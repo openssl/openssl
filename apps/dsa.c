@@ -1,257 +1,297 @@
-/* apps/dsa.c */
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- * 
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- * 
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
+
+#include <openssl/opensslconf.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include "apps.h"
-#include "bio.h"
-#include "err.h"
-#include "dsa.h"
-#include "evp.h"
-#include "x509.h"
-#include "pem.h"
+#include "progs.h"
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/dsa.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
+#include <openssl/bn.h>
+#include <openssl/encoder.h>
+#include <openssl/core_names.h>
+#include <openssl/core_dispatch.h>
 
-#undef PROG
-#define PROG	dsa_main
-
-/* -inform arg	- input format - default PEM (one of DER, NET or PEM)
- * -outform arg - output format - default PEM
- * -in arg	- input file - default stdin
- * -out arg	- output file - default stdout
- * -des		- encrypt output if PEM format with DES in cbc mode
- * -des3	- encrypt output if PEM format
- * -idea	- encrypt output if PEM format
- * -text	- print a text version
- * -modulus	- print the DSA public key
- */
-
-int MAIN(argc, argv)
-int argc;
-char **argv;
-	{
-	int ret=1;
-	DSA *dsa=NULL;
-	int i,badops=0;
-	EVP_CIPHER *enc=NULL;
-	BIO *in=NULL,*out=NULL;
-	int informat,outformat,text=0,noout=0;
-	char *infile,*outfile,*prog;
-	int modulus=0;
-
-	apps_startup();
-
-	if (bio_err == NULL)
-		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
-			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
-
-	infile=NULL;
-	outfile=NULL;
-	informat=FORMAT_PEM;
-	outformat=FORMAT_PEM;
-
-	prog=argv[0];
-	argc--;
-	argv++;
-	while (argc >= 1)
-		{
-		if 	(strcmp(*argv,"-inform") == 0)
-			{
-			if (--argc < 1) goto bad;
-			informat=str2fmt(*(++argv));
-			}
-		else if (strcmp(*argv,"-outform") == 0)
-			{
-			if (--argc < 1) goto bad;
-			outformat=str2fmt(*(++argv));
-			}
-		else if (strcmp(*argv,"-in") == 0)
-			{
-			if (--argc < 1) goto bad;
-			infile= *(++argv);
-			}
-		else if (strcmp(*argv,"-out") == 0)
-			{
-			if (--argc < 1) goto bad;
-			outfile= *(++argv);
-			}
-		else if (strcmp(*argv,"-noout") == 0)
-			noout=1;
-		else if (strcmp(*argv,"-text") == 0)
-			text=1;
-		else if (strcmp(*argv,"-modulus") == 0)
-			modulus=1;
-		else if ((enc=EVP_get_cipherbyname(&(argv[0][1]))) == NULL)
-			{
-			BIO_printf(bio_err,"unknown option %s\n",*argv);
-			badops=1;
-			break;
-			}
-		argc--;
-		argv++;
-		}
-
-	if (badops)
-		{
-bad:
-		BIO_printf(bio_err,"%s [options] <infile >outfile\n",prog);
-		BIO_printf(bio_err,"where options are\n");
-		BIO_printf(bio_err," -inform arg   input format - one of DER NET PEM\n");
-		BIO_printf(bio_err," -outform arg  output format - one of DER NET PEM\n");
-		BIO_printf(bio_err," -in arg       inout file\n");
-		BIO_printf(bio_err," -out arg      output file\n");
-		BIO_printf(bio_err," -des          encrypt PEM output with cbc des\n");
-		BIO_printf(bio_err," -des3         encrypt PEM output with ede cbc des using 168 bit key\n");
-#ifndef NO_IDEA
-		BIO_printf(bio_err," -idea         encrypt PEM output with cbc idea\n");
+#ifndef OPENSSL_NO_RC4
+# define DEFAULT_PVK_ENCR_STRENGTH      2
+#else
+# define DEFAULT_PVK_ENCR_STRENGTH      0
 #endif
-		BIO_printf(bio_err," -text         print the key in text\n");
-		BIO_printf(bio_err," -noout        don't print key out\n");
-		BIO_printf(bio_err," -modulus      print the DSA public value\n");
-		goto end;
-		}
 
-	ERR_load_crypto_strings();
+typedef enum OPTION_choice {
+    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_ENGINE,
+    /* Do not change the order here; see case statements below */
+    OPT_PVK_NONE, OPT_PVK_WEAK, OPT_PVK_STRONG,
+    OPT_NOOUT, OPT_TEXT, OPT_MODULUS, OPT_PUBIN,
+    OPT_PUBOUT, OPT_CIPHER, OPT_PASSIN, OPT_PASSOUT,
+    OPT_PROV_ENUM
+} OPTION_CHOICE;
 
-	in=BIO_new(BIO_s_file());
-	out=BIO_new(BIO_s_file());
-	if ((in == NULL) || (out == NULL))
-		{
-		ERR_print_errors(bio_err);
-		goto end;
-		}
+const OPTIONS dsa_options[] = {
+    OPT_SECTION("General"),
+    {"help", OPT_HELP, '-', "Display this summary"},
+    {"", OPT_CIPHER, '-', "Any supported cipher"},
+#ifndef OPENSSL_NO_RC4
+    {"pvk-strong", OPT_PVK_STRONG, '-', "Enable 'Strong' PVK encoding level (default)"},
+    {"pvk-weak", OPT_PVK_WEAK, '-', "Enable 'Weak' PVK encoding level"},
+    {"pvk-none", OPT_PVK_NONE, '-', "Don't enforce PVK encoding"},
+#endif
+#ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
+#endif
 
-	if (infile == NULL)
-		BIO_set_fp(in,stdin,BIO_NOCLOSE);
-	else
-		{
-		if (BIO_read_filename(in,infile) <= 0)
-			{
-			perror(infile);
-			goto end;
-			}
-		}
+    OPT_SECTION("Input"),
+    {"in", OPT_IN, 's', "Input key"},
+    {"inform", OPT_INFORM, 'f', "Input format (DER/PEM/PVK); has no effect"},
+    {"pubin", OPT_PUBIN, '-', "Expect a public key in input file"},
+    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
 
-	BIO_printf(bio_err,"read DSA private key\n");
-	if	(informat == FORMAT_ASN1)
-		dsa=d2i_DSAPrivateKey_bio(in,NULL);
-	else if (informat == FORMAT_PEM)
-		dsa=PEM_read_bio_DSAPrivateKey(in,NULL,NULL);
-	else
-		{
-		BIO_printf(bio_err,"bad input format specified for key\n");
-		goto end;
-		}
-	if (dsa == NULL)
-		{
-		BIO_printf(bio_err,"unable to load Private Key\n");
-		ERR_print_errors(bio_err);
-		goto end;
-		}
+    OPT_SECTION("Output"),
+    {"out", OPT_OUT, '>', "Output file"},
+    {"outform", OPT_OUTFORM, 'f', "Output format, DER PEM PVK"},
+    {"noout", OPT_NOOUT, '-', "Don't print key out"},
+    {"text", OPT_TEXT, '-', "Print the key in text"},
+    {"modulus", OPT_MODULUS, '-', "Print the DSA public value"},
+    {"pubout", OPT_PUBOUT, '-', "Output public key, not private"},
+    {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
 
-	if (outfile == NULL)
-		BIO_set_fp(out,stdout,BIO_NOCLOSE);
-	else
-		{
-		if (BIO_write_filename(out,outfile) <= 0)
-			{
-			perror(outfile);
-			goto end;
-			}
-		}
+    OPT_PROV_OPTIONS,
+    {NULL}
+};
 
-	if (text) 
-		if (!DSA_print(out,dsa,0))
-			{
-			perror(outfile);
-			ERR_print_errors(bio_err);
-			goto end;
-			}
+int dsa_main(int argc, char **argv)
+{
+    BIO *out = NULL;
+    ENGINE *e = NULL;
+    EVP_PKEY *pkey = NULL;
+    EVP_CIPHER *enc = NULL;
+    char *infile = NULL, *outfile = NULL, *prog;
+    char *passin = NULL, *passout = NULL, *passinarg = NULL, *passoutarg = NULL;
+    OPTION_CHOICE o;
+    int informat = FORMAT_PEM, outformat = FORMAT_PEM, text = 0, noout = 0;
+    int modulus = 0, pubin = 0, pubout = 0, ret = 1;
+    int pvk_encr = DEFAULT_PVK_ENCR_STRENGTH;
+    int private = 0;
+    const char *output_type = NULL, *ciphername = NULL;
+    const char *output_structure = NULL;
+    int selection = 0;
+    OSSL_ENCODER_CTX *ectx = NULL;
 
-	if (modulus)
-		{
-		fprintf(stdout,"Public Key=");
-		BN_print(out,dsa->pub_key);
-		fprintf(stdout,"\n");
-		}
+    prog = opt_init(argc, argv, dsa_options);
+    while ((o = opt_next()) != OPT_EOF) {
+        switch (o) {
+        case OPT_EOF:
+        case OPT_ERR:
+ opthelp:
+            ret = 0;
+            BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
+            goto end;
+        case OPT_HELP:
+            opt_help(dsa_options);
+            ret = 0;
+            goto end;
+        case OPT_INFORM:
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &informat))
+                goto opthelp;
+            break;
+        case OPT_IN:
+            infile = opt_arg();
+            break;
+        case OPT_OUTFORM:
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &outformat))
+                goto opthelp;
+            break;
+        case OPT_OUT:
+            outfile = opt_arg();
+            break;
+        case OPT_ENGINE:
+            e = setup_engine(opt_arg(), 0);
+            break;
+        case OPT_PASSIN:
+            passinarg = opt_arg();
+            break;
+        case OPT_PASSOUT:
+            passoutarg = opt_arg();
+            break;
+        case OPT_PVK_STRONG:    /* pvk_encr:= 2 */
+        case OPT_PVK_WEAK:      /* pvk_encr:= 1 */
+        case OPT_PVK_NONE:      /* pvk_encr:= 0 */
+#ifndef OPENSSL_NO_RC4
+            pvk_encr = (o - OPT_PVK_NONE);
+#endif
+            break;
+        case OPT_NOOUT:
+            noout = 1;
+            break;
+        case OPT_TEXT:
+            text = 1;
+            break;
+        case OPT_MODULUS:
+            modulus = 1;
+            break;
+        case OPT_PUBIN:
+            pubin = 1;
+            break;
+        case OPT_PUBOUT:
+            pubout = 1;
+            break;
+        case OPT_CIPHER:
+            ciphername = opt_unknown();
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto end;
+            break;
+        }
+    }
 
-	if (noout) goto end;
-	BIO_printf(bio_err,"writing DSA private key\n");
-	if 	(outformat == FORMAT_ASN1)
-		i=i2d_DSAPrivateKey_bio(out,dsa);
-	else if (outformat == FORMAT_PEM)
-		i=PEM_write_bio_DSAPrivateKey(out,dsa,enc,NULL,0,NULL);
-	else	{
-		BIO_printf(bio_err,"bad output format specified for outfile\n");
-		goto end;
-		}
-	if (!i)
-		{
-		BIO_printf(bio_err,"unable to write private key\n");
-		ERR_print_errors(bio_err);
-		}
-	else
-		ret=0;
-end:
-	if (in != NULL) BIO_free(in);
-	if (out != NULL) BIO_free(out);
-	if (dsa != NULL) DSA_free(dsa);
-	EXIT(ret);
-	}
+    /* No extra args. */
+    argc = opt_num_rest();
+    if (argc != 0)
+        goto opthelp;
 
+    if (ciphername != NULL) {
+        if (!opt_cipher(ciphername, &enc))
+            goto end;
+    }
+    private = pubin || pubout ? 0 : 1;
+    if (text && !pubin)
+        private = 1;
+
+    if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
+        BIO_printf(bio_err, "Error getting passwords\n");
+        goto end;
+    }
+
+    BIO_printf(bio_err, "read DSA key\n");
+    if (pubin)
+        pkey = load_pubkey(infile, informat, 1, passin, e, "public key");
+    else
+        pkey = load_key(infile, informat, 1, passin, e, "private key");
+
+    if (pkey == NULL) {
+        BIO_printf(bio_err, "unable to load Key\n");
+        ERR_print_errors(bio_err);
+        goto end;
+    }
+    if (!EVP_PKEY_is_a(pkey, "DSA")) {
+        BIO_printf(bio_err, "Not a DSA key\n");
+        goto end;
+    }
+
+    out = bio_open_owner(outfile, outformat, private);
+    if (out == NULL)
+        goto end;
+
+    if (text) {
+        assert(pubin || private);
+        if ((pubin && EVP_PKEY_print_public(out, pkey, 0, NULL) <= 0)
+            || (!pubin && EVP_PKEY_print_private(out, pkey, 0, NULL) <= 0)) {
+            perror(outfile);
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+    }
+
+    if (modulus) {
+        BIGNUM *pub_key = NULL;
+
+        if (!EVP_PKEY_get_bn_param(pkey, "pub", &pub_key)) {
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+        BIO_printf(out, "Public Key=");
+        BN_print(out, pub_key);
+        BIO_printf(out, "\n");
+        BN_free(pub_key);
+    }
+
+    if (noout) {
+        ret = 0;
+        goto end;
+    }
+    BIO_printf(bio_err, "writing DSA key\n");
+    if (outformat == FORMAT_ASN1) {
+        output_type = "DER";
+    } else if (outformat == FORMAT_PEM) {
+        output_type = "PEM";
+    } else if (outformat == FORMAT_MSBLOB) {
+        output_type = "MSBLOB";
+    } else if (outformat == FORMAT_PVK) {
+        if (pubin) {
+            BIO_printf(bio_err, "PVK form impossible with public key input\n");
+            goto end;
+        }
+        output_type = "PVK";
+    } else {
+        BIO_printf(bio_err, "bad output format specified for outfile\n");
+        goto end;
+    }
+
+    if (outformat == FORMAT_ASN1 || outformat == FORMAT_PEM) {
+        if (pubout || pubin)
+            output_structure = "SubjectPublicKeyInfo";
+        else
+            output_structure = "type-specific";
+    }
+
+    /* Select what you want in the output */
+    if (pubout || pubin) {
+        selection = OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
+    } else {
+        assert(private);
+        selection = (OSSL_KEYMGMT_SELECT_KEYPAIR
+                     | OSSL_KEYMGMT_SELECT_ALL_PARAMETERS);
+    }
+
+    /* Perform the encoding */
+    ectx = OSSL_ENCODER_CTX_new_for_pkey(pkey, selection, output_type,
+                                         output_structure, NULL);
+    if (OSSL_ENCODER_CTX_get_num_encoders(ectx) == 0) {
+        BIO_printf(bio_err, "%s format not supported\n", output_type);
+        goto end;
+    }
+
+    /* PVK requires a bit more */
+    if (outformat == FORMAT_PVK) {
+        OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+
+        params[0] = OSSL_PARAM_construct_int("encrypt-level", &pvk_encr);
+        if (!OSSL_ENCODER_CTX_set_params(ectx, params)) {
+            BIO_printf(bio_err, "invalid PVK encryption level\n");
+            goto end;
+        }
+    }
+
+    if (!OSSL_ENCODER_to_bio(ectx, out)) {
+        BIO_printf(bio_err, "unable to write key\n");
+        goto end;
+    }
+    ret = 0;
+ end:
+    if (ret != 0)
+        ERR_print_errors(bio_err);
+    OSSL_ENCODER_CTX_free(ectx);
+    BIO_free_all(out);
+    EVP_PKEY_free(pkey);
+    EVP_CIPHER_free(enc);
+    release_engine(e);
+    OPENSSL_free(passin);
+    OPENSSL_free(passout);
+    return ret;
+}

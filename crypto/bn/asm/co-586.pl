@@ -1,9 +1,18 @@
-#!/usr/local/bin/perl
+#! /usr/bin/env perl
+# Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
 
-push(@INC,"perlasm","../../perlasm");
+$0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
 
-&asm_init($ARGV[0],"bn-586.pl");
+$output = pop and open STDOUT,">$output";
+
+&asm_init($ARGV[0]);
 
 &bn_mul_comba("bn_mul_comba8",8);
 &bn_mul_comba("bn_mul_comba4",4);
@@ -11,6 +20,8 @@ require "x86asm.pl";
 &bn_sqr_comba("bn_sqr_comba4",4);
 
 &asm_finish();
+
+close STDOUT or die "error closing STDOUT: $!";
 
 sub mul_add_c
 	{
@@ -27,17 +38,17 @@ sub mul_add_c
 
 	&mul("edx");
 	&add($c0,"eax");
-	 &mov("eax",&DWP(($na)*4,$a,"",0)) if $pos == 0;	# laod next a
+	 &mov("eax",&DWP(($na)*4,$a,"",0)) if $pos == 0;	# load next a
 	 &mov("eax",&wparam(0)) if $pos > 0;			# load r[]
 	 ###
 	&adc($c1,"edx");
-	 &mov("edx",&DWP(($nb)*4,$b,"",0)) if $pos == 0;	# laod next b
-	 &mov("edx",&DWP(($nb)*4,$b,"",0)) if $pos == 1;	# laod next b
+	 &mov("edx",&DWP(($nb)*4,$b,"",0)) if $pos == 0;	# load next b
+	 &mov("edx",&DWP(($nb)*4,$b,"",0)) if $pos == 1;	# load next b
 	 ###
 	&adc($c2,0);
-	 # is pos > 1, it means it is the last loop 
+	 # is pos > 1, it means it is the last loop
 	 &mov(&DWP($i*4,"eax","",0),$c0) if $pos > 0;		# save r[];
-	&mov("eax",&DWP(($na)*4,$a,"",0)) if $pos == 1;		# laod next a
+	&mov("eax",&DWP(($na)*4,$a,"",0)) if $pos == 1;		# load next a
 	}
 
 sub sqr_add_c
@@ -64,7 +75,7 @@ sub sqr_add_c
 	 &mov("edx",&DWP(($nb)*4,$a,"",0)) if ($pos == 1) && ($na != $nb);
 	 ###
 	&adc($c2,0);
-	 # is pos > 1, it means it is the last loop 
+	 # is pos > 1, it means it is the last loop
 	 &mov(&DWP($i*4,$r,"",0),$c0) if $pos > 0;		# save r[];
 	&mov("eax",&DWP(($na)*4,$a,"",0)) if $pos == 1;		# load next b
 	}
@@ -115,7 +126,7 @@ sub bn_mul_comba
 	$c2="ebp";
 	$a="esi";
 	$b="edi";
-	
+
 	$as=0;
 	$ae=0;
 	$bs=0;
@@ -130,9 +141,9 @@ sub bn_mul_comba
 	 &push("ebx");
 
 	&xor($c0,$c0);
-	 &mov("eax",&DWP(0,$a,"",0));	# load the first word 
+	 &mov("eax",&DWP(0,$a,"",0));	# load the first word
 	&xor($c1,$c1);
-	 &mov("edx",&DWP(0,$b,"",0));	# load the first second 
+	 &mov("edx",&DWP(0,$b,"",0));	# load the first second
 
 	for ($i=0; $i<$tot; $i++)
 		{
@@ -140,7 +151,7 @@ sub bn_mul_comba
 		$bi=$bs;
 		$end=$be+1;
 
-		&comment("################## Calculate word $i"); 
+		&comment("################## Calculate word $i");
 
 		for ($j=$bs; $j<$end; $j++)
 			{

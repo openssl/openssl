@@ -1,308 +1,288 @@
-/* crypto/cryptlib.c */
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1998-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- * 
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- * 
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
-#include <string.h>
-#include "cryptlib.h"
-#include "crypto.h"
-#include "date.h"
+#include "e_os.h"
+#include "crypto/cryptlib.h"
+#include <openssl/safestack.h>
 
-#if defined(WIN32) || defined(WIN16)
-static double SSLeay_MSVC5_hack=0.0; /* and for VC1.5 */
-#endif
+#if defined(_WIN32)
+# include <tchar.h>
+# include <signal.h>
+# ifdef __WATCOMC__
+#  if defined(_UNICODE) || defined(__UNICODE__)
+#   define _vsntprintf _vsnwprintf
+#  else
+#   define _vsntprintf _vsnprintf
+#  endif
+# endif
+# ifdef _MSC_VER
+#  define alloca _alloca
+# endif
 
-/* real #defines in crypto.h, keep these upto date */
-static char* lock_names[CRYPTO_NUM_LOCKS] =
-	{
-	"<<ERROR>>",
-	"err",
-	"err_hash",
-	"x509",
-	"x509_info",
-	"x509_pkey",
-	"x509_crl",
-	"x509_req",
-	"dsa",
-	"rsa",
-	"evp_pkey",
-	"x509_store",
-	"ssl_ctx",
-	"ssl_cert",
-	"ssl_session",
-	"ssl",
-	"rand",
-	"debug_malloc",
-	"BIO",
-	"bio_gethostbyname",
-	"RSA_blinding",
-	};
+# if defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0333
+#  ifdef OPENSSL_SYS_WIN_CORE
 
-static STACK *app_locks=NULL;
+int OPENSSL_isservice(void)
+{
+    /* OneCore API cannot interact with GUI */
+    return 1;
+}
+#  else
+int OPENSSL_isservice(void)
+{
+    HWINSTA h;
+    DWORD len;
+    WCHAR *name;
+    static union {
+        void *p;
+        FARPROC f;
+    } _OPENSSL_isservice = {
+        NULL
+    };
 
-#ifndef NOPROTO
-static void (MS_FAR *locking_callback)(int mode,int type,
-	char *file,int line)=NULL;
-static int (MS_FAR *add_lock_callback)(int *pointer,int amount,
-	int type,char *file,int line)=NULL;
-static unsigned long (MS_FAR *id_callback)(void)=NULL;
+    if (_OPENSSL_isservice.p == NULL) {
+        HANDLE mod = GetModuleHandle(NULL);
+        FARPROC f = NULL;
+
+        if (mod != NULL)
+            f = GetProcAddress(mod, "_OPENSSL_isservice");
+        if (f == NULL)
+            _OPENSSL_isservice.p = (void *)-1;
+        else
+            _OPENSSL_isservice.f = f;
+    }
+
+    if (_OPENSSL_isservice.p != (void *)-1)
+        return (*_OPENSSL_isservice.f) ();
+
+    h = GetProcessWindowStation();
+    if (h == NULL)
+        return -1;
+
+    if (GetUserObjectInformationW(h, UOI_NAME, NULL, 0, &len) ||
+        GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+        return -1;
+
+    if (len > 512)
+        return -1;              /* paranoia */
+    len++, len &= ~1;           /* paranoia */
+    name = (WCHAR *)alloca(len + sizeof(WCHAR));
+    if (!GetUserObjectInformationW(h, UOI_NAME, name, len, &len))
+        return -1;
+
+    len++, len &= ~1;           /* paranoia */
+    name[len / sizeof(WCHAR)] = L'\0'; /* paranoia */
+#   if 1
+    /*
+     * This doesn't cover "interactive" services [working with real
+     * WinSta0's] nor programs started non-interactively by Task Scheduler
+     * [those are working with SAWinSta].
+     */
+    if (wcsstr(name, L"Service-0x"))
+        return 1;
+#   else
+    /* This covers all non-interactive programs such as services. */
+    if (!wcsstr(name, L"WinSta0"))
+        return 1;
+#   endif
+    else
+        return 0;
+}
+#  endif
+# else
+int OPENSSL_isservice(void)
+{
+    return 0;
+}
+# endif
+
+void OPENSSL_showfatal(const char *fmta, ...)
+{
+    va_list ap;
+    TCHAR buf[256];
+    const TCHAR *fmt;
+    /*
+     * First check if it's a console application, in which case the
+     * error message would be printed to standard error.
+     * Windows CE does not have a concept of a console application,
+     * so we need to guard the check.
+     */
+# ifdef STD_ERROR_HANDLE
+    HANDLE h;
+
+    if ((h = GetStdHandle(STD_ERROR_HANDLE)) != NULL &&
+        GetFileType(h) != FILE_TYPE_UNKNOWN) {
+        /* must be console application */
+        int len;
+        DWORD out;
+
+        va_start(ap, fmta);
+        len = _vsnprintf((char *)buf, sizeof(buf), fmta, ap);
+        WriteFile(h, buf, len < 0 ? sizeof(buf) : (DWORD) len, &out, NULL);
+        va_end(ap);
+        return;
+    }
+# endif
+
+    if (sizeof(TCHAR) == sizeof(char))
+        fmt = (const TCHAR *)fmta;
+    else
+        do {
+            int keepgoing;
+            size_t len_0 = strlen(fmta) + 1, i;
+            WCHAR *fmtw;
+
+            fmtw = (WCHAR *)alloca(len_0 * sizeof(WCHAR));
+            if (fmtw == NULL) {
+                fmt = (const TCHAR *)L"no stack?";
+                break;
+            }
+            if (!MultiByteToWideChar(CP_ACP, 0, fmta, len_0, fmtw, len_0))
+                for (i = 0; i < len_0; i++)
+                    fmtw[i] = (WCHAR)fmta[i];
+            for (i = 0; i < len_0; i++) {
+                if (fmtw[i] == L'%')
+                    do {
+                        keepgoing = 0;
+                        switch (fmtw[i + 1]) {
+                        case L'0':
+                        case L'1':
+                        case L'2':
+                        case L'3':
+                        case L'4':
+                        case L'5':
+                        case L'6':
+                        case L'7':
+                        case L'8':
+                        case L'9':
+                        case L'.':
+                        case L'*':
+                        case L'-':
+                            i++;
+                            keepgoing = 1;
+                            break;
+                        case L's':
+                            fmtw[i + 1] = L'S';
+                            break;
+                        case L'S':
+                            fmtw[i + 1] = L's';
+                            break;
+                        case L'c':
+                            fmtw[i + 1] = L'C';
+                            break;
+                        case L'C':
+                            fmtw[i + 1] = L'c';
+                            break;
+                        }
+                    } while (keepgoing);
+            }
+            fmt = (const TCHAR *)fmtw;
+        } while (0);
+
+    va_start(ap, fmta);
+    _vsntprintf(buf, OSSL_NELEM(buf) - 1, fmt, ap);
+    buf[OSSL_NELEM(buf) - 1] = _T('\0');
+    va_end(ap);
+
+# if defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0333
+#  ifdef OPENSSL_SYS_WIN_CORE
+    /* ONECORE is always NONGUI and NT >= 0x0601 */
+
+    /*
+    * TODO: (For non GUI and no std error cases)
+    * Add event logging feature here.
+    */
+
+#   if !defined(NDEBUG)
+        /*
+        * We are in a situation where we tried to report a critical
+        * error and this failed for some reason. As a last resort,
+        * in debug builds, send output to the debugger or any other
+        * tool like DebugView which can monitor the output.
+        */
+        OutputDebugString(buf);
+#   endif
+#  else
+    /* this -------------v--- guards NT-specific calls */
+    if (check_winnt() && OPENSSL_isservice() > 0) {
+        HANDLE hEventLog = RegisterEventSource(NULL, _T("OpenSSL"));
+
+        if (hEventLog != NULL) {
+            const TCHAR *pmsg = buf;
+
+            if (!ReportEvent(hEventLog, EVENTLOG_ERROR_TYPE, 0, 0, NULL,
+                             1, 0, &pmsg, NULL)) {
+#   if !defined(NDEBUG)
+                /*
+                 * We are in a situation where we tried to report a critical
+                 * error and this failed for some reason. As a last resort,
+                 * in debug builds, send output to the debugger or any other
+                 * tool like DebugView which can monitor the output.
+                 */
+                OutputDebugString(pmsg);
+#   endif
+            }
+
+            (void)DeregisterEventSource(hEventLog);
+        }
+    } else {
+        MessageBox(NULL, buf, _T("OpenSSL: FATAL"), MB_OK | MB_ICONERROR);
+    }
+#  endif
+# else
+    MessageBox(NULL, buf, _T("OpenSSL: FATAL"), MB_OK | MB_ICONERROR);
+# endif
+}
 #else
-static void (MS_FAR *locking_callback)()=NULL;
-static int (MS_FAR *add_lock_callback)()=NULL;
-static unsigned long (MS_FAR *id_callback)()=NULL;
+void OPENSSL_showfatal(const char *fmta, ...)
+{
+#ifndef OPENSSL_NO_STDIO
+    va_list ap;
+
+    va_start(ap, fmta);
+    vfprintf(stderr, fmta, ap);
+    va_end(ap);
+#endif
+}
+
+int OPENSSL_isservice(void)
+{
+    return 0;
+}
 #endif
 
-int CRYPTO_get_new_lockid(name)
-char *name;
-	{
-	char *str;
-	int i;
-
-	/* A hack to make Visual C++ 5.0 work correctly when linking as
-	 * a DLL using /MT. Without this, the application cannot use
-	 * and floating point printf's.
-	 * It also seems to be needed for Visual C 1.5 (win16) */
-#if defined(WIN32) || defined(WIN16)
-	SSLeay_MSVC5_hack=(double)name[0]*(double)name[1];
-#endif
-
-	if ((app_locks == NULL) && ((app_locks=sk_new_null()) == NULL))
-		{
-		CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_LOCKID,ERR_R_MALLOC_FAILURE);
-		return(0);
-		}
-	if ((str=BUF_strdup(name)) == NULL)
-		return(0);
-	i=sk_push(app_locks,str);
-	if (!i)
-		Free(str);
-	else
-		i+=CRYPTO_NUM_LOCKS; /* gap of one :-) */
-	return(i);
-	}
-
-void (*CRYPTO_get_locking_callback(P_V))(P_I_I_P_I)
-	{
-	return(locking_callback);
-	}
-
-int (*CRYPTO_get_add_lock_callback(P_V))(P_IP_I_I_P_I)
-	{
-	return(add_lock_callback);
-	}
-
-void CRYPTO_set_locking_callback(func)
-void (*func)(P_I_I_P_I);
-	{
-	locking_callback=func;
-	}
-
-void CRYPTO_set_add_lock_callback(func)
-int (*func)(P_IP_I_I_P_I);
-	{
-	add_lock_callback=func;
-	}
-
-unsigned long (*CRYPTO_get_id_callback(P_V))(P_V)
-	{
-	return(id_callback);
-	}
-
-void CRYPTO_set_id_callback(func)
-unsigned long (*func)(P_V);
-	{
-	id_callback=func;
-	}
-
-unsigned long CRYPTO_thread_id()
-	{
-	unsigned long ret=0;
-
-	if (id_callback == NULL)
-		{
-#ifdef WIN16
-		ret=(unsigned long)GetCurrentTask();
-#elif defined(WIN32)
-		ret=(unsigned long)GetCurrentThreadId();
-#elif defined(MSDOS)
-		ret=1L;
+void OPENSSL_die(const char *message, const char *file, int line)
+{
+    OPENSSL_showfatal("%s:%d: OpenSSL internal error: %s\n",
+                      file, line, message);
+#if !defined(_WIN32)
+    abort();
 #else
-		ret=(unsigned long)getpid();
+    /*
+     * Win32 abort() customarily shows a dialog, but we just did that...
+     */
+# if !defined(_WIN32_WCE)
+    raise(SIGABRT);
+# endif
+    _exit(3);
 #endif
-		}
-	else
-		ret=id_callback();
-	return(ret);
-	}
+}
 
-void CRYPTO_lock(mode,type,file,line)
-int mode;
-int type;
-char *file;
-int line;
-	{
-#ifdef LOCK_DEBUG
-		{
-		char *rw_text,*operation_text;
-
-		if (mode & CRYPTO_LOCK)
-			operation_text="lock  ";
-		else if (mode & CRYPTO_UNLOCK)
-			operation_text="unlock";
-		else
-			operation_text="ERROR ";
-
-		if (mode & CRYPTO_READ)
-			rw_text="r";
-		else if (mode & CRYPTO_WRITE)
-			rw_text="w";
-		else
-			rw_text="ERROR";
-
-		fprintf(stderr,"lock:%08lx:(%s)%s %-18s %s:%d\n",
-			CRYPTO_thread_id(), rw_text, operation_text,
-			CRYPTO_get_lock_name(type), file, line);
-		}
-#endif
-	if (locking_callback != NULL)
-		locking_callback(mode,type,file,line);
-	}
-
-int CRYPTO_add_lock(pointer,amount,type,file,line)
-int *pointer;
-int amount;
-int type;
-char *file;
-int line;
-	{
-	int ret;
-
-	if (add_lock_callback != NULL)
-		{
-#ifdef LOCK_DEBUG
-		int before= *pointer;
-#endif
-
-		ret=add_lock_callback(pointer,amount,type,file,line);
-#ifdef LOCK_DEBUG
-		fprintf(stderr,"ladd:%08lx:%2d+%2d->%2d %-18s %s:%d\n",
-			CRYPTO_thread_id(),
-			before,amount,ret,
-			CRYPTO_get_lock_name(type),
-			file,line);
-#endif
-		*pointer=ret;
-		}
-	else
-		{
-		CRYPTO_lock(CRYPTO_LOCK|CRYPTO_WRITE,type,file,line);
-
-		ret= *pointer+amount;
-#ifdef LOCK_DEBUG
-		fprintf(stderr,"ladd:%08lx:%2d+%2d->%2d %-18s %s:%d\n",
-			CRYPTO_thread_id(),
-			*pointer,amount,ret,
-			CRYPTO_get_lock_name(type),
-			file,line);
-#endif
-		*pointer=ret;
-		CRYPTO_lock(CRYPTO_UNLOCK|CRYPTO_WRITE,type,file,line);
-		}
-	return(ret);
-	}
-
-char *CRYPTO_get_lock_name(type)
-int type;
-	{
-	if (type < 0)
-		return("ERROR");
-	else if (type < CRYPTO_NUM_LOCKS)
-		return(lock_names[type]);
-	else if (type-CRYPTO_NUM_LOCKS >= sk_num(app_locks))
-		return("ERROR");
-	else
-		return(sk_value(app_locks,type-CRYPTO_NUM_LOCKS));
-	}
-
-#ifdef _DLL
-#ifdef WIN32
-
-/* All we really need to do is remove the 'error' state when a thread
- * detaches */
-
-BOOL WINAPI DLLEntryPoint(hinstDLL,fdwReason,lpvReserved)
-HINSTANCE hinstDLL;
-DWORD fdwReason;
-LPVOID lpvReserved;
-	{
-	switch(fdwReason)
-		{
-	case DLL_PROCESS_ATTACH:
-		break;
-	case DLL_THREAD_ATTACH:
-		break;
-	case DLL_THREAD_DETACH:
-		ERR_remove_state(0);
-		break;
-	case DLL_PROCESS_DETACH:
-		break;
-		}
-	return(TRUE);
-	}
-#endif
-
-#endif
+#if defined(__TANDEM) && defined(OPENSSL_VPROC)
+/*
+ * Define a VPROC function for HP NonStop build crypto library.
+ * This is used by platform version identification tools.
+ * Do not inline this procedure or make it static.
+ */
+# define OPENSSL_VPROC_STRING_(x)    x##_CRYPTO
+# define OPENSSL_VPROC_STRING(x)     OPENSSL_VPROC_STRING_(x)
+# define OPENSSL_VPROC_FUNC          OPENSSL_VPROC_STRING(OPENSSL_VPROC)
+void OPENSSL_VPROC_FUNC(void) {}
+#endif /* __TANDEM */

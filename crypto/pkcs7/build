@@ -1,5 +1,0 @@
-#!/bin/sh -x
-
-make
-gcc -I../../include -g -o enc enc.c ../../libcrypto.a
-gcc -I../../include -g -o dec dec.c ../../libcrypto.a

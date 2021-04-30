@@ -1,7 +1,0 @@
--	A minor bug in ssl/s3_clnt.c where there would always be 4 0 bytes
-	sent in the client random, thanks to 
-	Edward Bishop <ebishop@spyglass.com>
--	Changed some BIGNUM api stuff.
-
--	I Deleted the HISTORY.090 I was working on and when I found out, it was
-	permanently gone :-(

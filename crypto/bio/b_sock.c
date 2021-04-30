@@ -1,681 +1,410 @@
-/* crypto/bio/b_sock.c */
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- * 
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- * 
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
-
-#ifndef NO_SOCK
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
-#define USE_SOCKETS
-#include "cryptlib.h"
-#include "bio.h"
+#include "bio_local.h"
+#ifndef OPENSSL_NO_SOCK
+# define SOCKET_PROTOCOL IPPROTO_TCP
+# ifdef SO_MAXCONN
+#  define MAX_LISTEN  SO_MAXCONN
+# elif defined(SOMAXCONN)
+#  define MAX_LISTEN  SOMAXCONN
+# else
+#  define MAX_LISTEN  32
+# endif
+# if defined(OPENSSL_SYS_WINDOWS)
+static int wsa_init_done = 0;
+# endif
 
-/*	BIOerr(BIO_F_WSASTARTUP,BIO_R_WSASTARTUP ); */
+# if defined __TANDEM
+#  include <unistd.h>
+#  include <sys/time.h> /* select */
+#  if defined(OPENSSL_TANDEM_FLOSS)
+#   include <floss.h(floss_select)>
+#  endif
+# elif !defined _WIN32
+#  include <unistd.h>
+#  include <sys/select.h>
+# else
+#  include <winsock.h> /* for type fd_set */
+# endif
 
-#ifdef WIN16
-#define SOCKET_PROTOCOL 0 /* more microsoft stupidity */
-#else
-#define SOCKET_PROTOCOL IPPROTO_TCP
-#endif
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
+int BIO_get_host_ip(const char *str, unsigned char *ip)
+{
+    BIO_ADDRINFO *res = NULL;
+    int ret = 0;
 
-#ifdef SO_MAXCONN
-#define MAX_LISTEN  SOMAXCONN
-#elif defined(SO_MAXCONN)
-#define MAX_LISTEN  SO_MAXCONN
-#else
-#define MAX_LISTEN  32
-#endif
+    if (BIO_sock_init() != 1)
+        return 0;               /* don't generate another error code here */
 
-#ifdef WINDOWS
-static int wsa_init_done=0;
-#endif
+    if (BIO_lookup(str, NULL, BIO_LOOKUP_CLIENT, AF_INET, SOCK_STREAM, &res)) {
+        size_t l;
 
-static unsigned long BIO_ghbn_hits=0L;
-static unsigned long BIO_ghbn_miss=0L;
+        if (BIO_ADDRINFO_family(res) != AF_INET) {
+            ERR_raise(ERR_LIB_BIO, BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET);
+        } else if (BIO_ADDR_rawaddress(BIO_ADDRINFO_address(res), NULL, &l)) {
+            /*
+             * Because only AF_INET addresses will reach this far, we can assert
+             * that l should be 4
+             */
+            if (ossl_assert(l == 4))
+                ret = BIO_ADDR_rawaddress(BIO_ADDRINFO_address(res), ip, &l);
+        }
+        BIO_ADDRINFO_free(res);
+    } else {
+        ERR_add_error_data(2, "host=", str);
+    }
 
-#define GHBN_NUM	4
-static struct ghbn_cache_st
-	{
-	char name[129];
-	struct hostent *ent;
-	unsigned long order;
-	} ghbn_cache[GHBN_NUM];
+    return ret;
+}
 
-#ifndef NOPROTO
-static int get_ip(char *str,unsigned char *ip);
-static void ghbn_free(struct hostent *a);
-static struct hostent *ghbn_dup(struct hostent *a);
-#else
-static int get_ip();
-static void ghbn_free();
-static struct hostent *ghbn_dup();
-#endif
+int BIO_get_port(const char *str, unsigned short *port_ptr)
+{
+    BIO_ADDRINFO *res = NULL;
+    int ret = 0;
 
-int BIO_get_host_ip(str,ip)
-char *str;
-unsigned char *ip;
-	{
-	int i;
-	struct hostent *he;
+    if (str == NULL) {
+        ERR_raise(ERR_LIB_BIO, BIO_R_NO_PORT_DEFINED);
+        return 0;
+    }
 
-	i=get_ip(str,ip);
-	if (i > 0) return(1);
-	if (i < 0)
-		{
-		BIOerr(BIO_F_BIO_GET_HOST_IP,BIO_R_INVALID_IP_ADDRESS);
-		ERR_add_error_data(2,"host=",str);
-		return(0);
-		}
-	else
-		{ /* do a gethostbyname */
-		if (!BIO_sock_init()) return(0);
+    if (BIO_sock_init() != 1)
+        return 0;               /* don't generate another error code here */
 
-		he=BIO_gethostbyname(str);
-		if (he == NULL)
-			{
-			BIOerr(BIO_F_BIO_GET_HOST_IP,BIO_R_BAD_HOSTNAME_LOOKUP);
-			ERR_add_error_data(2,"host=",str);
-			return(0);
-			}
+    if (BIO_lookup(NULL, str, BIO_LOOKUP_CLIENT, AF_INET, SOCK_STREAM, &res)) {
+        if (BIO_ADDRINFO_family(res) != AF_INET) {
+            ERR_raise(ERR_LIB_BIO, BIO_R_ADDRINFO_ADDR_IS_NOT_AF_INET);
+        } else {
+            *port_ptr = ntohs(BIO_ADDR_rawport(BIO_ADDRINFO_address(res)));
+            ret = 1;
+        }
+        BIO_ADDRINFO_free(res);
+    } else {
+        ERR_add_error_data(2, "host=", str);
+    }
 
-		/* cast to short because of win16 winsock definition */
-		if ((short)he->h_addrtype != AF_INET)
-			{
-			BIOerr(BIO_F_BIO_GET_HOST_IP,BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET);
-			ERR_add_error_data(2,"host=",str);
-			return(0);
-			}
-		for (i=0; i<4; i++)
-			ip[i]=he->h_addr_list[0][i];
-		}
-	return(1);
-	}
+    return ret;
+}
+# endif
 
-int BIO_get_port(str,port_ptr)
-char *str;
-unsigned short *port_ptr;
-	{
-	int i;
-	struct servent *s;
+int BIO_sock_error(int sock)
+{
+    int j = 0, i;
+    socklen_t size = sizeof(j);
 
-	if (str == NULL)
-		{
-		BIOerr(BIO_F_BIO_GET_PORT,BIO_R_NO_PORT_DEFINED);
-		return(0);
-		}
-	i=atoi(str);
-	if (i != 0)
-		*port_ptr=(unsigned short)i;
-	else
-		{
-		s=getservbyname(str,"tcp");
-		if (s == NULL)
-			{
-			if (strcmp(str,"http") == 0)
-				*port_ptr=80;
-			else if (strcmp(str,"telnet") == 0)
-				*port_ptr=23;
-			else if (strcmp(str,"socks") == 0)
-				*port_ptr=1080;
-			else if (strcmp(str,"https") == 0)
-				*port_ptr=443;
-			else if (strcmp(str,"ssl") == 0)
-				*port_ptr=443;
-			else if (strcmp(str,"ftp") == 0)
-				*port_ptr=21;
-			else if (strcmp(str,"gopher") == 0)
-				*port_ptr=70;
-#if 0
-			else if (strcmp(str,"wais") == 0)
-				*port_ptr=21;
-#endif
-			else
-				{
-				SYSerr(SYS_F_GETSERVBYNAME,get_last_socket_error());
-				ERR_add_error_data(3,"service='",str,"'");
-				return(0);
-				}
-			return(1);
-			}
-		*port_ptr=htons((unsigned short)s->s_port);
-		}
-	return(1);
-	}
+    /*
+     * Note: under Windows the third parameter is of type (char *) whereas
+     * under other systems it is (void *) if you don't have a cast it will
+     * choke the compiler: if you do have a cast then you can either go for
+     * (char *) or (void *).
+     */
+    i = getsockopt(sock, SOL_SOCKET, SO_ERROR, (void *)&j, &size);
+    if (i < 0)
+        return get_last_socket_error();
+    else
+        return j;
+}
 
-int BIO_sock_error(sock)
-int sock;
-	{
-	int j,i,size;
-		 
-	size=sizeof(int);
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
+struct hostent *BIO_gethostbyname(const char *name)
+{
+    /*
+     * Caching gethostbyname() results forever is wrong, so we have to let
+     * the true gethostbyname() worry about this
+     */
+    return gethostbyname(name);
+}
+# endif
 
-	i=getsockopt(sock,SOL_SOCKET,SO_ERROR,(char *)&j,&size);
-	if (i < 0)
-		return(1);
-	else
-		return(j);
-	}
+int BIO_sock_init(void)
+{
+# ifdef OPENSSL_SYS_WINDOWS
+    static struct WSAData wsa_state;
 
-long BIO_ghbn_ctrl(cmd,iarg,parg)
-int cmd;
-int iarg;
-char *parg;
-	{
-	int i;
-	char **p;
+    if (!wsa_init_done) {
+        wsa_init_done = 1;
+        memset(&wsa_state, 0, sizeof(wsa_state));
+        /*
+         * Not making wsa_state available to the rest of the code is formally
+         * wrong. But the structures we use are [believed to be] invariable
+         * among Winsock DLLs, while API availability is [expected to be]
+         * probed at run-time with DSO_global_lookup.
+         */
+        if (WSAStartup(0x0202, &wsa_state) != 0) {
+            ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
+                           "calling wsastartup()");
+            ERR_raise(ERR_LIB_BIO, BIO_R_WSASTARTUP);
+            return -1;
+        }
+    }
+# endif                         /* OPENSSL_SYS_WINDOWS */
+# ifdef WATT32
+    extern int _watt_do_exit;
+    _watt_do_exit = 0;          /* don't make sock_init() call exit() */
+    if (sock_init())
+        return -1;
+# endif
 
-	switch (cmd)
-		{
-	case BIO_GHBN_CTRL_HITS:
-		return(BIO_ghbn_hits);
-		/* break; */
-	case BIO_GHBN_CTRL_MISSES:
-		return(BIO_ghbn_miss);
-		/* break; */
-	case BIO_GHBN_CTRL_CACHE_SIZE:
-		return(GHBN_NUM);
-		/* break; */
-	case BIO_GHBN_CTRL_GET_ENTRY:
-		if ((iarg >= 0) && (iarg <GHBN_NUM) &&
-			(ghbn_cache[iarg].order > 0))
-			{
-			p=(char **)parg;
-			if (p == NULL) return(0);
-			*p=ghbn_cache[iarg].name;
-			ghbn_cache[iarg].name[128]='\0';
-			return(1);
-			}
-		return(0);
-		/* break; */
-	case BIO_GHBN_CTRL_FLUSH:
-		for (i=0; i<GHBN_NUM; i++)
-			ghbn_cache[i].order=0;
-		break;
-	default:
-		return(0);
-		}
-	return(1);
-	}
+    return 1;
+}
 
-static struct hostent *ghbn_dup(a)
-struct hostent *a;
-	{
-	struct hostent *ret;
-	int i,j;
+void bio_sock_cleanup_int(void)
+{
+# ifdef OPENSSL_SYS_WINDOWS
+    if (wsa_init_done) {
+        wsa_init_done = 0;
+        WSACleanup();
+    }
+# endif
+}
 
-	MemCheck_off();
-	ret=(struct hostent *)Malloc(sizeof(struct hostent));
-	if (ret == NULL) return(NULL);
-	memset(ret,0,sizeof(struct hostent));
+int BIO_socket_ioctl(int fd, long type, void *arg)
+{
+    int i;
 
-	for (i=0; a->h_aliases[i] != NULL; i++)
-		;
-	i++;
-	ret->h_aliases=(char **)Malloc(sizeof(char *)*i);
-	memset(ret->h_aliases,0,sizeof(char *)*i);
-	if (ret == NULL) goto err;
+#  ifdef __DJGPP__
+    i = ioctlsocket(fd, type, (char *)arg);
+#  else
+#   if defined(OPENSSL_SYS_VMS)
+    /*-
+     * 2011-02-18 SMS.
+     * VMS ioctl() can't tolerate a 64-bit "void *arg", but we
+     * observe that all the consumers pass in an "unsigned long *",
+     * so we arrange a local copy with a short pointer, and use
+     * that, instead.
+     */
+#    if __INITIAL_POINTER_SIZE == 64
+#     define ARG arg_32p
+#     pragma pointer_size save
+#     pragma pointer_size 32
+    unsigned long arg_32;
+    unsigned long *arg_32p;
+#     pragma pointer_size restore
+    arg_32p = &arg_32;
+    arg_32 = *((unsigned long *)arg);
+#    else                       /* __INITIAL_POINTER_SIZE == 64 */
+#     define ARG arg
+#    endif                      /* __INITIAL_POINTER_SIZE == 64 [else] */
+#   else                        /* defined(OPENSSL_SYS_VMS) */
+#    define ARG arg
+#   endif                       /* defined(OPENSSL_SYS_VMS) [else] */
 
-	for (i=0; a->h_addr_list[i] != NULL; i++)
-		;
-	i++;
-	ret->h_addr_list=(char **)Malloc(sizeof(char *)*i);
-	memset(ret->h_addr_list,0,sizeof(char *)*i);
-	if (ret->h_addr_list == NULL) goto err;
+    i = ioctlsocket(fd, type, ARG);
+#  endif                        /* __DJGPP__ */
+    if (i < 0)
+        ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
+                       "calling ioctlsocket()");
+    return i;
+}
 
-	j=strlen(a->h_name)+1;
-	if ((ret->h_name=Malloc(j)) == NULL) goto err;
-	memcpy((char *)ret->h_name,a->h_name,j+1);
-	for (i=0; a->h_aliases[i] != NULL; i++)
-		{
-		j=strlen(a->h_aliases[i])+1;
-		if ((ret->h_aliases[i]=Malloc(j)) == NULL) goto err;
-		memcpy(ret->h_aliases[i],a->h_aliases[i],j+1);
-		}
-	ret->h_length=a->h_length;
-	ret->h_addrtype=a->h_addrtype;
-	for (i=0; a->h_addr_list[i] != NULL; i++)
-		{
-		if ((ret->h_addr_list[i]=Malloc(a->h_length)) == NULL)
-			goto err;
-		memcpy(ret->h_addr_list[i],a->h_addr_list[i],a->h_length);
-		}
-	if (0)
-		{
-err:	
-		if (ret != NULL)
-			ghbn_free(ret);
-		ret=NULL;
-		}
-	MemCheck_on();
-	return(ret);
-	}
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
+int BIO_get_accept_socket(char *host, int bind_mode)
+{
+    int s = INVALID_SOCKET;
+    char *h = NULL, *p = NULL;
+    BIO_ADDRINFO *res = NULL;
 
-static void ghbn_free(a)
-struct hostent *a;
-	{
-	int i;
+    if (!BIO_parse_hostserv(host, &h, &p, BIO_PARSE_PRIO_SERV))
+        return INVALID_SOCKET;
 
-	if (a->h_aliases != NULL)
-		{
-		for (i=0; a->h_aliases[i] != NULL; i++)
-			Free(a->h_aliases[i]);
-		Free(a->h_aliases);
-		}
-	if (a->h_addr_list != NULL)
-		{
-		for (i=0; a->h_addr_list[i] != NULL; i++)
-			Free(a->h_addr_list[i]);
-		Free(a->h_addr_list);
-		}
-	if (a->h_name != NULL) Free((char *)a->h_name);
-	Free(a);
-	}
+    if (BIO_sock_init() != 1)
+        return INVALID_SOCKET;
 
-struct hostent *BIO_gethostbyname(name)
-char *name;
-	{
-	struct hostent *ret;
-	int i,lowi=0,j;
-	unsigned long low= (unsigned long)-1;
+    if (BIO_lookup(h, p, BIO_LOOKUP_SERVER, AF_UNSPEC, SOCK_STREAM, &res) != 0)
+        goto err;
 
-/*	return(gethostbyname(name)); */
+    if ((s = BIO_socket(BIO_ADDRINFO_family(res), BIO_ADDRINFO_socktype(res),
+                        BIO_ADDRINFO_protocol(res), 0)) == INVALID_SOCKET) {
+        s = INVALID_SOCKET;
+        goto err;
+    }
 
-	CRYPTO_w_lock(CRYPTO_LOCK_BIO_GETHOSTBYNAME);
-	j=strlen(name);
-	if (j < 128)
-		{
-		for (i=0; i<GHBN_NUM; i++)
-			{
-			if (low > ghbn_cache[i].order)
-				{
-				low=ghbn_cache[i].order;
-				lowi=i;
-				}
-			if (ghbn_cache[i].order > 0)
-				{
-				if (strncmp(name,ghbn_cache[i].name,128) == 0)
-					break;
-				}
-			}
-		}
-	else
-		i=GHBN_NUM;
+    if (!BIO_listen(s, BIO_ADDRINFO_address(res),
+                    bind_mode ? BIO_SOCK_REUSEADDR : 0)) {
+        BIO_closesocket(s);
+        s = INVALID_SOCKET;
+    }
 
-	if (i == GHBN_NUM) /* no hit*/
-		{
-		BIO_ghbn_miss++;
-		ret=gethostbyname(name);
+ err:
+    BIO_ADDRINFO_free(res);
+    OPENSSL_free(h);
+    OPENSSL_free(p);
 
-		if (ret == NULL) return(NULL);
-		if (j > 128) return(ret); /* too big to cache */
+    return s;
+}
 
-		/* else add to cache */
-		if (ghbn_cache[lowi].ent != NULL)
-			ghbn_free(ghbn_cache[lowi].ent);
+int BIO_accept(int sock, char **ip_port)
+{
+    BIO_ADDR res;
+    int ret = -1;
 
-		strncpy(ghbn_cache[lowi].name,name,128);
-		ghbn_cache[lowi].ent=ghbn_dup(ret);
-		ghbn_cache[lowi].order=BIO_ghbn_miss+BIO_ghbn_hits;
-		}
-	else
-		{
-		BIO_ghbn_hits++;
-		ret= ghbn_cache[i].ent;
-		ghbn_cache[i].order=BIO_ghbn_miss+BIO_ghbn_hits;
-		}
-	CRYPTO_w_unlock(CRYPTO_LOCK_BIO_GETHOSTBYNAME);
-	return(ret);
-	}
+    ret = BIO_accept_ex(sock, &res, 0);
+    if (ret == (int)INVALID_SOCKET) {
+        if (BIO_sock_should_retry(ret)) {
+            ret = -2;
+            goto end;
+        }
+        ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
+                       "calling accept()");
+        ERR_raise(ERR_LIB_BIO, BIO_R_ACCEPT_ERROR);
+        goto end;
+    }
 
-int BIO_sock_init()
-	{
-#ifdef WINDOWS
-	static struct WSAData wsa_state;
+    if (ip_port != NULL) {
+        char *host = BIO_ADDR_hostname_string(&res, 1);
+        char *port = BIO_ADDR_service_string(&res, 1);
+        if (host != NULL && port != NULL)
+            *ip_port = OPENSSL_zalloc(strlen(host) + strlen(port) + 2);
+        else
+            *ip_port = NULL;
 
-	if (!wsa_init_done)
-		{
-		int err;
-	  
-#ifdef SIGINT
-		signal(SIGINT,(void (*)(int))BIO_sock_cleanup);
-#endif
-		wsa_init_done=1;
-		memset(&wsa_state,0,sizeof(wsa_state));
-		if (WSAStartup(0x0101,&wsa_state)!=0)
-			{
-			err=WSAGetLastError();
-			SYSerr(SYS_F_WSASTARTUP,err);
-			BIOerr(BIO_F_BIO_SOCK_INIT,BIO_R_WSASTARTUP);
-			return(-1);
-			}
-		}
-#endif /* WINDOWS */
-	return(1);
-	}
+        if (*ip_port == NULL) {
+            ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
+            BIO_closesocket(ret);
+            ret = (int)INVALID_SOCKET;
+        } else {
+            strcpy(*ip_port, host);
+            strcat(*ip_port, ":");
+            strcat(*ip_port, port);
+        }
+        OPENSSL_free(host);
+        OPENSSL_free(port);
+    }
 
-void BIO_sock_cleanup()
-	{
-#ifdef WINDOWS
-	if (wsa_init_done)
-		{
-		wsa_init_done=0;
-		WSACancelBlockingCall();
-		WSACleanup();
-		}
-#endif
-	}
+ end:
+    return ret;
+}
+# endif
 
-int BIO_socket_ioctl(fd,type,arg)
-int fd;
-long type;
-unsigned long *arg;
-	{
-	int i;
+int BIO_set_tcp_ndelay(int s, int on)
+{
+    int ret = 0;
+# if defined(TCP_NODELAY) && (defined(IPPROTO_TCP) || defined(SOL_TCP))
+    int opt;
 
-	i=ioctlsocket(fd,type,arg);
-	if (i < 0)
-		SYSerr(SYS_F_IOCTLSOCKET,get_last_socket_error());
-	return(i);
-	}
+#  ifdef SOL_TCP
+    opt = SOL_TCP;
+#  else
+#   ifdef IPPROTO_TCP
+    opt = IPPROTO_TCP;
+#   endif
+#  endif
 
-/* The reason I have implemented this instead of using sscanf is because
- * Visual C 1.52c gives an unresolved external when linking a DLL :-( */
-static int get_ip(str,ip)
-char *str;
-unsigned char ip[4];
-	{
-	unsigned int tmp[4];
-	int num=0,c,ok=0;
+    ret = setsockopt(s, opt, TCP_NODELAY, (char *)&on, sizeof(on));
+# endif
+    return (ret == 0);
+}
 
-	tmp[0]=tmp[1]=tmp[2]=tmp[3]=0;
+int BIO_socket_nbio(int s, int mode)
+{
+    int ret = -1;
+    int l;
 
-	for (;;)
-		{
-		c= *(str++);
-		if ((c >= '0') && (c <= '9'))
-			{
-			ok=1;
-			tmp[num]=tmp[num]*10+c-'0';
-			if (tmp[num] > 255) return(-1);
-			}
-		else if (c == '.')
-			{
-			if (!ok) return(-1);
-			if (num == 3) break;
-			num++;
-			ok=0;
-			}
-		else if ((num == 3) && ok)
-			break;
-		else
-			return(0);
-		}
-	ip[0]=tmp[0];
-	ip[1]=tmp[1];
-	ip[2]=tmp[2];
-	ip[3]=tmp[3];
-	return(1);
-	}
+    l = mode;
+# ifdef FIONBIO
+    l = mode;
 
-int BIO_get_accept_socket(host,bind_mode)
-char *host;
-int bind_mode;
-	{
-	int ret=0;
-	struct sockaddr_in server,client;
-	int s= -1,cs;
-	unsigned char ip[4];
-	short port;
-	char *str,*h,*p,*e;
-	unsigned long l;
-	int err_num;
+    ret = BIO_socket_ioctl(s, FIONBIO, &l);
+# elif defined(F_GETFL) && defined(F_SETFL) && (defined(O_NONBLOCK) || defined(FNDELAY))
+    /* make sure this call always pushes an error level; BIO_socket_ioctl() does so, so we do too. */
 
-	if (!BIO_sock_init()) return(INVALID_SOCKET);
+    l = fcntl(s, F_GETFL, 0);
+    if (l == -1) {
+        ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
+                       "calling fcntl()");
+        ret = -1;
+    } else {
+#  if defined(O_NONBLOCK)
+        l &= ~O_NONBLOCK;
+#  else
+        l &= ~FNDELAY; /* BSD4.x */
+#  endif
+        if (mode) {
+#  if defined(O_NONBLOCK)
+            l |= O_NONBLOCK;
+#  else
+            l |= FNDELAY; /* BSD4.x */
+#  endif
+        }
+        ret = fcntl(s, F_SETFL, l);
 
-	if ((str=BUF_strdup(host)) == NULL) return(INVALID_SOCKET);
+        if (ret < 0) {
+            ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
+                           "calling fcntl()");
+        }
+    }
+# else
+    /* make sure this call always pushes an error level; BIO_socket_ioctl() does so, so we do too. */
+    ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_INVALID_ARGUMENT);
+# endif
 
-	h=p=NULL;
-	h=str;
-	for (e=str; *e; e++)
-		{
-		if (*e == ':')
-			{
-			p= &(e[1]);
-			*e='\0';
-			}
-		else if (*e == '/')
-			{
-			*e='\0';
-			break;
-			}
-		}
+    return (ret == 0);
+}
 
-	if (p == NULL)
-		{
-		p=h;
-		h="*";
-		}
+int BIO_sock_info(int sock,
+                  enum BIO_sock_info_type type, union BIO_sock_info_u *info)
+{
+    switch (type) {
+    case BIO_SOCK_INFO_ADDRESS:
+        {
+            socklen_t addr_len;
+            int ret = 0;
+            addr_len = sizeof(*info->addr);
+            ret = getsockname(sock, BIO_ADDR_sockaddr_noconst(info->addr),
+                              &addr_len);
+            if (ret == -1) {
+                ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
+                               "calling getsockname()");
+                ERR_raise(ERR_LIB_BIO, BIO_R_GETSOCKNAME_ERROR);
+                return 0;
+            }
+            if ((size_t)addr_len > sizeof(*info->addr)) {
+                ERR_raise(ERR_LIB_BIO, BIO_R_GETSOCKNAME_TRUNCATED_ADDRESS);
+                return 0;
+            }
+        }
+        break;
+    default:
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNKNOWN_INFO_TYPE);
+        return 0;
+    }
+    return 1;
+}
 
-	if (!BIO_get_port(p,&port)) return(INVALID_SOCKET);
+/* TODO simplify by BIO_socket_wait() further other uses of select() in apps/ */
+/*
+ * Wait on fd at most until max_time; succeed immediately if max_time == 0.
+ * If for_read == 0 then assume to wait for writing, else wait for reading.
+ * Returns -1 on error, 0 on timeout, and 1 on success.
+ */
+int BIO_socket_wait(int fd, int for_read, time_t max_time)
+{
+    fd_set confds;
+    struct timeval tv;
+    time_t now;
 
-	memset((char *)&server,0,sizeof(server));
-	server.sin_family=AF_INET;
-	server.sin_port=htons((unsigned short)port);
+    if (fd < 0 || fd >= FD_SETSIZE)
+        return -1;
+    if (max_time == 0)
+        return 1;
 
-	if (strcmp(h,"*") == 0)
-		server.sin_addr.s_addr=INADDR_ANY;
-	else
-		{
-		if (!BIO_get_host_ip(h,&(ip[0]))) return(INVALID_SOCKET);
-		l=(unsigned long)
-			((unsigned long)ip[0]<<24L)|
-			((unsigned long)ip[1]<<16L)|
-			((unsigned long)ip[2]<< 8L)|
-			((unsigned long)ip[3]);
-		server.sin_addr.s_addr=htonl(l);
-		}
+    now = time(NULL);
+    if (max_time <= now)
+        return 0;
 
-again:
-	s=socket(AF_INET,SOCK_STREAM,SOCKET_PROTOCOL);
-	if (s == INVALID_SOCKET)
-		{
-		SYSerr(SYS_F_SOCKET,get_last_socket_error());
-		ERR_add_error_data(3,"port='",host,"'");
-		BIOerr(BIO_F_BIO_GET_ACCEPT_SOCKET,BIO_R_UNABLE_TO_CREATE_SOCKET);
-		goto err;
-		}
-
-#ifdef SO_REUSEADDR
-	if (bind_mode == BIO_BIND_REUSEADDR)
-		{
-		int i=1;
-
-		ret=setsockopt(s,SOL_SOCKET,SO_REUSEADDR,(char *)&i,sizeof(i));
-		bind_mode=BIO_BIND_NORMAL;
-		}
-#endif
-	if (bind(s,(struct sockaddr *)&server,sizeof(server)) == -1)
-		{
-#ifdef SO_REUSEADDR
-		err_num=get_last_socket_error();
-		if ((bind_mode == BIO_BIND_REUSEADDR_IF_UNUSED) &&
-			(err_num == EADDRINUSE))
-			{
-			memcpy((char *)&client,(char *)&server,sizeof(server));
-			if (strcmp(h,"*") == 0)
-				client.sin_addr.s_addr=htonl(0x7F000001);
-			cs=socket(AF_INET,SOCK_STREAM,SOCKET_PROTOCOL);
-			if (cs != INVALID_SOCKET)
-				{
-				int ii;
-				ii=connect(cs,(struct sockaddr *)&client,
-					sizeof(client));
-				closesocket(cs);
-				if (ii == INVALID_SOCKET)
-					{
-					bind_mode=BIO_BIND_REUSEADDR;
-					closesocket(s);
-					goto again;
-					}
-				/* else error */
-				}
-			/* else error */
-			}
-#endif
-		SYSerr(SYS_F_BIND,err_num);
-		ERR_add_error_data(3,"port='",host,"'");
-		BIOerr(BIO_F_BIO_GET_ACCEPT_SOCKET,BIO_R_UNABLE_TO_BIND_SOCKET);
-		goto err;
-		}
-	if (listen(s,MAX_LISTEN) == -1)
-		{
-		SYSerr(SYS_F_BIND,get_last_socket_error());
-		ERR_add_error_data(3,"port='",host,"'");
-		BIOerr(BIO_F_BIO_GET_ACCEPT_SOCKET,BIO_R_UNABLE_TO_LISTEN_SOCKET);
-		goto err;
-		}
-	ret=1;
-err:
-	if (str != NULL) Free(str);
-	if ((ret == 0) && (s != INVALID_SOCKET))
-		{
-		closesocket(s);
-		s= INVALID_SOCKET;
-		}
-	return(s);
-	}
-
-int BIO_accept(sock,addr)
-int sock;
-char **addr;
-	{
-	int ret=INVALID_SOCKET;
-	static struct sockaddr_in from;
-	unsigned long l;
-	short port;
-	int len;
-	char *p;
-
-	memset((char *)&from,0,sizeof(from));
-	len=sizeof(from);
-	ret=accept(sock,(struct sockaddr *)&from,&len);
-	if (ret == INVALID_SOCKET)
-		{
-		SYSerr(SYS_F_ACCEPT,get_last_socket_error());
-		BIOerr(BIO_F_BIO_ACCEPT,BIO_R_ACCEPT_ERROR);
-		goto end;
-		}
-
-	if (addr == NULL) goto end;
-
-	l=ntohl(from.sin_addr.s_addr);
-	port=ntohs(from.sin_port);
-	if (*addr == NULL)
-		{
-		if ((p=Malloc(24)) == NULL)
-			{
-			BIOerr(BIO_F_BIO_ACCEPT,ERR_R_MALLOC_FAILURE);
-			goto end;
-			}
-		*addr=p;
-		}
-	sprintf(*addr,"%d.%d.%d.%d:%d",
-		(unsigned char)(l>>24L)&0xff,
-		(unsigned char)(l>>16L)&0xff,
-		(unsigned char)(l>> 8L)&0xff,
-		(unsigned char)(l     )&0xff,
-		port);
-end:
-	return(ret);
-	}
-
-int BIO_set_tcp_ndelay(s,on)
-int s;
-int on;
-	{
-	int ret=0;
-#if defined(TCP_NODELAY) && (defined(IPPROTO_TCP) || defined(SOL_TCP))
-	int opt;
-
-#ifdef SOL_TCP
-	opt=SOL_TCP;
-#else
-#ifdef IPPROTO_TCP
-	opt=IPPROTO_TCP;
-#endif
-#endif
-	
-	ret=setsockopt(s,opt,TCP_NODELAY,(char *)&on,sizeof(on));
-#endif
-	return(ret == 0);
-	}
-#endif
-
-int BIO_socket_nbio(s,mode)
-int s;
-int mode;
-	{
-	int ret= -1;
-	unsigned long l;
-
-	l=mode;
-#ifdef FIONBIO
-	ret=BIO_socket_ioctl(s,FIONBIO,&l);
-#endif
-	return(ret == 0);
-	}
+    FD_ZERO(&confds);
+    openssl_fdset(fd, &confds);
+    tv.tv_usec = 0;
+    tv.tv_sec = (long)(max_time - now); /* might overflow */
+    return select(fd + 1, for_read ? &confds : NULL,
+                  for_read ? NULL : &confds, NULL, &tv);
+}
+#endif /* !defined(OPENSSL_NO_SOCK) */

@@ -1,107 +1,187 @@
-/* crypto/err/err_prn.c */
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- * 
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- * 
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
+/* TODO: When ERR_STATE becomes opaque, this musts be removed */
+#define OSSL_FORCE_ERR_STATE
+
 #include <stdio.h>
-#include "lhash.h"
-#include "crypto.h"
-#include "cryptlib.h"
-#include "buffer.h"
-#include "err.h"
-#include "crypto.h"
+#include "internal/cryptlib.h"
+#include <openssl/crypto.h>
+#include <openssl/buffer.h>
+#include <openssl/err.h>
+#include "err_local.h"
 
-#ifndef NO_FP_API
-void ERR_print_errors_fp(fp)
-FILE *fp;
-	{
-	unsigned long l;
-	char buf[200];
-	char *file,*data;
-	int line,flags;
-	unsigned long es;
+#define ERR_PRINT_BUF_SIZE 4096
+void ERR_print_errors_cb(int (*cb) (const char *str, size_t len, void *u),
+                         void *u)
+{
+    CRYPTO_THREAD_ID tid = CRYPTO_THREAD_get_current_id();
+    unsigned long l;
+    const char *file, *data, *func;
+    int line, flags;
 
-	es=CRYPTO_thread_id();
-	while ((l=ERR_get_error_line_data(&file,&line,&data,&flags)) != 0)
-		{
-		fprintf(fp,"%lu:%s:%s:%d:%s\n",es,ERR_error_string(l,buf),
-			file,line,(flags&ERR_TXT_STRING)?data:"");
-		}
-	}
+    while ((l = ERR_get_error_all(&file, &line, &func, &data, &flags)) != 0) {
+        char buf[ERR_PRINT_BUF_SIZE] = "";
+        char *hex = NULL;
+        int offset;
+
+        if ((flags & ERR_TXT_STRING) == 0)
+            data = "";
+
+        hex = ossl_buf2hexstr_sep((const unsigned char *)&tid, sizeof(tid), '\0');
+        BIO_snprintf(buf, sizeof(buf), "%s:", hex == NULL ? "<null>" : hex);
+        offset = strlen(buf);
+        ossl_err_string_int(l, func, buf + offset, sizeof(buf) - offset);
+        offset += strlen(buf + offset);
+        BIO_snprintf(buf + offset, sizeof(buf) - offset, ":%s:%d:%s\n",
+                     file, line, data);
+        OPENSSL_free(hex);
+        if (cb(buf, strlen(buf), u) <= 0)
+            break;              /* abort outputting the error report */
+    }
+}
+
+/* auxiliary function for incrementally reporting texts via the error queue */
+static void put_error(int lib, const char *func, int reason,
+                      const char *file, int line)
+{
+    ERR_new();
+    ERR_set_debug(file, line, func);
+    ERR_set_error(lib, reason, NULL /* no data here, so fmt is NULL */);
+}
+
+#define TYPICAL_MAX_OUTPUT_BEFORE_DATA 100
+#define MAX_DATA_LEN (ERR_PRINT_BUF_SIZE - TYPICAL_MAX_OUTPUT_BEFORE_DATA)
+void ERR_add_error_txt(const char *separator, const char *txt)
+{
+    const char *file = NULL;
+    int line;
+    const char *func = NULL;
+    const char *data = NULL;
+    int flags;
+    unsigned long err = ERR_peek_last_error();
+
+    if (separator == NULL)
+        separator = "";
+    if (err == 0)
+        put_error(ERR_LIB_NONE, NULL, 0, "", 0);
+
+    do {
+        size_t available_len, data_len;
+        const char *curr = txt, *next = txt;
+        const char *leading_separator = separator;
+        int trailing_separator = 0;
+        char *tmp;
+
+        ERR_peek_last_error_all(&file, &line, &func, &data, &flags);
+        if ((flags & ERR_TXT_STRING) == 0) {
+            data = "";
+            leading_separator = "";
+        }
+        data_len = strlen(data);
+
+        /* workaround for limit of ERR_print_errors_cb() */
+        if (data_len >= MAX_DATA_LEN
+                || strlen(separator) >= (size_t)(MAX_DATA_LEN - data_len))
+            available_len = 0;
+        else
+            available_len = MAX_DATA_LEN - data_len - strlen(separator) - 1;
+        /* MAX_DATA_LEN > available_len >= 0 */
+
+        if (*separator == '\0') {
+            const size_t len_next = strlen(next);
+
+            if (len_next <= available_len) {
+                next += len_next;
+                curr = NULL; /* no need to split */
+            } else {
+                next += available_len;
+                curr = next; /* will split at this point */
+            }
+        } else {
+            while (*next != '\0' && (size_t)(next - txt) <= available_len) {
+                curr = next;
+                next = strstr(curr, separator);
+                if (next != NULL) {
+                    next += strlen(separator);
+                    trailing_separator = *next == '\0';
+                } else {
+                    next = curr + strlen(curr);
+                }
+            }
+            if ((size_t)(next - txt) <= available_len)
+                curr = NULL; /* the above loop implies *next == '\0' */
+        }
+        if (curr != NULL) {
+            /* split error msg at curr since error data would get too long */
+            if (curr != txt) {
+                tmp = OPENSSL_strndup(txt, curr - txt);
+                if (tmp == NULL)
+                    return;
+                ERR_add_error_data(2, separator, tmp);
+                OPENSSL_free(tmp);
+            }
+            put_error(ERR_GET_LIB(err), func, err, file, line);
+            txt = curr;
+        } else {
+            if (trailing_separator) {
+                tmp = OPENSSL_strndup(txt, next - strlen(separator) - txt);
+                if (tmp == NULL)
+                    return;
+                /* output txt without the trailing separator */
+                ERR_add_error_data(2, leading_separator, tmp);
+                OPENSSL_free(tmp);
+            } else {
+                ERR_add_error_data(2, leading_separator, txt);
+            }
+            txt = next; /* finished */
+        }
+    } while (*txt != '\0');
+}
+
+void ERR_add_error_mem_bio(const char *separator, BIO *bio)
+{
+    if (bio != NULL) {
+        char *str;
+        long len = BIO_get_mem_data(bio, &str);
+
+        if (len > 0) {
+            if (str[len - 1] != '\0') {
+                if (BIO_write(bio, "", 1) <= 0)
+                    return;
+
+                len = BIO_get_mem_data(bio, &str);
+            }
+            if (len > 1)
+                ERR_add_error_txt(separator, str);
+        }
+    }
+}
+
+static int print_bio(const char *str, size_t len, void *bp)
+{
+    return BIO_write((BIO *)bp, str, len);
+}
+
+void ERR_print_errors(BIO *bp)
+{
+    ERR_print_errors_cb(print_bio, bp);
+}
+
+#ifndef OPENSSL_NO_STDIO
+void ERR_print_errors_fp(FILE *fp)
+{
+    BIO *bio = BIO_new_fp(fp, BIO_NOCLOSE);
+    if (bio == NULL)
+        return;
+
+    ERR_print_errors_cb(print_bio, bio);
+    BIO_free(bio);
+}
 #endif
-
-void ERR_print_errors(bp)
-BIO *bp;
-	{
-	unsigned long l;
-	char buf[256];
-	char buf2[256];
-	char *file,*data;
-	int line,flags;
-	unsigned long es;
-
-	es=CRYPTO_thread_id();
-	while ((l=ERR_get_error_line_data(&file,&line,&data,&flags)) != 0)
-		{
-		sprintf(buf2,"%lu:%s:%s:%d:",es,ERR_error_string(l,buf),
-			file,line);
-		BIO_write(bp,buf2,strlen(buf2));
-		if (flags & ERR_TXT_STRING)
-			BIO_write(bp,data,strlen(data));
-		BIO_write(bp,"\n",1);
-		}
-	}
-

@@ -1,294 +1,443 @@
-#!/usr/local/bin/perl
+#! /usr/bin/env perl
+# Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
-# generate a .def file
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+# Generate a linker version script suitable for the given platform
+# from a given ordinals file.
+
+use strict;
+use warnings;
+
+use Getopt::Long;
+use FindBin;
+use lib "$FindBin::Bin/perl";
+
+use OpenSSL::Ordinals;
+
+use lib '.';
+use configdata;
+
+use File::Spec::Functions;
+use lib catdir($config{sourcedir}, 'Configurations');
+use platform;
+
+my $name = undef;               # internal library/module name
+my $ordinals_file = undef;      # the ordinals file to use
+my $version = undef;            # the version to use for the library
+my $OS = undef;                 # the operating system family
+my $verbose = 0;
+my $ctest = 0;
+my $debug = 0;
+
+# For VMS, some modules may have case insensitive names
+my $case_insensitive = 0;
+
+GetOptions('name=s'     => \$name,
+           'ordinals=s' => \$ordinals_file,
+           'version=s'  => \$version,
+           'OS=s'       => \$OS,
+           'ctest'      => \$ctest,
+           'verbose'    => \$verbose,
+           # For VMS
+           'case-insensitive' => \$case_insensitive)
+    or die "Error in command line arguments\n";
+
+die "Please supply arguments\n"
+    unless $name && $ordinals_file && $OS;
+
+# When building a "variant" shared library, with a custom SONAME, also customize
+# all the symbol versions.  This produces a shared object that can coexist
+# without conflict in the same address space as a default build, or an object
+# with a different variant tag.
 #
-# It does this by parsing the header files and looking for the
-# non-prototyped functions.
+# For example, with a target definition that includes:
 #
+#         shlib_variant => "-opt",
+#
+# we build the following objects:
+#
+# $ perl -le '
+#     for (@ARGV) {
+#         if ($l = readlink) {
+#             printf "%s -> %s\n", $_, $l
+#         } else {
+#             print
+#         }
+#     }' *.so*
+# libcrypto-opt.so.1.1
+# libcrypto.so -> libcrypto-opt.so.1.1
+# libssl-opt.so.1.1
+# libssl.so -> libssl-opt.so.1.1
+#
+# whose SONAMEs and dependencies are:
+#
+# $ for l in *.so; do
+#     echo $l
+#     readelf -d $l | egrep 'SONAME|NEEDED.*(ssl|crypto)'
+#   done
+# libcrypto.so
+#  0x000000000000000e (SONAME)             Library soname: [libcrypto-opt.so.1.1]
+# libssl.so
+#  0x0000000000000001 (NEEDED)             Shared library: [libcrypto-opt.so.1.1]
+#  0x000000000000000e (SONAME)             Library soname: [libssl-opt.so.1.1]
+#
+# We case-fold the variant tag to upper case and replace all non-alnum
+# characters with "_".  This yields the following symbol versions:
+#
+# $ nm libcrypto.so | grep -w A
+# 0000000000000000 A OPENSSL_OPT_1_1_0
+# 0000000000000000 A OPENSSL_OPT_1_1_0a
+# 0000000000000000 A OPENSSL_OPT_1_1_0c
+# 0000000000000000 A OPENSSL_OPT_1_1_0d
+# 0000000000000000 A OPENSSL_OPT_1_1_0f
+# 0000000000000000 A OPENSSL_OPT_1_1_0g
+# $ nm libssl.so | grep -w A
+# 0000000000000000 A OPENSSL_OPT_1_1_0
+# 0000000000000000 A OPENSSL_OPT_1_1_0d
+#
+(my $SO_VARIANT = uc($target{"shlib_variant"} // '')) =~ s/\W/_/g;
 
-$crypto_num="util/libeay.num";
-$ssl_num=   "util/ssleay.num";
+my $libname = platform->sharedname($name);
 
-$NT=1;
-foreach (@ARGV)
-	{
-	$NT=1 if $_ eq "32";
-	$NT=0 if $_ eq "16";
-	$do_ssl=1 if $_ eq "ssleay";
-	$do_crypto=1 if $_ eq "libeay";
-	}
+my %OS_data = (
+    solaris     => { writer     => \&writer_linux,
+                     sort       => sorter_linux(),
+                     platforms  => { UNIX                       => 1 } },
+    "solaris-gcc" => 'solaris', # alias
+    linux       => 'solaris',   # alias
+    "bsd-gcc"   => 'solaris',   # alias
+    aix         => { writer     => \&writer_aix,
+                     sort       => sorter_unix(),
+                     platforms  => { UNIX                       => 1 } },
+    VMS         => { writer     => \&writer_VMS,
+                     sort       => OpenSSL::Ordinals::by_number(),
+                     platforms  => { VMS                        => 1 } },
+    vms         => 'VMS',       # alias
+    WINDOWS     => { writer     => \&writer_windows,
+                     sort       => OpenSSL::Ordinals::by_name(),
+                     platforms  => { WIN32                      => 1,
+                                     _WIN32                     => 1 } },
+    windows     => 'WINDOWS',   # alias
+    WIN32       => 'WINDOWS',   # alias
+    win32       => 'WIN32',     # alias
+    32          => 'WIN32',     # alias
+    NT          => 'WIN32',     # alias
+    nt          => 'WIN32',     # alias
+    mingw       => 'WINDOWS',   # alias
+    nonstop     => { writer     => \&writer_nonstop,
+                     sort       => OpenSSL::Ordinals::by_name(),
+                     platforms  => { TANDEM                     => 1 } },
+   );
 
-if (!$do_ssl && !$do_crypto)
-	{
-	print STDERR "usage: $0 ( ssl | crypto ) [ 16 | 32 ]\n";
-	exit(1);
-	}
+do {
+    die "Unknown operating system family $OS\n"
+        unless exists $OS_data{$OS};
+    $OS = $OS_data{$OS};
+} while(ref($OS) eq '');
 
-%ssl_list=&load_numbers($ssl_num);
-%crypto_list=&load_numbers($crypto_num);
+my %disabled_uc = map { my $x = uc $_; $x =~ s|-|_|g; $x => 1 } keys %disabled;
 
-$ssl="ssl/ssl.h";
+my %ordinal_opts = ();
+$ordinal_opts{sort} = $OS->{sort} if $OS->{sort};
+$ordinal_opts{filter} =
+    sub {
+        my $item = shift;
+        return
+            $item->exists()
+            && platform_filter($item)
+            && feature_filter($item);
+    };
+my $ordinals = OpenSSL::Ordinals->new(from => $ordinals_file);
 
-$crypto ="crypto/crypto.h";
-$crypto.=" crypto/des/des.h";
-$crypto.=" crypto/idea/idea.h";
-$crypto.=" crypto/rc4/rc4.h";
-$crypto.=" crypto/rc5/rc5.h";
-$crypto.=" crypto/rc2/rc2.h";
-$crypto.=" crypto/bf/blowfish.h";
-$crypto.=" crypto/cast/cast.h";
-$crypto.=" crypto/md2/md2.h";
-$crypto.=" crypto/md5/md5.h";
-$crypto.=" crypto/mdc2/mdc2.h";
-$crypto.=" crypto/sha/sha.h";
-$crypto.=" crypto/ripemd/ripemd.h";
+my $writer = $OS->{writer};
+$writer = \&writer_ctest if $ctest;
 
-$crypto.=" crypto/bn/bn.h";
-$crypto.=" crypto/rsa/rsa.h";
-$crypto.=" crypto/dsa/dsa.h";
-$crypto.=" crypto/dh/dh.h";
+$writer->($ordinals->items(%ordinal_opts));
 
-$crypto.=" crypto/stack/stack.h";
-$crypto.=" crypto/buffer/buffer.h";
-$crypto.=" crypto/bio/bio.h";
-$crypto.=" crypto/lhash/lhash.h";
-$crypto.=" crypto/conf/conf.h";
-$crypto.=" crypto/txt_db/txt_db.h";
+exit 0;
 
-$crypto.=" crypto/evp/evp.h";
-$crypto.=" crypto/objects/objects.h";
-$crypto.=" crypto/pem/pem.h";
-#$crypto.=" crypto/meth/meth.h";
-$crypto.=" crypto/asn1/asn1.h";
-$crypto.=" crypto/asn1/asn1_mac.h";
-$crypto.=" crypto/err/err.h";
-$crypto.=" crypto/pkcs7/pkcs7.h";
-$crypto.=" crypto/x509/x509.h";
-$crypto.=" crypto/x509/x509_vfy.h";
-$crypto.=" crypto/rand/rand.h";
-$crypto.=" crypto/hmac/hmac.h";
-$crypto.=" crypto/comp/comp.h";
-$crypto.=" crypto/tmdiff.h";
+sub platform_filter {
+    my $item = shift;
+    my %platforms = ( $item->platforms() );
 
-$match{'NOPROTO'}=1;
-$match2{'PERL5'}=1;
+    # True if no platforms are defined
+    return 1 if scalar keys %platforms == 0;
 
-&print_def_file(*STDOUT,"SSLEAY",*ssl_list,&do_defs("SSLEAY",$ssl))
-	if $do_ssl == 1;
+    # For any item platform tag, return the equivalence with the
+    # current platform settings if it exists there, return 0 otherwise
+    # if the item platform tag is true
+    for (keys %platforms) {
+        if (exists $OS->{platforms}->{$_}) {
+            return $platforms{$_} == $OS->{platforms}->{$_};
+        }
+        if ($platforms{$_}) {
+            return 0;
+        }
+    }
 
-&print_def_file(*STDOUT,"LIBEAY",*crypto_list,&do_defs("LIBEAY",$crypto))
-	if $do_crypto == 1;
+    # Found no match?  Then it's a go
+    return 1;
+}
 
-sub do_defs
-	{
-	local($name,$files)=@_;
-	local(@ret);
+sub feature_filter {
+    my $item = shift;
+    my @features = ( $item->features() );
 
-	$off=-1;
-	foreach $file (split(/\s+/,$files))
-		{
-#		print STDERR "reading $file\n";
-		open(IN,"<$file") || die "unable to open $file:$!\n";
-		$depth=0;
-		$pr=-1;
-		@np="";
-		$/=undef;
-		$a=<IN>;
-		while (($i=index($a,"/*")) >= 0)
-			{
-			$j=index($a,"*/");
-			break unless ($j >= 0);
-			$a=substr($a,0,$i).substr($a,$j+2);
-		#	print "$i $j\n";
-			}
-		foreach (split("\n",$a))
-			{
-			if (/^\#\s*ifndef (.*)/)
-				{
-				push(@tag,$1);
-				$tag{$1}=-1;
-				next;
-				}
-			elsif (/^\#\s*if !defined\(([^\)]+)\)/)
-				{
-				push(@tag,$1);
-				$tag{$1}=-1;
-				next;
-				}
-			elsif (/^\#\s*ifdef (.*)/)
-				{
-				push(@tag,$1);
-				$tag{$1}=1;
-				next;
-				}
-			elsif (/^\#\s*if defined(.*)/)
-				{
-				push(@tag,$1);
-				$tag{$1}=1;
-				next;
-				}
-			elsif (/^\#\s*endif/)
-				{
-				$tag{$tag[$#tag]}=0;
-				pop(@tag);
-				next;
-				}
-			elsif (/^\#\s*else/)
-				{
-				$t=$tag[$#tag];
-				$tag{$t}= -$tag{$t};
-				next;
-				}
-#printf STDERR "$_\n%2d %2d %2d %2d %2d $NT\n",
-#$tag{'NOPROTO'},$tag{'FreeBSD'},$tag{'WIN16'},$tag{'PERL5'},$tag{'NO_FP_API'};
+    # True if no features are defined
+    return 1 if scalar @features == 0;
 
-			$t=undef;
-			if (/^extern .*;$/)
-				{ $t=&do_extern($name,$_); }
-			elsif (	($tag{'NOPROTO'} == 1) &&
-				($tag{'FreeBSD'} != 1) &&
-				(($NT && ($tag{'WIN16'} != 1)) ||
-				 (!$NT && ($tag{'WIN16'} != -1))) &&
-				($tag{'PERL5'} != 1) &&
-#				($tag{'_WINDLL'} != -1) &&
-				((!$NT && $tag{'_WINDLL'} != -1) ||
-				 ($NT && $tag{'_WINDLL'} != 1)) &&
-				((($tag{'NO_FP_API'} != 1) && $NT) ||
-				 (($tag{'NO_FP_API'} != -1) && !$NT)))
-				{ $t=&do_line($name,$_); }
-			else
-				{ $t=undef; }
-			if (($t ne undef) && (!$done{$name,$t}))
-				{
-				$done{$name,$t}++;
-				push(@ret,$t);
-#printf STDERR "one:$t\n" if $t =~ /BIO_/;
-				}
-			}
-		close(IN);
-		}
-	return(@ret);
-	}
+    my $verdict = ! grep { $disabled_uc{$_} } @features;
 
-sub do_line
-	{
-	local($file,$_)=@_;
-	local($n);
+    if ($disabled{deprecated}) {
+        foreach (@features) {
+            next unless /^DEPRECATEDIN_(\d+)_(\d+)(?:_(\d+))?$/;
+            my $symdep = $1 * 10000 + $2 * 100 + ($3 // 0);
+            $verdict = 0 if $config{api} >= $symdep;
+            print STDERR "DEBUG: \$symdep = $symdep, \$verdict = $verdict\n"
+                if $debug && $1 == 0;
+        }
+    }
 
-	return(undef) if /^$/;
-	return(undef) if /^\s/;
-#printf STDERR "two:$_\n" if $_ =~ /BIO_/;
-	if (/(CRYPTO_get_locking_callback)/)
-		{ return($1); }
-	elsif (/(CRYPTO_get_id_callback)/)
-		{ return($1); }
-	elsif (/(CRYPTO_get_add_lock_callback)/)
-		{ return($1); }
-	elsif (/(SSL_CTX_get_verify_callback)/)
-		{ return($1); }
-	elsif (/(SSL_get_info_callback)/)
-		{ return($1); }
-	elsif ((!$NT) && /(ERR_load_CRYPTO_strings)/)
-		{ return("ERR_load_CRYPTOlib_strings"); }
-	elsif (!$NT && /BIO_s_file/)
-		{ return(undef); }
-	elsif (!$NT && /BIO_new_file/)
-		{ return(undef); }
-	elsif (!$NT && /BIO_new_fp/)
-		{ return(undef); }
-	elsif ($NT && /BIO_s_file_internal/)
-		{ return(undef); }
-	elsif ($NT && /BIO_new_file_internal/)
-		{ return(undef); }
-	elsif ($NT && /BIO_new_fp_internal/)
-		{ return(undef); }
-	else
-		{
-		/\s\**(\S+)\s*\(/;
-		return($1);
-		}
-	}
+    return $verdict;
+}
 
-sub do_extern
-	{
-	local($file,$_)=@_;
-	local($n);
+sub sorter_unix {
+    my $by_name = OpenSSL::Ordinals::by_name();
+    my %weight = (
+        'FUNCTION'      => 1,
+        'VARIABLE'      => 2
+       );
 
-	/\s\**(\S+);$/;
-	return($1);
-	}
+    return sub {
+        my $item1 = shift;
+        my $item2 = shift;
 
-sub print_def_file
-	{
-	local(*OUT,$name,*nums,@functions)=@_;
-	local($n)=1;
+        my $verdict = $weight{$item1->type()} <=> $weight{$item2->type()};
+        if ($verdict == 0) {
+            $verdict = $by_name->($item1, $item2);
+        }
+        return $verdict;
+    };
+}
 
-	if ($NT)
-		{ $name.="32"; }
-	else
-		{ $name.="16"; }
+sub sorter_linux {
+    my $by_version = OpenSSL::Ordinals::by_version();
+    my $by_unix = sorter_unix();
 
-	print OUT <<"EOF";
+    return sub {
+        my $item1 = shift;
+        my $item2 = shift;
+
+        my $verdict = $by_version->($item1, $item2);
+        if ($verdict == 0) {
+            $verdict = $by_unix->($item1, $item2);
+        }
+        return $verdict;
+    };
+}
+
+sub writer_linux {
+    my $thisversion = '';
+    my $currversion_s = '';
+    my $prevversion_s = '';
+    my $indent = 0;
+
+    for (@_) {
+        if ($thisversion && $_->version() ne $thisversion) {
+            die "$ordinals_file: It doesn't make sense to have both versioned ",
+                "and unversioned symbols"
+                if $thisversion eq '*';
+            print <<"_____";
+}${prevversion_s};
+_____
+            $prevversion_s = " OPENSSL${SO_VARIANT}_$thisversion";
+            $thisversion = '';  # Trigger start of next section
+        }
+        unless ($thisversion) {
+            $indent = 0;
+            $thisversion = $_->version();
+            $currversion_s = '';
+            $currversion_s = "OPENSSL${SO_VARIANT}_$thisversion "
+                if $thisversion ne '*';
+            print <<"_____";
+${currversion_s}{
+    global:
+_____
+        }
+        print '        ', $_->name(), ";\n";
+    }
+
+    print <<"_____";
+    local: *;
+}${prevversion_s};
+_____
+}
+
+sub writer_aix {
+    for (@_) {
+        print $_->name(),"\n";
+    }
+}
+
+sub writer_nonstop {
+    for (@_) {
+        print "-export ",$_->name(),"\n";
+    }
+}
+
+sub writer_windows {
+    print <<"_____";
 ;
-; Definition file for the DDL version of the $name library from SSLeay
+; Definition file for the DLL version of the $libname library from OpenSSL
 ;
 
-LIBRARY         $name
+LIBRARY         "$libname"
 
-DESCRIPTION     'SSLeay $name - eay\@cryptsoft.com'
+EXPORTS
+_____
+    for (@_) {
+        print "    ",$_->name();
+        if (platform->can('export2internal')) {
+            print "=". platform->export2internal($_->name());
+        }
+        print "\n";
+    }
+}
 
-EOF
+sub collect_VMS_mixedcase {
+    return [ 'SPARE', 'SPARE' ] unless @_;
 
-	if (!$NT)
-		{
-		print <<"EOF";
-CODE            PRELOAD MOVEABLE
-DATA            PRELOAD MOVEABLE SINGLE
+    my $s = shift;
+    my $s_uc = uc($s);
+    my $type = shift;
 
-EXETYPE		WINDOWS
+    return [ "$s=$type", 'SPARE' ] if $s_uc eq $s;
+    return [ "$s_uc/$s=$type", "$s=$type" ];
+}
 
-HEAPSIZE	4096
-STACKSIZE	8192
+sub collect_VMS_uppercase {
+    return [ 'SPARE' ] unless @_;
 
-EOF
-		}
+    my $s = shift;
+    my $s_uc = uc($s);
+    my $type = shift;
 
-	print "EXPORTS\n";
+    return [ "$s_uc=$type" ];
+}
 
+sub writer_VMS {
+    my @slot_collection = ();
+    my $collector =
+        $case_insensitive ? \&collect_VMS_uppercase : \&collect_VMS_mixedcase;
 
-	(@e)=grep(/^SSLeay/,@functions);
-	(@r)=grep(!/^SSLeay/,@functions);
-	@functions=((sort @e),(sort @r));
+    my $last_num = 0;
+    foreach (@_) {
+        my $this_num = $_->number();
+        $this_num = $last_num + 1 if $this_num =~ m|^\?|;
 
-	foreach $func (@functions)
-		{
-		if (!defined($nums{$func}))
-			{
-			printf STDERR "$func does not have a number assigned\n";
-			}
-		else
-			{
-			$n=$nums{$func};
-			printf OUT "    %s%-35s@%d\n",($NT)?"":"_",$func,$n;
-			}
-		}
-	printf OUT "\n";
-	}
+        while (++$last_num < $this_num) {
+            push @slot_collection, $collector->(); # Just occupy a slot
+        }
+        my $type = {
+            FUNCTION    => 'PROCEDURE',
+            VARIABLE    => 'DATA'
+           } -> {$_->type()};
+        push @slot_collection, $collector->($_->name(), $type);
+    }
 
-sub load_numbers
-	{
-	local($name)=@_;
-	local($j,@a,%ret);
+    print <<"_____" if defined $version;
+IDENTIFICATION=$version
+_____
+    print <<"_____" unless $case_insensitive;
+CASE_SENSITIVE=YES
+_____
+    print <<"_____";
+SYMBOL_VECTOR=(-
+_____
+    # It's uncertain how long aggregated lines the linker can handle,
+    # but it has been observed that at least 1024 characters is ok.
+    # Either way, this means that we need to keep track of the total
+    # line length of each "SYMBOL_VECTOR" statement.  Fortunately, we
+    # can have more than one of those...
+    my $symvtextcount = 16;     # The length of "SYMBOL_VECTOR=("
+    while (@slot_collection) {
+        my $set = shift @slot_collection;
+        my $settextlength = 0;
+        foreach (@$set) {
+            $settextlength +=
+                + 3             # two space indentation and comma
+                + length($_)
+                + 1             # postdent
+                ;
+        }
+        $settextlength--;       # only one space indentation on the first one
+        my $firstcomma = ',';
 
-	open(IN,"<$name") || die "unable to open $name:$!\n";
-	while (<IN>)
-		{
-		chop;
-		s/#.*$//;
-		next if /^\s*$/;
-		@a=split;
-		$ret{$a[0]}=$a[1];
-		}
-	close(IN);
-	return(%ret);
-	}
+        if ($symvtextcount + $settextlength > 1024) {
+            print <<"_____";
+)
+SYMBOL_VECTOR=(-
+_____
+            $symvtextcount = 16; # The length of "SYMBOL_VECTOR=("
+        }
+        if ($symvtextcount == 16) {
+            $firstcomma = '';
+        }
+
+        my $indent = ' '.$firstcomma;
+        foreach (@$set) {
+            print <<"_____";
+$indent$_ -
+_____
+            $symvtextcount += length($indent) + length($_) + 1;
+            $indent = '  ,';
+        }
+    }
+    print <<"_____";
+)
+_____
+
+    if (defined $version) {
+        $version =~ /^(\d+)\.(\d+)\.(\d+)/;
+        my $libvmajor = $1;
+        my $libvminor = $2 * 100 + $3;
+        print <<"_____";
+GSMATCH=LEQUAL,$libvmajor,$libvminor
+_____
+    }
+}
+
+sub writer_ctest {
+    print <<'_____';
+/*
+ * Test file to check all DEF file symbols are present by trying
+ * to link to all of them. This is *not* intended to be run!
+ */
+
+int main()
+{
+_____
+
+    my $last_num = 0;
+    for (@_) {
+        my $this_num = $_->number();
+        $this_num = $last_num + 1 if $this_num =~ m|^\?|;
+
+        if ($_->type() eq 'VARIABLE') {
+            print "\textern int ", $_->name(), '; /* type unknown */ /* ',
+                  $this_num, ' ', $_->version(), " */\n";
+        } else {
+            print "\textern int ", $_->name(), '(); /* type unknown */ /* ',
+                  $this_num, ' ', $_->version(), " */\n";
+        }
+
+        $last_num = $this_num;
+    }
+    print <<'_____';
+}
+_____
+}

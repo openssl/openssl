@@ -1,6 +1,0 @@
-#!/bin/sh
-for i in BUILD_SSLV23 BUILD_SSLV2 BUILD_SSLV3 BUILD_SSL_COMMON BUILD_SSL_BIO BUILD_SSL_OPTIONAL
-do
-time gcc -D$i -o $i.o -c -I. -I../include -O3 -fomit-frame-pointer ssl.c
-done
-

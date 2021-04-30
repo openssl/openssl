@@ -1,9 +1,16 @@
-#!/usr/local/bin/perl
+#! /usr/bin/env perl
+# Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 
 $L="edi";
 $R="esi";
 
-sub des_encrypt3
+sub DES_encrypt3
 	{
 	local($name,$enc)=@_;
 
@@ -27,7 +34,7 @@ sub des_encrypt3
 	&IP_new($L,$R,"edx",0);
 
 	# put them back
-	
+
 	if ($enc)
 		{
 		&mov(&DWP(4,"ebx","",0),$R);
@@ -44,18 +51,18 @@ sub des_encrypt3
 		 &mov("edi",&wparam(2));
 		 &mov("eax",&wparam(3));
 		}
-	&mov(&swtmp(2),	(($enc)?"1":"0"));
+	&mov(&swtmp(2),	(DWC(($enc)?"1":"0")));
 	&mov(&swtmp(1),	"eax");
 	&mov(&swtmp(0),	"ebx");
-	&call("des_encrypt2");
-	&mov(&swtmp(2),	(($enc)?"0":"1"));
+	&call("DES_encrypt2");
+	&mov(&swtmp(2),	(DWC(($enc)?"0":"1")));
 	&mov(&swtmp(1),	"edi");
 	&mov(&swtmp(0),	"ebx");
-	&call("des_encrypt2");
-	&mov(&swtmp(2),	(($enc)?"1":"0"));
+	&call("DES_encrypt2");
+	&mov(&swtmp(2),	(DWC(($enc)?"1":"0")));
 	&mov(&swtmp(1),	"esi");
 	&mov(&swtmp(0),	"ebx");
-	&call("des_encrypt2");
+	&call("DES_encrypt2");
 
 	&stack_pop(3);
 	&mov($L,&DWP(0,"ebx","",0));

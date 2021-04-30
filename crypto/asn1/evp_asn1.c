@@ -1,194 +1,183 @@
-/* crypto/asn1/evp_asn1.c */
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- * 
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- * 
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
-#include "asn1.h"
-#include "asn1_mac.h"
+#include "internal/cryptlib.h"
+#include <openssl/asn1.h>
+#include <openssl/asn1t.h>
+#include "crypto/asn1.h"
 
-int ASN1_TYPE_set_octetstring(a,data,len)
-ASN1_TYPE *a;
-unsigned char *data;
-int len;
-	{
-	ASN1_STRING *os;
+int ASN1_TYPE_set_octetstring(ASN1_TYPE *a, unsigned char *data, int len)
+{
+    ASN1_STRING *os;
 
-	if ((os=ASN1_OCTET_STRING_new()) == NULL) return(0);
-	if (!ASN1_OCTET_STRING_set(os,data,len)) return(0);
-	ASN1_TYPE_set(a,V_ASN1_OCTET_STRING,(char *)os);
-	return(1);
-	}
+    if ((os = ASN1_OCTET_STRING_new()) == NULL)
+        return 0;
+    if (!ASN1_OCTET_STRING_set(os, data, len)) {
+        ASN1_OCTET_STRING_free(os);
+        return 0;
+    }
+    ASN1_TYPE_set(a, V_ASN1_OCTET_STRING, os);
+    return 1;
+}
 
-int ASN1_TYPE_get_octetstring(a,data,max_len)
-ASN1_TYPE *a;
-unsigned char *data;
-int max_len; /* for returned value */
-	{
-	int ret,num;
-	unsigned char *p;
+/* int max_len:  for returned value    */
+int ASN1_TYPE_get_octetstring(const ASN1_TYPE *a, unsigned char *data, int max_len)
+{
+    int ret, num;
+    const unsigned char *p;
 
-	if ((a->type != V_ASN1_OCTET_STRING) || (a->value.octet_string == NULL))
-		{
-		ASN1err(ASN1_F_ASN1_TYPE_GET_OCTETSTRING,ASN1_R_DATA_IS_WRONG);
-		return(-1);
-		}
-	p=ASN1_STRING_data(a->value.octet_string);
-	ret=ASN1_STRING_length(a->value.octet_string);
-	if (ret < max_len)
-		num=ret;
-	else
-		num=max_len;
-	memcpy(data,p,num);
-	return(ret);
-	}
+    if ((a->type != V_ASN1_OCTET_STRING) || (a->value.octet_string == NULL)) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_DATA_IS_WRONG);
+        return -1;
+    }
+    p = ASN1_STRING_get0_data(a->value.octet_string);
+    ret = ASN1_STRING_length(a->value.octet_string);
+    if (ret < max_len)
+        num = ret;
+    else
+        num = max_len;
+    memcpy(data, p, num);
+    return ret;
+}
 
-int ASN1_TYPE_set_int_octetstring(a,num,data,len)
-ASN1_TYPE *a;
-long num;
-unsigned char *data;
-int len;
-	{
-	int n,size;
-	ASN1_OCTET_STRING os,*osp;
-	ASN1_INTEGER in;
-	unsigned char *p;
-	unsigned char buf[32]; /* when they have 256bit longs, 
-				* I'll be in trouble */
-	in.data=buf;
-	in.length=32;
-	os.data=data;
-	os.type=V_ASN1_OCTET_STRING;
-	os.length=len;
-	ASN1_INTEGER_set(&in,num);
-	n =  i2d_ASN1_INTEGER(&in,NULL);
-	n+=M_i2d_ASN1_OCTET_STRING(&os,NULL);
+static ossl_inline void asn1_type_init_oct(ASN1_OCTET_STRING *oct,
+                                           unsigned char *data, int len)
+{
+    oct->data = data;
+    oct->type = V_ASN1_OCTET_STRING;
+    oct->length = len;
+    oct->flags = 0;
+}
 
-	size=ASN1_object_size(1,n,V_ASN1_SEQUENCE);
+static int asn1_type_get_int_oct(ASN1_OCTET_STRING *oct, int32_t anum,
+                                 long *num, unsigned char *data, int max_len)
+{
+    int ret = ASN1_STRING_length(oct), n;
 
-	if ((osp=ASN1_STRING_new()) == NULL) return(0);
-	/* Grow the 'string' */
-	ASN1_STRING_set(osp,NULL,size);
+    if (num != NULL)
+        *num = anum;
 
-	ASN1_STRING_length(osp)=size;
-	p=ASN1_STRING_data(osp);
+    if (max_len > ret)
+        n = ret;
+    else
+        n = max_len;
 
-	ASN1_put_object(&p,1,n,V_ASN1_SEQUENCE,V_ASN1_UNIVERSAL);
-	  i2d_ASN1_INTEGER(&in,&p);
-	M_i2d_ASN1_OCTET_STRING(&os,&p);
+    if (data != NULL)
+        memcpy(data, ASN1_STRING_get0_data(oct), n);
 
-	ASN1_TYPE_set(a,V_ASN1_SEQUENCE,(char *)osp);
-	return(1);
-	}
+    return ret;
+}
 
-/* we return the actual length..., num may be missing, in which
- * case, set it to zero */
-int ASN1_TYPE_get_int_octetstring(a,num,data,max_len)
-ASN1_TYPE *a;
-long *num;
-unsigned char *data;
-int max_len; /* for returned value */
-	{
-	int ret= -1,n;
-	ASN1_INTEGER *ai=NULL;
-	ASN1_OCTET_STRING *os=NULL;
-	unsigned char *p;
-	long length;
-	ASN1_CTX c;
+typedef struct {
+    int32_t num;
+    ASN1_OCTET_STRING *oct;
+} asn1_int_oct;
 
-	if ((a->type != V_ASN1_SEQUENCE) || (a->value.sequence == NULL))
-		{
-		goto err;
-		}
-	p=ASN1_STRING_data(a->value.sequence);
-	length=ASN1_STRING_length(a->value.sequence);
+ASN1_SEQUENCE(asn1_int_oct) = {
+        ASN1_EMBED(asn1_int_oct, num, INT32),
+        ASN1_SIMPLE(asn1_int_oct, oct, ASN1_OCTET_STRING)
+} static_ASN1_SEQUENCE_END(asn1_int_oct)
 
-	c.pp= &p;
-	c.p=p;
-	c.max=p+length;
-	c.error=ASN1_R_DATA_IS_WRONG;
+DECLARE_ASN1_ITEM(asn1_int_oct)
 
-	M_ASN1_D2I_start_sequence();
-	c.q=c.p;
-	if ((ai=d2i_ASN1_INTEGER(NULL,&c.p,c.slen)) == NULL) goto err;
-        c.slen-=(c.p-c.q);
-	c.q=c.p;
-	if ((os=d2i_ASN1_OCTET_STRING(NULL,&c.p,c.slen)) == NULL) goto err;
-        c.slen-=(c.p-c.q);
-	if (!M_ASN1_D2I_end_sequence()) goto err;
+int ASN1_TYPE_set_int_octetstring(ASN1_TYPE *a, long num, unsigned char *data,
+                                  int len)
+{
+    asn1_int_oct atmp;
+    ASN1_OCTET_STRING oct;
 
-	if (num != NULL)
-		*num=ASN1_INTEGER_get(ai);
+    atmp.num = num;
+    atmp.oct = &oct;
+    asn1_type_init_oct(&oct, data, len);
 
-	ret=ASN1_STRING_length(os);
-	if (max_len > ret)
-		n=ret;
-	else
-		n=max_len;
+    if (ASN1_TYPE_pack_sequence(ASN1_ITEM_rptr(asn1_int_oct), &atmp, &a))
+        return 1;
+    return 0;
+}
 
-	if (data != NULL)
-		memcpy(data,ASN1_STRING_data(os),n);
-	if (0)
-		{
-err:
-		ASN1err(ASN1_F_ASN1_TYPE_GET_INT_OCTETSTRING,ASN1_R_DATA_IS_WRONG);
-		}
-	if (os != NULL) ASN1_OCTET_STRING_free(os);
-	if (ai != NULL) ASN1_INTEGER_free(ai);
-	return(ret);
-	}
+int ASN1_TYPE_get_int_octetstring(const ASN1_TYPE *a, long *num,
+                                  unsigned char *data, int max_len)
+{
+    asn1_int_oct *atmp = NULL;
+    int ret = -1;
 
+    if ((a->type != V_ASN1_SEQUENCE) || (a->value.sequence == NULL)) {
+        goto err;
+    }
+
+    atmp = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(asn1_int_oct), a);
+
+    if (atmp == NULL)
+        goto err;
+
+    ret = asn1_type_get_int_oct(atmp->oct, atmp->num, num, data, max_len);
+
+    if (ret == -1) {
+ err:
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_DATA_IS_WRONG);
+    }
+    M_ASN1_free_of(atmp, asn1_int_oct);
+    return ret;
+}
+
+typedef struct {
+    ASN1_OCTET_STRING *oct;
+    int32_t num;
+} asn1_oct_int;
+
+/*
+ * Defined in RFC 5084 -
+ * Section 2. "Content-Authenticated Encryption Algorithms"
+ */
+ASN1_SEQUENCE(asn1_oct_int) = {
+        ASN1_SIMPLE(asn1_oct_int, oct, ASN1_OCTET_STRING),
+        ASN1_EMBED(asn1_oct_int, num, INT32)
+} static_ASN1_SEQUENCE_END(asn1_oct_int)
+
+DECLARE_ASN1_ITEM(asn1_oct_int)
+
+int ossl_asn1_type_set_octetstring_int(ASN1_TYPE *a, long num,
+                                       unsigned char *data, int len)
+{
+    asn1_oct_int atmp;
+    ASN1_OCTET_STRING oct;
+
+    atmp.num = num;
+    atmp.oct = &oct;
+    asn1_type_init_oct(&oct, data, len);
+
+    if (ASN1_TYPE_pack_sequence(ASN1_ITEM_rptr(asn1_oct_int), &atmp, &a))
+        return 1;
+    return 0;
+}
+
+int ossl_asn1_type_get_octetstring_int(const ASN1_TYPE *a, long *num,
+                                       unsigned char *data, int max_len)
+{
+    asn1_oct_int *atmp = NULL;
+    int ret = -1;
+
+    if ((a->type != V_ASN1_SEQUENCE) || (a->value.sequence == NULL))
+        goto err;
+
+    atmp = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(asn1_oct_int), a);
+
+    if (atmp == NULL)
+        goto err;
+
+    ret = asn1_type_get_int_oct(atmp->oct, atmp->num, num, data, max_len);
+
+    if (ret == -1) {
+ err:
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_DATA_IS_WRONG);
+    }
+    M_ASN1_free_of(atmp, asn1_oct_int);
+    return ret;
+}

@@ -1,153 +1,312 @@
-/* crypto/bn/bn_blind.c */
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1998-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- * 
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- * 
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
-#include "cryptlib.h"
-#include "bn_lcl.h"
+#include <openssl/opensslconf.h>
+#include "internal/cryptlib.h"
+#include "bn_local.h"
 
-BN_BLINDING *BN_BLINDING_new(A,Ai,mod)
-BIGNUM *A;
-BIGNUM *Ai;
-BIGNUM *mod;
-	{
-	BN_BLINDING *ret=NULL;
+#define BN_BLINDING_COUNTER     32
 
-	bn_check_top(Ai);
-	bn_check_top(mod);
+struct bn_blinding_st {
+    BIGNUM *A;
+    BIGNUM *Ai;
+    BIGNUM *e;
+    BIGNUM *mod;                /* just a reference */
+    CRYPTO_THREAD_ID tid;
+    int counter;
+    unsigned long flags;
+    BN_MONT_CTX *m_ctx;
+    int (*bn_mod_exp) (BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+                       const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+    CRYPTO_RWLOCK *lock;
+};
 
-	if ((ret=(BN_BLINDING *)Malloc(sizeof(BN_BLINDING))) == NULL)
-		{
-		BNerr(BN_F_BN_BLINDING_NEW,ERR_R_MALLOC_FAILURE);
-		return(NULL);
-		}
-	memset(ret,0,sizeof(BN_BLINDING));
-	if ((ret->A=BN_new()) == NULL) goto err;
-	if ((ret->Ai=BN_new()) == NULL) goto err;
-	if (!BN_copy(ret->A,A)) goto err;
-	if (!BN_copy(ret->Ai,Ai)) goto err;
-	ret->mod=mod;
-	return(ret);
-err:
-	if (ret != NULL) BN_BLINDING_free(ret);
-	return(NULL);
-	}
+BN_BLINDING *BN_BLINDING_new(const BIGNUM *A, const BIGNUM *Ai, BIGNUM *mod)
+{
+    BN_BLINDING *ret = NULL;
 
-void BN_BLINDING_free(r)
-BN_BLINDING *r;
-	{
-	if (r->A  != NULL) BN_free(r->A );
-	if (r->Ai != NULL) BN_free(r->Ai);
-	Free(r);
-	}
+    bn_check_top(mod);
 
-int BN_BLINDING_update(b,ctx)
-BN_BLINDING *b;
-BN_CTX *ctx;
-	{
-	int ret=0;
+    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
+        ERR_raise(ERR_LIB_BN, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
 
-	if ((b->A == NULL) || (b->Ai == NULL))
-		{
-		BNerr(BN_F_BN_BLINDING_UPDATE,BN_R_NOT_INITALISED);
-		goto err;
-		}
-		
-	if (!BN_mod_mul(b->A,b->A,b->A,b->mod,ctx)) goto err;
-	if (!BN_mod_mul(b->Ai,b->Ai,b->Ai,b->mod,ctx)) goto err;
+    ret->lock = CRYPTO_THREAD_lock_new();
+    if (ret->lock == NULL) {
+        ERR_raise(ERR_LIB_BN, ERR_R_MALLOC_FAILURE);
+        OPENSSL_free(ret);
+        return NULL;
+    }
 
-	ret=1;
-err:
-	return(ret);
-	}
+    BN_BLINDING_set_current_thread(ret);
 
-int BN_BLINDING_convert(n,b,ctx)
-BIGNUM *n;
-BN_BLINDING *b;
-BN_CTX *ctx;
-	{
-	bn_check_top(n);
+    if (A != NULL) {
+        if ((ret->A = BN_dup(A)) == NULL)
+            goto err;
+    }
 
-	if ((b->A == NULL) || (b->Ai == NULL))
-		{
-		BNerr(BN_F_BN_BLINDING_CONVERT,BN_R_NOT_INITALISED);
-		return(0);
-		}
-	return(BN_mod_mul(n,n,b->A,b->mod,ctx));
-	}
+    if (Ai != NULL) {
+        if ((ret->Ai = BN_dup(Ai)) == NULL)
+            goto err;
+    }
 
-int BN_BLINDING_invert(n,b,ctx)
-BIGNUM *n;
-BN_BLINDING *b;
-BN_CTX *ctx;
-	{
-	int ret;
+    /* save a copy of mod in the BN_BLINDING structure */
+    if ((ret->mod = BN_dup(mod)) == NULL)
+        goto err;
 
-	bn_check_top(n);
-	if ((b->A == NULL) || (b->Ai == NULL))
-		{
-		BNerr(BN_F_BN_BLINDING_INVERT,BN_R_NOT_INITALISED);
-		return(0);
-		}
-	if ((ret=BN_mod_mul(n,n,b->Ai,b->mod,ctx)) >= 0)
-		{
-		if (!BN_BLINDING_update(b,ctx))
-			return(0);
-		}
-	return(ret);
-	}
+    if (BN_get_flags(mod, BN_FLG_CONSTTIME) != 0)
+        BN_set_flags(ret->mod, BN_FLG_CONSTTIME);
 
+    /*
+     * Set the counter to the special value -1 to indicate that this is
+     * never-used fresh blinding that does not need updating before first
+     * use.
+     */
+    ret->counter = -1;
+
+    return ret;
+
+ err:
+    BN_BLINDING_free(ret);
+    return NULL;
+}
+
+void BN_BLINDING_free(BN_BLINDING *r)
+{
+    if (r == NULL)
+        return;
+    BN_free(r->A);
+    BN_free(r->Ai);
+    BN_free(r->e);
+    BN_free(r->mod);
+    CRYPTO_THREAD_lock_free(r->lock);
+    OPENSSL_free(r);
+}
+
+int BN_BLINDING_update(BN_BLINDING *b, BN_CTX *ctx)
+{
+    int ret = 0;
+
+    if ((b->A == NULL) || (b->Ai == NULL)) {
+        ERR_raise(ERR_LIB_BN, BN_R_NOT_INITIALIZED);
+        goto err;
+    }
+
+    if (b->counter == -1)
+        b->counter = 0;
+
+    if (++b->counter == BN_BLINDING_COUNTER && b->e != NULL &&
+        !(b->flags & BN_BLINDING_NO_RECREATE)) {
+        /* re-create blinding parameters */
+        if (!BN_BLINDING_create_param(b, NULL, NULL, ctx, NULL, NULL))
+            goto err;
+    } else if (!(b->flags & BN_BLINDING_NO_UPDATE)) {
+        if (b->m_ctx != NULL) {
+            if (!bn_mul_mont_fixed_top(b->Ai, b->Ai, b->Ai, b->m_ctx, ctx)
+                || !bn_mul_mont_fixed_top(b->A, b->A, b->A, b->m_ctx, ctx))
+                goto err;
+        } else {
+            if (!BN_mod_mul(b->Ai, b->Ai, b->Ai, b->mod, ctx)
+                || !BN_mod_mul(b->A, b->A, b->A, b->mod, ctx))
+                goto err;
+        }
+    }
+
+    ret = 1;
+ err:
+    if (b->counter == BN_BLINDING_COUNTER)
+        b->counter = 0;
+    return ret;
+}
+
+int BN_BLINDING_convert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx)
+{
+    return BN_BLINDING_convert_ex(n, NULL, b, ctx);
+}
+
+int BN_BLINDING_convert_ex(BIGNUM *n, BIGNUM *r, BN_BLINDING *b, BN_CTX *ctx)
+{
+    int ret = 1;
+
+    bn_check_top(n);
+
+    if ((b->A == NULL) || (b->Ai == NULL)) {
+        ERR_raise(ERR_LIB_BN, BN_R_NOT_INITIALIZED);
+        return 0;
+    }
+
+    if (b->counter == -1)
+        /* Fresh blinding, doesn't need updating. */
+        b->counter = 0;
+    else if (!BN_BLINDING_update(b, ctx))
+        return 0;
+
+    if (r != NULL && (BN_copy(r, b->Ai) == NULL))
+        return 0;
+
+    if (b->m_ctx != NULL)
+        ret = BN_mod_mul_montgomery(n, n, b->A, b->m_ctx, ctx);
+    else
+        ret = BN_mod_mul(n, n, b->A, b->mod, ctx);
+
+    return ret;
+}
+
+int BN_BLINDING_invert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx)
+{
+    return BN_BLINDING_invert_ex(n, NULL, b, ctx);
+}
+
+int BN_BLINDING_invert_ex(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b,
+                          BN_CTX *ctx)
+{
+    int ret;
+
+    bn_check_top(n);
+
+    if (r == NULL && (r = b->Ai) == NULL) {
+        ERR_raise(ERR_LIB_BN, BN_R_NOT_INITIALIZED);
+        return 0;
+    }
+
+    if (b->m_ctx != NULL) {
+        /* ensure that BN_mod_mul_montgomery takes pre-defined path */
+        if (n->dmax >= r->top) {
+            size_t i, rtop = r->top, ntop = n->top;
+            BN_ULONG mask;
+
+            for (i = 0; i < rtop; i++) {
+                mask = (BN_ULONG)0 - ((i - ntop) >> (8 * sizeof(i) - 1));
+                n->d[i] &= mask;
+            }
+            mask = (BN_ULONG)0 - ((rtop - ntop) >> (8 * sizeof(ntop) - 1));
+            /* always true, if (rtop >= ntop) n->top = r->top; */
+            n->top = (int)(rtop & ~mask) | (ntop & mask);
+            n->flags |= (BN_FLG_FIXED_TOP & ~mask);
+        }
+        ret = BN_mod_mul_montgomery(n, n, r, b->m_ctx, ctx);
+    } else {
+        ret = BN_mod_mul(n, n, r, b->mod, ctx);
+    }
+
+    bn_check_top(n);
+    return ret;
+}
+
+int BN_BLINDING_is_current_thread(BN_BLINDING *b)
+{
+    return CRYPTO_THREAD_compare_id(CRYPTO_THREAD_get_current_id(), b->tid);
+}
+
+void BN_BLINDING_set_current_thread(BN_BLINDING *b)
+{
+    b->tid = CRYPTO_THREAD_get_current_id();
+}
+
+int BN_BLINDING_lock(BN_BLINDING *b)
+{
+    return CRYPTO_THREAD_write_lock(b->lock);
+}
+
+int BN_BLINDING_unlock(BN_BLINDING *b)
+{
+    return CRYPTO_THREAD_unlock(b->lock);
+}
+
+unsigned long BN_BLINDING_get_flags(const BN_BLINDING *b)
+{
+    return b->flags;
+}
+
+void BN_BLINDING_set_flags(BN_BLINDING *b, unsigned long flags)
+{
+    b->flags = flags;
+}
+
+BN_BLINDING *BN_BLINDING_create_param(BN_BLINDING *b,
+                                      const BIGNUM *e, BIGNUM *m, BN_CTX *ctx,
+                                      int (*bn_mod_exp) (BIGNUM *r,
+                                                         const BIGNUM *a,
+                                                         const BIGNUM *p,
+                                                         const BIGNUM *m,
+                                                         BN_CTX *ctx,
+                                                         BN_MONT_CTX *m_ctx),
+                                      BN_MONT_CTX *m_ctx)
+{
+    int retry_counter = 32;
+    BN_BLINDING *ret = NULL;
+
+    if (b == NULL)
+        ret = BN_BLINDING_new(NULL, NULL, m);
+    else
+        ret = b;
+
+    if (ret == NULL)
+        goto err;
+
+    if (ret->A == NULL && (ret->A = BN_new()) == NULL)
+        goto err;
+    if (ret->Ai == NULL && (ret->Ai = BN_new()) == NULL)
+        goto err;
+
+    if (e != NULL) {
+        BN_free(ret->e);
+        ret->e = BN_dup(e);
+    }
+    if (ret->e == NULL)
+        goto err;
+
+    if (bn_mod_exp != NULL)
+        ret->bn_mod_exp = bn_mod_exp;
+    if (m_ctx != NULL)
+        ret->m_ctx = m_ctx;
+
+    do {
+        int rv;
+        if (!BN_priv_rand_range_ex(ret->A, ret->mod, ctx))
+            goto err;
+        if (int_bn_mod_inverse(ret->Ai, ret->A, ret->mod, ctx, &rv))
+            break;
+
+        /*
+         * this should almost never happen for good RSA keys
+         */
+        if (!rv)
+            goto err;
+
+        if (retry_counter-- == 0) {
+            ERR_raise(ERR_LIB_BN, BN_R_TOO_MANY_ITERATIONS);
+            goto err;
+        }
+    } while (1);
+
+    if (ret->bn_mod_exp != NULL && ret->m_ctx != NULL) {
+        if (!ret->bn_mod_exp(ret->A, ret->A, ret->e, ret->mod, ctx, ret->m_ctx))
+            goto err;
+    } else {
+        if (!BN_mod_exp(ret->A, ret->A, ret->e, ret->mod, ctx))
+            goto err;
+    }
+
+    if (ret->m_ctx != NULL) {
+        if (!bn_to_mont_fixed_top(ret->Ai, ret->Ai, ret->m_ctx, ctx)
+            || !bn_to_mont_fixed_top(ret->A, ret->A, ret->m_ctx, ctx))
+            goto err;
+    }
+
+    return ret;
+ err:
+    if (b == NULL) {
+        BN_BLINDING_free(ret);
+        ret = NULL;
+    }
+
+    return ret;
+}

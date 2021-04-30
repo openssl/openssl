@@ -1,116 +1,113 @@
-/* crypto/err/err_all.c */
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- * 
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- * 
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
-#include "asn1.h"
-#include "bn.h"
-#include "buffer.h"
-#include "bio.h"
-#ifndef NO_RSA
-#include "rsa.h"
-#endif
-#ifdef RSAref
-#include "rsaref.h"
-#endif
-#ifndef NO_DH
-#include "dh.h"
-#endif
-#ifndef NO_DSA
-#include "dsa.h"
-#endif
-#include "evp.h"
-#include "objects.h"
-#include "pem.h"
-#include "x509.h"
-#include "conf.h"
-#include "err.h"
+#include <openssl/err.h>
+#include "crypto/err.h"
+#include "crypto/cryptoerr.h"
+#include "crypto/asn1err.h"
+#include "crypto/bnerr.h"
+#include "crypto/ecerr.h"
+#include "crypto/buffererr.h"
+#include "crypto/bioerr.h"
+#include "crypto/comperr.h"
+#include "crypto/rsaerr.h"
+#include "crypto/dherr.h"
+#include "crypto/dsaerr.h"
+#include "crypto/evperr.h"
+#include "crypto/objectserr.h"
+#include "crypto/pemerr.h"
+#include "crypto/pkcs7err.h"
+#include "crypto/x509err.h"
+#include "crypto/x509v3err.h"
+#include "crypto/conferr.h"
+#include "crypto/pkcs12err.h"
+#include "crypto/randerr.h"
+#include "internal/dsoerr.h"
+#include "crypto/engineerr.h"
+#include "crypto/uierr.h"
+#include "crypto/httperr.h"
+#include "crypto/ocsperr.h"
+#include "crypto/tserr.h"
+#include "crypto/cmserr.h"
+#include "crypto/crmferr.h"
+#include "crypto/cmperr.h"
+#include "crypto/cterr.h"
+#include "crypto/asyncerr.h"
+#include "crypto/storeerr.h"
+#include "crypto/esserr.h"
+#include "internal/propertyerr.h"
+#include "prov/proverr.h"
 
-void ERR_load_crypto_strings()
-	{
-	static int done=0;
+int err_load_crypto_strings_int(void)
+{
+    if (0
+#ifndef OPENSSL_NO_ERR
+        || err_load_ERR_strings_int() == 0 /* include error strings for SYSerr */
+        || err_load_BN_strings_int() == 0
+        || err_load_RSA_strings_int() == 0
+# ifndef OPENSSL_NO_DH
+        || err_load_DH_strings_int() == 0
+# endif
+        || err_load_EVP_strings_int() == 0
+        || err_load_BUF_strings_int() == 0
+        || err_load_OBJ_strings_int() == 0
+        || err_load_PEM_strings_int() == 0
+# ifndef OPENSSL_NO_DSA
+        || err_load_DSA_strings_int() == 0
+# endif
+        || err_load_X509_strings_int() == 0
+        || err_load_ASN1_strings_int() == 0
+        || err_load_CONF_strings_int() == 0
+        || err_load_CRYPTO_strings_int() == 0
+# ifndef OPENSSL_NO_COMP
+        || err_load_COMP_strings_int() == 0
+# endif
+# ifndef OPENSSL_NO_EC
+        || err_load_EC_strings_int() == 0
+# endif
+        /* skip err_load_SSL_strings_int() because it is not in this library */
+        || err_load_BIO_strings_int() == 0
+        || err_load_PKCS7_strings_int() == 0
+        || err_load_X509V3_strings_int() == 0
+        || err_load_PKCS12_strings_int() == 0
+        || err_load_RAND_strings_int() == 0
+        || err_load_DSO_strings_int() == 0
+# ifndef OPENSSL_NO_TS
+        || err_load_TS_strings_int() == 0
+# endif
+# ifndef OPENSSL_NO_ENGINE
+        || err_load_ENGINE_strings_int() == 0
+# endif
+        || err_load_HTTP_strings_int() == 0
+# ifndef OPENSSL_NO_OCSP
+        || err_load_OCSP_strings_int() == 0
+# endif
+        || err_load_UI_strings_int() == 0
+# ifndef OPENSSL_NO_CMS
+        || err_load_CMS_strings_int() == 0
+# endif
+# ifndef OPENSSL_NO_CRMF
+        || err_load_CRMF_strings_int() == 0
+        || err_load_CMP_strings_int() == 0
+# endif
+# ifndef OPENSSL_NO_CT
+        || err_load_CT_strings_int() == 0
+# endif
+        || err_load_ESS_strings_int() == 0
+        || err_load_ASYNC_strings_int() == 0
+        || err_load_OSSL_STORE_strings_int() == 0
+        || err_load_PROP_strings_int() == 0
+        || err_load_PROV_strings_int() == 0
+#endif
+        )
+        return 0;
 
-	if (done) return;
-	done=1;
-#ifndef NO_ERR
-	ERR_load_ASN1_strings();
-	ERR_load_BN_strings();
-	ERR_load_BUF_strings();
-	ERR_load_BIO_strings();
-	ERR_load_CONF_strings();
-#ifndef NO_RSA
-#ifdef RSAref
-	ERR_load_RSAREF_strings();
-#else
-	ERR_load_RSA_strings();
-#endif
-#endif
-#ifndef NO_DH
-	ERR_load_DH_strings();
-#endif
-#ifndef NO_DSA
-	ERR_load_DSA_strings();
-#endif
-	ERR_load_ERR_strings();
-	ERR_load_EVP_strings();
-	ERR_load_OBJ_strings();
-	ERR_load_PEM_strings();
-	ERR_load_X509_strings();
-	ERR_load_CRYPTO_strings();
-	ERR_load_PKCS7_strings();
-#endif
-	}
+    return 1;
+}

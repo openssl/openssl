@@ -1,0 +1,9 @@
+LIBS=../../libcrypto
+
+# compile ess_lib.c when cms or ts are enabled
+IF[{- !$disabled{'cms'} or !$disabled{'ts'} -}]
+  SOURCE[../../libcrypto]= ess_lib.c
+ENDIF
+
+SOURCE[../../libcrypto]= ess_asn1.c ess_err.c 
+

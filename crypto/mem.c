@@ -1,413 +1,331 @@
-/* crypto/mem.c */
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- * 
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- * 
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
+#include "e_os.h"
+#include "internal/cryptlib.h"
+#include "crypto/cryptlib.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "buffer.h"
-#include "bio.h"
-#include "lhash.h"
-#include "cryptlib.h"
+#include <limits.h>
+#include <openssl/crypto.h>
 
-#ifdef CRYPTO_MDEBUG
-static int mh_mode=CRYPTO_MEM_CHECK_ON;
+/*
+ * the following pointers may be changed as long as 'allow_customize' is set
+ */
+static int allow_customize = 1;
+static CRYPTO_malloc_fn malloc_impl = CRYPTO_malloc;
+static CRYPTO_realloc_fn realloc_impl = CRYPTO_realloc;
+static CRYPTO_free_fn free_impl = CRYPTO_free;
+
+#if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODULE)
+# include "internal/tsan_assist.h"
+
+static TSAN_QUALIFIER int malloc_count;
+static TSAN_QUALIFIER int realloc_count;
+static TSAN_QUALIFIER int free_count;
+
+# define INCREMENT(x) tsan_counter(&(x))
+
+static char *md_failstring;
+static long md_count;
+static int md_fail_percent = 0;
+static int md_tracefd = -1;
+
+static void parseit(void);
+static int shouldfail(void);
+
+# define FAILTEST() if (shouldfail()) return NULL
+
 #else
-static int mh_mode=CRYPTO_MEM_CHECK_OFF;
-#endif
-static unsigned long order=0;
 
-static LHASH *mh=NULL;
-
-typedef struct mem_st
-	{
-	char *addr;
-	int num;
-	char *file;
-	int line;
-	unsigned long order;
-	} MEM;
-
-int CRYPTO_mem_ctrl(mode)
-int mode;
-	{
-	int ret=mh_mode;
-
-	CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
-	switch (mode)
-		{
-	case CRYPTO_MEM_CHECK_ON:
-		mh_mode|=CRYPTO_MEM_CHECK_ON;
-		break;
-	case CRYPTO_MEM_CHECK_OFF:
-		mh_mode&= ~CRYPTO_MEM_CHECK_ON;
-		break;
-	case CRYPTO_MEM_CHECK_DISABLE:
-		mh_mode&= ~CRYPTO_MEM_CHECK_ENABLE;
-		break;
-	case CRYPTO_MEM_CHECK_ENABLE:
-		if (mh_mode&CRYPTO_MEM_CHECK_ON)
-			mh_mode|=CRYPTO_MEM_CHECK_ENABLE;
-		break;
-	default:
-		break;
-		}
-	CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
-	return(ret);
-	}
-
-static int mem_cmp(a,b)
-MEM *a,*b;
-	{
-	return(a->addr - b->addr);
-	}
-
-static unsigned long mem_hash(a)
-MEM *a;
-	{
-	unsigned long ret;
-
-	ret=(unsigned long)a->addr;
-
-	ret=ret*17851+(ret>>14)*7+(ret>>4)*251;
-	return(ret);
-	}
-
-static char *(*malloc_locked_func)()=(char *(*)())malloc;
-static void (*free_locked_func)()=(void (*)())free;
-static char *(*malloc_func)()=	(char *(*)())malloc;
-static char *(*realloc_func)()=	(char *(*)())realloc;
-static void (*free_func)()=	(void (*)())free;
-
-void CRYPTO_set_mem_functions(m,r,f)
-char *(*m)();
-char *(*r)();
-void (*f)();
-	{
-	if ((m == NULL) || (r == NULL) || (f == NULL)) return;
-	malloc_func=m;
-	realloc_func=r;
-	free_func=f;
-	malloc_locked_func=m;
-	free_locked_func=f;
-	}
-
-void CRYPTO_set_locked_mem_functions(m,f)
-char *(*m)();
-void (*f)();
-	{
-	if ((m == NULL) || (f == NULL)) return;
-	malloc_locked_func=m;
-	free_locked_func=f;
-	}
-
-void CRYPTO_get_mem_functions(m,r,f)
-char *(**m)();
-char *(**r)();
-void (**f)();
-	{
-	if (m != NULL) *m=malloc_func;
-	if (r != NULL) *r=realloc_func;
-	if (f != NULL) *f=free_func;
-	}
-
-void CRYPTO_get_locked_mem_functions(m,f)
-char *(**m)();
-void (**f)();
-	{
-	if (m != NULL) *m=malloc_locked_func;
-	if (f != NULL) *f=free_locked_func;
-	}
-
-char *CRYPTO_malloc_locked(num)
-int num;
-	{
-	return(malloc_locked_func(num));
-	}
-
-void CRYPTO_free_locked(str)
-char *str;
-	{
-	free_locked_func(str);
-	}
-
-char *CRYPTO_malloc(num)
-int num;
-	{
-	return(malloc_func(num));
-	}
-
-char *CRYPTO_realloc(str,num)
-char *str;
-int num;
-	{
-	return(realloc_func(str,num));
-	}
-
-void CRYPTO_free(str)
-char *str;
-	{
-	free_func(str);
-	}
-
-static unsigned long break_order_num=0;
-char *CRYPTO_dbg_malloc(num,file,line)
-int num;
-char *file;
-int line;
-	{
-	char *ret;
-	MEM *m,*mm;
-
-	if ((ret=malloc_func(num)) == NULL)
-		return(NULL);
-
-	if (mh_mode & CRYPTO_MEM_CHECK_ENABLE)
-		{
-		MemCheck_off();
-		if ((m=(MEM *)Malloc(sizeof(MEM))) == NULL)
-			{
-			Free(ret);
-			MemCheck_on();
-			return(NULL);
-			}
-		CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
-		if (mh == NULL)
-			{
-			if ((mh=lh_new(mem_hash,mem_cmp)) == NULL)
-				{
-				Free(ret);
-				Free(m);
-				ret=NULL;
-				goto err;
-				}
-			}
-
-		m->addr=ret;
-		m->file=file;
-		m->line=line;
-		m->num=num;
-		if (order == break_order_num)
-			{
-			/* BREAK HERE */
-			m->order=order;
-			}
-		m->order=order++;
-		if ((mm=(MEM *)lh_insert(mh,(char *)m)) != NULL)
-			{
-			/* Not good, but don't sweat it */
-			Free(mm);
-			}
-err:
-		CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
-		MemCheck_on();
-		}
-	return(ret);
-	}
-
-void CRYPTO_dbg_free(addr)
-char *addr;
-	{
-	MEM m,*mp;
-
-	if ((mh_mode & CRYPTO_MEM_CHECK_ENABLE) && (mh != NULL))
-		{
-		MemCheck_off();
-		CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
-		m.addr=addr;
-		mp=(MEM *)lh_delete(mh,(char *)&m);
-		if (mp != NULL)
-			Free(mp);
-		CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
-		MemCheck_on();
-		}
-	free_func(addr);
-	}
-
-char *CRYPTO_dbg_realloc(addr,num,file,line)
-char *addr;
-int num;
-char *file;
-int line;
-	{
-	char *ret;
-	MEM m,*mp;
-
-	ret=realloc_func(addr,num);
-	if (ret == addr) return(ret);
-
-	if (mh_mode & CRYPTO_MEM_CHECK_ENABLE)
-		{
-		MemCheck_off();
-		if (ret == NULL) return(NULL);
-		m.addr=addr;
-		CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
-		mp=(MEM *)lh_delete(mh,(char *)&m);
-		if (mp != NULL)
-			{
-			mp->addr=ret;
-			lh_insert(mh,(char *)mp);
-			}
-		CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
-		MemCheck_on();
-		}
-	return(ret);
-	}
-
-char *CRYPTO_remalloc(a,n)
-char *a;
-int n;
-	{
-	if (a != NULL) Free(a);
-	a=(char *)Malloc(n);
-	return(a);
-	}
-
-char *CRYPTO_dbg_remalloc(a,n,file,line)
-char *a;
-int n;
-char *file;
-int line;
-	{
-	if (a != NULL) CRYPTO_dbg_free(a);
-	a=(char *)CRYPTO_dbg_malloc(n,file,line);
-	return(a);
-	}
-
-
-typedef struct mem_leak_st
-	{
-	BIO *bio;
-	int chunks;
-	long bytes;
-	} MEM_LEAK;
-
-static void print_leak(m,l)
-MEM *m;
-MEM_LEAK *l;
-	{
-	char buf[128];
-
-	sprintf(buf,"%5ld file=%s, line=%d, number=%d, address=%08lX\n",
-		m->order,m->file,m->line,m->num,(long)m->addr);
-	BIO_puts(l->bio,buf);
-	l->chunks++;
-	l->bytes+=m->num;
-	}
-
-void CRYPTO_mem_leaks(b)
-BIO *b;
-	{
-	MEM_LEAK ml;
-	char buf[80];
-
-	if (mh == NULL) return;
-	ml.bio=b;
-	ml.bytes=0;
-	ml.chunks=0;
-	CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
-	lh_doall_arg(mh,(void (*)())print_leak,(char *)&ml);
-	CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
-	if (ml.chunks != 0)
-		{
-		sprintf(buf,"%ld bytes leaked in %d chunks\n",
-			ml.bytes,ml.chunks);
-		BIO_puts(b,buf);
-		}
-
-#if 0
-	lh_stats_bio(mh,b);
-        lh_node_stats_bio(mh,b);
-        lh_node_usage_stats_bio(mh,b);
-#endif
-	}
-
-static void (*mem_cb)()=NULL;
-
-static void cb_leak(m,cb)
-MEM *m;
-char *cb;
-	{
-	void (*mem_callback)()=(void (*)())cb;
-	mem_callback(m->order,m->file,m->line,m->num,m->addr);
-	}
-
-void CRYPTO_mem_leaks_cb(cb)
-void (*cb)();
-	{
-	if (mh == NULL) return;
-	CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
-	mem_cb=cb;
-	lh_doall_arg(mh,(void (*)())cb_leak,(char *)mem_cb);
-	mem_cb=NULL;
-	CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
-	}
-
-#ifndef NO_FP_API
-void CRYPTO_mem_leaks_fp(fp)
-FILE *fp;
-	{
-	BIO *b;
-
-	if (mh == NULL) return;
-	if ((b=BIO_new(BIO_s_file())) == NULL)
-		return;
-	BIO_set_fp(b,fp,BIO_NOCLOSE);
-	CRYPTO_mem_leaks(b);
-	BIO_free(b);
-	}
+# define INCREMENT(x) /* empty */
+# define FAILTEST() /* empty */
 #endif
 
+int CRYPTO_set_mem_functions(CRYPTO_malloc_fn malloc_fn,
+                             CRYPTO_realloc_fn realloc_fn,
+                             CRYPTO_free_fn free_fn)
+{
+    if (!allow_customize)
+        return 0;
+    if (malloc_fn != NULL)
+        malloc_impl = malloc_fn;
+    if (realloc_fn != NULL)
+        realloc_impl = realloc_fn;
+    if (free_fn != NULL)
+        free_impl = free_fn;
+    return 1;
+}
+
+void CRYPTO_get_mem_functions(CRYPTO_malloc_fn *malloc_fn,
+                              CRYPTO_realloc_fn *realloc_fn,
+                              CRYPTO_free_fn *free_fn)
+{
+    if (malloc_fn != NULL)
+        *malloc_fn = malloc_impl;
+    if (realloc_fn != NULL)
+        *realloc_fn = realloc_impl;
+    if (free_fn != NULL)
+        *free_fn = free_impl;
+}
+
+#if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODULE)
+void CRYPTO_get_alloc_counts(int *mcount, int *rcount, int *fcount)
+{
+    if (mcount != NULL)
+        *mcount = tsan_load(&malloc_count);
+    if (rcount != NULL)
+        *rcount = tsan_load(&realloc_count);
+    if (fcount != NULL)
+        *fcount = tsan_load(&free_count);
+}
+
+/*
+ * Parse a "malloc failure spec" string.  This likes like a set of fields
+ * separated by semicolons.  Each field has a count and an optional failure
+ * percentage.  For example:
+ *          100@0;100@25;0@0
+ *    or    100;100@25;0
+ * This means 100 mallocs succeed, then next 100 fail 25% of the time, and
+ * all remaining (count is zero) succeed.
+ */
+static void parseit(void)
+{
+    char *semi = strchr(md_failstring, ';');
+    char *atsign;
+
+    if (semi != NULL)
+        *semi++ = '\0';
+
+    /* Get the count (atol will stop at the @ if there), and percentage */
+    md_count = atol(md_failstring);
+    atsign = strchr(md_failstring, '@');
+    md_fail_percent = atsign == NULL ? 0 : atoi(atsign + 1);
+
+    if (semi != NULL)
+        md_failstring = semi;
+}
+
+/*
+ * Windows doesn't have random(), but it has rand()
+ * Some rand() implementations aren't good, but we're not
+ * dealing with secure randomness here.
+ */
+# ifdef _WIN32
+#  define random() rand()
+# endif
+/*
+ * See if the current malloc should fail.
+ */
+static int shouldfail(void)
+{
+    int roll = (int)(random() % 100);
+    int shoulditfail = roll < md_fail_percent;
+# ifndef _WIN32
+/* suppressed on Windows as POSIX-like file descriptors are non-inheritable */
+    int len;
+    char buff[80];
+
+    if (md_tracefd > 0) {
+        BIO_snprintf(buff, sizeof(buff),
+                     "%c C%ld %%%d R%d\n",
+                     shoulditfail ? '-' : '+', md_count, md_fail_percent, roll);
+        len = strlen(buff);
+        if (write(md_tracefd, buff, len) != len)
+            perror("shouldfail write failed");
+    }
+# endif
+
+    if (md_count) {
+        /* If we used up this one, go to the next. */
+        if (--md_count == 0)
+            parseit();
+    }
+
+    return shoulditfail;
+}
+
+void ossl_malloc_setup_failures(void)
+{
+    const char *cp = getenv("OPENSSL_MALLOC_FAILURES");
+
+    if (cp != NULL && (md_failstring = strdup(cp)) != NULL)
+        parseit();
+    if ((cp = getenv("OPENSSL_MALLOC_FD")) != NULL)
+        md_tracefd = atoi(cp);
+}
+#endif
+
+void *CRYPTO_malloc(size_t num, const char *file, int line)
+{
+    INCREMENT(malloc_count);
+    if (malloc_impl != CRYPTO_malloc)
+        return malloc_impl(num, file, line);
+
+    if (num == 0)
+        return NULL;
+
+    FAILTEST();
+    if (allow_customize) {
+        /*
+         * Disallow customization after the first allocation. We only set this
+         * if necessary to avoid a store to the same cache line on every
+         * allocation.
+         */
+        allow_customize = 0;
+    }
+
+    return malloc(num);
+}
+
+void *CRYPTO_zalloc(size_t num, const char *file, int line)
+{
+    void *ret;
+
+    ret = CRYPTO_malloc(num, file, line);
+    FAILTEST();
+    if (ret != NULL)
+        memset(ret, 0, num);
+
+    return ret;
+}
+
+void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
+{
+    INCREMENT(realloc_count);
+    if (realloc_impl != CRYPTO_realloc)
+        return realloc_impl(str, num, file, line);
+
+    FAILTEST();
+    if (str == NULL)
+        return CRYPTO_malloc(num, file, line);
+
+    if (num == 0) {
+        CRYPTO_free(str, file, line);
+        return NULL;
+    }
+
+    return realloc(str, num);
+}
+
+void *CRYPTO_clear_realloc(void *str, size_t old_len, size_t num,
+                           const char *file, int line)
+{
+    void *ret = NULL;
+
+    if (str == NULL)
+        return CRYPTO_malloc(num, file, line);
+
+    if (num == 0) {
+        CRYPTO_clear_free(str, old_len, file, line);
+        return NULL;
+    }
+
+    /* Can't shrink the buffer since memcpy below copies |old_len| bytes. */
+    if (num < old_len) {
+        OPENSSL_cleanse((char*)str + num, old_len - num);
+        return str;
+    }
+
+    ret = CRYPTO_malloc(num, file, line);
+    if (ret != NULL) {
+        memcpy(ret, str, old_len);
+        CRYPTO_clear_free(str, old_len, file, line);
+    }
+    return ret;
+}
+
+void CRYPTO_free(void *str, const char *file, int line)
+{
+    INCREMENT(free_count);
+    if (free_impl != CRYPTO_free) {
+        free_impl(str, file, line);
+        return;
+    }
+
+    free(str);
+}
+
+void CRYPTO_clear_free(void *str, size_t num, const char *file, int line)
+{
+    if (str == NULL)
+        return;
+    if (num)
+        OPENSSL_cleanse(str, num);
+    CRYPTO_free(str, file, line);
+}
+
+#if !defined(OPENSSL_NO_CRYPTO_MDEBUG)
+
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+int CRYPTO_mem_ctrl(int mode)
+{
+    (void)mode;
+    return -1;
+}
+
+int CRYPTO_set_mem_debug(int flag)
+{
+    (void)flag;
+    return -1;
+}
+
+int CRYPTO_mem_debug_push(const char *info, const char *file, int line)
+{
+    (void)info; (void)file; (void)line;
+    return -1;
+}
+
+int CRYPTO_mem_debug_pop(void)
+{
+    return -1;
+}
+
+void CRYPTO_mem_debug_malloc(void *addr, size_t num, int flag,
+                             const char *file, int line)
+{
+    (void)addr; (void)num; (void)flag; (void)file; (void)line;
+}
+
+void CRYPTO_mem_debug_realloc(void *addr1, void *addr2, size_t num, int flag,
+                              const char *file, int line)
+{
+    (void)addr1; (void)addr2; (void)num; (void)flag; (void)file; (void)line;
+}
+
+void CRYPTO_mem_debug_free(void *addr, int flag,
+                           const char *file, int line)
+{
+    (void)addr; (void)flag; (void)file; (void)line;
+}
+
+int CRYPTO_mem_leaks(BIO *b)
+{
+    (void)b;
+    return -1;
+}
+
+#  ifndef OPENSSL_NO_STDIO
+int CRYPTO_mem_leaks_fp(FILE *fp)
+{
+    (void)fp;
+    return -1;
+}
+#  endif
+
+int CRYPTO_mem_leaks_cb(int (*cb)(const char *str, size_t len, void *u),
+                        void *u)
+{
+    (void)cb; (void)u;
+    return -1;
+}
+
+# endif
+
+#endif

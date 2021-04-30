@@ -1,85 +1,93 @@
+/*
+ * Copyright 1998-2020 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "objects.h"
-#include "comp.h"
+#include <openssl/objects.h>
+#include <openssl/comp.h>
+#include <openssl/err.h>
+#include "comp_local.h"
 
-COMP_CTX *COMP_CTX_new(meth)
-COMP_METHOD *meth;
-	{
-	COMP_CTX *ret;
+COMP_CTX *COMP_CTX_new(COMP_METHOD *meth)
+{
+    COMP_CTX *ret;
 
-	if ((ret=(COMP_CTX *)Malloc(sizeof(COMP_CTX))) == NULL)
-		{
-		/* ZZZZZZZZZZZZZZZZ */
-		return(NULL);
-		}
-	memset(ret,0,sizeof(COMP_CTX));
-	ret->meth=meth;
-	if ((ret->meth->init != NULL) && !ret->meth->init(ret))
-		{
-		Free(ret);
-		ret=NULL;
-		}
-#if 0
-	else
-		CRYPTO_new_ex_data(rsa_meth,(char *)ret,&ret->ex_data);
-#endif
-	return(ret);
-	}
+    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
+        ERR_raise(ERR_LIB_COMP, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+    ret->meth = meth;
+    if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
+        OPENSSL_free(ret);
+        ret = NULL;
+    }
+    return ret;
+}
 
-void COMP_CTX_free(ctx)
-COMP_CTX *ctx;
-	{
-	/* CRYPTO_free_ex_data(rsa_meth,(char *)ctx,&ctx->ex_data); */
+const COMP_METHOD *COMP_CTX_get_method(const COMP_CTX *ctx)
+{
+    return ctx->meth;
+}
 
-	if (ctx->meth->finish != NULL)
-		ctx->meth->finish(ctx);
+int COMP_get_type(const COMP_METHOD *meth)
+{
+    return meth->type;
+}
 
-	Free(ctx);
-	}
+const char *COMP_get_name(const COMP_METHOD *meth)
+{
+    return meth->name;
+}
 
-int COMP_compress_block(ctx,out,olen,in,ilen)
-COMP_CTX *ctx;
-unsigned char *out;
-int olen;
-unsigned char *in;
-int ilen;
-	{
-	int ret;
-	if (ctx->meth->compress == NULL)
-		{
-		/* ZZZZZZZZZZZZZZZZZ */
-		return(-1);
-		}
-	ret=ctx->meth->compress(ctx,out,olen,in,ilen);
-	if (ret > 0)
-		{
-		ctx->compress_in+=ilen;
-		ctx->compress_out+=ret;
-		}
-	return(ret);
-	}
+void COMP_CTX_free(COMP_CTX *ctx)
+{
+    if (ctx == NULL)
+        return;
+    if (ctx->meth->finish != NULL)
+        ctx->meth->finish(ctx);
 
-int COMP_expand_block(ctx,out,olen,in,ilen)
-COMP_CTX *ctx;
-unsigned char *out;
-int olen;
-unsigned char *in;
-int ilen;
-	{
-	int ret;
+    OPENSSL_free(ctx);
+}
 
-	if (ctx->meth->expand == NULL)
-		{
-		/* ZZZZZZZZZZZZZZZZZ */
-		return(-1);
-		}
-	ret=ctx->meth->expand(ctx,out,olen,in,ilen);
-	if (ret > 0)
-		{
-		ctx->expand_in+=ilen;
-		ctx->expand_out+=ret;
-		}
-	return(ret);
-	}
+int COMP_compress_block(COMP_CTX *ctx, unsigned char *out, int olen,
+                        unsigned char *in, int ilen)
+{
+    int ret;
+    if (ctx->meth->compress == NULL) {
+        return -1;
+    }
+    ret = ctx->meth->compress(ctx, out, olen, in, ilen);
+    if (ret > 0) {
+        ctx->compress_in += ilen;
+        ctx->compress_out += ret;
+    }
+    return ret;
+}
+
+int COMP_expand_block(COMP_CTX *ctx, unsigned char *out, int olen,
+                      unsigned char *in, int ilen)
+{
+    int ret;
+
+    if (ctx->meth->expand == NULL) {
+        return -1;
+    }
+    ret = ctx->meth->expand(ctx, out, olen, in, ilen);
+    if (ret > 0) {
+        ctx->expand_in += ilen;
+        ctx->expand_out += ret;
+    }
+    return ret;
+}
+
+int COMP_CTX_get_type(const COMP_CTX* comp)
+{
+    return comp->meth ? comp->meth->type : NID_undef;
+}

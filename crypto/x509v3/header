@@ -1,6 +1,0 @@
-int		a2i_ASN1_INTEGER(BIO *bp,ASN1_INTEGER *bs,char *buf,int size)
-int		i2a_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *a)
-int		i2d_ASN1_INTEGER(ASN1_INTEGER *a,unsigned char **pp)
-ASN1_INTEGER *	d2i_ASN1_INTEGER(ASN1_INTEGER **a,unsigned char **pp,long length)
-
-

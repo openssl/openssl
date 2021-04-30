@@ -1,365 +1,311 @@
-/* crypto/pem/pem_info.c */
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- * 
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- * 
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
+/*
+ * DSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <stdio.h>
-#include "cryptlib.h"
-#include "buffer.h"
-#include "objects.h"
-#include "evp.h"
-#include "x509.h"
-#include "pem.h"
+#include "internal/cryptlib.h"
+#include <openssl/buffer.h>
+#include <openssl/objects.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
+#include <openssl/rsa.h>
+#include <openssl/dsa.h>
+#include "crypto/evp.h"
 
-#ifndef NO_FP_API
-STACK *PEM_X509_INFO_read(fp,sk,cb)
-FILE *fp;
-STACK *sk;
-int (*cb)();
-	{
-        BIO *b;
-        STACK *ret;
+#ifndef OPENSSL_NO_STDIO
+STACK_OF(X509_INFO)
+*PEM_X509_INFO_read_ex(FILE *fp, STACK_OF(X509_INFO) *sk, pem_password_cb *cb,
+                       void *u, OSSL_LIB_CTX *libctx, const char *propq)
+{
+    BIO *b;
+    STACK_OF(X509_INFO) *ret;
 
-        if ((b=BIO_new(BIO_s_file())) == NULL)
-		{
-		PEMerr(PEM_F_PEM_X509_INFO_READ,ERR_R_BUF_LIB);
-                return(0);
-		}
-        BIO_set_fp(b,fp,BIO_NOCLOSE);
-        ret=PEM_X509_INFO_read_bio(b,sk,cb);
-        BIO_free(b);
-        return(ret);
-	}
+    if ((b = BIO_new(BIO_s_file())) == NULL) {
+        ERR_raise(ERR_LIB_PEM, ERR_R_BUF_LIB);
+        return 0;
+    }
+    BIO_set_fp(b, fp, BIO_NOCLOSE);
+    ret = PEM_X509_INFO_read_bio_ex(b, sk, cb, u, libctx, propq);
+    BIO_free(b);
+    return ret;
+}
+
+STACK_OF(X509_INFO) *PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk,
+                                        pem_password_cb *cb, void *u)
+{
+    return PEM_X509_INFO_read_ex(fp, sk, cb, u, NULL, NULL);
+}
 #endif
 
-STACK *PEM_X509_INFO_read_bio(bp,sk,cb)
-BIO *bp;
-STACK *sk;
-int (*cb)();
-	{
-	X509_INFO *xi=NULL;
-	char *name=NULL,*header=NULL,**pp;
-	unsigned char *data=NULL,*p;
-	long len,error=0;
-	int ok=0;
-	STACK *ret=NULL;
-	unsigned int i,raw;
-	char *(*d2i)();
+STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio_ex(BIO *bp, STACK_OF(X509_INFO) *sk,
+                                               pem_password_cb *cb, void *u,
+                                               OSSL_LIB_CTX *libctx,
+                                               const char *propq)
+{
+    X509_INFO *xi = NULL;
+    char *name = NULL, *header = NULL, *str;
+    void *pp;
+    unsigned char *data = NULL;
+    const unsigned char *p;
+    long len, error = 0;
+    int ok = 0;
+    STACK_OF(X509_INFO) *ret = NULL;
+    unsigned int i, raw, ptype;
+    d2i_of_void *d2i = 0;
 
-	if (sk == NULL)
-		{
-		if ((ret=sk_new_null()) == NULL)
-			{
-			PEMerr(PEM_F_PEM_X509_INFO_READ_BIO,ERR_R_MALLOC_FAILURE);
-			goto err;
-			}
-		}
-	else
-		ret=sk;
+    if (sk == NULL) {
+        if ((ret = sk_X509_INFO_new_null()) == NULL) {
+            ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+    } else
+        ret = sk;
 
-	if ((xi=X509_INFO_new()) == NULL) goto err;
-	for (;;)
-		{
-		raw=0;
-		i=PEM_read_bio(bp,&name,&header,&data,&len);
-		if (i == 0)
-			{
-			error=ERR_GET_REASON(ERR_peek_error());
-			if (error == PEM_R_NO_START_LINE)
-				{
-				ERR_clear_error();
-				break;
-				}
-			goto err;
-			}
-start:
-		if (	(strcmp(name,PEM_STRING_X509) == 0) ||
-			(strcmp(name,PEM_STRING_X509_OLD) == 0))
-			{
-			d2i=(char *(*)())d2i_X509;
-			if (xi->x509 != NULL)
-				{
-				if (!sk_push(ret,(char *)xi)) goto err;
-				if ((xi=X509_INFO_new()) == NULL) goto err;
-				goto start;
-				}
-			pp=(char **)&(xi->x509);
-			}
-		else if (strcmp(name,PEM_STRING_X509_CRL) == 0)
-			{
-			d2i=(char *(*)())d2i_X509_CRL;
-			if (xi->crl != NULL)
-				{
-				if (!sk_push(ret,(char *)xi)) goto err;
-				if ((xi=X509_INFO_new()) == NULL) goto err;
-				goto start;
-				}
-			pp=(char **)&(xi->crl);
-			}
-		else
-#ifndef NO_RSA
-			if (strcmp(name,PEM_STRING_RSA) == 0)
-			{
-			d2i=(char *(*)())d2i_RSAPrivateKey;
-			if (xi->x_pkey != NULL) 
-				{
-				if (!sk_push(ret,(char *)xi)) goto err;
-				if ((xi=X509_INFO_new()) == NULL) goto err;
-				goto start;
-				}
+    if ((xi = X509_INFO_new()) == NULL)
+        goto err;
+    for (;;) {
+        raw = 0;
+        ptype = 0;
+        ERR_set_mark();
+        i = PEM_read_bio(bp, &name, &header, &data, &len);
+        if (i == 0) {
+            error = ERR_GET_REASON(ERR_peek_last_error());
+            if (error == PEM_R_NO_START_LINE) {
+                ERR_pop_to_mark();
+                break;
+            }
+            ERR_clear_last_mark();
+            goto err;
+        }
+        ERR_clear_last_mark();
+ start:
+        if (strcmp(name, PEM_STRING_X509) == 0
+                || strcmp(name, PEM_STRING_X509_OLD) == 0
+                || strcmp(name, PEM_STRING_X509_TRUSTED) == 0) {
+            if (xi->x509 != NULL) {
+                if (!sk_X509_INFO_push(ret, xi))
+                    goto err;
+                if ((xi = X509_INFO_new()) == NULL)
+                    goto err;
+                goto start;
+            }
+            if ((strcmp(name, PEM_STRING_X509_TRUSTED) == 0))
+                d2i = (D2I_OF(void)) d2i_X509_AUX;
+            else
+                d2i = (D2I_OF(void)) d2i_X509;
+            xi->x509 = X509_new_ex(libctx, propq);
+            if (xi->x509 == NULL)
+                goto err;
+            pp = &(xi->x509);
+        } else if (strcmp(name, PEM_STRING_X509_CRL) == 0) {
+            d2i = (D2I_OF(void)) d2i_X509_CRL;
+            if (xi->crl != NULL) {
+                if (!sk_X509_INFO_push(ret, xi))
+                    goto err;
+                if ((xi = X509_INFO_new()) == NULL)
+                    goto err;
+                goto start;
+            }
+            pp = &(xi->crl);
+        } else if ((str = strstr(name, PEM_STRING_PKCS8INF)) != NULL) {
+            if (xi->x_pkey != NULL) {
+                if (!sk_X509_INFO_push(ret, xi))
+                    goto err;
+                if ((xi = X509_INFO_new()) == NULL)
+                    goto err;
+                goto start;
+            }
+            if (str == name || strcmp(name, PEM_STRING_PKCS8) == 0) {
+                ptype = EVP_PKEY_NONE;
+            } else {
+                /* chop " PRIVATE KEY" */
+                *--str = '\0';
+                ptype = evp_pkey_name2type(name);
+            }
+            xi->enc_data = NULL;
+            xi->enc_len = 0;
 
-			xi->enc_data=NULL;
-			xi->enc_len=0;
+            d2i = (D2I_OF(void)) d2i_AutoPrivateKey;
+            xi->x_pkey = X509_PKEY_new();
+            if (xi->x_pkey == NULL)
+                goto err;
+            pp = &xi->x_pkey->dec_pkey;
+            if ((int)strlen(header) > 10 /* assume encrypted */
+                   || strcmp(name, PEM_STRING_PKCS8) == 0)
+                raw = 1;
+        } else { /* unknown */
+            d2i = NULL;
+            pp = NULL;
+        }
 
-			xi->x_pkey=X509_PKEY_new();
-			if ((xi->x_pkey->dec_pkey=EVP_PKEY_new()) == NULL)
-				goto err;
-			xi->x_pkey->dec_pkey->type=EVP_PKEY_RSA;
-			pp=(char **)&(xi->x_pkey->dec_pkey->pkey.rsa);
-			if ((int)strlen(header) > 10) /* assume encrypted */
-				raw=1;
-			}
-		else
-#endif
-#ifndef NO_DSA
-			if (strcmp(name,PEM_STRING_DSA) == 0)
-			{
-			d2i=(char *(*)())d2i_DSAPrivateKey;
-			if (xi->x_pkey != NULL) 
-				{
-				if (!sk_push(ret,(char *)xi)) goto err;
-				if ((xi=X509_INFO_new()) == NULL) goto err;
-				goto start;
-				}
+        if (d2i != NULL) {
+            if (!raw) {
+                EVP_CIPHER_INFO cipher;
 
-			xi->enc_data=NULL;
-			xi->enc_len=0;
+                if (!PEM_get_EVP_CIPHER_INFO(header, &cipher))
+                    goto err;
+                if (!PEM_do_header(&cipher, data, &len, cb, u))
+                    goto err;
+                p = data;
+                if (ptype) {
+                    if (d2i_PrivateKey_ex(ptype, pp, &p, len,
+                                          libctx, propq) == NULL) {
+                        ERR_raise(ERR_LIB_PEM, ERR_R_ASN1_LIB);
+                        goto err;
+                    }
+                } else if (d2i(pp, &p, len) == NULL) {
+                    ERR_raise(ERR_LIB_PEM, ERR_R_ASN1_LIB);
+                    goto err;
+                }
+            } else {            /* encrypted key data */
+                if (!PEM_get_EVP_CIPHER_INFO(header, &xi->enc_cipher))
+                    goto err;
+                xi->enc_data = (char *)data;
+                xi->enc_len = (int)len;
+                data = NULL;
+            }
+        }
+        OPENSSL_free(name);
+        name = NULL;
+        OPENSSL_free(header);
+        header = NULL;
+        OPENSSL_free(data);
+        data = NULL;
+    }
 
-			xi->x_pkey=X509_PKEY_new();
-			if ((xi->x_pkey->dec_pkey=EVP_PKEY_new()) == NULL)
-				goto err;
-			xi->x_pkey->dec_pkey->type=EVP_PKEY_DSA;
-			pp=(char **)&(xi->x_pkey->dec_pkey->pkey.dsa);
-			if ((int)strlen(header) > 10) /* assume encrypted */
-				raw=1;
-			}
-		else
-#endif
-			{
-			d2i=NULL;
-			pp=NULL;
-			}
+    /*
+     * if the last one hasn't been pushed yet and there is anything in it
+     * then add it to the stack ...
+     */
+    if ((xi->x509 != NULL) || (xi->crl != NULL) ||
+        (xi->x_pkey != NULL) || (xi->enc_data != NULL)) {
+        if (!sk_X509_INFO_push(ret, xi))
+            goto err;
+        xi = NULL;
+    }
+    ok = 1;
+ err:
+    X509_INFO_free(xi);
+    if (!ok) {
+        for (i = 0; ((int)i) < sk_X509_INFO_num(ret); i++) {
+            xi = sk_X509_INFO_value(ret, i);
+            X509_INFO_free(xi);
+        }
+        if (ret != sk)
+            sk_X509_INFO_free(ret);
+        ret = NULL;
+    }
 
-		if (d2i != NULL)
-			{
-			if (!raw)
-				{
-				EVP_CIPHER_INFO cipher;
+    OPENSSL_free(name);
+    OPENSSL_free(header);
+    OPENSSL_free(data);
+    return ret;
+}
 
-				if (!PEM_get_EVP_CIPHER_INFO(header,&cipher))
-					goto err;
-				if (!PEM_do_header(&cipher,data,&len,cb))
-					goto err;
-				p=data;
-				if (d2i(pp,&p,len) == NULL)
-					{
-					PEMerr(PEM_F_PEM_X509_INFO_READ_BIO,ERR_R_ASN1_LIB);
-					goto err;
-					}
-				}
-			else
-				{ /* encrypted RSA data */
-				if (!PEM_get_EVP_CIPHER_INFO(header,
-					&xi->enc_cipher)) goto err;
-				xi->enc_data=(char *)data;
-				xi->enc_len=(int)len;
-				data=NULL;
-				}
-			}
-		else	{
-			/* unknown */
-			}
-		if (name != NULL) Free(name);
-		if (header != NULL) Free(header);
-		if (data != NULL) Free(data);
-		name=NULL;
-		header=NULL;
-		data=NULL;
-		}
-
-	/* if the last one hasn't been pushed yet and there is anything
-	 * in it then add it to the stack ... 
-	 */
-	if ((xi->x509 != NULL) || (xi->crl != NULL) ||
-		(xi->x_pkey != NULL) || (xi->enc_data != NULL))
-		{
-		if (!sk_push(ret,(char *)xi)) goto err;
-		xi=NULL;
-		}
-	ok=1;
-err:
-	if (xi != NULL) X509_INFO_free(xi);
-	if (!ok)
-		{
-		for (i=0; ((int)i)<sk_num(ret); i++)
-			{
-			xi=(X509_INFO *)sk_value(ret,i);
-			X509_INFO_free(xi);
-			}
-		if (ret != sk) sk_free(ret);
-		ret=NULL;
-		}
-		
-	if (name != NULL) Free(name);
-	if (header != NULL) Free(header);
-	if (data != NULL) Free(data);
-	return(ret);
-	}
-
+STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk,
+                                            pem_password_cb *cb, void *u)
+{
+    return PEM_X509_INFO_read_bio_ex(bp, sk, cb, u, NULL, NULL);
+}
 
 /* A TJH addition */
-int PEM_X509_INFO_write_bio(bp,xi,enc,kstr,klen,cb)
-BIO *bp;
-X509_INFO *xi;
-EVP_CIPHER *enc;
-unsigned char *kstr;
-int klen;
-int (*cb)();
-	{
-	EVP_CIPHER_CTX ctx;
-	int i,ret=0;
-	unsigned char *data=NULL;
-	char *objstr=NULL;
-#define PEM_BUFSIZE	1024
-	char buf[PEM_BUFSIZE];
-	unsigned char *iv=NULL;
-	
-	if (enc != NULL)
-		{
-		objstr=OBJ_nid2sn(EVP_CIPHER_nid(enc));
-		if (objstr == NULL)
-			{
-			PEMerr(PEM_F_PEM_X509_INFO_WRITE_BIO,PEM_R_UNSUPPORTED_CIPHER);
-			goto err;
-			}
-		}
+int PEM_X509_INFO_write_bio(BIO *bp, const X509_INFO *xi, EVP_CIPHER *enc,
+                            const unsigned char *kstr, int klen,
+                            pem_password_cb *cb, void *u)
+{
+    int i, ret = 0;
+    unsigned char *data = NULL;
+    const char *objstr = NULL;
+    char buf[PEM_BUFSIZE];
+    const unsigned char *iv = NULL;
 
-	/* now for the fun part ... if we have a private key then 
-	 * we have to be able to handle a not-yet-decrypted key
-	 * being written out correctly ... if it is decrypted or
-	 * it is non-encrypted then we use the base code
-	 */
-	if (xi->x_pkey!=NULL)
-		{
-		if ( (xi->enc_data!=NULL) && (xi->enc_len>0) )
-			{
-			/* copy from wierdo names into more normal things */
-			iv=xi->enc_cipher.iv;
-			data=(unsigned char *)xi->enc_data;
-			i=xi->enc_len;
+    if (enc != NULL) {
+        objstr = EVP_CIPHER_name(enc);
+        if (objstr == NULL
+                   /*
+                    * Check "Proc-Type: 4,Encrypted\nDEK-Info: objstr,hex-iv\n"
+                    * fits into buf
+                    */
+                || (strlen(objstr) + 23 + 2 * EVP_CIPHER_iv_length(enc) + 13)
+                   > sizeof(buf)) {
+            ERR_raise(ERR_LIB_PEM, PEM_R_UNSUPPORTED_CIPHER);
+            goto err;
+        }
+    }
 
-			/* we take the encryption data from the
-			 * internal stuff rather than what the
-			 * user has passed us ... as we have to 
-			 * match exactly for some strange reason
-			 */
-			objstr=OBJ_nid2sn(
-				EVP_CIPHER_nid(xi->enc_cipher.cipher));
-			if (objstr == NULL)
-				{
-				PEMerr(PEM_F_PEM_X509_INFO_WRITE_BIO,PEM_R_UNSUPPORTED_CIPHER);
-				goto err;
-				}
+    /*
+     * now for the fun part ... if we have a private key then we have to be
+     * able to handle a not-yet-decrypted key being written out correctly ...
+     * if it is decrypted or it is non-encrypted then we use the base code
+     */
+    if (xi->x_pkey != NULL) {
+        if ((xi->enc_data != NULL) && (xi->enc_len > 0)) {
+            if (enc == NULL) {
+                ERR_raise(ERR_LIB_PEM, PEM_R_CIPHER_IS_NULL);
+                goto err;
+            }
 
-			/* create the right magic header stuff */
-			buf[0]='\0';
-			PEM_proc_type(buf,PEM_TYPE_ENCRYPTED);
-			PEM_dek_info(buf,objstr,8,(char *)iv);
+            /* copy from weirdo names into more normal things */
+            iv = xi->enc_cipher.iv;
+            data = (unsigned char *)xi->enc_data;
+            i = xi->enc_len;
 
-			/* use the normal code to write things out */
-			i=PEM_write_bio(bp,PEM_STRING_RSA,buf,data,i);
-			if (i <= 0) goto err;
-			}
-		else
-			{
-			/* Add DSA/DH */
-#ifndef NO_RSA
-			/* normal optionally encrypted stuff */
-			if (PEM_write_bio_RSAPrivateKey(bp,
-				xi->x_pkey->dec_pkey->pkey.rsa,
-				enc,kstr,klen,cb)<=0)
-				goto err;
-#endif
-			}
-		}
+            /*
+             * we take the encryption data from the internal stuff rather
+             * than what the user has passed us ... as we have to match
+             * exactly for some strange reason
+             */
+            objstr = EVP_CIPHER_name(xi->enc_cipher.cipher);
+            if (objstr == NULL) {
+                ERR_raise(ERR_LIB_PEM, PEM_R_UNSUPPORTED_CIPHER);
+                goto err;
+            }
 
-	/* if we have a certificate then write it out now */
-	if ((xi->x509 != NULL) || (PEM_write_bio_X509(bp,xi->x509) <= 0))
-		goto err;
+            /* Create the right magic header stuff */
+            buf[0] = '\0';
+            PEM_proc_type(buf, PEM_TYPE_ENCRYPTED);
+            PEM_dek_info(buf, objstr, EVP_CIPHER_iv_length(enc),
+                         (const char *)iv);
 
-	/* we are ignoring anything else that is loaded into the X509_INFO
-	 * structure for the moment ... as I don't need it so I'm not
-	 * coding it here and Eric can do it when this makes it into the
-	 * base library --tjh
-	 */
+            /* use the normal code to write things out */
+            i = PEM_write_bio(bp, PEM_STRING_RSA, buf, data, i);
+            if (i <= 0)
+                goto err;
+        } else {
+            /* Add DSA/DH */
+            /* normal optionally encrypted stuff */
+            if (PEM_write_bio_RSAPrivateKey(bp,
+                                            EVP_PKEY_get0_RSA(xi->x_pkey->dec_pkey),
+                                            enc, kstr, klen, cb, u) <= 0)
+                goto err;
+        }
+    }
 
-	ret=1;
+    /* if we have a certificate then write it out now */
+    if ((xi->x509 != NULL) && (PEM_write_bio_X509(bp, xi->x509) <= 0))
+        goto err;
 
-err:
-	memset((char *)&ctx,0,sizeof(ctx));
-	memset(buf,0,PEM_BUFSIZE);
-	return(ret);
-	}
+    /*
+     * we are ignoring anything else that is loaded into the X509_INFO
+     * structure for the moment ... as I don't need it so I'm not coding it
+     * here and Eric can do it when this makes it into the base library --tjh
+     */
+
+    ret = 1;
+
+ err:
+    OPENSSL_cleanse(buf, PEM_BUFSIZE);
+    return ret;
+}

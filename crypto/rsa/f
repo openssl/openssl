@@ -1,6 +1,0 @@
-	if ((rsa->method_mod_n == NULL) && (rsa->flags & RSA_FLAG_CACHE_PUBLIC))
-		{
-		if ((rsa->method_mod_n=(char *)BN_MONT_CTX_new()) != NULL)
-			if (!BN_MONT_CTX_set((BN_MONT_CTX *)rsa->method_mod_n,
-				rsa->n,ctx)) goto err;
-		}

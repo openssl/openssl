@@ -1,164 +1,276 @@
-/* crypto/x509/x509_set.c */
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- * 
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- * 
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
-#include "asn1.h"
-#include "objects.h"
-#include "evp.h"
-#include "x509.h"
+#include "internal/cryptlib.h"
+#include "internal/refcount.h"
+#include <openssl/asn1.h>
+#include <openssl/objects.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
+#include "crypto/asn1.h"
+#include "crypto/x509.h"
+#include "x509_local.h"
 
-int X509_set_version(x,version)
-X509 *x;
-long version;
-	{
-	if (x == NULL) return(0);
-	if (x->cert_info->version == NULL)
-		{
-		if ((x->cert_info->version=ASN1_INTEGER_new()) == NULL)
-			return(0);
-		}
-	return(ASN1_INTEGER_set(x->cert_info->version,version));
-	}
+int X509_set_version(X509 *x, long version)
+{
+    if (x == NULL)
+        return 0;
+    if (version == 0) {
+        ASN1_INTEGER_free(x->cert_info.version);
+        x->cert_info.version = NULL;
+        return 1;
+    }
+    if (x->cert_info.version == NULL) {
+        if ((x->cert_info.version = ASN1_INTEGER_new()) == NULL)
+            return 0;
+    }
+    return ASN1_INTEGER_set(x->cert_info.version, version);
+}
 
-int X509_set_serialNumber(x,serial)
-X509 *x;
-ASN1_INTEGER *serial;
-	{
-	ASN1_INTEGER *in;
+int X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial)
+{
+    ASN1_INTEGER *in;
 
-	if (x == NULL) return(0);
-	in=x->cert_info->serialNumber;
-	if (in != serial)
-		{
-		in=ASN1_INTEGER_dup(serial);
-		if (in != NULL)
-			{
-			ASN1_INTEGER_free(x->cert_info->serialNumber);
-			x->cert_info->serialNumber=in;
-			}
-		}
-	return(in != NULL);
-	}
+    if (x == NULL)
+        return 0;
+    in = &x->cert_info.serialNumber;
+    if (in != serial)
+        return ASN1_STRING_copy(in, serial);
+    return 1;
+}
 
-int X509_set_issuer_name(x,name)
-X509 *x;
-X509_NAME *name;
-	{
-	if ((x == NULL) || (x->cert_info == NULL)) return(0);
-	return(X509_NAME_set(&x->cert_info->issuer,name));
-	}
+int X509_set_issuer_name(X509 *x, const X509_NAME *name)
+{
+    if (x == NULL)
+        return 0;
+    return X509_NAME_set(&x->cert_info.issuer, name);
+}
 
-int X509_set_subject_name(x,name)
-X509 *x;
-X509_NAME *name;
-	{
-	if ((x == NULL) || (x->cert_info == NULL)) return(0);
-	return(X509_NAME_set(&x->cert_info->subject,name));
-	}
+int X509_set_subject_name(X509 *x, const X509_NAME *name)
+{
+    if (x == NULL)
+        return 0;
+    return X509_NAME_set(&x->cert_info.subject, name);
+}
 
-int X509_set_notBefore(x,tm)
-X509 *x;
-ASN1_UTCTIME *tm;
-	{
-	ASN1_UTCTIME *in;
+int ossl_x509_set1_time(ASN1_TIME **ptm, const ASN1_TIME *tm)
+{
+    ASN1_TIME *in;
+    in = *ptm;
+    if (in != tm) {
+        in = ASN1_STRING_dup(tm);
+        if (in != NULL) {
+            ASN1_TIME_free(*ptm);
+            *ptm = in;
+        }
+    }
+    return (in != NULL);
+}
 
-	if ((x == NULL) || (x->cert_info->validity == NULL)) return(0);
-	in=x->cert_info->validity->notBefore;
-	if (in != tm)
-		{
-		in=ASN1_UTCTIME_dup(tm);
-		if (in != NULL)
-			{
-			ASN1_UTCTIME_free(x->cert_info->validity->notBefore);
-			x->cert_info->validity->notBefore=in;
-			}
-		}
-	return(in != NULL);
-	}
+int X509_set1_notBefore(X509 *x, const ASN1_TIME *tm)
+{
+    if (x == NULL)
+        return 0;
+    return ossl_x509_set1_time(&x->cert_info.validity.notBefore, tm);
+}
 
-int X509_set_notAfter(x,tm)
-X509 *x;
-ASN1_UTCTIME *tm;
-	{
-	ASN1_UTCTIME *in;
+int X509_set1_notAfter(X509 *x, const ASN1_TIME *tm)
+{
+    if (x == NULL)
+        return 0;
+    return ossl_x509_set1_time(&x->cert_info.validity.notAfter, tm);
+}
 
-	if ((x == NULL) || (x->cert_info->validity == NULL)) return(0);
-	in=x->cert_info->validity->notAfter;
-	if (in != tm)
-		{
-		in=ASN1_UTCTIME_dup(tm);
-		if (in != NULL)
-			{
-			ASN1_UTCTIME_free(x->cert_info->validity->notAfter);
-			x->cert_info->validity->notAfter=in;
-			}
-		}
-	return(in != NULL);
-	}
+int X509_set_pubkey(X509 *x, EVP_PKEY *pkey)
+{
+    if (x == NULL)
+        return 0;
+    return X509_PUBKEY_set(&(x->cert_info.key), pkey);
+}
 
-int X509_set_pubkey(x,pkey)
-X509 *x;
-EVP_PKEY *pkey;
-	{
-	if ((x == NULL) || (x->cert_info == NULL)) return(0);
-	return(X509_PUBKEY_set(&(x->cert_info->key),pkey));
-	}
+int X509_up_ref(X509 *x)
+{
+    int i;
 
+    if (CRYPTO_UP_REF(&x->references, &i, x->lock) <= 0)
+        return 0;
 
+    REF_PRINT_COUNT("X509", x);
+    REF_ASSERT_ISNT(i < 2);
+    return ((i > 1) ? 1 : 0);
+}
 
+long X509_get_version(const X509 *x)
+{
+    return ASN1_INTEGER_get(x->cert_info.version);
+}
+
+const ASN1_TIME *X509_get0_notBefore(const X509 *x)
+{
+    return x->cert_info.validity.notBefore;
+}
+
+const ASN1_TIME *X509_get0_notAfter(const X509 *x)
+{
+    return x->cert_info.validity.notAfter;
+}
+
+ASN1_TIME *X509_getm_notBefore(const X509 *x)
+{
+    return x->cert_info.validity.notBefore;
+}
+
+ASN1_TIME *X509_getm_notAfter(const X509 *x)
+{
+    return x->cert_info.validity.notAfter;
+}
+
+int X509_get_signature_type(const X509 *x)
+{
+    return EVP_PKEY_type(OBJ_obj2nid(x->sig_alg.algorithm));
+}
+
+X509_PUBKEY *X509_get_X509_PUBKEY(const X509 *x)
+{
+    return x->cert_info.key;
+}
+
+const STACK_OF(X509_EXTENSION) *X509_get0_extensions(const X509 *x)
+{
+    return x->cert_info.extensions;
+}
+
+void X509_get0_uids(const X509 *x, const ASN1_BIT_STRING **piuid,
+                    const ASN1_BIT_STRING **psuid)
+{
+    if (piuid != NULL)
+        *piuid = x->cert_info.issuerUID;
+    if (psuid != NULL)
+        *psuid = x->cert_info.subjectUID;
+}
+
+const X509_ALGOR *X509_get0_tbs_sigalg(const X509 *x)
+{
+    return &x->cert_info.signature;
+}
+
+int X509_SIG_INFO_get(const X509_SIG_INFO *siginf, int *mdnid, int *pknid,
+                      int *secbits, uint32_t *flags)
+{
+    if (mdnid != NULL)
+        *mdnid = siginf->mdnid;
+    if (pknid != NULL)
+        *pknid = siginf->pknid;
+    if (secbits != NULL)
+        *secbits = siginf->secbits;
+    if (flags != NULL)
+        *flags = siginf->flags;
+    return (siginf->flags & X509_SIG_INFO_VALID) != 0;
+}
+
+void X509_SIG_INFO_set(X509_SIG_INFO *siginf, int mdnid, int pknid,
+                       int secbits, uint32_t flags)
+{
+    siginf->mdnid = mdnid;
+    siginf->pknid = pknid;
+    siginf->secbits = secbits;
+    siginf->flags = flags;
+}
+
+int X509_get_signature_info(X509 *x, int *mdnid, int *pknid, int *secbits,
+                            uint32_t *flags)
+{
+    X509_check_purpose(x, -1, -1);
+    return X509_SIG_INFO_get(&x->siginf, mdnid, pknid, secbits, flags);
+}
+
+/* Modify *siginf according to alg and sig. Return 1 on success, else 0. */
+static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
+                              const ASN1_STRING *sig)
+{
+    int pknid, mdnid;
+    const EVP_MD *md;
+    const EVP_PKEY_ASN1_METHOD *ameth;
+
+    siginf->mdnid = NID_undef;
+    siginf->pknid = NID_undef;
+    siginf->secbits = -1;
+    siginf->flags = 0;
+    if (!OBJ_find_sigid_algs(OBJ_obj2nid(alg->algorithm), &mdnid, &pknid)
+            || pknid == NID_undef) {
+        ERR_raise(ERR_LIB_X509, X509_R_UNKNOWN_SIGID_ALGS);
+        return 0;
+    }
+    siginf->mdnid = mdnid;
+    siginf->pknid = pknid;
+
+    switch (mdnid) {
+    case NID_undef:
+        /* If we have one, use a custom handler for this algorithm */
+        ameth = EVP_PKEY_asn1_find(NULL, pknid);
+        if (ameth == NULL || ameth->siginf_set == NULL
+                || !ameth->siginf_set(siginf, alg, sig)) {
+            ERR_raise(ERR_LIB_X509, X509_R_ERROR_USING_SIGINF_SET);
+            return 0;
+        }
+        break;
+        /*
+         * SHA1 and MD5 are known to be broken. Reduce security bits so that
+         * they're no longer accepted at security level 1.
+         * The real values don't really matter as long as they're lower than 80,
+         * which is our security level 1.
+         */
+    case NID_sha1:
+        /*
+         * https://eprint.iacr.org/2020/014 puts a chosen-prefix attack
+         * for SHA1 at2^63.4
+         */
+        siginf->secbits = 63;
+        break;
+    case NID_md5:
+        /*
+         * https://documents.epfl.ch/users/l/le/lenstra/public/papers/lat.pdf
+         * puts a chosen-prefix attack for MD5 at 2^39.
+         */
+        siginf->secbits = 39;
+        break;
+    case NID_id_GostR3411_94:
+        /*
+         * There is a collision attack on GOST R 34.11-94 at 2^105, see
+         * https://link.springer.com/chapter/10.1007%2F978-3-540-85174-5_10
+         */
+        siginf->secbits = 105;
+        break;
+    default:
+        /* Security bits: half number of bits in digest */
+        if ((md = EVP_get_digestbynid(mdnid)) == NULL) {
+            ERR_raise(ERR_LIB_X509, X509_R_ERROR_GETTING_MD_BY_NID);
+            return 0;
+        }
+        siginf->secbits = EVP_MD_size(md) * 4;
+        break;
+    }
+    switch (mdnid) {
+    case NID_sha1:
+    case NID_sha256:
+    case NID_sha384:
+    case NID_sha512:
+        siginf->flags |= X509_SIG_INFO_TLS;
+    }
+    siginf->flags |= X509_SIG_INFO_VALID;
+    return 1;
+}
+
+/* Returns 1 on success, 0 on failure */
+int ossl_x509_init_sig_info(X509 *x)
+{
+    return x509_sig_info_init(&x->siginf, &x->sig_alg, &x->signature);
+}

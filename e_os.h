@@ -1,328 +1,381 @@
-/* e_os.h */
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- * 
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- * 
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_E_OS_H
-#define HEADER_E_OS_H
+#ifndef OSSL_E_OS_H
+# define OSSL_E_OS_H
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
+# include <limits.h>
+# include <openssl/opensslconf.h>
 
-/* Used to checking reference counts, most while doing perl5 stuff :-) */
-#ifdef REF_PRINT
-#undef REF_PRINT
-#define REF_PRINT(a,b)	fprintf(stderr,"%08X:%4d:%s\n",(int)b,b->references,a)
-#endif
+# include <openssl/e_os2.h>
+# include <openssl/crypto.h>
+# include "internal/nelem.h"
 
-#ifndef DEVRANDOM
-/* set this to your 'random' device if you have one.
- * My default, we will try to read this file */
-#define DEVRANDOM "/dev/urandom"
-#endif
+/*
+ * <openssl/e_os2.h> contains what we can justify to make visible to the
+ * outside; this file e_os.h is not part of the exported interface.
+ */
 
-#if defined(NOCONST)
-#define const
-#endif
+# if defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_UEFI)
+#  define NO_CHMOD
+#  define NO_SYSLOG
+# endif
+
+# define get_last_sys_error()    errno
+# define clear_sys_error()       errno=0
+# define set_sys_error(e)        errno=(e)
 
 /********************************************************************
  The Microsoft section
  ********************************************************************/
-/* The following is used becaue of the small stack in some
- * Microsoft operating systems */
-#if defined(WIN16) || defined(MSDOS)
-#  define MS_STATIC	static
-#else
-#  define MS_STATIC
-#endif
+# if defined(OPENSSL_SYS_WIN32) && !defined(WIN32)
+#  define WIN32
+# endif
+# if defined(OPENSSL_SYS_WINDOWS) && !defined(WINDOWS)
+#  define WINDOWS
+# endif
+# if defined(OPENSSL_SYS_MSDOS) && !defined(MSDOS)
+#  define MSDOS
+# endif
 
-#if defined(WIN32) || defined(WIN16)
-#  ifndef WINDOWS
-#    define WINDOWS
+# ifdef WIN32
+#  undef get_last_sys_error
+#  undef clear_sys_error
+#  undef set_sys_error
+#  define get_last_sys_error()    GetLastError()
+#  define clear_sys_error()       SetLastError(0)
+#  define set_sys_error(e)        SetLastError(e)
+#  if !defined(WINNT)
+#   define WIN_CONSOLE_BUG
 #  endif
-#  ifndef MSDOS
-#    define MSDOS
+# else
+# endif
+
+# if (defined(WINDOWS) || defined(MSDOS))
+
+#  ifdef __DJGPP__
+#   include <unistd.h>
+#   include <sys/stat.h>
+#   define _setmode setmode
+#   define _O_TEXT O_TEXT
+#   define _O_BINARY O_BINARY
+#   undef DEVRANDOM_EGD  /*  Neither MS-DOS nor FreeDOS provide 'egd' sockets.  */
+#   undef DEVRANDOM
+#   define DEVRANDOM "/dev/urandom\x24"
+#  endif                        /* __DJGPP__ */
+
+#  ifndef S_IFDIR
+#   define S_IFDIR     _S_IFDIR
 #  endif
-#endif
 
-#ifdef WIN32
-#define get_last_sys_error()	GetLastError()
-#define clear_sys_error()	SetLastError(0)
-#else
-#define get_last_sys_error()	errno
-#define clear_sys_error()	errno=0
-#endif
+#  ifndef S_IFMT
+#   define S_IFMT      _S_IFMT
+#  endif
 
-#ifdef WINDOWS
-#define get_last_socket_error()	WSAGetLastError()
-#define clear_socket_error()	WSASetLastError(0)
-#define readsocket(s,b,n)	recv((s),(b),(n),0)
-#define writesocket(s,b,n)	send((s),(b),(n),0)
-#define EADDRINUSE		WSAEADDRINUSE
-#else
-#define get_last_socket_error()	errno
-#define clear_socket_error()	errno=0
-#define ioctlsocket(a,b,c)	ioctl(a,b,c)
-#define closesocket(s)		close(s)
-#define readsocket(s,b,n)	read((s),(b),(n))
-#define writesocket(s,b,n)	write((s),(b),(n))
-#endif
-
-#ifdef WIN16
-#  define NO_FP_API
-#  define MS_CALLBACK	_far _loadds
-#  define MS_FAR	_far
-#else
-#  define MS_CALLBACK
-#  define MS_FAR
-#endif
-
-#ifdef NO_STDIO
-#  define NO_FP_API
-#endif
-
-#if defined(WINDOWS) || defined(MSDOS)
-
-#ifndef S_IFDIR
-#define S_IFDIR	_S_IFDIR
-#endif
-
-#ifndef S_IFMT
-#define S_IFMT	_S_IFMT
-#endif
-
-#define strncasecmp(a,b,c)	strnicmp((a),(b),(c))
+#  if !defined(WINNT) && !defined(__DJGPP__)
+#   define NO_SYSLOG
+#  endif
 
 #  ifdef WINDOWS
-#    include <windows.h>
-#    include <stddef.h>
-#    include <errno.h>
-#    include <string.h>
-#    include <malloc.h>
+#   if !defined(_WIN32_WCE) && !defined(_WIN32_WINNT)
+       /*
+        * Defining _WIN32_WINNT here in e_os.h implies certain "discipline."
+        * Most notably we ought to check for availability of each specific
+        * routine that was introduced after denoted _WIN32_WINNT with
+        * GetProcAddress(). Normally newer functions are masked with higher
+        * _WIN32_WINNT in SDK headers. So that if you wish to use them in
+        * some module, you'd need to override _WIN32_WINNT definition in
+        * the target module in order to "reach for" prototypes, but replace
+        * calls to new functions with indirect calls. Alternatively it
+        * might be possible to achieve the goal by /DELAYLOAD-ing .DLLs
+        * and check for current OS version instead.
+        */
+#    define _WIN32_WINNT 0x0501
+#   endif
+#   if defined(_WIN32_WINNT) || defined(_WIN32_WCE)
+       /*
+        * Just like defining _WIN32_WINNT including winsock2.h implies
+        * certain "discipline" for maintaining [broad] binary compatibility.
+        * As long as structures are invariant among Winsock versions,
+        * it's sufficient to check for specific Winsock2 API availability
+        * at run-time [DSO_global_lookup is recommended]...
+        */
+#    include <winsock2.h>
+#    include <ws2tcpip.h>
+       /*
+        * Clang-based C++Builder 10.3.3 toolchains cannot find C inline
+        * definitions at link-time.  This header defines WspiapiLoad() as an
+        * __inline function.  https://quality.embarcadero.com/browse/RSP-33806
+        */
+#    if !defined(__BORLANDC__) || !defined(__clang__)
+#     include <wspiapi.h>
+#    endif
+       /* yes, they have to be #included prior to <windows.h> */
+#   endif
+#   include <windows.h>
+#   include <stdio.h>
+#   include <stddef.h>
+#   include <errno.h>
+#   if defined(_WIN32_WCE) && !defined(EACCES)
+#    define EACCES   13
+#   endif
+#   include <string.h>
+#   ifdef _WIN64
+#    define strlen(s) _strlen31(s)
+/* cut strings to 2GB */
+static __inline unsigned int _strlen31(const char *str)
+{
+    unsigned int len = 0;
+    while (*str && len < 0x80000000U)
+        str++, len++;
+    return len & 0x7FFFFFFF;
+}
+#   endif
+#   include <malloc.h>
+#   if defined(_MSC_VER) && !defined(_WIN32_WCE) && !defined(_DLL) && defined(stdin)
+#    if _MSC_VER>=1300 && _MSC_VER<1600
+#     undef stdin
+#     undef stdout
+#     undef stderr
+FILE *__iob_func();
+#     define stdin  (&__iob_func()[0])
+#     define stdout (&__iob_func()[1])
+#     define stderr (&__iob_func()[2])
+#    elif _MSC_VER<1300 && defined(I_CAN_LIVE_WITH_LNK4049)
+#     undef stdin
+#     undef stdout
+#     undef stderr
+         /*
+          * pre-1300 has __p__iob(), but it's available only in msvcrt.lib,
+          * or in other words with /MD. Declaring implicit import, i.e. with
+          * _imp_ prefix, works correctly with all compiler options, but
+          * without /MD results in LINK warning LNK4049: 'locally defined
+          * symbol "__iob" imported'.
+          */
+extern FILE *_imp___iob;
+#     define stdin  (&_imp___iob[0])
+#     define stdout (&_imp___iob[1])
+#     define stderr (&_imp___iob[2])
+#    endif
+#   endif
 #  endif
 #  include <io.h>
 #  include <fcntl.h>
 
-#if defined(WIN16) && !defined(MONOLITH) && defined(SSLEAY) && defined(_WINEXITNOPERSIST)
-#  define EXIT(n) { if (n == 0) _wsetexit(_WINEXITNOPERSIST); return(n); }
-#else
-#  define EXIT(n)		return(n);
-#endif
+#  ifdef OPENSSL_SYS_WINCE
+#   define OPENSSL_NO_POSIX_IO
+#  endif
+
+#  define EXIT(n) exit(n)
 #  define LIST_SEPARATOR_CHAR ';'
-#ifndef X_OK
-#  define X_OK	0
-#endif
-#ifndef W_OK
-#  define W_OK	2
-#endif
-#ifndef R_OK
-#  define R_OK	4
-#endif
-#  define SSLEAY_CONF	"ssleay.cnf"
-#  define NUL_DEV	"nul"
-#  define RFILE		".rnd"
-
-#else /* The non-microsoft world world */
-
-#  ifdef VMS
-#    include <unixlib.h>
+#  ifndef W_OK
+#   define W_OK        2
+#  endif
+#  ifndef R_OK
+#   define R_OK        4
+#  endif
+#  ifdef OPENSSL_SYS_WINCE
+#   define DEFAULT_HOME  ""
 #  else
+#   define DEFAULT_HOME  "C:"
+#  endif
+
+/* Avoid Visual Studio 13 GetVersion deprecated problems */
+#  if defined(_MSC_VER) && _MSC_VER>=1800
+#   define check_winnt() (1)
+#   define check_win_minplat(x) (1)
+#  else
+#   define check_winnt() (GetVersion() < 0x80000000)
+#   define check_win_minplat(x) (LOBYTE(LOWORD(GetVersion())) >= (x))
+#  endif
+
+# else                          /* The non-microsoft world */
+
+#  if defined(OPENSSL_SYS_VXWORKS)
+#   include <time.h>
+#  else
+#   include <sys/time.h>
+#  endif
+
+#  ifdef OPENSSL_SYS_VMS
+#   define VMS 1
+  /*
+   * some programs don't include stdlib, so exit() and others give implicit
+   * function warnings
+   */
+#   include <stdlib.h>
+#   if defined(__DECC)
 #    include <unistd.h>
-#  endif
+#   else
+#    include <unixlib.h>
+#   endif
+#   define LIST_SEPARATOR_CHAR ','
+  /* We don't have any well-defined random devices on VMS, yet... */
+#   undef DEVRANDOM
+  /*-
+     We need to do this since VMS has the following coding on status codes:
 
-#  define SSLEAY_CONF	"ssleay.cnf"
-#  define RFILE		".rnd"
-#  define LIST_SEPARATOR_CHAR ':'
-#  ifndef MONOLITH
-#    define EXIT(n)		exit(n); return(n)
-#  else
-#    define EXIT(n)		return(n)
-#  endif
-#  define NUL_DEV		"/dev/null"
+     Bits 0-2: status type: 0 = warning, 1 = success, 2 = error, 3 = info ...
+               The important thing to know is that odd numbers are considered
+               good, while even ones are considered errors.
+     Bits 3-15: actual status number
+     Bits 16-27: facility number.  0 is considered "unknown"
+     Bits 28-31: control bits.  If bit 28 is set, the shell won't try to
+                 output the message (which, for random codes, just looks ugly)
 
-#  define SSLeay_getpid()	getpid()
+     So, what we do here is to change 0 to 1 to get the default success status,
+     and everything else is shifted up to fit into the status number field, and
+     the status is tagged as an error, which is what is wanted here.
 
-#endif
+     Finally, we add the VMS C facility code 0x35a000, because there are some
+     programs, such as Perl, that will reinterpret the code back to something
+     POSIX.  'man perlvms' explains it further.
 
-/*************/
+     NOTE: the perlvms manual wants to turn all codes 2 to 255 into success
+     codes (status type = 1).  I couldn't disagree more.  Fortunately, the
+     status type doesn't seem to bother Perl.
+     -- Richard Levitte
+  */
+#   define EXIT(n)  exit((n) ? (((n) << 3) | 2 | 0x10000000 | 0x35a000) : 1)
 
-#ifdef USE_SOCKETS
-#  if defined(WINDOWS) || defined(MSDOS)
-      /* windows world */
-
-#    ifdef NO_SOCK
-#      define SSLeay_Write(a,b,c)	(-1)
-#      define SSLeay_Read(a,b,c)	(-1)
-#      define SHUTDOWN(fd)		close(fd)
-#      define SHUTDOWN2(fd)		close(fd)
-#    else
-#      include <winsock.h>
-extern HINSTANCE _hInstance;
-#      define SSLeay_Write(a,b,c)	send((a),(b),(c),0)
-#      define SSLeay_Read(a,b,c)	recv((a),(b),(c),0)
-#      define SHUTDOWN(fd)		{ shutdown((fd),0); closesocket(fd); }
-#      define SHUTDOWN2(fd)		{ shutdown((fd),2); closesocket(fd); }
-#    endif
-
+#   define DEFAULT_HOME "SYS$LOGIN:"
 
 #  else
+     /* !defined VMS */
+#   include <unistd.h>
+#   include <sys/types.h>
+#   ifdef OPENSSL_SYS_WIN32_CYGWIN
+#    include <io.h>
+#    include <fcntl.h>
+#   endif
 
-#    ifndef VMS
-      /* unix world */
-#      include <netdb.h>
-#      include <sys/types.h>
-#      include <sys/socket.h>
-#      ifdef FILIO_H
-#        include <sys/filio.h> /* Added for FIONBIO under unixware */
-#      endif
-#      include <sys/param.h>
-#      include <sys/time.h> /* Needed under linux for FD_XXX */
-#      include <netinet/in.h>
-#    endif
-
-#    if defined(NeXT) || defined(_NEXT_SOURCE)
-#      include <sys/fcntl.h>
-#      include <sys/types.h>
-#    endif
-
-#    ifdef AIX
-#      include <sys/select.h>
-#    endif
-
-#    if defined(sun)
-#      include <sys/filio.h>
-#    else
-#      include <sys/ioctl.h>
-#    endif
-
-#    ifdef VMS
-#      include <unixio.h>
-#    endif
-
-#    define SSLeay_Read(a,b,c)     read((a),(b),(c))
-#    define SSLeay_Write(a,b,c)    write((a),(b),(c))
-#    define SHUTDOWN(fd)    { shutdown((fd),0); close((fd)); }
-#    define SHUTDOWN2(fd)   { shutdown((fd),2); close((fd)); }
-#    define INVALID_SOCKET	(-1)
+#   define LIST_SEPARATOR_CHAR ':'
+#   define EXIT(n)             exit(n)
 #  endif
-#endif
 
-#if defined(THREADS) || defined(sun)
-#ifndef _REENTRANT
-#define _REENTRANT
-#endif
-#endif
+# endif
 
 /***********************************************/
 
-#ifndef NOPROTO
-#define P_CC_CC	const void *,const void *
-#define P_I_I		int,int 
-#define P_I_I_P		int,int,char *
-#define P_I_I_P_I	int,int,char *,int
-#define P_IP_I_I_P_I	int *,int,int,char *,int
-#define P_V		void 
-#else
-#define P_CC_CC
-#define P_I_I
-#define P_I_I_P
-#define P_IP_I_I_P_I
-#define P_I_I_P_I
-#define P_V
+# if defined(OPENSSL_SYS_WINDOWS)
+#  define strcasecmp _stricmp
+#  define strncasecmp _strnicmp
+#  if (_MSC_VER >= 1310) && !defined(_WIN32_WCE)
+#   define open _open
+#   define fdopen _fdopen
+#   define close _close
+#   ifndef strdup
+#    define strdup _strdup
+#   endif
+#   define unlink _unlink
+#   define fileno _fileno
+#  endif
+# else
+#  include <strings.h>
+# endif
+
+/* vxworks */
+# if defined(OPENSSL_SYS_VXWORKS)
+#  include <ioLib.h>
+#  include <tickLib.h>
+#  include <sysLib.h>
+#  include <vxWorks.h>
+#  include <sockLib.h>
+#  include <taskLib.h>
+
+#  define TTY_STRUCT int
+#  define sleep(a) taskDelay((a) * sysClkRateGet())
+
+/*
+ * NOTE: these are implemented by helpers in database app! if the database is
+ * not linked, we need to implement them elsewhere
+ */
+struct hostent *gethostbyname(const char *name);
+struct hostent *gethostbyaddr(const char *addr, int length, int type);
+struct servent *getservbyname(const char *name, const char *proto);
+
+# endif
+/* end vxworks */
+
+/* ----------------------------- HP NonStop -------------------------------- */
+/* Required to support platform variant without getpid() and pid_t. */
+# if defined(__TANDEM) && defined(_GUARDIAN_TARGET)
+#  include <strings.h>
+#  include <netdb.h>
+#  define getservbyname(name,proto)          getservbyname((char*)name,proto)
+#  define gethostbyname(name)                gethostbyname((char*)name)
+#  define ioctlsocket(a,b,c)	ioctl(a,b,c)
+#  ifdef NO_GETPID
+inline int nssgetpid();
+#   ifndef NSSGETPID_MACRO
+#    define NSSGETPID_MACRO
+#    include <cextdecs.h(PROCESSHANDLE_GETMINE_)>
+#    include <cextdecs.h(PROCESSHANDLE_DECOMPOSE_)>
+       inline int nssgetpid()
+       {
+         short phandle[10]={0};
+         union pseudo_pid {
+          struct {
+           short cpu;
+           short pin;
+         } cpu_pin ;
+         int ppid;
+        } ppid = { 0 };
+        PROCESSHANDLE_GETMINE_(phandle);
+        PROCESSHANDLE_DECOMPOSE_(phandle, &ppid.cpu_pin.cpu, &ppid.cpu_pin.pin);
+        return ppid.ppid;
+       }
+#    define getpid(a) nssgetpid(a)
+#   endif /* NSSGETPID_MACRO */
+#  endif /* NO_GETPID */
+/*#  define setsockopt(a,b,c,d,f) setsockopt(a,b,c,(char*)d,f)*/
+/*#  define getsockopt(a,b,c,d,f) getsockopt(a,b,c,(char*)d,f)*/
+/*#  define connect(a,b,c) connect(a,(struct sockaddr *)b,c)*/
+/*#  define bind(a,b,c) bind(a,(struct sockaddr *)b,c)*/
+/*#  define sendto(a,b,c,d,e,f) sendto(a,(char*)b,c,d,(struct sockaddr *)e,f)*/
+#  if defined(OPENSSL_THREADS) && !defined(_PUT_MODEL_)
+  /*
+   * HPNS SPT threads
+   */
+#   define  SPT_THREAD_SIGNAL 1
+#   define  SPT_THREAD_AWARE 1
+#   include <spthread.h>
+#   undef close
+#   define close spt_close
+/*
+#   define get_last_socket_error()	errno
+#   define clear_socket_error()	errno=0
+#   define ioctlsocket(a,b,c)	ioctl(a,b,c)
+#   define closesocket(s)		close(s)
+#   define readsocket(s,b,n)	read((s),(char*)(b),(n))
+#   define writesocket(s,b,n)	write((s),(char*)(b),(n)
+*/
+#   define accept(a,b,c)        accept(a,(struct sockaddr *)b,c)
+#   define recvfrom(a,b,c,d,e,f) recvfrom(a,b,(socklen_t)c,d,e,f)
+#  endif
+# endif
+
+# ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+#  define CRYPTO_memcmp memcmp
+# endif
+
+# ifndef OPENSSL_NO_SECURE_MEMORY
+   /* unistd.h defines _POSIX_VERSION */
+#  if (defined(OPENSSL_SYS_UNIX) \
+        && ( (defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L)      \
+             || defined(__sun) || defined(__hpux) || defined(__sgi)      \
+             || defined(__osf__) )) \
+      || defined(_WIN32)
+      /* secure memory is implemented */
+#   else
+#     define OPENSSL_NO_SECURE_MEMORY
+#   endif
+# endif
+
 #endif
-
-/* not used yet */
-#define	CS_BEGIN
-#define CS_END
-
-/* do we need to do this for getenv.
- * Just define getenv for use under windows */
-
-#ifdef WIN16
-/* How to do this needs to be thought out a bit more.... */
-/*char *GETENV(char *);
-#define Getenv	GETENV*/
-#define Getenv	getenv
-#else
-#define Getenv getenv
-#endif
-
-#define DG_GCC_BUG	/* gcc < 2.6.3 on DGUX */
-
-#ifdef sgi
-#define IRIX_CC_BUG	/* all version of IRIX I've tested (4.* 5.*) */
-#endif
-
-#ifdef NO_MD2
-#define MD2_Init MD2Init
-#define MD2_Update MD2Update
-#define MD2_Final MD2Final
-#define MD2_DIGEST_LENGTH 16
-#endif
-#ifdef NO_MD5
-#define MD5_Init MD5Init 
-#define MD5_Update MD5Update
-#define MD5_Final MD5Final
-#define MD5_DIGEST_LENGTH 16
-#endif
-
-#ifdef  __cplusplus
-}
-#endif
-
-#endif
-

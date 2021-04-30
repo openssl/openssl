@@ -1,0 +1,1300 @@
+## descrip.mms to build OpenSSL on OpenVMS
+##
+## {- join("\n## ", @autowarntext) -}
+{-
+  use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs/;
+  use File::Basename;
+
+  (our $osslprefix_q = platform->osslprefix()) =~ s/\$/\\\$/;
+
+  our $sover_dirname = platform->shlib_version_as_filename();
+  our $osslver = sprintf "%02d%02d", split(/\./, $config{version});
+
+  our $sourcedir = $config{sourcedir};
+  our $builddir = $config{builddir};
+  sub sourcefile {
+      catfile($sourcedir, @_);
+  }
+  sub buildfile {
+      catfile($builddir, @_);
+  }
+  sub sourcedir {
+      catdir($sourcedir, @_);
+  }
+  sub builddir {
+      catdir($builddir, @_);
+  }
+  sub tree {
+      (my $x = shift) =~ s|\]$|...]|;
+      $x
+  }
+  }
+
+  # Because we need to make two computations of these data,
+  # we store them in arrays for reuse
+  our @libs =
+      map { platform->staticname($_) }
+      @{$unified_info{libraries}};
+  our @shlibs =
+      map { platform->sharedname($_) // () }
+      @{$unified_info{libraries}};
+  our @install_libs =
+      map { platform->staticname($_) }
+      grep { !$unified_info{attributes}->{libraries}->{$_}->{noinst} }
+      @{$unified_info{libraries}};
+  our @install_shlibs =
+      map { platform->sharedname($_) // () }
+      grep { !$unified_info{attributes}->{libraries}->{$_}->{noinst} }
+      @{$unified_info{libraries}};
+  our @install_engines =
+      grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
+             && $unified_info{attributes}->{modules}->{$_}->{engine} }
+      @{$unified_info{modules}};
+  our @install_modules =
+      grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
+             && !$unified_info{attributes}->{modules}->{$_}->{engine} }
+      @{$unified_info{modules}};
+  our @install_programs =
+      grep { !$unified_info{attributes}->{programs}->{$_}->{noinst} }
+      @{$unified_info{programs}};
+  our @install_bin_scripts =
+      grep { !$unified_info{attributes}->{scripts}->{$_}->{noinst}
+             && !$unified_info{attributes}->{scripts}->{$_}->{misc} }
+      @{$unified_info{scripts}};
+  our @install_misc_scripts =
+      grep { !$unified_info{attributes}->{scripts}->{$_}->{noinst}
+             && $unified_info{attributes}->{scripts}->{$_}->{misc} }
+      @{$unified_info{scripts}};
+
+  # This is a horrible hack, but is needed because recursive inclusion of files
+  # in different directories does not work well with HP C.
+  my $sd = sourcedir("crypto", "async", "arch");
+  foreach (grep /\[\.crypto\.async\.arch\].*\.o$/, keys %{$unified_info{sources}}) {
+      my $obj = platform->obj($_);
+      $unified_info{before}->{$obj}
+          = qq(arch_include = F\$PARSE("$sd","A.;",,,"SYNTAX_ONLY") - "A.;"
+        define arch 'arch_include');
+      $unified_info{after}->{$obj}
+          = qq(deassign arch);
+  }
+  my $sd1 = sourcedir("ssl","record");
+  my $sd2 = sourcedir("ssl","statem");
+  my @ssl_locl_users = grep(/^\[\.(?:ssl\.(?:record|statem)|test)\].*\.o$/,
+                            keys %{$unified_info{sources}});
+  foreach (@ssl_locl_users) {
+      my $obj = platform->obj($_);
+      $unified_info{before}->{$obj}
+          = qq(record_include = F\$PARSE("$sd1","A.;",,,"SYNTAX_ONLY") - "A.;"
+        define record 'record_include'
+        statem_include = F\$PARSE("$sd2","A.;",,,"SYNTAX_ONLY") - "A.;"
+        define statem 'statem_include');
+      $unified_info{after}->{$obj}
+          = qq(deassign statem
+        deassign record);
+  }
+  # This makes sure things get built in the order they need
+  # to. You're welcome.
+  sub dependmagic {
+      my $target = shift;
+
+      return "$target : build_generated\n\t\pipe \$(MMS) \$(MMSQUALIFIERS) depend && \$(MMS) \$(MMSQUALIFIERS) _$target\n_$target";
+  }
+  "";
+-}
+PLATFORM={- $config{target} -}
+OPTIONS={- $config{options} -}
+CONFIGURE_ARGS=({- join(", ",quotify_l(@{$config{perlargv}})) -})
+SRCDIR={- $config{sourcedir} -}
+BLDDIR={- $config{builddir} -}
+FIPSKEY={- $config{FIPSKEY} -}
+
+# Allow both V and VERBOSE to indicate verbosity.  This only applies
+# to testing.
+VERBOSE=$(V)
+VERBOSE_FAILURE=$(VF)
+
+VERSION={- "$config{full_version}" -}
+MAJOR={- $config{major} -}
+MINOR={- $config{minor} -}
+SHLIB_VERSION_NUMBER={- $config{shlib_version} -}
+SHLIB_TARGET={- $target{shared_target} -}
+
+LIBS={- join(", ", map { "-\n\t".$_.".OLB" } @libs) -}
+SHLIBS={- join(", ", map { "-\n\t".$_.".EXE" } @shlibs) -}
+FIPSMODULENAME={- # We do some extra checking here, as there should be only one
+                  use File::Basename;
+                  my @fipsmodules =
+                      grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
+                             && $unified_info{attributes}->{modules}->{$_}->{fips} }
+                      @{$unified_info{modules}};
+                  die "More that one FIPS module" if scalar @fipsmodules > 1;
+                  join(", ", map { basename(platform->dso($_)) } @fipsmodules) -}
+MODULES={- join(", ", map { "-\n\t".$_.".EXE" } @{$unified_info{modules}}) -}
+PROGRAMS={- join(", ", map { "-\n\t".$_.".EXE" } @{$unified_info{programs}}) -}
+SCRIPTS={- join(", ", map { "-\n\t".$_ } @{$unified_info{scripts}}) -}
+{- output_off() if $disabled{makedepend}; "" -}
+DEPS={- our @deps = map { platform->isobj($_) ? platform->dep($_) : $_ }
+                    grep { $unified_info{sources}->{$_}->[0] =~ /\.c$/ }
+                    keys %{$unified_info{sources}};
+        join(", ", map { "-\n\t".$_ } @deps); -}
+{- output_on() if $disabled{makedepend}; "" -}
+GENERATED_MANDATORY={- join(", ", map { "-\n\t".$_ } @{$unified_info{depends}->{""}} ) -}
+GENERATED={- # common0.tmpl provides @generated
+             join(", ", map { platform->convertext($_) } @generated) -}
+
+INSTALL_LIBS={- join(", ", map { "-\n\t".$_.".OLB" } @install_libs) -}
+INSTALL_SHLIBS={- join(", ", map { "-\n\t".$_.".EXE" } @install_shlibs) -}
+INSTALL_ENGINES={- join(", ", map { "-\n\t".$_.".EXE" } @install_engines) -}
+INSTALL_MODULES={- join(", ", map { "-\n\t".$_.".EXE" } @install_modules) -}
+INSTALL_PROGRAMS={- join(", ", map { "-\n\t".$_.".EXE" } @install_programs) -}
+BIN_SCRIPTS={- join(", ", @install_bin_scripts) -}
+MISC_SCRIPTS={- join(", ", @install_misc_scripts) -}
+HTMLDOCS1={- join(", ", map { "-\n\t".$_ } @{$unified_info{htmldocs}->{man1}}) -}
+HTMLDOCS3={- join(", ", map { "-\n\t".$_ } @{$unified_info{htmldocs}->{man3}}) -}
+HTMLDOCS5={- join(", ", map { "-\n\t".$_ } @{$unified_info{htmldocs}->{man5}}) -}
+HTMLDOCS7={- join(", ", map { "-\n\t".$_ } @{$unified_info{htmldocs}->{man7}}) -}
+
+APPS_OPENSSL="{- use File::Spec::Functions;
+                 catfile("apps","openssl") -}"
+
+# DESTDIR is for package builders so that they can configure for, say,
+# SYS$COMMON:[OPENSSL] and yet have everything installed in STAGING:[USER].
+# In that case, configure with --prefix=SYS$COMMON:[OPENSSL] and then run
+# MMS with /MACROS=(DESTDIR=STAGING:[USER]).  The result will end up in
+# STAGING:[USER.OPENSSL].
+# Normally it is left empty.
+DESTDIR=
+
+# Do not edit this manually. Use Configure --prefix=DIR to change this!
+INSTALLTOP={- our $installtop =
+                  catdir($config{prefix}) || "SYS\$COMMON:[OPENSSL]";
+              $installtop -}
+SYSTARTUP={- catdir($installtop, '[.SYS$STARTUP]'); -}
+# This is the standard central area to store certificates, private keys...
+OPENSSLDIR={- catdir($config{openssldir}) or
+              $config{prefix} ? catdir($config{prefix},"COMMON")
+                              : "SYS\$COMMON:[OPENSSL-COMMON]" -}
+# The same, but for C
+OPENSSLDIR_C={- platform->osslprefix() -}DATAROOT:[000000]
+# Where installed ENGINE modules reside, for C
+ENGINESDIR_C={- platform->osslprefix() -}ENGINES{- $sover_dirname.$target{pointer_size} -}:
+# Where modules reside, for C
+MODULESDIR_C={- platform->osslprefix() -}MODULES{- $sover_dirname.$target{pointer_size} -}:
+
+##### User defined commands and flags ################################
+
+CC={- $config{CC} -}
+CPP={- $config{CPP} -}
+DEFINES={- our $defines1 = join('', map { ",$_" } @{$config{CPPDEFINES}}) -}
+INCLUDES={- our $includes1 = join(',', @{$config{CPPINCLUDES}}) -}
+CPPFLAGS={- our $cppflags1 = join('', @{$config{CPPFLAGS}}) -}
+CFLAGS={- join('', @{$config{CFLAGS}}) -}
+LDFLAGS={- join('', @{$config{LFLAGS}}) -}
+EX_LIBS={- join('', map { ",$_" } @{$config{LDLIBS}}) -}
+
+PERL={- $config{PERL} -}
+
+AS={- $config{AS} -}
+ASFLAGS={- join(' ', @{$config{ASFLAGS}}) -}
+
+##### Special command flags ##########################################
+
+ASOUTFLAG={- $target{asoutflag} -}$(OSSL_EMPTY)
+
+##### Project flags ##################################################
+
+# Variables starting with CNF_ are common variables for all product types
+
+CNF_ASFLAGS={- join('', $target{asflags} || (),
+                        @{$config{asflags}}) -}
+CNF_DEFINES={- our $defines2 = join('', (map { ",$_" } @{$target{defines}},
+                                                       @{$config{defines}}),
+                                        "'extradefines'") -}
+CNF_INCLUDES={- our $includes2 = join(',', @{$target{includes}},
+                                           @{$config{includes}}) -}
+CNF_CPPFLAGS={- our $cppflags2 = join('', $target{cppflags} || (),
+                                          @{$config{cppflags}}) -}
+CNF_CFLAGS={- join('', $target{cflags} || (),
+                       @{$config{cflags}}) -}
+CNF_CXXFLAGS={- join('', $target{cxxflags} || (),
+                         @{$config{cxxflags}}) -}
+CNF_LDFLAGS={- join('', $target{lflags} || (),
+                        @{$config{lflags}}) -}
+CNF_EX_LIBS={- join('', map{ ",$_" } @{$target{ex_libs}},
+                                     @{$config{ex_libs}}) -}
+
+# Variables starting with LIB_ are used to build library object files
+# and shared libraries.
+# Variables starting with DSO_ are used to build DSOs and their object files.
+# Variables starting with BIN_ are used to build programs and their object
+# files.
+
+LIB_ASFLAGS={- join(' ', $target{lib_asflags} || (),
+                         @{$config{lib_asflags}},
+                         '$(CNF_ASFLAGS)', '$(ASFLAGS)') -}
+LIB_DEFINES={- our $lib_defines =
+               join('', (map { ",$_" } @{$target{lib_defines}},
+                                       @{$target{shared_defines}},
+                                       @{$config{lib_defines}},
+                                       @{$config{shared_defines}}));
+               join('', $lib_defines,
+                        (map { ",$_" } 'OPENSSLDIR="""$(OPENSSLDIR_C)"""',
+                                       'ENGINESDIR="""$(ENGINESDIR_C)"""',
+                                       'MODULESDIR="""$(MODULESDIR_C)"""'),
+                        '$(CNF_DEFINES)', '$(DEFINES)') -}
+LIB_INCLUDES={- our $lib_includes =
+                join(',', @{$target{lib_includes}},
+                          @{$target{shared_includes}},
+                          @{$config{lib_includes}},
+                          @{$config{shared_includes}}) -}
+LIB_CPPFLAGS={- our $lib_cppflags =
+                join('', $target{lib_cppflags} || (),
+                         $target{shared_cppflags} || (),
+                         @{$config{lib_cppflags}},
+                         @{$config{shared_cppflag}});
+                join('', "'qual_includes'",
+                         '/DEFINE=(__dummy$(LIB_DEFINES))',
+                         $lib_cppflags,
+                         '$(CNF_CPPFLAGS)', '$(CPPFLAGS)') -}
+LIB_CFLAGS={- join('', $target{lib_cflags} || (),
+                       $target{shared_cflag} || (),
+                       @{$config{lib_cflags}},
+                       @{$config{shared_cflag}},
+                       '$(CNF_CFLAGS)', '$(CFLAGS)') -}
+LIB_LDFLAGS={- join('', $target{lib_lflags} || (),
+                        $target{shared_ldflag} || (),
+                        @{$config{lib_lflags}},
+                        @{$config{shared_ldflag}},
+                        '$(CNF_LDFLAGS)', '$(LDFLAGS)') -}
+LIB_EX_LIBS=$(CNF_EX_LIBS)$(EX_LIBS)
+DSO_ASFLAGS={- join(' ', $target{dso_asflags} || (),
+                         $target{module_asflags} || (),
+                         @{$config{dso_asflags}},
+                         @{$config{module_asflags}},
+                         '$(CNF_ASFLAGS)', '$(ASFLAGS)') -}
+DSO_DEFINES={- join('', (map { ",$_" } @{$target{dso_defines}},
+                                       @{$target{module_defines}},
+                                       @{$config{dso_defines}},
+                                       @{$config{module_defines}}),
+                        '$(CNF_DEFINES)', '$(DEFINES)') -}
+DSO_INCLUDES={- join(',', @{$target{dso_includes}},
+                          @{$target{module_includes}},
+                          @{$config{dso_includes}},
+                          @{$config{module_includes}}) -}
+DSO_CPPFLAGS={- join('', "'qual_includes'",
+                         '/DEFINE=(__dummy$(DSO_DEFINES))',
+                         $target{dso_cppflags} || (),
+                         $target{module_cppflags} || (),
+                         @{$config{dso_cppflags}},
+                         @{$config{module_cppflags}},
+                         '$(CNF_CPPFLAGS)', '$(CPPFLAGS)') -}
+DSO_CFLAGS={- join('', $target{dso_cflags} || (),
+                       $target{module_cflags} || (),
+                       @{$config{dso_cflags}},
+                       @{$config{module_cflags}},
+                       '$(CNF_CFLAGS)', '$(CFLAGS)') -}
+DSO_LDFLAGS={- join('', $target{dso_lflags} || (),
+                        $target{module_ldflags} || (),
+                        @{$config{dso_lflags}},
+                        @{$config{module_ldflags}},
+                        '$(CNF_LDFLAGS)', '$(LDFLAGS)') -}
+DSO_EX_LIBS=$(CNF_EX_LIBS) $(EX_LIBS)
+BIN_ASFLAGS={- join(' ', $target{bin_asflags} || (),
+                         @{$config{bin_asflags}},
+                         '$(CNF_ASFLAGS)', '$(ASFLAGS)') -}
+BIN_DEFINES={- join('', (map { ",$_" } @{$target{bin_defines}},
+                                       @{$config{bin_defines}}),
+                        '$(CNF_DEFINES)', '$(DEFINES)') -}
+BIN_INCLUDES={- join(',', @{$target{bin_includes}},
+                          @{$config{bin_includes}}) -}
+BIN_CPPFLAGS={- join('', "'qual_includes'",
+                         '/DEFINE=(__dummy$(DSO_DEFINES))',
+                         $target{bin_cppflags} || (),
+                         @{$config{bin_cppflag}},
+                         '$(CNF_CPPFLAGS)', '$(CPPFLAGS)') -}
+BIN_CFLAGS={- join('', $target{bin_cflags} || (),
+                       @{$config{bin_cflags}},
+                       '$(CNF_CFLAGS)', '$(CFLAGS)') -}
+BIN_LDFLAGS={- join('', $target{bin_lflags} || (),
+                        @{$config{bin_lflags}} || (),
+                        '$(CNF_LDFLAGS)', '$(LDFLAGS)') -}
+BIN_EX_LIBS=$(CNF_EX_LIBS) $(EX_LIBS)
+NO_INST_LIB_CFLAGS={- join('', $target{no_inst_lib_cflags}
+                               // $target{lib_cflags}
+                               // (),
+                               $target{shared_cflag} || (),
+                               @{$config{lib_cflags}},
+                               @{$config{shared_cflag}},
+                               '$(CNF_CFLAGS)', '$(CFLAGS)') -}
+NO_INST_DSO_CFLAGS={- join('', $target{no_inst_dso_cflags}
+                               // $target{dso_cflags}
+                               // (),
+                               $target{no_inst_module_cflags}
+                               // $target{module_cflags}
+                               // (),
+                               @{$config{dso_cflags}},
+                               @{$config{module_cflags}},
+                               '$(CNF_CFLAGS)', '$(CFLAGS)') -}
+NO_INST_BIN_CFLAGS={- join('', $target{no_inst_bin_cflags}
+                               // $target{bin_cflags}
+                               // (),
+                               @{$config{bin_cflags}},
+                               '$(CNF_CFLAGS)', '$(CFLAGS)') -}
+
+PERLASM_SCHEME={- $target{perlasm_scheme} -}
+
+# CPPFLAGS_Q is used for one thing only: to build up buildinf.h
+CPPFLAGS_Q={- (my $c = $lib_cppflags.$cppflags2.$cppflags1) =~ s|"|""|g;
+              (my $d = $lib_defines.$defines2.$defines1) =~ s|"|""|g;
+              my $i = join(',', $lib_includes || (), $includes2 || (),
+                                $includes1 || ());
+              my $x = $c;
+              $x .= "/INCLUDE=($i)" if $i;
+              $x .= "/DEFINE=($d)" if $d;
+              $x; -}
+
+# .FIRST and .LAST are special targets with MMS and MMK.
+# The defines in there are for C.  includes that look like
+# this:
+#
+#    #include <openssl/foo.h>
+#    #include "internal/bar.h"
+#
+# will use the logical names to find the files.  Expecting
+# DECompHP C to find files in subdirectories of whatever was
+# given with /INCLUDE is a fantasy, unfortunately.
+NODEBUG=@
+.FIRST :
+        $(NODEBUG) sourcetop = F$PARSE("$(SRCDIR)","[]A.;",,"SYNTAX_ONLY,NO_CONCEAL") - ".][000000" - "[000000." - "][" - "]A.;" + ".]"
+        $(NODEBUG) DEFINE ossl_sourceroot 'sourcetop'
+        $(NODEBUG) !
+        $(NODEBUG) openssl_inc1 = F$PARSE("[.include.openssl]","A.;",,,"syntax_only") - "A.;"
+        $(NODEBUG) openssl_inc2 = F$PARSE("{- catdir($config{sourcedir},"[.include.openssl]") -}","A.;",,,"SYNTAX_ONLY") - "A.;"
+        $(NODEBUG) internal_inc1 = F$PARSE("[.crypto.include.internal]","A.;",,,"SYNTAX_ONLY") - "A.;"
+        $(NODEBUG) internal_inc2 = F$PARSE("{- catdir($config{sourcedir},"[.include.internal]") -}","A.;",,,"SYNTAX_ONLY") - "A.;"
+        $(NODEBUG) internal_inc3 = F$PARSE("{- catdir($config{sourcedir},"[.crypto.include.internal]") -}","A.;",,,"SYNTAX_ONLY") - "A.;"
+        $(NODEBUG) DEFINE openssl 'openssl_inc1','openssl_inc2'
+        $(NODEBUG) DEFINE internal 'internal_inc1','internal_inc2','internal_inc3'
+        $(NODEBUG) staging_dir = "$(DESTDIR)"
+        $(NODEBUG) staging_instdir = ""
+        $(NODEBUG) staging_datadir = ""
+        $(NODEBUG) IF staging_dir .NES. "" THEN -
+                staging_instdir = F$PARSE("A.;",staging_dir,"[]",,"SYNTAX_ONLY")
+        $(NODEBUG) IF staging_instdir - "]A.;" .NES. staging_instdir THEN -
+                staging_instdir = staging_instdir - "]A.;" + ".OPENSSL-INSTALL]"
+        $(NODEBUG) IF staging_instdir - "A.;" .NES. staging_instdir THEN -
+                staging_instdir = staging_instdir - "A.;" + "[OPENSSL-INSTALL]"
+        $(NODEBUG) IF staging_dir .NES. "" THEN -
+                staging_datadir = F$PARSE("A.;",staging_dir,"[]",,"SYNTAX_ONLY")
+        $(NODEBUG) IF staging_datadir - "]A.;" .NES. staging_datadir THEN -
+                staging_datadir = staging_datadir - "]A.;" + ".OPENSSL-COMMON]"
+        $(NODEBUG) IF staging_datadir - "A.;" .NES. staging_datadir THEN -
+                staging_datadir = staging_datadir - "A.;" + "[OPENSSL-COMMON]"
+        $(NODEBUG) !
+        $(NODEBUG) ! Installation logical names
+        $(NODEBUG) !
+        $(NODEBUG) ! This also creates a few DCL variables that are used for
+        $(NODEBUG) ! the "install_msg" target.
+        $(NODEBUG) !
+        $(NODEBUG) installroot = F$PARSE(staging_instdir,"$(INSTALLTOP)","[]A.;",,"SYNTAX_ONLY,NO_CONCEAL") - ".][000000" - "[000000." - "][" - "]A.;"
+        $(NODEBUG) installtop = installroot + ".]"
+        $(NODEBUG) dataroot = F$PARSE(staging_datadir,"$(OPENSSLDIR)","[]A.;",,"SYNTAX_ONLY,NO_CONCEAL") - ".][000000" - "[000000." - "][" - "]A.;"
+        $(NODEBUG) datatop = dataroot + ".]"
+        $(NODEBUG) DEFINE ossl_installroot 'installtop'
+        $(NODEBUG) DEFINE ossl_dataroot 'datatop'
+        $(NODEBUG) !
+        $(NODEBUG) ! Figure out the architecture
+        $(NODEBUG) !
+        $(NODEBUG) arch = f$edit( f$getsyi( "arch_name"), "upcase")
+        $(NODEBUG) !
+        $(NODEBUG) ! Set up logical names for the libraries, so LINK and
+        $(NODEBUG) ! running programs can use them.
+        $(NODEBUG) !
+        $(NODEBUG) {- join("\n\t\$(NODEBUG) ", map { "DEFINE ".uc($_)." 'F\$ENV(\"DEFAULT\")'".uc($_)."\$(SHLIB_EXT)" } @shlibs) || "!" -}
+
+.LAST :
+        $(NODEBUG) {- join("\n\t\$(NODEBUG) ", map { "DEASSIGN ".uc($_) } @shlibs) || "!" -}
+        $(NODEBUG) DEASSIGN ossl_dataroot
+        $(NODEBUG) DEASSIGN ossl_installroot
+        $(NODEBUG) DEASSIGN internal
+        $(NODEBUG) DEASSIGN openssl
+.DEFAULT :
+        @ ! MMS cannot handle no actions...
+
+# The main targets ###################################################
+
+{- dependmagic('build_sw'); -} : build_libs_nodep, build_modules_nodep, build_programs_nodep copy-utils
+{- dependmagic('build_libs'); -} : build_libs_nodep
+{- dependmagic('build_modules'); -} : build_modules_nodep
+{- dependmagic('build_programs'); -} : build_programs_nodep
+
+build_generated : $(GENERATED_MANDATORY)
+build_libs_nodep : $(LIBS), $(SHLIBS)
+build_modules_nodep : $(MODULES)
+build_programs_nodep : $(PROGRAMS), $(SCRIPTS)
+
+build_docs: build_html_docs
+build_html_docs: $(HTMLDOCS1) $(HTMLDOCS3) $(HTMLDOCS5) $(HTMLDOCS7)
+
+# Kept around for backward compatibility
+build_apps build_tests : build_programs
+
+# Convenience target to prebuild all generated files, not just the mandatory
+# ones
+build_all_generated : $(GENERATED_MANDATORY) $(GENERATED) build_docs
+	@ ! {- output_off() if $disabled{makedepend}; "" -}
+	@ WRITE SYS$OUTPUT "Warning: consider configuring with no-makedepend, because if"
+	@ WRITE SYS$OUTPUT "         target system doesn't have $(PERL),"
+	@ WRITE SYS$OUTPUT "         then make will fail..."
+	@ ! {- output_on() if $disabled{makedepend}; "" -}
+
+all : build_sw build_docs
+
+test : tests
+{- dependmagic('tests'); -} : build_programs_nodep, build_modules_nodep copy-utils
+        @ ! {- output_off() if $disabled{tests}; "" -}
+        DEFINE SRCTOP "$(SRCDIR)"
+        DEFINE BLDTOP "$(BLDDIR)"
+        DEFINE FIPSKEY "$(FIPSKEY)"
+        IF "$(VERBOSE)" .NES. "" THEN DEFINE VERBOSE "$(VERBOSE)"
+        $(PERL) {- sourcefile("test", "run_tests.pl") -} $(TESTS)
+        DEASSIGN BLDTOP
+        DEASSIGN SRCTOP
+        DEASSIGN FIPSKEY
+        @ ! {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
+        @ WRITE SYS$OUTPUT "Tests are not supported with your chosen Configure options"
+        @ ! {- output_on() if !$disabled{tests}; "" -}
+
+list-tests :
+        @ ! {- output_off() if $disabled{tests}; "" -}
+        @ DEFINE SRCTOP "$(SRCDIR)"
+        @ $(PERL) {- sourcefile("test", "run_tests.pl") -} list
+        @ DEASSIGN SRCTOP
+        @ ! {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
+        @ WRITE SYS$OUTPUT "Tests are not supported with your chosen Configure options"
+        @ ! {- output_on() if !$disabled{tests}; "" -}
+
+install : install_sw install_ssldirs install_docs install_msg
+
+install_msg :
+        @ WRITE SYS$OUTPUT ""
+        @ WRITE SYS$OUTPUT "######################################################################"
+        @ WRITE SYS$OUTPUT ""
+        @ IF "$(DESTDIR)" .EQS. "" THEN -
+             @{- sourcefile("VMS", "msg_install.com") -} "$(SYSTARTUP)" "{- $osslver -}"
+        @ IF "$(DESTDIR)" .NES. "" THEN -
+             @{- sourcefile("VMS", "msg_staging.com") -} -
+             "''installroot']" "''dataroot']" "$(INSTALLTOP)" "$(OPENSSLDIR)" -
+             "$(SYSTARTUP)" "{- $osslver -}"
+
+check_install :
+        spawn/nolog @ossl_installroot:[SYSTEST]openssl_ivp{- $osslver -}.com
+
+uninstall : uninstall_docs uninstall_sw
+
+# Because VMS wants the generation number (or *) to delete files, we can't
+# use $(LIBS), $(PROGRAMS), $(GENERATED) and $(MODULES) directly.
+libclean :
+        {- join("\n\t", map { "- DELETE $_.OLB;*" } @libs) || "@ !" -}
+        {- join("\n\t", map { "- DELETE $_.EXE;*,$_.MAP;*" } @shlibs) || "@ !" -}
+
+clean : libclean
+        {- join("\n\t", map { "- DELETE $_;*" } @{$unified_info{htmldocs}->{man1}}) || "@ !" -}
+        {- join("\n\t", map { "- DELETE $_;*" } @{$unified_info{htmldocs}->{man3}}) || "@ !" -}
+        {- join("\n\t", map { "- DELETE $_;*" } @{$unified_info{htmldocs}->{man5}}) || "@ !" -}
+        {- join("\n\t", map { "- DELETE $_;*" } @{$unified_info{htmldocs}->{man7}}) || "@ !" -}
+        {- join("\n\t", map { "- DELETE $_.EXE;*,$_.OPT;*" } @{$unified_info{programs}}) || "@ !" -}
+        {- join("\n\t", map { "- DELETE $_.EXE;*,$_.OPT;*" } @{$unified_info{modules}}) || "@ !" -}
+        {- join("\n\t", map { "- DELETE $_;*" } @{$unified_info{scripts}}) || "@ !" -}
+        {- join("\n\t", map { "- DELETE $_;*" } @{$unified_info{depends}->{""}}) || "@ !" -}
+        {- join("\n\t", map { "- DELETE $_;*" } @generated) || "@ !" -}
+        - DELETE [...]*.MAP;*
+        - DELETE [...]*.D;*
+        - DELETE [...]*.OBJ;*,*.LIS;*
+        - DELETE []CXX$DEMANGLER_DB.;*
+        - DELETE [.VMS]openssl_startup.com;*
+        - DELETE [.VMS]openssl_shutdown.com;*
+        - DELETE []vmsconfig.pm;*
+
+distclean : clean
+        - DELETE configdata.pm;*
+        - DELETE descrip.mms;*
+
+depend : descrip.mms
+descrip.mms : FORCE
+	@ ! {- output_off() if $disabled{makedepend}; "" -}
+	@ $(PERL) {- sourcefile("util", "add-depends.pl") -} "{- $config{makedep_scheme} -}"
+	@ ! {- output_on() if $disabled{makedepend}; "" -}
+
+# Install helper targets #############################################
+
+install_sw : install_dev install_engines install_modules -
+             install_runtime install_startup install_ivp
+
+uninstall_sw : uninstall_dev uninstall_modules uninstall_engines -
+               uninstall_runtime uninstall_startup uninstall_ivp
+
+install_docs : install_html_docs
+
+uninstall_docs : uninstall_html_docs
+
+install_fips: install_sw
+	@ WRITE SYS$OUTPUT "*** Installing FIPS module configuration"
+	@ WRITE SYS$OUTPUT "fipsinstall $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME).cnf"
+	openssl fipsinstall -
+		-module ossl_installroot:[MODULES{- $sover_dirname.$target{pointer_size} -}.'arch']$(FIPSMODULENAME) -
+		-out ossl_installroot:[MODULES{- $sover_dirname.$target{pointer_size} -}.'arch']$(FIPSMODULENAME).cnf -
+		-macopt "hexkey:$(FIPSKEY)"
+
+uninstall_fips: uninstall_sw
+	@ WRITE SYS$OUTPUT "*** Uninstalling FIPS module configuration"
+	DELETE ossl_installroot:[MODULES{- $sover_dirname.$target{pointer_size} -}.'arch']$(FIPSMODULENAME).cnf;*
+
+install_ssldirs : check_INSTALLTOP
+        - CREATE/DIR/PROT=(S:RWED,O:RWE,G:RE,W:RE) OSSL_DATAROOT:[000000]
+        IF F$SEARCH("OSSL_DATAROOT:[000000]CERTS.DIR;1") .EQS. "" THEN -
+                CREATE/DIR/PROT=(S:RWED,O:RWE,G:RE,W:RE) OSSL_DATAROOT:[CERTS]
+        IF F$SEARCH("OSSL_DATAROOT:[000000]PRIVATE.DIR;1") .EQS. "" THEN -
+                CREATE/DIR/PROT=(S:RWED,O:RWE,G,W) OSSL_DATAROOT:[PRIVATE]
+        IF F$SEARCH("OSSL_DATAROOT:[000000]MISC.DIR;1") .EQS. "" THEN -
+                CREATE/DIR/PROT=(S:RWED,O:RWE,G,W) OSSL_DATAROOT:[MISC]
+        COPY/PROT=W:RE $(MISC_SCRIPTS) OSSL_DATAROOT:[MISC]
+        @ ! Install configuration file
+        COPY/PROT=W:R {- sourcefile("apps", "openssl-vms.cnf") -} -
+                ossl_dataroot:[000000]openssl.cnf-dist
+        IF F$SEARCH("OSSL_DATAROOT:[000000]openssl.cnf") .EQS. "" THEN -
+                COPY/PROT=W:R {- sourcefile("apps", "openssl-vms.cnf") -} -
+                        ossl_dataroot:[000000]openssl.cnf
+        @ ! Install CTLOG configuration file
+        COPY/PROT=W:R {- sourcefile("apps", "ct_log_list.cnf") -} -
+                ossl_dataroot:[000000]ct_log_list.cnf-dist
+        IF F$SEARCH("OSSL_DATAROOT:[000000]ct_log_list.cnf") .EQS. "" THEN -
+                COPY/PROT=W:R {- sourcefile("apps", "ct_log_list.cnf") -} -
+                        ossl_dataroot:[000000]ct_log_list.cnf
+
+install_dev : check_INSTALLTOP install_runtime_libs
+        @ WRITE SYS$OUTPUT "*** Installing development files"
+        @ ! Install header files
+        - CREATE/DIR ossl_installroot:[include.openssl]
+        COPY/PROT=W:R openssl:*.h ossl_installroot:[include.openssl]
+        @ ! Install static (development) libraries
+        - CREATE/DIR ossl_installroot:[LIB.'arch']
+        {- join("\n        ",
+                map { "COPY/PROT=W:R $_.OLB ossl_installroot:[LIB.'arch']" }
+                @install_libs) -}
+
+install_engines : check_INSTALLTOP install_runtime_libs build_modules
+        @ {- output_off() unless scalar @install_engines; "" -} !
+        @ WRITE SYS$OUTPUT "*** Installing engines"
+        - CREATE/DIR ossl_installroot:[ENGINES{- $sover_dirname.$target{pointer_size} -}.'arch']
+        {- join("\n        ",
+                map { "COPY/PROT=W:RE $_.EXE ossl_installroot:[ENGINES$sover_dirname$target{pointer_size}.'arch']" }
+                @install_engines) -}
+        @ {- output_on() unless scalar @install_engines; "" -} !
+
+install_modules : check_INSTALLTOP install_runtime_libs build_modules
+        @ {- output_off() unless scalar @install_modules; "" -} !
+        @ WRITE SYS$OUTPUT "*** Installing modules"
+        - CREATE/DIR ossl_installroot:[MODULES{- $sover_dirname.$target{pointer_size} -}.'arch']
+        {- join("\n        ",
+                map { "COPY/PROT=W:RE $_.EXE ossl_installroot:[MODULES$sover_dirname$target{pointer_size}.'arch']" }
+                @install_modules) -}
+        @ {- output_on() unless scalar @install_modules; "" -} !
+
+install_runtime : install_programs
+
+install_runtime_libs : check_INSTALLTOP build_libs
+        @ {- output_off() if $disabled{shared}; "" -} !
+        @ WRITE SYS$OUTPUT "*** Installing shareable images"
+        @ ! Install shared (runtime) libraries
+        - CREATE/DIR ossl_installroot:[LIB.'arch']
+        {- join("\n        ",
+                map { "COPY/PROT=W:R $_.EXE ossl_installroot:[LIB.'arch']" }
+                @install_shlibs) -}
+        @ {- output_on() if $disabled{shared}; "" -} !
+
+install_programs : check_INSTALLTOP install_runtime_libs build_programs
+        @ {- output_off() if $disabled{apps}; "" -} !
+        @ ! Install the main program
+        - CREATE/DIR ossl_installroot:[EXE.'arch']
+        COPY/PROT=W:RE [.APPS]openssl.EXE -
+                ossl_installroot:[EXE.'arch']openssl{- $osslver -}.EXE
+        @ ! Install scripts
+        COPY/PROT=W:RE $(BIN_SCRIPTS) ossl_installroot:[EXE]
+        @ ! {- output_on() if $disabled{apps}; "" -}
+
+install_startup : [.VMS]openssl_startup.com [.VMS]openssl_shutdown.com -
+                 [.VMS]openssl_utils.com, check_INSTALLTOP
+        - CREATE/DIR ossl_installroot:[SYS$STARTUP]
+        COPY/PROT=W:RE [.VMS]openssl_startup.com -
+                ossl_installroot:[SYS$STARTUP]openssl_startup{- $osslver -}.com
+        COPY/PROT=W:RE [.VMS]openssl_shutdown.com -
+                ossl_installroot:[SYS$STARTUP]openssl_shutdown{- $osslver -}.com
+        COPY/PROT=W:RE [.VMS]openssl_utils.com -
+                ossl_installroot:[SYS$STARTUP]openssl_utils{- $osslver -}.com
+
+install_ivp : [.VMS]openssl_ivp.com check_INSTALLTOP
+        - CREATE/DIR ossl_installroot:[SYSTEST]
+        COPY/PROT=W:RE [.VMS]openssl_ivp.com -
+                ossl_installroot:[SYSTEST]openssl_ivp{- $osslver -}.com
+
+[.VMS]openssl_startup.com : vmsconfig.pm {- sourcefile("VMS", "openssl_startup.com.in") -}
+        - CREATE/DIR [.VMS]
+        $(PERL) "-I." "-Mvmsconfig" {- sourcefile("util", "dofile.pl") -} -
+                {- sourcefile("VMS", "openssl_startup.com.in") -} -
+                > [.VMS]openssl_startup.com
+
+[.VMS]openssl_utils.com : vmsconfig.pm {- sourcefile("VMS", "openssl_utils.com.in") -}
+        - CREATE/DIR [.VMS]
+        $(PERL) "-I." "-Mvmsconfig" {- sourcefile("util", "dofile.pl") -} -
+                {- sourcefile("VMS", "openssl_utils.com.in") -} -
+                > [.VMS]openssl_utils.com
+
+[.VMS]openssl_shutdown.com : vmsconfig.pm {- sourcefile("VMS", "openssl_shutdown.com.in") -}
+        - CREATE/DIR [.VMS]
+        $(PERL) "-I." "-Mvmsconfig" {- sourcefile("util", "dofile.pl") -} -
+                {- sourcefile("VMS", "openssl_shutdown.com.in") -} -
+                > [.VMS]openssl_shutdown.com
+
+[.VMS]openssl_ivp.com : vmsconfig.pm {- sourcefile("VMS", "openssl_ivp.com.in") -}
+        - CREATE/DIR [.VMS]
+        $(PERL) "-I." "-Mvmsconfig" {- sourcefile("util", "dofile.pl") -} -
+                {- sourcefile("VMS", "openssl_ivp.com.in") -} -
+                > [.VMS]openssl_ivp.com
+
+vmsconfig.pm : configdata.pm
+        OPEN/WRITE/SHARE=READ CONFIG []vmsconfig.pm
+        WRITE CONFIG "package vmsconfig;"
+        WRITE CONFIG "use strict; use warnings;"
+        WRITE CONFIG "use Exporter;"
+        WRITE CONFIG "our @ISA = qw(Exporter);"
+        WRITE CONFIG "our @EXPORT = qw(%config %target %withargs %unified_info %disabled);"
+        WRITE CONFIG "our %config = ("
+        WRITE CONFIG "  target => '","{- $config{target} -}","',"
+        WRITE CONFIG "  version => '","{- $config{version} -}","',"
+        WRITE CONFIG "  shlib_version => '","{- $config{shlib_version} -}","',"
+        WRITE CONFIG "  shlib_major => '","{- $config{shlib_major} -}","',"
+        WRITE CONFIG "  shlib_minor => '","{- $config{shlib_minor} -}","',"
+        WRITE CONFIG "  no_shared => '","{- $disabled{shared} -}","',"
+        WRITE CONFIG "  INSTALLTOP => '$(INSTALLTOP)',"
+        WRITE CONFIG "  OPENSSLDIR => '$(OPENSSLDIR)',"
+        WRITE CONFIG "  pointer_size => '","{- $target{pointer_size} -}","',"
+        WRITE CONFIG ");"
+        WRITE CONFIG "our %target = ();"
+        WRITE CONFIG "our %disabled = ();"
+        WRITE CONFIG "our %withargs = ();"
+        WRITE CONFIG "our %unified_info = ();"
+        WRITE CONFIG "1;"
+        CLOSE CONFIG
+
+install_html_docs : check_INSTALLTOP build_html_docs
+        @ WRITE SYS$OUTPUT "*** Installing HTML docs"
+        - CREATE/DIR ossl_installroot:[HTML.MAN1]
+        - CREATE/DIR ossl_installroot:[HTML.MAN3]
+        - CREATE/DIR ossl_installroot:[HTML.MAN5]
+        - CREATE/DIR ossl_installroot:[HTML.MAN7]
+        {- join("\n        ",
+                ( map { "COPY/PROT=W:RE $_ ossl_installroot:[HTML.MAN1]" }
+                  @{$unified_info{htmldocs}->{man1}} ),
+                ( map { "COPY/PROT=W:RE $_ ossl_installroot:[HTML.MAN3]" }
+                  @{$unified_info{htmldocs}->{man3}} ),
+                ( map { "COPY/PROT=W:RE $_ ossl_installroot:[HTML.MAN5]" }
+                  @{$unified_info{htmldocs}->{man5}} ),
+                ( map { "COPY/PROT=W:RE $_ ossl_installroot:[HTML.MAN7]" }
+                  @{$unified_info{htmldocs}->{man7}} )) -}
+
+check_INSTALLTOP :
+        @ IF "$(INSTALLTOP)" .EQS. "" THEN -
+                WRITE SYS$ERROR "INSTALLTOP should not be empty"
+        @ IF "$(INSTALLTOP)" .EQS. "" THEN -
+                EXIT %x10000002
+
+# Helper targets #####################################################
+
+copy-utils : [.util]wrap.pl
+
+[.util]wrap.pl : configdata.pm
+	@ IF "$(SRCDIR)" .NES. "$(BLDDIR)" THEN -
+		CREATE/DIR/LOG [.util]
+	@ IF "$(SRCDIR)" .NES. "$(BLDDIR)" THEN -
+		COPY/LOG ossl_sourceroot:[util]wrap.pl [.util]
+
+# Developer targets ##################################################
+
+debug_logicals :
+        SH LOGICAL/PROC openssl,internal,ossl_installroot,ossl_dataroot
+
+# Building targets ###################################################
+
+configdata.pm : $(SRCDIR)Configure $(SRCDIR)config.com {- join(" ", @{$config{build_file_templates}}, @{$config{build_infos}}, @{$config{conf_files}}) -}
+        perl configdata.pm -r
+        @ WRITE SYS$OUTPUT "*************************************************"
+        @ WRITE SYS$OUTPUT "***                                           ***"
+        @ WRITE SYS$OUTPUT "***   Please run the same mms command again   ***"
+        @ WRITE SYS$OUTPUT "***                                           ***"
+        @ WRITE SYS$OUTPUT "*************************************************"
+        @ PIPE ( EXIT %X10000000 )
+
+reconfigure reconf :
+	perl configdata.pm -r
+
+{-
+  use File::Basename;
+  use File::Spec::Functions qw/abs2rel rel2abs catfile catdir/;
+
+  # Helper function to figure out dependencies on libraries
+  # It takes a list of library names and outputs a list of dependencies
+  sub compute_lib_depends {
+      # Depending on shared libraries:
+      # On Windows POSIX layers, we depend on {libname}.dll.a
+      # On Unix platforms, we depend on {shlibname}.so
+      return map {
+          { lib   => platform->sharedlib($_) // platform->staticlib($_),
+            attrs => $unified_info{attributes}->{libraries}->{$_} }
+      } @_;
+  }
+
+  # Helper function to deal with inclusion directory specs.
+  # We have to deal with two things:
+  # 1. comma separation and no possibility of trailing comma
+  # 2. no inclusion directories given at all
+  # 3. long compiler command lines
+  # To resolve 1, we need to iterate through the sources of inclusion
+  # directories, and only add a comma when needed.
+  # To resolve 2, we need to have a variable that will hold the whole
+  # inclusion qualifier, or be the empty string if there are no inclusion
+  # directories.  That's the symbol 'qual_includes' that's used in CPPFLAGS
+  # To resolve 3, we create a logical name TMP_INCLUDES: to hold the list
+  # of inclusion directories.
+  #
+  # This function returns a list of two lists, one being the collection of
+  # commands to execute before the compiler is called, and the other being
+  # the collection of commands to execute after.  It takes as arguments the
+  # collection of strings to include as directory specs.
+  sub includes {
+      my @stuff = ( @_ );
+      my @before = (
+          'qual_includes :=',
+      );
+      my @after = (
+          'DELETE/SYMBOL/LOCAL qual_includes',
+      );
+
+      if (scalar @stuff > 0) {
+          push @before, 'tmp_includes := '.shift(@stuff);
+          while (@stuff) {
+              push @before, 'tmp_add := '.shift(@stuff);
+              push @before, 'IF tmp_includes .NES. "" .AND. tmp_add .NES. "" THEN tmp_includes = tmp_includes + ","';
+              push @before, 'tmp_includes = tmp_includes + tmp_add';
+          }
+          push @before, "IF tmp_includes .NES. \"\" THEN DEFINE tmp_includes 'tmp_includes'";
+          push @before, 'IF tmp_includes .NES. "" THEN qual_includes := /INCLUDE=(tmp_includes:)';
+          push @before, 'DELETE/SYMBOL/LOCAL tmp_includes';
+          push @before, 'DELETE/SYMBOL/LOCAL tmp_add';
+          push @after, 'DEASSIGN tmp_includes:'
+      }
+      return ([ @before ], [ @after ]);
+  }
+
+  sub generatetarget {
+      my %args = @_;
+      my $deps = join(" ", @{$args{deps}});
+      return <<"EOF";
+$args{target} : $deps
+EOF
+  }
+
+  sub generatesrc {
+      my %args = @_;
+      my $gen0 = $args{generator}->[0];
+      my $gen_args = join('', map { " $_" }
+                              @{$args{generator}}[1..$#{$args{generator}}]);
+      my $gen_incs = join("", map { ' "-I'.$_.'"' } @{$args{generator_incs}});
+      my $deps = join(", -\n\t\t", @{$args{generator_deps}}, @{$args{deps}});
+
+      if ($args{src} =~ /\.html$/) {
+          #
+          # HTML generator
+          #
+          my $title = basename($args{src}, ".html");
+          my $pod = $gen0;
+          my $mkpod2html = sourcefile('util', 'mkpod2html.pl');
+          return <<"EOF";
+$args{src}: $pod
+	\$(PERL) $mkpod2html -i $pod -o \$\@ -t "$title" -r "\$(SRCDIR)/doc"
+EOF
+      } elsif (platform->isdef($args{src})) {
+          #
+          # Linker script-ish generator
+          #
+          my $target = platform->def($args{src});
+          my $mkdef = sourcefile('util', 'mkdef.pl');
+          my $ord_ver = $args{intent} eq 'lib' ? ' --version $(VERSION)' : '';
+          my $ord_name =
+              $args{generator}->[1] || basename($args{product}, '.EXE');
+          my $case_insensitive =
+              $target{$args{intent}.'_cflags'} =~ m|/NAMES=[^/]*AS_IS|i
+              ? '' : ' --case-insensitive';
+          return <<"EOF";
+$target : $gen0 $deps $mkdef
+	\$(PERL) $mkdef$ord_ver --ordinals $gen0 --name $ord_name "--OS" "VMS"$case_insensitive > $target
+EOF
+      } elsif (platform->isasm($args{src})) {
+          #
+          # Assembler generator
+          #
+          my $cppflags = {
+              shlib => '$(LIB_CFLAGS) $(LIB_CPPFLAGS)',
+              lib => '$(LIB_CFLAGS) $(LIB_CPPFLAGS)',
+              dso => '$(DSO_CFLAGS) $(DSO_CPPFLAGS)',
+              bin => '$(BIN_CFLAGS) $(BIN_CPPFLAGS)'
+          } -> {$args{intent}};
+          my @incs_cmds = includes({ shlib => '$(LIB_INCLUDES)',
+                                     lib => '$(LIB_INCLUDES)',
+                                     dso => '$(DSO_INCLUDES)',
+                                     bin => '$(BIN_INCLUDES)' } -> {$args{intent}},
+                                   '$(CNF_INCLUDES)',
+                                   '$(INCLUDES)',
+                                   @{$args{incs}});
+          my $incs_on = join("\n\t\@ ", @{$incs_cmds[0]}) || '!';
+          my $incs_off = join("\n\t\@ ", @{$incs_cmds[1]}) || '!';
+          my $defs = join("", map { ",".$_ } @{$args{defs}});
+          my $target = platform->asm($args{src});
+
+          my $generator;
+          if ($gen0 =~ /\.pl$/) {
+              $generator = '$(PERL)'.$gen_incs.' '.$gen0.$gen_args
+                  .' '.$cppflags;
+          } elsif ($gen0 =~ /\.S$/) {
+              $generator = undef;
+          } else {
+              die "Generator type for $src unknown: $gen0.$gen_args\n";
+          }
+
+          if (defined($generator)) {
+              # If the target is named foo.S in build.info, we want to
+              # end up generating foo.s in two steps.
+              if ($args{src} =~ /\.S$/) {
+                   return <<"EOF";
+$target : $gen0 $deps
+	$generator \$\@-S
+        \@ $incs_on
+        \@ extradefines = "$defs"
+	PIPE \$(CPP) $cppflags \$\@-S | -
+             \$(PERL) -ne "/^#(\\s*line)?\\s*[0-9]+\\s+""/ or print" > \$\@-i
+        \@ DELETE/SYMBOL/LOCAL extradefines
+        \@ $incs_off
+        RENAME \$\@-i \$\@
+        DELETE \$\@-S;
+EOF
+              }
+              # Otherwise....
+              return <<"EOF";
+$target : $gen0 $deps
+        \@ $incs_on
+        \@ extradefines = "$defs"
+	$generator \$\@
+        \@ DELETE/SYMBOL/LOCAL extradefines
+        \@ $incs_off
+EOF
+          }
+          return <<"EOF";
+$target : $gen0 $deps
+        \@ $incs_on
+        \@ extradefines = "$defs"
+        SHOW SYMBOL qual_includes
+        PIPE \$(CPP) $cppflags $gen0 | -
+        \$(PERL) "-ne" "/^#(\\s*line)?\\s*[0-9]+\\s+""/ or print" > \$\@
+        \@ DELETE/SYMBOL/LOCAL extradefines
+        \@ $incs_off
+EOF
+      } elsif ($gen0 =~ m|^.*\.in$|) {
+          #
+          # "dofile" generator (file.in -> file)
+          #
+          my $dofile = abs2rel(rel2abs(catfile($config{sourcedir},
+                                               "util", "dofile.pl")),
+                               rel2abs($config{builddir}));
+          my @modules = ( 'configdata.pm',
+                          grep { $_ =~ m|\.pm$| } @{$args{deps}} );
+          my %moduleincs = map { '"-I'.dirname($_).'"' => 1 } @modules;
+          $deps = join(' ', $deps, @modules);
+          @modules = map { '"-M'.basename($_, '.pm').'"' } @modules;
+          my $modules = join(' ', '', sort keys %moduleincs, @modules);
+          return <<"EOF";
+$target : $gen0 $deps
+	\$(PERL)$modules $dofile "-o$target{build_file}" $gen0$gen_args > \$\@
+EOF
+      } elsif (grep { $_ eq $gen0 } @{$unified_info{programs}}) {
+          #
+          # Generic generator using OpenSSL programs
+          #
+
+          # Redo $deps, because programs aren't expected to have deps of their
+          # own.  This is a little more tricky, though, because running programs
+          # may have dependencies on all sorts of files, so we search through
+          # our database of programs and modules to see if our dependencies
+          # are one of those.
+          $deps = join(' ', map { my $x = $_;
+                                  if (grep { $x eq $_ }
+                                          @{$unified_info{programs}}) {
+                                      platform->bin($x);
+                                  } elsif (grep { $x eq $_ }
+                                          @{$unified_info{modules}}) {
+                                      platform->dso($x);
+                                  } else {
+                                      $x;
+                                  }
+                                } @{$args{deps}});
+          # Also redo $gen0, to ensure that we have the proper extension
+          $gen0 = platform->bin($gen0);
+          return <<"EOF";
+$args{src}: $gen0 $deps
+	PIPE $gen0$gen_args > \$@
+EOF
+      } else {
+          #
+          # Generic generator using Perl
+          #
+          return <<"EOF";
+$target : $gen0 $deps
+	\$(PERL)$gen_incs $gen0$gen_args > \$\@
+EOF
+      }
+  }
+
+  sub src2obj {
+      my $asmext = platform->asmext();
+      my %args = @_;
+      my @srcs =
+          map { my $x = $_;
+                (platform->isasm($x) && grep { $x eq $_ } @generated)
+                ? platform->asm($x) : $x }
+          ( @{$args{srcs}} );
+      my $obj = platform->obj($args{obj});
+      my $dep = platform->dep($args{obj});
+      my $deps = join(", -\n\t\t", @srcs, @{$args{deps}});
+
+      # Because VMS C isn't very good at combining a /INCLUDE path with
+      # #includes having a relative directory (like '#include "../foo.h"),
+      # the best choice is to move to the first source file's intended
+      # directory before compiling, and make sure to write the object file
+      # in the correct position (important when the object tree is other
+      # than the source tree).
+      my $forward = dirname($args{srcs}->[0]);
+      my $backward = abs2rel(rel2abs("."), rel2abs($forward));
+      my $objd = abs2rel(rel2abs(dirname($obj)), rel2abs($forward));
+      my $objn = basename($obj);
+      my $depd = abs2rel(rel2abs(dirname($dep)), rel2abs($forward));
+      my $depn = basename($dep);
+      my $srcs =
+          join(", ", map { abs2rel(rel2abs($_), rel2abs($forward)) } @srcs);
+      my $before = $unified_info{before}->{$obj} || "\@ !";
+      my $after = $unified_info{after}->{$obj} || "\@ !";
+
+      my $cflags;
+      if ($args{attrs}->{noinst}) {
+          $cflags = { shlib => '$(NO_INST_LIB_CFLAGS)',
+                      lib => '$(NO_INST_LIB_CFLAGS)',
+                      dso => '$(NO_INST_DSO_CFLAGS)',
+                      bin => '$(NO_INST_BIN_CFLAGS)' } -> {$args{intent}};
+      } else {
+          $cflags = { shlib => '$(LIB_CFLAGS)',
+                      lib => '$(LIB_CFLAGS)',
+                      dso => '$(DSO_CFLAGS)',
+                      bin => '$(BIN_CFLAGS)' } -> {$args{intent}};
+      }
+      $cflags .= { shlib => '$(LIB_CPPFLAGS)',
+		   lib => '$(LIB_CPPFLAGS)',
+		   dso => '$(DSO_CPPFLAGS)',
+		   bin => '$(BIN_CPPFLAGS)' } -> {$args{intent}};
+      my $defs = join("", map { ",".$_ } @{$args{defs}});
+      my $asflags = { shlib => ' $(LIB_ASFLAGS)',
+		      lib => ' $(LIB_ASFLAGS)',
+		      dso => ' $(DSO_ASFLAGS)',
+		      bin => ' $(BIN_ASFLAGS)' } -> {$args{intent}};
+
+      my @incs_cmds = includes({ shlib => '$(LIB_INCLUDES)',
+                                 lib => '$(LIB_INCLUDES)',
+                                 dso => '$(DSO_INCLUDES)',
+                                 bin => '$(BIN_INCLUDES)' } -> {$args{intent}},
+                               '$(INCLUDES)',
+                               map {
+                                   file_name_is_absolute($_)
+                                   ? $_ : catdir($backward,$_)
+                               } @{$args{incs}});
+      my $incs_on = join("\n\t\@ ", @{$incs_cmds[0]}) || '!';
+      my $incs_off = join("\n\t\@ ", @{$incs_cmds[1]}) || '!';
+
+      if ($srcs[0] =~ /\Q${asmext}\E$/) {
+          return <<"EOF";
+$obj : $deps
+        ${before}
+        SET DEFAULT $forward
+        \$(AS) $asflags \$(ASOUTFLAG)${objd}${objn} $srcs
+        SET DEFAULT $backward
+        ${after}
+        - PURGE $obj
+EOF
+      } elsif ($srcs[0] =~ /.S$/) {
+         return <<"EOF";
+$obj : $deps
+        ${before}
+        SET DEFAULT $forward
+        \@ $incs_on
+        \@ extradefines = "$defs"
+        PIPE \$(CPP) ${cflags} $srcs | -
+             \$(PERL) -ne "/^#(\\s*line)?\\s*[0-9]+\\s+""/ or print" -
+             > ${objd}${objn}-asm
+        \@ DELETE/SYMBOL/LOCAL extradefines
+        \@ $incs_off
+        SET DEFAULT $backward
+        ${after}
+        \$(AS) $asflags \$(ASOUTFLAG)$obj $obj-asm
+        - PURGE $obj
+EOF
+      }
+
+      my $depbuild = $disabled{makedepend} ? ""
+          : " /MMS=(FILE=${depd}${depn},TARGET=$obj)";
+
+      return <<"EOF";
+$obj : $deps
+        ${before}
+        SET DEFAULT $forward
+        \@ $incs_on
+        \@ extradefines = "$defs"
+        \$(CC) ${cflags}${depbuild} /OBJECT=${objd}${objn} /REPOSITORY=$backward $srcs
+        \@ DELETE/SYMBOL/LOCAL extradefines
+        \@ $incs_off
+        SET DEFAULT $backward
+        ${after}
+        - PURGE $obj
+EOF
+  }
+  sub obj2shlib {
+      my %args = @_;
+      my $shlibname = platform->sharedname($args{lib});
+      my $shlib = platform->sharedlib($args{lib});
+      my @objs = map { platform->convertext($_) }
+                 grep { platform->isobj($_) }
+                 @{$args{objs}};
+      my @defs = map { platform->convertext($_) }
+                 grep { platform->isdef($_) }
+                 @{$args{objs}};
+      my @deps = compute_lib_depends(@{$args{deps}});
+      die "More than one symbol vector" if scalar @defs > 1;
+      my $deps = join(", -\n\t\t", @objs, @defs, map { $_->{lib} } @deps);
+      my $shlib_target = $disabled{shared} ? "" : $target{shared_target};
+      my $translatesyms_pl = abs2rel(rel2abs(catfile($config{sourcedir},
+                                                     "VMS", "translatesyms.pl")),
+                                     rel2abs($config{builddir}));
+      # The "[]" hack is because in .OPT files, each line inherits the
+      # previous line's file spec as default, so if no directory spec
+      # is present in the current line and the previous line has one that
+      # doesn't apply, you're in for a surprise.
+      my $write_opt1 =
+          join(",-\"\n\t", map { my $x = $_ =~ /\[/ ? $_ : "[]".$_;
+                                 "WRITE OPT_FILE \"$x" } @objs).
+          "\"";
+      my $write_opt2 =
+          join("\n\t", map { my $x = $_->{lib} =~ /\[/
+                                 ? $_->{lib} : "[]".$_->{lib};
+                             $x =~ s|(\.EXE)|$1/SHARE|;
+                             $x =~ s|(\.OLB)|$1/LIB|;
+                             "WRITE OPT_FILE \"$x\"" } @deps)
+          || "\@ !";
+      return <<"EOF"
+$shlib : $deps
+        \$(PERL) $translatesyms_pl \$(BLDDIR)CXX\$DEMANGLER_DB. < $defs[0] > $defs[0]-translated
+        OPEN/WRITE/SHARE=READ OPT_FILE $shlibname-components.OPT
+        $write_opt1
+        $write_opt2
+        CLOSE OPT_FILE
+        LINK \$(LIB_LDFLAGS)/SHARE=\$\@ $defs[0]-translated/OPT,-
+                $shlibname-components.OPT/OPT \$(LIB_EX_LIBS)
+        DELETE $defs[0]-translated;*,$shlibname-components.OPT;*
+        PURGE $shlibname.EXE,$shlibname.MAP
+EOF
+        . ($config{target} =~ m|alpha| ? "" : <<"EOF"
+        SET IMAGE/FLAGS=(NOCALL_DEBUG) \$\@
+EOF
+        );
+  }
+  sub obj2dso {
+      my %args = @_;
+      my $dsoname = platform->dsoname($args{module});
+      my $dso = platform->dso($args{module});
+      my @objs = map { platform->convertext($_) }
+                 grep { platform->isobj($_) }
+                 @{$args{objs}};
+      my @defs = map { platform->convertext($_) }
+                 grep { platform->isdef($_) }
+                 @{$args{objs}};
+      my @deps = compute_lib_depends(@{$args{deps}});
+      my $deps = join(", -\n\t\t", @objs, @defs, map { $_->{lib} } @deps);
+      die "More than one symbol vector" if scalar @defs > 1;
+      my $shlib_target = $disabled{shared} ? "" : $target{shared_target};
+      # The "[]" hack is because in .OPT files, each line inherits the
+      # previous line's file spec as default, so if no directory spec
+      # is present in the current line and the previous line has one that
+      # doesn't apply, you're in for a surprise.
+      my $write_opt1 =
+          join(",-\"\n\t", map { my $x = $_ =~ /\[/ ? $_ : "[]".$_;
+                                 "WRITE OPT_FILE \"$x" } @objs).
+          "\"";
+      my $write_opt2 =
+          join("\n\t", map { my $x = $_->{lib} =~ /\[/
+                                 ? $_->{lib} : "[]".$_->{lib};
+                             $x =~ s|(\.EXE)|$1/SHARE|;
+                             $x =~ s|(\.OLB)|$1/LIB|;
+                             "WRITE OPT_FILE \"$x\"" } @deps)
+          || "\@ !";
+      return <<"EOF"
+$dso : $deps
+        OPEN/WRITE/SHARE=READ OPT_FILE $dsoname-components.OPT
+        $write_opt1
+        $write_opt2
+        CLOSE OPT_FILE
+        LINK \$(DSO_LDFLAGS)/SHARE=\$\@ $defs[0]/OPT,-
+		$dsoname-components.OPT/OPT \$(DSO_EX_LIBS)
+        - PURGE $dsoname.EXE,$dsoname.OPT,$dsoname.MAP
+EOF
+        . ($config{target} =~ m|alpha| ? "" : <<"EOF"
+        SET IMAGE/FLAGS=(NOCALL_DEBUG) \$\@
+EOF
+        );
+  }
+  sub obj2lib {
+      my %args = @_;
+      my $lib = platform->staticlib($args{lib});
+      my @objs = map { platform->convertext($_) }
+                 grep { platform->isobj($_) }
+                 @{$args{objs}};
+      my $objs = join(", -\n\t\t", @objs);
+      my $fill_lib = join("\n\t", (map { "LIBRARY/REPLACE $lib $_" } @objs));
+      return <<"EOF";
+$lib : $objs
+        LIBRARY/CREATE/OBJECT $lib
+        $fill_lib
+        - PURGE $lib
+EOF
+  }
+  sub obj2bin {
+      my %args = @_;
+      my $bin = platform->bin($args{bin});
+      my $binname = platform->binname($args{bin});
+      my @objs = map { platform->convertext($_) }
+                 grep { platform->isobj($_) }
+                 @{$args{objs}};
+      my $objs = join(",", @objs);
+      my @deps = compute_lib_depends(@{$args{deps}});
+      my $deps = join(", -\n\t\t", @objs, map { $_->{lib} } @deps);
+
+      my $olb_count = scalar grep(m|\.OLB$|, map { $_->{lib} } @deps);
+      my $analyse_objs = "@ !";
+      if ($olb_count > 0) {
+          my $analyse_quals =
+              $config{target} =~ m|alpha| ? "/GSD" : "/SECTIONS=SYMTAB";
+          $analyse_objs = "- pipe ANALYSE/OBJECT$analyse_quals $objs | SEARCH SYS\$INPUT \"\"\"main\"\"\" ; nomain = \$severity .NE. 1"
+      }
+      # The "[]" hack is because in .OPT files, each line inherits the
+      # previous line's file spec as default, so if no directory spec
+      # is present in the current line and the previous line has one that
+      # doesn't apply, you're in for a surprise.
+      my $write_opt1 =
+          join(",-\"\n\t", map { my $x = $_ =~ /\[/ ? $_ : "[]".$_;
+                                 "\@ WRITE OPT_FILE \"$x" } @objs).
+          "\"";
+      my $write_opt2 =
+          join("\n\t", "WRITE OPT_FILE \"CASE_SENSITIVE=YES\"",
+                       map { my @lines = ();
+                             use Data::Dumper;
+                             my $x = $_->{lib} =~ /\[/
+                                 ? $_->{lib} : "[]".$_->{lib};
+                             if ($x =~ m|\.EXE$|) {
+                                 push @lines, "\@ WRITE OPT_FILE \"$x/SHARE\"";
+                             } elsif ($x =~ m|\.OLB$|) {
+                                 # Special hack to include the MAIN object
+                                 # module explicitly.  This will only be done
+                                 # if there isn't a 'main' in the program's
+                                 # object modules already.
+                                 my $main = $_->{attrs}->{has_main}
+                                     ? '/INCLUDE=main' : '';
+                                 push @lines,
+                                     "\@ IF nomain THEN WRITE OPT_FILE \"$x/LIB$main\"",
+                                     "\@ IF .NOT. nomain THEN WRITE OPT_FILE \"$x/LIB\""
+                             }
+                             @lines
+                           } @deps)
+          || "\@ !";
+      # The linking commands looks a bit complex, but it's for good reason.
+      # When you link, say, foo.obj, bar.obj and libsomething.exe/share, and
+      # bar.obj happens to have a symbol that also exists in libsomething.exe,
+      # the linker will warn about it, loudly, and will then choose to pick
+      # the first copy encountered (the one in bar.obj in this example).
+      # On Unix and on Windows, the corresponding maneuver goes through
+      # silently with the same effect.
+      # With some test programs, made for checking the internals of OpenSSL,
+      # we do this kind of linking deliberately, picking a few specific object
+      # files from within [.crypto] or [.ssl] so we can reach symbols that are
+      # otherwise unreachable (since the shareable images only exports the
+      # symbols listed in [.util]*.num), and then with the shared libraries
+      # themselves.  So we need to silence the warning about multiply defined
+      # symbols, to mimic the way linking work on Unix and Windows, and so
+      # the build isn't interrupted (MMS stops when warnings are signaled,
+      # by default), and so someone building doesn't have to worry where it
+      # isn't necessary.  If there are other warnings, however, we show them
+      # and let it break the build.
+      return <<"EOF"
+$bin : $deps
+        $analyse_objs
+        @ OPEN/WRITE/SHARE=READ OPT_FILE $binname.OPT
+        $write_opt1
+        $write_opt2
+        @ CLOSE OPT_FILE
+        TYPE $binname.OPT ! For debugging
+        - pipe SPAWN/WAIT/NOLOG/OUT=$binname.LINKLOG -
+                    LINK \$(BIN_LDFLAGS)/EXEC=\$\@ $binname.OPT/OPT \$(BIN_EX_LIBS) ; -
+               link_status = \$status ; link_severity = link_status .AND. 7
+        @ search_severity = 1
+        -@ IF link_severity .EQ. 0 THEN -
+                pipe SEARCH $binname.LINKLOG "%","-"/MATCH=AND | -
+                     SPAWN/WAIT/NOLOG/OUT=NLA0: -
+                          SEARCH SYS\$INPUT: "-W-MULDEF,"/MATCH=NOR ; -
+                     search_severity = \$severity
+        @ ! search_severity is 3 when the last search didn't find any matching
+        @ ! string: %SEARCH-I-NOMATCHES, no strings matched
+        @ ! If that was the result, we pretend linking got through without
+        @ ! fault or warning.
+        @ IF search_severity .EQ. 3 THEN link_severity = 1
+        @ ! At this point, if link_severity shows that there was a fault
+        @ ! or warning, make sure to restore the linking status.
+        -@ IF .NOT. link_severity THEN TYPE $binname.LINKLOG
+        -@ DELETE $binname.LINKLOG;*
+        @ IF .NOT. link_severity THEN SPAWN/WAIT/NOLOG EXIT 'link_status'
+        - PURGE $bin,$binname.OPT
+EOF
+      . ($config{target} =~ m|alpha| ? "" : <<"EOF"
+        SET IMAGE/FLAGS=(NOCALL_DEBUG) \$\@
+EOF
+        );
+  }
+  sub in2script {
+      my %args = @_;
+      my $script = $args{script};
+      return "" if grep { $_ eq $script } @{$args{sources}}; # No overwrite!
+      my $sources = join(" ", @{$args{sources}});
+      my $dofile = abs2rel(rel2abs(catfile($config{sourcedir},
+                                           "util", "dofile.pl")),
+                           rel2abs($config{builddir}));
+      return <<"EOF";
+$script : $sources
+        \$(PERL) "-I\$(BLDDIR)" "-Mconfigdata" $dofile -
+	    "-o$target{build_file}" $sources > $script
+        SET FILE/PROT=(S:RWED,O:RWED,G:RE,W:RE) $script
+        PURGE $script
+EOF
+  }
+  ""    # Important!  This becomes part of the template result.
+-}

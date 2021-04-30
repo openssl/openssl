@@ -1,6 +1,0 @@
-	if ((dsa->method_mod_p == NULL) && (dsa->flags & DSA_FLAG_CACHE_MONT_P))
-		{
-		if ((dsa->method_mod_p=(char *)BN_MONT_CTX_new()) != NULL)
-			if (!BN_MONT_CTX_set((BN_MONT_CTX *)dsa->method_mod_p,
-				dsa->p,ctx)) goto err;
-		}
