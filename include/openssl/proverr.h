@@ -66,6 +66,7 @@
 # define PROV_R_INVALID_MAC                               151
 # define PROV_R_INVALID_MGF1_MD                           167
 # define PROV_R_INVALID_MODE                              125
+# define PROV_R_INVALID_OUTPUT_LENGTH                     217
 # define PROV_R_INVALID_PADDING_MODE                      168
 # define PROV_R_INVALID_PUBINFO                           198
 # define PROV_R_INVALID_SALT_LENGTH                       112
