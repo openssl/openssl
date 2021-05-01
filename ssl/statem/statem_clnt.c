@@ -2833,7 +2833,7 @@ int tls_process_initial_server_flight(SSL *s)
         if (ret < 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_F_TLS_PROCESS_INITIAL_SERVER_FLIGHT,
-                     ERR_R_MALLOC_FAILURE);
+                     SSL_R_OCSP_CALLBACK_FAILURE);
             return 0;
         }
     }
