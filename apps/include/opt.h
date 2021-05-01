@@ -14,6 +14,8 @@
 #include <openssl/types.h>
 #include <stdarg.h>
 
+#define OPT_COMMON OPT_ERR = -1, OPT_EOF = 0, OPT_HELP
+
 /*
  * Common verification options.
  */

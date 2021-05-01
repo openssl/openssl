@@ -85,7 +85,7 @@ static int index_changed(CA_DB *);
 #endif
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_OUTFILE, OPT_TIMEOUT, OPT_URL, OPT_HOST, OPT_PORT,
     OPT_IGNORE_ERR, OPT_NOVERIFY, OPT_NONCE, OPT_NO_NONCE,
     OPT_RESP_NO_CERTS, OPT_RESP_KEY_ID, OPT_NO_CERTS,

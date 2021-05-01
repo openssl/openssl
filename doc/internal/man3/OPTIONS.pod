@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-OPTIONS, OPT_PAIR,
+OPTIONS, OPT_PAIR, OPT_COMMON, OPT_ERR, OPT_EOF, OPT_HELP,
 opt_init, opt_progname, opt_appname, opt_getprog, opt_help,
 opt_begin, opt_next, opt_flag, opt_arg, opt_unknown, opt_cipher, opt_md,
 opt_int, opt_int_arg, opt_long, opt_ulong, opt_intmax, opt_uintmax,
@@ -16,6 +16,10 @@ opt_num_rest, opt_rest
 
  typedef struct { ... }  OPTIONS;
  typedef struct { ... } OPT_PAIR;
+ #define OPT_COMMON
+ #define OPT_ERR
+ #define OPT_EOF
+ #define OPT_HELP
 
  char *opt_init(int argc, char **argv, const OPTIONS *o);
  char *opt_progname(const char *argv0);
@@ -67,14 +71,15 @@ Each program should define, near the main() routine, an enumeration
 that is the set of options the program accepts. For example:
 
     typedef enum OPTION_choice {
-        OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+        OPT_COMMON,
         OPT_YES, OPT_NAME, OPT_COUNT, OPT_OFILE,
         ...
     } OPTION_CHOICE;
 
-The first two lines must appear exactly as shown. In addition to
-defining symbolic names for the constants that opt_next() returns,
-it also helps guarantee that every command has a C<-help> option.
+The first two lines must appear exactly as shown.
+OPT_COMMON is a macro that expands to C<OPT_ERR = -1, OPT_EOF = 0, OPT_HELP>.
+In addition to defining symbolic names for the constants that opt_next()
+returns, it also helps guarantee that every command has a C<-help> option.
 The third line is a sample
 set of flags, and the closing C<typedef> name is used for error-checking
 as discussed below.
@@ -209,7 +214,7 @@ The opt_begin() fuction, which is called automatically by opt_init(),
 can be used to reset the option parsing loop.
 
 The opt_next() function is called, once opt_init() has been called,
-in a loop to fetch each option in turn. It returns -1, or OPT_EOF when the
+in a loop to fetch each option in turn. It returns -1, or B<OPT_EOF> when the
 end of arguments has been reached. This is typically done like this:
 
     prog = opt_init(argc, argv, my_options);

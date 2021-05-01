@@ -34,7 +34,7 @@ static EVP_PKEY *dsa_to_dh(EVP_PKEY *dh);
 static int gendh_cb(EVP_PKEY_CTX *ctx);
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT,
     OPT_ENGINE, OPT_CHECK, OPT_TEXT, OPT_NOOUT,
     OPT_DSAPARAM, OPT_2, OPT_3, OPT_5,

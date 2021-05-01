@@ -27,7 +27,7 @@ static int verbose = 0;
 static int gendsa_cb(EVP_PKEY_CTX *ctx);
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_TEXT,
     OPT_NOOUT, OPT_GENKEY, OPT_ENGINE, OPT_VERBOSE,
     OPT_R_ENUM, OPT_PROV_ENUM
