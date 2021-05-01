@@ -985,17 +985,16 @@ BIO *OSSL_HTTP_exchange(OSSL_HTTP_REQ_CTX *rctx, char **redirection_url)
 #endif
                 ) {
                 if (rctx->server != NULL) {
-                    BIO_snprintf(buf, 200, "server=http%s://%s",
-                                 rctx->use_ssl ? "s" : "", rctx->server);
-                    if (rctx->port != NULL)
-                        BIO_snprintf(buf + strlen(buf), 200 - strlen(buf),
-                                     ":%s", rctx->port);
+                    BIO_snprintf(buf, sizeof(buf), "server=http%s://%s%s%s",
+                                 rctx->use_ssl ? "s" : "", rctx->server,
+                                 rctx->port != NULL ? ":" : "",
+                                 rctx->port != NULL ? rctx->port : "");
+                    ERR_add_error_data(1, buf);
                 }
-                ERR_add_error_data(1, buf);
                 if (rctx->proxy != NULL)
                     ERR_add_error_data(2, " proxy=", rctx->proxy);
                 if (err == 0) {
-                    BIO_snprintf(buf, 200, " peer has disconnected%s",
+                    BIO_snprintf(buf, sizeof(buf), " peer has disconnected%s",
                                  rctx->use_ssl ? " violating the protocol" :
                                  ", likely because it requires the use of TLS");
                     ERR_add_error_data(1, buf);
