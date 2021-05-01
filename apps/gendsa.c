@@ -23,7 +23,7 @@
 #include <openssl/pem.h>
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_OUT, OPT_PASSOUT, OPT_ENGINE, OPT_CIPHER, OPT_VERBOSE,
     OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;

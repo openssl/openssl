@@ -40,7 +40,7 @@ static int do_raw_keyop(int pkey_op, EVP_MD_CTX *mctx,
                         unsigned char **out, size_t *poutlen);
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_ENGINE, OPT_ENGINE_IMPL, OPT_IN, OPT_OUT,
     OPT_PUBIN, OPT_CERTIN, OPT_ASN1PARSE, OPT_HEXDUMP, OPT_SIGN,
     OPT_VERIFY, OPT_VERIFYRECOVER, OPT_REV, OPT_ENCRYPT, OPT_DECRYPT,
