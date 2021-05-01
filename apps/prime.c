@@ -14,7 +14,7 @@
 #include <openssl/bn.h>
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_HEX, OPT_GENERATE, OPT_BITS, OPT_SAFE, OPT_CHECKS,
     OPT_PROV_ENUM
 } OPTION_CHOICE;

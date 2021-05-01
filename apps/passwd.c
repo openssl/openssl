@@ -50,7 +50,7 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
                      int reverse, size_t pw_maxlen, passwd_modes mode);
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_IN,
     OPT_NOVERIFY, OPT_QUIET, OPT_TABLE, OPT_REVERSE, OPT_APR1,
     OPT_1, OPT_5, OPT_6, OPT_AIXMD5, OPT_SALT, OPT_STDIN,

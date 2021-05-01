@@ -15,7 +15,7 @@
 #include <openssl/err.h>
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_TOSEQ, OPT_IN, OPT_OUT,
     OPT_PROV_ENUM
 } OPTION_CHOICE;

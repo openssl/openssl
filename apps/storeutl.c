@@ -22,7 +22,8 @@ static int process(const char *uri, const UI_METHOD *uimeth, PW_CB_DATA *uidata,
                    const char *prog, OSSL_LIB_CTX *libctx);
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP, OPT_ENGINE, OPT_OUT, OPT_PASSIN,
+    OPT_COMMON,
+    OPT_ENGINE, OPT_OUT, OPT_PASSIN,
     OPT_NOOUT, OPT_TEXT, OPT_RECURSIVE,
     OPT_SEARCHFOR_CERTS, OPT_SEARCHFOR_KEYS, OPT_SEARCHFOR_CRLS,
     OPT_CRITERION_SUBJECT, OPT_CRITERION_ISSUER, OPT_CRITERION_SERIAL,
