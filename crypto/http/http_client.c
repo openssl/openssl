@@ -286,7 +286,7 @@ static int OSSL_HTTP_REQ_CTX_add1_headers(OSSL_HTTP_REQ_CTX *rctx,
                                           const char *host)
 {
     int i;
-    int add_host = 1;
+    int add_host = host != NULL && *host != '\0';
     CONF_VALUE *hdr;
 
     for (i = 0; i < sk_CONF_VALUE_num(headers); i++) {
