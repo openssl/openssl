@@ -544,7 +544,7 @@ int x509_main(int argc, char **argv)
             checkend = 1;
             {
                 intmax_t temp = 0;
-                if (!opt_imax(opt_arg(), &temp))
+                if (!opt_intmax(opt_arg(), &temp))
                     goto opthelp;
                 checkoffset = (time_t)temp;
                 if ((intmax_t)checkoffset != temp) {
