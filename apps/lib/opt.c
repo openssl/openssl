@@ -227,7 +227,7 @@ static OPT_PAIR formats[] = {
 };
 
 /* Print an error message about a failed format parse. */
-int opt_format_error(const char *s, unsigned long flags)
+static int opt_format_error(const char *s, unsigned long flags)
 {
     OPT_PAIR *ap;
 
@@ -325,7 +325,7 @@ int opt_format(const char *s, unsigned long flags, int *result)
 }
 
 /* Return string representing the given format. */
-const char *format2str(int format)
+static const char *format2str(int format)
 {
     switch (format) {
     default:
@@ -973,7 +973,7 @@ static const char *valtype2param(const OPTIONS *o)
     return "parm";
 }
 
-void opt_print(const OPTIONS *o, int doingparams, int width)
+static void opt_print(const OPTIONS *o, int doingparams, int width)
 {
     const char* help;
     char start[80 + 1];
