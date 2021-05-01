@@ -2188,10 +2188,10 @@ static char *opt_str(void)
 
     if (arg[0] == '\0') {
         CMP_warn1("%s option argument is empty string, resetting option",
-                  opt_name());
+                  opt_flag());
         arg = NULL;
     } else if (arg[0] == '-') {
-        CMP_warn1("%s option argument starts with hyphen", opt_name());
+        CMP_warn1("%s option argument starts with hyphen", opt_flag());
     }
     return arg;
 }

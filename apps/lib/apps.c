@@ -3152,6 +3152,7 @@ void make_uppercase(char *string)
         string[i] = toupper((unsigned char)string[i]);
 }
 
+/* This function is defined here due to visibility of bio_err */
 int opt_printf_stderr(const char *fmt, ...)
 {
     va_list ap;
