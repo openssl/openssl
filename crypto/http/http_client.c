@@ -1056,25 +1056,20 @@ BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
                                  &port, NULL /* port_num */, &path, NULL, NULL))
             break;
 
-    new_rpath:
         rctx = OSSL_HTTP_open(host, port, proxy, no_proxy,
                               use_ssl, bio, rbio, bio_update_fn, arg,
                               buf_size, max_resp_len, timeout);
+    new_rpath:
         if (rctx != NULL) {
             if (!OSSL_HTTP_set_request(rctx, path, headers,
                                        NULL /* content_type */,
                                        NULL /* req_mem */,
                                        expected_ct, expect_asn1,
                                        -1 /* use same max time */,
-                                       0 /* no keep_alive */)) {
+                                       0 /* no keep_alive */))
                 OSSL_HTTP_REQ_CTX_free(rctx);
-            } else {
+            else
                 resp = OSSL_HTTP_exchange(rctx, &redirection_url);
-                if (!OSSL_HTTP_close(rctx, resp != NULL)) {
-                    BIO_free(resp);
-                    resp = NULL;
-                }
-            }
         }
         OPENSSL_free(path);
         if (resp == NULL && redirection_url != NULL) {
@@ -1088,12 +1083,18 @@ BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
                 }
                 OPENSSL_free(host);
                 OPENSSL_free(port);
+                (void)OSSL_HTTP_close(rctx, 1);
                 continue;
             }
+            /* if redirection not allowed, ignore it */
             OPENSSL_free(redirection_url);
         }
         OPENSSL_free(host);
         OPENSSL_free(port);
+        if (!OSSL_HTTP_close(rctx, resp != NULL)) {
+            BIO_free(resp);
+            resp = NULL;
+        }
         break;
     }
     OPENSSL_free(current_url);
