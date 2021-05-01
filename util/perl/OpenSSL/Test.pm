@@ -1232,7 +1232,7 @@ sub __wrap_cmd {
             # In the Windows case, we run perl explicitly.  We might not
             # need it, but that depends on if the user has associated the
             # '.pl' extension with a perl interpreter, so better be safe.
-            @prefix = ( $^X, $std_wrapper );
+            @prefix = ( __fixup_prg($^X), $std_wrapper );
         } else {
             # Otherwise, we assume Unix semantics, and trust that the #!
             # line activates perl for us.
