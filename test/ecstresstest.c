@@ -127,7 +127,7 @@ int setup_tests(void)
 {
     OPTION_CHOICE o;
 
-    if (!opt_imax(NUM_REPEATS, &num_repeats)) {
+    if (!opt_intmax(NUM_REPEATS, &num_repeats)) {
         TEST_error("Cannot parse " NUM_REPEATS);
         return 0;
     }
@@ -135,7 +135,7 @@ int setup_tests(void)
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
         case OPT_NUM_REPEATS:
-            if (!opt_imax(opt_arg(), &num_repeats)
+            if (!opt_intmax(opt_arg(), &num_repeats)
                     || num_repeats < 0)
                 return 0;
             print_mode = 1;

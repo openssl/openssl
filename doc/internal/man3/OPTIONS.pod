@@ -3,10 +3,11 @@
 =head1 NAME
 
 OPTIONS, OPT_PAIR,
-opt_progname, opt_appname, opt_getprog, opt_init, opt_format,
-opt_int, opt_long, opt_imax, opt_umax, opt_ulong, opt_pair,
-opt_string, opt_cipher, opt_md, opt_next, opt_arg, opt_flag, opt_unknown,
-opt_num_rest, opt_rest, opt_help, opt_isdir
+opt_init, opt_progname, opt_appname, opt_getprog, opt_help,
+opt_begin, opt_next, opt_flag, opt_arg, opt_unknown, opt_cipher, opt_md,
+opt_int, opt_int_arg, opt_long, opt_ulong, opt_intmax, opt_uintmax,
+opt_format, opt_isdir, opt_string, opt_pair,
+opt_num_rest, opt_rest
 - Option parsing for commands and tests
 
 =head1 SYNOPSIS
@@ -16,28 +17,29 @@ opt_num_rest, opt_rest, opt_help, opt_isdir
  typedef struct { ... }  OPTIONS;
  typedef struct { ... } OPT_PAIR;
 
- char *opt_progname(const char *argv0);
- char *opt_appname(const char *arg0);
- char *opt_getprog(void);
  char *opt_init(int argc, char **argv, const OPTIONS *o);
-
- int opt_next(void);
+ char *opt_progname(const char *argv0);
+ char *opt_appname(const char *argv0);
+ char *opt_getprog(void);
  void opt_help(const OPTIONS *list);
- char *opt_arg(void);
+
+ void opt_begin(void);
+ int opt_next(void);
  char *opt_flag(void);
+ char *opt_arg(void);
  char *opt_unknown(void);
  int opt_cipher(const char *name, EVP_CIPHER **cipherp);
  int opt_md(const char *name, EVP_MD **mdp);
 
  int opt_int(const char *value, int *result);
+ int opt_int_arg(void);
  int opt_long(const char *value, long *result);
- int opt_imax(const char *value, intmax_t *result);
- int opt_umax(const char *value, uintmax_t *result);
  int opt_ulong(const char *value, unsigned long *result);
-
- int opt_isdir(const char *name);
+ int opt_intmax(const char *value, intmax_t *result);
+ int opt_uintmax(const char *value, uintmax_t *result);
 
  int opt_format(const char *s, unsigned long flags, int *result);
+ int opt_isdir(const char *name);
  int opt_string(const char *name, const char **options);
  int opt_pair(const char *name, const OPT_PAIR* pairs, int *result);
 
@@ -184,19 +186,30 @@ the help string:
 
 =head2 Functions
 
-The opt_init() function takes the "argc, argv" arguments given to main() and
-a pointer to the list of options. It returns the simple program
+The opt_init() function takes the I<argc> and I<argv> arguments given to main()
+and a pointer I<o> to the list of options. It returns the simple program
 name, as defined by opt_progname().
 
-The opt_progname() function takes the full pathname, C<argv[0]>, and returns
+The opt_progname() function takes the full pathname C<argv[0]> in its I<arg0>
+parameter and returns
 the simple short name of the executable, to be used for error messages and
-the like.  The opt_appname() functions takes the "application" name (such
-as the specific command from L<openssl(1)> and appends it to the program
-name. This function should only be called once.  Once set, opt_getprog()
-also returns the value.
+the like.
 
-Once opt_init() has been called, opt_next() can be called in a loop to
-fetch each option in turn. It returns -1, or OPT_EOF when the
+The opt_appname() function takes in its I<argv0> parameter
+the "application" name (such
+as the specific command from L<openssl(1)> and appends it to the program
+name. This function should only be called once.
+
+The opt_getprog() function returns the value set by opt_appname().
+
+The opt_help() function takes a list of option definitions and prints a
+nicely-formatted output.
+
+The opt_begin() function, which is called automatically by opt_init(),
+can be used to reset the option parsing loop.
+
+The opt_next() function is called, once opt_init() has been called,
+in a loop to fetch each option in turn. It returns -1, or OPT_EOF when the
 end of arguments has been reached. This is typically done like this:
 
     prog = opt_init(argc, argv, my_options);
@@ -214,13 +227,14 @@ end of arguments has been reached. This is typically done like this:
         }
     }
 
-The opt_help() function takes a list of option definitions and prints a
-nicely-formatted output.
+Within the option parsing loop, the following functions may be called.
 
-Within the option parsing loop, opt_flag() returns the option,
-without any leading hyphens. The opt_arg() function returns
-the option's value, if there is one.
+The opt_flag() function returns the most recent option name
+including the preceding C<->.
 
+The opt_arg() function returns the option's argument value, if there is one.
+
+The opt_unknown() function returns the unknown option.
 In an option list, there can be at most one option with the empty string.
 This is a "wildcard" or "unknown" option. For example, it allows an
 option to be be taken as digest algorithm, like C<-sha1>. The
@@ -229,7 +243,7 @@ the cipher into I<cipherp>.  The function opt_md() does the same
 thing for message digest.
 
 There are a several useful functions for parsing numbers.  These are
-opt_int(), opt_long(), opt_ulong(), opt_imax(), and opt_umax().  They all
+opt_int(), opt_long(), opt_ulong(), opt_intmax(), and opt_uintmax().  They all
 take C<0x> to mean hexadecimal and C<0> to mean octal, and will do the
 necessary range-checking. They return 1 if successful and fill in the
 C<result> pointer with the value, or 0 on error. Note that opt_next()
@@ -237,10 +251,15 @@ will also do range-check on the argument if the appropriate B<valtype>
 field is specified for the option. This means that error-checking inside
 the C<switch> C<case> can often be elided.
 
-The opt_isdir() function returns 1 if the specified I<name> is
-a directory, or 0 if not. The opt_format() function takes a string value,
+The opt_int_arg() function is a convenience abbreviation to opt_int().
+It parses and returns an integer, assuming its range has been checked before.
+
+The opt_format() function takes a string value,
 such as used with the B<-informat> or similar option, and fills
 the value from the constants in F<fmt.h> file.
+
+The opt_isdir() function returns 1 if the specified I<name> is
+a directory, or 0 if not.
 
 The opt_string() function checks that I<name> appears in the
 NULL-terminated array of strings. It returns 1 if found,
@@ -251,10 +270,13 @@ has a text name and an integer. The specified I<name> is
 found on the list, it puts the index in I<*result>, and returns
 1. If not found, it returns 0.
 
-After processing all the options, the opt_num_rest() returns what is
-left, and opt_rest() returns a pointer to the first non-option.
+The following functions can be used after processing all the options.
+
+The opt_num_rest() function returns what is left.
+
+The opt_rest() function returns a pointer to the first non-option.
 If there were no parameters, it will point to the NULL that is
-at the end of the standard B<argv> array.
+at the end of the standard I<argv> array.
 
 =head2 Common Options
 

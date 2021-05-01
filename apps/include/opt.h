@@ -342,46 +342,50 @@ typedef struct string_int_pair_st {
 #define OPT_PARAMETERS() { OPT_PARAM_STR, 1, '-', "Parameters:\n" }
 
 const char *opt_path_end(const char *filename);
-char *opt_progname(const char *argv0);
-char *opt_appname(const char *arg0);
-char *opt_getprog(void);
 char *opt_init(int ac, char **av, const OPTIONS * o);
-int opt_next(void);
+char *opt_progname(const char *argv0);
+char *opt_appname(const char *argv0);
+char *opt_getprog(void);
+void opt_help(const OPTIONS * list);
+
 void opt_begin(void);
-int opt_format(const char *s, unsigned long flags, int *result);
-int opt_int(const char *arg, int *result);
-int opt_int_arg(void);
-int opt_ulong(const char *arg, unsigned long *result);
-int opt_long(const char *arg, long *result);
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
-    defined(INTMAX_MAX) && defined(UINTMAX_MAX) && \
-    !defined(OPENSSL_NO_INTTYPES_H)
-int opt_imax(const char *arg, intmax_t *result);
-int opt_umax(const char *arg, uintmax_t *result);
-#else
-# define opt_imax opt_long
-# define opt_umax opt_ulong
-# define intmax_t long
-# define uintmax_t unsigned long
-#endif
-int opt_pair(const char *arg, const OPT_PAIR * pairs, int *result);
-int opt_string(const char *name, const char **options);
+int opt_next(void);
+char *opt_flag(void);
+char *opt_arg(void);
+char *opt_unknown(void);
 int opt_cipher(const char *name, EVP_CIPHER **cipherp);
 int opt_cipher_silent(const char *name, EVP_CIPHER **cipherp);
 int opt_md(const char *name, EVP_MD **mdp);
 int opt_md_silent(const char *name, EVP_MD **mdp);
-char *opt_name(void);
-char *opt_arg(void);
-char *opt_flag(void);
-char *opt_unknown(void);
-char **opt_rest(void);
-int opt_num_rest(void);
+
+int opt_int(const char *arg, int *result);
+int opt_int_arg(void);
+int opt_long(const char *arg, long *result);
+int opt_ulong(const char *arg, unsigned long *result);
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
+    defined(INTMAX_MAX) && defined(UINTMAX_MAX) && \
+    !defined(OPENSSL_NO_INTTYPES_H)
+int opt_intmax(const char *arg, intmax_t *result);
+int opt_uintmax(const char *arg, uintmax_t *result);
+#else
+# define opt_intmax opt_long
+# define opt_uintmax opt_ulong
+# define intmax_t long
+# define uintmax_t unsigned long
+#endif
+
+int opt_isdir(const char *name);
+int opt_format(const char *s, unsigned long flags, int *result);
+void print_format_error(int format, unsigned long flags);
+int opt_printf_stderr(const char *fmt, ...);
+int opt_string(const char *name, const char **options);
+int opt_pair(const char *arg, const OPT_PAIR * pairs, int *result);
+
 int opt_verify(int i, X509_VERIFY_PARAM *vpm);
 int opt_rand(int i);
 int opt_provider(int i);
-void opt_help(const OPTIONS * list);
-void print_format_error(int format, unsigned long flags);
-int opt_isdir(const char *name);
-int opt_printf_stderr(const char *fmt, ...);
+
+char **opt_rest(void);
+int opt_num_rest(void);
 
 #endif /* OSSL_APPS_OPT_H */
