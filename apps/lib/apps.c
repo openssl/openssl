@@ -2282,7 +2282,8 @@ int do_X509_REQ_verify(X509_REQ *x, EVP_PKEY *pkey,
     int rv = 0;
 
     if (do_x509_req_init(x, vfyopts) > 0)
-        rv = (X509_REQ_verify(x, pkey) > 0);
+        rv = (X509_REQ_verify_ex(x, pkey,
+                                 app_get0_libctx(), app_get0_propq()) > 0);
     return rv;
 }
 
