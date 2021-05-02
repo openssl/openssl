@@ -937,6 +937,91 @@ int tls_parse_ctos_ems(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 }
 
 
+int tls_parse_ctos_cert_compression(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
+                       size_t chainidx)
+{
+    PACKET pkt_ids;
+    unsigned int algo_ids;
+
+    /* array to emulate hashmap-like access to ids */
+    unsigned int req_ids[SSL_CERT_COMPRESSION_ZSTD + 1] = {0, 0, 0, 0};
+    unsigned int ids_idx = 1;
+    unsigned short *supported_ids = NULL;
+
+    if (s->ext.selected_cert_compression_id != SSL_CERT_COMPRESSION_NONE) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    if (!PACKET_as_length_prefixed_1(pkt, &pkt_ids)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+        return 0;
+    }
+
+    /* Value is bigger than ZSTD idx for proper algorithm selection */
+    supported_ids = s->ext.supported_cert_compression_ids;
+    for (int i = 0; i < s->ext.supported_cert_compression_ids_len; i++) {
+        req_ids[*supported_ids] = SSL_CERT_COMPRESSION_ZSTD + 1;
+        ++supported_ids;
+    }
+
+    while (PACKET_remaining(&pkt_ids) > 0) {
+        if (!PACKET_get_net_2(&pkt_ids, &algo_ids)) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+            return 0;
+        }
+
+        if (algo_ids > SSL_CERT_COMPRESSION_ZSTD) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_INVALID_COMPRESSION_ALGORITHM);
+            return 0;
+        }
+
+        /*
+         * Save order of algos requested by client. Indeces starts from 1
+         * to prevent 0 value collision
+         * */
+        if (req_ids[algo_ids])
+            req_ids[algo_ids] = ids_idx++;
+    }
+
+    /*
+     * Previously all server-side enabled alogs values were set
+     * to ZSTD idx + 1. All values not requested by client-side
+     * will be discarded
+     */
+    ids_idx = SSL_CERT_COMPRESSION_ZSTD + 1;
+
+    for (int i = SSL_CERT_COMPRESSION_ZSTD; i > 0; --i) {
+        if ((0
+#ifdef ZLIB
+        || i == SSL_CERT_COMPRESSION_ZLIB
+#endif
+#ifdef BROTLI
+        || i == SSL_CERT_COMPRESSION_BROTLI
+#endif
+#ifdef ZSTD
+        || i == SSL_CERT_COMPRESSION_ZSTD
+#endif
+        ) && req_ids[i] > 0 && req_ids[i] < ids_idx) {
+            /*
+             * Select only enabled algos. Lowest value is
+             * the first in client-side list
+             */
+            s->ext.selected_cert_compression_id = i;
+            ids_idx = req_ids[i];
+        }
+    }
+
+    if (s->ext.selected_cert_compression_id == SSL_CERT_COMPRESSION_NONE ||
+        s->ext.selected_cert_compression_id > SSL_CERT_COMPRESSION_ZSTD) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
+
 int tls_parse_ctos_early_data(SSL *s, PACKET *pkt, unsigned int context,
                               X509 *x, size_t chainidx)
 {

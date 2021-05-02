@@ -2897,6 +2897,7 @@ static void print_connection_info(SSL *con)
                SSL_get_secure_renegotiation_support(con) ? "" : " NOT");
     if ((SSL_get_options(con) & SSL_OP_NO_RENEGOTIATION))
         BIO_printf(bio_s_out, "Renegotiation is DISABLED\n");
+    print_cert_compression_state(bio_s_out, con);
 
     if (keymatexportlabel != NULL) {
         BIO_printf(bio_s_out, "Keying material exporter:\n");
@@ -3110,6 +3111,7 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
                        "Secure Renegotiation IS%s supported\n",
                        SSL_get_secure_renegotiation_support(con) ?
                        "" : " NOT");
+            print_cert_compression_state(io, con);
 
             /*
              * The following is evil and should not really be done

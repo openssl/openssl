@@ -668,6 +668,7 @@ static STRINT_PAIR tlsext_types[] = {
     {"psk kex modes", TLSEXT_TYPE_psk_kex_modes},
     {"certificate authorities", TLSEXT_TYPE_certificate_authorities},
     {"post handshake auth", TLSEXT_TYPE_post_handshake_auth},
+    {"certificate compression", TLSEXT_TYPE_cert_compression},
     {NULL}
 };
 
@@ -1555,5 +1556,42 @@ void print_ca_names(BIO *bio, SSL *s)
     for (i = 0; i < sk_X509_NAME_num(sk); i++) {
         X509_NAME_print_ex(bio, sk_X509_NAME_value(sk, i), 0, get_nameopt());
         BIO_write(bio, "\n", 1);
+    }
+}
+
+void print_cert_compression_state(BIO *bio, SSL *s)
+{
+    static STRINT_PAIR comp_ids_list[] = {
+            {"NONE", SSL_CERT_COMPRESSION_NONE},
+            {"ZLIB", SSL_CERT_COMPRESSION_ZLIB},
+            {"BROTLI", SSL_CERT_COMPRESSION_BROTLI},
+            {"ZSTD", SSL_CERT_COMPRESSION_ZSTD},
+            {NULL}
+    };
+    const char *curr = NULL;
+    const uint16_t *algs_list = NULL;
+    size_t len = 0;
+    uint16_t selected_id = 0;
+
+    SSL_get_cert_compression(s, &algs_list, &len);
+
+    BIO_printf(bio, "Supported certificate compression algorithms:");
+    for (int i = 0;  i < len; ++i) {
+        curr = lookup(*algs_list, comp_ids_list, "UNKNOWN");
+        BIO_printf(bio, " %s", curr);
+        ++algs_list;
+    }
+    BIO_write(bio, "\n", 1);
+
+    if (SSL_is_server(s)) {
+        selected_id = SSL_get_cert_compression_selected(s);
+
+        fprintf(stderr, "size %zu\n", sizeof(comp_ids_list) - 1);
+        if (selected_id > SSL_CERT_COMPRESSION_ZSTD) {
+            selected_id = 4;
+        }
+
+        curr = lookup(selected_id, comp_ids_list, "UNKNOWN");
+        BIO_printf(bio, "Current certificate compression algorithm: %s\n", curr);
     }
 }

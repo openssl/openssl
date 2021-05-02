@@ -130,6 +130,7 @@ __owur int tls_construct_cert_status_body(SSL *s, WPACKET *pkt);
 __owur int tls_construct_cert_status(SSL *s, WPACKET *pkt);
 __owur MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt);
 __owur MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt);
+__owur MSG_PROCESS_RETURN tls_process_compressed_server_certificate(SSL *s, PACKET *pkt);
 __owur WORK_STATE tls_post_process_server_certificate(SSL *s, WORK_STATE wst);
 __owur int ssl3_check_cert_and_algorithm(SSL *s);
 #ifndef OPENSSL_NO_NEXTPROTONEG
@@ -145,6 +146,7 @@ __owur WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst);
 __owur int tls_construct_server_hello(SSL *s, WPACKET *pkt);
 __owur int dtls_construct_hello_verify_request(SSL *s, WPACKET *pkt);
 __owur int tls_construct_server_certificate(SSL *s, WPACKET *pkt);
+__owur int tls_construct_compressed_server_certificate(SSL *s, WPACKET *pkt);
 __owur int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt);
 __owur int tls_construct_certificate_request(SSL *s, WPACKET *pkt);
 __owur int tls_construct_server_done(SSL *s, WPACKET *pkt);
@@ -237,6 +239,8 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 int tls_parse_ctos_cookie(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                           size_t chainidx);
 int tls_parse_ctos_ems(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
+                       size_t chainidx);
+int tls_parse_ctos_cert_compression(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                        size_t chainidx);
 int tls_parse_ctos_psk_kex_modes(SSL *s, PACKET *pkt, unsigned int context,
                                  X509 *x, size_t chainidx);
@@ -355,6 +359,8 @@ EXT_RETURN tls_construct_ctos_sct(SSL *s, WPACKET *pkt, unsigned int context,
 #endif
 EXT_RETURN tls_construct_ctos_ems(SSL *s, WPACKET *pkt, unsigned int context,
                                   X509 *x, size_t chainidx);
+EXT_RETURN tls_construct_ctos_cert_compression(SSL *s, WPACKET *pkt, unsigned int context,
+                                  X509 *x, size_t chainidx);
 EXT_RETURN tls_construct_ctos_supported_versions(SSL *s, WPACKET *pkt,
                                                  unsigned int context, X509 *x,
                                                  size_t chainidx);
@@ -421,3 +427,8 @@ int tls_handle_alpn(SSL *s);
 
 int tls13_save_handshake_digest_for_pha(SSL *s);
 int tls13_restore_handshake_digest_for_pha(SSL *s);
+
+void *cert_brotli_zalloc(void*opaque, size_t size);
+void cert_brotli_zfree(void*opaque, void* addr);
+void *cert_zlib_zalloc(void *opaque, unsigned int no, unsigned int size);
+void cert_zlib_zfree(void *opaque, void *address);

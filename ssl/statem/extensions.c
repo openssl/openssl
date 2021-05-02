@@ -279,6 +279,13 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         tls_construct_stoc_ems, tls_construct_ctos_ems, final_ems
     },
     {
+        TLSEXT_TYPE_cert_compression,
+        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_CERTIFICATE_REQUEST |
+        SSL_EXT_TLS1_3_ONLY,
+        NULL, tls_parse_ctos_cert_compression, NULL, NULL,
+        tls_construct_ctos_cert_compression, NULL
+    },
+    {
         TLSEXT_TYPE_signature_algorithms_cert,
         SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_CERTIFICATE_REQUEST,
         init_sig_algs_cert, tls_parse_ctos_sig_algs_cert,

@@ -2403,3 +2403,25 @@ int tls13_restore_handshake_digest_for_pha(SSL *s)
     }
     return 1;
 }
+
+/* Helpers for compression and decompression of certificates.
+ * zlib_zalloc and zlib_zfree already defined in compression
+ * module, but defined as static.
+ */
+
+void *cert_brotli_zalloc(void*opaque, size_t size) {
+    return OPENSSL_zalloc(size);
+}
+void cert_brotli_zfree(void*opaque, void* addr) {
+    OPENSSL_free(addr);
+}
+
+void *cert_zlib_zalloc(void *opaque, unsigned int no, unsigned int size)
+{
+    return OPENSSL_zalloc(no * size);
+}
+
+void cert_zlib_zfree(void *opaque, void *address)
+{
+    OPENSSL_free(address);
+}

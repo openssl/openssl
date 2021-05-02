@@ -1064,7 +1064,9 @@ typedef enum {
     TLS_ST_EARLY_DATA,
     TLS_ST_PENDING_EARLY_DATA_END,
     TLS_ST_CW_END_OF_EARLY_DATA,
-    TLS_ST_SR_END_OF_EARLY_DATA
+    TLS_ST_SR_END_OF_EARLY_DATA,
+    TLS_ST_CR_CERT_COMPRESSED,
+    TLS_ST_SW_CERT_COMPRESSED
 } OSSL_HANDSHAKE_STATE;
 
 /*
@@ -1599,6 +1601,11 @@ __owur SSL_verify_cb SSL_get_verify_callback(const SSL *s);
 void SSL_set_verify(SSL *s, int mode, SSL_verify_cb callback);
 void SSL_set_verify_depth(SSL *s, int depth);
 void SSL_set_cert_cb(SSL *s, int (*cb) (SSL *ssl, void *arg), void *arg);
+void SSL_set_cert_compression(SSL *s, uint16_t *ids, size_t len);
+void SSL_get_cert_compression(SSL *s, const uint16_t **ids, size_t *len);
+void SSL_CTX_get_cert_compression(SSL_CTX *ctx, const uint16_t **ids, size_t *len);
+void SSL_CTX_set_cert_compression(SSL_CTX *ctx, uint16_t *ids, size_t len);
+__owur uint16_t SSL_get_cert_compression_selected(SSL *s);
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 OSSL_DEPRECATEDIN_3_0 __owur int SSL_use_RSAPrivateKey(SSL *ssl, RSA *rsa);
 OSSL_DEPRECATEDIN_3_0
@@ -2530,6 +2537,12 @@ void SSL_set_allow_early_data_cb(SSL *s,
 /* store the default cipher strings inside the library */
 const char *OSSL_default_cipher_list(void);
 const char *OSSL_default_ciphersuites(void);
+
+/* RFC 8879 Compression algorithms list */
+#define SSL_CERT_COMPRESSION_NONE           0x0
+#define SSL_CERT_COMPRESSION_ZLIB           0x1
+#define SSL_CERT_COMPRESSION_BROTLI         0x2
+#define SSL_CERT_COMPRESSION_ZSTD           0x3
 
 # ifdef  __cplusplus
 }

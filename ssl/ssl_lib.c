@@ -790,6 +790,19 @@ SSL *SSL_new(SSL_CTX *ctx)
         }
         s->ext.supportedgroups_len = ctx->ext.supportedgroups_len;
     }
+    if (ctx->ext.supported_cert_compression_ids) {
+        s->ext.supported_cert_compression_ids =
+            OPENSSL_memdup(ctx->ext.supported_cert_compression_ids,
+                           ctx->ext.supported_cert_compression_ids_len
+                                * sizeof(*ctx->ext.supported_cert_compression_ids));
+
+        if (!s->ext.supported_cert_compression_ids) {
+            s->ext.supported_cert_compression_ids_len = 0;
+            goto err;
+        }
+
+        s->ext.supported_cert_compression_ids_len = ctx->ext.supported_cert_compression_ids_len;
+    }
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
     s->ext.npn = NULL;
@@ -5993,4 +6006,45 @@ int SSL_CTX_set0_tmp_dh_pkey(SSL_CTX *ctx, EVP_PKEY *dhpkey)
     EVP_PKEY_free(ctx->cert->dh_tmp);
     ctx->cert->dh_tmp = dhpkey;
     return 1;
+}
+
+void SSL_CTX_set_cert_compression(SSL_CTX *ctx, uint16_t *ids, size_t len)
+{
+    if (ids) {
+        ctx->ext.supported_cert_compression_ids =
+                OPENSSL_memdup(ids, len * sizeof(*ids));
+        ctx->ext.supported_cert_compression_ids_len = len;
+
+        if (!ctx->ext.supported_cert_compression_ids)
+            ctx->ext.supported_cert_compression_ids_len = 0;
+    }
+}
+
+void SSL_set_cert_compression(SSL *s, uint16_t *ids, size_t len)
+{
+    if (ids) {
+        s->ext.supported_cert_compression_ids =
+                OPENSSL_memdup(ids, len * sizeof(*ids));
+
+        s->ext.supported_cert_compression_ids_len = len;
+
+        if (!s->ext.supported_cert_compression_ids)
+            s->ext.supported_cert_compression_ids_len = 0;
+    }
+}
+
+void SSL_CTX_get_cert_compression(SSL_CTX *ctx, const uint16_t **ids, size_t *len)
+{
+    *ids = ctx->ext.supported_cert_compression_ids;
+    *len = ctx->ext.supported_cert_compression_ids_len;
+}
+
+void SSL_get_cert_compression(SSL *ctx, const uint16_t **ids, size_t *len)
+{
+    *ids = ctx->ext.supported_cert_compression_ids;
+    *len = ctx->ext.supported_cert_compression_ids_len;
+}
+
+uint16_t SSL_get_cert_compression_selected(SSL *s) {
+    return s->ext.selected_cert_compression_id;
 }

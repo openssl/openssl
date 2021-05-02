@@ -520,6 +520,48 @@ EXT_RETURN tls_construct_ctos_ems(SSL *s, WPACKET *pkt, unsigned int context,
     return EXT_RETURN_SENT;
 }
 
+EXT_RETURN tls_construct_ctos_cert_compression(SSL *s, WPACKET *pkt, unsigned int context,
+                                  X509 *x, size_t chainidx)
+{
+    int min_version, max_version, reason;
+
+    reason = ssl_get_min_max_version(s, &min_version, &max_version, NULL);
+    if (reason != 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, reason);
+        return EXT_RETURN_FAIL;
+    }
+
+    /* RFC8879 is available only in TLS 1.3 */
+    if (max_version < TLS1_3_VERSION)
+        return EXT_RETURN_NOT_SENT;
+
+    if (!s->ext.supported_cert_compression_ids
+        || s->ext.supported_cert_compression_ids_len == 0) {
+        return EXT_RETURN_NOT_SENT;
+    }
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_cert_compression)
+        || !WPACKET_start_sub_packet_u16(pkt)
+        || !WPACKET_start_sub_packet_u8(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+
+    for (int i = 0; i < s->ext.supported_cert_compression_ids_len; ++i) {
+        if (!WPACKET_put_bytes_u16(pkt, s->ext.supported_cert_compression_ids[i])) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return EXT_RETURN_FAIL;
+        }
+    }
+
+    if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+
+    return EXT_RETURN_SENT;
+}
+
 EXT_RETURN tls_construct_ctos_supported_versions(SSL *s, WPACKET *pkt,
                                                  unsigned int context, X509 *x,
                                                  size_t chainidx)

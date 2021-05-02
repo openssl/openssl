@@ -113,6 +113,10 @@ const char *SSL_state_string_long(const SSL *s)
         return "TLSv1.3 write end of early data";
     case TLS_ST_SR_END_OF_EARLY_DATA:
         return "TLSv1.3 read end of early data";
+    case TLS_ST_CR_CERT_COMPRESSED:
+        return "TLSv1.3 read compressed server certificate";
+    case TLS_ST_SW_CERT_COMPRESSED:
+        return "TLSv1.3 write compressed server certificate";
     default:
         return "unknown state";
     }
@@ -220,6 +224,10 @@ const char *SSL_state_string(const SSL *s)
         return "TWEOED";
     case TLS_ST_SR_END_OF_EARLY_DATA:
         return "TWEOED";
+    case TLS_ST_CR_CERT_COMPRESSED:
+        return "TRCCC";
+    case TLS_ST_SW_CERT_COMPRESSED:
+        return "TWSCC";
     default:
         return "UNKWN ";
     }

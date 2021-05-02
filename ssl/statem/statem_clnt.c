@@ -28,6 +28,16 @@
 #include <openssl/param_build.h>
 #include <internal/cryptlib.h>
 
+#ifdef BROTLI
+#include <brotli/decode.h>
+#endif
+#ifdef ZLIB
+#include <zlib.h>
+#endif
+#ifdef ZSTD
+#include <zstd.h>
+#endif
+
 static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL *s, PACKET *pkt);
 static MSG_PROCESS_RETURN tls_process_encrypted_extensions(SSL *s, PACKET *pkt);
 
@@ -35,6 +45,14 @@ static ossl_inline int cert_req_allowed(SSL *s);
 static int key_exchange_expected(SSL *s);
 static int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk,
                                     WPACKET *pkt);
+
+#define GETU32(pt) (((uint32_t)(pt)[0] << 16) ^ ((uint32_t)(pt)[1] <<  8) ^ ((uint32_t)(pt)[2]))
+static size_t tls_cert_uncompress_zlib(const uint8_t* next_in, size_t avail_in,
+                                       uint8_t* next_out, size_t avail_out);
+static size_t tls_cert_uncompress_brotli(const uint8_t* next_in, size_t avail_in,
+                                         uint8_t* next_out, size_t avail_out);
+static size_t tls_cert_uncompress_zstd(const uint8_t* next_in, size_t avail_in,
+                                       uint8_t* next_out, size_t avail_out);
 
 /*
  * Is a CertificateRequest message allowed at the moment or not?
@@ -133,6 +151,10 @@ static int ossl_statem_client13_read_transition(SSL *s, int mt)
                 st->hand_state = TLS_ST_CR_CERT;
                 return 1;
             }
+            if (mt == SSL3_MT_CERTIFICATE_COMPRESSED) {
+                st->hand_state = TLS_ST_CR_CERT_COMPRESSED;
+                return 1;
+            }
         }
         break;
 
@@ -141,9 +163,14 @@ static int ossl_statem_client13_read_transition(SSL *s, int mt)
             st->hand_state = TLS_ST_CR_CERT;
             return 1;
         }
+        if (mt == SSL3_MT_CERTIFICATE_COMPRESSED) {
+            st->hand_state = TLS_ST_CR_CERT_COMPRESSED;
+            return 1;
+        }
         break;
 
     case TLS_ST_CR_CERT:
+    case TLS_ST_CR_CERT_COMPRESSED:
         if (mt == SSL3_MT_CERTIFICATE_VERIFY) {
             st->hand_state = TLS_ST_CR_CERT_VRFY;
             return 1;
@@ -281,6 +308,10 @@ int ossl_statem_client_read_transition(SSL *s, int mt)
                     st->hand_state = TLS_ST_CR_CERT;
                     return 1;
                 }
+                if (mt == SSL3_MT_CERTIFICATE_COMPRESSED) {
+                    st->hand_state = TLS_ST_CR_CERT_COMPRESSED;
+                    return 1;
+                }
             } else {
                 ske_expected = key_exchange_expected(s);
                 /* SKE is optional for some PSK ciphersuites */
@@ -304,6 +335,7 @@ int ossl_statem_client_read_transition(SSL *s, int mt)
         break;
 
     case TLS_ST_CR_CERT:
+    case TLS_ST_CR_CERT_COMPRESSED:
         /*
          * The CertificateStatus message is optional even if
          * |ext.status_expected| is set
@@ -969,6 +1001,9 @@ size_t ossl_statem_client_max_message_size(SSL *s)
     case TLS_ST_CR_CERT:
         return s->max_cert_list;
 
+    case TLS_ST_CR_CERT_COMPRESSED:
+        return s->max_cert_list;
+
     case TLS_ST_CR_CERT_VRFY:
         return SSL3_RT_MAX_PLAIN_LENGTH;
 
@@ -1030,6 +1065,9 @@ MSG_PROCESS_RETURN ossl_statem_client_process_message(SSL *s, PACKET *pkt)
     case TLS_ST_CR_CERT:
         return tls_process_server_certificate(s, pkt);
 
+    case TLS_ST_CR_CERT_COMPRESSED:
+        return tls_process_compressed_server_certificate(s, pkt);
+
     case TLS_ST_CR_CERT_VRFY:
         return tls_process_cert_verify(s, pkt);
 
@@ -1080,6 +1118,7 @@ WORK_STATE ossl_statem_client_post_process_message(SSL *s, WORK_STATE wst)
         return WORK_ERROR;
 
     case TLS_ST_CR_CERT:
+    case TLS_ST_CR_CERT_COMPRESSED:
         return tls_post_process_server_certificate(s, wst);
 
     case TLS_ST_CR_CERT_VRFY:
@@ -1841,6 +1880,85 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
     X509_free(x);
     sk_X509_pop_free(s->session->peer_chain, X509_free);
     s->session->peer_chain = NULL;
+    return MSG_PROCESS_ERROR;
+}
+
+MSG_PROCESS_RETURN tls_process_compressed_server_certificate(SSL *s, PACKET *pkt)
+{
+    unsigned int alg_id = 0;
+    unsigned long uncomp_len = 0;
+    unsigned long comp_len = 0;
+    const unsigned char *raw_buff = NULL;
+    unsigned char *uncomp_buff = NULL;
+
+    MSG_PROCESS_RETURN err;
+    PACKET uncomp_pkt;
+
+    if (!SSL_IS_TLS13(s)) {
+        SSLfatal(s, SSL_AD_PROTOCOL_VERSION, SSL_R_BAD_EXTENSION);
+        goto err;
+    }
+
+    if (!PACKET_get_net_2(pkt, &alg_id)
+        || !(0
+             #ifdef ZLIB
+             || alg_id == SSL_CERT_COMPRESSION_ZLIB
+             #endif
+             #ifdef BROTLI
+             || alg_id == SSL_CERT_COMPRESSION_BROTLI
+             #endif
+             #ifdef ZSTD
+             || alg_id == SSL_CERT_COMPRESSION_ZSTD
+#endif
+        )) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_SSLV3_ALERT_BAD_CERTIFICATE);
+        goto err;
+    }
+
+    if (!PACKET_get_net_3(pkt, &uncomp_len)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+        goto err;
+    }
+
+    if (!PACKET_get_net_3(pkt, &comp_len)
+        || PACKET_remaining(pkt) != comp_len
+        || PACKET_remaining(pkt) == 0
+        || !PACKET_get_bytes(pkt, &raw_buff, comp_len)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+        goto err;
+    }
+
+    uncomp_buff = OPENSSL_zalloc(sizeof(uncomp_buff) * uncomp_len);
+
+    /* RFC8879:
+     * If the received CompressedCertificate message cannot be decompressed,
+     * the connection MUST be terminated with the "bad_certificate" alert.
+     */
+
+    if (alg_id == SSL_CERT_COMPRESSION_ZLIB &&
+        tls_cert_uncompress_zlib(raw_buff, comp_len, uncomp_buff, uncomp_len) != uncomp_len) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_SSLV3_ALERT_BAD_CERTIFICATE);
+        goto err;
+    } else if (alg_id == SSL_CERT_COMPRESSION_BROTLI &&
+        tls_cert_uncompress_brotli(raw_buff, comp_len, uncomp_buff, uncomp_len) != uncomp_len) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_SSLV3_ALERT_BAD_CERTIFICATE);
+        goto err;
+    } else if (alg_id == SSL_CERT_COMPRESSION_ZSTD &&
+        tls_cert_uncompress_zstd(raw_buff, comp_len, uncomp_buff, uncomp_len) != uncomp_len) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_SSLV3_ALERT_BAD_CERTIFICATE);
+        goto err;
+    }
+
+    if (!PACKET_buf_init(&uncomp_pkt, uncomp_buff, uncomp_len)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_SSLV3_ALERT_BAD_CERTIFICATE);
+        goto err;
+    }
+
+    err = tls_process_server_certificate(s, &uncomp_pkt);
+    OPENSSL_free(uncomp_buff);
+    return err;
+err:
+    OPENSSL_free(uncomp_buff);
     return MSG_PROCESS_ERROR;
 }
 
@@ -3778,4 +3896,92 @@ int tls_construct_end_of_early_data(SSL *s, WPACKET *pkt)
 
     s->early_data_state = SSL_EARLY_DATA_FINISHED_WRITING;
     return 1;
+}
+
+static size_t tls_cert_uncompress_zlib(const uint8_t* next_in, size_t avail_in, uint8_t* next_out, size_t avail_out)
+{
+#ifdef ZLIB
+    int ret = 0;
+    z_stream state;
+
+    if (next_in == NULL || avail_in == 0)
+        return 0;
+
+    state.zalloc = cert_zlib_zalloc;
+    state.zfree = cert_zlib_zfree;
+    state.opaque = NULL;
+
+    state.next_in  = (Bytef *)next_in;
+    state.avail_in = avail_in;
+    state.next_out = next_out;
+    state.avail_out = avail_in;
+
+    if ((ret = inflateInit(&state)) != Z_OK) {
+        ERR_raise_data(ERR_LIB_SSL, SSL_R_COMPRESSION_LIBRARY_ERROR,
+                       "zlib error: %s", zError(ret));
+        return 0;
+    }
+
+    while (state.avail_in) {
+        ret = inflate(&state, Z_NO_FLUSH);
+        if ((ret != Z_OK) && (ret != Z_STREAM_END)) {
+            ERR_raise_data(ERR_LIB_SSL, SSL_R_COMPRESSION_LIBRARY_ERROR,
+                           "zlib error: %s", zError(ret));
+            return 0;
+        }
+        if ((ret == Z_STREAM_END) || !state.avail_out)
+            return avail_out - state.avail_out;
+    }
+
+    return 0;
+#else
+    return 0;
+#endif
+}
+
+static size_t tls_cert_uncompress_brotli(const uint8_t* next_in, size_t avail_in, uint8_t* next_out, size_t avail_out)
+{
+#ifdef BROTLI
+    size_t total_out = 0;
+
+    BrotliDecoderState* state;
+    BrotliDecoderResult rest;
+
+    state = BrotliDecoderCreateInstance(cert_brotli_zalloc, cert_brotli_zfree, NULL);
+    if (!state) {
+        ERR_raise_data(ERR_LIB_SSL, SSL_R_COMPRESSION_LIBRARY_ERROR,
+                       "brotli error: init error");
+        return 0;
+    }
+
+    rest = BrotliDecoderDecompressStream(state, &avail_in, &next_in, &avail_out, &next_out, &total_out);
+    if (rest != BROTLI_DECODER_RESULT_SUCCESS) {
+        ERR_raise_data(ERR_LIB_SSL, SSL_R_COMPRESSION_LIBRARY_ERROR,
+                       "brotli error: stream compression error");
+        total_out = 0;
+    }
+
+    BrotliDecoderDestroyInstance(state);
+    return total_out;
+#else
+    return 0;
+#endif
+}
+
+static size_t tls_cert_uncompress_zstd(const uint8_t* next_in, size_t avail_in, uint8_t* next_out, size_t avail_out)
+{
+#ifdef ZSTD
+    size_t total_out = 0;
+
+    if(ZSTD_getFrameContentSize(next_in, avail_in) != avail_out) {
+        ERR_raise_data(ERR_LIB_SSL, SSL_R_COMPRESSION_LIBRARY_ERROR,
+                       "zstd error: header length mismatch");
+        return 0;
+    }
+
+    total_out = ZSTD_decompress(next_out, avail_out, next_in, avail_in);
+    return total_out;
+#else
+    return 0;
+#endif
 }

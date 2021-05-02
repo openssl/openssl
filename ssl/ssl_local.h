@@ -752,6 +752,7 @@ typedef enum tlsext_index_en {
     TLSEXT_IDX_encrypt_then_mac,
     TLSEXT_IDX_signed_certificate_timestamp,
     TLSEXT_IDX_extended_master_secret,
+    TLSEXT_IDX_cert_compression,
     TLSEXT_IDX_signature_algorithms_cert,
     TLSEXT_IDX_post_handshake_auth,
     TLSEXT_IDX_signature_algorithms,
@@ -1106,6 +1107,10 @@ struct ssl_ctx_st {
 # endif
 
         unsigned char cookie_hmac_key[SHA256_DIGEST_LENGTH];
+
+        /* RFC8879 certificate compression algorithms */
+        uint16_t *supported_cert_compression_ids;
+        size_t supported_cert_compression_ids_len;
     } ext;
 
 # ifndef OPENSSL_NO_PSK
@@ -1664,6 +1669,11 @@ struct ssl_st {
          * selected.
          */
         int tick_identity;
+
+        /* RFC8879 certificate compression algorithms */
+        uint16_t *supported_cert_compression_ids;
+        size_t supported_cert_compression_ids_len;
+        uint16_t selected_cert_compression_id;
     } ext;
 
     /*

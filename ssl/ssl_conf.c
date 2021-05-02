@@ -269,6 +269,50 @@ static int cmd_Ciphersuites(SSL_CONF_CTX *cctx, const char *value)
     return rv > 0;
 }
 
+static int cmd_CertCompression(SSL_CONF_CTX *cctx, const char *value)
+{
+    uint16_t *comp_ids, *compression_ids_ptr = NULL;
+    const char *vptr = value;
+    size_t comp_len = 1;
+
+    if (strnlen(value, 100) == 0) { // TODO: replace 100 with macros
+        return 1;
+    }
+
+    for (int i = 0; i < strnlen(value, 100); ++i) {
+        if (value[i] == ',') {
+            ++comp_len;
+        }
+    }
+
+    comp_ids = OPENSSL_malloc(sizeof(uint16_t) * comp_len);
+    compression_ids_ptr = comp_ids;
+
+    size_t value_len = strnlen(value, 100) - 1;
+
+    for (int i = 0; i <= value_len; ++i) {
+        if (value[i] == ',' || i == value_len) {
+            if (strncmp(vptr, "zlib", 4) == 0 || strncmp(vptr, "1", 1) == 0) {
+                *compression_ids_ptr = SSL_CERT_COMPRESSION_ZLIB;
+            } else if (strncmp(vptr, "brotli", 6) == 0 || strncmp(vptr, "2", 1) == 0) {
+                *compression_ids_ptr = SSL_CERT_COMPRESSION_BROTLI;
+            } else if (strncmp(vptr, "zstd", 4) == 0 || strncmp(vptr, "3", 1) == 0) {
+                *compression_ids_ptr = SSL_CERT_COMPRESSION_ZSTD;
+            }
+
+            vptr = value + i + 1;
+            ++compression_ids_ptr;
+        }
+    }
+
+    if (cctx->ctx) {
+        SSL_CTX_set_cert_compression(cctx->ctx, comp_ids, comp_len);
+    } else if (cctx->ssl) {
+        SSL_set_cert_compression(cctx->ssl, comp_ids, comp_len);
+    }
+    return 1;
+}
+
 static int cmd_Protocol(SSL_CONF_CTX *cctx, const char *value)
 {
     static const ssl_flag_tbl ssl_protocol_list[] = {
@@ -745,6 +789,7 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
                  SSL_CONF_TYPE_FILE),
     SSL_CONF_CMD_STRING(RecordPadding, "record_padding", 0),
     SSL_CONF_CMD_STRING(NumTickets, "num_tickets", SSL_CONF_FLAG_SERVER),
+    SSL_CONF_CMD_STRING(CertCompression, "cert_compression", 0),
 };
 
 /* Supported switches: must match order of switches in ssl_conf_cmds */
