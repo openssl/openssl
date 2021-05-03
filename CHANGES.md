@@ -77,6 +77,14 @@ OpenSSL 3.0
 
    *Boris Pismenny, John Baldwin and Andrew Gallatin*
 
+ * Support for RFC 5746 secure renegotiation is now required by default for
+   SSL or TLS connections to succeed.  Applications that require the ability
+   to connect to legacy peers will need to explicitly set
+   SSL_OP_LEGACY_SERVER_CONNECT.  Accordingly, SSL_OP_LEGACY_SERVER_CONNECT
+   is no longer set as part of SSL_OP_ALL.
+
+   *Benjamin Kaduk*
+
  * The signature of the `copy` functional parameter of the
    EVP_PKEY_meth_set_copy() function has changed so its `src` argument is
    now `const EVP_PKEY_CTX *` instead of `EVP_PKEY_CTX *`. Similarly

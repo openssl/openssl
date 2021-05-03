@@ -425,7 +425,6 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
  */
 # define SSL_OP_ALL        (SSL_OP_CRYPTOPRO_TLSEXT_BUG|\
                             SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS|\
-                            SSL_OP_LEGACY_SERVER_CONNECT|\
                             SSL_OP_TLSEXT_PADDING|\
                             SSL_OP_SAFARI_ECDHE_ECDSA_BUG)
 
