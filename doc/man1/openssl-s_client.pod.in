@@ -83,6 +83,7 @@ B<openssl> B<s_client>
 [B<-comp>]
 [B<-no_comp>]
 [B<-brief>]
+[B<-legacy_server_connect>]
 [B<-allow_no_dhe_kex>]
 [B<-sigalgs> I<sigalglist>]
 [B<-curves> I<curvelist>]
