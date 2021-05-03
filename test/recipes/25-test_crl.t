@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_crl");
 
-plan tests => 9;
+plan tests => 10;
 
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
@@ -44,8 +44,10 @@ ok(compare1stline_stdin([qw{openssl crl -hash -noout}],
                         '106cd822'),
    "crl piped input test");
 
-ok(run(app(["openssl", "crl", "-text", "-in", $pem, "-out", $out,
-            "-nameopt", "utf8"])));
+ok(!run(app(["openssl", "crl", "-text", "-in", $pem, "-inform", "DER",
+             "-out", $out, "-nameopt", "utf8"])));
+ok(run(app(["openssl", "crl", "-text", "-in", $pem, "-inform", "PEM",
+            "-out", $out, "-nameopt", "utf8"])));
 is(cmp_text($out, srctop_file("test/certs", "cyrillic_crl.utf8")),
    0, 'Comparing utf8 output');
 

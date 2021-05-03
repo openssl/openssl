@@ -80,7 +80,7 @@ sub tsignverify {
     my $sigfile = basename($privkey, '.pem') . '.sig';
 
     my @args = ();
-    plan tests => 4;
+    plan tests => 5;
 
     @args = ('openssl', 'pkeyutl', '-sign',
              '-inkey', $privkey,
@@ -89,6 +89,15 @@ sub tsignverify {
     push(@args, @extraopts);
     ok(run(app([@args])),
        $testtext.": Generating signature");
+
+    @args = ('openssl', 'pkeyutl', '-sign',
+             '-inkey', $privkey,
+             '-keyform', 'DER',
+             '-out', $sigfile,
+             '-in', $data_to_sign);
+    push(@args, @extraopts);
+    ok(!run(app([@args])),
+       $testtext.": Checking that mismatching keyform fails");
 
     @args = ('openssl', 'pkeyutl', '-verify',
              '-inkey', $privkey,
@@ -99,6 +108,7 @@ sub tsignverify {
        $testtext.": Verify signature with private key");
 
     @args = ('openssl', 'pkeyutl', '-verify',
+             '-keyform', 'PEM',
              '-inkey', $pubkey, '-pubin',
              '-sigfile', $sigfile,
              '-in', $data_to_sign);

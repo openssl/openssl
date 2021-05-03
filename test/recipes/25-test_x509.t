@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509");
 
-plan tests => 15;
+plan tests => 18;
 
 require_ok(srctop_file("test", "recipes", "tconversion.pl"));
 
@@ -24,6 +24,8 @@ my @certs = qw(test certs);
 my $pem = srctop_file(@certs, "cyrillic.pem");
 my $out_msb = "out-cyrillic.msb";
 my $out_utf8 = "out-cyrillic.utf8";
+my $der = "cyrillic.der";
+my $der2 = "cyrillic.der";
 my $msb = srctop_file(@certs, "cyrillic.msb");
 my $utf = srctop_file(@certs, "cyrillic.utf8");
 
@@ -36,7 +38,7 @@ ok(run(app(["openssl", "x509", "-text", "-in", $pem, "-out", $out_utf8,
 is(cmp_text($out_utf8, $utf),
    0, 'Comparing utf8 output with cyrillic.utf8');
 
- SKIP: {
+SKIP: {
     skip "DES disabled", 1 if disabled("des");
 
     my $p12 = srctop_file("test", "shibboleth.pfx");
@@ -46,6 +48,16 @@ is(cmp_text($out_utf8, $utf),
                 "-passin", "pass:$p12pass"])));
     # not unlinking $out_pem
 }
+
+ok(!run(app(["openssl", "x509", "-in", $pem, "-inform", "DER",
+             "-out", $der, "-outform", "DER"])),
+   "Checking failure of mismatching -inform DER");
+ok(run(app(["openssl", "x509", "-in", $pem, "-inform", "PEM",
+            "-out", $der, "-outform", "DER"])),
+   "Conversion to DER");
+ok(!run(app(["openssl", "x509", "-in", $der, "-inform", "PEM",
+             "-out", $der2, "-outform", "DER"])),
+   "Checking failure of mismatching -inform PEM");
 
 # producing and checking self-issued (but not self-signed) cert
 my $subj = "/CN=CA"; # using same DN as in issuer of ee-cert.pem
