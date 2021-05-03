@@ -3502,7 +3502,6 @@ int speed_main(int argc, char **argv)
                 pkey_print_message("sign", OBJ_nid2sn(oqssl_sig_nids_list[testnum]),
                                    oqssig_c[testnum][0],
                                    0, seconds.oqssig);
-                loopargs[i].sigsize = oqs_size(oqssig_pkey);
                 Time_F(START);
                 count = run_benchmark(async_jobs, OQS_sign_loop, loopargs);
                 d = Time_F(STOP);
