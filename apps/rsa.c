@@ -335,6 +335,20 @@ int rsa_main(int argc, char **argv)
         goto end;
     }
 
+    /* Passphrase setup */
+    if (enc != NULL)
+        OSSL_ENCODER_CTX_set_cipher(ectx, EVP_CIPHER_name(enc), NULL);
+
+    /* Default passphrase prompter */
+    if (enc != NULL || outformat == FORMAT_PVK) {
+        OSSL_ENCODER_CTX_set_passphrase_ui(ectx, get_ui_method(), NULL);
+        if (passout != NULL)
+            /* When passout given, override the passphrase prompter */
+            OSSL_ENCODER_CTX_set_passphrase(ectx,
+                                            (const unsigned char *)passout,
+                                            strlen(passout));
+    }
+
     /* PVK is a bit special... */
     if (outformat == FORMAT_PVK) {
         OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
