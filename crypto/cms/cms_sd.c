@@ -496,8 +496,12 @@ void ossl_cms_SignerInfos_set_cmsctx(CMS_ContentInfo *cms)
 {
     int i;
     CMS_SignerInfo *si;
-    STACK_OF(CMS_SignerInfo) *sinfos = CMS_get0_SignerInfos(cms);
+    STACK_OF(CMS_SignerInfo) *sinfos;
     const CMS_CTX *ctx = ossl_cms_get0_cmsctx(cms);
+
+    ERR_set_mark();
+    sinfos = CMS_get0_SignerInfos(cms);
+    ERR_pop_to_mark(); /* removes error in case sinfos == NULL */
 
     for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
         si = sk_CMS_SignerInfo_value(sinfos, i);
