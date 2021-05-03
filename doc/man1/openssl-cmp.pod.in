@@ -732,8 +732,7 @@ Default value is PEM.
 
 =item B<-keyform> I<PEM|DER|P12|ENGINE>
 
-The format of the key input.
-The only value with effect is B<ENGINE>.
+The format of the key input; unspecified by default.
 See L<openssl(1)/Format Options> for details.
 
 =item B<-otherpass> I<arg>

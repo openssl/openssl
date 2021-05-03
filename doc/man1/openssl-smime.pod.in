@@ -127,8 +127,7 @@ See L<openssl-format-options(1)> for details.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The key format; the default is B<PEM>.
-The only value with effect is B<ENGINE>; all others have become obsolete.
+The key format; unspecified by default.
 See L<openssl-format-options(1)> for details.
 
 =item B<-stream>, B<-indef>, B<-noindef>
@@ -480,9 +479,6 @@ The use of multiple B<-signer> options and the B<-resign> command were first
 added in OpenSSL 1.0.0
 
 The -no_alt_chains option was added in OpenSSL 1.1.0.
-
-All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
-and have no effect.
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
 

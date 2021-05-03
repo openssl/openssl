@@ -55,9 +55,14 @@ applications should use the more secure PKCS#8 format using the B<pkcs8>
 
 Print out a usage message.
 
-=item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
+=item B<-inform> B<DER>|B<PEM>
 
-The input and formats; the default is B<PEM>.
+The key input format; unspecified by default.
+See L<openssl-format-options(1)> for details.
+
+=item B<-outform> B<DER>|B<PEM>
+
+The key output format; the default is B<PEM>.
 See L<openssl-format-options(1)> for details.
 
 Private keys are a sequence of B<ASN.1 INTEGERS>: the version (zero), B<p>,

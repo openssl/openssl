@@ -241,8 +241,7 @@ See L<openssl-format-options(1)> for details.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The format of the private key file; the default is B<PEM>.
-The only value with effect is B<ENGINE>; all others have become obsolete.
+The format of the private key file; unspecified by default.
 See L<openssl-format-options(1)> for details.
 
 =item B<-rctform> B<DER>|B<PEM>|B<SMIME>
@@ -785,9 +784,6 @@ The use of non-RSA keys with B<-encrypt> and B<-decrypt>
 was added in OpenSSL 1.0.2.
 
 The -no_alt_chains option was added in OpenSSL 1.0.2b.
-
-All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
-and have no effect.
 
 The B<-nameopt> option was added in OpenSSL 3.0.0.
 

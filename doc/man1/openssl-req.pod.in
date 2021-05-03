@@ -74,7 +74,7 @@ Print out a usage message.
 
 =item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
 
-The input and output formats; the default is B<PEM>.
+The input and output formats; unspecified by default.
 See L<openssl-format-options(1)> for details.
 
 The data is a PKCS#10 object.
@@ -197,8 +197,7 @@ It also accepts PKCS#8 format private keys for PEM format files.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The format of the private key; the default is B<PEM>.
-The only value with effect is B<ENGINE>; all others have become obsolete.
+The format of the private key; unspecified by default.
 See L<openssl-format-options(1)> for details.
 
 =item B<-keyout> I<filename>
@@ -737,8 +736,8 @@ L<x509v3_config(5)>
 
 The B<-section> option was added in OpenSSL 3.0.0.
 
-All B<-keyform> values except B<ENGINE> and the B<-multivalue-rdn> option
-have become obsolete in OpenSSL 3.0.0 and have no effect.
+The B<-multivalue-rdn> option has become obsolete in OpenSSL 3.0.0 and
+has no effect.
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
 The <-nodes> option was deprecated in OpenSSL 3.0, too; use B<-noenc> instead.

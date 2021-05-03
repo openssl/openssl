@@ -47,8 +47,8 @@ Print out a usage message.
 
 =item B<-inform> B<DER>|B<PEM>
 
-The CRL input format.
-This option has no effect and is retained for backward compatibility only.
+The CRL input format; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-outform> B<DER>|B<PEM>
 
@@ -61,8 +61,8 @@ The private key to be used to sign the CRL.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>
 
-The format of the private key file.
-This option has no effect and is retained for backward compatibility only.
+The format of the private key file; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-in> I<filename>
 
@@ -155,11 +155,6 @@ L<openssl-crl2pkcs7(1)>,
 L<openssl-ca(1)>,
 L<openssl-x509(1)>,
 L<ossl_store-file(7)>
-
-=head1 HISTORY
-
-The B<-inform> and B<-keyform> options have become obsolete in OpenSSL 3.0.0
-and have no effect.
 
 =head1 COPYRIGHT
 
