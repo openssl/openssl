@@ -2521,6 +2521,7 @@ ASN1_VALUE *app_http_post_asn1(const char *host, const char *port,
                                const STACK_OF(CONF_VALUE) *headers,
                                const char *content_type,
                                ASN1_VALUE *req, const ASN1_ITEM *req_it,
+                               const char *expected_content_type,
                                long timeout, const ASN1_ITEM *rsp_it)
 {
     APP_HTTP_TLS_INFO info;
@@ -2538,7 +2539,7 @@ ASN1_VALUE *app_http_post_asn1(const char *host, const char *port,
                              proxy, no_proxy, NULL /* bio */, NULL /* rbio */,
                              app_http_tls_cb, &info,
                              0 /* buf_size */, headers, content_type, req_mem,
-                             NULL /* expected_ct */, 1 /* expect_asn1 */,
+                             expected_content_type, 1 /* expect_asn1 */,
                              HTTP_DEFAULT_MAX_RESP_LEN, timeout,
                              0 /* keep_alive */);
     BIO_free(req_mem);
