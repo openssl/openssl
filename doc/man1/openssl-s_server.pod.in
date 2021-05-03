@@ -94,7 +94,6 @@ B<openssl> B<s_server>
 [B<-serverpref>]
 [B<-legacy_renegotiation>]
 [B<-no_renegotiation>]
-[B<-legacy_server_connect>]
 [B<-no_resumption_on_reneg>]
 [B<-no_legacy_server_connect>]
 [B<-allow_no_dhe_kex>]
