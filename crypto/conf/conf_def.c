@@ -192,11 +192,11 @@ static int def_load(CONF *conf, const char *name, long *line)
 /* Parse a boolean value and fill in *flag. Return 0 on error. */
 static int parsebool(const char *pval, int *flag)
 {
-    if (strcmp(pval, "on") == 0
-            || strcmp(pval, "true") == 0) {
+    if (strcasecmp(pval, "on") == 0
+            || strcasecmp(pval, "true") == 0) {
         *flag = 1;
-    } else if (strcmp(pval, "off") == 0
-            || strcmp(pval, "false") == 0) {
+    } else if (strcasecmp(pval, "off") == 0
+            || strcasecmp(pval, "false") == 0) {
         *flag = 0;
     } else {
         ERR_raise(ERR_LIB_CONF, CONF_R_INVALID_PRAGMA);
@@ -452,11 +452,6 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                 if (!str_copy(conf, psection, &include, p))
                     goto err;
 
-                if (conf->flag_abspath && !ossl_is_absolute_path(include)) {
-                    ERR_raise(ERR_LIB_CONF, CONF_R_RELATIVE_PATH);
-                    goto err;
-                }
-
                 if (include_dir != NULL && !ossl_is_absolute_path(include)) {
                     size_t newlen = strlen(include_dir) + strlen(include) + 2;
 
@@ -474,6 +469,12 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                     OPENSSL_free(include);
                 } else {
                     include_path = include;
+                }
+
+                if (conf->flag_abspath
+                        && !ossl_is_absolute_path(include_path)) {
+                    ERR_raise(ERR_LIB_CONF, CONF_R_RELATIVE_PATH);
+                    goto err;
                 }
 
                 /* get the BIO of the included file */
