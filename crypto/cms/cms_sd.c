@@ -547,8 +547,11 @@ EVP_MD_CTX *CMS_SignerInfo_get0_md_ctx(CMS_SignerInfo *si)
 
 STACK_OF(CMS_SignerInfo) *CMS_get0_SignerInfos(CMS_ContentInfo *cms)
 {
-    CMS_SignedData *sd = cms_get0_signed(cms);
+    CMS_SignedData *sd;
 
+    ERR_set_mark();
+    sd = cms_get0_signed(cms);
+    ERR_pop_to_mark();
     return sd != NULL ? sd->signerInfos : NULL;
 }
 
