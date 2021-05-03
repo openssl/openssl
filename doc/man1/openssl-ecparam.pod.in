@@ -43,9 +43,14 @@ this command can only create EC parameters from known (named) curves.
 
 Print out a usage message.
 
-=item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
+=item B<-inform> B<DER>|B<PEM>
 
-The input and formats; the default is B<PEM>.
+The EC parameters input format; unspecified by default.
+See L<openssl-format-options(1)> for details.
+
+=item B<-outform> B<DER>|B<PEM>
+
+The EC parameters output format; the default is B<PEM>.
 See L<openssl-format-options(1)> for details.
 
 Parameters are encoded as B<EcpkParameters> as specified in IETF RFC 3279.

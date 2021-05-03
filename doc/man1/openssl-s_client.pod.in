@@ -242,8 +242,8 @@ The chain for the client certificate may be specified using B<-cert_chain>.
 
 =item B<-certform> B<DER>|B<PEM>|B<P12>
 
-The client certificate file format to use; the default is B<PEM>.
-This option has no effect and is retained for backward compatibility only.
+The client certificate file format to use; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-cert_chain>
 
@@ -262,7 +262,7 @@ CRL file to use to check the server's certificate.
 
 =item B<-CRLform> B<DER>|B<PEM>
 
-The CRL file format; the default is B<PEM>.
+The CRL file format; unspecified by default.
 See L<openssl-format-options(1)> for details.
 
 =item B<-crl_download>
@@ -276,8 +276,7 @@ If not specified then the certificate file will be used to read also the key.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The key format; the default is B<PEM>.
-The only value with effect is B<ENGINE>; all others have become obsolete.
+The key format; unspecified by default.
 See L<openssl-format-options(1)> for details.
 
 =item B<-pass> I<arg>
@@ -910,9 +909,6 @@ The B<-no_alt_chains> option was added in OpenSSL 1.1.0.
 The B<-name> option was added in OpenSSL 1.1.1.
 
 The B<-certform> option has become obsolete in OpenSSL 3.0.0 and has no effect.
-
-All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
-and have no effect.
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
 

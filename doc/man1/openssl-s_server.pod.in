@@ -226,8 +226,8 @@ The certificate file to use for servername; default is C<server2.pem>.
 
 =item B<-certform> B<DER>|B<PEM>|B<P12>
 
-The server certificate file format.
-This option has no effect and is retained for backward compatibility only.
+The server certificate file format; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-cert_chain>
 
@@ -259,8 +259,7 @@ The private Key file to use for servername if not given via B<-cert2>.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The key format; the default is B<PEM>.
-The only value with effect is B<ENGINE>; all others have become obsolete.
+The key format; unspecified by default.
 See L<openssl-format-options(1)> for details.
 
 =item B<-pass> I<val>
@@ -289,14 +288,13 @@ The input can be in PEM, DER, or PKCS#12 format.
 
 =item B<-dcertform> B<DER>|B<PEM>|B<P12>
 
-The format of the additional certificate file.
-This option has no effect and is retained for backward compatibility only.
+The format of the additional certificate file; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-dkeyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The format of the additional private key; the default is B<PEM>.
-The only value with effect is B<ENGINE>; all others have become obsolete.
-See L<openssl-format-options(1)>.
+The format of the additional private key; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-dpass> I<val>
 
@@ -334,7 +332,7 @@ The CRL file to use.
 
 =item B<-CRLform> B<DER>|B<PEM>
 
-The CRL file format; the default is B<PEM>.
+The CRL file format; unspecified by default.
 See L<openssl-format-options(1)> for details.
 
 =item B<-crl_download>
@@ -844,12 +842,6 @@ The -no_alt_chains option was added in OpenSSL 1.1.0.
 
 The
 -allow-no-dhe-kex and -prioritize_chacha options were added in OpenSSL 1.1.1.
-
-All B<-keyform> and B<-dkeyform> values except B<ENGINE>
-have become obsolete in OpenSSL 3.0.0 and have no effect.
-
-The B<-certform> and B<-dcertform> options have become obsolete in OpenSSL 3.0.0
-and have no effect.
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
 
