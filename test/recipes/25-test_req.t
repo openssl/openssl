@@ -73,16 +73,24 @@ subtest "generating alt certificate requests with RSA" => sub {
 
 
 subtest "generating certificate requests with RSA" => sub {
-    plan tests => 2;
+    plan tests => 3;
 
     SKIP: {
         skip "RSA is not supported by this OpenSSL build", 2
             if disabled("rsa");
 
+        ok(!run(app(["openssl", "req",
+                     "-config", srctop_file("test", "test.cnf"),
+                     "-new", "-out", "testreq-rsa.pem", "-utf8",
+                     "-key", srctop_file("test", "testrsa.pem"),
+                     "-keyform", "DER"])),
+           "Checking that mismatching keyform fails");
+
         ok(run(app(["openssl", "req",
                     "-config", srctop_file("test", "test.cnf"),
                     "-new", "-out", "testreq-rsa.pem", "-utf8",
-                    "-key", srctop_file("test", "testrsa.pem")])),
+                    "-key", srctop_file("test", "testrsa.pem"),
+                    "-keyform", "PEM"])),
            "Generating request");
 
         ok(run(app(["openssl", "req",
