@@ -494,6 +494,8 @@ static int test_bad_dtls(void)
     if (!TEST_ptr(ctx)
             || !TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_BAD_VER))
             || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_BAD_VER))
+            || !TEST_true(SSL_CTX_set_options(ctx,
+                                              SSL_OP_LEGACY_SERVER_CONNECT))
             || !TEST_true(SSL_CTX_set_cipher_list(ctx, "AES128-SHA")))
         goto end;
 
