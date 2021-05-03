@@ -3311,11 +3311,6 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
 # endif
 #endif
     /*
-     * Default is to connect to non-RI servers. When RI is more widely
-     * deployed might change this.
-     */
-    ret->options |= SSL_OP_LEGACY_SERVER_CONNECT;
-    /*
      * Disable compression by default to prevent CRIME. Applications can
      * re-enable compression by configuring
      * SSL_CTX_clear_options(ctx, SSL_OP_NO_COMPRESSION);
