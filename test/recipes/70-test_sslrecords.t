@@ -96,7 +96,7 @@ my $sslv2testtype = TLSV1_2_IN_SSLV2;
 $proxy->clear();
 $proxy->filter(\&add_sslv2_filter);
 $proxy->serverflags("-tls1_2");
-$proxy->clientflags("-no_tls1_3");
+$proxy->clientflags("-no_tls1_3 -legacy_renegotiation");
 $proxy->ciphers("AES128-SHA:\@SECLEVEL=0");
 $proxy->start();
 ok(TLSProxy::Message->success(), "TLSv1.2 in SSLv2 ClientHello test");
