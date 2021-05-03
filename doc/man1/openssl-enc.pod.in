@@ -143,6 +143,8 @@ encrypting, this is the default.
 =item B<-S> I<salt>
 
 The actual salt to use: this must be represented as a string of hex digits.
+If this option is used while encrypting, the same exact value will be needed 
+again during decryption.
 
 =item B<-K> I<key>
 
@@ -230,9 +232,11 @@ OpenSSL.
 Without the B<-salt> option it is possible to perform efficient dictionary
 attacks on the password and to attack stream cipher encrypted data. The reason
 for this is that without the salt the same password always generates the same
-encryption key. When the salt is being used the first eight bytes of the
-encrypted data are reserved for the salt: it is generated at random when
-encrypting a file and read from the encrypted file when it is decrypted.
+encryption key. 
+
+When the salt is generated at random (that means when encrypting using a
+passphrase without explicit salt given using B<-S> option), the first bytes
+of the encrypted data are reserved to store the salt for later decrypting.
 
 Some of the ciphers do not have large keys and others have security
 implications if not used correctly. A beginner is advised to just use
