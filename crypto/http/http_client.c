@@ -796,6 +796,7 @@ static BIO *HTTP_new_bio(const char *server /* optionally includes ":port" */,
 }
 #endif /* OPENSSL_NO_SOCK */
 
+/* Exchange request and response via HTTP on (non-)blocking BIO */
 BIO *OSSL_HTTP_REQ_CTX_exchange(OSSL_HTTP_REQ_CTX *rctx)
 {
     int rv;
@@ -856,6 +857,10 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
 
     if (bio != NULL) {
         cbio = bio;
+        if (proxy != NULL || no_proxy != NULL) {
+            ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_INVALID_ARGUMENT);
+            return NULL;
+        }
     } else {
 #ifndef OPENSSL_NO_SOCK
         char *proxy_host = NULL, *proxy_port = NULL;
@@ -1064,7 +1069,7 @@ BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
                                        NULL /* content_type */,
                                        NULL /* req_mem */,
                                        expected_ct, expect_asn1,
-                                       -1 /* use same max time */,
+                                       -1 /* use same max time (timeout) */,
                                        0 /* no keep_alive */))
                 OSSL_HTTP_REQ_CTX_free(rctx);
             else
@@ -1100,6 +1105,7 @@ BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
     return resp;
 }
 
+/* Exchange request and response over a connection managed via |prctx| */
 BIO *OSSL_HTTP_transfer(OSSL_HTTP_REQ_CTX **prctx,
                         const char *server, const char *port,
                         const char *path, int use_ssl,
@@ -1122,11 +1128,14 @@ BIO *OSSL_HTTP_transfer(OSSL_HTTP_REQ_CTX **prctx,
     }
     if (rctx != NULL) {
         if (OSSL_HTTP_set_request(rctx, path, headers, content_type, req,
-                                  expected_ct, expect_asn1, timeout, keep_alive))
+                                  expected_ct, expect_asn1,
+                                  timeout, keep_alive))
             resp = OSSL_HTTP_exchange(rctx, NULL);
         if (resp == NULL || !OSSL_HTTP_is_alive(rctx)) {
-            if (!OSSL_HTTP_close(rctx, resp != NULL))
+            if (!OSSL_HTTP_close(rctx, resp != NULL)) {
+                BIO_free(resp);
                 resp = NULL;
+            }
             rctx = NULL;
         }
     }
