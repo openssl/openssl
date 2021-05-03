@@ -22,13 +22,21 @@ X509_SIG *PKCS8_encrypt_ex(int pbe_nid, const EVP_CIPHER *cipher,
     X509_SIG *p8 = NULL;
     X509_ALGOR *pbe;
 
-    if (pbe_nid == -1)
+    if (pbe_nid == -1) {
+        if (cipher == NULL) {
+            ERR_raise(ERR_LIB_PKCS12, ERR_R_PASSED_NULL_PARAMETER);
+            return NULL;
+        }
         pbe = PKCS5_pbe2_set_iv_ex(cipher, iter, salt, saltlen, NULL, -1,
                                    libctx);
-    else if (EVP_PBE_find(EVP_PBE_TYPE_PRF, pbe_nid, NULL, NULL, 0))
+    } else if (EVP_PBE_find(EVP_PBE_TYPE_PRF, pbe_nid, NULL, NULL, 0)) {
+        if (cipher == NULL) {
+            ERR_raise(ERR_LIB_PKCS12, ERR_R_PASSED_NULL_PARAMETER);
+            return NULL;
+        }
         pbe = PKCS5_pbe2_set_iv_ex(cipher, iter, salt, saltlen, NULL, pbe_nid,
                                    libctx);
-    else {
+    } else {
         ERR_clear_error();
         pbe = PKCS5_pbe_set_ex(pbe_nid, iter, salt, saltlen, libctx);
     }
