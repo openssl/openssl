@@ -1,0 +1,42 @@
+name: Run-checker daily build only
+# Jobs run daily without testing
+
+on: [pull_request, push]
+#schedule:
+#- cron: '0 21 * * *'
+jobs:
+  run-checker:
+    strategy:
+      fail-fast: false
+      matrix:
+        opt: [
+          no-asan,
+          no-buildtest-c++,
+          no-crypto-mdebug,
+          no-crypto-mdebug-backtrace,
+          no-deprecated,
+          no-devcryptoeng,
+          no-ec_nistp_64_gcc_128,
+          no-egd,
+          no-external-tests,
+          no-fuzz-afl,
+          no-fuzz-libfuzzer,
+          no-md2,
+          no-msan,
+          no-rc5,
+          no-sctp,
+          no-ssl-trace,
+          no-trace,
+          no-ubsan,
+          no-uplink,
+          no-weak-ssl-ciphers,
+          no-zlib,
+          no-zlib-dynamic,
+        ]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: config
+      run: CC=clang ./config --strict-warnings ${{ matrix.opt }} && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
