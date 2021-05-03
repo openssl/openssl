@@ -96,7 +96,7 @@ SKIP: {
 }
 
 SKIP: {
-    skip "Skipping legacy PKCS#12 test because RC2 is disabled in this build", 1
+    skip "Skipping legacy PKCS#12 test because the required algorithms are disabled", 1
         if disabled("des") || disabled("rc2") || disabled("legacy");
     # Test reading legacy PKCS#12 file
     ok(run(app(["openssl", "pkcs12", "-export",
