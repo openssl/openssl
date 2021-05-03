@@ -123,6 +123,7 @@ and to gather the response via HTTP, using the I<wbio> and I<rbio>
 that were given when calling OSSL_HTTP_REQ_CTX_new().
 If successful, the contents of the internal memory B<BIO> contains
 the contents of the HTTP response, without the response headers.
+This does not support streaming.
 The function may need to be called again if its result is -1, which indicates
 L<BIO_should_retry(3)>.  In such a case it is advisable to sleep a little in
 between, using L<BIO_wait(3)> on the read BIO to prevent a busy loop.
@@ -221,7 +222,7 @@ OSSL_HTTP_REQ_CTX_nbio() and OSSL_HTTP_REQ_CTX_nbio_d2i()
 return 1 for success, 0 on error or redirection, -1 if retry is needed.
 
 OSSL_HTTP_REQ_CTX_exchange() and OSSL_HTTP_REQ_CTX_get0_mem_bio()
-returns a pointer to a B<BIO> on success and NULL on failure.
+return a pointer to a B<BIO> on success and NULL on failure.
 
 OSSL_HTTP_REQ_CTX_get_resp_len() returns the size of the response contents
 or 0 if not available or an error occurred.

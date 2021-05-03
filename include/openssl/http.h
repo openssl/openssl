@@ -72,7 +72,7 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
                             int timeout, BIO *bio_err, const char *prog);
 int OSSL_HTTP_set_request(OSSL_HTTP_REQ_CTX *rctx, const char *path,
                           const STACK_OF(CONF_VALUE) *headers,
-                          const char *content_type, BIO *req_mem,
+                          const char *content_type, BIO *req,
                           const char *expected_content_type, int expect_asn1,
                           int timeout, int keep_alive);
 BIO *OSSL_HTTP_exchange(OSSL_HTTP_REQ_CTX *rctx, char **redirection_url);

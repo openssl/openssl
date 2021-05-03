@@ -1214,6 +1214,7 @@ OCSP_RESPONSE *process_responder(OCSP_REQUEST *req,
         app_http_post_asn1(host, port, path, NULL, NULL /* no proxy used */,
                            ctx, headers, "application/ocsp-request",
                            (ASN1_VALUE *)req, ASN1_ITEM_rptr(OCSP_REQUEST),
+                           "application/ocsp-response",
                            req_timeout, ASN1_ITEM_rptr(OCSP_RESPONSE));
 
     if (resp == NULL)

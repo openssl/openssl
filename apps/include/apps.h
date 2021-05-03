@@ -285,6 +285,7 @@ ASN1_VALUE *app_http_post_asn1(const char *host, const char *port,
                                const STACK_OF(CONF_VALUE) *headers,
                                const char *content_type,
                                ASN1_VALUE *req, const ASN1_ITEM *req_it,
+                               const char *expected_content_type,
                                long timeout, const ASN1_ITEM *rsp_it);
 # endif
 

@@ -53,8 +53,10 @@ OpenSSL 3.0
     also covering CRMF (RFC 4211) and HTTP transfer (RFC 6712).
     It is part of the crypto lib and adds a 'cmp' app with a demo configuration.
     All widely used CMP features are supported for both clients and servers.
-  * Added a proper HTTP(S) client to libcrypto supporting GET and POST,
-    redirection, plain and ASN.1-encoded contents, proxies, and timeouts.
+  * Added a proper HTTP client supporting GET with optional redirection, POST,
+    arbitrary request and response content types, TLS, persistent connections,
+    connections via HTTP(s) proxies, connections and exchange via user-defined
+    BIOs (allowing implicit connections), and timeout checks.
   * Added util/check-format.pl for checking adherence to the coding guidelines.
   * Added OSSL_ENCODER, a generic encoder API.
   * Added OSSL_PARAM_BLD, an easier to use API to OSSL_PARAM.
