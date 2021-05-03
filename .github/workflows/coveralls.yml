@@ -3,7 +3,7 @@ name: Coverage
 #Run once a week
 on:
   schedule:
-    - cron:  '0 0 * * SAT'
+    - cron:  '49 0 * * *'
 
 jobs:
   coverage:
