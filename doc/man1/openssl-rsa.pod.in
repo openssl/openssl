@@ -60,8 +60,7 @@ Print out a usage message.
 
 =item B<-inform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The key input format; the default is B<PEM>.
-The only value with effect is B<ENGINE>; all others have become obsolete.
+The key input format; unspecified by default.
 See L<openssl-format-options(1)> for details.
 
 =item B<-outform> B<DER>|B<PEM>

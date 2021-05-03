@@ -51,6 +51,13 @@ OpenSSL 3.0
 
    *Shane Lontis*
 
+ * The openssl commands that read keys, certificates, and CRLs now
+   automatically detect the PEM or DER format of the input files so it is not
+   necessary to explicitly specify the input format anymore. However if the
+   input format option is used the specified format will be required.
+
+   *David von Oheimb, Richard Levitte, and Tomáš Mráz*
+
  * Added enhanced PKCS#12 APIs which accept a library context `OSSL_LIB_CTX`
    and (where relevant) a property query. Other APIs which handle PKCS#7 and
    PKCS#8 objects have also been enhanced where required. This includes:

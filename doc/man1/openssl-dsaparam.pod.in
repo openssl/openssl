@@ -36,9 +36,14 @@ DSA parameters is often used to generate several distinct keys.
 
 Print out a usage message.
 
-=item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
+=item B<-inform> B<DER>|B<PEM>
 
-This option has become obsolete.
+The DSA parameters input format; unspecified by default.
+See L<openssl-format-options(1)> for details.
+
+=item B<-outform> B<DER>|B<PEM>
+
+The DSA parameters output format; the default is B<PEM>.
 See L<openssl-format-options(1)> for details.
 
 Parameters are a sequence of B<ASN.1 INTEGER>s: B<p>, B<q>, and B<g>.
