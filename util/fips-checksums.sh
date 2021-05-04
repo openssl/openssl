@@ -11,7 +11,7 @@ for f in "$@"; do
         *.c | *.h )
             cat "$f" \
                 | $HERE/lang-compress.pl 'C' \
-                | unifdef -DFIPS_MODE=1 \
+                | unifdef -DFIPS_MODULE=1 \
                 | openssl sha256 -r \
                 | sed -e "s| \\*stdin|  $f|"
             ;;
