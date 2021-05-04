@@ -19,8 +19,6 @@ static const ERR_STRING_DATA CRYPTO_str_reasons[] = {
     "bad algorithm name"},
     {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_CONFLICTING_NAMES),
     "conflicting names"},
-    {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_FIPS_MODE_NOT_SUPPORTED),
-    "fips mode not supported"},
     {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_HEX_STRING_TOO_SHORT),
     "hex string too short"},
     {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_ILLEGAL_HEX_DIGIT),
