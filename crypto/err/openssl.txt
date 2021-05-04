@@ -426,7 +426,6 @@ CRMF_R_UNSUPPORTED_METHOD_FOR_CREATING_POPO:115:\
 CRMF_R_UNSUPPORTED_POPO_METHOD:116:unsupported popo method
 CRYPTO_R_BAD_ALGORITHM_NAME:117:bad algorithm name
 CRYPTO_R_CONFLICTING_NAMES:118:conflicting names
-CRYPTO_R_FIPS_MODE_NOT_SUPPORTED:101:fips mode not supported
 CRYPTO_R_HEX_STRING_TOO_SHORT:121:hex string too short
 CRYPTO_R_ILLEGAL_HEX_DIGIT:102:illegal hex digit
 CRYPTO_R_INSUFFICIENT_DATA_SPACE:106:insufficient data space
@@ -663,7 +662,6 @@ EVP_R_DEFAULT_QUERY_PARSE_ERROR:210:default query parse error
 EVP_R_DIFFERENT_KEY_TYPES:101:different key types
 EVP_R_DIFFERENT_PARAMETERS:153:different parameters
 EVP_R_ERROR_LOADING_SECTION:165:error loading section
-EVP_R_ERROR_SETTING_FIPS_MODE:166:error setting fips mode
 EVP_R_EXPECTING_AN_HMAC_KEY:174:expecting an hmac key
 EVP_R_EXPECTING_AN_RSA_KEY:127:expecting an rsa key
 EVP_R_EXPECTING_A_DH_KEY:128:expecting a dh key
@@ -673,7 +671,6 @@ EVP_R_EXPECTING_A_EC_KEY:142:expecting an ec key
 EVP_R_EXPECTING_A_POLY1305_KEY:164:expecting a poly1305 key
 EVP_R_EXPECTING_A_SIPHASH_KEY:175:expecting a siphash key
 EVP_R_FINAL_ERROR:188:final error
-EVP_R_FIPS_MODE_NOT_SUPPORTED:167:fips mode not supported
 EVP_R_GENERATE_ERROR:214:generate error
 EVP_R_GET_RAW_KEY_FAILED:182:get raw key failed
 EVP_R_ILLEGAL_SCRYPT_PARAMETERS:171:illegal scrypt parameters
@@ -683,7 +680,6 @@ EVP_R_INITIALIZATION_ERROR:134:initialization error
 EVP_R_INPUT_NOT_INITIALIZED:111:input not initialized
 EVP_R_INVALID_CUSTOM_LENGTH:185:invalid custom length
 EVP_R_INVALID_DIGEST:152:invalid digest
-EVP_R_INVALID_FIPS_MODE:168:invalid fips mode
 EVP_R_INVALID_IV_LENGTH:194:invalid iv length
 EVP_R_INVALID_KEY:163:invalid key
 EVP_R_INVALID_KEY_LENGTH:130:invalid key length
@@ -1223,8 +1219,6 @@ SSL_R_APPLICATION_DATA_AFTER_CLOSE_NOTIFY:291:\
 SSL_R_APP_DATA_IN_HANDSHAKE:100:app data in handshake
 SSL_R_ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT:272:\
 	attempt to reuse session in different context
-SSL_R_AT_LEAST_TLS_1_0_NEEDED_IN_FIPS_MODE:143:\
-	at least TLS 1.0 needed in FIPS mode
 SSL_R_AT_LEAST_TLS_1_2_NEEDED_IN_SUITEB_MODE:158:\
 	at least (D)TLS 1.2 needed in Suite B mode
 SSL_R_BAD_CHANGE_CIPHER_SPEC:103:bad change cipher spec
