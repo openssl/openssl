@@ -21,8 +21,6 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
     "app data in handshake"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT),
     "attempt to reuse session in different context"},
-    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_AT_LEAST_TLS_1_0_NEEDED_IN_FIPS_MODE),
-    "at least TLS 1.0 needed in FIPS mode"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_AT_LEAST_TLS_1_2_NEEDED_IN_SUITEB_MODE),
     "at least (D)TLS 1.2 needed in Suite B mode"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_BAD_CHANGE_CIPHER_SPEC),
