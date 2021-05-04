@@ -403,13 +403,14 @@ int X509_NAME_digest(const X509_NAME *data, const EVP_MD *type,
                      unsigned char *md, unsigned int *len);
 
 X509 *X509_load_http(const char *url, BIO *bio, BIO *rbio, int timeout);
-# define X509_http_nbio(rctx, pcert)                                    \
-    ((*(pcert) =                                                        \
-      OSSL_HTTP_REQ_CTX_sendreq_d2i(rctx, ASN1_ITEM_rptr(X509))) != NULL)
 X509_CRL *X509_CRL_load_http(const char *url, BIO *bio, BIO *rbio, int timeout);
-# define X509_CRL_http_nbio(rctx, pcrl)                                 \
-    ((*(pcrl) =                                                         \
-      OSSL_HTTP_REQ_CTX_sendreq_d2i(rctx, ASN1_ITEM_rptr(X509_CRL))) != NULL)
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  include <openssl/ocsp.h> /* OCSP_REQ_CTX_nbio_d2i */
+#  define X509_http_nbio(rctx, pcert) \
+      OCSP_REQ_CTX_nbio_d2i(rctx, pcert, ASN1_ITEM_rptr(X509))
+#  define X509_CRL_http_nbio(rctx, pcrl) \
+      OCSP_REQ_CTX_nbio_d2i(rctx, pcrl, ASN1_ITEM_rptr(X509_CRL))
+# endif
 
 # ifndef OPENSSL_NO_STDIO
 X509 *d2i_X509_fp(FILE *fp, X509 **x509);

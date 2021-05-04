@@ -341,6 +341,11 @@ OpenSSL 3.0
 
    *Rich Salz and Richard Levitte*
 
+ * Deprecated `X509_http_nbio()` and `X509_CRL_http_nbio()`,
+   which are superseded by `X509_load_http()` and `X509_CRL_load_http()`.
+
+   *David von Oheimb*
+
  * Deprecated `OCSP_parse_url()`, which is replaced with `OSSL_HTTP_parse_url`.
 
    *David von Oheimb*
