@@ -210,7 +210,7 @@ The opt_getprog() function returns the value set by opt_appname().
 The opt_help() function takes a list of option definitions and prints a
 nicely-formatted output.
 
-The opt_begin() fuction, which is called automatically by opt_init(),
+The opt_begin() function, which is called automatically by opt_init(),
 can be used to reset the option parsing loop.
 
 The opt_next() function is called, once opt_init() has been called,
@@ -234,7 +234,7 @@ end of arguments has been reached. This is typically done like this:
 
 Within the option parsing loop, the following functions may be called.
 
-The opt_flag() fuction returns the most recent option name
+The opt_flag() function returns the most recent option name
 including the preceding C<->.
 
 The opt_arg() function returns the option's argument value, if there is one.
@@ -242,7 +242,7 @@ The opt_arg() function returns the option's argument value, if there is one.
 The opt_unknown() function returns the unknown option.
 In an option list, there can be at most one option with the empty string.
 This is a "wildcard" or "unknown" option. For example, it allows an
-option to be be taken as digest algorithm, like B<-sha1>. The
+option to be be taken as digest algorithm, like C<-sha1>. The
 function opt_cipher() takes the specified I<name> and fills in
 the cipher into I<cipherp>.  The function opt_md() does the same
 thing for message digest.
@@ -277,7 +277,7 @@ found on the list, it puts the index in I<*result>, and returns
 
 The following functions can be used after processing all the options.
 
-The opt_num_rest() fuction returns what is left.
+The opt_num_rest() function returns what is left.
 
 The opt_rest() function returns a pointer to the first non-option.
 If there were no parameters, it will point to the NULL that is
