@@ -141,7 +141,7 @@ static int evp_mac_final(EVP_MAC_CTX *ctx, int xof,
         return 1;
     }
     if (xof) {
-        params[0] = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_XOFLEN, &xof);
+        params[0] = OSSL_PARAM_construct_int(OSSL_MAC_PARAM_XOF, &xof);
         params[1] = OSSL_PARAM_construct_end();
 
         if (EVP_MAC_CTX_set_params(ctx, params) <= 0) {
