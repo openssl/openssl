@@ -229,6 +229,15 @@ static const int enc_nids_all[] = {
     NID_des_ede3_cbc,
     NID_des_cbc,
 #endif
+#ifndef OPENSSL_NO_RC5
+    NID_rc5_cbc,
+#endif
+#ifndef OPENSSL_NO_RC4
+    NID_rc4,
+#endif
+#ifndef OPENSSL_NO_RC2
+    NID_rc2_cbc,
+#endif
 
 #ifndef OPENSSL_NO_MD2
 # ifndef OPENSSL_NO_DES
@@ -602,6 +611,54 @@ static int test_single_secret_encrypted_content(void)
     return end_pkcs12_builder(pb);
 }
 
+static int test_single_secret(PKCS12_ENC *enc)
+{
+    char fname[80];
+    PKCS12_BUILDER *pb;
+
+    sprintf(fname, "1secret_ciph-%s_iter-%d.p12", OBJ_nid2sn(enc->nid), enc->iter);
+    pb = new_pkcs12_builder(fname);
+    int custom_nid = get_custom_oid();
+
+    /* Generate/encode */
+    start_pkcs12(pb);
+
+        start_contentinfo(pb);
+
+            add_secretbag(pb, custom_nid, "VerySecretMessage", ATTRS1);
+
+        end_contentinfo_encrypted(pb, enc);
+
+    end_pkcs12_with_mac(pb, &mac_default);
+
+    /* Read/decode */
+    start_check_pkcs12_with_mac(pb, &mac_default);
+
+        start_check_contentinfo_encrypted(pb, enc);
+
+            check_secretbag(pb, custom_nid, "VerySecretMessage", ATTRS1);
+
+        end_check_contentinfo(pb);
+
+    end_check_pkcs12(pb);
+
+    return end_pkcs12_builder(pb);
+}
+
+static int test_single_secret_enc_alg(int z)
+{
+    PKCS12_ENC enc;
+
+    if (lgcyprov == NULL)
+        enc.nid = enc_nids_no_legacy[z];
+    else
+        enc.nid = enc_nids_all[z];
+    enc.pass = enc_default.pass;
+    enc.iter = enc_default.iter;
+
+    return test_single_secret(&enc);
+}
+
 static int test_multiple_contents(void)
 {
     PKCS12_BUILDER *pb = new_pkcs12_builder("multi_contents.p12");
@@ -733,6 +790,10 @@ int setup_tests(void)
     ADD_TEST(test_cert_key_with_attrs_and_mac);
     ADD_TEST(test_cert_key_encrypted_content);
     ADD_TEST(test_single_secret_encrypted_content);
+    if (lgcyprov == NULL)
+        ADD_ALL_TESTS(test_single_secret_enc_alg, OSSL_NELEM(enc_nids_no_legacy));
+    else
+        ADD_ALL_TESTS(test_single_secret_enc_alg, OSSL_NELEM(enc_nids_all));
     ADD_TEST(test_multiple_contents);
     return 1;
 }

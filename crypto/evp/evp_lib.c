@@ -369,6 +369,11 @@ int evp_cipher_cache_constants(EVP_CIPHER *cipher)
         /* Provided implementations may have a custom cipher_cipher */
         if (cipher->prov != NULL && cipher->ccipher != NULL)
             cipher->flags |= EVP_CIPH_FLAG_CUSTOM_CIPHER;
+        /* Provided implementations may also have custom ASN1 algorithm parameters */
+        if (EVP_CIPHER_gettable_ctx_params(cipher) != NULL
+            && OSSL_PARAM_locate_const(EVP_CIPHER_gettable_ctx_params(cipher),
+                                       OSSL_CIPHER_PARAM_ALG_ID))
+            cipher->flags |= EVP_CIPH_FLAG_CUSTOM_ASN1;
     }
     return ok;
 }
