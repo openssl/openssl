@@ -589,8 +589,8 @@ SSLv23_client_method                    define
 SSLv23_method                           define
 SSLv23_server_method                    define
 TLS_DEFAULT_CIPHERSUITES                define deprecated 3.0.0
-X509_CRL_http_nbio                      define
-X509_http_nbio                          define
+X509_CRL_http_nbio                      define deprecated 3.0.0
+X509_http_nbio                          define deprecated 3.0.0
 X509_LOOKUP_add_dir                     define
 X509_LOOKUP_add_store                   define
 X509_LOOKUP_add_store_ex                define
