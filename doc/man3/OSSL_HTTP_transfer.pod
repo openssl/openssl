@@ -30,7 +30,7 @@ OSSL_HTTP_close
                            const STACK_OF(CONF_VALUE) *headers,
                            const char *content_type, BIO *req,
                            const char *expected_content_type, int expect_asn1,
-                           int timeout, int keep_alive);
+                           size_t max_resp_len, int timeout, int keep_alive);
  BIO *OSSL_HTTP_exchange(OSSL_HTTP_REQ_CTX *rctx, char **redirection_url);
  BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
                     BIO *bio, BIO *rbio,
@@ -126,8 +126,6 @@ The I<buf_size> parameter specifies the response header maximum line length.
 A value <= 0 indicates that
 the B<HTTP_DEFAULT_MAX_LINE_LENGTH> of 4KiB should be used.
 This length is also used as the number of content bytes that are read at a time.
-The I<max_resp_len> specifies the maximum allowed response content length.
-The value 0 indicates B<HTTP_DEFAULT_MAX_RESP_LEN>, which currently is 100 KiB.
 
 If the I<overall_timeout> parameter is > 0 this indicates the maximum number of
 seconds the overall HTTP transfer (i.e., connection setup if needed,
@@ -161,6 +159,8 @@ is not NULL then the client will check that the given content type string
 is included in the HTTP header of the response and return an error if not.
 If the I<expect_asn1> parameter is nonzero,
 a structure in ASN.1 encoding will be expected as response content.
+The I<max_resp_len> parameter specifies the maximum allowed
+response content length, where the value 0 indicates no limit.
 If the I<timeout> parameter is > 0 this indicates the maximum number of seconds
 the subsequent HTTP transfer (sending the request and receiving a response)
 is allowed to take.
@@ -234,8 +234,9 @@ OSSL_HTTP_proxy_connect() and OSSL_HTTP_set_request()
 return 1 on success, 0 on error.
 
 On success, OSSL_HTTP_exchange(), OSSL_HTTP_get(), and OSSL_HTTP_transfer()
-return a memory BIO containing the data received.
-This must be freed by the caller.
+return a memory BIO containing the data received if an ASN.1-encoded response
+is expected, else a BIO that may support streaming.
+The BIO must be freed by the caller.
 On failure, they return NULL.
 Failure conditions include connection/transfer timeout, parse errors, etc.
 
