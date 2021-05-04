@@ -90,9 +90,9 @@ unsigned long ASN1_tag2bit(int tag)
 
 /* Macro to initialize and invalidate the cache */
 
-#define asn1_tlc_clear(c)       if ((c) != NULL) (c)->valid = 0
+#define asn1_tlc_clear(c)       do { if ((c) != NULL) (c)->valid = 0; } while (0)
 /* Version to avoid compiler warning about 'c' always non-NULL */
-#define asn1_tlc_clear_nc(c)    (c)->valid = 0
+#define asn1_tlc_clear_nc(c)    do {(c)->valid = 0; } while (0)
 
 /*
  * Decode an ASN1 item, this currently behaves just like a standard 'd2i'
