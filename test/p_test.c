@@ -32,12 +32,14 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/crypto.h>
+#include <openssl/provider.h>
 
 typedef struct p_test_ctx {
     char *thisfile;
     char *thisfunc;
     const OSSL_CORE_HANDLE *handle;
     OSSL_LIB_CTX *libctx;
+    OSSL_PROVIDER *deflt;
 } P_TEST_CTX;
 
 static OSSL_FUNC_core_gettable_params_fn *c_gettable_params = NULL;
@@ -127,7 +129,16 @@ static int p_get_params(void *provctx, OSSL_PARAM params[])
             const char *msg = "Hello world";
             unsigned char out[16];
 
-            if (md4 != NULL && mdctx != NULL) {
+            /*
+             * We should have the default provider available that we loaded
+             * ourselves, and the legacy provider which we inherit from the
+             * parent libctx. We should also have "this" provider available.
+             */
+            if (OSSL_PROVIDER_available(ctx->libctx, "default")
+                    && OSSL_PROVIDER_available(ctx->libctx, "legacy")
+                    && OSSL_PROVIDER_available(ctx->libctx, "p_test")
+                    && md4 != NULL
+                    && mdctx != NULL) {
                 if (EVP_DigestInit_ex(mdctx, md4, NULL)
                         && EVP_DigestUpdate(mdctx, (const unsigned char *)msg,
                                             strlen(msg))
@@ -233,6 +244,11 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
         p_teardown(ctx);
         return 0;
     }
+    ctx->deflt = OSSL_PROVIDER_load(ctx->libctx, "default");
+    if (ctx->deflt == NULL || !OSSL_PROVIDER_available(ctx->libctx, "default")) {
+        p_teardown(ctx);
+        return 0;
+    }
 #endif
 
     /*
@@ -251,6 +267,7 @@ static void p_teardown(void *provctx)
     P_TEST_CTX *ctx = (P_TEST_CTX *)provctx;
 
 #ifdef PROVIDER_INIT_FUNCTION_NAME
+    OSSL_PROVIDER_unload(ctx->deflt);
     OSSL_LIB_CTX_free(ctx->libctx);
 #endif
     free(ctx->thisfile);

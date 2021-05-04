@@ -35,6 +35,7 @@ static int test_provider(OSSL_LIB_CTX **libctx, const char *name,
     int ok = 0;
     long err;
     int dolegacycheck = (legacy != NULL);
+    OSSL_PROVIDER *deflt = NULL;
 
     BIO_snprintf(expected_greeting, sizeof(expected_greeting),
                  "Hello OpenSSL %.20s, greetings from %s!",
@@ -69,10 +70,19 @@ static int test_provider(OSSL_LIB_CTX **libctx, const char *name,
             goto err;
         /*
          * Loading the legacy provider again should make it available again in
-         * the child libctx.
+         * the child libctx. Loading and unloading the default provider should
+         * have not impact on the child because the child loads it explicitly
+         * before this point.
          */
         legacy = OSSL_PROVIDER_load(*libctx, "legacy");
+        deflt = OSSL_PROVIDER_load(*libctx, "default");
+        if (!TEST_ptr(deflt)
+                || !TEST_true(OSSL_PROVIDER_available(*libctx, "default")))
+            goto err;
+        OSSL_PROVIDER_unload(deflt);
+        deflt = NULL;
         if (!TEST_ptr(legacy)
+                || !TEST_false(OSSL_PROVIDER_available(*libctx, "default"))
                 || !TEST_true(OSSL_PROVIDER_get_params(prov, digest_check))
                 || !TEST_true(digestsuccess))
         goto err;
@@ -95,6 +105,7 @@ static int test_provider(OSSL_LIB_CTX **libctx, const char *name,
     ERR_print_errors_fp(stderr);
     ok = 1;
  err:
+    OSSL_PROVIDER_unload(deflt);
     OSSL_PROVIDER_unload(legacy);
     legacy = NULL;
     OSSL_PROVIDER_unload(prov);
