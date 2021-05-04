@@ -688,6 +688,7 @@ static int test_EC_priv_pub(void)
     if (!test_fromdata("EC", params))
         goto err;
     OSSL_PARAM_free(params);
+    params = NULL;
     OSSL_PARAM_BLD_free(bld);
 
     /* Test priv and !pub */
@@ -704,6 +705,7 @@ static int test_EC_priv_pub(void)
     if (!test_fromdata("EC", params))
         goto err;
     OSSL_PARAM_free(params);
+    params = NULL;
     OSSL_PARAM_BLD_free(bld);
 
     /* Test !priv and pub */
@@ -721,6 +723,7 @@ static int test_EC_priv_pub(void)
     if (!test_fromdata("EC", params))
         goto err;
     OSSL_PARAM_free(params);
+    params = NULL;
     OSSL_PARAM_BLD_free(bld);
 
     /* Test priv and pub */
