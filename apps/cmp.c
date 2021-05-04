@@ -2682,6 +2682,7 @@ int cmp_main(int argc, char **argv)
 
 
     if (opt_port != NULL) { /* act as very basic CMP HTTP server */
+        /* TODO for readability, convert this block to separate function */
 #ifdef OPENSSL_NO_SOCK
         BIO_printf(bio_err, "Cannot act as server - sockets not supported\n");
 #else
