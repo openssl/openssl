@@ -75,11 +75,15 @@ int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
 static ASN1_VALUE *simple_get_asn1(const char *url, BIO *bio, BIO *rbio,
                                    int timeout, const ASN1_ITEM *it)
 {
-    return OSSL_HTTP_get_asn1(url, NULL, NULL /* no proxy used */, bio,
-                              rbio, NULL /* no callback for SSL/TLS */, NULL,
-                              NULL /* headers */, 1024 /* maxline */,
-                              0 /* max_resp_len */, timeout,
-                              NULL /* expected_content_type */, it);
+    BIO *mem = OSSL_HTTP_get(url, NULL /* proxy */, NULL /* no_proxy */,
+                             bio, rbio, NULL /* cb */ , NULL /* arg */,
+                             1024 /* buf_size */, NULL /* headers */,
+                             NULL /* expected_ct */, 1 /* expect_asn1 */,
+                             HTTP_DEFAULT_MAX_RESP_LEN, timeout);
+    ASN1_VALUE *res = ASN1_item_d2i_bio(it, mem, NULL);
+
+    BIO_free(mem);
+    return res;
 }
 
 X509 *X509_load_http(const char *url, BIO *bio, BIO *rbio, int timeout)

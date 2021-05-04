@@ -31,7 +31,7 @@ ASN1_item_i2d_mem_bio() returns a pointer to a memory BIO or NULL on error.
 
 =head1 HISTORY
 
-The functions described here were added in OpenSSL 3.0.
+ASN1_item_i2d_mem_bio() was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

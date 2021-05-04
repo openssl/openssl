@@ -339,8 +339,9 @@ OCSP_REQ_CTX                            datatype deprecated 3.0.0
 OCSP_REQ_CTX_add1_header                define deprecated 3.0.0
 OCSP_REQ_CTX_free                       define deprecated 3.0.0
 OCSP_REQ_CTX_i2d                        define deprecated 3.0.0
-OCSP_set_max_response_length            define deprecated 3.0.0
 OCSP_REQ_CTX_set1_req                   define deprecated 3.0.0
+OCSP_sendreq_nbio                       define deprecated 3.0.0
+OCSP_set_max_response_length            define deprecated 3.0.0
 OPENSSL_FILE                            define
 OPENSSL_FUNC                            define
 OPENSSL_LINE                            define
