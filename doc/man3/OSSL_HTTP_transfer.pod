@@ -153,7 +153,8 @@ and expectations on the response using the following parameters.
 If I<path> is NULL it defaults to "/".
 If I<req> is NULL the HTTP GET method will be used to send the request
 else HTTP POST with the contents of I<req> and optional I<content_type>, where
-I<req> must contain data with determined length; streaming is not supported.
+the length of the data in I<req> does not need to be determined in advance: the
+BIO will be read on-the-fly while sending the request, which supports streaming.
 The optional list I<headers> may contain additional custom HTTP header lines.
 If the parameter I<expected_content_type>
 is not NULL then the client will check that the given content type string
