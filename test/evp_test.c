@@ -1373,7 +1373,10 @@ static int mac_test_run_mac(EVP_TEST *t)
             t->err = "TEST_FAILURE";
             goto err;
         }
-        if (!EVP_MAC_finalXOF(ctx, got, expected->output_len)) {
+        if (!EVP_MAC_finalXOF(ctx, got, expected->output_len)
+            || !memory_err_compare(t, "TEST_MAC_ERR",
+                                   expected->output, expected->output_len,
+                                   got, expected->output_len)) {
             t->err = "MAC_FINAL_ERROR";
             goto err;
         }
