@@ -11,21 +11,6 @@
 #ifndef OSSL_CRYPTO_HTTP_LOCAL_H
 # define OSSL_CRYPTO_HTTP_LOCAL_H
 
-# include <openssl/ocsp.h>
-
-BIO *ossl_http_asn1_item2bio(const ASN1_ITEM *it, const ASN1_VALUE *val);
-
-OSSL_HTTP_REQ_CTX
-*ossl_http_req_ctx_new(BIO *wbio, BIO *rbio, int use_http_proxy,
-                       const char *server, const char *port,
-                       const char *path,
-                       const STACK_OF(CONF_VALUE) *headers,
-                       const char *content_type, BIO *req_mem,
-                       int maxline, unsigned long max_resp_len,
-                       int timeout,
-                       const char *expected_content_type,
-                       int expect_asn1);
-
 int ossl_http_use_proxy(const char *no_proxy, const char *server);
 const char *ossl_http_adapt_proxy(const char *proxy, const char *no_proxy,
                                   const char *server, int use_ssl);

@@ -49,7 +49,7 @@ Error conditions include connection/transfer timeout, parse errors, etc.
 
 =head1 SEE ALSO
 
-L<OSSL_HTTP_get_asn1(3)>
+L<OSSL_HTTP_get(3)>
 
 =head1 HISTORY
 

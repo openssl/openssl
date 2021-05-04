@@ -2479,6 +2479,7 @@ ASN1_VALUE *app_http_get_asn1(const char *url, const char *proxy,
     char *server;
     char *port;
     int use_ssl;
+    BIO *mem;
     ASN1_VALUE *resp = NULL;
 
     if (url == NULL || it == NULL) {
@@ -2500,10 +2501,13 @@ ASN1_VALUE *app_http_get_asn1(const char *url, const char *proxy,
     info.use_proxy = proxy != NULL;
     info.timeout = timeout;
     info.ssl_ctx = ssl_ctx;
-    resp = OSSL_HTTP_get_asn1(url, proxy, no_proxy,
-                              NULL, NULL, app_http_tls_cb, &info,
-                              headers, 0 /* maxline */, 0 /* max_resp_len */,
-                              timeout, expected_content_type, it);
+    mem = OSSL_HTTP_get(url, proxy, no_proxy, NULL /* bio */, NULL /* rbio */,
+                        app_http_tls_cb, &info, 0 /* buf_size */, headers,
+                        expected_content_type, 1 /* expect_asn1 */,
+                        HTTP_DEFAULT_MAX_RESP_LEN, timeout);
+    resp = ASN1_item_d2i_bio(it, mem, NULL);
+    BIO_free(mem);
+
  end:
     OPENSSL_free(server);
     OPENSSL_free(port);
@@ -2520,18 +2524,27 @@ ASN1_VALUE *app_http_post_asn1(const char *host, const char *port,
                                long timeout, const ASN1_ITEM *rsp_it)
 {
     APP_HTTP_TLS_INFO info;
+    BIO *rsp, *req_mem = ASN1_item_i2d_mem_bio(req_it, req);
+    ASN1_VALUE *res;
 
+    if (req_mem == NULL)
+        return NULL;
     info.server = host;
     info.port = port;
     info.use_proxy = proxy != NULL;
     info.timeout = timeout;
     info.ssl_ctx = ssl_ctx;
-    return OSSL_HTTP_post_asn1(host, port, path, ssl_ctx != NULL,
-                               proxy, no_proxy,
-                               NULL, NULL, app_http_tls_cb, &info,
-                               headers, content_type, req, req_it,
-                               0 /* maxline */,
-                               0 /* max_resp_len */, timeout, NULL, rsp_it);
+    rsp = OSSL_HTTP_transfer(NULL, host, port, path, ssl_ctx != NULL,
+                             proxy, no_proxy, NULL /* bio */, NULL /* rbio */,
+                             app_http_tls_cb, &info,
+                             0 /* buf_size */, headers, content_type, req_mem,
+                             NULL /* expected_ct */, 1 /* expect_asn1 */,
+                             HTTP_DEFAULT_MAX_RESP_LEN, timeout,
+                             0 /* keep_alive */);
+    BIO_free(req_mem);
+    res = ASN1_item_d2i_bio(rsp_it, rsp, NULL);
+    BIO_free(rsp);
+    return res;
 }
 
 #endif
