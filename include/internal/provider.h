@@ -41,6 +41,7 @@ int ossl_provider_set_fallback(OSSL_PROVIDER *prov);
 int ossl_provider_set_module_path(OSSL_PROVIDER *prov, const char *module_path);
 int ossl_provider_add_parameter(OSSL_PROVIDER *prov, const char *name,
                                 const char *value);
+int ossl_provider_is_child(const OSSL_PROVIDER *prov);
 int ossl_provider_set_child(OSSL_PROVIDER *prov, const OSSL_CORE_HANDLE *handle);
 const OSSL_CORE_HANDLE *ossl_provider_get_parent(OSSL_PROVIDER *prov);
 int ossl_provider_up_ref_parent(OSSL_PROVIDER *prov, int activate);
