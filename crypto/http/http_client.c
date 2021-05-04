@@ -53,7 +53,9 @@ struct ossl_http_req_ctx_st {
     long len_to_send;           /* number of bytes in request still to send */
     unsigned long resp_len;     /* length of response */
     unsigned long max_resp_len; /* Maximum length of response */
-    time_t max_time;            /* Maximum end time of the transfer, or 0 */
+    int keep_alive;             /* Persistent conn. 0=no, 1=prefer, 2=require */
+    time_t max_time;            /* Maximum end time of current transfer, or 0 */
+    time_t max_total_time;      /* Maximum end time of total transfer, or 0 */
     char *redirection_url;      /* Location given with HTTP status 301/302 */
 };
 
@@ -72,10 +74,7 @@ struct ossl_http_req_ctx_st {
 #define OHS_DONE           (8 | OHS_NOREAD) /* Completed */
 #define OHS_HTTP_HEADER    (9 | OHS_NOREAD) /* Headers set, w/o final \r\n */
 
-OSSL_HTTP_REQ_CTX *OSSL_HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio,
-                                         int maxline, unsigned long max_resp_len,
-                                         int timeout, const char *expected_ct,
-                                         int expect_asn1)
+OSSL_HTTP_REQ_CTX *OSSL_HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio, int maxline)
 {
     OSSL_HTTP_REQ_CTX *rctx;
 
@@ -95,11 +94,8 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio,
         OPENSSL_free(rctx);
         return NULL;
     }
-    rctx->expected_ct = expected_ct;
-    rctx->expect_asn1 = expect_asn1;
     rctx->resp_len = 0;
-    OSSL_HTTP_REQ_CTX_set_max_response_length(rctx, max_resp_len);
-    rctx->max_time = timeout > 0 ? time(NULL) + timeout : 0;
+    rctx->max_resp_len = HTTP_DEFAULT_MAX_RESP_LEN;
     /* everything else is 0, e.g. rctx->len_to_send, or NULL, e.g. rctx->mem  */
     return rctx;
 }
@@ -110,6 +106,7 @@ void OSSL_HTTP_REQ_CTX_free(OSSL_HTTP_REQ_CTX *rctx)
         return;
     BIO_free(rctx->mem); /* this may indirectly call ERR_clear_error() */
     OPENSSL_free(rctx->readbuf);
+    OPENSSL_free((char *)rctx->expected_ct);
     OPENSSL_free(rctx);
 }
 
@@ -120,6 +117,15 @@ BIO *OSSL_HTTP_REQ_CTX_get0_mem_bio(const OSSL_HTTP_REQ_CTX *rctx)
         return NULL;
     }
     return rctx->mem;
+}
+
+size_t OSSL_HTTP_REQ_CTX_get_resp_len(const OSSL_HTTP_REQ_CTX *rctx)
+{
+    if (rctx == NULL) {
+        ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    return rctx->resp_len;
 }
 
 void OSSL_HTTP_REQ_CTX_set_max_response_length(OSSL_HTTP_REQ_CTX *rctx,
@@ -201,6 +207,36 @@ int OSSL_HTTP_REQ_CTX_add1_header(OSSL_HTTP_REQ_CTX *rctx,
     return 1;
 }
 
+int OSSL_HTTP_REQ_CTX_set_expected(OSSL_HTTP_REQ_CTX *rctx,
+                                   const char *content_type, int asn1,
+                                   int timeout, int keep_alive)
+{
+    if (rctx == NULL) {
+        ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (keep_alive != 0
+            && rctx->state != OHS_ERROR && rctx->state != OHS_HEADERS) {
+        /* Cannot anymore set keep-alive in request header */
+        ERR_raise(ERR_LIB_HTTP, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
+
+    OPENSSL_free((char *)rctx->expected_ct);
+    rctx->expected_ct = NULL;
+    if (content_type != NULL
+            && (rctx->expected_ct = OPENSSL_strdup(content_type)) == NULL)
+        return 0;
+
+    rctx->expect_asn1 = asn1;
+    if (timeout >= 0)
+        rctx->max_time = timeout > 0 ? time(NULL) + timeout : 0;
+    else
+        rctx->max_time = rctx->max_total_time;
+    rctx->keep_alive = keep_alive;
+    return 1;
+}
+
 static int ossl_http_req_ctx_set_content(OSSL_HTTP_REQ_CTX *rctx,
                                          const char *content_type, BIO *req_mem)
 {
@@ -228,7 +264,7 @@ static int ossl_http_req_ctx_set_content(OSSL_HTTP_REQ_CTX *rctx,
         && BIO_write(rctx->mem, req, req_len) == (int)req_len;
 }
 
-BIO *ossl_http_asn1_item2bio(const ASN1_ITEM *it, const ASN1_VALUE *val)
+BIO *OSSL_HTTP_i2d_new_bio(const ASN1_VALUE *val, const ASN1_ITEM *it)
 {
     BIO *res;
 
@@ -247,7 +283,7 @@ BIO *ossl_http_asn1_item2bio(const ASN1_ITEM *it, const ASN1_VALUE *val)
 }
 
 int OSSL_HTTP_REQ_CTX_set1_req(OSSL_HTTP_REQ_CTX *rctx, const char *content_type,
-                               const ASN1_ITEM *it, ASN1_VALUE *req)
+                               const ASN1_ITEM *it, const ASN1_VALUE *req)
 {
     BIO *mem;
     int res;
@@ -257,7 +293,7 @@ int OSSL_HTTP_REQ_CTX_set1_req(OSSL_HTTP_REQ_CTX *rctx, const char *content_type
         return 0;
     }
 
-    res = (mem = ossl_http_asn1_item2bio(it, req)) != NULL
+    res = (mem = OSSL_HTTP_i2d_new_bio(req, it)) != NULL
         && ossl_http_req_ctx_set_content(rctx, content_type, mem);
     BIO_free(mem);
     return res;
@@ -289,14 +325,13 @@ static int OSSL_HTTP_REQ_CTX_add1_headers(OSSL_HTTP_REQ_CTX *rctx,
  * If !use_http_proxy then the 'server' and 'port' parameters are ignored.
  * If req_mem == NULL then use GET and ignore content_type, else POST.
  */
-OSSL_HTTP_REQ_CTX
+static OSSL_HTTP_REQ_CTX
 *ossl_http_req_ctx_new(BIO *wbio, BIO *rbio, int use_http_proxy,
                        const char *server, const char *port,
                        const char *path,
                        const STACK_OF(CONF_VALUE) *headers,
                        const char *content_type, BIO *req_mem,
-                       int maxline, unsigned long max_resp_len,
-                       int timeout,
+                       int maxline, int timeout,
                        const char *expected_ct, int expect_asn1)
 {
     OSSL_HTTP_REQ_CTX *rctx;
@@ -307,14 +342,14 @@ OSSL_HTTP_REQ_CTX
     }
     /* remaining parameters are checked indirectly by the functions called */
 
-    if ((rctx = OSSL_HTTP_REQ_CTX_new(wbio, rbio, maxline, max_resp_len, timeout,
-                                      expected_ct, expect_asn1))
+    if ((rctx = OSSL_HTTP_REQ_CTX_new(wbio, rbio, maxline))
         == NULL)
         return NULL;
-
     if (OSSL_HTTP_REQ_CTX_set_request_line(rctx, req_mem != NULL,
                                            use_http_proxy ? server : NULL, port,
                                            path)
+        && OSSL_HTTP_REQ_CTX_set_expected(rctx, expected_ct, expect_asn1,
+                                          timeout, 0)
         && OSSL_HTTP_REQ_CTX_add1_headers(rctx, headers, server)
         && (req_mem == NULL
             || ossl_http_req_ctx_set_content(rctx, content_type, req_mem)))
@@ -588,6 +623,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
                                    rctx->expected_ct, value);
                     return 0;
                 }
+                OPENSSL_free((char *)rctx->expected_ct);
                 rctx->expected_ct = NULL; /* content-type has been found */
             }
             if (strcasecmp(key, "Content-Length") == 0) {
@@ -723,7 +759,7 @@ static BIO *HTTP_new_bio(const char *server /* optionally includes ":port" */,
 }
 #endif /* OPENSSL_NO_SOCK */
 
-static ASN1_VALUE *BIO_mem_d2i(BIO *mem, const ASN1_ITEM *it)
+ASN1_VALUE *OSSL_HTTP_d2i_free_bio(BIO *mem, const ASN1_ITEM *it)
 {
     const unsigned char *p;
     ASN1_VALUE *resp;
@@ -733,10 +769,16 @@ static ASN1_VALUE *BIO_mem_d2i(BIO *mem, const ASN1_ITEM *it)
 
     if ((resp = ASN1_item_d2i(NULL, &p, BIO_get_mem_data(mem, &p), it)) == NULL)
         ERR_raise(ERR_LIB_HTTP, HTTP_R_RESPONSE_PARSE_ERROR);
+    BIO_free(mem);
     return resp;
 }
 
-static BIO *ossl_http_req_ctx_transfer(OSSL_HTTP_REQ_CTX *rctx)
+int OSSL_HTTP_is_alive(const OSSL_HTTP_REQ_CTX *rctx)
+{
+    return rctx != NULL && rctx->keep_alive != 0;
+}
+
+BIO *OSSL_HTTP_REQ_CTX_exchange(OSSL_HTTP_REQ_CTX *rctx)
 {
     int rv;
 
@@ -767,17 +809,6 @@ static BIO *ossl_http_req_ctx_transfer(OSSL_HTTP_REQ_CTX *rctx)
     return rctx->mem;
 }
 
-/* Exchange ASN.1-encoded request and response via HTTP on (non-)blocking BIO */
-ASN1_VALUE *OSSL_HTTP_REQ_CTX_sendreq_d2i(OSSL_HTTP_REQ_CTX *rctx,
-                                          const ASN1_ITEM *it)
-{
-    if (rctx == NULL || it == NULL) {
-        ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
-        return NULL;
-    }
-    return BIO_mem_d2i(ossl_http_req_ctx_transfer(rctx), it);
-}
-
 static int update_timeout(int timeout, time_t start_time)
 {
     long elapsed_time;
@@ -786,6 +817,15 @@ static int update_timeout(int timeout, time_t start_time)
         return 0;
     elapsed_time = (long)(time(NULL) - start_time); /* this might overflow */
     return timeout <= elapsed_time ? -1 : timeout - elapsed_time;
+}
+
+OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
+                                  const char *proxy, const char *no_proxy,
+                                  int use_ssl, BIO *bio, BIO *rbio,
+                                  OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
+                                  int buf_size, int overall_timeout)
+{
+    return NULL; /* TODO(3.0) expand */
 }
 
 /*-
@@ -815,16 +855,31 @@ static int update_timeout(int timeout, time_t start_time)
  * The function should return NULL to indicate failure.
  * After disconnect the modified BIO will be deallocated using BIO_free_all().
  */
-BIO *OSSL_HTTP_transfer(const char *server, const char *port, const char *path,
+int OSSL_HTTP_set_request(OSSL_HTTP_REQ_CTX *rctx, const char *path,
+                          const STACK_OF(CONF_VALUE) *headers,
+                          const char *content_type, BIO *req,
+                          const char *expected_content_type, int expect_asn1,
+                          size_t max_resp_len, int timeout, int keep_alive)
+{
+    return 0; /* TODO(3.0) expand */
+}
+
+BIO *OSSL_HTTP_exchange(OSSL_HTTP_REQ_CTX *rctx, char **redirection_url)
+{
+    return NULL; /* TODO(3.0) expand */
+}
+
+BIO *OSSL_HTTP_transfer(OSSL_HTTP_REQ_CTX **prctx,
+                        const char *server, const char *port, const char *path,
                         int use_ssl, const char *proxy, const char *no_proxy,
                         BIO *bio, BIO *rbio,
                         OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
-                        const STACK_OF(CONF_VALUE) *headers,
+                        int maxline, const STACK_OF(CONF_VALUE) *headers,
                         const char *content_type, BIO *req_mem,
-                        int maxline, unsigned long max_resp_len, int timeout,
                         const char *expected_ct, int expect_asn1,
-                        char **redirection_url)
+                        size_t max_resp_len, int timeout, int keep_alive)
 {
+    char **redirection_url = (char **)prctx; /* TODO(3.0) fix when API approved */
     time_t start_time = timeout > 0 ? time(NULL) : 0;
     BIO *cbio; /* = bio if present, used as connection BIO if rbio is NULL */
     OSSL_HTTP_REQ_CTX *rctx;
@@ -892,12 +947,12 @@ BIO *OSSL_HTTP_transfer(const char *server, const char *port, const char *path,
     rctx = ossl_http_req_ctx_new(cbio, rbio != NULL ? rbio : cbio,
                                  !use_ssl && proxy != NULL, server, port, path,
                                  headers, content_type, req_mem, maxline,
-                                 max_resp_len, update_timeout(timeout, start_time),
+                                 update_timeout(timeout, start_time),
                                  expected_ct, expect_asn1);
     if (rctx == NULL)
         goto end;
 
-    resp = ossl_http_req_ctx_transfer(rctx);
+    resp = OSSL_HTTP_REQ_CTX_exchange(rctx);
     if (resp == NULL) {
         if (rctx->redirection_url != NULL) {
             if (redirection_url == NULL)
@@ -981,12 +1036,12 @@ static int redirection_ok(int n_redir, const char *old_url, const char *new_url)
 BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
                    BIO *bio, BIO *rbio,
                    OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
-                   const STACK_OF(CONF_VALUE) *headers,
-                   int maxline, unsigned long max_resp_len, int timeout,
-                   const char *expected_ct, int expect_asn1)
+                   int maxline, const STACK_OF(CONF_VALUE) *headers,
+                   const char *expected_ct, int expect_asn1,
+                   unsigned long max_resp_len, int timeout)
 {
     time_t start_time = timeout > 0 ? time(NULL) : 0;
-    char *current_url, *redirection_url;
+    char *current_url, *redirection_url = NULL;
     int n_redirs = 0;
     char *host;
     char *port;
@@ -1007,13 +1062,13 @@ BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
             break;
 
      new_rpath:
-        resp = OSSL_HTTP_transfer(host, port, path, use_ssl, proxy, no_proxy,
+        resp = OSSL_HTTP_transfer((OSSL_HTTP_REQ_CTX **)&redirection_url, /* TODO(3.0) fix when API approved */
+                                  host, port, path, use_ssl, proxy, no_proxy,
                                   bio, rbio,
-                                  bio_update_fn, arg, headers, NULL, NULL,
-                                  maxline, max_resp_len,
-                                  update_timeout(timeout, start_time),
+                                  bio_update_fn, arg, maxline, headers, NULL, NULL,
                                   expected_ct, expect_asn1,
-                                  &redirection_url);
+                                  max_resp_len,
+                                  update_timeout(timeout, start_time), 0);
         OPENSSL_free(path);
         if (resp == NULL && redirection_url != NULL) {
             if (redirection_ok(++n_redirs, current_url, redirection_url)) {
@@ -1038,65 +1093,9 @@ BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
     return resp;
 }
 
-/* Get ASN.1-encoded data via HTTP from server at given URL */
-ASN1_VALUE *OSSL_HTTP_get_asn1(const char *url,
-                               const char *proxy, const char *no_proxy,
-                               BIO *bio, BIO *rbio,
-                               OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
-                               const STACK_OF(CONF_VALUE) *headers,
-                               int maxline, unsigned long max_resp_len,
-                               int timeout, const char *expected_ct,
-                               const ASN1_ITEM *rsp_it)
+int OSSL_HTTP_close(OSSL_HTTP_REQ_CTX *rctx, int ok)
 {
-    BIO *mem;
-    ASN1_VALUE *resp = NULL;
-
-    if (url == NULL || rsp_it == NULL) {
-        ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
-        return NULL;
-    }
-    mem = OSSL_HTTP_get(url, proxy, no_proxy, bio, rbio, bio_update_fn,
-                        arg, headers, maxline, max_resp_len, timeout,
-                        expected_ct, 1 /* expect_asn1 */);
-    resp = BIO_mem_d2i(mem /* may be NULL */, rsp_it);
-    BIO_free(mem);
-    return resp;
-}
-
-/* Post ASN.1-encoded request via HTTP to server return ASN.1 response */
-ASN1_VALUE *OSSL_HTTP_post_asn1(const char *server, const char *port,
-                                const char *path, int use_ssl,
-                                const char *proxy, const char *no_proxy,
-                                BIO *bio, BIO *rbio,
-                                OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
-                                const STACK_OF(CONF_VALUE) *headers,
-                                const char *content_type,
-                                const ASN1_VALUE *req, const ASN1_ITEM *req_it,
-                                int maxline, unsigned long max_resp_len,
-                                int timeout, const char *expected_ct,
-                                const ASN1_ITEM *rsp_it)
-{
-    BIO *req_mem;
-    BIO *res_mem;
-    ASN1_VALUE *resp = NULL;
-
-    if (req == NULL) {
-        ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
-        return NULL;
-    }
-    /* remaining parameters are checked indirectly */
-
-    req_mem = ossl_http_asn1_item2bio(req_it, req);
-    res_mem = OSSL_HTTP_transfer(server, port, path, use_ssl, proxy, no_proxy,
-                                 bio, rbio,
-                                 bio_update_fn, arg, headers, content_type,
-                                 req_mem /* may be NULL */, maxline,
-                                 max_resp_len, timeout,
-                                 expected_ct, 1 /* expect_asn1 */, NULL);
-    BIO_free(req_mem);
-    resp = BIO_mem_d2i(res_mem /* may be NULL */, rsp_it);
-    BIO_free(res_mem);
-    return resp;
+    return 0; /* TODO(3.0) expand */
 }
 
 /* BASE64 encoder used for encoding basic proxy authentication credentials */
