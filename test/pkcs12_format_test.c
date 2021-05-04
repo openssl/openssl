@@ -613,12 +613,13 @@ static int test_single_secret_encrypted_content(void)
 
 static int test_single_secret(PKCS12_ENC *enc)
 {
+    int custom_nid;
     char fname[80];
     PKCS12_BUILDER *pb;
 
     sprintf(fname, "1secret_ciph-%s_iter-%d.p12", OBJ_nid2sn(enc->nid), enc->iter);
     pb = new_pkcs12_builder(fname);
-    int custom_nid = get_custom_oid();
+    custom_nid = get_custom_oid();
 
     /* Generate/encode */
     start_pkcs12(pb);
