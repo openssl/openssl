@@ -16,7 +16,8 @@ purposes:
 
 =item - Run the startup FIPS self-test known answer tests (KATS).
 
-This is done once, at installation time.
+This is normally done once, at installation time, but may also be set up to
+run each time the module is used.
 
 =item - Verify the module's checksum.
 
