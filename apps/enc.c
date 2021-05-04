@@ -429,7 +429,6 @@ int enc_main(int argc, char **argv)
     }
 
     if (cipher != NULL) {
-
         if (str != NULL) { /* a passphrase is available */
             /*
              * Salt handling: if encrypting generate a salt if not supplied,
@@ -467,7 +466,6 @@ int enc_main(int argc, char **argv)
                         }
                     }
                 } else {    /* decryption */
-
                     if (hsalt == NULL) {
                         if (BIO_read(rbio, mbuf, sizeof(mbuf)) != sizeof(mbuf)) {
                             BIO_printf(bio_err, "error reading input file\n");
@@ -479,8 +477,7 @@ int enc_main(int argc, char **argv)
                                 BIO_printf(bio_err, "error reading input file\n");
                                 goto end;
                             }
-                        }
-                        else { /* file is NOT salted, NO salt available */
+                        } else { /* file is NOT salted, NO salt available */
                             BIO_printf(bio_err, "bad magic number\n");
                             goto end;
                         }
