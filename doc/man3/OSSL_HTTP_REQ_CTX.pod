@@ -87,16 +87,19 @@ For example, to add a C<Host> header for C<example.com> you would call:
  OSSL_HTTP_REQ_CTX_add1_header(ctx, "Host", "example.com");
 
 OSSL_HTTP_REQ_CTX_set_expected() optionally sets in I<rctx> some expectations
-of the HTTP client.
+of the HTTP client on the response.
 Due to the structure of an HTTP request, if the I<keep_alive> argument is
 nonzero the function must be used before calling OSSL_HTTP_REQ_CTX_set1_req().
 If the I<content_type> parameter
 is not NULL then the client will check that the given content type string
 is included in the HTTP header of the response and return an error if not.
 If the I<asn1> parameter is nonzero a structure in ASN.1 encoding will be
-expected as the response content.  This means that an ASN.1 sequence header
-is required and the its length field is checked.
+expected as the response content and input streaming is disabled.  This means
+that an ASN.1 sequence header is required, its length field is checked, and
+OSSL_HTTP_REQ_CTX_get0_mem_bio() should be used to get the buffered response.
 Else any form of input is allowed without length checks, which is the default.
+In this case the BIO given as I<rbio> argument to OSSL_HTTP_REQ_CTX_new() should
+be used directly to read the response contents, which may support streaming.
 If the I<timeout> parameter is > 0 this indicates the maximum number of seconds
 the subsequent HTTP transfer (sending the request and receiving a response)
 is allowed to take.
@@ -121,9 +124,6 @@ All of this ends up in the internal memory B<BIO>.
 OSSL_HTTP_REQ_CTX_nbio() attempts to send the request prepared in I<rctx>
 and to gather the response via HTTP, using the I<wbio> and I<rbio>
 that were given when calling OSSL_HTTP_REQ_CTX_new().
-If successful, the contents of the internal memory B<BIO> contains
-the contents of the HTTP response, without the response headers.
-This does not support streaming.
 The function may need to be called again if its result is -1, which indicates
 L<BIO_should_retry(3)>.  In such a case it is advisable to sleep a little in
 between, using L<BIO_wait(3)> on the read BIO to prevent a busy loop.
