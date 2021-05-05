@@ -17,6 +17,8 @@ typedef struct {
     OSSL_FUNC_BIO_gets_fn *c_bio_gets;
     OSSL_FUNC_BIO_puts_fn *c_bio_puts;
     OSSL_FUNC_BIO_ctrl_fn *c_bio_ctrl;
+    OSSL_FUNC_BIO_up_ref_fn *c_bio_up_ref;
+    OSSL_FUNC_BIO_free_fn *c_bio_free;
 } BIO_CORE_GLOBALS;
 
 static void bio_core_globals_free(void *vbcg)
@@ -97,7 +99,10 @@ static int bio_core_new(BIO *bio)
 
 static int bio_core_free(BIO *bio)
 {
+    BIO_CORE_GLOBALS *bcgbl = get_globals(bio->libctx);
+
     BIO_set_init(bio, 0);
+    bcgbl->c_bio_free(BIO_get_data(bio));
 
     return 1;
 }
@@ -134,6 +139,10 @@ BIO *BIO_new_from_core_bio(OSSL_LIB_CTX *libctx, OSSL_CORE_BIO *corebio)
     if ((outbio = BIO_new_ex(libctx, BIO_s_core())) == NULL)
         return NULL;
 
+    if (!bcgbl->c_bio_up_ref(corebio)) {
+        BIO_free(outbio);
+        return NULL;
+    }
     BIO_set_data(outbio, corebio);
     return outbio;
 }
@@ -163,6 +172,14 @@ int ossl_bio_init_core(OSSL_LIB_CTX *libctx, const OSSL_DISPATCH *fns)
         case OSSL_FUNC_BIO_CTRL:
             if (bcgbl->c_bio_ctrl == NULL)
                 bcgbl->c_bio_ctrl = OSSL_FUNC_BIO_ctrl(fns);
+            break;
+        case OSSL_FUNC_BIO_UP_REF:
+            if (bcgbl->c_bio_up_ref == NULL)
+                bcgbl->c_bio_up_ref = OSSL_FUNC_BIO_up_ref(fns);
+            break;
+        case OSSL_FUNC_BIO_FREE:
+            if (bcgbl->c_bio_free == NULL)
+                bcgbl->c_bio_free = OSSL_FUNC_BIO_free(fns);
             break;
         }
     }
