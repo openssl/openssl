@@ -726,11 +726,17 @@ static int provider_activate(OSSL_PROVIDER *prov, int flag_lock)
 static int provider_flush_store_cache(const OSSL_PROVIDER *prov)
 {
     struct provider_store_st *store;
+    int freeing;
 
     if ((store = get_provider_store(prov->libctx)) == NULL)
         return 0;
 
-    if (!store->freeing)
+    if (!CRYPTO_THREAD_read_lock(store->lock))
+        return 0;
+    freeing = store->freeing;
+    CRYPTO_THREAD_unlock(store->lock);
+
+    if (!freeing)
         return evp_method_store_flush(prov->libctx);
     return 1;
 }
