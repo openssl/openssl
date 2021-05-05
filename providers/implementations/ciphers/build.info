@@ -7,12 +7,12 @@
 
 $COMMON_GOAL=../../libcommon.a
 
-$NULL_GOAL=../../libimplementations.a
-$AES_GOAL=../../libimplementations.a
-$TDES_1_GOAL=../../libimplementations.a
-$TDES_2_GOAL=../../libimplementations.a
-$ARIA_GOAL=../../libimplementations.a
-$CAMELLIA_GOAL=../../libimplementations.a
+$NULL_GOAL=../../libnonfips.a
+$AES_GOAL=../../libcommon.a
+$TDES_1_GOAL=../../libcommon.a
+$TDES_2_GOAL=../../libcommon.a
+$ARIA_GOAL=../../libnonfips.a
+$CAMELLIA_GOAL=../../libnonfips.a
 $DES_GOAL=../../liblegacy.a
 $BLOWFISH_GOAL=../../liblegacy.a
 $IDEA_GOAL=../../liblegacy.a
@@ -21,10 +21,10 @@ $RC2_GOAL=../../liblegacy.a
 $RC4_GOAL=../../liblegacy.a
 $RC5_GOAL=../../liblegacy.a
 $SEED_GOAL=../../liblegacy.a
-$SM4_GOAL=../../libimplementations.a
-$CHACHA_GOAL=../../libimplementations.a
-$CHACHAPOLY_GOAL=../../libimplementations.a
-$SIV_GOAL=../../libimplementations.a
+$SM4_GOAL=../../libnonfips.a
+$CHACHA_GOAL=../../libnonfips.a
+$CHACHAPOLY_GOAL=../../libnonfips.a
+$SIV_GOAL=../../libnonfips.a
 
 # This source is common building blocks for all ciphers in all our providers.
 SOURCE[$COMMON_GOAL]=\

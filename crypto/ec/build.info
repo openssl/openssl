@@ -65,7 +65,7 @@ SOURCE[../../providers/libfips.a]=$COMMON
 # need to be applied to all affected libraries and modules.
 DEFINE[../../libcrypto]=$ECDEF
 DEFINE[../../providers/libfips.a]=$ECDEF
-DEFINE[../../providers/libimplementations.a]=$ECDEF
+DEFINE[../../providers/libcommon.a]=$ECDEF
 
 GENERATE[ecp_nistz256-x86.s]=asm/ecp_nistz256-x86.pl
 

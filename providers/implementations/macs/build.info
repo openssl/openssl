@@ -1,13 +1,13 @@
 # We make separate GOAL variables for each algorithm, to make it easy to
 # switch each to the Legacy provider when needed.
 
-$GMAC_GOAL=../../libimplementations.a
-$HMAC_GOAL=../../libimplementations.a
-$KMAC_GOAL=../../libimplementations.a
-$CMAC_GOAL=../../libimplementations.a
-$BLAKE2_GOAL=../../libimplementations.a
-$SIPHASH_GOAL=../../libimplementations.a
-$POLY1305_GOAL=../../libimplementations.a
+$GMAC_GOAL=../../libcommon.a
+$HMAC_GOAL=../../libcommon.a
+$KMAC_GOAL=../../libcommon.a
+$CMAC_GOAL=../../libcommon.a
+$BLAKE2_GOAL=../../libnonfips.a
+$SIPHASH_GOAL=../../libnonfips.a
+$POLY1305_GOAL=../../libnonfips.a
 
 SOURCE[$GMAC_GOAL]=gmac_prov.c
 SOURCE[$HMAC_GOAL]=hmac_prov.c
@@ -16,8 +16,6 @@ SOURCE[$KMAC_GOAL]=kmac_prov.c
 IF[{- !$disabled{cmac} -}]
   SOURCE[$CMAC_GOAL]=cmac_prov.c
 ENDIF
-
-$GOAL=../../libimplementations.a
 
 IF[{- !$disabled{blake2} -}]
   SOURCE[$BLAKE2_GOAL]=blake2b_mac.c blake2s_mac.c

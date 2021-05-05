@@ -1,16 +1,16 @@
 # We make separate GOAL variables for each algorithm, to make it easy to
 # switch each to the Legacy provider when needed.
 
-$TLS1_PRF_GOAL=../../libimplementations.a
-$HKDF_GOAL=../../libimplementations.a
-$KBKDF_GOAL=../../libimplementations.a
-$KRB5KDF_GOAL=../../libimplementations.a
-$PBKDF2_GOAL=../../libimplementations.a
-$PKCS12KDF_GOAL=../../libimplementations.a
-$SSKDF_GOAL=../../libimplementations.a
-$SCRYPT_GOAL=../../libimplementations.a
-$SSHKDF_GOAL=../../libimplementations.a
-$X942KDF_GOAL=../../libimplementations.a
+$TLS1_PRF_GOAL=../../libcommon.a
+$HKDF_GOAL=../../libcommon.a
+$KBKDF_GOAL=../../libcommon.a
+$KRB5KDF_GOAL=../../libnonfips.a
+$PBKDF2_GOAL=../../libcommon.a
+$PKCS12KDF_GOAL=../../libnonfips.a
+$SSKDF_GOAL=../../libcommon.a
+$SCRYPT_GOAL=../../libnonfips.a
+$SSHKDF_GOAL=../../libcommon.a
+$X942KDF_GOAL=../../libcommon.a
 
 SOURCE[$TLS1_PRF_GOAL]=tls1_prf.c
 

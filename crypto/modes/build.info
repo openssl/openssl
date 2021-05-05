@@ -58,7 +58,7 @@ SOURCE[../../providers/libfips.a]=$COMMON
 # need to be applied to all affected libraries and modules.
 DEFINE[../../libcrypto]=$MODESDEF
 DEFINE[../../providers/libfips.a]=$MODESDEF
-DEFINE[../../providers/libimplementations.a]=$MODESDEF
+DEFINE[../../providers/libcommon.a]=$MODESDEF
 
 
 INCLUDE[gcm128.o]=..

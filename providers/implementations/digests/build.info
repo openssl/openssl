@@ -3,12 +3,12 @@
 
 $COMMON_GOAL=../../libcommon.a
 
-$SHA1_GOAL=../../libimplementations.a
-$SHA2_GOAL=../../libimplementations.a
-$SHA3_GOAL=../../libimplementations.a
-$BLAKE2_GOAL=../../libimplementations.a
-$SM3_GOAL=../../libimplementations.a
-$MD5_GOAL=../../libimplementations.a
+$SHA1_GOAL=../../libcommon.a
+$SHA2_GOAL=../../libcommon.a
+$SHA3_GOAL=../../libcommon.a
+$BLAKE2_GOAL=../../libnonfips.a
+$SM3_GOAL=../../libnonfips.a
+$MD5_GOAL=../../libnonfips.a
 
 $MD2_GOAL=../../liblegacy.a
 $MD4_GOAL=../../liblegacy.a

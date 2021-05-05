@@ -1,9 +1,9 @@
 # We make separate GOAL variables for each algorithm, to make it easy to
 # switch each to the Legacy provider when needed.
 
-$DSA_GOAL=../../libimplementations.a
-$EC_GOAL=../../libimplementations.a
-$SM2SIG_GOAL=../../libimplementations.a
+$DSA_GOAL=../../libcommon.a
+$EC_GOAL=../../libcommon.a
+$SM2SIG_GOAL=../../libnonfips.a
 
 IF[{- !$disabled{dsa} -}]
   SOURCE[$DSA_GOAL]=dsa.c
