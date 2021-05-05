@@ -21,10 +21,10 @@ ENDIF
 
 SOURCE[$RSA_GOAL]=rsa_sig.c
 
-DEPEND[rsa.o]=../../common/include/prov/der_rsa.h
-DEPEND[dsa.o]=../../common/include/prov/der_dsa.h
-DEPEND[ecdsa.o]=../../common/include/prov/der_ec.h
-DEPEND[eddsa.o]=../../common/include/prov/der_ecx.h
-DEPEND[sm2sig.o]=../../common/include/prov/der_sm2.h
+DEPEND[rsa_sig.o]=../../common/include/prov/der_rsa.h
+DEPEND[dsa_sig.o]=../../common/include/prov/der_dsa.h
+DEPEND[ecdsa_sig.o]=../../common/include/prov/der_ec.h
+DEPEND[eddsa_sig.o]=../../common/include/prov/der_ecx.h
+DEPEND[sm2_sig.o]=../../common/include/prov/der_sm2.h
 
 SOURCE[$MAC_GOAL]=mac_legacy_sig.c
