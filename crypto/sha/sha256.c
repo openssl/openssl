@@ -40,7 +40,6 @@ int SHA224_Init(SHA256_CTX *c)
 
 int SHA256_Init(SHA256_CTX *c)
 {
-    /*Adding a comment*/
     memset(c, 0, sizeof(*c));
     c->h[0] = 0x6a09e667UL;
     c->h[1] = 0xbb67ae85UL;
