@@ -679,8 +679,8 @@ static int provider_init(OSSL_PROVIDER *prov, int flag_lock)
 }
 
 /*
- * Activate a provider.
- * Return -1 on failure and the number of activations on success
+ * Deactivate a provider.
+ * Return -1 on failure and the activation count on success
  */
 static int provider_deactivate(OSSL_PROVIDER *prov)
 {
@@ -703,7 +703,7 @@ static int provider_deactivate(OSSL_PROVIDER *prov)
 
 /*
  * Activate a provider.
- * Return -1 on failure and the number of activations on success
+ * Return -1 on failure and the activation count on success
  */
 static int provider_activate(OSSL_PROVIDER *prov, int flag_lock)
 {
@@ -1059,7 +1059,7 @@ int ossl_provider_clear_all_operation_bits(OSSL_LIB_CTX *libctx)
     int i, num, res = 1;
 
     if ((store = get_provider_store(libctx)) != NULL) {
-        if (!CRYPTO_THREAD_write_lock(store->lock))
+        if (!CRYPTO_THREAD_read_lock(store->lock))
             return 0;
         num = sk_OSSL_PROVIDER_num(store->providers);
         for (i = 0; i < num; i++) {
