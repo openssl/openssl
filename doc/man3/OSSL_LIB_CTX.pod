@@ -3,8 +3,8 @@
 =head1 NAME
 
 OSSL_LIB_CTX, OSSL_LIB_CTX_new, OSSL_LIB_CTX_new_from_dispatch,
-OSSL_LIB_CTX_free, OSSL_LIB_CTX_load_config, OSSL_LIB_CTX_get0_global_default,
-OSSL_LIB_CTX_set0_default
+OSSL_LIB_CTX_new_child, OSSL_LIB_CTX_free, OSSL_LIB_CTX_load_config,
+OSSL_LIB_CTX_get0_global_default, OSSL_LIB_CTX_set0_default
 - OpenSSL library context
 
 =head1 SYNOPSIS
@@ -16,6 +16,8 @@ OSSL_LIB_CTX_set0_default
  OSSL_LIB_CTX *OSSL_LIB_CTX_new(void);
  OSSL_LIB_CTX *OSSL_LIB_CTX_new_from_dispatch(const OSSL_CORE_HANDLE *handle,
                                               const OSSL_DISPATCH *in);
+ OSSL_LIB_CTX *OSSL_LIB_CTX_new_child(const OSSL_CORE_HANDLE *handle,
+                                      const OSSL_DISPATCH *in);
  int OSSL_LIB_CTX_load_config(OSSL_LIB_CTX *ctx, const char *config_file);
  void OSSL_LIB_CTX_free(OSSL_LIB_CTX *ctx);
  OSSL_LIB_CTX *OSSL_LIB_CTX_get0_global_default(void);
@@ -42,6 +44,44 @@ passed should be the same ones as passed to a provider's
 OSSL_provider_init function. Some OpenSSL functions, such as
 L<BIO_new_from_core_bio(3)>, require the library context to be created in this
 way in order to work.
+
+OSSL_LIB_CTX_new_child() is only useful to provider authors and does the same
+thing as OSSL_LIB_CTX_new_from_dispatch() except that it additionally links the
+new library context to the application library context. The new library context
+is a full library context in its own right, but will have all the same providers
+available to it that are available in the application library context (without
+having to reload them). If the application loads or unloads providers from the
+application library context then this will be automatically mirrored in the
+child library context.
+
+In addition providers that are not loaded in the parent library context can be
+explicitly loaded into the child library context independently from the parent
+library context. Providers loaded independently in this way will not be mirrored
+in the parent library context and will not be affected if the parent library
+context subsequently loads the same provider.
+
+A provider may call the function L<OSSL_PROVIDER_load(3)> with the child library
+context as required. If the provider already exists due to it being mirrored
+from the parent library context then it will remain available and its reference
+count will be increased. If L<OSSL_PROVIDER_load(3)> is called in this way then
+L<OSSL_PROVIDER_unload(3)> should be subsequently called to decrement the
+reference count. L<OSSL_PROVIDER_unload(3)> must not be called for a provider in
+the child library context that did not have an earlier L<OSSL_PROVIDER_load(3)>
+call for that provider in that child library context.
+
+OSSL_LIB_CTX_new_child() must only be called from within the scope of a
+provider's B<OSSL_provider_init> function (see L<provider-base(7)>). Calling it
+outside of that function may succeed but may not correctly mirror all providers
+and is considered undefined behaviour. When called from within the scope of a
+provider's B<OSSL_provider_init> function the currently initialising provider is
+not yet available in the application's library context and therefore will
+similarly not yet be available in the newly constructed child library context.
+As soon as the B<OSSL_provider_init> function returns then the new provider is
+available in the application's library context and will be similarly mirrored in
+the child library context. Since the current provider is still initialising
+the provider should not attempt to perform fetches, or call any function that
+performs a fetch using the child library context until after the initialisation
+function has completed.
 
 OSSL_LIB_CTX_load_config() loads a configuration file using the given C<ctx>.
 This can be used to associate a library context with providers that are loaded
