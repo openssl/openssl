@@ -185,6 +185,7 @@ static int ec_group_explicit_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
         BIGNUM *p = BN_CTX_get(bnctx);
         BIGNUM *a = BN_CTX_get(bnctx);
         BIGNUM *b = BN_CTX_get(bnctx);
+
         if (b == NULL) {
             ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
             goto err;
@@ -205,6 +206,7 @@ static int ec_group_explicit_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
     param = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_ORDER);
     if (tmpl != NULL || param != NULL) {
         const BIGNUM *order = EC_GROUP_get0_order(group);
+
         if (order == NULL) {
             ERR_raise(ERR_LIB_EC, EC_R_INVALID_GROUP_ORDER);
             goto err;
@@ -231,6 +233,7 @@ static int ec_group_explicit_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
         size_t genbuf_len;
         const EC_POINT *genpt = EC_GROUP_get0_generator(group);
         point_conversion_form_t genform = EC_GROUP_get_point_conversion_form(group);
+
         if (genpt == NULL) {
             ERR_raise(ERR_LIB_EC, EC_R_INVALID_GENERATOR);
             goto err;
@@ -251,6 +254,7 @@ static int ec_group_explicit_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
     param = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_COFACTOR);
     if (tmpl != NULL || param != NULL) {
         const BIGNUM *cofactor = EC_GROUP_get0_cofactor(group);
+
         if (cofactor != NULL
             && !ossl_param_build_set_bn(tmpl, params,
                                         OSSL_PKEY_PARAM_EC_COFACTOR, cofactor)) {
@@ -263,6 +267,7 @@ static int ec_group_explicit_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
     if (tmpl != NULL || param != NULL) {
         unsigned char *seed = EC_GROUP_get0_seed(group);
         size_t seed_len = EC_GROUP_get_seed_len(group);
+
         if (seed != NULL
             && seed_len > 0
             && !ossl_param_build_set_octet_string(tmpl, params,
