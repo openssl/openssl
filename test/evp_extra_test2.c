@@ -290,6 +290,7 @@ done:
     return ret;
 }
 
+#ifndef OPENSSL_NO_DES
 static int test_pkcs8key_nid_bio(void)
 {
     int ret;
@@ -313,11 +314,15 @@ static int test_pkcs8key_nid_bio(void)
           && TEST_ptr(pkey_dec = d2i_PKCS8PrivateKey_bio(enc_bio, NULL, NULL,
                                                          (void *)pwd))
           && TEST_true(EVP_PKEY_eq(pkey, pkey_dec));
-    BIO_free(enc_bio);
+
+    EVP_PKEY_free(pkey_dec);
+    EVP_PKEY_free(pkey);
     BIO_free(in);
+    BIO_free(enc_bio);
     OSSL_PROVIDER_unload(provider);
     return ret;
 }
+#endif /* OPENSSL_NO_DES */
 
 static int test_alternative_default(void)
 {
@@ -756,7 +761,9 @@ int setup_tests(void)
     ADD_TEST(test_pkey_todata_null);
     ADD_TEST(test_pkey_export_null);
     ADD_TEST(test_pkey_export);
+#ifndef OPENSSL_NO_DES
     ADD_TEST(test_pkcs8key_nid_bio);
+#endif
     return 1;
 }
 
