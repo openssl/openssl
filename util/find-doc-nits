@@ -351,6 +351,7 @@ sub name_synopsis {
 
         my $sym;
         my $is_prototype = 1;
+        $line =~ s/LHASH_OF\([^)]+\)/int/g;
         $line =~ s/STACK_OF\([^)]+\)/int/g;
         $line =~ s/SPARSE_ARRAY_OF\([^)]+\)/int/g;
         $line =~ s/__declspec\([^)]+\)//;
