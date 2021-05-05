@@ -13,8 +13,8 @@ DEPEND[$DER_DIGESTS_H]=oids_to_c.pm
 $DER_RSA_H=../include/prov/der_rsa.h
 $DER_RSA_GEN=der_rsa_gen.c
 $DER_RSA_AUX=der_rsa_key.c der_rsa_sig.c
-$DER_RSA_COMMON=$DER_RSA_GEN der_rsa_sig.c
-$DER_RSA_FIPSABLE=der_rsa_key.c
+$DER_RSA_COMMON=$DER_RSA_GEN der_rsa_key.c
+$DER_RSA_FIPSABLE=der_rsa_sig.c
 
 GENERATE[$DER_RSA_GEN]=der_rsa_gen.c.in
 DEPEND[$DER_RSA_GEN]=oids_to_c.pm
@@ -97,9 +97,6 @@ ENDIF
 
 #----- Conclusion
 
-# TODO(3.0) $COMMON should go to libcommon.a, but this currently leads
-# to linking conflicts, so we add it to libfips.a and libdefault.a for
-# the moment being
 $COMMON= $DER_RSA_COMMON $DER_DIGESTS_GEN $DER_WRAP_GEN
 
 IF[{- !$disabled{dsa} -}]
@@ -112,8 +109,9 @@ IF[{- !$disabled{ec} -}]
 ENDIF
 
 IF[{- !$disabled{sm2} -}]
-  $COMMON = $COMMON $DER_SM2_GEN $DER_SM2_AUX
+  $NONFIPS = $NONFIPS $DER_SM2_GEN $DER_SM2_AUX
 ENDIF
 
-SOURCE[../../libfips.a]=$COMMON $DER_RSA_FIPSABLE
-SOURCE[../../libdefault.a]=$COMMON $DER_RSA_FIPSABLE
+SOURCE[../../libcommon.a]= $COMMON
+SOURCE[../../libfips.a]= $DER_RSA_FIPSABLE
+SOURCE[../../libdefault.a]= $DER_RSA_FIPSABLE $NONFIPS

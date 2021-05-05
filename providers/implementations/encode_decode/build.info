@@ -3,12 +3,6 @@
 
 $ENCODER_GOAL=../../libdefault.a
 $DECODER_GOAL=../../libdefault.a
-$RSA_GOAL=../../libdefault.a
-$FFC_GOAL=../../libdefault.a
-$DH_GOAL=../../libdefault.a
-$DSA_GOAL=../../libdefault.a
-$ECX_GOAL=../../libdefault.a
-$EC_GOAL=../../libdefault.a
 
 SOURCE[$ENCODER_GOAL]=endecoder_common.c
 

@@ -321,9 +321,6 @@ providers/common/der/der_ecx_key.c
 providers/common/der/der_rsa_gen.c.in
 providers/common/der/der_rsa_key.c
 providers/common/der/der_rsa_sig.c
-providers/common/der/der_sm2_gen.c.in
-providers/common/der/der_sm2_key.c
-providers/common/der/der_sm2_sig.c
 providers/common/der/der_wrap_gen.c.in
 providers/common/digest_to_nid.c
 providers/common/provider_ctx.c
