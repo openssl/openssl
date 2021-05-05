@@ -13,7 +13,7 @@ ossl_provider_name, ossl_provider_dso,
 ossl_provider_module_name, ossl_provider_module_path,
 ossl_provider_libctx,
 ossl_provider_teardown, ossl_provider_gettable_params,
-ossl_provider_get_params,
+ossl_provider_get_params, ossl_provider_clear_all_operation_bits,
 ossl_provider_query_operation, ossl_provider_unquery_operation,
 ossl_provider_set_operation_bit, ossl_provider_test_operation_bit,
 ossl_provider_get_capabilities
@@ -80,6 +80,7 @@ ossl_provider_get_capabilities
  int ossl_provider_set_operation_bit(OSSL_PROVIDER *provider, size_t bitnum);
  int ossl_provider_test_operation_bit(OSSL_PROVIDER *provider, size_t bitnum,
                                       int *result);
+ int ossl_provider_clear_all_operation_bits(OSSL_LIB_CTX *libctx);
 
 =head1 DESCRIPTION
 
@@ -245,9 +246,12 @@ that all relevant information has been copied.
 ossl_provider_set_operation_bit() registers a 1 for operation I<bitnum>
 in a bitstring that's internal to I<provider>.
 
-ossl_provider_tests_operation_bit() checks if the bit operation I<bitnum>
+ossl_provider_test_operation_bit() checks if the bit operation I<bitnum>
 is set (1) or not (0) in the internal I<provider> bitstring, and sets
 I<*result> to 1 or 0 accorddingly. 
+
+ossl_provider_clear_all_operation_bits() clears all of the operation bits
+to (0) for all providers in the library context I<libctx>.
 
 =head1 NOTES
 
@@ -318,6 +322,8 @@ If this function isn't available in the provider, 0 is returned.
 
 ossl_provider_set_operation_bit() and ossl_provider_test_operation_bit()
 return 1 on success, or 0 on error.
+
+ossl_provider_clear_all_operation_bits() returns 1 on success, or 0 on error.
 
 ossl_provider_get_capabilities() returns 1 on success, or 0 on error.
 If this function isn't available in the provider or the provider does not
