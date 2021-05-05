@@ -778,10 +778,13 @@ int setup_tests(void)
     }
 
     ADD_TEST(test_single_cert_no_attrs);
-    if (lgcyprov == NULL)
+    if (lgcyprov == NULL) {
         ADD_ALL_TESTS(test_single_key_enc_alg, OSSL_NELEM(enc_nids_no_legacy));
-    else
+        ADD_ALL_TESTS(test_single_secret_enc_alg, OSSL_NELEM(enc_nids_no_legacy));
+    } else {
         ADD_ALL_TESTS(test_single_key_enc_alg, OSSL_NELEM(enc_nids_all));
+        ADD_ALL_TESTS(test_single_secret_enc_alg, OSSL_NELEM(enc_nids_all));
+    }
     ADD_ALL_TESTS(test_single_key_enc_pass, OSSL_NELEM(passwords));
     ADD_ALL_TESTS(test_single_key_enc_iter, OSSL_NELEM(iters));
     ADD_TEST(test_single_key_with_attrs);
@@ -791,10 +794,6 @@ int setup_tests(void)
     ADD_TEST(test_cert_key_with_attrs_and_mac);
     ADD_TEST(test_cert_key_encrypted_content);
     ADD_TEST(test_single_secret_encrypted_content);
-    if (lgcyprov == NULL)
-        ADD_ALL_TESTS(test_single_secret_enc_alg, OSSL_NELEM(enc_nids_no_legacy));
-    else
-        ADD_ALL_TESTS(test_single_secret_enc_alg, OSSL_NELEM(enc_nids_all));
     ADD_TEST(test_multiple_contents);
     return 1;
 }
