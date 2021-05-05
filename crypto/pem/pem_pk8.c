@@ -93,7 +93,7 @@ static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder, int nid,
         }
     }
 
-    if (OSSL_ENCODER_CTX_get_num_encoders(ctx) != 0) {
+    if (nid == -1 && OSSL_ENCODER_CTX_get_num_encoders(ctx) != 0) {
         ret = 1;
         if (enc != NULL) {
             ret = 0;

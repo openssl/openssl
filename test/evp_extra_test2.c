@@ -290,6 +290,35 @@ done:
     return ret;
 }
 
+static int test_pkcs8key_nid_bio(void)
+{
+    int ret;
+    const int nid = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
+    static const char pwd[] = "PASSWORD";
+    EVP_PKEY *pkey = NULL, *pkey_dec = NULL;
+    BIO *in = NULL, *enc_bio = NULL;
+    char *enc_data = NULL;
+    long enc_datalen = 0;
+    OSSL_PROVIDER *provider = NULL;
+
+    ret = TEST_ptr(provider = OSSL_PROVIDER_load(NULL, "default"))
+          && TEST_ptr(enc_bio = BIO_new(BIO_s_mem()))
+          && TEST_ptr(in = BIO_new_mem_buf(kExampleRSAKeyPKCS8,
+                                           sizeof(kExampleRSAKeyPKCS8)))
+          && TEST_ptr(pkey = d2i_PrivateKey_ex_bio(in, NULL, NULL, NULL))
+          && TEST_int_eq(i2d_PKCS8PrivateKey_nid_bio(enc_bio, pkey, nid,
+                                                     pwd, sizeof(pwd) - 1,
+                                                     NULL, NULL), 1)
+          && TEST_int_gt(enc_datalen = BIO_get_mem_data(enc_bio, &enc_data), 0)
+          && TEST_ptr(pkey_dec = d2i_PKCS8PrivateKey_bio(enc_bio, NULL, NULL,
+                                                         (void *)pwd))
+          && TEST_true(EVP_PKEY_eq(pkey, pkey_dec));
+    BIO_free(enc_bio);
+    BIO_free(in);
+    OSSL_PROVIDER_unload(provider);
+    return ret;
+}
+
 static int test_alternative_default(void)
 {
     OSSL_LIB_CTX *oldctx;
@@ -727,6 +756,7 @@ int setup_tests(void)
     ADD_TEST(test_pkey_todata_null);
     ADD_TEST(test_pkey_export_null);
     ADD_TEST(test_pkey_export);
+    ADD_TEST(test_pkcs8key_nid_bio);
     return 1;
 }
 
