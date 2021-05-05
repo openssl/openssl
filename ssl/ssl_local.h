@@ -2391,6 +2391,7 @@ __owur STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(SSL_CTX *ctx,
                                                     STACK_OF(SSL_CIPHER) **cipher_list_by_id,
                                                     const char *rule_str,
                                                     CERT *c);
+__owur STACK_OF(SSL_CIPHER) *ssl_get_tls13_suites(const char *str);
 __owur int ssl_cache_cipherlist(SSL *s, PACKET *cipher_suites, int sslv2format);
 __owur int bytes_to_cipher_list(SSL *s, PACKET *cipher_suites,
                                 STACK_OF(SSL_CIPHER) **skp,
