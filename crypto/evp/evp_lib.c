@@ -126,8 +126,9 @@ int evp_cipher_param_to_asn1_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
          * We make two passes, the first to get the appropriate buffer size,
          * and the second to get the actual value.
          */
-        *p++ = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_ALG_ID,
-                                                 NULL, 0);
+        *p++ = OSSL_PARAM_construct_octet_string(
+                       OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS,
+                       NULL, 0);
         *p = OSSL_PARAM_construct_end();
 
         if (!EVP_CIPHER_CTX_get_params(c, params))
@@ -213,8 +214,9 @@ int evp_cipher_asn1_to_param_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
 
         if ((derl = i2d_ASN1_TYPE(type, &der)) >= 0) {
             *p++ =
-                OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_ALG_ID,
-                                                  der, (size_t)derl);
+                OSSL_PARAM_construct_octet_string(
+                        OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS,
+                        der, (size_t)derl);
             *p = OSSL_PARAM_construct_end();
             if (EVP_CIPHER_CTX_set_params(c, params))
                 ret = 1;
@@ -371,7 +373,7 @@ int evp_cipher_cache_constants(EVP_CIPHER *cipher)
             cipher->flags |= EVP_CIPH_FLAG_CUSTOM_CIPHER;
         /* Provided implementations may also have custom ASN1 algorithm parameters */
         if (OSSL_PARAM_locate_const(EVP_CIPHER_gettable_ctx_params(cipher),
-                                    OSSL_CIPHER_PARAM_ALG_ID))
+                                    OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS))
             cipher->flags |= EVP_CIPH_FLAG_CUSTOM_ASN1;
     }
     return ok;
