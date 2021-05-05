@@ -19,7 +19,7 @@ static OSSL_PARAM greeting_request[] = {
     { NULL, 0, NULL, 0, 0 }
 };
 
-unsigned int digestsuccess = 0;
+static unsigned int digestsuccess = 0;
 static OSSL_PARAM digest_check[] = {
     { "digest-check", OSSL_PARAM_UNSIGNED_INTEGER, &digestsuccess,
       sizeof(digestsuccess) },
