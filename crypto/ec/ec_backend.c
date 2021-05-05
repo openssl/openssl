@@ -156,94 +156,122 @@ static int ec_group_explicit_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
 {
     int ret = 0, fid;
     const char *field_type;
-    const BIGNUM *cofactor, *order;
-    BIGNUM *p = NULL, *a = NULL, *b = NULL;
-    point_conversion_form_t genform;
-    const EC_POINT *genpt;
-    unsigned char *seed = NULL;
-    size_t genbuf_len, seed_len;
-
-    genform = EC_GROUP_get_point_conversion_form(group);
+    const OSSL_PARAM *param = NULL;
+    const OSSL_PARAM *param_p = NULL;
+    const OSSL_PARAM *param_a = NULL;
+    const OSSL_PARAM *param_b = NULL;
 
     fid = EC_GROUP_get_field_type(group);
 
     if (fid == NID_X9_62_prime_field) {
         field_type = SN_X9_62_prime_field;
     } else if (fid == NID_X9_62_characteristic_two_field) {
+#ifdef OPENSSL_NO_EC2M
+        ERR_raise(ERR_LIB_EC, EC_R_GF2M_NOT_SUPPORTED);
+        goto err;
+#else
         field_type = SN_X9_62_characteristic_two_field;
+#endif
     } else {
         ERR_raise(ERR_LIB_EC, EC_R_INVALID_FIELD);
         return 0;
     }
 
-    p = BN_CTX_get(bnctx);
-    a = BN_CTX_get(bnctx);
-    b = BN_CTX_get(bnctx);
-    if (b == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
-        goto err;
+    param_p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_P);
+    param_a = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_A);
+    param_b = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_B);
+    if (tmpl != NULL || param_p != NULL || param_a != NULL || param_b != NULL)
+    {
+        BIGNUM *p = BN_CTX_get(bnctx);
+        BIGNUM *a = BN_CTX_get(bnctx);
+        BIGNUM *b = BN_CTX_get(bnctx);
+        if (b == NULL) {
+            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+
+        if (!EC_GROUP_get_curve(group, p, a, b, bnctx)) {
+            ERR_raise(ERR_LIB_EC, EC_R_INVALID_CURVE);
+            goto err;
+        }
+        if (!ossl_param_build_set_bn(tmpl, params, OSSL_PKEY_PARAM_EC_P, p)
+            || !ossl_param_build_set_bn(tmpl, params, OSSL_PKEY_PARAM_EC_A, a)
+            || !ossl_param_build_set_bn(tmpl, params, OSSL_PKEY_PARAM_EC_B, b)) {
+            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
     }
 
-    if (!EC_GROUP_get_curve(group, p, a, b, bnctx)) {
-        ERR_raise(ERR_LIB_EC, EC_R_INVALID_CURVE);
-        goto err;
+    param = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_ORDER);
+    if (tmpl != NULL || param != NULL) {
+        const BIGNUM *order = EC_GROUP_get0_order(group);
+        if (order == NULL) {
+            ERR_raise(ERR_LIB_EC, EC_R_INVALID_GROUP_ORDER);
+            goto err;
+        }
+        if (!ossl_param_build_set_bn(tmpl, params, OSSL_PKEY_PARAM_EC_ORDER,
+                                    order)) {
+            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
     }
 
-    order = EC_GROUP_get0_order(group);
-    if (order == NULL) {
-        ERR_raise(ERR_LIB_EC, EC_R_INVALID_GROUP_ORDER);
-        goto err;
-    }
-    genpt = EC_GROUP_get0_generator(group);
-    if (genpt == NULL) {
-        ERR_raise(ERR_LIB_EC, EC_R_INVALID_GENERATOR);
-        goto err;
-    }
-    genbuf_len = EC_POINT_point2buf(group, genpt, genform, genbuf, bnctx);
-    if (genbuf_len == 0) {
-        ERR_raise(ERR_LIB_EC, EC_R_INVALID_GENERATOR);
-        goto err;
+    param = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_FIELD_TYPE);
+    if (tmpl != NULL || param != NULL) {
+        if (!ossl_param_build_set_utf8_string(tmpl, params,
+                                              OSSL_PKEY_PARAM_EC_FIELD_TYPE,
+                                              field_type)) {
+            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
     }
 
-    if (!ossl_param_build_set_utf8_string(tmpl, params,
-                                          OSSL_PKEY_PARAM_EC_FIELD_TYPE,
-                                          field_type)
-        || !ossl_param_build_set_bn(tmpl, params, OSSL_PKEY_PARAM_EC_P, p)
-        || !ossl_param_build_set_bn(tmpl, params, OSSL_PKEY_PARAM_EC_A, a)
-        || !ossl_param_build_set_bn(tmpl, params, OSSL_PKEY_PARAM_EC_B, b)
-        || !ossl_param_build_set_bn(tmpl, params, OSSL_PKEY_PARAM_EC_ORDER,
-                                    order)
-        || !ossl_param_build_set_octet_string(tmpl, params,
-                                              OSSL_PKEY_PARAM_EC_GENERATOR,
-                                              *genbuf, genbuf_len)) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
-        goto err;
+    param = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_GENERATOR);
+    if (tmpl != NULL || param != NULL) {
+        size_t genbuf_len;
+        const EC_POINT *genpt = EC_GROUP_get0_generator(group);
+        point_conversion_form_t genform = EC_GROUP_get_point_conversion_form(group);
+        if (genpt == NULL) {
+            ERR_raise(ERR_LIB_EC, EC_R_INVALID_GENERATOR);
+            goto err;
+        }
+        genbuf_len = EC_POINT_point2buf(group, genpt, genform, genbuf, bnctx);
+        if (genbuf_len == 0) {
+            ERR_raise(ERR_LIB_EC, EC_R_INVALID_GENERATOR);
+            goto err;
+        }
+        if (!ossl_param_build_set_octet_string(tmpl, params,
+                                               OSSL_PKEY_PARAM_EC_GENERATOR,
+                                               *genbuf, genbuf_len)) {
+            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
     }
 
-    cofactor = EC_GROUP_get0_cofactor(group);
-    if (cofactor != NULL
-        && !ossl_param_build_set_bn(tmpl, params,
-                                    OSSL_PKEY_PARAM_EC_COFACTOR, cofactor)) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
-        goto err;
+    param = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_COFACTOR);
+    if (tmpl != NULL || param != NULL) {
+        const BIGNUM *cofactor = EC_GROUP_get0_cofactor(group);
+        if (cofactor != NULL
+            && !ossl_param_build_set_bn(tmpl, params,
+                                        OSSL_PKEY_PARAM_EC_COFACTOR, cofactor)) {
+            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
     }
 
-    seed = EC_GROUP_get0_seed(group);
-    seed_len = EC_GROUP_get_seed_len(group);
-    if (seed != NULL
-        && seed_len > 0
-        && !ossl_param_build_set_octet_string(tmpl, params,
-                                              OSSL_PKEY_PARAM_EC_SEED,
-                                              seed, seed_len)) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
-        goto err;
+    param = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_SEED);
+    if (tmpl != NULL || param != NULL) {
+        unsigned char *seed = EC_GROUP_get0_seed(group);
+        size_t seed_len = EC_GROUP_get_seed_len(group);
+        if (seed != NULL
+            && seed_len > 0
+            && !ossl_param_build_set_octet_string(tmpl, params,
+                                                  OSSL_PKEY_PARAM_EC_SEED,
+                                                  seed, seed_len)) {
+            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
     }
-#ifdef OPENSSL_NO_EC2M
-    if (fid == NID_X9_62_characteristic_two_field) {
-        ERR_raise(ERR_LIB_EC, EC_R_GF2M_NOT_SUPPORTED);
-        goto err;
-    }
-#endif
     ret = 1;
 err:
     return ret;
@@ -282,13 +310,19 @@ int ossl_ec_group_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
         return 0;
     }
 
-    /* Get individual parameters even for named curves */
-    if (!ec_group_explicit_todata(group, tmpl, params, bnctx, genbuf))
-        goto err;
-    
     curve_nid = EC_GROUP_get_curve_name(group);
+
+    /*
+     * Get the explicit parameters in these two cases:
+     * - We do not have a template, i.e. specific parameters are requested
+     * - The curve is not a named curve
+     */
+    if (tmpl == NULL || curve_nid == NID_undef)
+        if (!ec_group_explicit_todata(group, tmpl, params, bnctx, genbuf))
+            goto err;
+    
     if (curve_nid != NID_undef) {
-        /* named curve */
+        /* Named curve */
         const char *curve_name = ossl_ec_curve_nid2name(curve_nid);
 
         if (curve_name == NULL
