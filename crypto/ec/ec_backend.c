@@ -302,7 +302,7 @@ int ossl_ec_group_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
         || !ossl_param_build_set_utf8_string(
                 tmpl, params,
                 OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT, pt_form_name)) {
-        ECerr(0, EC_R_INVALID_FORM);
+        ERR_raise(ERR_LIB_EC, EC_R_INVALID_FORM);
         return 0;
     }
     encoding_flag = EC_GROUP_get_asn1_flag(group) & OPENSSL_EC_NAMED_CURVE;
