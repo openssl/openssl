@@ -55,9 +55,8 @@ INCLUDE[$LIBLEGACY]=.. $COMMON_INCLUDES
 INCLUDE[$LIBDEFAULT]=.. $COMMON_INCLUDES
 DEFINE[$LIBFIPS]=FIPS_MODULE
 
-# Weak dependencies to provide library order information. We make it weak so
-# they aren't both used always; what is actually used is determined by
-# non-weak dependencies.
+# Weak dependencies to provide library order information.  What is actually
+# used is determined by non-weak dependencies.
 DEPEND[$LIBCOMMON]{weak}=../libcrypto
 
 # Strong dependencies.  This ensures that any time an implementation library
@@ -74,7 +73,7 @@ DEPEND[$LIBDEFAULT]=$LIBCOMMON
 # Because the default provider is built in, it means that libcrypto must
 # include all the object files that are needed (we do that indirectly,
 # by using the appropriate libraries as source).  Note that for shared
-# libraries, SOURCEd libraries are considered as if the where specified
+# libraries, SOURCEd libraries are considered as if they where specified
 # with DEPEND.
 $DEFAULTGOAL=../libcrypto
 SOURCE[$DEFAULTGOAL]=$LIBDEFAULT defltprov.c
