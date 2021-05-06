@@ -13,10 +13,10 @@ use OpenSSL::Test;              # get 'plan'
 use OpenSSL::Test::Simple;
 use OpenSSL::Test::Utils;
 
-setup("test_rdrand_sanity");
+setup("test_rdcpu_sanity");
 
 # We also need static builds to be enabled even on linux
 plan skip_all => "This test is unsupported if static builds are not enabled"
     if disabled("static");
 
-simple_test("test_rdrand_sanity", "rdrand_sanitytest");
+simple_test("test_rdcpu_sanity", "rdcpu_sanitytest");
