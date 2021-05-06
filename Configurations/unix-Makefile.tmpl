@@ -1294,6 +1294,8 @@ tar:
 link-utils: $(BLDDIR)/util/opensslwrap.sh $(BLDDIR)/util/wrap.pl \
             $(BLDDIR)/apps/openssl.cnf
 
+$(BLDDIR)/util/wrap.pl: $(BLDDIR)/util/shlib_wrap.sh
+
 $(BLDDIR)/util/opensslwrap.sh $(BLDDIR)/util/wrap.pl: configdata.pm
 	@if [ "$(SRCDIR)" != "$(BLDDIR)" ]; then \
 	    mkdir -p "$(BLDDIR)/util"; \
