@@ -2,31 +2,30 @@
 #                       potentially needed by any of our providers.
 #
 # libfips.a             Contains all algorithm implementations that should
-#                       go in the FIPS provider.  Because the FIPS provider
-#                       needs to be self contained and therefore shares
-#                       source with libcrypto, select sources from crypto/
-#                       are compiled for the library alongside the sources
-#                       from providers/implementations.
-#                       The compilations for this library are all done with
-#                       FIPS_MODULE defined.
+#                       go in the FIPS provider.  The compilations for this
+#                       library are all done with FIPS_MODULE defined.
 #
 # liblegacy.a           Contains all algorithm implementations that should
-#                       into the legacy provider.  The compilations for this
-#                       library are all done with STATIC_LEGACY defined.
+#                       go into the legacy provider.  The compilations for
+#                       this library are all done with STATIC_LEGACY defined.
 #
 # libdefault.a          Contains all algorithm implementations that should
 #                       into the default or base provider.
+#
+# To be noted is that the FIPS provider shares source code with libcrypto,
+# which means that select source files from crypto/ are compiled for
+# libfips.a the sources from providers/implementations.
 #
 # This is how a provider module should be linked:
 #
 #     -o {modulename}.so {object files...} lib{modulename}.a libcommon.a
 #
-# It is crucial that code that checks for the FIPS_MODULE macro ends up in
+# It is crucial that code that checks the FIPS_MODULE macro ends up in
 # libfips.a.
-# It is crucial that code that checks for the STATIC_LEGACY macro ends up in
+# It is crucial that code that checks the STATIC_LEGACY macro ends up in
 # liblegacy.a.
-# It is crucial that code that is written for libcommon.a doesn't end up
-# depending on libfips.a, liblegacy.a or libdefault.a
+# It is recommended that code that is written for libcommon.a doesn't end
+# up depending on libfips.a, liblegacy.a or libdefault.a
 #
 # Code in providers/implementations/ should be written in such a way that
 # the OSSL_DISPATCH arrays (and preferably the majority of the actual code)
