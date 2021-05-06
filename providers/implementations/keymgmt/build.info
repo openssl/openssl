@@ -1,20 +1,22 @@
 # We make separate GOAL variables for each algorithm, to make it easy to
 # switch each to the Legacy provider when needed.
 
-$ECX_GOAL=../../libimplementations.a
-$KDF_GOAL=../../libimplementations.a
+$DH_GOAL=../../libdefault.a ../../libfips.a
+$DSA_GOAL=../../libdefault.a ../../libfips.a
+$EC_GOAL=../../libdefault.a ../../libfips.a
+$ECX_GOAL=../../libdefault.a ../../libfips.a
+$KDF_GOAL=../../libdefault.a ../../libfips.a
+$MAC_GOAL=../../libdefault.a ../../libfips.a
+$RSA_GOAL=../../libdefault.a ../../libfips.a
 
 IF[{- !$disabled{dh} -}]
-  SOURCE[../../libfips.a]=dh_kmgmt.c
-  SOURCE[../../libnonfips.a]=dh_kmgmt.c
+  SOURCE[$DH_GOAL]=dh_kmgmt.c
 ENDIF
 IF[{- !$disabled{dsa} -}]
-  SOURCE[../../libfips.a]=dsa_kmgmt.c
-  SOURCE[../../libnonfips.a]=dsa_kmgmt.c
+  SOURCE[$DSA_GOAL]=dsa_kmgmt.c
 ENDIF
 IF[{- !$disabled{ec} -}]
-  SOURCE[../../libfips.a]=ec_kmgmt.c
-  SOURCE[../../libnonfips.a]=ec_kmgmt.c
+  SOURCE[$EC_GOAL]=ec_kmgmt.c
 ENDIF
 
 IF[{- !$disabled{asm} -}]
@@ -32,10 +34,8 @@ IF[{- !$disabled{ec} -}]
   DEFINE[$ECX_GOAL]=$ECDEF
 ENDIF
 
-SOURCE[../../libfips.a]=rsa_kmgmt.c
-SOURCE[../../libnonfips.a]=rsa_kmgmt.c
+SOURCE[$RSA_GOAL]=rsa_kmgmt.c
 
 SOURCE[$KDF_GOAL]=kdf_legacy_kmgmt.c
 
-SOURCE[../../libfips.a]=mac_legacy_kmgmt.c
-SOURCE[../../libnonfips.a]=mac_legacy_kmgmt.c
+SOURCE[$MAC_GOAL]=mac_legacy_kmgmt.c

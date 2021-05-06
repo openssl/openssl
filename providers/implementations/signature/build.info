@@ -1,9 +1,11 @@
 # We make separate GOAL variables for each algorithm, to make it easy to
 # switch each to the Legacy provider when needed.
 
-$DSA_GOAL=../../libimplementations.a
-$EC_GOAL=../../libimplementations.a
-$SM2SIG_GOAL=../../libimplementations.a
+$DSA_GOAL=../../libdefault.a ../../libfips.a
+$EC_GOAL=../../libdefault.a ../../libfips.a
+$MAC_GOAL=../../libdefault.a ../../libfips.a
+$RSA_GOAL=../../libdefault.a ../../libfips.a
+$SM2_GOAL=../../libdefault.a
 
 IF[{- !$disabled{dsa} -}]
   SOURCE[$DSA_GOAL]=dsa_sig.c
@@ -17,8 +19,7 @@ IF[{- !$disabled{sm2} -}]
   SOURCE[$SM2_GOAL]=sm2_sig.c
 ENDIF
 
-SOURCE[../../libfips.a]=rsa_sig.c
-SOURCE[../../libnonfips.a]=rsa_sig.c
+SOURCE[$RSA_GOAL]=rsa_sig.c
 
 DEPEND[rsa.o]=../../common/include/prov/der_rsa.h
 DEPEND[dsa.o]=../../common/include/prov/der_dsa.h
@@ -26,5 +27,4 @@ DEPEND[ecdsa.o]=../../common/include/prov/der_ec.h
 DEPEND[eddsa.o]=../../common/include/prov/der_ecx.h
 DEPEND[sm2sig.o]=../../common/include/prov/der_sm2.h
 
-SOURCE[../../libfips.a]=mac_legacy_sig.c
-SOURCE[../../libnonfips.a]=mac_legacy_sig.c
+SOURCE[$MAC_GOAL]=mac_legacy_sig.c
