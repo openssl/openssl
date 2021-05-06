@@ -1,21 +1,21 @@
 # libcommon.a           Contains common building blocks and other routines,
 #                       potentially needed by any of our providers.
 #
-# libfips.a             Contains all FIPS compilations of the algorithm
-#                       implementations, which is primarly code from
-#                       providers/implementations, but also code that it
-#                       happens to share with libcrypto, i.e. from crypto/.
-#                       FIPS_MODULE is defined for object files placed in
-#                       this library, and it's exclusively used by the FIPS
-#                       provider module.
+# libfips.a             Contains all algorithm implementations that should
+#                       go in the FIPS provider.  Because the FIPS provider
+#                       needs to be self contained and therefore shares
+#                       source with libcrypto, select sources from crypto/
+#                       are compiled for the library alongside the sources
+#                       from providers/implementations.
+#                       The compilations for this library are all done with
+#                       FIPS_MODULE defined.
 #
-# liblegacy.a           Corresponds to libfips.a, but built with FIPS_MODULE
-#                       undefined and STATIC_LEGACY defined.  The legacy
-#                       providers uses this.
+# liblegacy.a           Contains all algorithm implementations that should
+#                       into the legacy provider.  The compilations for this
+#                       library are all done with STATIC_LEGACY defined.
 #
-# libdefault.a          Corresponds to libfips.a, but built with FIPS_MODULE
-#                       and STATIC_LEGACY undefined.  The default and base
-#                       providers uses this.
+# libdefault.a          Contains all algorithm implementations that should
+#                       into the default or base provider.
 #
 # This is how a provider module should be linked:
 #
