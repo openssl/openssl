@@ -1047,6 +1047,9 @@ int s_client_main(int argc, char **argv)
         case OPT_BRIEF:
             c_brief = verify_args.quiet = c_quiet = 1;
             break;
+        case OPT_S_IMMEDIATE_RENEG:
+            /* Option ignored on client. */
+            break;
         case OPT_S_CASES:
             if (ssl_args == NULL)
                 ssl_args = sk_OPENSSL_STRING_new_null();
@@ -2673,7 +2676,6 @@ int s_client_main(int argc, char **argv)
             tty_on = 1;
             if (in_init) {
                 in_init = 0;
-
                 if (c_brief) {
                     BIO_puts(bio_err, "CONNECTION ESTABLISHED\n");
                     print_ssl_summary(con);

@@ -29,6 +29,12 @@ OpenSSL 3.0
 
    * Rich Salz *
 
+ * Client-initiated renegotiation is disabled by default. To allow it, use
+   the -client_renegotiation option, the SSL_OP_ALLOW_CLIENT_RENEGOTIATION
+   flag, or the "ClientRenegotiation" config parameter as appropriate.
+
+   * Rich Salz *
+
  * Add "abspath" and "includedir" pragma's to config files, to prevent,
    or modify relative pathname inclusion.
 

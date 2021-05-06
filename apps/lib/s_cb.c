@@ -1233,12 +1233,10 @@ int config_ctx(SSL_CONF_CTX *cctx, STACK_OF(OPENSSL_STRING) *str,
     for (i = 0; i < sk_OPENSSL_STRING_num(str); i += 2) {
         const char *flag = sk_OPENSSL_STRING_value(str, i);
         const char *arg = sk_OPENSSL_STRING_value(str, i + 1);
+
         if (SSL_CONF_cmd(cctx, flag, arg) <= 0) {
-            if (arg != NULL)
-                BIO_printf(bio_err, "Error with command: \"%s %s\"\n",
-                           flag, arg);
-            else
-                BIO_printf(bio_err, "Error with command: \"%s\"\n", flag);
+            BIO_printf(bio_err, "Call to SSL_CONF_cmd(%s, %s) failed\n",
+                       flag, arg == NULL ? "<NULL>" : arg);
             ERR_print_errors(bio_err);
             return 0;
         }
