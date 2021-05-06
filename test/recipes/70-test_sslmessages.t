@@ -239,6 +239,7 @@ checkhandshake($proxy, checkhandshake::CLIENT_AUTH_HANDSHAKE,
 #Test 7: A handshake with a renegotiation
 $proxy->clear();
 $proxy->clientflags("-no_tls1_3");
+$proxy->serverflags("-client_renegotiation");
 $proxy->reneg(1);
 $proxy->start();
 checkhandshake($proxy, checkhandshake::RENEG_HANDSHAKE,

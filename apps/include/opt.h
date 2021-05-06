@@ -155,13 +155,14 @@
         OPT_S__FIRST=3000, \
         OPT_S_NOSSL3, OPT_S_NOTLS1, OPT_S_NOTLS1_1, OPT_S_NOTLS1_2, \
         OPT_S_NOTLS1_3, OPT_S_BUGS, OPT_S_NO_COMP, OPT_S_NOTICKET, \
-        OPT_S_SERVERPREF, OPT_S_LEGACYRENEG, OPT_S_LEGACYCONN, \
+        OPT_S_SERVERPREF, OPT_S_LEGACYRENEG, OPT_S_CLIENTRENEG, \
+        OPT_S_LEGACYCONN, \
         OPT_S_ONRESUMP, OPT_S_NOLEGACYCONN, OPT_S_ALLOW_NO_DHE_KEX, \
         OPT_S_PRIORITIZE_CHACHA, \
         OPT_S_STRICT, OPT_S_SIGALGS, OPT_S_CLIENTSIGALGS, OPT_S_GROUPS, \
         OPT_S_CURVES, OPT_S_NAMEDCURVE, OPT_S_CIPHER, OPT_S_CIPHERSUITES, \
         OPT_S_RECORD_PADDING, OPT_S_DEBUGBROKE, OPT_S_COMP, \
-        OPT_S_MINPROTO, OPT_S_MAXPROTO, \
+        OPT_S_MINPROTO, OPT_S_MAXPROTO, OPT_S_IMMEDIATE_RENEG, \
         OPT_S_NO_RENEGOTIATION, OPT_S_NO_MIDDLEBOX, OPT_S__LAST
 
 # define OPT_S_OPTIONS \
@@ -179,6 +180,8 @@
         {"serverpref", OPT_S_SERVERPREF, '-', "Use server's cipher preferences"}, \
         {"legacy_renegotiation", OPT_S_LEGACYRENEG, '-', \
             "Enable use of legacy renegotiation (dangerous)"}, \
+        {"client_renegotiation", OPT_S_CLIENTRENEG, '-', \
+            "Allow client-initiated renegotiation" }, \
         {"no_renegotiation", OPT_S_NO_RENEGOTIATION, '-', \
             "Disable all renegotiation."}, \
         {"legacy_server_connect", OPT_S_LEGACYCONN, '-', \
@@ -208,6 +211,8 @@
         {"ciphersuites", OPT_S_CIPHERSUITES, 's', "Specify TLSv1.3 ciphersuites to be used"}, \
         {"min_protocol", OPT_S_MINPROTO, 's', "Specify the minimum protocol version to be used"}, \
         {"max_protocol", OPT_S_MAXPROTO, 's', "Specify the maximum protocol version to be used"}, \
+        {"immediate_renegotiation", OPT_S_IMMEDIATE_RENEG, '-', \
+            "Immediately attempt renegotiation"}, \
         {"record_padding", OPT_S_RECORD_PADDING, 's', \
             "Block size to pad TLS 1.3 records to."}, \
         {"debug_broken_protocol", OPT_S_DEBUGBROKE, '-', \
@@ -228,6 +233,7 @@
         case OPT_S_NOTICKET: \
         case OPT_S_SERVERPREF: \
         case OPT_S_LEGACYRENEG: \
+        case OPT_S_CLIENTRENEG: \
         case OPT_S_LEGACYCONN: \
         case OPT_S_ONRESUMP: \
         case OPT_S_NOLEGACYCONN: \

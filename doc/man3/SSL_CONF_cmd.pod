@@ -58,9 +58,15 @@ Use server and not client preference order when determining which cipher suite,
 signature algorithm or elliptic curve to use for an incoming connection.
 Equivalent to B<SSL_OP_CIPHER_SERVER_PREFERENCE>. Only used by servers.
 
+=item B<-client_renegotiation>
+
+Allows servers to accept client-initiated renegotiation. Equivalent to
+setting B<SSL_OP_ALLOW_CLIENT_RENEGOTIATION>.
+Only used by servers.
+
 =item B<-legacyrenegotiation>
 
-permits the use of unsafe legacy renegotiation. Equivalent to setting
+Permits the use of unsafe legacy renegotiation. Equivalent to setting
 B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION>.
 
 =item B<-no_renegotiation>
@@ -70,12 +76,18 @@ B<SSL_OP_NO_RENEGOTIATION>.
 
 =item B<-no_resumption_on_reneg>
 
-set SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION flag. Only used by servers.
+Sets B<SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION>. Only used by servers.
 
 =item B<-legacy_server_connect>, B<-no_legacy_server_connect>
 
-permits or prohibits the use of unsafe legacy renegotiation for OpenSSL
+Permits or prohibits the use of unsafe legacy renegotiation for OpenSSL
 clients only. Equivalent to setting or clearing B<SSL_OP_LEGACY_SERVER_CONNECT>.
+
+=item B<-immediate_renegotiation>
+
+Try to do a renegotiation immediately after the handshake.
+This is for debugging and has no option equivalent.
+Ignored by the B<openssl s_client> command.
 
 =item B<-prioritize_chacha>
 
@@ -91,7 +103,7 @@ that there will be no forward secrecy for the resumed session.
 
 =item B<-strict>
 
-enables strict mode protocol handling. Equivalent to setting
+Enables strict mode protocol handling. Equivalent to setting
 B<SSL_CERT_FLAG_TLS_STRICT>.
 
 =item B<-sigalgs> I<algs>
