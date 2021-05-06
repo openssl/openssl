@@ -5413,3 +5413,4 @@ BIO_get_line                            5540	3_0_0	EXIST::FUNCTION:
 OSSL_LIB_CTX_new_from_dispatch          5541	3_0_0	EXIST::FUNCTION:
 OSSL_LIB_CTX_new_child                  5542	3_0_0	EXIST::FUNCTION:
 OSSL_PROVIDER_get0_dispatch             5543	3_0_0	EXIST::FUNCTION:
+PKCS5_PBE_keyivgen_ex                   5544	3_0_0	EXIST::FUNCTION:
