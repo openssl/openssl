@@ -1,5 +1,5 @@
 # libcommon.a           Contains common building blocks and other routines,
-#                       potentially needed both by any of our providers.
+#                       potentially needed by any of our providers.
 #
 # libfips.a             Contains all FIPS compilations of the algorithm
 #                       implementations, which is primarly code from
