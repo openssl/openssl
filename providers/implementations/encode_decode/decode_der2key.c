@@ -134,7 +134,7 @@ static void *der2key_decode_p8(const unsigned char **input_der,
         if (!pw_cb(pbuf, sizeof(pbuf), &plen, NULL, pw_cbarg))
             ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_GET_PASSPHRASE);
         else
-            p8inf = PKCS8_decrypt(p8, pbuf, plen);
+            p8inf = PKCS8_decrypt_ex(p8, pbuf, plen, PROV_LIBCTX_OF(ctx->provctx), NULL);
         if (p8inf == NULL)
             ctx->flag_fatal = 1;
         X509_SIG_free(p8);
