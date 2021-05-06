@@ -175,9 +175,9 @@ static int kdf_pbkdf1_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
     KDF_PBKDF1 *ctx = vctx;
-    OSSL_LIB_CTX *provctx = PROV_LIBCTX_OF(ctx->provctx);
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
 
-    if (!ossl_prov_digest_load_from_params(&ctx->digest, params, provctx))
+    if (!ossl_prov_digest_load_from_params(&ctx->digest, params, libctx))
         return 0;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PASSWORD)) != NULL)
