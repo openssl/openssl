@@ -17,12 +17,12 @@ Key exchange support for the B<DH> key type.
 
 See L<provider-keyexch(7)/Common Key Exchange parameters>.
 
-=item "kdf-ukm" (B<OSSL_EXCHANGE_PARAM_KDF_UKM>) <octet_string>
+=item "kdf-ukm" (B<OSSL_EXCHANGE_PARAM_KDF_UKM>) <octet string>
 
 Sets the User Key Material to be used as part of the selected Key Derivation
 Function associated with the given key exchange ctx.
 
-=item "kdf-ukm" (B<OSSL_EXCHANGE_PARAM_KDF_UKM>) <octet_string_ptr>
+=item "kdf-ukm" (B<OSSL_EXCHANGE_PARAM_KDF_UKM>) <octet string ptr>
 
 Gets a pointer to the User Key Material to be used as part of the selected
 Key Derivation Function associated with the given key exchange ctx. Providers

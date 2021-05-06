@@ -47,12 +47,12 @@ The value is either CMAC or HMAC.
 
 The seed parameter is unused in counter mode.
 
-=item "use-l" (B<OSSL_KDF_PARAM_KBKDF_USE_L>) <int>
+=item "use-l" (B<OSSL_KDF_PARAM_KBKDF_USE_L>) <integer>
 
 Set to B<0> to disable use of the optional Fixed Input data 'L' (see SP800-108).
 The default value of B<1> will be used if unspecified.
 
-=item "use-separator" (B<OSSL_KDF_PARAM_KBKDF_USE_SEPARATOR>) <int>
+=item "use-separator" (B<OSSL_KDF_PARAM_KBKDF_USE_SEPARATOR>) <integer>
 
 Set to B<0> to disable use of the optional Fixed Input data 'zero separator'
 (see SP800-108) that is placed between the Label and Context.

@@ -52,7 +52,7 @@ RFC7748.
 
 =over 4
 
-=item "mandatory-digest" (B<OSSL_PKEY_PARAM_MANDATORY_DIGEST>) <utf8 string>
+=item "mandatory-digest" (B<OSSL_PKEY_PARAM_MANDATORY_DIGEST>) <UTF8 string>
 
 The empty string, signifying that no digest may be specified.
 

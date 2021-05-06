@@ -313,17 +313,17 @@ provider_get_params() can return the following provider parameters to the core:
 
 =over 4
 
-=item "name" (B<OSSL_PROV_PARAM_NAME>) <UTF8_ptr>
+=item "name" (B<OSSL_PROV_PARAM_NAME>) <UTF8 string ptr>
 
 This points to a string that should give a unique name for the provider.
 
-=item "version" (B<OSSL_PROV_PARAM_VERSION>) <UTF8_ptr>
+=item "version" (B<OSSL_PROV_PARAM_VERSION>) <UTF8 string ptr>
 
 This points to a string that is a version number associated with this provider.
 OpenSSL in-built providers use OPENSSL_VERSION_STR, but this may be different
 for any third party provider. This string is for informational purposes only.
 
-=item "buildinfo" (B<OSSL_PROV_PARAM_BUILDINFO>) <UTF8_ptr>
+=item "buildinfo" (B<OSSL_PROV_PARAM_BUILDINFO>) <UTF8 string ptr>
 
 This points to a string that is a build information associated with this provider.
 OpenSSL in-built providers use OPENSSL_FULL_VERSION_STR, but this may be
@@ -345,16 +345,16 @@ core_get_params() can retrieve the following core parameters for each provider:
 
 =over 4
 
-=item "openssl-version" (B<OSSL_PROV_PARAM_CORE_VERSION>) <UTF8_ptr>
+=item "openssl-version" (B<OSSL_PROV_PARAM_CORE_VERSION>) <UTF8 string ptr>
 
 This points to the OpenSSL libraries' full version string, i.e. the string
 expanded from the macro B<OPENSSL_VERSION_STR>.
 
-=item "provider-name" (B<OSSL_PROV_PARAM_CORE_PROV_NAME>) <UTF8_ptr>
+=item "provider-name" (B<OSSL_PROV_PARAM_CORE_PROV_NAME>) <UTF8 string ptr>
 
 This points to the OpenSSL libraries' idea of what the calling provider is named.
 
-=item "module-filename" (B<OSSL_PROV_PARAM_CORE_MODULE_FILENAME>) <UTF8_ptr>
+=item "module-filename" (B<OSSL_PROV_PARAM_CORE_MODULE_FILENAME>) <UTF8 string ptr>
 
 This points to a string containing the full filename of the providers
 module file.
@@ -433,12 +433,12 @@ B<OSSL_CAPABILITY_TLS_GROUP_IS_KEM>):
 
 =over 4
 
-=item "tls-group-name" (B<OSSL_CAPABILITY_TLS_GROUP_NAME>) <utf8 string>
+=item "tls-group-name" (B<OSSL_CAPABILITY_TLS_GROUP_NAME>) <UTF8 string>
 
 The name of the group as given in the IANA TLS Supported Groups registry
 L<https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8>.
 
-=item "tls-group-name-internal" (B<OSSL_CAPABILITY_TLS_GROUP_NAME_INTERNAL>) <utf8 string>
+=item "tls-group-name-internal" (B<OSSL_CAPABILITY_TLS_GROUP_NAME_INTERNAL>) <UTF8 string>
 
 The name of the group as known by the provider. This could be the same as the
 "tls-group-name", but does not have to be.
@@ -447,7 +447,7 @@ The name of the group as known by the provider. This could be the same as the
 
 The TLS group id value as given in the IANA TLS Supported Groups registry.
 
-=item "tls-group-alg" (B<OSSL_CAPABILITY_TLS_GROUP_ALG>) <utf8 string>
+=item "tls-group-alg" (B<OSSL_CAPABILITY_TLS_GROUP_ALG>) <UTF8 string>
 
 The name of a Key Management algorithm that the provider offers and that should
 be used with this group. Keys created should be able to support I<key exchange>

@@ -24,11 +24,11 @@ built-in EC algorithm:
 
 =over 4
 
-=item "group" (B<OSSL_PKEY_PARAM_GROUP_NAME>) <utf8 string>
+=item "group" (B<OSSL_PKEY_PARAM_GROUP_NAME>) <UTF8 string>
 
 The curve name.
 
-=item "field-type" (B<OSSL_PKEY_PARAM_EC_FIELD_TYPE>) <utf8 string>
+=item "field-type" (B<OSSL_PKEY_PARAM_EC_FIELD_TYPE>) <UTF8 string>
 
 The value should be either "prime-field" or "characteristic-two-field",
 which correspond to prime field Fp and binary field F2^m.
@@ -74,18 +74,18 @@ Enable Cofactor DH (ECC CDH) if this value is 1, otherwise it uses normal EC DH
 if the value is zero. The cofactor variant multiplies the shared secret by the
 EC curve's cofactor (note for some curves the cofactor is 1).
 
-=item "encoding" (B<OSSL_PKEY_PARAM_EC_ENCODING>) <utf8 string>
+=item "encoding" (B<OSSL_PKEY_PARAM_EC_ENCODING>) <UTF8 string>
 
 Set the format used for serializing the EC group parameters.
 Valid values are "explicit" or "named_curve". The default value is "named_curve".
 
-=item "point-format" (B<OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT>) <utf8 string>
+=item "point-format" (B<OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT>) <UTF8 string>
 
 Sets or gets the point_conversion_form for the I<key>. For a description of
 point_conversion_forms please see L<EC_POINT_new(3)>. Valid values are
 "uncompressed" or "compressed". The default value is "uncompressed".
 
-=item "group-check" (B<OSSL_PKEY_PARAM_EC_GROUP_CHECK_TYPE>) <utf8 string>
+=item "group-check" (B<OSSL_PKEY_PARAM_EC_GROUP_CHECK_TYPE>) <UTF8 string>
 
 Sets or Gets the type of group check done when EVP_PKEY_param_check() is called.
 Valid values are "default", "named" and "named-nist".
@@ -123,7 +123,7 @@ The following Gettable types are also available for the built-in EC algorithm:
 
 =over 4
 
-=item "basis-type" (B<OSSL_PKEY_PARAM_EC_CHAR2_TYPE>) <utf8 string>
+=item "basis-type" (B<OSSL_PKEY_PARAM_EC_CHAR2_TYPE>) <UTF8 string>
 
 Supports the values "tpBasis" for a trinomial or "ppBasis" for a pentanomial.
 This field is only used for a binary field F2^m.

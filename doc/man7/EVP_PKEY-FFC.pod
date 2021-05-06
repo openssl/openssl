@@ -108,7 +108,7 @@ The following key generation types are available for DSA and DHX algorithms:
 
 =over 4
 
-=item "type" (B<OSSL_PKEY_PARAM_FFC_TYPE>) <utf8_string>
+=item "type" (B<OSSL_PKEY_PARAM_FFC_TYPE>) <UTF8 string>
 
 Sets the type of parameter generation. The shared valid values are:
 
@@ -140,13 +140,13 @@ Sets the size (in bits) of the prime 'q'.
 For "fips186_4" this can be either 224 or 256.
 For "fips186_2" this has a size of 160.
 
-=item "digest" (B<OSSL_PKEY_PARAM_FFC_DIGEST>)  <utf8_string>
+=item "digest" (B<OSSL_PKEY_PARAM_FFC_DIGEST>)  <UTF8 string>
 
 Sets the Digest algorithm to be used as part of the Key Generation Function
 associated with the given Key Generation I<ctx>.
 This must also be set for key validation.
 
-=item "properties" (B<OSSL_PKEY_PARAM_FFC_DIGEST_PROPS>) <utf8_string>
+=item "properties" (B<OSSL_PKEY_PARAM_FFC_DIGEST_PROPS>) <UTF8 string>
 
 Sets properties to be used upon look up of the implementation for the selected
 Digest algorithm for the Key Generation Function associated with the given key
