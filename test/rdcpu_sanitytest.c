@@ -16,10 +16,24 @@
 #if (defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
      defined(__x86_64) || defined(__x86_64__) || \
      defined(_M_AMD64) || defined (_M_X64)) && defined(OPENSSL_CPUID_OBJ)
-
+# define IS_X_86 1
 size_t OPENSSL_ia32_rdrand_bytes(unsigned char *buf, size_t len);
 size_t OPENSSL_ia32_rdseed_bytes(unsigned char *buf, size_t len);
+#else
+# define IS_X_86 0
+#endif
 
+#if defined(__aarch64__)
+# define IS_AARCH_64 1
+# include "arm_arch.h"
+
+size_t OPENSSL_rndr_bytes(unsigned char *buf, size_t len);
+size_t OPENSSL_rndrrs_bytes(unsigned char *buf, size_t len);
+#else
+# define IS_AARCH_64 0
+#endif
+
+#if (IS_X_86 || IS_AARCH_64)
 static int sanity_check_bytes(size_t (*rng)(unsigned char *, size_t),
     int rounds, int min_failures, int max_retries, int max_zero_words)
 {
@@ -76,7 +90,9 @@ static int sanity_check_bytes(size_t (*rng)(unsigned char *, size_t),
 end:
     return testresult;
 }
+#endif
 
+#if IS_X_86
 static int sanity_check_rdrand_bytes(void)
 {
     return sanity_check_bytes(OPENSSL_ia32_rdrand_bytes, 1000, 0, 10, 10);
@@ -92,11 +108,24 @@ static int sanity_check_rdseed_bytes(void)
      */
     return sanity_check_bytes(OPENSSL_ia32_rdseed_bytes, 1000, 1, 10000, 10);
 }
+#elif IS_AARCH_64
+static int sanity_check_rndr_bytes(void)
+{
+    return sanity_check_bytes(OPENSSL_rndr_bytes, 1000, 0, 10, 10);
+}
+
+static int sanity_check_rndrrs_bytes(void)
+{
+    return sanity_check_bytes(OPENSSL_rndrrs_bytes, 1000, 0, 10000, 10);
+}
+#endif
 
 int setup_tests(void)
 {
+#if (IS_X_86 || IS_AARCH_64)
     OPENSSL_cpuid_setup();
 
+# if IS_X_86
     int have_rdseed = (OPENSSL_ia32cap_P[2] & (1 << 18)) != 0;
     int have_rdrand = (OPENSSL_ia32cap_P[1] & (1 << (62 - 32))) != 0;
 
@@ -107,16 +136,15 @@ int setup_tests(void)
     if (have_rdseed) {
         ADD_TEST(sanity_check_rdseed_bytes);
     }
+# elif IS_AARCH_64
+    int have_rndr_rndrrs = (OPENSSL_armcap_P & (1 << 8)) != 0;
 
-    return 1;
-}
-
-
-#else
-
-int setup_tests(void)
-{
-    return 1;
-}
-
+    if (have_rndr_rndrrs) {
+        ADD_TEST(sanity_check_rndr_bytes);
+        ADD_TEST(sanity_check_rndrrs_bytes);
+    }
+# endif
 #endif
+
+    return 1;
+}
