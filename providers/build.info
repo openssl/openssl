@@ -72,7 +72,7 @@ DEPEND[$LIBDEFAULT]=$LIBCOMMON
 # Because the default provider is built in, it means that libcrypto must
 # include all the object files that are needed (we do that indirectly,
 # by using the appropriate libraries as source).  Note that for shared
-# libraries, SOURCEd libraries are considered as if they where specified
+# libraries, SOURCEd libraries are considered as if they were specified
 # with DEPEND.
 $DEFAULTGOAL=../libcrypto
 SOURCE[$DEFAULTGOAL]=$LIBDEFAULT defltprov.c
