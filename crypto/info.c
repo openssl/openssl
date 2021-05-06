@@ -135,7 +135,11 @@ DEFINE_RUN_ONCE_STATIC(init_info_strings)
         add_seeds_string("stdsc");
 #endif
 #ifdef OPENSSL_RAND_SEED_RDCPU
+# ifdef __aarch64__
+        add_seeds_string("rndr ( rndrrs rndr )");
+# else
         add_seeds_string("rdrand ( rdseed rdrand )");
+# endif
 #endif
 #ifdef OPENSSL_RAND_SEED_LIBRANDOM
         add_seeds_string("C-library-random");
