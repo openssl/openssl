@@ -448,6 +448,15 @@
      $cache{$script} = 1;
  }
 
+ # dofile is responsible for building generic scripts.  It depends entirely
+ # on existing generators, so calls dogenerate().
+ sub dofile {
+     my $file = shift;
+     return "" if $cache{$file};
+     $OUT .= dogenerate($file, undef, undef, intent => "file");
+     $cache{$file} = 1;
+ }
+
  sub dodir {
      my $dir = shift;
      return "" if !exists(&generatedir) or $cache{$dir};
@@ -486,6 +495,7 @@
  foreach (@{$unified_info{modules}})   { domodule($_); }
  foreach (@{$unified_info{programs}})  { dobin($_);    }
  foreach (@{$unified_info{scripts}})   { doscript($_); }
+ foreach (@{$unified_info{files}})     { dofile($_); }
  foreach (sort keys %{$unified_info{htmldocs}}) { dodocs('html', $_); }
  foreach (sort keys %{$unified_info{mandocs}})  { dodocs('man', $_); }
  foreach (sort keys %{$unified_info{dirinfo}})  { dodir($_); }

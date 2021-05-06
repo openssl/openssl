@@ -1935,6 +1935,7 @@ if ($builder eq "unified") {
         my @libraries = ();
         my @modules = ();
         my @scripts = ();
+        my @files = ();
 
         my %sources = ();
         my %shared_sources = ();
@@ -2155,6 +2156,11 @@ if ($builder eq "unified") {
                                 \$attributes{scripts}, $+{ATTRIBS},
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
+            qr/^\s* FILES ${attribs_re} \s* =  ${value_re} $/x
+            => sub { $push_to->(\@files, undef,
+                                \$attributes{files}, $+{ATTRIBS},
+                                tokenize($expand_variables->($+{VALUE})))
+                         if !@skip || $skip[$#skip] > 0; },
             qr/^\s* HTMLDOCS ${index_re} = ${value_re} $/x
             => sub { $push_to->(\%htmldocs, $expand_variables->($+{INDEX}),
                                 undef, undef,
@@ -2222,7 +2228,8 @@ EOF
             my %infos = ( programs  => [ @programs  ],
                           libraries => [ @libraries ],
                           modules   => [ @modules   ],
-                          scripts   => [ @scripts   ] );
+                          scripts   => [ @scripts   ],
+                          files     => [ @files     ] );
             foreach my $k (keys %infos) {
                 foreach (@{$infos{$k}}) {
                     my $item = cleanfile($buildd, $_, $blddir);
@@ -2574,7 +2581,8 @@ EOF
                 if defined($unified_info{$_});
             delete $unified_info{$_};
         }
-        foreach my $prodtype (('programs', 'libraries', 'modules', 'scripts')) {
+        foreach my $prodtype (('programs', 'libraries', 'modules',
+                               'scripts', 'files')) {
             # $intent serves multi purposes:
             # - give a prefix for the new object files names
             # - in the case of libraries, rearrange the object files so static
@@ -2593,7 +2601,9 @@ EOF
                 modules   => { dso    => { src => [ 'sources' ],
                                            dst => 'sources' } },
                 scripts   => { script => { src => [ 'sources' ],
-                                           dst => 'sources' } }
+                                           dst => 'sources' } },
+                files     => { file   => { src => [ 'sources' ],
+                                           dst => 'sources' } },
                } -> {$prodtype};
             foreach my $kind (keys %$intent) {
                 next if ($intent->{$kind}->{dst} eq 'shared_sources'
@@ -2652,7 +2662,8 @@ EOF
 
     ### Make unified_info a bit more efficient
     # One level structures
-    foreach (("programs", "libraries", "modules", "scripts", "targets")) {
+    foreach (("programs", "libraries", "modules",
+              "scripts", "files", "targets")) {
         $unified_info{$_} = [ sort keys %{$unified_info{$_}} ];
     }
     # Two level structures
@@ -2704,6 +2715,7 @@ EOF
                      "dso" => [ @{$unified_info{modules}} ],
                      "bin" => [ @{$unified_info{programs}} ],
                      "script" => [ @{$unified_info{scripts}} ],
+                     "files" => [ @{$unified_info{files}} ],
                      "docs" => [ (map { @{$unified_info{htmldocs}->{$_} // []} }
                                   keys %{$unified_info{htmldocs} // {}}),
                                  (map { @{$unified_info{mandocs}->{$_} // []} }

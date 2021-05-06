@@ -24,6 +24,8 @@ B<MODULES=> I<name> ...
 
 B<SCRIPTS=> I<name> ...
 
+B<FILES=> I<name> ...
+
 B<DEPEND[>I<items>B<]=> I<otheritem> ...
 
 B<GENERATE[>I<item>B<]=> I<generator> I<generator-args> ...
@@ -70,8 +72,8 @@ the end.
 
 F<build.info> files are meta data files for OpenSSL's built file
 generators, and are used to specify exactly what end product files
-(programs, libraries, modules or scripts) are to be produced, and from
-what sources.
+(programs, libraries, modules, scripts or files) are to be produced,
+and from what sources.
 
 Intermediate files, such as object files, are seldom referred to at
 all.  They sometimes can be, if there's a need, but this should happen
@@ -426,6 +428,16 @@ scripts given in such a statement.  For example:
 
 With those two lines, the script C<foo> will not have the attribute
 C<noinst>, while the script C<bar> will.
+
+=item B<FILES=> I<name>
+
+Collects names of general files that should be built.  This statement
+is expected to be accompanied by a B<GENERATE> statement that
+specifies how this file is produced.
+
+These files are never installed automatically.  Instead, if any of
+them is to be installed, that must be done explicitly in the build
+file.
 
 =back
 
