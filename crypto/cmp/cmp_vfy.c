@@ -139,6 +139,24 @@ int OSSL_CMP_validate_cert_path(const OSSL_CMP_CTX *ctx,
     return valid;
 }
 
+static int verify_cb_cert(X509_STORE *ts, X509 *cert, int err)
+{
+    X509_STORE_CTX_verify_cb verify_cb;
+    X509_STORE_CTX *csc;
+    int ok = 0;
+
+    if (ts == NULL || (verify_cb = X509_STORE_get_verify_cb(ts)) == NULL)
+        return ok;
+    if ((csc = X509_STORE_CTX_new()) != NULL
+            && X509_STORE_CTX_init(csc, ts, cert, NULL)) {
+        X509_STORE_CTX_set_error(csc, err);
+        X509_STORE_CTX_set_current_cert(csc, cert);
+        ok = (*verify_cb)(0, csc);
+    }
+    X509_STORE_CTX_free(csc);
+    return ok;
+}
+
 /* Return 0 if expect_name != NULL and there is no matching actual_name */
 static int check_name(const OSSL_CMP_CTX *ctx, int log_success,
                       const char *actual_desc, const X509_NAME *actual_name,
@@ -256,9 +274,14 @@ static int cert_acceptable(const OSSL_CMP_CTX *ctx,
     time_cmp = X509_cmp_timeframe(vpm, X509_get0_notBefore(cert),
                                   X509_get0_notAfter(cert));
     if (time_cmp != 0) {
+        int err = time_cmp > 0 ? X509_V_ERR_CERT_HAS_EXPIRED
+                               : X509_V_ERR_CERT_NOT_YET_VALID;
+
         ossl_cmp_warn(ctx, time_cmp > 0 ? "cert has expired"
                                         : "cert is not yet valid");
-        return 0;
+        if (ctx->log_cb != NULL /* logging not temporarily disabled */
+                && verify_cb_cert(ts, cert, err) <= 0)
+            return 0;
     }
 
     if (!check_name(ctx, 1,
@@ -432,12 +455,6 @@ static int check_msg_all_certs(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
     return ret;
 }
 
-static int no_log_cb(const char *func, const char *file, int line,
-                     OSSL_CMP_severity level, const char *msg)
-{
-    return 1;
-}
-
 /*-
  * Verify message signature with any acceptable and valid candidate cert.
  * On success cache the found cert using ossl_cmp_ctx_set1_validatedSrvCert().
@@ -465,7 +482,7 @@ static int check_msg_find_cert(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
 
     /* enable clearing irrelevant errors in attempts to validate sender certs */
     (void)ERR_set_mark();
-    ctx->log_cb = no_log_cb; /* temporarily disable logging */
+    ctx->log_cb = NULL; /* temporarily disable logging */
 
     /*
      * try first cached scrt, used successfully earlier in same transaction,
