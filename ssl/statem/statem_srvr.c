@@ -1368,6 +1368,10 @@ static void ssl_check_for_safari(SSL *s, const CLIENTHELLO_MSG *hello)
                                              ext_len);
 }
 
+#define RENEG_OPTIONS_OK(options) \
+    ((options & SSL_OP_NO_RENEGOTIATION) == 0 \
+     && (options & SSL_OP_ALLOW_CLIENT_RENEGOTIATION) != 0)
+
 MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
 {
     /* |cookie| will only be initialized for DTLS. */
@@ -1381,7 +1385,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
         }
-        if ((s->options & SSL_OP_NO_RENEGOTIATION) != 0
+        if (!RENEG_OPTIONS_OK(s->options)
                 || (!s->s3.send_connection_binding
                     && (s->options
                         & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION) == 0)) {

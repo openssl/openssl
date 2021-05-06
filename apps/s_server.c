@@ -78,6 +78,7 @@ static int accept_socket = -1;
 static int s_nbio = 0;
 static int s_nbio_test = 0;
 static int s_crlf = 0;
+static int immediate_reneg = 0;
 static SSL_CTX *ctx = NULL;
 static SSL_CTX *ctx2 = NULL;
 static int www = 0;
@@ -1257,6 +1258,9 @@ int s_server_main(int argc, char *argv[])
         case OPT_CRLFORM:
             if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &crl_format))
                 goto opthelp;
+            break;
+        case OPT_S_IMMEDIATE_RENEG:
+            immediate_reneg = 1;
             break;
         case OPT_S_CASES:
         case OPT_S_NUM_TICKETS:
@@ -2784,6 +2788,8 @@ static int init_ssl_connection(SSL *con)
     } else {
         do {
             i = SSL_accept(con);
+            if (immediate_reneg)
+                SSL_renegotiate(con);
 
             if (i <= 0)
                 retry = is_retryable(con, i);

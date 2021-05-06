@@ -695,7 +695,9 @@ int create_ssl_ctx_pair(OSSL_LIB_CTX *libctx, const SSL_METHOD *sm,
     if (sctx != NULL) {
         if (*sctx != NULL)
             serverctx = *sctx;
-        else if (!TEST_ptr(serverctx = SSL_CTX_new_ex(libctx, NULL, sm)))
+        else if (!TEST_ptr(serverctx = SSL_CTX_new_ex(libctx, NULL, sm))
+            || !TEST_true(SSL_CTX_set_options(serverctx,
+                                              SSL_OP_ALLOW_CLIENT_RENEGOTIATION)))
             goto err;
     }
 
