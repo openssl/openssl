@@ -7,12 +7,12 @@
 
 $COMMON_GOAL=../../libcommon.a
 
-$NULL_GOAL=../../libimplementations.a
-$AES_GOAL=../../libimplementations.a
-$TDES_1_GOAL=../../libimplementations.a
-$TDES_2_GOAL=../../libimplementations.a
-$ARIA_GOAL=../../libimplementations.a
-$CAMELLIA_GOAL=../../libimplementations.a
+$NULL_GOAL=../../libdefault.a
+$AES_GOAL=../../libdefault.a ../../libfips.a
+$TDES_1_GOAL=../../libdefault.a ../../libfips.a
+$TDES_2_GOAL=../../libdefault.a
+$ARIA_GOAL=../../libdefault.a
+$CAMELLIA_GOAL=../../libdefault.a
 $DES_GOAL=../../liblegacy.a
 $BLOWFISH_GOAL=../../liblegacy.a
 $IDEA_GOAL=../../liblegacy.a
@@ -21,10 +21,10 @@ $RC2_GOAL=../../liblegacy.a
 $RC4_GOAL=../../liblegacy.a
 $RC5_GOAL=../../liblegacy.a
 $SEED_GOAL=../../liblegacy.a
-$SM4_GOAL=../../libimplementations.a
-$CHACHA_GOAL=../../libimplementations.a
-$CHACHAPOLY_GOAL=../../libimplementations.a
-$SIV_GOAL=../../libimplementations.a
+$SM4_GOAL=../../libdefault.a
+$CHACHA_GOAL=../../libdefault.a
+$CHACHAPOLY_GOAL=../../libdefault.a
+$SIV_GOAL=../../libdefault.a
 
 # This source is common building blocks for all ciphers in all our providers.
 SOURCE[$COMMON_GOAL]=\
@@ -51,8 +51,7 @@ SOURCE[$AES_GOAL]=\
 
 # Extra code to satisfy the FIPS and non-FIPS separation.
 # When the AES-xxx-XTS moves to legacy, cipher_aes_xts_fips.c can be removed.
-SOURCE[../../libfips.a]=cipher_aes_xts_fips.c
-SOURCE[../../libnonfips.a]=cipher_aes_xts_fips.c
+SOURCE[$AES_GOAL]=cipher_aes_xts_fips.c
 
 IF[{- !$disabled{siv} -}]
   SOURCE[$SIV_GOAL]=\

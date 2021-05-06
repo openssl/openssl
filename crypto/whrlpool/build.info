@@ -17,10 +17,6 @@ IF[{- !$disabled{asm} -}]
   ENDIF
 ENDIF
 
-# Implementations are now spread across several libraries, so the defines
-# need to be applied to all affected libraries and modules.
-DEFINE[../../providers/libimplementations.a]=$WPDEF
-
 SOURCE[../../libcrypto]=wp_dgst.c $WPASM
 DEFINE[../../libcrypto]=$WPDEF
 
