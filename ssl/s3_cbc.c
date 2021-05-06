@@ -90,6 +90,7 @@ int ssl3_cbc_digest_record(const EVP_MD *md,
  * standard "final" operation without adding the padding and length that such
  * a function typically does.
  */
+#ifndef FIPS_MODULE
 static void tls1_md5_final_raw(void *ctx, unsigned char *md_out)
 {
     MD5_CTX *md5 = ctx;
@@ -98,6 +99,7 @@ static void tls1_md5_final_raw(void *ctx, unsigned char *md_out)
     u32toLE(md5->C, md_out);
     u32toLE(md5->D, md_out);
 }
+#endif /* FIPS_MODULE */
 
 static void tls1_sha1_final_raw(void *ctx, unsigned char *md_out)
 {
@@ -196,6 +198,9 @@ int ssl3_cbc_digest_record(const EVP_MD *md,
         return 0;
 
     if (EVP_MD_is_a(md, "MD5")) {
+#ifdef FIPS_MODULE
+        return 0;
+#else
         if (MD5_Init((MD5_CTX *)md_state.c) <= 0)
             return 0;
         md_final_raw = tls1_md5_final_raw;
@@ -204,6 +209,7 @@ int ssl3_cbc_digest_record(const EVP_MD *md,
         md_size = 16;
         sslv3_pad_length = 48;
         length_is_big_endian = 0;
+#endif
     } else if (EVP_MD_is_a(md, "SHA1")) {
         if (SHA1_Init((SHA_CTX *)md_state.c) <= 0)
             return 0;
