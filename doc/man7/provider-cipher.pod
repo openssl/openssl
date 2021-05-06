@@ -435,7 +435,7 @@ Byte 11-12: Input length (Always 0)
 
 Gets the result of running the "tls1multi_aad" operation.
 
-=item "cts_mode" (B<OSSL_CIPHER_PARAM_CTS_MODE>) <utf8 string>
+=item "cts_mode" (B<OSSL_CIPHER_PARAM_CTS_MODE>) <UTF8 string>
 
 Sets the cipher text stealing mode. For all modes the output size is the same as
 the input size.
