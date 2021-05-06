@@ -21,7 +21,7 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
-### Changes between 1.1.1 and 3.0 alpha 16 [6 May 2021]
+### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
  * Add "abspath" and "includedir" pragma's to config files, to prevent,
    or modify relative pathname inclusion.
