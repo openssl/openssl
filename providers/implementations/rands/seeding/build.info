@@ -6,5 +6,5 @@ IF[{- $config{target} =~ /vms/i -}]
   $COMMON=$COMMON rand_vms.c
 ENDIF
 
-SOURCE[../../../libnonfips.a]=$COMMON
+SOURCE[../../../libdefault.a]=$COMMON
 

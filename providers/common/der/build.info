@@ -98,7 +98,7 @@ ENDIF
 #----- Conclusion
 
 # TODO(3.0) $COMMON should go to libcommon.a, but this currently leads
-# to linking conflicts, so we add it to libfips.a and libnonfips.a for
+# to linking conflicts, so we add it to libfips.a and libdefault.a for
 # the moment being
 $COMMON= $DER_RSA_COMMON $DER_DIGESTS_GEN $DER_WRAP_GEN
 
@@ -116,4 +116,4 @@ IF[{- !$disabled{sm2} -}]
 ENDIF
 
 SOURCE[../../libfips.a]=$COMMON $DER_RSA_FIPSABLE
-SOURCE[../../libnonfips.a]=$COMMON $DER_RSA_FIPSABLE
+SOURCE[../../libdefault.a]=$COMMON $DER_RSA_FIPSABLE

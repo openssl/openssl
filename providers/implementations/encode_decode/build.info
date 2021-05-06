@@ -1,14 +1,14 @@
 # We make separate GOAL variables for each algorithm, to make it easy to
 # switch each to the Legacy provider when needed.
 
-$ENCODER_GOAL=../../libimplementations.a
-$DECODER_GOAL=../../libimplementations.a
-$RSA_GOAL=../../libimplementations.a
-$FFC_GOAL=../../libimplementations.a
-$DH_GOAL=../../libimplementations.a
-$DSA_GOAL=../../libimplementations.a
-$ECX_GOAL=../../libimplementations.a
-$EC_GOAL=../../libimplementations.a
+$ENCODER_GOAL=../../libdefault.a
+$DECODER_GOAL=../../libdefault.a
+$RSA_GOAL=../../libdefault.a
+$FFC_GOAL=../../libdefault.a
+$DH_GOAL=../../libdefault.a
+$DSA_GOAL=../../libdefault.a
+$ECX_GOAL=../../libdefault.a
+$EC_GOAL=../../libdefault.a
 
 SOURCE[$ENCODER_GOAL]=endecoder_common.c
 
