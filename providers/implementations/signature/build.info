@@ -6,19 +6,19 @@ $EC_GOAL=../../libimplementations.a
 $SM2SIG_GOAL=../../libimplementations.a
 
 IF[{- !$disabled{dsa} -}]
-  SOURCE[$DSA_GOAL]=dsa.c
+  SOURCE[$DSA_GOAL]=dsa_sig.c
 ENDIF
 
 IF[{- !$disabled{ec} -}]
-  SOURCE[$EC_GOAL]=eddsa.c ecdsa.c
+  SOURCE[$EC_GOAL]=eddsa_sig.c ecdsa_sig.c
 ENDIF
 
 IF[{- !$disabled{sm2} -}]
-  SOURCE[$SM2SIG_GOAL]=sm2sig.c
+  SOURCE[$SM2_GOAL]=sm2_sig.c
 ENDIF
 
-SOURCE[../../libfips.a]=rsa.c
-SOURCE[../../libnonfips.a]=rsa.c
+SOURCE[../../libfips.a]=rsa_sig.c
+SOURCE[../../libnonfips.a]=rsa_sig.c
 
 DEPEND[rsa.o]=../../common/include/prov/der_rsa.h
 DEPEND[dsa.o]=../../common/include/prov/der_dsa.h
@@ -26,5 +26,5 @@ DEPEND[ecdsa.o]=../../common/include/prov/der_ec.h
 DEPEND[eddsa.o]=../../common/include/prov/der_ecx.h
 DEPEND[sm2sig.o]=../../common/include/prov/der_sm2.h
 
-SOURCE[../../libfips.a]=mac_legacy.c
-SOURCE[../../libnonfips.a]=mac_legacy.c
+SOURCE[../../libfips.a]=mac_legacy_sig.c
+SOURCE[../../libnonfips.a]=mac_legacy_sig.c
