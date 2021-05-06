@@ -44,9 +44,9 @@ IF[{- !$disabled{asm} -}]
 ENDIF
 
 $COMMON=ec_lib.c ecp_smpl.c ecp_mont.c ecp_nist.c ec_cvt.c ec_mult.c \
-        ec_curve.c ec_check.c ec_print.c ec_key.c ecx_key.c ec_asn1.c \
-        ec2_smpl.c ec_deprecated.c \
-        ecp_oct.c ec2_oct.c ec_oct.c ec_kmeth.c ecdh_ossl.c \
+        ec_curve.c ec_check.c ec_key.c ec_kmeth.c ecx_key.c ec_asn1.c \
+        ec2_smpl.c \
+        ecp_oct.c ec2_oct.c ec_oct.c ecdh_ossl.c \
         ecdsa_ossl.c ecdsa_sign.c ecdsa_vrf.c curve25519.c \
         curve448/f_generic.c curve448/scalar.c \
         curve448/curve448_tables.c curve448/eddsa.c curve448/curve448.c \
@@ -57,8 +57,9 @@ IF[{- !$disabled{'ec_nistp_64_gcc_128'} -}]
   $COMMON=$COMMON ecp_nistp224.c ecp_nistp256.c ecp_nistp521.c ecp_nistputil.c
 ENDIF
 
-SOURCE[../../libcrypto]=$COMMON ec_ameth.c ec_pmeth.c ecx_meth.c ecx_key.c \
-                        ec_err.c eck_prn.c
+SOURCE[../../libcrypto]=$COMMON ec_ameth.c ec_pmeth.c ecx_meth.c \
+                        ec_err.c eck_prn.c \
+                        ec_deprecated.c ec_print.c
 SOURCE[../../providers/libfips.a]=$COMMON
 
 # Implementations are now spread across several libraries, so the defines
