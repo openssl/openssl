@@ -146,13 +146,11 @@ crypto/ec/ec_backend.c
 crypto/ec/ec_check.c
 crypto/ec/ec_curve.c
 crypto/ec/ec_cvt.c
-crypto/ec/ec_deprecated.c
 crypto/ec/ec_key.c
 crypto/ec/ec_kmeth.c
 crypto/ec/ec_lib.c
 crypto/ec/ec_mult.c
 crypto/ec/ec_oct.c
-crypto/ec/ec_print.c
 crypto/ec/ecdh_kdf.c
 crypto/ec/ecdh_ossl.c
 crypto/ec/ecdsa_ossl.c
@@ -166,7 +164,6 @@ crypto/ec/ecp_smpl.c
 crypto/ec/ecx_backend.c
 crypto/ec/ecx_key.c
 crypto/evp/asymcipher.c
-crypto/evp/cmeth_lib.c
 crypto/evp/dh_support.c
 crypto/evp/digest.c
 crypto/evp/ec_support.c
@@ -200,12 +197,6 @@ crypto/ffc/ffc_params_validate.c
 crypto/hmac/hmac.c
 crypto/initthread.c
 crypto/lhash/lhash.c
-crypto/md5/asm/md5-586.pl
-crypto/md5/asm/md5-sparcv9.pl
-crypto/md5/asm/md5-x86_64.pl
-crypto/md5/md5_dgst.c
-crypto/md5/md5_one.c
-crypto/md5/md5_sha1.c
 crypto/mem_clr.c
 crypto/modes/asm/aes-gcm-armv8_64.pl
 crypto/modes/asm/aesni-gcm-x86_64.pl
