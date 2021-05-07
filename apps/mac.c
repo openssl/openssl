@@ -150,10 +150,11 @@ opthelp:
         goto err;
     }
 
-    for (;;) {
+    while (BIO_pending(in) || !BIO_eof(in)) {
         i = BIO_read(in, (char *)buf, BUFSIZE);
         if (i < 0) {
             BIO_printf(bio_err, "Read Error in '%s'\n", infile);
+            ERR_print_errors(bio_err);
             goto err;
         }
         if (i == 0)
