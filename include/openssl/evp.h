@@ -1513,8 +1513,7 @@ int EVP_PBE_get(int *ptype, int *ppbe_nid, size_t num);
 
 # define ASN1_PKEY_CTRL_SET1_TLS_ENCPT   0x9
 # define ASN1_PKEY_CTRL_GET1_TLS_ENCPT   0xa
-# define ASN1_PKEY_CTRL_SUPPORTS_MD_NID  0xb
-# define ASN1_PKEY_CTRL_CMS_IS_RI_TYPE_SUPPORTED 0xc
+# define ASN1_PKEY_CTRL_CMS_IS_RI_TYPE_SUPPORTED 0xb
 
 int EVP_PKEY_asn1_get_count(void);
 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_get0(int idx);
