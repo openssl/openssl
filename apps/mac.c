@@ -117,11 +117,13 @@ opthelp:
                 goto opthelp;
             break;
         case OPT_CIPHER:
+            OPENSSL_free(cipher);
             cipher = alloc_mac_algorithm_name(&opts, "cipher", opt_arg());
             if (cipher == NULL)
                 goto opthelp;
             break;
         case OPT_DIGEST:
+            OPENSSL_free(digest);
             digest = alloc_mac_algorithm_name(&opts, "digest", opt_arg());
             if (digest == NULL)
                 goto opthelp;
