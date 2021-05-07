@@ -1,6 +1,6 @@
 name: Coverage
 
-#Run once a week
+#Run once a day
 on:
   schedule:
     - cron:  '49 0 * * *'
