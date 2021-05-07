@@ -9,6 +9,8 @@ openssl-mac - perform Message Authentication Code operations
 
 B<openssl mac>
 [B<-help>]
+[B<-cipher>]
+[B<-digest>]
 [B<-macopt>]
 [B<-in> I<filename>]
 [B<-out> I<filename>]
@@ -44,6 +46,20 @@ Filename to output to, or standard output by default.
 
 Output the MAC in binary form. Uses hexadecimal text format if not specified.
 
+=item B<-cipher> I<name>
+
+Used by CMAC and GMAC to specify the cipher algorithm.
+For CMAC it must be one of AES-128-CBC, AES-192-CBC, AES-256-CBC or
+DES-EDE3-CBC.
+For GMAC it should be a GCM mode cipher e.g. AES-128-GCM.
+
+=item B<-digest> I<name>
+
+Used by HMAC as an alphanumeric string (use if the key contains printable
+characters only).
+The string length must conform to any restrictions of the MAC algorithm.
+To see the list of supported digests, use C<openssl list -digest-commands>.
+
 =item B<-macopt> I<nm>:I<v>
 
 Passes options to the MAC algorithm.
@@ -68,6 +84,7 @@ A key must be specified for every MAC algorithm.
 
 =item B<digest:>I<string>
 
+This option is identical to the B<-digest> option.
 Used by HMAC as an alphanumeric string (use if the key contains printable
 characters only).
 The string length must conform to any restrictions of the MAC algorithm.
@@ -75,6 +92,7 @@ To see the list of supported digests, use C<openssl list -digest-commands>.
 
 =item B<cipher:>I<string>
 
+This option is identical to the B<-cipher> option.
 Used by CMAC and GMAC to specify the cipher algorithm.
 For CMAC it must be one of AES-128-CBC, AES-192-CBC, AES-256-CBC or
 DES-EDE3-CBC.
@@ -115,7 +133,7 @@ To see the list of supported MAC's use the command C<opensssl list
 =head1 EXAMPLES
 
 To create a hex-encoded HMAC-SHA1 MAC of a file and write to stdout: \
- openssl mac -macopt digest:SHA1 \
+ openssl mac -digest SHA1 \
          -macopt hexkey:000102030405060708090A0B0C0D0E0F10111213 \
          -in msg.bin HMAC
 
@@ -124,7 +142,7 @@ To create a SipHash MAC from a file with a binary file output: \
          -in msg.bin -out out.bin -binary SipHash
 
 To create a hex-encoded CMAC-AES-128-CBC MAC from a file:\
- openssl mac -macopt cipher:AES-128-CBC \
+ openssl mac -cipher AES-128-CBC \
          -macopt hexkey:77A77FAF290C1FA30C683DF16BA7A77B \
          -in msg.bin CMAC
 
@@ -134,7 +152,7 @@ To create a hex-encoded KMAC128 MAC from a file with a Customisation String
          -macopt size:16 -in msg.bin KMAC128
 
 To create a hex-encoded GMAC-AES-128-GCM with a IV from a file: \
- openssl mac -macopt cipher:AES-128-GCM -macopt hexiv:E0E00F19FED7BA0136A797F3 \
+ openssl mac -cipher AES-128-GCM -macopt hexiv:E0E00F19FED7BA0136A797F3 \
          -macopt hexkey:77A77FAF290C1FA30C683DF16BA7A77B -in msg.bin GMAC
 
 =head1 NOTES
