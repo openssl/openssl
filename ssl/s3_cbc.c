@@ -75,22 +75,22 @@ int ssl3_cbc_digest_record(const EVP_MD *md,
  */
 #define MAX_HASH_BLOCK_SIZE 128
 
+#ifndef FIPS_MODULE
 /*
  * u32toLE serializes an unsigned, 32-bit number (n) as four bytes at (p) in
  * little-endian order. The value of p is advanced by four.
  */
-#define u32toLE(n, p) \
-        (*((p)++)=(unsigned char)(n), \
-         *((p)++)=(unsigned char)(n>>8), \
-         *((p)++)=(unsigned char)(n>>16), \
-         *((p)++)=(unsigned char)(n>>24))
+# define u32toLE(n, p) \
+         (*((p)++)=(unsigned char)(n), \
+          *((p)++)=(unsigned char)(n>>8), \
+          *((p)++)=(unsigned char)(n>>16), \
+          *((p)++)=(unsigned char)(n>>24))
 
 /*
  * These functions serialize the state of a hash and thus perform the
  * standard "final" operation without adding the padding and length that such
  * a function typically does.
  */
-#ifndef FIPS_MODULE
 static void tls1_md5_final_raw(void *ctx, unsigned char *md_out)
 {
     MD5_CTX *md5 = ctx;
