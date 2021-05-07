@@ -109,3 +109,21 @@ int ASN1_item_i2d_bio(const ASN1_ITEM *it, BIO *out, const void *x)
     OPENSSL_free(b);
     return ret;
 }
+
+BIO *ASN1_item_i2d_mem_bio(const ASN1_ITEM *it, const ASN1_VALUE *val)
+{
+    BIO *res;
+
+    if (it == NULL || val == NULL) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+
+    if ((res = BIO_new(BIO_s_mem())) == NULL)
+        return NULL;
+    if (ASN1_item_i2d_bio(it, res, val) <= 0) {
+        BIO_free(res);
+        res = NULL;
+    }
+    return res;
+}

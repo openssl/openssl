@@ -62,6 +62,8 @@ void *ASN1_item_d2i_bio(const ASN1_ITEM *it, BIO *in, void *x)
     void *ret = NULL;
     int len;
 
+    if (in == NULL)
+        return NULL;
     len = asn1_d2i_read_bio(in, &b);
     if (len < 0)
         goto err;
