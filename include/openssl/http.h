@@ -56,7 +56,7 @@ size_t OSSL_HTTP_REQ_CTX_get_resp_len(const OSSL_HTTP_REQ_CTX *rctx);
 void OSSL_HTTP_REQ_CTX_set_max_response_length(OSSL_HTTP_REQ_CTX *rctx,
                                                unsigned long len);
 BIO *OSSL_HTTP_i2d_new_bio(const ASN1_VALUE *val, const ASN1_ITEM *it);
-ASN1_VALUE *OSSL_HTTP_d2i_free_bio(BIO *res, const ASN1_ITEM *it);
+ASN1_VALUE *OSSL_HTTP_d2i_consume_bio(BIO *res, const ASN1_ITEM *it);
 int OSSL_HTTP_is_alive(const OSSL_HTTP_REQ_CTX *rctx);
 
 /* High-level HTTP API */

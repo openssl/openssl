@@ -110,7 +110,7 @@ static int test_http_x509(int do_get)
     BIO_set_callback_arg(wbio, (char *)rbio);
 
     rpath = RPATH;
-    rcert = (X509 *) OSSL_HTTP_d2i_free_bio(do_get ?
+    rcert = (X509 *) OSSL_HTTP_d2i_consume_bio(do_get ?
                       OSSL_HTTP_get("http://"SERVER":"PORT"/"RPATH,
                                     NULL /* proxy */, NULL /* no_proxy */,
                                     wbio, rbio, NULL /* bio_update_fn */, NULL,

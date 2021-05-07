@@ -209,7 +209,7 @@ OSSL_HTTP_proxy_connect() returns 1 on success, 0 on error.
 
 =head1 SEE ALSO
 
-L<OSSL_HTTP_i2d_new_bio(3)>, L<OSSL_HTTP_d2i_free_bio(3)>,
+L<OSSL_HTTP_i2d_new_bio(3)>, L<OSSL_HTTP_d2i_consume_bio(3)>,
 L<OSSL_HTTP_is_alive(3)>,
 L<OSSL_HTTP_parse_url(3)>, L<BIO_set_conn_port(3)>
 

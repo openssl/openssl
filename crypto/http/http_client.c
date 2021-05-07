@@ -759,7 +759,7 @@ static BIO *HTTP_new_bio(const char *server /* optionally includes ":port" */,
 }
 #endif /* OPENSSL_NO_SOCK */
 
-ASN1_VALUE *OSSL_HTTP_d2i_free_bio(BIO *mem, const ASN1_ITEM *it)
+ASN1_VALUE *OSSL_HTTP_d2i_consume_bio(BIO *mem, const ASN1_ITEM *it)
 {
     const unsigned char *p;
     ASN1_VALUE *resp;

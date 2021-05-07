@@ -44,8 +44,8 @@ OSSL_HTTP_REQ_CTX *OCSP_sendreq_new(BIO *io, const char *path,
 int OCSP_sendreq_nbio(OCSP_RESPONSE **presp, OSSL_HTTP_REQ_CTX *rctx)
 {
     *presp = (OCSP_RESPONSE *)
-        OSSL_HTTP_d2i_free_bio(OSSL_HTTP_REQ_CTX_exchange(rctx),
-                               ASN1_ITEM_rptr(OCSP_RESPONSE));
+        OSSL_HTTP_d2i_consume_bio(OSSL_HTTP_REQ_CTX_exchange(rctx),
+                                  ASN1_ITEM_rptr(OCSP_RESPONSE));
     return *presp != NULL;
 }
 

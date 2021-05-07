@@ -194,7 +194,7 @@ typedef OSSL_HTTP_REQ_CTX OCSP_REQ_CTX;
         OSSL_HTTP_REQ_CTX_nbio(r)
 #   define OCSP_REQ_CTX_nbio_d2i(r, p, i) \
         ((*((ASN1_VALUE **)(p)) = \
-          OSSL_HTTP_d2i_free_bio(OSSL_HTTP_REQ_CTX_exchange(r), i)) != NULL)
+          OSSL_HTTP_d2i_consume_bio(OSSL_HTTP_REQ_CTX_exchange(r), i)) != NULL)
 #   define OCSP_REQ_CTX_get0_mem_bio(r) \
         OSSL_HTTP_REQ_CTX_get0_mem_bio(r)
 #   define OCSP_set_max_response_length(r, l) \

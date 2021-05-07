@@ -71,7 +71,7 @@ OSSL_CMP_MSG *OSSL_CMP_MSG_http_perform(OSSL_CMP_CTX *ctx,
                              ctx->msg_timeout, 0 /* keep_alive */);
     BIO_free(req_mem);
     res = (OSSL_CMP_MSG *)
-        OSSL_HTTP_d2i_free_bio(rsp, ASN1_ITEM_rptr(OSSL_CMP_MSG));
+        OSSL_HTTP_d2i_consume_bio(rsp, ASN1_ITEM_rptr(OSSL_CMP_MSG));
     ossl_cmp_debug(ctx, "disconnected from CMP server");
  err:
     sk_CONF_VALUE_pop_free(headers, X509V3_conf_free);

@@ -15,7 +15,7 @@ OSSL_HTTP_REQ_CTX_get0_mem_bio,
 OSSL_HTTP_REQ_CTX_get_resp_len,
 OSSL_HTTP_REQ_CTX_set_max_response_length,
 OSSL_HTTP_i2d_new_bio,
-OSSL_HTTP_d2i_free_bio,
+OSSL_HTTP_d2i_consume_bio,
 OSSL_HTTP_is_alive
 - HTTP client low-level functions
 
@@ -48,7 +48,7 @@ OSSL_HTTP_is_alive
                                                 unsigned long len);
 
  BIO *OSSL_HTTP_i2d_new_bio(const ASN1_ITEM *it, const ASN1_VALUE *val);
- ASN1_VALUE *OSSL_HTTP_d2i_free_bio(BIO *res, const ASN1_ITEM *it);
+ ASN1_VALUE *OSSL_HTTP_d2i_consume_bio(BIO *res, const ASN1_ITEM *it);
  int OSSL_HTTP_is_alive(const OSSL_HTTP_REQ_CTX *rctx);
 
 =head1 DESCRIPTION
@@ -186,7 +186,7 @@ returns a pointer to a B<BIO> on success and NULL on failure.
 OSSL_HTTP_REQ_CTX_get_resp_len() returns the size of the response contents
 or 0 if not available or an error occurred.
 
-OSSL_HTTP_d2i_free_bio() returns a pointer to a B<ASN1_VALUE>, or NULL on error.
+OSSL_HTTP_d2i_consume_bio() returns a pointer to a B<ASN1_VALUE>, or NULL on error.
 
 OSSL_HTTP_is_alive() returns 1 if its argument is non-NULL
 and the client requested a persistent connection

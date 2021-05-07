@@ -4884,7 +4884,7 @@ OSSL_parse_url                          ?	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_REQ_CTX_get_resp_len          ?	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_REQ_CTX_set_expected          ?	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_i2d_new_bio                   ?	3_0_0	EXIST::FUNCTION:
-OSSL_HTTP_d2i_free_bio                  ?	3_0_0	EXIST::FUNCTION:
+OSSL_HTTP_d2i_consume_bio               ?	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_is_alive                      ?	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_open                          ?	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_proxy_connect                 ?	3_0_0	EXIST::FUNCTION:
