@@ -64,4 +64,8 @@ __owur int ossl_method_store_flush_cache(OSSL_METHOD_STORE *store, int all);
 OSSL_PROPERTY_LIST *ossl_property_merge(const OSSL_PROPERTY_LIST *a,
                                         const OSSL_PROPERTY_LIST *b);
 
+size_t ossl_property_list_to_string(OSSL_LIB_CTX *ctx,
+                                    const OSSL_PROPERTY_LIST *list, char *buf,
+                                    size_t bufsize);
+
 #endif
