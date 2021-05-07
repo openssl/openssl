@@ -11,6 +11,8 @@ use OpenSSL::Test;
 
 setup("test_memleak");
 
+plan skip_all => "Test is disabled in an address sanitizer build"
+    unless disabled("asan");
 plan skip_all => "MacOS currently doesn't support leak sanitizer"
     if $^O eq 'darwin';
 
