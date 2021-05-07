@@ -3612,7 +3612,7 @@ EVP_CIPHER_CTX_encrypting               3694	3_0_0	EXIST::FUNCTION:
 EC_KEY_can_sign                         3695	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC
 PEM_write_bio_RSAPublicKey              3696	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 X509_CRL_set1_lastUpdate                3697	3_0_0	EXIST::FUNCTION:
-OCSP_sendreq_nbio                       3698	3_0_0	EXIST::FUNCTION:OCSP
+OSSL_HTTP_REQ_CTX_nbio_d2i              3698	3_0_0	EXIST::FUNCTION:
 PKCS8_encrypt                           3699	3_0_0	EXIST::FUNCTION:
 i2d_PKCS7_fp                            3700	3_0_0	EXIST::FUNCTION:STDIO
 i2d_X509_REQ                            3701	3_0_0	EXIST::FUNCTION:
@@ -4883,8 +4883,6 @@ BIO_do_connect_retry                    ?	3_0_0	EXIST::FUNCTION:
 OSSL_parse_url                          ?	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_REQ_CTX_get_resp_len          ?	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_REQ_CTX_set_expected          ?	3_0_0	EXIST::FUNCTION:
-OSSL_HTTP_i2d_new_bio                   ?	3_0_0	EXIST::FUNCTION:
-OSSL_HTTP_d2i_consume_bio               ?	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_is_alive                      ?	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_open                          ?	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_proxy_connect                 ?	3_0_0	EXIST::FUNCTION:

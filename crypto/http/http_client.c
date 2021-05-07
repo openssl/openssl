@@ -264,24 +264,6 @@ static int ossl_http_req_ctx_set_content(OSSL_HTTP_REQ_CTX *rctx,
         && BIO_write(rctx->mem, req, req_len) == (int)req_len;
 }
 
-BIO *OSSL_HTTP_i2d_new_bio(const ASN1_VALUE *val, const ASN1_ITEM *it)
-{
-    BIO *res;
-
-    if (it == NULL || val == NULL) {
-        ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
-        return NULL;
-    }
-
-    if ((res = BIO_new(BIO_s_mem())) == NULL)
-        return NULL;
-    if (ASN1_item_i2d_bio(it, res, val) <= 0) {
-        BIO_free(res);
-        res = NULL;
-    }
-    return res;
-}
-
 int OSSL_HTTP_REQ_CTX_set1_req(OSSL_HTTP_REQ_CTX *rctx, const char *content_type,
                                const ASN1_ITEM *it, const ASN1_VALUE *req)
 {
@@ -293,7 +275,7 @@ int OSSL_HTTP_REQ_CTX_set1_req(OSSL_HTTP_REQ_CTX *rctx, const char *content_type
         return 0;
     }
 
-    res = (mem = OSSL_HTTP_i2d_new_bio(req, it)) != NULL
+    res = (mem = ASN1_item_i2d_mem_bio(it, req)) != NULL
         && ossl_http_req_ctx_set_content(rctx, content_type, mem);
     BIO_free(mem);
     return res;
@@ -724,6 +706,20 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
     }
 }
 
+int OSSL_HTTP_REQ_CTX_nbio_d2i(OSSL_HTTP_REQ_CTX *rctx,
+                               ASN1_VALUE **pval, const ASN1_ITEM *it)
+{
+    const unsigned char *p;
+    int rv;
+
+    *pval = NULL;
+    if ((rv = OSSL_HTTP_REQ_CTX_nbio(rctx)) != 1)
+        return rv;
+    *pval = ASN1_item_d2i(NULL, &p, BIO_get_mem_data(rctx->mem, &p), it);
+    return *pval != NULL;
+
+}
+
 #ifndef OPENSSL_NO_SOCK
 
 /* set up a new connection BIO, to HTTP server or to HTTP(S) proxy if given */
@@ -758,20 +754,6 @@ static BIO *HTTP_new_bio(const char *server /* optionally includes ":port" */,
     return cbio;
 }
 #endif /* OPENSSL_NO_SOCK */
-
-ASN1_VALUE *OSSL_HTTP_d2i_consume_bio(BIO *mem, const ASN1_ITEM *it)
-{
-    const unsigned char *p;
-    ASN1_VALUE *resp;
-
-    if (mem == NULL)
-        return NULL;
-
-    if ((resp = ASN1_item_d2i(NULL, &p, BIO_get_mem_data(mem, &p), it)) == NULL)
-        ERR_raise(ERR_LIB_HTTP, HTTP_R_RESPONSE_PARSE_ERROR);
-    BIO_free(mem);
-    return resp;
-}
 
 int OSSL_HTTP_is_alive(const OSSL_HTTP_REQ_CTX *rctx)
 {

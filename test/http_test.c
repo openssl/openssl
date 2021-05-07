@@ -99,7 +99,7 @@ static int test_http_x509(int do_get)
     X509 *rcert = NULL;
     BIO *wbio = BIO_new(BIO_s_mem());
     BIO *rbio = BIO_new(BIO_s_mem());
-    BIO *req = OSSL_HTTP_i2d_new_bio((ASN1_VALUE *)x509, x509_it);
+    BIO *rsp, *req = ASN1_item_i2d_mem_bio(x509_it, (ASN1_VALUE *)x509);
     STACK_OF(CONF_VALUE) *headers = NULL;
     const char content_type[] = "application/x-x509-ca-cert";
     int res = 0;
@@ -110,23 +110,22 @@ static int test_http_x509(int do_get)
     BIO_set_callback_arg(wbio, (char *)rbio);
 
     rpath = RPATH;
-    rcert = (X509 *) OSSL_HTTP_d2i_consume_bio(do_get ?
-                      OSSL_HTTP_get("http://"SERVER":"PORT"/"RPATH,
-                                    NULL /* proxy */, NULL /* no_proxy */,
-                                    wbio, rbio, NULL /* bio_update_fn */, NULL,
-                                    0 /* buf_size */, headers, content_type,
-                                    1 /* expect_asn1 */,
-                                    HTTP_DEFAULT_MAX_RESP_LEN, 0 /* timeout */)
-                      :
-                      OSSL_HTTP_transfer(NULL, NULL /* host */, NULL /* port */,
-                                         RPATH, 0 /* use_ssl */,
-                                         NULL /* proxy */, NULL /* no_proxy */,
-                                         wbio, rbio, NULL /* bio_fn */, NULL,
-                                         0 /* bufsize */, headers, content_type,
-                                         req, content_type, 1 /* expect_asn1 */,
-                                         HTTP_DEFAULT_MAX_RESP_LEN,
-                                         0 /* timeout */, 0 /* keep_alive */),
-                      x509_it);
+    rsp = do_get ?
+        OSSL_HTTP_get("http://"SERVER":"PORT"/"RPATH,
+                      NULL /* proxy */, NULL /* no_proxy */,
+                      wbio, rbio, NULL /* bio_fn */, NULL /* arg */,
+                      0 /* buf_size */, headers, content_type,
+                      1 /* expect_asn1 */,
+                      HTTP_DEFAULT_MAX_RESP_LEN, 0 /* timeout */)
+        : OSSL_HTTP_transfer(NULL, NULL /* host */, NULL /* port */, RPATH,
+                             0 /* use_ssl */,NULL /* proxy */, NULL /* no_pr */,
+                             wbio, rbio, NULL /* bio_fn */, NULL /* arg */,
+                             0 /* buf_size */, headers, content_type,
+                             req, content_type, 1 /* expect_asn1 */,
+                             HTTP_DEFAULT_MAX_RESP_LEN, 0 /* timeout */,
+                             0 /* keep_alive */);
+    rcert = d2i_X509_bio(rsp, NULL);
+    BIO_free(rsp);
     res = TEST_ptr(rcert) && TEST_int_eq(X509_cmp(x509, rcert), 0);
 
  err:

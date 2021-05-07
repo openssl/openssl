@@ -37,8 +37,9 @@ OSSL_CMP_MSG *OSSL_CMP_MSG_http_perform(OSSL_CMP_CTX *ctx,
 {
     char server_port[32] = { '\0' };
     STACK_OF(CONF_VALUE) *headers = NULL;
-    const char *const content_type_pkix = "application/pkixcmp";
+    const char content_type_pkix[] = "application/pkixcmp";
     int tls_used;
+    const ASN1_ITEM *it = ASN1_ITEM_rptr(OSSL_CMP_MSG);
     BIO *req_mem, *rsp;
     OSSL_CMP_MSG *res = NULL;
 
@@ -49,8 +50,7 @@ OSSL_CMP_MSG *OSSL_CMP_MSG_http_perform(OSSL_CMP_CTX *ctx,
 
     if (!X509V3_add_value("Pragma", "no-cache", &headers))
         return NULL;
-    if ((req_mem = OSSL_HTTP_i2d_new_bio((const ASN1_VALUE *)req,
-                                         ASN1_ITEM_rptr(OSSL_CMP_MSG))) == NULL)
+    if ((req_mem = ASN1_item_i2d_mem_bio(it, (const ASN1_VALUE *)req)) == NULL)
         goto err;
 
     if (ctx->serverPort != 0)
@@ -70,8 +70,8 @@ OSSL_CMP_MSG *OSSL_CMP_MSG_http_perform(OSSL_CMP_CTX *ctx,
                              HTTP_DEFAULT_MAX_RESP_LEN,
                              ctx->msg_timeout, 0 /* keep_alive */);
     BIO_free(req_mem);
-    res = (OSSL_CMP_MSG *)
-        OSSL_HTTP_d2i_consume_bio(rsp, ASN1_ITEM_rptr(OSSL_CMP_MSG));
+    res = (OSSL_CMP_MSG *)ASN1_item_d2i_bio(it, rsp, NULL);
+    BIO_free(rsp);
     ossl_cmp_debug(ctx, "disconnected from CMP server");
  err:
     sk_CONF_VALUE_pop_free(headers, X509V3_conf_free);

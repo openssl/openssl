@@ -41,24 +41,19 @@ OSSL_HTTP_REQ_CTX *OCSP_sendreq_new(BIO *io, const char *path,
     return NULL;
 }
 
-int OCSP_sendreq_nbio(OCSP_RESPONSE **presp, OSSL_HTTP_REQ_CTX *rctx)
-{
-    *presp = (OCSP_RESPONSE *)
-        OSSL_HTTP_d2i_consume_bio(OSSL_HTTP_REQ_CTX_exchange(rctx),
-                                  ASN1_ITEM_rptr(OCSP_RESPONSE));
-    return *presp != NULL;
-}
-
 OCSP_RESPONSE *OCSP_sendreq_bio(BIO *b, const char *path, OCSP_REQUEST *req)
 {
     OCSP_RESPONSE *resp = NULL;
     OSSL_HTTP_REQ_CTX *ctx;
+    BIO *mem;
 
     ctx = OCSP_sendreq_new(b, path, req, -1 /* default max resp line length */);
     if (ctx == NULL)
         return NULL;
-
-    OCSP_sendreq_nbio(&resp, ctx);
+    mem = OSSL_HTTP_REQ_CTX_exchange(ctx);
+    resp = (OCSP_RESPONSE *)
+        ASN1_item_d2i_bio(ASN1_ITEM_rptr(OCSP_RESPONSE), mem, NULL);
+    BIO_free(mem);
 
     /* this indirectly calls ERR_clear_error(): */
     OSSL_HTTP_REQ_CTX_free(ctx);
