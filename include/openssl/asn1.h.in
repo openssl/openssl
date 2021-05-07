@@ -784,7 +784,7 @@ void *ASN1_d2i_bio(void *(*xnew) (void), d2i_of_void *d2i, BIO *in, void **x);
                           in, \
                           CHECKED_PPTR_OF(type, x)))
 
-void *ASN1_item_d2i_bio(const ASN1_ITEM *it, BIO *in, void *x);
+void *ASN1_item_d2i_bio(const ASN1_ITEM *it, BIO *in, void *pval);
 int ASN1_i2d_bio(i2d_of_void *i2d, BIO *out, const void *x);
 
 #  define ASN1_i2d_bio_of(type,i2d,out,x) \
@@ -793,6 +793,7 @@ int ASN1_i2d_bio(i2d_of_void *i2d, BIO *out, const void *x);
                   CHECKED_PTR_OF(const type, x)))
 
 int ASN1_item_i2d_bio(const ASN1_ITEM *it, BIO *out, const void *x);
+BIO *ASN1_item_i2d_mem_bio(const ASN1_ITEM *it, const ASN1_VALUE *val);
 int ASN1_UTCTIME_print(BIO *fp, const ASN1_UTCTIME *a);
 int ASN1_GENERALIZEDTIME_print(BIO *fp, const ASN1_GENERALIZEDTIME *a);
 int ASN1_TIME_print(BIO *fp, const ASN1_TIME *a);
