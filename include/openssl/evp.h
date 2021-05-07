@@ -1390,7 +1390,8 @@ int EVP_PKEY_print_params_fp(FILE *fp, const EVP_PKEY *pkey,
 int EVP_PKEY_get_default_digest_nid(EVP_PKEY *pkey, int *pnid);
 int EVP_PKEY_get_default_digest_name(EVP_PKEY *pkey,
                                      char *mdname, size_t mdname_sz);
-int EVP_PKEY_supports_digest_nid(EVP_PKEY *pkey, int nid);
+int EVP_PKEY_digestsign_supports_digest(EVP_PKEY *pkey, OSSL_LIB_CTX *libctx,
+                                        const char *name, const char *propq);
 
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 /*

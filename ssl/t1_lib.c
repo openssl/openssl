@@ -3054,13 +3054,13 @@ static int check_cert_usable(SSL *s, const SIGALG_LOOKUP *sig, X509 *x,
     size_t i;
 
     /*
-     * If the given EVP_PKEY cannot supporting signing with this sigalg,
+     * If the given EVP_PKEY cannot support signing with this digest,
      * the answer is simply 'no'.
      */
-    ERR_set_mark();
-    supported = EVP_PKEY_supports_digest_nid(pkey, sig->hash);
-    ERR_pop_to_mark();
-    if (supported == 0)
+    supported = EVP_PKEY_digestsign_supports_digest(pkey, s->ctx->libctx,
+                                                    OBJ_nid2sn(sig->hash),
+                                                    s->ctx->propq);
+    if (supported <= 0)
         return 0;
 
     /*

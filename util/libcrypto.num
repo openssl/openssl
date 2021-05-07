@@ -4412,7 +4412,7 @@ EVP_MAC_init                            ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_update                          ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_final                           ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_finalXOF                        ?	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_supports_digest_nid            ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_digestsign_supports_digest     ?	3_0_0	EXIST::FUNCTION:
 SRP_VBASE_add0_user                     ?	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,SRP
 SRP_user_pwd_new                        ?	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,SRP
 SRP_user_pwd_set_gN                     ?	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,SRP
