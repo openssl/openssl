@@ -107,16 +107,19 @@ opthelp:
                 goto opthelp;
             break;
         case OPT_CIPHER:
+            OPENSSL_free(cipher);
             cipher = alloc_kdf_algorithm_name(&opts, "cipher", opt_arg());
             if (cipher == NULL)
                 goto opthelp;
             break;
         case OPT_DIGEST:
+            OPENSSL_free(digest);
             digest = alloc_kdf_algorithm_name(&opts, "digest", opt_arg());
             if (digest == NULL)
                 goto opthelp;
             break;
         case OPT_MAC:
+            OPENSSL_free(mac);
             mac = alloc_kdf_algorithm_name(&opts, "mac", opt_arg());
             if (mac == NULL)
                 goto opthelp;
