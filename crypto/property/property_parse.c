@@ -616,3 +616,133 @@ int ossl_property_parse_init(OSSL_LIB_CTX *ctx)
 err:
     return 0;
 }
+
+static void put_char(char ch, char **buf, size_t *remain, size_t *needed)
+{
+    if (*remain == 0) {
+        *needed += 1;
+        return;
+    }
+    if(*remain == 1)
+        **buf = '\0';
+    else
+        **buf = ch;
+    *buf += 1;
+    *needed += 1;
+    *remain -= 1;
+}
+
+static void put_str(const char *str, char **buf, size_t *remain, size_t *needed)
+{
+    size_t olen, len;
+
+    len = olen = strlen(str);
+    *needed += len;
+
+    if (*remain == 0)
+        return;
+
+    if(*remain < len + 1)
+        len = *remain - 1;
+
+    if(len > 0) {
+        strncpy(*buf, str, len);
+        *buf += len;
+        *remain -= len;
+    }
+
+    if(len < olen && *remain == 1) {
+        **buf = '\0';
+        *buf += 1;
+        *remain -= 1;
+    }
+}
+
+static void put_num(int val, char **buf, size_t *remain, size_t *needed)
+{
+    int tmpval = val;
+    size_t len = 1;
+
+    for (; tmpval > 9; len++, tmpval /= 10);
+
+    *needed += len;
+
+    if (*remain == 0)
+        return;
+
+    BIO_snprintf(*buf, *remain, "%d", val);
+    if (*remain < len) {
+        *buf += *remain;
+        *remain = 0;
+    } else {
+        *buf += len;
+        *remain -= len;
+    }
+}
+
+size_t ossl_property_list_to_string(OSSL_LIB_CTX *ctx,
+                                    const OSSL_PROPERTY_LIST *list, char *buf,
+                                    size_t bufsize)
+{
+    int i;
+    const PROPERTY_DEFINITION *prop;
+    size_t needed = 0;
+    const char *val;
+
+    if (list == NULL) {
+        if (bufsize > 0)
+            *buf = '\0';
+        return 1;
+    }
+    if (list->n != 0)
+        prop = &list->properties[list->n - 1];
+    for (i = 0; i < list->n; i++, prop--) {
+        /* Skip invalid names */
+        if (prop->name_idx == 0)
+            continue;
+
+        if (needed > 0)
+            put_char(',', &buf, &bufsize, &needed);
+
+        if (prop->optional)
+            put_char('?', &buf, &bufsize, &needed);
+        else if (prop->oper == PROPERTY_OVERRIDE)
+            put_char('-', &buf, &bufsize, &needed);
+
+        val = ossl_property_name_str(ctx, prop->name_idx);
+        if (val == NULL)
+            return 0;
+        put_str(val, &buf, &bufsize, &needed);
+
+        switch (prop->oper) {
+            case PROPERTY_OPER_NE:
+                put_char('!', &buf, &bufsize, &needed);
+                /* fall through */
+            case PROPERTY_OPER_EQ:
+                put_char('=', &buf, &bufsize, &needed);
+                /* put value */
+                switch (prop->type) {
+                case PROPERTY_TYPE_STRING:
+                    val = ossl_property_value_str(ctx, prop->v.str_val);
+                    if (val == NULL)
+                        return 0;
+                    put_str(val, &buf, &bufsize, &needed);
+                    break;
+
+                case PROPERTY_TYPE_NUMBER:
+                    put_num(prop->v.int_val, &buf, &bufsize, &needed);
+                    break;
+
+                default:
+                    return 0;
+                }
+                break;
+            default:
+                /* do nothing */
+                break;
+        }
+    }
+
+    put_char('\0', &buf, &bufsize, &needed);
+    return needed;
+}

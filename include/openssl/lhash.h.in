@@ -226,6 +226,13 @@ void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
     { \
         OPENSSL_LH_doall((OPENSSL_LHASH *)lh, (OPENSSL_LH_DOALL_FUNC)doall); \
     } \
+    static ossl_unused ossl_inline void lh_##type##_doall_arg(LHASH_OF(type) *lh, \
+                                                              void (*doallarg)(type *, void *), \
+                                                              void *arg) \
+    { \
+        OPENSSL_LH_doall_arg((OPENSSL_LHASH *)lh, \
+                             (OPENSSL_LH_DOALL_FUNCARG)doallarg, arg); \
+    } \
     LHASH_OF(type)
 
 #define IMPLEMENT_LHASH_DOALL_ARG_CONST(type, argtype) \

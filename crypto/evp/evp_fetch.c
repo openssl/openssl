@@ -409,7 +409,11 @@ int evp_set_default_properties_int(OSSL_LIB_CTX *libctx, const char *propq,
         ERR_raise(ERR_LIB_EVP, EVP_R_DEFAULT_QUERY_PARSE_ERROR);
         return 0;
     }
-    return evp_set_parsed_default_properties(libctx, pl, loadconfig);
+    if (!evp_set_parsed_default_properties(libctx, pl, loadconfig)) {
+        ossl_property_free(pl);
+        return 0;
+    }
+    return 1;
 }
 
 int EVP_set_default_properties(OSSL_LIB_CTX *libctx, const char *propq)
@@ -436,7 +440,11 @@ static int evp_default_properties_merge(OSSL_LIB_CTX *libctx, const char *propq)
         ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    return evp_set_parsed_default_properties(libctx, pl2, 0);
+    if (!evp_set_parsed_default_properties(libctx, pl2, 0)) {
+        ossl_property_free(pl2);
+        return 0;
+    }
+    return 1;
 }
 
 static int evp_default_property_is_enabled(OSSL_LIB_CTX *libctx,
