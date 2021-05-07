@@ -102,7 +102,6 @@ static int provider_create_child_cb(const OSSL_CORE_HANDLE *prov, void *cbdata)
     const char *provname;
     OSSL_PROVIDER *cprov;
     int ret = 0;
-    int ischild = 0;
 
     gbl = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_CHILD_PROVIDER_INDEX,
                                 &child_prov_ossl_ctx_method);
@@ -125,17 +124,22 @@ static int provider_create_child_cb(const OSSL_CORE_HANDLE *prov, void *cbdata)
     gbl->curr_prov = prov;
 
     if ((cprov = ossl_provider_find(ctx, provname, 1)) != NULL) {
-        /* It already exists. It could have been a previously created child, or
-         * it could have been explicitly loaded. If explicitly loaded we
-         * ignore it - i.e. we don't start treating it like a child.
+
+        /*
+        * We free the newly created ref. We rely on the provider sticking around
+        * in the provider store.
+        */
+        ossl_provider_free(cprov);
+
+        /*
+         * The provider already exists. It could be an unused built-in, or a
+         * previously created child, or it could have been explicitly loaded. If
+         * explicitly loaded it cannot be converted to a child and we ignore it
+         * - i.e. we don't start treating it like a child.
          */
-        ischild = ossl_provider_is_child(cprov);
-        if (!ischild) {
-            ossl_provider_free(cprov);
-            /* We treat this as a success */
-            ret = 1;
+        if (!ossl_provider_convert_to_child(cprov, prov,
+                                            ossl_child_provider_init))
             goto err;
-        }
     } else {
         /*
          * Create it - passing 1 as final param so we don't try and recursively
@@ -144,19 +148,20 @@ static int provider_create_child_cb(const OSSL_CORE_HANDLE *prov, void *cbdata)
         if ((cprov = ossl_provider_new(ctx, provname, ossl_child_provider_init,
                                        1)) == NULL)
             goto err;
-    }
-    /*
-     * We free the newly created ref. We rely on the provider sticking around
-     * in the provider store.
-     */
-    ossl_provider_free(cprov);
 
-    if (!ossl_provider_activate(cprov, 0, 0))
-        goto err;
+        /*
+        * We free the newly created ref. We rely on the provider sticking around
+        * in the provider store.
+        */
+        ossl_provider_free(cprov);
 
-    if (!ischild && !ossl_provider_set_child(cprov, prov)) {
-        ossl_provider_deactivate(cprov);
-        goto err;
+        if (!ossl_provider_activate(cprov, 0, 0))
+            goto err;
+
+        if (!ossl_provider_set_child(cprov, prov)) {
+            ossl_provider_deactivate(cprov);
+            goto err;
+        }
     }
 
     ret = 1;
