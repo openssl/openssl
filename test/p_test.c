@@ -131,10 +131,12 @@ static int p_get_params(void *provctx, OSSL_PARAM params[])
 
             /*
              * We should have the default provider available that we loaded
-             * ourselves, and the legacy provider which we inherit from the
-             * parent libctx. We should also have "this" provider available.
+             * ourselves, and the base and legacy providers which we inherit
+             * from the parent libctx. We should also have "this" provider
+             * available.
              */
             if (OSSL_PROVIDER_available(ctx->libctx, "default")
+                    && OSSL_PROVIDER_available(ctx->libctx, "base")
                     && OSSL_PROVIDER_available(ctx->libctx, "legacy")
                     && OSSL_PROVIDER_available(ctx->libctx, "p_test")
                     && md4 != NULL
@@ -244,8 +246,13 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
         p_teardown(ctx);
         return 0;
     }
+    /*
+     * "default" has not been loaded into the parent libctx. We should be able
+     * to explicitly load it as a non-child provider.
+     */
     ctx->deflt = OSSL_PROVIDER_load(ctx->libctx, "default");
-    if (ctx->deflt == NULL || !OSSL_PROVIDER_available(ctx->libctx, "default")) {
+    if (ctx->deflt == NULL
+            || !OSSL_PROVIDER_available(ctx->libctx, "default")) {
         p_teardown(ctx);
         return 0;
     }

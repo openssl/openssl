@@ -35,12 +35,18 @@ static int test_provider(OSSL_LIB_CTX **libctx, const char *name,
     int ok = 0;
     long err;
     int dolegacycheck = (legacy != NULL);
-    OSSL_PROVIDER *deflt = NULL;
+    OSSL_PROVIDER *deflt = NULL, *base = NULL;
 
     BIO_snprintf(expected_greeting, sizeof(expected_greeting),
                  "Hello OpenSSL %.20s, greetings from %s!",
                  OPENSSL_VERSION_STR, name);
 
+    /*
+        * Check that it is possible to have a built-in provider mirrored in
+        * a child lib ctx.
+        */
+    if (!TEST_ptr(base = OSSL_PROVIDER_load(*libctx, "base")))
+        goto err;
     if (!TEST_ptr(prov = OSSL_PROVIDER_load(*libctx, name)))
         goto err;
     if (dolegacycheck) {
@@ -71,7 +77,7 @@ static int test_provider(OSSL_LIB_CTX **libctx, const char *name,
         /*
          * Loading the legacy provider again should make it available again in
          * the child libctx. Loading and unloading the default provider should
-         * have not impact on the child because the child loads it explicitly
+         * have no impact on the child because the child loads it explicitly
          * before this point.
          */
         legacy = OSSL_PROVIDER_load(*libctx, "legacy");
@@ -90,6 +96,9 @@ static int test_provider(OSSL_LIB_CTX **libctx, const char *name,
         legacy = NULL;
     }
 
+    if (!TEST_true(OSSL_PROVIDER_unload(base)))
+        goto err;
+    base = NULL;
     if (!TEST_true(OSSL_PROVIDER_unload(prov)))
         goto err;
     prov = NULL;
@@ -105,6 +114,7 @@ static int test_provider(OSSL_LIB_CTX **libctx, const char *name,
     ERR_print_errors_fp(stderr);
     ok = 1;
  err:
+    OSSL_PROVIDER_unload(base);
     OSSL_PROVIDER_unload(deflt);
     OSSL_PROVIDER_unload(legacy);
     legacy = NULL;
@@ -131,6 +141,8 @@ static int test_builtin_provider(void)
     return ok;
 }
 
+/* Test relies on fetching the MD4 digest from the legacy provider */
+#ifndef OPENSSL_NO_MD4
 static int test_builtin_provider_with_child(void)
 {
     OSSL_LIB_CTX *libctx = OSSL_LIB_CTX_new();
@@ -156,6 +168,7 @@ static int test_builtin_provider_with_child(void)
     /* test_provider will free libctx and unload legacy as part of the test */
     return test_provider(&libctx, name, legacy);
 }
+#endif
 
 #ifndef NO_PROVIDER_MODULE
 static int test_loaded_provider(void)
@@ -207,7 +220,9 @@ int setup_tests(void)
 
     if (!loaded) {
         ADD_TEST(test_builtin_provider);
+#ifndef OPENSSL_NO_MD4
         ADD_TEST(test_builtin_provider_with_child);
+#endif
     }
 #ifndef NO_PROVIDER_MODULE
     else {
