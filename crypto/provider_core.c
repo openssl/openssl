@@ -42,6 +42,7 @@ typedef struct {
 } INFOPAIR;
 DEFINE_STACK_OF(INFOPAIR)
 
+#ifndef FIPS_MODULE
 typedef struct {
     OSSL_PROVIDER *prov;
     int (*create_cb)(const OSSL_CORE_HANDLE *provider, void *cbdata);
@@ -49,6 +50,7 @@ typedef struct {
     void *cbdata;
 } OSSL_PROVIDER_CHILD_CB;
 DEFINE_STACK_OF(OSSL_PROVIDER_CHILD_CB)
+#endif
 
 struct provider_store_st;        /* Forward declaration */
 
@@ -57,7 +59,9 @@ struct ossl_provider_st {
     unsigned int flag_initialized:1;
     unsigned int flag_activated:1;
     unsigned int flag_fallback:1; /* Can be used as fallback */
+#ifndef FIPS_MODULE
     unsigned int flag_couldbechild:1;
+#endif
 
     /* Getting and setting the flags require synchronization */
     CRYPTO_RWLOCK *flag_lock;
@@ -101,9 +105,11 @@ struct ossl_provider_st {
     size_t operation_bits_sz;
     CRYPTO_RWLOCK *opbits_lock;
 
+#ifndef FIPS_MODULE
     /* Whether this provider is the child of some other provider */
     const OSSL_CORE_HANDLE *handle;
     unsigned int ischild:1;
+#endif
 
     /* Provider side data */
     void *provctx;
@@ -149,10 +155,12 @@ static void provider_deactivate_free(OSSL_PROVIDER *prov)
     ossl_provider_free(prov);
 }
 
+#ifndef FIPS_MODULE
 static void ossl_provider_child_cb_free(OSSL_PROVIDER_CHILD_CB *cb)
 {
     OPENSSL_free(cb);
 }
+#endif
 
 static void provider_store_free(void *vstore)
 {
@@ -163,8 +171,10 @@ static void provider_store_free(void *vstore)
     store->freeing = 1;
     OPENSSL_free(store->default_path);
     sk_OSSL_PROVIDER_pop_free(store->providers, provider_deactivate_free);
+#ifndef FIPS_MODULE
     sk_OSSL_PROVIDER_CHILD_CB_pop_free(store->child_cbs,
                                        ossl_provider_child_cb_free);
+#endif
     CRYPTO_THREAD_lock_free(store->default_path_lock);
     CRYPTO_THREAD_lock_free(store->lock);
     OPENSSL_free(store);
@@ -178,7 +188,9 @@ static void *provider_store_new(OSSL_LIB_CTX *ctx)
     if (store == NULL
         || (store->providers = sk_OSSL_PROVIDER_new(ossl_provider_cmp)) == NULL
         || (store->default_path_lock = CRYPTO_THREAD_lock_new()) == NULL
+#ifndef FIPS_MODULE
         || (store->child_cbs = sk_OSSL_PROVIDER_CHILD_CB_new_null()) == NULL
+#endif
         || (store->lock = CRYPTO_THREAD_lock_new()) == NULL) {
         provider_store_free(store);
         return NULL;
@@ -307,7 +319,9 @@ static OSSL_PROVIDER *provider_new(const char *name,
     }
 
     prov->init_function = init_function;
+#ifndef FIPS_MODULE
     prov->flag_couldbechild = 1;
+#endif
     return prov;
 }
 
@@ -648,7 +662,9 @@ static int provider_init(OSSL_PROVIDER *prov, int flag_lock)
     }
     prov->provctx = tmp_provctx;
     prov->dispatch = provider_dispatch;
+#ifndef FIPS_MODULE
     prov->flag_couldbechild = 0;
+#endif
 
     for (; provider_dispatch->function_id != 0; provider_dispatch++) {
         switch (provider_dispatch->function_id) {
@@ -761,12 +777,14 @@ static int provider_deactivate(OSSL_PROVIDER *prov)
 
     store = get_provider_store(prov->libctx);
     if (store == NULL)
-        return 0;
+        return -1;
 
     if (!CRYPTO_THREAD_read_lock(store->lock))
-        return 0;
-    if (!CRYPTO_THREAD_write_lock(prov->flag_lock))
         return -1;
+    if (!CRYPTO_THREAD_write_lock(prov->flag_lock)) {
+        CRYPTO_THREAD_unlock(store->lock);
+        return -1;
+    }
 
 #ifndef FIPS_MODULE
     if (prov->activatecnt == 2 && prov->ischild) {
@@ -779,14 +797,18 @@ static int provider_deactivate(OSSL_PROVIDER *prov)
 #endif
 
     if ((count = --prov->activatecnt) < 1) {
-        int i, max = sk_OSSL_PROVIDER_CHILD_CB_num(store->child_cbs);
-        OSSL_PROVIDER_CHILD_CB *child_cb;
-
         prov->flag_activated = 0;
-        for (i = 0; i < max; i++) {
-            child_cb = sk_OSSL_PROVIDER_CHILD_CB_value(store->child_cbs, i);
-            child_cb->remove_cb((OSSL_CORE_HANDLE *)prov, child_cb->cbdata);
+#ifndef FIPS_MODULE
+        {
+            int i, max = sk_OSSL_PROVIDER_CHILD_CB_num(store->child_cbs);
+            OSSL_PROVIDER_CHILD_CB *child_cb;
+
+            for (i = 0; i < max; i++) {
+                child_cb = sk_OSSL_PROVIDER_CHILD_CB_value(store->child_cbs, i);
+                child_cb->remove_cb((OSSL_CORE_HANDLE *)prov, child_cb->cbdata);
+            }
         }
+#endif
     }
 
     CRYPTO_THREAD_unlock(prov->flag_lock);
@@ -806,20 +828,19 @@ static int provider_activate(OSSL_PROVIDER *prov, int lock, int upcalls)
 
     if (provider_init(prov, lock)) {
         int ret = 1;
-        int i, max;
-        OSSL_PROVIDER_CHILD_CB *child_cb;
         struct provider_store_st *store;
 
         store = get_provider_store(prov->libctx);
         if (store == NULL)
-            return 0;
+            return -1;
 
         if (lock && !CRYPTO_THREAD_read_lock(store->lock))
-            return 0;
+            return -1;
 
-        max = sk_OSSL_PROVIDER_CHILD_CB_num(store->child_cbs);
-        if (lock && !CRYPTO_THREAD_write_lock(prov->flag_lock))
-            return 0;
+        if (lock && !CRYPTO_THREAD_write_lock(prov->flag_lock)) {
+            CRYPTO_THREAD_unlock(store->lock);
+            return -1;
+        }
 
 #ifndef FIPS_MODULE
         if (prov->ischild && upcalls)
@@ -830,7 +851,12 @@ static int provider_activate(OSSL_PROVIDER *prov, int lock, int upcalls)
             count = ++prov->activatecnt;
             prov->flag_activated = 1;
 
+#ifndef FIPS_MODULE
             if (prov->activatecnt == 1) {
+                OSSL_PROVIDER_CHILD_CB *child_cb;
+                int i, max;
+
+                max = sk_OSSL_PROVIDER_CHILD_CB_num(store->child_cbs);
                 for (i = 0; i < max; i++) {
                     /*
                      * This is newly activated (activatecnt == 1), so we need to
@@ -842,6 +868,7 @@ static int provider_activate(OSSL_PROVIDER *prov, int lock, int upcalls)
                                                child_cb->cbdata);
                 }
             }
+#endif
         }
 
         if (lock) {
@@ -1144,7 +1171,11 @@ OSSL_LIB_CTX *ossl_provider_libctx(const OSSL_PROVIDER *prov)
 /* Wrappers around calls to the provider */
 void ossl_provider_teardown(const OSSL_PROVIDER *prov)
 {
-    if (prov->teardown != NULL && !prov->ischild)
+    if (prov->teardown != NULL
+#ifndef FIPS_MODULE
+            && !prov->ischild
+#endif
+       )
         prov->teardown(prov->provctx);
 }
 
@@ -1279,6 +1310,7 @@ int ossl_provider_test_operation_bit(OSSL_PROVIDER *provider, size_t bitnum,
     return 1;
 }
 
+#ifndef FIPS_MODULE
 const OSSL_CORE_HANDLE *ossl_provider_get_parent(OSSL_PROVIDER *prov)
 {
     return prov->handle;
@@ -1337,8 +1369,6 @@ int ossl_provider_convert_to_child(OSSL_PROVIDER *prov,
     return 1;
 }
 
-
-#ifndef FIPS_MODULE
 static int ossl_provider_register_child_cb(const OSSL_CORE_HANDLE *handle,
                                            int (*create_cb)(
                                                const OSSL_CORE_HANDLE *provider,
