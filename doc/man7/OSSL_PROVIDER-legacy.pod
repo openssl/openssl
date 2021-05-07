@@ -52,6 +52,32 @@ The OpenSSL legacy provider supports these operations and algorithms:
 
 =back
 
+=head2 Symmetric Ciphers
+
+Not all of these symmetric cipher algorithms are enabled by default.
+
+=over 4
+
+=item Blowfish
+
+=item CAST
+
+=item DES
+
+=item IDEA
+
+=item RC2
+
+=item RC4
+
+=item RC5
+
+Disabled by default. Use I<enable-rc5> config option to enable.
+
+=item SEED
+
+=back
+
 =begin comment
 
 When algorithms for other operations start appearing, the
