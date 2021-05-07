@@ -1337,9 +1337,8 @@ int EVP_PKEY_get_group_name(const EVP_PKEY *pkey, char *gname, size_t gname_sz,
 
 int EVP_PKEY_supports_digest_nid(EVP_PKEY *pkey, int nid)
 {
-    int rv, default_nid;
+    int rv = -2, default_nid;
 
-    rv = evp_pkey_asn1_ctrl(pkey, ASN1_PKEY_CTRL_SUPPORTS_MD_NID, nid, NULL);
     if (rv == -2) {
         /*
          * If there is a mandatory default digest and this isn't it, then
