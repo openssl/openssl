@@ -181,8 +181,6 @@ opthelp:
     if (out_bin) {
         BIO_write(out, buf, len);
     } else {
-        if (outfile == NULL)
-            BIO_printf(out,"\n");
         for (i = 0; i < (int)len; ++i)
             BIO_printf(out, "%02X", buf[i]);
         if (outfile == NULL)
