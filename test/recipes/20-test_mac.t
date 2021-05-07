@@ -137,10 +137,10 @@ sub compareline {
     # Not unlinking $tmpfile
 
     if (defined($expect)) {
-        if ($lines[1] =~ m|^\Q${expect}\E\R$|) {
+        if ($lines[0] =~ m|^\Q${expect}\E\R$|) {
             return 1;
         } else {
-            print "Got: $lines[1]";
+            print "Got: $lines[0]";
             print "Exp: $expect\n";
             return 0;
         }
