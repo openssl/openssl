@@ -63,9 +63,6 @@ static char *alloc_mac_algorithm_name(STACK_OF(OPENSSL_STRING) **optp,
     if (*optp == NULL)
         return NULL;
 
-    res = app_malloc(len, "algorithm name");
-    if (res == NULL)
-        return NULL;
     BIO_snprintf(res, len, "%s:%s", name, arg);
     if (sk_OPENSSL_STRING_push(*optp, res))
         return res;
