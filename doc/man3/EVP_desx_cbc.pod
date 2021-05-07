@@ -23,6 +23,10 @@ All modes below use a key length of 128 bits and acts on blocks of 128-bits.
 
 The DES-X algorithm in CBC mode.
 
+This algorithm is not provided by the OpenSSL default provider.
+To use it is necessary to load either the OpenSSL legacy provider or another
+implementation.
+
 =back
 
 =head1 RETURN VALUES
