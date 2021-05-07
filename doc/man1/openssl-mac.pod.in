@@ -82,22 +82,6 @@ Specifies the MAC key in hexadecimal form (two hex digits per byte).
 The key length must conform to any restrictions of the MAC algorithm.
 A key must be specified for every MAC algorithm.
 
-=item B<digest:>I<string>
-
-This option is identical to the B<-digest> option.
-Used by HMAC as an alphanumeric string (use if the key contains printable
-characters only).
-The string length must conform to any restrictions of the MAC algorithm.
-To see the list of supported digests, use C<openssl list -digest-commands>.
-
-=item B<cipher:>I<string>
-
-This option is identical to the B<-cipher> option.
-Used by CMAC and GMAC to specify the cipher algorithm.
-For CMAC it must be one of AES-128-CBC, AES-192-CBC, AES-256-CBC or
-DES-EDE3-CBC.
-For GMAC it should be a GCM mode cipher e.g. AES-128-GCM.
-
 =item B<iv:>I<string>
 
 Used by GMAC to specify an IV as an alphanumeric string (use if the IV contains
@@ -116,6 +100,14 @@ The default sizes are 32 or 64 bytes respectively.
 
 Used by KMAC128 or KMAC256 to specify a customization string.
 The default is the empty string "".
+
+=item B<digest:>I<string>
+
+This option is identical to the B<-digest> option.
+
+=item B<cipher:>I<string>
+
+This option is identical to the B<-cipher> option.
 
 =back
 
