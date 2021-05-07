@@ -4886,6 +4886,7 @@ OSSL_HTTP_get_asn1                      ?	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_post_asn1                     ?	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_transfer                      ?	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_proxy_connect                 ?	3_0_0	EXIST::FUNCTION:
+ASN1_item_i2d_mem_bio                   ?	3_0_0	EXIST::FUNCTION:
 ERR_add_error_txt                       ?	3_0_0	EXIST::FUNCTION:
 ERR_add_error_mem_bio                   ?	3_0_0	EXIST::FUNCTION:
 X509_STORE_CTX_print_verify_cb          ?	3_0_0	EXIST::FUNCTION:
