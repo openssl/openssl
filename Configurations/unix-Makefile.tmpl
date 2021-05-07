@@ -607,6 +607,15 @@ install_fips: build_sw providers/fipsmodule.cnf
 	@$(ECHO) "*** Installing FIPS module configuration"
 	@$(ECHO) "install providers/fipsmodule.cnf -> $(DESTDIR)$(OPENSSLDIR)/fipsmodule.cnf"
 	@cp providers/fipsmodule.cnf $(DESTDIR)$(OPENSSLDIR)/fipsmodule.cnf
+	@$(ECHO) "install $(SRCDIR)/providers/fipsmodule.cnf -> $(DESTDIR)$(OPENSSLDIR)/fipsmodule.cnf.dist"
+	@cp $(SRCDIR)/providers/fipsmodule.cnf $(DESTDIR)$(OPENSSLDIR)/fipsmodule.cnf.new
+	@chmod 644 $(DESTDIR)$(OPENSSLDIR)/fipsmodule.cnf.new
+	@mv -f  $(DESTDIR)$(OPENSSLDIR)/fipsmodule.cnf.new $(DESTDIR)$(OPENSSLDIR)/fipsmodule.cnf.dist
+	@if [ ! -f "$(DESTDIR)$(OPENSSLDIR)/fipsmodule.cnf" ]; then \
+		$(ECHO) "install $(SRCDIR)/providers/fipsmodule.cnf -> $(DESTDIR)$(OPENSSLDIR)/fipsmodule.cnf"; \
+		cp $(SRCDIR)/providers/fipsmodule.cnf $(DESTDIR)$(OPENSSLDIR)/fipsmodule.cnf; \
+		chmod 644 $(DESTDIR)$(OPENSSLDIR)/fipsmodule.cnf; \
+	fi
 
 uninstall_fips:
 	@$(ECHO) "*** Uninstalling FIPS module configuration"
