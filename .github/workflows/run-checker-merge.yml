@@ -1,7 +1,7 @@
 name: Run-checker merge
 # Jobs run per merge to master
 
-on: [pull_request, push]
+on: [push]
 jobs:
   run-checker:
     strategy:
