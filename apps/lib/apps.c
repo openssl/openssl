@@ -847,7 +847,7 @@ static const char *format2string(int format)
 }
 
 /* Set type expectation, but clear it if objects of different types expected. */
-#define SET_EXPECT(val) expect = expect < 0 ? val : (expect == val ? val : 0);
+#define SET_EXPECT(expect, val) ((expect) = (expect) < 0 ? (val) : ((expect) == (val) ? (val) : 0))
 /*
  * Load those types of credentials for which the result pointer is not NULL.
  * Reads from stdio if uri is NULL and maybe_stdin is nonzero.
@@ -889,22 +889,22 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
     if (ppkey != NULL) {
         *ppkey = NULL;
         cnt_expectations++;
-        SET_EXPECT(OSSL_STORE_INFO_PKEY);
+        SET_EXPECT(expect, OSSL_STORE_INFO_PKEY);
     }
     if (ppubkey != NULL) {
         *ppubkey = NULL;
         cnt_expectations++;
-        SET_EXPECT(OSSL_STORE_INFO_PUBKEY);
+        SET_EXPECT(expect, OSSL_STORE_INFO_PUBKEY);
     }
     if (pparams != NULL) {
         *pparams = NULL;
         cnt_expectations++;
-        SET_EXPECT(OSSL_STORE_INFO_PARAMS);
+        SET_EXPECT(expect, OSSL_STORE_INFO_PARAMS);
     }
     if (pcert != NULL) {
         *pcert = NULL;
         cnt_expectations++;
-        SET_EXPECT(OSSL_STORE_INFO_CERT);
+        SET_EXPECT(expect, OSSL_STORE_INFO_CERT);
     }
     if (pcerts != NULL) {
         if (*pcerts == NULL && (*pcerts = sk_X509_new_null()) == NULL) {
@@ -912,12 +912,12 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
             goto end;
         }
         cnt_expectations++;
-        SET_EXPECT(OSSL_STORE_INFO_CERT);
+        SET_EXPECT(expect, OSSL_STORE_INFO_CERT);
     }
     if (pcrl != NULL) {
         *pcrl = NULL;
         cnt_expectations++;
-        SET_EXPECT(OSSL_STORE_INFO_CRL);
+        SET_EXPECT(expect, OSSL_STORE_INFO_CRL);
     }
     if (pcrls != NULL) {
         if (*pcrls == NULL && (*pcrls = sk_X509_CRL_new_null()) == NULL) {
@@ -925,7 +925,7 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
             goto end;
         }
         cnt_expectations++;
-        SET_EXPECT(OSSL_STORE_INFO_CRL);
+        SET_EXPECT(expect, OSSL_STORE_INFO_CRL);
     }
     if (cnt_expectations == 0) {
         BIO_printf(bio_err, "Internal error: nothing to load from %s\n",
