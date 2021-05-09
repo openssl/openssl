@@ -150,7 +150,7 @@ int f(void) /*
         hanging_stmt;
 }
 
-/* not: constant on LHS of comparison or assignment operator */
+/* should not trigger: constant on LHS of comparison or assignment operator */
 X509 *x509 = NULL;
 int y = a + 1 < b;
 
