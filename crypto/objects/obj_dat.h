@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[8065] = {
+static const unsigned char so[8076] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1114,9 +1114,10 @@ static const unsigned char so[8065] = {
     0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x0B,       /* [ 8037] OBJ_signedObject */
     0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x0D,       /* [ 8045] OBJ_rpkiNotify */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x01,0x2F,  /* [ 8053] OBJ_id_ct_geofeedCSVwithCRLF */
+    0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x01,0x30,  /* [ 8064] OBJ_id_ct_signedChecklist */
 };
 
-#define NUM_NID 1247
+#define NUM_NID 1248
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2365,9 +2366,10 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"signedObject", "Signed Object", NID_signedObject, 8, &so[8037]},
     {"rpkiNotify", "RPKI Notify", NID_rpkiNotify, 8, &so[8045]},
     {"id-ct-geofeedCSVwithCRLF", "id-ct-geofeedCSVwithCRLF", NID_id_ct_geofeedCSVwithCRLF, 11, &so[8053]},
+    {"id-ct-signedChecklist", "id-ct-signedChecklist", NID_id_ct_signedChecklist, 11, &so[8064]},
 };
 
-#define NUM_SN 1238
+#define NUM_SN 1239
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -2984,6 +2986,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1234,    /* "id-ct-routeOriginAuthz" */
     1236,    /* "id-ct-rpkiGhostbusters" */
     1235,    /* "id-ct-rpkiManifest" */
+    1247,    /* "id-ct-signedChecklist" */
     1060,    /* "id-ct-xml" */
     1108,    /* "id-dsa-with-sha3-224" */
     1109,    /* "id-dsa-with-sha3-256" */
@@ -3609,7 +3612,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1093,    /* "x509ExtAdmission" */
 };
 
-#define NUM_LN 1238
+#define NUM_LN 1239
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -4244,6 +4247,7 @@ static const unsigned int ln_objs[NUM_LN] = {
     1234,    /* "id-ct-routeOriginAuthz" */
     1236,    /* "id-ct-rpkiGhostbusters" */
     1235,    /* "id-ct-rpkiManifest" */
+    1247,    /* "id-ct-signedChecklist" */
     1060,    /* "id-ct-xml" */
      408,    /* "id-ecPublicKey" */
      508,    /* "id-hex-multipart-message" */
@@ -4851,7 +4855,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1109
+#define NUM_OBJ 1110
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -5891,6 +5895,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1236,    /* OBJ_id_ct_rpkiGhostbusters       1 2 840 113549 1 9 16 1 35 */
     1237,    /* OBJ_id_ct_resourceTaggedAttest   1 2 840 113549 1 9 16 1 36 */
     1246,    /* OBJ_id_ct_geofeedCSVwithCRLF     1 2 840 113549 1 9 16 1 47 */
+    1247,    /* OBJ_id_ct_signedChecklist        1 2 840 113549 1 9 16 1 48 */
      212,    /* OBJ_id_smime_aa_receiptRequest   1 2 840 113549 1 9 16 2 1 */
      213,    /* OBJ_id_smime_aa_securityLabel    1 2 840 113549 1 9 16 2 2 */
      214,    /* OBJ_id_smime_aa_mlExpandHistory  1 2 840 113549 1 9 16 2 3 */
