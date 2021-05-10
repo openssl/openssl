@@ -588,6 +588,7 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
             OSSL_CMP_PKISI_free(si);
         }
     }
+    OSSL_CMP_CTX_print_errors(ctx);
     ctx->secretValue = backup_secret;
 
     /* possibly close the transaction */
