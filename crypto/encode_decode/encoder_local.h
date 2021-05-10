@@ -19,6 +19,7 @@
 struct ossl_endecode_base_st {
     OSSL_PROVIDER *prov;
     int id;
+    char *name;
     const char *propdef;
     const char *description;
 

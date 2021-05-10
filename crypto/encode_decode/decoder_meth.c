@@ -58,6 +58,7 @@ void OSSL_DECODER_free(OSSL_DECODER *decoder)
     CRYPTO_DOWN_REF(&decoder->base.refcnt, &ref, decoder->base.lock);
     if (ref > 0)
         return;
+    OPENSSL_free(decoder->base.name);
     ossl_provider_free(decoder->base.prov);
     CRYPTO_THREAD_lock_free(decoder->base.lock);
     OPENSSL_free(decoder);
@@ -169,6 +170,10 @@ void *ossl_decoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
     if ((decoder = ossl_decoder_new()) == NULL)
         return NULL;
     decoder->base.id = id;
+    if ((decoder->base.name = ossl_algorithm_get1_first_name(algodef)) == NULL) {
+        OSSL_DECODER_free(decoder);
+        return NULL;
+    }
     decoder->base.propdef = algodef->property_definition;
     decoder->base.description = algodef->algorithm_description;
 
@@ -424,6 +429,11 @@ int OSSL_DECODER_number(const OSSL_DECODER *decoder)
     }
 
     return decoder->base.id;
+}
+
+const char *OSSL_DECODER_name(const OSSL_DECODER *decoder)
+{
+    return decoder->base.name;
 }
 
 const char *OSSL_DECODER_description(const OSSL_DECODER *decoder)
