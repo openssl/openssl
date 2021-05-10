@@ -3052,13 +3052,16 @@ static int check_cert_usable(SSL *s, const SIGALG_LOOKUP *sig, X509 *x,
     const SIGALG_LOOKUP *lu;
     int mdnid, pknid, supported;
     size_t i;
+    const char *mdname = NULL;
 
     /*
      * If the given EVP_PKEY cannot support signing with this digest,
      * the answer is simply 'no'.
      */
+    if (sig->hash != NID_undef)
+        mdname = OBJ_nid2sn(sig->hash);
     supported = EVP_PKEY_digestsign_supports_digest(pkey, s->ctx->libctx,
-                                                    OBJ_nid2sn(sig->hash),
+                                                    mdname,
                                                     s->ctx->propq);
     if (supported <= 0)
         return 0;
