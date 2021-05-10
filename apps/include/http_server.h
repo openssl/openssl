@@ -35,12 +35,14 @@
 #  include <signal.h>
 #  define MAXERRLEN 1000 /* limit error text sent to syslog to 1000 bytes */
 # else
+#  undef LOG_DEBUG
 #  undef LOG_INFO
 #  undef LOG_WARNING
 #  undef LOG_ERR
-#  define LOG_INFO      0
-#  define LOG_WARNING   1
-#  define LOG_ERR       2
+#  define LOG_DEBUG     7
+#  define LOG_INFO      6
+#  define LOG_WARNING   4
+#  define LOG_ERR       3
 # endif
 
 /*-

@@ -2540,6 +2540,7 @@ int cmp_main(int argc, char **argv)
     X509 *newcert = NULL;
     ENGINE *engine = NULL;
     char mock_server[] = "mock server:1";
+    OSSL_CMP_CTX *srv_cmp_ctx = NULL;
     int ret = 0; /* default: failure */
 
     prog = opt_appname(argv[0]);
@@ -2651,12 +2652,13 @@ int cmp_main(int argc, char **argv)
 
         if ((srv_ctx = setup_srv_ctx(engine)) == NULL)
             goto err;
+        srv_cmp_ctx = OSSL_CMP_SRV_CTX_get0_cmp_ctx(srv_ctx);
         OSSL_CMP_CTX_set_transfer_cb_arg(cmp_ctx, srv_ctx);
-        if (!OSSL_CMP_CTX_set_log_cb(OSSL_CMP_SRV_CTX_get0_cmp_ctx(srv_ctx),
-                                     print_to_bio_out)) {
+        if (!OSSL_CMP_CTX_set_log_cb(srv_cmp_ctx, print_to_bio_out)) {
             CMP_err1("cannot set up error reporting and logging for %s", prog);
             goto err;
         }
+        OSSL_CMP_CTX_set_log_verbosity(srv_cmp_ctx, opt_verbosity);
     }
 
 
@@ -2667,6 +2669,7 @@ int cmp_main(int argc, char **argv)
         BIO *acbio;
         BIO *cbio = NULL;
         int msgs = 0;
+        int retry = 1;
 
         if ((acbio = http_server_init_bio(prog, opt_port)) == NULL)
             goto err;
@@ -2678,10 +2681,17 @@ int cmp_main(int argc, char **argv)
             ret = http_server_get_asn1_req(ASN1_ITEM_rptr(OSSL_CMP_MSG),
                                            (ASN1_VALUE **)&req, &path,
                                            &cbio, acbio, prog, 0, 0);
-            if (ret == 0)
-                continue;
-            if (ret++ == -1)
-                break; /* fatal error */
+            if (ret == 0) { /* no request yet */
+                if (retry) {
+                    sleep(1);
+                    retry = 0;
+                    continue;
+                }
+                ret = 0;
+                goto next;
+            }
+            if (ret++ == -1) /* fatal error */
+                break;
 
             ret = 0;
             msgs++;
@@ -2692,7 +2702,7 @@ int cmp_main(int argc, char **argv)
                              path);
                     OPENSSL_free(path);
                     OSSL_CMP_MSG_free(req);
-                    goto cont;
+                    goto next;
                 }
                 OPENSSL_free(path);
                 resp = OSSL_CMP_CTX_server_perform(cmp_ctx, req);
@@ -2708,10 +2718,12 @@ int cmp_main(int argc, char **argv)
                 OSSL_CMP_MSG_free(resp);
                 if (!ret)
                     break; /* treated as fatal error */
-            } else {
-                (void)http_server_send_status(cbio, 400, "Bad Request");
             }
-        cont:
+        next:
+            if (!ret) { /* on transmission error, cancel CMP transaction */
+                (void)OSSL_CMP_CTX_set1_transactionID(srv_cmp_ctx, NULL);
+                (void)OSSL_CMP_CTX_set1_senderNonce(srv_cmp_ctx, NULL);
+            }
             BIO_free_all(cbio);
             cbio = NULL;
         }
