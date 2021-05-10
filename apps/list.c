@@ -1560,7 +1560,7 @@ opthelp:
             return 1;
         case OPT_HELP:
             opt_help(list_options);
-            break;
+            return 0;
         case OPT_ONE:
             one = 1;
             break;
