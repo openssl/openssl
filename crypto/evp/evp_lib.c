@@ -354,7 +354,7 @@ int evp_cipher_cache_constants(EVP_CIPHER *cipher)
     params[7] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK,
                                          &multiblock);
     params[8] = OSSL_PARAM_construct_end();
-    ok = evp_do_ciph_getparams(cipher, params);
+    ok = evp_do_ciph_getparams(cipher, params) > 0;
     if (ok) {
         cipher->block_size = blksz;
         cipher->iv_len = ivlen;
@@ -368,10 +368,8 @@ int evp_cipher_cache_constants(EVP_CIPHER *cipher)
             cipher->flags |= EVP_CIPH_FLAG_CTS;
         if (multiblock)
             cipher->flags |= EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK;
-        /* Provided implementations may have a custom cipher_cipher */
-        if (cipher->prov != NULL && cipher->ccipher != NULL)
+        if (cipher->ccipher != NULL)
             cipher->flags |= EVP_CIPH_FLAG_CUSTOM_CIPHER;
-        /* Provided implementations may also have custom ASN1 algorithm parameters */
         if (OSSL_PARAM_locate_const(EVP_CIPHER_gettable_ctx_params(cipher),
                                     OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS))
             cipher->flags |= EVP_CIPH_FLAG_CUSTOM_ASN1;
