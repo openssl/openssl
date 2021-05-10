@@ -24,7 +24,7 @@ jobs:
           no-blake2,
           no-buildtest-c++,
           no-bulk,
-          no-cached-fetch
+          no-cached-fetch,
           no-camellia,
           no-capieng,
           no-cast,
