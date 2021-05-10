@@ -23,7 +23,7 @@ void ossl_ffc_params_init(FFC_PARAMS *params)
     memset(params, 0, sizeof(*params));
     params->pcounter = -1;
     params->gindex = FFC_UNVERIFIABLE_GINDEX;
-    params->flags = FFC_PARAM_FLAG_VALIDATE_ALL;
+    params->flags = FFC_PARAM_FLAG_VALIDATE_PQG;
 }
 
 void ossl_ffc_params_cleanup(FFC_PARAMS *params)
@@ -207,39 +207,11 @@ int ossl_ffc_params_cmp(const FFC_PARAMS *a, const FFC_PARAMS *b, int ignore_q)
            && (ignore_q || BN_cmp(a->q, b->q) == 0); /* Note: q may be NULL */
 }
 
-static const OSSL_ITEM flag_map[] = {
-    { FFC_PARAM_FLAG_VALIDATE_PQ, OSSL_FFC_PARAM_VALIDATE_PQ },
-    { FFC_PARAM_FLAG_VALIDATE_G, OSSL_FFC_PARAM_VALIDATE_G },
-    { FFC_PARAM_FLAG_VALIDATE_ALL, OSSL_FFC_PARAM_VALIDATE_PQG },
-    { 0, "" }
-};
-
-int ossl_ffc_params_flags_from_name(const char *name)
-{
-    size_t i;
-
-    for (i = 0; i < OSSL_NELEM(flag_map); ++i) {
-        if (strcasecmp(flag_map[i].ptr, name) == 0)
-            return flag_map[i].id;
-    }
-    return NID_undef;
-}
-
-const char *ossl_ffc_params_flags_to_name(int flags)
-{
-    size_t i;
-
-    flags &= FFC_PARAM_FLAG_VALIDATE_ALL;
-    for (i = 0; i < OSSL_NELEM(flag_map); ++i) {
-        if ((int)flag_map[i].id == flags)
-            return flag_map[i].ptr;
-    }
-    return "";
-}
-
 int ossl_ffc_params_todata(const FFC_PARAMS *ffc, OSSL_PARAM_BLD *bld,
                       OSSL_PARAM params[])
 {
+    int test_flags;
+
     if (ffc == NULL)
         return 0;
 
@@ -279,10 +251,20 @@ int ossl_ffc_params_todata(const FFC_PARAMS *ffc, OSSL_PARAM_BLD *bld,
                                                  name))
             return 0;
     }
-    if (!ossl_param_build_set_utf8_string(bld, params,
-                                          OSSL_PKEY_PARAM_FFC_VALIDATE_TYPE,
-                                          ossl_ffc_params_flags_to_name(ffc->flags)))
+    test_flags = ((ffc->flags & FFC_PARAM_FLAG_VALIDATE_PQ) != 0);
+    if (!ossl_param_build_set_int(bld, params,
+                                  OSSL_PKEY_PARAM_FFC_VALIDATE_PQ, test_flags))
         return 0;
+    test_flags = ((ffc->flags & FFC_PARAM_FLAG_VALIDATE_G) != 0);
+    if (!ossl_param_build_set_int(bld, params,
+                                  OSSL_PKEY_PARAM_FFC_VALIDATE_G, test_flags))
+        return 0;
+    test_flags = ((ffc->flags & FFC_PARAM_FLAG_VALIDATE_LEGACY) != 0);
+    if (!ossl_param_build_set_int(bld, params,
+                                  OSSL_PKEY_PARAM_FFC_VALIDATE_LEGACY,
+                                  test_flags))
+        return 0;
+
     if (ffc->mdname != NULL
         && !ossl_param_build_set_utf8_string(bld, params,
                                              OSSL_PKEY_PARAM_FFC_DIGEST,

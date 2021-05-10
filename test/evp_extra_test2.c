@@ -596,20 +596,6 @@ static int do_check_int(OSSL_PARAM params[], const char *key, int expected)
            && TEST_int_eq(val, expected);
 }
 
-static int do_check_utf8_str(OSSL_PARAM params[], const char *key,
-                             const char *expected)
-{
-    OSSL_PARAM *p;
-    char *bufp = NULL;
-    int ret;
-
-    ret = TEST_ptr(p = OSSL_PARAM_locate(params, key))
-          && TEST_true(OSSL_PARAM_get_utf8_string(p, &bufp, 0))
-          && TEST_str_eq(bufp, expected);
-    OPENSSL_free(bufp);
-    return ret;
-}
-
 static int test_dsa_todata(void)
 {
     EVP_PKEY *pkey = NULL;
@@ -648,8 +634,9 @@ static int test_dsa_todata(void)
         || !do_check_int(to_params, OSSL_PKEY_PARAM_FFC_GINDEX, -1)
         || !do_check_int(to_params, OSSL_PKEY_PARAM_FFC_PCOUNTER, -1)
         || !do_check_int(to_params, OSSL_PKEY_PARAM_FFC_H, 0)
-        || !do_check_utf8_str(to_params, OSSL_PKEY_PARAM_FFC_VALIDATE_TYPE,
-                              OSSL_FFC_PARAM_VALIDATE_PQG)
+        || !do_check_int(to_params, OSSL_PKEY_PARAM_FFC_VALIDATE_PQ, 1)
+        || !do_check_int(to_params, OSSL_PKEY_PARAM_FFC_VALIDATE_G, 1)
+        || !do_check_int(to_params, OSSL_PKEY_PARAM_FFC_VALIDATE_LEGACY, 0)
         || !TEST_ptr_null(OSSL_PARAM_locate(to_params, OSSL_PKEY_PARAM_FFC_SEED)))
         goto err;
 

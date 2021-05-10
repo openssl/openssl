@@ -479,7 +479,7 @@ static const char *default_mdname(size_t N)
  *  For validation one of:
  *   -FFC_PARAM_FLAG_VALIDATE_PQ
  *   -FFC_PARAM_FLAG_VALIDATE_G
- *   -FFC_PARAM_FLAG_VALIDATE_ALL
+ *   -FFC_PARAM_FLAG_VALIDATE_PQG
  *  For generation of p & q:
  *   - This is skipped if p & q are passed in.
  *   - If the seed is passed in then generation of p & q uses this seed (and if
@@ -720,7 +720,7 @@ int ossl_ffc_params_FIPS186_4_gen_verify(OSSL_LIB_CTX *libctx,
         goto err;
 
     /* If validating p & q only then skip the g validation test */
-    if ((flags & FFC_PARAM_FLAG_VALIDATE_ALL) == FFC_PARAM_FLAG_VALIDATE_PQ)
+    if ((flags & FFC_PARAM_FLAG_VALIDATE_PQG) == FFC_PARAM_FLAG_VALIDATE_PQ)
         goto pass;
 g_only:
     if ((mont = BN_MONT_CTX_new()) == NULL)
@@ -972,7 +972,7 @@ int ossl_ffc_params_FIPS186_2_gen_verify(OSSL_LIB_CTX *libctx,
         }
     }
     /* If validating p & q only then skip the g validation test */
-    if ((flags & FFC_PARAM_FLAG_VALIDATE_ALL) == FFC_PARAM_FLAG_VALIDATE_PQ)
+    if ((flags & FFC_PARAM_FLAG_VALIDATE_PQG) == FFC_PARAM_FLAG_VALIDATE_PQ)
         goto pass;
 g_only:
     if ((mont = BN_MONT_CTX_new()) == NULL)
