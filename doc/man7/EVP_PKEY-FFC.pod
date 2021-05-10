@@ -100,6 +100,23 @@ satisfies g = h^j mod p (where g != 1 and "j" is the cofactor).
 
 An optional informational cofactor parameter that should equal to (p - 1) / q.
 
+=item "validate-pq" (B<OSSL_PKEY_PARAM_FFC_VALIDATE_PQ>) <unsigned integer>
+
+=item "validate-g" (B<OSSL_PKEY_PARAM_FFC_VALIDATE_G>) <unsigned integer>
+
+These boolean values are used during FIPS186-4 or FIPS186-2 key validation checks
+(See L<EVP_PKEY_param_check(3)>) to select validation options. By default
+I<validate-pq> and I<validate-g> are both set to 1 to check that p,q and g are
+valid. Either of these may be set to 0 to skip a test, which is mainly useful
+for testing purposes.
+
+=item "validate-legacy" (B<OSSL_PKEY_PARAM_FFC_VALIDATE_LEGACY>) <unsigned integer>
+
+This boolean value is used during key validation checks
+(See L<EVP_PKEY_param_check(3)>) to select the validation type. The default
+value of 0 selects FIPS186-4 validation. Setting this value to 1 selects
+FIPS186-2 validation.
+
 =back
 
 =head2 FFC key generation parameters

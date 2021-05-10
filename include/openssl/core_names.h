@@ -294,12 +294,9 @@ extern "C" {
 #define OSSL_PKEY_PARAM_FFC_SEED            "seed"
 #define OSSL_PKEY_PARAM_FFC_COFACTOR        "j"
 #define OSSL_PKEY_PARAM_FFC_H               "hindex"
-#define OSSL_PKEY_PARAM_FFC_VALIDATE_TYPE   "valid-type"
-
-/* Diffie-Hellman/DSA Parameters parameter validation types */
-#define OSSL_FFC_PARAM_VALIDATE_PQ          "validate-pq"
-#define OSSL_FFC_PARAM_VALIDATE_G           "validate-g"
-#define OSSL_FFC_PARAM_VALIDATE_PQG         "validate-pqg"
+#define OSSL_PKEY_PARAM_FFC_VALIDATE_PQ     "validate-pq"
+#define OSSL_PKEY_PARAM_FFC_VALIDATE_G      "validate-g"
+#define OSSL_PKEY_PARAM_FFC_VALIDATE_LEGACY "validate-legacy"
 
 /* Diffie-Hellman params */
 #define OSSL_PKEY_PARAM_DH_GENERATOR        "safeprime-generator"
