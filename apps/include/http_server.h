@@ -38,9 +38,11 @@
 #  undef LOG_INFO
 #  undef LOG_WARNING
 #  undef LOG_ERR
-#  define LOG_INFO      0
-#  define LOG_WARNING   1
-#  define LOG_ERR       2
+#  undef LOG_DEBUG
+#  define LOG_ERR       3
+#  define LOG_WARNING   4
+#  define LOG_INFO      6
+#  define LOG_DEBUG     7
 # endif
 
 /*-
