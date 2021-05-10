@@ -581,7 +581,7 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
         }
 
         if ((si = OSSL_CMP_STATUSINFO_new(OSSL_CMP_PKISTATUS_rejection,
-                                          fail_info, NULL)) != NULL) {
+                                          fail_info, data)) != NULL) {
             if (err != 0 && (flags & ERR_TXT_STRING) != 0)
                 data = ERR_reason_error_string(err);
             rsp = ossl_cmp_error_new(srv_ctx->ctx, si,

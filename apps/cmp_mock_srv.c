@@ -251,7 +251,8 @@ static OSSL_CMP_PKISI *process_rr(OSSL_CMP_SRV_CTX *srv_ctx,
     if (X509_NAME_cmp(issuer, X509_get_issuer_name(ctx->certOut)) != 0
             || ASN1_INTEGER_cmp(serial,
                                 X509_get0_serialNumber(ctx->certOut)) != 0) {
-        ERR_raise(ERR_LIB_CMP, CMP_R_REQUEST_NOT_ACCEPTED);
+        ERR_raise_data(ERR_LIB_CMP, CMP_R_REQUEST_NOT_ACCEPTED,
+                       "wrong certificate to revoke");
         return NULL;
     }
     return OSSL_CMP_PKISI_dup(ctx->statusOut);
