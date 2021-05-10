@@ -131,11 +131,11 @@ static int dsa_setup_md(PROV_DSA_CTX *ctx,
                                                             sha1_allowed);
         size_t mdname_len = strlen(mdname);
 
-        if (md == NULL || md_nid == NID_undef) {
+        if (md == NULL || md_nid < 0) {
             if (md == NULL)
                 ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
                                "%s could not be fetched", mdname);
-            if (md_nid == NID_undef)
+            if (md_nid < 0)
                 ERR_raise_data(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED,
                                "digest=%s", mdname);
             if (mdname_len >= sizeof(ctx->mdname))

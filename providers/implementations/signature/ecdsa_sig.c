@@ -227,7 +227,7 @@ static int ecdsa_setup_md(PROV_ECDSA_CTX *ctx, const char *mdname,
     sha1_allowed = (ctx->operation != EVP_PKEY_OP_SIGN);
     md_nid = ossl_digest_get_approved_nid_with_sha1(ctx->libctx, md,
                                                     sha1_allowed);
-    if (md_nid == NID_undef) {
+    if (md_nid < 0) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED,
                        "digest=%s", mdname);
         EVP_MD_free(md);

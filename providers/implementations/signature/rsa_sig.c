@@ -289,13 +289,13 @@ static int rsa_setup_md(PROV_RSA_CTX *ctx, const char *mdname,
         size_t mdname_len = strlen(mdname);
 
         if (md == NULL
-            || md_nid == NID_undef
+            || md_nid <= 0
             || !rsa_check_padding(ctx, mdname, NULL, md_nid)
             || mdname_len >= sizeof(ctx->mdname)) {
             if (md == NULL)
                 ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
                                "%s could not be fetched", mdname);
-            if (md_nid == NID_undef)
+            if (md_nid <= 0)
                 ERR_raise_data(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED,
                                "digest=%s", mdname);
             if (mdname_len >= sizeof(ctx->mdname))
@@ -344,9 +344,9 @@ static int rsa_setup_mgf1_md(PROV_RSA_CTX *ctx, const char *mdname,
         return 0;
     }
     /* The default for mgf1 is SHA1 - so allow SHA1 */
-    if ((mdnid = ossl_digest_rsa_sign_get_md_nid(ctx->libctx, md, 1)) == NID_undef
+    if ((mdnid = ossl_digest_rsa_sign_get_md_nid(ctx->libctx, md, 1)) <= 0
         || !rsa_check_padding(ctx, NULL, mdname, mdnid)) {
-        if (mdnid == NID_undef)
+        if (mdnid <= 0)
             ERR_raise_data(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED,
                            "digest=%s", mdname);
         EVP_MD_free(md);
