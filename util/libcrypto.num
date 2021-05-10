@@ -5400,3 +5400,4 @@ BIO_new_from_core_bio                   ?	3_0_0	EXIST::FUNCTION:
 BIO_new_ex                              ?	3_0_0	EXIST::FUNCTION:
 BIO_s_core                              ?	3_0_0	EXIST::FUNCTION:
 OSSL_LIB_CTX_new_from_dispatch          ?	3_0_0	EXIST::FUNCTION:
+CTLOG_STORE_add0_log                    ?	3_0_0	EXIST::FUNCTION:CT

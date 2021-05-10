@@ -4,7 +4,8 @@
 
 CTLOG_STORE_new_ex,
 CTLOG_STORE_new, CTLOG_STORE_free,
-CTLOG_STORE_load_default_file, CTLOG_STORE_load_file -
+CTLOG_STORE_load_default_file, CTLOG_STORE_load_file,
+CTLOG_STORE_add0_log -
 Create and populate a Certificate Transparency log list
 
 =head1 SYNOPSIS
@@ -18,10 +19,13 @@ Create and populate a Certificate Transparency log list
  int CTLOG_STORE_load_default_file(CTLOG_STORE *store);
  int CTLOG_STORE_load_file(CTLOG_STORE *store, const char *file);
 
+ int CTLOG_STORE_add0_log(CTLOG_STORE *store, CTLOG *log);
+
 =head1 DESCRIPTION
 
 A CTLOG_STORE is a container for a list of CTLOGs (Certificate Transparency
-logs). The list can be loaded from one or more files and then searched by LogID
+logs). The list can be populated manually or loaded from one or more files
+and then searched by LogID
 (see RFC 6962, Section 3.2, for the definition of a LogID).
 
 CTLOG_STORE_new_ex() creates an empty list of CT logs associated with
@@ -30,13 +34,15 @@ the library context I<libctx> and the property query string I<propq>.
 CTLOG_STORE_new() does the same thing as CTLOG_STORE_new_ex() but with
 the default library context and property query string.
 
-The CTLOG_STORE is then populated by CTLOG_STORE_load_default_file() or
-CTLOG_STORE_load_file(). CTLOG_STORE_load_default_file() loads from the default
+The CTLOG_STORE is then populated by CTLOG_STORE_load_default_file(),
+CTLOG_STORE_load_file(), or CTLOG_STORE_add0_log().
+CTLOG_STORE_load_default_file() loads from the default
 file, which is named F<ct_log_list.cnf> in OPENSSLDIR (see the output of
 L<openssl-version(1)>). This can be overridden using an environment variable
 named B<CTLOG_FILE>. CTLOG_STORE_load_file() loads from a caller-specified file
 path instead. Both of these functions append any loaded CT logs to the
-CTLOG_STORE.
+CTLOG_STORE. CTLOG_STORE_add0_log() adds a CTLOG to the CTLOG_STORE and takes
+ownership of it.
 
 The expected format of the file is:
 
@@ -65,20 +71,23 @@ invalid if it is missing a "key" or "description" field.
 Both B<CTLOG_STORE_load_default_file> and B<CTLOG_STORE_load_file> return 1 if
 all CT logs in the file are successfully parsed and loaded, 0 otherwise.
 
+B<CTLOG_STORE_add0_log> returns 1 if the log was added successfully, 0 otherwise.
+
 =head1 SEE ALSO
 
 L<ct(7)>,
 L<CTLOG_STORE_get0_log_by_id(3)>,
+L<CTLOG_new(3)>,
 L<SSL_CTX_set_ctlog_list_file(3)>
 
 =head1 HISTORY
 
-CTLOG_STORE_new_ex was added in OpenSSL 3.0. All other functions were
-added in OpenSSL 1.1.0.
+CTLOG_STORE_new_ex and CTLOG_STORE_add0_log were added in OpenSSL 3.0.
+All other functions were added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

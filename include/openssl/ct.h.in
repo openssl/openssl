@@ -518,6 +518,12 @@ __owur int CTLOG_STORE_load_file(CTLOG_STORE *store, const char *file);
  */
 __owur int CTLOG_STORE_load_default_file(CTLOG_STORE *store);
 
+/*
+ * Adds a CT log into a |store| and takes ownership of it.
+ * Returns 1 if operation is successful, or 0 otherwise.
+ */
+__owur int CTLOG_STORE_add0_log(CTLOG_STORE *store, CTLOG *log);
+
 #  ifdef  __cplusplus
 }
 #  endif
