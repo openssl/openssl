@@ -259,6 +259,15 @@ end:
     return ret;
 }
 
+int CTLOG_STORE_add0_log(CTLOG_STORE *store, CTLOG *log)
+{
+    if (!sk_CTLOG_push(store->logs, log)) {
+        ERR_raise(ERR_LIB_CT, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+    return 1;
+}
+
 /*
  * Initialize a new CTLOG object.
  * Takes ownership of the public key.

@@ -497,6 +497,60 @@ static int test_ctlog_from_base64(void)
         return 0;
     return 1;
 }
+
+static int test_ctlog_store_from_ctlog(void)
+{
+    /* Google test log */
+    const uint8_t log_id[32]  = {
+        0xDF, 0x1C, 0x2E, 0xC1, 0x15, 0x00, 0x94, 0x52,
+        0x47, 0xA9, 0x61, 0x68, 0x32, 0x5D, 0xDC, 0x5C,
+        0x79, 0x59, 0xE8, 0xF7, 0xC6, 0xD3, 0x88, 0xFC,
+        0x00, 0x2E, 0x0B, 0xBD, 0x3F, 0x74, 0xD7, 0x64
+    };
+    const char *log_name;
+    const CTLOG *log;
+    EVP_PKEY *log_public_key = NULL;
+    CTLOG *log_copy = NULL;
+    CTLOG_STORE *store = NULL;
+
+    SETUP_CT_TEST_FIXTURE();
+    
+    /* Extract log from file-based store. */
+    if (!TEST_ptr(log = CTLOG_STORE_get0_log_by_id(fixture->ctlog_store,
+                                                   log_id, sizeof(log_id))))
+        goto err;
+    log_name = CTLOG_get0_name(log);
+    log_public_key = CTLOG_get0_public_key(log);
+    if (!TEST_true(EVP_PKEY_up_ref(log_public_key)))
+        goto err;
+    if (!TEST_ptr(log_copy = CTLOG_new(log_public_key, log_name)))
+        goto err;
+    CTLOG_STORE_free(fixture->ctlog_store);
+
+    /* Create new store and add single log directly. */
+    if (!TEST_ptr(store = CTLOG_STORE_new()))
+        goto err;
+    if (!TEST_true(CTLOG_STORE_add0_log(store, log_copy)))
+        goto err;
+    fixture->ctlog_store = store;
+
+    fixture->certs_dir = certs_dir;
+    fixture->certificate_file = "embeddedSCTs1.pem";
+    fixture->issuer_file = "embeddedSCTs1_issuer.pem";
+    fixture->expected_sct_count = fixture->expected_valid_sct_count = 1;
+    fixture->test_validity = 1;
+    EXECUTE_CT_TEST();
+    goto end;
+err:
+    if (log_public_key != NULL && log_copy == NULL)
+        EVP_PKEY_free(log_public_key);
+    if (log_copy != NULL)
+        CTLOG_free(log_copy);
+    if (store != NULL)
+        CTLOG_STORE_free(store);
+end:
+    return result;
+}
 #endif
 
 int setup_tests(void)
@@ -517,6 +571,7 @@ int setup_tests(void)
     ADD_TEST(test_encode_tls_sct);
     ADD_TEST(test_default_ct_policy_eval_ctx_time_is_now);
     ADD_TEST(test_ctlog_from_base64);
+    ADD_TEST(test_ctlog_store_from_ctlog);
 #else
     printf("No CT support\n");
 #endif
