@@ -407,12 +407,12 @@ OSSL_PROPERTY_LIST *ossl_parse_query(OSSL_LIB_CTX *ctx, const char *s,
         if (match_ch(&s, '-')) {
             prop->oper = PROPERTY_OVERRIDE;
             prop->optional = 0;
-            if (!parse_name(ctx, &s, 0, &prop->name_idx))
+            if (!parse_name(ctx, &s, 1, &prop->name_idx))
                 goto err;
             goto skip_value;
         }
         prop->optional = match_ch(&s, '?');
-        if (!parse_name(ctx, &s, 0, &prop->name_idx))
+        if (!parse_name(ctx, &s, 1, &prop->name_idx))
             goto err;
 
         if (match_ch(&s, '=')) {
