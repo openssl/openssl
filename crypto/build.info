@@ -81,6 +81,7 @@ ENDIF
 # Implementations are now spread across several libraries, so the CPUID define
 # need to be applied to all affected libraries and modules.
 DEFINE[../providers/libcommon.a]=$CPUIDDEF
+DEFINE[../providers/libdefault.a]=$CPUIDDEF
 
 # The Core
 $CORE_COMMON=provider_core.c provider_predefined.c \
