@@ -177,6 +177,8 @@ static const OSSL_ITEM *p_get_reason_strings(void *_)
 {
     static const OSSL_ITEM reason_strings[] = {
         {1, "dummy reason string"},
+        {2, "Can't create child library context"},
+        {3, "Can't load default provider"},
         {0, NULL}
     };
 
@@ -243,6 +245,9 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
     /* We only do this if we are linked with libcrypto */
     ctx->libctx = OSSL_LIB_CTX_new_child(handle, oin);
     if (ctx->libctx == NULL) {
+        /* We set error "2" for a failure to create the child libctx*/
+        p_set_error(ERR_LIB_PROV, 2, ctx->thisfile, OPENSSL_LINE, ctx->thisfunc,
+                    NULL);
         p_teardown(ctx);
         return 0;
     }
@@ -253,6 +258,9 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
     ctx->deflt = OSSL_PROVIDER_load(ctx->libctx, "default");
     if (ctx->deflt == NULL
             || !OSSL_PROVIDER_available(ctx->libctx, "default")) {
+        /* We set error "3" for a failure to load the default provider */
+        p_set_error(ERR_LIB_PROV, 3, ctx->thisfile, OPENSSL_LINE, ctx->thisfunc,
+                    NULL);
         p_teardown(ctx);
         return 0;
     }
