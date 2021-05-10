@@ -42,7 +42,7 @@
 /* Validation flags */
 # define FFC_PARAM_FLAG_VALIDATE_PQ    0x01
 # define FFC_PARAM_FLAG_VALIDATE_G     0x02
-# define FFC_PARAM_FLAG_VALIDATE_ALL                                           \
+# define FFC_PARAM_FLAG_VALIDATE_PQG                                           \
     (FFC_PARAM_FLAG_VALIDATE_PQ | FFC_PARAM_FLAG_VALIDATE_G)
 #define FFC_PARAM_FLAG_VALIDATE_LEGACY 0x04
 
@@ -105,7 +105,7 @@ typedef struct ffc_params_st {
     int gindex;
     int h; /* loop counter for unverifiable g */
 
-    unsigned int flags; /* See FFC_PARAM_FLAG_VALIDATE_ALL */
+    unsigned int flags;
     /*
      * The digest to use for generation or validation. If this value is NULL,
      * then the digest is chosen using the value of N.
@@ -208,8 +208,5 @@ const char *ossl_ffc_named_group_get_name(const DH_NAMED_GROUP *);
 const BIGNUM *ossl_ffc_named_group_get_q(const DH_NAMED_GROUP *group);
 int ossl_ffc_named_group_set_pqg(FFC_PARAMS *ffc, const DH_NAMED_GROUP *group);
 #endif
-
-const char *ossl_ffc_params_flags_to_name(int flags);
-int ossl_ffc_params_flags_from_name(const char *name);
 
 #endif /* OSSL_INTERNAL_FFC_H */
