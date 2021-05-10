@@ -507,6 +507,8 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
 #endif
         }
     }
+    ossl_cmp_log1(DEBUG, ctx,
+                  "received %s", ossl_cmp_bodytype_to_string(req_type));
 
     res = ossl_cmp_msg_check_update(ctx, req, unprotected_exception,
                                     srv_ctx->acceptUnprotected);
@@ -591,18 +593,25 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
     OSSL_CMP_CTX_print_errors(ctx);
     ctx->secretValue = backup_secret;
 
-    /* possibly close the transaction */
     rsp_type =
         rsp != NULL ? ossl_cmp_msg_get_bodytype(rsp) : OSSL_CMP_PKIBODY_ERROR;
+    if (rsp != NULL)
+        ossl_cmp_log1(DEBUG, ctx,
+                      "sending %s", ossl_cmp_bodytype_to_string(rsp_type));
+    else
+        ossl_cmp_log(ERR, ctx, "cannot send proper CMP response");
+
+    /* possibly close the transaction */
+    ctx->status = -2; /* this indicates transaction is open */
     switch (rsp_type) {
     case OSSL_CMP_PKIBODY_IP:
     case OSSL_CMP_PKIBODY_CP:
     case OSSL_CMP_PKIBODY_KUP:
-    case OSSL_CMP_PKIBODY_RP:
         if (OSSL_CMP_CTX_get_option(ctx, OSSL_CMP_OPT_IMPLICIT_CONFIRM) == 0)
             break;
         /* fall through */
 
+    case OSSL_CMP_PKIBODY_RP:
     case OSSL_CMP_PKIBODY_PKICONF:
     case OSSL_CMP_PKIBODY_GENP:
     case OSSL_CMP_PKIBODY_ERROR:
@@ -610,6 +619,7 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
         /* prepare for next transaction, ignoring any errors here: */
         (void)OSSL_CMP_CTX_set1_transactionID(ctx, NULL);
         (void)OSSL_CMP_CTX_set1_senderNonce(ctx, NULL);
+        ctx->status = -1; /* transaction closed */
 
     default: /* not closing transaction in other cases */
         break;
@@ -623,19 +633,19 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
  * returns received message on success, else NULL and pushes an element on the
  * error stack.
  */
-OSSL_CMP_MSG * OSSL_CMP_CTX_server_perform(OSSL_CMP_CTX *client_ctx,
-                                           const OSSL_CMP_MSG *req)
+OSSL_CMP_MSG *OSSL_CMP_CTX_server_perform(OSSL_CMP_CTX *client_ctx,
+                                          const OSSL_CMP_MSG *req)
 {
     OSSL_CMP_SRV_CTX *srv_ctx = NULL;
 
     if (client_ctx == NULL || req == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
-        return 0;
+        return NULL;
     }
 
     if ((srv_ctx = OSSL_CMP_CTX_get_transfer_cb_arg(client_ctx)) == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_TRANSFER_ERROR);
-        return 0;
+        return NULL;
     }
 
     return OSSL_CMP_SRV_process_request(srv_ctx, req);
