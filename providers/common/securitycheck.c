@@ -231,8 +231,8 @@ int ossl_digest_get_approved_nid_with_sha1(OSSL_LIB_CTX *ctx, const EVP_MD *md,
 
 # if !defined(OPENSSL_NO_FIPS_SECURITYCHECKS)
     if (ossl_securitycheck_enabled(ctx)) {
-        if (mdnid == NID_sha1 && !sha1_allowed)
-            mdnid = NID_undef;
+        if (mdnid == NID_undef || (mdnid == NID_sha1 && !sha1_allowed))
+            mdnid = -1; /* disallowed by security checks */
     }
 # endif /* OPENSSL_NO_FIPS_SECURITYCHECKS */
     return mdnid;

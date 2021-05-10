@@ -97,11 +97,6 @@ Key = P-256-PUBLIC
 Input = "Hello World"
 Output = 3046022100e7515177ec3817b77a4a94066ab3070817b7aa9d44a8a09f040da250116e8972022100ba59b0f631258e59a9026be5d84f60685f4cf22b9165a0c2736d5c21c8ec1862
 
-# Invalid digest
-DigestVerify = MD5
-Key = P-256-PUBLIC
-Result = DIGESTVERIFYINIT_ERROR
-
 # Oneshot tests
 OneShotDigestVerify = SHA256
 Key = P-256-PUBLIC
@@ -214,3 +209,10 @@ Securitycheck = 1
 Ctrl = digest:SHA1
 Input = "0123456789ABCDEF1234"
 Result = PKEY_CTRL_ERROR
+
+# Invalid non-approved digest
+Availablein = fips
+DigestVerify = MD5
+Securitycheck = 1
+Key = P-256-PUBLIC
+Result = DIGESTVERIFYINIT_ERROR
