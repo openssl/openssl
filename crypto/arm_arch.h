@@ -72,6 +72,7 @@
 # ifndef __ASSEMBLER__
 extern unsigned int OPENSSL_armcap_P;
 extern unsigned int OPENSSL_arm_midr;
+extern unsigned int OPENSSL_armv8_rsa_neonized;
 # endif
 
 # define ARMV7_NEON      (1<<0)
