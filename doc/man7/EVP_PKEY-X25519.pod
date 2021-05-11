@@ -86,7 +86,7 @@ An B<EVP_PKEY> context can be obtained by calling:
 
 An B<X25519> key can be generated like this:
 
-    pkey = EVP_Q_keygen(NULL, NULL, "X25519");
+    pkey = EVP_PKEY_Q_keygen(NULL, NULL, "X25519");
 
 An B<X448>, B<ED25519>, or B<ED448> key can be generated likewise.
 
