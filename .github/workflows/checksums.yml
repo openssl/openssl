@@ -43,14 +43,15 @@ jobs:
       - name: make diff-fips-checksums
         run: make diff-fips-checksums
         working-directory: ./build
-
-#      - uses: actions/github-script@v4
-#        with:
-#          github-token: ${{secrets.GITHUB_TOKEN}}
-#          script: |
-#            github.issues.addLabels({
-#              issue_number: context.issue.number,
-#              owner: context.repo.owner,
-#              repo: context.repo.repo,
-#              labels: ['Triage']
-#            })
+      - name: set label
+        if: ${{ failure() }}
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            github.issues.addLabels({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['severity: fips change']
+            })
