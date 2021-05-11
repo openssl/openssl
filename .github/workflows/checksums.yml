@@ -41,16 +41,17 @@ jobs:
         run: make update-fips-checksums
         working-directory: ./build-pristine
       - name: make diff-fips-checksums
-        run: make diff-fips-checksums
+        run: make diff-fips-checksums || echo "fips_changed=1" >> $GITHUB_ENV
         working-directory: ./build
-
-#      - uses: actions/github-script@v4
-#        with:
-#          github-token: ${{secrets.GITHUB_TOKEN}}
-#          script: |
-#            github.issues.addLabels({
-#              issue_number: context.issue.number,
-#              owner: context.repo.owner,
-#              repo: context.repo.repo,
-#              labels: ['Triage']
-#            })
+      - name: set label
+        if: ${{ env.fips_changed }}
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            github.issues.addLabels({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['severity: fips change']
+            })
