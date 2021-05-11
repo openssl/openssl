@@ -101,7 +101,7 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio, int buf_size)
     if ((rctx = OPENSSL_zalloc(sizeof(*rctx))) == NULL)
         return NULL;
     rctx->state = OHS_ERROR;
-    rctx->buf_size = buf_size > 0 ? buf_size : HTTP_DEFAULT_MAX_LINE_LENGTH;
+    rctx->buf_size = buf_size > 0 ? buf_size : OSSL_HTTP_DEFAULT_MAX_LINE_LEN;
     rctx->buf = OPENSSL_malloc(rctx->buf_size);
     rctx->wbio = wbio;
     rctx->rbio = rbio;
@@ -109,7 +109,7 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio, int buf_size)
         OPENSSL_free(rctx);
         return NULL;
     }
-    rctx->max_resp_len = HTTP_DEFAULT_MAX_RESP_LEN;
+    rctx->max_resp_len = OSSL_HTTP_DEFAULT_MAX_RESP_LEN;
     /* everything else is 0, e.g. rctx->len_to_send, or NULL, e.g. rctx->mem  */
     return rctx;
 }
@@ -160,7 +160,7 @@ void OSSL_HTTP_REQ_CTX_set_max_response_length(OSSL_HTTP_REQ_CTX *rctx,
         ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
         return;
     }
-    rctx->max_resp_len = len != 0 ? (size_t)len : HTTP_DEFAULT_MAX_RESP_LEN;
+    rctx->max_resp_len = len != 0 ? (size_t)len : OSSL_HTTP_DEFAULT_MAX_RESP_LEN;
 }
 
 /*
