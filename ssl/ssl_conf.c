@@ -24,12 +24,12 @@ typedef struct {
     const char *name;
     int namelen;
     unsigned int name_flags;
-    unsigned long option_value;
+    uint64_t option_value;
 } ssl_flag_tbl;
 
 /* Switch table: use for single command line switches like no_tls2 */
 typedef struct {
-    unsigned long option_value;
+    uint64_t option_value;
     unsigned int name_flags;
 } ssl_switch_tbl;
 
@@ -84,7 +84,7 @@ struct ssl_conf_ctx_st {
     SSL_CTX *ctx;
     SSL *ssl;
     /* Pointer to SSL or SSL_CTX options field or NULL if none */
-    uint32_t *poptions;
+    uint64_t *poptions;
     /* Certificate filenames for each type */
     char *cert_filename[SSL_PKEY_NUM];
     /* Pointer to SSL or SSL_CTX cert_flags or NULL if none */
@@ -107,6 +107,7 @@ static void ssl_set_option(SSL_CONF_CTX *cctx, unsigned int name_flags,
                            unsigned long option_value, int onoff)
 {
     uint32_t *pflags;
+
     if (cctx->poptions == NULL)
         return;
     if (name_flags & SSL_TFLAG_INV)
@@ -120,10 +121,13 @@ static void ssl_set_option(SSL_CONF_CTX *cctx, unsigned int name_flags,
     case SSL_TFLAG_VFY:
         pflags = cctx->pvfy_flags;
         break;
-
+        
     case SSL_TFLAG_OPTION:
-        pflags = cctx->poptions;
-        break;
+        if (onoff)
+            *cctx->poptions |= option_value;
+        else
+            *cctx->poptions &= ~option_value;
+        return;
 
     default:
         return;
