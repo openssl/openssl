@@ -1130,44 +1130,67 @@ md-nits:
 lint:
 	lint -DLINT $(INCLUDES) $(SRCS)
 
-generate_apps:
+$(SRCDIR)/apps/openssl-vms.cnf: $(SRCDIR)/apps/openssl.cnf
 	( cd $(SRCDIR); $(PERL) VMS/VMSify-conf.pl \
 				< apps/openssl.cnf > apps/openssl-vms.cnf )
+.PHONY: generate_apps
+generate_apps: $(SRCDIR)/apps/openssl-vms.cnf
 
-generate_crypto_bn:
+$(SRCDIR)/crypto/bn/bn_prime.h: $(SRCDIR)/crypto/bn/bn_prime.pl
 	( cd $(SRCDIR); $(PERL) crypto/bn/bn_prime.pl > crypto/bn/bn_prime.h )
+.PHONY: generate_crypto_bn
+generate_crypto_bn: $(SRCDIR)/crypto/bn/bn_prime.h
 
-generate_crypto_objects:
+$(SRCDIR)/crypto/objects/obj_mac.num: $(SRCDIR)/crypto/objects/objects.pl \
+                                      $(SRCDIR)/crypto/objects/objects.txt
 	( cd $(SRCDIR); $(PERL) crypto/objects/objects.pl -n \
 				crypto/objects/objects.txt \
 				crypto/objects/obj_mac.num \
 				> crypto/objects/obj_mac.new && \
 	    mv crypto/objects/obj_mac.new crypto/objects/obj_mac.num )
+$(SRCDIR)/include/openssl/obj_mac.h: $(SRCDIR)/crypto/objects/objects.pl \
+                                     $(SRCDIR)/crypto/objects/obj_dat.pl \
+                                     $(SRCDIR)/crypto/objects/obj_mac.num \
+                                     $(SRCDIR)/crypto/objects/obj_compat.h
 	( cd $(SRCDIR); $(PERL) crypto/objects/objects.pl \
 				crypto/objects/objects.txt \
 				crypto/objects/obj_mac.num \
-				> include/openssl/obj_mac.h )
-	( cd $(SRCDIR); $(PERL) crypto/objects/obj_dat.pl \
+				> include/openssl/obj_mac.h && \
+			$(PERL) crypto/objects/obj_dat.pl \
 				include/openssl/obj_mac.h \
-				> crypto/objects/obj_dat.h )
+				> crypto/objects/obj_dat.h && \
+			sed -e '1,8d' crypto/objects/obj_compat.h \
+				>> include/openssl/obj_mac.h )
+$(SRCDIR)/crypto/objects/obj_dat.h: $(SRCDIR)/include/openssl/obj_mac.h
+$(SRCDIR)/crypto/objects/obj_xref.h: $(SRCDIR)/crypto/objects/objxref.pl \
+                                     $(SRCDIR)/crypto/objects/obj_mac.num \
+                                     $(SRCDIR)/crypto/objects/obj_xref.txt
 	( cd $(SRCDIR); $(PERL) crypto/objects/objxref.pl \
 				crypto/objects/obj_mac.num \
 				crypto/objects/obj_xref.txt \
 				> crypto/objects/obj_xref.h )
-	( cd $(SRCDIR);	sed -e '1,8d' crypto/objects/obj_compat.h >> include/openssl/obj_mac.h )
+.PHONY: generate_crypto_objects
+generate_crypto_objects: $(SRCDIR)/crypto/objects/obj_dat.h \
+                         $(SRCDIR)/crypto/objects/obj_xref.h
 
-generate_crypto_conf:
+$(SRCDIR)/crypto/conf/conf_def.h: $(SRCDIR)/crypto/conf/keysets.pl
 	( cd $(SRCDIR); $(PERL) crypto/conf/keysets.pl \
 			        > crypto/conf/conf_def.h )
+.PHONY: generate_crypto_conf
+generate_crypto_conf: $(SRCDIR)/crypto/conf/conf_def.h
 
-generate_crypto_asn1:
+$(SRCDIR)/crypto/asn1/charmap.h: $(SRCDIR)/crypto/asn1/charmap.pl
 	( cd $(SRCDIR); $(PERL) crypto/asn1/charmap.pl \
 			        > crypto/asn1/charmap.h )
+.PHONY: generate_crypto_asn1
+generate_crypto_asn1: $(SRCDIR)/crypto/asn1/charmap.h
 
-generate_fuzz_oids:
+$(SRCDIR)/fuzz/oids.txt: $(SRCDIR)/fuzz/mkfuzzoids.pl $(SRCDIR)/crypto/objects/obj_dat.h
 	( cd $(SRCDIR); $(PERL) fuzz/mkfuzzoids.pl \
 				crypto/objects/obj_dat.h \
 				> fuzz/oids.txt )
+.PHONY: generate_fuzz_oids
+generate_fuzz_oids: $(SRCDIR)/fuzz/oids.txt
 
 generate_doc_buildinfo:
 	( $(PERL) -I$(BLDDIR) -Mconfigdata \

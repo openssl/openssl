@@ -20,7 +20,7 @@
 #include "crypto/asn1.h"
 #include "obj_local.h"
 
-/* obj_dat.h is generated from objects.h by obj_dat.pl */
+/* obj_dat.h is generated from objects.txt and obj_mac.{num,h} by obj_dat.pl */
 #include "obj_dat.h"
 
 DECLARE_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, sn);
