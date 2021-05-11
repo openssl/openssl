@@ -514,6 +514,7 @@ SSL_CTX_set_tlsext_ticket_key_cb        define
 SSL_CTX_set_tmp_dh                      define
 SSL_CTX_set_tmp_ecdh                    define
 SSL_DEFAULT_CIPHER_LIST                 define deprecated 3.0.0
+SSL_OP_BIT                              define
 SSL_add0_chain_cert                     define
 SSL_add1_chain_cert                     define
 SSL_build_cert_chain                    define

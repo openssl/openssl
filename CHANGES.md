@@ -23,6 +23,12 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * The signatures of the functions to get and set options on SSL and
+   SSL_CTX objects changed from "unsigned long" to "uint64_t" type.
+   Some source code changes may be required.
+
+   * Rich Salz *
+
  * Add "abspath" and "includedir" pragma's to config files, to prevent,
    or modify relative pathname inclusion.
 
