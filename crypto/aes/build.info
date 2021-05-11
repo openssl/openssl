@@ -70,6 +70,7 @@ SOURCE[../../providers/libfips.a]=$COMMON
 # need to be applied to all affected libraries and modules.
 DEFINE[../../libcrypto]=$AESDEF
 DEFINE[../../providers/libfips.a]=$AESDEF
+DEFINE[../../providers/libdefault.a]=$AESDEF
 
 GENERATE[aes-ia64.s]=asm/aes-ia64.S
 
