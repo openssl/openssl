@@ -74,24 +74,30 @@ typedef struct {
 
 DEFINE_SPARSE_ARRAY_OF(ALGORITHM);
 
+typedef struct ossl_global_properties_st {
+    OSSL_PROPERTY_LIST *list;
+#ifndef FIPS_MODULE
+    unsigned int no_mirrored : 1;
+#endif
+} OSSL_GLOBAL_PROPERTIES;
+
 static void ossl_method_cache_flush(OSSL_METHOD_STORE *store, int nid);
 
 /* Global properties are stored per library context */
-static void ossl_ctx_global_properties_free(void *vstore)
+static void ossl_ctx_global_properties_free(void *vglobp)
 {
-    OSSL_PROPERTY_LIST **plp = vstore;
+    OSSL_GLOBAL_PROPERTIES *globp = vglobp;
 
-    if (plp != NULL) {
-        ossl_property_free(*plp);
-        OPENSSL_free(plp);
+    if (globp != NULL) {
+        ossl_property_free(globp->list);
+        OPENSSL_free(globp);
     }
 }
 
 static void *ossl_ctx_global_properties_new(OSSL_LIB_CTX *ctx)
 {
-    return OPENSSL_zalloc(sizeof(OSSL_PROPERTY_LIST **));
+    return OPENSSL_zalloc(sizeof(OSSL_GLOBAL_PROPERTIES));
 }
-
 
 static const OSSL_LIB_CTX_METHOD ossl_ctx_global_properties_method = {
     OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
@@ -102,13 +108,37 @@ static const OSSL_LIB_CTX_METHOD ossl_ctx_global_properties_method = {
 OSSL_PROPERTY_LIST **ossl_ctx_global_properties(OSSL_LIB_CTX *libctx,
                                                 int loadconfig)
 {
+    OSSL_GLOBAL_PROPERTIES *globp;
+
 #ifndef FIPS_MODULE
     if (loadconfig && !OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL))
         return NULL;
 #endif
-    return ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_GLOBAL_PROPERTIES,
-                                 &ossl_ctx_global_properties_method);
+    globp = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_GLOBAL_PROPERTIES,
+                                  &ossl_ctx_global_properties_method);
+
+    return &globp->list;
 }
+
+#ifndef FIPS_MODULE
+int ossl_global_properties_no_mirrored(OSSL_LIB_CTX *libctx)
+{
+    OSSL_GLOBAL_PROPERTIES *globp
+        = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_GLOBAL_PROPERTIES,
+                                &ossl_ctx_global_properties_method);
+
+    return globp->no_mirrored ? 1 : 0;
+}
+
+void ossl_global_properties_stop_mirroring(OSSL_LIB_CTX *libctx)
+{
+    OSSL_GLOBAL_PROPERTIES *globp
+        = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_GLOBAL_PROPERTIES,
+                                &ossl_ctx_global_properties_method);
+
+    globp->no_mirrored = 1;
+}
+#endif
 
 static int ossl_method_up_ref(METHOD *method)
 {

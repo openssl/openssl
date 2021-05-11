@@ -26,6 +26,13 @@ static OSSL_PARAM digest_check[] = {
     { NULL, 0, NULL, 0, 0 }
 };
 
+static unsigned int stopsuccess = 0;
+static OSSL_PARAM stop_property_mirror[] = {
+    { "stop-property-mirror", OSSL_PARAM_UNSIGNED_INTEGER, &stopsuccess,
+      sizeof(stopsuccess) },
+    { NULL, 0, NULL, 0, 0 }
+};
+
 static int test_provider(OSSL_LIB_CTX **libctx, const char *name,
                          OSSL_PROVIDER *legacy)
 {
@@ -66,6 +73,19 @@ static int test_provider(OSSL_LIB_CTX **libctx, const char *name,
         if (!TEST_true(OSSL_PROVIDER_get_params(prov, digest_check))
                 || !TEST_true(digestsuccess))
             goto err;
+
+        /*
+         * Check that a provider can prevent property mirroring if it sets its
+         * own properties explicitly
+         */
+        if (!TEST_true(OSSL_PROVIDER_get_params(prov, stop_property_mirror))
+                || !TEST_true(stopsuccess))
+            goto err;
+        EVP_set_default_properties(*libctx, "fips=yes");
+        if (!TEST_true(OSSL_PROVIDER_get_params(prov, digest_check))
+                || !TEST_true(digestsuccess))
+            goto err;
+        EVP_set_default_properties(*libctx, "");
     }
     if (!TEST_true(OSSL_PROVIDER_get_params(prov, greeting_request))
             || !TEST_ptr(greeting = greeting_request[0].data)
