@@ -1283,6 +1283,15 @@ $(SRCDIR)/providers/fips.checksum: providers/fips.checksum
 
 update-fips-checksums: $(SRCDIR)/providers/fips.checksum
 
+diff-fips-checksums: fips-checksums
+	@if [ "$(SRCDIR)" = "$(BLDDIR)" ]; then \
+	    echo >&2 "Nothing to diff as the build and the source tree is the same"; \
+	    false; \
+	fi
+	diff -u $(SRCDIR)/providers/fips.module.sources providers/fips.module.sources
+	diff -u $(SRCDIR)/providers/fips-sources.checksums providers/fips-sources.checksums
+	diff -u $(SRCDIR)/providers/fips.checksum providers/fips.checksum
+
 # Release targets (note: only available on Unix) #####################
 
 tar:
