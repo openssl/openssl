@@ -317,25 +317,25 @@ typedef int (*SSL_verify_cb)(int preverify_ok, X509_STORE_CTX *x509_ctx);
 typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
 
 /* Disable Extended master secret */
-# define SSL_OP_NO_EXTENDED_MASTER_SECRET                0x00000001U
+# define SSL_OP_NO_EXTENDED_MASTER_SECRET                (uint64_t)0x00000001
 
 /* Cleanse plaintext copies of data delivered to the application */
-# define SSL_OP_CLEANSE_PLAINTEXT                        0x00000002U
+# define SSL_OP_CLEANSE_PLAINTEXT                        (uint64_t)0x00000002
 
 /* Allow initial connection to servers that don't support RI */
-# define SSL_OP_LEGACY_SERVER_CONNECT                    0x00000004U
+# define SSL_OP_LEGACY_SERVER_CONNECT                    (uint64_t)0x00000004
 
 /* Enable support for Kernel TLS */
-# define SSL_OP_ENABLE_KTLS                              0x00000008U
+# define SSL_OP_ENABLE_KTLS                              (uint64_t)0x00000008
 
-# define SSL_OP_TLSEXT_PADDING                           0x00000010U
-# define SSL_OP_SAFARI_ECDHE_ECDSA_BUG                   0x00000040U
-# define SSL_OP_IGNORE_UNEXPECTED_EOF                    0x00000080U
+# define SSL_OP_TLSEXT_PADDING                           (uint64_t)0x00000010
+# define SSL_OP_SAFARI_ECDHE_ECDSA_BUG                   (uint64_t)0x00000040
+# define SSL_OP_IGNORE_UNEXPECTED_EOF                    (uint64_t)0x00000080
 
-# define SSL_OP_DISABLE_TLSEXT_CA_NAMES                  0x00000200U
+# define SSL_OP_DISABLE_TLSEXT_CA_NAMES                  (uint64_t)0x00000200
 
 /* In TLSv1.3 allow a non-(ec)dhe based kex_mode */
-# define SSL_OP_ALLOW_NO_DHE_KEX                         0x00000400U
+# define SSL_OP_ALLOW_NO_DHE_KEX                         (uint64_t)0x00000400
 
 /*
  * Disable SSL 3.0/TLS 1.0 CBC vulnerability workaround that was added in
@@ -344,79 +344,79 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
  * implementations cannot handle it at all, which is why we include it in
  * SSL_OP_ALL. Added in 0.9.6e
  */
-# define SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS              0x00000800U
+# define SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS              (uint64_t)0x00000800
 
 /* DTLS options */
-# define SSL_OP_NO_QUERY_MTU                             0x00001000U
+# define SSL_OP_NO_QUERY_MTU                             (uint64_t)0x00001000
 /* Turn on Cookie Exchange (on relevant for servers) */
-# define SSL_OP_COOKIE_EXCHANGE                          0x00002000U
+# define SSL_OP_COOKIE_EXCHANGE                          (uint64_t)0x00002000
 /* Don't use RFC4507 ticket extension */
-# define SSL_OP_NO_TICKET                                0x00004000U
+# define SSL_OP_NO_TICKET                                (uint64_t)0x00004000
 # ifndef OPENSSL_NO_DTLS1_METHOD
 /* Use Cisco's "speshul" version of DTLS_BAD_VER
  * (only with deprecated DTLSv1_client_method())  */
-#  define SSL_OP_CISCO_ANYCONNECT                        0x00008000U
+#  define SSL_OP_CISCO_ANYCONNECT                        (uint64_t)0x00008000
 # endif
 
 /* As server, disallow session resumption on renegotiation */
-# define SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION   0x00010000U
+# define SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION   (uint64_t)0x00010000
 /* Don't use compression even if supported */
-# define SSL_OP_NO_COMPRESSION                           0x00020000U
+# define SSL_OP_NO_COMPRESSION                           (uint64_t)0x00020000
 /* Permit unsafe legacy renegotiation */
-# define SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION        0x00040000U
+# define SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION        (uint64_t)0x00040000
 /* Disable encrypt-then-mac */
-# define SSL_OP_NO_ENCRYPT_THEN_MAC                      0x00080000U
+# define SSL_OP_NO_ENCRYPT_THEN_MAC                      (uint64_t)0x00080000
 
 /*
  * Enable TLSv1.3 Compatibility mode. This is on by default. A future version
  * of OpenSSL may have this disabled by default.
  */
-# define SSL_OP_ENABLE_MIDDLEBOX_COMPAT                  0x00100000U
+# define SSL_OP_ENABLE_MIDDLEBOX_COMPAT                  (uint64_t)0x00100000
 
 /* Prioritize Chacha20Poly1305 when client does.
  * Modifies SSL_OP_CIPHER_SERVER_PREFERENCE */
-# define SSL_OP_PRIORITIZE_CHACHA                        0x00200000U
+# define SSL_OP_PRIORITIZE_CHACHA                        (uint64_t)0x00200000
 
 /*
  * Set on servers to choose the cipher according to the server's preferences
  */
-# define SSL_OP_CIPHER_SERVER_PREFERENCE                 0x00400000U
+# define SSL_OP_CIPHER_SERVER_PREFERENCE                 (uint64_t)0x00400000
 /*
  * If set, a server will allow a client to issue a SSLv3.0 version number as
  * latest version supported in the premaster secret, even when TLSv1.0
  * (version 3.1) was announced in the client hello. Normally this is
  * forbidden to prevent version rollback attacks.
  */
-# define SSL_OP_TLS_ROLLBACK_BUG                         0x00800000U
+# define SSL_OP_TLS_ROLLBACK_BUG                         (uint64_t)0x00800000
 
 /*
  * Switches off automatic TLSv1.3 anti-replay protection for early data. This
  * is a server-side option only (no effect on the client).
  */
-# define SSL_OP_NO_ANTI_REPLAY                           0x01000000U
+# define SSL_OP_NO_ANTI_REPLAY                           (uint64_t)0x01000000
 
-# define SSL_OP_NO_SSLv3                                 0x02000000U
-# define SSL_OP_NO_TLSv1                                 0x04000000U
-# define SSL_OP_NO_TLSv1_2                               0x08000000U
-# define SSL_OP_NO_TLSv1_1                               0x10000000U
-# define SSL_OP_NO_TLSv1_3                               0x20000000U
+# define SSL_OP_NO_SSLv3                                 (uint64_t)0x02000000
+# define SSL_OP_NO_TLSv1                                 (uint64_t)0x04000000
+# define SSL_OP_NO_TLSv1_2                               (uint64_t)0x08000000
+# define SSL_OP_NO_TLSv1_1                               (uint64_t)0x10000000
+# define SSL_OP_NO_TLSv1_3                               (uint64_t)0x20000000
 
-# define SSL_OP_NO_DTLSv1                                0x04000000U
-# define SSL_OP_NO_DTLSv1_2                              0x08000000U
+# define SSL_OP_NO_DTLSv1                                (uint64_t)0x04000000
+# define SSL_OP_NO_DTLSv1_2                              (uint64_t)0x08000000
 
 # define SSL_OP_NO_SSL_MASK (SSL_OP_NO_SSLv3|\
         SSL_OP_NO_TLSv1|SSL_OP_NO_TLSv1_1|SSL_OP_NO_TLSv1_2|SSL_OP_NO_TLSv1_3)
 # define SSL_OP_NO_DTLS_MASK (SSL_OP_NO_DTLSv1|SSL_OP_NO_DTLSv1_2)
 
 /* Disallow all renegotiation */
-# define SSL_OP_NO_RENEGOTIATION                         0x40000000U
+# define SSL_OP_NO_RENEGOTIATION                         (uint64_t)0x40000000
 
 /*
  * Make server add server-hello extension from early version of cryptopro
  * draft, when GOST ciphersuite is negotiated. Required for interoperability
  * with CryptoPro CSP 3.x
  */
-# define SSL_OP_CRYPTOPRO_TLSEXT_BUG                     0x80000000U
+# define SSL_OP_CRYPTOPRO_TLSEXT_BUG                     (uint64_t)0x80000000
 
 /*
  * SSL_OP_ALL: various bug workarounds that should be rather harmless.
@@ -601,12 +601,12 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
  * cannot be used to clear bits.
  */
 
-unsigned long SSL_CTX_get_options(const SSL_CTX *ctx);
-unsigned long SSL_get_options(const SSL *s);
-unsigned long SSL_CTX_clear_options(SSL_CTX *ctx, unsigned long op);
-unsigned long SSL_clear_options(SSL *s, unsigned long op);
-unsigned long SSL_CTX_set_options(SSL_CTX *ctx, unsigned long op);
-unsigned long SSL_set_options(SSL *s, unsigned long op);
+uint64_t SSL_CTX_get_options(const SSL_CTX *ctx);
+uint64_t SSL_get_options(const SSL *s);
+uint64_t SSL_CTX_clear_options(SSL_CTX *ctx, uint64_t op);
+uint64_t SSL_clear_options(SSL *s, uint64_t op);
+uint64_t SSL_CTX_set_options(SSL_CTX *ctx, uint64_t op);
+uint64_t SSL_set_options(SSL *s, uint64_t op);
 
 # define SSL_CTX_set_mode(ctx,op) \
         SSL_CTX_ctrl((ctx),SSL_CTRL_MODE,(op),NULL)

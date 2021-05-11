@@ -10,14 +10,14 @@ SSL_get_secure_renegotiation_support - manipulate SSL options
 
  #include <openssl/ssl.h>
 
- long SSL_CTX_set_options(SSL_CTX *ctx, long options);
- long SSL_set_options(SSL *ssl, long options);
+ uint64_t SSL_CTX_set_options(SSL_CTX *ctx, uint64_t options);
+ uint64_t SSL_set_options(SSL *ssl, uint64_t options);
 
- long SSL_CTX_clear_options(SSL_CTX *ctx, long options);
- long SSL_clear_options(SSL *ssl, long options);
+ uint64_t SSL_CTX_clear_options(SSL_CTX *ctx, uint64_t options);
+ uint64_t SSL_clear_options(SSL *ssuint64_t, long options);
 
- long SSL_CTX_get_options(SSL_CTX *ctx);
- long SSL_get_options(SSL *ssl);
+ uint64_t SSL_CTX_get_options(SSL_CTX *ctx);
+ uint64_t SSL_get_options(SSL *ssl);
 
  long SSL_get_secure_renegotiation_support(SSL *ssl);
 

@@ -957,7 +957,7 @@ struct ssl_ctx_st {
      * SSL_new)
      */
 
-    uint32_t options;
+    uint64_t options;
     uint32_t mode;
     int min_proto_version;
     int max_proto_version;
@@ -1535,7 +1535,7 @@ struct ssl_st {
     STACK_OF(X509_NAME) *client_ca_names;
     CRYPTO_REF_COUNT references;
     /* protocol behaviour */
-    uint32_t options;
+    uint64_t options;
     /* API behaviour */
     uint32_t mode;
     int min_proto_version;
