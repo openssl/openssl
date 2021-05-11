@@ -266,6 +266,18 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
         p_teardown(ctx);
         return 0;
     }
+    /*
+     * The default provider is loaded - but the default properties should not
+     * allow its use.
+     */
+    {
+        EVP_MD *sha256 = EVP_MD_fetch(ctx->libctx, "SHA2-256", NULL);
+        if (sha256 != NULL) {
+            EVP_MD_free(sha256);
+            p_teardown(ctx);
+            return 0;
+        }
+    }
 #endif
 
     /*
