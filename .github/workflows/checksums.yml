@@ -43,6 +43,7 @@ jobs:
       - name: make diff-fips-checksums
         run: make diff-fips-checksums
         working-directory: ./build
+        continue-on-error: true
       - name: set label
         if: ${{ failure() }}
         uses: actions/github-script@v4
