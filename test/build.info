@@ -56,7 +56,7 @@ IF[{- !$disabled{tests} -}]
           sysdefaulttest errtest ssl_ctx_test gosttest \
           context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
           keymgmt_internal_test hexstr_test provider_status_test defltfips_test \
-          bio_readbuffer_test
+          bio_readbuffer_test user_property_test
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=enginetest
@@ -128,6 +128,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[tls13ccstest]=tls13ccstest.c helpers/ssltestlib.c
   INCLUDE[tls13ccstest]=../include ../apps/include
   DEPEND[tls13ccstest]=../libcrypto ../libssl libtestutil.a
+
+  SOURCE[user_property_test]=user_property_test.c
+  INCLUDE[user_property_test]=../include ../apps/include
+  DEPEND[user_property_test]=../libcrypto libtestutil.a
 
   SOURCE[evp_test]=evp_test.c
   INCLUDE[evp_test]=../include ../apps/include
