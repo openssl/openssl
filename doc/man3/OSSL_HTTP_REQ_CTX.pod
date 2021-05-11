@@ -64,8 +64,8 @@ which gets populated with the B<BIO> to write/send the request to (I<wbio>),
 the B<BIO> to read/receive the response from (I<rbio>, which may be equal to
 I<wbio>), and the maximum expected response header line length I<buf_size>.
 A value <= 0 indicates that
-the B<HTTP_DEFAULT_MAX_LINE_LENGTH> of 4KiB should be used.
-This length is also used as the number of content bytes that are read at a time.
+the B<OSSL_HTTP_DEFAULT_MAX_LINE_LEN> of 4KiB should be used.
+I<buf_size> is also used as the number of content bytes that are read at a time.
 The allocated context structure is also populated with an internal allocated
 memory B<BIO>, which collects the HTTP request and additional headers as text.
 
@@ -154,7 +154,7 @@ in I<rctx> if provided by the server as <Content-Length> header field, else 0.
 
 OSSL_HTTP_REQ_CTX_set_max_response_length() sets the maximum allowed
 response content length for I<rctx> to I<len>. If not set or I<len> is 0
-then the B<HTTP_DEFAULT_MAX_RESP_LEN> is used, which currently is 100 KiB.
+then the B<OSSL_HTTP_DEFAULT_MAX_RESP_LEN> is used, which currently is 100 KiB.
 If the C<Content-Length> header is present and exceeds this value or
 the content is an ASN.1 encoded structure with a length exceeding this value
 or both length indications are present but disagree then an error occurs.

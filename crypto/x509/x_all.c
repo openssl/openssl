@@ -79,7 +79,7 @@ static ASN1_VALUE *simple_get_asn1(const char *url, BIO *bio, BIO *rbio,
                              bio, rbio, NULL /* cb */ , NULL /* arg */,
                              1024 /* buf_size */, NULL /* headers */,
                              NULL /* expected_ct */, 1 /* expect_asn1 */,
-                             HTTP_DEFAULT_MAX_RESP_LEN, timeout);
+                             OSSL_HTTP_DEFAULT_MAX_RESP_LEN, timeout);
     ASN1_VALUE *res = ASN1_item_d2i_bio(it, mem, NULL);
 
     BIO_free(mem);

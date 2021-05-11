@@ -133,13 +133,13 @@ static int test_http_x509(int do_get)
                       wbio, rbio, NULL /* bio_update_fn */, NULL /* arg */,
                       0 /* buf_size */, headers, content_type,
                       1 /* expect_asn1 */,
-                      HTTP_DEFAULT_MAX_RESP_LEN, 0 /* timeout */)
+                      OSSL_HTTP_DEFAULT_MAX_RESP_LEN, 0 /* timeout */)
         : OSSL_HTTP_transfer(NULL, NULL /* host */, NULL /* port */, RPATH,
                              0 /* use_ssl */,NULL /* proxy */, NULL /* no_pr */,
                              wbio, rbio, NULL /* bio_fn */, NULL /* arg */,
                              0 /* buf_size */, headers, content_type,
                              req, content_type, 1 /* expect_asn1 */,
-                             HTTP_DEFAULT_MAX_RESP_LEN, 0 /* timeout */,
+                             OSSL_HTTP_DEFAULT_MAX_RESP_LEN, 0 /* timeout */,
                              0 /* keep_alive */);
     rcert = d2i_X509_bio(rsp, NULL);
     BIO_free(rsp);
