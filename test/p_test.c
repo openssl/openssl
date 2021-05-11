@@ -183,6 +183,22 @@ static int p_get_params(void *provctx, OSSL_PARAM params[])
             } else {
                 ok = 0;
             }
+        } else if (strcmp(p->key, "stop-property-mirror") == 0) {
+            /*
+             * Setting the default properties explicitly should stop mirroring
+             * of properties from the parent libctx.
+             */
+            unsigned int stopsuccess = 0;
+
+#ifdef PROVIDER_INIT_FUNCTION_NAME
+            stopsuccess = EVP_set_default_properties(ctx->libctx, NULL);
+#endif
+            if (p->data_size >= sizeof(stopsuccess)) {
+                *(unsigned int *)p->data = stopsuccess;
+                p->return_size = sizeof(stopsuccess);
+            } else {
+                ok = 0;
+            }
         }
     }
     return ok;

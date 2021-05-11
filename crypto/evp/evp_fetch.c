@@ -384,14 +384,27 @@ int evp_method_store_flush(OSSL_LIB_CTX *libctx)
 
 static int evp_set_parsed_default_properties(OSSL_LIB_CTX *libctx,
                                              OSSL_PROPERTY_LIST *def_prop,
-                                             int loadconfig)
+                                             int loadconfig,
+                                             int mirrored)
 {
     OSSL_METHOD_STORE *store = get_evp_method_store(libctx);
     OSSL_PROPERTY_LIST **plp = ossl_ctx_global_properties(libctx, loadconfig);
 
     if (plp != NULL && store != NULL) {
+#ifndef FIPS_MODULE
         char *propstr = NULL;
         size_t strsz;
+
+        if (mirrored) {
+            if (ossl_global_properties_no_mirrored(libctx))
+                return 0;
+        } else {
+            /*
+             * These properties have been explicitly set on this libctx, so
+             * don't allow any mirroring from a parent libctx.
+             */
+            ossl_global_properties_stop_mirroring(libctx);
+        }
 
         strsz = ossl_property_list_to_string(libctx, def_prop, NULL, 0);
         if (strsz > 0)
@@ -406,10 +419,11 @@ static int evp_set_parsed_default_properties(OSSL_LIB_CTX *libctx,
             ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
             return 0;
         }
-        ossl_property_free(*plp);
-        *plp = def_prop;
         ossl_provider_default_props_update(libctx, propstr);
         OPENSSL_free(propstr);
+#endif
+        ossl_property_free(*plp);
+        *plp = def_prop;
         if (store != NULL)
             return ossl_method_store_flush_cache(store, 0);
     }
@@ -418,7 +432,7 @@ static int evp_set_parsed_default_properties(OSSL_LIB_CTX *libctx,
 }
 
 int evp_set_default_properties_int(OSSL_LIB_CTX *libctx, const char *propq,
-                                   int loadconfig)
+                                   int loadconfig, int mirrored)
 {
     OSSL_PROPERTY_LIST *pl = NULL;
 
@@ -426,7 +440,7 @@ int evp_set_default_properties_int(OSSL_LIB_CTX *libctx, const char *propq,
         ERR_raise(ERR_LIB_EVP, EVP_R_DEFAULT_QUERY_PARSE_ERROR);
         return 0;
     }
-    if (!evp_set_parsed_default_properties(libctx, pl, loadconfig)) {
+    if (!evp_set_parsed_default_properties(libctx, pl, loadconfig, mirrored)) {
         ossl_property_free(pl);
         return 0;
     }
@@ -435,7 +449,7 @@ int evp_set_default_properties_int(OSSL_LIB_CTX *libctx, const char *propq,
 
 int EVP_set_default_properties(OSSL_LIB_CTX *libctx, const char *propq)
 {
-    return evp_set_default_properties_int(libctx, propq, 1);
+    return evp_set_default_properties_int(libctx, propq, 1, 0);
 }
 
 static int evp_default_properties_merge(OSSL_LIB_CTX *libctx, const char *propq)
@@ -457,7 +471,7 @@ static int evp_default_properties_merge(OSSL_LIB_CTX *libctx, const char *propq)
         ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    if (!evp_set_parsed_default_properties(libctx, pl2, 0)) {
+    if (!evp_set_parsed_default_properties(libctx, pl2, 0, 0)) {
         ossl_property_free(pl2);
         return 0;
     }
