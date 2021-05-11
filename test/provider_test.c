@@ -41,14 +41,27 @@ static int test_provider(OSSL_LIB_CTX **libctx, const char *name,
                  "Hello OpenSSL %.20s, greetings from %s!",
                  OPENSSL_VERSION_STR, name);
 
+
     /*
-        * Check that it is possible to have a built-in provider mirrored in
-        * a child lib ctx.
-        */
+     * We set properties that we know the providers we are using don't have.
+     * This should mean that the p_test provider will fail any fetches - which
+     * is something we test inside the provider.
+     */
+    EVP_set_default_properties(*libctx, "fips=yes");
+    /*
+     * Check that it is possible to have a built-in provider mirrored in
+     * a child lib ctx.
+     */
     if (!TEST_ptr(base = OSSL_PROVIDER_load(*libctx, "base")))
         goto err;
     if (!TEST_ptr(prov = OSSL_PROVIDER_load(*libctx, name)))
         goto err;
+
+    /*
+     * Once the provider is loaded we clear the default properties and fetches
+     * should start working again.
+     */
+    EVP_set_default_properties(*libctx, "");
     if (dolegacycheck) {
         if (!TEST_true(OSSL_PROVIDER_get_params(prov, digest_check))
                 || !TEST_true(digestsuccess))
