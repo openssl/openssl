@@ -48,7 +48,7 @@ struct ossl_http_req_ctx_st {
     BIO *rbio;                  /* BIO to read response from */
     BIO *mem;                   /* Memory BIO response is built into */
     int method_POST;            /* HTTP method is "POST" (else "GET") */
-    const char *expected_ct;    /* expected Content-Type, or NULL */
+    char *expected_ct;          /* expected Content-Type, or NULL */
     int expect_asn1;            /* response must be ASN.1-encoded */
     long len_to_send;           /* number of bytes in request still to send */
     unsigned long resp_len;     /* length of response */
@@ -106,7 +106,7 @@ void OSSL_HTTP_REQ_CTX_free(OSSL_HTTP_REQ_CTX *rctx)
         return;
     BIO_free(rctx->mem); /* this may indirectly call ERR_clear_error() */
     OPENSSL_free(rctx->readbuf);
-    OPENSSL_free((char *)rctx->expected_ct);
+    OPENSSL_free(rctx->expected_ct);
     OPENSSL_free(rctx);
 }
 
@@ -222,7 +222,7 @@ int OSSL_HTTP_REQ_CTX_set_expected(OSSL_HTTP_REQ_CTX *rctx,
         return 0;
     }
 
-    OPENSSL_free((char *)rctx->expected_ct);
+    OPENSSL_free(rctx->expected_ct);
     rctx->expected_ct = NULL;
     if (content_type != NULL
             && (rctx->expected_ct = OPENSSL_strdup(content_type)) == NULL)
@@ -605,7 +605,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
                                    rctx->expected_ct, value);
                     return 0;
                 }
-                OPENSSL_free((char *)rctx->expected_ct);
+                OPENSSL_free(rctx->expected_ct);
                 rctx->expected_ct = NULL; /* content-type has been found */
             }
             if (strcasecmp(key, "Content-Length") == 0) {

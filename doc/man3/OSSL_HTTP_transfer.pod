@@ -188,8 +188,8 @@ the length indications received are checked for consistency
 and for not exceeding any given maximum response length.
 On receiving a response, the function returns the contents as a memory BIO,
 which does not support streaming, in case an ASN.1-encoded response is expected.
-Else it returns directly the read BIO that holds the response contens,
-which allows responsse of indefinite length and may support streaming.
+Else it returns directly the read BIO that holds the response contents,
+which allows a response of indefinite length and may support streaming.
 
 OSSL_HTTP_get() uses HTTP GET to obtain data from I<bio> if non-NULL,
 else from the server contained in the I<url>, and returns it as a BIO.

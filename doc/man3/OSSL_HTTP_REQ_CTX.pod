@@ -63,7 +63,7 @@ OSSL_HTTP_REQ_CTX_new() allocates a new HTTP request context structure,
 which gets populated with the B<BIO> to write/send the request to (I<wbio>),
 the B<BIO> to read/receive the response from (I<rbio>, which may be equal to
 I<wbio>), and the maximum expected response header line length I<buf_size>.
-A value <= 0 less indicates that
+A value <= 0 indicates that
 the B<HTTP_DEFAULT_MAX_LINE_LENGTH> of 4KiB should be used.
 I<buf_size> is also used as the number of content bytes that are read at a time.
 The allocated context structure is also populated with an internal allocated
