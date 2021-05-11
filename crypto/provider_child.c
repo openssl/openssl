@@ -15,6 +15,7 @@
 #include <openssl/evp.h>
 #include "internal/provider.h"
 #include "internal/cryptlib.h"
+#include "crypto/evp.h"
 
 DEFINE_STACK_OF(OSSL_PROVIDER)
 
@@ -203,7 +204,7 @@ static int provider_global_props_cb(const char *props, void *cbdata)
 {
     OSSL_LIB_CTX *ctx = cbdata;
 
-    return EVP_set_default_properties(ctx, props);
+    return evp_set_default_properties_int(ctx, props, 1, 1);
 }
 
 int ossl_provider_init_as_child(OSSL_LIB_CTX *ctx,
