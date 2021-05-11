@@ -69,6 +69,12 @@ reference count. L<OSSL_PROVIDER_unload(3)> must not be called for a provider in
 the child library context that did not have an earlier L<OSSL_PROVIDER_load(3)>
 call for that provider in that child library context.
 
+In addition to providers, a child library context will also mirror the default
+properties (set via L<EVP_set_default_properties(3)>) from the parent library
+context. If L<EVP_set_default_properties(3)> is called directly from a child
+library context then the new properties will override anything from the parent
+library context and mirroring of the properties will stop.
+
 OSSL_LIB_CTX_new_child() must only be called from within the scope of a
 provider's B<OSSL_provider_init> function (see L<provider-base(7)>). Calling it
 outside of that function may succeed but may not correctly mirror all providers
