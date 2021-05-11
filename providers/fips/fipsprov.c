@@ -669,7 +669,7 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
 
     if (!fips_get_params_from_core(fgbl)) {
         /* Error already raised */
-        return 0;
+        goto err;
     }
     /*
      * Disable the conditional error check if it's disabled in the fips config
