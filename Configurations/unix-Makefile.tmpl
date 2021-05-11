@@ -1055,9 +1055,6 @@ uninstall_html_docs:
 # It's important that generate_buildinfo comes after ordinals, as ordinals
 # is sensitive to build.info changes.
 update: generate errors ordinals generate_buildinfo
-{- output_off() if $disabled{fips}; "" -}
-update: fips-checksums
-{- output_on() if $disabled{fips}; "" -}
 
 generate: generate_apps generate_crypto_bn generate_crypto_objects \
           generate_crypto_conf generate_crypto_asn1 generate_fuzz_oids
@@ -1140,9 +1137,8 @@ generate_doc_buildinfo:
                 mv $(SRCDIR)/doc/build.info.new $(SRCDIR)/doc/build.info; \
           fi )
 
-{- output_off() if $disabled{fips}; "" -}
-generate_fips_sources: $(SRCDIR)/providers/fips.module.sources
-$(SRCDIR)/providers/fips.module.sources: \
+generate_fips_sources: providers/fips.module.sources
+providers/fips.module.sources: \
                 $(SRCDIR)/Configure \
                 {- join(" \\\n" . ' ' x 16,
                         fill_lines(" ", $COLUMNS - 16,
@@ -1171,9 +1167,8 @@ $(SRCDIR)/providers/fips.module.sources: \
 		   crypto/sha/asm/*.pl; do \
 	    echo "$$x"; \
 	  done \
-	) | sort | uniq > $(SRCDIR)/providers/fips.module.sources
+	) | sort | uniq > providers/fips.module.sources
 	rm -rf sources-tmp
-{- output_on() if $disabled{fips}; "" -}
 
 # Set to -force to force a rebuild
 ERROR_REBUILD=
@@ -1269,19 +1264,24 @@ tags TAGS: FORCE
 	-ctags -R .
 	-etags `find . -name '*.[ch]' -o -name '*.pm'`
 
-{- output_off() if $disabled{fips}; "" -}
 fips-checksums: generate_fips_sources
-	if which unifdef > /dev/null; then \
-	    ( cd $(SRCDIR) \
-	      && cat providers/fips.module.sources \
-	             | xargs ./util/fips-checksums.sh \
-	             > providers/fips-sources.checksums \
-	      && sha256sum providers/fips-sources.checksums \
-	             > providers/fips.checksum ); \
-	else \
-	    echo >&2 "WARNING: unifdef not in your \$$PATH, FIPS checksums not calculated"; \
-	fi
-{- output_on() if $disabled{fips}; "" -}
+	@which unifdef > /dev/null || \
+	( echo >&2 "ERROR: unifdef not in your \$$PATH, FIPS checksums not calculated"; \
+	  false )
+	( sources=`pwd`/providers/fips.module.sources; \
+	  cd $(SRCDIR) \
+	  && cat $$sources \
+	         | xargs ./util/fips-checksums.sh ) \
+	         > providers/fips-sources.checksums \
+	&& sha256sum providers/fips-sources.checksums \
+	     > providers/fips.checksum
+
+$(SRCDIR)/providers/fips.checksum: providers/fips.checksum
+	cp -p providers/fips.module.sources \
+	    providers/fips-sources.checksums \
+	    providers/fips.checksum $(SRCDIR)/providers
+
+update-fips-checksums: $(SRCDIR)/providers/fips.checksum
 
 # Release targets (note: only available on Unix) #####################
 
