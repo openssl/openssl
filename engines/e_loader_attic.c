@@ -199,6 +199,7 @@ static OSSL_STORE_INFO *new_EMBEDDED(const char *new_pem_name,
         return NULL;
     }
 
+    data->blob = embedded;
     data->pem_name =
         new_pem_name == NULL ? NULL : OPENSSL_strdup(new_pem_name);
 
@@ -207,7 +208,6 @@ static OSSL_STORE_INFO *new_EMBEDDED(const char *new_pem_name,
         store_info_free(info);
         info = NULL;
     }
-    data->blob = embedded;
 
     return info;
 }
