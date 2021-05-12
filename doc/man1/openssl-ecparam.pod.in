@@ -129,10 +129,14 @@ This option will generate an EC private key using the specified parameters.
 
 =back
 
+The L<openssl-genpkey(1)> and L<openssl-pkeyparam(1)> commands are capable
+of performing all the operations this command can, as well as supporting
+other public key types.
+
 =head1 EXAMPLES
 
-Examples equivalent to these can be found in the documentation for the
-non-deprecated L<openssl-genpkey(1)> and L<openssl-pkeyparam(1)> commands.
+The documentation for the L<openssl-genpkey(1)> and L<openssl-pkeyparam(1)>
+commands contains examples equivalent to the ones listed here.
 
 To create EC parameters with the group 'prime192v1':
 
