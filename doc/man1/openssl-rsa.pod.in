@@ -57,7 +57,6 @@ various forms and their components printed out.
 
 Print out a usage message.
 
-
 =item B<-inform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
 The key input format; unspecified by default.
@@ -140,10 +139,15 @@ Like B<-pubin> and B<-pubout> except B<RSAPublicKey> format is used instead.
 
 =back
 
+=head1 NOTES
+
+The L<openssl-pkey(1)> command is capable of performing all the operations
+this command can, as well as supporting other public key types.
+
 =head1 EXAMPLES
 
-Examples equivalent to these can be found in the documentation for the
-non-deprecated L<openssl-pkey(1)> command.
+The documentation for the L<openssl-pkey(1)> command contains examples
+equivalent to the ones listed here.
 
 To remove the pass phrase on an RSA private key:
 
