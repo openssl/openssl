@@ -89,6 +89,7 @@ provider-base
                                       void *cbdata),
                      int (*remove_cb)(const OSSL_CORE_HANDLE *provider,
                                       void *cbdata),
+                     int (*global_props_cb)(const char *props, void *cbdata),
                      void *cbdata);
  void provider_deregister_child_cb(const OSSL_CORE_HANDLE *handle);
  const char *provider_name(const OSSL_CORE_HANDLE *prov);
@@ -289,12 +290,16 @@ I<create_cb> is a callback that will be called when a new provider is loaded
 into the application's library context. It is also called for any providers that
 are already loaded at the point that this callback is registered. The callback
 is passed the handle being used for the new provider being loadded and this
-provider's data in I<cbdata>. It should return 1 on success  or 0 on failure.
+provider's data in I<cbdata>. It should return 1 on success or 0 on failure.
 
 I<remove_cb> is a callback that will be called when a new provider is unloaded
 from the application's library context. It is passed the handle being used for
 the provider being unloaded and this provider's data in I<cbdata>. It should
-return 1 on success  or 0 on failure.
+return 1 on success or 0 on failure.
+
+I<global_props_cb> is a callback that will be called when the global properties
+from the parent library context are changed.It should return 1 on success
+or 0 on failure.
 
 provider_deregister_child_cb() unregisters callbacks previously registered via
 provider_register_child_cb(). If provider_register_child_cb() has been called
