@@ -104,7 +104,7 @@ struct ssl_conf_ctx_st {
 };
 
 static void ssl_set_option(SSL_CONF_CTX *cctx, unsigned int name_flags,
-                           unsigned long option_value, int onoff)
+                           uint64_t option_value, int onoff)
 {
     uint32_t *pflags;
 

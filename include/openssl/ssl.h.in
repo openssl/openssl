@@ -316,7 +316,7 @@ typedef int (*SSL_verify_cb)(int preverify_ok, X509_STORE_CTX *x509_ctx);
 /* Typedef for SSL async callback */
 typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
 
-#define SSL_OP_BIT(n)  (uint64_t)((uint64_t)1 << (uint64_t)n)
+#define SSL_OP_BIT(n)  ((uint64_t)1 << (uint64_t)n)
 
 /*
  * SSL/TLS connection options.

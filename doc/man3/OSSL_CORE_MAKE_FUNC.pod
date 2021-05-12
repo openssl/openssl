@@ -2,13 +2,16 @@
 
 =head1 NAME
 
-OSSL_CORE_MAKE_FUNC - OpenSSL reserved symbols
+OSSL_CORE_MAKE_FUNC,
+SSL_OP_BIT
+- OpenSSL reserved symbols
 
 =head1 SYNOPSIS
 
  #include <openssl/core_dispatch.h>
 
  #define OSSL_CORE_MAKE_FUNC(type,name,args)
+ #define SSL_OP_BIT(n)
 
 =head1 DESCRIPTION
 
