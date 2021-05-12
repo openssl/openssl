@@ -675,8 +675,40 @@ static void felem_reduce(felem out, const largefelem in)
      */
 }
 
-#define felem_square felem_square_ref
-#define felem_mul felem_mul_ref
+#if defined(ECP_NISTP521_ASM)
+void felem_square_wrapper(largefelem out, const felem in);
+void felem_mul_wrapper(largefelem out, const felem in1, const felem in2);
+
+static void (*felem_square_p)(largefelem out, const felem in) =
+    felem_square_wrapper;
+static void (*felem_mul_p)(largefelem out, const felem in1, const felem in2) =
+    felem_mul_wrapper;
+
+void felem_select(void)
+{
+    /* Default */
+    felem_square_p = felem_square_ref;
+    felem_mul_p = felem_mul_ref;
+}
+
+void felem_square_wrapper(largefelem out, const felem in)
+{
+    felem_select();
+    felem_square_p(out, in);
+}
+
+void felem_mul_wrapper(largefelem out, const felem in1, const felem in2)
+{
+    felem_select();
+    felem_mul_p(out, in1, in2);
+}
+
+# define felem_square felem_square_p
+# define felem_mul felem_mul_p
+#else
+# define felem_square felem_square_ref
+# define felem_mul felem_mul_ref
+#endif
 
 static void felem_square_reduce(felem out, const felem in)
 {
