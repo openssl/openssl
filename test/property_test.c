@@ -461,7 +461,7 @@ static int test_property_list_to_string(void)
         { NULL, "" }
     };
     size_t i, bufsize;
-    char *buf;
+    char *buf = NULL;
 
     for (i = 0; i < OSSL_NELEM(props); i++) {
         if (props[i].in != NULL
