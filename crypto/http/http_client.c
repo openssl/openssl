@@ -52,7 +52,7 @@ struct ossl_http_req_ctx_st {
     int expect_asn1;            /* response must be ASN.1-encoded */
     long len_to_send;           /* number of bytes in request still to send */
     unsigned long resp_len;     /* length of response */
-    unsigned long max_resp_len; /* Maximum length of response */
+    size_t max_resp_len;        /* Maximum length of response */
     int keep_alive;             /* Persistent conn. 0=no, 1=prefer, 2=require */
     time_t max_time;            /* Maximum end time of current transfer, or 0 */
     time_t max_total_time;      /* Maximum end time of total transfer, or 0 */
@@ -135,7 +135,7 @@ void OSSL_HTTP_REQ_CTX_set_max_response_length(OSSL_HTTP_REQ_CTX *rctx,
         ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
         return;
     }
-    rctx->max_resp_len = len != 0 ? len : HTTP_DEFAULT_MAX_RESP_LEN;
+    rctx->max_resp_len = len != 0 ? (size_t)len : HTTP_DEFAULT_MAX_RESP_LEN;
 }
 
 /*
@@ -1020,7 +1020,7 @@ BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
                    OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
                    int maxline, const STACK_OF(CONF_VALUE) *headers,
                    const char *expected_ct, int expect_asn1,
-                   unsigned long max_resp_len, int timeout)
+                   size_t max_resp_len, int timeout)
 {
     time_t start_time = timeout > 0 ? time(NULL) : 0;
     char *current_url, *redirection_url = NULL;
