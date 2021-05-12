@@ -131,8 +131,10 @@ X509 *d2i_X509(X509 **a, const unsigned char **in, long len)
     /* Only cache the extensions if the cert object was passed in */
     if (cert != NULL && a != NULL) { /* then cert == *a */
         if (!ossl_x509v3_cache_extensions(cert)) {
-            if (free_on_error)
+            if (free_on_error) {
+                *a = NULL;
                 X509_free(cert);
+            }
             cert = NULL;
         }
     }
