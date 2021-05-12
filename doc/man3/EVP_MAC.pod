@@ -259,7 +259,7 @@ must be set first, see parameter names "algorithm" below.
 
 =item "iv" (B<OSSL_MAC_PARAM_IV>) <octet string>
 
-Some MAC implementations require an IV, this parameter sets the IV.
+Some MAC implementations (GMAC) require an IV, this parameter sets the IV.
 
 =item "custom" (B<OSSL_MAC_PARAM_CUSTOM>) <octet string>
 
@@ -342,6 +342,8 @@ The MAC life-cycle is described in L<life_cycle-mac(7)>.  In the future,
 the transitions described there will be enforced.  When this is done, it will
 not be considered a breaking change to the API.
 
+The usage of the parameter names "custom", "iv" and "salt" correspond to
+the names used in the standard where the algorithm was defined.
 
 =head1 RETURN VALUES
 
