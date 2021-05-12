@@ -31,7 +31,7 @@ IF[{- !$disabled{asm} -}]
 
   $ECASM_ppc32=
   $ECASM_ppc64=ecp_nistz256.c ecp_nistz256-ppc64.s x25519-ppc64.s
-  $ECDEF_ppc64=ECP_NISTZ256_ASM X25519_ASM
+  $ECDEF_ppc64=ECP_NISTZ256_ASM ECP_NISTP521_ASM X25519_ASM
 
   $ECASM_c64xplus=
 
