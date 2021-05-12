@@ -10,7 +10,7 @@ jobs:
             sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install unifdef
       - uses: actions/checkout@v2
         with:
-          ref: master
+          ref: ${{ github.event.pull_request.base.sha }}
       - name: create build dirs
         run: |
           mkdir ./build-pristine
