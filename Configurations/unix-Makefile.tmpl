@@ -1137,8 +1137,8 @@ generate_doc_buildinfo:
                 mv $(SRCDIR)/doc/build.info.new $(SRCDIR)/doc/build.info; \
           fi )
 
-generate_fips_sources: providers/fips.module.sources
-providers/fips.module.sources: \
+generate_fips_sources: providers/fips.module.sources.new
+providers/fips.module.sources.new: \
                 $(SRCDIR)/Configure \
                 {- join(" \\\n" . ' ' x 16,
                         fill_lines(" ", $COLUMNS - 16,
@@ -1167,7 +1167,7 @@ providers/fips.module.sources: \
 		   crypto/sha/asm/*.pl; do \
 	    echo "$$x"; \
 	  done \
-	) | sort | uniq > providers/fips.module.sources
+	) | sort | uniq > providers/fips.module.sources.new
 	rm -rf sources-tmp
 
 # Set to -force to force a rebuild
@@ -1268,29 +1268,25 @@ fips-checksums: generate_fips_sources
 	@which unifdef > /dev/null || \
 	( echo >&2 "ERROR: unifdef not in your \$$PATH, FIPS checksums not calculated"; \
 	  false )
-	( sources=`pwd`/providers/fips.module.sources; \
+	( sources=`pwd`/providers/fips.module.sources.new; \
 	  cd $(SRCDIR) \
 	  && cat $$sources \
 	         | xargs ./util/fips-checksums.sh ) \
-	         > providers/fips-sources.checksums \
-	&& sha256sum providers/fips-sources.checksums \
-	     > providers/fips.checksum
+	         > providers/fips-sources.checksums.new \
+	&& sha256sum providers/fips-sources.checksums.new \
+	     > providers/fips.checksum.new
 
-$(SRCDIR)/providers/fips.checksum: providers/fips.checksum
-	cp -p providers/fips.module.sources \
-	    providers/fips-sources.checksums \
-	    providers/fips.checksum $(SRCDIR)/providers
+$(SRCDIR)/providers/fips.checksum: providers/fips.checksum.new
+	cp -p providers/fips.module.sources.new $(SRCDIR)/providers/fips.module.sources
+	cp -p providers/fips-sources.checksums.new $(SRCDIR)/providers/fips-sources.checksums
+	cp -p providers/fips.checksum.new $(SRCDIR)/providers/fips.checksum
 
 update-fips-checksums: $(SRCDIR)/providers/fips.checksum
 
 diff-fips-checksums: fips-checksums
-	@if [ "$(SRCDIR)" = "$(BLDDIR)" ]; then \
-	    echo >&2 "Nothing to diff as the build and the source tree is the same"; \
-	    false; \
-	fi
-	diff -u $(SRCDIR)/providers/fips.module.sources providers/fips.module.sources
-	diff -u $(SRCDIR)/providers/fips-sources.checksums providers/fips-sources.checksums
-	diff -u $(SRCDIR)/providers/fips.checksum providers/fips.checksum
+	diff -u $(SRCDIR)/providers/fips.module.sources providers/fips.module.sources.new
+	diff -u $(SRCDIR)/providers/fips-sources.checksums providers/fips-sources.checksums.new
+	diff -u $(SRCDIR)/providers/fips.checksum providers/fips.checksum.new
 
 # Release targets (note: only available on Unix) #####################
 
