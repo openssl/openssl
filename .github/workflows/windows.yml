@@ -13,7 +13,7 @@ jobs:
     - name: config
       working-directory: _build
       run: |
-        perl ..\Configure no-makedepend no-bulk no-deprecated no-fips no-asm -DOPENSSL_SMALL_FOOTPRINT VC-WIN64A
+        perl ..\Configure --banner=Configured no-makedepend no-bulk no-deprecated no-fips no-asm -DOPENSSL_SMALL_FOOTPRINT VC-WIN64A
         perl configdata.pm --dump
     - name: build
       working-directory: _build
