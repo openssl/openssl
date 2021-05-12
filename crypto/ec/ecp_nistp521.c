@@ -401,7 +401,7 @@ static void felem_diff128(largefelem out, const largefelem in)
  * On exit:
  *   out[i] < 17 * max(in[i]) * max(in[i])
  */
-static void felem_square(largefelem out, const felem in)
+static void felem_square_ref(largefelem out, const felem in)
 {
     felem inx2, inx4;
     felem_scalar(inx2, in, 2);
@@ -485,7 +485,7 @@ static void felem_square(largefelem out, const felem in)
  * On exit:
  *   out[i] < 17 * max(in1[i]) * max(in2[i])
  */
-static void felem_mul(largefelem out, const felem in1, const felem in2)
+static void felem_mul_ref(largefelem out, const felem in1, const felem in2)
 {
     felem in2x2;
     felem_scalar(in2x2, in2, 2);
@@ -674,6 +674,9 @@ static void felem_reduce(felem out, const largefelem in)
      *        < 2^59 + 2^14
      */
 }
+
+#define felem_square felem_square_ref
+#define felem_mul felem_mul_ref
 
 static void felem_square_reduce(felem out, const felem in)
 {
