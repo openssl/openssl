@@ -391,6 +391,7 @@ static int evp_set_parsed_default_properties(OSSL_LIB_CTX *libctx,
     OSSL_PROPERTY_LIST **plp = ossl_ctx_global_properties(libctx, loadconfig);
 
     if (plp != NULL && store != NULL) {
+#ifndef FIPS_MODULE
         char *propstr = NULL;
         size_t strsz;
 
@@ -418,10 +419,11 @@ static int evp_set_parsed_default_properties(OSSL_LIB_CTX *libctx,
             ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
             return 0;
         }
-        ossl_property_free(*plp);
-        *plp = def_prop;
         ossl_provider_default_props_update(libctx, propstr);
         OPENSSL_free(propstr);
+#endif
+        ossl_property_free(*plp);
+        *plp = def_prop;
         if (store != NULL)
             return ossl_method_store_flush_cache(store, 0);
     }
