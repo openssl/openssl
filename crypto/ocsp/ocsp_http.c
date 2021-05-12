@@ -14,9 +14,9 @@
 #ifndef OPENSSL_NO_OCSP
 
 OSSL_HTTP_REQ_CTX *OCSP_sendreq_new(BIO *io, const char *path,
-                                    const OCSP_REQUEST *req, int maxline)
+                                    const OCSP_REQUEST *req, int buf_size)
 {
-    OSSL_HTTP_REQ_CTX *rctx = OSSL_HTTP_REQ_CTX_new(io, io, maxline);
+    OSSL_HTTP_REQ_CTX *rctx = OSSL_HTTP_REQ_CTX_new(io, io, buf_size);
 
     if (rctx == NULL)
         return NULL;
