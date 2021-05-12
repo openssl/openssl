@@ -439,6 +439,7 @@ typedef struct tlsextstatusctx_st {
     char *respin;
     /* Default responder to use */
     char *host, *path, *port;
+    char *proxy, *no_proxy;
     int use_ssl;
     int verbose;
 } tlsextstatusctx;
@@ -458,6 +459,7 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
                                         OCSP_RESPONSE **resp)
 {
     char *host = NULL, *port = NULL, *path = NULL;
+    char *proxy = NULL, *no_proxy = NULL;
     int use_ssl;
     STACK_OF(OPENSSL_STRING) *aia = NULL;
     X509 *x = NULL;
@@ -492,6 +494,8 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
         port = srctx->port;
         use_ssl = srctx->use_ssl;
     }
+    proxy = srctx->proxy;
+    no_proxy = srctx->no_proxy;
 
     inctx = X509_STORE_CTX_new();
     if (inctx == NULL)
@@ -687,7 +691,8 @@ typedef enum OPTION_choice {
     OPT_CASTORE, OPT_NOCASTORE, OPT_CHAINCASTORE, OPT_VERIFYCASTORE,
     OPT_NBIO, OPT_NBIO_TEST, OPT_IGN_EOF, OPT_NO_IGN_EOF,
     OPT_DEBUG, OPT_TLSEXTDEBUG, OPT_STATUS, OPT_STATUS_VERBOSE,
-    OPT_STATUS_TIMEOUT, OPT_STATUS_URL, OPT_STATUS_FILE, OPT_MSG, OPT_MSGFILE,
+    OPT_STATUS_TIMEOUT, OPT_PROXY, OPT_NO_PROXY, OPT_STATUS_URL,
+    OPT_STATUS_FILE, OPT_MSG, OPT_MSGFILE,
     OPT_TRACE, OPT_SECURITY_DEBUG, OPT_SECURITY_DEBUG_VERBOSE, OPT_STATE,
     OPT_CRLF, OPT_QUIET, OPT_BRIEF, OPT_NO_DHE,
     OPT_NO_RESUME_EPHEMERAL, OPT_PSK_IDENTITY, OPT_PSK_HINT, OPT_PSK,
@@ -834,6 +839,12 @@ const OPTIONS s_server_options[] = {
     {"status_timeout", OPT_STATUS_TIMEOUT, 'n',
      "Status request responder timeout"},
     {"status_url", OPT_STATUS_URL, 's', "Status request fallback URL"},
+    {"proxy", OPT_PROXY, 's',
+     "[http[s]://]host[:port][/path] of HTTP(S) proxy to use; path is ignored"},
+    {"no_proxy", OPT_NO_PROXY, 's',
+     "List of addresses of servers not to use HTTP(S) proxy for"},
+    {OPT_MORE_STR, 0, 0,
+     "Default from environment variable 'no_proxy', else 'NO_PROXY', else none"},
     {"status_file", OPT_STATUS_FILE, '<',
      "File containing DER encoded OCSP Response"},
 #endif
@@ -1337,6 +1348,16 @@ int s_server_main(int argc, char *argv[])
 #ifndef OPENSSL_NO_OCSP
             s_tlsextstatus = 1;
             tlscstatp.timeout = atoi(opt_arg());
+#endif
+            break;
+        case OPT_PROXY:
+#ifndef OPENSSL_NO_OCSP
+            tlscstatp.proxy = opt_arg();
+#endif
+            break;
+        case OPT_NO_PROXY:
+#ifndef OPENSSL_NO_OCSP
+            tlscstatp.no_proxy = opt_arg();
 #endif
             break;
         case OPT_STATUS_URL:
