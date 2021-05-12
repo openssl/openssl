@@ -685,7 +685,7 @@ size_t ossl_property_list_to_string(OSSL_LIB_CTX *ctx,
                                     size_t bufsize)
 {
     int i;
-    const PROPERTY_DEFINITION *prop;
+    const PROPERTY_DEFINITION *prop = NULL;
     size_t needed = 0;
     const char *val;
 
