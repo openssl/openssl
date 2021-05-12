@@ -113,16 +113,18 @@ int X509_load_cert_file_ex(X509_LOOKUP *ctx, const char *file, int type,
 
     if (type == X509_FILETYPE_PEM) {
         for (;;) {
+            ERR_set_mark();
             if (PEM_read_bio_X509_AUX(in, &x, NULL, "") == NULL) {
                 if ((ERR_GET_REASON(ERR_peek_last_error()) ==
                      PEM_R_NO_START_LINE) && (count > 0)) {
-                    ERR_clear_error();
+                    ERR_pop_to_mark();
                     break;
                 } else {
-                    ERR_raise(ERR_LIB_X509, ERR_R_PEM_LIB);
+                    ERR_clear_last_mark();
                     goto err;
                 }
             }
+            ERR_clear_last_mark();
             i = X509_STORE_add_cert(ctx->store_ctx, x);
             if (!i)
                 goto err;

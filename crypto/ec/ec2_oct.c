@@ -46,9 +46,6 @@ int ossl_ec_GF2m_simple_set_compressed_coordinates(const EC_GROUP *group,
 #ifndef FIPS_MODULE
     BN_CTX *new_ctx = NULL;
 
-    /* clear error queue */
-    ERR_clear_error();
-
     if (ctx == NULL) {
         ctx = new_ctx = BN_CTX_new();
         if (ctx == NULL)
@@ -80,21 +77,24 @@ int ossl_ec_GF2m_simple_set_compressed_coordinates(const EC_GROUP *group,
             goto err;
         if (!BN_GF2m_add(tmp, x, tmp))
             goto err;
+        ERR_set_mark();
         if (!BN_GF2m_mod_solve_quad_arr(z, tmp, group->poly, ctx)) {
 #ifndef FIPS_MODULE
             unsigned long err = ERR_peek_last_error();
 
             if (ERR_GET_LIB(err) == ERR_LIB_BN
                 && ERR_GET_REASON(err) == BN_R_NO_SOLUTION) {
-                ERR_clear_error();
+                ERR_pop_to_mark();
                 ERR_raise(ERR_LIB_EC, EC_R_INVALID_COMPRESSED_POINT);
             } else
 #endif
             {
+                ERR_clear_last_mark();
                 ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
             }
             goto err;
         }
+        ERR_clear_last_mark();
         z0 = (BN_is_odd(z)) ? 1 : 0;
         if (!group->meth->field_mul(group, y, x, z, ctx))
             goto err;

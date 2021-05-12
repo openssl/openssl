@@ -88,11 +88,12 @@ X509_ALGOR *PKCS5_pbe2_set_iv_ex(const EVP_CIPHER *cipher, int iter,
      * If prf NID unspecified see if cipher has a preference. An error is OK
      * here: just means use default PRF.
      */
+    ERR_set_mark();
     if ((prf_nid == -1) &&
         EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_PBE_PRF_NID, 0, &prf_nid) <= 0) {
-        ERR_clear_error();
         prf_nid = NID_hmacWithSHA256;
     }
+    ERR_pop_to_mark();
     EVP_CIPHER_CTX_free(ctx);
     ctx = NULL;
 
