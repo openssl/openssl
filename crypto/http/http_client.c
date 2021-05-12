@@ -43,7 +43,7 @@
 struct ossl_http_req_ctx_st {
     int state;                  /* Current I/O state */
     unsigned char *readbuf;     /* Buffer for reading response by line */
-    int readbuflen;             /* Buffer length, equals maxline */
+    int readbuflen;             /* Buffer length, equals buf_size */
     BIO *wbio;                  /* BIO to send request to */
     BIO *rbio;                  /* BIO to read response from */
     BIO *mem;                   /* Memory BIO response is built into */
@@ -74,7 +74,7 @@ struct ossl_http_req_ctx_st {
 #define OHS_DONE           (8 | OHS_NOREAD) /* Completed */
 #define OHS_HTTP_HEADER    (9 | OHS_NOREAD) /* Headers set, w/o final \r\n */
 
-OSSL_HTTP_REQ_CTX *OSSL_HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio, int maxline)
+OSSL_HTTP_REQ_CTX *OSSL_HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio, int buf_size)
 {
     OSSL_HTTP_REQ_CTX *rctx;
 
@@ -86,7 +86,7 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio, int maxline)
     if ((rctx = OPENSSL_zalloc(sizeof(*rctx))) == NULL)
         return NULL;
     rctx->state = OHS_ERROR;
-    rctx->readbuflen = maxline > 0 ? maxline : HTTP_DEFAULT_MAX_LINE_LENGTH;
+    rctx->readbuflen = buf_size > 0 ? buf_size : HTTP_DEFAULT_MAX_LINE_LENGTH;
     rctx->readbuf = OPENSSL_malloc(rctx->readbuflen);
     rctx->wbio = wbio;
     rctx->rbio = rbio;
@@ -313,7 +313,7 @@ static OSSL_HTTP_REQ_CTX
                        const char *path,
                        const STACK_OF(CONF_VALUE) *headers,
                        const char *content_type, BIO *req_mem,
-                       int maxline, int timeout,
+                       int buf_size, int timeout,
                        const char *expected_ct, int expect_asn1)
 {
     OSSL_HTTP_REQ_CTX *rctx;
@@ -324,7 +324,7 @@ static OSSL_HTTP_REQ_CTX
     }
     /* remaining parameters are checked indirectly by the functions called */
 
-    if ((rctx = OSSL_HTTP_REQ_CTX_new(wbio, rbio, maxline))
+    if ((rctx = OSSL_HTTP_REQ_CTX_new(wbio, rbio, buf_size))
         == NULL)
         return NULL;
     if (OSSL_HTTP_REQ_CTX_set_request_line(rctx, req_mem != NULL,
@@ -856,7 +856,7 @@ BIO *OSSL_HTTP_transfer(OSSL_HTTP_REQ_CTX **prctx,
                         int use_ssl, const char *proxy, const char *no_proxy,
                         BIO *bio, BIO *rbio,
                         OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
-                        int maxline, const STACK_OF(CONF_VALUE) *headers,
+                        int buf_size, const STACK_OF(CONF_VALUE) *headers,
                         const char *content_type, BIO *req_mem,
                         const char *expected_ct, int expect_asn1,
                         size_t max_resp_len, int timeout, int keep_alive)
@@ -928,7 +928,7 @@ BIO *OSSL_HTTP_transfer(OSSL_HTTP_REQ_CTX **prctx,
 
     rctx = ossl_http_req_ctx_new(cbio, rbio != NULL ? rbio : cbio,
                                  !use_ssl && proxy != NULL, server, port, path,
-                                 headers, content_type, req_mem, maxline,
+                                 headers, content_type, req_mem, buf_size,
                                  update_timeout(timeout, start_time),
                                  expected_ct, expect_asn1);
     if (rctx == NULL)
@@ -1018,7 +1018,7 @@ static int redirection_ok(int n_redir, const char *old_url, const char *new_url)
 BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
                    BIO *bio, BIO *rbio,
                    OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
-                   int maxline, const STACK_OF(CONF_VALUE) *headers,
+                   int buf_size, const STACK_OF(CONF_VALUE) *headers,
                    const char *expected_ct, int expect_asn1,
                    size_t max_resp_len, int timeout)
 {
@@ -1047,7 +1047,7 @@ BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
         resp = OSSL_HTTP_transfer((OSSL_HTTP_REQ_CTX **)&redirection_url, /* TODO(3.0) fix when API approved */
                                   host, port, path, use_ssl, proxy, no_proxy,
                                   bio, rbio,
-                                  bio_update_fn, arg, maxline, headers, NULL, NULL,
+                                  bio_update_fn, arg, buf_size, headers, NULL, NULL,
                                   expected_ct, expect_asn1,
                                   max_resp_len,
                                   update_timeout(timeout, start_time), 0);
