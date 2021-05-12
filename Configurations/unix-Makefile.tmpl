@@ -1154,9 +1154,9 @@ $(SRCDIR)/providers/fips.module.sources: \
 	( \
 	  srcdir=`cd $(SRCDIR); pwd`; \
 	  cd sources-tmp \
-	  && $$srcdir/Configure enable-fips \
+	  && $$srcdir/Configure --banner=Configured enable-fips \
 	  && ./configdata.pm --query 'get_sources("providers/fips")' > sources1 \
-	  && $$srcdir/Configure enable-fips no-asm \
+	  && $$srcdir/Configure --banner=Configured enable-fips no-asm \
 	  && ./configdata.pm --query 'get_sources("providers/fips")' > sources2 \
 	)
 	( \

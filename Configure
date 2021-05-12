@@ -29,6 +29,24 @@ $SIG{__DIE__} = \&death_handler;
 
 my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-egd] [sctp] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--config=FILE] os/compiler[:flags]\n";
 
+my $banner = <<"EOF";
+
+**********************************************************************
+***                                                                ***
+***   OpenSSL has been successfully configured                     ***
+***                                                                ***
+***   If you encounter a problem while building, please open an    ***
+***   issue on GitHub <https://github.com/openssl/openssl/issues>  ***
+***   and include the output from the following command:           ***
+***                                                                ***
+***       perl configdata.pm --dump                                ***
+***                                                                ***
+***   (If you are new to OpenSSL, you might want to consult the    ***
+***   'Troubleshooting' section in the INSTALL.md file first)      ***
+***                                                                ***
+**********************************************************************
+EOF
+
 # Options:
 #
 # --config      add the given configuration file, which will be read after
@@ -43,6 +61,7 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 #               given with --prefix.
 #               This becomes the value of OPENSSLDIR in Makefile and in C.
 #               (Default: PREFIX/ssl)
+# --banner=".." Output specified text instead of default completion banner
 #
 # --cross-compile-prefix Add specified prefix to binutils components.
 #
@@ -975,6 +994,10 @@ while (@argvcopy)
                            if length $1 & 1;
                         die "FIPS key too long (64 bytes max)\n"
                            if length $1 > 64;
+                        }
+                elsif (/^--banner=(.*)$/)
+                        {
+                        $banner = $1 . "\n";
                         }
                 elsif (/^--cross-compile-prefix=(.*)$/)
                         {
@@ -2812,23 +2835,7 @@ or position independent code, please let us know (but please first make sure
 you have tried with a current version of OpenSSL).
 EOF
 
-print <<"EOF";
-
-**********************************************************************
-***                                                                ***
-***   OpenSSL has been successfully configured                     ***
-***                                                                ***
-***   If you encounter a problem while building, please open an    ***
-***   issue on GitHub <https://github.com/openssl/openssl/issues>  ***
-***   and include the output from the following command:           ***
-***                                                                ***
-***       perl configdata.pm --dump                                ***
-***                                                                ***
-***   (If you are new to OpenSSL, you might want to consult the    ***
-***   'Troubleshooting' section in the INSTALL.md file first)      ***
-***                                                                ***
-**********************************************************************
-EOF
+print $banner;
 
 exit(0);
 
