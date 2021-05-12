@@ -73,6 +73,8 @@ B<openssl> B<s_server>
 [B<-status>]
 [B<-status_verbose>]
 [B<-status_timeout> I<int>]
+[B<-proxy> I<[http[s]://][userinfo@]host[:port][/path]>]
+[B<-no_proxy> I<addresses>]
 [B<-status_url> I<val>]
 [B<-status_file> I<infile>]
 [B<-trace>]
@@ -461,6 +463,23 @@ a verbose printout of the OCSP response.
 =item B<-status_timeout> I<int>
 
 Sets the timeout for OCSP response to I<int> seconds.
+
+=item B<-proxy> I<[http[s]://][userinfo@]host[:port][/path]>
+
+The HTTP(S) proxy server to use for reaching the OCSP server unless B<-no_proxy>
+applies, see below.
+The proxy port defaults to 80 or 443 if the scheme is C<https>; apart from that
+the optional C<http://> or C<https://> prefix is ignored,
+as well as any userinfo and path components.
+Defaults to the environment variable C<http_proxy> if set, else C<HTTP_PROXY>
+in case no TLS is used, otherwise C<https_proxy> if set, else C<HTTPS_PROXY>.
+
+=item B<-no_proxy> I<addresses>
+
+List of IP addresses and/or DNS names of servers
+not to use an HTTP(S) proxy for, separated by commas and/or whitespace
+(where in the latter case the whole argument must be enclosed in "...").
+Default is from the environment variable C<no_proxy> if set, else C<NO_PROXY>.
 
 =item B<-status_url> I<val>
 
