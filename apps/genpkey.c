@@ -15,6 +15,8 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 
+static int quiet;
+
 static int init_keygen_file(EVP_PKEY_CTX **pctx, const char *file, ENGINE *e,
                             OSSL_LIB_CTX *libctx, const char *propq);
 static int genpkey_cb(EVP_PKEY_CTX *ctx);
@@ -23,7 +25,7 @@ typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_ENGINE, OPT_OUTFORM, OPT_OUT, OPT_PASS, OPT_PARAMFILE,
     OPT_ALGORITHM, OPT_PKEYOPT, OPT_GENPARAM, OPT_TEXT, OPT_CIPHER,
-    OPT_CONFIG,
+    OPT_QUIET, OPT_CONFIG,
     OPT_PROV_ENUM
 } OPTION_CHOICE;
 
@@ -35,6 +37,7 @@ const OPTIONS genpkey_options[] = {
 #endif
     {"paramfile", OPT_PARAMFILE, '<', "Parameters file"},
     {"algorithm", OPT_ALGORITHM, 's', "The public key algorithm"},
+    {"quiet", OPT_QUIET, 's', "Do not output status while generating keys"},
     {"pkeyopt", OPT_PKEYOPT, 's',
      "Set the public key algorithm option as opt:value"},
      OPT_CONFIG_OPTION,
@@ -110,6 +113,9 @@ int genpkey_main(int argc, char **argv)
         case OPT_PKEYOPT:
             if (!sk_OPENSSL_STRING_push(keyopt, opt_arg()))
                 goto end;
+            break;
+        case OPT_QUIET:
+            quiet = 1;
             break;
         case OPT_GENPARAM:
             do_param = 1;
@@ -332,16 +338,22 @@ static int genpkey_cb(EVP_PKEY_CTX *ctx)
 {
     char c = '*';
     BIO *b = EVP_PKEY_CTX_get_app_data(ctx);
-    int p;
-    p = EVP_PKEY_CTX_get_keygen_info(ctx, 0);
-    if (p == 0)
+
+    if (quiet)
+        return 1;
+
+    switch (EVP_PKEY_CTX_get_keygen_info(ctx, 0)) {
+    case 0:
         c = '.';
-    if (p == 1)
+        break;
+    case 1:
         c = '+';
-    if (p == 2)
-        c = '*';
-    if (p == 3)
+        break;
+    case 3:
         c = '\n';
+        break;
+    }
+
     BIO_write(b, &c, 1);
     (void)BIO_flush(b);
     return 1;
