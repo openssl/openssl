@@ -46,8 +46,8 @@ DEFINE_STACK_OF(INFOPAIR)
 typedef struct {
     OSSL_PROVIDER *prov;
     int (*create_cb)(const OSSL_CORE_HANDLE *provider, void *cbdata);
-    void (*remove_cb)(const OSSL_CORE_HANDLE *provider, void *cbdata);
-    void (*global_props_cb)(const char *props, void *cbdata);
+    int (*remove_cb)(const OSSL_CORE_HANDLE *provider, void *cbdata);
+    int (*global_props_cb)(const char *props, void *cbdata);
     void *cbdata;
 } OSSL_PROVIDER_CHILD_CB;
 DEFINE_STACK_OF(OSSL_PROVIDER_CHILD_CB)
@@ -1392,10 +1392,10 @@ static int ossl_provider_register_child_cb(const OSSL_CORE_HANDLE *handle,
                                            int (*create_cb)(
                                                const OSSL_CORE_HANDLE *provider,
                                                void *cbdata),
-                                           void (*remove_cb)(
+                                           int (*remove_cb)(
                                                const OSSL_CORE_HANDLE *provider,
                                                void *cbdata),
-                                           void (*global_props_cb)(
+                                           int (*global_props_cb)(
                                                const char *props,
                                                void *cbdata),
                                            void *cbdata)
