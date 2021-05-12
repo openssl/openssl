@@ -175,10 +175,10 @@ const EVP_MD *get_digest_from_engine(const char *name);
 const EVP_CIPHER *get_cipher_from_engine(const char *name);
 
 # ifndef OPENSSL_NO_OCSP
-OCSP_RESPONSE *process_responder(OCSP_REQUEST *req,
-                                 const char *host, const char *path,
-                                 const char *port, int use_ssl,
-                                 STACK_OF(CONF_VALUE) *headers,
+OCSP_RESPONSE *process_responder(OCSP_REQUEST *req, const char *host,
+                                 const char *port, const char *path,
+                                 const char *proxy, const char *no_proxy,
+                                 int use_ssl, STACK_OF(CONF_VALUE) *headers,
                                  int req_timeout);
 # endif
 

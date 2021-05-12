@@ -523,8 +523,8 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
         if (!OCSP_REQUEST_add_ext(req, ext, -1))
             goto err;
     }
-    *resp = process_responder(req, host, path, port, use_ssl, NULL,
-                             srctx->timeout);
+    *resp = process_responder(req, host, port, path, proxy, no_proxy,
+                              use_ssl, NULL /* headers */, srctx->timeout);
     if (*resp == NULL) {
         BIO_puts(bio_err, "cert_status: error querying responder\n");
         goto done;

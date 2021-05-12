@@ -30,9 +30,11 @@ B<openssl> B<ocsp>
 [B<-respin> I<file>]
 [B<-url> I<URL>]
 [B<-host> I<host>:I<port>]
+[B<-path>]
+[B<-proxy> I<[http[s]://][userinfo@]host[:port][/path]>]
+[B<-no_proxy> I<addresses>]
 [B<-header>]
 [B<-timeout> I<seconds>]
-[B<-path>]
 [B<-VAfile> I<file>]
 [B<-validity_period> I<n>]
 [B<-status_age> I<n>]
@@ -166,6 +168,23 @@ If the B<-host> option is present then the OCSP request is sent to the host
 I<hostname> on port I<port>. The B<-path> option specifies the HTTP pathname
 to use or "/" by default.  This is equivalent to specifying B<-url> with scheme
 http:// and the given hostname, port, and pathname.
+
+=item B<-proxy> I<[http[s]://][userinfo@]host[:port][/path]>
+
+The HTTP(S) proxy server to use for reaching the OCSP server unless B<-no_proxy>
+applies, see below.
+The proxy port defaults to 80 or 443 if the scheme is C<https>; apart from that
+the optional C<http://> or C<https://> prefix is ignored,
+as well as any userinfo and path components.
+Defaults to the environment variable C<http_proxy> if set, else C<HTTP_PROXY>
+in case no TLS is used, otherwise C<https_proxy> if set, else C<HTTPS_PROXY>.
+
+=item B<-no_proxy> I<addresses>
+
+List of IP addresses and/or DNS names of servers
+not to use an HTTP(S) proxy for, separated by commas and/or whitespace
+(where in the latter case the whole argument must be enclosed in "...").
+Default is from the environment variable C<no_proxy> if set, else C<NO_PROXY>.
 
 =item B<-header> I<name>=I<value>
 
