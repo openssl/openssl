@@ -38,13 +38,14 @@ jobs:
         run: make fips-checksums
         working-directory: ./build
       - name: update checksums pristine
-        run: make update-fips-checksums
+        run: touch providers/fips.checksum.new && make update-fips-checksums
         working-directory: ./build-pristine
       - name: make diff-fips-checksums
         run: make diff-fips-checksums && echo "fips_unchanged=1" >> $GITHUB_ENV || echo "fips_changed=1" >> $GITHUB_ENV
         working-directory: ./build
       - name: set label
         if: ${{ env.fips_changed }}
+        continue-on-error: true
         uses: actions/github-script@v4
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
@@ -57,6 +58,7 @@ jobs:
             })
       - name: remove label
         if: ${{ env.fips_unchanged }}
+        continue-on-error: true
         uses: actions/github-script@v4
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
