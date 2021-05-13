@@ -7,7 +7,7 @@ ossl_provider_free,
 ossl_provider_set_fallback, ossl_provider_set_module_path,
 ossl_provider_add_parameter, ossl_provider_set_child, ossl_provider_get_parent,
 ossl_provider_up_ref_parent, ossl_provider_free_parent,
-ossl_provider_get0_dispatch, ossl_provider_init_child_providers,
+ossl_provider_get0_dispatch,
 ossl_provider_init_as_child,
 ossl_provider_activate, ossl_provider_deactivate, ossl_provider_available,
 ossl_provider_ctx,
@@ -95,7 +95,6 @@ ossl_provider_get_capabilities
                                       int *result);
  int ossl_provider_clear_all_operation_bits(OSSL_LIB_CTX *libctx);
 
- int ossl_provider_init_child_providers(OSSL_LIB_CTX *ctx);
  int ossl_provider_init_as_child(OSSL_LIB_CTX *ctx,
                                  const OSSL_CORE_HANDLE *handle,
                                  const OSSL_DISPATCH *in);
@@ -290,10 +289,6 @@ I<*result> to 1 or 0 accorddingly.
 
 ossl_provider_clear_all_operation_bits() clears all of the operation bits
 to (0) for all providers in the library context I<libctx>.
-
-ossl_provider_init_child_providers() registers the callbacks required to
-receive notifications about loading and unloading of providers in the parent
-library context.
 
 ossl_provider_init_as_child() stores in the library context I<ctx> references to
 the necessary upcalls for managing child providers. The I<handle> and I<in>

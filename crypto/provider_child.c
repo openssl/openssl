@@ -198,44 +198,6 @@ static int provider_remove_child_cb(const OSSL_CORE_HANDLE *prov, void *cbdata)
     return 1;
 }
 
-int ossl_provider_init_child_providers(OSSL_LIB_CTX *ctx)
-{
-    struct child_prov_globals *gbl;
-
-    /* Should never happen */
-    if (ctx == NULL)
-        return 0;
-
-    gbl = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_CHILD_PROVIDER_INDEX,
-                                &child_prov_ossl_ctx_method);
-    if (gbl == NULL)
-        return 0;
-
-    if (!CRYPTO_THREAD_read_lock(gbl->lock))
-        return 0;
-    if (gbl->isinited) {
-        CRYPTO_THREAD_unlock(gbl->lock);
-        return 1;
-    }
-    CRYPTO_THREAD_unlock(gbl->lock);
-
-    if (!CRYPTO_THREAD_write_lock(gbl->lock))
-        return 0;
-    if (!gbl->isinited) {
-        if (!gbl->c_provider_register_child_cb(gbl->handle,
-                                               provider_create_child_cb,
-                                               provider_remove_child_cb,
-                                               ctx)) {
-            CRYPTO_THREAD_unlock(gbl->lock);
-            return 0;
-        }
-        gbl->isinited = 1;
-    }
-    CRYPTO_THREAD_unlock(gbl->lock);
-
-    return 1;
-}
-
 int ossl_provider_init_as_child(OSSL_LIB_CTX *ctx,
                                 const OSSL_CORE_HANDLE *handle,
                                 const OSSL_DISPATCH *in)
@@ -299,6 +261,14 @@ int ossl_provider_init_as_child(OSSL_LIB_CTX *ctx,
     gbl->lock = CRYPTO_THREAD_lock_new();
     if (gbl->lock == NULL)
         return 0;
+
+    if (!gbl->c_provider_register_child_cb(gbl->handle,
+                                           provider_create_child_cb,
+                                           provider_remove_child_cb,
+                                           ctx))
+        return 0;
+
+    gbl->isinited = 1;
 
     return 1;
 }

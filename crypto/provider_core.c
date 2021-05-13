@@ -276,9 +276,6 @@ OSSL_PROVIDER *ossl_provider_find(OSSL_LIB_CTX *libctx, const char *name,
         if (!noconfig) {
             if (ossl_lib_ctx_is_default(libctx))
                 OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
-            if (ossl_lib_ctx_is_child(libctx)
-                    && !ossl_provider_init_child_providers(libctx))
-                return NULL;
         }
 #endif
 
@@ -1007,9 +1004,6 @@ int ossl_provider_doall_activated(OSSL_LIB_CTX *ctx,
      */
     if (ossl_lib_ctx_is_default(ctx))
         OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
-    if (ossl_lib_ctx_is_child(ctx)
-            && !ossl_provider_init_child_providers(ctx))
-        return 0;
 #endif
 
     if (store == NULL)
