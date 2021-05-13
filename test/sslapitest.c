@@ -4696,7 +4696,7 @@ static int set_ssl_groups(SSL *serverssl, SSL *clientssl, int clientmulti,
  * Test the SSL_get_negotiated_group() API across a battery of scenarios.
  * Run through both the ECDHE and FFDHE group lists used in the previous
  * test, for both TLS 1.2 and TLS 1.3, negotiating each group in turn,
- * confirming the expected resul; then perform a resumption handshake
+ * confirming the expected result; then perform a resumption handshake
  * while offering the same group list, and another resumption handshake
  * offering a different group list.  The returned value should be the
  * negotiated group for the initial handshake; for TLS 1.3 resumption
