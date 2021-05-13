@@ -56,6 +56,8 @@ provider-base
  int CRYPTO_secure_allocated(const void *ptr);
  void OPENSSL_cleanse(void *ptr, size_t len);
 
+ unsigned char *OPENSSL_hexstr2buf(const char *str, long *buflen);
+
  OSSL_CORE_BIO *BIO_new_file(const char *filename, const char *mode);
  OSSL_CORE_BIO *BIO_new_membuf(const void *buf, int len);
  int BIO_read_ex(OSSL_CORE_BIO *bio, void *data, size_t data_len,
@@ -67,7 +69,8 @@ provider-base
  int BIO_vprintf(OSSL_CORE_BIO *bio, const char *format, va_list args);
  int BIO_vsnprintf(char *buf, size_t n, const char *fmt, va_list args);
 
- void self_test_cb(OPENSSL_CORE_CTX *ctx, OSSL_CALLBACK **cb, void **cbarg);
+ void OSSL_SELF_TEST_set_callback(OSSL_LIB_CTX *libctx, OSSL_CALLBACK *cb,
+                                  void *cbarg);
 
  size_t get_entropy(const OSSL_CORE_HANDLE *handle,
                     unsigned char **pout, int entropy,
@@ -107,6 +110,7 @@ provider-base
  const OSSL_ITEM *provider_get_reason_strings(void *provctx);
  int provider_get_capabilities(void *provctx, const char *capability,
                                OSSL_CALLBACK *cb, void *arg);
+ int provider_self_test(void *provctx);
 
 =head1 DESCRIPTION
 
@@ -138,7 +142,7 @@ provider):
  core_get_libctx                OSSL_FUNC_CORE_GET_LIBCTX
  core_new_error                 OSSL_FUNC_CORE_NEW_ERROR
  core_set_error_debug           OSSL_FUNC_CORE_SET_ERROR_DEBUG
- core_set_error                 OSSL_FUNC_CORE_SET_ERROR
+ core_vset_error                OSSL_FUNC_CORE_VSET_ERROR
  CRYPTO_malloc                  OSSL_FUNC_CRYPTO_MALLOC
  CRYPTO_zalloc                  OSSL_FUNC_CRYPTO_ZALLOC
  CRYPTO_memdup                  OSSL_FUNC_CRYPTO_MEMDUP
@@ -200,7 +204,7 @@ object for the current provider is stored, accessible through the I<handle>.
 This may sometimes be useful if the provider wishes to store a
 reference to its context in the same library context.
 
-core_new_error(), core_set_error_debug() and core_set_error() are
+core_new_error(), core_set_error_debug() and core_vset_error() are
 building blocks for reporting an error back to the core, with
 reference to the I<handle>.
 
@@ -221,7 +225,7 @@ line I<line> and the function name I<func> where the error occurred.
 
 This corresponds to the OpenSSL function L<ERR_set_debug(3)>.
 
-=item core_set_error()
+=item core_vset_error()
 
 sets the I<reason> for the error, along with any addition data.
 The I<reason> is a number defined by the provider and used to index
@@ -242,14 +246,14 @@ CRYPTO_strndup(), CRYPTO_free(), CRYPTO_clear_free(),
 CRYPTO_realloc(), CRYPTO_clear_realloc(), CRYPTO_secure_malloc(),
 CRYPTO_secure_zalloc(), CRYPTO_secure_free(),
 CRYPTO_secure_clear_free(), CRYPTO_secure_allocated(),
-BIO_new_file(), BIO_new_mem_buf(), BIO_read_ex(), BIO_up_ref(), BIO_free(),
-BIO_vprintf(), OPENSSL_cleanse(), and OPENSSL_hexstr2buf()
-correspond exactly to the public functions with the same name.
-As a matter of fact, the pointers in the B<OSSL_DISPATCH> array are
-direct pointers to those public functions. Note that the BIO functions take an
-B<OSSL_CORE_BIO> type rather than the standard B<BIO> type. This is to ensure
-that a provider does not mix BIOs from the core with BIOs used on the provider
-side (the two are not compatible).
+BIO_new_file(), BIO_new_mem_buf(), BIO_read_ex(), BIO_write_ex(), BIO_up_ref(),
+BIO_free(), BIO_vprintf(), BIO_vsnprintf(), OPENSSL_cleanse()
+and OPENSSL_hexstr2buf() correspond exactly to the public functions with
+the same name.  As a matter of fact, the pointers in the B<OSSL_DISPATCH>
+array are direct pointers to those public functions. Note that the BIO
+functions take an B<OSSL_CORE_BIO> type rather than the standard B<BIO>
+type. This is to ensure that a provider does not mix BIOs from the core
+with BIOs used on the provider side (the two are not compatible).
 OSSL_SELF_TEST_set_callback() is used to set an optional callback that can be
 passed into a provider. This may be ignored by a provider.
 
