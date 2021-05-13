@@ -7,6 +7,8 @@ input_msg = "[OpenSSL](https://openssl.org/) is an open-source implementation of
 
 @pytest.mark.parametrize('sig_name', common.signatures)
 def test_sig(ossl, ossl_config, test_artifacts_dir, sig_name, worker_id):
+    if (sys.platform.startswith("win") and ("rainbowVclassic" in sig_name)):
+        pytest.skip('rainbowVclassic not supported in windows')
     common.gen_keys(ossl, ossl_config, sig_name, test_artifacts_dir, worker_id)
     sign_out = common.run_subprocess([ossl, 'cms', '-sign',
                                                     '-signer', os.path.join(test_artifacts_dir, '{}_{}_srv.crt'.format(worker_id, sig_name)),

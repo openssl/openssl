@@ -1,19 +1,24 @@
-image:
-  - Visual Studio 2017
+version: 1.0.{build}
 
-platform:
-    - x64
-    - x86
+# TODO: Support Visual Studio 2017
+image: Visual Studio 2019
+
+platform: x64
 
 environment:
-    fast_finish: true
-    matrix:
-        - VSVER: 15
+  matrix:
+    - BUILD_SHARED: OFF
+      COMPILER: msvc2019
 
-configuration:
-    - shared
-    - plain
-    - minimal
+for:
+  - matrix:
+      only:
+        - OQS_USE_OPENSSL: OFF
+    before_build:
+      - cmd: |-
+             choco install openssl
+             choco install -y strawberryperl
+             SET "OPENSSL_ROOT_DIR=C:\OpenSSL-Win64"
 
 before_build:
     - ps: >-
@@ -38,12 +43,6 @@ before_build:
         } Else {
             $env:SHARED="no-shared no-makedepend"
         }
-    - call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" %VCVARS_PLATFORM%
-    - mkdir _build
-    - cd _build
-    - perl ..\Configure %TARGET% %SHARED%
-    - perl configdata.pm --dump
-    - cd ..
     - ps: >-
         if (-not $env:APPVEYOR_PULL_REQUEST_NUMBER`
             -or (&git log -1 $env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT |
@@ -52,27 +51,24 @@ before_build:
         }
 
 build_script:
-    - cd _build
-    - ps: >-
-        If ($env:Configuration -Match "shared" -or $env:EXTENDED_TESTS) {
-            cmd /c "nmake build_all_generated 2>&1"
-            cmd /c "nmake PERL=no-perl 2>&1"
-        }
-    - cd ..
+  - cmd: '%APPVEYOR_BUILD_FOLDER%\appveyor_build.bat'
+
+before_test:
+  - cmd: |-
+         SET "PATH=C:\Python37;C:\Python37\Scripts;%PATH%"
+         pip.exe install pytest pytest-xdist psutil
 
 test_script:
-    - cd _build
-    - ps: >-
-        If ($env:Configuration -Match "shared" -or $env:EXTENDED_TESTS) {
-            if ($env:EXTENDED_TESTS) {
-                cmd /c "nmake test V=1 2>&1"
-            } Else {
-                cmd /c "nmake test V=1 TESTS=-test_fuzz 2>&1"
-            }
-        }
-    - ps: >-
-        if ($env:EXTENDED_TESTS) {
-            mkdir ..\_install
-            cmd /c "nmake install DESTDIR=..\_install 2>&1"
-        }
-    - cd ..
+  - cmd: |-
+         cd %APPVEYOR_BUILD_FOLDER%
+         set PATH=%cd%;%PATH% && if not exist tmp (mkdir tmp) && python -m pytest --numprocesses=auto --verbose  oqs-test/test_tls_basic.py oqs-test/test_cms.py --junitxml=test-results.xml
+
+artifacts:
+  - path: test-results.xml
+    name: test logs
+    type: File
+
+after_test:
+  - ps: |-
+        $wc = New-Object 'System.Net.WebClient'
+        $wc.UploadFile("https://ci.appveyor.com/api/testresults/xunit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\test-results.xml))

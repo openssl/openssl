@@ -1,4 +1,4 @@
-[![CircleCI](https://circleci.com/gh/open-quantum-safe/openssl/tree/OQS-OpenSSL_1_1_1-stable.svg?style=svg)](https://circleci.com/gh/open-quantum-safe/openssl/tree/OQS-OpenSSL_1_1_1-stable)
+[![AppVeyor](https://ci.appveyor.com/api/projects/status/mjujhh01coab3fsw/branch/OQS-OpenSSL_1_1_1-stable?svg=true)](https://ci.appveyor.com/project/dstebila/openssl/branch/OQS-OpenSSL_1_1_1-stable), [![CircleCI](https://circleci.com/gh/open-quantum-safe/openssl/tree/OQS-OpenSSL_1_1_1-stable.svg?style=svg)](https://circleci.com/gh/open-quantum-safe/openssl/tree/OQS-OpenSSL_1_1_1-stable)
 
 OQS-OpenSSL\_1\_1\_1
 ==================================
