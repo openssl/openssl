@@ -278,11 +278,9 @@ void start_contentinfo(PKCS12_BUILDER *pb)
 
 void end_contentinfo(PKCS12_BUILDER *pb)
 {
-    if (pb->success) {
-        if (pb->bags && !TEST_true(PKCS12_add_safe(&pb->safes, pb->bags, -1, 0, NULL))) {
+    if (pb->success && pb->bags != NULL) {
+        if (!TEST_true(PKCS12_add_safe(&pb->safes, pb->bags, -1, 0, NULL)))
             pb->success = 0;
-            return;
-        }
     }
     sk_PKCS12_SAFEBAG_pop_free(pb->bags, PKCS12_SAFEBAG_free);
     pb->bags = NULL;
@@ -291,19 +289,16 @@ void end_contentinfo(PKCS12_BUILDER *pb)
 
 void end_contentinfo_encrypted(PKCS12_BUILDER *pb, const PKCS12_ENC *enc)
 {
-    if (pb->success) {
-        if (pb->bags) {
-            if (legacy) {
-                if (!TEST_true(PKCS12_add_safe(&pb->safes, pb->bags, enc->nid, enc->iter, enc->pass))) {
-                    pb->success = 0;
-                    return;
-                }
-            } else {
-                if (!TEST_true(PKCS12_add_safe_ex(&pb->safes, pb->bags, enc->nid, enc->iter, enc->pass, test_ctx, test_propq))) {
-                    pb->success = 0;
-                    return;
-                }
-            }
+    if (pb->success && pb->bags != NULL) {
+        if (legacy) {
+            if (!TEST_true(PKCS12_add_safe(&pb->safes, pb->bags, enc->nid,
+                                           enc->iter, enc->pass)))
+                pb->success = 0;
+        } else {
+            if (!TEST_true(PKCS12_add_safe_ex(&pb->safes, pb->bags, enc->nid,
+                                              enc->iter, enc->pass, test_ctx,
+                                              test_propq)))
+                pb->success = 0;
         }
     }
     sk_PKCS12_SAFEBAG_pop_free(pb->bags, PKCS12_SAFEBAG_free);
