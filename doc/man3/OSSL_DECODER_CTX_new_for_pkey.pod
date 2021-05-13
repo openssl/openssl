@@ -108,6 +108,13 @@ C<type-specific>.  This is the structure used for keys encoded
 according to key type specific specifications.  For example, RSA keys
 encoded according to PKCS#1.
 
+=head2 Selections
+
+I<selection> can be any one of the values described in
+L<EVP_PKEY_fromdata(3)/Selections>.
+Additionally I<selection> can also be set to B<0> to indicate that the code will
+auto detect the selection.
+
 =head1 RETURN VALUES
 
 OSSL_DECODER_CTX_new_for_pkey() returns a pointer to a
