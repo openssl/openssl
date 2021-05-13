@@ -1806,6 +1806,7 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
          * connection.
          */
         SSL_SESSION *new_sess;
+
         if ((new_sess = ssl_session_dup(s->session, 0)) == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
             return 0;
