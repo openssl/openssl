@@ -108,7 +108,6 @@ int ossl_provider_clear_all_operation_bits(OSSL_LIB_CTX *libctx);
 void ossl_provider_add_conf_module(void);
 
 /* Child providers */
-int ossl_provider_init_child_providers(OSSL_LIB_CTX *ctx);
 int ossl_provider_init_as_child(OSSL_LIB_CTX *ctx,
                                 const OSSL_CORE_HANDLE *handle,
                                 const OSSL_DISPATCH *in);
