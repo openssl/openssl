@@ -450,7 +450,7 @@ static int dsa_create_pkey(EVP_PKEY **pkey,
                            const unsigned char *g, size_t g_len,
                            const unsigned char *seed, size_t seed_len,
                            int counter,
-                           const char *validate_type,
+                           int validate_pq, int validate_g,
                            const unsigned char *pub, size_t pub_len,
                            BN_CTX *bn_ctx)
 {
@@ -463,9 +463,12 @@ static int dsa_create_pkey(EVP_PKEY **pkey,
     if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
         || !TEST_ptr(p_bn = BN_CTX_get(bn_ctx))
         || !TEST_ptr(BN_bin2bn(p, p_len, p_bn))
-        || !TEST_true(OSSL_PARAM_BLD_push_utf8_string(bld,
-                         OSSL_PKEY_PARAM_FFC_VALIDATE_TYPE,
-                         validate_type, 0))
+        || !TEST_true(OSSL_PARAM_BLD_push_int(bld,
+                                              OSSL_PKEY_PARAM_FFC_VALIDATE_PQ,
+                                              validate_pq))
+        || !TEST_true(OSSL_PARAM_BLD_push_int(bld,
+                                              OSSL_PKEY_PARAM_FFC_VALIDATE_G,
+                                              validate_g))
         || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_P, p_bn))
         || !TEST_ptr(q_bn = BN_CTX_get(bn_ctx))
         || !TEST_ptr(BN_bin2bn(q, q_len, q_bn))
@@ -524,7 +527,7 @@ static int dsa_pqver_test(int id)
         || !TEST_true(dsa_create_pkey(&param_key, tst->p, tst->p_len,
                                       tst->q, tst->q_len, NULL, 0,
                                       tst->seed, tst->seed_len, tst->counter,
-                                      OSSL_FFC_PARAM_VALIDATE_PQ,
+                                      1, 0,
                                       NULL, 0,
                                       bn_ctx))
         || !TEST_ptr(key_ctx = EVP_PKEY_CTX_new_from_pkey(libctx, param_key,
@@ -625,7 +628,7 @@ static int dsa_sigver_test(int id)
     if (!TEST_ptr(bn_ctx = BN_CTX_new())
         || !TEST_true(dsa_create_pkey(&pkey, tst->p, tst->p_len,
                                       tst->q, tst->q_len, tst->g, tst->g_len,
-                                      NULL, 0, 0, "", tst->pub, tst->pub_len,
+                                      NULL, 0, 0, 0, 0, tst->pub, tst->pub_len,
                                       bn_ctx)))
         goto err;
 
