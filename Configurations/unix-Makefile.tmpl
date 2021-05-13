@@ -1264,7 +1264,7 @@ tags TAGS: FORCE
 	-ctags -R .
 	-etags `find . -name '*.[ch]' -o -name '*.pm'`
 
-fips-checksums: generate_fips_sources
+providers/fips.checksum.new: generate_fips_sources
 	@which unifdef > /dev/null || \
 	( echo >&2 "ERROR: unifdef not in your \$$PATH, FIPS checksums not calculated"; \
 	  false )
@@ -1274,7 +1274,9 @@ fips-checksums: generate_fips_sources
 	         | xargs ./util/fips-checksums.sh ) \
 	         > providers/fips-sources.checksums.new \
 	&& sha256sum providers/fips-sources.checksums.new \
-	     > providers/fips.checksum.new
+	     | sed -e 's|\.new||' > providers/fips.checksum.new
+
+fips-checksums: providers/fips.checksum.new
 
 $(SRCDIR)/providers/fips.checksum: providers/fips.checksum.new
 	cp -p providers/fips.module.sources.new $(SRCDIR)/providers/fips.module.sources
