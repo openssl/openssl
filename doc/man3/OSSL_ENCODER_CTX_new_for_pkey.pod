@@ -108,38 +108,10 @@ The output is the I<selection> of the I<pkey> in PEM format.
 
 =head2 Selections
 
-=begin comment
+I<selection> can be any one of the values described in
+L<EVP_PKEY_fromdata(3)/Selections>.
 
-These constants should really be documented among the EVP manuals, but this
-will have to do for now.
-
-=end comment
-
-The following constants can be used for standard I<selection>:
-
-=over 4
-
-=item B<EVP_PKEY_KEY_PARAMETERS>
-
-Indicates that only the key parameters should be included in the output.
-Where it matters, the data type in the output will indicate that the data is
-parameters, not a key.
-
-=item B<EVP_PKEY_PUBLIC_KEY>
-
-Indicates that the public key and eventual key parameters will be included
-in the output.  Where it matters, the data type in the output will indicate
-that the data is a public key.
-
-=item B<EVP_PKEY_KEYPAIR>
-
-Indicates that the private key, the public key and eventual key parameters
-should be included in the output.  Where it matters, the data type in the
-output will indicate that the data is a private key.
-
-=back
-
-These are only indications, the encoder implementations are free to
+These are only 'hints' since the encoder implementations are free to
 determine what makes sense to include in the output, and this may depend on
 the desired output.  For example, an EC key in a PKCS#8 structure doesn't
 usually include the public key.
