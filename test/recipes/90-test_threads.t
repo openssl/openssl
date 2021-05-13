@@ -25,5 +25,10 @@ my $config_path = abs_path(srctop_file("test", $no_fips ? "default.cnf"
 
 plan tests => 1;
 
-ok(run(test(["threadstest", "-fips", "-config", $config_path, data_dir()])),
-   "running test_threads");
+if ($no_fips) {
+    ok(run(test(["threadstest", "-config", $config_path, data_dir()])),
+       "running test_threads");
+} else {
+    ok(run(test(["threadstest", "-fips", "-config", $config_path, data_dir()])),
+       "running test_threads with FIPS");
+}
