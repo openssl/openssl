@@ -52,7 +52,9 @@ The length of the "size" parameter should not exceed that of an B<unsigned int>.
 =head1 NOTES
 
 The OpenSSL implementation of the Poly 1305 MAC corresponds to RFC 7539.
-As noted in RFC 8439, the key should not be reused.
+
+It is critical to never reuse the key.  The security implication noted in
+RFC 8439 applies equally to the OpenSSL implementation.
 
 =head1 SEE ALSO
 
