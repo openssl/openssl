@@ -166,8 +166,13 @@ Configure the module to not perform run-time security checks as described above.
 
 =item B<-self_test_onload>
 
-Configure the self tests KATS to always run when the module is loaded. If this
-option is not used then the self tests KAT's are only run once during installation.
+Do not write the two fields related to the "test status indicator" and
+"MAC status indicator" to the output configuration file. Without these fields
+the self tests KATS will run each time the module is loaded. This option could be
+used for cross compiling, since the self tests need to run at least once on each
+target machine. Once the self tests have run on the target machine the user
+could possibly then add the 2 fields into the configuration using some other
+mechanism.
 
 =item B<-quiet>
 
