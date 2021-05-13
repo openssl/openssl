@@ -742,3 +742,25 @@ EVP_PKEY *d2i_PUBKEY_bio(BIO *bp, EVP_PKEY **a)
 {
     return ASN1_d2i_bio_of(EVP_PKEY, EVP_PKEY_new, d2i_PUBKEY, bp, a);
 }
+
+#ifndef OPENSSL_NO_STDIO
+X509_ACERT *d2i_X509_ACERT_fp(FILE *fp, X509_ACERT **acert)
+{
+    return ASN1_item_d2i_fp(ASN1_ITEM_rptr(X509_ACERT), fp, acert);
+}
+
+int i2d_X509_ACERT_fp(FILE *fp, const X509_ACERT *acert)
+{
+    return ASN1_item_i2d_fp(ASN1_ITEM_rptr(X509_ACERT), fp, acert);
+}
+#endif
+
+X509_ACERT *d2i_X509_ACERT_bio(BIO *bp, X509_ACERT **acert)
+{
+    return ASN1_item_d2i_bio(ASN1_ITEM_rptr(X509_ACERT), bp, acert);
+}
+
+int i2d_X509_ACERT_bio(BIO *bp, const X509_ACERT *acert)
+{
+    return ASN1_item_i2d_bio(ASN1_ITEM_rptr(X509_ACERT), bp, acert);
+}

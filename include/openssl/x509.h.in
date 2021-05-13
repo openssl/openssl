@@ -278,6 +278,11 @@ typedef struct SCRYPT_PARAMS_st {
 } SCRYPT_PARAMS;
 #endif
 
+typedef struct x509ACert_st X509_ACERT;
+typedef struct x509ACertInfo_st X509_ACERT_INFO;
+typedef struct object_digest_info_st OBJECT_DIGEST_INFO;
+typedef struct IssuerSerial_st ISSUER_SERIAL;
+
 #ifdef  __cplusplus
 }
 #endif
@@ -372,6 +377,8 @@ X509_CRL *d2i_X509_CRL_fp(FILE *fp, X509_CRL **crl);
 int i2d_X509_CRL_fp(FILE *fp, const X509_CRL *crl);
 X509_REQ *d2i_X509_REQ_fp(FILE *fp, X509_REQ **req);
 int i2d_X509_REQ_fp(FILE *fp, const X509_REQ *req);
+X509_ACERT *d2i_X509_ACERT_fp(FILE *fp, X509_ACERT **acert);
+int i2d_X509_ACERT_fp(FILE *fp, const X509_ACERT *acert);
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
 OSSL_DEPRECATEDIN_3_0 RSA *d2i_RSAPrivateKey_fp(FILE *fp, RSA **rsa);
 OSSL_DEPRECATEDIN_3_0 int i2d_RSAPrivateKey_fp(FILE *fp, const RSA *rsa);
@@ -418,6 +425,8 @@ X509_CRL *d2i_X509_CRL_bio(BIO *bp, X509_CRL **crl);
 int i2d_X509_CRL_bio(BIO *bp, const X509_CRL *crl);
 X509_REQ *d2i_X509_REQ_bio(BIO *bp, X509_REQ **req);
 int i2d_X509_REQ_bio(BIO *bp, const X509_REQ *req);
+X509_ACERT *d2i_X509_ACERT_bio(BIO *bp, X509_ACERT **acert);
+int i2d_X509_ACERT_bio(BIO *bp, const X509_ACERT *acert);
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
 OSSL_DEPRECATEDIN_3_0 RSA *d2i_RSAPrivateKey_bio(BIO *bp, RSA **rsa);
 OSSL_DEPRECATEDIN_3_0 int i2d_RSAPrivateKey_bio(BIO *bp, const RSA *rsa);
@@ -496,6 +505,9 @@ const char *X509_get_default_private_dir(void);
 
 X509_REQ *X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey, const EVP_MD *md);
 X509 *X509_REQ_to_X509(X509_REQ *r, int days, EVP_PKEY *pkey);
+
+DECLARE_ASN1_FUNCTIONS(X509_ACERT)
+DECLARE_ASN1_FUNCTIONS(X509_ACERT_INFO)
 
 DECLARE_ASN1_FUNCTIONS(X509_ALGOR)
 DECLARE_ASN1_ENCODE_FUNCTIONS(X509_ALGORS, X509_ALGORS, X509_ALGORS)
