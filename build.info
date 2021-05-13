@@ -39,6 +39,7 @@ DEPEND[]=include/openssl/asn1.h \
          include/openssl/ui.h \
          include/openssl/x509.h \
          include/openssl/x509v3.h \
+         include/openssl/x509_acert.h \
          include/openssl/x509_vfy.h \
          include/crypto/bn_conf.h include/crypto/dso_conf.h
 
@@ -69,6 +70,7 @@ GENERATE[include/openssl/ssl.h]=include/openssl/ssl.h.in
 GENERATE[include/openssl/ui.h]=include/openssl/ui.h.in
 GENERATE[include/openssl/x509.h]=include/openssl/x509.h.in
 GENERATE[include/openssl/x509v3.h]=include/openssl/x509v3.h.in
+GENERATE[include/openssl/x509_acert.h]=include/openssl/x509_acert.h.in
 GENERATE[include/openssl/x509_vfy.h]=include/openssl/x509_vfy.h.in
 GENERATE[include/crypto/bn_conf.h]=include/crypto/bn_conf.h.in
 GENERATE[include/crypto/dso_conf.h]=include/crypto/dso_conf.h.in

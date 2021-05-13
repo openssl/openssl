@@ -1,0 +1,41 @@
+/*
+ * {- join("\n * ", @autowarntext) -}
+ *
+ * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
+{-
+use OpenSSL::stackhash qw(generate_stack_macros);
+-}
+
+#ifndef OPENSSL_X509_ACERT_H
+# define OPENSSL_X509_ACERT_H
+# pragma once
+
+# include <openssl/x509v3.h>
+# include <openssl/x509.h>
+
+typedef struct X509_acert_st X509_ACERT;
+typedef struct X509_acert_info_st X509_ACERT_INFO;
+typedef struct ossl_object_digest_info_st OSSL_OBJECT_DIGEST_INFO;
+typedef struct ossl_issuer_serial_st OSSL_ISSUER_SERIAL;
+
+DECLARE_ASN1_FUNCTIONS(X509_ACERT)
+DECLARE_ASN1_FUNCTIONS(X509_ACERT_INFO)
+DECLARE_ASN1_FUNCTIONS(OSSL_OBJECT_DIGEST_INFO)
+DECLARE_ASN1_FUNCTIONS(OSSL_ISSUER_SERIAL)
+
+# ifndef OPENSSL_NO_STDIO
+X509_ACERT *d2i_X509_ACERT_fp(FILE *fp, X509_ACERT **acert);
+int i2d_X509_ACERT_fp(FILE *fp, const X509_ACERT *acert);
+# endif
+
+X509_ACERT *d2i_X509_ACERT_bio(BIO *bp, X509_ACERT **acert);
+int i2d_X509_ACERT_bio(BIO *bp, const X509_ACERT *acert);
+
+#endif
