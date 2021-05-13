@@ -3,7 +3,7 @@
 =head1 NAME
 
 ERR_set_mark, ERR_clear_last_mark, ERR_pop_to_mark
-- set marks, clear mark and pop errors until mark
+- set mark, clear mark and pop errors until mark
 
 =head1 SYNOPSIS
 
