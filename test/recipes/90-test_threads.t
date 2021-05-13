@@ -20,13 +20,15 @@ use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
+my $config_path = abs_path(srctop_file("test", $no_fips ? "default.cnf"
+                                                        : "default-and-fips.cnf"));
 
 plan tests => 1;
 
 if ($no_fips) {
-    $ENV{OPENSSL_CONF} = abs_path(srctop_file("test", "default.cnf"));
-    ok(run(test(["threadstest", data_dir()])), "running test_threads");
+    ok(run(test(["threadstest", "-config", $config_path, data_dir()])),
+       "running test_threads");
 } else {
-    $ENV{OPENSSL_CONF} = abs_path(srctop_file("test", "default-and-fips.cnf"));
-    ok(run(test(["threadstest", "-fips", data_dir()])), "running test_threads");
+    ok(run(test(["threadstest", "-fips", "-config", $config_path, data_dir()])),
+       "running test_threads with FIPS");
 }

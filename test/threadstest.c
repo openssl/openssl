@@ -23,6 +23,7 @@
 
 static int do_fips = 0;
 static char *privkey;
+static char *config_file = NULL;
 
 #if !defined(OPENSSL_THREADS) || defined(CRYPTO_TDEBUG)
 
@@ -450,9 +451,10 @@ static int test_multi(int idx)
 #endif
 
     multi_success = 1;
-    multi_libctx = OSSL_LIB_CTX_new();
-    if (!TEST_ptr(multi_libctx))
-        goto err;
+    if (!TEST_true(test_get_libctx(&multi_libctx, NULL, config_file,
+                                   NULL, NULL)))
+        return 0;
+
     prov = OSSL_PROVIDER_load(multi_libctx, (idx == 1) ? "fips" : "default");
     if (!TEST_ptr(prov))
         goto err;
@@ -583,7 +585,7 @@ static int test_multi_default(void)
 typedef enum OPTION_choice {
     OPT_ERR = -1,
     OPT_EOF = 0,
-    OPT_FIPS,
+    OPT_FIPS, OPT_CONFIG_FILE,
     OPT_TEST_ENUM
 } OPTION_CHOICE;
 
@@ -592,6 +594,8 @@ const OPTIONS *test_get_options(void)
     static const OPTIONS options[] = {
         OPT_TEST_OPTIONS_DEFAULT_USAGE,
         { "fips", OPT_FIPS, '-', "Test the FIPS provider" },
+        { "config", OPT_CONFIG_FILE, '<',
+          "The configuration file to use for the libctx" },
         { NULL }
     };
     return options;
@@ -606,6 +610,9 @@ int setup_tests(void)
         switch (o) {
         case OPT_FIPS:
             do_fips = 1;
+            break;
+        case OPT_CONFIG_FILE:
+            config_file = opt_arg();
             break;
         case OPT_TEST_CASES:
             break;
