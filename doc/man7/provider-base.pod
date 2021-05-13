@@ -142,7 +142,7 @@ provider):
  core_get_libctx                OSSL_FUNC_CORE_GET_LIBCTX
  core_new_error                 OSSL_FUNC_CORE_NEW_ERROR
  core_set_error_debug           OSSL_FUNC_CORE_SET_ERROR_DEBUG
- core_vset_error                OSSL_FUNC_CORE_SET_ERROR
+ core_vset_error                OSSL_FUNC_CORE_VSET_ERROR
  CRYPTO_malloc                  OSSL_FUNC_CRYPTO_MALLOC
  CRYPTO_zalloc                  OSSL_FUNC_CRYPTO_ZALLOC
  CRYPTO_memdup                  OSSL_FUNC_CRYPTO_MEMDUP
