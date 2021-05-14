@@ -99,8 +99,8 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
     /* No more legacy from here down to legacy: */
 
     ctx->op.ciph.cipher = cipher;
-    ctx->op.ciph.ciphprovctx = cipher->newctx(ossl_provider_ctx(cipher->prov));
-    if (ctx->op.ciph.ciphprovctx == NULL) {
+    ctx->op.ciph.algctx = cipher->newctx(ossl_provider_ctx(cipher->prov));
+    if (ctx->op.ciph.algctx == NULL) {
         /* The provider key can stay in the cache */
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         goto err;
@@ -113,7 +113,7 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
             ret = -2;
             goto err;
         }
-        ret = cipher->encrypt_init(ctx->op.ciph.ciphprovctx, provkey, params);
+        ret = cipher->encrypt_init(ctx->op.ciph.algctx, provkey, params);
         break;
     case EVP_PKEY_OP_DECRYPT:
         if (cipher->decrypt_init == NULL) {
@@ -121,7 +121,7 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
             ret = -2;
             goto err;
         }
-        ret = cipher->decrypt_init(ctx->op.ciph.ciphprovctx, provkey, params);
+        ret = cipher->decrypt_init(ctx->op.ciph.algctx, provkey, params);
         break;
     default:
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
@@ -194,10 +194,10 @@ int EVP_PKEY_encrypt(EVP_PKEY_CTX *ctx,
         return -1;
     }
 
-    if (ctx->op.ciph.ciphprovctx == NULL)
+    if (ctx->op.ciph.algctx == NULL)
         goto legacy;
 
-    ret = ctx->op.ciph.cipher->encrypt(ctx->op.ciph.ciphprovctx, out, outlen,
+    ret = ctx->op.ciph.cipher->encrypt(ctx->op.ciph.algctx, out, outlen,
                                        (out == NULL ? 0 : *outlen), in, inlen);
     return ret;
 
@@ -236,10 +236,10 @@ int EVP_PKEY_decrypt(EVP_PKEY_CTX *ctx,
         return -1;
     }
 
-    if (ctx->op.ciph.ciphprovctx == NULL)
+    if (ctx->op.ciph.algctx == NULL)
         goto legacy;
 
-    ret = ctx->op.ciph.cipher->decrypt(ctx->op.ciph.ciphprovctx, out, outlen,
+    ret = ctx->op.ciph.cipher->decrypt(ctx->op.ciph.algctx, out, outlen,
                                        (out == NULL ? 0 : *outlen), in, inlen);
     return ret;
 
