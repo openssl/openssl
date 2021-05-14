@@ -65,6 +65,7 @@ my $pbm_ref;    # The reference for PBM
 my $pbm_secret; # The secret for PBM
 my $column;     # The column number of the expected result
 my $sleep = 0;  # The time to sleep between two requests
+my $server_fh;  # Server file handle
 
 # The local $server_name variables below are among others taken as the name of a
 # sub-directory with server-specific certs etc. and CA-specific config section.
@@ -131,6 +132,9 @@ sub test_cmp_http {
     my $params = shift;
     my $expected_exit = shift;
     my $path_app = bldtop_dir($app);
+    $params = [ '-server', "127.0.0.1:$server_port", @$params ]
+        unless grep { $_ eq '-server' } @$params;
+
     with({ exit_checker => sub {
         my $actual_exit = shift;
         my $OK = $actual_exit == $expected_exit;
@@ -265,28 +269,32 @@ sub load_tests {
     return \@result;
 }
 
-sub mock_server_pid {
-    return `lsof -iTCP:$server_port` =~ m/\n\S+\s+(\d+)\s+[^\n]+LISTEN/s ? $1 : 0;
-}
-
 sub start_mock_server {
     my $args = $_[0]; # optional further CLI arguments
     my $dir = bldtop_dir("");
-    my $cmd = "LD_LIBRARY_PATH=$dir DYLD_LIBRARY_PATH=$dir " .
-        bldtop_dir($app) . " -config server.cnf $args";
-    my $pid = mock_server_pid();
-    if ($pid) {
-        print "Mock server already running with pid=$pid\n";
-        return $pid;
-    }
+    local $ENV{LD_LIBRARY_PATH} = $dir;
+    local $ENV{DYLD_LIBRARY_PATH} = $dir;
+    my $cmd = bldtop_dir($app) . " -port $server_port -config server.cnf $args";
     print "Current directory is ".getcwd()."\n";
     print "Launching mock server listening on port $server_port: $cmd\n";
-    return system("$cmd &") == 0 # start in background, check for success
-        ? (sleep 1, mock_server_pid()) : 0;
+    my $pid = open($server_fh, "$cmd|") or die "Trying to $cmd";
+    print "Pid is: $pid\n";
+    # Find out the actual server port
+    while (<$server_fh>) {
+        print;
+        s/\R$//;                # Better chomp
+        next unless (/^ACCEPT\s.*:(\d+)$/);
+        $server_port = $1;
+        $server_tls = $1;
+        $kur_port = $1;
+        $pbm_port = $1;
+        last;
+    }
+    return $pid;
 }
 
 sub stop_mock_server {
     my $pid = $_[0];
     print "Killing mock server with pid=$pid\n";
-    system("kill $pid") if $pid;
+    kill(3, $pid) if $pid;
 }
