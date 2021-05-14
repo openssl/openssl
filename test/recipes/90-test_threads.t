@@ -23,7 +23,7 @@ my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 my $config_path = abs_path(srctop_file("test", $no_fips ? "default.cnf"
                                                         : "default-and-fips.cnf"));
 
-plan tests => 1;
+plan tests => 2;
 
 if ($no_fips) {
     ok(run(test(["threadstest", "-config", $config_path, data_dir()])),
@@ -32,3 +32,6 @@ if ($no_fips) {
     ok(run(test(["threadstest", "-fips", "-config", $config_path, data_dir()])),
        "running test_threads with FIPS");
 }
+
+$ENV{OPENSSL_CONF} = $config_path;
+ok(run(test(["threadstest_fips"])), "running test_threads_fips");
