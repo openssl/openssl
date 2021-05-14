@@ -419,13 +419,13 @@ static int default_fixup_args(enum state state,
 
         if (translation->optype != 0) {
             if ((EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx->pctx)
-                 && ctx->pctx->op.sig.sigprovctx == NULL)
+                 && ctx->pctx->op.sig.algctx == NULL)
                 || (EVP_PKEY_CTX_IS_DERIVE_OP(ctx->pctx)
-                    && ctx->pctx->op.kex.exchprovctx == NULL)
+                    && ctx->pctx->op.kex.algctx == NULL)
                 || (EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx->pctx)
-                    && ctx->pctx->op.ciph.ciphprovctx == NULL)
+                    && ctx->pctx->op.ciph.algctx == NULL)
                 || (EVP_PKEY_CTX_IS_KEM_OP(ctx->pctx)
-                    && ctx->pctx->op.encap.kemprovctx == NULL)
+                    && ctx->pctx->op.encap.algctx == NULL)
                 /*
                  * The following may be unnecessary, but we have them
                  * for good measure...

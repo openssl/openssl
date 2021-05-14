@@ -284,13 +284,13 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
     /* No more legacy from here down to legacy: */
 
     ctx->op.kex.exchange = exchange;
-    ctx->op.kex.exchprovctx = exchange->newctx(ossl_provider_ctx(exchange->prov));
-    if (ctx->op.kex.exchprovctx == NULL) {
+    ctx->op.kex.algctx = exchange->newctx(ossl_provider_ctx(exchange->prov));
+    if (ctx->op.kex.algctx == NULL) {
         /* The provider key can stay in the cache */
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         goto err;
     }
-    ret = exchange->init(ctx->op.kex.exchprovctx, provkey, params);
+    ret = exchange->init(ctx->op.kex.algctx, provkey, params);
 
     return ret ? 1 : 0;
  err:
@@ -335,7 +335,7 @@ int EVP_PKEY_derive_set_peer_ex(EVP_PKEY_CTX *ctx, EVP_PKEY *peer,
         return -1;
     }
 
-    if (!EVP_PKEY_CTX_IS_DERIVE_OP(ctx) || ctx->op.kex.exchprovctx == NULL)
+    if (!EVP_PKEY_CTX_IS_DERIVE_OP(ctx) || ctx->op.kex.algctx == NULL)
         goto legacy;
 
     if (ctx->op.kex.exchange->set_peer == NULL) {
@@ -361,7 +361,7 @@ int EVP_PKEY_derive_set_peer_ex(EVP_PKEY_CTX *ctx, EVP_PKEY *peer,
      */
     if (provkey == NULL)
         goto legacy;
-    return ctx->op.kex.exchange->set_peer(ctx->op.kex.exchprovctx, provkey);
+    return ctx->op.kex.exchange->set_peer(ctx->op.kex.algctx, provkey);
 
  legacy:
 #ifdef FIPS_MODULE
@@ -447,10 +447,10 @@ int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *pkeylen)
         return -1;
     }
 
-    if (ctx->op.kex.exchprovctx == NULL)
+    if (ctx->op.kex.algctx == NULL)
         goto legacy;
 
-    ret = ctx->op.kex.exchange->derive(ctx->op.kex.exchprovctx, key, pkeylen,
+    ret = ctx->op.kex.exchange->derive(ctx->op.kex.algctx, key, pkeylen,
                                        key != NULL ? *pkeylen : 0);
 
     return ret;

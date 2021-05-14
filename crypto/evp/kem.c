@@ -67,8 +67,8 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
     }
 
     ctx->op.encap.kem = kem;
-    ctx->op.encap.kemprovctx = kem->newctx(ossl_provider_ctx(kem->prov));
-    if (ctx->op.encap.kemprovctx == NULL) {
+    ctx->op.encap.algctx = kem->newctx(ossl_provider_ctx(kem->prov));
+    if (ctx->op.encap.algctx == NULL) {
         /* The provider key can stay in the cache */
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         goto err;
@@ -81,7 +81,7 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
             ret = -2;
             goto err;
         }
-        ret = kem->encapsulate_init(ctx->op.encap.kemprovctx, provkey, params);
+        ret = kem->encapsulate_init(ctx->op.encap.algctx, provkey, params);
         break;
     case EVP_PKEY_OP_DECAPSULATE:
         if (kem->decapsulate_init == NULL) {
@@ -89,7 +89,7 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
             ret = -2;
             goto err;
         }
-        ret = kem->decapsulate_init(ctx->op.encap.kemprovctx, provkey, params);
+        ret = kem->decapsulate_init(ctx->op.encap.algctx, provkey, params);
         break;
     default:
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
@@ -123,7 +123,7 @@ int EVP_PKEY_encapsulate(EVP_PKEY_CTX *ctx,
         return -1;
     }
 
-    if (ctx->op.encap.kemprovctx == NULL) {
+    if (ctx->op.encap.algctx == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
@@ -131,7 +131,7 @@ int EVP_PKEY_encapsulate(EVP_PKEY_CTX *ctx,
     if (out != NULL && secret == NULL)
         return 0;
 
-    return ctx->op.encap.kem->encapsulate(ctx->op.encap.kemprovctx,
+    return ctx->op.encap.kem->encapsulate(ctx->op.encap.algctx,
                                           out, outlen, secret, secretlen);
 }
 
@@ -154,11 +154,11 @@ int EVP_PKEY_decapsulate(EVP_PKEY_CTX *ctx,
         return -1;
     }
 
-    if (ctx->op.encap.kemprovctx == NULL) {
+    if (ctx->op.encap.algctx == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
-    return ctx->op.encap.kem->decapsulate(ctx->op.encap.kemprovctx,
+    return ctx->op.encap.kem->decapsulate(ctx->op.encap.algctx,
                                           secret, secretlen, in, inlen);
 }
 

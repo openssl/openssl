@@ -104,7 +104,7 @@ DRBG_UINT(reseed_counter)
 
 static PROV_DRBG *prov_rand(EVP_RAND_CTX *drbg)
 {
-    return (PROV_DRBG *)drbg->data;
+    return (PROV_DRBG *)drbg->algctx;
 }
 
 static void set_reseed_counter(EVP_RAND_CTX *drbg, unsigned int n)

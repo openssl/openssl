@@ -412,16 +412,16 @@ int EVP_Cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         size_t blocksize = EVP_CIPHER_CTX_block_size(ctx);
 
         if (ctx->cipher->ccipher != NULL)
-            ret =  ctx->cipher->ccipher(ctx->provctx, out, &outl,
+            ret =  ctx->cipher->ccipher(ctx->algctx, out, &outl,
                                         inl + (blocksize == 1 ? 0 : blocksize),
                                         in, (size_t)inl)
                 ? (int)outl : -1;
         else if (in != NULL)
-            ret = ctx->cipher->cupdate(ctx->provctx, out, &outl,
+            ret = ctx->cipher->cupdate(ctx->algctx, out, &outl,
                                        inl + (blocksize == 1 ? 0 : blocksize),
                                        in, (size_t)inl);
         else
-            ret = ctx->cipher->cfinal(ctx->provctx, out, &outl,
+            ret = ctx->cipher->cfinal(ctx->algctx, out, &outl,
                                       blocksize == 1 ? 0 : blocksize);
 
         return ret;
@@ -505,7 +505,7 @@ int EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx)
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
     params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_IVLEN, &v);
-    rv = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->provctx, params);
+    rv = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->algctx, params);
     if (rv == EVP_CTRL_RET_UNSUPPORTED)
         goto legacy;
     return rv != 0 ? (int)v : -1;
@@ -526,7 +526,7 @@ int EVP_CIPHER_CTX_tag_length(const EVP_CIPHER_CTX *ctx)
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
     params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_AEAD_TAGLEN, &v);
-    ret = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->provctx, params);
+    ret = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->algctx, params);
     return ret == 1 ? (int)v : 0;
 }
 
@@ -540,7 +540,7 @@ const unsigned char *EVP_CIPHER_CTX_original_iv(const EVP_CIPHER_CTX *ctx)
     params[0] =
         OSSL_PARAM_construct_octet_ptr(OSSL_CIPHER_PARAM_IV,
                                        (void **)&v, sizeof(ctx->oiv));
-    ok = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->provctx, params);
+    ok = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->algctx, params);
 
     return ok != 0 ? v : NULL;
 }
@@ -557,7 +557,7 @@ const unsigned char *EVP_CIPHER_CTX_iv(const EVP_CIPHER_CTX *ctx)
     params[0] =
         OSSL_PARAM_construct_octet_ptr(OSSL_CIPHER_PARAM_UPDATED_IV,
                                        (void **)&v, sizeof(ctx->iv));
-    ok = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->provctx, params);
+    ok = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->algctx, params);
 
     return ok != 0 ? v : NULL;
 }
@@ -571,7 +571,7 @@ unsigned char *EVP_CIPHER_CTX_iv_noconst(EVP_CIPHER_CTX *ctx)
     params[0] =
         OSSL_PARAM_construct_octet_ptr(OSSL_CIPHER_PARAM_UPDATED_IV,
                                        (void **)&v, sizeof(ctx->iv));
-    ok = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->provctx, params);
+    ok = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->algctx, params);
 
     return ok != 0 ? v : NULL;
 }
@@ -583,7 +583,7 @@ int EVP_CIPHER_CTX_get_updated_iv(EVP_CIPHER_CTX *ctx, void *buf, size_t len)
 
     params[0] =
         OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_UPDATED_IV, buf, len);
-    return evp_do_ciph_ctx_getparams(ctx->cipher, ctx->provctx, params);
+    return evp_do_ciph_ctx_getparams(ctx->cipher, ctx->algctx, params);
 }
 
 int EVP_CIPHER_CTX_get_original_iv(EVP_CIPHER_CTX *ctx, void *buf, size_t len)
@@ -592,7 +592,7 @@ int EVP_CIPHER_CTX_get_original_iv(EVP_CIPHER_CTX *ctx, void *buf, size_t len)
 
     params[0] =
         OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_IV, buf, len);
-    return evp_do_ciph_ctx_getparams(ctx->cipher, ctx->provctx, params);
+    return evp_do_ciph_ctx_getparams(ctx->cipher, ctx->algctx, params);
 }
 
 unsigned char *EVP_CIPHER_CTX_buf_noconst(EVP_CIPHER_CTX *ctx)
@@ -607,7 +607,7 @@ int EVP_CIPHER_CTX_num(const EVP_CIPHER_CTX *ctx)
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
     params[0] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_NUM, &v);
-    ok = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->provctx, params);
+    ok = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->algctx, params);
 
     return ok != 0 ? (int)v : EVP_CTRL_RET_UNSUPPORTED;
 }
@@ -619,7 +619,7 @@ int EVP_CIPHER_CTX_set_num(EVP_CIPHER_CTX *ctx, int num)
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
     params[0] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_NUM, &n);
-    ok = evp_do_ciph_ctx_setparams(ctx->cipher, ctx->provctx, params);
+    ok = evp_do_ciph_ctx_setparams(ctx->cipher, ctx->algctx, params);
 
     if (ok != 0)
         ctx->num = (int)n;
@@ -638,7 +638,7 @@ int EVP_CIPHER_CTX_key_length(const EVP_CIPHER_CTX *ctx)
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
     params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_KEYLEN, &v);
-    ok = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->provctx, params);
+    ok = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->algctx, params);
 
     return ok != 0 ? (int)v : EVP_CTRL_RET_UNSUPPORTED;
 }
