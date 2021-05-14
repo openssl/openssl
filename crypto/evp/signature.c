@@ -458,9 +458,9 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation,
     /* No more legacy from here down to legacy: */
 
     ctx->op.sig.signature = signature;
-    ctx->op.sig.sigprovctx =
+    ctx->op.sig.algctx =
         signature->newctx(ossl_provider_ctx(signature->prov), ctx->propquery);
-    if (ctx->op.sig.sigprovctx == NULL) {
+    if (ctx->op.sig.algctx == NULL) {
         /* The provider key can stay in the cache */
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         goto err;
@@ -473,7 +473,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation,
             ret = -2;
             goto err;
         }
-        ret = signature->sign_init(ctx->op.sig.sigprovctx, provkey, params);
+        ret = signature->sign_init(ctx->op.sig.algctx, provkey, params);
         break;
     case EVP_PKEY_OP_VERIFY:
         if (signature->verify_init == NULL) {
@@ -481,7 +481,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation,
             ret = -2;
             goto err;
         }
-        ret = signature->verify_init(ctx->op.sig.sigprovctx, provkey, params);
+        ret = signature->verify_init(ctx->op.sig.algctx, provkey, params);
         break;
     case EVP_PKEY_OP_VERIFYRECOVER:
         if (signature->verify_recover_init == NULL) {
@@ -489,7 +489,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation,
             ret = -2;
             goto err;
         }
-        ret = signature->verify_recover_init(ctx->op.sig.sigprovctx, provkey,
+        ret = signature->verify_recover_init(ctx->op.sig.algctx, provkey,
                                              params);
         break;
     default:
@@ -498,8 +498,8 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation,
     }
 
     if (ret <= 0) {
-        signature->freectx(ctx->op.sig.sigprovctx);
-        ctx->op.sig.sigprovctx = NULL;
+        signature->freectx(ctx->op.sig.algctx);
+        ctx->op.sig.algctx = NULL;
         goto err;
     }
     goto end;
@@ -582,10 +582,10 @@ int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
         return -1;
     }
 
-    if (ctx->op.sig.sigprovctx == NULL)
+    if (ctx->op.sig.algctx == NULL)
         goto legacy;
 
-    ret = ctx->op.sig.signature->sign(ctx->op.sig.sigprovctx, sig, siglen,
+    ret = ctx->op.sig.signature->sign(ctx->op.sig.algctx, sig, siglen,
                                       SIZE_MAX, tbs, tbslen);
 
     return ret;
@@ -626,10 +626,10 @@ int EVP_PKEY_verify(EVP_PKEY_CTX *ctx,
         return -1;
     }
 
-    if (ctx->op.sig.sigprovctx == NULL)
+    if (ctx->op.sig.algctx == NULL)
         goto legacy;
 
-    ret = ctx->op.sig.signature->verify(ctx->op.sig.sigprovctx, sig, siglen,
+    ret = ctx->op.sig.signature->verify(ctx->op.sig.algctx, sig, siglen,
                                         tbs, tbslen);
 
     return ret;
@@ -669,10 +669,10 @@ int EVP_PKEY_verify_recover(EVP_PKEY_CTX *ctx,
         return -1;
     }
 
-    if (ctx->op.sig.sigprovctx == NULL)
+    if (ctx->op.sig.algctx == NULL)
         goto legacy;
 
-    ret = ctx->op.sig.signature->verify_recover(ctx->op.sig.sigprovctx, rout,
+    ret = ctx->op.sig.signature->verify_recover(ctx->op.sig.algctx, rout,
                                                 routlen,
                                                 (rout == NULL ? 0 : *routlen),
                                                 sig, siglen);

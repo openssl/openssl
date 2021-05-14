@@ -7,8 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* EVP_MD_CTX related stuff */
-
 #include <openssl/core_dispatch.h>
 #include "internal/refcount.h"
 
@@ -27,8 +25,11 @@ struct evp_md_ctx_st {
     /* Update function: usually copied from EVP_MD */
     int (*update) (EVP_MD_CTX *ctx, const void *data, size_t count);
 
-    /* Provider ctx */
-    void *provctx;
+    /*
+     * Opaque ctx returned from a providers digest algorithm implementation
+     * OSSL_FUNC_digest_newctx()
+     */
+    void *algctx;
     EVP_MD *fetched_digest;
 } /* EVP_MD_CTX */ ;
 
@@ -51,24 +52,27 @@ struct evp_cipher_ctx_st {
     int block_mask;
     unsigned char final[EVP_MAX_BLOCK_LENGTH]; /* possible final block */
 
-    /* Provider ctx */
-    void *provctx;
+    /*
+     * Opaque ctx returned from a providers cipher algorithm implementation
+     * OSSL_FUNC_cipher_newctx()
+     */
+    void *algctx;
     EVP_CIPHER *fetched_cipher;
 } /* EVP_CIPHER_CTX */ ;
 
 struct evp_mac_ctx_st {
     EVP_MAC *meth;               /* Method structure */
-    void *data;                  /* Individual method data */
+    void *algctx;                /* Algorithm-specific ctx */
 } /* EVP_MAC_CTX */;
 
 struct evp_kdf_ctx_st {
     EVP_KDF *meth;              /* Method structure */
-    void *data;                 /* Algorithm-specific data */
+    void *algctx;               /* Algorithm-specific ctx */
 } /* EVP_KDF_CTX */ ;
 
 struct evp_rand_ctx_st {
     EVP_RAND *meth;             /* Method structure */
-    void *data;                 /* Algorithm-specific data */
+    void *algctx;               /* Algorithm-specific ctx */
     EVP_RAND_CTX *parent;       /* Parent EVP_RAND or NULL if none */
     CRYPTO_REF_COUNT refcnt;    /* Context reference count */
     CRYPTO_RWLOCK *refcnt_lock;

@@ -214,7 +214,7 @@ const OSSL_PARAM *EVP_MAC_CTX_gettable_params(EVP_MAC_CTX *ctx)
     if (ctx->meth->gettable_ctx_params == NULL)
         return NULL;
     alg = ossl_provider_ctx(EVP_MAC_provider(ctx->meth));
-    return ctx->meth->gettable_ctx_params(ctx->data, alg);
+    return ctx->meth->gettable_ctx_params(ctx->algctx, alg);
 }
 
 const OSSL_PARAM *EVP_MAC_CTX_settable_params(EVP_MAC_CTX *ctx)
@@ -224,7 +224,7 @@ const OSSL_PARAM *EVP_MAC_CTX_settable_params(EVP_MAC_CTX *ctx)
     if (ctx->meth->settable_ctx_params == NULL)
         return NULL;
     alg = ossl_provider_ctx(EVP_MAC_provider(ctx->meth));
-    return ctx->meth->settable_ctx_params(ctx->data, alg);
+    return ctx->meth->settable_ctx_params(ctx->algctx, alg);
 }
 
 void EVP_MAC_do_all_provided(OSSL_LIB_CTX *libctx,

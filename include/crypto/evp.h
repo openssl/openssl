@@ -58,21 +58,21 @@ struct evp_pkey_ctx_st {
 
         struct {
             EVP_KEYEXCH *exchange;
-            void *exchprovctx;
+            void *algctx;
         } kex;
 
         struct {
             EVP_SIGNATURE *signature;
-            void *sigprovctx;
+            void *algctx;
         } sig;
 
         struct {
             EVP_ASYM_CIPHER *cipher;
-            void *ciphprovctx;
+            void *algctx;
         } ciph;
         struct {
             EVP_KEM *kem;
-            void *kemprovctx;
+            void *algctx;
         } encap;
     } op;
 
