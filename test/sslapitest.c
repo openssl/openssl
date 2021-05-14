@@ -4649,7 +4649,7 @@ static int test_key_exchange(int idx)
     return testresult;
 }
 
-#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_DH)
+# if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_DH)
 static int set_ssl_groups(SSL *serverssl, SSL *clientssl, int clientmulti,
                           int isecdhe, int idx)
 {
