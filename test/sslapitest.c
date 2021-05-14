@@ -4867,7 +4867,7 @@ static int test_negotiated_group(int idx)
     SSL_SESSION_free(origsess);
     return testresult;
 }
-#endif
+# endif /* !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_DH) */
 
 /*
  * Test TLSv1.3 Cipher Suite
