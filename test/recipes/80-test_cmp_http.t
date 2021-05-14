@@ -28,6 +28,8 @@ plan skip_all => "These tests are not supported in a no-cmp build"
     if disabled("cmp");
 plan skip_all => "These tests are not supported in a no-ec build"
     if disabled("ec");
+plan skip_all => "These tests are not supported in a no-sock build"
+    if disabled("sock");
 
 plan skip_all => "Tests involving local HTTP server not available on Windows, AIX or VMS"
     if $^O =~ /^(VMS|MSWin32|AIX)$/;
