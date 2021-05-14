@@ -600,10 +600,10 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
 
         data->flag_construct_called = 0;
         if (ctx->construct != NULL) {
-            int rv = ctx->construct(decoder_inst, params, ctx->construct_data);
-
+            ERR_set_mark();
+            ok = ctx->construct(decoder_inst, params, ctx->construct_data) > 0;
+            ERR_pop_to_mark();
             data->flag_construct_called = 1;
-            ok = (rv > 0);
             if (ok)
                 goto end;
         }
