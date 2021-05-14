@@ -20,6 +20,7 @@ OpenSSL 3.0
 
 ### Major changes between OpenSSL 1.1.1 and OpenSSL 3.0 [under development]
 
+  * Implemented support for fully "pluggable" TLSv1.3 groups
   * Added suport for Kernel TLS (KTLS)
   * Changed the license to the Apache License v2.0.
   * Moved all variations of the EVP ciphers CAST5, BF, IDEA, SEED, RC2,
