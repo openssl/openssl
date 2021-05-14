@@ -55,12 +55,13 @@ my $app = "apps/openssl cmp";
 my $ca_dn;      # The CA's Distinguished Name
 my $server_dn;  # The server's Distinguished Name
 my $server_host;# The server's host name or IP address
-my $server_port;# The server's port
-my $server_tls; # The server's TLS port, if any, or 0
+my $any_port;   # Random server port number, if used (for Mock server)
+my $server_port;# The server's port, may be 'any' to indicate using $any_port
+my $server_tls; # The server's TLS port, may be 'any', if used at all, or 0
 my $server_path;# The server's CMP alias
 my $server_cert;# The server's cert
-my $kur_port;   # The server's port for kur (cert update)
-my $pbm_port;   # The server port to be used for PBM
+my $kur_port;   # The server's port for kur (cert update), may be 'any'
+my $pbm_port;   # The server port to be used for PBM, may be 'any'
 my $pbm_ref;    # The reference for PBM
 my $pbm_secret; # The secret for PBM
 my $column;     # The column number of the expected result
@@ -106,6 +107,17 @@ sub load_config {
         || !defined $pbm_ref || !defined $pbm_secret
         || !defined $column || !defined $sleep;
     $server_dn = $server_dn // $ca_dn;
+    if ($server_port eq "any") {
+        my $lower_port = 1024;
+        my $upper_port = 65536;
+        $any_port = int(rand($upper_port - $lower_port)) + $lower_port;
+        # ensures 1024 <= $any_port < 65536
+        $server_port = $any_port if $server_port eq "any";
+        $server_tls = $any_port if $server_tls eq "any";
+        $kur_port = $any_port if $kur_port eq "any";
+        $pbm_port = $any_port if $pbm_port eq "any";
+    }
+
 }
 
 my @server_configurations = ("Mock");
@@ -131,6 +143,7 @@ sub test_cmp_http {
     my $params = shift;
     my $expected_exit = shift;
     my $path_app = bldtop_dir($app);
+    unshift(@$params, "-server", "127.0.0.1:$server_port") if defined $any_port;
     with({ exit_checker => sub {
         my $actual_exit = shift;
         my $OK = $actual_exit == $expected_exit;
@@ -273,7 +286,7 @@ sub start_mock_server {
     my $args = $_[0]; # optional further CLI arguments
     my $dir = bldtop_dir("");
     my $cmd = "LD_LIBRARY_PATH=$dir DYLD_LIBRARY_PATH=$dir " .
-        bldtop_dir($app) . " -config server.cnf $args";
+        bldtop_dir($app) . " -config server.cnf -port $server_port $args";
     my $pid = mock_server_pid();
     if ($pid) {
         print "Mock server already running with pid=$pid\n";
