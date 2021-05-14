@@ -314,7 +314,7 @@ err:
 
 static int test_cipher_reinit(int test_id)
 {
-    int ret = 0, diff, ccm, siv;
+    int ret = 0, diff, ccm, siv, no_null_key;
     int out1_len = 0, out2_len = 0, out3_len = 0;
     EVP_CIPHER *cipher = NULL;
     EVP_CIPHER_CTX *ctx = NULL;
@@ -354,6 +354,14 @@ static int test_cipher_reinit(int test_id)
     /* siv cannot be called with NULL key as the iv is irrelevant */
     siv = (EVP_CIPHER_mode(cipher) == EVP_CIPH_SIV_MODE);
 
+    /*
+     * Skip init call with a null key for RC4 as the stream cipher does not
+     * handle reinit (1.1.1 behaviour).
+     */
+    no_null_key = EVP_CIPHER_is_a(cipher, "RC4")
+                  || EVP_CIPHER_is_a(cipher, "RC4-40")
+                  || EVP_CIPHER_is_a(cipher, "RC4-HMAC-MD5");
+
     /* DES3-WRAP uses random every update - so it will give a different value */
     diff = EVP_CIPHER_is_a(cipher, "DES3-WRAP");
 
@@ -362,9 +370,10 @@ static int test_cipher_reinit(int test_id)
         || !TEST_true(EVP_EncryptInit_ex(ctx, NULL, NULL, key, iv))
         || !TEST_int_eq(EVP_EncryptUpdate(ctx, out2, &out2_len, in, sizeof(in)),
                         ccm ? 0 : 1)
-        || !TEST_true(EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, iv))
+        || (!no_null_key
+        && (!TEST_true(EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, iv))
         || !TEST_int_eq(EVP_EncryptUpdate(ctx, out3, &out3_len, in, sizeof(in)),
-                        ccm || siv ? 0 : 1))
+                        ccm || siv ? 0 : 1))))
         goto err;
 
     if (ccm == 0) {
@@ -375,7 +384,7 @@ static int test_cipher_reinit(int test_id)
                 goto err;
         } else {
             if (!TEST_mem_eq(out1, out1_len, out2, out2_len)
-                || (!siv && !TEST_mem_eq(out1, out1_len, out3, out3_len)))
+                || (!siv && !no_null_key && !TEST_mem_eq(out1, out1_len, out3, out3_len)))
                 goto err;
         }
     }
