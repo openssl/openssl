@@ -633,9 +633,10 @@ X509
                              encKey->data, encKey->length) <= 0
                 || (ek = OPENSSL_malloc(eksize)) == NULL)
             goto end;
+        ERR_set_mark();
         retval = EVP_PKEY_decrypt(pkctx, ek, &eksize,
                                   encKey->data, encKey->length);
-        ERR_clear_error(); /* error state may have sensitive information */
+        ERR_pop_to_mark(); /* error state may have sensitive information */
         failure = ~constant_time_is_zero_s(constant_time_msb(retval)
                                            | constant_time_is_zero(retval));
         failure |= ~constant_time_eq_s(eksize, (size_t)cikeysize);
