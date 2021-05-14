@@ -218,6 +218,10 @@ void spawn_loop(const char *prog)
 BIO *http_server_init_bio(const char *prog, const char *port)
 {
     BIO *acbio = NULL, *bufbio;
+    int fd;
+    union BIO_sock_info_u info;
+    char *hostname = NULL;
+    char *service = NULL;
 
     bufbio = BIO_new(BIO_f_buffer());
     if (bufbio == NULL)
@@ -236,6 +240,22 @@ BIO *http_server_init_bio(const char *prog, const char *port)
         log_message(prog, LOG_ERR, "Error starting accept");
         goto err;
     }
+
+    /* Report back what address and port are used */
+    BIO_get_fd(acbio, &fd);
+    if ((info.addr = BIO_ADDR_new()) == NULL
+        || !BIO_sock_info(fd, BIO_SOCK_INFO_ADDRESS, &info)
+        || (hostname = BIO_ADDR_hostname_string(info.addr, 1)) == NULL
+        || (service = BIO_ADDR_service_string(info.addr, 1)) == NULL
+        || BIO_printf(bio_out,
+                      strchr(hostname, ':') == NULL
+                      ? /* IPv4 */ "ACCEPT %s:%s\n"
+                      : /* IPv6 */ "ACCEPT [%s]:%s\n",
+                      hostname, service) <= 0) {
+        log_message(prog, LOG_ERR, "Error printing ACCEPT string");
+        goto err;
+    }
+    (void)BIO_flush(bio_out);
 
     return acbio;
 
