@@ -47,7 +47,7 @@ static void child_prov_ossl_ctx_free(void *vgbl)
 }
 
 static const OSSL_LIB_CTX_METHOD child_prov_ossl_ctx_method = {
-    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
+    OSSL_LIB_CTX_METHOD_LOW_PRIORITY,
     child_prov_ossl_ctx_new,
     child_prov_ossl_ctx_free,
 };
