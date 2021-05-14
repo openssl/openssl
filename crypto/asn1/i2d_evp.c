@@ -48,6 +48,7 @@ static int i2d_provided(const EVP_PKEY *a, int selection,
          * down, when pp != NULL.
          */
         size_t len = INT_MAX;
+        int pp_was_NULL = (pp == NULL || *pp == NULL);
 
         ctx = OSSL_ENCODER_CTX_new_for_pkey(a, selection,
                                             output_info->output_type,
@@ -56,7 +57,7 @@ static int i2d_provided(const EVP_PKEY *a, int selection,
         if (ctx == NULL)
             return -1;
         if (OSSL_ENCODER_to_data(ctx, pp, &len)) {
-            if (pp == NULL)
+            if (pp_was_NULL)
                 ret = (int)len;
             else
                 ret = INT_MAX - (int)len;
