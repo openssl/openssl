@@ -315,6 +315,13 @@ OpenSSL 3.0
 
    *Matt Caswell*
 
+ * Implemented support for fully "pluggable" TLSv1.3 groups. This means that
+   providers may supply their own group implementations (using either the "key
+   exchange" or the "key encapsulation" methods) which will automatically be
+   detected and used by libssl.
+
+   *Matt Caswell, Nicola Tuveri*
+
  * The undocumented function X509_certificate_type() has been deprecated;
    applications can use X509_get0_pubkey() and X509_get0_signature() to
    get the same information.
