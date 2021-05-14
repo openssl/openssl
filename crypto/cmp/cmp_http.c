@@ -44,7 +44,6 @@ static int keep_alive(int keep_alive, int body_type)
 
 /*
  * Send the PKIMessage req and on success return the response, else NULL.
- * Any previous error queue entries will likely be removed by ERR_clear_error().
  */
 OSSL_CMP_MSG *OSSL_CMP_MSG_http_perform(OSSL_CMP_CTX *ctx,
                                         const OSSL_CMP_MSG *req)
