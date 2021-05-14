@@ -23,6 +23,7 @@
 #include "internal/sockets.h"
 #include <openssl/err.h>
 #include <openssl/rand.h>
+#include "s_apps.h"
 
 #if defined(__TANDEM)
 # if defined(OPENSSL_TANDEM_FLOSS)
@@ -218,6 +219,7 @@ void spawn_loop(const char *prog)
 BIO *http_server_init_bio(const char *prog, const char *port)
 {
     BIO *acbio = NULL, *bufbio;
+    int asock;
 
     bufbio = BIO_new(BIO_f_buffer());
     if (bufbio == NULL)
@@ -234,6 +236,13 @@ BIO *http_server_init_bio(const char *prog, const char *port)
     bufbio = NULL;
     if (BIO_do_accept(acbio) <= 0) {
         log_message(prog, LOG_ERR, "Error starting accept");
+        goto err;
+    }
+
+    /* Report back what address and port are used */
+    BIO_get_fd(acbio, &asock);
+    if (!report_server_accept(bio_out, asock, 1)) {
+        log_message(prog, LOG_ERR, "Error printing ACCEPT string");
         goto err;
     }
 
