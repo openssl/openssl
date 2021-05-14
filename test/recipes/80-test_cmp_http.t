@@ -274,9 +274,9 @@ sub start_mock_server {
     my $dir = bldtop_dir("");
     local $ENV{LD_LIBRARY_PATH} = $dir;
     local $ENV{DYLD_LIBRARY_PATH} = $dir;
-    my $cmd = bldtop_dir($app) . " -port $server_port -config server.cnf $args";
+    my $cmd = bldtop_dir($app) . " -config server.cnf $args";
     print "Current directory is ".getcwd()."\n";
-    print "Launching mock server listening on port $server_port: $cmd\n";
+    print "Launching mock server: $cmd\n";
     my $pid = open($server_fh, "$cmd|") or die "Trying to $cmd";
     print "Pid is: $pid\n";
     # Find out the actual server port
@@ -296,5 +296,5 @@ sub start_mock_server {
 sub stop_mock_server {
     my $pid = $_[0];
     print "Killing mock server with pid=$pid\n";
-    kill(3, $pid) if $pid;
+    kill('QUIT', $pid) if $pid;
 }
