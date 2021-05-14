@@ -126,7 +126,7 @@ void OSSL_HTTP_REQ_CTX_free(OSSL_HTTP_REQ_CTX *rctx)
     if (rctx->free_wbio)
         BIO_free_all(rctx->wbio);
     /* do not free rctx->rbio */
-    BIO_free(rctx->mem); /* this may indirectly call ERR_clear_error() */
+    BIO_free(rctx->mem);
     OPENSSL_free(rctx->buf);
     OPENSSL_free(rctx->proxy);
     OPENSSL_free(rctx->server);
