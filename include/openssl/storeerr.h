@@ -35,6 +35,7 @@
 # define OSSL_STORE_R_NOT_A_PRIVATE_KEY                   102
 # define OSSL_STORE_R_NOT_A_PUBLIC_KEY                    122
 # define OSSL_STORE_R_NOT_PARAMETERS                      104
+# define OSSL_STORE_R_NO_LOADERS_FOUND                    123
 # define OSSL_STORE_R_PASSPHRASE_CALLBACK_ERROR           114
 # define OSSL_STORE_R_PATH_MUST_BE_ABSOLUTE               108
 # define OSSL_STORE_R_SEARCH_ONLY_SUPPORTED_FOR_DIRECTORIES 119

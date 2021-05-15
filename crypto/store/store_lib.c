@@ -144,8 +144,13 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
     if (loader != NULL)
         OSSL_TRACE1(STORE, "Found loader for scheme %s\n", schemes[i]);
 
-    if (loader_ctx == NULL)
+    if (loader_ctx == NULL) {
+        ERR_raise_data(ERR_LIB_OSSL_STORE, OSSL_STORE_R_NO_LOADERS_FOUND,
+                       "No store loaders were found. For standard store "
+                       "loaders you need at least one of the default or base "
+                       "providers available. Did you forget to load them?");
         goto err;
+    }
 
     OSSL_TRACE2(STORE, "Opened %s => %p\n", uri, (void *)loader_ctx);
 
