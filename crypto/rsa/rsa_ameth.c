@@ -725,7 +725,8 @@ static size_t rsa_pkey_dirty_cnt(const EVP_PKEY *pkey)
  * checks in this method since the caller tests EVP_KEYMGMT_is_a() first.
  */
 static int rsa_int_export_to(const EVP_PKEY *from, int rsa_type,
-                             void *to_keydata, EVP_KEYMGMT *to_keymgmt,
+                             void *to_keydata,
+                             OSSL_FUNC_keymgmt_import_fn *importer,
                              OSSL_LIB_CTX *libctx, const char *propq)
 {
     RSA *rsa = from->pkey.rsa;
@@ -778,7 +779,7 @@ static int rsa_int_export_to(const EVP_PKEY *from, int rsa_type,
         goto err;
 
     /* We export, the provider imports */
-    rv = evp_keymgmt_import(to_keymgmt, to_keydata, selection, params);
+    rv = importer(to_keydata, selection, params);
 
  err:
     OSSL_PARAM_free(params);
@@ -859,19 +860,19 @@ static int rsa_int_import_from(const OSSL_PARAM params[], void *vpctx,
 }
 
 static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
-                              EVP_KEYMGMT *to_keymgmt, OSSL_LIB_CTX *libctx,
-                              const char *propq)
+                              OSSL_FUNC_keymgmt_import_fn *importer,
+                              OSSL_LIB_CTX *libctx, const char *propq)
 {
     return rsa_int_export_to(from, RSA_FLAG_TYPE_RSA, to_keydata,
-                             to_keymgmt, libctx, propq);
+                             importer, libctx, propq);
 }
 
 static int rsa_pss_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
-                                  EVP_KEYMGMT *to_keymgmt, OSSL_LIB_CTX *libctx,
-                                  const char *propq)
+                                  OSSL_FUNC_keymgmt_import_fn *importer,
+                                  OSSL_LIB_CTX *libctx, const char *propq)
 {
     return rsa_int_export_to(from, RSA_FLAG_TYPE_RSASSAPSS, to_keydata,
-                             to_keymgmt, libctx, propq);
+                             importer, libctx, propq);
 }
 
 static int rsa_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
