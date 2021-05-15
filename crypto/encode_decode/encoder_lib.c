@@ -49,6 +49,14 @@ int OSSL_ENCODER_to_bio(OSSL_ENCODER_CTX *ctx, BIO *out)
     data.bio = out;
     data.current_encoder_inst_index = OSSL_ENCODER_CTX_get_num_encoders(ctx);
 
+    if (data.current_encoder_inst_index == 0) {
+        ERR_raise_data(ERR_LIB_OSSL_ENCODER, OSSL_ENCODER_R_ENCODER_NOT_FOUND,
+                       "No encoders were found. For standard encoders you need "
+                       "at least one of the default or base providers "
+                       "available. Did you forget to load them?");
+        return 0;
+    }
+
     return encoder_process(&data) > 0;
 }
 
