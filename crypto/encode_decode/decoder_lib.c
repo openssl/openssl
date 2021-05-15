@@ -48,6 +48,14 @@ int OSSL_DECODER_from_bio(OSSL_DECODER_CTX *ctx, BIO *in)
     int ok = 0;
     BIO *new_bio = NULL;
 
+    if (OSSL_DECODER_CTX_get_num_decoders(ctx) == 0) {
+        ERR_raise_data(ERR_LIB_OSSL_DECODER, OSSL_DECODER_R_DECODER_NOT_FOUND,
+                       "No decoders were found. For standard decoders you need "
+                       "at least one of the default or base providers "
+                       "available. Did you forget to load them?");
+        return 0;
+    }
+
     if (BIO_tell(in) < 0) {
         new_bio = BIO_new(BIO_f_readbuffer());
         if (new_bio == NULL)
