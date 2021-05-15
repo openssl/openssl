@@ -59,11 +59,10 @@ static int algorithm_do_this(OSSL_PROVIDER *provider, void *cbdata)
         map = ossl_provider_query_operation(provider, cur_operation,
                                             &no_store);
         if (map != NULL) {
-            while (map->algorithm_names != NULL) {
-                const OSSL_ALGORITHM *thismap = map++;
+            const OSSL_ALGORITHM *thismap;
 
+            for (thismap = map; thismap->algorithm_names != NULL; thismap++)
                 data->fn(provider, thismap, no_store, data->data);
-            }
         }
         ossl_provider_unquery_operation(provider, cur_operation, map);
 
