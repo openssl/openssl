@@ -134,6 +134,8 @@ int ossl_store_handle_load_result(const OSSL_PARAM params[], void *arg)
     if (*v == NULL && !try_key(&helper_data, v, ctx, provider, libctx, propq))
         goto err;
     ERR_pop_to_mark();
+    if (*v == NULL && helper_data.object_type == OSSL_OBJECT_PKEY)
+        return 0;
     ERR_set_mark();
     if (*v == NULL && !try_cert(&helper_data, v, libctx, propq))
         goto err;
