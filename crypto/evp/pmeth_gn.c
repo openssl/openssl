@@ -430,6 +430,10 @@ static int pkey_fake_import(void *fake_keydata, int ignored_selection,
 int EVP_PKEY_export(const EVP_PKEY *pkey, int selection,
                     OSSL_CALLBACK *export_cb, void *export_cbarg)
 {
+    if (pkey == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
     if (evp_pkey_is_legacy(pkey)) {
         struct fake_import_data_st data;
 
