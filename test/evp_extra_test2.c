@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* We need to use some deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 /*
  * Really these tests should be in evp_extra_test - but that doesn't
  * yet support testing with a non-default libctx. Once it does we should move
@@ -17,6 +20,9 @@
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/provider.h>
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <openssl/rsa.h>
+#endif
 #include <openssl/core_names.h>
 #include "testutil.h"
 #include "internal/nelem.h"
@@ -744,16 +750,36 @@ static int test_pkey_export_null(void)
 static int test_pkey_export(void)
 {
     EVP_PKEY *pkey = NULL;
-    int ret = 0;
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    RSA *rsa = NULL;
+#endif
+    int ret = 1;
     const unsigned char *pdata = keydata[0].kder;
+    int pdata_len = keydata[0].size;
 
-    ret = TEST_ptr(pkey = d2i_AutoPrivateKey_ex(NULL, &pdata, keydata[0].size,
-                                                mainctx, NULL))
-          && TEST_int_eq(EVP_PKEY_export(pkey, EVP_PKEY_KEYPAIR,
-                                         test_pkey_export_cb, pkey), 1)
-          && TEST_int_eq(EVP_PKEY_export(pkey, EVP_PKEY_KEYPAIR,
-                                         test_pkey_export_cb, NULL), 0);
+    if (!TEST_ptr(pkey = d2i_AutoPrivateKey_ex(NULL, &pdata, pdata_len,
+                                               mainctx, NULL))
+        || !TEST_true(EVP_PKEY_export(pkey, EVP_PKEY_KEYPAIR,
+                                       test_pkey_export_cb, pkey))
+        || !TEST_false(EVP_PKEY_export(pkey, EVP_PKEY_KEYPAIR,
+                                       test_pkey_export_cb, NULL)))
+        ret = 0;
     EVP_PKEY_free(pkey);
+
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    /* Now, try with a legacy key */
+    pdata = keydata[0].kder;
+    pdata_len = keydata[0].size;
+    if (!TEST_ptr(rsa = d2i_RSAPrivateKey(NULL, &pdata, pdata_len))
+        || !TEST_ptr(pkey = EVP_PKEY_new())
+        || !TEST_true(EVP_PKEY_assign_RSA(pkey, rsa))
+        || !TEST_true(EVP_PKEY_export(pkey, EVP_PKEY_KEYPAIR,
+                                      test_pkey_export_cb, pkey))
+        || !TEST_false(EVP_PKEY_export(pkey, EVP_PKEY_KEYPAIR,
+                                       test_pkey_export_cb, NULL)))
+        ret = 0;
+    EVP_PKEY_free(pkey);
+#endif
     return ret;
 }
 
