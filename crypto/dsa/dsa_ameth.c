@@ -424,8 +424,8 @@ static size_t dsa_pkey_dirty_cnt(const EVP_PKEY *pkey)
 }
 
 static int dsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
-                              EVP_KEYMGMT *to_keymgmt, OSSL_LIB_CTX *libctx,
-                              const char *propq)
+                              OSSL_FUNC_keymgmt_import_fn *importer,
+                              OSSL_LIB_CTX *libctx, const char *propq)
 {
     DSA *dsa = from->pkey.dsa;
     OSSL_PARAM_BLD *tmpl;
@@ -472,7 +472,7 @@ static int dsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
         goto err;
 
     /* We export, the provider imports */
-    rv = evp_keymgmt_import(to_keymgmt, to_keydata, selection, params);
+    rv = importer(to_keydata, selection, params);
 
     OSSL_PARAM_free(params);
  err:

@@ -12,6 +12,7 @@
 # pragma once
 
 # include <openssl/asn1.h>
+# include <openssl/core_dispatch.h> /* OSSL_FUNC_keymgmt_import() */
 
 /* Internal ASN1 structures and functions: not for application use */
 
@@ -80,8 +81,8 @@ struct evp_pkey_asn1_method_st {
     /* Exports and imports to / from providers */
     size_t (*dirty_cnt) (const EVP_PKEY *pk);
     int (*export_to) (const EVP_PKEY *pk, void *to_keydata,
-                      EVP_KEYMGMT *to_keymgmt, OSSL_LIB_CTX *libctx,
-                      const char *propq);
+                      OSSL_FUNC_keymgmt_import_fn *importer,
+                      OSSL_LIB_CTX *libctx, const char *propq);
     OSSL_CALLBACK *import_from;
     int (*copy) (EVP_PKEY *to, EVP_PKEY *from);
 
