@@ -306,7 +306,6 @@ static OSSL_PROVIDER *provider_new(const char *name,
 #ifndef HAVE_ATOMICS
         || (prov->refcnt_lock = CRYPTO_THREAD_lock_new()) == NULL
 #endif
-        || !ossl_provider_up_ref(prov) /* +1 One reference to be returned */
         || (prov->opbits_lock = CRYPTO_THREAD_lock_new()) == NULL
         || (prov->flag_lock = CRYPTO_THREAD_lock_new()) == NULL
         || (prov->name = OPENSSL_strdup(name)) == NULL) {
@@ -315,6 +314,7 @@ static OSSL_PROVIDER *provider_new(const char *name,
         return NULL;
     }
 
+    prov->refcnt = 1; /* 1 One reference to be returned */
     prov->init_function = init_function;
 #ifndef FIPS_MODULE
     prov->flag_couldbechild = 1;
