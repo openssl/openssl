@@ -255,9 +255,10 @@ int otherparams_to_params(const EC_KEY *ec, OSSL_PARAM_BLD *tmpl,
                                              name))
         return 0;
 
-    if ((EC_KEY_get_enc_flags(ec) & EC_PKEY_NO_PUBKEY) != 0)
-        ossl_param_build_set_int(tmpl, params,
-                                 OSSL_PKEY_PARAM_EC_INCLUDE_PUBLIC, 0);
+    if ((EC_KEY_get_enc_flags(ec) & EC_PKEY_NO_PUBKEY) != 0
+            && !ossl_param_build_set_int(tmpl, params,
+                                         OSSL_PKEY_PARAM_EC_INCLUDE_PUBLIC, 0))
+        return 0;
 
     ecdh_cofactor_mode =
         (EC_KEY_get_flags(ec) & EC_FLAG_COFACTOR_ECDH) ? 1 : 0;
