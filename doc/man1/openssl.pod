@@ -13,13 +13,13 @@ I<command>
 
 B<openssl>
 B<list>
-B<-standard-commands> |
-B<-digest-commands> |
-B<-cipher-commands> |
-B<-cipher-algorithms> |
-B<-digest-algorithms> |
-B<-mac-algorithms> |
-B<-public-key-algorithms>
+B<standard-commands> |
+B<digest-commands> |
+B<cipher-commands> |
+B<cipher-algorithms> |
+B<digest-algorithms> |
+B<mac-algorithms> |
+B<public-key-algorithms>
 
 B<openssl> B<no->I<XXX> [ I<options> ]
 

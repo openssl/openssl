@@ -1066,7 +1066,7 @@ generate_buildinfo: generate_doc_buildinfo
 doc-nits: build_generated_pods
 	$(PERL) $(SRCDIR)/util/find-doc-nits -n -l -e
 
-cmd-nits: build_generated apps/openssl build_generated_pods
+cmd-nits: build_generated_pods
 	$(PERL) $(SRCDIR)/util/find-doc-nits -c
 
 # This uses "mdl", the markdownlint application, which is written in ruby.
