@@ -742,6 +742,7 @@ static int test_pkey_export(void)
         ret = 0;
     EVP_PKEY_free(pkey);
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     /* Now, try with a legacy key */
     pdata = keydata[0].kder;
     pdata_len = keydata[0].size;
@@ -754,6 +755,7 @@ static int test_pkey_export(void)
                                        test_pkey_export_cb, NULL)))
         ret = 0;
     EVP_PKEY_free(pkey);
+#endif
     return ret;
 }
 
