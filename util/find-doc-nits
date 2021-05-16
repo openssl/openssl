@@ -549,8 +549,10 @@ sub option_check {
         err($id, "Malformed option [1] in SYNOPSIS: $&");
     }
 
+    my @synopsis;
     while ( $synopsis =~ /$markup_re/msg ) {
         my $found = $&;
+        push @synopsis, $found if $found =~ /^B<-/;
         print STDERR "$id:DEBUG[option_check] SYNOPSIS: found $found\n"
             if $debug;
         my $option_uw = normalise_option($id, $filename, $found);
@@ -560,6 +562,7 @@ sub option_check {
 
     # In OPTIONS, we look for =item paragraphs.
     # (?=^\s*$) detects an empty line.
+    my @options;
     while ( $options =~ /=item\s+(.*?)(?=^\s*$)/msg ) {
         my $item = $&;
 
@@ -573,7 +576,18 @@ sub option_check {
             my $option_uw = normalise_option($id, $filename, $found);
             err($id, "Malformed option in OPTIONS: $found")
                 if defined $option_uw && $option_uw eq '';
+            if ($found =~ /^B<-/) {
+                push @options, $found;
+                err($id, "OPTIONS entry $found missing from SYNOPSIS")
+                    unless (grep /^\Q$found\E$/, @synopsis)
+                         || $id =~ /(openssl|-options)\.pod:1:$/;
+            }
         }
+    }
+    foreach (@synopsis) {
+        my $option = $_;
+        err($id, "SYNOPSIS entry $option missing from OPTIONS")
+            unless (grep /^\Q$option\E$/, @options);
     }
 }
 
