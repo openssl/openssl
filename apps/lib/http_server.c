@@ -433,36 +433,33 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
 
         key = inbuf;
         value = strchr(key, ':');
-        if (value != NULL) {
-            *(value++) = '\0';
-            while (*value == ' ')
-                value++;
-            line_end = strchr(value, '\r');
-            if (line_end == NULL)
-                line_end = strchr(value, '\n');
-            if (line_end != NULL)
-                *line_end = '\0';
-        } else {
+        if (value == NULL) {
             log_message(prog, LOG_WARNING,
                         "Error parsing HTTP header: missing ':'");
             (void)http_server_send_status(cbio, 400, "Bad Request");
             goto out;
         }
-        if (value != NULL && line_end != NULL) {
-            /* https://tools.ietf.org/html/rfc7230#section-6.3 Persistence */
-            if (found_keep_alive != NULL && strcasecmp(key, "Connection") == 0) {
-                if (strcasecmp(value, "keep-alive") == 0)
-                    *found_keep_alive = 1;
-                if (strcasecmp(value, "close") == 0)
-                    *found_keep_alive = 0;
+        *(value++) = '\0';
+        while (*value == ' ')
+            value++;
+        line_end = strchr(value, '\r');
+        if (line_end == NULL) {
+            line_end = strchr(value, '\n');
+            if (line_end == NULL) {
+                log_message(prog, LOG_WARNING,
+                            "Error parsing HTTP header: missing end of line");
+                (void)http_server_send_status(cbio, 400, "Bad Request");
+                goto out;
             }
-        } else {
-            log_message(prog, LOG_WARNING,
-                        "Error parsing HTTP header: missing end of line");
-            (void)http_server_send_status(cbio, 400, "Bad Request");
-            goto out;
         }
-
+        *line_end = '\0';
+        /* https://tools.ietf.org/html/rfc7230#section-6.3 Persistence */
+        if (found_keep_alive != NULL && strcasecmp(key, "Connection") == 0) {
+            if (strcasecmp(value, "keep-alive") == 0)
+                *found_keep_alive = 1;
+            if (strcasecmp(value, "close") == 0)
+                *found_keep_alive = 0;
+        }
     }
 
 # ifdef HTTP_DAEMON
