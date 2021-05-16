@@ -45,7 +45,7 @@ our($opt_c);
 sub help {
     print <<EOF;
 Find small errors (nits) in documentation.  Options:
-    -c List undocumented commands and options
+    -c List undocumented commands, undocumented options and unimplemented options.
     -d Detailed list of undocumented (implies -u)
     -e Detailed list of new undocumented (implies -v)
     -h Print this help message
@@ -1085,8 +1085,7 @@ sub checkflags {
     # See what's in the command not the manpage.
     my @undocced = sort grep { !defined $docopts{$_} } @cmdopts;
     foreach ( @undocced ) {
-        next if $cmd eq "openssl" && $_ eq "help";
-        err("$doc: undocumented option -$_");
+        err("$doc: undocumented $cmd option -$_");
     }
 
     # See what's in the command not the manpage.
