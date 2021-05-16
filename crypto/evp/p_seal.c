@@ -20,7 +20,7 @@ int EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
                  EVP_PKEY **pubk, int npubk)
 {
     unsigned char key[EVP_MAX_KEY_LENGTH];
-    int i;
+    int i, len;
     int rv = 0;
 
     if (type) {
@@ -34,15 +34,19 @@ int EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
     if (EVP_CIPHER_CTX_rand_key(ctx, key) <= 0)
         return 0;
 
-    if (EVP_CIPHER_CTX_iv_length(ctx)
-            && RAND_bytes(iv, EVP_CIPHER_CTX_iv_length(ctx)) <= 0)
+    len = EVP_CIPHER_CTX_iv_length(ctx);
+    if (len < 0 || RAND_bytes(iv, len) <= 0)
+        goto err;
+
+    len = EVP_CIPHER_CTX_key_length(ctx);
+    if (len < 0)
         goto err;
 
     if (!EVP_EncryptInit_ex(ctx, NULL, NULL, key, iv))
         goto err;
 
     for (i = 0; i < npubk; i++) {
-        size_t keylen = EVP_CIPHER_CTX_key_length(ctx);
+        size_t keylen = len;
         EVP_PKEY_CTX *pctx = NULL;
 
         if ((pctx = EVP_PKEY_CTX_new(pubk[i], NULL)) == NULL) {
