@@ -35,6 +35,7 @@ our($opt_s);
 our($opt_o);
 our($opt_h);
 our($opt_l);
+our($opt_m);
 our($opt_n);
 our($opt_p);
 our($opt_u);
@@ -50,6 +51,7 @@ Find small errors (nits) in documentation.  Options:
     -e Detailed list of new undocumented (implies -v)
     -h Print this help message
     -l Print bogus links
+    -m Name(s) of manuals to focus on. Default: man1,man3,man5,man7
     -n Print nits in POD pages
     -o Causes -e/-v to count symbols added since 1.1.1 as new (implies -v)
     -u Count undocumented functions
@@ -58,7 +60,7 @@ EOF
     exit;
 }
 
-getopts('cdehlnouv');
+getopts('cdehlm:nouv');
 
 help() if $opt_h;
 $opt_u = 1 if $opt_d;
@@ -78,7 +80,11 @@ my $temp = '/tmp/docnits.txt';
 my $OUT;
 my $status = 0;
 
-my @sections = ( 'man1', 'man3', 'man5', 'man7' );
+$opt_m = "man1,man3,man5,man7" unless $opt_m;
+die "Argument of -m option may contain only man1, man3, man5, and/or man7"
+    unless $opt_m =~ /^(man[1357][, ]?)*$/;
+my @sections = ( split /[, ]/, $opt_m );
+
 my %mandatory_sections = (
     '*' => [ 'NAME', 'DESCRIPTION', 'COPYRIGHT' ],
     1   => [ 'SYNOPSIS', 'OPTIONS' ],
@@ -148,7 +154,7 @@ my %collected_results = ();
 #                       - exclusive selectors, only applicable together with
 #                         any of the manual selectors.  If any of these are
 #                         present, only the manuals from the given sections
-#                         will be include.  If none of these are present,
+#                         will be included.  If none of these are present,
 #                         the manuals from all sections will be returned.
 #
 # All returned manual files come from configdata.pm.
@@ -712,7 +718,7 @@ sub check {
                   files(TAGS => [ 'manual', 'man1' ]) );
         # TODO: Filter out "foreign manual" links.
         next if $target =~ /ps|apropos|sha1sum|procmail|perl/;
-        err($id, "Bad command link L<$target(1)>");
+        err($id, "Bad command link L<$target(1)>") if grep /man1/, @sections;
     }
     # Check for proper in-man-3 API links.
     while ( $contents =~ /L<([^>]*)\(3\)(?:\/.*)?>/g ) {
@@ -1180,7 +1186,7 @@ if ( $opt_l ) {
 
 if ( $opt_n ) {
     # If not given args, check that all man1 commands are named properly.
-    if ( scalar @ARGV == 0 ) {
+    if ( scalar @ARGV == 0 && grep /man1/, @sections ) {
         foreach ( files(TAGS => [ 'public_manual', 'man1' ]) ) {
             next if /openssl\.pod/
                 || /CA\.pl/ || /tsget\.pod/; # these commands are special cases
