@@ -3057,9 +3057,7 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
                     continue;
                 }
 #endif
-#if !defined(OPENSSL_SYS_MSDOS)
-                sleep(1);
-#endif
+                ossl_sleep(1000);
                 continue;
             }
         } else if (i == 0) {    /* end of input */
@@ -3486,9 +3484,7 @@ static int rev_body(int s, int stype, int prot, unsigned char *context)
                     continue;
                 }
 #endif
-#if !defined(OPENSSL_SYS_MSDOS)
-                sleep(1);
-#endif
+                ossl_sleep(1000);
                 continue;
             }
         } else if (i == 0) {    /* end of input */

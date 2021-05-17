@@ -2705,7 +2705,7 @@ int cmp_main(int argc, char **argv)
                                            prog, opt_port, 0, 0);
             if (ret == 0) { /* no request yet */
                 if (retry) {
-                    sleep(1);
+                    ossl_sleep(1000);
                     retry = 0;
                     continue;
                 }
