@@ -343,9 +343,6 @@ static int genpkey_cb(EVP_PKEY_CTX *ctx)
         return 1;
 
     switch (EVP_PKEY_CTX_get_keygen_info(ctx, 0)) {
-    default:
-        c = '*';
-        break;
     case 0:
         c = '.';
         break;
