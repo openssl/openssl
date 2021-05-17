@@ -29,7 +29,6 @@
       (my $x = shift) =~ s|\]$|...]|;
       $x
   }
-  }
 
   # Because we need to make two computations of these data,
   # we store them in arrays for reuse
@@ -139,7 +138,20 @@ DEPS={- our @deps = map { platform->isobj($_) ? platform->dep($_) : $_ }
                     keys %{$unified_info{sources}};
         join(", ", map { "-\n\t".$_ } @deps); -}
 {- output_on() if $disabled{makedepend}; "" -}
-GENERATED_MANDATORY={- join(", ", map { "-\n\t".$_ } @{$unified_info{depends}->{""}} ) -}
+GENERATED_MANDATORY={- join(", ",
+                            map { "-\n\t".$_ } @{$unified_info{depends}->{""}} ) -}
+GENERATED_PODS={- # common0.tmpl provides @generated
+                  join(", ",
+                       map { my $x = $_;
+                             (
+                               grep { 
+                                      $unified_info{attributes}->{depends}
+                                      ->{$x}->{$_}->{pod} // 0
+                                    }
+                                   keys %{$unified_info{attributes}->{depends}->{$x}}
+                             ) ? "-\n\t".$x : ();
+                           }
+                           @generated) -}
 GENERATED={- # common0.tmpl provides @generated
              join(", ", map { platform->convertext($_) } @generated) -}
 
@@ -366,7 +378,7 @@ CPPFLAGS_Q={- (my $c = $lib_cppflags.$cppflags2.$cppflags1) =~ s|"|""|g;
 # given with /INCLUDE is a fantasy, unfortunately.
 NODEBUG=@
 .FIRST :
-        $(NODEBUG) sourcetop = F$PARSE("$(SRCDIR)","[]A.;",,"SYNTAX_ONLY,NO_CONCEAL") - ".][000000" - "[000000." - "][" - "]A.;" + ".]"
+        $(NODEBUG) sourcetop = F$PARSE("$(SRCDIR)","[]A.;",,,"SYNTAX_ONLY,NO_CONCEAL") - ".][000000" - "[000000." - "][" - "]A.;" + ".]"
         $(NODEBUG) DEFINE ossl_sourceroot 'sourcetop'
         $(NODEBUG) !
         $(NODEBUG) openssl_inc1 = F$PARSE("[.include.openssl]","A.;",,,"syntax_only") - "A.;"
@@ -429,13 +441,14 @@ NODEBUG=@
 {- dependmagic('build_modules'); -} : build_modules_nodep
 {- dependmagic('build_programs'); -} : build_programs_nodep
 
+build_generated_pods : $(GENERATED_PODS)
+build_docs : build_html_docs
+build_html_docs : $(HTMLDOCS1) $(HTMLDOCS3) $(HTMLDOCS5) $(HTMLDOCS7)
+
 build_generated : $(GENERATED_MANDATORY)
 build_libs_nodep : $(LIBS), $(SHLIBS)
 build_modules_nodep : $(MODULES)
 build_programs_nodep : $(PROGRAMS), $(SCRIPTS)
-
-build_docs: build_html_docs
-build_html_docs: $(HTMLDOCS1) $(HTMLDOCS3) $(HTMLDOCS5) $(HTMLDOCS7)
 
 # Kept around for backward compatibility
 build_apps build_tests : build_programs
@@ -452,7 +465,8 @@ build_all_generated : $(GENERATED_MANDATORY) $(GENERATED) build_docs
 all : build_sw build_docs
 
 test : tests
-{- dependmagic('tests'); -} : build_programs_nodep, build_modules_nodep copy-utils
+{- dependmagic('tests'); -} : build_programs_nodep, build_modules_nodep copy-utils run_tests
+run_tests :
         @ ! {- output_off() if $disabled{tests}; "" -}
         DEFINE SRCTOP "$(SRCDIR)"
         DEFINE BLDTOP "$(BLDDIR)"
@@ -539,7 +553,7 @@ install_docs : install_html_docs
 
 uninstall_docs : uninstall_html_docs
 
-install_fips: install_sw
+install_fips : install_sw
 	@ WRITE SYS$OUTPUT "*** Installing FIPS module configuration"
 	@ WRITE SYS$OUTPUT "fipsinstall $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME).cnf"
 	openssl fipsinstall -
@@ -547,7 +561,7 @@ install_fips: install_sw
 		-out ossl_installroot:[MODULES{- $sover_dirname.$target{pointer_size} -}.'arch']$(FIPSMODULENAME).cnf -
 		-macopt "hexkey:$(FIPSKEY)"
 
-uninstall_fips: uninstall_sw
+uninstall_fips : uninstall_sw
 	@ WRITE SYS$OUTPUT "*** Uninstalling FIPS module configuration"
 	DELETE ossl_installroot:[MODULES{- $sover_dirname.$target{pointer_size} -}.'arch']$(FIPSMODULENAME).cnf;*
 
@@ -821,9 +835,14 @@ EOF
           my $pod = $gen0;
           my $mkpod2html = sourcefile('util', 'mkpod2html.pl');
           return <<"EOF";
-$args{src}: $pod
+$args{src} : $pod
 	\$(PERL) $mkpod2html -i $pod -o \$\@ -t "$title" -r "\$(SRCDIR)/doc"
 EOF
+      } elsif ($args{src} =~ /\.(\d)$/) {
+          #
+          # Man-page generator, on VMS we simply ignore man-pages
+          #
+          return "";
       } elsif (platform->isdef($args{src})) {
           #
           # Linker script-ish generator
@@ -923,7 +942,7 @@ EOF
           @modules = map { '"-M'.basename($_, '.pm').'"' } @modules;
           my $modules = join(' ', '', sort keys %moduleincs, @modules);
           return <<"EOF";
-$target : $gen0 $deps
+$args{src} : $gen0 $deps
 	\$(PERL)$modules $dofile "-o$target{build_file}" $gen0$gen_args > \$\@
 EOF
       } elsif (grep { $_ eq $gen0 } @{$unified_info{programs}}) {
@@ -950,7 +969,7 @@ EOF
           # Also redo $gen0, to ensure that we have the proper extension
           $gen0 = platform->bin($gen0);
           return <<"EOF";
-$args{src}: $gen0 $deps
+$args{src} : $gen0 $deps
 	PIPE $gen0$gen_args > \$@
 EOF
       } else {
@@ -958,7 +977,7 @@ EOF
           # Generic generator using Perl
           #
           return <<"EOF";
-$target : $gen0 $deps
+$args{src} : $gen0 $deps
 	\$(PERL)$gen_incs $gen0$gen_args > \$\@
 EOF
       }
