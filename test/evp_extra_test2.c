@@ -388,11 +388,9 @@ static int test_d2i_PrivateKey_ex(int testid)
 
     if (!TEST_ptr(provider = OSSL_PROVIDER_load(NULL, "default")))
         goto err;
-    if (!TEST_ptr(key_bio = BIO_new_mem_buf((&keydata[id])->kder,
-                                            (&keydata[id])->size)))
+    if (!TEST_ptr(key_bio = BIO_new_mem_buf(keydata[id].kder, keydata[id].size)))
         goto err;
-    if (!TEST_ptr_null(pkey = PEM_read_bio_PrivateKey(key_bio, NULL,
-                                                      NULL, NULL)))
+    if (!TEST_ptr_null(pkey = PEM_read_bio_PrivateKey(key_bio, NULL, NULL, NULL)))
         goto err;
 
     ERR_clear_error();
