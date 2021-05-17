@@ -130,51 +130,6 @@ sub output_off {
 
 # Helper functions for the templates #################################
 
-# It might be practical to quotify some strings and have them protected
-# from possible harm.  These functions primarily quote things that might
-# be interpreted wrongly by a perl eval.
-
-# NOTE THAT THESE AREN'T CLASS METHODS!
-
-=over 4
-
-=item quotify1 STRING
-
-This adds quotes (") around the given string, and escapes any $, @, \,
-" and ' by prepending a \ to them.
-
-=back
-
-=cut
-
-sub quotify1 {
-    my $s = shift @_;
-    $s =~ s/([\$\@\\"'])/\\$1/g;
-    '"'.$s.'"';
-}
-
-=over 4
-
-=item quotify_l LIST
-
-For each defined element in LIST (i.e. elements that aren't undef), have
-it quotified with 'quotify1'.
-Undefined elements are ignored.
-
-=back
-
-=cut
-
-sub quotify_l {
-    map {
-        if (!defined($_)) {
-            ();
-        } else {
-            quotify1($_);
-        }
-    } @_;
-}
-
 =head1 SEE ALSO
 
 L<Text::Template>
