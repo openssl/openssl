@@ -627,9 +627,9 @@ static void put_char(char ch, char **buf, size_t *remain, size_t *needed)
         **buf = '\0';
     else
         **buf = ch;
-    *buf += 1;
-    *needed += 1;
-    *remain -= 1;
+    ++*buf;
+    ++*needed;
+    --*remain;
 }
 
 static void put_str(const char *str, char **buf, size_t *remain, size_t *needed)
@@ -653,8 +653,8 @@ static void put_str(const char *str, char **buf, size_t *remain, size_t *needed)
 
     if(len < olen && *remain == 1) {
         **buf = '\0';
-        *buf += 1;
-        *remain -= 1;
+        ++*buf;
+        --*remain;
     }
 }
 
