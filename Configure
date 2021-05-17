@@ -1386,6 +1386,10 @@ foreach (keys %useradd) {
 # At this point, we can forget everything about %user and %useradd,
 # because it's now all been merged into the corresponding $config entry
 
+if (grep { $_ =~ /(?:^|\s)-static(?:\s|$)/ } @{$config{LDFLAGS}}) {
+    disable('static', 'pic', 'threads');
+}
+
 # Allow overriding the build file name
 $config{build_file} = env('BUILDFILE') || $target{build_file} || "Makefile";
 
@@ -1673,10 +1677,6 @@ if ($strict_warnings)
                 warn "WARNING --strict-warnings requires gcc[>=4] or gcc-alike, or MSVC"
                 }
         }
-
-if (grep { $_ =~ /(?:^|\s)-static(?:\s|$)/ } @{$config{LDFLAGS}}) {
-    disable('static', 'pic', 'threads');
-}
 
 $config{CFLAGS} = [ map { $_ eq '--ossl-strict-warnings'
                               ? @strict_warnings_collection
