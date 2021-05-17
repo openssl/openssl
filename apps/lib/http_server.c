@@ -96,7 +96,7 @@ static void killall(int ret, pid_t *kidpids)
         if (kidpids[i] != 0)
             (void)kill(kidpids[i], SIGTERM);
     OPENSSL_free(kidpids);
-    sleep(1);
+    ossl_sleep(1000);
     exit(ret);
 }
 
@@ -166,7 +166,7 @@ void spawn_loop(const char *prog)
                                WCOREDUMP(status) ? " (core dumped)" :
 # endif
                                "");
-                    sleep(1);
+                    ossl_sleep(1000);
                 }
                 break;
             } else if (errno != EINTR) {
@@ -180,7 +180,7 @@ void spawn_loop(const char *prog)
         switch (fpid = fork()) {
         case -1: /* error */
             /* System critically low on memory, pause and try again later */
-            sleep(30);
+            ossl_sleep(30000);
             break;
         case 0: /* child */
             OPENSSL_free(kidpids);

@@ -10,10 +10,9 @@
 #include <string.h>
 
 #include "internal/nelem.h"
-#include "internal/cryptlib.h" /* for ossl_sleep() */
 #include "ssltestlib.h"
 #include "../testutil.h"
-#include "e_os.h"
+#include "e_os.h" /* for ossl_sleep() etc. */
 
 #ifdef OPENSSL_SYS_UNIX
 # include <unistd.h>
