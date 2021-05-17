@@ -1034,7 +1034,6 @@ sub checkflags {
     my $doc = shift;
     my @cmdopts;
     my %docopts;
-    my %localskips;
 
     # Get the list of options in the command source file.
     my $active = 0;
@@ -1069,12 +1068,6 @@ sub checkflags {
     while ( <CFH> ) {
         chop;
         last if /DESCRIPTION/;
-        if ( /=for openssl ifdef (.*)/ ) {
-            foreach my $f ( split / /, $1 ) {
-                $localskips{$f} = 1;
-            }
-            next;
-        }
         my $opt;
         if ( /\[B<-([^ >]+)/ ) {
             $opt = $1;
@@ -1099,7 +1092,7 @@ sub checkflags {
     my @unimpl = sort grep { my $e = $_; !(grep /^\Q$e\E$/, @cmdopts) } keys %docopts;
     foreach ( @unimpl ) {
         next if $_ eq "-"; # Skip the -- end-of-flags marker
-        next if defined $skips{$_} || defined $localskips{$_};
+        next if defined $skips{$_};
         err("$doc: $cmd does not implement -$_");
     }
 }
