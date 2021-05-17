@@ -1,5 +1,5 @@
 #!{- $config{HASHBANGPERL} -}
-
+{- use OpenSSL::Util; -}
 # {- join("\n# ", @autowarntext) -}
 # Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
 #

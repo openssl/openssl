@@ -4,6 +4,7 @@
 ## {- join("\n## ", @autowarntext) -}
 {-
  use File::Basename;
+ use OpenSSL::Util;
 
  our $sover_dirname = platform->shlib_version_as_filename();
 

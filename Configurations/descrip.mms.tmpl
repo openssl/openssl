@@ -4,6 +4,7 @@
 {-
   use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs/;
   use File::Basename;
+  use OpenSSL::Util;
 
   (our $osslprefix_q = platform->osslprefix()) =~ s/\$/\\\$/;
 
