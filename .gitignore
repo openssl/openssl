@@ -2,6 +2,7 @@
 /.dir-locals.el
 
 # Top level excludes
+/Makefile.in
 /Makefile
 /MINFO
 /TABLE

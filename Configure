@@ -1918,9 +1918,7 @@ if ($builder eq "unified") {
     $config{build_file_templates}
       = [ cleanfile($srcdir, catfile("Configurations", "common0.tmpl"),
                     $blddir),
-          $build_file_template,
-          cleanfile($srcdir, catfile("Configurations", "common.tmpl"),
-                    $blddir) ];
+           $build_file_template ];
 
     my @build_dirs = ( [ ] );   # current directory
 
@@ -2789,7 +2787,7 @@ my %template_vars = (
 my $configdata_outname = 'configdata.pm';
 print "Creating $configdata_outname\n";
 open CONFIGDATA, ">$configdata_outname.new"
-            or die "Trying to create $configdata_outname.new: $!";
+    or die "Trying to create $configdata_outname.new: $!";
 my $configdata_tmplname = cleanfile($srcdir, "configdata.pm.in", $blddir);
 my $configdata_tmpl =
     OpenSSL::Template->new(TYPE => 'FILE', SOURCE => $configdata_tmplname);
