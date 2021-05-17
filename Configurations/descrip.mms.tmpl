@@ -13,6 +13,16 @@
 
   our $sourcedir = $config{sourcedir};
   our $builddir = $config{builddir};
+  sub make_unix_path {
+      # Split the native path
+      (my $vol, my $dirs, my $file) = File::Spec->splitpath($_[0]);
+      my @dirs = File::Spec->splitdir($dirs);
+
+      # Reassemble it as a Unix path
+      $vol =~ s|:$||;
+      return File::Spec::Unix->catpath(
+          '', File::Spec::Unix->catdir('', $vol ? $vol : (), @dirs), $file);
+  }
   sub sourcefile {
       catfile($sourcedir, @_);
   }
@@ -328,7 +338,7 @@ MODULESDIR_C={- platform->osslprefix() -}MODULES{- $sover_dirname.$target{pointe
 CC={- $config{CC} -}
 CPP={- $config{CPP} -}
 DEFINES={- our $defines = join('', map { ",$_" } @{$config{CPPDEFINES}}) -}
-INCLUDES={- our $includes = join(',', @{$config{CPPINCLUDES}}) -}
+#INCLUDES={- our $includes = join(',', @{$config{CPPINCLUDES}}) -}
 CPPFLAGS={- our $cppflags = join('', @{$config{CPPFLAGS}}) -}
 CFLAGS={- join('', @{$config{CFLAGS}}) -}
 LDFLAGS={- join('', @{$config{LFLAGS}}) -}
@@ -369,13 +379,6 @@ NODEBUG=@
         $(NODEBUG) sourcetop = F$PARSE("$(SRCDIR)","[]A.;",,,"SYNTAX_ONLY,NO_CONCEAL") - ".][000000" - "[000000." - "][" - "]A.;" + ".]"
         $(NODEBUG) DEFINE ossl_sourceroot 'sourcetop'
         $(NODEBUG) !
-        $(NODEBUG) openssl_inc1 = F$PARSE("[.include.openssl]","A.;",,,"syntax_only") - "A.;"
-        $(NODEBUG) openssl_inc2 = F$PARSE("{- catdir($config{sourcedir},"[.include.openssl]") -}","A.;",,,"SYNTAX_ONLY") - "A.;"
-        $(NODEBUG) internal_inc1 = F$PARSE("[.crypto.include.internal]","A.;",,,"SYNTAX_ONLY") - "A.;"
-        $(NODEBUG) internal_inc2 = F$PARSE("{- catdir($config{sourcedir},"[.include.internal]") -}","A.;",,,"SYNTAX_ONLY") - "A.;"
-        $(NODEBUG) internal_inc3 = F$PARSE("{- catdir($config{sourcedir},"[.crypto.include.internal]") -}","A.;",,,"SYNTAX_ONLY") - "A.;"
-        $(NODEBUG) DEFINE openssl 'openssl_inc1','openssl_inc2'
-        $(NODEBUG) DEFINE internal 'internal_inc1','internal_inc2','internal_inc3'
         $(NODEBUG) staging_dir = "$(DESTDIR)"
         $(NODEBUG) staging_instdir = ""
         $(NODEBUG) staging_datadir = ""
@@ -404,6 +407,12 @@ NODEBUG=@
         $(NODEBUG) DEFINE ossl_installroot 'installtop'
         $(NODEBUG) DEFINE ossl_dataroot 'datatop'
         $(NODEBUG) !
+        $(NODEBUG) ! Override disturbing system logicals.  We can't deassign
+        $(NODEBUG) ! them, so we create it instead.  This is an unfortunate
+        $(NODEBUG) ! necessity.
+        $(NODEBUG) !
+        $(NODEBUG) DEFINE openssl "{- sourcedir('include/openssl') -}
+        $(NODEBUG) !
         $(NODEBUG) ! Figure out the architecture
         $(NODEBUG) !
         $(NODEBUG) arch = f$edit( f$getsyi( "arch_name"), "upcase")
@@ -417,7 +426,6 @@ NODEBUG=@
         $(NODEBUG) {- join("\n\t\$(NODEBUG) ", map { "DEASSIGN ".uc($_) } @shlibs) || "!" -}
         $(NODEBUG) DEASSIGN ossl_dataroot
         $(NODEBUG) DEASSIGN ossl_installroot
-        $(NODEBUG) DEASSIGN internal
         $(NODEBUG) DEASSIGN openssl
 .DEFAULT :
         @ ! MMS cannot handle no actions...
@@ -744,6 +752,7 @@ reconfigure reconf :
 {-
   use File::Basename;
   use File::Spec::Functions qw/abs2rel rel2abs catfile catdir/;
+  use File::Spec::Unix;
 
   # Helper function to figure out dependencies on libraries
   # It takes a list of library names and outputs a list of dependencies
@@ -758,45 +767,79 @@ reconfigure reconf :
   }
 
   # Helper function to deal with inclusion directory specs.
-  # We have to deal with two things:
-  # 1. comma separation and no possibility of trailing comma
-  # 2. no inclusion directories given at all
-  # 3. long compiler command lines
-  # To resolve 1, we need to iterate through the sources of inclusion
-  # directories, and only add a comma when needed.
-  # To resolve 2, we need to have a variable that will hold the whole
-  # inclusion qualifier, or be the empty string if there are no inclusion
-  # directories.  That's the symbol 'qual_includes' that's used in CPPFLAGS
-  # To resolve 3, we create a logical name TMP_INCLUDES: to hold the list
-  # of inclusion directories.
+  # We're dealing with two issues:
+  # 1. A lot of include directory specs take up a lot of command line real
+  #    estate, and the DCL command line is very limited (2KiB).
+  # 2. For optimal usage, include directory paths must be in Unix form,
+  #    that's the only way the C compiler can merge multiple include paths
+  #    in a sane way (we can stop worrying about 1.h including foo/2.h
+  #    including ../3.h).
   #
-  # This function returns a list of two lists, one being the collection of
-  # commands to execute before the compiler is called, and the other being
-  # the collection of commands to execute after.  It takes as arguments the
-  # collection of strings to include as directory specs.
-  sub includes {
-      my @stuff = ( @_ );
-      my @before = (
-          'qual_includes :=',
-      );
-      my @after = (
-          'DELETE/SYMBOL/LOCAL qual_includes',
-      );
+  # To resolve 1, we need to create a file with include directory pragmas,
+  # and let the compiler use it with /FIRST_INCLUDE=.
+  # To resolve 2, we convert all include directory specs we get to Unix,
+  # with available File::Spec functions.
+  #
+  # We use CRC-24 from https://tools.ietf.org/html/rfc4880#section-6,
+  # reimplemented in Perl to get a workable and constant file name for each
+  # combination of include directory specs.  It is assumed that the order of
+  # these directories don't matter.
+  #
+  # This function takes as input a list of include directories
+  # This function returns a list two things:
+  # 1. The file name to use with /FIRST_INCLUDE=
+  # 2. Text to insert into descrip.mms (may be the empty string)
+  sub crc24 {
+      my $input = shift;
 
-      if (scalar @stuff > 0) {
-          push @before, 'tmp_includes := '.shift(@stuff);
-          while (@stuff) {
-              push @before, 'tmp_add := '.shift(@stuff);
-              push @before, 'IF tmp_includes .NES. "" .AND. tmp_add .NES. "" THEN tmp_includes = tmp_includes + ","';
-              push @before, 'tmp_includes = tmp_includes + tmp_add';
+      my $init_value = 0x00B704CE;
+      my $poly_value = 0x01864CFB;
+
+      my $crc = $init_value;
+
+      foreach my $x (unpack ('C*', $input)) {
+          $crc ^= $x << 16;
+
+          for (my $i; $i < 8; $i++) {
+              $crc <<= 1;
+              if ($crc & 0x01000000) {
+                  $crc ^= $poly_value;
+              }
           }
-          push @before, "IF tmp_includes .NES. \"\" THEN DEFINE tmp_includes 'tmp_includes'";
-          push @before, 'IF tmp_includes .NES. "" THEN qual_includes := /INCLUDE=(tmp_includes:)';
-          push @before, 'DELETE/SYMBOL/LOCAL tmp_includes';
-          push @before, 'DELETE/SYMBOL/LOCAL tmp_add';
-          push @after, 'DEASSIGN tmp_includes:'
       }
-      return ([ @before ], [ @after ]);
+      $crc &= 0xFFFFFF;
+
+      return $crc;
+  }
+  my %includefile_cache;
+  sub make_includefile {
+      my %dirs = map {
+          my $udir = make_unix_path(rel2abs($_));
+
+          $udir => 1;
+      } @_;
+      my @dirs = sort keys %dirs;
+      my $filename = sprintf 'incdirs_%x.h', crc24(join(',', @dirs));
+
+      if ($includefile_cache{$filename}) {
+          return ($filename, "");
+      }
+
+      my $scripture = <<"EOF";
+$filename :
+	open/write inc_output $filename
+EOF
+      foreach (@dirs) {
+          $scripture .= <<"EOF";
+	write inc_output "#pragma include_directory ""$_"""
+EOF
+      }
+      $scripture .= <<"EOF";
+	close inc_output
+EOF
+      $includefile_cache{$filename} = $scripture;
+
+      return ($filename, $scripture);
   }
 
   sub generatetarget {
@@ -856,15 +899,6 @@ EOF
                 lib => "$lib_cflags $lib_cppflags",
                 dso => "$dso_cflags $dso_cppflags",
                 bin => "$bin_cflags $bin_cppflags" } -> {$args{intent}};
-          my @incs_cmds = includes({ shlib => '$(LIB_INCLUDES)',
-                                     lib => '$(LIB_INCLUDES)',
-                                     dso => '$(DSO_INCLUDES)',
-                                     bin => '$(BIN_INCLUDES)' } -> {$args{intent}},
-                                   '$(CNF_INCLUDES)',
-                                   '$(INCLUDES)',
-                                   @{$args{incs}});
-          my $incs_on = join("\n\t\@ ", @{$incs_cmds[0]}) || '!';
-          my $incs_off = join("\n\t\@ ", @{$incs_cmds[1]}) || '!';
           my $defs = join("", map { ",".$_ } @{$args{defs}});
           my $target = platform->asm($args{src});
 
@@ -885,12 +919,10 @@ EOF
                    return <<"EOF";
 $target : $gen0 $deps
 	$generator \$\@-S
-        \@ $incs_on
         \@ extradefines = "$defs"
 	PIPE \$(CPP) $cppflags \$\@-S | -
              \$(PERL) -ne "/^#(\\s*line)?\\s*[0-9]+\\s+""/ or print" > \$\@-i
         \@ DELETE/SYMBOL/LOCAL extradefines
-        \@ $incs_off
         RENAME \$\@-i \$\@
         DELETE \$\@-S;
 EOF
@@ -898,22 +930,17 @@ EOF
               # Otherwise....
               return <<"EOF";
 $target : $gen0 $deps
-        \@ $incs_on
         \@ extradefines = "$defs"
 	$generator \$\@
         \@ DELETE/SYMBOL/LOCAL extradefines
-        \@ $incs_off
 EOF
           }
           return <<"EOF";
 $target : $gen0 $deps
-        \@ $incs_on
         \@ extradefines = "$defs"
-        SHOW SYMBOL qual_includes
         PIPE \$(CPP) $cppflags $gen0 | -
         \$(PERL) "-ne" "/^#(\\s*line)?\\s*[0-9]+\\s+""/ or print" > \$\@
         \@ DELETE/SYMBOL/LOCAL extradefines
-        \@ $incs_off
 EOF
       } elsif ($gen0 =~ m|^.*\.in$|) {
           #
@@ -1021,18 +1048,6 @@ EOF
 		      dso => $dso_asflags,
 		      bin => $bin_asflags } -> {$args{intent}};
 
-      my @incs_cmds = includes({ shlib => '$(LIB_INCLUDES)',
-                                 lib => '$(LIB_INCLUDES)',
-                                 dso => '$(DSO_INCLUDES)',
-                                 bin => '$(BIN_INCLUDES)' } -> {$args{intent}},
-                               '$(INCLUDES)',
-                               map {
-                                   file_name_is_absolute($_)
-                                   ? $_ : catdir($backward,$_)
-                               } @{$args{incs}});
-      my $incs_on = join("\n\t\@ ", @{$incs_cmds[0]}) || '!';
-      my $incs_off = join("\n\t\@ ", @{$incs_cmds[1]}) || '!';
-
       if ($srcs[0] =~ /\Q${asmext}\E$/) {
           return <<"EOF";
 $obj : $deps
@@ -1062,6 +1077,18 @@ $obj : $deps
 EOF
       }
 
+      my ($incdir_filename, $incdir_scripture) =
+          make_includefile(@{ { shlib => [ @lib_cppincludes ],
+                                lib => [ @lib_cppincludes ],
+                                dso => [ @dso_cppincludes ],
+                                bin => [ @bin_cppincludes ] } -> {$args{intent}} },
+                           @{$args{incs}});
+      $deps .= ", -\n\t\t$incdir_filename";
+      $cflags =
+          $target{cflag_incfirst}
+          . '"'.make_unix_path(rel2abs($incdir_filename)).'"'
+          . $cflags;
+
       my $depbuild = $disabled{makedepend} ? ""
           : " /MMS=(FILE=${depd}${depn},TARGET=$obj)";
 
@@ -1077,6 +1104,7 @@ $obj : $deps
         SET DEFAULT $backward
         ${after}
         - PURGE $obj
+$incdir_scripture
 EOF
   }
   sub obj2shlib {
