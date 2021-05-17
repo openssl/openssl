@@ -71,7 +71,7 @@ call for that provider in that child library context.
 
 In addition to providers, a child library context will also mirror the default
 properties (set via L<EVP_set_default_properties(3)>) from the parent library
-context. If L<EVP_set_default_properties(3)> is called directly from a child
+context. If L<EVP_set_default_properties(3)> is called directly on a child
 library context then the new properties will override anything from the parent
 library context and mirroring of the properties will stop.
 

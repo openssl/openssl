@@ -298,7 +298,7 @@ the provider being unloaded and this provider's data in I<cbdata>. It should
 return 1 on success or 0 on failure.
 
 I<global_props_cb> is a callback that will be called when the global properties
-from the parent library context are changed.It should return 1 on success
+from the parent library context are changed. It should return 1 on success
 or 0 on failure.
 
 provider_deregister_child_cb() unregisters callbacks previously registered via
