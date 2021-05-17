@@ -449,6 +449,7 @@ my @disablables = (
     "idea",
     "ktls",
     "legacy",
+    "loadereng",
     "makedepend",
     "md2",
     "md4",
