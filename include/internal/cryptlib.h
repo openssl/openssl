@@ -218,54 +218,6 @@ const void *ossl_bsearch(const void *key, const void *base, int num,
                          int size, int (*cmp) (const void *, const void *),
                          int flags);
 
-/* system-specific variants defining ossl_sleep() */
-#ifdef OPENSSL_SYS_UNIX
-# include <unistd.h>
-static ossl_inline void ossl_sleep(unsigned long millis)
-{
-# ifdef OPENSSL_SYS_VXWORKS
-    struct timespec ts;
-    ts.tv_sec = (long int) (millis / 1000);
-    ts.tv_nsec = (long int) (millis % 1000) * 1000000ul;
-    nanosleep(&ts, NULL);
-# elif defined(__TANDEM)
-#  if !defined(_REENTRANT)
-#   include <cextdecs.h(PROCESS_DELAY_)>
-    /* HPNS does not support usleep for non threaded apps */
-    PROCESS_DELAY_(millis * 1000);
-#  elif defined(_SPT_MODEL_)
-#   include <spthread.h>
-#   include <spt_extensions.h>
-    usleep(millis * 1000);
-#  else
-    usleep(millis * 1000);
-#  endif
-# else
-    usleep(millis * 1000);
-# endif
-}
-#elif defined(_WIN32)
-# include <windows.h>
-static ossl_inline void ossl_sleep(unsigned long millis)
-{
-    Sleep(millis);
-}
-#else
-/* Fallback to a busy wait */
-static ossl_inline void ossl_sleep(unsigned long millis)
-{
-    struct timeval start, now;
-    unsigned long elapsedms;
-
-    gettimeofday(&start, NULL);
-    do {
-        gettimeofday(&now, NULL);
-        elapsedms = (((now.tv_sec - start.tv_sec) * 1000000)
-                     + now.tv_usec - start.tv_usec) / 1000;
-    } while (elapsedms < millis);
-}
-#endif /* defined OPENSSL_SYS_UNIX */
-
 char *ossl_sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text,
                                    const char *sep, size_t max_len);
 char *ossl_ipaddr_to_asc(unsigned char *p, int len);

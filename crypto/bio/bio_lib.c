@@ -11,7 +11,6 @@
 #include <errno.h>
 #include <openssl/crypto.h>
 #include "bio_local.h"
-#include "internal/cryptlib.h"
 
 /*
  * Helper macro for the callback to determine whether an operator expects a
