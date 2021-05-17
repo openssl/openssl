@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "internal/provider.h"
 #include <openssl/rand.h>
 #include <openssl/rsa.h>
 #include <openssl/evp.h>
@@ -20,6 +21,9 @@ int EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
                  EVP_PKEY **pubk, int npubk)
 {
     unsigned char key[EVP_MAX_KEY_LENGTH];
+    const OSSL_PROVIDER *prov = EVP_CIPHER_provider(type);
+    OSSL_LIB_CTX *libctx = prov != NULL ? ossl_provider_libctx(prov) : NULL;
+    EVP_PKEY_CTX *pctx = NULL;
     int i, len;
     int rv = 0;
 
@@ -35,7 +39,7 @@ int EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
         return 0;
 
     len = EVP_CIPHER_CTX_iv_length(ctx);
-    if (len < 0 || RAND_bytes(iv, len) <= 0)
+    if (len < 0 || RAND_priv_bytes_ex(libctx, iv, len) <= 0)
         goto err;
 
     len = EVP_CIPHER_CTX_key_length(ctx);
@@ -47,9 +51,9 @@ int EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
 
     for (i = 0; i < npubk; i++) {
         size_t keylen = len;
-        EVP_PKEY_CTX *pctx = NULL;
 
-        if ((pctx = EVP_PKEY_CTX_new(pubk[i], NULL)) == NULL) {
+        pctx = EVP_PKEY_CTX_new_from_pkey(libctx, pubk[i], NULL);
+        if (pctx == NULL) {
             ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
             goto err;
         }
@@ -60,8 +64,10 @@ int EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
         ekl[i] = (int)keylen;
         EVP_PKEY_CTX_free(pctx);
     }
+    pctx = NULL;
     rv = npubk;
 err:
+    EVP_PKEY_CTX_free(pctx);
     OPENSSL_cleanse(key, sizeof(key));
     return rv;
 }
