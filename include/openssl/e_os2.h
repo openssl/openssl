@@ -102,11 +102,11 @@ extern "C" {
 # endif
 
 /* ------------------------------- OpenVMS -------------------------------- */
-# if defined(__VMS) || defined(VMS) || defined(OPENSSL_SYS_VMS)
+# if defined(__VMS) || defined(VMS)
 #  if !defined(OPENSSL_SYS_VMS)
 #   undef OPENSSL_SYS_UNIX
+#   define OPENSSL_SYS_VMS
 #  endif
-#  define OPENSSL_SYS_VMS
 #  if defined(__DECC)
 #   define OPENSSL_SYS_VMS_DECC
 #  elif defined(__DECCXX)
