@@ -13,12 +13,14 @@ B<openssl list>
 [B<-select> I<name>]
 [B<-1>]
 [B<-commands>]
+[B<-standard-commands>]
 [B<-digest-algorithms>]
 {- output_off() if $disabled{"deprecated-3.0"}; ""
 -}[B<-digest-commands>]
 {- output_on() if $disabled{"deprecated-3.0"}; ""
 -}[B<-kdf-algorithms>]
 [B<-mac-algorithms>]
+[B<-random-instances>]
 [B<-random-generators>]
 [B<-cipher-algorithms>]
 {- output_off() if $disabled{"deprecated-3.0"}; ""
@@ -38,6 +40,7 @@ B<openssl list>
 -}[B<-engines>]
 {- output_on() if $disabled{"deprecated-3.0"}; ""
 -}[B<-disabled>]
+[B<-missing-help>]
 [B<-objects>]
 [B<-options> I<command>]
 {- $OpenSSL::safe::opt_provider_synopsis -}
@@ -73,6 +76,10 @@ If used, this option must be given first.
 
 Display a list of standard commands.
 
+=item B<-standard-commands>
+
+ist of standard commands.
+
 =item B<-digest-commands>
 
 This option is deprecated. Use B<digest-algorithms> instead.
@@ -96,6 +103,10 @@ displayed.
 
 In verbose mode, the algorithms provided by a provider will get additional
 information on what parameters each implementation supports.
+
+=item B<-random-instances>
+
+List the primary, pubic and private random number generator details.
 
 =item B<-random-generators>
 
@@ -170,6 +181,10 @@ Display a list of loaded engines.
 
 Display a list of disabled features, those that were compiled out
 of the installation.
+
+=item B<-missing-help>
+
+List missing detailed help strings.
 
 =item B<-objects>
 

@@ -1490,7 +1490,7 @@ const OPTIONS list_options[] = {
      "List of key encapsulation mechanism algorithms" },
     {"signature-algorithms", OPT_SIGNATURE_ALGORITHMS, '-',
      "List of signature algorithms" },
-    { "asymcipher-algorithms", OPT_ASYM_CIPHER_ALGORITHMS, '-',
+    {"asymcipher-algorithms", OPT_ASYM_CIPHER_ALGORITHMS, '-',
       "List of asymmetric cipher algorithms" },
     {"public-key-algorithms", OPT_PK_ALGORITHMS, '-',
      "List of public key algorithms"},
