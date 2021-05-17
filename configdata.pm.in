@@ -1,65 +1,6 @@
 #! {- $config{HASHBANGPERL} -}
 # -*- mode: perl -*-
 {-
- sub out_item {
-     my $ref = shift;
-     # Available options:
-     # indent           => callers indentation (int)
-     # delimiters       => 1 if outer delimiters should be added
-     my %opts = @_;
-
-     my $indent = $opts{indent} // 0;
-     # Indentation of the whole structure, where applicable
-     my $nlindent1 = "\n" . ' ' x $indent;
-     # Indentation of individual items, where applicable
-     my $nlindent2 = "\n" . ' ' x ($indent + 4);
-
-     my $product;      # Finished product, or reference to a function that
-                       # produces a string, given $_
-     # The following are only used when $product is a function reference
-     my $delim_l;      # Left delimiter of structure
-     my $delim_r;      # Right delimiter of structure
-     my $separator;    # Item separator
-     my @items;        # Items to iterate over
-
-     if (ref($ref) eq "ARRAY") {
-         if (scalar @$ref == 0) {
-             $product = $opts{delimiters} ? '[]' : '';
-         } else {
-             $product = sub {
-                 out_item(\$_, delimiters => 1, indent => $indent + 4)
-             };
-             $delim_l = ($opts{delimiters} ? '[' : '').$nlindent2;
-             $delim_r = $nlindent1.($opts{delimiters} ? ']' : '');
-             $separator = ",$nlindent2";
-             @items = @$ref;
-         }
-     } elsif (ref($ref) eq "HASH") {
-         if (scalar keys %$ref == 0) {
-             $product = $opts{delimiters} ? '{}' : '';
-         } else {
-             $product = sub {
-                 quotify1($_) . " => "
-                 . out_item($ref->{$_}, delimiters => 1, indent => $indent + 4)
-             };
-             $delim_l = ($opts{delimiters} ? '{' : '').$nlindent2;
-             $delim_r = $nlindent1.($opts{delimiters} ? '}' : '');
-             $separator = ",$nlindent2";
-             @items = sort keys %$ref;
-         }
-     } elsif (ref($ref) eq "SCALAR") {
-         $product = defined $$ref ? quotify1 $$ref : "undef";
-     } else {
-         $product = defined $ref ? quotify1 $ref : "undef";
-     }
-
-     if (ref($product) eq "CODE") {
-         $delim_l . join($separator, map { &$product } @items) . $delim_r;
-     } else {
-         $product;
-     }
- }
-
  # We must make sourcedir() return an absolute path, because configdata.pm
  # may be loaded as a module from any script in any directory, making
  # relative paths untrustable.  Because the result is used with 'use lib',
@@ -73,6 +14,8 @@
  sub sourcefile {
      return abs_path(catfile($config{sourcedir}, @_));
  }
+ use lib sourcedir('util', 'perl');
+ use OpenSSL::Util;
 -}
 package configdata;
 
@@ -86,23 +29,23 @@ our @EXPORT = qw(
     @disablables @disablables_int
 );
 
-our %config = ({- out_item(\%config); -});
-our %target = ({- out_item(\%target); -});
-our @disablables = ({- out_item(\@disablables) -});
-our @disablables_int = ({- out_item(\@disablables_int) -});
-our %disabled = ({- out_item(\%disabled); -});
-our %withargs = ({- out_item(\%withargs); -});
-our %unified_info = ({- out_item(\%unified_info); -});
+our %config = ({- dump_data(\%config, indent => 0); -});
+our %target = ({- dump_data(\%target, indent => 0); -});
+our @disablables = ({- dump_data(\@disablables, indent => 0) -});
+our @disablables_int = ({- dump_data(\@disablables_int, indent => 0) -});
+our %disabled = ({- dump_data(\%disabled, indent => 0); -});
+our %withargs = ({- dump_data(\%withargs, indent => 0); -});
+our %unified_info = ({- dump_data(\%unified_info, indent => 0); -});
 
 # Unexported, only used by OpenSSL::Test::Utils::available_protocols()
 our %available_protocols = (
-    tls  => [{- out_item(\@tls) -}],
-    dtls => [{- out_item(\@dtls) -}],
+    tls  => [{- dump_data(\@tls, indent => 0) -}],
+    dtls => [{- dump_data(\@dtls, indent => 0) -}],
 );
 
 # The following data is only used when this files is use as a script
-my @makevars = ({- out_item(\@makevars); -});
-my %disabled_info = ({- out_item(\%disabled_info); -});
+my @makevars = ({- dump_data(\@makevars, indent => 0); -});
+my %disabled_info = ({- dump_data(\%disabled_info, indent => 0); -});
 my @user_crossable = qw( {- join (' ', @user_crossable) -} );
 
 # If run directly, we can give some answers, and even reconfigure
