@@ -23,8 +23,6 @@ B<openssl> B<pkcs7>
 [B<-noout>]
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 
-=for openssl ifdef engine
-
 =head1 DESCRIPTION
 
 This command processes PKCS#7 files.  Note that it only understands PKCS#7

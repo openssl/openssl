@@ -33,8 +33,6 @@ B<openssl> B<ec>
 [B<-check>]
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 
-=for openssl ifdef engine
-
 =head1 DESCRIPTION
 
 The L<openssl-ec(1)> command processes EC keys. They can be converted between

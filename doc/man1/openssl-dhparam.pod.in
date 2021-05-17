@@ -24,8 +24,6 @@ B<openssl dhparam>
 {- $OpenSSL::safe::opt_provider_synopsis -}
 [I<numbits>]
 
-=for openssl ifdef dsaparam engine
-
 =head1 DESCRIPTION
 
 This command is used to manipulate DH parameter files.

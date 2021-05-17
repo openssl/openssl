@@ -65,8 +65,6 @@ B<openssl> B<ca>
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<certreq>...]
 
-=for openssl ifdef engine
-
 =head1 DESCRIPTION
 
 This command emulates a CA application.

@@ -57,8 +57,6 @@ B<-verify>
 {- $OpenSSL::safe::opt_v_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 
-=for openssl ifdef engine
-
 =head1 DESCRIPTION
 
 This command is a basic Time Stamping Authority (TSA) client and

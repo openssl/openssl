@@ -144,8 +144,6 @@ Certificate verification options, for both CMP and TLS:
 
 {- $OpenSSL::safe::opt_v_synopsis -}
 
-=for openssl ifdef engine
-
 =head1 DESCRIPTION
 
 The B<cmp> command is a client implementation for the Certificate

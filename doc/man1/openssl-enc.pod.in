@@ -41,8 +41,6 @@ B<openssl> B<enc>|I<cipher>
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 
-=for openssl ifdef z engine ciphers
-
 B<openssl> I<cipher> [B<...>]
 
 =head1 DESCRIPTION

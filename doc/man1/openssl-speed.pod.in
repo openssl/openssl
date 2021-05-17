@@ -27,8 +27,6 @@ B<openssl speed>
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<algorithm> ...]
 
-=for openssl ifdef hmac cmac multi async_jobs engine
-
 =head1 DESCRIPTION
 
 This command is used to test the performance of cryptographic algorithms.
