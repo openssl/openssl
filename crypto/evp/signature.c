@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
+#include "internal/numbers.h"   /* includes SIZE_MAX */
 #include "internal/cryptlib.h"
 #include "internal/provider.h"
 #include "internal/core.h"

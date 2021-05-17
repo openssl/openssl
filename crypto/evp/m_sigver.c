@@ -14,6 +14,7 @@
 #include <openssl/x509.h>
 #include "crypto/evp.h"
 #include "internal/provider.h"
+#include "internal/numbers.h"   /* includes SIZE_MAX */
 #include "evp_local.h"
 
 #ifndef FIPS_MODULE
