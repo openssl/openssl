@@ -818,7 +818,11 @@ static int test_EC_priv_only_legacy(void)
 # endif /* OPENSSL_NO_DEPRECATED_3_0 */
 #endif /* OPENSSL_NO_EC */
 
-static int test_EVP_Enveloped(void)
+/*
+ * n = 0 => test using legacy cipher
+ * n = 1 => test using fetched cipher
+ */
+static int test_EVP_Enveloped(int n)
 {
     int ret = 0;
     EVP_CIPHER_CTX *ctx = NULL;
@@ -828,12 +832,16 @@ static int test_EVP_Enveloped(void)
     static const unsigned char msg[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
     int len, kek_len, ciphertext_len, plaintext_len;
     unsigned char ciphertext[32], plaintext[16];
-    const EVP_CIPHER *type = NULL;
+    EVP_CIPHER *type = NULL;
 
     if (nullprov != NULL)
         return TEST_skip("Test does not support a non-default library context");
 
-    type = EVP_aes_256_cbc();
+    if (n == 0)
+        type = (EVP_CIPHER *)EVP_aes_256_cbc();
+    else if (!TEST_ptr(type = EVP_CIPHER_fetch(testctx, "AES-256-CBC",
+                                               testpropq)))
+        goto err;
 
     if (!TEST_ptr(keypair = load_example_rsa_key())
             || !TEST_ptr(kek = OPENSSL_zalloc(EVP_PKEY_size(keypair)))
@@ -860,6 +868,8 @@ static int test_EVP_Enveloped(void)
 
     ret = 1;
 err:
+    if (n != 0)
+        EVP_CIPHER_free(type);
     OPENSSL_free(kek);
     EVP_PKEY_free(keypair);
     EVP_CIPHER_CTX_free(ctx);
@@ -2925,7 +2935,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_EVP_DigestSignInit, 9);
     ADD_TEST(test_EVP_DigestVerifyInit);
     ADD_TEST(test_EVP_Digest);
-    ADD_TEST(test_EVP_Enveloped);
+    ADD_ALL_TESTS(test_EVP_Enveloped, 2);
     ADD_ALL_TESTS(test_d2i_AutoPrivateKey, OSSL_NELEM(keydata));
     ADD_TEST(test_privatekey_to_pkcs8);
     ADD_TEST(test_EVP_PKCS82PKEY_wrong_tag);
