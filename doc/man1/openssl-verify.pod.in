@@ -23,8 +23,6 @@ B<openssl> B<verify>
 [B<-->]
 [I<certificate> ...]
 
-=for openssl ifdef engine
-
 =head1 DESCRIPTION
 
 This command verifies certificate chains. If a certificate chain has multiple

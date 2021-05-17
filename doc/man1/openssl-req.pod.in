@@ -56,8 +56,6 @@ B<openssl> B<req>
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 
-=for openssl ifdef engine keygen_engine
-
 =head1 DESCRIPTION
 
 This command primarily creates and processes certificate requests (CSRs)

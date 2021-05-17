@@ -39,8 +39,6 @@ B<openssl> B<pkeyutl>
 {- $OpenSSL::safe::opt_provider_synopsis -}
 {- $OpenSSL::safe::opt_config_synopsis -}
 
-=for openssl ifdef engine engine_impl
-
 =head1 DESCRIPTION
 
 This command can be used to perform low-level public key

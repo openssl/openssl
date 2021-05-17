@@ -38,8 +38,6 @@ B<openssl> B<dsa>
 [B<-pubout>]
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 
-=for openssl ifdef pvk-string pvk-weak pvk-none engine
-
 =head1 DESCRIPTION
 
 This command processes DSA keys. They can be converted between various

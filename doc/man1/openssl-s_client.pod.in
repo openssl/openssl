@@ -126,16 +126,6 @@ B<openssl> B<s_client>
 {- $OpenSSL::safe::opt_v_synopsis -}
 [I<host>:I<port>]
 
-=for openssl ifdef engine ssl_client_engine ct noct ctlogfile
-
-=for openssl ifdef ssl3 unix 4 6 use_srtp status trace wdebug nextprotoneg
-
-=for openssl ifdef ssl3 tls1 tls1_1 tls1_2 tls1_3 dtls mtu dtls1 dtls1_2
-
-=for openssl ifdef sctp_label_bug sctp
-
-=for openssl ifdef srpuser srppass srp_lateuser srp_moregroups srp_strength
-
 =head1 DESCRIPTION
 
 This command implements a generic SSL/TLS client which

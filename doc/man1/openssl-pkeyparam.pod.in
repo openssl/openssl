@@ -20,8 +20,6 @@ B<openssl> B<pkeyparam>
 [B<-check>]
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 
-=for openssl ifdef engine
-
 =head1 DESCRIPTION
 
 This command processes public key algorithm parameters.

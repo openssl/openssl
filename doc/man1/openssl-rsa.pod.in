@@ -42,8 +42,6 @@ B<openssl> B<rsa>
 [B<-RSAPublicKey_out>]
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 
-=for openssl ifdef pvk-strong pvk-weak pvk-none engine
-
 =head1 DESCRIPTION
 
 This command processes RSA keys. They can be converted between

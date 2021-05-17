@@ -25,8 +25,6 @@ B<openssl srp>
 {- $OpenSSL::safe::opt_provider_synopsis -}
 [I<user> ...]
 
-=for openssl ifdef engine
-
 =head1 DESCRIPTION
 
 This command is deprecated. It is used to maintain an SRP (secure remote
