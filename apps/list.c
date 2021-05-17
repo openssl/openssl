@@ -1470,7 +1470,7 @@ const OPTIONS list_options[] = {
     {"kdf-algorithms", OPT_KDF_ALGORITHMS, '-',
      "List of key derivation and pseudo random function algorithms"},
     {"random-instances", OPT_RANDOM_INSTANCES, '-',
-     "List the primary, pubic and private random number generator details"},
+     "List the primary, public and private random number generator details"},
     {"random-generators", OPT_RANDOM_GENERATORS, '-',
      "List of random number generators"},
     {"mac-algorithms", OPT_MAC_ALGORITHMS, '-',

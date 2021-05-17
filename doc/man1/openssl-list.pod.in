@@ -78,7 +78,7 @@ Display a list of standard commands.
 
 =item B<-standard-commands>
 
-ist of standard commands.
+List of standard commands.
 
 =item B<-digest-commands>
 
@@ -106,7 +106,7 @@ information on what parameters each implementation supports.
 
 =item B<-random-instances>
 
-List the primary, pubic and private random number generator details.
+List the primary, public and private random number generator details.
 
 =item B<-random-generators>
 
