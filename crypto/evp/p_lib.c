@@ -34,6 +34,7 @@
 #include <openssl/encoder.h>
 #include <openssl/core_names.h>
 
+#include "internal/numbers.h"   /* includes SIZE_MAX */
 #include "internal/ffc.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
