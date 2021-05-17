@@ -33,6 +33,7 @@
 #include "internal/asn1.h"       /* For asn1_d2i_read_bio */
 #include "internal/o_dir.h"
 #include "internal/cryptlib.h"
+#include "crypto/ctype.h"        /* For ossl_isdigit */
 #include "crypto/pem.h"          /* For PVK and "blob" PEM headers */
 
 #include "e_loader_attic_err.c"
