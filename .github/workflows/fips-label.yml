@@ -1,0 +1,38 @@
+name: FIPS Changed Label
+on:
+  workflow_run:
+    workflows: ["FIPS Checksums"]
+    types:
+      - completed
+
+jobs:
+  apply-label:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.event == 'pull_request' }}
+    steps:
+      - name: 'Check artifact and apply'
+        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            var artifacts = await github.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: ${{github.event.workflow_run.id }},
+            });
+            if ( artifacts.data.artifacts[0].name == 'fips_changed' ) {
+              github.issues.addLabels({
+                issue_number: ${{ github.event.workflow_run.pull_requests[0].number }},
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                labels: ['severity: fips change']
+              });
+            } else if ( artifacts.data.artifacts[0].name == 'fips_unchanged' ) {
+              github.issues.removeLabel({
+                issue_number: ${{ github.event.workflow_run.pull_requests[0].number }},
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: 'severity: fips change'
+              });
+            }

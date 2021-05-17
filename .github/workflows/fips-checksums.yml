@@ -1,0 +1,60 @@
+name: FIPS Checksums
+on: [pull_request]
+
+jobs:
+  compute-checksums:
+    runs-on: ubuntu-latest
+    steps:
+      - name: install unifdef
+        run: |
+            sudo apt-get update
+            sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install unifdef
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+      - name: create build dirs
+        run: |
+          mkdir ./build-pristine
+          mkdir ./build
+          mkdir ./empty
+          touch ./empty/placeholder
+      - name: config pristine
+        run: ../config enable-fips && perl configdata.pm --dump
+        working-directory: ./build-pristine
+      - name: make build_generated pristine
+        run: make -s build_generated
+        working-directory: ./build-pristine
+      - name: make fips-checksums pristine
+        run: make fips-checksums
+        working-directory: ./build-pristine
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          clean: false
+      - name: config
+        run: ../config enable-fips && perl configdata.pm --dump
+        working-directory: ./build
+      - name: make build_generated
+        run: make -s build_generated
+        working-directory: ./build
+      - name: make fips-checksums
+        run: make fips-checksums
+        working-directory: ./build
+      - name: update checksums pristine
+        run: touch providers/fips.checksum.new && make update-fips-checksums
+        working-directory: ./build-pristine
+      - name: make diff-fips-checksums
+        run: make diff-fips-checksums && echo "fips_unchanged=1" >> $GITHUB_ENV || echo "fips_changed=1" >> $GITHUB_ENV
+        working-directory: ./build
+      - name: save artifact fips_changed
+        if: ${{ env.fips_changed }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: fips_changed
+          path: empty/
+      - name: save artifact fips_unchanged
+        if: ${{ env.fips_unchanged }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: fips_unchanged
+          path: empty/
