@@ -122,9 +122,9 @@ if ( $WHAT =~ /^(-\?|-h|-help)$/ ) {
     print STDERR <<EOF;
 Usage:
     CA.pl -newcert | -newreq | -newreq-nodes | -xsign | -sign | -signCA | -signcert | -crl | -newca [-extra-cmd parameter]
-    CA.pl -pkcs12 [-extra-pkcs12 parameter] [certname]
-    CA.pl -verify [-extra-verify parameter] certfile ...
-    CA.pl -revoke [-extra-ca parameter] certfile [reason]
+    CA.pl -pkcs12 [certname]
+    CA.pl -verify certfile ...
+    CA.pl -revoke certfile [reason]
 EOF
     exit 0;
 }
