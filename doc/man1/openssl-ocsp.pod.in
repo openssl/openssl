@@ -74,8 +74,6 @@ B<openssl> B<ocsp>
 {- $OpenSSL::safe::opt_v_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 
-=for openssl ifdef multi
-
 =head1 DESCRIPTION
 
 The Online Certificate Status Protocol (OCSP) enables applications to

@@ -16,8 +16,6 @@ B<openssl rand>
 {- $OpenSSL::safe::opt_provider_synopsis -}
 I<num>
 
-=for openssl ifdef engine
-
 =head1 DESCRIPTION
 
 This command generates I<num> random bytes using a cryptographically

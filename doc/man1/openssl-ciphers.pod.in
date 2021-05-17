@@ -26,8 +26,6 @@ B<openssl> B<ciphers>
 {- $OpenSSL::safe::opt_provider_synopsis -}
 [I<cipherlist>]
 
-=for openssl ifdef ssl3 tls1 tls1_1 tls1_2 tls1_3 psk srp
-
 =head1 DESCRIPTION
 
 This command converts textual OpenSSL cipher lists into

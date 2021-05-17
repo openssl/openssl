@@ -89,8 +89,6 @@ B<openssl> B<cms>
 {- $OpenSSL::safe::opt_config_synopsis -}
 [I<recipient-cert> ...]
 
-=for openssl ifdef des-wrap engine
-
 =head1 DESCRIPTION
 
 This command handles S/MIME v3.1 mail. It can encrypt, decrypt,

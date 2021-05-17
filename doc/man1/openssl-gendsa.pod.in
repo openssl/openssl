@@ -28,8 +28,6 @@ B<openssl> B<gendsa>
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<paramfile>]
 
-=for openssl ifdef engine
-
 =head1 DESCRIPTION
 
 This command generates a DSA private key from a DSA parameter file

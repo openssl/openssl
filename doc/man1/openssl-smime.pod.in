@@ -52,8 +52,6 @@ B<openssl> B<smime>
 {- $OpenSSL::safe::opt_config_synopsis -}
 I<recipcert> ...
 
-=for openssl ifdef engine
-
 =head1 DESCRIPTION
 
 This command handles S/MIME mail. It can encrypt, decrypt, sign

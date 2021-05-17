@@ -31,8 +31,6 @@ B<openssl> B<crl>
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 
-=for openssl ifdef hash_old
-
 =head1 DESCRIPTION
 
 This command processes CRL files in DER or PEM format.

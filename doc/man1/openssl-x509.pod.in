@@ -78,8 +78,6 @@ B<openssl> B<x509>
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 
-=for openssl ifdef engine subject_hash_old issuer_hash_old
-
 =head1 DESCRIPTION
 
 This command is a multi-purposes certificate handling command.

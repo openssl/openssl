@@ -32,8 +32,6 @@ B<openssl> B<pkey>
 [B<-ec_conv_form> I<arg>]
 [B<-ec_param_enc> I<arg>]
 
-=for openssl ifdef engine
-
 =head1 DESCRIPTION
 
 This command processes public or private keys. They can be

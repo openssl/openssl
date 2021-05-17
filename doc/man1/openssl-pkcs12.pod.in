@@ -68,8 +68,6 @@ PKCS#12 output (export) options:
 [B<-maciter>]
 [B<-nomac>]
 
-=for openssl ifdef engine
-
 =head1 DESCRIPTION
 
 This command allows PKCS#12 files (sometimes referred to as

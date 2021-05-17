@@ -30,8 +30,6 @@ B<openssl> B<s_time>
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 
-=for openssl ifdef ssl3 tls1 tls1_1 tls1_2 tls1_3
-
 =head1 DESCRIPTION
 
 This command implements a generic SSL/TLS client which
