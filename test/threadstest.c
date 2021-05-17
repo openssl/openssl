@@ -366,7 +366,7 @@ static void thread_provider_load_unload(void)
  * Test 2: Simple fetch worker
  * Test 3: Worker downgrading a shared EVP_PKEY
  * Test 4: Worker using a shared EVP_PKEY
- * Test 5: Workder loading and unloading a provider
+ * Test 5: Worker loading and unloading a provider
  */
 static int test_multi(int idx)
 {
