@@ -31,6 +31,7 @@
 #include <openssl/engine.h>
 #include <openssl/x509.h>        /* For the PKCS8 stuff o.O */
 #include "internal/asn1.h"       /* For asn1_d2i_read_bio */
+#include "internal/ctype.h"      /* For ossl_isdigit */
 #include "internal/o_dir.h"
 #include "internal/cryptlib.h"
 #include "crypto/pem.h"          /* For PVK and "blob" PEM headers */
