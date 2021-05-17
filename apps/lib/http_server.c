@@ -457,7 +457,7 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
         if (found_keep_alive != NULL && strcasecmp(key, "Connection") == 0) {
             if (strcasecmp(value, "keep-alive") == 0)
                 *found_keep_alive = 1;
-            if (strcasecmp(value, "close") == 0)
+            else if (strcasecmp(value, "close") == 0)
                 *found_keep_alive = 0;
         }
     }
