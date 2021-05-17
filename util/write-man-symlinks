@@ -1,0 +1,43 @@
+#! /usr/bin/env perl
+# Copyright 2002-2021 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+
+require 5.10.0;
+use warnings;
+use strict;
+
+use FindBin;
+use lib "$FindBin::Bin/perl";
+
+use OpenSSL::Util::Pod;
+
+if ($#ARGV + 1 != 4 || $ARGV[0] !~ /^(un)?install$/) {
+    print "Usage: write-man-symlinks [install|uninstall] src-dir man-page-name target-dir\n";
+    exit;
+}
+
+my $action = $ARGV[0];
+
+my $srcdir = $ARGV[1];
+my $manname = $ARGV[2];
+my $targetdir = $ARGV[3];
+
+$manname =~ m|(.+)\.(.+)|;
+my $mainf = $1;
+my $section = $2;
+die "Bad src file" if !defined $mainf;
+my %podinfo = extract_pod_info("$srcdir/$mainf.pod");
+
+for my $name (@{$podinfo{names}}) {
+    next if $name eq $mainf;
+    if ($action eq "install") {
+        symlink "$targetdir/$manname", "$targetdir/$name.$section";
+    } else {
+        unlink "$targetdir/$name.$section";
+    }
+}
