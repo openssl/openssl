@@ -63,15 +63,26 @@
  # We must make sourcedir() return an absolute path, because configdata.pm
  # may be loaded as a module from any script in any directory, making
  # relative paths untrustable.  Because the result is used with 'use lib',
- # we must ensure that it returns a Unix style path.  Cwd::abs_path does
- # that (File::Spec::Functions::rel2abs return O/S specific paths)
- use File::Spec::Functions;
+ # we must ensure that it returns a Unix style path.  Mixing File::Spec
+ # and File::Spec::Unix does just that.
+ use File::Spec::Unix;
+ use File::Spec;
  use Cwd qw(abs_path);
+ sub _fixup_path {
+     # Split the native path
+     (my $vol, my $dirs, my $file) = File::Spec->splitpath($_[0]);
+     my @dirs = File::Spec->splitdir($dirs);
+
+     # Reassemble it as a Unix path
+     $vol =~ s|:$|| if $^O eq 'VMS';
+     return File::Spec::Unix->catpath(
+         '', File::Spec::Unix->catdir('', $vol ? $vol : (), @dirs), $file);
+ }
  sub sourcedir {
-     return abs_path(catdir($config{sourcedir}, @_));
+     return _fixup_path(abs_path(File::Spec->catdir($config{sourcedir}, @_)))
  }
  sub sourcefile {
-     return abs_path(catfile($config{sourcedir}, @_));
+     return _fixup_path(abs_path(File::Spec->catfile($config{sourcedir}, @_)))
  }
 -}
 package configdata;
