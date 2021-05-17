@@ -1035,7 +1035,6 @@ sub checkflags {
     my $doc = shift;
     my %cmdopts;
     my %docopts;
-    my %localskips;
 
     # Get the list of options in the command.
     open CFH, "$openssl list --options $cmd|"
@@ -1053,12 +1052,6 @@ sub checkflags {
     while ( <CFH> ) {
         chop;
         last if /DESCRIPTION/;
-        if ( /=for openssl ifdef (.*)/ ) {
-            foreach my $f ( split / /, $1 ) {
-                $localskips{$f} = 1;
-            }
-            next;
-        }
         my $opt;
         if ( /\[B<-([^ >]+)/ ) {
             $opt = $1;
@@ -1082,7 +1075,7 @@ sub checkflags {
     # See what's in the command not the manpage.
     my @unimpl = sort grep { !defined $cmdopts{$_} } keys %docopts;
     foreach ( @unimpl ) {
-        next if defined $skips{$_} || defined $localskips{$_};
+        next if defined $skips{$_};
         err("$doc: $cmd does not implement -$_");
     }
 }
