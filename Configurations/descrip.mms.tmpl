@@ -214,6 +214,19 @@
       $unified_info{after}->{$obj}
           = qq(deassign arch);
   }
+  my $sd32 = sourcedir("crypto", "ec", "curve448", "arch_32");
+  my $sd64 = sourcedir("crypto", "ec", "curve448", "arch_64");
+  foreach (grep /\[\.crypto\.ec\.curve448.*?\].*?\.o$/, keys %{$unified_info{sources}}) {
+      my $obj = platform->obj($_);
+      $unified_info{before}->{$obj}
+          = qq(arch_32_include = F\$PARSE("$sd32","A.;",,,"SYNTAX_ONLY") - "A.;"
+        define arch_32 'arch_32_include'
+        arch_64_include = F\$PARSE("$sd64","A.;",,,"SYNTAX_ONLY") - "A.;"
+        define arch_64 'arch_64_include');
+      $unified_info{after}->{$obj}
+          = qq(deassign arch_64
+        deassign arch_32);
+  }
   my $sd1 = sourcedir("ssl","record");
   my $sd2 = sourcedir("ssl","statem");
   my @ssl_locl_users = grep(/^\[\.(?:ssl\.(?:record|statem)|test)\].*\.o$/,
