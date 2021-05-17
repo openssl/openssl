@@ -40,6 +40,9 @@ B<openssl> B<rsa>
 [B<-pubout>]
 [B<-RSAPublicKey_in>]
 [B<-RSAPublicKey_out>]
+[B<-pvk-strong>]
+[B<-pvk-weak>]
+[B<-pvk-none>]
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef pvk-strong pvk-weak pvk-none engine
@@ -132,6 +135,18 @@ the input is a public key.
 =item B<-RSAPublicKey_in>, B<-RSAPublicKey_out>
 
 Like B<-pubin> and B<-pubout> except B<RSAPublicKey> format is used instead.
+
+=item B<-pvk-strong>
+
+Enable 'Strong' PVK encoding level (default).
+
+=item B<-pvk-weak>
+
+Enable 'Weak' PVK encoding level.
+
+=item B<-pvk-none>
+
+Don't enforce PVK encoding.
 
 {- $OpenSSL::safe::opt_engine_item -}
 
