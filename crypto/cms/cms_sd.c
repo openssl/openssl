@@ -549,9 +549,9 @@ STACK_OF(CMS_SignerInfo) *CMS_get0_SignerInfos(CMS_ContentInfo *cms)
 {
     CMS_SignedData *sd;
 
-    ERR_set_mark();
+    if (OBJ_obj2nid(cms->contentType) != NID_pkcs7_signed)
+        return NULL;
     sd = cms_get0_signed(cms);
-    ERR_pop_to_mark();
     return sd != NULL ? sd->signerInfos : NULL;
 }
 
