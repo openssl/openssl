@@ -938,7 +938,7 @@ install_man_docs: build_man_docs
 		$(ECHO) "install $$x -> $(DESTDIR)$(MANDIR)/man1/$${fn}$(MANSUFFIX)"; \
 		cp $$x $(DESTDIR)$(MANDIR)/man1/$${fn}$(MANSUFFIX); \
 		chmod 644 $(DESTDIR)$(MANDIR)/man1/$${fn}$(MANSUFFIX); \
-		$(PERL) $(SRCDIR)/util/write-man-symlinks install $(SRCDIR)/doc/man1 $${fn}$(MANSUFFIX) $(DESTDIR)$(MANDIR)/man1; \
+		$(PERL) $(SRCDIR)/util/write-man-symlinks install $(SRCDIR)/doc/man1 $(BLDDIR)/doc/man1 $${fn}$(MANSUFFIX) $(DESTDIR)$(MANDIR)/man1; \
 	done
 	@set -e; for x in dummy $(MANDOCS3); do \
 		if [ "$$x" = "dummy" ]; then continue; fi; \
@@ -946,7 +946,7 @@ install_man_docs: build_man_docs
 		$(ECHO) "install $$x -> $(DESTDIR)$(MANDIR)/man3/$${fn}$(MANSUFFIX)"; \
 		cp $$x $(DESTDIR)$(MANDIR)/man3/$${fn}$(MANSUFFIX); \
 		chmod 644 $(DESTDIR)$(MANDIR)/man3/$${fn}$(MANSUFFIX); \
-		$(PERL) $(SRCDIR)/util/write-man-symlinks install $(SRCDIR)/doc/man3 $${fn}$(MANSUFFIX) $(DESTDIR)$(MANDIR)/man3; \
+		$(PERL) $(SRCDIR)/util/write-man-symlinks install $(SRCDIR)/doc/man3 $(BLDDIR)/doc/man3 $${fn}$(MANSUFFIX) $(DESTDIR)$(MANDIR)/man3; \
 	done
 	@set -e; for x in dummy $(MANDOCS5); do \
 		if [ "$$x" = "dummy" ]; then continue; fi; \
@@ -954,7 +954,7 @@ install_man_docs: build_man_docs
 		$(ECHO) "install $$x -> $(DESTDIR)$(MANDIR)/man5/$${fn}$(MANSUFFIX)"; \
 		cp $$x $(DESTDIR)$(MANDIR)/man5/$${fn}$(MANSUFFIX); \
 		chmod 644 $(DESTDIR)$(MANDIR)/man5/$${fn}$(MANSUFFIX); \
-		$(PERL) $(SRCDIR)/util/write-man-symlinks install $(SRCDIR)/doc/man5 $${fn}$(MANSUFFIX) $(DESTDIR)$(MANDIR)/man5; \
+		$(PERL) $(SRCDIR)/util/write-man-symlinks install $(SRCDIR)/doc/man5 $(BLDDIR)/doc/man5 $${fn}$(MANSUFFIX) $(DESTDIR)$(MANDIR)/man5; \
 	done
 	@set -e; for x in dummy $(MANDOCS7); do \
 		if [ "$$x" = "dummy" ]; then continue; fi; \
@@ -962,7 +962,7 @@ install_man_docs: build_man_docs
 		$(ECHO) "install $$x -> $(DESTDIR)$(MANDIR)/man7/$${fn}$(MANSUFFIX)"; \
 		cp $$x $(DESTDIR)$(MANDIR)/man7/$${fn}$(MANSUFFIX); \
 		chmod 644 $(DESTDIR)$(MANDIR)/man7/$${fn}$(MANSUFFIX); \
-		$(PERL) $(SRCDIR)/util/write-man-symlinks install $(SRCDIR)/doc/man7 $${fn}$(MANSUFFIX) $(DESTDIR)$(MANDIR)/man7; \
+		$(PERL) $(SRCDIR)/util/write-man-symlinks install $(SRCDIR)/doc/man7 $(BLDDIR)/doc/man7 $${fn}$(MANSUFFIX) $(DESTDIR)$(MANDIR)/man7; \
 	done
 
 uninstall_man_docs: build_man_docs
@@ -972,28 +972,28 @@ uninstall_man_docs: build_man_docs
 		fn=`basename $$x`; \
 		$(ECHO) "$(RM) $(DESTDIR)$(MANDIR)/man1/$${fn}$(MANSUFFIX)"; \
 		$(RM) $(DESTDIR)$(MANDIR)/man1/$${fn}$(MANSUFFIX); \
-		$(PERL) $(SRCDIR)/util/write-man-symlinks uninstall $(SRCDIR)/doc/man1 $${fn}$(MANSUFFIX) $(DESTDIR)$(MANDIR)/man1; \
+		$(PERL) $(SRCDIR)/util/write-man-symlinks uninstall $(SRCDIR)/doc/man1 $(BLDDIR)/doc/man1 $${fn}$(MANSUFFIX) $(DESTDIR)$(MANDIR)/man1; \
 	done
 	@set -e; for x in dummy $(MANDOCS3); do \
 		if [ "$$x" = "dummy" ]; then continue; fi; \
 		fn=`basename $$x`; \
 		$(ECHO) "$(RM) $(DESTDIR)$(MANDIR)/man3/$${fn}$(MANSUFFIX)"; \
 		$(RM) $(DESTDIR)$(MANDIR)/man3/$${fn}$(MANSUFFIX); \
-		$(PERL) $(SRCDIR)/util/write-man-symlinks uninstall $(SRCDIR)/doc/man3 $${fn}$(MANSUFFIX) $(DESTDIR)$(MANDIR)/man3; \
+		$(PERL) $(SRCDIR)/util/write-man-symlinks uninstall $(SRCDIR)/doc/man3 $(BLDDIR)/doc/man3 $${fn}$(MANSUFFIX) $(DESTDIR)$(MANDIR)/man3; \
 	done
 	@set -e; for x in dummy $(MANDOCS5); do \
 		if [ "$$x" = "dummy" ]; then continue; fi; \
 		fn=`basename $$x`; \
 		$(ECHO) "$(RM) $(DESTDIR)$(MANDIR)/man5/$${fn}$(MANSUFFIX)"; \
 		$(RM) $(DESTDIR)$(MANDIR)/man5/$${fn}$(MANSUFFIX); \
-		$(PERL) $(SRCDIR)/util/write-man-symlinks uninstall $(SRCDIR)/doc/man5 $${fn}$(MANSUFFIX) $(DESTDIR)$(MANDIR)/man5; \
+		$(PERL) $(SRCDIR)/util/write-man-symlinks uninstall $(SRCDIR)/doc/man5 $(BLDDIR)/doc/man5 $${fn}$(MANSUFFIX) $(DESTDIR)$(MANDIR)/man5; \
 	done
 	@set -e; for x in dummy $(MANDOCS7); do \
 		if [ "$$x" = "dummy" ]; then continue; fi; \
 		fn=`basename $$x`; \
 		$(ECHO) "$(RM) $(DESTDIR)$(MANDIR)/man7/$${fn}$(MANSUFFIX)"; \
 		$(RM) $(DESTDIR)$(MANDIR)/man7/$${fn}$(MANSUFFIX); \
-		$(PERL) $(SRCDIR)/util/write-man-symlinks uninstall $(SRCDIR)/doc/man7 $${fn}$(MANSUFFIX) $(DESTDIR)$(MANDIR)/man7; \
+		$(PERL) $(SRCDIR)/util/write-man-symlinks uninstall $(SRCDIR)/doc/man7 $(BLDDIR)/doc/man7 $${fn}$(MANSUFFIX) $(DESTDIR)$(MANDIR)/man7; \
 	done
 
 install_html_docs: build_html_docs

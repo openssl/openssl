@@ -16,22 +16,27 @@ use lib "$FindBin::Bin/perl";
 
 use OpenSSL::Util::Pod;
 
-if ($#ARGV + 1 != 4 || $ARGV[0] !~ /^(un)?install$/) {
-    print "Usage: write-man-symlinks [install|uninstall] src-dir man-page-name target-dir\n";
+if ($#ARGV + 1 != 5 || $ARGV[0] !~ /^(un)?install$/) {
+    print "Usage: write-man-symlinks [install|uninstall] src-dir build-dir man-page-name target-dir\n";
     exit;
 }
 
 my $action = $ARGV[0];
-
 my $srcdir = $ARGV[1];
-my $manname = $ARGV[2];
-my $targetdir = $ARGV[3];
+my $builddir = $ARGV[2];
+my $manname = $ARGV[3];
+my $targetdir = $ARGV[4];
 
 $manname =~ m|(.+)\.(.+)|;
 my $mainf = $1;
 my $section = $2;
 die "Bad src file" if !defined $mainf;
-my %podinfo = extract_pod_info("$srcdir/$mainf.pod");
+my $podfile = "$srcdir/$mainf.pod";
+#Some pod files are generated and are in the build dir
+unless (-e $podfile) {
+    $podfile = "$builddir/$mainf.pod";
+}
+my %podinfo = extract_pod_info($podfile);
 
 for my $name (@{$podinfo{names}}) {
     next if $name eq $mainf;
