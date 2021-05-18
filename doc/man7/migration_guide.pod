@@ -1704,6 +1704,16 @@ This means that providers may supply their own group implementations (using
 either the "key exchange" or the "key encapsulation" methods) which will
 automatically be detected and used by libssl.
 
+=item SSL and SSL_CTX options are now 64bit instead of 32bit.
+
+The signatures of the functions to get and set options on SSL and
+SSL_CTX objects changed from "unsigned long" to "uint64_t" type.
+
+This may require source code changes.
+
+See L<SSL_CTX_get_options(3)>, L<SSL_CTX_set_options(3)>,
+L<SSL_get_options(3)> and L<SSL_set_options(3)>.
+
 =item SSL_set1_host() and SSL_add1_host() Changes
 
 These functions now take IP literal addresses as well as actual hostnames.
@@ -1714,6 +1724,12 @@ If the option is set, openssl cleanses (zeroize) plaintext bytes from
 internal buffers after delivering them to the application. Note,
 the application is still responsible for cleansing other copies
 (e.g.: data received by L<SSL_read(3)>).
+
+=item Client-initiated renegotiation is disabled by default.
+
+To allow it, use the '-client_renegotiation' option,
+the B<SSL_OP_ALLOW_CLIENT_RENEGOTIATION> flag, or the "ClientRenegotiation"
+config parameter as appropriate.
 
 =item Secure renegotiation is now required by default for TLS connections
 
