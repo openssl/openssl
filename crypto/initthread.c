@@ -33,7 +33,9 @@ extern OSSL_FUNC_core_thread_start_fn *c_thread_start;
 
 typedef struct thread_event_handler_st THREAD_EVENT_HANDLER;
 struct thread_event_handler_st {
+#ifndef FIPS_MODULE
     const void *index;
+#endif
     void *arg;
     OSSL_thread_stop_handler_fn handfn;
     THREAD_EVENT_HANDLER *next;
@@ -376,7 +378,9 @@ int ossl_init_thread_start(const void *index, void *arg,
 
     hand->handfn = handfn;
     hand->arg = arg;
+#ifndef FIPS_MODULE
     hand->index = index;
+#endif
     hand->next = *hands;
     *hands = hand;
 
