@@ -84,7 +84,7 @@ compilation (dependent on compiler support for this). Deprecated APIs may be
 removed from future versions of OpenSSL so you are strongly encouraged to update
 your code to use the high level APIs instead.
 
-These are described in more detail in L</Deprecation of Low Level Functions>
+This is described in more detail in L</Deprecation of Low Level Functions>
 
 =head3 Legacy Algorithms
 
@@ -315,8 +315,9 @@ This checks that the salt length is at least 128 bits, the derived key length is
 at least 112 bits, and that the iteration count is at least 1000.
 For backwards compatibility these checks are disabled by default in the
 default provider, but are enabled by default in the fips provider.
-To enable or disable these checks use the control
-B<EVP_KDF_CTRL_SET_PBKDF2_PKCS5_MODE>.
+
+To enable or disable the checks see B<OSSL_KDF_PARAM_PKCS5> in
+L<EVP_KDF-PBKDF2(7)>. The parameter can be set using L<EVP_KDF_derive(3)>.
 
 =head4 Enforce a minimum DH modulus size of 512 bits
 
@@ -513,18 +514,18 @@ library context.
 
 =head4 Using a Library Context - Old functions that should be changed
 
-If a library context is needed then all EVP_* digest functions that return an
+If a library context is needed then all EVP_* digest functions that return a
 B<const EVP_MD *> such as EVP_sha256() should be replaced with a call to
 L<EVP_MD_fetch(3)>. See L<crypto(7)/ALGORITHM FETCHING>.
 
-If a library context is needed then all EVP_* cipher functions that return an
+If a library context is needed then all EVP_* cipher functions that return a
 B<const EVP_CIPHER *> such as EVP_aes_128_cbc() should be replaced vith a call to
 L<EVP_CIPHER_fetch(3)>. See L<crypto(7)/ALGORITHM FETCHING>.
 
 Some functions can be passed an object that has already been set up with a library
 context such as L<d2i_X509(3)>, L<d2i_X509_CRL(3)> and L<d2i_X509_REQ(3)>.
-If NULL is passed instead then the created object will be set up with the default
-NULL library context. Use L<X509_new_ex(3)>, L<X509_CRL_new_ex(3)> and
+If NULL is passed instead then the created object will be set up with the
+default library context. Use L<X509_new_ex(3)>, L<X509_CRL_new_ex(3)> and
 L<X509_REQ_new_ex(3)> if a library context is required.
 
 All functions listed below with a I<NAME> have a replacment function I<NAME_ex>
@@ -822,13 +823,13 @@ and L<EVP_PKEY_pairwise_check(3)>.
 
 =head4 Deprecated low-level key exchange functions
 
-Many low-level functions has been informally discouraged from use for a long
+Many low-level functions have been informally discouraged from use for a long
 time. Applications should instead use L<EVP_PKEY_derive(3)>.
 See L<EVP_KEYEXCH-DH(7)>, L<EVP_KEYEXCH-ECDH(7)> and L<EVP_KEYEXCH-X25519(7)>.
 
 =head4 Deprecated low-level key generation functions
 
-Many low-level functions has been informally discouraged from use for a long
+Many low-level functions have been informally discouraged from use for a long
 time. Applications should instead use L<EVP_PKEY_keygen_init(3)> and
 L<EVP_PKEY_generate(3)> as described in L<EVP_PKEY-DSA(7)>, L<EVP_PKEY-DH(7)>,
 L<EVP_PKEY-RSA(7)>, L<EVP_PKEY-EC(7)> and L<EVP_PKEY-X25519(7)>.
@@ -884,8 +885,8 @@ There is no replacement. It returned a string indicating if the AES code was unr
 
 =item ASN1_digest, ASN1_sign and ASN1_verify
 
-There is no replacement. These old functions are not used, and could be disabled
-with the macro NO_ASN1_OLD since OpenSSL 0.9.7.
+There are no replacements. These old functions are not used, and could be
+disabled with the macro NO_ASN1_OLD since OpenSSL 0.9.7.
 
 =item ASN1_STRING_length_set
 
@@ -914,7 +915,7 @@ Use L<BN_rand(3)> and L<BN_rand_range(3)>.
 
 =item BN_X931_derive_prime_ex, BN_X931_generate_prime_ex and BN_X931_generate_Xpq
 
-There is no replacement for these low-level functions. They were used internally
+There are no replacements for these low-level functions. They were used internally
 by RSA_X931_derive_ex() and RSA_X931_generate_key_ex() which are also deprecated.
 Use L<EVP_PKEY_keygen(3)> instead.
 
@@ -945,20 +946,15 @@ CRYPTO_mem_debug_pop, CRYPTO_mem_debug_push, CRYPTO_mem_debug_realloc,
 CRYPTO_mem_leaks, CRYPTO_mem_leaks_cb, CRYPTO_mem_leaks_fp and
 CRYPTO_set_mem_debug
 
-Memory-leak checking has been deprecated in favor of clang's memory and leak
-sanitizer.
+Memory-leak checking has been deprecated in favor of more modern development
+tools, such as compiler memory and leak sanitizers or Valgrind.
 
-=item d2i_DHparams, d2i_DHxparams
-
-=item d2i_DSAparams, d2i_DSAPrivateKey, d2i_DSAPrivateKey_bio,
-d2i_DSAPrivateKey_fp, d2i_DSA_PUBKEY, d2i_DSA_PUBKEY_bio, d2i_DSA_PUBKEY_fp and 
-d2i_DSAPublicKey
-
-=item d2i_ECParameters, d2i_ECPrivateKey, d2i_ECPrivateKey_bio,
-d2i_ECPrivateKey_fp, d2i_EC_PUBKEY, d2i_EC_PUBKEY_bio, d2i_EC_PUBKEY_fp and
-and o2i_ECPublicKey.
-
-=item d2i_RSAPrivateKey, d2i_RSAPrivateKey_bio, d2i_RSAPrivateKey_fp,
+=item d2i_DHparams, d2i_DHxparams, d2i_DSAparams, d2i_DSAPrivateKey,
+d2i_DSAPrivateKey_bio, d2i_DSAPrivateKey_fp, d2i_DSA_PUBKEY, d2i_DSA_PUBKEY_bio,
+d2i_DSA_PUBKEY_fp, d2i_DSAPublicKey,
+d2i_ECParameters, d2i_ECPrivateKey, d2i_ECPrivateKey_bio, d2i_ECPrivateKey_fp,
+d2i_EC_PUBKEY, d2i_EC_PUBKEY_bio, d2i_EC_PUBKEY_fp, o2i_ECPublicKey,
+d2i_RSAPrivateKey, d2i_RSAPrivateKey_bio, d2i_RSAPrivateKey_fp,
 d2i_RSA_PUBKEY, d2i_RSA_PUBKEY_bio, d2i_RSA_PUBKEY_fp, d2i_RSAPublicKey,
 d2i_RSAPublicKey_bio and d2i_RSAPublicKey_fp
 
@@ -1114,9 +1110,8 @@ is constructed.
 
 Use L<EC_GROUP_free(3)> instead.
 
-=item EC_GROUP_get_curve_GF2m, EC_GROUP_get_curve_GFp
-
-=item EC_GROUP_set_curve_GF2m, EC_GROUP_set_curve_GFp
+=item EC_GROUP_get_curve_GF2m, EC_GROUP_get_curve_GFp, EC_GROUP_set_curve_GF2m
+and EC_GROUP_set_curve_GFp
 
 Applications should use L<EC_GROUP_get_curve(3)> and L<EC_GROUP_set_curve(3)>.
 
@@ -1302,9 +1297,9 @@ L<EVP_PKEY_decrypt_init(3)> and L<EVP_PKEY_decrypt(3)> instead.
 
 This function returns NULL if the key comes from a provider.
 
-=item EVP_PKEY_get0_DH, EVP_PKEY_get0_DSA, EVP_PKEY_get0_EC_KEY, EVP_PKEY_get0_RSA
-=item EVP_PKEY_get1_DH, EVP_PKEY_get1_DSA, EVP_PKEY_get1_EC_KEY and EVP_PKEY_get1_RSA
-=item EVP_PKEY_get0_hmac, EVP_PKEY_get0_poly1305 and EVP_PKEY_get0_siphash
+=item EVP_PKEY_get0_DH, EVP_PKEY_get0_DSA, EVP_PKEY_get0_EC_KEY, EVP_PKEY_get0_RSA,
+EVP_PKEY_get1_DH, EVP_PKEY_get1_DSA, EVP_PKEY_get1_EC_KEY and EVP_PKEY_get1_RSA,
+EVP_PKEY_get0_hmac, EVP_PKEY_get0_poly1305 and EVP_PKEY_get0_siphash
 
 See L</Functions that return an internal key should be treated as read only>.
 
@@ -1340,6 +1335,8 @@ See L</EVP_PKEY_set_alias_type() method has been removed>
 
 =item HMAC_Init_ex, HMAC_Update, HMAC_Final, HMAC_size
 
+See L</Deprecated low-level MAC functions>.
+
 =item HMAC_CTX_new, HMAC_CTX_free, HMAC_CTX_copy, HMAC_CTX_reset,
 HMAC_CTX_set_flags and HMAC_CTX_get_md
 
@@ -1347,13 +1344,22 @@ See L</Deprecated low-level MAC functions>.
 
 =item i2d_DHparams, i2d_DHxparams
 
+See L</Deprecated low-level key reading and writing functions>
+and L<d2i_RSAPrivateKey(3)/Migration> 
+
 =item i2d_DSAparams, i2d_DSAPrivateKey, i2d_DSAPrivateKey_bio,
 i2d_DSAPrivateKey_fp, i2d_DSA_PUBKEY, i2d_DSA_PUBKEY_bio, i2d_DSA_PUBKEY_fp and
 i2d_DSAPublicKey
 
+See L</Deprecated low-level key reading and writing functions>
+and L<d2i_RSAPrivateKey(3)/Migration> 
+
 =item i2d_ECParameters, i2d_ECPrivateKey, i2d_ECPrivateKey_bio,
 i2d_ECPrivateKey_fp, i2d_EC_PUBKEY, i2d_EC_PUBKEY_bio, i2d_EC_PUBKEY_fp and
 i2o_ECPublicKey.
+
+See L</Deprecated low-level key reading and writing functions>
+and L<d2i_RSAPrivateKey(3)/Migration> 
 
 =item i2d_RSAPrivateKey, i2d_RSAPrivateKey_bio, i2d_RSAPrivateKey_fp.
 i2d_RSA_PUBKEY, i2d_RSA_PUBKEY_bio, i2d_RSA_PUBKEY_fp, i2d_RSAPublicKey
@@ -1365,14 +1371,23 @@ and L<d2i_RSAPrivateKey(3)/Migration>
 =item IDEA_encrypt, IDEA_set_decrypt_key, IDEA_set_encrypt_key,
 IDEA_cbc_encrypt, IDEA_cfb64_encrypt, IDEA_ecb_encrypt and IDEA_ofb64_encrypt
 
+See L</Deprecated low-level encryption functions>.
+IDEA has been moved to the L<Legacy Provider|/Legacy Algorithms>.
+
 =item MD2, MD2_Init, MD2_Update and MD2_Final
 
+See L</Deprecated low-level encryption functions>.
+MD2 has been moved to the L<Legacy Provider|/Legacy Algorithms>.
+
 =item MD4, MD4_Init, MD4_Update, MD4_Final and MD4_Transform
+
+See L</Deprecated low-level encryption functions>.
+MD4 has been moved to the L<Legacy Provider|/Legacy Algorithms>.
 
 =item MDC2, MDC2_Init, MDC2_Update and MDC2_Final
 
 See L</Deprecated low-level encryption functions>.
-IDEA, MD2, MD4 and MDC2 have been moved to the L<Legacy Provider|/Legacy Algorithms>.
+MDC2 has been moved to the L<Legacy Provider|/Legacy Algorithms>.
 
 =item IDEA_options and MD2_options
 
@@ -1401,7 +1416,7 @@ with OSSL_HTTP_REQ_CTX_*(). See L<OSSL_HTTP_REQ_CTX(3)> for additional details.
 =item OPENSSL_fork_child, OPENSSL_fork_parent and OPENSSL_fork_prepare
 
 There is no replacement for these functions. These pthread fork support methods
-were unused.
+were unused by OpenSSL.
 
 =item OSSL_STORE_ctrl, OSSL_STORE_do_all_loaders, OSSL_STORE_LOADER_get0_engine,
 OSSL_STORE_LOADER_get0_scheme, OSSL_STORE_LOADER_new,
@@ -1412,31 +1427,24 @@ OSSL_STORE_LOADER_set_find, OSSL_STORE_LOADER_set_load,
 OSSL_STORE_LOADER_set_open, OSSL_STORE_LOADER_set_open_ex,
 OSSL_STORE_register_loader, OSSL_STORE_unregister_loader and OSSL_STORE_vctrl
 
-These functions helped applications and engines to create loaders for
+These functions helped applications and engines create loaders for
 schemes they supported.  These are all deprecated and discouraged in favour of
 provider implementations, see L<provider-storemgmt(7)>.
 
-=item PEM_read_DHparams, PEM_read_bio_DHparams, 
-
-=item PEM_read_DSAparams PEM_read_bio_DSAparams
-
-=item PEM_read_DSAPrivateKey, PEM_read_DSA_PUBKEY, PEM_read_bio_DSAPrivateKey and PEM_read_bio_DSA_PUBKEY
-
-=item PEM_read_ECPKParameters, PEM_read_ECPrivateKey, PEM_read_EC_PUBKEY,
-PEM_read_bio_ECPKParameters, PEM_read_bio_ECPrivateKey and PEM_read_bio_EC_PUBKEY
-
-=item PEM_read_RSAPrivateKey, PEM_read_RSA_PUBKEY, PEM_read_RSAPublicKey,
-PEM_read_bio_RSAPrivateKey, PEM_read_bio_RSA_PUBKEY and PEM_read_bio_RSAPublicKey
-
-=item PEM_write_bio_DHparams, PEM_write_bio_DHxparams, PEM_write_DHparams and PEM_write_DHxparams
-
-=item PEM_write_DSAparams, PEM_write_DSAPrivateKey, PEM_write_DSA_PUBKEY,
-PEM_write_bio_DSAparams, PEM_write_bio_DSAPrivateKey and PEM_write_bio_DSA_PUBKEY
-
-=item PEM_write_ECPKParameters, PEM_write_ECPrivateKey, PEM_write_EC_PUBKEY
-PEM_write_bio_ECPKParameters, PEM_write_bio_ECPrivateKey and PEM_write_bio_EC_PUBKEY
-
-=item PEM_write_RSAPrivateKey, PEM_write_RSA_PUBKEY, PEM_write_RSAPublicKey,
+=item PEM_read_DHparams, PEM_read_bio_DHparams,
+PEM_read_DSAparams, PEM_read_bio_DSAparams,
+PEM_read_DSAPrivateKey, PEM_read_DSA_PUBKEY,
+PEM_read_bio_DSAPrivateKey and PEM_read_bio_DSA_PUBKEY,
+PEM_read_ECPKParameters, PEM_read_ECPrivateKey, PEM_read_EC_PUBKEY,
+PEM_read_bio_ECPKParameters, PEM_read_bio_ECPrivateKey, PEM_read_bio_EC_PUBKEY,
+PEM_read_RSAPrivateKey, PEM_read_RSA_PUBKEY, PEM_read_RSAPublicKey,
+PEM_read_bio_RSAPrivateKey, PEM_read_bio_RSA_PUBKEY, PEM_read_bio_RSAPublicKey,
+PEM_write_bio_DHparams, PEM_write_bio_DHxparams, PEM_write_DHparams, PEM_write_DHxparams,
+PEM_write_DSAparams, PEM_write_DSAPrivateKey, PEM_write_DSA_PUBKEY,
+PEM_write_bio_DSAparams, PEM_write_bio_DSAPrivateKey, PEM_write_bio_DSA_PUBKEY,
+PEM_write_ECPKParameters, PEM_write_ECPrivateKey, PEM_write_EC_PUBKEY,
+PEM_write_bio_ECPKParameters, PEM_write_bio_ECPrivateKey, PEM_write_bio_EC_PUBKEY,
+PEM_write_RSAPrivateKey, PEM_write_RSA_PUBKEY, PEM_write_RSAPublicKey,
 PEM_write_bio_RSAPrivateKey, PEM_write_bio_RSA_PUBKEY and PEM_write_bio_RSAPublicKey.
 
 See L</Deprecated low-level key reading and writing functions>
@@ -1451,12 +1459,10 @@ Applications should instead use L<RAND_set_DRBG_type(3)>,
 L<EVP_RAND(3)> and L<EVP_RAND(7)>.
 See L<RAND_set_rand_method(3)> for more details.
 
-=item RC2_encrypt, RC2_decrypt, RC2_set_key, RC2_cbc_encrypt, RC2_cfb64_encrypt
-RC2_ecb_encrypt and RC2_ofb64_encrypt
-
-=item RC4, RC4_set_key, RC4_options
-
-=item RC5_32_encrypt, RC5_32_set_key, RC5_32_decrypt, RC5_32_cbc_encrypt,
+=item RC2_encrypt, RC2_decrypt, RC2_set_key, RC2_cbc_encrypt, RC2_cfb64_encrypt,
+RC2_ecb_encrypt, RC2_ofb64_encrypt,
+RC4, RC4_set_key, RC4_options,
+RC5_32_encrypt, RC5_32_set_key, RC5_32_decrypt, RC5_32_cbc_encrypt,
 RC5_32_cfb64_encrypt, RC5_32_ecb_encrypt and RC5_32_ofb64_encrypt
 
 See L</Deprecated low-level encryption functions>.
@@ -1476,8 +1482,7 @@ Use L<EVP_PKEY_bits(3)>, L<EVP_PKEY_security_bits(3)> and L<EVP_PKEY_size(3)>.
 See L</Deprecated low-level validation functions>
 
 =item RSA_clear_flags, RSA_flags, RSA_set_flags, RSA_test_flags,
-
-=item RSA_setup_blinding, RSA_blinding_off and RSA_blinding_on
+RSA_setup_blinding, RSA_blinding_off and RSA_blinding_on
 
 All of these RSA flags have been deprecated without replacement:
 
@@ -1567,15 +1572,11 @@ SEED_cfb128_encrypt, SEED_ecb_encrypt and SEED_ofb128_encrypt.
 See L</Deprecated low-level encryption functions>.
 The SEED algorithm has been moved to the L<Legacy Provider|/Legacy Algorithms>.
 
-=item SHA1_Init, SHA1_Update, SHA1_Final and SHA1_Transform
-
-=item SHA224_Init, SHA224_Update and SHA224_Final
-
-=item SHA256_Init, SHA256_Update, SHA256_Final and SHA256_Transform
-
-=item SHA384_Init, SHA384_Update and SHA384_Final
-
-=item SHA512_Init, SHA512_Update, SHA512_Final and SHA512_Transform
+=item SHA1_Init, SHA1_Update, SHA1_Final, SHA1_Transform,
+SHA224_Init, SHA224_Update, SHA224_Final,
+SHA256_Init, SHA256_Update, SHA256_Final, SHA256_Transform,
+SHA384_Init, SHA384_Update, SHA384_Final,
+SHA512_Init, SHA512_Update, SHA512_Final and SHA512_Transform
 
 See L</Deprecated low-level digest functions>.
 
@@ -1641,11 +1642,7 @@ third party providers. If used then the 'default' provider would also need to be
 specified if required. The '-provider_path' must be specified before the
 '-provider' option. 
 
-'-providers' used by 'list', which will display the list of loaded providers,
-their names, version and status.  It optionally displays their gettable parameters.
-
-'-objects' used by 'list' which will display the list of built in objects,
-i.e. OIDs with names.
+The 'list' app has many new options. See L<openssl-list(1)> for more information.
 
 `-crl_lastupdate` and `-crl_nextupdate` used by 'ca' allows explicit setting of
 fields in the generated CRL.
@@ -1655,7 +1652,7 @@ fields in the generated CRL.
 Interactive mode is not longer available.
 
 The `-crypt` option used by `passwd`.
-The '-C' option used by `x509`, `dhparam`, `dsaparam`, and `ecparam`.
+The '-c' option used by `x509`, `dhparam`, `dsaparam`, and `ecparam`.
 
 =head3 Other Changes
 
@@ -1672,8 +1669,8 @@ necessary to explicitly specify the input format anymore. However if the
 input format option is used the specified format will be required.
 
 `speed` no longer uses low-level API calls.
-This implies some of the performance numbers might not be fully comparable
-with the previous releases due to higher overhead. This applies particularly to
+This implies some of the performance numbers might not be comparable with the
+previous releases due to higher overhead. This applies particularly to
 measuring performance on smaller data chunks.
 
 'dhparam', 'dsa', 'gendsa', 'dsaparam', 'genrsa' and 'rsa' have been
@@ -1704,7 +1701,7 @@ This means that providers may supply their own group implementations (using
 either the "key exchange" or the "key encapsulation" methods) which will
 automatically be detected and used by libssl.
 
-=item SSL and SSL_CTX options are now 64bit instead of 32bit.
+=item SSL and SSL_CTX options are now 64 bit instead of 32 bit.
 
 The signatures of the functions to get and set options on SSL and
 SSL_CTX objects changed from "unsigned long" to "uint64_t" type.
@@ -1793,10 +1790,6 @@ be set using L<X509_VERIFY_PARAM_set_auth_level(3)> or using the `-auth_level`
 options of the commands.
 
 =back
-
-=head1 RETURN VALUES
-
-See the individual manual pages for details.
 
 =head1 SEE ALSO
 

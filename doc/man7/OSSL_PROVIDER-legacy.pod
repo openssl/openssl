@@ -64,7 +64,7 @@ Not all of these symmetric cipher algorithms are enabled by default.
 
 =item DES
 
-The algorithm names are DES_ECB, DES_CBC, DES_OFB, DES_CFB, DES_CFB1, DES_CFB8
+The algorithm names are: DES_ECB, DES_CBC, DES_OFB, DES_CFB, DES_CFB1, DES_CFB8
 and DESX_CBC.
 
 =item RC2

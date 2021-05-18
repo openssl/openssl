@@ -49,7 +49,7 @@ file by running this command:
     OPENSSLDIR: "/usr/local/ssl"
 
 Caution: Many Operating Systems install OpenSSL by default. It is a common error
-to not have the correct version of OpenSSL on your $PATH. Check that you are
+to not have the correct version of OpenSSL in your $PATH. Check that you are
 running an OpenSSL 3.0 version like this:
 
     $ openssl version -v
@@ -75,8 +75,8 @@ Edit the config file to add the following lines near the beginning:
     [base_sect]
     activate = 1
 
-Obviously the include file location above should match the name of the FIPS
-module config file that you installed earlier.
+Obviously the include file location above should match the path and name of the
+FIPS module config file that you installed earlier.
 See L<https://github.com/openssl/openssl/blob/master/README-FIPS.md>.
 
 Any applications that use OpenSSL 3.0 and are started after these changes are
@@ -95,7 +95,8 @@ some disadvantages to this approach:
 
 =item You may not want all applications to use the FIPS module.
 
-It may be the case that some applications should and some should not.
+It may be the case that some applications should and some should not use the
+FIPS module.
 
 =item If applications take explicit steps to not load the default config file or
 set different settings.
@@ -105,7 +106,7 @@ This method will not work for these cases.
 =item The algorithms available in the FIPS module are a subset of the algorithms
 that are available in the default OpenSSL Provider.
 
-If those applications attempt to use any algorithms that are not present,
+If any applications attempt to use any algorithms that are not present,
 then they will fail.
 
 -=item Usage of certain deprecated APIs avoids the use of the FIPS module.
@@ -120,7 +121,7 @@ A variation on the above approach is to do the same thing on an individual
 application basis. The default OpenSSL config file depends on the compiled in
 value for OPENSSLDIR as described in the section above. However it is also
 possible to override the config file to be used via the `OPENSSL_CONF`
-environment variable. For example the following on Unix will cause the
+environment variable. For example the following, on Unix, will cause the
 application to be executed with a non-standard config file location:
 
     $ OPENSSL_CONF=/my/nondefault/openssl.cnf myapplication
@@ -145,8 +146,8 @@ L</Making all applications use the FIPS module by default> above, but edit the
 `fipsmodule.cnf` file to remove or comment out the line which says
 `activate = 1` (note that setting this value to 0 is I<not> sufficient).
 This means all the required config information will be available to load the
-FIPS module, but it is not actually automatically loaded when the application
-starts. The FIPS provider can then be loaded programmatically like this:
+FIPS module, but it is not automatically loaded when the application starts. The
+FIPS provider can then be loaded programmatically like this:
 
     #include <openssl/provider.h>
 
@@ -278,7 +279,7 @@ create two library contexts. In one we assume the existence of a config file
 called "openssl-fips.cnf" that automatically loads and configures the FIPS and
 base providers. The other library context will just use the default provider.
 
-    OSSL_LIB_CTX *fipslibctx, *nonfipslibctx;
+    OSSL_LIB_CTX *fips_libctx, *nonfips_libctx;
     OSSL_PROVIDER *defctxnull = NULL;
     EVP_MD *fipssha256 = NULL, *nonfipssha256 = NULL;
     int ret = 1;
@@ -287,9 +288,9 @@ base providers. The other library context will just use the default provider.
      * Create two nondefault library contexts. One for fips usage and one for
      * non-fips usage
      */
-    fipslibctx = OSSL_LIB_CTX_new();
-    nonfipslibctx = OSSL_LIB_CTX_new();
-    if (fipslibctx == NULL || nonfipslibctx == NULL)
+    fips_libctx = OSSL_LIB_CTX_new();
+    nonfips_libctx = OSSL_LIB_CTX_new();
+    if (fips_libctx == NULL || nonfips_libctx == NULL)
         goto err;
 
     /* Prevent anything from using the default library context */
@@ -300,25 +301,25 @@ base providers. The other library context will just use the default provider.
      * config file will automatically activate the FIPS and base providers so we
      * don't need to explicitly load them here.
      */
-    if (!OSSL_LIB_CTX_load_config(fipslibctx, "openssl-fips.cnf"))
+    if (!OSSL_LIB_CTX_load_config(fips_libctx, "openssl-fips.cnf"))
         goto err;
 
     /*
      * We don't need to do anything special to load the default provider into
-     * nonfipslibctx. This happens automatically if no other providers are
+     * nonfips_libctx. This happens automatically if no other providers are
      * loaded. Because we don't call OSSL_LIB_CTX_load_config() explicitly for
-     * nonfipslibctx it will just use the default config file.
+     * nonfips_libctx it will just use the default config file.
      */
 
     /* As an example get some digests */
 
     /* Get a FIPS validated digest */
-    fipssha256 = EVP_MD_fetch(fipslibctx, "SHA2-256", NULL);
+    fipssha256 = EVP_MD_fetch(fips_libctx, "SHA2-256", NULL);
     if (fipssha256 == NULL)
         goto err;
 
     /* Get a non-FIPS validated digest */
-    nonfipssha256 = EVP_MD_fetch(nonfipslibctx, "SHA2-256", NULL);
+    nonfipssha256 = EVP_MD_fetch(nonfips_libctx, "SHA2-256", NULL);
     if (nonfipssha256 == NULL)
         goto err;
 
@@ -330,8 +331,8 @@ base providers. The other library context will just use the default provider.
     err:
     EVP_MD_free(fipssha256);
     EVP_MD_free(nonfipssha256);
-    OSSL_LIB_CTX_free(fipslibctx);
-    OSSL_LIB_CTX_free(nonfipslibctx);
+    OSSL_LIB_CTX_free(fips_libctx);
+    OSSL_LIB_CTX_free(nonfips_libctx);
     OSSL_PROVIDER_unload(defctxnull);
 
     return ret;
@@ -424,10 +425,6 @@ example of a digest is used.
 To go from an B<EVP_MD_CTX> to an B<EVP_MD>, use L<EVP_MD_CTX_md(3)> .
 To go from the B<EVP_MD> to its B<OSSL_PROVIDER>, use L<EVP_MD_provider(3)>.
 To extract the name from the B<OSSL_PROVIDER>, use L<OSSL_PROVIDER_name(3)>.
-
-=head1 RETURN VALUES
-
-See the individual manual pages for details.
 
 =head1 SEE ALSO
 
