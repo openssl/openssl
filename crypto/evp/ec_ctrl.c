@@ -127,7 +127,6 @@ int EVP_PKEY_CTX_get_ecdh_kdf_type(EVP_PKEY_CTX *ctx)
 /*
  * This one is currently implemented as an EVP_PKEY_CTX_ctrl() wrapper,
  * simply because that's easier.
- * TODO(3.0) Should this be deprecated in favor of passing a name?
  */
 int EVP_PKEY_CTX_set_ecdh_kdf_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
 {
@@ -138,7 +137,6 @@ int EVP_PKEY_CTX_set_ecdh_kdf_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
 /*
  * This one is currently implemented as an EVP_PKEY_CTX_ctrl() wrapper,
  * simply because that's easier.
- * TODO(3.0) Should this be deprecated in favor of getting a name?
  */
 int EVP_PKEY_CTX_get_ecdh_kdf_md(EVP_PKEY_CTX *ctx, const EVP_MD **pmd)
 {
@@ -281,7 +279,6 @@ int EVP_PKEY_CTX_get0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **pukm)
 /*
  * This one is currently implemented as an EVP_PKEY_CTX_ctrl() wrapper,
  * simply because that's easier.
- * TODO(3.0) Should this be deprecated in favor of setting a name or an
  * ASN1_OBJECT (which would be converted to text internally)?
  */
 int EVP_PKEY_CTX_set_ec_paramgen_curve_nid(EVP_PKEY_CTX *ctx, int nid)
