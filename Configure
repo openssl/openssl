@@ -2186,14 +2186,14 @@ if ($builder eq "unified") {
                                 undef, undef,
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
-            qr/^\s* SOURCE ${index_re} = ${value_re} $/x
+            qr/^\s* SOURCE ${index_re} ${attribs_re} = ${value_re} $/x
             => sub { $push_to->(\%sources, $expand_variables->($+{INDEX}),
-                                undef, undef,
+                                \$attributes{sources}, $+{ATTRIBS},
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
-            qr/^\s* SHARED_SOURCE ${index_re} = ${value_re} $/x
+            qr/^\s* SHARED_SOURCE ${index_re} ${attribs_re} = ${value_re} $/x
             => sub { $push_to->(\%shared_sources, $expand_variables->($+{INDEX}),
-                                undef, undef,
+                                \$attributes{sources}, $+{ATTRIBS},
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
             qr/^\s* INCLUDE ${index_re} = ${value_re} $/x
@@ -2279,10 +2279,10 @@ EOF
                 if ($s eq $src_configdata || $generate{$_} || ! -f $s) {
                     $s = cleanfile($buildd, $_, $blddir);
                 }
+                my $o = $_;
                 # We recognise C++, C and asm files
                 if ($s =~ /\.(cc|cpp|c|s|S)$/) {
                     push @{$check_exist{$s}}, $ddest;
-                    my $o = $_;
                     $o =~ s/\.[csS]$/.o/; # C and assembler
                     $o =~ s/\.(cc|cpp)$/_cc.o/; # C++
                     $o = cleanfile($buildd, $o, $blddir);
@@ -2291,7 +2291,6 @@ EOF
                 } elsif ($s =~ /\.rc$/) {
                     # We also recognise resource files
                     push @{$check_exist{$s}}, $ddest;
-                    my $o = $_;
                     $o =~ s/\.rc$/.res/; # Resource configuration
                     $o = cleanfile($buildd, $o, $blddir);
                     $unified_info{sources}->{$ddest}->{$o} = -1;
@@ -2299,6 +2298,17 @@ EOF
                 } else {
                     push @{$check_exist{$s}}, $ddest;
                     $unified_info{sources}->{$ddest}->{$s} = 1;
+                }
+                # Fix up associated attributes
+                if ($o ne $_) {
+                    $unified_info{attributes}->{sources}->{$ddest}->{$o} =
+                        $unified_info{attributes}->{sources}->{$o}->{$s} =
+                        $attributes{sources}->{$dest}->{$_}
+                        if defined $attributes{sources}->{$dest}->{$_};
+                } else {
+                    $unified_info{attributes}->{sources}->{$ddest}->{$s} =
+                        $attributes{sources}->{$dest}->{$_}
+                        if defined $attributes{sources}->{$dest}->{$_};
                 }
             }
         }
@@ -2315,10 +2325,10 @@ EOF
                     $s = cleanfile($buildd, $_, $blddir);
                 }
 
+                my $o = $_;
                 if ($s =~ /\.(cc|cpp|c|s|S)$/) {
                     # We recognise C++, C and asm files
                     push @{$check_exist{$s}}, $ddest;
-                    my $o = $_;
                     $o =~ s/\.[csS]$/.o/; # C and assembler
                     $o =~ s/\.(cc|cpp)$/_cc.o/; # C++
                     $o = cleanfile($buildd, $o, $blddir);
@@ -2327,7 +2337,6 @@ EOF
                 } elsif ($s =~ /\.rc$/) {
                     # We also recognise resource files
                     push @{$check_exist{$s}}, $ddest;
-                    my $o = $_;
                     $o =~ s/\.rc$/.res/; # Resource configuration
                     $o = cleanfile($buildd, $o, $blddir);
                     $unified_info{shared_sources}->{$ddest}->{$o} = -1;
@@ -2336,10 +2345,21 @@ EOF
                     # We also recognise linker scripts (or corresponding)
                     # We know they are generated files
                     push @{$check_exist{$s}}, $ddest;
-                    my $ld = cleanfile($buildd, $_, $blddir);
-                    $unified_info{shared_sources}->{$ddest}->{$ld} = 1;
+                    $o = cleanfile($buildd, $_, $blddir);
+                    $unified_info{shared_sources}->{$ddest}->{$o} = 1;
                 } else {
                     die "unrecognised source file type for shared library: $s\n";
+                }
+                # Fix up associated attributes
+                if ($o ne $_) {
+                    $unified_info{attributes}->{shared_sources}->{$ddest}->{$o} =
+                        $unified_info{attributes}->{sources}->{$o}->{$s} =
+                        $attributes{sources}->{$dest}->{$_}
+                        if defined $attributes{sources}->{$dest}->{$_};
+                } else {
+                    $unified_info{attributes}->{shared_sources}->{$ddest}->{$o} =
+                        $attributes{sources}->{$dest}->{$_}
+                        if defined $attributes{sources}->{$dest}->{$_};
                 }
             }
         }
@@ -2644,6 +2664,19 @@ EOF
                             $unified_info{$dst}->{$prod}->{$newobj} = 1;
                             foreach my $src (@{$prod_sources{$_}}) {
                                 $unified_info{sources}->{$newobj}->{$src} = 1;
+                                # Adjust source attributes
+                                my $attrs = $unified_info{attributes}->{sources};
+                                if (defined $attrs->{$prod}
+                                    && defined $attrs->{$prod}->{$_}) {
+                                    $attrs->{$prod}->{$newobj} =
+                                        $attrs->{$prod}->{$_};
+                                    delete $attrs->{$prod}->{$_};
+                                }
+                                foreach my $objsrc (keys %{$attrs->{$_} // {}}) {
+                                    $attrs->{$newobj}->{$objsrc} =
+                                        $attrs->{$_}->{$objsrc};
+                                    delete $attrs->{$_}->{$objsrc};
+                                }
                             }
                             # Adjust dependencies
                             foreach my $deps (keys %{$unified_info{depends}->{$_}}) {
