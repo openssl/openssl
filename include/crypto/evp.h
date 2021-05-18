@@ -887,7 +887,7 @@ int evp_pkey_ctx_use_cached_data(EVP_PKEY_CTX *ctx);
 int evp_method_store_flush(OSSL_LIB_CTX *libctx);
 int evp_set_default_properties_int(OSSL_LIB_CTX *libctx, const char *propq,
                                    int loadconfig, int mirrored);
-char *evp_get_global_properties_str(OSSL_LIB_CTX *libctx);
+char *evp_get_global_properties_str(OSSL_LIB_CTX *libctx, int loadconfig);
 
 void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force);
 

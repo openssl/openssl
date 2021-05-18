@@ -1428,7 +1428,7 @@ static int ossl_provider_register_child_cb(const OSSL_CORE_HANDLE *handle,
         OPENSSL_free(child_cb);
         return 0;
     }
-    propsstr = evp_get_global_properties_str(libctx);
+    propsstr = evp_get_global_properties_str(libctx, 0);
 
     if (propsstr != NULL) {
         global_props_cb(propsstr, cbdata);

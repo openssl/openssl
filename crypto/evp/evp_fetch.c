@@ -498,9 +498,9 @@ int EVP_default_properties_enable_fips(OSSL_LIB_CTX *libctx, int enable)
     return evp_default_properties_merge(libctx, query);
 }
 
-char *evp_get_global_properties_str(OSSL_LIB_CTX *libctx)
+char *evp_get_global_properties_str(OSSL_LIB_CTX *libctx, int loadconfig)
 {
-    OSSL_PROPERTY_LIST **plp = ossl_ctx_global_properties(libctx, 1);
+    OSSL_PROPERTY_LIST **plp = ossl_ctx_global_properties(libctx, loadconfig);
     char *propstr = NULL;
     size_t sz;
 
