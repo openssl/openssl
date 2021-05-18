@@ -117,8 +117,8 @@ The I<algorithm> can be selected only from a pre-compiled subset of things
 that the C<openssl speed> command knows about. To test any additional digest
 or cipher algorithm supported by OpenSSL use the C<-evp> option.
 
-There is no way to test speed of additional public key algorithms supported
-by third party providers with the C<openssl speed> command.
+There is no way to test the speed of any additional public key algorithms
+supported by third party providers with the C<openssl speed> command.
 
 =head1 HISTORY
 
