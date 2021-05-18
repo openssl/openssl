@@ -40,7 +40,6 @@ B<openssl list>
 -}[B<-engines>]
 {- output_on() if $disabled{"deprecated-3.0"}; ""
 -}[B<-disabled>]
-[B<-missing-help>]
 [B<-objects>]
 [B<-options> I<command>]
 {- $OpenSSL::safe::opt_provider_synopsis -}
@@ -181,10 +180,6 @@ Display a list of loaded engines.
 
 Display a list of disabled features, those that were compiled out
 of the installation.
-
-=item B<-missing-help>
-
-List missing detailed help strings.
 
 =item B<-objects>
 
