@@ -30,9 +30,6 @@ B<openssl speed>
 =head1 DESCRIPTION
 
 This command is used to test the performance of cryptographic algorithms.
-To see the list of supported algorithms, use C<openssl list -digest-commands>
-or C<openssl list -cipher-commands> command. The global CSPRNG is denoted by
-the B<rand> algorithm name.
 
 =head1 OPTIONS
 
@@ -54,6 +51,10 @@ Use the specified cipher or message digest algorithm via the EVP interface.
 If I<algo> is an AEAD cipher, then you can pass B<-aead> to benchmark a
 TLS-like sequence. And if I<algo> is a multi-buffer capable cipher, e.g.
 aes-128-cbc-hmac-sha1, then B<-mb> will time multi-buffer operation.
+
+To see the algorithms supported with this option, use
+C<openssl list -digest-algorithms> or C<openssl list -cipher-algorithms>
+command.
 
 =item B<-multi> I<num>
 
@@ -109,6 +110,15 @@ If any I<algorithm> is given, then those algorithms are tested, otherwise a
 pre-compiled grand selection is tested.
 
 =back
+
+=head1 BUGS
+
+The I<algorithm> can be selected only from a pre-compiled subset of things
+that the C<openssl speed> command knows about. To test any additional digest
+or cipher algorithm supported by OpenSSL use the C<-evp> option.
+
+There is no way to test the speed of any additional public key algorithms
+supported by third party providers with the C<openssl speed> command.
 
 =head1 HISTORY
 
