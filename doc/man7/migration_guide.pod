@@ -47,7 +47,7 @@ config file, which providers you want to use for any given application.
 OpenSSL 3.0 comes with 5 different providers as standard. Over time third
 parties may distribute additional providers that can be plugged into OpenSSL.
 All algorithm implementations available via providers are accessed through the
-"high" level APIs (for example those functions prefixed with "EVP"). They cannot
+"high level" APIs (for example those functions prefixed with "EVP"). They cannot
 be accessed using the L</Low Level APIs>.
 One of the standard providers available is the FIPS provider. This makes
 available FIPS validated cryptographic algorithms.
@@ -294,7 +294,7 @@ implemented by EVP_RAND and EVP_RAND_CTX.
 
 =head4 Removed FIPS_mode() and FIPS_mode_set()
 
-These functions are legacy API's that are not applicable to the new provider
+These functions are legacy APIs that are not applicable to the new provider
 model. Applications should instead use
 L<EVP_default_properties_is_fips_enabled(3)> and
 L<EVP_default_properties_enable_fips(3)>.
@@ -708,7 +708,7 @@ L<crypto(7)/ALGORITHM FETCHING>.
 
 =head3 Deprecation of Low Level Functions
 
-A significant number of API's have been deprecated in OpenSSL 3.0.
+A significant number of APIs have been deprecated in OpenSSL 3.0.
 This section describes some common categories of deprecations.
 See L</Deprecated function mappings> for the list of deprecated functions
 that refer to these categories.
@@ -1233,15 +1233,8 @@ L<EC_POINT_mul(3)> function.
 All engine functions are deprecated. An engine should be rewritten as a provider.
 See L</Providers are a replacement for engines and low-level method overrides>.
 
-=item ERR_func_error_string
-
-=item ERR_get_error_line
-
-=item ERR_get_error_line_data
-
-=item ERR_get_state
-
-=item ERR_load_*
+=item ERR_load_*, ERR_func_error_string, ERR_get_error_line,
+ERR_get_error_line_data and ERR_get_state
 
 OpenSSL now loads error strings automatically so these functions are not needed.
 
@@ -1374,10 +1367,18 @@ IDEA_cbc_encrypt, IDEA_cfb64_encrypt, IDEA_ecb_encrypt and IDEA_ofb64_encrypt
 See L</Deprecated low-level encryption functions>.
 IDEA has been moved to the L<Legacy Provider|/Legacy Algorithms>.
 
+=item IDEA_options
+
+There is no replacement. This function returned a constant string.
+
 =item MD2, MD2_Init, MD2_Update and MD2_Final
 
 See L</Deprecated low-level encryption functions>.
 MD2 has been moved to the L<Legacy Provider|/Legacy Algorithms>.
+
+=item MD2_options
+
+There is no replacement. This function returned a constant string.
 
 =item MD4, MD4_Init, MD4_Update, MD4_Final and MD4_Transform
 
@@ -1388,10 +1389,6 @@ MD4 has been moved to the L<Legacy Provider|/Legacy Algorithms>.
 
 See L</Deprecated low-level encryption functions>.
 MDC2 has been moved to the L<Legacy Provider|/Legacy Algorithms>.
-
-=item IDEA_options and MD2_options
-
-These functions return constant strings and are no longer supported.
 
 =item MD5, MD5_Init, MD5_Update, MD5_Final and MD5_Transform
 
@@ -1679,7 +1676,7 @@ modified to use PKEY APIs.
 
 =head3 Default settings
 
-"SHA256" is now the default digest for TS query used by`ts`.
+"SHA256" is now the default digest for TS query used by `ts`.
 
 =head3 Deprecated apps
 
@@ -1717,7 +1714,7 @@ These functions now take IP literal addresses as well as actual hostnames.
 
 =item Added SSL option SSL_OP_CLEANSE_PLAINTEXT
 
-If the option is set, openssl cleanses (zeroize) plaintext bytes from
+If the option is set, openssl cleanses (zeroizes) plaintext bytes from
 internal buffers after delivering them to the application. Note,
 the application is still responsible for cleansing other copies
 (e.g.: data received by L<SSL_read(3)>).
