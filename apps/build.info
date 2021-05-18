@@ -62,8 +62,8 @@ IF[{- !$disabled{apps} -}]
   DEPEND[openssl]=libapps.a ../libssl
 
   DEPEND[${OPENSSLSRC/.c/.o}]=progs.h
-  GENERATE[progs.c]=progs.pl -C $(APPS_OPENSSL)
-  GENERATE[progs.h]=progs.pl -H $(APPS_OPENSSL)
+  GENERATE[progs.c]=progs.pl "-C" $(APPS_OPENSSL)
+  GENERATE[progs.h]=progs.pl "-H" $(APPS_OPENSSL)
   # progs.pl tries to read all 'openssl' sources, including progs.c, so we make
   # sure things are generated in the correct order.
   DEPEND[progs.h]=progs.c
