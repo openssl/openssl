@@ -85,7 +85,7 @@
 
          # Reassemble it as a Unix path
          $vol =~ s|:$||;
-         $dirs = File::Spec::Unix->catdir('', $vol, @dirs)
+         $dirs = File::Spec::Unix->catdir('', $vol, @dirs);
          $path = File::Spec::Unix->catpath('', $dirs, $file);
      }
 
