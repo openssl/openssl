@@ -35,6 +35,7 @@ B<openssl list>
 [B<-asymcipher-algorithms>]
 [B<-public-key-algorithms>]
 [B<-public-key-methods>]
+[B<-store-loaders>]
 [B<-providers>]
 {- output_off() if $disabled{"deprecated-3.0"}; ""
 -}[B<-engines>]
@@ -161,6 +162,10 @@ Display a list of signature algorithms.
 =item B<-asymcipher-algorithms>
 
 Display a list of asymmetric cipher algorithms.
+
+=item B<-store-loaders>
+
+Display a list of store loaders.
 
 =item B<-providers>
 
