@@ -33,7 +33,8 @@
 struct pvk2key_ctx_st;            /* Forward declaration */
 typedef int check_key_fn(void *, struct pvk2key_ctx_st *ctx);
 typedef void adjust_key_fn(void *, struct pvk2key_ctx_st *ctx);
-typedef void *b2i_PVK_of_bio_pw_fn(BIO *in, pem_password_cb *cb, void *u);
+typedef void *b2i_PVK_of_bio_pw_fn(BIO *in, pem_password_cb *cb, void *u,
+                                   OSSL_LIB_CTX *libctx, const char *propq);
 typedef void free_key_fn(void *);
 struct keytype_desc_st {
     int type;                 /* EVP key type */
@@ -118,7 +119,8 @@ static int pvk2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         if (!ossl_pw_set_ossl_passphrase_cb(&pwdata, pw_cb, pw_cbarg))
             goto end;
 
-        key = ctx->desc->read_private_key(in, ossl_pw_pem_password, &pwdata);
+        key = ctx->desc->read_private_key(in, ossl_pw_pem_password, &pwdata,
+                                          PROV_LIBCTX_OF(ctx->provctx), NULL);
 
         /*
          * Because the PVK API doesn't have a separate decrypt call, we need
@@ -204,13 +206,13 @@ static int pvk2key_export_object(void *vctx,
 
 /* ---------------------------------------------------------------------- */
 
-#define dsa_private_key_bio     (b2i_PVK_of_bio_pw_fn *)b2i_DSA_PVK_bio
+#define dsa_private_key_bio     (b2i_PVK_of_bio_pw_fn *)b2i_DSA_PVK_bio_ex
 #define dsa_adjust              NULL
 #define dsa_free                (void (*)(void *))DSA_free
 
 /* ---------------------------------------------------------------------- */
 
-#define rsa_private_key_bio     (b2i_PVK_of_bio_pw_fn *)b2i_RSA_PVK_bio
+#define rsa_private_key_bio     (b2i_PVK_of_bio_pw_fn *)b2i_RSA_PVK_bio_ex
 
 static void rsa_adjust(void *key, struct pvk2key_ctx_st *ctx)
 {
