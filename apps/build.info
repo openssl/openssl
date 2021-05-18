@@ -11,7 +11,7 @@ ENDIF
 
 # Source for the 'openssl' program
 $OPENSSLSRC=\
-        openssl.c progs.c \
+        openssl.c \
         asn1parse.c ca.c ciphers.c crl.c crl2pkcs7.c dgst.c \
         enc.c errstr.c \
         genpkey.c kdf.c mac.c nseq.c passwd.c pkcs7.c \
@@ -61,7 +61,12 @@ IF[{- !$disabled{apps} -}]
   INCLUDE[openssl]=.. ../include include
   DEPEND[openssl]=libapps.a ../libssl
 
-  DEPEND[${OPENSSLSRC/.c/.o}]=progs.h
+  # The nocheck attribute is picked up by progs.pl as a signal not to look
+  # at that file; some systems may have locked it as the output file, and
+  # therefore don't allow it to be read at the same time, making progs.pl
+  # fail.
+  SOURCE[openssl]{nocheck}=progs.c
+  DEPEND[${OPENSSLSRC/.c/.o} progs.o]=progs.h
   GENERATE[progs.c]=progs.pl "-C" $(APPS_OPENSSL)
   GENERATE[progs.h]=progs.pl "-H" $(APPS_OPENSSL)
   # progs.pl tries to read all 'openssl' sources, including progs.c, so we make
