@@ -20,6 +20,9 @@
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/provider.h>
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <openssl/rsa.h>
+#endif
 #include <openssl/core_names.h>
 #include "testutil.h"
 #include "internal/nelem.h"
@@ -728,7 +731,9 @@ static int test_pkey_export_null(void)
 static int test_pkey_export(void)
 {
     EVP_PKEY *pkey = NULL;
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     RSA *rsa = NULL;
+#endif
     int ret = 1;
     const unsigned char *pdata = keydata[0].kder;
     int pdata_len = keydata[0].size;
