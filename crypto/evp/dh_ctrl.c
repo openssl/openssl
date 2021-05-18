@@ -148,8 +148,6 @@ int EVP_PKEY_CTX_set_dhx_rfc5114(EVP_PKEY_CTX *ctx, int gen)
 /*
  * This one is currently implemented as an EVP_PKEY_CTX_ctrl() wrapper,
  * simply because that's easier.
- * TODO(3.0) Should this be deprecated in favor of passing a name or an
- * ASN1_OBJECT (which can be converted to text internally)?
  */
 int EVP_PKEY_CTX_set_dh_nid(EVP_PKEY_CTX *ctx, int nid)
 {
@@ -178,7 +176,6 @@ int EVP_PKEY_CTX_set_dh_pad(EVP_PKEY_CTX *ctx, int pad)
 /*
  * This one is currently implemented as an EVP_PKEY_CTX_ctrl() wrapper,
  * simply because that's easier.
- * TODO(3.0) Should this be deprecated in favor of passing a name?
  */
 int EVP_PKEY_CTX_set_dh_kdf_type(EVP_PKEY_CTX *ctx, int kdf)
 {
@@ -189,7 +186,6 @@ int EVP_PKEY_CTX_set_dh_kdf_type(EVP_PKEY_CTX *ctx, int kdf)
 /*
  * This one is currently implemented as an EVP_PKEY_CTX_ctrl() wrapper,
  * simply because that's easier.
- * TODO(3.0) Should this be deprecated in favor of getting a name?
  */
 int EVP_PKEY_CTX_get_dh_kdf_type(EVP_PKEY_CTX *ctx)
 {
@@ -220,7 +216,6 @@ int EVP_PKEY_CTX_get0_dh_kdf_oid(EVP_PKEY_CTX *ctx, ASN1_OBJECT **oid)
 /*
  * This one is currently implemented as an EVP_PKEY_CTX_ctrl() wrapper,
  * simply because that's easier.
- * TODO(3.0) Should this be deprecated in favor of passing a name?
  */
 int EVP_PKEY_CTX_set_dh_kdf_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
 {
@@ -231,7 +226,6 @@ int EVP_PKEY_CTX_set_dh_kdf_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
 /*
  * This one is currently implemented as an EVP_PKEY_CTX_ctrl() wrapper,
  * simply because that's easier.
- * TODO(3.0) Should this be deprecated in favor of getting a name?
  */
 int EVP_PKEY_CTX_get_dh_kdf_md(EVP_PKEY_CTX *ctx, const EVP_MD **pmd)
 {

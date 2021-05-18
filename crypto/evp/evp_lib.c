@@ -1005,7 +1005,6 @@ EVP_PKEY_CTX *EVP_MD_CTX_pkey_ctx(const EVP_MD_CTX *ctx)
 }
 
 #if !defined(FIPS_MODULE)
-/* TODO(3.0): EVP_DigestSign* not yet supported in FIPS module */
 void EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx)
 {
     /*

@@ -7,11 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-/*
- * TODO(v3.0): the IMPLEMENT macros in include/openssl/pem.h should be
- * moved here.
- */
-
 #include <openssl/core_dispatch.h>
 #include <openssl/pem.h>
 #include <openssl/encoder.h>
