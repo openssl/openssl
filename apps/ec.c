@@ -67,7 +67,7 @@ int ec_main(int argc, char **argv)
     OSSL_DECODER_CTX *dctx = NULL;
     EVP_PKEY_CTX *pctx = NULL;
     EVP_PKEY *eckey = NULL;
-    BIO *in = NULL, *out = NULL;
+    BIO *out = NULL;
     ENGINE *e = NULL;
     EVP_CIPHER *enc = NULL;
     char *infile = NULL, *outfile = NULL, *ciphername = NULL, *prog;
@@ -172,12 +172,6 @@ int ec_main(int argc, char **argv)
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
         BIO_printf(bio_err, "Error getting passwords\n");
         goto end;
-    }
-
-    if (informat != FORMAT_ENGINE) {
-        in = bio_open_default(infile, 'r', informat);
-        if (in == NULL)
-            goto end;
     }
 
     BIO_printf(bio_err, "read EC key\n");
@@ -285,7 +279,6 @@ int ec_main(int argc, char **argv)
 end:
     if (ret != 0)
         ERR_print_errors(bio_err);
-    BIO_free(in);
     BIO_free_all(out);
     EVP_PKEY_free(eckey);
     EVP_CIPHER_free(enc);
