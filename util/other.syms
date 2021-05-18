@@ -333,6 +333,7 @@ EVP_rc5_32_12_16_cfb                    define
 EVP_RSA_gen                             define
 EVP_seed_cfb                            define
 EVP_sm4_cfb                             define
+EXT_UTF8STRING                          define
 OBJ_cleanup                             define deprecated 1.1.0
 OCSP_parse_url                          define
 OCSP_REQ_CTX                            datatype deprecated 3.0.0
