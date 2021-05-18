@@ -12,7 +12,9 @@ See the individual manual pages for details.
 
 This guide details the changes required to migrate to new versions of OpenSSL.
 Currently this covers OpenSSL 3.0. For earlier versions refer to
-L<https://github.com/openssl/openssl/blob/master/CHANGES.md>
+L<https://github.com/openssl/openssl/blob/master/CHANGES.md>.
+For an overview of some of the key concepts introduced in OpenSSL 3.0 see
+L<crypto(7)>.
 
 =head1 OPENSSL 3_0
 
@@ -51,14 +53,13 @@ One of the standard providers available is the FIPS provider. This makes
 available FIPS validated cryptographic algorithms.
 The FIPS provider is disabled by default and needs to be enabled explicitly
 at configuration time using the `enable-fips` option. If it is enabled,
-the FIPS provider gets built and installed in addition to the default and
-the legacy provider. No separate installation procedure is necessary.
+the FIPS provider gets built and installed in addition to the other standard
+providers. No separate installation procedure is necessary.
 There is however a dedicated `install_fips` make target, which serves the
 special purpose of installing only the FIPS provider into an existing
 OpenSSL installation.
 
 See also L</Legacy Algorithms> for information on the legacy provider.
-fips module
 
 See also L</Completing the installation of the FIPS Module> and
 L</Using the FIPS Module in applications>.
@@ -93,8 +94,8 @@ These legacy EVP algorithms are still available in OpenSSL 3.0 but not by
 default. If you want to use them then you must load the legacy provider.
 This can be as simple as a config file change, or can be done programmatically.
 See L<OSSL_PROVIDER-legacy(7)> for a complete list of algorithms.
-Applications using the EVP APIs to access these ciphers and digests should
-instead use more modern ciphers. If that is not possible then these applications
+Applications using the EVP APIs to access these algorithms should instead use
+more modern algorithms. If that is not possible then these applications
 should ensure that the legacy provider has been loaded. This can be achieved
 either programmatically or via configuration. See L<crypto(7)> man page for
 more information about providers.
@@ -319,7 +320,7 @@ B<EVP_KDF_CTRL_SET_PBKDF2_PKCS5_MODE>.
 
 =head4 Enforce a minimum DH modulus size of 512 bits
 
-.
+Smaller sizes now result in an error.
 
 =head4 SM2 key changes
 
@@ -435,7 +436,7 @@ L</Upgrading from OpenSSL 1.1.1>, the main things to be aware of are:
 =item 1) The build and installation procedure has changed significantly.
 
 Check the file INSTALL.md in the top of the installation for instructions on how
-to build and install OpenSSL for your platform. Also checkout the various NOTES
+to build and install OpenSSL for your platform. Also read the various NOTES
 files in the same directory, as applicable for your platform.
 
 =item 2) Many structures have been made opaque in OpenSSL 3.0.
@@ -478,15 +479,12 @@ L<OpenSSL 1.1.0 Changes page|https://wiki.openssl.org/index.php/OpenSSL_1.1.0_Ch
 The OpenSSL 2.0 FIPS Object Module was a separate download that had to be built
 separately and then integrated into your main OpenSSL 1.0.2 build.
 In OpenSSL 3.0 the FIPS support is fully integrated into the mainline version of
-OpenSSL and is no longer a separate download. You do not need to take separate
-build steps to add the FIPS support. You do need to take steps to ensure that
-your application is using the FIPS module in OpenSSL 3.0. See the further notes
-below on configuring this.
+OpenSSL and is no longer a separate download. For further information see
+L</Completing the installation of the FIPS Module>.
 
 The function calls 'FIPS_mode()' and 'FIPS_mode_set()' have been removed
 from OpenSSL 3.0. You should rewrite your application to not use them.
-See the sections below on how to write applications to use the FIPS Module in
-OpenSSL 3.0. 
+See L<fips_module(7)> and L<OSSL_PROVIDER-FIPS(7)> for details.
 
 =head2 Completing the installation of the FIPS Module
 
@@ -499,7 +497,8 @@ L<README-FIPS|https://github.com/openssl/openssl/blob/master/README-FIPS.md> fil
 Applications written to work with OpenSSL 1.1.1 will mostly just work with
 OpenSSL 3.0. However changes will be required if you want to take advantage of
 some of the new features that OpenSSL 3.0 makes available. In order to do that
-you need to understand some new concepts introduced in OpenSSL 3.0. 
+you need to understand some new concepts introduced in OpenSSL 3.0.
+Read L<crypto(7)/Library contexts> for further information.
 
 =head3 Library Context
 
@@ -524,7 +523,7 @@ L<EVP_CIPHER_fetch(3)>. See L<crypto(7)/ALGORITHM FETCHING>.
 
 Some functions can be passed an object that has already been set up with a library
 context such as L<d2i_X509(3)>, L<d2i_X509_CRL(3)> and L<d2i_X509_REQ(3)>.
-If NULL is passed instead then the created object will be setup with the default
+If NULL is passed instead then the created object will be set up with the default
 NULL library context. Use L<X509_new_ex(3)>, L<X509_CRL_new_ex(3)> and
 L<X509_REQ_new_ex(3)> if a library context is required.
 
@@ -924,6 +923,8 @@ Camellia_cbc_encrypt, Camellia_cfb128_encrypt, Camellia_cfb1_encrypt,
 Camellia_cfb8_encrypt, Camellia_ctr128_encrypt, Camellia_ecb_encrypt and
 Camellia_ofb128_encrypt.
 
+See L</Deprecated low-level encryption functions>.
+
 =item CAST_encrypt, CAST_decrypt, CAST_set_key, CAST_cbc_encrypt,
 CAST_cfb64_encrypt, CAST_ecb_encrypt and CAST_ofb64_encrypt
 
@@ -932,6 +933,8 @@ The CAST algorithm has been moved to the L<Legacy Provider|/Legacy Algorithms>.
 
 =item CMAC_CTX_new, CMAC_CTX_cleanup, CMAC_CTX_copy, CMAC_CTX_free and
 CMAC_CTX_get0_cipher_ctx
+
+See L</Deprecated low-level MAC functions>.
 
 =item CMAC_Init, CMAC_Update, CMAC_Final and CMAC_resume.
 
@@ -1188,9 +1191,11 @@ See L</Deprecated low-level key printing functions>
 
 =item EC_KEY_set_asn1_flag, EC_KEY_set_conv_form, EC_KEY_set_enc_flags
 
+See L</Deprecated low-level key parameter setters>.
+
 =item EC_KEY_set_group, EC_KEY_set_private_key, EC_KEY_set_public_key, EC_KEY_set_public_key_affine_coordinates
 
-See L</Deprecated low-level key parameter setters>,
+See L</Deprecated low-level key parameter setters>.
 
 =item ECParameters_print, ECParameters_print_fp, ECPKParameters_print and
 ECPKParameters_print_fp
@@ -1407,7 +1412,9 @@ OSSL_STORE_LOADER_set_find, OSSL_STORE_LOADER_set_load,
 OSSL_STORE_LOADER_set_open, OSSL_STORE_LOADER_set_open_ex,
 OSSL_STORE_register_loader, OSSL_STORE_unregister_loader and OSSL_STORE_vctrl
 
-TODO ??
+These functions helped applications and engines to create loaders for
+schemes they supported.  These are all deprecated and discouraged in favour of
+provider implementations, see L<provider-storemgmt(7)>.
 
 =item PEM_read_DHparams, PEM_read_bio_DHparams, 
 
@@ -1726,9 +1733,9 @@ TLS connections in such a build without also disabling TLSv1.3 at run time or
 using third party provider groups may result in handshake failures. TLSv1.3
 can be disabled at compile time using the "no-tls1_3" Configure option.
 
-=item SSL_CTX_set_ciphersuites() and SSL_set_ciphersuites() now ignore unknown ciphers.
+=item SSL_CTX_set_ciphersuites() and SSL_set_ciphersuites() changes.
 
-.
+The methods now ignore unknown ciphers.
 
 =item Security callback change.
 

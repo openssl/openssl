@@ -91,15 +91,28 @@ This approach has the primary advantage that it is simple, and no code changes
 are required in applications in order to benefit from the FIPS module. There are
 some disadvantages to this approach:
 
-- You may not want all applications to use the FIPS module. It may be the case
-that some applications should and some should not.
-- If applications take explicit steps to not load the default config file or set
-different settings then this method will not work for them
-- The algorithms available in the FIPS module are a subset of the algorithms
-that are available in the default OpenSSL Provider. If those applications
-attempt to use any algorithms that are not present, then they will fail.
-- Usage of certain deprecated APIs avoids the use of the FIPS module. If any
-applications use those APIs then the FIPS module will not be used.
+=over 4
+
+=item You may not want all applications to use the FIPS module.
+
+It may be the case that some applications should and some should not.
+
+=item If applications take explicit steps to not load the default config file or
+set different settings.
+
+This method will not work for these cases.
+
+=item The algorithms available in the FIPS module are a subset of the algorithms
+that are available in the default OpenSSL Provider.
+
+If those applications attempt to use any algorithms that are not present,
+then they will fail.
+
+-=item Usage of certain deprecated APIs avoids the use of the FIPS module.
+
+If any applications use those APIs then the FIPS module will not be used.
+
+=back
 
 =head2 Selectively making applications use the FIPS module by default
 
@@ -127,13 +140,13 @@ FIPS module config data (such as its self test status and integrity data). But
 in this case we do not automatically activate the FIPS provider via that config
 file.
 
-To do things this way configure as per the section "Making all applications use
-the FIPS module by default" above, but edit the `fipsmodule.cnf` file to remove
-or comment out the line which says `activate = 1` (note that setting this value
-to 0 is **not** sufficient). This means all the required config information will
-be available to load the FIPS module, but it is not actually automatically
-loaded when the application starts. The FIPS provider can then be loaded
-programmatically like this:
+To do things this way configure as per
+L</Making all applications use the FIPS module by default> above, but edit the
+`fipsmodule.cnf` file to remove or comment out the line which says
+`activate = 1` (note that setting this value to 0 is I<not> sufficient).
+This means all the required config information will be available to load the
+FIPS module, but it is not actually automatically loaded when the application
+starts. The FIPS provider can then be loaded programmatically like this:
 
     #include <openssl/provider.h>
 
@@ -181,7 +194,7 @@ will usually want to load the base provider instead.
 In this example we are using the "default" library context. OpenSSL functions
 operate within the scope of a library context. If no library context is
 explicitly specified then the default library context is used. For further
-details about library contexts see the `OSSL_LIB_CTX(3)` man page.
+details about library contexts see the L<OSSL_LIB_CTX(3)> man page.
 
 =head2 Loading the FIPS module at the same time as other providers
 
@@ -340,7 +353,6 @@ be available.
 See L<migration_guide(7)/Library Context> for additional information about the
 Library Context.
 
-
 =head2 Using Encoders and Decoders with the FIPS module
 
 Encoders and decoders are used to read and write keys or parameters from or to
@@ -367,8 +379,8 @@ properties and the default library context to specify usage of FIPS validated
 algorithms then this will happen automatically for all cryptographic algorithms
 in libssl. If you are using a nondefault library context to load the FIPS
 provider then you can supply this to libssl using the function
-`SSL_CTX_new_ex()`. This works as a drop in replacement for the function
-`SSL_CTX_new()` except it provides you with the capability to specify the
+L<SSL_CTX_new_ex(3)>. This works as a drop in replacement for the function
+L<SSL_CTX_new(3)> except it provides you with the capability to specify the
 library context to be used. You can also use the same function to specify
 libssl specific properties to use.
 
@@ -409,10 +421,10 @@ A chain of links needs to be followed to go from an algorithm instance to the
 provider that implements it. The process is similar for all algorithms. Here the
 example of a digest is used.
 
-To go from an `EVP_MD_CTX` to an `EVP_MD`, use the `EVP_MD_CTX_md()` call. To go
-from the `EVP_MD` to its `OSSL_PROVIDER`, use the `EVP_MD_provider()` call. To
-extract the name from the `OSSL_PROVIDER`, use the `OSSL_PROVIDER_name()` call.
-Finally, use `strcmp(3)` or `printf(3)` on the name.
+To go from an B<EVP_MD_CTX> to an B<EVP_MD>, use L<EVP_MD_CTX_md(3)> .
+To go from the B<EVP_MD> to its B<OSSL_PROVIDER>, use L<EVP_MD_provider(3)>.
+To extract the name from the B<OSSL_PROVIDER>, use L<OSSL_PROVIDER_name(3)>.
+Finally, use L<strcmp(3)> or L<printf(3)> on the name.
 
 =head1 RETURN VALUES
 

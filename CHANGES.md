@@ -21,10 +21,12 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
-For OpenSSL 3.0 a migration guide has been added, so the CHANGES entries listed
-here are only a brief description.
+For OpenSSL 3.0 a [Migration guide][] has been added, so the CHANGES entries
+listed here are only a brief description.
 The migration guide contains more detailed information related to new features,
 breaking changes, and mappings for the large list of deprecated functions.
+
+[Migration guide]: https://github.com/openssl/openssl/tree/master/doc/man7/migration_guide.pod
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
@@ -4379,12 +4381,7 @@ OpenSSL 1.0.2
    OpenSSL could do a one-byte buffer overread. The most likely result
    would be an erroneous display of the certificate in text format.
 
-   This issue was reported to OpenSSL by the OSS-Fuzz project.  This
-   is effectively the same as creating a RSA, DH or DSA object and
-   then assigning them to an EVP_PKEY, but directly using algorithm
-   agnostic EVP functions.  A benefit is that this should be future
-   proof for public key algorithms to come.
-   ([CVE-2017-3735])
+   This issue was reported to OpenSSL by the OSS-Fuzz project.
 
    *Rich Salz*
 
@@ -4659,12 +4656,7 @@ OpenSSL 1.0.2
    checked that there was enough data to have both the MAC and padding
    bytes.
 
-   This issue was reported by Juraj Somorovsky using TLS-Attacker.  This
-   is effectively the same as creating a RSA, DH or DSA object and
-   then assigning them to an EVP_PKEY, but directly using algorithm
-   agnostic EVP functions.  A benefit is that this should be future
-   proof for public key algorithms to come.
-   ([CVE-2016-2107])
+   This issue was reported by Juraj Somorovsky using TLS-Attacker.
 
    *Kurt Roeckx*
 
