@@ -964,25 +964,6 @@ static void list_keyexchanges(void)
         BIO_printf(bio_out, " -\n");
 }
 
-static void list_missing_help(void)
-{
-    const FUNCTION *fp;
-    const OPTIONS *o;
-
-    for (fp = functions; fp->name != NULL; fp++) {
-        if ((o = fp->help) != NULL) {
-            /* If there is help, list what flags are not documented. */
-            for ( ; o->name != NULL; o++) {
-                if (o->helpstr == NULL)
-                    BIO_printf(bio_out, "%s %s\n", fp->name, o->name);
-            }
-        } else if (fp->func != dgst_main) {
-            /* If not aliased to the dgst command, */
-            BIO_printf(bio_out, "%s *\n", fp->name);
-        }
-    }
-}
-
 static void list_objects(void)
 {
     int max_nid = OBJ_new_nid(0);
@@ -1443,7 +1424,7 @@ typedef enum HELPLIST_CHOICE {
     OPT_ENCODERS, OPT_DECODERS, OPT_KEYMANAGERS, OPT_KEYEXCHANGE_ALGORITHMS,
     OPT_KEM_ALGORITHMS, OPT_SIGNATURE_ALGORITHMS, OPT_ASYM_CIPHER_ALGORITHMS,
     OPT_PROVIDER_INFO,
-    OPT_MISSING_HELP, OPT_OBJECTS, OPT_SELECT_NAME,
+    OPT_OBJECTS, OPT_SELECT_NAME,
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     OPT_ENGINES, 
 #endif
@@ -1503,8 +1484,6 @@ const OPTIONS list_options[] = {
      "List of loaded engines"},
 #endif
     {"disabled", OPT_DISABLED, '-', "List of disabled features"},
-    {"missing-help", OPT_MISSING_HELP, '-',
-     "List missing detailed help strings"},
     {"options", OPT_OPTIONS, 's',
      "List options for specified command"},
     {"objects", OPT_OBJECTS, '-',
@@ -1543,7 +1522,6 @@ int list_main(int argc, char **argv)
         unsigned int engines:1;
 #endif
         unsigned int disabled:1;
-        unsigned int missing_help:1;
         unsigned int objects:1;
         unsigned int options:1;
     } todo = { 0, };
@@ -1629,9 +1607,6 @@ opthelp:
         case OPT_DISABLED:
             todo.disabled = 1;
             break;
-        case OPT_MISSING_HELP:
-            todo.missing_help = 1;
-            break;
         case OPT_OBJECTS:
             todo.objects = 1;
             break;
@@ -1700,8 +1675,6 @@ opthelp:
 #endif
     if (todo.disabled)
         list_disabled();
-    if (todo.missing_help)
-        list_missing_help();
     if (todo.objects)
         list_objects();
 
