@@ -67,7 +67,7 @@ const OPTIONS pkey_options[] = {
 
 int pkey_main(int argc, char **argv)
 {
-    BIO *in = NULL, *out = NULL;
+    BIO *out = NULL;
     ENGINE *e = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
@@ -321,7 +321,6 @@ int pkey_main(int argc, char **argv)
     EVP_CIPHER_free(cipher);
     release_engine(e);
     BIO_free_all(out);
-    BIO_free(in);
     OPENSSL_free(passin);
     OPENSSL_free(passout);
 
