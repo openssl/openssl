@@ -124,7 +124,6 @@ int EVP_PKEY_CTX_set_dsa_paramgen_md_props(EVP_PKEY_CTX *ctx,
 }
 
 #if !defined(FIPS_MODULE)
-/* TODO(3.0): deprecate as this is needed only for legacy? */
 int EVP_PKEY_CTX_set_dsa_paramgen_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
 {
     return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN,

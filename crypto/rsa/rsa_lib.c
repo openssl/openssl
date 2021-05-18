@@ -927,7 +927,6 @@ static int int_get_rsa_md_name(EVP_PKEY_CTX *ctx,
 /*
  * This one is currently implemented as an EVP_PKEY_CTX_ctrl() wrapper,
  * simply because that's easier.
- * TODO(3.0) Should this be deprecated?
  */
 int EVP_PKEY_CTX_set_rsa_padding(EVP_PKEY_CTX *ctx, int pad_mode)
 {
@@ -938,7 +937,6 @@ int EVP_PKEY_CTX_set_rsa_padding(EVP_PKEY_CTX *ctx, int pad_mode)
 /*
  * This one is currently implemented as an EVP_PKEY_CTX_ctrl() wrapper,
  * simply because that's easier.
- * TODO(3.0) Should this be deprecated?
  */
 int EVP_PKEY_CTX_get_rsa_padding(EVP_PKEY_CTX *ctx, int *pad_mode)
 {
@@ -949,7 +947,6 @@ int EVP_PKEY_CTX_get_rsa_padding(EVP_PKEY_CTX *ctx, int *pad_mode)
 /*
  * This one is currently implemented as an EVP_PKEY_CTX_ctrl() wrapper,
  * simply because that's easier.
- * TODO(3.0) Should this be deprecated in favor of passing a name?
  */
 int EVP_PKEY_CTX_set_rsa_pss_keygen_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
 {
@@ -969,7 +966,6 @@ int EVP_PKEY_CTX_set_rsa_pss_keygen_md_name(EVP_PKEY_CTX *ctx,
 /*
  * This one is currently implemented as an EVP_PKEY_CTX_ctrl() wrapper,
  * simply because that's easier.
- * TODO(3.0) Should this be deprecated in favor of passing a name?
  */
 int EVP_PKEY_CTX_set_rsa_oaep_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
 {
@@ -997,7 +993,6 @@ int EVP_PKEY_CTX_get_rsa_oaep_md_name(EVP_PKEY_CTX *ctx, char *name,
 /*
  * This one is currently implemented as an EVP_PKEY_CTX_ctrl() wrapper,
  * simply because that's easier.
- * TODO(3.0) Should this be deprecated in favor of getting a name?
  */
 int EVP_PKEY_CTX_get_rsa_oaep_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
 {
@@ -1008,7 +1003,6 @@ int EVP_PKEY_CTX_get_rsa_oaep_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
 /*
  * This one is currently implemented as an EVP_PKEY_CTX_ctrl() wrapper,
  * simply because that's easier.
- * TODO(3.0) Should this be deprecated in favor of passing a name?
  */
 int EVP_PKEY_CTX_set_rsa_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
 {
@@ -1036,7 +1030,6 @@ int EVP_PKEY_CTX_get_rsa_mgf1_md_name(EVP_PKEY_CTX *ctx, char *name,
 /*
  * This one is currently implemented as an EVP_PKEY_CTX_ctrl() wrapper,
  * simply because that's easier.
- * TODO(3.0) Should this be deprecated in favor of passing a name?
  */
 int EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
 {
@@ -1055,7 +1048,6 @@ int EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md_name(EVP_PKEY_CTX *ctx,
 /*
  * This one is currently implemented as an EVP_PKEY_CTX_ctrl() wrapper,
  * simply because that's easier.
- * TODO(3.0) Should this be deprecated in favor of getting a name?
  */
 int EVP_PKEY_CTX_get_rsa_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
 {
