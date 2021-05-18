@@ -37,8 +37,8 @@ jobs:
       run: ./config --banner=Configured --strict-warnings enable-fips && perl configdata.pm --dump
     - name: make build_generated
       run: make -s build_generated
-    - name: make doc-nits cmd-nits
-      run: make doc-nits cmd-nits
+    - name: make doc-nits
+      run: make doc-nits
 
   # This checks that we use ANSI C language syntax and semantics.
   # We are not as strict with libraries, but rather adapt to what's

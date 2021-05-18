@@ -1141,8 +1141,6 @@ if ( $opt_c ) {
             checkflags($cmd, @doc);
         }
     }
-
-    exit $status;
 }
 
 # Populate %state
