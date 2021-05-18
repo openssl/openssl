@@ -1120,10 +1120,19 @@ static char *wide_to_asc(LPCWSTR wstr)
 {
     char *str;
     int len_0, sz;
+    size_t len_1;
 
     if (!wstr)
         return NULL;
-    len_0 = (int)wcslen(wstr) + 1; /* WideCharToMultiByte expects int */
+
+    len_1 = wcslen(wstr) + 1;
+
+    if (len_1 > INT_MAX) {
+	    CAPIerr(CAPI_F_WIDE_TO_ASC, CAPI_R_FUNCTION_NOT_SUPPORTED);
+	    return NULL;
+    }
+
+    len_0 = (int)len_1; /* WideCharToMultiByte expects int */
     sz = WideCharToMultiByte(CP_ACP, 0, wstr, len_0, NULL, 0, NULL, NULL);
     if (!sz) {
         CAPIerr(CAPI_F_WIDE_TO_ASC, CAPI_R_WIN32_ERROR);
