@@ -946,21 +946,33 @@ static void *do_PVK_key_bio(BIO *in, pem_password_cb *cb, void *u,
 }
 
 #ifndef OPENSSL_NO_DSA
-DSA *b2i_DSA_PVK_bio(BIO *in, pem_password_cb *cb, void *u)
+DSA *b2i_DSA_PVK_bio_ex(BIO *in, pem_password_cb *cb, void *u,
+                        OSSL_LIB_CTX *libctx, const char *propq)
 {
     int isdss = 1;
     int ispub = 0;               /* PVK keys are always private */
 
-    return do_PVK_key_bio(in, cb, u, &isdss, &ispub, NULL, NULL);
+    return do_PVK_key_bio(in, cb, u, &isdss, &ispub, libctx, propq);
+}
+
+DSA *b2i_DSA_PVK_bio(BIO *in, pem_password_cb *cb, void *u)
+{
+    return b2i_DSA_PVK_bio_ex(in, cb, u, NULL, NULL);
 }
 #endif
 
-RSA *b2i_RSA_PVK_bio(BIO *in, pem_password_cb *cb, void *u)
+RSA *b2i_RSA_PVK_bio_ex(BIO *in, pem_password_cb *cb, void *u,
+                        OSSL_LIB_CTX *libctx, const char *propq)
 {
     int isdss = 0;
     int ispub = 0;               /* PVK keys are always private */
 
-    return do_PVK_key_bio(in, cb, u, &isdss, &ispub, NULL, NULL);
+    return do_PVK_key_bio(in, cb, u, &isdss, &ispub, libctx, propq);
+}
+
+RSA *b2i_RSA_PVK_bio(BIO *in, pem_password_cb *cb, void *u)
+{
+    return b2i_RSA_PVK_bio_ex(in, cb, u, NULL, NULL);
 }
 
 EVP_PKEY *b2i_PVK_bio_ex(BIO *in, pem_password_cb *cb, void *u,
