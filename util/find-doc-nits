@@ -1048,7 +1048,8 @@ sub checkflags {
                 next if m/^\s*#\s*if/;
                 err("$cmd does not implement help for -$expect_helpstr") unless m/^\s*"/;
                 $expect_helpstr = "";
-            } elsif (m/\{\s*"([^"]+)"\s*,\s*OPT_[A-Z0-9_]+\s*,\s*('[-\/:<>cEfFlMnNpsuU]'|0)\s*,(.*)$/
+            }
+            if (m/\{\s*"([^"]+)"\s*,\s*OPT_[A-Z0-9_]+\s*,\s*('[-\/:<>cEfFlMnNpsuU]'|0)\s*,(.*)$/
                        && !($cmd eq "s_client" && $1 eq "wdebug")) {
                 push @cmdopts, $1;
                 $expect_helpstr = $1;
