@@ -434,6 +434,7 @@ int EVP_PKEY_export(const EVP_PKEY *pkey, int selection,
         ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+#ifndef FIPS_MODULE
     if (evp_pkey_is_legacy(pkey)) {
         struct fake_import_data_st data;
 
@@ -447,5 +448,6 @@ int EVP_PKEY_export(const EVP_PKEY *pkey, int selection,
         return pkey->ameth->export_to(pkey, &data, pkey_fake_import,
                                       NULL, NULL);
     }
+#endif
     return evp_keymgmt_util_export(pkey, selection, export_cb, export_cbarg);
 }
