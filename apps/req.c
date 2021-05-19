@@ -467,7 +467,13 @@ int req_main(int argc, char **argv)
             newreq = precert = 1;
             break;
         case OPT_MD:
-            digest = opt_unknown();
+            if (digest == NULL) {
+                digest = opt_unknown();
+            } else {
+                char *another_digest = opt_unknown();
+                BIO_printf(bio_err, "More digest options, %s and %s\n", digest, another_digest);
+                goto opthelp;
+            }
             break;
         }
     }
@@ -535,6 +541,12 @@ int req_main(int argc, char **argv)
             ERR_clear_error();
         else
             digest = p;
+    } else {
+        EVP_MD *md = NULL;
+        int r = opt_md(digest, &md);
+        EVP_MD_free(md);
+        if (r == 0)
+            goto opthelp;
     }
 
     if (extensions == NULL) {
