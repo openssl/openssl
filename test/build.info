@@ -1,19 +1,3 @@
-# TODO: use ../apps/libapps.a instead of direct ../apps/lib source.
-# This can't currently be done, because some of its units drag in too many
-# unresolved references that don't apply here.
-# Most of all, ../apps/lib/apps.c needs to be divided in smaller pieces to
-# be useful here.
-#
-# Auxiliary program source (copied from ../apps/build.info)
-IF[{- $config{target} =~ /^(?:VC-|mingw|BC-)/ -}]
-  # It's called 'init', but doesn't have much 'init' in it...
-  $AUXLIBAPPSSRC=../apps/lib/win32_init.c
-ENDIF
-IF[{- $config{target} =~ /^vms-/ -}]
-  $AUXLIBAPPSSRC=../apps/lib/vms_term_sock.c ../apps/lib/vms_decc_argv.c
-ENDIF
-$LIBAPPSSRC=../apps/lib/opt.c $AUXLIBAPPSSRC
-
 IF[{- !$disabled{tests} -}]
   LIBS{noinst,has_main}=libtestutil.a
   SOURCE[libtestutil.a]=testutil/basic_output.c testutil/output.c \
@@ -21,9 +5,9 @@ IF[{- !$disabled{tests} -}]
           testutil/format_output.c testutil/load.c testutil/fake_random.c \
           testutil/test_cleanup.c testutil/main.c testutil/testutil_init.c \
           testutil/options.c testutil/test_options.c testutil/provider.c \
-          testutil/apps_mem.c testutil/random.c $LIBAPPSSRC
+          testutil/apps_mem.c testutil/random.c
   INCLUDE[libtestutil.a]=../include ../apps/include ..
-  DEPEND[libtestutil.a]=../libcrypto
+  DEPEND[libtestutil.a]=../apps/libapps.a ../libcrypto
 
   PROGRAMS{noinst}= \
           confdump \
@@ -831,9 +815,9 @@ IF[{- !$disabled{tests} -}]
   DEPEND[namemap_internal_test]=../libcrypto.a libtestutil.a
 
   PROGRAMS{noinst}=bio_prefix_text
-  SOURCE[bio_prefix_text]=bio_prefix_text.c $LIBAPPSSRC
+  SOURCE[bio_prefix_text]=bio_prefix_text.c
   INCLUDE[bio_prefix_text]=.. ../include ../apps/include
-  DEPEND[bio_prefix_text]=../libcrypto
+  DEPEND[bio_prefix_text]=../apps/libapps.a
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=pem_read_depr_test

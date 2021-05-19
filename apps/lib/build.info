@@ -16,6 +16,10 @@ IF[{- !$disabled{apps} -}]
   LIBS{noinst}=../libapps.a
   SOURCE[../libapps.a]=$LIBAPPSSRC $AUXLIBAPPSSRC
   INCLUDE[../libapps.a]=../.. ../../include ../include
+  # The "weak" dependency is only to ensure correct topology.  Each program
+  # that uses libapps.a will have to be set up with dependencies to the library
+  # they actually use.
+  DEPEND[libtestutil.a]{weak}=../libssl ../libcrypto
 ENDIF
 
 IF[{- !$disabled{srp} -}]
