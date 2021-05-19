@@ -49,12 +49,14 @@ No session caching for client or server takes place.
 
 =item SSL_SESS_CACHE_CLIENT
 
-Client sessions are added to the session cache. As there is no reliable way
-for the OpenSSL library to know whether a session should be reused or which
-session to choose (due to the abstract BIO layer the SSL engine does not
-have details about the connection), the application must select the session
-to be reused by using the L<SSL_set_session(3)>
-function. This option is not activated by default.
+Client sessions are added to the session cache. Sessions are identified by their
+cache identifier set via L<SSL_set1_cache_id(3)> when they are created by an SSL.
+This cache identifier must be set before calling L<SSL_connect(3)>.
+
+The application then can retrieve prior sessions via L<SSL_get1_previous_client_session(3)>
+and then assign the session to be reused via L<SSL_set_session(3)>.
+
+This option is not activated by default.
 
 =item SSL_SESS_CACHE_SERVER
 
@@ -67,6 +69,7 @@ server will try to reuse the session.  This is the default.
 =item SSL_SESS_CACHE_BOTH
 
 Enable both SSL_SESS_CACHE_CLIENT and SSL_SESS_CACHE_SERVER at the same time.
+The search method uses session ids to retreive sessions.
 
 =item SSL_SESS_CACHE_NO_AUTO_CLEAR
 
@@ -105,7 +108,6 @@ prevents these additions to the internal cache as well.
 Enable both SSL_SESS_CACHE_NO_INTERNAL_LOOKUP and
 SSL_SESS_CACHE_NO_INTERNAL_STORE at the same time.
 
-
 =back
 
 The default mode is SSL_SESS_CACHE_SERVER.
@@ -116,18 +118,21 @@ SSL_CTX_set_session_cache_mode() returns the previously set cache mode.
 
 SSL_CTX_get_session_cache_mode() returns the currently set cache mode.
 
-
 =head1 SEE ALSO
 
 L<ssl(7)>, L<SSL_set_session(3)>,
 L<SSL_session_reused(3)>,
+L<SSL_get0_cache_id(3)>,
+L<SSL_set1_cache_id(3)>,
+L<SSL_get1_previous_client_session(3)>,
 L<SSL_CTX_add_session(3)>,
 L<SSL_CTX_sess_number(3)>,
 L<SSL_CTX_sess_set_cache_size(3)>,
 L<SSL_CTX_sess_set_get_cb(3)>,
 L<SSL_CTX_set_session_id_context(3)>,
 L<SSL_CTX_set_timeout(3)>,
-L<SSL_CTX_flush_sessions(3)>
+L<SSL_CTX_flush_sessions(3)>,
+L<SSL_connect(3)>
 
 =head1 COPYRIGHT
 

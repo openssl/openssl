@@ -2,7 +2,9 @@
 
 =head1 NAME
 
-SSL_CTX_set_session_id_context, SSL_set_session_id_context - set context within which session can be reused (server side only)
+SSL_CTX_set_session_id_context, SSL_set_session_id_context,
+SSL_CTX_get0_session_id_context, SSL_get0_session_id_context
+- set context within which session can be reused (server side only)
 
 =head1 SYNOPSIS
 
@@ -13,6 +15,13 @@ SSL_CTX_set_session_id_context, SSL_set_session_id_context - set context within 
  int SSL_set_session_id_context(SSL *ssl, const unsigned char *sid_ctx,
                                 unsigned int sid_ctx_len);
 
+ int SSL_CTX_get0_session_id_context(const SSL_CTX *ctx,
+                                     const unsigned char **sid_ctx,
+                                     size_t *sid_ctx_len);
+ int SSL_get0_session_id_context(const SSL *ssl,
+                                 const unsigned char **sid_ctx,
+                                 size_t *sid_ctx_len);
+
 =head1 DESCRIPTION
 
 SSL_CTX_set_session_id_context() sets the context B<sid_ctx> of length
@@ -20,6 +29,15 @@ B<sid_ctx_len> within which a session can be reused for the B<ctx> object.
 
 SSL_set_session_id_context() sets the context B<sid_ctx> of length
 B<sid_ctx_len> within which a session can be reused for the B<ssl> object.
+
+SSL_CTX_get0_session_id_context() retreives the context into B<sid_ctx>
+and the length into B<sid_ctx_len> within which a session can be reused
+for the B<ctx> object.
+
+SSL_get0_session_id_context() retreives the context into B<sid_ctx>
+and the length into B<sid_ctx_len> within which a session can be reused
+for the B<ssl> object.
+
 
 =head1 NOTES
 
@@ -58,6 +76,10 @@ as an OpenSSL server checks the session id context itself before reusing
 a session as described above.
 
 =head1 RETURN VALUES
+
+SSL_CTX_get0_session_id_context() and SSL_get0_session_id_context()
+return 1 on success and 0 on failure. The B<sid_ctx> and B<sid_ctx_len>
+values are filled in and may be NULL and 0 respectively.
 
 SSL_CTX_set_session_id_context() and SSL_set_session_id_context()
 return the following values:

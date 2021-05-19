@@ -1,0 +1,105 @@
+=pod
+
+=head1 NAME
+
+SSL_set1_cache_id,
+SSL_get0_cache_id,
+SSL_SESSION_set1_cache_id,
+SSL_SESSION_get0_cache_id,
+SSL_get1_previous_client_session - use application-defined cache identifier for session caching
+
+=head1 SYNOPSIS
+
+ #include <openssl/ssl.h>
+
+ int SSL_set1_cache_id(SSL *s, const unsigned char *data, size_t len);
+ int SSL_get0_cache_id(const SSL *s, const unsigned char **data, size_t *len);
+
+ int SSL_SESSION_set1_cache_id(SSL_SESSION *ss, const unsigned char *data, size_t len);
+ int SSL_SESSION_get0_cache_id(const SSL_SESSION *ss, const unsigned char **data, size_t *len);
+
+ int SSL_get1_previous_client_session(SSL *s, int flags);
+
+=head1 DESCRIPTION
+
+SSL_set1_cache_id() sets the cache identifer specified by B<data> and B<len>
+into B<s>. This cache identifier is application-defined, and can be a domain
+name, IP address or other identifier.
+
+SSL_get0_cache_id() returns the cache identifer of B<s> into the B<data> and
+B<len> variables. The cache identifier is application-defined.
+
+SSL_SESSION_set1_cache_id() sets the cache identifer specified by B<data> and B<len>
+into B<ss>. This cache identifier is application-defined.
+
+SSL_SESSION_get0_cache_id() returns the cache identifer of B<ss> into the B<data> and
+B<len> variables. The cache identifier is application-defined.
+
+SSL_get1_previous_client_session() is used to search for and return a
+SSL_SESSION in the session cache. A cache identifier must first be set
+via SSL_set1_cache_id().
+
+=head1 NOTES
+
+The OpenSSL library can store/retrieve SSL/TLS sessions for later reuse.
+The sessions can be held in memory for each B<ctx>; if more than one
+SSL_CTX object is being maintained, the sessions are unique for each SSL_CTX
+object. The cache mode must be set to SSL_SESS_CACHE_CLIENT via
+L<SSL_CTX_set_session_cache_mode(3)> in order to use application-defined
+cache identifiers (otherwise session IDs are used).
+
+In order to reuse a session, a client must send the session's id to the
+server. It can only send exactly one id. The server then either
+agrees to reuse the session or it starts a full handshake (to create a new
+session).
+
+To reuse a session, use the SSL_set1_cache_id() function to specify the
+cache identifier of the server that the client is attempting to connect to. Set the
+optional session ID context via L<SSL_CTX_set_session_id_context(3)> or
+L<SSL_set_session_id_context(3)> before calling SSL_get1_previous_client_session().
+
+After the session has been retrieved, it may be examined to determine whether
+it can (or should) be used. The session must then be applied to the SSL object via the
+L<SSL_set_session(3)> before it can be used during L<SSL_connect(3)>.
+
+The session cache that is searched is specified by the SSL_CTX used in
+L<SSL_new(3)>. The SSL_CTX set via L<SSL_set_SSL_CTX(3)> is not used
+for the session cache.
+
+=head1 RETURN VALUES
+
+The SSL_set1_cache_id(), SSL_get0_cache_id(), SSL_SESSION_set1_cache_id() and
+SSL_SESSION_get0_cache_id() functions return 1 on success, 0 on failure.
+
+The SSL_get0_cache_id() function fills in the B<data> and B<len> parameters
+with the data from the B<s>.
+
+The SSL_get_previous_client_session() returns an SSL_SESSION on success, or NULL on
+failure. The error stack should be checked on error.
+
+=head1 SEE ALSO
+
+L<SSL_set_session(3)>
+L<SSL_session_reused(3)>
+L<SSL_CTX_add_session(3)>
+L<SSL_CTX_sess_number(3)>
+L<SSL_CTX_sess_set_cache_size(3)>
+L<SSL_CTX_sess_set_get_cb(3)>
+L<SSL_CTX_set_session_id_context(3)>
+L<SSL_CTX_set_timeout(3)>
+L<SSL_CTX_flush_sessions(3)>
+L<SSL_CTX_set_session_cache_mode(3)>,
+L<SSL_connect(3)>,
+L<SSL_new(3)>,
+L<SSL_set_SSL_CTX(3)>,
+
+=head1 COPYRIGHT
+
+Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
