@@ -818,6 +818,7 @@ subtest "CMS binary input tests\n" => sub {
     my $cert = srctop_file("test", "certs", "ee-self-signed.pem");
     my $key = srctop_file("test", "certs", "ee-key.pem");
 
+    plan skip_all => "Binary input tests currently disabled on Windows" if $^O =~ /^MSWin32$/;
     plan tests => 11;
 
     ok(run(app(["openssl", "cms", "-sign", "-md", "sha256",
