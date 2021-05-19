@@ -8,6 +8,7 @@
  */
 
 #include "opt.h"
+#include "app_bio.h"
 
 int opt_printf_stderr(const char *fmt, ...)
 {
