@@ -26,6 +26,8 @@
 #include <openssl/bio.h>
 #include <openssl/x509v3.h>
 
+#include "app_bio.h"
+
 #define MAX_OPT_HELP_WIDTH 30
 const char OPT_HELP_STR[] = "-H";
 const char OPT_MORE_STR[] = "-M";
@@ -140,6 +142,17 @@ char *opt_progname(const char *argv0)
     return prog;
 }
 #endif
+
+int opt_printf_stderr(const char *fmt, ...)
+{
+    va_list ap;
+    int ret;
+
+    va_start(ap, fmt);
+    ret = BIO_vprintf(bio_err, fmt, ap);
+    va_end(ap);
+    return ret;
+}
 
 char *opt_appname(const char *argv0)
 {
