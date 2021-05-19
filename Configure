@@ -799,6 +799,7 @@ while (@argvcopy)
         s /^threads$/enable-threads/;
         s /^zlib$/enable-zlib/;
         s /^zlib-dynamic$/enable-zlib-dynamic/;
+        s /^fips$/enable-fips/;
 
         if (/^(no|disable|enable)-(.+)$/)
                 {
@@ -923,19 +924,11 @@ while (@argvcopy)
                 }
         elsif (/^386$/)
                 { $config{processor}=386; }
-        elsif (/^fips$/)
-                {
-                die "FIPS mode not supported\n";
-                }
         elsif (/^rsaref$/)
                 {
                 # No RSAref support any more since it's not needed.
                 # The check for the option is there so scripts aren't
                 # broken
-                }
-        elsif (/^nofipscanistercheck$/)
-                {
-                die "FIPS mode not supported\n";
                 }
         elsif (m|^[-+/]|)
                 {
