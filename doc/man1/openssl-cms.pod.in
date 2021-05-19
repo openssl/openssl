@@ -507,8 +507,8 @@ will be written to this file if the verification was successful.
 
 =item B<-content> I<filename>
 
-This specifies a file containing the detached content, this is only
-useful with the B<-verify> command. This is only usable if the CMS
+This specifies a file containing the detached content for operations taking
+S/MIME input, such as the B<-verify> command. This is only usable if the CMS
 structure is using the detached signature form where the content is
 not included. This option will override any content if the input format
 is S/MIME and it uses the multipart/signed MIME content type.
