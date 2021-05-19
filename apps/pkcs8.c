@@ -214,11 +214,11 @@ int pkcs8_main(int argc, char **argv)
     if ((pbe_nid == -1) && cipher == NULL)
         cipher = (EVP_CIPHER *)EVP_aes_256_cbc();
 
-    in = bio_open_default(infile, 'r',
+    in = app_bio_open_default(infile, 'r',
                           informat == FORMAT_UNDEF ? FORMAT_PEM : informat);
     if (in == NULL)
         goto end;
-    out = bio_open_owner(outfile, outformat, private);
+    out = app_bio_open_owner(outfile, outformat, private);
     if (out == NULL)
         goto end;
 

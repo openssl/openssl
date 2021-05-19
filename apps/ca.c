@@ -1098,8 +1098,8 @@ end_of_options:
             if (verbose)
                 BIO_printf(bio_err, "writing %s\n", new_cert);
 
-            Sout = bio_open_default(outfile, 'w',
-                                    output_der ? FORMAT_ASN1 : FORMAT_TEXT);
+            Sout = app_bio_open_default(outfile, 'w',
+                                        output_der ? FORMAT_ASN1 : FORMAT_TEXT);
             if (Sout == NULL)
                 goto end;
 
@@ -1266,8 +1266,8 @@ end_of_options:
         if (!do_X509_CRL_sign(crl, pkey, dgst, sigopts))
             goto end;
 
-        Sout = bio_open_default(outfile, 'w',
-                                output_der ? FORMAT_ASN1 : FORMAT_TEXT);
+        Sout = app_bio_open_default(outfile, 'w',
+                                    output_der ? FORMAT_ASN1 : FORMAT_TEXT);
         if (Sout == NULL)
             goto end;
 

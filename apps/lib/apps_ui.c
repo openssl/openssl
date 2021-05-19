@@ -11,6 +11,7 @@
 #include <openssl/err.h>
 #include <openssl/ui.h>
 #include "apps_ui.h"
+#include "app_bio.h"
 
 static UI_METHOD *ui_method = NULL;
 static const UI_METHOD *ui_base_method = NULL;

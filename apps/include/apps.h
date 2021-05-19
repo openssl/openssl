@@ -33,6 +33,7 @@
 # include <openssl/http.h>
 # include <signal.h>
 # include "apps_ui.h"
+# include "app_bio.h"
 # include "opt.h"
 # include "fmt.h"
 # include "platform.h"
@@ -50,19 +51,10 @@ int app_RAND_write(void);
 int app_RAND_load(void);
 
 extern char *default_config_file; /* may be "" */
-extern BIO *bio_in;
-extern BIO *bio_out;
-extern BIO *bio_err;
 extern const unsigned char tls13_aes128gcmsha256_id[];
 extern const unsigned char tls13_aes256gcmsha384_id[];
 extern BIO_ADDR *ourpeer;
 
-BIO *dup_bio_in(int format);
-BIO *dup_bio_out(int format);
-BIO *dup_bio_err(int format);
-BIO *bio_open_owner(const char *filename, int format, int private);
-BIO *bio_open_default(const char *filename, char mode, int format);
-BIO *bio_open_default_quiet(const char *filename, char mode, int format);
 CONF *app_load_config_bio(BIO *in, const char *filename);
 #define app_load_config(filename) app_load_config_internal(filename, 0)
 #define app_load_config_quiet(filename) app_load_config_internal(filename, 1)

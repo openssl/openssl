@@ -39,10 +39,6 @@ static LHASH_OF(FUNCTION) *prog_init(void);
 static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[]);
 char *default_config_file = NULL;
 
-BIO *bio_in = NULL;
-BIO *bio_out = NULL;
-BIO *bio_err = NULL;
-
 static void warn_deprecated(const FUNCTION *fp)
 {
     if (fp->deprecated_version != NULL)
@@ -172,7 +168,7 @@ static void setup_trace_category(int category)
     if (OSSL_trace_enabled(category))
         return;
 
-    channel = BIO_push(BIO_new(BIO_f_prefix()), dup_bio_err(FORMAT_TEXT));
+    channel = BIO_push(BIO_new(BIO_f_prefix()), app_bio_dup_err(FORMAT_TEXT));
     trace_data = OPENSSL_zalloc(sizeof(*trace_data));
 
     if (trace_data == NULL
@@ -244,10 +240,7 @@ int main(int argc, char *argv[])
     arg.size = 0;
 
     /* Set up some of the environment. */
-    bio_in = dup_bio_in(FORMAT_TEXT);
-    bio_out = dup_bio_out(FORMAT_TEXT);
-    bio_err = dup_bio_err(FORMAT_TEXT);
-
+    (void)app_bio_init();
 #if defined(OPENSSL_SYS_VMS) && defined(__DECC)
     argv = copy_argv(&argc, argv);
 #elif defined(_WIN32)

@@ -413,7 +413,7 @@ opthelp:
     if (!gotkey && !sk_OPENSSL_STRING_push(opts, "hexkey:" FIPS_KEY_STRING))
         goto end;
 
-    module_bio = bio_open_default(module_fname, 'r', FORMAT_BINARY);
+    module_bio = app_bio_open_default(module_fname, 'r', FORMAT_BINARY);
     if (module_bio == NULL) {
         BIO_printf(bio_err, "Failed to open module file\n");
         goto end;
@@ -489,8 +489,8 @@ opthelp:
             goto end;
 
         fout =
-            out_fname == NULL ? dup_bio_out(FORMAT_TEXT)
-                              : bio_open_default(out_fname, 'w', FORMAT_TEXT);
+            out_fname == NULL ? app_bio_dup_out(FORMAT_TEXT)
+                              : app_bio_open_default(out_fname, 'w', FORMAT_TEXT);
         if (fout == NULL) {
             BIO_printf(bio_err, "Failed to open file\n");
             goto end;

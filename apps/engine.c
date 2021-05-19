@@ -302,13 +302,11 @@ int engine_main(int argc, char **argv)
     STACK_OF(OPENSSL_CSTRING) *engines = sk_OPENSSL_CSTRING_new_null();
     STACK_OF(OPENSSL_STRING) *pre_cmds = sk_OPENSSL_STRING_new_null();
     STACK_OF(OPENSSL_STRING) *post_cmds = sk_OPENSSL_STRING_new_null();
-    BIO *out;
     const char *indent = "     ";
     OPTION_CHOICE o;
     char *prog;
     char *argv1;
 
-    out = dup_bio_out(FORMAT_TEXT);
     if (engines == NULL || pre_cmds == NULL || post_cmds == NULL)
         goto end;
 
@@ -387,10 +385,10 @@ int engine_main(int argc, char **argv)
             /*
              * Do "id" first, then "name". Easier to auto-parse.
              */
-            BIO_printf(out, "(%s) %s\n", id, name);
-            util_do_cmds(e, pre_cmds, out, indent);
+            BIO_printf(bio_out, "(%s) %s\n", id, name);
+            util_do_cmds(e, pre_cmds, bio_out, indent);
             if (strcmp(ENGINE_get_id(e), id) != 0) {
-                BIO_printf(out, "Loaded: (%s) %s\n",
+                BIO_printf(bio_out, "Loaded: (%s) %s\n",
                            ENGINE_get_id(e), ENGINE_get_name(e));
             }
             if (list_cap) {
@@ -454,24 +452,24 @@ int engine_main(int argc, char **argv)
                         goto end;
                 }
                 if (cap_buf != NULL && (*cap_buf != '\0'))
-                    BIO_printf(out, " [%s]\n", cap_buf);
+                    BIO_printf(bio_out, " [%s]\n", cap_buf);
 
                 OPENSSL_free(cap_buf);
             }
             if (test_avail) {
-                BIO_printf(out, "%s", indent);
+                BIO_printf(bio_out, "%s", indent);
                 if (ENGINE_init(e)) {
-                    BIO_printf(out, "[ available ]\n");
-                    util_do_cmds(e, post_cmds, out, indent);
+                    BIO_printf(bio_out, "[ available ]\n");
+                    util_do_cmds(e, post_cmds, bio_out, indent);
                     ENGINE_finish(e);
                 } else {
-                    BIO_printf(out, "[ unavailable ]\n");
+                    BIO_printf(bio_out, "[ unavailable ]\n");
                     if (test_avail_noise)
-                        ERR_print_errors_fp(stdout);
+                        ERR_print_errors(bio_out);
                     ERR_clear_error();
                 }
             }
-            if ((verbose > 0) && !util_verbose(e, verbose, out, indent))
+            if ((verbose > 0) && !util_verbose(e, verbose, bio_out, indent))
                 goto end;
             ENGINE_free(e);
         } else {
@@ -488,6 +486,5 @@ int engine_main(int argc, char **argv)
     sk_OPENSSL_CSTRING_free(engines);
     sk_OPENSSL_STRING_free(pre_cmds);
     sk_OPENSSL_STRING_free(post_cmds);
-    BIO_free_all(out);
     return ret;
 }

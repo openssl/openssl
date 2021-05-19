@@ -109,7 +109,7 @@ int crl2pkcs7_main(int argc, char **argv)
         goto opthelp;
 
     if (!nocrl) {
-        in = bio_open_default(infile, 'r', informat);
+        in = app_bio_open_default(infile, 'r', informat);
         if (in == NULL)
             goto end;
 
@@ -158,7 +158,7 @@ int crl2pkcs7_main(int argc, char **argv)
         }
     }
 
-    out = bio_open_default(outfile, 'w', outformat);
+    out = app_bio_open_default(outfile, 'w', outformat);
     if (out == NULL)
         goto end;
 

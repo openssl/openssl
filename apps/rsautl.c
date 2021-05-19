@@ -207,10 +207,10 @@ int rsautl_main(int argc, char **argv)
     if (pkey == NULL)
         return 1;
 
-    in = bio_open_default(infile, 'r', FORMAT_BINARY);
+    in = app_bio_open_default(infile, 'r', FORMAT_BINARY);
     if (in == NULL)
         goto end;
-    out = bio_open_default(outfile, 'w', FORMAT_BINARY);
+    out = app_bio_open_default(outfile, 'w', FORMAT_BINARY);
     if (out == NULL)
         goto end;
 

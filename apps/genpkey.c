@@ -181,7 +181,7 @@ int genpkey_main(int argc, char **argv)
         goto end;
     }
 
-    out = bio_open_owner(outfile, outformat, private);
+    out = app_bio_open_owner(outfile, outformat, private);
     if (out == NULL)
         goto end;
 

@@ -164,17 +164,18 @@ int asn1parse_main(int argc, char **argv)
         goto opthelp;
 
     if (oidfile != NULL) {
-        in = bio_open_default(oidfile, 'r', FORMAT_TEXT);
+        in = app_bio_open_default(oidfile, 'r', FORMAT_TEXT);
         if (in == NULL)
             goto end;
         OBJ_create_objects(in);
         BIO_free(in);
     }
 
-    if ((in = bio_open_default(infile, 'r', informat)) == NULL)
+    if ((in = app_bio_open_default(infile, 'r', informat)) == NULL)
         goto end;
 
-    if (derfile && (derout = bio_open_default(derfile, 'w', FORMAT_ASN1)) == NULL)
+    if (derfile
+        && (derout = app_bio_open_default(derfile, 'w', FORMAT_ASN1)) == NULL)
         goto end;
 
     if ((buf = BUF_MEM_new()) == NULL)

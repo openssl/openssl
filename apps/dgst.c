@@ -267,7 +267,8 @@ int dgst_main(int argc, char **argv)
             out_bin = 0;
     }
 
-    out = bio_open_default(outfile, 'w', out_bin ? FORMAT_BINARY : FORMAT_TEXT);
+    out = app_bio_open_default(outfile, 'w',
+                               out_bin ? FORMAT_BINARY : FORMAT_TEXT);
     if (out == NULL)
         goto end;
 

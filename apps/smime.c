@@ -490,7 +490,7 @@ int smime_main(int argc, char **argv)
             goto end;
     }
 
-    in = bio_open_default(infile, 'r', informat);
+    in = app_bio_open_default(infile, 'r', informat);
     if (in == NULL)
         goto end;
 
@@ -526,7 +526,7 @@ int smime_main(int argc, char **argv)
         }
     }
 
-    out = bio_open_default(outfile, 'w', outformat);
+    out = app_bio_open_default(outfile, 'w', outformat);
     if (out == NULL)
         goto end;
 

@@ -123,7 +123,7 @@ int gendsa_main(int argc, char **argv)
 
     pkey = load_keyparams(dsaparams, FORMAT_UNDEF, 1, "DSA", "DSA parameters");
 
-    out = bio_open_owner(outfile, FORMAT_PEM, private);
+    out = app_bio_open_owner(outfile, FORMAT_PEM, private);
     if (out == NULL)
         goto end2;
 

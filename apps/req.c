@@ -707,7 +707,7 @@ int req_main(int argc, char **argv)
             BIO_printf(bio_err, "Writing new private key to stdout\n");
         else
             BIO_printf(bio_err, "Writing new private key to '%s'\n", keyout);
-        out = bio_open_owner(keyout, outformat, newreq);
+        out = app_bio_open_owner(keyout, outformat, newreq);
         if (out == NULL)
             goto end;
 
@@ -953,10 +953,10 @@ int req_main(int argc, char **argv)
         goto end;
     }
 
-    out = bio_open_default(outfile,
-                           keyout != NULL && outfile != NULL &&
-                           strcmp(keyout, outfile) == 0 ? 'a' : 'w',
-                           outformat);
+    out = app_bio_open_default(outfile,
+                               keyout != NULL && outfile != NULL &&
+                               strcmp(keyout, outfile) == 0 ? 'a' : 'w',
+                               outformat);
     if (out == NULL)
         goto end;
 

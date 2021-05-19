@@ -685,7 +685,7 @@ int pkcs12_main(int argc, char **argv)
 
         assert(private);
 
-        out = bio_open_owner(outfile, FORMAT_PKCS12, private);
+        out = app_bio_open_owner(outfile, FORMAT_PKCS12, private);
         if (out == NULL)
             goto end;
 
@@ -706,10 +706,10 @@ int pkcs12_main(int argc, char **argv)
 
     }
 
-    in = bio_open_default(infile, 'r', FORMAT_PKCS12);
+    in = app_bio_open_default(infile, 'r', FORMAT_PKCS12);
     if (in == NULL)
         goto end;
-    out = bio_open_owner(outfile, FORMAT_PEM, private);
+    out = app_bio_open_owner(outfile, FORMAT_PEM, private);
     if (out == NULL)
         goto end;
 

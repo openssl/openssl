@@ -24,6 +24,4 @@ void destroy_ui_method(void);
 int set_base_ui_method(const UI_METHOD *ui_method);
 const UI_METHOD *get_ui_method(void);
 
-extern BIO *bio_err;
-
 #endif

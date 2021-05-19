@@ -173,11 +173,12 @@ opthelp:
     /* Use text mode for stdin */
     if (infile == NULL || strcmp(infile, "-") == 0)
         inform = FORMAT_TEXT;
-    in = bio_open_default(infile, 'r', inform);
+    in = app_bio_open_default(infile, 'r', inform);
     if (in == NULL)
         goto err;
 
-    out = bio_open_default(outfile, 'w', out_bin ? FORMAT_BINARY : FORMAT_TEXT);
+    out = app_bio_open_default(outfile, 'w',
+                               out_bin ? FORMAT_BINARY : FORMAT_TEXT);
     if (out == NULL)
         goto err;
 

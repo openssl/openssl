@@ -160,7 +160,7 @@ int spkac_main(int argc, char **argv)
         if (spkstr == NULL)
             goto end;
 
-        out = bio_open_default(outfile, 'w', FORMAT_TEXT);
+        out = app_bio_open_default(outfile, 'w', FORMAT_TEXT);
         if (out == NULL) {
             OPENSSL_free(spkstr);
             goto end;
@@ -190,7 +190,7 @@ int spkac_main(int argc, char **argv)
         goto end;
     }
 
-    out = bio_open_default(outfile, 'w', FORMAT_TEXT);
+    out = app_bio_open_default(outfile, 'w', FORMAT_TEXT);
     if (out == NULL)
         goto end;
 

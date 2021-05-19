@@ -175,7 +175,7 @@ int ec_main(int argc, char **argv)
     }
 
     if (informat != FORMAT_ENGINE) {
-        in = bio_open_default(infile, 'r', informat);
+        in = app_bio_open_default(infile, 'r', informat);
         if (in == NULL)
             goto end;
     }
@@ -192,7 +192,7 @@ int ec_main(int argc, char **argv)
         goto end;
     }
 
-    out = bio_open_owner(outfile, outformat, private);
+    out = app_bio_open_owner(outfile, outformat, private);
     if (out == NULL)
         goto end;
 

@@ -170,7 +170,7 @@ int dhparam_main(int argc, char **argv)
         goto end;
     }
 
-    out = bio_open_default(outfile, 'w', outformat);
+    out = app_bio_open_default(outfile, 'w', outformat);
     if (out == NULL)
         goto end;
 
@@ -238,7 +238,7 @@ int dhparam_main(int argc, char **argv)
         const char *keytype = "DH";
         int done;
 
-        in = bio_open_default(infile, 'r', informat);
+        in = app_bio_open_default(infile, 'r', informat);
         if (in == NULL)
             goto end;
 

@@ -392,7 +392,7 @@ int pkeyutl_main(int argc, char **argv)
     }
 
     if (pkey_op != EVP_PKEY_OP_DERIVE) {
-        in = bio_open_default(infile, 'r', FORMAT_BINARY);
+        in = app_bio_open_default(infile, 'r', FORMAT_BINARY);
         if (infile != NULL) {
             struct stat st;
 
@@ -402,7 +402,7 @@ int pkeyutl_main(int argc, char **argv)
         if (in == NULL)
             goto end;
     }
-    out = bio_open_default(outfile, 'w', FORMAT_BINARY);
+    out = app_bio_open_default(outfile, 'w', FORMAT_BINARY);
     if (out == NULL)
         goto end;
 

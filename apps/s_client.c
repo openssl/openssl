@@ -1655,9 +1655,9 @@ int s_client_main(int argc, char **argv)
         if (c_quiet && !c_debug) {
             bio_c_out = BIO_new(BIO_s_null());
             if (c_msg && bio_c_msg == NULL)
-                bio_c_msg = dup_bio_out(FORMAT_TEXT);
+                bio_c_msg = app_bio_dup_out(FORMAT_TEXT);
         } else if (bio_c_out == NULL)
-            bio_c_out = dup_bio_out(FORMAT_TEXT);
+            bio_c_out = app_bio_dup_out(FORMAT_TEXT);
     }
 #ifndef OPENSSL_NO_SRP
     if (!app_passwd(srppass, NULL, &srp_arg.srppassin, NULL)) {

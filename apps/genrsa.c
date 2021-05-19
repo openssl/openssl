@@ -175,7 +175,7 @@ opthelp:
         goto end;
     }
 
-    out = bio_open_owner(outfile, FORMAT_PEM, private);
+    out = app_bio_open_owner(outfile, FORMAT_PEM, private);
     if (out == NULL)
         goto end;
 

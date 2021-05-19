@@ -887,8 +887,8 @@ int cms_main(int argc, char **argv)
 
     if ((flags & CMS_BINARY) == 0)
         warn_binary(infile);
-    in = bio_open_default(infile, 'r',
-                          (flags & CMS_BINARY) != 0 ? FORMAT_BINARY : informat);
+    in = app_bio_open_default(infile, 'r',
+                              (flags & CMS_BINARY) != 0 ? FORMAT_BINARY : informat);
     if (in == NULL)
         goto end;
 
@@ -931,7 +931,7 @@ int cms_main(int argc, char **argv)
             goto end;
     }
 
-    out = bio_open_default(outfile, 'w', outformat);
+    out = app_bio_open_default(outfile, 'w', outformat);
     if (out == NULL)
         goto end;
 
