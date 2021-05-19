@@ -7,7 +7,7 @@
 # https://www.openssl.org/source/license.html
 #
 #
-# Originally written by Ilya Albrekht, Sergey Kirillov and Andrey Matyukov
+# Originally written by Sergey Kirillov and Andrey Matyukov
 # Intel Corporation
 #
 # March 2021

@@ -7,7 +7,8 @@
 # https://www.openssl.org/source/license.html
 #
 #
-# Originally written by Ilya Albrekht, Sergey Kirillov and Andrey Matyukov
+# Originally written by Sergey Kirillov and Andrey Matyukov.
+# Special thanks to Ilya Albrekht for his valuable hints.
 # Intel Corporation
 #
 # December 2020
