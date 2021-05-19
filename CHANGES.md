@@ -30,6 +30,15 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Rework and make DEBUG macros consistent. Remove unused -DCONF_DEBUG and
+   -DBN_CTX_DEBUG. Rename REF_PRINT to REF_DEBUG for consistency, and add
+   a new tracing category and use it for printing reference counts. Rename
+   -DDEBUG_UNUSED to -DUNUSED_RESULT_DEBUG Fix BN_DEBUG_RAND so it compiles
+   and, when set, force DEBUG_RAND to be set also. Rename engine_debug_ref
+   to be ENGINE_REF_PRINT also for consistency.
+
+   * Rich Salz *
+
  * The signatures of the functions to get and set options on SSL and
    SSL_CTX objects changed from "unsigned long" to "uint64_t" type.
    Some source code changes may be required.

@@ -715,8 +715,8 @@ static int BN_GF2m_mod_inv_vartime(BIGNUM *r, const BIGNUM *a,
     ret = 1;
 
  err:
-# ifdef BN_DEBUG                /* BN_CTX_end would complain about the
-                                 * expanded form */
+# ifdef BN_DEBUG
+    /* BN_CTX_end would complain about the expanded form */
     bn_correct_top(c);
     bn_correct_top(u);
     bn_correct_top(v);

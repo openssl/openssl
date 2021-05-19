@@ -819,7 +819,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 
         /*
          * BN_to_montgomery can contaminate words above .top [in
-         * BN_DEBUG[_DEBUG] build]...
+         * BN_DEBUG build...
          */
         for (i = am.top; i < top; i++)
             am.d[i] = 0;
@@ -924,7 +924,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 
         /*
          * BN_to_montgomery can contaminate words above .top [in
-         * BN_DEBUG[_DEBUG] build]...
+         * BN_DEBUG build...
          */
         for (i = am.top; i < top; i++)
             am.d[i] = 0;
