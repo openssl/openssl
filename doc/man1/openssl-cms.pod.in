@@ -47,13 +47,14 @@ File format options:
 [B<-crlfeol>]
 [B<-asciicrlf>]
 
-Keying options:
+Keys and password options:
 
 [B<-pwri_password> I<password>]
 [B<-secretkey> I<key>]
 [B<-secretkeyid> I<id>]
 [B<-inkey> I<filename>|I<uri>]
 [B<-passin> I<arg>]
+[B<-keyopt> I<name>:I<parameter>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
@@ -101,7 +102,6 @@ Verification options:
 
 Output options:
 
-[B<-keyopt> I<name>:I<parameter>]
 [B<-keyid>]
 [B<-econtent_type> I<type>]
 [B<-text>]
@@ -310,7 +310,7 @@ content format is detected.
 
 =back
 
-=head2 Keying options
+=head2 Keys and password options
 
 =over 4
 
@@ -346,6 +346,13 @@ multiple times to specify successive keys.
 
 The private key password source. For more information about the format of B<arg>
 see L<openssl-passphrase-options(1)>.
+
+=item B<-keyopt> I<name>:I<parameter>
+
+For signing and encryption this option can be used multiple times to
+set customised parameters for the preceding key or certificate. It can
+currently be used to set RSA-PSS for signing, RSA-OAEP for encryption
+or to modify default parameters for ECDH.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
@@ -545,13 +552,6 @@ Exit nonzero on verification failure.
 =head2 Output options
 
 =over 4
-
-=item B<-keyopt> I<name>:I<parameter>
-
-For signing and encryption this option can be used multiple times to
-set customised parameters for the preceding key or certificate. It can
-currently be used to set RSA-PSS for signing, RSA-OAEP for encryption
-or to modify default parameters for ECDH.
 
 =item B<-keyid>
 
@@ -811,7 +811,7 @@ Sign and encrypt mail:
 Note: the encryption command does not include the B<-text> option because the
 message being encrypted already has MIME headers.
 
-Decrypt message:
+Decrypt a message:
 
  openssl cms -decrypt -in mail.msg -recip mycert.pem -inkey key.pem
 
@@ -839,12 +839,12 @@ Add a signer to an existing message:
 
  openssl cms -resign -in mail.msg -signer newsign.pem -out mail2.msg
 
-Sign message using RSA-PSS:
+Sign a message using RSA-PSS:
 
  openssl cms -sign -in message.txt -text -out mail.msg \
         -signer mycert.pem -keyopt rsa_padding_mode:pss
 
-Create encrypted message using RSA-OAEP:
+Create an encrypted message using RSA-OAEP:
 
  openssl cms -encrypt -in plain.txt -out mail.msg \
         -recip cert.pem -keyopt rsa_padding_mode:oaep
