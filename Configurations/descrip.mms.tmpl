@@ -205,43 +205,39 @@
   our $bin_ex_libs = join('', @cnf_ex_libs, '$(EX_LIBS)');
 
   # This is a horrible hack, but is needed because recursive inclusion of files
-  # in different directories does not work well with HP C.
-  my $sd = sourcedir("crypto", "async", "arch");
+  # in different directories does not work well with VMS C.  We try to help by
+  # specifying extra relative directories.  They must always be in Unix format,
+  # relative to the directory where the .c file is located.  The logic is that
+  # any inclusion, merged with one of these relative directories, will find the
+  # requested inclusion file.
   foreach (grep /\[\.crypto\.async\.arch\].*\.o$/, keys %{$unified_info{sources}}) {
       my $obj = platform->obj($_);
-      $unified_info{before}->{$obj}
-          = qq(arch_include = F\$PARSE("$sd","A.;",,,"SYNTAX_ONLY") - "A.;"
-        define arch 'arch_include');
-      $unified_info{after}->{$obj}
-          = qq(deassign arch);
+      push @{$unified_info{includes_extra}->{$obj}}, qw(../);
   }
-  my $sd32 = sourcedir("crypto", "ec", "curve448", "arch_32");
-  my $sd64 = sourcedir("crypto", "ec", "curve448", "arch_64");
-  foreach (grep /\[\.crypto\.ec\.curve448.*?\].*?\.o$/, keys %{$unified_info{sources}}) {
+  foreach (grep /\[\.crypto\.ec\.curve448\].*?\.o$/, keys %{$unified_info{sources}}) {
       my $obj = platform->obj($_);
-      $unified_info{before}->{$obj}
-          = qq(arch_32_include = F\$PARSE("$sd32","A.;",,,"SYNTAX_ONLY") - "A.;"
-        define arch_32 'arch_32_include'
-        arch_64_include = F\$PARSE("$sd64","A.;",,,"SYNTAX_ONLY") - "A.;"
-        define arch_64 'arch_64_include');
-      $unified_info{after}->{$obj}
-          = qq(deassign arch_64
-        deassign arch_32);
+      push @{$unified_info{includes_extra}->{$obj}}, qw(./arch_32 ./arch64);
   }
-  my $sd1 = sourcedir("ssl","record");
-  my $sd2 = sourcedir("ssl","statem");
-  my @ssl_locl_users = grep(/^\[\.(?:ssl\.(?:record|statem)|test)\].*\.o$/,
-                            keys %{$unified_info{sources}});
-  foreach (@ssl_locl_users) {
+  foreach (grep /\[\.crypto\.ec\.curve448.arch_(?:32|64)\].*?\.o$/, keys %{$unified_info{sources}}) {
       my $obj = platform->obj($_);
-      $unified_info{before}->{$obj}
-          = qq(record_include = F\$PARSE("$sd1","A.;",,,"SYNTAX_ONLY") - "A.;"
-        define record 'record_include'
-        statem_include = F\$PARSE("$sd2","A.;",,,"SYNTAX_ONLY") - "A.;"
-        define statem 'statem_include');
-      $unified_info{after}->{$obj}
-          = qq(deassign statem
-        deassign record);
+      push @{$unified_info{includes_extra}->{$obj}}, qw(../);
+  }
+  foreach (grep /\[\.ssl\.(?:record|statem)\].*?\.o$/, keys %{$unified_info{sources}}) {
+      my $obj = platform->obj($_);
+      # Most of the files in [.ssl.record] and [.ssl.statem] include
+      # "../ssl_local.h", which includes things like "record/record.h".
+      # Adding "../" as an inclusion directory helps making this sort of header
+      # from these directories.
+      push @{$unified_info{includes_extra}->{$obj}}, qw(../);
+
+  }
+  foreach (grep /\[\.test\].*?\.o$/, keys %{$unified_info{sources}}) {
+      my $obj = platform->obj($_);
+      push @{$unified_info{includes_extra}->{$obj}}, qw(../ssl ./helpers);
+  }
+  foreach (grep /\[\.test\.helpers\].*?\.o$/, keys %{$unified_info{sources}}) {
+      my $obj = platform->obj($_);
+      push @{$unified_info{includes_extra}->{$obj}}, qw(../../ssl);
   }
 
   # This makes sure things get built in the order they need
@@ -378,15 +374,6 @@ CPPFLAGS_Q={- (my $c = $lib_cppflags.$cppflags) =~ s|"|""|g;
               $x; -}
 
 # .FIRST and .LAST are special targets with MMS and MMK.
-# The defines in there are for C.  includes that look like
-# this:
-#
-#    #include <openssl/foo.h>
-#    #include "internal/bar.h"
-#
-# will use the logical names to find the files.  Expecting
-# DECompHP C to find files in subdirectories of whatever was
-# given with /INCLUDE is a fantasy, unfortunately.
 NODEBUG=@
 .FIRST :
         $(NODEBUG) sourcetop = F$PARSE("$(SRCDIR)","[]A.;",,,"SYNTAX_ONLY,NO_CONCEAL") - ".][000000" - "[000000." - "][" - "]A.;" + ".]"
@@ -1036,8 +1023,11 @@ EOF
       my $depn = basename($dep);
       my $srcs =
           join(", ", map { abs2rel(rel2abs($_), rel2abs($forward)) } @srcs);
-      my $before = $unified_info{before}->{$obj} || "\@ !";
-      my $after = $unified_info{after}->{$obj} || "\@ !";
+      my $incextra = join(',', map { "\"$_\"" }
+                               @{$unified_info{includes_extra}->{$obj}});
+      $incextra = "/INCLUDE=($incextra)" if $incextra;
+      print STDERR "DEBUG: Looking for extra include directories for $obj, found this: $incextra\n"
+          if $incextra;
 
       my $cflags;
       if ($args{attrs}->{noinst}) {
@@ -1055,6 +1045,7 @@ EOF
 		   lib => $lib_cppflags,
 		   dso => $dso_cppflags,
 		   bin => $bin_cppflags } -> {$args{intent}};
+      $cflags .= $incextra;
       my $defs = join("", map { ",".$_ } @{$args{defs}});
       my $asflags = { shlib => $lib_asflags,
 		      lib => $lib_asflags,
@@ -1064,17 +1055,14 @@ EOF
       if ($srcs[0] =~ /\Q${asmext}\E$/) {
           return <<"EOF";
 $obj : $deps
-        ${before}
         SET DEFAULT $forward
         \$(AS) $asflags \$(ASOUTFLAG)${objd}${objn} $srcs
         SET DEFAULT $backward
-        ${after}
         - PURGE $obj
 EOF
       } elsif ($srcs[0] =~ /.S$/) {
          return <<"EOF";
 $obj : $deps
-        ${before}
         SET DEFAULT $forward
         \@ $incs_on
         \@ extradefines = "$defs"
@@ -1084,7 +1072,6 @@ $obj : $deps
         \@ DELETE/SYMBOL/LOCAL extradefines
         \@ $incs_off
         SET DEFAULT $backward
-        ${after}
         \$(AS) $asflags \$(ASOUTFLAG)$obj $obj-asm
         - PURGE $obj
 EOF
@@ -1107,7 +1094,6 @@ EOF
 
       return <<"EOF";
 $obj : $deps
-        ${before}
         SET DEFAULT $forward
         \@ $incs_on
         \@ extradefines = "$defs"
@@ -1115,7 +1101,6 @@ $obj : $deps
         \@ DELETE/SYMBOL/LOCAL extradefines
         \@ $incs_off
         SET DEFAULT $backward
-        ${after}
         - PURGE $obj
 $incdir_scripture
 EOF
