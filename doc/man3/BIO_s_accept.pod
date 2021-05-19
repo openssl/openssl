@@ -77,6 +77,8 @@ port.  "port" has the same syntax as the port specified in
 BIO_set_conn_port() for connect BIOs, that is it can be a numerical
 port string or a string to lookup using getservbyname() and a string
 table.
+If the given port is C<0> then a random available port is chosen.
+It may be queried using BIO_sock_info() and L<BIO_ADDR_service_string(3)>.
 
 BIO_new_accept() combines BIO_new() and BIO_set_accept_name() into
 a single call: that is it creates a new accept BIO with port
