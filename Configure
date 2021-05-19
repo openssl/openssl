@@ -136,7 +136,6 @@ EOF
 # get past these.  Note that we only use these with C compilers, not with
 # C++ compilers.
 
-# DEBUG_UNUSED enables __owur (warn unused result) checks.
 # -DPEDANTIC complements -pedantic and is meant to mask code that
 # is not strictly standard-compliant and/or implementation-specific,
 # e.g. inline assembly, disregards to alignment requirements, such
@@ -150,9 +149,9 @@ EOF
 # but 'long long' type.
 
 my @gcc_devteam_warn = qw(
-    -DDEBUG_UNUSED
-    -DPEDANTIC -pedantic -Wno-long-long
+    -DPEDANTIC -pedantic -Wno-long-long -DUNUSEDRESULT_DEBUG
     -Wall
+    -Wmissing-declarations
     -Wextra
     -Wno-unused-parameter
     -Wno-missing-field-initializers

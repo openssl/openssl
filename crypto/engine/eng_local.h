@@ -20,14 +20,14 @@
 extern CRYPTO_RWLOCK *global_engine_lock;
 
 /*
- * This prints the engine's pointer address (truncated to unsigned int),
- * "struct" or "funct" to indicate the reference type, the before and after
- * reference count, and the file:line-number pair. The "engine_ref_debug"
- * statements must come *after* the change.
+ * This prints the engine's pointer address, "struct" or "funct" to
+ * indicate the reference type, the before and after reference count, and
+ * the file:line-number pair. The "ENGINE_REF_PRINT" statements must come
+ * *after* the change.
  */
-# define engine_ref_debug(e, isfunct, diff)                             \
+# define ENGINE_REF_PRINT(e, isfunct, diff)                             \
     OSSL_TRACE6(ENGINE_REF_COUNT,                                       \
-               "engine: %p %s from %d to %d (%s:%d)\n",               \
+               "engine: %p %s from %d to %d (%s:%d)\n",                 \
                (void *)(e), (isfunct ? "funct" : "struct"),             \
                ((isfunct)                                               \
                 ? ((e)->funct_ref - (diff))                             \
