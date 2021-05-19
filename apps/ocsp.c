@@ -87,7 +87,9 @@ static int index_changed(CA_DB *);
 typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_OUTFILE, OPT_TIMEOUT, OPT_URL, OPT_HOST, OPT_PORT,
+#ifndef OPENSSL_NO_SOCK
     OPT_PROXY, OPT_NO_PROXY,
+#endif
     OPT_IGNORE_ERR, OPT_NOVERIFY, OPT_NONCE, OPT_NO_NONCE,
     OPT_RESP_NO_CERTS, OPT_RESP_KEY_ID, OPT_NO_CERTS,
     OPT_NO_SIGNATURE_VERIFY, OPT_NO_CERT_VERIFY, OPT_NO_CHAIN,
@@ -160,12 +162,14 @@ const OPTIONS ocsp_options[] = {
     {"host", OPT_HOST, 's', "TCP/IP hostname:port to connect to"},
     {"port", OPT_PORT, 'p', "Port to run responder on"},
     {"path", OPT_PATH, 's', "Path to use in OCSP request"},
+#ifndef OPENSSL_NO_SOCK
     {"proxy", OPT_PROXY, 's',
      "[http[s]://]host[:port][/path] of HTTP(S) proxy to use; path is ignored"},
     {"no_proxy", OPT_NO_PROXY, 's',
      "List of addresses of servers not to use HTTP(S) proxy for"},
     {OPT_MORE_STR, 0, 0,
      "Default from environment variable 'no_proxy', else 'NO_PROXY', else none"},
+#endif
     {"out", OPT_OUTFILE, '>', "Output filename"},
     {"noverify", OPT_NOVERIFY, '-', "Don't verify response at all"},
     {"nonce", OPT_NONCE, '-', "Add OCSP nonce to request"},
@@ -232,8 +236,10 @@ int ocsp_main(int argc, char **argv)
     const char *CAfile = NULL, *CApath = NULL, *CAstore = NULL;
     char *header, *value, *respdigname = NULL;
     char *host = NULL, *port = NULL, *path = "/", *outfile = NULL;
+#ifndef OPENSSL_NO_SOCK
     char *opt_proxy = NULL;
     char *opt_no_proxy = NULL;
+#endif
     char *rca_filename = NULL, *reqin = NULL, *respin = NULL;
     char *reqout = NULL, *respout = NULL, *ridx_filename = NULL;
     char *rsignfile = NULL, *rkeyfile = NULL;
@@ -299,12 +305,14 @@ int ocsp_main(int argc, char **argv)
         case OPT_PATH:
             path = opt_arg();
             break;
+#ifndef OPENSSL_NO_SOCK
         case OPT_PROXY:
             opt_proxy = opt_arg();
             break;
         case OPT_NO_PROXY:
             opt_no_proxy = opt_arg();
             break;
+#endif
         case OPT_IGNORE_ERR:
             ignore_err = 1;
             break;
