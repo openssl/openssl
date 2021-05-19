@@ -7,12 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "e_os.h"                /* unistd.h */
+
 #include <errno.h>
 #include <string.h>
-#include <unistd.h>
 #include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
+#ifndef OPENSSL_NO_POSIX_IO
+# include <sys/stat.h>
+# include <fcntl.h>
+#endif
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include "opt.h"
