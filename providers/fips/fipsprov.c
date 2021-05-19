@@ -518,10 +518,11 @@ static const OSSL_DISPATCH intern_dispatch_table[] = {
     { 0, NULL }
 };
 
-int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
-                       const OSSL_DISPATCH *in,
-                       const OSSL_DISPATCH **out,
-                       void **provctx)
+OSSL_provider_init_fn OSSL_provider_init_int;
+int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
+                           const OSSL_DISPATCH *in,
+                           const OSSL_DISPATCH **out,
+                           void **provctx)
 {
     FIPS_GLOBAL *fgbl;
     OSSL_LIB_CTX *libctx = NULL;
