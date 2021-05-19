@@ -258,6 +258,7 @@ supported can be performed in the verification callback.
 
 The B<X509_V_FLAG_X509_STRICT> flag disables workarounds for some broken
 certificates and makes the verification strictly apply B<X509> rules.
+For more detail see L<openssl-verification-options(1)/Verification Options>.
 
 B<X509_V_FLAG_ALLOW_PROXY_CERTS> enables proxy certificate verification.
 
