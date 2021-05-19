@@ -11,7 +11,7 @@
 
 #include "helpers/cmp_testlib.h"
 
-#include "apps/cmp_mock_srv.h"
+#include "cmp_mock_srv.h"
 
 #ifndef NDEBUG /* tests need mock server, which is available only if !NDEBUG */
 

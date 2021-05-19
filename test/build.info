@@ -529,7 +529,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[cmp_server_test]=.. ../include ../apps/include
   DEPEND[cmp_server_test]=../libcrypto.a libtestutil.a
 
-  SOURCE[cmp_client_test]=cmp_client_test.c helpers/cmp_testlib.c ../apps/cmp_mock_srv.c
+  SOURCE[cmp_client_test]=cmp_client_test.c helpers/cmp_testlib.c ../apps/lib/cmp_mock_srv.c
   INCLUDE[cmp_client_test]=.. ../include ../apps/include
   DEPEND[cmp_client_test]=../libcrypto.a libtestutil.a
 
