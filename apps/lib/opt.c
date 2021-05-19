@@ -143,17 +143,6 @@ char *opt_progname(const char *argv0)
 }
 #endif
 
-int opt_printf_stderr(const char *fmt, ...)
-{
-    va_list ap;
-    int ret;
-
-    va_start(ap, fmt);
-    ret = BIO_vprintf(bio_err, fmt, ap);
-    va_end(ap);
-    return ret;
-}
-
 char *opt_appname(const char *argv0)
 {
     size_t len = strlen(prog);
