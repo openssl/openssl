@@ -30,22 +30,30 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Rework and make DEBUG macros consistent. Remove unused -DCONF_DEBUG,
+   -DBN_CTX_DEBUG, and REF_PRINT. Add a new tracing category and use it for
+   printing reference counts. Rename -DDEBUG_UNUSED to -DUNUSED_RESULT_DEBUG
+   Fix BN_DEBUG_RAND so it compiles and, when set, force DEBUG_RAND to be set
+   also. Rename engine_debug_ref to be ENGINE_REF_PRINT also for consistency.
+
+   *Rich Salz*
+
  * The signatures of the functions to get and set options on SSL and
    SSL_CTX objects changed from "unsigned long" to "uint64_t" type.
    Some source code changes may be required.
 
-   * Rich Salz *
+   *Rich Salz*
 
  * Client-initiated renegotiation is disabled by default. To allow it, use
    the -client_renegotiation option, the SSL_OP_ALLOW_CLIENT_RENEGOTIATION
    flag, or the "ClientRenegotiation" config parameter as appropriate.
 
-   * Rich Salz *
+   *Rich Salz*
 
  * Add "abspath" and "includedir" pragma's to config files, to prevent,
    or modify relative pathname inclusion.
 
-   * Rich Salz *
+   *Rich Salz*
 
  * OpenSSL includes a cryptographic module that is intended to be FIPS 140-2
    validated. Please consult the README-FIPS and
