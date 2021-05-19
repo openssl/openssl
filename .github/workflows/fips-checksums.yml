@@ -16,8 +16,7 @@ jobs:
         run: |
           mkdir ./build-pristine
           mkdir ./build
-          mkdir ./empty
-          touch ./empty/placeholder
+          mkdir ./artifact
       - name: config pristine
         run: ../config enable-fips && perl configdata.pm --dump
         working-directory: ./build-pristine
@@ -44,17 +43,12 @@ jobs:
         run: touch providers/fips.checksum.new && make update-fips-checksums
         working-directory: ./build-pristine
       - name: make diff-fips-checksums
-        run: make diff-fips-checksums && echo "fips_unchanged=1" >> $GITHUB_ENV || echo "fips_changed=1" >> $GITHUB_ENV
+        run: make diff-fips-checksums && touch ../artifact/fips_unchanged || ( touch ../artifact/fips_changed ; echo FIPS CHANGED )
         working-directory: ./build
-      - name: save artifact fips_changed
-        if: ${{ env.fips_changed }}
+      - name: save PR number
+        run: echo ${{ github.event.number }} > ./artifact/pr_num
+      - name: save artifact
         uses: actions/upload-artifact@v2
         with:
-          name: fips_changed
-          path: empty/
-      - name: save artifact fips_unchanged
-        if: ${{ env.fips_unchanged }}
-        uses: actions/upload-artifact@v2
-        with:
-          name: fips_unchanged
-          path: empty/
+          name: fips_checksum
+          path: artifact/
