@@ -817,7 +817,7 @@ IF[{- !$disabled{tests} -}]
   PROGRAMS{noinst}=bio_prefix_text
   SOURCE[bio_prefix_text]=bio_prefix_text.c
   INCLUDE[bio_prefix_text]=.. ../include ../apps/include
-  DEPEND[bio_prefix_text]=../apps/libapps.a
+  DEPEND[bio_prefix_text]=../apps/libapps.a ../libcrypto
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=pem_read_depr_test
