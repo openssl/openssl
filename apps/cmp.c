@@ -2552,6 +2552,7 @@ static int get_opts(int argc, char **argv)
     return 1;
 }
 
+#ifndef OPENSSL_NO_SOCK
 static int cmp_server(OSSL_CMP_CTX *srv_cmp_ctx) {
     BIO *acbio;
     BIO *cbio = NULL;
@@ -2627,6 +2628,7 @@ static int cmp_server(OSSL_CMP_CTX *srv_cmp_ctx) {
     BIO_free_all(acbio);
     return ret;
 }
+#endif
 
 int cmp_main(int argc, char **argv)
 {
