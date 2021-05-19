@@ -171,7 +171,8 @@ static EVP_PKEY *pem_read_bio_key_legacy(BIO *bp, EVP_PKEY **x,
     }
 
  p8err:
-    if (ret == NULL)
+    if (ret == NULL && ERR_peek_last_error() == 0)
+        /* ensure some error is reported but do not hide the real one */
         ERR_raise(ERR_LIB_PEM, ERR_R_ASN1_LIB);
  err:
     OPENSSL_secure_free(nm);
