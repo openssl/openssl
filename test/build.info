@@ -32,7 +32,7 @@ IF[{- !$disabled{tests} -}]
           sanitytest rsa_complex exdatatest bntest \
           ecstresstest gmdifftest pbelutest \
           destest mdc2test \
-          exptest \
+          exptest pbetest \
           evp_pkey_provided_test evp_test evp_extra_test evp_extra_test2 \
           evp_fetch_prov_test evp_libctx_test ossl_store_test \
           v3nametest v3ext \
@@ -120,6 +120,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[exptest]=exptest.c
   INCLUDE[exptest]=../include ../apps/include
   DEPEND[exptest]=../libcrypto libtestutil.a
+
+  SOURCE[pbetest]=pbetest.c
+  INCLUDE[pbetest]=../include ../apps/include
+  DEPEND[pbetest]=../libcrypto libtestutil.a
 
   SOURCE[fatalerrtest]=fatalerrtest.c helpers/ssltestlib.c
   INCLUDE[fatalerrtest]=../include ../apps/include
