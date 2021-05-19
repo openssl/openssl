@@ -49,7 +49,7 @@ jobs:
     - name: config
       working-directory: _build
       run: |
-        perl ..\Configure --banner=Configured no-makedepend no-fips VC-WIN32-masm
+        perl ..\Configure --banner=Configured no-makedepend no-fips VC-WIN32
         perl configdata.pm --dump
     - name: build
       working-directory: _build
