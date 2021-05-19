@@ -1069,11 +1069,11 @@ sub checkflags {
                 err("$cmd does not implement help for -$expect_helpstr") unless m/^\s*"/;
                 $expect_helpstr = "";
             }
-            if (m/\{\s*"([^"]+)"\s*,\s*OPT_[A-Z0-9_]+\s*,\s*('[-\/:<>cEfFlMnNpsuU]'|0)\s*,(.*)$/
-                       && !($cmd eq "s_client" && $1 eq "wdebug")) {
+            if (m/\{\s*"([^"]+)"\s*,\s*OPT_[A-Z0-9_]+\s*,\s*('[-\/:<>cEfFlMnNpsuU]'|0)(.*)$/
+                    && !($cmd eq "s_client" && $1 eq "wdebug")) {
                 push @cmdopts, $1;
                 $expect_helpstr = $1;
-                $expect_helpstr = "" if $3 =~ m/^\s*"/;
+                $expect_helpstr = "" if $3 =~ m/^\s*,\s*"/;
             } elsif (m/[\s,](OPT_[A-Z]+_OPTIONS?)\s*(,|$)/) {
                 push @cmdopts, @{ $genopts{$1} };
             }
