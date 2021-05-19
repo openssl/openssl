@@ -818,7 +818,6 @@ subtest "CMS binary input tests\n" => sub {
     my $cert = srctop_file("test", "certs", "ee-self-signed.pem");
     my $key = srctop_file("test", "certs", "ee-key.pem");
 
-    plan skip_all => "Binary input tests currently disabled on Windows" if $^O =~ /^MSWin32$/;
     plan tests => 11;
 
     ok(run(app(["openssl", "cms", "-sign", "-md", "sha256",
@@ -829,29 +828,31 @@ subtest "CMS binary input tests\n" => sub {
                 "-binary", "-in", $signed, "-out", $verified])),
        "verify binary input with -binary");
     is(compare($input, $verified), 0, "binary input retained with -binary");
+
     ok(run(app(["openssl", "cms", "-sign", "-md", "sha256",
                 "-signer", $cert, "-inkey", $key,
-                "-in", $input, "-out", $signed])),
+                "-in", $input, "-out", $signed.".nobin"])),
        "sign binary input without -binary");
     ok(run(app(["openssl", "cms", "-verify", "-CAfile", $cert,
-                "-in", $signed, "-out", $verified])),
+                "-in", $signed.".nobin", "-out", $verified.".nobin"])),
        "verify binary input without -binary");
-    is(compare($input, $verified), 1, "binary input not retained without -binary");
+    is(compare($input, $verified.".nobin"), 1, "binary input not retained without -binary");
     ok(!run(app(["openssl", "cms", "-verify", "-CAfile", $cert, "-crlfeol",
-                "-binary", "-in", $signed, "-out", $verified])),
+                "-binary", "-in", $signed, "-out", $verified.".crlfeol"])),
        "verify binary input wrong crlfeol");
 
     ok(run(app(["openssl", "cms", "-sign", "-md", "sha256", "-crlfeol",
                 "-signer", $cert, "-inkey", $key,
                 "-binary", "-in", $input, "-out", $signed.".crlf"])),
-       "sign binary input crlfeol");
+       "sign binary input with -binary -crlfeol");
     ok(run(app(["openssl", "cms", "-verify", "-CAfile", $cert, "-crlfeol",
                 "-binary", "-in", $signed.".crlf", "-out", $verified.".crlf"])),
-       "verify binary input crlfeol");
-    is(compare($input, $verified.".crlf"), 0);
+       "verify binary input with -binary -crlfeol");
+    is(compare($input, $verified.".crlf"), 0,
+       "binary input retained with -binary -crlfeol");
     ok(!run(app(["openssl", "cms", "-verify", "-CAfile", $cert,
-                "-binary", "-in", $signed.".crlf", "-out", $verified.".crlf"])),
-       "verify binary input missing crlfeol");
+                "-binary", "-in", $signed.".crlf", "-out", $verified.".crlf2"])),
+       "verify binary input with -binary missing -crlfeol");
 };
 
 sub check_availability {
