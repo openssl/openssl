@@ -24,7 +24,7 @@ B<openssl speed>
 [B<-bytes> I<num>]
 [B<-mr>]
 {- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<algorithm> ...]
 
 =for openssl ifdef hmac cmac multi async_jobs engine
@@ -102,6 +102,8 @@ Produce the summary in a mechanical, machine-readable, format.
 
 {- $OpenSSL::safe::opt_r_item -}
 
+{- $OpenSSL::safe::opt_engine_item -}
+
 {- $OpenSSL::safe::opt_provider_item -}
 
 =item I<algorithm> ...
@@ -122,7 +124,7 @@ supported by third party providers with the C<openssl speed> command.
 
 =head1 HISTORY
 
-The B<-engine> option was removed in OpenSSL 3.0.
+The B<-engine> option was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
