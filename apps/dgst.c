@@ -426,7 +426,7 @@ int dgst_main(int argc, char **argv)
     if (argc == 0) {
         BIO_set_fp(in, stdin, BIO_NOCLOSE);
         ret = do_fp(out, buf, inp, separator, out_bin, xoflen, sigkey, sigbuf,
-                    siglen, NULL, md_name, "stdin");
+                    siglen, NULL, md_name, "-");
     } else {
         const char *sig_name = NULL;
         if (!out_bin) {
@@ -620,7 +620,7 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout, int xoflen
         for (i = 0; i < (int)len; i++)
             BIO_printf(out, "%02x", buf[i]);
 
-        BIO_printf(out, " *%s\n", file);
+        BIO_printf(out, "  %s\n", file);
         OPENSSL_free((char *)file);
     } else {
         if (sig_name != NULL) {
