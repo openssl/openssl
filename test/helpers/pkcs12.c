@@ -688,7 +688,7 @@ void start_check_pkcs12_with_mac(PKCS12_BUILDER *pb, const PKCS12_ENC *mac)
     if (!pb->success)
         return;
 
-    p12 = from_bio_p12(pb->p12bio, mac); 
+    p12 = from_bio_p12(pb->p12bio, mac);
     if (!TEST_ptr(p12)) {
         pb->success = 0;
         return;
