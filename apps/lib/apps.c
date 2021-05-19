@@ -621,27 +621,6 @@ EVP_PKEY *load_keyparams(const char *uri, int format, int maybe_stdin,
     return params;
 }
 
-void app_bail_out(char *fmt, ...)
-{
-    va_list args;
-
-    va_start(args, fmt);
-    BIO_vprintf(bio_err, fmt, args);
-    va_end(args);
-    ERR_print_errors(bio_err);
-    exit(1);
-}
-
-void *app_malloc(size_t sz, const char *what)
-{
-    void *vp = OPENSSL_malloc(sz);
-
-    if (vp == NULL)
-        app_bail_out("%s: Could not allocate %zu bytes for %s\n",
-                     opt_getprog(), sz, what);
-    return vp;
-}
-
 char *next_item(char *opt) /* in list separated by comma and/or space */
 {
     /* advance to separator (comma or whitespace), if any */
