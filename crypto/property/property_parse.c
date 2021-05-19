@@ -620,7 +620,7 @@ err:
 static void put_char(char ch, char **buf, size_t *remain, size_t *needed)
 {
     if (*remain == 0) {
-        *needed += 1;
+        ++*needed;
         return;
     }
     if(*remain == 1)
