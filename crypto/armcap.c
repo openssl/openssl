@@ -17,6 +17,7 @@
 #include <sys/sysctl.h>
 #endif
 #include "internal/cryptlib.h"
+#include <unistd.h>
 
 #include "arm_arch.h"
 
@@ -54,6 +55,32 @@ void _armv8_pmull_probe(void);
 # ifdef __aarch64__
 void _armv8_sha512_probe(void);
 unsigned int _armv8_cpuid_probe(void);
+static void _armv8_rng_probe(void);
+
+static size_t OPENSSL_rndr_asm(unsigned char *buf, size_t len);
+static size_t OPENSSL_rndrrs_asm(unsigned char *buf, size_t len);
+
+static size_t OPENSSL_rndr_wrapper(size_t (*func)(unsigned char *, size_t), unsigned char *buf, size_t len)
+{
+    size_t buffer_size;
+    int i;
+
+    for (i = 0; i < 8; i++) {
+	buffer_size = func(buf, len);
+	if (buffer_size == len)
+	    break;
+	usleep(5000);  //5000 microseconds (5 milliseconds)
+    }
+    return buffer_size;
+}
+
+size_t OPENSSL_rndr_bytes(unsigned char *buf, size_t len) {
+    return OPENSSL_rndr_wrapper(OPENSSL_rndr_asm, buf, len);
+}
+
+size_t OPENSSL_rndrrs_bytes(unsigned char *buf, size_t len) {
+    return OPENSSL_rndr_wrapper(OPENSSL_rndrrs_asm, buf, len);
+}
 # endif
 uint32_t _armv7_tick(void);
 
@@ -138,6 +165,9 @@ static unsigned long getauxval(unsigned long key)
 #  define HWCAP_CE_SHA256        (1 << 6)
 #  define HWCAP_CPUID            (1 << 11)
 #  define HWCAP_CE_SHA512        (1 << 21)
+                                  /* AT_HWCAP2 */
+#  define HWCAP2                 26
+#  define HWCAP2_RNG             (1 << 16)
 # endif
 
 void OPENSSL_cpuid_setup(void)
@@ -212,6 +242,11 @@ void OPENSSL_cpuid_setup(void)
             OPENSSL_armcap_P |= ARMV8_CPUID;
 #  endif
     }
+#  ifdef __aarch64__
+        if (getauxval(HWCAP2) & HWCAP2_RNG) {
+	    OPENSSL_armcap_P |= ARMV8_RNG;
+	}
+#  endif
 # endif
 
     sigfillset(&all_masked);
@@ -255,6 +290,12 @@ void OPENSSL_cpuid_setup(void)
         }
 #  endif
     }
+#  ifdef __aarch64__
+    if (sigsetjmp(ill_jmp, 1) == 0) {
+        _armv8_rng_probe();
+        OPENSSL_armcap_P |= ARMV8_RNG;
+    }
+#  endif
 # endif
 
     /* Things that getauxval didn't tell us */
