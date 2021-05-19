@@ -77,14 +77,8 @@ static void cleanup(void);
 #endif
 
 /*
- * This is the Default Entry Point (DEP) code. Every platform must have a DEP.
+ * This is the Default Entry Point (DEP) code.
  * See FIPS 140-2 IG 9.10
- *
- * If we're run on a platform where we don't know how to define the DEP then
- * the self-tests will never get triggered (FIPS_state never moves to
- * FIPS_STATE_SELFTEST). This will be detected as an error when SELF_TEST_post()
- * is called from OSSL_provider_init(), and so the fips module will be unusable
- * on those platforms.
  */
 #if defined(_WIN32) || defined(__CYGWIN__)
 # ifdef __CYGWIN__
@@ -138,8 +132,8 @@ void __TERM__cleanup(void) {
 
 #elif defined(__cplusplus)
 /*
- * IG 9.10 Note 7 recommends that C++ be used for the DEP if nothing else
- * is available.
+ * FIPS 140-2 IG 9.10 Note 7 recommends that C++ be used for the DEP if
+ * nothing else is available.
  */
 static class FIPS_DEP {
 public:
@@ -153,8 +147,8 @@ public:
 #else
 /*
  * This build does not support any kind of DEP.
- * We start in the self test state which will run the tests prior to any
- * operations being possible.
+ * We force the self-tests to run as part of the FIPS provider initialisation
+ * rather than being triggered by the DEP.
  */
 # undef DEP_INIT_ATTRIBUTE
 # undef DEP_FINI_ATTRIBUTE
