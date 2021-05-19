@@ -1127,7 +1127,7 @@ if ( $opt_c ) {
     # See if each has a manpage.
     foreach my $cmd ( @commands ) {
         $cmd =~ s/\.c$//;
-        next if $cmd eq 'progs' || $cmd eq 'cmp_mock_srv' || $cmd eq 'vms_decc_init';
+        next if $cmd eq 'progs' || $cmd eq 'vms_decc_init';
         my @doc = ( grep { basename($_) eq "openssl-$cmd.pod"
                            # For "tsget" and "CA.pl" pod pages
                            || basename($_) eq "$cmd.pod" }
