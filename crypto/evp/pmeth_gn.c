@@ -413,6 +413,7 @@ int EVP_PKEY_todata(const EVP_PKEY *pkey, int selection, OSSL_PARAM **params)
     return EVP_PKEY_export(pkey, selection, ossl_pkey_todata_cb, params);
 }
 
+#ifndef FIPS_MODULE
 struct fake_import_data_st {
     OSSL_CALLBACK *export_cb;
     void *export_cbarg;
@@ -426,6 +427,7 @@ static int pkey_fake_import(void *fake_keydata, int ignored_selection,
 
     return data->export_cb(params, data->export_cbarg);
 }
+#endif
 
 int EVP_PKEY_export(const EVP_PKEY *pkey, int selection,
                     OSSL_CALLBACK *export_cb, void *export_cbarg)
