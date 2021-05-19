@@ -13,8 +13,7 @@ DEPEND[$DER_DIGESTS_H]=oids_to_c.pm
 $DER_RSA_H=../include/prov/der_rsa.h
 $DER_RSA_GEN=der_rsa_gen.c
 $DER_RSA_AUX=der_rsa_key.c der_rsa_sig.c
-$DER_RSA_COMMON=$DER_RSA_GEN der_rsa_key.c
-$DER_RSA_FIPSABLE=der_rsa_sig.c
+$DER_RSA_COMMON=$DER_RSA_GEN der_rsa_key.c der_rsa_sig.c
 
 GENERATE[$DER_RSA_GEN]=der_rsa_gen.c.in
 DEPEND[$DER_RSA_GEN]=oids_to_c.pm
@@ -108,10 +107,13 @@ IF[{- !$disabled{ec} -}]
   $COMMON = $COMMON $DER_ECX_GEN $DER_ECX_AUX
 ENDIF
 
+SOURCE[../../libcommon.a]= $COMMON
+
+# Some of them should not be seen in the FIPS provider,
+# so we tuck them into libdefault.a instead.
+
 IF[{- !$disabled{sm2} -}]
   $NONFIPS = $NONFIPS $DER_SM2_GEN $DER_SM2_AUX
 ENDIF
 
-SOURCE[../../libcommon.a]= $COMMON
-SOURCE[../../libfips.a]= $DER_RSA_FIPSABLE
-SOURCE[../../libdefault.a]= $DER_RSA_FIPSABLE $NONFIPS
+SOURCE[../../libdefault.a]= $NONFIPS
