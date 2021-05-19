@@ -518,10 +518,26 @@ static const OSSL_DISPATCH intern_dispatch_table[] = {
     { 0, NULL }
 };
 
-int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
-                       const OSSL_DISPATCH *in,
-                       const OSSL_DISPATCH **out,
-                       void **provctx)
+/*
+ * On VMS, the provider init function name is expected to be uppercase,
+ * see the pragmas in <openssl/core.h>.  Let's do the same with this
+ * internal name.  This is how symbol names are treated by default
+ * by the compiler if nothing else is said, but since this is part
+ * of libfips, and we build our libraries with mixed case symbol names,
+ * we must switch back to this default explicitly here.
+ */
+#ifdef __VMS
+# pragma names save
+# pragma names uppercase,truncated
+#endif
+OSSL_provider_init_fn OSSL_provider_init_int;
+#ifdef __VMS
+# pragma names restore
+#endif
+int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
+                           const OSSL_DISPATCH *in,
+                           const OSSL_DISPATCH **out,
+                           void **provctx)
 {
     FIPS_GLOBAL *fgbl;
     OSSL_LIB_CTX *libctx = NULL;
