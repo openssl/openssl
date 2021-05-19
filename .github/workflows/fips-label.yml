@@ -10,27 +10,47 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.event == 'pull_request' }}
     steps:
+      - name: 'Download artifact'
+        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+        uses: actions/github-script@v4
+        with:
+          script: |
+            var artifacts = await github.actions.listWorkflowRunArtifacts({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               run_id: ${{github.event.workflow_run.id }},
+            });
+            var matchArtifact = artifacts.data.artifacts.filter((artifact) => {
+              return artifact.name == "fips_checksum"
+            })[0];
+            var download = await github.actions.downloadArtifact({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               artifact_id: matchArtifact.id,
+               archive_format: 'zip',
+            });
+            var fs = require('fs');
+            fs.writeFileSync('${{github.workspace}}/artifact.zip', Buffer.from(download.data));
+      - run: unzip artifact.zip
+        if: ${{ github.event.workflow_run.conclusion == 'success' }}
       - name: 'Check artifact and apply'
         if: ${{ github.event.workflow_run.conclusion == 'success' }}
         uses: actions/github-script@v4
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            var artifacts = await github.actions.listWorkflowRunArtifacts({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: ${{ github.event.workflow_run.id }}
-            });
-            if ( artifacts.data.artifacts[0].name == 'fips_changed' ) {
+            var fs = require('fs');
+            var pr_num = Number(fs.readFileSync('./pr_num'));
+            if ( fs.existsSync('./fips_changed') ) {
               github.issues.addLabels({
-                issue_number: ${{ github.event.workflow_run.pull_requests[0].number }},
+                issue_number: pr_num,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 labels: ['severity: fips change']
               });
-            } else if ( artifacts.data.artifacts[0].name == 'fips_unchanged' ) {
+            } else if ( fs.existsSync('./fips_unchanged') ) {
               var labels = await github.issues.listLabelsOnIssue({
-                issue_number: ${{ github.event.workflow_run.pull_requests[0].number }},
+                issue_number: pr_num,
                 owner: context.repo.owner,
                 repo: context.repo.repo
               });
@@ -38,7 +58,7 @@ jobs:
               for ( var label in labels.data ) {
                 if (labels.data[label].name == 'severity: fips change') {
                   github.issues.removeLabel({
-                    issue_number: ${{ github.event.workflow_run.pull_requests[0].number }},
+                    issue_number: pr_num,
                     owner: context.repo.owner,
                     repo: context.repo.repo,
                     name: 'severity: fips change'
