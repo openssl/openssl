@@ -492,6 +492,17 @@ Static libraries may be sources.  In that case, its object files are
 used directly when building I<item> instead of relying on library
 dependency and symbol resolution (through B<DEPEND> statements).
 
+B<SOURCE> statements may have attributes, which apply to each
+individual dependency in such a statement.  For example:
+
+    SOURCE[prog]=prog_a.c
+    SOURCE[prog]{check}=prog_b.c prog_c.c
+
+With those statements, the association between C<prog> and C<prog_a.c>
+comes with no extra attributes, while the association between C<prog>
+and C<prog_b.c> as well as C<prog_c.c> comes with the extra attribute
+C<check>.
+
 =item B<SHARED_SOURCE[>I<item>B<]> B<=> I<file> ...
 
 Collects filenames that will be used as source files for I<item>.
@@ -500,6 +511,9 @@ The I<item> must be a singular item, and may be any library or module
 given with B<LIBS> or B<MODULES>.  For libraries, the given filenames
 are only used for their shared form, so if the item is a library name
 ending with C<.a>, the filenames will be ignored.
+
+B<SHARED_SOURCE> statements may have attributes, just as B<SOURCE>
+statements.
 
 =item B<DEFINE[>I<items>B<]> B<=> I<name>[B<=>I<value>] ...
 

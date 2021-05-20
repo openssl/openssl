@@ -346,8 +346,8 @@ static size_t ecx_pkey_dirty_cnt(const EVP_PKEY *pkey)
 }
 
 static int ecx_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
-                              EVP_KEYMGMT *to_keymgmt, OSSL_LIB_CTX *libctx,
-                              const char *propq)
+                              OSSL_FUNC_keymgmt_import_fn *importer,
+                              OSSL_LIB_CTX *libctx, const char *propq)
 {
     const ECX_KEY *key = from->pkey.ecx;
     OSSL_PARAM_BLD *tmpl = OSSL_PARAM_BLD_new();
@@ -375,7 +375,7 @@ static int ecx_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     params = OSSL_PARAM_BLD_to_param(tmpl);
 
     /* We export, the provider imports */
-    rv = evp_keymgmt_import(to_keymgmt, to_keydata, selection, params);
+    rv = importer(to_keydata, selection, params);
 
  err:
     OSSL_PARAM_BLD_free(tmpl);

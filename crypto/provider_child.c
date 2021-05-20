@@ -12,8 +12,10 @@
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/provider.h>
+#include <openssl/evp.h>
 #include "internal/provider.h"
 #include "internal/cryptlib.h"
+#include "crypto/evp.h"
 
 DEFINE_STACK_OF(OSSL_PROVIDER)
 
@@ -198,6 +200,13 @@ static int provider_remove_child_cb(const OSSL_CORE_HANDLE *prov, void *cbdata)
     return 1;
 }
 
+static int provider_global_props_cb(const char *props, void *cbdata)
+{
+    OSSL_LIB_CTX *ctx = cbdata;
+
+    return evp_set_default_properties_int(ctx, props, 0, 1);
+}
+
 int ossl_provider_init_as_child(OSSL_LIB_CTX *ctx,
                                 const OSSL_CORE_HANDLE *handle,
                                 const OSSL_DISPATCH *in)
@@ -265,6 +274,7 @@ int ossl_provider_init_as_child(OSSL_LIB_CTX *ctx,
     if (!gbl->c_provider_register_child_cb(gbl->handle,
                                            provider_create_child_cb,
                                            provider_remove_child_cb,
+                                           provider_global_props_cb,
                                            ctx))
         return 0;
 

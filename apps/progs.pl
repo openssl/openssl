@@ -28,7 +28,8 @@ my $YEAR         = [localtime()]->[5] + 1900;
 # the lookups in %unified_info
 my @openssl_source =
     map { @{$unified_info{sources}->{$_}} }
-    grep { /\.o$/ }
+    grep { /\.o$/
+           && !$unified_info{attributes}->{sources}->{$apps_openssl}->{$_}->{nocheck} }
         @{$unified_info{sources}->{$apps_openssl}};
 
 foreach my $filename (@openssl_source) {

@@ -384,24 +384,55 @@ int evp_method_store_flush(OSSL_LIB_CTX *libctx)
 
 static int evp_set_parsed_default_properties(OSSL_LIB_CTX *libctx,
                                              OSSL_PROPERTY_LIST *def_prop,
-                                             int loadconfig)
+                                             int loadconfig,
+                                             int mirrored)
 {
     OSSL_METHOD_STORE *store = get_evp_method_store(libctx);
     OSSL_PROPERTY_LIST **plp = ossl_ctx_global_properties(libctx, loadconfig);
 
-    if (plp != NULL) {
+    if (plp != NULL && store != NULL) {
+#ifndef FIPS_MODULE
+        char *propstr = NULL;
+        size_t strsz;
+
+        if (mirrored) {
+            if (ossl_global_properties_no_mirrored(libctx))
+                return 0;
+        } else {
+            /*
+             * These properties have been explicitly set on this libctx, so
+             * don't allow any mirroring from a parent libctx.
+             */
+            ossl_global_properties_stop_mirroring(libctx);
+        }
+
+        strsz = ossl_property_list_to_string(libctx, def_prop, NULL, 0);
+        if (strsz > 0)
+            propstr = OPENSSL_malloc(strsz);
+        if (propstr == NULL) {
+            ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        if (ossl_property_list_to_string(libctx, def_prop, propstr,
+                                         strsz) == 0) {
+            OPENSSL_free(propstr);
+            ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        ossl_provider_default_props_update(libctx, propstr);
+        OPENSSL_free(propstr);
+#endif
         ossl_property_free(*plp);
         *plp = def_prop;
         if (store != NULL)
             return ossl_method_store_flush_cache(store, 0);
-        return 1;
     }
     ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
     return 0;
 }
 
 int evp_set_default_properties_int(OSSL_LIB_CTX *libctx, const char *propq,
-                                   int loadconfig)
+                                   int loadconfig, int mirrored)
 {
     OSSL_PROPERTY_LIST *pl = NULL;
 
@@ -409,12 +440,16 @@ int evp_set_default_properties_int(OSSL_LIB_CTX *libctx, const char *propq,
         ERR_raise(ERR_LIB_EVP, EVP_R_DEFAULT_QUERY_PARSE_ERROR);
         return 0;
     }
-    return evp_set_parsed_default_properties(libctx, pl, loadconfig);
+    if (!evp_set_parsed_default_properties(libctx, pl, loadconfig, mirrored)) {
+        ossl_property_free(pl);
+        return 0;
+    }
+    return 1;
 }
 
 int EVP_set_default_properties(OSSL_LIB_CTX *libctx, const char *propq)
 {
-    return evp_set_default_properties_int(libctx, propq, 1);
+    return evp_set_default_properties_int(libctx, propq, 1, 0);
 }
 
 static int evp_default_properties_merge(OSSL_LIB_CTX *libctx, const char *propq)
@@ -436,7 +471,11 @@ static int evp_default_properties_merge(OSSL_LIB_CTX *libctx, const char *propq)
         ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    return evp_set_parsed_default_properties(libctx, pl2, 0);
+    if (!evp_set_parsed_default_properties(libctx, pl2, 0, 0)) {
+        ossl_property_free(pl2);
+        return 0;
+    }
+    return 1;
 }
 
 static int evp_default_property_is_enabled(OSSL_LIB_CTX *libctx,
@@ -459,6 +498,30 @@ int EVP_default_properties_enable_fips(OSSL_LIB_CTX *libctx, int enable)
     return evp_default_properties_merge(libctx, query);
 }
 
+char *evp_get_global_properties_str(OSSL_LIB_CTX *libctx, int loadconfig)
+{
+    OSSL_PROPERTY_LIST **plp = ossl_ctx_global_properties(libctx, loadconfig);
+    char *propstr = NULL;
+    size_t sz;
+
+    sz = ossl_property_list_to_string(libctx, *plp, NULL, 0);
+    if (sz == 0) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
+        return NULL;
+    }
+
+    propstr = OPENSSL_malloc(sz);
+    if (propstr == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+    if (ossl_property_list_to_string(libctx, *plp, propstr, sz) == 0) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
+        OPENSSL_free(propstr);
+        return NULL;
+    }
+    return propstr;
+}
 
 struct do_all_data_st {
     void (*user_fn)(void *method, void *arg);

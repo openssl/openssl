@@ -196,6 +196,7 @@ OSSL_CORE_MAKE_FUNC(int, provider_register_child_cb,
                     (const OSSL_CORE_HANDLE *handle,
                      int (*create_cb)(const OSSL_CORE_HANDLE *provider, void *cbdata),
                      int (*remove_cb)(const OSSL_CORE_HANDLE *provider, void *cbdata),
+                     int (*global_props_cb)(const char *props, void *cbdata),
                      void *cbdata))
 OSSL_CORE_MAKE_FUNC(void, provider_deregister_child_cb,
                     (const OSSL_CORE_HANDLE *handle))

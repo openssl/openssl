@@ -4292,6 +4292,10 @@ DEPEND[html/man7/evp.html]=man7/evp.pod
 GENERATE[html/man7/evp.html]=man7/evp.pod
 DEPEND[man/man7/evp.7]=man7/evp.pod
 GENERATE[man/man7/evp.7]=man7/evp.pod
+DEPEND[html/man7/fips_module.html]=man7/fips_module.pod
+GENERATE[html/man7/fips_module.html]=man7/fips_module.pod
+DEPEND[man/man7/fips_module.7]=man7/fips_module.pod
+GENERATE[man/man7/fips_module.7]=man7/fips_module.pod
 DEPEND[html/man7/life_cycle-kdf.html]=man7/life_cycle-kdf.pod
 GENERATE[html/man7/life_cycle-kdf.html]=man7/life_cycle-kdf.pod
 DEPEND[man/man7/life_cycle-kdf.7]=man7/life_cycle-kdf.pod
@@ -4304,6 +4308,10 @@ DEPEND[html/man7/life_cycle-rand.html]=man7/life_cycle-rand.pod
 GENERATE[html/man7/life_cycle-rand.html]=man7/life_cycle-rand.pod
 DEPEND[man/man7/life_cycle-rand.7]=man7/life_cycle-rand.pod
 GENERATE[man/man7/life_cycle-rand.7]=man7/life_cycle-rand.pod
+DEPEND[html/man7/migration_guide.html]=man7/migration_guide.pod
+GENERATE[html/man7/migration_guide.html]=man7/migration_guide.pod
+DEPEND[man/man7/migration_guide.7]=man7/migration_guide.pod
+GENERATE[man/man7/migration_guide.7]=man7/migration_guide.pod
 DEPEND[html/man7/openssl-core.h.html]=man7/openssl-core.h.pod
 GENERATE[html/man7/openssl-core.h.html]=man7/openssl-core.h.pod
 DEPEND[man/man7/openssl-core.h.7]=man7/openssl-core.h.pod
@@ -4496,9 +4504,11 @@ html/man7/crypto.html \
 html/man7/ct.html \
 html/man7/des_modes.html \
 html/man7/evp.html \
+html/man7/fips_module.html \
 html/man7/life_cycle-kdf.html \
 html/man7/life_cycle-mac.html \
 html/man7/life_cycle-rand.html \
+html/man7/migration_guide.html \
 html/man7/openssl-core.h.html \
 html/man7/openssl-core_dispatch.h.html \
 html/man7/openssl-core_names.h.html \
@@ -4599,9 +4609,11 @@ man/man7/crypto.7 \
 man/man7/ct.7 \
 man/man7/des_modes.7 \
 man/man7/evp.7 \
+man/man7/fips_module.7 \
 man/man7/life_cycle-kdf.7 \
 man/man7/life_cycle-mac.7 \
 man/man7/life_cycle-rand.7 \
+man/man7/migration_guide.7 \
 man/man7/openssl-core.h.7 \
 man/man7/openssl-core_dispatch.h.7 \
 man/man7/openssl-core_names.h.7 \

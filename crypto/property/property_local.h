@@ -16,8 +16,10 @@ typedef int OSSL_PROPERTY_IDX;
 /* Property string functions */
 OSSL_PROPERTY_IDX ossl_property_name(OSSL_LIB_CTX *ctx, const char *s,
                                      int create);
+const char *ossl_property_name_str(OSSL_LIB_CTX *ctx, OSSL_PROPERTY_IDX idx);
 OSSL_PROPERTY_IDX ossl_property_value(OSSL_LIB_CTX *ctx, const char *s,
                                       int create);
+const char *ossl_property_value_str(OSSL_LIB_CTX *ctx, OSSL_PROPERTY_IDX idx);
 
 /* Property list functions */
 void ossl_property_free(OSSL_PROPERTY_LIST *p);

@@ -435,6 +435,61 @@ err:
     return ret;
 }
 
+static int test_property_list_to_string(void)
+{
+    OSSL_PROPERTY_LIST *pl = NULL;
+    int ret = 0;
+    struct props_list_str {
+        const char *in;
+        const char *out;
+    } props[] = {
+        { "fips=yes", "fips=yes" },
+        { "fips!=yes", "fips!=yes" },
+        { "fips = yes", "fips=yes" },
+        { "fips", "fips=yes" },
+        { "fips=no", "fips=no" },
+        { "-fips", "-fips" },
+        { "?fips=yes", "?fips=yes" },
+        { "fips=yes,provider=fips", "fips=yes,provider=fips" },
+        { "fips = yes , provider = fips", "fips=yes,provider=fips" },
+        { "fips=yes,provider!=fips", "fips=yes,provider!=fips" },
+        { "fips=yes,?provider=fips", "fips=yes,?provider=fips" },
+        { "fips=yes,-provider", "fips=yes,-provider" },
+          /* foo is an unknown internal name */
+        { "foo=yes,fips=yes", "fips=yes"},
+        { "", "" },
+        { NULL, "" }
+    };
+    size_t i, bufsize;
+    char *buf = NULL;
+
+    for (i = 0; i < OSSL_NELEM(props); i++) {
+        if (props[i].in != NULL
+                && !TEST_ptr(pl = ossl_parse_query(NULL, props[i].in, 1)))
+            goto err;
+        bufsize = ossl_property_list_to_string(NULL, pl, NULL, 0);
+        if (!TEST_size_t_gt(bufsize, 0))
+            goto err;
+        buf = OPENSSL_malloc(bufsize);
+        if (!TEST_ptr(buf)
+                || !TEST_size_t_eq(ossl_property_list_to_string(NULL, pl, buf,
+                                                                bufsize),
+                                   bufsize)
+                || !TEST_str_eq(props[i].out, buf)
+                || !TEST_size_t_eq(bufsize, strlen(props[i].out) + 1))
+            goto err;
+        OPENSSL_free(buf);
+        buf = NULL;
+        ossl_property_free(pl);
+        pl = NULL;
+    }
+
+    ret = 1;
+ err:
+    OPENSSL_free(buf);
+    ossl_property_free(pl);
+    return ret;
+}
 
 int setup_tests(void)
 {
@@ -448,5 +503,6 @@ int setup_tests(void)
     ADD_TEST(test_property);
     ADD_TEST(test_query_cache_stochastic);
     ADD_TEST(test_fips_mode);
+    ADD_TEST(test_property_list_to_string);
     return 1;
 }

@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* We need to use some deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 /*
  * Really these tests should be in evp_extra_test - but that doesn't
  * yet support testing with a non-default libctx. Once it does we should move
@@ -17,6 +20,9 @@
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/provider.h>
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <openssl/rsa.h>
+#endif
 #include <openssl/core_names.h>
 #include "testutil.h"
 #include "internal/nelem.h"
@@ -223,6 +229,13 @@ static const unsigned char kExampleECKey2DER[] = {
     0xE0, 0xC7, 0xB2, 0xF8, 0x20, 0x40, 0xC2, 0x27, 0xC8, 0xBE, 0x02, 0x7E,
     0x96, 0x69, 0xE0, 0x04, 0xCB, 0x89, 0x0B, 0x42
 };
+
+static const unsigned char kExampleECXKey2DER[] = {
+    0x30, 0x2E, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x6e,
+    0x04, 0x22, 0x04, 0x20, 0xc8, 0xa9, 0xd5, 0xa9, 0x10, 0x91, 0xad, 0x85,
+    0x1c, 0x66, 0x8b, 0x07, 0x36, 0xc1, 0xc9, 0xa0, 0x29, 0x36, 0xc0, 0xd3,
+    0xad, 0x62, 0x67, 0x08, 0x58, 0x08, 0x80, 0x47, 0xba, 0x05, 0x74, 0x75
+};
 #endif
 
 typedef struct APK_DATA_st {
@@ -235,6 +248,7 @@ static APK_DATA keydata[] = {
     {kExampleRSAKeyDER, sizeof(kExampleRSAKeyDER), EVP_PKEY_RSA},
     {kExampleRSAKeyPKCS8, sizeof(kExampleRSAKeyPKCS8), EVP_PKEY_RSA},
 #ifndef OPENSSL_NO_EC
+    {kExampleECXKey2DER, sizeof(kExampleECXKey2DER), EVP_PKEY_X25519},
     {kExampleECKeyDER, sizeof(kExampleECKeyDER), EVP_PKEY_EC},
     {kExampleECKey2DER, sizeof(kExampleECKey2DER), EVP_PKEY_EC},
 #endif
@@ -267,6 +281,15 @@ static int test_d2i_AutoPrivateKey_ex(int i)
     if (ak->evptype == EVP_PKEY_RSA) {
         if (!TEST_true(EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_D,
                                              &priv_bn)))
+            goto done;
+    } else if (ak->evptype == EVP_PKEY_X25519) {
+        unsigned char buffer[32];
+        size_t len;
+
+        if (!TEST_true(EVP_PKEY_get_octet_string_param(pkey,
+                                                       OSSL_PKEY_PARAM_PRIV_KEY,
+                                                       buffer, sizeof(buffer),
+                                                       &len)))
             goto done;
     } else {
         if (!TEST_true(EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_PRIV_KEY,
@@ -361,16 +384,18 @@ static int test_alternative_default(void)
     return ok;
 }
 
-static int test_d2i_PrivateKey_ex(void) {
-    int ok;
-    OSSL_PROVIDER *provider;
-    BIO *key_bio;
-    EVP_PKEY* pkey;
-    ok = 0;
+static int test_d2i_PrivateKey_ex(int testid)
+{
+    int ok = 0;
+    OSSL_PROVIDER *provider = NULL;
+    BIO *key_bio = NULL;
+    EVP_PKEY *pkey = NULL;
+    int id = (testid == 0) ? 0 : 2;
 
-    provider = OSSL_PROVIDER_load(NULL, "default");
-    key_bio = BIO_new_mem_buf((&keydata[0])->kder, (&keydata)[0]->size);
-
+    if (!TEST_ptr(provider = OSSL_PROVIDER_load(NULL, "default")))
+        goto err;
+    if (!TEST_ptr(key_bio = BIO_new_mem_buf(keydata[id].kder, keydata[id].size)))
+        goto err;
     if (!TEST_ptr_null(pkey = PEM_read_bio_PrivateKey(key_bio, NULL, NULL, NULL)))
         goto err;
 
@@ -725,16 +750,36 @@ static int test_pkey_export_null(void)
 static int test_pkey_export(void)
 {
     EVP_PKEY *pkey = NULL;
-    int ret = 0;
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    RSA *rsa = NULL;
+#endif
+    int ret = 1;
     const unsigned char *pdata = keydata[0].kder;
+    int pdata_len = keydata[0].size;
 
-    ret = TEST_ptr(pkey = d2i_AutoPrivateKey_ex(NULL, &pdata, keydata[0].size,
-                                                mainctx, NULL))
-          && TEST_int_eq(EVP_PKEY_export(pkey, EVP_PKEY_KEYPAIR,
-                                         test_pkey_export_cb, pkey), 1)
-          && TEST_int_eq(EVP_PKEY_export(pkey, EVP_PKEY_KEYPAIR,
-                                         test_pkey_export_cb, NULL), 0);
+    if (!TEST_ptr(pkey = d2i_AutoPrivateKey_ex(NULL, &pdata, pdata_len,
+                                               mainctx, NULL))
+        || !TEST_true(EVP_PKEY_export(pkey, EVP_PKEY_KEYPAIR,
+                                       test_pkey_export_cb, pkey))
+        || !TEST_false(EVP_PKEY_export(pkey, EVP_PKEY_KEYPAIR,
+                                       test_pkey_export_cb, NULL)))
+        ret = 0;
     EVP_PKEY_free(pkey);
+
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    /* Now, try with a legacy key */
+    pdata = keydata[0].kder;
+    pdata_len = keydata[0].size;
+    if (!TEST_ptr(rsa = d2i_RSAPrivateKey(NULL, &pdata, pdata_len))
+        || !TEST_ptr(pkey = EVP_PKEY_new())
+        || !TEST_true(EVP_PKEY_assign_RSA(pkey, rsa))
+        || !TEST_true(EVP_PKEY_export(pkey, EVP_PKEY_KEYPAIR,
+                                      test_pkey_export_cb, pkey))
+        || !TEST_false(EVP_PKEY_export(pkey, EVP_PKEY_KEYPAIR,
+                                       test_pkey_export_cb, NULL)))
+        ret = 0;
+    EVP_PKEY_free(pkey);
+#endif
     return ret;
 }
 
@@ -748,7 +793,11 @@ int setup_tests(void)
 
     ADD_TEST(test_alternative_default);
     ADD_ALL_TESTS(test_d2i_AutoPrivateKey_ex, OSSL_NELEM(keydata));
-    ADD_TEST(test_d2i_PrivateKey_ex);
+#ifndef OPENSSL_NO_EC
+    ADD_ALL_TESTS(test_d2i_PrivateKey_ex, 2);
+#else
+    ADD_ALL_TESTS(test_d2i_PrivateKey_ex, 1);
+#endif
 #ifndef OPENSSL_NO_DSA
     ADD_TEST(test_dsa_todata);
 #endif
