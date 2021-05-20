@@ -371,14 +371,14 @@ int dgst_main(int argc, char **argv)
     }
     /* we use md as a filter, reading from 'in' */
     else {
-        if (md == NULL)
-            md = (EVP_MD *)EVP_sha256();
         EVP_MD_CTX *mctx = NULL;
         if (!BIO_get_md_ctx(bmd, &mctx)) {
             BIO_printf(bio_err, "Error getting context\n");
             ERR_print_errors(bio_err);
             goto end;
         }
+        if (md == NULL)
+            md = (EVP_MD *)EVP_sha256();
         if (!EVP_DigestInit_ex(mctx, md, impl)) {
             BIO_printf(bio_err, "Error setting digest\n");
             ERR_print_errors(bio_err);
