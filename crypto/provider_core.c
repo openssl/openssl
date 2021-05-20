@@ -1603,7 +1603,8 @@ static OPENSSL_CORE_CTX *core_get_libctx(const OSSL_CORE_HANDLE *handle)
 }
 
 static int core_thread_start(const OSSL_CORE_HANDLE *handle,
-                             OSSL_thread_stop_handler_fn handfn)
+                             OSSL_thread_stop_handler_fn handfn,
+                             void *arg)
 {
     /*
      * We created this object originally and we know it is actually an
@@ -1611,7 +1612,7 @@ static int core_thread_start(const OSSL_CORE_HANDLE *handle,
      */
     OSSL_PROVIDER *prov = (OSSL_PROVIDER *)handle;
 
-    return ossl_init_thread_start(prov, prov->provctx, handfn);
+    return ossl_init_thread_start(prov, arg, handfn);
 }
 
 /*
