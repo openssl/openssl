@@ -1684,7 +1684,7 @@ static int init_post_handshake_auth(SSL *s, ossl_unused unsigned int context)
  */
 static int final_psk(SSL *s, unsigned int context, int sent)
 {
-    if (s->server && sent && s->clienthello != NULL
+    if (SSL_IS_TLS13(s) && s->server && sent && s->clienthello != NULL
             && !s->clienthello->pre_proc_exts[TLSEXT_IDX_psk_kex_modes].present) {
         SSLfatal(s, TLS13_AD_MISSING_EXTENSION,
                  SSL_R_MISSING_PSK_KEX_MODES_EXTENSION);
