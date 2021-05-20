@@ -128,7 +128,8 @@ sub amm52x20_x1() {
 #                of data for corresponding AMM operation;
 # _b_offset    - offset in the |b| array pointing to the next qword digit;
 my ($_data_offset,$_b_offset,$_acc,$_R0,$_R0h,$_R1,$_R1h,$_R2,$_k0) = @_;
-my $_R0_xmm = $_R0 =~ s/%y/%x/r;
+my $_R0_xmm = $_R0;
+$_R0_xmm =~ s/%y/%x/;
 $code.=<<___;
     movq    $_b_offset($b_ptr), %r13             # b[i]
 
@@ -525,7 +526,8 @@ ___
 my ($out,$red_tbl,$red_tbl_idx,$tbl_idx) = @_6_args_universal_ABI;
 
 my ($t0,$t1,$t2,$t3,$t4) = map("%ymm$_", (0..4));
-my $t4xmm = $t4 =~ s/%y/%x/r;
+my $t4xmm = $t4;
+$t4xmm =~ s/%y/%x/;
 my ($tmp0,$tmp1,$tmp2,$tmp3,$tmp4) = map("%ymm$_", (16..20));
 my ($cur_idx,$idx,$ones) = map("%ymm$_", (21..23));
 
