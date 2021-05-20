@@ -9,8 +9,8 @@
 # Do a fast, not perfect but good enough, dependency list. Tries to
 # avoid system header dependencies.
 # Run this program like this:
-#       perl ./util/err-to-raise -Iflag... files...
-#       git ls-files | grep '\.c$' | perl -Iflag... ./util/err-to-raise
+#       perl ./util/find-includes.pl -Iflag... files...
+#       git ls-files | grep '\.c$' | perl -Iflag... ./util/find-includes.pl
 
 require 5.10.0;
 use warnings;
@@ -36,6 +36,7 @@ sub printit {
     my ($f, $dep) = ( @_ );
 
     return if defined $skips{$dep};
+    return unless $f =~ m@(crypto|internal|openssl)/@;
     $found_headers{$dep} = 1;
     return if $output eq 's';
 
