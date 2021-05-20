@@ -62,17 +62,29 @@ struct evp_cipher_ctx_st {
 
 struct evp_mac_ctx_st {
     EVP_MAC *meth;               /* Method structure */
-    void *algctx;                /* Algorithm-specific ctx */
+    /*
+     * Opaque ctx returned from a providers MAC algorithm implementation
+     * OSSL_FUNC_mac_newctx()
+     */
+    void *algctx;
 } /* EVP_MAC_CTX */;
 
 struct evp_kdf_ctx_st {
     EVP_KDF *meth;              /* Method structure */
-    void *algctx;               /* Algorithm-specific ctx */
+    /*
+     * Opaque ctx returned from a providers KDF algorithm implementation
+     * OSSL_FUNC_kdf_newctx()
+     */
+    void *algctx;
 } /* EVP_KDF_CTX */ ;
 
 struct evp_rand_ctx_st {
     EVP_RAND *meth;             /* Method structure */
-    void *algctx;               /* Algorithm-specific ctx */
+    /*
+     * Opaque ctx returned from a providers rand algorithm implementation
+     * OSSL_FUNC_rand_newctx()
+     */
+    void *algctx;
     EVP_RAND_CTX *parent;       /* Parent EVP_RAND or NULL if none */
     CRYPTO_REF_COUNT refcnt;    /* Context reference count */
     CRYPTO_RWLOCK *refcnt_lock;

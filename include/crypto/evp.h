@@ -58,20 +58,36 @@ struct evp_pkey_ctx_st {
 
         struct {
             EVP_KEYEXCH *exchange;
+            /*
+             * Opaque ctx returned from a providers exchange algorithm
+             * implementation OSSL_FUNC_keyexch_newctx()
+             */
             void *algctx;
         } kex;
 
         struct {
+            /*
+             * Opaque ctx returned from a providers signature algorithm
+             * implementation OSSL_FUNC_signature_newctx()
+             */
             EVP_SIGNATURE *signature;
             void *algctx;
         } sig;
 
         struct {
             EVP_ASYM_CIPHER *cipher;
+            /*
+             * Opaque ctx returned from a providers asymmetric cipher algorithm
+             * implementation OSSL_FUNC_asym_cipher_newctx()
+             */
             void *algctx;
         } ciph;
         struct {
             EVP_KEM *kem;
+            /*
+             * Opaque ctx returned from a providers KEM algorithm
+             * implementation OSSL_FUNC_kem_newctx()
+             */
             void *algctx;
         } encap;
     } op;
