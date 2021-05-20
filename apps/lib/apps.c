@@ -407,8 +407,8 @@ CONF *app_load_config_internal(const char *filename, int quiet)
     BIO *in = NULL; /* leads to empty config in case filename == "" */
     CONF *conf;
 
-    if (*filename != '\0'
-        && (in = bio_open_default_(filename, 'r', FORMAT_TEXT, quiet)) == NULL)
+    if ((filename != NULL && *filename != '\0')
+        || (in = bio_open_default_(filename, 'r', FORMAT_TEXT, quiet)) == NULL)
         return NULL;
     conf = app_load_config_bio(in, filename);
     BIO_free(in);
