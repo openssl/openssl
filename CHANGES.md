@@ -28,7 +28,7 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 [Migration guide]: https://github.com/openssl/openssl/tree/master/doc/man7/migration_guide.pod
 
-### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
+### Changes between 1.1.1 and 3.0 alpha 17 [20 May 2021]
 
  * The signatures of the functions to get and set options on SSL and
    SSL_CTX objects changed from "unsigned long" to "uint64_t" type.
