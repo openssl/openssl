@@ -446,7 +446,8 @@ This source is ignored by the FIPS provider.
 
 ### rdcpu
 
-Use the `RDSEED` or `RDRAND` command if provided by the CPU.
+Use the `RDSEED` or `RDRAND` command on x86 or `RNDRRS` command on aarch64
+if provided by the CPU.
 
 ### librandom
 
