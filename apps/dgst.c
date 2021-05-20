@@ -337,6 +337,8 @@ int dgst_main(int argc, char **argv)
             goto end;
     }
 
+    if (md == NULL)
+        md = (EVP_MD *)EVP_sha256();
     if (sigkey != NULL) {
         EVP_MD_CTX *mctx = NULL;
         EVP_PKEY_CTX *pctx = NULL;
@@ -375,8 +377,6 @@ int dgst_main(int argc, char **argv)
             ERR_print_errors(bio_err);
             goto end;
         }
-        if (md == NULL)
-            md = (EVP_MD *)EVP_sha256();
         if (!EVP_DigestInit_ex(mctx, md, impl)) {
             BIO_printf(bio_err, "Error setting digest\n");
             ERR_print_errors(bio_err);
