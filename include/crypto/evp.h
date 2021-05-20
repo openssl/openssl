@@ -66,11 +66,11 @@ struct evp_pkey_ctx_st {
         } kex;
 
         struct {
+            EVP_SIGNATURE *signature;
             /*
              * Opaque ctx returned from a providers signature algorithm
              * implementation OSSL_FUNC_signature_newctx()
              */
-            EVP_SIGNATURE *signature;
             void *algctx;
         } sig;
 
