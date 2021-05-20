@@ -18,7 +18,7 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
-### Major changes between OpenSSL 1.1.1 and OpenSSL 3.0 alpha 17 [in pre-release]
+### Major changes between OpenSSL 1.1.1 and OpenSSL 3.0 [under development]
 
   * Added migration guide to man7
   * Implemented support for fully "pluggable" TLSv1.3 groups
