@@ -19,6 +19,11 @@
 #  define strcasecmp _stricmp
 # endif
 
+# ifdef OPENSSL_SYS_VMS
+#  define strtoumax strtoull
+#  define strtoimax strtoll
+# endif
+
 typedef struct {
     OSSL_PARAM *param;
     int32_t i32;
