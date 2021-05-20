@@ -130,20 +130,6 @@ void __TERM__cleanup(void) {
     cleanup();
 }
 
-#elif defined(__cplusplus)
-/*
- * FIPS 140-2 IG 9.10 Note 7 recommends that C++ be used for the DEP if
- * nothing else is available.
- */
-static class FIPS_DEP {
-public:
-    FIPS_DEP() {
-        init();
-    }
-    ~FIPS_DEP() {
-        cleanup();
-    }
-} DEP;
 #else
 /*
  * This build does not support any kind of DEP.
