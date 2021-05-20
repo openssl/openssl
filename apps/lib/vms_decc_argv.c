@@ -55,7 +55,7 @@ char **copy_argv(int *argc, char *argv[])
      * symbol name clashes in test programs that would otherwise get them
      * when linking with all of libapps.a.  See comment in test/build.info.
      */
-    newargv = malloc(sizeof(*newargv) * (count + 1), "argv copy");
+    newargv = OPENSSL_malloc(sizeof(*newargv) * (count + 1));
     if (newargv == NULL)
         return NULL;
 
