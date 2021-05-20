@@ -10,7 +10,6 @@
 #include <stdlib.h>
 #include <openssl/crypto.h>
 #include "platform.h"            /* for copy_argv() */
-#include "apps.h"                /* for app_malloc() */
 
 char **newargv = NULL;
 
@@ -51,7 +50,13 @@ char **copy_argv(int *argc, char *argv[])
 
     cleanup_argv();
 
-    newargv = app_malloc(sizeof(*newargv) * (count + 1), "argv copy");
+    /*
+     * We purposefully use OPENSSL_malloc() rather than app_malloc() here,
+     * to avoid symbol name clashes in test programs that would otherwise
+     * get them when linking with all of libapps.a.
+     * See comment in test/build.info.
+     */
+    newargv = OPENSSL_malloc(sizeof(*newargv) * (count + 1));
     if (newargv == NULL)
         return NULL;
 
