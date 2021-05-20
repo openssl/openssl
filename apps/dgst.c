@@ -330,6 +330,8 @@ int dgst_main(int argc, char **argv)
     }
 
     if (hmac_key != NULL) {
+        if (md == NULL)
+            md = (EVP_MD *)EVP_sha256();
         sigkey = EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, impl,
                                               (unsigned char *)hmac_key,
                                               strlen(hmac_key));
@@ -337,8 +339,6 @@ int dgst_main(int argc, char **argv)
             goto end;
     }
 
-    if (md == NULL)
-        md = (EVP_MD *)EVP_sha256();
     if (sigkey != NULL) {
         EVP_MD_CTX *mctx = NULL;
         EVP_PKEY_CTX *pctx = NULL;
@@ -371,6 +371,8 @@ int dgst_main(int argc, char **argv)
     }
     /* we use md as a filter, reading from 'in' */
     else {
+        if (md == NULL)
+            md = (EVP_MD *)EVP_sha256();
         EVP_MD_CTX *mctx = NULL;
         if (!BIO_get_md_ctx(bmd, &mctx)) {
             BIO_printf(bio_err, "Error getting context\n");
