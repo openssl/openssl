@@ -370,10 +370,10 @@ static int test_cipher_reinit(int test_id)
         || !TEST_true(EVP_EncryptInit_ex(ctx, NULL, NULL, key, iv))
         || !TEST_int_eq(EVP_EncryptUpdate(ctx, out2, &out2_len, in, sizeof(in)),
                         ccm ? 0 : 1)
-        || !TEST_true(EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, iv))
-        || (!no_null_key &&
-           !TEST_int_eq(EVP_EncryptUpdate(ctx, out3, &out3_len, in, sizeof(in)),
-                        ccm || siv ? 0 : 1)))
+        || (!no_null_key
+        && (!TEST_true(EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, iv))
+        || !TEST_int_eq(EVP_EncryptUpdate(ctx, out3, &out3_len, in, sizeof(in)),
+                        ccm || siv ? 0 : 1))))
         goto err;
 
     if (ccm == 0) {
