@@ -33,5 +33,24 @@ if ($no_fips) {
        "running test_threads with FIPS");
 }
 
-$ENV{OPENSSL_CONF} = $config_path;
+# Merge the configuration files into one filtering the contents so the failure
+# condition is reproducable.  A working FIPS configuration without the install
+# status is required.
+
+open CFGBASE, '<', $config_path;
+open CFGINC, '<', bldtop_file('/providers/fipsmodule.cnf');
+open CFGOUT, '>', 'thread.cnf';
+
+while (<CFGBASE>) {
+    print CFGOUT unless m/^[.]include/;
+}
+close CFGBASE;
+print CFGOUT "\n\n";
+while (<CFGINC>) {
+    print CFGOUT unless m/^install-status/;
+}
+close CFGINC;
+close CFGOUT;
+
+$ENV{OPENSSL_CONF} = 'thread.cnf';
 ok(run(test(["threadstest_fips"])), "running test_threads_fips");
