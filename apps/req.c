@@ -1592,7 +1592,11 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
             return NULL;
         }
 
-        gctx = EVP_PKEY_CTX_new(param, keygen_engine);
+        if (keygen_engine != NULL)
+            gctx = EVP_PKEY_CTX_new(param, keygen_engine);
+        else
+            gctx = EVP_PKEY_CTX_new_from_pkey(app_get0_libctx(),
+                                              param, app_get0_propq());
         keylen = EVP_PKEY_bits(param);
         EVP_PKEY_free(param);
     } else {
@@ -1623,9 +1627,9 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
         size_t bits = keylen;
 
         params[0] =
-            OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_RSA_BITS, &bits);
+            OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_BITS, &bits);
         if (EVP_PKEY_CTX_set_params(gctx, params) <= 0) {
-            BIO_puts(bio_err, "Error setting RSA keysize\n");
+            BIO_puts(bio_err, "Error setting keysize\n");
             EVP_PKEY_CTX_free(gctx);
             return NULL;
         }
