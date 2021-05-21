@@ -207,6 +207,22 @@ MISC_SCRIPTS={-
                                && $unified_info{attributes}->{scripts}->{$_}->{misc} }
                         @{$unified_info{scripts}}))
 -}
+IMAGEDOCS1={-
+        join(" \\\n" . ' ' x 10,
+             fill_lines(" ", $COLUMNS - 10,
+                        @{$unified_info{imagedocs}->{man1}})) -}
+IMAGEDOCS3={-
+        join(" \\\n" . ' ' x 10,
+             fill_lines(" ", $COLUMNS - 10,
+                        @{$unified_info{imagedocs}->{man3}})) -}
+IMAGEDOCS5={-
+        join(" \\\n" . ' ' x 10,
+             fill_lines(" ", $COLUMNS - 10,
+                        @{$unified_info{imagedocs}->{man5}})) -}
+IMAGEDOCS7={-
+        join(" \\\n" . ' ' x 10,
+             fill_lines(" ", $COLUMNS - 10,
+                        @{$unified_info{imagedocs}->{man7}})) -}
 HTMLDOCS1={-
         join(" \\\n" . ' ' x 10,
              fill_lines(" ", $COLUMNS - 10,
@@ -998,7 +1014,7 @@ uninstall_man_docs: build_man_docs
 		$(PERL) $(SRCDIR)/util/write-man-symlinks uninstall $(SRCDIR)/doc/man7 $(BLDDIR)/doc/man7 $${fn}$(MANSUFFIX) $(DESTDIR)$(MANDIR)/man7; \
 	done
 
-install_html_docs: build_html_docs
+install_html_docs: install_image_docs build_html_docs
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(HTMLDIR)/man1
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(HTMLDIR)/man3
@@ -1034,7 +1050,7 @@ install_html_docs: build_html_docs
 		chmod 644 $(DESTDIR)$(HTMLDIR)/man7/$$fn; \
 	done
 
-uninstall_html_docs:
+uninstall_html_docs: uninstall_image_docs
 	@$(ECHO) "*** Uninstalling HTML manpages"
 	@set -e; for x in dummy $(HTMLDOCS1); do \
 		if [ "$$x" = "dummy" ]; then continue; fi; \
@@ -1059,6 +1075,66 @@ uninstall_html_docs:
 		fn=`basename $$x`; \
 		$(ECHO) "$(RM) $(DESTDIR)$(HTMLDIR)/man7/$$fn"; \
 		$(RM) $(DESTDIR)$(HTMLDIR)/man7/$$fn; \
+	done
+
+install_image_docs:
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(HTMLDIR)/man1/img
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(HTMLDIR)/man3/img
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(HTMLDIR)/man5/img
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(HTMLDIR)/man7/img
+	@set -e; for x in dummy $(IMAGEDOCS1); do \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
+		fn=`basename $$x`; \
+		$(ECHO) "install $$x -> $(DESTDIR)$(HTMLDIR)/man1/img/$$fn"; \
+		cp $(SRCDIR)/$$x $(DESTDIR)$(HTMLDIR)/man1/img/$$fn; \
+		chmod 644 $(DESTDIR)$(HTMLDIR)/man1/img/$$fn; \
+	done
+	@set -e; for x in dummy $(IMAGEDOCS3); do \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
+		fn=`basename $$x`; \
+		$(ECHO) "install $$x -> $(DESTDIR)$(HTMLDIR)/man3/img/$$fn"; \
+		cp $(SRCDIR)/$$x $(DESTDIR)$(HTMLDIR)/man3/img/$$fn; \
+		chmod 644 $(DESTDIR)$(HTMLDIR)/man3/img/$$fn; \
+	done
+	@set -e; for x in dummy $(IMAGEDOCS5); do \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
+		fn=`basename $$x`; \
+		$(ECHO) "install $$x -> $(DESTDIR)$(HTMLDIR)/man5/img/$$fn"; \
+		cp $(SRCDIR)/$$x $(DESTDIR)$(HTMLDIR)/man5/img/$$fn; \
+		chmod 644 $(DESTDIR)$(HTMLDIR)/man5/img/$$fn; \
+	done
+	@set -e; for x in dummy $(IMAGEDOCS7); do \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
+		fn=`basename $$x`; \
+		$(ECHO) "install $$x -> $(DESTDIR)$(HTMLDIR)/man7/img/$$fn"; \
+		cp $(SRCDIR)/$$x $(DESTDIR)$(HTMLDIR)/man7/img/$$fn; \
+		chmod 644 $(DESTDIR)$(HTMLDIR)/man7/img/$$fn; \
+	done
+
+uninstall_image_docs:
+	@set -e; for x in dummy $(IMAGEDOCS1); do \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
+		fn=`basename $$x`; \
+		$(ECHO) "$(RM) $(DESTDIR)$(HTMLDIR)/man1/img/$$fn"; \
+		$(RM) $(DESTDIR)$(HTMLDIR)/man1/img/$$fn; \
+	done
+	@set -e; for x in dummy $(IMAGEDOCS3); do \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
+		fn=`basename $$x`; \
+		$(ECHO) "$(RM) $(DESTDIR)$(HTMLDIR)/man3/img/$$fn"; \
+		$(RM) $(DESTDIR)$(HTMLDIR)/man3/img/$$fn; \
+	done
+	@set -e; for x in dummy $(IMAGEDOCS5); do \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
+		fn=`basename $$x`; \
+		$(ECHO) "$(RM) $(DESTDIR)$(HTMLDIR)/man5/img/$$fn"; \
+		$(RM) $(DESTDIR)$(HTMLDIR)/man5/img/$$fn; \
+	done
+	@set -e; for x in dummy $(IMAGEDOCS7); do \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
+		fn=`basename $$x`; \
+		$(ECHO) "$(RM) $(DESTDIR)$(HTMLDIR)/man7/img/$$fn"; \
+		$(RM) $(DESTDIR)$(HTMLDIR)/man7/img/$$fn; \
 	done
 
 # Developer targets (note: these are only available on Unix) #########
