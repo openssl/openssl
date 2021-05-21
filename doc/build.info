@@ -346,6 +346,7 @@ DEPEND[html/man1/tsget.html]=man1/tsget.pod
 GENERATE[html/man1/tsget.html]=man1/tsget.pod
 DEPEND[man/man1/tsget.1]=man1/tsget.pod
 GENERATE[man/man1/tsget.1]=man1/tsget.pod
+IMAGEDOCS[man1]=
 HTMLDOCS[man1]=html/man1/CA.pl.html \
 html/man1/openssl-asn1parse.html \
 html/man1/openssl-ca.html \
@@ -2818,6 +2819,7 @@ DEPEND[html/man3/s2i_ASN1_IA5STRING.html]=man3/s2i_ASN1_IA5STRING.pod
 GENERATE[html/man3/s2i_ASN1_IA5STRING.html]=man3/s2i_ASN1_IA5STRING.pod
 DEPEND[man/man3/s2i_ASN1_IA5STRING.3]=man3/s2i_ASN1_IA5STRING.pod
 GENERATE[man/man3/s2i_ASN1_IA5STRING.3]=man3/s2i_ASN1_IA5STRING.pod
+IMAGEDOCS[man3]=
 HTMLDOCS[man3]=html/man3/ADMISSIONS.html \
 html/man3/ASN1_INTEGER_get_int64.html \
 html/man3/ASN1_INTEGER_new.html \
@@ -4006,6 +4008,7 @@ DEPEND[html/man5/x509v3_config.html]=man5/x509v3_config.pod
 GENERATE[html/man5/x509v3_config.html]=man5/x509v3_config.pod
 DEPEND[man/man5/x509v3_config.5]=man5/x509v3_config.pod
 GENERATE[man/man5/x509v3_config.5]=man5/x509v3_config.pod
+IMAGEDOCS[man5]=
 HTMLDOCS[man5]=html/man5/config.html \
 html/man5/fips_config.html \
 html/man5/x509v3_config.html
@@ -4434,6 +4437,9 @@ DEPEND[html/man7/x509.html]=man7/x509.pod
 GENERATE[html/man7/x509.html]=man7/x509.pod
 DEPEND[man/man7/x509.7]=man7/x509.pod
 GENERATE[man/man7/x509.7]=man7/x509.pod
+IMAGEDOCS[man7]=man7/img/kdf.png \
+man7/img/mac.png \
+man7/img/rand.png
 HTMLDOCS[man7]=html/man7/EVP_ASYM_CIPHER-SM2.html \
 html/man7/EVP_KDF-HKDF.html \
 html/man7/EVP_KDF-KB.html \
