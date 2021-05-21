@@ -28,7 +28,7 @@ B<openssl> B<s_time>
 {- $OpenSSL::safe::opt_name_synopsis -}
 [B<-cafile> I<file>]
 {- $OpenSSL::safe::opt_trust_synopsis -}
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_p_synopsis -}
 
 =head1 DESCRIPTION
 
@@ -121,7 +121,7 @@ can establish.
 
 {- $OpenSSL::safe::opt_trust_item -}
 
-{- $OpenSSL::safe::opt_provider_item -}
+{- $OpenSSL::safe::opt_p_item -}
 
 =item B<-cafile> I<file>
 

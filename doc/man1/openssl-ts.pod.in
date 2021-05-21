@@ -23,7 +23,7 @@ B<-query>
 [B<-out> I<request.tsq>]
 [B<-text>]
 {- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_p_synopsis -}
 
 B<openssl> B<ts>
 B<-reply>
@@ -41,7 +41,7 @@ B<-reply>
 [B<-out> I<response.tsr>]
 [B<-token_out>]
 [B<-text>]
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_p_synopsis -}
 
 B<openssl> B<ts>
 B<-verify>
@@ -55,7 +55,7 @@ B<-verify>
 [B<-CApath> I<dir>]
 [B<-CAstore> I<uri>]
 {- $OpenSSL::safe::opt_v_synopsis -}
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_p_synopsis -}
 
 =head1 DESCRIPTION
 
@@ -295,7 +295,7 @@ instead of DER. (Optional)
 
 {- $OpenSSL::safe::opt_engine_item -}
 
-{- $OpenSSL::safe::opt_provider_item -}
+{- $OpenSSL::safe::opt_p_item -}
 
 =back
 

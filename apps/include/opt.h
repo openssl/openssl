@@ -277,25 +277,25 @@
 /*
  * Provider options.
  */
-# define OPT_PROV_ENUM \
-        OPT_PROV__FIRST=1600, \
-        OPT_PROV_PROVIDER, OPT_PROV_PROVIDER_PATH, OPT_PROV_PROPQUERY, \
-        OPT_PROV__LAST
+# define OPT_P_ENUM \
+        OPT_P__FIRST=1600, \
+        OPT_P_PROVIDER, OPT_P_PROVIDER_PATH, OPT_P_PROPQUERY, \
+        OPT_P__LAST
 
 # define OPT_CONFIG_OPTION \
         { "config", OPT_CONFIG, '<', "Load a configuration file (this may load modules)" }
 
-# define OPT_PROV_OPTIONS \
+# define OPT_P_OPTIONS \
         OPT_SECTION("Provider"), \
-        { "provider-path", OPT_PROV_PROVIDER_PATH, 's', "Provider load path (must be before 'provider' argument if required)" }, \
-        { "provider", OPT_PROV_PROVIDER, 's', "Provider to load (can be specified multiple times)" }, \
-        { "propquery", OPT_PROV_PROPQUERY, 's', "Property query used when fetching algorithms" }
+        { "provider-path", OPT_P_PROVIDER_PATH, 's', "Provider load path (must be before 'provider' argument if required)" }, \
+        { "provider", OPT_P_PROVIDER, 's', "Provider to load (can be specified multiple times)" }, \
+        { "propquery", OPT_P_PROPQUERY, 's', "Property query used when fetching algorithms" }
 
-# define OPT_PROV_CASES \
-        OPT_PROV__FIRST: case OPT_PROV__LAST: break; \
-        case OPT_PROV_PROVIDER: \
-        case OPT_PROV_PROVIDER_PATH: \
-        case OPT_PROV_PROPQUERY
+# define OPT_P_CASES \
+        OPT_P__FIRST: case OPT_P__LAST: break; \
+        case OPT_P_PROVIDER: \
+        case OPT_P_PROVIDER_PATH: \
+        case OPT_P_PROPQUERY
 
 /*
  * Option parsing.

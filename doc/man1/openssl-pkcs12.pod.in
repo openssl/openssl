@@ -19,7 +19,7 @@ B<openssl> B<pkcs12>
 [B<-nocerts>]
 [B<-noout>]
 [B<-legacy>]
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_p_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 
 PKCS#12 input (parsing) options:
@@ -149,7 +149,7 @@ AES_256_CBC with PBKDF2 for key derivation.
 
 {- $OpenSSL::safe::opt_engine_item -}
 
-{- $OpenSSL::safe::opt_provider_item -}
+{- $OpenSSL::safe::opt_p_item -}
 
 {- $OpenSSL::safe::opt_r_item -}
 

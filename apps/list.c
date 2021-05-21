@@ -1441,7 +1441,7 @@ typedef enum HELPLIST_CHOICE {
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     OPT_ENGINES, 
 #endif
-    OPT_PROV_ENUM
+    OPT_P_ENUM
 } HELPLIST_CHOICE;
 
 const OPTIONS list_options[] = {
@@ -1504,7 +1504,7 @@ const OPTIONS list_options[] = {
     {"objects", OPT_OBJECTS, '-',
      "List built in objects (OID<->name mappings)"},
 
-    OPT_PROV_OPTIONS,
+    OPT_P_OPTIONS,
     {NULL}
 };
 
@@ -1638,7 +1638,7 @@ opthelp:
         case OPT_SELECT_NAME:
             select_name = opt_arg();
             break;
-        case OPT_PROV_CASES:
+        case OPT_P_CASES:
             if (!opt_provider(o))
                 return 1;
             break;

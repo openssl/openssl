@@ -32,7 +32,7 @@ typedef enum OPTION_choice {
     OPT_UNTRUSTED, OPT_TRUSTED, OPT_CRLFILE, OPT_CRL_DOWNLOAD, OPT_SHOW_CHAIN,
     OPT_V_ENUM, OPT_NAMEOPT, OPT_VFYOPT,
     OPT_VERBOSE,
-    OPT_PROV_ENUM
+    OPT_P_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS verify_options[] = {
@@ -69,7 +69,7 @@ const OPTIONS verify_options[] = {
     OPT_V_OPTIONS,
     {"vfyopt", OPT_VFYOPT, 's', "Verification parameter in n:v form"},
 
-    OPT_PROV_OPTIONS,
+    OPT_P_OPTIONS,
 
     OPT_PARAMETERS(),
     {"cert", 0, 0, "Certificate(s) to verify (optional; stdin used otherwise)"},
@@ -187,7 +187,7 @@ int verify_main(int argc, char **argv)
         case OPT_VERBOSE:
             v_verbose = 1;
             break;
-        case OPT_PROV_CASES:
+        case OPT_P_CASES:
             if (!opt_provider(o))
                 goto end;
             break;

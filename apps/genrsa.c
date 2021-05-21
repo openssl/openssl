@@ -38,7 +38,7 @@ typedef enum OPTION_choice {
 #endif
     OPT_F4, OPT_ENGINE,
     OPT_OUT, OPT_PASSOUT, OPT_CIPHER, OPT_PRIMES, OPT_VERBOSE,
-    OPT_R_ENUM, OPT_PROV_ENUM, OPT_TRADITIONAL
+    OPT_R_ENUM, OPT_P_ENUM, OPT_TRADITIONAL
 } OPTION_CHOICE;
 
 const OPTIONS genrsa_options[] = {
@@ -67,7 +67,7 @@ const OPTIONS genrsa_options[] = {
     {"", OPT_CIPHER, '-', "Encrypt the output with any supported cipher"},
 
     OPT_R_OPTIONS,
-    OPT_PROV_OPTIONS,
+    OPT_P_OPTIONS,
 
     OPT_PARAMETERS(),
     {"numbits", 0, 0, "Size of key in bits"},
@@ -123,7 +123,7 @@ opthelp:
             if (!opt_rand(o))
                 goto end;
             break;
-        case OPT_PROV_CASES:
+        case OPT_P_CASES:
             if (!opt_provider(o))
                 goto end;
             break;

@@ -467,7 +467,7 @@ typedef enum OPTION_choice {
     OPT_DANE_TLSA_RRDATA, OPT_DANE_EE_NO_NAME,
     OPT_ENABLE_PHA,
     OPT_SCTP_LABEL_BUG,
-    OPT_R_ENUM, OPT_PROV_ENUM
+    OPT_R_ENUM, OPT_P_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS s_client_options[] = {
@@ -687,7 +687,7 @@ const OPTIONS s_client_options[] = {
     {"verifyCAstore", OPT_VERIFYCASTORE, ':',
      "CA store URI for certificate verification"},
     OPT_X_OPTIONS,
-    OPT_PROV_OPTIONS,
+    OPT_P_OPTIONS,
 
     OPT_PARAMETERS(),
     {"host:port", 0, 0, "Where to connect; same as -connect option"},
@@ -1100,7 +1100,7 @@ int s_client_main(int argc, char **argv)
             if (!opt_rand(o))
                 goto end;
             break;
-        case OPT_PROV_CASES:
+        case OPT_P_CASES:
             if (!opt_provider(o))
                 goto end;
             break;

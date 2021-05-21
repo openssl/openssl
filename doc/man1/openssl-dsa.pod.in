@@ -39,7 +39,7 @@ B<openssl> B<dsa>
 [B<-pvk-strong>]
 [B<-pvk-weak>]
 [B<-pvk-none>]
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_p_synopsis -}
 
 =head1 DESCRIPTION
 
@@ -138,7 +138,7 @@ Don't enforce PVK encoding.
 
 {- $OpenSSL::safe::opt_engine_item -}
 
-{- $OpenSSL::safe::opt_provider_item -}
+{- $OpenSSL::safe::opt_p_item -}
 
 =back
 

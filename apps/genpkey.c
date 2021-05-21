@@ -26,7 +26,7 @@ typedef enum OPTION_choice {
     OPT_ENGINE, OPT_OUTFORM, OPT_OUT, OPT_PASS, OPT_PARAMFILE,
     OPT_ALGORITHM, OPT_PKEYOPT, OPT_GENPARAM, OPT_TEXT, OPT_CIPHER,
     OPT_QUIET, OPT_CONFIG,
-    OPT_PROV_ENUM
+    OPT_P_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS genpkey_options[] = {
@@ -50,7 +50,7 @@ const OPTIONS genpkey_options[] = {
     {"text", OPT_TEXT, '-', "Print the in text"},
     {"", OPT_CIPHER, '-', "Cipher to use to encrypt the key"},
 
-    OPT_PROV_OPTIONS,
+    OPT_P_OPTIONS,
 
     /* This is deliberately last. */
     {OPT_HELP_STR, 1, 1,
@@ -131,7 +131,7 @@ int genpkey_main(int argc, char **argv)
             if (conf == NULL)
                 goto end;
             break;
-        case OPT_PROV_CASES:
+        case OPT_P_CASES:
             if (!opt_provider(o))
                 goto end;
             break;

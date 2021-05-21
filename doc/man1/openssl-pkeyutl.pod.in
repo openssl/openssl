@@ -36,7 +36,7 @@ B<openssl> B<pkeyutl>
 [B<-asn1parse>]
 {- $OpenSSL::safe::opt_engine_synopsis -}[B<-engine_impl>]
 {- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_p_synopsis -}
 {- $OpenSSL::safe::opt_config_synopsis -}
 
 =head1 DESCRIPTION
@@ -189,7 +189,7 @@ engine I<id> for crypto operations.
 
 {- $OpenSSL::safe::opt_r_item -}
 
-{- $OpenSSL::safe::opt_provider_item -}
+{- $OpenSSL::safe::opt_p_item -}
 
 {- $OpenSSL::safe::opt_config_item -}
 

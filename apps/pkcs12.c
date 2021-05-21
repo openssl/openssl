@@ -67,7 +67,7 @@ typedef enum OPTION_choice {
     OPT_NAME, OPT_CSP, OPT_CANAME,
     OPT_IN, OPT_OUT, OPT_PASSIN, OPT_PASSOUT, OPT_PASSWORD, OPT_CAPATH,
     OPT_CAFILE, OPT_CASTORE, OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOCASTORE, OPT_ENGINE,
-    OPT_R_ENUM, OPT_PROV_ENUM,
+    OPT_R_ENUM, OPT_P_ENUM,
 #ifndef OPENSSL_NO_DES
     OPT_LEGACY_ALG
 #endif
@@ -97,7 +97,7 @@ const OPTIONS pkcs12_options[] = {
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
-    OPT_PROV_OPTIONS,
+    OPT_P_OPTIONS,
     OPT_R_OPTIONS,
 
     OPT_SECTION("PKCS#12 import (parsing PKCS#12)"),
@@ -348,7 +348,7 @@ int pkcs12_main(int argc, char **argv)
             use_legacy = 1;
             break;
 #endif
-        case OPT_PROV_CASES:
+        case OPT_P_CASES:
             if (!opt_provider(o))
                 goto end;
             break;

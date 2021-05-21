@@ -39,7 +39,7 @@ B<openssl> B<enc>|I<cipher>
 [B<-debug>]
 [B<-none>]
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_p_synopsis -}
 
 B<openssl> I<cipher> [B<...>]
 
@@ -201,7 +201,7 @@ Use NULL cipher (no encryption or decryption of input).
 
 {- $OpenSSL::safe::opt_r_item -}
 
-{- $OpenSSL::safe::opt_provider_item -}
+{- $OpenSSL::safe::opt_p_item -}
 
 {- $OpenSSL::safe::opt_engine_item -}
 

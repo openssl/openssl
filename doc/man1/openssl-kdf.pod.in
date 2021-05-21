@@ -16,7 +16,7 @@ B<openssl kdf>
 [B<-keylen> I<num>]
 [B<-out> I<filename>]
 [B<-binary>]
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_p_synopsis -}
 I<kdf_name>
 
 =head1 DESCRIPTION
@@ -110,7 +110,7 @@ This option is identical to the B<-mac> option.
 
 =back
 
-{- $OpenSSL::safe::opt_provider_item -}
+{- $OpenSSL::safe::opt_p_item -}
 
 =item I<kdf_name>
 

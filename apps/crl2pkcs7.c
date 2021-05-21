@@ -24,7 +24,7 @@ static int add_certs_from_file(STACK_OF(X509) *stack, char *certfile);
 typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_NOCRL, OPT_CERTFILE,
-    OPT_PROV_ENUM
+    OPT_P_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS crl2pkcs7_options[] = {
@@ -42,7 +42,7 @@ const OPTIONS crl2pkcs7_options[] = {
     {"out", OPT_OUT, '>', "Output file"},
     {"outform", OPT_OUTFORM, 'F', "Output format - DER or PEM"},
 
-    OPT_PROV_OPTIONS,
+    OPT_P_OPTIONS,
     {NULL}
 };
 
@@ -96,7 +96,7 @@ int crl2pkcs7_main(int argc, char **argv)
             if (!sk_OPENSSL_STRING_push(certflst, opt_arg()))
                 goto end;
             break;
-        case OPT_PROV_CASES:
+        case OPT_P_CASES:
             if (!opt_provider(o))
                 goto end;
             break;

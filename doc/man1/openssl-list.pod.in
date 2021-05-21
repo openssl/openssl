@@ -43,7 +43,7 @@ B<openssl list>
 -}[B<-disabled>]
 [B<-objects>]
 [B<-options> I<command>]
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_p_synopsis -}
 
 =head1 DESCRIPTION
 
@@ -199,7 +199,7 @@ of what type of parameter it takes, if any.
 This is an internal option, used for checking that the documentation
 is complete.
 
-{- $OpenSSL::safe::opt_provider_item -}
+{- $OpenSSL::safe::opt_p_item -}
 
 =back
 

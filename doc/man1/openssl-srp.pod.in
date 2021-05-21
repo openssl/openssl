@@ -21,7 +21,7 @@ B<openssl srp>
 [B<-passin> I<arg>]
 [B<-passout> I<arg>]
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_p_synopsis -}
 {- $OpenSSL::safe::opt_config_synopsis -}
 [I<user> ...]
 
@@ -94,7 +94,7 @@ see L<openssl-passphrase-options(1)>.
 
 {- $OpenSSL::safe::opt_r_item -}
 
-{- $OpenSSL::safe::opt_provider_item -}
+{- $OpenSSL::safe::opt_p_item -}
 
 {- $OpenSSL::safe::opt_config_item -}
 
