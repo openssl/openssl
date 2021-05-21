@@ -1945,11 +1945,13 @@ static int test_emptyikm_HKDF(void)
 static int test_X509_PUBKEY_inplace(void)
 {
     int ret = 0;
-    X509_PUBKEY *xp = NULL;
+    X509_PUBKEY *xp = X509_PUBKEY_new_ex(testctx, testpropq);
     const unsigned char *p = kExampleECPubKeyDER;
     size_t input_len = sizeof(kExampleECPubKeyDER);
 
-    if (!TEST_ptr(xp = d2i_X509_PUBKEY(NULL, &p, input_len)))
+    if (!TEST_ptr(xp))
+        goto done;
+    if (!TEST_ptr(d2i_X509_PUBKEY(&xp, &p, input_len)))
         goto done;
 
     if (!TEST_ptr(X509_PUBKEY_get0(xp)))
@@ -1978,7 +1980,9 @@ static int test_X509_PUBKEY_dup(void)
     const unsigned char *p = kExampleECPubKeyDER;
     size_t input_len = sizeof(kExampleECPubKeyDER);
 
-    if (!TEST_ptr(xp = d2i_X509_PUBKEY(NULL, &p, input_len))
+    xp = X509_PUBKEY_new_ex(testctx, testpropq);
+    if (!TEST_ptr(xp)
+            || !TEST_ptr(d2i_X509_PUBKEY(&xp, &p, input_len))
             || !TEST_ptr(xq = X509_PUBKEY_dup(xp))
             || !TEST_ptr_ne(xp, xq))
         goto done;
