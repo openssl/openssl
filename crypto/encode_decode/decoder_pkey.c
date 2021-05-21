@@ -232,41 +232,57 @@ static void collect_decoder(OSSL_DECODER *decoder, void *arg)
     if (data->error_occurred)
         return;
 
-    data->error_occurred = 1;         /* Assume the worst */
-    if (data->names == NULL)
+    if (data->names == NULL) {
+        data->error_occurred = 1;
+        return;
+    }
+
+    /*
+     * Either the caller didn't give a selection, or if they did,
+     * the decoder must tell us if it supports that selection to
+     * be accepted.  If the decoder doesn't have |does_selection|,
+     * it's seen as taking anything.
+     */
+    if (decoder->does_selection != NULL
+            && !decoder->does_selection(provctx, data->ctx->selection))
         return;
 
     end_i = sk_OPENSSL_CSTRING_num(data->names);
     for (i = 0; i < end_i; i++) {
         const char *name = sk_OPENSSL_CSTRING_value(data->names, i);
-        void *decoderctx = NULL;
-        OSSL_DECODER_INSTANCE *di = NULL;
 
-        if (OSSL_DECODER_is_a(decoder, name)
-            /*
-             * Either the caller didn't give a selection, or if they did,
-             * the decoder must tell us if it supports that selection to
-             * be accepted.  If the decoder doesn't have |does_selection|,
-             * it's seen as taking anything.
-             */
-            && (decoder->does_selection == NULL
-                || decoder->does_selection(provctx, data->ctx->selection))
-            && (decoderctx = decoder->newctx(provctx)) != NULL
-            && (di = ossl_decoder_instance_new(decoder, decoderctx)) != NULL) {
-            /* If successful so far, don't free these directly */
-            decoderctx = NULL;
+        if (OSSL_DECODER_is_a(decoder, name)) {
+            void *decoderctx = NULL;
+            OSSL_DECODER_INSTANCE *di = NULL;
 
-            if (decoder_check_input_structure(data->ctx, di)
-                && ossl_decoder_ctx_add_decoder_inst(data->ctx, di))
-                di = NULL;      /* If successfully added, don't free it */
+            if ((decoderctx = decoder->newctx(provctx)) == NULL) {
+                data->error_occurred = 1;
+                return;
+            }
+            if ((di = ossl_decoder_instance_new(decoder, decoderctx)) == NULL) {
+                decoder->freectx(decoderctx);
+                data->error_occurred = 1;
+                return;
+            }
+
+            if (!decoder_check_input_structure(data->ctx, di)) {
+                ossl_decoder_instance_free(di);
+                /* Not a fatal error. Just return */
+                return;
+            }
+            if (!ossl_decoder_ctx_add_decoder_inst(data->ctx, di)) {
+                ossl_decoder_instance_free(di);
+                data->error_occurred = 1;
+                return;
+            }
+
+            /* Success */
+            return;
         }
-
-        /* Free what can be freed */
-        ossl_decoder_instance_free(di);
-        decoder->freectx(decoderctx);
     }
 
-    data->error_occurred = 0;         /* All is good now */
+    /* Decoder not suitable - but not a fatal error */
+    data->error_occurred = 0;
 }
 
 int ossl_decoder_ctx_setup_for_pkey(OSSL_DECODER_CTX *ctx,
