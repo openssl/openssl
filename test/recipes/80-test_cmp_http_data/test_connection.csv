@@ -5,7 +5,7 @@ expected,description, -section,val, -server,val, -proxy,val, -no_proxy,val, -tls
 TBD,Domain name, -section,, -server,_SERVER_CN:_SERVER_PORT,,,,,,,,,,,,,,
 TBD,IP address, -section,, -server,_SERVER_IP:_SERVER_PORT,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,
-1,wrong server, -section,, -server,example.com:_SERVER_PORT,,,,,BLANK,,,, -msg_timeout,1,BLANK,,BLANK,
+1,wrong server, -section,, -server,xn--rksmrgs-5wao1o.example.com:_SERVER_PORT,,,,,BLANK,,,, -msg_timeout,1,BLANK,,BLANK,
 1,wrong server port, -section,, -server,_SERVER_HOST:99,,,,,BLANK,,,, -msg_timeout,1,BLANK,,BLANK,
 1,server default port, -section,, -server,_SERVER_HOST,,,,,BLANK,,,, -msg_timeout,1,BLANK,,BLANK,
 1,server port out of range, -section,, -server,_SERVER_HOST:65536,,,,,BLANK,,,,BLANK,,BLANK,,BLANK,
