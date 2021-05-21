@@ -634,6 +634,8 @@ typedef int ASN1_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 typedef int ASN1_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
                         const ASN1_ITEM *it, int tag, int aclass);
 typedef int ASN1_ex_new_func(ASN1_VALUE **pval, const ASN1_ITEM *it);
+typedef int ASN1_ex_new_ex_func(ASN1_VALUE **pval, const ASN1_ITEM *it,
+                                OSSL_LIB_CTX *libctx, const char *propq);
 typedef void ASN1_ex_free_func(ASN1_VALUE **pval, const ASN1_ITEM *it);
 
 typedef int ASN1_ex_print_func(BIO *out, const ASN1_VALUE **pval,
@@ -657,6 +659,7 @@ typedef struct ASN1_EXTERN_FUNCS_st {
     ASN1_ex_d2i *asn1_ex_d2i;
     ASN1_ex_i2d *asn1_ex_i2d;
     ASN1_ex_print_func *asn1_ex_print;
+    ASN1_ex_new_ex_func *asn1_ex_new_ex;
 } ASN1_EXTERN_FUNCS;
 
 typedef struct ASN1_PRIMITIVE_FUNCS_st {
