@@ -201,11 +201,11 @@ int crl_main(int argc, char **argv)
         case OPT_MD:
             digestname = opt_unknown();
             break;
-#ifndef OPENSSL_NO_ENGINE
         case OPT_ENGINE:
+#ifndef OPENSSL_NO_ENGINE
             e = setup_engine(opt_arg(), 0);
-            break;
 #endif
+            break;
         case OPT_PROV_CASES:
             if (!opt_provider(o))
                 goto end;
