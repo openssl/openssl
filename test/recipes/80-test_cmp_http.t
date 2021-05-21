@@ -128,19 +128,19 @@ sub test_cmp_http {
     my $i = shift;
     my $title = shift;
     my $params = shift;
-    my $expected_exit = shift;
+    my $expected_result = shift;
     my $path_app = bldtop_dir($app);
     $params = [ '-server', "127.0.0.1:$server_port", @$params ]
         unless grep { $_ eq '-server' } @$params;
 
     with({ exit_checker => sub {
-        my $actual_exit = shift;
-        my $OK = $actual_exit == $expected_exit;
+        my $actual_result = shift == 0;
+        my $OK = $actual_result == $expected_result;
         if ($faillog && !$OK) {
             my $quote_spc_empty = sub { $_ eq "" ? '""' : $_ =~ m/ / ? '"'.$_.'"' : $_ };
             my $invocation = "$path_app ".join(' ', map $quote_spc_empty->($_), @$params);
             print $faillog "$server_name $aspect \"$title\" ($i/$n)".
-                " expected=$expected_exit actual=$actual_exit\n";
+                " expected=$expected_result actual=$actual_result\n";
             print $faillog "$invocation\n\n";
         }
         return $OK; } },
