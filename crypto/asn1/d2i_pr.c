@@ -120,7 +120,7 @@ d2i_PrivateKey_legacy(int keytype, EVP_PKEY **a, const unsigned char **pp,
             EVP_PKEY_free(ret);
             ret = tmp;
             ERR_pop_to_mark();
-            if (EVP_PKEY_type(keytype) != EVP_PKEY_base_id(ret))
+            if (EVP_PKEY_type(keytype) != EVP_PKEY_get_base_id(ret))
                 goto err;
         } else {
             ERR_clear_last_mark();

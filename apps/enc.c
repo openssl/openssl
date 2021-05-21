@@ -300,11 +300,11 @@ int enc_main(int argc, char **argv)
         if (!opt_cipher(ciphername, &cipher))
             goto opthelp;
     }
-    if (cipher && EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) {
+    if (cipher && EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) {
         BIO_printf(bio_err, "%s: AEAD ciphers not supported\n", prog);
         goto end;
     }
-    if (cipher && (EVP_CIPHER_mode(cipher) == EVP_CIPH_XTS_MODE)) {
+    if (cipher && (EVP_CIPHER_get_mode(cipher) == EVP_CIPH_XTS_MODE)) {
         BIO_printf(bio_err, "%s XTS ciphers not supported\n", prog);
         goto end;
     }
@@ -360,7 +360,7 @@ int enc_main(int argc, char **argv)
                 char prompt[200];
 
                 BIO_snprintf(prompt, sizeof(prompt), "enter %s %s password:",
-                        EVP_CIPHER_name(cipher),
+                        EVP_CIPHER_get0_name(cipher),
                         (enc) ? "encryption" : "decryption");
                 strbuf[0] = '\0';
                 i = EVP_read_pw_string((char *)strbuf, SIZE, prompt, enc);
@@ -492,8 +492,8 @@ int enc_main(int argc, char **argv)
                 * concatenated into a temporary buffer
                 */
                 unsigned char tmpkeyiv[EVP_MAX_KEY_LENGTH + EVP_MAX_IV_LENGTH];
-                int iklen = EVP_CIPHER_key_length(cipher);
-                int ivlen = EVP_CIPHER_iv_length(cipher);
+                int iklen = EVP_CIPHER_get_key_length(cipher);
+                int ivlen = EVP_CIPHER_get_iv_length(cipher);
                 /* not needed if HASH_UPDATE() is fixed : */
                 int islen = (sptr != NULL ? sizeof(salt) : 0);
                 if (!PKCS5_PBKDF2_HMAC(str, str_len, sptr, islen,
@@ -525,7 +525,7 @@ int enc_main(int argc, char **argv)
                 OPENSSL_cleanse(str, str_len);
         }
         if (hiv != NULL) {
-            int siz = EVP_CIPHER_iv_length(cipher);
+            int siz = EVP_CIPHER_get_iv_length(cipher);
             if (siz == 0) {
                 BIO_printf(bio_err, "warning: iv not used by this cipher\n");
             } else if (!set_hex(hiv, iv, siz)) {
@@ -534,7 +534,7 @@ int enc_main(int argc, char **argv)
             }
         }
         if ((hiv == NULL) && (str == NULL)
-            && EVP_CIPHER_iv_length(cipher) != 0) {
+            && EVP_CIPHER_get_iv_length(cipher) != 0) {
             /*
              * No IV was explicitly set and no IV was generated.
              * Hence the IV is undefined, making correct decryption impossible.
@@ -543,7 +543,7 @@ int enc_main(int argc, char **argv)
             goto end;
         }
         if (hkey != NULL) {
-            if (!set_hex(hkey, key, EVP_CIPHER_key_length(cipher))) {
+            if (!set_hex(hkey, key, EVP_CIPHER_get_key_length(cipher))) {
                 BIO_printf(bio_err, "invalid hex key value\n");
                 goto end;
             }
@@ -563,7 +563,7 @@ int enc_main(int argc, char **argv)
 
         if (!EVP_CipherInit_ex(ctx, cipher, e, NULL, NULL, enc)) {
             BIO_printf(bio_err, "Error setting cipher %s\n",
-                       EVP_CIPHER_name(cipher));
+                       EVP_CIPHER_get0_name(cipher));
             ERR_print_errors(bio_err);
             goto end;
         }
@@ -573,7 +573,7 @@ int enc_main(int argc, char **argv)
 
         if (!EVP_CipherInit_ex(ctx, NULL, NULL, key, iv, enc)) {
             BIO_printf(bio_err, "Error setting cipher %s\n",
-                       EVP_CIPHER_name(cipher));
+                       EVP_CIPHER_get0_name(cipher));
             ERR_print_errors(bio_err);
             goto end;
         }
@@ -590,15 +590,15 @@ int enc_main(int argc, char **argv)
                     printf("%02X", salt[i]);
                 printf("\n");
             }
-            if (EVP_CIPHER_key_length(cipher) > 0) {
+            if (EVP_CIPHER_get_key_length(cipher) > 0) {
                 printf("key=");
-                for (i = 0; i < EVP_CIPHER_key_length(cipher); i++)
+                for (i = 0; i < EVP_CIPHER_get_key_length(cipher); i++)
                     printf("%02X", key[i]);
                 printf("\n");
             }
-            if (EVP_CIPHER_iv_length(cipher) > 0) {
+            if (EVP_CIPHER_get_iv_length(cipher) > 0) {
                 printf("iv =");
-                for (i = 0; i < EVP_CIPHER_iv_length(cipher); i++)
+                for (i = 0; i < EVP_CIPHER_get_iv_length(cipher); i++)
                     printf("%02X", iv[i]);
                 printf("\n");
             }
@@ -661,8 +661,8 @@ static void show_ciphers(const OBJ_NAME *name, void *arg)
     /* Filter out ciphers that we cannot use */
     cipher = EVP_get_cipherbyname(name->name);
     if (cipher == NULL ||
-            (EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0 ||
-            EVP_CIPHER_mode(cipher) == EVP_CIPH_XTS_MODE)
+            (EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0 ||
+            EVP_CIPHER_get_mode(cipher) == EVP_CIPH_XTS_MODE)
         return;
 
     BIO_printf(dec->bio, "-%-25s", name->name);

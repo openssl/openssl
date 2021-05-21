@@ -26,7 +26,7 @@ EVP_PKEY *d2i_KeyParams(int type, EVP_PKEY **a, const unsigned char **pp,
     } else
         ret = *a;
 
-    if (type != EVP_PKEY_id(ret) && !EVP_PKEY_set_type(ret, type))
+    if (type != EVP_PKEY_get_id(ret) && !EVP_PKEY_set_type(ret, type))
         goto err;
 
     if (ret->ameth == NULL || ret->ameth->param_decode == NULL) {

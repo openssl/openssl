@@ -28,7 +28,7 @@ int ossl_pkcs5_pbkdf2_hmac_ex(const char *pass, int passlen,
     int rv = 1, mode = 1;
     EVP_KDF *kdf;
     EVP_KDF_CTX *kctx;
-    const char *mdname = EVP_MD_name(digest);
+    const char *mdname = EVP_MD_get0_name(digest);
     OSSL_PARAM params[6], *p = params;
 
     /* Keep documented behaviour. */
@@ -193,7 +193,7 @@ int PKCS5_v2_PBKDF2_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass,
         ERR_raise(ERR_LIB_EVP, EVP_R_NO_CIPHER_SET);
         goto err;
     }
-    keylen = EVP_CIPHER_CTX_key_length(ctx);
+    keylen = EVP_CIPHER_CTX_get_key_length(ctx);
     OPENSSL_assert(keylen <= sizeof(key));
 
     /* Decode parameter */
@@ -205,7 +205,7 @@ int PKCS5_v2_PBKDF2_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass,
         goto err;
     }
 
-    t = EVP_CIPHER_CTX_key_length(ctx);
+    t = EVP_CIPHER_CTX_get_key_length(ctx);
     if (t < 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_KEY_LENGTH);
         goto err;

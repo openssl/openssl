@@ -166,7 +166,7 @@ int EVP_KEYEXCH_up_ref(EVP_KEYEXCH *exchange)
     return 1;
 }
 
-OSSL_PROVIDER *EVP_KEYEXCH_provider(const EVP_KEYEXCH *exchange)
+OSSL_PROVIDER *EVP_KEYEXCH_get0_provider(const EVP_KEYEXCH *exchange)
 {
     return exchange->prov;
 }
@@ -264,8 +264,8 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
     exchange = EVP_KEYEXCH_fetch(ctx->libctx, supported_exch, ctx->propquery);
 
     if (exchange == NULL
-        || (EVP_KEYMGMT_provider(ctx->keymgmt)
-            != EVP_KEYEXCH_provider(exchange))) {
+        || (EVP_KEYMGMT_get0_provider(ctx->keymgmt)
+            != EVP_KEYEXCH_get0_provider(exchange))) {
         /*
          * We don't need to free ctx->keymgmt here, as it's not necessarily
          * tied to this operation.  It will be freed by EVP_PKEY_CTX_free().
@@ -464,17 +464,17 @@ int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *pkeylen)
         return ctx->pmeth->derive(ctx, key, pkeylen);
 }
 
-int EVP_KEYEXCH_number(const EVP_KEYEXCH *keyexch)
+int EVP_KEYEXCH_get_number(const EVP_KEYEXCH *keyexch)
 {
     return keyexch->name_id;
 }
 
-const char *EVP_KEYEXCH_name(const EVP_KEYEXCH *keyexch)
+const char *EVP_KEYEXCH_get0_name(const EVP_KEYEXCH *keyexch)
 {
     return keyexch->type_name;
 }
 
-const char *EVP_KEYEXCH_description(const EVP_KEYEXCH *keyexch)
+const char *EVP_KEYEXCH_get0_description(const EVP_KEYEXCH *keyexch)
 {
     return keyexch->description;
 }
@@ -511,7 +511,7 @@ const OSSL_PARAM *EVP_KEYEXCH_gettable_ctx_params(const EVP_KEYEXCH *keyexch)
     if (keyexch == NULL || keyexch->gettable_ctx_params == NULL)
         return NULL;
 
-    provctx = ossl_provider_ctx(EVP_KEYEXCH_provider(keyexch));
+    provctx = ossl_provider_ctx(EVP_KEYEXCH_get0_provider(keyexch));
     return keyexch->gettable_ctx_params(NULL, provctx);
 }
 
@@ -521,6 +521,6 @@ const OSSL_PARAM *EVP_KEYEXCH_settable_ctx_params(const EVP_KEYEXCH *keyexch)
 
     if (keyexch == NULL || keyexch->settable_ctx_params == NULL)
         return NULL;
-    provctx = ossl_provider_ctx(EVP_KEYEXCH_provider(keyexch));
+    provctx = ossl_provider_ctx(EVP_KEYEXCH_get0_provider(keyexch));
     return keyexch->settable_ctx_params(NULL, provctx);
 }

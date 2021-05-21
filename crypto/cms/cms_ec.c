@@ -182,14 +182,14 @@ static int ecdh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
         goto err;
     OBJ_obj2txt(name, sizeof(name), kekalg->algorithm, 0);
     kekcipher = EVP_CIPHER_fetch(pctx->libctx, name, pctx->propquery);
-    if (kekcipher == NULL || EVP_CIPHER_mode(kekcipher) != EVP_CIPH_WRAP_MODE)
+    if (kekcipher == NULL || EVP_CIPHER_get_mode(kekcipher) != EVP_CIPH_WRAP_MODE)
         goto err;
     if (!EVP_EncryptInit_ex(kekctx, kekcipher, NULL, NULL, NULL))
         goto err;
     if (EVP_CIPHER_asn1_to_param(kekctx, kekalg->parameter) <= 0)
         goto err;
 
-    keylen = EVP_CIPHER_CTX_key_length(kekctx);
+    keylen = EVP_CIPHER_CTX_get_key_length(kekctx);
     if (EVP_PKEY_CTX_set_ecdh_kdf_outlen(pctx, keylen) <= 0)
         goto err;
 
@@ -313,12 +313,12 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
 
     /* Lookup NID for KDF+cofactor+digest */
 
-    if (!OBJ_find_sigid_by_algs(&kdf_nid, EVP_MD_type(kdf_md), ecdh_nid))
+    if (!OBJ_find_sigid_by_algs(&kdf_nid, EVP_MD_get_type(kdf_md), ecdh_nid))
         goto err;
     /* Get wrap NID */
     ctx = CMS_RecipientInfo_kari_get0_ctx(ri);
-    wrap_nid = EVP_CIPHER_CTX_type(ctx);
-    keylen = EVP_CIPHER_CTX_key_length(ctx);
+    wrap_nid = EVP_CIPHER_CTX_get_type(ctx);
+    keylen = EVP_CIPHER_CTX_get_key_length(ctx);
 
     /* Package wrap algorithm in an AlgorithmIdentifier */
 
@@ -400,7 +400,7 @@ int ossl_cms_ecdsa_dsa_sign(CMS_SignerInfo *si, int verify)
         hnid = OBJ_obj2nid(alg1->algorithm);
         if (hnid == NID_undef)
             return -1;
-        if (!OBJ_find_sigid_by_algs(&snid, hnid, EVP_PKEY_id(pkey)))
+        if (!OBJ_find_sigid_by_algs(&snid, hnid, EVP_PKEY_get_id(pkey)))
             return -1;
         X509_ALGOR_set0(alg2, OBJ_nid2obj(snid), V_ASN1_UNDEF, 0);
     }

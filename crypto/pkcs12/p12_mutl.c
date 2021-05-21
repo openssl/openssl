@@ -117,8 +117,8 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
         ERR_raise(ERR_LIB_PKCS12, PKCS12_R_UNKNOWN_DIGEST_ALGORITHM);
         return 0;
     }
-    md_size = EVP_MD_size(md);
-    md_nid = EVP_MD_type(md);
+    md_size = EVP_MD_get_size(md);
+    md_nid = EVP_MD_get_type(md);
     if (md_size < 0)
         goto err;
     if ((md_nid == NID_id_GostR3411_94
@@ -267,7 +267,7 @@ int PKCS12_setup_mac(PKCS12 *p12, int iter, unsigned char *salt, int saltlen,
     } else
         memcpy(p12->mac->salt->data, salt, saltlen);
     X509_SIG_getm(p12->mac->dinfo, &macalg, NULL);
-    if (!X509_ALGOR_set0(macalg, OBJ_nid2obj(EVP_MD_type(md_type)),
+    if (!X509_ALGOR_set0(macalg, OBJ_nid2obj(EVP_MD_get_type(md_type)),
                          V_ASN1_NULL, NULL)) {
         ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
         return 0;

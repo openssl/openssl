@@ -175,7 +175,7 @@ void EVP_MAC_free(EVP_MAC *mac)
     evp_mac_free(mac);
 }
 
-const OSSL_PROVIDER *EVP_MAC_provider(const EVP_MAC *mac)
+const OSSL_PROVIDER *EVP_MAC_get0_provider(const EVP_MAC *mac)
 {
     return mac->prov;
 }
@@ -184,7 +184,7 @@ const OSSL_PARAM *EVP_MAC_gettable_params(const EVP_MAC *mac)
 {
     if (mac->gettable_params == NULL)
         return NULL;
-    return mac->gettable_params(ossl_provider_ctx(EVP_MAC_provider(mac)));
+    return mac->gettable_params(ossl_provider_ctx(EVP_MAC_get0_provider(mac)));
 }
 
 const OSSL_PARAM *EVP_MAC_gettable_ctx_params(const EVP_MAC *mac)
@@ -193,7 +193,7 @@ const OSSL_PARAM *EVP_MAC_gettable_ctx_params(const EVP_MAC *mac)
 
     if (mac->gettable_ctx_params == NULL)
         return NULL;
-    alg = ossl_provider_ctx(EVP_MAC_provider(mac));
+    alg = ossl_provider_ctx(EVP_MAC_get0_provider(mac));
     return mac->gettable_ctx_params(NULL, alg);
 }
 
@@ -203,7 +203,7 @@ const OSSL_PARAM *EVP_MAC_settable_ctx_params(const EVP_MAC *mac)
 
     if (mac->settable_ctx_params == NULL)
         return NULL;
-    alg = ossl_provider_ctx(EVP_MAC_provider(mac));
+    alg = ossl_provider_ctx(EVP_MAC_get0_provider(mac));
     return mac->settable_ctx_params(NULL, alg);
 }
 
@@ -213,7 +213,7 @@ const OSSL_PARAM *EVP_MAC_CTX_gettable_params(EVP_MAC_CTX *ctx)
 
     if (ctx->meth->gettable_ctx_params == NULL)
         return NULL;
-    alg = ossl_provider_ctx(EVP_MAC_provider(ctx->meth));
+    alg = ossl_provider_ctx(EVP_MAC_get0_provider(ctx->meth));
     return ctx->meth->gettable_ctx_params(ctx->algctx, alg);
 }
 
@@ -223,7 +223,7 @@ const OSSL_PARAM *EVP_MAC_CTX_settable_params(EVP_MAC_CTX *ctx)
 
     if (ctx->meth->settable_ctx_params == NULL)
         return NULL;
-    alg = ossl_provider_ctx(EVP_MAC_provider(ctx->meth));
+    alg = ossl_provider_ctx(EVP_MAC_get0_provider(ctx->meth));
     return ctx->meth->settable_ctx_params(ctx->algctx, alg);
 }
 

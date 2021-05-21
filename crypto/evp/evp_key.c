@@ -85,8 +85,8 @@ int EVP_BytesToKey(const EVP_CIPHER *type, const EVP_MD *md,
     int niv, nkey, addmd = 0;
     unsigned int mds = 0, i;
     int rv = 0;
-    nkey = EVP_CIPHER_key_length(type);
-    niv = EVP_CIPHER_iv_length(type);
+    nkey = EVP_CIPHER_get_key_length(type);
+    niv = EVP_CIPHER_get_iv_length(type);
     OPENSSL_assert(nkey <= EVP_MAX_KEY_LENGTH);
     OPENSSL_assert(niv <= EVP_MAX_IV_LENGTH);
 
@@ -146,7 +146,7 @@ int EVP_BytesToKey(const EVP_CIPHER *type, const EVP_MD *md,
         if ((nkey == 0) && (niv == 0))
             break;
     }
-    rv = EVP_CIPHER_key_length(type);
+    rv = EVP_CIPHER_get_key_length(type);
  err:
     EVP_MD_CTX_free(c);
     OPENSSL_cleanse(md_buf, sizeof(md_buf));

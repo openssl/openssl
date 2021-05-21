@@ -937,7 +937,7 @@ EXT_RETURN tls_construct_ctos_padding(SSL *s, WPACKET *pkt,
              * length.
              */
             hlen +=  PSK_PRE_BINDER_OVERHEAD + s->session->ext.ticklen
-                     + EVP_MD_size(md);
+                     + EVP_MD_get_size(md);
         }
     }
 
@@ -1068,7 +1068,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
          */
         agems += s->session->ext.tick_age_add;
 
-        reshashsize = EVP_MD_size(mdres);
+        reshashsize = EVP_MD_get_size(mdres);
         s->ext.tick_identity++;
         dores = 1;
     }
@@ -1097,7 +1097,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
             return EXT_RETURN_FAIL;
         }
 
-        pskhashsize = EVP_MD_size(mdpsk);
+        pskhashsize = EVP_MD_get_size(mdpsk);
     }
 
     /* Create the extension, but skip over the binder for now */

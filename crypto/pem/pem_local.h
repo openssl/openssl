@@ -62,7 +62,7 @@
     }                                                                   \
     if (enc != NULL) {                                                  \
         ret = 0;                                                        \
-        if (OSSL_ENCODER_CTX_set_cipher(ctx, EVP_CIPHER_name(enc),      \
+        if (OSSL_ENCODER_CTX_set_cipher(ctx, EVP_CIPHER_get0_name(enc), \
                                         NULL)) {                        \
             ret = 1;                                                    \
             if (kstr != NULL                                            \

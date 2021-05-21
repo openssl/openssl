@@ -72,7 +72,7 @@ IMPLEMENT_BLOCK_CIPHER(sm4, ks, sm4, EVP_SM4_KEY, NID_sm4,
 static int sm4_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                           const unsigned char *in, size_t len)
 {
-    unsigned int num = EVP_CIPHER_CTX_num(ctx);
+    unsigned int num = EVP_CIPHER_CTX_get_num(ctx);
     EVP_SM4_KEY *dat = EVP_C_DATA(EVP_SM4_KEY, ctx);
 
     CRYPTO_ctr128_encrypt(in, out, len, &dat->ks, ctx->iv,

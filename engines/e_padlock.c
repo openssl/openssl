@@ -324,13 +324,13 @@ padlock_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
     struct padlock_cipher_data *cdata = ALIGNED_CIPHER_DATA(ctx);
     size_t chunk;
 
-    if ((chunk = EVP_CIPHER_CTX_num(ctx))) {   /* borrow chunk variable */
+    if ((chunk = EVP_CIPHER_CTX_get_num(ctx))) {   /* borrow chunk variable */
         unsigned char *ivp = EVP_CIPHER_CTX_iv_noconst(ctx);
 
         if (chunk >= AES_BLOCK_SIZE)
             return 0;           /* bogus value */
 
-        if (EVP_CIPHER_CTX_encrypting(ctx))
+        if (EVP_CIPHER_CTX_is_encrypting(ctx))
             while (chunk < AES_BLOCK_SIZE && nbytes != 0) {
                 ivp[chunk] = *(out_arg++) = *(in_arg++) ^ ivp[chunk];
                 chunk++, nbytes--;
@@ -398,7 +398,7 @@ padlock_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
     /*
      * ctx->num is maintained in byte-oriented modes, such as CFB and OFB...
      */
-    if ((chunk = EVP_CIPHER_CTX_num(ctx))) {   /* borrow chunk variable */
+    if ((chunk = EVP_CIPHER_CTX_get_num(ctx))) {   /* borrow chunk variable */
         unsigned char *ivp = EVP_CIPHER_CTX_iv_noconst(ctx);
 
         if (chunk >= AES_BLOCK_SIZE)
@@ -457,7 +457,7 @@ padlock_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
                    const unsigned char *in_arg, size_t nbytes)
 {
     struct padlock_cipher_data *cdata = ALIGNED_CIPHER_DATA(ctx);
-    unsigned int num = EVP_CIPHER_CTX_num(ctx);
+    unsigned int num = EVP_CIPHER_CTX_get_num(ctx);
 
     CRYPTO_ctr128_encrypt_ctr32(in_arg, out_arg, nbytes,
                                 cdata, EVP_CIPHER_CTX_iv_noconst(ctx),
@@ -600,8 +600,8 @@ padlock_aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                      const unsigned char *iv, int enc)
 {
     struct padlock_cipher_data *cdata;
-    int key_len = EVP_CIPHER_CTX_key_length(ctx) * 8;
-    unsigned long mode = EVP_CIPHER_CTX_mode(ctx);
+    int key_len = EVP_CIPHER_CTX_get_key_length(ctx) * 8;
+    unsigned long mode = EVP_CIPHER_CTX_get_mode(ctx);
 
     if (key == NULL)
         return 0;               /* ERROR */
@@ -613,7 +613,7 @@ padlock_aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     if (mode == EVP_CIPH_OFB_MODE || mode == EVP_CIPH_CTR_MODE)
         cdata->cword.b.encdec = 0;
     else
-        cdata->cword.b.encdec = (EVP_CIPHER_CTX_encrypting(ctx) == 0);
+        cdata->cword.b.encdec = (EVP_CIPHER_CTX_is_encrypting(ctx) == 0);
     cdata->cword.b.rounds = 10 + (key_len - 128) / 32;
     cdata->cword.b.ksize = (key_len - 128) / 64;
 
