@@ -5,15 +5,27 @@ on: [pull_request, push]
 jobs:
   shared:
     runs-on: windows-latest
+    # Run a job for each of the specified target architectures:
+    strategy:
+      matrix:
+        arch:
+          - win64
+          - win32
     steps:
     - uses: actions/checkout@v2
     - uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: ${{ matrix.arch }}
+    - uses: ilammy/setup-nasm@v1
+      with:
+        platform: ${{ matrix.arch }}
     - name: prepare the build directory
       run: mkdir _build
     - name: config
       working-directory: _build
       run: |
-        perl ..\Configure --banner=Configured no-makedepend no-fips VC-WIN64A-masm
+        if ( "${{ matrix.arch }}" -eq "win32" ) { $target = "VC-WIN32" } else { $target = "VC-WIN64A" }
+        perl ..\Configure --banner=Configured no-makedepend no-fips $target
         perl configdata.pm --dump
     - name: build
       working-directory: _build
@@ -32,24 +44,6 @@ jobs:
       working-directory: _build
       run: |
         perl ..\Configure --banner=Configured no-makedepend no-shared no-fips VC-WIN64A-masm
-        perl configdata.pm --dump
-    - name: build
-      working-directory: _build
-      run: nmake
-    - name: test
-      working-directory: _build
-      run: nmake test VERBOSE_FAILURE=yes TESTS=-test_fuzz
-  shared-x86:
-    runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v2
-    - uses: ilammy/msvc-dev-cmd@v1
-    - name: prepare the build directory
-      run: mkdir _build
-    - name: config
-      working-directory: _build
-      run: |
-        perl ..\Configure --banner=Configured no-makedepend no-fips no-asm no-uplink VC-WIN32
         perl configdata.pm --dump
     - name: build
       working-directory: _build
