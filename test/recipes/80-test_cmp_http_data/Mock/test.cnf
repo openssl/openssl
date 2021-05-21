@@ -135,6 +135,6 @@ subjectAltName = @alt_names_3
 
 [alt_names_3]
 DNS.0 = localhost
-DNS.1 = example.com
-DNS.2 = example2.com
-DNS__3 = example3.com
+DNS.1 = xn--rksmrgs-5wao1o.example.com
+DNS.2 = xn--rkmacka-5wa.example.com
+DNS__3 = xn--rksallad-0za.example.com
