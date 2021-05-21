@@ -24,13 +24,16 @@ typedef enum OPTION_choice {
     OPT_ISSUER, OPT_LASTUPDATE, OPT_NEXTUPDATE, OPT_FINGERPRINT,
     OPT_CRLNUMBER, OPT_BADSIG, OPT_GENDELTA, OPT_CAPATH, OPT_CAFILE, OPT_CASTORE,
     OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOCASTORE, OPT_VERIFY, OPT_TEXT, OPT_HASH,
-    OPT_HASH_OLD, OPT_NOOUT, OPT_NAMEOPT, OPT_MD, OPT_PROV_ENUM
+    OPT_HASH_OLD, OPT_NOOUT, OPT_NAMEOPT, OPT_MD, OPT_PROV_ENUM, OPT_ENGINE
 } OPTION_CHOICE;
 
 const OPTIONS crl_options[] = {
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
     {"verify", OPT_VERIFY, '-', "Verify CRL signature"},
+#ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+#endif
 
     OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input file - default stdin"},
@@ -94,6 +97,9 @@ int crl_main(int argc, char **argv)
     int i;
 #ifndef OPENSSL_NO_MD5
     int hash_old = 0;
+#endif
+#ifndef OPENSSL_NO_ENGINE
+    ENGINE *e = NULL;
 #endif
 
     prog = opt_init(argc, argv, crl_options);
@@ -195,6 +201,11 @@ int crl_main(int argc, char **argv)
         case OPT_MD:
             digestname = opt_unknown();
             break;
+#ifndef OPENSSL_NO_ENGINE
+        case OPT_ENGINE:
+            e = setup_engine(opt_arg(), 0);
+            break;
+#endif
         case OPT_PROV_CASES:
             if (!opt_provider(o))
                 goto end;
@@ -385,5 +396,8 @@ int crl_main(int argc, char **argv)
     X509_CRL_free(x);
     X509_STORE_CTX_free(ctx);
     X509_STORE_free(store);
+#ifndef OPENSSL_NO_ENGINE
+    release_engine(e);
+#endif
     return ret;
 }
