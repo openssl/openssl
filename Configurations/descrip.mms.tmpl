@@ -997,7 +997,7 @@ EOF
           $gen0 = platform->bin($gen0);
           return <<"EOF";
 $args{src} : $gen0 $deps
-	PIPE $gen0$gen_args > \$@
+	PIPE MCR $gen0$gen_args > \$@
 EOF
       } else {
           #
