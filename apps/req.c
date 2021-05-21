@@ -637,6 +637,7 @@ int req_main(int argc, char **argv)
 
         if (newkey_len < MIN_KEY_LENGTH
             && (EVP_PKEY_CTX_is_a(genctx, "RSA")
+                || EVP_PKEY_CTX_is_a(genctx, "RSA-PSS")
                 || EVP_PKEY_CTX_is_a(genctx, "DSA"))) {
             BIO_printf(bio_err, "Private key length is too short,\n");
             BIO_printf(bio_err, "it needs to be at least %d bits, not %ld.\n",
@@ -644,8 +645,9 @@ int req_main(int argc, char **argv)
             goto end;
         }
 
-        if (EVP_PKEY_CTX_is_a(genctx, "RSA")
-                && newkey_len > OPENSSL_RSA_MAX_MODULUS_BITS)
+        if (newkey_len > OPENSSL_RSA_MAX_MODULUS_BITS
+            && (EVP_PKEY_CTX_is_a(genctx, "RSA")
+                || EVP_PKEY_CTX_is_a(genctx, "RSA-PSS")))
             BIO_printf(bio_err,
                        "Warning: It is not recommended to use more than %d bit for RSA keys.\n"
                        "         Your key size is %ld! Larger key size may behave not as expected.\n",
