@@ -442,8 +442,6 @@ static int try_cert(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
 {
     if (data->object_type == OSSL_OBJECT_UNKNOWN
         || data->object_type == OSSL_OBJECT_CERT) {
-        X509 *cert;
-
         /*
          * In most cases, we can try to interpret the serialized
          * data as a trusted cert (X509 + X509_AUX) and fall back
@@ -454,31 +452,32 @@ static int try_cert(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
          * or not (0).
          */
         int ignore_trusted = 1;
+        X509 *cert = X509_new_ex(libctx, propq);
+
+        if (cert == NULL)
+            return 0;
 
         /* If we have a data type, it should be a PEM name */
         if (data->data_type != NULL
             && (strcasecmp(data->data_type, PEM_STRING_X509_TRUSTED) == 0))
             ignore_trusted = 0;
 
-        cert = d2i_X509_AUX(NULL, (const unsigned char **)&data->octet_data,
-                            data->octet_data_size);
-        if (cert == NULL && ignore_trusted)
-            cert = d2i_X509(NULL, (const unsigned char **)&data->octet_data,
-                            data->octet_data_size);
-
-        if (cert != NULL)
-            /* We determined the object type */
-            data->object_type = OSSL_OBJECT_CERT;
-
-        if (cert != NULL && !ossl_x509_set0_libctx(cert, libctx, propq)) {
+        if (d2i_X509_AUX(&cert, (const unsigned char **)&data->octet_data,
+                         data->octet_data_size) == NULL
+            && (!ignore_trusted
+                || d2i_X509(&cert, (const unsigned char **)&data->octet_data,
+                            data->octet_data_size) == NULL)) {
             X509_free(cert);
             cert = NULL;
         }
 
-        if (cert != NULL)
+        if (cert != NULL) {
+            /* We determined the object type */
+            data->object_type = OSSL_OBJECT_CERT;
             *v = OSSL_STORE_INFO_new_CERT(cert);
-        if (*v == NULL)
-            X509_free(cert);
+            if (*v == NULL)
+                X509_free(cert);
+        }
     }
 
     return 1;
