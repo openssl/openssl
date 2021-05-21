@@ -1956,6 +1956,7 @@ if ($builder eq "unified") {
         my %defines = ();
         my %depends = ();
         my %generate = ();
+        my %imagedocs = ();
         my %htmldocs = ();
         my %mandocs = ();
 
@@ -2167,6 +2168,11 @@ if ($builder eq "unified") {
             qr/^\s* SCRIPTS ${attribs_re} \s* =  ${value_re} $/x
             => sub { $push_to->(\@scripts, undef,
                                 \$attributes{scripts}, $+{ATTRIBS},
+                                tokenize($expand_variables->($+{VALUE})))
+                         if !@skip || $skip[$#skip] > 0; },
+            qr/^\s* IMAGEDOCS ${index_re} = ${value_re} $/x
+            => sub { $push_to->(\%imagedocs, $expand_variables->($+{INDEX}),
+                                undef, undef,
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
             qr/^\s* HTMLDOCS ${index_re} = ${value_re} $/x
@@ -2463,6 +2469,13 @@ EOF
             }
         }
 
+        foreach my $section (keys %imagedocs) {
+            foreach (@{$imagedocs{$section}}) {
+                my $imagedocs = cleanfile($buildd, $_, $blddir);
+                $unified_info{imagedocs}->{$section}->{$imagedocs} = 1;
+            }
+        }
+
         foreach my $section (keys %htmldocs) {
             foreach (@{$htmldocs{$section}}) {
                 my $htmldocs = cleanfile($buildd, $_, $blddir);
@@ -2704,7 +2717,7 @@ EOF
     }
     # Two level structures
     foreach my $l1 (("sources", "shared_sources", "ldadd", "depends",
-                     "htmldocs", "mandocs")) {
+                     "imagedocs", "htmldocs", "mandocs")) {
         foreach my $l2 (sort keys %{$unified_info{$l1}}) {
             my @items =
                 sort
@@ -2751,7 +2764,9 @@ EOF
                      "dso" => [ @{$unified_info{modules}} ],
                      "bin" => [ @{$unified_info{programs}} ],
                      "script" => [ @{$unified_info{scripts}} ],
-                     "docs" => [ (map { @{$unified_info{htmldocs}->{$_} // []} }
+                     "docs" => [ (map { @{$unified_info{imagedocs}->{$_} // []} }
+                                  keys %{$unified_info{imagedocs} // {}}),
+                                 (map { @{$unified_info{htmldocs}->{$_} // []} }
                                   keys %{$unified_info{htmldocs} // {}}),
                                  (map { @{$unified_info{mandocs}->{$_} // []} }
                                   keys %{$unified_info{mandocs} // {}}) ] );
