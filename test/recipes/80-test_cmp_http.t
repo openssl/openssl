@@ -128,19 +128,19 @@ sub test_cmp_http {
     my $i = shift;
     my $title = shift;
     my $params = shift;
-    my $expected_exit = shift;
+    my $expected_result = shift;
     my $path_app = bldtop_dir($app);
     $params = [ '-server', "127.0.0.1:$server_port", @$params ]
         unless grep { $_ eq '-server' } @$params;
 
     with({ exit_checker => sub {
-        my $actual_exit = shift;
-        my $OK = $actual_exit == $expected_exit;
+        my $actual_result = shift == 0;
+        my $OK = $actual_result == $expected_result;
         if ($faillog && !$OK) {
             my $quote_spc_empty = sub { $_ eq "" ? '""' : $_ =~ m/ / ? '"'.$_.'"' : $_ };
             my $invocation = "$path_app ".join(' ', map $quote_spc_empty->($_), @$params);
             print $faillog "$server_name $aspect \"$title\" ($i/$n)".
-                " expected=$expected_exit actual=$actual_exit\n";
+                " expected=$expected_result actual=$actual_result\n";
             print $faillog "$invocation\n\n";
         }
         return $OK; } },
@@ -255,13 +255,13 @@ sub load_tests {
         s/^\s+// for (@fields); # remove leading whitespace from elements
         s/\s+$// for (@fields); # remove trailing whitespace from elements
         s/^\"(\".*?\")\"$/$1/ for (@fields); # remove escaping from quotation marks from elements
-        my $expected_exit = $fields[$column];
+        my $expected_result = $fields[$column];
         my $description = 1;
         my $title = $fields[$description];
-        next LOOP if (!defined($expected_exit)
-                      || ($expected_exit ne 0 && $expected_exit ne 1));
+        next LOOP if (!defined($expected_result)
+                      || ($expected_result ne 0 && $expected_result ne 1));
         @fields = grep {$_ ne 'BLANK'} @fields[$description + 1 .. @fields - 1];
-        push @result, [$title, \@fields, $expected_exit];
+        push @result, [$title, \@fields, $expected_result];
     }
     close($data);
     return \@result;
