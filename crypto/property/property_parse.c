@@ -658,11 +658,15 @@ static void put_str(const char *str, char **buf, size_t *remain, size_t *needed)
     }
 }
 
-static void put_num(int val, char **buf, size_t *remain, size_t *needed)
+static void put_num(int64_t val, char **buf, size_t *remain, size_t *needed)
 {
-    int tmpval = val;
+    int64_t tmpval = val;
     size_t len = 1;
 
+    if (tmpval < 0) {
+        len++;
+        tmpval = -tmpval;
+    }
     for (; tmpval > 9; len++, tmpval /= 10);
 
     *needed += len;
@@ -670,7 +674,7 @@ static void put_num(int val, char **buf, size_t *remain, size_t *needed)
     if (*remain == 0)
         return;
 
-    BIO_snprintf(*buf, *remain, "%d", val);
+    BIO_snprintf(*buf, *remain, "%lld", (long long int)val);
     if (*remain < len) {
         *buf += *remain;
         *remain = 0;
