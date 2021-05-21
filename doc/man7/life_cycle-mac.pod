@@ -83,7 +83,7 @@ The usual life-cycle of a MAC is illustrated:
 
 =end man
 
-=for html <img src="mac.png">
+=for html <img src="img/mac.png">
 
 =head2 Formal State Transitions
 
