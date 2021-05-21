@@ -10,6 +10,10 @@
 
 use configdata;
 
+##
+## COMMON OPTIONS HANDLED BY OPT_x_ENUM, ETC.
+##
+
 # Verify options
 $OpenSSL::safe::opt_v_synopsis = ""
 . "[B<-allow_proxy_certs>]\n"
@@ -55,7 +59,6 @@ $OpenSSL::safe::opt_v_item = ""
 . "Set various options of certificate chain verification.\n"
 . "See L<openssl-verification-options(1)/Verification Options> for details.";
 
-
 # Extended validation options.
 $OpenSSL::safe::opt_x_synopsis = ""
 . "[B<-xkey> I<infile>]\n"
@@ -72,15 +75,6 @@ $OpenSSL::safe::opt_x_item = ""
 . "Set extended certificate verification options.\n"
 . "See L<openssl-verification-options(1)/Extended Verification Options> for details.";
 
-# Name output options
-$OpenSSL::safe::opt_name_synopsis = ""
-. "[B<-nameopt> I<option>]";
-$OpenSSL::safe::opt_name_item = ""
-. "=item B<-nameopt> I<option>\n"
-. "\n"
-. "This specifies how the subject or issuer names are displayed.\n"
-. "See L<openssl-namedisplay-options(1)> for details.";
-
 # Random State Options
 $OpenSSL::safe::opt_r_synopsis = ""
 . "[B<-rand> I<files>]\n"
@@ -90,12 +84,12 @@ $OpenSSL::safe::opt_r_item = ""
 . "\n"
 . "See L<openssl(1)/Random State Options> for details.";
 
-# Provider options
-$OpenSSL::safe::opt_provider_synopsis = ""
+# Provider options.
+$OpenSSL::safe::opt_p_synopsis = ""
 . "[B<-provider> I<name>]\n"
 . "[B<-provider-path> I<path>]\n"
 . "[B<-propquery> I<propq>]";
-$OpenSSL::safe::opt_provider_item = ""
+$OpenSSL::safe::opt_p_item = ""
 . "=item B<-provider> I<name>\n"
 . "\n"
 . "=item B<-provider-path> I<path>\n"
@@ -103,6 +97,63 @@ $OpenSSL::safe::opt_provider_item = ""
 . "=item B<-propquery> I<propq>\n"
 . "\n"
 . "See L<openssl(1)/Provider Options>, L<provider(7)>, and L<property(7)>.";
+
+# SSL connection options.
+# TODO # options will probably be re-ordered.
+$OpenSSL::safe::opt_s_synopsis = ""
+. "[B<-bugs>]\n"
+. "[B<-no_comp>]\n"
+. "[B<-comp>]\n"
+. "[B<-no_ticket>]\n"
+. "[B<-serverpref>]\n"
+. "[B<-client_renegotiation>]\n"
+. "[B<-legacy_renegotiation>]\n"
+. "[B<-no_renegotiation>]\n"
+. "[B<-no_resumption_on_reneg>]\n"
+. "[B<-legacy_server_connect>]\n"
+. "[B<-no_legacy_server_connect>]\n"
+. "[B<-no_etm>]\n"
+. "[B<-allow_no_dhe_kex>]\n"
+. "[B<-prioritize_chacha>]\n"
+. "[B<-strict>]\n"
+. "[B<-sigalgs> I<algs>]\n"
+. "[B<-client_sigalgs> I<algs>]\n"
+. "[B<-groups> I<groups>]\n"
+. "[B<-curves> I<curves>]\n"
+. "[B<-named_curve> I<curve>]\n"
+. "[B<-cipher> I<ciphers>]\n"
+. "[B<-ciphersuites> I<1.3ciphers>]\n"
+. "[B<-min_protocol> I<minprot>]\n"
+. "[B<-max_protocol> I<maxprot>]\n"
+. "[B<-record_padding> I<padding>]\n"
+. "[B<-debug_broken_protocol>]\n"
+. "[B<-no_middlebox>]";
+$OpenSSL::safe::opt_s_item = ""
+. "=item B<-bugs>, B<-comp>, B<-no_comp>, B<-no_ticket>, B<-serverpref>,\n"
+. "B<-client_renegotiation>,\n"
+. "B<-legacy_renegotiation>, B<-no_renegotiation>,\n"
+. "B<-no_resumption_on_reneg>,\n"
+. "B<-legacy_server_connect>, B<-no_legacy_server_connect>, B<-no_etm>\n"
+. "B<-allow_no_dhe_kex>, B<-prioritize_chacha>, B<-strict>, B<-sigalgs>\n"
+. "I<algs>, B<-client_sigalgs> I<algs>, B<-groups> I<groups>, B<-curves>\n"
+. "I<curves>, B<-named_curve> I<curve>, B<-cipher> I<ciphers>, B<-ciphersuites>\n"
+. "I<1.3ciphers>, B<-min_protocol> I<minprot>, B<-max_protocol> I<maxprot>,\n"
+. "B<-record_padding> I<padding>, B<-debug_broken_protocol>, B<-no_middlebox>\n"
+. "\n"
+. "See L<SSL_CONF_cmd(3)/SUPPORTED COMMAND LINE COMMANDS> for details.";
+
+##
+## OTHER COMMON OPTIONS
+##
+
+# Name output options
+$OpenSSL::safe::opt_name_synopsis = ""
+. "[B<-nameopt> I<option>]";
+$OpenSSL::safe::opt_name_item = ""
+. "=item B<-nameopt> I<option>\n"
+. "\n"
+. "This specifies how the subject or issuer names are displayed.\n"
+. "See L<openssl-namedisplay-options(1)> for details.";
 
 # Configuration option
 $OpenSSL::safe::opt_config_synopsis = ""
@@ -170,50 +221,6 @@ $OpenSSL::safe::opt_version_item = "\n"
 . "\n"
 . "These specify the use of DTLS instead of TLS.\n"
 . "See L<openssl(1)/TLS Version Options>.";
-
-# SSL connection options.
-# TODO # options will probably be re-ordered.
-$OpenSSL::safe::opt_s_synopsis = ""
-. "[B<-bugs>]\n"
-. "[B<-no_comp>]\n"
-. "[B<-comp>]\n"
-. "[B<-no_ticket>]\n"
-. "[B<-serverpref>]\n"
-. "[B<-client_renegotiation>]\n"
-. "[B<-legacy_renegotiation>]\n"
-. "[B<-no_renegotiation>]\n"
-. "[B<-no_resumption_on_reneg>]\n"
-. "[B<-legacy_server_connect>]\n"
-. "[B<-no_legacy_server_connect>]\n"
-. "[B<-no_etm>]\n"
-. "[B<-allow_no_dhe_kex>]\n"
-. "[B<-prioritize_chacha>]\n"
-. "[B<-strict>]\n"
-. "[B<-sigalgs> I<algs>]\n"
-. "[B<-client_sigalgs> I<algs>]\n"
-. "[B<-groups> I<groups>]\n"
-. "[B<-curves> I<curves>]\n"
-. "[B<-named_curve> I<curve>]\n"
-. "[B<-cipher> I<ciphers>]\n"
-. "[B<-ciphersuites> I<1.3ciphers>]\n"
-. "[B<-min_protocol> I<minprot>]\n"
-. "[B<-max_protocol> I<maxprot>]\n"
-. "[B<-record_padding> I<padding>]\n"
-. "[B<-debug_broken_protocol>]\n"
-. "[B<-no_middlebox>]";
-$OpenSSL::safe::opt_s_item = ""
-. "=item B<-bugs>, B<-comp>, B<-no_comp>, B<-no_ticket>, B<-serverpref>,\n"
-. "B<-client_renegotiation>,\n"
-. "B<-legacy_renegotiation>, B<-no_renegotiation>,\n"
-. "B<-no_resumption_on_reneg>,\n"
-. "B<-legacy_server_connect>, B<-no_legacy_server_connect>, B<-no_etm>\n"
-. "B<-allow_no_dhe_kex>, B<-prioritize_chacha>, B<-strict>, B<-sigalgs>\n"
-. "I<algs>, B<-client_sigalgs> I<algs>, B<-groups> I<groups>, B<-curves>\n"
-. "I<curves>, B<-named_curve> I<curve>, B<-cipher> I<ciphers>, B<-ciphersuites>\n"
-. "I<1.3ciphers>, B<-min_protocol> I<minprot>, B<-max_protocol> I<maxprot>,\n"
-. "B<-record_padding> I<padding>, B<-debug_broken_protocol>, B<-no_middlebox>\n"
-. "\n"
-. "See L<SSL_CONF_cmd(3)/SUPPORTED COMMAND LINE COMMANDS> for details.";
 
 package OpenSSL::safe;
 sub output_do_not_edit_headers {

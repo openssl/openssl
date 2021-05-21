@@ -28,7 +28,7 @@ B<openssl> B<pkcs8>
 [B<-scrypt_r> I<r>]
 [B<-scrypt_p> I<p>]
 {- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_p_synopsis -}
 
 =head1 DESCRIPTION
 
@@ -152,7 +152,7 @@ Sets the scrypt I<N>, I<r> or I<p> parameters.
 
 {- $OpenSSL::safe::opt_engine_item -}
 
-{- $OpenSSL::safe::opt_provider_item -}
+{- $OpenSSL::safe::opt_p_item -}
 
 =back
 

@@ -25,7 +25,7 @@ B<openssl> B<spkac>
 [B<-spksect> I<section>]
 [B<-noout>]
 [B<-verify>]
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_p_synopsis -}
 
 =head1 DESCRIPTION
 
@@ -103,7 +103,7 @@ Verifies the digital signature on the supplied SPKAC.
 
 {- $OpenSSL::safe::opt_engine_item -}
 
-{- $OpenSSL::safe::opt_provider_item -}
+{- $OpenSSL::safe::opt_p_item -}
 
 =back
 

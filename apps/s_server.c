@@ -710,7 +710,7 @@ typedef enum OPTION_choice {
     OPT_S_ENUM,
     OPT_V_ENUM,
     OPT_X_ENUM,
-    OPT_PROV_ENUM
+    OPT_P_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS s_server_options[] = {
@@ -954,7 +954,7 @@ const OPTIONS s_server_options[] = {
     OPT_S_OPTIONS,
     OPT_V_OPTIONS,
     OPT_X_OPTIONS,
-    OPT_PROV_OPTIONS,
+    OPT_P_OPTIONS,
     {NULL}
 };
 
@@ -1538,7 +1538,7 @@ int s_server_main(int argc, char *argv[])
             if (!opt_rand(o))
                 goto end;
             break;
-        case OPT_PROV_CASES:
+        case OPT_P_CASES:
             if (!opt_provider(o))
                 goto end;
             break;

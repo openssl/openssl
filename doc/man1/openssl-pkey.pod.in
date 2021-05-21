@@ -13,7 +13,7 @@ openssl-pkey - public or private key processing command
 
 B<openssl> B<pkey>
 [B<-help>]
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_p_synopsis -}
 [B<-check>]
 [B<-pubcheck>]
 [B<-in> I<filename>|I<uri>]
@@ -49,7 +49,7 @@ Print out a usage message.
 
 {- $OpenSSL::safe::opt_engine_item -}
 
-{- $OpenSSL::safe::opt_provider_item -}
+{- $OpenSSL::safe::opt_p_item -}
 
 =item B<-check>
 

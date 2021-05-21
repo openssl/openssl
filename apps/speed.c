@@ -209,7 +209,7 @@ static int opt_found(const char *name, unsigned int *result,
 typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_ELAPSED, OPT_EVP, OPT_HMAC, OPT_DECRYPT, OPT_ENGINE, OPT_MULTI,
-    OPT_MR, OPT_MB, OPT_MISALIGN, OPT_ASYNCJOBS, OPT_R_ENUM, OPT_PROV_ENUM,
+    OPT_MR, OPT_MB, OPT_MISALIGN, OPT_ASYNCJOBS, OPT_R_ENUM, OPT_P_ENUM,
     OPT_PRIMES, OPT_SECONDS, OPT_BYTES, OPT_AEAD, OPT_CMAC
 } OPTION_CHOICE;
 
@@ -253,7 +253,7 @@ const OPTIONS speed_options[] = {
      "Use specified offset to mis-align buffers"},
 
     OPT_R_OPTIONS,
-    OPT_PROV_OPTIONS,
+    OPT_P_OPTIONS,
 
     OPT_PARAMETERS(),
     {"algorithm", 0, 0, "Algorithm(s) to test (optional; otherwise tests all)"},
@@ -1580,7 +1580,7 @@ int speed_main(int argc, char **argv)
             if (!opt_rand(o))
                 goto end;
             break;
-        case OPT_PROV_CASES:
+        case OPT_P_CASES:
             if (!opt_provider(o))
                 goto end;
             break;

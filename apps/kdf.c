@@ -21,7 +21,7 @@ typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_KDFOPT, OPT_BIN, OPT_KEYLEN, OPT_OUT,
     OPT_CIPHER, OPT_DIGEST, OPT_MAC,
-    OPT_PROV_ENUM
+    OPT_P_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS kdf_options[] = {
@@ -41,7 +41,7 @@ const OPTIONS kdf_options[] = {
     {"binary", OPT_BIN, '-',
         "Output in binary format (default is hexadecimal)"},
 
-    OPT_PROV_OPTIONS,
+    OPT_P_OPTIONS,
 
     OPT_PARAMETERS(),
     {"kdf_name", 0, 0, "Name of the KDF algorithm"},
@@ -125,7 +125,7 @@ opthelp:
             if (mac == NULL)
                 goto opthelp;
             break;
-        case OPT_PROV_CASES:
+        case OPT_P_CASES:
             if (!opt_provider(o))
                 goto err;
             break;

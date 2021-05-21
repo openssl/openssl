@@ -21,7 +21,7 @@ B<openssl dhparam>
 [B<-3>]
 [B<-5>]
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_p_synopsis -}
 [I<numbits>]
 
 =head1 DESCRIPTION
@@ -102,7 +102,7 @@ This option prints out the DH parameters in human readable form.
 
 {- $OpenSSL::safe::opt_r_item -}
 
-{- $OpenSSL::safe::opt_provider_item -}
+{- $OpenSSL::safe::opt_p_item -}
 
 =back
 

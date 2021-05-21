@@ -46,7 +46,7 @@ typedef enum OPTION_choice {
     OPT_VERIFY, OPT_VERIFYRECOVER, OPT_REV, OPT_ENCRYPT, OPT_DECRYPT,
     OPT_DERIVE, OPT_SIGFILE, OPT_INKEY, OPT_PEERKEY, OPT_PASSIN,
     OPT_PEERFORM, OPT_KEYFORM, OPT_PKEYOPT, OPT_PKEYOPT_PASSIN, OPT_KDF,
-    OPT_KDFLEN, OPT_R_ENUM, OPT_PROV_ENUM,
+    OPT_KDFLEN, OPT_R_ENUM, OPT_P_ENUM,
     OPT_CONFIG,
     OPT_RAWIN, OPT_DIGEST
 } OPTION_CHOICE;
@@ -96,7 +96,7 @@ const OPTIONS pkeyutl_options[] = {
     {"kdflen", OPT_KDFLEN, 'p', "KDF algorithm output length"},
 
     OPT_R_OPTIONS,
-    OPT_PROV_OPTIONS,
+    OPT_P_OPTIONS,
     {NULL}
 };
 
@@ -179,7 +179,7 @@ int pkeyutl_main(int argc, char **argv)
             if (conf == NULL)
                 goto end;
             break;
-        case OPT_PROV_CASES:
+        case OPT_P_CASES:
             if (!opt_provider(o))
                 goto end;
             break;

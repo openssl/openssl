@@ -12,7 +12,7 @@ B<openssl> B<nseq>
 [B<-in> I<filename>]
 [B<-out> I<filename>]
 [B<-toseq>]
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_p_synopsis -}
 
 =head1 DESCRIPTION
 
@@ -50,7 +50,7 @@ is the certificates contained in it. With the B<-toseq> option the
 situation is reversed: a Netscape certificate sequence is created from
 a file of certificates.
 
-{- $OpenSSL::safe::opt_provider_item -}
+{- $OpenSSL::safe::opt_p_item -}
 
 =back
 

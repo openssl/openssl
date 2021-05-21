@@ -26,7 +26,7 @@ typedef enum OPTION_choice {
 #endif
     OPT_V2, OPT_V1, OPT_V2PRF, OPT_ITER, OPT_PASSIN, OPT_PASSOUT,
     OPT_TRADITIONAL,
-    OPT_R_ENUM, OPT_PROV_ENUM
+    OPT_R_ENUM, OPT_P_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS pkcs8_options[] = {
@@ -63,7 +63,7 @@ const OPTIONS pkcs8_options[] = {
 #endif
 
     OPT_R_OPTIONS,
-    OPT_PROV_OPTIONS,
+    OPT_P_OPTIONS,
     {NULL}
 };
 
@@ -128,7 +128,7 @@ int pkcs8_main(int argc, char **argv)
             if (!opt_rand(o))
                 goto end;
             break;
-        case OPT_PROV_CASES:
+        case OPT_P_CASES:
             if (!opt_provider(o))
                 goto end;
             break;

@@ -18,7 +18,7 @@ DEFINE_STACK_OF(OSSL_PROVIDER)
 /*
  * See comments in opt_verify for explanation of this.
  */
-enum prov_range { OPT_PROV_ENUM };
+enum prov_range { OPT_P_ENUM };
 
 static STACK_OF(OSSL_PROVIDER) *app_providers = NULL;
 
@@ -65,14 +65,14 @@ static int opt_provider_path(const char *path)
 int opt_provider(int opt)
 {
     switch ((enum prov_range)opt) {
-    case OPT_PROV__FIRST:
-    case OPT_PROV__LAST:
+    case OPT_P__FIRST:
+    case OPT_P__LAST:
         return 1;
-    case OPT_PROV_PROVIDER:
+    case OPT_P_PROVIDER:
         return app_provider_load(app_get0_libctx(), opt_arg());
-    case OPT_PROV_PROVIDER_PATH:
+    case OPT_P_PROVIDER_PATH:
         return opt_provider_path(opt_arg());
-    case OPT_PROV_PROPQUERY:
+    case OPT_P_PROPQUERY:
         return app_set_propq(opt_arg());
     }
     return 0;

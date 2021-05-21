@@ -81,7 +81,7 @@ typedef enum OPTION_choice {
     OPT_RR_TO, OPT_AES128_WRAP, OPT_AES192_WRAP, OPT_AES256_WRAP,
     OPT_3DES_WRAP, OPT_WRAP, OPT_ENGINE,
     OPT_R_ENUM,
-    OPT_PROV_ENUM, OPT_CONFIG,
+    OPT_P_ENUM, OPT_CONFIG,
     OPT_V_ENUM,
     OPT_CIPHER,
     OPT_ORIGINATOR
@@ -152,7 +152,7 @@ const OPTIONS cms_options[] = {
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
 #endif
-    OPT_PROV_OPTIONS,
+    OPT_P_OPTIONS,
     OPT_R_OPTIONS,
 
     OPT_SECTION("Encryption and decryption"),
@@ -697,7 +697,7 @@ int cms_main(int argc, char **argv)
             if (!opt_rand(o))
                 goto end;
             break;
-        case OPT_PROV_CASES:
+        case OPT_P_CASES:
             if (!opt_provider(o))
                 goto end;
             break;

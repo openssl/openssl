@@ -28,7 +28,7 @@ typedef enum OPTION_choice {
     OPT_SEARCHFOR_CERTS, OPT_SEARCHFOR_KEYS, OPT_SEARCHFOR_CRLS,
     OPT_CRITERION_SUBJECT, OPT_CRITERION_ISSUER, OPT_CRITERION_SERIAL,
     OPT_CRITERION_FINGERPRINT, OPT_CRITERION_ALIAS,
-    OPT_MD, OPT_PROV_ENUM
+    OPT_MD, OPT_P_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS storeutl_options[] = {
@@ -60,7 +60,7 @@ const OPTIONS storeutl_options[] = {
     {"text", OPT_TEXT, '-', "Print a text form of the objects"},
     {"noout", OPT_NOOUT, '-', "No PEM output, just status"},
 
-    OPT_PROV_OPTIONS,
+    OPT_P_OPTIONS,
 
     OPT_PARAMETERS(),
     {"uri", 0, 0, "URI of the store object"},
@@ -250,7 +250,7 @@ int storeutl_main(int argc, char *argv[])
         case OPT_MD:
             digestname = opt_unknown();
             break;
-        case OPT_PROV_CASES:
+        case OPT_P_CASES:
             if (!opt_provider(o))
                 goto end;
             break;

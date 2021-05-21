@@ -13,7 +13,7 @@ B<openssl rand>
 [B<-base64>]
 [B<-hex>]
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_p_synopsis -}
 I<num>
 
 =head1 DESCRIPTION
@@ -51,7 +51,7 @@ Show the output as a hex string.
 
 {- $OpenSSL::safe::opt_r_item -}
 
-{- $OpenSSL::safe::opt_provider_item -}
+{- $OpenSSL::safe::opt_p_item -}
 
 =back
 

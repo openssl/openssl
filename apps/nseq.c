@@ -17,7 +17,7 @@
 typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_TOSEQ, OPT_IN, OPT_OUT,
-    OPT_PROV_ENUM
+    OPT_P_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS nseq_options[] = {
@@ -31,7 +31,7 @@ const OPTIONS nseq_options[] = {
     {"toseq", OPT_TOSEQ, '-', "Output NS Sequence file"},
     {"out", OPT_OUT, '>', "Output file"},
 
-    OPT_PROV_OPTIONS,
+    OPT_P_OPTIONS,
     {NULL}
 };
 
@@ -65,7 +65,7 @@ int nseq_main(int argc, char **argv)
         case OPT_OUT:
             outfile = opt_arg();
             break;
-        case OPT_PROV_CASES:
+        case OPT_P_CASES:
             if (!opt_provider(o))
                 goto end;
             break;

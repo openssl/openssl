@@ -222,7 +222,7 @@ typedef enum OPTION_choice {
 #ifndef OPENSSL_NO_ENGINE
     OPT_ENGINE,
 #endif
-    OPT_PROV_ENUM,
+    OPT_P_ENUM,
     OPT_R_ENUM,
 
     OPT_TLS_USED, OPT_TLS_CERT, OPT_TLS_KEY,
@@ -415,7 +415,7 @@ const OPTIONS cmp_options[] = {
     {OPT_MORE_STR, 0, 0,
      "Engines may also be defined in OpenSSL config file engine section."},
 #endif
-    OPT_PROV_OPTIONS,
+    OPT_P_OPTIONS,
     OPT_R_OPTIONS,
 
     OPT_SECTION("TLS connection"),
@@ -2077,13 +2077,13 @@ static int read_config(void)
                 || !strcmp(opt->name, OPT_MORE_STR))
             n_options--;
     OPENSSL_assert(OSSL_NELEM(cmp_vars) == n_options
-                 + OPT_PROV__FIRST + 1 - OPT_PROV__LAST
+                 + OPT_P__FIRST + 1 - OPT_P__LAST
                  + OPT_R__FIRST + 1 - OPT_R__LAST
                  + OPT_V__FIRST + 1 - OPT_V__LAST);
     for (i = start - OPT_HELP, opt = &cmp_options[start];
          opt->name; i++, opt++) {
-        int provider_option = (OPT_PROV__FIRST <= opt->retval
-                               && opt->retval < OPT_PROV__LAST);
+        int provider_option = (OPT_P__FIRST <= opt->retval
+                               && opt->retval < OPT_P__LAST);
         int rand_state_option = (OPT_R__FIRST <= opt->retval
                                  && opt->retval < OPT_R__LAST);
         int verification_option = (OPT_V__FIRST <= opt->retval
@@ -2427,7 +2427,7 @@ static int get_opts(int argc, char **argv)
             opt_engine = opt_str();
             break;
 #endif
-        case OPT_PROV_CASES:
+        case OPT_P_CASES:
             if (!opt_provider(o))
                 goto opthelp;
             break;

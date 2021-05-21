@@ -294,6 +294,7 @@ letter:
     X   Extended certificate
     S   TLS/SSL
     R   Random state
+    P   Providers
 
 The B<OPT_x_ENUM> macro is used to define the numeration values, where B<x>
 is one of the letters above.  The B<OPT_x_OPTIONS> macro is used to

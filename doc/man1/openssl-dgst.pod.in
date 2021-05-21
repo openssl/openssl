@@ -34,7 +34,7 @@ B<openssl> B<dgst>|I<digest>
 -}[B<-engine_impl> I<id>]{-
   output_on() if $disabled{"deprecated-3.0"}; "" -}
 {- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_p_synopsis -}
 [I<file> ...]
 
 =head1 DESCRIPTION
@@ -193,7 +193,7 @@ When used with the B<-engine> option, it specifies to also use
 engine I<id> for digest operations.
 
 {- output_on() if $disabled{"deprecated-3.0"}; "" -}
-{- $OpenSSL::safe::opt_provider_item -}
+{- $OpenSSL::safe::opt_p_item -}
 
 =item I<file> ...
 
