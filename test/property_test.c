@@ -1,4 +1,4 @@
-/*
+;/*
  * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
@@ -500,7 +500,6 @@ int setup_tests(void)
     ADD_TEST(test_property);
     ADD_TEST(test_query_cache_stochastic);
     ADD_TEST(test_fips_mode);
-    printf("hi\n");
     ADD_ALL_TESTS(test_property_list_to_string, OSSL_NELEM(to_string_tests));
     return 1;
 }
