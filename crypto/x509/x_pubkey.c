@@ -201,6 +201,18 @@ static const ASN1_EXTERN_FUNCS x509_pubkey_ff = {
 IMPLEMENT_EXTERN_ASN1(X509_PUBKEY, V_ASN1_SEQUENCE, x509_pubkey_ff)
 IMPLEMENT_ASN1_FUNCTIONS(X509_PUBKEY)
 
+X509_PUBKEY *X509_PUBKEY_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
+{
+    X509_PUBKEY *pubkey = NULL;
+
+    pubkey = (X509_PUBKEY *)ASN1_item_new((X509_PUBKEY_it()));
+    if (!x509_pubkey_set0_libctx(pubkey, libctx, propq)) {
+        X509_PUBKEY_free(pubkey);
+        pubkey = NULL;
+    }
+    return pubkey;
+}
+
 /*
  * X509_PUBKEY_dup() must be implemented manually, because there is no
  * support for it in ASN1_EXTERN_FUNCS.
