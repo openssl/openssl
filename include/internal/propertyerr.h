@@ -19,7 +19,7 @@
 extern "C" {
 # endif
 
-int err_load_PROP_strings_int(void);
+int ossl_load_PROP_strings_int(void);
 
 /*
  * PROP reason codes.

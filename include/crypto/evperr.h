@@ -19,7 +19,7 @@
 extern "C" {
 # endif
 
-int err_load_EVP_strings_int(void);
+int ossl_load_EVP_strings_int(void);
 
 # ifdef  __cplusplus
 }

@@ -1178,7 +1178,7 @@ providers/fips.module.sources.new: \
 	) | sort | uniq > providers/fips.module.sources.new
 	rm -rf sources-tmp
 
-# Set to -force to force a rebuild
+# Set to -rebuild to force a rebuild
 ERROR_REBUILD=
 errors:
 	( b=`pwd`; set -e; cd $(SRCDIR); \

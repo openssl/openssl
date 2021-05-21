@@ -174,8 +174,8 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_load_crypto_strings)
      * pulling in all the error strings during static linking
      */
 #if !defined(OPENSSL_NO_ERR) && !defined(OPENSSL_NO_AUTOERRINIT)
-    OSSL_TRACE(INIT, "err_load_crypto_strings_int()\n");
-    ret = err_load_crypto_strings_int();
+    OSSL_TRACE(INIT, "ERR_load_crypto_strings_int()\n");
+    ret = ossl_load_crypto_strings_int();
     load_crypto_strings_inited = 1;
 #endif
     return ret;

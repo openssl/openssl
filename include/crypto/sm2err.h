@@ -21,7 +21,7 @@ extern "C" {
 
 # ifndef OPENSSL_NO_SM2
 
-int err_load_SM2_strings_int(void);
+int ossl_load_SM2_strings_int(void);
 
 /*
  * SM2 reason codes.

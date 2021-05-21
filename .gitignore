@@ -74,6 +74,7 @@ providers/common/include/prov/der_sm2.h
 /engines/e_capi.txt.old
 /engines/e_dasync.txt.old
 /engines/e_ossltest.txt.old
+/engines/e_loader_attic.txt.old
 
 # Executables
 /apps/openssl

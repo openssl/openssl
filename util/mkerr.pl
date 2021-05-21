@@ -358,7 +358,7 @@ EOF
             $indent = "  ";
         }
         print OUT <<"EOF";
-int err_load_${lib}_strings_int(void);
+int ossl_load_${lib}_strings_int(void);
 EOF
 
         # If this library doesn't have a public header file, we write all
@@ -581,7 +581,7 @@ EOF
         if ( $internal ) {
             print OUT <<"EOF";
 
-int err_load_${lib}_strings_int(void)
+int ossl_load_${lib}_strings_int(void)
 {
 #${indent}ifndef OPENSSL_NO_ERR
     if (ERR_reason_error_string(${lib}_str_reasons[0].error) == NULL)

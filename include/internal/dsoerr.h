@@ -19,7 +19,7 @@
 extern "C" {
 # endif
 
-int err_load_DSO_strings_int(void);
+int ossl_load_DSO_strings_int(void);
 
 /*
  * DSO reason codes.
