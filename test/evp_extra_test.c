@@ -844,7 +844,7 @@ static int test_EVP_Enveloped(int n)
         goto err;
 
     if (!TEST_ptr(keypair = load_example_rsa_key())
-            || !TEST_ptr(kek = OPENSSL_zalloc(EVP_PKEY_size(keypair)))
+            || !TEST_ptr(kek = OPENSSL_zalloc(EVP_PKEY_get_size(keypair)))
             || !TEST_ptr(ctx = EVP_CIPHER_CTX_new())
             || !TEST_true(EVP_SealInit(ctx, type, &kek, &kek_len, iv,
                                        &keypair, 1))
@@ -1088,7 +1088,7 @@ static int test_d2i_AutoPrivateKey(int i)
     p = input;
     if (!TEST_ptr(pkey = d2i_AutoPrivateKey(NULL, &p, input_len))
             || !TEST_ptr_eq(p, input + input_len)
-            || !TEST_int_eq(EVP_PKEY_id(pkey), expected_id))
+            || !TEST_int_eq(EVP_PKEY_get_id(pkey), expected_id))
         goto done;
 
     ret = 1;
@@ -1734,7 +1734,7 @@ static int test_EVP_PKEY_check(int i)
     if (!TEST_ptr(pkey = load_example_key(ak->keytype, input, input_len)))
         goto done;
     if (type == 0
-        && !TEST_int_eq(EVP_PKEY_id(pkey), expected_id))
+        && !TEST_int_eq(EVP_PKEY_get_id(pkey), expected_id))
         goto done;
 
     if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(testctx, pkey, testpropq)))
@@ -2334,11 +2334,11 @@ static int test_EVP_PKEY_set1_DH(void)
         goto err;
 
     if(!TEST_true(EVP_PKEY_set1_DH(pkey1, x942dh))
-            || !TEST_int_eq(EVP_PKEY_id(pkey1), EVP_PKEY_DHX))
+            || !TEST_int_eq(EVP_PKEY_get_id(pkey1), EVP_PKEY_DHX))
         goto err;
 
     if(!TEST_true(EVP_PKEY_set1_DH(pkey2, noqdh))
-            || !TEST_int_eq(EVP_PKEY_id(pkey2), EVP_PKEY_DH))
+            || !TEST_int_eq(EVP_PKEY_get_id(pkey2), EVP_PKEY_DH))
         goto err;
 
     ret = 1;
@@ -2616,7 +2616,7 @@ static int test_evp_iv_aes(int idx)
             || !TEST_true(EVP_CIPHER_CTX_get_updated_iv(ctx, iv, sizeof(iv)))
             || !TEST_true(EVP_EncryptFinal_ex(ctx, ciphertext, &len)))
         goto err;
-    ivlen = EVP_CIPHER_CTX_iv_length(ctx);
+    ivlen = EVP_CIPHER_CTX_get_iv_length(ctx);
     if (!TEST_mem_eq(init_iv, ivlen, oiv, ivlen)
             || !TEST_mem_eq(ref_iv, ref_len, iv, ivlen))
         goto err;
@@ -2727,7 +2727,7 @@ static int test_evp_iv_des(int idx)
             || !TEST_true(EVP_CIPHER_CTX_get_updated_iv(ctx, iv, sizeof(iv)))
             || !TEST_true(EVP_EncryptFinal_ex(ctx, ciphertext, &len)))
         goto err;
-    ivlen = EVP_CIPHER_CTX_iv_length(ctx);
+    ivlen = EVP_CIPHER_CTX_get_iv_length(ctx);
     if (!TEST_mem_eq(init_iv, ivlen, oiv, ivlen)
             || !TEST_mem_eq(ref_iv, ref_len, iv, ivlen))
         goto err;

@@ -195,7 +195,7 @@ static int rsa_validate_rng_strength(EVP_RAND_CTX *rng, int nbits)
 {
     if (rng == NULL)
         return 0;
-    if (EVP_RAND_strength(rng) < ossl_ifc_ffc_compute_security_bits(nbits)) {
+    if (EVP_RAND_get_strength(rng) < ossl_ifc_ffc_compute_security_bits(nbits)) {
         ERR_raise(ERR_LIB_RSA,
                   RSA_R_RANDOMNESS_SOURCE_STRENGTH_INSUFFICIENT);
         return 0;

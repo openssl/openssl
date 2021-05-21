@@ -337,7 +337,7 @@ int rsa_main(int argc, char **argv)
 
     /* Passphrase setup */
     if (enc != NULL)
-        OSSL_ENCODER_CTX_set_cipher(ectx, EVP_CIPHER_name(enc), NULL);
+        OSSL_ENCODER_CTX_set_cipher(ectx, EVP_CIPHER_get0_name(enc), NULL);
 
     /* Default passphrase prompter */
     if (enc != NULL || outformat == FORMAT_PVK) {

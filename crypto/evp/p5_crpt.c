@@ -54,12 +54,12 @@ int PKCS5_PBE_keyivgen_ex(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
         return 0;
     }
 
-    ivl = EVP_CIPHER_iv_length(cipher);
+    ivl = EVP_CIPHER_get_iv_length(cipher);
     if (ivl < 0 || ivl > 16) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_IV_LENGTH);
         goto err;
     }
-    kl = EVP_CIPHER_key_length(cipher);
+    kl = EVP_CIPHER_get_key_length(cipher);
     if (kl < 0 || kl > (int)sizeof(md_tmp)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_KEY_LENGTH);
         goto err;
@@ -77,7 +77,7 @@ int PKCS5_PBE_keyivgen_ex(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
     else if (passlen == -1)
         passlen = strlen(pass);
 
-    mdsize = EVP_MD_size(md);
+    mdsize = EVP_MD_get_size(md);
     if (mdsize < 0)
         goto err;
 

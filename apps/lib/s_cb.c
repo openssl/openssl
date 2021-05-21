@@ -386,13 +386,13 @@ int ssl_print_tmp_key(BIO *out, SSL *s)
     if (!SSL_get_peer_tmp_key(s, &key))
         return 1;
     BIO_puts(out, "Server Temp Key: ");
-    switch (EVP_PKEY_id(key)) {
+    switch (EVP_PKEY_get_id(key)) {
     case EVP_PKEY_RSA:
-        BIO_printf(out, "RSA, %d bits\n", EVP_PKEY_bits(key));
+        BIO_printf(out, "RSA, %d bits\n", EVP_PKEY_get_bits(key));
         break;
 
     case EVP_PKEY_DH:
-        BIO_printf(out, "DH, %d bits\n", EVP_PKEY_bits(key));
+        BIO_printf(out, "DH, %d bits\n", EVP_PKEY_get_bits(key));
         break;
 #ifndef OPENSSL_NO_EC
     case EVP_PKEY_EC:
@@ -403,13 +403,13 @@ int ssl_print_tmp_key(BIO *out, SSL *s)
             if (!EVP_PKEY_get_utf8_string_param(key, OSSL_PKEY_PARAM_GROUP_NAME,
                                                 name, sizeof(name), &name_len))
                 strcpy(name, "?");
-            BIO_printf(out, "ECDH, %s, %d bits\n", name, EVP_PKEY_bits(key));
+            BIO_printf(out, "ECDH, %s, %d bits\n", name, EVP_PKEY_get_bits(key));
         }
     break;
 #endif
     default:
-        BIO_printf(out, "%s, %d bits\n", OBJ_nid2sn(EVP_PKEY_id(key)),
-                   EVP_PKEY_bits(key));
+        BIO_printf(out, "%s, %d bits\n", OBJ_nid2sn(EVP_PKEY_get_id(key)),
+                   EVP_PKEY_get_bits(key));
     }
     EVP_PKEY_free(key);
     return 1;
@@ -1426,7 +1426,7 @@ static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
                 EVP_PKEY_asn1_get0_info(NULL, NULL, NULL, NULL,
                                         &algname, EVP_PKEY_get0_asn1(pkey));
                 BIO_printf(sdb->out, "%s, bits=%d",
-                           algname, EVP_PKEY_bits(pkey));
+                           algname, EVP_PKEY_get_bits(pkey));
             }
             break;
         }

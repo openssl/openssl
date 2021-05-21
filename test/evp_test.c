@@ -431,7 +431,7 @@ static int digest_test_run(EVP_TEST *t)
         goto err;
     }
 
-    if (EVP_MD_flags(expected->digest) & EVP_MD_FLAG_XOF) {
+    if (EVP_MD_get_flags(expected->digest) & EVP_MD_FLAG_XOF) {
         EVP_MD_CTX *mctx_cpy;
         char dont[] = "touch";
 
@@ -541,13 +541,13 @@ static int cipher_test_init(EVP_TEST *t, const char *alg)
     cdat->cipher = cipher;
     cdat->fetched_cipher = fetched_cipher;
     cdat->enc = -1;
-    m = EVP_CIPHER_mode(cipher);
+    m = EVP_CIPHER_get_mode(cipher);
     if (m == EVP_CIPH_GCM_MODE
             || m == EVP_CIPH_OCB_MODE
             || m == EVP_CIPH_SIV_MODE
             || m == EVP_CIPH_CCM_MODE)
         cdat->aead = m;
-    else if (EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)
+    else if (EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)
         cdat->aead = -1;
     else
         cdat->aead = 0;
@@ -714,7 +714,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
                 t->err = "INVALID_IV_LENGTH";
                 goto err;
             }
-        } else if (expected->iv_len != (size_t)EVP_CIPHER_CTX_iv_length(ctx_base)) {
+        } else if (expected->iv_len != (size_t)EVP_CIPHER_CTX_get_iv_length(ctx_base)) {
             t->err = "INVALID_IV_LENGTH";
             goto err;
         }
@@ -770,9 +770,9 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
         /* Some (e.g., GCM) tests use IVs longer than EVP_MAX_IV_LENGTH. */
         unsigned char iv[128];
         if (!TEST_true(EVP_CIPHER_CTX_get_updated_iv(ctx_base, iv, sizeof(iv)))
-                || ((EVP_CIPHER_flags(expected->cipher) & EVP_CIPH_CUSTOM_IV) == 0
-                    && !TEST_mem_eq(expected->iv, expected->iv_len, iv,
-                                    expected->iv_len))) {
+            || ((EVP_CIPHER_get_flags(expected->cipher) & EVP_CIPH_CUSTOM_IV) == 0
+                && !TEST_mem_eq(expected->iv, expected->iv_len, iv,
+                                expected->iv_len))) {
             t->err = "INVALID_IV";
             goto err;
         }
@@ -894,9 +894,9 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
         /* Some (e.g., GCM) tests use IVs longer than EVP_MAX_IV_LENGTH. */
         unsigned char iv[128];
         if (!TEST_true(EVP_CIPHER_CTX_get_updated_iv(ctx, iv, sizeof(iv)))
-                || ((EVP_CIPHER_flags(expected->cipher) & EVP_CIPH_CUSTOM_IV) == 0
-                    && !TEST_mem_eq(expected->next_iv, expected->iv_len, iv,
-                                    expected->iv_len))) {
+            || ((EVP_CIPHER_get_flags(expected->cipher) & EVP_CIPH_CUSTOM_IV) == 0
+                && !TEST_mem_eq(expected->next_iv, expected->iv_len, iv,
+                                expected->iv_len))) {
             t->err = "INVALID_NEXT_IV";
             goto err;
         }
@@ -922,9 +922,9 @@ static int cipher_test_run(EVP_TEST *t)
         t->err = "NO_KEY";
         return 0;
     }
-    if (!cdat->iv && EVP_CIPHER_iv_length(cdat->cipher)) {
+    if (!cdat->iv && EVP_CIPHER_get_iv_length(cdat->cipher)) {
         /* IV is optional and usually omitted in wrap mode */
-        if (EVP_CIPHER_mode(cdat->cipher) != EVP_CIPH_WRAP_MODE) {
+        if (EVP_CIPHER_get_mode(cdat->cipher) != EVP_CIPH_WRAP_MODE) {
             t->err = "NO_IV";
             return 0;
         }
@@ -976,10 +976,10 @@ static int cipher_test_run(EVP_TEST *t)
              * lengths so we don't fragment for those
              */
             if (cdat->aead == EVP_CIPH_CCM_MODE
-                    || ((EVP_CIPHER_flags(cdat->cipher) & EVP_CIPH_FLAG_CTS) != 0)
-                    || EVP_CIPHER_mode(cdat->cipher) == EVP_CIPH_SIV_MODE
-                    || EVP_CIPHER_mode(cdat->cipher) == EVP_CIPH_XTS_MODE
-                    || EVP_CIPHER_mode(cdat->cipher) == EVP_CIPH_WRAP_MODE)
+                || ((EVP_CIPHER_get_flags(cdat->cipher) & EVP_CIPH_FLAG_CTS) != 0)
+                || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_SIV_MODE
+                || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_XTS_MODE
+                || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_WRAP_MODE)
                 break;
             out_misalign = 0;
             frag++;
@@ -1959,7 +1959,8 @@ static int pbe_test_run(EVP_TEST *t)
         }
 #endif
     } else if (expected->pbe_type == PBE_TYPE_PKCS12) {
-        fetched_digest = EVP_MD_fetch(libctx, EVP_MD_name(expected->md), NULL);
+        fetched_digest = EVP_MD_fetch(libctx, EVP_MD_get0_name(expected->md),
+                                      NULL);
         if (fetched_digest == NULL) {
             t->err = "PKCS12_ERROR";
             goto err;
@@ -2332,7 +2333,7 @@ static int rand_test_run(EVP_TEST *t)
     if (!TEST_true(EVP_RAND_CTX_set_params(expected->ctx, params)))
         goto err;
 
-    strength = EVP_RAND_strength(expected->ctx);
+    strength = EVP_RAND_get_strength(expected->ctx);
     for (i = 0; i <= expected->n; i++) {
         item = expected->data + i;
 
@@ -2401,7 +2402,7 @@ static int rand_test_run(EVP_TEST *t)
         if (!TEST_true(EVP_RAND_uninstantiate(expected->ctx))
                 || !TEST_true(EVP_RAND_uninstantiate(expected->parent))
                 || !TEST_true(EVP_RAND_verify_zeroization(expected->ctx))
-                || !TEST_int_eq(EVP_RAND_state(expected->ctx),
+                || !TEST_int_eq(EVP_RAND_get_state(expected->ctx),
                                 EVP_RAND_STATE_UNINITIALISED))
             goto err;
     }
@@ -2971,7 +2972,7 @@ static int digestsigver_test_parse(EVP_TEST *t,
     if (strcmp(keyword, "Key") == 0) {
         EVP_PKEY *pkey = NULL;
         int rv = 0;
-        const char *name = mdata->md == NULL ? NULL : EVP_MD_name(mdata->md);
+        const char *name = mdata->md == NULL ? NULL : EVP_MD_get0_name(mdata->md);
 
         if (mdata->is_verify)
             rv = find_key(&pkey, value, public_keys);

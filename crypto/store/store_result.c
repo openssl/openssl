@@ -88,7 +88,7 @@ int ossl_store_handle_load_result(const OSSL_PARAM params[], void *arg)
     OSSL_STORE_INFO **v = &cbdata->v;
     OSSL_STORE_CTX *ctx = cbdata->ctx;
     const OSSL_PROVIDER *provider =
-        OSSL_STORE_LOADER_provider(ctx->fetched_loader);
+        OSSL_STORE_LOADER_get0_provider(ctx->fetched_loader);
     OSSL_LIB_CTX *libctx = ossl_provider_libctx(provider);
     const char *propq = ctx->properties;
     const OSSL_PARAM *p;
@@ -206,7 +206,7 @@ static EVP_PKEY *try_key_ref(struct extracted_param_data_st *data,
          * 2.  The keymgmt is from another provider, then we must
          *     do the export/import dance.
          */
-        if (EVP_KEYMGMT_provider(keymgmt) == provider) {
+        if (EVP_KEYMGMT_get0_provider(keymgmt) == provider) {
             keydata = evp_keymgmt_load(keymgmt, data->ref, data->ref_size);
         } else {
             struct evp_keymgmt_util_try_import_data_st import_data;

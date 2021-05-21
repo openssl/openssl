@@ -413,7 +413,7 @@ OSSL_ENCODER *ossl_encoder_fetch_by_number(OSSL_LIB_CTX *libctx, int id,
  * Library of basic method functions
  */
 
-const OSSL_PROVIDER *OSSL_ENCODER_provider(const OSSL_ENCODER *encoder)
+const OSSL_PROVIDER *OSSL_ENCODER_get0_provider(const OSSL_ENCODER *encoder)
 {
     if (!ossl_assert(encoder != NULL)) {
         ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_PASSED_NULL_PARAMETER);
@@ -423,7 +423,7 @@ const OSSL_PROVIDER *OSSL_ENCODER_provider(const OSSL_ENCODER *encoder)
     return encoder->base.prov;
 }
 
-const char *OSSL_ENCODER_properties(const OSSL_ENCODER *encoder)
+const char *OSSL_ENCODER_get0_properties(const OSSL_ENCODER *encoder)
 {
     if (!ossl_assert(encoder != NULL)) {
         ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_PASSED_NULL_PARAMETER);
@@ -433,7 +433,7 @@ const char *OSSL_ENCODER_properties(const OSSL_ENCODER *encoder)
     return encoder->base.propdef;
 }
 
-int OSSL_ENCODER_number(const OSSL_ENCODER *encoder)
+int OSSL_ENCODER_get_number(const OSSL_ENCODER *encoder)
 {
     if (!ossl_assert(encoder != NULL)) {
         ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_PASSED_NULL_PARAMETER);
@@ -443,12 +443,12 @@ int OSSL_ENCODER_number(const OSSL_ENCODER *encoder)
     return encoder->base.id;
 }
 
-const char *OSSL_ENCODER_name(const OSSL_ENCODER *encoder)
+const char *OSSL_ENCODER_get0_name(const OSSL_ENCODER *encoder)
 {
     return encoder->base.name;
 }
 
-const char *OSSL_ENCODER_description(const OSSL_ENCODER *encoder)
+const char *OSSL_ENCODER_get0_description(const OSSL_ENCODER *encoder)
 {
     return encoder->base.description;
 }
@@ -528,7 +528,7 @@ const OSSL_PARAM *
 OSSL_ENCODER_gettable_params(OSSL_ENCODER *encoder)
 {
     if (encoder != NULL && encoder->gettable_params != NULL) {
-        void *provctx = ossl_provider_ctx(OSSL_ENCODER_provider(encoder));
+        void *provctx = ossl_provider_ctx(OSSL_ENCODER_get0_provider(encoder));
 
         return encoder->gettable_params(provctx);
     }
@@ -545,7 +545,7 @@ int OSSL_ENCODER_get_params(OSSL_ENCODER *encoder, OSSL_PARAM params[])
 const OSSL_PARAM *OSSL_ENCODER_settable_ctx_params(OSSL_ENCODER *encoder)
 {
     if (encoder != NULL && encoder->settable_ctx_params != NULL) {
-        void *provctx = ossl_provider_ctx(OSSL_ENCODER_provider(encoder));
+        void *provctx = ossl_provider_ctx(OSSL_ENCODER_get0_provider(encoder));
 
         return encoder->settable_ctx_params(provctx);
     }

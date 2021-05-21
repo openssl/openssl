@@ -79,8 +79,8 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
         EVP_ASYM_CIPHER_fetch(ctx->libctx, supported_ciph, ctx->propquery);
 
     if (cipher == NULL
-        || (EVP_KEYMGMT_provider(ctx->keymgmt)
-            != EVP_ASYM_CIPHER_provider(cipher))) {
+        || (EVP_KEYMGMT_get0_provider(ctx->keymgmt)
+            != EVP_ASYM_CIPHER_get0_provider(cipher))) {
         /*
          * We don't need to free ctx->keymgmt here, as it's not necessarily
          * tied to this operation.  It will be freed by EVP_PKEY_CTX_free().
@@ -415,7 +415,7 @@ int EVP_ASYM_CIPHER_up_ref(EVP_ASYM_CIPHER *cipher)
     return 1;
 }
 
-OSSL_PROVIDER *EVP_ASYM_CIPHER_provider(const EVP_ASYM_CIPHER *cipher)
+OSSL_PROVIDER *EVP_ASYM_CIPHER_get0_provider(const EVP_ASYM_CIPHER *cipher)
 {
     return cipher->prov;
 }
@@ -434,17 +434,17 @@ int EVP_ASYM_CIPHER_is_a(const EVP_ASYM_CIPHER *cipher, const char *name)
     return evp_is_a(cipher->prov, cipher->name_id, NULL, name);
 }
 
-int EVP_ASYM_CIPHER_number(const EVP_ASYM_CIPHER *cipher)
+int EVP_ASYM_CIPHER_get_number(const EVP_ASYM_CIPHER *cipher)
 {
     return cipher->name_id;
 }
 
-const char *EVP_ASYM_CIPHER_name(const EVP_ASYM_CIPHER *cipher)
+const char *EVP_ASYM_CIPHER_get0_name(const EVP_ASYM_CIPHER *cipher)
 {
     return cipher->type_name;
 }
 
-const char *EVP_ASYM_CIPHER_description(const EVP_ASYM_CIPHER *cipher)
+const char *EVP_ASYM_CIPHER_get0_description(const EVP_ASYM_CIPHER *cipher)
 {
     return cipher->description;
 }
@@ -478,7 +478,7 @@ const OSSL_PARAM *EVP_ASYM_CIPHER_gettable_ctx_params(const EVP_ASYM_CIPHER *cip
     if (cip == NULL || cip->gettable_ctx_params == NULL)
         return NULL;
 
-    provctx = ossl_provider_ctx(EVP_ASYM_CIPHER_provider(cip));
+    provctx = ossl_provider_ctx(EVP_ASYM_CIPHER_get0_provider(cip));
     return cip->gettable_ctx_params(NULL, provctx);
 }
 
@@ -489,6 +489,6 @@ const OSSL_PARAM *EVP_ASYM_CIPHER_settable_ctx_params(const EVP_ASYM_CIPHER *cip
     if (cip == NULL || cip->settable_ctx_params == NULL)
         return NULL;
 
-    provctx = ossl_provider_ctx(EVP_ASYM_CIPHER_provider(cip));
+    provctx = ossl_provider_ctx(EVP_ASYM_CIPHER_get0_provider(cip));
     return cip->settable_ctx_params(NULL, provctx);
 }

@@ -214,7 +214,7 @@ static int md_gets(BIO *bp, char *buf, int size)
 
     ctx = BIO_get_data(bp);
 
-    if (size < EVP_MD_CTX_size(ctx))
+    if (size < EVP_MD_CTX_get_size(ctx))
         return 0;
 
     if (EVP_DigestFinal_ex(ctx, (unsigned char *)buf, &ret) <= 0)

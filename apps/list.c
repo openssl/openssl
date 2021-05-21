@@ -36,7 +36,7 @@ static const char *select_name = NULL;
     {                                                           \
         TYPE *impl;                                             \
         const char *propq = app_get0_propq();                   \
-        const char *name = TYPE ## _name(alg);                  \
+        const char *name = TYPE ## _get0_name(alg);             \
                                                                 \
         ERR_set_mark();                                         \
         impl = TYPE ## _fetch(NULL, name, propq);               \
@@ -70,10 +70,10 @@ static void legacy_cipher_fn(const EVP_CIPHER *c,
 {
     if (select_name != NULL
         && (c == NULL
-            || strcasecmp(select_name,  EVP_CIPHER_name(c)) != 0))
+            || strcasecmp(select_name,  EVP_CIPHER_get0_name(c)) != 0))
         return;
     if (c != NULL) {
-        BIO_printf(arg, "  %s\n", EVP_CIPHER_name(c));
+        BIO_printf(arg, "  %s\n", EVP_CIPHER_get0_name(c));
     } else {
         if (from == NULL)
             from = "<undefined>";
@@ -88,11 +88,11 @@ DEFINE_STACK_OF(EVP_CIPHER)
 static int cipher_cmp(const EVP_CIPHER * const *a,
                       const EVP_CIPHER * const *b)
 {
-    int ret = EVP_CIPHER_number(*a) - EVP_CIPHER_number(*b);
+    int ret = EVP_CIPHER_get_number(*a) - EVP_CIPHER_get_number(*b);
 
     if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_name(EVP_CIPHER_provider(*a)),
-                     OSSL_PROVIDER_name(EVP_CIPHER_provider(*b)));
+        ret = strcmp(OSSL_PROVIDER_name(EVP_CIPHER_get0_provider(*a)),
+                     OSSL_PROVIDER_name(EVP_CIPHER_get0_provider(*b)));
 
     return ret;
 }
@@ -138,10 +138,10 @@ static void list_ciphers(void)
             print_names(bio_out, names);
 
             BIO_printf(bio_out, " @ %s\n",
-                       OSSL_PROVIDER_name(EVP_CIPHER_provider(c)));
+                       OSSL_PROVIDER_name(EVP_CIPHER_get0_provider(c)));
 
             if (verbose) {
-                const char *desc = EVP_CIPHER_description(c);
+                const char *desc = EVP_CIPHER_get0_description(c);
 
                 if (desc != NULL)
                     BIO_printf(bio_out, "    description: %s\n", desc);
@@ -163,7 +163,7 @@ static void legacy_md_fn(const EVP_MD *m,
                        const char *from, const char *to, void *arg)
 {
     if (m != NULL) {
-        BIO_printf(arg, "  %s\n", EVP_MD_name(m));
+        BIO_printf(arg, "  %s\n", EVP_MD_get0_name(m));
     } else {
         if (from == NULL)
             from = "<undefined>";
@@ -177,11 +177,11 @@ static void legacy_md_fn(const EVP_MD *m,
 DEFINE_STACK_OF(EVP_MD)
 static int md_cmp(const EVP_MD * const *a, const EVP_MD * const *b)
 {
-    int ret = EVP_MD_number(*a) - EVP_MD_number(*b);
+    int ret = EVP_MD_get_number(*a) - EVP_MD_get_number(*b);
 
     if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_name(EVP_MD_provider(*a)),
-                     OSSL_PROVIDER_name(EVP_MD_provider(*b)));
+        ret = strcmp(OSSL_PROVIDER_name(EVP_MD_get0_provider(*a)),
+                     OSSL_PROVIDER_name(EVP_MD_get0_provider(*b)));
 
     return ret;
 }
@@ -226,10 +226,11 @@ static void list_digests(void)
             BIO_printf(bio_out, "  ");
             print_names(bio_out, names);
 
-            BIO_printf(bio_out, " @ %s\n", OSSL_PROVIDER_name(EVP_MD_provider(m)));
+            BIO_printf(bio_out, " @ %s\n",
+                       OSSL_PROVIDER_name(EVP_MD_get0_provider(m)));
 
             if (verbose) {
-                const char *desc = EVP_MD_description(m);
+                const char *desc = EVP_MD_get0_description(m);
 
                 if (desc != NULL)
                     BIO_printf(bio_out, "    description: %s\n", desc);
@@ -249,11 +250,11 @@ static void list_digests(void)
 DEFINE_STACK_OF(EVP_MAC)
 static int mac_cmp(const EVP_MAC * const *a, const EVP_MAC * const *b)
 {
-    int ret = EVP_MAC_number(*a) - EVP_MAC_number(*b);
+    int ret = EVP_MAC_get_number(*a) - EVP_MAC_get_number(*b);
 
     if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_name(EVP_MAC_provider(*a)),
-                     OSSL_PROVIDER_name(EVP_MAC_provider(*b)));
+        ret = strcmp(OSSL_PROVIDER_name(EVP_MAC_get0_provider(*a)),
+                     OSSL_PROVIDER_name(EVP_MAC_get0_provider(*b)));
 
     return ret;
 }
@@ -291,10 +292,11 @@ static void list_macs(void)
             BIO_printf(bio_out, "  ");
             print_names(bio_out, names);
 
-            BIO_printf(bio_out, " @ %s\n", OSSL_PROVIDER_name(EVP_MAC_provider(m)));
+            BIO_printf(bio_out, " @ %s\n",
+                       OSSL_PROVIDER_name(EVP_MAC_get0_provider(m)));
 
             if (verbose) {
-                const char *desc = EVP_MAC_description(m);
+                const char *desc = EVP_MAC_get0_description(m);
 
                 if (desc != NULL)
                     BIO_printf(bio_out, "    description: %s\n", desc);
@@ -317,11 +319,11 @@ static void list_macs(void)
 DEFINE_STACK_OF(EVP_KDF)
 static int kdf_cmp(const EVP_KDF * const *a, const EVP_KDF * const *b)
 {
-    int ret = EVP_KDF_number(*a) - EVP_KDF_number(*b);
+    int ret = EVP_KDF_get_number(*a) - EVP_KDF_get_number(*b);
 
     if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_name(EVP_KDF_provider(*a)),
-                     OSSL_PROVIDER_name(EVP_KDF_provider(*b)));
+        ret = strcmp(OSSL_PROVIDER_name(EVP_KDF_get0_provider(*a)),
+                     OSSL_PROVIDER_name(EVP_KDF_get0_provider(*b)));
 
     return ret;
 }
@@ -359,10 +361,11 @@ static void list_kdfs(void)
             BIO_printf(bio_out, "  ");
             print_names(bio_out, names);
 
-            BIO_printf(bio_out, " @ %s\n", OSSL_PROVIDER_name(EVP_KDF_provider(k)));
+            BIO_printf(bio_out, " @ %s\n",
+                       OSSL_PROVIDER_name(EVP_KDF_get0_provider(k)));
 
             if (verbose) {
-                const char *desc = EVP_KDF_description(k);
+                const char *desc = EVP_KDF_get0_description(k);
 
                 if (desc != NULL)
                     BIO_printf(bio_out, "    description: %s\n", desc);
@@ -386,11 +389,11 @@ DEFINE_STACK_OF(EVP_RAND)
 
 static int rand_cmp(const EVP_RAND * const *a, const EVP_RAND * const *b)
 {
-    int ret = strcasecmp(EVP_RAND_name(*a), EVP_RAND_name(*b));
+    int ret = strcasecmp(EVP_RAND_get0_name(*a), EVP_RAND_get0_name(*b));
 
     if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_name(EVP_RAND_provider(*a)),
-                     OSSL_PROVIDER_name(EVP_RAND_provider(*b)));
+        ret = strcmp(OSSL_PROVIDER_name(EVP_RAND_get0_provider(*a)),
+                     OSSL_PROVIDER_name(EVP_RAND_get0_provider(*b)));
 
     return ret;
 }
@@ -420,13 +423,14 @@ static void list_random_generators(void)
         const EVP_RAND *m = sk_EVP_RAND_value(rands, i);
 
         if (select_name != NULL
-            && strcasecmp(EVP_RAND_name(m), select_name) != 0)
+            && strcasecmp(EVP_RAND_get0_name(m), select_name) != 0)
             continue;
-        BIO_printf(bio_out, "  %s", EVP_RAND_name(m));
-        BIO_printf(bio_out, " @ %s\n", OSSL_PROVIDER_name(EVP_RAND_provider(m)));
+        BIO_printf(bio_out, "  %s", EVP_RAND_get0_name(m));
+        BIO_printf(bio_out, " @ %s\n",
+                   OSSL_PROVIDER_name(EVP_RAND_get0_provider(m)));
 
         if (verbose) {
-            const char *desc = EVP_RAND_description(m);
+            const char *desc = EVP_RAND_get0_description(m);
 
             if (desc != NULL)
                 BIO_printf(bio_out, "    description: %s\n", desc);
@@ -452,13 +456,13 @@ static void display_random(const char *name, EVP_RAND_CTX *drbg)
 
     BIO_printf(bio_out, "%s:\n", name);
     if (drbg != NULL) {
-        rand = EVP_RAND_CTX_rand(drbg);
+        rand = EVP_RAND_CTX_get0_rand(drbg);
 
-        BIO_printf(bio_out, "  %s", EVP_RAND_name(rand));
+        BIO_printf(bio_out, "  %s", EVP_RAND_get0_name(rand));
         BIO_printf(bio_out, " @ %s\n",
-                   OSSL_PROVIDER_name(EVP_RAND_provider(rand)));
+                   OSSL_PROVIDER_name(EVP_RAND_get0_provider(rand)));
 
-        switch (EVP_RAND_state(drbg)) {
+        switch (EVP_RAND_get_state(drbg)) {
         case EVP_RAND_STATE_UNINITIALISED:
             p = "uninitialised";
             break;
@@ -516,11 +520,11 @@ DEFINE_STACK_OF(OSSL_ENCODER)
 static int encoder_cmp(const OSSL_ENCODER * const *a,
                        const OSSL_ENCODER * const *b)
 {
-    int ret = OSSL_ENCODER_number(*a) - OSSL_ENCODER_number(*b);
+    int ret = OSSL_ENCODER_get_number(*a) - OSSL_ENCODER_get_number(*b);
 
     if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_name(OSSL_ENCODER_provider(*a)),
-                     OSSL_PROVIDER_name(OSSL_ENCODER_provider(*b)));
+        ret = strcmp(OSSL_PROVIDER_name(OSSL_ENCODER_get0_provider(*a)),
+                     OSSL_PROVIDER_name(OSSL_ENCODER_get0_provider(*b)));
     return ret;
 }
 
@@ -560,11 +564,11 @@ static void list_encoders(void)
             print_names(bio_out, names);
 
             BIO_printf(bio_out, " @ %s (%s)\n",
-                    OSSL_PROVIDER_name(OSSL_ENCODER_provider(k)),
-                    OSSL_ENCODER_properties(k));
+                    OSSL_PROVIDER_name(OSSL_ENCODER_get0_provider(k)),
+                    OSSL_ENCODER_get0_properties(k));
 
             if (verbose) {
-                const char *desc = OSSL_ENCODER_description(k);
+                const char *desc = OSSL_ENCODER_get0_description(k);
 
                 if (desc != NULL)
                     BIO_printf(bio_out, "    description: %s\n", desc);
@@ -584,11 +588,11 @@ DEFINE_STACK_OF(OSSL_DECODER)
 static int decoder_cmp(const OSSL_DECODER * const *a,
                        const OSSL_DECODER * const *b)
 {
-    int ret = OSSL_DECODER_number(*a) - OSSL_DECODER_number(*b);
+    int ret = OSSL_DECODER_get_number(*a) - OSSL_DECODER_get_number(*b);
 
     if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_name(OSSL_DECODER_provider(*a)),
-                     OSSL_PROVIDER_name(OSSL_DECODER_provider(*b)));
+        ret = strcmp(OSSL_PROVIDER_name(OSSL_DECODER_get0_provider(*a)),
+                     OSSL_PROVIDER_name(OSSL_DECODER_get0_provider(*b)));
     return ret;
 }
 
@@ -629,11 +633,11 @@ static void list_decoders(void)
             print_names(bio_out, names);
 
             BIO_printf(bio_out, " @ %s (%s)\n",
-                    OSSL_PROVIDER_name(OSSL_DECODER_provider(k)),
-                    OSSL_DECODER_properties(k));
+                       OSSL_PROVIDER_name(OSSL_DECODER_get0_provider(k)),
+                       OSSL_DECODER_get0_properties(k));
 
             if (verbose) {
-                const char *desc = OSSL_DECODER_description(k);
+                const char *desc = OSSL_DECODER_get0_description(k);
 
                 if (desc != NULL)
                     BIO_printf(bio_out, "    description: %s\n", desc);
@@ -650,11 +654,11 @@ DEFINE_STACK_OF(EVP_KEYMGMT)
 static int keymanager_cmp(const EVP_KEYMGMT * const *a,
                           const EVP_KEYMGMT * const *b)
 {
-    int ret = EVP_KEYMGMT_number(*a) - EVP_KEYMGMT_number(*b);
+    int ret = EVP_KEYMGMT_get_number(*a) - EVP_KEYMGMT_get_number(*b);
 
     if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_name(EVP_KEYMGMT_provider(*a)),
-                     OSSL_PROVIDER_name(EVP_KEYMGMT_provider(*b)));
+        ret = strcmp(OSSL_PROVIDER_name(EVP_KEYMGMT_get0_provider(*a)),
+                     OSSL_PROVIDER_name(EVP_KEYMGMT_get0_provider(*b)));
     return ret;
 }
 
@@ -684,7 +688,7 @@ static void list_keymanagers(void)
 
         names = sk_OPENSSL_CSTRING_new(name_cmp);
         if (names != NULL && EVP_KEYMGMT_names_do_all(k, collect_names, names)) {
-            const char *desc = EVP_KEYMGMT_description(k);
+            const char *desc = EVP_KEYMGMT_get0_description(k);
 
             BIO_printf(bio_out, "  Name: ");
             if (desc != NULL)
@@ -696,7 +700,7 @@ static void list_keymanagers(void)
             BIO_printf(bio_out, "    IDs: ");
             print_names(bio_out, names);
             BIO_printf(bio_out, " @ %s\n",
-                    OSSL_PROVIDER_name(EVP_KEYMGMT_provider(k)));
+                    OSSL_PROVIDER_name(EVP_KEYMGMT_get0_provider(k)));
 
             if (verbose) {
                 print_param_types("settable key generation parameters",
@@ -716,11 +720,11 @@ DEFINE_STACK_OF(EVP_SIGNATURE)
 static int signature_cmp(const EVP_SIGNATURE * const *a,
                          const EVP_SIGNATURE * const *b)
 {
-    int ret = EVP_SIGNATURE_number(*a) - EVP_SIGNATURE_number(*b);
+    int ret = EVP_SIGNATURE_get_number(*a) - EVP_SIGNATURE_get_number(*b);
 
     if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_name(EVP_SIGNATURE_provider(*a)),
-                     OSSL_PROVIDER_name(EVP_SIGNATURE_provider(*b)));
+        ret = strcmp(OSSL_PROVIDER_name(EVP_SIGNATURE_get0_provider(*a)),
+                     OSSL_PROVIDER_name(EVP_SIGNATURE_get0_provider(*b)));
     return ret;
 }
 
@@ -755,10 +759,10 @@ static void list_signatures(void)
             print_names(bio_out, names);
 
             BIO_printf(bio_out, " @ %s\n",
-                    OSSL_PROVIDER_name(EVP_SIGNATURE_provider(k)));
+                    OSSL_PROVIDER_name(EVP_SIGNATURE_get0_provider(k)));
 
             if (verbose) {
-                const char *desc = EVP_SIGNATURE_description(k);
+                const char *desc = EVP_SIGNATURE_get0_description(k);
 
                 if (desc != NULL)
                     BIO_printf(bio_out, "    description: %s\n", desc);
@@ -779,11 +783,11 @@ DEFINE_STACK_OF(EVP_KEM)
 static int kem_cmp(const EVP_KEM * const *a,
                    const EVP_KEM * const *b)
 {
-    int ret = EVP_KEM_number(*a) - EVP_KEM_number(*b);
+    int ret = EVP_KEM_get_number(*a) - EVP_KEM_get_number(*b);
 
     if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_name(EVP_KEM_provider(*a)),
-                     OSSL_PROVIDER_name(EVP_KEM_provider(*b)));
+        ret = strcmp(OSSL_PROVIDER_name(EVP_KEM_get0_provider(*a)),
+                     OSSL_PROVIDER_name(EVP_KEM_get0_provider(*b)));
     return ret;
 }
 
@@ -817,10 +821,11 @@ static void list_kems(void)
             BIO_printf(bio_out, "  ");
             print_names(bio_out, names);
 
-            BIO_printf(bio_out, " @ %s\n", OSSL_PROVIDER_name(EVP_KEM_provider(k)));
+            BIO_printf(bio_out, " @ %s\n",
+                       OSSL_PROVIDER_name(EVP_KEM_get0_provider(k)));
 
             if (verbose) {
-                const char *desc = EVP_KEM_description(k);
+                const char *desc = EVP_KEM_get0_description(k);
 
                 if (desc != NULL)
                     BIO_printf(bio_out, "    description: %s\n", desc);
@@ -841,11 +846,11 @@ DEFINE_STACK_OF(EVP_ASYM_CIPHER)
 static int asymcipher_cmp(const EVP_ASYM_CIPHER * const *a,
                           const EVP_ASYM_CIPHER * const *b)
 {
-    int ret = EVP_ASYM_CIPHER_number(*a) - EVP_ASYM_CIPHER_number(*b);
+    int ret = EVP_ASYM_CIPHER_get_number(*a) - EVP_ASYM_CIPHER_get_number(*b);
 
     if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_name(EVP_ASYM_CIPHER_provider(*a)),
-                     OSSL_PROVIDER_name(EVP_ASYM_CIPHER_provider(*b)));
+        ret = strcmp(OSSL_PROVIDER_name(EVP_ASYM_CIPHER_get0_provider(*a)),
+                     OSSL_PROVIDER_name(EVP_ASYM_CIPHER_get0_provider(*b)));
     return ret;
 }
 
@@ -882,10 +887,10 @@ static void list_asymciphers(void)
             print_names(bio_out, names);
 
             BIO_printf(bio_out, " @ %s\n",
-                    OSSL_PROVIDER_name(EVP_ASYM_CIPHER_provider(k)));
+                    OSSL_PROVIDER_name(EVP_ASYM_CIPHER_get0_provider(k)));
 
             if (verbose) {
-                const char *desc = EVP_ASYM_CIPHER_description(k);
+                const char *desc = EVP_ASYM_CIPHER_get0_description(k);
 
                 if (desc != NULL)
                     BIO_printf(bio_out, "    description: %s\n", desc);
@@ -906,11 +911,11 @@ DEFINE_STACK_OF(EVP_KEYEXCH)
 static int kex_cmp(const EVP_KEYEXCH * const *a,
                    const EVP_KEYEXCH * const *b)
 {
-    int ret = EVP_KEYEXCH_number(*a) - EVP_KEYEXCH_number(*b);
+    int ret = EVP_KEYEXCH_get_number(*a) - EVP_KEYEXCH_get_number(*b);
 
     if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_name(EVP_KEYEXCH_provider(*a)),
-                     OSSL_PROVIDER_name(EVP_KEYEXCH_provider(*b)));
+        ret = strcmp(OSSL_PROVIDER_name(EVP_KEYEXCH_get0_provider(*a)),
+                     OSSL_PROVIDER_name(EVP_KEYEXCH_get0_provider(*b)));
     return ret;
 }
 
@@ -945,10 +950,10 @@ static void list_keyexchanges(void)
             print_names(bio_out, names);
 
             BIO_printf(bio_out, " @ %s\n",
-                    OSSL_PROVIDER_name(EVP_KEYEXCH_provider(k)));
+                    OSSL_PROVIDER_name(EVP_KEYEXCH_get0_provider(k)));
 
             if (verbose) {
-                const char *desc = EVP_KEYEXCH_description(k);
+                const char *desc = EVP_KEYEXCH_get0_description(k);
 
                 if (desc != NULL)
                     BIO_printf(bio_out, "    description: %s\n", desc);
@@ -1191,11 +1196,11 @@ DEFINE_STACK_OF(OSSL_STORE_LOADER)
 static int store_cmp(const OSSL_STORE_LOADER * const *a,
                      const OSSL_STORE_LOADER * const *b)
 {
-    int ret = OSSL_STORE_LOADER_number(*a) - OSSL_STORE_LOADER_number(*b);
+    int ret = OSSL_STORE_LOADER_get_number(*a) - OSSL_STORE_LOADER_get_number(*b);
 
     if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_name(OSSL_STORE_LOADER_provider(*a)),
-                     OSSL_PROVIDER_name(OSSL_STORE_LOADER_provider(*b)));
+        ret = strcmp(OSSL_PROVIDER_name(OSSL_STORE_LOADER_get0_provider(*a)),
+                     OSSL_PROVIDER_name(OSSL_STORE_LOADER_get0_provider(*b)));
 
     return ret;
 }
@@ -1234,7 +1239,7 @@ static void list_store_loaders(void)
             print_names(bio_out, names);
 
             BIO_printf(bio_out, " @ %s\n",
-                       OSSL_PROVIDER_name(OSSL_STORE_LOADER_provider(m)));
+                       OSSL_PROVIDER_name(OSSL_STORE_LOADER_get0_provider(m)));
         }
         sk_OPENSSL_CSTRING_free(names);
     }

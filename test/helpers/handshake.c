@@ -1240,7 +1240,7 @@ static int pkey_type(EVP_PKEY *pkey)
             return NID_undef;
         return OBJ_txt2nid(name);
     }
-    return EVP_PKEY_id(pkey);
+    return EVP_PKEY_get_id(pkey);
 }
 
 static int peer_pkey_type(SSL *s)

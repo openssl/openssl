@@ -710,12 +710,12 @@ cleanup_translation_ctx(enum state state,
  */
 static const char *get_cipher_name(void *cipher)
 {
-    return EVP_CIPHER_name(cipher);
+    return EVP_CIPHER_get0_name(cipher);
 }
 
 static const char *get_md_name(void *md)
 {
-    return EVP_MD_name(md);
+    return EVP_MD_get0_name(md);
 }
 
 static const void *get_cipher_by_name(OSSL_LIB_CTX *libctx, const char *name)
@@ -1456,7 +1456,7 @@ static int get_payload_group_name(enum state state,
     EVP_PKEY *pkey = ctx->p2;
 
     ctx->p2 = NULL;
-    switch (EVP_PKEY_base_id(pkey)) {
+    switch (EVP_PKEY_get_base_id(pkey)) {
 #ifndef OPENSSL_NO_DH
     case EVP_PKEY_DH:
         {
@@ -1512,7 +1512,7 @@ static int get_payload_private_key(enum state state,
     if (ctx->params->data_type != OSSL_PARAM_UNSIGNED_INTEGER)
         return 0;
 
-    switch (EVP_PKEY_base_id(pkey)) {
+    switch (EVP_PKEY_get_base_id(pkey)) {
 #ifndef OPENSSL_NO_DH
     case EVP_PKEY_DH:
         {
@@ -1548,7 +1548,7 @@ static int get_payload_public_key(enum state state,
     int ret;
 
     ctx->p2 = NULL;
-    switch (EVP_PKEY_base_id(pkey)) {
+    switch (EVP_PKEY_get_base_id(pkey)) {
 #ifndef OPENSSL_NO_DH
     case EVP_PKEY_DH:
         switch (ctx->params->data_type) {
@@ -1618,7 +1618,7 @@ static int get_dh_dsa_payload_p(enum state state,
     const BIGNUM *bn = NULL;
     EVP_PKEY *pkey = ctx->p2;
 
-    switch (EVP_PKEY_base_id(pkey)) {
+    switch (EVP_PKEY_get_base_id(pkey)) {
 #ifndef OPENSSL_NO_DH
     case EVP_PKEY_DH:
         bn = DH_get0_p(EVP_PKEY_get0_DH(pkey));
@@ -1642,7 +1642,7 @@ static int get_dh_dsa_payload_q(enum state state,
 {
     const BIGNUM *bn = NULL;
 
-    switch (EVP_PKEY_base_id(ctx->p2)) {
+    switch (EVP_PKEY_get_base_id(ctx->p2)) {
 #ifndef OPENSSL_NO_DH
     case EVP_PKEY_DH:
         bn = DH_get0_q(EVP_PKEY_get0_DH(ctx->p2));
@@ -1664,7 +1664,7 @@ static int get_dh_dsa_payload_g(enum state state,
 {
     const BIGNUM *bn = NULL;
 
-    switch (EVP_PKEY_base_id(ctx->p2)) {
+    switch (EVP_PKEY_get_base_id(ctx->p2)) {
 #ifndef OPENSSL_NO_DH
     case EVP_PKEY_DH:
         bn = DH_get0_g(EVP_PKEY_get0_DH(ctx->p2));
@@ -1720,7 +1720,7 @@ static int get_rsa_payload_n(enum state state,
 {
     const BIGNUM *bn = NULL;
 
-    if (EVP_PKEY_base_id(ctx->p2) != EVP_PKEY_RSA)
+    if (EVP_PKEY_get_base_id(ctx->p2) != EVP_PKEY_RSA)
         return 0;
     bn = RSA_get0_n(EVP_PKEY_get0_RSA(ctx->p2));
 
@@ -1733,7 +1733,7 @@ static int get_rsa_payload_e(enum state state,
 {
     const BIGNUM *bn = NULL;
 
-    if (EVP_PKEY_base_id(ctx->p2) != EVP_PKEY_RSA)
+    if (EVP_PKEY_get_base_id(ctx->p2) != EVP_PKEY_RSA)
         return 0;
     bn = RSA_get0_e(EVP_PKEY_get0_RSA(ctx->p2));
 
@@ -1746,7 +1746,7 @@ static int get_rsa_payload_d(enum state state,
 {
     const BIGNUM *bn = NULL;
 
-    if (EVP_PKEY_base_id(ctx->p2) != EVP_PKEY_RSA)
+    if (EVP_PKEY_get_base_id(ctx->p2) != EVP_PKEY_RSA)
         return 0;
     bn = RSA_get0_d(EVP_PKEY_get0_RSA(ctx->p2));
 
@@ -1846,7 +1846,7 @@ static int get_rsa_payload_coefficient(enum state state,
                          const struct translation_st *translation,      \
                          struct translation_ctx_st *ctx)                \
     {                                                                   \
-        if (EVP_PKEY_base_id(ctx->p2) != EVP_PKEY_RSA)                  \
+        if (EVP_PKEY_get_base_id(ctx->p2) != EVP_PKEY_RSA)              \
             return 0;                                                   \
         return get_rsa_payload_factor(state, translation, ctx, n - 1);  \
     }
@@ -1857,7 +1857,7 @@ static int get_rsa_payload_coefficient(enum state state,
                          const struct translation_st *translation,      \
                          struct translation_ctx_st *ctx)                \
     {                                                                   \
-        if (EVP_PKEY_base_id(ctx->p2) != EVP_PKEY_RSA)                  \
+        if (EVP_PKEY_get_base_id(ctx->p2) != EVP_PKEY_RSA)              \
             return 0;                                                   \
         return get_rsa_payload_exponent(state, translation, ctx,        \
                                         n - 1);                         \
@@ -1869,7 +1869,7 @@ static int get_rsa_payload_coefficient(enum state state,
                          const struct translation_st *translation,      \
                          struct translation_ctx_st *ctx)                \
     {                                                                   \
-        if (EVP_PKEY_base_id(ctx->p2) != EVP_PKEY_RSA)                  \
+        if (EVP_PKEY_get_base_id(ctx->p2) != EVP_PKEY_RSA)              \
             return 0;                                                   \
         return get_rsa_payload_coefficient(state, translation, ctx,     \
                                            n - 1);                      \

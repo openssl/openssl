@@ -135,7 +135,7 @@ static int enc_read(BIO *b, char *out, int outl)
         }
     }
 
-    blocksize = EVP_CIPHER_CTX_block_size(ctx->cipher);
+    blocksize = EVP_CIPHER_CTX_get_block_size(ctx->cipher);
     if (blocksize == 1)
         blocksize = 0;
 
@@ -312,7 +312,7 @@ static long enc_ctrl(BIO *b, int cmd, long num, void *ptr)
         ctx->ok = 1;
         ctx->finished = 0;
         if (!EVP_CipherInit_ex(ctx->cipher, NULL, NULL, NULL, NULL,
-                               EVP_CIPHER_CTX_encrypting(ctx->cipher)))
+                               EVP_CIPHER_CTX_is_encrypting(ctx->cipher)))
             return 0;
         ret = BIO_ctrl(next, cmd, num, ptr);
         break;

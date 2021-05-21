@@ -1352,8 +1352,8 @@ static int test_kdfs_same( EVP_KDF *kdf1, EVP_KDF *kdf2)
      * because without the algorithm in the cache, fetching it a second time
      * will result in a different pointer.
      */
-    return TEST_ptr_eq(EVP_KDF_provider(kdf1), EVP_KDF_provider(kdf2))
-           && TEST_str_eq(EVP_KDF_name(kdf1), EVP_KDF_name(kdf2));
+    return TEST_ptr_eq(EVP_KDF_get0_provider(kdf1), EVP_KDF_get0_provider(kdf2))
+           && TEST_str_eq(EVP_KDF_get0_name(kdf1), EVP_KDF_get0_name(kdf2));
 }
 
 static int test_kdf_get_kdf(void)

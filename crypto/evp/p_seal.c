@@ -35,7 +35,7 @@ int EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
             return 0;
     }
     if ((cipher = EVP_CIPHER_CTX_get0_cipher(ctx)) != NULL
-            && (prov = EVP_CIPHER_provider(cipher)) != NULL)
+            && (prov = EVP_CIPHER_get0_provider(cipher)) != NULL)
         libctx = ossl_provider_libctx(prov);
     if ((npubk <= 0) || !pubk)
         return 1;
@@ -43,11 +43,11 @@ int EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
     if (EVP_CIPHER_CTX_rand_key(ctx, key) <= 0)
         return 0;
 
-    len = EVP_CIPHER_CTX_iv_length(ctx);
+    len = EVP_CIPHER_CTX_get_iv_length(ctx);
     if (len < 0 || RAND_priv_bytes_ex(libctx, iv, len, 0) <= 0)
         goto err;
 
-    len = EVP_CIPHER_CTX_key_length(ctx);
+    len = EVP_CIPHER_CTX_get_key_length(ctx);
     if (len < 0)
         goto err;
 

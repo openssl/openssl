@@ -349,10 +349,10 @@ static int test_cipher_reinit(int test_id)
         goto err;
 
     /* ccm fails on the second update - this matches OpenSSL 1_1_1 behaviour */
-    ccm = (EVP_CIPHER_mode(cipher) == EVP_CIPH_CCM_MODE);
+    ccm = (EVP_CIPHER_get_mode(cipher) == EVP_CIPH_CCM_MODE);
 
     /* siv cannot be called with NULL key as the iv is irrelevant */
-    siv = (EVP_CIPHER_mode(cipher) == EVP_CIPH_SIV_MODE);
+    siv = (EVP_CIPHER_get_mode(cipher) == EVP_CIPH_SIV_MODE);
 
     /*
      * Skip init call with a null key for RC4 as the stream cipher does not
@@ -439,14 +439,14 @@ static int test_cipher_reinit_partialupdate(int test_id)
     if (!TEST_ptr(cipher = EVP_CIPHER_fetch(libctx, name, NULL)))
         goto err;
 
-    in_len = EVP_CIPHER_block_size(cipher) / 2;
+    in_len = EVP_CIPHER_get_block_size(cipher) / 2;
 
     /* skip any ciphers that don't allow partial updates */
-    if (((EVP_CIPHER_flags(cipher)
+    if (((EVP_CIPHER_get_flags(cipher)
           & (EVP_CIPH_FLAG_CTS | EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK)) != 0)
-        || EVP_CIPHER_mode(cipher) == EVP_CIPH_CCM_MODE
-        || EVP_CIPHER_mode(cipher) == EVP_CIPH_XTS_MODE
-        || EVP_CIPHER_mode(cipher) == EVP_CIPH_WRAP_MODE) {
+        || EVP_CIPHER_get_mode(cipher) == EVP_CIPH_CCM_MODE
+        || EVP_CIPHER_get_mode(cipher) == EVP_CIPH_XTS_MODE
+        || EVP_CIPHER_get_mode(cipher) == EVP_CIPH_WRAP_MODE) {
         ret = 1;
         goto err;
     }
@@ -460,7 +460,7 @@ static int test_cipher_reinit_partialupdate(int test_id)
     if (!TEST_mem_eq(out1, out1_len, out2, out2_len))
         goto err;
 
-    if (EVP_CIPHER_mode(cipher) != EVP_CIPH_SIV_MODE) {
+    if (EVP_CIPHER_get_mode(cipher) != EVP_CIPH_SIV_MODE) {
         if (!TEST_true(EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, iv))
             || !TEST_true(EVP_EncryptUpdate(ctx, out3, &out3_len, in, in_len)))
             goto err;
@@ -484,7 +484,7 @@ static int name_cmp(const char * const *a, const char * const *b)
 static void collect_cipher_names(EVP_CIPHER *cipher, void *cipher_names_list)
 {
     STACK_OF(OPENSSL_STRING) *names = cipher_names_list;
-    const char *name = EVP_CIPHER_name(cipher);
+    const char *name = EVP_CIPHER_get0_name(cipher);
     char *namedup = NULL;
 
     assert(name != NULL);

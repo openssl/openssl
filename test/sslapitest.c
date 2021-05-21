@@ -8850,7 +8850,7 @@ static int test_dh_auto(int idx)
 
     if (!TEST_int_gt(SSL_get_tmp_key(serverssl, &tmpkey), 0))
         goto end;
-    if (!TEST_size_t_eq(EVP_PKEY_bits(tmpkey), expdhsize))
+    if (!TEST_size_t_eq(EVP_PKEY_get_bits(tmpkey), expdhsize))
         goto end;
 
     if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))

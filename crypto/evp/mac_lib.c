@@ -77,7 +77,7 @@ EVP_MAC_CTX *EVP_MAC_CTX_dup(const EVP_MAC_CTX *src)
     return dst;
 }
 
-EVP_MAC *EVP_MAC_CTX_mac(EVP_MAC_CTX *ctx)
+EVP_MAC *EVP_MAC_CTX_get0_mac(EVP_MAC_CTX *ctx)
 {
     return ctx->meth;
 }
@@ -203,17 +203,17 @@ int EVP_MAC_CTX_set_params(EVP_MAC_CTX *ctx, const OSSL_PARAM params[])
     return 1;
 }
 
-int EVP_MAC_number(const EVP_MAC *mac)
+int EVP_MAC_get_number(const EVP_MAC *mac)
 {
     return mac->name_id;
 }
 
-const char *EVP_MAC_name(const EVP_MAC *mac)
+const char *EVP_MAC_get0_name(const EVP_MAC *mac)
 {
     return mac->type_name;
 }
 
-const char *EVP_MAC_description(const EVP_MAC *mac)
+const char *EVP_MAC_get0_description(const EVP_MAC *mac)
 {
     return mac->description;
 }

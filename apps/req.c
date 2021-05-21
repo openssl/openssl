@@ -1601,7 +1601,7 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
         else
             gctx = EVP_PKEY_CTX_new_from_pkey(app_get0_libctx(),
                                               param, app_get0_propq());
-        *pkeylen = EVP_PKEY_bits(param);
+        *pkeylen = EVP_PKEY_get_bits(param);
         EVP_PKEY_free(param);
     } else {
         if (keygen_engine != NULL) {

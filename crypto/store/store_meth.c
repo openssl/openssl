@@ -373,7 +373,7 @@ OSSL_STORE_LOADER *ossl_store_loader_fetch_by_number(OSSL_LIB_CTX *libctx,
  * Library of basic method functions
  */
 
-const OSSL_PROVIDER *OSSL_STORE_LOADER_provider(const OSSL_STORE_LOADER *loader)
+const OSSL_PROVIDER *OSSL_STORE_LOADER_get0_provider(const OSSL_STORE_LOADER *loader)
 {
     if (!ossl_assert(loader != NULL)) {
         ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_PASSED_NULL_PARAMETER);
@@ -383,7 +383,7 @@ const OSSL_PROVIDER *OSSL_STORE_LOADER_provider(const OSSL_STORE_LOADER *loader)
     return loader->prov;
 }
 
-const char *OSSL_STORE_LOADER_properties(const OSSL_STORE_LOADER *loader)
+const char *OSSL_STORE_LOADER_get0_properties(const OSSL_STORE_LOADER *loader)
 {
     if (!ossl_assert(loader != NULL)) {
         ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_PASSED_NULL_PARAMETER);
@@ -393,7 +393,7 @@ const char *OSSL_STORE_LOADER_properties(const OSSL_STORE_LOADER *loader)
     return loader->propdef;
 }
 
-int OSSL_STORE_LOADER_number(const OSSL_STORE_LOADER *loader)
+int OSSL_STORE_LOADER_get_number(const OSSL_STORE_LOADER *loader)
 {
     if (!ossl_assert(loader != NULL)) {
         ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_PASSED_NULL_PARAMETER);
@@ -403,7 +403,7 @@ int OSSL_STORE_LOADER_number(const OSSL_STORE_LOADER *loader)
     return loader->scheme_id;
 }
 
-const char *OSSL_STORE_LOADER_description(const OSSL_STORE_LOADER *loader)
+const char *OSSL_STORE_LOADER_get0_description(const OSSL_STORE_LOADER *loader)
 {
     return loader->description;
 }

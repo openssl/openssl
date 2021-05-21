@@ -31,11 +31,11 @@ OSSL_ENCODER *OSSL_ENCODER_fetch(OSSL_LIB_CTX *libctx, const char *name,
 int OSSL_ENCODER_up_ref(OSSL_ENCODER *encoder);
 void OSSL_ENCODER_free(OSSL_ENCODER *encoder);
 
-const OSSL_PROVIDER *OSSL_ENCODER_provider(const OSSL_ENCODER *encoder);
-const char *OSSL_ENCODER_properties(const OSSL_ENCODER *encoder);
-int OSSL_ENCODER_number(const OSSL_ENCODER *encoder);
-const char *OSSL_ENCODER_name(const OSSL_ENCODER *kdf);
-const char *OSSL_ENCODER_description(const OSSL_ENCODER *kdf);
+const OSSL_PROVIDER *OSSL_ENCODER_get0_provider(const OSSL_ENCODER *encoder);
+const char *OSSL_ENCODER_get0_properties(const OSSL_ENCODER *encoder);
+int OSSL_ENCODER_get_number(const OSSL_ENCODER *encoder);
+const char *OSSL_ENCODER_get0_name(const OSSL_ENCODER *kdf);
+const char *OSSL_ENCODER_get0_description(const OSSL_ENCODER *kdf);
 int OSSL_ENCODER_is_a(const OSSL_ENCODER *encoder, const char *name);
 
 void OSSL_ENCODER_do_all_provided(OSSL_LIB_CTX *libctx,

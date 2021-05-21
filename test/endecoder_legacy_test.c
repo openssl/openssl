@@ -518,7 +518,7 @@ static int test_key(int idx)
     if (!TEST_ptr(pkey = key->key)
         || !TEST_true(evp_pkey_copy_downgraded(&downgraded_pkey, pkey))
         || !TEST_ptr(downgraded_pkey)
-        || !TEST_int_eq(EVP_PKEY_id(downgraded_pkey), key->evp_type)
+        || !TEST_int_eq(EVP_PKEY_get_id(downgraded_pkey), key->evp_type)
         || !TEST_ptr(legacy_obj = EVP_PKEY_get0(downgraded_pkey)))
         goto end;
 

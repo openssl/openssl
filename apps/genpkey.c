@@ -166,7 +166,7 @@ int genpkey_main(int argc, char **argv)
     if (ciphername != NULL) {
         if (!opt_cipher(ciphername, &cipher) || do_param == 1)
             goto opthelp;
-        m = EVP_CIPHER_mode(cipher);
+        m = EVP_CIPHER_get_mode(cipher);
         if (m == EVP_CIPH_GCM_MODE || m == EVP_CIPH_CCM_MODE
                 || m == EVP_CIPH_XTS_MODE || m == EVP_CIPH_OCB_MODE) {
             BIO_printf(bio_err, "%s: cipher mode not supported\n", prog);

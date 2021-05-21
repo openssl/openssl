@@ -62,7 +62,7 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
         return 1;
     }
 
-    ivlen = EVP_CIPHER_CTX_iv_length(ctx);
+    ivlen = EVP_CIPHER_CTX_get_iv_length(ctx);
 
     if (s->early_data_state == SSL_EARLY_DATA_WRITING
             || s->early_data_state == SSL_EARLY_DATA_WRITE_RETRY) {

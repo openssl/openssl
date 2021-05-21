@@ -164,7 +164,7 @@ static int sm2_get_ctx_params(void *vpsm2ctx, OSSL_PARAM *params)
         const EVP_MD *md = ossl_prov_digest_md(&psm2ctx->md);
 
         if (!OSSL_PARAM_set_utf8_string(p, md == NULL ? ""
-                                                      : EVP_MD_name(md)))
+                                                      : EVP_MD_get0_name(md)))
             return 0;
     }
 

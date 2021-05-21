@@ -445,7 +445,8 @@ provider that implements it. The process is similar for all algorithms. Here the
 example of a digest is used.
 
 To go from an B<EVP_MD_CTX> to an B<EVP_MD>, use L<EVP_MD_CTX_md(3)> .
-To go from the B<EVP_MD> to its B<OSSL_PROVIDER>, use L<EVP_MD_provider(3)>.
+To go from the B<EVP_MD> to its B<OSSL_PROVIDER>,
+use L<EVP_MD_get0_provider(3)>.
 To extract the name from the B<OSSL_PROVIDER>, use L<OSSL_PROVIDER_name(3)>.
 
 =head1 SEE ALSO

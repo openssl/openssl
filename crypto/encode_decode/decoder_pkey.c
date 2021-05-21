@@ -108,8 +108,8 @@ static int decoder_construct_pkey(OSSL_DECODER_INSTANCE *decoder_inst,
     if (keymgmt != NULL) {
         EVP_PKEY *pkey = NULL;
         void *keydata = NULL;
-        const OSSL_PROVIDER *keymgmt_prov = EVP_KEYMGMT_provider(keymgmt);
-        const OSSL_PROVIDER *decoder_prov = OSSL_DECODER_provider(decoder);
+        const OSSL_PROVIDER *keymgmt_prov = EVP_KEYMGMT_get0_provider(keymgmt);
+        const OSSL_PROVIDER *decoder_prov = OSSL_DECODER_get0_provider(decoder);
 
         /*
          * If the EVP_KEYMGMT and the OSSL_DECODER are from the
@@ -226,7 +226,7 @@ static void collect_decoder(OSSL_DECODER *decoder, void *arg)
 {
     struct collect_decoder_data_st *data = arg;
     size_t i, end_i;
-    const OSSL_PROVIDER *prov = OSSL_DECODER_provider(decoder);
+    const OSSL_PROVIDER *prov = OSSL_DECODER_get0_provider(decoder);
     void *provctx = OSSL_PROVIDER_get0_provider_ctx(prov);
 
     if (data->error_occurred)

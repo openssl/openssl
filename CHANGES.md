@@ -641,8 +641,8 @@ breaking changes, and mappings for the large list of deprecated functions.
 
    *Richard Levitte*
 
- * Enhanced the documentation of EVP_PKEY_size(), EVP_PKEY_bits()
-   and EVP_PKEY_security_bits().  Especially EVP_PKEY_size() needed
+ * Enhanced the documentation of EVP_PKEY_get_size(), EVP_PKEY_get_bits()
+   and EVP_PKEY_get_security_bits().  Especially EVP_PKEY_get_size() needed
    a new formulation to include all the things it can be used for,
    as well as words of caution.
 

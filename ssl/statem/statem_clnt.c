@@ -2083,7 +2083,8 @@ static int tls_process_ske_dhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey)
         goto err;
     }
 
-    if (!ssl_security(s, SSL_SECOP_TMP_DH, EVP_PKEY_security_bits(peer_tmp),
+    if (!ssl_security(s, SSL_SECOP_TMP_DH,
+                      EVP_PKEY_get_security_bits(peer_tmp),
                       0, peer_tmp)) {
         SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_DH_KEY_TOO_SMALL);
         goto err;
@@ -2258,7 +2259,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
         }
         if (SSL_USE_SIGALGS(s))
             OSSL_TRACE1(TLS, "USING TLSv1.2 HASH %s\n",
-                        md == NULL ? "n/a" : EVP_MD_name(md));
+                        md == NULL ? "n/a" : EVP_MD_get0_name(md));
 
         if (!PACKET_get_length_prefixed_2(pkt, &signature)
             || PACKET_remaining(pkt) != 0) {
@@ -2273,7 +2274,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
         }
 
         if (EVP_DigestVerifyInit_ex(md_ctx, &pctx,
-                                    md == NULL ? NULL : EVP_MD_name(md),
+                                    md == NULL ? NULL : EVP_MD_get0_name(md),
                                     s->ctx->libctx, s->ctx->propq, pkey,
                                     NULL) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
@@ -2589,7 +2590,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
     /* This is a standalone message in TLSv1.3, so there is no more to read */
     if (SSL_IS_TLS13(s)) {
         const EVP_MD *md = ssl_handshake_md(s);
-        int hashleni = EVP_MD_size(md);
+        int hashleni = EVP_MD_get_size(md);
         size_t hashlen;
         static const unsigned char nonce_label[] = "resumption";
 
@@ -2942,7 +2943,7 @@ static int tls_construct_cke_dhe(SSL *s, WPACKET *pkt)
      * stack, we need to zero pad the DHE pub key to the same length
      * as the prime.
      */
-    prime_len = EVP_PKEY_size(ckey);
+    prime_len = EVP_PKEY_get_size(ckey);
     pad_len = prime_len - encoded_pub_len;
     if (pad_len > 0) {
         if (!WPACKET_sub_allocate_bytes_u16(pkt, pad_len, &keybytes)) {

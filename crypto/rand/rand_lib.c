@@ -298,7 +298,7 @@ int RAND_status(void)
 
     if ((rand = RAND_get0_primary(NULL)) == NULL)
         return 0;
-    return EVP_RAND_state(rand) == EVP_RAND_STATE_READY;
+    return EVP_RAND_get_state(rand) == EVP_RAND_STATE_READY;
 }
 # else  /* !FIPS_MODULE */
 

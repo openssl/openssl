@@ -260,7 +260,7 @@ int ec_main(int argc, char **argv)
                                              output_type, output_structure,
                                              NULL);
         if (enc != NULL) {
-            OSSL_ENCODER_CTX_set_cipher(ectx, EVP_CIPHER_name(enc), NULL);
+            OSSL_ENCODER_CTX_set_cipher(ectx, EVP_CIPHER_get0_name(enc), NULL);
             /* Default passphrase prompter */
             OSSL_ENCODER_CTX_set_passphrase_ui(ectx, get_ui_method(), NULL);
             if (passout != NULL)

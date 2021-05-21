@@ -226,11 +226,11 @@ int EVP_PBE_alg_add(int nid, const EVP_CIPHER *cipher, const EVP_MD *md,
     int cipher_nid, md_nid;
 
     if (cipher)
-        cipher_nid = EVP_CIPHER_nid(cipher);
+        cipher_nid = EVP_CIPHER_get_nid(cipher);
     else
         cipher_nid = -1;
     if (md)
-        md_nid = EVP_MD_type(md);
+        md_nid = EVP_MD_get_type(md);
     else
         md_nid = -1;
 

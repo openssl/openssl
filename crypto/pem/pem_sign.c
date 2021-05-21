@@ -32,7 +32,7 @@ int PEM_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
     int i, ret = 0;
     unsigned int m_len;
 
-    m = OPENSSL_malloc(EVP_PKEY_size(pkey));
+    m = OPENSSL_malloc(EVP_PKEY_get_size(pkey));
     if (m == NULL) {
         ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
         goto err;

@@ -165,9 +165,9 @@ Since only a copy of the digest context is ever finalized, the context must
 be cleaned up after use by calling EVP_MD_CTX_free() or a memory leak
 will occur.
 
-The use of EVP_PKEY_size() with these functions is discouraged because some
+The use of EVP_PKEY_get_size() with these functions is discouraged because some
 signature operations may have a signature length which depends on the
-parameters set. As a result EVP_PKEY_size() would have to return a value
+parameters set. As a result EVP_PKEY_get_size() would have to return a value
 which indicates the maximum possible signature for any set of parameters.
 
 =head1 SEE ALSO

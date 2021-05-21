@@ -411,7 +411,7 @@ int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *isize)
     if (ctx->digest == NULL)
         return 0;
 
-    sz = EVP_MD_size(ctx->digest);
+    sz = EVP_MD_get_size(ctx->digest);
     if (sz < 0)
         return 0;
     mdsize = sz;
@@ -654,7 +654,7 @@ const OSSL_PARAM *EVP_MD_gettable_params(const EVP_MD *digest)
 {
     if (digest != NULL && digest->gettable_params != NULL)
         return digest->gettable_params(
-                           ossl_provider_ctx(EVP_MD_provider(digest)));
+                           ossl_provider_ctx(EVP_MD_get0_provider(digest)));
     return NULL;
 }
 
@@ -682,7 +682,7 @@ const OSSL_PARAM *EVP_MD_settable_ctx_params(const EVP_MD *md)
     void *provctx;
 
     if (md != NULL && md->settable_ctx_params != NULL) {
-        provctx = ossl_provider_ctx(EVP_MD_provider(md));
+        provctx = ossl_provider_ctx(EVP_MD_get0_provider(md));
         return md->settable_ctx_params(NULL, provctx);
     }
     return NULL;
@@ -707,7 +707,7 @@ const OSSL_PARAM *EVP_MD_CTX_settable_params(EVP_MD_CTX *ctx)
                    pctx->op.sig.algctx);
 
     if (ctx->digest != NULL && ctx->digest->settable_ctx_params != NULL) {
-        alg = ossl_provider_ctx(EVP_MD_provider(ctx->digest));
+        alg = ossl_provider_ctx(EVP_MD_get0_provider(ctx->digest));
         return ctx->digest->settable_ctx_params(ctx->algctx, alg);
     }
 
@@ -738,7 +738,7 @@ const OSSL_PARAM *EVP_MD_gettable_ctx_params(const EVP_MD *md)
     void *provctx;
 
     if (md != NULL && md->gettable_ctx_params != NULL) {
-        provctx = ossl_provider_ctx(EVP_MD_provider(md));
+        provctx = ossl_provider_ctx(EVP_MD_get0_provider(md));
         return md->gettable_ctx_params(NULL, provctx);
     }
     return NULL;
@@ -763,7 +763,7 @@ const OSSL_PARAM *EVP_MD_CTX_gettable_params(EVP_MD_CTX *ctx)
                     pctx->op.sig.algctx);
 
     if (ctx->digest != NULL && ctx->digest->gettable_ctx_params != NULL) {
-        provctx = ossl_provider_ctx(EVP_MD_provider(ctx->digest));
+        provctx = ossl_provider_ctx(EVP_MD_get0_provider(ctx->digest));
         return ctx->digest->gettable_ctx_params(ctx->algctx, provctx);
     }
     return NULL;

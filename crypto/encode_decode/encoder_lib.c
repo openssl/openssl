@@ -279,7 +279,7 @@ int OSSL_ENCODER_CTX_add_encoder(OSSL_ENCODER_CTX *ctx, OSSL_ENCODER *encoder)
         return 0;
     }
 
-    prov = OSSL_ENCODER_provider(encoder);
+    prov = OSSL_ENCODER_get0_provider(encoder);
     provctx = OSSL_PROVIDER_get0_provider_ctx(prov);
 
     if ((encoderctx = encoder->newctx(provctx)) == NULL

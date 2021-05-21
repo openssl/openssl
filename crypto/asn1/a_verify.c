@@ -102,7 +102,7 @@ int ASN1_item_verify_ex(const ASN1_ITEM *it, const X509_ALGOR *alg,
 
     if ((ctx = evp_md_ctx_new_ex(pkey, id, libctx, propq)) != NULL) {
         rv = ASN1_item_verify_ctx(it, alg, signature, data, ctx);
-        EVP_PKEY_CTX_free(EVP_MD_CTX_pkey_ctx(ctx));
+        EVP_PKEY_CTX_free(EVP_MD_CTX_get_pkey_ctx(ctx));
         EVP_MD_CTX_free(ctx);
     }
     return rv;
@@ -118,7 +118,7 @@ int ASN1_item_verify_ctx(const ASN1_ITEM *it, const X509_ALGOR *alg,
     int mdnid, pknid;
     size_t inll = 0;
 
-    pkey = EVP_PKEY_CTX_get0_pkey(EVP_MD_CTX_pkey_ctx(ctx));
+    pkey = EVP_PKEY_CTX_get0_pkey(EVP_MD_CTX_get_pkey_ctx(ctx));
 
     if (pkey == NULL) {
         ERR_raise(ERR_LIB_ASN1, ERR_R_PASSED_NULL_PARAMETER);

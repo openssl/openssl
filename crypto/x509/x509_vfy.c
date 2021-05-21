@@ -3389,7 +3389,7 @@ static int check_key_level(X509_STORE_CTX *ctx, X509 *cert)
     if (level > NUM_AUTH_LEVELS)
         level = NUM_AUTH_LEVELS;
 
-    return EVP_PKEY_security_bits(pkey) >= minbits_table[level - 1];
+    return EVP_PKEY_get_security_bits(pkey) >= minbits_table[level - 1];
 }
 
 /*-
@@ -3406,7 +3406,7 @@ static int check_curve(X509 *cert)
     if (pkey == NULL)
         return -1;
 
-    if (EVP_PKEY_id(pkey) == EVP_PKEY_EC) {
+    if (EVP_PKEY_get_id(pkey) == EVP_PKEY_EC) {
         int ret, val;
 
         ret = EVP_PKEY_get_int_param(pkey,

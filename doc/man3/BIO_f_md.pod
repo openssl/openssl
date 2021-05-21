@@ -128,7 +128,7 @@ outputs them. This could be used with the examples above.
      if (!mdtmp)
          break;
      BIO_get_md(mdtmp, &md);
-     printf("%s digest", OBJ_nid2sn(EVP_MD_type(md)));
+     printf("%s digest", OBJ_nid2sn(EVP_MD_get_type(md)));
      mdlen = BIO_gets(mdtmp, mdbuf, EVP_MAX_MD_SIZE);
      for (i = 0; i < mdlen; i++) printf(":%02X", mdbuf[i]);
      printf("\n");

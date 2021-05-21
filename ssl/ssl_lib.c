@@ -305,7 +305,7 @@ static int dane_tlsa_add(SSL_DANE *dane,
         }
     }
 
-    if (md != NULL && dlen != (size_t)EVP_MD_size(md)) {
+    if (md != NULL && dlen != (size_t)EVP_MD_get_size(md)) {
         ERR_raise(ERR_LIB_SSL, SSL_R_DANE_TLSA_BAD_DIGEST_LENGTH);
         return 0;
     }
@@ -4764,7 +4764,7 @@ int ssl_handshake_hash(SSL *s, unsigned char *out, size_t outlen,
 {
     EVP_MD_CTX *ctx = NULL;
     EVP_MD_CTX *hdgst = s->s3.handshake_dgst;
-    int hashleni = EVP_MD_CTX_size(hdgst);
+    int hashleni = EVP_MD_CTX_get_size(hdgst);
     int ret = 0;
 
     if (hashleni < 0 || (size_t)hashleni > outlen) {
@@ -5898,7 +5898,7 @@ const EVP_CIPHER *ssl_evp_cipher_fetch(OSSL_LIB_CTX *libctx,
 int ssl_evp_cipher_up_ref(const EVP_CIPHER *cipher)
 {
     /* Don't up-ref an implicit EVP_CIPHER */
-    if (EVP_CIPHER_provider(cipher) == NULL)
+    if (EVP_CIPHER_get0_provider(cipher) == NULL)
         return 1;
 
     /*
@@ -5913,7 +5913,7 @@ void ssl_evp_cipher_free(const EVP_CIPHER *cipher)
     if (cipher == NULL)
         return;
 
-    if (EVP_CIPHER_provider(cipher) != NULL) {
+    if (EVP_CIPHER_get0_provider(cipher) != NULL) {
         /*
          * The cipher was explicitly fetched and therefore it is safe to cast
          * away the const
@@ -5942,7 +5942,7 @@ const EVP_MD *ssl_evp_md_fetch(OSSL_LIB_CTX *libctx,
 int ssl_evp_md_up_ref(const EVP_MD *md)
 {
     /* Don't up-ref an implicit EVP_MD */
-    if (EVP_MD_provider(md) == NULL)
+    if (EVP_MD_get0_provider(md) == NULL)
         return 1;
 
     /*
@@ -5957,7 +5957,7 @@ void ssl_evp_md_free(const EVP_MD *md)
     if (md == NULL)
         return;
 
-    if (EVP_MD_provider(md) != NULL) {
+    if (EVP_MD_get0_provider(md) != NULL) {
         /*
          * The digest was explicitly fetched and therefore it is safe to cast
          * away the const
@@ -5969,7 +5969,7 @@ void ssl_evp_md_free(const EVP_MD *md)
 int SSL_set0_tmp_dh_pkey(SSL *s, EVP_PKEY *dhpkey)
 {
     if (!ssl_security(s, SSL_SECOP_TMP_DH,
-                      EVP_PKEY_security_bits(dhpkey), 0, dhpkey)) {
+                      EVP_PKEY_get_security_bits(dhpkey), 0, dhpkey)) {
         ERR_raise(ERR_LIB_SSL, SSL_R_DH_KEY_TOO_SMALL);
         EVP_PKEY_free(dhpkey);
         return 0;
@@ -5982,7 +5982,7 @@ int SSL_set0_tmp_dh_pkey(SSL *s, EVP_PKEY *dhpkey)
 int SSL_CTX_set0_tmp_dh_pkey(SSL_CTX *ctx, EVP_PKEY *dhpkey)
 {
     if (!ssl_ctx_security(ctx, SSL_SECOP_TMP_DH,
-                          EVP_PKEY_security_bits(dhpkey), 0, dhpkey)) {
+                          EVP_PKEY_get_security_bits(dhpkey), 0, dhpkey)) {
         ERR_raise(ERR_LIB_SSL, SSL_R_DH_KEY_TOO_SMALL);
         EVP_PKEY_free(dhpkey);
         return 0;
