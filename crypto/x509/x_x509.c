@@ -169,7 +169,7 @@ X509 *X509_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
 {
     X509 *cert = NULL;
 
-    cert = (X509 *)ASN1_item_new((X509_it()));
+    cert = (X509 *)ASN1_item_new_ex(X509_it(), libctx, propq);
     if (!ossl_x509_set0_libctx(cert, libctx, propq)) {
         X509_free(cert);
         cert = NULL;

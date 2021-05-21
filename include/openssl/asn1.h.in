@@ -843,6 +843,8 @@ void ASN1_STRING_TABLE_cleanup(void);
 
 /* Old API compatible functions */
 ASN1_VALUE *ASN1_item_new(const ASN1_ITEM *it);
+ASN1_VALUE *ASN1_item_new_ex(const ASN1_ITEM *it, OSSL_LIB_CTX *libctx,
+                             const char *propq);
 void ASN1_item_free(ASN1_VALUE *val, const ASN1_ITEM *it);
 ASN1_VALUE *ASN1_item_d2i(ASN1_VALUE **val, const unsigned char **in,
                           long len, const ASN1_ITEM *it);

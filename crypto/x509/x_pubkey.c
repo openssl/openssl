@@ -71,6 +71,7 @@ static void x509_pubkey_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
     X509_ALGOR_free(pubkey->algor);
     ASN1_BIT_STRING_free(pubkey->public_key);
     EVP_PKEY_free(pubkey->pkey);
+    OPENSSL_free(pubkey->propq);
     OPENSSL_free(pubkey);
     *pval = NULL;
 }
@@ -85,12 +86,15 @@ static int x509_pubkey_ex_populate(ASN1_VALUE **pval, const ASN1_ITEM *it)
             || (pubkey->public_key = ASN1_BIT_STRING_new()) != NULL);
 }
 
-static int x509_pubkey_ex_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
+
+static int x509_pubkey_ex_new_ex(ASN1_VALUE **pval, const ASN1_ITEM *it,
+                                 OSSL_LIB_CTX *libctx, const char *propq)
 {
     X509_PUBKEY *ret;
 
     if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL
-        || !x509_pubkey_ex_populate((ASN1_VALUE **)&ret, NULL)) {
+        || !x509_pubkey_ex_populate((ASN1_VALUE **)&ret, NULL)
+        || !x509_pubkey_set0_libctx(ret, libctx, propq)) {
         x509_pubkey_ex_free((ASN1_VALUE **)&ret, NULL);
         ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
     } else {
@@ -110,7 +114,7 @@ static int x509_pubkey_ex_d2i(ASN1_VALUE **pval,
     int ret;
     OSSL_DECODER_CTX *dctx = NULL;
 
-    if (*pval == NULL && !x509_pubkey_ex_new(pval, it))
+    if (*pval == NULL && !x509_pubkey_ex_new_ex(pval, it, NULL, NULL))
         return 0;
     if (!x509_pubkey_ex_populate(pval, NULL)) {
         ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
@@ -190,12 +194,13 @@ static int x509_pubkey_ex_print(BIO *out, const ASN1_VALUE **pval, int indent,
 
 static const ASN1_EXTERN_FUNCS x509_pubkey_ff = {
     NULL,
-    x509_pubkey_ex_new,
+    NULL,
     x509_pubkey_ex_free,
     0,                          /* Default clear behaviour is OK */
     x509_pubkey_ex_d2i,
     x509_pubkey_ex_i2d,
-    x509_pubkey_ex_print
+    x509_pubkey_ex_print,
+    x509_pubkey_ex_new_ex,
 };
 
 IMPLEMENT_EXTERN_ASN1(X509_PUBKEY, V_ASN1_SEQUENCE, x509_pubkey_ff)
@@ -205,7 +210,7 @@ X509_PUBKEY *X509_PUBKEY_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
 {
     X509_PUBKEY *pubkey = NULL;
 
-    pubkey = (X509_PUBKEY *)ASN1_item_new((X509_PUBKEY_it()));
+    pubkey = (X509_PUBKEY *)ASN1_item_new_ex(X509_PUBKEY_it(), libctx, propq);
     if (!x509_pubkey_set0_libctx(pubkey, libctx, propq)) {
         X509_PUBKEY_free(pubkey);
         pubkey = NULL;
