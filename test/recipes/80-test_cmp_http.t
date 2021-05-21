@@ -255,13 +255,13 @@ sub load_tests {
         s/^\s+// for (@fields); # remove leading whitespace from elements
         s/\s+$// for (@fields); # remove trailing whitespace from elements
         s/^\"(\".*?\")\"$/$1/ for (@fields); # remove escaping from quotation marks from elements
-        my $expected_exit = $fields[$column];
+        my $expected_result = $fields[$column];
         my $description = 1;
         my $title = $fields[$description];
-        next LOOP if (!defined($expected_exit)
-                      || ($expected_exit ne 0 && $expected_exit ne 1));
+        next LOOP if (!defined($expected_result)
+                      || ($expected_result ne 0 && $expected_result ne 1));
         @fields = grep {$_ ne 'BLANK'} @fields[$description + 1 .. @fields - 1];
-        push @result, [$title, \@fields, $expected_exit];
+        push @result, [$title, \@fields, $expected_result];
     }
     close($data);
     return \@result;
