@@ -64,6 +64,7 @@ static int opt_provider_path(const char *path)
 
 int opt_provider(int opt)
 {
+    opt_incr_provider_options(1);
     switch ((enum prov_range)opt) {
     case OPT_PROV__FIRST:
     case OPT_PROV__LAST:

@@ -5,6 +5,7 @@
 OPTIONS, OPT_PAIR, OPT_COMMON, OPT_ERR, OPT_EOF, OPT_HELP,
 opt_init, opt_progname, opt_appname, opt_getprog, opt_help,
 opt_begin, opt_next, opt_flag, opt_arg, opt_unknown, opt_cipher, opt_md,
+opt_cipher_silent, opt_md_silent,
 opt_int, opt_int_arg, opt_long, opt_ulong, opt_intmax, opt_uintmax,
 opt_format, opt_isdir, opt_string, opt_pair,
 opt_num_rest, opt_rest
@@ -34,6 +35,8 @@ opt_num_rest, opt_rest
  char *opt_unknown(void);
  int opt_cipher(const char *name, EVP_CIPHER **cipherp);
  int opt_md(const char *name, EVP_MD **mdp);
+ int opt_cipher_silent(const char *name, EVP_CIPHER **cipherp);
+ int opt_md_silent(const char *name, EVP_MD **mdp);
 
  int opt_int(const char *value, int *result);
  int opt_int_arg(void);
@@ -246,6 +249,9 @@ option to be be taken as digest algorithm, like C<-sha1>. The
 function opt_cipher() takes the specified I<name> and fills in
 the cipher into I<cipherp>.  The function opt_md() does the same
 thing for message digest.
+Both print an error message if the cipher cannot be loaded.
+The functions opt_cipher_silent() and opt_md_silent() do the same
+thing, but clear the stack and do not print an error message on error.
 
 There are a several useful functions for parsing numbers.  These are
 opt_int(), opt_long(), opt_ulong(), opt_intmax(), and opt_uintmax().  They all

@@ -368,6 +368,7 @@ int opt_cipher(const char *name, EVP_CIPHER **cipherp);
 int opt_cipher_silent(const char *name, EVP_CIPHER **cipherp);
 int opt_md(const char *name, EVP_MD **mdp);
 int opt_md_silent(const char *name, EVP_MD **mdp);
+int opt_incr_provider_options(int);
 
 int opt_int(const char *arg, int *result);
 int opt_int_arg(void);

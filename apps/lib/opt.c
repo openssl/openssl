@@ -367,6 +367,19 @@ void print_format_error(int format, unsigned long flags)
     (void)opt_format_error(format2str(format), flags);
 }
 
+/*
+ * Bump count of provider options, return new value.
+ * This function should be cleaner, and be in app_provider.c, but
+ * the tests only link against this file so it has to be here and
+ * this API is clunky but workable.
+ */
+int opt_incr_provider_options(int x)
+{
+    static int count;
+
+    return count += x;
+}
+
 /* Parse a cipher name, put it in *EVP_CIPHER; return 0 on failure, else 1. */
 int opt_cipher_silent(const char *name, EVP_CIPHER **cipherp)
 {
@@ -374,7 +387,9 @@ int opt_cipher_silent(const char *name, EVP_CIPHER **cipherp)
 
     ERR_set_mark();
     if ((*cipherp = EVP_CIPHER_fetch(NULL, name, NULL)) != NULL
-        || (*cipherp = (EVP_CIPHER *)EVP_get_cipherbyname(name)) != NULL) {
+            || (!opt_incr_provider_options(0)
+                && (*cipherp =
+                        (EVP_CIPHER *)EVP_get_cipherbyname(name)) != NULL)) {
         ERR_pop_to_mark();
         return 1;
     }
@@ -400,7 +415,8 @@ int opt_md_silent(const char *name, EVP_MD **mdp)
 
     ERR_set_mark();
     if ((*mdp = EVP_MD_fetch(NULL, name, NULL)) != NULL
-        || (*mdp = (EVP_MD *)EVP_get_digestbyname(name)) != NULL) {
+            || (!opt_incr_provider_options(0)
+                && (*mdp = (EVP_MD *)EVP_get_digestbyname(name)) != NULL)) {
         ERR_pop_to_mark();
         return 1;
     }

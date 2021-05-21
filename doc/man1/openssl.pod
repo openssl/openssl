@@ -647,6 +647,11 @@ the PKCS#11 URI as defined in RFC 7512 should be possible to use directly:
 
 =head2 Provider Options
 
+If any of these options are given, then the default location for
+ciphers and digests (e.g., EVP_get_cipherbyname(3) and
+EVP_get_digestbyname(3))
+are not used.
+
 =over 4
 
 =item B<-provider> I<name>
