@@ -187,8 +187,7 @@ indir data_dir() => sub {
             if ($server_name eq "Mock") {
                 indir "Mock" => sub {
                     $pid = start_mock_server("");
-                    skip "Cannot start or find the started CMP mock server",
-                        scalar @all_aspects unless $pid;
+                    die "Cannot start or find the started CMP mock server" unless $pid;
                 }
             }
             foreach my $aspect (@all_aspects) {
@@ -275,20 +274,23 @@ sub start_mock_server {
     my $cmd = bldtop_dir($app) . " -config server.cnf $args";
     print "Current directory is ".getcwd()."\n";
     print "Launching mock server: $cmd\n";
+    die "Invalid port: $server_port" unless $server_port =~ m/^\d+$/;
     my $pid = open($server_fh, "$cmd|") or die "Trying to $cmd";
     print "Pid is: $pid\n";
-    # Find out the actual server port
-    while (<$server_fh>) {
-        print;
-        s/\R$//;                # Better chomp
-        next unless (/^ACCEPT\s.*:(\d+)$/);
-        $server_port = $1;
-        $server_tls = $1;
-        $kur_port = $1;
-        $pbm_port = $1;
-        last;
+    if ($server_port eq "0") {
+        # Find out the actual server port
+        while (<$server_fh>) {
+            print;
+            s/\R$//;                # Better chomp
+            next unless (/^ACCEPT/);
+            $server_port = $server_tls = $kur_port = $pbm_port = $1
+                if m/^ACCEPT\s.*?:(\d+)$/;
+            last;
+        }
     }
-    return $pid;
+    return $pid if $server_port =~ m/^(\d+)$/;
+    stop_mock_server($pid);
+    return 0;
 }
 
 sub stop_mock_server {
