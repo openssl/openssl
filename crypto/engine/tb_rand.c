@@ -58,7 +58,8 @@ int ENGINE_set_default_RAND(ENGINE *e)
  */
 ENGINE *ENGINE_get_default_RAND(void)
 {
-    return engine_table_select(&rand_table, dummy_nid);
+    return ossl_engine_table_select(&rand_table, dummy_nid,
+                                    OPENSSL_FILE, OPENSSL_LINE);
 }
 
 /* Obtains an RAND implementation from an ENGINE functional reference */

@@ -65,7 +65,8 @@ int ENGINE_set_default_digests(ENGINE *e)
  */
 ENGINE *ENGINE_get_digest_engine(int nid)
 {
-    return engine_table_select(&digest_table, nid);
+    return ossl_engine_table_select(&digest_table, nid,
+                                    OPENSSL_FILE, OPENSSL_LINE);
 }
 
 /* Obtains a digest implementation from an ENGINE functional reference */

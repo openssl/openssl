@@ -58,7 +58,8 @@ int ENGINE_set_default_DSA(ENGINE *e)
  */
 ENGINE *ENGINE_get_default_DSA(void)
 {
-    return engine_table_select(&dsa_table, dummy_nid);
+    return ossl_engine_table_select(&dsa_table, dummy_nid,
+                                    OPENSSL_FILE, OPENSSL_LINE);
 }
 
 /* Obtains an DSA implementation from an ENGINE functional reference */

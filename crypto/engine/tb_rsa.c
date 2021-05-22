@@ -58,7 +58,8 @@ int ENGINE_set_default_RSA(ENGINE *e)
  */
 ENGINE *ENGINE_get_default_RSA(void)
 {
-    return engine_table_select(&rsa_table, dummy_nid);
+    return ossl_engine_table_select(&rsa_table, dummy_nid,
+                                    OPENSSL_FILE, OPENSSL_LINE);
 }
 
 /* Obtains an RSA implementation from an ENGINE functional reference */

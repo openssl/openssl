@@ -66,7 +66,8 @@ int ENGINE_set_default_pkey_meths(ENGINE *e)
  */
 ENGINE *ENGINE_get_pkey_meth_engine(int nid)
 {
-    return engine_table_select(&pkey_meth_table, nid);
+    return ossl_engine_table_select(&pkey_meth_table, nid,
+                                    OPENSSL_FILE, OPENSSL_LINE);
 }
 
 /* Obtains a pkey_meth implementation from an ENGINE functional reference */
