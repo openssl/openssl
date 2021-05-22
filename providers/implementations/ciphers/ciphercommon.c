@@ -30,7 +30,6 @@ static const OSSL_PARAM cipher_known_gettable_params[] = {
     OSSL_PARAM_int(OSSL_CIPHER_PARAM_CUSTOM_IV, NULL),
     OSSL_PARAM_int(OSSL_CIPHER_PARAM_CTS, NULL),
     OSSL_PARAM_int(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK, NULL),
-    { OSSL_CIPHER_PARAM_TLS_MAC, OSSL_PARAM_OCTET_PTR, NULL, 0, OSSL_PARAM_UNMODIFIED },
     OSSL_PARAM_END
 };
 const OSSL_PARAM *ossl_cipher_generic_gettable_params(ossl_unused void *provctx)
@@ -92,6 +91,7 @@ int ossl_cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
 }
 
 CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_START(ossl_cipher_generic)
+{ OSSL_CIPHER_PARAM_TLS_MAC, OSSL_PARAM_OCTET_PTR, NULL, 0, OSSL_PARAM_UNMODIFIED },
 CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_END(ossl_cipher_generic)
 
 CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_START(ossl_cipher_generic)
