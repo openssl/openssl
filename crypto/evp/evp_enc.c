@@ -1073,6 +1073,12 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
             return 0;
         params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_IVLEN, &sz);
         break;
+    case EVP_CTRL_CCM_SET_L:
+        if (arg < 2 || arg > 8)
+            return 0;
+        sz = 15 - arg;
+        params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_IVLEN, &sz);
+        break;
     case EVP_CTRL_AEAD_SET_IV_FIXED:
         params[0] = OSSL_PARAM_construct_octet_string(
                         OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED, ptr, sz);
