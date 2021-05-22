@@ -167,7 +167,7 @@ opthelp:
 
     private = 1;
     if (ciphername != NULL) {
-        if (!opt_cipher(ciphername, &enc))
+        if (!opt_cipher(app_get0_libctx(), ciphername, app_get0_propq(), &enc))
             goto end;
     }
     if (!app_passwd(NULL, passoutarg, NULL, &passout)) {

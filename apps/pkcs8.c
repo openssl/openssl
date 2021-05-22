@@ -202,7 +202,7 @@ int pkcs8_main(int argc, char **argv)
         goto end;
 
     if (ciphername != NULL) {
-        if (!opt_cipher(ciphername, &cipher))
+        if (!opt_cipher(app_get0_libctx(), ciphername, app_get0_propq(), &cipher))
             goto opthelp;
     }
 

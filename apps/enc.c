@@ -297,7 +297,7 @@ int enc_main(int argc, char **argv)
 
     /* Get the cipher name, either from progname (if set) or flag. */
     if (ciphername != NULL) {
-        if (!opt_cipher(ciphername, &cipher))
+        if (!opt_cipher(app_get0_libctx(), ciphername, app_get0_propq(), &cipher))
             goto opthelp;
     }
     if (cipher && EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) {
@@ -309,7 +309,7 @@ int enc_main(int argc, char **argv)
         goto end;
     }
     if (digestname != NULL) {
-        if (!opt_md(digestname, &dgst))
+        if (!opt_md(app_get0_libctx(), digestname, app_get0_propq(), &dgst))
             goto opthelp;
     }
     if (dgst == NULL)

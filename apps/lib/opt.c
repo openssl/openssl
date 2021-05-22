@@ -381,12 +381,14 @@ int opt_incr_provider_options(int x)
 }
 
 /* Parse a cipher name, put it in *EVP_CIPHER; return 0 on failure, else 1. */
-int opt_cipher_silent(const char *name, EVP_CIPHER **cipherp)
+int opt_cipher_silent(OSSL_LIB_CTX *libctx,
+                      const char *name, const char *propq,
+                      EVP_CIPHER **cipherp)
 {
     EVP_CIPHER_free(*cipherp);
 
     ERR_set_mark();
-    if ((*cipherp = EVP_CIPHER_fetch(NULL, name, NULL)) != NULL
+    if ((*cipherp = EVP_CIPHER_fetch(libctx, name, propq)) != NULL
             || (!opt_incr_provider_options(0)
                 && (*cipherp =
                         (EVP_CIPHER *)EVP_get_cipherbyname(name)) != NULL)) {
@@ -397,11 +399,12 @@ int opt_cipher_silent(const char *name, EVP_CIPHER **cipherp)
     return 0;
 }
 
-int opt_cipher(const char *name, EVP_CIPHER **cipherp)
+int opt_cipher(OSSL_LIB_CTX *libctx, const char *name, const char *propq,
+               EVP_CIPHER **cipherp)
 {
     int ret;
 
-    if ((ret = opt_cipher_silent(name, cipherp)) == 0)
+    if ((ret = opt_cipher_silent(libctx, name, propq, cipherp)) == 0)
        opt_printf_stderr("%s: Unknown cipher: %s\n", prog, name);
     return ret;
 }
@@ -409,12 +412,13 @@ int opt_cipher(const char *name, EVP_CIPHER **cipherp)
 /*
  * Parse message digest name, put it in *EVP_MD; return 0 on failure, else 1.
  */
-int opt_md_silent(const char *name, EVP_MD **mdp)
+int opt_md_silent(OSSL_LIB_CTX *libctx, const char *name, const char *propq,
+                  EVP_MD **mdp)
 {
     EVP_MD_free(*mdp);
 
     ERR_set_mark();
-    if ((*mdp = EVP_MD_fetch(NULL, name, NULL)) != NULL
+    if ((*mdp = EVP_MD_fetch(libctx, name, propq)) != NULL
             || (!opt_incr_provider_options(0)
                 && (*mdp = (EVP_MD *)EVP_get_digestbyname(name)) != NULL)) {
         ERR_pop_to_mark();
@@ -424,11 +428,12 @@ int opt_md_silent(const char *name, EVP_MD **mdp)
     return 0;
 }
 
-int opt_md(const char *name, EVP_MD **mdp)
+int opt_md(OSSL_LIB_CTX *libctx, const char *name, const char *propq,
+           EVP_MD **mdp)
 {
     int ret;
 
-    if ((ret = opt_md_silent(name, mdp)) == 0)
+    if ((ret = opt_md_silent(libctx, name, propq, mdp)) == 0)
         opt_printf_stderr("%s: Unknown option or message digest: %s\n", prog,
                           name != NULL ? name : "\"\"");
     return ret;

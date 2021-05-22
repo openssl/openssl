@@ -296,7 +296,7 @@ int ts_main(int argc, char **argv)
         goto end;
 
     if (digestname != NULL) {
-        if (!opt_md(digestname, &md))
+        if (!opt_md(app_get0_libctx(), digestname, app_get0_propq(), &md))
             goto opthelp;
     }
     if (mode == OPT_REPLY && passin &&

@@ -208,7 +208,7 @@ int crl_main(int argc, char **argv)
         goto opthelp;
 
     if (digestname != NULL) {
-        if (!opt_md(digestname, &digest))
+        if (!opt_md(app_get0_libctx(), digestname, app_get0_propq(), &digest))
             goto opthelp;
     }
     x = load_crl(infile, informat, 1, "CRL");

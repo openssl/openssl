@@ -187,7 +187,7 @@ int pkey_main(int argc, char **argv)
     private = (!noout && !pubout) || (text && !text_pub);
 
     if (ciphername != NULL) {
-        if (!opt_cipher(ciphername, &cipher))
+        if (!opt_cipher(app_get0_libctx(), ciphername, app_get0_propq(), &cipher))
             goto opthelp;
     }
     if (cipher == NULL) {

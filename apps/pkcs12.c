@@ -364,7 +364,7 @@ int pkcs12_main(int argc, char **argv)
         goto end;
 
     if (ciphername != NULL) {
-        if (!opt_cipher(ciphername, &enc))
+        if (!opt_cipher(app_get0_libctx(), ciphername, app_get0_propq(), &enc))
             goto opthelp;
     }
     if (export_pkcs12) {
@@ -672,7 +672,7 @@ int pkcs12_main(int argc, char **argv)
         }
 
         if (macalg != NULL) {
-            if (!opt_md(macalg, &macmd))
+            if (!opt_md(app_get0_libctx(), macalg, app_get0_propq(), &macmd))
                 goto opthelp;
         }
 

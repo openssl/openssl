@@ -111,7 +111,7 @@ int gendsa_main(int argc, char **argv)
         goto end;
 
     if (ciphername != NULL) {
-        if (!opt_cipher(ciphername, &enc))
+        if (!opt_cipher(app_get0_libctx(), ciphername, app_get0_propq(), &enc))
             goto end;
     }
     private = 1;

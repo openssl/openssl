@@ -721,15 +721,15 @@ int cms_main(int argc, char **argv)
         goto end;
 
     if (digestname != NULL) {
-        if (!opt_md(digestname, &sign_md))
+        if (!opt_md(app_get0_libctx(), digestname, app_get0_propq(), &sign_md))
             goto end;
     }
     if (ciphername != NULL) {
-        if (!opt_cipher(ciphername, &cipher))
+        if (!opt_cipher(app_get0_libctx(), ciphername, app_get0_propq(), &cipher))
             goto end;
     }
     if (wrapname != NULL) {
-        if (!opt_cipher(wrapname, &wrap_cipher))
+        if (!opt_cipher(app_get0_libctx(), wrapname, app_get0_propq(), &wrap_cipher))
             goto end;
     }
 

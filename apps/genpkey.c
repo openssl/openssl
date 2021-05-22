@@ -164,7 +164,7 @@ int genpkey_main(int argc, char **argv)
         }
     }
     if (ciphername != NULL) {
-        if (!opt_cipher(ciphername, &cipher) || do_param == 1)
+        if (!opt_cipher(app_get0_libctx(), ciphername, app_get0_propq(), &cipher) || do_param == 1)
             goto opthelp;
         m = EVP_CIPHER_mode(cipher);
         if (m == EVP_CIPH_GCM_MODE || m == EVP_CIPH_CCM_MODE

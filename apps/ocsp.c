@@ -508,7 +508,7 @@ int ocsp_main(int argc, char **argv)
                 goto end;
             break;
         case OPT_RCID:
-            if (!opt_md(opt_arg(), &resp_certid_md))
+            if (!opt_md(app_get0_libctx(), opt_arg(), app_get0_propq(), &resp_certid_md))
                 goto opthelp;
             break;
         case OPT_MD:
@@ -518,7 +518,7 @@ int ocsp_main(int argc, char **argv)
                            prog);
                 goto opthelp;
             }
-            if (!opt_md(opt_unknown(), &cert_id_md))
+            if (!opt_md(app_get0_libctx(), opt_unknown(), app_get0_propq(), &cert_id_md))
                 goto opthelp;
             trailing_md = 1;
             break;
@@ -546,7 +546,7 @@ int ocsp_main(int argc, char **argv)
     }
 
     if (respdigname != NULL) {
-        if (!opt_md(respdigname, &rsign_md))
+        if (!opt_md(app_get0_libctx(), respdigname, app_get0_propq(), &rsign_md))
             goto end;
     }
 

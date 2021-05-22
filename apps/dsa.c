@@ -166,7 +166,7 @@ int dsa_main(int argc, char **argv)
         goto opthelp;
 
     if (ciphername != NULL) {
-        if (!opt_cipher(ciphername, &enc))
+        if (!opt_cipher(app_get0_libctx(), ciphername, app_get0_propq(), &enc))
             goto end;
     }
     private = pubin || pubout ? 0 : 1;

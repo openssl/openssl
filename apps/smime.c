@@ -363,11 +363,11 @@ int smime_main(int argc, char **argv)
         goto end;
 
     if (digestname != NULL) {
-        if (!opt_md(digestname, &sign_md))
+        if (!opt_md(app_get0_libctx(), digestname, app_get0_propq(), &sign_md))
             goto opthelp;
     }
     if (ciphername != NULL) {
-        if (!opt_cipher(ciphername, &cipher))
+        if (!opt_cipher(app_get0_libctx(), ciphername, app_get0_propq(), &cipher))
             goto opthelp;
     }
     if (!(operation & SMIME_SIGNERS) && (skkeys != NULL || sksigners != NULL)) {

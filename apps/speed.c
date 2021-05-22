@@ -507,7 +507,7 @@ static int have_md(const char *name)
     int ret = 0;
     EVP_MD *md = NULL;
 
-    if (opt_md_silent(name, &md)) {
+    if (opt_md_silent(app_get0_libctx(), name, app_get0_propq(), &md)) {
         EVP_MD_CTX *ctx = EVP_MD_CTX_new();
 
         if (ctx != NULL && EVP_DigestInit(ctx, md) > 0)
@@ -523,7 +523,7 @@ static int have_cipher(const char *name)
     int ret = 0;
     EVP_CIPHER *cipher = NULL;
 
-    if (opt_cipher_silent(name, &cipher)) {
+    if (opt_cipher_silent(app_get0_libctx(), name, app_get0_propq(), &cipher)) {
         EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
 
         if (ctx != NULL
@@ -543,7 +543,7 @@ static int EVP_Digest_loop(const char *mdname, int algindex, void *args)
     int count;
     EVP_MD *md = NULL;
 
-    if (!opt_md_silent(mdname, &md))
+    if (!opt_md_silent(app_get0_libctx(), mdname, app_get0_propq(), &md))
         return -1;
     for (count = 0; COND(c[algindex][testnum]); count++) {
         if (!EVP_Digest(buf, (size_t)lengths[testnum], digest, NULL, md,
@@ -677,7 +677,7 @@ static EVP_CIPHER_CTX *init_evp_cipher_ctx(const char *ciphername,
     EVP_CIPHER_CTX *ctx = NULL;
     EVP_CIPHER *cipher = NULL;
 
-    if (!opt_cipher_silent(ciphername, &cipher))
+    if (!opt_cipher_silent(app_get0_libctx(), ciphername, app_get0_propq(), &cipher))
         return NULL;
 
     if ((ctx = EVP_CIPHER_CTX_new()) == NULL)
@@ -1492,7 +1492,7 @@ int speed_main(int argc, char **argv)
                 goto opterr;
             }
             ERR_set_mark();
-            if (!opt_cipher_silent(opt_arg(), &evp_cipher)) {
+            if (!opt_cipher_silent(app_get0_libctx(), opt_arg(), app_get0_propq(), &evp_cipher)) {
                 if (have_md(opt_arg()))
                     evp_md_name = opt_arg();
             }
@@ -2258,7 +2258,7 @@ int speed_main(int argc, char **argv)
 
         if (mac == NULL || evp_mac_ciphername == NULL)
             goto end;
-        if (!opt_cipher(evp_mac_ciphername, &cipher))
+        if (!opt_cipher(app_get0_libctx(), evp_mac_ciphername, app_get0_propq(), &cipher))
             goto end;
 
         keylen = EVP_CIPHER_key_length(cipher);
