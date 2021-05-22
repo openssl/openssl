@@ -58,7 +58,8 @@ int ENGINE_set_default_DH(ENGINE *e)
  */
 ENGINE *ENGINE_get_default_DH(void)
 {
-    return engine_table_select(&dh_table, dummy_nid);
+    return ossl_engine_table_select(&dh_table, dummy_nid,
+                                    OPENSSL_FILE, OPENSSL_LINE);
 }
 
 /* Obtains an DH implementation from an ENGINE functional reference */

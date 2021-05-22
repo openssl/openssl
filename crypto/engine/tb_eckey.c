@@ -58,7 +58,8 @@ int ENGINE_set_default_EC(ENGINE *e)
  */
 ENGINE *ENGINE_get_default_EC(void)
 {
-    return engine_table_select(&dh_table, dummy_nid);
+    return ossl_engine_table_select(&dh_table, dummy_nid,
+                                    OPENSSL_FILE, OPENSSL_LINE);
 }
 
 /* Obtains an EC_KEY implementation from an ENGINE functional reference */
