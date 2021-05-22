@@ -130,7 +130,7 @@ sub test_cmp_http {
     my $params = shift;
     my $expected_result = shift;
     my $path_app = bldtop_dir($app);
-    $params = [ '-server', "127.0.0.1:$server_port", @$params ]
+    $params = [ '-server', "127.0.0.1:".$server_port, @$params ]
         unless grep { $_ eq '-server' } @$params;
 
     with({ exit_checker => sub {
@@ -187,8 +187,7 @@ indir data_dir() => sub {
             if ($server_name eq "Mock") {
                 indir "Mock" => sub {
                     $pid = start_mock_server("");
-                    skip "Cannot start or find the started CMP mock server",
-                        scalar @all_aspects unless $pid;
+                    die "Cannot start or find the started CMP mock server" unless $pid;
                 }
             }
             foreach my $aspect (@all_aspects) {
@@ -278,6 +277,7 @@ sub start_mock_server {
     my $pid = open($server_fh, "$cmd|") or die "Trying to $cmd";
     print "Pid is: $pid\n";
     # Find out the actual server port
+    $server_port = "error";
     while (<$server_fh>) {
         print;
         s/\R$//;                # Better chomp
@@ -288,7 +288,9 @@ sub start_mock_server {
         $pbm_port = $1;
         last;
     }
-    return $pid;
+    return $pid if $server_port =~ m/^(\d+)$/;
+    stop_mock_server($pid);
+    return 0;
 }
 
 sub stop_mock_server {
