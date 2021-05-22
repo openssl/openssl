@@ -628,8 +628,8 @@ int BIO_lookup(const char *host, const char *service,
 }
 
 /*-
- * BIO_lookup_ex - look up the node and service you want to connect to.
- * @node: the node you want to connect to.
+ * BIO_lookup_ex - look up the host and service you want to connect to.
+ * @host: the host (or node, in case family == AF_UNIX) you want to connect to.
  * @service: the service you want to connect to.
  * @lookup_type: declare intent with the result, client or server.
  * @family: the address family you want to use.  Use AF_UNSPEC for any, or
@@ -642,7 +642,7 @@ int BIO_lookup(const char *host, const char *service,
  *            with 0 for the protocol)
  * @res: Storage place for the resulting list of returned addresses
  *
- * This will do a lookup of the node and service that you want to connect to.
+ * This will do a lookup of the host and service that you want to connect to.
  * It returns a linked list of different addresses you can try to connect to.
  *
  * When no longer needed you should call BIO_ADDRINFO_free() to free the result.

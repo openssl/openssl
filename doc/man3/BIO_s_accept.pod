@@ -73,7 +73,7 @@ connect BIOs, that is it can be a numerical port string or a
 string to lookup using getservbyname() and a string table.
 
 BIO_set_accept_port() uses the string B<port> to set the accept
-port.  "port" has the same syntax as the port specified in
+port of BIO I<b>.  "port" has the same syntax as the port specified in
 BIO_set_conn_port() for connect BIOs, that is it can be a numerical
 port string or a string to lookup using getservbyname() and a string
 table.
