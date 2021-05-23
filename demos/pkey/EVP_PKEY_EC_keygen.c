@@ -23,14 +23,14 @@ static int get_key_values(EVP_PKEY *pkey);
 /*
  * The following code shows how to generate a EC key from a curve name
  * with additional parameters. If only the curve name is required then the
- * simple helper can be used instead i.e.
+ * simple helper can be used instead i.e. Either
  * pkey = EVP_EC_gen(curvename); OR
  * pkey = EVP_PKEY_Q_keygen(libctx, propq, "EC", curvename);
  */
 static EVP_PKEY *do_ec_keygen(void)
 {
     /*
-     * The libctx and prop q can be set if required, they are include here
+     * The libctx and propq can be set if required, they are included here
      * to show how they are passed to EVP_PKEY_CTX_new_from_name().
      */
     OSSL_LIB_CTX *libctx = NULL;
@@ -55,7 +55,7 @@ static EVP_PKEY *do_ec_keygen(void)
     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
                                                  (char *)curvename, 0);
     /*
-     * This is here for demonstration purposes only.
+     * This is an optional parameter.
      * For many curves the cofactor is 1 - so setting this has
      * no effect.
      */
@@ -72,14 +72,13 @@ static EVP_PKEY *do_ec_keygen(void)
         fprintf(stderr, "EVP_PKEY_generate() failed\n");
         goto cleanup;
     }
-    /* key will be NON NULL if it gets here */
 cleanup:
     EVP_PKEY_CTX_free(genctx);
     return key;
 }
 
 /*
- * The following code shows how to pull values back out of the generated
+ * The following code shows how retrieve key data from the generated
  * EC key. See doc/man7/EVP_PKEY-EC.pod for more information.
  *
  * EVP_PKEY_print_private() could also be used to display the values.
