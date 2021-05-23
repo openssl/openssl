@@ -62,7 +62,8 @@ int engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,
                           int setdefault);
 void engine_table_unregister(ENGINE_TABLE **table, ENGINE *e);
 void engine_table_cleanup(ENGINE_TABLE **table);
-ENGINE *engine_table_select(ENGINE_TABLE **table, int nid, const char *f, int l);
+ENGINE *ossl_engine_table_select(ENGINE_TABLE **table, int nid,
+                                 const char *f, int l);
 typedef void (engine_table_doall_cb) (int nid, STACK_OF(ENGINE) *sk,
                                       ENGINE *def, void *arg);
 void engine_table_doall(ENGINE_TABLE *table, engine_table_doall_cb *cb,
