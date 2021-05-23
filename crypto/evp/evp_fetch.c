@@ -504,6 +504,9 @@ char *evp_get_global_properties_str(OSSL_LIB_CTX *libctx, int loadconfig)
     char *propstr = NULL;
     size_t sz;
 
+    if (plp == NULL)
+        return OPENSSL_strdup("");
+
     sz = ossl_property_list_to_string(libctx, *plp, NULL, 0);
     if (sz == 0) {
         ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
