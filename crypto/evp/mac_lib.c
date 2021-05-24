@@ -82,14 +82,14 @@ EVP_MAC *EVP_MAC_CTX_mac(EVP_MAC_CTX *ctx)
     return ctx->meth;
 }
 
-size_t EVP_MAC_CTX_get_mac_size(EVP_MAC_CTX *ctx)
+static size_t get_size_t_ctx_param(EVP_MAC_CTX *ctx, const char *name)
 {
     size_t sz = 0;
 
     if (ctx->algctx != NULL) {
         OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
-        params[0] = OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_SIZE, &sz);
+        params[0] = OSSL_PARAM_construct_size_t(name, &sz);
         if (ctx->meth->get_ctx_params != NULL) {
             if (ctx->meth->get_ctx_params(ctx->algctx, params))
                 return sz;
@@ -103,6 +103,16 @@ size_t EVP_MAC_CTX_get_mac_size(EVP_MAC_CTX *ctx)
      * we return zero
      */
     return 0;
+}
+
+size_t EVP_MAC_CTX_get_mac_size(EVP_MAC_CTX *ctx)
+{
+    return get_size_t_ctx_param(ctx, OSSL_MAC_PARAM_SIZE);
+}
+
+size_t EVP_MAC_CTX_get_block_size(EVP_MAC_CTX *ctx)
+{
+    return get_size_t_ctx_param(ctx, OSSL_MAC_PARAM_BLOCK_SIZE);
 }
 
 int EVP_MAC_init(EVP_MAC_CTX *ctx, const unsigned char *key, size_t keylen,

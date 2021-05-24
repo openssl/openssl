@@ -169,6 +169,7 @@ extern "C" {
 #define OSSL_MAC_PARAM_DIGEST           OSSL_ALG_PARAM_DIGEST     /* utf8 string */
 #define OSSL_MAC_PARAM_PROPERTIES       OSSL_ALG_PARAM_PROPERTIES /* utf8 string */
 #define OSSL_MAC_PARAM_SIZE             "size"                    /* size_t */
+#define OSSL_MAC_PARAM_BLOCK_SIZE       "block-size"              /* size_t */
 #define OSSL_MAC_PARAM_TLS_DATA_SIZE    "tls-data-size"           /* size_t */
 
 /* Known MAC names */
