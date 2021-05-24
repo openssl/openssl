@@ -38,7 +38,7 @@ if ($no_fips) {
 # status is required.
 
 open CFGBASE, '<', $config_path;
-open CFGINC, '<', bldtop_file('/providers/fipsmodule.cnf');
+open CFGINC, '<', bldtop_file('/test/fipsmodule.cnf');
 open CFGOUT, '>', 'thread.cnf';
 
 while (<CFGBASE>) {
