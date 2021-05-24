@@ -1033,6 +1033,10 @@ typedef struct mac_data_st {
     int xof;
     /* Collection of controls */
     STACK_OF(OPENSSL_STRING) *controls;
+    /* Output size */
+    int output_size;
+    /* Block size */
+    int block_size;
 } MAC_DATA;
 
 static int mac_test_init(EVP_TEST *t, const char *alg)
@@ -1076,6 +1080,7 @@ static int mac_test_init(EVP_TEST *t, const char *alg)
     mdat->mac_name = OPENSSL_strdup(alg);
     mdat->mac = mac;
     mdat->controls = sk_OPENSSL_STRING_new_null();
+    mdat->output_size = mdat->block_size = -1;
     t->data = mdat;
     return 1;
 }
@@ -1130,6 +1135,18 @@ static int mac_test_parse(EVP_TEST *t,
     if (strcmp(keyword, "Ctrl") == 0)
         return sk_OPENSSL_STRING_push(mdata->controls,
                                       OPENSSL_strdup(value)) != 0;
+    if (strcmp(keyword, "OutputSize") == 0) {
+        mdata->output_size = atoi(value);
+        if (mdata->output_size < 0)
+            return -1;
+        return 1;
+    }
+    if (strcmp(keyword, "BlockSize") == 0) {
+        mdata->block_size = atoi(value);
+        if (mdata->block_size < 0)
+            return -1;
+        return 1;
+    }
     return 0;
 }
 
@@ -1271,8 +1288,8 @@ static int mac_test_run_mac(EVP_TEST *t)
     EVP_MAC_CTX *ctx = NULL;
     unsigned char *got = NULL;
     size_t got_len;
-    int i;
-    OSSL_PARAM params[21];
+    int i, block_size = -1, output_size = -1;
+    OSSL_PARAM params[21], sizes[3], *psizes = sizes;
     size_t params_n = 0;
     size_t params_n_allocstart = 0;
     const OSSL_PARAM *defined_params =
@@ -1363,6 +1380,29 @@ static int mac_test_run_mac(EVP_TEST *t)
     if (!EVP_MAC_init(ctx, expected->key, expected->key_len, params)) {
         t->err = "MAC_INIT_ERROR";
         goto err;
+    }
+    if (expected->output_size >= 0)
+        *psizes++ = OSSL_PARAM_construct_int(OSSL_MAC_PARAM_SIZE,
+                                             &output_size);
+    if (expected->block_size >= 0)
+        *psizes++ = OSSL_PARAM_construct_int(OSSL_MAC_PARAM_BLOCK_SIZE,
+                                             &block_size);
+    if (psizes != sizes) {
+        *psizes = OSSL_PARAM_construct_end();
+        if (!TEST_true(EVP_MAC_CTX_get_params(ctx, sizes))) {
+            t->err = "INTERNAL_ERROR";
+            goto err;
+        }
+        if (expected->output_size >= 0
+                && !TEST_int_eq(output_size, expected->output_size)) {
+            t->err = "TEST_FAILURE";
+            goto err;
+        }
+        if (expected->block_size >= 0
+                && !TEST_int_eq(block_size, expected->block_size)) {
+            t->err = "TEST_FAILURE";
+            goto err;
+        }
     }
     if (!EVP_MAC_update(ctx, expected->input, expected->input_len)) {
         t->err = "MAC_UPDATE_ERROR";
