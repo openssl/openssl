@@ -34,7 +34,7 @@ my $libdir = rel2abs(catdir($srctop, "util", "perl"));
 my $jobs = $ENV{HARNESS_JOBS} // 1;
 
 $ENV{OPENSSL_CONF} = rel2abs(catdir($srctop, "apps", "openssl.cnf"));
-$ENV{OPENSSL_CONF_INCLUDE} = rel2abs(catdir($bldtop, "providers"));
+$ENV{OPENSSL_CONF_INCLUDE} = rel2abs(catdir($bldtop, "test"));
 $ENV{OPENSSL_MODULES} = rel2abs(catdir($bldtop, "providers"));
 $ENV{OPENSSL_ENGINES} = rel2abs(catdir($bldtop, "engines"));
 $ENV{CTLOG_FILE} = rel2abs(catdir($srctop, "test", "ct", "log_list.cnf"));
@@ -134,10 +134,15 @@ foreach my $arg (@ARGV ? @ARGV : ('alltests')) {
 sub find_matching_tests {
     my ($glob) = @_;
 
+    # prep recipes are mandatory
+    my @recipes = glob(catfile($recipesdir,"00-prep_*.t"));
+
     if ($glob =~ m|^[\d\[\]\?\-]+$|) {
-        return glob(catfile($recipesdir,"$glob-*.t"));
+        push @recipes, glob(catfile($recipesdir,"$glob-*.t"));
+    } else {
+        push @recipes, glob(catfile($recipesdir,"*-$glob.t"));
     }
-    return glob(catfile($recipesdir,"*-$glob.t"));
+    return @recipes;
 }
 
 # The following is quite a bit of hackery to adapt to both TAP::Harness
