@@ -7,7 +7,7 @@ EVP_MAC_number, EVP_MAC_name, EVP_MAC_names_do_all, EVP_MAC_description,
 EVP_MAC_provider, EVP_MAC_get_params, EVP_MAC_gettable_params,
 EVP_MAC_CTX, EVP_MAC_CTX_new, EVP_MAC_CTX_free, EVP_MAC_CTX_dup,
 EVP_MAC_CTX_mac, EVP_MAC_CTX_get_params, EVP_MAC_CTX_set_params,
-EVP_MAC_CTX_get_mac_size, EVP_Q_mac,
+EVP_MAC_CTX_get_mac_size, EVP_MAC_CTX_get_block_size, EVP_Q_mac,
 EVP_MAC_init, EVP_MAC_update, EVP_MAC_final, EVP_MAC_finalXOF,
 EVP_MAC_gettable_ctx_params, EVP_MAC_settable_ctx_params,
 EVP_MAC_CTX_gettable_params, EVP_MAC_CTX_settable_params,
@@ -42,6 +42,7 @@ EVP_MAC_do_all_provided - EVP MAC routines
  int EVP_MAC_CTX_set_params(EVP_MAC_CTX *ctx, const OSSL_PARAM params[]);
 
  size_t EVP_MAC_CTX_get_mac_size(EVP_MAC_CTX *ctx);
+ size_t EVP_MAC_CTX_get_block_size(EVP_MAC_CTX *ctx);
  unsigned char *EVP_Q_mac(OSSL_LIB_CTX *libctx, const char *name, const char *propq,
                           const char *subalg, const OSSL_PARAM *params,
                           const void *key, size_t keylen,
@@ -212,6 +213,9 @@ for the use of B<OSSL_PARAM> as a parameter descriptor.
 
 EVP_MAC_CTX_get_mac_size() returns the MAC output size for the given context.
 
+EVP_MAC_CTX_get_block_size() returns the MAC block size for the given context.
+Not all MAC algorithms support this.
+
 EVP_MAC_is_a() checks if the given I<mac> is an implementation of an
 algorithm that's identifiable with I<name>.
 
@@ -378,8 +382,11 @@ EVP_Q_mac() returns a pointer to the computed MAC value, or NULL on error.
 EVP_MAC_init(), EVP_MAC_update(), EVP_MAC_final(), and EVP_MAC_finalXOF()
 return 1 on success, 0 on error.
 
-EVP_MAC_CTX_get_mac_size() returns the expected output size, or 0 if it isn't set.
-If it isn't set, a call to EVP_MAC_init() should get it set.
+EVP_MAC_CTX_get_mac_size() returns the expected output size, or 0 if it isn't
+set.  If it isn't set, a call to EVP_MAC_init() will set it.
+
+EVP_MAC_CTX_get_block_size() returns the block size, or 0 if it isn't set.
+If it isn't set, a call to EVP_MAC_init() will set it.
 
 EVP_MAC_do_all_provided() returns nothing at all.
 
