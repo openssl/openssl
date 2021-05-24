@@ -16,9 +16,8 @@
 #include <openssl/rc4.h>
 #include <openssl/md5.h>
 
-#if !defined OPENSSL_NO_RC4 && !defined OPENSSL_NO_MD5
-# if !defined OPENSSL_NO_DES && !defined OPENSSL_NO_SHA1
-
+#if !defined OPENSSL_NO_RC4 && !defined OPENSSL_NO_MD5 \
+    || !defined OPENSSL_NO_DES && !defined OPENSSL_NO_SHA1
 static const char pbe_password[] = "MyVoiceIsMyPassport";
 
 static unsigned char pbe_salt[] = {
@@ -32,7 +31,6 @@ static unsigned char pbe_plaintext[] = {
     0x6c, 0x6c, 0x20, 0x6d, 0x61, 0x64, 0x65, 0x20,
     0x6f, 0x66, 0x20, 0x73, 0x74, 0x61, 0x72, 0x73,
 };
-# endif
 #endif
 
 /* Expected output generated using OpenSSL 1.1.1 */
@@ -54,8 +52,8 @@ static const unsigned char pbe_ciphertext_des_sha1[] = {
 };
 #endif
 
-#if !defined OPENSSL_NO_RC4 && !defined OPENSSL_NO_MD5
-# if !defined OPENSSL_NO_DES && !defined OPENSSL_NO_SHA1
+#if !defined OPENSSL_NO_RC4 && !defined OPENSSL_NO_MD5 \
+    || !defined OPENSSL_NO_DES && !defined OPENSSL_NO_SHA1
 static int test_pkcs5_pbe(const EVP_CIPHER *cipher, const EVP_MD *md,
                           const unsigned char *exp, const int exp_len)
 {
@@ -109,7 +107,6 @@ err:
     X509_ALGOR_free(algor);
     return ret;
 }
-# endif
 #endif
 
 #if !defined OPENSSL_NO_RC4 && !defined OPENSSL_NO_MD5
