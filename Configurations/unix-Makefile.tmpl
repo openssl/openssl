@@ -90,14 +90,21 @@ SHLIB_INFO={- join(" \\\n" . ' ' x 11,
 MODULES={- join(" \\\n" . ' ' x 8,
                 fill_lines(" ", $COLUMNS - 8,
                            map { platform->dso($_) }
+                           # Drop all modules that are dependencies, they will
+                           # be processed through their dependents
+                           grep { my $x = $_;
+                                  !grep { grep { $_ eq $x } @$_ }
+                                        values %{$unified_info{depends}} }
                            @{$unified_info{modules}})) -}
-FIPSMODULENAME={- # We do some extra checking here, as there should be only one
-                  use File::Basename;
-                  my @fipsmodules =
-                      grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
-                             && $unified_info{attributes}->{modules}->{$_}->{fips} }
-                      @{$unified_info{modules}};
-                  die "More that one FIPS module" if scalar @fipsmodules > 1;
+FIPSMODULE={- # We do some extra checking here, as there should be only one
+              use File::Basename;
+              our @fipsmodules =
+                  grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
+                         && $unified_info{attributes}->{modules}->{$_}->{fips} }
+                  @{$unified_info{modules}};
+              die "More that one FIPS module" if scalar @fipsmodules > 1;
+              join(" ", map { platform->dso($_) } @fipsmodules) -}
+FIPSMODULENAME={- die "More that one FIPS module" if scalar @fipsmodules > 1;
                   join(" ", map { basename(platform->dso($_)) } @fipsmodules) -}
 
 PROGRAMS={- join(" \\\n" . ' ' x 9,
