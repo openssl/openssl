@@ -364,7 +364,7 @@ sub determine_compiler_settings {
         if ( $SYSTEM eq "SunOS" ) {
             # check for Oracle Developer Studio, expected output is "cc: blah-blah C x.x blah-blah"
             my $v = `(cc -V 2>&1) 2>/dev/null | egrep -e '^cc: .* C [0-9]\.[0-9]'`;
-	    my @numbers = 
+            my @numbers = 
                     ( $v =~ m/^.* C ([0-9]+)\.([0-9]+) .*/ );
             my @factors = (100, 1);
             $v = 0;
@@ -372,11 +372,11 @@ sub determine_compiler_settings {
                 $v += shift(@numbers) * shift(@factors)
             }
 
-	    if ($v > 500) {
+            if ($v > 500) {
                 $CC = 'cc';
                 $CCVENDOR = 'sun';
                 $CCVER = $v;
-	   }
+            }
         }
     }
 
@@ -678,7 +678,7 @@ EOF
         sub {
             my $KERNEL_BITS = $ENV{KERNEL_BITS};
             my $ISA64 = `isainfo 2>/dev/null | grep sparcv9`;
-	    my $KB = $KERNEL_BITS // '64';
+            my $KB = $KERNEL_BITS // '64';
             if ( $ISA64 ne "" && $KB eq '64' ) {
                 if ( $CCVENDOR eq "sun" && $CCVER >= 500 ) {
                     print <<EOF;
