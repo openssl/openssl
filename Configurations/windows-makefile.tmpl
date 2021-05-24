@@ -624,16 +624,7 @@ uninstall_html_docs: uninstall_image_docs
 install_image_docs:
 	@if "$(INSTALLTOP)"=="" ( echo INSTALLTOP should not be empty & exit 1 )
 	@echo *** Installing HTML images
-	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\html\man1\img"
-	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\html\man3\img"
-	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\html\man5\img"
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\html\man7\img"
-	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(SRCDIR)\doc\man1\img\*.png \
-                                        "$(INSTALLTOP)\html\man1\img"
-	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(SRCDIR)\doc\man3\img\*.png \
-                                        "$(INSTALLTOP)\html\man3\img"
-	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(SRCDIR)\doc\man5\img\*.png \
-                                        "$(INSTALLTOP)\html\man5\img"
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(SRCDIR)\doc\man7\img\*.png \
                                         "$(INSTALLTOP)\html\man7\img"
 

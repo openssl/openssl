@@ -1078,31 +1078,7 @@ uninstall_html_docs: uninstall_image_docs
 	done
 
 install_image_docs:
-	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(HTMLDIR)/man1/img
-	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(HTMLDIR)/man3/img
-	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(HTMLDIR)/man5/img
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(HTMLDIR)/man7/img
-	@set -e; for x in dummy $(IMAGEDOCS1); do \
-		if [ "$$x" = "dummy" ]; then continue; fi; \
-		fn=`basename $$x`; \
-		$(ECHO) "install $$x -> $(DESTDIR)$(HTMLDIR)/man1/img/$$fn"; \
-		cp $(SRCDIR)/$$x $(DESTDIR)$(HTMLDIR)/man1/img/$$fn; \
-		chmod 644 $(DESTDIR)$(HTMLDIR)/man1/img/$$fn; \
-	done
-	@set -e; for x in dummy $(IMAGEDOCS3); do \
-		if [ "$$x" = "dummy" ]; then continue; fi; \
-		fn=`basename $$x`; \
-		$(ECHO) "install $$x -> $(DESTDIR)$(HTMLDIR)/man3/img/$$fn"; \
-		cp $(SRCDIR)/$$x $(DESTDIR)$(HTMLDIR)/man3/img/$$fn; \
-		chmod 644 $(DESTDIR)$(HTMLDIR)/man3/img/$$fn; \
-	done
-	@set -e; for x in dummy $(IMAGEDOCS5); do \
-		if [ "$$x" = "dummy" ]; then continue; fi; \
-		fn=`basename $$x`; \
-		$(ECHO) "install $$x -> $(DESTDIR)$(HTMLDIR)/man5/img/$$fn"; \
-		cp $(SRCDIR)/$$x $(DESTDIR)$(HTMLDIR)/man5/img/$$fn; \
-		chmod 644 $(DESTDIR)$(HTMLDIR)/man5/img/$$fn; \
-	done
 	@set -e; for x in dummy $(IMAGEDOCS7); do \
 		if [ "$$x" = "dummy" ]; then continue; fi; \
 		fn=`basename $$x`; \
@@ -1112,24 +1088,6 @@ install_image_docs:
 	done
 
 uninstall_image_docs:
-	@set -e; for x in dummy $(IMAGEDOCS1); do \
-		if [ "$$x" = "dummy" ]; then continue; fi; \
-		fn=`basename $$x`; \
-		$(ECHO) "$(RM) $(DESTDIR)$(HTMLDIR)/man1/img/$$fn"; \
-		$(RM) $(DESTDIR)$(HTMLDIR)/man1/img/$$fn; \
-	done
-	@set -e; for x in dummy $(IMAGEDOCS3); do \
-		if [ "$$x" = "dummy" ]; then continue; fi; \
-		fn=`basename $$x`; \
-		$(ECHO) "$(RM) $(DESTDIR)$(HTMLDIR)/man3/img/$$fn"; \
-		$(RM) $(DESTDIR)$(HTMLDIR)/man3/img/$$fn; \
-	done
-	@set -e; for x in dummy $(IMAGEDOCS5); do \
-		if [ "$$x" = "dummy" ]; then continue; fi; \
-		fn=`basename $$x`; \
-		$(ECHO) "$(RM) $(DESTDIR)$(HTMLDIR)/man5/img/$$fn"; \
-		$(RM) $(DESTDIR)$(HTMLDIR)/man5/img/$$fn; \
-	done
 	@set -e; for x in dummy $(IMAGEDOCS7); do \
 		if [ "$$x" = "dummy" ]; then continue; fi; \
 		fn=`basename $$x`; \
