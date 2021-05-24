@@ -1245,7 +1245,7 @@ providers/fips.module.sources.new: \
 	  && find .. -name '*.d' | xargs cat > dep2 \
 	  && cat sources1 sources2 \
 	     | grep -v ' : \\$$' | grep -v util/providers.num \
-	     | sed -E -e 's:^ *(../)*$(SRCDIR)::' -e 's: \\::' \
+	     | sed -E -e 's:^ *([.][.]/)*$(SRCDIR)::' -e 's: \\::' \
 	     | sort | uniq > sources \
 	  && cat dep1 dep2 | grep -v providers/common/include/prov/der_ >deps \
 	)
@@ -1253,7 +1253,7 @@ providers/fips.module.sources.new: \
 	  perl -p -e 's/\\\n//' sources-tmp/deps \
 	     | sed -e 's/^.*: *//' -e 's/  */ /g' \
 	     | fgrep -f sources-tmp/sources | tr ' ' '\n' \
-	     | sed -E -e '/^include/s:$$:.in:' -e 's:^ *(../)*$(SRCDIR)::' -e 's:^/::' ; \
+	     | sed -E -e '/^include/s:$$:.in:' -e 's:^ *([.][.]/)*$(SRCDIR)::' -e 's:^/::' ; \
 	  for x in providers/common/include/prov/*.h; do \
 	    echo providers/common/der/`basename "$$x"`.in; \
 	  done ; \
