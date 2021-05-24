@@ -94,6 +94,12 @@ buffering or SSL BIO is required for each connection. The
 chain of BIOs must not be freed after this call, they will
 be automatically freed when the accept BIO is freed.
 
+BIO_get_accept_ip_family() returns the IP family accepted by the BIO I<b>,
+which may be B<BIO_FAMILY_IPV4>, B<BIO_FAMILY_IPV6>, or B<BIO_FAMILY_IPANY>.
+
+BIO_set_accept_ip_family() sets the IP family I<family> accepted by BIO I<b>.
+The default is B<BIO_FAMILY_IPANY>.
+
 BIO_set_bind_mode() and BIO_get_bind_mode() set and retrieve
 the current bind mode. If B<BIO_BIND_NORMAL> (the default) is set
 then another socket cannot be bound to the same port. If
