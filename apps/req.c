@@ -1508,16 +1508,16 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
     int expect_paramfile = 0;
     const char *paramfile = NULL;
 
-    /* Default from input */
-    if (*pkeytype != NULL)
-        keytype = *pkeytype;
-    if (pkeylen != NULL)
-        keylen = *pkeylen;
-
     /* Treat the first part of gstr, and only that */
     if (gstr == NULL) {
+        /*
+         * Special case: when no string given, default to RSA and the
+         * key length given by |*pkeylen|.
+         */
         keytype = "RSA";
+        keylen = *pkeylen;
     } else if (gstr[0] >= '0' && gstr[0] <= '9') {
+        /* Special case: only keylength given from string, so default to RSA */
         keytype = "RSA";
         /* The second part treatment will do the rest */
     } else {
