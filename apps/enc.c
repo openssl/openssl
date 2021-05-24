@@ -389,8 +389,8 @@ int enc_main(int argc, char **argv)
         goto end;
 
     if (debug) {
-        BIO_set_callback(in, BIO_debug_callback);
-        BIO_set_callback(out, BIO_debug_callback);
+        BIO_set_callback_ex(in, BIO_debug_callback_ex);
+        BIO_set_callback_ex(out, BIO_debug_callback_ex);
         BIO_set_callback_arg(in, (char *)bio_err);
         BIO_set_callback_arg(out, (char *)bio_err);
     }
@@ -403,7 +403,7 @@ int enc_main(int argc, char **argv)
         if ((bzl = BIO_new(BIO_f_zlib())) == NULL)
             goto end;
         if (debug) {
-            BIO_set_callback(bzl, BIO_debug_callback);
+            BIO_set_callback_ex(bzl, BIO_debug_callback_ex);
             BIO_set_callback_arg(bzl, (char *)bio_err);
         }
         if (enc)
@@ -417,7 +417,7 @@ int enc_main(int argc, char **argv)
         if ((b64 = BIO_new(BIO_f_base64())) == NULL)
             goto end;
         if (debug) {
-            BIO_set_callback(b64, BIO_debug_callback);
+            BIO_set_callback_ex(b64, BIO_debug_callback_ex);
             BIO_set_callback_arg(b64, (char *)bio_err);
         }
         if (olb64)
@@ -579,7 +579,7 @@ int enc_main(int argc, char **argv)
         }
 
         if (debug) {
-            BIO_set_callback(benc, BIO_debug_callback);
+            BIO_set_callback_ex(benc, BIO_debug_callback_ex);
             BIO_set_callback_arg(benc, (char *)bio_err);
         }
 

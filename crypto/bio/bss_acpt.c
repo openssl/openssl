@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <stdio.h>
 #include <errno.h>
 #include "bio_local.h"
@@ -305,9 +307,11 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
             if (bio == NULL)
                 goto exit_loop;
 
+            BIO_set_callback_ex(bio, BIO_get_callback_ex(b));
+#ifndef OPENSSL_NO_DEPRECATED_3_0
             BIO_set_callback(bio, BIO_get_callback(b));
+#endif
             BIO_set_callback_arg(bio, BIO_get_callback_arg(b));
-
             /*
              * If the accept BIO has an bio_chain, we dup it and put the new
              * socket at the end.
