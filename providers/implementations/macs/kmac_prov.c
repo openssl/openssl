@@ -239,13 +239,6 @@ static void *kmac_dup(void *vsrc)
     return dst;
 }
 
-static size_t kmac_size(void *vmacctx)
-{
-    struct kmac_data_st *kctx = vmacctx;
-
-    return kctx->out_len;
-}
-
 static int kmac_setkey(struct kmac_data_st *kctx, const unsigned char *key,
                        size_t keylen)
 {
@@ -361,6 +354,7 @@ static int kmac_final(void *vmacctx, unsigned char *out, size_t *outl,
 
 static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
+    OSSL_PARAM_size_t(OSSL_MAC_PARAM_BLOCK_SIZE, NULL),
     OSSL_PARAM_END
 };
 static const OSSL_PARAM *kmac_gettable_ctx_params(ossl_unused void *ctx,
@@ -371,10 +365,19 @@ static const OSSL_PARAM *kmac_gettable_ctx_params(ossl_unused void *ctx,
 
 static int kmac_get_ctx_params(void *vmacctx, OSSL_PARAM params[])
 {
+    struct kmac_data_st *kctx = vmacctx;
     OSSL_PARAM *p;
+    int sz;
 
-    if ((p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_SIZE)) != NULL)
-        return OSSL_PARAM_set_size_t(p, kmac_size(vmacctx));
+    if ((p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_SIZE)) != NULL
+            && !OSSL_PARAM_set_size_t(p, kctx->out_len))
+        return 0;
+
+    if ((p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_BLOCK_SIZE)) != NULL) {
+        sz = EVP_MD_block_size(ossl_prov_digest_md(&kctx->digest));
+        if (!OSSL_PARAM_set_int(p, sz))
+            return 0;
+    }
 
     return 1;
 }
