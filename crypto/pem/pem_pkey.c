@@ -36,6 +36,11 @@ static EVP_PKEY *pem_read_bio_key_decoder(BIO *bp, EVP_PKEY **x,
 {
     EVP_PKEY *pkey = NULL;
     OSSL_DECODER_CTX *dctx = NULL;
+    int pos, newpos;
+
+    if ((pos = BIO_tell(bp)) < 0)
+        /* We can depend on BIO_tell() thanks to the BIO_f_readbuffer() */
+        return NULL;
 
     dctx = OSSL_DECODER_CTX_new_for_pkey(&pkey, "PEM", NULL, NULL,
                                          selection, libctx, propq);
@@ -50,8 +55,10 @@ static EVP_PKEY *pem_read_bio_key_decoder(BIO *bp, EVP_PKEY **x,
         goto err;
 
     while (!OSSL_DECODER_from_bio(dctx, bp) || pkey == NULL)
-        if (BIO_eof(bp) != 0)
+        if (BIO_eof(bp) != 0 || (newpos = BIO_tell(bp)) < 0 || newpos <= pos)
             goto err;
+        else
+            pos = newpos;
 
     if (!evp_keymgmt_util_has(pkey, selection)) {
         EVP_PKEY_free(pkey);
