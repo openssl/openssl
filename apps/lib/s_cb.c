@@ -415,8 +415,8 @@ int ssl_print_tmp_key(BIO *out, SSL *s)
     return 1;
 }
 
-long bio_dump_callback(BIO *bio, int cmd, const char *argp,
-                       int argi, long argl, long ret)
+long bio_dump_callback(BIO *bio, int cmd, const char *argp, size_t len,
+                       int argi, long argl, int ret, size_t *processed)
 {
     BIO *out;
 
@@ -425,14 +425,23 @@ long bio_dump_callback(BIO *bio, int cmd, const char *argp,
         return ret;
 
     if (cmd == (BIO_CB_READ | BIO_CB_RETURN)) {
-        BIO_printf(out, "read from %p [%p] (%lu bytes => %ld (0x%lX))\n",
-                   (void *)bio, (void *)argp, (unsigned long)argi, ret, ret);
-        BIO_dump(out, argp, (int)ret);
-        return ret;
+        if (ret > 0 && processed != NULL) {
+            BIO_printf(out, "read from %p [%p] (%zu bytes => %zu (0x%zX))\n",
+                       (void *)bio, (void *)argp, len, *processed, *processed);
+            BIO_dump(out, argp, (int)*processed);
+        } else {
+            BIO_printf(out, "read from %p [%p] (%zu bytes => %d)\n",
+                       (void *)bio, (void *)argp, len, ret);
+        }
     } else if (cmd == (BIO_CB_WRITE | BIO_CB_RETURN)) {
-        BIO_printf(out, "write to %p [%p] (%lu bytes => %ld (0x%lX))\n",
-                   (void *)bio, (void *)argp, (unsigned long)argi, ret, ret);
-        BIO_dump(out, argp, (int)ret);
+        if (ret > 0 && processed != NULL) {
+            BIO_printf(out, "write to %p [%p] (%zu bytes => %zu (0x%zX))\n",
+                       (void *)bio, (void *)argp, len, *processed, *processed);
+            BIO_dump(out, argp, (int)*processed);
+        } else {
+            BIO_printf(out, "write to %p [%p] (%zu bytes => %d)\n",
+                       (void *)bio, (void *)argp, len, ret);
+        }
     }
     return ret;
 }

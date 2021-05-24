@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <stdio.h>
 #include <errno.h>
 #include <openssl/crypto.h>
@@ -207,6 +209,7 @@ void BIO_set_flags(BIO *b, int flags)
     b->flags |= flags;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 BIO_callback_fn BIO_get_callback(const BIO *b)
 {
     return b->callback;
@@ -216,6 +219,7 @@ void BIO_set_callback(BIO *b, BIO_callback_fn cb)
 {
     b->callback = cb;
 }
+#endif
 
 BIO_callback_fn_ex BIO_get_callback_ex(const BIO *b)
 {

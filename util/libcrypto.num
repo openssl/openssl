@@ -1226,7 +1226,7 @@ UI_method_get_opener                    1254	3_0_0	EXIST::FUNCTION:
 EVP_aes_192_gcm                         1255	3_0_0	EXIST::FUNCTION:
 TS_CONF_set_tsa_name                    1256	3_0_0	EXIST::FUNCTION:TS
 X509_email_free                         1257	3_0_0	EXIST::FUNCTION:
-BIO_get_callback                        1258	3_0_0	EXIST::FUNCTION:
+BIO_get_callback                        1258	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 OPENSSL_sk_shift                        1259	3_0_0	EXIST::FUNCTION:
 i2d_X509_REVOKED                        1260	3_0_0	EXIST::FUNCTION:
 CMS_sign                                1261	3_0_0	EXIST::FUNCTION:CMS
@@ -3060,7 +3060,7 @@ ASN1_STRING_print                       3126	3_0_0	EXIST::FUNCTION:
 CRYPTO_THREAD_lock_free                 3127	3_0_0	EXIST::FUNCTION:
 TS_ACCURACY_get_seconds                 3128	3_0_0	EXIST::FUNCTION:TS
 BN_options                              3129	3_0_0	EXIST::FUNCTION:
-BIO_debug_callback                      3130	3_0_0	EXIST::FUNCTION:
+BIO_debug_callback                      3130	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 EVP_MD_meth_get_update                  3131	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 GENERAL_NAME_set0_othername             3132	3_0_0	EXIST::FUNCTION:
 ASN1_BIT_STRING_set_bit                 3133	3_0_0	EXIST::FUNCTION:
@@ -3671,7 +3671,7 @@ X509v3_get_ext_count                    3753	3_0_0	EXIST::FUNCTION:
 UI_OpenSSL                              3754	3_0_0	EXIST::FUNCTION:UI_CONSOLE
 CRYPTO_ccm128_decrypt                   3755	3_0_0	EXIST::FUNCTION:
 d2i_OCSP_RESPDATA                       3756	3_0_0	EXIST::FUNCTION:OCSP
-BIO_set_callback                        3757	3_0_0	EXIST::FUNCTION:
+BIO_set_callback                        3757	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 BN_GF2m_poly2arr                        3758	3_0_0	EXIST::FUNCTION:EC2M
 CMS_unsigned_get_attr_count             3759	3_0_0	EXIST::FUNCTION:CMS
 EVP_aes_256_gcm                         3760	3_0_0	EXIST::FUNCTION:
@@ -5415,3 +5415,4 @@ OSSL_LIB_CTX_new_child                  5542	3_0_0	EXIST::FUNCTION:
 OSSL_PROVIDER_get0_dispatch             5543	3_0_0	EXIST::FUNCTION:
 PKCS5_PBE_keyivgen_ex                   5544	3_0_0	EXIST::FUNCTION:
 EVP_MAC_CTX_get_block_size              5545	3_0_0	EXIST::FUNCTION:
+BIO_debug_callback_ex                   5546	3_0_0	EXIST::FUNCTION:

@@ -250,7 +250,7 @@ int dgst_main(int argc, char **argv)
     }
 
     if (debug) {
-        BIO_set_callback(in, BIO_debug_callback);
+        BIO_set_callback_ex(in, BIO_debug_callback_ex);
         /* needed for windows 3.1 */
         BIO_set_callback_arg(in, (char *)bio_err);
     }
