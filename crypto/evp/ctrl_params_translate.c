@@ -1680,6 +1680,40 @@ static int get_dh_dsa_payload_g(enum state state,
     return get_payload_bn(state, translation, ctx, bn);
 }
 
+static int get_payload_int(enum state state,
+                            const struct translation_st *translation,
+                            struct translation_ctx_st *ctx,
+                            const int val)
+{
+    if (ctx->params->data_type != OSSL_PARAM_INTEGER)
+        return 0;
+    ctx->p1 = val;
+    ctx->p2 = NULL;
+
+    return default_fixup_args(state, translation, ctx);
+}
+
+static int get_ec_decoded_from_explicit_params(enum state state,
+                                               const struct translation_st *translation,
+                                               struct translation_ctx_st *ctx)
+{
+    int val = 0;
+    EVP_PKEY *pkey = ctx->p2;
+
+    switch (EVP_PKEY_base_id(pkey)) {
+#ifndef OPENSSL_NO_EC
+    case EVP_PKEY_EC:
+        val = EC_KEY_decoded_from_explicit_params(EVP_PKEY_get0_EC_KEY(pkey));
+        break;
+#endif
+    default:
+        ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_KEY_TYPE);
+        return 0;
+    }
+
+    return get_payload_int(state, translation, ctx, val);
+}
+
 static int get_rsa_payload_n(enum state state,
                              const struct translation_st *translation,
                              struct translation_ctx_st *ctx)
@@ -2320,6 +2354,11 @@ static const struct translation_st evp_pkey_translations[] = {
     { GET, -1, -1, -1, 0, NULL, NULL,
       OSSL_PKEY_PARAM_RSA_COEFFICIENT9, OSSL_PARAM_UNSIGNED_INTEGER,
       get_rsa_payload_c9 },
+
+    /* EC */
+    { GET, -1, -1, -1, 0, NULL, NULL,
+      OSSL_PKEY_PARAM_EC_DECODED_FROM_EXPLICIT_PARAMS, OSSL_PARAM_INTEGER,
+      get_ec_decoded_from_explicit_params },
 };
 
 static const struct translation_st *

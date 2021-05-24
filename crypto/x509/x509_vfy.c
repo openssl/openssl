@@ -23,6 +23,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/objects.h>
+#include <openssl/core_names.h>
 #include "internal/dane.h"
 #include "crypto/x509.h"
 #include "x509_local.h"
@@ -3399,7 +3400,6 @@ static int check_key_level(X509_STORE_CTX *ctx, X509 *cert)
  */
 static int check_curve(X509 *cert)
 {
-#ifndef OPENSSL_NO_EC
     EVP_PKEY *pkey = X509_get0_pubkey(cert);
 
     /* Unsupported or malformed key */
@@ -3407,12 +3407,13 @@ static int check_curve(X509 *cert)
         return -1;
 
     if (EVP_PKEY_id(pkey) == EVP_PKEY_EC) {
-        int ret;
+        int ret, val;
 
-        ret = EC_KEY_decoded_from_explicit_params(EVP_PKEY_get0_EC_KEY(pkey));
-        return ret < 0 ? ret : !ret;
+        ret = EVP_PKEY_get_int_param(pkey,
+                                     OSSL_PKEY_PARAM_EC_DECODED_FROM_EXPLICIT_PARAMS,
+                                     &val);
+        return ret < 0 ? ret : !val;
     }
-#endif
 
     return 1;
 }
