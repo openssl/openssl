@@ -68,6 +68,11 @@ I<order> - 1.
 I<cofactor> is an optional value.
 I<order> multiplied by the I<cofactor> gives the number of points on the curve.
 
+=item  "decoded-from-explicit" (B<OSSL_PKEY_PARAM_EC_DECODED_FROM_EXPLICIT_PARAMS>) <integer>
+
+Gets a flag indicating wether the key or parameters were decoded from explicit
+curve parameters. Set to 1 if so or 0 if a named curve was used. 
+
 =item "use-cofactor-flag" (B<OSSL_PKEY_PARAM_USE_COFACTOR_ECDH>) <integer>
 
 Enable Cofactor DH (ECC CDH) if this value is 1, otherwise it uses normal EC DH
