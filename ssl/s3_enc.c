@@ -590,7 +590,7 @@ int ssl3_alert_code(int code)
     case SSL_AD_CERTIFICATE_REQUIRED:
         return SSL_AD_HANDSHAKE_FAILURE;
     case TLS13_AD_MISSING_EXTENSION:
-        return TLS13_AD_MISSING_EXTENSION;
+        return SSL_AD_HANDSHAKE_FAILURE;
     default:
         return -1;
     }
