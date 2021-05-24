@@ -173,14 +173,6 @@ INSTALL_ENGINES={-
                                && $unified_info{attributes}->{modules}->{$_}->{engine} }
                         @{$unified_info{modules}}))
 -}
-INSTALL_FIPS={-
-        join(" \\\n" . ' ' x 16,
-             fill_lines(" ", $COLUMNS - 16,
-                        map { platform->dso($_) }
-                        grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
-                               && $unified_info{attributes}->{modules}->{$_}->{fips} }
-                        @{$unified_info{modules}}))
--}
 INSTALL_MODULES={-
         join(" \\\n" . ' ' x 16,
              fill_lines(" ", $COLUMNS - 16,
@@ -190,6 +182,15 @@ INSTALL_MODULES={-
                                && !$unified_info{attributes}->{modules}->{$_}->{fips} }
                         @{$unified_info{modules}}))
 -}
+INSTALL_FIPSMODULE={-
+        join(" \\\n" . ' ' x 16,
+             fill_lines(" ", $COLUMNS - 16,
+                        map { platform->dso($_) }
+                        grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
+                               && $unified_info{attributes}->{modules}->{$_}->{fips} }
+                        @{$unified_info{modules}}))
+-}
+INSTALL_FIPSMODULECONF=providers/fipsmodule.cnf
 INSTALL_PROGRAMS={-
         join(" \\\n" . ' ' x 16,
              fill_lines(" ", $COLUMNS - 16, map { platform->bin($_) }
@@ -621,18 +622,18 @@ uninstall_docs: uninstall_man_docs uninstall_html_docs
 	$(RM) -r $(DESTDIR)$(DOCDIR)
 
 {- output_off() if $disabled{fips}; "" -}
-install_fips: build_sw providers/fipsmodule.cnf
+install_fips: build_sw $(INSTALL_FIPSMODULECONF)
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(MODULESDIR)
 	@$(ECHO) "*** Installing FIPS module"
-	@$(ECHO) "install $(INSTALL_FIPS) -> $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME)"
-	@cp "$(INSTALL_FIPS)" $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME).new
+	@$(ECHO) "install $(INSTALL_FIPSMODULE) -> $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME)"
+	@cp "$(INSTALL_FIPSMODULE)" $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME).new
 	@chmod 755 $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME).new
 	@mv -f $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME).new \
 	       $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME)
 	@$(ECHO) "*** Installing FIPS module configuration"
-	@$(ECHO) "install providers/fipsmodule.cnf -> $(DESTDIR)$(OPENSSLDIR)/fipsmodule.cnf"
-	@cp providers/fipsmodule.cnf $(DESTDIR)$(OPENSSLDIR)/fipsmodule.cnf
+	@$(ECHO) "install $(INSTALL_FIPSMODULECONF) -> $(DESTDIR)$(OPENSSLDIR)/fipsmodule.cnf"
+	@cp $(INSTALL_FIPSMODULECONF) $(DESTDIR)$(OPENSSLDIR)/fipsmodule.cnf
 
 uninstall_fips:
 	@$(ECHO) "*** Uninstalling FIPS module configuration"
