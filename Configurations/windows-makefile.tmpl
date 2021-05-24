@@ -112,12 +112,6 @@ INSTALL_ENGINEPDBS={-
                          && $unified_info{attributes}->{modules}->{$_}->{engine} }
                   @{$unified_info{modules}})
 -}
-INSTALL_FIPS={-
-        join(" ", map { quotify1(platform->dso($_)) }
-                  grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
-                          && $unified_info{attributes}->{modules}->{$_}->{fips} }
-                  @{$unified_info{modules}})
--}
 INSTALL_MODULES={-
         join(" ", map { quotify1(platform->dso($_)) }
                   grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
@@ -131,6 +125,13 @@ INSTALL_MODULEPDBS={-
                          && !$unified_info{attributes}->{modules}->{$_}->{engine} }
                   @{$unified_info{modules}})
 -}
+INSTALL_FIPSMODULE={-
+        join(" ", map { quotify1(platform->dso($_)) }
+                  grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
+                          && $unified_info{attributes}->{modules}->{$_}->{fips} }
+                  @{$unified_info{modules}})
+-}
+INSTALL_FIPSMODULECONF=providers\fipsmodule.cnf
 INSTALL_PROGRAMS={-
         join(" ", map { quotify1(platform->bin($_)) }
                   grep { !$unified_info{attributes}->{programs}->{$_}->{noinst} }
@@ -499,13 +500,13 @@ install_fips: build_sw providers\fipsmodule.cnf
 #	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
 	@$(PERL) $(SRCDIR)\util\mkdir-p.pl $(MODULESDIR)
 	@$(ECHO) "*** Installing FIPS module"
-	@$(ECHO) "install $(INSTALL_FIPS) -> $(MODULESDIR)\$(FIPSMODULENAME)"
-	@copy "$(INSTALL_FIPS)" $(MODULESDIR)\$(FIPSMODULENAME).new
+	@$(ECHO) "install $(INSTALL_FIPSMODULE) -> $(MODULESDIR)\$(FIPSMODULENAME)"
+	@copy "$(INSTALL_FIPSMODULE)" $(MODULESDIR)\$(FIPSMODULENAME).new
 	@move /Y $(MODULESDIR)\$(FIPSMODULENAME).new \
 	       $(MODULESDIR)\$(FIPSMODULENAME)
 	@$(ECHO) "*** Installing FIPS module configuration"
-	@$(ECHO) "install providers\fipsmodule.cnf -> $(OPENSSLDIR)\fipsmodule.cnf"
-    @copy providers\fipsmodule.cnf "$(OPENSSLDIR)\fipsmodule.cnf"
+	@$(ECHO) "install $(INSTALL_FIPSMODULECONF) -> $(OPENSSLDIR)\fipsmodule.cnf"
+	@copy $(INSTALL_FIPSMODULECONF) "$(OPENSSLDIR)\fipsmodule.cnf"
 
 uninstall_fips:
 	@$(ECHO) "*** Uninstalling FIPS module configuration"

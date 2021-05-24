@@ -62,7 +62,12 @@
       @{$unified_info{modules}};
   our @install_modules =
       grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
-             && !$unified_info{attributes}->{modules}->{$_}->{engine} }
+             && !$unified_info{attributes}->{modules}->{$_}->{engine}
+             && !$unified_info{attributes}->{modules}->{$_}->{fips} }
+      @{$unified_info{modules}};
+  our @install_fipsmodules =
+      grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
+             && $unified_info{attributes}->{modules}->{$_}->{fips} }
       @{$unified_info{modules}};
   our @install_programs =
       grep { !$unified_info{attributes}->{programs}->{$_}->{noinst} }
@@ -315,6 +320,8 @@ INSTALL_LIBS={- join(", ", map { "-\n\t".$_.".OLB" } @install_libs) -}
 INSTALL_SHLIBS={- join(", ", map { "-\n\t".$_.".EXE" } @install_shlibs) -}
 INSTALL_ENGINES={- join(", ", map { "-\n\t".$_.".EXE" } @install_engines) -}
 INSTALL_MODULES={- join(", ", map { "-\n\t".$_.".EXE" } @install_modules) -}
+INSTALL_FIPSMODULE={- join(", ", map { "-\n\t".$_.".EXE" } @install_fipsmodules) -}
+INSTALL_FIPSMODULECONF=[.providers]fipsmodule.cnf
 INSTALL_PROGRAMS={- join(", ", map { "-\n\t".$_.".EXE" } @install_programs) -}
 BIN_SCRIPTS={- join(", ", @install_bin_scripts) -}
 MISC_SCRIPTS={- join(", ", @install_misc_scripts) -}
@@ -557,17 +564,20 @@ install_docs : install_html_docs
 
 uninstall_docs : uninstall_html_docs
 
-install_fips : install_sw
+{- output_off() if $disabled{fips}; "" -}
+install_fips : install_sw $(INSTALL_FIPSMODULECONF)
+	@ WRITE SYS$OUTPUT "*** Installing FIPS module"
+	COPY/PROT=W:RE $(INSTALL_FIPSMODULES) -
+                ossl_installroot:[MODULES{- $sover_dirname.$target{pointer_size} -}.'arch']$(FIPSMODULENAME)
 	@ WRITE SYS$OUTPUT "*** Installing FIPS module configuration"
-	@ WRITE SYS$OUTPUT "fipsinstall $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME).cnf"
-	openssl fipsinstall -
-		-module ossl_installroot:[MODULES{- $sover_dirname.$target{pointer_size} -}.'arch']$(FIPSMODULENAME) -
-		-out ossl_installroot:[MODULES{- $sover_dirname.$target{pointer_size} -}.'arch']$(FIPSMODULENAME).cnf -
-		-macopt "hexkey:$(FIPSKEY)"
+	COPY/PROT=W:RE $(INSTALL_FIPSMODULESCONF) OSSL_DATAROOT:[000000]
 
 uninstall_fips : uninstall_sw
 	@ WRITE SYS$OUTPUT "*** Uninstalling FIPS module configuration"
-	DELETE ossl_installroot:[MODULES{- $sover_dirname.$target{pointer_size} -}.'arch']$(FIPSMODULENAME).cnf;*
+	DELETE OSSL_DATAROOT:[000000]fipsmodule.cnf;*
+	@ WRITE SYS$OUTPUT "*** Uninstalling FIPS module"
+	DELETE ossl_installroot:[MODULES{- $sover_dirname.$target{pointer_size} -}.'arch']$(FIPSMODULENAME);*
+{- output_on() if $disabled{fips}; "" -}
 
 install_ssldirs : check_INSTALLTOP
         - CREATE/DIR/PROT=(S:RWED,O:RWE,G:RE,W:RE) OSSL_DATAROOT:[000000]
