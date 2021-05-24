@@ -32,22 +32,12 @@ static const char *hamlet_1 =
     "Whether tis nobler in the minde to suffer\n"
     "The ?lings and arrowes of outragious fortune,\n"
     "Or to take Armes again in a sea of troubles,\n"
+;
+static const char *hamlet_2 =
     "And by opposing, end them, to die to sleep;\n"
     "No more, and by a sleep, to say we end\n"
     "The heart-ache, and the thousand natural shocks\n"
     "That flesh is heir to? tis a consumation\n"
-;
-
-static const char *hamlet_2 =
-    "Devoutly to be wished. To die to sleep,\n"
-    "To sleepe, perchance to dreame, Aye, there's the rub,\n"
-    "For in that sleep of death what dreams may come\n"
-    "When we haue shuffled off this mortal coil\n"
-    "Must give us pause. There's the respect\n"
-    "That makes calamity of so long life:\n"
-    "For who would bear the Ships and Scorns of time,\n"
-    "The oppressor's wrong, the proud man's Contumely,\n"
-    "The pangs of dispised love, the Law's delay,\n"
 ;
 
 /*
