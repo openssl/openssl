@@ -28,7 +28,6 @@ jobs:
         working-directory: ./build-pristine
       - uses: actions/checkout@v2
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
           clean: false
       - name: config
         run: ../config enable-fips && perl configdata.pm --dump
