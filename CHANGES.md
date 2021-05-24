@@ -189,6 +189,11 @@ breaking changes, and mappings for the large list of deprecated functions.
 
    *Jon Spillett*
 
+ * Deprecated obsolete BIO_set_callback(), BIO_get_callback(), and
+   BIO_debug_callback() functions.
+
+   *Tomáš Mráz*
+
  * Deprecated obsolete EVP_PKEY_CTX_get0_dh_kdf_ukm() and
    EVP_PKEY_CTX_get0_ecdh_kdf_ukm() functions.
 
