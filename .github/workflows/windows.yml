@@ -33,6 +33,11 @@ jobs:
     - name: test
       working-directory: _build
       run: nmake test VERBOSE_FAILURE=yes TESTS=-test_fuzz
+    - name: install
+      # Run on 64 bit only as 32 bit is slow enough already
+      if: $${{ matrix.arch == 'win64' }}
+      run: make install
+      working-directory: ./build
   plain:
     runs-on: windows-latest
     steps:
