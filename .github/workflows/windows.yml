@@ -37,7 +37,7 @@ jobs:
       # Run on 64 bit only as 32 bit is slow enough already
       if: $${{ matrix.arch == 'win64' }}
       run: make install
-      working-directory: ./build
+      working-directory: _build
   plain:
     runs-on: windows-latest
     steps:
