@@ -49,17 +49,25 @@ SHLIB_VERSION_NUMBER={- $config{shlib_version} -}
 LIBS={- join(" ", map { ( platform->sharedlib_import($_), platform->staticlib($_) ) } @{$unified_info{libraries}}) -}
 SHLIBS={- join(" ", map { platform->sharedlib($_) // () } @{$unified_info{libraries}}) -}
 SHLIBPDBS={- join(" ", map { platform->sharedlibpdb($_) // () } @{$unified_info{libraries}}) -}
-MODULES={- our @MODULES = map { platform->dso($_) } @{$unified_info{modules}};
+MODULES={- our @MODULES = map { platform->dso($_) }
+                          # Drop all modules that are dependencies, they will
+                          # be processed through their dependents
+                          grep { my $x = $_;
+                                 !grep { grep { $_ eq $x } @$_ }
+                                       values %{$unified_info{depends}} }
+                          @{$unified_info{modules}};
            join(" ", @MODULES) -}
 MODULEPDBS={- join(" ", map { platform->dsopdb($_) } @{$unified_info{modules}}) -}
-FIPSMODULENAME={- # We do some extra checking here, as there should be only one
-                  use File::Basename;
-                  my @fipsmodules =
-                      grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
-                             && $unified_info{attributes}->{modules}->{$_}->{fips} }
-                      @{$unified_info{modules}};
-                  die "More that one FIPS module" if scalar @fipsmodules > 1;
-                  join(" ", map { basename(platform->dso($_)) } @fipsmodules) -}
+FIPSMODULE={- # We do some extra checking here, as there should be only one
+              use File::Basename;
+              our @fipsmodules =
+                  grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
+                         && $unified_info{attributes}->{modules}->{$_}->{fips} }
+                  @{$unified_info{modules}};
+              die "More that one FIPS module" if scalar @fipsmodules > 1;
+              join(" ", map { basename(platform->dso($_)) } @fipsmodules) -}
+FIPSMODULENAME={- die "More that one FIPS module" if scalar @fipsmodules > 1;
+                  join(", ", map { basename(platform->dso($_)) } @fipsmodules) -}
 PROGRAMS={- our @PROGRAMS = map { platform->bin($_) } @{$unified_info{programs}}; join(" ", @PROGRAMS) -}
 PROGRAMPDBS={- join(" ", map { $_.".pdb" } @{$unified_info{programs}}) -}
 SCRIPTS={- our @SCRIPTS = @{$unified_info{scripts}}; join(" ", @SCRIPTS) -}
