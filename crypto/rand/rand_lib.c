@@ -746,7 +746,7 @@ static int random_conf_init(CONF_IMODULE *md, const CONF *cnf)
 {
     STACK_OF(CONF_VALUE) *elist;
     CONF_VALUE *cval;
-    RAND_GLOBAL *dgbl = rand_get_global(cnf->libctx);
+    RAND_GLOBAL *dgbl = rand_get_global(NCONF_get0_libctx((CONF *)cnf));
     int i, r = 1;
 
     OSSL_TRACE1(CONF, "Loading random module: section %s\n",

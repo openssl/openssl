@@ -106,6 +106,7 @@ OSSL_DEPRECATEDIN_1_1_0 void OPENSSL_config(const char *config_name);
  */
 
 CONF *NCONF_new_ex(OSSL_LIB_CTX *libctx, CONF_METHOD *meth);
+OSSL_LIB_CTX *NCONF_get0_libctx(CONF *conf);
 CONF *NCONF_new(CONF_METHOD *meth);
 CONF_METHOD *NCONF_default(void);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
