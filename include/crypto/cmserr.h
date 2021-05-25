@@ -21,7 +21,7 @@ extern "C" {
 
 # ifndef OPENSSL_NO_CMS
 
-int err_load_CMS_strings_int(void);
+int ossl_err_load_CMS_strings(void);
 # endif
 
 # ifdef  __cplusplus
