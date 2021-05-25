@@ -488,7 +488,7 @@ uninstall_docs: uninstall_html_docs
 
 {- output_off() if $disabled{fips}; "" -}
 install_fips: build_sw providers\fipsmodule.cnf
-#	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
+#	@[ -n "$(INSTALLTOP)" ] || ( $(ECHO) "INSTALLTOP should not be empty" & exit 1)
 	@$(PERL) $(SRCDIR)\util\mkdir-p.pl $(MODULESDIR)
 	@$(ECHO) "*** Installing FIPS module"
 	@$(ECHO) "install $(INSTALL_FIPS) -> $(MODULESDIR)\$(FIPSMODULENAME)"
@@ -604,8 +604,8 @@ install_programs: install_runtime_libs build_programs
 uninstall_runtime:
 
 install_html_docs: install_image_docs build_html_docs
-	@if "$(INSTALLTOP)"=="" ( echo INSTALLTOP should not be empty & exit 1 )
-	@echo *** Installing HTML docs
+	@if "$(INSTALLTOP)"=="" ( $(ECHO) "INSTALLTOP should not be empty" & exit 1 )
+	@$(ECHO) "*** Installing HTML docs"
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\html\man1"
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\html\man3"
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\html\man5"
@@ -622,20 +622,24 @@ install_html_docs: install_image_docs build_html_docs
 uninstall_html_docs: uninstall_image_docs
 
 install_image_docs:
-	@if "$(INSTALLTOP)"=="" ( echo INSTALLTOP should not be empty & exit 1 )
-	@echo *** Installing HTML images
+	@if "$(INSTALLTOP)"=="" ( $(ECHO) "INSTALLTOP should not be empty" & exit 1 )
+	@$(ECHO) "*** Installing HTML images"
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\html\man1\img"
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\html\man3\img"
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\html\man5\img"
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\html\man7\img"
-	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(SRCDIR)\doc\man1\img\*.png \
-                                        "$(INSTALLTOP)\html\man1\img"
-	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(SRCDIR)\doc\man3\img\*.png \
-                                        "$(INSTALLTOP)\html\man3\img"
-	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(SRCDIR)\doc\man5\img\*.png \
-                                        "$(INSTALLTOP)\html\man5\img"
-	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(SRCDIR)\doc\man7\img\*.png \
-                                        "$(INSTALLTOP)\html\man7\img"
+	@if exist $(SRCDIR)\doc\man1\img\*.png \
+            "$(PERL)" "$(SRCDIR)\util\copy.pl" $(SRCDIR)\doc\man1\img\*.png \
+                                              "$(INSTALLTOP)\html\man1\img"
+	@if exist $(SRCDIR)\doc\man3\img\*.png \
+            "$(PERL)" "$(SRCDIR)\util\copy.pl" $(SRCDIR)\doc\man3\img\*.png \
+                                              "$(INSTALLTOP)\html\man3\img"
+	@if exist $(SRCDIR)\doc\man5\img\*.png \
+            "$(PERL)" "$(SRCDIR)\util\copy.pl" $(SRCDIR)\doc\man5\img\*.png \
+                                              "$(INSTALLTOP)\html\man5\img"
+	@if exist $(SRCDIR)\doc\man7\img\*.png \
+            "$(PERL)" "$(SRCDIR)\util\copy.pl" $(SRCDIR)\doc\man7\img\*.png \
+                                              "$(INSTALLTOP)\html\man7\img"
 
 uninstall_image_docs:
 
