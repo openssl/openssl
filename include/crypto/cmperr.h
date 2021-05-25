@@ -21,7 +21,7 @@ extern "C" {
 
 # ifndef OPENSSL_NO_CMP
 
-int err_load_CMP_strings_int(void);
+int ossl_err_load_CMP_strings(void);
 # endif
 
 # ifdef  __cplusplus

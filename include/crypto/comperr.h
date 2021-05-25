@@ -21,7 +21,7 @@ extern "C" {
 
 # ifndef OPENSSL_NO_COMP
 
-int err_load_COMP_strings_int(void);
+int ossl_err_load_COMP_strings(void);
 # endif
 
 # ifdef  __cplusplus

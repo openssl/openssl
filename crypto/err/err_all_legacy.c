@@ -44,16 +44,16 @@
 # include "crypto/x509v3err.h"
 
 # ifdef OPENSSL_NO_ERR
-#  define IMPLEMENT_LEGACY_ERR_LOAD(lib)         \
+#  define IMPLEMENT_LEGACY_ERR_LOAD(lib)        \
     int ERR_load_##lib##_strings(void)          \
     {                                           \
         return 1;                               \
     }
 # else
-#  define IMPLEMENT_LEGACY_ERR_LOAD(lib)         \
+#  define IMPLEMENT_LEGACY_ERR_LOAD(lib)        \
     int ERR_load_##lib##_strings(void)          \
     {                                           \
-        return err_load_##lib##_strings_int();  \
+        return ossl_err_load_##lib##_strings(); \
     }
 # endif
 

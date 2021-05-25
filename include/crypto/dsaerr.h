@@ -21,7 +21,7 @@ extern "C" {
 
 # ifndef OPENSSL_NO_DSA
 
-int err_load_DSA_strings_int(void);
+int ossl_err_load_DSA_strings(void);
 # endif
 
 # ifdef  __cplusplus

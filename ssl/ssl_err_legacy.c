@@ -14,7 +14,7 @@
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 int ERR_load_SSL_strings(void)
 {
-    return err_load_SSL_strings_int();
+    return ossl_err_load_SSL_strings();
 }
 #else
 NON_EMPTY_TRANSLATION_UNIT
