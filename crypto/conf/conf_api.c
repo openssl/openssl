@@ -20,6 +20,11 @@
 static void value_free_hash(const CONF_VALUE *a, LHASH_OF(CONF_VALUE) *conf);
 static void value_free_stack_doall(CONF_VALUE *a);
 
+OSSL_LIB_CTX *NCONF_get0_libctx(CONF *conf)
+{
+    return conf->libctx;
+}
+
 CONF_VALUE *_CONF_get_section(const CONF *conf, const char *section)
 {
     CONF_VALUE vv;

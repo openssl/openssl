@@ -5418,3 +5418,4 @@ EVP_MAC_CTX_get_block_size              5545	3_0_0	EXIST::FUNCTION:
 BIO_debug_callback_ex                   5546	3_0_0	EXIST::FUNCTION:
 b2i_PVK_bio_ex                          5547	3_0_0	EXIST::FUNCTION:
 i2b_PVK_bio_ex                          5548	3_0_0	EXIST::FUNCTION:
+NCONF_get0_libctx                       5547	3_0_0	EXIST::FUNCTION:
