@@ -7,12 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
-/*
- * Example of using EVP_MD*, EVP_DigestSign* and EVP_DigestVerify* methods
- * to calculate and verify a signature of static buffers.
- * Another way of signature is to use EVP_PKEY_sign(), it uses a digest
- * of message, does not hash the data to be signed, and therefore is
- * normally used to sign digests.
+/* An example that uses the EVP_MD*, EVP_DigestSign* and EVP_DigestVerify* 
+ * methods to calculate and verify a signature of two static buffers.
+ * Another way of generating a signature is to use EVP_PKEY_sign(), it uses
+ * a digest of message, does not hash the data to be signed, and therefore
+ * is normally used to sign digests.
  */
 
 #include <string.h>
@@ -23,14 +22,14 @@
 #include <openssl/decoder.h>
 
 /*
- * This demonstration will show calculate and verify a signature of data using
+ * This demonstration will calculate and verify a signature of data using
  * the soliloqy from Hamlet scene 1 act 3
  */
 
 static const char *hamlet_1 =
     "To be, or not to be, that is the question,\n"
     "Whether tis nobler in the minde to suffer\n"
-    "The ?lings and arrowes of outragious fortune,\n"
+    "The slings and arrowes of outragious fortune,\n"
     "Or to take Armes again in a sea of troubles,\n"
 ;
 static const char *hamlet_2 =
@@ -178,7 +177,7 @@ static int demo_verify(OSSL_LIB_CTX *libctx, const char *sig_name,
         fprintf(stderr, "EVP_MD_CTX_new failed.\n");
         goto cleanup;
     }
-    /*Get public key*/
+    /*Get public key */
     pub_key = get_key(libctx, propq, public);
     if (pub_key == NULL) {
         fprintf(stderr, "Get public key failed.\n");
