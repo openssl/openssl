@@ -154,7 +154,7 @@ cleanup:
 static int demo_verify(OSSL_LIB_CTX *libctx, const char *sig_name,
                        size_t sig_len, unsigned char *sig_value)
 {
-    int result = 0, i = 0, public = 1;
+    int result = 0, public = 1;
     const char *propq = NULL;
     EVP_MD_CTX *verify_context = NULL;
     EVP_PKEY *pub_key = NULL;
