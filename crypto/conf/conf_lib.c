@@ -16,6 +16,7 @@
 #include <openssl/err.h>
 #include <openssl/conf.h>
 #include <openssl/conf_api.h>
+#include "conf_local.h"
 #include <openssl/lhash.h>
 
 static CONF_METHOD *default_CONF_method = NULL;
