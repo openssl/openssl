@@ -21,7 +21,7 @@
 #define HAS_LEN_OPER(o) ((o) == BIO_CB_READ || (o) == BIO_CB_WRITE \
                          || (o) == BIO_CB_GETS)
 
-#ifndef OPENSSL_NO_DEPRECATED
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 # define HAS_CALLBACK(b) ((b)->callback != NULL || (b)->callback_ex != NULL)
 #else
 # define HAS_CALLBACK(b) ((b)->callback_ex != NULL)
