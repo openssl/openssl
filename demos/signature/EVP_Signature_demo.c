@@ -73,7 +73,7 @@ static EVP_PKEY *get_key(OSSL_LIB_CTX *libctx, const char *propq, int public)
 static int demo_sign(OSSL_LIB_CTX *libctx,  const char *sig_name,
                      size_t *sig_out_len, unsigned char **sig_out_value)
 {
-    int j = 0, result = 0, public = 0;
+    int result = 0, public = 0;
     size_t sig_len;
     unsigned char *sig_value = NULL;
     const char *propq = NULL;
@@ -137,9 +137,8 @@ static int demo_sign(OSSL_LIB_CTX *libctx,  const char *sig_name,
     *sig_out_len = sig_len;
     *sig_out_value = sig_value;
     fprintf(stdout, "Generating Signature:\n");
-    for (j = 0; j < sig_len; j++)
-        fprintf(stdout, "%02x", sig_value[j]);
-    fprintf(stdout, "\n\n");
+    BIO_dump_indent_fp(stdout, sig_value, sig_len, 2);
+    fprintf(stdout, "\n");
     result = 1;
 
 cleanup:

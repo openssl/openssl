@@ -24,3 +24,6 @@ smime:
 pkcs12:
 pkread.c               Print out a description of a PKCS12 file.
 pkwrite.c              Add a password to an existing PKCS12 file.
+
+signature:
+EVP_Signature_demo.c   Compute and verify a signature from multiple buffers
