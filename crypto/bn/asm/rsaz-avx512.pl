@@ -514,10 +514,10 @@ ___
 #
 # Extracted value (output) is 20 digit number in 2^52 radix.
 #
-# void extract_multiplier_2x20_win5(BN_ULONG *red_Y,
-#                                   const BN_ULONG red_table[1 << EXP_WIN_SIZE][2][20],
-#                                   int red_table_idx,
-#                                   int tbl_idx);           # 0 or 1
+# void ossl_extract_multiplier_2x20_win5(BN_ULONG *red_Y,
+#                                        const BN_ULONG red_table[1 << EXP_WIN_SIZE][2][20],
+#                                        int red_table_idx,
+#                                        int tbl_idx);           # 0 or 1
 #
 # EXP_WIN_SIZE = 5
 ###############################################################################
@@ -535,9 +535,9 @@ $code.=<<___;
 .text
 
 .align 32
-.globl  extract_multiplier_2x20_win5
-.type   extract_multiplier_2x20_win5,\@function,4
-extract_multiplier_2x20_win5:
+.globl  ossl_extract_multiplier_2x20_win5
+.type   ossl_extract_multiplier_2x20_win5,\@function,4
+ossl_extract_multiplier_2x20_win5:
 .cfi_startproc
     endbranch
     leaq    ($tbl_idx,$tbl_idx,4), %rax
@@ -581,7 +581,7 @@ extract_multiplier_2x20_win5:
 
     ret
 .cfi_endproc
-.size   extract_multiplier_2x20_win5, .-extract_multiplier_2x20_win5
+.size   ossl_extract_multiplier_2x20_win5, .-ossl_extract_multiplier_2x20_win5
 ___
 $code.=<<___;
 .data
@@ -696,9 +696,9 @@ rsaz_def_handler:
     .rva    .LSEH_end_RSAZ_amm52x20_x2_256
     .rva    .LSEH_info_RSAZ_amm52x20_x2_256
 
-    .rva    .LSEH_begin_extract_multiplier_2x20_win5
-    .rva    .LSEH_end_extract_multiplier_2x20_win5
-    .rva    .LSEH_info_extract_multiplier_2x20_win5
+    .rva    .LSEH_begin_ossl_extract_multiplier_2x20_win5
+    .rva    .LSEH_end_ossl_extract_multiplier_2x20_win5
+    .rva    .LSEH_info_ossl_extract_multiplier_2x20_win5
 
 .section    .xdata
 .align  8
@@ -710,10 +710,10 @@ rsaz_def_handler:
     .byte   9,0,0,0
     .rva    rsaz_def_handler
     .rva    .Lrsaz_amm52x20_x2_256_body,.Lrsaz_amm52x20_x2_256_epilogue
-.LSEH_info_extract_multiplier_2x20_win5:
+.LSEH_info_ossl_extract_multiplier_2x20_win5:
     .byte   9,0,0,0
     .rva    rsaz_def_handler
-    .rva    .LSEH_begin_extract_multiplier_2x20_win5,.LSEH_begin_extract_multiplier_2x20_win5
+    .rva    .LSEH_begin_ossl_extract_multiplier_2x20_win5,.LSEH_begin_ossl_extract_multiplier_2x20_win5
 ___
 }
 }}} else {{{                # fallback for old assembler
@@ -729,11 +729,11 @@ rsaz_avx512ifma_eligible:
 
 .globl  RSAZ_amm52x20_x1_256
 .globl  RSAZ_amm52x20_x2_256
-.globl  extract_multiplier_2x20_win5
+.globl  ossl_extract_multiplier_2x20_win5
 .type   RSAZ_amm52x20_x1_256,\@abi-omnipotent
 RSAZ_amm52x20_x1_256:
 RSAZ_amm52x20_x2_256:
-extract_multiplier_2x20_win5:
+ossl_extract_multiplier_2x20_win5:
     .byte   0x0f,0x0b    # ud2
     ret
 .size   RSAZ_amm52x20_x1_256, .-RSAZ_amm52x20_x1_256
