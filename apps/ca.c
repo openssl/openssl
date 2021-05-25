@@ -111,6 +111,7 @@ static int certify_cert(X509 **xret, const char *infile, int certformat,
                         const char *enddate, long days, int batch, const char *ext_sect,
                         CONF *conf, int verbose, unsigned long certopt,
                         unsigned long nameopt, int default_op, int ext_copy);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 static int certify_spkac(X509 **xret, const char *infile, EVP_PKEY *pkey,
                          X509 *x509, const char *dgst,
                          STACK_OF(OPENSSL_STRING) *sigopts,
@@ -120,6 +121,7 @@ static int certify_spkac(X509 **xret, const char *infile, EVP_PKEY *pkey,
                          const char *enddate, long days, const char *ext_sect, CONF *conf,
                          int verbose, unsigned long certopt,
                          unsigned long nameopt, int default_op, int ext_copy);
+#endif
 static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
                    const char *dgst, STACK_OF(OPENSSL_STRING) *sigopts,
                    STACK_OF(CONF_VALUE) *policy, CA_DB *db, BIGNUM *serial,
@@ -176,8 +178,10 @@ const OPTIONS ca_options[] = {
     {"msie_hack", OPT_MSIE_HACK, '-',
      "msie modifications to handle all Universal Strings"},
     {"ss_cert", OPT_SS_CERT, '<', "File contains a self signed cert to sign"},
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     {"spkac", OPT_SPKAC, '<',
      "File contains DN and signed public key and challenge"},
+#endif
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
@@ -450,8 +454,10 @@ opthelp:
             req = 1;
             break;
         case OPT_SPKAC:
+#ifndef OPENSSL_NO_DEPRECATED_3_0
             spkac_file = opt_arg();
             req = 1;
+#endif
             break;
         case OPT_REVOKE:
             infile = opt_arg();
@@ -941,6 +947,7 @@ end_of_options:
             BIO_printf(bio_err, "Memory allocation failure\n");
             goto end;
         }
+#ifndef OPENSSL_NO_DEPRECATED_3_0
         if (spkac_file != NULL) {
             total++;
             j = certify_spkac(&x, spkac_file, pkey, x509, dgst, sigopts,
@@ -961,6 +968,7 @@ end_of_options:
                 }
             }
         }
+#endif
         if (ss_cert_file != NULL) {
             total++;
             j = certify_cert(&x, ss_cert_file, certformat, passin, pkey,
@@ -1962,6 +1970,7 @@ static void write_new_certificate(BIO *bp, X509 *x, int output_der, int notext)
     PEM_write_bio_X509(bp, x);
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 static int certify_spkac(X509 **xret, const char *infile, EVP_PKEY *pkey,
                          X509 *x509, const char *dgst,
                          STACK_OF(OPENSSL_STRING) *sigopts,
@@ -2092,6 +2101,7 @@ static int certify_spkac(X509 **xret, const char *infile, EVP_PKEY *pkey,
 
     return ok;
 }
+#endif
 
 static int check_time_format(const char *str)
 {

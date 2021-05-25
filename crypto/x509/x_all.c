@@ -50,12 +50,6 @@ int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r)
     return X509_REQ_verify_ex(a, r, NULL, NULL);
 }
 
-int NETSCAPE_SPKI_verify(NETSCAPE_SPKI *a, EVP_PKEY *r)
-{
-    return ASN1_item_verify(ASN1_ITEM_rptr(NETSCAPE_SPKAC),
-                            &a->sig_algor, a->signature, a->spkac, r);
-}
-
 int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
     x->cert_info.enc.modified = 1;
@@ -126,12 +120,6 @@ X509_CRL *X509_CRL_load_http(const char *url, BIO *bio, BIO *rbio, int timeout)
 {
     return (X509_CRL *)simple_get_asn1(url, bio, rbio, timeout,
                                        ASN1_ITEM_rptr(X509_CRL));
-}
-
-int NETSCAPE_SPKI_sign(NETSCAPE_SPKI *x, EVP_PKEY *pkey, const EVP_MD *md)
-{
-    return ASN1_item_sign_ex(ASN1_ITEM_rptr(NETSCAPE_SPKAC), &x->sig_algor, NULL,
-                          x->signature, x->spkac, NULL, pkey, md, NULL, NULL);
 }
 
 #ifndef OPENSSL_NO_STDIO

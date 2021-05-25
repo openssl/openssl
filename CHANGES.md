@@ -38,6 +38,12 @@ breaking changes, and mappings for the large list of deprecated functions.
 
    *Rich Salz*
 
+ * Support for the SXNET (Thawte Strong Extranet) certificate extension,
+   the NETSCAPE_CERT_SEQUENCE, NETSCAPE_SPKAC, and NETSCAPE_SPKI datatypes
+   have been deprecrated.
+
+   *Rich Salz*
+
  * The signatures of the functions to get and set options on SSL and
    SSL_CTX objects changed from "unsigned long" to "uint64_t" type.
    Some source code changes may be required.

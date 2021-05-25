@@ -266,9 +266,10 @@ typedef struct X509_info_st {
     generate_stack_macros("X509_INFO");
 -}
 
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 /*
  * The next 2 structures and their 8 routines are used to manipulate Netscape's
- * spki structures - useful if you are writing a CA web page
+ * spki structures
  */
 typedef struct Netscape_spkac_st {
     X509_PUBKEY *pubkey;
@@ -286,6 +287,9 @@ typedef struct Netscape_certificate_sequence {
     ASN1_OBJECT *type;
     STACK_OF(X509) *certs;
 } NETSCAPE_CERT_SEQUENCE;
+
+DECLARE_ASN1_FUNCTIONS_attr(OSSL_DEPRECATEDIN_3_0, NETSCAPE_CERT_SEQUENCE)
+# endif
 
 /*- Unused (and iv length is wrong)
 typedef struct CBCParameter_st
@@ -369,14 +373,18 @@ int X509_REQ_verify_ex(X509_REQ *a, EVP_PKEY *r, OSSL_LIB_CTX *libctx,
                        const char *propq);
 int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r);
 int X509_CRL_verify(X509_CRL *a, EVP_PKEY *r);
-int NETSCAPE_SPKI_verify(NETSCAPE_SPKI *a, EVP_PKEY *r);
 
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+int NETSCAPE_SPKI_verify(NETSCAPE_SPKI *a, EVP_PKEY *r);
 NETSCAPE_SPKI *NETSCAPE_SPKI_b64_decode(const char *str, int len);
 char *NETSCAPE_SPKI_b64_encode(NETSCAPE_SPKI *x);
 EVP_PKEY *NETSCAPE_SPKI_get_pubkey(NETSCAPE_SPKI *x);
 int NETSCAPE_SPKI_set_pubkey(NETSCAPE_SPKI *x, EVP_PKEY *pkey);
-
 int NETSCAPE_SPKI_print(BIO *out, NETSCAPE_SPKI *spki);
+int NETSCAPE_SPKI_sign(NETSCAPE_SPKI *x, EVP_PKEY *pkey, const EVP_MD *md);
+DECLARE_ASN1_FUNCTIONS(NETSCAPE_SPKI)
+DECLARE_ASN1_FUNCTIONS(NETSCAPE_SPKAC)
+#endif
 
 int X509_signature_dump(BIO *bp, const ASN1_STRING *sig, int indent);
 int X509_signature_print(BIO *bp, const X509_ALGOR *alg,
@@ -388,7 +396,6 @@ int X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md);
 int X509_REQ_sign_ctx(X509_REQ *x, EVP_MD_CTX *ctx);
 int X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md);
 int X509_CRL_sign_ctx(X509_CRL *x, EVP_MD_CTX *ctx);
-int NETSCAPE_SPKI_sign(NETSCAPE_SPKI *x, EVP_PKEY *pkey, const EVP_MD *md);
 
 int X509_pubkey_digest(const X509 *data, const EVP_MD *type,
                        unsigned char *md, unsigned int *len);
@@ -653,9 +660,6 @@ int X509_CRL_get0_by_cert(X509_CRL *crl, X509_REVOKED **ret, X509 *x);
 X509_PKEY *X509_PKEY_new(void);
 void X509_PKEY_free(X509_PKEY *a);
 
-DECLARE_ASN1_FUNCTIONS(NETSCAPE_SPKI)
-DECLARE_ASN1_FUNCTIONS(NETSCAPE_SPKAC)
-DECLARE_ASN1_FUNCTIONS(NETSCAPE_CERT_SEQUENCE)
 
 X509_INFO *X509_INFO_new(void);
 void X509_INFO_free(X509_INFO *a);

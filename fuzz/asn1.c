@@ -112,11 +112,11 @@ static ASN1_ITEM_EXP *item_type[] = {
     ASN1_ITEM_ref(ISSUING_DIST_POINT),
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ASN1_ITEM_ref(LONG),
-#endif
-    ASN1_ITEM_ref(NAME_CONSTRAINTS),
     ASN1_ITEM_ref(NETSCAPE_CERT_SEQUENCE),
     ASN1_ITEM_ref(NETSCAPE_SPKAC),
     ASN1_ITEM_ref(NETSCAPE_SPKI),
+#endif
+    ASN1_ITEM_ref(NAME_CONSTRAINTS),
     ASN1_ITEM_ref(NOTICEREF),
 #ifndef OPENSSL_NO_OCSP
     ASN1_ITEM_ref(OCSP_BASICRESP),
@@ -171,9 +171,9 @@ static ASN1_ITEM_EXP *item_type[] = {
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ASN1_ITEM_ref(RSAPrivateKey),
     ASN1_ITEM_ref(RSAPublicKey),
-#endif
     ASN1_ITEM_ref(SXNET),
     ASN1_ITEM_ref(SXNETID),
+#endif
     ASN1_ITEM_ref(USERNOTICE),
     ASN1_ITEM_ref(X509),
     ASN1_ITEM_ref(X509_ALGOR),
