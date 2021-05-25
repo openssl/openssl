@@ -14,7 +14,7 @@
 #include <openssl/params.h>
 /* For TLS1_3_VERSION */
 #include <openssl/ssl.h>
-#include <internal/nelem.h>
+#include "internal/nelem.h"
 
 static OSSL_FUNC_keymgmt_import_fn xor_import;
 static OSSL_FUNC_keymgmt_import_types_fn xor_import_types;
