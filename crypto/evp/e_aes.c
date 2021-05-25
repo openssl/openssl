@@ -2323,7 +2323,7 @@ static int aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
             ret = AES_set_decrypt_key(key, EVP_CIPHER_CTX_key_length(ctx) * 8,
                                       &dat->ks.ks);
             dat->block = (block128_f) AES_decrypt;
-            dat->stream.cbc = (cbc128_f) bsaes_cbc_encrypt;
+            dat->stream.cbc = (cbc128_f) ossl_bsaes_cbc_encrypt;
         } else
 #endif
 #ifdef VPAES_CAPABLE
@@ -2369,7 +2369,7 @@ static int aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
         ret = AES_set_encrypt_key(key, EVP_CIPHER_CTX_key_length(ctx) * 8,
                                   &dat->ks.ks);
         dat->block = (block128_f) AES_encrypt;
-        dat->stream.ctr = (ctr128_f) bsaes_ctr32_encrypt_blocks;
+        dat->stream.ctr = (ctr128_f) ossl_bsaes_ctr32_encrypt_blocks;
     } else
 #endif
 #ifdef VPAES_CAPABLE
@@ -2711,7 +2711,7 @@ static int aes_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                 AES_set_encrypt_key(key, ctx->key_len * 8, &gctx->ks.ks);
                 CRYPTO_gcm128_init(&gctx->gcm, &gctx->ks,
                                    (block128_f) AES_encrypt);
-                gctx->ctr = (ctr128_f) bsaes_ctr32_encrypt_blocks;
+                gctx->ctr = (ctr128_f) ossl_bsaes_ctr32_encrypt_blocks;
                 break;
             } else
 #endif
@@ -3168,7 +3168,7 @@ static int aes_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 #endif
 #ifdef BSAES_CAPABLE
             if (BSAES_CAPABLE)
-                xctx->stream = enc ? bsaes_xts_encrypt : bsaes_xts_decrypt;
+                xctx->stream = enc ? ossl_bsaes_xts_encrypt : ossl_bsaes_xts_decrypt;
             else
 #endif
 #ifdef VPAES_CAPABLE
