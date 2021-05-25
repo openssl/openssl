@@ -1410,7 +1410,7 @@ int BN_mod_exp_mont_consttime_x2(BIGNUM *rr1, const BIGNUM *a1, const BIGNUM *p1
     BN_MONT_CTX *mont1 = NULL;
     BN_MONT_CTX *mont2 = NULL;
 
-    if (rsaz_avx512ifma_eligible() &&
+    if (ossl_rsaz_avx512ifma_eligible() &&
         ((a1->top == 16) && (p1->top == 16) && (BN_num_bits(m1) == 1024) &&
          (a2->top == 16) && (p2->top == 16) && (BN_num_bits(m2) == 1024))) {
 
@@ -1437,11 +1437,11 @@ int BN_mod_exp_mont_consttime_x2(BIGNUM *rr1, const BIGNUM *a1, const BIGNUM *p1
                 goto err;
         }
 
-        ret = RSAZ_mod_exp_avx512_x2(rr1->d, a1->d, p1->d, m1->d, mont1->RR.d,
-                                     mont1->n0[0],
-                                     rr2->d, a2->d, p2->d, m2->d, mont2->RR.d,
-                                     mont2->n0[0],
-                                     1024 /* factor bit size */);
+        ret = ossl_rsaz_mod_exp_avx512_x2(rr1->d, a1->d, p1->d, m1->d,
+                                          mont1->RR.d, mont1->n0[0],
+                                          rr2->d, a2->d, p2->d, m2->d,
+                                          mont2->RR.d, mont2->n0[0],
+                                          1024 /* factor bit size */);
 
         rr1->top = 16;
         rr1->neg = 0;
