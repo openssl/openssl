@@ -7,7 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* An example that uses the EVP_MD*, EVP_DigestSign* and EVP_DigestVerify* 
+/* 
+ * An example that uses the EVP_MD*, EVP_DigestSign* and EVP_DigestVerify* 
  * methods to calculate and verify a signature of two static buffers.
  * Another way of generating a signature is to use EVP_PKEY_sign(), it uses
  * a digest of message, does not hash the data to be signed, and therefore
@@ -72,7 +73,7 @@ static EVP_PKEY *get_key(OSSL_LIB_CTX *libctx, const char *propq, int public)
 static int demo_sign(OSSL_LIB_CTX *libctx,  const char *sig_name,
                      size_t *sig_out_len, unsigned char **sig_out_value)
 {
-    int i = 0, j = 0, result = 0, public = 0;
+    int j = 0, result = 0, public = 0;
     size_t sig_len;
     unsigned char *sig_value = NULL;
     const char *propq = NULL;
