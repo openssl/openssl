@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "openssl/camellia.h"
+#include <openssl/camellia.h>
 #include "prov/ciphercommon.h"
 #include "crypto/cmll_platform.h"
 
