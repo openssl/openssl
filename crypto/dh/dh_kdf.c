@@ -21,7 +21,7 @@
 #include <openssl/evp.h>
 #include <openssl/asn1.h>
 #include <openssl/kdf.h>
-#include <internal/provider.h>
+#include "internal/provider.h"
 #include <crypto/dh.h>
 
 /* Key derivation function from X9.63/SECG */
