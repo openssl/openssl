@@ -8,7 +8,7 @@
  */
 
 /*
- * Example showing how to generate a EC key and extract values from the
+ * Example showing how to generate an EC key and extract values from the
  * generated key.
  */
 
@@ -21,7 +21,7 @@
 static int get_key_values(EVP_PKEY *pkey);
 
 /*
- * The following code shows how to generate a EC key from a curve name
+ * The following code shows how to generate an EC key from a curve name
  * with additional parameters. If only the curve name is required then the
  * simple helper can be used instead i.e. Either
  * pkey = EVP_EC_gen(curvename); OR
@@ -35,11 +35,11 @@ static EVP_PKEY *do_ec_keygen(void)
      */
     OSSL_LIB_CTX *libctx = NULL;
     const char *propq = NULL;
-    static int use_cofactordh = 1;
     EVP_PKEY *key = NULL;
     OSSL_PARAM params[3];
     EVP_PKEY_CTX *genctx = NULL;
-    static const char *curvename = "P-256";
+    const char *curvename = "P-256";
+    int use_cofactordh = 1;
 
     genctx = EVP_PKEY_CTX_new_from_name(libctx, "EC", propq);
     if (genctx == NULL) {
@@ -56,8 +56,7 @@ static EVP_PKEY *do_ec_keygen(void)
                                                  (char *)curvename, 0);
     /*
      * This is an optional parameter.
-     * For many curves the cofactor is 1 - so setting this has
-     * no effect.
+     * For many curves where the cofactor is 1, setting this has no effect.
      */
     params[1] = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_USE_COFACTOR_ECDH,
                                          &use_cofactordh);
@@ -88,10 +87,9 @@ static int get_key_values(EVP_PKEY *pkey)
     int result = 0;
     char out_curvename[80];
     unsigned char out_pubkey[80];
-    char out_pub_hexstr[256];
-    char *out_priv_hexstr = NULL;
+    unsigned char out_privkey[80];
     BIGNUM *out_priv = NULL;
-    size_t i, len = 0;
+    size_t i, out_pubkey_len, out_privkey_len = 0;
 
     if (!EVP_PKEY_get_utf8_string_param(pkey, OSSL_PKEY_PARAM_GROUP_NAME,
                                         out_curvename, sizeof(out_curvename),
@@ -101,14 +99,9 @@ static int get_key_values(EVP_PKEY *pkey)
     }
 
     if (!EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PUB_KEY,
-                                        out_pubkey, sizeof(out_pubkey), &len)) {
+                                        out_pubkey, sizeof(out_pubkey),
+                                        &out_pubkey_len)) {
         fprintf(stderr, "Failed to get public key\n");
-        goto cleanup;
-    }
-
-    out_priv = BN_new();
-    if (out_priv == NULL) {
-        fprintf(stderr, "BN_new() failed\n");
         goto cleanup;
     }
 
@@ -117,27 +110,21 @@ static int get_key_values(EVP_PKEY *pkey)
         goto cleanup;
     }
 
-    /* Convert a byte buffer into a printable hex string */
-    if (!OPENSSL_buf2hexstr_ex(out_pub_hexstr, sizeof(out_pub_hexstr), NULL,
-                               out_pubkey, len, ':')) {
-        fprintf(stderr, "Failed to convert public key to a hex string\n");
+    out_privkey_len = BN_bn2bin(out_priv, out_privkey);
+    if (out_privkey_len <= 0 || out_privkey_len > sizeof(out_privkey)) {
+        fprintf(stderr, "BN_bn2bin failed\n");
         goto cleanup;
     }
 
-    out_priv_hexstr = BN_bn2hex(out_priv);
-    if (out_priv_hexstr == NULL) {
-        fprintf(stderr, "Failed to convert private key to a hex string\n");
-        goto cleanup;
-    }
+    fprintf(stdout, "Curve name: %s\n", out_curvename);
+    fprintf(stdout, "Public key:\n");
+    BIO_dump_indent_fp(stdout, out_pubkey, out_pubkey_len, 2);
+    fprintf(stdout, "Private Key:\n");
+    BIO_dump_indent_fp(stdout, out_privkey, out_privkey_len, 2);
 
-    fprintf(stdout, " Curve name: %s\n", out_curvename);
-    fprintf(stdout, " Public key: %s\n", out_pub_hexstr);
-    fprintf(stdout, "Private Key: %s\n", out_priv_hexstr);
     result = 1;
 cleanup:
     /* Zeroize the private key data when we free it */
-    if (out_priv_hexstr != NULL)
-        OPENSSL_clear_free(out_priv_hexstr, strlen(out_priv_hexstr));
     BN_clear_free(out_priv);
     return result;
 }
