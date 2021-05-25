@@ -100,6 +100,7 @@ providers/common/include/prov/der_sm2.h
 /test/confdump
 /test/bio_prefix_text
 /test/evp_extra_test2
+/test/threadstest_fips
 
 # Certain files that get created by tests on the fly
 /test-runs
