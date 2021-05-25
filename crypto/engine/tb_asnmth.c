@@ -76,7 +76,8 @@ int ENGINE_set_default_pkey_asn1_meths(ENGINE *e)
  */
 ENGINE *ENGINE_get_pkey_asn1_meth_engine(int nid)
 {
-    return engine_table_select(&pkey_asn1_meth_table, nid);
+    return ossl_engine_table_select(&pkey_asn1_meth_table, nid,
+                                    OPENSSL_FILE, OPENSSL_LINE);
 }
 
 /*

@@ -331,7 +331,11 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
         }
     }
 
-    /* Only runs the KAT's during installation OR on_demand() */
+    /*
+     * Only runs the KAT's during installation OR on_demand().
+     * NOTE: If the installation option 'self_test_onload' is chosen then this
+     * path will always be run, since kats_already_passed will always be 0.
+     */
     if (on_demand_test || kats_already_passed == 0) {
         if (!SELF_TEST_kats(ev, st->libctx)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_SELF_TEST_KAT_FAILURE);
