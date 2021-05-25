@@ -1000,16 +1000,27 @@ sub collectnames {
         }
     }
 
-    my @links =
-        $podinfo{contents} =~ /L<
-                              # if the link is of the form L<something|name(s)>,
-                              # then remove 'something'.  Note that 'something'
-                              # may contain POD codes as well...
-                              (?:(?:[^\|]|<[^>]*>)*\|)?
-                              # we're only interested in references that have
-                              # a one digit section number
-                              ([^\/>\(]+\(\d\))
-                             /gx;
+    my @links = ();
+    # Don't use this regexp directly on $podinfo{contents}, as it causes a
+    # regexp recusion, which fails on really big PODs.  Instead, use $markup_re
+    # to pick up general markup, and use this regexp to check that the markup
+    # that was found is indeed a link.
+    my $linkre = qr/L<
+                    # if the link is of the form L<something|name(s)>,
+                    # then remove 'something'.  Note that 'something'
+                    # may contain POD codes as well...
+                    (?:(?:[^\|]|<[^>]*>)*\|)?
+                    # we're only interested in references that have
+                    # a one digit section number
+                    ([^\/>\(]+\(\d\))
+                   /x;
+    while ( $podinfo{contents} =~ /$markup_re/msg ) {
+        my $x = $1;
+
+        if ($x =~ $linkre) {
+            push @links, $1;
+        }
+    }
     $link_map{$filename} = [ @links ];
 }
 
