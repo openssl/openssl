@@ -8,7 +8,6 @@ Notes on Perl
  - [Required Perl modules](#required-perl-modules)
  - [Notes on installing a Perl module](#notes-on-installing-a-perl-module])
 
-
 General Notes
 -------------
 
@@ -70,10 +69,13 @@ Required Perl modules
 We do our best to limit ourselves to core Perl modules to keep the
 requirements down. There are just a few exceptions.
 
+ * Text::Template this is used *for building*
 
-## For Building
+   To avoid unnecessary initial hurdles, we have bundled a copy of the
+   following modules in our source.  They will work as fallbacks if these
+   modules aren't already installed on the system.
 
- * `Text::Template`
+ * `Text::Template` this is required *for building*
 
    This module is not part of the core Perl modules.
    As a matter of fact, the core Perl modules do not
@@ -81,9 +83,7 @@ requirements down. There are just a few exceptions.
    This module is absolutely needed,
    configuration depends on it.
 
-## For Testing
-
- * `Test::More`
+ * `Test::More` this is required *for testing*
 
    We require the minimum version to be 0.96, which
    appeared in Perl 5.13.4, because that version was
@@ -91,14 +91,6 @@ requirements down. There are just a few exceptions.
    This module is required for testing only!
    If you don't plan on running the tests,
    you don't need to bother with this one.
-
-
-
-To avoid unnecessary initial hurdles, we have bundled a copy of the
-following modules in our source.  They will work as fallbacks if
-these modules aren't already installed on the system.
-
-   Text::Template
 
 Notes on installing a Perl module
 ---------------------------------
