@@ -214,18 +214,24 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
                 ERR_raise(ERR_LIB_BIO, BIO_R_LOOKUP_RETURNED_NOTHING);
                 goto exit_loop;
             }
-            /* We're currently not iterating, but set this as preparation
-             * for possible future development in that regard
-             */
             c->addr_iter = c->addr_first;
             c->state = ACPT_S_CREATE_SOCKET;
             break;
 
         case ACPT_S_CREATE_SOCKET:
+            ERR_set_mark();
             s = BIO_socket(BIO_ADDRINFO_family(c->addr_iter),
                            BIO_ADDRINFO_socktype(c->addr_iter),
                            BIO_ADDRINFO_protocol(c->addr_iter), 0);
             if (s == (int)INVALID_SOCKET) {
+                if ((c->addr_iter = BIO_ADDRINFO_next(c->addr_iter)) != NULL) {
+                    /*
+                     * if there are more addresses to try, do that first
+                     */
+                    ERR_pop_to_mark();
+                    break;
+                }
+                ERR_clear_last_mark();
                 ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                                "calling socket(%s, %s)",
                                 c->param_addr, c->param_serv);
