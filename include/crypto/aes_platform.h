@@ -11,7 +11,7 @@
 # define OSSL_AES_PLATFORM_H
 # pragma once
 
-# include "openssl/aes.h"
+# include <openssl/aes.h>
 
 # ifdef VPAES_ASM
 int vpaes_set_encrypt_key(const unsigned char *userKey, int bits,

@@ -17,7 +17,7 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/proverr.h>
-#include "openssl/param_build.h"
+#include <openssl/param_build.h>
 #include "internal/param_build_set.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
