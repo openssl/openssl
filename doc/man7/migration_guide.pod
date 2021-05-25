@@ -1085,6 +1085,12 @@ There is no replacement. This option returned a constant string.
 
 =item -
 
+BIO_get_callback(), BIO_set_callback(), BIO_debug_callback()
+
+Use the respective non-deprecated _ex() functions.
+
+=item -
+
 BN_is_prime_ex(), BN_is_prime_fasttest_ex()
 
 Use L<BN_check_prime(3)> which that avoids possible misuse and always uses at least
