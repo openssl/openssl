@@ -32,7 +32,7 @@
  */
 struct ossl_cmp_ctx_st {
     OSSL_LIB_CTX *libctx;
-    const char *propq;
+    char *propq;
     OSSL_CMP_log_cb_t log_cb; /* log callback for error/debug/etc. output */
     OSSL_CMP_severity log_verbosity; /* level of verbosity of log output */
 

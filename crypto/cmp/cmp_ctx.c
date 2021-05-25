@@ -179,6 +179,7 @@ void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx)
         (void)OSSL_HTTP_close(ctx->http_ctx, 1);
         ossl_cmp_debug(ctx, "disconnected from CMP server");
     }
+    OPENSSL_free(ctx->propq);
     OPENSSL_free(ctx->serverPath);
     OPENSSL_free(ctx->server);
     OPENSSL_free(ctx->proxy);
