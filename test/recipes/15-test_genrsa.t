@@ -24,7 +24,7 @@ use lib bldtop_dir('.');
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
 plan tests =>
-    ($no_fips ? 0 : 1)          # Extra FIPS related test
+    ($no_fips ? 0 : 2)          # Extra FIPS related test
     + 13;
 
 # We want to know that an absurdly small number of bits isn't support
@@ -131,4 +131,10 @@ unless ($no_fips) {
                '-pkeyopt', 'bits:2080',
                '-out', 'genrsatest2080.pem'])),
        "Generating RSA key with > 2048 bits and < 3072 bits");
+    ok(run(app(['openssl', 'genpkey',
+                @prov,
+               '-algorithm', 'RSA',
+               '-pkeyopt', 'bits:3072',
+               '-out', 'genrsatest3072.pem'])),
+       "Generating RSA key with 3072 bits");
 }
