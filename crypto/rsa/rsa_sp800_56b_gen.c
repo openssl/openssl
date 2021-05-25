@@ -17,7 +17,6 @@
 
 #define RSA_FIPS1864_MIN_KEYGEN_KEYSIZE 2048
 #define RSA_FIPS1864_MIN_KEYGEN_STRENGTH 112
-#define RSA_FIPS1864_MAX_KEYGEN_STRENGTH 256
 
 /*
  * Generate probable primes 'p' & 'q'. See FIPS 186-4 Section B.3.6
@@ -174,8 +173,7 @@ int ossl_rsa_sp800_56b_validate_strength(int nbits, int strength)
     int s = (int)ossl_ifc_ffc_compute_security_bits(nbits);
 
 #ifdef FIPS_MODULE
-    if (s < RSA_FIPS1864_MIN_KEYGEN_STRENGTH
-            || s > RSA_FIPS1864_MAX_KEYGEN_STRENGTH) {
+    if (s < RSA_FIPS1864_MIN_KEYGEN_STRENGTH) {
         ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_MODULUS);
         return 0;
     }
