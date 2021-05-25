@@ -177,7 +177,7 @@ static int demo_verify(OSSL_LIB_CTX *libctx, const char *sig_name,
         fprintf(stderr, "EVP_MD_CTX_new failed.\n");
         goto cleanup;
     }
-    /*Get public key */
+    /* Get public key */
     pub_key = get_key(libctx, propq, public);
     if (pub_key == NULL) {
         fprintf(stderr, "Get public key failed.\n");
