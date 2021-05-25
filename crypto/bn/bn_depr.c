@@ -49,7 +49,7 @@ int BN_is_prime(const BIGNUM *a, int checks,
 {
     BN_GENCB cb;
     BN_GENCB_set_old(&cb, callback, cb_arg);
-    return bn_check_prime_int(a, checks, ctx_passed, 0, &cb);
+    return ossl_bn_check_prime(a, checks, ctx_passed, 0, &cb);
 }
 
 int BN_is_prime_fasttest(const BIGNUM *a, int checks,
@@ -59,5 +59,5 @@ int BN_is_prime_fasttest(const BIGNUM *a, int checks,
 {
     BN_GENCB cb;
     BN_GENCB_set_old(&cb, callback, cb_arg);
-    return bn_check_prime_int(a, checks, ctx_passed, do_trial_division, &cb);
+    return ossl_bn_check_prime(a, checks, ctx_passed, do_trial_division, &cb);
 }

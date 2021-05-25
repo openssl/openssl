@@ -230,19 +230,19 @@ int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe,
 int BN_is_prime_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed,
                    BN_GENCB *cb)
 {
-    return bn_check_prime_int(a, checks, ctx_passed, 0, cb);
+    return ossl_bn_check_prime(a, checks, ctx_passed, 0, cb);
 }
 
 int BN_is_prime_fasttest_ex(const BIGNUM *w, int checks, BN_CTX *ctx,
                             int do_trial_division, BN_GENCB *cb)
 {
-    return bn_check_prime_int(w, checks, ctx, do_trial_division, cb);
+    return ossl_bn_check_prime(w, checks, ctx, do_trial_division, cb);
 }
 #endif
 
 /* Wrapper around bn_is_prime_int that sets the minimum number of checks */
-int bn_check_prime_int(const BIGNUM *w, int checks, BN_CTX *ctx,
-                       int do_trial_division, BN_GENCB *cb)
+int ossl_bn_check_prime(const BIGNUM *w, int checks, BN_CTX *ctx,
+                        int do_trial_division, BN_GENCB *cb)
 {
     int min_checks = bn_mr_min_checks(BN_num_bits(w));
 
@@ -254,7 +254,7 @@ int bn_check_prime_int(const BIGNUM *w, int checks, BN_CTX *ctx,
 
 int BN_check_prime(const BIGNUM *p, BN_CTX *ctx, BN_GENCB *cb)
 {
-    return bn_check_prime_int(p, 0, ctx, 1, cb);
+    return ossl_bn_check_prime(p, 0, ctx, 1, cb);
 }
 
 /*
