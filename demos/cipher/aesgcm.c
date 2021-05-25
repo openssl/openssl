@@ -75,6 +75,7 @@ int aes_gcm_encrypt(void)
     int outlen, tmplen;
     size_t gcm_ivlen = sizeof(gcm_iv);
     unsigned char outbuf[1024];
+    unsigned char outtag[16];
     OSSL_PARAM params[2] = {
         OSSL_PARAM_END, OSSL_PARAM_END
     };
@@ -123,14 +124,14 @@ int aes_gcm_encrypt(void)
 
     /* Get tag */
     params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
-                                                  outbuf + outlen, 16);
+                                                  outtag, 16);
 
     if (!EVP_CIPHER_CTX_get_params(ctx, params))
         goto err;
 
     /* Output tag */
     printf("Tag:\n");
-    BIO_dump_fp(stdout, outbuf + outlen, 16);
+    BIO_dump_fp(stdout, outtag, 16);
 
     ret = 1;
 err:

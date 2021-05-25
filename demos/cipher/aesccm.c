@@ -77,6 +77,7 @@ int aes_ccm_encrypt(void)
     size_t ccm_nonce_len = sizeof(ccm_nonce);
     size_t ccm_tag_len = sizeof(ccm_tag);
     unsigned char outbuf[1024];
+    unsigned char outtag[16];
     OSSL_PARAM params[3] = {
         OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END
     };
@@ -133,7 +134,7 @@ int aes_ccm_encrypt(void)
 
     /* Get tag */
     params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
-                                                  outbuf + outlen, ccm_tag_len);
+                                                  outtag, ccm_tag_len);
     params[1] = OSSL_PARAM_construct_end();
 
     if (!EVP_CIPHER_CTX_get_params(ctx, params))
@@ -141,7 +142,7 @@ int aes_ccm_encrypt(void)
 
     /* Output tag */
     printf("Tag:\n");
-    BIO_dump_fp(stdout, outbuf + outlen, ccm_tag_len);
+    BIO_dump_fp(stdout, outtag, ccm_tag_len);
 
     ret = 1;
 err:
