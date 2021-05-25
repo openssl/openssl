@@ -1212,12 +1212,6 @@ providers/fips.module.sources.new: \
 	     | sed -e 's/^.*: *//' -e 's/  */ /g' \
 	     | fgrep -f sources-tmp/sources | tr ' ' '\n' \
 	     | sed -E -e '/^include/s:$$:.in:' -e 's:^ *([.][.]/)*$(SRCDIR)::' -e 's:^/::' ; \
-	  for x in providers/common/include/prov/*.h; do \
-	    echo providers/common/der/`basename "$$x"`.in; \
-	  done ; \
-	  for x in providers/common/der/*.c; do \
-	    echo "$$x".in; \
-	  done ; \
 	  for x in `cat sources-tmp/sources`; do \
 	    if [ -f "$(SRCDIR)$$x" ]; then echo $$x | sed 's:^/::' ; fi ; \
 	  done ; \
@@ -1227,7 +1221,8 @@ providers/fips.module.sources.new: \
 		   crypto/ec/asm/*.pl \
 		   crypto/modes/asm/*.pl \
 		   crypto/sha/asm/*.pl \
-		   crypto/x86_64cpuid.pl; do \
+		   crypto/x86_64cpuid.pl \
+	           providers/common/der/*.in; do \
 	    echo "$$x"; \
 	  done \
 	) | sed -e 's:/[^/]*/[^/]*/[.][.]/[.][.]/:/:g' -e 's:/[^/]*/[.][.]/:/:g' \
