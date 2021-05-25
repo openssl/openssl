@@ -139,6 +139,7 @@ if ($checkexist) {
     if ($dropped) {
         print STDERR "${ordinals_file}: Dropped $dropped new symbols\n";
     }
+    $stats{unassigned} = 0 unless defined $stats{unassigned};
     $unassigned = $stats{unassigned} - $dropped;
     if ($unassigned) {
         my $symbol = $unassigned == 1 ? "symbol" : "symbols";
