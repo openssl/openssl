@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-NCONF_new_ex, NCONF_new, NCONF_free, NCONF_default, NCONF_load
+NCONF_new_ex, NCONF_new, NCONF_free, NCONF_default, NCONF_load,
+NCONF_get0_libctx
 - functionality to Load and parse configuration files manually
 
 =head1 SYNOPSIS
@@ -14,6 +15,7 @@ NCONF_new_ex, NCONF_new, NCONF_free, NCONF_default, NCONF_load
  void NCONF_free(CONF *conf);
  CONF_METHOD *NCONF_default(void);
  int NCONF_load(CONF *conf, const char *file, long *eline);
+ OSSL_LIB_CTX *NCONF_get0_libctx(CONF *conf);
 
 =head1 DESCRIPTION
 
@@ -31,6 +33,9 @@ I<conf>. If an error occurs I<file> and I<eline> list the file and line that
 the load failed on if they are not NULL.
 
 NCONF_default() gets the default method table for processing a configuration file.
+
+NCONF_get0_libctx() gets the library context associated with the I<conf>
+parameter.
 
 =head1 RETURN VALUES
 
