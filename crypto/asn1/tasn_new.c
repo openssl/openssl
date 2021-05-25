@@ -45,6 +45,13 @@ ASN1_VALUE *ASN1_item_new_ex(const ASN1_ITEM *it, OSSL_LIB_CTX *libctx,
 
 /* Allocate an ASN1 structure */
 
+
+int ossl_asn1_item_ex_new_intern(ASN1_VALUE **pval, const ASN1_ITEM *it,
+                                 OSSL_LIB_CTX *libctx, const char *propq)
+{
+    return asn1_item_embed_new(pval, it, 0, libctx, propq);
+}
+
 int ASN1_item_ex_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
     return asn1_item_embed_new(pval, it, 0, NULL, NULL);
