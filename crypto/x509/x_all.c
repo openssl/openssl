@@ -182,8 +182,15 @@ int i2d_X509_CRL_bio(BIO *bp, const X509_CRL *crl)
 PKCS7 *d2i_PKCS7_fp(FILE *fp, PKCS7 **p7)
 {
     PKCS7 *ret;
+    OSSL_LIB_CTX *libctx = NULL;
+    const char *propq = NULL;
 
-    ret = ASN1_item_d2i_fp(ASN1_ITEM_rptr(PKCS7), fp, p7);
+    if (p7 != NULL && *p7 != NULL) {
+        libctx = (*p7)->ctx.libctx;
+        propq = (*p7)->ctx.propq;
+    }
+
+    ret = ASN1_item_d2i_fp_ex(ASN1_ITEM_rptr(PKCS7), fp, p7, libctx, propq);
     if (ret != NULL)
         ossl_pkcs7_resolve_libctx(ret);
     return ret;
@@ -198,8 +205,16 @@ int i2d_PKCS7_fp(FILE *fp, const PKCS7 *p7)
 PKCS7 *d2i_PKCS7_bio(BIO *bp, PKCS7 **p7)
 {
     PKCS7 *ret;
+    OSSL_LIB_CTX *libctx = NULL;
+    const char *propq = NULL;
 
-    ret = ASN1_item_d2i_bio(ASN1_ITEM_rptr(PKCS7), bp, p7);
+    if (p7 != NULL && *p7 != NULL) {
+        libctx = (*p7)->ctx.libctx;
+        propq = (*p7)->ctx.propq;
+    }
+
+
+    ret = ASN1_item_d2i_bio_ex(ASN1_ITEM_rptr(PKCS7), bp, p7, libctx, propq);
     if (ret != NULL)
         ossl_pkcs7_resolve_libctx(ret);
     return ret;
