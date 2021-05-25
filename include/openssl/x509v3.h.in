@@ -232,6 +232,7 @@ struct AUTHORITY_KEYID_st {
     ASN1_INTEGER *serial;
 };
 
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 /* Strong extranet structures */
 
 typedef struct SXNET_ID_st {
@@ -243,11 +244,11 @@ typedef struct SXNET_ID_st {
     generate_stack_macros("SXNETID");
 -}
 
-
 typedef struct SXNET_st {
     ASN1_INTEGER *version;
     STACK_OF(SXNETID) *ids;
 } SXNET;
+# endif
 
 typedef struct ISSUER_SIGN_TOOL_st {
     ASN1_UTF8STRING *signTool;
@@ -504,20 +505,21 @@ typedef struct x509_purpose_st {
 
 DECLARE_ASN1_FUNCTIONS(BASIC_CONSTRAINTS)
 
-DECLARE_ASN1_FUNCTIONS(SXNET)
-DECLARE_ASN1_FUNCTIONS(SXNETID)
-
 DECLARE_ASN1_FUNCTIONS(ISSUER_SIGN_TOOL)
 
+
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+DECLARE_ASN1_FUNCTIONS(SXNET)
+DECLARE_ASN1_FUNCTIONS(SXNETID)
 int SXNET_add_id_asc(SXNET **psx, const char *zone, const char *user, int userlen);
 int SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, const char *user,
                        int userlen);
 int SXNET_add_id_INTEGER(SXNET **psx, ASN1_INTEGER *izone, const char *user,
                          int userlen);
-
 ASN1_OCTET_STRING *SXNET_get_id_asc(SXNET *sx, const char *zone);
 ASN1_OCTET_STRING *SXNET_get_id_ulong(SXNET *sx, unsigned long lzone);
 ASN1_OCTET_STRING *SXNET_get_id_INTEGER(SXNET *sx, ASN1_INTEGER *zone);
+# endif
 
 DECLARE_ASN1_FUNCTIONS(AUTHORITY_KEYID)
 
