@@ -11,7 +11,7 @@
 #include "internal/ktls.h"
 
 #if defined(__FreeBSD__)
-# include <crypto/cryptodev.h>
+# include "crypto/cryptodev.h"
 
 /*-
  * Check if a given cipher is supported by the KTLS interface.
