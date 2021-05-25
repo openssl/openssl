@@ -15,7 +15,7 @@
 #include <ctype.h>
 #include <openssl/crypto.h>
 #include "internal/conf.h"
-#include "openssl/conf_api.h"
+#include <openssl/conf_api.h>
 #include "internal/dso.h"
 #include "internal/thread_once.h"
 #include <openssl/x509.h>
