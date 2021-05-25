@@ -1503,7 +1503,7 @@ reconfigure reconf:
 
   sub generatetarget {
       my %args = @_;
-      my $deps = join(" ", compute_lib_depends(@{$args{deps}}));
+      my $deps = join(" ", compute_platform_depends(@{$args{deps}}));
       return <<"EOF";
 $args{target}: $deps
 EOF
