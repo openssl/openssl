@@ -82,9 +82,9 @@ void RSAZ_exp52x20_x2_256(BN_ULONG *res, const BN_ULONG *base,
 void RSAZ_amm52x20_x2_256(BN_ULONG *out, const BN_ULONG *a,
                           const BN_ULONG *b, const BN_ULONG *m,
                           const BN_ULONG k0[2]);
-void extract_multiplier_2x20_win5(BN_ULONG *red_Y,
-                                  const BN_ULONG *red_table,
-                                  int red_table_idx, int tbl_idx);
+void ossl_extract_multiplier_2x20_win5(BN_ULONG *red_Y,
+                                       const BN_ULONG *red_table,
+                                       int red_table_idx, int tbl_idx);
 
 /*
  * Dual Montgomery modular exponentiation using prime moduli of the
@@ -328,8 +328,10 @@ void RSAZ_exp52x20_x2_256(BN_ULONG *out,          /* [2][20] */
         red_table_idx_0 >>= exp_chunk_shift;
         red_table_idx_1 >>= exp_chunk_shift;
 
-        extract_multiplier_2x20_win5(red_Y[0], (const BN_ULONG*)red_table, (int)red_table_idx_0, 0);
-        extract_multiplier_2x20_win5(red_Y[1], (const BN_ULONG*)red_table, (int)red_table_idx_1, 1);
+        ossl_extract_multiplier_2x20_win5(red_Y[0], (const BN_ULONG*)red_table,
+                                          (int)red_table_idx_0, 0);
+        ossl_extract_multiplier_2x20_win5(red_Y[1], (const BN_ULONG*)red_table,
+                                          (int)red_table_idx_1, 1);
 
         /* Process other exp windows */
         for (exp_bit_no -= EXP_WIN_SIZE; exp_bit_no >= 0; exp_bit_no -= EXP_WIN_SIZE) {
@@ -354,7 +356,9 @@ void RSAZ_exp52x20_x2_256(BN_ULONG *out,          /* [2][20] */
                     }
                     red_table_idx_0 &= table_idx_mask;
 
-                    extract_multiplier_2x20_win5(red_X[0], (const BN_ULONG*)red_table, (int)red_table_idx_0, 0);
+                    ossl_extract_multiplier_2x20_win5(red_X[0],
+                                                      (const BN_ULONG*)red_table,
+                                                      (int)red_table_idx_0, 0);
                 }
                 {
                     red_table_idx_1 = expz[1][exp_chunk_no];
@@ -371,7 +375,9 @@ void RSAZ_exp52x20_x2_256(BN_ULONG *out,          /* [2][20] */
                     }
                     red_table_idx_1 &= table_idx_mask;
 
-                    extract_multiplier_2x20_win5(red_X[1], (const BN_ULONG*)red_table, (int)red_table_idx_1, 1);
+                    ossl_extract_multiplier_2x20_win5(red_X[1],
+                                                      (const BN_ULONG*)red_table,
+                                                      (int)red_table_idx_1, 1);
                 }
             }
 
