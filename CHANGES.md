@@ -12257,7 +12257,7 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
    *"Brian Havard" <brianh@kheldar.apana.org.au> and Richard Levitte*
 
  * Rewrite commands to use `NCONF` routines instead of the old `CONF`.
-   New functions to support `NCONF `routines in extension code.
+   New functions to support `NCONF` routines in extension code.
    New function `CONF_set_nconf()`
    to allow functions which take an `NCONF` to also handle the old `LHASH`
    structure: this means that the old `CONF` compatible routines can be
@@ -18578,13 +18578,11 @@ ndif
    *Ralf S. Engelschall*
 
  * Removed dummy files from the 0.9.1b source tree:
-   ```
    crypto/asn1/x crypto/bio/cd crypto/bio/fg crypto/bio/grep crypto/bio/vi
    crypto/bn/asm/......add.c crypto/bn/asm/a.out crypto/dsa/f crypto/md5/f
    crypto/pem/gmon.out crypto/perlasm/f crypto/pkcs7/build crypto/rsa/f
    crypto/sha/asm/f crypto/threads/f ms/zzz ssl/f ssl/f.mak test/f
    util/f.mak util/pl/f util/pl/f.mak crypto/bf/bf_locl.old apps/f
-   ```
 
    *Ralf S. Engelschall*
 
