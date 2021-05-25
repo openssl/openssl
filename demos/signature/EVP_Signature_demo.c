@@ -77,7 +77,6 @@ static int demo_sign(OSSL_LIB_CTX *libctx,  const char *sig_name,
     unsigned char *sig_value = NULL;
     const char *propq = NULL;
     EVP_MD_CTX *sign_context = NULL;
-    const EVP_MD *sig_alg = NULL;
     EVP_PKEY *priv_key = NULL;
     
     /* Get private key */
@@ -102,15 +101,6 @@ static int demo_sign(OSSL_LIB_CTX *libctx,  const char *sig_name,
     if (EVP_DigestSignInit_ex(sign_context, NULL, sig_name,
                               libctx, NULL, priv_key, NULL) != 1) {
         fprintf(stderr, "EVP_DigestSignInit_ex failed.\n");
-        goto cleanup;
-    }
-    /*
-     * EVP_MD_CTX_get1_md returns the EVP_MD structure corresponding
-     * to the passed EVP_MD_CTX.
-     */
-    sig_alg = EVP_MD_CTX_get0_md(sign_context);
-    if (sig_alg == NULL) {
-        fprintf(stderr, "EVP_MD_CTX_get1_md returned NULL.");
         goto cleanup;
     }
     /*
@@ -145,10 +135,10 @@ static int demo_sign(OSSL_LIB_CTX *libctx,  const char *sig_name,
     }
     *sig_out_len = sig_len;
     *sig_out_value = sig_value;
+    fprintf(stdout, "Generating Signature:\n");
     for (j = 0; j < sig_len; j++)
         fprintf(stdout, "%02x", sig_value[j]);
-    fprintf(stdout, "\n");
-    fprintf(stdout, "Signature calculated properly.\n");
+    fprintf(stdout, "\n\n");
     result = 1;
 
 cleanup:
@@ -201,14 +191,12 @@ static int demo_verify(OSSL_LIB_CTX *libctx, const char *sig_name,
         fprintf(stderr, "EVP_DigestVerifyUpdate(hamlet_2) failed.\n");
         goto cleanup;
     }
-    
     if (EVP_DigestVerifyFinal(verify_context, sig_value, sig_len) != 1) {
         fprintf(stderr, "EVP_DigestVerifyFinal failed.\n");
         goto cleanup;
-    } else {
-        fprintf(stdout, "Signature verified properly.\n");
-        result = 1;
     }
+    fprintf(stdout, "Verifying Signature:\nSignature verified.\n");
+    result = 1;
 
 cleanup:
     /* OpenSSL free functions will ignore NULL arguments */

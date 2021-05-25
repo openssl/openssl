@@ -1,7 +1,7 @@
 #
 # To run the demos when linked with a shared library (default):
 #
-#    LD_LIBRARY_PATH=../.. ./EVP_MD_demo
+#    LD_LIBRARY_PATH=../.. ./EVP_Signature_demo
 
 CFLAGS = -I../../include -g
 LDFLAGS = -L../..
