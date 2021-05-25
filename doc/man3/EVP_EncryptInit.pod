@@ -224,8 +224,8 @@ Allocates and returns a cipher context.
 
 =item EVP_CIPHER_CTX_free()
 
-Clears all information from a cipher context and free up any allocated memory
-associate with it, including B<ctx> itself. This function should be called after
+Clears all information from a cipher context and frees any allocated memory
+associated with it, including B<ctx> itself. This function should be called after
 all operations using a cipher are complete so sensitive information does not
 remain in memory.
 
@@ -290,23 +290,23 @@ See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as a parameter descriptor.
 =item EVP_EncryptInit_ex2()
 
 Sets up cipher context I<ctx> for encryption with cipher I<type>. I<type> is
-typically supplied by a function such as EVP_aes_256_cbc(), or a value
-explicitly fetched with EVP_CIPHER_fetch(). I<key> is the symmetric key to use
-and I<iv> is the IV to use (if necessary), the actual number of bytes
-used for the key and IV depends on the cipher. The parameters I<params> will
-be set on the context after initialisation. It is possible to set
-all parameters to NULL except I<type> in an initial call and supply
-the remaining parameters in subsequent calls, all of which have I<type>
-set to NULL. This is done when the default cipher parameters are not
-appropriate.
+typically supplied by calling EVP_CIPHER_fetch(). I<type> may also be set
+using legacy functions such as EVP_aes_256_cbc(), but this is not recommended
+for new applications. I<key> is the symmetric key to use and I<iv> is the IV to
+use (if necessary), the actual number of bytes used for the key and IV depends
+on the cipher. The parameters I<params> will be set on the context after
+initialisation. It is possible to set all parameters to NULL except I<type> in
+an initial call and supply the remaining parameters in subsequent calls, all of
+which have I<type> set to NULL. This is done when the default cipher parameters
+are not appropriate.
 For B<EVP_CIPH_GCM_MODE> the IV will be generated internally if it is not
 specified.
 
 =item EVP_EncryptInit_ex()
 
-Is a legacy function similiar to EVP_EncryptInit_ex2() except If I<impl>
-is non-NULL, its implementation of the cipher B<type> is used if there is one,
-and if not, the default implementation is used.
+This legacy function is similar to EVP_EncryptInit_ex2() when I<impl> is NULL.
+The I<cipher> field will be replaced by the engines I<impl> internal cipher if
+it exists.
 
 =item EVP_EncryptUpdate()
 
@@ -352,7 +352,7 @@ size is 1 in which case I<inl> bytes is sufficient.
 =item EVP_CipherInit_ex2(), EVP_CipherInit_ex(), EVP_CipherUpdate() and
 EVP_CipherFinal_ex()
 
-These functions that can be used for decryption or encryption. The operation
+These functions can be used for decryption or encryption. The operation
 performed depends on the value of the I<enc> parameter. It should be set to 1
 for encryption, 0 for decryption and -1 to leave the value unchanged
 (the actual value of 'enc' being supplied in a previous call).
@@ -361,7 +361,7 @@ for encryption, 0 for decryption and -1 to leave the value unchanged
 
 Clears all information from a cipher context and free up any allocated memory
 associated with it, except the I<ctx> itself. This function should be called
-anytime I<ctx> is to be reused for another
+anytime I<ctx> is reused by another
 EVP_CipherInit() / EVP_CipherUpdate() / EVP_CipherFinal() series of calls.
 
 =item EVP_EncryptInit(), EVP_DecryptInit() and EVP_CipherInit()
@@ -430,7 +430,7 @@ The constant B<EVP_MAX_IV_LENGTH> is the maximum IV length for all ciphers.
 
 =item EVP_CIPHER_CTX_tag_length()
 
-Returns the tag length of a AEAD cipher when passed a B<EVP_CIPHER_CTX>. It will
+Returns the tag length of an AEAD cipher when passed a B<EVP_CIPHER_CTX>. It will
 return zero if the cipher does not support a tag. It returns a default value if
 the tag length has not been set.
 
@@ -443,8 +443,8 @@ maximum block length for all ciphers.
 =item EVP_CIPHER_type() and EVP_CIPHER_CTX_type()
 
 Return the type of the passed cipher or context. This "type" is the actual NID
-of the cipher OBJECT IDENTIFIER as such it ignores the cipher parameters and
-40 bit RC2 and 128 bit RC2 have the same NID. If the cipher does not have an
+of the cipher OBJECT IDENTIFIER and as such it ignores the cipher parameters
+(40 bit RC2 and 128 bit RC2 have the same NID). If the cipher does not have an
 object identifier or does not have ASN1 support this function will return
 B<NID_undef>.
 
@@ -464,8 +464,7 @@ useful with fetched B<EVP_CIPHER>s.
 =item EVP_CIPHER_name() and EVP_CIPHER_CTX_name()
 
 Return the name of the passed cipher or context.  For fetched ciphers with
-multiple names, only one of them is returned; it's recommended to use
-EVP_CIPHER_names_do_all() instead.
+multiple names, only one of them is returned. See also EVP_CIPHER_names_do_all().
 
 =item EVP_CIPHER_names_do_all()
 
@@ -724,8 +723,8 @@ See also EVP_CIPHER_CTX_get_updated_iv().
 =item "randkey" (B<OSSL_CIPHER_PARAM_RANDOM_KEY>) <octet string>
 
 Gets a implementation specific randomly generated key for the associated
-cipher ctx I(ctx>. This is currently only supported by 3DES (which sets the key to
-odd parity).
+cipher ctx I<ctx>. This is currently only supported by DES and 3DES (which set
+the key to odd parity).
 
 =item "taglen" (B<OSSL_CIPHER_PARAM_AEAD_TAGLEN>) <unsigned integer>
 
@@ -752,7 +751,7 @@ Get the total length of the record returned from the "tls1multi_enc" operation.
 
 =item "tls1multi_maxbufsz" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_BUFSIZE>) <unsigned integer>
 
-Gets the maximum record length for a tls1 multiblock cipher operation.
+Gets the maximum record length for a TLS1 multiblock cipher operation.
 The length of the "tls1multi_maxbufsz" parameter should not exceed that of a B<size_t>.
 
 =item "tls1multi_aadpacklen" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD_PACKLEN>) <unsigned integer>
@@ -761,7 +760,7 @@ Gets the result of running the "tls1multi_aad" operation.
 
 =item "tls-mac" (B<OSSL_CIPHER_PARAM_TLS_MAC>) <octet ptr>
 
-Used to pass the tls mac data.
+Used to pass the TLS MAC data.
 
 =back
 
@@ -784,11 +783,11 @@ performed. This is used for performance testing.
 
 =item "tls-version" (B<OSSL_CIPHER_PARAM_TLS_VERSION>) <integer>
 
-Sets the tls-version.
+Sets the TLS version.
 
 =item "tls-mac-size" (B<OSSL_CIPHER_PARAM_TLS_MAC_SIZE>) <unsigned integer>
 
-Set the tls mac size.
+Set the TLS MAC size.
 
 =item "tlsaad" (B<OSSL_CIPHER_PARAM_AEAD_TLS1_AAD>) <octet string>
 
@@ -815,7 +814,7 @@ In order to allow for "in place" decryption the plaintext output should be
 written to the same location in the output buffer that the ciphertext payload
 was read from, i.e. immediately after the explicit IV.
 
-When encrypting a record the first bytes of the input buffer will be empty to
+When encrypting a record the first bytes of the input buffer should be empty to
 allow space for the explicit IV, as will the final bytes where the tag will
 be written.
 The length of the input buffer will include the length of the explicit IV, the
@@ -837,8 +836,8 @@ This is only used for GCM mode.
 
 =item "tls1multi_enc" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC>) <octet string>
 
-Triggers a multiblock tls1 encrypt operation for a tls1 aware cipher that supports
-sending 4 or 8 records in one go.
+Triggers a multiblock TLS1 encrypt operation for a TLS1 aware cipher that
+supports sending 4 or 8 records in one go.
 The cipher performs both the MAC and encrypt stages and constructs the record
 headers itself.
 "tls1multi_enc" supplies the output buffer for the encrypt operation,
@@ -847,17 +846,17 @@ values to the encrypt operation.
 
 =item "tls1multi_encin" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_IN>) <octet string>
 
-Supplies the data to encrypt for a tls1 multiblock cipher operation.
+Supplies the data to encrypt for a TLS1 multiblock cipher operation.
 
 =item "tls1multi_maxsndfrag" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_SEND_FRAGMENT>) <unsigned integer>
 
-Sets the maximum send fragment size for a tls1 multiblock cipher operation.
+Sets the maximum send fragment size for a TLS1 multiblock cipher operation.
 It must be set before using "tls1multi_maxbufsz".
 The length of the "tls1multi_maxsndfrag" parameter should not exceed that of a B<size_t>.
 
 =item "tls1multi_aad" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD>) <octet string>
 
-Sets the authenticated additional data used by a tls1 multiblock cipher operation.
+Sets the authenticated additional data used by a TLS1 multiblock cipher operation.
 The supplied data consists of 13 bytes of record data containing:
 Bytes 0-7: The sequence number of the first record
 Byte 8: The record type
@@ -962,14 +961,14 @@ followed by EVP_CIPHER_CTX_get_params() with a key of
 =item EVP_CTRL_TLS1_1_MULTIBLOCK_MAX_BUFSIZE
 
 When used with a fetched B<EVP_CIPHER>,
-EVP_CIPHER_CTX_set_params() get called with an L<OSSL_PARAM(3)> item with the
+EVP_CIPHER_CTX_set_params() gets called with an L<OSSL_PARAM(3)> item with the
 key OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_SEND_FRAGMENT
 followed by EVP_CIPHER_CTX_get_params() with a key of
 "tls1multi_maxbufsz" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_BUFSIZE>).
 
 =item EVP_CTRL_TLS1_1_MULTIBLOCK_AAD
 
-When used with a fetched B<EVP_CIPHER>, EVP_CIPHER_CTX_set_params() get called
+When used with a fetched B<EVP_CIPHER>, EVP_CIPHER_CTX_set_params() gets called
 with L<OSSL_PARAM(3)> items with the keys
 "tls1multi_aad" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD>) and
 "tls1multi_interleave" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE>)
@@ -979,7 +978,7 @@ followed by EVP_CIPHER_CTX_get_params() with keys of
 
 =item EVP_CTRL_TLS1_1_MULTIBLOCK_ENCRYPT
 
-When used with a fetched B<EVP_CIPHER>, EVP_CIPHER_CTX_set_params() get called
+When used with a fetched B<EVP_CIPHER>, EVP_CIPHER_CTX_set_params() gets called
 with L<OSSL_PARAM(3)> items with the keys
 "tls1multi_enc" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC>),
 "tls1multi_encin" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_IN>) and

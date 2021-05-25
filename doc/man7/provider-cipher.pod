@@ -204,7 +204,7 @@ provider side algorithm I<provctx>.
 
 Parameters currently recognised by built-in ciphers are listed in
 L<EVP_EncryptInit(3)/PARAMETERS>.
-Not all parameters are relevant to, or are understood by all ciphers:
+Not all parameters are relevant to, or are understood by all ciphers.
 
 =head1 RETURN VALUES
 

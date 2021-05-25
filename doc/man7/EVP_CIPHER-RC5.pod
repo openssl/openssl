@@ -8,7 +8,7 @@ EVP_CIPHER-RC5 - The RC5 EVP_CIPHER implementations
 
 Support for RC5 symmetric encryption using the B<EVP_CIPHER> API.
 
-Disabled by default. Use I<enable-rc5> config option to enable.
+Disabled by default. Use the I<enable-rc5> configuration option to enable.
 
 =head2 Algorithm Names
 
