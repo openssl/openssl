@@ -228,7 +228,11 @@ int ecparam_main(int argc, char **argv)
                        OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT,
                        point_format, 0);
         *p = OSSL_PARAM_construct_end();
-        gctx_params = EVP_PKEY_CTX_new_from_name(NULL, "ec", NULL);
+
+        if (strcasecmp(curve_name, "SM2") == 0)
+            gctx_params = EVP_PKEY_CTX_new_from_name(NULL, "sm2", NULL);
+        else
+            gctx_params = EVP_PKEY_CTX_new_from_name(NULL, "ec", NULL);
         if (gctx_params == NULL
             || EVP_PKEY_keygen_init(gctx_params) <= 0
             || EVP_PKEY_CTX_set_params(gctx_params, params) <= 0
