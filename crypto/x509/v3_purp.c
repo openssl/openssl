@@ -366,16 +366,15 @@ static int setup_crldp(X509 *x)
 /* Check that issuer public key algorithm matches subject signature algorithm */
 static int check_sig_alg_match(const EVP_PKEY *issuer_key, const X509 *subject)
 {
-    int signer_nid, subj_sig_nid;
+    int subj_sig_nid;
 
     if (issuer_key == NULL)
         return X509_V_ERR_NO_ISSUER_PUBLIC_KEY;
-    signer_nid = EVP_PKEY_base_id(issuer_key);
     if (OBJ_find_sigid_algs(OBJ_obj2nid(subject->cert_info.signature.algorithm),
                             NULL, &subj_sig_nid) == 0)
          return X509_V_ERR_UNSUPPORTED_SIGNATURE_ALGORITHM;
-    if (signer_nid == EVP_PKEY_type(subj_sig_nid)
-        || (signer_nid == NID_rsaEncryption && subj_sig_nid == NID_rsassaPss))
+    if (EVP_PKEY_is_a(issuer_key, OBJ_nid2sn(subj_sig_nid))
+        || (EVP_PKEY_is_a(issuer_key, "RSA") && subj_sig_nid == NID_rsassaPss))
         return X509_V_OK;
     return X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH;
 }
