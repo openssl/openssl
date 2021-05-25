@@ -24,7 +24,7 @@
 #include <openssl/err.h>
 #include <openssl/engine.h>
 #include <openssl/objects.h>
-#include <crypto/cryptodev.h>
+#include "crypto/cryptodev.h"
 
 /* #define ENGINE_DEVCRYPTO_DEBUG */
 
