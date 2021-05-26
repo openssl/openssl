@@ -102,8 +102,8 @@ ok(!run(app([ 'openssl', 'genpkey', '-propquery', 'unknown',
    "genpkey requesting unknown=yes property should fail");
 
 
-ok(run(app([ 'openssl', 'genrsa', '-3', '-out', 'genrsatest.pem', $good ])),
-   "genrsa -3 $good");
+ok(run(app([ 'openssl', 'genrsa', '-out', 'genrsatest.pem', $good ])),
+   "genrsa $good");
 ok(run(app([ 'openssl', 'rsa', '-check', '-in', 'genrsatest.pem', '-noout' ])),
    "rsa -check");
 ok(run(app([ 'openssl', 'genrsa', '-f4', '-out', 'genrsatest.pem', $good ])),
