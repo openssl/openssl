@@ -77,14 +77,25 @@ sub run_mp_tests {
             ok(run(app([ 'openssl', 'rsa', '-check',
                          '-in', "rsamptest-$name.pem", '-noout'])),
                "rsa -check $name");
-            ok(run(app([ 'openssl', 'rsautl', '-inkey', "rsamptest-$name.pem",
-                         '-encrypt', '-in', $cleartext,
-                         '-out', "rsamptest-$name.enc" ])),
-               "rsa $name encrypt");
-            ok(run(app([ 'openssl', 'rsautl', '-inkey', "rsamptest-$name.pem",
-                         '-decrypt', '-in', "rsamptest-$name.enc",
-                         '-out', "rsamptest-$name.dec" ])),
-               "rsa $name decrypt");
+            if (!disabled('deprecated-3.0')) {
+                ok(run(app([ 'openssl', 'rsautl', '-inkey', "rsamptest-$name.pem",
+                             '-encrypt', '-in', $cleartext,
+                             '-out', "rsamptest-$name.enc" ])),
+                   "rsa $name encrypt");
+                ok(run(app([ 'openssl', 'rsautl', '-inkey', "rsamptest-$name.pem",
+                             '-decrypt', '-in', "rsamptest-$name.enc",
+                             '-out', "rsamptest-$name.dec" ])),
+                   "rsa $name decrypt");
+            } else {
+                ok(run(app([ 'openssl', 'pkeyutl', '-inkey', "rsamptest-$name.pem",
+                             '-encrypt', '-in', $cleartext,
+                             '-out', "rsamptest-$name.enc" ])),
+                   "rsa $name encrypt");
+                ok(run(app([ 'openssl', 'pkeyutl', '-inkey', "rsamptest-$name.pem",
+                             '-decrypt', '-in', "rsamptest-$name.enc",
+                             '-out', "rsamptest-$name.dec" ])),
+                   "rsa $name decrypt");
+            }
         }
         ok(check_msg("rsamptest-$name.dec"), "rsa $name check result");
     }
