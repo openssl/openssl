@@ -85,6 +85,7 @@
 # define RSA_R_PUB_EXPONENT_OUT_OF_RANGE                  178
 # define RSA_R_P_NOT_PRIME                                128
 # define RSA_R_Q_NOT_PRIME                                129
+# define RSA_R_RANDOMNESS_SOURCE_STRENGTH_INSUFFICIENT_FOR_KEYGEN 180
 # define RSA_R_RSA_OPERATIONS_NOT_SUPPORTED               130
 # define RSA_R_SLEN_CHECK_FAILED                          136
 # define RSA_R_SLEN_RECOVERY_FAILED                       135
