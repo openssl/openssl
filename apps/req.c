@@ -142,7 +142,7 @@ const OPTIONS req_options[] = {
     {"key", OPT_KEY, 's', "Private key to use"},
     {"keyform", OPT_KEYFORM, 'f', "Key file format (ENGINE, other values ignored)"},
     {"pubkey", OPT_PUBKEY, '-', "Output public key"},
-    {"keyout", OPT_KEYOUT, '>', "File to save newly created private key"},
+    {"keyout", OPT_KEYOUT, '>', "File to write private key to"},
     {"passin", OPT_PASSIN, 's', "Private key and certificate password source"},
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
     {"newkey", OPT_NEWKEY, 's',
@@ -676,17 +676,21 @@ int req_main(int argc, char **argv)
 
         EVP_PKEY_CTX_free(genctx);
         genctx = NULL;
-
-        if (keyout == NULL) {
-            keyout = NCONF_get_string(req_conf, section, KEYFILE);
-            if (keyout == NULL)
-                ERR_clear_error();
-        }
-
+    }
+    if (keyout == NULL) {
+        keyout = NCONF_get_string(req_conf, section, KEYFILE);
         if (keyout == NULL)
-            BIO_printf(bio_err, "Writing new private key to stdout\n");
-        else
-            BIO_printf(bio_err, "Writing new private key to '%s'\n", keyout);
+            ERR_clear_error();
+    }
+
+    if (pkey != NULL && (keyfile == NULL || keyout != NULL)) {
+        if (verbose) {
+            BIO_printf(bio_err, "Writing private key to ");
+            if (keyout == NULL)
+                BIO_printf(bio_err, "stdout\n");
+            else
+                BIO_printf(bio_err, "'%s'\n", keyout);
+        }
         out = bio_open_owner(keyout, outformat, newreq);
         if (out == NULL)
             goto end;
@@ -705,7 +709,6 @@ int req_main(int argc, char **argv)
 
         i = 0;
  loop:
-        assert(newreq);
         if (!PEM_write_bio_PrivateKey(out, pkey, cipher,
                                       NULL, 0, NULL, passout)) {
             if ((ERR_GET_REASON(ERR_peek_error()) ==
