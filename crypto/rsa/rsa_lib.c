@@ -348,7 +348,7 @@ uint16_t ossl_ifc_ffc_compute_security_bits(int n)
         return 0;
 
     /*
-     * To ensure that the output is non-decreasing with repsect to n,
+     * To ensure that the output is non-decreasing with respect to n,
      * a cap needs to be applied to the two values where the function over
      * estimates the strength (according to the above fast path.  For all
      * remaining values, 
