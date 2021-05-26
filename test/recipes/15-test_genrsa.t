@@ -24,8 +24,8 @@ use lib bldtop_dir('.');
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
 plan tests =>
-    ($no_fips ? 0 : 1)          # Extra FIPS related test
-    + 15;
+    ($no_fips ? 0 : 2)          # Extra FIPS related test
+    + 14;
 
 # We want to know that an absurdly small number of bits isn't support
 is(run(app([ 'openssl', 'genpkey', '-out', 'genrsatest.pem',
