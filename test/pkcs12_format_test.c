@@ -708,6 +708,40 @@ static int test_multiple_contents(void)
     return end_pkcs12_builder(pb);
 }
 
+#ifndef OPENSSL_NO_DES
+static int pkcs12_create_test(void)
+{
+    int ret = 0;
+    BIO *bio = NULL;
+    EVP_PKEY *pkey = NULL;
+    PKCS12 *p12 = NULL;
+
+    const char *pem = "-----BEGIN PRIVATE KEY-----\nMIICdwIBADANBgkqhkiG9w0BAQEFAASCAmEwggJdAgEAAoGBALskegl+DrI3Msw5\nZ63xnj1rgoPR0KykwBi+jZgAwHv/B0TJyhy6NuEnaf+x442L7lepOqoWQzlUGXyu\naSQU9mT/vHTGZ2xM8QJJaccr4eGho0MU9HePyNCFWjWVrGKpwSEAd6CLlzC0Wiy4\nkC9IoAUoS/IPjeyLTQNCddatgcARAgMBAAECgYAA/LlKJgeJUStTcpHgGD6mXjHv\nnAwWJELQKDP5+tA8VAQGwBX1G5qzJDGrPGtHQ7DSqdwF4YFZtgTpZmGq1wsAjz3l\nv6L4XiVsHiIPtP1B4gMxX9ogxcDzVQ7hyezXPioMAcp7Isus9Csn8HhftcL56BRa\nbn6GvWqbIAy6zJcgEQJBAMlZnymKW5/jKth+wkCfqEXlPhGNPO1uq87QZUbYxwdj\ntSM09J9+HMfH+WXR9ARCOL46DJ0IJfyjcdmuDDlh9IkCQQDt76up1Tmc7lkb/89I\nRBu2MudGJPMEf96VCG11nmcXulyk1OLiTXfO62YpxZbgYrvlrNxEYlSG7WQMztBg\nA51JAkBU2RhyJ+S+drsaaigvlVgSxCyotszi/Q0XZMgY18bfPUwanvkqsLkuEv3s\nw1HB7an9t3aTQdjIIpQad/acw8OJAkEAjvmnCK21KgTbjQShtQYgNNLPwImxcjG4\nOYvP4o6l2k9FHlNCZsQwSymOwWkXKYyK5g+CaKFBs7ZwmXWpJxjk6QJBAInqbm1w\n3yVfGD9I2mMQi/6oDJQP3pdWU4mU4h4sdDyRgTQLpkD4yypgjOACt4mTzxifSVT9\nfT+a79SkT8FFmZE=\n-----END PRIVATE KEY-----";
+
+    if (!TEST_ptr(bio = BIO_new_mem_buf(pem, strlen(pem))))
+        goto err;
+
+    if (!TEST_ptr(pkey = PEM_read_bio_PrivateKey(bio, NULL, NULL, NULL)))
+        goto err;
+    if (!TEST_int_eq(ERR_peek_error(), 0))
+        goto err;
+    p12 = PKCS12_create(NULL, NULL, pkey, NULL, NULL,
+                        NID_pbe_WithSHA1And3_Key_TripleDES_CBC,
+                        NID_pbe_WithSHA1And3_Key_TripleDES_CBC, 2, 1, 0);
+    if (!TEST_ptr(p12))
+        goto err;
+
+    if (!TEST_int_eq(ERR_peek_error(), 0))
+        goto err;
+    ret = 1;
+err:
+    PKCS12_free(p12);
+    EVP_PKEY_free(pkey);
+    BIO_free(bio);
+    return ret;
+}
+#endif
+
 typedef enum OPTION_choice {
     OPT_ERR = -1,
     OPT_EOF = 0,
@@ -785,6 +819,10 @@ int setup_tests(void)
         ADD_ALL_TESTS(test_single_key_enc_alg, OSSL_NELEM(enc_nids_all));
         ADD_ALL_TESTS(test_single_secret_enc_alg, OSSL_NELEM(enc_nids_all));
     }
+#ifndef OPENSSL_NO_DES
+    if (default_libctx)
+        ADD_TEST(pkcs12_create_test);
+#endif
     ADD_ALL_TESTS(test_single_key_enc_pass, OSSL_NELEM(passwords));
     ADD_ALL_TESTS(test_single_key_enc_iter, OSSL_NELEM(iters));
     ADD_TEST(test_single_key_with_attrs);
