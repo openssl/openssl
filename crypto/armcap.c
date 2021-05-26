@@ -133,6 +133,8 @@ void OPENSSL_cpuid_setup(void)
         return;
     trigger = 1;
 
+    OPENSSL_armcap_P = 0;
+
     if ((e = getenv("OPENSSL_armcap"))) {
         OPENSSL_armcap_P = (unsigned int)strtoul(e, NULL, 0);
         return;
@@ -165,8 +167,6 @@ void OPENSSL_cpuid_setup(void)
     }
 #   endif
 # endif
-
-    OPENSSL_armcap_P = 0;
 
 # ifdef OSSL_IMPLEMENT_GETAUXVAL
     if (getauxval(HWCAP) & HWCAP_NEON) {
