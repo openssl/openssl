@@ -130,7 +130,7 @@ sub test_cmp_http {
     my $params = shift;
     my $expected_result = shift;
     my $path_app = bldtop_dir($app);
-    $params = [ '-server', "127.0.0.1:".$server_port, @$params ]
+    $params = [ '-server', "127.0.0.1:$server_port", @$params ]
         unless grep { $_ eq '-server' } @$params;
 
     with({ exit_checker => sub {
@@ -276,15 +276,16 @@ sub start_mock_server {
     print "Launching mock server: $cmd\n";
     my $pid = open($server_fh, "$cmd|") or die "Trying to $cmd";
     print "Pid is: $pid\n";
-    # Find out the actual server port
-    $server_port = "error";
-    while (<$server_fh>) {
-        print;
-        s/\R$//;                # Better chomp
-        next unless (/^ACCEPT/);
-        $server_port = $server_tls = $kur_port = $pbm_port = $1
-            if m/^ACCEPT\s.*:(\d+)$/;
-        last;
+    if ($server_port =~ m/^0\D?/) {
+        # Find out the actual server port
+        while (<$server_fh>) {
+            print;
+            s/\R$//;                # Better chomp
+            next unless (/^ACCEPT/);
+            $server_port = $server_tls = $kur_port = $pbm_port = $1
+                if m/^ACCEPT\s.*?:(\d+)$/;
+            last;
+        }
     }
     return $pid if $server_port =~ m/^(\d+)$/;
     stop_mock_server($pid);
