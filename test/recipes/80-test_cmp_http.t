@@ -274,9 +274,10 @@ sub start_mock_server {
     my $cmd = bldtop_dir($app) . " -config server.cnf $args";
     print "Current directory is ".getcwd()."\n";
     print "Launching mock server: $cmd\n";
+    die "Invalid port: $server_port" unless $server_port =~ m/^\d+$/;
     my $pid = open($server_fh, "$cmd|") or die "Trying to $cmd";
     print "Pid is: $pid\n";
-    if ($server_port =~ m/^0\D?/) {
+    if ($server_port eq "0") {
         # Find out the actual server port
         while (<$server_fh>) {
             print;
