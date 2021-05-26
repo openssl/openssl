@@ -906,11 +906,11 @@ DEFINE_STACK_OF(EVP_KEYEXCH)
 static int kex_cmp(const EVP_KEYEXCH * const *a,
                    const EVP_KEYEXCH * const *b)
 {
-    int ret = EVP_KEYEXCH_number(*a) - EVP_KEYEXCH_number(*b);
+    int ret = EVP_KEYEXCH_get_number(*a) - EVP_KEYEXCH_number(*b);
 
     if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_name(EVP_KEYEXCH_provider(*a)),
-                     OSSL_PROVIDER_name(EVP_KEYEXCH_provider(*b)));
+        ret = strcmp(OSSL_PROVIDER_name(EVP_KEYEXCH_get0_provider(*a)),
+                     OSSL_PROVIDER_name(EVP_KEYEXCH_get0_provider(*b)));
     return ret;
 }
 
@@ -945,10 +945,10 @@ static void list_keyexchanges(void)
             print_names(bio_out, names);
 
             BIO_printf(bio_out, " @ %s\n",
-                    OSSL_PROVIDER_name(EVP_KEYEXCH_provider(k)));
+                    OSSL_PROVIDER_name(EVP_KEYEXCH_get0_provider(k)));
 
             if (verbose) {
-                const char *desc = EVP_KEYEXCH_description(k);
+                const char *desc = EVP_KEYEXCH_get0_description(k);
 
                 if (desc != NULL)
                     BIO_printf(bio_out, "    description: %s\n", desc);

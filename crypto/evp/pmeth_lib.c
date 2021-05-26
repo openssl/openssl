@@ -742,7 +742,7 @@ const OSSL_PARAM *EVP_PKEY_CTX_gettable_params(const EVP_PKEY_CTX *ctx)
     if (EVP_PKEY_CTX_IS_DERIVE_OP(ctx)
             && ctx->op.kex.exchange != NULL
             && ctx->op.kex.exchange->gettable_ctx_params != NULL) {
-        provctx = ossl_provider_ctx(EVP_KEYEXCH_provider(ctx->op.kex.exchange));
+        provctx = ossl_provider_ctx(EVP_KEYEXCH_get0_provider(ctx->op.kex.exchange));
         return ctx->op.kex.exchange->gettable_ctx_params(ctx->op.kex.algctx,
                                                          provctx);
     }
@@ -779,7 +779,7 @@ const OSSL_PARAM *EVP_PKEY_CTX_settable_params(const EVP_PKEY_CTX *ctx)
     if (EVP_PKEY_CTX_IS_DERIVE_OP(ctx)
             && ctx->op.kex.exchange != NULL
             && ctx->op.kex.exchange->settable_ctx_params != NULL) {
-        provctx = ossl_provider_ctx(EVP_KEYEXCH_provider(ctx->op.kex.exchange));
+        provctx = ossl_provider_ctx(EVP_KEYEXCH_get0_provider(ctx->op.kex.exchange));
         return ctx->op.kex.exchange->settable_ctx_params(ctx->op.kex.algctx,
                                                          provctx);
     }

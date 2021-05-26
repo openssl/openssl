@@ -4635,7 +4635,7 @@ EVP_CIPHER_provider                     4762	3_0_0	EXIST::FUNCTION:
 OSSL_PROVIDER_name                      4763	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_do_all_provided              4764	3_0_0	EXIST::FUNCTION:
 EVP_MD_do_all_provided                  4765	3_0_0	EXIST::FUNCTION:
-EVP_KEYEXCH_provider                    4766	3_0_0	EXIST::FUNCTION:
+EVP_KEYEXCH_get0_provider               4766	3_0_0	EXIST::FUNCTION:
 OSSL_PROVIDER_available                 4767	3_0_0	EXIST::FUNCTION:
 ERR_new                                 4768	3_0_0	EXIST::FUNCTION:
 ERR_set_debug                           4769	3_0_0	EXIST::FUNCTION:
@@ -4787,7 +4787,7 @@ EVP_MD_number                           4914	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_number                       4915	3_0_0	EXIST::FUNCTION:
 EVP_MAC_number                          4916	3_0_0	EXIST::FUNCTION:
 EVP_KEYMGMT_number                      4917	3_0_0	EXIST::FUNCTION:
-EVP_KEYEXCH_number                      4918	3_0_0	EXIST::FUNCTION:
+EVP_KEYEXCH_get_number                  4918	3_0_0	EXIST::FUNCTION:
 EVP_KDF_number                          4919	3_0_0	EXIST::FUNCTION:
 EVP_SIGNATURE_number                    4920	3_0_0	EXIST::FUNCTION:
 OSSL_CMP_CTX_snprint_PKIStatus          4921	3_0_0	EXIST::FUNCTION:CMP
@@ -5361,7 +5361,7 @@ EVP_KEYMGMT_description                 5488	3_0_0	EXIST::FUNCTION:
 EVP_SIGNATURE_description               5489	3_0_0	EXIST::FUNCTION:
 EVP_ASYM_CIPHER_description             5490	3_0_0	EXIST::FUNCTION:
 EVP_KEM_description                     5491	3_0_0	EXIST::FUNCTION:
-EVP_KEYEXCH_description                 5492	3_0_0	EXIST::FUNCTION:
+EVP_KEYEXCH_get0_description            5492	3_0_0	EXIST::FUNCTION:
 EVP_KDF_description                     5493	3_0_0	EXIST::FUNCTION:
 OPENSSL_sk_find_all                     5494	3_0_0	EXIST::FUNCTION:
 X509_CRL_new_ex                         5495	3_0_0	EXIST::FUNCTION:
@@ -5378,7 +5378,7 @@ OSSL_LIB_CTX_get0_global_default        5505	3_0_0	EXIST::FUNCTION:
 EVP_SIGNATURE_name                      5506	3_0_0	EXIST::FUNCTION:
 EVP_ASYM_CIPHER_name                    5507	3_0_0	EXIST::FUNCTION:
 EVP_KEM_name                            5508	3_0_0	EXIST::FUNCTION:
-EVP_KEYEXCH_name                        5509	3_0_0	EXIST::FUNCTION:
+EVP_KEYEXCH_get0_name                   5509	3_0_0	EXIST::FUNCTION:
 PKCS5_v2_PBE_keyivgen_ex                5510	3_0_0	EXIST::FUNCTION:
 EVP_PBE_scrypt_ex                       5511	3_0_0	EXIST::FUNCTION:SCRYPT
 PKCS5_v2_scrypt_keyivgen_ex             5512	3_0_0	EXIST::FUNCTION:SCRYPT
