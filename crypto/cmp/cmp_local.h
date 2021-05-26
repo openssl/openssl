@@ -670,8 +670,11 @@ struct ossl_cmp_msg_st {
     ASN1_BIT_STRING *protection; /* 0 */
     /* OSSL_CMP_CMPCERTIFICATE is effectively X509 so it is used directly */
     STACK_OF(X509) *extraCerts; /* 1 */
+    OSSL_LIB_CTX *libctx;
+    char *propq;
 } /* OSSL_CMP_MSG */;
-DECLARE_ASN1_FUNCTIONS(OSSL_CMP_MSG)
+OSSL_CMP_MSG *OSSL_CMP_MSG_new(OSSL_LIB_CTX *libctx, const char *propq);
+void OSSL_CMP_MSG_free(OSSL_CMP_MSG *msg);
 
 /*-
  * ProtectedPart ::= SEQUENCE {
@@ -852,6 +855,8 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr);
 # define OSSL_CMP_CERTREQID 0
 /* sequence id for the first - and so far only - revocation request */
 # define OSSL_CMP_REVREQSID 0
+int ossl_cmp_msg_set0_libctx(OSSL_CMP_MSG *msg, OSSL_LIB_CTX *libctx,
+                             const char *propq);
 const char *ossl_cmp_bodytype_to_string(int type);
 int ossl_cmp_msg_set_bodytype(OSSL_CMP_MSG *msg, int type);
 int ossl_cmp_msg_get_bodytype(const OSSL_CMP_MSG *msg);
