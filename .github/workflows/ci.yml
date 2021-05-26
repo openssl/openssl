@@ -43,6 +43,8 @@ jobs:
       run: |
           sudo gem install mdl
           make md-nits
+    - name: make include-nits
+      run: make include-nits
 
   # This checks that we use ANSI C language syntax and semantics.
   # We are not as strict with libraries, but rather adapt to what's
