@@ -35,14 +35,14 @@ my @test_param = (
     },
 );
 
-plan tests => 1 + scalar(@test_param) * 5 * (disabled('deprecated-3.0') ? 1 : 2);
+plan tests => 1 + scalar(@test_param) * 5 * 2;
 
 ok(run(test(["rsa_mp_test"])), "running rsa multi prime test");
 
 my $cleartext = data_file("plain_text");
 
 # genrsa
-run_mp_tests(0) if !disabled('deprecated-3.0');
+run_mp_tests(0);
 # evp
 run_mp_tests(1);
 
