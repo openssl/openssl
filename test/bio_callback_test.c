@@ -118,7 +118,23 @@ static int test_bio_callback_ex(void)
         goto err;
 
     /* Force the mem bio to return 0 if it has run out of data */
-    BIO_set_mem_eof_return(bio, 0);
+    my_param_count = 0;
+    i = BIO_set_mem_eof_return(bio, 0);
+    if (!TEST_int_eq(i, 1)
+            || !TEST_int_eq(my_param_count, 2)
+            || !TEST_ptr_eq(my_param_b[0], bio)
+            || !TEST_int_eq(my_param_oper[0], BIO_CB_CTRL)
+            || !TEST_ptr_eq(my_param_argp[0], NULL)
+            || !TEST_int_eq(my_param_argi[0], BIO_C_SET_BUF_MEM_EOF_RETURN)
+            || !TEST_long_eq(my_param_argl[0], 0L)
+            || !TEST_int_eq((int)my_param_ret[0], 1)
+            || !TEST_ptr_eq(my_param_b[1], bio)
+            || !TEST_int_eq(my_param_oper[1], BIO_CB_CTRL | BIO_CB_RETURN)
+            || !TEST_ptr_eq(my_param_argp[1], NULL)
+            || !TEST_int_eq(my_param_argi[1], BIO_C_SET_BUF_MEM_EOF_RETURN)
+            || !TEST_long_eq(my_param_argl[1], 0L)
+            || !TEST_int_eq((int)my_param_ret[1], 1))
+        goto err;
     my_param_count = 0;
     i = BIO_read(bio, buf, sizeof(buf));
     if (!TEST_int_eq(i, 0)
