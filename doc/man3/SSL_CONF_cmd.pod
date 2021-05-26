@@ -24,8 +24,8 @@ SSL_CONF_cmd_value_type() returns the type of value that B<option> refers to.
 =head1 SUPPORTED COMMAND LINE COMMANDS
 
 Currently supported B<option> names for command lines (i.e. when the
-flag B<SSL_CONF_CMDLINE> is set) are listed below. Note: all B<option> names
-are case sensitive. Unless otherwise stated commands can be used by
+flag B<SSL_CONF_FLAG_CMDLINE> is set) are listed below. Note: all B<option>
+names are case sensitive. Unless otherwise stated commands can be used by
 both clients and servers and the B<value> parameter is not used. The default
 prefix for command line commands is B<-> and that is reflected below.
 
