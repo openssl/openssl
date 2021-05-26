@@ -24,16 +24,22 @@ use lib bldtop_dir('.');
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
 plan tests =>
-    ($no_fips ? 0 : 1)          # Extra FIPS related test
+    ($no_fips ? 0 : 2)          # Extra FIPS related test
     + 14;
 
 # We want to know that an absurdly small number of bits isn't support
 is(run(app([ 'openssl', 'genpkey', '-out', 'genrsatest.pem',
              '-algorithm', 'RSA', '-pkeyopt', 'rsa_keygen_bits:8',
              '-pkeyopt', 'rsa_keygen_pubexp:3'])),
-           0, "genpkey -3 8");
+           0, "genpkey 8");
 is(run(app([ 'openssl', 'genrsa', '-3', '-out', 'genrsatest.pem', '8'])),
            0, "genrsa -3 8");
+
+# We want to know that an absurdly large number of bits fails the RNG check
+is(run(app([ 'openssl', 'genpkey', '-out', 'genrsatest.pem',
+             '-algorithm', 'RSA', '-pkeyopt', 'rsa_keygen_bits:1000000000',
+             '-pkeyopt', 'rsa_keygen_pubexp:3'])),
+           0, "genpkey 1000000000");
 
 # Depending on the shared library, we might have different lower limits.
 # Let's find it!  This is a simple binary search
@@ -67,14 +73,9 @@ ok(run(app([ 'openssl', 'genpkey', '-algorithm', 'RSA',
              '-pkeyopt', 'rsa_keygen_pubexp:65537',
              '-pkeyopt', "rsa_keygen_bits:$good",
              '-out', 'genrsatest.pem' ])),
-   "genpkey -3 $good");
+   "genpkey $good");
 ok(run(app([ 'openssl', 'pkey', '-check', '-in', 'genrsatest.pem', '-noout' ])),
    "pkey -check");
-ok(run(app([ 'openssl', 'genpkey', '-algorithm', 'RSA',
-             '-pkeyopt', 'rsa_keygen_pubexp:65537',
-             '-pkeyopt', "rsa_keygen_bits:$good",
-             '-out', 'genrsatest.pem' ])),
-   "genpkey -f4 $good");
 
 ok(run(app([ 'openssl', 'genpkey', '-algorithm', 'RSA',
              '-pkeyopt', 'rsa_keygen_bits:2048',
@@ -95,11 +96,15 @@ ok(!run(app([ 'openssl', 'genpkey', '-propquery', 'unknown',
              '-algorithm', 'RSA' ])),
    "genpkey requesting unknown=yes property should fail");
 
+ SKIP: {
+    skip "Skipping rsa command line test", 2 if disabled("deprecated-3.0");
 
-ok(run(app([ 'openssl', 'genrsa', '-out', 'genrsatest.pem', $good ])),
-   "genrsa $good");
-ok(run(app([ 'openssl', 'rsa', '-check', '-in', 'genrsatest.pem', '-noout' ])),
-   "rsa -check");
+    ok(run(app([ 'openssl', 'genrsa', '-3', '-out', 'genrsatest.pem', $good ])),
+       "genrsa -3 $good");
+    ok(run(app([ 'openssl', 'rsa', '-check', '-in', 'genrsatest.pem', '-noout' ])),
+       "rsa -check");
+ }
+
 ok(run(app([ 'openssl', 'genrsa', '-f4', '-out', 'genrsatest.pem', $good ])),
    "genrsa -f4 $good");
 ok(run(app([ 'openssl', 'rsa', '-check', '-in', 'genrsatest.pem', '-noout' ])),
