@@ -25,13 +25,13 @@ my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
 plan tests =>
     ($no_fips ? 0 : 1)          # Extra FIPS related test
-    + 15;
+    + 14;
 
 # We want to know that an absurdly small number of bits isn't support
 is(run(app([ 'openssl', 'genpkey', '-out', 'genrsatest.pem',
              '-algorithm', 'RSA', '-pkeyopt', 'rsa_keygen_bits:8',
              '-pkeyopt', 'rsa_keygen_pubexp:3'])),
-           0, "genpkey -3 8");
+           0, "genpkey 8");
 is(run(app([ 'openssl', 'genrsa', '-3', '-out', 'genrsatest.pem', '8'])),
            0, "genrsa -3 8");
 
@@ -39,7 +39,7 @@ is(run(app([ 'openssl', 'genrsa', '-3', '-out', 'genrsatest.pem', '8'])),
 is(run(app([ 'openssl', 'genpkey', '-out', 'genrsatest.pem',
              '-algorithm', 'RSA', '-pkeyopt', 'rsa_keygen_bits:1000000000',
              '-pkeyopt', 'rsa_keygen_pubexp:3'])),
-           0, "genpkey -3 1000000000");
+           0, "genpkey 1000000000");
 
 # Depending on the shared library, we might have different lower limits.
 # Let's find it!  This is a simple binary search
@@ -73,14 +73,9 @@ ok(run(app([ 'openssl', 'genpkey', '-algorithm', 'RSA',
              '-pkeyopt', 'rsa_keygen_pubexp:65537',
              '-pkeyopt', "rsa_keygen_bits:$good",
              '-out', 'genrsatest.pem' ])),
-   "genpkey -3 $good");
+   "genpkey $good");
 ok(run(app([ 'openssl', 'pkey', '-check', '-in', 'genrsatest.pem', '-noout' ])),
    "pkey -check");
-ok(run(app([ 'openssl', 'genpkey', '-algorithm', 'RSA',
-             '-pkeyopt', 'rsa_keygen_pubexp:65537',
-             '-pkeyopt', "rsa_keygen_bits:$good",
-             '-out', 'genrsatest.pem' ])),
-   "genpkey -f4 $good");
 
 ok(run(app([ 'openssl', 'genpkey', '-algorithm', 'RSA',
              '-pkeyopt', 'rsa_keygen_bits:2048',
