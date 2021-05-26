@@ -204,10 +204,12 @@ See L<openssl-format-options(1)> for details.
 
 =item B<-keyout> I<filename>
 
-This gives the filename to write any newly created private key to.
-If this option is not given then the filename specified in the configuration
-file with the B<default_keyfile> option is used if present,
-else the key is written to standard output.
+This gives the filename to write any private key to that has been newly created
+or read from B<-key>.
+If the B<-keyout> option is not given the filename specified in the
+configuration file with the B<default_keyfile> option is used, if present.
+If a new key is generated and no filename is specified
+the key is written to standard output.
 
 =item B<-noenc>
 
