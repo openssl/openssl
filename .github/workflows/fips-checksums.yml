@@ -9,16 +9,19 @@ jobs:
         run: |
             sudo apt-get update
             sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install unifdef
-      - uses: actions/checkout@v2
-        with:
-          ref: ${{ github.event.pull_request.base.sha }}
       - name: create build dirs
         run: |
           mkdir ./build-pristine
+          mkdir ./source-pristine
           mkdir ./build
+          mkdir ./source
           mkdir ./artifact
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: source-pristine
       - name: config pristine
-        run: ../config enable-fips && perl configdata.pm --dump
+        run: ../source-pristine/config enable-fips && perl configdata.pm --dump
         working-directory: ./build-pristine
       - name: make build_generated pristine
         run: make -s build_generated
@@ -28,9 +31,9 @@ jobs:
         working-directory: ./build-pristine
       - uses: actions/checkout@v2
         with:
-          clean: false
+          path: source
       - name: config
-        run: ../config enable-fips && perl configdata.pm --dump
+        run: ../source/config enable-fips && perl configdata.pm --dump
         working-directory: ./build
       - name: make build_generated
         run: make -s build_generated
@@ -38,9 +41,11 @@ jobs:
       - name: make fips-checksums
         run: make fips-checksums
         working-directory: ./build
-      - name: update checksums pristine
-        run: touch providers/fips.checksum.new && make update-fips-checksums
-        working-directory: ./build-pristine
+      - name: update checksums
+        run: |
+          cp -a build-pristine/providers/fips.module.sources.new source/providers/fips.module.sources
+          cp -a build-pristine/providers/fips-sources.checksums.new source/providers/fips-sources.checksums
+          cp -a build-pristine/providers/fips.checksum.new source/providers/fips.checksum
       - name: make diff-fips-checksums
         run: make diff-fips-checksums && touch ../artifact/fips_unchanged || ( touch ../artifact/fips_changed ; echo FIPS CHANGED )
         working-directory: ./build
