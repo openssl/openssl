@@ -195,7 +195,7 @@ int report_server_accept(BIO *out, int asock, int with_address)
 {
     int success = 0;
 
-    if (BIO_printf(out, "ACCEPT ") <= 0)
+    if (BIO_printf(out, "ACCEPT") <= 0)
         return 0;
     if (with_address) {
         union BIO_sock_info_u info;
@@ -208,8 +208,8 @@ int report_server_accept(BIO *out, int asock, int with_address)
             && (service = BIO_ADDR_service_string(info.addr, 1)) != NULL
             && BIO_printf(out,
                           strchr(hostname, ':') == NULL
-                          ? /* IPv4 */ "%s:%s\n"
-                          : /* IPv6 */ "[%s]:%s\n",
+                          ? /* IPv4 */ " %s:%s\n"
+                          : /* IPv6 */ " [%s]:%s\n",
                           hostname, service) > 0)
             success = 1;
         else
@@ -218,7 +218,7 @@ int report_server_accept(BIO *out, int asock, int with_address)
         OPENSSL_free(hostname);
         OPENSSL_free(service);
         BIO_ADDR_free(info.addr);
-    } else if (BIO_printf(out, "none:none\n") > 0) {
+    } else if (BIO_printf(out, "\n") > 0) {
         success = 1;
     }
     (void)BIO_flush(out);

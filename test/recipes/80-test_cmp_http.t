@@ -281,11 +281,9 @@ sub start_mock_server {
     while (<$server_fh>) {
         print;
         s/\R$//;                # Better chomp
-        next unless (/^ACCEPT\s.*:(\d+)$/);
-        $server_port = $1;
-        $server_tls = $1;
-        $kur_port = $1;
-        $pbm_port = $1;
+        next unless (/^ACCEPT/);
+        $server_port = $server_tls = $kur_port = $pbm_port = $1
+            if m/^ACCEPT\s.*:(\d+)$/;
         last;
     }
     return $pid if $server_port =~ m/^(\d+)$/;
