@@ -11,10 +11,7 @@
 # pragma once
 
 # include <openssl/e_os2.h>
-
-# if defined(REF_DEBUG) &&  defined(OPENSSL_NO_STDIO)
-#  error "REF_DEBUG requires stdio"
-# endif
+# include <openssl/trace.h>
 
 # ifndef OPENSSL_DEV_NO_ATOMICS
 #  if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L \
@@ -173,14 +170,9 @@ typedef int CRYPTO_REF_COUNT;
 #  define REF_ASSERT_ISNT(i)
 # endif
 
-# ifdef REF_DEBUG
-#  define REF_PRINT_EX(text, count, object) \
-    OSSL_TRACE3(REF_COUNT, "%p:%4d:%s\n", object, refcount, text);
-#  define REF_PRINT_COUNT(text, object) \
-    OSSL_TRACE3(REF_COUNT, "%p:%4d:%s\n", object, refcount, text);
-# else
-#  define REF_PRINT_EX(text, count, object)
-#  define REF_PRINT_COUNT(text, object)
-# endif
+# define REF_PRINT_EX(text, count, object) \
+    OSSL_TRACE3(REF_COUNT, "%p:%4d:%s\n", (object), (count), (text));
+# define REF_PRINT_COUNT(text, object) \
+    REF_PRINT_EX(text, object->reference, object)
 
 #endif
