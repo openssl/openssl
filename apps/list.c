@@ -584,11 +584,11 @@ DEFINE_STACK_OF(OSSL_DECODER)
 static int decoder_cmp(const OSSL_DECODER * const *a,
                        const OSSL_DECODER * const *b)
 {
-    int ret = OSSL_DECODER_number(*a) - OSSL_DECODER_number(*b);
+    int ret = OSSL_DECODER_get_number(*a) - OSSL_DECODER_number(*b);
 
     if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_name(OSSL_DECODER_provider(*a)),
-                     OSSL_PROVIDER_name(OSSL_DECODER_provider(*b)));
+        ret = strcmp(OSSL_PROVIDER_name(OSSL_DECODER_get0_provider(*a)),
+                     OSSL_PROVIDER_name(OSSL_DECODER_get0_provider(*b)));
     return ret;
 }
 
@@ -629,11 +629,11 @@ static void list_decoders(void)
             print_names(bio_out, names);
 
             BIO_printf(bio_out, " @ %s (%s)\n",
-                    OSSL_PROVIDER_name(OSSL_DECODER_provider(k)),
-                    OSSL_DECODER_properties(k));
+                       OSSL_PROVIDER_name(OSSL_DECODER_get0_provider(k)),
+                       OSSL_DECODER_get0_properties(k));
 
             if (verbose) {
-                const char *desc = OSSL_DECODER_description(k);
+                const char *desc = OSSL_DECODER_get0_description(k);
 
                 if (desc != NULL)
                     BIO_printf(bio_out, "    description: %s\n", desc);

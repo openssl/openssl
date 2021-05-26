@@ -300,7 +300,7 @@ int OSSL_DECODER_CTX_add_decoder(OSSL_DECODER_CTX *ctx, OSSL_DECODER *decoder)
         return 0;
     }
 
-    prov = OSSL_DECODER_provider(decoder);
+    prov = OSSL_DECODER_get0_provider(decoder);
     provctx = OSSL_PROVIDER_get0_provider_ctx(prov);
 
     if ((decoderctx = decoder->newctx(provctx)) == NULL

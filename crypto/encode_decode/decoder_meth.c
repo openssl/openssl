@@ -401,7 +401,7 @@ OSSL_DECODER *ossl_decoder_fetch_by_number(OSSL_LIB_CTX *libctx, int id,
  * Library of basic method functions
  */
 
-const OSSL_PROVIDER *OSSL_DECODER_provider(const OSSL_DECODER *decoder)
+const OSSL_PROVIDER *OSSL_DECODER_get0_provider(const OSSL_DECODER *decoder)
 {
     if (!ossl_assert(decoder != NULL)) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_PASSED_NULL_PARAMETER);
@@ -411,7 +411,7 @@ const OSSL_PROVIDER *OSSL_DECODER_provider(const OSSL_DECODER *decoder)
     return decoder->base.prov;
 }
 
-const char *OSSL_DECODER_properties(const OSSL_DECODER *decoder)
+const char *OSSL_DECODER_get0_properties(const OSSL_DECODER *decoder)
 {
     if (!ossl_assert(decoder != NULL)) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_PASSED_NULL_PARAMETER);
@@ -421,7 +421,7 @@ const char *OSSL_DECODER_properties(const OSSL_DECODER *decoder)
     return decoder->base.propdef;
 }
 
-int OSSL_DECODER_number(const OSSL_DECODER *decoder)
+int OSSL_DECODER_get_number(const OSSL_DECODER *decoder)
 {
     if (!ossl_assert(decoder != NULL)) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_PASSED_NULL_PARAMETER);
@@ -431,12 +431,12 @@ int OSSL_DECODER_number(const OSSL_DECODER *decoder)
     return decoder->base.id;
 }
 
-const char *OSSL_DECODER_name(const OSSL_DECODER *decoder)
+const char *OSSL_DECODER_get0_name(const OSSL_DECODER *decoder)
 {
     return decoder->base.name;
 }
 
-const char *OSSL_DECODER_description(const OSSL_DECODER *decoder)
+const char *OSSL_DECODER_get0_description(const OSSL_DECODER *decoder)
 {
     return decoder->base.description;
 }
@@ -511,7 +511,7 @@ const OSSL_PARAM *
 OSSL_DECODER_gettable_params(OSSL_DECODER *decoder)
 {
     if (decoder != NULL && decoder->gettable_params != NULL) {
-        void *provctx = ossl_provider_ctx(OSSL_DECODER_provider(decoder));
+        void *provctx = ossl_provider_ctx(OSSL_DECODER_get0_provider(decoder));
 
         return decoder->gettable_params(provctx);
     }
@@ -529,7 +529,7 @@ const OSSL_PARAM *
 OSSL_DECODER_settable_ctx_params(OSSL_DECODER *decoder)
 {
     if (decoder != NULL && decoder->settable_ctx_params != NULL) {
-        void *provctx = ossl_provider_ctx(OSSL_DECODER_provider(decoder));
+        void *provctx = ossl_provider_ctx(OSSL_DECODER_get0_provider(decoder));
 
         return decoder->settable_ctx_params(provctx);
     }
