@@ -4139,9 +4139,12 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
     }
 
     if (tctx->generate_ticket_cb != NULL &&
-        tctx->generate_ticket_cb(s, tctx->ticket_cb_data) == 0)
+        tctx->generate_ticket_cb(s, tctx->ticket_cb_data) == 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                 SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET,
+                 ERR_R_INTERNAL_ERROR);
         goto err;
-
+    }
     /*
      * If we are using anti-replay protection then we behave as if
      * SSL_OP_NO_TICKET is set - we are caching tickets anyway so there
