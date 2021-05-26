@@ -1107,7 +1107,7 @@ generate: generate_apps generate_crypto_bn generate_crypto_objects \
 
 generate_buildinfo: generate_doc_buildinfo
 
-.PHONY: doc-nits md-nits
+.PHONY: doc-nits md-nits include-nits
 doc-nits: build_generated_pods
 	$(PERL) $(SRCDIR)/util/find-doc-nits -c -n -l -e
 
@@ -1119,6 +1119,17 @@ doc-nits: build_generated_pods
 # can be found at https://github.com/DavidAnson/markdownlint
 md-nits:
 	mdl -s util/markdownlint.rb .
+
+GENERATED_FIPS_HEADERS = \
+     providers/common/include/prov/der_digests.h \
+     providers/common/include/prov/der_dsa.h \
+     providers/common/include/prov/der_ec.h \
+     providers/common/include/prov/der_ecx.h \
+     providers/common/include/prov/der_rsa.h \
+     providers/common/include/prov/der_sm2.h
+
+include-nits: build_generated $(GENERATED_FIPS_HEADERS)
+	$(PERL) $(SRCDIR)/util/find-include-nits
 
 # Test coverage is a good idea for the future
 #coverage: $(PROGRAMS) $(TESTPROGRAMS)
