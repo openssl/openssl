@@ -335,7 +335,7 @@ uint16_t ossl_ifc_ffc_compute_security_bits(int n)
      */
     if (n >= 687737)
         return 1200;
-    if (n < 8)
+    if (n < 256)
         return 0;
 
     x = n * (uint64_t)log_2;
