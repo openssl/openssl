@@ -98,7 +98,7 @@ static void collect_encoder(OSSL_ENCODER *encoder, void *arg)
     end_i = sk_OPENSSL_CSTRING_num(data->names);
     for (i = 0; i < end_i; i++) {
         const char *name = sk_OPENSSL_CSTRING_value(data->names, i);
-        const OSSL_PROVIDER *prov = OSSL_ENCODER_provider(encoder);
+        const OSSL_PROVIDER *prov = OSSL_ENCODER_get0_provider(encoder);
         void *provctx = OSSL_PROVIDER_get0_provider_ctx(prov);
 
         if (!OSSL_ENCODER_is_a(encoder, name)
@@ -174,7 +174,7 @@ encoder_construct_pkey(OSSL_ENCODER_INSTANCE *encoder_inst, void *arg)
             OSSL_ENCODER_INSTANCE_get_encoder(encoder_inst);
         const EVP_PKEY *pk = data->pk;
         const OSSL_PROVIDER *k_prov = EVP_KEYMGMT_provider(pk->keymgmt);
-        const OSSL_PROVIDER *e_prov = OSSL_ENCODER_provider(encoder);
+        const OSSL_PROVIDER *e_prov = OSSL_ENCODER_get0_provider(encoder);
 
         if (k_prov != e_prov) {
             data->encoder_inst = encoder_inst;
