@@ -36,24 +36,24 @@ breaking changes, and mappings for the large list of deprecated functions.
    Fix BN_DEBUG_RAND so it compiles and, when set, force DEBUG_RAND to be set
    also. Rename engine_debug_ref to be ENGINE_REF_PRINT also for consistency.
 
-   * Rich Salz *
+   *Rich Salz*
 
  * The signatures of the functions to get and set options on SSL and
    SSL_CTX objects changed from "unsigned long" to "uint64_t" type.
    Some source code changes may be required.
 
-   * Rich Salz *
+   *Rich Salz*
 
  * Client-initiated renegotiation is disabled by default. To allow it, use
    the -client_renegotiation option, the SSL_OP_ALLOW_CLIENT_RENEGOTIATION
    flag, or the "ClientRenegotiation" config parameter as appropriate.
 
-   * Rich Salz *
+   *Rich Salz*
 
  * Add "abspath" and "includedir" pragma's to config files, to prevent,
    or modify relative pathname inclusion.
 
-   * Rich Salz *
+   *Rich Salz*
 
  * OpenSSL includes a cryptographic module that is intended to be FIPS 140-2
    validated. Please consult the README-FIPS and

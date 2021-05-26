@@ -173,6 +173,6 @@ typedef int CRYPTO_REF_COUNT;
 # define REF_PRINT_EX(text, count, object) \
     OSSL_TRACE3(REF_COUNT, "%p:%4d:%s\n", (object), (count), (text));
 # define REF_PRINT_COUNT(text, object) \
-    REF_PRINT_EX(text, object->reference, object)
+    REF_PRINT_EX(text, object->references, (void *)object)
 
 #endif
