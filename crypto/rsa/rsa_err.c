@@ -119,7 +119,7 @@ static const ERR_STRING_DATA RSA_str_reasons[] = {
     {ERR_PACK(ERR_LIB_RSA, 0, RSA_R_P_NOT_PRIME), "p not prime"},
     {ERR_PACK(ERR_LIB_RSA, 0, RSA_R_Q_NOT_PRIME), "q not prime"},
     {ERR_PACK(ERR_LIB_RSA, 0, RSA_R_RANDOMNESS_SOURCE_STRENGTH_INSUFFICIENT),
-    "randomness source strength insufficient for keygen"},
+    "randomness source strength insufficient"},
     {ERR_PACK(ERR_LIB_RSA, 0, RSA_R_RSA_OPERATIONS_NOT_SUPPORTED),
     "rsa operations not supported"},
     {ERR_PACK(ERR_LIB_RSA, 0, RSA_R_SLEN_CHECK_FAILED),
