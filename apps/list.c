@@ -1191,11 +1191,11 @@ DEFINE_STACK_OF(OSSL_STORE_LOADER)
 static int store_cmp(const OSSL_STORE_LOADER * const *a,
                      const OSSL_STORE_LOADER * const *b)
 {
-    int ret = OSSL_STORE_LOADER_number(*a) - OSSL_STORE_LOADER_number(*b);
+    int ret = OSSL_STORE_LOADER_get_number(*a) - OSSL_STORE_LOADER_number(*b);
 
     if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_name(OSSL_STORE_LOADER_provider(*a)),
-                     OSSL_PROVIDER_name(OSSL_STORE_LOADER_provider(*b)));
+        ret = strcmp(OSSL_PROVIDER_name(OSSL_STORE_LOADER_get0_provider(*a)),
+                     OSSL_PROVIDER_name(OSSL_STORE_LOADER_get0_provider(*b)));
 
     return ret;
 }
@@ -1234,7 +1234,7 @@ static void list_store_loaders(void)
             print_names(bio_out, names);
 
             BIO_printf(bio_out, " @ %s\n",
-                       OSSL_PROVIDER_name(OSSL_STORE_LOADER_provider(m)));
+                       OSSL_PROVIDER_name(OSSL_STORE_LOADER_get0_provider(m)));
         }
         sk_OPENSSL_CSTRING_free(names);
     }

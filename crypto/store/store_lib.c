@@ -124,7 +124,7 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
             && (fetched_loader =
                 OSSL_STORE_LOADER_fetch(schemes[i], libctx, propq)) != NULL) {
             const OSSL_PROVIDER *provider =
-                OSSL_STORE_LOADER_provider(fetched_loader);
+                OSSL_STORE_LOADER_get0_provider(fetched_loader);
             void *provctx = OSSL_PROVIDER_get0_provider_ctx(provider);
 
             loader_ctx = fetched_loader->p_open(provctx, uri);
@@ -790,7 +790,7 @@ int OSSL_STORE_supports_search(OSSL_STORE_CTX *ctx, int search_type)
 
     if (ctx->fetched_loader != NULL) {
         void *provctx =
-            ossl_provider_ctx(OSSL_STORE_LOADER_provider(ctx->fetched_loader));
+            ossl_provider_ctx(OSSL_STORE_LOADER_get0_provider(ctx->fetched_loader));
         const OSSL_PARAM *params;
         const OSSL_PARAM *p_subject = NULL;
         const OSSL_PARAM *p_issuer = NULL;
@@ -976,7 +976,7 @@ OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp, const char *scheme,
         && (fetched_loader =
             OSSL_STORE_LOADER_fetch(scheme, libctx, propq)) != NULL) {
         const OSSL_PROVIDER *provider =
-            OSSL_STORE_LOADER_provider(fetched_loader);
+            OSSL_STORE_LOADER_get0_provider(fetched_loader);
         void *provctx = OSSL_PROVIDER_get0_provider_ctx(provider);
         OSSL_CORE_BIO *cbio = ossl_core_bio_new_from_bio(bp);
 

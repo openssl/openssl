@@ -5217,9 +5217,9 @@ EC_GROUP_new_from_params                5344	3_0_0	EXIST::FUNCTION:EC
 OSSL_STORE_LOADER_set_open_ex           5345	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 OSSL_STORE_LOADER_fetch                 5346	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_LOADER_up_ref                5347	3_0_0	EXIST::FUNCTION:
-OSSL_STORE_LOADER_provider              5348	3_0_0	EXIST::FUNCTION:
-OSSL_STORE_LOADER_properties            5349	3_0_0	EXIST::FUNCTION:
-OSSL_STORE_LOADER_number                5350	3_0_0	EXIST::FUNCTION:
+OSSL_STORE_LOADER_get0_provider         5348	3_0_0	EXIST::FUNCTION:
+OSSL_STORE_LOADER_get0_properties       5349	3_0_0	EXIST::FUNCTION:
+OSSL_STORE_LOADER_get_number            5350	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_LOADER_is_a                  5351	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_LOADER_do_all_provided       5352	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_LOADER_names_do_all          5353	3_0_0	EXIST::FUNCTION:
@@ -5351,7 +5351,7 @@ OSSL_DECODER_get0_name                  5478	3_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_get0_name                  5479	3_0_0	EXIST::FUNCTION:
 OSSL_DECODER_get0_description           5480	3_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_get0_description           5481	3_0_0	EXIST::FUNCTION:
-OSSL_STORE_LOADER_description           5482	3_0_0	EXIST::FUNCTION:
+OSSL_STORE_LOADER_get0_description      5482	3_0_0	EXIST::FUNCTION:
 EVP_MD_description                      5483	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_description                  5484	3_0_0	EXIST::FUNCTION:
 EVP_MAC_description                     5485	3_0_0	EXIST::FUNCTION:
