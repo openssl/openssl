@@ -24,19 +24,16 @@ use lib bldtop_dir('.');
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
 plan tests =>
-    ($no_fips ? 0 : 2)          # Extra FIPS related test
-    + 13;
+    ($no_fips ? 0 : 1)          # Extra FIPS related test
+    + 14;
 
 # We want to know that an absurdly small number of bits isn't support
-if (disabled("deprecated-3.0")) {
-    is(run(app([ 'openssl', 'genpkey', '-out', 'genrsatest.pem',
-                 '-algorithm', 'RSA', '-pkeyopt', 'rsa_keygen_bits:8',
-                 '-pkeyopt', 'rsa_keygen_pubexp:3'])),
-               0, "genrsa -3 8");
-} else {
-    is(run(app([ 'openssl', 'genrsa', '-3', '-out', 'genrsatest.pem', '8'])),
-               0, "genrsa -3 8");
-}
+is(run(app([ 'openssl', 'genpkey', '-out', 'genrsatest.pem',
+             '-algorithm', 'RSA', '-pkeyopt', 'rsa_keygen_bits:8',
+             '-pkeyopt', 'rsa_keygen_pubexp:3'])),
+           0, "genpkey -3 8");
+is(run(app([ 'openssl', 'genrsa', '-3', '-out', 'genrsatest.pem', '8'])),
+           0, "genrsa -3 8");
 
 # Depending on the shared library, we might have different lower limits.
 # Let's find it!  This is a simple binary search
@@ -50,16 +47,10 @@ my $fin;
 while ($good > $bad + 1) {
     my $checked = int(($good + $bad + 1) / 2);
     my $bits = 2 ** $checked;
-    if (disabled("deprecated-3.0")) {
-        $fin = run(app([ 'openssl', 'genpkey', '-out', 'genrsatest.pem',
-                         '-algorithm', 'RSA', '-pkeyopt', 'rsa_keygen_pubexp:65537',
-                         '-pkeyopt', "rsa_keygen_bits:$bits",
-                       ], stderr => undef));
-    } else {
-        $fin = run(app([ 'openssl', 'genrsa', '-3', '-out', 'genrsatest.pem',
-                         $bits
-                       ], stderr => undef));
-    }
+    $fin = run(app([ 'openssl', 'genpkey', '-out', 'genrsatest.pem',
+                     '-algorithm', 'RSA', '-pkeyopt', 'rsa_keygen_pubexp:65537',
+                     '-pkeyopt', "rsa_keygen_bits:$bits",
+                   ], stderr => undef));
     if ($fin) {
         note 2 ** $checked, " bits is good";
         $good = $checked;
@@ -105,18 +96,14 @@ ok(!run(app([ 'openssl', 'genpkey', '-propquery', 'unknown',
    "genpkey requesting unknown=yes property should fail");
 
 
- SKIP: {
-    skip "Skipping rsa command line test", 4 if disabled("deprecated-3.0");
-
-    ok(run(app([ 'openssl', 'genrsa', '-3', '-out', 'genrsatest.pem', $good ])),
-       "genrsa -3 $good");
-    ok(run(app([ 'openssl', 'rsa', '-check', '-in', 'genrsatest.pem', '-noout' ])),
-       "rsa -check");
-    ok(run(app([ 'openssl', 'genrsa', '-f4', '-out', 'genrsatest.pem', $good ])),
-       "genrsa -f4 $good");
-    ok(run(app([ 'openssl', 'rsa', '-check', '-in', 'genrsatest.pem', '-noout' ])),
-       "rsa -check");
-}
+ok(run(app([ 'openssl', 'genrsa', '-out', 'genrsatest.pem', $good ])),
+   "genrsa $good");
+ok(run(app([ 'openssl', 'rsa', '-check', '-in', 'genrsatest.pem', '-noout' ])),
+   "rsa -check");
+ok(run(app([ 'openssl', 'genrsa', '-f4', '-out', 'genrsatest.pem', $good ])),
+   "genrsa -f4 $good");
+ok(run(app([ 'openssl', 'rsa', '-check', '-in', 'genrsatest.pem', '-noout' ])),
+   "rsa -check");
 
 unless ($no_fips) {
     my $provconf = srctop_file("test", "fips-and-base.cnf");
