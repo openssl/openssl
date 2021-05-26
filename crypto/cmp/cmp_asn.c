@@ -208,6 +208,31 @@ int ossl_cmp_asn1_get_int(const ASN1_INTEGER *a)
     return (int)res;
 }
 
+static int ossl_cmp_msg_cb(int operation, ASN1_VALUE **pval,
+                           const ASN1_ITEM *it, void *exarg)
+{
+    OSSL_CMP_MSG *ret = (OSSL_CMP_MSG *)*pval;
+
+    switch (operation) {
+    case ASN1_OP_FREE_POST:
+        OPENSSL_free(ret->propq);
+        break;
+
+    case ASN1_OP_DUP_POST:
+        {
+            OSSL_CMP_MSG *old = exarg;
+
+            if (!ossl_cmp_msg_set0_libctx(ret, old->libctx, old->propq))
+                return 0;
+        }
+        break;
+    default:
+        break;
+    }
+
+    return 1;
+}
+
 ASN1_CHOICE(OSSL_CMP_CERTORENCCERT) = {
     /* OSSL_CMP_CMPCERTIFICATE is effectively X509 so it is used directly */
     ASN1_EXP(OSSL_CMP_CERTORENCCERT, value.certificate, X509, 0),
@@ -405,14 +430,13 @@ ASN1_SEQUENCE(OSSL_CMP_PROTECTEDPART) = {
 } ASN1_SEQUENCE_END(OSSL_CMP_PROTECTEDPART)
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_PROTECTEDPART)
 
-ASN1_SEQUENCE(OSSL_CMP_MSG) = {
+ASN1_SEQUENCE_cb(OSSL_CMP_MSG, ossl_cmp_msg_cb) = {
     ASN1_SIMPLE(OSSL_CMP_MSG, header, OSSL_CMP_PKIHEADER),
     ASN1_SIMPLE(OSSL_CMP_MSG, body, OSSL_CMP_PKIBODY),
     ASN1_EXP_OPT(OSSL_CMP_MSG, protection, ASN1_BIT_STRING, 0),
     /* OSSL_CMP_CMPCERTIFICATE is effectively X509 so it is used directly */
     ASN1_EXP_SEQUENCE_OF_OPT(OSSL_CMP_MSG, extraCerts, X509, 1)
-} ASN1_SEQUENCE_END(OSSL_CMP_MSG)
-IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_MSG)
+} ASN1_SEQUENCE_END_cb(OSSL_CMP_MSG, OSSL_CMP_MSG)
 IMPLEMENT_ASN1_DUP_FUNCTION(OSSL_CMP_MSG)
 
 ASN1_ITEM_TEMPLATE(OSSL_CMP_MSGS) =

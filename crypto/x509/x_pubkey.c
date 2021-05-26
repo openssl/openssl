@@ -104,17 +104,18 @@ static int x509_pubkey_ex_new_ex(ASN1_VALUE **pval, const ASN1_ITEM *it,
     return ret != NULL;
 }
 
-static int x509_pubkey_ex_d2i(ASN1_VALUE **pval,
-                              const unsigned char **in, long len,
-                              const ASN1_ITEM *it, int tag, int aclass,
-                              char opt, ASN1_TLC *ctx)
+static int x509_pubkey_ex_d2i_ex(ASN1_VALUE **pval,
+                                 const unsigned char **in, long len,
+                                 const ASN1_ITEM *it, int tag, int aclass,
+                                 char opt, ASN1_TLC *ctx, OSSL_LIB_CTX *libctx,
+                                 const char *propq)
 {
     const unsigned char *in_saved = *in;
     X509_PUBKEY *pubkey;
     int ret;
     OSSL_DECODER_CTX *dctx = NULL;
 
-    if (*pval == NULL && !x509_pubkey_ex_new_ex(pval, it, NULL, NULL))
+    if (*pval == NULL && !x509_pubkey_ex_new_ex(pval, it, libctx, propq))
         return 0;
     if (!x509_pubkey_ex_populate(pval, NULL)) {
         ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
@@ -197,10 +198,11 @@ static const ASN1_EXTERN_FUNCS x509_pubkey_ff = {
     NULL,
     x509_pubkey_ex_free,
     0,                          /* Default clear behaviour is OK */
-    x509_pubkey_ex_d2i,
+    NULL,
     x509_pubkey_ex_i2d,
     x509_pubkey_ex_print,
     x509_pubkey_ex_new_ex,
+    x509_pubkey_ex_d2i_ex,
 };
 
 IMPLEMENT_EXTERN_ASN1(X509_PUBKEY, V_ASN1_SEQUENCE, x509_pubkey_ff)
