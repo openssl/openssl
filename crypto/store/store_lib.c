@@ -120,24 +120,32 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
                 loader_ctx = loader->open(loader, uri, ui_method, ui_data);
         }
 #endif
-        if (loader == NULL
-            && (fetched_loader =
-                OSSL_STORE_LOADER_fetch(schemes[i], libctx, propq)) != NULL) {
-            const OSSL_PROVIDER *provider =
-                OSSL_STORE_LOADER_provider(fetched_loader);
-            void *provctx = OSSL_PROVIDER_get0_provider_ctx(provider);
+        if (loader == NULL) {
+            if ((fetched_loader =
+                 OSSL_STORE_LOADER_fetch(schemes[i], libctx, propq)) != NULL) {
+                const OSSL_PROVIDER *provider =
+                    OSSL_STORE_LOADER_provider(fetched_loader);
+                void *provctx = OSSL_PROVIDER_get0_provider_ctx(provider);
 
-            loader_ctx = fetched_loader->p_open(provctx, uri);
-            if (loader_ctx == NULL) {
-                OSSL_STORE_LOADER_free(fetched_loader);
-                fetched_loader = NULL;
-            } else if(!loader_set_params(fetched_loader, loader_ctx,
-                                         params, propq)) {
-                (void)fetched_loader->p_close(loader_ctx);
-                OSSL_STORE_LOADER_free(fetched_loader);
-                fetched_loader = NULL;
+                loader_ctx = fetched_loader->p_open(provctx, uri);
+                if (loader_ctx == NULL) {
+                    OSSL_STORE_LOADER_free(fetched_loader);
+                    fetched_loader = NULL;
+                } else if(!loader_set_params(fetched_loader, loader_ctx,
+                                             params, propq)) {
+                    (void)fetched_loader->p_close(loader_ctx);
+                    OSSL_STORE_LOADER_free(fetched_loader);
+                    fetched_loader = NULL;
+                }
+                loader = fetched_loader;
+            } else {
+                ERR_raise_data(ERR_LIB_OSSL_STORE,
+                               OSSL_STORE_R_UNREGISTERED_SCHEME,
+                               "No store loader was found for scheme=%s. "
+                               "For standard store loaders you need at "
+                               "least one of the default or base providers "
+                               "available. Did you forget to load them?");
             }
-            loader = fetched_loader;
         }
     }
 
@@ -145,10 +153,10 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
         OSSL_TRACE1(STORE, "Found loader for scheme %s\n", schemes[i]);
 
     if (loader_ctx == NULL) {
-        ERR_raise_data(ERR_LIB_OSSL_STORE, OSSL_STORE_R_NO_LOADERS_FOUND,
-                       "No store loaders were found. For standard store "
-                       "loaders you need at least one of the default or base "
-                       "providers available. Did you forget to load them?");
+        /*
+         * We assume that errors have already been recorded, either when
+         * getting the loader or when trying to open the URI.
+         */
         goto err;
     }
 
