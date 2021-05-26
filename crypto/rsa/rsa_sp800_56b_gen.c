@@ -11,6 +11,8 @@
 #include <openssl/err.h>
 #include <openssl/bn.h>
 #include <openssl/core.h>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
 #include "crypto/bn.h"
 #include "crypto/security_bits.h"
 #include "rsa_local.h"
@@ -186,6 +188,22 @@ int ossl_rsa_sp800_56b_validate_strength(int nbits, int strength)
 }
 
 /*
+ * Validate that the random bit generator is of sufficient strength to generate
+ * a key of the specified length.
+ */
+static int rsa_validate_rng_strength(EVP_RAND_CTX *rng, int nbits)
+{
+    if (rng == NULL)
+        return 0;
+    if (EVP_RAND_strength(rng) < ossl_ifc_ffc_compute_security_bits(nbits)) {
+        ERR_raise(ERR_LIB_RSA,
+                  RSA_R_RANDOMNESS_SOURCE_STRENGTH_INSUFFICIENT);
+        return 0;
+    }
+    return 1;
+}
+
+/*
  *
  * Using p & q, calculate other required parameters such as n, d.
  * as well as the CRT parameters dP, dQ, qInv.
@@ -344,6 +362,10 @@ int ossl_rsa_sp800_56b_generate_key(RSA *rsa, int nbits, const BIGNUM *efixed,
 
     /* (Steps 1a-1b) : Currently ignores the strength check */
     if (!ossl_rsa_sp800_56b_validate_strength(nbits, -1))
+        return 0;
+
+    /* Check that the RNG is capable of generating a key this large */
+   if (!rsa_validate_rng_strength(RAND_get0_private(rsa->libctx), nbits))
         return 0;
 
     ctx = BN_CTX_new_ex(rsa->libctx);
