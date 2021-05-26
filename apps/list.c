@@ -779,11 +779,11 @@ DEFINE_STACK_OF(EVP_KEM)
 static int kem_cmp(const EVP_KEM * const *a,
                    const EVP_KEM * const *b)
 {
-    int ret = EVP_KEM_number(*a) - EVP_KEM_number(*b);
+    int ret = EVP_KEM_get_number(*a) - EVP_KEM_number(*b);
 
     if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_name(EVP_KEM_provider(*a)),
-                     OSSL_PROVIDER_name(EVP_KEM_provider(*b)));
+        ret = strcmp(OSSL_PROVIDER_name(EVP_KEM_get0_provider(*a)),
+                     OSSL_PROVIDER_name(EVP_KEM_get0_provider(*b)));
     return ret;
 }
 
@@ -817,10 +817,11 @@ static void list_kems(void)
             BIO_printf(bio_out, "  ");
             print_names(bio_out, names);
 
-            BIO_printf(bio_out, " @ %s\n", OSSL_PROVIDER_name(EVP_KEM_provider(k)));
+            BIO_printf(bio_out, " @ %s\n",
+                       OSSL_PROVIDER_name(EVP_KEM_get0_provider(k)));
 
             if (verbose) {
-                const char *desc = EVP_KEM_description(k);
+                const char *desc = EVP_KEM_get0_description(k);
 
                 if (desc != NULL)
                     BIO_printf(bio_out, "    description: %s\n", desc);

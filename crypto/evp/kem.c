@@ -60,7 +60,7 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
 
     kem = EVP_KEM_fetch(ctx->libctx, supported_kem, ctx->propquery);
     if (kem == NULL
-        || (EVP_KEYMGMT_provider(ctx->keymgmt) != EVP_KEM_provider(kem))) {
+        || (EVP_KEYMGMT_provider(ctx->keymgmt) != EVP_KEM_get0_provider(kem))) {
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         ret = -2;
         goto err;
@@ -324,7 +324,7 @@ int EVP_KEM_up_ref(EVP_KEM *kem)
     return 1;
 }
 
-OSSL_PROVIDER *EVP_KEM_provider(const EVP_KEM *kem)
+OSSL_PROVIDER *EVP_KEM_get0_provider(const EVP_KEM *kem)
 {
     return kem->prov;
 }
@@ -343,17 +343,17 @@ int EVP_KEM_is_a(const EVP_KEM *kem, const char *name)
     return evp_is_a(kem->prov, kem->name_id, NULL, name);
 }
 
-int EVP_KEM_number(const EVP_KEM *kem)
+int EVP_KEM_get_number(const EVP_KEM *kem)
 {
     return kem->name_id;
 }
 
-const char *EVP_KEM_name(const EVP_KEM *kem)
+const char *EVP_KEM_get0_name(const EVP_KEM *kem)
 {
     return kem->type_name;
 }
 
-const char *EVP_KEM_description(const EVP_KEM *kem)
+const char *EVP_KEM_get0_description(const EVP_KEM *kem)
 {
     return kem->description;
 }
@@ -384,7 +384,7 @@ const OSSL_PARAM *EVP_KEM_gettable_ctx_params(const EVP_KEM *kem)
     if (kem == NULL || kem->gettable_ctx_params == NULL)
         return NULL;
 
-    provctx = ossl_provider_ctx(EVP_KEM_provider(kem));
+    provctx = ossl_provider_ctx(EVP_KEM_get0_provider(kem));
     return kem->gettable_ctx_params(NULL, provctx);
 }
 
@@ -395,6 +395,6 @@ const OSSL_PARAM *EVP_KEM_settable_ctx_params(const EVP_KEM *kem)
     if (kem == NULL || kem->settable_ctx_params == NULL)
         return NULL;
 
-    provctx = ossl_provider_ctx(EVP_KEM_provider(kem));
+    provctx = ossl_provider_ctx(EVP_KEM_get0_provider(kem));
     return kem->settable_ctx_params(NULL, provctx);
 }

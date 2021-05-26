@@ -5242,10 +5242,10 @@ EVP_KEYMGMT_name                        5369	3_0_0	EXIST::FUNCTION:
 EC_KEY_decoded_from_explicit_params     5370	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC
 EVP_KEM_free                            5371	3_0_0	EXIST::FUNCTION:
 EVP_KEM_up_ref                          5372	3_0_0	EXIST::FUNCTION:
-EVP_KEM_provider                        5373	3_0_0	EXIST::FUNCTION:
+EVP_KEM_get0_provider                   5373	3_0_0	EXIST::FUNCTION:
 EVP_KEM_fetch                           5374	3_0_0	EXIST::FUNCTION:
 EVP_KEM_is_a                            5375	3_0_0	EXIST::FUNCTION:
-EVP_KEM_number                          5376	3_0_0	EXIST::FUNCTION:
+EVP_KEM_get_number                      5376	3_0_0	EXIST::FUNCTION:
 EVP_KEM_do_all_provided                 5377	3_0_0	EXIST::FUNCTION:
 EVP_KEM_names_do_all                    5378	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_encapsulate_init               5379	3_0_0	EXIST::FUNCTION:
@@ -5360,7 +5360,7 @@ EVP_PKEY_description                    5487	3_0_0	EXIST::FUNCTION:
 EVP_KEYMGMT_description                 5488	3_0_0	EXIST::FUNCTION:
 EVP_SIGNATURE_description               5489	3_0_0	EXIST::FUNCTION:
 EVP_ASYM_CIPHER_description             5490	3_0_0	EXIST::FUNCTION:
-EVP_KEM_description                     5491	3_0_0	EXIST::FUNCTION:
+EVP_KEM_get0_description                5491	3_0_0	EXIST::FUNCTION:
 EVP_KEYEXCH_get0_description            5492	3_0_0	EXIST::FUNCTION:
 EVP_KDF_description                     5493	3_0_0	EXIST::FUNCTION:
 OPENSSL_sk_find_all                     5494	3_0_0	EXIST::FUNCTION:
@@ -5377,7 +5377,7 @@ EVP_CIPHER_CTX_get1_cipher              5504	3_0_0	EXIST::FUNCTION:
 OSSL_LIB_CTX_get0_global_default        5505	3_0_0	EXIST::FUNCTION:
 EVP_SIGNATURE_name                      5506	3_0_0	EXIST::FUNCTION:
 EVP_ASYM_CIPHER_name                    5507	3_0_0	EXIST::FUNCTION:
-EVP_KEM_name                            5508	3_0_0	EXIST::FUNCTION:
+EVP_KEM_get0_name                       5508	3_0_0	EXIST::FUNCTION:
 EVP_KEYEXCH_get0_name                   5509	3_0_0	EXIST::FUNCTION:
 PKCS5_v2_PBE_keyivgen_ex                5510	3_0_0	EXIST::FUNCTION:
 EVP_PBE_scrypt_ex                       5511	3_0_0	EXIST::FUNCTION:SCRYPT
