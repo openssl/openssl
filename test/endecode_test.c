@@ -526,7 +526,7 @@ static int test_unprotected_via_DER(const char *type, EVP_PKEY *key)
     return test_encode_decode(__FILE__, __LINE__, type, key,
                               OSSL_KEYMGMT_SELECT_KEYPAIR
                               | OSSL_KEYMGMT_SELECT_ALL_PARAMETERS,
-                              "DER", "pkcs8", NULL, NULL,
+                              "DER", "PrivateKeyInfo", NULL, NULL,
                               encode_EVP_PKEY_prov, decode_EVP_PKEY_prov,
                               test_mem, check_unprotected_PKCS8_DER,
                               dump_der, 0);
@@ -548,7 +548,7 @@ static int test_unprotected_via_PEM(const char *type, EVP_PKEY *key)
     return test_encode_decode(__FILE__, __LINE__, type, key,
                               OSSL_KEYMGMT_SELECT_KEYPAIR
                               | OSSL_KEYMGMT_SELECT_ALL_PARAMETERS,
-                              "PEM", "pkcs8", NULL, NULL,
+                              "PEM", "PrivateKeyInfo", NULL, NULL,
                               encode_EVP_PKEY_prov, decode_EVP_PKEY_prov,
                               test_text, check_unprotected_PKCS8_PEM,
                               dump_pem, 0);
@@ -703,7 +703,8 @@ static int test_protected_via_DER(const char *type, EVP_PKEY *key)
     return test_encode_decode(__FILE__, __LINE__, type, key,
                               OSSL_KEYMGMT_SELECT_KEYPAIR
                               | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
-                              "DER", "pkcs8", pass, pass_cipher,
+                              "DER", "PrivateKeyInfo",
+                              pass, pass_cipher,
                               encode_EVP_PKEY_prov, decode_EVP_PKEY_prov,
                               test_mem, check_protected_PKCS8_DER,
                               dump_der, 0);
@@ -725,7 +726,8 @@ static int test_protected_via_PEM(const char *type, EVP_PKEY *key)
     return test_encode_decode(__FILE__, __LINE__, type, key,
                               OSSL_KEYMGMT_SELECT_KEYPAIR
                               | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
-                              "PEM", "pkcs8", pass, pass_cipher,
+                              "PEM", "PrivateKeyInfo",
+                              pass, pass_cipher,
                               encode_EVP_PKEY_prov, decode_EVP_PKEY_prov,
                               test_text, check_protected_PKCS8_PEM,
                               dump_pem, 0);
