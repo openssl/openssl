@@ -106,7 +106,7 @@ OSSL_DEPRECATEDIN_1_1_0 void OPENSSL_config(const char *config_name);
  */
 
 CONF *NCONF_new_ex(OSSL_LIB_CTX *libctx, CONF_METHOD *meth);
-OSSL_LIB_CTX *NCONF_get0_libctx(CONF *conf);
+OSSL_LIB_CTX *NCONF_get0_libctx(const CONF *conf);
 CONF *NCONF_new(CONF_METHOD *meth);
 CONF_METHOD *NCONF_default(void);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -120,6 +120,7 @@ int NCONF_load(CONF *conf, const char *file, long *eline);
 int NCONF_load_fp(CONF *conf, FILE *fp, long *eline);
 # endif
 int NCONF_load_bio(CONF *conf, BIO *bp, long *eline);
+STACK_OF(OPENSSL_CSTRING) *NCONF_get_section_names(const CONF *conf);
 STACK_OF(CONF_VALUE) *NCONF_get_section(const CONF *conf,
                                         const char *section);
 char *NCONF_get_string(const CONF *conf, const char *group, const char *name);

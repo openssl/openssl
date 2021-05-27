@@ -47,7 +47,7 @@ breaking changes, and mappings for the large list of deprecated functions.
  * The public definitions of conf_method_st and conf_st have been
    deprecated. They will be made opaque in a future release.
 
-   * Rich Salz *
+   *Rich Salz and Tomáš Mráz*
 
  * Client-initiated renegotiation is disabled by default. To allow it, use
    the -client_renegotiation option, the SSL_OP_ALLOW_CLIENT_RENEGOTIATION
