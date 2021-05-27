@@ -842,11 +842,11 @@ DEFINE_STACK_OF(EVP_ASYM_CIPHER)
 static int asymcipher_cmp(const EVP_ASYM_CIPHER * const *a,
                           const EVP_ASYM_CIPHER * const *b)
 {
-    int ret = EVP_ASYM_CIPHER_number(*a) - EVP_ASYM_CIPHER_number(*b);
+    int ret = EVP_ASYM_CIPHER_get_number(*a) - EVP_ASYM_CIPHER_number(*b);
 
     if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_name(EVP_ASYM_CIPHER_provider(*a)),
-                     OSSL_PROVIDER_name(EVP_ASYM_CIPHER_provider(*b)));
+        ret = strcmp(OSSL_PROVIDER_name(EVP_ASYM_CIPHER_get0_provider(*a)),
+                     OSSL_PROVIDER_name(EVP_ASYM_CIPHER_get0_provider(*b)));
     return ret;
 }
 
@@ -883,10 +883,10 @@ static void list_asymciphers(void)
             print_names(bio_out, names);
 
             BIO_printf(bio_out, " @ %s\n",
-                    OSSL_PROVIDER_name(EVP_ASYM_CIPHER_provider(k)));
+                    OSSL_PROVIDER_name(EVP_ASYM_CIPHER_get0_provider(k)));
 
             if (verbose) {
-                const char *desc = EVP_ASYM_CIPHER_description(k);
+                const char *desc = EVP_ASYM_CIPHER_get0_description(k);
 
                 if (desc != NULL)
                     BIO_printf(bio_out, "    description: %s\n", desc);

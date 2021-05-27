@@ -758,7 +758,7 @@ const OSSL_PARAM *EVP_PKEY_CTX_gettable_params(const EVP_PKEY_CTX *ctx)
             && ctx->op.ciph.cipher != NULL
             && ctx->op.ciph.cipher->gettable_ctx_params != NULL) {
         provctx = ossl_provider_ctx(
-                      EVP_ASYM_CIPHER_provider(ctx->op.ciph.cipher));
+                      EVP_ASYM_CIPHER_get0_provider(ctx->op.ciph.cipher));
         return ctx->op.ciph.cipher->gettable_ctx_params(ctx->op.ciph.algctx,
                                                         provctx);
     }
@@ -795,7 +795,7 @@ const OSSL_PARAM *EVP_PKEY_CTX_settable_params(const EVP_PKEY_CTX *ctx)
             && ctx->op.ciph.cipher != NULL
             && ctx->op.ciph.cipher->settable_ctx_params != NULL) {
         provctx = ossl_provider_ctx(
-                      EVP_ASYM_CIPHER_provider(ctx->op.ciph.cipher));
+                      EVP_ASYM_CIPHER_get0_provider(ctx->op.ciph.cipher));
         return ctx->op.ciph.cipher->settable_ctx_params(ctx->op.ciph.algctx,
                                                         provctx);
     }
