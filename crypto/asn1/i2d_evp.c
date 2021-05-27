@@ -97,7 +97,7 @@ int i2d_PrivateKey(const EVP_PKEY *a, unsigned char **pp)
     if (evp_pkey_is_provided(a)) {
         static const struct type_and_structure_st output_info[] = {
             { "DER", "type-specific" },
-            { "DER", "pkcs8" },
+            { "DER", "PrivateKeyInfo" },
             { NULL, }
         };
 

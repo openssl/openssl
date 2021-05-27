@@ -322,7 +322,7 @@ int rsa_main(int argc, char **argv)
             if (traditional)
                 output_structure = "pkcs1"; /* "type-specific" would work too */
             else
-                output_structure = "pkcs8";
+                output_structure = "PrivateKeyInfo";
         }
     }
 

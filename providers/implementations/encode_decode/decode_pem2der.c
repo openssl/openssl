@@ -101,8 +101,8 @@ static int pem2der_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
          * These entries should be in longest to shortest order to avoid
          * mixups.
          */
-        { "ENCRYPTED PRIVATE KEY", "pkcs8" },
-        { "PRIVATE KEY", "pkcs8" },
+        { "ENCRYPTED PRIVATE KEY", "EncryptedPrivateKeyInfo" },
+        { "PRIVATE KEY", "PrivateKeyInfo" },
         { "PUBLIC KEY", "SubjectPublicKeyInfo" },
         { "PARAMETERS", NULL }
 

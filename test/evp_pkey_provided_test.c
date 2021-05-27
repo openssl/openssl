@@ -176,14 +176,14 @@ static int test_print_key_type_using_encoder(const char *alg, int type,
 
     case PRIV_PEM:
         output_type = "PEM";
-        output_structure = "pkcs8";
+        output_structure = "PrivateKeyInfo";
         selection = OSSL_KEYMGMT_SELECT_KEYPAIR
             | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
         break;
 
     case PRIV_DER:
         output_type = "DER";
-        output_structure = "pkcs8";
+        output_structure = "PrivateKeyInfo";
         selection = OSSL_KEYMGMT_SELECT_KEYPAIR
             | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
         break;
