@@ -111,9 +111,11 @@ static int x509_pubkey_ex_d2i_ex(ASN1_VALUE **pval,
                                  const char *propq)
 {
     const unsigned char *in_saved = *in;
+    size_t publen;
     X509_PUBKEY *pubkey;
     int ret;
     OSSL_DECODER_CTX *dctx = NULL;
+    unsigned char *tmpbuf = NULL;
 
     if (*pval == NULL && !x509_pubkey_ex_new_ex(pval, it, libctx, propq))
         return 0;
@@ -127,6 +129,12 @@ static int x509_pubkey_ex_d2i_ex(ASN1_VALUE **pval,
                                 ASN1_ITEM_rptr(X509_PUBKEY_INTERNAL),
                                 tag, aclass, opt, ctx)) <= 0)
         return ret;
+
+    publen = *in - in_saved;
+    if (!ossl_assert(publen > 0)) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
 
     pubkey = (X509_PUBKEY *)*pval;
     EVP_PKEY_free(pubkey->pkey);
@@ -151,8 +159,23 @@ static int x509_pubkey_ex_d2i_ex(ASN1_VALUE **pval,
 
     /* Try to decode it into an EVP_PKEY with OSSL_DECODER */
     if (ret <= 0 && !pubkey->flag_force_legacy) {
-        const unsigned char *p = in_saved;
+        const unsigned char *p;
         char txtoidname[OSSL_MAX_NAME_SIZE];
+
+        /*
+        * The decoders don't know how to handle anything other than Universal
+        * class so we modify the data accordingly.
+        */
+        if (aclass != V_ASN1_UNIVERSAL) {
+            tmpbuf = OPENSSL_memdup(in_saved, publen);
+            if (tmpbuf == NULL) {
+                ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+                return 0;
+            }
+            in_saved = tmpbuf;
+            *tmpbuf = V_ASN1_CONSTRUCTED | V_ASN1_SEQUENCE;
+        }
+        p = in_saved;
 
         if (OBJ_obj2txt(txtoidname, sizeof(txtoidname),
                         pubkey->algor->algorithm, 0) <= 0) {
@@ -176,6 +199,7 @@ static int x509_pubkey_ex_d2i_ex(ASN1_VALUE **pval,
     ret = 1;
  end:
     OSSL_DECODER_CTX_free(dctx);
+    OPENSSL_free(tmpbuf);
     return ret;
 }
 
