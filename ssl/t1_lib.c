@@ -357,7 +357,7 @@ static int add_provider_groups(const OSSL_PARAM params[], void *data)
          * assumption to make (in which case perhaps we should document this
          * behaviour)?
          */
-        if (EVP_KEYMGMT_provider(keymgmt) == provider) {
+        if (EVP_KEYMGMT_get0_provider(keymgmt) == provider) {
             /* We have a match - so we will use this group */
             ctx->group_list_len++;
             ginf = NULL;

@@ -4626,7 +4626,7 @@ EVP_PKEY_CTX_set_params                 4753	3_0_0	EXIST::FUNCTION:
 EVP_KEYMGMT_fetch                       4754	3_0_0	EXIST::FUNCTION:
 EVP_KEYMGMT_up_ref                      4755	3_0_0	EXIST::FUNCTION:
 EVP_KEYMGMT_free                        4756	3_0_0	EXIST::FUNCTION:
-EVP_KEYMGMT_provider                    4757	3_0_0	EXIST::FUNCTION:
+EVP_KEYMGMT_get0_provider               4757	3_0_0	EXIST::FUNCTION:
 X509_PUBKEY_dup                         4758	3_0_0	EXIST::FUNCTION:
 EVP_MD_name                             4759	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_name                         4760	3_0_0	EXIST::FUNCTION:
@@ -4786,7 +4786,7 @@ EVP_SIGNATURE_names_do_all              4913	3_0_0	EXIST::FUNCTION:
 EVP_MD_number                           4914	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_number                       4915	3_0_0	EXIST::FUNCTION:
 EVP_MAC_number                          4916	3_0_0	EXIST::FUNCTION:
-EVP_KEYMGMT_number                      4917	3_0_0	EXIST::FUNCTION:
+EVP_KEYMGMT_get_number                  4917	3_0_0	EXIST::FUNCTION:
 EVP_KEYEXCH_get_number                  4918	3_0_0	EXIST::FUNCTION:
 EVP_KDF_number                          4919	3_0_0	EXIST::FUNCTION:
 EVP_SIGNATURE_get_number                4920	3_0_0	EXIST::FUNCTION:
@@ -5238,7 +5238,7 @@ CMS_AuthEnvelopedData_create            5365	3_0_0	EXIST::FUNCTION:CMS
 CMS_AuthEnvelopedData_create_ex         5366	3_0_0	EXIST::FUNCTION:CMS
 EVP_PKEY_CTX_set_ec_param_enc           5367	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_get0_type_name                 5368	3_0_0	EXIST::FUNCTION:
-EVP_KEYMGMT_name                        5369	3_0_0	EXIST::FUNCTION:
+EVP_KEYMGMT_get0_name                   5369	3_0_0	EXIST::FUNCTION:
 EC_KEY_decoded_from_explicit_params     5370	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC
 EVP_KEM_free                            5371	3_0_0	EXIST::FUNCTION:
 EVP_KEM_up_ref                          5372	3_0_0	EXIST::FUNCTION:
@@ -5357,7 +5357,7 @@ EVP_CIPHER_description                  5484	3_0_0	EXIST::FUNCTION:
 EVP_MAC_description                     5485	3_0_0	EXIST::FUNCTION:
 EVP_RAND_description                    5486	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_description                    5487	3_0_0	EXIST::FUNCTION:
-EVP_KEYMGMT_description                 5488	3_0_0	EXIST::FUNCTION:
+EVP_KEYMGMT_get0_description            5488	3_0_0	EXIST::FUNCTION:
 EVP_SIGNATURE_get0_description          5489	3_0_0	EXIST::FUNCTION:
 EVP_ASYM_CIPHER_get0_description        5490	3_0_0	EXIST::FUNCTION:
 EVP_KEM_get0_description                5491	3_0_0	EXIST::FUNCTION:

@@ -22,7 +22,7 @@
  */
 static int match_type(const EVP_KEYMGMT *keymgmt1, const EVP_KEYMGMT *keymgmt2)
 {
-    const char *name2 = EVP_KEYMGMT_name(keymgmt2);
+    const char *name2 = EVP_KEYMGMT_get0_name(keymgmt2);
 
     return EVP_KEYMGMT_is_a(keymgmt1, name2);
 }

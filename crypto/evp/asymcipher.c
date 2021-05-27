@@ -79,7 +79,7 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
         EVP_ASYM_CIPHER_fetch(ctx->libctx, supported_ciph, ctx->propquery);
 
     if (cipher == NULL
-        || (EVP_KEYMGMT_provider(ctx->keymgmt)
+        || (EVP_KEYMGMT_get0_provider(ctx->keymgmt)
             != EVP_ASYM_CIPHER_get0_provider(cipher))) {
         /*
          * We don't need to free ctx->keymgmt here, as it's not necessarily

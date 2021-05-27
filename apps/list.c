@@ -650,11 +650,11 @@ DEFINE_STACK_OF(EVP_KEYMGMT)
 static int keymanager_cmp(const EVP_KEYMGMT * const *a,
                           const EVP_KEYMGMT * const *b)
 {
-    int ret = EVP_KEYMGMT_number(*a) - EVP_KEYMGMT_number(*b);
+    int ret = EVP_KEYMGMT_get_number(*a) - EVP_KEYMGMT_number(*b);
 
     if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_name(EVP_KEYMGMT_provider(*a)),
-                     OSSL_PROVIDER_name(EVP_KEYMGMT_provider(*b)));
+        ret = strcmp(OSSL_PROVIDER_name(EVP_KEYMGMT_get0_provider(*a)),
+                     OSSL_PROVIDER_name(EVP_KEYMGMT_get0_provider(*b)));
     return ret;
 }
 
@@ -684,7 +684,7 @@ static void list_keymanagers(void)
 
         names = sk_OPENSSL_CSTRING_new(name_cmp);
         if (names != NULL && EVP_KEYMGMT_names_do_all(k, collect_names, names)) {
-            const char *desc = EVP_KEYMGMT_description(k);
+            const char *desc = EVP_KEYMGMT_get0_description(k);
 
             BIO_printf(bio_out, "  Name: ");
             if (desc != NULL)
@@ -696,7 +696,7 @@ static void list_keymanagers(void)
             BIO_printf(bio_out, "    IDs: ");
             print_names(bio_out, names);
             BIO_printf(bio_out, " @ %s\n",
-                    OSSL_PROVIDER_name(EVP_KEYMGMT_provider(k)));
+                    OSSL_PROVIDER_name(EVP_KEYMGMT_get0_provider(k)));
 
             if (verbose) {
                 print_param_types("settable key generation parameters",

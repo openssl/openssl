@@ -225,7 +225,7 @@ const char *EVP_PKEY_get0_type_name(const EVP_PKEY *key)
     const char *name = NULL;
 
     if (key->keymgmt != NULL)
-        return EVP_KEYMGMT_name(key->keymgmt);
+        return EVP_KEYMGMT_get0_name(key->keymgmt);
 
     /* Otherwise fallback to legacy */
     ameth = EVP_PKEY_get0_asn1(key);

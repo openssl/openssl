@@ -122,7 +122,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                                     locpctx->propquery);
 
     if (signature == NULL
-        || (EVP_KEYMGMT_provider(locpctx->keymgmt)
+        || (EVP_KEYMGMT_get0_provider(locpctx->keymgmt)
             != EVP_SIGNATURE_get0_provider(signature))) {
         /*
          * We don't need to free ctx->keymgmt here, as it's not necessarily

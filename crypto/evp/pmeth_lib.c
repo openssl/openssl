@@ -192,7 +192,7 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
         /* If we have an engine, something went wrong somewhere... */
         if (!ossl_assert(e == NULL))
             return NULL;
-        keytype = EVP_KEYMGMT_name(pkey->keymgmt);
+        keytype = EVP_KEYMGMT_get0_name(pkey->keymgmt);
         goto common;
     }
 
@@ -802,7 +802,7 @@ const OSSL_PARAM *EVP_PKEY_CTX_settable_params(const EVP_PKEY_CTX *ctx)
     if (EVP_PKEY_CTX_IS_GEN_OP(ctx)
             && ctx->keymgmt != NULL
             && ctx->keymgmt->gen_settable_params != NULL) {
-        provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(ctx->keymgmt));
+        provctx = ossl_provider_ctx(EVP_KEYMGMT_get0_provider(ctx->keymgmt));
         return ctx->keymgmt->gen_settable_params(ctx->op.keymgmt.genctx,
                                                  provctx);
     }

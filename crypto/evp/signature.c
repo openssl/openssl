@@ -439,7 +439,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation,
         EVP_SIGNATURE_fetch(ctx->libctx, supported_sig, ctx->propquery);
 
     if (signature == NULL
-        || (EVP_KEYMGMT_provider(ctx->keymgmt)
+        || (EVP_KEYMGMT_get0_provider(ctx->keymgmt)
             != EVP_SIGNATURE_get0_provider(signature))) {
         /*
          * We don't need to free ctx->keymgmt here, as it's not necessarily

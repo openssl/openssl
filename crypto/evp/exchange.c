@@ -264,7 +264,7 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
     exchange = EVP_KEYEXCH_fetch(ctx->libctx, supported_exch, ctx->propquery);
 
     if (exchange == NULL
-        || (EVP_KEYMGMT_provider(ctx->keymgmt)
+        || (EVP_KEYMGMT_get0_provider(ctx->keymgmt)
             != EVP_KEYEXCH_get0_provider(exchange))) {
         /*
          * We don't need to free ctx->keymgmt here, as it's not necessarily

@@ -60,7 +60,7 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
 
     kem = EVP_KEM_fetch(ctx->libctx, supported_kem, ctx->propquery);
     if (kem == NULL
-        || (EVP_KEYMGMT_provider(ctx->keymgmt) != EVP_KEM_get0_provider(kem))) {
+        || (EVP_KEYMGMT_get0_provider(ctx->keymgmt) != EVP_KEM_get0_provider(kem))) {
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         ret = -2;
         goto err;

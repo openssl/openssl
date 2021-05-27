@@ -108,7 +108,7 @@ static int decoder_construct_pkey(OSSL_DECODER_INSTANCE *decoder_inst,
     if (keymgmt != NULL) {
         EVP_PKEY *pkey = NULL;
         void *keydata = NULL;
-        const OSSL_PROVIDER *keymgmt_prov = EVP_KEYMGMT_provider(keymgmt);
+        const OSSL_PROVIDER *keymgmt_prov = EVP_KEYMGMT_get0_provider(keymgmt);
         const OSSL_PROVIDER *decoder_prov = OSSL_DECODER_get0_provider(decoder);
 
         /*
