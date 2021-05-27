@@ -239,7 +239,15 @@ int i2d_X509_REQ_fp(FILE *fp, const X509_REQ *req)
 
 X509_REQ *d2i_X509_REQ_bio(BIO *bp, X509_REQ **req)
 {
-    return ASN1_item_d2i_bio(ASN1_ITEM_rptr(X509_REQ), bp, req);
+    OSSL_LIB_CTX *libctx = NULL;
+    const char *propq = NULL;
+
+    if (req != NULL && *req != NULL) {
+        libctx = (*req)->libctx;
+        propq = (*req)->propq;
+    }
+
+    return ASN1_item_d2i_bio_ex(ASN1_ITEM_rptr(X509_REQ), bp, req, libctx, propq);
 }
 
 int i2d_X509_REQ_bio(BIO *bp, const X509_REQ *req)

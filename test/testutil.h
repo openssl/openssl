@@ -592,6 +592,6 @@ EVP_PKEY *load_pkey_pem(const char *file, OSSL_LIB_CTX *libctx);
 X509 *load_cert_pem(const char *file, OSSL_LIB_CTX *libctx);
 X509 *load_cert_der(const unsigned char *bytes, int len);
 STACK_OF(X509) *load_certs_pem(const char *file);
-X509_REQ *load_csr_der(const char *file);
+X509_REQ *load_csr_der(const char *file, OSSL_LIB_CTX *libctx);
 
 #endif                          /* OSSL_TESTUTIL_H */
