@@ -201,8 +201,8 @@ The B<EVP_CIPHER> type is a structure for cipher method implementation.
 
 =item EVP_CIPHER_fetch()
 
-Fetches the cipher implementation for the given B<algorithm> from any provider
-offering it, within the criteria given by the B<properties>.
+Fetches the cipher implementation for the given I<algorithm> from any provider
+offering it, within the criteria given by the I<properties>.
 See L<crypto(7)/ALGORITHM FETCHING> for further information.
 
 The returned value must eventually be freed with EVP_CIPHER_free().
@@ -225,15 +225,15 @@ Allocates and returns a cipher context.
 =item EVP_CIPHER_CTX_free()
 
 Clears all information from a cipher context and frees any allocated memory
-associated with it, including B<ctx> itself. This function should be called after
+associated with it, including I<ctx> itself. This function should be called after
 all operations using a cipher are complete so sensitive information does not
 remain in memory.
 
 =item EVP_CIPHER_CTX_ctrl()
 
-I<This is a legacy method. EVP_CIPHER_CTX_set_params() and
+I<This is a legacy method.> EVP_CIPHER_CTX_set_params() and
 EVP_CIPHER_CTX_get_params() is the mechanism that should be used to set and get
-parameters that are used by providers.>
+parameters that are used by providers.
 
 Performs cipher-specific control actions on context I<ctx>. The control command
 is indicated in I<cmd> and any additional arguments in I<p1> and I<p2>.
@@ -305,8 +305,8 @@ specified.
 =item EVP_EncryptInit_ex()
 
 This legacy function is similar to EVP_EncryptInit_ex2() when I<impl> is NULL.
-The I<cipher> field will be replaced by the engines I<impl> internal cipher if
-it exists.
+The implementation of the I<type> from the I<impl> engine will be used if it
+exists.
 
 =item EVP_EncryptUpdate()
 
@@ -329,8 +329,8 @@ If padding is enabled (the default) then EVP_EncryptFinal_ex() encrypts
 the "final" data, that is any data that remains in a partial block.
 It uses standard block padding (aka PKCS padding) as described in
 the NOTES section, below. The encrypted
-final data is written to B<out> which should have sufficient space for
-one cipher block. The number of bytes written is placed in B<outl>. After
+final data is written to I<out> which should have sufficient space for
+one cipher block. The number of bytes written is placed in I<outl>. After
 this function is called the encryption operation is finished and no further
 calls to EVP_EncryptUpdate() should be made.
 
@@ -367,7 +367,8 @@ EVP_CipherInit() / EVP_CipherUpdate() / EVP_CipherFinal() series of calls.
 =item EVP_EncryptInit(), EVP_DecryptInit() and EVP_CipherInit()
 
 Behave in a similar way to EVP_EncryptInit_ex(), EVP_DecryptInit_ex() and
-EVP_CipherInit_ex() except they always use the default cipher implementation.
+EVP_CipherInit_ex() except if the I<type> is not a fetched cipher they use the
+default implementation of the I<type>.
 
 =item EVP_EncryptFinal(), EVP_DecryptFinal() and EVP_CipherFinal()
 
@@ -384,8 +385,9 @@ If the cipher doesn't have the flag B<EVP_CIPH_FLAG_CUSTOM_CIPHER> set,
 then I<inl> must be a multiple of EVP_CIPHER_block_size().  If it isn't,
 the result is undefined.  If the cipher has that flag set, then I<inl>
 can be any size.
-This function is historic and shouldn't be used in an application, please
-consider using EVP_CipherUpdate() and EVP_CipherFinal_ex instead.
+Due to the constraints of the API contract of this function it shouldn't be used
+in applications, please consider using EVP_CipherUpdate() and
+EVP_CipherFinal_ex() instead.
 
 =item EVP_get_cipherbyname(), EVP_get_cipherbynid() and EVP_get_cipherbyobj()
 
@@ -404,7 +406,7 @@ Enables or disables padding. This function should be called after the context
 is set up for encryption or decryption with EVP_EncryptInit_ex2(),
 EVP_DecryptInit_ex2() or EVP_CipherInit_ex2(). By default encryption operations
 are padded using standard block padding and the padding is checked and removed
-when decrypting. If the B<pad> parameter is zero then no padding is
+when decrypting. If the I<pad> parameter is zero then no padding is
 performed, the total amount of data encrypted or decrypted must then
 be a multiple of the block size or an error will occur.
 
@@ -418,7 +420,7 @@ variable key length ciphers.
 
 =item EVP_CIPHER_CTX_set_key_length()
 
-Sets the key length of the cipher ctx.
+Sets the key length of the cipher context.
 If the cipher is a fixed length cipher then attempting to set the key
 length to any value other than the fixed value is an error.
 
@@ -525,7 +527,7 @@ is not supported.
 
 Generates a random key of the appropriate length based on the cipher context.
 The B<EVP_CIPHER> can provide its own random key generation routine to support
-keys of a specific form. I<Key> must point to a buffer at least as big as the
+keys of a specific form. I<key> must point to a buffer at least as big as the
 value returned by EVP_CIPHER_CTX_key_length().
 
 =item EVP_CIPHER_do_all_provided()
@@ -610,7 +612,7 @@ cached value.
 
 =head2 Gettable and Settable EVP_CIPHER_CTX parameters
 
-The following OSSL_PARAM keys can be used with both EVP_CIPHER_CTX_get_params()
+The following B<OSSL_PARAM> keys can be used with both EVP_CIPHER_CTX_get_params()
 and EVP_CIPHER_CTX_set_params().
 
 =over 4
@@ -697,7 +699,7 @@ cipher operation (either 4 or 8 records).
 
 =head2 Gettable EVP_CIPHER_CTX parameters
 
-The following OSSL_PARAM keys can be used with EVP_CIPHER_CTX_get_params():
+The following B<OSSL_PARAM> keys can be used with EVP_CIPHER_CTX_get_params():
 
 =over 4
 
@@ -714,7 +716,7 @@ See also EVP_CIPHER_CTX_get_original_iv().
 
 =item "updated-iv" (B<OSSL_CIPHER_PARAM_UPDATED_IV>) <octet string OR octet ptr>
 
-Gets the updated pseudo-IV state for the associated cipher ctx, e.g.,
+Gets the updated pseudo-IV state for the associated cipher context, e.g.,
 the previous ciphertext block for CBC mode or the iteratively encrypted IV
 value for OFB mode.  Note that octet pointer access is deprecated and is
 provided only for backwards compatibility with historical libcrypto APIs.
@@ -722,21 +724,21 @@ See also EVP_CIPHER_CTX_get_updated_iv().
 
 =item "randkey" (B<OSSL_CIPHER_PARAM_RANDOM_KEY>) <octet string>
 
-Gets a implementation specific randomly generated key for the associated
-cipher ctx I<ctx>. This is currently only supported by DES and 3DES (which set
+Gets an implementation specific randomly generated key for the associated
+cipher context I<ctx>. This is currently only supported by DES and 3DES (which set
 the key to odd parity).
 
 =item "taglen" (B<OSSL_CIPHER_PARAM_AEAD_TAGLEN>) <unsigned integer>
 
-Gets the tag length to be used for an AEAD cipher for the associated cipher ctx
-I<ctx>. It gets a default value if it has not been set.
+Gets the tag length to be used for an AEAD cipher for the associated cipher
+context I<ctx>. It gets a default value if it has not been set.
 The length of the "taglen" parameter should not exceed that of a B<size_t>.
 See also EVP_CIPHER_CTX_tag_length().
 
 =item "tlsaadpad" (B<OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD>) <unsigned integer>
 
 Gets the length of the tag that will be added to a TLS record for the AEAD
-tag for the associated cipher ctx I<ctx>.
+tag for the associated cipher context I<ctx>.
 The length of the "tlsaadpad" parameter should not exceed that of a B<size_t>.
 
 =item "tlsivgen" (B<OSSL_CIPHER_PARAM_AEAD_TLS1_GET_IV_GEN>) <octet string>
@@ -766,7 +768,7 @@ Used to pass the TLS MAC data.
 
 =head2 Settable EVP_CIPHER_CTX parameters
 
-The following OSSL_PARAM keys can be used with EVP_CIPHER_CTX_set_params():
+The following B<OSSL_PARAM> keys can be used with EVP_CIPHER_CTX_set_params():
 
 =over 4
 
@@ -776,7 +778,7 @@ Sets the MAC key used by composite AEAD ciphers such as AES-CBC-HMAC-SHA256.
 
 =item "speed" (B<OSSL_CIPHER_PARAM_SPEED>) <unsigned integer>
 
-Sets the speed option for the associated cipher ctx. This is only supported
+Sets the speed option for the associated cipher context. This is only supported
 by AES SIV ciphers which disallow multiple operations by default.
 Setting "speed" to 1 allows another encrypt or decrypt operation to be
 performed. This is used for performance testing.
@@ -791,14 +793,14 @@ Set the TLS MAC size.
 
 =item "tlsaad" (B<OSSL_CIPHER_PARAM_AEAD_TLS1_AAD>) <octet string>
 
-Sets TLSv1.2 AAD information for the associated cipher ctx I<ctx>.
+Sets TLSv1.2 AAD information for the associated cipher context I<ctx>.
 TLSv1.2 AAD information is always 13 bytes in length and is as defined for the
 "additional_data" field described in section 6.2.3.3 of RFC5246.
 
 =item "tlsivfixed" (B<OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED>) <octet string>
 
 Sets the fixed portion of an IV for an AEAD cipher used in a TLS record
-encryption/ decryption for the associated cipher ctx.
+encryption/ decryption for the associated cipher context.
 TLS record encryption/decryption always occurs "in place" so that the input and
 output buffers are always the same memory location.
 AEAD IVs in TLSv1.2 consist of an implicit "fixed" part and an explicit part
@@ -1069,7 +1071,7 @@ depending on the mode specified.
 
 To specify additional authenticated data (AAD), a call to EVP_CipherUpdate(),
 EVP_EncryptUpdate() or EVP_DecryptUpdate() should be made with the output
-parameter B<out> set to B<NULL>.
+parameter I<out> set to B<NULL>.
 
 When decrypting, the return value of EVP_DecryptFinal() or EVP_CipherFinal()
 indicates whether the operation was successful. If it does not indicate success,
@@ -1126,8 +1128,8 @@ few additional requirements and different I<ctrl> values.
 
 For CCM mode, the total plaintext or ciphertext length B<MUST> be passed to
 EVP_CipherUpdate(), EVP_EncryptUpdate() or EVP_DecryptUpdate() with the output
-and input parameters (B<in> and B<out>) set to B<NULL> and the length passed in
-the B<inl> parameter.
+and input parameters (I<in> and I<out>) set to B<NULL> and the length passed in
+the I<inl> parameter.
 
 The following I<ctrl>s are supported in CCM mode.
 
@@ -1161,7 +1163,7 @@ altered and several additional ctrl operations are supported.
 
 To specify any additional authenticated data (AAD) and/or a Nonce, a call to
 EVP_CipherUpdate(), EVP_EncryptUpdate() or EVP_DecryptUpdate() should be made
-with the output parameter B<out> set to B<NULL>.
+with the output parameter I<out> set to B<NULL>.
 
 RFC5297 states that the Nonce is the last piece of AAD before the actual
 encrypt/decrypt takes place. The API does not differentiate the Nonce from
@@ -1178,14 +1180,14 @@ The following ctrls are supported in both SIV modes.
 
 =item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen, tag);
 
-Writes B<taglen> bytes of the tag value to the buffer indicated by B<tag>.
+Writes I<taglen> bytes of the tag value to the buffer indicated by I<tag>.
 This call can only be made when encrypting data and B<after> all data has been
 processed (e.g. after an EVP_EncryptFinal() call). For SIV mode the taglen must
 be 16.
 
 =item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen, tag);
 
-Sets the expected tag to B<taglen> bytes from B<tag>. This call is only legal
+Sets the expected tag to I<taglen> bytes from I<tag>. This call is only legal
 when decrypting data and must be made B<before> any data is processed (e.g.
 before any EVP_DecryptUpdate() call). For SIV mode the taglen must be 16.
 
@@ -1193,7 +1195,7 @@ before any EVP_DecryptUpdate() call). For SIV mode the taglen must be 16.
 
 SIV mode makes two passes over the input data, thus, only one call to
 EVP_CipherUpdate(), EVP_EncryptUpdate() or EVP_DecryptUpdate() should be made
-with B<out> set to a non-B<NULL> value. A call to EVP_Decrypt_Final() or
+with I<out> set to a non-B<NULL> value. A call to EVP_Decrypt_Final() or
 EVP_CipherFinal() is not required, but will indicate if the update
 operation succeeded.
 
