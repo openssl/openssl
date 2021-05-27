@@ -17,6 +17,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
+#include <openssl/engine.h>
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "crypto/x509.h"
@@ -362,14 +363,30 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
  */
 static int x509_pubkey_decode(EVP_PKEY **ppkey, const X509_PUBKEY *key)
 {
-    EVP_PKEY *pkey = EVP_PKEY_new();
+    EVP_PKEY *pkey;
+    int nid;
 
+    nid = OBJ_obj2nid(key->algor->algorithm);
+    if (!key->flag_force_legacy) {
+#ifndef OPENSSL_NO_ENGINE
+        ENGINE *e = NULL;
+
+        e = ENGINE_get_pkey_meth_engine(nid);
+        if (e == NULL)
+            return 0;
+        ENGINE_finish(e);
+#else
+        return 0;
+#endif
+    }
+
+    pkey = EVP_PKEY_new();
     if (pkey == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
         return -1;
     }
 
-    if (!EVP_PKEY_set_type(pkey, OBJ_obj2nid(key->algor->algorithm))) {
+    if (!EVP_PKEY_set_type(pkey, nid)) {
         ERR_raise(ERR_LIB_X509, X509_R_UNSUPPORTED_ALGORITHM);
         goto error;
     }
