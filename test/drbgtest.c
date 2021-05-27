@@ -81,7 +81,7 @@ static int rand_priv_bytes(unsigned char *buf, int num)
  */
 static int state(EVP_RAND_CTX *drbg)
 {
-    return EVP_RAND_state(drbg);
+    return EVP_RAND_get_state(drbg);
 }
 
 static unsigned int query_rand_uint(EVP_RAND_CTX *drbg, const char *name)

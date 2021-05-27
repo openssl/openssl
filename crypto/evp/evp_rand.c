@@ -293,17 +293,17 @@ void EVP_RAND_free(EVP_RAND *rand)
     evp_rand_free(rand);
 }
 
-int EVP_RAND_number(const EVP_RAND *rand)
+int EVP_RAND_get_number(const EVP_RAND *rand)
 {
     return rand->name_id;
 }
 
-const char *EVP_RAND_name(const EVP_RAND *rand)
+const char *EVP_RAND_get0_name(const EVP_RAND *rand)
 {
     return rand->type_name;
 }
 
-const char *EVP_RAND_description(const EVP_RAND *rand)
+const char *EVP_RAND_get0_description(const EVP_RAND *rand)
 {
     return rand->description;
 }
@@ -313,7 +313,7 @@ int EVP_RAND_is_a(const EVP_RAND *rand, const char *name)
     return evp_is_a(rand->prov, rand->name_id, NULL, name);
 }
 
-const OSSL_PROVIDER *EVP_RAND_provider(const EVP_RAND *rand)
+const OSSL_PROVIDER *EVP_RAND_get0_provider(const EVP_RAND *rand)
 {
     return rand->prov;
 }
@@ -395,7 +395,7 @@ void EVP_RAND_CTX_free(EVP_RAND_CTX *ctx)
     EVP_RAND_CTX_free(parent);
 }
 
-EVP_RAND *EVP_RAND_CTX_rand(EVP_RAND_CTX *ctx)
+EVP_RAND *EVP_RAND_CTX_get0_rand(EVP_RAND_CTX *ctx)
 {
     return ctx->meth;
 }
@@ -440,7 +440,7 @@ const OSSL_PARAM *EVP_RAND_gettable_params(const EVP_RAND *rand)
 {
     if (rand->gettable_params == NULL)
         return NULL;
-    return rand->gettable_params(ossl_provider_ctx(EVP_RAND_provider(rand)));
+    return rand->gettable_params(ossl_provider_ctx(EVP_RAND_get0_provider(rand)));
 }
 
 const OSSL_PARAM *EVP_RAND_gettable_ctx_params(const EVP_RAND *rand)
@@ -449,7 +449,7 @@ const OSSL_PARAM *EVP_RAND_gettable_ctx_params(const EVP_RAND *rand)
 
     if (rand->gettable_ctx_params == NULL)
         return NULL;
-    provctx = ossl_provider_ctx(EVP_RAND_provider(rand));
+    provctx = ossl_provider_ctx(EVP_RAND_get0_provider(rand));
     return rand->gettable_ctx_params(NULL, provctx);
 }
 
@@ -459,7 +459,7 @@ const OSSL_PARAM *EVP_RAND_settable_ctx_params(const EVP_RAND *rand)
 
     if (rand->settable_ctx_params == NULL)
         return NULL;
-    provctx = ossl_provider_ctx(EVP_RAND_provider(rand));
+    provctx = ossl_provider_ctx(EVP_RAND_get0_provider(rand));
     return rand->settable_ctx_params(NULL, provctx);
 }
 
@@ -469,7 +469,7 @@ const OSSL_PARAM *EVP_RAND_CTX_gettable_params(EVP_RAND_CTX *ctx)
 
     if (ctx->meth->gettable_ctx_params == NULL)
         return NULL;
-    provctx = ossl_provider_ctx(EVP_RAND_provider(ctx->meth));
+    provctx = ossl_provider_ctx(EVP_RAND_get0_provider(ctx->meth));
     return ctx->meth->gettable_ctx_params(ctx->algctx, provctx);
 }
 
@@ -479,7 +479,7 @@ const OSSL_PARAM *EVP_RAND_CTX_settable_params(EVP_RAND_CTX *ctx)
 
     if (ctx->meth->settable_ctx_params == NULL)
         return NULL;
-    provctx = ossl_provider_ctx(EVP_RAND_provider(ctx->meth));
+    provctx = ossl_provider_ctx(EVP_RAND_get0_provider(ctx->meth));
     return ctx->meth->settable_ctx_params(ctx->algctx, provctx);
 }
 
@@ -622,7 +622,7 @@ static unsigned int evp_rand_strength_locked(EVP_RAND_CTX *ctx)
     return strength;
 }
 
-unsigned int EVP_RAND_strength(EVP_RAND_CTX *ctx)
+unsigned int EVP_RAND_get_strength(EVP_RAND_CTX *ctx)
 {
     unsigned int res;
 
@@ -656,7 +656,7 @@ int EVP_RAND_nonce(EVP_RAND_CTX *ctx, unsigned char *out, size_t outlen)
     return res;
 }
 
-int EVP_RAND_state(EVP_RAND_CTX *ctx)
+int EVP_RAND_get_state(EVP_RAND_CTX *ctx)
 {
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
     int state;

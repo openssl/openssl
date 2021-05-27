@@ -2332,7 +2332,7 @@ static int rand_test_run(EVP_TEST *t)
     if (!TEST_true(EVP_RAND_CTX_set_params(expected->ctx, params)))
         goto err;
 
-    strength = EVP_RAND_strength(expected->ctx);
+    strength = EVP_RAND_get_strength(expected->ctx);
     for (i = 0; i <= expected->n; i++) {
         item = expected->data + i;
 
@@ -2401,7 +2401,7 @@ static int rand_test_run(EVP_TEST *t)
         if (!TEST_true(EVP_RAND_uninstantiate(expected->ctx))
                 || !TEST_true(EVP_RAND_uninstantiate(expected->parent))
                 || !TEST_true(EVP_RAND_verify_zeroization(expected->ctx))
-                || !TEST_int_eq(EVP_RAND_state(expected->ctx),
+                || !TEST_int_eq(EVP_RAND_get_state(expected->ctx),
                                 EVP_RAND_STATE_UNINITIALISED))
             goto err;
     }

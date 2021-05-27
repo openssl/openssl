@@ -386,11 +386,11 @@ DEFINE_STACK_OF(EVP_RAND)
 
 static int rand_cmp(const EVP_RAND * const *a, const EVP_RAND * const *b)
 {
-    int ret = strcasecmp(EVP_RAND_name(*a), EVP_RAND_name(*b));
+    int ret = strcasecmp(EVP_RAND_get0_name(*a), EVP_RAND_name(*b));
 
     if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_name(EVP_RAND_provider(*a)),
-                     OSSL_PROVIDER_name(EVP_RAND_provider(*b)));
+        ret = strcmp(OSSL_PROVIDER_name(EVP_RAND_get0_provider(*a)),
+                     OSSL_PROVIDER_name(EVP_RAND_get0_provider(*b)));
 
     return ret;
 }
@@ -420,13 +420,14 @@ static void list_random_generators(void)
         const EVP_RAND *m = sk_EVP_RAND_value(rands, i);
 
         if (select_name != NULL
-            && strcasecmp(EVP_RAND_name(m), select_name) != 0)
+            && strcasecmp(EVP_RAND_get0_name(m), select_name) != 0)
             continue;
-        BIO_printf(bio_out, "  %s", EVP_RAND_name(m));
-        BIO_printf(bio_out, " @ %s\n", OSSL_PROVIDER_name(EVP_RAND_provider(m)));
+        BIO_printf(bio_out, "  %s", EVP_RAND_get0_name(m));
+        BIO_printf(bio_out, " @ %s\n",
+                   OSSL_PROVIDER_name(EVP_RAND_get0_provider(m)));
 
         if (verbose) {
-            const char *desc = EVP_RAND_description(m);
+            const char *desc = EVP_RAND_get0_description(m);
 
             if (desc != NULL)
                 BIO_printf(bio_out, "    description: %s\n", desc);
@@ -452,13 +453,13 @@ static void display_random(const char *name, EVP_RAND_CTX *drbg)
 
     BIO_printf(bio_out, "%s:\n", name);
     if (drbg != NULL) {
-        rand = EVP_RAND_CTX_rand(drbg);
+        rand = EVP_RAND_CTX_get0_rand(drbg);
 
-        BIO_printf(bio_out, "  %s", EVP_RAND_name(rand));
+        BIO_printf(bio_out, "  %s", EVP_RAND_get0_name(rand));
         BIO_printf(bio_out, " @ %s\n",
-                   OSSL_PROVIDER_name(EVP_RAND_provider(rand)));
+                   OSSL_PROVIDER_name(EVP_RAND_get0_provider(rand)));
 
-        switch (EVP_RAND_state(drbg)) {
+        switch (EVP_RAND_get_state(drbg)) {
         case EVP_RAND_STATE_UNINITIALISED:
             p = "uninitialised";
             break;
