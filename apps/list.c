@@ -716,11 +716,11 @@ DEFINE_STACK_OF(EVP_SIGNATURE)
 static int signature_cmp(const EVP_SIGNATURE * const *a,
                          const EVP_SIGNATURE * const *b)
 {
-    int ret = EVP_SIGNATURE_number(*a) - EVP_SIGNATURE_number(*b);
+    int ret = EVP_SIGNATURE_get_number(*a) - EVP_SIGNATURE_number(*b);
 
     if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_name(EVP_SIGNATURE_provider(*a)),
-                     OSSL_PROVIDER_name(EVP_SIGNATURE_provider(*b)));
+        ret = strcmp(OSSL_PROVIDER_name(EVP_SIGNATURE_get0_provider(*a)),
+                     OSSL_PROVIDER_name(EVP_SIGNATURE_get0_provider(*b)));
     return ret;
 }
 
@@ -755,10 +755,10 @@ static void list_signatures(void)
             print_names(bio_out, names);
 
             BIO_printf(bio_out, " @ %s\n",
-                    OSSL_PROVIDER_name(EVP_SIGNATURE_provider(k)));
+                    OSSL_PROVIDER_name(EVP_SIGNATURE_get0_provider(k)));
 
             if (verbose) {
-                const char *desc = EVP_SIGNATURE_description(k);
+                const char *desc = EVP_SIGNATURE_get0_description(k);
 
                 if (desc != NULL)
                     BIO_printf(bio_out, "    description: %s\n", desc);

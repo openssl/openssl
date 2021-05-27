@@ -300,7 +300,7 @@ int EVP_SIGNATURE_up_ref(EVP_SIGNATURE *signature)
     return 1;
 }
 
-OSSL_PROVIDER *EVP_SIGNATURE_provider(const EVP_SIGNATURE *signature)
+OSSL_PROVIDER *EVP_SIGNATURE_get0_provider(const EVP_SIGNATURE *signature)
 {
     return signature->prov;
 }
@@ -319,17 +319,17 @@ int EVP_SIGNATURE_is_a(const EVP_SIGNATURE *signature, const char *name)
     return evp_is_a(signature->prov, signature->name_id, NULL, name);
 }
 
-int EVP_SIGNATURE_number(const EVP_SIGNATURE *signature)
+int EVP_SIGNATURE_get_number(const EVP_SIGNATURE *signature)
 {
     return signature->name_id;
 }
 
-const char *EVP_SIGNATURE_name(const EVP_SIGNATURE *signature)
+const char *EVP_SIGNATURE_get0_name(const EVP_SIGNATURE *signature)
 {
     return signature->type_name;
 }
 
-const char *EVP_SIGNATURE_description(const EVP_SIGNATURE *signature)
+const char *EVP_SIGNATURE_get0_description(const EVP_SIGNATURE *signature)
 {
     return signature->description;
 }
@@ -363,7 +363,7 @@ const OSSL_PARAM *EVP_SIGNATURE_gettable_ctx_params(const EVP_SIGNATURE *sig)
     if (sig == NULL || sig->gettable_ctx_params == NULL)
         return NULL;
 
-    provctx = ossl_provider_ctx(EVP_SIGNATURE_provider(sig));
+    provctx = ossl_provider_ctx(EVP_SIGNATURE_get0_provider(sig));
     return sig->gettable_ctx_params(NULL, provctx);
 }
 
@@ -374,7 +374,7 @@ const OSSL_PARAM *EVP_SIGNATURE_settable_ctx_params(const EVP_SIGNATURE *sig)
     if (sig == NULL || sig->settable_ctx_params == NULL)
         return NULL;
 
-    provctx = ossl_provider_ctx(EVP_SIGNATURE_provider(sig));
+    provctx = ossl_provider_ctx(EVP_SIGNATURE_get0_provider(sig));
     return sig->settable_ctx_params(NULL, provctx);
 }
 
@@ -440,7 +440,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation,
 
     if (signature == NULL
         || (EVP_KEYMGMT_provider(ctx->keymgmt)
-            != EVP_SIGNATURE_provider(signature))) {
+            != EVP_SIGNATURE_get0_provider(signature))) {
         /*
          * We don't need to free ctx->keymgmt here, as it's not necessarily
          * tied to this operation.  It will be freed by EVP_PKEY_CTX_free().

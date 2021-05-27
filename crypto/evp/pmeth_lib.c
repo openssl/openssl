@@ -750,7 +750,7 @@ const OSSL_PARAM *EVP_PKEY_CTX_gettable_params(const EVP_PKEY_CTX *ctx)
             && ctx->op.sig.signature != NULL
             && ctx->op.sig.signature->gettable_ctx_params != NULL) {
         provctx = ossl_provider_ctx(
-                      EVP_SIGNATURE_provider(ctx->op.sig.signature));
+                      EVP_SIGNATURE_get0_provider(ctx->op.sig.signature));
         return ctx->op.sig.signature->gettable_ctx_params(ctx->op.sig.algctx,
                                                           provctx);
     }
@@ -787,7 +787,7 @@ const OSSL_PARAM *EVP_PKEY_CTX_settable_params(const EVP_PKEY_CTX *ctx)
             && ctx->op.sig.signature != NULL
             && ctx->op.sig.signature->settable_ctx_params != NULL) {
         provctx = ossl_provider_ctx(
-                      EVP_SIGNATURE_provider(ctx->op.sig.signature));
+                      EVP_SIGNATURE_get0_provider(ctx->op.sig.signature));
         return ctx->op.sig.signature->settable_ctx_params(ctx->op.sig.algctx,
                                                           provctx);
     }
