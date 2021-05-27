@@ -287,7 +287,7 @@ int dgst_main(int argc, char **argv)
              */
             goto end;
         }
-        type = EVP_PKEY_id(sigkey);
+        type = EVP_PKEY_get_id(sigkey);
         if (type == EVP_PKEY_ED25519 || type == EVP_PKEY_ED448) {
             /*
              * We implement PureEdDSA for these which doesn't have a separate
@@ -381,7 +381,7 @@ int dgst_main(int argc, char **argv)
             BIO_printf(bio_err, "Error opening signature file %s\n", sigfile);
             goto end;
         }
-        siglen = EVP_PKEY_size(sigkey);
+        siglen = EVP_PKEY_get_size(sigkey);
         sigbuf = app_malloc(siglen, "signature buffer");
         siglen = BIO_read(sigbio, sigbuf, siglen);
         BIO_free(sigbio);

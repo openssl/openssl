@@ -1203,7 +1203,8 @@ Algorithms for "DESX-CBC", "DES-ECB", "DES-CBC", "DES-OFB", "DES-CFB",
 
 DH_bits(), DH_security_bits(), DH_size()
 
-Use L<EVP_PKEY_bits(3)>, L<EVP_PKEY_security_bits(3)> and L<EVP_PKEY_size(3)>.
+Use L<EVP_PKEY_get_bits(3)>, L<EVP_PKEY_get_security_bits(3)> and
+L<EVP_PKEY_get_size(3)>.
 
 =item -
 
@@ -1284,7 +1285,8 @@ See L</Deprecated low-level key parameter setters>
 
 DSA_bits(), DSA_security_bits(), DSA_size()
 
-Use L<EVP_PKEY_bits(3)>, L<EVP_PKEY_security_bits(3)> and L<EVP_PKEY_size(3)>.
+Use L<EVP_PKEY_get_bits(3)>, L<EVP_PKEY_get_security_bits(3)> and
+L<EVP_PKEY_get_size(3)>.
 
 =item -
 
@@ -1376,7 +1378,7 @@ See L</Deprecated low-level signing functions>.
 
 ECDSA_size()
 
-Applications should use L<EVP_PKEY_size(3)>.
+Applications should use L<EVP_PKEY_get_size(3)>.
 
 =item -
 
@@ -1900,7 +1902,8 @@ The RIPE algorithm has been moved to the L<Legacy Provider|/Legacy Algorithms>.
 
 RSA_bits(), RSA_security_bits(), RSA_size()
 
-Use L<EVP_PKEY_bits(3)>, L<EVP_PKEY_security_bits(3)> and L<EVP_PKEY_size(3)>.
+Use L<EVP_PKEY_get_bits(3)>, L<EVP_PKEY_get_security_bits(3)> and
+L<EVP_PKEY_get_size(3)>.
 
 =item -
 

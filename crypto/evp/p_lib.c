@@ -58,7 +58,7 @@ static void evp_pkey_free_it(EVP_PKEY *key);
 /* The type of parameters selected in key parameter functions */
 # define SELECT_PARAMETERS OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
 
-int EVP_PKEY_bits(const EVP_PKEY *pkey)
+int EVP_PKEY_get_bits(const EVP_PKEY *pkey)
 {
     int size = 0;
 
@@ -70,7 +70,7 @@ int EVP_PKEY_bits(const EVP_PKEY *pkey)
     return size < 0 ? 0 : size;
 }
 
-int EVP_PKEY_security_bits(const EVP_PKEY *pkey)
+int EVP_PKEY_get_security_bits(const EVP_PKEY *pkey)
 {
     int size = 0;
 
@@ -865,7 +865,7 @@ DSA *EVP_PKEY_get1_DSA(EVP_PKEY *pkey)
 # ifndef OPENSSL_NO_EC
 static const ECX_KEY *evp_pkey_get0_ECX_KEY(const EVP_PKEY *pkey, int type)
 {
-    if (EVP_PKEY_base_id(pkey) != type) {
+    if (EVP_PKEY_get_base_id(pkey) != type) {
         ERR_raise(ERR_LIB_EVP, EVP_R_EXPECTING_A_ECX_KEY);
         return NULL;
     }
@@ -970,12 +970,12 @@ int EVP_PKEY_type(int type)
     return ret;
 }
 
-int EVP_PKEY_id(const EVP_PKEY *pkey)
+int EVP_PKEY_get_id(const EVP_PKEY *pkey)
 {
     return pkey->type;
 }
 
-int EVP_PKEY_base_id(const EVP_PKEY *pkey)
+int EVP_PKEY_get_base_id(const EVP_PKEY *pkey)
 {
     return EVP_PKEY_type(pkey->type);
 }
@@ -1052,7 +1052,7 @@ int EVP_PKEY_type_names_do_all(const EVP_PKEY *pkey,
         return 0;
 
     if (!evp_pkey_is_provided(pkey)) {
-        const char *name = OBJ_nid2sn(EVP_PKEY_id(pkey));
+        const char *name = OBJ_nid2sn(EVP_PKEY_get_id(pkey));
 
         fn(name, data);
         return 1;
@@ -1063,7 +1063,7 @@ int EVP_PKEY_type_names_do_all(const EVP_PKEY *pkey,
 int EVP_PKEY_can_sign(const EVP_PKEY *pkey)
 {
     if (pkey->keymgmt == NULL) {
-        switch (EVP_PKEY_base_id(pkey)) {
+        switch (EVP_PKEY_get_base_id(pkey)) {
         case EVP_PKEY_RSA:
             return 1;
 # ifndef OPENSSL_NO_DSA
@@ -1767,7 +1767,7 @@ void EVP_PKEY_free(EVP_PKEY *x)
     OPENSSL_free(x);
 }
 
-int EVP_PKEY_size(const EVP_PKEY *pkey)
+int EVP_PKEY_get_size(const EVP_PKEY *pkey)
 {
     int size = 0;
 
@@ -1781,7 +1781,7 @@ int EVP_PKEY_size(const EVP_PKEY *pkey)
     return size < 0 ? 0 : size;
 }
 
-const char *EVP_PKEY_description(const EVP_PKEY *pkey)
+const char *EVP_PKEY_get0_description(const EVP_PKEY *pkey)
 {
     if (!evp_pkey_is_assigned(pkey))
         return NULL;

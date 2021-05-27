@@ -278,7 +278,7 @@ void evp_keymgmt_util_cache_keyinfo(EVP_PKEY *pk)
     /*
      * Cache information about the provider "origin" key.
      *
-     * This services functions like EVP_PKEY_size, EVP_PKEY_bits, etc
+     * This services functions like EVP_PKEY_get_size, EVP_PKEY_get_bits, etc
      */
     if (pk->keydata != NULL) {
         int bits = 0;

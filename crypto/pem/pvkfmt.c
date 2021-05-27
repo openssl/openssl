@@ -991,7 +991,7 @@ static int i2b_PVK(unsigned char **out, const EVP_PKEY *pk, int enclevel,
 
     write_ledword(&p, MS_PVKMAGIC);
     write_ledword(&p, 0);
-    if (EVP_PKEY_id(pk) == EVP_PKEY_RSA)
+    if (EVP_PKEY_get_id(pk) == EVP_PKEY_RSA)
         write_ledword(&p, MS_KEYTYPE_KEYX);
 #ifndef OPENSSL_NO_DSA
     else

@@ -78,7 +78,7 @@ int ASN1_sign(i2d_of_void *i2d, X509_ALGOR *algor1, X509_ALGOR *algor2,
     }
     inll = (size_t)inl;
     buf_in = OPENSSL_malloc(inll);
-    outll = outl = EVP_PKEY_size(pkey);
+    outll = outl = EVP_PKEY_get_size(pkey);
     buf_out = OPENSSL_malloc(outll);
     if (buf_in == NULL || buf_out == NULL) {
         outl = 0;
@@ -238,7 +238,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
 
         pkey_id =
 #ifndef OPENSSL_NO_SM2
-            EVP_PKEY_id(pkey) == NID_sm2 ? NID_sm2 :
+            EVP_PKEY_get_id(pkey) == NID_sm2 ? NID_sm2 :
 #endif
             pkey->ameth->pkey_id;
 

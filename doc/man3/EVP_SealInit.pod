@@ -29,7 +29,7 @@ using one or more public keys, this allows the same encrypted data to be
 decrypted using any of the corresponding private keys. B<ek> is an array of
 buffers where the public key encrypted secret key will be written, each buffer
 must contain enough room for the corresponding encrypted key: that is
-B<ek[i]> must have room for B<EVP_PKEY_size(pubk[i])> bytes. The actual
+B<ek[i]> must have room for B<EVP_PKEY_get_size(pubk[i])> bytes. The actual
 size of each encrypted secret key is written to the array B<ekl>. B<pubk> is
 an array of B<npubk> public keys.
 

@@ -228,7 +228,7 @@ static int set_sig_algor(const OSSL_CMP_CTX *ctx, X509_ALGOR **alg)
     ASN1_OBJECT *algo = NULL;
 
     if (!OBJ_find_sigid_by_algs(&nid, EVP_MD_type(ctx->digest),
-                                EVP_PKEY_id(ctx->pkey))) {
+                                EVP_PKEY_get_id(ctx->pkey))) {
         ERR_raise(ERR_LIB_CMP, CMP_R_UNSUPPORTED_KEY_TYPE);
         return 0;
     }

@@ -1275,10 +1275,10 @@ DEPEND[html/man3/EVP_PKEY_sign.html]=man3/EVP_PKEY_sign.pod
 GENERATE[html/man3/EVP_PKEY_sign.html]=man3/EVP_PKEY_sign.pod
 DEPEND[man/man3/EVP_PKEY_sign.3]=man3/EVP_PKEY_sign.pod
 GENERATE[man/man3/EVP_PKEY_sign.3]=man3/EVP_PKEY_sign.pod
-DEPEND[html/man3/EVP_PKEY_size.html]=man3/EVP_PKEY_size.pod
-GENERATE[html/man3/EVP_PKEY_size.html]=man3/EVP_PKEY_size.pod
-DEPEND[man/man3/EVP_PKEY_size.3]=man3/EVP_PKEY_size.pod
-GENERATE[man/man3/EVP_PKEY_size.3]=man3/EVP_PKEY_size.pod
+DEPEND[html/man3/EVP_PKEY_get_size.html]=man3/EVP_PKEY_get_size.pod
+GENERATE[html/man3/EVP_PKEY_get_size.html]=man3/EVP_PKEY_get_size.pod
+DEPEND[man/man3/EVP_PKEY_get_size.3]=man3/EVP_PKEY_get_size.pod
+GENERATE[man/man3/EVP_PKEY_get_size.3]=man3/EVP_PKEY_get_size.pod
 DEPEND[html/man3/EVP_PKEY_todata.html]=man3/EVP_PKEY_todata.pod
 GENERATE[html/man3/EVP_PKEY_todata.html]=man3/EVP_PKEY_todata.pod
 DEPEND[man/man3/EVP_PKEY_todata.3]=man3/EVP_PKEY_todata.pod
@@ -3022,7 +3022,7 @@ html/man3/EVP_PKEY_set1_encoded_public_key.html \
 html/man3/EVP_PKEY_set_type.html \
 html/man3/EVP_PKEY_settable_params.html \
 html/man3/EVP_PKEY_sign.html \
-html/man3/EVP_PKEY_size.html \
+html/man3/EVP_PKEY_get_size.html \
 html/man3/EVP_PKEY_todata.html \
 html/man3/EVP_PKEY_verify.html \
 html/man3/EVP_PKEY_verify_recover.html \
@@ -3610,7 +3610,7 @@ man/man3/EVP_PKEY_set1_encoded_public_key.3 \
 man/man3/EVP_PKEY_set_type.3 \
 man/man3/EVP_PKEY_settable_params.3 \
 man/man3/EVP_PKEY_sign.3 \
-man/man3/EVP_PKEY_size.3 \
+man/man3/EVP_PKEY_get_size.3 \
 man/man3/EVP_PKEY_todata.3 \
 man/man3/EVP_PKEY_verify.3 \
 man/man3/EVP_PKEY_verify_recover.3 \

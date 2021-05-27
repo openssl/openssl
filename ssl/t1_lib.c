@@ -1245,7 +1245,7 @@ static int rsa_pss_check_min_key_size(SSL_CTX *ctx, const EVP_PKEY *pkey,
         return 0;
     if (!tls1_lookup_md(ctx, lu, &md) || md == NULL)
         return 0;
-    if (EVP_PKEY_size(pkey) < RSA_PSS_MINIMUM_KEY_SIZE(md))
+    if (EVP_PKEY_get_size(pkey) < RSA_PSS_MINIMUM_KEY_SIZE(md))
         return 0;
     return 1;
 }
@@ -1463,7 +1463,7 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
     const SIGALG_LOOKUP *lu;
     int secbits = 0;
 
-    pkeyid = EVP_PKEY_id(pkey);
+    pkeyid = EVP_PKEY_get_id(pkey);
     /* Should never happen */
     if (pkeyid == -1)
         return -1;
@@ -1490,7 +1490,7 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
         return 0;
     }
     /* Check the sigalg is consistent with the key OID */
-    if (!ssl_cert_lookup_by_nid(EVP_PKEY_id(pkey), &cidx)
+    if (!ssl_cert_lookup_by_nid(EVP_PKEY_get_id(pkey), &cidx)
             || lu->sig_idx != (int)cidx) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_WRONG_SIGNATURE_TYPE);
         return 0;
@@ -2898,7 +2898,7 @@ EVP_PKEY *ssl_get_auto_dh(SSL *s)
         } else {
             if (s->s3.tmp.cert == NULL)
                 return NULL;
-            dh_secbits = EVP_PKEY_security_bits(s->s3.tmp.cert->privatekey);
+            dh_secbits = EVP_PKEY_get_security_bits(s->s3.tmp.cert->privatekey);
         }
     }
 
@@ -2950,7 +2950,7 @@ static int ssl_security_cert_key(SSL *s, SSL_CTX *ctx, X509 *x, int op)
          * reject keys which omit parameters but this only affects DSA and
          * omission of parameters is never (?) done in practice.
          */
-        secbits = EVP_PKEY_security_bits(pkey);
+        secbits = EVP_PKEY_get_security_bits(pkey);
     }
     if (s)
         return ssl_security(s, op, secbits, 0, x);

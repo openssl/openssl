@@ -781,7 +781,7 @@ RC4_options                             801	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3
 BIO_f_null                              802	3_0_0	EXIST::FUNCTION:
 EC_GROUP_set_curve_name                 803	3_0_0	EXIST::FUNCTION:EC
 d2i_PBE2PARAM                           804	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_security_bits                  805	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_get_security_bits              805	3_0_0	EXIST::FUNCTION:
 PKCS12_unpack_p7encdata                 806	3_0_0	EXIST::FUNCTION:
 X509V3_EXT_i2d                          807	3_0_0	EXIST::FUNCTION:
 X509V3_get_value_bool                   808	3_0_0	EXIST::FUNCTION:
@@ -2037,7 +2037,7 @@ d2i_RSAPublicKey                        2084	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_
 i2d_ASN1_GENERALSTRING                  2085	3_0_0	EXIST::FUNCTION:
 POLICYQUALINFO_new                      2086	3_0_0	EXIST::FUNCTION:
 PKCS7_RECIP_INFO_get0_alg               2087	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_base_id                        2088	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_get_base_id                    2088	3_0_0	EXIST::FUNCTION:
 UI_method_set_opener                    2089	3_0_0	EXIST::FUNCTION:
 X509v3_get_ext_by_NID                   2090	3_0_0	EXIST::FUNCTION:
 TS_CONF_set_policies                    2091	3_0_0	EXIST::FUNCTION:TS
@@ -2301,7 +2301,7 @@ BIO_s_fd                                2350	3_0_0	EXIST::FUNCTION:
 i2d_CMS_bio                             2351	3_0_0	EXIST::FUNCTION:CMS
 CRYPTO_gcm128_decrypt                   2352	3_0_0	EXIST::FUNCTION:
 EVP_aes_256_ctr                         2353	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_bits                           2354	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_get_bits                       2354	3_0_0	EXIST::FUNCTION:
 BN_BLINDING_new                         2355	3_0_0	EXIST::FUNCTION:
 ASN1_GENERALIZEDTIME_check              2356	3_0_0	EXIST::FUNCTION:
 BN_clear_bit                            2357	3_0_0	EXIST::FUNCTION:
@@ -3143,7 +3143,7 @@ BN_rand_range                           3210	3_0_0	EXIST::FUNCTION:
 SMIME_write_ASN1                        3211	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_CTX_new                      3212	3_0_0	EXIST::FUNCTION:
 MD4_Final                               3213	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,MD4
-EVP_PKEY_id                             3214	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_get_id                         3214	3_0_0	EXIST::FUNCTION:
 CMS_RecipientInfo_get0_pkey_ctx         3215	3_0_0	EXIST::FUNCTION:CMS
 OCSP_REQINFO_free                       3216	3_0_0	EXIST::FUNCTION:OCSP
 AUTHORITY_KEYID_new                     3217	3_0_0	EXIST::FUNCTION:
@@ -3443,7 +3443,7 @@ ENGINE_get_first                        3516	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_
 CERTIFICATEPOLICIES_it                  3517	3_0_0	EXIST::FUNCTION:
 EVP_MD_CTX_ctrl                         3518	3_0_0	EXIST::FUNCTION:
 PKCS7_final                             3519	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_size                           3520	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_get_size                       3520	3_0_0	EXIST::FUNCTION:
 EVP_DecryptFinal_ex                     3521	3_0_0	EXIST::FUNCTION:
 SCT_get_signature_nid                   3522	3_0_0	EXIST::FUNCTION:CT
 PROXY_CERT_INFO_EXTENSION_new           3523	3_0_0	EXIST::FUNCTION:
@@ -5356,7 +5356,7 @@ EVP_MD_description                      5483	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_description                  5484	3_0_0	EXIST::FUNCTION:
 EVP_MAC_get0_description                5485	3_0_0	EXIST::FUNCTION:
 EVP_RAND_get0_description               5486	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_description                    5487	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_get0_description               5487	3_0_0	EXIST::FUNCTION:
 EVP_KEYMGMT_get0_description            5488	3_0_0	EXIST::FUNCTION:
 EVP_SIGNATURE_get0_description          5489	3_0_0	EXIST::FUNCTION:
 EVP_ASYM_CIPHER_get0_description        5490	3_0_0	EXIST::FUNCTION:
