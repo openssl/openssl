@@ -331,6 +331,83 @@ int OSSL_DECODER_CTX_add_decoder(OSSL_DECODER_CTX *ctx, OSSL_DECODER *decoder)
     return 0;
 }
 
+struct collect_extra_decoder_data_st {
+    OSSL_DECODER_CTX *ctx;
+    const char *output_type;
+    /*
+     * 0 to check that the decoder's input type is the same as the decoder name
+     * 1 to check that the decoder's input type differs from the decoder name
+     */
+    enum { IS_SAME = 0, IS_DIFFERENT = 1 } type_check;
+    size_t w_prev_start, w_prev_end; /* "previous" decoders */
+    size_t w_new_start, w_new_end;   /* "new" decoders */
+};
+
+static void collect_extra_decoder(OSSL_DECODER *decoder, void *arg)
+{
+    struct collect_extra_decoder_data_st *data = arg;
+    size_t j;
+    const OSSL_PROVIDER *prov = OSSL_DECODER_get0_provider(decoder);
+    void *provctx = OSSL_PROVIDER_get0_provider_ctx(prov);
+
+    if (OSSL_DECODER_is_a(decoder, data->output_type)) {
+        void *decoderctx = NULL;
+        OSSL_DECODER_INSTANCE *di = NULL;
+
+        /*
+         * Check that we don't already have this decoder in our stack,
+         * starting with the previous windows but also looking at what
+         * we have added in the current window.
+         */
+        for (j = data->w_prev_start; j < data->w_new_end; j++) {
+            OSSL_DECODER_INSTANCE *check_inst =
+                sk_OSSL_DECODER_INSTANCE_value(data->ctx->decoder_insts, j);
+
+            if (decoder->base.algodef == check_inst->decoder->base.algodef)
+                /* We found it, so don't do anything more */
+                return;
+        }
+
+        if ((decoderctx = decoder->newctx(provctx)) == NULL)
+            return;
+
+        if ((di = ossl_decoder_instance_new(decoder, decoderctx)) == NULL) {
+            decoder->freectx(decoderctx);
+            return;
+        }
+
+        switch (data->type_check) {
+        case IS_SAME:
+            /* If it differs, this is not a decoder to add for now. */
+            if (!OSSL_DECODER_is_a(decoder,
+                                   OSSL_DECODER_INSTANCE_get_input_type(di))) {
+                ossl_decoder_instance_free(di);
+                return;
+            }
+            break;
+        case IS_DIFFERENT:
+            /* If it's the same, this is not a decoder to add for now. */
+            if (OSSL_DECODER_is_a(decoder,
+                                  OSSL_DECODER_INSTANCE_get_input_type(di))) {
+                ossl_decoder_instance_free(di);
+                return;
+            }
+            break;
+        }
+
+        /*
+         * Apart from keeping w_new_end up to date, We don't care about
+         * errors here.  If it doesn't collect, then it doesn't...
+         */
+        if (!ossl_decoder_ctx_add_decoder_inst(data->ctx, di)) {
+            ossl_decoder_instance_free(di);
+            return;
+        }
+
+        data->w_new_end++;
+    }
+}
+
 int OSSL_DECODER_CTX_add_extra(OSSL_DECODER_CTX *ctx,
                                OSSL_LIB_CTX *libctx, const char *propq)
 {
@@ -357,10 +434,9 @@ int OSSL_DECODER_CTX_add_extra(OSSL_DECODER_CTX *ctx,
      * +----------------+
      *                    <--- w_new_end
      */
-    size_t w_prev_start, w_prev_end; /* "previous" decoders */
-    size_t w_new_start, w_new_end;   /* "new" decoders */
-    size_t count = 0; /* Calculates how many were added in each iteration */
+    struct collect_extra_decoder_data_st data;
     size_t depth = 0; /* Counts the number of iterations */
+    size_t count; /* Calculates how many were added in each iteration */
 
     if (!ossl_assert(ctx != NULL)) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_PASSED_NULL_PARAMETER);
@@ -374,71 +450,43 @@ int OSSL_DECODER_CTX_add_extra(OSSL_DECODER_CTX *ctx,
     if (ctx->decoder_insts == NULL)
         return 1;
 
-    w_prev_start = 0;
-    w_prev_end = sk_OSSL_DECODER_INSTANCE_num(ctx->decoder_insts);
+    memset(&data, 0, sizeof(data));
+    data.ctx = ctx;
+    data.w_prev_start = 0;
+    data.w_prev_end = sk_OSSL_DECODER_INSTANCE_num(ctx->decoder_insts);
     do {
         size_t i;
 
-        w_new_start = w_new_end = w_prev_end;
+        data.w_new_start = data.w_new_end = data.w_prev_end;
 
-        for (i = w_prev_start; i < w_prev_end; i++) {
-            OSSL_DECODER_INSTANCE *decoder_inst =
-                sk_OSSL_DECODER_INSTANCE_value(ctx->decoder_insts, i);
-            const char *input_type =
-                OSSL_DECODER_INSTANCE_get_input_type(decoder_inst);
-            OSSL_DECODER *decoder = NULL;
+        /*
+         * Two iterations:
+         * 0.  All decoders that have the same name as their input type.
+         *     This allows for decoders that unwrap some data in a specific
+         *     encoding, and pass the result on with the same encoding.
+         * 1.  All decoders that a different name than their input type.
+         */
+        for (data.type_check = IS_SAME;
+             data.type_check <= IS_DIFFERENT;
+             data.type_check++) {
+            for (i = data.w_prev_start; i < data.w_prev_end; i++) {
+                OSSL_DECODER_INSTANCE *decoder_inst =
+                    sk_OSSL_DECODER_INSTANCE_value(ctx->decoder_insts, i);
 
-            /*
-             * If the caller has specified what the initial input should be,
-             * and the decoder implementation we're looking at has that
-             * input type, there's no point adding on more implementations
-             * on top of this one, so we don't.
-             */
-            if (ctx->start_input_type != NULL
-                && strcasecmp(ctx->start_input_type, input_type) == 0)
-                continue;
+                data.output_type
+                    = OSSL_DECODER_INSTANCE_get_input_type(decoder_inst);
 
-            ERR_set_mark();
-            decoder = OSSL_DECODER_fetch(libctx, input_type, propq);
-            ERR_pop_to_mark();
 
-            if (decoder != NULL) {
-                size_t j;
-
-                /*
-                 * Check that we don't already have this decoder in our
-                 * stack We only need to check among the newly added ones.
-                 */
-                for (j = w_new_start; j < w_new_end; j++) {
-                    OSSL_DECODER_INSTANCE *check_inst =
-                        sk_OSSL_DECODER_INSTANCE_value(ctx->decoder_insts, j);
-
-                    if (decoder == check_inst->decoder) {
-                        /* We found it, so drop the new fetch */
-                        OSSL_DECODER_free(decoder);
-                        decoder = NULL;
-                        break;
-                    }
-                }
+                OSSL_DECODER_do_all_provided(libctx,
+                                             collect_extra_decoder, &data);
             }
-
-            if (decoder == NULL)
-                continue;
-
-            /*
-             * Apart from keeping w_new_end up to date, We don't care about
-             * errors here.  If it doesn't collect, then it doesn't...
-             */
-            if (OSSL_DECODER_CTX_add_decoder(ctx, decoder)) /* ref++ */
-                w_new_end++;
-            OSSL_DECODER_free(decoder); /* ref-- */
         }
         /* How many were added in this iteration */
-        count = w_new_end - w_new_start;
+        count = data.w_new_end - data.w_new_start;
 
         /* Slide the "previous decoder" windows */
-        w_prev_start = w_new_start;
-        w_prev_end = w_new_end;
+        data.w_prev_start = data.w_new_start;
+        data.w_prev_end = data.w_new_end;
 
         depth++;
     } while (count != 0 && depth <= 10);

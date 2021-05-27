@@ -176,8 +176,7 @@ void *ossl_decoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
         OSSL_DECODER_free(decoder);
         return NULL;
     }
-    decoder->base.propdef = algodef->property_definition;
-    decoder->base.description = algodef->algorithm_description;
+    decoder->base.algodef = algodef;
     decoder->base.parsed_propdef
         = ossl_parse_property(libctx, algodef->property_definition);
 
@@ -422,7 +421,7 @@ const char *OSSL_DECODER_get0_properties(const OSSL_DECODER *decoder)
         return 0;
     }
 
-    return decoder->base.propdef;
+    return decoder->base.algodef->property_definition;
 }
 
 const OSSL_PROPERTY_LIST *
@@ -453,7 +452,7 @@ const char *OSSL_DECODER_get0_name(const OSSL_DECODER *decoder)
 
 const char *OSSL_DECODER_get0_description(const OSSL_DECODER *decoder)
 {
-    return decoder->base.description;
+    return decoder->base.algodef->algorithm_description;
 }
 
 int OSSL_DECODER_is_a(const OSSL_DECODER *decoder, const char *name)
