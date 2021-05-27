@@ -4435,7 +4435,7 @@ EVP_KDF_CTX_free                        4562	3_0_0	EXIST::FUNCTION:
 EVP_KDF_CTX_reset                       4563	3_0_0	EXIST::FUNCTION:
 EVP_KDF_CTX_get_kdf_size                4564	3_0_0	EXIST::FUNCTION:
 EVP_KDF_derive                          4565	3_0_0	EXIST::FUNCTION:
-EVP_KDF_name                            4566	3_0_0	EXIST::FUNCTION:
+EVP_KDF_get0_name                       4566	3_0_0	EXIST::FUNCTION:
 EC_GROUP_get0_field                     4567	3_0_0	EXIST::FUNCTION:EC
 CRYPTO_alloc_ex_data                    4568	3_0_0	EXIST::FUNCTION:
 OSSL_LIB_CTX_new                        4569	3_0_0	EXIST::FUNCTION:
@@ -4675,7 +4675,7 @@ EVP_KDF_up_ref                          4802	3_0_0	EXIST::FUNCTION:
 EVP_KDF_free                            4803	3_0_0	EXIST::FUNCTION:
 EVP_KDF_fetch                           4804	3_0_0	EXIST::FUNCTION:
 EVP_KDF_CTX_dup                         4805	3_0_0	EXIST::FUNCTION:
-EVP_KDF_provider                        4806	3_0_0	EXIST::FUNCTION:
+EVP_KDF_get0_provider                   4806	3_0_0	EXIST::FUNCTION:
 EVP_KDF_get_params                      4807	3_0_0	EXIST::FUNCTION:
 EVP_KDF_CTX_get_params                  4808	3_0_0	EXIST::FUNCTION:
 EVP_KDF_CTX_set_params                  4809	3_0_0	EXIST::FUNCTION:
@@ -4788,7 +4788,7 @@ EVP_CIPHER_number                       4915	3_0_0	EXIST::FUNCTION:
 EVP_MAC_get_number                      4916	3_0_0	EXIST::FUNCTION:
 EVP_KEYMGMT_get_number                  4917	3_0_0	EXIST::FUNCTION:
 EVP_KEYEXCH_get_number                  4918	3_0_0	EXIST::FUNCTION:
-EVP_KDF_number                          4919	3_0_0	EXIST::FUNCTION:
+EVP_KDF_get_number                      4919	3_0_0	EXIST::FUNCTION:
 EVP_SIGNATURE_get_number                4920	3_0_0	EXIST::FUNCTION:
 OSSL_CMP_CTX_snprint_PKIStatus          4921	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_HDR_get0_transactionID         4922	3_0_0	EXIST::FUNCTION:CMP
@@ -5180,7 +5180,7 @@ EVP_PKEY_CTX_set_hkdf_md                5307	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_set1_hkdf_salt             5308	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_set1_hkdf_key              5309	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_add1_hkdf_info             5310	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_CTX_hkdf_mode                  5311	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_set_hkdf_mode              5311	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_set1_pbe_pass              5312	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_set1_scrypt_salt           5313	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_set_scrypt_N               5314	3_0_0	EXIST::FUNCTION:
@@ -5362,7 +5362,7 @@ EVP_SIGNATURE_get0_description          5489	3_0_0	EXIST::FUNCTION:
 EVP_ASYM_CIPHER_get0_description        5490	3_0_0	EXIST::FUNCTION:
 EVP_KEM_get0_description                5491	3_0_0	EXIST::FUNCTION:
 EVP_KEYEXCH_get0_description            5492	3_0_0	EXIST::FUNCTION:
-EVP_KDF_description                     5493	3_0_0	EXIST::FUNCTION:
+EVP_KDF_get0_description                5493	3_0_0	EXIST::FUNCTION:
 OPENSSL_sk_find_all                     5494	3_0_0	EXIST::FUNCTION:
 X509_CRL_new_ex                         5495	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_dup                          5496	3_0_0	EXIST::FUNCTION:

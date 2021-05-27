@@ -1051,7 +1051,7 @@ int EVP_PKEY_CTX_add1_hkdf_info(EVP_PKEY_CTX *ctx,
                                           info, infolen);
 }
 
-int EVP_PKEY_CTX_hkdf_mode(EVP_PKEY_CTX *ctx, int mode)
+int EVP_PKEY_CTX_set_hkdf_mode(EVP_PKEY_CTX *ctx, int mode)
 {
     OSSL_PARAM int_params[2], *p = int_params;
 

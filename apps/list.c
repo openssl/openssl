@@ -318,11 +318,11 @@ static void list_macs(void)
 DEFINE_STACK_OF(EVP_KDF)
 static int kdf_cmp(const EVP_KDF * const *a, const EVP_KDF * const *b)
 {
-    int ret = EVP_KDF_number(*a) - EVP_KDF_number(*b);
+    int ret = EVP_KDF_get_number(*a) - EVP_KDF_get_number(*b);
 
     if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_name(EVP_KDF_provider(*a)),
-                     OSSL_PROVIDER_name(EVP_KDF_provider(*b)));
+        ret = strcmp(OSSL_PROVIDER_name(EVP_KDF_get0_provider(*a)),
+                     OSSL_PROVIDER_name(EVP_KDF_get0_provider(*b)));
 
     return ret;
 }
@@ -360,10 +360,11 @@ static void list_kdfs(void)
             BIO_printf(bio_out, "  ");
             print_names(bio_out, names);
 
-            BIO_printf(bio_out, " @ %s\n", OSSL_PROVIDER_name(EVP_KDF_provider(k)));
+            BIO_printf(bio_out, " @ %s\n",
+                       OSSL_PROVIDER_name(EVP_KDF_get0_provider(k)));
 
             if (verbose) {
-                const char *desc = EVP_KDF_description(k);
+                const char *desc = EVP_KDF_get0_description(k);
 
                 if (desc != NULL)
                     BIO_printf(bio_out, "    description: %s\n", desc);
