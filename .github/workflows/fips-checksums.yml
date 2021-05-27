@@ -18,7 +18,8 @@ jobs:
           mkdir ./artifact
       - uses: actions/checkout@v2
         with:
-          ref: ${{ github.event.pull_request.base.sha }}
+          repository: ${{ github.event.pull_request.base.repo.full_name }}
+          ref: ${{ github.event.pull_request.base.ref }}
           path: source-pristine
       - name: config pristine
         run: ../source-pristine/config enable-fips && perl configdata.pm --dump
