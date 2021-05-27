@@ -265,11 +265,11 @@ static int ossl_encoder_ctx_add_encoder_inst(OSSL_ENCODER_CTX *ctx,
     if (ok) {
         OSSL_TRACE_BEGIN(ENCODER) {
             BIO_printf(trc_out,
-                       "(ctx %p) Added encoder instance %p (encoder %p) with:\n",
-                       (void *)ctx, (void *)ei, (void *)ei->encoder);
-            BIO_printf(trc_out,
-                       "    output type: %s, output structure: %s\n",
-                       ei->output_type, ei->output_structure);
+                       "(ctx %p) Added encoder instance %p (encoder %p):\n"
+                       "    %s with %s\n",
+                       (void *)ctx, (void *)ei, (void *)ei->encoder,
+                       OSSL_ENCODER_get0_name(ei->encoder),
+                       OSSL_ENCODER_get0_properties(ei->encoder));
         } OSSL_TRACE_END(ENCODER);
     }
     return ok;

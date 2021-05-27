@@ -265,7 +265,20 @@ static void collect_decoder(OSSL_DECODER *decoder, void *arg)
                 return;
             }
 
+            OSSL_TRACE_BEGIN(DECODER) {
+                BIO_printf(trc_out,
+                           "(ctx %p) Checking out decoder %p:\n"
+                           "    %s with %s\n",
+                           (void *)data->ctx, (void *)decoder,
+                           OSSL_DECODER_get0_name(decoder),
+                           OSSL_DECODER_get0_properties(decoder));
+            } OSSL_TRACE_END(DECODER);
+
             if (!decoder_check_input_structure(data->ctx, di)) {
+                OSSL_TRACE_BEGIN(DECODER) {
+                    BIO_printf(trc_out,
+                               "    REJECTED: not the desired input structure\n");
+                } OSSL_TRACE_END(DECODER);
                 ossl_decoder_instance_free(di);
                 /* Not a fatal error. Just return */
                 return;
