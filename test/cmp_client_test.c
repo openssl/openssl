@@ -223,7 +223,7 @@ static int test_exec_P10CR_ses(void)
     SETUP_TEST_FIXTURE(CMP_SES_TEST_FIXTURE, set_up);
     fixture->req_type = OSSL_CMP_P10CR;
     fixture->expected = 1;
-    if (!TEST_ptr(req = load_csr_der(pkcs10_f))
+    if (!TEST_ptr(req = load_csr_der(pkcs10_f, libctx))
             || !TEST_true(OSSL_CMP_CTX_set1_p10CSR(fixture->cmp_ctx, req))) {
         tear_down(fixture);
         fixture = NULL;
