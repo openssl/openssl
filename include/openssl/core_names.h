@@ -65,6 +65,7 @@ extern "C" {
 
 /* cipher parameters */
 #define OSSL_CIPHER_PARAM_PADDING              "padding"      /* uint */
+#define OSSL_CIPHER_PARAM_USE_BITS             "use-bits"     /* uint */
 #define OSSL_CIPHER_PARAM_TLS_VERSION          "tls-version"  /* uint */
 #define OSSL_CIPHER_PARAM_TLS_MAC              "tls-mac"      /* octet_ptr */
 #define OSSL_CIPHER_PARAM_TLS_MAC_SIZE         "tls-mac-size" /* size_t */

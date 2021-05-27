@@ -1058,14 +1058,31 @@ int EVP_MD_CTX_test_flags(const EVP_MD_CTX *ctx, int flags)
     return (ctx->flags & flags);
 }
 
+static int evp_cipher_ctx_enable_use_bits(EVP_CIPHER_CTX *ctx,
+                                          unsigned int enable)
+{
+    OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
+
+    params[0] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_USE_BITS, &enable);
+    return EVP_CIPHER_CTX_set_params(ctx, params);
+}
+
 void EVP_CIPHER_CTX_set_flags(EVP_CIPHER_CTX *ctx, int flags)
 {
+    int oldflags = ctx->flags;
+
     ctx->flags |= flags;
+    if (((oldflags ^ ctx->flags) & EVP_CIPH_FLAG_LENGTH_BITS) != 0)
+        evp_cipher_ctx_enable_use_bits(ctx, 1);
 }
 
 void EVP_CIPHER_CTX_clear_flags(EVP_CIPHER_CTX *ctx, int flags)
 {
+    int oldflags = ctx->flags;
+
     ctx->flags &= ~flags;
+    if (((oldflags ^ ctx->flags) & EVP_CIPH_FLAG_LENGTH_BITS) != 0)
+        evp_cipher_ctx_enable_use_bits(ctx, 0);
 }
 
 int EVP_CIPHER_CTX_test_flags(const EVP_CIPHER_CTX *ctx, int flags)
