@@ -74,7 +74,7 @@ static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder, int nid,
     const char *outtype = isder ? "DER" : "PEM";
     OSSL_ENCODER_CTX *ctx =
         OSSL_ENCODER_CTX_new_for_pkey(x, OSSL_KEYMGMT_SELECT_ALL,
-                                      outtype, "pkcs8", propq);
+                                      outtype, "PrivateKeyInfo", propq);
 
     if (ctx == NULL)
         return 0;

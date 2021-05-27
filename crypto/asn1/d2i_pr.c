@@ -32,7 +32,7 @@ d2i_PrivateKey_decoder(int keytype, EVP_PKEY **a, const unsigned char **pp,
     EVP_PKEY *pkey = NULL, *bak_a = NULL;
     EVP_PKEY **ppkey = &pkey;
     const char *key_name = NULL;
-    const char *input_structures[] = { "type-specific", "pkcs8", NULL };
+    const char *input_structures[] = { "type-specific", "PrivateKeyInfo", NULL };
     int i, ret;
 
     if (keytype != EVP_PKEY_NONE) {

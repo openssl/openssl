@@ -31,7 +31,7 @@
  * Properties, named according to the ASN.1 names used throughout libcrypto.
  */
 # define PEM_STRUCTURE_PUBKEY "SubjectPublicKeyInfo"
-# define PEM_STRUCTURE_PrivateKey "pkcs8"
+# define PEM_STRUCTURE_PrivateKey "PrivateKeyInfo"
 # define PEM_STRUCTURE_Parameters "type-specific"
 
 # define PEM_STRUCTURE_RSAPrivateKey "type-specific"
