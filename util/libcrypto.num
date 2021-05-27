@@ -4406,7 +4406,7 @@ EVP_PKEY_meth_get_digest_custom         4533	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_
 EVP_MAC_CTX_new                         4534	3_0_0	EXIST::FUNCTION:
 EVP_MAC_CTX_free                        4535	3_0_0	EXIST::FUNCTION:
 EVP_MAC_CTX_dup                         4536	3_0_0	EXIST::FUNCTION:
-EVP_MAC_CTX_mac                         4537	3_0_0	EXIST::FUNCTION:
+EVP_MAC_CTX_get0_mac                    4537	3_0_0	EXIST::FUNCTION:
 EVP_MAC_CTX_get_mac_size                4538	3_0_0	EXIST::FUNCTION:
 EVP_Q_mac                               4539	3_0_0	EXIST::FUNCTION:
 EVP_MAC_init                            4540	3_0_0	EXIST::FUNCTION:
@@ -4666,9 +4666,9 @@ EVP_MAC_free                            4793	3_0_0	EXIST::FUNCTION:
 EVP_MAC_up_ref                          4794	3_0_0	EXIST::FUNCTION:
 EVP_MAC_get_params                      4795	3_0_0	EXIST::FUNCTION:
 EVP_MAC_gettable_params                 4796	3_0_0	EXIST::FUNCTION:
-EVP_MAC_provider                        4797	3_0_0	EXIST::FUNCTION:
+EVP_MAC_get0_provider                   4797	3_0_0	EXIST::FUNCTION:
 EVP_MAC_do_all_provided                 4798	3_0_0	EXIST::FUNCTION:
-EVP_MAC_name                            4799	3_0_0	EXIST::FUNCTION:
+EVP_MAC_get0_name                       4799	3_0_0	EXIST::FUNCTION:
 EVP_MD_free                             4800	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_free                         4801	3_0_0	EXIST::FUNCTION:
 EVP_KDF_up_ref                          4802	3_0_0	EXIST::FUNCTION:
@@ -4785,7 +4785,7 @@ EVP_KDF_names_do_all                    4912	3_0_0	EXIST::FUNCTION:
 EVP_SIGNATURE_names_do_all              4913	3_0_0	EXIST::FUNCTION:
 EVP_MD_number                           4914	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_number                       4915	3_0_0	EXIST::FUNCTION:
-EVP_MAC_number                          4916	3_0_0	EXIST::FUNCTION:
+EVP_MAC_get_number                      4916	3_0_0	EXIST::FUNCTION:
 EVP_KEYMGMT_get_number                  4917	3_0_0	EXIST::FUNCTION:
 EVP_KEYEXCH_get_number                  4918	3_0_0	EXIST::FUNCTION:
 EVP_KDF_number                          4919	3_0_0	EXIST::FUNCTION:
@@ -5354,7 +5354,7 @@ OSSL_ENCODER_get0_description           5481	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_LOADER_get0_description      5482	3_0_0	EXIST::FUNCTION:
 EVP_MD_description                      5483	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_description                  5484	3_0_0	EXIST::FUNCTION:
-EVP_MAC_description                     5485	3_0_0	EXIST::FUNCTION:
+EVP_MAC_get0_description                5485	3_0_0	EXIST::FUNCTION:
 EVP_RAND_get0_description               5486	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_description                    5487	3_0_0	EXIST::FUNCTION:
 EVP_KEYMGMT_get0_description            5488	3_0_0	EXIST::FUNCTION:

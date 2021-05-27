@@ -362,7 +362,7 @@ static int sskdf_derive(void *vctx, unsigned char *key, size_t keylen,
         const unsigned char *custom = NULL;
         size_t custom_len = 0;
         int default_salt_len;
-        EVP_MAC *mac = EVP_MAC_CTX_mac(ctx->macctx);
+        EVP_MAC *mac = EVP_MAC_CTX_get0_mac(ctx->macctx);
 
         if (EVP_MAC_is_a(mac, OSSL_MAC_NAME_HMAC)) {
             /* H(x) = HMAC(x, salt, hash) */

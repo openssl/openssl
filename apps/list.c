@@ -249,11 +249,11 @@ static void list_digests(void)
 DEFINE_STACK_OF(EVP_MAC)
 static int mac_cmp(const EVP_MAC * const *a, const EVP_MAC * const *b)
 {
-    int ret = EVP_MAC_number(*a) - EVP_MAC_number(*b);
+    int ret = EVP_MAC_get_number(*a) - EVP_MAC_get_number(*b);
 
     if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_name(EVP_MAC_provider(*a)),
-                     OSSL_PROVIDER_name(EVP_MAC_provider(*b)));
+        ret = strcmp(OSSL_PROVIDER_name(EVP_MAC_get0_provider(*a)),
+                     OSSL_PROVIDER_name(EVP_MAC_get0_provider(*b)));
 
     return ret;
 }
@@ -291,10 +291,11 @@ static void list_macs(void)
             BIO_printf(bio_out, "  ");
             print_names(bio_out, names);
 
-            BIO_printf(bio_out, " @ %s\n", OSSL_PROVIDER_name(EVP_MAC_provider(m)));
+            BIO_printf(bio_out, " @ %s\n",
+                       OSSL_PROVIDER_name(EVP_MAC_get0_provider(m)));
 
             if (verbose) {
-                const char *desc = EVP_MAC_description(m);
+                const char *desc = EVP_MAC_get0_description(m);
 
                 if (desc != NULL)
                     BIO_printf(bio_out, "    description: %s\n", desc);

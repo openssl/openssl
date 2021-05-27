@@ -326,7 +326,7 @@ static int drbg_hmac_get_ctx_params(void *vdrbg, OSSL_PARAM params[])
     if (p != NULL) {
         if (hmac->ctx == NULL)
             return 0;
-        name = EVP_MAC_name(EVP_MAC_CTX_mac(hmac->ctx));
+        name = EVP_MAC_get0_name(EVP_MAC_CTX_get0_mac(hmac->ctx));
         if (!OSSL_PARAM_set_utf8_string(p, name))
             return 0;
     }
