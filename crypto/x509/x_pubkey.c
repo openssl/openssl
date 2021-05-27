@@ -161,6 +161,7 @@ static int x509_pubkey_ex_d2i_ex(ASN1_VALUE **pval,
     if (ret <= 0 && !pubkey->flag_force_legacy) {
         const unsigned char *p;
         char txtoidname[OSSL_MAX_NAME_SIZE];
+        size_t slen = publen;
 
         /*
         * The decoders don't know how to handle anything other than Universal
@@ -190,9 +191,19 @@ static int x509_pubkey_ex_d2i_ex(ASN1_VALUE **pval,
                                            pubkey->propq)) != NULL)
             /*
              * As said higher up, we're being opportunistic.  In other words,
-             * we don't care about what the return value signals.
+             * we don't care if we fail.
              */
-            OSSL_DECODER_from_data(dctx, &p, NULL);
+            if (OSSL_DECODER_from_data(dctx, &p, &slen)) {
+                if (slen != 0) {
+                    /*
+                     * If we successfully decoded then we *must* consume all the
+                     * bytes.
+                     */
+                    ERR_clear_last_mark();
+                    ERR_raise(ERR_LIB_ASN1, EVP_R_DECODE_ERROR);
+                    goto end;
+                }
+            }
     }
 
     ERR_pop_to_mark();
