@@ -5,7 +5,7 @@
 EVP_SIGNATURE_fetch, EVP_SIGNATURE_free, EVP_SIGNATURE_up_ref,
 EVP_SIGNATURE_get_number, EVP_SIGNATURE_is_a, EVP_SIGNATURE_get0_provider,
 EVP_SIGNATURE_do_all_provided, EVP_SIGNATURE_names_do_all,
-EVP_SIGNATURE_get0_name, EVP_SIGNATURE_description,
+EVP_SIGNATURE_get0_name, EVP_SIGNATURE_get0_description,
 EVP_SIGNATURE_gettable_ctx_params, EVP_SIGNATURE_settable_ctx_params
 - Functions to manage EVP_SIGNATURE algorithm objects
 

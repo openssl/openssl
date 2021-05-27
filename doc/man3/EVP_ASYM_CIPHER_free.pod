@@ -5,7 +5,7 @@
 EVP_ASYM_CIPHER_fetch, EVP_ASYM_CIPHER_free, EVP_ASYM_CIPHER_up_ref,
 EVP_ASYM_CIPHER_get_number, EVP_ASYM_CIPHER_is_a, EVP_ASYM_CIPHER_get0_provider,
 EVP_ASYM_CIPHER_do_all_provided, EVP_ASYM_CIPHER_names_do_all,
-EVP_ASYM_CIPHER_get0_name, EVP_ASYM_CIPHER_description,
+EVP_ASYM_CIPHER_get0_name, EVP_ASYM_CIPHER_get0_description,
 EVP_ASYM_CIPHER_gettable_ctx_params, EVP_ASYM_CIPHER_settable_ctx_params
 - Functions to manage EVP_ASYM_CIPHER algorithm objects
 

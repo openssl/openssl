@@ -5,7 +5,7 @@
 EVP_KEYEXCH_fetch, EVP_KEYEXCH_free, EVP_KEYEXCH_up_ref,
 EVP_KEYEXCH_get0_provider, EVP_KEYEXCH_is_a, EVP_KEYEXCH_do_all_provided,
 EVP_KEYEXCH_get_number, EVP_KEYEXCH_names_do_all,
-EVP_KEYEXCH_get0_name, EVP_KEYEXCH_description,
+EVP_KEYEXCH_get0_name, EVP_KEYEXCH_get0_description,
 EVP_KEYEXCH_gettable_ctx_params, EVP_KEYEXCH_settable_ctx_params
 - Functions to manage EVP_KEYEXCH algorithm objects
 
