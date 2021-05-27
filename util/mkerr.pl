@@ -459,7 +459,7 @@ extern \"C\" {
 # endif
 int ERR_load_${lib}_strings(void);
 void ERR_unload_${lib}_strings(void);
-void ERR_${lib}_error(int function, int reason, char *file, int line);
+void ERR_${lib}_error(int function, int reason, const char *file, int line);
 # ifdef  __cplusplus
 }
 # endif
@@ -621,7 +621,7 @@ ${st}void ERR_unload_${lib}_strings(void)
     }
 }
 
-${st}void ERR_${lib}_error(int function, int reason, char *file, int line)
+${st}void ERR_${lib}_error(int function, int reason, const char *file, int line)
 {
     if (lib_code == 0)
         lib_code = ERR_get_next_error_library();
