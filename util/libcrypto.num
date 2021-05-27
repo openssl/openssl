@@ -5417,3 +5417,4 @@ PKCS5_PBE_keyivgen_ex                   5544	3_0_0	EXIST::FUNCTION:
 EVP_MAC_CTX_get_block_size              5545	3_0_0	EXIST::FUNCTION:
 BIO_debug_callback_ex                   5546	3_0_0	EXIST::FUNCTION:
 NCONF_get0_libctx                       5547	3_0_0	EXIST::FUNCTION:
+NCONF_get_section_names                 5548	3_0_0	EXIST::FUNCTION:
