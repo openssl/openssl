@@ -122,6 +122,20 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
             }
         }
         break;
+    case ASN1_OP_GET0_LIBCTX:
+        {
+            OSSL_LIB_CTX **libctx = exarg;
+
+            *libctx = ret->libctx;
+        }
+        break;
+    case ASN1_OP_GET0_PROPQ:
+        {
+            const char **propq = exarg;
+
+            *propq = ret->propq;
+        }
+        break;
     default:
         break;
     }
