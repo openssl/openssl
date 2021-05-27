@@ -211,19 +211,33 @@ int ossl_cmp_asn1_get_int(const ASN1_INTEGER *a)
 static int ossl_cmp_msg_cb(int operation, ASN1_VALUE **pval,
                            const ASN1_ITEM *it, void *exarg)
 {
-    OSSL_CMP_MSG *ret = (OSSL_CMP_MSG *)*pval;
+    OSSL_CMP_MSG *msg = (OSSL_CMP_MSG *)*pval;
 
     switch (operation) {
     case ASN1_OP_FREE_POST:
-        OPENSSL_free(ret->propq);
+        OPENSSL_free(msg->propq);
         break;
 
     case ASN1_OP_DUP_POST:
         {
             OSSL_CMP_MSG *old = exarg;
 
-            if (!ossl_cmp_msg_set0_libctx(ret, old->libctx, old->propq))
+            if (!ossl_cmp_msg_set0_libctx(msg, old->libctx, old->propq))
                 return 0;
+        }
+        break;
+    case ASN1_OP_GET0_LIBCTX:
+        {
+            OSSL_LIB_CTX **libctx = exarg;
+
+            *libctx = msg->libctx;
+        }
+        break;
+    case ASN1_OP_GET0_PROPQ:
+        {
+            const char **propq = exarg;
+
+            *propq = msg->propq;
         }
         break;
     default:
