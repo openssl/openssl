@@ -1729,7 +1729,7 @@ static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_PROVIDER_DEREGISTER_CHILD_CB,
         (void (*)(void))ossl_provider_deregister_child_cb },
     { OSSL_FUNC_PROVIDER_NAME,
-        (void (*)(void))OSSL_PROVIDER_name },
+        (void (*)(void))OSSL_PROVIDER_get0_name },
     { OSSL_FUNC_PROVIDER_GET0_PROVIDER_CTX,
         (void (*)(void))OSSL_PROVIDER_get0_provider_ctx },
     { OSSL_FUNC_PROVIDER_GET0_DISPATCH,
