@@ -639,7 +639,7 @@ void *EVP_CIPHER_CTX_set_cipher_data(EVP_CIPHER_CTX *ctx, void *cipher_data);
 # define EVP_CIPHER_CTX_get_type(c)  EVP_CIPHER_get_type(EVP_CIPHER_CTX_get0_cipher(c))
 # define EVP_CIPHER_CTX_type         EVP_CIPHER_CTX_get_type
 # ifndef OPENSSL_NO_DEPRECATED_1_1_0
-#  define EVP_CIPHER_CTX_flags(c)    EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(c))
+#  define EVP_CIPHER_CTX_flags       EVP_CIPHER_get_flags
 # endif
 # define EVP_CIPHER_CTX_get_mode(c)  EVP_CIPHER_get_mode(EVP_CIPHER_CTX_get0_cipher(c))
 # define EVP_CIPHER_CTX_mode         EVP_CIPHER_CTX_get_mode
