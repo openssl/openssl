@@ -386,7 +386,7 @@ int ossl_bn_miller_rabin_is_prime(const BIGNUM *w, int iterations, BN_CTX *ctx,
     /* (Step 4) */
     for (i = 0; i < iterations; ++i) {
         /* (Step 4.1) obtain a Random string of bits b where 1 < b < w-1 */
-        if (!BN_priv_rand_range_ex(b, w3, ctx)
+        if (!BN_priv_rand_range_ex(b, w3, 0, ctx)
                 || !BN_add_word(b, 2)) /* 1 < b < w-1 */
             goto err;
 
@@ -484,7 +484,8 @@ static int probable_prime(BIGNUM *rnd, int bits, int safe, prime_t *mods,
 
  again:
     /* TODO: Not all primes are private */
-    if (!BN_priv_rand_ex(rnd, bits, BN_RAND_TOP_TWO, BN_RAND_BOTTOM_ODD, ctx))
+    if (!BN_priv_rand_ex(rnd, bits, BN_RAND_TOP_TWO, BN_RAND_BOTTOM_ODD, 0,
+                         ctx))
         return 0;
     if (safe && !BN_set_bit(rnd, 1))
         return 0;
@@ -550,7 +551,7 @@ static int probable_prime_dh(BIGNUM *rnd, int bits, int safe, prime_t *mods,
         maxdelta = BN_MASK2 - BN_get_word(add);
 
  again:
-    if (!BN_rand_ex(rnd, bits, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ODD, ctx))
+    if (!BN_rand_ex(rnd, bits, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ODD, 0, ctx))
         goto err;
 
     /* we need ((rnd-rem) % add) == 0 */

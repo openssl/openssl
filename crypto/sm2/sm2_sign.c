@@ -240,7 +240,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
     }
 
     for (;;) {
-        if (!BN_priv_rand_range_ex(k, order, ctx)) {
+        if (!BN_priv_rand_range_ex(k, order, 0, ctx)) {
             ERR_raise(ERR_LIB_SM2, ERR_R_INTERNAL_ERROR);
             goto done;
         }

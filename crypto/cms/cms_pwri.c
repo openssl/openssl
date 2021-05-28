@@ -94,7 +94,7 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
     ivlen = EVP_CIPHER_CTX_iv_length(ctx);
 
     if (ivlen > 0) {
-        if (RAND_bytes_ex(ossl_cms_ctx_get0_libctx(cms_ctx), iv, ivlen) <= 0)
+        if (RAND_bytes_ex(ossl_cms_ctx_get0_libctx(cms_ctx), iv, ivlen, 0) <= 0)
             goto err;
         if (EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, iv) <= 0) {
             ERR_raise(ERR_LIB_CMS, ERR_R_EVP_LIB);
@@ -264,7 +264,7 @@ static int kek_wrap_key(unsigned char *out, size_t *outlen,
         /* Add random padding to end */
         if (olen > inlen + 4
             && RAND_bytes_ex(ossl_cms_ctx_get0_libctx(cms_ctx), out + 4 + inlen,
-                             olen - 4 - inlen) <= 0)
+                             olen - 4 - inlen, 0) <= 0)
             return 0;
         /* Encrypt twice */
         if (!EVP_EncryptUpdate(ctx, out, &dummy, out, olen)

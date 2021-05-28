@@ -180,7 +180,7 @@ static ECDSA_SIG *ecdsa_s390x_nistp_sign_sig(const unsigned char *dgst,
          * internally implementing counter-measures for RNG weakness.
          */
          if (RAND_priv_bytes_ex(eckey->libctx, param + S390X_OFF_RN(len),
-                                len) != 1) {
+                                len, 0) != 1) {
              ERR_raise(ERR_LIB_EC, EC_R_RANDOM_NUMBER_GENERATION_FAILED);
              goto ret;
          }
