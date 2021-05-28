@@ -1681,9 +1681,9 @@ static int get_dh_dsa_payload_g(enum state state,
 }
 
 static int get_payload_int(enum state state,
-                            const struct translation_st *translation,
-                            struct translation_ctx_st *ctx,
-                            const int val)
+                           const struct translation_st *translation,
+                           struct translation_ctx_st *ctx,
+                           const int val)
 {
     if (ctx->params->data_type != OSSL_PARAM_INTEGER)
         return 0;
