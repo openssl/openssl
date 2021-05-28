@@ -1188,13 +1188,7 @@ generate_doc_buildinfo:
           fi )
 
 generate_fips_sources: providers/fips.module.sources.new
-providers/fips.module.sources.new: \
-                $(SRCDIR)/Configure \
-                {- join(" \\\n" . ' ' x 16,
-                        fill_lines(" ", $COLUMNS - 16,
-                                   @{$config{build_file_templates}},
-                                   @{$config{build_infos}},
-                                   @{$config{conf_files}})) -}
+providers/fips.module.sources.new: configdata.pm
 	rm -rf sources-tmp
 	mkdir sources-tmp
 	( \
