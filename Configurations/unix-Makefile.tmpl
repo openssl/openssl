@@ -1197,38 +1197,44 @@ providers/fips.module.sources.new: configdata.pm
 	  && $$srcdir/Configure --banner=Configured enable-fips -O0 \
 	  && ./configdata.pm --query 'get_sources("providers/fips")' > sources1 \
 	  && $(MAKE) -sj 4 \
-	  && find .. -name '*.d' | xargs cat > dep1 \
+	  && find . -name '*.d' | xargs cat > dep1 \
           && $(MAKE) distclean \
 	  && $$srcdir/Configure --banner=Configured enable-fips no-asm -O0 \
 	  && ./configdata.pm --query 'get_sources("providers/fips")' > sources2 \
 	  && $(MAKE) -sj 4 \
-	  && find .. -name '*.d' | xargs cat > dep2 \
+	  && find . -name '*.d' | xargs cat > dep2 \
 	  && cat sources1 sources2 \
 	     | grep -v ' : \\$$' | grep -v util/providers.num \
-	     | sed -E -e 's:^ *([.][.]/)*$(SRCDIR)::' -e 's: \\::' \
+	     | sed -e 's/^ *//' -e 's/ *\\$$//' \
 	     | sort | uniq > sources \
-	  && cat dep1 dep2 | grep -v providers/common/include/prov/der_ >deps \
+	  && cat dep1 dep2 \
+	     | $(PERL) -p -e 's/\\\n//' \
+	     | sed -e 's/^.*: *//' -e 's/  */ /g' \
+	     | fgrep -f sources \
+	     | tr ' ' '\n' \
+	     | sort | uniq > deps.raw \
+	  && cat deps.raw \
+	     | xargs ./configdata.pm --query 'get_sources(@ARGV)' \
+	     | $(PERL) -p -e 's/\\\n//' \
+	     | sed -e 's/\./\\\./g' -e 's/ : */:/' -e 's/^/s:/' -e 's/$$/:/' \
+	     > deps.sed \
+	  && cat deps.raw | sed -f deps.sed > deps \
 	)
 	( \
-	  perl -p -e 's/\\\n//' sources-tmp/deps \
-	     | sed -e 's/^.*: *//' -e 's/  */ /g' \
-	     | fgrep -f sources-tmp/sources | tr ' ' '\n' \
-	     | sed -E -e '/^include/s:$$:.in:' -e 's:^ *([.][.]/)*$(SRCDIR)::' -e 's:^/::' ; \
-	  for x in `cat sources-tmp/sources`; do \
-	    if [ -f "$(SRCDIR)$$x" ]; then echo $$x | sed 's:^/::' ; fi ; \
-	  done ; \
+	  cat sources-tmp/sources sources-tmp/deps \
+	     | $(PERL) -p -e 's:^ *\Q../\E:: ;' \
+			  -e 's:^\Q$(SRCDIR)/\E:: if "$(SRCDIR)" ne "." ;' \
+			  -e 'my $$x; do { $$x = $$_; s:(^|/)((?!\Q../\E)[^/]*/)\Q..\E($$|/):$$1: } while ($$x ne $$_) ;' ; \
 	  cd $(SRCDIR); \
 	  for x in crypto/bn/asm/*.pl crypto/bn/asm/*.S \
 		   crypto/aes/asm/*.pl crypto/aes/asm/*.S \
 		   crypto/ec/asm/*.pl \
 		   crypto/modes/asm/*.pl \
 		   crypto/sha/asm/*.pl \
-		   crypto/x86_64cpuid.pl \
-	           providers/common/der/*.in; do \
+		   crypto/x86_64cpuid.pl; do \
 	    echo "$$x"; \
 	  done \
-	) | sed -e 's:/[^/]*/[^/]*/[.][.]/[.][.]/:/:g' -e 's:/[^/]*/[.][.]/:/:g' \
-	  | sort | uniq > providers/fips.module.sources.new
+	) | sort | uniq > providers/fips.module.sources.new
 	rm -rf sources-tmp
 
 # Set to -force to force a rebuild
