@@ -373,7 +373,7 @@ int setup_tests(void)
             || !TEST_ptr(server_cert = load_cert_pem(server_cert_f, libctx))
             || !TEST_ptr(client_key = load_pkey_pem(client_key_f, libctx))
             || !TEST_ptr(client_cert = load_cert_pem(client_cert_f, libctx))
-            || !TEST_int_eq(1, RAND_bytes_ex(libctx, ref, sizeof(ref)))) {
+            || !TEST_int_eq(1, RAND_bytes_ex(libctx, ref, sizeof(ref), 0))) {
         cleanup_tests();
         return 0;
     }
