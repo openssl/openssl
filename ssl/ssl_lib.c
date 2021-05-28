@@ -4557,8 +4557,11 @@ int ssl_handshake_hash(SSL *s, unsigned char *out, size_t outlen,
     }
 
     ctx = EVP_MD_CTX_new();
-    if (ctx == NULL)
+    if (ctx == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_HANDSHAKE_HASH,
+                 ERR_R_INTERNAL_ERROR);
         goto err;
+    }
 
     if (!EVP_MD_CTX_copy_ex(ctx, hdgst)
         || EVP_DigestFinal_ex(ctx, out, NULL) <= 0) {
