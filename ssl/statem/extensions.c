@@ -1028,6 +1028,15 @@ static int final_server_name(SSL *s, unsigned int context, int sent)
 }
 
 #ifndef OPENSSL_NO_EC
+static int init_ec_point_formats(SSL *s, unsigned int context)
+{
+    OPENSSL_free(s->ext.peer_ecpointformats);
+    s->ext.peer_ecpointformats = NULL;
+    s->ext.peer_ecpointformats_len = 0;
+
+    return 1;
+}
+
 static int final_ec_pt_formats(SSL *s, unsigned int context, int sent)
 {
     unsigned long alg_k, alg_a;
@@ -1165,15 +1174,6 @@ static int init_srp(SSL *s, unsigned int context)
     return 1;
 }
 #endif
-
-static int init_ec_point_formats(SSL *s, unsigned int context)
-{
-    OPENSSL_free(s->ext.peer_ecpointformats);
-    s->ext.peer_ecpointformats = NULL;
-    s->ext.peer_ecpointformats_len = 0;
-
-    return 1;
-}
 
 static int init_etm(SSL *s, unsigned int context)
 {
