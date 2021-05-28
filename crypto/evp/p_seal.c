@@ -44,7 +44,7 @@ int EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
         return 0;
 
     len = EVP_CIPHER_CTX_iv_length(ctx);
-    if (len < 0 || RAND_priv_bytes_ex(libctx, iv, len) <= 0)
+    if (len < 0 || RAND_priv_bytes_ex(libctx, iv, len, 0) <= 0)
         goto err;
 
     len = EVP_CIPHER_CTX_key_length(ctx);

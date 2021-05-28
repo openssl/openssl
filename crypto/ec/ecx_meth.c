@@ -937,7 +937,7 @@ static int s390x_pkey_ecx_keygen25519(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
         goto err;
     }
 
-    if (RAND_priv_bytes_ex(ctx->libctx, privkey, X25519_KEYLEN) <= 0)
+    if (RAND_priv_bytes_ex(ctx->libctx, privkey, X25519_KEYLEN, 0) <= 0)
         goto err;
 
     privkey[0] &= 248;
@@ -980,7 +980,7 @@ static int s390x_pkey_ecx_keygen448(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
         goto err;
     }
 
-    if (RAND_priv_bytes_ex(ctx->libctx, privkey, X448_KEYLEN) <= 0)
+    if (RAND_priv_bytes_ex(ctx->libctx, privkey, X448_KEYLEN, 0) <= 0)
         goto err;
 
     privkey[0] &= 252;
@@ -1029,7 +1029,7 @@ static int s390x_pkey_ecd_keygen25519(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
         goto err;
     }
 
-    if (RAND_priv_bytes_ex(ctx->libctx, privkey, ED25519_KEYLEN) <= 0)
+    if (RAND_priv_bytes_ex(ctx->libctx, privkey, ED25519_KEYLEN, 0) <= 0)
         goto err;
 
     md = EVP_MD_fetch(ctx->libctx, "SHA512", ctx->propquery);
@@ -1095,7 +1095,7 @@ static int s390x_pkey_ecd_keygen448(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
         goto err;
     }
 
-    if (RAND_priv_bytes_ex(ctx->libctx, privkey, ED448_KEYLEN) <= 0)
+    if (RAND_priv_bytes_ex(ctx->libctx, privkey, ED448_KEYLEN, 0) <= 0)
         goto err;
 
     hashctx = EVP_MD_CTX_new();
