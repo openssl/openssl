@@ -167,7 +167,7 @@ To list all decoders in a provider to a bio_out:
  for (i = 0; i < sk_OSSL_DECODER_num(decoders); i++) {
      OSSL_DECODER *decoder = sk_OSSL_DECODER_value(decoders, i);
 
-     if (strcmp(OSSL_PROVIDER_name(OSSL_DECODER_get0_provider(decoder)),
+     if (strcmp(OSSL_PROVIDER_get0_name(OSSL_DECODER_get0_provider(decoder)),
                 provider) != 0)
          continue;
 
