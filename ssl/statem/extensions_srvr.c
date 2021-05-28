@@ -1164,7 +1164,8 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 
         md = ssl_md(s->ctx, sess->cipher->algorithm2);
         if (!EVP_MD_is_a(md,
-                EVP_MD_name(ssl_md(s->ctx, s->s3.tmp.new_cipher->algorithm2)))) {
+                EVP_MD_get0_name(ssl_md(s->ctx,
+                                        s->s3.tmp.new_cipher->algorithm2)))) {
             /* The ciphersuite is not compatible with this session. */
             SSL_SESSION_free(sess);
             sess = NULL;
@@ -1179,7 +1180,7 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         return 1;
 
     binderoffset = PACKET_data(pkt) - (const unsigned char *)s->init_buf->data;
-    hashsize = EVP_MD_size(md);
+    hashsize = EVP_MD_get_size(md);
 
     if (!PACKET_get_length_prefixed_2(pkt, &binders)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);

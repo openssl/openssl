@@ -186,7 +186,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
         EVP_CIPHER_CTX_reset(dd);
 
     p = s->s3.tmp.key_block;
-    mdi = EVP_MD_size(m);
+    mdi = EVP_MD_get_size(m);
     if (mdi < 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
@@ -266,7 +266,7 @@ int ssl3_setup_key_block(SSL *s)
     s->s3.tmp.new_compression = comp;
 #endif
 
-    num = EVP_MD_size(hash);
+    num = EVP_MD_get_size(hash);
     if (num < 0)
         return 0;
 
@@ -424,7 +424,7 @@ size_t ssl3_final_finish_mac(SSL *s, const char *sender, size_t len,
         return 0;
     }
 
-    if (EVP_MD_CTX_type(s->s3.handshake_dgst) != NID_md5_sha1) {
+    if (EVP_MD_CTX_get_type(s->s3.handshake_dgst) != NID_md5_sha1) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_NO_REQUIRED_DIGEST);
         return 0;
     }
@@ -440,7 +440,7 @@ size_t ssl3_final_finish_mac(SSL *s, const char *sender, size_t len,
         goto err;
     }
 
-    ret = EVP_MD_CTX_size(ctx);
+    ret = EVP_MD_CTX_get_size(ctx);
     if (ret < 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         ret = 0;

@@ -346,7 +346,7 @@ int ssl_load_ciphers(SSL_CTX *ctx)
         if (md == NULL) {
             ctx->disabled_mac_mask |= t->mask;
         } else {
-            int tmpsize = EVP_MD_size(md);
+            int tmpsize = EVP_MD_get_size(md);
             if (!ossl_assert(tmpsize >= 0))
                 return 0;
             ctx->ssl_mac_secret_size[i] = tmpsize;
@@ -2172,7 +2172,7 @@ int ssl_cipher_get_overhead(const SSL_CIPHER *c, size_t *mac_overhead,
         if (e_md == NULL)
             return 0;
 
-        mac = EVP_MD_size(e_md);
+        mac = EVP_MD_get_size(e_md);
         if (c->algorithm_enc != SSL_eNULL) {
             int cipher_nid = SSL_CIPHER_get_cipher_nid(c);
             const EVP_CIPHER *e_ciph = EVP_get_cipherbynid(cipher_nid);

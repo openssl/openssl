@@ -351,7 +351,8 @@ int OSSL_STORE_find(OSSL_STORE_CTX *ctx, const OSSL_STORE_SEARCH *search)
             break;
         case OSSL_STORE_SEARCH_BY_KEY_FINGERPRINT:
             if (OSSL_PARAM_BLD_push_utf8_string(bld, OSSL_STORE_PARAM_DIGEST,
-                                                EVP_MD_name(search->digest), 0)
+                                                EVP_MD_get0_name(search->digest),
+                                                0)
                 && OSSL_PARAM_BLD_push_octet_string(bld,
                                                     OSSL_STORE_PARAM_FINGERPRINT,
                                                     search->string,
@@ -879,11 +880,11 @@ OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_key_fingerprint(const EVP_MD *digest,
         return NULL;
     }
 
-    if (digest != NULL && len != (size_t)EVP_MD_size(digest)) {
+    if (digest != NULL && len != (size_t)EVP_MD_get_size(digest)) {
         ERR_raise_data(ERR_LIB_OSSL_STORE,
                        OSSL_STORE_R_FINGERPRINT_SIZE_DOES_NOT_MATCH_DIGEST,
                        "%s size is %d, fingerprint size is %zu",
-                       EVP_MD_name(digest), EVP_MD_size(digest), len);
+                       EVP_MD_get0_name(digest), EVP_MD_get_size(digest), len);
         OPENSSL_free(search);
         return NULL;
     }

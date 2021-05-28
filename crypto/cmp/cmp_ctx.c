@@ -1114,9 +1114,9 @@ int OSSL_CMP_CTX_get_option(const OSSL_CMP_CTX *ctx, int opt)
     case OSSL_CMP_OPT_POPO_METHOD:
         return ctx->popoMethod;
     case OSSL_CMP_OPT_DIGEST_ALGNID:
-        return EVP_MD_type(ctx->digest);
+        return EVP_MD_get_type(ctx->digest);
     case OSSL_CMP_OPT_OWF_ALGNID:
-        return EVP_MD_type(ctx->pbm_owf);
+        return EVP_MD_get_type(ctx->pbm_owf);
     case OSSL_CMP_OPT_MAC_ALGNID:
         return ctx->pbm_mac;
     case OSSL_CMP_OPT_KEEP_ALIVE:

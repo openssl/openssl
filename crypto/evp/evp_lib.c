@@ -711,15 +711,15 @@ int EVP_MD_is_a(const EVP_MD *md, const char *name)
 {
     if (md->prov != NULL)
         return evp_is_a(md->prov, md->name_id, NULL, name);
-    return evp_is_a(NULL, 0, EVP_MD_name(md), name);
+    return evp_is_a(NULL, 0, EVP_MD_get0_name(md), name);
 }
 
-int EVP_MD_number(const EVP_MD *md)
+int EVP_MD_get_number(const EVP_MD *md)
 {
     return md->name_id;
 }
 
-const char *EVP_MD_description(const EVP_MD *md)
+const char *EVP_MD_get0_description(const EVP_MD *md)
 {
     if (md->description != NULL)
         return md->description;
@@ -730,7 +730,7 @@ const char *EVP_MD_description(const EVP_MD *md)
 #endif
 }
 
-const char *EVP_MD_name(const EVP_MD *md)
+const char *EVP_MD_get0_name(const EVP_MD *md)
 {
     if (md == NULL)
         return NULL;
@@ -753,22 +753,22 @@ int EVP_MD_names_do_all(const EVP_MD *md,
     return 1;
 }
 
-const OSSL_PROVIDER *EVP_MD_provider(const EVP_MD *md)
+const OSSL_PROVIDER *EVP_MD_get0_provider(const EVP_MD *md)
 {
     return md->prov;
 }
 
-int EVP_MD_type(const EVP_MD *md)
+int EVP_MD_get_type(const EVP_MD *md)
 {
     return md->type;
 }
 
-int EVP_MD_pkey_type(const EVP_MD *md)
+int EVP_MD_get_pkey_type(const EVP_MD *md)
 {
     return md->pkey_type;
 }
 
-int EVP_MD_block_size(const EVP_MD *md)
+int EVP_MD_get_block_size(const EVP_MD *md)
 {
     if (md == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_MESSAGE_DIGEST_IS_NULL);
@@ -777,7 +777,7 @@ int EVP_MD_block_size(const EVP_MD *md)
     return md->block_size;
 }
 
-int EVP_MD_size(const EVP_MD *md)
+int EVP_MD_get_size(const EVP_MD *md)
 {
     if (md == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_MESSAGE_DIGEST_IS_NULL);
@@ -786,7 +786,7 @@ int EVP_MD_size(const EVP_MD *md)
     return md->md_size;
 }
 
-unsigned long EVP_MD_flags(const EVP_MD *md)
+unsigned long EVP_MD_get_flags(const EVP_MD *md)
 {
     return md->flags;
 }
@@ -999,7 +999,7 @@ EVP_MD *EVP_MD_CTX_get1_md(EVP_MD_CTX *ctx)
     return md;
 }
 
-EVP_PKEY_CTX *EVP_MD_CTX_pkey_ctx(const EVP_MD_CTX *ctx)
+EVP_PKEY_CTX *EVP_MD_CTX_get_pkey_ctx(const EVP_MD_CTX *ctx)
 {
     return ctx->pctx;
 }
@@ -1025,7 +1025,7 @@ void EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx)
 }
 #endif /* !defined(FIPS_MODULE) */
 
-void *EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx)
+void *EVP_MD_CTX_get0_md_data(const EVP_MD_CTX *ctx)
 {
     return ctx->md_data;
 }

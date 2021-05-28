@@ -431,7 +431,7 @@ static int digest_test_run(EVP_TEST *t)
         goto err;
     }
 
-    if (EVP_MD_flags(expected->digest) & EVP_MD_FLAG_XOF) {
+    if (EVP_MD_get_flags(expected->digest) & EVP_MD_FLAG_XOF) {
         EVP_MD_CTX *mctx_cpy;
         char dont[] = "touch";
 
@@ -1959,7 +1959,8 @@ static int pbe_test_run(EVP_TEST *t)
         }
 #endif
     } else if (expected->pbe_type == PBE_TYPE_PKCS12) {
-        fetched_digest = EVP_MD_fetch(libctx, EVP_MD_name(expected->md), NULL);
+        fetched_digest = EVP_MD_fetch(libctx, EVP_MD_get0_name(expected->md),
+                                      NULL);
         if (fetched_digest == NULL) {
             t->err = "PKCS12_ERROR";
             goto err;
@@ -2971,7 +2972,7 @@ static int digestsigver_test_parse(EVP_TEST *t,
     if (strcmp(keyword, "Key") == 0) {
         EVP_PKEY *pkey = NULL;
         int rv = 0;
-        const char *name = mdata->md == NULL ? NULL : EVP_MD_name(mdata->md);
+        const char *name = mdata->md == NULL ? NULL : EVP_MD_get0_name(mdata->md);
 
         if (mdata->is_verify)
             rv = find_key(&pkey, value, public_keys);

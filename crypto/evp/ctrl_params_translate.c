@@ -715,7 +715,7 @@ static const char *get_cipher_name(void *cipher)
 
 static const char *get_md_name(void *md)
 {
-    return EVP_MD_name(md);
+    return EVP_MD_get0_name(md);
 }
 
 static const void *get_cipher_by_name(OSSL_LIB_CTX *libctx, const char *name)

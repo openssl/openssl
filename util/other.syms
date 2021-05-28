@@ -232,10 +232,10 @@ ERR_raise                               define
 ERR_raise_data                          define
 EVP_DigestSignUpdate                    define
 EVP_DigestVerifyUpdate                  define
-EVP_MD_CTX_block_size                   define
-EVP_MD_CTX_name                         define
-EVP_MD_CTX_size                         define
-EVP_MD_CTX_type                         define
+EVP_MD_CTX_get_block_size               define
+EVP_MD_CTX_get0_name                    define
+EVP_MD_CTX_get_size                     define
+EVP_MD_CTX_get_type                     define
 EVP_OpenUpdate                          define
 EVP_PKEY_CTX_add1_hkdf_info             define
 EVP_PKEY_CTX_add1_tls1_prf_seed         define

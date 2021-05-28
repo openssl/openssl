@@ -723,7 +723,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         mac_size = 0;
     } else {
         /* TODO(siz_t): Convert me */
-        mac_size = EVP_MD_CTX_size(s->write_hash);
+        mac_size = EVP_MD_CTX_get_size(s->write_hash);
         if (mac_size < 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;

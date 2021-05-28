@@ -443,8 +443,8 @@ static int sig_out(BIO *b)
     ctx = BIO_get_data(b);
     md = ctx->md;
     digest = EVP_MD_CTX_get0_md(md);
-    md_size = EVP_MD_size(digest);
-    md_data = EVP_MD_CTX_md_data(md);
+    md_size = EVP_MD_get_size(digest);
+    md_data = EVP_MD_CTX_get0_md_data(md);
 
     if (ctx->buf_len + 2 * md_size > OK_BLOCK_SIZE)
         return 1;
@@ -487,8 +487,8 @@ static int sig_in(BIO *b)
     ctx = BIO_get_data(b);
     md = ctx->md;
     digest = EVP_MD_CTX_get0_md(md);
-    md_size = EVP_MD_size(digest);
-    md_data = EVP_MD_CTX_md_data(md);
+    md_size = EVP_MD_get_size(digest);
+    md_data = EVP_MD_CTX_get0_md_data(md);
 
     if ((int)(ctx->buf_len - ctx->buf_off) < 2 * md_size)
         return 1;
@@ -533,7 +533,7 @@ static int block_out(BIO *b)
     ctx = BIO_get_data(b);
     md = ctx->md;
     digest = EVP_MD_CTX_get0_md(md);
-    md_size = EVP_MD_size(digest);
+    md_size = EVP_MD_get_size(digest);
 
     tl = ctx->buf_len - OK_BLOCK_BLOCK;
     ctx->buf[0] = (unsigned char)(tl >> 24);
@@ -563,7 +563,7 @@ static int block_in(BIO *b)
 
     ctx = BIO_get_data(b);
     md = ctx->md;
-    md_size = EVP_MD_size(EVP_MD_CTX_get0_md(md));
+    md_size = EVP_MD_get_size(EVP_MD_CTX_get0_md(md));
 
     assert(sizeof(tl) >= OK_BLOCK_BLOCK); /* always true */
     tl = ctx->buf[0];

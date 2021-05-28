@@ -258,7 +258,7 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
         kdf_md = EVP_sha1();
         if (EVP_PKEY_CTX_set_dh_kdf_md(pctx, kdf_md) <= 0)
             goto err;
-    } else if (EVP_MD_type(kdf_md) != NID_sha1)
+    } else if (EVP_MD_get_type(kdf_md) != NID_sha1)
         /* Unsupported digest */
         goto err;
 

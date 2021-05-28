@@ -526,7 +526,7 @@ int ssl3_get_record(SSL *s)
         const EVP_MD *tmpmd = EVP_MD_CTX_get0_md(s->read_hash);
 
         if (tmpmd != NULL) {
-            imac_size = EVP_MD_size(tmpmd);
+            imac_size = EVP_MD_get_size(tmpmd);
             if (!ossl_assert(imac_size >= 0 && imac_size <= EVP_MAX_MD_SIZE)) {
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
                     return -1;
@@ -968,7 +968,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
 
     if (sending) {
         if (EVP_MD_CTX_get0_md(s->write_hash)) {
-            int n = EVP_MD_CTX_size(s->write_hash);
+            int n = EVP_MD_CTX_get_size(s->write_hash);
             if (!ossl_assert(n >= 0)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return 0;
@@ -1006,7 +1006,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
         }
     } else {
         if (EVP_MD_CTX_get0_md(s->read_hash)) {
-            int n = EVP_MD_CTX_size(s->read_hash);
+            int n = EVP_MD_CTX_get_size(s->read_hash);
             if (!ossl_assert(n >= 0)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return 0;
@@ -1283,7 +1283,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
  */
 char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx)
 {
-    switch (EVP_MD_CTX_type(ctx)) {
+    switch (EVP_MD_CTX_get_type(ctx)) {
     case NID_md5:
     case NID_sha1:
     case NID_sha224:
@@ -1315,7 +1315,7 @@ int n_ssl3_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
         hash = ssl->read_hash;
     }
 
-    t = EVP_MD_CTX_size(hash);
+    t = EVP_MD_CTX_get_size(hash);
     if (t < 0)
         return 0;
     md_size = t;
@@ -1418,7 +1418,7 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
         hash = ssl->read_hash;
     }
 
-    t = EVP_MD_CTX_size(hash);
+    t = EVP_MD_CTX_get_size(hash);
     if (!ossl_assert(t >= 0))
         return 0;
     md_size = t;
@@ -1466,7 +1466,7 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
                                            &rec->orig_len);
         *p++ = OSSL_PARAM_construct_end();
 
-        if (!EVP_PKEY_CTX_set_params(EVP_MD_CTX_pkey_ctx(mac_ctx),
+        if (!EVP_PKEY_CTX_set_params(EVP_MD_CTX_get_pkey_ctx(mac_ctx),
                                      tls_hmac_params))
             return 0;
     }
@@ -1551,7 +1551,7 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
         const EVP_MD *tmpmd = EVP_MD_CTX_get0_md(s->read_hash);
 
         if (tmpmd != NULL) {
-            imac_size = EVP_MD_size(tmpmd);
+            imac_size = EVP_MD_get_size(tmpmd);
             if (!ossl_assert(imac_size >= 0 && imac_size <= EVP_MAX_MD_SIZE)) {
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
                     return -1;

@@ -416,7 +416,7 @@ static void get_legacy_md_names(const OBJ_NAME *on, void *arg)
 {
     const EVP_MD *md = (void *)OBJ_NAME_get(on->name, on->type);
 
-    get_legacy_evp_names(0, EVP_MD_type(md), NULL, arg);
+    get_legacy_evp_names(0, EVP_MD_get_type(md), NULL, arg);
 }
 
 static void get_legacy_pkey_meth_names(const EVP_PKEY_ASN1_METHOD *ameth,

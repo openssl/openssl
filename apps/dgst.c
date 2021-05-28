@@ -399,10 +399,10 @@ int dgst_main(int argc, char **argv)
         md = EVP_MD_CTX_get1_md(tctx);
     }
     if (md != NULL)
-        md_name = EVP_MD_name(md);
+        md_name = EVP_MD_get0_name(md);
 
     if (xoflen > 0) {
-        if (!(EVP_MD_flags(md) & EVP_MD_FLAG_XOF)) {
+        if (!(EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF)) {
             BIO_printf(bio_err, "Length can only be specified for XOF\n");
             goto end;
         }

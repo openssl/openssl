@@ -931,7 +931,7 @@ static int evp_pkey_ctx_set_md(EVP_PKEY_CTX *ctx, const EVP_MD *md,
     if (md == NULL) {
         name = "";
     } else {
-        name = EVP_MD_name(md);
+        name = EVP_MD_get0_name(md);
     }
 
     *p++ = OSSL_PARAM_construct_utf8_string(param,

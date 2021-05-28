@@ -28,7 +28,7 @@ int ossl_pkcs5_pbkdf2_hmac_ex(const char *pass, int passlen,
     int rv = 1, mode = 1;
     EVP_KDF *kdf;
     EVP_KDF_CTX *kctx;
-    const char *mdname = EVP_MD_name(digest);
+    const char *mdname = EVP_MD_get0_name(digest);
     OSSL_PARAM params[6], *p = params;
 
     /* Keep documented behaviour. */

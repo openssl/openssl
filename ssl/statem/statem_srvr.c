@@ -2678,7 +2678,7 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
         }
 
         if (EVP_DigestSignInit_ex(md_ctx, &pctx,
-                                  md == NULL ? NULL : EVP_MD_name(md),
+                                  md == NULL ? NULL : EVP_MD_get0_name(md),
                                   s->ctx->libctx, s->ctx->propq, pkey,
                                   NULL) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -3875,7 +3875,7 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
         uint64_t nonce;
         static const unsigned char nonce_label[] = "resumption";
         const EVP_MD *md = ssl_handshake_md(s);
-        int hashleni = EVP_MD_size(md);
+        int hashleni = EVP_MD_get_size(md);
 
         /* Ensure cast to size_t is safe */
         if (!ossl_assert(hashleni >= 0)) {

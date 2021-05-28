@@ -1235,7 +1235,7 @@ int tls1_lookup_md(SSL_CTX *ctx, const SIGALG_LOOKUP *lu, const EVP_MD **pmd)
  * SHA512 has a hash length of 64 bytes, which is incompatible
  * with a 128 byte (1024 bit) key.
  */
-#define RSA_PSS_MINIMUM_KEY_SIZE(md) (2 * EVP_MD_size(md) + 2)
+#define RSA_PSS_MINIMUM_KEY_SIZE(md) (2 * EVP_MD_get_size(md) + 2)
 static int rsa_pss_check_min_key_size(SSL_CTX *ctx, const EVP_PKEY *pkey,
                                       const SIGALG_LOOKUP *lu)
 {
@@ -1418,10 +1418,10 @@ static int sigalg_security_bits(SSL_CTX *ctx, const SIGALG_LOOKUP *lu)
         return 0;
     if (md != NULL)
     {
-        int md_type = EVP_MD_type(md);
+        int md_type = EVP_MD_get_type(md);
 
         /* Security bits: half digest bits */
-        secbits = EVP_MD_size(md) * 4;
+        secbits = EVP_MD_get_size(md) * 4;
         /*
          * SHA1 and MD5 are known to be broken. Reduce security bits so that
          * they're no longer accepted at security level 1. The real values don't
@@ -1560,7 +1560,7 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
     secbits = sigalg_security_bits(s->ctx, lu);
     if (secbits == 0 ||
         !ssl_security(s, SSL_SECOP_SIGALG_CHECK, secbits,
-                      md != NULL ? EVP_MD_type(md) : NID_undef,
+                      md != NULL ? EVP_MD_get_type(md) : NID_undef,
                       (void *)sigalgstr)) {
         SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_WRONG_SIGNATURE_TYPE);
         return 0;

@@ -52,7 +52,7 @@ static int tls1_PRF(SSL *s,
     EVP_KDF_free(kdf);
     if (kctx == NULL)
         goto err;
-    mdname = EVP_MD_name(md);
+    mdname = EVP_MD_get0_name(md);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
                                             (char *)mdname, 0);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
@@ -153,7 +153,7 @@ int tls_provider_set_tls_params(SSL *s, EVP_CIPHER_CTX *ctx,
                 * and writing.
                 */
             && !s->ext.use_etm)
-        imacsize = EVP_MD_size(md);
+        imacsize = EVP_MD_get_size(md);
     if (imacsize >= 0)
         macsize = (size_t)imacsize;
 
@@ -377,7 +377,7 @@ int tls1_change_cipher_state(SSL *s, int which)
                                            (int)*mac_secret_size);
         }
         if (mac_key == NULL
-            || EVP_DigestSignInit_ex(mac_ctx, NULL, EVP_MD_name(m),
+            || EVP_DigestSignInit_ex(mac_ctx, NULL, EVP_MD_get0_name(m),
                                      s->ctx->libctx, s->ctx->propq, mac_key,
                                      NULL) <= 0) {
             EVP_PKEY_free(mac_key);

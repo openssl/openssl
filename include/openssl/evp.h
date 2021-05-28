@@ -569,10 +569,9 @@ void EVP_MD_CTX_set_update_fn(EVP_MD_CTX *ctx,
 # define EVP_MD_CTX_block_size EVP_MD_CTX_get_block_size
 # define EVP_MD_CTX_get_type(e)            EVP_MD_get_type(EVP_MD_CTX_get0_md(e))
 # define EVP_MD_CTX_type EVP_MD_CTX_get_type
-EVP_PKEY_CTX *EVP_MD_CTX_get0_pkey_ctx(const EVP_MD_CTX *ctx);
-# define EVP_MD_CTX_get0_pkey_ctx EVP_MD_CTX_pkey_ctx
-void EVP_MD_CTX_set0_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx);
-# define EVP_MD_CTX_set_pkey_ctx EVP_MD_CTX_set0_pkey_ctx
+EVP_PKEY_CTX *EVP_MD_CTX_get_pkey_ctx(const EVP_MD_CTX *ctx);
+# define EVP_MD_CTX_pkey_ctx EVP_MD_CTX_get_pkey_ctx
+void EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx);
 void *EVP_MD_CTX_get0_md_data(const EVP_MD_CTX *ctx);
 # define EVP_MD_CTX_md_data EVP_MD_CTX_get0_md_data
 

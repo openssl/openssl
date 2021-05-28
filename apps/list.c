@@ -163,7 +163,7 @@ static void legacy_md_fn(const EVP_MD *m,
                        const char *from, const char *to, void *arg)
 {
     if (m != NULL) {
-        BIO_printf(arg, "  %s\n", EVP_MD_name(m));
+        BIO_printf(arg, "  %s\n", EVP_MD_get0_name(m));
     } else {
         if (from == NULL)
             from = "<undefined>";
@@ -177,11 +177,11 @@ static void legacy_md_fn(const EVP_MD *m,
 DEFINE_STACK_OF(EVP_MD)
 static int md_cmp(const EVP_MD * const *a, const EVP_MD * const *b)
 {
-    int ret = EVP_MD_number(*a) - EVP_MD_number(*b);
+    int ret = EVP_MD_get_number(*a) - EVP_MD_get_number(*b);
 
     if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_name(EVP_MD_provider(*a)),
-                     OSSL_PROVIDER_name(EVP_MD_provider(*b)));
+        ret = strcmp(OSSL_PROVIDER_name(EVP_MD_get0_provider(*a)),
+                     OSSL_PROVIDER_name(EVP_MD_get0_provider(*b)));
 
     return ret;
 }
@@ -226,10 +226,11 @@ static void list_digests(void)
             BIO_printf(bio_out, "  ");
             print_names(bio_out, names);
 
-            BIO_printf(bio_out, " @ %s\n", OSSL_PROVIDER_name(EVP_MD_provider(m)));
+            BIO_printf(bio_out, " @ %s\n",
+                       OSSL_PROVIDER_name(EVP_MD_get0_provider(m)));
 
             if (verbose) {
-                const char *desc = EVP_MD_description(m);
+                const char *desc = EVP_MD_get0_description(m);
 
                 if (desc != NULL)
                     BIO_printf(bio_out, "    description: %s\n", desc);

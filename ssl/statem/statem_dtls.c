@@ -136,7 +136,7 @@ int dtls1_do_write(SSL *s, int type)
                 EVP_CIPH_FLAG_AEAD_CIPHER) != 0)
             mac_size = 0;
         else
-            mac_size = EVP_MD_CTX_size(s->write_hash);
+            mac_size = EVP_MD_CTX_get_size(s->write_hash);
     } else
         mac_size = 0;
 

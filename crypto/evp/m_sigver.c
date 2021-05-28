@@ -156,7 +156,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     if (type != NULL) {
         ctx->reqdigest = type;
         if (mdname == NULL)
-            mdname = canon_mdname(EVP_MD_name(type));
+            mdname = canon_mdname(EVP_MD_get0_name(type));
     } else {
         if (mdname == NULL) {
             if (evp_keymgmt_util_get_deflt_digest_name(tmp_keymgmt, provkey,
@@ -475,7 +475,7 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
             if (pctx->pmeth->signctx(pctx, sigret, siglen, ctx) <= 0)
                 return 0;
         } else {
-            int s = EVP_MD_size(ctx->digest);
+            int s = EVP_MD_get_size(ctx->digest);
 
             if (s < 0 || EVP_PKEY_sign(pctx, sigret, siglen, NULL, s) <= 0)
                 return 0;

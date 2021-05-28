@@ -187,7 +187,7 @@ static void *kmac_fetch_new(void *provctx, const OSSL_PARAM *params)
         return 0;
     }
 
-    kctx->out_len = EVP_MD_size(ossl_prov_digest_md(&kctx->digest));
+    kctx->out_len = EVP_MD_get_size(ossl_prov_digest_md(&kctx->digest));
     return kctx;
 }
 
@@ -243,7 +243,7 @@ static int kmac_setkey(struct kmac_data_st *kctx, const unsigned char *key,
                        size_t keylen)
 {
     const EVP_MD *digest = ossl_prov_digest_md(&kctx->digest);
-    int w = EVP_MD_block_size(digest);
+    int w = EVP_MD_get_block_size(digest);
 
     if (keylen < KMAC_MIN_KEY || keylen > KMAC_MAX_KEY) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
@@ -288,7 +288,7 @@ static int kmac_init(void *vmacctx, const unsigned char *key,
                            NULL))
         return 0;
 
-    t = EVP_MD_block_size(ossl_prov_digest_md(&kctx->digest));
+    t = EVP_MD_get_block_size(ossl_prov_digest_md(&kctx->digest));
     if (t < 0) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST_LENGTH);
         return 0;

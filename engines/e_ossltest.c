@@ -226,15 +226,15 @@ static int ossltest_digest_nids(const int **nids)
     if (!init) {
         const EVP_MD *md;
         if ((md = digest_md5()) != NULL)
-            digest_nids[pos++] = EVP_MD_type(md);
+            digest_nids[pos++] = EVP_MD_get_type(md);
         if ((md = digest_sha1()) != NULL)
-            digest_nids[pos++] = EVP_MD_type(md);
+            digest_nids[pos++] = EVP_MD_get_type(md);
         if ((md = digest_sha256()) != NULL)
-            digest_nids[pos++] = EVP_MD_type(md);
+            digest_nids[pos++] = EVP_MD_get_type(md);
         if ((md = digest_sha384()) != NULL)
-            digest_nids[pos++] = EVP_MD_type(md);
+            digest_nids[pos++] = EVP_MD_get_type(md);
         if ((md = digest_sha512()) != NULL)
-            digest_nids[pos++] = EVP_MD_type(md);
+            digest_nids[pos++] = EVP_MD_get_type(md);
         digest_nids[pos] = 0;
         init = 1;
     }

@@ -313,7 +313,7 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
 
     /* Lookup NID for KDF+cofactor+digest */
 
-    if (!OBJ_find_sigid_by_algs(&kdf_nid, EVP_MD_type(kdf_md), ecdh_nid))
+    if (!OBJ_find_sigid_by_algs(&kdf_nid, EVP_MD_get_type(kdf_md), ecdh_nid))
         goto err;
     /* Get wrap NID */
     ctx = CMS_RecipientInfo_kari_get0_ctx(ri);

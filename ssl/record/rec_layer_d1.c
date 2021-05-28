@@ -837,7 +837,7 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
     if (clear)
         mac_size = 0;
     else {
-        mac_size = EVP_MD_CTX_size(s->write_hash);
+        mac_size = EVP_MD_CTX_get_size(s->write_hash);
         if (mac_size < 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_R_EXCEEDS_MAX_FRAGMENT_SIZE);

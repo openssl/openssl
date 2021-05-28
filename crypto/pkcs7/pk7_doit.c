@@ -679,7 +679,7 @@ static BIO *PKCS7_find_digest(EVP_MD_CTX **pmd, BIO *bio, int nid)
             ERR_raise(ERR_LIB_PKCS7, ERR_R_INTERNAL_ERROR);
             return NULL;
         }
-        if (EVP_MD_CTX_type(*pmd) == nid)
+        if (EVP_MD_CTX_get_type(*pmd) == nid)
             return bio;
         bio = BIO_next(bio);
     }
@@ -915,7 +915,7 @@ int PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si)
         goto err;
     }
 
-    if (EVP_DigestSignInit_ex(mctx, &pctx, EVP_MD_name(md),
+    if (EVP_DigestSignInit_ex(mctx, &pctx, EVP_MD_get0_name(md),
                               ossl_pkcs7_ctx_get0_libctx(ctx),
                               ossl_pkcs7_ctx_get0_propq(ctx), si->pkey,
                               NULL) <= 0)
@@ -1044,13 +1044,13 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
             ERR_raise(ERR_LIB_PKCS7, ERR_R_INTERNAL_ERROR);
             goto err;
         }
-        if (EVP_MD_CTX_type(mdc) == md_type)
+        if (EVP_MD_CTX_get_type(mdc) == md_type)
             break;
         /*
          * Workaround for some broken clients that put the signature OID
          * instead of the digest OID in digest_alg->algorithm
          */
-        if (EVP_MD_pkey_type(EVP_MD_CTX_get0_md(mdc)) == md_type)
+        if (EVP_MD_get_pkey_type(EVP_MD_CTX_get0_md(mdc)) == md_type)
             break;
         btmp = BIO_next(btmp);
     }

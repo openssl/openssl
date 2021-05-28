@@ -143,7 +143,7 @@ int ASN1_item_sign_ex(const ASN1_ITEM *it, X509_ALGOR *algor1,
     rv = ASN1_item_sign_ctx(it, algor1, algor2, signature, data, ctx);
 
  err:
-    EVP_PKEY_CTX_free(EVP_MD_CTX_pkey_ctx(ctx));
+    EVP_PKEY_CTX_free(EVP_MD_CTX_get_pkey_ctx(ctx));
     EVP_MD_CTX_free(ctx);
     return rv;
 }
@@ -160,7 +160,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
     int rv, pkey_id;
 
     md = EVP_MD_CTX_get0_md(ctx);
-    pkey = EVP_PKEY_CTX_get0_pkey(EVP_MD_CTX_pkey_ctx(ctx));
+    pkey = EVP_PKEY_CTX_get0_pkey(EVP_MD_CTX_get_pkey_ctx(ctx));
 
     if (pkey == NULL) {
         ERR_raise(ERR_LIB_ASN1, ASN1_R_CONTEXT_NOT_INITIALISED);
@@ -168,7 +168,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
     }
 
     if (pkey->ameth == NULL) {
-        EVP_PKEY_CTX *pctx = EVP_MD_CTX_pkey_ctx(ctx);
+        EVP_PKEY_CTX *pctx = EVP_MD_CTX_get_pkey_ctx(ctx);
         OSSL_PARAM params[2];
         unsigned char aid[128];
         size_t aid_len = 0;
