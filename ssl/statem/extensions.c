@@ -42,7 +42,9 @@ static int tls_parse_certificate_authorities(SSL *s, PACKET *pkt,
 #ifndef OPENSSL_NO_SRP
 static int init_srp(SSL *s, unsigned int context);
 #endif
+#ifndef OPENSSL_NO_EC
 static int init_ec_point_formats(SSL *s, unsigned int context);
+#endif
 static int init_etm(SSL *s, unsigned int context);
 static int init_ems(SSL *s, unsigned int context);
 static int final_ems(SSL *s, unsigned int context, int sent);
@@ -1166,6 +1168,7 @@ static int init_srp(SSL *s, unsigned int context)
 }
 #endif
 
+#ifndef OPENSSL_NO_EC
 static int init_ec_point_formats(SSL *s, unsigned int context)
 {
     OPENSSL_free(s->ext.peer_ecpointformats);
@@ -1174,6 +1177,7 @@ static int init_ec_point_formats(SSL *s, unsigned int context)
 
     return 1;
 }
+#endif
 
 static int init_etm(SSL *s, unsigned int context)
 {
