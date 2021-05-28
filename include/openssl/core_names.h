@@ -26,6 +26,9 @@ extern "C" {
 #define OSSL_PROV_PARAM_BUILDINFO       "buildinfo"           /* utf8_ptr */
 #define OSSL_PROV_PARAM_STATUS          "status"              /* uint */
 #define OSSL_PROV_PARAM_SECURITY_CHECKS "security-checks"     /* uint */
+#define OSSL_PROV_PARAM_PKCS11_SLOT     "pkcs11-slot"         /* uint */
+#define OSSL_PROV_PARAM_PKCS11_TOKEN    "pkcs11-token"        /* uint */
+#define OSSL_PROV_PARAM_PKCS11_MODULE   "pkcs11-module"       /* utf8_string */
 
 /* Self test callback parameters */
 #define OSSL_PROV_PARAM_SELF_TEST_PHASE  "st-phase" /* utf8_string */

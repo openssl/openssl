@@ -249,6 +249,15 @@ OSSL_CORE_MAKE_FUNC(int, provider_get_capabilities, (void *provctx,
 # define OSSL_FUNC_PROVIDER_SELF_TEST          1031
 OSSL_CORE_MAKE_FUNC(int, provider_self_test, (void *provctx))
 
+/*WB*/
+# define OSSL_FUNC_PROVIDER_SETTABLE_PARAMS    1032
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *,
+                    provider_settable_params,(void *provctx))
+# define OSSL_FUNC_PROVIDER_SET_PARAMS         1033
+OSSL_CORE_MAKE_FUNC(int,provider_set_params,(void *provdata,
+                                             const OSSL_PARAM params[]))
+/*end WB*/
+
 /* Operations */
 
 # define OSSL_OP_DIGEST                              1

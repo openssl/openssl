@@ -75,6 +75,19 @@ int OSSL_PROVIDER_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
     return ossl_provider_get_params(prov, params);
 }
 
+/*WB*/
+const OSSL_PARAM *OSSL_PROVIDER_settable_params(const OSSL_PROVIDER *prov)
+{
+    return ossl_provider_settable_params(prov);
+}
+
+int OSSL_PROVIDER_set_params(OSSL_PROVIDER *prov, const OSSL_PARAM params[])
+{
+    return ossl_provider_set_params(prov, params);
+}
+
+/*end WB*/
+
 const OSSL_ALGORITHM *OSSL_PROVIDER_query_operation(const OSSL_PROVIDER *prov,
                                                     int operation_id,
                                                     int *no_cache)

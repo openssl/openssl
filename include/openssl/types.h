@@ -134,6 +134,8 @@ typedef struct evp_Encode_Ctx_st EVP_ENCODE_CTX;
 
 typedef struct hmac_ctx_st HMAC_CTX;
 
+typedef struct pkcs11_st PKCS11_CTX;
+
 typedef struct dh_st DH;
 typedef struct dh_method DH_METHOD;
 

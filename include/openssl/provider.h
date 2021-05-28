@@ -37,6 +37,10 @@ int OSSL_PROVIDER_get_capabilities(const OSSL_PROVIDER *prov,
                                    const char *capability,
                                    OSSL_CALLBACK *cb,
                                    void *arg);
+/*WB*/
+const OSSL_PARAM *OSSL_PROVIDER_settable_params(const OSSL_PROVIDER *prov);
+int OSSL_PROVIDER_set_params(OSSL_PROVIDER *prov, const OSSL_PARAM params[]);
+/*end WB*/
 
 const OSSL_ALGORITHM *OSSL_PROVIDER_query_operation(const OSSL_PROVIDER *prov,
                                                     int operation_id,

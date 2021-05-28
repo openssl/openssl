@@ -168,6 +168,24 @@ IF[{- !$disabled{legacy} -}]
   INCLUDE[$LEGACYGOAL]=../include implementations/include common/include
 ENDIF
 
+SUBDIRS=pkcs11
+$PKCS11GOAL=pkcs11
+DEPEND[$PKCS11GOAL]=$LIBIMPLEMENTATIONS
+INCLUDE[$PKCS11GOAL]=../include
+DEFINE[$PKCS11GOAL]=PKCS11_MODULE
+IF[{- defined $target{shared_defflag} -}]
+  SOURCE[$PKCS11GOAL]=pkcs11.ld
+  GENERATE[pkcs11.ld]=../util/providers.num
+ENDIF
+
+IF[{- !$disabled{pkcs11} -}]
+  # This is the trigger to actually build the PKCS11 module.  Without these
+  # statements, the final build file will not have a trace of it.
+  MODULES{pkcs11}=$PKCS11GOAL
+  DEPEND[$PKCS11GOAL]=$LIBLEGACY ../libcrypto
+  LIBS{noinst}=$LIBPKCS11
+ENDIF
+
 #
 # Null provider stuff
 #
