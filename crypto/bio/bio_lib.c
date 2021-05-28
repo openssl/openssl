@@ -334,10 +334,13 @@ static int bio_write_intern(BIO *b, const void *data, size_t dlen,
 {
     int ret;
 
-    if (b == NULL) {
-        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
-        return -1;
-    }
+    /*
+     * This check does not raise an error here because many existing
+     * callers of this method do not check the return value.
+     */
+    if (b == NULL)
+        return 0;
+
     if (b->method == NULL || b->method->bwrite == NULL) {
         ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_METHOD);
         return -2;
