@@ -505,8 +505,8 @@ static EVP_PKEY *d2i_PUBKEY_int(EVP_PKEY **a,
 }
 
 /* For the algorithm specific d2i functions further down */
-static EVP_PKEY *d2i_PUBKEY_legacy(EVP_PKEY **a,
-                                   const unsigned char **pp, long length)
+EVP_PKEY *ossl_d2i_PUBKEY_legacy(EVP_PKEY **a, const unsigned char **pp,
+                                 long length)
 {
     return d2i_PUBKEY_int(a, pp, length, NULL, NULL, 1, d2i_X509_PUBKEY);
 }
@@ -583,7 +583,7 @@ RSA *d2i_RSA_PUBKEY(RSA **a, const unsigned char **pp, long length)
     const unsigned char *q;
 
     q = *pp;
-    pkey = d2i_PUBKEY_legacy(NULL, &q, length);
+    pkey = ossl_d2i_PUBKEY_legacy(NULL, &q, length);
     if (pkey == NULL)
         return NULL;
     key = EVP_PKEY_get1_RSA(pkey);
@@ -624,7 +624,7 @@ DH *ossl_d2i_DH_PUBKEY(DH **a, const unsigned char **pp, long length)
     const unsigned char *q;
 
     q = *pp;
-    pkey = d2i_PUBKEY_legacy(NULL, &q, length);
+    pkey = ossl_d2i_PUBKEY_legacy(NULL, &q, length);
     if (pkey == NULL)
         return NULL;
     if (EVP_PKEY_get_id(pkey) == EVP_PKEY_DH)
@@ -665,7 +665,7 @@ DH *ossl_d2i_DHx_PUBKEY(DH **a, const unsigned char **pp, long length)
     const unsigned char *q;
 
     q = *pp;
-    pkey = d2i_PUBKEY_legacy(NULL, &q, length);
+    pkey = ossl_d2i_PUBKEY_legacy(NULL, &q, length);
     if (pkey == NULL)
         return NULL;
     if (EVP_PKEY_get_id(pkey) == EVP_PKEY_DHX)
@@ -708,7 +708,7 @@ DSA *d2i_DSA_PUBKEY(DSA **a, const unsigned char **pp, long length)
     const unsigned char *q;
 
     q = *pp;
-    pkey = d2i_PUBKEY_legacy(NULL, &q, length);
+    pkey = ossl_d2i_PUBKEY_legacy(NULL, &q, length);
     if (pkey == NULL)
         return NULL;
     key = EVP_PKEY_get1_DSA(pkey);
@@ -751,7 +751,7 @@ EC_KEY *d2i_EC_PUBKEY(EC_KEY **a, const unsigned char **pp, long length)
     int type;
 
     q = *pp;
-    pkey = d2i_PUBKEY_legacy(NULL, &q, length);
+    pkey = ossl_d2i_PUBKEY_legacy(NULL, &q, length);
     if (pkey == NULL)
         return NULL;
     type = EVP_PKEY_get_id(pkey);
@@ -794,7 +794,7 @@ ECX_KEY *ossl_d2i_ED25519_PUBKEY(ECX_KEY **a,
     const unsigned char *q;
 
     q = *pp;
-    pkey = d2i_PUBKEY_legacy(NULL, &q, length);
+    pkey = ossl_d2i_PUBKEY_legacy(NULL, &q, length);
     if (pkey == NULL)
         return NULL;
     key = ossl_evp_pkey_get1_ED25519(pkey);
@@ -835,7 +835,7 @@ ECX_KEY *ossl_d2i_ED448_PUBKEY(ECX_KEY **a,
     const unsigned char *q;
 
     q = *pp;
-    pkey = d2i_PUBKEY_legacy(NULL, &q, length);
+    pkey = ossl_d2i_PUBKEY_legacy(NULL, &q, length);
     if (pkey == NULL)
         return NULL;
     if (EVP_PKEY_get_id(pkey) == EVP_PKEY_ED448)
@@ -877,7 +877,7 @@ ECX_KEY *ossl_d2i_X25519_PUBKEY(ECX_KEY **a,
     const unsigned char *q;
 
     q = *pp;
-    pkey = d2i_PUBKEY_legacy(NULL, &q, length);
+    pkey = ossl_d2i_PUBKEY_legacy(NULL, &q, length);
     if (pkey == NULL)
         return NULL;
     if (EVP_PKEY_get_id(pkey) == EVP_PKEY_X25519)
@@ -919,7 +919,7 @@ ECX_KEY *ossl_d2i_X448_PUBKEY(ECX_KEY **a,
     const unsigned char *q;
 
     q = *pp;
-    pkey = d2i_PUBKEY_legacy(NULL, &q, length);
+    pkey = ossl_d2i_PUBKEY_legacy(NULL, &q, length);
     if (pkey == NULL)
         return NULL;
     if (EVP_PKEY_get_id(pkey) == EVP_PKEY_X448)
