@@ -335,8 +335,8 @@ static int bio_write_intern(BIO *b, const void *data, size_t dlen,
     int ret;
 
     /*
-     * This check does not raise an error here because many existing
-     * callers of this method do not check the return value.
+     * b == NULL is not an error but just means that zero bytes are written.
+     * Do not raise an error here.
      */
     if (b == NULL)
         return 0;
