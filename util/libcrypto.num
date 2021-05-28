@@ -4632,7 +4632,7 @@ EVP_MD_get0_name                        4759	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_get0_name                    4760	3_0_0	EXIST::FUNCTION:
 EVP_MD_get0_provider                    4761	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_get0_provider                4762	3_0_0	EXIST::FUNCTION:
-OSSL_PROVIDER_name                      4763	3_0_0	EXIST::FUNCTION:
+OSSL_PROVIDER_get0_name                 4763	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_do_all_provided              4764	3_0_0	EXIST::FUNCTION:
 EVP_MD_do_all_provided                  4765	3_0_0	EXIST::FUNCTION:
 EVP_KEYEXCH_get0_provider               4766	3_0_0	EXIST::FUNCTION:
