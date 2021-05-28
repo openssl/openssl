@@ -1231,8 +1231,7 @@ providers/fips.module.sources.new: configdata.pm
 		   crypto/ec/asm/*.pl \
 		   crypto/modes/asm/*.pl \
 		   crypto/sha/asm/*.pl \
-		   crypto/x86_64cpuid.pl \
-	           providers/common/der/*.in; do \
+		   crypto/x86_64cpuid.pl; do \
 	    echo "$$x"; \
 	  done \
 	) | sort | uniq > providers/fips.module.sources.new
