@@ -13,16 +13,18 @@ EVP_MD_CTX_set_flags, EVP_MD_CTX_clear_flags, EVP_MD_CTX_test_flags,
 EVP_Q_digest, EVP_Digest, EVP_DigestInit_ex2, EVP_DigestInit_ex, EVP_DigestInit,
 EVP_DigestUpdate, EVP_DigestFinal_ex, EVP_DigestFinalXOF, EVP_DigestFinal,
 EVP_MD_is_a, EVP_MD_get0_name, EVP_MD_get0_description, EVP_MD_get_number,
-EVP_MD_names_do_all, EVP_MD_get0_provider,
-EVP_MD_get_type, EVP_MD_get_pkey_type, EVP_MD_get_size, EVP_MD_get_block_size, EVP_MD_get_flags,
-EVP_MD_CTX_get0_name,
-EVP_MD_CTX_md, EVP_MD_CTX_get0_md, EVP_MD_CTX_get1_md,
+EVP_MD_names_do_all, EVP_MD_get0_provider, EVP_MD_get_type,
+EVP_MD_get_pkey_type, EVP_MD_get_size, EVP_MD_get_block_size, EVP_MD_get_flags,
+EVP_MD_CTX_get0_name, EVP_MD_CTX_md, EVP_MD_CTX_get0_md, EVP_MD_CTX_get1_md,
 EVP_MD_CTX_get_type, EVP_MD_CTX_get_size, EVP_MD_CTX_get_block_size,
 EVP_MD_CTX_get0_md_data, EVP_MD_CTX_update_fn, EVP_MD_CTX_set_update_fn,
 EVP_md_null,
 EVP_get_digestbyname, EVP_get_digestbynid, EVP_get_digestbyobj,
 EVP_MD_CTX_get_pkey_ctx, EVP_MD_CTX_set_pkey_ctx,
-EVP_MD_do_all_provided
+EVP_MD_do_all_provided,
+EVP_MD_type, EVP_MD_nid, EVP_MD_name, EVP_MD_pkey_type, EVP_MD_size,
+EVP_MD_block_size, EVP_MD_flags, EVP_MD_CTX_size, EVP_MD_CTX_block_size,
+EVP_MD_CTX_type, EVP_MD_CTX_pkey_ctx, EVP_MD_CTX_md_data
 - EVP digest routines
 
 =head1 SYNOPSIS
@@ -102,6 +104,19 @@ EVP_MD_do_all_provided
  void EVP_MD_do_all_provided(OSSL_LIB_CTX *libctx,
                              void (*fn)(EVP_MD *mac, void *arg),
                              void *arg);
+
+ #define EVP_MD_type EVP_MD_get_type
+ #define EVP_MD_nid EVP_MD_get_type
+ #define EVP_MD_name EVP_MD_get0_name
+ #define EVP_MD_pkey_type EVP_MD_get_pkey_type
+ #define EVP_MD_size EVP_MD_get_size
+ #define EVP_MD_block_size EVP_MD_get_block_size
+ #define EVP_MD_flags EVP_MD_get_flags
+ #define EVP_MD_CTX_size EVP_MD_CTX_get_size
+ #define EVP_MD_CTX_block_size EVP_MD_CTX_get_block_size
+ #define EVP_MD_CTX_type EVP_MD_CTX_get_type
+ #define EVP_MD_CTX_pkey_ctx EVP_MD_CTX_get_pkey_ctx
+ #define EVP_MD_CTX_md_data EVP_MD_CTX_get0_md_data
 
 Deprecated since OpenSSL 3.0, can be hidden entirely by defining
 B<OPENSSL_API_COMPAT> with a suitable version value, see
@@ -717,6 +732,13 @@ EVP_MD_get_params(), EVP_MD_CTX_set_params(), EVP_MD_CTX_get_params(),
 EVP_MD_gettable_params(), EVP_MD_gettable_ctx_params(),
 EVP_MD_settable_ctx_params(), EVP_MD_CTX_settable_params() and
 EVP_MD_CTX_gettable_params() functions were added in OpenSSL 3.0.
+
+The EVP_MD_type(), EVP_MD_nid(), EVP_MD_name(), EVP_MD_pkey_type(),
+EVP_MD_size(), EVP_MD_block_size(), EVP_MD_flags(), EVP_MD_CTX_size(),
+EVP_MD_CTX_block_size(), EVP_MD_CTX_type(), and EVP_MD_CTX_md_data()
+functions were renamed to include C<get> or C<get0> in their names in
+OpenSSL 3.0, respectively. The old names are kept as non-deprecated
+alias macros.
 
 The EVP_MD_CTX_md() function was deprecated in OpenSSL 3.0; use
 EVP_MD_CTX_get0_md() instead.

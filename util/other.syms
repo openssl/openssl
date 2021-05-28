@@ -626,3 +626,37 @@ OSSL_TRACE9                             define
 TS_VERIFY_CTS_set_certs                 define deprecated 3.0.0
 EVP_PKEY_get1_tls_encodedpoint          define deprecated 3.0.0
 EVP_PKEY_set1_tls_encodedpoint          define deprecated 3.0.0
+EVP_MD_type                             define
+EVP_MD_nid                              define
+EVP_MD_name                             define
+EVP_MD_pkey_type                        define
+EVP_MD_size                             define
+EVP_MD_block_size                       define
+EVP_MD_flags                            define
+EVP_MD_CTX_size                         define
+EVP_MD_CTX_block_size                   define
+EVP_MD_CTX_type                         define
+EVP_MD_CTX_pkey_ctx                     define
+EVP_MD_CTX_md_data                      define
+EVP_CIPHER_nid                          define
+EVP_CIPHER_name                         define
+EVP_CIPHER_block_size                   define
+EVP_CIPHER_key_length                   define
+EVP_CIPHER_iv_length                    define
+EVP_CIPHER_flags                        define
+EVP_CIPHER_mode                         define
+EVP_CIPHER_type                         define
+EVP_CIPHER_CTX_encrypting               define
+EVP_CIPHER_CTX_nid                      define
+EVP_CIPHER_CTX_block_size               define
+EVP_CIPHER_CTX_key_length               define
+EVP_CIPHER_CTX_iv_length                define
+EVP_CIPHER_CTX_tag_length               define
+EVP_CIPHER_CTX_num                      define
+EVP_CIPHER_CTX_type                     define
+EVP_CIPHER_CTX_mode                     define
+EVP_PKEY_bits                           define
+EVP_PKEY_security_bits                  define
+EVP_PKEY_size                           define
+EVP_PKEY_id                             define
+EVP_PKEY_base_id                        define

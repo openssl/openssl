@@ -104,6 +104,13 @@ breaking changes, and mappings for the large list of deprecated functions.
 
    *Shane Lontis*
 
+ * Many functions in the EVP_ namespace that are getters of values from
+   implementations or contexts were renamed to include get or get0 in their
+   names. Old names are provided as macro aliases for compatibility and
+   are not deprecated.
+
+   *Tomáš Mráz*
+
  * The EVP_PKEY_CTRL_PKCS7_ENCRYPT, EVP_PKEY_CTRL_PKCS7_DECRYPT,
    EVP_PKEY_CTRL_PKCS7_SIGN, EVP_PKEY_CTRL_CMS_ENCRYPT,
    EVP_PKEY_CTRL_CMS_DECRYPT, and EVP_PKEY_CTRL_CMS_SIGN control operations
