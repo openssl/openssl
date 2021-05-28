@@ -2738,7 +2738,7 @@ int tls_construct_certificate_request(SSL *s, WPACKET *pkt)
                 return 0;
             }
             if (RAND_bytes_ex(s->ctx->libctx, s->pha_context,
-                                     s->pha_context_len) <= 0
+                                     s->pha_context_len, 0) <= 0
                     || !WPACKET_sub_memcpy_u8(pkt, s->pha_context,
                                               s->pha_context_len)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -3778,7 +3778,7 @@ static int construct_stateless_ticket(SSL *s, WPACKET *pkt, uint32_t age_add,
         }
 
         iv_len = EVP_CIPHER_iv_length(cipher);
-        if (RAND_bytes_ex(s->ctx->libctx, iv, iv_len) <= 0
+        if (RAND_bytes_ex(s->ctx->libctx, iv, iv_len, 0) <= 0
                 || !EVP_EncryptInit_ex(ctx, cipher, NULL,
                                        tctx->ext.secure->tick_aes_key, iv)
                 || !ssl_hmac_init(hctx, tctx->ext.secure->tick_hmac_key,
@@ -3905,7 +3905,7 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
             goto err;
         }
         if (RAND_bytes_ex(s->ctx->libctx, age_add_u.age_add_c,
-                          sizeof(age_add_u)) <= 0) {
+                          sizeof(age_add_u), 0) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
         }
