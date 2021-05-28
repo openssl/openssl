@@ -21,19 +21,19 @@ BIO_gets, BIO_get_line, BIO_puts
 
 =head1 DESCRIPTION
 
-BIO_read_ex() attempts to read B<dlen> bytes from BIO B<b> and places the data
-in B<data>. If any bytes were successfully read then the number of bytes read is
-stored in B<*readbytes>.
+BIO_read_ex() attempts to read I<dlen> bytes from BIO I<b> and places the data
+in I<data>. If any bytes were successfully read then the number of bytes read is
+stored in I<*readbytes>.
 
-BIO_write_ex() attempts to write B<dlen> bytes from B<data> to BIO B<b>. If
-successful then the number of bytes written is stored in B<*written>.
+BIO_write_ex() attempts to write I<dlen> bytes from I<data> to BIO I<b>. If
+successful then the number of bytes written is stored in I<*written>.
 
-BIO_read() attempts to read B<len> bytes from BIO B<b> and places
-the data in B<buf>.
+BIO_read() attempts to read I<len> bytes from BIO I<b> and places
+the data in I<buf>.
 
 BIO_gets() performs the BIOs "gets" operation and places the data
-in B<buf>. Usually this operation will attempt to read a line of data
-from the BIO of maximum length B<size-1>. There are exceptions to this,
+in I<buf>. Usually this operation will attempt to read a line of data
+from the BIO of maximum length I<size-1>. There are exceptions to this,
 however; for example, BIO_gets() on a digest BIO will calculate and
 return the digest and other BIOs may not support BIO_gets() at all.
 The returned string is always NUL-terminated and the '\n' is preserved
@@ -42,21 +42,23 @@ On binary input there may be NUL characters within the string;
 in this case the return value (if nonnegative) may give an incorrect length.
 
 BIO_get_line() attempts to read from BIO <b> a line of data up to the next '\n'
-or the maximum length B<size-1> is reached and places the data in B<buf>.
+or the maximum length I<size-1> is reached and places the data in I<buf>.
 The returned string is always NUL-terminated and the '\n' is preserved
 if present in the input data.
 On binary input there may be NUL characters within the string;
 in this case the return value (if nonnegative) gives the actual length read.
 For implementing this, unfortunately the data needs to be read byte-by-byte.
 
-BIO_write() attempts to write B<len> bytes from B<buf> to BIO B<b>.
+BIO_write() attempts to write I<len> bytes from I<buf> to BIO I<b>.
 
-BIO_puts() attempts to write a NUL-terminated string B<buf> to BIO B<b>.
+BIO_puts() attempts to write a NUL-terminated string I<buf> to BIO I<b>.
 
 =head1 RETURN VALUES
 
 BIO_read_ex() and BIO_write_ex() return 1 if data was successfully read or
 written, and 0 otherwise.
+
+BIO_write() and BIO_write_ex() return 0 if the BIO I<b> is NULL.
 
 BIO_gets() returns -2 if the "gets" operation is not implemented by the BIO
 or -1 on other errors.
