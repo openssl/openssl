@@ -202,6 +202,12 @@ L<openssl_user_macros(7)>:
 
  const EVP_CIPHER *EVP_CIPHER_CTX_cipher(const EVP_CIPHER_CTX *ctx);
 
+Deprecated since OpenSSL 1.1.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
+ int EVP_CIPHER_CTX_flags(const EVP_CIPHER_CTX *ctx);
+
 =head1 DESCRIPTION
 
 The EVP cipher routines are a high-level interface to certain
@@ -526,13 +532,18 @@ for a list of currently defined flags.
 
 =item EVP_CIPHER_CTX_get_num() and EVP_CIPHER_CTX_set_num()
 
-Respectively gets or sets the cipher specific "num" parameter for the associated I<ctx>.
+Gets or sets the cipher specific "num" parameter for the associated I<ctx>.
 Built-in ciphers typically use this to track how much of the current underlying block
 has been "used" already.
 
 =item EVP_CIPHER_CTX_is_encrypting()
 
 Reports whether the I<ctx> is being used for encryption or decryption.
+
+=item EVP_CIPHER_CTX_flags()
+
+A deprecated macro calling C<EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(ctx))>.
+Do not use.
 
 =item EVP_CIPHER_param_to_asn1()
 
@@ -1159,7 +1170,7 @@ B<EVP_CTRL_RET_UNSUPPORTED> if the implementation does not support the call
 or on any other error.
 
 EVP_CIPHER_CTX_set_num() returns 1 on success and 0 if the implementation
-does not support the cal or on any other error.
+does not support the call or on any other error.
 
 EVP_CIPHER_CTX_is_encrypting() returns 1 if the I<ctx> is set up for encryption
 0 otherwise.
@@ -1603,6 +1614,8 @@ EVP_CIPHER_CTX_get_params(), EVP_CIPHER_gettable_params(),
 EVP_CIPHER_settable_ctx_params(), EVP_CIPHER_gettable_ctx_params(),
 EVP_CIPHER_CTX_settable_params() and EVP_CIPHER_CTX_gettable_params()
 functions were added in 3.0.
+
+The EVP_CIPHER_CTX_flags() macro was deprecated in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
