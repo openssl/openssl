@@ -463,14 +463,12 @@ static int try_cert(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
             ignore_trusted = 0;
 
         if (d2i_X509_AUX(&cert, (const unsigned char **)&data->octet_data,
-                         data->octet_data_size) == NULL) {
-            if (ignore_trusted
-                    && d2i_X509(&cert,
-                                (const unsigned char **)&data->octet_data,
-                                data->octet_data_size) == NULL) {
-                X509_free(cert);
-                cert = NULL;
-            }
+                         data->octet_data_size) == NULL
+            && (!ignore_trusted
+                || d2i_X509(&cert, (const unsigned char **)&data->octet_data,
+                            data->octet_data_size) == NULL)) {
+            X509_free(cert);
+            cert = NULL;
         }
 
         if (cert != NULL) {
