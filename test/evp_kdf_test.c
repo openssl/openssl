@@ -19,13 +19,19 @@
 #include "internal/numbers.h"
 #include "testutil.h"
 
-static EVP_KDF_CTX *get_kdfbyname(const char *name)
+
+static EVP_KDF_CTX *get_kdfbyname_libctx(OSSL_LIB_CTX *libctx, const char *name)
 {
-    EVP_KDF *kdf = EVP_KDF_fetch(NULL, name, NULL);
+    EVP_KDF *kdf = EVP_KDF_fetch(libctx, name, NULL);
     EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
 
     EVP_KDF_free(kdf);
     return kctx;
+}
+
+static EVP_KDF_CTX *get_kdfbyname(const char *name)
+{
+    return get_kdfbyname_libctx(NULL, name);
 }
 
 static OSSL_PARAM *construct_tls1_prf_params(const char *digest, const char *secret,
@@ -346,7 +352,8 @@ static int test_kdf_pbkdf1(void)
     EVP_KDF_CTX *kctx = NULL;
     unsigned char out[25];
     unsigned int iterations = 4096;
-    OSSL_PARAM *params;
+    OSSL_LIB_CTX *libctx = NULL;
+    OSSL_PARAM *params = NULL;
     OSSL_PROVIDER *prov = NULL;
     const unsigned char expected[sizeof(out)] = {
         0xfb, 0x83, 0x4d, 0x36, 0x6d, 0xbc, 0x53, 0x87, 0x35, 0x1b, 0x34, 0x75,
@@ -354,8 +361,11 @@ static int test_kdf_pbkdf1(void)
         0xcc
     };
 
+    if (!TEST_ptr(libctx = OSSL_LIB_CTX_new()))
+        goto err;
+
     /* PBKDF1 only available in the legacy provider */
-    prov = OSSL_PROVIDER_load(NULL, "legacy");
+    prov = OSSL_PROVIDER_load(libctx, "legacy");
     if (prov == NULL)
         return TEST_skip("PBKDF1 only available in legacy provider");
 
@@ -364,7 +374,7 @@ static int test_kdf_pbkdf1(void)
                                      &iterations);
 
     if (!TEST_ptr(params)
-        || !TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_PBKDF1))
+        || !TEST_ptr(kctx = get_kdfbyname_libctx(libctx, OSSL_KDF_NAME_PBKDF1))
         || !TEST_true(EVP_KDF_CTX_set_params(kctx, params))
         || !TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out), NULL), 0)
         || !TEST_mem_eq(out, sizeof(out), expected, sizeof(expected)))
@@ -375,6 +385,7 @@ err:
     EVP_KDF_CTX_free(kctx);
     OPENSSL_free(params);
     OSSL_PROVIDER_unload(prov);
+    OSSL_LIB_CTX_free(libctx);
     return ret;
 }
 
@@ -1455,6 +1466,7 @@ static int test_kdf_krb5kdf(void)
 
 int setup_tests(void)
 {
+    ADD_TEST(test_kdf_pbkdf1);
 #if !defined(OPENSSL_NO_CMAC) && !defined(OPENSSL_NO_CAMELLIA)
     ADD_TEST(test_kdf_kbkdf_6803_128);
     ADD_TEST(test_kdf_kbkdf_6803_256);
@@ -1483,7 +1495,6 @@ int setup_tests(void)
     ADD_TEST(test_kdf_hkdf_empty_key);
     ADD_TEST(test_kdf_hkdf_1byte_key);
     ADD_TEST(test_kdf_hkdf_empty_salt);
-    ADD_TEST(test_kdf_pbkdf1);
     ADD_TEST(test_kdf_pbkdf2);
     ADD_TEST(test_kdf_pbkdf2_small_output);
     ADD_TEST(test_kdf_pbkdf2_large_output);
