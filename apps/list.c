@@ -36,7 +36,7 @@ static const char *select_name = NULL;
     {                                                           \
         TYPE *impl;                                             \
         const char *propq = app_get0_propq();                   \
-        const char *name = TYPE ## _name(alg);                  \
+        const char *name = TYPE ## _get0_name(alg);             \
                                                                 \
         ERR_set_mark();                                         \
         impl = TYPE ## _fetch(NULL, name, propq);               \
@@ -389,7 +389,7 @@ DEFINE_STACK_OF(EVP_RAND)
 
 static int rand_cmp(const EVP_RAND * const *a, const EVP_RAND * const *b)
 {
-    int ret = strcasecmp(EVP_RAND_get0_name(*a), EVP_RAND_name(*b));
+    int ret = strcasecmp(EVP_RAND_get0_name(*a), EVP_RAND_get0_name(*b));
 
     if (ret == 0)
         ret = strcmp(OSSL_PROVIDER_name(EVP_RAND_get0_provider(*a)),
@@ -520,7 +520,7 @@ DEFINE_STACK_OF(OSSL_ENCODER)
 static int encoder_cmp(const OSSL_ENCODER * const *a,
                        const OSSL_ENCODER * const *b)
 {
-    int ret = OSSL_ENCODER_get_number(*a) - OSSL_ENCODER_number(*b);
+    int ret = OSSL_ENCODER_get_number(*a) - OSSL_ENCODER_get_number(*b);
 
     if (ret == 0)
         ret = strcmp(OSSL_PROVIDER_name(OSSL_ENCODER_get0_provider(*a)),
@@ -588,7 +588,7 @@ DEFINE_STACK_OF(OSSL_DECODER)
 static int decoder_cmp(const OSSL_DECODER * const *a,
                        const OSSL_DECODER * const *b)
 {
-    int ret = OSSL_DECODER_get_number(*a) - OSSL_DECODER_number(*b);
+    int ret = OSSL_DECODER_get_number(*a) - OSSL_DECODER_get_number(*b);
 
     if (ret == 0)
         ret = strcmp(OSSL_PROVIDER_name(OSSL_DECODER_get0_provider(*a)),
@@ -654,7 +654,7 @@ DEFINE_STACK_OF(EVP_KEYMGMT)
 static int keymanager_cmp(const EVP_KEYMGMT * const *a,
                           const EVP_KEYMGMT * const *b)
 {
-    int ret = EVP_KEYMGMT_get_number(*a) - EVP_KEYMGMT_number(*b);
+    int ret = EVP_KEYMGMT_get_number(*a) - EVP_KEYMGMT_get_number(*b);
 
     if (ret == 0)
         ret = strcmp(OSSL_PROVIDER_name(EVP_KEYMGMT_get0_provider(*a)),
@@ -720,7 +720,7 @@ DEFINE_STACK_OF(EVP_SIGNATURE)
 static int signature_cmp(const EVP_SIGNATURE * const *a,
                          const EVP_SIGNATURE * const *b)
 {
-    int ret = EVP_SIGNATURE_get_number(*a) - EVP_SIGNATURE_number(*b);
+    int ret = EVP_SIGNATURE_get_number(*a) - EVP_SIGNATURE_get_number(*b);
 
     if (ret == 0)
         ret = strcmp(OSSL_PROVIDER_name(EVP_SIGNATURE_get0_provider(*a)),
@@ -783,7 +783,7 @@ DEFINE_STACK_OF(EVP_KEM)
 static int kem_cmp(const EVP_KEM * const *a,
                    const EVP_KEM * const *b)
 {
-    int ret = EVP_KEM_get_number(*a) - EVP_KEM_number(*b);
+    int ret = EVP_KEM_get_number(*a) - EVP_KEM_get_number(*b);
 
     if (ret == 0)
         ret = strcmp(OSSL_PROVIDER_name(EVP_KEM_get0_provider(*a)),
@@ -846,7 +846,7 @@ DEFINE_STACK_OF(EVP_ASYM_CIPHER)
 static int asymcipher_cmp(const EVP_ASYM_CIPHER * const *a,
                           const EVP_ASYM_CIPHER * const *b)
 {
-    int ret = EVP_ASYM_CIPHER_get_number(*a) - EVP_ASYM_CIPHER_number(*b);
+    int ret = EVP_ASYM_CIPHER_get_number(*a) - EVP_ASYM_CIPHER_get_number(*b);
 
     if (ret == 0)
         ret = strcmp(OSSL_PROVIDER_name(EVP_ASYM_CIPHER_get0_provider(*a)),
@@ -911,7 +911,7 @@ DEFINE_STACK_OF(EVP_KEYEXCH)
 static int kex_cmp(const EVP_KEYEXCH * const *a,
                    const EVP_KEYEXCH * const *b)
 {
-    int ret = EVP_KEYEXCH_get_number(*a) - EVP_KEYEXCH_number(*b);
+    int ret = EVP_KEYEXCH_get_number(*a) - EVP_KEYEXCH_get_number(*b);
 
     if (ret == 0)
         ret = strcmp(OSSL_PROVIDER_name(EVP_KEYEXCH_get0_provider(*a)),
@@ -1196,7 +1196,7 @@ DEFINE_STACK_OF(OSSL_STORE_LOADER)
 static int store_cmp(const OSSL_STORE_LOADER * const *a,
                      const OSSL_STORE_LOADER * const *b)
 {
-    int ret = OSSL_STORE_LOADER_get_number(*a) - OSSL_STORE_LOADER_number(*b);
+    int ret = OSSL_STORE_LOADER_get_number(*a) - OSSL_STORE_LOADER_get_number(*b);
 
     if (ret == 0)
         ret = strcmp(OSSL_PROVIDER_name(OSSL_STORE_LOADER_get0_provider(*a)),
