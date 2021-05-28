@@ -1615,6 +1615,20 @@ EVP_CIPHER_settable_ctx_params(), EVP_CIPHER_gettable_ctx_params(),
 EVP_CIPHER_CTX_settable_params() and EVP_CIPHER_CTX_gettable_params()
 functions were added in 3.0.
 
+The EVP_CIPHER_nid(), EVP_CIPHER_name(), EVP_CIPHER_block_size(),
+EVP_CIPHER_key_length(), EVP_CIPHER_iv_length(), EVP_CIPHER_flags(),
+EVP_CIPHER_mode(), EVP_CIPHER_type(), EVP_CIPHER_CTX_nid(),
+EVP_CIPHER_CTX_block_size(), EVP_CIPHER_CTX_key_length(),
+EVP_CIPHER_CTX_iv_length(), EVP_CIPHER_CTX_tag_length(),
+EVP_CIPHER_CTX_num(), EVP_CIPHER_CTX_type(), and EVP_CIPHER_CTX_mode()
+functions were renamed to include C<get> or C<get0> in their names in
+OpenSSL 3.0, respectively. The old names are kept as non-deprecated
+alias macros.
+
+The EVP_CIPHER_CTX_encrypting() function was renamed to
+EVP_CIPHER_CTX_is_encrypting() in OpenSSL 3.0. The old name is kept as
+non-deprecated alias macro.
+
 The EVP_CIPHER_CTX_flags() macro was deprecated in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT

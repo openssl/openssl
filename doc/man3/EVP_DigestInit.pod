@@ -718,6 +718,13 @@ EVP_MD_gettable_params(), EVP_MD_gettable_ctx_params(),
 EVP_MD_settable_ctx_params(), EVP_MD_CTX_settable_params() and
 EVP_MD_CTX_gettable_params() functions were added in OpenSSL 3.0.
 
+The EVP_MD_type(), EVP_MD_nid(), EVP_MD_name(), EVP_MD_pkey_type(),
+EVP_MD_size(), EVP_MD_block_size(), EVP_MD_flags(), EVP_MD_CTX_size(),
+EVP_MD_CTX_block_size(), EVP_MD_CTX_type(), and EVP_MD_CTX_md_data()
+functions were renamed to include C<get> or C<get0> in their names in
+OpenSSL 3.0, respectively. The old names are kept as non-deprecated
+alias macros.
+
 The EVP_MD_CTX_md() function was deprecated in OpenSSL 3.0; use
 EVP_MD_CTX_get0_md() instead.
 EVP_MD_CTX_update_fn() and EVP_MD_CTX_set_update_fn() were deprecated

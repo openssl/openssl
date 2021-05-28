@@ -198,6 +198,10 @@ L<EVP_PKEY_new(3)>, L<SM2(7)>
 
 =head1 HISTORY
 
+The EVP_PKEY_id() and EVP_PKEY_base_id() functions were renamed to
+include C<get> in their names in OpenSSL 3.0, respectively. The old names
+are kept as non-deprecated alias macros.
+
 EVP_PKEY_set1_RSA, EVP_PKEY_set1_DSA, EVP_PKEY_set1_DH, EVP_PKEY_set1_EC_KEY,
 EVP_PKEY_get1_RSA, EVP_PKEY_get1_DSA, EVP_PKEY_get1_DH, EVP_PKEY_get1_EC_KEY,
 EVP_PKEY_get0_RSA, EVP_PKEY_get0_DSA, EVP_PKEY_get0_DH, EVP_PKEY_get0_EC_KEY,
