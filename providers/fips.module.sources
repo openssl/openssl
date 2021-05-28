@@ -501,8 +501,6 @@ providers/common/der/der_rsa.h.in
 providers/common/der/der_rsa_gen.c.in
 providers/common/der/der_rsa_key.c
 providers/common/der/der_rsa_sig.c
-providers/common/der/der_sm2.h.in
-providers/common/der/der_sm2_gen.c.in
 providers/common/der/der_wrap.h.in
 providers/common/der/der_wrap_gen.c.in
 providers/common/digest_to_nid.c
