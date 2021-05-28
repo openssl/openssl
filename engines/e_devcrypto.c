@@ -207,7 +207,7 @@ static int cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     struct cipher_ctx *cipher_ctx =
         (struct cipher_ctx *)EVP_CIPHER_CTX_get_cipher_data(ctx);
     const struct cipher_data_st *cipher_d =
-        get_cipher_data(EVP_CIPHER_CTX_nid(ctx));
+        get_cipher_data(EVP_CIPHER_CTX_get_nid(ctx));
     int ret;
 
     /* cleanup a previous session */
@@ -260,12 +260,12 @@ static int cipher_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 #if !defined(COP_FLAG_WRITE_IV)
     cryp.flags = 0;
 
-    ivlen = EVP_CIPHER_CTX_iv_length(ctx);
+    ivlen = EVP_CIPHER_CTX_get_iv_length(ctx);
     if (ivlen > 0)
         switch (cipher_ctx->mode) {
         case EVP_CIPH_CBC_MODE:
             assert(inl >= ivlen);
-            if (!EVP_CIPHER_CTX_encrypting(ctx)) {
+            if (!EVP_CIPHER_CTX_is_encrypting(ctx)) {
                 ivptr = in + inl - ivlen;
                 memcpy(saved_iv, ivptr, ivlen);
             }
@@ -291,7 +291,7 @@ static int cipher_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         switch (cipher_ctx->mode) {
         case EVP_CIPH_CBC_MODE:
             assert(inl >= ivlen);
-            if (EVP_CIPHER_CTX_encrypting(ctx))
+            if (EVP_CIPHER_CTX_is_encrypting(ctx))
                 ivptr = out + inl - ivlen;
             else
                 ivptr = saved_iv;
@@ -610,7 +610,7 @@ static int cryptodev_select_cipher_cb(const char *str, int len, void *usr)
     EVP = EVP_get_cipherbyname(name);
     if (EVP == NULL)
         fprintf(stderr, "devcrypto: unknown cipher %s\n", name);
-    else if ((i = find_cipher_data_index(EVP_CIPHER_nid(EVP))) != (size_t)-1)
+    else if ((i = find_cipher_data_index(EVP_CIPHER_get_nid(EVP))) != (size_t)-1)
         cipher_list[i] = 1;
     else
         fprintf(stderr, "devcrypto: cipher %s not available\n", name);

@@ -70,10 +70,10 @@ static void legacy_cipher_fn(const EVP_CIPHER *c,
 {
     if (select_name != NULL
         && (c == NULL
-            || strcasecmp(select_name,  EVP_CIPHER_name(c)) != 0))
+            || strcasecmp(select_name,  EVP_CIPHER_get0_name(c)) != 0))
         return;
     if (c != NULL) {
-        BIO_printf(arg, "  %s\n", EVP_CIPHER_name(c));
+        BIO_printf(arg, "  %s\n", EVP_CIPHER_get0_name(c));
     } else {
         if (from == NULL)
             from = "<undefined>";
@@ -88,11 +88,11 @@ DEFINE_STACK_OF(EVP_CIPHER)
 static int cipher_cmp(const EVP_CIPHER * const *a,
                       const EVP_CIPHER * const *b)
 {
-    int ret = EVP_CIPHER_number(*a) - EVP_CIPHER_number(*b);
+    int ret = EVP_CIPHER_get_number(*a) - EVP_CIPHER_get_number(*b);
 
     if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_name(EVP_CIPHER_provider(*a)),
-                     OSSL_PROVIDER_name(EVP_CIPHER_provider(*b)));
+        ret = strcmp(OSSL_PROVIDER_name(EVP_CIPHER_get0_provider(*a)),
+                     OSSL_PROVIDER_name(EVP_CIPHER_get0_provider(*b)));
 
     return ret;
 }
@@ -138,10 +138,10 @@ static void list_ciphers(void)
             print_names(bio_out, names);
 
             BIO_printf(bio_out, " @ %s\n",
-                       OSSL_PROVIDER_name(EVP_CIPHER_provider(c)));
+                       OSSL_PROVIDER_name(EVP_CIPHER_get0_provider(c)));
 
             if (verbose) {
-                const char *desc = EVP_CIPHER_description(c);
+                const char *desc = EVP_CIPHER_get0_description(c);
 
                 if (desc != NULL)
                     BIO_printf(bio_out, "    description: %s\n", desc);

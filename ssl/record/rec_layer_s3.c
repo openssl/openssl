@@ -439,7 +439,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
             && !SSL_WRITE_ETM(s)
             && SSL_USE_EXPLICIT_IV(s)
             && BIO_get_ktls_send(s->wbio) == 0
-            && (EVP_CIPHER_flags(EVP_CIPHER_CTX_get0_cipher(s->enc_write_ctx))
+            && (EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(s->enc_write_ctx))
                 & EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK) != 0) {
         unsigned char aad[13];
         EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM mb_param;
@@ -588,7 +588,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
     }
     if (maxpipes == 0
         || s->enc_write_ctx == NULL
-        || (EVP_CIPHER_flags(EVP_CIPHER_CTX_get0_cipher(s->enc_write_ctx))
+        || (EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(s->enc_write_ctx))
             & EVP_CIPH_FLAG_PIPELINE) == 0
         || !SSL_USE_EXPLICIT_IV(s))
         maxpipes = 1;
@@ -831,10 +831,10 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 
     /* Explicit IV length, block ciphers appropriate version flag */
     if (s->enc_write_ctx && SSL_USE_EXPLICIT_IV(s) && !SSL_TREAT_AS_TLS13(s)) {
-        int mode = EVP_CIPHER_CTX_mode(s->enc_write_ctx);
+        int mode = EVP_CIPHER_CTX_get_mode(s->enc_write_ctx);
         if (mode == EVP_CIPH_CBC_MODE) {
             /* TODO(size_t): Convert me */
-            eivlen = EVP_CIPHER_CTX_iv_length(s->enc_write_ctx);
+            eivlen = EVP_CIPHER_CTX_get_iv_length(s->enc_write_ctx);
             if (eivlen <= 1)
                 eivlen = 0;
         } else if (mode == EVP_CIPH_GCM_MODE) {

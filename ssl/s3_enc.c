@@ -192,9 +192,9 @@ int ssl3_change_cipher_state(SSL *s, int which)
         goto err;
     }
     i = mdi;
-    cl = EVP_CIPHER_key_length(c);
+    cl = EVP_CIPHER_get_key_length(c);
     j = cl;
-    k = EVP_CIPHER_iv_length(c);
+    k = EVP_CIPHER_get_iv_length(c);
     if ((which == SSL3_CHANGE_CIPHER_CLIENT_WRITE) ||
         (which == SSL3_CHANGE_CIPHER_SERVER_READ)) {
         ms = &(p[0]);
@@ -225,7 +225,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
         goto err;
     }
 
-    if (EVP_CIPHER_provider(c) != NULL
+    if (EVP_CIPHER_get0_provider(c) != NULL
             && !tls_provider_set_tls_params(s, dd, c, m)) {
         /* SSLfatal already called */
         goto err;
@@ -270,7 +270,7 @@ int ssl3_setup_key_block(SSL *s)
     if (num < 0)
         return 0;
 
-    num = EVP_CIPHER_key_length(c) + num + EVP_CIPHER_iv_length(c);
+    num = EVP_CIPHER_get_key_length(c) + num + EVP_CIPHER_get_iv_length(c);
     num *= 2;
 
     ssl3_cleanup_key_block(s);

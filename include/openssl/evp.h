@@ -598,6 +598,8 @@ unsigned long EVP_CIPHER_get_flags(const EVP_CIPHER *cipher);
 #define EVP_CIPHER_flags EVP_CIPHER_get_flags
 int EVP_CIPHER_get_mode(const EVP_CIPHER *cipher);
 # define EVP_CIPHER_mode EVP_CIPHER_get_mode
+int EVP_CIPHER_get_type(const EVP_CIPHER *cipher);
+#define EVP_CIPHER_type EVP_CIPHER_get_type
 EVP_CIPHER *EVP_CIPHER_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                              const char *properties);
 int EVP_CIPHER_up_ref(EVP_CIPHER *cipher);
@@ -639,7 +641,7 @@ void *EVP_CIPHER_CTX_set_cipher_data(EVP_CIPHER_CTX *ctx, void *cipher_data);
 # define EVP_CIPHER_CTX_get_type(c)  EVP_CIPHER_get_type(EVP_CIPHER_CTX_get0_cipher(c))
 # define EVP_CIPHER_CTX_type         EVP_CIPHER_CTX_get_type
 # ifndef OPENSSL_NO_DEPRECATED_1_1_0
-#  define EVP_CIPHER_CTX_flags(c)    EVP_CIPHER_flags(EVP_CIPHER_CTX_get0_cipher(c))
+#  define EVP_CIPHER_CTX_flags(c)    EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(c))
 # endif
 # define EVP_CIPHER_CTX_get_mode(c)  EVP_CIPHER_get_mode(EVP_CIPHER_CTX_get0_cipher(c))
 # define EVP_CIPHER_CTX_mode         EVP_CIPHER_CTX_get_mode
@@ -1458,9 +1460,6 @@ int EVP_PKEY_set1_encoded_public_key(EVP_PKEY *pkey,
 # endif
 
 size_t EVP_PKEY_get1_encoded_public_key(EVP_PKEY *pkey, unsigned char **ppub);
-
-int EVP_CIPHER_get_type(const EVP_CIPHER *cipher);
-#define EVP_CIPHER_type EVP_CIPHER_get_type
 
 /* calls methods */
 int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type);

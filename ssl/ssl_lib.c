@@ -5898,7 +5898,7 @@ const EVP_CIPHER *ssl_evp_cipher_fetch(OSSL_LIB_CTX *libctx,
 int ssl_evp_cipher_up_ref(const EVP_CIPHER *cipher)
 {
     /* Don't up-ref an implicit EVP_CIPHER */
-    if (EVP_CIPHER_provider(cipher) == NULL)
+    if (EVP_CIPHER_get0_provider(cipher) == NULL)
         return 1;
 
     /*
@@ -5913,7 +5913,7 @@ void ssl_evp_cipher_free(const EVP_CIPHER *cipher)
     if (cipher == NULL)
         return;
 
-    if (EVP_CIPHER_provider(cipher) != NULL) {
+    if (EVP_CIPHER_get0_provider(cipher) != NULL) {
         /*
          * The cipher was explicitly fetched and therefore it is safe to cast
          * away the const

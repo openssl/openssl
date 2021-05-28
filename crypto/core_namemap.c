@@ -409,7 +409,7 @@ static void get_legacy_cipher_names(const OBJ_NAME *on, void *arg)
 {
     const EVP_CIPHER *cipher = (void *)OBJ_NAME_get(on->name, on->type);
 
-    get_legacy_evp_names(NID_undef, EVP_CIPHER_type(cipher), NULL, arg);
+    get_legacy_evp_names(NID_undef, EVP_CIPHER_get_type(cipher), NULL, arg);
 }
 
 static void get_legacy_md_names(const OBJ_NAME *on, void *arg)

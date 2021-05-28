@@ -103,7 +103,8 @@ static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder, int nid,
         ret = 1;
         if (enc != NULL) {
             ret = 0;
-            if (OSSL_ENCODER_CTX_set_cipher(ctx, EVP_CIPHER_name(enc), NULL)) {
+            if (OSSL_ENCODER_CTX_set_cipher(ctx, EVP_CIPHER_get0_name(enc),
+                                            NULL)) {
                 const unsigned char *ukstr = (const unsigned char *)kstr;
 
                 /*

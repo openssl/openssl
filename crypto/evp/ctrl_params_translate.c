@@ -710,7 +710,7 @@ cleanup_translation_ctx(enum state state,
  */
 static const char *get_cipher_name(void *cipher)
 {
-    return EVP_CIPHER_name(cipher);
+    return EVP_CIPHER_get0_name(cipher);
 }
 
 static const char *get_md_name(void *md)

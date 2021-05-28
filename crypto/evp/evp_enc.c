@@ -216,10 +216,10 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
         return ctx->cipher->einit(ctx->algctx,
                                   key,
                                   key == NULL ? 0
-                                              : EVP_CIPHER_CTX_key_length(ctx),
+                                              : EVP_CIPHER_CTX_get_key_length(ctx),
                                   iv,
                                   iv == NULL ? 0
-                                             : EVP_CIPHER_CTX_iv_length(ctx),
+                                             : EVP_CIPHER_CTX_get_iv_length(ctx),
                                   params);
     }
 
@@ -231,10 +231,10 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
     return ctx->cipher->dinit(ctx->algctx,
                               key,
                               key == NULL ? 0
-                                          : EVP_CIPHER_CTX_key_length(ctx),
+                                          : EVP_CIPHER_CTX_get_key_length(ctx),
                               iv,
                               iv == NULL ? 0
-                                         : EVP_CIPHER_CTX_iv_length(ctx),
+                                         : EVP_CIPHER_CTX_get_iv_length(ctx),
                                   params);
 
     /* Code below to be removed when legacy support is dropped. */
@@ -321,14 +321,14 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
                    || ctx->cipher->block_size == 16);
 
     if (!(ctx->flags & EVP_CIPHER_CTX_FLAG_WRAP_ALLOW)
-        && EVP_CIPHER_CTX_mode(ctx) == EVP_CIPH_WRAP_MODE) {
+        && EVP_CIPHER_CTX_get_mode(ctx) == EVP_CIPH_WRAP_MODE) {
         ERR_raise(ERR_LIB_EVP, EVP_R_WRAP_MODE_NOT_ALLOWED);
         return 0;
     }
 
-    if ((EVP_CIPHER_flags(EVP_CIPHER_CTX_get0_cipher(ctx))
+    if ((EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(ctx))
                 & EVP_CIPH_CUSTOM_IV) == 0) {
-        switch (EVP_CIPHER_CTX_mode(ctx)) {
+        switch (EVP_CIPHER_CTX_get_mode(ctx)) {
 
         case EVP_CIPH_STREAM_CIPHER:
         case EVP_CIPH_ECB_MODE:
@@ -341,19 +341,19 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
             /* fall-through */
 
         case EVP_CIPH_CBC_MODE:
-            n = EVP_CIPHER_CTX_iv_length(ctx);
+            n = EVP_CIPHER_CTX_get_iv_length(ctx);
             if (!ossl_assert(n >= 0 && n <= (int)sizeof(ctx->iv)))
                     return 0;
             if (iv)
-                memcpy(ctx->oiv, iv, EVP_CIPHER_CTX_iv_length(ctx));
-            memcpy(ctx->iv, ctx->oiv, EVP_CIPHER_CTX_iv_length(ctx));
+                memcpy(ctx->oiv, iv, EVP_CIPHER_CTX_get_iv_length(ctx));
+            memcpy(ctx->iv, ctx->oiv, EVP_CIPHER_CTX_get_iv_length(ctx));
             break;
 
         case EVP_CIPH_CTR_MODE:
             ctx->num = 0;
             /* Don't reuse IV for CTR mode */
             if (iv)
-                memcpy(ctx->iv, iv, EVP_CIPHER_CTX_iv_length(ctx));
+                memcpy(ctx->iv, iv, EVP_CIPHER_CTX_get_iv_length(ctx));
             break;
 
         default:
@@ -674,7 +674,7 @@ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
     if (ctx->cipher->prov == NULL)
         goto legacy;
 
-    blocksize = EVP_CIPHER_CTX_block_size(ctx);
+    blocksize = EVP_CIPHER_CTX_get_block_size(ctx);
 
     if (blocksize < 1 || ctx->cipher->cfinal == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
@@ -761,7 +761,7 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     if (ctx->cipher->prov == NULL)
         goto legacy;
 
-    blocksize = EVP_CIPHER_CTX_block_size(ctx);
+    blocksize = EVP_CIPHER_CTX_get_block_size(ctx);
 
     if (ctx->cipher->cupdate == NULL || blocksize < 1) {
         ERR_raise(ERR_LIB_EVP, EVP_R_UPDATE_ERROR);
@@ -896,7 +896,7 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
     if (ctx->cipher->prov == NULL)
         goto legacy;
 
-    blocksize = EVP_CIPHER_CTX_block_size(ctx);
+    blocksize = EVP_CIPHER_CTX_get_block_size(ctx);
 
     if (blocksize < 1 || ctx->cipher->cfinal == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
@@ -976,7 +976,7 @@ int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
         OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
         size_t len = keylen;
 
-        if (EVP_CIPHER_CTX_key_length(c) == keylen)
+        if (EVP_CIPHER_CTX_get_key_length(c) == keylen)
             return 1;
 
         /* Check the cipher actually understands this parameter */
@@ -998,7 +998,7 @@ int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
      */
     if (c->cipher->flags & EVP_CIPH_CUSTOM_KEY_LENGTH)
         return EVP_CIPHER_CTX_ctrl(c, EVP_CTRL_SET_KEY_LENGTH, keylen, NULL);
-    if (EVP_CIPHER_CTX_key_length(c) == keylen)
+    if (EVP_CIPHER_CTX_get_key_length(c) == keylen)
         return 1;
     if ((keylen > 0) && (c->cipher->flags & EVP_CIPH_VARIABLE_LENGTH)) {
         c->key_len = keylen;
@@ -1257,7 +1257,7 @@ const OSSL_PARAM *EVP_CIPHER_gettable_params(const EVP_CIPHER *cipher)
 {
     if (cipher != NULL && cipher->gettable_params != NULL)
         return cipher->gettable_params(
-                   ossl_provider_ctx(EVP_CIPHER_provider(cipher)));
+                   ossl_provider_ctx(EVP_CIPHER_get0_provider(cipher)));
     return NULL;
 }
 
@@ -1266,7 +1266,7 @@ const OSSL_PARAM *EVP_CIPHER_settable_ctx_params(const EVP_CIPHER *cipher)
     void *provctx;
 
     if (cipher != NULL && cipher->settable_ctx_params != NULL) {
-        provctx = ossl_provider_ctx(EVP_CIPHER_provider(cipher));
+        provctx = ossl_provider_ctx(EVP_CIPHER_get0_provider(cipher));
         return cipher->settable_ctx_params(NULL, provctx);
     }
     return NULL;
@@ -1277,7 +1277,7 @@ const OSSL_PARAM *EVP_CIPHER_gettable_ctx_params(const EVP_CIPHER *cipher)
     void *provctx;
 
     if (cipher != NULL && cipher->gettable_ctx_params != NULL) {
-        provctx = ossl_provider_ctx(EVP_CIPHER_provider(cipher));
+        provctx = ossl_provider_ctx(EVP_CIPHER_get0_provider(cipher));
         return cipher->gettable_ctx_params(NULL, provctx);
     }
     return NULL;
@@ -1288,7 +1288,7 @@ const OSSL_PARAM *EVP_CIPHER_CTX_settable_params(EVP_CIPHER_CTX *cctx)
     void *alg;
 
     if (cctx != NULL && cctx->cipher->settable_ctx_params != NULL) {
-        alg = ossl_provider_ctx(EVP_CIPHER_provider(cctx->cipher));
+        alg = ossl_provider_ctx(EVP_CIPHER_get0_provider(cctx->cipher));
         return cctx->cipher->settable_ctx_params(cctx->algctx, alg);
     }
     return NULL;
@@ -1299,7 +1299,7 @@ const OSSL_PARAM *EVP_CIPHER_CTX_gettable_params(EVP_CIPHER_CTX *cctx)
     void *provctx;
 
     if (cctx != NULL && cctx->cipher->gettable_ctx_params != NULL) {
-        provctx = ossl_provider_ctx(EVP_CIPHER_provider(cctx->cipher));
+        provctx = ossl_provider_ctx(EVP_CIPHER_get0_provider(cctx->cipher));
         return cctx->cipher->gettable_ctx_params(cctx->algctx, provctx);
     }
     return NULL;
@@ -1314,7 +1314,7 @@ static OSSL_LIB_CTX *EVP_CIPHER_CTX_get_libctx(EVP_CIPHER_CTX *ctx)
     if (cipher == NULL)
         return NULL;
 
-    prov = EVP_CIPHER_provider(cipher);
+    prov = EVP_CIPHER_get0_provider(cipher);
     return ossl_provider_libctx(prov);
 }
 #endif
@@ -1331,7 +1331,7 @@ int EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key)
         int kl;
         OSSL_LIB_CTX *libctx = EVP_CIPHER_CTX_get_libctx(ctx);
 
-        kl = EVP_CIPHER_CTX_key_length(ctx);
+        kl = EVP_CIPHER_CTX_get_key_length(ctx);
         if (kl <= 0 || RAND_priv_bytes_ex(libctx, key, kl, 0) <= 0)
             return 0;
         return 1;
@@ -1442,7 +1442,7 @@ static void set_legacy_nid(const char *name, void *vlegacy_nid)
         return;
     if (legacy_method == NULL)
         return;
-    nid = EVP_CIPHER_nid(legacy_method);
+    nid = EVP_CIPHER_get_nid(legacy_method);
     if (*legacy_nid != NID_undef && *legacy_nid != nid) {
         *legacy_nid = -1;
         return;

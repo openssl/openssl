@@ -1715,10 +1715,10 @@ int speed_main(int argc, char **argv)
         if (evp_cipher == NULL) {
             BIO_printf(bio_err, "-aead can be used only with an AEAD cipher\n");
             goto end;
-        } else if (!(EVP_CIPHER_flags(evp_cipher) &
+        } else if (!(EVP_CIPHER_get_flags(evp_cipher) &
                      EVP_CIPH_FLAG_AEAD_CIPHER)) {
             BIO_printf(bio_err, "%s is not an AEAD cipher\n",
-                       EVP_CIPHER_name(evp_cipher));
+                       EVP_CIPHER_get0_name(evp_cipher));
             goto end;
         }
     }
@@ -1727,10 +1727,10 @@ int speed_main(int argc, char **argv)
             BIO_printf(bio_err, "-mb can be used only with a multi-block"
                                 " capable cipher\n");
             goto end;
-        } else if (!(EVP_CIPHER_flags(evp_cipher) &
+        } else if (!(EVP_CIPHER_get_flags(evp_cipher) &
                      EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK)) {
             BIO_printf(bio_err, "%s is not a multi-block capable\n",
-                       EVP_CIPHER_name(evp_cipher));
+                       EVP_CIPHER_get0_name(evp_cipher));
             goto end;
         } else if (async_jobs > 0) {
             BIO_printf(bio_err, "Async mode is not supported with -mb");
@@ -2172,18 +2172,18 @@ int speed_main(int argc, char **argv)
         if (evp_cipher != NULL) {
             int (*loopfunc) (void *) = EVP_Update_loop;
 
-            if (multiblock && (EVP_CIPHER_flags(evp_cipher) &
+            if (multiblock && (EVP_CIPHER_get_flags(evp_cipher) &
                                EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK)) {
                 multiblock_speed(evp_cipher, lengths_single, &seconds);
                 ret = 0;
                 goto end;
             }
 
-            names[D_EVP] = EVP_CIPHER_name(evp_cipher);
+            names[D_EVP] = EVP_CIPHER_get0_name(evp_cipher);
 
-            if (EVP_CIPHER_mode(evp_cipher) == EVP_CIPH_CCM_MODE) {
+            if (EVP_CIPHER_get_mode(evp_cipher) == EVP_CIPH_CCM_MODE) {
                 loopfunc = EVP_Update_loop_ccm;
-            } else if (aead && (EVP_CIPHER_flags(evp_cipher) &
+            } else if (aead && (EVP_CIPHER_get_flags(evp_cipher) &
                                 EVP_CIPH_FLAG_AEAD_CIPHER)) {
                 loopfunc = EVP_Update_loop_aead;
                 if (lengths == lengths_list) {
@@ -2211,7 +2211,7 @@ int speed_main(int argc, char **argv)
 
                     EVP_CIPHER_CTX_set_padding(loopargs[k].ctx, 0);
 
-                    keylen = EVP_CIPHER_CTX_key_length(loopargs[k].ctx);
+                    keylen = EVP_CIPHER_CTX_get_key_length(loopargs[k].ctx);
                     loopargs[k].key = app_malloc(keylen, "evp_cipher key");
                     EVP_CIPHER_CTX_rand_key(loopargs[k].ctx, loopargs[k].key);
                     if (!EVP_CipherInit_ex(loopargs[k].ctx, NULL, NULL,
@@ -2223,7 +2223,7 @@ int speed_main(int argc, char **argv)
                     OPENSSL_clear_free(loopargs[k].key, keylen);
 
                     /* SIV mode only allows for a single Update operation */
-                    if (EVP_CIPHER_mode(evp_cipher) == EVP_CIPH_SIV_MODE)
+                    if (EVP_CIPHER_get_mode(evp_cipher) == EVP_CIPH_SIV_MODE)
                         EVP_CIPHER_CTX_ctrl(loopargs[k].ctx, EVP_CTRL_SET_SPEED,
                                             1, NULL);
                 }
@@ -2261,7 +2261,7 @@ int speed_main(int argc, char **argv)
         if (!opt_cipher(evp_mac_ciphername, &cipher))
             goto end;
 
-        keylen = EVP_CIPHER_key_length(cipher);
+        keylen = EVP_CIPHER_get_key_length(cipher);
         EVP_CIPHER_free(cipher);
         if (keylen <= 0 || keylen > (int)sizeof(key32)) {
             BIO_printf(bio_err, "\nRequested CMAC cipher with unsupported key length.\n");
@@ -3575,7 +3575,7 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
     if (!EVP_EncryptInit_ex(ctx, evp_cipher, NULL, NULL, no_iv))
         app_bail_out("failed to initialise cipher context\n");
 
-    if ((keylen = EVP_CIPHER_CTX_key_length(ctx)) < 0) {
+    if ((keylen = EVP_CIPHER_CTX_get_key_length(ctx)) < 0) {
         BIO_printf(bio_err, "Impossible negative key length: %d\n", keylen);
         goto err;
     }
@@ -3589,7 +3589,7 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
     if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_MAC_KEY,
                              sizeof(no_key), no_key))
         app_bail_out("failed to set AEAD key\n");
-    if ((alg_name = EVP_CIPHER_name(evp_cipher)) == NULL)
+    if ((alg_name = EVP_CIPHER_get0_name(evp_cipher)) == NULL)
         app_bail_out("failed to get cipher name\n");
 
     for (j = 0; j < num; j++) {

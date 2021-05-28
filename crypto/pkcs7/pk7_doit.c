@@ -296,16 +296,16 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
             goto err;
         }
         BIO_get_cipher_ctx(btmp, &ctx);
-        keylen = EVP_CIPHER_key_length(evp_cipher);
-        ivlen = EVP_CIPHER_iv_length(evp_cipher);
-        xalg->algorithm = OBJ_nid2obj(EVP_CIPHER_type(evp_cipher));
+        keylen = EVP_CIPHER_get_key_length(evp_cipher);
+        ivlen = EVP_CIPHER_get_iv_length(evp_cipher);
+        xalg->algorithm = OBJ_nid2obj(EVP_CIPHER_get_type(evp_cipher));
         if (ivlen > 0)
             if (RAND_bytes_ex(libctx, iv, ivlen, 0) <= 0)
                 goto err;
 
         (void)ERR_set_mark();
         fetched_cipher = EVP_CIPHER_fetch(libctx,
-                                          EVP_CIPHER_name(evp_cipher),
+                                          EVP_CIPHER_get0_name(evp_cipher),
                                           propq);
         (void)ERR_pop_to_mark();
         if (fetched_cipher != NULL)
@@ -572,7 +572,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
                 ri = sk_PKCS7_RECIP_INFO_value(rsk, i);
                 ri->ctx = p7_ctx;
                 if (pkcs7_decrypt_rinfo(&ek, &eklen, ri, pkey,
-                        EVP_CIPHER_key_length(cipher)) < 0)
+                        EVP_CIPHER_get_key_length(cipher)) < 0)
                     goto err;
                 ERR_clear_error();
             }
@@ -591,7 +591,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
         if (EVP_CIPHER_asn1_to_param(evp_ctx, enc_alg->parameter) < 0)
             goto err;
         /* Generate random key as MMA defence */
-        len = EVP_CIPHER_CTX_key_length(evp_ctx);
+        len = EVP_CIPHER_CTX_get_key_length(evp_ctx);
         if (len <= 0)
             goto err;
         tkeylen = (size_t)len;
@@ -606,7 +606,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
             tkey = NULL;
         }
 
-        if (eklen != EVP_CIPHER_CTX_key_length(evp_ctx)) {
+        if (eklen != EVP_CIPHER_CTX_get_key_length(evp_ctx)) {
             /*
              * Some S/MIME clients don't use the same key and effective key
              * length. The key length is determined by the size of the

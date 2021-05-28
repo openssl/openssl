@@ -616,7 +616,7 @@ static EVP_PKEY *new_cmac_key_int(const unsigned char *priv, size_t len,
     EVP_PKEY_CTX *ctx;
 
     if (cipher != NULL)
-        cipher_name = EVP_CIPHER_name(cipher);
+        cipher_name = EVP_CIPHER_get0_name(cipher);
 
     if (cipher_name == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_KEY_SETUP_FAILED);

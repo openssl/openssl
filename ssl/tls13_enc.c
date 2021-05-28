@@ -403,8 +403,8 @@ static int derive_secret_key_and_iv(SSL *s, int sending, const EVP_MD *md,
     }
 
     /* TODO(size_t): convert me */
-    keylen = EVP_CIPHER_key_length(ciph);
-    if (EVP_CIPHER_mode(ciph) == EVP_CIPH_CCM_MODE) {
+    keylen = EVP_CIPHER_get_key_length(ciph);
+    if (EVP_CIPHER_get_mode(ciph) == EVP_CIPH_CCM_MODE) {
         uint32_t algenc;
 
         ivlen = EVP_CCM_TLS_IV_LEN;
@@ -425,7 +425,7 @@ static int derive_secret_key_and_iv(SSL *s, int sending, const EVP_MD *md,
          else
             taglen = EVP_CCM_TLS_TAG_LEN;
     } else {
-        ivlen = EVP_CIPHER_iv_length(ciph);
+        ivlen = EVP_CIPHER_get_iv_length(ciph);
         taglen = 0;
     }
 

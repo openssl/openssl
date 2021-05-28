@@ -871,9 +871,9 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
 
     /* Explicit IV length, block ciphers appropriate version flag */
     if (s->enc_write_ctx) {
-        int mode = EVP_CIPHER_CTX_mode(s->enc_write_ctx);
+        int mode = EVP_CIPHER_CTX_get_mode(s->enc_write_ctx);
         if (mode == EVP_CIPH_CBC_MODE) {
-            eivlen = EVP_CIPHER_CTX_iv_length(s->enc_write_ctx);
+            eivlen = EVP_CIPHER_CTX_get_iv_length(s->enc_write_ctx);
             if (eivlen <= 1)
                 eivlen = 0;
         }

@@ -182,14 +182,14 @@ static int ecdh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
         goto err;
     OBJ_obj2txt(name, sizeof(name), kekalg->algorithm, 0);
     kekcipher = EVP_CIPHER_fetch(pctx->libctx, name, pctx->propquery);
-    if (kekcipher == NULL || EVP_CIPHER_mode(kekcipher) != EVP_CIPH_WRAP_MODE)
+    if (kekcipher == NULL || EVP_CIPHER_get_mode(kekcipher) != EVP_CIPH_WRAP_MODE)
         goto err;
     if (!EVP_EncryptInit_ex(kekctx, kekcipher, NULL, NULL, NULL))
         goto err;
     if (EVP_CIPHER_asn1_to_param(kekctx, kekalg->parameter) <= 0)
         goto err;
 
-    keylen = EVP_CIPHER_CTX_key_length(kekctx);
+    keylen = EVP_CIPHER_CTX_get_key_length(kekctx);
     if (EVP_PKEY_CTX_set_ecdh_kdf_outlen(pctx, keylen) <= 0)
         goto err;
 
@@ -317,8 +317,8 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
         goto err;
     /* Get wrap NID */
     ctx = CMS_RecipientInfo_kari_get0_ctx(ri);
-    wrap_nid = EVP_CIPHER_CTX_type(ctx);
-    keylen = EVP_CIPHER_CTX_key_length(ctx);
+    wrap_nid = EVP_CIPHER_CTX_get_type(ctx);
+    keylen = EVP_CIPHER_CTX_get_key_length(ctx);
 
     /* Package wrap algorithm in an AlgorithmIdentifier */
 

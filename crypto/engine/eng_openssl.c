@@ -205,7 +205,7 @@ typedef struct {
 static int test_rc4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                              const unsigned char *iv, int enc)
 {
-    const int n = EVP_CIPHER_CTX_key_length(ctx);
+    const int n = EVP_CIPHER_CTX_get_key_length(ctx);
 
 # ifdef TEST_ENG_OPENSSL_RC4_P_INIT
     fprintf(stderr, "(TEST_ENG_OPENSSL_RC4) test_init_key() called\n");
@@ -285,9 +285,9 @@ static int test_cipher_nids(const int **nids)
     if (!init) {
         const EVP_CIPHER *cipher;
         if ((cipher = test_r4_cipher()) != NULL)
-            cipher_nids[pos++] = EVP_CIPHER_nid(cipher);
+            cipher_nids[pos++] = EVP_CIPHER_get_nid(cipher);
         if ((cipher = test_r4_40_cipher()) != NULL)
-            cipher_nids[pos++] = EVP_CIPHER_nid(cipher);
+            cipher_nids[pos++] = EVP_CIPHER_get_nid(cipher);
         cipher_nids[pos] = 0;
         init = 1;
     }
