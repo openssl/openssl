@@ -505,8 +505,7 @@ static EVP_PKEY *d2i_PUBKEY_int(EVP_PKEY **a,
 }
 
 /* For the algorithm specific d2i functions further down */
-static EVP_PKEY *d2i_PUBKEY_legacy(EVP_PKEY **a,
-                                   const unsigned char **pp, long length)
+EVP_PKEY *d2i_PUBKEY_legacy(EVP_PKEY **a, const unsigned char **pp, long length)
 {
     return d2i_PUBKEY_int(a, pp, length, NULL, NULL, 1, d2i_X509_PUBKEY);
 }

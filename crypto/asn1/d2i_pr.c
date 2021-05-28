@@ -74,7 +74,7 @@ err:
     return NULL;
 }
 
-static EVP_PKEY *
+EVP_PKEY *
 d2i_PrivateKey_legacy(int keytype, EVP_PKEY **a, const unsigned char **pp,
                       long length, OSSL_LIB_CTX *libctx, const char *propq)
 {
