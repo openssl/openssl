@@ -663,8 +663,6 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
         OSSL_LIB_CTX_free(libctx);
         goto err;
     }
-    ossl_prov_ctx_set0_libctx(*provctx, libctx);
-    ossl_prov_ctx_set0_handle(*provctx, handle);
 
     if ((fgbl = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_FIPS_PROV_INDEX,
                                       &fips_prov_ossl_ctx_method)) == NULL)
@@ -706,6 +704,9 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
         ERR_raise(ERR_LIB_PROV, PROV_R_SELF_TEST_POST_FAILURE);
         goto err;
     }
+
+    ossl_prov_ctx_set0_libctx(*provctx, libctx);
+    ossl_prov_ctx_set0_handle(*provctx, handle);
 
     *out = fips_dispatch_table;
     return 1;
