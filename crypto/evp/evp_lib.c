@@ -391,7 +391,7 @@ int EVP_CIPHER_CTX_get_block_size(const EVP_CIPHER_CTX *ctx)
     return EVP_CIPHER_get_block_size(ctx->cipher);
 }
 
-int EVP_CIPHER_get_impl_ctx_size(const EVP_CIPHER *e)
+int EVP_CIPHER_impl_ctx_size(const EVP_CIPHER *e)
 {
     return e->ctx_size;
 }
@@ -595,7 +595,7 @@ int EVP_CIPHER_CTX_get_original_iv(EVP_CIPHER_CTX *ctx, void *buf, size_t len)
     return evp_do_ciph_ctx_getparams(ctx->cipher, ctx->algctx, params);
 }
 
-unsigned char *EVP_CIPHER_CTX_get0_buf_noconst(EVP_CIPHER_CTX *ctx)
+unsigned char *EVP_CIPHER_CTX_buf_noconst(EVP_CIPHER_CTX *ctx)
 {
     return ctx->buf;
 }

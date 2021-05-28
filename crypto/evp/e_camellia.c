@@ -334,12 +334,12 @@ static int camellia_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     num = snum;
     if (dat->stream.ctr)
         CRYPTO_ctr128_encrypt_ctr32(in, out, len, &dat->ks, ctx->iv,
-                                    EVP_CIPHER_CTX_get0_buf_noconst(ctx),
+                                    EVP_CIPHER_CTX_buf_noconst(ctx),
                                     &num,
                                     dat->stream.ctr);
     else
         CRYPTO_ctr128_encrypt(in, out, len, &dat->ks, ctx->iv,
-                              EVP_CIPHER_CTX_get0_buf_noconst(ctx), &num,
+                              EVP_CIPHER_CTX_buf_noconst(ctx), &num,
                               dat->block);
     EVP_CIPHER_CTX_set_num(ctx, num);
     return 1;

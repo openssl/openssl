@@ -588,8 +588,7 @@ int EVP_CIPHER_names_do_all(const EVP_CIPHER *cipher,
 const OSSL_PROVIDER *EVP_CIPHER_get0_provider(const EVP_CIPHER *cipher);
 int EVP_CIPHER_get_block_size(const EVP_CIPHER *cipher);
 # define EVP_CIPHER_block_size EVP_CIPHER_get_block_size
-int EVP_CIPHER_get_impl_ctx_size(const EVP_CIPHER *cipher);
-# define EVP_CIPHER_impl_ctx_size EVP_CIPHER_get_impl_ctx_size
+int EVP_CIPHER_impl_ctx_size(const EVP_CIPHER *cipher);
 int EVP_CIPHER_get_key_length(const EVP_CIPHER *cipher);
 # define EVP_CIPHER_key_length EVP_CIPHER_get_key_length
 int EVP_CIPHER_get_iv_length(const EVP_CIPHER *cipher);
@@ -627,8 +626,7 @@ OSSL_DEPRECATEDIN_3_0 unsigned char *EVP_CIPHER_CTX_iv_noconst(EVP_CIPHER_CTX *c
 # endif
 int EVP_CIPHER_CTX_get_updated_iv(EVP_CIPHER_CTX *ctx, void *buf, size_t len);
 int EVP_CIPHER_CTX_get_original_iv(EVP_CIPHER_CTX *ctx, void *buf, size_t len);
-unsigned char *EVP_CIPHER_CTX_get0_buf_noconst(EVP_CIPHER_CTX *ctx);
-# define EVP_CIPHER_CTX_buf_noconst EVP_CIPHER_CTX_get0_buf_noconst
+unsigned char *EVP_CIPHER_CTX_buf_noconst(EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_get_num(const EVP_CIPHER_CTX *ctx);
 # define EVP_CIPHER_CTX_num EVP_CIPHER_CTX_get_num
 int EVP_CIPHER_CTX_set_num(EVP_CIPHER_CTX *ctx, int num);

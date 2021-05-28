@@ -1386,7 +1386,7 @@ static int s390x_aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         return 1;
 
     case EVP_CTRL_AEAD_SET_TAG:
-        buf = EVP_CIPHER_CTX_get0_buf_noconst(c);
+        buf = EVP_CIPHER_CTX_buf_noconst(c);
         enc = EVP_CIPHER_CTX_is_encrypting(c);
         if (arg <= 0 || arg > 16 || enc)
             return 0;
@@ -1460,7 +1460,7 @@ static int s390x_aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         if (arg != EVP_AEAD_TLS1_AAD_LEN)
             return 0;
 
-        buf = EVP_CIPHER_CTX_get0_buf_noconst(c);
+        buf = EVP_CIPHER_CTX_buf_noconst(c);
         memcpy(buf, ptr, arg);
         gctx->tls_aad_len = arg;
         gctx->tls_enc_records = 0;
@@ -1555,7 +1555,7 @@ static int s390x_aes_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                     const unsigned char *in, size_t len)
 {
     S390X_AES_GCM_CTX *gctx = EVP_C_DATA(S390X_AES_GCM_CTX, ctx);
-    const unsigned char *buf = EVP_CIPHER_CTX_get0_buf_noconst(ctx);
+    const unsigned char *buf = EVP_CIPHER_CTX_buf_noconst(ctx);
     const int enc = EVP_CIPHER_CTX_is_encrypting(ctx);
     int rv = -1;
 
@@ -1652,7 +1652,7 @@ static int s390x_aes_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             if (gctx->taglen < 0)
                 return -1;
 
-            buf = EVP_CIPHER_CTX_get0_buf_noconst(ctx);
+            buf = EVP_CIPHER_CTX_buf_noconst(ctx);
             if (CRYPTO_memcmp(buf, gctx->kma.param.t.b, gctx->taglen))
                 return -1;
         }
@@ -1867,7 +1867,7 @@ static int s390x_aes_ccm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 {
     S390X_AES_CCM_CTX *cctx = EVP_C_DATA(S390X_AES_CCM_CTX, ctx);
     unsigned char *ivec = ctx->iv;
-    unsigned char *buf = EVP_CIPHER_CTX_get0_buf_noconst(ctx);
+    unsigned char *buf = EVP_CIPHER_CTX_buf_noconst(ctx);
     const int enc = EVP_CIPHER_CTX_is_encrypting(ctx);
 
     if (out != in
@@ -2023,7 +2023,7 @@ static int s390x_aes_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         rv = -1;
 
         if (!s390x_aes_ccm(cctx, in, out, len, enc)) {
-            buf = EVP_CIPHER_CTX_get0_buf_noconst(ctx);
+            buf = EVP_CIPHER_CTX_buf_noconst(ctx);
             if (!CRYPTO_memcmp(cctx->aes.ccm.kmac_param.icv.b, buf,
                                cctx->aes.ccm.m))
                 rv = len;
@@ -2070,7 +2070,7 @@ static int s390x_aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
             return 0;
 
         /* Save the aad for later use. */
-        buf = EVP_CIPHER_CTX_get0_buf_noconst(c);
+        buf = EVP_CIPHER_CTX_buf_noconst(c);
         memcpy(buf, ptr, arg);
         cctx->aes.ccm.tls_aad_len = arg;
 
@@ -2125,7 +2125,7 @@ static int s390x_aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 
         if (ptr) {
             cctx->aes.ccm.tag_set = 1;
-            buf = EVP_CIPHER_CTX_get0_buf_noconst(c);
+            buf = EVP_CIPHER_CTX_buf_noconst(c);
             memcpy(buf, ptr, arg);
         }
 
@@ -2522,12 +2522,12 @@ static int aes_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     if (dat->stream.ctr)
         CRYPTO_ctr128_encrypt_ctr32(in, out, len, &dat->ks,
                                     ctx->iv,
-                                    EVP_CIPHER_CTX_get0_buf_noconst(ctx),
+                                    EVP_CIPHER_CTX_buf_noconst(ctx),
                                     &num, dat->stream.ctr);
     else
         CRYPTO_ctr128_encrypt(in, out, len, &dat->ks,
                               ctx->iv,
-                              EVP_CIPHER_CTX_get0_buf_noconst(ctx), &num,
+                              EVP_CIPHER_CTX_buf_noconst(ctx), &num,
                               dat->block);
     EVP_CIPHER_CTX_set_num(ctx, num);
     return 1;
@@ -3282,12 +3282,12 @@ static int aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         /* Save the AAD for later use */
         if (arg != EVP_AEAD_TLS1_AAD_LEN)
             return 0;
-        memcpy(EVP_CIPHER_CTX_get0_buf_noconst(c), ptr, arg);
+        memcpy(EVP_CIPHER_CTX_buf_noconst(c), ptr, arg);
         cctx->tls_aad_len = arg;
         {
             uint16_t len =
-                EVP_CIPHER_CTX_get0_buf_noconst(c)[arg - 2] << 8
-                | EVP_CIPHER_CTX_get0_buf_noconst(c)[arg - 1];
+                EVP_CIPHER_CTX_buf_noconst(c)[arg - 2] << 8
+                | EVP_CIPHER_CTX_buf_noconst(c)[arg - 1];
             /* Correct length for explicit IV */
             if (len < EVP_CCM_TLS_EXPLICIT_IV_LEN)
                 return 0;
@@ -3298,8 +3298,8 @@ static int aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
                     return 0;
                 len -= cctx->M;
             }
-            EVP_CIPHER_CTX_get0_buf_noconst(c)[arg - 2] = len >> 8;
-            EVP_CIPHER_CTX_get0_buf_noconst(c)[arg - 1] = len & 0xff;
+            EVP_CIPHER_CTX_buf_noconst(c)[arg - 2] = len >> 8;
+            EVP_CIPHER_CTX_buf_noconst(c)[arg - 1] = len & 0xff;
         }
         /* Extra padding: tag appended to record */
         return cctx->M;
@@ -3328,7 +3328,7 @@ static int aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
             return 0;
         if (ptr) {
             cctx->tag_set = 1;
-            memcpy(EVP_CIPHER_CTX_get0_buf_noconst(c), ptr, arg);
+            memcpy(EVP_CIPHER_CTX_buf_noconst(c), ptr, arg);
         }
         cctx->M = arg;
         return 1;
@@ -3418,7 +3418,7 @@ static int aes_ccm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         return -1;
     /* If encrypting set explicit IV from sequence number (start of AAD) */
     if (EVP_CIPHER_CTX_is_encrypting(ctx))
-        memcpy(out, EVP_CIPHER_CTX_get0_buf_noconst(ctx),
+        memcpy(out, EVP_CIPHER_CTX_buf_noconst(ctx),
                EVP_CCM_TLS_EXPLICIT_IV_LEN);
     /* Get rest of IV from explicit IV */
     memcpy(ctx->iv + EVP_CCM_TLS_FIXED_IV_LEN, in,
@@ -3429,7 +3429,7 @@ static int aes_ccm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                             len))
             return -1;
     /* Use saved AAD */
-    CRYPTO_ccm128_aad(ccm, EVP_CIPHER_CTX_get0_buf_noconst(ctx),
+    CRYPTO_ccm128_aad(ccm, EVP_CIPHER_CTX_buf_noconst(ctx),
                       cctx->tls_aad_len);
     /* Fix buffer to point to payload */
     in += EVP_CCM_TLS_EXPLICIT_IV_LEN;
@@ -3515,7 +3515,7 @@ static int aes_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             !CRYPTO_ccm128_decrypt(ccm, in, out, len)) {
             unsigned char tag[16];
             if (CRYPTO_ccm128_tag(ccm, tag, cctx->M)) {
-                if (!CRYPTO_memcmp(tag, EVP_CIPHER_CTX_get0_buf_noconst(ctx),
+                if (!CRYPTO_memcmp(tag, EVP_CIPHER_CTX_buf_noconst(ctx),
                                    cctx->M))
                     rv = len;
             }

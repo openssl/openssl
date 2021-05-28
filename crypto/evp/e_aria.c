@@ -177,7 +177,7 @@ static int aria_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     EVP_ARIA_KEY *dat = EVP_C_DATA(EVP_ARIA_KEY, ctx);
 
     CRYPTO_ctr128_encrypt(in, out, len, &dat->ks, ctx->iv,
-                          EVP_CIPHER_CTX_get0_buf_noconst(ctx), &num,
+                          EVP_CIPHER_CTX_buf_noconst(ctx), &num,
                           (block128_f) ossl_aria_encrypt);
     EVP_CIPHER_CTX_set_num(ctx, num);
     return 1;
@@ -283,7 +283,7 @@ static int aria_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
     case EVP_CTRL_AEAD_SET_TAG:
         if (arg <= 0 || arg > 16 || EVP_CIPHER_CTX_is_encrypting(c))
             return 0;
-        memcpy(EVP_CIPHER_CTX_get0_buf_noconst(c), ptr, arg);
+        memcpy(EVP_CIPHER_CTX_buf_noconst(c), ptr, arg);
         gctx->taglen = arg;
         return 1;
 
@@ -291,7 +291,7 @@ static int aria_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         if (arg <= 0 || arg > 16 || !EVP_CIPHER_CTX_is_encrypting(c)
             || gctx->taglen < 0)
             return 0;
-        memcpy(ptr, EVP_CIPHER_CTX_get0_buf_noconst(c), arg);
+        memcpy(ptr, EVP_CIPHER_CTX_buf_noconst(c), arg);
         return 1;
 
     case EVP_CTRL_GCM_SET_IV_FIXED:
@@ -343,12 +343,12 @@ static int aria_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         /* Save the AAD for later use */
         if (arg != EVP_AEAD_TLS1_AAD_LEN)
             return 0;
-        memcpy(EVP_CIPHER_CTX_get0_buf_noconst(c), ptr, arg);
+        memcpy(EVP_CIPHER_CTX_buf_noconst(c), ptr, arg);
         gctx->tls_aad_len = arg;
         {
             unsigned int len =
-                EVP_CIPHER_CTX_get0_buf_noconst(c)[arg - 2] << 8
-                | EVP_CIPHER_CTX_get0_buf_noconst(c)[arg - 1];
+                EVP_CIPHER_CTX_buf_noconst(c)[arg - 2] << 8
+                | EVP_CIPHER_CTX_buf_noconst(c)[arg - 1];
             /* Correct length for explicit IV */
             if (len < EVP_GCM_TLS_EXPLICIT_IV_LEN)
                 return 0;
@@ -359,8 +359,8 @@ static int aria_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
                     return 0;
                 len -= EVP_GCM_TLS_TAG_LEN;
             }
-            EVP_CIPHER_CTX_get0_buf_noconst(c)[arg - 2] = len >> 8;
-            EVP_CIPHER_CTX_get0_buf_noconst(c)[arg - 1] = len & 0xff;
+            EVP_CIPHER_CTX_buf_noconst(c)[arg - 2] = len >> 8;
+            EVP_CIPHER_CTX_buf_noconst(c)[arg - 1] = len & 0xff;
         }
         /* Extra padding: tag appended to record */
         return EVP_GCM_TLS_TAG_LEN;
@@ -411,7 +411,7 @@ static int aria_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                             EVP_GCM_TLS_EXPLICIT_IV_LEN, out) <= 0)
         goto err;
     /* Use saved AAD */
-    if (CRYPTO_gcm128_aad(&gctx->gcm, EVP_CIPHER_CTX_get0_buf_noconst(ctx),
+    if (CRYPTO_gcm128_aad(&gctx->gcm, EVP_CIPHER_CTX_buf_noconst(ctx),
                           gctx->tls_aad_len))
         goto err;
     /* Fix buffer and length to point to payload */
@@ -431,10 +431,10 @@ static int aria_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         if (CRYPTO_gcm128_decrypt(&gctx->gcm, in, out, len))
             goto err;
         /* Retrieve tag */
-        CRYPTO_gcm128_tag(&gctx->gcm, EVP_CIPHER_CTX_get0_buf_noconst(ctx),
+        CRYPTO_gcm128_tag(&gctx->gcm, EVP_CIPHER_CTX_buf_noconst(ctx),
                           EVP_GCM_TLS_TAG_LEN);
         /* If tag mismatch wipe buffer */
-        if (CRYPTO_memcmp(EVP_CIPHER_CTX_get0_buf_noconst(ctx), in + len,
+        if (CRYPTO_memcmp(EVP_CIPHER_CTX_buf_noconst(ctx), in + len,
                           EVP_GCM_TLS_TAG_LEN)) {
             OPENSSL_cleanse(out, len);
             goto err;
@@ -479,13 +479,13 @@ static int aria_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         if (gctx->taglen < 0)
             return -1;
         if (CRYPTO_gcm128_finish(&gctx->gcm,
-                                 EVP_CIPHER_CTX_get0_buf_noconst(ctx),
+                                 EVP_CIPHER_CTX_buf_noconst(ctx),
                                  gctx->taglen) != 0)
             return -1;
         gctx->iv_set = 0;
         return 0;
     }
-    CRYPTO_gcm128_tag(&gctx->gcm, EVP_CIPHER_CTX_get0_buf_noconst(ctx), 16);
+    CRYPTO_gcm128_tag(&gctx->gcm, EVP_CIPHER_CTX_buf_noconst(ctx), 16);
     gctx->taglen = 16;
     /* Don't reuse the IV */
     gctx->iv_set = 0;
@@ -554,12 +554,12 @@ static int aria_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         /* Save the AAD for later use */
         if (arg != EVP_AEAD_TLS1_AAD_LEN)
             return 0;
-        memcpy(EVP_CIPHER_CTX_get0_buf_noconst(c), ptr, arg);
+        memcpy(EVP_CIPHER_CTX_buf_noconst(c), ptr, arg);
         cctx->tls_aad_len = arg;
         {
             uint16_t len =
-                EVP_CIPHER_CTX_get0_buf_noconst(c)[arg - 2] << 8
-                | EVP_CIPHER_CTX_get0_buf_noconst(c)[arg - 1];
+                EVP_CIPHER_CTX_buf_noconst(c)[arg - 2] << 8
+                | EVP_CIPHER_CTX_buf_noconst(c)[arg - 1];
             /* Correct length for explicit IV */
             if (len < EVP_CCM_TLS_EXPLICIT_IV_LEN)
                 return 0;
@@ -570,8 +570,8 @@ static int aria_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
                     return 0;
                 len -= cctx->M;
             }
-            EVP_CIPHER_CTX_get0_buf_noconst(c)[arg - 2] = len >> 8;
-            EVP_CIPHER_CTX_get0_buf_noconst(c)[arg - 1] = len & 0xff;
+            EVP_CIPHER_CTX_buf_noconst(c)[arg - 2] = len >> 8;
+            EVP_CIPHER_CTX_buf_noconst(c)[arg - 1] = len & 0xff;
         }
         /* Extra padding: tag appended to record */
         return cctx->M;
@@ -599,7 +599,7 @@ static int aria_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
             return 0;
         if (ptr) {
             cctx->tag_set = 1;
-            memcpy(EVP_CIPHER_CTX_get0_buf_noconst(c), ptr, arg);
+            memcpy(EVP_CIPHER_CTX_buf_noconst(c), ptr, arg);
         }
         cctx->M = arg;
         return 1;
@@ -642,7 +642,7 @@ static int aria_ccm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         return -1;
     /* If encrypting set explicit IV from sequence number (start of AAD) */
     if (EVP_CIPHER_CTX_is_encrypting(ctx))
-        memcpy(out, EVP_CIPHER_CTX_get0_buf_noconst(ctx),
+        memcpy(out, EVP_CIPHER_CTX_buf_noconst(ctx),
                EVP_CCM_TLS_EXPLICIT_IV_LEN);
     /* Get rest of IV from explicit IV */
     memcpy(ctx->iv + EVP_CCM_TLS_FIXED_IV_LEN, in,
@@ -653,7 +653,7 @@ static int aria_ccm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                             len))
             return -1;
     /* Use saved AAD */
-    CRYPTO_ccm128_aad(ccm, EVP_CIPHER_CTX_get0_buf_noconst(ctx),
+    CRYPTO_ccm128_aad(ccm, EVP_CIPHER_CTX_buf_noconst(ctx),
                       cctx->tls_aad_len);
     /* Fix buffer to point to payload */
     in += EVP_CCM_TLS_EXPLICIT_IV_LEN;
@@ -736,7 +736,7 @@ static int aria_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             !CRYPTO_ccm128_decrypt(ccm, in, out, len)) {
             unsigned char tag[16];
             if (CRYPTO_ccm128_tag(ccm, tag, cctx->M)) {
-                if (!CRYPTO_memcmp(tag, EVP_CIPHER_CTX_get0_buf_noconst(ctx),
+                if (!CRYPTO_memcmp(tag, EVP_CIPHER_CTX_buf_noconst(ctx),
                                    cctx->M))
                     rv = len;
             }

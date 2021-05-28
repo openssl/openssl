@@ -461,7 +461,7 @@ padlock_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 
     CRYPTO_ctr128_encrypt_ctr32(in_arg, out_arg, nbytes,
                                 cdata, EVP_CIPHER_CTX_iv_noconst(ctx),
-                                EVP_CIPHER_CTX_get0_buf_noconst(ctx), &num,
+                                EVP_CIPHER_CTX_buf_noconst(ctx), &num,
                                 (ctr128_f) padlock_ctr32_encrypt_glue);
 
     EVP_CIPHER_CTX_set_num(ctx, (size_t)num);

@@ -279,7 +279,7 @@ static const EVP_CIPHER *ossltest_aes_128_cbc(void)
             || !EVP_CIPHER_meth_set_do_cipher(_hidden_aes_128_cbc,
                                               ossltest_aes128_cbc_cipher)
             || !EVP_CIPHER_meth_set_impl_ctx_size(_hidden_aes_128_cbc,
-                    EVP_CIPHER_get_impl_ctx_size(EVP_aes_128_cbc())))) {
+                    EVP_CIPHER_impl_ctx_size(EVP_aes_128_cbc())))) {
         EVP_CIPHER_meth_free(_hidden_aes_128_cbc);
         _hidden_aes_128_cbc = NULL;
     }
@@ -308,7 +308,7 @@ static const EVP_CIPHER *ossltest_aes_128_gcm(void)
             || !EVP_CIPHER_meth_set_ctrl(_hidden_aes_128_gcm,
                                               ossltest_aes128_gcm_ctrl)
             || !EVP_CIPHER_meth_set_impl_ctx_size(_hidden_aes_128_gcm,
-                    EVP_CIPHER_get_impl_ctx_size(EVP_aes_128_gcm())))) {
+                    EVP_CIPHER_impl_ctx_size(EVP_aes_128_gcm())))) {
         EVP_CIPHER_meth_free(_hidden_aes_128_gcm);
         _hidden_aes_128_gcm = NULL;
     }
