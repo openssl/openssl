@@ -1154,7 +1154,7 @@ OBJECT IDENTIFIER.
 
 EVP_CIPHER_CTX_cipher() returns an B<EVP_CIPHER> structure.
 
-EVP_CIPHER_CTX_get_num() returns a non-negative num value or
+EVP_CIPHER_CTX_get_num() returns a nonnegative num value or
 B<EVP_CTRL_RET_UNSUPPORTED> if the implementation does not support the call
 or on any other error.
 
