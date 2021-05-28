@@ -143,7 +143,7 @@ static size_t tls1_multi_block_encrypt(void *vctx,
 #  endif
 
     /* ask for IVs in bulk */
-    if (RAND_bytes_ex(ctx->base.libctx, (IVs = blocks[0].c), 16 * x4) <= 0)
+    if (RAND_bytes_ex(ctx->base.libctx, (IVs = blocks[0].c), 16 * x4, 0) <= 0)
         return 0;
 
     mctx = (SHA1_MB_CTX *) (storage + 32 - ((size_t)storage % 32)); /* align */
