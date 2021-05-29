@@ -423,6 +423,12 @@ Previously (in 1.1.1) these conflicting parameters were allowed, but will now
 result in errors. See L<EVP_PKEY-DH(7)> for further details. This affects the
 behaviour of L<openssl-genpkey(1)> for DH parameter generation.
 
+=head4 EVP_CIPHER_CTX_set_flags() ordering change
+
+If using a cipher from a provider the B<EVP_CIPH_FLAG_LENGTH_BITS> flag can only
+be set B<after> the cipher has been assigned to the cipher context.
+See L<EVP_EncryptInit(3)/FLAGS> for more information.
+
 =head2 Installation and Compilation
 
 Please refer to the INSTALL.md file in the top of the distribution for
@@ -868,6 +874,19 @@ See also L<crypto(7)/OPENSSL PROVIDERS>.
 
 Implicit and Explicit Fetching is described in detail here
 L<crypto(7)/ALGORITHM FETCHING>.
+
+=head3 Mapping EVP controls and flags to provider B<OSSL_PARAM> parameters
+
+The existing functions for controls (such as L<EVP_CIPHER_CTX_ctrl(3)>) and
+manipulating flags (such as L<EVP_MD_CTX_set_flags(3)>)internally use
+B<OSSL_PARAMS> to pass information to/from provider objects.
+See L<OSSL_PARAM(3)> for additional information related to parameters.
+
+For ciphers see L<EVP_EncryptInit(3)/CONTROLS>, L<EVP_EncryptInit(3)/FLAGS> and
+L<EVP_EncryptInit(3)/PARAMETERS>.
+
+For digests see L<EVP_DigestInit(3)/CONTROLS>, L<EVP_DigestInit(3)/FLAGS> and
+L<EVP_DigestInit(3)/PARAMETERS>.
 
 =head3 Deprecation of Low Level Functions
 
