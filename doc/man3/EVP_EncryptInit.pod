@@ -66,6 +66,9 @@ EVP_CIPHER_CTX_get_app_data,
 EVP_CIPHER_CTX_set_app_data,
 EVP_CIPHER_CTX_type,
 EVP_CIPHER_CTX_flags,
+EVP_CIPHER_CTX_set_flags,
+EVP_CIPHER_CTX_clear_flags,
+EVP_CIPHER_CTX_test_flags,
 EVP_CIPHER_CTX_mode,
 EVP_CIPHER_param_to_asn1,
 EVP_CIPHER_asn1_to_param,
@@ -134,6 +137,9 @@ EVP_CIPHER_do_all_provided
  int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *x, int keylen);
  int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int cmd, int p1, void *p2);
  int EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key);
+ void EVP_CIPHER_CTX_set_flags(EVP_CIPHER_CTX *ctx, int flags);
+ void EVP_CIPHER_CTX_clear_flags(EVP_CIPHER_CTX *ctx, int flags);
+ int EVP_CIPHER_CTX_test_flags(const EVP_CIPHER_CTX *ctx, int flags);
 
  const EVP_CIPHER *EVP_get_cipherbyname(const char *name);
  const EVP_CIPHER *EVP_get_cipherbynid(int nid);
@@ -381,10 +387,12 @@ must be called to free any context resources.
 
 Encrypts or decrypts a maximum I<inl> amount of bytes from I<in> and leaves the
 result in I<out>.
-If the cipher doesn't have the flag B<EVP_CIPH_FLAG_CUSTOM_CIPHER> set,
-then I<inl> must be a multiple of EVP_CIPHER_block_size().  If it isn't,
-the result is undefined.  If the cipher has that flag set, then I<inl>
-can be any size.
+
+For legacy ciphers - If the cipher doesn't have the flag
+B<EVP_CIPH_FLAG_CUSTOM_CIPHER> set, then I<inl> must be a multiple of
+EVP_CIPHER_block_size().  If it isn't, the result is undefined.  If the cipher
+has that flag set, then I<inl> can be any size.
+
 Due to the constraints of the API contract of this function it shouldn't be used
 in applications, please consider using EVP_CipherUpdate() and
 EVP_CipherFinal_ex() instead.
@@ -399,6 +407,14 @@ ASN1_OBJECT structure.
 Return the NID of a cipher when passed an B<EVP_CIPHER> or B<EVP_CIPHER_CTX>
 structure.  The actual NID value is an internal value which may not have a
 corresponding OBJECT IDENTIFIER.
+
+=item EVP_CIPHER_CTX_set_flags(), EVP_CIPHER_CTX_clear_flags() and EVP_CIPHER_CTX_test_flags()
+
+Sets, clears and tests I<ctx> flags.  See L</FLAGS> below for more information.
+
+For provided ciphers EVP_CIPHER_CTX_set_flags() should be called only after the
+fetched cipher has been assigned to the I<ctx>. It is recommended to use
+L</PARAMETERS> instead.
 
 =item EVP_CIPHER_CTX_set_padding()
 
@@ -499,7 +515,7 @@ If the cipher is a stream cipher then EVP_CIPH_STREAM_CIPHER is returned.
 
 =item EVP_CIPHER_flags()
 
-Returns any flags associated with the cipher. See EVP_CIPHER_meth_set_flags()
+Returns any flags associated with the cipher. See L</FLAGS>
 for a list of currently defined flags.
 
 =item EVP_CIPHER_param_to_asn1()
@@ -783,6 +799,15 @@ by AES SIV ciphers which disallow multiple operations by default.
 Setting "speed" to 1 allows another encrypt or decrypt operation to be
 performed. This is used for performance testing.
 
+=item "use-bits" (B<OSSL_CIPHER_PARAM_USE_BITS>) <unsigned integer>
+
+Determines if the input length I<inl> passed to EVP_EncryptUpdate(),
+EVP_DecryptUpdate() and EVP_CipherUpdate() is the number of bits or number of bytes.
+Setting "use-bits" to 1 uses bits. The default is in bytes.
+This is only used for B<CFB1> ciphers.
+
+This can be set using EVP_CIPHER_CTX_set_flags(ctx, EVP_CIPH_FLAG_LENGTH_BITS).
+
 =item "tls-version" (B<OSSL_CIPHER_PARAM_TLS_VERSION>) <integer>
 
 Sets the TLS version.
@@ -990,6 +1015,78 @@ followed by EVP_CIPHER_CTX_get_params() with a key of
 
 =back
 
+=head1 FLAGS
+
+EVP_CIPHER_CTX_set_flags(), EVP_CIPHER_CTX_clear_flags() and EVP_CIPHER_CTX_test_flags().
+can be used to manipulate and test these B<EVP_CIPHER_CTX> flags:
+
+=over 4
+
+=item EVP_CIPH_NO_PADDING
+
+Used by EVP_CIPHER_CTX_set_padding().
+
+See also L</Gettable and Settable EVP_CIPHER_CTX parameters> "padding"
+
+=item EVP_CIPH_FLAG_LENGTH_BITS
+
+See L</Settable EVP_CIPHER_CTX parameters> "use-bits".
+
+=item EVP_CIPHER_CTX_FLAG_WRAP_ALLOW
+
+Used for Legacy purposes only. This flag needed to be set to indicate the
+cipher handled wrapping.
+
+=back
+
+EVP_CIPHER_flags() uses the following flags that
+have mappings to L</Gettable EVP_CIPHER parameters>:
+
+=over 4
+
+=item EVP_CIPH_FLAG_AEAD_CIPHER
+
+See L</Gettable EVP_CIPHER parameters> "aead".
+
+=item EVP_CIPH_CUSTOM_IV
+
+See L</Gettable EVP_CIPHER parameters> "custom-iv".
+
+=item EVP_CIPH_FLAG_CTS
+
+See L</Gettable EVP_CIPHER parameters> "cts".
+
+=item EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK;
+
+See L</Gettable EVP_CIPHER parameters> "tls-multi".
+
+=back
+
+EVP_CIPHER_flags() uses the following flags for legacy purposes only:
+
+=over 4
+
+=item EVP_CIPH_VARIABLE_LENGTH
+
+=item EVP_CIPH_FLAG_CUSTOM_CIPHER
+
+=item EVP_CIPH_ALWAYS_CALL_INIT
+
+=item EVP_CIPH_CTRL_INIT
+
+=item EVP_CIPH_CUSTOM_KEY_LENGTH
+
+=item EVP_CIPH_RAND_KEY
+
+=item EVP_CIPH_CUSTOM_COPY
+
+=item EVP_CIPH_FLAG_DEFAULT_ASN1
+
+See L<EVP_CIPHER_meth_set_flags(3)> for further information related to the above
+flags.
+
+=back
+
 =head1 RETURN VALUES
 
 EVP_CIPHER_fetch() returns a pointer to a B<EVP_CIPHER> for success
@@ -1010,7 +1107,7 @@ EVP_CipherInit_ex2() and EVP_CipherUpdate() return 1 for success and 0 for failu
 EVP_CipherFinal_ex() returns 0 for a decryption failure or 1 for success.
 
 EVP_Cipher() returns the amount of encrypted / decrypted bytes, or -1
-on failure, if the flag B<EVP_CIPH_FLAG_CUSTOM_CIPHER> is set for the
+on failure if the flag B<EVP_CIPH_FLAG_CUSTOM_CIPHER> is set for the
 cipher.  EVP_Cipher() returns 1 on success or 0 on failure, if the flag
 B<EVP_CIPH_FLAG_CUSTOM_CIPHER> is not set for the cipher.
 
