@@ -141,15 +141,18 @@ int PKCS5_v2_PBE_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
         goto err;
     }
 
+    (void)ERR_set_mark();
     cipher = cipher_fetch = EVP_CIPHER_fetch(libctx, ciph_name, propq);
     /* Fallback to legacy method */
     if (cipher == NULL)
-        cipher = EVP_get_cipherbyname(ciph_name);
+        cipher = EVP_get_cipherbyname(ciph_name);;
 
     if (cipher == NULL) {
+        (void)ERR_clear_last_mark();
         ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_CIPHER);
         goto err;
     }
+    (void)ERR_pop_to_mark();
 
     /* Fixup cipher based on AlgorithmIdentifier */
     if (!EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, en_de))
