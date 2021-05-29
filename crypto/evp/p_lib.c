@@ -1268,9 +1268,14 @@ static int legacy_asn1_ctrl_to_param(EVP_PKEY *pkey, int op,
                 int mdnum;
                 OSSL_LIB_CTX *libctx = ossl_provider_libctx(pkey->keymgmt->prov);
                 /* Make sure the MD is in the namemap if available */
-                EVP_MD *md = EVP_MD_fetch(libctx, mdname, NULL);
-                OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
+                EVP_MD *md;
+                OSSL_NAMEMAP *namemap;
                 int nid = NID_undef;
+
+                (void)ERR_set_mark();
+                md = EVP_MD_fetch(libctx, mdname, NULL);
+                (void)ERR_pop_to_mark();
+                namemap = ossl_namemap_stored(libctx);
 
                 /*
                  * The only reason to fetch the MD was to make sure it is in the
