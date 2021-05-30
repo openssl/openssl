@@ -145,7 +145,7 @@ int PKCS5_v2_PBE_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
     cipher = cipher_fetch = EVP_CIPHER_fetch(libctx, ciph_name, propq);
     /* Fallback to legacy method */
     if (cipher == NULL)
-        cipher = EVP_get_cipherbyname(ciph_name);;
+        cipher = EVP_get_cipherbyname(ciph_name);
 
     if (cipher == NULL) {
         (void)ERR_clear_last_mark();

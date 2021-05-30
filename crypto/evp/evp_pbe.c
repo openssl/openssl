@@ -122,13 +122,13 @@ int EVP_PBE_CipherInit_ex(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
         /* Fallback to legacy method */
         if (cipher == NULL)
             cipher = EVP_get_cipherbynid(cipher_nid);
-        (void)ERR_pop_to_mark();
-
         if (cipher == NULL) {
+            (void)ERR_clear_last_mark();
             ERR_raise_data(ERR_LIB_EVP, EVP_R_UNKNOWN_CIPHER,
                            OBJ_nid2sn(cipher_nid));
             goto err;
         }
+        (void)ERR_pop_to_mark();
     }
 
     if (md_nid != -1) {
