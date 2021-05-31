@@ -1576,6 +1576,7 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
         if (keytype == NULL) {
             keytype = EVP_PKEY_get0_type_name(param);
             if (keytype == NULL) {
+                EVP_PKEY_free(param);
                 BIO_puts(bio_err, "Unable to determine key type\n");
                 return NULL;
             }
