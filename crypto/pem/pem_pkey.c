@@ -298,8 +298,6 @@ PEM_write_cb_fnsig(PrivateKey, EVP_PKEY, BIO, write_bio)
 /*
  * Note: there is no way to tell a provided pkey encoder to use "traditional"
  * encoding.  Therefore, if the pkey is provided, we try to take a copy 
- * TODO: when #legacy keys are gone, this function will not be possible any
- * more and should be removed.
  */
 int PEM_write_bio_PrivateKey_traditional(BIO *bp, const EVP_PKEY *x,
                                          const EVP_CIPHER *enc,
