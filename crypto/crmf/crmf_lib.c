@@ -358,7 +358,7 @@ static int create_popo_signature(OSSL_CRMF_POPOSIGNINGKEY *ps,
         return 0;
     }
     if (ps->poposkInput != NULL) {
-        /* TODO: support cases 1+2 defined in RFC 4211, section 4.1 */
+        /* We do not support cases 1+2 defined in RFC 4211, section 4.1 */
         ERR_raise(ERR_LIB_CRMF, CRMF_R_POPOSKINPUT_NOT_SUPPORTED);
         return 0;
     }
@@ -484,10 +484,6 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
                 ERR_raise(ERR_LIB_CRMF, CRMF_R_POPO_INCONSISTENT_PUBLIC_KEY);
                 return 0;
             }
-            /*
-             * TODO check the contents of the authInfo sub-field,
-             * see RFC 4211 https://tools.ietf.org/html/rfc4211#section-4.1
-             */
             it = ASN1_ITEM_rptr(OSSL_CRMF_POPOSIGNINGKEYINPUT);
             asn = sig->poposkInput;
         } else {
@@ -504,12 +500,6 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
             return 0;
         break;
     case OSSL_CRMF_POPO_KEYENC:
-        /*
-         * TODO: when OSSL_CMP_certrep_new() supports encrypted certs,
-         * return 1 if the type of req->popo->value.keyEncipherment
-         * is OSSL_CRMF_POPOPRIVKEY_SUBSEQUENTMESSAGE and
-         * its value.subsequentMessage == OSSL_CRMF_SUBSEQUENTMESSAGE_ENCRCERT
-         */
     case OSSL_CRMF_POPO_KEYAGREE:
     default:
         ERR_raise(ERR_LIB_CRMF, CRMF_R_UNSUPPORTED_POPO_METHOD);
