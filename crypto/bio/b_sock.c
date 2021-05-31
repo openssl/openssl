@@ -383,7 +383,6 @@ int BIO_sock_info(int sock,
     return 1;
 }
 
-/* TODO simplify by BIO_socket_wait() further other uses of select() in apps/ */
 /*
  * Wait on fd at most until max_time; succeed immediately if max_time == 0.
  * If for_read == 0 then assume to wait for writing, else wait for reading.
