@@ -10,9 +10,6 @@
 /* 
  * An example that uses the EVP_MD*, EVP_DigestSign* and EVP_DigestVerify* 
  * methods to calculate and verify a signature of two static buffers.
- * Another way of generating a signature is to use EVP_PKEY_sign(), it uses
- * a digest of message, does not hash the data to be signed, and therefore
- * is normally used to sign digests.
  */
 
 #include <string.h>
@@ -24,7 +21,7 @@
 
 /*
  * This demonstration will calculate and verify a signature of data using
- * the soliloqy from Hamlet scene 1 act 3
+ * the soliloquy from Hamlet scene 1 act 3
  */
 
 static const char *hamlet_1 =
@@ -100,7 +97,7 @@ static int demo_sign(OSSL_LIB_CTX *libctx,  const char *sig_name,
      * sign provider.
      */
     if (EVP_DigestSignInit_ex(sign_context, NULL, sig_name,
-                              libctx, NULL, priv_key, NULL) != 1) {
+                              libctx, NULL, priv_key, NULL) <= 0) {
         fprintf(stderr, "EVP_DigestSignInit_ex failed.\n");
         goto cleanup;
     }
@@ -108,16 +105,16 @@ static int demo_sign(OSSL_LIB_CTX *libctx,  const char *sig_name,
      * EVP_DigestSignUpdate() can be called several times on the same context
      * to include additional data.
      */
-    if (EVP_DigestSignUpdate(sign_context, hamlet_1, strlen(hamlet_1)) != 1) {
+    if (EVP_DigestSignUpdate(sign_context, hamlet_1, strlen(hamlet_1)) <= 0) {
         fprintf(stderr, "EVP_DigestSignUpdate(hamlet_1) failed.\n");
         goto cleanup;
     }
-    if (EVP_DigestSignUpdate(sign_context, hamlet_2, strlen(hamlet_2)) != 1) {
+    if (EVP_DigestSignUpdate(sign_context, hamlet_2, strlen(hamlet_2)) <= 0) {
         fprintf(stderr, "EVP_DigestSignUpdate(hamlet_2) failed.\n");
         goto cleanup;
     }
     /* Call EVP_DigestSignFinal to get signature length sig_len */
-    if (EVP_DigestSignFinal(sign_context, NULL, &sig_len) != 1) {
+    if (EVP_DigestSignFinal(sign_context, NULL, &sig_len) <= 0) {
         fprintf(stderr, "EVP_DigestSignFinal failed.\n");
         goto cleanup;
     }
@@ -130,7 +127,7 @@ static int demo_sign(OSSL_LIB_CTX *libctx,  const char *sig_name,
         fprintf(stderr, "No memory.\n");
         goto cleanup;
     }
-    if (EVP_DigestSignFinal(sign_context, sig_value, &sig_len) != 1) {
+    if (EVP_DigestSignFinal(sign_context, sig_value, &sig_len) <= 0) {
         fprintf(stderr, "EVP_DigestSignFinal failed.\n");
         goto cleanup;
     }
@@ -175,7 +172,7 @@ static int demo_verify(OSSL_LIB_CTX *libctx, const char *sig_name,
     }
     /* Verify */
     if (EVP_DigestVerifyInit_ex(verify_context, NULL, sig_name,
-                                libctx, NULL, pub_key, NULL) != 1) {
+                                libctx, NULL, pub_key, NULL) <= 0) {
         fprintf(stderr, "EVP_DigestVerifyInit failed.\n");
         goto cleanup;
     }
@@ -183,15 +180,15 @@ static int demo_verify(OSSL_LIB_CTX *libctx, const char *sig_name,
      * EVP_DigestVerifyUpdate() can be called several times on the same context
      * to include additional data.
      */
-    if (EVP_DigestVerifyUpdate(verify_context, hamlet_1, strlen(hamlet_1)) != 1) {
+    if (EVP_DigestVerifyUpdate(verify_context, hamlet_1, strlen(hamlet_1)) <= 0) {
         fprintf(stderr, "EVP_DigestVerifyUpdate(hamlet_1) failed.\n");
         goto cleanup;
     }
-    if (EVP_DigestVerifyUpdate(verify_context, hamlet_2, strlen(hamlet_2)) != 1) {
+    if (EVP_DigestVerifyUpdate(verify_context, hamlet_2, strlen(hamlet_2)) <= 0) {
         fprintf(stderr, "EVP_DigestVerifyUpdate(hamlet_2) failed.\n");
         goto cleanup;
     }
-    if (EVP_DigestVerifyFinal(verify_context, sig_value, sig_len) != 1) {
+    if (EVP_DigestVerifyFinal(verify_context, sig_value, sig_len) <= 0) {
         fprintf(stderr, "EVP_DigestVerifyFinal failed.\n");
         goto cleanup;
     }
@@ -218,11 +215,11 @@ int main(void)
         fprintf(stderr, "OSSL_LIB_CTX_new() returned NULL\n");
         goto cleanup;
     }
-    if (demo_sign(libctx, sig_name, &sig_len, &sig_value) != 1) {
+    if (demo_sign(libctx, sig_name, &sig_len, &sig_value) <= 0) {
         fprintf(stderr, "demo_sign failed.\n");
         goto cleanup;
     }
-    if (demo_verify(libctx, sig_name, sig_len, sig_value) != 1) {
+    if (demo_verify(libctx, sig_name, sig_len, sig_value) <= 0) {
         fprintf(stderr, "demo_verify failed.\n");
         goto cleanup;
     }
