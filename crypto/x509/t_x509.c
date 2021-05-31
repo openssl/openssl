@@ -523,11 +523,5 @@ int X509_STORE_CTX_print_verify_cb(int ok, X509_STORE_CTX *ctx)
         BIO_free(bio);
     }
 
-    /*
-     * TODO we could check policies here too, e.g.:
-     * if (cert_error == X509_V_OK && ok == 2)
-     *     policies_print(NULL, ctx);
-     */
-
     return ok;
 }
