@@ -83,7 +83,7 @@ sub reorder {
 
     # for parallel test runs, do slow tests first
     if ($jobs > 1 && $key =~ m/test_ssl_new|test_fuzz/) {
-        $key =~ s/(\d+)-/00-/;
+        $key =~ s/(\d+)-/01-/;
     }
     return $key;
 }
@@ -131,18 +131,20 @@ foreach my $arg (@ARGV ? @ARGV : ('alltests')) {
     $initial_arg = 0;
 }
 
+# prep recipes are mandatory and need to be always run first
+my @preps = glob(catfile($recipesdir,"00-prep_*.t"));
+foreach my $test (@preps) {
+    delete $tests{$test};
+}
+
 sub find_matching_tests {
     my ($glob) = @_;
 
-    # prep recipes are mandatory
-    my @recipes = glob(catfile($recipesdir,"00-prep_*.t"));
-
     if ($glob =~ m|^[\d\[\]\?\-]+$|) {
-        push @recipes, glob(catfile($recipesdir,"$glob-*.t"));
-    } else {
-        push @recipes, glob(catfile($recipesdir,"*-$glob.t"));
+        return glob(catfile($recipesdir,"$glob-*.t"));
     }
-    return @recipes;
+
+    return glob(catfile($recipesdir,"*-$glob.t"));
 }
 
 # The following is quite a bit of hackery to adapt to both TAP::Harness
@@ -305,6 +307,10 @@ unless (defined $eres) {
 
 my $harness = $package->new(\%tapargs);
 my $ret =
+    $harness->runtests(map { [ abs2rel($_, rel2abs(curdir())), basename($_) ] }
+                       @preps);
+die if $ret->has_errors;
+$ret =
     $harness->runtests(map { [ abs2rel($_, rel2abs(curdir())), basename($_) ] }
                        sort { reorder($a) cmp reorder($b) } keys %tests);
 
