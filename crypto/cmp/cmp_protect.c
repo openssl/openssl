@@ -258,7 +258,6 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
 
     /*
      * For the case of re-protection remove pre-existing protection.
-     * TODO: Consider also removing any pre-existing extraCerts.
      */
     X509_ALGOR_free(msg->header->protectionAlg);
     msg->header->protectionAlg = NULL;

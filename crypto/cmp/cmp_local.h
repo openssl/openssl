@@ -120,12 +120,9 @@ struct ossl_cmp_ctx_st {
 
     /* result returned in responses */
     int status; /* PKIStatus of last received IP/CP/KUP/RP/error or -1 */
-    /* TODO: this should be a stack since there could be more than one */
     OSSL_CMP_PKIFREETEXT *statusString; /* of last IP/CP/KUP/RP/error */
     int failInfoCode; /* failInfoCode of last received IP/CP/KUP/error, or -1 */
-    /* TODO: this should be a stack since there could be more than one */
     X509 *newCert; /* newly enrolled cert received from the CA */
-    /* TODO: this should be a stack since there could be more than one */
     STACK_OF(X509) *newChain; /* chain of newly enrolled cert received */
     STACK_OF(X509) *caPubs; /* CA certs received from server (in IP message) */
     STACK_OF(X509) *extraCertsIn; /* extraCerts received from server */
@@ -708,8 +705,6 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CMP_PROTECTEDPART)
  *   }       -- or HMAC [RFC2104, RFC2202])
  */
 /*-
- *  TODO: this is not yet defined here - but DH is anyway not used yet
- *
  *   id-DHBasedMac OBJECT IDENTIFIER ::= {1 2 840 113533 7 66 30}
  *   DHBMParameter ::= SEQUENCE {
  *           owf                 AlgorithmIdentifier,

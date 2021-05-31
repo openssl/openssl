@@ -770,7 +770,7 @@ DEFINE_OSSL_CMP_CTX_set1(p10CSR, X509_REQ)
 
 /*
  * Set the (newly received in IP/KUP/CP) certificate in the context.
- * TODO: this only permits for one cert to be enrolled at a time.
+ * This only permits for one cert to be enrolled at a time.
  */
 int ossl_cmp_ctx_set0_newCert(OSSL_CMP_CTX *ctx, X509 *cert)
 {
@@ -784,7 +784,7 @@ int ossl_cmp_ctx_set0_newCert(OSSL_CMP_CTX *ctx, X509 *cert)
 
 /*
  * Get the (newly received in IP/KUP/CP) client certificate from the context
- * TODO: this only permits for one client cert to be received...
+ * This only permits for one client cert to be received...
  */
 X509 *OSSL_CMP_CTX_get0_newCert(const OSSL_CMP_CTX *ctx)
 {
