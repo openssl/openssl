@@ -12,9 +12,9 @@ RAND_pseudo_bytes - generate random data
  int RAND_bytes(unsigned char *buf, int num);
  int RAND_priv_bytes(unsigned char *buf, int num);
 
- int RAND_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num,
+ int RAND_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num,
                    unsigned int strength);
- int RAND_priv_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num,
+ int RAND_priv_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num,
                         unsigned int strength);
 
 Deprecated since OpenSSL 1.1.0, can be hidden entirely by defining
