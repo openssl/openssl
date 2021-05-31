@@ -541,13 +541,13 @@ int EVP_MD_names_do_all(const EVP_MD *md,
                         void *data);
 const OSSL_PROVIDER *EVP_MD_get0_provider(const EVP_MD *md);
 int EVP_MD_get_pkey_type(const EVP_MD *md);
-#define EVP_MD_pkey_type EVP_MD_get_pkey_type
+# define EVP_MD_pkey_type EVP_MD_get_pkey_type
 int EVP_MD_get_size(const EVP_MD *md);
-#define EVP_MD_size EVP_MD_get_size
+# define EVP_MD_size EVP_MD_get_size
 int EVP_MD_get_block_size(const EVP_MD *md);
-#define EVP_MD_block_size EVP_MD_get_block_size
+# define EVP_MD_block_size EVP_MD_get_block_size
 unsigned long EVP_MD_get_flags(const EVP_MD *md);
-#define EVP_MD_flags EVP_MD_get_flags
+# define EVP_MD_flags EVP_MD_get_flags
 
 const EVP_MD *EVP_MD_CTX_get0_md(const EVP_MD_CTX *ctx);
 EVP_MD *EVP_MD_CTX_get1_md(EVP_MD_CTX *ctx);
@@ -594,11 +594,11 @@ int EVP_CIPHER_get_key_length(const EVP_CIPHER *cipher);
 int EVP_CIPHER_get_iv_length(const EVP_CIPHER *cipher);
 # define EVP_CIPHER_iv_length EVP_CIPHER_get_iv_length
 unsigned long EVP_CIPHER_get_flags(const EVP_CIPHER *cipher);
-#define EVP_CIPHER_flags EVP_CIPHER_get_flags
+# define EVP_CIPHER_flags EVP_CIPHER_get_flags
 int EVP_CIPHER_get_mode(const EVP_CIPHER *cipher);
 # define EVP_CIPHER_mode EVP_CIPHER_get_mode
 int EVP_CIPHER_get_type(const EVP_CIPHER *cipher);
-#define EVP_CIPHER_type EVP_CIPHER_get_type
+# define EVP_CIPHER_type EVP_CIPHER_get_type
 EVP_CIPHER *EVP_CIPHER_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                              const char *properties);
 int EVP_CIPHER_up_ref(EVP_CIPHER *cipher);
@@ -1306,11 +1306,11 @@ int EVP_PKEY_get_id(const EVP_PKEY *pkey);
 int EVP_PKEY_get_base_id(const EVP_PKEY *pkey);
 # define EVP_PKEY_base_id EVP_PKEY_get_base_id
 int EVP_PKEY_get_bits(const EVP_PKEY *pkey);
-#define EVP_PKEY_bits EVP_PKEY_get_bits
+# define EVP_PKEY_bits EVP_PKEY_get_bits
 int EVP_PKEY_get_security_bits(const EVP_PKEY *pkey);
-#define EVP_PKEY_security_bits EVP_PKEY_get_security_bits
+# define EVP_PKEY_security_bits EVP_PKEY_get_security_bits
 int EVP_PKEY_get_size(const EVP_PKEY *pkey);
-#define EVP_PKEY_size EVP_PKEY_get_size
+# define EVP_PKEY_size EVP_PKEY_get_size
 int EVP_PKEY_can_sign(const EVP_PKEY *pkey);
 int EVP_PKEY_set_type(EVP_PKEY *pkey, int type);
 int EVP_PKEY_set_type_str(EVP_PKEY *pkey, const char *str, int len);
