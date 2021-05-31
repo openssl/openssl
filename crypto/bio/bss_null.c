@@ -20,10 +20,8 @@ static long null_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static const BIO_METHOD null_method = {
     BIO_TYPE_NULL,
     "NULL",
-    /* TODO: Convert to new style write function */
     bwrite_conv,
     null_write,
-    /* TODO: Convert to new style read function */
     bread_conv,
     null_read,
     null_puts,
