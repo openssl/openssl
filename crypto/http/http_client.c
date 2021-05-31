@@ -1330,7 +1330,7 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
     /* Read past all following headers */
     do {
         /*
-         * TODO: This does not necessarily catch the case when the full
+         * This does not necessarily catch the case when the full
          * HTTP response came in in more than a single TCP message.
          */
         read_len = BIO_gets(fbio, mbuf, BUF_SIZE);
