@@ -77,6 +77,10 @@ int ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex(OSSL_LIB_CTX *libctx,
         mgf1md = md;
 
     mdlen = EVP_MD_size(md);
+    if (mdlen < 0) {
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_LENGTH);
+        return 0;
+    }
 
     /* step 2b: check KLen > nLen - 2 HLen - 2 */
     if (flen > emlen - 2 * mdlen - 1) {

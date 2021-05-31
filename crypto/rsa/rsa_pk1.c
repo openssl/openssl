@@ -138,7 +138,7 @@ int ossl_rsa_padding_add_PKCS1_type_2_ex(OSSL_LIB_CTX *libctx, unsigned char *to
     /* pad out with non-zero random data */
     j = tlen - 3 - flen;
 
-    if (RAND_bytes_ex(libctx, p, j, 0) <= 0)
+    if (j < 0 || RAND_bytes_ex(libctx, p, j, 0) <= 0)
         return 0;
     for (i = 0; i < j; i++) {
         if (*p == '\0')

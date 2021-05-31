@@ -45,7 +45,7 @@ X509_ALGOR *PKCS5_pbe2_set_iv_ex(const EVP_CIPHER *cipher, int iter,
                                  OSSL_LIB_CTX *libctx)
 {
     X509_ALGOR *scheme = NULL, *ret = NULL;
-    int alg_nid, keylen;
+    int alg_nid, keylen, ivlen;
     EVP_CIPHER_CTX *ctx = NULL;
     unsigned char iv[EVP_MAX_IV_LENGTH];
     PBE2PARAM *pbe2 = NULL;
@@ -66,11 +66,11 @@ X509_ALGOR *PKCS5_pbe2_set_iv_ex(const EVP_CIPHER *cipher, int iter,
         goto merr;
 
     /* Create random IV */
-    if (EVP_CIPHER_iv_length(cipher)) {
+    ivlen = EVP_CIPHER_iv_length(cipher);
+    if (ivlen > 0) {
         if (aiv)
-            memcpy(iv, aiv, EVP_CIPHER_iv_length(cipher));
-        else if (RAND_bytes_ex(libctx, iv, EVP_CIPHER_iv_length(cipher),
-                               0) <= 0)
+            memcpy(iv, aiv, ivlen);
+        else if (RAND_bytes_ex(libctx, iv, ivlen, 0) <= 0)
             goto err;
     }
 
