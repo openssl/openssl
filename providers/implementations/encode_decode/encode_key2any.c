@@ -602,7 +602,6 @@ static int prepare_ec_explicit_params(const void *eckey,
 /*
  * This implements EcpkParameters, where the CHOICE is based on whether there
  * is a curve name (curve nid) to be found or not.  See RFC 3279 for details.
- * TODO: shouldn't we use i2d_ECPKParameters()?
  */
 static int prepare_ec_params(const void *eckey, int nid, int save,
                              void **pstr, int *pstrtype)
