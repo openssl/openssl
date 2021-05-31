@@ -601,7 +601,7 @@ void ossl_rand_pool_keep_random_devices_open(int keep)
 /*
  * Try the various seeding methods in turn, exit when successful.
  *
- * TODO(DRBG): If more than one entropy source is available, is it
+ * If more than one entropy source is available, is it
  * preferable to stop as soon as enough entropy has been collected
  * (as favored by @rsalz) or should one rather be defensive and add
  * more entropy than requested and/or from different sources?
