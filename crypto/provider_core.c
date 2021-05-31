@@ -980,8 +980,6 @@ static void provider_activate_fallbacks(struct provider_store_st *store)
     /*
      * We assume that all fallbacks have been added to the store before
      * any fallback is activated.
-     * TODO: We may have to reconsider this, IF we find ourselves adding
-     * fallbacks after any previous fallback has been activated.
      */
     if (activated_fallback_count > 0)
         store->use_fallbacks = 0;
