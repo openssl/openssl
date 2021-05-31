@@ -204,7 +204,6 @@ static OSSL_CMP_PKISI *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
     }
     if (ctx->certOut != NULL
             && (*certOut = X509_dup(ctx->certOut)) == NULL)
-        /* TODO better return a cert produced from data in request template */
         goto err;
     if (ctx->chainOut != NULL
             && (*chainOut = X509_chain_up_ref(ctx->chainOut)) == NULL)
@@ -312,7 +311,6 @@ static void process_error(OSSL_CMP_SRV_CTX *srv_ctx, const OSSL_CMP_MSG *error,
     if (sk_ASN1_UTF8STRING_num(errorDetails) <= 0) {
         BIO_printf(bio_err, "errorDetails absent\n");
     } else {
-        /* TODO could use sk_ASN1_UTF8STRING2text() if exported */
         BIO_printf(bio_err, "errorDetails: ");
         for (i = 0; i < sk_ASN1_UTF8STRING_num(errorDetails); i++) {
             if (i > 0)

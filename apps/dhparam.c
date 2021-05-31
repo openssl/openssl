@@ -273,10 +273,9 @@ int dhparam_main(int argc, char **argv)
                 */
                 keytype = "DHX";
                 /*
-                    * BIO_reset() returns 0 for success for file BIOs only!!!
-                    * This won't work for stdin (and never has done)
-                    * TODO: We should fix this at some point
-                    */
+                 * BIO_reset() returns 0 for success for file BIOs only!!!
+                 * This won't work for stdin (and never has done)
+                 */
                 if (BIO_reset(in) == 0)
                     done = 0;
             }
