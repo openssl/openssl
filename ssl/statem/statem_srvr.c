@@ -3778,7 +3778,8 @@ static int construct_stateless_ticket(SSL *s, WPACKET *pkt, uint32_t age_add,
         }
 
         iv_len = EVP_CIPHER_iv_length(cipher);
-        if (RAND_bytes_ex(s->ctx->libctx, iv, iv_len, 0) <= 0
+        if (iv_len < 0
+                || RAND_bytes_ex(s->ctx->libctx, iv, iv_len, 0) <= 0
                 || !EVP_EncryptInit_ex(ctx, cipher, NULL,
                                        tctx->ext.secure->tick_aes_key, iv)
                 || !ssl_hmac_init(hctx, tctx->ext.secure->tick_hmac_key,
