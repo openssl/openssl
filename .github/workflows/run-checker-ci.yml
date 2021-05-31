@@ -23,10 +23,9 @@ jobs:
           no-threads,
           no-tls,
           no-tls1_3,
-          enable-trace,
+          enable-trace enable-fips,
           no-ts,
           no-ui,
-          enable-fips,
         ]
     runs-on: ubuntu-latest
     steps:
