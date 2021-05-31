@@ -25,7 +25,7 @@
 #include <openssl/encoder.h>
 
 /*
- * TODO: This include is to get OSSL_KEYMGMT_SELECT_*, which feels a bit
+ * This include is to get OSSL_KEYMGMT_SELECT_*, which feels a bit
  * much just for those macros...  they might serve better as EVP macros.
  */
 #include <openssl/core_dispatch.h>

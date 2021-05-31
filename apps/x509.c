@@ -745,7 +745,6 @@ int x509_main(int argc, char **argv)
 
     if (!noout || text || next_serial)
         OBJ_create("2.99999.3", "SET.ex3", "SET x509v3 extension 3");
-    /* TODO: why is this strange object created (and no error checked)? */
 
     if (alias)
         X509_alias_set1(x, (unsigned char *)alias, -1);
