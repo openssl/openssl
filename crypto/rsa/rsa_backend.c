@@ -270,7 +270,6 @@ int ossl_rsa_pss_params_30_fromdata(RSA_PSS_PARAMS_30 *pss_params,
         else if (!OSSL_PARAM_get_utf8_ptr(param_mgf, &mgfname))
             return 0;
 
-        /* TODO Revisit this if / when a new MGF algorithm appears */
         if (strcasecmp(param_mgf->data,
                        ossl_rsa_mgf_nid2name(default_maskgenalg_nid)) != 0)
             return 0;
