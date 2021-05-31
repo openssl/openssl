@@ -329,7 +329,7 @@ static int generate_q_fips186_4(BN_CTX *ctx, BIGNUM *q, const EVP_MD *evpmd,
 
         /* A.1.1.2 Step (5) : generate seed with size seed_len */
         if (generate_seed
-                && RAND_bytes_ex(libctx, seed, (int)seedlen, 0) < 0)
+                && RAND_bytes_ex(libctx, seed, seedlen, 0) < 0)
             goto err;
         /*
          * A.1.1.2 Step (6) AND
@@ -399,7 +399,7 @@ static int generate_q_fips186_2(BN_CTX *ctx, BIGNUM *q, const EVP_MD *evpmd,
         if (!BN_GENCB_call(cb, 0, m++))
             goto err;
 
-        if (generate_seed && RAND_bytes_ex(libctx, seed, (int)qsize, 0) <= 0)
+        if (generate_seed && RAND_bytes_ex(libctx, seed, qsize, 0) <= 0)
             goto err;
 
         memcpy(buf, seed, qsize);
