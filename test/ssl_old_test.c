@@ -636,7 +636,7 @@ static void sv_usage(void)
 #endif
     fprintf(stderr, " -no_dhe       - disable DHE\n");
 #ifndef OPENSSL_NO_EC
-    fprintf(stderr, " -no_ecdhe     - disable ECDHE\nTODO(openssl-team): no_ecdhe was broken by auto ecdh. Make this work again.\n");
+    fprintf(stderr, " -no_ecdhe     - disable ECDHE\n");
 #endif
 #ifndef OPENSSL_NO_PSK
     fprintf(stderr, " -psk arg      - PSK in hex (without 0x)\n");
