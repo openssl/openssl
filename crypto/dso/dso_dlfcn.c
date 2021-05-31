@@ -437,7 +437,6 @@ static int dlfcn_pathbyaddr(void *addr, char *path, int sz)
         return len;
     }
 
-    /* TODO: what error report does this attach to? */
     ERR_add_error_data(2, "dlfcn_pathbyaddr(): ", dlerror());
 # endif
     return -1;
