@@ -730,7 +730,6 @@ sub check {
         next if $target =~ /openssl-?/;
         next if ( grep { basename($_) eq "$target.pod" }
                   files(TAGS => [ 'manual', 'man1' ]) );
-        # TODO: Filter out "foreign manual" links.
         next if $target =~ /ps|apropos|sha1sum|procmail|perl/;
         err($id, "Bad command link L<$target(1)>") if grep /man1/, @sections;
     }
