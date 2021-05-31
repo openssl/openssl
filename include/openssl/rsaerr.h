@@ -48,6 +48,7 @@
 # define RSA_R_INVALID_KEYPAIR                            171
 # define RSA_R_INVALID_KEY_LENGTH                         173
 # define RSA_R_INVALID_LABEL                              160
+# define RSA_R_INVALID_LENGTH                             181
 # define RSA_R_INVALID_MESSAGE_LENGTH                     131
 # define RSA_R_INVALID_MGF1_MD                            156
 # define RSA_R_INVALID_MODULUS                            174
