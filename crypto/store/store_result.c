@@ -399,8 +399,6 @@ static int try_key(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
              * engine provided legacy key.
              * This is the same as der2key_decode() does, but in a limited
              * way and within the walls of libcrypto.
-             *
-             * TODO Remove this when #legacy keys are gone
              */
             if (pk == NULL)
                 pk = try_key_value_legacy(data, &store_info_new, ctx,
