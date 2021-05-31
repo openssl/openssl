@@ -553,7 +553,6 @@ static int check_extensions(X509_STORE_CTX *ctx)
             CB_FAIL_IF(x->altname != NULL
                            && sk_GENERAL_NAME_num(x->altname) <= 0,
                        ctx, x, i, X509_V_ERR_EMPTY_SUBJECT_ALT_NAME);
-            /* TODO add more checks on SAN entries */
             /* Check sig alg consistency acc. to RFC 5280 section 4.1.1.2 */
             CB_FAIL_IF(X509_ALGOR_cmp(&x->sig_alg, &x->cert_info.signature) != 0,
                        ctx, x, i, X509_V_ERR_SIGNATURE_ALGORITHM_INCONSISTENCY);
@@ -2088,8 +2087,9 @@ X509_CRL *X509_CRL_diff(X509_CRL *base, X509_CRL *newer,
 
         rvn = sk_X509_REVOKED_value(revs, i);
         /*
-         * Add only if not also in base. TODO: need something cleverer here
-         * for some more complex CRLs covering multiple CAs.
+         * Add only if not also in base.
+         * Need something cleverer here for some more complex CRLs covering
+         * multiple CAs.
          */
         if (!X509_CRL_get0_by_serial(base, &rvtmp, &rvn->serialNumber)) {
             rvtmp = X509_REVOKED_dup(rvn);
@@ -2101,7 +2101,6 @@ X509_CRL *X509_CRL_diff(X509_CRL *base, X509_CRL *newer,
             }
         }
     }
-    /* TODO: optionally prune deleted entries */
 
     if (skey != NULL && md != NULL && !X509_CRL_sign(crl, skey, md))
         goto memerr;

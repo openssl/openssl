@@ -225,7 +225,6 @@ X509_PUBKEY *X509_PUBKEY_dup(const X509_PUBKEY *a)
     return pubkey;
 }
 
-/* TODO should better be called X509_PUBKEY_set1 */
 int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 {
     X509_PUBKEY *pk = NULL;
