@@ -483,7 +483,6 @@ static int probable_prime(BIGNUM *rnd, int bits, int safe, prime_t *mods,
     BN_ULONG maxdelta = BN_MASK2 - primes[trial_divisions - 1];
 
  again:
-    /* TODO: Not all primes are private */
     if (!BN_priv_rand_ex(rnd, bits, BN_RAND_TOP_TWO, BN_RAND_BOTTOM_ODD, 0,
                          ctx))
         return 0;
