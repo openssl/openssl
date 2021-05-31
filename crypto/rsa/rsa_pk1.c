@@ -128,6 +128,9 @@ int ossl_rsa_padding_add_PKCS1_type_2_ex(OSSL_LIB_CTX *libctx, unsigned char *to
     if (flen > (tlen - RSA_PKCS1_PADDING_SIZE)) {
         ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
         return 0;
+    } else if (flen < 0) {
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_LENGTH);
+        return 0;
     }
 
     p = (unsigned char *)to;
@@ -138,7 +141,7 @@ int ossl_rsa_padding_add_PKCS1_type_2_ex(OSSL_LIB_CTX *libctx, unsigned char *to
     /* pad out with non-zero random data */
     j = tlen - 3 - flen;
 
-    if (j < 0 || RAND_bytes_ex(libctx, p, j, 0) <= 0)
+    if (RAND_bytes_ex(libctx, p, j, 0) <= 0)
         return 0;
     for (i = 0; i < j; i++) {
         if (*p == '\0')
