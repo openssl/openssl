@@ -24,8 +24,8 @@ jobs:
     - name: config
       working-directory: _build
       run: |
-        if ( "${{ matrix.arch }}" -eq "win32" ) { $target = "VC-WIN32" } else { $target = "VC-WIN64A" }
-        perl ..\Configure --banner=Configured no-makedepend no-fips $target
+        if ( "${{ matrix.arch }}" -eq "win32" ) { $target = "VC-WIN32" ; $fips = "no-fips" } else { $target = "VC-WIN64A" ; $fips = "enable-fips" }
+        perl ..\Configure --banner=Configured no-makedepend $fips $target
         perl configdata.pm --dump
     - name: build
       working-directory: _build
