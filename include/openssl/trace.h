@@ -198,7 +198,7 @@ void OSSL_trace_end(int category, BIO *channel);
  * call OSSL_TRACE_CANCEL(category).
  */
 
-# ifndef OPENSSL_NO_TRACE
+# if !defined OPENSSL_NO_TRACE && !defined FIPS_MODULE
 
 #  define OSSL_TRACE_BEGIN(category) \
     do { \
@@ -237,7 +237,7 @@ void OSSL_trace_end(int category, BIO *channel);
  *         ...
  *     }
  */
-# ifndef OPENSSL_NO_TRACE
+# if !defined OPENSSL_NO_TRACE && !defined FIPS_MODULE
 
 #  define OSSL_TRACE_ENABLED(category) \
     OSSL_trace_enabled(OSSL_TRACE_CATEGORY_##category)
