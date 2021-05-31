@@ -264,22 +264,22 @@ void aes_t4_decrypt(const unsigned char *in, unsigned char *out,
  */
 void aes128_t4_cbc_encrypt(const unsigned char *in, unsigned char *out,
                            size_t len, const AES_KEY *key,
-                           unsigned char *ivec);
+                           unsigned char *ivec, int /*unused*/);
 void aes128_t4_cbc_decrypt(const unsigned char *in, unsigned char *out,
                            size_t len, const AES_KEY *key,
-                           unsigned char *ivec);
+                           unsigned char *ivec, int /*unused*/);
 void aes192_t4_cbc_encrypt(const unsigned char *in, unsigned char *out,
                            size_t len, const AES_KEY *key,
-                           unsigned char *ivec);
+                           unsigned char *ivec, int /*unused*/);
 void aes192_t4_cbc_decrypt(const unsigned char *in, unsigned char *out,
                            size_t len, const AES_KEY *key,
-                           unsigned char *ivec);
+                           unsigned char *ivec, int /*unused*/);
 void aes256_t4_cbc_encrypt(const unsigned char *in, unsigned char *out,
                            size_t len, const AES_KEY *key,
-                           unsigned char *ivec);
+                           unsigned char *ivec, int /*unused*/);
 void aes256_t4_cbc_decrypt(const unsigned char *in, unsigned char *out,
                            size_t len, const AES_KEY *key,
-                           unsigned char *ivec);
+                           unsigned char *ivec, int /*unused*/);
 void aes128_t4_ctr32_encrypt(const unsigned char *in, unsigned char *out,
                              size_t blocks, const AES_KEY *key,
                              unsigned char *ivec);
