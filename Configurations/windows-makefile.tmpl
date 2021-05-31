@@ -65,7 +65,7 @@ FIPSMODULE={- # We do some extra checking here, as there should be only one
                          && $unified_info{attributes}->{modules}->{$_}->{fips} }
                   @{$unified_info{modules}};
               die "More that one FIPS module" if scalar @fipsmodules > 1;
-              join(" ", map { basename(platform->dso($_)) } @fipsmodules) -}
+              join(" ", map { platform->dso($_) } @fipsmodules) -}
 FIPSMODULENAME={- die "More that one FIPS module" if scalar @fipsmodules > 1;
                   join(", ", map { basename(platform->dso($_)) } @fipsmodules) -}
 PROGRAMS={- our @PROGRAMS = map { platform->bin($_) } @{$unified_info{programs}}; join(" ", @PROGRAMS) -}
