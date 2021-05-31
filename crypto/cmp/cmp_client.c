@@ -71,7 +71,6 @@ static int unprotected_exception(const OSSL_CMP_CTX *ctx,
 
             if (sk_OSSL_CMP_CERTRESPONSE_num(crepmsg->response) > 1)
                 return -1;
-            /* TODO: handle potentially multiple CertResponses in CertRepMsg */
             if (crep == NULL)
                 return -1;
             if (ossl_cmp_pkisi_get_status(crep->status)
@@ -262,7 +261,6 @@ static int poll_for_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
                   "received 'waiting' PKIStatus, starting to poll for response");
     *rep = NULL;
     for (;;) {
-        /* TODO: handle potentially multiple poll requests per message */
         if ((preq = ossl_cmp_pollReq_new(ctx, rid)) == NULL)
             goto err;
 

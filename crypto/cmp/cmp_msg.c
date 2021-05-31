@@ -399,7 +399,6 @@ OSSL_CMP_MSG *ossl_cmp_certreq_new(OSSL_CMP_CTX *ctx, int type,
         if (!sk_OSSL_CRMF_MSG_push(msg->body->value.ir, local_crm))
             goto err;
         local_crm = NULL;
-        /* TODO: here optional 2nd certreqmsg could be pushed to the stack */
     }
 
     if (!ossl_cmp_msg_protect(ctx, msg))
@@ -465,7 +464,6 @@ OSSL_CMP_MSG *ossl_cmp_certrep_new(OSSL_CMP_CTX *ctx, int bodytype,
     if (!sk_OSSL_CMP_CERTRESPONSE_push(repMsg->response, resp))
         goto err;
     resp = NULL;
-    /* TODO: here optional 2nd certrep could be pushed to the stack */
 
     if (bodytype == OSSL_CMP_PKIBODY_IP && caPubs != NULL
             && (repMsg->caPubs = X509_chain_up_ref(caPubs)) == NULL)
@@ -528,11 +526,6 @@ OSSL_CMP_MSG *ossl_cmp_rr_new(OSSL_CMP_CTX *ctx)
     if (!sk_OSSL_CMP_REVDETAILS_push(msg->body->value.rr, rd))
         goto err;
     rd = NULL;
-
-    /*
-     * TODO: the Revocation Passphrase according to section 5.3.19.9 could be
-     *       set here if set in ctx
-     */
 
     if (!ossl_cmp_msg_protect(ctx, msg))
         goto err;
@@ -749,10 +742,6 @@ int ossl_cmp_certstatus_set0_certHash(OSSL_CMP_CERTSTATUS *certStatus,
     return 1;
 }
 
-/*
- * TODO: handle potential 2nd certificate when signing and encrypting
- * certificates have been requested/received
- */
 OSSL_CMP_MSG *ossl_cmp_certConf_new(OSSL_CMP_CTX *ctx, int fail_info,
                                     const char *text)
 {
@@ -827,7 +816,6 @@ OSSL_CMP_MSG *ossl_cmp_pollReq_new(OSSL_CMP_CTX *ctx, int crid)
     if ((msg = ossl_cmp_msg_create(ctx, OSSL_CMP_PKIBODY_POLLREQ)) == NULL)
         goto err;
 
-    /* TODO: support multiple cert request IDs to poll */
     if ((preq = OSSL_CMP_POLLREQ_new()) == NULL
             || !ASN1_INTEGER_set(preq->certReqId, crid)
             || !sk_OSSL_CMP_POLLREQ_push(msg->body->value.pollReq, preq))
