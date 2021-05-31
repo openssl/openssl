@@ -74,10 +74,6 @@ struct evp_pkey_asn1_method_st {
     int (*get_priv_key) (const EVP_PKEY *pk, unsigned char *priv, size_t *len);
     int (*get_pub_key) (const EVP_PKEY *pk, unsigned char *pub, size_t *len);
 
-    /*
-     * TODO: Make sure these functions are defined for key types that are
-     * implemented in providers.
-     */
     /* Exports and imports to / from providers */
     size_t (*dirty_cnt) (const EVP_PKEY *pk);
     int (*export_to) (const EVP_PKEY *pk, void *to_keydata,
