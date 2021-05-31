@@ -555,6 +555,7 @@ EC_R_INVALID_FORM:104:invalid form
 EC_R_INVALID_GENERATOR:173:invalid generator
 EC_R_INVALID_GROUP_ORDER:122:invalid group order
 EC_R_INVALID_KEY:116:invalid key
+EC_R_INVALID_LENGTH:117:invalid length
 EC_R_INVALID_NAMED_GROUP_CONVERSION:174:invalid named group conversion
 EC_R_INVALID_OUTPUT_LENGTH:161:invalid output length
 EC_R_INVALID_P:172:invalid p
@@ -1152,6 +1153,7 @@ RSA_R_INVALID_HEADER:137:invalid header
 RSA_R_INVALID_KEYPAIR:171:invalid keypair
 RSA_R_INVALID_KEY_LENGTH:173:invalid key length
 RSA_R_INVALID_LABEL:160:invalid label
+RSA_R_INVALID_LENGTH:181:invalid length
 RSA_R_INVALID_MESSAGE_LENGTH:131:invalid message length
 RSA_R_INVALID_MGF1_MD:156:invalid mgf1 md
 RSA_R_INVALID_MODULUS:174:invalid modulus

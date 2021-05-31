@@ -259,8 +259,10 @@ int PKCS12_setup_mac(PKCS12 *p12, int iter, unsigned char *salt, int saltlen,
     }
     p12->mac->salt->length = saltlen;
     if (!salt) {
+        if (saltlen < 0)
+            return 0;
         if (RAND_bytes_ex(p12->authsafes->ctx.libctx, p12->mac->salt->data,
-                          saltlen, 0) <= 0)
+                          (size_t)saltlen, 0) <= 0)
             return 0;
     } else
         memcpy(p12->mac->salt->data, salt, saltlen);

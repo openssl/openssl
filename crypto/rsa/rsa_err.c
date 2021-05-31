@@ -57,6 +57,7 @@ static const ERR_STRING_DATA RSA_str_reasons[] = {
     {ERR_PACK(ERR_LIB_RSA, 0, RSA_R_INVALID_KEYPAIR), "invalid keypair"},
     {ERR_PACK(ERR_LIB_RSA, 0, RSA_R_INVALID_KEY_LENGTH), "invalid key length"},
     {ERR_PACK(ERR_LIB_RSA, 0, RSA_R_INVALID_LABEL), "invalid label"},
+    {ERR_PACK(ERR_LIB_RSA, 0, RSA_R_INVALID_LENGTH), "invalid length"},
     {ERR_PACK(ERR_LIB_RSA, 0, RSA_R_INVALID_MESSAGE_LENGTH),
     "invalid message length"},
     {ERR_PACK(ERR_LIB_RSA, 0, RSA_R_INVALID_MGF1_MD), "invalid mgf1 md"},
