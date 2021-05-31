@@ -6,7 +6,7 @@ GENERATE[$DER_DIGESTS_GEN]=der_digests_gen.c.in
 DEPEND[$DER_DIGESTS_GEN]=oids_to_c.pm NIST.asn1 DIGESTS.asn1
 
 DEPEND[${DER_DIGESTS_GEN/.c/.o}]=$DER_DIGESTS_H
-GENERATE[$DER_DIGESTS_H]=der_digests.h.in
+GENERATE[$DER_DIGESTS_H]=../include/prov/der_digests.h.in
 DEPEND[$DER_DIGESTS_H]=oids_to_c.pm NIST.asn1 DIGESTS.asn1
 
 #----- RSA
@@ -21,7 +21,7 @@ DEPEND[$DER_RSA_GEN]=oids_to_c.pm NIST.asn1 RSA.asn1
 
 DEPEND[${DER_RSA_AUX/.c/.o}]=$DER_RSA_H $DER_DIGESTS_H
 DEPEND[${DER_RSA_GEN/.c/.o}]=$DER_RSA_H
-GENERATE[$DER_RSA_H]=der_rsa.h.in
+GENERATE[$DER_RSA_H]=../include/prov/der_rsa.h.in
 DEPEND[$DER_RSA_H]=oids_to_c.pm NIST.asn1 RSA.asn1
 
 #----- DSA
@@ -35,7 +35,7 @@ IF[{- !$disabled{dsa} -}]
 
   DEPEND[${DER_DSA_AUX/.c/.o}]=$DER_DSA_H $DER_DIGESTS_H
   DEPEND[${DER_DSA_GEN/.c/.o}]=$DER_DSA_H
-  GENERATE[$DER_DSA_H]=der_dsa.h.in
+  GENERATE[$DER_DSA_H]=../include/prov/der_dsa.h.in
   DEPEND[$DER_DSA_H]=oids_to_c.pm DSA.asn1
 ENDIF
 
@@ -50,7 +50,7 @@ IF[{- !$disabled{ec} -}]
 
   DEPEND[${DER_EC_AUX/.c/.o}]=$DER_EC_H $DER_DIGESTS_H
   DEPEND[${DER_EC_GEN/.c/.o}]=$DER_EC_H
-  GENERATE[$DER_EC_H]=der_ec.h.in
+  GENERATE[$DER_EC_H]=../include/prov/der_ec.h.in
   DEPEND[$DER_EC_H]=oids_to_c.pm EC.asn1
 ENDIF
 
@@ -65,7 +65,7 @@ IF[{- !$disabled{ec} -}]
 
   DEPEND[${DER_ECX_AUX/.c/.o}]=$DER_ECX_H
   DEPEND[${DER_ECX_GEN/.c/.o}]=$DER_ECX_H
-  GENERATE[$DER_ECX_H]=der_ecx.h.in
+  GENERATE[$DER_ECX_H]=../include/prov/der_ecx.h.in
   DEPEND[$DER_ECX_H]=oids_to_c.pm ECX.asn1
 ENDIF
 
@@ -77,7 +77,7 @@ GENERATE[$DER_WRAP_GEN]=der_wrap_gen.c.in
 DEPEND[$DER_WRAP_GEN]=oids_to_c.pm wrap.asn1
 
 DEPEND[${DER_WRAP_GEN/.c/.o}]=$DER_WRAP_H
-GENERATE[$DER_WRAP_H]=der_wrap.h.in
+GENERATE[$DER_WRAP_H]=../include/prov/der_wrap.h.in
 DEPEND[$DER_WRAP_H]=oids_to_c.pm wrap.asn1
 
 #----- SM2
@@ -91,7 +91,7 @@ IF[{- !$disabled{sm2} -}]
 
   DEPEND[${DER_SM2_AUX/.c/.o}]=$DER_SM2_H $DER_EC_H
   DEPEND[${DER_SM2_GEN/.c/.o}]=$DER_SM2_H
-  GENERATE[$DER_SM2_H]=der_sm2.h.in
+  GENERATE[$DER_SM2_H]=../include/prov/der_sm2.h.in
   DEPEND[$DER_SM2_H]=oids_to_c.pm SM2.asn1
 ENDIF
 
