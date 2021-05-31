@@ -885,7 +885,6 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
     const char *input_type;
     OSSL_PARAM itp[2];
     const OSSL_PARAM *params = NULL;
-    /* TODO make use of the engine reference 'eng' when loading pkeys */
 
     if (ppkey != NULL) {
         *ppkey = NULL;
@@ -2258,8 +2257,6 @@ int do_X509_sign(X509 *cert, EVP_PKEY *pkey, const char *md,
         if (!adapt_keyid_ext(cert, ext_ctx, "authorityKeyIdentifier",
                              "keyid, issuer", !self_sign))
             goto end;
-
-        /* TODO any further measures for ensuring default RFC 5280 compliance */
     }
 
     if (mctx != NULL && do_sign_init(mctx, pkey, md, sigopts) > 0)

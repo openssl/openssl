@@ -405,7 +405,6 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
         log_message(prog, LOG_WARNING,
                     "HTTP request does not begin with %sPOST: %s",
                     accept_get ? "GET or " : "", reqbuf);
-        /* TODO provide better diagnosis in case client tries TLS */
         (void)http_server_send_status(cbio, 400, "Bad Request");
         goto out;
     }
