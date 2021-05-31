@@ -271,7 +271,6 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
          * values. We go through all keymgmt names, because the keytype
          * that's passed to this function doesn't necessarily translate
          * directly.
-         * TODO: Remove this when #legacy keys are gone.
          */
         if (keymgmt != NULL) {
             int tmp_id = get_legacy_alg_type_from_keymgmt(keymgmt);
@@ -323,7 +322,7 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
     ret->libctx = libctx;
     ret->keytype = keytype;
     ret->keymgmt = keymgmt;
-    ret->legacy_keytype = id;   /* TODO: Remove when #legacy key are gone */
+    ret->legacy_keytype = id;
     ret->engine = e;
     ret->pmeth = pmeth;
     ret->operation = EVP_PKEY_OP_UNDEFINED;
