@@ -115,8 +115,6 @@ typedef struct extensions_definition_st {
  * messages the extension is relevant to. These flags also specify whether the
  * extension is relevant to a particular protocol or protocol version.
  *
- * TODO(TLS1.3): Make sure we have a test to check the consistency of these
- *
  * NOTE: WebSphere Application Server 7+ cannot handle empty extensions at
  * the end, keep these extensions before signature_algorithm.
  */

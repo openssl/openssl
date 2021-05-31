@@ -295,7 +295,6 @@ int ssl3_read_n(SSL *s, size_t n, size_t max, int extend, int clearold,
         clear_sys_error();
         if (s->rbio != NULL) {
             s->rwstate = SSL_READING;
-            /* TODO(size_t): Convert this function */
             ret = BIO_read(s->rbio, pkt + len + left, max - left);
             if (ret >= 0)
                 bioread = ret;
@@ -722,7 +721,6 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         clear = s->enc_write_ctx ? 0 : 1; /* must be AEAD cipher */
         mac_size = 0;
     } else {
-        /* TODO(siz_t): Convert me */
         mac_size = EVP_MD_CTX_get_size(s->write_hash);
         if (mac_size < 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -833,7 +831,6 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
     if (s->enc_write_ctx && SSL_USE_EXPLICIT_IV(s) && !SSL_TREAT_AS_TLS13(s)) {
         int mode = EVP_CIPHER_CTX_get_mode(s->enc_write_ctx);
         if (mode == EVP_CIPH_CBC_MODE) {
-            /* TODO(size_t): Convert me */
             eivlen = EVP_CIPHER_CTX_get_iv_length(s->enc_write_ctx);
             if (eivlen <= 1)
                 eivlen = 0;
@@ -1195,7 +1192,6 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf, size_t len,
                     return i;
                 BIO_set_ktls_ctrl_msg(s->wbio, type);
             }
-            /* TODO(size_t): Convert this call */
             i = BIO_write(s->wbio, (char *)
                           &(SSL3_BUFFER_get_buf(&wb[currbuf])
                             [SSL3_BUFFER_get_offset(&wb[currbuf])]),

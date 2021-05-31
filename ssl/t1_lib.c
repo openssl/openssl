@@ -3079,7 +3079,7 @@ static int check_cert_usable(SSL *s, const SIGALG_LOOKUP *sig, X509 *x,
                 continue;
 
             /*
-             * TODO this does not differentiate between the
+             * This does not differentiate between the
              * rsa_pss_pss_* and rsa_pss_rsae_* schemes since we do not
              * have a chain here that lets us look at the key OID in the
              * signing certificate.

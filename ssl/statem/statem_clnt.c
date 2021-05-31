@@ -168,7 +168,8 @@ static int ossl_statem_client13_read_transition(SSL *s, int mt)
         }
         if (mt == SSL3_MT_CERTIFICATE_REQUEST) {
 #if DTLS_MAX_VERSION_INTERNAL != DTLS1_2_VERSION
-# error TODO(DTLS1.3): Restore digest for PHA before adding message.
+            /* Restore digest for PHA before adding message.*/
+# error Internal DTLS version error
 #endif
             if (!SSL_IS_DTLS(s) && s->post_handshake_auth == SSL_PHA_EXT_SENT) {
                 s->post_handshake_auth = SSL_PHA_REQUESTED;
@@ -1985,7 +1986,6 @@ static int tls_process_ske_srp(SSL *s, PACKET *pkt, EVP_PKEY **pkey)
         return 0;
     }
 
-    /* TODO(size_t): Convert BN_bin2bn() calls */
     if ((s->srp_ctx.N =
          BN_bin2bn(PACKET_data(&prime),
                    (int)PACKET_remaining(&prime), NULL)) == NULL
@@ -2035,7 +2035,6 @@ static int tls_process_ske_dhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey)
         return 0;
     }
 
-    /* TODO(size_t): Convert these calls */
     p = BN_bin2bn(PACKET_data(&prime), (int)PACKET_remaining(&prime), NULL);
     g = BN_bin2bn(PACKET_data(&generator), (int)PACKET_remaining(&generator),
                   NULL);
@@ -2573,7 +2572,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
         goto err;
     }
     /*
-     * TODO(size_t): we use sess_len here because EVP_Digest expects an int
+     * We use sess_len here because EVP_Digest expects an int
      * but s->session->session_id_length is a size_t
      */
     if (!EVP_Digest(s->session->ext.tick, ticklen,
@@ -2853,7 +2852,6 @@ static int tls_construct_cke_rsa(SSL *s, WPACKET *pkt)
 
     pms[0] = s->client_version >> 8;
     pms[1] = s->client_version & 0xff;
-    /* TODO(size_t): Convert this function */
     if (RAND_bytes_ex(s->ctx->libctx, pms + 2, pmslen - 2, 0) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -3059,7 +3057,6 @@ static int tls_construct_cke_gost(SSL *s, WPACKET *pkt)
 
     if (EVP_PKEY_encrypt_init(pkey_ctx) <= 0
         /* Generate session key
-         * TODO(size_t): Convert this function
          */
         || RAND_bytes_ex(s->ctx->libctx, pms, pmslen, 0) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);

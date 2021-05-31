@@ -1765,7 +1765,7 @@ static int tls_early_post_process_client_hello(SSL *s)
 
     /*
      * We don't allow resumption in a backwards compatible ClientHello.
-     * TODO(openssl-team): in TLS1.1+, session_id MUST be empty.
+     * In TLS1.1+, session_id MUST be empty.
      *
      * Versions before 0.9.7 always allow clients to resume sessions in
      * renegotiation. 0.9.7 and later allow this by default, but optionally
