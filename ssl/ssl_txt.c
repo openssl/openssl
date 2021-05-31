@@ -107,7 +107,6 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
     if (x->ext.tick) {
         if (BIO_puts(bp, "\n    TLS session ticket:\n") <= 0)
             goto err;
-        /* TODO(size_t): Convert this call */
         if (BIO_dump_indent
             (bp, (const char *)x->ext.tick, (int)x->ext.ticklen, 4)
             <= 0)

@@ -402,7 +402,6 @@ static int derive_secret_key_and_iv(SSL *s, int sending, const EVP_MD *md,
         return 0;
     }
 
-    /* TODO(size_t): convert me */
     keylen = EVP_CIPHER_get_key_length(ciph);
     if (EVP_CIPHER_get_mode(ciph) == EVP_CIPH_CCM_MODE) {
         uint32_t algenc;

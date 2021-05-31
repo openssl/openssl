@@ -1543,7 +1543,6 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(SSL_CTX *ctx,
 
     /*
      * Partially overrule strength sort to prefer TLS 1.2 ciphers/PRFs.
-     * TODO(openssl-team): is there an easier way to accomplish all this?
      */
     ssl_cipher_apply_rule(0, 0, 0, 0, 0, TLS1_2_VERSION, 0, CIPHER_BUMP, -1,
                           &head, &tail);

@@ -1379,7 +1379,7 @@ struct ssl_st {
         size_t previous_client_finished_len;
         unsigned char previous_server_finished[EVP_MAX_MD_SIZE];
         size_t previous_server_finished_len;
-        int send_connection_binding; /* TODOEKR */
+        int send_connection_binding;
 
 # ifndef OPENSSL_NO_NEXTPROTONEG
         /*

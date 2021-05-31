@@ -333,7 +333,6 @@ int tls1_change_cipher_state(SSL *s, int which)
     p = s->s3.tmp.key_block;
     i = *mac_secret_size = s->s3.tmp.new_mac_secret_size;
 
-    /* TODO(size_t): convert me */
     cl = EVP_CIPHER_get_key_length(c);
     j = cl;
     k = tls_iv_length_within_key_block(c);

@@ -499,7 +499,6 @@ int ssl3_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
                                 SSL3_RANDOM_SIZE) <= 0
             || EVP_DigestUpdate(ctx, &(s->s3.server_random[0]),
                                 SSL3_RANDOM_SIZE) <= 0
-               /* TODO(size_t) : convert me */
             || EVP_DigestFinal_ex(ctx, buf, &n) <= 0
             || EVP_DigestInit_ex(ctx, s->ctx->md5, NULL) <= 0
             || EVP_DigestUpdate(ctx, p, len) <= 0

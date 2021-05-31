@@ -155,10 +155,6 @@ int tls_parse_ctos_server_name(SSL *s, PACKET *pkt, unsigned int context,
          * the initial handshake and the resumption. In TLSv1.3 SNI is not
          * associated with the session.
          */
-        /*
-         * TODO(openssl-team): if the SNI doesn't match, we MUST
-         * fall back to a full handshake.
-         */
         s->servername_done = (s->session->ext.hostname != NULL)
             && PACKET_equal(&hostname, s->session->ext.hostname,
                             strlen(s->session->ext.hostname));
@@ -215,10 +211,6 @@ int tls_parse_ctos_srp(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         return 0;
     }
 
-    /*
-     * TODO(openssl-team): currently, we re-authenticate the user
-     * upon resumption. Instead, we MUST ignore the login.
-     */
     if (!PACKET_strndup(&srp_I, &s->srp_ctx.login)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
@@ -364,7 +356,6 @@ int tls_parse_ctos_status_request(SSL *s, PACKET *pkt, unsigned int context,
         }
 
         id_data = PACKET_data(&responder_id);
-        /* TODO(size_t): Convert d2i_* to size_t */
         id = d2i_OCSP_RESPID(NULL, &id_data,
                              (int)PACKET_remaining(&responder_id));
         if (id == NULL) {

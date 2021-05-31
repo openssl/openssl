@@ -35,7 +35,6 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
 
     if (n_recs != 1) {
         /* Should not happen */
-        /* TODO(TLS1.3): Support pipelining */
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -139,7 +138,6 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
         return 0;
     }
 
-    /* TODO(size_t): lenu/lenf should be a size_t but EVP doesn't support it */
     if (EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, sending) <= 0
             || (!sending && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
                                              taglen,

@@ -500,7 +500,6 @@ int ssl3_cbc_digest_record(const EVP_MD *md,
             || EVP_DigestUpdate(md_ctx, mac_out, md_size) <= 0)
             goto err;
     }
-    /* TODO(size_t): Convert me */
     ret = EVP_DigestFinal(md_ctx, md_out, &md_out_size_u);
     if (ret && md_out_size)
         *md_out_size = md_out_size_u;

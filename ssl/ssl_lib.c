@@ -2246,11 +2246,6 @@ int SSL_shutdown(SSL *s)
 
 int SSL_key_update(SSL *s, int updatetype)
 {
-    /*
-     * TODO(TLS1.3): How will applications know whether TLSv1.3 has been
-     * negotiated, and that it is appropriate to call SSL_key_update() instead
-     * of SSL_renegotiate().
-     */
     if (!SSL_IS_TLS13(s)) {
         ERR_raise(ERR_LIB_SSL, SSL_R_WRONG_SSL_VERSION);
         return 0;

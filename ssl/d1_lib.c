@@ -797,7 +797,6 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
             BIO_ADDR_free(tmpclient);
             tmpclient = NULL;
 
-            /* TODO(size_t): convert this call */
             if (BIO_write(wbio, wbuf, wreclen) < (int)wreclen) {
                 if (BIO_should_retry(wbio)) {
                     /*
