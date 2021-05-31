@@ -315,7 +315,7 @@ const RAND_METHOD *RAND_get_rand_method(void)
  * the default method, then just call RAND_bytes().  Otherwise make
  * sure we're instantiated and use the private DRBG.
  */
-int RAND_priv_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num,
+int RAND_priv_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num,
                        unsigned int strength)
 {
     EVP_RAND_CTX *rand;
@@ -339,10 +339,12 @@ int RAND_priv_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num,
 
 int RAND_priv_bytes(unsigned char *buf, int num)
 {
-    return RAND_priv_bytes_ex(NULL, buf, num, 0);
+    if (num < 0)
+        return 0;
+    return RAND_priv_bytes_ex(NULL, buf, (size_t)num, 0);
 }
 
-int RAND_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num,
+int RAND_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num,
                   unsigned int strength)
 {
     EVP_RAND_CTX *rand;
@@ -366,7 +368,9 @@ int RAND_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num,
 
 int RAND_bytes(unsigned char *buf, int num)
 {
-    return RAND_bytes_ex(NULL, buf, num, 0);
+    if (num < 0)
+        return 0;
+    return RAND_bytes_ex(NULL, buf, (size_t)num, 0);
 }
 
 typedef struct rand_global_st {
