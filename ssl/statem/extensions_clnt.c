@@ -629,7 +629,7 @@ static int add_key_share(SSL *s, WPACKET *pkt, unsigned int curve_id)
     }
 
     /*
-     * TODO(TLS1.3): When changing to send more than one key_share we're
+     * When changing to send more than one key_share we're
      * going to need to be able to save more than one EVP_PKEY. For now
      * we reuse the existing tmp.pkey
      */
@@ -668,8 +668,8 @@ EXT_RETURN tls_construct_ctos_key_share(SSL *s, WPACKET *pkt,
     tls1_get_supported_groups(s, &pgroups, &num_groups);
 
     /*
-     * TODO(TLS1.3): Make the number of key_shares sent configurable. For
-     * now, just send one
+     * Make the number of key_shares sent configurable. For
+     * now, we just send one
      */
     if (s->s3.group_id != 0) {
         curve_id = s->s3.group_id;
@@ -1387,7 +1387,6 @@ int tls_parse_stoc_status_request(SSL *s, PACKET *pkt, unsigned int context,
 {
     if (context == SSL_EXT_TLS1_3_CERTIFICATE_REQUEST) {
         /* We ignore this if the server sends a CertificateRequest */
-        /* TODO(TLS1.3): Add support for this */
         return 1;
     }
 
@@ -1429,7 +1428,6 @@ int tls_parse_stoc_sct(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 {
     if (context == SSL_EXT_TLS1_3_CERTIFICATE_REQUEST) {
         /* We ignore this if the server sends it in a CertificateRequest */
-        /* TODO(TLS1.3): Add support for this */
         return 1;
     }
 

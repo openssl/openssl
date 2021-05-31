@@ -521,7 +521,6 @@ int ssl3_get_record(SSL *s)
     if (BIO_get_ktls_recv(s->rbio) && !is_ktls_left)
         goto skip_decryption;
 
-    /* TODO(size_t): convert this to do size_t properly */
     if (s->read_hash != NULL) {
         const EVP_MD *tmpmd = EVP_MD_CTX_get0_md(s->read_hash);
 
@@ -782,7 +781,6 @@ int ssl3_do_uncompress(SSL *ssl, SSL3_RECORD *rr)
     if (rr->comp == NULL)
         return 0;
 
-    /* TODO(size_t): Convert this call */
     i = COMP_expand_block(ssl->expand, rr->comp,
                           SSL3_RT_MAX_PLAIN_LENGTH, rr->data, (int)rr->length);
     if (i < 0)
@@ -799,7 +797,6 @@ int ssl3_do_compress(SSL *ssl, SSL3_RECORD *wr)
 #ifndef OPENSSL_NO_COMP
     int i;
 
-    /* TODO(size_t): Convert this call */
     i = COMP_compress_block(ssl->compress, wr->data,
                             (int)(wr->length + SSL3_RT_MAX_COMPRESSED_OVERHEAD),
                             wr->input, (int)wr->length);
@@ -858,7 +855,6 @@ int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, size_t n_recs, int sending,
         int provided = (EVP_CIPHER_get0_provider(enc) != NULL);
 
         l = rec->length;
-        /* TODO(size_t): Convert this call */
         bs = EVP_CIPHER_CTX_get_block_size(ds);
 
         /* COMPRESS */
@@ -916,7 +912,6 @@ int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, size_t n_recs, int sending,
                 }
             }
         } else {
-            /* TODO(size_t): Convert this call */
             if (EVP_Cipher(ds, rec->data, rec->input, (unsigned int)l) < 1) {
                 /* Shouldn't happen */
                 SSLfatal(s, SSL_AD_BAD_RECORD_MAC, ERR_R_INTERNAL_ERROR);
@@ -1212,7 +1207,6 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
         } else {
             /* Legacy cipher */
 
-            /* TODO(size_t): Convert this call */
             tmpr = EVP_Cipher(ds, recs[0].data, recs[0].input,
                               (unsigned int)reclen[0]);
             if ((EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(ds))
@@ -1471,7 +1465,6 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
             return 0;
     }
 
-    /* TODO(size_t): Convert these calls */
     if (EVP_DigestSignUpdate(mac_ctx, header, sizeof(header)) <= 0
         || EVP_DigestSignUpdate(mac_ctx, rec->input, rec->length) <= 0
         || EVP_DigestSignFinal(mac_ctx, md, &md_size) <= 0) {
@@ -1546,7 +1539,6 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
     rr->data = rr->input;
     rr->orig_len = rr->length;
 
-    /* TODO(size_t): convert this to do size_t properly */
     if (s->read_hash != NULL) {
         const EVP_MD *tmpmd = EVP_MD_CTX_get0_md(s->read_hash);
 
@@ -1850,10 +1842,6 @@ int dtls1_get_record(SSL *s)
     if (!BIO_dgram_is_sctp(SSL_get_rbio(s))) {
 #endif
         /* Check whether this is a repeat, or aged record. */
-        /*
-         * TODO: Does it make sense to have replay protection in epoch 0 where
-         * we have no integrity negotiated yet?
-         */
         if (!dtls1_record_replay_check(s, bitmap)) {
             rr->length = 0;
             rr->read = 1;
