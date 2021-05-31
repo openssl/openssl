@@ -25,10 +25,8 @@ static long nullf_callback_ctrl(BIO *h, int cmd, BIO_info_cb *fp);
 static const BIO_METHOD methods_nullf = {
     BIO_TYPE_NULL_FILTER,
     "NULL filter",
-    /* TODO: Convert to new style write function */
     bwrite_conv,
     nullf_write,
-    /* TODO: Convert to new style read function */
     bread_conv,
     nullf_read,
     nullf_puts,
