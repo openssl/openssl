@@ -131,9 +131,10 @@ foreach my $arg (@ARGV ? @ARGV : ('alltests')) {
     $initial_arg = 0;
 }
 
-# prep recipes are mandatory
-foreach my $test (glob(catfile($recipesdir,"00-prep_*.t"))) {
-    $tests{$test} = 1;
+# prep recipes are mandatory and need to be always run first
+my @preps = glob(catfile($recipesdir,"00-prep_*.t"));
+foreach my $test (@preps) {
+    delete $tests{$test};
 }
 
 sub find_matching_tests {
@@ -306,6 +307,10 @@ unless (defined $eres) {
 
 my $harness = $package->new(\%tapargs);
 my $ret =
+    $harness->runtests(map { [ abs2rel($_, rel2abs(curdir())), basename($_) ] }
+                       @preps);
+die if $ret->has_errors;
+$ret =
     $harness->runtests(map { [ abs2rel($_, rel2abs(curdir())), basename($_) ] }
                        sort { reorder($a) cmp reorder($b) } keys %tests);
 
