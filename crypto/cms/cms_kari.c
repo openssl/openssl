@@ -432,7 +432,6 @@ static int cms_wrap_init(CMS_KeyAgreeRecipientInfo *kari,
         return 0;
     keylen = EVP_CIPHER_get_key_length(cipher);
     if ((EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_GET_WRAP_CIPHER) != 0) {
-        /* TODO: make this not get a method we can call directly */
         ret = EVP_CIPHER_meth_get_ctrl(cipher)(NULL, EVP_CTRL_GET_WRAP_CIPHER,
                                                0, &kekcipher);
         if (ret <= 0)
