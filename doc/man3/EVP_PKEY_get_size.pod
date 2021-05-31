@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-EVP_PKEY_get_size, EVP_PKEY_get_bits, EVP_PKEY_get_security_bits
+EVP_PKEY_get_size, EVP_PKEY_get_bits, EVP_PKEY_get_security_bits,
+EVP_PKEY_bits, EVP_PKEY_security_bits, EVP_PKEY_size
 - EVP_PKEY information functions
 
 =head1 SYNOPSIS
@@ -12,6 +13,10 @@ EVP_PKEY_get_size, EVP_PKEY_get_bits, EVP_PKEY_get_security_bits
  int EVP_PKEY_get_size(const EVP_PKEY *pkey);
  int EVP_PKEY_get_bits(const EVP_PKEY *pkey);
  int EVP_PKEY_get_security_bits(const EVP_PKEY *pkey);
+
+ #define EVP_PKEY_bits EVP_PKEY_get_bits
+ #define EVP_PKEY_security_bits EVP_PKEY_get_security_bits
+ #define EVP_PKEY_size EVP_PKEY_get_size
 
 =head1 DESCRIPTION
 

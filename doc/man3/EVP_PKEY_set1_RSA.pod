@@ -9,7 +9,8 @@ EVP_PKEY_assign_RSA, EVP_PKEY_assign_DSA, EVP_PKEY_assign_DH,
 EVP_PKEY_assign_EC_KEY, EVP_PKEY_assign_POLY1305, EVP_PKEY_assign_SIPHASH,
 EVP_PKEY_get0_hmac, EVP_PKEY_get0_poly1305, EVP_PKEY_get0_siphash,
 EVP_PKEY_get0, EVP_PKEY_type, EVP_PKEY_get_id, EVP_PKEY_get_base_id,
-EVP_PKEY_set1_engine, EVP_PKEY_get0_engine -
+EVP_PKEY_set1_engine, EVP_PKEY_get0_engine,
+EVP_PKEY_id, EVP_PKEY_base_id -
 EVP_PKEY assignment functions
 
 =head1 SYNOPSIS
@@ -19,6 +20,9 @@ EVP_PKEY assignment functions
  int EVP_PKEY_get_id(const EVP_PKEY *pkey);
  int EVP_PKEY_get_base_id(const EVP_PKEY *pkey);
  int EVP_PKEY_type(int type);
+
+ #define EVP_PKEY_id EVP_PKEY_get_id
+ #define EVP_PKEY_base_id EVP_PKEY_get_base_id
 
 Deprecated since OpenSSL 3.0, can be hidden entirely by defining
 B<OPENSSL_API_COMPAT> with a suitable version value, see
