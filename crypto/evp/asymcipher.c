@@ -34,10 +34,6 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
     evp_pkey_ctx_free_old_ops(ctx);
     ctx->operation = operation;
 
-    /*
-     * TODO when we stop falling back to legacy, this and the ERR_pop_to_mark()
-     * calls can be removed.
-     */
     ERR_set_mark();
 
     if (evp_pkey_ctx_is_legacy(ctx))
@@ -90,7 +86,6 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
     }
 
     /*
-     * TODO remove this when legacy is gone
      * If we don't have the full support we need with provided methods,
      * let's go see if legacy does.
      */
@@ -134,7 +129,6 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
 
  legacy:
     /*
-     * TODO remove this when legacy is gone
      * If we don't have the full support we need with provided methods,
      * let's go see if legacy does.
      */
