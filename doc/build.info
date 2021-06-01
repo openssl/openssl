@@ -471,6 +471,10 @@ DEPEND[html/man3/ADMISSIONS.html]=man3/ADMISSIONS.pod
 GENERATE[html/man3/ADMISSIONS.html]=man3/ADMISSIONS.pod
 DEPEND[man/man3/ADMISSIONS.3]=man3/ADMISSIONS.pod
 GENERATE[man/man3/ADMISSIONS.3]=man3/ADMISSIONS.pod
+DEPEND[html/man3/ASN1_EXTERN_FUNCS.html]=man3/ASN1_EXTERN_FUNCS.pod
+GENERATE[html/man3/ASN1_EXTERN_FUNCS.html]=man3/ASN1_EXTERN_FUNCS.pod
+DEPEND[man/man3/ASN1_EXTERN_FUNCS.3]=man3/ASN1_EXTERN_FUNCS.pod
+GENERATE[man/man3/ASN1_EXTERN_FUNCS.3]=man3/ASN1_EXTERN_FUNCS.pod
 DEPEND[html/man3/ASN1_INTEGER_get_int64.html]=man3/ASN1_INTEGER_get_int64.pod
 GENERATE[html/man3/ASN1_INTEGER_get_int64.html]=man3/ASN1_INTEGER_get_int64.pod
 DEPEND[man/man3/ASN1_INTEGER_get_int64.3]=man3/ASN1_INTEGER_get_int64.pod
@@ -511,6 +515,10 @@ DEPEND[html/man3/ASN1_TYPE_get.html]=man3/ASN1_TYPE_get.pod
 GENERATE[html/man3/ASN1_TYPE_get.html]=man3/ASN1_TYPE_get.pod
 DEPEND[man/man3/ASN1_TYPE_get.3]=man3/ASN1_TYPE_get.pod
 GENERATE[man/man3/ASN1_TYPE_get.3]=man3/ASN1_TYPE_get.pod
+DEPEND[html/man3/ASN1_aux_cb.html]=man3/ASN1_aux_cb.pod
+GENERATE[html/man3/ASN1_aux_cb.html]=man3/ASN1_aux_cb.pod
+DEPEND[man/man3/ASN1_aux_cb.3]=man3/ASN1_aux_cb.pod
+GENERATE[man/man3/ASN1_aux_cb.3]=man3/ASN1_aux_cb.pod
 DEPEND[html/man3/ASN1_generate_nconf.html]=man3/ASN1_generate_nconf.pod
 GENERATE[html/man3/ASN1_generate_nconf.html]=man3/ASN1_generate_nconf.pod
 DEPEND[man/man3/ASN1_generate_nconf.3]=man3/ASN1_generate_nconf.pod
@@ -519,6 +527,10 @@ DEPEND[html/man3/ASN1_item_d2i_bio.html]=man3/ASN1_item_d2i_bio.pod
 GENERATE[html/man3/ASN1_item_d2i_bio.html]=man3/ASN1_item_d2i_bio.pod
 DEPEND[man/man3/ASN1_item_d2i_bio.3]=man3/ASN1_item_d2i_bio.pod
 GENERATE[man/man3/ASN1_item_d2i_bio.3]=man3/ASN1_item_d2i_bio.pod
+DEPEND[html/man3/ASN1_item_new.html]=man3/ASN1_item_new.pod
+GENERATE[html/man3/ASN1_item_new.html]=man3/ASN1_item_new.pod
+DEPEND[man/man3/ASN1_item_new.3]=man3/ASN1_item_new.pod
+GENERATE[man/man3/ASN1_item_new.3]=man3/ASN1_item_new.pod
 DEPEND[html/man3/ASN1_item_sign.html]=man3/ASN1_item_sign.pod
 GENERATE[html/man3/ASN1_item_sign.html]=man3/ASN1_item_sign.pod
 DEPEND[man/man3/ASN1_item_sign.3]=man3/ASN1_item_sign.pod
@@ -2825,6 +2837,7 @@ DEPEND[man/man3/s2i_ASN1_IA5STRING.3]=man3/s2i_ASN1_IA5STRING.pod
 GENERATE[man/man3/s2i_ASN1_IA5STRING.3]=man3/s2i_ASN1_IA5STRING.pod
 IMAGEDOCS[man3]=
 HTMLDOCS[man3]=html/man3/ADMISSIONS.html \
+html/man3/ASN1_EXTERN_FUNCS.html \
 html/man3/ASN1_INTEGER_get_int64.html \
 html/man3/ASN1_INTEGER_new.html \
 html/man3/ASN1_ITEM_lookup.html \
@@ -2835,8 +2848,10 @@ html/man3/ASN1_STRING_new.html \
 html/man3/ASN1_STRING_print_ex.html \
 html/man3/ASN1_TIME_set.html \
 html/man3/ASN1_TYPE_get.html \
+html/man3/ASN1_aux_cb.html \
 html/man3/ASN1_generate_nconf.html \
 html/man3/ASN1_item_d2i_bio.html \
+html/man3/ASN1_item_new.html \
 html/man3/ASN1_item_sign.html \
 html/man3/ASYNC_WAIT_CTX_new.html \
 html/man3/ASYNC_start_job.html \
@@ -3414,6 +3429,7 @@ html/man3/i2d_re_X509_tbs.html \
 html/man3/o2i_SCT_LIST.html \
 html/man3/s2i_ASN1_IA5STRING.html
 MANDOCS[man3]=man/man3/ADMISSIONS.3 \
+man/man3/ASN1_EXTERN_FUNCS.3 \
 man/man3/ASN1_INTEGER_get_int64.3 \
 man/man3/ASN1_INTEGER_new.3 \
 man/man3/ASN1_ITEM_lookup.3 \
@@ -3424,8 +3440,10 @@ man/man3/ASN1_STRING_new.3 \
 man/man3/ASN1_STRING_print_ex.3 \
 man/man3/ASN1_TIME_set.3 \
 man/man3/ASN1_TYPE_get.3 \
+man/man3/ASN1_aux_cb.3 \
 man/man3/ASN1_generate_nconf.3 \
 man/man3/ASN1_item_d2i_bio.3 \
+man/man3/ASN1_item_new.3 \
 man/man3/ASN1_item_sign.3 \
 man/man3/ASYNC_WAIT_CTX_new.3 \
 man/man3/ASYNC_start_job.3 \

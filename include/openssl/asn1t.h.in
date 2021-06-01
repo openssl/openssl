@@ -704,7 +704,7 @@ typedef struct ASN1_AUX_st {
     void *app_data;
     int flags;
     int ref_offset;             /* Offset of reference value */
-    int ref_lock;               /* Lock type to use */
+    int ref_lock;               /* Offset of lock value */
     ASN1_aux_cb *asn1_cb;
     int enc_offset;             /* Offset of ASN1_ENCODING structure */
     ASN1_aux_const_cb *asn1_const_cb; /* for ASN1_OP_I2D_ and ASN1_OP_PRINT_ */
