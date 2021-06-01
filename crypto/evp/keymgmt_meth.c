@@ -251,7 +251,7 @@ const OSSL_PROVIDER *EVP_KEYMGMT_get0_provider(const EVP_KEYMGMT *keymgmt)
     return keymgmt->prov;
 }
 
-int EVP_KEYMGMT_get_number(const EVP_KEYMGMT *keymgmt)
+int evp_keymgmt_get_number(const EVP_KEYMGMT *keymgmt)
 {
     return keymgmt->name_id;
 }

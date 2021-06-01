@@ -428,7 +428,7 @@ int EVP_ASYM_CIPHER_is_a(const EVP_ASYM_CIPHER *cipher, const char *name)
     return evp_is_a(cipher->prov, cipher->name_id, NULL, name);
 }
 
-int EVP_ASYM_CIPHER_get_number(const EVP_ASYM_CIPHER *cipher)
+int evp_asym_cipher_get_number(const EVP_ASYM_CIPHER *cipher)
 {
     return cipher->name_id;
 }

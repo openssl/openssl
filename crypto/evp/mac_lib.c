@@ -203,7 +203,7 @@ int EVP_MAC_CTX_set_params(EVP_MAC_CTX *ctx, const OSSL_PARAM params[])
     return 1;
 }
 
-int EVP_MAC_get_number(const EVP_MAC *mac)
+int evp_mac_get_number(const EVP_MAC *mac)
 {
     return mac->name_id;
 }
