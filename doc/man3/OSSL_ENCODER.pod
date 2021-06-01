@@ -9,7 +9,6 @@ OSSL_ENCODER_free,
 OSSL_ENCODER_get0_provider,
 OSSL_ENCODER_get0_properties,
 OSSL_ENCODER_is_a,
-OSSL_ENCODER_get_number,
 OSSL_ENCODER_get0_name,
 OSSL_ENCODER_get0_description,
 OSSL_ENCODER_do_all_provided,
@@ -31,7 +30,6 @@ OSSL_ENCODER_get_params
  const OSSL_PROVIDER *OSSL_ENCODER_get0_provider(const OSSL_ENCODER *encoder);
  const char *OSSL_ENCODER_get0_properties(const OSSL_ENCODER *encoder);
  int OSSL_ENCODER_is_a(const OSSL_ENCODER *encoder, const char *name);
- int OSSL_ENCODER_get_number(const OSSL_ENCODER *encoder);
  const char *OSSL_ENCODER_get0_name(const OSSL_ENCODER *encoder);
  const char *OSSL_ENCODER_get0_description(const OSSL_ENCODER *encoder);
  void OSSL_ENCODER_do_all_provided(OSSL_LIB_CTX *libctx,
@@ -73,10 +71,7 @@ with the given I<encoder>.
 OSSL_ENCODER_is_a() checks if I<encoder> is an implementation of an
 algorithm that's identifiable with I<name>.
 
-OSSL_ENCODER_get_number() returns the internal dynamic number assigned to
-the given I<encoder>.
-
-OSSL_ENCODER_get_number() returns the name used to fetch the given I<encoder>.
+ossl_encoder_get_number() returns the name used to fetch the given I<encoder>.
 
 OSSL_ENCODER_get0_description() returns a description of the I<loader>, meant
 for display and human consumption.  The description is at the discretion of the
@@ -115,8 +110,6 @@ definition string, or NULL on error.
 
 OSSL_ENCODER_is_a() returns 1 of I<encoder> was identifiable,
 otherwise 0.
-
-OSSL_ENCODER_get_number() returns an integer.
 
 OSSL_ENCODER_get0_name() returns the algorithm name from the provided
 implementation for the given I<encoder>. Note that the I<encoder> may have

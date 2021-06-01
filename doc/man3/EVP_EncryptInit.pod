@@ -35,7 +35,6 @@ EVP_get_cipherbyobj,
 EVP_CIPHER_is_a,
 EVP_CIPHER_get0_name,
 EVP_CIPHER_get0_description,
-EVP_CIPHER_get_number,
 EVP_CIPHER_names_do_all,
 EVP_CIPHER_get0_provider,
 EVP_CIPHER_get_nid,
@@ -166,7 +165,6 @@ EVP_CIPHER_CTX_mode
  const EVP_CIPHER *EVP_get_cipherbyobj(const ASN1_OBJECT *a);
 
  int EVP_CIPHER_get_nid(const EVP_CIPHER *e);
- int EVP_CIPHER_get_number(const EVP_CIPHER *e);
  int EVP_CIPHER_is_a(const EVP_CIPHER *cipher, const char *name);
  int EVP_CIPHER_names_do_all(const EVP_CIPHER *cipher,
                              void (*fn)(const char *name, void *data),
@@ -520,11 +518,6 @@ with I<name>, otherwise 0. If I<cipher> is a legacy cipher (it's the return
 value from the likes of EVP_aes128() rather than the result of an
 EVP_CIPHER_fetch()), only cipher names registered with the default library
 context (see L<OSSL_LIB_CTX(3)>) will be considered.
-
-=item EVP_CIPHER_get_number()
-
-Returns the internal dynamic number assigned to the I<cipher>.  This is only
-useful with fetched B<EVP_CIPHER>s.
 
 =item EVP_CIPHER_get0_name() and EVP_CIPHER_CTX_get0_name()
 
