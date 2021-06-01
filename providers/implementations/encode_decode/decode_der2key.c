@@ -177,39 +177,6 @@ static void der2key_freectx(void *vctx)
     OPENSSL_free(ctx);
 }
 
-static const OSSL_PARAM *
-der2key_gettable_params(void *provctx, const struct keytype_desc_st *desc)
-{
-    static const OSSL_PARAM gettables[] = {
-        { OSSL_DECODER_PARAM_INPUT_TYPE, OSSL_PARAM_UTF8_PTR, NULL, 0, 0 },
-        OSSL_PARAM_END,
-    };
-    static const OSSL_PARAM gettables_w_structure[] = {
-        { OSSL_DECODER_PARAM_INPUT_TYPE, OSSL_PARAM_UTF8_PTR, NULL, 0, 0 },
-        { OSSL_DECODER_PARAM_INPUT_STRUCTURE, OSSL_PARAM_UTF8_PTR, NULL, 0, 0 },
-        OSSL_PARAM_END,
-    };
-
-    return desc->structure_name != NULL ? gettables_w_structure :  gettables;
-}
-
-static int der2key_get_params(OSSL_PARAM params[],
-                              const struct keytype_desc_st *desc)
-{
-    OSSL_PARAM *p;
-
-    p = OSSL_PARAM_locate(params, OSSL_DECODER_PARAM_INPUT_TYPE);
-    if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, "DER"))
-        return 0;
-    if (desc->structure_name != NULL) {
-        p = OSSL_PARAM_locate(params, OSSL_DECODER_PARAM_INPUT_STRUCTURE);
-        if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, desc->structure_name))
-            return 0;
-    }
-
-    return 1;
-}
-
 static int der2key_check_selection(int selection,
                                    const struct keytype_desc_st *desc)
 {
@@ -791,24 +758,10 @@ static void rsa_adjust(void *key, struct der2key_ctx_st *ctx)
           DO_##kind(keytype) };                                         \
                                                                         \
     static OSSL_FUNC_decoder_newctx_fn kind##_der2##keytype##_newctx;   \
-    static OSSL_FUNC_decoder_gettable_params_fn                         \
-    kind##_der2##keytype##_gettable_params;                             \
-    static OSSL_FUNC_decoder_get_params_fn                              \
-    kind##_der2##keytype##_get_params;                                  \
                                                                         \
     static void *kind##_der2##keytype##_newctx(void *provctx)           \
     {                                                                   \
         return der2key_newctx(provctx, &kind##_##keytype##_desc);       \
-    }                                                                   \
-    static const OSSL_PARAM *                                           \
-    kind##_der2##keytype##_gettable_params(void *provctx)               \
-    {                                                                   \
-        return                                                          \
-            der2key_gettable_params(provctx, &kind##_##keytype##_desc); \
-    }                                                                   \
-    static int kind##_der2##keytype##_get_params(OSSL_PARAM params[])   \
-    {                                                                   \
-        return der2key_get_params(params, &kind##_##keytype##_desc);    \
     }                                                                   \
     static int kind##_der2##keytype##_does_selection(void *provctx,     \
                                                      int selection)     \
@@ -822,10 +775,6 @@ static void rsa_adjust(void *key, struct der2key_ctx_st *ctx)
           (void (*)(void))kind##_der2##keytype##_newctx },              \
         { OSSL_FUNC_DECODER_FREECTX,                                    \
           (void (*)(void))der2key_freectx },                            \
-        { OSSL_FUNC_DECODER_GETTABLE_PARAMS,                            \
-          (void (*)(void))kind##_der2##keytype##_gettable_params },     \
-        { OSSL_FUNC_DECODER_GET_PARAMS,                                 \
-          (void (*)(void))kind##_der2##keytype##_get_params },          \
         { OSSL_FUNC_DECODER_DOES_SELECTION,                             \
           (void (*)(void))kind##_der2##keytype##_does_selection },      \
         { OSSL_FUNC_DECODER_DECODE,                                     \
