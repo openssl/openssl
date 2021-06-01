@@ -25,10 +25,10 @@ L<EVP_PKEY_encrypt(3)>, L<EVP_PKEY_decrypt(3)>, L<EVP_PKEY_derive(3)>.
 It must be stressed that, unless the documentation for the operation
 that's being performed says otherwise, the size returned by
 EVP_PKEY_size() is only preliminary and not exact, so the final
-contents of the target buffer may be smaller.  It is therefore crucial
-to take note of the size given back by the function that performs the
-operation, such as L<EVP_PKEY_sign(3)> (the I<siglen> argument will
-receive that length), to avoid bugs.
+contents of the target buffer may be smaller or larger than indicated.
+It is therefore crucial to take note of the size given back by the
+function that performs the operation, such as L<EVP_PKEY_sign(3)>
+(the I<siglen> argument will receive that length), to avoid bugs.
 
 EVP_PKEY_bits() returns the cryptographic length of the cryptosystem
 to which the key in I<pkey> belongs, in bits.  Note that the definition
