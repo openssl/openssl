@@ -3,7 +3,7 @@
 =head1 NAME
 
 EVP_ASYM_CIPHER_fetch, EVP_ASYM_CIPHER_free, EVP_ASYM_CIPHER_up_ref,
-EVP_ASYM_CIPHER_get_number, EVP_ASYM_CIPHER_is_a, EVP_ASYM_CIPHER_get0_provider,
+EVP_ASYM_CIPHER_is_a, EVP_ASYM_CIPHER_get0_provider,
 EVP_ASYM_CIPHER_do_all_provided, EVP_ASYM_CIPHER_names_do_all,
 EVP_ASYM_CIPHER_get0_name, EVP_ASYM_CIPHER_get0_description,
 EVP_ASYM_CIPHER_gettable_ctx_params, EVP_ASYM_CIPHER_settable_ctx_params
@@ -17,7 +17,6 @@ EVP_ASYM_CIPHER_gettable_ctx_params, EVP_ASYM_CIPHER_settable_ctx_params
                                         const char *properties);
  void EVP_ASYM_CIPHER_free(EVP_ASYM_CIPHER *cipher);
  int EVP_ASYM_CIPHER_up_ref(EVP_ASYM_CIPHER *cipher);
- int EVP_ASYM_CIPHER_get_number(const EVP_ASYM_CIPHER *cipher);
  const char *EVP_ASYM_CIPHER_get0_name(const EVP_ASYM_CIPHER *cipher);
  int EVP_ASYM_CIPHER_is_a(const EVP_ASYM_CIPHER *cipher, const char *name);
  OSSL_PROVIDER *EVP_ASYM_CIPHER_get0_provider(const EVP_ASYM_CIPHER *cipher);
@@ -61,9 +60,6 @@ EVP_ASYM_CIPHER_do_all_provided() traverses all EVP_ASYM_CIPHERs implemented by
 all activated providers in the given library context I<libctx>, and for each of
 the implementations, calls the given function I<fn> with the implementation
 method and the given I<arg> as argument.
-
-EVP_ASYM_CIPHER_get_number() returns the internal dynamic number assigned to
-I<cipher>.
 
 EVP_ASYM_CIPHER_get0_name() returns the algorithm name from the provided
 implementation for the given I<cipher>. Note that the I<cipher> may have
