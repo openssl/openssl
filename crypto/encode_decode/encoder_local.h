@@ -14,6 +14,7 @@
 #include <openssl/decoder.h>
 #include "internal/cryptlib.h"
 #include "internal/passphrase.h"
+#include "internal/property.h"
 #include "internal/refcount.h"
 
 struct ossl_endecode_base_st {
@@ -22,6 +23,7 @@ struct ossl_endecode_base_st {
     char *name;
     const char *propdef;
     const char *description;
+    OSSL_PROPERTY_LIST *parsed_propdef;
 
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
@@ -157,3 +159,7 @@ struct ossl_decoder_ctx_st {
     /* For any function that needs a passphrase reader */
     struct ossl_passphrase_data_st pwdata;
 };
+
+
+const OSSL_PROPERTY_LIST *
+ossl_decoder_parsed_properties(const OSSL_DECODER *decoder);

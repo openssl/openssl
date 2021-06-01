@@ -16,8 +16,8 @@
 #include <openssl/pkcs12err.h>
 #include <openssl/x509err.h>
 #include <openssl/trace.h>
-#include "internal/passphrase.h"
 #include "internal/bio.h"
+#include "internal/provider.h"
 #include "crypto/decoder.h"
 #include "encoder_local.h"
 #include "e_os.h"
@@ -204,16 +204,13 @@ OSSL_DECODER_INSTANCE *ossl_decoder_instance_new(OSSL_DECODER *decoder,
                                                  void *decoderctx)
 {
     OSSL_DECODER_INSTANCE *decoder_inst = NULL;
-    OSSL_PARAM params[3];
+    const OSSL_PROVIDER *prov;
+    OSSL_LIB_CTX *libctx;
+    const OSSL_PROPERTY_LIST *props;
+    const OSSL_PROPERTY_DEFINITION *prop;
 
     if (!ossl_assert(decoder != NULL)) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
-    }
-
-    if (decoder->get_params == NULL) {
-        ERR_raise(ERR_LIB_OSSL_DECODER,
-                  OSSL_DECODER_R_MISSING_GET_PARAMS);
         return 0;
     }
 
@@ -226,22 +223,25 @@ OSSL_DECODER_INSTANCE *ossl_decoder_instance_new(OSSL_DECODER *decoder,
         goto err;
     }
 
-    /* Cache the input type for this decoder */
-    params[0] =
-        OSSL_PARAM_construct_utf8_ptr(OSSL_DECODER_PARAM_INPUT_TYPE,
-                                      (char **)&decoder_inst->input_type, 0);
-    params[1] =
-        OSSL_PARAM_construct_utf8_ptr(OSSL_DECODER_PARAM_INPUT_STRUCTURE,
-                                      (char **)&decoder_inst->input_structure,
-                                      0);
-    params[2] = OSSL_PARAM_construct_end();
-
-    if (!decoder->get_params(params)
-        || !OSSL_PARAM_modified(&params[0]))
+    prov = OSSL_DECODER_get0_provider(decoder);
+    libctx = ossl_provider_libctx(prov);
+    props = ossl_decoder_parsed_properties(decoder);
+    if (props == NULL)
         goto err;
 
-    decoder_inst->flag_input_structure_was_set =
-        OSSL_PARAM_modified(&params[1]);
+    /* The "input" property is mandatory */
+    prop = ossl_property_find_property(props, libctx, "input");
+    decoder_inst->input_type = ossl_property_get_string_value(libctx, prop);
+    if (decoder_inst->input_type == NULL)
+        goto err;
+
+    /* The "structure" property is optional */
+    prop = ossl_property_find_property(props, libctx, "structure");
+    if (prop != NULL) {
+        decoder_inst->input_structure
+            = ossl_property_get_string_value(libctx, prop);
+    }
+
     decoder_inst->decoder = decoder;
     decoder_inst->decoderctx = decoderctx;
     return decoder_inst;
