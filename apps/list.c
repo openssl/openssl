@@ -88,13 +88,8 @@ DEFINE_STACK_OF(EVP_CIPHER)
 static int cipher_cmp(const EVP_CIPHER * const *a,
                       const EVP_CIPHER * const *b)
 {
-    int ret = EVP_CIPHER_get_number(*a) - EVP_CIPHER_get_number(*b);
-
-    if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_get0_name(EVP_CIPHER_get0_provider(*a)),
-                     OSSL_PROVIDER_get0_name(EVP_CIPHER_get0_provider(*b)));
-
-    return ret;
+    return strcmp(OSSL_PROVIDER_get0_name(EVP_CIPHER_get0_provider(*a)),
+                  OSSL_PROVIDER_get0_name(EVP_CIPHER_get0_provider(*b)));
 }
 
 static void collect_ciphers(EVP_CIPHER *cipher, void *stack)
@@ -177,13 +172,8 @@ static void legacy_md_fn(const EVP_MD *m,
 DEFINE_STACK_OF(EVP_MD)
 static int md_cmp(const EVP_MD * const *a, const EVP_MD * const *b)
 {
-    int ret = EVP_MD_get_number(*a) - EVP_MD_get_number(*b);
-
-    if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_get0_name(EVP_MD_get0_provider(*a)),
-                     OSSL_PROVIDER_get0_name(EVP_MD_get0_provider(*b)));
-
-    return ret;
+    return strcmp(OSSL_PROVIDER_get0_name(EVP_MD_get0_provider(*a)),
+                  OSSL_PROVIDER_get0_name(EVP_MD_get0_provider(*b)));
 }
 
 static void collect_digests(EVP_MD *digest, void *stack)
@@ -250,13 +240,8 @@ static void list_digests(void)
 DEFINE_STACK_OF(EVP_MAC)
 static int mac_cmp(const EVP_MAC * const *a, const EVP_MAC * const *b)
 {
-    int ret = EVP_MAC_get_number(*a) - EVP_MAC_get_number(*b);
-
-    if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_get0_name(EVP_MAC_get0_provider(*a)),
-                     OSSL_PROVIDER_get0_name(EVP_MAC_get0_provider(*b)));
-
-    return ret;
+    return strcmp(OSSL_PROVIDER_get0_name(EVP_MAC_get0_provider(*a)),
+                  OSSL_PROVIDER_get0_name(EVP_MAC_get0_provider(*b)));
 }
 
 static void collect_macs(EVP_MAC *mac, void *stack)
@@ -319,13 +304,8 @@ static void list_macs(void)
 DEFINE_STACK_OF(EVP_KDF)
 static int kdf_cmp(const EVP_KDF * const *a, const EVP_KDF * const *b)
 {
-    int ret = EVP_KDF_get_number(*a) - EVP_KDF_get_number(*b);
-
-    if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_get0_name(EVP_KDF_get0_provider(*a)),
-                     OSSL_PROVIDER_get0_name(EVP_KDF_get0_provider(*b)));
-
-    return ret;
+    return strcmp(OSSL_PROVIDER_get0_name(EVP_KDF_get0_provider(*a)),
+                  OSSL_PROVIDER_get0_name(EVP_KDF_get0_provider(*b)));
 }
 
 static void collect_kdfs(EVP_KDF *kdf, void *stack)
@@ -520,12 +500,8 @@ DEFINE_STACK_OF(OSSL_ENCODER)
 static int encoder_cmp(const OSSL_ENCODER * const *a,
                        const OSSL_ENCODER * const *b)
 {
-    int ret = OSSL_ENCODER_get_number(*a) - OSSL_ENCODER_get_number(*b);
-
-    if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_get0_name(OSSL_ENCODER_get0_provider(*a)),
-                     OSSL_PROVIDER_get0_name(OSSL_ENCODER_get0_provider(*b)));
-    return ret;
+    return strcmp(OSSL_PROVIDER_get0_name(OSSL_ENCODER_get0_provider(*a)),
+                  OSSL_PROVIDER_get0_name(OSSL_ENCODER_get0_provider(*b)));
 }
 
 static void collect_encoders(OSSL_ENCODER *encoder, void *stack)
@@ -588,12 +564,8 @@ DEFINE_STACK_OF(OSSL_DECODER)
 static int decoder_cmp(const OSSL_DECODER * const *a,
                        const OSSL_DECODER * const *b)
 {
-    int ret = OSSL_DECODER_get_number(*a) - OSSL_DECODER_get_number(*b);
-
-    if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_get0_name(OSSL_DECODER_get0_provider(*a)),
-                     OSSL_PROVIDER_get0_name(OSSL_DECODER_get0_provider(*b)));
-    return ret;
+    return strcmp(OSSL_PROVIDER_get0_name(OSSL_DECODER_get0_provider(*a)),
+                  OSSL_PROVIDER_get0_name(OSSL_DECODER_get0_provider(*b)));
 }
 
 static void collect_decoders(OSSL_DECODER *decoder, void *stack)
@@ -654,12 +626,8 @@ DEFINE_STACK_OF(EVP_KEYMGMT)
 static int keymanager_cmp(const EVP_KEYMGMT * const *a,
                           const EVP_KEYMGMT * const *b)
 {
-    int ret = EVP_KEYMGMT_get_number(*a) - EVP_KEYMGMT_get_number(*b);
-
-    if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_get0_name(EVP_KEYMGMT_get0_provider(*a)),
-                     OSSL_PROVIDER_get0_name(EVP_KEYMGMT_get0_provider(*b)));
-    return ret;
+    return strcmp(OSSL_PROVIDER_get0_name(EVP_KEYMGMT_get0_provider(*a)),
+                  OSSL_PROVIDER_get0_name(EVP_KEYMGMT_get0_provider(*b)));
 }
 
 static void collect_keymanagers(EVP_KEYMGMT *km, void *stack)
@@ -720,12 +688,8 @@ DEFINE_STACK_OF(EVP_SIGNATURE)
 static int signature_cmp(const EVP_SIGNATURE * const *a,
                          const EVP_SIGNATURE * const *b)
 {
-    int ret = EVP_SIGNATURE_get_number(*a) - EVP_SIGNATURE_get_number(*b);
-
-    if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_get0_name(EVP_SIGNATURE_get0_provider(*a)),
-                     OSSL_PROVIDER_get0_name(EVP_SIGNATURE_get0_provider(*b)));
-    return ret;
+    return strcmp(OSSL_PROVIDER_get0_name(EVP_SIGNATURE_get0_provider(*a)),
+                  OSSL_PROVIDER_get0_name(EVP_SIGNATURE_get0_provider(*b)));
 }
 
 static void collect_signatures(EVP_SIGNATURE *sig, void *stack)
@@ -783,12 +747,8 @@ DEFINE_STACK_OF(EVP_KEM)
 static int kem_cmp(const EVP_KEM * const *a,
                    const EVP_KEM * const *b)
 {
-    int ret = EVP_KEM_get_number(*a) - EVP_KEM_get_number(*b);
-
-    if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_get0_name(EVP_KEM_get0_provider(*a)),
-                     OSSL_PROVIDER_get0_name(EVP_KEM_get0_provider(*b)));
-    return ret;
+    return strcmp(OSSL_PROVIDER_get0_name(EVP_KEM_get0_provider(*a)),
+                  OSSL_PROVIDER_get0_name(EVP_KEM_get0_provider(*b)));
 }
 
 static void collect_kem(EVP_KEM *kem, void *stack)
@@ -846,12 +806,8 @@ DEFINE_STACK_OF(EVP_ASYM_CIPHER)
 static int asymcipher_cmp(const EVP_ASYM_CIPHER * const *a,
                           const EVP_ASYM_CIPHER * const *b)
 {
-    int ret = EVP_ASYM_CIPHER_get_number(*a) - EVP_ASYM_CIPHER_get_number(*b);
-
-    if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_get0_name(EVP_ASYM_CIPHER_get0_provider(*a)),
-                     OSSL_PROVIDER_get0_name(EVP_ASYM_CIPHER_get0_provider(*b)));
-    return ret;
+    return strcmp(OSSL_PROVIDER_get0_name(EVP_ASYM_CIPHER_get0_provider(*a)),
+                  OSSL_PROVIDER_get0_name(EVP_ASYM_CIPHER_get0_provider(*b)));
 }
 
 static void collect_asymciph(EVP_ASYM_CIPHER *asym_cipher, void *stack)
@@ -911,12 +867,8 @@ DEFINE_STACK_OF(EVP_KEYEXCH)
 static int kex_cmp(const EVP_KEYEXCH * const *a,
                    const EVP_KEYEXCH * const *b)
 {
-    int ret = EVP_KEYEXCH_get_number(*a) - EVP_KEYEXCH_get_number(*b);
-
-    if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_get0_name(EVP_KEYEXCH_get0_provider(*a)),
-                     OSSL_PROVIDER_get0_name(EVP_KEYEXCH_get0_provider(*b)));
-    return ret;
+    return strcmp(OSSL_PROVIDER_get0_name(EVP_KEYEXCH_get0_provider(*a)),
+                  OSSL_PROVIDER_get0_name(EVP_KEYEXCH_get0_provider(*b)));
 }
 
 static void collect_kex(EVP_KEYEXCH *kex, void *stack)
@@ -1196,13 +1148,8 @@ DEFINE_STACK_OF(OSSL_STORE_LOADER)
 static int store_cmp(const OSSL_STORE_LOADER * const *a,
                      const OSSL_STORE_LOADER * const *b)
 {
-    int ret = OSSL_STORE_LOADER_get_number(*a) - OSSL_STORE_LOADER_get_number(*b);
-
-    if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_get0_name(OSSL_STORE_LOADER_get0_provider(*a)),
-                     OSSL_PROVIDER_get0_name(OSSL_STORE_LOADER_get0_provider(*b)));
-
-    return ret;
+    return strcmp(OSSL_PROVIDER_get0_name(OSSL_STORE_LOADER_get0_provider(*a)),
+                  OSSL_PROVIDER_get0_name(OSSL_STORE_LOADER_get0_provider(*b)));
 }
 
 static void collect_store_loaders(OSSL_STORE_LOADER *store, void *stack)
