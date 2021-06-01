@@ -421,7 +421,7 @@ const char *OSSL_DECODER_get0_properties(const OSSL_DECODER *decoder)
     return decoder->base.propdef;
 }
 
-int OSSL_DECODER_get_number(const OSSL_DECODER *decoder)
+int ossl_decoder_get_number(const OSSL_DECODER *decoder)
 {
     if (!ossl_assert(decoder != NULL)) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_PASSED_NULL_PARAMETER);

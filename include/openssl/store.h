@@ -261,7 +261,6 @@ void OSSL_STORE_LOADER_free(OSSL_STORE_LOADER *loader);
 const OSSL_PROVIDER *OSSL_STORE_LOADER_get0_provider(const OSSL_STORE_LOADER *
                                                 loader);
 const char *OSSL_STORE_LOADER_get0_properties(const OSSL_STORE_LOADER *loader);
-int OSSL_STORE_LOADER_get_number(const OSSL_STORE_LOADER *loader);
 const char *OSSL_STORE_LOADER_get0_description(const OSSL_STORE_LOADER *loader);
 int OSSL_STORE_LOADER_is_a(const OSSL_STORE_LOADER *loader,
                            const char *scheme);

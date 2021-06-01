@@ -660,7 +660,7 @@ int EVP_CIPHER_is_a(const EVP_CIPHER *cipher, const char *name)
     return evp_is_a(NULL, 0, EVP_CIPHER_get0_name(cipher), name);
 }
 
-int EVP_CIPHER_get_number(const EVP_CIPHER *cipher)
+int evp_cipher_get_number(const EVP_CIPHER *cipher)
 {
     return cipher->name_id;
 }
@@ -714,7 +714,7 @@ int EVP_MD_is_a(const EVP_MD *md, const char *name)
     return evp_is_a(NULL, 0, EVP_MD_get0_name(md), name);
 }
 
-int EVP_MD_get_number(const EVP_MD *md)
+int evp_md_get_number(const EVP_MD *md)
 {
     return md->name_id;
 }

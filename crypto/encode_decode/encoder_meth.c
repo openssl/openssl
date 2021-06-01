@@ -433,7 +433,7 @@ const char *OSSL_ENCODER_get0_properties(const OSSL_ENCODER *encoder)
     return encoder->base.propdef;
 }
 
-int OSSL_ENCODER_get_number(const OSSL_ENCODER *encoder)
+int ossl_encoder_get_number(const OSSL_ENCODER *encoder)
 {
     if (!ossl_assert(encoder != NULL)) {
         ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_PASSED_NULL_PARAMETER);
