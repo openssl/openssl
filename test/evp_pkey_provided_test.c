@@ -979,7 +979,7 @@ static int test_fromdata_ecx(int tst)
         fromdata_params = ed25519_fromdata_params;
         bits = ED25519_BITS;
         security_bits = ED25519_SECURITY_BITS;
-        size = ED25519_KEYLEN;
+        size = ED25519_SIGSIZE;
         alg = "ED25519";
         break;
 
@@ -987,7 +987,7 @@ static int test_fromdata_ecx(int tst)
         fromdata_params = ed448_fromdata_params;
         bits = ED448_BITS;
         security_bits = ED448_SECURITY_BITS;
-        size = ED448_KEYLEN;
+        size = ED448_SIGSIZE;
         alg = "ED448";
         break;
     default:
