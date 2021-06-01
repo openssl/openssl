@@ -17,6 +17,12 @@
 typedef struct ossl_method_store_st OSSL_METHOD_STORE;
 typedef struct ossl_property_list_st OSSL_PROPERTY_LIST;
 
+typedef enum {
+    OSSL_PROPERTY_TYPE_STRING, OSSL_PROPERTY_TYPE_NUMBER,
+    OSSL_PROPERTY_TYPE_VALUE_UNDEFINED
+} OSSL_PROPERTY_TYPE;
+typedef struct ossl_property_definition_st OSSL_PROPERTY_DEFINITION;
+
 /* Initialisation */
 int ossl_property_parse_init(OSSL_LIB_CTX *ctx);
 
@@ -32,6 +38,15 @@ int ossl_property_is_enabled(OSSL_LIB_CTX *ctx,  const char *property_name,
                              const OSSL_PROPERTY_LIST *prop_list);
 /* Free a parsed property list */
 void ossl_property_free(OSSL_PROPERTY_LIST *p);
+
+/* Get a property from a property list */
+const OSSL_PROPERTY_DEFINITION *
+ossl_property_find_property(const OSSL_PROPERTY_LIST *list,
+                            OSSL_LIB_CTX *libctx, const char *name);
+OSSL_PROPERTY_TYPE ossl_property_get_type(const OSSL_PROPERTY_DEFINITION *prop);
+const char *ossl_property_get_string_value(OSSL_LIB_CTX *libctx,
+                                           const OSSL_PROPERTY_DEFINITION *prop);
+int64_t ossl_property_get_number_value(const OSSL_PROPERTY_DEFINITION *prop);
 
 
 /* Implementation store functions */
