@@ -195,11 +195,17 @@ static int rsa_validate_rng_strength(EVP_RAND_CTX *rng, int nbits)
 {
     if (rng == NULL)
         return 0;
+#ifdef FIPS_MODULE
+    /*
+     * This should become mainstream once similar tests are added to the other
+     * key generations and once there is a way to disable these checks.
+     */
     if (EVP_RAND_get_strength(rng) < ossl_ifc_ffc_compute_security_bits(nbits)) {
         ERR_raise(ERR_LIB_RSA,
                   RSA_R_RANDOMNESS_SOURCE_STRENGTH_INSUFFICIENT);
         return 0;
     }
+#endif
     return 1;
 }
 
