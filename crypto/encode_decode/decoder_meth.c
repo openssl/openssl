@@ -59,6 +59,7 @@ void OSSL_DECODER_free(OSSL_DECODER *decoder)
     if (ref > 0)
         return;
     OPENSSL_free(decoder->base.name);
+    ossl_property_free(decoder->base.parsed_propdef);
     ossl_provider_free(decoder->base.prov);
     CRYPTO_THREAD_lock_free(decoder->base.lock);
     OPENSSL_free(decoder);
@@ -166,6 +167,7 @@ void *ossl_decoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
 {
     OSSL_DECODER *decoder = NULL;
     const OSSL_DISPATCH *fns = algodef->implementation;
+    OSSL_LIB_CTX *libctx = ossl_provider_libctx(prov);
 
     if ((decoder = ossl_decoder_new()) == NULL)
         return NULL;
@@ -176,6 +178,8 @@ void *ossl_decoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
     }
     decoder->base.propdef = algodef->property_definition;
     decoder->base.description = algodef->algorithm_description;
+    decoder->base.parsed_propdef
+        = ossl_parse_property(libctx, algodef->property_definition);
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
@@ -419,6 +423,17 @@ const char *OSSL_DECODER_get0_properties(const OSSL_DECODER *decoder)
     }
 
     return decoder->base.propdef;
+}
+
+const OSSL_PROPERTY_LIST *
+ossl_decoder_parsed_properties(const OSSL_DECODER *decoder)
+{
+    if (!ossl_assert(decoder != NULL)) {
+        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    return decoder->base.parsed_propdef;
 }
 
 int ossl_decoder_get_number(const OSSL_DECODER *decoder)

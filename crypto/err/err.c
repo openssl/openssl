@@ -125,6 +125,8 @@ static ERR_STRING_DATA ERR_str_reasons[] = {
      * unsupported.
      */
     {ERR_R_FETCH_FAILED, "fetch failed"},
+
+    {ERR_R_INVALID_PROPERTY_DEFINITION, "invalid property definition"},
     {0, NULL},
 };
 #endif
