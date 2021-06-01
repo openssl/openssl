@@ -11,7 +11,20 @@ OPENSSL_instrument_bus2                 assembler
 #
 ADMISSION_SYNTAX                        datatype
 ADMISSIONS                              datatype
+ASN1_AUX                                datatype
+ASN1_aux_cb                             datatype
+ASN1_aux_const_cb                       datatype
+ASN1_ex_d2i                             datatype
+ASN1_ex_d2i_ex                          datatype
+ASN1_ex_free_func                       datatype
+ASN1_ex_i2d                             datatype
+ASN1_ex_new_func                        datatype
+ASN1_ex_new_ex_func                     datatype
+ASN1_ex_print_func                      datatype
+ASN1_EXTERN_FUNCS                       datatype
 ASN1_ITEM                               datatype
+ASN1_PRINT_ARG                          datatype
+ASN1_STREAM_ARG                         datatype
 ASN1_STRING_TABLE                       datatype
 ASYNC_callback_fn                       datatype
 BIO_ADDR                                datatype
