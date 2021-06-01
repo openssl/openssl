@@ -25,6 +25,7 @@ attempts to automatically determine the key type. If the key is encrypted then
 I<cb> is called with the user data I<u> in order to obtain a password to decrypt
 the key. The supplied library context I<libctx> and property query
 string I<propq> are used in any decrypt operation.
+
 b2i_PVK_bio() does the same as b2i_PVK_bio_ex() except that the default
 library context and property query string are used.
 
@@ -33,6 +34,7 @@ a password obtained via I<pem_password_cb> is used to encrypt the private key.
 If I<enclevel> is 0 then no encryption is applied. The user data in I<u> is
 passed to the password callback. The supplied library context I<libctx> and
 property query string I<propq> are used in any decrypt operation.
+
 i2b_PVK_bio() does the same as i2b_PVK_bio_ex() except that the default
 library context and property query string are used.
 
