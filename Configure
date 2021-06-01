@@ -2212,7 +2212,7 @@ if ($builder eq "unified") {
                          if !@skip || $skip[$#skip] > 0; },
             qr/^\s* GENERATE ${index_re} = ${value_re} $/x
             => sub { $push_to->(\%generate, $expand_variables->($+{INDEX}),
-                                undef, undef, $+{VALUE})
+                                undef, undef, $expand_variables->($+{VALUE}))
                          if !@skip || $skip[$#skip] > 0; },
             qr/^\s* (?:\#.*)? $/x => sub { },
             "OTHERWISE" => sub { die "Something wrong with this line:\n$_\nat $sourced/$f" },
