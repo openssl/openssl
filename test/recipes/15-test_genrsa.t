@@ -24,8 +24,8 @@ use lib bldtop_dir('.');
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
 plan tests =>
-    ($no_fips ? 0 : 2)          # Extra FIPS related test
-    + 14;
+    ($no_fips ? 0 : 3)          # Extra FIPS related tests
+    + 13;
 
 # We want to know that an absurdly small number of bits isn't support
 is(run(app([ 'openssl', 'genpkey', '-out', 'genrsatest.pem',
@@ -35,11 +35,13 @@ is(run(app([ 'openssl', 'genpkey', '-out', 'genrsatest.pem',
 is(run(app([ 'openssl', 'genrsa', '-3', '-out', 'genrsatest.pem', '8'])),
            0, "genrsa -3 8");
 
-# We want to know that an absurdly large number of bits fails the RNG check
-is(run(app([ 'openssl', 'genpkey', '-out', 'genrsatest.pem',
-             '-algorithm', 'RSA', '-pkeyopt', 'rsa_keygen_bits:1000000000',
-             '-pkeyopt', 'rsa_keygen_pubexp:3'])),
-           0, "genpkey 1000000000");
+unless ($no_fips) {
+    # We want to know that an absurdly large number of bits fails the RNG check
+    is(run(app([ 'openssl', 'genpkey', '-out', 'genrsatest.pem',
+                 '-algorithm', 'RSA', '-pkeyopt', 'rsa_keygen_bits:1000000000',
+                 '-pkeyopt', 'rsa_keygen_pubexp:3'])),
+               0, "genpkey 1000000000");
+}
 
 # Depending on the shared library, we might have different lower limits.
 # Let's find it!  This is a simple binary search
