@@ -71,7 +71,7 @@ with the given I<decoder>.
 OSSL_DECODER_is_a() checks if I<decoder> is an implementation
 of an algorithm that's identifiable with I<name>.
 
-ossl_decoder_get_number() returns the name used to fetch the given I<decoder>.
+ossl_decoder_get0_name() returns the name used to fetch the given I<decoder>.
 
 OSSL_DECODER_get0_description() returns a description of the I<decoder>, meant
 for display and human consumption.  The description is at the discretion
