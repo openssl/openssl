@@ -992,13 +992,22 @@ static const uint16_t tls12_sigalgs[] = {
     TLSEXT_SIGALG_rsa_pkcs1_sha384,
     TLSEXT_SIGALG_rsa_pkcs1_sha512,
 
+/* Presense of OPENSSL_CAPIENG_LIMIT_SIGALGS removes sha-224 signature
+   algorithms. Windows does not have sha-224 implementations.
+   Pass '-DOPENSSL_CAPIENG_LIMIT_SIGALGS' to Configure. */
+#   ifndef OPENSSL_CAPIENG_LIMIT_SIGALGS
     TLSEXT_SIGALG_ecdsa_sha224,
+#   endif
     TLSEXT_SIGALG_ecdsa_sha1,
 
+#   ifndef OPENSSL_CAPIENG_LIMIT_SIGALGS
     TLSEXT_SIGALG_rsa_pkcs1_sha224,
+#   endif
     TLSEXT_SIGALG_rsa_pkcs1_sha1,
 
+#   ifndef OPENSSL_CAPIENG_LIMIT_SIGALGS
     TLSEXT_SIGALG_dsa_sha224,
+#   endif
     TLSEXT_SIGALG_dsa_sha1,
 
     TLSEXT_SIGALG_dsa_sha256,
