@@ -934,4 +934,16 @@ EC_KEY *evp_pkey_get0_EC_KEY_int(const EVP_PKEY *pkey);
 RSA *evp_pkey_get0_RSA_int(const EVP_PKEY *pkey);
 # endif
 
+/* Get internal identification number routines */
+int evp_asym_cipher_get_number(const EVP_ASYM_CIPHER *cipher);
+int evp_cipher_get_number(const EVP_CIPHER *cipher);
+int evp_kdf_get_number(const EVP_KDF *kdf);
+int evp_kem_get_number(const EVP_KEM *wrap);
+int evp_keyexch_get_number(const EVP_KEYEXCH *keyexch);
+int evp_keymgmt_get_number(const EVP_KEYMGMT *keymgmt);
+int evp_mac_get_number(const EVP_MAC *mac);
+int evp_md_get_number(const EVP_MD *md);
+int evp_rand_get_number(const EVP_RAND *rand);
+int evp_signature_get_number(const EVP_SIGNATURE *signature);
+
 #endif /* OSSL_CRYPTO_EVP_H */
