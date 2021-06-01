@@ -464,7 +464,7 @@ int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *pkeylen)
         return ctx->pmeth->derive(ctx, key, pkeylen);
 }
 
-int EVP_KEYEXCH_get_number(const EVP_KEYEXCH *keyexch)
+int evp_keyexch_get_number(const EVP_KEYEXCH *keyexch)
 {
     return keyexch->name_id;
 }

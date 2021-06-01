@@ -33,7 +33,6 @@ void OSSL_ENCODER_free(OSSL_ENCODER *encoder);
 
 const OSSL_PROVIDER *OSSL_ENCODER_get0_provider(const OSSL_ENCODER *encoder);
 const char *OSSL_ENCODER_get0_properties(const OSSL_ENCODER *encoder);
-int OSSL_ENCODER_get_number(const OSSL_ENCODER *encoder);
 const char *OSSL_ENCODER_get0_name(const OSSL_ENCODER *kdf);
 const char *OSSL_ENCODER_get0_description(const OSSL_ENCODER *kdf);
 int OSSL_ENCODER_is_a(const OSSL_ENCODER *encoder, const char *name);

@@ -293,7 +293,7 @@ void EVP_RAND_free(EVP_RAND *rand)
     evp_rand_free(rand);
 }
 
-int EVP_RAND_get_number(const EVP_RAND *rand)
+int evp_rand_get_number(const EVP_RAND *rand)
 {
     return rand->name_id;
 }

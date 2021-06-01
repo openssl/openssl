@@ -319,7 +319,7 @@ int EVP_SIGNATURE_is_a(const EVP_SIGNATURE *signature, const char *name)
     return evp_is_a(signature->prov, signature->name_id, NULL, name);
 }
 
-int EVP_SIGNATURE_get_number(const EVP_SIGNATURE *signature)
+int evp_signature_get_number(const EVP_SIGNATURE *signature)
 {
     return signature->name_id;
 }

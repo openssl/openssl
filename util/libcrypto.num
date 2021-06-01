@@ -4783,13 +4783,6 @@ EVP_KEYMGMT_names_do_all                4910	3_0_0	EXIST::FUNCTION:
 EVP_KEYEXCH_names_do_all                4911	3_0_0	EXIST::FUNCTION:
 EVP_KDF_names_do_all                    4912	3_0_0	EXIST::FUNCTION:
 EVP_SIGNATURE_names_do_all              4913	3_0_0	EXIST::FUNCTION:
-EVP_MD_get_number                       4914	3_0_0	EXIST::FUNCTION:
-EVP_CIPHER_get_number                   4915	3_0_0	EXIST::FUNCTION:
-EVP_MAC_get_number                      4916	3_0_0	EXIST::FUNCTION:
-EVP_KEYMGMT_get_number                  4917	3_0_0	EXIST::FUNCTION:
-EVP_KEYEXCH_get_number                  4918	3_0_0	EXIST::FUNCTION:
-EVP_KDF_get_number                      4919	3_0_0	EXIST::FUNCTION:
-EVP_SIGNATURE_get_number                4920	3_0_0	EXIST::FUNCTION:
 OSSL_CMP_CTX_snprint_PKIStatus          4921	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_HDR_get0_transactionID         4922	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_HDR_get0_recipNonce            4923	3_0_0	EXIST::FUNCTION:CMP
@@ -4805,7 +4798,6 @@ EVP_ASYM_CIPHER_up_ref                  4932	3_0_0	EXIST::FUNCTION:
 EVP_ASYM_CIPHER_get0_provider           4933	3_0_0	EXIST::FUNCTION:
 EVP_ASYM_CIPHER_fetch                   4934	3_0_0	EXIST::FUNCTION:
 EVP_ASYM_CIPHER_is_a                    4935	3_0_0	EXIST::FUNCTION:
-EVP_ASYM_CIPHER_get_number              4936	3_0_0	EXIST::FUNCTION:
 EVP_ASYM_CIPHER_do_all_provided         4937	3_0_0	EXIST::FUNCTION:
 EVP_ASYM_CIPHER_names_do_all            4938	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_set_rsa_padding            4939	3_0_0	EXIST::FUNCTION:
@@ -4827,7 +4819,6 @@ EVP_PKEY_meth_get_digestverify          4954	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_
 OSSL_ENCODER_up_ref                     4955	3_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_free                       4956	3_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_fetch                      4957	3_0_0	EXIST::FUNCTION:
-OSSL_ENCODER_get_number                 4958	3_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_is_a                       4959	3_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_get0_provider              4960	3_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_do_all_provided            4961	3_0_0	EXIST::FUNCTION:
@@ -5043,7 +5034,6 @@ OSSL_PARAM_set_all_unmodified           5170	3_0_0	EXIST::FUNCTION:
 EVP_RAND_fetch                          5171	3_0_0	EXIST::FUNCTION:
 EVP_RAND_up_ref                         5172	3_0_0	EXIST::FUNCTION:
 EVP_RAND_free                           5173	3_0_0	EXIST::FUNCTION:
-EVP_RAND_get_number                     5174	3_0_0	EXIST::FUNCTION:
 EVP_RAND_get0_name                      5175	3_0_0	EXIST::FUNCTION:
 EVP_RAND_is_a                           5176	3_0_0	EXIST::FUNCTION:
 EVP_RAND_get0_provider                  5177	3_0_0	EXIST::FUNCTION:
@@ -5115,7 +5105,6 @@ OSSL_DECODER_up_ref                     5242	3_0_0	EXIST::FUNCTION:
 OSSL_DECODER_free                       5243	3_0_0	EXIST::FUNCTION:
 OSSL_DECODER_get0_provider              5244	3_0_0	EXIST::FUNCTION:
 OSSL_DECODER_get0_properties            5245	3_0_0	EXIST::FUNCTION:
-OSSL_DECODER_get_number                 5246	3_0_0	EXIST::FUNCTION:
 OSSL_DECODER_is_a                       5247	3_0_0	EXIST::FUNCTION:
 OSSL_DECODER_do_all_provided            5248	3_0_0	EXIST::FUNCTION:
 OSSL_DECODER_names_do_all               5249	3_0_0	EXIST::FUNCTION:
@@ -5219,7 +5208,6 @@ OSSL_STORE_LOADER_fetch                 5346	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_LOADER_up_ref                5347	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_LOADER_get0_provider         5348	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_LOADER_get0_properties       5349	3_0_0	EXIST::FUNCTION:
-OSSL_STORE_LOADER_get_number            5350	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_LOADER_is_a                  5351	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_LOADER_do_all_provided       5352	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_LOADER_names_do_all          5353	3_0_0	EXIST::FUNCTION:
@@ -5245,7 +5233,6 @@ EVP_KEM_up_ref                          5372	3_0_0	EXIST::FUNCTION:
 EVP_KEM_get0_provider                   5373	3_0_0	EXIST::FUNCTION:
 EVP_KEM_fetch                           5374	3_0_0	EXIST::FUNCTION:
 EVP_KEM_is_a                            5375	3_0_0	EXIST::FUNCTION:
-EVP_KEM_get_number                      5376	3_0_0	EXIST::FUNCTION:
 EVP_KEM_do_all_provided                 5377	3_0_0	EXIST::FUNCTION:
 EVP_KEM_names_do_all                    5378	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_encapsulate_init               5379	3_0_0	EXIST::FUNCTION:
