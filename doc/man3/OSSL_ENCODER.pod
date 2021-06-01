@@ -71,7 +71,7 @@ with the given I<encoder>.
 OSSL_ENCODER_is_a() checks if I<encoder> is an implementation of an
 algorithm that's identifiable with I<name>.
 
-ossl_encoder_get_number() returns the name used to fetch the given I<encoder>.
+OSSL_ENCODER_get0_name() returns the name used to fetch the given I<encoder>.
 
 OSSL_ENCODER_get0_description() returns a description of the I<loader>, meant
 for display and human consumption.  The description is at the discretion of the
