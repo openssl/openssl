@@ -36,8 +36,8 @@ the FIPS provider independently, without installing the rest of OpenSSL.
 The Installation of the FIPS provider consists of two steps. In the first step,
 the shared library is copied to its installed location, which by default is
 
-    /usr/local/lib/ossl-modules/fips.so                  on Unix, and
-    C:\Program Files\OpenSSL\lib\ossl-modules\fips.dll   on Windows.
+    /usr/local/lib/ossl-modules-3.0/fips.so                  on Unix, and
+    C:\Program Files\OpenSSL\lib\ossl-modules-3.0\fips.dll   on Windows.
 
 In the second step, the `openssl fipsinstall` command is executed, which completes
 the installation by doing the following two things:

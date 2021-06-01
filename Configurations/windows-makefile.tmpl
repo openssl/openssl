@@ -222,7 +222,7 @@ MODULESDIR_dev={- use File::Spec::Functions qw(:DEFAULT splitpath catpath);
                       splitpath($modulesprefix, 1);
                   our $modulesdir_dev = $modulesprefix_dev;
                   our $modulesdir_dir =
-                      catdir($modulesprefix_dir, "ossl-modules");
+                      catdir($modulesprefix_dir, "ossl-modules-$sover_dirname");
                   our $modulesdir = catpath($modulesdir_dev, $modulesdir_dir);
                   our $enginesdir_dev = $modulesprefix_dev;
                   our $enginesdir_dir =
