@@ -3,7 +3,7 @@
 =head1 NAME
 
 EVP_KEM_fetch, EVP_KEM_free, EVP_KEM_up_ref,
-EVP_KEM_get_number, EVP_KEM_get0_name, EVP_KEM_is_a, EVP_KEM_get0_provider,
+EVP_KEM_get0_name, EVP_KEM_is_a, EVP_KEM_get0_provider,
 EVP_KEM_do_all_provided, EVP_KEM_names_do_all, EVP_KEM_get0_description,
 EVP_KEM_gettable_ctx_params, EVP_KEM_settable_ctx_params
 - Functions to manage EVP_KEM algorithm objects
@@ -16,7 +16,6 @@ EVP_KEM_gettable_ctx_params, EVP_KEM_settable_ctx_params
                         const char *properties);
  void EVP_KEM_free(EVP_KEM *kem);
  int EVP_KEM_up_ref(EVP_KEM *kem);
- int EVP_KEM_get_number(const EVP_KEM *kem);
  const char *EVP_KEM_get0_name(const EVP_KEM *kem);
  int EVP_KEM_is_a(const EVP_KEM *kem, const char *name);
  OSSL_PROVIDER *EVP_KEM_get0_provider(const EVP_KEM *kem);
@@ -54,8 +53,6 @@ EVP_KEM_do_all_provided() traverses all EVP_KEMs implemented by all activated
 providers in the given library context I<libctx>, and for each of the
 implementations, calls the given function I<fn> with the implementation method
 and the given I<arg> as argument.
-
-EVP_KEM_get_number() returns the internal dynamic number assigned to I<kem>.
 
 EVP_KEM_get0_name() returns the algorithm name from the provided
 implementation for the given I<kem>. Note that the I<kem> may have

@@ -9,7 +9,6 @@ OSSL_DECODER_free,
 OSSL_DECODER_get0_provider,
 OSSL_DECODER_get0_properties,
 OSSL_DECODER_is_a,
-OSSL_DECODER_get_number,
 OSSL_DECODER_get0_name,
 OSSL_DECODER_get0_description,
 OSSL_DECODER_do_all_provided,
@@ -31,7 +30,6 @@ OSSL_DECODER_get_params
  const OSSL_PROVIDER *OSSL_DECODER_get0_provider(const OSSL_DECODER *decoder);
  const char *OSSL_DECODER_get0_properties(const OSSL_DECODER *decoder);
  int OSSL_DECODER_is_a(const OSSL_DECODER *decoder, const char *name);
- int OSSL_DECODER_get_number(const OSSL_DECODER *decoder);
  const char *OSSL_DECODER_get0_name(const OSSL_DECODER *decoder);
  const char *OSSL_DECODER_get0_description(const OSSL_DECODER *decoder);
  void OSSL_DECODER_do_all_provided(OSSL_LIB_CTX *libctx,
@@ -73,10 +71,7 @@ with the given I<decoder>.
 OSSL_DECODER_is_a() checks if I<decoder> is an implementation
 of an algorithm that's identifiable with I<name>.
 
-OSSL_DECODER_get_number() returns the internal dynamic number assigned
-to the given I<decoder>.
-
-OSSL_DECODER_get_number() returns the name used to fetch the given I<decoder>.
+ossl_decoder_get_number() returns the name used to fetch the given I<decoder>.
 
 OSSL_DECODER_get0_description() returns a description of the I<decoder>, meant
 for display and human consumption.  The description is at the discretion
@@ -114,8 +109,6 @@ definition string, or NULL on error.
 
 OSSL_DECODER_is_a() returns 1 if I<decoder> was identifiable,
 otherwise 0.
-
-OSSL_DECODER_get_number() returns an integer.
 
 OSSL_DECODER_get0_name() returns the algorithm name from the provided
 implementation for the given I<decoder>. Note that the I<decoder> may have

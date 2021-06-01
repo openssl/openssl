@@ -8,7 +8,7 @@ EVP_RAND_uninstantiate, EVP_RAND_generate, EVP_RAND_reseed, EVP_RAND_nonce,
 EVP_RAND_enable_locking, EVP_RAND_verify_zeroization, EVP_RAND_get_strength,
 EVP_RAND_get_state,
 EVP_RAND_get0_provider, EVP_RAND_CTX_get0_rand, EVP_RAND_is_a,
-EVP_RAND_get_number, EVP_RAND_get0_name, EVP_RAND_names_do_all,
+EVP_RAND_get0_name, EVP_RAND_names_do_all,
 EVP_RAND_get0_description,
 EVP_RAND_CTX_get_params,
 EVP_RAND_CTX_set_params, EVP_RAND_do_all_provided, EVP_RAND_get_params,
@@ -39,7 +39,6 @@ EVP_RAND_STATE_ERROR - EVP RAND routines
  const OSSL_PARAM *EVP_RAND_settable_ctx_params(const EVP_RAND *rand);
  const OSSL_PARAM *EVP_RAND_CTX_gettable_params(EVP_RAND_CTX *ctx);
  const OSSL_PARAM *EVP_RAND_CTX_settable_params(EVP_RAND_CTX *ctx);
- int EVP_RAND_get_number(const EVP_RAND *rand);
  const char *EVP_RAND_get0_name(const EVP_RAND *rand);
  const char *EVP_RAND_get0_description(const EVP_RAND *rand);
  int EVP_RAND_is_a(const EVP_RAND *rand, const char *name);
@@ -243,9 +242,6 @@ providers in the given library context I<libctx>, and for each of the
 implementations, calls the given function I<fn> with the implementation method
 and the given I<arg> as argument.
 
-EVP_RAND_get_number() returns the internal dynamic number assigned to
-I<rand>.
-
 EVP_RAND_get0_name() returns the canonical name of I<rand>.
 
 EVP_RAND_names_do_all() traverses all names for I<rand>, and calls
@@ -360,9 +356,6 @@ with the context.
 
 EVP_RAND_get0_name() returns the name of the random number generation
 algorithm.
-
-EVP_RAND_get_number() returns the provider specific identification number
-for the specified algorithm.
 
 EVP_RAND_up_ref() returns 1 on success, 0 on error.
 

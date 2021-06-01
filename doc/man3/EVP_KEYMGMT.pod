@@ -8,7 +8,6 @@ EVP_KEYMGMT_up_ref,
 EVP_KEYMGMT_free,
 EVP_KEYMGMT_get0_provider,
 EVP_KEYMGMT_is_a,
-EVP_KEYMGMT_get_number,
 EVP_KEYMGMT_get0_description,
 EVP_KEYMGMT_get0_name,
 EVP_KEYMGMT_do_all_provided,
@@ -30,7 +29,6 @@ EVP_KEYMGMT_gen_settable_params
  void EVP_KEYMGMT_free(EVP_KEYMGMT *keymgmt);
  const OSSL_PROVIDER *EVP_KEYMGMT_get0_provider(const EVP_KEYMGMT *keymgmt);
  int EVP_KEYMGMT_is_a(const EVP_KEYMGMT *keymgmt, const char *name);
- int EVP_KEYMGMT_get_number(const EVP_KEYMGMT *keymgmt);
  const char *EVP_KEYMGMT_get0_name(const EVP_KEYMGMT *keymgmt);
  const char *EVP_KEYMGMT_get0_description(const EVP_KEYMGMT *keymgmt);
 
@@ -70,9 +68,6 @@ implementation.
 
 EVP_KEYMGMT_is_a() checks if I<keymgmt> is an implementation of an
 algorithm that's identifiable with I<name>.
-
-EVP_KEYMGMT_get_number() returns the internal dynamic number assigned to
-the I<keymgmt>.
 
 EVP_KEYMGMT_get0_name() returns the algorithm name from the provided
 implementation for the given I<keymgmt>. Note that the I<keymgmt> may have
@@ -126,8 +121,6 @@ on error.
 
 EVP_KEYMGMT_is_a() returns 1 of I<keymgmt> was identifiable,
 otherwise 0.
-
-EVP_KEYMGMT_get_number() returns an integer.
 
 EVP_KEYMGMT_get0_name() returns the algorithm name, or NULL on error.
 
