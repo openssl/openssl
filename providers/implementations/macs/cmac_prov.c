@@ -87,6 +87,8 @@ static void *cmac_dup(void *vsrc)
         return NULL;
 
     dst = cmac_new(src->provctx);
+    if (dst == NULL)
+        return NULL;
     if (!CMAC_CTX_copy(dst->ctx, src->ctx)
         || !ossl_prov_cipher_copy(&dst->cipher, &src->cipher)) {
         cmac_free(dst);

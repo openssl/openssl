@@ -125,7 +125,7 @@ void EVP_KDF_CTX_reset(EVP_KDF_CTX *ctx)
 size_t EVP_KDF_CTX_get_kdf_size(EVP_KDF_CTX *ctx)
 {
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    size_t s;
+    size_t s = 0;
 
     if (ctx == NULL)
         return 0;
