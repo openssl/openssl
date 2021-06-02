@@ -1137,25 +1137,180 @@ static const uint16_t tls_default_sigalg[] = {
     0, /* SSL_PKEY_ED448 */
 };
 
+struct provider_sigalg_data_st {
+    SSL_CTX *ctx;
+    OSSL_PROVIDER *provider;
+    SIGALG_LOOKUP **from_provider;
+    size_t *num_from_provider;
+};
+
+static OSSL_CALLBACK add_provider_sigalgs;
+static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
+{
+    struct provider_sigalg_data_st *psd = data;
+    SSL_CTX *ctx = psd->ctx;
+    OSSL_PROVIDER *provider = psd->provider;
+    SIGALG_LOOKUP **from_provider = psd->from_provider;
+    size_t *num_from_provider = psd->num_from_provider;
+    SIGALG_LOOKUP *tmp = NULL;
+    const OSSL_PARAM *p;
+    EVP_KEYMGMT *keymgmt;
+    unsigned int sigalg;
+    int ret = 0;
+
+    if (!from_provider) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    if (! *from_provider) {
+        tmp = OPENSSL_zalloc(sizeof(SIGALG_LOOKUP));
+        if (!tmp) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+
+        *from_provider = tmp;
+    } else {
+        tmp = OPENSSL_realloc(*from_provider, sizeof(SIGALG_LOOKUP) * (*num_from_provider + 1));
+
+        if (!tmp) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+
+        *from_provider = tmp;
+        tmp += *num_from_provider * sizeof(SIGALG_LOOKUP);
+        memset(tmp, 0, sizeof(SIGALG_LOOKUP));
+    }
+
+    p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_SIGALG_NAME);
+    if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+        goto err;
+    }
+
+    tmp->name = OPENSSL_strdup(p->data);
+    if (!tmp->name) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+
+    p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_SIGALG_ID);
+    if (p == NULL || !OSSL_PARAM_get_uint(p, &sigalg) || sigalg > UINT16_MAX) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+        goto err;
+    }
+    tmp->sigalg = (uint16_t)sigalg;
+
+    /* Initially, to keep this simple we make the following assumption:
+     * - Intrinsic signature schemes so no hashing.
+     * - Signature scheme has no NID.
+     * - No associated curve.
+     *
+     * TODO: Stop making these assumptions.
+     */
+    tmp->hash = NID_undef;
+    tmp->hash_idx = -1;
+    tmp->sig = NID_undef;
+    tmp->sig_idx = -1;
+    tmp->sigandhash = NID_undef;
+    tmp->curve = NID_undef;
+    tmp->enabled = 1;
+
+    /*
+     * Now check that the algorithm is actually usable for our property query
+     * string. Regardless of the result we still return success because we have
+     * successfully processed this sigalg, even though we may decide not to use
+     * it.
+     */
+    ret = 1;
+    keymgmt = EVP_KEYMGMT_fetch(ctx->libctx, tmp->name, ctx->propq);
+    if (keymgmt) {
+        /*
+         * We have successfully fetched the algorithm - however if the provider
+         * doesn't match this one then we ignore it.
+         *
+         * Note: We're cheating a little here. Technically if the same algorithm
+         * is available from more than one provider then it is undefined which
+         * implementation you will get back. Theoretically this could be
+         * different every time...we assume here that you'll always get the
+         * same one back if you repeat the exact same fetch. Is this a reasonable
+         * assumption to make (in which case perhaps we should document this
+         * behaviour)?
+         */
+        if (EVP_KEYMGMT_provider(keymgmt) == provider) {
+            /* We have a match - so we will use this sigalg */
+           (*num_from_provider)++;
+           tmp = NULL;
+        }
+        EVP_KEYMGMT_free(keymgmt);
+    }
+ err:
+    if (tmp) {
+        OPENSSL_free(tmp->name);
+        memset(tmp, 0, sizeof(SIGALG_LOOKUP));
+    }
+    return ret;
+}
+
+static int discover_provider_sigalgs(OSSL_PROVIDER *provider, void *vctx)
+{
+    struct provider_sigalg_data_st *psd = vctx;
+
+    psd->provider = provider;
+    OSSL_PROVIDER_get_capabilities(provider, "TLS-SIGALG",
+                                   add_provider_sigalgs, psd);
+    /* If a provider returns 0 it means it does not support this capability.
+     * We should continue on looking at other providers so return 1 no matter
+     * what the function above returns.
+     */
+    return 1;
+}
+
 int ssl_setup_sig_algs(SSL_CTX *ctx)
 {
     size_t i;
     const SIGALG_LOOKUP *lu;
-    SIGALG_LOOKUP *cache
-        = OPENSSL_malloc(sizeof(*lu) * OSSL_NELEM(sigalg_lookup_tbl));
+    SIGALG_LOOKUP *from_provider = NULL;
+    size_t num_from_provider = 0;
+    struct provider_sigalg_data_st psd;
+    SIGALG_LOOKUP *cache = NULL;
     EVP_PKEY *tmpkey = EVP_PKEY_new();
     int ret = 0;
 
-    if (cache == NULL || tmpkey == NULL)
+    if (!tmpkey)
+        return 0;
+
+    psd.ctx = ctx;
+    psd.from_provider = &from_provider;
+    psd.num_from_provider = &num_from_provider;
+    psd.provider = NULL; /* Set in the discover() function. */
+    if (!OSSL_PROVIDER_do_all(ctx->libctx, discover_provider_sigalgs, &psd))
+        goto err;
+
+    cache = OPENSSL_zalloc(sizeof(*lu) * (OSSL_NELEM(sigalg_lookup_tbl) + num_from_provider));
+    if (!cache)
         goto err;
 
     ERR_set_mark();
     for (i = 0, lu = sigalg_lookup_tbl;
-         i < OSSL_NELEM(sigalg_lookup_tbl); lu++, i++) {
+         i < OSSL_NELEM(sigalg_lookup_tbl) + num_from_provider; lu++, i++) {
         EVP_PKEY_CTX *pctx;
 
-        cache[i] = *lu;
-
+        if (i < OSSL_NELEM(sigalg_lookup_tbl)) {
+            cache[i] = *lu;
+            /* We need to do this because the name is malloc()'d for the ones
+             * from the provider.
+             */
+            if (cache[i].name) {
+                cache[i].name = strdup(lu->name);
+                if (!cache[i].name)
+                    goto err;
+            }
+        } else {
+            cache[i] = from_provider[i - OSSL_NELEM(sigalg_lookup_tbl)];
+        }
         /*
          * Check hash is available.
          * This test is not perfect. A provider could have support
@@ -1164,29 +1319,45 @@ int ssl_setup_sig_algs(SSL_CTX *ctx)
          * could be that the signature is available, and the hash is available
          * independently - but not as a combination. We ignore this for now.
          */
-        if (lu->hash != NID_undef
-                && ctx->ssl_digest_methods[lu->hash_idx] == NULL) {
+        if (cache[i].hash != NID_undef
+                && ctx->ssl_digest_methods[cache[i].hash_idx] == NULL) {
             cache[i].enabled = 0;
             continue;
         }
 
-        if (!EVP_PKEY_set_type(tmpkey, lu->sig)) {
+        if (cache[i].name) {
+            pctx = EVP_PKEY_CTX_new_from_name(ctx->libctx, cache[i].name, ctx->propq);
+            if (pctx) {
+                EVP_PKEY_CTX_free(pctx);
+                continue;
+            }
+        }
+
+        if (!EVP_PKEY_set_type(tmpkey, cache[i].sig)) {
             cache[i].enabled = 0;
             continue;
         }
+
         pctx = EVP_PKEY_CTX_new_from_pkey(ctx->libctx, tmpkey, ctx->propq);
-        /* If unable to create pctx we assume the sig algorithm is unavailable */
-        if (pctx == NULL)
+        /* If unable to create pctx from either name or pkey, we assume the sig algorithm is unavailable. */
+        if (!pctx)
             cache[i].enabled = 0;
+
         EVP_PKEY_CTX_free(pctx);
     }
     ERR_pop_to_mark();
-    ctx->sigalg_lookup_cache = cache;
-    cache = NULL;
 
+    ctx->sigalg_lookup_cache = cache;
+    ctx->sigalg_lookup_cache_len = i;
+    cache = NULL;
     ret = 1;
  err:
+    if (cache)
+        for (i = 0; i < OSSL_NELEM(sigalg_lookup_tbl) + num_from_provider; i++)
+            OPENSSL_free(cache[i].name);
+
     OPENSSL_free(cache);
+    OPENSSL_free(from_provider);
     EVP_PKEY_free(tmpkey);
     return ret;
 }
@@ -1198,8 +1369,7 @@ static const SIGALG_LOOKUP *tls1_lookup_sigalg(const SSL *s, uint16_t sigalg)
     const SIGALG_LOOKUP *lu;
 
     for (i = 0, lu = s->ctx->sigalg_lookup_cache;
-         /* cache should have the same number of elements as sigalg_lookup_tbl */
-         i < OSSL_NELEM(sigalg_lookup_tbl);
+         i < s->ctx->sigalg_lookup_cache_len;
          lu++, i++) {
         if (lu->sigalg == sigalg) {
             if (!lu->enabled)

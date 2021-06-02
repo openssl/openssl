@@ -1186,6 +1186,7 @@ struct ssl_ctx_st {
 
     /* Cache of all sigalgs we know and whether they are available or not */
     struct sigalg_lookup_st *sigalg_lookup_cache;
+    size_t sigalg_lookup_cache_len;
 
     TLS_GROUP_INFO *group_list;
     size_t group_list_len;
@@ -1798,7 +1799,7 @@ struct ssl_st {
 */
 typedef struct sigalg_lookup_st {
     /* TLS 1.3 signature scheme name */
-    const char *name;
+    char *name;
     /* Raw value used in extension */
     uint16_t sigalg;
     /* NID of hash algorithm or NID_undef if no hash */
