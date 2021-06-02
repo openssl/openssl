@@ -1587,7 +1587,8 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
         *pkeytype = OPENSSL_strndup(keytype, keytypelen);
     else
         *pkeytype = OPENSSL_strdup(keytype);
-    *pkeylen = keylen;
+    if (keylen >= 0)
+        *pkeylen = keylen;
 
     if (param != NULL) {
         if (!EVP_PKEY_is_a(param, *pkeytype)) {
@@ -1626,6 +1627,10 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
         EVP_PKEY_CTX_free(gctx);
         return NULL;
     }
+    if (keylen == -1 && (EVP_PKEY_CTX_is_a(gctx, "RSA")
+        || EVP_PKEY_CTX_is_a(gctx, "RSA-PSS")))
+        keylen = *pkeylen;
+
     if (keylen != -1) {
         OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
         size_t bits = keylen;
