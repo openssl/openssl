@@ -89,9 +89,9 @@ foreach my $f (($symhacks_file // (), @ARGV)) {
 }
 
 # As long as we're running in development or alpha releases, we can have
-# symbols without specific numbers assigned.  When in beta or final release,
-# all symbols MUST have an assigned number.
-if ($version !~ m/^\d+\.\d+\.\d+(?:[a-z]+)?-(?:dev|alpha)/) {
+# symbols without specific numbers assigned.  In beta or final release, all
+# symbols MUST have an assigned number.
+if ($version !~ m/^\d+\.\d+\.\d+(?:-alpha|(?:-.*?)?-dev$)/) {
     $ordinals->renumber();
 }
 
