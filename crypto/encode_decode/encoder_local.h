@@ -161,3 +161,5 @@ struct ossl_decoder_ctx_st {
 
 const OSSL_PROPERTY_LIST *
 ossl_decoder_parsed_properties(const OSSL_DECODER *decoder);
+const OSSL_PROPERTY_LIST *
+ossl_encoder_parsed_properties(const OSSL_ENCODER *encoder);
