@@ -9,6 +9,8 @@
  */
 
 #include <string.h>
+#include "e_os.h" /* for strcmp */
+
 #include <openssl/opensslconf.h>
 #include <openssl/evp.h>
 #include <openssl/encoder.h>
