@@ -179,7 +179,14 @@ int ASN1_item_verify_ctx(const ASN1_ITEM *it, const X509_ALGOR *alg,
                 goto err;
             }
 
-            type = EVP_get_digestbynid(mdnid);
+            if (mdnid != NID_undef) {
+                type = EVP_get_digestbynid(mdnid);
+                if (type == NULL) {
+                    ERR_raise(ERR_LIB_ASN1,
+                              ASN1_R_UNKNOWN_MESSAGE_DIGEST_ALGORITHM);
+                    goto err;
+                }
+            }
 
             /*
              * Note that some algorithms (notably Ed25519 and Ed448) may allow
