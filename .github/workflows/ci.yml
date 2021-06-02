@@ -39,6 +39,10 @@ jobs:
       run: make -s build_generated
     - name: make doc-nits
       run: make doc-nits
+    - name: make md-nits
+      run: |
+          sudo gem install mdl
+          make md-nits
 
   # This checks that we use ANSI C language syntax and semantics.
   # We are not as strict with libraries, but rather adapt to what's
