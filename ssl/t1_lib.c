@@ -1239,7 +1239,7 @@ static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
          * assumption to make (in which case perhaps we should document this
          * behaviour)?
          */
-        if (EVP_KEYMGMT_provider(keymgmt) == provider) {
+        if (EVP_KEYMGMT_get0_provider(keymgmt) == provider) {
             /* We have a match - so we will use this sigalg */
            (*num_from_provider)++;
            tmp = NULL;
