@@ -29,7 +29,7 @@ jobs:
         perl configdata.pm --dump
     - name: build
       working-directory: _build
-      run: nmake
+      run: nmake /S
     - name: test
       working-directory: _build
       run: nmake test VERBOSE_FAILURE=yes TESTS=-test_fuzz* HARNESS_JOBS=4
@@ -54,7 +54,7 @@ jobs:
         perl configdata.pm --dump
     - name: build
       working-directory: _build
-      run: nmake
+      run: nmake /S
     - name: test
       working-directory: _build
       run: nmake test VERBOSE_FAILURE=yes TESTS=-test_fuzz* HARNESS_JOBS=4
@@ -72,7 +72,7 @@ jobs:
         perl configdata.pm --dump
     - name: build
       working-directory: _build
-      run: nmake
+      run: nmake # verbose, so no /S here
     - name: test
       working-directory: _build
       run: nmake test VERBOSE_FAILURE=yes TESTS=-test_fuzz* HARNESS_JOBS=4

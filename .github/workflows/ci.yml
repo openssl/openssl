@@ -81,7 +81,7 @@ jobs:
     - name: config
       run: ./config --banner=Configured --strict-warnings no-bulk no-pic no-asm -DOPENSSL_NO_SECURE_MEMORY -DOPENSSL_SMALL_FOOTPRINT && perl configdata.pm --dump
     - name: make
-      run: make -s -j4
+      run: make -j4 # verbose, so no -s here
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
