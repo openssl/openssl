@@ -40,7 +40,7 @@ breaking changes, and mappings for the large list of deprecated functions.
 
  * Support for the SXNET (Thawte Strong Extranet) certificate extension,
    the NETSCAPE_CERT_SEQUENCE, NETSCAPE_SPKAC, and NETSCAPE_SPKI datatypes
-   have been deprecrated.
+   have been deprecated.
 
    *Rich Salz*
 

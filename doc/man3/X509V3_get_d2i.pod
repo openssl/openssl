@@ -12,10 +12,6 @@ X509_REVOKED_add1_ext_i2d - X509 extension decode and encode functions
 
  #include <openssl/x509v3.h>
 
-Deprecated since OpenSSL 3.0, can be hidden entirely by defining
-B<OPENSSL_API_COMPAT> with a suitable version value, see
-L<openssl_user_macros(7)>:
-
  void *X509V3_get_d2i(const STACK_OF(X509_EXTENSION) *x, int nid, int *crit,
                       int *idx);
  int X509V3_add1_i2d(STACK_OF(X509_EXTENSION) **x, int nid, void *value,
@@ -41,8 +37,6 @@ L<openssl_user_macros(7)>:
  const STACK_OF(X509_EXTENSION) *X509_REVOKED_get0_extensions(const X509_REVOKED *r);
 
 =head1 DESCRIPTION
-
-All of the functions described on this page are deprecated.
 
 X509V3_get_ext_d2i() looks for an extension with OID B<nid> in the extensions
 B<x> and, if found, decodes it. If B<idx> is B<NULL> then only one

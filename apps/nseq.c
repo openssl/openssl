@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/deprecated.h"
+#define OPENSSL_SUPPRESS_DEPRECATED
 #include <stdio.h>
 #include <string.h>
 #include "apps.h"
