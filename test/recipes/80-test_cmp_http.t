@@ -277,7 +277,7 @@ sub start_mock_server {
     die "Invalid port: $server_port" unless $server_port =~ m/^\d+$/;
     my $pid = open($server_fh, "$cmd|") or die "Trying to $cmd";
     print "Pid is: $pid\n";
-    if ($server_port eq "0") {
+    if ($server_port == 0) {
         # Find out the actual server port
         while (<$server_fh>) {
             print;
