@@ -9,6 +9,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/deprecated.h"
+
 #include "internal/cryptlib.h"
 #ifndef OPENSSL_NO_SM4
 # include <openssl/evp.h>
