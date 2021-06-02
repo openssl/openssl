@@ -884,13 +884,11 @@ static void key2any_freectx(void *vctx)
 static const OSSL_PARAM *key2any_gettable_params(void *provctx, int structure)
 {
     static const OSSL_PARAM gettables[] = {
-        { OSSL_ENCODER_PARAM_INPUT_TYPE, OSSL_PARAM_UTF8_PTR, NULL, 0, 0 },
         { OSSL_ENCODER_PARAM_OUTPUT_TYPE, OSSL_PARAM_UTF8_PTR, NULL, 0, 0 },
         OSSL_PARAM_END,
     };
 
     static const OSSL_PARAM gettables_w_structure[] = {
-        { OSSL_ENCODER_PARAM_INPUT_TYPE, OSSL_PARAM_UTF8_PTR, NULL, 0, 0 },
         { OSSL_ENCODER_PARAM_OUTPUT_TYPE, OSSL_PARAM_UTF8_PTR, NULL, 0, 0 },
         { OSSL_ENCODER_PARAM_OUTPUT_STRUCTURE, OSSL_PARAM_UTF8_PTR, NULL, 0, 0 },
         OSSL_PARAM_END,
@@ -899,15 +897,10 @@ static const OSSL_PARAM *key2any_gettable_params(void *provctx, int structure)
     return structure ? gettables_w_structure : gettables;
 }
 
-static int key2any_get_params(OSSL_PARAM params[], const char *input_type,
-                              const char *output_type,
+static int key2any_get_params(OSSL_PARAM params[], const char *output_type,
                               const char *output_struct)
 {
     OSSL_PARAM *p;
-
-    p = OSSL_PARAM_locate(params, OSSL_ENCODER_PARAM_INPUT_TYPE);
-    if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, input_type))
-        return 0;
 
     p = OSSL_PARAM_locate(params, OSSL_ENCODER_PARAM_OUTPUT_TYPE);
     if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, output_type))
@@ -1234,8 +1227,7 @@ static int key2any_encode(struct key2any_ctx_st *ctx, OSSL_CORE_BIO *cout,
     static int                                                              \
     impl##_to_##kind##_##output##_get_params(OSSL_PARAM params[])           \
     {                                                                       \
-        return key2any_get_params(params, impl##_input_type,                \
-                                  output##_output_type,                     \
+        return key2any_get_params(params, output##_output_type,             \
                                   kind##_output_structure);                 \
     }                                                                       \
     static void *                                                           \

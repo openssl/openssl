@@ -805,13 +805,9 @@ static const OSSL_PARAM *key2text_gettable_params(void *provctx)
     return gettables;
 }
 
-static int key2text_get_params(OSSL_PARAM params[], const char *input_type)
+static int key2text_get_params(OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
-
-    p = OSSL_PARAM_locate(params, OSSL_ENCODER_PARAM_INPUT_TYPE);
-    if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, input_type))
-        return 0;
 
     p = OSSL_PARAM_locate(params, OSSL_ENCODER_PARAM_OUTPUT_TYPE);
     if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, "TEXT"))
@@ -847,10 +843,6 @@ static int key2text_encode(void *vctx, const void *key, int selection,
     impl##2text_free_object;                                            \
     static OSSL_FUNC_encoder_encode_fn impl##2text_encode;              \
                                                                         \
-    static int impl##2text_get_params(OSSL_PARAM params[])              \
-    {                                                                   \
-        return key2text_get_params(params, impl##_input_type);          \
-    }                                                                   \
     static void *impl##2text_import_object(void *ctx, int selection,    \
                                            const OSSL_PARAM params[])   \
     {                                                                   \
@@ -884,7 +876,7 @@ static int key2text_encode(void *vctx, const void *key, int selection,
         { OSSL_FUNC_ENCODER_GETTABLE_PARAMS,                            \
           (void (*)(void))key2text_gettable_params },                   \
         { OSSL_FUNC_ENCODER_GET_PARAMS,                                 \
-          (void (*)(void))impl##2text_get_params },                     \
+          (void (*)(void))key2text_get_params },                        \
         { OSSL_FUNC_ENCODER_IMPORT_OBJECT,                              \
           (void (*)(void))impl##2text_import_object },                  \
         { OSSL_FUNC_ENCODER_FREE_OBJECT,                                \
