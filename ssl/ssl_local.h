@@ -2567,7 +2567,6 @@ __owur int dtls1_handle_timeout(SSL *s);
 void dtls1_start_timer(SSL *s);
 void dtls1_stop_timer(SSL *s);
 __owur int dtls1_is_timer_expired(SSL *s);
-void dtls1_double_timeout(SSL *s);
 __owur int dtls_raw_hello_verify_request(WPACKET *pkt, unsigned char *cookie,
                                          size_t cookie_len);
 __owur size_t dtls1_min_mtu(SSL *s);
