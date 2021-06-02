@@ -35,14 +35,6 @@ is(run(app([ 'openssl', 'genpkey', '-out', 'genrsatest.pem',
 is(run(app([ 'openssl', 'genrsa', '-3', '-out', 'genrsatest.pem', '8'])),
            0, "genrsa -3 8");
 
-unless ($no_fips) {
-    # We want to know that an absurdly large number of bits fails the RNG check
-    is(run(app([ 'openssl', 'genpkey', '-out', 'genrsatest.pem',
-                 '-algorithm', 'RSA', '-pkeyopt', 'rsa_keygen_bits:1000000000',
-                 '-pkeyopt', 'rsa_keygen_pubexp:3'])),
-               0, "genpkey 1000000000");
-}
-
 # Depending on the shared library, we might have different lower limits.
 # Let's find it!  This is a simple binary search
 # ------------------------------------------------------------
@@ -121,14 +113,22 @@ unless ($no_fips) {
     $ENV{OPENSSL_TEST_LIBCTX} = "1";
     ok(run(app(['openssl', 'genpkey',
                 @prov,
-               '-algorithm', 'RSA',
-               '-pkeyopt', 'bits:2080',
-               '-out', 'genrsatest2080.pem'])),
+                '-algorithm', 'RSA',
+                '-pkeyopt', 'bits:2080',
+                '-out', 'genrsatest2080.pem'])),
        "Generating RSA key with > 2048 bits and < 3072 bits");
     ok(run(app(['openssl', 'genpkey',
                 @prov,
-               '-algorithm', 'RSA',
-               '-pkeyopt', 'bits:3072',
-               '-out', 'genrsatest3072.pem'])),
+                '-algorithm', 'RSA',
+                '-pkeyopt', 'bits:3072',
+                '-out', 'genrsatest3072.pem'])),
        "Generating RSA key with 3072 bits");
+
+    # We want to know that an absurdly large number of bits fails the RNG check
+    is(run(app([ 'openssl', 'genpkey',
+                 @prov,
+                 '-algorithm', 'RSA',
+                 '-pkeyopt', 'bits:1000000000',
+                 '-out', 'genrsatest.pem'])),
+               0, "genpkey 1000000000");
 }
