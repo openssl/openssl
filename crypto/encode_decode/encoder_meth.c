@@ -166,6 +166,7 @@ static void *encoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
 {
     OSSL_ENCODER *encoder = NULL;
     const OSSL_DISPATCH *fns = algodef->implementation;
+    OSSL_LIB_CTX *libctx = ossl_provider_libctx(prov);
 
     if ((encoder = ossl_encoder_new()) == NULL)
         return NULL;
@@ -176,6 +177,8 @@ static void *encoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
     }
     encoder->base.propdef = algodef->property_definition;
     encoder->base.description = algodef->algorithm_description;
+    encoder->base.parsed_propdef
+        = ossl_parse_property(libctx, algodef->property_definition);
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
@@ -239,9 +242,7 @@ static void *encoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
           || (encoder->newctx != NULL && encoder->freectx != NULL)
           || (encoder->import_object != NULL && encoder->free_object != NULL)
           || (encoder->import_object == NULL && encoder->free_object == NULL))
-        || encoder->encode == NULL
-        || encoder->gettable_params == NULL
-        || encoder->get_params == NULL) {
+        || encoder->encode == NULL) {
         OSSL_ENCODER_free(encoder);
         ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_INVALID_PROVIDER_FUNCTIONS);
         return NULL;
@@ -431,6 +432,17 @@ const char *OSSL_ENCODER_get0_properties(const OSSL_ENCODER *encoder)
     }
 
     return encoder->base.propdef;
+}
+
+const OSSL_PROPERTY_LIST *
+ossl_encoder_parsed_properties(const OSSL_ENCODER *encoder)
+{
+    if (!ossl_assert(encoder != NULL)) {
+        ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    return encoder->base.parsed_propdef;
 }
 
 int ossl_encoder_get_number(const OSSL_ENCODER *encoder)
