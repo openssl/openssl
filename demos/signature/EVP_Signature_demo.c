@@ -16,8 +16,8 @@
 #include <stdio.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include "EVP_Signature_demo.h"
 #include <openssl/decoder.h>
+#include "EVP_Signature_demo.h"
 
 /*
  * This demonstration will calculate and verify a signature of data using
@@ -63,7 +63,7 @@ static EVP_PKEY *get_key(OSSL_LIB_CTX *libctx, const char *propq, int public)
     (void)OSSL_DECODER_from_data(dctx, &data, &data_len);
     OSSL_DECODER_CTX_free(dctx);
     if (pkey == NULL)
-        fprintf(stderr, "Failed to load %s key.\n", public ? "Public" : "Private");
+        fprintf(stderr, "Failed to load %s key.\n", public ? "public" : "private");
     return pkey;
 }
 
@@ -133,7 +133,7 @@ static int demo_sign(OSSL_LIB_CTX *libctx,  const char *sig_name,
     }
     *sig_out_len = sig_len;
     *sig_out_value = sig_value;
-    fprintf(stdout, "Generating Signature:\n");
+    fprintf(stdout, "Generating signature:\n");
     BIO_dump_indent_fp(stdout, sig_value, sig_len, 2);
     fprintf(stdout, "\n");
     result = 1;
@@ -192,7 +192,7 @@ static int demo_verify(OSSL_LIB_CTX *libctx, const char *sig_name,
         fprintf(stderr, "EVP_DigestVerifyFinal failed.\n");
         goto cleanup;
     }
-    fprintf(stdout, "Verifying Signature:\nSignature verified.\n");
+    fprintf(stdout, "Signature verified.\n");
     result = 1;
 
 cleanup:
