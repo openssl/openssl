@@ -47,5 +47,4 @@ expected,description, -section,val, -recipient,val, -expect_sender,val, -srvcert
 ,,,,,,,,,,,,,,,,,,,,,,,,,
 1,extracertsout, -section,, -recipient,_CA_DN,BLANK,,BLANK,, -trusted,trusted.crt,BLANK,,BLANK, -unprotected_errors, -extracertsout,_RESULT_DIR/test.extracerts.pem,,,,,,,
 0,extracertsout no parameter, -section,, -recipient,_CA_DN,BLANK,,BLANK,, -trusted,trusted.crt,BLANK,,BLANK, -unprotected_errors, -extracertsout,,,,,,,,
-0,extracertsout directory, -section,, -recipient,_CA_DN,BLANK,,BLANK,, -trusted,trusted.crt,BLANK,,BLANK, -unprotected_errors, -extracertsout,directory/,,,,,,,
 0,extracertsout multiple arguments, -section,, -recipient,_CA_DN,BLANK,,BLANK,, -trusted,trusted.crt,BLANK,,BLANK, -unprotected_errors, -extracertsout,abc,def,,,,,,
