@@ -168,6 +168,8 @@ Encoding of public keys according to the Subject Public Key Info of RFC 5280.
 
 =back
 
+=back
+
 The possible values of both these properties is open ended.  A provider may
 very well specify input types and structures that libcrypto doesn't know
 anything about.
