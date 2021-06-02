@@ -119,7 +119,7 @@ EVP_BytesToKey                          120	3_0_0	EXIST::FUNCTION:
 ENGINE_set_default_pkey_asn1_meths      121	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,ENGINE
 OCSP_BASICRESP_add1_ext_i2d             122	3_0_0	EXIST::FUNCTION:OCSP
 EVP_camellia_128_ctr                    123	3_0_0	EXIST::FUNCTION:CAMELLIA
-EVP_CIPHER_impl_ctx_size                124	3_0_0	EXIST::FUNCTION:
+EVP_CIPHER_impl_ctx_size                124	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 X509_CRL_get_nextUpdate                 125	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0
 PKCS12_free                             126	3_0_0	EXIST::FUNCTION:
 CMS_signed_get_attr                     127	3_0_0	EXIST::FUNCTION:CMS
@@ -1217,7 +1217,7 @@ DSO_METHOD_openssl                      1244	3_0_0	EXIST::FUNCTION:
 d2i_PrivateKey_fp                       1245	3_0_0	EXIST::FUNCTION:STDIO
 i2d_NETSCAPE_CERT_SEQUENCE              1246	3_0_0	EXIST::FUNCTION:
 EC_POINT_oct2point                      1248	3_0_0	EXIST::FUNCTION:EC
-EVP_CIPHER_CTX_buf_noconst              1249	3_0_0	EXIST::FUNCTION:
+EVP_CIPHER_CTX_buf_noconst              1249	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 OPENSSL_DIR_read                        1250	3_0_0	EXIST::FUNCTION:
 CMS_add_smimecap                        1251	3_0_0	EXIST::FUNCTION:CMS
 X509_check_email                        1252	3_0_0	EXIST::FUNCTION:
