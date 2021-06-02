@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use POSIX;
-use OpenSSL::Test qw/:DEFAULT with data_file data_dir srctop_dir bldtop_dir result_dir/;
+use OpenSSL::Test qw/:DEFAULT data_file data_dir srctop_dir bldtop_dir result_dir/;
 use OpenSSL::Test::Utils;
 
 BEGIN {
@@ -133,19 +133,17 @@ sub test_cmp_http {
     $params = [ '-server', "127.0.0.1:$server_port", @$params ]
         unless grep { $_ eq '-server' } @$params;
 
-    with({ exit_checker => sub {
-        my $actual_result = shift == 0;
-        my $OK = $actual_result == $expected_result;
-        if ($faillog && !$OK) {
+    unless (is(my $actual_result = run(cmd([$path_app, @$params,])),
+               $expected_result,
+               $title)) {
+        if ($faillog) {
             my $quote_spc_empty = sub { $_ eq "" ? '""' : $_ =~ m/ / ? '"'.$_.'"' : $_ };
             my $invocation = "$path_app ".join(' ', map $quote_spc_empty->($_), @$params);
             print $faillog "$server_name $aspect \"$title\" ($i/$n)".
                 " expected=$expected_result actual=$actual_result\n";
             print $faillog "$invocation\n\n";
         }
-        return $OK; } },
-         sub { ok(run(cmd([$path_app, @$params,])),
-                  $title); });
+    }
 }
 
 sub test_cmp_http_aspect {
