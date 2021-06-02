@@ -565,6 +565,7 @@ void EVP_MD_CTX_set_update_fn(EVP_MD_CTX *ctx,
 # define EVP_MD_CTX_get0_name(e)       EVP_MD_get0_name(EVP_MD_CTX_get0_md(e))
 # define EVP_MD_CTX_get_size(e)        EVP_MD_get_size(EVP_MD_CTX_get0_md(e))
 # define EVP_MD_CTX_size               EVP_MD_CTX_get_size
+# define EVP_MD_CTX_length             EVP_MD_CTX_get_size
 # define EVP_MD_CTX_get_block_size(e)  EVP_MD_get_block_size(EVP_MD_CTX_get0_md(e))
 # define EVP_MD_CTX_block_size EVP_MD_CTX_get_block_size
 # define EVP_MD_CTX_get_type(e)            EVP_MD_get_type(EVP_MD_CTX_get0_md(e))
