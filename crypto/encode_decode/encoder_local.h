@@ -59,7 +59,6 @@ struct ossl_decoder_st {
 struct ossl_encoder_instance_st {
     OSSL_ENCODER *encoder;        /* Never NULL */
     void *encoderctx;             /* Never NULL */
-    const char *input_type;       /* May be NULL */
     const char *output_type;      /* Never NULL */
     const char *output_structure; /* May be NULL */
 };

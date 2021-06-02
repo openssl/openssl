@@ -36,6 +36,8 @@ struct encoder_process_data_st {
     OSSL_ENCODER_INSTANCE *prev_encoder_inst;
     unsigned char *running_output;
     size_t running_output_length;
+    /* Data type = the name of the first succeeding encoder implementation */
+    const char *data_type;
 };
 
 static int encoder_process(struct encoder_process_data_st *data);
@@ -207,10 +209,7 @@ static OSSL_ENCODER_INSTANCE *ossl_encoder_instance_new(OSSL_ENCODER *encoder,
         OSSL_PARAM_construct_utf8_ptr(OSSL_ENCODER_PARAM_OUTPUT_STRUCTURE,
                                       (char **)&encoder_inst->output_structure,
                                       0);
-    params[2] =
-        OSSL_PARAM_construct_utf8_ptr(OSSL_ENCODER_PARAM_INPUT_TYPE,
-                                      (char **)&encoder_inst->input_type, 0);
-    params[3] = OSSL_PARAM_construct_end();
+    params[2] = OSSL_PARAM_construct_end();
 
     if (!encoder->get_params(params)
         || !OSSL_PARAM_modified(&params[0]))
@@ -260,8 +259,8 @@ static int ossl_encoder_ctx_add_encoder_inst(OSSL_ENCODER_CTX *ctx,
                        "(ctx %p) Added encoder instance %p (encoder %p) with:\n",
                        (void *)ctx, (void *)ei, (void *)ei->encoder);
             BIO_printf(trc_out,
-                       "    output type: %s, output structure: %s, input type :%s\n",
-                       ei->output_type, ei->output_structure, ei->input_type);
+                       "    output type: %s, output structure: %s\n",
+                       ei->output_type, ei->output_structure);
         } OSSL_TRACE_END(ENCODER);
     }
     return ok;
@@ -360,14 +359,6 @@ OSSL_ENCODER_INSTANCE_get_encoder_ctx(OSSL_ENCODER_INSTANCE *encoder_inst)
     if (encoder_inst == NULL)
         return NULL;
     return encoder_inst->encoderctx;
-}
-
-const char *
-OSSL_ENCODER_INSTANCE_get_input_type(OSSL_ENCODER_INSTANCE *encoder_inst)
-{
-    if (encoder_inst == NULL)
-        return NULL;
-    return encoder_inst->input_type;
 }
 
 const char *
@@ -566,6 +557,9 @@ static int encoder_process(struct encoder_process_data_st *data)
                 data->ctx->construct(current_encoder_inst,
                                      data->ctx->construct_data);
 
+            /* Also set the data type, using the encoder implementation name */
+            data->data_type = OSSL_ENCODER_get0_name(current_encoder);
+
             /* Assume that the constructor recorded an error */
             if (original_data != NULL)
                 ok = 1;
@@ -586,15 +580,12 @@ static int encoder_process(struct encoder_process_data_st *data)
                  */
 
                 OSSL_PARAM *abstract_p = abstract;
-                const char *prev_input_type =
-                    OSSL_ENCODER_INSTANCE_get_input_type(data->prev_encoder_inst);
                 const char *prev_output_structure =
                     OSSL_ENCODER_INSTANCE_get_output_structure(data->prev_encoder_inst);
 
-                if (prev_input_type != NULL)
-                    *abstract_p++ =
-                        OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_TYPE,
-                                                         (char *)prev_input_type, 0);
+                *abstract_p++ =
+                    OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_TYPE,
+                                                     (char *)data->data_type, 0);
                 if (prev_output_structure != NULL)
                     *abstract_p++ =
                         OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_STRUCTURE,
