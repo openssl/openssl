@@ -247,15 +247,6 @@ determine how it fits in a chain of encoders:
 
 =over 4
 
-=item "input-type" (B<OSSL_ENCODER_PARAM_INPUT_TYPE>) <UTF8 string>
-
-This is used to specify a distinct type name for the object passed as
-I<obj_raw> to OSSL_FUNC_encoder_encode.
-
-This parameter is an optional parameter, to be used if the name of the
-implementation can be ambiguous because of aliases, and something more
-deterministic is needed.
-
 =item "output-type" (B<OSSL_ENCODER_PARAM_OUTPUT_TYPE>) <UTF8 string>
 
 This is used to specify the output type for an ENCODER implementation.

@@ -5249,7 +5249,6 @@ OSSL_ENCODER_CTX_get_num_encoders       ?	3_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_CTX_set_selection          ?	3_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_INSTANCE_get_encoder       ?	3_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_INSTANCE_get_encoder_ctx   ?	3_0_0	EXIST::FUNCTION:
-OSSL_ENCODER_INSTANCE_get_input_type    ?	3_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_INSTANCE_get_output_type   ?	3_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_CTX_set_construct          ?	3_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_CTX_set_construct_data     ?	3_0_0	EXIST::FUNCTION:
