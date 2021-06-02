@@ -59,6 +59,7 @@ void OSSL_DECODER_free(OSSL_DECODER *decoder)
     if (ref > 0)
         return;
     OPENSSL_free(decoder->base.name);
+    ossl_property_free(decoder->base.parsed_propdef);
     ossl_provider_free(decoder->base.prov);
     CRYPTO_THREAD_lock_free(decoder->base.lock);
     OPENSSL_free(decoder);
