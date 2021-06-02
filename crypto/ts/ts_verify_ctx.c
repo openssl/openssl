@@ -126,6 +126,8 @@ TS_VERIFY_CTX *TS_REQ_to_TS_VERIFY_CTX(TS_REQ *req, TS_VERIFY_CTX *ctx)
         goto err;
     msg = imprint->hashed_msg;
     ret->imprint_len = ASN1_STRING_length(msg);
+    if (ret->imprint_len <= 0)
+        goto err;
     if ((ret->imprint = OPENSSL_malloc(ret->imprint_len)) == NULL)
         goto err;
     memcpy(ret->imprint, ASN1_STRING_get0_data(msg), ret->imprint_len);
