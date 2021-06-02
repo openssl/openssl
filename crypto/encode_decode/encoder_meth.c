@@ -59,6 +59,7 @@ void OSSL_ENCODER_free(OSSL_ENCODER *encoder)
     if (ref > 0)
         return;
     OPENSSL_free(encoder->base.name);
+    ossl_property_free(encoder->base.parsed_propdef);
     ossl_provider_free(encoder->base.prov);
     CRYPTO_THREAD_lock_free(encoder->base.lock);
     OPENSSL_free(encoder);
