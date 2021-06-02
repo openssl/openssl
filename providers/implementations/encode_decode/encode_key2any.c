@@ -376,9 +376,6 @@ static int key_to_type_specific_pem_param_bio(BIO *out, const void *key,
 }
 #endif
 
-#define der_output_type         "DER"
-#define pem_output_type         "PEM"
-
 /* ---------------------------------------------------------------------- */
 
 #ifndef OPENSSL_NO_DH
@@ -881,40 +878,6 @@ static void key2any_freectx(void *vctx)
     OPENSSL_free(ctx);
 }
 
-static const OSSL_PARAM *key2any_gettable_params(void *provctx, int structure)
-{
-    static const OSSL_PARAM gettables[] = {
-        { OSSL_ENCODER_PARAM_OUTPUT_TYPE, OSSL_PARAM_UTF8_PTR, NULL, 0, 0 },
-        OSSL_PARAM_END,
-    };
-
-    static const OSSL_PARAM gettables_w_structure[] = {
-        { OSSL_ENCODER_PARAM_OUTPUT_TYPE, OSSL_PARAM_UTF8_PTR, NULL, 0, 0 },
-        { OSSL_ENCODER_PARAM_OUTPUT_STRUCTURE, OSSL_PARAM_UTF8_PTR, NULL, 0, 0 },
-        OSSL_PARAM_END,
-    };
-
-    return structure ? gettables_w_structure : gettables;
-}
-
-static int key2any_get_params(OSSL_PARAM params[], const char *output_type,
-                              const char *output_struct)
-{
-    OSSL_PARAM *p;
-
-    p = OSSL_PARAM_locate(params, OSSL_ENCODER_PARAM_OUTPUT_TYPE);
-    if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, output_type))
-        return 0;
-
-    if (output_struct != NULL) {
-        p = OSSL_PARAM_locate(params, OSSL_ENCODER_PARAM_OUTPUT_STRUCTURE);
-        if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, output_struct))
-            return 0;
-    }
-
-    return 1;
-}
-
 static const OSSL_PARAM *key2any_settable_ctx_params(ossl_unused void *provctx)
 {
     static const OSSL_PARAM settables[] = {
@@ -1059,13 +1022,6 @@ static int key2any_encode(struct key2any_ctx_st *ctx, OSSL_CORE_BIO *cout,
  * referred to by name, and for each name, the following macros are defined
  * (braces not included):
  *
- * {kind}_output_structure
- *
- *      A string that names the output structure. This is used as a selection
- *      criterion for each implementation.  It may be NULL, which means that
- *      there is only one possible output structure for the implemented output
- *      type.
- *
  * DO_{kind}_selection_mask
  *
  *      A mask of selection bits that must not be zero.  This is used as a
@@ -1086,13 +1042,11 @@ static int key2any_encode(struct key2any_ctx_st *ctx, OSSL_CORE_BIO *cout,
  */
 
 /* PKCS#8 is a structure for private keys only */
-#define PKCS8_output_structure "pkcs8"
 #define DO_PKCS8_selection_mask DO_PRIVATE_KEY_selection_mask
 #define DO_PKCS8(impl, type, output)                                        \
     DO_PRIVATE_KEY(impl, type, pkcs8, output)
 
 /* SubjectPublicKeyInfo is a structure for public keys only */
-#define SubjectPublicKeyInfo_output_structure "SubjectPublicKeyInfo"
 #define DO_SubjectPublicKeyInfo_selection_mask DO_PUBLIC_KEY_selection_mask
 #define DO_SubjectPublicKeyInfo(impl, type, output)                         \
     DO_PUBLIC_KEY(impl, type, spki, output)
@@ -1112,24 +1066,20 @@ static int key2any_encode(struct key2any_ctx_st *ctx, OSSL_CORE_BIO *cout,
  * - type_specific_no_pub               Supports all parts of an EVP_PKEY
  *                                      except public key
  */
-#define type_specific_params_output_structure "type-specific"
 #define DO_type_specific_params_selection_mask DO_PARAMETERS_selection_mask
 #define DO_type_specific_params(impl, type, output)                         \
     DO_PARAMETERS(impl, type, type_specific, output)
-#define type_specific_keypair_output_structure "type-specific"
 #define DO_type_specific_keypair_selection_mask                             \
     ( DO_PRIVATE_KEY_selection_mask | DO_PUBLIC_KEY_selection_mask )
 #define DO_type_specific_keypair(impl, type, output)                        \
     DO_PRIVATE_KEY(impl, type, type_specific, output)                       \
     DO_PUBLIC_KEY(impl, type, type_specific, output)
-#define type_specific_output_structure "type-specific"
 #define DO_type_specific_selection_mask                                     \
     ( DO_type_specific_keypair_selection_mask                               \
       | DO_type_specific_params_selection_mask )
 #define DO_type_specific(impl, type, output)                                \
     DO_type_specific_keypair(impl, type, output)                            \
     DO_type_specific_params(impl, type, output)
-#define type_specific_no_pub_output_structure "type-specific"
 #define DO_type_specific_no_pub_selection_mask \
     ( DO_PRIVATE_KEY_selection_mask |  DO_PARAMETERS_selection_mask)
 #define DO_type_specific_no_pub(impl, type, output)                         \
@@ -1142,46 +1092,36 @@ static int key2any_encode(struct key2any_ctx_st *ctx, OSSL_CORE_BIO *cout,
  * This only covers key types that are represented with i2d_{TYPE}PrivateKey,
  * i2d_{TYPE}PublicKey and i2d_{TYPE}params / i2d_{TYPE}Parameters.
  */
-#define RSA_output_structure "rsa"
 #define DO_RSA_selection_mask DO_type_specific_keypair_selection_mask
 #define DO_RSA(impl, type, output) DO_type_specific_keypair(impl, type, output)
 
-#define DH_output_structure "dh"
 #define DO_DH_selection_mask DO_type_specific_params_selection_mask
 #define DO_DH(impl, type, output) DO_type_specific_params(impl, type, output)
 
-#define DHX_output_structure "dhx"
 #define DO_DHX_selection_mask DO_type_specific_params_selection_mask
 #define DO_DHX(impl, type, output) DO_type_specific_params(impl, type, output)
 
-#define DSA_output_structure "dsa"
 #define DO_DSA_selection_mask DO_type_specific_selection_mask
 #define DO_DSA(impl, type, output) DO_type_specific(impl, type, output)
 
-#define EC_output_structure "ec"
 #define DO_EC_selection_mask DO_type_specific_selection_mask
 #define DO_EC(impl, type, output) DO_type_specific(impl, type, output)
 
-#define SM2_output_structure "sm2"
 #define DO_SM2_selection_mask DO_type_specific_selection_mask
 #define DO_SM2(impl, type, output) DO_type_specific(impl, type, output)
 
 /* PKCS#1 defines a structure for RSA private and public keys */
-#define PKCS1_output_structure "pkcs1"
 #define DO_PKCS1_selection_mask DO_RSA_selection_mask
 #define DO_PKCS1(impl, type, output) DO_RSA(impl, type, output)
 
 /* PKCS#3 defines a structure for DH parameters */
-#define PKCS3_output_structure "pkcs3"
 #define DO_PKCS3_selection_mask DO_DH_selection_mask
 #define DO_PKCS3(impl, type, output) DO_DH(impl, type, output)
 /* X9.42 defines a structure for DHx parameters */
-#define X9_42_output_structure "X9.42"
 #define DO_X9_42_selection_mask DO_DHX_selection_mask
 #define DO_X9_42(impl, type, output) DO_DHX(impl, type, output)
 
 /* X9.62 defines a structure for EC keys and parameters */
-#define X9_62_output_structure "X9.62"
 #define DO_X9_62_selection_mask DO_EC_selection_mask
 #define DO_X9_62(impl, type, output) DO_EC(impl, type, output)
 
@@ -1207,10 +1147,6 @@ static int key2any_encode(struct key2any_ctx_st *ctx, OSSL_CORE_BIO *cout,
  * ossl_##impl##_to_##kind##_##output##_encoder_functions
  */
 #define MAKE_ENCODER(impl, type, evp_type, kind, output)                    \
-    static OSSL_FUNC_encoder_gettable_params_fn                             \
-    impl##_to_##kind##_##output##_gettable_params;                          \
-    static OSSL_FUNC_encoder_get_params_fn                                  \
-    impl##_to_##kind##_##output##_get_params;                               \
     static OSSL_FUNC_encoder_import_object_fn                               \
     impl##_to_##kind##_##output##_import_object;                            \
     static OSSL_FUNC_encoder_free_object_fn                                 \
@@ -1218,18 +1154,6 @@ static int key2any_encode(struct key2any_ctx_st *ctx, OSSL_CORE_BIO *cout,
     static OSSL_FUNC_encoder_encode_fn                                      \
     impl##_to_##kind##_##output##_encode;                                   \
                                                                             \
-    static const OSSL_PARAM *                                               \
-    impl##_to_##kind##_##output##_gettable_params(void *provctx)            \
-    {                                                                       \
-        return key2any_gettable_params(provctx,                             \
-                                       kind##_output_structure != NULL);    \
-    }                                                                       \
-    static int                                                              \
-    impl##_to_##kind##_##output##_get_params(OSSL_PARAM params[])           \
-    {                                                                       \
-        return key2any_get_params(params, output##_output_type,             \
-                                  kind##_output_structure);                 \
-    }                                                                       \
     static void *                                                           \
     impl##_to_##kind##_##output##_import_object(void *vctx, int selection,  \
                                                 const OSSL_PARAM params[])  \
@@ -1273,10 +1197,6 @@ static int key2any_encode(struct key2any_ctx_st *ctx, OSSL_CORE_BIO *cout,
           (void (*)(void))key2any_newctx },                                 \
         { OSSL_FUNC_ENCODER_FREECTX,                                        \
           (void (*)(void))key2any_freectx },                                \
-        { OSSL_FUNC_ENCODER_GETTABLE_PARAMS,                                \
-          (void (*)(void))impl##_to_##kind##_##output##_gettable_params },  \
-        { OSSL_FUNC_ENCODER_GET_PARAMS,                                     \
-          (void (*)(void))impl##_to_##kind##_##output##_get_params },       \
         { OSSL_FUNC_ENCODER_SETTABLE_CTX_PARAMS,                            \
           (void (*)(void))key2any_settable_ctx_params },                    \
         { OSSL_FUNC_ENCODER_SET_CTX_PARAMS,                                 \
