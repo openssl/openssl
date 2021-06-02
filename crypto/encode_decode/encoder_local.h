@@ -159,7 +159,6 @@ struct ossl_decoder_ctx_st {
     struct ossl_passphrase_data_st pwdata;
 };
 
-
 const OSSL_PROPERTY_LIST *
 ossl_decoder_parsed_properties(const OSSL_DECODER *decoder);
 const OSSL_PROPERTY_LIST *
