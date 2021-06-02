@@ -133,7 +133,7 @@ Properties can be used to further specify details about an implementation:
 
 =item output
 
-This property is used to specify what type of output implementation
+This property is used to specify what type of output the implementation
 produces.
 
 This property is I<mandatory>.
