@@ -122,6 +122,19 @@ Used for getting and setting the encoding of an EC public key. The public key
 is expected to be a point conforming to Sec. 2.3.4 of the SECG SEC 1 ("Elliptic
 Curve Cryptography") standard.
 
+=item "qx" (B<OSSL_PKEY_PARAM_EC_PUB_X>) <unsigned integer>
+
+Used for getting the EC public key X component.
+
+=item "qy" (B<OSSL_PKEY_PARAM_EC_PUB_Y>) <unsigned integer>
+
+Used for getting the EC public key Y component.
+
+=item (B<OSSL_PKEY_PARAM_DEFAULT_DIGEST>) <UTF8 string>
+
+Getter that returns the default digest name.
+(Currently returns "SHA256" as of OpenSSL 3.0).
+
 =back
 
 The following Gettable types are also available for the built-in EC algorithm:
