@@ -60,7 +60,7 @@ written, and 0 otherwise.
 
 BIO_write() returns -2 if the "write" operation is not implemented by the BIO
 or -1 on other errors.
-Else it returns the number of bytes written.
+Otherwise it returns the number of bytes written.
 This may be 0 if the BIO I<b> is NULL or I<dlen <= 0>.
 
 BIO_gets() returns -2 if the "gets" operation is not implemented by the BIO
