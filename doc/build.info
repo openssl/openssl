@@ -2811,6 +2811,10 @@ DEPEND[html/man3/X509_ACERT_add1_attr.html]=man3/X509_ACERT_add1_attr.pod
 GENERATE[html/man3/X509_ACERT_add1_attr.html]=man3/X509_ACERT_add1_attr.pod
 DEPEND[man/man3/X509_ACERT_add1_attr.3]=man3/X509_ACERT_add1_attr.pod
 GENERATE[man/man3/X509_ACERT_add1_attr.3]=man3/X509_ACERT_add1_attr.pod
+DEPEND[html/man3/X509_ACERT_add_attr_nconf.html]=man3/X509_ACERT_add_attr_nconf.pod
+GENERATE[html/man3/X509_ACERT_add_attr_nconf.html]=man3/X509_ACERT_add_attr_nconf.pod
+DEPEND[man/man3/X509_ACERT_add_attr_nconf.3]=man3/X509_ACERT_add_attr_nconf.pod
+GENERATE[man/man3/X509_ACERT_add_attr_nconf.3]=man3/X509_ACERT_add_attr_nconf.pod
 DEPEND[html/man3/X509_ACERT_get0_holder_baseCertId.html]=man3/X509_ACERT_get0_holder_baseCertId.pod
 GENERATE[html/man3/X509_ACERT_get0_holder_baseCertId.html]=man3/X509_ACERT_get0_holder_baseCertId.pod
 DEPEND[man/man3/X509_ACERT_get0_holder_baseCertId.3]=man3/X509_ACERT_get0_holder_baseCertId.pod
@@ -3658,6 +3662,7 @@ html/man3/UI_new.html \
 html/man3/X509V3_get_d2i.html \
 html/man3/X509V3_set_ctx.html \
 html/man3/X509_ACERT_add1_attr.html \
+html/man3/X509_ACERT_add_attr_nconf.html \
 html/man3/X509_ACERT_get0_holder_baseCertId.html \
 html/man3/X509_ACERT_get_attr.html \
 html/man3/X509_ACERT_print_ex.html \
@@ -4309,6 +4314,7 @@ man/man3/UI_new.3 \
 man/man3/X509V3_get_d2i.3 \
 man/man3/X509V3_set_ctx.3 \
 man/man3/X509_ACERT_add1_attr.3 \
+man/man3/X509_ACERT_add_attr_nconf.3 \
 man/man3/X509_ACERT_get0_holder_baseCertId.3 \
 man/man3/X509_ACERT_get_attr.3 \
 man/man3/X509_ACERT_print_ex.3 \
