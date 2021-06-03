@@ -1296,7 +1296,8 @@ int ssl_setup_sig_algs(SSL_CTX *ctx)
     }
 
     memcpy(cache, sigalg_lookup_tbl, sizeof(*cache) * OSSL_NELEM(sigalg_lookup_tbl));
-    memcpy(cache + sizeof(*cache) * OSSL_NELEM(sigalg_lookup_tbl), from_provider, sizeof(*cache) * num_from_provider);
+    if (from_provider != NULL)
+        memcpy(cache + sizeof(*cache) * OSSL_NELEM(sigalg_lookup_tbl), from_provider, sizeof(*cache) * num_from_provider);
 
     ERR_set_mark();
     for (i = 0; i < OSSL_NELEM(sigalg_lookup_tbl) + num_from_provider; i++) {
