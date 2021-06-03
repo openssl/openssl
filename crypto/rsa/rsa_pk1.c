@@ -20,7 +20,7 @@
 #include <openssl/rsa.h>
 #include <openssl/rand.h>
 /* Just for the SSL_MAX_MASTER_KEY_LENGTH value */
-#include <openssl/ssl.h>
+#include <openssl/prov_ssl.h>
 #include "internal/cryptlib.h"
 #include "crypto/rsa.h"
 #include "rsa_local.h"

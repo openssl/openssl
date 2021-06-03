@@ -12,7 +12,7 @@
  */
 
 /* For SSL3_VERSION */
-#include <openssl/ssl.h>
+#include <openssl/prov_ssl.h>
 #include <openssl/proverr.h>
 #include "ciphercommon_local.h"
 #include "prov/provider_ctx.h"
