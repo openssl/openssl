@@ -60,6 +60,9 @@ static void _armv8_rng_probe(void);
 static size_t OPENSSL_rndr_asm(unsigned char *buf, size_t len);
 static size_t OPENSSL_rndrrs_asm(unsigned char *buf, size_t len);
 
+size_t OPENSSL_rndr_bytes(unsigned char *buf, size_t len);
+size_t OPENSSL_rndrrs_bytes(unsigned char *buf, size_t len);
+
 static size_t OPENSSL_rndr_wrapper(size_t (*func)(unsigned char *, size_t), unsigned char *buf, size_t len)
 {
     size_t buffer_size;
