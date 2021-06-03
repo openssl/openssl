@@ -83,6 +83,10 @@ int ossl_rsa_param_decode(RSA *rsa, const X509_ALGOR *alg);
 RSA *ossl_rsa_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
                              OSSL_LIB_CTX *libctx, const char *propq);
 
+int ossl_rsa_padding_check_PKCS1_type_2(OSSL_LIB_CTX *ctx,
+                                        unsigned char *to, int tlen,
+                                        const unsigned char *from, int flen,
+                                        int num, unsigned char *kdk);
 int ossl_rsa_padding_check_PKCS1_type_2_TLS(OSSL_LIB_CTX *ctx, unsigned char *to,
                                             size_t tlen,
                                             const unsigned char *from,
