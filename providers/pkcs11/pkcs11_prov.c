@@ -9,25 +9,15 @@
 
 #include <string.h>
 #include <stdio.h>
-#include <openssl/core.h>
-#include <openssl/core_dispatch.h>
-#include <openssl/core_names.h>
 #include <openssl/params.h>
-#include <openssl/configuration.h>
-#include <openssl/crypto.h>
+#include <prov/providercommon.h>
 #include "pkcs11_ctx.h"
-#include <prov/provider_ctx.h>
-#include <prov/implementations.h>
-#include "my_digest.h"\
-
 #include <dlfcn.h>
-#include "pkcs11_ctx.h"
 #include <openssl/err.h>
 #include <openssl/proverr.h>
 
 /* provider entry point (fixed name, exported) */
 OSSL_provider_init_fn OSSL_provider_init;
-int pkcs11_set_params_module(PKCS11_CTX *ctx, const char* libname);
 
 /************************************************************************
  * Parameters we provide to the core.
@@ -50,6 +40,13 @@ static const OSSL_PARAM pkcs11_set_param_types[] = {
     OSSL_PARAM_END
 };
 
+/************************************************************************/
+
+/************************************************************************
+ * Static fprivate functions definition
+ */
+void pkcs11_unload_module(PKCS11_CTX *ctx);
+int pkcs11_load_module(PKCS11_CTX *ctx, const char* libname);
 /************************************************************************/
 
 /************************************************************************
@@ -180,20 +177,6 @@ static const OSSL_ITEM reason_strings[] = {
     {0, NULL}
 };
 
-/*
- * Provider global initialization mutex and refcount.
- * Used to serialize C_Initialize and C_Finalize calls: The pkcs11 module is
- * initialized when the first provider context is allocated and finalized when
- * the last provider context is freed. For details on pkcs11 multi-threading,
- * see [pkcs11 ug].
- */
-struct {
-    pthread_mutex_t mutex;
-    unsigned int refcount;
-} provider_init = {
-    PTHREAD_MUTEX_INITIALIZER,
-    0
-};
 
 /* Functions we provide to the core */
 static const OSSL_DISPATCH my_dispatch_table[] = {
@@ -206,49 +189,12 @@ static const OSSL_DISPATCH my_dispatch_table[] = {
     { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))pkcs11_teardown },
     { 0, NULL }
 };
-/************************************************************************/
 
 /************************************************************************/
 
 #define SEARCH_PARAM "provider=my_provider"
 
-/************************************************************************
- * List of supported digests by this provider and their functions.
- * This list will be returned by my_query if a digest is fetched using
- * a library context which loaded this provider.
- * Don't forget to include the OpenSSL configuration.h file to ensure
- * the ossl_method... are accessible by wrapping it with the #ifndef
- * OPENSSL_NO_<digest name>.
- */
-static const OSSL_ALGORITHM my_digests[] = {
-#ifndef OPENSSL_NO_MD2
-    {"MD2", SEARCH_PARAM, ossl_md2_functions},
-#endif
-#ifndef OPENSSL_NO_MD4
-    {"MD4", SEARCH_PARAM, ossl_md4_functions},
-#endif
-    {"MY_DIGEST", SEARCH_PARAM, ossl_my_digest_functions},
-    { NULL, NULL, NULL }
-};
 /************************************************************************/
-
-/************************************************************************
- * List of supported ciphers by this provider and their functions.
- * This list will be returned by my_query if a cipher is fetched using
- * a library context which loaded this provider.
- * Don't forget to include the OpenSSL configuration.h file to ensure
- * the ossl_method... are accessible by wrapping it with the #ifndef
- * OPENSSL_NO_<cipher name>.
- */
-static const OSSL_ALGORITHM my_ciphers[] = {
-# ifndef OPENSSL_NO_RC4
-#  ifndef OPENSSL_NO_MD5
-    {"RC4-HMAC-MD5", SEARCH_PARAM, ossl_rc4_hmac_ossl_md5_functions},
-#  endif /* OPENSSL_NO_MD5 */
-# endif /* OPENSSL_NO_RC4 */
-    { NULL, NULL, NULL }
-};
-
 
 /************************************************************************/
 
@@ -267,7 +213,7 @@ static int pkcs11_get_params(void *provctx, OSSL_PARAM params[])
 
     printf("- my_provider: %s (%d)\n", __FUNCTION__, __LINE__);
     p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_NAME);
-    if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, "OpenSSL My Provider"))
+    if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, "PKCS11 Provider"))
         return 0;
     p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_VERSION);
     if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, OPENSSL_VERSION_STR))
@@ -298,7 +244,6 @@ static int pkcs11_set_params(void *provctx, const OSSL_PARAM params[])
     int ival = 0;
     const char* module = NULL;
 
-    printf("- my_provider: %s (%d)\n", __FUNCTION__, __LINE__);
     p = OSSL_PARAM_locate((OSSL_PARAM*)params, OSSL_PROV_PARAM_PKCS11_SLOT);
     if (p != NULL && !OSSL_PARAM_get_int(p, &ival))
         return 0;
@@ -315,7 +260,7 @@ static int pkcs11_set_params(void *provctx, const OSSL_PARAM params[])
     if (p != NULL && !OSSL_PARAM_get_utf8_ptr(p, &module))
         return 0;
     else {
-        if (!pkcs11_set_params_module(ctx, module))
+        if (!pkcs11_load_module(ctx, module))
             return 0;
     }
 
@@ -333,11 +278,11 @@ static const OSSL_ALGORITHM *pkcs11_query(void *provctx,
     case OSSL_OP_DIGEST:
         printf("- my_provider: %s (%d) returning my_digests list\n", __FUNCTION__, __LINE__);
         fflush(stdout);
-        return my_digests;
+        return NULL;
     case OSSL_OP_CIPHER:
         printf("- my_provider: %s (%d) returning my_ciphers list\n", __FUNCTION__, __LINE__);
         fflush(stdout);
-        return my_ciphers;
+        return NULL;
     }
     return NULL;
 }
@@ -354,13 +299,10 @@ static const OSSL_ITEM *pkcs11_get_reason_strings(void *provctx)
 static void pkcs11_teardown(void *provctx)
 {
     PKCS11_CTX *ctx = (PKCS11_CTX*)provctx;
-    if (ctx) 
-    {
-        if (ctx->so_handle)
-            dlclose(ctx->so_handle);
-    }
+    pkcs11_unload_module(ctx);
+    CRYPTO_THREAD_lock_free(ctx->lock);
     OSSL_LIB_CTX_free(PROV_LIBCTX_OF(provctx));
-    ossl_prov_ctx_free(provctx);
+    OPENSSL_free(ctx);
 }
 
 /* Implementation of the OSSL_provider_init function
@@ -371,41 +313,24 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
                             const OSSL_DISPATCH **out,
                             void **provctx)
 {
-    PROV_CTX* prov_ctx = ossl_prov_ctx_new();
-//    CK_C_GetFunctionList get_functionlist = NULL;
-    PKCS11_CTX *ctx = NULL;
     OSSL_LIB_CTX *libctx = NULL;
-//    CK_FLAGS flags = 0;
-//    CK_ULONG i = 0;
-//    CK_ULONG idx1 = 0;
-//    CK_ULONG idx2 = 0;
-//    char *str = NULL;
-//    CK_RV rv = CKR_OK;
-//    int rc = 0;
+    PKCS11_CTX* ctx = NULL;
     int ret = 0;
-    
+
     if (handle == NULL || in == NULL || out == NULL || provctx == NULL)
     {
         ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);
         goto end;
     }
 
-    /* Create pkcs11 context */
-    ctx = calloc(1, sizeof(PKCS11_CTX));
-    if (ctx == NULL)
-    {
-        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);
-        goto end;
+    ctx = (PKCS11_CTX*)OPENSSL_zalloc(sizeof(PKCS11_CTX));
+    if (ctx == NULL
+        || (libctx = OSSL_LIB_CTX_new()) == NULL) {
+        OSSL_LIB_CTX_free(libctx);
+        pkcs11_teardown(ctx);
+        *provctx = NULL;
+        return 0;
     }
-     /* Save core handle */
-    ctx->handle = handle;
-
-    ctx->lock = CRYPTO_THREAD_lock_new();
-    if (ctx->lock == NULL) {
-        ERR_raise(ERR_LIB_DSO, ERR_R_MALLOC_FAILURE);
-        goto end;
-    }
-    
     /* Asign the core function to the context object */
     for (; in->function_id != 0; in++)
     {
@@ -497,69 +422,61 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
             break;
         }
     }
-
     /* Check required core functions. */
     if (ctx->core_get_params == NULL
         || ctx->core_get_libctx == NULL)
     {
         SET_PKCS11_PROV_ERR(ctx, CKR_FUNCTION_REJECTED);
+        pkcs11_teardown(ctx);
         goto end;
     }
 
     /* Save corectx. */
     ctx->corectx = ctx->core_get_libctx(handle);
-
     *provctx = ctx;
-    if ((libctx = OSSL_LIB_CTX_new()) == NULL)
-        goto end;
 
     ossl_prov_ctx_set0_libctx(*provctx, libctx);
     ossl_prov_ctx_set0_handle(*provctx, handle);
+    ctx->lock = CRYPTO_THREAD_lock_new();
+
     *out = my_dispatch_table;
     ret = 1;
-    
-#if 0
-    {
-        OSSL_LIB_CTX *libctx = NULL;
-        printf("- my_provider: %s (%d)\n", __FUNCTION__, __LINE__);
-        fflush(stdout);
-    
-        if (ctx->core_get_libctx == NULL)
-            return 0;
-    
-        if ((*provctx = ossl_prov_ctx_new()) == NULL
-            || (libctx = OSSL_LIB_CTX_new()) == NULL) {
-            OSSL_LIB_CTX_free(libctx);
-            pkcs11_teardown(*provctx);
-            *provctx = NULL;
-            return 0;
-        }
-        ossl_prov_ctx_set0_libctx(*provctx, libctx);
-        ossl_prov_ctx_set0_handle(*provctx, handle);
-    
-        *out = my_dispatch_table;
-        ret = 1;
-    }
-#endif
 end:
-    if (ret == 0)
-    {
-        pkcs11_teardown(*provctx);
-
-        if (ctx && ctx->lock)
-            CRYPTO_THREAD_lock_free(ctx->lock);
-        if (ctx)
-            free(ctx);
-    }
     return ret;
 }
 
 /************************************************************************
  * Helper Functions
  */
-int pkcs11_set_params_module(PKCS11_CTX *ctx, const char* libname)
+
+int pkcs11_do_GetFunctionList(PKCS11_CTX *ctx, char* libname)
+{
+    CK_RV(*pfunc) ();
+    int ret = 0;
+
+    ctx->lib_handle = dlopen(libname, RTLD_NOW);
+    if (ctx->lib_handle == NULL)
+        goto ret;
+
+    *(void **)(&pfunc) = dlsym(ctx->lib_handle, "C_GetFunctionList");
+    if (pfunc == NULL)
+        goto ret;
+
+    if (pfunc(&ctx->lib_functions) != CKR_OK)
+        goto ret;
+
+    ret = 1;
+ret:
+    if (!ret)
+        pkcs11_unload_module(ctx);
+
+    return ret;
+}
+
+int pkcs11_load_module(PKCS11_CTX *ctx, const char* libname)
 {
     int ret = 0;
+    CK_C_INITIALIZE_ARGS cinit_args = {0};
 
     if (ctx == NULL || libname == NULL || strlen(libname) <= 0)
     {
@@ -567,47 +484,35 @@ int pkcs11_set_params_module(PKCS11_CTX *ctx, const char* libname)
         goto end;
     }
 
-    if (ctx->so_handle == NULL){
-        ctx->so_handle = dlopen(ctx->pkcs11module, RTLD_NOW);
-        if (ctx->so_handle == NULL)
-            goto end;
-    }
+    pkcs11_unload_module(ctx);
+
+    if (!pkcs11_do_GetFunctionList(ctx, (char*)libname))
+        goto end;
+
+    // Initialize
+    memset(&cinit_args, 0x0, sizeof(cinit_args));
+    cinit_args.flags = CKF_OS_LOCKING_OK;
+
+    if ((ctx->lib_functions->C_Initialize(&cinit_args)) != CKR_OK)
+        goto end;
+
+    ret = 1;
 end:
+    if (!ret)
+        pkcs11_unload_module(ctx);
+
     return ret;
 }
 
-/************************************************************************
- * Functions that implement the digest methods
- */
-int my_digest_Init(MY_DIGEST_CTX *c)
+void pkcs11_unload_module(PKCS11_CTX *ctx)
 {
-    memset(c, 0, sizeof(*c));
-    printf("- my_provider: %s (%d)\n", __FUNCTION__, __LINE__);
-    fflush(stdout);
-    return 1;
-}
-
-int my_digest_Update(MY_DIGEST_CTX *c, const void *data, size_t len)
-{
-    printf("- my_provider: %s (%d)\n", __FUNCTION__, __LINE__);
-    fflush(stdout);
-    if (len < sizeof(c->data)) {
-        int i = 0;
-        char* p = (char*)data + len - 1;
-        char* p2 = (char*)c->data;
-        for (i = len -1; i >= 0; i--, p--, p2++) {
-            *p2 = *p;
-        }
+    if (ctx->lib_handle)
+    {
+        dlclose(ctx->lib_handle);
+        ctx->lib_handle = NULL;
+        free(ctx->module_filename);
+        ctx->module_filename = NULL;
     }
-    return 1;
-}
-
-int my_digest_Final(unsigned char *myd, MY_DIGEST_CTX *c)
-{
-    printf("- my_provider: %s (%d)\n", __FUNCTION__, __LINE__);
-    fflush(stdout);
-    memcpy(myd, c->data, MY_DIGEST_LBLOCK);
-    return 1;
 }
 /************************************************************************/
 
