@@ -70,6 +70,7 @@ static int req_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
                 return 0;
             if (old->req_info.pubkey != NULL) {
                 EVP_PKEY *pkey = X509_PUBKEY_get0(old->req_info.pubkey);
+
                 if (pkey != NULL) {
                     pkey = EVP_PKEY_dup(pkey);
                     if (pkey == NULL) {
