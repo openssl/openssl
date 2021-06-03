@@ -20,7 +20,7 @@
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 
-#define DES_FLAGS 0
+#define DES_FLAGS PROV_CIPHER_FLAG_RAND_KEY
 
 static OSSL_FUNC_cipher_freectx_fn des_freectx;
 static OSSL_FUNC_cipher_encrypt_init_fn des_einit;

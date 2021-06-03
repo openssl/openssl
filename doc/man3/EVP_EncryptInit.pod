@@ -679,6 +679,12 @@ TLS ciphers.
 Use (EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK) to retrieve the
 cached value.
 
+=item "has-randkey" (B<OSSL_CIPHER_PARAM_HAS_RANDKEY>) <integer>
+
+Gets 1 if the cipher algorithm I<cipher> supports the gettable EVP_CIPHER_CTX
+parameter B<OSSL_CIPHER_PARAM_RANDOM_KEY>. Only DES and 3DES set this to 1,
+all other OpenSSL ciphers return 0.
+
 =back
 
 =head2 Gettable and Settable EVP_CIPHER_CTX parameters
@@ -1115,6 +1121,10 @@ See L</Gettable EVP_CIPHER parameters> "cts".
 
 See L</Gettable EVP_CIPHER parameters> "tls-multi".
 
+=item EVP_CIPH_RAND_KEY
+
+See L</Gettable EVP_CIPHER parameters> "has-randkey".
+
 =back
 
 EVP_CIPHER_flags() uses the following flags for legacy purposes only:
@@ -1130,8 +1140,6 @@ EVP_CIPHER_flags() uses the following flags for legacy purposes only:
 =item EVP_CIPH_CTRL_INIT
 
 =item EVP_CIPH_CUSTOM_KEY_LENGTH
-
-=item EVP_CIPH_RAND_KEY
 
 =item EVP_CIPH_CUSTOM_COPY
 
