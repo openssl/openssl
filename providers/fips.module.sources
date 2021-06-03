@@ -392,8 +392,6 @@ include/openssl/aes.h
 include/openssl/asn1.h.in
 include/openssl/asn1err.h
 include/openssl/asn1t.h.in
-include/openssl/async.h
-include/openssl/asyncerr.h
 include/openssl/bio.h.in
 include/openssl/bioerr.h
 include/openssl/bn.h
@@ -401,8 +399,6 @@ include/openssl/bnerr.h
 include/openssl/buffer.h
 include/openssl/buffererr.h
 include/openssl/cmac.h
-include/openssl/comp.h
-include/openssl/comperr.h
 include/openssl/conf.h.in
 include/openssl/conferr.h
 include/openssl/configuration.h.in
@@ -413,14 +409,11 @@ include/openssl/core_names.h
 include/openssl/crypto.h.in
 include/openssl/cryptoerr.h
 include/openssl/cryptoerr_legacy.h
-include/openssl/ct.h.in
-include/openssl/cterr.h
 include/openssl/des.h
 include/openssl/dh.h
 include/openssl/dherr.h
 include/openssl/dsa.h
 include/openssl/dsaerr.h
-include/openssl/dtls1.h
 include/openssl/e_os2.h
 include/openssl/ebcdic.h
 include/openssl/ec.h
@@ -456,6 +449,7 @@ include/openssl/pem.h
 include/openssl/pemerr.h
 include/openssl/pkcs7.h.in
 include/openssl/pkcs7err.h
+include/openssl/prov_ssl.h
 include/openssl/proverr.h
 include/openssl/provider.h
 include/openssl/rand.h
@@ -466,15 +460,8 @@ include/openssl/rsaerr.h
 include/openssl/safestack.h.in
 include/openssl/self_test.h
 include/openssl/sha.h
-include/openssl/srtp.h
-include/openssl/ssl.h.in
-include/openssl/ssl2.h
-include/openssl/ssl3.h
-include/openssl/sslerr.h
-include/openssl/sslerr_legacy.h
 include/openssl/stack.h
 include/openssl/symhacks.h
-include/openssl/tls1.h
 include/openssl/trace.h
 include/openssl/types.h
 include/openssl/ui.h.in
