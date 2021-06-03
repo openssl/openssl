@@ -17,7 +17,7 @@ to form the message prefix which is hashed before the real message is hashed.
 
 =head2 Common SM2 parameters
 
-SM2 uses the same parameters as defined in L<EVP_PKEY-EC(7)/Common EC parameters>.
+SM2 uses the parameters defined in L<EVP_PKEY-EC(7)/Common EC parameters>.
 The following parameters are different:
 
 =over 4
