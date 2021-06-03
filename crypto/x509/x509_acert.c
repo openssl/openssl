@@ -8,6 +8,8 @@
  */
 
 #include <stdio.h>
+#include <string.h>
+#include <crypto/ctype.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
@@ -248,4 +250,60 @@ int X509_ACERT_add1_attr_by_txt(X509_ACERT *x, const char *attrname, int type,
     STACK_OF(X509_ATTRIBUTE) **attrs = &x->acinfo->attributes;
 
     return (X509at_add1_attr_by_txt(attrs, attrname, type, bytes, len) != NULL);
+}
+
+static int check_asn1_attribute(const char **value)
+{
+    const char *p = *value;
+
+    if (strncmp(p, "ASN1:", 5) != 0)
+        return 0;
+
+    p += 5;
+    while (ossl_isspace(*p))
+        p++;
+
+    *value = p;
+    return 1;
+}
+
+int X509_ACERT_add_attr_nconf(CONF *conf, const char *section,
+                              int strtype, X509_ACERT *acert)
+{
+    int ret = 0, i;
+    STACK_OF(CONF_VALUE) *attr_sk = NCONF_get_section(conf, section);
+
+    if (attr_sk == NULL)
+        goto err;
+
+    for (i = 0; i < sk_CONF_VALUE_num(attr_sk); i++) {
+        int att_len;
+        unsigned char *att_data = NULL;
+        CONF_VALUE *v = sk_CONF_VALUE_value(attr_sk, i);
+        const char *value = v->value;
+
+        if (check_asn1_attribute(&value) == 0) {
+            ret = X509_ACERT_add1_attr_by_txt(acert, v->name, strtype,
+                                              (unsigned char *)value, -1);
+            if (!ret)
+                goto err;
+        } else {
+            ASN1_TYPE *asn1 = ASN1_generate_nconf(value, conf);
+            if (asn1 == NULL)
+                goto err;
+
+            att_len = i2d_ASN1_TYPE(asn1, &att_data);
+
+            ret = X509_ACERT_add1_attr_by_txt(acert, v->name, V_ASN1_SEQUENCE,
+                                              att_data, att_len);
+            ASN1_TYPE_free(asn1);
+            OPENSSL_free(att_data);
+
+            if (!ret)
+                goto err;
+        }
+    }
+    ret = 1;
+err:
+    return ret;
 }
