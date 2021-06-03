@@ -22,7 +22,7 @@
 #include <openssl/err.h>
 #include <openssl/proverr.h>
 /* Just for SSL_MAX_MASTER_KEY_LENGTH */
-#include <openssl/ssl.h>
+#include <openssl/prov_ssl.h>
 #include "internal/constant_time.h"
 #include "internal/sizes.h"
 #include "crypto/rsa.h"
