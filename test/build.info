@@ -57,7 +57,7 @@ IF[{- !$disabled{tests} -}]
           context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
           keymgmt_internal_test hexstr_test provider_status_test defltfips_test \
           bio_readbuffer_test user_property_test pkcs7_test upcallstest \
-          provfetchtest
+          provfetchtest x509acert_test
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=enginetest
@@ -874,6 +874,10 @@ ENDIF
   SOURCE[ssl_ctx_test]=ssl_ctx_test.c
   INCLUDE[ssl_ctx_test]=../include ../apps/include
   DEPEND[ssl_ctx_test]=../libcrypto ../libssl libtestutil.a
+
+  SOURCE[x509acert_test]=x509acert_test.c
+  INCLUDE[x509acert_test]=../include ../apps/include
+  DEPEND[x509acert_test]=../libcrypto.a libtestutil.a
 
 {-
    use File::Spec::Functions;
