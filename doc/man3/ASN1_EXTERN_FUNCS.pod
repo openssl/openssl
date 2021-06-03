@@ -47,9 +47,9 @@ IMPLEMENT_EXTERN_ASN1
 
 ASN1 data structures templates are typically defined in OpenSSL using a series
 of macros such as ASN1_SEQUENCE(), ASN1_SEQUENCE_END() and so on. Instead
-templates can be defined based entirely on external functions. These external
-functions are called to perform operations such as creating a new B<ASN1_VALUE>
-or converting an B<ASN1_VALUE> to or from DER encoding.
+templates can also be defined based entirely on external functions. These
+external functions are called to perform operations such as creating a new
+B<ASN1_VALUE> or converting an B<ASN1_VALUE> to or from DER encoding.
 
 The macro IMPLEMENT_EXTERN_ASN1() can be used to create such an externally
 defined structure. The name of the structure should be supplied in the I<sname>
@@ -67,12 +67,12 @@ A pointer to arbitrary application specific data.
 
 =item I<asn1_ex_new>
 
-A "new" function responsible constructing a new B<ASN1_VALUE> object. The newly
-constructed value should be stored in I<*pval>. The I<it> parameter is a pointer
-to the B<ASN1_ITEM> template object created via the IMPLEMENT_EXTERN_ASN1()
-macro.
+A "new" function responsible for constructing a new B<ASN1_VALUE> object. The
+newly constructed value should be stored in I<*pval>. The I<it> parameter is a
+pointer to the B<ASN1_ITEM> template object created via the
+IMPLEMENT_EXTERN_ASN1() macro.
 
-Returns a postive value on success or 0 on error.
+Returns a positive value on success or 0 on error.
 
 =item I<asn1_ex_free>
 
@@ -102,6 +102,9 @@ object created via the IMPLEMENT_EXTERN_ASN1() macro. A pointer to the current
 B<ASN1_TLC> context (which may be required for other ASN1 function calls) is
 passed in the I<ctx> parameter.
 
+The I<asn1_ex_d2i> entry may be NULL if I<asn1_ex_d2i_ex> has been specified
+instead.
+
 Returns <= 0 on error or a positive value on success.
 
 =item I<asn1_ex_i2d>
@@ -119,6 +122,9 @@ the data just written.
 If I<out> is NULL then no data should be written but the length calculated and
 returned as if it were.
 
+The I<asn1_ex_i2d> entry may be NULL if I<asn1_ex_i2d_ex> has been specified
+instead.
+
 The return value should be negative if a fatal error occurred, or 0 if a
 non-fatal error occurred. Otherwise it should return the length of the encoded
 data.
@@ -126,11 +132,11 @@ data.
 =item I<asn1_ex_print>
 
 A "print" function. I<out> is the BIO to print the output to. I<*pval> is the
-B<ASN2_VALUE> to be printed. I<indent> is the number of spaces of indenting to
+B<ASN1_VALUE> to be printed. I<indent> is the number of spaces of indenting to
 be printed before any data is printed. I<fname> is currently unused and is
 always "". I<pctx> is a pointer to the B<ASN1_PCTX> for the print operation.
 
-Returns 0 on error or a postive value on success. If the return value is 2 then
+Returns 0 on error or a positive value on success. If the return value is 2 then
 an additional newline will be printed after the data printed by this function.
 
 =item I<asn1_ex_new_ex>

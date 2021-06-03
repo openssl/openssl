@@ -13,7 +13,7 @@ ASN1_AUX, ASN1_PRINT_ARG, ASN1_STREAM_ARG, ASN1_aux_cb, ASN1_aux_const_cb
      void *app_data;
      int flags;
      int ref_offset;             /* Offset of reference value */
-     int ref_lock;               /* Offset to an CRYPTO_RWLOCK*/
+     int ref_lock;               /* Offset to an CRYPTO_RWLOCK */
      ASN1_aux_cb *asn1_cb;
      int enc_offset;             /* Offset of ASN1_ENCODING structure */
      ASN1_aux_const_cb *asn1_const_cb; /* for ASN1_OP_I2D_ and ASN1_OP_PRINT_ */
@@ -103,7 +103,7 @@ the B<ASN1_AFLG_CONST_CB> flag is set. See below for further details.
 =back
 
 During the processing of an B<ASN1_VALUE> object the callbacks set via
-I<asn1_cb> or I< asn1_const_cb> will be invoked as a result of various events
+I<asn1_cb> or I<asn1_const_cb> will be invoked as a result of various events
 indicated via the I<operation> parameter. The value of I<*in> will be the
 B<ASN1_VALUE> object being processed based on the template in I<it>. An
 additional operation specific parameter may be passed in I<exarg>. The currently
@@ -248,7 +248,7 @@ callback operations. It contains the following information.
 
 The B<BIO> to stream through
 
-=item I<indent>
+=item I<ndef_bio>
 
 The B<BIO> with filters appended
 
@@ -260,8 +260,8 @@ The streaming I/O boundary.
 
 =head1 RETURN VALUES
 
-The callbacks return 0 on error and a postive value on success. Some operations
-require specific postivie success values as noted above.
+The callbacks return 0 on error and a positive value on success. Some operations
+require specific positive success values as noted above.
 
 =head1 SEE ALSO
 
@@ -269,8 +269,8 @@ L<ASN1_item_new_ex(3)>
 
 =head1 HISTORY
 
-The ASN1_aux_const_cb callback and the ASN1_OP_GET0_LIBCTX and
-ASN1_OP_GET0_PROPQ operation types were added in OpenSSL 3.0.
+The ASN1_aux_const_cb() callback and the B<ASN1_OP_GET0_LIBCTX> and
+B<ASN1_OP_GET0_PROPQ> operation types were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

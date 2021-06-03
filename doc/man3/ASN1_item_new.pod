@@ -22,7 +22,7 @@ the I<libctx> parameter and the property query string in I<propq>. See
 L<crypto(7)/ALGORITHM FETCHING> for more information about algorithm fetching.
 
 ASN1_item_new() is the same as ASN1_item_new_ex() except that the default
-B<OSSL_LIB_CTX> is used (i.e. NULL) and a NULL property query string.
+B<OSSL_LIB_CTX> is used (i.e. NULL) and with a NULL property query string.
 
 =head1 RETURN VALUES
 
@@ -31,7 +31,7 @@ B<ASN1_VALUE> or NULL on error.
 
 =head1 HISTORY
 
-The functions ASN1_item_new_ex() was added in OpenSSL 3.0.
+The function ASN1_item_new_ex() was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

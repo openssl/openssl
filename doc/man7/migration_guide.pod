@@ -562,10 +562,11 @@ B<const EVP_CIPHER *> such as EVP_aes_128_cbc() should be replaced vith a call t
 L<EVP_CIPHER_fetch(3)>. See L<crypto(7)/ALGORITHM FETCHING>.
 
 Some functions can be passed an object that has already been set up with a library
-context such as L<d2i_X509(3)>, L<d2i_X509_CRL(3)> and L<d2i_X509_REQ(3)>.
-If NULL is passed instead then the created object will be set up with the
-default library context. Use L<X509_new_ex(3)>, L<X509_CRL_new_ex(3)> and
-L<X509_REQ_new_ex(3)> if a library context is required.
+context such as L<d2i_X509(3)>, L<d2i_X509_CRL(3)>, L<d2i_X509_REQ(3)> and
+L<d2i_X509_PUBKEY(3)>. If NULL is passed instead then the created object will be
+set up with the default library context. Use L<X509_new_ex(3)>,
+L<X509_CRL_new_ex(3)>, L<X509_REQ_new_ex(3)> and L<X509_PUBKEY_new_ex(3)> if a
+library context is required.
 
 All functions listed below with a I<NAME> have a replacment function I<NAME_ex>
 that takes B<OSSL_LIB_CTX> as an additional argument. Functions that have other
@@ -575,7 +576,8 @@ mappings are listed along with the respective name.
 
 =item -
 
-L<ASN1_item_sign(3)> and L<ASN1_item_verify(3)>
+L<ASN1_item_new(3)>, L<ASN1_item_d2i(3)>, L<ASN1_item_d2i_fp(3)>,
+L<ASN1_item_d2i_bio(3)>, L<ASN1_item_sign(3)> and L<ASN1_item_verify(3)>
 
 =item -
 
