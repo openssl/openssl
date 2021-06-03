@@ -40,18 +40,18 @@ size_t ossl_prov_acquire_entropy_from_cpu(RAND_POOL *pool)
         buffer = ossl_rand_pool_add_begin(pool, bytes_needed);
 
         if (buffer != NULL) {
-            if (get_hardware_random_value(buffer, bytes_needed) == bytes_needed) {
+            if (get_hardware_random_value(buffer, bytes_needed) == bytes_needed)
                 ossl_rand_pool_add_end(pool, bytes_needed, 8 * bytes_needed);
-            } else {
+            else
                 ossl_rand_pool_add_end(pool, 0, 0);
-            }
         }
     }
 
     return ossl_rand_pool_entropy_available(pool);
 }
 
-static size_t get_hardware_random_value(unsigned char *buf, size_t len) {
+static size_t get_hardware_random_value(unsigned char *buf, size_t len)
+{
     /* Always use RNDRRS or nothing */
     if (OPENSSL_armcap_P & ARMV8_RNG)  {
         if (OPENSSL_rndrrs_bytes(buf, len) != len)
@@ -64,4 +64,4 @@ static size_t get_hardware_random_value(unsigned char *buf, size_t len) {
 
 #else
 NON_EMPTY_TRANSLATION_UNIT
-#endif
+#endif /* OPENSSL_RAND_SEED_RDCPU */
