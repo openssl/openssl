@@ -22,7 +22,7 @@
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 
-#define TDES_WRAP_FLAGS PROV_CIPHER_FLAG_CUSTOM_IV
+#define TDES_WRAP_FLAGS PROV_CIPHER_FLAG_CUSTOM_IV | PROV_CIPHER_FLAG_RAND_KEY
 
 static OSSL_FUNC_cipher_update_fn tdes_wrap_update;
 static OSSL_FUNC_cipher_cipher_fn tdes_wrap_cipher;

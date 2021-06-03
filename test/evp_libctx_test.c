@@ -557,6 +557,33 @@ static int kem_rsa_gen_recover(void)
     return ret;
 }
 
+#ifndef OPENSSL_NO_DES
+/*
+ * This test makes sure that EVP_CIPHER_CTX_rand_key() works correctly
+ * For fips mode this code would produce an error if the flag is not set.
+ */
+static int test_cipher_tdes_randkey(void)
+{
+    int ret;
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *tdes_cipher = NULL, *aes_cipher = NULL;
+    unsigned char key[24] = { 0 };
+
+    ret = TEST_ptr(aes_cipher = EVP_CIPHER_fetch(libctx, "AES-256-CBC", NULL))
+          && TEST_int_eq(EVP_CIPHER_get_flags(aes_cipher) & EVP_CIPH_RAND_KEY, 0)
+          && TEST_ptr(tdes_cipher = EVP_CIPHER_fetch(libctx, "DES-EDE3-CBC", NULL))
+          && TEST_int_ne(EVP_CIPHER_get_flags(tdes_cipher) & EVP_CIPH_RAND_KEY, 0)
+          && TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+          && TEST_true(EVP_CipherInit_ex(ctx, tdes_cipher, NULL, NULL, NULL, 1))
+          && TEST_true(EVP_CIPHER_CTX_rand_key(ctx, key));
+
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(tdes_cipher);
+    EVP_CIPHER_free(aes_cipher);
+    return ret;
+}
+#endif /* OPENSSL_NO_DES */
+
 static int kem_rsa_params(void)
 {
     int ret = 0;
@@ -716,6 +743,9 @@ int setup_tests(void)
     ADD_TEST(kem_rsa_params);
 #ifndef OPENSSL_NO_DH
     ADD_TEST(kem_invalid_keytype);
+#endif
+#ifndef OPENSSL_NO_DES
+    ADD_TEST(test_cipher_tdes_randkey);
 #endif
     return 1;
 }
