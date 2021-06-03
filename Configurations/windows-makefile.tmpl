@@ -461,10 +461,10 @@ libclean:
 	-del /Q /F $(LIBS) libcrypto.* libssl.* ossl_static.pdb
 
 clean: libclean
-	-rmdir /Q /S $(HTMLDOCS1_BLDDIRS)
-	-rmdir /Q /S $(HTMLDOCS3_BLDDIRS)
-	-rmdir /Q /S $(HTMLDOCS5_BLDDIRS)
-	-rmdir /Q /S $(HTMLDOCS7_BLDDIRS)
+	-rd /Q /S $(HTMLDOCS1_BLDDIRS)
+	-rd /Q /S $(HTMLDOCS3_BLDDIRS)
+	-rd /Q /S $(HTMLDOCS5_BLDDIRS)
+	-rd /Q /S $(HTMLDOCS7_BLDDIRS)
 	{- join("\n\t", map { "-del /Q /F $_" } @PROGRAMS) -}
 	{- join("\n\t", map { "-del /Q /F $_" } @MODULES) -}
 	{- join("\n\t", map { "-del /Q /F $_" } @SCRIPTS) -}
@@ -474,7 +474,7 @@ clean: libclean
 	-del /Q /S /F engines\*.lib engines\*.exp
 	-del /Q /S /F apps\*.lib apps\*.rc apps\*.res apps\*.exp
 	-del /Q /S /F test\*.exp
-	-rmdir /Q /S test\test-runs
+	-rd /Q /S test\test-runs
 
 distclean: clean
 	-del /Q /F configdata.pm
