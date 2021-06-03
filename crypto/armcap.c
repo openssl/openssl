@@ -74,11 +74,13 @@ static size_t OPENSSL_rndr_wrapper(size_t (*func)(unsigned char *, size_t), unsi
     return buffer_size;
 }
 
-size_t OPENSSL_rndr_bytes(unsigned char *buf, size_t len) {
+size_t OPENSSL_rndr_bytes(unsigned char *buf, size_t len)
+{
     return OPENSSL_rndr_wrapper(OPENSSL_rndr_asm, buf, len);
 }
 
-size_t OPENSSL_rndrrs_bytes(unsigned char *buf, size_t len) {
+size_t OPENSSL_rndrrs_bytes(unsigned char *buf, size_t len)
+{
     return OPENSSL_rndr_wrapper(OPENSSL_rndrrs_asm, buf, len);
 }
 # endif
@@ -243,9 +245,8 @@ void OPENSSL_cpuid_setup(void)
 #  endif
     }
 #  ifdef __aarch64__
-        if (getauxval(HWCAP2) & HWCAP2_RNG) {
+        if (getauxval(HWCAP2) & HWCAP2_RNG)
 	    OPENSSL_armcap_P |= ARMV8_RNG;
-	}
 #  endif
 # endif
 
