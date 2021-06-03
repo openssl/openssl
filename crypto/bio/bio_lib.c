@@ -332,8 +332,11 @@ int BIO_read_ex(BIO *b, void *data, size_t dlen, size_t *readbytes)
 static int bio_write_intern(BIO *b, const void *data, size_t dlen,
                             size_t *written)
 {
+    size_t local_written;
     int ret;
 
+    if (written != NULL)
+        *written = 0;
     /*
      * b == NULL is not an error but just means that zero bytes are written.
      * Do not raise an error here.
@@ -356,15 +359,17 @@ static int bio_write_intern(BIO *b, const void *data, size_t dlen,
         return -1;
     }
 
-    ret = b->method->bwrite(b, data, dlen, written);
+    ret = b->method->bwrite(b, data, dlen, &local_written);
 
     if (ret > 0)
-        b->num_write += (uint64_t)*written;
+        b->num_write += (uint64_t)local_written;
 
     if (HAS_CALLBACK(b))
         ret = (int)bio_call_callback(b, BIO_CB_WRITE | BIO_CB_RETURN, data,
-                                     dlen, 0, 0L, ret, written);
+                                     dlen, 0, 0L, ret, &local_written);
 
+    if (written != NULL)
+        *written = local_written;
     return ret;
 }
 
@@ -373,13 +378,13 @@ int BIO_write(BIO *b, const void *data, int dlen)
     size_t written;
     int ret;
 
-    if (dlen < 0)
+    if (dlen <= 0)
         return 0;
 
     ret = bio_write_intern(b, data, (size_t)dlen, &written);
 
     if (ret > 0) {
-        /* *written should always be <= dlen */
+        /* written should always be <= dlen */
         ret = (int)written;
     }
 
@@ -388,7 +393,7 @@ int BIO_write(BIO *b, const void *data, int dlen)
 
 int BIO_write_ex(BIO *b, const void *data, size_t dlen, size_t *written)
 {
-    return bio_write_intern(b, data, dlen, written) > 0;
+    return bio_write_intern(b, data, dlen, written) >= 0;
 }
 
 int BIO_puts(BIO *b, const char *buf)
