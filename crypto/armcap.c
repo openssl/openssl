@@ -55,10 +55,10 @@ void _armv8_pmull_probe(void);
 # ifdef __aarch64__
 void _armv8_sha512_probe(void);
 unsigned int _armv8_cpuid_probe(void);
-static void _armv8_rng_probe(void);
+void _armv8_rng_probe(void);
 
-static size_t OPENSSL_rndr_asm(unsigned char *buf, size_t len);
-static size_t OPENSSL_rndrrs_asm(unsigned char *buf, size_t len);
+size_t OPENSSL_rndr_asm(unsigned char *buf, size_t len);
+size_t OPENSSL_rndrrs_asm(unsigned char *buf, size_t len);
 
 size_t OPENSSL_rndr_bytes(unsigned char *buf, size_t len);
 size_t OPENSSL_rndrrs_bytes(unsigned char *buf, size_t len);
