@@ -1816,6 +1816,8 @@ typedef struct sigalg_lookup_st {
     int curve;
     /* Whether this signature algorithm is actually available for use */
     int enabled;
+    /* Whether name needs to be freed */
+    int name_malloced;
 } SIGALG_LOOKUP;
 
 /*

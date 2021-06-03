@@ -3455,6 +3455,9 @@ void SSL_CTX_free(SSL_CTX *a)
     }
     OPENSSL_free(a->group_list);
 
+    for (j = 0; j < a->sigalg_lookup_cache_len; j++)
+        if (a->sigalg_lookup_cache[j].name_malloced)
+            OPENSSL_free(a->sigalg_lookup_cache[j].name);
     OPENSSL_free(a->sigalg_lookup_cache);
 
     CRYPTO_THREAD_lock_free(a->lock);
