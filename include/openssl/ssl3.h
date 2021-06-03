@@ -212,7 +212,7 @@ extern "C" {
 # define SSL3_MD_CLIENT_FINISHED_CONST   "\x43\x4C\x4E\x54"
 # define SSL3_MD_SERVER_FINISHED_CONST   "\x53\x52\x56\x52"
 
-# define SSL3_VERSION                    0x0300
+/* SSL3_VERSION is defined in prov_ssl.h */
 # define SSL3_VERSION_MAJOR              0x03
 # define SSL3_VERSION_MINOR              0x00
 
