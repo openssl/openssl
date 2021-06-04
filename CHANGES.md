@@ -24,7 +24,9 @@ OpenSSL 3.1
 
 ### Changes between 3.0 and 3.1 [xx XXX xxxx]
 
- *
+ * The undocumented function BIO_f_zlib has been deprecated, which
+   forced the deprecation of the "-z" option to the enc command, and
+   the "-compress" and "-uncompress" options to the cms command.
 
 OpenSSL 3.0
 -----------

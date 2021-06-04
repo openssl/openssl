@@ -264,7 +264,7 @@ void ossl_comp_zlib_cleanup(void)
 #endif
 }
 
-#ifdef ZLIB
+#if defined(ZLIB) && !defined(OPENSSL_NO_DEPRECATED_3_0)
 
 /* Zlib based compression/decompression filter BIO */
 

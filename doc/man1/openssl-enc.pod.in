@@ -431,7 +431,7 @@ The default digest was changed from MD5 to SHA256 in OpenSSL 1.1.0.
 
 The B<-list> option was added in OpenSSL 1.1.1e.
 
-The B<-ciphers> and B<-engine> options were deprecated in OpenSSL 3.0.
+The B<-ciphers>, B<-engine>, and B<-z> options were deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

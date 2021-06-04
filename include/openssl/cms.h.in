@@ -248,9 +248,15 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
 int CMS_RecipientInfo_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri);
 int CMS_RecipientInfo_encrypt(const CMS_ContentInfo *cms, CMS_RecipientInfo *ri);
 
+#ifdef ZLIB
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0
 int CMS_uncompress(CMS_ContentInfo *cms, BIO *dcont, BIO *out,
                    unsigned int flags);
+OSSL_DEPRECATEDIN_3_0
 CMS_ContentInfo *CMS_compress(BIO *in, int comp_nid, unsigned int flags);
+# endif
+#endif
 
 int CMS_set1_eContentType(CMS_ContentInfo *cms, const ASN1_OBJECT *oid);
 const ASN1_OBJECT *CMS_get0_eContentType(CMS_ContentInfo *cms);
