@@ -110,9 +110,11 @@ const OPTIONS cms_options[] = {
      "Create a CMS \"DigestedData\" object"},
     {"digest_verify", OPT_DIGEST_VERIFY, '-',
      "Verify a CMS \"DigestedData\" object and output it"},
+#if defined(ZLIB) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     {"compress", OPT_COMPRESS, '-', "Create a CMS \"CompressedData\" object"},
     {"uncompress", OPT_UNCOMPRESS, '-',
      "Uncompress a CMS \"CompressedData\" object"},
+#endif
     {"EncryptedData_encrypt", OPT_ED_ENCRYPT, '-',
      "Create CMS \"EncryptedData\" object using symmetric key"},
     {"EncryptedData_decrypt", OPT_ED_DECRYPT, '-',
@@ -392,12 +394,18 @@ int cms_main(int argc, char **argv)
         case OPT_DIGEST_VERIFY:
             operation = SMIME_DIGEST_VERIFY;
             break;
+#if defined(ZLIB) && !defined(OPENSSL_NO_DEPRECATED_3_0)
         case OPT_COMPRESS:
             operation = SMIME_COMPRESS;
             break;
         case OPT_UNCOMPRESS:
             operation = SMIME_UNCOMPRESS;
             break;
+#else
+        case OPT_COMPRESS:
+        case OPT_UNCOMPRESS:
+            break;
+#endif
         case OPT_ED_ENCRYPT:
             operation = SMIME_ENCRYPTED_ENCRYPT;
             break;
@@ -980,7 +988,9 @@ int cms_main(int argc, char **argv)
     } else if (operation == SMIME_DIGEST_CREATE) {
         cms = CMS_digest_create_ex(in, sign_md, flags, libctx, app_get0_propq());
     } else if (operation == SMIME_COMPRESS) {
+#if defined(ZLIB) && !defined(OPENSSL_NO_DEPRECATED_3_0)
         cms = CMS_compress(in, -1, flags);
+#endif
     } else if (operation == SMIME_ENCRYPT) {
         int i;
         flags |= CMS_PARTIAL;
@@ -1182,8 +1192,10 @@ int cms_main(int argc, char **argv)
         if (!CMS_data(cms, out, flags))
             goto end;
     } else if (operation == SMIME_UNCOMPRESS) {
+#if defined(ZLIB) && !defined(OPENSSL_NO_DEPRECATED_3_0)
         if (!CMS_uncompress(cms, indata, out, flags))
             goto end;
+#endif
     } else if (operation == SMIME_DIGEST_VERIFY) {
         if (CMS_digest_verify(cms, indata, out, flags) > 0) {
             BIO_printf(bio_err, "Verification successful\n");

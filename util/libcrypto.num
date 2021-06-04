@@ -1776,7 +1776,7 @@ BIO_sock_info                           1818	3_0_0	EXIST::FUNCTION:SOCK
 OPENSSL_hexstr2buf                      1819	3_0_0	EXIST::FUNCTION:
 EVP_add_cipher                          1820	3_0_0	EXIST::FUNCTION:
 X509V3_EXT_add_list                     1821	3_0_0	EXIST::FUNCTION:
-CMS_compress                            1822	3_0_0	EXIST::FUNCTION:CMS
+CMS_compress                            1822	3_0_0	EXIST::FUNCTION:CMS,DEPRECATEDIN_3_0,ZLIB
 X509_get_ext_by_critical                1823	3_0_0	EXIST::FUNCTION:
 ASYNC_WAIT_CTX_clear_fd                 1824	3_0_0	EXIST::FUNCTION:
 ZLONG_it                                1825	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
@@ -1846,7 +1846,7 @@ TS_RESP_CTX_set_time_cb                 1889	3_0_0	EXIST::FUNCTION:TS
 IDEA_cbc_encrypt                        1890	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,IDEA
 BN_CTX_secure_new                       1891	3_0_0	EXIST::FUNCTION:
 OCSP_ONEREQ_add_ext                     1892	3_0_0	EXIST::FUNCTION:OCSP
-CMS_uncompress                          1893	3_0_0	EXIST::FUNCTION:CMS
+CMS_uncompress                          1893	3_0_0	EXIST::FUNCTION:CMS,DEPRECATEDIN_3_0,ZLIB
 CRYPTO_mem_debug_pop                    1895	3_0_0	EXIST::FUNCTION:CRYPTO_MDEBUG,DEPRECATEDIN_3_0
 EVP_aes_192_cfb128                      1896	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_REQ_CTX_nbio                  1897	3_0_0	EXIST::FUNCTION:
