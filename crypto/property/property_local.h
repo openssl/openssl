@@ -34,6 +34,8 @@ struct ossl_property_list_st {
     OSSL_PROPERTY_DEFINITION properties[1];
 };
 
+extern OSSL_PROPERTY_IDX ossl_property_true, ossl_property_false;
+
 /* Property string functions */
 OSSL_PROPERTY_IDX ossl_property_name(OSSL_LIB_CTX *ctx, const char *s,
                                      int create);
