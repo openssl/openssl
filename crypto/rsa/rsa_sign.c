@@ -91,6 +91,15 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
         encoded_len = SSL_SIG_LENGTH;
         encoded = m;
     } else {
+        const EVP_MD *md = EVP_get_digestbynid(type);
+
+        if (md != NULL) {
+            if (m_len != (size_t)EVP_MD_size(md)) {
+                RSAerr(RSA_F_RSA_SIGN, RSA_R_INVALID_MESSAGE_LENGTH);
+                return 0;
+            }
+        }
+
         if (!encode_pkcs1(&tmps, &encoded_len, type, m, m_len))
             goto err;
         encoded = tmps;
