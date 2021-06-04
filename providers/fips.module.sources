@@ -250,7 +250,6 @@ crypto/param_build_set.c
 crypto/params.c
 crypto/params_dup.c
 crypto/params_from_text.c
-crypto/passphrase.c
 crypto/property/defn_cache.c
 crypto/property/property.c
 crypto/property/property_local.h
@@ -377,7 +376,6 @@ include/internal/nelem.h
 include/internal/numbers.h
 include/internal/packet.h
 include/internal/param_build_set.h
-include/internal/passphrase.h
 include/internal/property.h
 include/internal/propertyerr.h
 include/internal/provider.h
