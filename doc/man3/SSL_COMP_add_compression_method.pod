@@ -10,15 +10,14 @@ SSL_COMP_get0_name, SSL_COMP_get_id, SSL_COMP_free_compression_methods
 
  #include <openssl/ssl.h>
 
- int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm);
- STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void);
- const char *SSL_COMP_get0_name(const SSL_COMP *comp);
- int SSL_COMP_get_id(const SSL_COMP *comp);
-
 Deprecated since OpenSSL 1.1.0, can be hidden entirely by defining
 B<OPENSSL_API_COMPAT> with a suitable version value, see
 L<openssl_user_macros(7)>:
 
+ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm);
+ STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void);
+ const char *SSL_COMP_get0_name(const SSL_COMP *comp);
+ int SSL_COMP_get_id(const SSL_COMP *comp);
  void SSL_COMP_free_compression_methods(void);
 
 =head1 DESCRIPTION
@@ -40,7 +39,7 @@ maintain the internal table of compression methods.
 
 =head1 NOTES
 
-The TLS standard (or SSLv3) allows the integration of compression methods
+Some versions of TLS (and SSLv3) allow the integration of compression methods
 into the communication. The TLS RFC does however not specify compression
 methods or their corresponding identifiers, so there is currently no compatible
 way to integrate compression with unknown peers. It is therefore currently not
@@ -90,6 +89,12 @@ SSL_COMP_get_id() returns the name of the compression method or -1 on error.
 L<ssl(7)>
 
 =head1 HISTORY
+
+SSL_COMP_add_compression_method(),
+SSL_COMP_get_compression_methods(),
+SSL_COMP_get0_name(), and
+SSL_COMP_get_id()
+functions were deprecated in OpenSSL 3.0.
 
 The SSL_COMP_free_compression_methods() function was deprecated in OpenSSL 1.1.0.
 The SSL_COMP_get0_name() and SSL_comp_get_id() functions were added in OpenSSL 1.1.0d.

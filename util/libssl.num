@@ -24,7 +24,7 @@ SSL_set_generate_session_id             24	3_0_0	EXIST::FUNCTION:
 SSL_get_ex_data_X509_STORE_CTX_idx      25	3_0_0	EXIST::FUNCTION:
 SSL_get_quiet_shutdown                  26	3_0_0	EXIST::FUNCTION:
 SSL_dane_enable                         27	3_0_0	EXIST::FUNCTION:
-SSL_COMP_add_compression_method         28	3_0_0	EXIST::FUNCTION:
+SSL_COMP_add_compression_method         28	3_0_0	EXIST::FUNCTION:COMP,DEPRECATED_3_0
 SSL_CTX_use_RSAPrivateKey               29	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 SSL_CTX_sess_get_new_cb                 30	3_0_0	EXIST::FUNCTION:
 d2i_SSL_SESSION                         31	3_0_0	EXIST::FUNCTION:
@@ -150,7 +150,7 @@ SSL_CTX_SRP_CTX_init                    150	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3
 SSL_SESSION_set_time                    151	3_0_0	EXIST::FUNCTION:
 i2d_SSL_SESSION                         152	3_0_0	EXIST::FUNCTION:
 SSL_SESSION_get_master_key              153	3_0_0	EXIST::FUNCTION:
-SSL_COMP_get_compression_methods        154	3_0_0	EXIST::FUNCTION:
+SSL_COMP_get_compression_methods        154	3_0_0	EXIST::FUNCTION:COMP,DEPRECATED_3_0
 SSL_CTX_set_alpn_select_cb              155	3_0_0	EXIST::FUNCTION:
 SSL_CTX_set_tmp_dh_callback             156	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 SSL_CTX_get_default_passwd_cb           157	3_0_0	EXIST::FUNCTION:
@@ -224,7 +224,7 @@ SSL_set_alpn_protos                     224	3_0_0	EXIST::FUNCTION:
 SSL_set_ex_data                         225	3_0_0	EXIST::FUNCTION:
 SSL_rstate_string_long                  226	3_0_0	EXIST::FUNCTION:
 SSL_ctrl                                227	3_0_0	EXIST::FUNCTION:
-SSL_get_current_compression             228	3_0_0	EXIST::FUNCTION:
+SSL_get_current_compression             228	3_0_0	EXIST::FUNCTION:COMP,DEPRECATED_3_0
 SSL_SESSION_has_ticket                  229	3_0_0	EXIST::FUNCTION:
 SSL_CTX_set_cert_verify_callback        230	3_0_0	EXIST::FUNCTION:
 SSL_set_session_secret_cb               231	3_0_0	EXIST::FUNCTION:
@@ -291,7 +291,7 @@ SSL_get0_alpn_selected                  291	3_0_0	EXIST::FUNCTION:
 SSL_get0_next_proto_negotiated          292	3_0_0	EXIST::FUNCTION:NEXTPROTONEG
 SSL_set0_security_ex_data               293	3_0_0	EXIST::FUNCTION:
 SSL_CTX_set_tlsext_use_srtp             294	3_0_0	EXIST::FUNCTION:SRTP
-SSL_COMP_set0_compression_methods       295	3_0_0	EXIST::FUNCTION:
+SSL_COMP_set0_compression_methods       295	3_0_0	EXIST::FUNCTION:COMP,DEPRECATED_3_0
 SSL_CTX_set_not_resumable_session_callback 296	3_0_0	EXIST::FUNCTION:
 SSL_accept                              297	3_0_0	EXIST::FUNCTION:
 SSL_use_psk_identity_hint               298	3_0_0	EXIST::FUNCTION:PSK
@@ -315,7 +315,7 @@ SSL_CTX_get_timeout                     315	3_0_0	EXIST::FUNCTION:
 SSL_use_certificate_chain_file          316	3_0_0	EXIST::FUNCTION:
 SSL_set_not_resumable_session_callback  317	3_0_0	EXIST::FUNCTION:
 SSL_CTX_SRP_CTX_free                    318	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,SRP
-SSL_get_current_expansion               319	3_0_0	EXIST::FUNCTION:
+SSL_get_current_expansion               319	3_0_0	EXIST::FUNCTION:COMP,DEPRECATED_3_0
 SSL_clear_options                       320	3_0_0	EXIST::FUNCTION:
 SSL_CTX_use_PrivateKey                  321	3_0_0	EXIST::FUNCTION:
 SSL_get_info_callback                   322	3_0_0	EXIST::FUNCTION:
@@ -338,7 +338,7 @@ SSL_add_file_cert_subjects_to_stack     338	3_0_0	EXIST::FUNCTION:
 SSL_get_default_passwd_cb_userdata      339	3_0_0	EXIST::FUNCTION:
 SSL_get_security_callback               340	3_0_0	EXIST::FUNCTION:
 SSL_CTX_set_srp_username                341	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,SRP
-SSL_COMP_get_name                       342	3_0_0	EXIST::FUNCTION:
+SSL_COMP_get_name                       342	3_0_0	EXIST::FUNCTION:COMP,DEPRECATED_3_0
 SSL_CTX_set_default_passwd_cb_userdata  343	3_0_0	EXIST::FUNCTION:
 SSL_set_verify                          344	3_0_0	EXIST::FUNCTION:
 SSL_in_before                           345	3_0_0	EXIST::FUNCTION:
@@ -408,8 +408,8 @@ DTLS_get_data_mtu                       408	3_0_0	EXIST::FUNCTION:
 SSL_read_ex                             409	3_0_0	EXIST::FUNCTION:
 SSL_peek_ex                             410	3_0_0	EXIST::FUNCTION:
 SSL_write_ex                            411	3_0_0	EXIST::FUNCTION:
-SSL_COMP_get_id                         412	3_0_0	EXIST::FUNCTION:
-SSL_COMP_get0_name                      413	3_0_0	EXIST::FUNCTION:
+SSL_COMP_get_id                         412	3_0_0	EXIST::FUNCTION:COMP,DEPRECATED_3_0
+SSL_COMP_get0_name                      413	3_0_0	EXIST::FUNCTION:COMP,DEPRECATED_3_0
 SSL_CTX_set_keylog_callback             414	3_0_0	EXIST::FUNCTION:
 SSL_CTX_get_keylog_callback             415	3_0_0	EXIST::FUNCTION:
 SSL_get_peer_signature_type_nid         416	3_0_0	EXIST::FUNCTION:

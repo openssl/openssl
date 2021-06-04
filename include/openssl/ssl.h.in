@@ -2147,18 +2147,28 @@ void SSL_set_tmp_dh_callback(SSL *ssl,
 #  endif
 # endif
 
-__owur const COMP_METHOD *SSL_get_current_compression(const SSL *s);
-__owur const COMP_METHOD *SSL_get_current_expansion(const SSL *s);
-__owur const char *SSL_COMP_get_name(const COMP_METHOD *comp);
-__owur const char *SSL_COMP_get0_name(const SSL_COMP *comp);
-__owur int SSL_COMP_get_id(const SSL_COMP *comp);
-STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void);
-__owur STACK_OF(SSL_COMP) *SSL_COMP_set0_compression_methods(STACK_OF(SSL_COMP)
-                                                             *meths);
 # ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define SSL_COMP_free_compression_methods() while(0) continue
 # endif
-__owur int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm);
+# if !defined(OPENSSL_NO_COMP) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+OSSL_DEPRECATEDIN_3_0
+STACK_OF(SSL_COMP) *SSL_COMP_set0_compression_methods(STACK_OF(SSL_COMP)
+                                                             *meths);
+OSSL_DEPRECATEDIN_3_0
+const COMP_METHOD *SSL_get_current_expansion(const SSL *s);
+OSSL_DEPRECATEDIN_3_0
+const COMP_METHOD *SSL_get_current_compression(const SSL *s);
+OSSL_DEPRECATEDIN_3_0
+int SSL_COMP_get_id(const SSL_COMP *comp);
+OSSL_DEPRECATEDIN_3_0
+const char *SSL_COMP_get_name(const COMP_METHOD *comp);
+OSSL_DEPRECATEDIN_3_0
+const char *SSL_COMP_get0_name(const SSL_COMP *comp);
+OSSL_DEPRECATEDIN_3_0
+STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void);
+OSSL_DEPRECATEDIN_3_0
+int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm);
+#endif
 
 const SSL_CIPHER *SSL_CIPHER_find(SSL *ssl, const unsigned char *ptr);
 int SSL_CIPHER_get_cipher_nid(const SSL_CIPHER *c);

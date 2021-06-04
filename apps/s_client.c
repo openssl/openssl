@@ -8,6 +8,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED
 #include "e_os.h"
 #include <ctype.h>
 #include <stdio.h>
@@ -3073,9 +3074,6 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     EVP_PKEY *public_key;
     int i, istls13 = (SSL_version(s) == TLS1_3_VERSION);
     long verify_result;
-#ifndef OPENSSL_NO_COMP
-    const COMP_METHOD *comp, *expansion;
-#endif
     unsigned char *exportedkeymat;
 #ifndef OPENSSL_NO_CT
     const SSL_CTX *ctx = SSL_get_SSL_CTX(s);
@@ -3184,13 +3182,16 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     }
     BIO_printf(bio, "Secure Renegotiation IS%s supported\n",
                SSL_get_secure_renegotiation_support(s) ? "" : " NOT");
-#ifndef OPENSSL_NO_COMP
-    comp = SSL_get_current_compression(s);
-    expansion = SSL_get_current_expansion(s);
-    BIO_printf(bio, "Compression: %s\n",
-               comp ? SSL_COMP_get_name(comp) : "NONE");
-    BIO_printf(bio, "Expansion: %s\n",
-               expansion ? SSL_COMP_get_name(expansion) : "NONE");
+#if !defined(OPENSSL_NO_COMP) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+    {
+        const COMP_METHOD *comp = SSL_get_current_compression(s);
+        const COMP_METHOD *expansion = SSL_get_current_expansion(s);
+
+        BIO_printf(bio, "Compression: %s\n",
+                comp ? SSL_COMP_get_name(comp) : "NONE");
+        BIO_printf(bio, "Expansion: %s\n",
+                expansion ? SSL_COMP_get_name(expansion) : "NONE");
+    }
 #endif
 #ifndef OPENSSL_NO_KTLS
     if (BIO_get_ktls_send(SSL_get_wbio(s)))

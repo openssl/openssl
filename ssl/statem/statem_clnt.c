@@ -1380,7 +1380,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
     unsigned int sversion;
     unsigned int context;
     RAW_EXTENSION *extensions = NULL;
-#ifndef OPENSSL_NO_COMP
+#if !defined(OPENSSL_NO_COMP) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     SSL_COMP *comp;
 #endif
 
@@ -1609,7 +1609,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
         goto err;
     }
 
-#ifdef OPENSSL_NO_COMP
+#if defined(OPENSSL_NO_COMP) || defined(OPENSSL_NO_DEPRECATED_3_0)
     if (compression != 0) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
                  SSL_R_UNSUPPORTED_COMPRESSION_ALGORITHM);
