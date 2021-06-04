@@ -26,6 +26,7 @@
 #include "internal/asn1.h"
 #include "crypto/pkcs7.h"
 #include "crypto/x509.h"
+#include "crypto/rsa.h"
 
 int X509_verify(X509 *a, EVP_PKEY *r)
 {
@@ -437,8 +438,8 @@ ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert)
 {
     unsigned int len;
     unsigned char hash[EVP_MAX_MD_SIZE];
-    int md_NID;
-    const EVP_MD *md = NULL;
+    int mdnid, pknid;
+    EVP_MD *md = NULL;
     ASN1_OCTET_STRING *new = NULL;
 
     if (cert == NULL) {
@@ -446,18 +447,57 @@ ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert)
         return NULL;
     }
 
-    if (!OBJ_find_sigid_algs(X509_get_signature_nid(cert), &md_NID, NULL)
-            || (md = EVP_get_digestbynid(md_NID)) == NULL) {
-        ERR_raise(ERR_LIB_CMP, X509_R_UNSUPPORTED_ALGORITHM);
+    if (!OBJ_find_sigid_algs(X509_get_signature_nid(cert), &mdnid, &pknid)) {
+        ERR_raise(ERR_LIB_X509, X509_R_UNKNOWN_SIGID_ALGS);
+        return NULL;
+    }
+
+    if (mdnid == NID_undef) {
+        if (pknid == EVP_PKEY_RSA_PSS) {
+            RSA_PSS_PARAMS *pss = ossl_rsa_pss_decode(&cert->sig_alg);
+            const EVP_MD *mgf1md, *mmd = NULL;
+            int saltlen, trailerfield;
+
+            if (pss == NULL
+                || !ossl_rsa_pss_get_param_unverified(pss, &mmd, &mgf1md,
+                                                      &saltlen,
+                                                      &trailerfield)
+                ||  mmd == NULL) {
+                RSA_PSS_PARAMS_free(pss);
+                ERR_raise(ERR_LIB_X509, X509_R_UNSUPPORTED_ALGORITHM);
+                return NULL;
+            }
+            RSA_PSS_PARAMS_free(pss);
+            /* Fetch explicitly and do not fallback */
+            if ((md = EVP_MD_fetch(cert->libctx, EVP_MD_get0_name(mmd),
+                                   cert->propq)) == NULL)
+                /* Error code from fetch is sufficient */
+                return NULL;
+        } else if (pknid != NID_undef) {
+            /* Default to SHA-256 for known algorithms without a digest */
+            if ((md = EVP_MD_fetch(cert->libctx, "SHA256",
+                                   cert->propq)) == NULL)
+                return NULL;
+        } else {
+            /* A completely unknown algorithm */
+            ERR_raise(ERR_LIB_X509, X509_R_UNSUPPORTED_ALGORITHM);
+            return NULL;
+        }
+    } else if ((md = EVP_MD_fetch(cert->libctx, OBJ_nid2sn(mdnid),
+                                  cert->propq)) == NULL
+               && (md = (EVP_MD *)EVP_get_digestbynid(mdnid)) == NULL) {
+        ERR_raise(ERR_LIB_X509, X509_R_UNSUPPORTED_ALGORITHM);
         return NULL;
     }
     if (!X509_digest(cert, md, hash, &len)
             || (new = ASN1_OCTET_STRING_new()) == NULL)
-        return NULL;
+        goto err;
     if (!(ASN1_OCTET_STRING_set(new, hash, len))) {
         ASN1_OCTET_STRING_free(new);
-        return NULL;
+        new = NULL;
     }
+ err:
+    EVP_MD_free(md);
     return new;
 }
 
