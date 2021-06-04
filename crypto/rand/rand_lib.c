@@ -10,25 +10,25 @@
 /* We need to use some engine deprecated APIs */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
-#include <stdio.h>
-#include <time.h>
-#include <limits.h>
-#include <openssl/trace.h>
 #include <openssl/err.h>
-#include <openssl/conf.h>
-#include "internal/cryptlib.h"
 #include <openssl/opensslconf.h>
+#include <openssl/core_names.h>
+#include "internal/cryptlib.h"
+#include "internal/thread_once.h"
 #include "crypto/rand.h"
 #include "crypto/cryptlib.h"
-#include <openssl/engine.h>
-#include <openssl/core_names.h>
-#include "internal/thread_once.h"
 #include "rand_local.h"
-#include "e_os.h"
 
 #ifndef FIPS_MODULE
+# include <stdio.h>
+# include <time.h>
+# include <limits.h>
+# include <openssl/conf.h>
+# include <openssl/trace.h>
+# include <openssl/engine.h>
 # include "crypto/rand_pool.h"
 # include "prov/seeding.h"
+# include "e_os.h"
 
 # ifndef OPENSSL_NO_ENGINE
 /* non-NULL if default_RAND_meth is ENGINE-provided */
@@ -319,7 +319,7 @@ int RAND_priv_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num,
                        unsigned int strength)
 {
     EVP_RAND_CTX *rand;
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#if !defined(OPENSSL_NO_DEPRECATED_3_0) && !defined(FIPS_MODULE)
     const RAND_METHOD *meth = RAND_get_rand_method();
 
     if (meth != NULL && meth != RAND_OpenSSL()) {
@@ -348,7 +348,7 @@ int RAND_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num,
                   unsigned int strength)
 {
     EVP_RAND_CTX *rand;
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#if !defined(OPENSSL_NO_DEPRECATED_3_0) && !defined(FIPS_MODULE)
     const RAND_METHOD *meth = RAND_get_rand_method();
 
     if (meth != NULL && meth != RAND_OpenSSL()) {

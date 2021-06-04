@@ -61,9 +61,5 @@ RAND_METHOD ossl_rand_meth = {
 
 RAND_METHOD *RAND_OpenSSL(void)
 {
-#ifndef FIPS_MODULE
     return &ossl_rand_meth;
-#else
-    return NULL;
-#endif
 }
