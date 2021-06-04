@@ -72,7 +72,7 @@ static size_t OPENSSL_rndr_wrapper(size_t (*func)(unsigned char *, size_t), unsi
 	buffer_size = func(buf, len);
 	if (buffer_size == len)
 	    break;
-	usleep(5000);  //5000 microseconds (5 milliseconds)
+	usleep(5000);  /* 5000 microseconds (5 milliseconds) */
     }
     return buffer_size;
 }
