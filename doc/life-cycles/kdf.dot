@@ -1,4 +1,6 @@
 strict digraph kdf {
+    bgcolor="#00000000";
+
     begin [label=start, color="#deeaee", style="filled"];
     newed [label="newed", fontcolor="#c94c4c", style="solid"];
     deriving [label="deriving", fontcolor="#c94c4c"];

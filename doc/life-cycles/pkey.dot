@@ -1,4 +1,5 @@
 strict digraph pkey {
+    bgcolor="#00000000";
     layout=circo
 
     begin [label=start, color="#deeaee", style="filled"];
