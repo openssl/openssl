@@ -13,8 +13,8 @@ I<command>
 
 =head1 DESCRIPTION
 
-There are many situations where X.509 certificates are verified,
-also within the OpenSSL libraries and in various OpenSSL commands.
+There are many situations where X.509 certificates are verified
+within the OpenSSL libraries and in various OpenSSL commands.
 
 Certificate verification is implemented by L<X509_verify_cert(3)>.
 It is a complicated process consisting of a number of steps
@@ -77,7 +77,7 @@ enables all uses when trusted.
 
 A certificate, which may be CA certificate or an end-entity certificate,
 is considered a trust anchor for the given use
-if and only if all the following conditions hold.
+if and only if all the following conditions hold:
 
 =over 4
 
@@ -375,8 +375,8 @@ keys shorter than 1024 bits.
 
 =item B<-partial_chain>
 
-Allow verification to succeed also if an incomplete chain can be built,
-i.e., a chain ending in a certificate that normally would not be trusted
+Allow verification to succeed if an incomplete chain can be built.
+That is, a chain ending in a certificate that normally would not be trusted
 (because it has no matching positive trust attributes and is not self-signed)
 but is an element of the trust store.
 This certificate may be self-issued or belong to an intermediate CA.
@@ -555,7 +555,7 @@ which includes the case that it is an X.509v1 certificate,
 then the certificate is considered to be a "possible CA" and
 other extensions are checked according to the intended use of the certificate.
 The treatment of certificates without basicConstraints as a CA
-is presently supported, but may in the future be withdrawn.
+is presently supported, but this could change in the future.
 
 =head3 Key Usage
 
@@ -579,28 +579,29 @@ CA certificates.
 =item B<SSL Client>
 
 The extended key usage extension must be absent or include the "web client
-authentication" OID.  keyUsage must be absent or it must have the
-digitalSignature bit set. Netscape certificate type must be absent or it must
-have the SSL client bit set.
+authentication" OID.  The keyUsage extension must be absent or it must have the
+digitalSignature bit set.  The Netscape certificate type must be absent
+or it must have the SSL client bit set.
 
 =item B<SSL Client CA>
 
 The extended key usage extension must be absent or include the "web client
-authentication" OID. Netscape certificate type must be absent or it must have
-the SSL CA bit set.
+authentication" OID.
+The Netscape certificate type must be absent or it must have the SSL CA bit set.
 This is used as a work around if the basicConstraints extension is absent.
 
 =item B<SSL Server>
 
 The extended key usage extension must be absent or include the "web server
-authentication" and/or one of the SGC OIDs.  keyUsage must be absent or it
+authentication" and/or one of the SGC OIDs.  The keyUsage extension must be
+absent or it
 must have the digitalSignature, the keyEncipherment set or both bits set.
-Netscape certificate type must be absent or have the SSL server bit set.
+The Netscape certificate type must be absent or have the SSL server bit set.
 
 =item B<SSL Server CA>
 
 The extended key usage extension must be absent or include the "web server
-authentication" and/or one of the SGC OIDs.  Netscape certificate type must
+authentication" and/or one of the SGC OIDs.  The Netscape certificate type must
 be absent or the SSL CA bit must be set.
 This is used as a work around if the basicConstraints extension is absent.
 
@@ -614,8 +615,8 @@ Otherwise it is the same as a normal SSL server.
 =item B<Common S/MIME Client Tests>
 
 The extended key usage extension must be absent or include the "email
-protection" OID. Netscape certificate type must be absent or should have the
-S/MIME bit set. If the S/MIME bit is not set in Netscape certificate type
+protection" OID.  The Netscape certificate type must be absent or should have the
+S/MIME bit set. If the S/MIME bit is not set in the Netscape certificate type
 then the SSL client bit is tolerated as an alternative but a warning is shown.
 This is because some Verisign certificates don't set the S/MIME bit.
 
@@ -632,7 +633,7 @@ if the keyUsage extension is present.
 =item B<S/MIME CA>
 
 The extended key usage extension must be absent or include the "email
-protection" OID. Netscape certificate type must be absent or must have the
+protection" OID.  The Netscape certificate type must be absent or must have the
 S/MIME CA bit set.
 This is used as a work around if the basicConstraints extension is absent.
 
@@ -673,9 +674,6 @@ L<openssl-cms(1)>
 =head1 HISTORY
 
 The checks enabled by B<-x509_strict> have been extended in OpenSSL 3.0.
-
-Previous versions of OpenSSL assume certificates with matching subject
-name are identical and mishandled them.
 
 =head1 COPYRIGHT
 

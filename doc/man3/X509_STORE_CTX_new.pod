@@ -120,9 +120,6 @@ X509_STORE_CTX_verify() will take the first element, if any,
 as its default target if the target certificate is not set explicitly.
 
 X509_STORE_CTX_get_num_untrusted() returns the number of untrusted certificates
-that were used in building the chain following a call to L<X509_verify_cert(3)>.
-
-X509_STORE_CTX_get_num_untrusted() returns the number of untrusted certificates
 that were used in building the chain.
 This is can be used after calling L<X509_verify_cert(3)> and similar functions.
 With L<X509_STORE_CTX_verify(3)>, this does not count the first chain element.
