@@ -892,18 +892,16 @@ long SSL_SESSION_set_timeout(SSL_SESSION *s, long t)
 
     if (s == NULL || t < 0)
         return 0;
-    if (s->timeout != new_timeout) {
-        if (s->owner != NULL) {
-            if (!CRYPTO_THREAD_write_lock(s->owner->lock))
-                return 0;
-            s->timeout = new_timeout;
-            ssl_session_calculate_timeout(s);
-            SSL_SESSION_list_add(s->owner, s);
-            CRYPTO_THREAD_unlock(s->owner->lock);
-        } else {
-            s->timeout = new_timeout;
-            ssl_session_calculate_timeout(s);
-        }
+    if (s->owner != NULL) {
+        if (!CRYPTO_THREAD_write_lock(s->owner->lock))
+            return 0;
+        s->timeout = new_timeout;
+        ssl_session_calculate_timeout(s);
+        SSL_SESSION_list_add(s->owner, s);
+        CRYPTO_THREAD_unlock(s->owner->lock);
+    } else {
+        s->timeout = new_timeout;
+        ssl_session_calculate_timeout(s);
     }
     return 1;
 }
@@ -928,18 +926,16 @@ long SSL_SESSION_set_time(SSL_SESSION *s, long t)
 
     if (s == NULL)
         return 0;
-    if (s->time != new_time) {
-        if (s->owner != NULL) {
-            if (!CRYPTO_THREAD_write_lock(s->owner->lock))
-                return 0;
-            s->time = new_time;
-            ssl_session_calculate_timeout(s);
-            SSL_SESSION_list_add(s->owner, s);
-            CRYPTO_THREAD_unlock(s->owner->lock);
-        } else {
-            s->time = new_time;
-            ssl_session_calculate_timeout(s);
-        }
+    if (s->owner != NULL) {
+        if (!CRYPTO_THREAD_write_lock(s->owner->lock))
+            return 0;
+        s->time = new_time;
+        ssl_session_calculate_timeout(s);
+        SSL_SESSION_list_add(s->owner, s);
+        CRYPTO_THREAD_unlock(s->owner->lock);
+    } else {
+        s->time = new_time;
+        ssl_session_calculate_timeout(s);
     }
     return t;
 }
