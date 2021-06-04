@@ -414,30 +414,18 @@ static int x509_pubkey_decode(EVP_PKEY **ppkey, const X509_PUBKEY *key)
 
 EVP_PKEY *X509_PUBKEY_get0(const X509_PUBKEY *key)
 {
-    EVP_PKEY *ret = NULL;
-
-    if (key == NULL || key->public_key == NULL)
+    if (key == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
-
-    if (key->pkey != NULL)
-        return key->pkey;
-
-    /*
-     * When the key ASN.1 is initially parsed an attempt is made to
-     * decode the public key and cache the EVP_PKEY structure. If this
-     * operation fails the cached value will be NULL. Parsing continues
-     * to allow parsing of unknown key types or unsupported forms.
-     * We repeat the decode operation so the appropriate errors are left
-     * in the queue.
-     */
-    x509_pubkey_decode(&ret, key);
-    /* If decode doesn't fail something bad happened */
-    if (ret != NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_INTERNAL_ERROR);
-        EVP_PKEY_free(ret);
     }
 
-    return NULL;
+    if (key->pkey == NULL) {
+        /* We failed to decode the key when we loaded it, or it was never set */
+        ERR_raise(ERR_LIB_X509, EVP_R_DECODE_ERROR);
+        return NULL;
+    }
+
+    return key->pkey;
 }
 
 EVP_PKEY *X509_PUBKEY_get(const X509_PUBKEY *key)
