@@ -1,5 +1,5 @@
 digraph mac {
-    bgcolor="#00000000";
+    bgcolor="transparent";
 
     begin [label=start, color="#deeaee", style="filled"];
     newed [fontcolor="#c94c4c", style="solid"];
