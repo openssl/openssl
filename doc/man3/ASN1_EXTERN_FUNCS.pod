@@ -5,7 +5,7 @@
 ASN1_EXTERN_FUNCS, ASN1_ex_d2i, ASN1_ex_d2i_ex, ASN1_ex_i2d, ASN1_ex_new_func,
 ASN1_ex_new_ex_func, ASN1_ex_free_func, ASN1_ex_print_func,
 IMPLEMENT_EXTERN_ASN1
-- ASN1 external function support
+- ASN.1 external function support
 
 =head1 SYNOPSIS
 
@@ -45,7 +45,7 @@ IMPLEMENT_EXTERN_ASN1
 
 =head1 DESCRIPTION
 
-ASN1 data structures templates are typically defined in OpenSSL using a series
+ASN.1 data structures templates are typically defined in OpenSSL using a series
 of macros such as ASN1_SEQUENCE(), ASN1_SEQUENCE_END() and so on. Instead
 templates can also be defined based entirely on external functions. These
 external functions are called to perform operations such as creating a new

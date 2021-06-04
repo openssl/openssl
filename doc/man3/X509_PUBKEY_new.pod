@@ -52,7 +52,7 @@ the property query string I<propq>. See L<crypto(7)/ALGORITHM FETCHING> for
 further information about algorithm fetching.
 
 X509_PUBKEY_new() is the same as X509_PUBKEY_new_ex() except that the default
-(NULL) B<OSSL_LIB_CTX> is used and with a NULL property query string.
+(NULL) B<OSSL_LIB_CTX> and a NULL property query string are used.
 
 X509_PUBKEY_dup() creates a duplicate copy of the B<X509_PUBKEY> object
 specified by I<a>.
