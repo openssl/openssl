@@ -16,6 +16,9 @@
 OSSL_DECODER *ossl_decoder_fetch_by_number(OSSL_LIB_CTX *libctx,
                                                      int id,
                                                      const char *properties);
+void ossl_decoder_do_all_prefetched(OSSL_LIB_CTX *libctx,
+                                    void (*fn)(OSSL_DECODER *decoder, void *arg),
+                                    void *arg);
 
 /*
  * These are specially made for the 'file:' provider-native loader, which
@@ -40,4 +43,3 @@ int ossl_decoder_ctx_setup_for_pkey(OSSL_DECODER_CTX *ctx,
 int ossl_decoder_get_number(const OSSL_DECODER *encoder);
 
 #endif
-
