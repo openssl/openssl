@@ -295,7 +295,7 @@ stack_to_property_list(STACK_OF(OSSL_PROPERTY_DEFINITION) *sk)
             r->properties[i] = *sk_OSSL_PROPERTY_DEFINITION_value(sk, i);
             r->has_optional |= r->properties[i].optional;
         }
-        r->n = n;
+        r->num_properties = n;
     }
     return r;
 }
@@ -469,12 +469,12 @@ int ossl_property_match_count(const OSSL_PROPERTY_LIST *query,
     int i = 0, j = 0, matches = 0;
     OSSL_PROPERTY_OPER oper;
 
-    while (i < query->n) {
+    while (i < query->num_properties) {
         if ((oper = q[i].oper) == OSSL_PROPERTY_OVERRIDE) {
             i++;
             continue;
         }
-        if (j < defn->n) {
+        if (j < defn->num_properties) {
             if (q[i].name_idx > d[j].name_idx) {  /* skip defn, not in query */
                 j++;
                 continue;
@@ -536,7 +536,7 @@ OSSL_PROPERTY_LIST *ossl_property_merge(const OSSL_PROPERTY_LIST *a,
     const OSSL_PROPERTY_DEFINITION *copy;
     OSSL_PROPERTY_LIST *r;
     int i, j, n;
-    const int t = a->n + b->n;
+    const int t = a->num_properties + b->num_properties;
 
     r = OPENSSL_malloc(sizeof(*r)
                        + (t == 0 ? 0 : t - 1) * sizeof(r->properties[0]));
@@ -544,10 +544,10 @@ OSSL_PROPERTY_LIST *ossl_property_merge(const OSSL_PROPERTY_LIST *a,
         return NULL;
 
     r->has_optional = 0;
-    for (i = j = n = 0; i < a->n || j < b->n; n++) {
-        if (i >= a->n) {
+    for (i = j = n = 0; i < a->num_properties || j < b->num_properties; n++) {
+        if (i >= a->num_properties) {
             copy = &bp[j++];
-        } else if (j >= b->n) {
+        } else if (j >= b->num_properties) {
             copy = &ap[i++];
         } else if (ap[i].name_idx <= bp[j].name_idx) {
             if (ap[i].name_idx == bp[j].name_idx)
@@ -559,7 +559,7 @@ OSSL_PROPERTY_LIST *ossl_property_merge(const OSSL_PROPERTY_LIST *a,
         memcpy(r->properties + n, copy, sizeof(r->properties[0]));
         r->has_optional |= copy->optional;
     }
-    r->n = n;
+    r->num_properties = n;
     if (n != t)
         r = OPENSSL_realloc(r, sizeof(*r) + (n - 1) * sizeof(r->properties[0]));
     return r;
@@ -672,9 +672,9 @@ size_t ossl_property_list_to_string(OSSL_LIB_CTX *ctx,
             *buf = '\0';
         return 1;
     }
-    if (list->n != 0)
-        prop = &list->properties[list->n - 1];
-    for (i = 0; i < list->n; i++, prop--) {
+    if (list->num_properties != 0)
+        prop = &list->properties[list->num_properties - 1];
+    for (i = 0; i < list->num_properties; i++, prop--) {
         /* Skip invalid names */
         if (prop->name_idx == 0)
             continue;
