@@ -11,21 +11,27 @@
 #include "internal/property.h"
 #include "property_local.h"
 
+static int property_idx_cmp(const void *keyp, const void *compare)
+{
+    OSSL_PROPERTY_IDX key = *(const OSSL_PROPERTY_IDX *)keyp;
+    const OSSL_PROPERTY_DEFINITION *defn =
+            (const OSSL_PROPERTY_DEFINITION *)compare;
+
+    return key - defn->name_idx;
+}
+
 const OSSL_PROPERTY_DEFINITION *
 ossl_property_find_property(const OSSL_PROPERTY_LIST *list,
                             OSSL_LIB_CTX *libctx, const char *name)
 {
     OSSL_PROPERTY_IDX name_idx;
-    int i;
 
     if (list == NULL || name == NULL
         || (name_idx = ossl_property_name(libctx, name, 0)) == 0)
         return NULL;
 
-    for (i = 0; i < list->num_properties; i++)
-        if (list->properties[i].name_idx == name_idx)
-            return &list->properties[i];
-    return NULL;
+    return ossl_bsearch(&name_idx, list->properties, list->num_properties,
+                        sizeof(*list->properties), &property_idx_cmp, 0);
 }
 
 OSSL_PROPERTY_TYPE ossl_property_get_type(const OSSL_PROPERTY_DEFINITION *prop)
@@ -51,3 +57,4 @@ int64_t ossl_property_get_number_value(const OSSL_PROPERTY_DEFINITION *prop)
         value = prop->v.int_val;
     return value;
 }
+

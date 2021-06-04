@@ -431,30 +431,17 @@ int ossl_property_has_optional(const OSSL_PROPERTY_LIST *query)
 int ossl_property_is_enabled(OSSL_LIB_CTX *ctx,  const char *property_name,
                              const OSSL_PROPERTY_LIST *prop_list)
 {
-    int i;
-    OSSL_PROPERTY_IDX name_id;
-    const OSSL_PROPERTY_DEFINITION *prop = NULL;
+    const OSSL_PROPERTY_DEFINITION *prop;
 
-    if (prop_list == NULL)
+    prop = ossl_property_find_property(prop_list, ctx, property_name);
+    /* Do a separate check for override as it does not set type */
+    if (prop == NULL || prop->optional || prop->oper == OSSL_PROPERTY_OVERRIDE)
         return 0;
-
-    if (!parse_name(ctx, &property_name, 0, &name_id))
-        return 0;
-
-    prop = prop_list->properties;
-    for (i = 0; i < prop_list->n; ++i) {
-        if (prop[i].name_idx == name_id) {
-            /* Do a separate check for override as it does not set type */
-            if (prop[i].optional || prop[i].oper == OSSL_PROPERTY_OVERRIDE)
-                return 0;
-            return (prop[i].type == OSSL_PROPERTY_TYPE_STRING
-                    && ((prop[i].oper == OSSL_PROPERTY_OPER_EQ
-                             && prop[i].v.str_val == ossl_property_true)
-                         || (prop[i].oper == OSSL_PROPERTY_OPER_NE
-                             && prop[i].v.str_val != ossl_property_true)));
-        }
-    }
-    return 0;
+    return (prop->type == OSSL_PROPERTY_TYPE_STRING
+            && ((prop->oper == OSSL_PROPERTY_OPER_EQ
+                     && prop->v.str_val == ossl_property_true)
+                 || (prop->oper == OSSL_PROPERTY_OPER_NE
+                     && prop->v.str_val != ossl_property_true)));
 }
 
 /*
