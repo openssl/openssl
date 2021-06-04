@@ -29,7 +29,7 @@ struct ossl_property_definition_st {
 };
 
 struct ossl_property_list_st {
-    int n;
+    int num_properties;
     unsigned int has_optional : 1;
     OSSL_PROPERTY_DEFINITION properties[1];
 };

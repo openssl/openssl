@@ -22,7 +22,7 @@ ossl_property_find_property(const OSSL_PROPERTY_LIST *list,
         || (name_idx = ossl_property_name(libctx, name, 0)) == 0)
         return NULL;
 
-    for (i = 0; i < list->n; i++)
+    for (i = 0; i < list->num_properties; i++)
         if (list->properties[i].name_idx == name_idx)
             return &list->properties[i];
     return NULL;
