@@ -431,12 +431,9 @@ ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert)
 
     if (mdnid == NID_undef) {
         if (pknid == EVP_PKEY_RSA_PSS) {
-            RSA_PSS_PARAMS *pss;
+            RSA_PSS_PARAMS *pss = ossl_rsa_pss_decode(&cert->sig_alg);
             const EVP_MD *mgf1md, *mmd = NULL;
             int saltlen, trailerfield;
-
-            /* Decode PSS parameters */
-            pss = ossl_rsa_pss_decode(&cert->sig_alg);
 
             if (pss == NULL
                 || !ossl_rsa_pss_get_param_unverified(pss, &mmd, &mgf1md,
