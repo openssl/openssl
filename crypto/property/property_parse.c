@@ -19,7 +19,7 @@
 #include "property_local.h"
 #include "e_os.h"
 
-static OSSL_PROPERTY_IDX ossl_property_true, ossl_property_false;
+OSSL_PROPERTY_IDX ossl_property_true, ossl_property_false;
 
 DEFINE_STACK_OF(OSSL_PROPERTY_DEFINITION)
 
@@ -420,28 +420,6 @@ err:
     OPENSSL_free(prop);
     sk_OSSL_PROPERTY_DEFINITION_pop_free(sk, &pd_free);
     return res;
-}
-
-/* Does a property query have any optional clauses */
-int ossl_property_has_optional(const OSSL_PROPERTY_LIST *query)
-{
-    return query->has_optional ? 1 : 0;
-}
-
-int ossl_property_is_enabled(OSSL_LIB_CTX *ctx,  const char *property_name,
-                             const OSSL_PROPERTY_LIST *prop_list)
-{
-    const OSSL_PROPERTY_DEFINITION *prop;
-
-    prop = ossl_property_find_property(prop_list, ctx, property_name);
-    /* Do a separate check for override as it does not set type */
-    if (prop == NULL || prop->optional || prop->oper == OSSL_PROPERTY_OVERRIDE)
-        return 0;
-    return (prop->type == OSSL_PROPERTY_TYPE_STRING
-            && ((prop->oper == OSSL_PROPERTY_OPER_EQ
-                     && prop->v.str_val == ossl_property_true)
-                 || (prop->oper == OSSL_PROPERTY_OPER_NE
-                     && prop->v.str_val != ossl_property_true)));
 }
 
 /*
