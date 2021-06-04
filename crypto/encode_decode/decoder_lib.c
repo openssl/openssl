@@ -226,14 +226,24 @@ OSSL_DECODER_INSTANCE *ossl_decoder_instance_new(OSSL_DECODER *decoder,
     prov = OSSL_DECODER_get0_provider(decoder);
     libctx = ossl_provider_libctx(prov);
     props = ossl_decoder_parsed_properties(decoder);
-    if (props == NULL)
+    if (props == NULL) {
+        ERR_raise_data(ERR_LIB_OSSL_DECODER, ERR_R_INVALID_PROPERTY_DEFINITION,
+                       "there are no property definitions with decoder %s",
+                       OSSL_DECODER_get0_name(decoder));
         goto err;
+    }
 
     /* The "input" property is mandatory */
     prop = ossl_property_find_property(props, libctx, "input");
     decoder_inst->input_type = ossl_property_get_string_value(libctx, prop);
-    if (decoder_inst->input_type == NULL)
+    if (decoder_inst->input_type == NULL) {
+        ERR_raise_data(ERR_LIB_OSSL_DECODER, ERR_R_INVALID_PROPERTY_DEFINITION,
+                       "the mandatory 'input' property is missing "
+                       "for decoder %s (properties: %s)",
+                       OSSL_DECODER_get0_name(decoder),
+                       OSSL_DECODER_get0_properties(decoder));
         goto err;
+    }
 
     /* The "structure" property is optional */
     prop = ossl_property_find_property(props, libctx, "structure");
