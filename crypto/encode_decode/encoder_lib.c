@@ -204,14 +204,24 @@ static OSSL_ENCODER_INSTANCE *ossl_encoder_instance_new(OSSL_ENCODER *encoder,
     prov = OSSL_ENCODER_get0_provider(encoder);
     libctx = ossl_provider_libctx(prov);
     props = ossl_encoder_parsed_properties(encoder);
-    if (props == NULL)
+    if (props == NULL) {
+        ERR_raise_data(ERR_LIB_OSSL_DECODER, ERR_R_INVALID_PROPERTY_DEFINITION,
+                       "there are no property definitions with encoder %s",
+                       OSSL_ENCODER_get0_name(encoder));
         goto err;
+    }
 
     /* The "output" property is mandatory */
     prop = ossl_property_find_property(props, libctx, "output");
     encoder_inst->output_type = ossl_property_get_string_value(libctx, prop);
-    if (encoder_inst->output_type == NULL)
+    if (encoder_inst->output_type == NULL) {
+        ERR_raise_data(ERR_LIB_OSSL_DECODER, ERR_R_INVALID_PROPERTY_DEFINITION,
+                       "the mandatory 'output' property is missing "
+                       "for encoder %s (properties: %s)",
+                       OSSL_ENCODER_get0_name(encoder),
+                       OSSL_ENCODER_get0_properties(encoder));
         goto err;
+    }
 
     /* The "structure" property is optional */
     prop = ossl_property_find_property(props, libctx, "structure");
