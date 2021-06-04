@@ -24,7 +24,11 @@ OpenSSL 3.1
 
 ### Changes between 3.0 and 3.1 [xx XXX xxxx]
 
- *
+ * The SSL_COMP API, that enables compression in TLS/SSL, has been
+   deprecated. Compression has a history of security vulnerabilities,
+   and is not defined for TLS 1.3.
+
+   *Rich Salz*
 
 OpenSSL 3.0
 -----------
@@ -116,8 +120,6 @@ breaking changes, and mappings for the large list of deprecated functions.
  * Version of MSVC earlier than 1300 could get link warnings, which could
    be suppressed if the undocumented -DI_CAN_LIVE_WITH_LNK4049 was set.
    Support for this flag has been removed.
-
-   *Rich Salz*
 
  * Rework and make DEBUG macros consistent. Remove unused -DCONF_DEBUG,
    -DBN_CTX_DEBUG, and REF_PRINT. Add a new tracing category and use it for
