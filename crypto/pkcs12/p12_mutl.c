@@ -249,23 +249,22 @@ int PKCS12_setup_mac(PKCS12 *p12, int iter, unsigned char *salt, int saltlen,
             return 0;
         }
     }
-    if (!saltlen)
+    if (saltlen == 0)
         saltlen = PKCS12_SALT_LEN;
-    if (saltlen < 0)
+    else if (saltlen < 0)
         return 0;
     if ((p12->mac->salt->data = OPENSSL_malloc(saltlen)) == NULL) {
         ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     p12->mac->salt->length = saltlen;
-    if (!salt) {
-        if (saltlen < 0)
-            return 0;
+    if (salt == NULL) {
         if (RAND_bytes_ex(p12->authsafes->ctx.libctx, p12->mac->salt->data,
                           (size_t)saltlen, 0) <= 0)
             return 0;
-    } else
+    } else {
         memcpy(p12->mac->salt->data, salt, saltlen);
+    }
     X509_SIG_getm(p12->mac->dinfo, &macalg, NULL);
     if (!X509_ALGOR_set0(macalg, OBJ_nid2obj(EVP_MD_get_type(md_type)),
                          V_ASN1_NULL, NULL)) {
