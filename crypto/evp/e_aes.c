@@ -2516,8 +2516,13 @@ static int aes_cfb1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 static int aes_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                           const unsigned char *in, size_t len)
 {
-    unsigned int num = EVP_CIPHER_CTX_get_num(ctx);
+    int n = EVP_CIPHER_CTX_get_num(ctx);
+    unsigned int num;
     EVP_AES_KEY *dat = EVP_C_DATA(EVP_AES_KEY,ctx);
+
+    if (n < 0)
+        return 0;
+    num = (unsigned int)n;
 
     if (dat->stream.ctr)
         CRYPTO_ctr128_encrypt_ctr32(in, out, len, &dat->ks,

@@ -175,8 +175,13 @@ const EVP_CIPHER *EVP_aria_##keylen##_##mode(void) \
 static int aria_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                const unsigned char *in, size_t len)
 {
-    unsigned int num = EVP_CIPHER_CTX_get_num(ctx);
+    int n = EVP_CIPHER_CTX_get_num(ctx);
+    unsigned int num;
     EVP_ARIA_KEY *dat = EVP_C_DATA(EVP_ARIA_KEY, ctx);
+
+    if (n < 0)
+        return 0;
+    num = (unsigned int)n;
 
     CRYPTO_ctr128_encrypt(in, out, len, &dat->ks, ctx->iv,
                           EVP_CIPHER_CTX_buf_noconst(ctx), &num,
