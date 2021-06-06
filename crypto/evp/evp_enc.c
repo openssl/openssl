@@ -344,7 +344,7 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
             n = EVP_CIPHER_CTX_get_iv_length(ctx);
             if (!ossl_assert(n >= 0 && n <= (int)sizeof(ctx->iv)))
                     return 0;
-            if (iv)
+            if (iv != NULL)
                 memcpy(ctx->oiv, iv, EVP_CIPHER_CTX_get_iv_length(ctx));
             memcpy(ctx->iv, ctx->oiv, EVP_CIPHER_CTX_get_iv_length(ctx));
             break;
@@ -352,8 +352,11 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
         case EVP_CIPH_CTR_MODE:
             ctx->num = 0;
             /* Don't reuse IV for CTR mode */
-            if (iv)
-                memcpy(ctx->iv, iv, EVP_CIPHER_CTX_get_iv_length(ctx));
+            if (iv != NULL) {
+                if ((n = EVP_CIPHER_CTX_get_iv_length(ctx)) <= 0)
+                    return 0;
+                memcpy(ctx->iv, iv, n);
+            }
             break;
 
         default:
@@ -361,7 +364,7 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
         }
     }
 
-    if (key || (ctx->cipher->flags & EVP_CIPH_ALWAYS_CALL_INIT)) {
+    if (key != NULL || (ctx->cipher->flags & EVP_CIPH_ALWAYS_CALL_INIT)) {
         if (!ctx->cipher->init(ctx, key, iv, enc))
             return 0;
     }
