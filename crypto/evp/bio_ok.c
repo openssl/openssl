@@ -483,9 +483,11 @@ static int sig_in(BIO *b)
     void *md_data;
 
     ctx = BIO_get_data(b);
-    md = ctx->md;
+    if ((md = ctx->md) == NULL)
+        goto berr;
     digest = EVP_MD_CTX_get0_md(md);
-    md_size = EVP_MD_get_size(digest);
+    if ((md_size = EVP_MD_get_size(digest)) < 0)
+        goto berr;
     md_data = EVP_MD_CTX_get0_md_data(md);
 
     if ((int)(ctx->buf_len - ctx->buf_off) < 2 * md_size)
@@ -562,6 +564,8 @@ static int block_in(BIO *b)
     ctx = BIO_get_data(b);
     md = ctx->md;
     md_size = EVP_MD_get_size(EVP_MD_CTX_get0_md(md));
+    if (md_size < 0)
+        goto berr;
 
     assert(sizeof(tl) >= OK_BLOCK_BLOCK); /* always true */
     tl = ctx->buf[0];
