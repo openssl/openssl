@@ -544,7 +544,7 @@ static int afalg_cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                              const unsigned char *iv, int enc)
 {
     int ciphertype;
-    int ret;
+    int ret, len;
     afalg_ctx *actx;
     const char *ciphername;
 
@@ -588,8 +588,9 @@ static int afalg_cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     if (ret < 1)
         return 0;
 
-
-    ret = afalg_set_key(actx, key, EVP_CIPHER_CTX_get_key_length(ctx));
+    if ((len = EVP_CIPHER_CTX_get_key_length(ctx)) <= 0)
+        goto err;
+    ret = afalg_set_key(actx, key, len);
     if (ret < 1)
         goto err;
 
