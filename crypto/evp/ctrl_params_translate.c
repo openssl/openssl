@@ -1704,6 +1704,10 @@ static int get_ec_decoded_from_explicit_params(enum state state,
 #ifndef OPENSSL_NO_EC
     case EVP_PKEY_EC:
         val = EC_KEY_decoded_from_explicit_params(EVP_PKEY_get0_EC_KEY(pkey));
+        if (val < 0) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_KEY);
+            return 0;
+        }
         break;
 #endif
     default:
