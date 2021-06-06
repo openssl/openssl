@@ -3555,21 +3555,25 @@ typedef struct {
 static int aes_wrap_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                              const unsigned char *iv, int enc)
 {
+    int len;
     EVP_AES_WRAP_CTX *wctx = EVP_C_DATA(EVP_AES_WRAP_CTX,ctx);
-    if (!iv && !key)
+
+    if (iv == NULL && key == NULL)
         return 1;
-    if (key) {
+    if (key != NULL) {
         if (EVP_CIPHER_CTX_is_encrypting(ctx))
             AES_set_encrypt_key(key, EVP_CIPHER_CTX_get_key_length(ctx) * 8,
                                 &wctx->ks.ks);
         else
             AES_set_decrypt_key(key, EVP_CIPHER_CTX_get_key_length(ctx) * 8,
                                 &wctx->ks.ks);
-        if (!iv)
+        if (iv == NULL)
             wctx->iv = NULL;
     }
-    if (iv) {
-        memcpy(ctx->iv, iv, EVP_CIPHER_CTX_get_iv_length(ctx));
+    if (iv != NULL) {
+        if ((len = EVP_CIPHER_CTX_get_iv_length(ctx)) < 0)
+            return 0;
+        memcpy(ctx->iv, iv, len);
         wctx->iv = ctx->iv;
     }
     return 1;
