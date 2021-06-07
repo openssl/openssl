@@ -75,8 +75,8 @@ err:
 }
 
 EVP_PKEY *
-d2i_PrivateKey_legacy(int keytype, EVP_PKEY **a, const unsigned char **pp,
-                      long length, OSSL_LIB_CTX *libctx, const char *propq)
+ossl_d2i_PrivateKey_legacy(int keytype, EVP_PKEY **a, const unsigned char **pp,
+                           long length, OSSL_LIB_CTX *libctx, const char *propq)
 {
     EVP_PKEY *ret;
     const unsigned char *p = *pp;
@@ -149,7 +149,7 @@ EVP_PKEY *d2i_PrivateKey_ex(int keytype, EVP_PKEY **a, const unsigned char **pp,
     ret = d2i_PrivateKey_decoder(keytype, a, pp, length, libctx, propq);
     /* try the legacy path if the decoder failed */
     if (ret == NULL)
-        ret = d2i_PrivateKey_legacy(keytype, a, pp, length, libctx, propq);
+        ret = ossl_d2i_PrivateKey_legacy(keytype, a, pp, length, libctx, propq);
     return ret;
 }
 
@@ -208,7 +208,7 @@ static EVP_PKEY *d2i_AutoPrivateKey_legacy(EVP_PKEY **a,
         keytype = EVP_PKEY_RSA;
     }
     sk_ASN1_TYPE_pop_free(inkey, ASN1_TYPE_free);
-    return d2i_PrivateKey_legacy(keytype, a, pp, length, libctx, propq);
+    return ossl_d2i_PrivateKey_legacy(keytype, a, pp, length, libctx, propq);
 }
 
 /*

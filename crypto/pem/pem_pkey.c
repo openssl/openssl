@@ -158,9 +158,10 @@ static EVP_PKEY *pem_read_bio_key_legacy(BIO *bp, EVP_PKEY **x,
         ameth = EVP_PKEY_asn1_find_str(NULL, nm, slen);
         if (ameth == NULL || ameth->old_priv_decode == NULL)
             goto p8err;
-        ret = d2i_PrivateKey_legacy(ameth->pkey_id, x, &p, len, libctx, propq);
+        ret = ossl_d2i_PrivateKey_legacy(ameth->pkey_id, x, &p, len, libctx,
+                                         propq);
     } else if (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) {
-        ret = d2i_PUBKEY_legacy(x, &p, len);
+        ret = ossl_d2i_PUBKEY_legacy(x, &p, len);
     } else if ((slen = ossl_pem_check_suffix(nm, "PARAMETERS")) > 0) {
         ret = EVP_PKEY_new();
         if (ret == NULL)
