@@ -371,10 +371,11 @@ ok(!verify("badalt10-cert", "", ["root-cert"], ["ncca1-cert", "ncca3-cert"], ),
 
 #Check that we get the expected failure return code
 with({ exit_checker => sub { return shift == 2; } },
-   sub {
-      ok(verify("bad-othername-namec", "", ["bad-othername-namec-inter"], [], "-partial_chain"),
-         "Name constraints bad othername name constraint");
-   });
+     sub {
+         ok(verify("bad-othername-namec", "", ["bad-othername-namec-inter"], [],
+                   "-partial_chain", "-attime", "1623060000"),
+            "Name constraints bad othername name constraint");
+     });
 
 ok(verify("ee-pss-sha1-cert", "", ["root-cert"], ["ca-cert"], "-auth_level", "0"),
     "Accept PSS signature using SHA1 at auth level 0");
