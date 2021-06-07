@@ -96,9 +96,6 @@ Returns the internal dynamic number assigned to the given I<loader>.
 All of these functions return the provider specific identification number
 for the specified algorithm.
 
-=head1 SEE ALSO
-
-
 =head1 HISTORY
 
 This functionality was added to OpenSSL 3.0.
