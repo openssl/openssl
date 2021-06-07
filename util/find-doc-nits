@@ -1139,7 +1139,7 @@ if ( $opt_c ) {
 
     # Get the lists of generic options.
     my $active = "";
-    open OFH, "apps/include/opt.h"
+    open OFH, catdir($config{sourcedir}, "apps/include/opt.h")
         or die "Can't open apps/include/opt.h to list generic options, $!";
     while ( <OFH> ) {
         chop;
