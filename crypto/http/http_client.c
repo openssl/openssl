@@ -285,10 +285,13 @@ static int set_content(OSSL_HTTP_REQ_CTX *rctx,
             && BIO_printf(rctx->mem, "Content-Type: %s\r\n", content_type) <= 0)
         return 0;
 
-    rctx->req = req;
-    if ((req_len = BIO_ctrl(req, BIO_CTRL_INFO, 0, NULL)) <= 0)
-        return 1; /* streaming BIO may not support querying size */
-    return BIO_printf(rctx->mem, "Content-Length: %ld\r\n", req_len) > 0;
+    /* streaming BIO may not support querying size */
+    if ((req_len = BIO_ctrl(req, BIO_CTRL_INFO, 0, NULL)) <= 0
+        || BIO_printf(rctx->mem, "Content-Length: %ld\r\n", req_len) > 0) {
+        rctx->req = req;
+        return 1;
+    }
+    return 0;
 }
 
 int OSSL_HTTP_REQ_CTX_set1_req(OSSL_HTTP_REQ_CTX *rctx, const char *content_type,
@@ -304,7 +307,8 @@ int OSSL_HTTP_REQ_CTX_set1_req(OSSL_HTTP_REQ_CTX *rctx, const char *content_type
 
     res = (mem = ASN1_item_i2d_mem_bio(it, req)) != NULL
         && set_content(rctx, content_type, mem);
-    BIO_free(mem);
+    if (!res)
+        BIO_free(mem);
     return res;
 }
 
