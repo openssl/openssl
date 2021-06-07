@@ -28,7 +28,8 @@ This parameter is ignored for B<SM2>.
 
 =item (B<OSSL_PKEY_PARAM_DEFAULT_DIGEST>) <UTF8 string>
 
-Getter that returns the default digest string "SM3".
+Getter that returns the default digest name.
+(Currently returns "SM3" as of OpenSSL 3.0).
 
 =back
 

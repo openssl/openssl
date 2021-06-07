@@ -132,7 +132,8 @@ Used for getting the EC public key Y component.
 
 =item (B<OSSL_PKEY_PARAM_DEFAULT_DIGEST>) <UTF8 string>
 
-Getter that returns the default digest string "SHA256".
+Getter that returns the default digest name.
+(Currently returns "SHA256" as of OpenSSL 3.0).
 
 =back
 
