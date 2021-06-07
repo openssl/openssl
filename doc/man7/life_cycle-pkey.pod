@@ -145,7 +145,8 @@ This is the canonical list.
 
 =begin man
 
- Function Call                 start    newed       digest       verify       verify       encrypt      decrypt      derive      encapsulate  decapsulate  parameter       key       freed
+ Function Call                 ---------------------------------------------------------------------- Current State ----------------------------------------------------------------------
+                               start    newed       digest       verify       verify       encrypt      decrypt      derive      encapsulate  decapsulate  parameter       key       freed
                                                      sign                     recover                                                                      generation   generation
  EVP_PKEY_CTX_new              newed
  EVP_PKEY_CTX_new_id           newed
