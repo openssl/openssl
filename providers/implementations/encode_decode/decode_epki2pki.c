@@ -25,8 +25,6 @@
 
 static OSSL_FUNC_decoder_newctx_fn epki2pki_newctx;
 static OSSL_FUNC_decoder_freectx_fn epki2pki_freectx;
-static OSSL_FUNC_decoder_gettable_params_fn epki2pki_gettable_params;
-static OSSL_FUNC_decoder_get_params_fn epki2pki_get_params;
 static OSSL_FUNC_decoder_decode_fn epki2pki_decode;
 
 /*
