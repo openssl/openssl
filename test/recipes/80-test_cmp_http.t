@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use POSIX;
-use OpenSSL::Test qw/:DEFAULT data_file data_dir srctop_dir bldtop_dir result_dir/;
+use OpenSSL::Test qw/:DEFAULT cmdstr data_file data_dir srctop_dir bldtop_dir result_dir/;
 use OpenSSL::Test::Utils;
 
 BEGIN {
@@ -266,10 +266,8 @@ sub load_tests {
 
 sub start_mock_server {
     my $args = $_[0]; # optional further CLI arguments
-    my $dir = bldtop_dir("");
-    local $ENV{LD_LIBRARY_PATH} = $dir;
-    local $ENV{DYLD_LIBRARY_PATH} = $dir;
-    my $cmd = bldtop_dir($app) . " -config server.cnf $args";
+    my $cmd = cmdstr(app(['openssl', 'cmp', '-config', 'server.cnf',
+                          $args ? $args : ()]), display => 1);
     print "Current directory is ".getcwd()."\n";
     print "Launching mock server: $cmd\n";
     die "Invalid port: $server_port" unless $server_port =~ m/^\d+$/;
@@ -281,7 +279,7 @@ sub start_mock_server {
             print "Server output: $_";
             next if m/using section/;
             s/\R$//;                # Better chomp
-            $server_port = $1 if /^ACCEPT\s.*:(\d+)$/;
+            ($server_port, $pid) = ($1, $2) if /^ACCEPT\s.*:(\d+) PID=(\d+)$/;
             last; # Do not loop further to prevent hangs on server misbehavior
         }
     }
@@ -296,5 +294,5 @@ sub start_mock_server {
 sub stop_mock_server {
     my $pid = $_[0];
     print "Killing mock server with pid=$pid\n";
-    kill('QUIT', $pid) if $pid;
+    kill('QUIT', $pid);
 }
