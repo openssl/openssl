@@ -4391,6 +4391,10 @@ DEPEND[html/man7/life_cycle-mac.html]=man7/life_cycle-mac.pod
 GENERATE[html/man7/life_cycle-mac.html]=man7/life_cycle-mac.pod
 DEPEND[man/man7/life_cycle-mac.7]=man7/life_cycle-mac.pod
 GENERATE[man/man7/life_cycle-mac.7]=man7/life_cycle-mac.pod
+DEPEND[html/man7/life_cycle-pkey.html]=man7/life_cycle-pkey.pod
+GENERATE[html/man7/life_cycle-pkey.html]=man7/life_cycle-pkey.pod
+DEPEND[man/man7/life_cycle-pkey.7]=man7/life_cycle-pkey.pod
+GENERATE[man/man7/life_cycle-pkey.7]=man7/life_cycle-pkey.pod
 DEPEND[html/man7/life_cycle-rand.html]=man7/life_cycle-rand.pod
 GENERATE[html/man7/life_cycle-rand.html]=man7/life_cycle-rand.pod
 DEPEND[man/man7/life_cycle-rand.7]=man7/life_cycle-rand.pod
@@ -4525,6 +4529,7 @@ IMAGEDOCS[man7]=man7/img/cipher.png \
 man7/img/digest.png \
 man7/img/kdf.png \
 man7/img/mac.png \
+man7/img/pkey.png \
 man7/img/rand.png
 HTMLDOCS[man7]=html/man7/EVP_ASYM_CIPHER-SM2.html \
 html/man7/EVP_CIPHER-AES.html \
@@ -4614,6 +4619,7 @@ html/man7/life_cycle-cipher.html \
 html/man7/life_cycle-digest.html \
 html/man7/life_cycle-kdf.html \
 html/man7/life_cycle-mac.html \
+html/man7/life_cycle-pkey.html \
 html/man7/life_cycle-rand.html \
 html/man7/migration_guide.html \
 html/man7/openssl-core.h.html \
@@ -4734,6 +4740,7 @@ man/man7/life_cycle-cipher.7 \
 man/man7/life_cycle-digest.7 \
 man/man7/life_cycle-kdf.7 \
 man/man7/life_cycle-mac.7 \
+man/man7/life_cycle-pkey.7 \
 man/man7/life_cycle-rand.7 \
 man/man7/migration_guide.7 \
 man/man7/openssl-core.h.7 \
