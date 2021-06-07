@@ -128,6 +128,16 @@ typedef struct CK_OPENCRYPTOKI_FUNCTION_LIST {
     CK_C_WaitForSlotEvent C_WaitForSlotEvent;
 } CK_OPENCRYPTOKI_FUNCTION_LIST;
 
+typedef struct pkcs11_type_item_st {
+    CK_MECHANISM_TYPE type;
+    CK_MECHANISM_INFO info;
+}PKCS11_TYPE_DATA_ITEM;
+
+typedef struct pkcs11_type_st {
+    OSSL_ALGORITHM *algolist;
+    PKCS11_TYPE_DATA_ITEM *items;
+    int len;
+}PKCS11_TYPE_DATA;
 
 struct pkcs11_st {
     PROV_CTX ctx;
@@ -135,47 +145,44 @@ struct pkcs11_st {
     int name_id;
     char *type_name;
     const char *description;
-    OSSL_PROVIDER *prov;
-    CRYPTO_REF_COUNT refcnt;
-    CRYPTO_RWLOCK *lock;
 
     const OSSL_CORE_HANDLE *handle;
     OPENSSL_CORE_CTX *corectx;
 
     /* default core params */
-    char *openssl_version;
-    char *provider_name;
-    char *module_filename;
+    unsigned char *openssl_version;
+    unsigned char *provider_name;
+    unsigned char *module_filename;
+    unsigned char *userpin;
 
     /* pkcs11 module data */
     void *lib_handle;
     CK_OPENCRYPTOKI_FUNCTION_LIST *lib_functions;
     CK_SLOT_ID slot;
     int token;
-    CK_MECHANISM_TYPE *mechlist;
-    CK_MECHANISM_INFO *mechinfo;
-    CK_ULONG mechcount;
+
+    PKCS11_TYPE_DATA keymgmt;
+
     CK_SESSION_HANDLE session;
     CK_BBOOL tokobjs;
-    struct {
-      /* X9.31 and PKCS#1 */
-      int avail;
-      CK_ULONG idx;
-    } rsakeygen[2];
 
     /* operation dispatch tables */
     OSSL_ALGORITHM *digest;
     OSSL_ALGORITHM *cipher;
     OSSL_ALGORITHM *mac;
     OSSL_ALGORITHM *kdf;
-    OSSL_ALGORITHM *keymgmt;
     OSSL_ALGORITHM *keyexch;
     OSSL_ALGORITHM *signature;
     OSSL_ALGORITHM *asym_cipher;
     OSSL_ALGORITHM *serializer;
 
+    /* Error functions */
+    OSSL_FUNC_core_new_error_fn             *core_new_error;
+    OSSL_FUNC_core_set_error_debug_fn       *core_set_error_debug;
+    OSSL_FUNC_core_vset_error_fn            *core_vset_error;
+
    /* functions offered by libcrypto to the providers */
-    OSSL_FUNC_core_gettable_params_fn       *core_gettable_params;
+/*    OSSL_FUNC_core_gettable_params_fn       *core_gettable_params;
     OSSL_FUNC_core_get_params_fn            *core_get_params;
     OSSL_FUNC_core_thread_start_fn          *core_thread_start;
     OSSL_FUNC_core_get_libctx_fn            *core_get_libctx;
@@ -202,7 +209,7 @@ struct pkcs11_st {
     OSSL_FUNC_BIO_read_ex_fn                *BIO_read_ex;
     OSSL_FUNC_BIO_free_fn                   *BIO_free;
     OSSL_FUNC_BIO_vprintf_fn                *BIO_vprintf;
-    OSSL_FUNC_self_test_cb_fn               *self_test_cb;
+    OSSL_FUNC_self_test_cb_fn               *self_test_cb;*/
 };
 
 
