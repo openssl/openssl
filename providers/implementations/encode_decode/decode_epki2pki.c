@@ -52,31 +52,6 @@ static void epki2pki_freectx(void *vctx)
     OPENSSL_free(ctx);
 }
 
-static const OSSL_PARAM *epki2pki_gettable_params(void *provctx)
-{
-    static const OSSL_PARAM gettables[] = {
-        { OSSL_DECODER_PARAM_INPUT_TYPE, OSSL_PARAM_UTF8_PTR, NULL, 0, 0 },
-        { OSSL_DECODER_PARAM_INPUT_STRUCTURE, OSSL_PARAM_UTF8_PTR, NULL, 0, 0 },
-        OSSL_PARAM_END,
-    };
-
-    return gettables;
-}
-
-static int epki2pki_get_params(OSSL_PARAM params[])
-{
-    OSSL_PARAM *p;
-
-    p = OSSL_PARAM_locate(params, OSSL_DECODER_PARAM_INPUT_TYPE);
-    if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, "DER"))
-        return 0;
-    p = OSSL_PARAM_locate(params, OSSL_DECODER_PARAM_INPUT_STRUCTURE);
-    if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, "EncryptedPrivateKeyInfo"))
-        return 0;
-
-    return 1;
-}
-
 /*
  * The selection parameter in epki2pki_decode() is not used by this function
  * because it's not relevant just to decode PEM to DER.
@@ -174,8 +149,6 @@ static int epki2pki_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
 const OSSL_DISPATCH ossl_EncryptedPrivateKeyInfo_der_to_der_decoder_functions[] = {
     { OSSL_FUNC_DECODER_NEWCTX, (void (*)(void))epki2pki_newctx },
     { OSSL_FUNC_DECODER_FREECTX, (void (*)(void))epki2pki_freectx },
-    { OSSL_FUNC_DECODER_GETTABLE_PARAMS, (void (*)(void))epki2pki_gettable_params },
-    { OSSL_FUNC_DECODER_GET_PARAMS, (void (*)(void))epki2pki_get_params },
     { OSSL_FUNC_DECODER_DECODE, (void (*)(void))epki2pki_decode },
     { 0, NULL }
 };
