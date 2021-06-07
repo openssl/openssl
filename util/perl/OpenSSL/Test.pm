@@ -65,8 +65,7 @@ C<$SRCTOP/test/recipes/99-foo_data/>.
 
 use File::Copy;
 use File::Spec::Functions qw/file_name_is_absolute curdir canonpath splitdir
-                             catdir catfile splitpath catpath devnull abs2rel
-                             rel2abs/;
+                             catdir catfile splitpath catpath devnull abs2rel/;
 use File::Path 2.00 qw/rmtree mkpath/;
 use File::Basename;
 use Cwd qw/getcwd abs_path/;
@@ -1117,8 +1116,8 @@ sub __data_dir {
 sub __cwd {
     my $dir = catdir(shift);
     my %opts = @_;
-    my $abscurdir = rel2abs(curdir());
-    my $absdir = rel2abs($dir);
+    my $abscurdir = abs_path(curdir());
+    my $absdir = abs_path($dir);
     my $reverse = abs2rel($abscurdir, $absdir);
 
     # PARANOIA: if we're not moving anywhere, we do nothing more
@@ -1152,7 +1151,14 @@ sub __cwd {
     my @dirtags = sort keys %directories;
     foreach (@dirtags) {
 	if (!file_name_is_absolute($directories{$_})) {
-	    my $newpath = abs2rel(rel2abs($directories{$_}), rel2abs($dir));
+	    my $oldpath = abs_path($directories{$_});
+	    my $newbase = abs_path($dir);
+	    my $newpath = abs2rel($oldpath, $newbase);
+	    if ($debug) {
+		print STDERR "DEBUG: [dir $_] old path: $oldpath\n";
+		print STDERR "DEBUG: [dir $_] new base: $newbase\n";
+		print STDERR "DEBUG: [dir $_] resulting new path: $newpath\n";
+	    }
 	    $tmp_directories{$_} = $newpath;
 	}
     }
@@ -1162,7 +1168,14 @@ sub __cwd {
     # process can use their values properly as well
     foreach (@direnv) {
 	if (!file_name_is_absolute($ENV{$_})) {
-	    my $newpath = abs2rel(rel2abs($ENV{$_}), rel2abs($dir));
+	    my $oldpath = abs_path($ENV{$_});
+	    my $newbase = abs_path($dir);
+	    my $newpath = abs2rel($oldpath, $newbase);
+	    if ($debug) {
+		print STDERR "DEBUG: [env $_] old path: $oldpath\n";
+		print STDERR "DEBUG: [env $_] new base: $newbase\n";
+		print STDERR "DEBUG: [env $_] resulting new path: $newpath\n";
+	    }
 	    $tmp_ENV{$_} = $newpath;
 	}
     }
@@ -1182,16 +1195,18 @@ sub __cwd {
 
     if ($debug) {
 	print STDERR "DEBUG: __cwd(), directories and files:\n";
-	print STDERR "  \$directories{BLDTEST} = \"$directories{BLDTEST}\"\n";
-	print STDERR "  \$directories{SRCTEST} = \"$directories{SRCTEST}\"\n";
-	print STDERR "  \$directories{SRCDATA} = \"$directories{SRCDATA}\"\n";
-	print STDERR "  \$directories{RESULTS} = \"$directories{RESULTS}\"\n";
-	print STDERR "  \$directories{BLDAPPS} = \"$directories{BLDAPPS}\"\n";
-	print STDERR "  \$directories{SRCAPPS} = \"$directories{SRCAPPS}\"\n";
-	print STDERR "  \$directories{SRCTOP}  = \"$directories{SRCTOP}\"\n";
-	print STDERR "  \$directories{BLDTOP}  = \"$directories{BLDTOP}\"\n";
+	print STDERR "	Moving from $abscurdir\n";
+	print STDERR "	Moving to $absdir\n";
 	print STDERR "\n";
-	print STDERR "  current directory is \"",curdir(),"\"\n";
+	print STDERR "	\$directories{BLDTEST} = \"$directories{BLDTEST}\"\n";
+	print STDERR "	\$directories{SRCTEST} = \"$directories{SRCTEST}\"\n";
+	print STDERR "	\$directories{SRCDATA} = \"$directories{SRCDATA}\"\n";
+	print STDERR "	\$directories{RESULTS} = \"$directories{RESULTS}\"\n";
+	print STDERR "	\$directories{BLDAPPS} = \"$directories{BLDAPPS}\"\n";
+	print STDERR "	\$directories{SRCAPPS} = \"$directories{SRCAPPS}\"\n";
+	print STDERR "	\$directories{SRCTOP}  = \"$directories{SRCTOP}\"\n";
+	print STDERR "	\$directories{BLDTOP}  = \"$directories{BLDTOP}\"\n";
+	print STDERR "\n";
 	print STDERR "  the way back is \"$reverse\"\n";
     }
 
