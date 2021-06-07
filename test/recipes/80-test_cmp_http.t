@@ -276,27 +276,18 @@ sub start_mock_server {
     my $pid = open($server_fh, "$cmd|") or die "Trying to $cmd";
     print "Pid is: $pid\n";
     if ($server_port == 0) {
-        # Clear it first
-        $server_port = undef;
-
         # Find out the actual server port
         while (<$server_fh>) {
-            print;
+            print "Server output: $_";
+            next if m/using section/;
             s/\R$//;                # Better chomp
-            next unless (/^ACCEPT/);
-
-            # $1 may be undefined, which is OK to assign to $server_port,
-            # as that gets detected further down.
-            /^ACCEPT\s.*:(\d+)$/;
-            $server_port = $1;
-
-            last;
+            $server_port = $1 if /^ACCEPT\s.*:(\d+)$/;
+            last; # Do not loop further to prevent hangs on server misbehavior
         }
-
-        unless (defined $server_port) {
-            stop_mock_server($pid);
-            return 0;
-        }
+    }
+    unless ($server_port > 0) {
+        stop_mock_server($pid);
+        return 0;
     }
     $server_tls = $kur_port = $pbm_port = $server_port;
     return $pid;
