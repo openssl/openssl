@@ -421,7 +421,7 @@ EVP_PKEY *X509_PUBKEY_get0(const X509_PUBKEY *key)
 
     if (key->pkey == NULL) {
         /* We failed to decode the key when we loaded it, or it was never set */
-        ERR_raise(ERR_LIB_X509, EVP_R_DECODE_ERROR);
+        ERR_raise(ERR_LIB_EVP, EVP_R_DECODE_ERROR);
         return NULL;
     }
 
