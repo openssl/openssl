@@ -126,7 +126,8 @@ void OSSL_HTTP_REQ_CTX_free(OSSL_HTTP_REQ_CTX *rctx)
     if (rctx->free_wbio)
         BIO_free_all(rctx->wbio);
     /* do not free rctx->rbio */
-    BIO_free(rctx->mem); /* this may indirectly call ERR_clear_error() */
+    BIO_free(rctx->mem);
+    BIO_free(rctx->req);
     OPENSSL_free(rctx->buf);
     OPENSSL_free(rctx->proxy);
     OPENSSL_free(rctx->server);
@@ -260,8 +261,8 @@ int OSSL_HTTP_REQ_CTX_set_expected(OSSL_HTTP_REQ_CTX *rctx,
     return 1;
 }
 
-static int set_content(OSSL_HTTP_REQ_CTX *rctx,
-                       const char *content_type, BIO *req)
+static int set1_content(OSSL_HTTP_REQ_CTX *rctx,
+                        const char *content_type, BIO *req)
 {
     long req_len;
 
@@ -285,10 +286,16 @@ static int set_content(OSSL_HTTP_REQ_CTX *rctx,
             && BIO_printf(rctx->mem, "Content-Type: %s\r\n", content_type) <= 0)
         return 0;
 
-    rctx->req = req;
-    if ((req_len = BIO_ctrl(req, BIO_CTRL_INFO, 0, NULL)) <= 0)
-        return 1; /* streaming BIO may not support querying size */
-    return BIO_printf(rctx->mem, "Content-Length: %ld\r\n", req_len) > 0;
+    /* streaming BIO may not support querying size */
+    if ((req_len = BIO_ctrl(req, BIO_CTRL_INFO, 0, NULL)) <= 0
+        || BIO_printf(rctx->mem, "Content-Length: %ld\r\n", req_len) > 0) {
+        if (!BIO_up_ref(req))
+            return 0;
+        BIO_free(rctx->req);
+        rctx->req = req;
+        return 1;
+    }
+    return 0;
 }
 
 int OSSL_HTTP_REQ_CTX_set1_req(OSSL_HTTP_REQ_CTX *rctx, const char *content_type,
@@ -303,7 +310,7 @@ int OSSL_HTTP_REQ_CTX_set1_req(OSSL_HTTP_REQ_CTX *rctx, const char *content_type
     }
 
     res = (mem = ASN1_item_i2d_mem_bio(it, req)) != NULL
-        && set_content(rctx, content_type, mem);
+        && set1_content(rctx, content_type, mem);
     BIO_free(mem);
     return res;
 }
@@ -965,7 +972,7 @@ int OSSL_HTTP_set_request(OSSL_HTTP_REQ_CTX *rctx, const char *path,
         && add1_headers(rctx, headers, rctx->server)
         && OSSL_HTTP_REQ_CTX_set_expected(rctx, expected_content_type,
                                           expect_asn1, timeout, keep_alive)
-        && set_content(rctx, content_type, req);
+        && set1_content(rctx, content_type, req);
 }
 
 /*-
