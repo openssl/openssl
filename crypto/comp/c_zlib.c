@@ -11,14 +11,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/objects.h>
-#include "internal/comp.h"
+#include <openssl/comp.h>
 #include <openssl/err.h>
 #include "crypto/cryptlib.h"
 #include "internal/bio.h"
 #include "internal/thread_once.h"
 #include "comp_local.h"
-
-COMP_METHOD *COMP_zlib(void);
 
 static COMP_METHOD zlib_method_nozlib = {
     NID_undef,
@@ -29,9 +27,18 @@ static COMP_METHOD zlib_method_nozlib = {
     NULL,
 };
 
-#ifndef ZLIB
-# undef ZLIB_SHARED
+COMP_METHOD *COMP_zlib(void)
+{
+
+#ifdef ZLIB
+    return &zlib_stateful_method;
 #else
+    return &zlib_method_nozlib;
+#endif
+}
+
+
+#ifdef ZLIB
 
 # include <zlib.h>
 
@@ -67,53 +74,6 @@ static COMP_METHOD zlib_stateful_method = {
     zlib_stateful_compress_block,
     zlib_stateful_expand_block
 };
-
-/*
- * When OpenSSL is built on Windows, we do not want to require that
- * the ZLIB.DLL be available in order for the OpenSSL DLLs to
- * work.  Therefore, all ZLIB routines are loaded at run time
- * and we do not link to a .LIB file when ZLIB_SHARED is set.
- */
-# if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
-#  include <windows.h>
-# endif                         /* !(OPENSSL_SYS_WINDOWS ||
-                                 * OPENSSL_SYS_WIN32) */
-
-# ifdef ZLIB_SHARED
-#  include "internal/dso.h"
-
-/* Function pointers */
-typedef int (*compress_ft) (Bytef *dest, uLongf * destLen,
-                            const Bytef *source, uLong sourceLen);
-typedef int (*inflateEnd_ft) (z_streamp strm);
-typedef int (*inflate_ft) (z_streamp strm, int flush);
-typedef int (*inflateInit__ft) (z_streamp strm,
-                                const char *version, int stream_size);
-typedef int (*deflateEnd_ft) (z_streamp strm);
-typedef int (*deflate_ft) (z_streamp strm, int flush);
-typedef int (*deflateInit__ft) (z_streamp strm, int level,
-                                const char *version, int stream_size);
-typedef const char *(*zError__ft) (int err);
-static compress_ft p_compress = NULL;
-static inflateEnd_ft p_inflateEnd = NULL;
-static inflate_ft p_inflate = NULL;
-static inflateInit__ft p_inflateInit_ = NULL;
-static deflateEnd_ft p_deflateEnd = NULL;
-static deflate_ft p_deflate = NULL;
-static deflateInit__ft p_deflateInit_ = NULL;
-static zError__ft p_zError = NULL;
-
-static DSO *zlib_dso = NULL;
-
-#  define compress                p_compress
-#  define inflateEnd              p_inflateEnd
-#  define inflate                 p_inflate
-#  define inflateInit_            p_inflateInit_
-#  define deflateEnd              p_deflateEnd
-#  define deflate                 p_deflate
-#  define deflateInit_            p_deflateInit_
-#  define zError                  p_zError
-# endif                         /* ZLIB_SHARED */
 
 struct zlib_state {
     z_stream istream;
@@ -204,68 +164,6 @@ static int zlib_stateful_expand_block(COMP_CTX *ctx, unsigned char *out,
     return olen - state->istream.avail_out;
 }
 
-static CRYPTO_ONCE zlib_once = CRYPTO_ONCE_STATIC_INIT;
-DEFINE_RUN_ONCE_STATIC(ossl_comp_zlib_init)
-{
-# ifdef ZLIB_SHARED
-    /* LIBZ may be externally defined, and we should respect that value */
-#  ifndef LIBZ
-#   if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
-#    define LIBZ "ZLIB1"
-#   elif defined(OPENSSL_SYS_VMS)
-#    define LIBZ "LIBZ"
-#   else
-#    define LIBZ "z"
-#   endif
-#  endif
-
-    zlib_dso = DSO_load(NULL, LIBZ, NULL, 0);
-    if (zlib_dso != NULL) {
-        p_compress = (compress_ft) DSO_bind_func(zlib_dso, "compress");
-        p_inflateEnd = (inflateEnd_ft) DSO_bind_func(zlib_dso, "inflateEnd");
-        p_inflate = (inflate_ft) DSO_bind_func(zlib_dso, "inflate");
-        p_inflateInit_ = (inflateInit__ft) DSO_bind_func(zlib_dso, "inflateInit_");
-        p_deflateEnd = (deflateEnd_ft) DSO_bind_func(zlib_dso, "deflateEnd");
-        p_deflate = (deflate_ft) DSO_bind_func(zlib_dso, "deflate");
-        p_deflateInit_ = (deflateInit__ft) DSO_bind_func(zlib_dso, "deflateInit_");
-        p_zError = (zError__ft) DSO_bind_func(zlib_dso, "zError");
-
-        if (p_compress == NULL || p_inflateEnd == NULL
-                || p_inflate == NULL || p_inflateInit_ == NULL
-                || p_deflateEnd == NULL || p_deflate == NULL
-                || p_deflateInit_ == NULL || p_zError == NULL) {
-            ossl_comp_zlib_cleanup();
-            return 0;
-        }
-    }
-# endif
-    return 1;
-}
-#endif
-
-COMP_METHOD *COMP_zlib(void)
-{
-    COMP_METHOD *meth = &zlib_method_nozlib;
-
-#ifdef ZLIB
-    if (RUN_ONCE(&zlib_once, ossl_comp_zlib_init))
-        meth = &zlib_stateful_method;
-#endif
-
-    return meth;
-}
-
-/* Also called from OPENSSL_cleanup() */
-void ossl_comp_zlib_cleanup(void)
-{
-#ifdef ZLIB_SHARED
-    DSO_free(zlib_dso);
-    zlib_dso = NULL;
-#endif
-}
-
-#ifdef ZLIB
-
 /* Zlib based compression/decompression filter BIO */
 
 typedef struct {
@@ -314,12 +212,6 @@ static int bio_zlib_new(BIO *bi)
 {
     BIO_ZLIB_CTX *ctx;
 
-# ifdef ZLIB_SHARED
-    if (!RUN_ONCE(&zlib_once, ossl_comp_zlib_init)) {
-        ERR_raise(ERR_LIB_COMP, COMP_R_ZLIB_NOT_SUPPORTED);
-        return 0;
-    }
-# endif
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_COMP, ERR_R_MALLOC_FAILURE);

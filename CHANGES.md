@@ -24,7 +24,9 @@ OpenSSL 3.1
 
 ### Changes between 3.0 and 3.1 [xx XXX xxxx]
 
- *
+ * The `zlib-dynamic` configuration option has been removed.
+
+ *Rich Salz*
 
 OpenSSL 3.0
 -----------
