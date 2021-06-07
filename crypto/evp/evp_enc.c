@@ -345,8 +345,8 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
             if (!ossl_assert(n >= 0 && n <= (int)sizeof(ctx->iv)))
                     return 0;
             if (iv != NULL)
-                memcpy(ctx->oiv, iv, EVP_CIPHER_CTX_get_iv_length(ctx));
-            memcpy(ctx->iv, ctx->oiv, EVP_CIPHER_CTX_get_iv_length(ctx));
+                memcpy(ctx->oiv, iv, n);
+            memcpy(ctx->iv, ctx->oiv, n);
             break;
 
         case EVP_CIPH_CTR_MODE:
