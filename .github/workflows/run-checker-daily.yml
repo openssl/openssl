@@ -120,8 +120,6 @@ jobs:
           no-weak-ssl-ciphers,
           no-whirlpool,
           no-zlib,
-          enable-zlib-dynamic,
-          no-zlib-dynamic,
         ]
     runs-on: ubuntu-latest
     steps:

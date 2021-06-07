@@ -27,7 +27,7 @@ use OpenSSL::config;
 my $orig_death_handler = $SIG{__DIE__};
 $SIG{__DIE__} = \&death_handler;
 
-my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-egd] [sctp] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--config=FILE] os/compiler[:flags]\n";
+my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib] [no-asm] [no-egd] [sctp] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--config=FILE] os/compiler[:flags]\n";
 
 my $banner = <<"EOF";
 
@@ -85,8 +85,6 @@ EOF
 # no-asm        do not use assembler
 # no-egd        do not compile support for the entropy-gathering daemon APIs
 # [no-]zlib     [don't] compile support for zlib compression.
-# zlib-dynamic  Like "zlib", but the zlib library is expected to be a shared
-#               library and will be loaded in run-time by the OpenSSL library.
 # sctp          include SCTP support
 # no-uplink     Don't build support for UPLINK interface.
 # enable-weak-ssl-ciphers
@@ -501,7 +499,6 @@ my @disablables = (
     "weak-ssl-ciphers",
     "whirlpool",
     "zlib",
-    "zlib-dynamic",
     );
 foreach my $proto ((@tls, @dtls))
         {
@@ -556,7 +553,6 @@ our %disabled = ( # "what"         => "comment"
                   "unit-test"           => "default",
                   "weak-ssl-ciphers"    => "default",
                   "zlib"                => "default",
-                  "zlib-dynamic"        => "default",
                 );
 
 # Note: => pair form used for aesthetics, not to truly make a hash table
@@ -582,7 +578,6 @@ my @disable_cascades = (
                         => [ "sse2" ],
     "ssl"               => [ "ssl3" ],
     "ssl3-method"       => [ "ssl3" ],
-    "zlib"              => [ "zlib-dynamic" ],
     "des"               => [ "mdc2" ],
     "ec"                => [ "ec2m", "ecdsa", "ecdh", "sm2", "gost" ],
     "dgram"             => [ "dtls", "sctp" ],
@@ -798,7 +793,6 @@ while (@argvcopy)
         s /^sctp$/enable-sctp/;
         s /^threads$/enable-threads/;
         s /^zlib$/enable-zlib/;
-        s /^zlib-dynamic$/enable-zlib-dynamic/;
         s /^fips$/enable-fips/;
 
         if (/^(no|disable|enable)-(.+)$/)
@@ -880,10 +874,6 @@ while (@argvcopy)
                 elsif ($1 eq "dynamic-engine")
                         {
                         delete $disabled{"dynamic-engine"};
-                        }
-                elsif ($1 eq "zlib-dynamic")
-                        {
-                        delete $disabled{"zlib"};
                         }
                 my $algo = $1;
                 delete $disabled{$algo};
@@ -1809,7 +1799,7 @@ foreach my $what (sort keys %disabled) {
 
     if (!grep { $what eq $_ } ( 'buildtest-c++', 'fips', 'threads', 'shared',
                                 'module', 'pic', 'dynamic-engine', 'makedepend',
-                                'zlib-dynamic', 'zlib', 'sse2', 'legacy' )) {
+                                'zlib', 'sse2', 'legacy' )) {
         (my $WHAT = uc $what) =~ s|-|_|g;
         my $skipdir = $what;
 

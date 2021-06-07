@@ -152,7 +152,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: config
-      run: ./config --banner=Configured --strict-warnings no-ec enable-ssl-trace enable-zlib enable-zlib-dynamic enable-crypto-mdebug enable-crypto-mdebug-backtrace enable-egd enable-fips && perl configdata.pm --dump
+      run: ./config --banner=Configured --strict-warnings no-ec enable-ssl-trace enable-zlib enable-crypto-mdebug enable-crypto-mdebug-backtrace enable-egd enable-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: make test

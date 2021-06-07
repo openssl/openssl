@@ -20,7 +20,7 @@
 #include "internal/conf.h"
 #include "crypto/async.h"
 #include "crypto/engine.h"
-#include "internal/comp.h"
+#include <openssl/comp.h>
 #include "internal/err.h"
 #include "crypto/err.h"
 #include "crypto/objects.h"
@@ -370,11 +370,6 @@ void OPENSSL_cleanup(void)
      * We assume we are single-threaded for this function, i.e. no race
      * conditions for the various "*_inited" vars below.
      */
-
-#ifndef OPENSSL_NO_COMP
-    OSSL_TRACE(INIT, "OPENSSL_cleanup: ossl_comp_zlib_cleanup()\n");
-    ossl_comp_zlib_cleanup();
-#endif
 
     if (async_inited) {
         OSSL_TRACE(INIT, "OPENSSL_cleanup: async_deinit()\n");
