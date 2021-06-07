@@ -30,6 +30,12 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Version of MSVC earlier than 1300 could get link warnings, which could
+   be suppressed if the undocumented -DI_CAN_LIVE_WITH_LNK4049 was set.
+   Support for this flag has been removed.
+
+   *Rich Salz*
+
  * Rework and make DEBUG macros consistent. Remove unused -DCONF_DEBUG,
    -DBN_CTX_DEBUG, and REF_PRINT. Add a new tracing category and use it for
    printing reference counts. Rename -DDEBUG_UNUSED to -DUNUSED_RESULT_DEBUG
