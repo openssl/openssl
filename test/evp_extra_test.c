@@ -1681,6 +1681,9 @@ static struct keys_st {
 } keys[] = {
     {
         EVP_PKEY_HMAC, "0123456789", NULL
+    },
+    {
+        EVP_PKEY_HMAC, "", NULL
 #ifndef OPENSSL_NO_POLY1305
     }, {
         EVP_PKEY_POLY1305, "01234567890123456789012345678901", NULL
