@@ -16,7 +16,7 @@
 #define PROTOCOL        "tcp"
 
 typedef int (*do_server_cb)(int s, int stype, int prot, unsigned char *context);
-int report_server_accept(BIO *out, int asock, int with_address);
+int report_server_accept(BIO *out, int asock, int with_address, int with_pid);
 int do_server(int *accept_sock, const char *host, const char *port,
               int family, int type, int protocol, do_server_cb cb,
               unsigned char *context, int naccept, BIO *bio_s_out);
