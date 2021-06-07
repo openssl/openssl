@@ -3348,6 +3348,7 @@ static int key_unsupported(void)
     long reason = ERR_GET_REASON(err);
 
     if ((lib == ERR_LIB_EVP && reason == EVP_R_UNSUPPORTED_ALGORITHM)
+        || (lib == ERR_LIB_EVP && reason == EVP_R_DECODE_ERROR)
         || reason == ERR_R_UNSUPPORTED) {
         ERR_clear_error();
         return 1;
