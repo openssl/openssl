@@ -1,2 +1,2 @@
-SOURCE[../pkcs11]=pkcs11_rsa.c pkcs11_prov.c
+SOURCE[../pkcs11]=pkcs11_kmgmt.c pkcs11_prov.c
 INCLUDE[../pkcs11]=../implementations/include ../common/include ../..

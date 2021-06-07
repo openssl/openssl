@@ -10,6 +10,8 @@
 #define PKCS11_DEFAULT_RSA_PUBLIC_EXPONENTS {0x01, 0x00, 0x01}
 #define PKCS11_DEFAULT_RSA_MODULUS_BITS     2048
 
+PKCS11_TYPE_DATA_ITEM* pkcs11_get_mech_data(PKCS11_CTX *provctx, CK_MECHANISM_TYPE type
+                                            , CK_ULONG bits);
 
 /* required functions */
 static OSSL_FUNC_keymgmt_gen_init_fn pkcs11_rsa_keymgmt_gen_init;
@@ -40,30 +42,55 @@ const OSSL_DISPATCH rsa_keymgmt_dp_tbl[] = {
     {0, NULL}
 };
 
+PKCS11_TYPE_DATA_ITEM* pkcs11_get_mech_data(PKCS11_CTX *provctx, CK_MECHANISM_TYPE type
+                                            , CK_ULONG bits)
+{
+    int i = 0;
+    PKCS11_TYPE_DATA_ITEM* found = NULL;
+    PKCS11_TYPE_DATA_ITEM* pkeymgmt = NULL;
+
+    pkeymgmt = provctx->keymgmt.items;
+    for (i = 0; i < provctx->keymgmt.len; i++, pkeymgmt++)
+    {
+        if (pkeymgmt->type == type)
+        {
+            if (bits >= pkeymgmt->info.ulMinKeySize
+               && bits <= pkeymgmt->info.ulMaxKeySize)
+            {
+                found = pkeymgmt;
+                break;
+            }
+        }
+    }
+    return found;
+}
+
 struct pkcs11_genctx_st {
     PKCS11_CTX *provctx;
     CK_MECHANISM_TYPE type;
-};
-
-struct pkcs11_rsa_genctx_st {
-    struct pkcs11_genctx_st ctx;
-    CK_ULONG modulus_bits;
-    CK_BYTE *public_exponent;
-    CK_ULONG public_exponentlen;
-    PKCS11_TYPE_DATA_ITEM *mechdata;
+    union {
+        struct rsa_st {
+            CK_ULONG modulus_bits;
+            CK_BYTE *public_exponent;
+            CK_ULONG public_exponentlen;
+            PKCS11_TYPE_DATA_ITEM *mechdata;
+        }rsa;
+    };
 };
 
 struct pkcs11_rsa_keykey_st {
-    struct pkcs11_rsa_genctx_st* genctx;
+    struct pkcs11_genctx_st* genctx;
     CK_OBJECT_HANDLE priv;
     CK_OBJECT_HANDLE pub;
 };
 
+
+
 static void *pkcs11_rsa_keymgmt_gen_init(void *provctx, int selection, const OSSL_PARAM params[])
 {
     static const CK_BYTE public_exponent[] = PKCS11_DEFAULT_RSA_PUBLIC_EXPONENTS;
-    struct pkcs11_rsa_genctx_st *genctx = NULL;
-    struct pkcs11_rsa_genctx_st *ret = NULL;
+    struct pkcs11_genctx_st *genctx = NULL;
+    struct pkcs11_genctx_st *ret = NULL;
 
     if (!provctx)
         goto end;
@@ -75,24 +102,24 @@ static void *pkcs11_rsa_keymgmt_gen_init(void *provctx, int selection, const OSS
     if (genctx == NULL)
         goto end;
 
-    genctx->ctx.type = CKM_RSA_PKCS_KEY_PAIR_GEN;
-    genctx->public_exponentlen = sizeof(public_exponent);
-    genctx->public_exponent = OPENSSL_zalloc(genctx->public_exponentlen);
-    if (genctx->public_exponent == NULL)
+    genctx->type = CKM_RSA_PKCS_KEY_PAIR_GEN;
+    genctx->rsa.public_exponentlen = sizeof(public_exponent);
+    genctx->rsa.public_exponent = OPENSSL_zalloc(genctx->rsa.public_exponentlen);
+    if (genctx->rsa.public_exponent == NULL)
         goto end;
 
-    memcpy(genctx->public_exponent,
-           public_exponent, genctx->public_exponentlen);
-    genctx->modulus_bits = PKCS11_DEFAULT_RSA_MODULUS_BITS;
-    genctx->ctx.provctx = (PKCS11_CTX*)provctx;
+    memcpy(genctx->rsa.public_exponent,
+           public_exponent, genctx->rsa.public_exponentlen);
+    genctx->rsa.modulus_bits = PKCS11_DEFAULT_RSA_MODULUS_BITS;
+    genctx->provctx = (PKCS11_CTX*)provctx;
     ret = genctx;
 
 end:
     if (!ret)
     {
         if (genctx){
-            if (genctx->public_exponent)
-                OPENSSL_free(genctx->public_exponent);
+            if (genctx->rsa.public_exponent)
+                OPENSSL_free(genctx->rsa.public_exponent);
             OPENSSL_free(genctx);
         }
     }
@@ -102,10 +129,10 @@ end:
 # define NMEMB(array) (sizeof(array) / sizeof(array[0]))
 static void *rsa_keymgmt_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg)
 {
-    struct pkcs11_rsa_genctx_st *gctx = genctx;
+    struct pkcs11_genctx_st *gctx = genctx;
     struct pkcs11_rsa_keykey_st *key = NULL;
     struct pkcs11_rsa_keykey_st *ret = NULL;
-    CK_MECHANISM_TYPE mechtype = gctx->mechdata->type;
+    CK_MECHANISM_TYPE mechtype = gctx->rsa.mechdata->type;
     CK_MECHANISM mech = {mechtype, NULL, 0};
     CK_BBOOL flag_token; /* = ctx->provctx->tokobjs;*/
     CK_BBOOL flag_true = CK_TRUE;
@@ -120,9 +147,9 @@ static void *rsa_keymgmt_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg)
         {CKA_WRAP, &flag_true, sizeof(flag_true)},
         /* RSA public key object attributes  */
         {CKA_MODULUS_BITS,
-         &gctx->modulus_bits, sizeof(gctx->modulus_bits)}, /* required */
+         &gctx->rsa.modulus_bits, sizeof(gctx->rsa.modulus_bits)}, /* required */
         {CKA_PUBLIC_EXPONENT,
-         gctx->public_exponent, gctx->public_exponentlen}
+         gctx->rsa.public_exponent, gctx->rsa.public_exponentlen}
     };
     CK_ATTRIBUTE priv_templ[] = {
         /* Common storage object attributes */
@@ -140,7 +167,7 @@ static void *rsa_keymgmt_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg)
         goto end;
 
     key->genctx = gctx;
-    rv = gctx->ctx.provctx->lib_functions->C_GenerateKeyPair(gctx->ctx.provctx->session, &mech,
+    rv = gctx->provctx->lib_functions->C_GenerateKeyPair(gctx->provctx->session, &mech,
                                              pub_templ, NMEMB(pub_templ),
                                              priv_templ, NMEMB(priv_templ),
                                              &key->pub, &key->priv);
@@ -158,11 +185,11 @@ end:
 
 static void rsa_keymgmt_gen_cleanup(void *genctx)
 {
-    struct pkcs11_rsa_genctx_st *ctx = genctx;
+    struct pkcs11_genctx_st *ctx = genctx;
 
     assert(genctx != NULL);
 
-    OPENSSL_free(ctx->public_exponent);
+    OPENSSL_free(ctx->rsa.public_exponent);
     OPENSSL_free(ctx);
 }
 
@@ -174,7 +201,7 @@ static void rsa_keymgmt_free(void *keydata)
     if (key == NULL)
         return;
 
-    ctx = key->genctx->ctx.provctx;
+    ctx = key->genctx->provctx;
 
     (void)ctx->lib_functions->C_DestroyObject(ctx->session, key->priv);
     (void)ctx->lib_functions->C_DestroyObject(ctx->session, key->pub);
@@ -211,17 +238,11 @@ static int rsa_keymgmt_get_params(void *keydata, OSSL_PARAM params[])
     OSSL_PARAM *p;
 
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_BITS)) != NULL
-        && !OSSL_PARAM_set_int(p, key->genctx->modulus_bits))
+        && !OSSL_PARAM_set_int(p, key->genctx->rsa.modulus_bits))
         return 0;
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_MAX_SIZE)) != NULL
-        && !OSSL_PARAM_set_int(p, (key->genctx->modulus_bits + 7) / 8))
+        && !OSSL_PARAM_set_int(p, (key->genctx->rsa.modulus_bits + 7) / 8))
         return 0;
-# if 0  /* XXX PSS */
-    if ((p = OSSL_PARAM_locate(params,
-                               OSSL_PKEY_PARAM_MANDATORY_DIGEST)) != NULL
-       ) {
-    }
-#endif
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_DEFAULT_DIGEST)) != NULL
             ) {
         if (!OSSL_PARAM_set_utf8_string(p, "SHA256")) /* XXX PSS */
@@ -255,40 +276,25 @@ static const OSSL_PARAM *rsa_keymgmt_gen_settable_params(void *genctx, void *pro
 
 static int rsa_keymgmt_gen_set_params(void *genctx, const OSSL_PARAM params[])
 {
-    struct pkcs11_rsa_genctx_st *ctx = genctx;
+    struct pkcs11_genctx_st *ctx = genctx;
     const OSSL_PARAM *p;
     PKCS11_CTX *provctx = NULL;
-    PKCS11_TYPE_DATA_ITEM* pkeymgmt = NULL;
     PKCS11_TYPE_DATA_ITEM* found = NULL;
-    CK_ULONG bits;
-    int i = 0;
-    int rc;
+    CK_ULONG bits = 0;
     int ret = 0;
 
-    provctx = ctx->ctx.provctx;
+    provctx = ctx->provctx;
     if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_BITS)) != NULL) {
         if (OSSL_PARAM_get_size_t(p, &bits) != 1)
             goto end;
 
         /* Find a fitting key manager mechanism */
-        pkeymgmt = provctx->keymgmt.items;
-        for (i = 0; i < provctx->keymgmt.len; i++, pkeymgmt++)
-        {
-            if (pkeymgmt->type == CKM_RSA_PKCS_KEY_PAIR_GEN)
-            {
-                if (bits >= pkeymgmt->info.ulMinKeySize
-                   && bits <= pkeymgmt->info.ulMaxKeySize)
-                {
-                    found = pkeymgmt;
-                    break;
-                }
-            }
-        }
+        found = pkcs11_get_mech_data(provctx, CKM_RSA_PKCS_KEY_PAIR_GEN, bits);
         if (!found)
             goto end;
 
-        ctx->mechdata = found;
-        ctx->modulus_bits = bits;
+        ctx->rsa.mechdata = found;
+        ctx->rsa.modulus_bits = bits;
     }
     if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_E)) != NULL) {
         const union {
@@ -309,25 +315,24 @@ static int rsa_keymgmt_gen_set_params(void *genctx, const OSSL_PARAM params[])
         else
         {
             /* skip leading zeros */
-            for (buf = p->data; *buf == 0 && buflen > 0; buf++, buflen--)
-                ;
+            for (buf = p->data; *buf == 0 && buflen > 0; buf++, buflen--);
         }
 
-        ctx->public_exponentlen = buflen;
-        ctx->public_exponent = realloc(ctx->public_exponent, buflen);
-        if (ctx->public_exponent == NULL)
+        ctx->rsa.public_exponentlen = buflen;
+        ctx->rsa.public_exponent = realloc(ctx->rsa.public_exponent, buflen);
+        if (ctx->rsa.public_exponent == NULL)
             return 0;
 
         if (is_endian.little == 1) {
             size_t i;
 
             for (i = 0; i < buflen; i++) {
-                ctx->public_exponent[i] = buf[buflen - 1 - i];
+                ctx->rsa.public_exponent[i] = buf[buflen - 1 - i];
             }
         }
         else
         {
-            memcpy(ctx->public_exponent, buf, buflen);
+            memcpy(ctx->rsa.public_exponent, buf, buflen);
         }
     }
     ret = 1;
