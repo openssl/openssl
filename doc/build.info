@@ -1719,6 +1719,14 @@ DEPEND[html/man3/OSSL_HTTP_transfer.html]=man3/OSSL_HTTP_transfer.pod
 GENERATE[html/man3/OSSL_HTTP_transfer.html]=man3/OSSL_HTTP_transfer.pod
 DEPEND[man/man3/OSSL_HTTP_transfer.3]=man3/OSSL_HTTP_transfer.pod
 GENERATE[man/man3/OSSL_HTTP_transfer.3]=man3/OSSL_HTTP_transfer.pod
+DEPEND[html/man3/OSSL_IETF_ATTR_SYNTAX.html]=man3/OSSL_IETF_ATTR_SYNTAX.pod
+GENERATE[html/man3/OSSL_IETF_ATTR_SYNTAX.html]=man3/OSSL_IETF_ATTR_SYNTAX.pod
+DEPEND[man/man3/OSSL_IETF_ATTR_SYNTAX.3]=man3/OSSL_IETF_ATTR_SYNTAX.pod
+GENERATE[man/man3/OSSL_IETF_ATTR_SYNTAX.3]=man3/OSSL_IETF_ATTR_SYNTAX.pod
+DEPEND[html/man3/OSSL_IETF_ATTR_SYNTAX_print.html]=man3/OSSL_IETF_ATTR_SYNTAX_print.pod
+GENERATE[html/man3/OSSL_IETF_ATTR_SYNTAX_print.html]=man3/OSSL_IETF_ATTR_SYNTAX_print.pod
+DEPEND[man/man3/OSSL_IETF_ATTR_SYNTAX_print.3]=man3/OSSL_IETF_ATTR_SYNTAX_print.pod
+GENERATE[man/man3/OSSL_IETF_ATTR_SYNTAX_print.3]=man3/OSSL_IETF_ATTR_SYNTAX_print.pod
 DEPEND[html/man3/OSSL_ITEM.html]=man3/OSSL_ITEM.pod
 GENERATE[html/man3/OSSL_ITEM.html]=man3/OSSL_ITEM.pod
 DEPEND[man/man3/OSSL_ITEM.3]=man3/OSSL_ITEM.pod
@@ -3377,6 +3385,8 @@ html/man3/OSSL_HPKE_CTX_new.html \
 html/man3/OSSL_HTTP_REQ_CTX.html \
 html/man3/OSSL_HTTP_parse_url.html \
 html/man3/OSSL_HTTP_transfer.html \
+html/man3/OSSL_IETF_ATTR_SYNTAX.html \
+html/man3/OSSL_IETF_ATTR_SYNTAX_print.html \
 html/man3/OSSL_ITEM.html \
 html/man3/OSSL_LIB_CTX.html \
 html/man3/OSSL_PARAM.html \
@@ -4026,6 +4036,8 @@ man/man3/OSSL_HPKE_CTX_new.3 \
 man/man3/OSSL_HTTP_REQ_CTX.3 \
 man/man3/OSSL_HTTP_parse_url.3 \
 man/man3/OSSL_HTTP_transfer.3 \
+man/man3/OSSL_IETF_ATTR_SYNTAX.3 \
+man/man3/OSSL_IETF_ATTR_SYNTAX_print.3 \
 man/man3/OSSL_ITEM.3 \
 man/man3/OSSL_LIB_CTX.3 \
 man/man3/OSSL_PARAM.3 \
