@@ -130,7 +130,9 @@ static X509_SIG *key_to_encp8(const void *key, int key_nid,
         key_to_p8info(key, key_nid, params, params_type, k2d);
     X509_SIG *p8 = NULL;
 
-    if (p8info != NULL) {
+    if (p8info == NULL) {
+        free_asn1_data(params_type, params);
+    } else {
         p8 = p8info_to_encp8(p8info, ctx);
         PKCS8_PRIV_KEY_INFO_free(p8info);
     }
@@ -201,12 +203,11 @@ static int key_to_epki_der_priv_bio(BIO *out, const void *key,
         return 0;
 
     p8 = key_to_encp8(key, key_nid, str, strtype, k2d, ctx);
-    if (p8 == NULL) {
-        free_asn1_data(strtype, str);
-    } else {
+    if (p8 != NULL)
         ret = i2d_PKCS8_bio(out, p8);
-        X509_SIG_free(p8);
-    }
+
+    X509_SIG_free(p8);
+
     return ret;
 }
 
@@ -230,12 +231,11 @@ static int key_to_epki_pem_priv_bio(BIO *out, const void *key,
         return 0;
 
     p8 = key_to_encp8(key, key_nid, str, strtype, k2d, ctx);
-    if (p8 == NULL) {
-        free_asn1_data(strtype, str);
-    } else {
+    if (p8 != NULL)
         ret = PEM_write_bio_PKCS8(out, p8);
-        X509_SIG_free(p8);
-    }
+
+    X509_SIG_free(p8);
+
     return ret;
 }
 
