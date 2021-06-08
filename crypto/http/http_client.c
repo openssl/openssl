@@ -126,7 +126,8 @@ void OSSL_HTTP_REQ_CTX_free(OSSL_HTTP_REQ_CTX *rctx)
     if (rctx->free_wbio)
         BIO_free_all(rctx->wbio);
     /* do not free rctx->rbio */
-    BIO_free(rctx->mem); /* this may indirectly call ERR_clear_error() */
+    BIO_free(rctx->mem);
+    BIO_free(rctx->req);
     OPENSSL_free(rctx->buf);
     OPENSSL_free(rctx->proxy);
     OPENSSL_free(rctx->server);
@@ -288,6 +289,7 @@ static int set_content(OSSL_HTTP_REQ_CTX *rctx,
     /* streaming BIO may not support querying size */
     if ((req_len = BIO_ctrl(req, BIO_CTRL_INFO, 0, NULL)) <= 0
         || BIO_printf(rctx->mem, "Content-Length: %ld\r\n", req_len) > 0) {
+        BIO_free(rctx->req);
         rctx->req = req;
         return 1;
     }
