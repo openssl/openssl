@@ -1948,6 +1948,7 @@ uint16_t SSL_CIPHER_get_protocol_id(const SSL_CIPHER *c)
     return c->id & 0xFFFF;
 }
 
+#if !defined(OPENSSL_NO_COMP) && !defined(OPENSSL_NO_DEPRECATED_3_0)
 SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n)
 {
     SSL_COMP *ctmp;
@@ -1964,24 +1965,6 @@ SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n)
     return NULL;
 }
 
-#ifdef OPENSSL_NO_COMP
-STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void)
-{
-    return NULL;
-}
-
-STACK_OF(SSL_COMP) *SSL_COMP_set0_compression_methods(STACK_OF(SSL_COMP)
-                                                      *meths)
-{
-    return meths;
-}
-
-int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
-{
-    return 1;
-}
-
-#else
 STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void)
 {
     load_builtin_compressions();
@@ -2049,34 +2032,34 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
     }
     return 0;
 }
-#endif
 
 const char *SSL_COMP_get_name(const COMP_METHOD *comp)
 {
-#ifndef OPENSSL_NO_COMP
+# ifndef OPENSSL_NO_COMP
     return comp ? COMP_get_name(comp) : NULL;
-#else
+# else
     return NULL;
-#endif
+# endif
 }
 
 const char *SSL_COMP_get0_name(const SSL_COMP *comp)
 {
-#ifndef OPENSSL_NO_COMP
+# ifndef OPENSSL_NO_COMP
     return comp->name;
-#else
+# else
     return NULL;
-#endif
+# endif
 }
 
 int SSL_COMP_get_id(const SSL_COMP *comp)
 {
-#ifndef OPENSSL_NO_COMP
+# ifndef OPENSSL_NO_COMP
     return comp->id;
-#else
+# else
     return -1;
-#endif
+# endif
 }
+#endif
 
 const SSL_CIPHER *ssl_get_cipher_by_char(SSL *ssl, const unsigned char *ptr,
                                          int all)

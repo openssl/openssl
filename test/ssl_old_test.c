@@ -9,6 +9,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED /* For SSL_COMP_xxx API */
 #include "e_os.h"
 
 /* Or gethostname won't be declared properly on Linux and GNU platforms. */
@@ -890,7 +891,7 @@ int main(int argc, char *argv[])
     int no_psk = 0;
     int print_time = 0;
     clock_t s_time = 0, c_time = 0;
-#ifndef OPENSSL_NO_COMP
+#if !defined(OPENSSL_NO_COMP) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     int n, comp = 0;
     COMP_METHOD *cm = NULL;
     STACK_OF(SSL_COMP) *ssl_comp_methods = NULL;
@@ -1063,7 +1064,7 @@ int main(int argc, char *argv[])
             ct_validation = 1;
         }
 #endif
-#ifndef OPENSSL_NO_COMP
+#if !defined(OPENSSL_NO_COMP) && !defined(OPENSSL_NO_DEPRECATED_3_0)
         else if (strcmp(*argv, "-zlib") == 0) {
             comp = COMP_ZLIB;
         }
@@ -1279,7 +1280,7 @@ int main(int argc, char *argv[])
                     "Warning: For accurate timings, use more connections (e.g. -num 1000)\n");
     }
 
-#ifndef OPENSSL_NO_COMP
+#if !defined(OPENSSL_NO_COMP) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     if (comp == COMP_ZLIB)
         cm = COMP_zlib();
     if (cm != NULL) {

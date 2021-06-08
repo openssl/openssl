@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED /* For SSL_get_current_compression */
 #include <string.h>
 
 #include <openssl/bio.h>
@@ -1620,9 +1621,13 @@ static HANDSHAKE_RESULT *do_handshake_internal(
         ret->session_ticket = SSL_TEST_SESSION_TICKET_NO;
     else
         ret->session_ticket = SSL_TEST_SESSION_TICKET_YES;
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     ret->compression = (SSL_get_current_compression(client.ssl) == NULL)
                        ? SSL_TEST_COMPRESSION_NO
                        : SSL_TEST_COMPRESSION_YES;
+#else
+    ret->compression = SSL_TEST_COMPRESSION_NO;
+#endif
     if (sess_id == NULL || sess_id_len == 0)
         ret->session_id = SSL_TEST_SESSION_ID_NO;
     else

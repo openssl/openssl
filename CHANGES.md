@@ -30,6 +30,12 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * The SSL_COMP API, that enables compression in TLS/SSL, has been
+   deprecated. Compression has a history of security vulnerabilities,
+   and is not defined for TLS 1.3.
+
+   *Rich Salz*
+
  * Rework and make DEBUG macros consistent. Remove unused -DCONF_DEBUG,
    -DBN_CTX_DEBUG, and REF_PRINT. Add a new tracing category and use it for
    printing reference counts. Rename -DDEBUG_UNUSED to -DUNUSED_RESULT_DEBUG
