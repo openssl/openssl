@@ -493,7 +493,9 @@ int OSSL_DECODER_CTX_add_extra(OSSL_DECODER_CTX *ctx,
          *     encoding, and pass the result on with the same encoding.
          * 1.  All decoders that a different name than their input type.
          */
-        for (data.type_check = 0; data.type_check < 2; data.type_check++) {
+        for (data.type_check = IS_SAME;
+             data.type_check <= IS_DIFFERENT;
+             data.type_check++) {
             for (i = data.w_prev_start; i < data.w_prev_end; i++) {
                 OSSL_DECODER_INSTANCE *decoder_inst =
                     sk_OSSL_DECODER_INSTANCE_value(ctx->decoder_insts, i);
