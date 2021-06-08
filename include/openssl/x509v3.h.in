@@ -1085,6 +1085,28 @@ const ASN1_PRINTABLESTRING *PROFESSION_INFO_get0_registrationNumber(
 void PROFESSION_INFO_set0_registrationNumber(
     PROFESSION_INFO *pi, ASN1_PRINTABLESTRING *rn);
 
+# define IETFAS_OCTETS  0
+# define IETFAS_OID     1
+# define IETFAS_STRING  2
+
+typedef struct IETF_ATTR_SYNTAX_VALUE_st IETF_ATTR_SYNTAX_VALUE;
+typedef struct IETF_ATTR_SYNTAX_st IETF_ATTR_SYNTAX;
+{-
+    generate_stack_macros("IETF_ATTR_SYNTAX_VALUE");
+-}
+
+DECLARE_ASN1_FUNCTIONS(IETF_ATTR_SYNTAX_VALUE)
+DECLARE_ASN1_FUNCTIONS(IETF_ATTR_SYNTAX)
+
+const GENERAL_NAMES *
+IETF_ATTR_SYNTAX_get0_policyAuthority(const IETF_ATTR_SYNTAX *a);
+void IETF_ATTR_SYNTAX_set0_policyAuthority(IETF_ATTR_SYNTAX *a, GENERAL_NAMES *names);
+
+int IETF_ATTR_SYNTAX_get_value_num(const IETF_ATTR_SYNTAX *a);
+void *IETF_ATTR_SYNTAX_get0_value(const IETF_ATTR_SYNTAX *a, int ind, int *type);
+int IETF_ATTR_SYNTAX_add1_value(IETF_ATTR_SYNTAX *a, int type, void *data);
+int IETF_ATTR_SYNTAX_print(BIO *bp, IETF_ATTR_SYNTAX *a, int indent);
+
 # ifdef  __cplusplus
 }
 # endif
