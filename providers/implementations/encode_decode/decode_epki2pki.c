@@ -28,7 +28,7 @@ static OSSL_FUNC_decoder_freectx_fn epki2pki_freectx;
 static OSSL_FUNC_decoder_decode_fn epki2pki_decode;
 
 /*
- * Context used for PEM to DER decoding.
+ * Context used for EncryptedPrivateKeyInfo to PrivateKeyInfo decoding.
  */
 struct epki2pki_ctx_st {
     PROV_CTX *provctx;
@@ -52,7 +52,8 @@ static void epki2pki_freectx(void *vctx)
 
 /*
  * The selection parameter in epki2pki_decode() is not used by this function
- * because it's not relevant just to decode PEM to DER.
+ * because it's not relevant just to decode EncryptedPrivateKeyInfo to
+ * PrivateKeyInfo.
  */
 static int epki2pki_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
                            OSSL_CALLBACK *data_cb, void *data_cbarg,
