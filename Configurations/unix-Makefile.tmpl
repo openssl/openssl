@@ -123,6 +123,9 @@ DEPS={- join(" \\\n" . ' ' x 5,
 GENERATED_MANDATORY={- join(" \\\n" . ' ' x 20,
                             fill_lines(" ", $COLUMNS - 20,
                                        @{$unified_info{depends}->{""}})) -}
+GENERATED_FIPS_FILES={- join(" \\\n" . ' ' x 20,
+                            fill_lines(" ", $COLUMNS - 20,
+                                       @{$unified_info{depends}->{"providers/common/der/GENFIPSFILES"}})) -}
 GENERATED_PODS={- # common0.tmpl provides @generated
                   join(" \\\n" . ' ' x 15,
                        fill_lines(" ", $COLUMNS - 15,
@@ -1127,16 +1130,11 @@ doc-nits: build_generated_pods
 md-nits:
 	mdl -s util/markdownlint.rb .
 
-GENERATED_FIPS_HEADERS = \
-     providers/common/include/prov/der_digests.h \
-     providers/common/include/prov/der_dsa.h \
-     providers/common/include/prov/der_ec.h \
-     providers/common/include/prov/der_ecx.h \
-     providers/common/include/prov/der_rsa.h \
-     providers/common/include/prov/der_sm2.h
-
-include-nits: build_generated $(GENERATED_FIPS_HEADERS)
+# First check the source tree (via 'get ls-files') then check the
+# generated files
+include-nits: build_generated $(GENERATED_FIPS_FILES)
 	$(PERL) $(SRCDIR)/util/find-include-nits
+	$(PERL) $(SRCDIR)/util/find-include-nits $(GENERATED_FIPS_FILES)
 
 # Test coverage is a good idea for the future
 #coverage: $(PROGRAMS) $(TESTPROGRAMS)
