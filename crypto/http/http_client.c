@@ -57,6 +57,7 @@ struct ossl_http_req_ctx_st {
     char *port;                 /* Optional server port */
     BIO *mem;                   /* Memory BIO holding request/response header */
     BIO *req;                   /* BIO holding the request provided by caller */
+    BIO *req_owned;             /* Request BIO to be freed */
     int method_POST;            /* HTTP method is POST (else GET) */
     char *expected_ct;          /* Optional expected Content-Type */
     int expect_asn1;            /* Response must be ASN.1-encoded */
@@ -127,7 +128,7 @@ void OSSL_HTTP_REQ_CTX_free(OSSL_HTTP_REQ_CTX *rctx)
         BIO_free_all(rctx->wbio);
     /* do not free rctx->rbio */
     BIO_free(rctx->mem);
-    BIO_free(rctx->req);
+    BIO_free(rctx->req_owned);
     OPENSSL_free(rctx->buf);
     OPENSSL_free(rctx->proxy);
     OPENSSL_free(rctx->server);
@@ -289,7 +290,6 @@ static int set_content(OSSL_HTTP_REQ_CTX *rctx,
     /* streaming BIO may not support querying size */
     if ((req_len = BIO_ctrl(req, BIO_CTRL_INFO, 0, NULL)) <= 0
         || BIO_printf(rctx->mem, "Content-Length: %ld\r\n", req_len) > 0) {
-        BIO_free(rctx->req);
         rctx->req = req;
         return 1;
     }
@@ -309,8 +309,12 @@ int OSSL_HTTP_REQ_CTX_set1_req(OSSL_HTTP_REQ_CTX *rctx, const char *content_type
 
     res = (mem = ASN1_item_i2d_mem_bio(it, req)) != NULL
         && set_content(rctx, content_type, mem);
-    if (!res)
+    if (res) {
+        BIO_free(rctx->req_owned);
+        rctx->req_owned = mem;
+    } else {
         BIO_free(mem);
+    }
     return res;
 }
 
