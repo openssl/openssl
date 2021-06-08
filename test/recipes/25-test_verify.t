@@ -28,7 +28,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 156;
+plan tests => 157;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -412,6 +412,8 @@ ok(verify("root-cert-rsa2", "", ["root-cert-rsa2"], [], "-check_ss_sig"),
 
 ok(verify("ee-self-signed", "", ["ee-self-signed"], [], "-attime", "1593565200"),
    "accept trusted self-signed EE cert excluding key usage keyCertSign");
+ok(verify("ee-ss-with-keyCertSign", "", ["ee-ss-with-keyCertSign"], []),
+   "accept trusted self-signed EE cert with key usage keyCertSign also when strict");
 
 SKIP: {
     skip "Ed25519 is not supported by this OpenSSL build", 6
