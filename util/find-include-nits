@@ -31,10 +31,6 @@ process
     my $infile = $file;
     $infile =~ s/\.in$//;
 
-    # Some FIPS generated files end up elsewhere :(
-    $infile = $file
-        if ! -f $infile && $file =~ m@providers/common/der/@;
-
     my $IN;
     if ( !open($IN, '<', $infile) ) {
         err("Can't open $infile, $!");
@@ -53,6 +49,7 @@ process
             err($infile, "use quotes for include", $included)
                 if $included =~ m@crypto/@
                     || $included =~ m@internal/@
+                    || $included =~ m@provider/@
                     || $included =~ m@prov/@;
         } elsif ( $quotes eq '"' ) {
             err($infile, "Use <> for include", $included)
