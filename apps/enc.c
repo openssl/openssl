@@ -91,7 +91,7 @@ const OPTIONS enc_options[] = {
     {"iter", OPT_ITER, 'p', "Specify the iteration count and force use of PBKDF2"},
     {"pbkdf2", OPT_PBKDF2, '-', "Use password-based key derivation function 2"},
     {"none", OPT_NONE, '-', "Don't encrypt"},
-#ifdef ZLIB
+#if defined(ZLIB) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     {"z", OPT_Z, '-', "Compress or decompress encrypted data using zlib"},
 #endif
     {"", OPT_CIPHER, '-', "Any supported cipher"},
@@ -210,7 +210,7 @@ int enc_main(int argc, char **argv)
             base64 = 1;
             break;
         case OPT_Z:
-#ifdef ZLIB
+#if defined(ZLIB) && !defined(OPENSSL_NO_DEPRECATED_3_0)
             do_zlib = 1;
 #endif
             break;
@@ -398,7 +398,7 @@ int enc_main(int argc, char **argv)
     rbio = in;
     wbio = out;
 
-#ifdef ZLIB
+#if defined(ZLIB) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     if (do_zlib) {
         if ((bzl = BIO_new(BIO_f_zlib())) == NULL)
             goto end;

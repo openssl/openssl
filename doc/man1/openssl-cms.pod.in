@@ -898,7 +898,8 @@ The -no_alt_chains option was added in OpenSSL 1.0.2b.
 
 The B<-nameopt> option was added in OpenSSL 3.0.0.
 
-The B<-engine> option was deprecated in OpenSSL 3.0.
+The B<-engine>, B<-compress>, and B<-uncompress>  options were
+deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

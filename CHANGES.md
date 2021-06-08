@@ -30,6 +30,12 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * The undocumented function BIO_f_zlib has been deprecated, which
+   forced the deprecation of the "-z" option to the enc command, and
+   the "-compress" and "-uncompress" options to the cms command.
+
+   *Rich Salz*
+
  * Rework and make DEBUG macros consistent. Remove unused -DCONF_DEBUG,
    -DBN_CTX_DEBUG, and REF_PRINT. Add a new tracing category and use it for
    printing reference counts. Rename -DDEBUG_UNUSED to -DUNUSED_RESULT_DEBUG

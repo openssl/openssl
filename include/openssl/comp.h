@@ -46,7 +46,8 @@ COMP_METHOD *COMP_zlib(void);
 #endif
 
 # ifdef OPENSSL_BIO_H
-#  ifdef ZLIB
+#  if defined(ZLIB) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+OPENSSL_DEPRECATEDIN_3_0
 const BIO_METHOD *BIO_f_zlib(void);
 #  endif
 # endif

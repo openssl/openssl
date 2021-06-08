@@ -62,6 +62,7 @@ CMS_ContentInfo *ossl_cms_CompressedData_create(int comp_nid,
     return NULL;
 }
 
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 BIO *ossl_cms_CompressedData_init_bio(const CMS_ContentInfo *cms)
 {
     CMS_CompressedData *cd;
@@ -79,5 +80,6 @@ BIO *ossl_cms_CompressedData_init_bio(const CMS_ContentInfo *cms)
     }
     return BIO_new(BIO_f_zlib());
 }
+# endif
 
 #endif
