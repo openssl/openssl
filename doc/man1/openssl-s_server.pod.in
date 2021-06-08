@@ -536,8 +536,7 @@ Configure SSL_CTX using the given configuration value.
 
 =item B<-trace>
 
-Show verbose trace output of protocol messages. OpenSSL needs to be compiled
-with B<enable-ssl-trace> for this option to work.
+Show verbose trace output of protocol messages.
 
 =item B<-brief>
 
