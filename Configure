@@ -548,7 +548,6 @@ our %disabled = ( # "what"         => "comment"
                   "msan"                => "default",
                   "rc5"                 => "default",
                   "sctp"                => "default",
-                  "ssl-trace"           => "default",
                   "ssl3"                => "default",
                   "ssl3-method"         => "default",
                   "trace"               => "default",
@@ -575,7 +574,7 @@ my @disable_cascades = (
                              "rc2", "rc4", "rmd160",
                              "seed", "siphash", "siv",
                              "sm3", "sm4", "srp",
-                             "srtp", "ssl3-method",
+                             "srtp", "ssl3-method", "ssl-trace",
                              "ts", "ui-console", "whirlpool",
                              "fips-securitychecks" ],
     sub { $config{processor} eq "386" }
