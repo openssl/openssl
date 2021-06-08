@@ -107,8 +107,16 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
     if (pk->keydata == NULL)
         return NULL;
 
-    /* If |keymgmt| matches the "origin" |keymgmt|, no more to do */
-    if (pk->keymgmt == keymgmt)
+    /*
+     * If |keymgmt| matches the "origin" |keymgmt|, there is no more to do.
+     * The "origin" is determined by the |keymgmt| pointers being identical
+     * or when the provider and the name ID match.  The latter case handles the
+     * situation where the fetch cache is flushed and a "new" key manager is
+     * created.
+     */
+    if (pk->keymgmt == keymgmt
+        || (pk->keymgmt->name_id == keymgmt->name_id
+            && pk->keymgmt->prov == keymgmt->prov))
         return pk->keydata;
 
     if (!CRYPTO_THREAD_read_lock(pk->lock))
