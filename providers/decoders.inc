@@ -80,6 +80,11 @@ DECODER_w_structure("RSA-PSS", der, SubjectPublicKeyInfo, rsapss, yes),
 DECODER("RSA", msblob, rsa, yes),
 DECODER("RSA", pvk, rsa, yes),
 
+/*
+ * A decoder that takes a SubjectPublicKeyInfo and figures out the types of key
+ * that it contains. The output is the same SubjectPublicKeyInfo
+ */
+DECODER_w_structure("DER", der, SubjectPublicKeyInfo, der, yes),
 DECODER("DER", pem, der, yes),
 /*
  * A decoder that recognises PKCS#8 EncryptedPrivateKeyInfo structure
