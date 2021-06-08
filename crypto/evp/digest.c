@@ -129,6 +129,10 @@ static int evp_md_init_internal(EVP_MD_CTX *ctx, const EVP_MD *type,
     ENGINE *tmpimpl = NULL;
 #endif
 
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
 #if !defined(FIPS_MODULE)
     if (ctx->pctx != NULL
             && EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx->pctx)
@@ -354,6 +358,10 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 
 int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
     if (count == 0)
         return 1;
 
@@ -396,6 +404,7 @@ int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *data, size_t count)
 int EVP_DigestFinal(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *size)
 {
     int ret;
+
     ret = EVP_DigestFinal_ex(ctx, md, size);
     EVP_MD_CTX_reset(ctx);
     return ret;
@@ -408,6 +417,10 @@ int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *isize)
     size_t size = 0;
     size_t mdsize = 0;
 
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
     if (ctx->digest == NULL)
         return 0;
 
@@ -456,6 +469,10 @@ int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
     OSSL_PARAM params[2];
     size_t i = 0;
 
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
     if (ctx->digest == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_NULL_ALGORITHM);
         return 0;
@@ -504,6 +521,10 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 {
     unsigned char *tmp_buf;
 
+    if (out == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
     if (in == NULL || in->digest == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INPUT_NOT_INITIALIZED);
         return 0;
@@ -526,8 +547,11 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
     out->pctx = NULL;
     out->algctx = NULL;
 
-    if (in->fetched_digest != NULL)
-        EVP_MD_up_ref(in->fetched_digest);
+    if (in->fetched_digest != NULL
+        && !EVP_MD_up_ref(in->fetched_digest)) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_NOT_ABLE_TO_COPY_CTX);
+            return 0;
+    }
 
     if (in->algctx != NULL) {
         out->algctx = in->digest->dupctx(in->algctx);
@@ -660,8 +684,13 @@ const OSSL_PARAM *EVP_MD_gettable_params(const EVP_MD *digest)
 
 int EVP_MD_CTX_set_params(EVP_MD_CTX *ctx, const OSSL_PARAM params[])
 {
-    EVP_PKEY_CTX *pctx = ctx->pctx;
+    EVP_PKEY_CTX *pctx;
 
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    pctx = ctx->pctx;
     /* If we have a pctx then we should try that first */
     if (pctx != NULL
             && (pctx->operation == EVP_PKEY_OP_VERIFYCTX
@@ -693,8 +722,10 @@ const OSSL_PARAM *EVP_MD_CTX_settable_params(EVP_MD_CTX *ctx)
     EVP_PKEY_CTX *pctx;
     void *alg;
 
-    if (ctx == NULL)
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
+    }
 
     /* If we have a pctx then we should try that first */
     pctx = ctx->pctx;
@@ -716,8 +747,13 @@ const OSSL_PARAM *EVP_MD_CTX_settable_params(EVP_MD_CTX *ctx)
 
 int EVP_MD_CTX_get_params(EVP_MD_CTX *ctx, OSSL_PARAM params[])
 {
-    EVP_PKEY_CTX *pctx = ctx->pctx;
+    EVP_PKEY_CTX *pctx;
 
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    pctx = ctx->pctx;
     /* If we have a pctx then we should try that first */
     if (pctx != NULL
             && (pctx->operation == EVP_PKEY_OP_VERIFYCTX
@@ -749,8 +785,10 @@ const OSSL_PARAM *EVP_MD_CTX_gettable_params(EVP_MD_CTX *ctx)
     EVP_PKEY_CTX *pctx;
     void *provctx;
 
-    if (ctx == NULL)
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
+    }
 
     /* If we have a pctx then we should try that first */
     pctx = ctx->pctx;
@@ -1045,6 +1083,8 @@ int EVP_MD_up_ref(EVP_MD *md)
 {
     int ref = 0;
 
+    if (md == NULL)
+        return 0;
     if (md->origin == EVP_ORIG_DYNAMIC)
         CRYPTO_UP_REF(&md->refcnt, &ref, md->lock);
     return 1;

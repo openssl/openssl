@@ -709,6 +709,10 @@ int EVP_CIPHER_get_mode(const EVP_CIPHER *cipher)
 
 int EVP_MD_is_a(const EVP_MD *md, const char *name)
 {
+    if (md == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_MESSAGE_DIGEST_IS_NULL);
+        return 0;
+    }
     if (md->prov != NULL)
         return evp_is_a(md->prov, md->name_id, NULL, name);
     return evp_is_a(NULL, 0, EVP_MD_get0_name(md), name);
@@ -721,6 +725,10 @@ int evp_md_get_number(const EVP_MD *md)
 
 const char *EVP_MD_get0_description(const EVP_MD *md)
 {
+    if (md == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_MESSAGE_DIGEST_IS_NULL);
+        return NULL;
+    }
     if (md->description != NULL)
         return md->description;
 #ifndef FIPS_MODULE
@@ -732,8 +740,10 @@ const char *EVP_MD_get0_description(const EVP_MD *md)
 
 const char *EVP_MD_get0_name(const EVP_MD *md)
 {
-    if (md == NULL)
+    if (md == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_MESSAGE_DIGEST_IS_NULL);
         return NULL;
+    }
     if (md->type_name != NULL)
         return md->type_name;
 #ifndef FIPS_MODULE
@@ -747,6 +757,10 @@ int EVP_MD_names_do_all(const EVP_MD *md,
                         void (*fn)(const char *name, void *data),
                         void *data)
 {
+    if (md == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_MESSAGE_DIGEST_IS_NULL);
+        return 0;
+    }
     if (md->prov != NULL)
         return evp_names_do_all(md->prov, md->name_id, fn, data);
 
@@ -755,17 +769,17 @@ int EVP_MD_names_do_all(const EVP_MD *md,
 
 const OSSL_PROVIDER *EVP_MD_get0_provider(const EVP_MD *md)
 {
-    return md->prov;
+    return md != NULL ? md->prov : NULL;
 }
 
 int EVP_MD_get_type(const EVP_MD *md)
 {
-    return md->type;
+    return md != NULL ? md->type : NID_undef;
 }
 
 int EVP_MD_get_pkey_type(const EVP_MD *md)
 {
-    return md->pkey_type;
+    return md != NULL ? md->pkey_type : NID_undef;
 }
 
 int EVP_MD_get_block_size(const EVP_MD *md)
@@ -788,7 +802,7 @@ int EVP_MD_get_size(const EVP_MD *md)
 
 unsigned long EVP_MD_get_flags(const EVP_MD *md)
 {
-    return md->flags;
+    return md != NULL ? md->flags : 0;
 }
 
 EVP_MD *EVP_MD_meth_new(int md_type, int pkey_type)
@@ -991,8 +1005,10 @@ EVP_MD *EVP_MD_CTX_get1_md(EVP_MD_CTX *ctx)
 {
     EVP_MD *md;
 
-    if (ctx == NULL)
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
+    }
     md = (EVP_MD *)ctx->reqdigest;
     if (!EVP_MD_up_ref(md))
         return NULL;
@@ -1001,12 +1017,16 @@ EVP_MD *EVP_MD_CTX_get1_md(EVP_MD_CTX *ctx)
 
 EVP_PKEY_CTX *EVP_MD_CTX_get_pkey_ctx(const EVP_MD_CTX *ctx)
 {
-    return ctx->pctx;
+    return ctx != NULL ? ctx->pctx : NULL;
 }
 
 #if !defined(FIPS_MODULE)
 void EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx)
 {
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return;
+    }
     /*
      * it's reasonable to set NULL pctx (a.k.a clear the ctx->pctx), so
      * we have to deal with the cleanup job here.
@@ -1027,7 +1047,7 @@ void EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx)
 
 void *EVP_MD_CTX_get0_md_data(const EVP_MD_CTX *ctx)
 {
-    return ctx->md_data;
+    return ctx != NULL ? ctx->md_data : NULL;
 }
 
 int (*EVP_MD_CTX_update_fn(EVP_MD_CTX *ctx))(EVP_MD_CTX *ctx,
@@ -1045,17 +1065,19 @@ void EVP_MD_CTX_set_update_fn(EVP_MD_CTX *ctx,
 
 void EVP_MD_CTX_set_flags(EVP_MD_CTX *ctx, int flags)
 {
-    ctx->flags |= flags;
+    if (ctx != NULL)
+        ctx->flags |= flags;
 }
 
 void EVP_MD_CTX_clear_flags(EVP_MD_CTX *ctx, int flags)
 {
-    ctx->flags &= ~flags;
+    if (ctx != NULL)
+        ctx->flags &= ~flags;
 }
 
 int EVP_MD_CTX_test_flags(const EVP_MD_CTX *ctx, int flags)
 {
-    return (ctx->flags & flags);
+    return ctx != NULL ? (ctx->flags & flags) : 0;
 }
 
 static int evp_cipher_ctx_enable_use_bits(EVP_CIPHER_CTX *ctx,
