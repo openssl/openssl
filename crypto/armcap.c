@@ -171,6 +171,7 @@ static unsigned long getauxval(unsigned long key)
 #  define HWCAP_CE_SHA1          (1 << 5)
 #  define HWCAP_CE_SHA256        (1 << 6)
 #  define HWCAP_CPUID            (1 << 11)
+#  define HWCAP_SHA3             (1 << 17)
 #  define HWCAP_CE_SM3           (1 << 18)
 #  define HWCAP_CE_SM4           (1 << 19)
 #  define HWCAP_CE_SHA512        (1 << 21)
@@ -216,11 +217,20 @@ void OPENSSL_cpuid_setup(void)
      */
 #   else
     {
-        unsigned int sha512;
-        size_t len = sizeof(sha512);
+        unsigned int feature;
+        size_t len = sizeof(feature);
+        char uarch[64];
 
-        if (sysctlbyname("hw.optional.armv8_2_sha512", &sha512, &len, NULL, 0) == 0 && sha512 == 1)
+        if (sysctlbyname("hw.optional.armv8_2_sha512", &feature, &len, NULL, 0) == 0 && feature == 1)
             OPENSSL_armcap_P |= ARMV8_SHA512;
+        feature = 0;
+        if (sysctlbyname("hw.optional.armv8_2_sha3", &feature, &len, NULL, 0) == 0 && feature == 1) {
+            OPENSSL_armcap_P |= ARMV8_SHA3;
+            len = sizeof(uarch);
+            if ((sysctlbyname("machdep.cpu.brand_string", uarch, &len, NULL, 0) == 0) &&
+                (strncmp(uarch, "Apple M1", 8) == 0))
+                OPENSSL_armcap_P |= ARMV8_UNROLL8_EOR3;
+        }
     }
 #   endif
 # endif
@@ -255,6 +265,8 @@ void OPENSSL_cpuid_setup(void)
 
         if (hwcap & HWCAP_CE_SM3)
             OPENSSL_armcap_P |= ARMV8_SM3;
+        if (hwcap & HWCAP_SHA3)
+            OPENSSL_armcap_P |= ARMV8_SHA3;
 #  endif
     }
 #  ifdef __aarch64__
@@ -311,6 +323,9 @@ void OPENSSL_cpuid_setup(void)
         if (sigsetjmp(ill_jmp, 1) == 0) {
             _armv8_sm3_probe();
             OPENSSL_armcap_P |= ARMV8_SM3;
+        if (sigsetjmp(ill_jmp, 1) == 0) {
+            _armv8_eor3_probe();
+            OPENSSL_armcap_P |= ARMV8_SHA3;
         }
 #  endif
     }
@@ -340,6 +355,9 @@ void OPENSSL_cpuid_setup(void)
         (OPENSSL_armcap_P & ARMV7_NEON)) {
             OPENSSL_armv8_rsa_neonized = 1;
     }
+    if ((MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_V1)) &&
+        (OPENSSL_armcap_P & ARMV8_SHA3))
+        OPENSSL_armcap_P |= ARMV8_UNROLL8_EOR3;
 # endif
 }
 #endif
