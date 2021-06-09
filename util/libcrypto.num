@@ -1144,7 +1144,7 @@ BN_security_bits                        1171	3_0_0	EXIST::FUNCTION:
 X509_PURPOSE_get0_name                  1172	3_0_0	EXIST::FUNCTION:
 TS_TST_INFO_get_serial                  1173	3_0_0	EXIST::FUNCTION:TS
 ASN1_PCTX_get_str_flags                 1174	3_0_0	EXIST::FUNCTION:
-SHA256                                  1175	3_0_0	NOEXIST::FUNCTION:
+SHA256                                  1175	3_0_0	EXIST::FUNCTION:
 X509_LOOKUP_hash_dir                    1176	3_0_0	EXIST::FUNCTION:
 ASN1_BIT_STRING_check                   1177	3_0_0	EXIST::FUNCTION:
 ENGINE_set_default_RAND                 1178	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,ENGINE
@@ -1375,7 +1375,7 @@ EVP_MD_meth_get_cleanup                 1408	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_
 SRP_Calc_server_key                     1409	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,SRP
 BN_mod_exp_simple                       1410	3_0_0	EXIST::FUNCTION:
 BIO_set_ex_data                         1411	3_0_0	EXIST::FUNCTION:
-SHA512                                  1412	3_0_0	NOEXIST::FUNCTION:
+SHA512                                  1412	3_0_0	EXIST::FUNCTION:
 X509_STORE_CTX_get_explicit_policy      1413	3_0_0	EXIST::FUNCTION:
 EVP_DecodeBlock                         1414	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_REQ_CTX_set_request_line      1415	3_0_0	EXIST::FUNCTION:
@@ -2460,7 +2460,7 @@ BN_generate_dsa_nonce                   2512	3_0_0	EXIST::FUNCTION:
 X509_verify_cert                        2513	3_0_0	EXIST::FUNCTION:
 X509_policy_level_get0_node             2514	3_0_0	EXIST::FUNCTION:
 X509_REQ_get_attr                       2515	3_0_0	EXIST::FUNCTION:
-SHA1                                    2516	3_0_0	NOEXIST::FUNCTION:
+SHA1                                    2516	3_0_0	EXIST::FUNCTION:
 X509_print                              2517	3_0_0	EXIST::FUNCTION:
 d2i_AutoPrivateKey                      2518	3_0_0	EXIST::FUNCTION:
 X509_REQ_new                            2519	3_0_0	EXIST::FUNCTION:
@@ -2927,7 +2927,7 @@ EC_GROUP_set_asn1_flag                  2991	3_0_0	EXIST::FUNCTION:EC
 EVP_PKEY_new                            2992	3_0_0	EXIST::FUNCTION:
 i2d_POLICYINFO                          2993	3_0_0	EXIST::FUNCTION:
 BN_get_flags                            2994	3_0_0	EXIST::FUNCTION:
-SHA384                                  2995	3_0_0	NOEXIST::FUNCTION:
+SHA384                                  2995	3_0_0	EXIST::FUNCTION:
 NCONF_get_string                        2996	3_0_0	EXIST::FUNCTION:
 d2i_PROXY_CERT_INFO_EXTENSION           2997	3_0_0	EXIST::FUNCTION:
 EC_POINT_point2buf                      2998	3_0_0	EXIST::FUNCTION:EC
@@ -3510,7 +3510,7 @@ EVP_MD_meth_dup                         3588	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_
 ENGINE_unregister_ciphers               3589	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,ENGINE
 X509_issuer_and_serial_cmp              3590	3_0_0	EXIST::FUNCTION:
 OCSP_response_create                    3591	3_0_0	EXIST::FUNCTION:OCSP
-SHA224                                  3592	3_0_0	NOEXIST::FUNCTION:
+SHA224                                  3592	3_0_0	EXIST::FUNCTION:
 MD2_options                             3593	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,MD2
 X509_REQ_it                             3595	3_0_0	EXIST::FUNCTION:
 RAND_bytes                              3596	3_0_0	EXIST::FUNCTION:
