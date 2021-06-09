@@ -485,6 +485,7 @@ void EVP_KEYEXCH_do_all_provided(OSSL_LIB_CTX *libctx,
     evp_generic_do_all(libctx, OSSL_OP_KEYEXCH,
                        (void (*)(void *, void *))fn, arg,
                        evp_keyexch_from_algorithm,
+                       (int (*)(void *))EVP_KEYEXCH_up_ref,
                        (void (*)(void *))EVP_KEYEXCH_free);
 }
 

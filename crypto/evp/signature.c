@@ -342,6 +342,7 @@ void EVP_SIGNATURE_do_all_provided(OSSL_LIB_CTX *libctx,
     evp_generic_do_all(libctx, OSSL_OP_SIGNATURE,
                        (void (*)(void *, void *))fn, arg,
                        evp_signature_from_algorithm,
+                       (int (*)(void *))EVP_SIGNATURE_up_ref,
                        (void (*)(void *))EVP_SIGNATURE_free);
 }
 

@@ -1649,5 +1649,6 @@ void EVP_CIPHER_do_all_provided(OSSL_LIB_CTX *libctx,
 {
     evp_generic_do_all(libctx, OSSL_OP_CIPHER,
                        (void (*)(void *, void *))fn, arg,
-                       evp_cipher_from_algorithm, evp_cipher_free);
+                       evp_cipher_from_algorithm, evp_cipher_up_ref,
+                       evp_cipher_free);
 }
