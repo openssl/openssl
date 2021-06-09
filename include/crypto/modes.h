@@ -118,8 +118,8 @@ struct gcm128_context {
         size_t t[16 / sizeof(size_t)];
     } Yi, EKi, EK0, len, Xi, H;
     /*
-     * Relative position of Xi, H and pre-computed Htable is used in some
-     * assembler modules, i.e. don't change the order!
+     * Relative position of Yi, EKi, EK0, len, Xi, H and pre-computed Htable is
+     * used in some assembler modules, i.e. don't change the order!
      */
 #if TABLE_BITS==8
     u128 Htable[256];

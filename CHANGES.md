@@ -36,6 +36,10 @@ OpenSSL 3.1
 
    *Felipe Gasper*
 
+ * AES-GCM enabled with AVX512 vAES and vPCLMULQDQ.
+
+   *Tomasz Kantecki, Andrey Matyukov*
+
  * The various OBJ_* functions have been made thread safe.
 
    *Paul Dale*
