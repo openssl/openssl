@@ -684,8 +684,8 @@ breaking changes, and mappings for the large list of deprecated functions.
 
    *Paul Dale*
 
- * The low-level MD2, MD4, MD5, MDC2, RIPEMD160, SHA1, SHA224, SHA256,
-   SHA384, SHA512 and Whirlpool digest functions have been deprecated.
+ * The low-level MD2, MD4, MD5, MDC2, RIPEMD160 and Whirlpool digest
+   functions have been deprecated.
 
    *Paul Dale and David von Oheimb*
 
