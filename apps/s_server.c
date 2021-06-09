@@ -2003,7 +2003,8 @@ int s_server_main(int argc, char *argv[])
         if (dhfile != NULL)
             dhpkey = load_keyparams(dhfile, FORMAT_UNDEF, 0, "DH", "DH parameters");
         else if (s_cert_file != NULL)
-            dhpkey = load_keyparams(s_cert_file, FORMAT_UNDEF, 0, "DH", "DH parameters");
+            dhpkey = load_keyparams_suppress(s_cert_file, FORMAT_UNDEF, 0, "DH",
+                                             "DH parameters", 1);
 
         if (dhpkey != NULL) {
             BIO_printf(bio_s_out, "Setting temp DH parameters\n");
@@ -2035,9 +2036,10 @@ int s_server_main(int argc, char *argv[])
 
         if (ctx2 != NULL) {
             if (dhfile != NULL) {
-                EVP_PKEY *dhpkey2 = load_keyparams(s_cert_file2, FORMAT_UNDEF,
-                                                   0, "DH",
-                                                   "DH parameters");
+                EVP_PKEY *dhpkey2 = load_keyparams_suppress(s_cert_file2,
+                                                            FORMAT_UNDEF,
+                                                            0, "DH",
+                                                            "DH parameters", 1);
 
                 if (dhpkey2 != NULL) {
                     BIO_printf(bio_s_out, "Setting temp DH parameters\n");

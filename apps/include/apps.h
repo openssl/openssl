@@ -121,6 +121,9 @@ EVP_PKEY *load_pubkey(const char *uri, int format, int maybe_stdin,
                       const char *pass, ENGINE *e, const char *desc);
 EVP_PKEY *load_keyparams(const char *uri, int format, int maybe_stdin,
                          const char *keytype, const char *desc);
+EVP_PKEY *load_keyparams_suppress(const char *uri, int format, int maybe_stdin,
+                                  const char *keytype, const char *desc,
+                                  int suppress_decode_errors);
 char *next_item(char *opt); /* in list separated by comma and/or space */
 int load_cert_certs(const char *uri,
                     X509 **pcert, STACK_OF(X509) **pcerts,

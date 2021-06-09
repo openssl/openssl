@@ -75,6 +75,14 @@ static int set_table_opts(unsigned long *flags, const char *arg,
                           const NAME_EX_TBL * in_tbl);
 static int set_multi_opts(unsigned long *flags, const char *arg,
                           const NAME_EX_TBL * in_tbl);
+static
+int load_key_certs_crls_suppress(const char *uri, int format, int maybe_stdin,
+                                 const char *pass, const char *desc,
+                                 EVP_PKEY **ppkey, EVP_PKEY **ppubkey,
+                                 EVP_PKEY **pparams,
+                                 X509 **pcert, STACK_OF(X509) **pcerts,
+                                 X509_CRL **pcrl, STACK_OF(X509_CRL) **pcrls,
+                                 int suppress_decode_errors);
 
 int app_init(long mesgwin);
 
@@ -605,25 +613,35 @@ EVP_PKEY *load_pubkey(const char *uri, int format, int maybe_stdin,
     return pkey;
 }
 
-EVP_PKEY *load_keyparams(const char *uri, int format, int maybe_stdin,
-                         const char *keytype, const char *desc)
+EVP_PKEY *load_keyparams_suppress(const char *uri, int format, int maybe_stdin,
+                                 const char *keytype, const char *desc,
+                                 int suppress_decode_errors)
 {
     EVP_PKEY *params = NULL;
 
     if (desc == NULL)
         desc = "key parameters";
 
-    (void)load_key_certs_crls(uri, format, maybe_stdin, NULL, desc,
-                              NULL, NULL, &params, NULL, NULL, NULL, NULL);
+    (void)load_key_certs_crls_suppress(uri, format, maybe_stdin, NULL, desc,
+                                       NULL, NULL, &params, NULL, NULL, NULL,
+                                       NULL, suppress_decode_errors);
     if (params != NULL && keytype != NULL && !EVP_PKEY_is_a(params, keytype)) {
-        BIO_printf(bio_err,
-                   "Unable to load %s from %s (unexpected parameters type)\n",
-                   desc, uri);
-        ERR_print_errors(bio_err);
+        if (!suppress_decode_errors) {
+            BIO_printf(bio_err,
+                       "Unable to load %s from %s (unexpected parameters type)\n",
+                       desc, uri);
+            ERR_print_errors(bio_err);
+        }
         EVP_PKEY_free(params);
         params = NULL;
     }
     return params;
+}
+
+EVP_PKEY *load_keyparams(const char *uri, int format, int maybe_stdin,
+                         const char *keytype, const char *desc)
+{
+    return load_keyparams_suppress(uri, format, maybe_stdin, keytype, desc, 0);
 }
 
 void app_bail_out(char *fmt, ...)
@@ -866,12 +884,14 @@ static const char *format2string(int format)
  * In any case (also on error) the caller is responsible for freeing all members
  * of *pcerts and *pcrls (as far as they are not NULL).
  */
-int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
-                        const char *pass, const char *desc,
-                        EVP_PKEY **ppkey, EVP_PKEY **ppubkey,
-                        EVP_PKEY **pparams,
-                        X509 **pcert, STACK_OF(X509) **pcerts,
-                        X509_CRL **pcrl, STACK_OF(X509_CRL) **pcrls)
+static
+int load_key_certs_crls_suppress(const char *uri, int format, int maybe_stdin,
+                                 const char *pass, const char *desc,
+                                 EVP_PKEY **ppkey, EVP_PKEY **ppubkey,
+                                 EVP_PKEY **pparams,
+                                 X509 **pcert, STACK_OF(X509) **pcerts,
+                                 X509_CRL **pcrl, STACK_OF(X509_CRL) **pcrls,
+                                 int suppress_decode_errors)
 {
     PW_CB_DATA uidata;
     OSSL_STORE_CTX *ctx = NULL;
@@ -889,6 +909,9 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
     const char *input_type;
     OSSL_PARAM itp[2];
     const OSSL_PARAM *params = NULL;
+
+    if (suppress_decode_errors)
+        ERR_set_mark();
 
     if (ppkey != NULL) {
         *ppkey = NULL;
@@ -1074,12 +1097,14 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
                 any = 1;
             failed = "CRL";
         }
-        if (failed != NULL)
-            BIO_printf(bio_err, "Could not read");
-        if (any)
-            BIO_printf(bio_err, " any");
+        if (!suppress_decode_errors) {
+            if (failed != NULL)
+                BIO_printf(bio_err, "Could not read");
+            if (any)
+                BIO_printf(bio_err, " any");
+        }
     }
-    if (failed != NULL) {
+    if (!suppress_decode_errors && failed != NULL) {
         if (desc != NULL && strstr(desc, failed) != NULL) {
             BIO_printf(bio_err, " %s", desc);
         } else {
@@ -1092,9 +1117,22 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
         BIO_printf(bio_err, "\n");
         ERR_print_errors(bio_err);
     }
+    if (suppress_decode_errors)
+        ERR_pop_to_mark();
     return failed == NULL;
 }
 
+int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
+                        const char *pass, const char *desc,
+                        EVP_PKEY **ppkey, EVP_PKEY **ppubkey,
+                        EVP_PKEY **pparams,
+                        X509 **pcert, STACK_OF(X509) **pcerts,
+                        X509_CRL **pcrl, STACK_OF(X509_CRL) **pcrls)
+{
+    return load_key_certs_crls_suppress(uri, format, maybe_stdin, pass, desc,
+                                        ppkey, ppubkey, pparams, pcert, pcerts,
+                                        pcrl, pcrls, 0);
+}
 
 #define X509V3_EXT_UNKNOWN_MASK         (0xfL << 16)
 /* Return error for unknown extensions */
