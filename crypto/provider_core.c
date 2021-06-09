@@ -483,6 +483,7 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
 int ossl_provider_set_module_path(OSSL_PROVIDER *prov, const char *module_path)
 {
     OPENSSL_free(prov->path);
+    prov->path = NULL;
     if (module_path == NULL)
         return 1;
     if ((prov->path = OPENSSL_strdup(module_path)) != NULL)
