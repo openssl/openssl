@@ -81,7 +81,12 @@ OSSL_PROVIDER_load() loads and initializes a provider.
 This may simply initialize a provider that was previously added with
 OSSL_PROVIDER_add_builtin() and run its given initialization function,
 or load a provider module with the given name and run its provider
-entry point, C<OSSL_provider_init>.
+entry point, C<OSSL_provider_init>. The I<name> can be a path
+to a provider module, in that case the provider name as returned
+by OSSL_PROVIDER_get0_name() will be the path. Interpretation
+of relative paths is platform dependent and they are relative
+to the configured "MODULESDIR" directory or the path set in
+the environment variable OPENSSL_MODULES if set.
 
 OSSL_PROVIDER_try_load() functions like OSSL_PROVIDER_load(), except that
 it does not disable the fallback providers if the provider cannot be
