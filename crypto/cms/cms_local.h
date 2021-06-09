@@ -404,7 +404,9 @@ int ossl_cms_DigestedData_do_final(const CMS_ContentInfo *cms,
                                    BIO *chain, int verify);
 
 BIO *ossl_cms_SignedData_init_bio(CMS_ContentInfo *cms);
-int ossl_cms_SignedData_final(CMS_ContentInfo *cms, BIO *chain);
+int ossl_cms_SignedData_final(CMS_ContentInfo *cms, BIO *chain,
+                              const unsigned char *precomp_md,
+                              unsigned int precomp_mdlen);
 int ossl_cms_set1_SignerIdentifier(CMS_SignerIdentifier *sid, X509 *cert,
                                    int type, const CMS_CTX *ctx);
 int ossl_cms_SignerIdentifier_get0_signer_id(CMS_SignerIdentifier *sid,
