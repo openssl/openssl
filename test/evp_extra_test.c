@@ -1294,7 +1294,7 @@ static int test_EVP_PKCS82PKEY_wrong_tag(void)
         || !TEST_int_gt(BIO_get_mem_data(membio, &membuf), 0)
         || !TEST_ptr(p8inf = d2i_PKCS8_PRIV_KEY_INFO_bio(membio, NULL))
         || !TEST_ptr(pkey2 = EVP_PKCS82PKEY(p8inf))
-        || !TEST_int_eq(ERR_get_error(), 0)) {
+        || !TEST_int_eq(ERR_peek_last_error(), 0)) {
         goto done;
     }
 
