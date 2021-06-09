@@ -1543,6 +1543,8 @@ static OSSL_FUNC_core_vset_error_fn core_vset_error;
 static OSSL_FUNC_core_set_error_mark_fn core_set_error_mark;
 static OSSL_FUNC_core_clear_last_error_mark_fn core_clear_last_error_mark;
 static OSSL_FUNC_core_pop_error_to_mark_fn core_pop_error_to_mark;
+static OSSL_FUNC_core_obj_add_sigid_fn core_obj_add_sigid;
+static OSSL_FUNC_core_obj_create_fn core_obj_create;
 #endif
 
 static const OSSL_PARAM *core_gettable_params(const OSSL_CORE_HANDLE *handle)
@@ -1673,6 +1675,39 @@ static int core_pop_error_to_mark(const OSSL_CORE_HANDLE *handle)
 {
     return ERR_pop_to_mark();
 }
+
+static int core_obj_add_sigid(const OSSL_CORE_HANDLE *prov,
+                              const char *sign_name, const char *digest_name,
+                              const char *pkey_name)
+{
+    int sign_nid = OBJ_txt2nid(sign_name);
+    int digest_nid = OBJ_txt2nid(digest_name);
+    int pkey_nid = OBJ_txt2nid(pkey_name);
+
+    if (sign_nid == NID_undef)
+        return 0;
+
+    /*
+     * Check if it already exists. This is a success if so (even if we don't
+     * have nids for the digest/pkey)
+     */
+    if (OBJ_find_sigid_algs(sign_nid, NULL, NULL))
+        return 1;
+
+    if (digest_nid == NID_undef
+            || pkey_nid == NID_undef)
+        return 0;
+
+    return OBJ_add_sigid(sign_nid, digest_nid, pkey_nid);
+}
+
+static int core_obj_create(const OSSL_CORE_HANDLE *prov, const char *oid,
+                           const char *sn, const char *ln)
+{
+    /* Check if it already exists and create it if not */
+    return OBJ_txt2nid(oid) != NID_undef
+           || OBJ_create(oid, sn, ln) != NID_undef;
+}
 #endif /* FIPS_MODULE */
 
 /*
@@ -1737,6 +1772,8 @@ static const OSSL_DISPATCH core_dispatch_[] = {
         (void (*)(void))provider_up_ref_intern },
     { OSSL_FUNC_PROVIDER_FREE,
         (void (*)(void))provider_free_intern },
+    { OSSL_FUNC_CORE_OBJ_ADD_SIGID, (void (*)(void))core_obj_add_sigid },
+    { OSSL_FUNC_CORE_OBJ_CREATE, (void (*)(void))core_obj_create },
 #endif
     { 0, NULL }
 };
