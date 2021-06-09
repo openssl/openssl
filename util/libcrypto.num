@@ -4878,7 +4878,7 @@ OSSL_HTTP_REQ_CTX_set_expected          ?	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_is_alive                      ?	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_open                          ?	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_proxy_connect                 ?	3_0_0	EXIST::FUNCTION:
-OSSL_HTTP_set_request                   ?	3_0_0	EXIST::FUNCTION:
+OSSL_HTTP_set1_request                  ?	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_exchange                      ?	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_get                           ?	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_transfer                      ?	3_0_0	EXIST::FUNCTION:
