@@ -18,7 +18,7 @@ defined:
 
 =over 4
 
-=item "provider=default"
+=item "provider=fips"
 
 =item "fips=yes"
 
