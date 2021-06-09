@@ -200,9 +200,12 @@ int OSSL_HTTP_REQ_CTX_set_request_line(OSSL_HTTP_REQ_CTX *rctx, int method_POST,
         path = "/";
     if (path[0] != '/' && BIO_printf(rctx->mem, "/") <= 0)
         return 0;
-
+    /*
+     * Add (the rest of) the path and the HTTP version,
+     * which is fixed to 1.0 for straightforward implementation of keep-alive */
     if (BIO_printf(rctx->mem, "%s "HTTP_1_0"\r\n", path) <= 0)
         return 0;
+
     rctx->resp_len = 0;
     rctx->state = OHS_ADD_HEADERS;
     return 1;
@@ -275,42 +278,36 @@ static int set1_content(OSSL_HTTP_REQ_CTX *rctx,
             && !OSSL_HTTP_REQ_CTX_add1_header(rctx, "Connection", "keep-alive"))
         return 0;
 
+    BIO_free(rctx->req);
+    rctx->req = NULL;
     if (req == NULL)
         return 1;
     if (!rctx->method_POST) {
         ERR_raise(ERR_LIB_HTTP, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
+    if (!BIO_up_ref(req))
+        return 0;
+    rctx->req = req;
 
     if (content_type != NULL
             && BIO_printf(rctx->mem, "Content-Type: %s\r\n", content_type) <= 0)
         return 0;
 
     /* streaming BIO may not support querying size */
-    if ((req_len = BIO_ctrl(req, BIO_CTRL_INFO, 0, NULL)) <= 0
-        || BIO_printf(rctx->mem, "Content-Length: %ld\r\n", req_len) > 0) {
-        if (!BIO_up_ref(req))
-            return 0;
-        BIO_free(rctx->req);
-        rctx->req = req;
-        return 1;
-    }
-    return 0;
+    return (req_len = BIO_ctrl(req, BIO_CTRL_INFO, 0, NULL)) <= 0
+        || BIO_printf(rctx->mem, "Content-Length: %ld\r\n", req_len) > 0;
 }
 
 int OSSL_HTTP_REQ_CTX_set1_req(OSSL_HTTP_REQ_CTX *rctx, const char *content_type,
                                const ASN1_ITEM *it, const ASN1_VALUE *req)
 {
-    BIO *mem;
-    int res;
+    BIO *mem = NULL;
+    int res = 1;
 
-    if (rctx == NULL || it == NULL || req == NULL) {
-        ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
-    }
-
-    res = (mem = ASN1_item_i2d_mem_bio(it, req)) != NULL
-        && set1_content(rctx, content_type, mem);
+    if (req != NULL)
+        res = (mem = ASN1_item_i2d_mem_bio(it, req)) != NULL;
+    res = res && set1_content(rctx, content_type, mem);
     BIO_free(mem);
     return res;
 }
