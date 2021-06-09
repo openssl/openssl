@@ -24,8 +24,10 @@ static int gen_init(EVP_PKEY_CTX *ctx, int operation)
 {
     int ret = 0;
 
-    if (ctx == NULL)
-        goto not_supported;
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return -2;
+    }
 
     evp_pkey_ctx_free_old_ops(ctx);
     ctx->operation = operation;
@@ -131,11 +133,16 @@ int EVP_PKEY_generate(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
     /* Legacy compatible keygen callback info, only used with provider impls */
     int gentmp[2];
 
-    if (ppkey == NULL)
+    if (ppkey == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
         return -1;
+    }
 
-    if (ctx == NULL)
-        goto not_supported;
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        ret = -1;
+        goto end;
+    }
 
     if ((ctx->operation & EVP_PKEY_OP_TYPE_GEN) == 0)
         goto not_initialized;
@@ -152,7 +159,7 @@ int EVP_PKEY_generate(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
         goto legacy;
 
     /*
-     * Asssigning gentmp to ctx->keygen_info is something our legacy
+     * Assigning gentmp to ctx->keygen_info is something our legacy
      * implementations do.  Because the provider implementations aren't
      * allowed to reach into our EVP_PKEY_CTX, we need to provide similar
      * space for backward compatibility.  It's ok that we attach a local
@@ -257,6 +264,10 @@ int EVP_PKEY_generate(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
 
 int EVP_PKEY_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
 {
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
+    }
     if (ctx->operation != EVP_PKEY_OP_PARAMGEN) {
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_INITIALIZED);
         return -1;
@@ -266,6 +277,10 @@ int EVP_PKEY_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
 
 int EVP_PKEY_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
 {
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
+    }
     if (ctx->operation != EVP_PKEY_OP_KEYGEN) {
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_INITIALIZED);
         return -1;
@@ -275,12 +290,13 @@ int EVP_PKEY_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
 
 void EVP_PKEY_CTX_set_cb(EVP_PKEY_CTX *ctx, EVP_PKEY_gen_cb *cb)
 {
-    ctx->pkey_gencb = cb;
+    if (ctx != NULL)
+        ctx->pkey_gencb = cb;
 }
 
 EVP_PKEY_gen_cb *EVP_PKEY_CTX_get_cb(EVP_PKEY_CTX *ctx)
 {
-    return ctx->pkey_gencb;
+    return ctx != NULL ? ctx->pkey_gencb : NULL;
 }
 
 /*
@@ -303,6 +319,10 @@ void evp_pkey_set_cb_translate(BN_GENCB *cb, EVP_PKEY_CTX *ctx)
 
 int EVP_PKEY_CTX_get_keygen_info(EVP_PKEY_CTX *ctx, int idx)
 {
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
     if (idx == -1)
         return ctx->keygen_info_count;
     if (idx < 0 || idx > ctx->keygen_info_count)
@@ -317,6 +337,7 @@ EVP_PKEY *EVP_PKEY_new_mac_key(int type, ENGINE *e,
 {
     EVP_PKEY_CTX *mac_ctx = NULL;
     EVP_PKEY *mac_key = NULL;
+
     mac_ctx = EVP_PKEY_CTX_new_id(type, e);
     if (!mac_ctx)
         return NULL;
@@ -337,7 +358,12 @@ EVP_PKEY *EVP_PKEY_new_mac_key(int type, ENGINE *e,
 
 static int fromdata_init(EVP_PKEY_CTX *ctx, int operation)
 {
-    if (ctx == NULL || ctx->keytype == NULL)
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
+    }
+
+    if (ctx->keytype == NULL)
         goto not_supported;
 
     evp_pkey_ctx_free_old_ops(ctx);
@@ -348,8 +374,7 @@ static int fromdata_init(EVP_PKEY_CTX *ctx, int operation)
     return 1;
 
  not_supported:
-    if (ctx != NULL)
-        ctx->operation = EVP_PKEY_OP_UNDEFINED;
+    ctx->operation = EVP_PKEY_OP_UNDEFINED;
     ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
     return -2;
 }
@@ -364,13 +389,16 @@ int EVP_PKEY_fromdata(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey, int selection,
 {
     void *keydata = NULL;
 
-    if (ctx == NULL || (ctx->operation & EVP_PKEY_OP_FROMDATA) == 0) {
+    if (ctx == NULL || ppkey == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
+    }
+
+    if ((ctx->operation & EVP_PKEY_OP_FROMDATA) == 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
 
-    if (ppkey == NULL)
-        return -1;
 
     if (*ppkey == NULL)
         *ppkey = EVP_PKEY_new();
@@ -407,8 +435,10 @@ static int ossl_pkey_todata_cb(const OSSL_PARAM params[], void *arg)
 
 int EVP_PKEY_todata(const EVP_PKEY *pkey, int selection, OSSL_PARAM **params)
 {
-    if (params == NULL)
+    if (params == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
+    }
     return EVP_PKEY_export(pkey, selection, ossl_pkey_todata_cb, params);
 }
 

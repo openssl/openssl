@@ -85,6 +85,11 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
     ENGINE *tmpimpl = NULL;
 #endif
+
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
     /*
      * enc == 1 means we are encrypting.
      * enc == 0 means we are decrypting.
@@ -396,6 +401,8 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 int EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
                      const unsigned char *in, int inl)
 {
+    if (ctx == NULL)
+        return 0;
     if (ctx->encrypt)
         return EVP_EncryptUpdate(ctx, out, outl, in, inl);
     else
@@ -404,6 +411,8 @@ int EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 
 int EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 {
+    if (ctx == NULL)
+        return 0;
     if (ctx->encrypt)
         return EVP_EncryptFinal_ex(ctx, out, outl);
     else
@@ -412,6 +421,8 @@ int EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 
 int EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 {
+    if (ctx == NULL)
+        return 0;
     if (ctx->encrypt)
         return EVP_EncryptFinal(ctx, out, outl);
     else
@@ -593,7 +604,7 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     size_t soutl;
     int blocksize;
 
-    if (outl != NULL) {
+    if (outl != NULL && ctx != NULL) {
         *outl = 0;
     } else {
         ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
@@ -642,9 +653,7 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 
 int EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 {
-    int ret;
-    ret = EVP_EncryptFinal_ex(ctx, out, outl);
-    return ret;
+    return EVP_EncryptFinal_ex(ctx, out, outl);
 }
 
 int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
@@ -654,7 +663,7 @@ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
     size_t soutl;
     int blocksize;
 
-    if (outl != NULL) {
+    if (outl != NULL && ctx != NULL) {
         *outl = 0;
     } else {
         ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
@@ -741,7 +750,7 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     size_t soutl;
     int blocksize;
 
-    if (outl != NULL) {
+    if (outl != NULL && ctx != NULL) {
         *outl = 0;
     } else {
         ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
@@ -862,9 +871,7 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 
 int EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 {
-    int ret;
-    ret = EVP_DecryptFinal_ex(ctx, out, outl);
-    return ret;
+    return EVP_DecryptFinal_ex(ctx, out, outl);
 }
 
 int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
@@ -875,7 +882,7 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
     int ret;
     int blocksize;
 
-    if (outl != NULL) {
+    if (outl != NULL && ctx != NULL) {
         *outl = 0;
     } else {
         ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
@@ -971,6 +978,9 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 
 int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
 {
+    if (c == NULL || c->cipher == NULL)
+        return 0;
+
     if (c->cipher->prov != NULL) {
         int ok;
         OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
@@ -1013,6 +1023,9 @@ int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *ctx, int pad)
     int ok;
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
     unsigned int pd = pad;
+
+    if (ctx == NULL)
+        return 0;
 
     if (pad)
         ctx->flags &= ~EVP_CIPH_NO_PADDING;
@@ -1241,14 +1254,18 @@ int EVP_CIPHER_get_params(EVP_CIPHER *cipher, OSSL_PARAM params[])
 
 int EVP_CIPHER_CTX_set_params(EVP_CIPHER_CTX *ctx, const OSSL_PARAM params[])
 {
-    if (ctx->cipher != NULL && ctx->cipher->set_ctx_params != NULL)
+    if (ctx != NULL
+        && ctx->cipher != NULL
+        && ctx->cipher->set_ctx_params != NULL)
         return ctx->cipher->set_ctx_params(ctx->algctx, params);
     return 0;
 }
 
 int EVP_CIPHER_CTX_get_params(EVP_CIPHER_CTX *ctx, OSSL_PARAM params[])
 {
-    if (ctx->cipher != NULL && ctx->cipher->get_ctx_params != NULL)
+    if (ctx != NULL
+        && ctx->cipher != NULL
+        && ctx->cipher->get_ctx_params != NULL)
         return ctx->cipher->get_ctx_params(ctx->algctx, params);
     return 0;
 }
@@ -1308,19 +1325,20 @@ const OSSL_PARAM *EVP_CIPHER_CTX_gettable_params(EVP_CIPHER_CTX *cctx)
 #ifndef FIPS_MODULE
 static OSSL_LIB_CTX *EVP_CIPHER_CTX_get_libctx(EVP_CIPHER_CTX *ctx)
 {
-    const EVP_CIPHER *cipher = ctx->cipher;
     const OSSL_PROVIDER *prov;
 
-    if (cipher == NULL)
+    if (ctx == NULL)
         return NULL;
-
-    prov = EVP_CIPHER_get0_provider(cipher);
+    prov = EVP_CIPHER_get0_provider(ctx->cipher);
     return ossl_provider_libctx(prov);
 }
 #endif
 
 int EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key)
 {
+    if (ctx == NULL)
+        return 0;
+
     if (ctx->cipher->flags & EVP_CIPH_RAND_KEY)
         return EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_RAND_KEY, 0, key);
 
@@ -1341,7 +1359,7 @@ int EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key)
 
 int EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
 {
-    if ((in == NULL) || (in->cipher == NULL)) {
+    if (in == NULL || in->cipher == NULL || out == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INPUT_NOT_INITIALIZED);
         return 0;
     }

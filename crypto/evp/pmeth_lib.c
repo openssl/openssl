@@ -1523,12 +1523,12 @@ int evp_pkey_ctx_use_cached_data(EVP_PKEY_CTX *ctx)
 
 OSSL_LIB_CTX *EVP_PKEY_CTX_get0_libctx(EVP_PKEY_CTX *ctx)
 {
-    return ctx->libctx;
+    return ctx != NULL ? ctx->libctx : NULL;
 }
 
 const char *EVP_PKEY_CTX_get0_propq(EVP_PKEY_CTX *ctx)
 {
-    return ctx->propquery;
+    return ctx != NULL ? ctx->propquery : NULL;
 }
 
 /* Utility functions to send a string of hex string to a ctrl */

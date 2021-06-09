@@ -44,9 +44,14 @@ static int try_provided_check(EVP_PKEY_CTX *ctx, int selection, int checktype)
 
 static int evp_pkey_public_check_combined(EVP_PKEY_CTX *ctx, int checktype)
 {
-    EVP_PKEY *pkey = ctx->pkey;
+    EVP_PKEY *pkey;
     int ok;
 
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    pkey = ctx->pkey;
     if (pkey == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEY_SET);
         return 0;
@@ -88,9 +93,14 @@ int EVP_PKEY_public_check_quick(EVP_PKEY_CTX *ctx)
 
 static int evp_pkey_param_check_combined(EVP_PKEY_CTX *ctx, int checktype)
 {
-    EVP_PKEY *pkey = ctx->pkey;
+    EVP_PKEY *pkey;
     int ok;
 
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    pkey = ctx->pkey;
     if (pkey == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEY_SET);
         return 0;
@@ -133,9 +143,14 @@ int EVP_PKEY_param_check_quick(EVP_PKEY_CTX *ctx)
 
 int EVP_PKEY_private_check(EVP_PKEY_CTX *ctx)
 {
-    EVP_PKEY *pkey = ctx->pkey;
+    EVP_PKEY *pkey;
     int ok;
 
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    pkey = ctx->pkey;
     if (pkey == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEY_SET);
         return 0;
@@ -152,9 +167,14 @@ int EVP_PKEY_private_check(EVP_PKEY_CTX *ctx)
 
 int EVP_PKEY_pairwise_check(EVP_PKEY_CTX *ctx)
 {
-    EVP_PKEY *pkey = ctx->pkey;
+    EVP_PKEY *pkey;
     int ok;
 
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    pkey = ctx->pkey;
     if (pkey == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEY_SET);
         return 0;
@@ -171,9 +191,14 @@ int EVP_PKEY_pairwise_check(EVP_PKEY_CTX *ctx)
 
 int EVP_PKEY_check(EVP_PKEY_CTX *ctx)
 {
-    EVP_PKEY *pkey = ctx->pkey;
+    EVP_PKEY *pkey;
     int ok;
 
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    pkey = ctx->pkey;
     if (pkey == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEY_SET);
         return 0;

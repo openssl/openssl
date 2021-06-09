@@ -643,8 +643,6 @@ static int EVP_Cipher_loop(void *args)
     unsigned char *buf = tempargs->buf;
     int count;
 
-    if (tempargs->ctx == NULL)
-        return -1;
     for (count = 0; COND(c[algindex][testnum]); count++)
         if (EVP_Cipher(tempargs->ctx, buf, buf, (size_t)lengths[testnum]) <= 0)
             return -1;
