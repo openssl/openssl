@@ -322,6 +322,12 @@ int ossl_decoder_ctx_setup_for_pkey(OSSL_DECODER_CTX *ctx,
     int ok = 0;
     int isecoid = 0;
 
+    /* Pre-fetch all available decoders */
+    (void)OSSL_DECODER_fetch(libctx, NULL, NULL);
+
+    /* Pre-fetch all available keymgmts */
+    (void)EVP_KEYMGMT_fetch(libctx, NULL, NULL);
+
     if (keytype != NULL
             && (strcmp(keytype, "id-ecPublicKey") == 0
                 || strcmp(keytype, "1.2.840.10045.2.1") == 0))
@@ -401,8 +407,8 @@ int ossl_decoder_ctx_setup_for_pkey(OSSL_DECODER_CTX *ctx,
 
         collect_decoder_data.names = names;
         collect_decoder_data.ctx = ctx;
-        OSSL_DECODER_do_all_provided(libctx,
-                                     collect_decoder, &collect_decoder_data);
+        ossl_decoder_do_all_prefetched(libctx,
+                                       collect_decoder, &collect_decoder_data);
         sk_OPENSSL_CSTRING_free(names);
         names = NULL;
 
