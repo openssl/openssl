@@ -333,7 +333,7 @@ int ossl_x509_PUBKEY_get0_libctx(OSSL_LIB_CTX **plibctx, const char **ppropq,
 ASN1_OCTET_STRING *ossl_x509_pubkey_hash(X509_PUBKEY *pubkey);
 
 X509_PUBKEY *ossl_d2i_X509_PUBKEY_INTERNAL(const unsigned char **pp,
-                                           long len);
+                                           long len, OSSL_LIB_CTX *libctx);
 void ossl_X509_PUBKEY_INTERNAL_free(X509_PUBKEY *xpub);
 
 RSA *ossl_d2i_RSA_PSS_PUBKEY(RSA **a, const unsigned char **pp, long length);

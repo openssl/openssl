@@ -64,18 +64,21 @@ static int spki2typespki_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     if (!ossl_read_der(ctx->provctx, cin, &der, &len))
         return 1;
     derp = der;
-    xpub = ossl_d2i_X509_PUBKEY_INTERNAL((const unsigned char **)&derp, len);
+    xpub = ossl_d2i_X509_PUBKEY_INTERNAL((const unsigned char **)&derp, len,
+                                         PROV_LIBCTX_OF(ctx->provctx));
 
     /* We return "empty handed".  This is not an error. */
     if (xpub == NULL
             || !X509_PUBKEY_get0_param(NULL, NULL, NULL, &algor, xpub)) {
-        X509_PUBKEY_free(xpub);;
+        ossl_X509_PUBKEY_INTERNAL_free(xpub);
         return 1;
     }
     X509_ALGOR_get0(&oid, NULL, NULL, algor);
 
-    if (!OBJ_obj2txt(dataname, sizeof(dataname), oid, 0))
+    if (!OBJ_obj2txt(dataname, sizeof(dataname), oid, 0)) {
+        ossl_X509_PUBKEY_INTERNAL_free(xpub);
         return 0;
+    }
 
     ossl_X509_PUBKEY_INTERNAL_free(xpub);
     /*
