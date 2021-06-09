@@ -1736,6 +1736,11 @@ static const OSSL_DISPATCH core_dispatch_[] = {
         (void (*)(void))provider_up_ref_intern },
     { OSSL_FUNC_PROVIDER_FREE,
         (void (*)(void))provider_free_intern },
+    { OSSL_FUNC_OBJ_ADD_SIGID, (void (*)(void))OBJ_add_sigid },
+    { OSSL_FUNC_OBJ_CREATE, (void (*)(void))OBJ_create },
+    { OSSL_FUNC_OBJ_TXT2NID, (void (*)(void))OBJ_txt2nid },
+    { OSSL_FUNC_OBJ_SN2NID, (void (*)(void))OBJ_sn2nid },
+    { OSSL_FUNC_OBJ_LN2NID, (void (*)(void))OBJ_ln2nid },
 #endif
     { 0, NULL }
 };

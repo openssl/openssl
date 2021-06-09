@@ -212,6 +212,21 @@ OSSL_CORE_MAKE_FUNC(int, provider_up_ref,
 OSSL_CORE_MAKE_FUNC(int, provider_free,
                     (const OSSL_CORE_HANDLE *prov, int deactivate))
 
+/* Functions to access the OBJ database */
+
+#define OSSL_FUNC_OBJ_ADD_SIGID                112
+#define OSSL_FUNC_OBJ_CREATE                   113
+#define OSSL_FUNC_OBJ_TXT2NID                  114
+#define OSSL_FUNC_OBJ_SN2NID                   115
+#define OSSL_FUNC_OBJ_LN2NID                   116
+
+OSSL_CORE_MAKE_FUNC(int, OBJ_add_sigid, (int signid, int dig_id, int pkey_id))
+OSSL_CORE_MAKE_FUNC(int, OBJ_create, (const char *oid, const char *sn,
+                                      const char *ln))
+OSSL_CORE_MAKE_FUNC(int, OBJ_txt2nid, (const char *s))
+OSSL_CORE_MAKE_FUNC(int, OBJ_sn2nid, (const char *s))
+OSSL_CORE_MAKE_FUNC(int, OBJ_ln2nid, (const char *s))
+
 /* Functions provided by the provider to the Core, reserved numbers 1024-1535 */
 # define OSSL_FUNC_PROVIDER_TEARDOWN           1024
 OSSL_CORE_MAKE_FUNC(void,provider_teardown,(void *provctx))
