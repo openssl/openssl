@@ -57,7 +57,7 @@ jobs:
       run: nmake /S
     - name: test
       working-directory: _build
-      run: nmake test VERBOSE_FAILURE=yes TESTS=-test_fuzz* HARNESS_JOBS=4
+      run: nmake test VERBOSE_FAILURE=yes HARNESS_JOBS=4
   minimal:
     runs-on: windows-latest
     steps:
