@@ -12,3 +12,7 @@
 OSSL_ENCODER *ossl_encoder_fetch_by_number(OSSL_LIB_CTX *libctx, int id,
                                            const char *properties);
 int ossl_encoder_get_number(const OSSL_ENCODER *encoder);
+void ossl_encoder_do_all_prefetched(OSSL_LIB_CTX *libctx,
+                                    void (*user_fn)(OSSL_ENCODER *encoder,
+                                                    void *arg),
+                                    void *user_arg);
