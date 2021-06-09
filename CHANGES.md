@@ -41,6 +41,10 @@ OpenSSL 3.1
 
    *Felipe Gasper*
 
+ * AES-GCM enabled with AVX512 vAES and vPCLMULQDQ.
+
+   *Tomasz Kantecki, Andrey Matyukov*
+
  * The default SSL/TLS security level has been changed from 1 to 2. RSA,
    DSA and DH keys of 1024 bits and above and less than 2048 bits and ECC keys
    of 160 bits and above and less than 224 bits were previously accepted by
