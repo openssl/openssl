@@ -393,7 +393,13 @@ int BIO_write(BIO *b, const void *data, int dlen)
 
 int BIO_write_ex(BIO *b, const void *data, size_t dlen, size_t *written)
 {
-    return bio_write_intern(b, data, dlen, written) >= 0;
+    if (dlen == 0) {
+        /* no error */
+        if (written != NULL)
+            *written = 0;
+        return 1;
+    }
+    return bio_write_intern(b, data, dlen, written) > 0;
 }
 
 int BIO_puts(BIO *b, const char *buf)
