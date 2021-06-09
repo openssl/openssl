@@ -70,6 +70,12 @@ provider-base
  int BIO_vprintf(OSSL_CORE_BIO *bio, const char *format, va_list args);
  int BIO_vsnprintf(char *buf, size_t n, const char *fmt, va_list args);
 
+ int OBJ_add_sigid(int signid, int dig_id, int pkey_id);
+ int OBJ_create(const char *oid, const char *sn, const char *ln);
+ int OBJ_txt2nid(const char *s);
+ int OBJ_ln2nid(const char *s);
+ int OBJ_sn2nid(const char *s);
+
  void OSSL_SELF_TEST_set_callback(OSSL_LIB_CTX *libctx, OSSL_CALLBACK *cb,
                                   void *cbarg);
 
@@ -171,6 +177,11 @@ provider):
  ossl_rand_cleanup_entropy      OSSL_FUNC_CLEANUP_ENTROPY
  ossl_rand_get_nonce            OSSL_FUNC_GET_NONCE
  ossl_rand_cleanup_nonce        OSSL_FUNC_CLEANUP_NONCE
+ OBJ_add_sigid                  OSSL_FUNC_OBJ_ADD_SIGID
+ OBJ_create                     OSSL_FUNC_OBJ_CREATE
+ OBJ_txt2nid                    OSSL_FUNC_OBJ_TXT2NID
+ OBJ_sn2nid                     OSSL_FUNC_OBJ_SN2NID
+ OBJ_ln2nid                     OSSL_FUNC_OBJ_LN2NID
 
 For I<*out> (the B<OSSL_DISPATCH> array passed from the provider to
 F<libcrypto>):
@@ -250,10 +261,11 @@ CRYPTO_realloc(), CRYPTO_clear_realloc(), CRYPTO_secure_malloc(),
 CRYPTO_secure_zalloc(), CRYPTO_secure_free(),
 CRYPTO_secure_clear_free(), CRYPTO_secure_allocated(),
 BIO_new_file(), BIO_new_mem_buf(), BIO_read_ex(), BIO_write_ex(), BIO_up_ref(),
-BIO_free(), BIO_vprintf(), BIO_vsnprintf(), OPENSSL_cleanse()
-and OPENSSL_hexstr2buf() correspond exactly to the public functions with
+BIO_free(), BIO_vprintf(), BIO_vsnprintf(), OPENSSL_cleanse(),
+OPENSSL_hexstr2buf(), OBJ_add_sigid(), OBJ_create(), OBJ_txt2nid(), OBJ_sn2nid()
+and OBJ_ln2nid() correspond exactly to the public functions with
 the same name.  As a matter of fact, the pointers in the B<OSSL_DISPATCH>
-array are direct pointers to those public functions. Note that the BIO
+array are typically direct pointers to those public functions. Note that the BIO
 functions take an B<OSSL_CORE_BIO> type rather than the standard B<BIO>
 type. This is to ensure that a provider does not mix BIOs from the core
 with BIOs used on the provider side (the two are not compatible).
