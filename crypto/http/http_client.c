@@ -944,11 +944,11 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
     return rctx;
 }
 
-int OSSL_HTTP_set_request(OSSL_HTTP_REQ_CTX *rctx, const char *path,
-                          const STACK_OF(CONF_VALUE) *headers,
-                          const char *content_type, BIO *req,
-                          const char *expected_content_type, int expect_asn1,
-                          size_t max_resp_len, int timeout, int keep_alive)
+int OSSL_HTTP_set1_request(OSSL_HTTP_REQ_CTX *rctx, const char *path,
+                           const STACK_OF(CONF_VALUE) *headers,
+                           const char *content_type, BIO *req,
+                           const char *expected_content_type, int expect_asn1,
+                           size_t max_resp_len, int timeout, int keep_alive)
 {
     int use_http_proxy;
 
@@ -1087,12 +1087,12 @@ BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
                               buf_size, timeout);
     new_rpath:
         if (rctx != NULL) {
-            if (!OSSL_HTTP_set_request(rctx, path, headers,
-                                       NULL /* content_type */,
-                                       NULL /* req */,
-                                       expected_ct, expect_asn1, max_resp_len,
-                                       -1 /* use same max time (timeout) */,
-                                       0 /* no keep_alive */))
+            if (!OSSL_HTTP_set1_request(rctx, path, headers,
+                                        NULL /* content_type */,
+                                        NULL /* req */,
+                                        expected_ct, expect_asn1, max_resp_len,
+                                        -1 /* use same max time (timeout) */,
+                                        0 /* no keep_alive */))
                 OSSL_HTTP_REQ_CTX_free(rctx);
             else
                 resp = OSSL_HTTP_exchange(rctx, &redirection_url);
@@ -1149,9 +1149,9 @@ BIO *OSSL_HTTP_transfer(OSSL_HTTP_REQ_CTX **prctx,
         timeout = -1; /* Already set during opening the connection */
     }
     if (rctx != NULL) {
-        if (OSSL_HTTP_set_request(rctx, path, headers, content_type, req,
-                                  expected_ct, expect_asn1,
-                                  max_resp_len, timeout, keep_alive))
+        if (OSSL_HTTP_set1_request(rctx, path, headers, content_type, req,
+                                   expected_ct, expect_asn1,
+                                   max_resp_len, timeout, keep_alive))
             resp = OSSL_HTTP_exchange(rctx, NULL);
         if (resp == NULL || !OSSL_HTTP_is_alive(rctx)) {
             if (!OSSL_HTTP_close(rctx, resp != NULL)) {
