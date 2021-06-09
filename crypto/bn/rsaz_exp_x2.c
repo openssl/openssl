@@ -81,25 +81,25 @@ void ossl_extract_multiplier_2x20_win5(BN_ULONG *red_Y,
                                        const BN_ULONG *red_table,
                                        int red_table_idx1, int red_table_idx2);
 
-void RSAZ_amm52x30_x1_ifma256(BN_ULONG *res, const BN_ULONG *a,
-                          const BN_ULONG *b, const BN_ULONG *m,
-                          BN_ULONG k0);
-void RSAZ_amm52x30_x2_ifma256(BN_ULONG *out, const BN_ULONG *a,
-                          const BN_ULONG *b, const BN_ULONG *m,
-                          const BN_ULONG k0[2]);
-void extract_multiplier_2x30_win5(BN_ULONG *red_Y,
-                                  const BN_ULONG *red_table,
-                                  int red_table_idx1, int red_table_idx2);
+void ossl_rsaz_amm52x30_x1_ifma256(BN_ULONG *res, const BN_ULONG *a,
+                                   const BN_ULONG *b, const BN_ULONG *m,
+                                   BN_ULONG k0);
+void ossl_rsaz_amm52x30_x2_ifma256(BN_ULONG *out, const BN_ULONG *a,
+                                   const BN_ULONG *b, const BN_ULONG *m,
+                                   const BN_ULONG k0[2]);
+void ossl_extract_multiplier_2x30_win5(BN_ULONG *red_Y,
+                                       const BN_ULONG *red_table,
+                                       int red_table_idx1, int red_table_idx2);
 
-void RSAZ_amm52x40_x1_ifma256(BN_ULONG *res, const BN_ULONG *a,
-                          const BN_ULONG *b, const BN_ULONG *m,
-                          BN_ULONG k0);
-void RSAZ_amm52x40_x2_ifma256(BN_ULONG *out, const BN_ULONG *a,
-                          const BN_ULONG *b, const BN_ULONG *m,
-                          const BN_ULONG k0[2]);
-void extract_multiplier_2x40_win5(BN_ULONG *red_Y,
-                                  const BN_ULONG *red_table,
-                                  int red_table_idx1, int red_table_idx2);
+void ossl_rsaz_amm52x40_x1_ifma256(BN_ULONG *res, const BN_ULONG *a,
+                                   const BN_ULONG *b, const BN_ULONG *m,
+                                   BN_ULONG k0);
+void ossl_rsaz_amm52x40_x2_ifma256(BN_ULONG *out, const BN_ULONG *a,
+                                   const BN_ULONG *b, const BN_ULONG *m,
+                                   const BN_ULONG k0[2]);
+void ossl_extract_multiplier_2x40_win5(BN_ULONG *red_Y,
+                                       const BN_ULONG *red_table,
+                                       int red_table_idx1, int red_table_idx2);
 
 static int RSAZ_mod_exp_x2_ifma256(BN_ULONG *res, const BN_ULONG *base,
                                    const BN_ULONG *exp[2], const BN_ULONG *m,
@@ -183,10 +183,10 @@ int ossl_rsaz_mod_exp_avx512_x2(BN_ULONG *res1,
         amm = ossl_rsaz_amm52x20_x1_ifma256;
         break;
     case 1536:
-        amm = RSAZ_amm52x30_x1_ifma256;
+        amm = ossl_rsaz_amm52x30_x1_ifma256;
         break;
     case 2048:
-        amm = RSAZ_amm52x40_x1_ifma256;
+        amm = ossl_rsaz_amm52x40_x1_ifma256;
         break;
     default:
         goto err;
@@ -348,14 +348,14 @@ int RSAZ_mod_exp_x2_ifma256(BN_ULONG *out,
         /* Extended with 2 digits padding to avoid mask ops in high YMM register */
         red_digits = 30 + 2;
         exp_digits = 24;
-        damm = RSAZ_amm52x30_x2_ifma256;
-        extract = extract_multiplier_2x30_win5;
+        damm = ossl_rsaz_amm52x30_x2_ifma256;
+        extract = ossl_extract_multiplier_2x30_win5;
         break;
     case 2048:
         red_digits = 40;
         exp_digits = 32;
-        damm = RSAZ_amm52x40_x2_ifma256;
-        extract = extract_multiplier_2x40_win5;
+        damm = ossl_rsaz_amm52x40_x2_ifma256;
+        extract = ossl_extract_multiplier_2x40_win5;
         break;
     default:
         goto err;

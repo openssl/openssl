@@ -324,7 +324,7 @@ ossl_rsaz_amm52x20_x1_ifma256:
 .cfi_push   %r14
     push    %r15
 .cfi_push   %r15
-.Lrsaz_amm52x20_x1_ifma256_body:
+.Lossl_rsaz_amm52x20_x1_ifma256_body:
 
     # Zeroing accumulators
     vpxord   $zero, $zero, $zero
@@ -377,7 +377,7 @@ $code.=<<___;
 .cfi_restore    %rbx
     lea  48(%rsp),%rsp
 .cfi_adjust_cfa_offset  -48
-.Lrsaz_amm52x20_x1_ifma256_epilogue:
+.Lossl_rsaz_amm52x20_x1_ifma256_epilogue:
     ret
 .cfi_endproc
 .size   ossl_rsaz_amm52x20_x1_ifma256, .-ossl_rsaz_amm52x20_x1_ifma256
@@ -429,7 +429,7 @@ ossl_rsaz_amm52x20_x2_ifma256:
 .cfi_push   %r14
     push    %r15
 .cfi_push   %r15
-.Lrsaz_amm52x20_x2_ifma256_body:
+.Lossl_rsaz_amm52x20_x2_ifma256_body:
 
     # Zeroing accumulators
     vpxord   $zero, $zero, $zero
@@ -494,7 +494,7 @@ $code.=<<___;
 .cfi_restore    %rbx
     lea  48(%rsp),%rsp
 .cfi_adjust_cfa_offset  -48
-.Lrsaz_amm52x20_x2_ifma256_epilogue:
+.Lossl_rsaz_amm52x20_x2_ifma256_epilogue:
     ret
 .cfi_endproc
 .size   ossl_rsaz_amm52x20_x2_ifma256, .-ossl_rsaz_amm52x20_x2_ifma256
@@ -505,16 +505,14 @@ ___
 # Constant time extraction from the precomputed table of powers base^i, where
 #    i = 0..2^EXP_WIN_SIZE-1
 #
-# The input |red_table| contains precomputations for two independent base values,
-# so the |tbl_idx| indicates for which base shall we extract the value.
-# |red_table_idx| is a power index.
+# The input |red_table| contains precomputations for two independent base values.
+# |red_table_idx1| and |red_table_idx2| are corresponding power indexes.
 #
-# Extracted value (output) is 20 digit number in 2^52 radix.
+# Extracted value (output) is 2 20 digit numbers in 2^52 radix.
 #
 # void ossl_extract_multiplier_2x20_win5(BN_ULONG *red_Y,
 #                                        const BN_ULONG red_table[1 << EXP_WIN_SIZE][2][20],
-#                                        int red_table_idx,
-#                                        int tbl_idx);           # 0 or 1
+#                                        int red_table_idx1, int red_table_idx2);
 #
 # EXP_WIN_SIZE = 5
 ###############################################################################
@@ -528,8 +526,8 @@ my ($t6,$t7,$t8,$t9) = map("%ymm$_", (16..19));
 my ($tmp,$cur_idx,$idx1,$idx2,$ones) = map("%ymm$_", (20..24));
 
 my @t = ($t0,$t1,$t2,$t3,$t4,$t5,$t6,$t7,$t8,$t9);
-my $t4xmm = $t4;
-$t4xmm =~ s/%y/%x/;
+my $t0xmm = $t0;
+$t0xmm =~ s/%y/%x/;
 
 $code.=<<___;
 .text
@@ -701,11 +699,11 @@ rsaz_def_handler:
 .LSEH_info_ossl_rsaz_amm52x20_x1_ifma256:
     .byte   9,0,0,0
     .rva    rsaz_def_handler
-    .rva    .Lrsaz_amm52x20_x1_ifma256_body,.Lrsaz_amm52x20_x1_ifma256_epilogue
+    .rva    .Lossl_rsaz_amm52x20_x1_ifma256_body,.Lossl_rsaz_amm52x20_x1_ifma256_epilogue
 .LSEH_info_ossl_rsaz_amm52x20_x2_ifma256:
     .byte   9,0,0,0
     .rva    rsaz_def_handler
-    .rva    .Lrsaz_amm52x20_x2_ifma256_body,.Lrsaz_amm52x20_x2_ifma256_epilogue
+    .rva    .Lossl_rsaz_amm52x20_x2_ifma256_body,.Lossl_rsaz_amm52x20_x2_ifma256_epilogue
 ___
 }
 }}} else {{{                # fallback for old assembler

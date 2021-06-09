@@ -83,11 +83,11 @@ if ($avx512ifma>0) {{{
 # [2] Gueron, S. Enhanced Montgomery Multiplication.
 #     DOI: 10.1007/3-540-36400-5_5
 #
-# void RSAZ_amm52x30_x1_ifma256(BN_ULONG *res,
-#                               const BN_ULONG *a,
-#                               const BN_ULONG *b,
-#                               const BN_ULONG *m,
-#                               BN_ULONG k0);
+# void ossl_rsaz_amm52x30_x1_ifma256(BN_ULONG *res,
+#                                    const BN_ULONG *a,
+#                                    const BN_ULONG *b,
+#                                    const BN_ULONG *m,
+#                                    BN_ULONG k0);
 ###############################################################################
 {
 # input parameters ("%rdi","%rsi","%rdx","%rcx","%r8")
@@ -116,7 +116,8 @@ sub amm52x30_x1() {
 #                of data for corresponding AMM operation;
 # _b_offset    - offset in the |b| array pointing to the next qword digit;
 my ($_data_offset,$_b_offset,$_acc,$_R0,$_R0h,$_R1,$_R1h,$_R2,$_R2h,$_R3,$_R3h,$_k0) = @_;
-my $_R0_xmm = $_R0 =~ s/%y/%x/r;
+my $_R0_xmm = $_R0;
+$_R0_xmm =~ s/%y/%x/;
 $code.=<<___;
     movq    $_b_offset($b_ptr), %r13             # b[i]
 
@@ -357,10 +358,10 @@ ___
 $code.=<<___;
 .text
 
-.globl  RSAZ_amm52x30_x1_ifma256
-.type   RSAZ_amm52x30_x1_ifma256,\@function,5
+.globl  ossl_rsaz_amm52x30_x1_ifma256
+.type   ossl_rsaz_amm52x30_x1_ifma256,\@function,5
 .align 32
-RSAZ_amm52x30_x1_ifma256:
+ossl_rsaz_amm52x30_x1_ifma256:
 .cfi_startproc
     endbranch
     push    %rbx
@@ -388,7 +389,7 @@ $code.=<<___ if ($win64);
     vmovdqa64   %xmm13,`7*16`(%rsp)
     vmovdqa64   %xmm14,`8*16`(%rsp)
     vmovdqa64   %xmm15,`9*16`(%rsp)
-.Lrsaz_amm52x30_x1_ifma256_body:
+.Lossl_rsaz_amm52x30_x1_ifma256_body:
 ___
 $code.=<<___;
     # Zeroing accumulators
@@ -468,10 +469,10 @@ $code.=<<___;
 .cfi_restore    %rbx
     lea  48(%rax),%rsp       # restore rsp
 .cfi_def_cfa %rsp,8
-.Lrsaz_amm52x30_x1_ifma256_epilogue:
+.Lossl_rsaz_amm52x30_x1_ifma256_epilogue:
     ret
 .cfi_endproc
-.size   RSAZ_amm52x30_x1_ifma256, .-RSAZ_amm52x30_x1_ifma256
+.size   ossl_rsaz_amm52x30_x1_ifma256, .-ossl_rsaz_amm52x30_x1_ifma256
 ___
 
 $code.=<<___;
@@ -487,27 +488,27 @@ ___
 ###############################################################################
 # Dual Almost Montgomery Multiplication for 30-digit number in radix 2^52
 #
-# See description of RSAZ_amm52x30_x1_ifma256() above for details about Almost
+# See description of ossl_rsaz_amm52x30_x1_ifma256() above for details about Almost
 # Montgomery Multiplication algorithm and function input parameters description.
 #
 # This function does two AMMs for two independent inputs, hence dual.
 #
 # NOTE: the function uses zero-padded data - 2 high QWs is a padding.
 #
-# void RSAZ_amm52x30_x2_ifma256(BN_ULONG out[2][32],
-#                               const BN_ULONG a[2][32],
-#                               const BN_ULONG b[2][32],
-#                               const BN_ULONG m[2][32],
-#                               const BN_ULONG k0[2]);
+# void ossl_rsaz_amm52x30_x2_ifma256(BN_ULONG out[2][32],
+#                                    const BN_ULONG a[2][32],
+#                                    const BN_ULONG b[2][32],
+#                                    const BN_ULONG m[2][32],
+#                                    const BN_ULONG k0[2]);
 ###############################################################################
 
 $code.=<<___;
 .text
 
-.globl  RSAZ_amm52x30_x2_ifma256
-.type   RSAZ_amm52x30_x2_ifma256,\@function,5
+.globl  ossl_rsaz_amm52x30_x2_ifma256
+.type   ossl_rsaz_amm52x30_x2_ifma256,\@function,5
 .align 32
-RSAZ_amm52x30_x2_ifma256:
+ossl_rsaz_amm52x30_x2_ifma256:
 .cfi_startproc
     endbranch
     push    %rbx
@@ -535,7 +536,7 @@ $code.=<<___ if ($win64);
     vmovdqa64   %xmm13,`7*16`(%rsp)
     vmovdqa64   %xmm14,`8*16`(%rsp)
     vmovdqa64   %xmm15,`9*16`(%rsp)
-.Lrsaz_amm52x30_x2_ifma256_body:
+.Lossl_rsaz_amm52x30_x2_ifma256_body:
 ___
 $code.=<<___;
     # Zeroing accumulators
@@ -632,10 +633,10 @@ $code.=<<___;
 .cfi_restore    %rbx
     lea  48(%rax),%rsp
 .cfi_def_cfa    %rsp,8
-.Lrsaz_amm52x30_x2_ifma256_epilogue:
+.Lossl_rsaz_amm52x30_x2_ifma256_epilogue:
     ret
 .cfi_endproc
-.size   RSAZ_amm52x30_x2_ifma256, .-RSAZ_amm52x30_x2_ifma256
+.size   ossl_rsaz_amm52x30_x2_ifma256, .-ossl_rsaz_amm52x30_x2_ifma256
 ___
 }
 
@@ -643,17 +644,15 @@ ___
 # Constant time extraction from the precomputed table of powers base^i, where
 #    i = 0..2^EXP_WIN_SIZE-1
 #
-# The input |red_table| contains precomputations for two independent base values,
-# so the |tbl_idx| indicates for which base shall we extract the value.
-# |red_table_idx| is a power index.
+# The input |red_table| contains precomputations for two independent base values.
+# |red_table_idx1| and |red_table_idx2| are corresponding power indexes.
 #
-# Extracted value (output) is 30 + 2 digit number in 2^52 radix.
+# Extracted value (output) is 2 (30 + 2) digits numbers in 2^52 radix.
 # (2 high QW is zero padding)
 #
-# void extract_multiplier_2x30_win5(BN_ULONG *red_Y,
-#                                   const BN_ULONG red_table[1 << EXP_WIN_SIZE][2][32],
-#                                   int red_table_idx,
-#                                   int tbl_idx);           # 0 or 1
+# void ossl_extract_multiplier_2x30_win5(BN_ULONG *red_Y,
+#                                        const BN_ULONG red_table[1 << EXP_WIN_SIZE][2][32],
+#                                        int red_table_idx1, int red_table_idx2);
 #
 # EXP_WIN_SIZE = 5
 ###############################################################################
@@ -667,15 +666,16 @@ my ($t6,$t7,$t8,$t9,$t10,$t11,$t12,$t13,$t14,$t15) = map("%ymm$_", (16..25));
 my ($tmp,$cur_idx,$idx1,$idx2,$ones) = map("%ymm$_", (26..30));
 
 my @t = ($t0,$t1,$t2,$t3,$t4,$t5,$t6,$t7,$t8,$t9,$t10,$t11,$t12,$t13,$t14,$t15);
-my $t0xmm = $t0 =~ s/%y/%x/r;
+my $t0xmm = $t0;
+$t0xmm =~ s/%y/%x/;
 
 $code.=<<___;
 .text
 
 .align 32
-.globl  extract_multiplier_2x30_win5
-.type   extract_multiplier_2x30_win5,\@abi-omnipotent
-extract_multiplier_2x30_win5:
+.globl  ossl_extract_multiplier_2x30_win5
+.type   ossl_extract_multiplier_2x30_win5,\@abi-omnipotent
+ossl_extract_multiplier_2x30_win5:
 .cfi_startproc
     endbranch
     vmovdqa64   .Lones(%rip), $ones         # broadcast ones
@@ -718,7 +718,7 @@ $code.=<<___;
 
     ret
 .cfi_endproc
-.size   extract_multiplier_2x30_win5, .-extract_multiplier_2x30_win5
+.size   ossl_extract_multiplier_2x30_win5, .-ossl_extract_multiplier_2x30_win5
 ___
 $code.=<<___;
 .data
@@ -832,40 +832,40 @@ rsaz_avx_handler:
 
 .section    .pdata
 .align  4
-    .rva    .LSEH_begin_RSAZ_amm52x30_x1_ifma256
-    .rva    .LSEH_end_RSAZ_amm52x30_x1_ifma256
-    .rva    .LSEH_info_RSAZ_amm52x30_x1_ifma256
+    .rva    .LSEH_begin_ossl_rsaz_amm52x30_x1_ifma256
+    .rva    .LSEH_end_ossl_rsaz_amm52x30_x1_ifma256
+    .rva    .LSEH_info_ossl_rsaz_amm52x30_x1_ifma256
 
-    .rva    .LSEH_begin_RSAZ_amm52x30_x2_ifma256
-    .rva    .LSEH_end_RSAZ_amm52x30_x2_ifma256
-    .rva    .LSEH_info_RSAZ_amm52x30_x2_ifma256
+    .rva    .LSEH_begin_ossl_rsaz_amm52x30_x2_ifma256
+    .rva    .LSEH_end_ossl_rsaz_amm52x30_x2_ifma256
+    .rva    .LSEH_info_ossl_rsaz_amm52x30_x2_ifma256
 
 .section    .xdata
 .align  8
-.LSEH_info_RSAZ_amm52x30_x1_ifma256:
+.LSEH_info_ossl_rsaz_amm52x30_x1_ifma256:
     .byte   9,0,0,0
     .rva    rsaz_avx_handler
-    .rva    .Lrsaz_amm52x30_x1_ifma256_body,.Lrsaz_amm52x30_x1_ifma256_epilogue
-.LSEH_info_RSAZ_amm52x30_x2_ifma256:
+    .rva    .Lossl_rsaz_amm52x30_x1_ifma256_body,.Lossl_rsaz_amm52x30_x1_ifma256_epilogue
+.LSEH_info_ossl_rsaz_amm52x30_x2_ifma256:
     .byte   9,0,0,0
     .rva    rsaz_avx_handler
-    .rva    .Lrsaz_amm52x30_x2_ifma256_body,.Lrsaz_amm52x30_x2_ifma256_epilogue
+    .rva    .Lossl_rsaz_amm52x30_x2_ifma256_body,.Lossl_rsaz_amm52x30_x2_ifma256_epilogue
 ___
 }
 }}} else {{{                # fallback for old assembler
 $code.=<<___;
 .text
 
-.globl  RSAZ_amm52x30_x1_ifma256
-.globl  RSAZ_amm52x30_x2_ifma256
-.globl  extract_multiplier_2x30_win5
-.type   RSAZ_amm52x30_x1_ifma256,\@abi-omnipotent
-RSAZ_amm52x30_x1_ifma256:
-RSAZ_amm52x30_x2_ifma256:
-extract_multiplier_2x30_win5:
+.globl  ossl_rsaz_amm52x30_x1_ifma256
+.globl  ossl_rsaz_amm52x30_x2_ifma256
+.globl  ossl_extract_multiplier_2x30_win5
+.type   ossl_rsaz_amm52x30_x1_ifma256,\@abi-omnipotent
+ossl_rsaz_amm52x30_x1_ifma256:
+ossl_rsaz_amm52x30_x2_ifma256:
+ossl_extract_multiplier_2x30_win5:
     .byte   0x0f,0x0b    # ud2
     ret
-.size   RSAZ_amm52x30_x1_ifma256, .-RSAZ_amm52x30_x1_ifma256
+.size   ossl_rsaz_amm52x30_x1_ifma256, .-ossl_rsaz_amm52x30_x1_ifma256
 ___
 }}}
 
