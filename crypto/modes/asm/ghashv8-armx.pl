@@ -158,6 +158,7 @@ $code.=<<___;
 ___
 if ($flavour =~ /64/) {
 my ($t3,$Yl,$Ym,$Yh) = map("q$_",(4..7));
+my ($H3,$H34k,$H4,$H5,$H56k,$H6,$H7,$H78k,$H8) = map("q$_",(15..23));
 
 $code.=<<___;
 	@ calculate H^3 and H^4
@@ -192,15 +193,103 @@ $code.=<<___;
 	 vpmull.p64	$Yl,$Yl,$xC2
 	veor		$t2,$t2,$Xh
 	 veor		$t3,$t3,$Yh
-	veor		$H, $Xl,$t2		@ H^3
-	 veor		$H2,$Yl,$t3		@ H^4
+	veor		$H3, $Xl,$t2		@ H^3
+	 veor		$H4,$Yl,$t3		@ H^4
 
-	vext.8		$t0,$H, $H,#8		@ Karatsuba pre-processing
-	 vext.8		$t1,$H2,$H2,#8
-	veor		$t0,$t0,$H
-	 veor		$t1,$t1,$H2
-	vext.8		$Hhl,$t0,$t1,#8		@ pack Karatsuba pre-processed
-	vst1.64		{$H-$H2},[x0]		@ store Htable[3..5]
+	vext.8		$t0,$H3, $H3,#8		@ Karatsuba pre-processing
+	 vext.8		$t1,$H4,$H4,#8
+	 vext.8		$t2,$H2,$H2,#8
+	veor		$t0,$t0,$H3
+	 veor		$t1,$t1,$H4
+	 veor		$t2,$t2,$H2
+	vext.8		$H34k,$t0,$t1,#8		@ pack Karatsuba pre-processed
+	vst1.64		{$H3-$H4},[x0],#48		@ store Htable[3..5]
+
+	@ calculate H^5 and H^6
+	vpmull.p64	$Xl,$H2, $H3
+	 vpmull.p64	$Yl,$H3,$H3
+	vpmull2.p64	$Xh,$H2, $H3
+	 vpmull2.p64	$Yh,$H3,$H3
+	vpmull.p64	$Xm,$t0,$t2
+	 vpmull.p64	$Ym,$t0,$t0
+
+	vext.8		$t0,$Xl,$Xh,#8		@ Karatsuba post-processing
+	 vext.8		$t1,$Yl,$Yh,#8
+	veor		$t2,$Xl,$Xh
+	veor		$Xm,$Xm,$t0
+	 veor		$t3,$Yl,$Yh
+	 veor		$Ym,$Ym,$t1
+	veor		$Xm,$Xm,$t2
+	vpmull.p64	$t2,$Xl,$xC2		@ 1st phase
+	 veor		$Ym,$Ym,$t3
+	 vpmull.p64	$t3,$Yl,$xC2
+
+	vmov		$Xh#lo,$Xm#hi		@ Xh|Xm - 256-bit result
+	 vmov		$Yh#lo,$Ym#hi
+	vmov		$Xm#hi,$Xl#lo		@ Xm is rotated Xl
+	 vmov		$Ym#hi,$Yl#lo
+	veor		$Xl,$Xm,$t2
+	 veor		$Yl,$Ym,$t3
+
+	vext.8		$t2,$Xl,$Xl,#8		@ 2nd phase
+	 vext.8		$t3,$Yl,$Yl,#8
+	vpmull.p64	$Xl,$Xl,$xC2
+	 vpmull.p64	$Yl,$Yl,$xC2
+	veor		$t2,$t2,$Xh
+	 veor		$t3,$t3,$Yh
+	veor		$H5,$Xl,$t2		@ H^5
+	 veor		$H6,$Yl,$t3		@ H^6
+
+	vext.8		$t0,$H5, $H5,#8		@ Karatsuba pre-processing
+	 vext.8		$t1,$H6,$H6,#8
+	 vext.8		$t2,$H2,$H2,#8
+	veor		$t0,$t0,$H5
+	 veor		$t1,$t1,$H6
+	 veor		$t2,$t2,$H2
+	vext.8		$H56k,$t0,$t1,#8		@ pack Karatsuba pre-processed
+	vst1.64		{$H5-$H6},[x0],#48		@ store Htable[6..8]
+
+	@ calculate H^7 and H^8
+	vpmull.p64	$Xl,$H2,$H5
+	 vpmull.p64	$Yl,$H2,$H6
+	vpmull2.p64	$Xh,$H2,$H5
+	 vpmull2.p64	$Yh,$H2,$H6
+	vpmull.p64	$Xm,$t0,$t2
+	 vpmull.p64	$Ym,$t1,$t2
+
+	vext.8		$t0,$Xl,$Xh,#8		@ Karatsuba post-processing
+	 vext.8		$t1,$Yl,$Yh,#8
+	veor		$t2,$Xl,$Xh
+	veor		$Xm,$Xm,$t0
+	 veor		$t3,$Yl,$Yh
+	 veor		$Ym,$Ym,$t1
+	veor		$Xm,$Xm,$t2
+	vpmull.p64	$t2,$Xl,$xC2		@ 1st phase
+	 veor		$Ym,$Ym,$t3
+	 vpmull.p64	$t3,$Yl,$xC2
+
+	vmov		$Xh#lo,$Xm#hi		@ Xh|Xm - 256-bit result
+	 vmov		$Yh#lo,$Ym#hi
+	vmov		$Xm#hi,$Xl#lo		@ Xm is rotated Xl
+	 vmov		$Ym#hi,$Yl#lo
+	veor		$Xl,$Xm,$t2
+	 veor		$Yl,$Ym,$t3
+
+	vext.8		$t2,$Xl,$Xl,#8		@ 2nd phase
+	 vext.8		$t3,$Yl,$Yl,#8
+	vpmull.p64	$Xl,$Xl,$xC2
+	 vpmull.p64	$Yl,$Yl,$xC2
+	veor		$t2,$t2,$Xh
+	 veor		$t3,$t3,$Yh
+	veor		$H7,$Xl,$t2		@ H^7
+	 veor		$H8,$Yl,$t3		@ H^8
+
+	vext.8		$t0,$H7,$H7,#8		@ Karatsuba pre-processing
+	 vext.8		$t1,$H8,$H8,#8
+	veor		$t0,$t0,$H7
+	 veor		$t1,$t1,$H8
+	vext.8		$H78k,$t0,$t1,#8		@ pack Karatsuba pre-processed
+	vst1.64		{$H7-$H8},[x0]		@ store Htable[9..11]
 ___
 }
 $code.=<<___;

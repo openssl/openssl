@@ -96,6 +96,14 @@ _armv8_sha512_probe:
 	ret
 .size	_armv8_sha512_probe,.-_armv8_sha512_probe
 
+.globl	_armv8_eor3_probe
+.type	_armv8_eor3_probe,%function
+_armv8_eor3_probe:
+	AARCH64_VALID_CALL_TARGET
+	.long	0xce010800	// eor3	v0.16b, v0.16b, v1.16b, v2.16b
+	ret
+.size	_armv8_eor3_probe,.-_armv8_eor3_probe
+
 .globl	_armv8_cpuid_probe
 .type	_armv8_cpuid_probe,%function
 _armv8_cpuid_probe:
