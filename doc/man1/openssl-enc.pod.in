@@ -193,7 +193,7 @@ Debug the BIOs used for I/O.
 
 Compress or decompress encrypted data using zlib after encryption or before
 decryption. This option exists only if OpenSSL was compiled with the zlib
-or zlib-dynamic option.
+option.
 
 =item B<-none>
 

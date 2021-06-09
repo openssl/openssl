@@ -407,9 +407,7 @@ already on the system include path.
 If not provided the system library path will be used.
 
 **On Windows:** this is the filename of the zlib library (with or
-without a path).  This flag must be provided if the
-[zlib-dynamic](#zlib-dynamic) option is not also used. If `zlib-dynamic` is used
-then this flag is optional and defaults to `ZLIB1` if not provided.
+without a path).  This flag must be provided.
 
 **On VMS:** this is the filename of the zlib library (with or without a path).
 This flag is optional and if not provided then `GNV$LIBZSHR`, `GNV$LIBZSHR32`
@@ -616,7 +614,7 @@ Don't build support for Cryptographic Message Syntax (CMS).
 Don't build support for SSL/TLS compression.
 
 If this option is enabled (the default), then compression will only work if
-the zlib or `zlib-dynamic` options are also chosen.
+the `zlib` option is also chosen.
 
 ### enable-crypto-mdebug
 
@@ -929,13 +927,6 @@ Enabling this includes for example the RC4 based ciphersuites.
 ### zlib
 
 Build with support for zlib compression/decompression.
-
-### zlib-dynamic
-
-Like the zlib option, but has OpenSSL load the zlib library dynamically
-when needed.
-
-This is only supported on systems where loading of shared libraries is supported.
 
 ### 386
 
