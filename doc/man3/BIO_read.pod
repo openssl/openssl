@@ -27,7 +27,7 @@ stored in I<*readbytes>.
 
 BIO_write_ex() attempts to write I<dlen> bytes from I<data> to BIO I<b>.
 If successful then the number of bytes written is stored in I<*written>
-unless I<written> is NULL. No data is written if I<b> is NULL.
+unless I<written> is NULL.
 
 BIO_read() attempts to read I<len> bytes from BIO I<b> and places
 the data in I<buf>.
@@ -59,7 +59,7 @@ BIO_puts() attempts to write a NUL-terminated string I<buf> to BIO I<b>.
 BIO_read_ex() returns 1 if data was successfully read, and 0 otherwise.
 
 BIO_write_ex() returns 1 if no error was encountered writing data, 0 otherwise.
-Write to NULL B<BIO> is not considered as an error.
+Requesting to write 0 bytes is not considered an error.
 
 BIO_write() returns -2 if the "write" operation is not implemented by the BIO
 or -1 on other errors.
@@ -113,6 +113,9 @@ BIO_gets() on 1.1.0 and older when called on BIO_fd() based BIO did not
 keep the '\n' at the end of the line in the buffer.
 
 BIO_get_line() was added in OpenSSL 3.0.
+
+BIO_write_ex() returns 1 if the size of the data to write is 0 and the
+I<written> parameter of the function can be NULL since OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
