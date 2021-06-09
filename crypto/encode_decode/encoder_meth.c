@@ -331,10 +331,10 @@ inner_ossl_encoder_fetch(struct encoder_data_st *methdata, int id,
     }
 
     /*
-     * If we have been passed neither a name_id or a name, we have an
+     * If we have been passed both an id and a name, we have an
      * internal programming error.
      */
-    if (!ossl_assert(id != 0 || name != NULL)) {
+    if (!ossl_assert(id == 0 || name == NULL)) {
         ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_INTERNAL_ERROR);
         return NULL;
     }
@@ -386,7 +386,7 @@ inner_ossl_encoder_fetch(struct encoder_data_st *methdata, int id,
         unsupported = !methdata->flag_construct_error_occurred;
     }
 
-    if (method == NULL) {
+    if ((id != 0 || name != NULL) && method == NULL) {
         int code = unsupported ? ERR_R_UNSUPPORTED : ERR_R_FETCH_FAILED;
 
         if (name == NULL)
@@ -493,47 +493,36 @@ int OSSL_ENCODER_is_a(const OSSL_ENCODER *encoder, const char *name)
     return 0;
 }
 
-struct encoder_do_all_data_st {
-    void (*user_fn)(void *method, void *arg);
+struct do_one_data_st {
+    void (*user_fn)(OSSL_ENCODER *encoder, void *arg);
     void *user_arg;
 };
 
-static void encoder_do_one(OSSL_PROVIDER *provider,
-                           const OSSL_ALGORITHM *algodef,
-                           int no_store, void *vdata)
+static void do_one(ossl_unused int id, void *method, void *arg)
 {
-    struct encoder_do_all_data_st *data = vdata;
-    OSSL_LIB_CTX *libctx = ossl_provider_libctx(provider);
-    OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
-    const char *names = algodef->algorithm_names;
-    int id = ossl_namemap_add_names(namemap, 0, names, NAME_SEPARATOR);
-    void *method = NULL;
+    struct do_one_data_st *data = arg;
 
-    if (id != 0)
-        method =
-            encoder_from_algorithm(id, algodef, provider);
-
-    if (method != NULL) {
-        data->user_fn(method, data->user_arg);
-        OSSL_ENCODER_free(method);
-    }
+    data->user_fn(method, data->user_arg);
 }
 
 void OSSL_ENCODER_do_all_provided(OSSL_LIB_CTX *libctx,
-                                  void (*fn)(OSSL_ENCODER *encoder, void *arg),
-                                  void *arg)
+                                  void (*user_fn)(OSSL_ENCODER *encoder,
+                                                  void *arg),
+                                  void *user_arg)
 {
-    struct encoder_do_all_data_st data;
+    struct encoder_data_st methdata;
+    struct do_one_data_st data;
 
-    data.user_fn = (void (*)(void *, void *))fn;
-    data.user_arg = arg;
+    methdata.libctx = libctx;
+    methdata.tmp_store = NULL;
+    (void)inner_ossl_encoder_fetch(&methdata, 0, NULL, NULL /* properties */);
 
-    /*
-     * No pre- or post-condition for this call, as this only creates methods
-     * temporarly and then promptly destroys them.
-     */
-    ossl_algorithm_do_all(libctx, OSSL_OP_ENCODER, NULL, NULL,
-                          encoder_do_one, NULL, &data);
+    data.user_fn = user_fn;
+    data.user_arg = user_arg;
+    if (methdata.tmp_store != NULL)
+        ossl_method_store_do_all(methdata.tmp_store, &do_one, &data);
+    ossl_method_store_do_all(get_encoder_store(libctx), &do_one, &data);
+    dealloc_tmp_encoder_store(methdata.tmp_store);
 }
 
 int OSSL_ENCODER_names_do_all(const OSSL_ENCODER *encoder,
