@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-
+#include <string.h>
 #include <openssl/asn1t.h>
 #include <openssl/core_names.h>
 #include <openssl/core_object.h>
@@ -15,6 +15,7 @@
 #include <openssl/x509.h>
 #include "internal/sizes.h"
 #include "crypto/x509.h"
+#include "crypto/ec.h"
 #include "prov/bio.h"
 #include "prov/implementations.h"
 #include "endecoder_local.h"
@@ -75,7 +76,11 @@ static int spki2typespki_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     }
     X509_ALGOR_get0(&oid, NULL, NULL, algor);
 
-    if (!OBJ_obj2txt(dataname, sizeof(dataname), oid, 0)) {
+    /* SM2 abuses the EC oid, so this could actually be SM2 */
+    if (OBJ_obj2nid(oid) == NID_X9_62_id_ecPublicKey
+            && ossl_x509_algor_is_sm2(algor)) {
+        strcpy(dataname, "SM2");
+    } else if (!OBJ_obj2txt(dataname, sizeof(dataname), oid, 0)) {
         ossl_X509_PUBKEY_INTERNAL_free(xpub);
         return 0;
     }
