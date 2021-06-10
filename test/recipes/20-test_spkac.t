@@ -16,23 +16,26 @@ use OpenSSL::Test::Utils;
 
 setup("test_spkac");
 
+plan skip_all => "RSA is not supported by this OpenSSL build"
+    if disabled("rsa");
+
 plan tests => 4;
 
 # For the tests below we use the cert itself as the TBS file
 
 SKIP: {
-    skip "RSA is not supported by this OpenSSL build", 4
-        if disabled("rsa");
+    skip "MD5 is not supported by this OpenSSL build", 2
+        if disabled("md5");
 
     ok(run(app([ 'openssl', 'spkac', '-key', srctop_file("test", "testrsa.pem"),
                  '-out', 'spkac-md5.pem'])),
                "SPKAC MD5");
     ok(run(app([ 'openssl', 'spkac', '-in', 'spkac-md5.pem'])),
                "SPKAC MD5 verify");
-
-    ok(run(app([ 'openssl', 'spkac', '-key', srctop_file("test", "testrsa.pem"),
-                 '-out', 'spkac-sha256.pem', '-digest', 'sha256'])),
-               "SPKAC SHA256");
-    ok(run(app([ 'openssl', 'spkac', '-in', 'spkac-sha256.pem'])),
-               "SPKAC SHA256 verify");
 }
+
+ok(run(app([ 'openssl', 'spkac', '-key', srctop_file("test", "testrsa.pem"),
+             '-out', 'spkac-sha256.pem', '-digest', 'sha256'])),
+           "SPKAC SHA256");
+ok(run(app([ 'openssl', 'spkac', '-in', 'spkac-sha256.pem'])),
+           "SPKAC SHA256 verify");
