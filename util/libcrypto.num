@@ -5423,3 +5423,4 @@ ASN1_item_d2i_fp_ex                     ?	3_0_0	EXIST::FUNCTION:STDIO
 ASN1_item_d2i_bio_ex                    ?	3_0_0	EXIST::FUNCTION:
 ASN1_item_d2i_ex                        ?	3_0_0	EXIST::FUNCTION:
 ASN1_TIME_print_ex                      ?	3_0_0	EXIST::FUNCTION:
+BN_consttime_randomized_swap            ?	3_0_0	EXIST::FUNCTION:
