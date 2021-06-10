@@ -251,7 +251,7 @@ static void *construct_loader(const OSSL_ALGORITHM *algodef,
 
     /*
      * Flag to indicate that there was actual construction errors.  This
-     * helps inner_evp_generic_fetch() determine what error it should
+     * helps inner_loader_fetch() determine what error it should
      * record on inaccessible algorithms.
      */
     if (method == NULL)
@@ -355,8 +355,8 @@ static OSSL_STORE_LOADER *inner_loader_fetch(OSSL_LIB_CTX *libctx,
     return method;
 }
 
-OSSL_STORE_LOADER *OSSL_STORE_LOADER_fetch(const char *scheme,
-                                           OSSL_LIB_CTX *libctx,
+OSSL_STORE_LOADER *OSSL_STORE_LOADER_fetch(OSSL_LIB_CTX *libctx,
+                                           const char *scheme,
                                            const char *properties)
 {
     return inner_loader_fetch(libctx, 0, scheme, properties);

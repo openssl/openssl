@@ -122,7 +122,7 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
 #endif
         if (loader == NULL
             && (fetched_loader =
-                OSSL_STORE_LOADER_fetch(schemes[i], libctx, propq)) != NULL) {
+                OSSL_STORE_LOADER_fetch(libctx, schemes[i], propq)) != NULL) {
             const OSSL_PROVIDER *provider =
                 OSSL_STORE_LOADER_get0_provider(fetched_loader);
             void *provctx = OSSL_PROVIDER_get0_provider_ctx(provider);
@@ -975,7 +975,7 @@ OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp, const char *scheme,
 #endif
     if (loader == NULL
         && (fetched_loader =
-            OSSL_STORE_LOADER_fetch(scheme, libctx, propq)) != NULL) {
+            OSSL_STORE_LOADER_fetch(libctx, scheme, propq)) != NULL) {
         const OSSL_PROVIDER *provider =
             OSSL_STORE_LOADER_get0_provider(fetched_loader);
         void *provctx = OSSL_PROVIDER_get0_provider_ctx(provider);
