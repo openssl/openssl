@@ -995,6 +995,10 @@ sub __env {
     rmtree($directories{RESULTS}, { safe => 0, keep_root => 1 });
     mkpath($directories{RESULTS});
 
+    # All directories are assumed to exist, except for SRCDATA.  If that one
+    # doesn't exist, just drop it.
+    delete $directories{SRCDATA} unless -d $directories{SRCDATA};
+
     push @direnv, "TOP"       if $ENV{TOP};
     push @direnv, "SRCTOP"    if $ENV{SRCTOP};
     push @direnv, "BLDTOP"    if $ENV{BLDTOP};
@@ -1094,12 +1098,16 @@ sub __fuzz_file {
 sub __data_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
+    return undef unless exists $directories{SRCDATA};
+
     my $f = pop;
     return catfile($directories{SRCDATA},@_,$f);
 }
 
 sub __data_dir {
     BAIL_OUT("Must run setup() first") if (! $test_name);
+
+    return undef unless exists $directories{SRCDATA};
 
     return catdir($directories{SRCDATA},@_);
 }
@@ -1200,7 +1208,8 @@ sub __cwd {
 	print STDERR "\n";
 	print STDERR "	\$directories{BLDTEST} = \"$directories{BLDTEST}\"\n";
 	print STDERR "	\$directories{SRCTEST} = \"$directories{SRCTEST}\"\n";
-	print STDERR "	\$directories{SRCDATA} = \"$directories{SRCDATA}\"\n";
+	print STDERR "	\$directories{SRCDATA} = \"$directories{SRCDATA}\"\n"
+            if exists $directories{SRCDATA};
 	print STDERR "	\$directories{RESULTS} = \"$directories{RESULTS}\"\n";
 	print STDERR "	\$directories{BLDAPPS} = \"$directories{BLDAPPS}\"\n";
 	print STDERR "	\$directories{SRCAPPS} = \"$directories{SRCAPPS}\"\n";
