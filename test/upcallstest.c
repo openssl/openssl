@@ -24,24 +24,8 @@ static const OSSL_DISPATCH obj_dispatch_table[] = {
     { 0, NULL }
 };
 
-static OSSL_FUNC_OBJ_add_sigid_fn *c_obj_add_sigid = NULL;
-static OSSL_FUNC_OBJ_create_fn *c_obj_create = NULL;
-static OSSL_FUNC_OBJ_txt2nid_fn *c_obj_txt2nid = NULL;
-static OSSL_FUNC_OBJ_sn2nid_fn *c_obj_sn2nid = NULL;
-static OSSL_FUNC_OBJ_ln2nid_fn *c_obj_ln2nid = NULL;
-
-static int test_create_oid(const char *oid, const char *sn, const char *ln)
-{
-    int nid = c_obj_create(oid, sn, ln);
-
-    if (nid == NID_undef
-            || c_obj_txt2nid(oid) != nid
-            || c_obj_sn2nid(sn) != nid
-            || c_obj_ln2nid(ln) != nid)
-        return NID_undef;
-
-    return nid;
-}
+static OSSL_FUNC_core_obj_add_sigid_fn *c_obj_add_sigid = NULL;
+static OSSL_FUNC_core_obj_create_fn *c_obj_create = NULL;
 
 #define SIG_OID "1.3.6.1.4.1.16604.998877.1"
 #define SIG_SN "my-sig"
@@ -54,32 +38,21 @@ static int test_create_oid(const char *oid, const char *sn, const char *ln)
 #define SIGALG_LN "my-sigalg-long"
 
 static int obj_provider_init(const OSSL_CORE_HANDLE *handle,
-                      const OSSL_DISPATCH *in,
-                      const OSSL_DISPATCH **out,
-                      void **provctx)
+                             const OSSL_DISPATCH *in,
+                             const OSSL_DISPATCH **out,
+                             void **provctx)
 {
-
-    int digestnid, signid, sigalgnid;
-
     *provctx = (void *)handle;
     *out = obj_dispatch_table;
 
    for (; in->function_id != 0; in++) {
         switch (in->function_id) {
-        case OSSL_FUNC_OBJ_ADD_SIGID:
-            c_obj_add_sigid = OSSL_FUNC_OBJ_add_sigid(in);
+        case OSSL_FUNC_CORE_OBJ_ADD_SIGID:
+            c_obj_add_sigid = OSSL_FUNC_core_obj_add_sigid(in);
             break;
-        case OSSL_FUNC_OBJ_CREATE:
-            c_obj_create = OSSL_FUNC_OBJ_create(in);
+        case OSSL_FUNC_CORE_OBJ_CREATE:
+            c_obj_create = OSSL_FUNC_core_obj_create(in);
             break;
-        case OSSL_FUNC_OBJ_TXT2NID:
-            c_obj_txt2nid = OSSL_FUNC_OBJ_txt2nid(in);
-            break;
-        case OSSL_FUNC_OBJ_SN2NID:
-            c_obj_sn2nid = OSSL_FUNC_OBJ_sn2nid(in);
-            break;
-        case OSSL_FUNC_OBJ_LN2NID:
-            c_obj_ln2nid = OSSL_FUNC_OBJ_ln2nid(in);
             break;
         default:
             /* Just ignore anything we don't understand */
@@ -87,14 +60,12 @@ static int obj_provider_init(const OSSL_CORE_HANDLE *handle,
         }
     }
 
-    digestnid = test_create_oid(DIGEST_OID, DIGEST_SN, DIGEST_LN);
-    signid = test_create_oid(SIG_OID, SIG_SN, SIG_LN);
-    sigalgnid = test_create_oid(SIGALG_OID, SIGALG_SN, SIGALG_LN);
-
-    if (digestnid == NID_undef || signid == NID_undef)
+    if (!c_obj_create(handle, DIGEST_OID, DIGEST_SN, DIGEST_LN)
+            || !c_obj_create(handle, SIG_OID, SIG_SN, SIG_LN)
+            || !c_obj_create(handle, SIGALG_OID, SIGALG_SN, SIGALG_LN))
         return 0;
 
-    if (!c_obj_add_sigid(sigalgnid, digestnid, signid))
+    if (!c_obj_add_sigid(handle, SIGALG_OID, DIGEST_SN, SIG_LN))
         return 0;
 
     return 1;
