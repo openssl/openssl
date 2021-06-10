@@ -2109,7 +2109,7 @@ if ($builder eq "unified") {
         my $index_re = qr/\[\s*(?P<INDEX>(?:\\.|.)*?)\s*\]/;
         my $cond_re = qr/\[\s*(?P<COND>(?:\\.|.)*?)\s*\]/;
         my $attribs_re = qr/(?:\{\s*(?P<ATTRIBS>(?:\\.|.)*?)\s*\})?/;
-        my $value_re = qr/\s*(?P<VALUE>.*?)\s*/;
+        my $value_re = qr/(?P<VALUE>.*?)/;
         collect_information(
             collect_from_array([ @text ],
                                qr/\\$/ => sub { my $l1 = shift; my $l2 = shift;
@@ -2136,13 +2136,13 @@ if ($builder eq "unified") {
             qr/^\s* ENDIF \s*$/x
             => sub { die "ENDIF out of scope" if ! @skip;
                      pop @skip; },
-            qr/^\s* ${variable_re} \s* = ${value_re} $/x
+            qr/^\s* ${variable_re} \s* = \s* ${value_re} \s* $/x
             => sub {
                 if (!@skip || $skip[$#skip] > 0) {
                     $variables{$+{VARIABLE}} = $expand_variables->($+{VALUE});
                 }
             },
-            qr/^\s* SUBDIRS \s* = ${value_re} $/x
+            qr/^\s* SUBDIRS \s* = \s* ${value_re} \s* $/x
             => sub {
                 if (!@skip || $skip[$#skip] > 0) {
                     foreach (tokenize($expand_variables->($+{VALUE}))) {
@@ -2150,67 +2150,67 @@ if ($builder eq "unified") {
                     }
                 }
             },
-            qr/^\s* PROGRAMS ${attribs_re} \s* =  ${value_re} $/x
+            qr/^\s* PROGRAMS ${attribs_re} \s* =  \s* ${value_re} \s* $/x
             => sub { $push_to->(\@programs, undef,
                                 \$attributes{programs}, $+{ATTRIBS},
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
-            qr/^\s* LIBS ${attribs_re} \s* =  ${value_re} $/x
+            qr/^\s* LIBS ${attribs_re} \s* =  \s* ${value_re} \s* $/x
             => sub { $push_to->(\@libraries, undef,
                                 \$attributes{libraries}, $+{ATTRIBS},
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
-            qr/^\s* MODULES ${attribs_re} \s* =  ${value_re} $/x
+            qr/^\s* MODULES ${attribs_re} \s* =  \s* ${value_re} \s* $/x
             => sub { $push_to->(\@modules, undef,
                                 \$attributes{modules}, $+{ATTRIBS},
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
-            qr/^\s* SCRIPTS ${attribs_re} \s* =  ${value_re} $/x
+            qr/^\s* SCRIPTS ${attribs_re} \s* = \s* ${value_re} \s* $/x
             => sub { $push_to->(\@scripts, undef,
                                 \$attributes{scripts}, $+{ATTRIBS},
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
-            qr/^\s* IMAGEDOCS ${index_re} = ${value_re} $/x
+            qr/^\s* IMAGEDOCS ${index_re} \s* = \s* ${value_re} \s* $/x
             => sub { $push_to->(\%imagedocs, $expand_variables->($+{INDEX}),
                                 undef, undef,
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
-            qr/^\s* HTMLDOCS ${index_re} = ${value_re} $/x
+            qr/^\s* HTMLDOCS ${index_re} \s* = \s* ${value_re} \s* $/x
             => sub { $push_to->(\%htmldocs, $expand_variables->($+{INDEX}),
                                 undef, undef,
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
-            qr/^\s* MANDOCS ${index_re} = ${value_re} $/x
+            qr/^\s* MANDOCS ${index_re} \s* = \s* ${value_re} \s* $/x
             => sub { $push_to->(\%mandocs, $expand_variables->($+{INDEX}),
                                 undef, undef,
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
-            qr/^\s* SOURCE ${index_re} ${attribs_re} = ${value_re} $/x
+            qr/^\s* SOURCE ${index_re} ${attribs_re} \s* = \s* ${value_re} \s* $/x
             => sub { $push_to->(\%sources, $expand_variables->($+{INDEX}),
                                 \$attributes{sources}, $+{ATTRIBS},
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
-            qr/^\s* SHARED_SOURCE ${index_re} ${attribs_re} = ${value_re} $/x
+            qr/^\s* SHARED_SOURCE ${index_re} ${attribs_re} \s* = \s* ${value_re} \s* $/x
             => sub { $push_to->(\%shared_sources, $expand_variables->($+{INDEX}),
                                 \$attributes{sources}, $+{ATTRIBS},
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
-            qr/^\s* INCLUDE ${index_re} = ${value_re} $/x
+            qr/^\s* INCLUDE ${index_re} \s* = \s* ${value_re} \s* $/x
             => sub { $push_to->(\%includes, $expand_variables->($+{INDEX}),
                                 undef, undef,
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
-            qr/^\s* DEFINE ${index_re} = ${value_re} $/x
+            qr/^\s* DEFINE ${index_re} \s* = \s* ${value_re} \s* $/x
             => sub { $push_to->(\%defines, $expand_variables->($+{INDEX}),
                                 undef, undef,
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
-            qr/^\s* DEPEND ${index_re} ${attribs_re} = ${value_re} $/x
+            qr/^\s* DEPEND ${index_re} ${attribs_re} \s* = \s* ${value_re} \s* $/x
             => sub { $push_to->(\%depends, $expand_variables->($+{INDEX}),
                                 \$attributes{depends}, $+{ATTRIBS},
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
-            qr/^\s* GENERATE ${index_re} = ${value_re} $/x
+            qr/^\s* GENERATE ${index_re} \s* = \s* ${value_re} \s* $/x
             => sub { $push_to->(\%generate, $expand_variables->($+{INDEX}),
                                 undef, undef, $expand_variables->($+{VALUE}))
                          if !@skip || $skip[$#skip] > 0; },
