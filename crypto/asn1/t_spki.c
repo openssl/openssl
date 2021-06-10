@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/x509.h>
