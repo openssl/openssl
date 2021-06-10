@@ -26,9 +26,8 @@
  */
 
 typedef struct {
-    const char *s;
+    char *s;
     OSSL_PROPERTY_IDX idx;
-    char body[1];
 } PROPERTY_STRING;
 
 DEFINE_LHASH_OF(PROPERTY_STRING);
@@ -53,6 +52,7 @@ static int property_cmp(const PROPERTY_STRING *a, const PROPERTY_STRING *b)
 
 static void property_free(PROPERTY_STRING *ps)
 {
+    OPENSSL_free(ps->s);
     OPENSSL_free(ps);
 }
 
@@ -117,11 +117,10 @@ static PROPERTY_STRING *new_property_string(const char *s,
     PROPERTY_STRING *ps = OPENSSL_malloc(sizeof(*ps) + l);
 
     if (ps != NULL) {
-        memcpy(ps->body, s, l + 1);
-        ps->s = ps->body;
+        ps->s = OPENSSL_strdup(s);
         ps->idx = ++*pidx;
         if (ps->idx == 0) {
-            OPENSSL_free(ps);
+            property_free(ps);
             return NULL;
         }
     }
@@ -134,7 +133,7 @@ static OSSL_PROPERTY_IDX ossl_property_string(PROP_TABLE *t,
 {
     PROPERTY_STRING p, *ps, *ps_new;
 
-    p.s = s;
+    p.s = (char *)s;
     ps = lh_PROPERTY_STRING_retrieve(t, &p);
     if (ps == NULL && pidx != NULL)
         if ((ps_new = new_property_string(s, pidx)) != NULL) {
