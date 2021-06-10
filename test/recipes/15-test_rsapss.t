@@ -33,21 +33,21 @@ ok(run(app(['openssl', 'dgst', '-sign', srctop_file('test', 'testrsa.pem'), '-sh
             srctop_file('test', 'testrsa.pem')])),
    "openssl dgst -sign [plain RSA key, PSS padding mode, no PSS restrictions]");
 
-with({ exit_checker => sub { return shift == 1; } },
-     sub { ok(run(app(['openssl', 'dgst', '-sign', srctop_file('test', 'testrsa.pem'), '-sha512',
-                       '-sigopt', 'rsa_padding_mode:pss', '-sigopt', 'rsa_pss_saltlen:max',
-                       '-sigopt', 'rsa_mgf1_md:sha512', srctop_file('test', 'testrsa.pem')])),
-              "openssl dgst -sign, expect to fail gracefully");
-           ok(run(app(['openssl', 'dgst', '-sign', srctop_file('test', 'testrsa.pem'), '-sha512',
-                       '-sigopt', 'rsa_padding_mode:pss', '-sigopt', 'rsa_pss_saltlen:2147483647',
-                       '-sigopt', 'rsa_mgf1_md:sha1', srctop_file('test', 'testrsa.pem')])),
-              "openssl dgst -sign, expect to fail gracefully");
-           ok(run(app(['openssl', 'dgst', '-prverify', srctop_file('test', 'testrsa.pem'), '-sha512',
-                       '-sigopt', 'rsa_padding_mode:pss', '-sigopt', 'rsa_pss_saltlen:max',
-                       '-sigopt', 'rsa_mgf1_md:sha512', '-signature', 'testrsapss.sig',
-                       srctop_file('test', 'testrsa.pem')])),
-              "openssl dgst -prverify, expect to fail gracefully");
-         });
+ok(!run(app(['openssl', 'dgst', '-sign', srctop_file('test', 'testrsa.pem'), '-sha512',
+             '-sigopt', 'rsa_padding_mode:pss', '-sigopt', 'rsa_pss_saltlen:max',
+             '-sigopt', 'rsa_mgf1_md:sha512', srctop_file('test', 'testrsa.pem')])),
+   "openssl dgst -sign, expect to fail gracefully");
+
+ok(!run(app(['openssl', 'dgst', '-sign', srctop_file('test', 'testrsa.pem'), '-sha512',
+             '-sigopt', 'rsa_padding_mode:pss', '-sigopt', 'rsa_pss_saltlen:2147483647',
+             '-sigopt', 'rsa_mgf1_md:sha1', srctop_file('test', 'testrsa.pem')])),
+   "openssl dgst -sign, expect to fail gracefully");
+
+ok(!run(app(['openssl', 'dgst', '-prverify', srctop_file('test', 'testrsa.pem'), '-sha512',
+             '-sigopt', 'rsa_padding_mode:pss', '-sigopt', 'rsa_pss_saltlen:max',
+             '-sigopt', 'rsa_mgf1_md:sha512', '-signature', 'testrsapss.sig',
+             srctop_file('test', 'testrsa.pem')])),
+   "openssl dgst -prverify, expect to fail gracefully");
 
 ok(run(app(['openssl', 'dgst', '-prverify', srctop_file('test', 'testrsa.pem'),
             '-sha1',
