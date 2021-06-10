@@ -253,8 +253,8 @@ int OSSL_STORE_find(OSSL_STORE_CTX *ctx, const OSSL_STORE_SEARCH *search);
 
 typedef struct ossl_store_loader_st OSSL_STORE_LOADER;
 
-OSSL_STORE_LOADER *OSSL_STORE_LOADER_fetch(const char *scheme,
-                                           OSSL_LIB_CTX *libctx,
+OSSL_STORE_LOADER *OSSL_STORE_LOADER_fetch(OSSL_LIB_CTX *libctx,
+                                           const char *scheme,
                                            const char *properties);
 int OSSL_STORE_LOADER_up_ref(OSSL_STORE_LOADER *loader);
 void OSSL_STORE_LOADER_free(OSSL_STORE_LOADER *loader);
