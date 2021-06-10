@@ -148,12 +148,13 @@ int ossl_ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
                               const BIGNUM *scalar, const EC_POINT *point,
                               BN_CTX *ctx)
 {
-    int i, cardinality_bits, group_top, kbit, pbit, Z_is_one;
     EC_POINT *p = NULL;
     EC_POINT *s = NULL;
     BIGNUM *k = NULL;
     BIGNUM *lambda = NULL;
     BIGNUM *cardinality = NULL;
+    BN_ULONG *swap_rand;
+    int i, cardinality_bits, group_top, kbit, pbit, Z_is_one, swap_size;
     int ret = 0;
 
     /* early exit if the input point is the point at infinity */
@@ -239,16 +240,17 @@ int ossl_ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
     }
 
     /*
-     * Create random values for BN_consttime_swap_randomized, and for
-	 * constant-time swapping of Z_is_one in EC_POINT_SWAP below
-	 * This randomizatin is needed to prevent side channel attacks
-     * (for details, see: "Nonce@Once: A Single-Trace EM Side Channel Attack on
-     *  Several Constant-Time Elliptic Curve Implementations in Mobile Platforms"
-     * by M. Alam, B. Yilmaz, F. Werner, N. Samwel, A. Zajic, D. Genkin, Y. Yarom,
-     * and M. Prvulovic, in IEEE Euro S&P 2021)
+     * Create random values for BN_consttime_randomized_swap(), and for
+     * constant-time swapping of |Z_is_one| in EC_POINT_SWAP below.
      */
-    BN_ULONG *swap_rand=OPENSSL_malloc((cardinality_bits+2)*sizeof(BN_ULONG));
-    if(RAND_bytes_ex(bn_get_libctx(ctx),(unsigned char *)swap_rand,(cardinality_bits+2)*sizeof(BN_ULONG))<=0) {
+    swap_size = (cardinality_bits + 2) * sizeof (BN_ULONG);
+    swap_rand = OPENSSL_malloc(swap_size);
+    if (swap_rand == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+    if (RAND_bytes_ex(ossl_bn_get_libctx(ctx), (unsigned char *)swap_rand,
+                      swap_size, 0) <= 0) {
        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
        goto err;
     }
@@ -264,10 +266,11 @@ int ossl_ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
     }
     /*
      * lambda := scalar + cardinality
-     * k := scalar + 2*cardinality
+     * k := scalar + 2 * cardinality
      */
     kbit = BN_is_bit_set(lambda, cardinality_bits);
-    BN_consttime_swap_randomized(kbit, k, lambda, group_top + 2, swap_rand[cardinality_bits],swap_rand[cardinality_bits]);
+    BN_consttime_randomized_swap(kbit, k, lambda, group_top + 2,
+                                 swap_rand[cardinality_bits]);
 
     group_top = bn_get_top(group->field);
     if ((bn_wexpand(s->X, group_top) == NULL)
@@ -299,14 +302,15 @@ int ossl_ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
     /* top bit is a 1, in a fixed pos */
     pbit = 1;
 
-#define EC_POINT_CSWAP(c, a, b, w, t, r) do {         \
-        BN_consttime_swap_randomized(c, (a)->X, (b)->X, w, r, r);   \
-        BN_consttime_swap_randomized(c, (a)->Y, (b)->Y, w, r, r);   \
-        BN_consttime_swap_randomized(c, (a)->Z, (b)->Z, w, r, r);   \
-        t = (((a)->Z_is_one ^ (b)->Z_is_one) & (c)) ^ (r); \
-        (a)->Z_is_one = ((a)->Z_is_one ^ (t)) ^ (r);                      \
-        (b)->Z_is_one = ((b)->Z_is_one ^ (t)) ^ (r);                      \
-} while(0)
+#define EC_POINT_CSWAP(c, a, b, w, t, r) \
+    do {                                                        \
+        BN_consttime_randomized_swap(c, (a)->X, (b)->X, w, r);  \
+        BN_consttime_randomized_swap(c, (a)->Y, (b)->Y, w, r);  \
+        BN_consttime_randomized_swap(c, (a)->Z, (b)->Z, w, r);  \
+        t = (((a)->Z_is_one ^ (b)->Z_is_one) & (c)) ^ (r);      \
+        (a)->Z_is_one = ((a)->Z_is_one ^ (t)) ^ (r);            \
+        (b)->Z_is_one = ((b)->Z_is_one ^ (t)) ^ (r);            \
+    } while (0)
 
     /*-
      * The ladder step, with branches, is
@@ -382,7 +386,8 @@ int ossl_ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
         pbit ^= kbit;
     }
     /* one final cswap to move the right value into r */
-    EC_POINT_CSWAP(pbit, r, s, group_top, Z_is_one, swap_rand[cardinality_bits+1]);
+    EC_POINT_CSWAP(pbit, r, s, group_top, Z_is_one,
+                   swap_rand[cardinality_bits + 1]);
 #undef EC_POINT_CSWAP
 
     OPENSSL_free(swap_rand);
