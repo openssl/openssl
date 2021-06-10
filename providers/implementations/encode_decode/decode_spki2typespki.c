@@ -61,6 +61,7 @@ static int spki2typespki_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     X509_ALGOR *algor = NULL;
     const ASN1_OBJECT *oid = NULL;
     char dataname[OSSL_MAX_NAME_SIZE];
+    OSSL_PARAM params[5], *p = params;
 
     if (!ossl_read_der(ctx->provctx, cin, &der, &len))
         return 1;
@@ -68,51 +69,51 @@ static int spki2typespki_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     xpub = ossl_d2i_X509_PUBKEY_INTERNAL((const unsigned char **)&derp, len,
                                          PROV_LIBCTX_OF(ctx->provctx));
 
-    /* We return "empty handed".  This is not an error. */
-    if (xpub == NULL
-            || !X509_PUBKEY_get0_param(NULL, NULL, NULL, &algor, xpub)) {
-        ossl_X509_PUBKEY_INTERNAL_free(xpub);
-        return 1;
+
+    if (xpub == NULL) {
+        /* We return "empty handed".  This is not an error. */
+        ok = 1;
+        goto end;
     }
+
+    if (!X509_PUBKEY_get0_param(NULL, NULL, NULL, &algor, xpub))
+        goto end;
     X509_ALGOR_get0(&oid, NULL, NULL, algor);
 
+#ifndef OPENSSL_NO_EC
     /* SM2 abuses the EC oid, so this could actually be SM2 */
     if (OBJ_obj2nid(oid) == NID_X9_62_id_ecPublicKey
             && ossl_x509_algor_is_sm2(algor)) {
         strcpy(dataname, "SM2");
-    } else if (!OBJ_obj2txt(dataname, sizeof(dataname), oid, 0)) {
-        ossl_X509_PUBKEY_INTERNAL_free(xpub);
-        return 0;
+    } else
+#endif
+    if (!OBJ_obj2txt(dataname, sizeof(dataname), oid, 0)) {
+        goto end;
     }
 
     ossl_X509_PUBKEY_INTERNAL_free(xpub);
-    /*
-     * Indicated that we successfully decoded something, or not at all.
-     * Ending up "empty handed" is not an error.
-     */
-    ok = 1;
+    xpub = NULL;
 
-    {
-        OSSL_PARAM params[5], *p = params;
+    *p++ =
+        OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_TYPE,
+                                            dataname, 0);
 
-        *p++ =
-            OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_TYPE,
-                                             dataname, 0);
+    *p++ =
+        OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_STRUCTURE,
+                                            "SubjectPublicKeyInfo",
+                                            0);
+    *p++ =
+        OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_DATA, der, len);
+    *p++ =
+        OSSL_PARAM_construct_int(OSSL_OBJECT_PARAM_TYPE, &objtype);
 
-        *p++ =
-            OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_STRUCTURE,
-                                             "SubjectPublicKeyInfo",
-                                             0);
-        *p++ =
-            OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_DATA, der, len);
-        *p++ =
-            OSSL_PARAM_construct_int(OSSL_OBJECT_PARAM_TYPE, &objtype);
+    *p = OSSL_PARAM_construct_end();
 
-        *p = OSSL_PARAM_construct_end();
+    ok = data_cb(params, data_cbarg);
 
-        ok = data_cb(params, data_cbarg);
-    }
-
+ end:
+    ossl_X509_PUBKEY_INTERNAL_free(xpub);
+    OPENSSL_free(der);
     return ok;
 }
 
