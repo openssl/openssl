@@ -1124,6 +1124,14 @@ sub __data_dir {
 sub __cwd {
     my $dir = catdir(shift);
     my %opts = @_;
+
+    # If the directory is to be created, we must do that before using
+    # abs_path().
+    $dir = canonpath($dir);
+    if ($opts{create}) {
+	mkpath($dir);
+    }
+
     my $abscurdir = abs_path(curdir());
     my $absdir = abs_path($dir);
     my $reverse = abs2rel($abscurdir, $absdir);
@@ -1143,11 +1151,6 @@ sub __cwd {
     # In this case, we won't even clean it out, for safety's sake.
     return "." if $reverse eq "";
 
-    $dir = canonpath($dir);
-    if ($opts{create}) {
-	mkpath($dir);
-    }
-
     # We are recalculating the directories we keep track of, but need to save
     # away the result for after having moved into the new directory.
     my %tmp_directories = ();
@@ -1160,11 +1163,10 @@ sub __cwd {
     foreach (@dirtags) {
 	if (!file_name_is_absolute($directories{$_})) {
 	    my $oldpath = abs_path($directories{$_});
-	    my $newbase = abs_path($dir);
-	    my $newpath = abs2rel($oldpath, $newbase);
+	    my $newpath = abs2rel($oldpath, $absdir);
 	    if ($debug) {
 		print STDERR "DEBUG: [dir $_] old path: $oldpath\n";
-		print STDERR "DEBUG: [dir $_] new base: $newbase\n";
+		print STDERR "DEBUG: [dir $_] new base: $absdir\n";
 		print STDERR "DEBUG: [dir $_] resulting new path: $newpath\n";
 	    }
 	    $tmp_directories{$_} = $newpath;
@@ -1177,11 +1179,10 @@ sub __cwd {
     foreach (@direnv) {
 	if (!file_name_is_absolute($ENV{$_})) {
 	    my $oldpath = abs_path($ENV{$_});
-	    my $newbase = abs_path($dir);
-	    my $newpath = abs2rel($oldpath, $newbase);
+	    my $newpath = abs2rel($oldpath, $absdir);
 	    if ($debug) {
 		print STDERR "DEBUG: [env $_] old path: $oldpath\n";
-		print STDERR "DEBUG: [env $_] new base: $newbase\n";
+		print STDERR "DEBUG: [env $_] new base: $absdir\n";
 		print STDERR "DEBUG: [env $_] resulting new path: $newpath\n";
 	    }
 	    $tmp_ENV{$_} = $newpath;
