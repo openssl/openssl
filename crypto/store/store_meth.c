@@ -288,16 +288,16 @@ inner_loader_fetch(struct loader_data_st *methdata, int id,
     }
 
     /*
-     * If we have been passed neither a scheme_id nor a scheme, we have an
+     * If we have been passed both an id and a scheme, we have an
      * internal programming error.
      */
-    if (!ossl_assert(id != 0 || scheme != NULL)) {
+    if (!ossl_assert(id == 0 || scheme == NULL)) {
         ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_INTERNAL_ERROR);
         return NULL;
     }
 
     /* If we haven't received a name id yet, try to get one for the name */
-    if (id == 0)
+    if (id == 0 && scheme != NULL)
         id = ossl_namemap_name2num(namemap, scheme);
 
     /*
@@ -343,7 +343,7 @@ inner_loader_fetch(struct loader_data_st *methdata, int id,
         unsupported = !methdata->flag_construct_error_occurred;
     }
 
-    if (method == NULL) {
+    if ((id != 0 || scheme != NULL) && method == NULL) {
         int code = unsupported ? ERR_R_UNSUPPORTED : ERR_R_FETCH_FAILED;
 
         if (scheme == NULL)
@@ -436,44 +436,36 @@ int OSSL_STORE_LOADER_is_a(const OSSL_STORE_LOADER *loader, const char *name)
     return 0;
 }
 
-struct loader_do_all_data_st {
-    void (*user_fn)(void *method, void *arg);
+struct do_one_data_st {
+    void (*user_fn)(OSSL_STORE_LOADER *loader, void *arg);
     void *user_arg;
 };
 
-static void loader_do_one(OSSL_PROVIDER *provider,
-                          const OSSL_ALGORITHM *algodef,
-                          int no_store, void *vdata)
+static void do_one(ossl_unused int id, void *method, void *arg)
 {
-    struct loader_do_all_data_st *data = vdata;
-    OSSL_LIB_CTX *libctx = ossl_provider_libctx(provider);
-    OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
-    const char *name = algodef->algorithm_names;
-    int id = ossl_namemap_add_name(namemap, 0, name);
-    void *method = NULL;
+    struct do_one_data_st *data = arg;
 
-    if (id != 0)
-        method =
-            loader_from_algorithm(id, algodef, provider);
-
-    if (method != NULL) {
-        data->user_fn(method, data->user_arg);
-        OSSL_STORE_LOADER_free(method);
-    }
+    data->user_fn(method, data->user_arg);
 }
 
 void OSSL_STORE_LOADER_do_all_provided(OSSL_LIB_CTX *libctx,
-                                       void (*fn)(OSSL_STORE_LOADER *loader,
-                                                  void *arg),
-                                       void *arg)
+                                       void (*user_fn)(OSSL_STORE_LOADER *loader,
+                                                       void *arg),
+                                       void *user_arg)
 {
-    struct loader_do_all_data_st data;
+    struct loader_data_st methdata;
+    struct do_one_data_st data;
 
-    data.user_fn = (void (*)(void *, void *))fn;
-    data.user_arg = arg;
-    ossl_algorithm_do_all(libctx, OSSL_OP_STORE, NULL,
-                          NULL, loader_do_one, NULL,
-                          &data);
+    methdata.libctx = libctx;
+    methdata.tmp_store = NULL;
+    (void)inner_loader_fetch(&methdata, 0, NULL, NULL /* properties */);
+
+    data.user_fn = user_fn;
+    data.user_arg = user_arg;
+    if (methdata.tmp_store != NULL)
+        ossl_method_store_do_all(methdata.tmp_store, &do_one, &data);
+    ossl_method_store_do_all(get_loader_store(libctx), &do_one, &data);
+    dealloc_tmp_loader_store(methdata.tmp_store);
 }
 
 int OSSL_STORE_LOADER_names_do_all(const OSSL_STORE_LOADER *loader,
