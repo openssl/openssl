@@ -31,6 +31,11 @@ provider-base
  void core_vset_error(const OSSL_CORE_HANDLE *handle,
                       uint32_t reason, const char *fmt, va_list args);
 
+ int core_obj_add_sigid(const OSSL_CORE_HANDLE *prov, const char  *sign_name,
+                        const char *digest_name, const char *pkey_name);
+ int core_obj_create(const OSSL_CORE_HANDLE *handle, const char *oid,
+                     const char *sn, const char *ln);
+
  /*
   * Some OpenSSL functionality is directly offered to providers via
   * dispatch
@@ -69,12 +74,6 @@ provider-base
  int BIO_free(OSSL_CORE_BIO *bio);
  int BIO_vprintf(OSSL_CORE_BIO *bio, const char *format, va_list args);
  int BIO_vsnprintf(char *buf, size_t n, const char *fmt, va_list args);
-
- int OBJ_add_sigid(int signid, int dig_id, int pkey_id);
- int OBJ_create(const char *oid, const char *sn, const char *ln);
- int OBJ_txt2nid(const char *s);
- int OBJ_ln2nid(const char *s);
- int OBJ_sn2nid(const char *s);
 
  void OSSL_SELF_TEST_set_callback(OSSL_LIB_CTX *libctx, OSSL_CALLBACK *cb,
                                   void *cbarg);
@@ -151,6 +150,8 @@ provider):
  core_new_error                 OSSL_FUNC_CORE_NEW_ERROR
  core_set_error_debug           OSSL_FUNC_CORE_SET_ERROR_DEBUG
  core_vset_error                OSSL_FUNC_CORE_VSET_ERROR
+ core_obj_add_sigid             OSSL_FUNC_CORE_OBJ_ADD_SIGID
+ core_obj_create                OSSL_FUNC_CORE_OBJ_CREATE
  CRYPTO_malloc                  OSSL_FUNC_CRYPTO_MALLOC
  CRYPTO_zalloc                  OSSL_FUNC_CRYPTO_ZALLOC
  CRYPTO_memdup                  OSSL_FUNC_CRYPTO_MEMDUP
@@ -177,11 +178,6 @@ provider):
  ossl_rand_cleanup_entropy      OSSL_FUNC_CLEANUP_ENTROPY
  ossl_rand_get_nonce            OSSL_FUNC_GET_NONCE
  ossl_rand_cleanup_nonce        OSSL_FUNC_CLEANUP_NONCE
- OBJ_add_sigid                  OSSL_FUNC_OBJ_ADD_SIGID
- OBJ_create                     OSSL_FUNC_OBJ_CREATE
- OBJ_txt2nid                    OSSL_FUNC_OBJ_TXT2NID
- OBJ_sn2nid                     OSSL_FUNC_OBJ_SN2NID
- OBJ_ln2nid                     OSSL_FUNC_OBJ_LN2NID
 
 For I<*out> (the B<OSSL_DISPATCH> array passed from the provider to
 F<libcrypto>):
@@ -255,15 +251,29 @@ This corresponds to the OpenSSL function L<ERR_vset_error(3)>.
 
 =back
 
+The core_obj_create() function registers a new OID and associated short and
+long names for the given I<handle>. It corresponds to the OpenSSL function
+L<OBJ_create(3)> except that it returns 1 on success or 0 on failure. A common
+failure reason is that the OID is already registered.
+
+The core_obj_add_sigid() function registers a new composite signature algorithm
+(I<sign_name>) consisting of an underlying signature algorithm (I<pkey_name>)
+and digest algorithm (I<digest_name>) for the given I<handle>. It assumes that
+the OIDs for the composite signature algorithm as well as for the underlying
+signature and digest algorithms are either already known to OpenSSL or have been
+registered via a call to core_obj_create(). It corresponds to the OpenSSL
+function L<OBJ_add_sigid(3)>, except that the objects are identified by name
+rather than a numeric NID. Any name (OID, short name or long name) can be used
+to identify the object. It returns 1 on success or 0 on failure.
+
 CRYPTO_malloc(), CRYPTO_zalloc(), CRYPTO_memdup(), CRYPTO_strdup(),
 CRYPTO_strndup(), CRYPTO_free(), CRYPTO_clear_free(),
 CRYPTO_realloc(), CRYPTO_clear_realloc(), CRYPTO_secure_malloc(),
 CRYPTO_secure_zalloc(), CRYPTO_secure_free(),
 CRYPTO_secure_clear_free(), CRYPTO_secure_allocated(),
 BIO_new_file(), BIO_new_mem_buf(), BIO_read_ex(), BIO_write_ex(), BIO_up_ref(),
-BIO_free(), BIO_vprintf(), BIO_vsnprintf(), OPENSSL_cleanse(),
-OPENSSL_hexstr2buf(), OBJ_add_sigid(), OBJ_create(), OBJ_txt2nid(), OBJ_sn2nid()
-and OBJ_ln2nid() correspond exactly to the public functions with
+BIO_free(), BIO_vprintf(), BIO_vsnprintf(), OPENSSL_cleanse() and
+OPENSSL_hexstr2buf() correspond exactly to the public functions with
 the same name.  As a matter of fact, the pointers in the B<OSSL_DISPATCH>
 array are typically direct pointers to those public functions. Note that the BIO
 functions take an B<OSSL_CORE_BIO> type rather than the standard B<BIO>

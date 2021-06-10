@@ -59,10 +59,10 @@ an ASN1_OBJECT structure, its long name and its short name respectively,
 or B<NULL> if an error occurred.
 
 OBJ_obj2nid(), OBJ_ln2nid(), OBJ_sn2nid() return the corresponding NID
-for the object I<o>, the long name <ln> or the short name <sn> respectively
+for the object I<o>, the long name I<ln> or the short name I<sn> respectively
 or NID_undef if an error occurred.
 
-OBJ_txt2nid() returns NID corresponding to text string <s>. I<s> can be
+OBJ_txt2nid() returns NID corresponding to text string I<s>. I<s> can be
 a long name, a short name or the numerical representation of an object.
 
 OBJ_txt2obj() converts the text string I<s> into an ASN1_OBJECT structure.
@@ -99,7 +99,7 @@ given nid with two other nids - one representing the underlying signature
 algorithm and the other representing a digest algorithm to be used in
 conjunction with it. I<signid> represents the NID for the composite "Signature
 Algorithm", I<dig_id> is the NID for the digest algorithm and I<pkey_id> is the
-NID for the underlying signature algorithm. 
+NID for the underlying signature algorithm.
 
 OBJ_cleanup() releases any resources allocated by creating new objects.
 
@@ -150,7 +150,7 @@ on error.
 OBJ_obj2nid(), OBJ_ln2nid(), OBJ_sn2nid() and OBJ_txt2nid() return
 a NID or B<NID_undef> on error.
 
-OBJ_add_sigid()returns 1 on success or 0 on error.
+OBJ_add_sigid() returns 1 on success or 0 on error.
 
 =head1 EXAMPLES
 
