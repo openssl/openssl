@@ -36,10 +36,11 @@ static const char *select_name = NULL;
     {                                                           \
         TYPE *impl;                                             \
         const char *propq = app_get0_propq();                   \
+        OSSL_LIB_CTX *libctx = app_get0_libctx();               \
         const char *name = TYPE ## _get0_name(alg);             \
                                                                 \
         ERR_set_mark();                                         \
-        impl = TYPE ## _fetch(NULL, name, propq);               \
+        impl = TYPE ## _fetch(libctx, name, propq);             \
         ERR_pop_to_mark();                                      \
         if (impl == NULL)                                       \
             return 0;                                           \
@@ -118,7 +119,7 @@ static void list_ciphers(void)
 #endif
 
     BIO_printf(bio_out, "Provided:\n");
-    EVP_CIPHER_do_all_provided(NULL, collect_ciphers, ciphers);
+    EVP_CIPHER_do_all_provided(app_get0_libctx(), collect_ciphers, ciphers);
     sk_EVP_CIPHER_sort(ciphers);
     for (i = 0; i < sk_EVP_CIPHER_num(ciphers); i++) {
         const EVP_CIPHER *c = sk_EVP_CIPHER_value(ciphers, i);
@@ -202,7 +203,7 @@ static void list_digests(void)
 #endif
 
     BIO_printf(bio_out, "Provided:\n");
-    EVP_MD_do_all_provided(NULL, collect_digests, digests);
+    EVP_MD_do_all_provided(app_get0_libctx(), collect_digests, digests);
     sk_EVP_MD_sort(digests);
     for (i = 0; i < sk_EVP_MD_num(digests); i++) {
         const EVP_MD *m = sk_EVP_MD_value(digests, i);
@@ -263,7 +264,7 @@ static void list_macs(void)
         return;
     }
     BIO_printf(bio_out, "Provided MACs:\n");
-    EVP_MAC_do_all_provided(NULL, collect_macs, macs);
+    EVP_MAC_do_all_provided(app_get0_libctx(), collect_macs, macs);
     sk_EVP_MAC_sort(macs);
     for (i = 0; i < sk_EVP_MAC_num(macs); i++) {
         const EVP_MAC *m = sk_EVP_MAC_value(macs, i);
@@ -327,7 +328,7 @@ static void list_kdfs(void)
         return;
     }
     BIO_printf(bio_out, "Provided KDFs and PDFs:\n");
-    EVP_KDF_do_all_provided(NULL, collect_kdfs, kdfs);
+    EVP_KDF_do_all_provided(app_get0_libctx(), collect_kdfs, kdfs);
     sk_EVP_KDF_sort(kdfs);
     for (i = 0; i < sk_EVP_KDF_num(kdfs); i++) {
         const EVP_KDF *k = sk_EVP_KDF_value(kdfs, i);
@@ -397,7 +398,7 @@ static void list_random_generators(void)
         return;
     }
     BIO_printf(bio_out, "Provided RNGs and seed sources:\n");
-    EVP_RAND_do_all_provided(NULL, collect_rands, rands);
+    EVP_RAND_do_all_provided(app_get0_libctx(), collect_rands, rands);
     sk_EVP_RAND_sort(rands);
     for (i = 0; i < sk_EVP_RAND_num(rands); i++) {
         const EVP_RAND *m = sk_EVP_RAND_value(rands, i);
@@ -524,7 +525,8 @@ static void list_encoders(void)
         return;
     }
     BIO_printf(bio_out, "Provided ENCODERs:\n");
-    OSSL_ENCODER_do_all_provided(NULL, collect_encoders, encoders);
+    OSSL_ENCODER_do_all_provided(app_get0_libctx(), collect_encoders,
+                                 encoders);
     sk_OSSL_ENCODER_sort(encoders);
 
     for (i = 0; i < sk_OSSL_ENCODER_num(encoders); i++) {
@@ -588,7 +590,7 @@ static void list_decoders(void)
         return;
     }
     BIO_printf(bio_out, "Provided DECODERs:\n");
-    OSSL_DECODER_do_all_provided(NULL, collect_decoders,
+    OSSL_DECODER_do_all_provided(app_get0_libctx(), collect_decoders,
                                  decoders);
     sk_OSSL_DECODER_sort(decoders);
 
@@ -644,7 +646,8 @@ static void list_keymanagers(void)
     int i;
     STACK_OF(EVP_KEYMGMT) *km_stack = sk_EVP_KEYMGMT_new(keymanager_cmp);
 
-    EVP_KEYMGMT_do_all_provided(NULL, collect_keymanagers, km_stack);
+    EVP_KEYMGMT_do_all_provided(app_get0_libctx(), collect_keymanagers,
+                                km_stack);
     sk_EVP_KEYMGMT_sort(km_stack);
 
     for (i = 0; i < sk_EVP_KEYMGMT_num(km_stack); i++) {
@@ -706,7 +709,8 @@ static void list_signatures(void)
     int i, count = 0;
     STACK_OF(EVP_SIGNATURE) *sig_stack = sk_EVP_SIGNATURE_new(signature_cmp);
 
-    EVP_SIGNATURE_do_all_provided(NULL, collect_signatures, sig_stack);
+    EVP_SIGNATURE_do_all_provided(app_get0_libctx(), collect_signatures,
+                                  sig_stack);
     sk_EVP_SIGNATURE_sort(sig_stack);
 
     for (i = 0; i < sk_EVP_SIGNATURE_num(sig_stack); i++) {
@@ -765,7 +769,7 @@ static void list_kems(void)
     int i, count = 0;
     STACK_OF(EVP_KEM) *kem_stack = sk_EVP_KEM_new(kem_cmp);
 
-    EVP_KEM_do_all_provided(NULL, collect_kem, kem_stack);
+    EVP_KEM_do_all_provided(app_get0_libctx(), collect_kem, kem_stack);
     sk_EVP_KEM_sort(kem_stack);
 
     for (i = 0; i < sk_EVP_KEM_num(kem_stack); i++) {
@@ -825,7 +829,8 @@ static void list_asymciphers(void)
     STACK_OF(EVP_ASYM_CIPHER) *asymciph_stack =
         sk_EVP_ASYM_CIPHER_new(asymcipher_cmp);
 
-    EVP_ASYM_CIPHER_do_all_provided(NULL, collect_asymciph, asymciph_stack);
+    EVP_ASYM_CIPHER_do_all_provided(app_get0_libctx(), collect_asymciph,
+                                    asymciph_stack);
     sk_EVP_ASYM_CIPHER_sort(asymciph_stack);
 
     for (i = 0; i < sk_EVP_ASYM_CIPHER_num(asymciph_stack); i++) {
@@ -885,7 +890,7 @@ static void list_keyexchanges(void)
     int i, count = 0;
     STACK_OF(EVP_KEYEXCH) *kex_stack = sk_EVP_KEYEXCH_new(kex_cmp);
 
-    EVP_KEYEXCH_do_all_provided(NULL, collect_kex, kex_stack);
+    EVP_KEYEXCH_do_all_provided(app_get0_libctx(), collect_kex, kex_stack);
     sk_EVP_KEYEXCH_sort(kex_stack);
 
     for (i = 0; i < sk_EVP_KEYEXCH_num(kex_stack); i++) {
@@ -1013,7 +1018,7 @@ static int is_md_available(const char *name)
 
     /* Look through providers' digests */
     ERR_set_mark();
-    md = EVP_MD_fetch(NULL, name, propq);
+    md = EVP_MD_fetch(app_get0_libctx(), name, propq);
     ERR_pop_to_mark();
     if (md != NULL) {
         EVP_MD_free(md);
@@ -1030,7 +1035,7 @@ static int is_cipher_available(const char *name)
 
     /* Look through providers' ciphers */
     ERR_set_mark();
-    cipher = EVP_CIPHER_fetch(NULL, name, propq);
+    cipher = EVP_CIPHER_fetch(app_get0_libctx(), name, propq);
     ERR_pop_to_mark();
     if (cipher != NULL) {
         EVP_CIPHER_free(cipher);
@@ -1170,7 +1175,8 @@ static void list_store_loaders(void)
         return;
     }
     BIO_printf(bio_out, "Provided STORE LOADERs:\n");
-    OSSL_STORE_LOADER_do_all_provided(NULL, collect_store_loaders, stores);
+    OSSL_STORE_LOADER_do_all_provided(app_get0_libctx(), collect_store_loaders,
+                                      stores);
     sk_OSSL_STORE_LOADER_sort(stores);
     for (i = 0; i < sk_OSSL_STORE_LOADER_num(stores); i++) {
         const OSSL_STORE_LOADER *m = sk_OSSL_STORE_LOADER_value(stores, i);
