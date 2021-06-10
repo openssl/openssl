@@ -441,12 +441,16 @@ static int test_multi(int idx)
 
     worker();
 
-    if (!TEST_true(wait_for_thread(thread1))
-            || !TEST_true(wait_for_thread(thread2))
-            || !TEST_true(multi_success))
-        goto err;
-
     testresult = 1;
+    /*
+     * Don't combine these into one if statement; must wait for both threads.
+     */
+    if (!TEST_true(wait_for_thread(thread1)))
+        testresult = 0;
+    if (!TEST_true(wait_for_thread(thread2)))
+        testresult = 0;
+    if (!TEST_true(multi_success))
+        testresult = 0;
 
  err:
     EVP_MD_free(sha256);
