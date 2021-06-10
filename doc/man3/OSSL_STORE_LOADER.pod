@@ -33,8 +33,8 @@ unregister STORE loaders for different URI schemes
 
  typedef struct ossl_store_loader_st OSSL_STORE_LOADER;
 
- OSSL_STORE_LOADER *OSSL_STORE_LOADER_fetch(const char *scheme,
-                                            OSSL_LIB_CTX *libctx,
+ OSSL_STORE_LOADER *OSSL_STORE_LOADER_fetch(OSSL_LIB_CTX *libctx,
+                                            const char *scheme,
                                             const char *properties);
  int OSSL_STORE_LOADER_up_ref(OSSL_STORE_LOADER *loader);
  void OSSL_STORE_LOADER_free(OSSL_STORE_LOADER *loader);
@@ -119,7 +119,7 @@ storage schemes.
 
 OSSL_STORE_LOADER_fetch() looks for an implementation for a storage
 I<scheme> within the providers that has been loaded into the B<OSSL_LIB_CTX>
-given by I<ctx>, and with the properties given by I<properties>.
+given by I<libctx>, and with the properties given by I<properties>.
 
 OSSL_STORE_LOADER_up_ref() increments the reference count for the given
 I<loader>.
