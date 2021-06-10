@@ -202,7 +202,8 @@ int OSSL_HTTP_REQ_CTX_set_request_line(OSSL_HTTP_REQ_CTX *rctx, int method_POST,
         return 0;
     /*
      * Add (the rest of) the path and the HTTP version,
-     * which is fixed to 1.0 for straightforward implementation of keep-alive */
+     * which is fixed to 1.0 for straightforward implementation of keep-alive
+     */
     if (BIO_printf(rctx->mem, "%s "HTTP_1_0"\r\n", path) <= 0)
         return 0;
 
@@ -286,17 +287,19 @@ static int set1_content(OSSL_HTTP_REQ_CTX *rctx,
         ERR_raise(ERR_LIB_HTTP, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
-    if (!BIO_up_ref(req))
-        return 0;
-    rctx->req = req;
 
     if (content_type != NULL
             && BIO_printf(rctx->mem, "Content-Type: %s\r\n", content_type) <= 0)
         return 0;
 
     /* streaming BIO may not support querying size */
-    return (req_len = BIO_ctrl(req, BIO_CTRL_INFO, 0, NULL)) <= 0
-        || BIO_printf(rctx->mem, "Content-Length: %ld\r\n", req_len) > 0;
+    if (((req_len = BIO_ctrl(req, BIO_CTRL_INFO, 0, NULL)) <= 0
+         || BIO_printf(rctx->mem, "Content-Length: %ld\r\n", req_len) > 0)
+        && BIO_up_ref(req)) {
+        rctx->req = req;
+        return 1;
+    }
+    return 0;
 }
 
 int OSSL_HTTP_REQ_CTX_set1_req(OSSL_HTTP_REQ_CTX *rctx, const char *content_type,
