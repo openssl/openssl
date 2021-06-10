@@ -2,21 +2,34 @@
 
 =head1 NAME
 
-BN_swap - exchange BIGNUMs
+BN_swap, BN_consttime_swap, BN_consttime_randomized_swap
+- exchange BIGNUMs
 
 =head1 SYNOPSIS
 
  #include <openssl/bn.h>
 
  void BN_swap(BIGNUM *a, BIGNUM *b);
+ void BN_consttime_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords);
+ void BN_consttime_randomized_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b,
+                                   int nwords, BN_ULONG r);
 
 =head1 DESCRIPTION
 
 BN_swap() exchanges the values of I<a> and I<b>.
 
+BN_consttime_swap() exchanges the values of I<a> amd I<b> if I<condition>
+is not zero.  I<nwords> specifies the number of words to swap, and
+each of I<a> and I<b> most have at least that many words allocated,
+and not use more than that many words.
+
+BN_consttime_randomized_swap() is the same as BN_consttime_swap()
+except that it uses I<r> as a randomization value to avoid a class
+of timing attacks.
+
 =head1 RETURN VALUES
 
-BN_swap() does not return a value.
+None of these functions returns a value.
 
 =head1 COPYRIGHT
 
