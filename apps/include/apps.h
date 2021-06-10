@@ -37,6 +37,7 @@
 # include "fmt.h"
 # include "platform.h"
 # include "engine_loader.h"
+# include "app_libctx.h"
 
 /*
  * quick macro when you need to pass an unsigned char instead of a char.
@@ -330,8 +331,6 @@ typedef struct verify_options_st {
 
 extern VERIFY_CB_ARGS verify_args;
 
-OSSL_LIB_CTX *app_create_libctx(void);
-OSSL_LIB_CTX *app_get0_libctx(void);
 OSSL_PARAM *app_params_new_from_opts(STACK_OF(OPENSSL_STRING) *opts,
                                      const OSSL_PARAM *paramdefs);
 void app_params_free(OSSL_PARAM *params);
@@ -340,9 +339,5 @@ void app_providers_cleanup(void);
 
 EVP_PKEY *app_keygen(EVP_PKEY_CTX *ctx, const char *alg, int bits, int verbose);
 EVP_PKEY *app_paramgen(EVP_PKEY_CTX *ctx, const char *alg);
-
-OSSL_LIB_CTX *app_get0_libctx(void);
-int app_set_propq(const char *arg);
-const char *app_get0_propq(void);
 
 #endif
