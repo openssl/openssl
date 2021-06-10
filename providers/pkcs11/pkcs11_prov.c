@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,13 +9,14 @@
 
 #include <string.h>
 #include <stdio.h>
+#include "pkcs11_ctx.h"
+#include <dlfcn.h>
+
+#include <openssl/err.h>
+#include <openssl/proverr.h>
 #include <openssl/params.h>
 #include <prov/providercommon.h>
 #include <prov/names.h>
-#include "pkcs11_ctx.h"
-#include <dlfcn.h>
-#include <openssl/err.h>
-#include <openssl/proverr.h>
 
 extern const OSSL_DISPATCH rsa_keymgmt_dp_tbl[];
 
@@ -23,11 +24,11 @@ extern const OSSL_DISPATCH rsa_keymgmt_dp_tbl[];
 OSSL_provider_init_fn OSSL_provider_init;
 
 static OSSL_ALGORITHM rsa_keymgmt_alg_tbl[] = {
-    { PROV_NAMES_RSA, "provider=pkcs11,fips=no", rsa_keymgmt_dp_tbl},
+    { PROV_NAMES_RSA, "provider=pkcs11,fips=no", rsa_keymgmt_dp_tbl },
     { NULL, NULL, NULL }
 };
 
-/************************************************************************
+/*
  * Parameters we provide to the core.
  * The parameters in this list can be used with this provider.
  * Implementation for retrieving those parameters are implemented in 
@@ -42,41 +43,30 @@ static const OSSL_PARAM pkcs11_get_param_types[] = {
 };
 
 static const OSSL_PARAM pkcs11_set_param_types[] = {
-    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_PKCS11_SLOT,     OSSL_PARAM_INTEGER,  NULL, 0),
-    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_PKCS11_TOKEN,     OSSL_PARAM_INTEGER,  NULL, 0),
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_PKCS11_SLOT,   OSSL_PARAM_INTEGER,  NULL, 0),
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_PKCS11_TOKEN,  OSSL_PARAM_INTEGER,  NULL, 0),
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_PKCS11_MODULE, OSSL_PARAM_UTF8_PTR, NULL, 0),
     OSSL_PARAM_END
 };
 
-/************************************************************************/
-
-/************************************************************************
- * Static private functions definition
- */
+/* Private functions definition */
 void pkcs11_unload_module(PKCS11_CTX *ctx);
-int pkcs11_load_module(PKCS11_CTX *ctx, const char* libname);
-void pkcs11_generate_dispatch_tables(PKCS11_CTX *ctx);
+int pkcs11_load_module(PKCS11_CTX *ctx, const char *libname);
+int pkcs11_generate_dispatch_tables(PKCS11_CTX *ctx);
 int pkcs11_generate_mechanism_tables(PKCS11_CTX *ctx);
-/************************************************************************/
 
-/************************************************************************
- * Defining the dispatch table.
- * Forward declarations to ensure that interface functions are correctly
- * defined. Those interface functions are provided to the core using
- * my_dispatch_table.
- */
-static OSSL_FUNC_provider_gettable_params_fn pkcs11_gettable_params;
-static OSSL_FUNC_provider_get_params_fn pkcs11_get_params;
-static OSSL_FUNC_provider_settable_params_fn pkcs11_settable_params;
-static OSSL_FUNC_provider_set_params_fn pkcs11_set_params;
-static OSSL_FUNC_provider_query_operation_fn pkcs11_query;
+static OSSL_FUNC_provider_gettable_params_fn    pkcs11_gettable_params;
+static OSSL_FUNC_provider_get_params_fn         pkcs11_get_params;
+static OSSL_FUNC_provider_settable_params_fn    pkcs11_settable_params;
+static OSSL_FUNC_provider_set_params_fn         pkcs11_set_params;
+static OSSL_FUNC_provider_query_operation_fn    pkcs11_query;
 static OSSL_FUNC_provider_get_reason_strings_fn pkcs11_get_reason_strings;
-static OSSL_FUNC_provider_teardown_fn pkcs11_teardown;
+static OSSL_FUNC_provider_teardown_fn           pkcs11_teardown;
 
 #define SET_PKCS11_PROV_ERR(ctx, reasonidx) \
     pkcs11_set_error(ctx, reasonidx, OPENSSL_FILE, OPENSSL_LINE, OPENSSL_FUNC, NULL)
 static void pkcs11_set_error(PKCS11_CTX *ctx, int reason, const char *file, int line,
-                        const char *func, const char *fmt, ...)
+                             const char *func, const char *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
@@ -88,7 +78,7 @@ static void pkcs11_set_error(PKCS11_CTX *ctx, int reason, const char *file, int 
 
 /* Define the reason string table */
 #define ERR_PKCS11_NO_USERPIN_SET (CKR_TOKEN_RESOURCE_EXCEEDED + 1)
-static const OSSL_ITEM reason_strings[] = {
+static const OSSL_ITEM pkcs11_reason_strings[] = {
 #define REASON_STRING(ckr) {ckr, #ckr}
     REASON_STRING(CKR_CANCEL),
     REASON_STRING(CKR_HOST_MEMORY),
@@ -190,9 +180,8 @@ static const OSSL_ITEM reason_strings[] = {
     {0, NULL}
 };
 
-
 /* Functions we provide to the core */
-static const OSSL_DISPATCH my_dispatch_table[] = {
+static const OSSL_DISPATCH pkcs11_dispatch_table[] = {
     { OSSL_FUNC_PROVIDER_SETTABLE_PARAMS, (void (*)(void))pkcs11_settable_params },
     { OSSL_FUNC_PROVIDER_SET_PARAMS, (void (*)(void))pkcs11_set_params },
     { OSSL_FUNC_PROVIDER_GETTABLE_PARAMS, (void (*)(void))pkcs11_gettable_params },
@@ -203,19 +192,9 @@ static const OSSL_DISPATCH my_dispatch_table[] = {
     { 0, NULL }
 };
 
-/************************************************************************/
-
-#define SEARCH_PARAM "provider=my_provider"
-
-/************************************************************************/
-
-/************************************************************************/
-
 /* Implementation for the OSSL_FUNC_PROVIDER_GETTABLE_PARAMS function */
 static const OSSL_PARAM *pkcs11_gettable_params(void *provctx)
 {
-    printf("- my_provider: %s (%d)\n", __FUNCTION__, __LINE__);
-    fflush(stdout);
     return pkcs11_get_param_types;
 }
 
@@ -236,7 +215,7 @@ static int pkcs11_get_params(void *provctx, OSSL_PARAM params[])
     p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_STATUS);
     if (p != NULL && !OSSL_PARAM_set_int(p, ossl_prov_is_running()))
         return 0;
-            
+
     return 1;
 }
 
@@ -249,35 +228,44 @@ static const OSSL_PARAM *pkcs11_settable_params(void *provctx)
 /* Implementation for the OSSL_FUNC_PROVIDER_GET_PARAMS function */
 static int pkcs11_set_params(void *provctx, const OSSL_PARAM params[])
 {
-    OSSL_PARAM *p;
-    PKCS11_CTX *ctx = (PKCS11_CTX*)provctx;
+    OSSL_PARAM *p = NULL;
+    PKCS11_CTX *ctx = (PKCS11_CTX *)provctx;
     int ival = 0;
-    const char* strval = NULL;
+    const char *strval = NULL;
 
-    p = OSSL_PARAM_locate((OSSL_PARAM*)params, OSSL_PROV_PARAM_PKCS11_SLOT);
+    p = OSSL_PARAM_locate((OSSL_PARAM *)params, OSSL_PROV_PARAM_PKCS11_SLOT);
     if (p != NULL && !OSSL_PARAM_get_int(p, &ival))
-        return 0;
-    else {
-        ctx->slot = ival;
-    }
-    p = OSSL_PARAM_locate((OSSL_PARAM*)params, OSSL_PROV_PARAM_PKCS11_TOKEN);
-    if (p != NULL && !OSSL_PARAM_get_int(p, &ival))
-        return 0;
-    else {
-        ctx->token = ival;
-    }
-    p = OSSL_PARAM_locate((OSSL_PARAM*)params, OSSL_PROV_PARAM_PKCS11_USERPIN);
-    if (p != NULL && !OSSL_PARAM_get_utf8_ptr(p, &strval))
         return 0;
     else
-    {
-        ctx->userpin = OPENSSL_zalloc(strlen(strval) + 1);
-        strncpy((char*)ctx->userpin, strval, strlen(strval));
-    }
-    p = OSSL_PARAM_locate((OSSL_PARAM*)params, OSSL_PROV_PARAM_PKCS11_MODULE);
-    if (p != NULL && !OSSL_PARAM_get_utf8_ptr(p, &strval))
+        ctx->slot = ival;
+
+    p = OSSL_PARAM_locate((OSSL_PARAM *)params, OSSL_PROV_PARAM_PKCS11_TOKEN);
+    if (p != NULL && !OSSL_PARAM_get_int(p, &ival))
         return 0;
-    else {
+    else
+        ctx->token = ival;
+
+    /* WB use OSSL_PARAM_set_octet_string to avoid unsigned char* casts & getting rid of pointer */
+    p = OSSL_PARAM_locate((OSSL_PARAM *)params, OSSL_PROV_PARAM_PKCS11_USERPIN);
+    if (p != NULL) {
+        /* WB Do this for the other params */
+        if (!OSSL_PARAM_get_utf8_ptr(p, &strval)) {
+            return 0;
+        } else {
+            if (ctx->userpin != NULL)
+                OPENSSL_clear_free(ctx->userpin, strlen((const char*)ctx->userpin));
+    
+            ctx->userpin = OPENSSL_zalloc(strlen(strval) + 1);
+            if (ctx->userpin == NULL)
+                return 0;
+            strncpy((char *)ctx->userpin, strval, strlen(strval));
+        }
+    }
+
+    p = OSSL_PARAM_locate((OSSL_PARAM *)params, OSSL_PROV_PARAM_PKCS11_MODULE);
+    if (p != NULL && !OSSL_PARAM_get_utf8_ptr(p, &strval)) {
+        return 0;
+    } else {
         if (!pkcs11_load_module(ctx, strval))
             return 0;
     }
@@ -290,7 +278,7 @@ static const OSSL_ALGORITHM *pkcs11_query(void *provctx,
                                           int operation_id,
                                           int *no_cache)
 {
-    PKCS11_CTX* ctx = (PKCS11_CTX*)provctx;
+    PKCS11_CTX *ctx = (PKCS11_CTX *)provctx;
 
     *no_cache = 1;
     switch (operation_id) {
@@ -309,13 +297,13 @@ static const OSSL_ITEM *pkcs11_get_reason_strings(void *provctx)
     if (provctx == NULL)
         return NULL;
 
-    return reason_strings;
+    return pkcs11_reason_strings;
 }
 
 /* Implementation for the OSSL_FUNC_PROVIDER_TEARDOWN function */
 static void pkcs11_teardown(void *provctx)
 {
-    PKCS11_CTX *ctx = (PKCS11_CTX*)provctx;
+    PKCS11_CTX *ctx = (PKCS11_CTX *)provctx;
     pkcs11_unload_module(ctx);
     OSSL_LIB_CTX_free(PROV_LIBCTX_OF(provctx));
     OPENSSL_free(ctx);
@@ -325,12 +313,12 @@ static void pkcs11_teardown(void *provctx)
  * This method is basically the entry point of the provider library.
  */
 int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
-                            const OSSL_DISPATCH *in,
-                            const OSSL_DISPATCH **out,
-                            void **provctx)
+                       const OSSL_DISPATCH *in,
+                       const OSSL_DISPATCH **out,
+                       void **provctx)
 {
     OSSL_LIB_CTX *libctx = NULL;
-    PKCS11_CTX* ctx = NULL;
+    PKCS11_CTX *ctx = NULL;
     int ret = 0;
 
     if (handle == NULL || in == NULL || out == NULL || provctx == NULL)
@@ -339,13 +327,17 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
         goto end;
     }
 
-    ctx = (PKCS11_CTX*)OPENSSL_zalloc(sizeof(PKCS11_CTX));
-    if (ctx == NULL
-        || (libctx = OSSL_LIB_CTX_new()) == NULL) {
+    *provctx = NULL;
+
+    ctx = (PKCS11_CTX *)OPENSSL_zalloc(sizeof(PKCS11_CTX));
+    if (ctx == NULL) {
+        OPENSSL_free(ctx);
+        goto end;
+    }
+
+    if ((libctx = OSSL_LIB_CTX_new()) == NULL) {
         OSSL_LIB_CTX_free(libctx);
-        pkcs11_teardown(ctx);
-        *provctx = NULL;
-        return 0;
+        goto end;
     }
 
     /* Asign the core function to the context object */
@@ -370,25 +362,25 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
     ossl_prov_ctx_set0_libctx(*provctx, libctx);
     ossl_prov_ctx_set0_handle(*provctx, handle);
 
-    *out = my_dispatch_table;
+    *out = pkcs11_dispatch_table;
     ret = 1;
 end:
     return ret;
 }
 
-/************************************************************************
- * Helper Functions
- */
-
-int pkcs11_do_GetFunctionList(PKCS11_CTX *ctx, char* libname)
+/* Helper Functions */
+int pkcs11_do_GetFunctionList(PKCS11_CTX *ctx, char *libname)
 {
+    /* WB Change to modern style */
     CK_RV(*pfunc) ();
     int ret = 0;
 
+    /* dlopen -> use openssl method dso_load */
     ctx->lib_handle = dlopen(libname, RTLD_NOW);
     if (ctx->lib_handle == NULL)
         goto ret;
 
+    /* WB Use DSO ??? */
     *(void **)(&pfunc) = dlsym(ctx->lib_handle, "C_GetFunctionList");
     if (pfunc == NULL)
         goto ret;
@@ -404,7 +396,7 @@ ret:
     return ret;
 }
 
-int pkcs11_load_module(PKCS11_CTX *ctx, const char* libname)
+int pkcs11_load_module(PKCS11_CTX *ctx, const char *libname)
 {
     int ret = 0;
     CK_RV rv = CKR_CANCEL;
@@ -419,13 +411,10 @@ int pkcs11_load_module(PKCS11_CTX *ctx, const char* libname)
 
     pkcs11_unload_module(ctx);
 
-    if (!pkcs11_do_GetFunctionList(ctx, (char*)libname))
+    if (!pkcs11_do_GetFunctionList(ctx, (char *)libname))
         goto end;
 
-    // Initialize
-    memset(&cinit_args, 0x0, sizeof(cinit_args));
     cinit_args.flags = CKF_OS_LOCKING_OK;
-
     rv = ctx->lib_functions->C_Initialize(&cinit_args);
     if (rv != CKR_OK) {
         SET_PKCS11_PROV_ERR(ctx, rv);
@@ -435,7 +424,8 @@ int pkcs11_load_module(PKCS11_CTX *ctx, const char* libname)
     if (!pkcs11_generate_mechanism_tables(ctx))
         goto end;
 
-    pkcs11_generate_dispatch_tables(ctx);
+    if (!pkcs11_generate_dispatch_tables(ctx))
+        goto end;
 
     /* Open a user R/W session: all future sessions will be user sessions. */
     flags = CKF_SERIAL_SESSION | CKF_RW_SESSION;
@@ -443,23 +433,23 @@ int pkcs11_load_module(PKCS11_CTX *ctx, const char* libname)
     if (rv != CKR_OK)
         goto end;
 
-    if (!ctx->userpin)
-    {
+    if (ctx->userpin == NULL) {
         SET_PKCS11_PROV_ERR(ctx, ERR_PKCS11_NO_USERPIN_SET);
         goto end;
     }
 
     rv = ctx->lib_functions->C_Login(ctx->session, CKU_USER,
-                          ctx->userpin,
-                          strlen((const char*)ctx->userpin));
+                                     ctx->userpin,
+                                     strlen((char *)ctx->userpin));
     if (rv != CKR_OK && rv != CKR_USER_ALREADY_LOGGED_IN) {
         SET_PKCS11_PROV_ERR(ctx, rv);
         goto end;
     }
 
     ctx->module_filename = OPENSSL_zalloc(strlen(libname) + 1);
-    strncpy((char*)ctx->module_filename, libname, strlen(libname));
+    strncpy((char *)ctx->module_filename, libname, strlen(libname));
     ret = 1;
+
 end:
     if (!ret)
         pkcs11_unload_module(ctx);
@@ -471,36 +461,39 @@ int pkcs11_generate_mechanism_tables(PKCS11_CTX *ctx)
 {
     int ret = 0;
     CK_ULONG i = 0;
-    CK_RV rv;
+    CK_RV rv = 0;
     CK_ULONG mechcount = 0;
-    CK_MECHANISM_TYPE* mechlist = NULL;
-    CK_MECHANISM_TYPE* pmechlist = NULL;
-    CK_MECHANISM_INFO* mechinfo = NULL;
-    CK_MECHANISM_INFO* pmechinfo = NULL;
-    PKCS11_TYPE_DATA_ITEM* pkeymgm = NULL;
+    CK_MECHANISM_TYPE *mechlist = NULL;
+    CK_MECHANISM_TYPE *pmechlist = NULL;
+    CK_MECHANISM_INFO *mechinfo = NULL;
+    CK_MECHANISM_INFO *pmechinfo = NULL;
+    PKCS11_TYPE_DATA_ITEM *pkeymgm = NULL;
     int keymgmtlen = 0;
 
     /* Cache the slot's mechanism list. */
     rv = ctx->lib_functions->C_GetMechanismList(ctx->slot, NULL, &mechcount);
     if (rv != CKR_OK)
         goto end;
-    mechlist = (CK_MECHANISM_TYPE*)OPENSSL_zalloc(mechcount * sizeof(CK_MECHANISM_TYPE));
+    mechlist = (CK_MECHANISM_TYPE *)OPENSSL_zalloc(mechcount * sizeof(CK_MECHANISM_TYPE));
     if (mechlist == NULL)
         goto end;
     rv = ctx->lib_functions->C_GetMechanismList(ctx->slot, mechlist, &mechcount);
     if (rv != CKR_OK)
         goto end;
 
-    mechinfo = calloc(mechcount, sizeof(CK_MECHANISM_INFO));
+    /* Maybe use OpenSSL stack */
+    mechinfo = OPENSSL_zalloc(mechcount * sizeof(CK_MECHANISM_INFO));
     /* Cache the slot's mechanism info structure for each mechanism. */
     for (i = 0; i < mechcount; i++) {
         rv = ctx->lib_functions->C_GetMechanismInfo(ctx->slot,
-                                         mechlist[i], &mechinfo[i]);
+                                                    mechlist[i], &mechinfo[i]);
         if (rv != CKR_OK)
             goto end;
+
         if (mechinfo[i].flags & CKF_GENERATE_KEY_PAIR)
             keymgmtlen++;
     }
+
     if (keymgmtlen > 0) {
         ctx->keymgmt.items = OPENSSL_zalloc(keymgmtlen * sizeof(PKCS11_TYPE_DATA_ITEM));
         ctx->keymgmt.len = keymgmtlen;
@@ -519,27 +512,28 @@ int pkcs11_generate_mechanism_tables(PKCS11_CTX *ctx)
     }
     ret = 1;
 end:
-    if (mechlist)
-        OPENSSL_free(mechlist);
-    if (mechinfo)
-        OPENSSL_free(mechinfo);
+    OPENSSL_free(mechlist);
+    OPENSSL_free(mechinfo);
 
     return ret;
 }
 
 void pkcs11_unload_module(PKCS11_CTX *ctx)
 {
-    if (ctx->lib_handle)
+    if (ctx->lib_handle != NULL)
     {
-        ctx->lib_functions->C_Logout(ctx->session);
-        ctx->lib_functions->C_Finalize(NULL);
+        /* WB Meybe closing session and check priority */
+        if (ctx->lib_functions != NULL) {
+            ctx->lib_functions->C_Logout(ctx->session);
+            ctx->lib_functions->C_Finalize(NULL);
+        }
         dlclose(ctx->lib_handle);
         ctx->lib_handle = NULL;
         if (ctx->module_filename)
             OPENSSL_free(ctx->module_filename);
         ctx->module_filename = NULL;
-        if (ctx->userpin)
-            OPENSSL_free(ctx->userpin);
+        if (ctx->userpin != NULL)
+            OPENSSL_clear_free(ctx->userpin, strlen(ctx->userpin));
         ctx->userpin = NULL;
         if (ctx->keymgmt.items)
             OPENSSL_free(ctx->keymgmt.items);
@@ -547,9 +541,9 @@ void pkcs11_unload_module(PKCS11_CTX *ctx)
     }
 }
 
-void pkcs11_generate_dispatch_tables(PKCS11_CTX *ctx)
+int pkcs11_generate_dispatch_tables(PKCS11_CTX *ctx)
 {
     ctx->keymgmt.algolist = rsa_keymgmt_alg_tbl;
+    return 1;
 }
-/************************************************************************/
 
