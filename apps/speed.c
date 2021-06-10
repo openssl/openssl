@@ -1337,6 +1337,7 @@ int speed_main(int argc, char **argv)
     const char *prog;
     const char *engine_id = NULL;
     EVP_CIPHER *evp_cipher = NULL;
+    EVP_MAC *mac = NULL;
     double d = 0.0;
     OPTION_CHOICE o;
     int async_init = 0, multiblock = 0, pr_header = 0;
@@ -1791,8 +1792,6 @@ int speed_main(int argc, char **argv)
 
     /* No parameters; turn on everything. */
     if (argc == 0 && !doit[D_EVP] && !doit[D_HMAC] && !doit[D_EVP_CMAC]) {
-        EVP_MAC *mac;
-
         memset(doit, 1, sizeof(doit));
         doit[D_EVP] = doit[D_EVP_CMAC] = 0;
         ERR_set_mark();
@@ -1805,15 +1804,19 @@ int speed_main(int argc, char **argv)
                 doit[i] = 0;
         }
         if ((mac = EVP_MAC_fetch(app_get0_libctx(), "GMAC",
-                                 app_get0_propq())) != NULL)
+                                 app_get0_propq())) != NULL) {
             EVP_MAC_free(mac);
-        else
+            mac = NULL;
+        } else {
             doit[D_GHASH] = 0;
+        }
         if ((mac = EVP_MAC_fetch(app_get0_libctx(), "HMAC",
-                                 app_get0_propq())) != NULL)
+                                 app_get0_propq())) != NULL) {
             EVP_MAC_free(mac);
-        else
+            mac = NULL;
+        } else {
             doit[D_HMAC] = 0;
+        }
         ERR_pop_to_mark();
         memset(rsa_doit, 1, sizeof(rsa_doit));
 #ifndef OPENSSL_NO_DH
@@ -1960,10 +1963,9 @@ int speed_main(int argc, char **argv)
     if (doit[D_HMAC]) {
         static const char hmac_key[] = "This is a key...";
         int len = strlen(hmac_key);
-        EVP_MAC *mac = EVP_MAC_fetch(app_get0_libctx(), "HMAC",
-                                     app_get0_propq());
         OSSL_PARAM params[3];
 
+        mac = EVP_MAC_fetch(app_get0_libctx(), "HMAC", app_get0_propq());
         if (mac == NULL || evp_mac_mdname == NULL)
             goto end;
 
@@ -2001,6 +2003,7 @@ int speed_main(int argc, char **argv)
         for (i = 0; i < loopargs_len; i++)
             EVP_MAC_CTX_free(loopargs[i].mctx);
         EVP_MAC_free(mac);
+        mac = NULL;
     }
 
     if (doit[D_CBC_DES]) {
@@ -2124,10 +2127,9 @@ int speed_main(int argc, char **argv)
     }
     if (doit[D_GHASH]) {
         static const char gmac_iv[] = "0123456789ab";
-        EVP_MAC *mac = EVP_MAC_fetch(app_get0_libctx(), "GMAC",
-                                     app_get0_propq());
         OSSL_PARAM params[3];
 
+        mac = EVP_MAC_fetch(app_get0_libctx(), "GMAC", app_get0_propq());
         if (mac == NULL)
             goto end;
 
@@ -2159,6 +2161,7 @@ int speed_main(int argc, char **argv)
         for (i = 0; i < loopargs_len; i++)
             EVP_MAC_CTX_free(loopargs[i].mctx);
         EVP_MAC_free(mac);
+        mac = NULL;
     }
 
     if (doit[D_RAND]) {
@@ -2256,11 +2259,10 @@ int speed_main(int argc, char **argv)
     }
 
     if (doit[D_EVP_CMAC]) {
-        EVP_MAC *mac = EVP_MAC_fetch(app_get0_libctx(), "CMAC",
-                                     app_get0_propq());
         OSSL_PARAM params[3];
         EVP_CIPHER *cipher = NULL;
 
+        mac = EVP_MAC_fetch(app_get0_libctx(), "CMAC", app_get0_propq());
         if (mac == NULL || evp_mac_ciphername == NULL)
             goto end;
         if (!opt_cipher(evp_mac_ciphername, &cipher))
@@ -2305,6 +2307,7 @@ int speed_main(int argc, char **argv)
         for (i = 0; i < loopargs_len; i++)
             EVP_MAC_CTX_free(loopargs[i].mctx);
         EVP_MAC_free(mac);
+        mac = NULL;
     }
 
     for (i = 0; i < loopargs_len; i++)
@@ -3324,6 +3327,7 @@ int speed_main(int argc, char **argv)
     OPENSSL_free(loopargs);
     release_engine(e);
     EVP_CIPHER_free(evp_cipher);
+    EVP_MAC_free(mac);
     return ret;
 }
 
