@@ -763,7 +763,8 @@ int pkcs12_main(int argc, char **argv)
     if (macver) {
         EVP_KDF *pkcs12kdf;
 
-        pkcs12kdf = EVP_KDF_fetch(NULL, "PKCS12KDF", NULL);
+        pkcs12kdf = EVP_KDF_fetch(app_get0_libctx(), "PKCS12KDF",
+                                  app_get0_propq());
         if (pkcs12kdf == NULL) {
             BIO_printf(bio_err, "Error verifying PKCS12 MAC; no PKCS12KDF support.\n");
             BIO_printf(bio_err, "Use -nomacver if MAC verification is not required.\n");
