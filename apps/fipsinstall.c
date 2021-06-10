@@ -431,7 +431,7 @@ opthelp:
     if (read_buffer == NULL)
         goto end;
 
-    mac = EVP_MAC_fetch(NULL, mac_name, NULL);
+    mac = EVP_MAC_fetch(app_get0_libctx(), mac_name, app_get0_propq());
     if (mac == NULL) {
         BIO_printf(bio_err, "Unable to get MAC of type %s\n", mac_name);
         goto end;
