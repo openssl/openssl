@@ -12,9 +12,9 @@ jobs:
           - windows-2016
         platform:
           - arch: win64
-            config: VC-WIN32 --strict-warnings no-fips
-          - arch: win32
             config: VC-WIN64A enable-fips
+          - arch: win32
+            config: VC-WIN32 --strict-warnings no-fips
     runs-on: ${{matrix.os}}
     steps:
     - uses: actions/checkout@v2
