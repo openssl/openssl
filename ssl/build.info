@@ -36,8 +36,7 @@ ENDIF
 # For shared builds we need to include the libcrypto packet.c and sources
 # needed in providers (s3_cbc.c and record/tls_pad.c) in libssl as well.
 # We can either continue to do it like this, or export all the used
-# symbols so that libssl can use them like any other. Probably would do
-# this privately so it does not become part of the public API.
+# symbols so that libssl can use them like any other.
 IF[{- !$disabled{shared} -}]
   SOURCE[../libssl]=record/tls_pad.c ../crypto/packet.c
 ENDIF
