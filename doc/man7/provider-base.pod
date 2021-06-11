@@ -251,10 +251,12 @@ This corresponds to the OpenSSL function L<ERR_vset_error(3)>.
 
 =back
 
-The core_obj_create() function registers a new OID and associated short and
-long names for the given I<handle>. It corresponds to the OpenSSL function
-L<OBJ_create(3)> except that it returns 1 on success or 0 on failure. A common
-failure reason is that the OID is already registered.
+The core_obj_create() function registers a new OID and associated short name
+I<sn> and long name I<ln> for the given I<handle>. It is similar to the OpenSSL
+function L<OBJ_create(3)> except that it returns 1 on success or 0 on failure.
+It will treat as success the case where the OID already exists (even if the
+short name I<sn> or long name I<ln> provided as arguments differ to those
+associated with the existing OID).
 
 The core_obj_add_sigid() function registers a new composite signature algorithm
 (I<sign_name>) consisting of an underlying signature algorithm (I<pkey_name>)
