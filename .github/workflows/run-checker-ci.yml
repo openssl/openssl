@@ -1,7 +1,7 @@
 
 # Jobs run per pull request submission
 name: Run-checker CI
-on: [pull_request]
+on: [pull_request, push]
 jobs:
   run-checker:
     strategy:
