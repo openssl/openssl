@@ -83,13 +83,12 @@ static int spki2typespki_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
 #ifndef OPENSSL_NO_EC
     /* SM2 abuses the EC oid, so this could actually be SM2 */
     if (OBJ_obj2nid(oid) == NID_X9_62_id_ecPublicKey
-            && ossl_x509_algor_is_sm2(algor)) {
+            && ossl_x509_algor_is_sm2(algor))
         strcpy(dataname, "SM2");
-    } else
+    else
 #endif
-    if (!OBJ_obj2txt(dataname, sizeof(dataname), oid, 0)) {
+    if (!OBJ_obj2txt(dataname, sizeof(dataname), oid, 0))
         goto end;
-    }
 
     ossl_X509_PUBKEY_INTERNAL_free(xpub);
     xpub = NULL;
