@@ -10,25 +10,26 @@ jobs:
         os:
           - windows-latest
           - windows-2016
-        arch:
-          - win64
-          - win32
+        platform:
+          - arch: win64
+            config: VC-WIN32 --strict-warnings no-fips
+          - arch: win32
+            config: VC-WIN64A enable-fips
     runs-on: ${{matrix.os}}
     steps:
     - uses: actions/checkout@v2
     - uses: ilammy/msvc-dev-cmd@v1
       with:
-        arch: ${{ matrix.arch }}
+        arch: ${{ matrix.platform.arch }}
     - uses: ilammy/setup-nasm@v1
       with:
-        platform: ${{ matrix.arch }}
+        platform: ${{ matrix.platform.arch }}
     - name: prepare the build directory
       run: mkdir _build
     - name: config
       working-directory: _build
       run: |
-        if ( "${{ matrix.arch }}" -eq "win32" ) { $target = "VC-WIN32" ; $fips = "no-fips" } else { $target = "VC-WIN64A" ; $fips = "enable-fips" }
-        perl ..\Configure --banner=Configured --strict-warnings no-makedepend $fips $target
+        perl ..\Configure --banner=Configured no-makedepend ${{ matric.platform.config }}
         perl configdata.pm --dump
     - name: build
       working-directory: _build
@@ -38,7 +39,7 @@ jobs:
       run: nmake test VERBOSE_FAILURE=yes TESTS=-test_fuzz* HARNESS_JOBS=4
     - name: install
       # Run on 64 bit only as 32 bit is slow enough already
-      if: $${{ matrix.arch == 'win64' }}
+      if: $${{ matrix.platform.arch == 'win64' }}
       run: |
         mkdir _dest
         nmake install DESTDIR=_dest
