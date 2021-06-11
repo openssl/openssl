@@ -30,18 +30,12 @@ SOURCE[../libssl]=\
         record/ssl3_buffer.c record/ssl3_record.c record/dtls1_bitmap.c \
         statem/statem.c record/ssl3_record_tls13.c \
         tls_depr.c $KTLSSRC
-IF[{- !$disabled{'deprecated-3.0'} -}]
-  SOURCE[../libssl]=ssl_rsa_legacy.c
-ENDIF
 # For shared builds we need to include the libcrypto packet.c and sources
 # needed in providers (s3_cbc.c and record/tls_pad.c) in libssl as well.
-# We can either continue to do it like this, or export all the used
-# symbols so that libssl can use them like any other.
-IF[{- !$disabled{shared} -}]
-  SOURCE[../libssl]=record/tls_pad.c ../crypto/packet.c
-ENDIF
-IF[{- !$disabled{'deprecated-3.0'} && !$disabled{shared} -}]
-  SOURCE[../libssl]=s3_cbc.c
+SHARED_SOURCE[../libssl]=record/tls_pad.c ../crypto/packet.c
+IF[{- !$disabled{'deprecated-3.0'} -}]
+  SHARED_SOURCE[../libssl]=s3_cbc.c
+  SOURCE[../libssl]=ssl_rsa_legacy.c
 ENDIF
 
 DEFINE[../libssl]=$AESDEF
