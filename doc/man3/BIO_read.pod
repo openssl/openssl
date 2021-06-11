@@ -59,7 +59,7 @@ BIO_puts() attempts to write a NUL-terminated string I<buf> to BIO I<b>.
 BIO_read_ex() returns 1 if data was successfully read, and 0 otherwise.
 
 BIO_write_ex() returns 1 if no error was encountered writing data, 0 otherwise.
-Request to write 0 bytes is not considered an error.
+Requesting to write 0 bytes is not considered an error.
 
 BIO_write() returns -2 if the "write" operation is not implemented by the BIO
 or -1 on other errors.
