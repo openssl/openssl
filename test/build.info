@@ -624,7 +624,7 @@ IF[{- !$disabled{tests} -}]
 
     SOURCE[tls13encryptiontest]=tls13encryptiontest.c
     INCLUDE[tls13encryptiontest]=.. ../include ../apps/include
-    DEPEND[tls13encryptiontest]=../libcrypto ../libssl.a libtestutil.a
+    DEPEND[tls13encryptiontest]=../libcrypto.a ../libssl.a libtestutil.a
 
     SOURCE[ideatest]=ideatest.c
     INCLUDE[ideatest]=../include ../apps/include
@@ -632,7 +632,7 @@ IF[{- !$disabled{tests} -}]
 
     SOURCE[wpackettest]=wpackettest.c
     INCLUDE[wpackettest]=../include ../apps/include
-    DEPEND[wpackettest]=../libcrypto ../libssl.a libtestutil.a
+    DEPEND[wpackettest]=../libcrypto.a ../libssl.a libtestutil.a
 
     SOURCE[property_test]=property_test.c
     INCLUDE[property_test]=.. ../include ../apps/include
