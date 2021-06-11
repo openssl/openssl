@@ -29,7 +29,7 @@ jobs:
     - name: config
       working-directory: _build
       run: |
-        perl ..\Configure --banner=Configured no-makedepend ${{ matric.platform.config }}
+        perl ..\Configure --banner=Configured no-makedepend ${{ matrix.platform.config }}
         perl configdata.pm --dump
     - name: build
       working-directory: _build
