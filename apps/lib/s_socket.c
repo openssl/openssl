@@ -26,6 +26,15 @@
 typedef unsigned int u_int;
 #endif
 
+#ifdef _WIN32
+/*
+ * With MSVC, certain POSIX functions have been renamed to have an underscore
+ * prefix.
+ */
+# include <process.h>
+# define getpid _getpid
+#endif
+
 #ifndef OPENSSL_NO_SOCK
 
 # include "apps.h"
