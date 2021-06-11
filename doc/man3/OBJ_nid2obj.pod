@@ -95,7 +95,7 @@ OBJ_get0_data() returns a pointer to the content octets of I<obj>.
 The returned pointer is an internal pointer which B<must not> be freed.
 
 OBJ_add_sigid() creates a new composite "Signature Algorithm" that associates a
-given nid with two other nids - one representing the underlying signature
+given NID with two other NIDs - one representing the underlying signature
 algorithm and the other representing a digest algorithm to be used in
 conjunction with it. I<signid> represents the NID for the composite "Signature
 Algorithm", I<dig_id> is the NID for the digest algorithm and I<pkey_id> is the
