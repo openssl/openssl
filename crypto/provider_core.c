@@ -1694,7 +1694,9 @@ static int core_obj_add_sigid(const OSSL_CORE_HANDLE *prov,
 static int core_obj_create(const OSSL_CORE_HANDLE *prov, const char *oid,
                            const char *sn, const char *ln)
 {
-    return (OBJ_create(oid, sn, ln) != NID_undef);
+    /* Create it, or verify it already exists if we fail to create */
+    return (OBJ_create(oid, sn, ln) != NID_undef
+            || OBJ_txt2nid(oid) != NID_undef);
 }
 #endif /* FIPS_MODULE */
 
