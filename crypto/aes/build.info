@@ -70,7 +70,14 @@ SOURCE[../../providers/libfips.a]=$COMMON
 # need to be applied to all affected libraries and modules.
 DEFINE[../../libcrypto]=$AESDEF
 DEFINE[../../providers/libfips.a]=$AESDEF
-DEFINE[../../providers/libimplementations.a]=$AESDEF
+DEFINE[../../providers/libdefault.a]=$AESDEF
+# We only need to include the AESDEF stuff in the legacy provider when it's a
+# separate module and it's dynamically linked with libcrypto.  Otherwise, it
+# already gets everything that the static libcrypto.a has, and doesn't need it
+# added again.
+IF[{- !$disabled{module} && !$disabled{shared} -}]
+  DEFINE[../providers/liblegacy.a]=$AESDEF
+ENDIF
 
 GENERATE[aes-ia64.s]=asm/aes-ia64.S
 

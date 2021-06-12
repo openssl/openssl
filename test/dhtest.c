@@ -249,16 +249,18 @@ static int dh_computekey_range_test(void)
         || !TEST_true(DH_set0_pqg(dh, p, q, g)))
         goto err;
     p = q = g = NULL;
-    sz = DH_size(dh);
 
-    if (!TEST_ptr(buf = OPENSSL_malloc(sz))
+    if (!TEST_int_gt(sz = DH_size(dh), 0)
+        || !TEST_ptr(buf = OPENSSL_malloc(sz))
         || !TEST_ptr(pub = BN_new())
         || !TEST_ptr(priv = BN_new()))
         goto err;
 
     if (!TEST_true(BN_set_word(priv, 1))
-        || !TEST_true(DH_set0_key(dh, NULL, priv))
-        || !TEST_true(BN_set_word(pub, 1)))
+        || !TEST_true(DH_set0_key(dh, NULL, priv)))
+        goto err;
+    priv = NULL;
+    if (!TEST_true(BN_set_word(pub, 1)))
         goto err;
 
     /* Given z = pub ^ priv mod p */
@@ -282,6 +284,7 @@ static int dh_computekey_range_test(void)
     ret = 1;
 err:
     OPENSSL_free(buf);
+    BN_free(priv);
     BN_free(pub);
     BN_free(g);
     BN_free(q);
@@ -663,12 +666,12 @@ static int rfc7919_test(void)
     DH_get0_key(b, &bpub_key, NULL);
 
     alen = DH_size(a);
-    if (!TEST_ptr(abuf = OPENSSL_malloc(alen))
+    if (!TEST_int_gt(alen, 0) || !TEST_ptr(abuf = OPENSSL_malloc(alen))
             || !TEST_true((aout = DH_compute_key(abuf, bpub_key, a)) != -1))
         goto err;
 
     blen = DH_size(b);
-    if (!TEST_ptr(bbuf = OPENSSL_malloc(blen))
+    if (!TEST_int_gt(blen, 0) || !TEST_ptr(bbuf = OPENSSL_malloc(blen))
             || !TEST_true((bout = DH_compute_key(bbuf, apub_key, b)) != -1))
         goto err;
 

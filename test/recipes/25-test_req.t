@@ -33,6 +33,7 @@ if (disabled("rsa")) {
 
 # Check for duplicate -addext parameters, and one "working" case.
 my @addext_args = ( "openssl", "req", "-new", "-out", "testreq.pem",
+                    "-key",  srctop_file("test", "certs", "ee-key.pem"),
     "-config", srctop_file("test", "test.cnf"), @req_new );
 my $val = "subjectAltName=DNS:example.com";
 my $val2 = " " . $val;
@@ -73,22 +74,53 @@ subtest "generating alt certificate requests with RSA" => sub {
 
 
 subtest "generating certificate requests with RSA" => sub {
-    plan tests => 2;
+    plan tests => 7;
 
     SKIP: {
         skip "RSA is not supported by this OpenSSL build", 2
             if disabled("rsa");
 
+        ok(!run(app(["openssl", "req",
+                     "-config", srctop_file("test", "test.cnf"),
+                     "-new", "-out", "testreq-rsa.pem", "-utf8",
+                     "-key", srctop_file("test", "testrsa.pem"),
+                     "-keyform", "DER"])),
+           "Checking that mismatching keyform fails");
+
         ok(run(app(["openssl", "req",
                     "-config", srctop_file("test", "test.cnf"),
                     "-new", "-out", "testreq-rsa.pem", "-utf8",
-                    "-key", srctop_file("test", "testrsa.pem")])),
+                    "-key", srctop_file("test", "testrsa.pem"),
+                    "-keyform", "PEM"])),
            "Generating request");
 
         ok(run(app(["openssl", "req",
                     "-config", srctop_file("test", "test.cnf"),
                     "-verify", "-in", "testreq-rsa.pem", "-noout"])),
            "Verifying signature on request");
+
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-new", "-out", "testreq_withattrs_pem.pem", "-utf8",
+                    "-key", srctop_file("test", "testrsa_withattrs.pem")])),
+           "Generating request from a key with extra attributes - PEM");
+
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-verify", "-in", "testreq_withattrs_pem.pem", "-noout"])),
+           "Verifying signature on request from a key with extra attributes - PEM");
+
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-new", "-out", "testreq_withattrs_der.pem", "-utf8",
+                    "-key", srctop_file("test", "testrsa_withattrs.der"),
+	            "-keyform", "DER"])),
+           "Generating request from a key with extra attributes - PEM");
+
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-verify", "-in", "testreq_withattrs_der.pem", "-noout"])),
+           "Verifying signature on request from a key with extra attributes - PEM");
     }
 };
 
@@ -257,6 +289,7 @@ subtest "generating certificate requests" => sub {
     plan tests => 2;
 
     ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
+                "-key", srctop_file("test", "certs", "ee-key.pem"),
                 @req_new, "-out", "testreq.pem"])),
        "Generating request");
 

@@ -19,7 +19,7 @@
 #include <openssl/rand.h>
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_OUT, OPT_ENGINE, OPT_BASE64, OPT_HEX,
     OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
@@ -99,7 +99,9 @@ int rand_main(int argc, char **argv)
         goto opthelp;
     }
 
-    app_RAND_load();
+    if (!app_RAND_load())
+        goto end;
+
     out = bio_open_default(outfile, 'w', format);
     if (out == NULL)
         goto end;

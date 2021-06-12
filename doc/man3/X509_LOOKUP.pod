@@ -94,7 +94,7 @@ X509_LOOKUP_ctrl_ex() is used to set or get additional data to or from
 a B<X509_LOOKUP> structure or its associated L<X509_LOOKUP_METHOD(3)>.
 The arguments of the control command are passed via I<argc> and I<argl>,
 its return value via I<*ret>. The library context I<libctx> and property
-query <propq> are used when fetching algorithms from providers.
+query I<propq> are used when fetching algorithms from providers.
 The meaning of the arguments depends on the I<cmd> number of the
 control command. In general, this function is not called directly, but
 wrapped by a macro call, see below.
@@ -102,17 +102,17 @@ The control I<cmd>s known to OpenSSL are discussed in more depth
 in L</Control Commands>.
 
 X509_LOOKUP_ctrl() is similar to X509_LOOKUP_ctrl_ex() but
-uses NULL for the library context I<libctx> and property query <propq>.
+uses NULL for the library context I<libctx> and property query I<propq>.
 
 X509_LOOKUP_load_file_ex() passes a filename to be loaded immediately
 into the associated B<X509_STORE>. The library context I<libctx> and property
-query <propq> are used when fetching algorithms from providers.
+query I<propq> are used when fetching algorithms from providers.
 I<type> indicates what type of object is expected.
 This can only be used with a lookup using the implementation
 L<X509_LOOKUP_file(3)>.
 
 X509_LOOKUP_load_file() is similar to X509_LOOKUP_load_file_ex() but
-uses NULL for the library context I<libctx> and property query <propq>.
+uses NULL for the library context I<libctx> and property query I<propq>.
 
 X509_LOOKUP_add_dir() passes a directory specification from which
 certificates and CRLs are loaded on demand into the associated
@@ -124,20 +124,20 @@ L<X509_LOOKUP_hash_dir(3)>.
 X509_LOOKUP_add_store_ex() passes a URI for a directory-like structure
 from which containers with certificates and CRLs are loaded on demand
 into the associated B<X509_STORE>. The library context I<libctx> and property
-query <propq> are used when fetching algorithms from providers.
+query I<propq> are used when fetching algorithms from providers.
 
 X509_LOOKUP_add_store() is similar to X509_LOOKUP_add_store_ex() but
-uses NULL for the library context I<libctx> and property query <propq>.
+uses NULL for the library context I<libctx> and property query I<propq>.
 
 X509_LOOKUP_load_store_ex() passes a URI for a single container from
 which certificates and CRLs are immediately loaded into the associated
-B<X509_STORE>. The library context I<libctx> and property query <propq> are used
+B<X509_STORE>. The library context I<libctx> and property query I<propq> are used
 when fetching algorithms from providers.
 These functions can only be used with a lookup using the
 implementation L<X509_LOOKUP_store(3)>.
 
 X509_LOOKUP_load_store() is similar to X509_LOOKUP_load_store_ex() but
-uses NULL for the library context I<libctx> and property query <propq>.
+uses NULL for the library context I<libctx> and property query I<propq>.
 
 X509_LOOKUP_load_file_ex(), X509_LOOKUP_load_file(),
 X509_LOOKUP_add_dir(),
@@ -228,7 +228,7 @@ added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -52,7 +52,7 @@ RFC7748.
 
 =over 4
 
-=item "mandatory-digest" (B<OSSL_PKEY_PARAM_MANDATORY_DIGEST>) <utf8 string>
+=item "mandatory-digest" (B<OSSL_PKEY_PARAM_MANDATORY_DIGEST>) <UTF8 string>
 
 The empty string, signifying that no digest may be specified.
 
@@ -84,25 +84,11 @@ An B<EVP_PKEY> context can be obtained by calling:
     EVP_PKEY_CTX *pctx =
         EVP_PKEY_CTX_new_from_name(NULL, "ED448", NULL);
 
-An B<ED25519> key can be generated like this:
+An B<X25519> key can be generated like this:
 
-    EVP_PKEY *pkey = NULL;
-    EVP_PKEY_CTX *pctx =
-        EVP_PKEY_CTX_new_from_name(NULL, "ED25519", NULL);
+    pkey = EVP_PKEY_Q_keygen(NULL, NULL, "X25519");
 
-    EVP_PKEY_keygen_init(pctx);
-    EVP_PKEY_gen(pctx, &pkey);
-    EVP_PKEY_CTX_free(pctx);
-
-An B<X25519> key can be generated in a similar way:
-
-    EVP_PKEY *pkey = NULL;
-    EVP_PKEY_CTX *pctx =
-        EVP_PKEY_CTX_new_from_name(NULL, "X25519", NULL);
-
-    EVP_PKEY_keygen_init(pctx);
-    EVP_PKEY_gen(pctx, &pkey);
-    EVP_PKEY_CTX_free(pctx);
+An B<X448>, B<ED25519>, or B<ED448> key can be generated likewise.
 
 =head1 SEE ALSO
 
@@ -112,7 +98,7 @@ L<EVP_SIGNATURE-ED25519(7)>, L<EVP_SIGNATURE-ED448(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -13,7 +13,7 @@ CMS_add1_ReceiptRequest, CMS_get1_ReceiptRequest, CMS_ReceiptRequest_get0_values
  CMS_ReceiptRequest *CMS_ReceiptRequest_create0_ex(
      unsigned char *id, int idlen, int allorfirst,
      STACK_OF(GENERAL_NAMES) *receiptList, STACK_OF(GENERAL_NAMES) *receiptsTo,
-     OSSL_LIB_CTX *libctx, const char *propq);
+     OSSL_LIB_CTX *libctx);
  CMS_ReceiptRequest *CMS_ReceiptRequest_create0(
      unsigned char *id, int idlen, int allorfirst,
      STACK_OF(GENERAL_NAMES) *receiptList, STACK_OF(GENERAL_NAMES) *receiptsTo);
@@ -33,11 +33,11 @@ If I<receiptList> is NULL the allOrFirstTier option in I<receiptsFrom> is used
 and set to the value of the I<allorfirst> parameter. If I<receiptList> is not
 NULL the I<receiptList> option in I<receiptsFrom> is used. The I<receiptsTo>
 parameter specifies the I<receiptsTo> field value. The library context I<libctx>
-and the property query I<propq> are used when retrieving algorithms from providers.
+is used to find the public random generator.
 
 CMS_ReceiptRequest_create0() is similar to
 CMS_ReceiptRequest_create0_ex() but uses default values of NULL for the
-library context I<libctx> and the property query I<propq>.
+library context I<libctx>.
 
 The CMS_add1_ReceiptRequest() function adds a signed receipt request B<rr>
 to SignerInfo structure B<si>.
@@ -82,7 +82,7 @@ The function CMS_ReceiptRequest_create0_ex() was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2008-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2008-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

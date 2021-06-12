@@ -11,7 +11,20 @@ OPENSSL_instrument_bus2                 assembler
 #
 ADMISSION_SYNTAX                        datatype
 ADMISSIONS                              datatype
+ASN1_AUX                                datatype
+ASN1_aux_cb                             datatype
+ASN1_aux_const_cb                       datatype
+ASN1_ex_d2i                             datatype
+ASN1_ex_d2i_ex                          datatype
+ASN1_ex_free_func                       datatype
+ASN1_ex_i2d                             datatype
+ASN1_ex_new_func                        datatype
+ASN1_ex_new_ex_func                     datatype
+ASN1_ex_print_func                      datatype
+ASN1_EXTERN_FUNCS                       datatype
 ASN1_ITEM                               datatype
+ASN1_PRINT_ARG                          datatype
+ASN1_STREAM_ARG                         datatype
 ASN1_STRING_TABLE                       datatype
 ASYNC_callback_fn                       datatype
 BIO_ADDR                                datatype
@@ -232,10 +245,10 @@ ERR_raise                               define
 ERR_raise_data                          define
 EVP_DigestSignUpdate                    define
 EVP_DigestVerifyUpdate                  define
-EVP_MD_CTX_block_size                   define
-EVP_MD_CTX_name                         define
-EVP_MD_CTX_size                         define
-EVP_MD_CTX_type                         define
+EVP_MD_CTX_get_block_size               define
+EVP_MD_CTX_get0_name                    define
+EVP_MD_CTX_get_size                     define
+EVP_MD_CTX_get_type                     define
 EVP_OpenUpdate                          define
 EVP_PKEY_CTX_add1_hkdf_info             define
 EVP_PKEY_CTX_add1_tls1_prf_seed         define
@@ -255,7 +268,6 @@ EVP_PKEY_CTX_get_rsa_oaep_md            define
 EVP_PKEY_CTX_get_rsa_padding            define
 EVP_PKEY_CTX_get_rsa_pss_saltlen        define
 EVP_PKEY_CTX_get_signature_md           define
-EVP_PKEY_CTX_hkdf_mode                  define
 EVP_PKEY_CTX_set0_dh_kdf_oid            define
 EVP_PKEY_CTX_set0_dh_kdf_ukm            define
 EVP_PKEY_CTX_set0_ecdh_kdf_ukm          define
@@ -322,6 +334,7 @@ EVP_VerifyUpdate                        define
 EVP_bf_cfb                              define
 EVP_cast5_cfb                           define
 EVP_cleanup                             define deprecated 1.1.0
+EVP_EC_gen                              define
 EVP_get_digestbynid                     define
 EVP_get_digestbyobj                     define
 EVP_get_macbynid                        define
@@ -329,15 +342,19 @@ EVP_get_macbyobj                        define
 EVP_idea_cfb                            define
 EVP_rc2_cfb                             define
 EVP_rc5_32_12_16_cfb                    define
+EVP_RSA_gen                             define
 EVP_seed_cfb                            define
 EVP_sm4_cfb                             define
+EXT_UTF8STRING                          define
 OBJ_cleanup                             define deprecated 1.1.0
 OCSP_parse_url                          define
+OCSP_REQ_CTX                            datatype deprecated 3.0.0
 OCSP_REQ_CTX_add1_header                define deprecated 3.0.0
 OCSP_REQ_CTX_free                       define deprecated 3.0.0
 OCSP_REQ_CTX_i2d                        define deprecated 3.0.0
-OCSP_set_max_response_length            define deprecated 3.0.0
 OCSP_REQ_CTX_set1_req                   define deprecated 3.0.0
+OCSP_sendreq_nbio                       define deprecated 3.0.0
+OCSP_set_max_response_length            define deprecated 3.0.0
 OPENSSL_FILE                            define
 OPENSSL_FUNC                            define
 OPENSSL_LINE                            define
@@ -505,6 +522,7 @@ SSL_CTX_set_tlsext_ticket_key_cb        define
 SSL_CTX_set_tmp_dh                      define
 SSL_CTX_set_tmp_ecdh                    define
 SSL_DEFAULT_CIPHER_LIST                 define deprecated 3.0.0
+SSL_OP_BIT                              define
 SSL_add0_chain_cert                     define
 SSL_add1_chain_cert                     define
 SSL_build_cert_chain                    define
@@ -588,8 +606,8 @@ SSLv23_client_method                    define
 SSLv23_method                           define
 SSLv23_server_method                    define
 TLS_DEFAULT_CIPHERSUITES                define deprecated 3.0.0
-X509_CRL_http_nbio                      define
-X509_http_nbio                          define
+X509_CRL_http_nbio                      define deprecated 3.0.0
+X509_http_nbio                          define deprecated 3.0.0
 X509_LOOKUP_add_dir                     define
 X509_LOOKUP_add_store                   define
 X509_LOOKUP_add_store_ex                define
@@ -616,3 +634,37 @@ OSSL_TRACE9                             define
 TS_VERIFY_CTS_set_certs                 define deprecated 3.0.0
 EVP_PKEY_get1_tls_encodedpoint          define deprecated 3.0.0
 EVP_PKEY_set1_tls_encodedpoint          define deprecated 3.0.0
+EVP_MD_type                             define
+EVP_MD_nid                              define
+EVP_MD_name                             define
+EVP_MD_pkey_type                        define
+EVP_MD_size                             define
+EVP_MD_block_size                       define
+EVP_MD_flags                            define
+EVP_MD_CTX_size                         define
+EVP_MD_CTX_block_size                   define
+EVP_MD_CTX_type                         define
+EVP_MD_CTX_pkey_ctx                     define
+EVP_MD_CTX_md_data                      define
+EVP_CIPHER_nid                          define
+EVP_CIPHER_name                         define
+EVP_CIPHER_block_size                   define
+EVP_CIPHER_key_length                   define
+EVP_CIPHER_iv_length                    define
+EVP_CIPHER_flags                        define
+EVP_CIPHER_mode                         define
+EVP_CIPHER_type                         define
+EVP_CIPHER_CTX_encrypting               define
+EVP_CIPHER_CTX_nid                      define
+EVP_CIPHER_CTX_block_size               define
+EVP_CIPHER_CTX_key_length               define
+EVP_CIPHER_CTX_iv_length                define
+EVP_CIPHER_CTX_tag_length               define
+EVP_CIPHER_CTX_num                      define
+EVP_CIPHER_CTX_type                     define
+EVP_CIPHER_CTX_mode                     define
+EVP_PKEY_bits                           define
+EVP_PKEY_security_bits                  define
+EVP_PKEY_size                           define
+EVP_PKEY_id                             define
+EVP_PKEY_base_id                        define

@@ -15,13 +15,17 @@ jobs:
   check_update:
     runs-on: ubuntu-latest
     steps:
+    - name: install unifdef
+      run: |
+        sudo apt-get update
+        sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install unifdef
     - uses: actions/checkout@v2
     - name: config
-      run: ./config --strict-warnings && perl configdata.pm --dump
+      run: ./config --banner=Configured --strict-warnings enable-fips && perl configdata.pm --dump
     - name: make build_generated
       run: make -s build_generated
     - name: make update
-      run: make -s update
+      run: make update
     - name: git diff
       run: git diff --exit-code
 
@@ -30,11 +34,15 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: config
-      run: ./config --strict-warnings && perl configdata.pm --dump
+      run: ./config --banner=Configured --strict-warnings enable-fips && perl configdata.pm --dump
     - name: make build_generated
       run: make -s build_generated
     - name: make doc-nits
       run: make doc-nits
+    - name: make md-nits
+      run: |
+          sudo gem install mdl
+          make md-nits
 
   # This checks that we use ANSI C language syntax and semantics.
   # We are not as strict with libraries, but rather adapt to what's
@@ -44,7 +52,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: config
-      run: CPPFLAGS=-ansi ./config no-asm no-makedepend enable-buildtest-c++ --strict-warnings -D_DEFAULT_SOURCE && perl configdata.pm --dump
+      run: CPPFLAGS=-ansi ./config --banner=Configured no-asm no-makedepend enable-buildtest-c++ enable-fips --strict-warnings -D_DEFAULT_SOURCE && perl configdata.pm --dump
     - name: make
       run: make -s -j4
 
@@ -53,7 +61,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: config
-      run: ./config --strict-warnings && perl configdata.pm --dump
+      run: ./config --banner=Configured enable-fips --strict-warnings && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: make test
@@ -64,7 +72,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: config
-      run: CC=clang ./config --strict-warnings && perl configdata.pm --dump
+      run: CC=clang ./config --banner=Configured no-fips --strict-warnings && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: make test
@@ -75,9 +83,9 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: config
-      run: ./config --strict-warnings no-bulk no-pic no-asm -DOPENSSL_NO_SECURE_MEMORY -DOPENSSL_SMALL_FOOTPRINT && perl configdata.pm --dump
+      run: ./config --banner=Configured --strict-warnings no-bulk no-pic no-asm -DOPENSSL_NO_SECURE_MEMORY -DOPENSSL_SMALL_FOOTPRINT && perl configdata.pm --dump
     - name: make
-      run: make -s -j4
+      run: make -j4 # verbose, so no -s here
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
@@ -86,7 +94,21 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: config
-      run: ./config --strict-warnings no-deprecated && perl configdata.pm --dump
+      run: ./config --banner=Configured --strict-warnings no-deprecated enable-fips && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: make test
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+
+  no-shared:
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{matrix.os}}
+    steps:
+    - uses: actions/checkout@v2
+    - name: config
+      run: ./config --banner=Configured --strict-warnings no-shared no-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: make test
@@ -97,7 +119,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: config
-      run: ./config --debug enable-asan enable-ubsan no-cached-fetch no-dtls no-tls1 no-tls1-method no-tls1_1 no-tls1_1-method no-async && perl configdata.pm --dump
+      run: ./config --banner=Configured --debug enable-asan enable-ubsan no-cached-fetch no-fips no-dtls no-tls1 no-tls1-method no-tls1_1 no-tls1_1-method no-async && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: make test
@@ -108,7 +130,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: config
-      run: ./config --debug enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 && perl configdata.pm --dump
+      run: ./config --banner=Configured --debug enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: make test
@@ -119,7 +141,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: config
-      run: CC=clang ./config --strict-warnings -fsanitize=thread && perl configdata.pm --dump
+      run: CC=clang ./config --banner=Configured no-fips --strict-warnings -fsanitize=thread && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: make test
@@ -130,7 +152,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: config
-      run: ./config --strict-warnings no-ec enable-ssl-trace enable-zlib enable-zlib-dynamic enable-crypto-mdebug enable-crypto-mdebug-backtrace enable-egd && perl configdata.pm --dump
+      run: ./config --banner=Configured --strict-warnings no-ec enable-ssl-trace enable-zlib enable-zlib-dynamic enable-crypto-mdebug enable-crypto-mdebug-backtrace enable-egd enable-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: make test
@@ -141,7 +163,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: config
-      run: ./config --strict-warnings no-legacy && perl configdata.pm --dump
+      run: ./config --banner=Configured --strict-warnings no-legacy enable-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: make test
@@ -152,7 +174,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: config
-      run: ./config -Werror --debug no-afalgeng no-shared enable-crypto-mdebug enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 && perl configdata.pm --dump
+      run: ./config --banner=Configured -Werror --debug no-afalgeng no-shared enable-crypto-mdebug enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 no-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: make test
@@ -163,7 +185,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: config
-      run: ./config no-asm no-makedepend enable-buildtest-c++ --strict-warnings -D_DEFAULT_SOURCE && perl configdata.pm --dump
+      run: ./config --banner=Configured no-asm no-makedepend enable-buildtest-c++ enable-fips --strict-warnings -D_DEFAULT_SOURCE && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: make test
@@ -181,7 +203,7 @@ jobs:
         mkdir ./build
         mkdir ./install
     - name: config
-      run: ../config --strict-warnings --prefix=$(cd ../install; pwd) && perl configdata.pm --dump
+      run: ../config --banner=Configured enable-fips --strict-warnings --prefix=$(cd ../install; pwd) && perl configdata.pm --dump
       working-directory: ./build
     - name: make
       run: make -s -j4
@@ -207,13 +229,42 @@ jobs:
       uses: perl-actions/install-with-cpanm@v1
       with:
         install: Test2::V0
+    - name: setup hostname workaround
+      run: sudo hostname localhost
     - name: config
-      run: ./config --strict-warnings --debug no-afalgeng enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 enable-external-tests && perl configdata.pm --dump
+      run: ./config --banner=Configured --strict-warnings --debug no-afalgeng enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 enable-external-tests no-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: test external gost-engine
       run: make test TESTS="test_external_gost_engine"
     - name: test external krb5
       run: make test TESTS="test_external_krb5"
-#   - name: test external pyca
-#     run: make test TESTS="test_external_pyca"
+
+  external-test-pyca:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        RUST:
+          - 1.51.0
+        PYTHON:
+          - 3.9
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: Configure OpenSSL
+      run: ./config --banner=Configured --strict-warnings --debug enable-external-tests && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: Setup Python
+      uses: actions/setup-python@v2.2.2
+      with:
+        python-version: ${{ matrix.PYTHON }}
+    - uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: ${{ matrix.RUST }}
+        override: true
+        default: true
+    - name: test external pyca
+      run: make test TESTS="test_external_pyca" VERBOSE=1

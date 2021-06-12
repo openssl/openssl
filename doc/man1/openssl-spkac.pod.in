@@ -26,8 +26,6 @@ B<openssl> B<spkac>
 [B<-verify>]
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 
-=for openssl ifdef engine
-
 =head1 DESCRIPTION
 
 This command processes Netscape signed public key and challenge
@@ -60,8 +58,7 @@ present.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The key format; the default is B<PEM>.
-The only value with effect is B<ENGINE>; all others have become obsolete.
+The key format; unspecified by default.
 See L<openssl-format-options(1)> for details.
 
 =item B<-passin> I<arg>
@@ -150,14 +147,11 @@ L<openssl-ca(1)>
 
 =head1 HISTORY
 
-All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
-and have no effect.
-
 The B<-engine> option was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

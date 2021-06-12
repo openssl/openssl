@@ -8,7 +8,7 @@ SMIME_read_CMS_ex, SMIME_read_CMS - parse S/MIME message
 
  #include <openssl/cms.h>
 
- CMS_ContentInfo *SMIME_read_CMS_ex(BIO *bio, BIO **bcont,
+ CMS_ContentInfo *SMIME_read_CMS_ex(BIO *bio, int flags, BIO **bcont,
                                     CMS_ContentInfo **cms);
  CMS_ContentInfo *SMIME_read_CMS(BIO *in, BIO **bcont);
 
@@ -24,10 +24,14 @@ written to B<*bcont>, otherwise B<*bcont> is set to NULL.
 The parsed CMS_ContentInfo structure is returned or NULL if an
 error occurred.
 
-SMIME_read_CMS_ex() is similar to SMIME_read_CMS() but can optionally supply a
-previously created I<cms> CMS_ContentInfo object. If I<cms> is NULL then it is
-identical to SMIME_read_CMS().
+SMIME_read_CMS_ex() is similar to SMIME_read_CMS() but optionally a previously
+created I<cms> CMS_ContentInfo object can be supplied as well as some I<flags>.
 To create a I<cms> object use L<CMS_ContentInfo_new_ex(3)>.
+If the I<flags> argument contains B<CMS_BINARY> then the input is assumed to be
+in binary format and is not translated to canonical form.
+If in addition B<SMIME_ASCIICRLF> is set then the binary input is assumed
+to be followed by B<CR> and B<LF> characters, else only by an B<LF> character.
+If I<flags> is 0 and I<cms> is NULL then it is identical to SMIME_read_CMS().
 
 =head1 NOTES
 
@@ -78,7 +82,7 @@ The function SMIME_read_CMS_ex() was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2008-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2008-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

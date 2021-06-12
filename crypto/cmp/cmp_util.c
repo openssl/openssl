@@ -22,15 +22,19 @@
 
 int OSSL_CMP_log_open(void) /* is designed to be idempotent */
 {
-#ifndef OPENSSL_NO_STDIO
+#ifdef OPENSSL_NO_TRACE
+    return 1;
+#else
+# ifndef OPENSSL_NO_STDIO
     BIO *bio = BIO_new_fp(stdout, BIO_NOCLOSE);
 
     if (bio != NULL && OSSL_trace_set_channel(OSSL_TRACE_CATEGORY_CMP, bio))
         return 1;
     BIO_free(bio);
-#endif
+# endif
     ERR_raise(ERR_LIB_CMP, CMP_R_NO_STDIO);
     return 0;
+#endif
 }
 
 void OSSL_CMP_log_close(void) /* is designed to be idempotent */
@@ -214,67 +218,6 @@ int ossl_cmp_X509_STORE_add1_certs(X509_STORE *store, STACK_OF(X509) *certs,
                 return 0;
     }
     return 1;
-}
-
-/*-
- * Builds a certificate chain starting from <cert>
- * using the optional list of intermediate CA certificates <certs>.
- * If <store> is NULL builds the chain as far down as possible, ignoring errors.
- * Else the chain must reach a trust anchor contained in <store>.
- *
- * Returns NULL on error, else a pointer to a stack of (up_ref'ed) certificates
- * starting with given EE certificate and followed by all available intermediate
- * certificates down towards any trust anchor but without including the latter.
- *
- * NOTE: If a non-NULL stack is returned the caller is responsible for freeing.
- * NOTE: In case there is more than one possibility for the chain,
- * OpenSSL seems to take the first one; check X509_verify_cert() for details.
- */
-/* TODO this should be of more general interest and thus be exported. */
-STACK_OF(X509)
-    *ossl_cmp_build_cert_chain(OSSL_LIB_CTX *libctx, const char *propq,
-                               X509_STORE *store,
-                               STACK_OF(X509) *certs, X509 *cert)
-{
-    STACK_OF(X509) *chain = NULL, *result = NULL;
-    X509_STORE *ts = store == NULL ? X509_STORE_new() : store;
-    X509_STORE_CTX *csc = NULL;
-
-    if (ts == NULL || cert == NULL) {
-        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
-        goto err;
-    }
-
-    if ((csc = X509_STORE_CTX_new_ex(libctx, propq)) == NULL)
-        goto err;
-    if (store == NULL && certs != NULL
-            && !ossl_cmp_X509_STORE_add1_certs(ts, certs, 0))
-        goto err;
-    if (!X509_STORE_CTX_init(csc, ts, cert,
-                             store == NULL ? NULL : certs))
-        goto err;
-    /* disable any cert status/revocation checking etc. */
-    X509_VERIFY_PARAM_clear_flags(X509_STORE_CTX_get0_param(csc),
-                                  ~(X509_V_FLAG_USE_CHECK_TIME
-                                    | X509_V_FLAG_NO_CHECK_TIME));
-
-    if (X509_verify_cert(csc) <= 0 && store != NULL)
-        goto err;
-    chain = X509_STORE_CTX_get0_chain(csc);
-
-    /* result list to store the up_ref'ed not self-signed certificates */
-    if (!ossl_x509_add_certs_new(&result, chain,
-                                 X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
-                                 | X509_ADD_FLAG_NO_SS)) {
-        sk_X509_free(result);
-        result = NULL;
-    }
-
- err:
-    if (store == NULL)
-        X509_STORE_free(ts);
-    X509_STORE_CTX_free(csc);
-    return result;
 }
 
 int ossl_cmp_sk_ASN1_UTF8STRING_push_str(STACK_OF(ASN1_UTF8STRING) *sk,

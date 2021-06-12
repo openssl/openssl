@@ -382,7 +382,7 @@ static int send_finished(SSL *s, BIO *rbio)
         return 0;
 
     do_PRF(TLS_MD_SERVER_FINISH_CONST, TLS_MD_SERVER_FINISH_CONST_SIZE,
-           handshake_hash, EVP_MD_CTX_size(handshake_md),
+           handshake_hash, EVP_MD_CTX_get_size(handshake_md),
            NULL, 0,
            finished_msg + DTLS1_HM_HEADER_LENGTH, TLS1_FINISH_MAC_LENGTH);
 
@@ -494,6 +494,8 @@ static int test_bad_dtls(void)
     if (!TEST_ptr(ctx)
             || !TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_BAD_VER))
             || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_BAD_VER))
+            || !TEST_true(SSL_CTX_set_options(ctx,
+                                              SSL_OP_LEGACY_SERVER_CONNECT))
             || !TEST_true(SSL_CTX_set_cipher_list(ctx, "AES128-SHA")))
         goto end;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -131,6 +131,7 @@ static const EVP_CIPHER chacha20 = {
     CHACHA_KEY_SIZE,        /* key_len */
     CHACHA_CTR_SIZE,        /* iv_len, 128-bit counter in the context */
     EVP_CIPH_CUSTOM_IV | EVP_CIPH_ALWAYS_CALL_INIT,
+    EVP_ORIG_GLOBAL,
     chacha_init_key,
     chacha_cipher,
     NULL,
@@ -614,6 +615,7 @@ static EVP_CIPHER chacha20_poly1305 = {
     EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT |
     EVP_CIPH_CUSTOM_COPY | EVP_CIPH_FLAG_CUSTOM_CIPHER |
     EVP_CIPH_CUSTOM_IV_LENGTH,
+    EVP_ORIG_GLOBAL,
     chacha20_poly1305_init_key,
     chacha20_poly1305_cipher,
     chacha20_poly1305_cleanup,

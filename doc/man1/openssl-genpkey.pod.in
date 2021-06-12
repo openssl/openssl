@@ -15,6 +15,7 @@ B<openssl> B<genpkey>
 [B<-help>]
 [B<-out> I<filename>]
 [B<-outform> B<DER>|B<PEM>]
+[B<-quiet>]
 [B<-pass> I<arg>]
 [B<-I<cipher>>]
 [B<-paramfile> I<file>]
@@ -24,8 +25,6 @@ B<openssl> B<genpkey>
 [B<-text>]
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 {- $OpenSSL::safe::opt_config_synopsis -}
-
-=for openssl ifdef engine
 
 =head1 DESCRIPTION
 
@@ -51,6 +50,10 @@ See L<openssl-format-options(1)> for details.
 
 When B<-genparam> is given, B<-outform> is ignored.
 
+=item B<-quiet>
+
+Do not output "status dots" while generating keys.
+
 =item B<-pass> I<arg>
 
 The output file password source. For more information about the format of I<arg>
@@ -63,7 +66,7 @@ name accepted by EVP_get_cipherbyname() is acceptable such as B<des3>.
 
 =item B<-algorithm> I<alg>
 
-Public key algorithm to use such as RSA, DSA or DH. If used this option must
+Public key algorithm to use such as RSA, DSA, DH or DHX. If used this option must
 precede any B<-pkeyopt> options. The options B<-paramfile> and B<-algorithm>
 are mutually exclusive. Engines may add algorithms in addition to the standard
 built-in ones.
@@ -74,11 +77,8 @@ X25519, X448, ED25519 and ED448.
 Valid built-in algorithm names for parameter generation (see the B<-genparam>
 option) are DH, DSA and EC.
 
-Note that the algorithm name X9.42 DH may be used as a synonym for the DH
-algorithm. These are identical and do not indicate the type of parameters that
-will be generated. Use the B<dh_paramgen_type> option to indicate whether PKCS#3
-or X9.42 DH parameters are required. See L</DH Parameter Generation Options>
-below for more details.
+Note that the algorithm name X9.42 DH may be used as a synonym for DHX keys and
+PKCS#3 refers to DH Keys. Some options are not shared between DH and DHX keys.
 
 =item B<-pkeyopt> I<opt>:I<value>
 
@@ -182,6 +182,18 @@ B<named_curve> or B<explicit>. The default value is B<named_curve>.
 
 =back
 
+=head2 DH Key Generation Options
+
+=over 4
+
+=item B<group>:I<name>
+
+The B<paramfile> option is not required if a named group is used here.
+See the L</DH Parameter Generation Options> section below.
+
+=back
+
+
 =head1 PARAMETER GENERATION OPTIONS
 
 The options supported by each algorithm and indeed each implementation of an
@@ -214,7 +226,6 @@ ignored. If not set, then a digest will be used that gives an output matching
 the number of bits in B<q>, i.e. B<sha1> if q length is 160, B<sha224> if it 224
 or B<sha256> if it is 256.
 
-
 =item B<properties>:I<query>
 
 The I<digest> property I<query> string to use when fetching a digest from a provider.
@@ -243,36 +254,128 @@ generate valid primes.
 
 =head2 DH Parameter Generation Options
 
+For most use cases it is recommended to use the B<group> option rather than
+the B<type> options. Note that the B<group> option is not used by default if
+no parameter generation options are specified.
+
 =over 4
 
-=item B<dh_paramgen_prime_len>:I<numbits>
+=item B<group>:I<name>
 
-The number of bits in the prime parameter I<p>. The default is 2048.
+=item B<dh_param>:I<name>
 
-=item B<dh_paramgen_subprime_len>:I<numbits>
+Use a named DH group to select constant values for the DH parameters.
+All other options will be ignored if this value is set.
 
-The number of bits in the sub prime parameter I<q>. The default is 256 if the
-prime is at least 2048 bits long or 160 otherwise. Only relevant if used in
-conjunction with the B<dh_paramgen_type> option to generate X9.42 DH parameters.
+Valid values that are associated with the B<algorithm> of B<"DH"> are:
+"ffdhe2048", "ffdhe3072", "ffdhe4096", "ffdhe6144", "ffdhe8192",
+"modp_1536", "modp_2048", "modp_3072", "modp_4096", "modp_6144", "modp_8192".
 
-=item B<dh_paramgen_generator>:I<value>
-
-The value to use for the generator I<g>. The default is 2.
-
-=item B<dh_paramgen_type>:I<value>
-
-The type of DH parameters to generate. Use 0 for PKCS#3 DH and 1 for X9.42 DH.
-The default is 0.
+Valid values that are associated with the B<algorithm> of B<"DHX"> are the
+RFC5114 names "dh_1024_160", "dh_2048_224", "dh_2048_256".
 
 =item B<dh_rfc5114>:I<num>
 
 If this option is set, then the appropriate RFC5114 parameters are used
 instead of generating new parameters. The value I<num> can be one of
-1, 2 or 3 corresponding to RFC5114 DH parameters consisting of
-1024 bit group with 160 bit subgroup, 2048 bit group with 224 bit subgroup
-and 2048 bit group with 256 bit subgroup as mentioned in RFC5114 sections
-2.1, 2.2 and 2.3 respectively. If present this overrides all other DH parameter
-options.
+1, 2 or 3 that are equivalant to using the option B<group> with one of
+"dh_1024_160", "dh_2048_224" or "dh_2048_256".
+All other options will be ignored if this value is set.
+
+=item B<pbits>:I<numbits>
+
+=item B<dh_paramgen_prime_len>:I<numbits>
+
+The number of bits in the prime parameter I<p>. The default is 2048.
+
+=item B<qbits>:I<numbits>
+
+=item B<dh_paramgen_subprime_len>:I<numbits>
+
+The number of bits in the sub prime parameter I<q>. The default is 224.
+Only relevant if used in conjunction with the B<dh_paramgen_type> option to
+generate DHX parameters.
+
+=item B<safeprime-generator>:I<value>
+
+=item B<dh_paramgen_generator>:I<value>
+
+The value to use for the generator I<g>. The default is 2.
+The B<algorithm> option must be B<"DH"> for this parameter to be used.
+
+=item B<type>:I<string>
+
+The type name of DH parameters to generate. Valid values are:
+
+=over 4
+
+=item "generator"
+
+Use a safe prime generator with the option B<safeprime_generator>
+The B<algorithm> option must be B<"DH">.
+
+=item "fips186_4"
+
+FIPS186-4 parameter generation.
+The B<algorithm> option must be B<"DHX">.
+
+=item "fips186_2"
+
+FIPS186-4 parameter generation.
+The B<algorithm> option must be B<"DHX">.
+
+=item "group"
+
+Can be used with the option B<pbits> to select one of
+"ffdhe2048", "ffdhe3072", "ffdhe4096", "ffdhe6144" or "ffdhe8192".
+The B<algorithm> option must be B<"DH">.
+
+=item "default"
+
+Selects a default type based on the B<algorithm>. This is used by the
+OpenSSL default provider to set the type for backwards compatability.
+If B<algorithm> is B<"DH"> then B<"generator"> is used.
+If B<algorithm> is B<"DHX"> then B<"fips186_2"> is used.
+
+=back
+
+=item B<dh_paramgen_type>:I<value>
+
+The type of DH parameters to generate. Valid values are 0, 1, 2 or 3
+which correspond to setting the option B<type> to
+"generator", "fips186_2", "fips186_4" or "group".
+
+=item B<digest>:I<digest>
+
+The digest to use during parameter generation. Must be one of B<sha1>, B<sha224>
+or B<sha256>. If set, then the number of bits in B<qbits> will match the output
+size of the specified digest and the B<qbits> parameter will be
+ignored. If not set, then a digest will be used that gives an output matching
+the number of bits in B<q>, i.e. B<sha1> if q length is 160, B<sha224> if it is
+224 or B<sha256> if it is 256.
+This is only used by "fips186_4" and "fips186_2" key generation.
+
+=item B<properties>:I<query>
+
+The I<digest> property I<query> string to use when fetching a digest from a provider.
+This is only used by "fips186_4" and "fips186_2" key generation.
+
+=item B<gindex>:I<index>
+
+The index to use for canonical generation and verification of the generator g.
+Set this to a positive value ranging from 0..255 to use this mode. Larger values
+will only use the bottom byte.
+This I<index> must then be reused during key validation to verify the value of g.
+If this value is not set then g is not verifiable. The default value is -1.
+This is only used by "fips186_4" and "fips186_2" key generation.
+
+=item B<hexseed>:I<seed>
+
+The seed I<seed> data to use instead of generating a random seed internally.
+This should be used for testing purposes only. This will either produced fixed
+values for the generated parameters OR it will fail if the seed did not
+generate valid primes.
+This is only used by "fips186_4" and "fips186_2" key generation.
 
 =back
 
@@ -313,24 +416,48 @@ Generate DSA key from parameters:
 
  openssl genpkey -paramfile dsap.pem -out dsakey.pem
 
-Generate 2048 bit DH parameters:
+Generate 4096 bit DH Key using safe prime group ffdhe4096:
+
+ openssl genpkey -algorithm DH -out dhkey.pem -pkeyopt group:ffdhe4096
+
+Generate 2048 bit X9.42 DH key with 256 bit subgroup using RFC5114 group3:
+
+ openssl genpkey -algorithm DHX -out dhkey.pem -pkeyopt dh_rfc5114:3
+
+Generate a DH key using a DH parameters file:
+
+ openssl genpkey -paramfile dhp.pem -out dhkey.pem
+
+Output DH parameters for safe prime group ffdhe2048:
+
+ openssl genpkey -genparam -algorithm DH -out dhp.pem -pkeyopt group:ffdhe2048
+
+Output 2048 bit X9.42 DH parameters with 224 bit subgroup using RFC5114 group2:
+
+ openssl genpkey -genparam -algorithm DHX -out dhp.pem -pkeyopt dh_rfc5114:2
+
+Output 2048 bit X9.42 DH parameters with 224 bit subgroup using FIP186-4 keygen:
+
+ openssl genpkey -genparam -algorithm DHX -out dhp.pem -text \
+     -pkeyopt pbits:2048 -pkeyopt qbits:224 -pkeyopt digest:SHA256 \
+     -pkeyopt gindex:1 -pkeyopt dh_paramgen_type:2
+
+Output 1024 bit X9.42 DH parameters with 160 bit subgroup using FIP186-2 keygen:
+
+ openssl genpkey -genparam -algorithm DHX -out dhp.pem -text \
+     -pkeyopt pbits:1024 -pkeyopt qbits:160 -pkeyopt digest:SHA1 \
+     -pkeyopt gindex:1 -pkeyopt dh_paramgen_type:1
+
+Output 2048 bit DH parameters:
 
  openssl genpkey -genparam -algorithm DH -out dhp.pem \
      -pkeyopt dh_paramgen_prime_len:2048
 
-Generate 2048 bit X9.42 DH parameters:
+Output 2048 bit DH parameters using a generator:
 
  openssl genpkey -genparam -algorithm DH -out dhpx.pem \
      -pkeyopt dh_paramgen_prime_len:2048 \
      -pkeyopt dh_paramgen_type:1
-
-Output RFC5114 2048 bit DH parameters with 224 bit subgroup:
-
- openssl genpkey -genparam -algorithm DH -out dhp.pem -pkeyopt dh_rfc5114:2
-
-Generate DH key from parameters:
-
- openssl genpkey -paramfile dhp.pem -out dhkey.pem
 
 Generate EC parameters:
 
@@ -367,7 +494,7 @@ The B<-engine> option was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -12,6 +12,7 @@
 #include <openssl/lhash.h>
 #include "crypto/lhash.h"      /* ossl_lh_strcasehash */
 #include "internal/tsan_assist.h"
+#include "internal/sizes.h"
 
 /*-
  * The namenum entry
@@ -86,6 +87,7 @@ static void stored_namemap_free(void *vnamemap)
 }
 
 static const OSSL_LIB_CTX_METHOD stored_namemap_method = {
+    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
     stored_namemap_new,
     stored_namemap_free,
 };
@@ -378,45 +380,82 @@ int ossl_namemap_add_names(OSSL_NAMEMAP *namemap, int number,
 #include <openssl/evp.h>
 
 /* Creates an initial namemap with names found in the legacy method db */
-static void get_legacy_evp_names(const char *main_name, const char *alias,
+static void get_legacy_evp_names(int base_nid, int nid, const char *pem_name,
                                  void *arg)
 {
-    int main_id = ossl_namemap_add_name(arg, 0, main_name);
+    int num = 0;
+    ASN1_OBJECT *obj;
 
-    /*
-     * We could check that the returned value is the same as main_id,
-     * but since this is a void function, there's no sane way to report
-     * the error.  The best we can do is trust ourselve to keep the legacy
-     * method database conflict free.
-     *
-     * This registers any alias with the same number as the main name.
-     * Should it be that the current |on| *has* the main name, this is
-     * simply a no-op.
-     */
-    if (alias != NULL) {
-        (void)ossl_namemap_add_name(arg, main_id, alias);
+    if (base_nid != NID_undef) {
+        num = ossl_namemap_add_name(arg, num, OBJ_nid2sn(base_nid));
+        num = ossl_namemap_add_name(arg, num, OBJ_nid2ln(base_nid));
     }
+
+    if (nid != NID_undef) {
+        num = ossl_namemap_add_name(arg, num, OBJ_nid2sn(nid));
+        num = ossl_namemap_add_name(arg, num, OBJ_nid2ln(nid));
+        if ((obj = OBJ_nid2obj(nid)) != NULL) {
+            char txtoid[OSSL_MAX_NAME_SIZE];
+
+            if (OBJ_obj2txt(txtoid, sizeof(txtoid), obj, 1))
+                num = ossl_namemap_add_name(arg, num, txtoid);
+        }
+    }
+    if (pem_name != NULL)
+        num = ossl_namemap_add_name(arg, num, pem_name);
 }
 
 static void get_legacy_cipher_names(const OBJ_NAME *on, void *arg)
 {
     const EVP_CIPHER *cipher = (void *)OBJ_NAME_get(on->name, on->type);
 
-    get_legacy_evp_names(EVP_CIPHER_name(cipher), on->name, arg);
+    get_legacy_evp_names(NID_undef, EVP_CIPHER_get_type(cipher), NULL, arg);
 }
 
 static void get_legacy_md_names(const OBJ_NAME *on, void *arg)
 {
     const EVP_MD *md = (void *)OBJ_NAME_get(on->name, on->type);
-    /* We don't want the pkey_type names, so we need some extra care */
-    int snid, lnid;
 
-    snid = OBJ_sn2nid(on->name);
-    lnid = OBJ_ln2nid(on->name);
-    if (snid != EVP_MD_pkey_type(md) && lnid != EVP_MD_pkey_type(md))
-        get_legacy_evp_names(EVP_MD_name(md), on->name, arg);
-    else
-        get_legacy_evp_names(EVP_MD_name(md), NULL, arg);
+    get_legacy_evp_names(0, EVP_MD_get_type(md), NULL, arg);
+}
+
+static void get_legacy_pkey_meth_names(const EVP_PKEY_ASN1_METHOD *ameth,
+                                       void *arg)
+{
+    int nid = 0, base_nid = 0, flags = 0;
+    const char *pem_name = NULL;
+
+    EVP_PKEY_asn1_get0_info(&nid, &base_nid, &flags, NULL, &pem_name, ameth);
+    if (nid != NID_undef) {
+        if ((flags & ASN1_PKEY_ALIAS) == 0) {
+            switch (nid) {
+            case EVP_PKEY_DHX:
+                /* We know that the name "DHX" is used too */
+                get_legacy_evp_names(0, nid, "DHX", arg);
+                /* FALLTHRU */
+            default:
+                get_legacy_evp_names(0, nid, pem_name, arg);
+            }
+        } else {
+            /*
+             * Treat aliases carefully, some of them are undesirable, or
+             * should not be treated as such for providers.
+             */
+
+            switch (nid) {
+            case EVP_PKEY_SM2:
+                /*
+                 * SM2 is a separate keytype with providers, not an alias for
+                 * EC.
+                 */
+                get_legacy_evp_names(0, nid, pem_name, arg);
+                break;
+            default:
+                /* Use the short name of the base nid as the common reference */
+                get_legacy_evp_names(base_nid, nid, pem_name, arg);
+            }
+        }
+    }
 }
 #endif
 
@@ -447,6 +486,8 @@ OSSL_NAMEMAP *ossl_namemap_stored(OSSL_LIB_CTX *libctx)
         return NULL;
     }
     if (nms == 1) {
+        int i, end;
+
         /* Before pilfering, we make sure the legacy database is populated */
         OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS
                             | OPENSSL_INIT_ADD_ALL_DIGESTS, NULL);
@@ -455,6 +496,10 @@ OSSL_NAMEMAP *ossl_namemap_stored(OSSL_LIB_CTX *libctx)
                         get_legacy_cipher_names, namemap);
         OBJ_NAME_do_all(OBJ_NAME_TYPE_MD_METH,
                         get_legacy_md_names, namemap);
+
+        /* We also pilfer data from the legacy EVP_PKEY_ASN1_METHODs */
+        for (i = 0, end = EVP_PKEY_asn1_get_count(); i < end; i++)
+            get_legacy_pkey_meth_names(EVP_PKEY_asn1_get0(i), namemap);
     }
 #endif
 

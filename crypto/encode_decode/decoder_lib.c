@@ -16,8 +16,8 @@
 #include <openssl/pkcs12err.h>
 #include <openssl/x509err.h>
 #include <openssl/trace.h>
-#include "internal/passphrase.h"
 #include "internal/bio.h"
+#include "internal/provider.h"
 #include "crypto/decoder.h"
 #include "encoder_local.h"
 #include "e_os.h"
@@ -32,6 +32,12 @@ struct decoder_process_data_st {
     size_t current_decoder_inst_index;
     /* For tracing, count recursion level */
     size_t recursion;
+
+    /*-
+     * Flags
+     */
+    unsigned int flag_next_level_called : 1;
+    unsigned int flag_construct_called : 1;
 };
 
 static int decoder_process(const OSSL_PARAM params[], void *arg);
@@ -41,6 +47,14 @@ int OSSL_DECODER_from_bio(OSSL_DECODER_CTX *ctx, BIO *in)
     struct decoder_process_data_st data;
     int ok = 0;
     BIO *new_bio = NULL;
+
+    if (OSSL_DECODER_CTX_get_num_decoders(ctx) == 0) {
+        ERR_raise_data(ERR_LIB_OSSL_DECODER, OSSL_DECODER_R_DECODER_NOT_FOUND,
+                       "No decoders were found. For standard decoders you need "
+                       "at least one of the default or base providers "
+                       "available. Did you forget to load them?");
+        return 0;
+    }
 
     if (BIO_tell(in) < 0) {
         new_bio = BIO_new(BIO_f_readbuffer());
@@ -56,6 +70,31 @@ int OSSL_DECODER_from_bio(OSSL_DECODER_CTX *ctx, BIO *in)
     (void)ossl_pw_enable_passphrase_caching(&ctx->pwdata);
 
     ok = decoder_process(NULL, &data);
+
+    if (!data.flag_construct_called) {
+        const char *spaces
+            = ctx->start_input_type != NULL && ctx->input_structure != NULL
+            ? " " : "";
+        const char *input_type_label
+            = ctx->start_input_type != NULL ? "Input type: " : "";
+        const char *input_structure_label
+            = ctx->input_structure != NULL ? "Input structure: " : "";
+        const char *comma
+            = ctx->start_input_type != NULL && ctx->input_structure != NULL
+            ? ", " : "";
+        const char *input_type
+            = ctx->start_input_type != NULL ? ctx->start_input_type : "";
+        const char *input_structure
+            = ctx->input_structure != NULL ? ctx->input_structure : "";
+
+        if (BIO_eof(in) == 0 || ERR_peek_error() == 0)
+            /* Prevent spurious decoding error */
+            ERR_raise_data(ERR_LIB_OSSL_DECODER, ERR_R_UNSUPPORTED,
+                           "No supported data to decode. %s%s%s%s%s%s",
+                           spaces, input_type_label, input_type, comma,
+                           input_structure_label, input_structure);
+        ok = 0;
+    }
 
     /* Clear any internally cached passphrase */
     (void)ossl_pw_clear_passphrase_cache(&ctx->pwdata);
@@ -154,8 +193,8 @@ int OSSL_DECODER_CTX_set_input_structure(OSSL_DECODER_CTX *ctx,
     }
 
     /*
-     * NULL is a valid starting input type, and means that the caller leaves
-     * it to code to discover what the starting input type is.
+     * NULL is a valid starting input structure, and means that the caller
+     * leaves it to code to discover what the starting input structure is.
      */
     ctx->input_structure = input_structure;
     return 1;
@@ -165,16 +204,13 @@ OSSL_DECODER_INSTANCE *ossl_decoder_instance_new(OSSL_DECODER *decoder,
                                                  void *decoderctx)
 {
     OSSL_DECODER_INSTANCE *decoder_inst = NULL;
-    OSSL_PARAM params[3];
+    const OSSL_PROVIDER *prov;
+    OSSL_LIB_CTX *libctx;
+    const OSSL_PROPERTY_LIST *props;
+    const OSSL_PROPERTY_DEFINITION *prop;
 
     if (!ossl_assert(decoder != NULL)) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
-    }
-
-    if (decoder->get_params == NULL) {
-        ERR_raise(ERR_LIB_OSSL_DECODER,
-                  OSSL_DECODER_R_MISSING_GET_PARAMS);
         return 0;
     }
 
@@ -187,22 +223,35 @@ OSSL_DECODER_INSTANCE *ossl_decoder_instance_new(OSSL_DECODER *decoder,
         goto err;
     }
 
-    /* Cache the input type for this decoder */
-    params[0] =
-        OSSL_PARAM_construct_utf8_ptr(OSSL_DECODER_PARAM_INPUT_TYPE,
-                                      (char **)&decoder_inst->input_type, 0);
-    params[1] =
-        OSSL_PARAM_construct_utf8_ptr(OSSL_DECODER_PARAM_INPUT_STRUCTURE,
-                                      (char **)&decoder_inst->input_structure,
-                                      0);
-    params[2] = OSSL_PARAM_construct_end();
-
-    if (!decoder->get_params(params)
-        || !OSSL_PARAM_modified(&params[0]))
+    prov = OSSL_DECODER_get0_provider(decoder);
+    libctx = ossl_provider_libctx(prov);
+    props = ossl_decoder_parsed_properties(decoder);
+    if (props == NULL) {
+        ERR_raise_data(ERR_LIB_OSSL_DECODER, ERR_R_INVALID_PROPERTY_DEFINITION,
+                       "there are no property definitions with decoder %s",
+                       OSSL_DECODER_get0_name(decoder));
         goto err;
+    }
 
-    decoder_inst->flag_input_structure_was_set =
-        OSSL_PARAM_modified(&params[1]);
+    /* The "input" property is mandatory */
+    prop = ossl_property_find_property(props, libctx, "input");
+    decoder_inst->input_type = ossl_property_get_string_value(libctx, prop);
+    if (decoder_inst->input_type == NULL) {
+        ERR_raise_data(ERR_LIB_OSSL_DECODER, ERR_R_INVALID_PROPERTY_DEFINITION,
+                       "the mandatory 'input' property is missing "
+                       "for decoder %s (properties: %s)",
+                       OSSL_DECODER_get0_name(decoder),
+                       OSSL_DECODER_get0_properties(decoder));
+        goto err;
+    }
+
+    /* The "structure" property is optional */
+    prop = ossl_property_find_property(props, libctx, "structure");
+    if (prop != NULL) {
+        decoder_inst->input_structure
+            = ossl_property_get_string_value(libctx, prop);
+    }
+
     decoder_inst->decoder = decoder;
     decoder_inst->decoderctx = decoderctx;
     return decoder_inst;
@@ -239,11 +288,11 @@ int ossl_decoder_ctx_add_decoder_inst(OSSL_DECODER_CTX *ctx,
     if (ok) {
         OSSL_TRACE_BEGIN(DECODER) {
             BIO_printf(trc_out,
-                       "(ctx %p) Added decoder instance %p (decoder %p) with:\n",
-                       (void *)ctx, (void *)di, (void *)di->decoder);
-            BIO_printf(trc_out,
-                       "    input type: %s, input structure: %s\n",
-                       di->input_type, di->input_structure);
+                       "(ctx %p) Added decoder instance %p for decoder %p\n"
+                       "    %s with %s\n",
+                       (void *)ctx, (void *)di, (void *)di->decoder,
+                       OSSL_DECODER_get0_name(di->decoder),
+                       OSSL_DECODER_get0_properties(di->decoder));
         } OSSL_TRACE_END(DECODER);
     }
     return ok;
@@ -261,7 +310,7 @@ int OSSL_DECODER_CTX_add_decoder(OSSL_DECODER_CTX *ctx, OSSL_DECODER *decoder)
         return 0;
     }
 
-    prov = OSSL_DECODER_provider(decoder);
+    prov = OSSL_DECODER_get0_provider(decoder);
     provctx = OSSL_PROVIDER_get0_provider_ctx(prov);
 
     if ((decoderctx = decoder->newctx(provctx)) == NULL
@@ -280,6 +329,105 @@ int OSSL_DECODER_CTX_add_decoder(OSSL_DECODER_CTX *ctx, OSSL_DECODER *decoder)
     if (decoderctx != NULL)
         decoder->freectx(decoderctx);
     return 0;
+}
+
+struct collect_extra_decoder_data_st {
+    OSSL_DECODER_CTX *ctx;
+    const char *output_type;
+    /*
+     * 0 to check that the decoder's input type is the same as the decoder name
+     * 1 to check that the decoder's input type differs from the decoder name
+     */
+    enum { IS_SAME = 0, IS_DIFFERENT = 1 } type_check;
+    size_t w_prev_start, w_prev_end; /* "previous" decoders */
+    size_t w_new_start, w_new_end;   /* "new" decoders */
+};
+
+static void collect_extra_decoder(OSSL_DECODER *decoder, void *arg)
+{
+    struct collect_extra_decoder_data_st *data = arg;
+    size_t j;
+    const OSSL_PROVIDER *prov = OSSL_DECODER_get0_provider(decoder);
+    void *provctx = OSSL_PROVIDER_get0_provider_ctx(prov);
+
+    if (OSSL_DECODER_is_a(decoder, data->output_type)) {
+        void *decoderctx = NULL;
+        OSSL_DECODER_INSTANCE *di = NULL;
+
+        OSSL_TRACE_BEGIN(DECODER) {
+            BIO_printf(trc_out,
+                       "(ctx %p) [%d] Checking out decoder %p:\n"
+                       "    %s with %s\n",
+                       (void *)data->ctx, data->type_check, (void *)decoder,
+                       OSSL_DECODER_get0_name(decoder),
+                       OSSL_DECODER_get0_properties(decoder));
+        } OSSL_TRACE_END(DECODER);
+
+        /*
+         * Check that we don't already have this decoder in our stack,
+         * starting with the previous windows but also looking at what
+         * we have added in the current window.
+         */
+        for (j = data->w_prev_start; j < data->w_new_end; j++) {
+            OSSL_DECODER_INSTANCE *check_inst =
+                sk_OSSL_DECODER_INSTANCE_value(data->ctx->decoder_insts, j);
+
+            if (decoder->base.algodef == check_inst->decoder->base.algodef) {
+                /* We found it, so don't do anything more */
+                OSSL_TRACE_BEGIN(DECODER) {
+                    BIO_printf(trc_out,
+                               "    REJECTED: already exists in the chain\n");
+                } OSSL_TRACE_END(DECODER);
+                return;
+            }
+        }
+
+        if ((decoderctx = decoder->newctx(provctx)) == NULL)
+            return;
+
+        if ((di = ossl_decoder_instance_new(decoder, decoderctx)) == NULL) {
+            decoder->freectx(decoderctx);
+            return;
+        }
+
+        switch (data->type_check) {
+        case IS_SAME:
+            /* If it differs, this is not a decoder to add for now. */
+            if (!OSSL_DECODER_is_a(decoder,
+                                   OSSL_DECODER_INSTANCE_get_input_type(di))) {
+                ossl_decoder_instance_free(di);
+                OSSL_TRACE_BEGIN(DECODER) {
+                    BIO_printf(trc_out,
+                               "    REJECTED: input type doesn't match output type\n");
+                } OSSL_TRACE_END(DECODER);
+                return;
+            }
+            break;
+        case IS_DIFFERENT:
+            /* If it's the same, this is not a decoder to add for now. */
+            if (OSSL_DECODER_is_a(decoder,
+                                  OSSL_DECODER_INSTANCE_get_input_type(di))) {
+                ossl_decoder_instance_free(di);
+                OSSL_TRACE_BEGIN(DECODER) {
+                    BIO_printf(trc_out,
+                               "    REJECTED: input type matches output type\n");
+                } OSSL_TRACE_END(DECODER);
+                return;
+            }
+            break;
+        }
+
+        /*
+         * Apart from keeping w_new_end up to date, We don't care about
+         * errors here.  If it doesn't collect, then it doesn't...
+         */
+        if (!ossl_decoder_ctx_add_decoder_inst(data->ctx, di)) {
+            ossl_decoder_instance_free(di);
+            return;
+        }
+
+        data->w_new_end++;
+    }
 }
 
 int OSSL_DECODER_CTX_add_extra(OSSL_DECODER_CTX *ctx,
@@ -308,10 +456,9 @@ int OSSL_DECODER_CTX_add_extra(OSSL_DECODER_CTX *ctx,
      * +----------------+
      *                    <--- w_new_end
      */
-    size_t w_prev_start, w_prev_end; /* "previous" decoders */
-    size_t w_new_start, w_new_end;   /* "new" decoders */
-    size_t count = 0; /* Calculates how many were added in each iteration */
+    struct collect_extra_decoder_data_st data;
     size_t depth = 0; /* Counts the number of iterations */
+    size_t count; /* Calculates how many were added in each iteration */
 
     if (!ossl_assert(ctx != NULL)) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_PASSED_NULL_PARAMETER);
@@ -325,71 +472,48 @@ int OSSL_DECODER_CTX_add_extra(OSSL_DECODER_CTX *ctx,
     if (ctx->decoder_insts == NULL)
         return 1;
 
-    w_prev_start = 0;
-    w_prev_end = sk_OSSL_DECODER_INSTANCE_num(ctx->decoder_insts);
+    OSSL_TRACE_BEGIN(DECODER) {
+        BIO_printf(trc_out, "(ctx %p) Looking for extra decoders\n",
+                   (void *)ctx);
+    } OSSL_TRACE_END(DECODER);
+
+    memset(&data, 0, sizeof(data));
+    data.ctx = ctx;
+    data.w_prev_start = 0;
+    data.w_prev_end = sk_OSSL_DECODER_INSTANCE_num(ctx->decoder_insts);
     do {
         size_t i;
 
-        w_new_start = w_new_end = w_prev_end;
+        data.w_new_start = data.w_new_end = data.w_prev_end;
 
-        for (i = w_prev_start; i < w_prev_end; i++) {
-            OSSL_DECODER_INSTANCE *decoder_inst =
-                sk_OSSL_DECODER_INSTANCE_value(ctx->decoder_insts, i);
-            const char *input_type =
-                OSSL_DECODER_INSTANCE_get_input_type(decoder_inst);
-            OSSL_DECODER *decoder = NULL;
+        /*
+         * Two iterations:
+         * 0.  All decoders that have the same name as their input type.
+         *     This allows for decoders that unwrap some data in a specific
+         *     encoding, and pass the result on with the same encoding.
+         * 1.  All decoders that a different name than their input type.
+         */
+        for (data.type_check = IS_SAME;
+             data.type_check <= IS_DIFFERENT;
+             data.type_check++) {
+            for (i = data.w_prev_start; i < data.w_prev_end; i++) {
+                OSSL_DECODER_INSTANCE *decoder_inst =
+                    sk_OSSL_DECODER_INSTANCE_value(ctx->decoder_insts, i);
 
-            /*
-             * If the caller has specified what the initial input should be,
-             * and the decoder implementation we're looking at has that
-             * input type, there's no point adding on more implementations
-             * on top of this one, so we don't.
-             */
-            if (ctx->start_input_type != NULL
-                && strcasecmp(ctx->start_input_type, input_type) == 0)
-                continue;
+                data.output_type
+                    = OSSL_DECODER_INSTANCE_get_input_type(decoder_inst);
 
-            ERR_set_mark();
-            decoder = OSSL_DECODER_fetch(libctx, input_type, propq);
-            ERR_pop_to_mark();
 
-            if (decoder != NULL) {
-                size_t j;
-
-                /*
-                 * Check that we don't already have this decoder in our
-                 * stack We only need to check among the newly added ones.
-                 */
-                for (j = w_new_start; j < w_new_end; j++) {
-                    OSSL_DECODER_INSTANCE *check_inst =
-                        sk_OSSL_DECODER_INSTANCE_value(ctx->decoder_insts, j);
-
-                    if (decoder == check_inst->decoder) {
-                        /* We found it, so drop the new fetch */
-                        OSSL_DECODER_free(decoder);
-                        decoder = NULL;
-                        break;
-                    }
-                }
+                OSSL_DECODER_do_all_provided(libctx,
+                                             collect_extra_decoder, &data);
             }
-
-            if (decoder == NULL)
-                continue;
-
-            /*
-             * Apart from keeping w_new_end up to date, We don't care about
-             * errors here.  If it doesn't collect, then it doesn't...
-             */
-            if (OSSL_DECODER_CTX_add_decoder(ctx, decoder)) /* ref++ */
-                w_new_end++;
-            OSSL_DECODER_free(decoder); /* ref-- */
         }
         /* How many were added in this iteration */
-        count = w_new_end - w_new_start;
+        count = data.w_new_end - data.w_new_start;
 
         /* Slide the "previous decoder" windows */
-        w_prev_start = w_new_start;
-        w_prev_end = w_new_end;
+        data.w_prev_start = data.w_new_start;
+        data.w_prev_end = data.w_new_end;
 
         depth++;
     } while (count != 0 && depth <= 10);
@@ -525,11 +649,17 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
     BIO *bio = data->bio;
     long loc;
     size_t i;
-    int err, lib, reason, ok = 0;
+    int ok = 0;
     /* For recursions */
     struct decoder_process_data_st new_data;
     const char *data_type = NULL;
     const char *data_structure = NULL;
+
+    /*
+     * This is an indicator up the call stack that something was indeed
+     * decoded, leading to a recursive call of this function.
+     */
+    data->flag_next_level_called = 1;
 
     memset(&new_data, 0, sizeof(new_data));
     new_data.ctx = data->ctx;
@@ -562,10 +692,28 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
                                            data->current_decoder_inst_index);
         decoder = OSSL_DECODER_INSTANCE_get_decoder(decoder_inst);
 
-        if (ctx->construct != NULL
-            && ctx->construct(decoder_inst, params, ctx->construct_data)) {
-            ok = 1;
-            goto end;
+        data->flag_construct_called = 0;
+        if (ctx->construct != NULL) {
+            int rv;
+
+            OSSL_TRACE_BEGIN(DECODER) {
+                BIO_printf(trc_out,
+                           "(ctx %p) %s Running constructor\n",
+                           (void *)new_data.ctx, LEVEL);
+            } OSSL_TRACE_END(DECODER);
+
+            rv = ctx->construct(decoder_inst, params, ctx->construct_data);
+
+            OSSL_TRACE_BEGIN(DECODER) {
+                BIO_printf(trc_out,
+                           "(ctx %p) %s Running constructor => %d\n",
+                           (void *)new_data.ctx, LEVEL, rv);
+            } OSSL_TRACE_END(DECODER);
+
+            data->flag_construct_called = 1;
+            ok = (rv > 0);
+            if (ok)
+                goto end;
         }
 
         /* The constructor didn't return success */
@@ -656,11 +804,12 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
 
         OSSL_TRACE_BEGIN(DECODER) {
             BIO_printf(trc_out,
-                       "(ctx %p) %s [%u] Considering decoder instance %p, which has:\n"
-                       "    input type: %s, input structure: %s, decoder: %p\n",
+                       "(ctx %p) %s [%u] Considering decoder instance %p (decoder %p):\n"
+                       "    %s with %s\n",
                        (void *)new_data.ctx, LEVEL, (unsigned int)i,
-                       (void *)new_decoder_inst, new_input_type,
-                       new_input_structure, (void *)new_decoder);
+                       (void *)new_decoder_inst, (void *)new_decoder,
+                       OSSL_DECODER_get0_name(new_decoder),
+                       OSSL_DECODER_get0_properties(new_decoder));
         } OSSL_TRACE_END(DECODER);
 
         /*
@@ -746,6 +895,12 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
                        (void *)new_decoder_inst);
         } OSSL_TRACE_END(DECODER);
 
+        /*
+         * We only care about errors reported from decoder implementations
+         * if it returns false (i.e. there was a fatal error).
+         */
+        ERR_set_mark();
+
         new_data.current_decoder_inst_index = i;
         ok = new_decoder->decode(new_decoderctx, cbio,
                                  new_data.ctx->selection,
@@ -755,31 +910,29 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
 
         OSSL_TRACE_BEGIN(DECODER) {
             BIO_printf(trc_out,
-                       "(ctx %p) %s [%u] Running decoder instance %p => %d\n",
+                       "(ctx %p) %s [%u] Running decoder instance %p => %d"
+                       " (recursed further: %s, construct called: %s)\n",
                        (void *)new_data.ctx, LEVEL, (unsigned int)i,
-                       (void *)new_decoder_inst, ok);
+                       (void *)new_decoder_inst, ok,
+                       new_data.flag_next_level_called ? "yes" : "no",
+                       new_data.flag_construct_called ? "yes" : "no");
         } OSSL_TRACE_END(DECODER);
 
-        if (ok)
+        data->flag_construct_called = new_data.flag_construct_called;
+
+        /* Break on error or if we tried to construct an object already */
+        if (!ok || data->flag_construct_called) {
+            ERR_clear_last_mark();
             break;
+        }
+        ERR_pop_to_mark();
 
         /*
-         * These errors are assumed to come from ossl_store_handle_load_result()
-         * in crypto/store/store_result.c.  They are currently considered fatal
-         * errors, so we preserve them in the error queue and stop.
+         * Break if the decoder implementation that we called recursed, since
+         * that indicates that it successfully decoded something.
          */
-        err = ERR_peek_last_error();
-        lib = ERR_GET_LIB(err);
-        reason = ERR_GET_REASON(err);
-        if ((lib == ERR_LIB_EVP
-             && reason == EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM)
-#ifndef OPENSSL_NO_EC
-            || (lib == ERR_LIB_EC && reason == EC_R_UNKNOWN_GROUP)
-#endif
-            || (lib == ERR_LIB_X509 && reason == X509_R_UNSUPPORTED_ALGORITHM)
-            || (lib == ERR_LIB_PKCS12
-                && reason == PKCS12_R_PKCS12_CIPHERFINAL_ERROR))
-            goto end;
+        if (new_data.flag_next_level_called)
+            break;
     }
 
  end:

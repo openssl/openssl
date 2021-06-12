@@ -22,6 +22,7 @@
 #include "internal/param_build_set.h"
 #include "crypto/asn1.h"
 #include "crypto/rsa.h"
+#include "rsa_local.h"
 
 #include "e_os.h"                /* strcasecmp for Windows() */
 
@@ -269,7 +270,6 @@ int ossl_rsa_pss_params_30_fromdata(RSA_PSS_PARAMS_30 *pss_params,
         else if (!OSSL_PARAM_get_utf8_ptr(param_mgf, &mgfname))
             return 0;
 
-        /* TODO Revisit this if / when a new MGF algorithm appears */
         if (strcasecmp(param_mgf->data,
                        ossl_rsa_mgf_nid2name(default_maskgenalg_nid)) != 0)
             return 0;
@@ -322,6 +322,117 @@ int ossl_rsa_pss_params_30_fromdata(RSA_PSS_PARAMS_30 *pss_params,
     return ret;
 }
 
+int ossl_rsa_is_foreign(const RSA *rsa)
+{
+#ifndef FIPS_MODULE
+    if (rsa->engine != NULL || RSA_get_method(rsa) != RSA_PKCS1_OpenSSL())
+        return 1;
+#endif
+    return 0;
+}
+
+static ossl_inline int rsa_bn_dup_check(BIGNUM **out, const BIGNUM *f)
+{
+    if (f != NULL && (*out = BN_dup(f)) == NULL)
+        return 0;
+    return 1;
+}
+
+RSA *ossl_rsa_dup(const RSA *rsa, int selection)
+{
+    RSA *dupkey = NULL;
+#ifndef FIPS_MODULE
+    int pnum, i;
+#endif
+
+    /* Do not try to duplicate foreign RSA keys */
+    if (ossl_rsa_is_foreign(rsa))
+        return NULL;
+
+    if ((dupkey = ossl_rsa_new_with_ctx(rsa->libctx)) == NULL)
+        return NULL;
+
+    /* public key */
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
+        if (!rsa_bn_dup_check(&dupkey->n, rsa->n))
+            goto err;
+        if (!rsa_bn_dup_check(&dupkey->e, rsa->e))
+            goto err;
+    }
+
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
+
+        /* private key */
+        if (!rsa_bn_dup_check(&dupkey->d, rsa->d))
+            goto err;
+
+        /* factors and crt params */
+        if (!rsa_bn_dup_check(&dupkey->p, rsa->p))
+            goto err;
+        if (!rsa_bn_dup_check(&dupkey->q, rsa->q))
+            goto err;
+        if (!rsa_bn_dup_check(&dupkey->dmp1, rsa->dmp1))
+            goto err;
+        if (!rsa_bn_dup_check(&dupkey->dmq1, rsa->dmq1))
+            goto err;
+        if (!rsa_bn_dup_check(&dupkey->iqmp, rsa->iqmp))
+            goto err;
+    }
+
+    dupkey->version = rsa->version;
+    dupkey->flags = rsa->flags;
+    /* we always copy the PSS parameters regardless of selection */
+    dupkey->pss_params = rsa->pss_params;
+
+#ifndef FIPS_MODULE
+    /* multiprime */
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0
+        && (pnum = sk_RSA_PRIME_INFO_num(rsa->prime_infos)) > 0) {
+        dupkey->prime_infos = sk_RSA_PRIME_INFO_new_reserve(NULL, pnum);
+        for (i = 0; i < pnum; i++) {
+            const RSA_PRIME_INFO *pinfo = NULL;
+            RSA_PRIME_INFO *duppinfo = NULL;
+
+            if ((duppinfo = OPENSSL_zalloc(sizeof(*duppinfo))) == NULL) {
+                ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+                goto err;
+            }
+            /* push first so cleanup in error case works */
+            (void)sk_RSA_PRIME_INFO_push(dupkey->prime_infos, duppinfo);
+
+            pinfo = sk_RSA_PRIME_INFO_value(rsa->prime_infos, i);
+            if (!rsa_bn_dup_check(&duppinfo->r, pinfo->r))
+                goto err;
+            if (!rsa_bn_dup_check(&duppinfo->d, pinfo->d))
+                goto err;
+            if (!rsa_bn_dup_check(&duppinfo->t, pinfo->t))
+                goto err;
+        }
+        if (!ossl_rsa_multip_calc_product(dupkey))
+            goto err;
+    }
+
+    if (rsa->pss != NULL) {
+        dupkey->pss = RSA_PSS_PARAMS_dup(rsa->pss);
+        if (rsa->pss->maskGenAlgorithm != NULL
+            && dupkey->pss->maskGenAlgorithm == NULL) {
+            dupkey->pss->maskHash = ossl_x509_algor_mgf1_decode(rsa->pss->maskGenAlgorithm);
+            if (dupkey->pss->maskHash == NULL)
+                goto err;
+        }
+    }
+    if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_RSA,
+                            &dupkey->ex_data, &rsa->ex_data))
+        goto err;
+#endif
+
+    return dupkey;
+
+ err:
+    RSA_free(dupkey);
+    return NULL;
+}
+
 #ifndef FIPS_MODULE
 RSA_PSS_PARAMS *ossl_rsa_pss_decode(const X509_ALGOR *alg)
 {
@@ -368,8 +479,8 @@ static int ossl_rsa_sync_to_pss_params_30(RSA *rsa)
         if (!ossl_rsa_pss_get_param_unverified(legacy_pss, &md, &mgf1md,
                                                &saltlen, &trailerField))
             return 0;
-        md_nid = EVP_MD_type(md);
-        mgf1md_nid = EVP_MD_type(mgf1md);
+        md_nid = EVP_MD_get_type(md);
+        mgf1md_nid = EVP_MD_get_type(mgf1md);
         if (!ossl_rsa_pss_params_30_set_defaults(&pss_params)
             || !ossl_rsa_pss_params_30_set_hashalg(&pss_params, md_nid)
             || !ossl_rsa_pss_params_30_set_maskgenhashalg(&pss_params,

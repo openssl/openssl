@@ -1,5 +1,5 @@
 #
-# Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -35,6 +35,7 @@ Key = 00000000000000000000000000000000
 IV = 0000000000000000
 Plaintext = 0000000000000000
 Ciphertext = 21a5dbee154b8f6d
+NextIV = 21a5dbee154b8f6d
 
 Availablein = legacy
 Cipher = RC5-CBC
@@ -42,6 +43,7 @@ Key = 0102030405060708090A0B0C0D0E0F10
 IV = 0102030405060708
 Plaintext = 000102030405060708090A0B0C0D0E0F
 Ciphertext = eeebae12d768ac9e5b3d6072a9c76c65
+NextIV = 5b3d6072a9c76c65
 
 #Self generated. Bigger key.
 Availablein = legacy
@@ -50,6 +52,7 @@ Key = 0102030405060708090A0B0C0D0E0F1000000000
 IV = 0102030405060708
 Plaintext = 000102030405060708090A0B0C0D0E0F
 Ciphertext = af64972111a80ec28871c51dd4bfe8de
+NextIV = 8871c51dd4bfe8de
 
 Availablein = legacy
 Cipher = RC5-OFB
@@ -57,6 +60,7 @@ Key = 00000000000000000000000000000000
 IV = 0000000000000000
 Plaintext = 0000000000000000
 Ciphertext = 21a5dbee154b8f6d
+NextIV = 21a5dbee154b8f6d
 
 Availablein = legacy
 Cipher = RC5-OFB
@@ -64,6 +68,7 @@ Key = 0102030405060708090A0B0C0D0E0F10
 IV = 0102030405060708
 Plaintext = 000102030405060708090A0B0C0D0E0F
 Ciphertext = c0ad101b40fc7ffdfc386ea5ecf458b7
+NextIV = f43164aee0f956b8
 
 #Self generated. Bigger key.
 Availablein = legacy
@@ -72,6 +77,7 @@ Key = 0102030405060708090A0B0C0D0E0F1000000000
 IV = 0102030405060708
 Plaintext = 000102030405060708090A0B0C0D0E0F
 Ciphertext = 66ff8fee03d45533dde93632e8f81f6f
+NextIV = d5e03c39e4f51160
 
 Availablein = legacy
 Cipher = RC5-CFB
@@ -79,6 +85,7 @@ Key = 00000000000000000000000000000000
 IV = 0000000000000000
 Plaintext = 0000000000000000
 Ciphertext = 21a5dbee154b8f6d
+NextIV = 21a5dbee154b8f6d
 
 Availablein = legacy
 Cipher = RC5-CFB
@@ -86,6 +93,7 @@ Key = 0102030405060708090A0B0C0D0E0F10
 IV = 0102030405060708
 Plaintext = 000102030405060708090A0B0C0D0E0F
 Ciphertext = c0ad101b40fc7ffdeb97c6173bf2987e
+NextIV = eb97c6173bf2987e
 
 Availablein = legacy
 Cipher = RC5-CFB

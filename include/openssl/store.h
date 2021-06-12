@@ -59,6 +59,7 @@ OSSL_STORE_open(const char *uri, const UI_METHOD *ui_method, void *ui_data,
 OSSL_STORE_CTX *
 OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
                    const UI_METHOD *ui_method, void *ui_data,
+                   const OSSL_PARAM params[],
                    OSSL_STORE_post_process_info_fn post_process,
                    void *post_process_data);
 
@@ -131,6 +132,7 @@ int OSSL_STORE_close(OSSL_STORE_CTX *ctx);
 OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bio, const char *scheme,
                                   OSSL_LIB_CTX *libctx, const char *propq,
                                   const UI_METHOD *ui_method, void *ui_data,
+                                  const OSSL_PARAM params[],
                                   OSSL_STORE_post_process_info_fn post_process,
                                   void *post_process_data);
 
@@ -251,16 +253,15 @@ int OSSL_STORE_find(OSSL_STORE_CTX *ctx, const OSSL_STORE_SEARCH *search);
 
 typedef struct ossl_store_loader_st OSSL_STORE_LOADER;
 
-OSSL_STORE_LOADER *OSSL_STORE_LOADER_fetch(const char *scheme,
-                                           OSSL_LIB_CTX *libctx,
+OSSL_STORE_LOADER *OSSL_STORE_LOADER_fetch(OSSL_LIB_CTX *libctx,
+                                           const char *scheme,
                                            const char *properties);
 int OSSL_STORE_LOADER_up_ref(OSSL_STORE_LOADER *loader);
 void OSSL_STORE_LOADER_free(OSSL_STORE_LOADER *loader);
-const OSSL_PROVIDER *OSSL_STORE_LOADER_provider(const OSSL_STORE_LOADER *
+const OSSL_PROVIDER *OSSL_STORE_LOADER_get0_provider(const OSSL_STORE_LOADER *
                                                 loader);
-const char *OSSL_STORE_LOADER_properties(const OSSL_STORE_LOADER *loader);
-int OSSL_STORE_LOADER_number(const OSSL_STORE_LOADER *loader);
-const char *OSSL_STORE_LOADER_description(const OSSL_STORE_LOADER *loader);
+const char *OSSL_STORE_LOADER_get0_properties(const OSSL_STORE_LOADER *loader);
+const char *OSSL_STORE_LOADER_get0_description(const OSSL_STORE_LOADER *loader);
 int OSSL_STORE_LOADER_is_a(const OSSL_STORE_LOADER *loader,
                            const char *scheme);
 void OSSL_STORE_LOADER_do_all_provided(OSSL_LIB_CTX *libctx,

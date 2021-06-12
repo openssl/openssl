@@ -104,8 +104,8 @@ ossl_method_store_new() returns a new method store object or NULL on failure.
 
 ossl_method_store_free(), ossl_method_store_add(),
 ossl_method_store_remove(), ossl_method_store_fetch(),
-ossl_method_store_cache_get()
-and ossl_method_store_cache_set() return B<1> on success and B<0> on error.
+ossl_method_store_cache_get(), ossl_method_store_cache_set() and
+ossl_method_store_flush_cache() return B<1> on success and B<0> on error.
 
 ossl_method_store_free() and ossl_method_store_cleanup() do not return any value.
 
@@ -115,7 +115,7 @@ This functionality was added to OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
 Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use this

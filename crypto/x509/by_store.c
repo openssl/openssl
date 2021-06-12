@@ -21,7 +21,8 @@ static int cache_objects(X509_LOOKUP *lctx, const char *uri,
     OSSL_STORE_CTX *ctx = NULL;
     X509_STORE *xstore = X509_LOOKUP_get_store(lctx);
 
-    if ((ctx = OSSL_STORE_open_ex(uri, libctx, propq, NULL, NULL, NULL, NULL)) == NULL)
+    if ((ctx = OSSL_STORE_open_ex(uri, libctx, propq, NULL, NULL, NULL,
+                                  NULL, NULL)) == NULL)
         return 0;
 
     /*

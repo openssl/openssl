@@ -24,11 +24,11 @@ built-in EC algorithm:
 
 =over 4
 
-=item "group" (B<OSSL_PKEY_PARAM_GROUP_NAME>) <utf8 string>
+=item "group" (B<OSSL_PKEY_PARAM_GROUP_NAME>) <UTF8 string>
 
 The curve name.
 
-=item "field-type" (B<OSSL_PKEY_PARAM_EC_FIELD_TYPE>) <utf8 string>
+=item "field-type" (B<OSSL_PKEY_PARAM_EC_FIELD_TYPE>) <UTF8 string>
 
 The value should be either "prime-field" or "characteristic-two-field",
 which correspond to prime field Fp and binary field F2^m.
@@ -68,24 +68,29 @@ I<order> - 1.
 I<cofactor> is an optional value.
 I<order> multiplied by the I<cofactor> gives the number of points on the curve.
 
+=item  "decoded-from-explicit" (B<OSSL_PKEY_PARAM_EC_DECODED_FROM_EXPLICIT_PARAMS>) <integer>
+
+Gets a flag indicating wether the key or parameters were decoded from explicit
+curve parameters. Set to 1 if so or 0 if a named curve was used. 
+
 =item "use-cofactor-flag" (B<OSSL_PKEY_PARAM_USE_COFACTOR_ECDH>) <integer>
 
 Enable Cofactor DH (ECC CDH) if this value is 1, otherwise it uses normal EC DH
 if the value is zero. The cofactor variant multiplies the shared secret by the
 EC curve's cofactor (note for some curves the cofactor is 1).
 
-=item "encoding" (B<OSSL_PKEY_PARAM_EC_ENCODING>) <utf8 string>
+=item "encoding" (B<OSSL_PKEY_PARAM_EC_ENCODING>) <UTF8 string>
 
 Set the format used for serializing the EC group parameters.
 Valid values are "explicit" or "named_curve". The default value is "named_curve".
 
-=item "point-format" (B<OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT>) <utf8 string>
+=item "point-format" (B<OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT>) <UTF8 string>
 
 Sets or gets the point_conversion_form for the I<key>. For a description of
 point_conversion_forms please see L<EC_POINT_new(3)>. Valid values are
 "uncompressed" or "compressed". The default value is "uncompressed".
 
-=item "group-check" (B<OSSL_PKEY_PARAM_EC_GROUP_CHECK_TYPE>) <utf8 string>
+=item "group-check" (B<OSSL_PKEY_PARAM_EC_GROUP_CHECK_TYPE>) <UTF8 string>
 
 Sets or Gets the type of group check done when EVP_PKEY_param_check() is called.
 Valid values are "default", "named" and "named-nist".
@@ -117,13 +122,26 @@ Used for getting and setting the encoding of an EC public key. The public key
 is expected to be a point conforming to Sec. 2.3.4 of the SECG SEC 1 ("Elliptic
 Curve Cryptography") standard.
 
+=item "qx" (B<OSSL_PKEY_PARAM_EC_PUB_X>) <unsigned integer>
+
+Used for getting the EC public key X component.
+
+=item "qy" (B<OSSL_PKEY_PARAM_EC_PUB_Y>) <unsigned integer>
+
+Used for getting the EC public key Y component.
+
+=item (B<OSSL_PKEY_PARAM_DEFAULT_DIGEST>) <UTF8 string>
+
+Getter that returns the default digest name.
+(Currently returns "SHA256" as of OpenSSL 3.0).
+
 =back
 
 The following Gettable types are also available for the built-in EC algorithm:
 
 =over 4
 
-=item "basis-type" (B<OSSL_PKEY_PARAM_EC_CHAR2_TYPE>) <utf8 string>
+=item "basis-type" (B<OSSL_PKEY_PARAM_EC_CHAR2_TYPE>) <UTF8 string>
 
 Supports the values "tpBasis" for a trinomial or "ppBasis" for a pentanomial.
 This field is only used for a binary field F2^m.
@@ -159,6 +177,10 @@ An B<EVP_PKEY> context can be obtained by calling:
 An B<EVP_PKEY> ECDSA or ECDH key can be generated with a "P-256" named group by
 calling:
 
+    pkey = EVP_EC_gen("P-256");
+
+or like this:
+
     EVP_PKEY *key = NULL;
     OSSL_PARAM params[2];
     EVP_PKEY_CTX *gctx =
@@ -171,7 +193,7 @@ calling:
     params[1] = OSSL_PARAM_construct_end();
     EVP_PKEY_CTX_set_params(gctx, params);
 
-    EVP_PKEY_gen(gctx, &key);
+    EVP_PKEY_generate(gctx, &key);
 
     EVP_PKEY_print_private(bio_out, key, 0, NULL);
     ...
@@ -201,7 +223,7 @@ An B<EVP_PKEY> EC CDH (Cofactor Diffie-Hellman) key can be generated with a
     params[2] = OSSL_PARAM_construct_end();
     EVP_PKEY_CTX_set_params(gctx, params);
 
-    EVP_PKEY_gen(gctx, &key);
+    EVP_PKEY_generate(gctx, &key);
     EVP_PKEY_print_private(bio_out, key, 0, NULL);
     ...
     EVP_PKEY_free(key);
@@ -209,6 +231,7 @@ An B<EVP_PKEY> EC CDH (Cofactor Diffie-Hellman) key can be generated with a
 
 =head1 SEE ALSO
 
+L<EVP_EC_gen(3)>,
 L<EVP_KEYMGMT(3)>,
 L<EVP_PKEY(3)>,
 L<provider-keymgmt(7)>,

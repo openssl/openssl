@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2013-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -87,9 +87,6 @@ int main(int argc, char **argv)
         fprintf(stderr, "Can't locate SSL pointer\n");
         goto end;
     }
-
-    /* Don't want any retries */
-    SSL_set_mode(ssl, SSL_MODE_AUTO_RETRY);
 
     /* We might want to do other things with ssl here */
 

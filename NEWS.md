@@ -20,11 +20,15 @@ OpenSSL 3.0
 
 ### Major changes between OpenSSL 1.1.1 and OpenSSL 3.0 [under development]
 
+  * Added migration guide to man7
+  * Implemented support for fully "pluggable" TLSv1.3 groups
+  * Added suport for Kernel TLS (KTLS)
   * Changed the license to the Apache License v2.0.
   * Moved all variations of the EVP ciphers CAST5, BF, IDEA, SEED, RC2,
     RC4, RC5, and DES to the legacy provider.
   * Moved the EVP digests MD2, MD4, MDC2, WHIRLPOOL and RIPEMD-160 to the legacy
     provider.
+  * Added convenience functions for generating asymmetric key pairs.
   * Deprecated the `OCSP_REQ_CTX` type and functions.
   * Deprecated the `EC_KEY` and `EC_KEY_METHOD` types and functions.
   * Deprecated the `RSA` and `RSA_METHOD` types and functions.
@@ -51,8 +55,10 @@ OpenSSL 3.0
     also covering CRMF (RFC 4211) and HTTP transfer (RFC 6712).
     It is part of the crypto lib and adds a 'cmp' app with a demo configuration.
     All widely used CMP features are supported for both clients and servers.
-  * Added a proper HTTP(S) client to libcrypto supporting GET and POST,
-    redirection, plain and ASN.1-encoded contents, proxies, and timeouts.
+  * Added a proper HTTP client supporting GET with optional redirection, POST,
+    arbitrary request and response content types, TLS, persistent connections,
+    connections via HTTP(s) proxies, connections and exchange via user-defined
+    BIOs (allowing implicit connections), and timeout checks.
   * Added util/check-format.pl for checking adherence to the coding guidelines.
   * Added OSSL_ENCODER, a generic encoder API.
   * Added OSSL_PARAM_BLD, an easier to use API to OSSL_PARAM.

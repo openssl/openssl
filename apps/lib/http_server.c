@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -23,6 +23,7 @@
 #include "internal/sockets.h"
 #include <openssl/err.h>
 #include <openssl/rand.h>
+#include "s_apps.h"
 
 #if defined(__TANDEM)
 # if defined(OPENSSL_TANDEM_FLOSS)
@@ -30,7 +31,15 @@
 # endif
 #endif
 
+static int verbosity = LOG_INFO;
+
+#define HTTP_PREFIX "HTTP/"
+#define HTTP_VERSION_PATT "1." /* allow 1.x */
+#define HTTP_PREFIX_VERSION HTTP_PREFIX""HTTP_VERSION_PATT
+#define HTTP_1_0 HTTP_PREFIX_VERSION"0" /* "HTTP/1.0" */
+
 #ifdef HTTP_DAEMON
+
 int multi = 0; /* run multiple responder processes */
 int acfd = (int) INVALID_SOCKET;
 
@@ -49,6 +58,9 @@ void log_message(const char *prog, int level, const char *fmt, ...)
 {
     va_list ap;
 
+    if (verbosity < level)
+        return;
+
     va_start(ap, fmt);
 #ifdef HTTP_DAEMON
     if (multi) {
@@ -56,7 +68,7 @@ void log_message(const char *prog, int level, const char *fmt, ...)
 
         if (vsnprintf(buf, sizeof(buf), fmt, ap) > 0)
             syslog(level, "%s", buf);
-        if (level >= LOG_ERR)
+        if (level <= LOG_ERR)
             ERR_print_errors_cb(print_syslog, &level);
     } else
 #endif
@@ -64,6 +76,7 @@ void log_message(const char *prog, int level, const char *fmt, ...)
         BIO_printf(bio_err, "%s: ", prog);
         BIO_vprintf(bio_err, fmt, ap);
         BIO_printf(bio_err, "\n");
+        (void)BIO_flush(bio_err);
     }
     va_end(ap);
 }
@@ -83,7 +96,7 @@ static void killall(int ret, pid_t *kidpids)
         if (kidpids[i] != 0)
             (void)kill(kidpids[i], SIGTERM);
     OPENSSL_free(kidpids);
-    sleep(1);
+    ossl_sleep(1000);
     exit(ret);
 }
 
@@ -153,7 +166,7 @@ void spawn_loop(const char *prog)
                                WCOREDUMP(status) ? " (core dumped)" :
 # endif
                                "");
-                    sleep(1);
+                    ossl_sleep(1000);
                 }
                 break;
             } else if (errno != EINTR) {
@@ -167,7 +180,7 @@ void spawn_loop(const char *prog)
         switch (fpid = fork()) {
         case -1: /* error */
             /* System critically low on memory, pause and try again later */
-            sleep(30);
+            ossl_sleep(30000);
             break;
         case 0: /* child */
             OPENSSL_free(kidpids);
@@ -206,6 +219,7 @@ void spawn_loop(const char *prog)
 BIO *http_server_init_bio(const char *prog, const char *port)
 {
     BIO *acbio = NULL, *bufbio;
+    int asock;
 
     bufbio = BIO_new(BIO_f_buffer());
     if (bufbio == NULL)
@@ -222,6 +236,13 @@ BIO *http_server_init_bio(const char *prog, const char *port)
     bufbio = NULL;
     if (BIO_do_accept(acbio) <= 0) {
         log_message(prog, LOG_ERR, "Error starting accept");
+        goto err;
+    }
+
+    /* Report back what address and port are used */
+    BIO_get_fd(acbio, &asock);
+    if (!report_server_accept(bio_out, asock, 1, 1)) {
+        log_message(prog, LOG_ERR, "Error printing ACCEPT string");
         goto err;
     }
 
@@ -257,28 +278,36 @@ static int urldecode(char *p)
     return (int)(out - save);
 }
 
+/* if *pcbio != NULL, continue given connected session, else accept new */
+/* if found_keep_alive != NULL, return this way connection persistence state */
 int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
                              char **ppath, BIO **pcbio, BIO *acbio,
-                             const char *prog, int accept_get, int timeout)
+                             int *found_keep_alive,
+                             const char *prog, const char *port,
+                             int accept_get, int timeout)
 {
-    BIO *cbio = NULL, *getbio = NULL, *b64 = NULL;
+    BIO *cbio = *pcbio, *getbio = NULL, *b64 = NULL;
     int len;
     char reqbuf[2048], inbuf[2048];
     char *meth, *url, *end;
     ASN1_VALUE *req;
-    int ret = 1;
+    int ret = 0;
 
     *preq = NULL;
     if (ppath != NULL)
         *ppath = NULL;
-    *pcbio = NULL;
 
-    /* Connection loss before accept() is routine, ignore silently */
-    if (BIO_do_accept(acbio) <= 0)
-        return 0;
+    if (cbio == NULL) {
+        log_message(prog, LOG_DEBUG,
+                    "Awaiting new connection on port %s...", port);
+        if (BIO_do_accept(acbio) <= 0)
+            /* Connection loss before accept() is routine, ignore silently */
+            return ret;
 
-    cbio = BIO_pop(acbio);
-    *pcbio = cbio;
+        *pcbio = cbio = BIO_pop(acbio);
+    } else {
+        log_message(prog, LOG_DEBUG, "Awaiting next request...");
+    }
     if (cbio == NULL) {
         /* Cannot call http_server_send_status(cbio, ...) */
         ret = -1;
@@ -294,23 +323,32 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
 
     /* Read the request line. */
     len = BIO_gets(cbio, reqbuf, sizeof(reqbuf));
-    if (len <= 0) {
-        log_message(prog, LOG_INFO,
-                    "Request line read error or empty request");
+    if (len == 0)
+        return ret;
+    ret = 1;
+    if (len < 0) {
+        log_message(prog, LOG_WARNING, "Request line read error");
         (void)http_server_send_status(cbio, 400, "Bad Request");
         goto out;
     }
+    if ((end = strchr(reqbuf, '\r')) != NULL
+            || (end = strchr(reqbuf, '\n')) != NULL)
+        *end = '\0';
+    log_message(prog, LOG_INFO, "Received request, 1st line: %s", reqbuf);
 
     meth = reqbuf;
     url = meth + 3;
     if ((accept_get && strncmp(meth, "GET ", 4) == 0)
             || (url++, strncmp(meth, "POST ", 5) == 0)) {
+        static const char http_version_str[] = " "HTTP_PREFIX_VERSION;
+        static const size_t http_version_str_len = sizeof(http_version_str) - 1;
+
         /* Expecting (GET|POST) {sp} /URL {sp} HTTP/1.x */
         *(url++) = '\0';
         while (*url == ' ')
             url++;
         if (*url != '/') {
-            log_message(prog, LOG_INFO,
+            log_message(prog, LOG_WARNING,
                         "Invalid %s -- URL does not begin with '/': %s",
                         meth, url);
             (void)http_server_send_status(cbio, 400, "Bad Request");
@@ -322,14 +360,17 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
         for (end = url; *end != '\0'; end++)
             if (*end == ' ')
                 break;
-        if (strncmp(end, " HTTP/1.", 7) != 0) {
-            log_message(prog, LOG_INFO,
+        if (strncmp(end, http_version_str, http_version_str_len) != 0) {
+            log_message(prog, LOG_WARNING,
                         "Invalid %s -- bad HTTP/version string: %s",
                         meth, end + 1);
             (void)http_server_send_status(cbio, 400, "Bad Request");
             goto out;
         }
         *end = '\0';
+        /* above HTTP 1.0, connection persistence is the default */
+        if (found_keep_alive != NULL)
+            *found_keep_alive = end[http_version_str_len] > '0';
 
         /*-
          * Skip "GET / HTTP..." requests often used by load-balancers.
@@ -343,7 +384,7 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
 
         len = urldecode(url);
         if (len < 0) {
-            log_message(prog, LOG_INFO,
+            log_message(prog, LOG_WARNING,
                         "Invalid %s request -- bad URL encoding: %s",
                         meth, url);
             (void)http_server_send_status(cbio, 400, "Bad Request");
@@ -361,9 +402,9 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
             getbio = BIO_push(b64, getbio);
         }
     } else {
-        log_message(prog, LOG_INFO,
-                    "HTTP request does not start with GET/POST: %s", reqbuf);
-        /* TODO provide better diagnosis in case client tries TLS */
+        log_message(prog, LOG_WARNING,
+                    "HTTP request does not begin with %sPOST: %s",
+                    accept_get ? "GET or " : "", reqbuf);
         (void)http_server_send_status(cbio, 400, "Bad Request");
         goto out;
     }
@@ -377,15 +418,47 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
 
     /* Read and skip past the headers. */
     for (;;) {
+        char *key, *value, *line_end = NULL;
+
         len = BIO_gets(cbio, inbuf, sizeof(inbuf));
         if (len <= 0) {
-            log_message(prog, LOG_ERR,
-                        "Error skipping remaining HTTP headers");
+            log_message(prog, LOG_WARNING, "Error reading HTTP header");
             (void)http_server_send_status(cbio, 400, "Bad Request");
             goto out;
         }
-        if ((inbuf[0] == '\r') || (inbuf[0] == '\n'))
+
+        if (inbuf[0] == '\r' || inbuf[0] == '\n')
             break;
+
+        key = inbuf;
+        value = strchr(key, ':');
+        if (value == NULL) {
+            log_message(prog, LOG_WARNING,
+                        "Error parsing HTTP header: missing ':'");
+            (void)http_server_send_status(cbio, 400, "Bad Request");
+            goto out;
+        }
+        *(value++) = '\0';
+        while (*value == ' ')
+            value++;
+        line_end = strchr(value, '\r');
+        if (line_end == NULL) {
+            line_end = strchr(value, '\n');
+            if (line_end == NULL) {
+                log_message(prog, LOG_WARNING,
+                            "Error parsing HTTP header: missing end of line");
+                (void)http_server_send_status(cbio, 400, "Bad Request");
+                goto out;
+            }
+        }
+        *line_end = '\0';
+        /* https://tools.ietf.org/html/rfc7230#section-6.3 Persistence */
+        if (found_keep_alive != NULL && strcasecmp(key, "Connection") == 0) {
+            if (strcasecmp(value, "keep-alive") == 0)
+                *found_keep_alive = 1;
+            else if (strcasecmp(value, "close") == 0)
+                *found_keep_alive = 0;
+        }
     }
 
 # ifdef HTTP_DAEMON
@@ -397,7 +470,9 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
     /* Try to read and parse request */
     req = ASN1_item_d2i_bio(it, getbio != NULL ? getbio : cbio, NULL);
     if (req == NULL) {
-        log_message(prog, LOG_ERR, "Error parsing request");
+        log_message(prog, LOG_WARNING,
+                    "Error parsing DER-encoded request content");
+        (void)http_server_send_status(cbio, 400, "Bad Request");
     } else if (ppath != NULL && (*ppath = OPENSSL_strdup(url)) == NULL) {
         log_message(prog, LOG_ERR,
                     "Out of memory allocating %zu bytes", strlen(url) + 1);
@@ -429,11 +504,15 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
 }
 
 /* assumes that cbio does not do an encoding that changes the output length */
-int http_server_send_asn1_resp(BIO *cbio, const char *content_type,
+int http_server_send_asn1_resp(BIO *cbio, int keep_alive,
+                               const char *content_type,
                                const ASN1_ITEM *it, const ASN1_VALUE *resp)
 {
-    int ret = BIO_printf(cbio, "HTTP/1.0 200 OK\r\nContent-type: %s\r\n"
-                         "Content-Length: %d\r\n\r\n", content_type,
+    int ret = BIO_printf(cbio, HTTP_1_0" 200 OK\r\n%s"
+                         "Content-type: %s\r\n"
+                         "Content-Length: %d\r\n\r\n",
+                         keep_alive ? "Connection: keep-alive\r\n" : "",
+                         content_type,
                          ASN1_item_i2d(resp, NULL, it)) > 0
             && ASN1_item_i2d_bio(it, cbio, resp) > 0;
 
@@ -443,7 +522,9 @@ int http_server_send_asn1_resp(BIO *cbio, const char *content_type,
 
 int http_server_send_status(BIO *cbio, int status, const char *reason)
 {
-    int ret = BIO_printf(cbio, "HTTP/1.0 %d %s\r\n\r\n", status, reason) > 0;
+    int ret = BIO_printf(cbio, HTTP_1_0" %d %s\r\n\r\n",
+                         /* This implicitly cancels keep-alive */
+                         status, reason) > 0;
 
     (void)BIO_flush(cbio);
     return ret;

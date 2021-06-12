@@ -108,8 +108,8 @@ static int decoder_construct_pkey(OSSL_DECODER_INSTANCE *decoder_inst,
     if (keymgmt != NULL) {
         EVP_PKEY *pkey = NULL;
         void *keydata = NULL;
-        const OSSL_PROVIDER *keymgmt_prov = EVP_KEYMGMT_provider(keymgmt);
-        const OSSL_PROVIDER *decoder_prov = OSSL_DECODER_provider(decoder);
+        const OSSL_PROVIDER *keymgmt_prov = EVP_KEYMGMT_get0_provider(keymgmt);
+        const OSSL_PROVIDER *decoder_prov = OSSL_DECODER_get0_provider(decoder);
 
         /*
          * If the EVP_KEYMGMT and the OSSL_DECODER are from the
@@ -226,47 +226,76 @@ static void collect_decoder(OSSL_DECODER *decoder, void *arg)
 {
     struct collect_decoder_data_st *data = arg;
     size_t i, end_i;
-    const OSSL_PROVIDER *prov = OSSL_DECODER_provider(decoder);
+    const OSSL_PROVIDER *prov = OSSL_DECODER_get0_provider(decoder);
     void *provctx = OSSL_PROVIDER_get0_provider_ctx(prov);
 
     if (data->error_occurred)
         return;
 
-    data->error_occurred = 1;         /* Assume the worst */
-    if (data->names == NULL)
+    if (data->names == NULL) {
+        data->error_occurred = 1;
+        return;
+    }
+
+    /*
+     * Either the caller didn't give a selection, or if they did,
+     * the decoder must tell us if it supports that selection to
+     * be accepted.  If the decoder doesn't have |does_selection|,
+     * it's seen as taking anything.
+     */
+    if (decoder->does_selection != NULL
+            && !decoder->does_selection(provctx, data->ctx->selection))
         return;
 
     end_i = sk_OPENSSL_CSTRING_num(data->names);
     for (i = 0; i < end_i; i++) {
         const char *name = sk_OPENSSL_CSTRING_value(data->names, i);
-        void *decoderctx = NULL;
-        OSSL_DECODER_INSTANCE *di = NULL;
 
-        if (OSSL_DECODER_is_a(decoder, name)
-            /*
-             * Either the caller didn't give a selection, or if they did,
-             * the decoder must tell us if it supports that selection to
-             * be accepted.  If the decoder doesn't have |does_selection|,
-             * it's seen as taking anything.
-             */
-            && (decoder->does_selection == NULL
-                || decoder->does_selection(provctx, data->ctx->selection))
-            && (decoderctx = decoder->newctx(provctx)) != NULL
-            && (di = ossl_decoder_instance_new(decoder, decoderctx)) != NULL) {
-            /* If successful so far, don't free these directly */
-            decoderctx = NULL;
+        if (OSSL_DECODER_is_a(decoder, name)) {
+            void *decoderctx = NULL;
+            OSSL_DECODER_INSTANCE *di = NULL;
 
-            if (decoder_check_input_structure(data->ctx, di)
-                && ossl_decoder_ctx_add_decoder_inst(data->ctx, di))
-                di = NULL;      /* If successfully added, don't free it */
+            if ((decoderctx = decoder->newctx(provctx)) == NULL) {
+                data->error_occurred = 1;
+                return;
+            }
+            if ((di = ossl_decoder_instance_new(decoder, decoderctx)) == NULL) {
+                decoder->freectx(decoderctx);
+                data->error_occurred = 1;
+                return;
+            }
+
+            OSSL_TRACE_BEGIN(DECODER) {
+                BIO_printf(trc_out,
+                           "(ctx %p) Checking out decoder %p:\n"
+                           "    %s with %s\n",
+                           (void *)data->ctx, (void *)decoder,
+                           OSSL_DECODER_get0_name(decoder),
+                           OSSL_DECODER_get0_properties(decoder));
+            } OSSL_TRACE_END(DECODER);
+
+            if (!decoder_check_input_structure(data->ctx, di)) {
+                OSSL_TRACE_BEGIN(DECODER) {
+                    BIO_printf(trc_out,
+                               "    REJECTED: not the desired input structure\n");
+                } OSSL_TRACE_END(DECODER);
+                ossl_decoder_instance_free(di);
+                /* Not a fatal error. Just return */
+                return;
+            }
+            if (!ossl_decoder_ctx_add_decoder_inst(data->ctx, di)) {
+                ossl_decoder_instance_free(di);
+                data->error_occurred = 1;
+                return;
+            }
+
+            /* Success */
+            return;
         }
-
-        /* Free what can be freed */
-        ossl_decoder_instance_free(di);
-        decoder->freectx(decoderctx);
     }
 
-    data->error_occurred = 0;         /* All is good now */
+    /* Decoder not suitable - but not a fatal error */
+    data->error_occurred = 0;
 }
 
 int ossl_decoder_ctx_setup_for_pkey(OSSL_DECODER_CTX *ctx,
@@ -278,6 +307,12 @@ int ossl_decoder_ctx_setup_for_pkey(OSSL_DECODER_CTX *ctx,
     STACK_OF(EVP_KEYMGMT) *keymgmts = NULL;
     STACK_OF(OPENSSL_CSTRING) *names = NULL;
     int ok = 0;
+    int isecoid = 0;
+
+    if (keytype != NULL
+            && (strcmp(keytype, "id-ecPublicKey") == 0
+                || strcmp(keytype, "1.2.840.10045.2.1") == 0))
+        isecoid = 1;
 
     if ((process_data = OPENSSL_zalloc(sizeof(*process_data))) == NULL
         || (propquery != NULL
@@ -301,8 +336,13 @@ int ossl_decoder_ctx_setup_for_pkey(OSSL_DECODER_CTX *ctx,
         /*
          * If the key type is given by the caller, we only use the matching
          * KEYMGMTs, otherwise we use them all.
+         * We have to special case SM2 here because of its abuse of the EC OID.
+         * The EC OID can be used to identify an EC key or an SM2 key - so if
+         * we have seen that OID we try both key types
          */
-        if (keytype == NULL || EVP_KEYMGMT_is_a(keymgmt, keytype)) {
+        if (keytype == NULL
+                || EVP_KEYMGMT_is_a(keymgmt, keytype)
+                || (isecoid && EVP_KEYMGMT_is_a(keymgmt, "SM2"))) {
             if (!EVP_KEYMGMT_names_do_all(keymgmt, collect_name, names)) {
                 ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_INTERNAL_ERROR);
                 goto err;

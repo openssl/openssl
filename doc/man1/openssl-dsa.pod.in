@@ -36,9 +36,10 @@ B<openssl> B<dsa>
 [B<-modulus>]
 [B<-pubin>]
 [B<-pubout>]
+[B<-pvk-strong>]
+[B<-pvk-weak>]
+[B<-pvk-none>]
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
-
-=for openssl ifdef pvk-string pvk-weak pvk-none engine
 
 =head1 DESCRIPTION
 
@@ -55,9 +56,14 @@ applications should use the more secure PKCS#8 format using the B<pkcs8>
 
 Print out a usage message.
 
-=item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
+=item B<-inform> B<DER>|B<PEM>
 
-The input and formats; the default is B<PEM>.
+The key input format; unspecified by default.
+See L<openssl-format-options(1)> for details.
+
+=item B<-outform> B<DER>|B<PEM>
+
+The key output format; the default is B<PEM>.
 See L<openssl-format-options(1)> for details.
 
 Private keys are a sequence of B<ASN.1 INTEGERS>: the version (zero), B<p>,
@@ -118,16 +124,31 @@ By default, a private key is output. With this option a public
 key will be output instead. This option is automatically set if the input is
 a public key.
 
+=item B<-pvk-strong>
+
+Enable 'Strong' PVK encoding level (default).
+
+=item B<-pvk-weak>
+
+Enable 'Weak' PVK encoding level.
+
+=item B<-pvk-none>
+
+Don't enforce PVK encoding.
+
 {- $OpenSSL::safe::opt_engine_item -}
 
 {- $OpenSSL::safe::opt_provider_item -}
 
 =back
 
+The L<openssl-pkey(1)> command is capable of performing all the operations
+this command can, as well as supporting other public key types.
+
 =head1 EXAMPLES
 
-Examples equivalent to these can be found in the documentation for the
-non-deprecated L<openssl-pkey(1)> command.
+The documentation for the L<openssl-pkey(1)> command contains examples
+equivalent to the ones listed here.
 
 To remove the pass phrase on a DSA private key:
 
@@ -164,7 +185,7 @@ The B<-engine> option was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

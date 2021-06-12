@@ -267,7 +267,7 @@ EVP_PKEY *get_dsa(int dsa_bits)
                              params) <= 0)
         pkey = NULL;
 err:
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
     OSSL_PARAM_BLD_free(tmpl);
     BN_free(priv_key);
     BN_free(pub_key);

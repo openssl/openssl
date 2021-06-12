@@ -3636,9 +3636,16 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             return id;
         }
     case SSL_CTRL_GET_NEGOTIATED_GROUP:
-        ret = tls1_group_id2nid(s->s3.group_id, 1);
-        break;
+        {
+            unsigned int id;
 
+            if (SSL_IS_TLS13(s) && s->s3.did_kex)
+                id = s->s3.group_id;
+            else
+                id = s->session->kex_group;
+            ret = tls1_group_id2nid(id, 1);
+            break;
+        }
     case SSL_CTRL_SET_SIGALGS:
         return tls1_set_sigalgs(s->cert, parg, larg, 0);
 
@@ -4545,9 +4552,9 @@ int ssl_fill_hello_random(SSL *s, int server, unsigned char *result, size_t len,
         unsigned char *p = result;
 
         l2n(Time, p);
-        ret = RAND_bytes_ex(s->ctx->libctx, p, len - 4);
+        ret = RAND_bytes_ex(s->ctx->libctx, p, len - 4, 0);
     } else {
-        ret = RAND_bytes_ex(s->ctx->libctx, result, len);
+        ret = RAND_bytes_ex(s->ctx->libctx, result, len, 0);
     }
 
     if (ret > 0) {

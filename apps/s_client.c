@@ -429,7 +429,7 @@ static int tlsa_import_rrset(SSL *con, STACK_OF(OPENSSL_STRING) *rrset)
 }
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_4, OPT_6, OPT_HOST, OPT_PORT, OPT_CONNECT, OPT_BIND, OPT_UNIX,
     OPT_XMPPHOST, OPT_VERIFY, OPT_NAMEOPT,
     OPT_CERT, OPT_CRL, OPT_CRL_DOWNLOAD, OPT_SESS_OUT, OPT_SESS_IN,
@@ -815,15 +815,15 @@ int s_client_main(int argc, char **argv)
     struct timeval timeout, *timeoutp;
     fd_set readfds, writefds;
     int noCApath = 0, noCAfile = 0, noCAstore = 0;
-    int build_chain = 0, cbuf_len, cbuf_off, cert_format = FORMAT_PEM;
-    int key_format = FORMAT_PEM, crlf = 0, full_log = 1, mbuf_len = 0;
+    int build_chain = 0, cbuf_len, cbuf_off, cert_format = FORMAT_UNDEF;
+    int key_format = FORMAT_UNDEF, crlf = 0, full_log = 1, mbuf_len = 0;
     int prexit = 0;
     int sdebug = 0;
     int reconnect = 0, verify = SSL_VERIFY_NONE, vpmtouched = 0;
     int ret = 1, in_init = 1, i, nbio_test = 0, sock = -1, k, width, state = 0;
     int sbuf_len, sbuf_off, cmdletters = 1;
     int socket_family = AF_UNSPEC, socket_type = SOCK_STREAM, protocol = 0;
-    int starttls_proto = PROTO_OFF, crl_format = FORMAT_PEM, crl_download = 0;
+    int starttls_proto = PROTO_OFF, crl_format = FORMAT_UNDEF, crl_download = 0;
     int write_tty, read_tty, write_ssl, read_ssl, tty_on, ssl_pending;
 #if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS)
     int at_eof = 0;
@@ -1046,6 +1046,9 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_BRIEF:
             c_brief = verify_args.quiet = c_quiet = 1;
+            break;
+        case OPT_S_IMMEDIATE_RENEG:
+            /* Option ignored on client. */
             break;
         case OPT_S_CASES:
             if (ssl_args == NULL)
@@ -1475,7 +1478,8 @@ int s_client_main(int argc, char **argv)
     } else if (argc != 0) {
         goto opthelp;
     }
-    app_RAND_load();
+    if (!app_RAND_load())
+        goto end;
 
     if (count4or6 >= 2) {
         BIO_printf(bio_err, "%s: Can't use both -4 and -6\n", prog);
@@ -1619,7 +1623,8 @@ int s_client_main(int argc, char **argv)
     }
 
     if (cert_file != NULL) {
-        cert = load_cert_pass(cert_file, 1, pass, "client certificate");
+        cert = load_cert_pass(cert_file, cert_format, 1, pass,
+                              "client certificate");
         if (cert == NULL)
             goto end;
     }
@@ -1631,7 +1636,7 @@ int s_client_main(int argc, char **argv)
 
     if (crl_file != NULL) {
         X509_CRL *crl;
-        crl = load_crl(crl_file, "CRL");
+        crl = load_crl(crl_file, crl_format, 0, "CRL");
         if (crl == NULL)
             goto end;
         crls = sk_X509_CRL_new_null();
@@ -2071,7 +2076,7 @@ int s_client_main(int argc, char **argv)
     }
 
     if (c_debug) {
-        BIO_set_callback(sbio, bio_dump_callback);
+        BIO_set_callback_ex(sbio, bio_dump_callback);
         BIO_set_callback_arg(sbio, (char *)bio_c_out);
     }
     if (c_msg) {
@@ -2671,7 +2676,6 @@ int s_client_main(int argc, char **argv)
             tty_on = 1;
             if (in_init) {
                 in_init = 0;
-
                 if (c_brief) {
                     BIO_puts(bio_err, "CONNECTION ESTABLISHED\n");
                     print_ssl_summary(con);
@@ -3095,8 +3099,8 @@ static void print_stuff(BIO *bio, SSL *s, int full)
                 public_key = X509_get_pubkey(sk_X509_value(sk, i));
                 if (public_key != NULL) {
                     BIO_printf(bio, "   a:PKEY: %s, %d (bit); sigalg: %s\n",
-                               OBJ_nid2sn(EVP_PKEY_base_id(public_key)),
-                               EVP_PKEY_bits(public_key),
+                               OBJ_nid2sn(EVP_PKEY_get_base_id(public_key)),
+                               EVP_PKEY_get_bits(public_key),
                                OBJ_nid2sn(X509_get_signature_nid(sk_X509_value(sk, i))));
                     EVP_PKEY_free(public_key);
                 }
@@ -3176,7 +3180,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 
         pktmp = X509_get0_pubkey(peer);
         BIO_printf(bio, "Server public key is %d bit\n",
-                   EVP_PKEY_bits(pktmp));
+                   EVP_PKEY_get_bits(pktmp));
     }
     BIO_printf(bio, "Secure Renegotiation IS%s supported\n",
                SSL_get_secure_renegotiation_support(s) ? "" : " NOT");

@@ -11,28 +11,6 @@
 # define OSSL_CRYPTO_ESS_H
 # pragma once
 
-/* internal ESS related stuff */
-
-ESS_SIGNING_CERT *ossl_ess_get_signing_cert(const PKCS7_SIGNER_INFO *si);
-int ossl_ess_signing_cert_add(PKCS7_SIGNER_INFO *si, ESS_SIGNING_CERT *sc);
-
-ESS_SIGNING_CERT *ossl_ess_signing_cert_new_init(X509 *signcert,
-                                                 STACK_OF(X509) *certs,
-                                                 int issuer_needed);
-
-ESS_SIGNING_CERT_V2 *ossl_ess_get_signing_cert_v2(const PKCS7_SIGNER_INFO *si);
-int ossl_ess_signing_cert_v2_add(PKCS7_SIGNER_INFO *si, ESS_SIGNING_CERT_V2 *sc);
-
-ESS_SIGNING_CERT_V2 *ossl_ess_signing_cert_v2_new_init(const EVP_MD *hash_alg,
-                                                       X509 *signcert,
-                                                       STACK_OF(X509) *certs,
-                                                       int issuer_needed);
-
-int ossl_ess_check_signing_certs(const ESS_SIGNING_CERT *ss,
-                                 const ESS_SIGNING_CERT_V2 *ssv2,
-                                 const STACK_OF(X509) *chain,
-                                 int require_signing_cert);
-
 /*-
  * IssuerSerial ::= SEQUENCE {
  *        issuer                  GeneralNames,

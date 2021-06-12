@@ -14,6 +14,7 @@
 #include <openssl/params.h>
 /* For TLS1_3_VERSION */
 #include <openssl/ssl.h>
+#include "internal/nelem.h"
 
 static OSSL_FUNC_keymgmt_import_fn xor_import;
 static OSSL_FUNC_keymgmt_import_types_fn xor_import_types;
@@ -52,7 +53,7 @@ typedef struct xorkey_st {
 static OSSL_FUNC_keymgmt_new_fn xor_newdata;
 static OSSL_FUNC_keymgmt_free_fn xor_freedata;
 static OSSL_FUNC_keymgmt_has_fn xor_has;
-static OSSL_FUNC_keymgmt_copy_fn xor_copy;
+static OSSL_FUNC_keymgmt_dup_fn xor_dup;
 static OSSL_FUNC_keymgmt_gen_init_fn xor_gen_init;
 static OSSL_FUNC_keymgmt_gen_set_params_fn xor_gen_set_params;
 static OSSL_FUNC_keymgmt_gen_settable_params_fn xor_gen_settable_params;
@@ -167,16 +168,52 @@ static const OSSL_PARAM xor_kemgroup_params[] = {
     OSSL_PARAM_END
 };
 
+#define NUM_DUMMY_GROUPS 50
+static char *dummy_group_names[NUM_DUMMY_GROUPS];
 
 static int tls_prov_get_capabilities(void *provctx, const char *capability,
                                      OSSL_CALLBACK *cb, void *arg)
 {
-    if (strcmp(capability, "TLS-GROUP") == 0)
-        return cb(xor_group_params, arg)
-            && cb(xor_kemgroup_params, arg);
+    int ret;
+    int i;
+    const char *dummy_base = "dummy";
+    const size_t dummy_name_max_size = strlen(dummy_base) + 3;
 
-    /* We don't support this capability */
-    return 0;
+    if (strcmp(capability, "TLS-GROUP") != 0) {
+        /* We don't support this capability */
+        return 0;
+    }
+
+    /* Register our 2 groups */
+    ret = cb(xor_group_params, arg);
+    ret &= cb(xor_kemgroup_params, arg);
+
+    /*
+     * Now register some dummy groups > GROUPLIST_INCREMENT (== 40) as defined
+     * in ssl/t1_lib.c, to make sure we exercise the code paths for registering
+     * large numbers of groups.
+     */
+
+    for (i = 0; i < NUM_DUMMY_GROUPS; i++) {
+        OSSL_PARAM dummygroup[OSSL_NELEM(xor_group_params)];
+
+        memcpy(dummygroup, xor_group_params, sizeof(xor_group_params));
+
+        /* Give the dummy group a unique name */
+        if (dummy_group_names[i] == NULL) {
+            dummy_group_names[i] = OPENSSL_zalloc(dummy_name_max_size);
+            if (dummy_group_names[i] == NULL)
+                return 0;
+            BIO_snprintf(dummy_group_names[i],
+                         dummy_name_max_size,
+                         "%s%d", dummy_base, i);
+        }
+        dummygroup[0].data = dummy_group_names[i];
+        dummygroup[0].data_size = strlen(dummy_group_names[i]) + 1;
+        ret &= cb(dummygroup, arg);
+    }
+
+    return ret;
 }
 
 /*
@@ -440,9 +477,9 @@ static int xor_has(const void *vkey, int selection)
     return ok;
 }
 
-static int xor_copy(void *vtokey, const void *vfromkey, int selection)
+static void *xor_dup(const void *vfromkey, int selection)
 {
-    XORKEY *tokey = vtokey;
+    XORKEY *tokey = xor_newdata(NULL);
     const XORKEY *fromkey = vfromkey;
     int ok = 0;
 
@@ -466,7 +503,11 @@ static int xor_copy(void *vtokey, const void *vfromkey, int selection)
             }
         }
     }
-    return ok;
+    if (!ok) {
+        xor_freedata(tokey);
+        tokey = NULL;
+    }
+    return tokey;
 }
 
 static ossl_inline int xor_get_params(void *vkey, OSSL_PARAM params[])
@@ -599,7 +640,7 @@ static void *xor_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
         return NULL;
 
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
-        if (RAND_bytes_ex(gctx->libctx, key->privkey, XOR_KEY_SIZE) <= 0) {
+        if (RAND_bytes_ex(gctx->libctx, key->privkey, XOR_KEY_SIZE, 0) <= 0) {
             OPENSSL_free(key);
             return NULL;
         }
@@ -706,7 +747,7 @@ static const OSSL_DISPATCH xor_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_SET_PARAMS, (void (*) (void))xor_set_params },
     { OSSL_FUNC_KEYMGMT_SETTABLE_PARAMS, (void (*) (void))xor_settable_params },
     { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))xor_has },
-    { OSSL_FUNC_KEYMGMT_COPY, (void (*)(void))xor_copy },
+    { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))xor_dup },
     { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))xor_freedata },
     { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))xor_import },
     { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))xor_import_types },
@@ -739,9 +780,21 @@ static const OSSL_ALGORITHM *tls_prov_query(void *provctx, int operation_id,
     return NULL;
 }
 
+static void tls_prov_teardown(void *provctx)
+{
+    int i;
+
+    OSSL_LIB_CTX_free(provctx);
+
+    for (i = 0; i < NUM_DUMMY_GROUPS; i++) {
+        OPENSSL_free(dummy_group_names[i]);
+        dummy_group_names[i] = NULL;
+    }
+}
+
 /* Functions we provide to the core */
 static const OSSL_DISPATCH tls_prov_dispatch_table[] = {
-    { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))OSSL_LIB_CTX_free },
+    { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))tls_prov_teardown },
     { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))tls_prov_query },
     { OSSL_FUNC_PROVIDER_GET_CAPABILITIES, (void (*)(void))tls_prov_get_capabilities },
     { 0, NULL }
@@ -760,7 +813,7 @@ unsigned int randomize_tls_group_id(OSSL_LIB_CTX *libctx)
     int i;
 
  retry:
-    if (!RAND_bytes_ex(libctx, (unsigned char *)&group_id, sizeof(group_id)))
+    if (!RAND_bytes_ex(libctx, (unsigned char *)&group_id, sizeof(group_id), 0))
         return 0;
     /*
      * Ensure group_id is within the IANA Reserved for private use range

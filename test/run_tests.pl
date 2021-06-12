@@ -34,7 +34,7 @@ my $libdir = rel2abs(catdir($srctop, "util", "perl"));
 my $jobs = $ENV{HARNESS_JOBS} // 1;
 
 $ENV{OPENSSL_CONF} = rel2abs(catdir($srctop, "apps", "openssl.cnf"));
-$ENV{OPENSSL_CONF_INCLUDE} = rel2abs(catdir($bldtop, "providers"));
+$ENV{OPENSSL_CONF_INCLUDE} = rel2abs(catdir($bldtop, "test"));
 $ENV{OPENSSL_MODULES} = rel2abs(catdir($bldtop, "providers"));
 $ENV{OPENSSL_ENGINES} = rel2abs(catdir($bldtop, "engines"));
 $ENV{CTLOG_FILE} = rel2abs(catdir($srctop, "test", "ct", "log_list.cnf"));
@@ -83,7 +83,7 @@ sub reorder {
 
     # for parallel test runs, do slow tests first
     if ($jobs > 1 && $key =~ m/test_ssl_new|test_fuzz/) {
-        $key =~ s/(\d+)-/00-/;
+        $key =~ s/(\d+)-/01-/;
     }
     return $key;
 }
@@ -131,12 +131,19 @@ foreach my $arg (@ARGV ? @ARGV : ('alltests')) {
     $initial_arg = 0;
 }
 
+# prep recipes are mandatory and need to be always run first
+my @preps = glob(catfile($recipesdir,"00-prep_*.t"));
+foreach my $test (@preps) {
+    delete $tests{$test};
+}
+
 sub find_matching_tests {
     my ($glob) = @_;
 
     if ($glob =~ m|^[\d\[\]\?\-]+$|) {
         return glob(catfile($recipesdir,"$glob-*.t"));
     }
+
     return glob(catfile($recipesdir,"*-$glob.t"));
 }
 
@@ -300,6 +307,10 @@ unless (defined $eres) {
 
 my $harness = $package->new(\%tapargs);
 my $ret =
+    $harness->runtests(map { [ abs2rel($_, rel2abs(curdir())), basename($_) ] }
+                       @preps);
+die if $ret->has_errors;
+$ret =
     $harness->runtests(map { [ abs2rel($_, rel2abs(curdir())), basename($_) ] }
                        sort { reorder($a) cmp reorder($b) } keys %tests);
 

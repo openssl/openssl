@@ -60,7 +60,7 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
     }
     if (!(cflag & X509_FLAG_NO_VERSION)) {
         l = X509_REQ_get_version(x);
-        if (l >= 0 && l <= 2) {
+        if (l == X509_REQ_VERSION_1) {
             if (BIO_printf(bp, "%8sVersion: %ld (0x%lx)\n", "", l + 1, (unsigned long)l) <= 0)
                 goto err;
         } else {

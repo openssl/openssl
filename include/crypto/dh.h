@@ -26,7 +26,7 @@ int ossl_dh_generate_public_key(BN_CTX *ctx, const DH *dh,
                                 const BIGNUM *priv_key, BIGNUM *pub_key);
 int ossl_dh_get_named_group_uid_from_size(int pbits);
 const char *ossl_dh_gen_type_id2name(int id);
-int ossl_dh_gen_type_name2id(const char *name);
+int ossl_dh_gen_type_name2id(const char *name, int type);
 void ossl_dh_cache_named_group(DH *dh);
 int ossl_dh_is_named_safe_prime_group(const DH *dh);
 
@@ -56,5 +56,7 @@ int ossl_dh_kdf_X9_42_asn1(unsigned char *out, size_t outlen,
                            const unsigned char *ukm, size_t ukmlen,
                            const EVP_MD *md,
                            OSSL_LIB_CTX *libctx, const char *propq);
+int ossl_dh_is_foreign(const DH *dh);
+DH *ossl_dh_dup(const DH *dh, int selection);
 
 #endif  /* OSSL_CRYPTO_DH_H */

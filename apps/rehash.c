@@ -466,7 +466,7 @@ static int do_dir(const char *dirname, enum Hash h)
 }
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_COMPAT, OPT_OLD, OPT_N, OPT_VERBOSE,
     OPT_PROV_ENUM
 } OPTION_CHOICE;
@@ -534,7 +534,7 @@ int rehash_main(int argc, char **argv)
     argv = opt_rest();
 
     evpmd = EVP_sha1();
-    evpmdsize = EVP_MD_size(evpmd);
+    evpmdsize = EVP_MD_get_size(evpmd);
 
     if (*argv != NULL) {
         while (*argv != NULL)

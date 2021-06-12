@@ -17,7 +17,7 @@
 #include "s_apps.h"
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_STDNAME,
     OPT_CONVERT,
     OPT_SSL3,

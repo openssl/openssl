@@ -25,8 +25,6 @@ B<openssl passwd>
 {- $OpenSSL::safe::opt_provider_synopsis -}
 [I<password>]
 
-=for openssl ifdef crypt
-
 =head1 DESCRIPTION
 
 This command computes the hash of a password typed at
@@ -116,7 +114,7 @@ The B<-crypt> option was removed in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

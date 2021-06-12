@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/store.h>
 #include <openssl/crypto.h>
+#include "crypto/store.h"
 #include "internal/core.h"
 #include "internal/namemap.h"
 #include "internal/property.h"
@@ -81,6 +81,7 @@ static void *loader_store_new(OSSL_LIB_CTX *ctx)
 
 
 static const OSSL_LIB_CTX_METHOD loader_store_method = {
+    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
     loader_store_new,
     loader_store_free,
 };
@@ -250,7 +251,7 @@ static void *construct_loader(const OSSL_ALGORITHM *algodef,
 
     /*
      * Flag to indicate that there was actual construction errors.  This
-     * helps inner_evp_generic_fetch() determine what error it should
+     * helps inner_loader_fetch() determine what error it should
      * record on inaccessible algorithms.
      */
     if (method == NULL)
@@ -281,7 +282,7 @@ static OSSL_STORE_LOADER *inner_loader_fetch(OSSL_LIB_CTX *libctx,
     }
 
     /*
-     * If we have been passed neither a scheme_id or a scheme, we have an
+     * If we have been passed neither a scheme_id nor a scheme, we have an
      * internal programming error.
      */
     if (!ossl_assert(id != 0 || scheme != NULL)) {
@@ -354,8 +355,8 @@ static OSSL_STORE_LOADER *inner_loader_fetch(OSSL_LIB_CTX *libctx,
     return method;
 }
 
-OSSL_STORE_LOADER *OSSL_STORE_LOADER_fetch(const char *scheme,
-                                           OSSL_LIB_CTX *libctx,
+OSSL_STORE_LOADER *OSSL_STORE_LOADER_fetch(OSSL_LIB_CTX *libctx,
+                                           const char *scheme,
                                            const char *properties)
 {
     return inner_loader_fetch(libctx, 0, scheme, properties);
@@ -372,7 +373,7 @@ OSSL_STORE_LOADER *ossl_store_loader_fetch_by_number(OSSL_LIB_CTX *libctx,
  * Library of basic method functions
  */
 
-const OSSL_PROVIDER *OSSL_STORE_LOADER_provider(const OSSL_STORE_LOADER *loader)
+const OSSL_PROVIDER *OSSL_STORE_LOADER_get0_provider(const OSSL_STORE_LOADER *loader)
 {
     if (!ossl_assert(loader != NULL)) {
         ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_PASSED_NULL_PARAMETER);
@@ -382,7 +383,7 @@ const OSSL_PROVIDER *OSSL_STORE_LOADER_provider(const OSSL_STORE_LOADER *loader)
     return loader->prov;
 }
 
-const char *OSSL_STORE_LOADER_properties(const OSSL_STORE_LOADER *loader)
+const char *OSSL_STORE_LOADER_get0_properties(const OSSL_STORE_LOADER *loader)
 {
     if (!ossl_assert(loader != NULL)) {
         ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_PASSED_NULL_PARAMETER);
@@ -392,7 +393,7 @@ const char *OSSL_STORE_LOADER_properties(const OSSL_STORE_LOADER *loader)
     return loader->propdef;
 }
 
-int OSSL_STORE_LOADER_number(const OSSL_STORE_LOADER *loader)
+int ossl_store_loader_get_number(const OSSL_STORE_LOADER *loader)
 {
     if (!ossl_assert(loader != NULL)) {
         ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_PASSED_NULL_PARAMETER);
@@ -402,7 +403,7 @@ int OSSL_STORE_LOADER_number(const OSSL_STORE_LOADER *loader)
     return loader->scheme_id;
 }
 
-const char *OSSL_STORE_LOADER_description(const OSSL_STORE_LOADER *loader)
+const char *OSSL_STORE_LOADER_get0_description(const OSSL_STORE_LOADER *loader)
 {
     return loader->description;
 }

@@ -63,10 +63,8 @@ void BIO_CONNECT_free(BIO_CONNECT *a);
 static const BIO_METHOD methods_connectp = {
     BIO_TYPE_CONNECT,
     "socket connect",
-    /* TODO: Convert to new style write function */
     bwrite_conv,
     conn_write,
-    /* TODO: Convert to new style read function */
     bread_conv,
     conn_read,
     conn_puts,
@@ -155,6 +153,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
 
         case BIO_CONN_S_CONNECT:
             BIO_clear_retry_flags(b);
+            ERR_set_mark();
             ret = BIO_connect(b->num, BIO_ADDRINFO_address(c->addr_iter),
                               BIO_SOCK_KEEPALIVE | c->connect_mode);
             b->retry_reason = 0;
@@ -163,7 +162,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
                     BIO_set_retry_special(b);
                     c->state = BIO_CONN_S_BLOCKED_CONNECT;
                     b->retry_reason = BIO_RR_CONNECT;
-                    ERR_clear_error();
+                    ERR_pop_to_mark();
                 } else if ((c->addr_iter = BIO_ADDRINFO_next(c->addr_iter))
                            != NULL) {
                     /*
@@ -171,9 +170,10 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
                      */
                     BIO_closesocket(b->num);
                     c->state = BIO_CONN_S_CREATE_SOCKET;
-                    ERR_clear_error();
+                    ERR_pop_to_mark();
                     break;
                 } else {
+                    ERR_clear_last_mark();
                     ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                                    "calling connect(%s, %s)",
                                     c->param_hostname, c->param_service);
@@ -182,6 +182,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
                 }
                 goto exit_loop;
             } else {
+                ERR_clear_last_mark();
                 c->state = BIO_CONN_S_OK;
             }
             break;
@@ -196,7 +197,6 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
                      */
                     BIO_closesocket(b->num);
                     c->state = BIO_CONN_S_CREATE_SOCKET;
-                    ERR_clear_error();
                     break;
                 }
                 ERR_raise_data(ERR_LIB_SYS, i,

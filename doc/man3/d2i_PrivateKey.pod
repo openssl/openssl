@@ -50,13 +50,16 @@ i2d_PrivateKey_fp
 =head1 DESCRIPTION
 
 d2i_PrivateKey_ex() decodes a private key using algorithm I<type>. It attempts
-to use any key specific format or PKCS#8 unencrypted PrivateKeyInfo format. The
-I<type> parameter should be a public key algorithm constant such as
+to use any key-specific format or PKCS#8 unencrypted PrivateKeyInfo format.
+The I<type> parameter should be a public key algorithm constant such as
 B<EVP_PKEY_RSA>. An error occurs if the decoded key does not match I<type>. Some
 private key decoding implementations may use cryptographic algorithms (for
 example to automatically derive the public key if it is not explicitly
 included in the encoding). In this case the supplied library context I<libctx>
 and property query string I<propq> are used.
+If successful and the I<a> parameter is not NULL the function assigns the
+returned B<EVP_PKEY> structure pointer to I<*a>, overwriting any previous value.
+
 d2i_PrivateKey() does the same as d2i_PrivateKey_ex() except that the default
 library context and property query string are used.
 d2i_PublicKey() does the same for public keys.
@@ -78,7 +81,7 @@ i2d_PublicKey() does the same for public keys.
 i2d_KeyParams() does the same for key parameters.
 These functions are similar to the d2i_X509() functions; see L<d2i_X509(3)>.
 i2d_PrivateKey_bio() and i2d_PrivateKey_fp() do the same thing except that they
-encode to a B<BIO> or B<FILE> respectrively. Again, these work similarly to the
+encode to a B<BIO> or B<FILE> respectively. Again, these work similarly to the
 functions described in L<d2i_X509(3)>.
 
 =head1 NOTES
@@ -86,10 +89,6 @@ functions described in L<d2i_X509(3)>.
 All these functions use DER format and unencrypted keys. Applications wishing
 to encrypt or decrypt private keys should use other functions such as
 d2i_PKCS8PrivateKey() instead.
-
-If the I<*a> is not NULL when calling d2i_PrivateKey() or d2i_AutoPrivateKey()
-(i.e. an existing structure is being reused) and the key format is PKCS#8
-then I<*a> will be freed and replaced on a successful call.
 
 To decode a key with type B<EVP_PKEY_EC>, d2i_PublicKey() requires I<*a> to be
 a non-NULL EVP_PKEY structure assigned an EC_KEY structure referencing the proper
@@ -100,7 +99,7 @@ EC_GROUP.
 The d2i_PrivateKey_ex(), d2i_PrivateKey(), d2i_AutoPrivateKey_ex(),
 d2i_AutoPrivateKey(), d2i_PrivateKey_ex_bio(), d2i_PrivateKey_bio(),
 d2i_PrivateKey_ex_fp(), d2i_PrivateKey_fp(), d2i_PublicKey(), d2i_KeyParams()
-and d2i_KeyParams_bio() functions return a valid B<EVP_KEY> structure or B<NULL>
+and d2i_KeyParams_bio() functions return a valid B<EVP_PKEY> structure or NULL
 if an error occurs. The error code can be obtained by calling
 L<ERR_get_error(3)>.
 
@@ -121,7 +120,7 @@ d2i_AutoPrivateKey_ex() were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

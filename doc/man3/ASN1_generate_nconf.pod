@@ -42,8 +42,9 @@ I<value> and I<modifier> are explained below.
 
 =head2 Supported Types
 
-The supported types are listed below. Unless otherwise specified
-only the B<ASCII> format is permissible.
+The supported types are listed below.
+Case is not significant in the type names.
+Unless otherwise specified only the B<ASCII> format is permissible.
 
 =over 4
 

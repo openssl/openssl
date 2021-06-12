@@ -50,7 +50,7 @@ The supported parameters are:
 
 These parameters work as described in L<EVP_RAND(3)/PARAMETERS>.
 
-=item "use_derivation_function" (B<OSSL_DRBG_PARAM_USE_DF>) <int>
+=item "use_derivation_function" (B<OSSL_DRBG_PARAM_USE_DF>) <integer>
 
 This Boolean indicates if a derivation function should be used or not.
 A nonzero value (the default) uses the derivation function.  A zero value

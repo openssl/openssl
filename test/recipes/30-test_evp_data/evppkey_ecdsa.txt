@@ -1,5 +1,5 @@
 #
-# Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2001-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -96,11 +96,6 @@ DigestVerify = SHA256
 Key = P-256-PUBLIC
 Input = "Hello World"
 Output = 3046022100e7515177ec3817b77a4a94066ab3070817b7aa9d44a8a09f040da250116e8972022100ba59b0f631258e59a9026be5d84f60685f4cf22b9165a0c2736d5c21c8ec1862
-
-# Invalid digest
-DigestVerify = MD5
-Key = P-256-PUBLIC
-Result = DIGESTVERIFYINIT_ERROR
 
 # Oneshot tests
 OneShotDigestVerify = SHA256
@@ -210,6 +205,14 @@ Result = DIGESTSIGNINIT_ERROR
 # Test that SHA1 is not allowed in fips mode for signing
 Availablein = fips
 Sign = P-256
+Securitycheck = 1
 Ctrl = digest:SHA1
 Input = "0123456789ABCDEF1234"
 Result = PKEY_CTRL_ERROR
+
+# Invalid non-approved digest
+Availablein = fips
+DigestVerify = MD5
+Securitycheck = 1
+Key = P-256-PUBLIC
+Result = DIGESTVERIFYINIT_ERROR

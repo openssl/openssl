@@ -21,6 +21,8 @@
     ossl_der_oid_id_rsassa_pkcs1_v1_5_with_sha3_384
 #define ossl_der_oid_sha3_512WithRSAEncryption \
     ossl_der_oid_id_rsassa_pkcs1_v1_5_with_sha3_512
+#define ossl_der_oid_mdc2WithRSAEncryption \
+    ossl_der_oid_mdc2WithRSASignature
 
 #define MD_with_RSA_CASE(name, var)                                     \
     case NID_##name:                                                    \
@@ -40,7 +42,7 @@ int ossl_DER_w_algorithmIdentifier_MDWithRSAEncryption(WPACKET *pkt, int tag,
         MD_with_RSA_CASE(md5, precompiled);
         MD_with_RSA_CASE(md4, precompiled);
         MD_with_RSA_CASE(ripemd160, precompiled);
-/* TODO(3.0) Decide what to do about mdc2 and md5_sha1 */
+        MD_with_RSA_CASE(mdc2, precompiled);
 #endif
         MD_with_RSA_CASE(sha1, precompiled);
         MD_with_RSA_CASE(sha224, precompiled);
@@ -54,7 +56,12 @@ int ossl_DER_w_algorithmIdentifier_MDWithRSAEncryption(WPACKET *pkt, int tag,
         MD_with_RSA_CASE(sha3_384, precompiled);
         MD_with_RSA_CASE(sha3_512, precompiled);
     default:
-        return 0;
+        /*
+         * Hash algorithms for which we do not have a valid OID
+         * such as md5sha1 will just fail to provide the der encoding.
+         * That does not prevent producing signatures if OID is not needed.
+         */
+        return -1;
     }
 
     return ossl_DER_w_begin_sequence(pkt, tag)

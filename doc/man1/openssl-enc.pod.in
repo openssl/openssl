@@ -41,8 +41,6 @@ B<openssl> B<enc>|I<cipher>
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 
-=for openssl ifdef z engine ciphers
-
 B<openssl> I<cipher> [B<...>]
 
 =head1 DESCRIPTION
@@ -55,6 +53,10 @@ either by itself or in addition to the encryption or decryption.
 =head1 OPTIONS
 
 =over 4
+
+=item B<-I<cipher>>
+
+The cipher to use.
 
 =item B<-help>
 
@@ -143,6 +145,8 @@ encrypting, this is the default.
 =item B<-S> I<salt>
 
 The actual salt to use: this must be represented as a string of hex digits.
+If this option is used while encrypting, the same exact value will be needed
+again during decryption.
 
 =item B<-K> I<key>
 
@@ -230,9 +234,11 @@ OpenSSL.
 Without the B<-salt> option it is possible to perform efficient dictionary
 attacks on the password and to attack stream cipher encrypted data. The reason
 for this is that without the salt the same password always generates the same
-encryption key. When the salt is being used the first eight bytes of the
-encrypted data are reserved for the salt: it is generated at random when
-encrypting a file and read from the encrypted file when it is decrypted.
+encryption key.
+
+When the salt is generated at random (that means when encrypting using a
+passphrase without explicit salt given using B<-S> option), the first bytes
+of the encrypted data are reserved to store the salt for later decrypting.
 
 Some of the ciphers do not have large keys and others have security
 implications if not used correctly. A beginner is advised to just use
@@ -429,7 +435,7 @@ The B<-ciphers> and B<-engine> options were deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

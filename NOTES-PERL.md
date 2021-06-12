@@ -4,9 +4,9 @@ Notes on Perl
  - [General Notes](#general-notes)
  - [Perl on Windows](#perl-on-windows)
  - [Perl on VMS](#perl-on-vms)
+ - [Perl on NonStop](#perl-on-nonstop)
  - [Required Perl modules](#required-perl-modules)
  - [Notes on installing a Perl module](#notes-on-installing-a-perl-module])
-
 
 General Notes
 -------------
@@ -52,41 +52,35 @@ download the source from <http://perl.org/>, unpacking it, reading
 `.PCSI` file from <http://www.vmsperl.com/> and install it using the
 POLYCENTER install tool.
 
+Perl on NonStop
+---------------
+
+Perl is installed on HPE NonStop platforms as part of the Scripting Languages
+package T1203PAX file. The package is shipped as part of a NonStop RVU
+(Release Version Updates) package. Individual SPRs (Software Product Release)
+representing fixes can be obtained from the Scout website at
+<https://h22204.www2.hpe.com/NEP>. Follow the appropriate set of installation
+instructions for your operating system release as described in the
+Script Language User Guide available from the NonStop Technical Library.
+
 Required Perl modules
 ---------------------
 
 We do our best to limit ourselves to core Perl modules to keep the
 requirements down. There are just a few exceptions.
 
+ * Text::Template this is required *for building*
 
-## For Building
+   To avoid unnecessary initial hurdles, we include a copy of this module
+   in the source. It will work as a fallback if the module isn't already
+   installed.
 
- * `Text::Template`
+ * `Test::More` this is required *for testing*
 
-   This module is not part of the core Perl modules.
-   As a matter of fact, the core Perl modules do not
-   include any templating module to date.
-   This module is absolutely needed,
-   configuration depends on it.
-
-## For Testing
-
- * `Test::More`
-
-   We require the minimum version to be 0.96, which
-   appeared in Perl 5.13.4, because that version was
-   the first to have all the features we're using.
-   This module is required for testing only!
-   If you don't plan on running the tests,
-   you don't need to bother with this one.
-
-
-
-To avoid unnecessary initial hurdles, we have bundled a copy of the
-following modules in our source.  They will work as fallbacks if
-these modules aren't already installed on the system.
-
-   Text::Template
+   We require the minimum version to be 0.96, which appeared in Perl 5.13.4,
+   because that version was the first to have all the features we're using.
+   This module is required for testing only!  If you don't plan on running
+   the tests, you don't need to bother with this one.
 
 Notes on installing a Perl module
 ---------------------------------

@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -239,6 +239,7 @@ checkhandshake($proxy, checkhandshake::CLIENT_AUTH_HANDSHAKE,
 #Test 7: A handshake with a renegotiation
 $proxy->clear();
 $proxy->clientflags("-no_tls1_3");
+$proxy->serverflags("-client_renegotiation");
 $proxy->reneg(1);
 $proxy->start();
 checkhandshake($proxy, checkhandshake::RENEG_HANDSHAKE,

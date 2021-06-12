@@ -1,9 +1,9 @@
 name: Coverage
 
-#Run once a week
+#Run once a day
 on:
   schedule:
-    - cron:  '0 0 * * SAT'
+    - cron:  '49 0 * * *'
 
 jobs:
   coverage:
@@ -14,7 +14,7 @@ jobs:
       run: |
         sudo apt-get -yq install lcov
     - name: config
-      run: CC=gcc ./config --debug --coverage no-asm enable-rc5 enable-md2 enable-ssl3 enable-nextprotoneg enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 no-shared enable-buildtest-c++ enable-external-tests -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION && perl configdata.pm --dump
+      run: CC=gcc ./config --banner=Configured --debug --coverage no-asm enable-fips enable-rc5 enable-md2 enable-ssl3 enable-nextprotoneg enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 no-shared enable-buildtest-c++ enable-external-tests -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: make test

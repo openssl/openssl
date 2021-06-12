@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -198,6 +198,43 @@ PKCS12_SAFEBAG *PKCS12_SAFEBAG_create0_pkcs8(X509_SIG *p8)
     return bag;
 }
 
+PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_pkcs8_encrypt_ex(int pbe_nid,
+                                                       const char *pass,
+                                                       int passlen,
+                                                       unsigned char *salt,
+                                                       int saltlen, int iter,
+                                                       PKCS8_PRIV_KEY_INFO *p8inf,
+                                                       OSSL_LIB_CTX *ctx,
+                                                       const char *propq)
+{
+    PKCS12_SAFEBAG *bag = NULL;
+    const EVP_CIPHER *pbe_ciph = NULL;
+    EVP_CIPHER *pbe_ciph_fetch = NULL;
+    X509_SIG *p8;
+
+    ERR_set_mark();
+    pbe_ciph = pbe_ciph_fetch = EVP_CIPHER_fetch(ctx, OBJ_nid2sn(pbe_nid), propq);
+    if (pbe_ciph == NULL)
+        pbe_ciph = EVP_get_cipherbynid(pbe_nid);
+    ERR_pop_to_mark();
+
+    if (pbe_ciph != NULL)
+        pbe_nid = -1;
+
+    p8 = PKCS8_encrypt_ex(pbe_nid, pbe_ciph, pass, passlen, salt, saltlen, iter,
+                          p8inf, ctx, propq);
+    if (p8 == NULL)
+        goto err;
+
+    bag = PKCS12_SAFEBAG_create0_pkcs8(p8);
+    if (bag == NULL)
+        X509_SIG_free(p8);
+
+err:
+    EVP_CIPHER_free(pbe_ciph_fetch);
+    return bag;
+}
+
 PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_pkcs8_encrypt(int pbe_nid,
                                                     const char *pass,
                                                     int passlen,
@@ -205,22 +242,7 @@ PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_pkcs8_encrypt(int pbe_nid,
                                                     int saltlen, int iter,
                                                     PKCS8_PRIV_KEY_INFO *p8inf)
 {
-    PKCS12_SAFEBAG *bag;
-    const EVP_CIPHER *pbe_ciph;
-    X509_SIG *p8;
-
-    pbe_ciph = EVP_get_cipherbynid(pbe_nid);
-    if (pbe_ciph)
-        pbe_nid = -1;
-
-    p8 = PKCS8_encrypt(pbe_nid, pbe_ciph, pass, passlen, salt, saltlen, iter,
-                       p8inf);
-    if (p8 == NULL)
-        return NULL;
-
-    bag = PKCS12_SAFEBAG_create0_pkcs8(p8);
-    if (bag == NULL)
-        X509_SIG_free(p8);
-
-    return bag;
+    return PKCS12_SAFEBAG_create_pkcs8_encrypt_ex(pbe_nid, pass, passlen,
+                                                  salt, saltlen, iter, p8inf,
+                                                  NULL, NULL);
 }

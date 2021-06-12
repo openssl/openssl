@@ -22,7 +22,7 @@
 #include <openssl/err.h>
 #include <openssl/proverr.h>
 /* Just for SSL_MAX_MASTER_KEY_LENGTH */
-#include <openssl/ssl.h>
+#include <openssl/prov_ssl.h>
 #include "internal/constant_time.h"
 #include "internal/sizes.h"
 #include "crypto/rsa.h"
@@ -96,10 +96,13 @@ static int rsa_init(void *vprsactx, void *vrsa, const OSSL_PARAM params[],
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
 
-    if (!ossl_prov_is_running()
-            || prsactx == NULL
-            || vrsa == NULL
-            || !RSA_up_ref(vrsa))
+    if (!ossl_prov_is_running() || prsactx == NULL || vrsa == NULL)
+        return 0;
+
+    if (!ossl_rsa_check_key(prsactx->libctx, vrsa, operation))
+        return 0;
+
+    if (!RSA_up_ref(vrsa))
         return 0;
     RSA_free(prsactx->rsa);
     prsactx->rsa = vrsa;
@@ -110,11 +113,8 @@ static int rsa_init(void *vprsactx, void *vrsa, const OSSL_PARAM params[],
         prsactx->pad_mode = RSA_PKCS1_PADDING;
         break;
     default:
-        ERR_raise(ERR_LIB_PROV, PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return 0;
-    }
-    if (!ossl_rsa_check_key(vrsa, operation == EVP_PKEY_OP_ENCRYPT)) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+        /* This should not happen due to the check above */
+        ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
         return 0;
     }
     return rsa_set_ctx_params(prsactx, params);
@@ -371,7 +371,7 @@ static int rsa_get_ctx_params(void *vprsactx, OSSL_PARAM *params)
     p = OSSL_PARAM_locate(params, OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST);
     if (p != NULL && !OSSL_PARAM_set_utf8_string(p, prsactx->oaep_md == NULL
                                                     ? ""
-                                                    : EVP_MD_name(prsactx->oaep_md)))
+                                                    : EVP_MD_get0_name(prsactx->oaep_md)))
         return 0;
 
     p = OSSL_PARAM_locate(params, OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST);
@@ -381,7 +381,7 @@ static int rsa_get_ctx_params(void *vprsactx, OSSL_PARAM *params)
 
         if (!OSSL_PARAM_set_utf8_string(p, mgf1_md == NULL
                                            ? ""
-                                           : EVP_MD_name(mgf1_md)))
+                                           : EVP_MD_get0_name(mgf1_md)))
         return 0;
     }
 

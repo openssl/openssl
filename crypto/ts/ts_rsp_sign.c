@@ -8,14 +8,15 @@
  */
 
 #include "e_os.h"
-#include "internal/cryptlib.h"
 
 #include <openssl/objects.h>
 #include <openssl/ts.h>
 #include <openssl/pkcs7.h>
 #include <openssl/crypto.h>
-#include "ts_local.h"
+#include "internal/cryptlib.h"
+#include "internal/sizes.h"
 #include "crypto/ess.h"
+#include "ts_local.h"
 
 DEFINE_STACK_OF_CONST(EVP_MD)
 
@@ -447,7 +448,7 @@ static int ts_RESP_check_request(TS_RESP_CTX *ctx)
     TS_REQ *request = ctx->request;
     TS_MSG_IMPRINT *msg_imprint;
     X509_ALGOR *md_alg;
-    int md_alg_id;
+    char md_alg_name[OSSL_MAX_NAME_SIZE];
     const ASN1_OCTET_STRING *digest;
     const EVP_MD *md = NULL;
     int i;
@@ -461,10 +462,10 @@ static int ts_RESP_check_request(TS_RESP_CTX *ctx)
 
     msg_imprint = request->msg_imprint;
     md_alg = msg_imprint->hash_algo;
-    md_alg_id = OBJ_obj2nid(md_alg->algorithm);
+    OBJ_obj2txt(md_alg_name, sizeof(md_alg_name), md_alg->algorithm, 0);
     for (i = 0; !md && i < sk_EVP_MD_num(ctx->mds); ++i) {
         const EVP_MD *current_md = sk_EVP_MD_value(ctx->mds, i);
-        if (md_alg_id == EVP_MD_type(current_md))
+        if (EVP_MD_is_a(current_md, md_alg_name))
             md = current_md;
     }
     if (!md) {
@@ -483,7 +484,7 @@ static int ts_RESP_check_request(TS_RESP_CTX *ctx)
         return 0;
     }
     digest = msg_imprint->hashed_msg;
-    if (digest->length != EVP_MD_size(md)) {
+    if (digest->length != EVP_MD_get_size(md)) {
         TS_RESP_CTX_set_status_info(ctx, TS_STATUS_REJECTION,
                                     "Bad message digest.");
         TS_RESP_CTX_add_failure_info(ctx, TS_INFO_BAD_DATA_FORMAT);
@@ -625,6 +626,52 @@ static int ts_RESP_process_extensions(TS_RESP_CTX *ctx)
 }
 
 /* Functions for signing the TS_TST_INFO structure of the context. */
+static int ossl_ess_add1_signing_cert(PKCS7_SIGNER_INFO *si,
+                                      const ESS_SIGNING_CERT *sc)
+{
+    ASN1_STRING *seq = NULL;
+    int len = i2d_ESS_SIGNING_CERT(sc, NULL);
+    unsigned char *p, *pp = OPENSSL_malloc(len);
+
+    if (pp == NULL)
+        return 0;
+
+    p = pp;
+    i2d_ESS_SIGNING_CERT(sc, &p);
+    if ((seq = ASN1_STRING_new()) == NULL || !ASN1_STRING_set(seq, pp, len)) {
+        ASN1_STRING_free(seq);
+        OPENSSL_free(pp);
+        return 0;
+    }
+
+    OPENSSL_free(pp);
+    return PKCS7_add_signed_attribute(si, NID_id_smime_aa_signingCertificate,
+                                      V_ASN1_SEQUENCE, seq);
+}
+
+static int ossl_ess_add1_signing_cert_v2(PKCS7_SIGNER_INFO *si,
+                                         const ESS_SIGNING_CERT_V2 *sc)
+{
+    ASN1_STRING *seq = NULL;
+    int len = i2d_ESS_SIGNING_CERT_V2(sc, NULL);
+    unsigned char *p, *pp = OPENSSL_malloc(len);
+
+    if (pp == NULL)
+        return 0;
+
+    p = pp;
+    i2d_ESS_SIGNING_CERT_V2(sc, &p);
+    if ((seq = ASN1_STRING_new()) == NULL || !ASN1_STRING_set(seq, pp, len)) {
+        ASN1_STRING_free(seq);
+        OPENSSL_free(pp);
+        return 0;
+    }
+
+    OPENSSL_free(pp);
+    return PKCS7_add_signed_attribute(si, NID_id_smime_aa_signingCertificateV2,
+                                      V_ASN1_SEQUENCE, seq);
+}
+
 static int ts_RESP_sign(TS_RESP_CTX *ctx)
 {
     int ret = 0;
@@ -664,8 +711,8 @@ static int ts_RESP_sign(TS_RESP_CTX *ctx)
 
     if (ctx->signer_md == NULL)
         signer_md = EVP_MD_fetch(ctx->libctx, "SHA256", ctx->propq);
-    else if (EVP_MD_provider(ctx->signer_md) == NULL)
-        signer_md = EVP_MD_fetch(ctx->libctx, EVP_MD_name(ctx->signer_md),
+    else if (EVP_MD_get0_provider(ctx->signer_md) == NULL)
+        signer_md = EVP_MD_fetch(ctx->libctx, EVP_MD_get0_name(ctx->signer_md),
                                  ctx->propq);
     else
         signer_md = (EVP_MD *)ctx->signer_md;
@@ -686,21 +733,21 @@ static int ts_RESP_sign(TS_RESP_CTX *ctx)
     certs = ctx->flags & TS_ESS_CERT_ID_CHAIN ? ctx->certs : NULL;
     if (ctx->ess_cert_id_digest == NULL
         || EVP_MD_is_a(ctx->ess_cert_id_digest, SN_sha1)) {
-        if ((sc = ossl_ess_signing_cert_new_init(ctx->signer_cert,
+        if ((sc = OSSL_ESS_signing_cert_new_init(ctx->signer_cert,
                                                  certs, 0)) == NULL)
             goto err;
 
-        if (!ossl_ess_signing_cert_add(si, sc)) {
+        if (!ossl_ess_add1_signing_cert(si, sc)) {
             ERR_raise(ERR_LIB_TS, TS_R_ESS_ADD_SIGNING_CERT_ERROR);
             goto err;
         }
     } else {
-        sc2 = ossl_ess_signing_cert_v2_new_init(ctx->ess_cert_id_digest,
+        sc2 = OSSL_ESS_signing_cert_v2_new_init(ctx->ess_cert_id_digest,
                                                 ctx->signer_cert, certs, 0);
         if (sc2 == NULL)
             goto err;
 
-        if (!ossl_ess_signing_cert_v2_add(si, sc2)) {
+        if (!ossl_ess_add1_signing_cert_v2(si, sc2)) {
             ERR_raise(ERR_LIB_TS, TS_R_ESS_ADD_SIGNING_CERT_V2_ERROR);
             goto err;
         }

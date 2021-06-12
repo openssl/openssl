@@ -71,6 +71,12 @@ is NULL.  The usual full terminating template is:
 
 This can also be specified using L<OSSL_PARAM_END(3)>.
 
+=head2 Functional support
+
+Libcrypto offers a limited set of helper functions to handle
+B<OSSL_PARAM> items and arrays, please see L<OSSL_PARAM_get_int(3)>.
+Developers are free to extend or replace those as they see fit.
+
 =head2 B<OSSL_PARAM> fields
 
 =over 4
@@ -342,7 +348,7 @@ could fill in the parameters like this:
 
 =head1 SEE ALSO
 
-L<openssl-core.h(7)>, L<OSSL_PARAM_get_int(3)>
+L<openssl-core.h(7)>, L<OSSL_PARAM_get_int(3)>, L<OSSL_PARAM_dup(3)>
 
 =head1 HISTORY
 

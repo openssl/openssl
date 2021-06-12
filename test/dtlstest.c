@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -67,8 +67,16 @@ static int test_dtls_unprocessed(int testidx)
                                        &sctx, &cctx, cert, privkey)))
         return 0;
 
+#ifndef OPENSSL_NO_DTLS1_2
     if (!TEST_true(SSL_CTX_set_cipher_list(cctx, "AES128-SHA")))
         goto end;
+#else
+    /* Default sigalgs are SHA1 based in <DTLS1.2 which is in security level 0 */
+    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "AES128-SHA:@SECLEVEL=0"))
+            || !TEST_true(SSL_CTX_set_cipher_list(cctx,
+                                                  "AES128-SHA:@SECLEVEL=0")))
+        goto end;
+#endif
 
     c_to_s_fbio = BIO_new(bio_f_tls_dump_filter());
     if (!TEST_ptr(c_to_s_fbio))
@@ -166,6 +174,14 @@ static int test_dtls_drop_records(int idx)
                                        DTLS1_VERSION, 0,
                                        &sctx, &cctx, cert, privkey)))
         return 0;
+
+#ifdef OPENSSL_NO_DTLS1_2
+    /* Default sigalgs are SHA1 based in <DTLS1.2 which is in security level 0 */
+    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0"))
+            || !TEST_true(SSL_CTX_set_cipher_list(cctx,
+                                                  "DEFAULT:@SECLEVEL=0")))
+        goto end;
+#endif
 
     if (!TEST_true(SSL_CTX_set_dh_auto(sctx, 1)))
         goto end;
@@ -286,6 +302,14 @@ static int test_cookie(void)
     SSL_CTX_set_cookie_generate_cb(sctx, generate_cookie_cb);
     SSL_CTX_set_cookie_verify_cb(sctx, verify_cookie_cb);
 
+#ifdef OPENSSL_NO_DTLS1_2
+    /* Default sigalgs are SHA1 based in <DTLS1.2 which is in security level 0 */
+    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0"))
+            || !TEST_true(SSL_CTX_set_cipher_list(cctx,
+                                                  "DEFAULT:@SECLEVEL=0")))
+        goto end;
+#endif
+
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                       NULL, NULL))
             || !TEST_true(create_ssl_connection(serverssl, clientssl,
@@ -314,6 +338,14 @@ static int test_dtls_duplicate_records(void)
                                        &sctx, &cctx, cert, privkey)))
         return 0;
 
+#ifdef OPENSSL_NO_DTLS1_2
+    /* Default sigalgs are SHA1 based in <DTLS1.2 which is in security level 0 */
+    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0"))
+            || !TEST_true(SSL_CTX_set_cipher_list(cctx,
+                                                  "DEFAULT:@SECLEVEL=0")))
+        goto end;
+#endif
+
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                       NULL, NULL)))
         goto end;
@@ -337,6 +369,79 @@ static int test_dtls_duplicate_records(void)
     return testresult;
 }
 
+/*
+ * Test just sending a Finished message as the first message. Should fail due
+ * to an unexpected message.
+ */
+static int test_just_finished(void)
+{
+    int testresult = 0, ret;
+    SSL_CTX *sctx = NULL;
+    SSL *serverssl = NULL;
+    BIO *rbio = NULL, *wbio = NULL, *sbio = NULL;
+    unsigned char buf[] = {
+        /* Record header */
+        SSL3_RT_HANDSHAKE, /* content type */
+        (DTLS1_2_VERSION >> 8) & 0xff, /* protocol version hi byte */
+        DTLS1_2_VERSION & 0xff, /* protocol version lo byte */
+        0, 0, /* epoch */
+        0, 0, 0, 0, 0, 0, /* record sequence */
+        0, DTLS1_HM_HEADER_LENGTH + SHA_DIGEST_LENGTH, /* record length */
+
+        /* Message header */
+        SSL3_MT_FINISHED, /* message type */
+        0, 0, SHA_DIGEST_LENGTH, /* message length */
+        0, 0, /* message sequence */
+        0, 0, 0, /* fragment offset */
+        0, 0, SHA_DIGEST_LENGTH, /* fragment length */
+
+        /* Message body */
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    };
+
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+                                       NULL, 0, 0,
+                                       &sctx, NULL, cert, privkey)))
+        return 0;
+
+    serverssl = SSL_new(sctx);
+    rbio = BIO_new(BIO_s_mem());
+    wbio = BIO_new(BIO_s_mem());
+
+    if (!TEST_ptr(serverssl) || !TEST_ptr(rbio) || !TEST_ptr(wbio))
+        goto end;
+
+    sbio = rbio;
+    SSL_set0_rbio(serverssl, rbio);
+    SSL_set0_wbio(serverssl, wbio);
+    rbio = wbio = NULL;
+    DTLS_set_timer_cb(serverssl, timer_cb);
+
+    if (!TEST_int_eq(BIO_write(sbio, buf, sizeof(buf)), sizeof(buf)))
+        goto end;
+
+    /* We expect the attempt to process the message to fail */
+    if (!TEST_int_le(ret = SSL_accept(serverssl), 0))
+        goto end;
+
+    /* Check that we got the error we were expecting */
+    if (!TEST_int_eq(SSL_get_error(serverssl, ret), SSL_ERROR_SSL))
+        goto end;
+
+    if (!TEST_int_eq(ERR_GET_REASON(ERR_get_error()), SSL_R_UNEXPECTED_MESSAGE))
+        goto end;
+
+    testresult = 1;
+ end:
+    BIO_free(rbio);
+    BIO_free(wbio);
+    SSL_free(serverssl);
+    SSL_CTX_free(sctx);
+
+    return testresult;
+}
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
 
 int setup_tests(void)
@@ -356,6 +461,7 @@ int setup_tests(void)
 #endif
     ADD_TEST(test_cookie);
     ADD_TEST(test_dtls_duplicate_records);
+    ADD_TEST(test_just_finished);
 
     return 1;
 }

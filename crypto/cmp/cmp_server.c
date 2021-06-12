@@ -189,7 +189,7 @@ static OSSL_CMP_MSG *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
     } else {
         OSSL_CRMF_MSGS *reqs = req->body->value.ir; /* same for cr and kur */
 
-        if (sk_OSSL_CRMF_MSG_num(reqs) != 1) { /* TODO: handle case > 1 */
+        if (sk_OSSL_CRMF_MSG_num(reqs) != 1) {
             ERR_raise(ERR_LIB_CMP, CMP_R_MULTIPLE_REQUESTS_NOT_SUPPORTED);
             return NULL;
         }
@@ -228,10 +228,6 @@ static OSSL_CMP_MSG *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
     msg = ossl_cmp_certrep_new(srv_ctx->ctx, bodytype, certReqId, si,
                                certOut, chainOut, caPubs, 0 /* encrypted */,
                                srv_ctx->sendUnprotectedErrors);
-    /*
-     * TODO when implemented in ossl_cmp_certrep_new():
-     * in case OSSL_CRMF_POPO_KEYENC, set encrypted
-     */
     if (msg == NULL)
         ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_CREATING_CERTREP);
 
@@ -258,7 +254,6 @@ static OSSL_CMP_MSG *process_rr(OSSL_CMP_SRV_CTX *srv_ctx,
         return NULL;
 
     if (sk_OSSL_CMP_REVDETAILS_num(req->body->value.rr) != 1) {
-        /* TODO: handle multiple elements if multiple requests have been sent */
         ERR_raise(ERR_LIB_CMP, CMP_R_MULTIPLE_REQUESTS_NOT_SUPPORTED);
         return NULL;
     }
@@ -393,7 +388,7 @@ static OSSL_CMP_MSG *process_pollReq(OSSL_CMP_SRV_CTX *srv_ctx,
         return NULL;
 
     prc = req->body->value.pollReq;
-    if (sk_OSSL_CMP_POLLREQ_num(prc) != 1) { /* TODO: handle case > 1 */
+    if (sk_OSSL_CMP_POLLREQ_num(prc) != 1) {
         ERR_raise(ERR_LIB_CMP, CMP_R_MULTIPLE_REQUESTS_NOT_SUPPORTED);
         return NULL;
     }
@@ -507,6 +502,8 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
 #endif
         }
     }
+    ossl_cmp_log1(DEBUG, ctx,
+                  "received %s", ossl_cmp_bodytype_to_string(req_type));
 
     res = ossl_cmp_msg_check_update(ctx, req, unprotected_exception,
                                     srv_ctx->acceptUnprotected);
@@ -557,7 +554,6 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
             rsp = process_pollReq(srv_ctx, req);
         break;
     default:
-        /* TODO possibly support further request message types */
         ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
         break;
     }
@@ -569,7 +565,6 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
         int flags = 0;
         unsigned long err = ERR_peek_error_data(&data, &flags);
         int fail_info = 1 << OSSL_CMP_PKIFAILUREINFO_badRequest;
-        /* TODO fail_info could be more specific */
         OSSL_CMP_PKISI *si = NULL;
 
         if (ctx->transactionID == NULL) {
@@ -579,7 +574,7 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
         }
 
         if ((si = OSSL_CMP_STATUSINFO_new(OSSL_CMP_PKISTATUS_rejection,
-                                          fail_info, NULL)) != NULL) {
+                                          fail_info, data)) != NULL) {
             if (err != 0 && (flags & ERR_TXT_STRING) != 0)
                 data = ERR_reason_error_string(err);
             rsp = ossl_cmp_error_new(srv_ctx->ctx, si,
@@ -588,27 +583,34 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
             OSSL_CMP_PKISI_free(si);
         }
     }
+    OSSL_CMP_CTX_print_errors(ctx);
     ctx->secretValue = backup_secret;
 
-    /* possibly close the transaction */
     rsp_type =
         rsp != NULL ? ossl_cmp_msg_get_bodytype(rsp) : OSSL_CMP_PKIBODY_ERROR;
+    if (rsp != NULL)
+        ossl_cmp_log1(DEBUG, ctx,
+                      "sending %s", ossl_cmp_bodytype_to_string(rsp_type));
+    else
+        ossl_cmp_log(ERR, ctx, "cannot send proper CMP response");
+
+    /* possibly close the transaction */
+    ctx->status = -2; /* this indicates transaction is open */
     switch (rsp_type) {
     case OSSL_CMP_PKIBODY_IP:
     case OSSL_CMP_PKIBODY_CP:
     case OSSL_CMP_PKIBODY_KUP:
-    case OSSL_CMP_PKIBODY_RP:
         if (OSSL_CMP_CTX_get_option(ctx, OSSL_CMP_OPT_IMPLICIT_CONFIRM) == 0)
             break;
         /* fall through */
 
+    case OSSL_CMP_PKIBODY_RP:
     case OSSL_CMP_PKIBODY_PKICONF:
     case OSSL_CMP_PKIBODY_GENP:
     case OSSL_CMP_PKIBODY_ERROR:
-        /* TODO possibly support further terminating response message types */
-        /* prepare for next transaction, ignoring any errors here: */
         (void)OSSL_CMP_CTX_set1_transactionID(ctx, NULL);
         (void)OSSL_CMP_CTX_set1_senderNonce(ctx, NULL);
+        ctx->status = -1; /* transaction closed */
 
     default: /* not closing transaction in other cases */
         break;
@@ -622,19 +624,19 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
  * returns received message on success, else NULL and pushes an element on the
  * error stack.
  */
-OSSL_CMP_MSG * OSSL_CMP_CTX_server_perform(OSSL_CMP_CTX *client_ctx,
-                                           const OSSL_CMP_MSG *req)
+OSSL_CMP_MSG *OSSL_CMP_CTX_server_perform(OSSL_CMP_CTX *client_ctx,
+                                          const OSSL_CMP_MSG *req)
 {
     OSSL_CMP_SRV_CTX *srv_ctx = NULL;
 
     if (client_ctx == NULL || req == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
-        return 0;
+        return NULL;
     }
 
     if ((srv_ctx = OSSL_CMP_CTX_get_transfer_cb_arg(client_ctx)) == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_TRANSFER_ERROR);
-        return 0;
+        return NULL;
     }
 
     return OSSL_CMP_SRV_process_request(srv_ctx, req);

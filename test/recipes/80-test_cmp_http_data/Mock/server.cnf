@@ -1,6 +1,6 @@
 [cmp] # mock server configuration
 
-port = 1700
+port = 0 # 0 means that the server should choose a random available port
 srv_cert = server.crt
 srv_key = server.key
 srv_secret = pass:test

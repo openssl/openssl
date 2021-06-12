@@ -113,7 +113,29 @@ int ecdh_init(void *vpecdhctx, void *vecdh, const OSSL_PARAM params[])
     pecdhctx->cofactor_mode = -1;
     pecdhctx->kdf_type = PROV_ECDH_KDF_NONE;
     return ecdh_set_ctx_params(pecdhctx, params)
-           && ossl_ec_check_key(vecdh, 1);
+           && ossl_ec_check_key(pecdhctx->libctx, vecdh, 1);
+}
+
+static
+int ecdh_match_params(const EC_KEY *priv, const EC_KEY *peer)
+{
+    int ret;
+    BN_CTX *ctx = NULL;
+    const EC_GROUP *group_priv = EC_KEY_get0_group(priv);
+    const EC_GROUP *group_peer = EC_KEY_get0_group(peer);
+
+    ctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(priv));
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+    ret = group_priv != NULL
+          && group_peer != NULL
+          && EC_GROUP_cmp(group_priv, group_peer, ctx) == 0;
+    if (!ret)
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISMATCHING_DOMAIN_PARAMETERS);
+    BN_CTX_free(ctx);
+    return ret;
 }
 
 static
@@ -124,11 +146,14 @@ int ecdh_set_peer(void *vpecdhctx, void *vecdh)
     if (!ossl_prov_is_running()
             || pecdhctx == NULL
             || vecdh == NULL
+            || !ecdh_match_params(pecdhctx->k, vecdh)
+            || !ossl_ec_check_key(pecdhctx->libctx, vecdh, 1)
             || !EC_KEY_up_ref(vecdh))
         return 0;
+
     EC_KEY_free(pecdhctx->peerk);
     pecdhctx->peerk = vecdh;
-    return ossl_ec_check_key(vecdh, 1);
+    return 1;
 }
 
 static
@@ -258,7 +283,7 @@ int ecdh_set_ctx_params(void *vpecdhctx, const OSSL_PARAM params[])
 
         EVP_MD_free(pectx->kdf_md);
         pectx->kdf_md = EVP_MD_fetch(pectx->libctx, name, mdprops);
-        if (!ossl_digest_is_allowed(pectx->kdf_md)) {
+        if (!ossl_digest_is_allowed(pectx->libctx, pectx->kdf_md)) {
             EVP_MD_free(pectx->kdf_md);
             pectx->kdf_md = NULL;
         }
@@ -352,7 +377,7 @@ int ecdh_get_ctx_params(void *vpecdhctx, OSSL_PARAM params[])
     if (p != NULL
             && !OSSL_PARAM_set_utf8_string(p, pectx->kdf_md == NULL
                                            ? ""
-                                           : EVP_MD_name(pectx->kdf_md))){
+                                           : EVP_MD_get0_name(pectx->kdf_md))){
         return 0;
     }
 

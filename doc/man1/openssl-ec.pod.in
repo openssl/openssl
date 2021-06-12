@@ -33,8 +33,6 @@ B<openssl> B<ec>
 [B<-check>]
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 
-=for openssl ifdef engine
-
 =head1 DESCRIPTION
 
 The L<openssl-ec(1)> command processes EC keys. They can be converted between
@@ -53,13 +51,12 @@ Print out a usage message.
 
 =item B<-inform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The key input format; the default is B<PEM>.
-The only value with effect is B<ENGINE>; all others have become obsolete.
+The key input format; unspecified by default.
 See L<openssl-format-options(1)> for details.
 
 =item B<-outform> B<DER>|B<PEM>
 
-The key output formats; the default is B<PEM>.
+The key output format; the default is B<PEM>.
 See L<openssl-format-options(1)> for details.
 
 Private keys are an SEC1 private key or PKCS#8 format.
@@ -102,6 +99,10 @@ Prints out the public, private key components and parameters.
 =item B<-noout>
 
 This option prevents output of the encoded version of the key.
+
+=item B<-param_out>
+
+Print the elliptic curve parameters.
 
 =item B<-pubin>
 
@@ -148,10 +149,13 @@ This option checks the consistency of an EC private or public key.
 
 =back
 
+The L<openssl-pkey(1)> command is capable of performing all the operations
+this command can, as well as supporting other public key types.
+
 =head1 EXAMPLES
 
-Examples equivalent to these can be found in the documentation for the
-non-deprecated L<openssl-pkey(1)> command.
+The documentation for the L<openssl-pkey(1)> command contains examples
+equivalent to the ones listed here.
 
 To encrypt a private key using triple DES:
 

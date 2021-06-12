@@ -14,7 +14,6 @@ ENDIF
 
 # Implementations are now spread across several libraries, so the defines
 # need to be applied to all affected libraries and modules
-DEFINE[../../providers/libimplementations.a]=$RMD160DEF
 
 SOURCE[../../libcrypto]=rmd_dgst.c rmd_one.c $RMD160ASM
 DEFINE[../../libcrypto]=$RMD160DEF

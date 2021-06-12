@@ -170,34 +170,30 @@ typedef struct ocsp_service_locator_st OCSP_SERVICELOC;
 
 DECLARE_ASN1_DUP_FUNCTION(OCSP_CERTID)
 
-OCSP_RESPONSE *OCSP_sendreq_bio(BIO *b, const char *path, OCSP_REQUEST *req);
 OSSL_HTTP_REQ_CTX *OCSP_sendreq_new(BIO *io, const char *path,
-                                    const OCSP_REQUEST *req, int maxline);
-int OCSP_sendreq_nbio(OCSP_RESPONSE **presp, OSSL_HTTP_REQ_CTX *rctx);
+                                    const OCSP_REQUEST *req, int buf_size);
+OCSP_RESPONSE *OCSP_sendreq_bio(BIO *b, const char *path, OCSP_REQUEST *req);
 
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
 typedef OSSL_HTTP_REQ_CTX OCSP_REQ_CTX;
-#   define OCSP_REQ_CTX_new(io, maxline) \
-        OSSL_HTTP_REQ_CTX_new(io, io, maxline, 0, 0, NULL, 1)
-#   define OCSP_REQ_CTX_free(r) \
-        OSSL_HTTP_REQ_CTX_free(r)
+#   define OCSP_REQ_CTX_new(io, buf_size) \
+        OSSL_HTTP_REQ_CTX_new(io, io, buf_size)
+#   define OCSP_REQ_CTX_free OSSL_HTTP_REQ_CTX_free
 #   define OCSP_REQ_CTX_http(rctx, op, path) \
         OSSL_HTTP_REQ_CTX_set_request_line(rctx, strcmp(op, "POST") == 0, \
                                            NULL, NULL, path)
-#   define OCSP_REQ_CTX_add1_header(r, n, v) \
-        OSSL_HTTP_REQ_CTX_add1_header(r, n, v)
-#   define OCSP_REQ_CTX_i2d(r, i, req) \
-        OSSL_HTTP_REQ_CTX_set1_req(r, "application/ocsp-request", i, req)
-#   define OCSP_REQ_CTX_nbio(r) \
-        OSSL_HTTP_REQ_CTX_nbio(r)
-#   define OCSP_REQ_CTX_nbio_d2i(r, p, i)        \
-        ((*(p) = OSSL_HTTP_REQ_CTX_sendreq_d2i(r, i)) != NULL)
-#   define OCSP_REQ_CTX_get0_mem_bio(r) \
-        OSSL_HTTP_REQ_CTX_get0_mem_bio(r)
-#   define OCSP_set_max_response_length(r, l) \
-        OSSL_HTTP_REQ_CTX_set_max_response_length(r, l)
+#   define OCSP_REQ_CTX_add1_header OSSL_HTTP_REQ_CTX_add1_header
+#   define OCSP_REQ_CTX_i2d(r, it, req) \
+        OSSL_HTTP_REQ_CTX_set1_req(r, "application/ocsp-request", it, req)
 #   define OCSP_REQ_CTX_set1_req(r, req) \
         OCSP_REQ_CTX_i2d(r, ASN1_ITEM_rptr(OCSP_REQUEST), (ASN1_VALUE *)(req))
+#   define OCSP_REQ_CTX_nbio OSSL_HTTP_REQ_CTX_nbio
+#   define OCSP_REQ_CTX_nbio_d2i OSSL_HTTP_REQ_CTX_nbio_d2i
+#   define OCSP_sendreq_nbio(p, r) \
+        OSSL_HTTP_REQ_CTX_nbio_d2i(r, (ASN1_VALUE **)(p), \
+                                   ASN1_ITEM_rptr(OCSP_RESPONSE))
+#   define OCSP_REQ_CTX_get0_mem_bio OSSL_HTTP_REQ_CTX_get0_mem_bio
+#   define OCSP_set_max_response_length OSSL_HTTP_REQ_CTX_set_max_response_length
 #  endif
 
 OCSP_CERTID *OCSP_cert_to_id(const EVP_MD *dgst, const X509 *subject,

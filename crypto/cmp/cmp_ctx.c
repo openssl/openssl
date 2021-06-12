@@ -108,17 +108,18 @@ OSSL_CMP_CTX *OSSL_CMP_CTX_new(OSSL_LIB_CTX *libctx, const char *propq)
 
     ctx->libctx = libctx;
     if (propq != NULL && (ctx->propq = OPENSSL_strdup(propq)) == NULL)
-        goto err;
+        goto oom;
 
     ctx->log_verbosity = OSSL_CMP_LOG_INFO;
 
     ctx->status = -1;
     ctx->failInfoCode = -1;
 
-    ctx->msg_timeout = 2 * 60;
+    ctx->keep_alive = 1;
+    ctx->msg_timeout = -1;
 
     if ((ctx->untrusted = sk_X509_new_null()) == NULL)
-        goto err;
+        goto oom;
 
     ctx->pbm_slen = 16;
     if (!cmp_ctx_set_md(ctx, &ctx->pbm_owf, NID_sha256))
@@ -134,9 +135,10 @@ OSSL_CMP_CTX *OSSL_CMP_CTX_new(OSSL_LIB_CTX *libctx, const char *propq)
     /* all other elements are initialized to 0 or NULL, respectively */
     return ctx;
 
+ oom:
+    ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
  err:
     OSSL_CMP_CTX_free(ctx);
-    ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
     return NULL;
 }
 
@@ -148,6 +150,11 @@ int OSSL_CMP_CTX_reinit(OSSL_CMP_CTX *ctx)
         return 0;
     }
 
+    if (ctx->http_ctx != NULL) {
+        (void)OSSL_HTTP_close(ctx->http_ctx, 1);
+        ossl_cmp_debug(ctx, "disconnected from CMP server");
+        ctx->http_ctx = NULL;
+    }
     ctx->status = -1;
     ctx->failInfoCode = -1;
 
@@ -168,6 +175,11 @@ void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx)
     if (ctx == NULL)
         return;
 
+    if (ctx->http_ctx != NULL) {
+        (void)OSSL_HTTP_close(ctx->http_ctx, 1);
+        ossl_cmp_debug(ctx, "disconnected from CMP server");
+    }
+    OPENSSL_free(ctx->propq);
     OPENSSL_free(ctx->serverPath);
     OPENSSL_free(ctx->server);
     OPENSSL_free(ctx->proxy);
@@ -734,8 +746,8 @@ int OSSL_CMP_CTX_build_cert_chain(OSSL_CMP_CTX *ctx, X509_STORE *own_trusted,
         return 0;
 
     ossl_cmp_debug(ctx, "trying to build chain for own CMP signer cert");
-    chain = ossl_cmp_build_cert_chain(ctx->libctx, ctx->propq, own_trusted,
-                                      ctx->untrusted, ctx->cert);
+    chain = X509_build_chain(ctx->cert, ctx->untrusted, own_trusted, 0,
+                             ctx->libctx, ctx->propq);
     if (chain == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_FAILED_BUILDING_OWN_CHAIN);
         return 0;
@@ -758,7 +770,7 @@ DEFINE_OSSL_CMP_CTX_set1(p10CSR, X509_REQ)
 
 /*
  * Set the (newly received in IP/KUP/CP) certificate in the context.
- * TODO: this only permits for one cert to be enrolled at a time.
+ * This only permits for one cert to be enrolled at a time.
  */
 int ossl_cmp_ctx_set0_newCert(OSSL_CMP_CTX *ctx, X509 *cert)
 {
@@ -772,7 +784,7 @@ int ossl_cmp_ctx_set0_newCert(OSSL_CMP_CTX *ctx, X509 *cert)
 
 /*
  * Get the (newly received in IP/KUP/CP) client certificate from the context
- * TODO: this only permits for one client cert to be received...
+ * This only permits for one client cert to be received...
  */
 X509 *OSSL_CMP_CTX_get0_newCert(const OSSL_CMP_CTX *ctx)
 {
@@ -1040,6 +1052,9 @@ int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val)
     case OSSL_CMP_OPT_MAC_ALGNID:
         ctx->pbm_mac = val;
         break;
+    case OSSL_CMP_OPT_KEEP_ALIVE:
+        ctx->keep_alive = val;
+        break;
     case OSSL_CMP_OPT_MSG_TIMEOUT:
         ctx->msg_timeout = val;
         break;
@@ -1099,11 +1114,13 @@ int OSSL_CMP_CTX_get_option(const OSSL_CMP_CTX *ctx, int opt)
     case OSSL_CMP_OPT_POPO_METHOD:
         return ctx->popoMethod;
     case OSSL_CMP_OPT_DIGEST_ALGNID:
-        return EVP_MD_type(ctx->digest);
+        return EVP_MD_get_type(ctx->digest);
     case OSSL_CMP_OPT_OWF_ALGNID:
-        return EVP_MD_type(ctx->pbm_owf);
+        return EVP_MD_get_type(ctx->pbm_owf);
     case OSSL_CMP_OPT_MAC_ALGNID:
         return ctx->pbm_mac;
+    case OSSL_CMP_OPT_KEEP_ALIVE:
+        return ctx->keep_alive;
     case OSSL_CMP_OPT_MSG_TIMEOUT:
         return ctx->msg_timeout;
     case OSSL_CMP_OPT_TOTAL_TIMEOUT:

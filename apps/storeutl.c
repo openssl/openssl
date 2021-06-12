@@ -22,7 +22,8 @@ static int process(const char *uri, const UI_METHOD *uimeth, PW_CB_DATA *uidata,
                    const char *prog, OSSL_LIB_CTX *libctx);
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP, OPT_ENGINE, OPT_OUT, OPT_PASSIN,
+    OPT_COMMON,
+    OPT_ENGINE, OPT_OUT, OPT_PASSIN,
     OPT_NOOUT, OPT_TEXT, OPT_RECURSIVE,
     OPT_SEARCHFOR_CERTS, OPT_SEARCHFOR_KEYS, OPT_SEARCHFOR_CRLS,
     OPT_CRITERION_SUBJECT, OPT_CRITERION_ISSUER, OPT_CRITERION_SERIAL,
@@ -83,7 +84,7 @@ int storeutl_main(int argc, char *argv[])
     size_t fingerprintlen = 0;
     char *alias = NULL, *digestname = NULL;
     OSSL_STORE_SEARCH *search = NULL;
-    const EVP_MD *digest = NULL;
+    EVP_MD *digest = NULL;
     OSSL_LIB_CTX *libctx = app_get0_libctx();
 
     while ((o = opt_next()) != OPT_EOF) {
@@ -322,6 +323,7 @@ int storeutl_main(int argc, char *argv[])
                   text, noout, recursive, 0, out, prog, libctx);
 
  end:
+    EVP_MD_free(digest);
     OPENSSL_free(fingerprint);
     OPENSSL_free(alias);
     ASN1_INTEGER_free(serial);
@@ -356,7 +358,7 @@ static int process(const char *uri, const UI_METHOD *uimeth, PW_CB_DATA *uidata,
     int ret = 1, items = 0;
 
     if ((store_ctx = OSSL_STORE_open_ex(uri, libctx, app_get0_propq(), uimeth, uidata,
-                                        NULL, NULL))
+                                        NULL, NULL, NULL))
         == NULL) {
         BIO_printf(bio_err, "Couldn't open file or uri %s\n", uri);
         ERR_print_errors(bio_err);

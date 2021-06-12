@@ -42,6 +42,16 @@ int ossl_provider_set_module_path(OSSL_PROVIDER *prov, const char *module_path);
 int ossl_provider_add_parameter(OSSL_PROVIDER *prov, const char *name,
                                 const char *value);
 
+int ossl_provider_is_child(const OSSL_PROVIDER *prov);
+int ossl_provider_set_child(OSSL_PROVIDER *prov, const OSSL_CORE_HANDLE *handle);
+int ossl_provider_convert_to_child(OSSL_PROVIDER *prov,
+                                   const OSSL_CORE_HANDLE *handle,
+                                   OSSL_provider_init_fn *init_function);
+const OSSL_CORE_HANDLE *ossl_provider_get_parent(OSSL_PROVIDER *prov);
+int ossl_provider_up_ref_parent(OSSL_PROVIDER *prov, int activate);
+int ossl_provider_free_parent(OSSL_PROVIDER *prov, int deactivate);
+int ossl_provider_default_props_update(OSSL_LIB_CTX *libctx, const char *props);
+
 /* Disable fallback loading */
 int ossl_provider_disable_fallback_loading(OSSL_LIB_CTX *libctx);
 
@@ -49,7 +59,8 @@ int ossl_provider_disable_fallback_loading(OSSL_LIB_CTX *libctx);
  * Activate the Provider
  * If the Provider is a module, the module will be loaded
  */
-int ossl_provider_activate(OSSL_PROVIDER *prov, int retain_fallbacks);
+int ossl_provider_activate(OSSL_PROVIDER *prov, int retain_fallbacks,
+                           int upcalls);
 int ossl_provider_deactivate(OSSL_PROVIDER *prov);
 /* Check if the provider is available (activated) */
 int ossl_provider_available(OSSL_PROVIDER *prov);
@@ -69,6 +80,7 @@ const DSO *ossl_provider_dso(const OSSL_PROVIDER *prov);
 const char *ossl_provider_module_name(const OSSL_PROVIDER *prov);
 const char *ossl_provider_module_path(const OSSL_PROVIDER *prov);
 void *ossl_provider_prov_ctx(const OSSL_PROVIDER *prov);
+const OSSL_DISPATCH *ossl_provider_get0_dispatch(const OSSL_PROVIDER *prov);
 OSSL_LIB_CTX *ossl_provider_libctx(const OSSL_PROVIDER *prov);
 
 /* Thin wrappers around calls to the provider */
@@ -91,9 +103,15 @@ void ossl_provider_unquery_operation(const OSSL_PROVIDER *prov,
 int ossl_provider_set_operation_bit(OSSL_PROVIDER *provider, size_t bitnum);
 int ossl_provider_test_operation_bit(OSSL_PROVIDER *provider, size_t bitnum,
                                      int *result);
+int ossl_provider_clear_all_operation_bits(OSSL_LIB_CTX *libctx);
 
 /* Configuration */
 void ossl_provider_add_conf_module(void);
+
+/* Child providers */
+int ossl_provider_init_as_child(OSSL_LIB_CTX *ctx,
+                                const OSSL_CORE_HANDLE *handle,
+                                const OSSL_DISPATCH *in);
 
 # ifdef __cplusplus
 }

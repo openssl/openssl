@@ -52,6 +52,7 @@ Message transfer options:
 [B<-proxy> I<[http[s]://][userinfo@]host[:port][/path][?query][#fragment]>]
 [B<-no_proxy> I<addresses>]
 [B<-recipient> I<name>]
+[B<-keep_alive> I<value>]
 [B<-msg_timeout> I<seconds>]
 [B<-total_timeout> I<seconds>]
 
@@ -85,6 +86,10 @@ Credentials format options:
 [B<-keyform> I<PEM|DER|P12|ENGINE>]
 [B<-otherpass> I<arg>]
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+
+Random state options:
+
+{- $OpenSSL::safe::opt_r_synopsis -}
 
 TLS connection options:
 
@@ -138,8 +143,6 @@ Mock server options:
 Certificate verification options, for both CMP and TLS:
 
 {- $OpenSSL::safe::opt_v_synopsis -}
-
-=for openssl ifdef engine
 
 =head1 DESCRIPTION
 
@@ -256,7 +259,7 @@ if any, or else the current client key, if given.
 Pass phrase source for the key given with the B<-newkey> option.
 If not given here, the password will be prompted for if needed.
 
-For more information about the format of B<arg> see
+For more information about the format of I<arg> see
 L<openssl-passphrase-options(1)>.
 
 =item B<-subject> I<name>
@@ -437,9 +440,10 @@ Reason numbers defined in RFC 5280 are:
 
 =item B<-server> I<[http[s]://][userinfo@]host[:port][/path][?query][#fragment]>
 
-The IP address or DNS hostname and optionally port (defaulting to 80 or 443)
+The IP address or DNS hostname and optionally port
 of the CMP server to connect to using HTTP(S) transport.
-The scheme I<https> may be given only if the B<tls_used> option is used.
+The scheme C<https> may be given only if the B<-tls_used> option is used.
+In this case the default port is 443, else 80.
 The optional userinfo and fragment components are ignored.
 Any given query component is handled as part of the path component.
 If a path is included it provides the default value for the B<-path> option.
@@ -449,12 +453,13 @@ If a path is included it provides the default value for the B<-path> option.
 HTTP path at the CMP server (aka CMP alias) to use for POST requests.
 Defaults to any path given with B<-server>, else C<"/">.
 
-=item B<-proxy> I<[http[s]://][userinfo@]host[:port] [/path][?query][#fragment]>
+=item B<-proxy> I<[http[s]://][userinfo@]host[:port][/path][?query][#fragment]>
 
-The HTTP(S) proxy server to use for reaching the CMP server unless B<no_proxy>
+The HTTP(S) proxy server to use for reaching the CMP server unless B<-no_proxy>
 applies, see below.
-The optional I<http://> or I<https://> prefix is ignored (note that TLS may be
-selected by B<tls_used>), as well as any path, userinfo, and query, and fragment
+The proxy port defaults to 80 or 443 if the scheme is C<https>; apart from that
+the optional C<http://> or C<https://> prefix is ignored (note that TLS may be
+selected by B<-tls_used>), as well as any path, userinfo, and query, and fragment
 components.
 Defaults to the environment variable C<http_proxy> if set, else C<HTTP_PROXY>
 in case no TLS is used, otherwise C<https_proxy> if set, else C<HTTPS_PROXY>.
@@ -482,11 +487,20 @@ as far as any of those is present, else the NULL-DN as last resort.
 The argument must be formatted as I</type0=value0/type1=value1/type2=...>.
 For details see the description of the B<-subject> option.
 
+=item B<-keep_alive> I<value>
+
+If the given value is 0 then HTTP connections are not kept open
+after receiving a response, which is the default behavior for HTTP 1.0.
+If the value is 1 or 2 then persistent connections are requested.
+If the value is 2 then persistent connections are required,
+i.e., in case the server does not grant them an error occurs.
+The default value is 1, which means preferring to keep the connection open.
+
 =item B<-msg_timeout> I<seconds>
 
 Number of seconds (or 0 for infinite) a CMP request-response message round trip
 is allowed to take before a timeout error is returned.
-Default is 120.
+Default is to use the B<-total_timeout> setting.
 
 =item B<-total_timeout> I<seconds>
 
@@ -631,7 +645,7 @@ and (as far as needed) for validating PBM-based protection of incoming messages.
 PBM stands for Password-Based Message Authentication Code.
 This takes precedence over the B<-cert> and B<-key> options.
 
-For more information about the format of B<arg> see
+For more information about the format of I<arg> see
 L<openssl-passphrase-options(1)>.
 
 =item B<-cert> I<filename>|I<uri>
@@ -680,7 +694,7 @@ Pass phrase source for the private key given with the B<-key> option.
 Also used for B<-cert> and B<-oldcert> in case it is an encrypted PKCS#12 file.
 If not given here, the password will be prompted for if needed.
 
-For more information about the format of B<arg> see
+For more information about the format of I<arg> see
 L<openssl-passphrase-options(1)>.
 
 =item B<-digest> I<name>
@@ -689,13 +703,13 @@ Specifies name of supported digest to use in RFC 4210's MSG_SIG_ALG
 and as the one-way function (OWF) in MSG_MAC_ALG.
 If applicable, this is used for message protection and
 Proof-of-Possession (POPO) signatures.
-To see the list of supported digests, use B<openssl list -digest-commands>.
+To see the list of supported digests, use C<openssl list -digest-commands>.
 Defaults to C<sha256>.
 
 =item B<-mac> I<name>
 
 Specifies the name of the MAC algorithm in MSG_MAC_ALG.
-To get the names of supported MAC algorithms use B<openssl list -mac-algorithms>
+To get the names of supported MAC algorithms use C<openssl list -mac-algorithms>
 and possibly combine such a name with the name of a supported digest algorithm,
 e.g., hmacWithSHA256.
 Defaults to C<hmac-sha1> as per RFC 4210.
@@ -726,8 +740,7 @@ Default value is PEM.
 
 =item B<-keyform> I<PEM|DER|P12|ENGINE>
 
-The format of the key input.
-The only value with effect is B<ENGINE>.
+The format of the key input; unspecified by default.
 See L<openssl(1)/Format Options> for details.
 
 =item B<-otherpass> I<arg>
@@ -738,12 +751,10 @@ B<-srv_trusted>, B<-srv_untrusted>, B<-rsp_extracerts>, B<-rsp_capubs>,
 B<-tls_extra>, and B<-tls_trusted> options.
 If not given here, the password will be prompted for if needed.
 
-For more information about the format of B<arg> see
+For more information about the format of I<arg> see
 L<openssl-passphrase-options(1)>.
 
 {- $OpenSSL::safe::opt_engine_item -}
-
-=back
 
 {- output_off() if $disabled{"deprecated-3.0"}; "" -}
 As an alternative to using this combination:
@@ -758,6 +769,24 @@ like this:
 This applies to all options specifying keys: B<-key>, B<-newkey>, and
 B<-tls_key>.
 {- output_on() if $disabled{"deprecated-3.0"}; "" -}
+
+=back
+
+=head2 Provider options
+
+=over 4
+
+{- $OpenSSL::safe::opt_provider_item -}
+
+=back
+
+=head2 Random state options
+
+=over 4
+
+{- $OpenSSL::safe::opt_r_item -}
+
+=back
 
 =head2 TLS connection options
 
@@ -780,11 +809,11 @@ Private key for the client's TLS certificate.
 
 =item B<-tls_keypass> I<arg>
 
-Pass phrase source for client's private TLS key B<tls_key>.
+Pass phrase source for client's private TLS key B<-tls_key>.
 Also used for B<-tls_cert> in case it is an encrypted PKCS#12 file.
 If not given here, the password will be prompted for if needed.
 
-For more information about the format of B<arg> see
+For more information about the format of I<arg> see
 L<openssl-passphrase-options(1)>.
 
 =item B<-tls_extra> I<filenames>|I<uris>
@@ -823,7 +852,7 @@ This can be useful for batch processing and testing.
 
 =item B<-repeat> I<number>
 
-Invoke the command the given number of times with the same parameters.
+Invoke the command the given positive number of times with the same parameters.
 Default is one invocation.
 
 =item B<-reqin> I<filenames>
@@ -1041,7 +1070,7 @@ It can be viewed using, e.g.,
   openssl x509 -noout -text -in insta.cert.pem
 
 In case the network setup requires using an HTTP proxy it may be given as usual
-via the environment variable B<http_proxy> or via the B<proxy> option in the
+via the environment variable B<http_proxy> or via the B<-proxy> option in the
 configuration file or the CMP command-line argument B<-proxy>, for example
 
   -proxy http://192.168.1.1:8080
@@ -1088,7 +1117,7 @@ Many more options can be given in the configuration file
 and/or on the command line.
 For instance, the B<-reqexts> CLI option may refer to a section in the
 configuration file defining X.509 extensions to use in certificate requests,
-such as B<v3_req> in F<openssl/apps/openssl.cnf>:
+such as C<v3_req> in F<openssl/apps/openssl.cnf>:
 
   openssl cmp -section insta,cr -reqexts v3_req
 
@@ -1145,7 +1174,7 @@ For CMP client invocations, in particular for certificate enrollment,
 usually many parameters need to be set, which is tedious and error-prone to do
 on the command line.
 Therefore, the client offers the possibility to read
-options from sections of the OpenSSL config file, usually called B<openssl.cnf>.
+options from sections of the OpenSSL config file, usually called F<openssl.cnf>.
 The values found there can still be extended and even overridden by any
 subsequently loaded sections and on the command line.
 

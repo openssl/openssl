@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -194,8 +194,8 @@ void engine_table_cleanup(ENGINE_TABLE **table)
 }
 
 /* return a functional reference for a given 'nid' */
-ENGINE *engine_table_select_int(ENGINE_TABLE **table, int nid, const char *f,
-                                int l)
+ENGINE *ossl_engine_table_select(ENGINE_TABLE **table, int nid,
+                                 const char *f, int l)
 {
     ENGINE *ret = NULL;
     ENGINE_PILE tmplate, *fnd = NULL;

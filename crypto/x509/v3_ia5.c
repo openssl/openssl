@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -29,7 +29,7 @@ char *i2s_ASN1_IA5STRING(X509V3_EXT_METHOD *method, ASN1_IA5STRING *ia5)
 {
     char *tmp;
 
-    if (ia5 == NULL || ia5->length == 0)
+    if (ia5 == NULL || ia5->length <= 0)
         return NULL;
     if ((tmp = OPENSSL_malloc(ia5->length + 1)) == NULL) {
         ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);

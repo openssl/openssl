@@ -40,7 +40,7 @@ static int do_raw_keyop(int pkey_op, EVP_MD_CTX *mctx,
                         unsigned char **out, size_t *poutlen);
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_ENGINE, OPT_ENGINE_IMPL, OPT_IN, OPT_OUT,
     OPT_PUBIN, OPT_CERTIN, OPT_ASN1PARSE, OPT_HEXDUMP, OPT_SIGN,
     OPT_VERIFY, OPT_VERIFYRECOVER, OPT_REV, OPT_ENCRYPT, OPT_DECRYPT,
@@ -111,7 +111,8 @@ int pkeyutl_main(int argc, char **argv)
     char hexdump = 0, asn1parse = 0, rev = 0, *prog;
     unsigned char *buf_in = NULL, *buf_out = NULL, *sig = NULL;
     OPTION_CHOICE o;
-    int buf_inlen = 0, siglen = -1, keyform = FORMAT_PEM, peerform = FORMAT_PEM;
+    int buf_inlen = 0, siglen = -1;
+    int keyform = FORMAT_UNDEF, peerform = FORMAT_UNDEF;
     int keysize = -1, pkey_op = EVP_PKEY_OP_SIGN, key_type = KEY_PRIVKEY;
     int engine_impl = 0;
     int ret = 1, rv = -1;
@@ -124,6 +125,7 @@ int pkeyutl_main(int argc, char **argv)
     STACK_OF(OPENSSL_STRING) *pkeyopts_passin = NULL;
     int rawin = 0;
     EVP_MD_CTX *mctx = NULL;
+    EVP_MD *md = NULL;
     int filesize = -1;
     OSSL_LIB_CTX *libctx = app_get0_libctx();
 
@@ -255,7 +257,8 @@ int pkeyutl_main(int argc, char **argv)
     if (argc != 0)
         goto opthelp;
 
-    app_RAND_load();
+    if (!app_RAND_load())
+        goto end;
 
     if (rawin && pkey_op != EVP_PKEY_OP_SIGN && pkey_op != EVP_PKEY_OP_VERIFY) {
         BIO_printf(bio_err,
@@ -506,6 +509,7 @@ int pkeyutl_main(int argc, char **argv)
  end:
     EVP_MD_CTX_free(mctx);
     EVP_PKEY_CTX_free(ctx);
+    EVP_MD_free(md);
     release_engine(e);
     BIO_free(in);
     BIO_free_all(out);
@@ -552,7 +556,7 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
         break;
 
     case KEY_CERT:
-        x = load_cert(keyfile, "Certificate");
+        x = load_cert(keyfile, keyform, "Certificate");
         if (x) {
             pkey = X509_get_pubkey(x);
             X509_free(x);
@@ -588,7 +592,7 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
         if (pkey == NULL)
             goto end;
 
-        *pkeysize = EVP_PKEY_size(pkey);
+        *pkeysize = EVP_PKEY_get_size(pkey);
         if (impl != NULL)
             ctx = EVP_PKEY_CTX_new(pkey, impl);
         else
@@ -722,8 +726,8 @@ static int do_raw_keyop(int pkey_op, EVP_MD_CTX *mctx,
     int buf_len = 0;
 
     /* Some algorithms only support oneshot digests */
-    if (EVP_PKEY_id(pkey) == EVP_PKEY_ED25519
-            || EVP_PKEY_id(pkey) == EVP_PKEY_ED448) {
+    if (EVP_PKEY_get_id(pkey) == EVP_PKEY_ED25519
+            || EVP_PKEY_get_id(pkey) == EVP_PKEY_ED448) {
         if (filesize < 0) {
             BIO_printf(bio_err,
                        "Error: unable to determine file size for oneshot operation\n");

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -65,18 +65,18 @@ int ossl_asn1_item_digest_ex(const ASN1_ITEM *it, const EVP_MD *md, void *asn,
     if (i < 0 || str == NULL)
         return 0;
 
-    if (EVP_MD_provider(md) == NULL) {
+    if (EVP_MD_get0_provider(md) == NULL) {
 #if !defined(OPENSSL_NO_ENGINE)
-        ENGINE *tmpeng = ENGINE_get_digest_engine(EVP_MD_type(md));
+        ENGINE *tmpeng = ENGINE_get_digest_engine(EVP_MD_get_type(md));
 
         if (tmpeng != NULL)
             ENGINE_finish(tmpeng);
         else
 #endif
-            fetched_md = EVP_MD_fetch(libctx, EVP_MD_name(md), propq);
+            fetched_md = EVP_MD_fetch(libctx, EVP_MD_get0_name(md), propq);
     }
-     if (fetched_md == NULL)
-         goto err;
+    if (fetched_md == NULL)
+        goto err;
 
     ret = EVP_Digest(str, i, data, len, fetched_md, NULL);
 err:

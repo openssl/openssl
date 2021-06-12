@@ -22,10 +22,11 @@ The X509 ASN1 allocation routines, allocate and free an
 X509 structure, which represents an X509 certificate.
 
 X509_new_ex() allocates and initializes a X509 structure with a
-library context of I<libctx>, property query of <propq> and a reference
+library context of I<libctx>, property query of I<propq> and a reference
 count of B<1>. Many X509 functions such as X509_check_purpose(), and
 X509_verify() use this library context to select which providers supply the
-fetched algorithms (SHA1 is used internally).
+fetched algorithms (SHA1 is used internally). This created X509 object can then
+be used when loading binary data using d2i_X509().
 
 X509_new() is similar to X509_new_ex() but sets the library context
 and property query to NULL. This results in the default (NULL) library context

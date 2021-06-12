@@ -34,16 +34,18 @@
 #include <openssl/encoder.h>
 #include <openssl/core_names.h>
 
+#include "internal/numbers.h"   /* includes SIZE_MAX */
 #include "internal/ffc.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
+#include "crypto/dh.h"
+#include "crypto/dsa.h"
 #include "crypto/ec.h"
 #include "crypto/ecx.h"
+#include "crypto/rsa.h"
 #include "crypto/x509.h"
 #include "internal/provider.h"
 #include "evp_local.h"
-
-#include "crypto/ec.h"
 
 #include "e_os.h"                /* strcasecmp on Windows */
 
@@ -56,7 +58,7 @@ static void evp_pkey_free_it(EVP_PKEY *key);
 /* The type of parameters selected in key parameter functions */
 # define SELECT_PARAMETERS OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
 
-int EVP_PKEY_bits(const EVP_PKEY *pkey)
+int EVP_PKEY_get_bits(const EVP_PKEY *pkey)
 {
     int size = 0;
 
@@ -68,7 +70,7 @@ int EVP_PKEY_bits(const EVP_PKEY *pkey)
     return size < 0 ? 0 : size;
 }
 
-int EVP_PKEY_security_bits(const EVP_PKEY *pkey)
+int EVP_PKEY_get_security_bits(const EVP_PKEY *pkey)
 {
     int size = 0;
 
@@ -180,10 +182,12 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 
     /*
      * If |to| is provided, we know that |from| is legacy at this point.
-     * Try exporting |from| to |to|'s keymgmt, then use evp_keymgmt_copy()
+     * Try exporting |from| to |to|'s keymgmt, then use evp_keymgmt_dup()
      * to copy the appropriate data to |to|'s keydata.
+     * We cannot override existing data so do it only if there is no keydata
+     * in |to| yet.
      */
-    if (to->keymgmt != NULL) {
+    if (to->keymgmt != NULL && to->keydata == NULL) {
         EVP_KEYMGMT *to_keymgmt = to->keymgmt;
         void *from_keydata =
             evp_pkey_export_to_provider((EVP_PKEY *)from, NULL, &to_keymgmt,
@@ -196,8 +200,9 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
         if (from_keydata == NULL)
             ERR_raise(ERR_LIB_EVP, EVP_R_DIFFERENT_KEY_TYPES);
         else
-            ok = evp_keymgmt_copy(to->keymgmt, to->keydata, from_keydata,
-                                  SELECT_PARAMETERS);
+            ok = (to->keydata = evp_keymgmt_dup(to->keymgmt,
+                                                from_keydata,
+                                                SELECT_PARAMETERS)) != NULL;
         goto end;
     }
 
@@ -288,10 +293,12 @@ static int evp_pkey_cmp_any(const EVP_PKEY *a, const EVP_PKEY *b,
     return evp_keymgmt_match(keymgmt1, keydata1, keydata2, selection);
 }
 
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 int EVP_PKEY_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
 {
     return EVP_PKEY_parameters_eq(a, b);
 }
+#endif
 
 int EVP_PKEY_parameters_eq(const EVP_PKEY *a, const EVP_PKEY *b)
 {
@@ -311,10 +318,12 @@ int EVP_PKEY_parameters_eq(const EVP_PKEY *a, const EVP_PKEY *b)
     return -2;
 }
 
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 int EVP_PKEY_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 {
     return EVP_PKEY_eq(a, b);
 }
+#endif
 
 int EVP_PKEY_eq(const EVP_PKEY *a, const EVP_PKEY *b)
 {
@@ -322,6 +331,12 @@ int EVP_PKEY_eq(const EVP_PKEY *a, const EVP_PKEY *b)
      * This will just call evp_keymgmt_util_match when legacy support
      * is gone.
      */
+
+    /* Trivial shortcuts */
+    if (a == b)
+        return 1;
+    if (a == NULL || b == NULL)
+        return 0;
 
     if (a->keymgmt != NULL || b->keymgmt != NULL)
         return evp_pkey_cmp_any(a, b, (SELECT_PARAMETERS
@@ -601,7 +616,7 @@ static EVP_PKEY *new_cmac_key_int(const unsigned char *priv, size_t len,
     EVP_PKEY_CTX *ctx;
 
     if (cipher != NULL)
-        cipher_name = EVP_CIPHER_name(cipher);
+        cipher_name = EVP_CIPHER_get0_name(cipher);
 
     if (cipher_name == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_KEY_SETUP_FAILED);
@@ -662,37 +677,6 @@ int EVP_PKEY_set_type_str(EVP_PKEY *pkey, const char *str, int len)
     return pkey_set_type(pkey, NULL, EVP_PKEY_NONE, str, len, NULL);
 }
 
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-int EVP_PKEY_set_alias_type(EVP_PKEY *pkey, int type)
-{
-    if (!evp_pkey_is_legacy(pkey)) {
-        const char *name = OBJ_nid2sn(type);
-
-        if (name != NULL && EVP_PKEY_is_a(pkey, name))
-            return 1;
-
-        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_OPERATION);
-        return 0;
-    }
-
-    if (pkey->type == type) {
-        return 1; /* it already is that type */
-    }
-
-    /*
-     * The application is requesting to alias this to a different pkey type,
-     * but not one that resolves to the base type.
-     */
-    if (EVP_PKEY_type(type) != EVP_PKEY_base_id(pkey)) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_ALGORITHM);
-        return 0;
-    }
-
-    pkey->type = type;
-    return 1;
-}
-# endif
-
 # ifndef OPENSSL_NO_ENGINE
 int EVP_PKEY_set1_engine(EVP_PKEY *pkey, ENGINE *e)
 {
@@ -719,24 +703,68 @@ ENGINE *EVP_PKEY_get0_engine(const EVP_PKEY *pkey)
 # endif
 
 # ifndef OPENSSL_NO_DEPRECATED_3_0
+static void detect_foreign_key(EVP_PKEY *pkey)
+{
+    switch (pkey->type) {
+    case EVP_PKEY_RSA:
+        pkey->foreign = pkey->pkey.rsa != NULL
+                        && ossl_rsa_is_foreign(pkey->pkey.rsa);
+        break;
+#  ifndef OPENSSL_NO_EC
+    case EVP_PKEY_SM2:
+    case EVP_PKEY_EC:
+        pkey->foreign = pkey->pkey.ec != NULL
+                        && ossl_ec_key_is_foreign(pkey->pkey.ec);
+        break;
+#  endif
+#  ifndef OPENSSL_NO_DSA
+    case EVP_PKEY_DSA:
+        pkey->foreign = pkey->pkey.dsa != NULL
+                        && ossl_dsa_is_foreign(pkey->pkey.dsa);
+        break;
+#endif
+#  ifndef OPENSSL_NO_DH
+    case EVP_PKEY_DH:
+        pkey->foreign = pkey->pkey.dh != NULL
+                        && ossl_dh_is_foreign(pkey->pkey.dh);
+        break;
+#endif
+    default:
+        pkey->foreign = 0;
+        break;
+    }
+}
+
 int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key)
 {
-    int alias = type;
-
 #  ifndef OPENSSL_NO_EC
-    if ((key != NULL) && (EVP_PKEY_type(type) == EVP_PKEY_EC)) {
+    int pktype;
+
+    pktype = EVP_PKEY_type(type);
+    if ((key != NULL) && (pktype == EVP_PKEY_EC || pktype == EVP_PKEY_SM2)) {
         const EC_GROUP *group = EC_KEY_get0_group(key);
 
-        if (group != NULL && EC_GROUP_get_curve_name(group) == NID_sm2)
-            alias = EVP_PKEY_SM2;
+        if (group != NULL) {
+            int curve = EC_GROUP_get_curve_name(group);
+
+            /*
+             * Regardless of what is requested the SM2 curve must be SM2 type,
+             * and non SM2 curves are EC type.
+             */
+            if (curve == NID_sm2 && pktype == EVP_PKEY_EC)
+                type = EVP_PKEY_SM2;
+            else if(curve != NID_sm2 && pktype == EVP_PKEY_SM2)
+                type = EVP_PKEY_EC;
+        }
     }
 #  endif
 
     if (pkey == NULL || !EVP_PKEY_set_type(pkey, type))
         return 0;
-    if (!EVP_PKEY_set_alias_type(pkey, alias))
-        return 0;
+
     pkey->pkey.ptr = key;
+    detect_foreign_key(pkey);
+
     return (key != NULL);
 }
 # endif
@@ -837,7 +865,7 @@ DSA *EVP_PKEY_get1_DSA(EVP_PKEY *pkey)
 # ifndef OPENSSL_NO_EC
 static const ECX_KEY *evp_pkey_get0_ECX_KEY(const EVP_PKEY *pkey, int type)
 {
-    if (EVP_PKEY_base_id(pkey) != type) {
+    if (EVP_PKEY_get_base_id(pkey) != type) {
         ERR_raise(ERR_LIB_EVP, EVP_R_EXPECTING_A_ECX_KEY);
         return NULL;
     }
@@ -867,13 +895,38 @@ IMPLEMENT_ECX_VARIANT(ED448)
 
 # if !defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_DEPRECATED_3_0)
 
-int EVP_PKEY_set1_DH(EVP_PKEY *pkey, DH *key)
+int EVP_PKEY_set1_DH(EVP_PKEY *pkey, DH *dhkey)
 {
-    int type = DH_get0_q(key) == NULL ? EVP_PKEY_DH : EVP_PKEY_DHX;
-    int ret = EVP_PKEY_assign(pkey, type, key);
+    int ret, type;
+
+    /*
+     * ossl_dh_is_named_safe_prime_group() returns 1 for named safe prime groups
+     * related to ffdhe and modp (which cache q = (p - 1) / 2),
+     * and returns 0 for all other dh parameter generation types including
+     * RFC5114 named groups.
+     *
+     * The EVP_PKEY_DH type is used for dh parameter generation types:
+     *  - named safe prime groups related to ffdhe and modp
+     *  - safe prime generator
+     *
+     * The type EVP_PKEY_DHX is used for dh parameter generation types
+     *  - fips186-4 and fips186-2
+     *  - rfc5114 named groups.
+     *
+     * The EVP_PKEY_DH type is used to save PKCS#3 data than can be stored
+     * without a q value.
+     * The EVP_PKEY_DHX type is used to save X9.42 data that requires the
+     * q value to be stored.
+     */
+    if (ossl_dh_is_named_safe_prime_group(dhkey))
+        type = EVP_PKEY_DH;
+    else
+        type = DH_get0_q(dhkey) == NULL ? EVP_PKEY_DH : EVP_PKEY_DHX;
+
+    ret = EVP_PKEY_assign(pkey, type, dhkey);
 
     if (ret)
-        DH_up_ref(key);
+        DH_up_ref(dhkey);
     return ret;
 }
 
@@ -917,12 +970,12 @@ int EVP_PKEY_type(int type)
     return ret;
 }
 
-int EVP_PKEY_id(const EVP_PKEY *pkey)
+int EVP_PKEY_get_id(const EVP_PKEY *pkey)
 {
     return pkey->type;
 }
 
-int EVP_PKEY_base_id(const EVP_PKEY *pkey)
+int EVP_PKEY_get_base_id(const EVP_PKEY *pkey)
 {
     return EVP_PKEY_type(pkey->type);
 }
@@ -991,15 +1044,15 @@ int EVP_PKEY_is_a(const EVP_PKEY *pkey, const char *name)
     return EVP_KEYMGMT_is_a(pkey->keymgmt, name);
 }
 
-int EVP_PKEY_typenames_do_all(const EVP_PKEY *pkey,
-                              void (*fn)(const char *name, void *data),
-                              void *data)
+int EVP_PKEY_type_names_do_all(const EVP_PKEY *pkey,
+                               void (*fn)(const char *name, void *data),
+                               void *data)
 {
     if (!evp_pkey_is_typed(pkey))
         return 0;
 
     if (!evp_pkey_is_provided(pkey)) {
-        const char *name = OBJ_nid2sn(EVP_PKEY_id(pkey));
+        const char *name = OBJ_nid2sn(EVP_PKEY_get_id(pkey));
 
         fn(name, data);
         return 1;
@@ -1010,7 +1063,7 @@ int EVP_PKEY_typenames_do_all(const EVP_PKEY *pkey,
 int EVP_PKEY_can_sign(const EVP_PKEY *pkey)
 {
     if (pkey->keymgmt == NULL) {
-        switch (EVP_PKEY_base_id(pkey)) {
+        switch (EVP_PKEY_get_base_id(pkey)) {
         case EVP_PKEY_RSA:
             return 1;
 # ifndef OPENSSL_NO_DSA
@@ -1028,12 +1081,12 @@ int EVP_PKEY_can_sign(const EVP_PKEY *pkey)
             break;
         }
     } else {
-        const OSSL_PROVIDER *prov = EVP_KEYMGMT_provider(pkey->keymgmt);
+        const OSSL_PROVIDER *prov = EVP_KEYMGMT_get0_provider(pkey->keymgmt);
         OSSL_LIB_CTX *libctx = ossl_provider_libctx(prov);
         const char *supported_sig =
             pkey->keymgmt->query_operation_name != NULL
             ? pkey->keymgmt->query_operation_name(OSSL_OP_SIGNATURE)
-            : evp_first_name(prov, pkey->keymgmt->name_id);
+            : EVP_KEYMGMT_get0_name(pkey->keymgmt);
         EVP_SIGNATURE *signature = NULL;
 
         signature = EVP_SIGNATURE_fetch(libctx, supported_sig, NULL);
@@ -1215,9 +1268,14 @@ static int legacy_asn1_ctrl_to_param(EVP_PKEY *pkey, int op,
                 int mdnum;
                 OSSL_LIB_CTX *libctx = ossl_provider_libctx(pkey->keymgmt->prov);
                 /* Make sure the MD is in the namemap if available */
-                EVP_MD *md = EVP_MD_fetch(libctx, mdname, NULL);
-                OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
+                EVP_MD *md;
+                OSSL_NAMEMAP *namemap;
                 int nid = NID_undef;
+
+                (void)ERR_set_mark();
+                md = EVP_MD_fetch(libctx, mdname, NULL);
+                (void)ERR_pop_to_mark();
+                namemap = ossl_namemap_stored(libctx);
 
                 /*
                  * The only reason to fetch the MD was to make sure it is in the
@@ -1283,23 +1341,21 @@ int EVP_PKEY_get_group_name(const EVP_PKEY *pkey, char *gname, size_t gname_sz,
                                           gname, gname_sz, gname_len);
 }
 
-int EVP_PKEY_supports_digest_nid(EVP_PKEY *pkey, int nid)
+int EVP_PKEY_digestsign_supports_digest(EVP_PKEY *pkey, OSSL_LIB_CTX *libctx,
+                                        const char *name, const char *propq)
 {
-    int rv, default_nid;
+    int rv;
+    EVP_MD_CTX *ctx = NULL;
 
-    rv = evp_pkey_asn1_ctrl(pkey, ASN1_PKEY_CTRL_SUPPORTS_MD_NID, nid, NULL);
-    if (rv == -2) {
-        /*
-         * If there is a mandatory default digest and this isn't it, then
-         * the answer is 'no'.
-         */
-        rv = EVP_PKEY_get_default_digest_nid(pkey, &default_nid);
-        if (rv == 2)
-            return (nid == default_nid);
-        /* zero is an error from EVP_PKEY_get_default_digest_nid() */
-        if (rv == 0)
-            return -1;
-    }
+    if ((ctx = EVP_MD_CTX_new()) == NULL)
+        return -1;
+
+    ERR_set_mark();
+    rv = EVP_DigestSignInit_ex(ctx, NULL, name, libctx,
+                               propq, pkey, NULL);
+    ERR_pop_to_mark();
+
+    EVP_MD_CTX_free(ctx);
     return rv;
 }
 
@@ -1372,7 +1428,6 @@ EVP_PKEY *EVP_PKEY_new(void)
     ret->type = EVP_PKEY_NONE;
     ret->save_type = EVP_PKEY_NONE;
     ret->references = 1;
-    ret->save_parameters = 1;
 
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
@@ -1381,6 +1436,7 @@ EVP_PKEY *EVP_PKEY_new(void)
     }
 
 #ifndef FIPS_MODULE
+    ret->save_parameters = 1;
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_EVP_PKEY, ret, &ret->ex_data)) {
         ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -1505,10 +1561,12 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
          * EVP_PKEY_KEYMGMT, which indicates that one should be cautious
          * with functions that expect legacy internal keys.
          */
-        if (ameth != NULL)
-            pkey->type = ameth->pkey_id;
-        else
+        if (ameth != NULL) {
+            if (type == EVP_PKEY_NONE)
+                pkey->type = ameth->pkey_id;
+        } else {
             pkey->type = EVP_PKEY_KEYMGMT;
+        }
 #endif
     }
     return 1;
@@ -1709,7 +1767,7 @@ void EVP_PKEY_free(EVP_PKEY *x)
     OPENSSL_free(x);
 }
 
-int EVP_PKEY_size(const EVP_PKEY *pkey)
+int EVP_PKEY_get_size(const EVP_PKEY *pkey)
 {
     int size = 0;
 
@@ -1723,7 +1781,7 @@ int EVP_PKEY_size(const EVP_PKEY *pkey)
     return size < 0 ? 0 : size;
 }
 
-const char *EVP_PKEY_description(const EVP_PKEY *pkey)
+const char *EVP_PKEY_get0_description(const EVP_PKEY *pkey)
 {
     if (!evp_pkey_is_assigned(pkey))
         return NULL;
@@ -1825,7 +1883,8 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
         if ((keydata = evp_keymgmt_newdata(tmp_keymgmt)) == NULL)
             goto end;
 
-        if (!pk->ameth->export_to(pk, keydata, tmp_keymgmt, libctx, propquery)) {
+        if (!pk->ameth->export_to(pk, keydata, tmp_keymgmt->import,
+                                  libctx, propquery)) {
             evp_keymgmt_freedata(tmp_keymgmt, keydata);
             keydata = NULL;
             goto end;
@@ -1876,7 +1935,7 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
 
         /* Synchronize the dirty count */
         pk->dirty_cnt_copy = pk->ameth->dirty_cnt(pk);
-    
+
         CRYPTO_THREAD_unlock(pk->lock);
         goto end;
     }
@@ -1912,8 +1971,7 @@ int evp_pkey_copy_downgraded(EVP_PKEY **dest, const EVP_PKEY *src)
         int type = src->type;
         const char *keytype = NULL;
 
-        keytype = evp_first_name(EVP_KEYMGMT_provider(keymgmt),
-                                 keymgmt->name_id);
+        keytype = EVP_KEYMGMT_get0_name(keymgmt);
 
         /*
          * If the type is EVP_PKEY_NONE, then we have a problem somewhere

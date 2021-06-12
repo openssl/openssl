@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -20,8 +20,6 @@
 
 #include "../testutil.h"
 
-/* Set this to > 0 write test data to file */
-extern int write_files;
 
 /* -------------------------------------------------------------------------
  * PKCS#12 Test structures
@@ -36,9 +34,9 @@ typedef struct pkcs12_attr {
 
 /* Holds encryption parameters */
 typedef struct pkcs12_enc {
-    int      nid;
-    char    *pass;
-    int      iter;
+    int         nid;
+    const char *pass;
+    int         iter;
 } PKCS12_ENC;
 
 /* Set of variables required for constructing the PKCS#12 structure */
@@ -56,6 +54,12 @@ typedef struct pkcs12_builder {
 /* -------------------------------------------------------------------------
  * PKCS#12 Test function declarations
  */
+
+/* Global settings */
+void PKCS12_helper_set_write_files(int enable);
+void PKCS12_helper_set_legacy(int enable);
+void PKCS12_helper_set_libctx(OSSL_LIB_CTX *libctx);
+void PKCS12_helper_set_propq(const char *propq);
 
 /* Allocate and initialise a PKCS#12 builder object */
 PKCS12_BUILDER *new_pkcs12_builder(const char *filename);

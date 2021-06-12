@@ -89,6 +89,8 @@ static const ERR_STRING_DATA PROV_str_reasons[] = {
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_MAC), "invalid mac"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_MGF1_MD), "invalid mgf1 md"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_MODE), "invalid mode"},
+    {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_OUTPUT_LENGTH),
+    "invalid output length"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_PADDING_MODE),
     "invalid padding mode"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_PUBINFO), "invalid pubinfo"},
@@ -110,6 +112,9 @@ static const ERR_STRING_DATA PROV_str_reasons[] = {
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_KEY_SETUP_FAILED), "key setup failed"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_KEY_SIZE_TOO_SMALL),
     "key size too small"},
+    {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_LENGTH_TOO_LARGE), "length too large"},
+    {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_MISMATCHING_DOMAIN_PARAMETERS),
+    "mismatching domain parameters"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_MISSING_CEK_ALG), "missing cek alg"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_MISSING_CIPHER), "missing cipher"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_MISSING_CONFIG_DATA),
@@ -212,7 +217,7 @@ static const ERR_STRING_DATA PROV_str_reasons[] = {
 
 #endif
 
-int err_load_PROV_strings_int(void)
+int ossl_err_load_PROV_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
     if (ERR_reason_error_string(PROV_str_reasons[0].error) == NULL)

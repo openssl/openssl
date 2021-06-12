@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -78,7 +78,7 @@ int ASN1_sign(i2d_of_void *i2d, X509_ALGOR *algor1, X509_ALGOR *algor2,
     }
     inll = (size_t)inl;
     buf_in = OPENSSL_malloc(inll);
-    outll = outl = EVP_PKEY_size(pkey);
+    outll = outl = EVP_PKEY_get_size(pkey);
     buf_out = OPENSSL_malloc(outll);
     if (buf_in == NULL || buf_out == NULL) {
         outl = 0;
@@ -136,13 +136,14 @@ int ASN1_item_sign_ex(const ASN1_ITEM *it, X509_ALGOR *algor1,
         ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
         return 0;
     }
+    /* We can use the non _ex variant here since the pkey is already setup */
     if (!EVP_DigestSignInit(ctx, NULL, md, NULL, pkey))
         goto err;
 
     rv = ASN1_item_sign_ctx(it, algor1, algor2, signature, data, ctx);
 
  err:
-    EVP_PKEY_CTX_free(EVP_MD_CTX_pkey_ctx(ctx));
+    EVP_PKEY_CTX_free(EVP_MD_CTX_get_pkey_ctx(ctx));
     EVP_MD_CTX_free(ctx);
     return rv;
 }
@@ -158,8 +159,8 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
     int signid, paramtype, buf_len = 0;
     int rv, pkey_id;
 
-    md = EVP_MD_CTX_md(ctx);
-    pkey = EVP_PKEY_CTX_get0_pkey(EVP_MD_CTX_pkey_ctx(ctx));
+    md = EVP_MD_CTX_get0_md(ctx);
+    pkey = EVP_PKEY_CTX_get0_pkey(EVP_MD_CTX_get_pkey_ctx(ctx));
 
     if (pkey == NULL) {
         ERR_raise(ERR_LIB_ASN1, ASN1_R_CONTEXT_NOT_INITIALISED);
@@ -167,7 +168,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
     }
 
     if (pkey->ameth == NULL) {
-        EVP_PKEY_CTX *pctx = EVP_MD_CTX_pkey_ctx(ctx);
+        EVP_PKEY_CTX *pctx = EVP_MD_CTX_get_pkey_ctx(ctx);
         OSSL_PARAM params[2];
         unsigned char aid[128];
         size_t aid_len = 0;
@@ -237,7 +238,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
 
         pkey_id =
 #ifndef OPENSSL_NO_SM2
-            EVP_PKEY_id(pkey) == NID_sm2 ? NID_sm2 :
+            EVP_PKEY_get_id(pkey) == NID_sm2 ? NID_sm2 :
 #endif
             pkey->ameth->pkey_id;
 

@@ -15,6 +15,10 @@ X509_CRL_http_nbio
  X509 *X509_load_http(const char *url, BIO *bio, BIO *rbio, int timeout);
  X509_CRL *X509_CRL_load_http(const char *url, BIO *bio, BIO *rbio, int timeout);
 
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  #define X509_http_nbio(rctx, pcert)
  #define X509_CRL_http_nbio(rctx, pcrl)
 
@@ -45,11 +49,12 @@ Error conditions include connection/transfer timeout, parse errors, etc.
 
 =head1 SEE ALSO
 
-L<OSSL_HTTP_get_asn1(3)>
+L<OSSL_HTTP_get(3)>
 
 =head1 HISTORY
 
 X509_load_http() and X509_CRL_load_http() were added in OpenSSL 3.0.
+X509_http_nbio() and X509_CRL_http_nbio() were deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

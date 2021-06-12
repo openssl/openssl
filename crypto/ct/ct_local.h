@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -189,11 +189,6 @@ __owur int SCT_is_complete(const SCT *sct);
  * values and that the signature field is set.
  */
 __owur int SCT_signature_is_complete(const SCT *sct);
-
-/*
- * TODO(RJPercival): Create an SCT_signature struct and make i2o_SCT_signature
- * and o2i_SCT_signature conform to the i2d/d2i conventions.
- */
 
 /*
 * Serialize (to TLS format) an |sct| signature and write it to |out|.

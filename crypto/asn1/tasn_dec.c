@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -28,7 +28,8 @@
 static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
                                long len, const ASN1_ITEM *it,
                                int tag, int aclass, char opt, ASN1_TLC *ctx,
-                               int depth);
+                               int depth, OSSL_LIB_CTX *libctx,
+                               const char *propq);
 
 static int asn1_check_eoc(const unsigned char **in, long len);
 static int asn1_find_end(const unsigned char **in, long len, char inf);
@@ -46,11 +47,13 @@ static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass,
 static int asn1_template_ex_d2i(ASN1_VALUE **pval,
                                 const unsigned char **in, long len,
                                 const ASN1_TEMPLATE *tt, char opt,
-                                ASN1_TLC *ctx, int depth);
+                                ASN1_TLC *ctx, int depth, OSSL_LIB_CTX *libctx,
+                                const char *propq);
 static int asn1_template_noexp_d2i(ASN1_VALUE **val,
                                    const unsigned char **in, long len,
                                    const ASN1_TEMPLATE *tt, char opt,
-                                   ASN1_TLC *ctx, int depth);
+                                   ASN1_TLC *ctx, int depth,
+                                   OSSL_LIB_CTX *libctx, const char *propq);
 static int asn1_d2i_ex_primitive(ASN1_VALUE **pval,
                                  const unsigned char **in, long len,
                                  const ASN1_ITEM *it,
@@ -66,7 +69,7 @@ static const unsigned long tag2bit[32] = {
     /* tags  4- 7 */
     B_ASN1_OCTET_STRING, 0, 0, B_ASN1_UNKNOWN,
     /* tags  8-11 */
-    B_ASN1_UNKNOWN, B_ASN1_UNKNOWN, B_ASN1_UNKNOWN, B_ASN1_UNKNOWN,
+    B_ASN1_UNKNOWN, B_ASN1_UNKNOWN, 0, B_ASN1_UNKNOWN,
     /* tags 12-15 */
     B_ASN1_UTF8STRING, B_ASN1_UNKNOWN, B_ASN1_UNKNOWN, B_ASN1_UNKNOWN,
     /* tags 16-19 */
@@ -90,9 +93,9 @@ unsigned long ASN1_tag2bit(int tag)
 
 /* Macro to initialize and invalidate the cache */
 
-#define asn1_tlc_clear(c)       if (c) (c)->valid = 0
+#define asn1_tlc_clear(c)       do { if ((c) != NULL) (c)->valid = 0; } while (0)
 /* Version to avoid compiler warning about 'c' always non-NULL */
-#define asn1_tlc_clear_nc(c)    (c)->valid = 0
+#define asn1_tlc_clear_nc(c)    do {(c)->valid = 0; } while (0)
 
 /*
  * Decode an ASN1 item, this currently behaves just like a standard 'd2i'
@@ -101,9 +104,36 @@ unsigned long ASN1_tag2bit(int tag)
  * this will simply be a special case.
  */
 
-ASN1_VALUE *ASN1_item_d2i(ASN1_VALUE **pval,
-                          const unsigned char **in, long len,
-                          const ASN1_ITEM *it)
+static int asn1_item_ex_d2i_intern(ASN1_VALUE **pval, const unsigned char **in,
+                                   long len, const ASN1_ITEM *it, int tag,
+                                   int aclass, char opt, ASN1_TLC *ctx,
+                                   OSSL_LIB_CTX *libctx, const char *propq)
+{
+    int rv;
+
+    if (pval == NULL || it == NULL) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    rv = asn1_item_embed_d2i(pval, in, len, it, tag, aclass, opt, ctx, 0,
+                             libctx, propq);
+    if (rv <= 0)
+        ASN1_item_ex_free(pval, it);
+    return rv;
+}
+
+int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
+                     const ASN1_ITEM *it,
+                     int tag, int aclass, char opt, ASN1_TLC *ctx)
+{
+    return asn1_item_ex_d2i_intern(pval, in, len, it, tag, aclass, opt, ctx,
+                                   NULL, NULL);
+}
+
+ASN1_VALUE *ASN1_item_d2i_ex(ASN1_VALUE **pval,
+                             const unsigned char **in, long len,
+                             const ASN1_ITEM *it, OSSL_LIB_CTX *libctx,
+                             const char *propq)
 {
     ASN1_TLC c;
     ASN1_VALUE *ptmpval = NULL;
@@ -111,20 +141,17 @@ ASN1_VALUE *ASN1_item_d2i(ASN1_VALUE **pval,
     if (pval == NULL)
         pval = &ptmpval;
     asn1_tlc_clear_nc(&c);
-    if (ASN1_item_ex_d2i(pval, in, len, it, -1, 0, 0, &c) > 0)
+    if (asn1_item_ex_d2i_intern(pval, in, len, it, -1, 0, 0, &c, libctx,
+                                propq) > 0)
         return *pval;
     return NULL;
 }
 
-int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
-                     const ASN1_ITEM *it,
-                     int tag, int aclass, char opt, ASN1_TLC *ctx)
+ASN1_VALUE *ASN1_item_d2i(ASN1_VALUE **pval,
+                          const unsigned char **in, long len,
+                          const ASN1_ITEM *it)
 {
-    int rv;
-    rv = asn1_item_embed_d2i(pval, in, len, it, tag, aclass, opt, ctx, 0);
-    if (rv <= 0)
-        ASN1_item_ex_free(pval, it);
-    return rv;
+    return ASN1_item_d2i_ex(pval, in, len, it, NULL, NULL);
 }
 
 /*
@@ -135,11 +162,12 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
                                long len, const ASN1_ITEM *it,
                                int tag, int aclass, char opt, ASN1_TLC *ctx,
-                               int depth)
+                               int depth, OSSL_LIB_CTX *libctx,
+                               const char *propq)
 {
     const ASN1_TEMPLATE *tt, *errtt = NULL;
     const ASN1_EXTERN_FUNCS *ef;
-    const ASN1_AUX *aux = it->funcs;
+    const ASN1_AUX *aux;
     ASN1_aux_cb *asn1_cb;
     const unsigned char *p = NULL, *q;
     unsigned char oclass;
@@ -150,8 +178,15 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
     int ret = 0;
     ASN1_VALUE **pchptr;
 
-    if (pval == NULL)
+    if (pval == NULL || it == NULL) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
+    }
+    if (len <= 0) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_SMALL);
+        return 0;
+    }
+    aux = it->funcs;
     if (aux && aux->asn1_cb)
         asn1_cb = aux->asn1_cb;
     else
@@ -176,8 +211,8 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
                           ASN1_R_ILLEGAL_OPTIONS_ON_ITEM_TEMPLATE);
                 goto err;
             }
-            return asn1_template_ex_d2i(pval, in, len,
-                                        it->templates, opt, ctx, depth);
+            return asn1_template_ex_d2i(pval, in, len, it->templates, opt, ctx,
+                                        depth, libctx, propq);
         }
         return asn1_d2i_ex_primitive(pval, in, len, it,
                                      tag, aclass, opt, ctx);
@@ -223,6 +258,9 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
     case ASN1_ITYPE_EXTERN:
         /* Use new style d2i */
         ef = it->funcs;
+        if (ef->asn1_ex_d2i_ex != NULL)
+            return ef->asn1_ex_d2i_ex(pval, in, len, it, tag, aclass, opt, ctx,
+                                      libctx, propq);
         return ef->asn1_ex_d2i(pval, in, len, it, tag, aclass, opt, ctx);
 
     case ASN1_ITYPE_CHOICE:
@@ -246,7 +284,7 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
                 ossl_asn1_template_free(pchptr, tt);
                 ossl_asn1_set_choice_selector(pval, -1, it);
             }
-        } else if (!ASN1_item_ex_new(pval, it)) {
+        } else if (!ossl_asn1_item_ex_new_intern(pval, it, libctx, propq)) {
             ERR_raise(ERR_LIB_ASN1, ERR_R_NESTED_ASN1_ERROR);
             goto err;
         }
@@ -257,7 +295,8 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
             /*
              * We mark field as OPTIONAL so its absence can be recognised.
              */
-            ret = asn1_template_ex_d2i(pchptr, &p, len, tt, 1, ctx, depth);
+            ret = asn1_template_ex_d2i(pchptr, &p, len, tt, 1, ctx, depth,
+                                       libctx, propq);
             /* If field not present, try the next one */
             if (ret == -1)
                 continue;
@@ -323,7 +362,8 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
             goto err;
         }
 
-        if (*pval == NULL && !ASN1_item_ex_new(pval, it)) {
+        if (*pval == NULL
+                && !ossl_asn1_item_ex_new_intern(pval, it, libctx, propq)) {
             ERR_raise(ERR_LIB_ASN1, ERR_R_NESTED_ASN1_ERROR);
             goto err;
         }
@@ -380,7 +420,7 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
              */
 
             ret = asn1_template_ex_d2i(pseqval, &p, len, seqtt, isopt, ctx,
-                                       depth);
+                                       depth, libctx, propq);
             if (!ret) {
                 errtt = seqtt;
                 goto err;
@@ -456,7 +496,8 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
 static int asn1_template_ex_d2i(ASN1_VALUE **val,
                                 const unsigned char **in, long inlen,
                                 const ASN1_TEMPLATE *tt, char opt,
-                                ASN1_TLC *ctx, int depth)
+                                ASN1_TLC *ctx, int depth,
+                                OSSL_LIB_CTX *libctx, const char *propq)
 {
     int flags, aclass;
     int ret;
@@ -490,7 +531,8 @@ static int asn1_template_ex_d2i(ASN1_VALUE **val,
             return 0;
         }
         /* We've found the field so it can't be OPTIONAL now */
-        ret = asn1_template_noexp_d2i(val, &p, len, tt, 0, ctx, depth);
+        ret = asn1_template_noexp_d2i(val, &p, len, tt, 0, ctx, depth, libctx,
+                                      propq);
         if (!ret) {
             ERR_raise(ERR_LIB_ASN1, ERR_R_NESTED_ASN1_ERROR);
             return 0;
@@ -513,7 +555,8 @@ static int asn1_template_ex_d2i(ASN1_VALUE **val,
             }
         }
     } else
-        return asn1_template_noexp_d2i(val, in, inlen, tt, opt, ctx, depth);
+        return asn1_template_noexp_d2i(val, in, inlen, tt, opt, ctx, depth,
+                                       libctx, propq);
 
     *in = p;
     return 1;
@@ -525,7 +568,8 @@ static int asn1_template_ex_d2i(ASN1_VALUE **val,
 static int asn1_template_noexp_d2i(ASN1_VALUE **val,
                                    const unsigned char **in, long len,
                                    const ASN1_TEMPLATE *tt, char opt,
-                                   ASN1_TLC *ctx, int depth)
+                                   ASN1_TLC *ctx, int depth,
+                                   OSSL_LIB_CTX *libctx, const char *propq)
 {
     int flags, aclass;
     int ret;
@@ -606,7 +650,7 @@ static int asn1_template_noexp_d2i(ASN1_VALUE **val,
             skfield = NULL;
             if (!asn1_item_embed_d2i(&skfield, &p, len,
                                      ASN1_ITEM_ptr(tt->item), -1, 0, 0, ctx,
-                                     depth)) {
+                                     depth, libctx, propq)) {
                 ERR_raise(ERR_LIB_ASN1, ERR_R_NESTED_ASN1_ERROR);
                 /* |skfield| may be partially allocated despite failure. */
                 ASN1_item_free(skfield, ASN1_ITEM_ptr(tt->item));
@@ -627,7 +671,7 @@ static int asn1_template_noexp_d2i(ASN1_VALUE **val,
         /* IMPLICIT tagging */
         ret = asn1_item_embed_d2i(val, &p, len,
                                   ASN1_ITEM_ptr(tt->item), tt->tag, aclass, opt,
-                                  ctx, depth);
+                                  ctx, depth, libctx, propq);
         if (!ret) {
             ERR_raise(ERR_LIB_ASN1, ERR_R_NESTED_ASN1_ERROR);
             goto err;
@@ -636,7 +680,7 @@ static int asn1_template_noexp_d2i(ASN1_VALUE **val,
     } else {
         /* Nothing special */
         ret = asn1_item_embed_d2i(val, &p, len, ASN1_ITEM_ptr(tt->item),
-                                  -1, 0, opt, ctx, depth);
+                                  -1, 0, opt, ctx, depth, libctx, propq);
         if (!ret) {
             ERR_raise(ERR_LIB_ASN1, ERR_R_NESTED_ASN1_ERROR);
             goto err;
@@ -1100,7 +1144,11 @@ static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass,
     p = *in;
     q = p;
 
-    if (ctx && ctx->valid) {
+    if (len <= 0) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_SMALL);
+        goto err;
+    }
+    if (ctx != NULL && ctx->valid) {
         i = ctx->ret;
         plen = ctx->plen;
         pclass = ctx->pclass;
@@ -1108,7 +1156,7 @@ static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass,
         p += ctx->hdrlen;
     } else {
         i = ASN1_get_object(&p, &plen, &ptag, &pclass, len);
-        if (ctx) {
+        if (ctx != NULL) {
             ctx->ret = i;
             ctx->plen = plen;
             ctx->pclass = pclass;
@@ -1119,29 +1167,26 @@ static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass,
              * If definite length, and no error, length + header can't exceed
              * total amount of data available.
              */
-            if (!(i & 0x81) && ((plen + ctx->hdrlen) > len)) {
+            if ((i & 0x81) == 0 && (plen + ctx->hdrlen) > len) {
                 ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_LONG);
-                asn1_tlc_clear(ctx);
-                return 0;
+                goto err;
             }
         }
     }
 
-    if (i & 0x80) {
+    if ((i & 0x80) != 0) {
         ERR_raise(ERR_LIB_ASN1, ASN1_R_BAD_OBJECT_HEADER);
-        asn1_tlc_clear(ctx);
-        return 0;
+        goto err;
     }
     if (exptag >= 0) {
-        if ((exptag != ptag) || (expclass != pclass)) {
+        if (exptag != ptag || expclass != pclass) {
             /*
              * If type is OPTIONAL, not an error: indicate missing type.
              */
-            if (opt)
+            if (opt != 0)
                 return -1;
-            asn1_tlc_clear(ctx);
             ERR_raise(ERR_LIB_ASN1, ASN1_R_WRONG_TAG);
-            return 0;
+            goto err;
         }
         /*
          * We have a tag and class match: assume we are going to do something
@@ -1150,24 +1195,28 @@ static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass,
         asn1_tlc_clear(ctx);
     }
 
-    if (i & 1)
+    if ((i & 1) != 0)
         plen = len - (p - q);
 
-    if (inf)
+    if (inf != NULL)
         *inf = i & 1;
 
-    if (cst)
+    if (cst != NULL)
         *cst = i & V_ASN1_CONSTRUCTED;
 
-    if (olen)
+    if (olen != NULL)
         *olen = plen;
 
-    if (oclass)
+    if (oclass != NULL)
         *oclass = pclass;
 
-    if (otag)
+    if (otag != NULL)
         *otag = ptag;
 
     *in = p;
     return 1;
+
+ err:
+    asn1_tlc_clear(ctx);
+    return 0;
 }

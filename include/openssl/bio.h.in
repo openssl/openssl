@@ -30,6 +30,7 @@ use OpenSSL::stackhash qw(generate_stack_macros);
 
 # include <openssl/crypto.h>
 # include <openssl/bioerr.h>
+# include <openssl/core.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -66,7 +67,7 @@ extern "C" {
 # ifndef OPENSSL_NO_SCTP
 #  define BIO_TYPE_DGRAM_SCTP    (24|BIO_TYPE_SOURCE_SINK|BIO_TYPE_DESCRIPTOR)
 # endif
-# define BIO_TYPE_CORE_TO_PROV   (25|BIO_TYPE_FILTER)
+# define BIO_TYPE_CORE_TO_PROV   (25|BIO_TYPE_SOURCE_SINK)
 
 #define BIO_TYPE_START           128
 
@@ -270,16 +271,23 @@ void BIO_clear_flags(BIO *b, int flags);
 # define BIO_cb_pre(a)   (!((a)&BIO_CB_RETURN))
 # define BIO_cb_post(a)  ((a)&BIO_CB_RETURN)
 
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 typedef long (*BIO_callback_fn)(BIO *b, int oper, const char *argp, int argi,
                                 long argl, long ret);
+OSSL_DEPRECATEDIN_3_0 BIO_callback_fn BIO_get_callback(const BIO *b);
+OSSL_DEPRECATEDIN_3_0 void BIO_set_callback(BIO *b, BIO_callback_fn callback);
+OSSL_DEPRECATEDIN_3_0 long BIO_debug_callback(BIO *bio, int cmd,
+                                               const char *argp, int argi,
+                                               long argl, long ret);
+# endif
+
 typedef long (*BIO_callback_fn_ex)(BIO *b, int oper, const char *argp,
                                    size_t len, int argi,
                                    long argl, int ret, size_t *processed);
-BIO_callback_fn BIO_get_callback(const BIO *b);
-void BIO_set_callback(BIO *b, BIO_callback_fn callback);
-
 BIO_callback_fn_ex BIO_get_callback_ex(const BIO *b);
 void BIO_set_callback_ex(BIO *b, BIO_callback_fn_ex callback);
+long BIO_debug_callback_ex(BIO *bio, int oper, const char *argp, size_t len,
+                           int argi, long argl, int ret, size_t *processed);
 
 char *BIO_get_callback_arg(const BIO *b);
 void BIO_set_callback_arg(BIO *b, char *arg);
@@ -590,9 +598,11 @@ int BIO_asn1_get_suffix(BIO *b, asn1_ps_func **psuffix,
 
 const BIO_METHOD *BIO_s_file(void);
 BIO *BIO_new_file(const char *filename, const char *mode);
+BIO *BIO_new_from_core_bio(OSSL_LIB_CTX *libctx, OSSL_CORE_BIO *corebio);
 # ifndef OPENSSL_NO_STDIO
 BIO *BIO_new_fp(FILE *stream, int close_flag);
 # endif
+BIO *BIO_new_ex(OSSL_LIB_CTX *libctx, const BIO_METHOD *method);
 BIO *BIO_new(const BIO_METHOD *type);
 int BIO_free(BIO *a);
 void BIO_set_data(BIO *a, void *ptr);
@@ -606,6 +616,7 @@ int BIO_up_ref(BIO *a);
 int BIO_read(BIO *b, void *data, int dlen);
 int BIO_read_ex(BIO *b, void *data, size_t dlen, size_t *readbytes);
 int BIO_gets(BIO *bp, char *buf, int size);
+int BIO_get_line(BIO *bio, char *buf, int size);
 int BIO_write(BIO *b, const void *data, int dlen);
 int BIO_write_ex(BIO *b, const void *data, size_t dlen, size_t *written);
 int BIO_puts(BIO *bp, const char *buf);
@@ -630,9 +641,6 @@ int BIO_nread(BIO *bio, char **buf, int num);
 int BIO_nwrite0(BIO *bio, char **buf);
 int BIO_nwrite(BIO *bio, char **buf, int num);
 
-long BIO_debug_callback(BIO *bio, int cmd, const char *argp, int argi,
-                        long argl, long ret);
-
 const BIO_METHOD *BIO_s_mem(void);
 const BIO_METHOD *BIO_s_secmem(void);
 BIO *BIO_new_mem_buf(const void *buf, int len);
@@ -651,6 +659,7 @@ const BIO_METHOD *BIO_f_readbuffer(void);
 const BIO_METHOD *BIO_f_linebuffer(void);
 const BIO_METHOD *BIO_f_nbio_test(void);
 const BIO_METHOD *BIO_f_prefix(void);
+const BIO_METHOD *BIO_s_core(void);
 # ifndef OPENSSL_NO_DGRAM
 const BIO_METHOD *BIO_s_datagram(void);
 int BIO_dgram_non_fatal_error(int error);

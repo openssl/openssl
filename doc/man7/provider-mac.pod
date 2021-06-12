@@ -54,7 +54,7 @@ provider_query_operation() function
 (see L<provider-base(7)/Provider Functions>).
 
 All these "functions" have a corresponding function type definition
-named B<OSSL_{name}_fn>, and a helper function to retrieve the
+named B<OSSL_FUNC_{name}_fn>, and a helper function to retrieve the
 function pointer from an B<OSSL_DISPATCH> element named
 B<OSSL_FUNC_{name}>.
 For example, the "function" OSSL_FUNC_mac_newctx() has these:
@@ -180,6 +180,14 @@ MAC size for the implementation).
 
 Note that some implementations allow setting the size that the resulting MAC
 should have as well, see the documentation of the implementation.
+
+=back
+
+=over 4
+
+=item "size" (B<OSSL_MAC_PARAM_BLOCK_SIZE>) <integer>
+
+Can be used to get the MAC block size (if supported by the algorithm).
 
 =back
 

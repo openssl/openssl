@@ -717,9 +717,8 @@ void cleanup_tests(void)
     return;
 }
 
-DEFINE_SET_GET_ARG_FN(set, get, option, 16, int)
-/* option == OSSL_CMP_OPT_IGNORE_KEYUSAGE */
-DEFINE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set, get, 0, option_16, int, -1, IS_0, \
+DEFINE_SET_GET_ARG_FN(set, get, option, 35, int) /* OPT_IGNORE_KEYUSAGE */
+DEFINE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set, get, 0, option_35, int, -1, IS_0, \
                          1 /* true */, DROP)
 
 DEFINE_SET_CB_TEST(log_cb)
@@ -792,7 +791,7 @@ int setup_tests(void)
     ADD_TEST(test_CTX_reinit);
 
     /* various CMP options: */
-    ADD_TEST(test_CTX_set_get_option_16);
+    ADD_TEST(test_CTX_set_get_option_35);
     /* CMP-specific callback for logging and outputting the error queue: */
     ADD_TEST(test_CTX_set_get_log_cb);
     /*
@@ -874,6 +873,5 @@ int setup_tests(void)
     ADD_TEST(test_CTX_set1_get0_transactionID);
     ADD_TEST(test_CTX_set1_get0_senderNonce);
     ADD_TEST(test_CTX_set1_get0_recipNonce);
-    /* ossl_cmp_build_cert_chain() is tested in cmp_protect.c */
     return 1;
 }

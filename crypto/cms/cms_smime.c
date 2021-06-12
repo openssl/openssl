@@ -169,6 +169,10 @@ CMS_ContentInfo *CMS_digest_create_ex(BIO *in, const EVP_MD *md,
 {
     CMS_ContentInfo *cms;
 
+    /*
+     * Because the EVP_MD is cached and can be a legacy algorithm, we
+     * cannot fetch the algorithm if it isn't supplied.
+     */
     if (md == NULL)
         md = EVP_sha1();
     cms = ossl_cms_DigestedData_create(md, ctx, propq);
@@ -626,7 +630,7 @@ CMS_ContentInfo *CMS_encrypt_ex(STACK_OF(X509) *certs, BIO *data,
     X509 *recip;
 
 
-    cms = (EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)
+    cms = (EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)
           ? CMS_AuthEnvelopedData_create_ex(cipher, libctx, propq)
           : CMS_EnvelopedData_create_ex(cipher, libctx, propq);
     if (cms == NULL)

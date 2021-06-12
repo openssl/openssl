@@ -32,7 +32,7 @@
  */
 struct ossl_cmp_ctx_st {
     OSSL_LIB_CTX *libctx;
-    const char *propq;
+    char *propq;
     OSSL_CMP_log_cb_t log_cb; /* log callback for error/debug/etc. output */
     OSSL_CMP_severity log_verbosity; /* level of verbosity of log output */
 
@@ -40,11 +40,13 @@ struct ossl_cmp_ctx_st {
     OSSL_CMP_transfer_cb_t transfer_cb; /* default: OSSL_CMP_MSG_http_perform */
     void *transfer_cb_arg; /* allows to store optional argument to cb */
     /* HTTP-based transfer */
+    OSSL_HTTP_REQ_CTX *http_ctx;
     char *serverPath;
     char *server;
     int serverPort;
     char *proxy;
     char *no_proxy;
+    int keep_alive; /* persistent connection: 0=no, 1=prefer, 2=require */
     int msg_timeout; /* max seconds to wait for each CMP message round trip */
     int total_timeout; /* max number of seconds an enrollment may take, incl. */
     /* attempts polling for a response if a 'waiting' PKIStatus is received */
@@ -118,12 +120,9 @@ struct ossl_cmp_ctx_st {
 
     /* result returned in responses */
     int status; /* PKIStatus of last received IP/CP/KUP/RP/error or -1 */
-    /* TODO: this should be a stack since there could be more than one */
     OSSL_CMP_PKIFREETEXT *statusString; /* of last IP/CP/KUP/RP/error */
     int failInfoCode; /* failInfoCode of last received IP/CP/KUP/error, or -1 */
-    /* TODO: this should be a stack since there could be more than one */
     X509 *newCert; /* newly enrolled cert received from the CA */
-    /* TODO: this should be a stack since there could be more than one */
     STACK_OF(X509) *newChain; /* chain of newly enrolled cert received */
     STACK_OF(X509) *caPubs; /* CA certs received from server (in IP message) */
     STACK_OF(X509) *extraCertsIn; /* extraCerts received from server */
@@ -671,8 +670,11 @@ struct ossl_cmp_msg_st {
     ASN1_BIT_STRING *protection; /* 0 */
     /* OSSL_CMP_CMPCERTIFICATE is effectively X509 so it is used directly */
     STACK_OF(X509) *extraCerts; /* 1 */
+    OSSL_LIB_CTX *libctx;
+    char *propq;
 } /* OSSL_CMP_MSG */;
-DECLARE_ASN1_FUNCTIONS(OSSL_CMP_MSG)
+OSSL_CMP_MSG *OSSL_CMP_MSG_new(OSSL_LIB_CTX *libctx, const char *propq);
+void OSSL_CMP_MSG_free(OSSL_CMP_MSG *msg);
 
 /*-
  * ProtectedPart ::= SEQUENCE {
@@ -706,8 +708,6 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CMP_PROTECTEDPART)
  *   }       -- or HMAC [RFC2104, RFC2202])
  */
 /*-
- *  TODO: this is not yet defined here - but DH is anyway not used yet
- *
  *   id-DHBasedMac OBJECT IDENTIFIER ::= {1 2 840 113533 7 66 30}
  *   DHBMParameter ::= SEQUENCE {
  *           owf                 AlgorithmIdentifier,
@@ -749,10 +749,6 @@ int ossl_cmp_asn1_octet_string_set1(ASN1_OCTET_STRING **tgt,
                                     const ASN1_OCTET_STRING *src);
 int ossl_cmp_asn1_octet_string_set1_bytes(ASN1_OCTET_STRING **tgt,
                                           const unsigned char *bytes, int len);
-STACK_OF(X509)
-    *ossl_cmp_build_cert_chain(OSSL_LIB_CTX *libctx, const char *propq,
-                               X509_STORE *store,
-                               STACK_OF(X509) *certs, X509 *cert);
 
 /* from cmp_ctx.c */
 int ossl_cmp_print_log(OSSL_CMP_severity level, const OSSL_CMP_CTX *ctx,
@@ -859,6 +855,8 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr);
 # define OSSL_CMP_CERTREQID 0
 /* sequence id for the first - and so far only - revocation request */
 # define OSSL_CMP_REVREQSID 0
+int ossl_cmp_msg_set0_libctx(OSSL_CMP_MSG *msg, OSSL_LIB_CTX *libctx,
+                             const char *propq);
 const char *ossl_cmp_bodytype_to_string(int type);
 int ossl_cmp_msg_set_bodytype(OSSL_CMP_MSG *msg, int type);
 int ossl_cmp_msg_get_bodytype(const OSSL_CMP_MSG *msg);

@@ -43,11 +43,9 @@
 #include <openssl/err.h>
 #include "ec_local.h"
 
-#if defined(__SIZEOF_INT128__) && __SIZEOF_INT128__==16
-  /* even with gcc, the typedef won't work for 32-bit platforms */
-typedef __uint128_t uint128_t;  /* nonstandard; implemented by gcc on 64-bit
-                                 * platforms */
-#else
+#include "internal/numbers.h"
+
+#ifndef INT128_MAX
 # error "Your compiler doesn't appear to support 128-bit integer types"
 #endif
 
@@ -1272,7 +1270,7 @@ void EC_nistp224_pre_comp_free(NISTP224_PRE_COMP *p)
         return;
 
     CRYPTO_DOWN_REF(&p->references, &i, p->lock);
-    REF_PRINT_COUNT("EC_nistp224", x);
+    REF_PRINT_COUNT("EC_nistp224", p);
     if (i > 0)
         return;
     REF_ASSERT_ISNT(i < 0);

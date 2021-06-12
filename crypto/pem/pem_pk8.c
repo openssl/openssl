@@ -74,7 +74,7 @@ static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder, int nid,
     const char *outtype = isder ? "DER" : "PEM";
     OSSL_ENCODER_CTX *ctx =
         OSSL_ENCODER_CTX_new_for_pkey(x, OSSL_KEYMGMT_SELECT_ALL,
-                                      outtype, "pkcs8", propq);
+                                      outtype, "PrivateKeyInfo", propq);
 
     if (ctx == NULL)
         return 0;
@@ -93,11 +93,18 @@ static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder, int nid,
         }
     }
 
-    if (OSSL_ENCODER_CTX_get_num_encoders(ctx) != 0) {
+    /*
+     * NOTE: There is no attempt to do a EVP_CIPHER_fetch() using the nid,
+     * since the nid is a PBE algorithm which can't be fetched currently.
+     * (e.g. NID_pbe_WithSHA1And2_Key_TripleDES_CBC). Just use the legacy
+     * path if the NID is passed.
+     */
+    if (nid == -1 && OSSL_ENCODER_CTX_get_num_encoders(ctx) != 0) {
         ret = 1;
         if (enc != NULL) {
             ret = 0;
-            if (OSSL_ENCODER_CTX_set_cipher(ctx, EVP_CIPHER_name(enc), NULL)) {
+            if (OSSL_ENCODER_CTX_set_cipher(ctx, EVP_CIPHER_get0_name(enc),
+                                            NULL)) {
                 const unsigned char *ukstr = (const unsigned char *)kstr;
 
                 /*

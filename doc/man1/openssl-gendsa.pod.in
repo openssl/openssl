@@ -28,8 +28,6 @@ B<openssl> B<gendsa>
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<paramfile>]
 
-=for openssl ifdef engine
-
 =head1 DESCRIPTION
 
 This command generates a DSA private key from a DSA parameter file
@@ -97,7 +95,7 @@ The B<-engine> option was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

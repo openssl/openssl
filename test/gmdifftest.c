@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -49,10 +49,12 @@ static int check_time(long offset)
 
 static int test_gmtime(int offset)
 {
-    return check_time(offset) &&
-           check_time(-offset) &&
-           check_time(offset * 1000L) &&
-           check_time(-offset * 1000L);
+    return check_time(offset)
+           && check_time(-offset)
+           && check_time(offset * 1000L)
+           && check_time(-offset * 1000L)
+           && check_time(offset * 1000000L)
+           && check_time(-offset * 1000000L);
 }
 
 int setup_tests(void)
@@ -60,6 +62,6 @@ int setup_tests(void)
     if (sizeof(time_t) < 8)
         TEST_info("Skipping; time_t is less than 64-bits");
     else
-        ADD_ALL_TESTS_NOSUBTEST(test_gmtime, 1000000);
+        ADD_ALL_TESTS_NOSUBTEST(test_gmtime, 1000);
     return 1;
 }

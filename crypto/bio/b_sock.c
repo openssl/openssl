@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -29,11 +29,15 @@ static int wsa_init_done = 0;
 #  if defined(OPENSSL_TANDEM_FLOSS)
 #   include <floss.h(floss_select)>
 #  endif
-# elif !defined _WIN32
-#  include <unistd.h>
-#  include <sys/select.h>
-# else
+# elif defined _WIN32
 #  include <winsock.h> /* for type fd_set */
+# else
+#  include <unistd.h>
+#  if defined __VMS
+#   include <sys/socket.h>
+#  else
+#   include <sys/select.h>
+#  endif
 # endif
 
 # ifndef OPENSSL_NO_DEPRECATED_1_1_0
@@ -379,7 +383,6 @@ int BIO_sock_info(int sock,
     return 1;
 }
 
-/* TODO simplify by BIO_socket_wait() further other uses of select() in apps/ */
 /*
  * Wait on fd at most until max_time; succeed immediately if max_time == 0.
  * If for_read == 0 then assume to wait for writing, else wait for reading.

@@ -1,10 +1,12 @@
 #
-# Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
+
+# Cipher names id-aesXXX-wrap are to test aliases.
 
 # AES wrap tests from RFC3394
 Cipher = id-aes128-wrap
@@ -32,10 +34,17 @@ Key = 000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F
 Plaintext = 00112233445566778899AABBCCDDEEFF0001020304050607
 Ciphertext = A8F9BC1612C68B3FF6E6F4FBE30E71E4769C8B80A32CB8958CD5D17D6B254DA1
 
-Cipher = id-aes256-wrap
+# Testing strncasecmp
+Cipher = aes256-WRAP
 Key = 000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F
 Plaintext = 00112233445566778899AABBCCDDEEFF000102030405060708090A0B0C0D0E0F
 Ciphertext = 28C9F404C4B810F4CBCCB35CFB87F8263F5786E2D80ED326CBC7F0E71A99F43BFB988B9B7A02DD21
+
+Cipher = ID-aes256-WRAP
+Key = 000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F
+Plaintext = 00112233445566778899AABBCCDDEEFF000102030405060708090A0B0C0D0E0F
+Ciphertext = 28C9F404C4B810F4CBCCB35CFB87F8263F5786E2D80ED326CBC7F0E71A99F43BFB988B9B7A02DD21
+
 
 # Same as previous example but with invalid unwrap key: should be rejected
 # without returning any plaintext

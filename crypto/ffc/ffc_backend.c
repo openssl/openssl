@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -80,12 +80,25 @@ int ossl_ffc_params_fromdata(FFC_PARAMS *ffc, const OSSL_PARAM params[])
         if (!ossl_ffc_params_set_seed(ffc, prm->data, prm->data_size))
             goto err;
     }
-    prm  = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_VALIDATE_TYPE);
+    prm  = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_VALIDATE_PQ);
     if (prm != NULL) {
-        if (prm->data_type != OSSL_PARAM_UTF8_STRING)
+        if (!OSSL_PARAM_get_int(prm, &i))
             goto err;
-        ossl_ffc_params_set_flags(ffc, ossl_ffc_params_flags_from_name(prm->data));
+        ossl_ffc_params_enable_flags(ffc, FFC_PARAM_FLAG_VALIDATE_PQ, i);
     }
+    prm  = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_VALIDATE_G);
+    if (prm != NULL) {
+        if (!OSSL_PARAM_get_int(prm, &i))
+            goto err;
+        ossl_ffc_params_enable_flags(ffc, FFC_PARAM_FLAG_VALIDATE_G, i);
+    }
+    prm  = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_VALIDATE_LEGACY);
+    if (prm != NULL) {
+        if (!OSSL_PARAM_get_int(prm, &i))
+            goto err;
+        ossl_ffc_params_enable_flags(ffc, FFC_PARAM_FLAG_VALIDATE_LEGACY, i);
+    }
+
     prm = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_DIGEST);
     if (prm != NULL) {
         const OSSL_PARAM *p1;

@@ -26,6 +26,7 @@
 #include "internal/cryptlib.h"
 #include "internal/o_dir.h"
 #include "crypto/decoder.h"
+#include "crypto/ctype.h"        /* ossl_isdigit() */
 #include "prov/implementations.h"
 #include "prov/bio.h"
 #include "file_store_local.h"
@@ -149,15 +150,11 @@ static OSSL_DECODER_CLEANUP file_load_cleanup;
  *
  */
 static struct file_ctx_st *file_open_stream(BIO *source, const char *uri,
-                                            const char *input_type,
                                             void *provctx)
 {
     struct file_ctx_st *ctx;
 
-    if ((ctx = new_file_ctx(IS_FILE, uri, provctx)) == NULL
-        || (input_type != NULL
-            && (ctx->_.file.input_type =
-                OPENSSL_strdup(input_type)) == NULL)) {
+    if ((ctx = new_file_ctx(IS_FILE, uri, provctx)) == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -285,7 +282,7 @@ static void *file_open(void *provctx, const char *uri)
     if (S_ISDIR(st.st_mode))
         ctx = file_open_dir(path, uri, provctx);
     else if ((bio = BIO_new_file(path, "rb")) == NULL
-             || (ctx = file_open_stream(bio, uri, NULL, provctx)) == NULL)
+             || (ctx = file_open_stream(bio, uri, provctx)) == NULL)
         BIO_free_all(bio);
 
     return ctx;
@@ -299,7 +296,7 @@ void *file_attach(void *provctx, OSSL_CORE_BIO *cin)
     if (new_bio == NULL)
         return NULL;
 
-    ctx = file_open_stream(new_bio, NULL, NULL, provctx);
+    ctx = file_open_stream(new_bio, NULL, provctx);
     if (ctx == NULL)
         BIO_free(new_bio);
     return ctx;
@@ -316,6 +313,7 @@ static const OSSL_PARAM *file_settable_ctx_params(void *provctx)
         OSSL_PARAM_utf8_string(OSSL_STORE_PARAM_PROPERTIES, NULL, 0),
         OSSL_PARAM_int(OSSL_STORE_PARAM_EXPECT, NULL),
         OSSL_PARAM_octet_string(OSSL_STORE_PARAM_SUBJECT, NULL, 0),
+        OSSL_PARAM_utf8_string(OSSL_STORE_PARAM_INPUT_TYPE, NULL, 0),
         OSSL_PARAM_END
     };
     return known_settable_ctx_params;
@@ -329,12 +327,22 @@ static int file_set_ctx_params(void *loaderctx, const OSSL_PARAM params[])
     if (params == NULL)
         return 1;
 
-    p = OSSL_PARAM_locate_const(params, OSSL_STORE_PARAM_PROPERTIES);
-    if (p != NULL) {
-        OPENSSL_free(ctx->_.file.propq);
-        ctx->_.file.propq = NULL;
-        if (!OSSL_PARAM_get_utf8_string(p, &ctx->_.file.propq, 0))
-            return 0;
+    if (ctx->type != IS_DIR) {
+        /* these parameters are ignored for directories */
+        p = OSSL_PARAM_locate_const(params, OSSL_STORE_PARAM_PROPERTIES);
+        if (p != NULL) {
+            OPENSSL_free(ctx->_.file.propq);
+            ctx->_.file.propq = NULL;
+            if (!OSSL_PARAM_get_utf8_string(p, &ctx->_.file.propq, 0))
+                return 0;
+        }
+        p = OSSL_PARAM_locate_const(params, OSSL_STORE_PARAM_INPUT_TYPE);
+        if (p != NULL) {
+            OPENSSL_free(ctx->_.file.input_type);
+            ctx->_.file.input_type = NULL;
+            if (!OSSL_PARAM_get_utf8_string(p, &ctx->_.file.input_type, 0))
+                return 0;
+        }
     }
     p = OSSL_PARAM_locate_const(params, OSSL_STORE_PARAM_EXPECT);
     if (p != NULL && !OSSL_PARAM_get_int(p, &ctx->expected_type))
@@ -415,7 +423,7 @@ static int file_setup_decoders(struct file_ctx_st *ctx)
     OSSL_DECODER_INSTANCE *to_obj_inst = NULL;
     OSSL_DECODER_CLEANUP *old_cleanup = NULL;
     void *old_construct_data = NULL;
-    int ok = 0;
+    int ok = 0, expect_evp_pkey = 0;
 
     /* Setup for this session, so only if not already done */
     if (ctx->_.file.decoderctx == NULL) {
@@ -423,6 +431,11 @@ static int file_setup_decoders(struct file_ctx_st *ctx)
             ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
             goto err;
         }
+
+        expect_evp_pkey = (ctx->expected_type == 0
+                           || ctx->expected_type == OSSL_STORE_INFO_PARAMS
+                           || ctx->expected_type == OSSL_STORE_INFO_PUBKEY
+                           || ctx->expected_type == OSSL_STORE_INFO_PKEY);
 
         /* Make sure the input type is set */
         if (!OSSL_DECODER_CTX_set_input_type(ctx->_.file.decoderctx,
@@ -462,9 +475,10 @@ static int file_setup_decoders(struct file_ctx_st *ctx)
          * Since we're setting up our own constructor, we don't need to care
          * more than that...
          */
-        if (!ossl_decoder_ctx_setup_for_pkey(ctx->_.file.decoderctx,
-                                             &dummy, NULL,
-                                             libctx, ctx->_.file.propq)
+        if ((expect_evp_pkey
+             && !ossl_decoder_ctx_setup_for_pkey(ctx->_.file.decoderctx,
+                                                 &dummy, NULL,
+                                                 libctx, ctx->_.file.propq))
             || !OSSL_DECODER_CTX_add_extra(ctx->_.file.decoderctx,
                                            libctx, ctx->_.file.propq)) {
             ERR_raise(ERR_LIB_PROV, ERR_R_OSSL_DECODER_LIB);
@@ -504,6 +518,7 @@ static int file_load_file(struct file_ctx_st *ctx,
                           OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
 {
     struct file_load_data_st data;
+    int ret, err;
 
     /* Setup the decoders (one time shot per session */
 
@@ -519,7 +534,16 @@ static int file_load_file(struct file_ctx_st *ctx,
 
     /* Launch */
 
-    return OSSL_DECODER_from_bio(ctx->_.file.decoderctx, ctx->_.file.file);
+    ERR_set_mark();
+    ret = OSSL_DECODER_from_bio(ctx->_.file.decoderctx, ctx->_.file.file);
+    if (BIO_eof(ctx->_.file.file)
+        && ((err = ERR_peek_last_error()) != 0)
+        && ERR_GET_LIB(err) == ERR_LIB_OSSL_DECODER
+        && ERR_GET_REASON(err) == ERR_R_UNSUPPORTED)
+        ERR_pop_to_mark();
+    else
+        ERR_clear_last_mark();
+    return ret;
 }
 
 /*-

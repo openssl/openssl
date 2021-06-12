@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2013-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -71,11 +71,11 @@ static int aesni_cbc_hmac_sha256_init_key(EVP_CIPHER_CTX *ctx,
 
     if (enc)
         ret = aesni_set_encrypt_key(inkey,
-                                    EVP_CIPHER_CTX_key_length(ctx) * 8,
+                                    EVP_CIPHER_CTX_get_key_length(ctx) * 8,
                                     &key->ks);
     else
         ret = aesni_set_decrypt_key(inkey,
-                                    EVP_CIPHER_CTX_key_length(ctx) * 8,
+                                    EVP_CIPHER_CTX_get_key_length(ctx) * 8,
                                     &key->ks);
 
     SHA256_Init(&key->head);    /* handy when benchmarking */
@@ -439,7 +439,7 @@ static int aesni_cbc_hmac_sha256_cipher(EVP_CIPHER_CTX *ctx,
     if (len % AES_BLOCK_SIZE)
         return 0;
 
-    if (EVP_CIPHER_CTX_encrypting(ctx)) {
+    if (EVP_CIPHER_CTX_is_encrypting(ctx)) {
         if (plen == NO_PAYLOAD_LENGTH)
             plen = len;
         else if (len !=
@@ -794,7 +794,7 @@ static int aesni_cbc_hmac_sha256_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
 
             len = p[arg - 2] << 8 | p[arg - 1];
 
-            if (EVP_CIPHER_CTX_encrypting(ctx)) {
+            if (EVP_CIPHER_CTX_is_encrypting(ctx)) {
                 key->payload_length = len;
                 if ((key->aux.tls_ver =
                      p[arg - 4] << 8 | p[arg - 3]) >= TLS1_1_VERSION) {
@@ -835,7 +835,7 @@ static int aesni_cbc_hmac_sha256_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
 
             inp_len = param->inp[11] << 8 | param->inp[12];
 
-            if (EVP_CIPHER_CTX_encrypting(ctx)) {
+            if (EVP_CIPHER_CTX_is_encrypting(ctx)) {
                 if ((param->inp[9] << 8 | param->inp[10]) < TLS1_1_VERSION)
                     return -1;
 
@@ -898,6 +898,7 @@ static EVP_CIPHER aesni_128_cbc_hmac_sha256_cipher = {
     AES_BLOCK_SIZE, 16, AES_BLOCK_SIZE,
     EVP_CIPH_CBC_MODE | EVP_CIPH_FLAG_DEFAULT_ASN1 |
         EVP_CIPH_FLAG_AEAD_CIPHER | EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK,
+    EVP_ORIG_GLOBAL,
     aesni_cbc_hmac_sha256_init_key,
     aesni_cbc_hmac_sha256_cipher,
     NULL,
@@ -917,6 +918,7 @@ static EVP_CIPHER aesni_256_cbc_hmac_sha256_cipher = {
     AES_BLOCK_SIZE, 32, AES_BLOCK_SIZE,
     EVP_CIPH_CBC_MODE | EVP_CIPH_FLAG_DEFAULT_ASN1 |
         EVP_CIPH_FLAG_AEAD_CIPHER | EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK,
+    EVP_ORIG_GLOBAL,
     aesni_cbc_hmac_sha256_init_key,
     aesni_cbc_hmac_sha256_cipher,
     NULL,

@@ -24,12 +24,12 @@ typedef struct {
     const char *name;
     int namelen;
     unsigned int name_flags;
-    unsigned long option_value;
+    uint64_t option_value;
 } ssl_flag_tbl;
 
 /* Switch table: use for single command line switches like no_tls2 */
 typedef struct {
-    unsigned long option_value;
+    uint64_t option_value;
     unsigned int name_flags;
 } ssl_switch_tbl;
 
@@ -84,7 +84,7 @@ struct ssl_conf_ctx_st {
     SSL_CTX *ctx;
     SSL *ssl;
     /* Pointer to SSL or SSL_CTX options field or NULL if none */
-    uint32_t *poptions;
+    uint64_t *poptions;
     /* Certificate filenames for each type */
     char *cert_filename[SSL_PKEY_NUM];
     /* Pointer to SSL or SSL_CTX cert_flags or NULL if none */
@@ -104,9 +104,10 @@ struct ssl_conf_ctx_st {
 };
 
 static void ssl_set_option(SSL_CONF_CTX *cctx, unsigned int name_flags,
-                           unsigned long option_value, int onoff)
+                           uint64_t option_value, int onoff)
 {
     uint32_t *pflags;
+
     if (cctx->poptions == NULL)
         return;
     if (name_flags & SSL_TFLAG_INV)
@@ -122,8 +123,11 @@ static void ssl_set_option(SSL_CONF_CTX *cctx, unsigned int name_flags,
         break;
 
     case SSL_TFLAG_OPTION:
-        pflags = cctx->poptions;
-        break;
+        if (onoff)
+            *cctx->poptions |= option_value;
+        else
+            *cctx->poptions &= ~option_value;
+        return;
 
     default:
         return;
@@ -379,6 +383,8 @@ static int cmd_Options(SSL_CONF_CTX *cctx, const char *value)
         SSL_FLAG_TBL_SRV("ECDHSingle", SSL_OP_SINGLE_ECDH_USE),
         SSL_FLAG_TBL("UnsafeLegacyRenegotiation",
                      SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION),
+        SSL_FLAG_TBL("ClientRenegotiation",
+                     SSL_OP_ALLOW_CLIENT_RENEGOTIATION),
         SSL_FLAG_TBL_INV("EncryptThenMac", SSL_OP_NO_ENCRYPT_THEN_MAC),
         SSL_FLAG_TBL("NoRenegotiation", SSL_OP_NO_RENEGOTIATION),
         SSL_FLAG_TBL("AllowNoDHEKEX", SSL_OP_ALLOW_NO_DHE_KEX),
@@ -386,7 +392,8 @@ static int cmd_Options(SSL_CONF_CTX *cctx, const char *value)
         SSL_FLAG_TBL("MiddleboxCompat", SSL_OP_ENABLE_MIDDLEBOX_COMPAT),
         SSL_FLAG_TBL_INV("AntiReplay", SSL_OP_NO_ANTI_REPLAY),
         SSL_FLAG_TBL_INV("ExtendedMasterSecret", SSL_OP_NO_EXTENDED_MASTER_SECRET),
-        SSL_FLAG_TBL_INV("CANames", SSL_OP_DISABLE_TLSEXT_CA_NAMES)
+        SSL_FLAG_TBL_INV("CANames", SSL_OP_DISABLE_TLSEXT_CA_NAMES),
+        SSL_FLAG_TBL("KTLS", SSL_OP_ENABLE_KTLS)
     };
     if (value == NULL)
         return -3;
@@ -683,7 +690,8 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
     SSL_CONF_CMD_SWITCH("no_ticket", 0),
     SSL_CONF_CMD_SWITCH("serverpref", SSL_CONF_FLAG_SERVER),
     SSL_CONF_CMD_SWITCH("legacy_renegotiation", 0),
-    SSL_CONF_CMD_SWITCH("legacy_server_connect", SSL_CONF_FLAG_SERVER),
+    SSL_CONF_CMD_SWITCH("client_renegotiation", SSL_CONF_FLAG_SERVER),
+    SSL_CONF_CMD_SWITCH("legacy_server_connect", SSL_CONF_FLAG_CLIENT),
     SSL_CONF_CMD_SWITCH("no_renegotiation", 0),
     SSL_CONF_CMD_SWITCH("no_resumption_on_reneg", SSL_CONF_FLAG_SERVER),
     SSL_CONF_CMD_SWITCH("no_legacy_server_connect", SSL_CONF_FLAG_SERVER),
@@ -761,6 +769,8 @@ static const ssl_switch_tbl ssl_cmd_switches[] = {
     {SSL_OP_CIPHER_SERVER_PREFERENCE, 0}, /* serverpref */
     /* legacy_renegotiation */
     {SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION, 0},
+    /* Allow client renegotiation */
+    {SSL_OP_ALLOW_CLIENT_RENEGOTIATION, 0},
     /* legacy_server_connect */
     {SSL_OP_LEGACY_SERVER_CONNECT, 0},
     /* no_renegotiation */

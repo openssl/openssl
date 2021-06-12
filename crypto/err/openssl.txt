@@ -66,6 +66,7 @@ ASN1_R_INVALID_STRING_TABLE_VALUE:218:invalid string table value
 ASN1_R_INVALID_UNIVERSALSTRING_LENGTH:133:invalid universalstring length
 ASN1_R_INVALID_UTF8STRING:134:invalid utf8string
 ASN1_R_INVALID_VALUE:219:invalid value
+ASN1_R_LENGTH_TOO_LONG:231:length too long
 ASN1_R_LIST_ERROR:188:list error
 ASN1_R_MIME_NO_CONTENT_TYPE:206:mime no content type
 ASN1_R_MIME_PARSE_ERROR:207:mime parse error
@@ -392,6 +393,7 @@ CONF_R_NUMBER_TOO_LARGE:121:number too large
 CONF_R_OPENSSL_CONF_REFERENCES_MISSING_SECTION:124:\
 	openssl conf references missing section
 CONF_R_RECURSIVE_DIRECTORY_INCLUDE:111:recursive directory include
+CONF_R_RELATIVE_PATH:125:relative path
 CONF_R_SSL_COMMAND_SECTION_EMPTY:117:ssl command section empty
 CONF_R_SSL_COMMAND_SECTION_NOT_FOUND:118:ssl command section not found
 CONF_R_SSL_SECTION_EMPTY:119:ssl section empty
@@ -425,7 +427,6 @@ CRMF_R_UNSUPPORTED_METHOD_FOR_CREATING_POPO:115:\
 CRMF_R_UNSUPPORTED_POPO_METHOD:116:unsupported popo method
 CRYPTO_R_BAD_ALGORITHM_NAME:117:bad algorithm name
 CRYPTO_R_CONFLICTING_NAMES:118:conflicting names
-CRYPTO_R_FIPS_MODE_NOT_SUPPORTED:101:fips mode not supported
 CRYPTO_R_HEX_STRING_TOO_SHORT:121:hex string too short
 CRYPTO_R_ILLEGAL_HEX_DIGIT:102:illegal hex digit
 CRYPTO_R_INSUFFICIENT_DATA_SPACE:106:insufficient data space
@@ -554,6 +555,7 @@ EC_R_INVALID_FORM:104:invalid form
 EC_R_INVALID_GENERATOR:173:invalid generator
 EC_R_INVALID_GROUP_ORDER:122:invalid group order
 EC_R_INVALID_KEY:116:invalid key
+EC_R_INVALID_LENGTH:117:invalid length
 EC_R_INVALID_NAMED_GROUP_CONVERSION:174:invalid named group conversion
 EC_R_INVALID_OUTPUT_LENGTH:161:invalid output length
 EC_R_INVALID_P:172:invalid p
@@ -662,17 +664,15 @@ EVP_R_DEFAULT_QUERY_PARSE_ERROR:210:default query parse error
 EVP_R_DIFFERENT_KEY_TYPES:101:different key types
 EVP_R_DIFFERENT_PARAMETERS:153:different parameters
 EVP_R_ERROR_LOADING_SECTION:165:error loading section
-EVP_R_ERROR_SETTING_FIPS_MODE:166:error setting fips mode
 EVP_R_EXPECTING_AN_HMAC_KEY:174:expecting an hmac key
 EVP_R_EXPECTING_AN_RSA_KEY:127:expecting an rsa key
 EVP_R_EXPECTING_A_DH_KEY:128:expecting a dh key
 EVP_R_EXPECTING_A_DSA_KEY:129:expecting a dsa key
-EVP_R_EXPECTING_A_ECX_KEY:219:expecting a ecx key
-EVP_R_EXPECTING_A_EC_KEY:142:expecting a ec key
+EVP_R_EXPECTING_A_ECX_KEY:219:expecting an ecx key
+EVP_R_EXPECTING_A_EC_KEY:142:expecting an ec key
 EVP_R_EXPECTING_A_POLY1305_KEY:164:expecting a poly1305 key
 EVP_R_EXPECTING_A_SIPHASH_KEY:175:expecting a siphash key
 EVP_R_FINAL_ERROR:188:final error
-EVP_R_FIPS_MODE_NOT_SUPPORTED:167:fips mode not supported
 EVP_R_GENERATE_ERROR:214:generate error
 EVP_R_GET_RAW_KEY_FAILED:182:get raw key failed
 EVP_R_ILLEGAL_SCRYPT_PARAMETERS:171:illegal scrypt parameters
@@ -682,7 +682,6 @@ EVP_R_INITIALIZATION_ERROR:134:initialization error
 EVP_R_INPUT_NOT_INITIALIZED:111:input not initialized
 EVP_R_INVALID_CUSTOM_LENGTH:185:invalid custom length
 EVP_R_INVALID_DIGEST:152:invalid digest
-EVP_R_INVALID_FIPS_MODE:168:invalid fips mode
 EVP_R_INVALID_IV_LENGTH:194:invalid iv length
 EVP_R_INVALID_KEY:163:invalid key
 EVP_R_INVALID_KEY_LENGTH:130:invalid key length
@@ -725,6 +724,7 @@ EVP_R_PKEY_APPLICATION_ASN1_METHOD_ALREADY_REGISTERED:179:\
 EVP_R_PRIVATE_KEY_DECODE_ERROR:145:private key decode error
 EVP_R_PRIVATE_KEY_ENCODE_ERROR:146:private key encode error
 EVP_R_PUBLIC_KEY_NOT_RSA:106:public key not rsa
+EVP_R_SETTING_XOF_FAILED:227:setting xof failed
 EVP_R_SET_DEFAULT_PROPERTY_FAILURE:209:set default property failure
 EVP_R_TOO_MANY_RECORDS:183:too many records
 EVP_R_UNABLE_TO_ENABLE_LOCKING:212:unable to enable locking
@@ -761,6 +761,7 @@ HTTP_R_ERROR_PARSING_URL:101:error parsing url
 HTTP_R_ERROR_RECEIVING:103:error receiving
 HTTP_R_ERROR_SENDING:102:error sending
 HTTP_R_FAILED_READING_DATA:128:failed reading data
+HTTP_R_HEADER_PARSE_ERROR:126:header parse error
 HTTP_R_INCONSISTENT_CONTENT_LENGTH:120:inconsistent content length
 HTTP_R_INVALID_PORT_NUMBER:123:invalid port number
 HTTP_R_INVALID_URL_PATH:125:invalid url path
@@ -775,6 +776,7 @@ HTTP_R_REDIRECTION_FROM_HTTPS_TO_HTTP:112:redirection from https to http
 HTTP_R_REDIRECTION_NOT_ENABLED:116:redirection not enabled
 HTTP_R_RESPONSE_LINE_TOO_LONG:113:response line too long
 HTTP_R_RESPONSE_PARSE_ERROR:104:response parse error
+HTTP_R_SERVER_CANCELED_CONNECTION:127:server canceled connection
 HTTP_R_SOCK_NOT_SUPPORTED:122:sock not supported
 HTTP_R_STATUS_CODE_UNSUPPORTED:114:status code unsupported
 HTTP_R_TLS_NOT_ENABLED:107:tls not enabled
@@ -810,6 +812,8 @@ OCSP_R_STATUS_TOO_OLD:127:status too old
 OCSP_R_UNKNOWN_MESSAGE_DIGEST:119:unknown message digest
 OCSP_R_UNKNOWN_NID:120:unknown nid
 OCSP_R_UNSUPPORTED_REQUESTORNAME_TYPE:129:unsupported requestorname type
+OSSL_DECODER_R_COULD_NOT_DECODE_OBJECT:101:could not decode object
+OSSL_DECODER_R_DECODER_NOT_FOUND:102:decoder not found
 OSSL_DECODER_R_MISSING_GET_PARAMS:100:missing get params
 OSSL_ENCODER_R_ENCODER_NOT_FOUND:101:encoder not found
 OSSL_ENCODER_R_INCORRECT_PROPERTY_QUERY:100:incorrect property query
@@ -829,6 +833,7 @@ OSSL_STORE_R_NOT_A_NAME:103:not a name
 OSSL_STORE_R_NOT_A_PRIVATE_KEY:102:not a private key
 OSSL_STORE_R_NOT_A_PUBLIC_KEY:122:not a public key
 OSSL_STORE_R_NOT_PARAMETERS:104:not parameters
+OSSL_STORE_R_NO_LOADERS_FOUND:123:no loaders found
 OSSL_STORE_R_PASSPHRASE_CALLBACK_ERROR:114:passphrase callback error
 OSSL_STORE_R_PATH_MUST_BE_ABSOLUTE:108:path must be absolute
 OSSL_STORE_R_SEARCH_ONLY_SUPPORTED_FOR_DIRECTORIES:119:\
@@ -992,6 +997,7 @@ PROV_R_INVALID_KEY_LENGTH:105:invalid key length
 PROV_R_INVALID_MAC:151:invalid mac
 PROV_R_INVALID_MGF1_MD:167:invalid mgf1 md
 PROV_R_INVALID_MODE:125:invalid mode
+PROV_R_INVALID_OUTPUT_LENGTH:217:invalid output length
 PROV_R_INVALID_PADDING_MODE:168:invalid padding mode
 PROV_R_INVALID_PUBINFO:198:invalid pubinfo
 PROV_R_INVALID_SALT_LENGTH:112:invalid salt length
@@ -1005,6 +1011,8 @@ PROV_R_INVALID_X931_DIGEST:170:invalid x931 digest
 PROV_R_IN_ERROR_STATE:192:in error state
 PROV_R_KEY_SETUP_FAILED:101:key setup failed
 PROV_R_KEY_SIZE_TOO_SMALL:171:key size too small
+PROV_R_LENGTH_TOO_LARGE:202:length too large
+PROV_R_MISMATCHING_DOMAIN_PARAMETERS:203:mismatching domain parameters
 PROV_R_MISSING_CEK_ALG:144:missing cek alg
 PROV_R_MISSING_CIPHER:155:missing cipher
 PROV_R_MISSING_CONFIG_DATA:213:missing config data
@@ -1145,6 +1153,7 @@ RSA_R_INVALID_HEADER:137:invalid header
 RSA_R_INVALID_KEYPAIR:171:invalid keypair
 RSA_R_INVALID_KEY_LENGTH:173:invalid key length
 RSA_R_INVALID_LABEL:160:invalid label
+RSA_R_INVALID_LENGTH:181:invalid length
 RSA_R_INVALID_MESSAGE_LENGTH:131:invalid message length
 RSA_R_INVALID_MGF1_MD:156:invalid mgf1 md
 RSA_R_INVALID_MODULUS:174:invalid modulus
@@ -1183,6 +1192,8 @@ RSA_R_PSS_SALTLEN_TOO_SMALL:164:pss saltlen too small
 RSA_R_PUB_EXPONENT_OUT_OF_RANGE:178:pub exponent out of range
 RSA_R_P_NOT_PRIME:128:p not prime
 RSA_R_Q_NOT_PRIME:129:q not prime
+RSA_R_RANDOMNESS_SOURCE_STRENGTH_INSUFFICIENT:180:\
+	randomness source strength insufficient
 RSA_R_RSA_OPERATIONS_NOT_SUPPORTED:130:rsa operations not supported
 RSA_R_SLEN_CHECK_FAILED:136:salt length check failed
 RSA_R_SLEN_RECOVERY_FAILED:135:salt length recovery failed
@@ -1219,8 +1230,6 @@ SSL_R_APPLICATION_DATA_AFTER_CLOSE_NOTIFY:291:\
 SSL_R_APP_DATA_IN_HANDSHAKE:100:app data in handshake
 SSL_R_ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT:272:\
 	attempt to reuse session in different context
-SSL_R_AT_LEAST_TLS_1_0_NEEDED_IN_FIPS_MODE:143:\
-	at least TLS 1.0 needed in FIPS mode
 SSL_R_AT_LEAST_TLS_1_2_NEEDED_IN_SUITEB_MODE:158:\
 	at least (D)TLS 1.2 needed in Suite B mode
 SSL_R_BAD_CHANGE_CIPHER_SPEC:103:bad change cipher spec
@@ -1360,6 +1369,7 @@ SSL_R_MISSING_DSA_SIGNING_CERT:165:missing dsa signing cert
 SSL_R_MISSING_ECDSA_SIGNING_CERT:381:missing ecdsa signing cert
 SSL_R_MISSING_FATAL:256:missing fatal
 SSL_R_MISSING_PARAMETERS:290:missing parameters
+SSL_R_MISSING_PSK_KEX_MODES_EXTENSION:310:missing psk kex modes extension
 SSL_R_MISSING_RSA_CERTIFICATE:168:missing rsa certificate
 SSL_R_MISSING_RSA_ENCRYPTING_CERT:169:missing rsa encrypting cert
 SSL_R_MISSING_RSA_SIGNING_CERT:170:missing rsa signing cert
@@ -1405,6 +1415,7 @@ SSL_R_NO_VALID_SCTS:216:no valid scts
 SSL_R_NO_VERIFY_COOKIE_CALLBACK:403:no verify cookie callback
 SSL_R_NULL_SSL_CTX:195:null ssl ctx
 SSL_R_NULL_SSL_METHOD_PASSED:196:null ssl method passed
+SSL_R_OCSP_CALLBACK_FAILURE:305:ocsp callback failure
 SSL_R_OLD_SESSION_CIPHER_NOT_RETURNED:197:old session cipher not returned
 SSL_R_OLD_SESSION_COMPRESSION_ALGORITHM_NOT_RETURNED:344:\
 	old session compression algorithm not returned

@@ -10,14 +10,14 @@ SSL_get_secure_renegotiation_support - manipulate SSL options
 
  #include <openssl/ssl.h>
 
- long SSL_CTX_set_options(SSL_CTX *ctx, long options);
- long SSL_set_options(SSL *ssl, long options);
+ uint64_t SSL_CTX_set_options(SSL_CTX *ctx, uint64_t options);
+ uint64_t SSL_set_options(SSL *ssl, uint64_t options);
 
- long SSL_CTX_clear_options(SSL_CTX *ctx, long options);
- long SSL_clear_options(SSL *ssl, long options);
+ uint64_t SSL_CTX_clear_options(SSL_CTX *ctx, uint64_t options);
+ uint64_t SSL_clear_options(SSL *ssl, uint64_t options);
 
- long SSL_CTX_get_options(SSL_CTX *ctx);
- long SSL_get_options(SSL *ssl);
+ uint64_t SSL_CTX_get_options(SSL_CTX *ctx);
+ uint64_t SSL_get_options(SSL *ssl);
 
  long SSL_get_secure_renegotiation_support(SSL *ssl);
 
@@ -88,8 +88,7 @@ implementations.
 
 =item SSL_OP_ALL
 
-All of the above bug workarounds plus B<SSL_OP_LEGACY_SERVER_CONNECT> as
-mentioned below.
+All of the above bug workarounds.
 
 =back
 
@@ -193,8 +192,7 @@ servers. See the B<SECURE RENEGOTIATION> section for more details.
 =item SSL_OP_LEGACY_SERVER_CONNECT
 
 Allow legacy insecure renegotiation between OpenSSL and unpatched servers
-B<only>: this option is currently set by default. See the
-B<SECURE RENEGOTIATION> section for more details.
+B<only>. See the B<SECURE RENEGOTIATION> section for more details.
 
 =item SSL_OP_NO_ENCRYPT_THEN_MAC
 
@@ -279,6 +277,29 @@ responsible for cleansing all other buffers. Most notably, this
 applies to buffers passed to functions like L<SSL_read(3)>,
 L<SSL_peek(3)> but also like L<SSL_write(3)>.
 
+=item SSL_OP_ENABLE_KTLS
+
+Enable the use of kernel TLS. In order to benefit from kernel TLS OpenSSL must
+have been compiled with support for it, and it must be supported by the
+negotiated ciphersuites and extensions. The specific ciphersuites and extensions
+that are supported may vary by platform and kernel version.
+
+The kernel TLS data-path implements the record layer, and the encryption
+algorithm. The kernel will utilize the best hardware
+available for encryption. Using the kernel data-path should reduce the memory
+footprint of OpenSSL because no buffering is required. Also, the throughput
+should improve because data copy is avoided when user data is encrypted into
+kernel memory instead of the usual encrypt then copy to kernel.
+
+Kernel TLS might not support all the features of OpenSSL. For instance,
+renegotiation, and setting the maximum fragment size is not possible as of
+Linux 4.20.
+
+Note that with kernel TLS enabled some cryptographic operations are performed
+by the kernel directly and not via any available OpenSSL Providers. This might
+be undesirable if, for example, the application requires all cryptographic
+operations to be performed by the FIPS provider.
+
 =back
 
 The following options no longer have any effect but their identifiers are
@@ -355,15 +376,10 @@ and renegotiation between patched OpenSSL clients and unpatched servers
 succeeds. If neither option is set then initial connections to unpatched
 servers will fail.
 
-The option B<SSL_OP_LEGACY_SERVER_CONNECT> is currently set by default even
-though it has security implications: otherwise it would be impossible to
-connect to unpatched servers (i.e. all of them initially) and this is clearly
-not acceptable. Renegotiation is permitted because this does not add any
-additional security issues: during an attack clients do not see any
-renegotiations anyway.
-
-As more servers become patched the option B<SSL_OP_LEGACY_SERVER_CONNECT> will
-B<not> be set by default in a future version of OpenSSL.
+Setting the option B<SSL_OP_LEGACY_SERVER_CONNECT> has security implications;
+clients that are willing to connect to servers that do not implement
+RFC 5746 secure renegotiation are subject to attacks such as
+CVE-2009-3555.
 
 OpenSSL client applications wishing to ensure they can connect to unpatched
 servers should always B<set> B<SSL_OP_LEGACY_SERVER_CONNECT>
@@ -413,7 +429,7 @@ options were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2001-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

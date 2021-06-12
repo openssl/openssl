@@ -65,6 +65,7 @@ extern "C" {
 
 /* cipher parameters */
 #define OSSL_CIPHER_PARAM_PADDING              "padding"      /* uint */
+#define OSSL_CIPHER_PARAM_USE_BITS             "use-bits"     /* uint */
 #define OSSL_CIPHER_PARAM_TLS_VERSION          "tls-version"  /* uint */
 #define OSSL_CIPHER_PARAM_TLS_MAC              "tls-mac"      /* octet_ptr */
 #define OSSL_CIPHER_PARAM_TLS_MAC_SIZE         "tls-mac-size" /* size_t */
@@ -74,6 +75,7 @@ extern "C" {
 #define OSSL_CIPHER_PARAM_CUSTOM_IV            "custom-iv"    /* int, 0 or 1 */
 #define OSSL_CIPHER_PARAM_CTS                  "cts"          /* int, 0 or 1 */
 #define OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK      "tls-multi"    /* int, 0 or 1 */
+#define OSSL_CIPHER_PARAM_HAS_RAND_KEY         "has-randkey"  /* int, 0 or 1 */
 #define OSSL_CIPHER_PARAM_KEYLEN               "keylen"       /* size_t */
 #define OSSL_CIPHER_PARAM_IVLEN                "ivlen"        /* size_t */
 #define OSSL_CIPHER_PARAM_IV                   "iv"           /* octet_string OR octet_ptr */
@@ -94,7 +96,7 @@ extern "C" {
 #define OSSL_CIPHER_PARAM_SPEED                "speed"        /* uint */
 #define OSSL_CIPHER_PARAM_CTS_MODE             "cts_mode"     /* utf8_string */
 /* For passing the AlgorithmIdentifier parameter in DER form */
-#define OSSL_CIPHER_PARAM_ALG_ID               "alg_id_param" /* octet_string */
+#define OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS  "alg_id_param" /* octet_string */
 
 #define OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_SEND_FRAGMENT                    \
     "tls1multi_maxsndfrag" /* uint */
@@ -169,6 +171,7 @@ extern "C" {
 #define OSSL_MAC_PARAM_DIGEST           OSSL_ALG_PARAM_DIGEST     /* utf8 string */
 #define OSSL_MAC_PARAM_PROPERTIES       OSSL_ALG_PARAM_PROPERTIES /* utf8 string */
 #define OSSL_MAC_PARAM_SIZE             "size"                    /* size_t */
+#define OSSL_MAC_PARAM_BLOCK_SIZE       "block-size"              /* size_t */
 #define OSSL_MAC_PARAM_TLS_DATA_SIZE    "tls-data-size"           /* size_t */
 
 /* Known MAC names */
@@ -207,7 +210,6 @@ extern "C" {
 #define OSSL_KDF_PARAM_SSHKDF_SESSION_ID "session_id" /* octet string */
 #define OSSL_KDF_PARAM_SSHKDF_TYPE  "type"      /* int */
 #define OSSL_KDF_PARAM_SIZE         "size"      /* size_t */
-#define OSSL_KDF_PARAM_CIPHER       OSSL_ALG_PARAM_CIPHER     /* utf8 string */
 #define OSSL_KDF_PARAM_CONSTANT     "constant"  /* octet string */
 #define OSSL_KDF_PARAM_PKCS12_ID    "id"        /* int */
 #define OSSL_KDF_PARAM_KBKDF_USE_L  "use-l"             /* int */
@@ -221,6 +223,7 @@ extern "C" {
 
 /* Known KDF names */
 #define OSSL_KDF_NAME_HKDF           "HKDF"
+#define OSSL_KDF_NAME_PBKDF1         "PBKDF1"
 #define OSSL_KDF_NAME_PBKDF2         "PBKDF2"
 #define OSSL_KDF_NAME_SCRYPT         "SCRYPT"
 #define OSSL_KDF_NAME_SSHKDF         "SSHKDF"
@@ -295,12 +298,9 @@ extern "C" {
 #define OSSL_PKEY_PARAM_FFC_SEED            "seed"
 #define OSSL_PKEY_PARAM_FFC_COFACTOR        "j"
 #define OSSL_PKEY_PARAM_FFC_H               "hindex"
-#define OSSL_PKEY_PARAM_FFC_VALIDATE_TYPE   "valid-type"
-
-/* Diffie-Hellman/DSA Parameters parameter validation types */
-#define OSSL_FFC_PARAM_VALIDATE_PQ          "validate-pq"
-#define OSSL_FFC_PARAM_VALIDATE_G           "validate-g"
-#define OSSL_FFC_PARAM_VALIDATE_PQG         "validate-pqg"
+#define OSSL_PKEY_PARAM_FFC_VALIDATE_PQ     "validate-pq"
+#define OSSL_PKEY_PARAM_FFC_VALIDATE_G      "validate-g"
+#define OSSL_PKEY_PARAM_FFC_VALIDATE_LEGACY "validate-legacy"
 
 /* Diffie-Hellman params */
 #define OSSL_PKEY_PARAM_DH_GENERATOR        "safeprime-generator"
@@ -311,20 +311,21 @@ extern "C" {
 #define OSSL_PKEY_PARAM_EC_PUB_Y     "qy"
 
 /* Elliptic Curve Explicit Domain Parameters */
-#define OSSL_PKEY_PARAM_EC_FIELD_TYPE     "field-type"
-#define OSSL_PKEY_PARAM_EC_P              "p"
-#define OSSL_PKEY_PARAM_EC_A              "a"
-#define OSSL_PKEY_PARAM_EC_B              "b"
-#define OSSL_PKEY_PARAM_EC_GENERATOR      "generator"
-#define OSSL_PKEY_PARAM_EC_ORDER          "order"
-#define OSSL_PKEY_PARAM_EC_COFACTOR       "cofactor"
-#define OSSL_PKEY_PARAM_EC_SEED           "seed"
-#define OSSL_PKEY_PARAM_EC_CHAR2_M        "m"
-#define OSSL_PKEY_PARAM_EC_CHAR2_TYPE     "basis-type"
-#define OSSL_PKEY_PARAM_EC_CHAR2_TP_BASIS "tp"
-#define OSSL_PKEY_PARAM_EC_CHAR2_PP_K1    "k1"
-#define OSSL_PKEY_PARAM_EC_CHAR2_PP_K2    "k2"
-#define OSSL_PKEY_PARAM_EC_CHAR2_PP_K3    "k3"
+#define OSSL_PKEY_PARAM_EC_FIELD_TYPE                   "field-type"
+#define OSSL_PKEY_PARAM_EC_P                            "p"
+#define OSSL_PKEY_PARAM_EC_A                            "a"
+#define OSSL_PKEY_PARAM_EC_B                            "b"
+#define OSSL_PKEY_PARAM_EC_GENERATOR                    "generator"
+#define OSSL_PKEY_PARAM_EC_ORDER                        "order"
+#define OSSL_PKEY_PARAM_EC_COFACTOR                     "cofactor"
+#define OSSL_PKEY_PARAM_EC_SEED                         "seed"
+#define OSSL_PKEY_PARAM_EC_CHAR2_M                      "m"
+#define OSSL_PKEY_PARAM_EC_CHAR2_TYPE                   "basis-type"
+#define OSSL_PKEY_PARAM_EC_CHAR2_TP_BASIS               "tp"
+#define OSSL_PKEY_PARAM_EC_CHAR2_PP_K1                  "k1"
+#define OSSL_PKEY_PARAM_EC_CHAR2_PP_K2                  "k2"
+#define OSSL_PKEY_PARAM_EC_CHAR2_PP_K3                  "k3"
+#define OSSL_PKEY_PARAM_EC_DECODED_FROM_EXPLICIT_PARAMS "decoded-from-explicit"
 
 /* Elliptic Curve Key Parameters */
 #define OSSL_PKEY_PARAM_USE_COFACTOR_FLAG "use-cofactor-flag"
@@ -468,16 +469,11 @@ extern "C" {
  */
 #define OSSL_ENCODER_PARAM_CIPHER           OSSL_ALG_PARAM_CIPHER
 #define OSSL_ENCODER_PARAM_PROPERTIES       OSSL_ALG_PARAM_PROPERTIES
-#define OSSL_ENCODER_PARAM_INPUT_TYPE       "input-type"
-#define OSSL_ENCODER_PARAM_OUTPUT_TYPE      "output-type"
-#define OSSL_ENCODER_PARAM_OUTPUT_STRUCTURE "output-structure"
 /* Currently PVK only, but reusable for others as needed */
 #define OSSL_ENCODER_PARAM_ENCRYPT_LEVEL    "encrypt-level"
 #define OSSL_ENCODER_PARAM_SAVE_PARAMETERS  "save-parameters" /* integer */
 
 #define OSSL_DECODER_PARAM_PROPERTIES       OSSL_ALG_PARAM_PROPERTIES
-#define OSSL_DECODER_PARAM_INPUT_TYPE       "input-type"
-#define OSSL_DECODER_PARAM_INPUT_STRUCTURE  "input-structure"
 
 /* Passphrase callback parameters */
 #define OSSL_PASSPHRASE_PARAM_INFO      "info"
@@ -546,6 +542,8 @@ extern "C" {
 
 /* You may want to pass properties for the provider implementation to use */
 #define OSSL_STORE_PARAM_PROPERTIES "properties"   /* utf8_string */
+/* OSSL_DECODER input type if a decoder is used by the store */
+#define OSSL_STORE_PARAM_INPUT_TYPE "input-type"   /* UTF8_STRING */
 
 # ifdef __cplusplus
 }

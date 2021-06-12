@@ -20,8 +20,9 @@ EC_GROUP_set_curve_GFp,
 EC_GROUP_get_curve_GFp,
 EC_GROUP_set_curve_GF2m,
 EC_GROUP_get_curve_GF2m,
-EC_get_builtin_curves - Functions for creating and destroying EC_GROUP
-objects
+EC_get_builtin_curves,
+OSSL_EC_curve_nid2name -
+Functions for creating and destroying EC_GROUP objects
 
 =head1 SYNOPSIS
 
@@ -52,6 +53,7 @@ objects
                                              ECPKPARAMETERS *params);
 
  size_t EC_get_builtin_curves(EC_builtin_curve *r, size_t nitems);
+ const char *OSSL_EC_curve_nid2name(int nid);
 
 Deprecated since OpenSSL 3.0, can be hidden entirely by defining
 B<OPENSSL_API_COMPAT> with a suitable version value, see
@@ -173,6 +175,8 @@ in the EC_GROUP is public anyway, this function is unnecessary.
 Its use can be safely replaced with EC_GROUP_free().
 If I<group> is NULL nothing is done.
 
+OSSL_EC_curve_nid2name() converts a curve I<nid> into the corresponding name.
+
 =head1 RETURN VALUES
 
 All EC_GROUP_new* functions return a pointer to the newly constructed group, or
@@ -183,6 +187,8 @@ available.
 
 EC_GROUP_set_curve_GFp(), EC_GROUP_get_curve_GFp(), EC_GROUP_set_curve_GF2m(),
 EC_GROUP_get_curve_GF2m() return 1 on success or 0 on error.
+
+OSSL_EC_curve_nid2name() returns a character string constant, or NULL on error.
 
 =head1 SEE ALSO
 

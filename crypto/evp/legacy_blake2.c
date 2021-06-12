@@ -22,6 +22,7 @@ static const EVP_MD blake2b_md = {
     0,
     BLAKE2B_DIGEST_LENGTH,
     0,
+    EVP_ORIG_GLOBAL,
     LEGACY_EVP_MD_METH_TABLE(blake2b_int_init, blake2b_int_update,
                              blake2b_int_final, NULL, BLAKE2B_BLOCKBYTES),
 };
@@ -36,6 +37,7 @@ static const EVP_MD blake2s_md = {
     0,
     BLAKE2S_DIGEST_LENGTH,
     0,
+    EVP_ORIG_GLOBAL,
     LEGACY_EVP_MD_METH_TABLE(blake2s_int_init, blake2s_int_update,
                              blake2s_int_final, NULL, BLAKE2S_BLOCKBYTES),
 };

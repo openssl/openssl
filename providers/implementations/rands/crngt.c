@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -83,6 +83,7 @@ static void *rand_crng_ossl_ctx_new(OSSL_LIB_CTX *ctx)
 }
 
 static const OSSL_LIB_CTX_METHOD rand_crng_ossl_ctx_method = {
+    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
     rand_crng_ossl_ctx_new,
     rand_crng_ossl_ctx_free,
 };

@@ -184,17 +184,7 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
 
 EC_KEY *EC_KEY_dup(const EC_KEY *ec_key)
 {
-    EC_KEY *ret = ossl_ec_key_new_method_int(ec_key->libctx, ec_key->propq,
-                                             ec_key->engine);
-
-    if (ret == NULL)
-        return NULL;
-
-    if (EC_KEY_copy(ret, ec_key) == NULL) {
-        EC_KEY_free(ret);
-        return NULL;
-    }
-    return ret;
+    return ossl_ec_key_dup(ec_key, OSSL_KEYMGMT_SELECT_ALL);
 }
 
 int EC_KEY_up_ref(EC_KEY *r)
@@ -308,7 +298,7 @@ static int ec_generate_key(EC_KEY *eckey, int pairwise_test)
     }
 
     do
-        if (!BN_priv_rand_range_ex(priv_key, order, ctx))
+        if (!BN_priv_rand_range_ex(priv_key, order, 0, ctx))
             goto err;
     while (BN_is_zero(priv_key)) ;
 
@@ -688,6 +678,9 @@ int EC_KEY_set_group(EC_KEY *key, const EC_GROUP *group)
         return 0;
     EC_GROUP_free(key->group);
     key->group = EC_GROUP_dup(group);
+    if (key->group != NULL && EC_GROUP_get_curve_name(key->group) == NID_sm2)
+        EC_KEY_set_flags(key, EC_FLAG_SM2_RANGE);
+
     key->dirty_cnt++;
     return (key->group == NULL) ? 0 : 1;
 }

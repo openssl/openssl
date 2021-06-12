@@ -1,52 +1,35 @@
-# We place all implementations in static libraries, and then let the
-# provider mains pilfer what they want through symbol resolution when
-# linking.
+# libcommon.a           Contains common building blocks and other routines,
+#                       potentially needed by any of our providers.
 #
-# The non-legacy implementations (libimplementations) must be made FIPS
-# agnostic as much as possible, as well as the common building blocks
-# (libcommon).  The legacy implementations (liblegacy) will never be
-# part of the FIPS provider.
+# libfips.a             Contains all algorithm implementations that should
+#                       go in the FIPS provider.  The compilations for this
+#                       library are all done with FIPS_MODULE defined.
 #
-# If there is anything that isn't FIPS agnostic, it should be set aside
-# in its own source file, which is then included directly into other
-# static libraries geared for FIPS and non-FIPS providers, and built
-# separately.
+# liblegacy.a           Contains all algorithm implementations that should
+#                       go into the legacy provider.  The compilations for
+#                       this library are all done with STATIC_LEGACY defined.
 #
-# libcommon.a           Contains common building blocks, potentially
-#                       needed both by non-legacy and legacy code.
+# libdefault.a          Contains all algorithm implementations that should
+#                       into the default or base provider.
 #
-# libimplementations.a  Contains all non-legacy implementations.
-# liblegacy.a           Contains all legacy implementations.
+# To be noted is that the FIPS provider shares source code with libcrypto,
+# which means that select source files from crypto/ are compiled for
+# libfips.a the sources from providers/implementations.
 #
-# libfips.a             Contains all things needed to support
-#                       FIPS implementations, such as code from
-#                       crypto/ and object files that contain
-#                       FIPS-specific code.  FIPS_MODULE is defined
-#                       for this library.  The FIPS module uses
-#                       this.
-# libnonfips.a          Corresponds to libfips.a, but built with
-#                       FIPS_MODULE undefined.  The default and legacy
-#                       providers use this.
+# This is how a provider module should be linked:
 #
-# This is how different provider modules should be linked:
+#     -o {modulename}.so {object files...} lib{modulename}.a libcommon.a
 #
-# FIPS:
-#     -o fips.so {object files...} libimplementations.a libcommon.a libfips.a
-# Non-FIPS:
-#     -o module.so {object files...} libimplementations.a libcommon.a libnonfips.a
+# It is crucial that code that checks the FIPS_MODULE macro ends up in
+# libfips.a.
+# It is crucial that code that checks the STATIC_LEGACY macro ends up in
+# liblegacy.a.
+# It is recommended that code that is written for libcommon.a doesn't end
+# up depending on libfips.a, liblegacy.a or libdefault.a
 #
-# It is crucial that code that checks for the FIPS_MODULE macro end up in
-# libfips.a and libnonfips.a, never in libcommon.a.
-# It is crucial that such code is written so libfips.a and libnonfips.a doesn't
-# end up depending on libimplementations.a or libcommon.a.
-# It is crucial that such code is written so libcommon.a doesn't end up
-# depending on libimplementations.a.
-#
-# Code in providers/implementations/ should be written in such a way that the
-# OSSL_DISPATCH arrays (and preferably the majority of the actual code) ends
-# up in either libimplementations.a or liblegacy.a.
-# If need be, write an abstraction layer in separate source files and make them
-# libfips.a / libnonfips.a sources.
+# Code in providers/implementations/ should be written in such a way that
+# the OSSL_DISPATCH arrays (and preferably the majority of the actual code)
+# end up in either libfips.a, liblegacy.a or libdefault.a.
 
 SUBDIRS=common implementations
 
@@ -54,10 +37,10 @@ INCLUDE[../libcrypto]=common/include
 
 # Libraries we're dealing with
 $LIBCOMMON=libcommon.a
-$LIBIMPLEMENTATIONS=libimplementations.a
-$LIBLEGACY=liblegacy.a
-$LIBNONFIPS=libnonfips.a
 $LIBFIPS=libfips.a
+$LIBLEGACY=liblegacy.a
+$LIBDEFAULT=libdefault.a
+LIBS{noinst}=$LIBDEFAULT $LIBCOMMON
 
 # Enough of our implementations include prov/ciphercommon.h (present in
 # providers/implementations/include), which includes crypto/*_platform.h
@@ -66,31 +49,22 @@ $LIBFIPS=libfips.a
 $COMMON_INCLUDES=../crypto ../include implementations/include common/include
 
 INCLUDE[$LIBCOMMON]=$COMMON_INCLUDES
-INCLUDE[$LIBIMPLEMENTATIONS]=.. $COMMON_INCLUDES
-INCLUDE[$LIBLEGACY]=.. $COMMON_INCLUDES
-INCLUDE[$LIBNONFIPS]=.. $COMMON_INCLUDES
 INCLUDE[$LIBFIPS]=.. $COMMON_INCLUDES
+INCLUDE[$LIBLEGACY]=.. $COMMON_INCLUDES
+INCLUDE[$LIBDEFAULT]=.. $COMMON_INCLUDES
 DEFINE[$LIBFIPS]=FIPS_MODULE
 
-# Weak dependencies to provide library order information.
-# We make it weak so they aren't both used always; what is
-# actually used is determined by non-weak dependencies.
-DEPEND[$LIBIMPLEMENTATIONS]{weak}=$LIBFIPS $LIBNONFIPS
-DEPEND[$LIBCOMMON]{weak}=$LIBFIPS
+# Weak dependencies to provide library order information.  What is actually
+# used is determined by non-weak dependencies.
+DEPEND[$LIBCOMMON]{weak}=../libcrypto
 
-# Strong dependencies.  This ensures that any time libimplementations
+# Strong dependencies.  This ensures that any time an implementation library
 # is used, libcommon gets included as well.
-DEPEND[$LIBIMPLEMENTATIONS]=$LIBCOMMON
-DEPEND[$LIBNONFIPS]=../libcrypto
-# It's tempting to make libcommon depend on ../libcrypto.  However,
-# since the FIPS provider module must NOT depend on ../libcrypto, we
-# need to set that dependency up specifically for the final products
-# that use $LIBCOMMON or anything that depends on it.
-
-# Libraries common to all providers, must be built regardless
-LIBS{noinst}=$LIBCOMMON
-# Libraries that are common for all non-FIPS providers, must be built regardless
-LIBS{noinst}=$LIBNONFIPS $LIBIMPLEMENTATIONS
+# The $LIBFIPS dependency on $LIBCOMMON is extra strong, to mitigate for
+# linking problems because they are interdependent
+SOURCE[$LIBFIPS]=$LIBCOMMON
+DEPEND[$LIBLEGACY]=$LIBCOMMON
+DEPEND[$LIBDEFAULT]=$LIBCOMMON
 
 #
 # Default provider stuff
@@ -98,24 +72,20 @@ LIBS{noinst}=$LIBNONFIPS $LIBIMPLEMENTATIONS
 # Because the default provider is built in, it means that libcrypto must
 # include all the object files that are needed (we do that indirectly,
 # by using the appropriate libraries as source).  Note that for shared
-# libraries, SOURCEd libraries are considered as if the where specified
+# libraries, SOURCEd libraries are considered as if they were specified
 # with DEPEND.
 $DEFAULTGOAL=../libcrypto
-SOURCE[$DEFAULTGOAL]=$LIBIMPLEMENTATIONS $LIBNONFIPS
-SOURCE[$DEFAULTGOAL]=defltprov.c
-# Some legacy implementations depend on provider header files
+SOURCE[$DEFAULTGOAL]=$LIBDEFAULT defltprov.c
 INCLUDE[$DEFAULTGOAL]=implementations/include
-
-LIBS=$DEFAULTGOAL
 
 #
 # Base provider stuff
 #
-# Because the base provider is built in, it means that libcrypto
-# must include all of the object files that are needed.
+# Because the base provider is built in, it means that libcrypto must
+# include all of the object files that are needed, just like the default
+# provider.
 $BASEGOAL=../libcrypto
-SOURCE[$BASEGOAL]=$LIBIMPLEMENTATIONS $LIBNONFIPS
-SOURCE[$BASEGOAL]=baseprov.c
+SOURCE[$BASEGOAL]=$LIBDEFAULT baseprov.c
 INCLUDE[$BASEGOAL]=implementations/include
 
 #
@@ -127,30 +97,26 @@ INCLUDE[$BASEGOAL]=implementations/include
 # diverse build.info files.  libfips.a, fips.so and their sources aren't
 # built unless the proper LIBS or MODULES statement has been seen, so we
 # have those and only those within a condition.
-SUBDIRS=fips
-$FIPSGOAL=fips
-DEPEND[$FIPSGOAL]=$LIBIMPLEMENTATIONS $LIBFIPS
-INCLUDE[$FIPSGOAL]=../include
-DEFINE[$FIPSGOAL]=FIPS_MODULE
-IF[{- defined $target{shared_defflag} -}]
-  SOURCE[$FIPSGOAL]=fips.ld
-  GENERATE[fips.ld]=../util/providers.num
-ENDIF
-
 IF[{- !$disabled{fips} -}]
+  SUBDIRS=fips
+  $FIPSGOAL=fips
+
   # This is the trigger to actually build the FIPS module.  Without these
   # statements, the final build file will not have a trace of it.
   MODULES{fips}=$FIPSGOAL
   LIBS{noinst}=$LIBFIPS
 
-  # For tests that try to use the FIPS module, we need to make a local fips
-  # module installation.  We have the output go to standard output, because
-  # the generated commands in build templates are expected to catch that,
-  # and thereby keep control over the exact output file location.
-  DEPEND[|tests|]=fipsmodule.cnf
-  GENERATE[fipsmodule.cnf]=../apps/openssl fipsinstall \
-        -module providers/$(FIPSMODULENAME) -provider_name fips \
-        -mac_name HMAC -section_name fips_sect
+  DEPEND[$FIPSGOAL]=$LIBFIPS
+  INCLUDE[$FIPSGOAL]=../include
+  DEFINE[$FIPSGOAL]=FIPS_MODULE
+  IF[{- defined $target{shared_defflag} -}]
+    SOURCE[$FIPSGOAL]=fips.ld
+    GENERATE[fips.ld]=../util/providers.num
+  ENDIF
+
+  DEPEND[|build_modules_nodep|]=fipsmodule.cnf
+  GENERATE[fipsmodule.cnf]=../util/mk-fipsmodule-cnf.pl \
+          -module $(FIPSMODULE) -section_name fips_sect -key $(FIPSKEY)
   DEPEND[fipsmodule.cnf]=$FIPSGOAL
 ENDIF
 
@@ -158,11 +124,8 @@ ENDIF
 # Legacy provider stuff
 #
 IF[{- !$disabled{legacy} -}]
-  # The legacy implementation library
   LIBS{noinst}=$LIBLEGACY
-  DEPEND[$LIBLEGACY]=$LIBCOMMON $LIBNONFIPS
 
-  # The Legacy provider
   IF[{- $disabled{module} -}]
     # Become built in
     # In this case, we need to do the same thing a for the default provider,
@@ -172,18 +135,18 @@ IF[{- !$disabled{legacy} -}]
     # implementation specific build.info files harder to write, so we don't.
     $LEGACYGOAL=../libcrypto
     SOURCE[$LEGACYGOAL]=$LIBLEGACY
-    DEFINE[$LIBLEGACY]=STATIC_LEGACY
     DEFINE[$LEGACYGOAL]=STATIC_LEGACY
   ELSE
     # Become a module
     # In this case, we can work with dependencies
     $LEGACYGOAL=legacy
     MODULES=$LEGACYGOAL
-    DEPEND[$LEGACYGOAL]=$LIBLEGACY
+    DEPEND[$LEGACYGOAL]=$LIBLEGACY ../libcrypto
     IF[{- defined $target{shared_defflag} -}]
       SOURCE[legacy]=legacy.ld
       GENERATE[legacy.ld]=../util/providers.num
     ENDIF
+    SOURCE[$LIBLEGACY]=prov_running.c
   ENDIF
 
   # Common things that are valid no matter what form the Legacy provider
@@ -200,4 +163,4 @@ ENDIF
 $NULLGOAL=../libcrypto
 SOURCE[$NULLGOAL]=nullprov.c prov_running.c
 
-SOURCE[$LIBNONFIPS]=prov_running.c
+SOURCE[$LIBDEFAULT]=prov_running.c

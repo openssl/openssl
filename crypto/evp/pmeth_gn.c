@@ -123,7 +123,7 @@ static int ossl_callback_to_pkey_gencb(const OSSL_PARAM params[], void *arg)
     return ctx->pkey_gencb(ctx);
 }
 
-int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
+int EVP_PKEY_generate(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
 {
     int ret = 0;
     OSSL_CALLBACK cb;
@@ -199,7 +199,6 @@ int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
 
     /*
      * Because we still have legacy keys
-     * TODO remove this #legacy internal keys are gone
      */
     (*ppkey)->type = ctx->legacy_keytype;
 
@@ -262,7 +261,7 @@ int EVP_PKEY_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_INITIALIZED);
         return -1;
     }
-    return EVP_PKEY_gen(ctx, ppkey);
+    return EVP_PKEY_generate(ctx, ppkey);
 }
 
 int EVP_PKEY_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
@@ -271,7 +270,7 @@ int EVP_PKEY_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_INITIALIZED);
         return -1;
     }
-    return EVP_PKEY_gen(ctx, ppkey);
+    return EVP_PKEY_generate(ctx, ppkey);
 }
 
 void EVP_PKEY_CTX_set_cb(EVP_PKEY_CTX *ctx, EVP_PKEY_gen_cb *cb)
@@ -394,4 +393,62 @@ const OSSL_PARAM *EVP_PKEY_fromdata_settable(EVP_PKEY_CTX *ctx, int selection)
     if (fromdata_init(ctx, EVP_PKEY_OP_UNDEFINED) == 1)
         return evp_keymgmt_import_types(ctx->keymgmt, selection);
     return NULL;
+}
+
+static OSSL_CALLBACK ossl_pkey_todata_cb;
+
+static int ossl_pkey_todata_cb(const OSSL_PARAM params[], void *arg)
+{
+    OSSL_PARAM **ret = arg;
+
+    *ret = OSSL_PARAM_dup(params);
+    return 1;
+}
+
+int EVP_PKEY_todata(const EVP_PKEY *pkey, int selection, OSSL_PARAM **params)
+{
+    if (params == NULL)
+        return 0;
+    return EVP_PKEY_export(pkey, selection, ossl_pkey_todata_cb, params);
+}
+
+#ifndef FIPS_MODULE
+struct fake_import_data_st {
+    OSSL_CALLBACK *export_cb;
+    void *export_cbarg;
+};
+
+static OSSL_FUNC_keymgmt_import_fn pkey_fake_import;
+static int pkey_fake_import(void *fake_keydata, int ignored_selection,
+                            const OSSL_PARAM params[])
+{
+    struct fake_import_data_st *data = fake_keydata;
+
+    return data->export_cb(params, data->export_cbarg);
+}
+#endif
+
+int EVP_PKEY_export(const EVP_PKEY *pkey, int selection,
+                    OSSL_CALLBACK *export_cb, void *export_cbarg)
+{
+    if (pkey == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+#ifndef FIPS_MODULE
+    if (evp_pkey_is_legacy(pkey)) {
+        struct fake_import_data_st data;
+
+        data.export_cb = export_cb;
+        data.export_cbarg = export_cbarg;
+
+        /*
+         * We don't need to care about libctx or propq here, as we're only
+         * interested in the resulting OSSL_PARAM array.
+         */
+        return pkey->ameth->export_to(pkey, &data, pkey_fake_import,
+                                      NULL, NULL);
+    }
+#endif
+    return evp_keymgmt_util_export(pkey, selection, export_cb, export_cbarg);
 }

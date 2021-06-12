@@ -23,7 +23,7 @@ OSSL_PROVIDER *OSSL_PROVIDER_try_load(OSSL_LIB_CTX *libctx, const char *name,
         && (prov = ossl_provider_new(libctx, name, NULL, 0)) == NULL)
         return NULL;
 
-    if (!ossl_provider_activate(prov, retain_fallbacks)) {
+    if (!ossl_provider_activate(prov, retain_fallbacks, 1)) {
         ossl_provider_free(prov);
         return NULL;
     }
@@ -88,6 +88,11 @@ void *OSSL_PROVIDER_get0_provider_ctx(const OSSL_PROVIDER *prov)
     return ossl_provider_prov_ctx(prov);
 }
 
+const OSSL_DISPATCH *OSSL_PROVIDER_get0_dispatch(const OSSL_PROVIDER *prov)
+{
+    return ossl_provider_get0_dispatch(prov);
+}
+
 int OSSL_PROVIDER_self_test(const OSSL_PROVIDER *prov)
 {
     return ossl_provider_self_test(prov);
@@ -124,7 +129,7 @@ int OSSL_PROVIDER_add_builtin(OSSL_LIB_CTX *libctx, const char *name,
     return 1;
 }
 
-const char *OSSL_PROVIDER_name(const OSSL_PROVIDER *prov)
+const char *OSSL_PROVIDER_get0_name(const OSSL_PROVIDER *prov)
 {
     return ossl_provider_name(prov);
 }

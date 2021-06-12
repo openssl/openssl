@@ -13,6 +13,7 @@ B<openssl> B<crl>
 [B<-outform> B<DER>|B<PEM>]
 [B<-key> I<filename>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>]
+[B<-dateopt>]
 [B<-text>]
 [B<-in> I<filename>]
 [B<-out> I<filename>]
@@ -31,8 +32,6 @@ B<openssl> B<crl>
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 
-=for openssl ifdef hash_old
-
 =head1 DESCRIPTION
 
 This command processes CRL files in DER or PEM format.
@@ -47,8 +46,8 @@ Print out a usage message.
 
 =item B<-inform> B<DER>|B<PEM>
 
-The CRL input format.
-This option has no effect and is retained for backward compatibility only.
+The CRL input format; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-outform> B<DER>|B<PEM>
 
@@ -61,8 +60,8 @@ The private key to be used to sign the CRL.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>
 
-The format of the private key file.
-This option has no effect and is retained for backward compatibility only.
+The format of the private key file; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-in> I<filename>
 
@@ -82,6 +81,11 @@ Output a comparison of the main CRL and the one specified here.
 
 Corrupt the signature before writing it; this can be useful
 for testing.
+
+=item B<-dateopt>
+
+Specify the date output format. Values are: rfc_822 and iso_8601.
+Defaults to rfc_822.
 
 =item B<-text>
 
@@ -156,14 +160,9 @@ L<openssl-ca(1)>,
 L<openssl-x509(1)>,
 L<ossl_store-file(7)>
 
-=head1 HISTORY
-
-The B<-inform> and B<-keyform> options have become obsolete in OpenSSL 3.0.0
-and have no effect.
-
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

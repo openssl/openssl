@@ -5,7 +5,7 @@
 # be useful here.
 #
 # Auxiliary program source (copied from ../apps/build.info)
-IF[{- $config{target} =~ /^(?:VC-|mingw)/ -}]
+IF[{- $config{target} =~ /^(?:VC-|mingw|BC-)/ -}]
   # It's called 'init', but doesn't have much 'init' in it...
   $AUXLIBAPPSSRC=../apps/lib/win32_init.c
 ENDIF
@@ -32,9 +32,9 @@ IF[{- !$disabled{tests} -}]
           sanitytest rsa_complex exdatatest bntest \
           ecstresstest gmdifftest pbelutest \
           destest mdc2test \
-          exptest \
+          exptest pbetest \
           evp_pkey_provided_test evp_test evp_extra_test evp_extra_test2 \
-          evp_fetch_prov_test acvp_test evp_libctx_test ossl_store_test \
+          evp_fetch_prov_test evp_libctx_test ossl_store_test \
           v3nametest v3ext \
           evp_pkey_provided_test evp_test evp_extra_test evp_extra_test2 \
           evp_fetch_prov_test v3nametest v3ext \
@@ -44,10 +44,10 @@ IF[{- !$disabled{tests} -}]
           packettest asynctest secmemtest srptest memleaktest stack_test \
           dtlsv1listentest ct_test threadstest afalgtest d2i_test \
           ssl_test_ctx_test ssl_test x509aux cipherlist_test asynciotest \
-          bio_callback_test bio_memleak_test param_build_test \
+          bio_callback_test bio_memleak_test bio_core_test param_build_test \
           bioprinttest sslapitest dtlstest sslcorrupttest \
           bio_enc_test pkey_meth_test pkey_meth_kdf_test evp_kdf_test uitest \
-          cipherbytes_test \
+          cipherbytes_test threadstest_fips \
           asn1_encode_test asn1_decode_test asn1_string_table_test \
           x509_time_test x509_dup_cert_test x509_check_cert_pkey_test \
           recordlentest drbgtest rand_status_test sslbuffertest \
@@ -56,7 +56,7 @@ IF[{- !$disabled{tests} -}]
           sysdefaulttest errtest ssl_ctx_test gosttest \
           context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
           keymgmt_internal_test hexstr_test provider_status_test defltfips_test \
-          bio_readbuffer_test
+          bio_readbuffer_test user_property_test pkcs7_test
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=enginetest
@@ -121,6 +121,10 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[exptest]=../include ../apps/include
   DEPEND[exptest]=../libcrypto libtestutil.a
 
+  SOURCE[pbetest]=pbetest.c
+  INCLUDE[pbetest]=../include ../apps/include
+  DEPEND[pbetest]=../libcrypto libtestutil.a
+
   SOURCE[fatalerrtest]=fatalerrtest.c helpers/ssltestlib.c
   INCLUDE[fatalerrtest]=../include ../apps/include
   DEPEND[fatalerrtest]=../libcrypto ../libssl libtestutil.a
@@ -128,6 +132,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[tls13ccstest]=tls13ccstest.c helpers/ssltestlib.c
   INCLUDE[tls13ccstest]=../include ../apps/include
   DEPEND[tls13ccstest]=../libcrypto ../libssl libtestutil.a
+
+  SOURCE[user_property_test]=user_property_test.c
+  INCLUDE[user_property_test]=../include ../apps/include
+  DEPEND[user_property_test]=../libcrypto libtestutil.a
 
   SOURCE[evp_test]=evp_test.c
   INCLUDE[evp_test]=../include ../apps/include
@@ -159,7 +167,9 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[evp_pkey_provided_test]=../include ../apps/include
   DEPEND[evp_pkey_provided_test]=../libcrypto.a libtestutil.a
 
-  IF[{- !$disabled{acvp-tests} -}]
+  IF[{- !$disabled{'acvp-tests'} -}]
+    PROGRAMS{noinst}=acvp_test
+
     SOURCE[acvp_test]=acvp_test.c
     INCLUDE[acvp_test]=../include ../apps/include
     DEPEND[acvp_test]=../libcrypto.a libtestutil.a
@@ -245,6 +255,10 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[pkcs12_format_test]=../include ../apps/include
   DEPEND[pkcs12_format_test]=../libcrypto libtestutil.a
 
+  SOURCE[pkcs7_test]=pkcs7_test.c
+  INCLUDE[pkcs7_test]=../include ../apps/include
+  DEPEND[pkcs7_test]=../libcrypto libtestutil.a
+
   SOURCE[stack_test]=stack_test.c
   INCLUDE[stack_test]=../include ../apps/include
   DEPEND[stack_test]=../libcrypto libtestutil.a
@@ -264,6 +278,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[threadstest]=threadstest.c
   INCLUDE[threadstest]=../include ../apps/include
   DEPEND[threadstest]=../libcrypto libtestutil.a
+
+  SOURCE[threadstest_fips]=threadstest_fips.c
+  INCLUDE[threadstest_fips]=../include ../apps/include
+  DEPEND[threadstest_fips]=../libcrypto libtestutil.a
 
   SOURCE[afalgtest]=afalgtest.c
   INCLUDE[afalgtest]=../include ../apps/include
@@ -317,6 +335,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[bioprinttest]=bioprinttest.c
   INCLUDE[bioprinttest]=../include ../apps/include
   DEPEND[bioprinttest]=../libcrypto libtestutil.a
+
+  SOURCE[bio_core_test]=bio_core_test.c
+  INCLUDE[bio_core_test]=../include ../apps/include
+  DEPEND[bio_core_test]=../libcrypto libtestutil.a
 
   SOURCE[params_api_test]=params_api_test.c
   INCLUDE[params_api_test]=../include ../apps/include
@@ -519,7 +541,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[cmp_server_test]=.. ../include ../apps/include
   DEPEND[cmp_server_test]=../libcrypto.a libtestutil.a
 
-  SOURCE[cmp_client_test]=cmp_client_test.c helpers/cmp_testlib.c ../apps/cmp_mock_srv.c
+  SOURCE[cmp_client_test]=cmp_client_test.c helpers/cmp_testlib.c ../apps/lib/cmp_mock_srv.c
   INCLUDE[cmp_client_test]=.. ../include ../apps/include
   DEPEND[cmp_client_test]=../libcrypto.a libtestutil.a
 

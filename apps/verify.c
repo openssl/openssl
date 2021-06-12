@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -26,7 +26,7 @@ static int check(X509_STORE *ctx, const char *file,
 static int v_verbose = 0, vflags = 0;
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_ENGINE, OPT_CAPATH, OPT_CAFILE, OPT_CASTORE,
     OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOCASTORE,
     OPT_UNTRUSTED, OPT_TRUSTED, OPT_CRLFILE, OPT_CRL_DOWNLOAD, OPT_SHOW_CHAIN,
@@ -253,7 +253,7 @@ static int check(X509_STORE *ctx, const char *file,
     STACK_OF(X509) *chain = NULL;
     int num_untrusted;
 
-    x = load_cert(file, "certificate file");
+    x = load_cert(file, FORMAT_UNDEF, "certificate file");
     if (x == NULL)
         goto end;
 

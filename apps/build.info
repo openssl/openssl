@@ -11,17 +11,14 @@ ENDIF
 
 # Source for the 'openssl' program
 $OPENSSLSRC=\
-        openssl.c progs.c \
-        asn1pars.c ca.c ciphers.c cms.c crl.c crl2p7.c dgst.c \
+        openssl.c \
+        asn1parse.c ca.c ciphers.c crl.c crl2pkcs7.c dgst.c \
         enc.c errstr.c \
         genpkey.c kdf.c mac.c nseq.c passwd.c pkcs7.c \
         pkcs8.c pkey.c pkeyparam.c pkeyutl.c prime.c rand.c req.c \
         s_client.c s_server.c s_time.c sess_id.c smime.c speed.c \
         spkac.c verify.c version.c x509.c rehash.c storeutl.c \
-        list.c info.c fipsinstall.c
-IF[{- !$disabled{'des'} -}]
-  $OPENSSLSRC=$OPENSSLSRC pkcs12.c
-ENDIF
+        list.c info.c fipsinstall.c pkcs12.c
 IF[{- !$disabled{'ec'} -}]
   $OPENSSLSRC=$OPENSSLSRC ec.c ecparam.c
 ENDIF
@@ -51,8 +48,11 @@ IF[{- !$disabled{'deprecated-3.0'} -}]
     $OPENSSLSRC=$OPENSSLSRC rsautl.c
   ENDIF
 ENDIF
+IF[{- !$disabled{'cms'} -}]
+  $OPENSSLSRC=$OPENSSLSRC cms.c
+ENDIF
 IF[{- !$disabled{'cmp'} -}]
-  $OPENSSLSRC=$OPENSSLSRC cmp.c cmp_mock_srv.c
+  $OPENSSLSRC=$OPENSSLSRC cmp.c lib/cmp_mock_srv.c
 ENDIF
 
 IF[{- !$disabled{apps} -}]
@@ -61,9 +61,14 @@ IF[{- !$disabled{apps} -}]
   INCLUDE[openssl]=.. ../include include
   DEPEND[openssl]=libapps.a ../libssl
 
-  DEPEND[${OPENSSLSRC/.c/.o}]=progs.h
-  GENERATE[progs.c]=progs.pl -C $(APPS_OPENSSL)
-  GENERATE[progs.h]=progs.pl -H $(APPS_OPENSSL)
+  # The nocheck attribute is picked up by progs.pl as a signal not to look
+  # at that file; some systems may have locked it as the output file, and
+  # therefore don't allow it to be read at the same time, making progs.pl
+  # fail.
+  SOURCE[openssl]{nocheck}=progs.c
+  DEPEND[${OPENSSLSRC/.c/.o} progs.o]=progs.h
+  GENERATE[progs.c]=progs.pl "-C" $(APPS_OPENSSL)
+  GENERATE[progs.h]=progs.pl "-H" $(APPS_OPENSSL)
   # progs.pl tries to read all 'openssl' sources, including progs.c, so we make
   # sure things are generated in the correct order.
   DEPEND[progs.h]=progs.c
@@ -71,7 +76,7 @@ IF[{- !$disabled{apps} -}]
   # always depend on a changed configuration.
   DEPEND[progs.c]=../configdata.pm
 
-  IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-)/ -}]
+  IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-|BC-)/ -}]
     GENERATE[openssl.rc]=../util/mkrc.pl openssl
     SOURCE[openssl]=openssl.rc
   ENDIF

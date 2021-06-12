@@ -30,8 +30,6 @@ B<openssl> B<pkcs8>
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 
-=for openssl ifdef engine scrypt scrypt_N scrypt_r scrypt_p
-
 =head1 DESCRIPTION
 
 This command processes private keys in PKCS#8 format. It can handle
@@ -102,6 +100,10 @@ filename.
 When creating new PKCS#8 containers, use a given number of iterations on
 the password in deriving the encryption key for the PKCS#8 output.
 High values increase the time required to brute-force a PKCS#8 container.
+
+=item B<-noiter>
+
+When creating new PKCS#8 containers, use 1 as iteration count.
 
 =item B<-nocrypt>
 
@@ -276,7 +278,7 @@ The B<-engine> option was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

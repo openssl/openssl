@@ -77,7 +77,7 @@ static X509_STORE *create_cert_store(const char *CApath, const char *CAfile,
 static int verify_cb(int ok, X509_STORE_CTX *ctx);
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_ENGINE, OPT_CONFIG, OPT_SECTION, OPT_QUERY, OPT_DATA,
     OPT_DIGEST, OPT_TSPOLICY, OPT_NO_NONCE, OPT_CERT,
     OPT_IN, OPT_TOKEN_IN, OPT_OUT, OPT_TOKEN_OUT, OPT_TEXT,
@@ -168,7 +168,7 @@ int ts_main(int argc, char **argv)
     char *in = NULL, *out = NULL, *queryfile = NULL, *passin = NULL;
     char *inkey = NULL, *signer = NULL, *chain = NULL, *CApath = NULL;
     char *CAstore = NULL;
-    const EVP_MD *md = NULL;
+    EVP_MD *md = NULL;
     OPTION_CHOICE o, mode = OPT_ERR;
     int ret = 1, no_nonce = 0, cert = 0, text = 0;
     int vpmtouched = 0;
@@ -292,7 +292,9 @@ int ts_main(int argc, char **argv)
     if (argc != 0 || mode == OPT_ERR)
         goto opthelp;
 
-    app_RAND_load();
+    if (!app_RAND_load())
+        goto end;
+
     if (digestname != NULL) {
         if (!opt_md(digestname, &md))
             goto opthelp;
@@ -341,6 +343,7 @@ int ts_main(int argc, char **argv)
 
  end:
     X509_VERIFY_PARAM_free(vpm);
+    EVP_MD_free(md);
     NCONF_free(conf);
     OPENSSL_free(password);
     return ret;
@@ -457,7 +460,7 @@ static TS_REQ *create_query(BIO *data_bio, const char *digest, const EVP_MD *md,
         goto err;
     if ((algo = X509_ALGOR_new()) == NULL)
         goto err;
-    if ((algo->algorithm = OBJ_nid2obj(EVP_MD_type(md))) == NULL)
+    if ((algo->algorithm = OBJ_nid2obj(EVP_MD_get_type(md))) == NULL)
         goto err;
     if ((algo->parameter = ASN1_TYPE_new()) == NULL)
         goto err;
@@ -506,7 +509,7 @@ static int create_digest(BIO *input, const char *digest, const EVP_MD *md,
     int rv = 0;
     EVP_MD_CTX *md_ctx = NULL;
 
-    md_value_len = EVP_MD_size(md);
+    md_value_len = EVP_MD_get_size(md);
     if (md_value_len < 0)
         return 0;
 
@@ -526,7 +529,7 @@ static int create_digest(BIO *input, const char *digest, const EVP_MD *md,
         }
         if (!EVP_DigestFinal(md_ctx, *md_value, NULL))
             goto err;
-        md_value_len = EVP_MD_size(md);
+        md_value_len = EVP_MD_get_size(md);
     } else {
         long digest_len;
 

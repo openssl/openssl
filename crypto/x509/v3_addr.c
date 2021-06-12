@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -140,7 +140,6 @@ static int i2r_address(BIO *out,
             return 0;
         BIO_printf(out, "%d.%d.%d.%d", addr[0], addr[1], addr[2], addr[3]);
         break;
-        /* TODO possibly combine with ipaddr_to_asc() */
     case IANA_AFI_IPV6:
         if (!addr_expand(addr, bs, 16, fill))
             return 0;

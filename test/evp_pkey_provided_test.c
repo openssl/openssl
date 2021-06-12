@@ -176,14 +176,14 @@ static int test_print_key_type_using_encoder(const char *alg, int type,
 
     case PRIV_PEM:
         output_type = "PEM";
-        output_structure = "pkcs8";
+        output_structure = "PrivateKeyInfo";
         selection = OSSL_KEYMGMT_SELECT_KEYPAIR
             | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
         break;
 
     case PRIV_DER:
         output_type = "DER";
-        output_structure = "pkcs8";
+        output_structure = "PrivateKeyInfo";
         selection = OSSL_KEYMGMT_SELECT_KEYPAIR
             | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
         break;
@@ -346,9 +346,9 @@ static int test_fromdata_rsa(void)
 
     while (dup_pk == NULL) {
         ret = 0;
-        if (!TEST_int_eq(EVP_PKEY_bits(pk), 32)
-            || !TEST_int_eq(EVP_PKEY_security_bits(pk), 8)
-            || !TEST_int_eq(EVP_PKEY_size(pk), 4)
+        if (!TEST_int_eq(EVP_PKEY_get_bits(pk), 32)
+            || !TEST_int_eq(EVP_PKEY_get_security_bits(pk), 8)
+            || !TEST_int_eq(EVP_PKEY_get_size(pk), 4)
             || !TEST_false(EVP_PKEY_missing_parameters(pk)))
             goto err;
 
@@ -446,7 +446,7 @@ static int test_evp_pkey_get_bn_param_large(void)
     EVP_PKEY_free(pk);
     EVP_PKEY_CTX_free(key_ctx);
     EVP_PKEY_CTX_free(ctx);
-    OSSL_PARAM_BLD_free_params(fromdata_params);
+    OSSL_PARAM_free(fromdata_params);
     OSSL_PARAM_BLD_free(bld);
     return ret;
 }
@@ -528,9 +528,9 @@ static int test_fromdata_dh_named_group(void)
 
     while (dup_pk == NULL) {
         ret = 0;
-        if (!TEST_int_eq(EVP_PKEY_bits(pk), 2048)
-            || !TEST_int_eq(EVP_PKEY_security_bits(pk), 112)
-            || !TEST_int_eq(EVP_PKEY_size(pk), 256)
+        if (!TEST_int_eq(EVP_PKEY_get_bits(pk), 2048)
+            || !TEST_int_eq(EVP_PKEY_get_security_bits(pk), 112)
+            || !TEST_int_eq(EVP_PKEY_get_size(pk), 256)
             || !TEST_false(EVP_PKEY_missing_parameters(pk)))
             goto err;
 
@@ -627,7 +627,7 @@ err:
     EVP_PKEY_free(pk);
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_CTX_free(key_ctx);
-    OSSL_PARAM_BLD_free_params(fromdata_params);
+    OSSL_PARAM_free(fromdata_params);
     OSSL_PARAM_BLD_free(bld);
 
     return ret;
@@ -709,9 +709,9 @@ static int test_fromdata_dh_fips186_4(void)
 
     while (dup_pk == NULL) {
         ret = 0;
-        if (!TEST_int_eq(EVP_PKEY_bits(pk), 2048)
-            || !TEST_int_eq(EVP_PKEY_security_bits(pk), 112)
-            || !TEST_int_eq(EVP_PKEY_size(pk), 256)
+        if (!TEST_int_eq(EVP_PKEY_get_bits(pk), 2048)
+            || !TEST_int_eq(EVP_PKEY_get_security_bits(pk), 112)
+            || !TEST_int_eq(EVP_PKEY_get_size(pk), 256)
             || !TEST_false(EVP_PKEY_missing_parameters(pk)))
             goto err;
 
@@ -801,7 +801,7 @@ err:
     EVP_PKEY_free(pk);
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_CTX_free(key_ctx);
-    OSSL_PARAM_BLD_free_params(fromdata_params);
+    OSSL_PARAM_free(fromdata_params);
     OSSL_PARAM_BLD_free(bld);
 
     return ret;
@@ -979,7 +979,7 @@ static int test_fromdata_ecx(int tst)
         fromdata_params = ed25519_fromdata_params;
         bits = ED25519_BITS;
         security_bits = ED25519_SECURITY_BITS;
-        size = ED25519_KEYLEN;
+        size = ED25519_SIGSIZE;
         alg = "ED25519";
         break;
 
@@ -987,7 +987,7 @@ static int test_fromdata_ecx(int tst)
         fromdata_params = ed448_fromdata_params;
         bits = ED448_BITS;
         security_bits = ED448_SECURITY_BITS;
-        size = ED448_KEYLEN;
+        size = ED448_SIGSIZE;
         alg = "ED448";
         break;
     default:
@@ -1016,9 +1016,9 @@ static int test_fromdata_ecx(int tst)
 
     while (dup_pk == NULL) {
         ret = 0;
-        if (!TEST_int_eq(EVP_PKEY_bits(pk), bits)
-            || !TEST_int_eq(EVP_PKEY_security_bits(pk), security_bits)
-            || !TEST_int_eq(EVP_PKEY_size(pk), size)
+        if (!TEST_int_eq(EVP_PKEY_get_bits(pk), bits)
+            || !TEST_int_eq(EVP_PKEY_get_security_bits(pk), security_bits)
+            || !TEST_int_eq(EVP_PKEY_get_size(pk), size)
             || !TEST_false(EVP_PKEY_missing_parameters(pk)))
             goto err;
 
@@ -1117,6 +1117,13 @@ static int test_fromdata_ec(void)
     char out_curve_name[80];
     const OSSL_PARAM *gettable = NULL;
     size_t len;
+    EC_GROUP *group = NULL;
+    BIGNUM *group_a = NULL;
+    BIGNUM *group_b = NULL;
+    BIGNUM *group_p = NULL;
+    BIGNUM *a = NULL;
+    BIGNUM *b = NULL;
+    BIGNUM *p = NULL;
 
 
     if (!TEST_ptr(bld = OSSL_PARAM_BLD_new()))
@@ -1147,9 +1154,9 @@ static int test_fromdata_ec(void)
 
     while (dup_pk == NULL) {
         ret = 0;
-        if (!TEST_int_eq(EVP_PKEY_bits(pk), 256)
-            || !TEST_int_eq(EVP_PKEY_security_bits(pk), 128)
-            || !TEST_int_eq(EVP_PKEY_size(pk), 2 + 35 * 2)
+        if (!TEST_int_eq(EVP_PKEY_get_bits(pk), 256)
+            || !TEST_int_eq(EVP_PKEY_get_security_bits(pk), 128)
+            || !TEST_int_eq(EVP_PKEY_get_size(pk), 2 + 35 * 2)
             || !TEST_false(EVP_PKEY_missing_parameters(pk)))
             goto err;
 
@@ -1166,6 +1173,22 @@ static int test_fromdata_ec(void)
                                                  OSSL_PKEY_PARAM_PUB_KEY))
             || !TEST_ptr(OSSL_PARAM_locate_const(gettable,
                                                  OSSL_PKEY_PARAM_PRIV_KEY)))
+            goto err;
+
+        if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(OBJ_sn2nid(curve)))
+            || !TEST_ptr(group_p = BN_new())
+            || !TEST_ptr(group_a = BN_new())
+            || !TEST_ptr(group_b = BN_new())
+            || !TEST_true(EC_GROUP_get_curve(group, group_p, group_a, group_b, NULL)))
+            goto err;
+
+        if (!TEST_true(EVP_PKEY_get_bn_param(pk, OSSL_PKEY_PARAM_EC_A, &a))
+            || !TEST_true(EVP_PKEY_get_bn_param(pk, OSSL_PKEY_PARAM_EC_B, &b))
+            || !TEST_true(EVP_PKEY_get_bn_param(pk, OSSL_PKEY_PARAM_EC_P, &p)))
+            goto err;
+
+        if (!TEST_BN_eq(group_p, p) || !TEST_BN_eq(group_a, a)
+            || !TEST_BN_eq(group_b, b))
             goto err;
 
         if (!EVP_PKEY_get_utf8_string_param(pk, OSSL_PKEY_PARAM_GROUP_NAME,
@@ -1198,9 +1221,16 @@ static int test_fromdata_ec(void)
     }
 
 err:
+    EC_GROUP_free(group);
+    BN_free(group_a);
+    BN_free(group_b);
+    BN_free(group_p);
+    BN_free(a);
+    BN_free(b);
+    BN_free(p);
     BN_free(bn_priv);
     BN_free(ec_priv_bn);
-    OSSL_PARAM_BLD_free_params(fromdata_params);
+    OSSL_PARAM_free(fromdata_params);
     OSSL_PARAM_BLD_free(bld);
     EVP_PKEY_free(pk);
     EVP_PKEY_free(copy_pk);
@@ -1429,9 +1459,9 @@ static int test_fromdata_dsa_fips186_4(void)
 
     while (dup_pk == NULL) {
         ret = 0;
-        if (!TEST_int_eq(EVP_PKEY_bits(pk), 2048)
-            || !TEST_int_eq(EVP_PKEY_security_bits(pk), 112)
-            || !TEST_int_eq(EVP_PKEY_size(pk), 2 + 2 * (3 + sizeof(q_data)))
+        if (!TEST_int_eq(EVP_PKEY_get_bits(pk), 2048)
+            || !TEST_int_eq(EVP_PKEY_get_security_bits(pk), 112)
+            || !TEST_int_eq(EVP_PKEY_get_size(pk), 2 + 2 * (3 + sizeof(q_data)))
             || !TEST_false(EVP_PKEY_missing_parameters(pk)))
             goto err;
 
@@ -1519,7 +1549,7 @@ static int test_fromdata_dsa_fips186_4(void)
     }
 
  err:
-    OSSL_PARAM_BLD_free_params(fromdata_params);
+    OSSL_PARAM_free(fromdata_params);
     OSSL_PARAM_BLD_free(bld);
     BN_free(p);
     BN_free(q);

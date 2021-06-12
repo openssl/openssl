@@ -41,8 +41,6 @@ static int read_pem(PROV_CTX *provctx, OSSL_CORE_BIO *cin,
 
 static OSSL_FUNC_decoder_newctx_fn pem2der_newctx;
 static OSSL_FUNC_decoder_freectx_fn pem2der_freectx;
-static OSSL_FUNC_decoder_gettable_params_fn pem2der_gettable_params;
-static OSSL_FUNC_decoder_get_params_fn pem2der_get_params;
 static OSSL_FUNC_decoder_decode_fn pem2der_decode;
 
 /*
@@ -66,27 +64,6 @@ static void pem2der_freectx(void *vctx)
     struct pem2der_ctx_st *ctx = vctx;
 
     OPENSSL_free(ctx);
-}
-
-static const OSSL_PARAM *pem2der_gettable_params(void *provctx)
-{
-    static const OSSL_PARAM gettables[] = {
-        { OSSL_DECODER_PARAM_INPUT_TYPE, OSSL_PARAM_UTF8_PTR, NULL, 0, 0 },
-        OSSL_PARAM_END,
-    };
-
-    return gettables;
-}
-
-static int pem2der_get_params(OSSL_PARAM params[])
-{
-    OSSL_PARAM *p;
-
-    p = OSSL_PARAM_locate(params, OSSL_DECODER_PARAM_INPUT_TYPE);
-    if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, "PEM"))
-        return 0;
-
-    return 1;
 }
 
 /* pem_password_cb compatible function */
@@ -124,8 +101,8 @@ static int pem2der_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
          * These entries should be in longest to shortest order to avoid
          * mixups.
          */
-        { "ENCRYPTED PRIVATE KEY", "pkcs8" },
-        { "PRIVATE KEY", "pkcs8" },
+        { "ENCRYPTED PRIVATE KEY", "EncryptedPrivateKeyInfo" },
+        { "PRIVATE KEY", "PrivateKeyInfo" },
         { "PUBLIC KEY", "SubjectPublicKeyInfo" },
         { "PARAMETERS", NULL }
 
@@ -145,9 +122,11 @@ static int pem2der_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     int objtype = OSSL_OBJECT_UNKNOWN;
     const char *data_structure = NULL;
 
-    if (read_pem(ctx->provctx, cin, &pem_name, &pem_header,
-                 &der, &der_len) <= 0)
-        return 0;
+    ok = read_pem(ctx->provctx, cin, &pem_name, &pem_header,
+                  &der, &der_len) > 0;
+    /* We return "empty handed".  This is not an error. */
+    if (!ok)
+        return 1;
 
     /*
      * 10 is the number of characters in "Proc-Type:", which
@@ -159,6 +138,7 @@ static int pem2der_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         EVP_CIPHER_INFO cipher;
         struct pem2der_pass_data_st pass_data;
 
+        ok = 0;                  /* Assume that we fail */
         pass_data.cb = pw_cb;
         pass_data.cbarg = pw_cbarg;
         if (!PEM_get_EVP_CIPHER_INFO(pem_header, &cipher)
@@ -166,6 +146,12 @@ static int pem2der_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
                               pem2der_pass_helper, &pass_data))
             goto end;
     }
+
+    /*
+     * Indicated that we successfully decoded something, or not at all.
+     * Ending up "empty handed" is not an error.
+     */
+    ok = 1;
 
     /*
      * Peal off certain strings from the end of |pem_name|, as they serve
@@ -253,10 +239,6 @@ static int pem2der_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
 const OSSL_DISPATCH ossl_pem_to_der_decoder_functions[] = {
     { OSSL_FUNC_DECODER_NEWCTX, (void (*)(void))pem2der_newctx },
     { OSSL_FUNC_DECODER_FREECTX, (void (*)(void))pem2der_freectx },
-    { OSSL_FUNC_DECODER_GETTABLE_PARAMS,
-      (void (*)(void))pem2der_gettable_params },
-    { OSSL_FUNC_DECODER_GET_PARAMS,
-      (void (*)(void))pem2der_get_params },
     { OSSL_FUNC_DECODER_DECODE, (void (*)(void))pem2der_decode },
     { 0, NULL }
 };

@@ -63,6 +63,8 @@ int ossl_rsa_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
 int ossl_rsa_get0_all_params(RSA *r, STACK_OF(BIGNUM_const) *primes,
                              STACK_OF(BIGNUM_const) *exps,
                              STACK_OF(BIGNUM_const) *coeffs);
+int ossl_rsa_is_foreign(const RSA *rsa);
+RSA *ossl_rsa_dup(const RSA *rsa, int selection);
 
 int ossl_rsa_todata(RSA *rsa, OSSL_PARAM_BLD *bld, OSSL_PARAM params[]);
 int ossl_rsa_fromdata(RSA *rsa, const OSSL_PARAM params[]);

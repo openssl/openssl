@@ -65,7 +65,8 @@ int ENGINE_set_default_ciphers(ENGINE *e)
  */
 ENGINE *ENGINE_get_cipher_engine(int nid)
 {
-    return engine_table_select(&cipher_table, nid);
+    return ossl_engine_table_select(&cipher_table, nid,
+                                    OPENSSL_FILE, OPENSSL_LINE);
 }
 
 /* Obtains a cipher implementation from an ENGINE functional reference */

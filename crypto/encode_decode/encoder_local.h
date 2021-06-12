@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,13 +14,15 @@
 #include <openssl/decoder.h>
 #include "internal/cryptlib.h"
 #include "internal/passphrase.h"
+#include "internal/property.h"
 #include "internal/refcount.h"
 
 struct ossl_endecode_base_st {
     OSSL_PROVIDER *prov;
     int id;
-    const char *propdef;
-    const char *description;
+    char *name;
+    const OSSL_ALGORITHM *algodef;
+    OSSL_PROPERTY_LIST *parsed_propdef;
 
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
@@ -56,7 +58,6 @@ struct ossl_decoder_st {
 struct ossl_encoder_instance_st {
     OSSL_ENCODER *encoder;        /* Never NULL */
     void *encoderctx;             /* Never NULL */
-    const char *input_type;       /* May be NULL */
     const char *output_type;      /* Never NULL */
     const char *output_structure; /* May be NULL */
 };
@@ -156,3 +157,8 @@ struct ossl_decoder_ctx_st {
     /* For any function that needs a passphrase reader */
     struct ossl_passphrase_data_st pwdata;
 };
+
+const OSSL_PROPERTY_LIST *
+ossl_decoder_parsed_properties(const OSSL_DECODER *decoder);
+const OSSL_PROPERTY_LIST *
+ossl_encoder_parsed_properties(const OSSL_ENCODER *encoder);

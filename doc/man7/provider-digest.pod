@@ -61,7 +61,7 @@ provider_query_operation() function
 (see L<provider-base(7)/Provider Functions>).
 
 All these "functions" have a corresponding function type definition
-named B<OSSL_{name}_fn>, and a helper function to retrieve the
+named B<OSSL_FUNC_{name}_fn>, and a helper function to retrieve the
 function pointer from an B<OSSL_DISPATCH> element named
 B<OSSL_FUNC_{name}>.
 For example, the "function" OSSL_FUNC_digest_newctx() has these:
@@ -255,14 +255,20 @@ algorithm.
 
 =head1 BUGS
 
-The EVP_Digest() and EVP_DigestFinal_ex() libcrypto API calls do not
+The EVP_Q_digest(), EVP_Digest() and EVP_DigestFinal_ex() API calls do not
 expect the digest size to be larger than EVP_MAX_MD_SIZE. Any algorithm which
 produces larger digests is unusable with those API calls.
 
 =head1 SEE ALSO
 
 L<provider(7)>, L<OSSL_PROVIDER-FIPS(7)>, L<OSSL_PROVIDER-default(7)>,
-L<OSSL_PROVIDER-legacy(7)>
+L<OSSL_PROVIDER-legacy(7)>,
+L<EVP_MD-common(7)>, L<EVP_MD-BLAKE2(7)>, L<EVP_MD-MD2(7)>,
+L<EVP_MD-MD4(7)>, L<EVP_MD-MD5(7)>, L<EVP_MD-MD5-SHA1(7)>,
+L<EVP_MD-MDC2(7)>, L<EVP_MD-RIPEMD160(7)>, L<EVP_MD-SHA1(7)>,
+L<EVP_MD-SHA2(7)>, L<EVP_MD-SHA3(7)>, L<EVP_MD-SHAKE(7)>,
+L<EVP_MD-SM3(7)>, L<EVP_MD-WHIRLPOOL(7)>,
+L<life_cycle-digest(7)>, L<EVP_DigestInit(3)>
 
 =head1 HISTORY
 

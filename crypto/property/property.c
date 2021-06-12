@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -12,7 +12,9 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <openssl/crypto.h>
+#include "internal/core.h"
 #include "internal/property.h"
+#include "internal/provider.h"
 #include "crypto/ctype.h"
 #include <openssl/lhash.h>
 #include <openssl/rand.h>
@@ -72,26 +74,33 @@ typedef struct {
 
 DEFINE_SPARSE_ARRAY_OF(ALGORITHM);
 
+typedef struct ossl_global_properties_st {
+    OSSL_PROPERTY_LIST *list;
+#ifndef FIPS_MODULE
+    unsigned int no_mirrored : 1;
+#endif
+} OSSL_GLOBAL_PROPERTIES;
+
 static void ossl_method_cache_flush(OSSL_METHOD_STORE *store, int nid);
 
 /* Global properties are stored per library context */
-static void ossl_ctx_global_properties_free(void *vstore)
+static void ossl_ctx_global_properties_free(void *vglobp)
 {
-    OSSL_PROPERTY_LIST **plp = vstore;
+    OSSL_GLOBAL_PROPERTIES *globp = vglobp;
 
-    if (plp != NULL) {
-        ossl_property_free(*plp);
-        OPENSSL_free(plp);
+    if (globp != NULL) {
+        ossl_property_free(globp->list);
+        OPENSSL_free(globp);
     }
 }
 
 static void *ossl_ctx_global_properties_new(OSSL_LIB_CTX *ctx)
 {
-    return OPENSSL_zalloc(sizeof(OSSL_PROPERTY_LIST **));
+    return OPENSSL_zalloc(sizeof(OSSL_GLOBAL_PROPERTIES));
 }
 
-
 static const OSSL_LIB_CTX_METHOD ossl_ctx_global_properties_method = {
+    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
     ossl_ctx_global_properties_new,
     ossl_ctx_global_properties_free,
 };
@@ -99,13 +108,37 @@ static const OSSL_LIB_CTX_METHOD ossl_ctx_global_properties_method = {
 OSSL_PROPERTY_LIST **ossl_ctx_global_properties(OSSL_LIB_CTX *libctx,
                                                 int loadconfig)
 {
+    OSSL_GLOBAL_PROPERTIES *globp;
+
 #ifndef FIPS_MODULE
     if (loadconfig && !OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL))
         return NULL;
 #endif
-    return ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_GLOBAL_PROPERTIES,
-                                 &ossl_ctx_global_properties_method);
+    globp = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_GLOBAL_PROPERTIES,
+                                  &ossl_ctx_global_properties_method);
+
+    return &globp->list;
 }
+
+#ifndef FIPS_MODULE
+int ossl_global_properties_no_mirrored(OSSL_LIB_CTX *libctx)
+{
+    OSSL_GLOBAL_PROPERTIES *globp
+        = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_GLOBAL_PROPERTIES,
+                                &ossl_ctx_global_properties_method);
+
+    return globp->no_mirrored ? 1 : 0;
+}
+
+void ossl_global_properties_stop_mirroring(OSSL_LIB_CTX *libctx)
+{
+    OSSL_GLOBAL_PROPERTIES *globp
+        = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_GLOBAL_PROPERTIES,
+                                &ossl_ctx_global_properties_method);
+
+    globp->no_mirrored = 1;
+}
+#endif
 
 static int ossl_method_up_ref(METHOD *method)
 {
@@ -117,17 +150,17 @@ static void ossl_method_free(METHOD *method)
     (*method->free)(method->method);
 }
 
-int ossl_property_read_lock(OSSL_METHOD_STORE *p)
+static __owur int ossl_property_read_lock(OSSL_METHOD_STORE *p)
 {
     return p != NULL ? CRYPTO_THREAD_read_lock(p->lock) : 0;
 }
 
-int ossl_property_write_lock(OSSL_METHOD_STORE *p)
+static __owur int ossl_property_write_lock(OSSL_METHOD_STORE *p)
 {
     return p != NULL ? CRYPTO_THREAD_write_lock(p->lock) : 0;
 }
 
-int ossl_property_unlock(OSSL_METHOD_STORE *p)
+static int ossl_property_unlock(OSSL_METHOD_STORE *p)
 {
     return p != 0 ? CRYPTO_THREAD_unlock(p->lock) : 0;
 }
@@ -246,7 +279,10 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
      * A write lock is used unconditionally because we wend our way down to the
      * property string code which isn't locking friendly.
      */
-    ossl_property_write_lock(store);
+    if (!ossl_property_write_lock(store)) {
+        OPENSSL_free(impl);
+        return 0;
+    }
     ossl_method_cache_flush(store, nid);
     if ((impl->properties = ossl_prop_defn_get(store->ctx, properties)) == NULL) {
         impl->properties = ossl_parse_property(store->ctx, properties);
@@ -298,7 +334,8 @@ int ossl_method_store_remove(OSSL_METHOD_STORE *store, int nid,
     if (nid <= 0 || method == NULL || store == NULL)
         return 0;
 
-    ossl_property_write_lock(store);
+    if (!ossl_property_write_lock(store))
+        return 0;
     ossl_method_cache_flush(store, nid);
     alg = ossl_method_store_retrieve(store, nid);
     if (alg == NULL) {
@@ -349,7 +386,8 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store, int nid,
      * This only needs to be a read lock, because queries never create property
      * names or value and thus don't modify any of the property string layer.
      */
-    ossl_property_read_lock(store);
+    if (!ossl_property_read_lock(store))
+        return 0;
     alg = ossl_method_store_retrieve(store, nid);
     if (alg == NULL) {
         ossl_property_unlock(store);
@@ -420,19 +458,23 @@ static void ossl_method_cache_flush(OSSL_METHOD_STORE *store, int nid)
     ALGORITHM *alg = ossl_method_store_retrieve(store, nid);
 
     if (alg != NULL) {
+        ossl_provider_clear_all_operation_bits(store->ctx);
         store->nelem -= lh_QUERY_num_items(alg->cache);
         impl_cache_flush_alg(0, alg, NULL);
     }
 }
 
-void ossl_method_store_flush_cache(OSSL_METHOD_STORE *store, int all)
+int ossl_method_store_flush_cache(OSSL_METHOD_STORE *store, int all)
 {
     void *arg = (all != 0 ? store->algs : NULL);
 
-    ossl_property_write_lock(store);
+    if (!ossl_property_write_lock(store))
+        return 0;
+    ossl_provider_clear_all_operation_bits(store->ctx);
     ossl_sa_ALGORITHM_doall_arg(store->algs, &impl_cache_flush_alg, arg);
     store->nelem = 0;
     ossl_property_unlock(store);
+    return 1;
 }
 
 IMPLEMENT_LHASH_DOALL_ARG(QUERY, IMPL_CACHE_FLUSH);
@@ -493,6 +535,7 @@ static void ossl_method_cache_flush_some(OSSL_METHOD_STORE *store)
     state.nelem = 0;
     if ((state.seed = OPENSSL_rdtsc()) == 0)
         state.seed = 1;
+    ossl_provider_clear_all_operation_bits(store->ctx);
     store->need_flush = 0;
     ossl_sa_ALGORITHM_doall_arg(store->algs, &impl_cache_flush_one_alg, &state);
     store->nelem = state.nelem;
@@ -508,7 +551,8 @@ int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, int nid,
     if (nid <= 0 || store == NULL)
         return 0;
 
-    ossl_property_read_lock(store);
+    if (!ossl_property_read_lock(store))
+        return 0;
     alg = ossl_method_store_retrieve(store, nid);
     if (alg == NULL)
         goto err;
@@ -541,7 +585,8 @@ int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, int nid,
     if (prop_query == NULL)
         return 1;
 
-    ossl_property_write_lock(store);
+    if (!ossl_property_write_lock(store))
+        return 0;
     if (store->need_flush)
         ossl_method_cache_flush_some(store);
     alg = ossl_method_store_retrieve(store, nid);

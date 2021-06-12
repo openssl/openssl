@@ -427,7 +427,7 @@ static int rsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
                 ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
                 return 0;
             }
-            *(int *)arg2 = EVP_MD_type(md);
+            *(int *)arg2 = EVP_MD_get_type(md);
             /* Return of 2 indicates this MD is mandatory */
             return 2;
         }
@@ -457,10 +457,10 @@ static RSA_PSS_PARAMS *rsa_ctx_to_pss(EVP_PKEY_CTX *pkctx)
     if (!EVP_PKEY_CTX_get_rsa_pss_saltlen(pkctx, &saltlen))
         return NULL;
     if (saltlen == -1) {
-        saltlen = EVP_MD_size(sigmd);
+        saltlen = EVP_MD_get_size(sigmd);
     } else if (saltlen == -2 || saltlen == -3) {
-        saltlen = EVP_PKEY_size(pk) - EVP_MD_size(sigmd) - 2;
-        if ((EVP_PKEY_bits(pk) & 0x7) == 1)
+        saltlen = EVP_PKEY_get_size(pk) - EVP_MD_get_size(sigmd) - 2;
+        if ((EVP_PKEY_get_bits(pk) & 0x7) == 1)
             saltlen--;
         if (saltlen < 0)
             return NULL;
@@ -545,7 +545,7 @@ int ossl_rsa_pss_to_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pkctx,
         const EVP_MD *checkmd;
         if (EVP_PKEY_CTX_get_signature_md(pkctx, &checkmd) <= 0)
             goto err;
-        if (EVP_MD_type(md) != EVP_MD_type(checkmd)) {
+        if (EVP_MD_get_type(md) != EVP_MD_get_type(checkmd)) {
             ERR_raise(ERR_LIB_RSA, RSA_R_DIGEST_DOES_NOT_MATCH);
             goto err;
         }
@@ -629,7 +629,7 @@ static int rsa_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, const void *asn,
                          ASN1_BIT_STRING *sig)
 {
     int pad_mode;
-    EVP_PKEY_CTX *pkctx = EVP_MD_CTX_pkey_ctx(ctx);
+    EVP_PKEY_CTX *pkctx = EVP_MD_CTX_get_pkey_ctx(ctx);
 
     if (EVP_PKEY_CTX_get_rsa_padding(pkctx, &pad_mode) <= 0)
         return 0;
@@ -674,18 +674,19 @@ static int rsa_sig_info_set(X509_SIG_INFO *siginf, const X509_ALGOR *sigalg,
     pss = ossl_rsa_pss_decode(sigalg);
     if (!ossl_rsa_pss_get_param(pss, &md, &mgf1md, &saltlen))
         goto err;
-    mdnid = EVP_MD_type(md);
+    mdnid = EVP_MD_get_type(md);
     /*
      * For TLS need SHA256, SHA384 or SHA512, digest and MGF1 digest must
      * match and salt length must equal digest size
      */
     if ((mdnid == NID_sha256 || mdnid == NID_sha384 || mdnid == NID_sha512)
-            && mdnid == EVP_MD_type(mgf1md) && saltlen == EVP_MD_size(md))
+            && mdnid == EVP_MD_get_type(mgf1md)
+            && saltlen == EVP_MD_get_size(md))
         flags = X509_SIG_INFO_TLS;
     else
         flags = 0;
     /* Note: security bits half number of digest bits */
-    secbits = EVP_MD_size(md) * 4;
+    secbits = EVP_MD_get_size(md) * 4;
     /*
      * SHA1 and MD5 are known to be broken. Reduce security bits so that
      * they're no longer accepted at security level 1. The real values don't
@@ -725,7 +726,8 @@ static size_t rsa_pkey_dirty_cnt(const EVP_PKEY *pkey)
  * checks in this method since the caller tests EVP_KEYMGMT_is_a() first.
  */
 static int rsa_int_export_to(const EVP_PKEY *from, int rsa_type,
-                             void *to_keydata, EVP_KEYMGMT *to_keymgmt,
+                             void *to_keydata,
+                             OSSL_FUNC_keymgmt_import_fn *importer,
                              OSSL_LIB_CTX *libctx, const char *propq)
 {
     RSA *rsa = from->pkey.rsa;
@@ -762,8 +764,8 @@ static int rsa_int_export_to(const EVP_PKEY *from, int rsa_type,
         if (!ossl_rsa_pss_get_param_unverified(rsa->pss, &md, &mgf1md,
                                                &saltlen, &trailerfield))
             goto err;
-        md_nid = EVP_MD_type(md);
-        mgf1md_nid = EVP_MD_type(mgf1md);
+        md_nid = EVP_MD_get_type(md);
+        mgf1md_nid = EVP_MD_get_type(mgf1md);
         if (!ossl_rsa_pss_params_30_set_defaults(&pss_params)
             || !ossl_rsa_pss_params_30_set_hashalg(&pss_params, md_nid)
             || !ossl_rsa_pss_params_30_set_maskgenhashalg(&pss_params,
@@ -778,10 +780,10 @@ static int rsa_int_export_to(const EVP_PKEY *from, int rsa_type,
         goto err;
 
     /* We export, the provider imports */
-    rv = evp_keymgmt_import(to_keymgmt, to_keydata, selection, params);
+    rv = importer(to_keydata, selection, params);
 
  err:
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
     OSSL_PARAM_BLD_free(tmpl);
     return rv;
 }
@@ -859,19 +861,19 @@ static int rsa_int_import_from(const OSSL_PARAM params[], void *vpctx,
 }
 
 static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
-                              EVP_KEYMGMT *to_keymgmt, OSSL_LIB_CTX *libctx,
-                              const char *propq)
+                              OSSL_FUNC_keymgmt_import_fn *importer,
+                              OSSL_LIB_CTX *libctx, const char *propq)
 {
     return rsa_int_export_to(from, RSA_FLAG_TYPE_RSA, to_keydata,
-                             to_keymgmt, libctx, propq);
+                             importer, libctx, propq);
 }
 
 static int rsa_pss_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
-                                  EVP_KEYMGMT *to_keymgmt, OSSL_LIB_CTX *libctx,
-                                  const char *propq)
+                                  OSSL_FUNC_keymgmt_import_fn *importer,
+                                  OSSL_LIB_CTX *libctx, const char *propq)
 {
     return rsa_int_export_to(from, RSA_FLAG_TYPE_RSASSAPSS, to_keydata,
-                             to_keymgmt, libctx, propq);
+                             importer, libctx, propq);
 }
 
 static int rsa_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
@@ -884,98 +886,6 @@ static int rsa_pss_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
     return rsa_int_import_from(params, vpctx, RSA_FLAG_TYPE_RSASSAPSS);
 }
 
-static ossl_inline int rsa_bn_dup_check(BIGNUM **out, const BIGNUM *f)
-{
-    if (f != NULL && (*out = BN_dup(f)) == NULL)
-        return 0;
-    return 1;
-}
-
-static RSA *rsa_dup(const RSA *rsa)
-{
-    RSA *dupkey = NULL;
-    int pnum, i;
-
-    /* Do not try to duplicate foreign RSA keys */
-    if (RSA_get_method(rsa) != RSA_PKCS1_OpenSSL())
-        return NULL;
-
-    if ((dupkey = ossl_rsa_new_with_ctx(rsa->libctx)) == NULL)
-        return NULL;
-
-    /* private and public key */
-    if (!rsa_bn_dup_check(&dupkey->n, rsa->n))
-        goto err;
-    if (!rsa_bn_dup_check(&dupkey->e, rsa->e))
-        goto err;
-    if (!rsa_bn_dup_check(&dupkey->d, rsa->d))
-        goto err;
-
-    /* factors and crt params */
-    if (!rsa_bn_dup_check(&dupkey->p, rsa->p))
-        goto err;
-    if (!rsa_bn_dup_check(&dupkey->q, rsa->q))
-        goto err;
-    if (!rsa_bn_dup_check(&dupkey->dmp1, rsa->dmp1))
-        goto err;
-    if (!rsa_bn_dup_check(&dupkey->dmq1, rsa->dmq1))
-        goto err;
-    if (!rsa_bn_dup_check(&dupkey->iqmp, rsa->iqmp))
-        goto err;
-
-    /* multiprime */
-    pnum = sk_RSA_PRIME_INFO_num(rsa->prime_infos);
-    if (pnum > 0) {
-        dupkey->prime_infos = sk_RSA_PRIME_INFO_new_reserve(NULL, pnum);
-        for (i = 0; i < pnum; i++) {
-            const RSA_PRIME_INFO *pinfo = NULL;
-            RSA_PRIME_INFO *duppinfo = NULL;
-
-            if ((duppinfo = OPENSSL_zalloc(sizeof(*duppinfo))) == NULL) {
-                ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
-                goto err;
-            }
-            /* push first so cleanup in error case works */
-            (void)sk_RSA_PRIME_INFO_push(dupkey->prime_infos, duppinfo);
-
-            pinfo = sk_RSA_PRIME_INFO_value(rsa->prime_infos, i);
-            if (!rsa_bn_dup_check(&duppinfo->r, pinfo->r))
-                goto err;
-            if (!rsa_bn_dup_check(&duppinfo->d, pinfo->d))
-                goto err;
-            if (!rsa_bn_dup_check(&duppinfo->t, pinfo->t))
-                goto err;
-        }
-        if (!ossl_rsa_multip_calc_product(dupkey))
-            goto err;
-    }
-
-    dupkey->version = rsa->version;
-    dupkey->flags = rsa->flags;
-
-    dupkey->pss_params = rsa->pss_params;
-
-    if (rsa->pss != NULL) {
-        dupkey->pss = RSA_PSS_PARAMS_dup(rsa->pss);
-        if (rsa->pss->maskGenAlgorithm != NULL
-            && dupkey->pss->maskGenAlgorithm == NULL) {
-            dupkey->pss->maskHash = ossl_x509_algor_mgf1_decode(rsa->pss->maskGenAlgorithm);
-            if (dupkey->pss->maskHash == NULL)
-                goto err;
-        }
-    }
-
-    if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_RSA,
-                            &dupkey->ex_data, &rsa->ex_data))
-        goto err;
-
-    return dupkey;
-
- err:
-    RSA_free(dupkey);
-    return NULL;
-}
-
 static int rsa_pkey_copy(EVP_PKEY *to, EVP_PKEY *from)
 {
     RSA *rsa = from->pkey.rsa;
@@ -983,7 +893,7 @@ static int rsa_pkey_copy(EVP_PKEY *to, EVP_PKEY *from)
     int ret;
 
     if (rsa != NULL) {
-        dupkey = rsa_dup(rsa);
+        dupkey = ossl_rsa_dup(rsa, OSSL_KEYMGMT_SELECT_ALL);
         if (dupkey == NULL)
             return 0;
     }

@@ -27,6 +27,8 @@ static const ERR_STRING_DATA HTTP_str_reasons[] = {
     {ERR_PACK(ERR_LIB_HTTP, 0, HTTP_R_ERROR_SENDING), "error sending"},
     {ERR_PACK(ERR_LIB_HTTP, 0, HTTP_R_FAILED_READING_DATA),
     "failed reading data"},
+    {ERR_PACK(ERR_LIB_HTTP, 0, HTTP_R_HEADER_PARSE_ERROR),
+    "header parse error"},
     {ERR_PACK(ERR_LIB_HTTP, 0, HTTP_R_INCONSISTENT_CONTENT_LENGTH),
     "inconsistent content length"},
     {ERR_PACK(ERR_LIB_HTTP, 0, HTTP_R_INVALID_PORT_NUMBER),
@@ -53,6 +55,8 @@ static const ERR_STRING_DATA HTTP_str_reasons[] = {
     "response line too long"},
     {ERR_PACK(ERR_LIB_HTTP, 0, HTTP_R_RESPONSE_PARSE_ERROR),
     "response parse error"},
+    {ERR_PACK(ERR_LIB_HTTP, 0, HTTP_R_SERVER_CANCELED_CONNECTION),
+    "server canceled connection"},
     {ERR_PACK(ERR_LIB_HTTP, 0, HTTP_R_SOCK_NOT_SUPPORTED),
     "sock not supported"},
     {ERR_PACK(ERR_LIB_HTTP, 0, HTTP_R_STATUS_CODE_UNSUPPORTED),
@@ -67,7 +71,7 @@ static const ERR_STRING_DATA HTTP_str_reasons[] = {
 
 #endif
 
-int err_load_HTTP_strings_int(void)
+int ossl_err_load_HTTP_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
     if (ERR_reason_error_string(HTTP_str_reasons[0].error) == NULL)

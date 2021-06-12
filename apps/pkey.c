@@ -18,7 +18,7 @@
 #include <openssl/core_names.h>
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_INFORM, OPT_OUTFORM, OPT_PASSIN, OPT_PASSOUT, OPT_ENGINE,
     OPT_IN, OPT_OUT, OPT_PUBIN, OPT_PUBOUT, OPT_TEXT_PUB,
     OPT_TEXT, OPT_NOOUT, OPT_CIPHER, OPT_TRADITIONAL, OPT_CHECK, OPT_PUB_CHECK,
@@ -67,15 +67,15 @@ const OPTIONS pkey_options[] = {
 
 int pkey_main(int argc, char **argv)
 {
-    BIO *in = NULL, *out = NULL;
+    BIO *out = NULL;
     ENGINE *e = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
-    const EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER *cipher = NULL;
     char *infile = NULL, *outfile = NULL, *passin = NULL, *passout = NULL;
     char *passinarg = NULL, *passoutarg = NULL, *ciphername = NULL, *prog;
     OPTION_CHOICE o;
-    int informat = FORMAT_PEM, outformat = FORMAT_PEM;
+    int informat = FORMAT_UNDEF, outformat = FORMAT_PEM;
     int pubin = 0, pubout = 0, text_pub = 0, text = 0, noout = 0, ret = 1;
     int private = 0, traditional = 0, check = 0, pub_check = 0;
 #ifndef OPENSSL_NO_EC
@@ -175,15 +175,19 @@ int pkey_main(int argc, char **argv)
     if (argc != 0)
         goto opthelp;
 
-    if (noout && pubout)
-        BIO_printf(bio_err,
-                   "Warning: The -pubout option is ignored with -noout\n");
     if (text && text_pub)
         BIO_printf(bio_err,
                    "Warning: The -text option is ignored with -text_pub\n");
     if (traditional && (noout || outformat != FORMAT_PEM))
         BIO_printf(bio_err,
                    "Warning: The -traditional is ignored since there is no PEM output\n");
+
+    /* -pubout and -text is the same as -text_pub */
+    if (!text_pub && pubout && text) {
+        text = 0;
+        text_pub = 1;
+    }
+
     private = (!noout && !pubout) || (text && !text_pub);
 
     if (ciphername != NULL) {
@@ -318,9 +322,9 @@ int pkey_main(int argc, char **argv)
         ERR_print_errors(bio_err);
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(pkey);
+    EVP_CIPHER_free(cipher);
     release_engine(e);
     BIO_free_all(out);
-    BIO_free(in);
     OPENSSL_free(passin);
     OPENSSL_free(passout);
 

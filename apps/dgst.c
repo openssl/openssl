@@ -36,7 +36,8 @@ struct doall_dgst_digests {
 };
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP, OPT_LIST,
+    OPT_COMMON,
+    OPT_LIST,
     OPT_C, OPT_R, OPT_OUT, OPT_SIGN, OPT_PASSIN, OPT_VERIFY,
     OPT_PRVERIFY, OPT_SIGNATURE, OPT_KEYFORM, OPT_ENGINE, OPT_ENGINE_IMPL,
     OPT_HEX, OPT_BINARY, OPT_DEBUG, OPT_FIPS_FINGERPRINT,
@@ -99,20 +100,20 @@ int dgst_main(int argc, char **argv)
     char *hmac_key = NULL;
     char *mac_name = NULL, *digestname = NULL;
     char *passinarg = NULL, *passin = NULL;
-    const EVP_MD *md = NULL;
+    EVP_MD *md = NULL;
     const char *outfile = NULL, *keyfile = NULL, *prog = NULL;
     const char *sigfile = NULL;
     const char *md_name = NULL;
     OPTION_CHOICE o;
-    int separator = 0, debug = 0, keyform = FORMAT_PEM, siglen = 0;
-    int i, ret = 1, out_bin = -1, want_pub = 0, do_verify = 0;
+    int separator = 0, debug = 0, keyform = FORMAT_UNDEF, siglen = 0;
+    int i, ret = EXIT_FAILURE, out_bin = -1, want_pub = 0, do_verify = 0;
     int xoflen = 0;
     unsigned char *buf = NULL, *sigbuf = NULL;
     int engine_impl = 0;
     struct doall_dgst_digests dec;
 
     buf = app_malloc(BUFSIZE, "I/O buffer");
-    md = EVP_get_digestbyname(argv[0]);
+    md = (EVP_MD *)EVP_get_digestbyname(argv[0]);
 
     prog = opt_init(argc, argv, dgst_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -124,7 +125,7 @@ int dgst_main(int argc, char **argv)
             goto end;
         case OPT_HELP:
             opt_help(dgst_options);
-            ret = 0;
+            ret = EXIT_SUCCESS;
             goto end;
         case OPT_LIST:
             BIO_printf(bio_out, "Supported digests:\n");
@@ -133,7 +134,7 @@ int dgst_main(int argc, char **argv)
             OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_MD_METH,
                                    show_digests, &dec);
             BIO_printf(bio_out, "\n");
-            ret = 0;
+            ret = EXIT_SUCCESS;
             goto end;
         case OPT_C:
             separator = 1;
@@ -225,7 +226,9 @@ int dgst_main(int argc, char **argv)
         BIO_printf(bio_err, "%s: Can only sign or verify one file.\n", prog);
         goto end;
     }
-    app_RAND_load();
+    if (!app_RAND_load())
+        goto end;
+
     if (digestname != NULL) {
         if (!opt_md(digestname, &md))
             goto opthelp;
@@ -241,13 +244,11 @@ int dgst_main(int argc, char **argv)
 
     in = BIO_new(BIO_s_file());
     bmd = BIO_new(BIO_f_md());
-    if ((in == NULL) || (bmd == NULL)) {
-        ERR_print_errors(bio_err);
+    if (in == NULL || bmd == NULL)
         goto end;
-    }
 
     if (debug) {
-        BIO_set_callback(in, BIO_debug_callback);
+        BIO_set_callback_ex(in, BIO_debug_callback_ex);
         /* needed for windows 3.1 */
         BIO_set_callback_arg(in, (char *)bio_err);
     }
@@ -269,7 +270,7 @@ int dgst_main(int argc, char **argv)
         goto end;
 
     if ((!(mac_name == NULL) + !(keyfile == NULL) + !(hmac_key == NULL)) > 1) {
-        BIO_printf(bio_err, "MAC and Signing key cannot both be specified\n");
+        BIO_printf(bio_err, "MAC and signing key cannot both be specified\n");
         goto end;
     }
 
@@ -286,7 +287,7 @@ int dgst_main(int argc, char **argv)
              */
             goto end;
         }
-        type = EVP_PKEY_id(sigkey);
+        type = EVP_PKEY_get_id(sigkey);
         if (type == EVP_PKEY_ED25519 || type == EVP_PKEY_ED448) {
             /*
              * We implement PureEdDSA for these which doesn't have a separate
@@ -299,34 +300,29 @@ int dgst_main(int argc, char **argv)
 
     if (mac_name != NULL) {
         EVP_PKEY_CTX *mac_ctx = NULL;
-        int r = 0;
+
         if (!init_gen_str(&mac_ctx, mac_name, impl, 0, NULL, NULL))
-            goto mac_end;
+            goto end;
         if (macopts != NULL) {
-            char *macopt;
             for (i = 0; i < sk_OPENSSL_STRING_num(macopts); i++) {
-                macopt = sk_OPENSSL_STRING_value(macopts, i);
+                char *macopt = sk_OPENSSL_STRING_value(macopts, i);
+
                 if (pkey_ctrl_string(mac_ctx, macopt) <= 0) {
-                    BIO_printf(bio_err,
-                               "MAC parameter error \"%s\"\n", macopt);
-                    ERR_print_errors(bio_err);
-                    goto mac_end;
+                    EVP_PKEY_CTX_free(mac_ctx);
+                    BIO_printf(bio_err, "MAC parameter error \"%s\"\n", macopt);
+                    goto end;
                 }
             }
         }
-        if (EVP_PKEY_keygen(mac_ctx, &sigkey) <= 0) {
-            BIO_puts(bio_err, "Error generating key\n");
-            ERR_print_errors(bio_err);
-            goto mac_end;
-        }
-        r = 1;
- mac_end:
+
+        sigkey = app_keygen(mac_ctx, mac_name, 0, 0 /* not verbose */);
+        /* Verbose output would make external-tests gost-engine fail */
         EVP_PKEY_CTX_free(mac_ctx);
-        if (r == 0)
-            goto end;
     }
 
     if (hmac_key != NULL) {
+        if (md == NULL)
+            md = (EVP_MD *)EVP_sha256();
         sigkey = EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, impl,
                                               (unsigned char *)hmac_key,
                                               strlen(hmac_key));
@@ -337,28 +333,27 @@ int dgst_main(int argc, char **argv)
     if (sigkey != NULL) {
         EVP_MD_CTX *mctx = NULL;
         EVP_PKEY_CTX *pctx = NULL;
-        int r;
+        int res;
+
         if (!BIO_get_md_ctx(bmd, &mctx)) {
             BIO_printf(bio_err, "Error getting context\n");
-            ERR_print_errors(bio_err);
             goto end;
         }
         if (do_verify)
-            r = EVP_DigestVerifyInit(mctx, &pctx, md, impl, sigkey);
+            res = EVP_DigestVerifyInit(mctx, &pctx, md, impl, sigkey);
         else
-            r = EVP_DigestSignInit(mctx, &pctx, md, impl, sigkey);
-        if (!r) {
+            res = EVP_DigestSignInit(mctx, &pctx, md, impl, sigkey);
+        if (res == 0) {
             BIO_printf(bio_err, "Error setting context\n");
-            ERR_print_errors(bio_err);
             goto end;
         }
         if (sigopts != NULL) {
-            char *sigopt;
             for (i = 0; i < sk_OPENSSL_STRING_num(sigopts); i++) {
-                sigopt = sk_OPENSSL_STRING_value(sigopts, i);
+                char *sigopt = sk_OPENSSL_STRING_value(sigopts, i);
+
                 if (pkey_ctrl_string(pctx, sigopt) <= 0) {
-                    BIO_printf(bio_err, "parameter error \"%s\"\n", sigopt);
-                    ERR_print_errors(bio_err);
+                    BIO_printf(bio_err, "Signature parameter error \"%s\"\n",
+                               sigopt);
                     goto end;
                 }
             }
@@ -369,32 +364,29 @@ int dgst_main(int argc, char **argv)
         EVP_MD_CTX *mctx = NULL;
         if (!BIO_get_md_ctx(bmd, &mctx)) {
             BIO_printf(bio_err, "Error getting context\n");
-            ERR_print_errors(bio_err);
             goto end;
         }
         if (md == NULL)
-            md = EVP_sha256();
+            md = (EVP_MD *)EVP_sha256();
         if (!EVP_DigestInit_ex(mctx, md, impl)) {
             BIO_printf(bio_err, "Error setting digest\n");
-            ERR_print_errors(bio_err);
             goto end;
         }
     }
 
     if (sigfile != NULL && sigkey != NULL) {
         BIO *sigbio = BIO_new_file(sigfile, "rb");
+
         if (sigbio == NULL) {
             BIO_printf(bio_err, "Error opening signature file %s\n", sigfile);
-            ERR_print_errors(bio_err);
             goto end;
         }
-        siglen = EVP_PKEY_size(sigkey);
+        siglen = EVP_PKEY_get_size(sigkey);
         sigbuf = app_malloc(siglen, "signature buffer");
         siglen = BIO_read(sigbio, sigbuf, siglen);
         BIO_free(sigbio);
         if (siglen <= 0) {
             BIO_printf(bio_err, "Error reading signature file %s\n", sigfile);
-            ERR_print_errors(bio_err);
             goto end;
         }
     }
@@ -402,14 +394,15 @@ int dgst_main(int argc, char **argv)
 
     if (md == NULL) {
         EVP_MD_CTX *tctx;
+
         BIO_get_md_ctx(bmd, &tctx);
-        md = EVP_MD_CTX_md(tctx);
+        md = EVP_MD_CTX_get1_md(tctx);
     }
     if (md != NULL)
-        md_name = EVP_MD_name(md);
+        md_name = EVP_MD_get0_name(md);
 
     if (xoflen > 0) {
-        if (!(EVP_MD_flags(md) & EVP_MD_FLAG_XOF)) {
+        if (!(EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF)) {
             BIO_printf(bio_err, "Length can only be specified for XOF\n");
             goto end;
         }
@@ -425,31 +418,33 @@ int dgst_main(int argc, char **argv)
                     siglen, NULL, md_name, "stdin");
     } else {
         const char *sig_name = NULL;
-        if (!out_bin) {
+
+        if (out_bin == 0) {
             if (sigkey != NULL)
-                sig_name = EVP_PKEY_get0_first_alg_name(sigkey);
+                sig_name = EVP_PKEY_get0_type_name(sigkey);
         }
-        ret = 0;
+        ret = EXIT_SUCCESS;
         for (i = 0; i < argc; i++) {
-            int r;
             if (BIO_read_filename(in, argv[i]) <= 0) {
                 perror(argv[i]);
-                ret++;
+                ret = EXIT_FAILURE;
                 continue;
             } else {
-                r = do_fp(out, buf, inp, separator, out_bin, xoflen,
-                          sigkey, sigbuf, siglen, sig_name, md_name, argv[i]);
+                if (do_fp(out, buf, inp, separator, out_bin, xoflen,
+                          sigkey, sigbuf, siglen, sig_name, md_name, argv[i]))
+                    ret = EXIT_FAILURE;
             }
-            if (r)
-                ret = r;
             (void)BIO_reset(bmd);
         }
     }
  end:
+    if (ret != EXIT_SUCCESS)
+        ERR_print_errors(bio_err);
     OPENSSL_clear_free(buf, BUFSIZE);
     BIO_free(in);
     OPENSSL_free(passin);
     BIO_free_all(out);
+    EVP_MD_free(md);
     EVP_PKEY_free(sigkey);
     sk_OPENSSL_STRING_free(sigopts);
     sk_OPENSSL_STRING_free(macopts);
@@ -530,14 +525,13 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout, int xoflen
           const char *file)
 {
     size_t len = BUFSIZE;
-    int i, backslash = 0, ret = 1;
+    int i, backslash = 0, ret = EXIT_FAILURE;
     unsigned char *allocated_buf = NULL;
 
     while (BIO_pending(bp) || !BIO_eof(bp)) {
         i = BIO_read(bp, (char *)buf, BUFSIZE);
         if (i < 0) {
-            BIO_printf(bio_err, "Read Error in %s\n", file);
-            ERR_print_errors(bio_err);
+            BIO_printf(bio_err, "Read error in %s\n", file);
             goto end;
         }
         if (i == 0)
@@ -550,14 +544,13 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout, int xoflen
         if (i > 0) {
             BIO_printf(out, "Verified OK\n");
         } else if (i == 0) {
-            BIO_printf(out, "Verification Failure\n");
+            BIO_printf(out, "Verification failure\n");
             goto end;
         } else {
-            BIO_printf(bio_err, "Error Verifying Data\n");
-            ERR_print_errors(bio_err);
+            BIO_printf(bio_err, "Error verifying data\n");
             goto end;
         }
-        ret = 0;
+        ret = EXIT_SUCCESS;
         goto end;
     }
     if (key != NULL) {
@@ -566,8 +559,7 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout, int xoflen
 
         BIO_get_md_ctx(bp, &ctx);
         if (!EVP_DigestSignFinal(ctx, NULL, &tmplen)) {
-            BIO_printf(bio_err, "Error Signing Data\n");
-            ERR_print_errors(bio_err);
+            BIO_printf(bio_err, "Error getting maximum length of signed data\n");
             goto end;
         }
         if (tmplen > BUFSIZE) {
@@ -576,8 +568,7 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout, int xoflen
             buf = allocated_buf;
         }
         if (!EVP_DigestSignFinal(ctx, buf, &len)) {
-            BIO_printf(bio_err, "Error Signing Data\n");
-            ERR_print_errors(bio_err);
+            BIO_printf(bio_err, "Error signing data\n");
             goto end;
         }
     } else if (xoflen > 0) {
@@ -593,15 +584,12 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout, int xoflen
 
         if (!EVP_DigestFinalXOF(ctx, buf, len)) {
             BIO_printf(bio_err, "Error Digesting Data\n");
-            ERR_print_errors(bio_err);
             goto end;
         }
     } else {
         len = BIO_gets(bp, (char *)buf, BUFSIZE);
-        if ((int)len < 0) {
-            ERR_print_errors(bio_err);
+        if ((int)len < 0)
             goto end;
-        }
     }
 
     if (binout) {
@@ -636,7 +624,7 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout, int xoflen
         BIO_printf(out, "\n");
     }
 
-    ret = 0;
+    ret = EXIT_SUCCESS;
  end:
     if (allocated_buf != NULL)
         OPENSSL_clear_free(allocated_buf, len);

@@ -73,15 +73,17 @@ B<openssl> B<s_server>
 [B<-status>]
 [B<-status_verbose>]
 [B<-status_timeout> I<int>]
+[B<-proxy> I<[http[s]://][userinfo@]host[:port][/path]>]
+[B<-no_proxy> I<addresses>]
 [B<-status_url> I<val>]
 [B<-status_file> I<infile>]
+[B<-ssl_config> I<val>]
 [B<-trace>]
 [B<-security_debug>]
 [B<-security_debug_verbose>]
 [B<-brief>]
 [B<-rev>]
 [B<-async>]
-[B<-ssl_config> I<val>]
 [B<-max_send_frag> I<+int>]
 [B<-split_send_frag> I<+int>]
 [B<-max_pipelines> I<+int>]
@@ -94,7 +96,6 @@ B<openssl> B<s_server>
 [B<-serverpref>]
 [B<-legacy_renegotiation>]
 [B<-no_renegotiation>]
-[B<-legacy_server_connect>]
 [B<-no_resumption_on_reneg>]
 [B<-no_legacy_server_connect>]
 [B<-allow_no_dhe_kex>]
@@ -122,9 +123,9 @@ B<openssl> B<s_server>
 [B<-listen>]
 [B<-sctp>]
 [B<-sctp_label_bug>]
+[B<-use_srtp> I<val>]
 [B<-no_dhe>]
 [B<-nextprotoneg> I<val>]
-[B<-use_srtp> I<val>]
 [B<-alpn> I<val>]
 [B<-sendfile>]
 [B<-keylogfile> I<outfile>]
@@ -143,18 +144,6 @@ B<openssl> B<s_server>
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
-
-=for openssl ifdef unix 4 6 unlink no_dhe nextprotoneg use_srtp engine
-
-=for openssl ifdef status status_verbose status_timeout status_url status_file
-
-=for openssl ifdef psk_hint srpvfile srpuserseed sctp sctp_label_bug
-
-=for openssl ifdef sctp sctp_label_bug trace mtu timeout listen
-
-=for openssl ifdef ssl3 tls1 tls1_1 tls1_2 tls1_3 dtls mtu dtls1 dtls1_2
-
-=for openssl ifdef sendfile
 
 =head1 DESCRIPTION
 
@@ -226,8 +215,8 @@ The certificate file to use for servername; default is C<server2.pem>.
 
 =item B<-certform> B<DER>|B<PEM>|B<P12>
 
-The server certificate file format.
-This option has no effect and is retained for backward compatibility only.
+The server certificate file format; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-cert_chain>
 
@@ -259,8 +248,7 @@ The private Key file to use for servername if not given via B<-cert2>.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The key format; the default is B<PEM>.
-The only value with effect is B<ENGINE>; all others have become obsolete.
+The key format; unspecified by default.
 See L<openssl-format-options(1)> for details.
 
 =item B<-pass> I<val>
@@ -289,14 +277,13 @@ The input can be in PEM, DER, or PKCS#12 format.
 
 =item B<-dcertform> B<DER>|B<PEM>|B<P12>
 
-The format of the additional certificate file.
-This option has no effect and is retained for backward compatibility only.
+The format of the additional certificate file; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-dkeyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The format of the additional private key; the default is B<PEM>.
-The only value with effect is B<ENGINE>; all others have become obsolete.
-See L<openssl-format-options(1)>.
+The format of the additional private key; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-dpass> I<val>
 
@@ -316,6 +303,14 @@ This option translated a line feed from the terminal into CR+LF.
 
 Print extensive debugging information including a hex dump of all traffic.
 
+=item B<-security_debug>
+
+Print output from SSL/TLS security framework.
+
+=item B<-security_debug_verbose>
+
+Print more output from SSL/TLS security framework
+
 =item B<-msg>
 
 Show all protocol messages with hex dump.
@@ -334,7 +329,7 @@ The CRL file to use.
 
 =item B<-CRLform> B<DER>|B<PEM>
 
-The CRL file format; the default is B<PEM>.
+The CRL file format; unspecified by default.
 See L<openssl-format-options(1)> for details.
 
 =item B<-crl_download>
@@ -390,6 +385,10 @@ DH).
 
 Inhibit printing of session and certificate information.
 
+=item B<-no_resume_ephemeral>
+
+Disable caching and tickets if ephemeral (EC)DH is used.
+
 =item B<-tlsextdebug>
 
 Print a hex dump of any TLS extensions received from the server.
@@ -439,6 +438,14 @@ option is enabled the peer does not need to send the close_notify alert and a
 closed connection will be treated as if the close_notify alert was received.
 For more information on shutting down a connection, see L<SSL_shutdown(3)>.
 
+=item B<-servername>
+
+Servername for HostName TLS extension.
+
+=item B<-servername_fatal>
+
+On servername mismatch send fatal alert (default: warning alert).
+
 =item B<-id_prefix> I<val>
 
 Generate SSL/TLS session IDs prefixed by I<val>. This is mostly useful
@@ -446,11 +453,39 @@ for testing any SSL/TLS code (e.g. proxies) that wish to deal with multiple
 servers, when each of which might be generating a unique range of session
 IDs (e.g. with a certain prefix).
 
+=item B<-keymatexport>
+
+Export keying material using label.
+
+=item B<-keymatexportlen>
+
+Export the given number of bytes of keying material; default 20.
+
+=item B<-no_cache>
+
+Disable session cache.
+
+=item B<-ext_cache>.
+
+Disable internal cache, set up and use external cache.
+
 =item B<-verify_return_error>
 
 Verification errors normally just print a message but allow the
 connection to continue, for debugging purposes.
 If this option is used, then verification errors close the connection.
+
+=item B<-verify_quiet>
+
+No verify output except verify errors.
+
+=item B<-ign_eof>
+
+Ignore input EOF (default: when B<-quiet>).
+
+=item B<-no_ign_eof>
+
+Do not ignore input EOF.
 
 =item B<-status>
 
@@ -465,6 +500,23 @@ a verbose printout of the OCSP response.
 
 Sets the timeout for OCSP response to I<int> seconds.
 
+=item B<-proxy> I<[http[s]://][userinfo@]host[:port][/path]>
+
+The HTTP(S) proxy server to use for reaching the OCSP server unless B<-no_proxy>
+applies, see below.
+The proxy port defaults to 80 or 443 if the scheme is C<https>; apart from that
+the optional C<http://> or C<https://> prefix is ignored,
+as well as any userinfo and path components.
+Defaults to the environment variable C<http_proxy> if set, else C<HTTP_PROXY>
+in case no TLS is used, otherwise C<https_proxy> if set, else C<HTTPS_PROXY>.
+
+=item B<-no_proxy> I<addresses>
+
+List of IP addresses and/or DNS names of servers
+not to use an HTTP(S) proxy for, separated by commas and/or whitespace
+(where in the latter case the whole argument must be enclosed in "...").
+Default is from the environment variable C<no_proxy> if set, else C<NO_PROXY>.
+
 =item B<-status_url> I<val>
 
 Sets a fallback responder URL to use if no responder URL is present in the
@@ -478,10 +530,13 @@ Any given query component is handled as part of the path component.
 Overrides any OCSP responder URLs from the certificate and always provides the
 OCSP Response stored in the file. The file must be in DER format.
 
+=item B<-ssl_config> I<val>
+
+Configure SSL_CTX using the given configuration value.
+
 =item B<-trace>
 
-Show verbose trace output of protocol messages. OpenSSL needs to be compiled
-with B<enable-ssl-trace> for this option to work.
+Show verbose trace output of protocol messages.
 
 =item B<-brief>
 
@@ -618,6 +673,14 @@ will be used.
 
 Turns on non blocking I/O.
 
+=item B<-timeout>
+
+Enable timeouts.
+
+=item B<-mtu>
+
+Set link-layer MTU.
+
 =item B<-psk_identity> I<val>
 
 Expect the client to send PSK identity I<val> when using a PSK
@@ -639,6 +702,16 @@ This option must be provided in order to use a PSK cipher.
 
 Use the pem encoded SSL_SESSION data stored in I<file> as the basis of a PSK.
 Note that this will only work if TLSv1.3 is negotiated.
+
+=item B<-srpvfile>
+
+The verifier file for SRP.
+This option is deprecated.
+
+=item B<-srpuserseed>
+
+A seed string for a default user salt.
+This option is deprecated.
 
 =item B<-listen>
 
@@ -665,6 +738,10 @@ older broken implementations but breaks interoperability with correct
 implementations. Must be used in conjunction with B<-sctp>. This option is only
 available where OpenSSL has support for SCTP enabled.
 
+=item B<-use_srtp>
+
+Offer SRTP key management with a colon-separated profile list.
+
 =item B<-no_dhe>
 
 If this option is set then no DH parameters will be loaded effectively
@@ -672,7 +749,7 @@ disabling the ephemeral DH cipher suites.
 
 =item B<-alpn> I<val>, B<-nextprotoneg> I<val>
 
-These flags enable the Enable the Application-Layer Protocol Negotiation
+These flags enable the Application-Layer Protocol Negotiation
 or Next Protocol Negotiation (NPN) extension, respectively. ALPN is the
 IETF standard and replaces NPN.
 The I<val> list is a comma-separated list of supported protocol
@@ -845,13 +922,8 @@ The -no_alt_chains option was added in OpenSSL 1.1.0.
 The
 -allow-no-dhe-kex and -prioritize_chacha options were added in OpenSSL 1.1.1.
 
-All B<-keyform> and B<-dkeyform> values except B<ENGINE>
-have become obsolete in OpenSSL 3.0.0 and have no effect.
-
-The B<-certform> and B<-dcertform> options have become obsolete in OpenSSL 3.0.0
-and have no effect.
-
-The B<-engine> option was deprecated in OpenSSL 3.0.
+The B<-srpvfile>, B<-srpuserseed>, and B<-engine>
+option were deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

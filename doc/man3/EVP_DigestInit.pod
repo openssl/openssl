@@ -10,18 +10,21 @@ EVP_MD_CTX_set_params, EVP_MD_CTX_get_params,
 EVP_MD_settable_ctx_params, EVP_MD_gettable_ctx_params,
 EVP_MD_CTX_settable_params, EVP_MD_CTX_gettable_params,
 EVP_MD_CTX_set_flags, EVP_MD_CTX_clear_flags, EVP_MD_CTX_test_flags,
-EVP_Digest, EVP_DigestInit_ex2, EVP_DigestInit_ex, EVP_DigestInit,
+EVP_Q_digest, EVP_Digest, EVP_DigestInit_ex2, EVP_DigestInit_ex, EVP_DigestInit,
 EVP_DigestUpdate, EVP_DigestFinal_ex, EVP_DigestFinalXOF, EVP_DigestFinal,
-EVP_MD_is_a, EVP_MD_name, EVP_MD_description, EVP_MD_number,
-EVP_MD_names_do_all, EVP_MD_provider,
-EVP_MD_type, EVP_MD_pkey_type, EVP_MD_size, EVP_MD_block_size, EVP_MD_flags,
-EVP_MD_CTX_name,
-EVP_MD_CTX_md, EVP_MD_CTX_type, EVP_MD_CTX_size, EVP_MD_CTX_block_size,
-EVP_MD_CTX_md_data, EVP_MD_CTX_update_fn, EVP_MD_CTX_set_update_fn,
+EVP_MD_is_a, EVP_MD_get0_name, EVP_MD_get0_description,
+EVP_MD_names_do_all, EVP_MD_get0_provider, EVP_MD_get_type,
+EVP_MD_get_pkey_type, EVP_MD_get_size, EVP_MD_get_block_size, EVP_MD_get_flags,
+EVP_MD_CTX_get0_name, EVP_MD_CTX_md, EVP_MD_CTX_get0_md, EVP_MD_CTX_get1_md,
+EVP_MD_CTX_get_type, EVP_MD_CTX_get_size, EVP_MD_CTX_get_block_size,
+EVP_MD_CTX_get0_md_data, EVP_MD_CTX_update_fn, EVP_MD_CTX_set_update_fn,
 EVP_md_null,
 EVP_get_digestbyname, EVP_get_digestbynid, EVP_get_digestbyobj,
-EVP_MD_CTX_pkey_ctx, EVP_MD_CTX_set_pkey_ctx,
-EVP_MD_do_all_provided
+EVP_MD_CTX_get_pkey_ctx, EVP_MD_CTX_set_pkey_ctx,
+EVP_MD_do_all_provided,
+EVP_MD_type, EVP_MD_nid, EVP_MD_name, EVP_MD_pkey_type, EVP_MD_size,
+EVP_MD_block_size, EVP_MD_flags, EVP_MD_CTX_size, EVP_MD_CTX_block_size,
+EVP_MD_CTX_type, EVP_MD_CTX_pkey_ctx, EVP_MD_CTX_md_data
 - EVP digest routines
 
 =head1 SYNOPSIS
@@ -48,6 +51,9 @@ EVP_MD_do_all_provided
  void EVP_MD_CTX_clear_flags(EVP_MD_CTX *ctx, int flags);
  int EVP_MD_CTX_test_flags(const EVP_MD_CTX *ctx, int flags);
 
+ int EVP_Q_digest(OSSL_LIB_CTX *libctx, const char *name, const char *propq,
+                  const void *data, size_t count,
+                  unsigned char *md, unsigned int *size);
  int EVP_Digest(const void *data, size_t count, unsigned char *md,
                 unsigned int *size, const EVP_MD *type, ENGINE *impl);
  int EVP_DigestInit_ex2(EVP_MD_CTX *ctx, const EVP_MD *type,
@@ -64,26 +70,26 @@ EVP_MD_do_all_provided
 
  int EVP_MD_CTX_copy(EVP_MD_CTX *out, EVP_MD_CTX *in);
 
- const char *EVP_MD_name(const EVP_MD *md);
- const char *EVP_MD_description(const EVP_MD *md);
- int EVP_MD_number(const EVP_MD *md);
+ const char *EVP_MD_get0_name(const EVP_MD *md);
+ const char *EVP_MD_get0_description(const EVP_MD *md);
  int EVP_MD_is_a(const EVP_MD *md, const char *name);
  int EVP_MD_names_do_all(const EVP_MD *md,
                          void (*fn)(const char *name, void *data),
                          void *data);
- const OSSL_PROVIDER *EVP_MD_provider(const EVP_MD *md);
- int EVP_MD_type(const EVP_MD *md);
- int EVP_MD_pkey_type(const EVP_MD *md);
- int EVP_MD_size(const EVP_MD *md);
- int EVP_MD_block_size(const EVP_MD *md);
- unsigned long EVP_MD_flags(const EVP_MD *md);
+ const OSSL_PROVIDER *EVP_MD_get0_provider(const EVP_MD *md);
+ int EVP_MD_get_type(const EVP_MD *md);
+ int EVP_MD_get_pkey_type(const EVP_MD *md);
+ int EVP_MD_get_size(const EVP_MD *md);
+ int EVP_MD_get_block_size(const EVP_MD *md);
+ unsigned long EVP_MD_get_flags(const EVP_MD *md);
 
- const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx);
- const char *EVP_MD_CTX_name(const EVP_MD_CTX *ctx);
- int EVP_MD_CTX_size(const EVP_MD_CTX *ctx);
- int EVP_MD_CTX_block_size(const EVP_MD_CTX *ctx);
- int EVP_MD_CTX_type(const EVP_MD_CTX *ctx);
- void *EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx);
+ const EVP_MD *EVP_MD_CTX_get0_md(const EVP_MD_CTX *ctx);
+ EVP_MD *EVP_MD_CTX_get1_md(EVP_MD_CTX *ctx);
+ const char *EVP_MD_CTX_get0_name(const EVP_MD_CTX *ctx);
+ int EVP_MD_CTX_get_size(const EVP_MD_CTX *ctx);
+ int EVP_MD_CTX_get_block_size(const EVP_MD_CTX *ctx);
+ int EVP_MD_CTX_get_type(const EVP_MD_CTX *ctx);
+ void *EVP_MD_CTX_get0_md_data(const EVP_MD_CTX *ctx);
 
  const EVP_MD *EVP_md_null(void);
 
@@ -91,16 +97,31 @@ EVP_MD_do_all_provided
  const EVP_MD *EVP_get_digestbynid(int type);
  const EVP_MD *EVP_get_digestbyobj(const ASN1_OBJECT *o);
 
- EVP_PKEY_CTX *EVP_MD_CTX_pkey_ctx(const EVP_MD_CTX *ctx);
+ EVP_PKEY_CTX *EVP_MD_CTX_get_pkey_ctx(const EVP_MD_CTX *ctx);
  void EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx);
 
  void EVP_MD_do_all_provided(OSSL_LIB_CTX *libctx,
                              void (*fn)(EVP_MD *mac, void *arg),
                              void *arg);
 
+ #define EVP_MD_type EVP_MD_get_type
+ #define EVP_MD_nid EVP_MD_get_type
+ #define EVP_MD_name EVP_MD_get0_name
+ #define EVP_MD_pkey_type EVP_MD_get_pkey_type
+ #define EVP_MD_size EVP_MD_get_size
+ #define EVP_MD_block_size EVP_MD_get_block_size
+ #define EVP_MD_flags EVP_MD_get_flags
+ #define EVP_MD_CTX_size EVP_MD_CTX_get_size
+ #define EVP_MD_CTX_block_size EVP_MD_CTX_get_block_size
+ #define EVP_MD_CTX_type EVP_MD_CTX_get_type
+ #define EVP_MD_CTX_pkey_ctx EVP_MD_CTX_get_pkey_ctx
+ #define EVP_MD_CTX_md_data EVP_MD_CTX_get0_md_data
+
 Deprecated since OpenSSL 3.0, can be hidden entirely by defining
 B<OPENSSL_API_COMPAT> with a suitable version value, see
 L<openssl_user_macros(7)>:
+
+ const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx);
 
  int (*EVP_MD_CTX_update_fn(EVP_MD_CTX *ctx))(EVP_MD_CTX *ctx,
                                               const void *data, size_t count);
@@ -122,7 +143,7 @@ The B<EVP_MD> type is a structure for digest method implementation.
 
 Fetches the digest implementation for the given I<algorithm> from any
 provider offering it, within the criteria given by the I<properties>.
-See L<provider(7)/Fetching algorithms> for further information.
+See L<crypto(7)/ALGORITHM FETCHING> for further information.
 
 The returned value must eventually be freed with EVP_MD_free().
 
@@ -212,6 +233,12 @@ as a parameter descriptor.
 
 Sets, clears and tests I<ctx> flags.  See L</FLAGS> below for more information.
 
+=item EVP_Q_digest() is a quick one-shot digest function.
+It hashes I<count> bytes of data at I<data> using the digest algorithm I<name>,
+which is fetched using the optional I<libctx> and I<propq> parameters.
+The digest value is placed in I<md> and its length is written at I<size>
+if the pointer is not NULL. At most B<EVP_MAX_MD_SIZE> bytes will be written.
+
 =item EVP_Digest()
 
 A wrapper around the Digest Init_ex, Update and Final_ex functions.
@@ -299,13 +326,8 @@ EVP_sha256() rather than the result of an EVP_MD_fetch()), only cipher
 names registered with the default library context (see
 L<OSSL_LIB_CTX(3)>) will be considered.
 
-=item EVP_MD_number()
-
-Returns the internal dynamic number assigned to the I<md>.  This is
-only useful with fetched B<EVP_MD>s.
-
-=item EVP_MD_name(),
-EVP_MD_CTX_name()
+=item EVP_MD_get0_name(),
+EVP_MD_CTX_get0_name()
 
 Return the name of the given message digest.  For fetched message
 digests with multiple names, only one of them is returned; it's
@@ -316,49 +338,52 @@ recommended to use EVP_MD_names_do_all() instead.
 Traverses all names for the I<md>, and calls I<fn> with each name and
 I<data>.  This is only useful with fetched B<EVP_MD>s.
 
-=item EVP_MD_description()
+=item EVP_MD_get0_description()
 
 Returns a description of the digest, meant for display and human consumption.
 The description is at the discretion of the digest implementation.
 
-=item EVP_MD_provider()
+=item EVP_MD_get0_provider()
 
 Returns an B<OSSL_PROVIDER> pointer to the provider that implements the given
 B<EVP_MD>.
 
-=item EVP_MD_size(),
-EVP_MD_CTX_size()
+=item EVP_MD_get_size(),
+EVP_MD_CTX_get_size()
 
 Return the size of the message digest when passed an B<EVP_MD> or an
 B<EVP_MD_CTX> structure, i.e. the size of the hash.
 
-=item EVP_MD_block_size(),
-EVP_MD_CTX_block_size()
+=item EVP_MD_get_block_size(),
+EVP_MD_CTX_get_block_size()
 
 Return the block size of the message digest when passed an B<EVP_MD> or an
 B<EVP_MD_CTX> structure.
 
-=item EVP_MD_type(),
-EVP_MD_CTX_type()
+=item EVP_MD_get_type(),
+EVP_MD_CTX_get_type()
 
 Return the NID of the OBJECT IDENTIFIER representing the given message digest
-when passed an B<EVP_MD> structure.  For example, C<EVP_MD_type(EVP_sha1())>
+when passed an B<EVP_MD> structure.  For example, C<EVP_MD_get_type(EVP_sha1())>
 returns B<NID_sha1>. This function is normally used when setting ASN1 OIDs.
 
-=item EVP_MD_CTX_md_data()
+=item EVP_MD_CTX_get0_md_data()
 
 Return the digest method private data for the passed B<EVP_MD_CTX>.
 The space is allocated by OpenSSL and has the size originally set with
 EVP_MD_meth_set_app_datasize().
 
-=item EVP_MD_CTX_md()
+=item EVP_MD_CTX_get0_md(), EVP_MD_CTX_get1_md()
 
-Returns the B<EVP_MD> structure corresponding to the passed B<EVP_MD_CTX>. This
+EVP_MD_CTX_get0_md() returns
+the B<EVP_MD> structure corresponding to the passed B<EVP_MD_CTX>. This
 will be the same B<EVP_MD> object originally passed to EVP_DigestInit_ex2() (or
 other similar function) when the EVP_MD_CTX was first initialised. Note that
 where explicit fetch is in use (see L<EVP_MD_fetch(3)>) the value returned from
 this function will not have its reference count incremented and therefore it
 should not be used after the EVP_MD_CTX is freed.
+EVP_MD_CTX_get1_md() is the same except the ownership is passed to the
+caller and is from the passed B<EVP_MD_CTX>.
 
 =item EVP_MD_CTX_set_update_fn()
 
@@ -370,12 +395,12 @@ update function from the B<EVP_MD> type specified at initialization is used.
 
 Returns the update function for I<ctx>.
 
-=item EVP_MD_flags()
+=item EVP_MD_get_flags()
 
 Returns the I<md> flags. Note that these are different from the B<EVP_MD_CTX>
 ones. See L<EVP_MD_meth_set_flags(3)> for more information.
 
-=item EVP_MD_pkey_type()
+=item EVP_MD_get_pkey_type()
 
 Returns the NID of the public key signing algorithm associated with this
 digest. For example EVP_sha1() is associated with RSA so this will return
@@ -394,7 +419,7 @@ EVP_get_digestbyobj()
 Returns an B<EVP_MD> structure when passed a digest name, a digest B<NID> or an
 B<ASN1_OBJECT> structure respectively.
 
-=item EVP_MD_CTX_pkey_ctx()
+=item EVP_MD_CTX_get_pkey_ctx()
 
 Returns the B<EVP_PKEY_CTX> assigned to I<ctx>. The returned pointer should not
 be freed by the caller.
@@ -521,12 +546,16 @@ Returns a pointer to a B<EVP_MD> for success or NULL for failure.
 
 Returns 1 for success or 0 for failure.
 
-=item EVP_DigestInit_ex2(),
+=item EVP_Q_digest(),
+EVP_Digest(),
+EVP_DigestInit_ex2(),
 EVP_DigestInit_ex(),
 EVP_DigestUpdate(),
-EVP_DigestFinal_ex()
+EVP_DigestFinal_ex(),
+EVP_DigestFinalXOF(), and
+EVP_DigestFinal()
 
-Returns 1 for
+return 1 for
 success and 0 for failure.
 
 =item EVP_MD_CTX_ctrl()
@@ -548,16 +577,16 @@ to get.
 
 Returns 1 if successful or 0 for failure.
 
-=item EVP_MD_type(),
-EVP_MD_pkey_type()
+=item EVP_MD_get_type(),
+EVP_MD_get_pkey_type()
 
 Returns the NID of the corresponding OBJECT IDENTIFIER or NID_undef if none
 exists.
 
-=item EVP_MD_size(),
-EVP_MD_block_size(),
-EVP_MD_CTX_size(),
-EVP_MD_CTX_block_size()
+=item EVP_MD_get_size(),
+EVP_MD_get_block_size(),
+EVP_MD_CTX_get_size(),
+EVP_MD_CTX_get_block_size()
 
 Returns the digest or block size in bytes.
 
@@ -605,9 +634,9 @@ implementations of digests to be specified.
 If digest contexts are not cleaned up after use,
 memory leaks will occur.
 
-EVP_MD_CTX_name(), EVP_MD_CTX_size(), EVP_MD_CTX_block_size(),
-EVP_MD_CTX_type(), EVP_get_digestbynid() and EVP_get_digestbyobj() are defined
-as macros.
+EVP_MD_CTX_get0_name(), EVP_MD_CTX_get_size(), EVP_MD_CTX_get_block_size(),
+EVP_MD_CTX_get_type(), EVP_get_digestbynid() and EVP_get_digestbyobj() are
+defined as macros.
 
 EVP_MD_CTX_ctrl() sends commands to message digests for additional configuration
 or control.
@@ -662,7 +691,11 @@ L<EVP_MD_meth_new(3)>,
 L<openssl-dgst(1)>,
 L<evp(7)>,
 L<OSSL_PROVIDER(3)>,
-L<OSSL_PARAM(3)>
+L<OSSL_PARAM(3)>,
+L<property(7)>,
+L<crypto(7)/ALGORITHM FETCHING>,
+L<provider-digest(7)>,
+L<life_cycle-digest(7)>
 
 The full list of digest algorithms are provided below.
 
@@ -677,7 +710,6 @@ L<EVP_sha224(3)>,
 L<EVP_sha3_224(3)>,
 L<EVP_sm3(3)>,
 L<EVP_whirlpool(3)>
-L<provider(7)/Fetching algorithms>
 
 =head1 HISTORY
 
@@ -691,13 +723,23 @@ The EVP_dss1() function was removed in OpenSSL 1.1.0.
 
 The EVP_MD_CTX_set_pkey_ctx() function was added in OpenSSL 1.1.1.
 
-The EVP_DigestInit_ex2(), EVP_MD_fetch(), EVP_MD_free(), EVP_MD_up_ref(),
+The EVP_Q_digest(), EVP_DigestInit_ex2(),
+EVP_MD_fetch(), EVP_MD_free(), EVP_MD_up_ref(),
 EVP_MD_get_params(), EVP_MD_CTX_set_params(), EVP_MD_CTX_get_params(),
 EVP_MD_gettable_params(), EVP_MD_gettable_ctx_params(),
 EVP_MD_settable_ctx_params(), EVP_MD_CTX_settable_params() and
 EVP_MD_CTX_gettable_params() functions were added in OpenSSL 3.0.
 
-The EVP_MD_CTX_update_fn() and EVP_MD_CTX_set_update_fn() were deprecated
+The EVP_MD_type(), EVP_MD_nid(), EVP_MD_name(), EVP_MD_pkey_type(),
+EVP_MD_size(), EVP_MD_block_size(), EVP_MD_flags(), EVP_MD_CTX_size(),
+EVP_MD_CTX_block_size(), EVP_MD_CTX_type(), and EVP_MD_CTX_md_data()
+functions were renamed to include C<get> or C<get0> in their names in
+OpenSSL 3.0, respectively. The old names are kept as non-deprecated
+alias macros.
+
+The EVP_MD_CTX_md() function was deprecated in OpenSSL 3.0; use
+EVP_MD_CTX_get0_md() instead.
+EVP_MD_CTX_update_fn() and EVP_MD_CTX_set_update_fn() were deprecated
 in OpenSSL 3.0.
 
 =head1 COPYRIGHT

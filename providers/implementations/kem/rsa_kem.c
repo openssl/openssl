@@ -21,7 +21,7 @@
 #include <openssl/rsa.h>
 #include <openssl/params.h>
 #include <openssl/err.h>
-#include <crypto/rsa.h>
+#include "crypto/rsa.h"
 #include <openssl/proverr.h>
 #include "prov/provider_ctx.h"
 #include "prov/implementations.h"
@@ -122,15 +122,17 @@ static int rsakem_init(void *vprsactx, void *vrsa,
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
 
-    if (prsactx == NULL || vrsa == NULL || !RSA_up_ref(vrsa))
+    if (prsactx == NULL || vrsa == NULL)
+        return 0;
+
+    if (!ossl_rsa_check_key(prsactx->libctx, vrsa, operation))
+        return 0;
+
+    if (!RSA_up_ref(vrsa))
         return 0;
     RSA_free(prsactx->rsa);
     prsactx->rsa = vrsa;
 
-    if (!ossl_rsa_check_key(vrsa, operation == EVP_PKEY_OP_ENCAPSULATE)) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
-        return 0;
-    }
     return rsakem_set_ctx_params(prsactx, params);
 }
 
@@ -227,7 +229,7 @@ static int rsasve_gen_rand_bytes(RSA *rsa_pub,
     ret = (z != NULL
            && (BN_copy(nminus3, RSA_get0_n(rsa_pub)) != NULL)
            && BN_sub_word(nminus3, 3)
-           && BN_priv_rand_range_ex(z, nminus3, bnctx)
+           && BN_priv_rand_range_ex(z, nminus3, 0, bnctx)
            && BN_add_word(z, 2)
            && (BN_bn2binpad(z, out, outlen) == outlen));
     BN_CTX_end(bnctx);

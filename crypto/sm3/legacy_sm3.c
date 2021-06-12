@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2017 Ribose Inc. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -20,6 +20,7 @@ static const EVP_MD sm3_md = {
     NID_sm3WithRSAEncryption,
     SM3_DIGEST_LENGTH,
     0,
+    EVP_ORIG_GLOBAL,
     LEGACY_EVP_MD_METH_TABLE(sm3_int_init, sm3_int_update, sm3_int_final, NULL,
                              SM3_CBLOCK),
 };

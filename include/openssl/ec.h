@@ -84,6 +84,8 @@ typedef enum {
     POINT_CONVERSION_HYBRID = 6
 } point_conversion_form_t;
 
+const char *OSSL_EC_curve_nid2name(int nid);
+
 # ifndef OPENSSL_NO_EC
 #  include <openssl/asn1.h>
 #  include <openssl/symhacks.h>
@@ -296,7 +298,7 @@ unsigned char *EC_GROUP_get0_seed(const EC_GROUP *x);
 size_t EC_GROUP_get_seed_len(const EC_GROUP *);
 size_t EC_GROUP_set_seed(EC_GROUP *, const unsigned char *, size_t len);
 
-/** Sets the parameters of a ec curve defined by y^2 = x^3 + a*x + b (for GFp)
+/** Sets the parameters of an ec curve defined by y^2 = x^3 + a*x + b (for GFp)
  *  or y^2 + x*y = x^3 + a*x^2 + b (for GF2m)
  *  \param  group  EC_GROUP object
  *  \param  p      BIGNUM with the prime number (GFp) or the polynomial
@@ -1072,7 +1074,7 @@ OSSL_DEPRECATEDIN_3_0 void EC_KEY_set_conv_form(EC_KEY *eckey,
                                                 point_conversion_form_t cform);
 #  endif /*OPENSSL_NO_DEPRECATED_3_0 */
 
-# define EC_KEY_get_ex_new_index(l, p, newf, dupf, freef) \
+#  define EC_KEY_get_ex_new_index(l, p, newf, dupf, freef) \
     CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_EC_KEY, l, p, newf, dupf, freef)
 
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -1222,7 +1224,7 @@ OSSL_DEPRECATEDIN_3_0 int i2d_ECParameters(const EC_KEY *key,
 /*         (octet string, not DER -- hence 'o2i' and 'i2o')         */
 /********************************************************************/
 
-/** Decodes a ec public key from a octet string.
+/** Decodes an ec public key from a octet string.
  *  \param  key  a pointer to a EC_KEY object which should be used
  *  \param  in   memory buffer with the encoded public key
  *  \param  len  length of the encoded public key
@@ -1232,7 +1234,7 @@ OSSL_DEPRECATEDIN_3_0 int i2d_ECParameters(const EC_KEY *key,
 OSSL_DEPRECATEDIN_3_0 EC_KEY *o2i_ECPublicKey(EC_KEY **key,
                                               const unsigned char **in, long len);
 
-/** Encodes a ec public key in an octet string.
+/** Encodes an ec public key in an octet string.
  *  \param  key  the EC_KEY object with the public key
  *  \param  out  the buffer for the result (if NULL the function returns number
  *               of bytes needed).
@@ -1544,6 +1546,8 @@ OSSL_DEPRECATEDIN_3_0 void EC_KEY_METHOD_get_verify
                                            EC_KEY *eckey));
 #  endif /* OPENSSL_NO_DEPRECATED_3_0 */
 
+#  define EVP_EC_gen(curve) \
+    EVP_PKEY_Q_keygen(NULL, NULL, "EC", (char *)(strstr(curve, "")))
 #  define ECParameters_dup(x) ASN1_dup_of(EC_KEY, i2d_ECParameters, \
                                           d2i_ECParameters, x)
 

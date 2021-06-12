@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -17,7 +17,7 @@ use OpenSSL::Test::Utils;
 
 setup("test_dgst");
 
-plan tests => 7;
+plan tests => 8;
 
 sub tsignverify {
     my $testtext = shift;
@@ -111,6 +111,20 @@ subtest "HMAC generation with `dgst` CLI" => sub {
     my @hmacdata = run(app(['openssl', 'dgst', '-sha256', '-hmac', '123456',
                             $testdata, $testdata]), capture => 1);
     chomp(@hmacdata);
+    my $expected = qr/HMAC-SHA2-256\(\Q$testdata\E\)= 6f12484129c4a761747f13d8234a1ff0e074adb34e9e9bf3a155c391b97b9a7c/;
+    ok($hmacdata[0] =~ $expected, "HMAC: Check HMAC value is as expected ($hmacdata[0]) vs ($expected)");
+    ok($hmacdata[1] =~ $expected,
+       "HMAC: Check second HMAC value is consistent with the first ($hmacdata[1]) vs ($expected)");
+};
+
+subtest "HMAC generation with `dgst` CLI, default digest" => sub {
+    plan tests => 2;
+
+    my $testdata = srctop_file('test', 'data.bin');
+    #HMAC the data twice to check consistency
+    my @hmacdata = run(app(['openssl', 'dgst', '-hmac', '123456',
+                            $testdata, $testdata]), capture => 1);
+    chomp(@hmacdata);
     my $expected = qr/HMAC-SHA256\(\Q$testdata\E\)= 6f12484129c4a761747f13d8234a1ff0e074adb34e9e9bf3a155c391b97b9a7c/;
     ok($hmacdata[0] =~ $expected, "HMAC: Check HMAC value is as expected ($hmacdata[0]) vs ($expected)");
     ok($hmacdata[1] =~ $expected,
@@ -125,7 +139,7 @@ subtest "Custom length XOF digest generation with `dgst` CLI" => sub {
     my @xofdata = run(app(['openssl', 'dgst', '-shake128', '-xoflen', '64',
                            $testdata, $testdata]), capture => 1);
     chomp(@xofdata);
-    my $expected = qr/SHAKE128\(\Q$testdata\E\)= bb565dac72640109e1c926ef441d3fa64ffd0b3e2bf8cd73d5182dfba19b6a8a2eab96d2df854b647b3795ef090582abe41ba4e0717dc4df40bc4e17d88e4677/;
+    my $expected = qr/SHAKE-128\(\Q$testdata\E\)= bb565dac72640109e1c926ef441d3fa64ffd0b3e2bf8cd73d5182dfba19b6a8a2eab96d2df854b647b3795ef090582abe41ba4e0717dc4df40bc4e17d88e4677/;
     ok($xofdata[0] =~ $expected, "XOF: Check digest value is as expected ($xofdata[0]) vs ($expected)");
     ok($xofdata[1] =~ $expected,
        "XOF: Check second digest value is consistent with the first ($xofdata[1]) vs ($expected)");

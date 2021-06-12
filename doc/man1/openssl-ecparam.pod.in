@@ -26,8 +26,6 @@ B<openssl ecparam>
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 
-=for openssl ifdef engine
-
 =head1 DESCRIPTION
 
 This command is used to manipulate or generate EC parameter files.
@@ -43,9 +41,14 @@ this command can only create EC parameters from known (named) curves.
 
 Print out a usage message.
 
-=item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
+=item B<-inform> B<DER>|B<PEM>
 
-The input and formats; the default is B<PEM>.
+The EC parameters input format; unspecified by default.
+See L<openssl-format-options(1)> for details.
+
+=item B<-outform> B<DER>|B<PEM>
+
+The EC parameters output format; the default is B<PEM>.
 See L<openssl-format-options(1)> for details.
 
 Parameters are encoded as B<EcpkParameters> as specified in IETF RFC 3279.
@@ -124,10 +127,14 @@ This option will generate an EC private key using the specified parameters.
 
 =back
 
+The L<openssl-genpkey(1)> and L<openssl-pkeyparam(1)> commands are capable
+of performing all the operations this command can, as well as supporting
+other public key types.
+
 =head1 EXAMPLES
 
-Examples equivalent to these can be found in the documentation for the
-non-deprecated L<openssl-genpkey(1)> and L<openssl-pkeyparam(1)> commands.
+The documentation for the L<openssl-genpkey(1)> and L<openssl-pkeyparam(1)>
+commands contains examples equivalent to the ones listed here.
 
 To create EC parameters with the group 'prime192v1':
 
@@ -169,7 +176,7 @@ The B<-C> option was removed in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2003-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2003-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

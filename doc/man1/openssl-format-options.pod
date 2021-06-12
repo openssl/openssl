@@ -15,9 +15,13 @@ I<command>
 
 Several OpenSSL commands can take input or generate output in a variety
 of formats.
+
 Since OpenSSL 3.0 keys, single certificates, and CRLs can be read from
-files in any of the B<DER>, B<PEM> or B<P12> formats,
-while specifying their input format is no more needed.
+files in any of the B<DER>, B<PEM> or B<P12> formats. Specifying their input
+format is no more needed and the openssl commands will automatically try all
+the possible formats. However if the B<DER> or B<PEM> input format is specified
+it will be enforced.
+
 In order to access a key via an engine the input format B<ENGINE> may be used;
 alternatively the key identifier in the <uri> argument of the respective key
 option may be preceded by C<org.openssl.engine:>.
@@ -39,8 +43,6 @@ The format of the input or output streams.
 =item B<-keyform> I<format>
 
 Format of a private key input source.
-The only value with effect is B<ENGINE>; all others have become obsolete.
-See L<openssl(1)/Format Options> for details.
 
 =item B<-CRLform> I<format>
 
@@ -133,7 +135,7 @@ Note that the parsing is simple and might fail to parse some legal data.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

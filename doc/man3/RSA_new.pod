@@ -8,6 +8,8 @@ RSA_new, RSA_free - allocate and free RSA objects
 
  #include <openssl/rsa.h>
 
+Deprecated since OpenSSL 3.0:
+
  RSA *RSA_new(void);
 
  void RSA_free(RSA *rsa);
@@ -35,9 +37,14 @@ L<ERR_get_error(3)>,
 L<RSA_generate_key(3)>,
 L<RSA_new_method(3)>
 
+=head1 HISTORY
+
+All functions described here were deprecated in OpenSSL 3.0.
+For replacement see EVP_PKEY-RSA(7).
+
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

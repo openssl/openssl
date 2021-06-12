@@ -32,7 +32,7 @@ static int verbose = 0;
 static int genrsa_cb(EVP_PKEY_CTX *ctx);
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     OPT_3,
 #endif
@@ -82,7 +82,7 @@ int genrsa_main(int argc, char **argv)
     BIO *out = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
-    const EVP_CIPHER *enc = NULL;
+    EVP_CIPHER *enc = NULL;
     int ret = 1, num = DEFBITS, private = 0, primes = DEFPRIMES;
     unsigned long f4 = RSA_F4;
     char *outfile = NULL, *passoutarg = NULL, *passout = NULL;
@@ -134,8 +134,7 @@ opthelp:
             ciphername = opt_unknown();
             break;
         case OPT_PRIMES:
-            if (!opt_int(opt_arg(), &primes))
-                goto end;
+            primes = opt_int_arg();
             break;
         case OPT_VERBOSE:
             verbose = 1;
@@ -163,7 +162,9 @@ opthelp:
         goto opthelp;
     }
 
-    app_RAND_load();
+    if (!app_RAND_load())
+        goto end;
+
     private = 1;
     if (ciphername != NULL) {
         if (!opt_cipher(ciphername, &enc))
@@ -200,13 +201,7 @@ opthelp:
         BIO_printf(bio_err, "Error setting number of primes\n");
         goto end;
     }
-    if (verbose)
-        BIO_printf(bio_err, "Generating RSA private key, %d bit long modulus (%d primes)\n",
-                   num, primes);
-    if (!EVP_PKEY_keygen(ctx, &pkey)) {
-        BIO_printf(bio_err, "Error generating RSA key\n");
-        goto end;
-    }
+    pkey = app_keygen(ctx, "RSA", num, verbose);
 
     if (verbose) {
         BIGNUM *e = NULL;
@@ -241,6 +236,7 @@ opthelp:
     BN_GENCB_free(cb);
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(pkey);
+    EVP_CIPHER_free(enc);
     BIO_free_all(out);
     release_engine(eng);
     OPENSSL_free(passout);

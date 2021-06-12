@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -28,7 +28,8 @@ my $YEAR         = [localtime()]->[5] + 1900;
 # the lookups in %unified_info
 my @openssl_source =
     map { @{$unified_info{sources}->{$_}} }
-    grep { /\.o$/ }
+    grep { /\.o$/
+           && !$unified_info{attributes}->{sources}->{$apps_openssl}->{$_}->{nocheck} }
         @{$unified_info{sources}->{$apps_openssl}};
 
 foreach my $filename (@openssl_source) {
@@ -98,7 +99,6 @@ EOF
         gendh    => "dh",
         dhparam  => "dh",
         ecparam  => "ec",
-        pkcs12   => "des",
     );
     my %cmd_deprecated = (
 # The format of this table is:

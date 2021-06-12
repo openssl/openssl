@@ -19,7 +19,7 @@
 
 #include "platform.h"            /* From libapps */
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__BORLANDC__)
 # define strdup _strdup
 #endif
 
@@ -48,7 +48,7 @@ static int rand_order = 0;
 
 /*
  * A parameterised test runs a loop of test cases.
- * |num_test_cases| counts the total number of test cases
+ * |num_test_cases| counts the total number of non-subtest test cases
  * across all tests.
  */
 static int num_test_cases = 0;
@@ -75,7 +75,10 @@ void add_all_tests(const char *test_case_name, int(*test_fn)(int idx),
     all_tests[num_tests].num = num;
     all_tests[num_tests].subtest = subtest;
     ++num_tests;
-    num_test_cases += num;
+    if (subtest)
+        ++num_test_cases;
+    else
+        num_test_cases += num;
 }
 
 static int gcd(int a, int b)
@@ -278,6 +281,8 @@ int run_tests(const char *test_prog_name)
     int num_failed = 0;
     int verdict = 1;
     int ii, i, jj, j, jstep;
+    int test_case_count = 0;
+    int subtest_case_count = 0;
     int permute[OSSL_NELEM(all_tests)];
 
     i = process_shared_options();
@@ -293,7 +298,7 @@ int run_tests(const char *test_prog_name)
             test_printf_stdout("Subtest: %s\n", test_prog_name);
             test_flush_stdout();
         }
-        test_printf_tapout("1..%d\n", num_tests);
+        test_printf_tapout("1..%d\n", num_test_cases);
     }
 
     test_flush_tapout();
@@ -328,21 +333,24 @@ int run_tests(const char *test_prog_name)
             set_test_title(all_tests[i].test_case_name);
             verdict = all_tests[i].test_fn();
             finalize(verdict != 0);
-            test_verdict(verdict, "%d - %s", ii + 1, test_title);
+            test_verdict(verdict, "%d - %s", test_case_count + 1, test_title);
             if (verdict == 0)
                 num_failed++;
+            test_case_count++;
         } else {
             int num_failed_inner = 0;
 
             verdict = TEST_SKIP_CODE;
-            level += 4;
-            test_adjust_streams_tap_level(level);
-            if (all_tests[i].subtest && single_iter == -1) {
-                test_printf_stdout("Subtest: %s\n",
-                                   all_tests[i].test_case_name);
-                test_printf_tapout("%d..%d\n", 1, all_tests[i].num);
-                test_flush_stdout();
-                test_flush_tapout();
+            set_test_title(all_tests[i].test_case_name);
+            if (all_tests[i].subtest) {
+                level += 4;
+                test_adjust_streams_tap_level(level);
+                if (single_iter == -1) {
+                    test_printf_stdout("Subtest: %s\n", test_title);
+                    test_printf_tapout("%d..%d\n", 1, all_tests[i].num);
+                    test_flush_stdout();
+                    test_flush_tapout();
+                }
             }
 
             j = -1;
@@ -359,7 +367,6 @@ int run_tests(const char *test_prog_name)
                 j = (j + jstep) % all_tests[i].num;
                 if (single_iter != -1 && ((jj + 1) != single_iter))
                     continue;
-                set_test_title(NULL);
                 v = all_tests[i].param_test_fn(j);
 
                 if (v == 0) {
@@ -371,20 +378,26 @@ int run_tests(const char *test_prog_name)
 
                 finalize(v != 0);
 
-                if (all_tests[i].subtest) {
-                    if (test_title != NULL)
-                        test_verdict(v, "%d - %s", jj + 1, test_title);
-                    else
-                        test_verdict(v, "%d - iteration %d", jj + 1, j + 1);
-                }
+                if (all_tests[i].subtest)
+                    test_verdict(v, "%d - iteration %d",
+                                 subtest_case_count + 1, j + 1);
+                else
+                    test_verdict(v, "%d - %s - iteration %d",
+                                 test_case_count + subtest_case_count + 1,
+                                 test_title, j + 1);
+                subtest_case_count++;
             }
 
-            level -= 4;
-            test_adjust_streams_tap_level(level);
+            if (all_tests[i].subtest) {
+                level -= 4;
+                test_adjust_streams_tap_level(level);
+            }
             if (verdict == 0)
                 ++num_failed;
-            test_verdict(verdict, "%d - %s", ii + 1,
-                         all_tests[i].test_case_name);
+            if (all_tests[i].num == -1 || all_tests[i].subtest)
+                test_verdict(verdict, "%d - %s", test_case_count + 1,
+                             all_tests[i].test_case_name);
+            test_case_count++;
         }
     }
     if (num_failed != 0)

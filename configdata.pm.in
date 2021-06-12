@@ -1,78 +1,45 @@
 #! {- $config{HASHBANGPERL} -}
 # -*- mode: perl -*-
 {-
- sub out_item {
-     my $ref = shift;
-     # Available options:
-     # indent           => callers indentation (int)
-     # delimiters       => 1 if outer delimiters should be added
-     my %opts = @_;
-
-     my $indent = $opts{indent} // 0;
-     # Indentation of the whole structure, where applicable
-     my $nlindent1 = "\n" . ' ' x $indent;
-     # Indentation of individual items, where applicable
-     my $nlindent2 = "\n" . ' ' x ($indent + 4);
-
-     my $product;      # Finished product, or reference to a function that
-                       # produces a string, given $_
-     # The following are only used when $product is a function reference
-     my $delim_l;      # Left delimiter of structure
-     my $delim_r;      # Right delimiter of structure
-     my $separator;    # Item separator
-     my @items;        # Items to iterate over
-
-     if (ref($ref) eq "ARRAY") {
-         if (scalar @$ref == 0) {
-             $product = $opts{delimiters} ? '[]' : '';
-         } else {
-             $product = sub {
-                 out_item(\$_, delimiters => 1, indent => $indent + 4)
-             };
-             $delim_l = ($opts{delimiters} ? '[' : '').$nlindent2;
-             $delim_r = $nlindent1.($opts{delimiters} ? ']' : '');
-             $separator = ",$nlindent2";
-             @items = @$ref;
-         }
-     } elsif (ref($ref) eq "HASH") {
-         if (scalar keys %$ref == 0) {
-             $product = $opts{delimiters} ? '{}' : '';
-         } else {
-             $product = sub {
-                 quotify1($_) . " => "
-                 . out_item($ref->{$_}, delimiters => 1, indent => $indent + 4)
-             };
-             $delim_l = ($opts{delimiters} ? '{' : '').$nlindent2;
-             $delim_r = $nlindent1.($opts{delimiters} ? '}' : '');
-             $separator = ",$nlindent2";
-             @items = sort keys %$ref;
-         }
-     } elsif (ref($ref) eq "SCALAR") {
-         $product = defined $$ref ? quotify1 $$ref : "undef";
-     } else {
-         $product = defined $ref ? quotify1 $ref : "undef";
-     }
-
-     if (ref($product) eq "CODE") {
-         $delim_l . join($separator, map { &$product } @items) . $delim_r;
-     } else {
-         $product;
-     }
- }
-
  # We must make sourcedir() return an absolute path, because configdata.pm
  # may be loaded as a module from any script in any directory, making
  # relative paths untrustable.  Because the result is used with 'use lib',
- # we must ensure that it returns a Unix style path.  Cwd::abs_path does
- # that (File::Spec::Functions::rel2abs return O/S specific paths)
- use File::Spec::Functions;
+ # we must ensure that it returns a Unix style path.  Mixing File::Spec
+ # and File::Spec::Unix does just that.
+ use File::Spec::Unix;
+ use File::Spec;
  use Cwd qw(abs_path);
+ sub _fixup_path {
+     my $path = shift;
+
+     # Make the path absolute at all times
+     $path = abs_path($path);
+
+     if ($^O eq 'VMS') {
+         # Convert any path of the VMS form VOLUME:[DIR1.DIR2]FILE to the
+         # Unix form /VOLUME/DIR1/DIR2/FILE, which is what VMS perl supports
+         # for 'use lib'.
+
+         # Start with spliting the native path
+         (my $vol, my $dirs, my $file) = File::Spec->splitpath($path);
+         my @dirs = File::Spec->splitdir($dirs);
+
+         # Reassemble it as a Unix path
+         $vol =~ s|:$||;
+         $dirs = File::Spec::Unix->catdir('', $vol, @dirs);
+         $path = File::Spec::Unix->catpath('', $dirs, $file);
+     }
+
+     return $path;
+ }
  sub sourcedir {
-     return abs_path(catdir($config{sourcedir}, @_));
+     return _fixup_path(File::Spec->catdir($config{sourcedir}, @_))
  }
  sub sourcefile {
-     return abs_path(catfile($config{sourcedir}, @_));
+     return _fixup_path(File::Spec->catfile($config{sourcedir}, @_))
  }
+ use lib sourcedir('util', 'perl');
+ use OpenSSL::Util;
 -}
 package configdata;
 
@@ -86,23 +53,23 @@ our @EXPORT = qw(
     @disablables @disablables_int
 );
 
-our %config = ({- out_item(\%config); -});
-our %target = ({- out_item(\%target); -});
-our @disablables = ({- out_item(\@disablables) -});
-our @disablables_int = ({- out_item(\@disablables_int) -});
-our %disabled = ({- out_item(\%disabled); -});
-our %withargs = ({- out_item(\%withargs); -});
-our %unified_info = ({- out_item(\%unified_info); -});
+our %config = ({- dump_data(\%config, indent => 0); -});
+our %target = ({- dump_data(\%target, indent => 0); -});
+our @disablables = ({- dump_data(\@disablables, indent => 0) -});
+our @disablables_int = ({- dump_data(\@disablables_int, indent => 0) -});
+our %disabled = ({- dump_data(\%disabled, indent => 0); -});
+our %withargs = ({- dump_data(\%withargs, indent => 0); -});
+our %unified_info = ({- dump_data(\%unified_info, indent => 0); -});
 
 # Unexported, only used by OpenSSL::Test::Utils::available_protocols()
 our %available_protocols = (
-    tls  => [{- out_item(\@tls) -}],
-    dtls => [{- out_item(\@dtls) -}],
+    tls  => [{- dump_data(\@tls, indent => 0) -}],
+    dtls => [{- dump_data(\@dtls, indent => 0) -}],
 );
 
 # The following data is only used when this files is use as a script
-my @makevars = ({- out_item(\@makevars); -});
-my %disabled_info = ({- out_item(\%disabled_info); -});
+my @makevars = ({- dump_data(\@makevars, indent => 0); -});
+my %disabled_info = ({- dump_data(\%disabled_info, indent => 0); -});
 my @user_crossable = qw( {- join (' ', @user_crossable) -} );
 
 # If run directly, we can give some answers, and even reconfigure
@@ -110,15 +77,50 @@ unless (caller) {
     use Getopt::Long;
     use File::Spec::Functions;
     use File::Basename;
+    use File::Copy;
     use Pod::Usage;
+
+    use lib '{- sourcedir('util', 'perl') -}';
+    use OpenSSL::fallback '{- sourcefile('external', 'perl', 'MODULES.txt') -}';
 
     my $here = dirname($0);
 
     if (scalar @ARGV == 0) {
         # With no arguments, re-create the build file
+        # We do that in two steps, where the first step emits perl
+        # snipets.
 
-        use lib '{- sourcedir('util', 'perl') -}';
-        use OpenSSL::fallback '{- sourcefile('external', 'perl', 'MODULES.txt') -}';
+        my $buildfile = $target{build_file};
+        my $buildfile_template = "$buildfile.in";
+        my @autowarntext = (
+            'WARNING: do not edit!',
+            "Generated by configdata.pm from "
+            .join(", ", @{$config{build_file_templates}}),
+            "via $buildfile_template"
+        );
+        my %gendata = (
+            config => \%config,
+            target => \%target,
+            disabled => \%disabled,
+            withargs => \%withargs,
+            unified_info => \%unified_info,
+            autowarntext => \@autowarntext,
+            );
+
+        use lib '.';
+        use lib '{- sourcedir('Configurations') -}';
+        use gentemplate;
+
+        print 'Creating ',$buildfile_template,"\n";
+        open my $buildfile_template_fh, ">$buildfile_template"
+            or die "Trying to create $buildfile_template: $!";
+        foreach (@{$config{build_file_templates}}) {
+            copy($_, $buildfile_template_fh)
+                or die "Trying to copy $_ into $buildfile_template: $!";
+        }
+        gentemplate(output => $buildfile_template_fh, %gendata);
+        close $buildfile_template_fh;
+
         use OpenSSL::Template;
 
         my $prepend = <<'_____';
@@ -129,36 +131,23 @@ use lib '{- $config{builddir} -}';
 use platform;
 _____
 
-        my @autowarntext = (
-            'WARNING: do not edit!',
-            "Generated by configdata.pm from "
-            .join(", ", @{$config{build_file_templates}})
-        );
-
-        print 'Creating ',$target{build_file},"\n";
-        open BUILDFILE, ">$target{build_file}.new"
-            or die "Trying to create $target{build_file}.new: $!";
-        foreach (@{$config{build_file_templates}}) {
-            my $tmpl = OpenSSL::Template->new(TYPE => 'FILE',
-                                              SOURCE => $_);
-            $tmpl->fill_in(FILENAME => $_,
-                           OUTPUT => \*BUILDFILE,
-                           HASH => { config => \%config,
-                                     target => \%target,
-                                     disabled => \%disabled,
-                                     withargs => \%withargs,
-                                     unified_info => \%unified_info,
-                                     autowarntext => \@autowarntext },
-                           PREPEND => $prepend,
-                           # To ensure that global variables and functions
-                           # defined in one template stick around for the
-                           # next, making them combinable
-                           PACKAGE => 'OpenSSL::safe')
-                or die $Text::Template::ERROR;
-        }
+        print 'Creating ',$buildfile,"\n";
+        open BUILDFILE, ">$buildfile.new"
+            or die "Trying to create $buildfile.new: $!";
+        my $tmpl = OpenSSL::Template->new(TYPE => 'FILE',
+                                          SOURCE => $buildfile_template);
+        $tmpl->fill_in(FILENAME => $_,
+                       OUTPUT => \*BUILDFILE,
+                       HASH => \%gendata,
+                       PREPEND => $prepend,
+                       # To ensure that global variables and functions
+                       # defined in one template stick around for the
+                       # next, making them combinable
+                       PACKAGE => 'OpenSSL::safe')
+            or die $Text::Template::ERROR;
         close BUILDFILE;
-        rename("$target{build_file}.new", $target{build_file})
-            or die "Trying to rename $target{build_file}.new to $target{build_file}: $!";
+        rename("$buildfile.new", $buildfile)
+            or die "Trying to rename $buildfile.new to $buildfile: $!";
 
         exit(0);
     }
@@ -172,6 +161,7 @@ _____
     my $buildparams = undef;
     my $reconf = undef;
     my $verbose = undef;
+    my $query = undef;
     my $help = undef;
     my $man = undef;
     GetOptions('dump|d'                 => \$dump,
@@ -183,11 +173,15 @@ _____
                'build-parameters|b'     => \$buildparams,
                'reconfigure|reconf|r'   => \$reconf,
                'verbose|v'              => \$verbose,
+               'query|q=s'              => \$query,
                'help'                   => \$help,
                'man'                    => \$man)
         or die "Errors in command line arguments\n";
 
-    if (scalar @ARGV > 0) {
+    # We allow extra arguments with --query.  That allows constructs like
+    # this:
+    # ./configdata.pm --query 'get_sources(@ARGV)' file1 file2 file3
+    if (!$query && scalar @ARGV > 0) {
         print STDERR <<"_____";
 Unrecognised arguments.
 For more information, do '$0 --help'
@@ -319,6 +313,25 @@ _____
 
         chdir $here;
         exec $^X,catfile($config{sourcedir}, 'Configure'),'reconf';
+    }
+    if ($query) {
+        use OpenSSL::Config::Query;
+
+        my $confquery = OpenSSL::Config::Query->new(info => \%unified_info,
+                                                    config => \%config);
+        my $result = eval "\$confquery->$query";
+
+        # We may need a result class with a printing function at some point.
+        # Until then, we assume that we get a scalar, or a list or a hash table
+        # with scalar values and simply print them in some orderly fashion.
+        if (ref $result eq 'ARRAY') {
+            print "$_\n" foreach @$result;
+        } elsif (ref $result eq 'HASH') {
+            print "$_ : \\\n  ", join(" \\\n  ", @{$result->{$_}}), "\n"
+                foreach sort keys %$result;
+        } elsif (ref $result eq 'SCALAR') {
+            print "$$result\n";
+        }
     }
 }
 

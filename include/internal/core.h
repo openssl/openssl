@@ -59,5 +59,11 @@ void ossl_algorithm_do_all(OSSL_LIB_CTX *libctx, int operation_id,
                            int (*post)(OSSL_PROVIDER *, int operation_id,
                                        int no_store, void *data, int *result),
                            void *data);
+char *ossl_algorithm_get1_first_name(const OSSL_ALGORITHM *algo);
+
+__owur int ossl_lib_ctx_write_lock(OSSL_LIB_CTX *ctx);
+__owur int ossl_lib_ctx_read_lock(OSSL_LIB_CTX *ctx);
+int ossl_lib_ctx_unlock(OSSL_LIB_CTX *ctx);
+int ossl_lib_ctx_is_child(OSSL_LIB_CTX *ctx);
 
 #endif

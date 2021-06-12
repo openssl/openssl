@@ -27,7 +27,7 @@ parameters I<pbmp>, message I<msg>, and secret I<sec>, along with the respective
 lengths I<msglen> and I<seclen>.
 The optional library context I<libctx> and I<propq> parameters may be used
 to influence the selection of the MAC algorithm referenced in the I<pbmp>;
-see L<provider(7)/Fetching algorithms> for further information.
+see L<crypto(7)/ALGORITHM FETCHING> for further information.
 On success writes the address of the newly
 allocated MAC via the I<mac> reference parameter and writes the length via the
 I<maclen> reference parameter unless it its NULL.

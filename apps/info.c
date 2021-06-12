@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,7 +12,7 @@
 #include "progs.h"
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_CONFIGDIR, OPT_ENGINESDIR, OPT_MODULESDIR, OPT_DSOEXT, OPT_DIRNAMESEP,
     OPT_LISTSEP, OPT_SEEDS, OPT_CPUSETTINGS
 } OPTION_CHOICE;

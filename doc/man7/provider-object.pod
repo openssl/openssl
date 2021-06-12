@@ -94,7 +94,7 @@ of the following parameters:
 
 =over 4
 
-=item "data" (B<OSSL_OBJECT_PARAM_DATA>) <octet string> or <utf8 string>
+=item "data" (B<OSSL_OBJECT_PARAM_DATA>) <octet string> or <UTF8 string>
 
 The object data I<passed by value>.
 
@@ -142,7 +142,7 @@ B<X509_CRL> object with d2i_X509_CRL().
 
 =back
 
-=item "data-type" (B<OSSL_OBJECT_PARAM_DATA_TYPE>) <utf8 string>
+=item "data-type" (B<OSSL_OBJECT_PARAM_DATA_TYPE>) <UTF8 string>
 
 The specific type of the object content.  Legitimate values depend on the
 object type; if it is B<OSSL_OBJECT_PKEY>, the data type is expected to be a
@@ -153,12 +153,12 @@ data.
 is either missing or has the value OSSL_OBJECT_UNKNOWN), libcrypto
 interprets the object data type as the input type for a decoder.
 
-=item "data-structure" (B<OSSL_OBJECT_PARAM_DATA_STRUCTURE>) <utf8 string>
+=item "data-structure" (B<OSSL_OBJECT_PARAM_DATA_STRUCTURE>) <UTF8 string>
 
 The outermost structure of the object content.  Legitimate values depend on
 the object type.
 
-=item "desc" (B<OSSL_OBJECT_PARAM_DESC>) <utf8 string>
+=item "desc" (B<OSSL_OBJECT_PARAM_DESC>) <UTF8 string>
 
 A human readable text that describes extra details on the object.
 
@@ -184,7 +184,7 @@ introduced in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

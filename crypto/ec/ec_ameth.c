@@ -23,7 +23,7 @@
 #include "crypto/evp.h"
 #include "crypto/x509.h"
 #include <openssl/core_names.h>
-#include "openssl/param_build.h"
+#include <openssl/param_build.h>
 #include "ec_local.h"
 
 static int eckey_param2type(int *pptype, void **ppval, const EC_KEY *ec_key)
@@ -405,7 +405,7 @@ static int ec_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 {
     switch (op) {
     case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
-        if (EVP_PKEY_id(pkey) == EVP_PKEY_SM2) {
+        if (EVP_PKEY_get_id(pkey) == EVP_PKEY_SM2) {
             /* For SM2, the only valid digest-alg is SM3 */
             *(int *)arg2 = NID_sm3;
             return 2;            /* Make it mandatory */
@@ -478,8 +478,8 @@ size_t ec_pkey_dirty_cnt(const EVP_PKEY *pkey)
 
 static
 int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
-                      EVP_KEYMGMT *to_keymgmt, OSSL_LIB_CTX *libctx,
-                      const char *propq)
+                      OSSL_FUNC_keymgmt_import_fn *importer,
+                      OSSL_LIB_CTX *libctx, const char *propq)
 {
     const EC_KEY *eckey = NULL;
     const EC_GROUP *ecg = NULL;
@@ -607,11 +607,11 @@ int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     params = OSSL_PARAM_BLD_to_param(tmpl);
 
     /* We export, the provider imports */
-    rv = evp_keymgmt_import(to_keymgmt, to_keydata, selection, params);
+    rv = importer(to_keydata, selection, params);
 
  err:
     OSSL_PARAM_BLD_free(tmpl);
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
     OPENSSL_free(pub_key_buf);
     OPENSSL_free(gen_buf);
     BN_CTX_end(bnctx);

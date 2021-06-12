@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2012-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -34,7 +34,7 @@ char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx);
 int ssl3_cbc_digest_record(const EVP_MD *md,
                            unsigned char *md_out,
                            size_t *md_out_size,
-                           const unsigned char header[13],
+                           const unsigned char *header,
                            const unsigned char *data,
                            size_t data_size,
                            size_t data_plus_mac_plus_padding_size,
@@ -75,15 +75,16 @@ int ssl3_cbc_digest_record(const EVP_MD *md,
  */
 #define MAX_HASH_BLOCK_SIZE 128
 
+#ifndef FIPS_MODULE
 /*
  * u32toLE serializes an unsigned, 32-bit number (n) as four bytes at (p) in
  * little-endian order. The value of p is advanced by four.
  */
-#define u32toLE(n, p) \
-        (*((p)++)=(unsigned char)(n), \
-         *((p)++)=(unsigned char)(n>>8), \
-         *((p)++)=(unsigned char)(n>>16), \
-         *((p)++)=(unsigned char)(n>>24))
+# define u32toLE(n, p) \
+         (*((p)++)=(unsigned char)(n), \
+          *((p)++)=(unsigned char)(n>>8), \
+          *((p)++)=(unsigned char)(n>>16), \
+          *((p)++)=(unsigned char)(n>>24))
 
 /*
  * These functions serialize the state of a hash and thus perform the
@@ -98,6 +99,7 @@ static void tls1_md5_final_raw(void *ctx, unsigned char *md_out)
     u32toLE(md5->C, md_out);
     u32toLE(md5->D, md_out);
 }
+#endif /* FIPS_MODULE */
 
 static void tls1_sha1_final_raw(void *ctx, unsigned char *md_out)
 {
@@ -154,7 +156,7 @@ static void tls1_sha512_final_raw(void *ctx, unsigned char *md_out)
 int ssl3_cbc_digest_record(const EVP_MD *md,
                            unsigned char *md_out,
                            size_t *md_out_size,
-                           const unsigned char header[13],
+                           const unsigned char *header,
                            const unsigned char *data,
                            size_t data_size,
                            size_t data_plus_mac_plus_padding_size,
@@ -196,6 +198,9 @@ int ssl3_cbc_digest_record(const EVP_MD *md,
         return 0;
 
     if (EVP_MD_is_a(md, "MD5")) {
+#ifdef FIPS_MODULE
+        return 0;
+#else
         if (MD5_Init((MD5_CTX *)md_state.c) <= 0)
             return 0;
         md_final_raw = tls1_md5_final_raw;
@@ -204,6 +209,7 @@ int ssl3_cbc_digest_record(const EVP_MD *md,
         md_size = 16;
         sslv3_pad_length = 48;
         length_is_big_endian = 0;
+#endif
     } else if (EVP_MD_is_a(md, "SHA1")) {
         if (SHA1_Init((SHA_CTX *)md_state.c) <= 0)
             return 0;
@@ -494,7 +500,6 @@ int ssl3_cbc_digest_record(const EVP_MD *md,
             || EVP_DigestUpdate(md_ctx, mac_out, md_size) <= 0)
             goto err;
     }
-    /* TODO(size_t): Convert me */
     ret = EVP_DigestFinal(md_ctx, md_out, &md_out_size_u);
     if (ret && md_out_size)
         *md_out_size = md_out_size_u;

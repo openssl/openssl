@@ -45,6 +45,7 @@ static int tls_parse_certificate_authorities(SSL *s, PACKET *pkt,
 #ifndef OPENSSL_NO_SRP
 static int init_srp(SSL *s, unsigned int context);
 #endif
+static int init_ec_point_formats(SSL *s, unsigned int context);
 static int init_etm(SSL *s, unsigned int context);
 static int init_ems(SSL *s, unsigned int context);
 static int final_ems(SSL *s, unsigned int context, int sent);
@@ -57,6 +58,7 @@ static int final_sig_algs(SSL *s, unsigned int context, int sent);
 static int final_early_data(SSL *s, unsigned int context, int sent);
 static int final_maxfragmentlen(SSL *s, unsigned int context, int sent);
 static int init_post_handshake_auth(SSL *s, unsigned int context);
+static int final_psk(SSL *s, unsigned int context, int sent);
 
 /* Structure to define a built-in extension */
 typedef struct extensions_definition_st {
@@ -113,8 +115,6 @@ typedef struct extensions_definition_st {
  * messages the extension is relevant to. These flags also specify whether the
  * extension is relevant to a particular protocol or protocol version.
  *
- * TODO(TLS1.3): Make sure we have a test to check the consistency of these
- *
  * NOTE: WebSphere Application Server 7+ cannot handle empty extensions at
  * the end, keep these extensions before signature_algorithm.
  */
@@ -158,7 +158,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         TLSEXT_TYPE_ec_point_formats,
         SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_2_SERVER_HELLO
         | SSL_EXT_TLS1_2_AND_BELOW_ONLY,
-        NULL, tls_parse_ctos_ec_pt_formats, tls_parse_stoc_ec_pt_formats,
+        init_ec_point_formats, tls_parse_ctos_ec_pt_formats, tls_parse_stoc_ec_pt_formats,
         tls_construct_stoc_ec_pt_formats, tls_construct_ctos_ec_pt_formats,
         final_ec_pt_formats
     },
@@ -381,7 +381,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_SERVER_HELLO
         | SSL_EXT_TLS_IMPLEMENTATION_ONLY | SSL_EXT_TLS1_3_ONLY,
         NULL, tls_parse_ctos_psk, tls_parse_stoc_psk, tls_construct_stoc_psk,
-        tls_construct_ctos_psk, NULL
+        tls_construct_ctos_psk, final_psk
     }
 };
 
@@ -1144,6 +1144,15 @@ static int init_srp(SSL *s, unsigned int context)
 }
 #endif
 
+static int init_ec_point_formats(SSL *s, unsigned int context)
+{
+    OPENSSL_free(s->ext.peer_ecpointformats);
+    s->ext.peer_ecpointformats = NULL;
+    s->ext.peer_ecpointformats_len = 0;
+
+    return 1;
+}
+
 static int init_etm(SSL *s, unsigned int context)
 {
     s->ext.use_etm = 0;
@@ -1442,7 +1451,7 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
 #endif
     const unsigned char *label;
     size_t bindersize, labelsize, hashsize;
-    int hashsizei = EVP_MD_size(md);
+    int hashsizei = EVP_MD_get_size(md);
     int ret = -1;
     int usepskfored = 0;
 
@@ -1576,7 +1585,7 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
         binderout = tmpbinder;
 
     bindersize = hashsize;
-    if (EVP_DigestSignInit_ex(mctx, NULL, EVP_MD_name(md), s->ctx->libctx,
+    if (EVP_DigestSignInit_ex(mctx, NULL, EVP_MD_get0_name(md), s->ctx->libctx,
                               s->ctx->propq, mackey, NULL) <= 0
             || EVP_DigestSignUpdate(mctx, hash, hashsize) <= 0
             || EVP_DigestSignFinal(mctx, binderout, &bindersize) <= 0
@@ -1673,6 +1682,22 @@ static int final_maxfragmentlen(SSL *s, unsigned int context, int sent)
 static int init_post_handshake_auth(SSL *s, ossl_unused unsigned int context)
 {
     s->post_handshake_auth = SSL_PHA_NONE;
+
+    return 1;
+}
+
+/*
+ * If clients offer "pre_shared_key" without a "psk_key_exchange_modes"
+ * extension, servers MUST abort the handshake.
+ */
+static int final_psk(SSL *s, unsigned int context, int sent)
+{
+    if (s->server && sent && s->clienthello != NULL
+            && !s->clienthello->pre_proc_exts[TLSEXT_IDX_psk_kex_modes].present) {
+        SSLfatal(s, TLS13_AD_MISSING_EXTENSION,
+                 SSL_R_MISSING_PSK_KEX_MODES_EXTENSION);
+        return 0;
+    }
 
     return 1;
 }

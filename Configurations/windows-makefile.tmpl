@@ -4,6 +4,7 @@
 ## {- join("\n## ", @autowarntext) -}
 {-
  use File::Basename;
+ use OpenSSL::Util;
 
  our $sover_dirname = platform->shlib_version_as_filename();
 
@@ -29,7 +30,7 @@
  sub dependmagic {
      my $target = shift;
 
-     return "$target: build_generated\n\t\$(MAKE) /\$(MAKEFLAGS) depend && \$(MAKE) /\$(MAKEFLAGS) _$target\n_$target";
+     return "$target: build_generated\n\t\$(MAKE) /\$(MAKEFLAGS) depend\n\t\$(MAKE) /\$(MAKEFLAGS) _$target\n_$target";
  }
  '';
 -}
@@ -48,17 +49,25 @@ SHLIB_VERSION_NUMBER={- $config{shlib_version} -}
 LIBS={- join(" ", map { ( platform->sharedlib_import($_), platform->staticlib($_) ) } @{$unified_info{libraries}}) -}
 SHLIBS={- join(" ", map { platform->sharedlib($_) // () } @{$unified_info{libraries}}) -}
 SHLIBPDBS={- join(" ", map { platform->sharedlibpdb($_) // () } @{$unified_info{libraries}}) -}
-MODULES={- our @MODULES = map { platform->dso($_) } @{$unified_info{modules}};
+MODULES={- our @MODULES = map { platform->dso($_) }
+                          # Drop all modules that are dependencies, they will
+                          # be processed through their dependents
+                          grep { my $x = $_;
+                                 !grep { grep { $_ eq $x } @$_ }
+                                       values %{$unified_info{depends}} }
+                          @{$unified_info{modules}};
            join(" ", @MODULES) -}
 MODULEPDBS={- join(" ", map { platform->dsopdb($_) } @{$unified_info{modules}}) -}
-FIPSMODULENAME={- # We do some extra checking here, as there should be only one
-                  use File::Basename;
-                  my @fipsmodules =
-                      grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
-                             && $unified_info{attributes}->{modules}->{$_}->{fips} }
-                      @{$unified_info{modules}};
-                  die "More that one FIPS module" if scalar @fipsmodules > 1;
-                  join(" ", map { basename(platform->dso($_)) } @fipsmodules) -}
+FIPSMODULE={- # We do some extra checking here, as there should be only one
+              use File::Basename;
+              our @fipsmodules =
+                  grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
+                         && $unified_info{attributes}->{modules}->{$_}->{fips} }
+                  @{$unified_info{modules}};
+              die "More that one FIPS module" if scalar @fipsmodules > 1;
+              join(" ", map { platform->dso($_) } @fipsmodules) -}
+FIPSMODULENAME={- die "More that one FIPS module" if scalar @fipsmodules > 1;
+                  join(", ", map { basename(platform->dso($_)) } @fipsmodules) -}
 PROGRAMS={- our @PROGRAMS = map { platform->bin($_) } @{$unified_info{programs}}; join(" ", @PROGRAMS) -}
 PROGRAMPDBS={- join(" ", map { $_.".pdb" } @{$unified_info{programs}}) -}
 SCRIPTS={- our @SCRIPTS = @{$unified_info{scripts}}; join(" ", @SCRIPTS) -}
@@ -104,9 +113,10 @@ INSTALL_ENGINEPDBS={-
                   @{$unified_info{modules}})
 -}
 INSTALL_MODULES={-
-        join(" ", map { platform->dso($_) }
+        join(" ", map { quotify1(platform->dso($_)) }
                   grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
-                          && !$unified_info{attributes}->{modules}->{$_}->{engine} }
+                          && !$unified_info{attributes}->{modules}->{$_}->{engine}
+                          && !$unified_info{attributes}->{modules}->{$_}->{fips} }
                   @{$unified_info{modules}})
 -}
 INSTALL_MODULEPDBS={-
@@ -115,6 +125,13 @@ INSTALL_MODULEPDBS={-
                          && !$unified_info{attributes}->{modules}->{$_}->{engine} }
                   @{$unified_info{modules}})
 -}
+INSTALL_FIPSMODULE={-
+        join(" ", map { quotify1(platform->dso($_)) }
+                  grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
+                          && $unified_info{attributes}->{modules}->{$_}->{fips} }
+                  @{$unified_info{modules}})
+-}
+INSTALL_FIPSMODULECONF=providers\fipsmodule.cnf
 INSTALL_PROGRAMS={-
         join(" ", map { quotify1(platform->bin($_)) }
                   grep { !$unified_info{attributes}->{programs}->{$_}->{noinst} }
@@ -137,6 +154,14 @@ MISC_SCRIPTS={-
                          && $unified_info{attributes}->{scripts}->{$_}->{misc} }
                   @{$unified_info{scripts}})
 -}
+IMAGEDOCS1={- our @IMAGEDOCS1 = @{$unified_info{imagedocs}->{man1}};
+             join(" ", @IMAGEDOCS1) -}
+IMAGEDOCS3={- our @IMAGEDOCS3 = @{$unified_info{imagedocs}->{man3}};
+             join(" ", @IMAGEDOCS3) -}
+IMAGEDOCS5={- our @IMAGEDOCS5 = @{$unified_info{imagedocs}->{man5}};
+             join(" ", @IMAGEDOCS5) -}
+IMAGEDOCS7={- our @IMAGEDOCS7 = @{$unified_info{imagedocs}->{man7}};
+             join(" ", @IMAGEDOCS7) -}
 HTMLDOCS1={- our @HTMLDOCS1 = @{$unified_info{htmldocs}->{man1}};
              join(" ", @HTMLDOCS1) -}
 HTMLDOCS3={- our @HTMLDOCS3 = @{$unified_info{htmldocs}->{man3}};
@@ -226,10 +251,10 @@ libdir={- file_name_is_absolute($libdir)
 ##### User defined commands and flags ################################
 
 CC="{- $config{CC} -}"
-CPP="{- $config{CPP} -}"
+CPP={- $config{CPP} -}
 CPPFLAGS={- our $cppflags1 = join(" ",
                                   (map { "-D".$_} @{$config{CPPDEFINES}}),
-                                  (map { " -I ".$_} @{$config{CPPINCLUDES}}),
+                                  (map { " -I".$_} @{$config{CPPINCLUDES}}),
                                   @{$config{CPPFLAGS}}) -}
 CFLAGS={- join(' ', @{$config{CFLAGS}}) -}
 LD="{- $config{LD} -}"
@@ -388,11 +413,15 @@ PROCESSOR= {- $config{processor} -}
 
 build_docs: build_html_docs
 build_html_docs: $(HTMLDOCS1) $(HTMLDOCS3) $(HTMLDOCS5) $(HTMLDOCS7)
-
+	@
 build_generated: $(GENERATED_MANDATORY)
+	@
 build_libs_nodep: $(LIBS) {- join(" ",map { platform->sharedlib_import($_) // () } @{$unified_info{libraries}}) -}
+	@
 build_modules_nodep: $(MODULES)
+	@
 build_programs_nodep: $(PROGRAMS) $(SCRIPTS)
+	@
 
 # Kept around for backward compatibility
 build_apps build_tests: build_programs
@@ -411,19 +440,14 @@ all: build_sw build_docs
 test: tests
 {- dependmagic('tests'); -}: build_programs_nodep build_modules_nodep copy-utils
 	@{- output_off() if $disabled{tests}; "" -}
-	set SRCTOP=$(SRCDIR)
-	set BLDTOP=$(BLDDIR)
-	set PERL=$(PERL)
-	set FIPSKEY=$(FIPSKEY)
-	"$(PERL)" "$(SRCDIR)\test\run_tests.pl" $(TESTS)
+	cmd /C "set "SRCTOP=$(SRCDIR)" & set "BLDTOP=$(BLDDIR)" & set "PERL=$(PERL)" & set "FIPSKEY=$(FIPSKEY)" & "$(PERL)" "$(SRCDIR)\test\run_tests.pl" $(TESTS)"
 	@{- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
 	@$(ECHO) "Tests are not supported with your chosen Configure options"
 	@{- output_on() if !$disabled{tests}; "" -}
 
 list-tests:
 	@{- output_off() if $disabled{tests}; "" -}
-	@set SRCTOP=$(SRCDIR)
-	@"$(PERL)" "$(SRCDIR)\test\run_tests.pl" list
+	@cmd /C "set "SRCTOP=$(SRCDIR)" & "$(PERL)" "$(SRCDIR)\test\run_tests.pl" list"
 	@{- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
 	@$(ECHO) "Tests are not supported with your chosen Configure options"
 	@{- output_on() if !$disabled{tests}; "" -}
@@ -437,10 +461,10 @@ libclean:
 	-del /Q /F $(LIBS) libcrypto.* libssl.* ossl_static.pdb
 
 clean: libclean
-	-rmdir /Q /S $(HTMLDOCS1_BLDDIRS)
-	-rmdir /Q /S $(HTMLDOCS3_BLDDIRS)
-	-rmdir /Q /S $(HTMLDOCS5_BLDDIRS)
-	-rmdir /Q /S $(HTMLDOCS7_BLDDIRS)
+	-rd /Q /S $(HTMLDOCS1_BLDDIRS)
+	-rd /Q /S $(HTMLDOCS3_BLDDIRS)
+	-rd /Q /S $(HTMLDOCS5_BLDDIRS)
+	-rd /Q /S $(HTMLDOCS7_BLDDIRS)
 	{- join("\n\t", map { "-del /Q /F $_" } @PROGRAMS) -}
 	{- join("\n\t", map { "-del /Q /F $_" } @MODULES) -}
 	{- join("\n\t", map { "-del /Q /F $_" } @SCRIPTS) -}
@@ -450,7 +474,7 @@ clean: libclean
 	-del /Q /S /F engines\*.lib engines\*.exp
 	-del /Q /S /F apps\*.lib apps\*.rc apps\*.res apps\*.exp
 	-del /Q /S /F test\*.exp
-	-rmdir /Q /S test\test-runs
+	-rd /Q /S test\test-runs
 
 distclean: clean
 	-del /Q /F configdata.pm
@@ -458,7 +482,7 @@ distclean: clean
 
 depend:
 	@ {- output_off() if $disabled{makedepend}; "" -}
-	@ "$(PERL)" "$(SRCDIR)\util\add-depends.pl" "VC"
+	@ "$(PERL)" "$(SRCDIR)\util\add-depends.pl" "{- $target{makedep_scheme} -}"
 	@ {- output_on() if $disabled{makedepend}; "" -}
 
 # Install helper targets #############################################
@@ -471,17 +495,31 @@ install_docs: install_html_docs
 
 uninstall_docs: uninstall_html_docs
 
-install_fips: install_sw
+{- output_off() if $disabled{fips}; "" -}
+install_fips: build_sw providers\fipsmodule.cnf
+#	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
+	@$(PERL) $(SRCDIR)\util\mkdir-p.pl $(MODULESDIR)
+	@$(ECHO) "*** Installing FIPS module"
+	@$(ECHO) "install $(INSTALL_FIPSMODULE) -> $(MODULESDIR)\$(FIPSMODULENAME)"
+	@copy "$(INSTALL_FIPSMODULE)" $(MODULESDIR)\$(FIPSMODULENAME).new
+	@move /Y $(MODULESDIR)\$(FIPSMODULENAME).new \
+	       $(MODULESDIR)\$(FIPSMODULENAME)
 	@$(ECHO) "*** Installing FIPS module configuration"
-	@$(ECHO) "fipsinstall $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME).cnf"
-	@openssl fipsinstall -module $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME) \
-		-out $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME).cnf \
-		-macopt "key:$(FIPSKEY)"
+	@$(ECHO) "install $(INSTALL_FIPSMODULECONF) -> $(OPENSSLDIR)\fipsmodule.cnf"
+	@copy $(INSTALL_FIPSMODULECONF) "$(OPENSSLDIR)\fipsmodule.cnf"
 
-uninstall_fips: uninstall_sw
+uninstall_fips:
 	@$(ECHO) "*** Uninstalling FIPS module configuration"
-	@$(ECHO) "$(RM) $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME).cnf"
-	@$(RM) $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME).cnf
+	$(RM) "$(OPENSSLDIR)\fipsmodule.cnf"
+	@$(ECHO) "*** Uninstalling FIPS module"
+	$(RM) "$(MODULESDIR)\$(FIPSMODULENAME)"
+{- if ($disabled{fips}) { output_on(); } else { output_off(); } "" -}
+install_fips:
+	@$(ECHO) "The 'install_fips' target requires the 'enable-fips' option"
+
+uninstall_fips:
+	@$(ECHO) "The 'uninstall_fips' target requires the 'enable-fips' option"
+{- output_on() if !$disabled{fips}; "" -}
 
 install_ssldirs:
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(OPENSSLDIR)\certs"
@@ -574,7 +612,7 @@ install_programs: install_runtime_libs build_programs
 
 uninstall_runtime:
 
-install_html_docs: build_html_docs
+install_html_docs: install_image_docs build_html_docs
 	@if "$(INSTALLTOP)"=="" ( echo INSTALLTOP should not be empty & exit 1 )
 	@echo *** Installing HTML docs
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\html\man1"
@@ -590,15 +628,28 @@ install_html_docs: build_html_docs
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(BLDDIR)\doc\html\man7\*.html \
                                         "$(INSTALLTOP)\html\man7"
 
-uninstall_html_docs:
+uninstall_html_docs: uninstall_image_docs
+
+install_image_docs:
+	@if "$(INSTALLTOP)"=="" ( echo INSTALLTOP should not be empty & exit 1 )
+	@echo *** Installing HTML images
+	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\html\man7\img"
+	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(SRCDIR)\doc\man7\img\*.png \
+                                        "$(INSTALLTOP)\html\man7\img"
+
+uninstall_image_docs:
 
 # Helper targets #####################################################
 
-copy-utils: $(BLDDIR)\util\wrap.pl
+copy-utils: $(BLDDIR)\util\wrap.pl $(BLDDIR)\apps\openssl.cnf
 
 $(BLDDIR)\util\wrap.pl: configdata.pm
 	@if NOT EXIST "$(BLDDIR)\util" mkdir "$(BLDDIR)\util"
 	@if NOT "$(SRCDIR)"=="$(BLDDIR)" copy "$(SRCDIR)\util\$(@F)" "$(BLDDIR)\util"
+
+$(BLDDIR)\apps\openssl.cnf: configdata.pm
+	@if NOT EXIST "$(BLDDIR)\apps" mkdir "$(BLDDIR)\apps"
+	@if NOT "$(SRCDIR)"=="$(BLDDIR)" copy "$(SRCDIR)\apps\$(@F)" "$(BLDDIR)\apps"
 
 # Building targets ###################################################
 
@@ -617,7 +668,18 @@ reconfigure reconf:
 
 {-
  use File::Basename;
- use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs/;
+ use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs file_name_is_absolute/;
+
+  # Helper function to convert dependencies in platform agnostic form to
+  # dependencies in platform form.
+  sub compute_platform_depends {
+      map { my $x = $_;
+
+            grep { $x eq $_ } @{$unified_info{programs}} and platform->bin($x)
+            or grep { $x eq $_ } @{$unified_info{modules}} and platform->dso($x)
+            or grep { $x eq $_ } @{$unified_info{libraries}} and platform->lib($x)
+            or platform->convertext($x); } @_;
+  }
 
  # Helper function to figure out dependencies on libraries
  # It takes a list of library names and outputs a list of dependencies
@@ -630,22 +692,28 @@ reconfigure reconf:
 
   sub generatetarget {
       my %args = @_;
-      my $deps = join(" ", @{$args{deps}});
+      my $deps = join(" ", compute_platform_depends(@{$args{deps}}));
       return <<"EOF";
 $args{target}: $deps
 EOF
   }
 
+  # This function (and the next) avoids quoting paths of generated dependencies
+  # (in the build tree), but quotes paths of non-generated dependencies (in the
+  # source tree). This is a workaround for a limitation of C++Builder's make.exe
+  # in handling quoted paths: https://quality.embarcadero.com/browse/RSP-31756
   sub generatesrc {
       my %args = @_;
       my $gen0 = $args{generator}->[0];
       my $gen_args = join('', map { " $_" }
                               @{$args{generator}}[1..$#{$args{generator}}]);
-      my $gen_incs = join("", map { " -I \"$_\"" } @{$args{generator_incs}});
-      my $incs = join("", map { " -I \"$_\"" } @{$args{incs}});
+      my $gen_incs = join("", map { " -I\"$_\"" } @{$args{generator_incs}});
+      my $incs = join("", map { " -I\"$_\"" } @{$args{incs}});
       my $defs = join("", map { " -D".$_ } @{$args{defs}});
-      my $deps = @{$args{deps}} ?
-          '"'.join('" "', @{$args{generator_deps}}, @{$args{deps}}).'"' : '';
+      my $deps = join(' ',
+                      map { file_name_is_absolute($_) || ($_ =~ m|^../|) ? "\"$_\"" : $_ }
+                      compute_platform_depends(@{$args{generator_deps}},
+                                               @{$args{deps}}));
 
       if ($args{src} =~ /\.html$/) {
           #
@@ -655,7 +723,7 @@ EOF
           my $pod = $gen0;
           return <<"EOF";
 $args{src}: "$pod"
-	\$(PERL) \$(SRCDIR)/util/mkpod2html.pl -i "$pod" -o \$\@ -t "$title" -r "\$(SRCDIR)/doc"
+	"\$(PERL)" "\$(SRCDIR)/util/mkpod2html.pl" -i "$pod" -o \$\@ -t "$title" -r "\$(SRCDIR)/doc"
 EOF
       } elsif (platform->isdef($args{src})) {
           #
@@ -700,22 +768,22 @@ EOF
               if ($args{src} =~ /\.S$/) {
                    return <<"EOF";
 $target: "$gen0" $deps
-	set ASM=\$(AS)
-	$generator \$@.S
-	\$(CPP) $incs $cppflags $defs \$@.S > \$@.i && move /Y \$@.i \$@
+	cmd /C "set "ASM=\$(AS)" & $generator \$@.S"
+	\$(CPP) $incs $cppflags $defs \$@.S > \$@.i
+	move /Y \$@.i \$@
         del /Q \$@.S
 EOF
               }
               # Otherwise....
               return <<"EOF";
 $target: "$gen0" $deps
-	set ASM=\$(AS)
-	$generator \$@
+	cmd /C "set "ASM=\$(AS)" & $generator \$@"
 EOF
           }
           return <<"EOF";
 $target: "$gen0" $deps
-	\$(CPP) $incs $cppflags $defs "$gen0" > \$@.i && move /Y \$@.i \$@
+	\$(CPP) $incs $cppflags $defs "$gen0" > \$@.i
+	move /Y \$@.i \$@
 EOF
       } elsif ($gen0 =~ m|^.*\.in$|) {
           #
@@ -724,42 +792,26 @@ EOF
           my $dofile = abs2rel(rel2abs(catfile($config{sourcedir},
                                                "util", "dofile.pl")),
                                rel2abs($config{builddir}));
-          my @modules = ( 'configdata.pm',
-                          grep { $_ =~ m|\.pm$| } @{$args{deps}} );
-          my %moduleincs = map { '"-I'.dirname($_).'"' => 1 } @modules;
-          $deps = join(' ', $deps, @modules);
-          @modules = map { "-M".basename($_, '.pm') } @modules;
-          my $modules = join(' ', '', sort keys %moduleincs, @modules);
+          my @perlmodules = ( 'configdata.pm',
+                              grep { $_ =~ m|\.pm$| } @{$args{deps}} );
+          my %perlmoduleincs = map { '"-I'.dirname($_).'"' => 1 } @perlmodules;
+          $deps = join(' ', $deps, compute_platform_depends(@perlmodules));
+          @perlmodules = map { "-M".basename($_, '.pm') } @perlmodules;
+          my $perlmodules = join(' ', '', sort keys %perlmoduleincs, @perlmodules);
           return <<"EOF";
 $args{src}: "$gen0" $deps
-	"\$(PERL)"$modules "$dofile" "-o$target{build_file}" "$gen0"$gen_args > \$@
+	"\$(PERL)"$perlmodules "$dofile" "-o$target{build_file}" "$gen0"$gen_args > \$@
 EOF
       } elsif (grep { $_ eq $gen0 } @{$unified_info{programs}}) {
           #
           # Generic generator using OpenSSL programs
           #
 
-          # Redo $deps, because programs aren't expected to have deps of their
-          # own.  This is a little more tricky, though, because running programs
-          # may have dependencies on all sorts of files, so we search through
-          # our database of programs and modules to see if our dependencies
-          # are one of those.
-          $deps = join(' ', map { my $x = $_;
-                                  if (grep { $x eq $_ }
-                                          @{$unified_info{programs}}) {
-                                      platform->bin($x);
-                                  } elsif (grep { $x eq $_ }
-                                          @{$unified_info{modules}}) {
-                                      platform->dso($x);
-                                  } else {
-                                      $x;
-                                  }
-                                } @{$args{deps}});
-          # Also redo $gen0, to ensure that we have the proper extension.
+          # Redo $gen0, to ensure that we have the proper extension.
           $gen0 = platform->bin($gen0);
           return <<"EOF";
-$args{src}: $gen0 $deps
-	$gen0$gen_args > \$@
+$args{src}: $gen0 $deps "\$(BLDDIR)\\util\\wrap.pl"
+	"\$(PERL)" "\$(BLDDIR)\\util\\wrap.pl" $gen0$gen_args > \$@
 EOF
       } else {
           #
@@ -781,8 +833,10 @@ EOF
                ? platform->asm($x) : $x }
          ( @{$args{srcs}} );
      my $srcs = '"'.join('" "',  @srcs).'"';
-     my $deps = '"'.join('" "', @srcs, @{$args{deps}}).'"';
-     my $incs = join("", map { ' -I "'.$_.'"' } @{$args{incs}});
+     my $deps = join(' ',
+                     map { file_name_is_absolute($_) || ($_ =~ m|^../|) ? "\"$_\"" : $_ }
+                     (@srcs, @{$args{deps}}));
+     my $incs = join("", map { ' -I"'.$_.'"' } @{$args{incs}});
      my $defs = join("", map { " -D".$_ } @{$args{defs}});
      my $cflags = { shlib => ' $(LIB_CFLAGS)',
 		    lib => ' $(LIB_CFLAGS)',
@@ -797,7 +851,7 @@ EOF
 		     lib => ' $(LIB_ASFLAGS)',
 		     dso => ' $(DSO_ASFLAGS)',
 		     bin => ' $(BIN_ASFLAGS)' } -> {$args{intent}};
-     my $makedepprog = $config{makedepprog};
+     my $makedepcmd = $config{makedepcmd} unless $disabled{makedepend};
      if ($srcs[0] =~ /\.rc$/) {
          my $res = platform->res($args{obj});
          return <<"EOF";
@@ -815,7 +869,8 @@ EOF
      } elsif ($srcs[0] =~ /.S$/) {
          return <<"EOF";
 $obj: $deps
-	\$(CC) /EP -D__ASSEMBLER__ $cflags $defs $srcs > \$@.asm && \$(AS) $asflags \$(ASOUTFLAG)\$\@ \$@.asm
+	\$(CC) /EP -D__ASSEMBLER__ $cflags $defs $srcs > \$@.asm
+	\$(AS) $asflags \$(ASOUTFLAG)\$\@ \$@.asm
 EOF
      }
      my $recipe = <<"EOF";
@@ -823,7 +878,7 @@ $obj: $deps
 	\$(CC) $cflags $defs -c \$(COUTFLAG)\$\@ $srcs
 EOF
      $recipe .= <<"EOF"	unless $disabled{makedepend};
-	\$(CC) $cflags $defs /Zs /showIncludes $srcs 2>&1 > $dep
+	cmd /C "$makedepcmd $cflags $defs $srcs > $dep 2>&1"
 EOF
      return $recipe;
  }
@@ -835,31 +890,38 @@ EOF
      my %args = @_;
      my $lib = $args{lib};
      my @objs = map { platform->convertext($_) }
-                grep { platform->isobj($_) || platform->isres($_) }
+                grep { platform->isobj($_) }
+                @{$args{objs}};
+     my @ress = map { platform->convertext($_) }
+                grep { platform->isres($_) }
                 @{$args{objs}};
      my @defs = map { platform->def($_) }
                 grep { platform->isdef($_) }
                 @{$args{objs}};
      my @deps = compute_lib_depends(@{$args{deps}});
      die "More than one exported symbols list" if scalar @defs > 1;
-     my $linklibs = join("", map { "$_\n" } @deps);
-     my $objs = join("\n", @objs);
-     my $deps = join(" ", @objs, @defs, @deps);
+     my $linklibs = join("", map { "$_$target{ld_resp_delim}" } @deps);
+     my $objs = join($target{ld_resp_delim}, @objs);
+     my $ress = join($target{ld_resp_delim}, @ress);
+     my $deps = join(" ", @objs, @ress, @defs, @deps);
      my $import = platform->sharedlib_import($lib);
      my $dll =  platform->sharedlib($lib);
-     my $shared_def = join("", map { " /def:$_" } @defs);
+     my $shared_def = $target{lddefflag} . join("", @defs);
+     my $implib_rule = $target{ld_implib_rule} || "";
+     my $implib_flag = $target{ld_implib_flag}
+                       ? "$target{ld_implib_flag}$import"
+                       : "";
      return <<"EOF"
 # The import library may look like a static library, but it is not.
 # We MUST make the import library depend on the DLL, in case someone
 # mistakenly removes the latter.
 $import: $dll
+	$implib_rule
 $dll: $deps
 	IF EXIST $full.manifest DEL /F /Q $full.manifest
 	IF EXIST \$@ DEL /F /Q \$@
-	\$(LD) \$(LDFLAGS) \$(LIB_LDFLAGS) \\
-		/implib:$import \$(LDOUTFLAG)$dll$shared_def @<< || (DEL /Q \$(\@B).* $import && EXIT 1)
-$objs
-$linklibs\$(LIB_EX_LIBS)
+	cmd /C "\$(LD) \$(LDFLAGS) \$(LIB_LDFLAGS) @<< $implib_flag || (DEL /Q \$(\@B).* $import & EXIT 1)"
+$objs$target{ld_resp_delim}\$(LDOUTFLAG)$dll$target{ldpostoutflag}$target{ld_resp_delim}$linklibs\$(LIB_EX_LIBS)$target{ld_resp_delim}$shared_def$target{ldresflag}$ress
 <<
 	IF EXIST $dll.manifest \\
 	   \$(MT) \$(MTFLAGS) \$(MTINFLAG)$dll.manifest \$(MTOUTFLAG)$dll
@@ -876,23 +938,26 @@ EOF
      my $dso = platform->dso($args{module});
      my $dso_n = platform->dsoname($args{module});
      my @objs = map { platform->convertext($_) }
-                grep { platform->isobj($_) || platform->isres($_) }
+                grep { platform->isobj($_) }
+                @{$args{objs}};
+     my @ress = map { platform->convertext($_) }
+                grep { platform->isres($_) }
                 @{$args{objs}};
      my @defs = map { platform->def($_) }
                 grep { platform->isdef($_) }
                 @{$args{objs}};
      my @deps = compute_lib_depends(@{$args{deps}});
-     my $objs = join("\n", @objs);
-     my $linklibs = join("", map { "$_\n" } @deps);
-     my $deps = join(" ", @objs, @defs, @deps);
-     my $shared_def = join("", map { " /def:$_" } @defs);
+     die "More than one exported symbols list" if scalar @defs > 1;
+     my $objs = join($target{ld_resp_delim}, @objs);
+     my $ress = join($target{ld_resp_delim}, @ress);
+     my $linklibs = join("", map { "$_$target{ld_resp_delim}" } @deps);
+     my $deps = join(" ", @objs, @ress, @defs, @deps);
+     my $shared_def = $target{lddefflag} . join("", @defs);
      return <<"EOF";
 $dso: $deps
 	IF EXIST $dso.manifest DEL /F /Q $dso.manifest
-	\$(LD) \$(LDFLAGS) \$(DSO_LDFLAGS) \\
-		\$(LDOUTFLAG)$dso$shared_def @<< || (DEL /Q \$(\@B).* $dso_n.* && EXIT 1)
-$objs
-$linklibs \$(DSO_EX_LIBS)
+	cmd /C "\$(LD) \$(LDFLAGS) \$(DSO_LDFLAGS) @<< || (DEL /Q \$(\@B).* $dso_n.* & EXIT 1)"
+$objs$target{ld_resp_delim}\$(LDOUTFLAG)$dso$target{ldpostoutflag}$target{ld_resp_delim}$linklibs \$(DSO_EX_LIBS)$target{ld_resp_delim}$shared_def$target{ldresflag}$ress
 <<
 	IF EXIST $dso.manifest \\
 	   \$(MT) \$(MTFLAGS) \$(MTINFLAG)$dso.manifest \$(MTOUTFLAG)$dso
@@ -902,7 +967,7 @@ EOF
      my %args = @_;
      my $lib = platform->staticlib($args{lib});
      my @objs = map { platform->obj($_) } @{$args{objs}};
-     my $objs = join("\n", @objs);
+     my $objs = join($target{ar_resp_delim}, @objs);
      my $deps = join(" ", @objs);
      return <<"EOF";
 $lib: $deps
@@ -915,19 +980,20 @@ EOF
      my %args = @_;
      my $bin = platform->bin($args{bin});
      my @objs = map { platform->convertext($_) }
-                grep { platform->isobj($_) || platform->isres($_) }
+                grep { platform->isobj($_) }
+                @{$args{objs}};
+     my @ress = map { platform->convertext($_) }
+                grep { platform->isres($_) }
                 @{$args{objs}};
      my @deps = compute_lib_depends(@{$args{deps}});
-     my $objs = join("\n", @objs);
-     my $linklibs = join("", map { "$_\n" } @deps);
-     my $deps = join(" ", @objs, @deps);
+     my $objs = join($target{ld_resp_delim}, @objs);
+     my $linklibs = join("", map { "$_$target{ld_resp_delim}" } @deps);
+     my $deps = join(" ", @objs, @ress, @deps);
      return <<"EOF";
 $bin: $deps
 	IF EXIST $bin.manifest DEL /F /Q $bin.manifest
-	\$(LD) \$(LDFLAGS) \$(BIN_LDFLAGS) \$(LDOUTFLAG)$bin @<<
-$objs
-setargv.obj
-$linklibs\$(BIN_EX_LIBS)
+	\$(LD) \$(LDFLAGS) \$(BIN_LDFLAGS) @<<
+$objs$target{ld_resp_delim}\$(LDOUTFLAG)$bin$target{ldpostoutflag}$target{ld_resp_delim}$linklibs\$(BIN_EX_LIBS)$target{ldresflag}$target{ldresflag}$ress
 <<
 	IF EXIST $bin.manifest \\
 	   \$(MT) \$(MTFLAGS) \$(MTINFLAG)$bin.manifest \$(MTOUTFLAG)$bin
@@ -943,7 +1009,7 @@ EOF
       return <<"EOF";
 $script: $sources
 	"\$(PERL)" "-I\$(BLDDIR)" -Mconfigdata "$dofile" \\
-	    "-o$target{build_file}" $sources > "$script"
+	    "-o$target{build_file}" $sources > \$@
 EOF
   }
   sub generatedir {

@@ -40,7 +40,9 @@ PKCS7_ISSUER_AND_SERIAL_digest
 =head1 DESCRIPTION
 
 X509_digest_sig() calculates a digest of the given certificate
-using the same hash algorithm as in its signature.
+using the same hash algorithm as in its signature with a fallback to B<SHA-256>
+for algorithms where the digest is an integral part of the signature algorithm
+such as with B<EdDSA> signatures.
 
 X509_pubkey_digest() returns a digest of the DER representation of the public
 key in the specified X509 B<data> object.

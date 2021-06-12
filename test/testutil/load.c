@@ -20,7 +20,7 @@ X509 *load_cert_pem(const char *file, OSSL_LIB_CTX *libctx)
     X509 *cert = NULL;
     BIO *bio = NULL;
 
-    if (!TEST_ptr(bio = BIO_new(BIO_s_file())))
+    if (!TEST_ptr(file) || !TEST_ptr(bio = BIO_new(BIO_s_file())))
         return NULL;
     if (TEST_int_gt(BIO_read_filename(bio, file), 0)
             && TEST_ptr(cert = X509_new_ex(libctx, NULL)))
@@ -30,17 +30,14 @@ X509 *load_cert_pem(const char *file, OSSL_LIB_CTX *libctx)
     return cert;
 }
 
-STACK_OF(X509) *load_certs_pem(const char *filename)
+STACK_OF(X509) *load_certs_pem(const char *file)
 {
     STACK_OF(X509) *certs;
     BIO *bio;
     X509 *x;
 
-    bio = BIO_new_file(filename, "r");
-
-    if (bio == NULL) {
+    if (!TEST_ptr(file) || (bio = BIO_new_file(file, "r")) == NULL)
         return NULL;
-    }
 
     certs = sk_X509_new_null();
     if (certs == NULL) {
@@ -74,7 +71,7 @@ EVP_PKEY *load_pkey_pem(const char *file, OSSL_LIB_CTX *libctx)
     EVP_PKEY *key = NULL;
     BIO *bio = NULL;
 
-    if (!TEST_ptr(bio = BIO_new(BIO_s_file())))
+    if (!TEST_ptr(file) || !TEST_ptr(bio = BIO_new(BIO_s_file())))
         return NULL;
     if (TEST_int_gt(BIO_read_filename(bio, file), 0))
         (void)TEST_ptr(key = PEM_read_bio_PrivateKey_ex(bio, NULL, NULL, NULL,
@@ -84,14 +81,17 @@ EVP_PKEY *load_pkey_pem(const char *file, OSSL_LIB_CTX *libctx)
     return key;
 }
 
-X509_REQ *load_csr_der(const char *file)
+X509_REQ *load_csr_der(const char *file, OSSL_LIB_CTX *libctx)
 {
     X509_REQ *csr = NULL;
     BIO *bio = NULL;
 
     if (!TEST_ptr(file) || !TEST_ptr(bio = BIO_new_file(file, "rb")))
         return NULL;
-    (void)TEST_ptr(csr = d2i_X509_REQ_bio(bio, NULL));
+
+    csr = X509_REQ_new_ex(libctx, NULL);
+    if (TEST_ptr(csr))
+        (void)TEST_ptr(d2i_X509_REQ_bio(bio, &csr));
     BIO_free(bio);
     return csr;
 }

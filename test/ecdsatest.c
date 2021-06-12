@@ -179,7 +179,7 @@ static int set_sm2_id(EVP_MD_CTX *mctx, EVP_PKEY *pkey)
     static const char sm2_id[] = { 1, 2, 3, 4, 'l', 'e', 't', 't', 'e', 'r' };
     EVP_PKEY_CTX *pctx;
 
-    if (!TEST_ptr(pctx = EVP_MD_CTX_pkey_ctx(mctx))
+    if (!TEST_ptr(pctx = EVP_MD_CTX_get_pkey_ctx(mctx))
         || !TEST_int_gt(EVP_PKEY_CTX_set1_id(pctx, sm2_id, sizeof(sm2_id)), 0))
         return 0;
     return 1;
@@ -242,18 +242,6 @@ static int test_builtin(int n, int as)
         goto err;
 
     temp = ECDSA_size(eckey);
-
-    /*
-     * |as| indicates how we want to treat the key, i.e. what sort of
-     * computation we want to do with it.  The two choices are the key
-     * types EVP_PKEY_EC and EVP_PKEY_SM2.  It's perfectly possible to
-     * switch back and forth between those two key types, regardless of
-     * curve, even though the default is to have EVP_PKEY_SM2 for the
-     * SM2 curve and EVP_PKEY_EC for all other curves.
-     */
-    if (!TEST_true(EVP_PKEY_set_alias_type(pkey, as))
-        || !TEST_true(EVP_PKEY_set_alias_type(pkey_neg, as)))
-            goto err;
 
     if (!TEST_int_ge(temp, 0)
         || !TEST_ptr(sig = OPENSSL_malloc(sig_len = (size_t)temp))

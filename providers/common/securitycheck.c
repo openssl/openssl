@@ -13,6 +13,7 @@
 #include <openssl/dsa.h>
 #include <openssl/dh.h>
 #include <openssl/ec.h>
+#include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/proverr.h>
 #include <openssl/core_names.h>
@@ -25,14 +26,50 @@
  * Set protect = 1 for encryption or signing operations, or 0 otherwise. See
  * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-131Ar2.pdf.
  */
-int ossl_rsa_check_key(const RSA *rsa, int protect)
+int ossl_rsa_check_key(OSSL_LIB_CTX *ctx, const RSA *rsa, int operation)
 {
+    int protect = 0;
+
+    switch (operation) {
+        case EVP_PKEY_OP_SIGN:
+            protect = 1;
+            /* fallthrough */
+        case EVP_PKEY_OP_VERIFY:
+            break;
+        case EVP_PKEY_OP_ENCAPSULATE:
+        case EVP_PKEY_OP_ENCRYPT:
+            protect = 1;
+            /* fallthrough */
+        case EVP_PKEY_OP_VERIFYRECOVER:
+        case EVP_PKEY_OP_DECAPSULATE:
+        case EVP_PKEY_OP_DECRYPT:
+            if (RSA_test_flags(rsa,
+                               RSA_FLAG_TYPE_MASK) == RSA_FLAG_TYPE_RSASSAPSS) {
+                ERR_raise_data(ERR_LIB_PROV,
+                               PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
+                               "operation: %d", operation);
+                return 0;
+            }
+            break;
+        default:
+            ERR_raise_data(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR,
+                           "invalid operation: %d", operation);
+            return 0;
+    }
+
 #if !defined(OPENSSL_NO_FIPS_SECURITYCHECKS)
-    if (ossl_securitycheck_enabled()) {
+    if (ossl_securitycheck_enabled(ctx)) {
         int sz = RSA_bits(rsa);
 
-        return protect ? (sz >= 2048) : (sz >= 1024);
+        if (protect ? (sz < 2048) : (sz < 1024)) {
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH,
+                           "operation: %d", operation);
+            return 0;
+        }
     }
+#else
+    /* make protect used */
+    (void)protect;
 #endif /* OPENSSL_NO_FIPS_SECURITYCHECKS */
     return 1;
 }
@@ -52,10 +89,10 @@ int ossl_rsa_check_key(const RSA *rsa, int protect)
  * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-131Ar2.pdf
  * "Table 2"
  */
-int ossl_ec_check_key(const EC_KEY *ec, int protect)
+int ossl_ec_check_key(OSSL_LIB_CTX *ctx, const EC_KEY *ec, int protect)
 {
 # if !defined(OPENSSL_NO_FIPS_SECURITYCHECKS)
-    if (ossl_securitycheck_enabled()) {
+    if (ossl_securitycheck_enabled(ctx)) {
         int nid, strength;
         const char *curve_name;
         const EC_GROUP *group = EC_KEY_get0_group(ec);
@@ -110,10 +147,10 @@ int ossl_ec_check_key(const EC_KEY *ec, int protect)
  * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-131Ar2.pdf
  * "Table 2"
  */
-int ossl_dsa_check_key(const DSA *dsa, int sign)
+int ossl_dsa_check_key(OSSL_LIB_CTX *ctx, const DSA *dsa, int sign)
 {
 # if !defined(OPENSSL_NO_FIPS_SECURITYCHECKS)
-    if (ossl_securitycheck_enabled()) {
+    if (ossl_securitycheck_enabled(ctx)) {
         size_t L, N;
         const BIGNUM *p, *q;
 
@@ -154,10 +191,10 @@ int ossl_dsa_check_key(const DSA *dsa, int sign)
  * "Section 5.5.1.1FFC Domain Parameter Selection/Generation" and
  * "Appendix D" FFC Safe-prime Groups
  */
-int ossl_dh_check_key(const DH *dh)
+int ossl_dh_check_key(OSSL_LIB_CTX *ctx, const DH *dh)
 {
 # if !defined(OPENSSL_NO_FIPS_SECURITYCHECKS)
-    if (ossl_securitycheck_enabled()) {
+    if (ossl_securitycheck_enabled(ctx)) {
         size_t L, N;
         const BIGNUM *p, *q;
 
@@ -187,23 +224,24 @@ int ossl_dh_check_key(const DH *dh)
 }
 #endif /* OPENSSL_NO_DH */
 
-int ossl_digest_get_approved_nid_with_sha1(const EVP_MD *md, int sha1_allowed)
+int ossl_digest_get_approved_nid_with_sha1(OSSL_LIB_CTX *ctx, const EVP_MD *md,
+                                           int sha1_allowed)
 {
     int mdnid = ossl_digest_get_approved_nid(md);
 
 # if !defined(OPENSSL_NO_FIPS_SECURITYCHECKS)
-    if (ossl_securitycheck_enabled()) {
-        if (mdnid == NID_sha1 && !sha1_allowed)
-            mdnid = NID_undef;
+    if (ossl_securitycheck_enabled(ctx)) {
+        if (mdnid == NID_undef || (mdnid == NID_sha1 && !sha1_allowed))
+            mdnid = -1; /* disallowed by security checks */
     }
 # endif /* OPENSSL_NO_FIPS_SECURITYCHECKS */
     return mdnid;
 }
 
-int ossl_digest_is_allowed(const EVP_MD *md)
+int ossl_digest_is_allowed(OSSL_LIB_CTX *ctx, const EVP_MD *md)
 {
 # if !defined(OPENSSL_NO_FIPS_SECURITYCHECKS)
-    if (ossl_securitycheck_enabled())
+    if (ossl_securitycheck_enabled(ctx))
         return ossl_digest_get_approved_nid(md) != NID_undef;
 # endif /* OPENSSL_NO_FIPS_SECURITYCHECKS */
     return 1;

@@ -108,8 +108,7 @@ command instead for this.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The format of the key to sign with; the default is B<PEM>.
-The only value with effect is B<ENGINE>; all others have become obsolete.
+The format of the key to sign with; unspecified by default.
 See L<openssl-format-options(1)> for details.
 
 =item B<-sigopt> I<nm>:I<v>
@@ -255,9 +254,6 @@ L<openssl-mac(1)>
 
 The default digest was changed from MD5 to SHA256 in OpenSSL 1.1.0.
 The FIPS-related options were removed in OpenSSL 1.1.0.
-
-All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
-and have no effect.
 
 The B<-engine> and B<-engine_impl> options were deprecated in OpenSSL 3.0.
 

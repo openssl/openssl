@@ -21,7 +21,7 @@ extern "C" {
 
 # ifndef OPENSSL_NO_TS
 
-int err_load_TS_strings_int(void);
+int ossl_err_load_TS_strings(void);
 # endif
 
 # ifdef  __cplusplus

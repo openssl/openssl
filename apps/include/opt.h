@@ -14,6 +14,8 @@
 #include <openssl/types.h>
 #include <stdarg.h>
 
+#define OPT_COMMON OPT_ERR = -1, OPT_EOF = 0, OPT_HELP
+
 /*
  * Common verification options.
  */
@@ -153,13 +155,14 @@
         OPT_S__FIRST=3000, \
         OPT_S_NOSSL3, OPT_S_NOTLS1, OPT_S_NOTLS1_1, OPT_S_NOTLS1_2, \
         OPT_S_NOTLS1_3, OPT_S_BUGS, OPT_S_NO_COMP, OPT_S_NOTICKET, \
-        OPT_S_SERVERPREF, OPT_S_LEGACYRENEG, OPT_S_LEGACYCONN, \
+        OPT_S_SERVERPREF, OPT_S_LEGACYRENEG, OPT_S_CLIENTRENEG, \
+        OPT_S_LEGACYCONN, \
         OPT_S_ONRESUMP, OPT_S_NOLEGACYCONN, OPT_S_ALLOW_NO_DHE_KEX, \
         OPT_S_PRIORITIZE_CHACHA, \
         OPT_S_STRICT, OPT_S_SIGALGS, OPT_S_CLIENTSIGALGS, OPT_S_GROUPS, \
         OPT_S_CURVES, OPT_S_NAMEDCURVE, OPT_S_CIPHER, OPT_S_CIPHERSUITES, \
         OPT_S_RECORD_PADDING, OPT_S_DEBUGBROKE, OPT_S_COMP, \
-        OPT_S_MINPROTO, OPT_S_MAXPROTO, \
+        OPT_S_MINPROTO, OPT_S_MAXPROTO, OPT_S_IMMEDIATE_RENEG, \
         OPT_S_NO_RENEGOTIATION, OPT_S_NO_MIDDLEBOX, OPT_S__LAST
 
 # define OPT_S_OPTIONS \
@@ -177,6 +180,8 @@
         {"serverpref", OPT_S_SERVERPREF, '-', "Use server's cipher preferences"}, \
         {"legacy_renegotiation", OPT_S_LEGACYRENEG, '-', \
             "Enable use of legacy renegotiation (dangerous)"}, \
+        {"client_renegotiation", OPT_S_CLIENTRENEG, '-', \
+            "Allow client-initiated renegotiation" }, \
         {"no_renegotiation", OPT_S_NO_RENEGOTIATION, '-', \
             "Disable all renegotiation."}, \
         {"legacy_server_connect", OPT_S_LEGACYCONN, '-', \
@@ -206,6 +211,8 @@
         {"ciphersuites", OPT_S_CIPHERSUITES, 's', "Specify TLSv1.3 ciphersuites to be used"}, \
         {"min_protocol", OPT_S_MINPROTO, 's', "Specify the minimum protocol version to be used"}, \
         {"max_protocol", OPT_S_MAXPROTO, 's', "Specify the maximum protocol version to be used"}, \
+        {"immediate_renegotiation", OPT_S_IMMEDIATE_RENEG, '-', \
+            "Immediately attempt renegotiation"}, \
         {"record_padding", OPT_S_RECORD_PADDING, 's', \
             "Block size to pad TLS 1.3 records to."}, \
         {"debug_broken_protocol", OPT_S_DEBUGBROKE, '-', \
@@ -226,6 +233,7 @@
         case OPT_S_NOTICKET: \
         case OPT_S_SERVERPREF: \
         case OPT_S_LEGACYRENEG: \
+        case OPT_S_CLIENTRENEG: \
         case OPT_S_LEGACYCONN: \
         case OPT_S_ONRESUMP: \
         case OPT_S_NOLEGACYCONN: \
@@ -258,7 +266,7 @@
 
 # define OPT_R_OPTIONS \
     OPT_SECTION("Random state"), \
-    {"rand", OPT_R_RAND, 's', "Load the file(s) into the random number generator"}, \
+    {"rand", OPT_R_RAND, 's', "Load the given file(s) into the random number generator"}, \
     {"writerand", OPT_R_WRITERAND, '>', "Write random data to the specified file"}
 
 # define OPT_R_CASES \
@@ -308,6 +316,9 @@ typedef struct options_st {
     int valtype;
     const char *helpstr;
 } OPTIONS;
+/* Special retval values: */
+#define OPT_PARAM 0 /* same as OPT_EOF usually defined in apps */
+#define OPT_DUP -2 /* marks duplicate occurrence of option in help output */
 
 /*
  * A string/int pairing; widely use for option value lookup, hence the
@@ -342,45 +353,50 @@ typedef struct string_int_pair_st {
 #define OPT_PARAMETERS() { OPT_PARAM_STR, 1, '-', "Parameters:\n" }
 
 const char *opt_path_end(const char *filename);
-char *opt_progname(const char *argv0);
-char *opt_appname(const char *arg0);
-char *opt_getprog(void);
 char *opt_init(int ac, char **av, const OPTIONS * o);
-int opt_next(void);
+char *opt_progname(const char *argv0);
+char *opt_appname(const char *argv0);
+char *opt_getprog(void);
+void opt_help(const OPTIONS * list);
+
 void opt_begin(void);
-int opt_format(const char *s, unsigned long flags, int *result);
-const char *format2str(int format);
+int opt_next(void);
+char *opt_flag(void);
+char *opt_arg(void);
+char *opt_unknown(void);
+int opt_cipher(const char *name, EVP_CIPHER **cipherp);
+int opt_cipher_silent(const char *name, EVP_CIPHER **cipherp);
+int opt_md(const char *name, EVP_MD **mdp);
+int opt_md_silent(const char *name, EVP_MD **mdp);
+
 int opt_int(const char *arg, int *result);
-int opt_ulong(const char *arg, unsigned long *result);
+int opt_int_arg(void);
 int opt_long(const char *arg, long *result);
+int opt_ulong(const char *arg, unsigned long *result);
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
     defined(INTMAX_MAX) && defined(UINTMAX_MAX) && \
     !defined(OPENSSL_NO_INTTYPES_H)
-int opt_imax(const char *arg, intmax_t *result);
-int opt_umax(const char *arg, uintmax_t *result);
+int opt_intmax(const char *arg, intmax_t *result);
+int opt_uintmax(const char *arg, uintmax_t *result);
 #else
-# define opt_imax opt_long
-# define opt_umax opt_ulong
+# define opt_intmax opt_long
+# define opt_uintmax opt_ulong
 # define intmax_t long
 # define uintmax_t unsigned long
 #endif
-int opt_pair(const char *arg, const OPT_PAIR * pairs, int *result);
+
+int opt_isdir(const char *name);
+int opt_format(const char *s, unsigned long flags, int *result);
+void print_format_error(int format, unsigned long flags);
+int opt_printf_stderr(const char *fmt, ...);
 int opt_string(const char *name, const char **options);
-int opt_cipher(const char *name, const EVP_CIPHER **cipherp);
-int opt_md(const char *name, const EVP_MD **mdp);
-char *opt_arg(void);
-char *opt_flag(void);
-char *opt_unknown(void);
-char **opt_rest(void);
-int opt_num_rest(void);
+int opt_pair(const char *arg, const OPT_PAIR * pairs, int *result);
+
 int opt_verify(int i, X509_VERIFY_PARAM *vpm);
 int opt_rand(int i);
 int opt_provider(int i);
-void opt_help(const OPTIONS * list);
-void opt_print(const OPTIONS * opt, int doingparams, int width);
-int opt_format_error(const char *s, unsigned long flags);
-void print_format_error(int format, unsigned long flags);
-int opt_isdir(const char *name);
-int opt_printf_stderr(const char *fmt, ...);
+
+char **opt_rest(void);
+int opt_num_rest(void);
 
 #endif /* OSSL_APPS_OPT_H */

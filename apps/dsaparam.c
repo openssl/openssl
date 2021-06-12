@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "apps.h"
 #include <time.h>
 #include <string.h>
 #include "apps.h"
@@ -27,7 +28,7 @@ static int verbose = 0;
 static int gendsa_cb(EVP_PKEY_CTX *ctx);
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_TEXT,
     OPT_NOOUT, OPT_GENKEY, OPT_ENGINE, OPT_VERBOSE,
     OPT_R_ENUM, OPT_PROV_ENUM
@@ -69,7 +70,7 @@ int dsaparam_main(int argc, char **argv)
     EVP_PKEY *params = NULL, *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     int numbits = -1, num = 0, genkey = 0;
-    int informat = FORMAT_PEM, outformat = FORMAT_PEM, noout = 0;
+    int informat = FORMAT_UNDEF, outformat = FORMAT_PEM, noout = 0;
     int ret = 1, i, text = 0, private = 0;
     char *infile = NULL, *outfile = NULL, *prog;
     OPTION_CHOICE o;
@@ -135,7 +136,8 @@ int dsaparam_main(int argc, char **argv)
     } else if (argc != 0) {
         goto opthelp;
     }
-    app_RAND_load();
+    if (!app_RAND_load())
+        goto end;
 
     /* generate a key */
     numbits = num;
@@ -175,12 +177,9 @@ int dsaparam_main(int argc, char **argv)
                        "Error, DSA key generation setting bit length failed\n");
             goto end;
         }
-        if (EVP_PKEY_paramgen(ctx, &params) <= 0) {
-            BIO_printf(bio_err, "Error, DSA key generation failed\n");
-            goto end;
-        }
+        params = app_paramgen(ctx, "DSA");
     } else {
-        params = load_keyparams(infile, 1, "DSA", "DSA parameters");
+        params = load_keyparams(infile, informat, 1, "DSA", "DSA parameters");
     }
     if (params == NULL) {
         /* Error message should already have been displayed */
@@ -217,10 +216,7 @@ int dsaparam_main(int argc, char **argv)
                        "Error, unable to initialise for key generation\n");
             goto end;
         }
-        if (!EVP_PKEY_keygen(ctx, &pkey)) {
-            BIO_printf(bio_err, "Error, unable to generate key\n");
-            goto end;
-        }
+        pkey = app_keygen(ctx, "DSA", numbits, verbose);
         assert(private);
         if (outformat == FORMAT_ASN1)
             i = i2d_PrivateKey_bio(out, pkey);

@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -991,7 +991,6 @@ char *ossl_ipaddr_to_asc(unsigned char *p, int len)
     case 4: /* IPv4 */
         BIO_snprintf(buf, sizeof(buf), "%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
         break;
-        /* TODO possibly combine with static i2r_address() in v3_addr.c */
     case 16: /* IPv6 */
         for (out = buf, i = 8, remain = sizeof(buf);
              i-- > 0 && bytes >= 0;

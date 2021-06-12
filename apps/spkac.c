@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -21,7 +21,7 @@
 #include <openssl/pem.h>
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_NOOUT, OPT_PUBKEY, OPT_VERIFY, OPT_IN, OPT_OUT,
     OPT_ENGINE, OPT_KEY, OPT_CHALLENGE, OPT_PASSIN, OPT_SPKAC,
     OPT_SPKSECT, OPT_KEYFORM,
@@ -67,7 +67,7 @@ int spkac_main(int argc, char **argv)
     char *spkstr = NULL, *prog;
     const char *spkac = "SPKAC", *spksect = "default";
     int i, ret = 1, verify = 0, noout = 0, pubkey = 0;
-    int keyformat = FORMAT_PEM;
+    int keyformat = FORMAT_UNDEF;
     OPTION_CHOICE o;
 
     prog = opt_init(argc, argv, spkac_options);

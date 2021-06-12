@@ -23,7 +23,6 @@
  */
 # define CRYPTO_R_BAD_ALGORITHM_NAME                      117
 # define CRYPTO_R_CONFLICTING_NAMES                       118
-# define CRYPTO_R_FIPS_MODE_NOT_SUPPORTED                 101
 # define CRYPTO_R_HEX_STRING_TOO_SHORT                    121
 # define CRYPTO_R_ILLEGAL_HEX_DIGIT                       102
 # define CRYPTO_R_INSUFFICIENT_DATA_SPACE                 106

@@ -50,7 +50,7 @@ provider_query_operation() function
 (see L<provider-base(7)/Provider Functions>).
 
 All these "functions" have a corresponding function type definition named
-B<OSSL_{name}_fn>, and a helper function to retrieve the function pointer
+B<OSSL_FUNC_{name}_fn>, and a helper function to retrieve the function pointer
 from a B<OSSL_DISPATCH> element named B<OSSL_get_{name}>.
 For example, the "function" OSSL_FUNC_store_load() has these:
 
@@ -141,17 +141,27 @@ The contents of the octet string is expected to be in DER form.
 Indicates that the caller wants to search for an object with the given
 serial number associated.
 
-=item "digest" (B<OSSL_STORE_PARAM_DIGEST>) <utf8 string>
+=item "digest" (B<OSSL_STORE_PARAM_DIGEST>) <UTF8 string>
 
 =item "fingerprint" (B<OSSL_STORE_PARAM_FINGERPRINT>) <octet string>
 
 Indicates that the caller wants to search for an object with the given
 fingerprint, computed with the given digest.
 
-=item "alias" (B<OSSL_STORE_PARAM_ALIAS>) <utf8 string>
+=item "alias" (B<OSSL_STORE_PARAM_ALIAS>) <UTF8 string>
 
 Indicates that the caller wants to search for an object with the given
 alias (some call it a "friendly name").
+
+=item "properties" (B<OSSL_STORE_PARAM_PROPERTIES) <utf8 string>
+
+Property string to use when querying for algorithms such as the B<OSSL_DECODER>
+decoder implementations.
+
+=item "input-type" (B<OSSL_STORE_PARAM_INPUT_TYPE) <utf8 string>
+
+Type of the input format as a hint to use when decoding the objects in the
+store.
 
 =back
 
@@ -169,7 +179,7 @@ The STORE interface was introduced in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

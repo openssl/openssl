@@ -11,6 +11,9 @@
 #include <openssl/conf.h>
 #include "internal/thread_once.h"
 #include "internal/property.h"
+#include "internal/core.h"
+#include "internal/bio.h"
+#include "internal/provider.h"
 
 struct ossl_lib_ctx_onfree_list_st {
     ossl_lib_ctx_onfree_fn *fn;
@@ -37,7 +40,32 @@ struct ossl_lib_ctx_st {
     int run_once_done[OSSL_LIB_CTX_MAX_RUN_ONCE];
     int run_once_ret[OSSL_LIB_CTX_MAX_RUN_ONCE];
     struct ossl_lib_ctx_onfree_list_st *onfreelist;
+    unsigned int ischild:1;
 };
+
+int ossl_lib_ctx_write_lock(OSSL_LIB_CTX *ctx)
+{
+    return CRYPTO_THREAD_write_lock(ossl_lib_ctx_get_concrete(ctx)->lock);
+}
+
+int ossl_lib_ctx_read_lock(OSSL_LIB_CTX *ctx)
+{
+    return CRYPTO_THREAD_read_lock(ossl_lib_ctx_get_concrete(ctx)->lock);
+}
+
+int ossl_lib_ctx_unlock(OSSL_LIB_CTX *ctx)
+{
+    return CRYPTO_THREAD_unlock(ossl_lib_ctx_get_concrete(ctx)->lock);
+}
+
+int ossl_lib_ctx_is_child(OSSL_LIB_CTX *ctx)
+{
+    ctx = ossl_lib_ctx_get_concrete(ctx);
+
+    if (ctx == NULL)
+        return 0;
+    return ctx->ischild;
+}
 
 static int context_init(OSSL_LIB_CTX *ctx)
 {
@@ -168,6 +196,39 @@ OSSL_LIB_CTX *OSSL_LIB_CTX_new(void)
 }
 
 #ifndef FIPS_MODULE
+OSSL_LIB_CTX *OSSL_LIB_CTX_new_from_dispatch(const OSSL_CORE_HANDLE *handle,
+                                             const OSSL_DISPATCH *in)
+{
+    OSSL_LIB_CTX *ctx = OSSL_LIB_CTX_new();
+
+    if (ctx == NULL)
+        return NULL;
+
+    if (!ossl_bio_init_core(ctx, in)) {
+        OSSL_LIB_CTX_free(ctx);
+        return NULL;
+    }
+
+    return ctx;
+}
+
+OSSL_LIB_CTX *OSSL_LIB_CTX_new_child(const OSSL_CORE_HANDLE *handle,
+                                     const OSSL_DISPATCH *in)
+{
+    OSSL_LIB_CTX *ctx = OSSL_LIB_CTX_new_from_dispatch(handle, in);
+
+    if (ctx == NULL)
+        return NULL;
+
+    if (!ossl_provider_init_as_child(ctx, handle, in)) {
+        OSSL_LIB_CTX_free(ctx);
+        return NULL;
+    }
+    ctx->ischild = 1;
+
+    return ctx;
+}
+
 int OSSL_LIB_CTX_load_config(OSSL_LIB_CTX *ctx, const char *config_file)
 {
     return CONF_modules_load_file_ex(ctx, config_file, NULL, 0) > 0;
@@ -183,18 +244,28 @@ void OSSL_LIB_CTX_free(OSSL_LIB_CTX *ctx)
     OPENSSL_free(ctx);
 }
 
+#ifndef FIPS_MODULE
+OSSL_LIB_CTX *OSSL_LIB_CTX_get0_global_default(void)
+{
+    if (!RUN_ONCE(&default_context_init, default_context_do_init))
+        return NULL;
+
+    return &default_context_int;
+}
+
 OSSL_LIB_CTX *OSSL_LIB_CTX_set0_default(OSSL_LIB_CTX *libctx)
 {
-#ifndef FIPS_MODULE
     OSSL_LIB_CTX *current_defctx;
 
-    if ((current_defctx = get_default_context()) != NULL
-        && set_default_context(libctx))
+    if ((current_defctx = get_default_context()) != NULL) {
+        if (libctx != NULL)
+            set_default_context(libctx);
         return current_defctx;
-#endif
+    }
 
     return NULL;
 }
+#endif
 
 OSSL_LIB_CTX *ossl_lib_ctx_get_concrete(OSSL_LIB_CTX *ctx)
 {
@@ -251,7 +322,6 @@ static void ossl_lib_ctx_generic_free(void *parent_ign, void *ptr,
     meth->free_func(ptr);
 }
 
-/* Non-static so we can use it in context_internal_test */
 static int ossl_lib_ctx_init_index(OSSL_LIB_CTX *ctx, int static_index,
                                    const OSSL_LIB_CTX_METHOD *meth)
 {
@@ -264,7 +334,8 @@ static int ossl_lib_ctx_init_index(OSSL_LIB_CTX *ctx, int static_index,
     idx = ossl_crypto_get_ex_new_index_ex(ctx, CRYPTO_EX_INDEX_OSSL_LIB_CTX, 0,
                                           (void *)meth,
                                           ossl_lib_ctx_generic_new,
-                                          NULL, ossl_lib_ctx_generic_free);
+                                          NULL, ossl_lib_ctx_generic_free,
+                                          meth->priority);
     if (idx < 0)
         return 0;
 

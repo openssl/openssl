@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -620,6 +620,7 @@ fmtfp(char **sbuffer,
                     /*
                      * Should not happen. If we're in F_FORMAT then exp < max?
                      */
+                    (void)doapr_outch(sbuffer, buffer, currlen, maxlen, '\0');
                     return 0;
                 }
             } else {
@@ -641,6 +642,7 @@ fmtfp(char **sbuffer,
      */
     if (ufvalue >= (double)(ULONG_MAX - 65535) + 65536.0) {
         /* Number too big */
+        (void)doapr_outch(sbuffer, buffer, currlen, maxlen, '\0');
         return 0;
     }
     intpart = (unsigned long)ufvalue;
@@ -704,8 +706,10 @@ fmtfp(char **sbuffer,
             tmpexp = (tmpexp / 10);
         } while (tmpexp > 0 && eplace < (int)sizeof(econvert));
         /* Exponent is huge!! Too big to print */
-        if (tmpexp > 0)
+        if (tmpexp > 0) {
+            (void)doapr_outch(sbuffer, buffer, currlen, maxlen, '\0');
             return 0;
+        }
         /* Add a leading 0 for single digit exponents */
         if (eplace == 1)
             econvert[eplace++] = '0';
@@ -835,9 +839,12 @@ doapr_outch(char **sbuffer,
             *sbuffer = NULL;
         } else {
             char *tmpbuf;
+
             tmpbuf = OPENSSL_realloc(*buffer, *maxlen);
-            if (tmpbuf == NULL)
+            if (tmpbuf == NULL) {
+                ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
                 return 0;
+            }
             *buffer = tmpbuf;
         }
     }
@@ -929,6 +936,5 @@ int BIO_vsnprintf(char *buf, size_t n, const char *format, va_list args)
          * been large enough.)
          */
         return -1;
-    else
-        return (retlen <= INT_MAX) ? (int)retlen : -1;
+    return (retlen <= INT_MAX) ? (int)retlen : -1;
 }

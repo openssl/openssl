@@ -269,11 +269,14 @@ int X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b)
             return -2;
     }
 
+    ret = a->canon_enclen - b->canon_enclen;
+    if (ret == 0 && a->canon_enclen == 0)
+        return 0;
+
     if (a->canon_enc == NULL || b->canon_enc == NULL)
         return -2;
 
-    ret = a->canon_enclen - b->canon_enclen;
-    if (ret == 0 && a->canon_enclen != 0)
+    if (ret == 0)
         ret = memcmp(a->canon_enc, b->canon_enc, a->canon_enclen);
 
     return ret < 0 ? -1 : ret > 0;
@@ -483,7 +486,7 @@ int X509_chain_check_suiteb(int *perror_depth, X509 *x, STACK_OF(X509) *chain,
     if (chain == NULL)
         return check_suite_b(pk, -1, &tflags);
 
-    if (X509_get_version(x) != 2) {
+    if (X509_get_version(x) != X509_VERSION_3) {
         rv = X509_V_ERR_SUITE_B_INVALID_VERSION;
         /* Correct error depth */
         i = 0;
@@ -500,7 +503,7 @@ int X509_chain_check_suiteb(int *perror_depth, X509 *x, STACK_OF(X509) *chain,
     for (; i < sk_X509_num(chain); i++) {
         sign_nid = X509_get_signature_nid(x);
         x = sk_X509_value(chain, i);
-        if (X509_get_version(x) != 2) {
+        if (X509_get_version(x) != X509_VERSION_3) {
             rv = X509_V_ERR_SUITE_B_INVALID_VERSION;
             goto end;
         }

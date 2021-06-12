@@ -47,8 +47,6 @@ struct keytype_desc_st {
 };
 
 static OSSL_FUNC_decoder_freectx_fn msblob2key_freectx;
-static OSSL_FUNC_decoder_gettable_params_fn msblob2key_gettable_params;
-static OSSL_FUNC_decoder_get_params_fn msblob2key_get_params;
 static OSSL_FUNC_decoder_decode_fn msblob2key_decode;
 static OSSL_FUNC_decoder_export_object_fn msblob2key_export_object;
 
@@ -79,27 +77,6 @@ static void msblob2key_freectx(void *vctx)
     OPENSSL_free(ctx);
 }
 
-static const OSSL_PARAM *msblob2key_gettable_params(ossl_unused void *provctx)
-{
-    static const OSSL_PARAM gettables[] = {
-        { OSSL_DECODER_PARAM_INPUT_TYPE, OSSL_PARAM_UTF8_PTR, NULL, 0, 0 },
-        OSSL_PARAM_END,
-    };
-
-    return gettables;
-}
-
-static int msblob2key_get_params(OSSL_PARAM params[])
-{
-    OSSL_PARAM *p;
-
-    p = OSSL_PARAM_locate(params, OSSL_DECODER_PARAM_INPUT_TYPE);
-    if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, "MSBLOB"))
-        return 0;
-
-    return 1;
-}
-
 static int msblob2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
                              OSSL_CALLBACK *data_cb, void *data_cbarg,
                              OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
@@ -116,30 +93,35 @@ static int msblob2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
 
     if (BIO_read(in, hdr_buf, 16) != 16) {
         ERR_raise(ERR_LIB_PEM, PEM_R_KEYBLOB_TOO_SHORT);
-        goto err;
+        goto next;
     }
+    ERR_set_mark();
     p = hdr_buf;
-    if (ossl_do_blob_header(&p, 16, &magic, &bitlen, &isdss, &ispub) <= 0)
-        goto err;
+    ok = ossl_do_blob_header(&p, 16, &magic, &bitlen, &isdss, &ispub) > 0;
+    ERR_pop_to_mark();
+    if (!ok)
+        goto next;
+
+    ok = 0;                      /* Assume that we fail */
 
     if ((isdss && ctx->desc->type != EVP_PKEY_DSA)
         || (!isdss && ctx->desc->type != EVP_PKEY_RSA))
-        goto err;
+        goto next;
 
     length = ossl_blob_length(bitlen, isdss, ispub);
     if (length > BLOB_MAX_LENGTH) {
         ERR_raise(ERR_LIB_PEM, PEM_R_HEADER_TOO_LONG);
-        goto err;
+        goto next;
     }
     buf = OPENSSL_malloc(length);
     if (buf == NULL) {
         ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
-        goto err;
+        goto end;
     }
     p = buf;
     if (BIO_read(in, buf, length) != (int)length) {
         ERR_raise(ERR_LIB_PEM, PEM_R_KEYBLOB_TOO_SHORT);
-        goto err;
+        goto next;
     }
 
     if ((selection == 0
@@ -150,7 +132,7 @@ static int msblob2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
 
         memset(&pwdata, 0, sizeof(pwdata));
         if (!ossl_pw_set_ossl_passphrase_cb(&pwdata, pw_cb, pw_cbarg))
-            goto err;
+            goto end;
         p = buf;
         key = ctx->desc->read_private_key(&p, bitlen, ispub);
         if (selection != 0 && key == NULL)
@@ -170,6 +152,12 @@ static int msblob2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         ctx->desc->adjust_key(key, ctx);
 
  next:
+    /*
+     * Indicated that we successfully decoded something, or not at all.
+     * Ending up "empty handed" is not an error.
+     */
+    ok = 1;
+
     /*
      * We free resources here so it's not held up during the callback, because
      * we know the process is recursive and the allocated chunks of memory
@@ -198,7 +186,7 @@ static int msblob2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         ok = data_cb(params, data_cbarg);
     }
 
- err:
+ end:
     BIO_free(in);
     OPENSSL_free(buf);
     ctx->desc->free_key(key);
@@ -267,10 +255,6 @@ static void rsa_adjust(void *key, struct msblob2key_ctx_st *ctx)
           (void (*)(void))msblob2##keytype##_newctx },                  \
         { OSSL_FUNC_DECODER_FREECTX,                                    \
           (void (*)(void))msblob2key_freectx },                         \
-        { OSSL_FUNC_DECODER_GETTABLE_PARAMS,                            \
-          (void (*)(void))msblob2key_gettable_params },                 \
-        { OSSL_FUNC_DECODER_GET_PARAMS,                                 \
-          (void (*)(void))msblob2key_get_params },                      \
         { OSSL_FUNC_DECODER_DECODE,                                     \
           (void (*)(void))msblob2key_decode },                          \
         { OSSL_FUNC_DECODER_EXPORT_OBJECT,                              \

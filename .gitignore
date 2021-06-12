@@ -2,6 +2,7 @@
 /.dir-locals.el
 
 # Top level excludes
+/Makefile.in
 /Makefile
 /MINFO
 /TABLE
@@ -99,6 +100,7 @@ providers/common/include/prov/der_sm2.h
 /test/confdump
 /test/bio_prefix_text
 /test/evp_extra_test2
+/test/threadstest_fips
 
 # Certain files that get created by tests on the fly
 /test-runs
@@ -212,6 +214,7 @@ providers/common/include/prov/der_sm2.h
 *.exp
 *.lib
 *.pdb
+*.tds
 *.ilk
 *.def
 *.rc
@@ -227,6 +230,7 @@ cscope.*
 *.d
 *.d.tmp
 pod2htmd.tmp
+MAKE0[0-9][0-9][0-9].@@@
 
 # Windows manifest files
 *.manifest

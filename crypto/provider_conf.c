@@ -13,12 +13,43 @@
 #include <openssl/conf.h>
 #include <openssl/safestack.h>
 #include "internal/provider.h"
+#include "internal/cryptlib.h"
 
 DEFINE_STACK_OF(OSSL_PROVIDER)
 
 /* PROVIDER config module */
 
-static STACK_OF(OSSL_PROVIDER) *activated_providers = NULL;
+typedef struct {
+    STACK_OF(OSSL_PROVIDER) *activated_providers;
+} PROVIDER_CONF_GLOBAL;
+
+static void *prov_conf_ossl_ctx_new(OSSL_LIB_CTX *libctx)
+{
+    PROVIDER_CONF_GLOBAL *pcgbl = OPENSSL_zalloc(sizeof(*pcgbl));
+
+    if (pcgbl == NULL)
+        return NULL;
+
+    return pcgbl;
+}
+
+static void prov_conf_ossl_ctx_free(void *vpcgbl)
+{
+    PROVIDER_CONF_GLOBAL *pcgbl = vpcgbl;
+
+    sk_OSSL_PROVIDER_pop_free(pcgbl->activated_providers,
+                              ossl_provider_free);
+
+    OSSL_TRACE(CONF, "Cleaned up providers\n");
+    OPENSSL_free(pcgbl);
+}
+
+static const OSSL_LIB_CTX_METHOD provider_conf_ossl_ctx_method = {
+    /* Must be freed before the provider store is freed */
+    OSSL_LIB_CTX_METHOD_PRIORITY_2,
+    prov_conf_ossl_ctx_new,
+    prov_conf_ossl_ctx_free,
+};
 
 static const char *skip_dot(const char *name)
 {
@@ -80,6 +111,9 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
     const char *path = NULL;
     long activate = 0;
     int ok = 0;
+    PROVIDER_CONF_GLOBAL *pcgbl
+        = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_PROVIDER_CONF_INDEX,
+                                &provider_conf_ossl_ctx_method);
 
     name = skip_dot(name);
     OSSL_TRACE1(CONF, "Configuring provider %s\n", name);
@@ -130,12 +164,12 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
     ok = provider_conf_params(prov, NULL, value, cnf);
 
     if (ok && activate) {
-        if (!ossl_provider_activate(prov, 0)) {
+        if (!ossl_provider_activate(prov, 0, 1)) {
             ok = 0;
         } else {
-            if (activated_providers == NULL)
-                activated_providers = sk_OSSL_PROVIDER_new_null();
-            sk_OSSL_PROVIDER_push(activated_providers, prov);
+            if (pcgbl->activated_providers == NULL)
+                pcgbl->activated_providers = sk_OSSL_PROVIDER_new_null();
+            sk_OSSL_PROVIDER_push(pcgbl->activated_providers, prov);
             ok = 1;
         }
     }
@@ -165,23 +199,16 @@ static int provider_conf_init(CONF_IMODULE *md, const CONF *cnf)
 
     for (i = 0; i < sk_CONF_VALUE_num(elist); i++) {
         cval = sk_CONF_VALUE_value(elist, i);
-        if (!provider_conf_load(cnf->libctx, cval->name, cval->value, cnf))
+        if (!provider_conf_load(NCONF_get0_libctx((CONF *)cnf),
+                    cval->name, cval->value, cnf))
             return 0;
     }
 
     return 1;
 }
 
-
-static void provider_conf_deinit(CONF_IMODULE *md)
-{
-    sk_OSSL_PROVIDER_pop_free(activated_providers, ossl_provider_free);
-    activated_providers = NULL;
-    OSSL_TRACE(CONF, "Cleaned up providers\n");
-}
-
 void ossl_provider_add_conf_module(void)
 {
     OSSL_TRACE(CONF, "Adding config module 'providers'\n");
-    CONF_module_add("providers", provider_conf_init, provider_conf_deinit);
+    CONF_module_add("providers", provider_conf_init, NULL);
 }

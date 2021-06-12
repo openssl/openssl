@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -46,6 +46,7 @@ static void self_test_set_callback_free(void *stcb)
 }
 
 static const OSSL_LIB_CTX_METHOD self_test_set_callback_method = {
+    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
     self_test_set_callback_new,
     self_test_set_callback_free,
 };

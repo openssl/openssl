@@ -29,6 +29,7 @@ typedef struct prov_aes_gcm_ctx_st {
                 S390X_KMA_PARAMS kma;
             } param;
             unsigned int fc;
+            unsigned int hsflag;    /* hash subkey set flag */
             unsigned char ares[16];
             unsigned char mres[16];
             unsigned char kres[16];

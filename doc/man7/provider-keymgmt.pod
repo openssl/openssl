@@ -52,8 +52,8 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
                               OSSL_CALLBACK *param_cb, void *cbarg);
  const OSSL_PARAM *OSSL_FUNC_keymgmt_export_types(int selection);
 
- /* Key object copy */
- int OSSL_FUNC_keymgmt_copy(void *keydata_to, const void *keydata_from, int selection);
+ /* Key object duplication, a constructor */
+ void *OSSL_FUNC_keymgmt_dup(const void *keydata_from, int selection);
 
  /* Key object validation */
  int OSSL_FUNC_keymgmt_validate(const void *keydata, int selection, int checktype);
@@ -78,7 +78,7 @@ provider_query_operation() function
 (see L<provider-base(7)/Provider Functions>).
 
 All these "functions" have a corresponding function type definition
-named B<OSSL_{name}_fn>, and a helper function to retrieve the
+named B<OSSL_FUNC_{name}_fn>, and a helper function to retrieve the
 function pointer from a B<OSSL_DISPATCH> element named
 B<OSSL_FUNC_{name}>.
 For example, the "function" OSSL_FUNC_keymgmt_new() has these:
@@ -118,7 +118,7 @@ macros in L<openssl-core_dispatch.h(7)>, as follows:
  OSSL_FUNC_keymgmt_export               OSSL_FUNC_KEYMGMT_EXPORT
  OSSL_FUNC_keymgmt_export_types         OSSL_FUNC_KEYMGMT_EXPORT_TYPES
 
- OSSL_FUNC_keymgmt_copy                 OSSL_FUNC_KEYMGMT_COPY
+ OSSL_FUNC_keymgmt_dup                  OSSL_FUNC_KEYMGMT_DUP
 
 =head2 Key Objects
 
@@ -175,7 +175,7 @@ Indicating that all key object parameters should be considered,
 regardless of their more granular classification.
 
 =for comment This should used by EVP functions such as
-EVP_PKEY_copy_parameters() and EVP_PKEY_cmp_parameters()
+EVP_PKEY_copy_parameters() and EVP_PKEY_parameters_eq()
 
 This is a combination of B<OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS> and
 B<OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS>.
@@ -320,7 +320,7 @@ I<selection> in I<keydata1> and I<keydata2> match.  It is assumed that
 the caller has ensured that I<keydata1> and I<keydata2> are both owned
 by the implementation of this function.
 
-=head2 Key Object Import, Export and Copy Functions
+=head2 Key Object Import, Export and Duplication Functions
 
 OSSL_FUNC_keymgmt_import() should import data indicated by I<selection> into
 I<keydata> with values taken from the B<OSSL_PARAM> array I<params>.
@@ -337,10 +337,9 @@ OSSL_FUNC_keymgmt_export_types() should return a constant array of descriptor
 B<OSSL_PARAM> for data indicated by I<selection>, that the
 OSSL_FUNC_keymgmt_export() callback can expect to receive.
 
-OSSL_FUNC_keymgmt_copy() should copy data subsets indicated by I<selection>
-from I<keydata_from> to I<keydata_to>.  It is assumed that the caller
-has ensured that I<keydata_to> and I<keydata_from> are both owned by
-the implementation of this function.
+OSSL_FUNC_keymgmt_dup() should duplicate data subsets indicated by
+I<selection> or the whole key data I<keydata_from> and create a new
+provider side key object with the data.
 
 =head2 Common Information Parameters
 
@@ -379,8 +378,8 @@ Bits of security is defined in SP800-57.
 
 =head1 RETURN VALUES
 
-OSSL_FUNC_keymgmt_new() should return a valid reference to the newly created provider
-side key object, or NULL on failure.
+OSSL_FUNC_keymgmt_new() and OSSL_FUNC_keymgmt_dup() should return a valid
+reference to the newly created provider side key object, or NULL on failure.
 
 OSSL_FUNC_keymgmt_import(), OSSL_FUNC_keymgmt_export(), OSSL_FUNC_keymgmt_get_params() and
 OSSL_FUNC_keymgmt_set_params() should return 1 for success or 0 on error.

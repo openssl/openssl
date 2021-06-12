@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
 #include <openssl/err.h>
 #include "crypto/ecx.h"
 
@@ -39,7 +40,6 @@ ECX_KEY *ossl_ecx_key_new(OSSL_LIB_CTX *libctx, ECX_KEY_TYPE type, int haspubkey
 
     if (propq != NULL) {
         ret->propq = OPENSSL_strdup(propq);
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         if (ret->propq == NULL)
             goto err;
     }

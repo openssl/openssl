@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2012-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -257,7 +257,7 @@ static X509 *make_cert(void)
 
     if (!TEST_ptr(crt = X509_new()))
         return NULL;
-    if (!TEST_true(X509_set_version(crt, 2))) {
+    if (!TEST_true(X509_set_version(crt, X509_VERSION_3))) {
         X509_free(crt);
         return NULL;
     }

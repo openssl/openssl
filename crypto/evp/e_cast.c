@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -40,7 +40,11 @@ IMPLEMENT_BLOCK_CIPHER(cast5, ks, CAST, EVP_CAST_KEY,
 static int cast_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                          const unsigned char *iv, int enc)
 {
-    CAST_set_key(&data(ctx)->ks, EVP_CIPHER_CTX_key_length(ctx), key);
+    int keylen = EVP_CIPHER_CTX_get_key_length(ctx);
+
+    if (keylen <= 0)
+        return 0;
+    CAST_set_key(&data(ctx)->ks, keylen, key);
     return 1;
 }
 

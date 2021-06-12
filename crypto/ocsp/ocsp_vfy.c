@@ -7,10 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/ocsp.h>
-#include "ocsp_local.h"
-#include <openssl/err.h>
 #include <string.h>
+#include <openssl/ocsp.h>
+#include <openssl/err.h>
+#include "internal/sizes.h"
+#include "ocsp_local.h"
 
 static int ocsp_find_signer(X509 **psigner, OCSP_BASICRESP *bs,
                             STACK_OF(X509) *certs, unsigned long flags);
@@ -50,12 +51,11 @@ static int ocsp_verify_signer(X509 *signer, int response,
             && X509_get_ext_by_NID(signer, NID_id_pkix_OCSP_noCheck, -1) >= 0)
         /*
          * Locally disable revocation status checking for OCSP responder cert.
-         * Done here for CRLs; TODO should be done also for OCSP-based checks.
+         * Done here for CRLs; should be done also for OCSP-based checks.
          */
         X509_VERIFY_PARAM_clear_flags(vp, X509_V_FLAG_CRL_CHECK);
     X509_STORE_CTX_set_purpose(ctx, X509_PURPOSE_OCSP_HELPER);
     X509_STORE_CTX_set_trust(ctx, X509_TRUST_OCSP_REQUEST);
-    /* TODO: why is X509_TRUST_OCSP_REQUEST set? Seems to get ignored. */
 
     ret = X509_verify_cert(ctx);
     if (ret <= 0) {
@@ -84,9 +84,9 @@ static int ocsp_verify(OCSP_REQUEST *req, OCSP_BASICRESP *bs,
             return -1;
         }
         if (req != NULL)
-            ret = OCSP_REQUEST_verify(req, skey);
+            ret = OCSP_REQUEST_verify(req, skey, signer->libctx, signer->propq);
         else
-            ret = OCSP_BASICRESP_verify(bs, skey);
+            ret = OCSP_BASICRESP_verify(bs, skey, signer->libctx, signer->propq);
         if (ret <= 0)
             ERR_raise(ERR_LIB_OCSP, OCSP_R_SIGNATURE_FAILURE);
     }
@@ -187,8 +187,9 @@ static int ocsp_find_signer(X509 **psigner, OCSP_BASICRESP *bs,
 
 static X509 *ocsp_find_signer_sk(STACK_OF(X509) *certs, OCSP_RESPID *id)
 {
-    int i;
+    int i, r;
     unsigned char tmphash[SHA_DIGEST_LENGTH], *keyhash;
+    EVP_MD *md;
     X509 *x;
 
     /* Easy if lookup by name */
@@ -203,11 +204,16 @@ static X509 *ocsp_find_signer_sk(STACK_OF(X509) *certs, OCSP_RESPID *id)
     keyhash = id->value.byKey->data;
     /* Calculate hash of each key and compare */
     for (i = 0; i < sk_X509_num(certs); i++) {
-        x = sk_X509_value(certs, i);
-        if (!X509_pubkey_digest(x, EVP_sha1(), tmphash, NULL))
-            break;
-        if (memcmp(keyhash, tmphash, SHA_DIGEST_LENGTH) == 0)
-            return x;
+        if ((x = sk_X509_value(certs, i)) != NULL) {
+            if ((md = EVP_MD_fetch(x->libctx, SN_sha1, x->propq)) == NULL)
+                break;
+            r = X509_pubkey_digest(x, md, tmphash, NULL);
+            EVP_MD_free(md);
+            if (!r)
+                break;
+            if (memcmp(keyhash, tmphash, SHA_DIGEST_LENGTH) == 0)
+                return x;
+        }
     }
     return NULL;
 }
@@ -296,42 +302,56 @@ static int ocsp_check_ids(STACK_OF(OCSP_SINGLERESP) *sresp, OCSP_CERTID **ret)
 static int ocsp_match_issuerid(X509 *cert, OCSP_CERTID *cid,
                                STACK_OF(OCSP_SINGLERESP) *sresp)
 {
+    int ret = -1;
+    EVP_MD *dgst = NULL;
+
     /* If only one ID to match then do it */
     if (cid != NULL) {
-        const EVP_MD *dgst = EVP_get_digestbyobj(cid->hashAlgorithm.algorithm);
+        char name[OSSL_MAX_NAME_SIZE];
         const X509_NAME *iname;
         int mdlen;
         unsigned char md[EVP_MAX_MD_SIZE];
 
-        if (dgst == NULL) {
-            ERR_raise(ERR_LIB_OCSP, OCSP_R_UNKNOWN_MESSAGE_DIGEST);
-            return -1;
-        }
+        OBJ_obj2txt(name, sizeof(name), cid->hashAlgorithm.algorithm, 0);
 
-        mdlen = EVP_MD_size(dgst);
+        (void)ERR_set_mark();
+        dgst = EVP_MD_fetch(NULL, name, NULL);
+        if (dgst == NULL)
+            dgst = (EVP_MD *)EVP_get_digestbyname(name);
+
+        if (dgst == NULL) {
+            (void)ERR_clear_last_mark();
+            ERR_raise(ERR_LIB_OCSP, OCSP_R_UNKNOWN_MESSAGE_DIGEST);
+            goto end;
+        }
+        (void)ERR_pop_to_mark();
+
+        mdlen = EVP_MD_get_size(dgst);
         if (mdlen < 0) {
             ERR_raise(ERR_LIB_OCSP, OCSP_R_DIGEST_SIZE_ERR);
-            return -1;
+            goto end;
         }
         if (cid->issuerNameHash.length != mdlen ||
-            cid->issuerKeyHash.length != mdlen)
-            return 0;
-        iname = X509_get_subject_name(cert);
-        if (!X509_NAME_digest(iname, dgst, md, NULL)) {
-            ERR_raise(ERR_LIB_OCSP, OCSP_R_DIGEST_NAME_ERR);
-            return -1;
+            cid->issuerKeyHash.length != mdlen) {
+            ret = 0;
+            goto end;
         }
-        if (memcmp(md, cid->issuerNameHash.data, mdlen) != 0)
-            return 0;
+        iname = X509_get_subject_name(cert);
+        if (!X509_NAME_digest(iname, dgst, md, NULL))
+            goto end;
+        if (memcmp(md, cid->issuerNameHash.data, mdlen) != 0) {
+            ret = 0;
+            goto end;
+        }
         if (!X509_pubkey_digest(cert, dgst, md, NULL)) {
             ERR_raise(ERR_LIB_OCSP, OCSP_R_DIGEST_ERR);
-            return -1;
+            goto end;
         }
-        if (memcmp(md, cid->issuerKeyHash.data, mdlen) != 0)
-            return 0;
+        ret = memcmp(md, cid->issuerKeyHash.data, mdlen) == 0;
+        goto end;
     } else {
         /* We have to match the whole lot */
-        int i, ret;
+        int i;
         OCSP_CERTID *tmpid;
 
         for (i = 0; i < sk_OCSP_SINGLERESP_num(sresp); i++) {
@@ -342,6 +362,9 @@ static int ocsp_match_issuerid(X509 *cert, OCSP_CERTID *cid,
         }
     }
     return 1;
+end:
+    EVP_MD_free(dgst);
+    return ret;
 }
 
 static int ocsp_check_delegated(X509 *x)

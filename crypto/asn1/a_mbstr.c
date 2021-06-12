@@ -55,6 +55,8 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
         len = strlen((const char *)in);
     if (!mask)
         mask = DIRSTRING_TYPE;
+    if (len < 0)
+        return -1;
 
     /* First do a string check and work out the number of characters */
     switch (inform) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -308,8 +308,10 @@ ASN1_INTEGER *ossl_c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp,
 
     c2i_ibuf(ret->data, &neg, *pp, len);
 
-    if (neg)
+    if (neg != 0)
         ret->type |= V_ASN1_NEG;
+    else
+        ret->type &= ~V_ASN1_NEG;
 
     *pp += len;
     if (a != NULL)
@@ -317,7 +319,7 @@ ASN1_INTEGER *ossl_c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp,
     return ret;
  err:
     ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
-    if ((a == NULL) || (*a != ret))
+    if (a == NULL || *a != ret)
         ASN1_INTEGER_free(ret);
     return NULL;
 }
@@ -396,7 +398,7 @@ ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a, const unsigned char **pp,
     ASN1_INTEGER *ret = NULL;
     const unsigned char *p;
     unsigned char *s;
-    long len;
+    long len = 0;
     int inf, tag, xclass;
     int i;
 
@@ -419,6 +421,10 @@ ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a, const unsigned char **pp,
         goto err;
     }
 
+    if (len < 0) {
+        i = ASN1_R_ILLEGAL_NEGATIVE_VALUE;
+        goto err;
+    }
     /*
      * We must OPENSSL_malloc stuff, even for 0 bytes otherwise it signifies
      * a missing NULL parameter.

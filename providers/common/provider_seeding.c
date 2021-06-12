@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,24 +18,28 @@ static OSSL_FUNC_cleanup_nonce_fn *c_cleanup_nonce = NULL;
 int ossl_prov_seeding_from_dispatch(const OSSL_DISPATCH *fns)
 {
     for (; fns->function_id != 0; fns++) {
+        /*
+         * We do not support the scenario of an application linked against
+         * multiple versions of libcrypto (e.g. one static and one dynamic), but
+         * sharing a single fips.so. We do a simple sanity check here.
+         */
+#define set_func(c, f) \
+    do { if (c == NULL) c = f; else if (c != f) return 0; } while (0)
         switch (fns->function_id) {
         case OSSL_FUNC_GET_ENTROPY:
-            if (c_get_entropy == NULL)
-                c_get_entropy = OSSL_FUNC_get_entropy(fns);
+            set_func(c_get_entropy, OSSL_FUNC_get_entropy(fns));
             break;
         case OSSL_FUNC_CLEANUP_ENTROPY:
-            if (c_cleanup_entropy == NULL)
-                c_cleanup_entropy = OSSL_FUNC_cleanup_entropy(fns);
+            set_func(c_cleanup_entropy, OSSL_FUNC_cleanup_entropy(fns));
             break;
         case OSSL_FUNC_GET_NONCE:
-            if (c_get_nonce == NULL)
-                c_get_nonce = OSSL_FUNC_get_nonce(fns);
+            set_func(c_get_nonce, OSSL_FUNC_get_nonce(fns));
             break;
         case OSSL_FUNC_CLEANUP_NONCE:
-            if (c_cleanup_nonce == NULL)
-                c_cleanup_nonce = OSSL_FUNC_cleanup_nonce(fns);
+            set_func(c_cleanup_nonce, OSSL_FUNC_cleanup_nonce(fns));
             break;
         }
+#undef set_func
     }
     return 1;
 }

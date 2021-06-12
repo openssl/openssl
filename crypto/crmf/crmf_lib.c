@@ -1,5 +1,5 @@
 /*-
- * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2018
  * Copyright Siemens AG 2015-2019
  *
@@ -30,6 +30,7 @@
 
 #include "crmf_local.h"
 #include "internal/constant_time.h"
+#include "internal/sizes.h"
 
 /* explicit #includes not strictly needed since implied by the above: */
 #include <openssl/crmf.h>
@@ -357,7 +358,7 @@ static int create_popo_signature(OSSL_CRMF_POPOSIGNINGKEY *ps,
         return 0;
     }
     if (ps->poposkInput != NULL) {
-        /* TODO: support cases 1+2 defined in RFC 4211, section 4.1 */
+        /* We do not support cases 1+2 defined in RFC 4211, section 4.1 */
         ERR_raise(ERR_LIB_CRMF, CRMF_R_POPOSKINPUT_NOT_SUPPORTED);
         return 0;
     }
@@ -483,10 +484,6 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
                 ERR_raise(ERR_LIB_CRMF, CRMF_R_POPO_INCONSISTENT_PUBLIC_KEY);
                 return 0;
             }
-            /*
-             * TODO check the contents of the authInfo sub-field,
-             * see RFC 4211 https://tools.ietf.org/html/rfc4211#section-4.1
-             */
             it = ASN1_ITEM_rptr(OSSL_CRMF_POPOSIGNINGKEYINPUT);
             asn = sig->poposkInput;
         } else {
@@ -503,12 +500,6 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
             return 0;
         break;
     case OSSL_CRMF_POPO_KEYENC:
-        /*
-         * TODO: when OSSL_CMP_certrep_new() supports encrypted certs,
-         * return 1 if the type of req->popo->value.keyEncipherment
-         * is OSSL_CRMF_POPOPRIVKEY_SUBSEQUENTMESSAGE and
-         * its value.subsequentMessage == OSSL_CRMF_SUBSEQUENTMESSAGE_ENCRCERT
-         */
     case OSSL_CRMF_POPO_KEYAGREE:
     default:
         ERR_raise(ERR_LIB_CRMF, CRMF_R_UNSUPPORTED_POPO_METHOD);
@@ -589,30 +580,38 @@ X509
     EVP_CIPHER_CTX *evp_ctx = NULL; /* context for symmetric encryption */
     unsigned char *ek = NULL; /* decrypted symmetric encryption key */
     size_t eksize = 0; /* size of decrypted symmetric encryption key */
-    const EVP_CIPHER *cipher = NULL; /* used cipher */
+    EVP_CIPHER *cipher = NULL; /* used cipher */
     int cikeysize = 0; /* key size from cipher */
     unsigned char *iv = NULL; /* initial vector for symmetric encryption */
     unsigned char *outbuf = NULL; /* decryption output buffer */
     const unsigned char *p = NULL; /* needed for decoding ASN1 */
-    int symmAlg = 0; /* NIDs for symmetric algorithm */
     int n, outlen = 0;
     EVP_PKEY_CTX *pkctx = NULL; /* private key context */
+    char name[OSSL_MAX_NAME_SIZE];
 
     if (ecert == NULL || ecert->symmAlg == NULL || ecert->encSymmKey == NULL
             || ecert->encValue == NULL || pkey == NULL) {
         ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
         return NULL;
     }
-    if ((symmAlg = OBJ_obj2nid(ecert->symmAlg->algorithm)) == 0) {
-        ERR_raise(ERR_LIB_CRMF, CRMF_R_UNSUPPORTED_CIPHER);
-        return NULL;
-    }
+
     /* select symmetric cipher based on algorithm given in message */
-    if ((cipher = EVP_get_cipherbynid(symmAlg)) == NULL) {
+    OBJ_obj2txt(name, sizeof(name), ecert->symmAlg->algorithm, 0);
+
+    (void)ERR_set_mark();
+    cipher = EVP_CIPHER_fetch(NULL, name, NULL);
+
+    if (cipher == NULL)
+        cipher = (EVP_CIPHER *)EVP_get_cipherbyname(name);
+
+    if (cipher == NULL) {
+        (void)ERR_clear_last_mark();
         ERR_raise(ERR_LIB_CRMF, CRMF_R_UNSUPPORTED_CIPHER);
         goto end;
     }
-    cikeysize = EVP_CIPHER_key_length(cipher);
+    (void)ERR_pop_to_mark();
+
+    cikeysize = EVP_CIPHER_get_key_length(cipher);
     /* first the symmetric key needs to be decrypted */
     pkctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq);
     if (pkctx != NULL && EVP_PKEY_decrypt_init(pkctx)) {
@@ -637,11 +636,11 @@ X509
     } else {
         goto end;
     }
-    if ((iv = OPENSSL_malloc(EVP_CIPHER_iv_length(cipher))) == NULL)
+    if ((iv = OPENSSL_malloc(EVP_CIPHER_get_iv_length(cipher))) == NULL)
         goto end;
     if (ASN1_TYPE_get_octetstring(ecert->symmAlg->parameter, iv,
-                                  EVP_CIPHER_iv_length(cipher))
-        != EVP_CIPHER_iv_length(cipher)) {
+                                  EVP_CIPHER_get_iv_length(cipher))
+        != EVP_CIPHER_get_iv_length(cipher)) {
         ERR_raise(ERR_LIB_CRMF, CRMF_R_MALFORMED_IV);
         goto end;
     }
@@ -651,7 +650,7 @@ X509
      * keep the original pointer in outbuf so the memory can be freed later
      */
     if ((p = outbuf = OPENSSL_malloc(ecert->encValue->length +
-                                     EVP_CIPHER_block_size(cipher))) == NULL
+                                     EVP_CIPHER_get_block_size(cipher))) == NULL
             || (evp_ctx = EVP_CIPHER_CTX_new()) == NULL)
         goto end;
     EVP_CIPHER_CTX_set_padding(evp_ctx, 0);
@@ -675,6 +674,7 @@ X509
     EVP_PKEY_CTX_free(pkctx);
     OPENSSL_free(outbuf);
     EVP_CIPHER_CTX_free(evp_ctx);
+    EVP_CIPHER_free(cipher);
     OPENSSL_clear_free(ek, eksize);
     OPENSSL_free(iv);
     return cert;

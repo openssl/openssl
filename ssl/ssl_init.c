@@ -54,8 +54,8 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_load_ssl_strings)
      * pulling in all the error strings during static linking
      */
 #if !defined(OPENSSL_NO_ERR) && !defined(OPENSSL_NO_AUTOERRINIT)
-    OSSL_TRACE(INIT, "ossl_init_load_ssl_strings: err_load_SSL_strings_int()\n");
-    err_load_SSL_strings_int();
+    OSSL_TRACE(INIT, "ossl_init_load_ssl_strings: ossl_err_load_SSL_strings()\n");
+    ossl_err_load_SSL_strings();
     ssl_strings_inited = 1;
 #endif
     return 1;

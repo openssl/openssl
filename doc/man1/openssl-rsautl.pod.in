@@ -30,8 +30,6 @@ B<openssl> B<rsautl>
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 
-=for openssl ifdef engine
-
 =head1 DESCRIPTION
 
 This command has been deprecated.
@@ -73,8 +71,7 @@ The input key, by default it should be an RSA private key.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The key format; the default is B<PEM>.
-The only value with effect is B<ENGINE>; all others have become obsolete.
+The key format; unspecified by default.
 See L<openssl-format-options(1)> for details.
 
 =item B<-pubin>
@@ -230,9 +227,6 @@ L<openssl-genrsa(1)>
 =head1 HISTORY
 
 This command was deprecated in OpenSSL 3.0.
-
-All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
-and have no effect.
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
 

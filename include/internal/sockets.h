@@ -7,10 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
-
 #ifndef OSSL_INTERNAL_SOCKETS_H
 # define OSSL_INTERNAL_SOCKETS_H
 # pragma once
+
+# include <openssl/opensslconf.h>
 
 # if defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_UEFI)
 #  define NO_SYS_PARAM_H

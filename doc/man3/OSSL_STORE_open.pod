@@ -24,6 +24,7 @@ OSSL_STORE_error, OSSL_STORE_close
  OSSL_STORE_CTX *
  OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
                     const UI_METHOD *ui_method, void *ui_data,
+                    const OSSL_PARAM params[],
                     OSSL_STORE_post_process_info_fn post_process,
                     void *post_process_data);
 
@@ -68,6 +69,8 @@ B<OSSL_STORE_CTX> with all necessary internal information.
 The given I<ui_method> and I<ui_data> will be reused by all
 functions that use B<OSSL_STORE_CTX> when interaction is needed,
 for instance to provide a password.
+The auxiliary B<OSSL_PARAM> parameters in I<params> can be set to further
+modify the store operation.
 The given I<post_process> and I<post_process_data> will be reused by
 OSSL_STORE_load() to manipulate or drop the value to be returned.
 The I<post_process> function drops values by returning NULL, which
@@ -76,7 +79,7 @@ the next object, until I<post_process> returns something other than
 NULL, or the end of data is reached as indicated by OSSL_STORE_eof().
 
 OSSL_STORE_open() is similar to OSSL_STORE_open_ex() but uses NULL for
-the library context I<libctx> and property query I<propq>.
+the I<params>, the library context I<libctx> and property query I<propq>.
 
 OSSL_STORE_ctrl() takes a B<OSSL_STORE_CTX>, and command number I<cmd> and
 more arguments not specified here.
@@ -143,8 +146,8 @@ on error or when end of data is reached.
 Use OSSL_STORE_error() and OSSL_STORE_eof() to determine the meaning of a
 returned NULL.
 
-OSSL_STORE_eof() returns 1 if the end of data has been reached, otherwise
-0.
+OSSL_STORE_eof() returns 1 if the end of data has been reached
+or an error occurred, 0 otherwise.
 
 OSSL_STORE_error() returns 1 if an error occurred in an OSSL_STORE_load() call,
 otherwise 0.
@@ -173,7 +176,7 @@ OSSL_STORE_ctrl() and OSSL_STORE_vctrl() were deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

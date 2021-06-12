@@ -46,9 +46,6 @@ int ossl_ec_GF2m_simple_set_compressed_coordinates(const EC_GROUP *group,
 #ifndef FIPS_MODULE
     BN_CTX *new_ctx = NULL;
 
-    /* clear error queue */
-    ERR_clear_error();
-
     if (ctx == NULL) {
         ctx = new_ctx = BN_CTX_new();
         if (ctx == NULL)
@@ -80,21 +77,24 @@ int ossl_ec_GF2m_simple_set_compressed_coordinates(const EC_GROUP *group,
             goto err;
         if (!BN_GF2m_add(tmp, x, tmp))
             goto err;
+        ERR_set_mark();
         if (!BN_GF2m_mod_solve_quad_arr(z, tmp, group->poly, ctx)) {
 #ifndef FIPS_MODULE
             unsigned long err = ERR_peek_last_error();
 
             if (ERR_GET_LIB(err) == ERR_LIB_BN
                 && ERR_GET_REASON(err) == BN_R_NO_SOLUTION) {
-                ERR_clear_error();
+                ERR_pop_to_mark();
                 ERR_raise(ERR_LIB_EC, EC_R_INVALID_COMPRESSED_POINT);
             } else
 #endif
             {
+                ERR_clear_last_mark();
                 ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
             }
             goto err;
         }
+        ERR_clear_last_mark();
         z0 = (BN_is_odd(z)) ? 1 : 0;
         if (!group->meth->field_mul(group, y, x, z, ctx))
             goto err;
@@ -270,9 +270,21 @@ int ossl_ec_GF2m_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
         ERR_raise(ERR_LIB_EC, EC_R_BUFFER_TOO_SMALL);
         return 0;
     }
-    form = buf[0];
-    y_bit = form & 1;
-    form = form & ~1U;
+
+    /*
+     * The first octet is the point converison octet PC, see X9.62, page 4
+     * and section 4.4.2.  It must be:
+     *     0x00          for the point at infinity
+     *     0x02 or 0x03  for compressed form
+     *     0x04          for uncompressed form
+     *     0x06 or 0x07  for hybrid form.
+     * For compressed or hybrid forms, we store the last bit of buf[0] as
+     * y_bit and clear it from buf[0] so as to obtain a POINT_CONVERSION_*.
+     * We error if buf[0] contains any but the above values.
+     */
+    y_bit = buf[0] & 1;
+    form = buf[0] & ~1U;
+
     if ((form != 0) && (form != POINT_CONVERSION_COMPRESSED)
         && (form != POINT_CONVERSION_UNCOMPRESSED)
         && (form != POINT_CONVERSION_HYBRID)) {
@@ -284,6 +296,7 @@ int ossl_ec_GF2m_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
         return 0;
     }
 
+    /* The point at infinity is represented by a single zero octet. */
     if (form == 0) {
         if (len != 1) {
             ERR_raise(ERR_LIB_EC, EC_R_INVALID_ENCODING);
@@ -337,11 +350,23 @@ int ossl_ec_GF2m_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
             goto err;
         }
         if (form == POINT_CONVERSION_HYBRID) {
-            if (!group->meth->field_div(group, yxi, y, x, ctx))
-                goto err;
-            if (y_bit != BN_is_odd(yxi)) {
-                ERR_raise(ERR_LIB_EC, EC_R_INVALID_ENCODING);
-                goto err;
+            /*
+             * Check that the form in the encoding was set correctly
+             * according to X9.62 4.4.2.a, 4(c), see also first paragraph
+             * of X9.62, 4.4.1.b.
+             */
+            if (BN_is_zero(x)) {
+                if (y_bit != 0) {
+                    ERR_raise(ERR_LIB_EC, EC_R_INVALID_ENCODING);
+                    goto err;
+                }
+            } else {
+                if (!group->meth->field_div(group, yxi, y, x, ctx))
+                    goto err;
+                if (y_bit != BN_is_odd(yxi)) {
+                    ERR_raise(ERR_LIB_EC, EC_R_INVALID_ENCODING);
+                    goto err;
+                }
             }
         }
 

@@ -44,6 +44,7 @@ B<openssl> B<ca>
 [B<-inform> B<DER>|<PEM>]
 [B<-out> I<file>]
 [B<-notext>]
+[B<-dateopt>]
 [B<-outdir> I<dir>]
 [B<-infiles>]
 [B<-spkac> I<file>]
@@ -64,8 +65,6 @@ B<openssl> B<ca>
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<certreq>...]
-
-=for openssl ifdef engine
 
 =head1 DESCRIPTION
 
@@ -114,8 +113,9 @@ signed by the CA.
 
 =item B<-inform> B<DER>|B<PEM>
 
-The format of the data in certificate request input files.
-The default is PEM.
+The format of the data in certificate request input files;
+unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-ss_cert> I<filename>
 
@@ -150,8 +150,8 @@ The CA certificate, which must match with B<-keyfile>.
 
 =item B<-certform> B<DER>|B<PEM>|B<P12>
 
-The format of the data in certificate input files.
-This option has no effect and is retained for backward compatibility only.
+The format of the data in certificate input files; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-keyfile> I<filename>|I<uri>
 
@@ -160,8 +160,7 @@ This must match with B<-cert>.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The format of the private key input file; the default is B<PEM>.
-The only value with effect is B<ENGINE>; all others have become obsolete.
+The format of the private key input file; unspecified by default.
 See L<openssl-format-options(1)> for details.
 
 =item B<-sigopt> I<nm>:I<v>
@@ -210,6 +209,11 @@ self-signed certificate.
 =item B<-notext>
 
 Don't output the text form of a certificate to the output file.
+
+=item B<-dateopt>
+
+Specify the date output format. Values are: rfc_822 and iso_8601.
+Defaults to rfc_822.
 
 =item B<-startdate> I<date>
 
@@ -818,11 +822,8 @@ retained mainly for compatibility reasons.
 
 The B<-section> option was added in OpenSSL 3.0.0.
 
-The B<-certform> and B<-multivalue-rdn> options
-have become obsolete in OpenSSL 3.0.0 and have no effect.
-
-All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
-and have no effect.
+The B<-multivalue-rdn> option has become obsolete in OpenSSL 3.0.0 and
+has no effect.
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
 

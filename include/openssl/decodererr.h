@@ -21,6 +21,8 @@
 /*
  * OSSL_DECODER reason codes.
  */
+# define OSSL_DECODER_R_COULD_NOT_DECODE_OBJECT           101
+# define OSSL_DECODER_R_DECODER_NOT_FOUND                 102
 # define OSSL_DECODER_R_MISSING_GET_PARAMS                100
 
 #endif

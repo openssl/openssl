@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -55,26 +55,35 @@ void *ASN1_d2i_bio(void *(*xnew) (void), d2i_of_void *d2i, BIO *in, void **x)
 
 #endif
 
-void *ASN1_item_d2i_bio(const ASN1_ITEM *it, BIO *in, void *x)
+void *ASN1_item_d2i_bio_ex(const ASN1_ITEM *it, BIO *in, void *x,
+                           OSSL_LIB_CTX *libctx, const char *propq)
 {
     BUF_MEM *b = NULL;
     const unsigned char *p;
     void *ret = NULL;
     int len;
 
+    if (in == NULL)
+        return NULL;
     len = asn1_d2i_read_bio(in, &b);
     if (len < 0)
         goto err;
 
     p = (const unsigned char *)b->data;
-    ret = ASN1_item_d2i(x, &p, len, it);
+    ret = ASN1_item_d2i_ex(x, &p, len, it, libctx, propq);
  err:
     BUF_MEM_free(b);
     return ret;
 }
 
+void *ASN1_item_d2i_bio(const ASN1_ITEM *it, BIO *in, void *x)
+{
+    return ASN1_item_d2i_bio_ex(it, in, x, NULL, NULL);
+}
+
 #ifndef OPENSSL_NO_STDIO
-void *ASN1_item_d2i_fp(const ASN1_ITEM *it, FILE *in, void *x)
+void *ASN1_item_d2i_fp_ex(const ASN1_ITEM *it, FILE *in, void *x,
+                          OSSL_LIB_CTX *libctx, const char *propq)
 {
     BIO *b;
     char *ret;
@@ -84,9 +93,14 @@ void *ASN1_item_d2i_fp(const ASN1_ITEM *it, FILE *in, void *x)
         return NULL;
     }
     BIO_set_fp(b, in, BIO_NOCLOSE);
-    ret = ASN1_item_d2i_bio(it, b, x);
+    ret = ASN1_item_d2i_bio_ex(it, b, x, libctx, propq);
     BIO_free(b);
     return ret;
+}
+
+void *ASN1_item_d2i_fp(const ASN1_ITEM *it, FILE *in, void *x)
+{
+    return ASN1_item_d2i_fp_ex(it, in, x, NULL, NULL);
 }
 #endif
 
@@ -101,6 +115,7 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
     uint32_t eos = 0;
     size_t off = 0;
     size_t len = 0;
+    size_t diff;
 
     const unsigned char *q;
     long slen;
@@ -112,17 +127,18 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
         return -1;
     }
 
-    ERR_clear_error();
+    ERR_set_mark();
     for (;;) {
-        if (want >= (len - off)) {
-            want -= (len - off);
+        diff = len - off;
+        if (want >= diff) {
+            want -= diff;
 
             if (len + want < len || !BUF_MEM_grow_clean(b, len + want)) {
                 ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
             i = BIO_read(in, &(b->data[len]), want);
-            if ((i < 0) && ((len - off) == 0)) {
+            if (i < 0 && diff == 0) {
                 ERR_raise(ERR_LIB_ASN1, ASN1_R_NOT_ENOUGH_DATA);
                 goto err;
             }
@@ -138,15 +154,17 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
 
         p = (unsigned char *)&(b->data[off]);
         q = p;
-        inf = ASN1_get_object(&q, &slen, &tag, &xclass, len - off);
+        diff = len - off;
+        if (diff == 0)
+            goto err;
+        inf = ASN1_get_object(&q, &slen, &tag, &xclass, diff);
         if (inf & 0x80) {
             unsigned long e;
 
-            e = ERR_GET_REASON(ERR_peek_error());
+            e = ERR_GET_REASON(ERR_peek_last_error());
             if (e != ASN1_R_TOO_LONG)
                 goto err;
-            else
-                ERR_clear_error(); /* clear error */
+            ERR_pop_to_mark();
         }
         i = q - p;            /* header length */
         off += i;               /* end of data */
@@ -229,6 +247,7 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
     *pb = b;
     return off;
  err:
+    ERR_clear_last_mark();
     BUF_MEM_free(b);
     return -1;
 }

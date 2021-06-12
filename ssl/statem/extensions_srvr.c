@@ -155,10 +155,6 @@ int tls_parse_ctos_server_name(SSL *s, PACKET *pkt, unsigned int context,
          * the initial handshake and the resumption. In TLSv1.3 SNI is not
          * associated with the session.
          */
-        /*
-         * TODO(openssl-team): if the SNI doesn't match, we MUST
-         * fall back to a full handshake.
-         */
         s->servername_done = (s->session->ext.hostname != NULL)
             && PACKET_equal(&hostname, s->session->ext.hostname,
                             strlen(s->session->ext.hostname));
@@ -215,10 +211,6 @@ int tls_parse_ctos_srp(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         return 0;
     }
 
-    /*
-     * TODO(openssl-team): currently, we re-authenticate the user
-     * upon resumption. Instead, we MUST ignore the login.
-     */
     if (!PACKET_strndup(&srp_I, &s->srp_ctx.login)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
@@ -364,7 +356,6 @@ int tls_parse_ctos_status_request(SSL *s, PACKET *pkt, unsigned int context,
         }
 
         id_data = PACKET_data(&responder_id);
-        /* TODO(size_t): Convert d2i_* to size_t */
         id = d2i_OCSP_RESPID(NULL, &id_data,
                              (int)PACKET_remaining(&responder_id));
         if (id == NULL) {
@@ -669,6 +660,8 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         }
 
         s->s3.group_id = group_id;
+        /* Cache the selected group ID in the SSL_SESSION */
+        s->session->kex_group = group_id;
 
         if (EVP_PKEY_set1_encoded_public_key(s->s3.peer_tmp,
                 PACKET_data(&encoded_pt),
@@ -1162,7 +1155,8 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 
         md = ssl_md(s->ctx, sess->cipher->algorithm2);
         if (!EVP_MD_is_a(md,
-                EVP_MD_name(ssl_md(s->ctx, s->s3.tmp.new_cipher->algorithm2)))) {
+                EVP_MD_get0_name(ssl_md(s->ctx,
+                                        s->s3.tmp.new_cipher->algorithm2)))) {
             /* The ciphersuite is not compatible with this session. */
             SSL_SESSION_free(sess);
             sess = NULL;
@@ -1177,7 +1171,7 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         return 1;
 
     binderoffset = PACKET_data(pkt) - (const unsigned char *)s->init_buf->data;
-    hashsize = EVP_MD_size(md);
+    hashsize = EVP_MD_get_size(md);
 
     if (!PACKET_get_length_prefixed_2(pkt, &binders)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
@@ -1614,6 +1608,13 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
         }
         return EXT_RETURN_NOT_SENT;
     }
+    if (s->hit && (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE) == 0) {
+        /*
+         * PSK ('hit') and explicitly not doing DHE (if the client sent the
+         * DHE option we always take it); don't send key share.
+         */
+        return EXT_RETURN_NOT_SENT;
+    }
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_key_share)
             || !WPACKET_start_sub_packet_u16(pkt)
@@ -1698,6 +1699,7 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
             return EXT_RETURN_FAIL;
         }
     }
+    s->s3.did_kex = 1;
     return EXT_RETURN_SENT;
 #else
     return EXT_RETURN_FAIL;

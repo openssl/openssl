@@ -15,10 +15,10 @@ IF[{- !$disabled{ktls} -}]
   $KTLSSRC=ktls.c
 ENDIF
 
-#TODO: For now we just include the libcrypto packet.c in libssl as well. We
-#      could either continue to do it like this, or export all the WPACKET
-#      symbols so that libssl can use them like any other. Probably would do
-#      this privately so it does not become part of the public API.
+# For now we just include the libcrypto packet.c in libssl as well. We
+# could either continue to do it like this, or export all the WPACKET
+# symbols so that libssl can use them like any other. Probably would do
+# this privately so it does not become part of the public API.
 SOURCE[../libssl]=\
         pqueue.c ../crypto/packet.c \
         statem/statem_srvr.c statem/statem_clnt.c  s3_lib.c  s3_enc.c record/rec_layer_s3.c \
@@ -40,4 +40,4 @@ ENDIF
 DEFINE[../libssl]=$AESDEF
 
 SOURCE[../providers/libcommon.a]=record/tls_pad.c
-SOURCE[../providers/libimplementations.a]=s3_cbc.c
+SOURCE[../providers/libdefault.a ../providers/libfips.a]=s3_cbc.c

@@ -44,6 +44,7 @@ static OSSL_FUNC_keymgmt_import_fn dsa_import;
 static OSSL_FUNC_keymgmt_import_types_fn dsa_import_types;
 static OSSL_FUNC_keymgmt_export_fn dsa_export;
 static OSSL_FUNC_keymgmt_export_types_fn dsa_export_types;
+static OSSL_FUNC_keymgmt_dup_fn dsa_dup;
 
 #define DSA_DEFAULT_MD "SHA256"
 #define DSA_POSSIBLE_SELECTIONS                                                \
@@ -205,10 +206,10 @@ static int dsa_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
 
     if (!ok
         || (params = OSSL_PARAM_BLD_to_param(tmpl)) == NULL)
-        goto err;;
+        goto err;
 
     ok = param_cb(params, cbarg);
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
 err:
     OSSL_PARAM_BLD_free(tmpl);
     return ok;
@@ -597,7 +598,7 @@ static void dsa_gen_cleanup(void *genctx)
     OPENSSL_free(gctx);
 }
 
-void *dsa_load(const void *reference, size_t reference_sz)
+static void *dsa_load(const void *reference, size_t reference_sz)
 {
     DSA *dsa = NULL;
 
@@ -608,6 +609,13 @@ void *dsa_load(const void *reference, size_t reference_sz)
         *(DSA **)reference = NULL;
         return dsa;
     }
+    return NULL;
+}
+
+static void *dsa_dup(const void *keydata_from, int selection)
+{
+    if (ossl_prov_is_running())
+        return ossl_dsa_dup(keydata_from, selection);
     return NULL;
 }
 
@@ -631,5 +639,6 @@ const OSSL_DISPATCH ossl_dsa_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))dsa_import_types },
     { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))dsa_export },
     { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))dsa_export_types },
+    { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))dsa_dup },
     { 0, NULL }
 };

@@ -17,16 +17,26 @@ use Storable qw(dclone);
 setup("test_mac");
 
 my @mac_tests = (
-    { cmd => [qw{openssl mac -macopt digest:SHA1 -macopt hexkey:000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F202122232425262728292A2B2C2D2E2F303132333435363738393A3B3C3D3E3F}],
+    { cmd => [qw{openssl mac -digest SHA1 -macopt hexkey:000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F202122232425262728292A2B2C2D2E2F303132333435363738393A3B3C3D3E3F}],
       type => 'HMAC',
       input => unpack("H*", "Sample message for keylen=blocklen"),
       expected => '5FD596EE78D5553C8FF4E72D266DFD192366DA29',
       desc => 'HMAC SHA1' },
-   { cmd => [qw{openssl mac -macopt cipher:AES-256-GCM -macopt hexkey:4C973DBC7364621674F8B5B89E5C15511FCED9216490FB1C1A2CAA0FFE0407E5 -macopt hexiv:7AE8E2CA4EC500012E58495C}],
+    { cmd => [qw{openssl mac -macopt digest:SHA1 -macopt hexkey:000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F202122232425262728292A2B2C2D2E2F303132333435363738393A3B3C3D3E3F}],
+      type => 'HMAC',
+      input => unpack("H*", "Sample message for keylen=blocklen"),
+      expected => '5FD596EE78D5553C8FF4E72D266DFD192366DA29',
+      desc => 'HMAC SHA1 via -macopt' },
+   { cmd => [qw{openssl mac -cipher AES-256-GCM -macopt hexkey:4C973DBC7364621674F8B5B89E5C15511FCED9216490FB1C1A2CAA0FFE0407E5 -macopt hexiv:7AE8E2CA4EC500012E58495C}],
      type => 'GMAC',
      input => '68F2E77696CE7AE8E2CA4EC588E541002E58495C08000F101112131415161718191A1B1C1D1E1F202122232425262728292A2B2C2D2E2F303132333435363738393A3B3C3D3E3F404142434445464748494A4B4C4D0007',
      expected => '00BDA1B7E87608BCBF470F12157F4C07',
      desc => 'GMAC' },
+   { cmd => [qw{openssl mac -macopt cipher:AES-256-GCM -macopt hexkey:4C973DBC7364621674F8B5B89E5C15511FCED9216490FB1C1A2CAA0FFE0407E5 -macopt hexiv:7AE8E2CA4EC500012E58495C}],
+     type => 'GMAC',
+     input => '68F2E77696CE7AE8E2CA4EC588E541002E58495C08000F101112131415161718191A1B1C1D1E1F202122232425262728292A2B2C2D2E2F303132333435363738393A3B3C3D3E3F404142434445464748494A4B4C4D0007',
+     expected => '00BDA1B7E87608BCBF470F12157F4C07',
+     desc => 'GMAC via -macopt' },
    { cmd => [qw{openssl mac -macopt hexkey:404142434445464748494A4B4C4D4E4F505152535455565758595A5B5C5D5E5F -macopt xof:0}],
      type => 'KMAC128',
      input => '00010203',
@@ -53,11 +63,16 @@ my @siphash_tests = (
 );
 
 my @cmac_tests = (
+    { cmd => [qw{openssl mac -cipher AES-256-CBC -macopt hexkey:0B122AC8F34ED1FE082A3625D157561454167AC145A10BBF77C6A70596D574F1}],
+      type => 'CMAC',
+      input => '498B53FDEC87EDCBF07097DCCDE93A084BAD7501A224E388DF349CE18959FE8485F8AD1537F0D896EA73BEDC7214713F',
+      expected => 'F62C46329B41085625669BAF51DEA66A',
+      desc => 'CMAC AES-256-CBC' },
     { cmd => [qw{openssl mac -macopt cipher:AES-256-CBC -macopt hexkey:0B122AC8F34ED1FE082A3625D157561454167AC145A10BBF77C6A70596D574F1}],
       type => 'CMAC',
       input => '498B53FDEC87EDCBF07097DCCDE93A084BAD7501A224E388DF349CE18959FE8485F8AD1537F0D896EA73BEDC7214713F',
       expected => 'F62C46329B41085625669BAF51DEA66A',
-      desc => 'CMAC AES-256-CBC' }
+      desc => 'CMAC AES-256-CBC' },
 );
 
 my @poly1305_tests = (
@@ -83,6 +98,11 @@ my @mac_fail_tests = (
       input => '00',
       err => 'Invalid MAC name KMAC128',
       desc => 'KMAC128 Fail unknown property' },
+    { cmd => [qw{openssl mac -cipher AES-128-CBC -macopt hexkey:00}],
+      type => 'HMAC',
+      input => '00',
+      err => 'MAC parameter error',
+      desc => 'HMAC given a cipher' },
 );
 
 my @siphash_fail_tests = (
@@ -137,10 +157,10 @@ sub compareline {
     # Not unlinking $tmpfile
 
     if (defined($expect)) {
-        if ($lines[1] =~ m|^\Q${expect}\E\R$|) {
+        if ($lines[0] =~ m|^\Q${expect}\E\R$|) {
             return 1;
         } else {
-            print "Got: $lines[1]";
+            print "Got: $lines[0]";
             print "Exp: $expect\n";
             return 0;
         }

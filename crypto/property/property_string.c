@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -105,6 +105,7 @@ err:
 }
 
 static const OSSL_LIB_CTX_METHOD property_string_data_method = {
+    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
     property_string_data_new,
     property_string_data_free,
 };
@@ -161,6 +162,45 @@ OSSL_PROPERTY_IDX ossl_property_name(OSSL_LIB_CTX *ctx, const char *s,
                                 s);
 }
 
+struct find_str_st {
+    const char *str;
+    OSSL_PROPERTY_IDX idx;
+};
+
+static void find_str_fn(PROPERTY_STRING *prop, void *vfindstr)
+{
+    struct find_str_st *findstr = vfindstr;
+
+    if (prop->idx == findstr->idx)
+        findstr->str = prop->s;
+}
+
+static const char *ossl_property_str(int name, OSSL_LIB_CTX *ctx,
+                                     OSSL_PROPERTY_IDX idx)
+{
+    struct find_str_st findstr;
+    PROPERTY_STRING_DATA *propdata
+        = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_PROPERTY_STRING_INDEX,
+                                &property_string_data_method);
+
+    if (propdata == NULL)
+        return NULL;
+
+    findstr.str = NULL;
+    findstr.idx = idx;
+
+    lh_PROPERTY_STRING_doall_arg(name ? propdata->prop_names
+                                      : propdata->prop_values,
+                                 find_str_fn, &findstr);
+
+    return findstr.str;
+}
+
+const char *ossl_property_name_str(OSSL_LIB_CTX *ctx, OSSL_PROPERTY_IDX idx)
+{
+    return ossl_property_str(1, ctx, idx);
+}
+
 OSSL_PROPERTY_IDX ossl_property_value(OSSL_LIB_CTX *ctx, const char *s,
                                       int create)
 {
@@ -173,4 +213,9 @@ OSSL_PROPERTY_IDX ossl_property_value(OSSL_LIB_CTX *ctx, const char *s,
     return ossl_property_string(propdata->prop_values,
                                 create ? &propdata->prop_value_idx : NULL,
                                 s);
+}
+
+const char *ossl_property_value_str(OSSL_LIB_CTX *ctx, OSSL_PROPERTY_IDX idx)
+{
+    return ossl_property_str(0, ctx, idx);
 }

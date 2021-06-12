@@ -19,11 +19,11 @@
 #include <openssl/pem.h>
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_INFORM, OPT_IN, OPT_OUTFORM, OPT_OUT, OPT_KEYFORM, OPT_KEY,
     OPT_ISSUER, OPT_LASTUPDATE, OPT_NEXTUPDATE, OPT_FINGERPRINT,
     OPT_CRLNUMBER, OPT_BADSIG, OPT_GENDELTA, OPT_CAPATH, OPT_CAFILE, OPT_CASTORE,
-    OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOCASTORE, OPT_VERIFY, OPT_TEXT, OPT_HASH,
+    OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOCASTORE, OPT_VERIFY, OPT_DATEOPT, OPT_TEXT, OPT_HASH,
     OPT_HASH_OLD, OPT_NOOUT, OPT_NAMEOPT, OPT_MD, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
@@ -41,6 +41,7 @@ const OPTIONS crl_options[] = {
     OPT_SECTION("Output"),
     {"out", OPT_OUT, '>', "output file - default stdout"},
     {"outform", OPT_OUTFORM, 'F', "Output format - default PEM"},
+    {"dateopt", OPT_DATEOPT, 's', "Datetime format used for printing. (rfc_822/iso_8601). Default is rfc_822."},
     {"text", OPT_TEXT, '-', "Print out a text format version"},
     {"hash", OPT_HASH, '-', "Print hash value"},
 #ifndef OPENSSL_NO_MD5
@@ -82,15 +83,16 @@ int crl_main(int argc, char **argv)
     X509_LOOKUP *lookup = NULL;
     X509_OBJECT *xobj = NULL;
     EVP_PKEY *pkey;
-    const EVP_MD *digest = EVP_sha1();
+    EVP_MD *digest = (EVP_MD *)EVP_sha1();
     char *infile = NULL, *outfile = NULL, *crldiff = NULL, *keyfile = NULL;
     char *digestname = NULL;
     const char *CAfile = NULL, *CApath = NULL, *CAstore = NULL, *prog;
     OPTION_CHOICE o;
     int hash = 0, issuer = 0, lastupdate = 0, nextupdate = 0, noout = 0;
-    int informat = FORMAT_PEM, outformat = FORMAT_PEM, keyformat = FORMAT_PEM;
+    int informat = FORMAT_UNDEF, outformat = FORMAT_PEM, keyformat = FORMAT_UNDEF;
     int ret = 1, num = 0, badsig = 0, fingerprint = 0, crlnumber = 0;
     int text = 0, do_ver = 0, noCAfile = 0, noCApath = 0, noCAstore = 0;
+    unsigned long dateopt = ASN1_DTFLGS_RFC822;
     int i;
 #ifndef OPENSSL_NO_MD5
     int hash_old = 0;
@@ -161,6 +163,10 @@ int crl_main(int argc, char **argv)
         case OPT_VERIFY:
             do_ver = 1;
             break;
+        case OPT_DATEOPT:
+            if (!set_dateopt(&dateopt, opt_arg()))
+                goto opthelp;
+            break;
         case OPT_TEXT:
             text = 1;
             break;
@@ -177,7 +183,7 @@ int crl_main(int argc, char **argv)
             nextupdate = ++num;
             break;
         case OPT_NOOUT:
-            noout = ++num;
+            noout = 1;
             break;
         case OPT_FINGERPRINT:
             fingerprint = ++num;
@@ -211,7 +217,7 @@ int crl_main(int argc, char **argv)
         if (!opt_md(digestname, &digest))
             goto opthelp;
     }
-    x = load_crl(infile, "CRL");
+    x = load_crl(infile, informat, 1, "CRL");
     if (x == NULL)
         goto end;
 
@@ -250,13 +256,13 @@ int crl_main(int argc, char **argv)
             BIO_printf(bio_err, "verify OK\n");
     }
 
-    if (crldiff) {
+    if (crldiff != NULL) {
         X509_CRL *newcrl, *delta;
         if (!keyfile) {
             BIO_puts(bio_err, "Missing CRL signing key\n");
             goto end;
         }
-        newcrl = load_crl(crldiff, "other CRL");
+        newcrl = load_crl(crldiff, informat, 0, "other CRL");
         if (!newcrl)
             goto end;
         pkey = load_key(keyfile, keyformat, 0, NULL, NULL, "CRL signing key");
@@ -327,13 +333,13 @@ int crl_main(int argc, char **argv)
 #endif
             if (lastupdate == i) {
                 BIO_printf(bio_out, "lastUpdate=");
-                ASN1_TIME_print(bio_out, X509_CRL_get0_lastUpdate(x));
+                ASN1_TIME_print_ex(bio_out, X509_CRL_get0_lastUpdate(x), dateopt);
                 BIO_printf(bio_out, "\n");
             }
             if (nextupdate == i) {
                 BIO_printf(bio_out, "nextUpdate=");
                 if (X509_CRL_get0_nextUpdate(x))
-                    ASN1_TIME_print(bio_out, X509_CRL_get0_nextUpdate(x));
+                    ASN1_TIME_print_ex(bio_out, X509_CRL_get0_nextUpdate(x), dateopt);
                 else
                     BIO_printf(bio_out, "NONE");
                 BIO_printf(bio_out, "\n");
@@ -347,7 +353,8 @@ int crl_main(int argc, char **argv)
                     BIO_printf(bio_err, "out of memory\n");
                     goto end;
                 }
-                BIO_printf(bio_out, "%s Fingerprint=", EVP_MD_name(digest));
+                BIO_printf(bio_out, "%s Fingerprint=",
+                           EVP_MD_get0_name(digest));
                 for (j = 0; j < (int)n; j++) {
                     BIO_printf(bio_out, "%02X%c", md[j], (j + 1 == (int)n)
                                ? '\n' : ':');
@@ -381,6 +388,7 @@ int crl_main(int argc, char **argv)
     if (ret != 0)
         ERR_print_errors(bio_err);
     BIO_free_all(out);
+    EVP_MD_free(digest);
     X509_CRL_free(x);
     X509_STORE_CTX_free(ctx);
     X509_STORE_free(store);

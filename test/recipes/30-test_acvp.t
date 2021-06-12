@@ -19,7 +19,7 @@ setup("test_acvp");
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
 plan skip_all => "ACVP is not supported by this test"
-    if $no_fips || disabled("acvp_tests");
+    if $no_fips || disabled("acvp-tests");
 
 use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');

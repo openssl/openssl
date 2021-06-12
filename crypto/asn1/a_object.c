@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -135,8 +135,10 @@ int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
                     OPENSSL_free(tmp);
                 tmpsize = blsize + 32;
                 tmp = OPENSSL_malloc(tmpsize);
-                if (tmp == NULL)
+                if (tmp == NULL) {
+                    ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
                     goto err;
+                }
             }
             while (blsize--) {
                 BN_ULONG t = BN_div_word(bl, 0x80L);
@@ -190,6 +192,10 @@ int i2a_ASN1_OBJECT(BIO *bp, const ASN1_OBJECT *a)
         return BIO_write(bp, "NULL", 4);
     i = i2t_ASN1_OBJECT(buf, sizeof(buf), a);
     if (i > (int)(sizeof(buf) - 1)) {
+        if (i > INT_MAX - 1) {  /* catch an integer overflow */
+            ERR_raise(ERR_LIB_ASN1, ASN1_R_LENGTH_TOO_LONG);
+            return -1;
+        }
         if ((p = OPENSSL_malloc(i + 1)) == NULL) {
             ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
             return -1;
@@ -285,16 +291,13 @@ ASN1_OBJECT *ossl_c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
         }
     }
 
-    /*
-     * only the ASN1_OBJECTs from the 'table' will have values for ->sn or
-     * ->ln
-     */
     if ((a == NULL) || ((*a) == NULL) ||
         !((*a)->flags & ASN1_OBJECT_FLAG_DYNAMIC)) {
         if ((ret = ASN1_OBJECT_new()) == NULL)
             return NULL;
-    } else
+    } else {
         ret = (*a);
+    }
 
     p = *pp;
     /* detach data from object */
@@ -312,6 +315,12 @@ ASN1_OBJECT *ossl_c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
         ret->flags |= ASN1_OBJECT_FLAG_DYNAMIC_DATA;
     }
     memcpy(data, p, length);
+    /* If there are dynamic strings, free them here, and clear the flag */
+    if ((ret->flags & ASN1_OBJECT_FLAG_DYNAMIC_STRINGS) != 0) {
+        OPENSSL_free((char *)ret->sn);
+        OPENSSL_free((char *)ret->ln);
+        ret->flags &= ~ASN1_OBJECT_FLAG_DYNAMIC_STRINGS;
+    }
     /* reattach data to object, after which it remains const */
     ret->data = data;
     ret->length = length;
@@ -349,9 +358,11 @@ void ASN1_OBJECT_free(ASN1_OBJECT *a)
     if (a == NULL)
         return;
     if (a->flags & ASN1_OBJECT_FLAG_DYNAMIC_STRINGS) {
-#ifndef CONST_STRICT            /* disable purely for compile-time strict
-                                 * const checking. Doing this on a "real"
-                                 * compile will cause memory leaks */
+#ifndef CONST_STRICT
+        /*
+         * Disable purely for compile-time strict const checking.  Doing this
+         * on a "real" compile will cause memory leaks
+         */
         OPENSSL_free((void*)a->sn);
         OPENSSL_free((void*)a->ln);
 #endif

@@ -117,7 +117,7 @@ static int rc2_get_ctx_params(void *vctx, OSSL_PARAM params[])
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_ALG_ID);
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS);
     if (p != NULL) {
         long num;
         int i;
@@ -176,7 +176,7 @@ static int rc2_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             return 0;
         }
     }
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_ALG_ID);
+    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS);
     if (p != NULL) {
         ASN1_TYPE *type = NULL;
         long num = 0;
@@ -210,11 +210,13 @@ static int rc2_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
 CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_START(rc2)
 OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_RC2_KEYBITS, NULL),
+OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS, NULL, 0),
 CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_END(rc2)
 
 CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_START(rc2)
 OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
 OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_RC2_KEYBITS, NULL),
+OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS, NULL, 0),
 CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_END(rc2)
 
 #define IMPLEMENT_cipher(alg, UCALG, lcmode, UCMODE, flags, kbits, blkbits,    \

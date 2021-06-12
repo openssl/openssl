@@ -30,7 +30,7 @@ Usage: release.sh [ options ... ]
                 key (default: use the default e-mail address’ key).
 
 --no-upload     Don't upload to upload@dev.openssl.org.
---no-update     Don't perform 'make update'.
+--no-update     Don't perform 'make update' and 'make update-fips-checksums'.
 --verbose       Verbose output.
 --debug         Include debug output.  Implies --no-upload.
 
@@ -319,9 +319,11 @@ echo "== Configuring OpenSSL for update and release.  This may take a bit of tim
 
 ./Configure cc >&42
 
-$VERBOSE "== Checking source file updates"
+$VERBOSE "== Checking source file updates and fips checksums"
 
 make update >&42
+
+make update-fips-checksums >&42
 
 if [ -n "$(git status --porcelain)" ]; then
     $VERBOSE "== Committing updates"
@@ -337,7 +339,7 @@ fi
 if $do_branch; then
     $VERBOSE "== Creating a local update branch: $tmp_update_branch"
     git branch $git_quiet "$tmp_update_branch"
-fi    
+fi
 
 # Write the version information we updated
 set_version
@@ -410,7 +412,7 @@ cat "$HERE/dev/release-aux/$announce_template" \
           -e "s|\\\$sha256hash|$sha256hash|" \
     | perl -p "$HERE/dev/release-aux/fix-title.pl" \
     > "../$announce"
-              
+
 $VERBOSE "== Generating signatures: $tgzfile.asc $announce.asc"
 rm -f "../$tgzfile.asc" "../$announce.asc"
 echo "Signing the release files.  You may need to enter a pass phrase"
@@ -508,7 +510,7 @@ $VERBOSE "== Push what we have to the parent repository"
 git push parent HEAD
 
 # Done ###############################################################
-    
+
 $VERBOSE "== Done"
 
 cd $HERE
@@ -697,7 +699,7 @@ Don't upload the produced files.
 
 =item B<--no-update>
 
-Don't run C<make update>.
+Don't run C<make update> and C<make update-fips-checksums>.
 
 =item B<--verbose>
 

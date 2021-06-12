@@ -297,7 +297,7 @@ void *OPENSSL_sk_delete(OPENSSL_STACK *st, int loc)
 }
 
 static int internal_find(OPENSSL_STACK *st, const void *data,
-                         int ret_val_options)
+                         int ret_val_options, int *pnum)
 {
     const void *r;
     int i;
@@ -307,8 +307,13 @@ static int internal_find(OPENSSL_STACK *st, const void *data,
 
     if (st->comp == NULL) {
         for (i = 0; i < st->num; i++)
-            if (st->data[i] == data)
+            if (st->data[i] == data) {
+                if (pnum != NULL)
+                    *pnum = 1;
                 return i;
+            }
+        if (pnum != NULL)
+            *pnum = 0;
         return -1;
     }
 
@@ -319,20 +324,41 @@ static int internal_find(OPENSSL_STACK *st, const void *data,
     }
     if (data == NULL)
         return -1;
+    if (pnum != NULL)
+        ret_val_options |= OSSL_BSEARCH_FIRST_VALUE_ON_MATCH;
     r = ossl_bsearch(&data, st->data, st->num, sizeof(void *), st->comp,
                      ret_val_options);
+
+    if (pnum != NULL) {
+        *pnum = 0;
+        if (r != NULL) {
+            const void **p = (const void **)r;
+
+            while (p < st->data + st->num) {
+                if (st->comp(&data, p) != 0)
+                    break;
+                ++*pnum;
+                ++p;
+            }
+        }
+    }
 
     return r == NULL ? -1 : (int)((const void **)r - st->data);
 }
 
 int OPENSSL_sk_find(OPENSSL_STACK *st, const void *data)
 {
-    return internal_find(st, data, OSSL_BSEARCH_FIRST_VALUE_ON_MATCH);
+    return internal_find(st, data, OSSL_BSEARCH_FIRST_VALUE_ON_MATCH, NULL);
 }
 
 int OPENSSL_sk_find_ex(OPENSSL_STACK *st, const void *data)
 {
-    return internal_find(st, data, OSSL_BSEARCH_VALUE_ON_NOMATCH);
+    return internal_find(st, data, OSSL_BSEARCH_VALUE_ON_NOMATCH, NULL);
+}
+
+int OPENSSL_sk_find_all(OPENSSL_STACK *st, const void *data, int *pnum)
+{
+    return internal_find(st, data, OSSL_BSEARCH_FIRST_VALUE_ON_MATCH, pnum);
 }
 
 int OPENSSL_sk_push(OPENSSL_STACK *st, const void *data)

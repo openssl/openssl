@@ -21,8 +21,6 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
     "app data in handshake"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT),
     "attempt to reuse session in different context"},
-    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_AT_LEAST_TLS_1_0_NEEDED_IN_FIPS_MODE),
-    "at least TLS 1.0 needed in FIPS mode"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_AT_LEAST_TLS_1_2_NEEDED_IN_SUITEB_MODE),
     "at least (D)TLS 1.2 needed in Suite B mode"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_BAD_CHANGE_CIPHER_SPEC),
@@ -239,6 +237,8 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
     "missing ecdsa signing cert"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_MISSING_FATAL), "missing fatal"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_MISSING_PARAMETERS), "missing parameters"},
+    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_MISSING_PSK_KEX_MODES_EXTENSION),
+    "missing psk kex modes extension"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_MISSING_RSA_CERTIFICATE),
     "missing rsa certificate"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_MISSING_RSA_ENCRYPTING_CERT),
@@ -312,6 +312,8 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_NULL_SSL_CTX), "null ssl ctx"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_NULL_SSL_METHOD_PASSED),
     "null ssl method passed"},
+    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_OCSP_CALLBACK_FAILURE),
+    "ocsp callback failure"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_OLD_SESSION_CIPHER_NOT_RETURNED),
     "old session cipher not returned"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_OLD_SESSION_COMPRESSION_ALGORITHM_NOT_RETURNED),
@@ -557,7 +559,7 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
 
 #endif
 
-int err_load_SSL_strings_int(void)
+int ossl_err_load_SSL_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
     if (ERR_reason_error_string(SSL_str_reasons[0].error) == NULL)

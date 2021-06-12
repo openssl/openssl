@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -184,7 +184,7 @@ int ossl_siv128_init(SIV128_CONTEXT *ctx, const unsigned char *key, int klen,
     if (key == NULL || cbc == NULL || ctr == NULL)
         return 0;
 
-    cbc_name = EVP_CIPHER_name(cbc);
+    cbc_name = EVP_CIPHER_get0_name(cbc);
     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
                                                  (char *)cbc_name, 0);
     params[1] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,

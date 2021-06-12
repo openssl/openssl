@@ -39,8 +39,6 @@ B<openssl> B<pkeyutl>
 {- $OpenSSL::safe::opt_provider_synopsis -}
 {- $OpenSSL::safe::opt_config_synopsis -}
 
-=for openssl ifdef engine engine_impl
-
 =head1 DESCRIPTION
 
 This command can be used to perform low-level public key
@@ -91,8 +89,7 @@ The input key, by default it should be a private key.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The key format; the default is B<PEM>.
-The only value with effect is B<ENGINE>; all others have become obsolete.
+The key format; unspecified by default.
 See L<openssl-format-options(1)> for details.
 
 =item B<-passin> I<arg>
@@ -106,8 +103,7 @@ The peer key file, used by key derivation (agreement) operations.
 
 =item B<-peerform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The peer key format; the default is B<PEM>.
-The only value with effect is B<ENGINE>; all others have become obsolete.
+The peer key format; unspecified by default.
 See L<openssl-format-options(1)> for details.
 
 =item B<-pubin>
@@ -409,9 +405,6 @@ L<EVP_PKEY_CTX_set_hkdf_md(3)>,
 L<EVP_PKEY_CTX_set_tls1_prf_md(3)>,
 
 =head1 HISTORY
-
-All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
-and have no effect.
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
 

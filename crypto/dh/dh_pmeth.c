@@ -35,7 +35,6 @@ typedef struct {
     int pad;
     /* message digest used for parameter generation */
     const EVP_MD *md;
-    int rfc5114_param;
     int param_nid;
     /* Keygen callback info */
     int gentmp[2];
@@ -98,7 +97,6 @@ static int pkey_dh_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
     dctx->paramgen_type = sctx->paramgen_type;
     dctx->pad = sctx->pad;
     dctx->md = sctx->md;
-    dctx->rfc5114_param = sctx->rfc5114_param;
     dctx->param_nid = sctx->param_nid;
 
     dctx->kdf_type = sctx->kdf_type;
@@ -156,11 +154,11 @@ static int pkey_dh_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     case EVP_PKEY_CTRL_DH_RFC5114:
         if (p1 < 1 || p1 > 3 || dctx->param_nid != NID_undef)
             return -2;
-        dctx->rfc5114_param = p1;
+        dctx->param_nid = p1;
         return 1;
 
     case EVP_PKEY_CTRL_DH_NID:
-        if (p1 <= 0 || dctx->rfc5114_param != 0)
+        if (p1 <= 0 || dctx->param_nid != NID_undef)
             return -2;
         dctx->param_nid = p1;
         return 1;
@@ -233,11 +231,12 @@ static int pkey_dh_ctrl_str(EVP_PKEY_CTX *ctx,
     }
     if (strcmp(type, "dh_rfc5114") == 0) {
         DH_PKEY_CTX *dctx = ctx->data;
-        int len;
-        len = atoi(value);
-        if (len < 0 || len > 3)
+        int id;
+
+        id = atoi(value);
+        if (id < 0 || id > 3)
             return -2;
-        dctx->rfc5114_param = len;
+        dctx->param_nid = id;
         return 1;
     }
     if (strcmp(type, "dh_param") == 0) {
@@ -297,7 +296,7 @@ static DH *ffc_params_generate(OSSL_LIB_CTX *libctx, DH_PKEY_CTX *dctx,
     }
 
     if (dctx->md != NULL)
-        ossl_ffc_set_digest(&ret->params, EVP_MD_name(dctx->md), NULL);
+        ossl_ffc_set_digest(&ret->params, EVP_MD_get0_name(dctx->md), NULL);
 
 # ifndef FIPS_MODULE
     if (dctx->paramgen_type == DH_PARAMGEN_TYPE_FIPS_186_2)
@@ -331,36 +330,16 @@ static int pkey_dh_paramgen(EVP_PKEY_CTX *ctx,
     /*
      * Look for a safe prime group for key establishment. Which uses
      * either RFC_3526 (modp_XXXX) or RFC_7919 (ffdheXXXX).
+     * RFC_5114 is also handled here for param_nid = (1..3)
      */
     if (dctx->param_nid != NID_undef) {
+        int type = dctx->param_nid <= 3 ? EVP_PKEY_DHX : EVP_PKEY_DH;
+
         if ((dh = DH_new_by_nid(dctx->param_nid)) == NULL)
             return 0;
-        EVP_PKEY_assign(pkey, EVP_PKEY_DH, dh);
+        EVP_PKEY_assign(pkey, type, dh);
         return 1;
     }
-
-#ifndef FIPS_MODULE
-    if (dctx->rfc5114_param) {
-        switch (dctx->rfc5114_param) {
-        case 1:
-            dh = DH_get_1024_160();
-            break;
-
-        case 2:
-            dh = DH_get_2048_224();
-            break;
-
-        case 3:
-            dh = DH_get_2048_256();
-            break;
-
-        default:
-            return -2;
-        }
-        EVP_PKEY_assign(pkey, EVP_PKEY_DHX, dh);
-        return 1;
-    }
-#endif /* FIPS_MODULE */
 
     if (ctx->pkey_gencb != NULL) {
         pcb = BN_GENCB_new();
@@ -463,10 +442,11 @@ static int pkey_dh_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
         if (*keylen != dctx->kdf_outlen)
             return 0;
         ret = 0;
-        Zlen = DH_size(dh);
-        Z = OPENSSL_malloc(Zlen);
-        if (Z == NULL) {
-            goto err;
+        if ((Zlen = DH_size(dh)) <= 0)
+            return 0;
+        if ((Z = OPENSSL_malloc(Zlen)) == NULL) {
+            ERR_raise(ERR_LIB_DH, ERR_R_MALLOC_FAILURE);
+            return 0;
         }
         if (DH_compute_key_padded(Z, dhpubbn, dh) <= 0)
             goto err;

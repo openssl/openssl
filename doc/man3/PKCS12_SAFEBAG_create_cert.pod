@@ -4,8 +4,8 @@
 
 PKCS12_SAFEBAG_create_cert, PKCS12_SAFEBAG_create_crl,
 PKCS12_SAFEBAG_create_secret, PKCS12_SAFEBAG_create0_p8inf, 
-PKCS12_SAFEBAG_create0_pkcs8, PKCS12_SAFEBAG_create_pkcs8_encrypt - Create
-PKCS#12 safeBag objects
+PKCS12_SAFEBAG_create0_pkcs8, PKCS12_SAFEBAG_create_pkcs8_encrypt,
+PKCS12_SAFEBAG_create_pkcs8_encrypt_ex - Create PKCS#12 safeBag objects
 
 =head1 SYNOPSIS
 
@@ -24,6 +24,14 @@ PKCS#12 safeBag objects
                                                      unsigned char *salt,
                                                      int saltlen, int iter,
                                                      PKCS8_PRIV_KEY_INFO *p8inf);
+ PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_pkcs8_encrypt_ex(int pbe_nid,
+                                                        const char *pass,
+                                                        int passlen,
+                                                        unsigned char *salt,
+                                                        int saltlen, int iter,
+                                                        PKCS8_PRIV_KEY_INFO *p8inf,
+                                                        OSSL_LIB_CTX *ctx,
+                                                        const char *propq);
 
 =head1 DESCRIPTION
 
@@ -34,7 +42,7 @@ PKCS12_SAFEBAG_create_crl() creates a new B<PKCS12_SAFEBAG> of type B<NID_crlBag
 containing the supplied crl.
 
 PKCS12_SAFEBAG_create_secret() creates a new B<PKCS12_SAFEBAG> of type
-corresponding to a PKCS#12 I<secretBag>. The I<secretBag> contents are tagged as
+corresponding to a PKCS#12 B<secretBag>. The B<secretBag> contents are tagged as
 I<type> with an ASN1 value of type I<vtype> constructed using the bytes in
 I<value> of length I<len>.
 
@@ -50,6 +58,10 @@ If I<pbe_nid> is 0, a default encryption algorithm is used. I<pass> is the
 passphrase and I<iter> is the iteration count. If I<iter> is zero then a default
 value of 2048 is used. If I<salt> is NULL then a salt is generated randomly.
 
+PKCS12_SAFEBAG_create_pkcs8_encrypt_ex() is identical to PKCS12_SAFEBAG_create_pkcs8_encrypt()
+but allows for a library context I<ctx> and property query I<propq> to be used to select
+algorithm implementations.
+
 =head1 NOTES
 
 PKCS12_SAFEBAG_create_pkcs8_encrypt() makes assumptions regarding the encoding of the given pass
@@ -62,15 +74,23 @@ PKCS12_SAFEBAG_create_secret() was added in OpenSSL 3.0.
 
 All of these functions return a valid B<PKCS12_SAFEBAG> structure or NULL if an error occurred.
 
+=head1 CONFORMING TO
+
+IETF RFC 7292 (L<https://tools.ietf.org/html/rfc7292>)
+
 =head1 SEE ALSO
 
 L<PKCS12_create(3)>,
 L<PKCS12_add_safe(3)>,
 L<PKCS12_add_safes(3)>
 
+=head1 HISTORY
+
+PKCS12_SAFEBAG_create_pkcs8_encrypt_ex() was added in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

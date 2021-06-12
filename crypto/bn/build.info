@@ -79,7 +79,7 @@ IF[{- !$disabled{asm} -}]
 
   $BNASM_ppc32=bn-ppc.s ppc-mont.s
   $BNDEF_ppc32=OPENSSL_BN_ASM_MONT
-  $BNASM_ppc64=$BNASM_ppc32
+  $BNASM_ppc64=$BNASM_ppc32 ppc64-mont-fixed.s
   $BNDEF_ppc64=$BNDEF_ppc32
 
   $BNASM_c64xplus=asm/bn-c64xplus.asm
@@ -120,7 +120,6 @@ SOURCE[../../providers/liblegacy.a]=$BNASM
 DEFINE[../../providers/liblegacy.a]=$BNDEF
 # Implementations are now spread across several libraries, so the defines
 # need to be applied to all affected libraries and modules.
-DEFINE[../../providers/libimplementations.a]=$BNDEF
 DEFINE[../../providers/libcommon.a]=$BNDEF
 
 INCLUDE[bn_exp.o]=..
@@ -169,6 +168,7 @@ GENERATE[parisc-mont.s]=asm/parisc-mont.pl
 GENERATE[bn-ppc.s]=asm/ppc.pl
 GENERATE[ppc-mont.s]=asm/ppc-mont.pl
 GENERATE[ppc64-mont.s]=asm/ppc64-mont.pl
+GENERATE[ppc64-mont-fixed.s]=asm/ppc64-mont-fixed.pl
 
 GENERATE[alpha-mont.S]=asm/alpha-mont.pl
 
@@ -177,3 +177,4 @@ INCLUDE[armv4-mont.o]=..
 GENERATE[armv4-gf2m.S]=asm/armv4-gf2m.pl
 INCLUDE[armv4-gf2m.o]=..
 GENERATE[armv8-mont.S]=asm/armv8-mont.pl
+INCLUDE[armv8-mont.o]=..

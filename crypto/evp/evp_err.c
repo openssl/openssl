@@ -55,8 +55,6 @@ static const ERR_STRING_DATA EVP_str_reasons[] = {
     "different parameters"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_ERROR_LOADING_SECTION),
     "error loading section"},
-    {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_ERROR_SETTING_FIPS_MODE),
-    "error setting fips mode"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_EXPECTING_AN_HMAC_KEY),
     "expecting an hmac key"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_EXPECTING_AN_RSA_KEY),
@@ -65,15 +63,13 @@ static const ERR_STRING_DATA EVP_str_reasons[] = {
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_EXPECTING_A_DSA_KEY),
     "expecting a dsa key"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_EXPECTING_A_ECX_KEY),
-    "expecting a ecx key"},
-    {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_EXPECTING_A_EC_KEY), "expecting a ec key"},
+    "expecting an ecx key"},
+    {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_EXPECTING_A_EC_KEY), "expecting an ec key"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_EXPECTING_A_POLY1305_KEY),
     "expecting a poly1305 key"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_EXPECTING_A_SIPHASH_KEY),
     "expecting a siphash key"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_FINAL_ERROR), "final error"},
-    {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_FIPS_MODE_NOT_SUPPORTED),
-    "fips mode not supported"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_GENERATE_ERROR), "generate error"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_GET_RAW_KEY_FAILED), "get raw key failed"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_ILLEGAL_SCRYPT_PARAMETERS),
@@ -88,7 +84,6 @@ static const ERR_STRING_DATA EVP_str_reasons[] = {
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_INVALID_CUSTOM_LENGTH),
     "invalid custom length"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_INVALID_DIGEST), "invalid digest"},
-    {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_INVALID_FIPS_MODE), "invalid fips mode"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_INVALID_IV_LENGTH), "invalid iv length"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_INVALID_KEY), "invalid key"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_INVALID_KEY_LENGTH), "invalid key length"},
@@ -133,10 +128,10 @@ static const ERR_STRING_DATA EVP_str_reasons[] = {
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_NULL_MAC_PKEY_CTX), "null mac pkey ctx"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_ONLY_ONESHOT_SUPPORTED),
     "only oneshot supported"},
-    {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE),
-    "operation not supported for this keytype"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_OPERATION_NOT_INITIALIZED),
     "operation not initialized"},
+    {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE),
+    "operation not supported for this keytype"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_OUTPUT_WOULD_OVERFLOW),
     "output would overflow"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_PARAMETER_TOO_LARGE),
@@ -151,6 +146,7 @@ static const ERR_STRING_DATA EVP_str_reasons[] = {
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_PRIVATE_KEY_ENCODE_ERROR),
     "private key encode error"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_PUBLIC_KEY_NOT_RSA), "public key not rsa"},
+    {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_SETTING_XOF_FAILED), "setting xof failed"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_SET_DEFAULT_PROPERTY_FAILURE),
     "set default property failure"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_TOO_MANY_RECORDS), "too many records"},
@@ -202,7 +198,7 @@ static const ERR_STRING_DATA EVP_str_reasons[] = {
 
 #endif
 
-int err_load_EVP_strings_int(void)
+int ossl_err_load_EVP_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
     if (ERR_reason_error_string(EVP_str_reasons[0].error) == NULL)

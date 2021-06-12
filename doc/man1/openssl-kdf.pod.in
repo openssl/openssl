@@ -9,6 +9,9 @@ openssl-kdf - perform Key Derivation Function operations
 
 B<openssl kdf>
 [B<-help>]
+[B<-cipher>]
+[B<-digest>]
+[B<-mac>]
 [B<-kdfopt> I<nm>:I<v>]
 [B<-keylen> I<num>]
 [B<-out> I<filename>]
@@ -40,6 +43,25 @@ Filename to output to, or standard output by default.
 =item B<-binary>
 
 Output the derived key in binary form. Uses hexadecimal text format if not specified.
+
+=item B<-cipher> I<name>
+
+Specify the cipher to be used by the KDF.
+Not all KDFs require a cipher and it is an error to use this option in such
+cases.
+
+=item B<-digest> I<name>
+
+Specify the digest to be used by the KDF.
+Not all KDFs require a digest and it is an error to use this option in such
+cases.
+To see the list of supported digests, use C<openssl list -digest-commands>.
+
+=item B<-mac> I<name>
+
+Specify the MAC to be used by the KDF.
+Not all KDFs require a MAC and it is an error to use this option in such
+cases.
 
 =item B<-kdfopt> I<nm>:I<v>
 
@@ -76,8 +98,15 @@ The password must be specified for PBKDF2 and scrypt.
 
 =item B<digest:>I<string>
 
-Specifies the name of a digest as an alphanumeric string.
-To see the list of supported digests, use the command I<list -digest-commands>.
+This option is identical to the B<-digest> option.
+
+=item B<cipher:>I<string>
+
+This option is identical to the B<-cipher> option.
+
+=item B<mac:>I<string>
+
+This option is identical to the B<-mac> option.
 
 =back
 
@@ -166,7 +195,7 @@ Added in OpenSSL 3.0
 
 =head1 COPYRIGHT
 
-Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

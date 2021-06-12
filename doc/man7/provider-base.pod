@@ -21,7 +21,8 @@ provider-base
 
  typedef void (*OSSL_thread_stop_handler_fn)(void *arg);
  int core_thread_start(const OSSL_CORE_HANDLE *handle,
-                       OSSL_thread_stop_handler_fn handfn);
+                       OSSL_thread_stop_handler_fn handfn,
+                       void *arg);
 
  OPENSSL_CORE_CTX *core_get_libctx(const OSSL_CORE_HANDLE *handle);
  void core_new_error(const OSSL_CORE_HANDLE *handle);
@@ -56,6 +57,8 @@ provider-base
  int CRYPTO_secure_allocated(const void *ptr);
  void OPENSSL_cleanse(void *ptr, size_t len);
 
+ unsigned char *OPENSSL_hexstr2buf(const char *str, long *buflen);
+
  OSSL_CORE_BIO *BIO_new_file(const char *filename, const char *mode);
  OSSL_CORE_BIO *BIO_new_membuf(const void *buf, int len);
  int BIO_read_ex(OSSL_CORE_BIO *bio, void *data, size_t data_len,
@@ -67,7 +70,8 @@ provider-base
  int BIO_vprintf(OSSL_CORE_BIO *bio, const char *format, va_list args);
  int BIO_vsnprintf(char *buf, size_t n, const char *fmt, va_list args);
 
- void self_test_cb(OPENSSL_CORE_CTX *ctx, OSSL_CALLBACK **cb, void **cbarg);
+ void OSSL_SELF_TEST_set_callback(OSSL_LIB_CTX *libctx, OSSL_CALLBACK *cb,
+                                  void *cbarg);
 
  size_t get_entropy(const OSSL_CORE_HANDLE *handle,
                     unsigned char **pout, int entropy,
@@ -79,6 +83,22 @@ provider-base
                   const void *salt, size_t salt_len);
  void cleanup_nonce(const OSSL_CORE_HANDLE *handle,
                     unsigned char *buf, size_t len);
+
+ /* Functions for querying the providers in the application library context */
+ int provider_register_child_cb(const OSSL_CORE_HANDLE *handle,
+                     int (*create_cb)(const OSSL_CORE_HANDLE *provider,
+                                      void *cbdata),
+                     int (*remove_cb)(const OSSL_CORE_HANDLE *provider,
+                                      void *cbdata),
+                     int (*global_props_cb)(const char *props, void *cbdata),
+                     void *cbdata);
+ void provider_deregister_child_cb(const OSSL_CORE_HANDLE *handle);
+ const char *provider_name(const OSSL_CORE_HANDLE *prov);
+ void *provider_get0_provider_ctx(const OSSL_CORE_HANDLE *prov);
+ const OSSL_DISPATCH *provider_get0_dispatch(const OSSL_CORE_HANDLE *prov);
+ int provider_up_ref(const OSSL_CORE_HANDLE *prov, int activate);
+ int provider_free(const OSSL_CORE_HANDLE *prov, int deactivate);
+
 
  /* Functions offered by the provider to libcrypto */
  void provider_teardown(void *provctx);
@@ -92,6 +112,7 @@ provider-base
  const OSSL_ITEM *provider_get_reason_strings(void *provctx);
  int provider_get_capabilities(void *provctx, const char *capability,
                                OSSL_CALLBACK *cb, void *arg);
+ int provider_self_test(void *provctx);
 
 =head1 DESCRIPTION
 
@@ -101,7 +122,7 @@ of the provider initialization function.  See L<provider(7)/Provider>
 for a description of the initialization function.
 
 All these "functions" have a corresponding function type definition
-named B<OSSL_{name}_fn>, and a helper function to retrieve the
+named B<OSSL_FUNC_{name}_fn>, and a helper function to retrieve the
 function pointer from a B<OSSL_DISPATCH> element named
 B<OSSL_FUNC_{name}>.
 For example, the "function" core_gettable_params() has these:
@@ -123,7 +144,7 @@ provider):
  core_get_libctx                OSSL_FUNC_CORE_GET_LIBCTX
  core_new_error                 OSSL_FUNC_CORE_NEW_ERROR
  core_set_error_debug           OSSL_FUNC_CORE_SET_ERROR_DEBUG
- core_set_error                 OSSL_FUNC_CORE_SET_ERROR
+ core_vset_error                OSSL_FUNC_CORE_VSET_ERROR
  CRYPTO_malloc                  OSSL_FUNC_CRYPTO_MALLOC
  CRYPTO_zalloc                  OSSL_FUNC_CRYPTO_ZALLOC
  CRYPTO_memdup                  OSSL_FUNC_CRYPTO_MEMDUP
@@ -172,20 +193,21 @@ core_get_params() retrieves parameters from the core for the given I<handle>.
 See L</Core parameters> below for a description of currently known
 parameters.
 
-The core_thread_start() function informs the core that the provider has started
+The core_thread_start() function informs the core that the provider has stated
 an interest in the current thread. The core will inform the provider when the
 thread eventually stops. It must be passed the I<handle> for this provider, as
 well as a callback I<handfn> which will be called when the thread stops. The
-callback will subsequently be called from the thread that is stopping and gets
-passed the provider context as an argument. This may be useful to perform thread
-specific clean up such as freeing thread local variables.
+callback will subsequently be called, with the supplied argument I<arg>, from
+the thread that is stopping and gets passed the provider context as an
+argument. This may be useful to perform thread specific clean up such as
+freeing thread local variables.
 
 core_get_libctx() retrieves the library context in which the library
 object for the current provider is stored, accessible through the I<handle>.
 This may sometimes be useful if the provider wishes to store a
 reference to its context in the same library context.
 
-core_new_error(), core_set_error_debug() and core_set_error() are
+core_new_error(), core_set_error_debug() and core_vset_error() are
 building blocks for reporting an error back to the core, with
 reference to the I<handle>.
 
@@ -206,7 +228,7 @@ line I<line> and the function name I<func> where the error occurred.
 
 This corresponds to the OpenSSL function L<ERR_set_debug(3)>.
 
-=item core_set_error()
+=item core_vset_error()
 
 sets the I<reason> for the error, along with any addition data.
 The I<reason> is a number defined by the provider and used to index
@@ -227,14 +249,14 @@ CRYPTO_strndup(), CRYPTO_free(), CRYPTO_clear_free(),
 CRYPTO_realloc(), CRYPTO_clear_realloc(), CRYPTO_secure_malloc(),
 CRYPTO_secure_zalloc(), CRYPTO_secure_free(),
 CRYPTO_secure_clear_free(), CRYPTO_secure_allocated(),
-BIO_new_file(), BIO_new_mem_buf(), BIO_read_ex(), BIO_up_ref(), BIO_free(),
-BIO_vprintf(), OPENSSL_cleanse(), and OPENSSL_hexstr2buf()
-correspond exactly to the public functions with the same name.
-As a matter of fact, the pointers in the B<OSSL_DISPATCH> array are
-direct pointers to those public functions. Note that the BIO functions take an
-B<OSSL_CORE_BIO> type rather than the standard B<BIO> type. This is to ensure
-that a provider does not mix BIOs from the core with BIOs used on the provider
-side (the two are not compatible).
+BIO_new_file(), BIO_new_mem_buf(), BIO_read_ex(), BIO_write_ex(), BIO_up_ref(),
+BIO_free(), BIO_vprintf(), BIO_vsnprintf(), OPENSSL_cleanse()
+and OPENSSL_hexstr2buf() correspond exactly to the public functions with
+the same name.  As a matter of fact, the pointers in the B<OSSL_DISPATCH>
+array are direct pointers to those public functions. Note that the BIO
+functions take an B<OSSL_CORE_BIO> type rather than the standard B<BIO>
+type. This is to ensure that a provider does not mix BIOs from the core
+with BIOs used on the provider side (the two are not compatible).
 OSSL_SELF_TEST_set_callback() is used to set an optional callback that can be
 passed into a provider. This may be ignored by a provider.
 
@@ -259,6 +281,49 @@ buffer length returned to the caller.  On error, zero is returned.
 cleanup_nonce() is used to clean up and free the buffer returned by
 get_nonce().  The nonce pointer returned by get_nonce() is passed in
 B<buf> and its length in B<len>.
+
+provider_register_child_cb() registers callbacks for being informed about the
+loading and unloading of providers in the application's library context.
+I<handle> is this provider's handle and I<cbdata> is this provider's data
+that will be passed back to the callbacks. It returns 1 on success or 0
+otherwise.
+
+I<create_cb> is a callback that will be called when a new provider is loaded
+into the application's library context. It is also called for any providers that
+are already loaded at the point that this callback is registered. The callback
+is passed the handle being used for the new provider being loadded and this
+provider's data in I<cbdata>. It should return 1 on success or 0 on failure.
+
+I<remove_cb> is a callback that will be called when a new provider is unloaded
+from the application's library context. It is passed the handle being used for
+the provider being unloaded and this provider's data in I<cbdata>. It should
+return 1 on success or 0 on failure.
+
+I<global_props_cb> is a callback that will be called when the global properties
+from the parent library context are changed. It should return 1 on success
+or 0 on failure.
+
+provider_deregister_child_cb() unregisters callbacks previously registered via
+provider_register_child_cb(). If provider_register_child_cb() has been called
+then provider_deregister_child_cb() should be called at or before the point that
+this provider's teardown function is called.
+
+provider_name() returns a string giving the name of the provider identified by
+I<handle>.
+
+provider_get0_provider_ctx() returns the provider context that is associated
+with the provider identified by I<prov>.
+
+provider_get0_dispatch() gets the dispatch table registered by the provider
+identified by I<prov> when it initialised.
+
+provider_up_ref() increments the reference count on the provider I<prov>. If
+I<activate> is nonzero then the provider is also loaded if it is not already
+loaded. It returns 1 on success or 0 on failure.
+
+provider_free() decrements the reference count on the provider I<prov>. If
+I<deactivate> is nonzero then the provider is also unloaded if it is not
+already loaded. It returns 1 on success or 0 on failure.
 
 =head2 Provider functions
 
@@ -313,17 +378,17 @@ provider_get_params() can return the following provider parameters to the core:
 
 =over 4
 
-=item "name" (B<OSSL_PROV_PARAM_NAME>) <UTF8_ptr>
+=item "name" (B<OSSL_PROV_PARAM_NAME>) <UTF8 string ptr>
 
 This points to a string that should give a unique name for the provider.
 
-=item "version" (B<OSSL_PROV_PARAM_VERSION>) <UTF8_ptr>
+=item "version" (B<OSSL_PROV_PARAM_VERSION>) <UTF8 string ptr>
 
 This points to a string that is a version number associated with this provider.
 OpenSSL in-built providers use OPENSSL_VERSION_STR, but this may be different
 for any third party provider. This string is for informational purposes only.
 
-=item "buildinfo" (B<OSSL_PROV_PARAM_BUILDINFO>) <UTF8_ptr>
+=item "buildinfo" (B<OSSL_PROV_PARAM_BUILDINFO>) <UTF8 string ptr>
 
 This points to a string that is a build information associated with this provider.
 OpenSSL in-built providers use OPENSSL_FULL_VERSION_STR, but this may be
@@ -345,16 +410,16 @@ core_get_params() can retrieve the following core parameters for each provider:
 
 =over 4
 
-=item "openssl-version" (B<OSSL_PROV_PARAM_CORE_VERSION>) <UTF8_ptr>
+=item "openssl-version" (B<OSSL_PROV_PARAM_CORE_VERSION>) <UTF8 string ptr>
 
 This points to the OpenSSL libraries' full version string, i.e. the string
 expanded from the macro B<OPENSSL_VERSION_STR>.
 
-=item "provider-name" (B<OSSL_PROV_PARAM_CORE_PROV_NAME>) <UTF8_ptr>
+=item "provider-name" (B<OSSL_PROV_PARAM_CORE_PROV_NAME>) <UTF8 string ptr>
 
 This points to the OpenSSL libraries' idea of what the calling provider is named.
 
-=item "module-filename" (B<OSSL_PROV_PARAM_CORE_MODULE_FILENAME>) <UTF8_ptr>
+=item "module-filename" (B<OSSL_PROV_PARAM_CORE_MODULE_FILENAME>) <UTF8 string ptr>
 
 This points to a string containing the full filename of the providers
 module file.
@@ -433,12 +498,12 @@ B<OSSL_CAPABILITY_TLS_GROUP_IS_KEM>):
 
 =over 4
 
-=item "tls-group-name" (B<OSSL_CAPABILITY_TLS_GROUP_NAME>) <utf8 string>
+=item "tls-group-name" (B<OSSL_CAPABILITY_TLS_GROUP_NAME>) <UTF8 string>
 
 The name of the group as given in the IANA TLS Supported Groups registry
 L<https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8>.
 
-=item "tls-group-name-internal" (B<OSSL_CAPABILITY_TLS_GROUP_NAME_INTERNAL>) <utf8 string>
+=item "tls-group-name-internal" (B<OSSL_CAPABILITY_TLS_GROUP_NAME_INTERNAL>) <UTF8 string>
 
 The name of the group as known by the provider. This could be the same as the
 "tls-group-name", but does not have to be.
@@ -447,7 +512,7 @@ The name of the group as known by the provider. This could be the same as the
 
 The TLS group id value as given in the IANA TLS Supported Groups registry.
 
-=item "tls-group-alg" (B<OSSL_CAPABILITY_TLS_GROUP_ALG>) <utf8 string>
+=item "tls-group-alg" (B<OSSL_CAPABILITY_TLS_GROUP_ALG>) <UTF8 string>
 
 The name of a Key Management algorithm that the provider offers and that should
 be used with this group. Keys created should be able to support I<key exchange>

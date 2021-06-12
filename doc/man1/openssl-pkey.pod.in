@@ -32,8 +32,6 @@ B<openssl> B<pkey>
 [B<-ec_conv_form> I<arg>]
 [B<-ec_param_enc> I<arg>]
 
-=for openssl ifdef engine
-
 =head1 DESCRIPTION
 
 This command processes public or private keys. They can be
@@ -78,8 +76,7 @@ a pass phrase will be prompted for.
 
 =item B<-inform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The key input format; the default is B<PEM>.
-The only value with effect is B<ENGINE>; all others have become obsolete.
+The key input format; unspecified by default.
 See L<openssl-format-options(1)> for details.
 
 =item B<-passin> I<arg>
@@ -134,9 +131,11 @@ option is specified then the older "traditional" format is used instead.
 
 =item B<-pubout>
 
-By default the encoded private and public key is output;
-this option restricts the encoded output to the public components.
+By default the private and public key is output;
+this option restricts the output to the public components.
 This option is automatically set if the input is a public key.
+
+When combined with B<-text>, this is equivalent to B<-text_pub>.
 
 =item B<-noout>
 

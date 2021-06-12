@@ -47,11 +47,21 @@ inside the B<pathname> are B<ignored>.  Similarly, if a file is opened
 while scanning a directory, and that file has an B<.include> directive
 that specifies a directory, that is also ignored.
 
-As a general rule, the B<pathname> should be an absolute path.  Relative
-paths are evaluated based on the current working directory, so unless the
-file with the B<.include> directive is application-specific, the inclusion
-will not work as expected.  The environment variable B<OPENSSL_CONF_INCLUDE>,
-if it exists, will be prepended to all B<.include> B<pathname>'s.
+As a general rule, the B<pathname> should be an absolute path; this can
+be enforced with the B<abspath> and B<includedir> pragmas, described below.
+The environment variable B<OPENSSL_CONF_INCLUDE>, if it exists,
+is prepended to all relative pathnames.
+If the pathname is still relative, it is interpreted based on the
+current working directory.
+
+To require all file inclusions to name absolute paths, use the following
+directive:
+
+ .pragma [=] abspath:value
+
+The default behavior, where the B<value> is B<false> or B<off>, is to allow
+relative paths. To require all B<.include> pathnames to be absolute paths,
+use a B<value> of B<true> or B<on>.
 
 In these files, the dollar sign, B<$>, is used to reference a variable, as
 described below.  On some platforms, however, it is common to treat B<$>
@@ -60,22 +70,18 @@ done with the following directive:
 
  .pragma [=] dollarid:value
 
-Where B<value> is one of the following:
-
-=over 4
-
-=item B<off> or B<false>
-
-This is the default behavior. For example, C<foo$bar> is interpreted as
-C<foo> followed by the expansion of the variable C<bar>.
-
-=item B<on> or B<true>
-
-This specifies that dollar signs are part of the symbol name and
+The default behavior, where the B<value> is B<false> or B<off>, is to treat
+the dollarsign as indicating a variable name; C<foo$bar> is interpreted as
+C<foo> followed by the expansion of the variable C<bar>. If B<value> is
+B<true> or B<on>, then C<foo$bar> is a single seven-character name nad
 variable expansions must be specified using braces or parentheses.
-For example, C<foo$bar> is treated as a single seven-character name.
 
-=back
+ .pragma [=] includedir:value
+
+If a relative pathname is specified in the B<.include> directive, and
+the B<OPENSSL_CONF_INCLUDE> environment variable doesn't exist, then
+the value of the B<includedir> pragma, if it exists, is prepended to the
+pathname.
 
 =head2 Settings
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -25,10 +25,8 @@ static long buffer_callback_ctrl(BIO *h, int cmd, BIO_info_cb *fp);
 static const BIO_METHOD methods_buffer = {
     BIO_TYPE_BUFFER,
     "buffer",
-    /* TODO: Convert to new style write function */
     bwrite_conv,
     buffer_write,
-    /* TODO: Convert to new style read function */
     bread_conv,
     buffer_read,
     buffer_puts,
@@ -289,7 +287,9 @@ static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
     case BIO_C_SET_BUFF_READ_DATA:
         if (num > ctx->ibuf_size) {
-            p1 = OPENSSL_malloc((int)num);
+            if (num <= 0)
+                return 0;
+            p1 = OPENSSL_malloc((size_t)num);
             if (p1 == NULL)
                 goto malloc_error;
             OPENSSL_free(ctx->ibuf);
@@ -318,12 +318,14 @@ static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
         p1 = ctx->ibuf;
         p2 = ctx->obuf;
         if ((ibs > DEFAULT_BUFFER_SIZE) && (ibs != ctx->ibuf_size)) {
-            p1 = OPENSSL_malloc((int)num);
+            if (num <= 0)
+                return 0;
+            p1 = OPENSSL_malloc((size_t)num);
             if (p1 == NULL)
                 goto malloc_error;
         }
         if ((obs > DEFAULT_BUFFER_SIZE) && (obs != ctx->obuf_size)) {
-            p2 = OPENSSL_malloc((int)num);
+            p2 = OPENSSL_malloc((size_t)num);
             if (p2 == NULL) {
                 if (p1 != ctx->ibuf)
                     OPENSSL_free(p1);

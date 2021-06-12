@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2005 Nokia. All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -43,6 +43,7 @@ typedef struct {
     ASN1_OCTET_STRING *alpn_selected;
     uint32_t tlsext_max_fragment_len_mode;
     ASN1_OCTET_STRING *ticket_appdata;
+    uint32_t kex_group;
 } SSL_SESSION_ASN1;
 
 ASN1_SEQUENCE(SSL_SESSION_ASN1) = {
@@ -73,7 +74,8 @@ ASN1_SEQUENCE(SSL_SESSION_ASN1) = {
     ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, max_early_data, ZUINT32, 15),
     ASN1_EXP_OPT(SSL_SESSION_ASN1, alpn_selected, ASN1_OCTET_STRING, 16),
     ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, tlsext_max_fragment_len_mode, ZUINT32, 17),
-    ASN1_EXP_OPT(SSL_SESSION_ASN1, ticket_appdata, ASN1_OCTET_STRING, 18)
+    ASN1_EXP_OPT(SSL_SESSION_ASN1, ticket_appdata, ASN1_OCTET_STRING, 18),
+    ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, kex_group, UINT32, 19)
 } static_ASN1_SEQUENCE_END(SSL_SESSION_ASN1)
 
 IMPLEMENT_STATIC_ASN1_ENCODE_FUNCTIONS(SSL_SESSION_ASN1)
@@ -134,6 +136,8 @@ int i2d_SSL_SESSION(const SSL_SESSION *in, unsigned char **pp)
     as.version = SSL_SESSION_ASN1_VERSION;
     as.ssl_version = in->ssl_version;
 
+    as.kex_group = in->kex_group;
+
     if (in->cipher == NULL)
         l = in->cipher_id;
     else
@@ -159,8 +163,8 @@ int i2d_SSL_SESSION(const SSL_SESSION *in, unsigned char **pp)
     ssl_session_oinit(&as.session_id_context, &sid_ctx,
                       in->sid_ctx, in->sid_ctx_length);
 
-    as.time = in->time;
-    as.timeout = in->timeout;
+    as.time = (int64_t)in->time;
+    as.timeout = (int64_t)in->timeout;
     as.verify_result = in->verify_result;
 
     as.peer = in->peer;
@@ -272,6 +276,8 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 
     ret->ssl_version = (int)as->ssl_version;
 
+    ret->kex_group = as->kex_group;
+
     if (as->cipher->length != 2) {
         ERR_raise(ERR_LIB_SSL, SSL_R_CIPHER_CODE_WRONG_LENGTH);
         goto err;
@@ -296,14 +302,15 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
     ret->master_key_length = tmpl;
 
     if (as->time != 0)
-        ret->time = (long)as->time;
+        ret->time = (time_t)as->time;
     else
-        ret->time = (long)time(NULL);
+        ret->time = time(NULL);
 
     if (as->timeout != 0)
-        ret->timeout = (long)as->timeout;
+        ret->timeout = (time_t)as->timeout;
     else
         ret->timeout = 3;
+    ssl_session_calculate_timeout(ret);
 
     X509_free(ret->peer);
     ret->peer = as->peer;

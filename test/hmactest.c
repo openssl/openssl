@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -100,10 +100,7 @@ static int test_hmac_md5(int idx)
                 test[idx].data, test[idx].data_len, NULL, NULL),
                 MD5_DIGEST_LENGTH);
 
-    if (!TEST_str_eq(p, test[idx].digest))
-      return 0;
-
-    return 1;
+    return TEST_ptr(p) && TEST_str_eq(p, test[idx].digest);
 }
 # endif
 
@@ -151,7 +148,7 @@ static int test_hmac_run(void)
         goto err;
 
     p = pt(buf, len);
-    if (!TEST_str_eq(p, test[4].digest))
+    if (!TEST_ptr(p) || !TEST_str_eq(p, test[4].digest))
         goto err;
 
     if (!TEST_false(HMAC_Init_ex(ctx, NULL, 0, EVP_sha256(), NULL)))
@@ -164,7 +161,7 @@ static int test_hmac_run(void)
         goto err;
 
     p = pt(buf, len);
-    if (!TEST_str_eq(p, test[5].digest))
+    if (!TEST_ptr(p) || !TEST_str_eq(p, test[5].digest))
         goto err;
 
     if (!TEST_true(HMAC_Init_ex(ctx, test[6].key, test[6].key_len, NULL, NULL))
@@ -172,7 +169,7 @@ static int test_hmac_run(void)
         || !TEST_true(HMAC_Final(ctx, buf, &len)))
         goto err;
     p = pt(buf, len);
-    if (!TEST_str_eq(p, test[6].digest))
+    if (!TEST_ptr(p) || !TEST_str_eq(p, test[6].digest))
         goto err;
 
     /* Test reusing a key */
@@ -181,7 +178,7 @@ static int test_hmac_run(void)
         || !TEST_true(HMAC_Final(ctx, buf, &len)))
         goto err;
     p = pt(buf, len);
-    if (!TEST_str_eq(p, test[6].digest))
+    if (!TEST_ptr(p) || !TEST_str_eq(p, test[6].digest))
         goto err;
 
     /*
@@ -193,7 +190,7 @@ static int test_hmac_run(void)
         || !TEST_true(HMAC_Final(ctx, buf, &len)))
         goto err;
     p = pt(buf, len);
-    if (!TEST_str_eq(p, test[6].digest))
+    if (!TEST_ptr(p) || !TEST_str_eq(p, test[6].digest))
         goto err;
 
     ret = 1;
@@ -207,10 +204,10 @@ static int test_hmac_single_shot(void)
 {
     char *p;
 
-    /* Test single-shot with an empty key. */
+    /* Test single-shot with NULL key. */
     p = pt(HMAC(EVP_sha1(), NULL, 0, test[4].data, test[4].data_len,
                 NULL, NULL), SHA_DIGEST_LENGTH);
-    if (!TEST_str_eq(p, test[4].digest))
+    if (!TEST_ptr(p) || !TEST_str_eq(p, test[4].digest))
         return 0;
 
     return 1;
@@ -237,7 +234,7 @@ static int test_hmac_copy(void)
         goto err;
 
     p = pt(buf, len);
-    if (!TEST_str_eq(p, test[7].digest))
+    if (!TEST_ptr(p) || !TEST_str_eq(p, test[7].digest))
         goto err;
 
     ret = 1;
@@ -253,6 +250,8 @@ static char *pt(unsigned char *md, unsigned int len)
     unsigned int i;
     static char buf[80];
 
+    if (md == NULL)
+        return NULL;
     for (i = 0; i < len; i++)
         sprintf(&(buf[i * 2]), "%02x", md[i]);
     return buf;

@@ -54,6 +54,10 @@ EVP_des_ofb()
 DES in CBC, ECB, CFB with 64-bit shift, CFB with 1-bit shift, CFB with 8-bit
 shift and OFB modes.
 
+None of these algorithms are provided by the OpenSSL default provider.
+To use them it is necessary to load either the OpenSSL legacy provider or another
+implementation.
+
 =item EVP_des_ede(),
 EVP_des_ede_cbc(),
 EVP_des_ede_cfb(),
@@ -95,7 +99,7 @@ L<EVP_CIPHER_meth_new(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

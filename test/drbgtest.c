@@ -81,7 +81,7 @@ static int rand_priv_bytes(unsigned char *buf, int num)
  */
 static int state(EVP_RAND_CTX *drbg)
 {
-    return EVP_RAND_state(drbg);
+    return EVP_RAND_get_state(drbg);
 }
 
 static unsigned int query_rand_uint(EVP_RAND_CTX *drbg, const char *name)
@@ -90,7 +90,7 @@ static unsigned int query_rand_uint(EVP_RAND_CTX *drbg, const char *name)
     unsigned int n;
 
     *params = OSSL_PARAM_construct_uint(name, &n);
-    if (EVP_RAND_get_ctx_params(drbg, params))
+    if (EVP_RAND_CTX_get_params(drbg, params))
         return n;
     return 0;
 }
@@ -104,7 +104,7 @@ DRBG_UINT(reseed_counter)
 
 static PROV_DRBG *prov_rand(EVP_RAND_CTX *drbg)
 {
-    return (PROV_DRBG *)drbg->data;
+    return (PROV_DRBG *)drbg->algctx;
 }
 
 static void set_reseed_counter(EVP_RAND_CTX *drbg, unsigned int n)
@@ -125,7 +125,7 @@ static time_t reseed_time(EVP_RAND_CTX *drbg)
     time_t t;
 
     *params = OSSL_PARAM_construct_time_t(OSSL_DRBG_PARAM_RESEED_TIME, &t);
-    if (EVP_RAND_get_ctx_params(drbg, params))
+    if (EVP_RAND_CTX_get_params(drbg, params))
         return t;
     return 0;
 }
@@ -691,7 +691,7 @@ static int set_reseed_time_interval(EVP_RAND_CTX *drbg, int t)
     params[0] = OSSL_PARAM_construct_int(OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL,
                                          &t);
     params[1] = OSSL_PARAM_construct_end();
-    return EVP_RAND_set_ctx_params(drbg, params);
+    return EVP_RAND_CTX_set_params(drbg, params);
 }
 
 static void run_multi_thread_test(void)
@@ -808,7 +808,7 @@ static EVP_RAND_CTX *new_drbg(EVP_RAND_CTX *parent)
 
     if (!TEST_ptr(rand = EVP_RAND_fetch(NULL, "CTR-DRBG", NULL))
             || !TEST_ptr(drbg = EVP_RAND_CTX_new(rand, parent))
-            || !TEST_true(EVP_RAND_set_ctx_params(drbg, params))) {
+            || !TEST_true(EVP_RAND_CTX_set_params(drbg, params))) {
         EVP_RAND_CTX_free(drbg);
         drbg = NULL;
     }

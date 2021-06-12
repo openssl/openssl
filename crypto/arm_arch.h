@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -72,6 +72,7 @@
 # ifndef __ASSEMBLER__
 extern unsigned int OPENSSL_armcap_P;
 extern unsigned int OPENSSL_arm_midr;
+extern unsigned int OPENSSL_armv8_rsa_neonized;
 # endif
 
 # define ARMV7_NEON      (1<<0)

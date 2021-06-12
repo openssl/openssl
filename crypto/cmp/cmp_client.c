@@ -11,6 +11,7 @@
 
 #include "cmp_local.h"
 #include "internal/cryptlib.h"
+#include "e_os.h" /* ossl_sleep() */
 
 /* explicit #includes not strictly needed since implied by the above: */
 #include <openssl/bio.h>
@@ -18,8 +19,7 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/x509v3.h>
-
-#include "openssl/cmp_util.h"
+#include <openssl/cmp_util.h>
 
 #define IS_CREP(t) ((t) == OSSL_CMP_PKIBODY_IP || (t) == OSSL_CMP_PKIBODY_CP \
                         || (t) == OSSL_CMP_PKIBODY_KUP)
@@ -71,7 +71,6 @@ static int unprotected_exception(const OSSL_CMP_CTX *ctx,
 
             if (sk_OSSL_CMP_CERTRESPONSE_num(crepmsg->response) > 1)
                 return -1;
-            /* TODO: handle potentially multiple CertResponses in CertRepMsg */
             if (crep == NULL)
                 return -1;
             if (ossl_cmp_pkisi_get_status(crep->status)
@@ -262,7 +261,6 @@ static int poll_for_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
                   "received 'waiting' PKIStatus, starting to poll for response");
     *rep = NULL;
     for (;;) {
-        /* TODO: handle potentially multiple poll requests per message */
         if ((preq = ossl_cmp_pollReq_new(ctx, rid)) == NULL)
             goto err;
 
@@ -277,7 +275,6 @@ static int poll_for_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
             char str[OSSL_CMP_PKISI_BUFLEN];
             int len;
 
-            /* TODO: handle potentially multiple elements in pollRep */
             if (sk_OSSL_CMP_POLLREP_num(prc) > 1) {
                 ERR_raise(ERR_LIB_CMP, CMP_R_MULTIPLE_RESPONSES_NOT_SUPPORTED);
                 goto err;
@@ -496,9 +493,8 @@ int OSSL_CMP_certConf_cb(OSSL_CMP_CTX *ctx, X509 *cert, int fail_info,
         return fail_info;
 
     ossl_cmp_debug(ctx, "trying to build chain for newly enrolled cert");
-    chain = ossl_cmp_build_cert_chain(ctx->libctx, ctx->propq,
-                                      out_trusted /* may be NULL */,
-                                      ctx->untrusted, cert);
+    chain = X509_build_chain(cert, ctx->untrusted, out_trusted /* maybe NULL */,
+                             0, ctx->libctx, ctx->propq);
     if (sk_X509_num(chain) > 0)
         X509_free(sk_X509_shift(chain)); /* remove leaf (EE) cert */
     if (out_trusted != NULL) {
@@ -552,7 +548,6 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
         ERR_raise(ERR_LIB_CMP, CMP_R_MULTIPLE_RESPONSES_NOT_SUPPORTED);
         return 0;
     }
-    /* TODO: handle potentially multiple CertResponses in CertRepMsg */
     crep = ossl_cmp_certrepmessage_get0_certresponse(crepmsg, rid);
     if (crep == NULL)
         return 0;
@@ -623,11 +618,6 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
     if (fail_info != 0) /* immediately log error before any certConf exchange */
         ossl_cmp_log1(ERROR, ctx,
                       "rejecting newly enrolled cert with subject: %s", subj);
-
-    /*
-     * TODO: better move certConf exchange to do_certreq_seq() such that
-     * also more low-level errors with CertReqMessages get reported to server
-     */
     if (!ctx->disableConfirm
             && !ossl_cmp_hdr_has_implicitConfirm((*resp)->header)) {
         if (!ossl_cmp_exchange_certConf(ctx, fail_info, txt))
@@ -688,9 +678,8 @@ int OSSL_CMP_try_certreq(OSSL_CMP_CTX *ctx, int req_type,
     } else {
         if (req_type < 0)
             return ossl_cmp_exchange_error(ctx, OSSL_CMP_PKISTATUS_rejection,
-                                           0 /* TODO better fail_info value? */,
-                                           "polling aborted", 0 /* errorCode */,
-                                           "by application");
+                                           0, "polling aborted",
+                                           0 /* errorCode */, "by application");
         res = poll_for_response(ctx, 0 /* no sleep */, rid, &rep, checkAfter);
         if (res <= 0) /* waiting or error */
             return res;
@@ -708,7 +697,6 @@ int OSSL_CMP_try_certreq(OSSL_CMP_CTX *ctx, int req_type,
  * certConf, PKIconf, and polling if required.
  * Will sleep as long as indicated by the server (according to checkAfter).
  * All enrollment options need to be present in the context.
- * TODO: another function to request two certificates at once should be created.
  * Returns pointer to received certificate, or NULL if none was received.
  */
 X509 *OSSL_CMP_exec_certreq(OSSL_CMP_CTX *ctx, int req_type,

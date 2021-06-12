@@ -17,6 +17,7 @@
 #include <openssl/core_names.h>
 #include "internal/param_build_set.h"
 #include "crypto/dh.h"
+#include "dh_local.h"
 
 /*
  * The intention with the "backend" source file is to offer backend functions
@@ -115,6 +116,63 @@ int ossl_dh_key_todata(DH *dh, OSSL_PARAM_BLD *bld, OSSL_PARAM params[])
         return 0;
 
     return 1;
+}
+
+int ossl_dh_is_foreign(const DH *dh)
+{
+#ifndef FIPS_MODULE
+    if (dh->engine != NULL || ossl_dh_get_method(dh) != DH_OpenSSL())
+        return 1;
+#endif
+    return 0;
+}
+
+static ossl_inline int dh_bn_dup_check(BIGNUM **out, const BIGNUM *f)
+{
+    if (f != NULL && (*out = BN_dup(f)) == NULL)
+        return 0;
+    return 1;
+}
+
+DH *ossl_dh_dup(const DH *dh, int selection)
+{
+    DH *dupkey = NULL;
+
+    /* Do not try to duplicate foreign DH keys */
+    if (ossl_dh_is_foreign(dh))
+        return NULL;
+
+    if ((dupkey = ossl_dh_new_ex(dh->libctx)) == NULL)
+        return NULL;
+
+    dupkey->length = DH_get_length(dh);
+    if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0
+        && !ossl_ffc_params_copy(&dupkey->params, &dh->params))
+        goto err;
+
+    dupkey->flags = dh->flags;
+
+    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0
+        && ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) == 0
+            || !dh_bn_dup_check(&dupkey->pub_key, dh->pub_key)))
+        goto err;
+
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0
+        && ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) == 0
+            || !dh_bn_dup_check(&dupkey->priv_key, dh->priv_key)))
+        goto err;
+
+#ifndef FIPS_MODULE
+    if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_DH,
+                            &dupkey->ex_data, &dh->ex_data))
+        goto err;
+#endif
+
+    return dupkey;
+
+ err:
+    DH_free(dupkey);
+    return NULL;
 }
 
 #ifndef FIPS_MODULE

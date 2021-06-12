@@ -49,6 +49,13 @@ Gets the MAC size.
 The "size" parameter can also be retrieved with with EVP_MAC_CTX_get_mac_size().
 The length of the "size" parameter should not exceed that of an B<unsigned int>.
 
+=head1 NOTES
+
+The OpenSSL implementation of the Poly 1305 MAC corresponds to RFC 7539.
+
+It is critical to never reuse the key.  The security implication noted in
+RFC 8439 applies equally to the OpenSSL implementation.
+
 =head1 SEE ALSO
 
 L<EVP_MAC_CTX_get_params(3)>, L<EVP_MAC_CTX_set_params(3)>,

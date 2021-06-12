@@ -14,14 +14,12 @@
 #include <openssl/params.h>
 #include <openssl/types.h>
 #include <openssl/safestack.h>
-#include "internal/cryptlib.h"
-#include "openssl/param_build.h"
+#include "internal/param_build_set.h"
 
 /*
  * Special internal param type to indicate the end of an allocate OSSL_PARAM
  * array.
  */
-#define OSSL_PARAM_ALLOCATED_END    127
 
 typedef struct {
     const char *key;
@@ -50,17 +48,6 @@ struct ossl_param_bld_st {
     STACK_OF(OSSL_PARAM_BLD_DEF) *params;
 };
 
-typedef union {
-    OSSL_UNION_ALIGN;
-} OSSL_PARAM_BLD_BLOCK;
-
-#define ALIGN_SIZE  sizeof(OSSL_PARAM_BLD_BLOCK)
-
-static size_t bytes_to_blocks(size_t bytes)
-{
-    return (bytes + ALIGN_SIZE - 1) / ALIGN_SIZE;
-}
-
 static OSSL_PARAM_BLD_DEF *param_push(OSSL_PARAM_BLD *bld, const char *key,
                                       int size, size_t alloc, int type,
                                       int secure)
@@ -74,7 +61,7 @@ static OSSL_PARAM_BLD_DEF *param_push(OSSL_PARAM_BLD *bld, const char *key,
     pd->key = key;
     pd->type = type;
     pd->size = size;
-    pd->alloc_blocks = bytes_to_blocks(alloc);
+    pd->alloc_blocks = ossl_param_bytes_to_blocks(alloc);
     if ((pd->secure = secure) != 0)
         bld->secure_blocks += pd->alloc_blocks;
     else
@@ -240,6 +227,7 @@ int OSSL_PARAM_BLD_push_utf8_string(OSSL_PARAM_BLD *bld, const char *key,
                                     const char *buf, size_t bsize)
 {
     OSSL_PARAM_BLD_DEF *pd;
+    int secure;
 
     if (bsize == 0) {
         bsize = strlen(buf);
@@ -247,7 +235,8 @@ int OSSL_PARAM_BLD_push_utf8_string(OSSL_PARAM_BLD *bld, const char *key,
         ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_STRING_TOO_LONG);
         return 0;
     }
-    pd = param_push(bld, key, bsize, bsize + 1, OSSL_PARAM_UTF8_STRING, 0);
+    secure = CRYPTO_secure_allocated(buf);
+    pd = param_push(bld, key, bsize, bsize + 1, OSSL_PARAM_UTF8_STRING, secure);
     if (pd == NULL)
         return 0;
     pd->string = buf;
@@ -276,12 +265,14 @@ int OSSL_PARAM_BLD_push_octet_string(OSSL_PARAM_BLD *bld, const char *key,
                                      const void *buf, size_t bsize)
 {
     OSSL_PARAM_BLD_DEF *pd;
+    int secure;
 
     if (bsize > INT_MAX) {
         ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_STRING_TOO_LONG);
         return 0;
     }
-    pd = param_push(bld, key, bsize, bsize, OSSL_PARAM_OCTET_STRING, 0);
+    secure = CRYPTO_secure_allocated(buf);
+    pd = param_push(bld, key, bsize, bsize, OSSL_PARAM_OCTET_STRING, secure);
     if (pd == NULL)
         return 0;
     pd->string = buf;
@@ -305,8 +296,8 @@ int OSSL_PARAM_BLD_push_octet_ptr(OSSL_PARAM_BLD *bld, const char *key,
 }
 
 static OSSL_PARAM *param_bld_convert(OSSL_PARAM_BLD *bld, OSSL_PARAM *param,
-                                     OSSL_PARAM_BLD_BLOCK *blk,
-                                     OSSL_PARAM_BLD_BLOCK *secure)
+                                     OSSL_PARAM_ALIGNED_BLOCK *blk,
+                                     OSSL_PARAM_ALIGNED_BLOCK *secure)
 {
     int i, num = sk_OSSL_PARAM_BLD_DEF_num(bld->params);
     OSSL_PARAM_BLD_DEF *pd;
@@ -356,12 +347,12 @@ static OSSL_PARAM *param_bld_convert(OSSL_PARAM_BLD *bld, OSSL_PARAM *param,
 
 OSSL_PARAM *OSSL_PARAM_BLD_to_param(OSSL_PARAM_BLD *bld)
 {
-    OSSL_PARAM_BLD_BLOCK *blk, *s = NULL;
+    OSSL_PARAM_ALIGNED_BLOCK *blk, *s = NULL;
     OSSL_PARAM *params, *last;
     const int num = sk_OSSL_PARAM_BLD_DEF_num(bld->params);
-    const size_t p_blks = bytes_to_blocks((1 + num) * sizeof(*params));
-    const size_t total = ALIGN_SIZE * (p_blks + bld->total_blocks);
-    const size_t ss = ALIGN_SIZE * bld->secure_blocks;
+    const size_t p_blks = ossl_param_bytes_to_blocks((1 + num) * sizeof(*params));
+    const size_t total = OSSL_PARAM_ALIGN_SIZE * (p_blks + bld->total_blocks);
+    const size_t ss = OSSL_PARAM_ALIGN_SIZE * bld->secure_blocks;
 
     if (ss > 0) {
         s = OPENSSL_secure_malloc(ss);
@@ -376,28 +367,13 @@ OSSL_PARAM *OSSL_PARAM_BLD_to_param(OSSL_PARAM_BLD *bld)
         OPENSSL_secure_free(s);
         return NULL;
     }
-    blk = p_blks + (OSSL_PARAM_BLD_BLOCK *)(params);
+    blk = p_blks + (OSSL_PARAM_ALIGNED_BLOCK *)(params);
     last = param_bld_convert(bld, params, blk, s);
-    last->data_size = ss;
-    last->data = s;
-    last->data_type = OSSL_PARAM_ALLOCATED_END;
+    ossl_param_set_secure_block(last, s, ss);
 
     /* Reset builder for reuse */
     bld->total_blocks = 0;
     bld->secure_blocks = 0;
     free_all_params(bld);
     return params;
-}
-
-void OSSL_PARAM_BLD_free_params(OSSL_PARAM *params)
-{
-    if (params != NULL) {
-        OSSL_PARAM *p;
-
-        for (p = params; p->key != NULL; p++)
-            ;
-        if (p->data_type == OSSL_PARAM_ALLOCATED_END)
-            OPENSSL_secure_clear_free(p->data, p->data_size);
-        OPENSSL_free(params);
-    }
 }

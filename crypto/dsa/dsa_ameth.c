@@ -424,8 +424,8 @@ static size_t dsa_pkey_dirty_cnt(const EVP_PKEY *pkey)
 }
 
 static int dsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
-                              EVP_KEYMGMT *to_keymgmt, OSSL_LIB_CTX *libctx,
-                              const char *propq)
+                              OSSL_FUNC_keymgmt_import_fn *importer,
+                              OSSL_LIB_CTX *libctx, const char *propq)
 {
     DSA *dsa = from->pkey.dsa;
     OSSL_PARAM_BLD *tmpl;
@@ -472,9 +472,9 @@ static int dsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
         goto err;
 
     /* We export, the provider imports */
-    rv = evp_keymgmt_import(to_keymgmt, to_keydata, selection, params);
+    rv = importer(to_keydata, selection, params);
 
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
  err:
     OSSL_PARAM_BLD_free(tmpl);
     return rv;
@@ -500,45 +500,6 @@ static int dsa_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
     return 1;
 }
 
-static ossl_inline int dsa_bn_dup_check(BIGNUM **out, const BIGNUM *f)
-{
-    if (f != NULL && (*out = BN_dup(f)) == NULL)
-        return 0;
-    return 1;
-}
-
-static DSA *dsa_dup(const DSA *dsa)
-{
-    DSA *dupkey = NULL;
-
-    /* Do not try to duplicate foreign DSA keys */
-    if (DSA_get_method((DSA *)dsa) != DSA_OpenSSL())
-        return NULL;
-
-    if ((dupkey = ossl_dsa_new(dsa->libctx)) == NULL)
-        return NULL;
-
-    if (!ossl_ffc_params_copy(&dupkey->params, &dsa->params))
-        goto err;
-
-    dupkey->flags = dsa->flags;
-
-    if (!dsa_bn_dup_check(&dupkey->pub_key, dsa->pub_key))
-        goto err;
-    if (!dsa_bn_dup_check(&dupkey->priv_key, dsa->priv_key))
-        goto err;
-
-    if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_DSA,
-                            &dupkey->ex_data, &dsa->ex_data))
-        goto err;
-
-    return dupkey;
-
- err:
-    DSA_free(dupkey);
-    return NULL;
-}
-
 static int dsa_pkey_copy(EVP_PKEY *to, EVP_PKEY *from)
 {
     DSA *dsa = from->pkey.dsa;
@@ -546,7 +507,7 @@ static int dsa_pkey_copy(EVP_PKEY *to, EVP_PKEY *from)
     int ret;
 
     if (dsa != NULL) {
-        dupkey = dsa_dup(dsa);
+        dupkey = ossl_dsa_dup(dsa, OSSL_KEYMGMT_SELECT_ALL);
         if (dupkey == NULL)
             return 0;
     }

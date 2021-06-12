@@ -440,8 +440,8 @@ static size_t dh_pkey_dirty_cnt(const EVP_PKEY *pkey)
 }
 
 static int dh_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
-                             EVP_KEYMGMT *to_keymgmt, OSSL_LIB_CTX *libctx,
-                             const char *propq)
+                             OSSL_FUNC_keymgmt_import_fn *importer,
+                             OSSL_LIB_CTX *libctx, const char *propq)
 {
     DH *dh = from->pkey.dh;
     OSSL_PARAM_BLD *tmpl;
@@ -495,9 +495,9 @@ static int dh_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
         goto err;
 
     /* We export, the provider imports */
-    rv = evp_keymgmt_import(to_keymgmt, to_keydata, selection, params);
+    rv = importer(to_keydata, selection, params);
 
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
 err:
     OSSL_PARAM_BLD_free(tmpl);
     return rv;
@@ -536,46 +536,6 @@ static int dhx_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
     return dh_pkey_import_from_type(params, vpctx, EVP_PKEY_DHX);
 }
 
-static ossl_inline int dh_bn_dup_check(BIGNUM **out, const BIGNUM *f)
-{
-    if (f != NULL && (*out = BN_dup(f)) == NULL)
-        return 0;
-    return 1;
-}
-
-static DH *dh_dup(const DH *dh)
-{
-    DH *dupkey = NULL;
-
-    /* Do not try to duplicate foreign DH keys */
-    if (ossl_dh_get_method(dh) != DH_OpenSSL())
-        return NULL;
-
-    if ((dupkey = ossl_dh_new_ex(dh->libctx)) == NULL)
-        return NULL;
-
-    dupkey->length = DH_get_length(dh);
-    if (!ossl_ffc_params_copy(&dupkey->params, &dh->params))
-        goto err;
-
-    dupkey->flags = dh->flags;
-
-    if (!dh_bn_dup_check(&dupkey->pub_key, dh->pub_key))
-        goto err;
-    if (!dh_bn_dup_check(&dupkey->priv_key, dh->priv_key))
-        goto err;
-
-    if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_DH,
-                            &dupkey->ex_data, &dh->ex_data))
-        goto err;
-
-    return dupkey;
-
- err:
-    DH_free(dupkey);
-    return NULL;
-}
-
 static int dh_pkey_copy(EVP_PKEY *to, EVP_PKEY *from)
 {
     DH *dh = from->pkey.dh;
@@ -583,7 +543,7 @@ static int dh_pkey_copy(EVP_PKEY *to, EVP_PKEY *from)
     int ret;
 
     if (dh != NULL) {
-        dupkey = dh_dup(dh);
+        dupkey = ossl_dh_dup(dh, OSSL_KEYMGMT_SELECT_ALL);
         if (dupkey == NULL)
             return 0;
     }
