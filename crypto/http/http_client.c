@@ -23,8 +23,6 @@
 #include "internal/sockets.h"
 #include "internal/cryptlib.h" /* for ossl_assert() */
 
-#include "http_local.h"
-
 #define HTTP_PREFIX "HTTP/"
 #define HTTP_VERSION_PATT "1." /* allow 1.x */
 #define HTTP_PREFIX_VERSION HTTP_PREFIX""HTTP_VERSION_PATT
@@ -897,7 +895,7 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
             port = NULL;
         if (port == NULL && strchr(server, ':') == NULL)
             port = use_ssl ? OSSL_HTTPS_PORT : OSSL_HTTP_PORT;
-        proxy = ossl_http_adapt_proxy(proxy, no_proxy, server, use_ssl);
+        proxy = OSSL_HTTP_adapt_proxy(proxy, no_proxy, server, use_ssl);
         if (proxy != NULL
             && !OSSL_HTTP_parse_url(proxy, NULL /* use_ssl */, NULL /* user */,
                                     &proxy_host, &proxy_port, NULL /* num */,

@@ -100,6 +100,8 @@ int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
 int OSSL_HTTP_parse_url(const char *url, int *pssl, char **puser, char **phost,
                         char **pport, int *pport_num,
                         char **ppath, char **pquery, char **pfrag);
+const char *OSSL_HTTP_adapt_proxy(const char *proxy, const char *no_proxy,
+                                  const char *server, int use_ssl);
 
 # ifdef  __cplusplus
 }

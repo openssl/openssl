@@ -1765,8 +1765,7 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
     int portnum, ssl;
     char server_buf[200] = { '\0' };
     char proxy_buf[200] = { '\0' };
-    char *proxy_host = NULL;
-    char *proxy_port_str = NULL;
+    const char *proxy_host = NULL;
 
     if (opt_server == NULL) {
         CMP_err("missing -server option");
@@ -1795,8 +1794,9 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
                        opt_tls_used ? "s" : "", host, port,
                        *used_path == '/' ? used_path + 1 : used_path);
 
-    if (opt_proxy != NULL)
-        (void)BIO_snprintf(proxy_buf, sizeof(proxy_buf), " via %s", opt_proxy);
+    proxy_host = OSSL_HTTP_adapt_proxy(opt_proxy, opt_no_proxy, host, ssl);
+    if (proxy_host != NULL)
+        (void)BIO_snprintf(proxy_buf, sizeof(proxy_buf), " via %s", proxy_host);
 
     if (!transform_opts())
         goto err;
@@ -1902,8 +1902,6 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
     OPENSSL_free(host);
     OPENSSL_free(port);
     OPENSSL_free(path);
-    OPENSSL_free(proxy_host);
-    OPENSSL_free(proxy_port_str);
     return ret;
  oom:
     CMP_err("out of memory");
