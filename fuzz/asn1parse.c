@@ -23,9 +23,9 @@ static BIO *bio_out;
 
 int FuzzerInitialize(int *argc, char ***argv)
 {
-    bio_out = BIO_new_file("/dev/null", "w");
+    bio_out = BIO_new(BIO_s_mem()); /* yet output will be ignored */
     if (bio_out == NULL)
-        bio_out = BIO_new(BIO_s_mem());
+        return 0;
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
     ERR_clear_error();
     CRYPTO_free_ex_index(0, -1);
