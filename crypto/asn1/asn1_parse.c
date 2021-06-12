@@ -115,9 +115,7 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
         op = p;
         j = ASN1_get_object(&p, &len, &tag, &xclass, length);
         if (j & 0x80) {
-            if (BIO_write(bp, "Error in encoding\n", 18) <= 0)
-                goto end;
-            ret = 0;
+            BIO_puts(bp, "Error in encoding\n");
             goto end;
         }
         hl = (p - op);
@@ -136,7 +134,6 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
                 goto end;
             if (len > length) {
                 BIO_printf(bp, "length is greater than %ld\n", length);
-                ret = 0;
                 goto end;
             }
             if ((j == 0x21) && (len == 0)) {
@@ -144,10 +141,8 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
                     r = asn1_parse2(bp, &p, (long)(tot - p),
                                     offset + (p - *pp), depth + 1,
                                     indent, dump);
-                    if (r == 0) {
-                        ret = 0;
+                    if (r == 0)
                         goto end;
-                    }
                     if ((r == 2) || (p >= tot)) {
                         len = p - sp;
                         break;
@@ -161,10 +156,8 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
                     r = asn1_parse2(bp, &p, tmp,
                                     offset + (p - *pp), depth + 1,
                                     indent, dump);
-                    if (r == 0) {
-                        ret = 0;
+                    if (r == 0)
                         goto end;
-                    }
                     tmp -= p - sp;
                 }
             }
