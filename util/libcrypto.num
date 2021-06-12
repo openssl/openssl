@@ -4873,6 +4873,7 @@ BIO_socket_wait                         ?	3_0_0	EXIST::FUNCTION:SOCK
 BIO_wait                                ?	3_0_0	EXIST::FUNCTION:
 BIO_do_connect_retry                    ?	3_0_0	EXIST::FUNCTION:
 OSSL_parse_url                          ?	3_0_0	EXIST::FUNCTION:
+OSSL_HTTP_adapt_proxy                   ?	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_REQ_CTX_get_resp_len          ?	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_REQ_CTX_set_expected          ?	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_is_alive                      ?	3_0_0	EXIST::FUNCTION:
