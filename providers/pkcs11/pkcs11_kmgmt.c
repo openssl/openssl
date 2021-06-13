@@ -4,6 +4,7 @@
 #include <openssl/core_dispatch.h>
 #include <openssl/rsa.h>
 #include <openssl/params.h>
+#include <openssl/stack.h>
 #include "prov/names.h"
 #include "prov/providercommon.h"
 #include "pkcs11_ctx.h"
@@ -14,6 +15,9 @@
 /* Private functions */
 PKCS11_TYPE_DATA_ITEM *pkcs11_get_mech_data(PKCS11_CTX *provctx, CK_MECHANISM_TYPE type,
                                             CK_ULONG bits);
+int pkcs11_add_attribute(OPENSSL_STACK *stack, CK_ATTRIBUTE_TYPE type,
+                         CK_VOID_PTR pValue, CK_ULONG ulValueLen);
+
 
 /* Internal structures */
 typedef struct pkcs11_genctx_st {
@@ -83,8 +87,8 @@ PKCS11_TYPE_DATA_ITEM *pkcs11_get_mech_data(PKCS11_CTX *provctx, CK_MECHANISM_TY
     int i = 0;
     PKCS11_TYPE_DATA_ITEM *pkeymgmt = NULL;
 
-    pkeymgmt = provctx->keymgmt.items;
-    for (i = 0; i < provctx->keymgmt.len; i++, pkeymgmt++) {
+    for (i = 0; i < OPENSSL_sk_num(provctx->keymgmt.items); i++) {
+        pkeymgmt = (PKCS11_TYPE_DATA_ITEM *)OPENSSL_sk_value(provctx->keymgmt.items, i);
         if (pkeymgmt->type == type) {
             if (bits >= pkeymgmt->info.ulMinKeySize
                 && bits <= pkeymgmt->info.ulMaxKeySize)
@@ -131,6 +135,22 @@ end:
     return ret;
 }
 
+int pkcs11_add_attribute(OPENSSL_STACK *stack, CK_ATTRIBUTE_TYPE type,
+                         CK_VOID_PTR pValue, CK_ULONG ulValueLen)
+{
+    CK_ATTRIBUTE *attr = (CK_ATTRIBUTE *)OPENSSL_zalloc(sizeof(CK_ATTRIBUTE));
+    if (attr == NULL)
+        return 0;
+    attr->type = type;
+    attr->pValue = pValue;
+    attr->ulValueLen = ulValueLen;
+    if (!OPENSSL_sk_push(stack, attr)){
+        OPENSSL_free(attr);
+        return 0;
+    }
+    return 1;
+}
+
 static void *pkcs11_keymgmt_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg)
 {
     PKCS11_GENCTX *gctx = (PKCS11_GENCTX*)genctx;
@@ -141,61 +161,79 @@ static void *pkcs11_keymgmt_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg)
     CK_BBOOL flag_token;
     CK_BBOOL flag_true = CK_TRUE;
     CK_RV rv = CKR_OK;
-    CK_BYTE *pupexp = NULL;
-    int len = 0;
+    CK_BYTE *pub_exp = NULL;
+    int pub_exp_len = 0;
     CK_ATTRIBUTE *pub_tbl = NULL;
     CK_ATTRIBUTE *priv_tbl = NULL;
     size_t pub_tbl_len = 0;
     size_t priv_tbl_len = 0;
+    OPENSSL_STACK *pub_stack = NULL;
+    OPENSSL_STACK *priv_stack = NULL;
+    int i = 0;
+    CK_ATTRIBUTE *pattr = NULL;
 
-    /* Check ret values */
-    len = BN_num_bytes(gctx->rsa.public_exponent);
-    if (len == 0) 
+    pub_stack = OPENSSL_sk_new_null();
+    if (pub_stack == NULL)
         goto end;
 
-    pupexp = (CK_BYTE*)malloc(len);
-    if (pupexp == NULL)
+    priv_stack = OPENSSL_sk_new_null();
+    if (priv_stack == NULL)
         goto end;
 
-    len = BN_bn2bin(gctx->rsa.public_exponent, pupexp);
+    pub_exp_len = BN_num_bytes(gctx->rsa.public_exponent);
+    if (pub_exp_len == 0) 
+        goto end;
+
+    pub_exp = (CK_BYTE*)OPENSSL_zalloc(pub_exp_len);
+    if (pub_exp == NULL)
+        goto end;
+
+    pub_exp_len = BN_bn2bin(gctx->rsa.public_exponent, pub_exp);
     switch(gctx->type)
     {
     case CKM_RSA_PKCS_KEY_PAIR_GEN: {
-        /* WB use flag from mechanics */
-        CK_ATTRIBUTE pub_templ[] = {
-            /* Common storage object attributes */
-            {CKA_TOKEN, &flag_token, sizeof(flag_token)},
-            /* Common public key attributes */
-            {CKA_ENCRYPT, &flag_true, sizeof(flag_true)},
-            {CKA_VERIFY, &flag_true, sizeof(flag_true)},
-            {CKA_WRAP, &flag_true, sizeof(flag_true)},
-            /* RSA public key object attributes  */
-            {CKA_MODULUS_BITS,
-             &gctx->rsa.modulus_bits, sizeof(gctx->rsa.modulus_bits)}, /* required */
-            {CKA_PUBLIC_EXPONENT,
-             pupexp, len}
-        };
-        CK_ATTRIBUTE priv_templ[] = {
-            /* Common storage object attributes */
-            {CKA_TOKEN, &flag_token, sizeof(flag_token)},
-            {CKA_PRIVATE, &flag_true, sizeof(flag_true)},
-            /* Common private key attributes */
-            {CKA_SENSITIVE, &flag_true, sizeof(flag_true)},
-            {CKA_DECRYPT, &flag_true, sizeof(flag_true)},
-            {CKA_SIGN, &flag_true, sizeof(flag_true)},
-            {CKA_UNWRAP, &flag_true, sizeof(flag_true)},
-        };
-        /* Check allocation, change more dynamic attribute tables (primes, exponents may need to be added or not */
-        pub_tbl = OPENSSL_zalloc(sizeof(pub_templ));
-        memcpy(pub_tbl, pub_templ, sizeof(pub_templ));
-        pub_tbl_len = (sizeof(pub_templ) / sizeof(CK_ATTRIBUTE));
-        priv_tbl = OPENSSL_zalloc(sizeof(priv_templ));
-        memcpy(priv_tbl, priv_templ, sizeof(priv_templ));
-        priv_tbl_len = (sizeof(priv_templ) / sizeof(CK_ATTRIBUTE));
+        /* Common storage object attributes */
+        pkcs11_add_attribute(pub_stack, CKA_TOKEN, &flag_token, sizeof(flag_token));
+        /* Common public key attributes */
+        pkcs11_add_attribute(pub_stack, CKA_ENCRYPT, &flag_true, sizeof(flag_true));
+        pkcs11_add_attribute(pub_stack, CKA_VERIFY, &flag_true, sizeof(flag_true));
+        pkcs11_add_attribute(pub_stack, CKA_WRAP, &flag_true, sizeof(flag_true));
+        /* RSA public key object attributes  */
+        pkcs11_add_attribute(pub_stack, CKA_MODULUS_BITS,
+                             &gctx->rsa.modulus_bits, sizeof(gctx->rsa.modulus_bits));
+        pkcs11_add_attribute(pub_stack, CKA_PUBLIC_EXPONENT, pub_exp, pub_exp_len);
+
+        /* Common storage object attributes */
+        pkcs11_add_attribute(priv_stack, CKA_TOKEN, &flag_token, sizeof(flag_token));
+        pkcs11_add_attribute(priv_stack, CKA_PRIVATE, &flag_true, sizeof(flag_true));
+        /* Common private key attributes */
+        pkcs11_add_attribute(priv_stack, CKA_SENSITIVE, &flag_true, sizeof(flag_true));
+        pkcs11_add_attribute(priv_stack, CKA_DECRYPT, &flag_true, sizeof(flag_true));
+        pkcs11_add_attribute(priv_stack, CKA_SIGN, &flag_true, sizeof(flag_true));
+        pkcs11_add_attribute(priv_stack, CKA_UNWRAP, &flag_true, sizeof(flag_true));
+        break;
     }
     default:
         goto end;
     }
+
+    /* Check allocation, change more dynamic attribute tables (primes, exponents may need to be added or not */
+    pub_tbl = (CK_ATTRIBUTE *)OPENSSL_zalloc(OPENSSL_sk_num(pub_stack) * sizeof(CK_ATTRIBUTE));
+    if (pub_tbl == NULL)
+        goto end;
+
+    pub_tbl_len = OPENSSL_sk_num(pub_stack);
+    for (i = 0, pattr = pub_tbl; i < pub_tbl_len; i++, pattr++) {
+        memcpy(pattr, OPENSSL_sk_value(pub_stack, i), sizeof(CK_ATTRIBUTE));
+    }
+
+    priv_tbl = (CK_ATTRIBUTE *)OPENSSL_zalloc(OPENSSL_sk_num(priv_stack) * sizeof(CK_ATTRIBUTE));
+    if (priv_tbl == NULL)
+        goto end;
+
+    priv_tbl_len = OPENSSL_sk_num(priv_stack);
+    for (i = 0, pattr = priv_tbl; i < priv_tbl_len; i++, pattr++)
+        memcpy(pattr, OPENSSL_sk_value(priv_stack, i), sizeof(CK_ATTRIBUTE));
 
     key = OPENSSL_zalloc(sizeof(*key));
     if (key == NULL)
@@ -212,13 +250,22 @@ static void *pkcs11_keymgmt_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg)
 
     ret = key;
 end:
-    /* WB check free pubex */
     if (!ret)
         OPENSSL_free(key);
-    if (pub_tbl)
-        OPENSSL_free(pub_tbl);
-    if (priv_tbl)
-        OPENSSL_free(priv_tbl);
+    OPENSSL_free(pub_tbl);
+    OPENSSL_free(priv_tbl);
+    if (pub_stack != NULL) {
+        for (i = 0; i < pub_tbl_len; i++)
+            OPENSSL_free(OPENSSL_sk_pop(pub_stack));
+        OPENSSL_sk_free(pub_stack);
+    }
+    if (priv_stack != NULL) {
+        for (i = 0; i < priv_tbl_len; i++)
+            OPENSSL_free(OPENSSL_sk_pop(priv_stack));
+        OPENSSL_sk_free(priv_stack);
+    }
+    if (pub_exp)
+        OPENSSL_free(pub_exp);
 
     return ret;
 }

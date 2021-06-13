@@ -42,16 +42,8 @@
 
 #include <openssl/core.h>
 #include <openssl/core_names.h>
-/*
- * Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
- * this file except in compliance with the License.  You can obtain a copy
- * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
- */
-
 #include <openssl/core_dispatch.h>
+#include "internal/dso.h"
 #include "internal/refcount.h"
 #include "internal/thread_once.h"
 #include "prov/provider_ctx.h"
@@ -131,13 +123,12 @@ typedef struct CK_OPENCRYPTOKI_FUNCTION_LIST {
 typedef struct pkcs11_type_item_st {
     CK_MECHANISM_TYPE type;
     CK_MECHANISM_INFO info;
-}PKCS11_TYPE_DATA_ITEM;
+} PKCS11_TYPE_DATA_ITEM;
 
 typedef struct pkcs11_type_st {
     OSSL_ALGORITHM *algolist;
-    PKCS11_TYPE_DATA_ITEM *items;
-    int len;
-}PKCS11_TYPE_DATA;
+    OPENSSL_STACK *items;
+} PKCS11_TYPE_DATA;
 
 struct pkcs11_st {
     PROV_CTX ctx;
@@ -156,7 +147,7 @@ struct pkcs11_st {
     unsigned char *userpin;
 
     /* pkcs11 module data */
-    void *lib_handle;
+    DSO *lib_handle;
     CK_OPENCRYPTOKI_FUNCTION_LIST *lib_functions;
     CK_SLOT_ID slot;
     int token;
@@ -182,34 +173,6 @@ struct pkcs11_st {
     OSSL_FUNC_core_vset_error_fn            *core_vset_error;
 
    /* functions offered by libcrypto to the providers */
-/*    OSSL_FUNC_core_gettable_params_fn       *core_gettable_params;
-    OSSL_FUNC_core_get_params_fn            *core_get_params;
-    OSSL_FUNC_core_thread_start_fn          *core_thread_start;
-    OSSL_FUNC_core_get_libctx_fn            *core_get_libctx;
-    OSSL_FUNC_core_new_error_fn             *core_new_error;
-    OSSL_FUNC_core_set_error_debug_fn       *core_set_error_debug;
-    OSSL_FUNC_core_vset_error_fn            *core_vset_error;
-    OSSL_FUNC_core_set_error_mark_fn        *core_set_error_mark;
-    OSSL_FUNC_core_clear_last_error_mark_fn *core_clear_last_error_mark;
-    OSSL_FUNC_core_pop_error_to_mark_fn     *core_pop_error_to_mark;
-    OSSL_FUNC_CRYPTO_malloc_fn              *CRYPTO_malloc;
-    OSSL_FUNC_CRYPTO_zalloc_fn              *CRYPTO_zalloc;
-    OSSL_FUNC_CRYPTO_free_fn                *CRYPTO_free;
-    OSSL_FUNC_CRYPTO_clear_free_fn          *CRYPTO_clear_free;
-    OSSL_FUNC_CRYPTO_realloc_fn             *CRYPTO_realloc;
-    OSSL_FUNC_CRYPTO_clear_realloc_fn       *CRYPTO_clear_realloc;
-    OSSL_FUNC_CRYPTO_secure_malloc_fn       *CRYPTO_secure_malloc;
-    OSSL_FUNC_CRYPTO_secure_zalloc_fn       *CRYPTO_secure_zalloc;
-    OSSL_FUNC_CRYPTO_secure_free_fn         *CRYPTO_secure_free;
-    OSSL_FUNC_CRYPTO_secure_clear_free_fn   *CRYPTO_secure_clear_free;
-    OSSL_FUNC_CRYPTO_secure_allocated_fn    *CRYPTO_secure_allocated;
-    OSSL_FUNC_OPENSSL_cleanse_fn            *OPENSSL_cleanse;
-    OSSL_FUNC_BIO_new_file_fn               *BIO_new_file;
-    OSSL_FUNC_BIO_new_membuf_fn             *BIO_new_membuf;
-    OSSL_FUNC_BIO_read_ex_fn                *BIO_read_ex;
-    OSSL_FUNC_BIO_free_fn                   *BIO_free;
-    OSSL_FUNC_BIO_vprintf_fn                *BIO_vprintf;
-    OSSL_FUNC_self_test_cb_fn               *self_test_cb;*/
 };
 
 
