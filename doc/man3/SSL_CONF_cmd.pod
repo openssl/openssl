@@ -83,12 +83,6 @@ Sets B<SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION>. Only used by servers.
 Permits or prohibits the use of unsafe legacy renegotiation for OpenSSL
 clients only. Equivalent to setting or clearing B<SSL_OP_LEGACY_SERVER_CONNECT>.
 
-=item B<-immediate_renegotiation>
-
-Try to do a renegotiation immediately after the handshake.
-This is for debugging and has no option equivalent.
-Ignored by the B<openssl s_client> command.
-
 =item B<-prioritize_chacha>
 
 Prioritize ChaCha ciphers when the client has a ChaCha20 cipher at the top of
