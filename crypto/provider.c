@@ -13,14 +13,18 @@
 #include <openssl/core_names.h>
 #include "internal/provider.h"
 
-OSSL_PROVIDER *OSSL_PROVIDER_try_load(OSSL_LIB_CTX *libctx, const char *name,
-                                      int retain_fallbacks)
+OSSL_PROVIDER *OSSL_PROVIDER_try_load(OSSL_LIB_CTX *libctx, const char *provid,
+                                      const char *libname, int retain_fallbacks)
 {
     OSSL_PROVIDER *prov = NULL;
+    const char *id = libname;
+
+    if (provid != NULL)
+        id = provid;
 
     /* Find it or create it */
-    if ((prov = ossl_provider_find(libctx, name, 0)) == NULL
-        && (prov = ossl_provider_new(libctx, name, NULL, 0)) == NULL)
+    if ((prov = ossl_provider_find(libctx, id, 0)) == NULL
+        && (prov = ossl_provider_new(libctx, provid, libname, NULL, 0)) == NULL)
         return NULL;
 
     if (!ossl_provider_activate(prov, retain_fallbacks, 1)) {
@@ -35,7 +39,15 @@ OSSL_PROVIDER *OSSL_PROVIDER_load(OSSL_LIB_CTX *libctx, const char *name)
 {
     /* Any attempt to load a provider disables auto-loading of defaults */
     if (ossl_provider_disable_fallback_loading(libctx))
-        return OSSL_PROVIDER_try_load(libctx, name, 0);
+        return OSSL_PROVIDER_try_load(libctx, NULL, name, 0);
+    return NULL;
+}
+
+OSSL_PROVIDER *OSSL_PROVIDER_multiple_load(OSSL_LIB_CTX *libctx, const char *provid, const char *name)
+{
+    /* Any attempt to load a provider disables auto-loading of defaults */
+    if (ossl_provider_disable_fallback_loading(libctx))
+        return OSSL_PROVIDER_try_load(libctx, provid, name, 0);
     return NULL;
 }
 
@@ -130,7 +142,7 @@ int OSSL_PROVIDER_add_builtin(OSSL_LIB_CTX *libctx, const char *name,
     }
 
     /* Create it */
-    if ((prov = ossl_provider_new(libctx, name, init_fn, 0)) == NULL)
+    if ((prov = ossl_provider_new(libctx, NULL, name, init_fn, 0)) == NULL)
         return 0;
 
     /*

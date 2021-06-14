@@ -80,19 +80,25 @@ const OSSL_PARAM pkcs11_rsa_keymgmt_gen_settable_params_tbl[] = {
     OSSL_PARAM_END
 };
 
-
 PKCS11_TYPE_DATA_ITEM *pkcs11_get_mech_data(PKCS11_CTX *provctx, CK_MECHANISM_TYPE type,
                                             CK_ULONG bits)
 {
     int i = 0;
+    int ii = 0;
+    PKCS11_SLOT *slot = NULL;
     PKCS11_TYPE_DATA_ITEM *pkeymgmt = NULL;
 
-    for (i = 0; i < OPENSSL_sk_num(provctx->keymgmt.items); i++) {
-        pkeymgmt = (PKCS11_TYPE_DATA_ITEM *)OPENSSL_sk_value(provctx->keymgmt.items, i);
-        if (pkeymgmt->type == type) {
-            if (bits >= pkeymgmt->info.ulMinKeySize
-                && bits <= pkeymgmt->info.ulMaxKeySize)
-                return pkeymgmt;
+    for (ii = 0; ii < OPENSSL_sk_num(provctx->slots); ii++) {
+        slot = (PKCS11_SLOT *)OPENSSL_sk_value(provctx->slots, ii);
+        if (slot->slotid == provctx->sel_slot) {
+            for (i = 0; i < OPENSSL_sk_num(slot->keymgmt.items); i++) {
+                pkeymgmt = (PKCS11_TYPE_DATA_ITEM *)OPENSSL_sk_value(slot->keymgmt.items, i);
+                if (pkeymgmt->type == type) {
+                    if (bits >= pkeymgmt->info.ulMinKeySize
+                        && bits <= pkeymgmt->info.ulMaxKeySize)
+                        return pkeymgmt;
+                }
+            }
         }
     }
     return NULL;

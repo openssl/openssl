@@ -55,6 +55,8 @@ void pkcs11_unload_module(PKCS11_CTX *ctx);
 int pkcs11_load_module(PKCS11_CTX *ctx, const char *libname);
 int pkcs11_generate_dispatch_tables(PKCS11_CTX *ctx);
 int pkcs11_generate_mechanism_tables(PKCS11_CTX *ctx);
+PKCS11_SLOT *pkcs11_get_slot(PKCS11_CTX *provctx);
+void pkcs11_free_slots(PKCS11_CTX *ctx);
 
 static OSSL_FUNC_provider_gettable_params_fn    pkcs11_gettable_params;
 static OSSL_FUNC_provider_get_params_fn         pkcs11_get_params;
@@ -80,6 +82,9 @@ static void pkcs11_set_error(PKCS11_CTX *ctx, int reason, const char *file, int 
 /* Define the reason string table */
 #define ERR_PKCS11_NO_USERPIN_SET (CKR_TOKEN_RESOURCE_EXCEEDED + 1)
 #define ERR_PKCS11_MEM_ALLOC_FAILED (CKR_TOKEN_RESOURCE_EXCEEDED + 2)
+#define ERR_PKCS11_NO_TOKENS_AVAILABLE (CKR_TOKEN_RESOURCE_EXCEEDED + 3)
+#define ERR_PKCS11_GET_LIST_OF_SLOTS_FAILED (CKR_TOKEN_RESOURCE_EXCEEDED + 4)
+
 static const OSSL_ITEM pkcs11_reason_strings[] = {
 #define REASON_STRING(ckr) {ckr, #ckr}
     REASON_STRING(CKR_CANCEL),
@@ -179,6 +184,8 @@ static const OSSL_ITEM pkcs11_reason_strings[] = {
     REASON_STRING(CKR_TOKEN_RESOURCE_EXCEEDED),
     REASON_STRING(ERR_PKCS11_NO_USERPIN_SET),
     REASON_STRING(ERR_PKCS11_MEM_ALLOC_FAILED),
+    REASON_STRING(ERR_PKCS11_NO_TOKENS_AVAILABLE),
+    REASON_STRING(ERR_PKCS11_GET_LIST_OF_SLOTS_FAILED),
 #undef REASON_STRING
     {0, NULL}
 };
@@ -242,7 +249,7 @@ static int pkcs11_set_params(void *provctx, const OSSL_PARAM params[])
     if (p != NULL && !OSSL_PARAM_get_int(p, &ival))
         return 0;
     else
-        ctx->slot = ival;
+        ctx->sel_slot = ival;
 
     p = OSSL_PARAM_locate((OSSL_PARAM *)params, OSSL_PROV_PARAM_PKCS11_TOKEN);
     if (p != NULL && !OSSL_PARAM_get_int(p, &ival))
@@ -282,15 +289,18 @@ static const OSSL_ALGORITHM *pkcs11_query(void *provctx,
                                           int *no_cache)
 {
     PKCS11_CTX *ctx = (PKCS11_CTX *)provctx;
-
+    PKCS11_SLOT *slot = pkcs11_get_slot(ctx);
     *no_cache = 1;
-    switch (operation_id) {
-    case OSSL_OP_DIGEST:
-        return NULL;
-    case OSSL_OP_CIPHER:
-        return NULL;
-    case OSSL_OP_KEYMGMT:
-        return ctx->keymgmt.algolist;
+
+    if (slot != NULL) {
+        switch (operation_id) {
+        case OSSL_OP_DIGEST:
+            return NULL;
+        case OSSL_OP_CIPHER:
+            return NULL;
+        case OSSL_OP_KEYMGMT:
+            return slot->keymgmt.algolist;
+        }
     }
     return NULL;
 }
@@ -433,7 +443,7 @@ int pkcs11_load_module(PKCS11_CTX *ctx, const char *libname)
 
     /* Open a user R/W session: all future sessions will be user sessions. */
     flags = CKF_SERIAL_SESSION | CKF_RW_SESSION;
-    rv = ctx->lib_functions->C_OpenSession(ctx->slot, flags, NULL, NULL, &ctx->session);
+    rv = ctx->lib_functions->C_OpenSession(ctx->sel_slot, flags, NULL, NULL, &ctx->session);
     if (rv != CKR_OK) {
         SET_PKCS11_PROV_ERR(ctx, rv);
         goto end;
@@ -469,70 +479,136 @@ end:
 
 int pkcs11_generate_mechanism_tables(PKCS11_CTX *ctx)
 {
-    int ret = 0;
-    CK_ULONG i = 0;
-    CK_RV rv = 0;
-    CK_ULONG mechcount = 0;
-    CK_MECHANISM_TYPE *mechlist = NULL;
-    CK_MECHANISM_INFO *mechinfo = NULL;
-    
-    /* Cache the slot's mechanism list. */
-    rv = ctx->lib_functions->C_GetMechanismList(ctx->slot, NULL, &mechcount);
-    if (rv != CKR_OK) {
-        SET_PKCS11_PROV_ERR(ctx, rv);
-        goto end;
-    }
-    mechlist = (CK_MECHANISM_TYPE *)OPENSSL_zalloc(mechcount * sizeof(CK_MECHANISM_TYPE));
-    if (mechlist == NULL)
-        goto end;
+    int                 ret = 0;
+    CK_ULONG            i = 0;
+    CK_RV               rv = 0;
+    CK_ULONG            mechcount = 0;
+    CK_ULONG            slot_count = 0;
+    CK_SLOT_ID_PTR      slot_list = NULL;
+    CK_MECHANISM_TYPE   *mechlist = NULL;
+    CK_MECHANISM_INFO   *mechinfo = NULL;
 
-    rv = ctx->lib_functions->C_GetMechanismList(ctx->slot, mechlist, &mechcount);
+    /* Find out how many slots are present in slots */
+    rv = ctx->lib_functions->C_GetSlotList(TRUE, NULL_PTR, &slot_count);
     if (rv != CKR_OK) {
         SET_PKCS11_PROV_ERR(ctx, rv);
         goto end;
     }
 
-    mechinfo = OPENSSL_zalloc(mechcount * sizeof(CK_MECHANISM_INFO));
-    ctx->keymgmt.items = OPENSSL_sk_new_null();
-    if (ctx->keymgmt.items == NULL) {
+    if (slot_count == 0) {
+        SET_PKCS11_PROV_ERR(ctx, ERR_PKCS11_NO_TOKENS_AVAILABLE);
+        goto end;
+    }
+
+    slot_list = (CK_SLOT_ID_PTR) malloc(slot_count * sizeof(CK_SLOT_ID));
+    if (slot_list == NULL) {
         SET_PKCS11_PROV_ERR(ctx, ERR_PKCS11_MEM_ALLOC_FAILED);
         goto end;
     }
 
-    /* Cache the slot's mechanism info structure for each mechanism. */
-    for (i = 0; i < mechcount; i++) {
-        rv = ctx->lib_functions->C_GetMechanismInfo(ctx->slot,
-                                                    mechlist[i], &mechinfo[i]);
+    rv = ctx->lib_functions->C_GetSlotList(TRUE, slot_list, &slot_count);
+    if (rv != CKR_OK) {
+        SET_PKCS11_PROV_ERR(ctx, ERR_PKCS11_GET_LIST_OF_SLOTS_FAILED);
+        goto end;
+    }
+
+    if (slot_count > 0)
+        ctx->slots = OPENSSL_sk_new_null();
+
+    for (i = 0; i < slot_count; i++) {
+        CK_SLOT_ID          slot = slot_list[i];
+        PKCS11_SLOT         *pkcs11_slot = (PKCS11_SLOT *)OPENSSL_zalloc(sizeof(PKCS11_SLOT));
+
+        if (pkcs11_slot == NULL) {
+            SET_PKCS11_PROV_ERR(ctx, ERR_PKCS11_MEM_ALLOC_FAILED);
+            goto end;
+        }
+
+        pkcs11_slot->slotid = slot;
+
+        /* Cache the slot's mechanism list. */
+        rv = ctx->lib_functions->C_GetMechanismList(slot, NULL, &mechcount);
+        if (rv != CKR_OK) {
+            SET_PKCS11_PROV_ERR(ctx, rv);
+            goto end;
+        }
+        mechlist = (CK_MECHANISM_TYPE *)OPENSSL_zalloc(mechcount * sizeof(CK_MECHANISM_TYPE));
+        if (mechlist == NULL)
+            goto end;
+
+        rv = ctx->lib_functions->C_GetMechanismList(slot, mechlist, &mechcount);
         if (rv != CKR_OK) {
             SET_PKCS11_PROV_ERR(ctx, rv);
             goto end;
         }
 
-        if (mechinfo[i].flags & CKF_GENERATE_KEY_PAIR) {
-            PKCS11_TYPE_DATA_ITEM *item = OPENSSL_zalloc(sizeof(*item));
-            if (item) {
-                item->info = mechinfo[i];
-                item->type = mechlist[i];
-                OPENSSL_sk_push(ctx->keymgmt.items, item);
+        mechinfo = OPENSSL_zalloc(mechcount * sizeof(CK_MECHANISM_INFO));
+        pkcs11_slot->keymgmt.items = OPENSSL_sk_new_null();
+        if (pkcs11_slot->keymgmt.items == NULL) {
+            SET_PKCS11_PROV_ERR(ctx, ERR_PKCS11_MEM_ALLOC_FAILED);
+            goto end;
+        }
+
+        /* Cache the slot's mechanism info structure for each mechanism. */
+        for (i = 0; i < mechcount; i++) {
+            rv = ctx->lib_functions->C_GetMechanismInfo(slot,
+                                                        mechlist[i], &mechinfo[i]);
+            if (rv != CKR_OK) {
+                SET_PKCS11_PROV_ERR(ctx, rv);
+                goto end;
+            }
+
+            if (mechinfo[i].flags & CKF_GENERATE_KEY_PAIR) {
+                PKCS11_TYPE_DATA_ITEM *item = OPENSSL_zalloc(sizeof(*item));
+                if (item) {
+                    item->info = mechinfo[i];
+                    item->type = mechlist[i];
+                    OPENSSL_sk_push(pkcs11_slot->keymgmt.items, item);
+                }
             }
         }
+        OPENSSL_sk_push(ctx->slots, pkcs11_slot);
+        OPENSSL_free(mechlist);
+        OPENSSL_free(mechinfo);
+        mechlist = NULL;
+        mechinfo = NULL;
     }
 
     ret = 1;
 end:
+    OPENSSL_free(slot_list);
     OPENSSL_free(mechlist);
     OPENSSL_free(mechinfo);
-    if (!ret){
-        if (ctx->keymgmt.items != NULL) {
-            int len = OPENSSL_sk_num(ctx->keymgmt.items);
-            for (i = 0; i < len; i++)
-                OPENSSL_free(OPENSSL_sk_pop(ctx->keymgmt.items));
-            OPENSSL_sk_free(ctx->keymgmt.items);
-            ctx->keymgmt.items = NULL;
-        }
-    }
+    if (!ret)
+        pkcs11_free_slots(ctx);
 
     return ret;
+}
+
+void pkcs11_free_slots(PKCS11_CTX *ctx)
+{
+    int i = 0;
+    int ii = 0;
+    PKCS11_SLOT *slot = NULL;
+    PKCS11_TYPE_DATA_ITEM *item = NULL;
+
+    if (ctx->slots != NULL) {
+        for (i = 0; i < OPENSSL_sk_num(ctx->slots); i++) {
+            slot = (PKCS11_SLOT *)OPENSSL_sk_value(ctx->slots, i);
+            if (slot != NULL) {
+                if (slot->keymgmt.items != NULL) {
+                    for (ii = 0; ii < OPENSSL_sk_num(slot->keymgmt.items); ii++) {
+                        item = (PKCS11_TYPE_DATA_ITEM *)OPENSSL_sk_value(slot->keymgmt.items, ii);
+                        OPENSSL_free(item);
+                    }
+                    OPENSSL_sk_free(slot->keymgmt.items);
+                }
+                OPENSSL_free(slot);
+            }
+        }
+        OPENSSL_sk_free(ctx->slots);
+        ctx->slots = NULL;
+    }
 }
 
 void pkcs11_unload_module(PKCS11_CTX *ctx)
@@ -553,23 +629,31 @@ void pkcs11_unload_module(PKCS11_CTX *ctx)
         if (ctx->userpin != NULL)
             OPENSSL_clear_free(ctx->userpin, strlen((const char *)ctx->userpin));
         ctx->userpin = NULL;
-        if (ctx->keymgmt.items) {
-            int i = 0;
-            PKCS11_TYPE_DATA_ITEM *item = NULL;
-            int len = OPENSSL_sk_num(ctx->keymgmt.items);
-            for (; i < len; i++) {
-                item = (PKCS11_TYPE_DATA_ITEM *)OPENSSL_sk_pop(ctx->keymgmt.items);
-                OPENSSL_free(item);
-            }
-            OPENSSL_sk_free(ctx->keymgmt.items);
-            ctx->keymgmt.items = NULL;
-        }
     }
+    pkcs11_free_slots(ctx);
 }
 
 int pkcs11_generate_dispatch_tables(PKCS11_CTX *ctx)
 {
-    ctx->keymgmt.algolist = rsa_keymgmt_alg_tbl;
+    PKCS11_SLOT *slot = NULL;
+    slot = pkcs11_get_slot(ctx);
+    if (slot != NULL) {
+        slot->keymgmt.algolist = rsa_keymgmt_alg_tbl;
+    }
     return 1;
 }
+
+PKCS11_SLOT *pkcs11_get_slot(PKCS11_CTX *provctx)
+{
+    int i = 0;
+    PKCS11_SLOT *slot = NULL;
+
+    for (i = 0; i < OPENSSL_sk_num(provctx->slots); i++) {
+        slot = (PKCS11_SLOT *)OPENSSL_sk_value(provctx->slots, i);
+        if (slot->slotid == provctx->sel_slot)
+            return slot;
+    }
+    return NULL;
+}
+
 
