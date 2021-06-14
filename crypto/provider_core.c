@@ -1683,8 +1683,17 @@ static int core_obj_add_sigid(const OSSL_CORE_HANDLE *prov,
     int digest_nid = OBJ_txt2nid(digest_name);
     int pkey_nid = OBJ_txt2nid(pkey_name);
 
-    if (sign_nid == NID_undef
-            || digest_nid == NID_undef
+    if (sign_nid == NID_undef)
+        return 0;
+
+    /*
+     * Check if it already exists. This is a success if so (even if we don't
+     * have nids for the digest/pkey)
+     */
+    if (OBJ_find_sigid_algs(sign_nid, NULL, NULL))
+        return 1;
+
+    if (digest_nid == NID_undef
             || pkey_nid == NID_undef)
         return 0;
 
@@ -1694,9 +1703,9 @@ static int core_obj_add_sigid(const OSSL_CORE_HANDLE *prov,
 static int core_obj_create(const OSSL_CORE_HANDLE *prov, const char *oid,
                            const char *sn, const char *ln)
 {
-    /* Create it, or verify it already exists if we fail to create */
-    return (OBJ_create(oid, sn, ln) != NID_undef
-            || OBJ_txt2nid(oid) != NID_undef);
+    /* Check if it already exists and create it if not */
+    return OBJ_txt2nid(oid) != NID_undef
+           || OBJ_create(oid, sn, ln) != NID_undef;
 }
 #endif /* FIPS_MODULE */
 
