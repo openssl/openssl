@@ -496,23 +496,24 @@ static void do_one(ossl_unused int id, void *method, void *arg)
     data->user_fn(method, data->user_arg);
 }
 
-void ossl_decoder_do_all_prefetched(OSSL_LIB_CTX *libctx,
-                                    void (*user_fn)(OSSL_DECODER *decoder, void *arg),
-                                    void *user_arg)
+void OSSL_DECODER_do_all_provided(OSSL_LIB_CTX *libctx,
+                                  void (*user_fn)(OSSL_DECODER *decoder,
+                                                  void *arg),
+                                  void *user_arg)
 {
+    struct decoder_data_st methdata;
     struct do_one_data_st data;
+
+    methdata.libctx = libctx;
+    methdata.tmp_store = NULL;
+    (void)inner_ossl_decoder_fetch(&methdata, 0, NULL, NULL /* properties */);
 
     data.user_fn = user_fn;
     data.user_arg = user_arg;
+    if (methdata.tmp_store != NULL)
+        ossl_method_store_do_all(methdata.tmp_store, &do_one, &data);
     ossl_method_store_do_all(get_decoder_store(libctx), &do_one, &data);
-}
-
-void OSSL_DECODER_do_all_provided(OSSL_LIB_CTX *libctx,
-                                  void (*fn)(OSSL_DECODER *decoder, void *arg),
-                                  void *arg)
-{
-    (void)OSSL_DECODER_fetch(libctx, NULL, NULL);
-    ossl_decoder_do_all_prefetched(libctx, fn, arg);
+    dealloc_tmp_decoder_store(methdata.tmp_store);
 }
 
 int OSSL_DECODER_names_do_all(const OSSL_DECODER *decoder,
