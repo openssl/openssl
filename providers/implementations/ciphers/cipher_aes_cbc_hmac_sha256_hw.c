@@ -733,7 +733,7 @@ static int aesni_cbc_hmac_sha256_set_tls1_aad(void *vctx,
             if (len < AES_BLOCK_SIZE)
                 return 0;
             len -= AES_BLOCK_SIZE;
-            p[aad_len] = len >> 8;
+            p[aad_len - 2] = len >> 8;
             p[aad_len - 1] = len;
         }
         sctx->md = sctx->head;
