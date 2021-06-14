@@ -581,6 +581,14 @@ L<ASN1_item_d2i_bio(3)>, L<ASN1_item_sign(3)> and L<ASN1_item_verify(3)>
 
 =item -
 
+L<BIO_new(3)>
+
+=item -
+
+b2i_RSA_PVK_bio() and i2b_PVK_bio()
+
+=item -
+
 L<BN_CTX_new(3)> and L<BN_CTX_secure_new(3)>
 
 =item -
@@ -624,6 +632,10 @@ L<EVP_DigestSignInit(3)> and L<EVP_DigestVerifyInit(3)>
 =item -
 
 L<EVP_PBE_CipherInit(3)>, L<EVP_PBE_find(3)> and L<EVP_PBE_scrypt(3)>
+
+=item -
+
+L<PKCS5_PBE_keyivgen(3)>
 
 =item -
 
@@ -705,6 +717,14 @@ L<SMIME_write_ASN1(3)>
 
 =item -
 
+L<SSL_load_client_CA_file(3)>
+
+=item -
+
+L<SSL_CTX_new(3)>
+
+=item -
+
 L<TS_RESP_CTX_new(3)>
 
 =item -
@@ -744,6 +764,10 @@ The following functions can be passed a library context if required.
 Passing NULL will use the default library context.
 
 =over 4
+
+=item -
+
+L<BIO_new_from_core_bio(3)>
 
 =item -
 
