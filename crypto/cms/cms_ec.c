@@ -59,7 +59,7 @@ static EVP_PKEY *pkey_type2param(int ptype, const void *pval,
     }
 
     ERR_raise(ERR_LIB_CMS, CMS_R_DECODE_ERROR);
-    return pkey;
+    return NULL;
 
  err:
     EVP_PKEY_free(pkey);
