@@ -163,7 +163,7 @@
         OPT_S_CURVES, OPT_S_NAMEDCURVE, OPT_S_CIPHER, OPT_S_CIPHERSUITES, \
         OPT_S_RECORD_PADDING, OPT_S_DEBUGBROKE, OPT_S_COMP, \
         OPT_S_MINPROTO, OPT_S_MAXPROTO, \
-        OPT_S_NO_RENEGOTIATION, OPT_S_NO_MIDDLEBOX, OPT_S__LAST
+        OPT_S_NO_RENEGOTIATION, OPT_S_NO_MIDDLEBOX, OPT_S_NO_ETM, OPT_S__LAST
 
 # define OPT_S_OPTIONS \
         OPT_SECTION("TLS/SSL"), \
@@ -216,7 +216,9 @@
         {"debug_broken_protocol", OPT_S_DEBUGBROKE, '-', \
             "Perform all sorts of protocol violations for testing purposes"}, \
         {"no_middlebox", OPT_S_NO_MIDDLEBOX, '-', \
-            "Disable TLSv1.3 middlebox compat mode" }
+            "Disable TLSv1.3 middlebox compat mode" }, \
+        {"no_etm", OPT_S_NO_ETM, '-', \
+            "Disable Encrypt-then-Mac extension"}
 
 # define OPT_S_CASES \
         OPT_S__FIRST: case OPT_S__LAST: break; \
@@ -250,7 +252,8 @@
         case OPT_S_MINPROTO: \
         case OPT_S_MAXPROTO: \
         case OPT_S_DEBUGBROKE: \
-        case OPT_S_NO_MIDDLEBOX
+        case OPT_S_NO_MIDDLEBOX: \
+        case OPT_S_NO_ETM
 
 #define IS_NO_PROT_FLAG(o) \
  (o == OPT_S_NOSSL3 || o == OPT_S_NOTLS1 || o == OPT_S_NOTLS1_1 \
