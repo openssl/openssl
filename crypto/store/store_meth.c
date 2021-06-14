@@ -81,7 +81,8 @@ static void *loader_store_new(OSSL_LIB_CTX *ctx)
 
 
 static const OSSL_LIB_CTX_METHOD loader_store_method = {
-    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
+    /* We want loader_store to be cleaned up before the provider store */
+    OSSL_LIB_CTX_METHOD_PRIORITY_2,
     loader_store_new,
     loader_store_free,
 };

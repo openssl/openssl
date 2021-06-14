@@ -78,7 +78,8 @@ static void *encoder_store_new(OSSL_LIB_CTX *ctx)
 
 
 static const OSSL_LIB_CTX_METHOD encoder_store_method = {
-    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
+    /* We want encoder_store to be cleaned up before the provider store */
+    OSSL_LIB_CTX_METHOD_PRIORITY_2,
     encoder_store_new,
     encoder_store_free,
 };
