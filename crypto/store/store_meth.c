@@ -94,7 +94,7 @@ struct loader_data_st {
     const char *scheme;          /* For get_loader_from_store() */
     const char *propquery;       /* For get_loader_from_store() */
 
-    OSSL_METHOD_STORE *tmp_store; /* For get_tmp_encoder_store() */
+    OSSL_METHOD_STORE *tmp_store; /* For get_tmp_loader_store() */
 
     unsigned int flag_construct_error_occurred : 1;
 };
