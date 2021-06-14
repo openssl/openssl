@@ -75,7 +75,7 @@ OpenSSL 3.0
     and SIPHASH.
   * Removed the heartbeat message in DTLS feature.
   * Added EVP_KDF, an EVP layer KDF and PRF API, and a generic EVP_PKEY to
-    EVP_KDF bridge.  Supported KDFs are: HKDF, KBKDF, Kerberos KDF, PBKDF2,
+    EVP_KDF bridge.  Supported KDFs are: HKDF, KBKDF, KRB5 KDF, PBKDF2,
     PKCS12 KDF, SCRYPT, SSH KDF, SSKDF, TLS1 PRF, X9.42 KDF and X9.63 KDF.
   * All of the low-level MD2, MD4, MD5, MDC2, RIPEMD160, SHA1, SHA224,
     SHA256, SHA384, SHA512 and Whirlpool digest functions have been
