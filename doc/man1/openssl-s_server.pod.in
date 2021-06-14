@@ -70,6 +70,7 @@ B<openssl> B<s_server>
 [B<-verify_quiet>]
 [B<-ign_eof>]
 [B<-no_ign_eof>]
+[B<-no_etm>]
 [B<-status>]
 [B<-status_verbose>]
 [B<-status_timeout> I<int>]
@@ -486,6 +487,10 @@ Ignore input EOF (default: when B<-quiet>).
 =item B<-no_ign_eof>
 
 Do not ignore input EOF.
+
+=item B<-no_etm>
+
+Disable Encrypt-then-MAC negotiation.
 
 =item B<-status>
 
