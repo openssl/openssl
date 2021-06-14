@@ -38,6 +38,7 @@ static EVP_PKEY *pkey_type2param(int ptype, const void *pval,
             goto err;
         }    
         OSSL_DECODER_CTX_free(ctx);
+        return pkey;
     } else if (ptype == V_ASN1_OBJECT) {
         const ASN1_OBJECT *poid = pval;
         char groupname[OSSL_MAX_NAME_SIZE];
@@ -53,11 +54,11 @@ static EVP_PKEY *pkey_type2param(int ptype, const void *pval,
         }
         if (EVP_PKEY_paramgen(pctx, &pkey) <= 0)
             goto err;
-    } else {
-        ERR_raise(ERR_LIB_CMS, CMS_R_DECODE_ERROR);
-        goto err;
+        EVP_PKEY_CTX_free(pctx);
+        return pkey;
     }
 
+    ERR_raise(ERR_LIB_CMS, CMS_R_DECODE_ERROR);
     return pkey;
 
  err:
