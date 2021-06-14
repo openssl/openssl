@@ -71,7 +71,7 @@ OpenSSL 3.0
   * Changed our version number scheme and set the next major release to
     3.0.0
   * Added EVP_MAC, an EVP layer MAC API, and a generic EVP_PKEY to EVP_MAC
-    bridge.  Support MACs are: BLAKE2, CMAC, GMAC, HMAC, KMAC, POLY1305
+    bridge.  Supported MACs are: BLAKE2, CMAC, GMAC, HMAC, KMAC, POLY1305
     and SIPHASH.
   * Removed the heartbeat message in DTLS feature.
   * Added EVP_KDF, an EVP layer KDF and PRF API, and a generic EVP_PKEY to
