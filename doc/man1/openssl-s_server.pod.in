@@ -545,9 +545,8 @@ output.
 
 =item B<-rev>
 
-Simple test server which just reverses the text received from the client
-and sends it back to the server. Also sets B<-brief>. Cannot be used in
-conjunction with B<-early_data>.
+Simple echo server that sends back received text reversed. Also sets B<-brief>.
+Cannot be used in conjunction with B<-early_data>.
 
 =item B<-async>
 
