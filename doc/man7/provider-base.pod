@@ -99,7 +99,6 @@ provider-base
  int provider_up_ref(const OSSL_CORE_HANDLE *prov, int activate);
  int provider_free(const OSSL_CORE_HANDLE *prov, int deactivate);
 
-
  /* Functions offered by the provider to libcrypto */
  void provider_teardown(void *provctx);
  const OSSL_ITEM *provider_gettable_params(void *provctx);
@@ -171,6 +170,13 @@ provider):
  ossl_rand_cleanup_entropy      OSSL_FUNC_CLEANUP_ENTROPY
  ossl_rand_get_nonce            OSSL_FUNC_GET_NONCE
  ossl_rand_cleanup_nonce        OSSL_FUNC_CLEANUP_NONCE
+ provider_register_child_cb     OSSL_FUNC_PROVIDER_REGISTER_CHILD_CB
+ provider_deregister_child_cb   OSSL_FUNC_PROVIDER_DEREGISTER_CHILD_CB
+ provider_name                  OSSL_FUNC_PROVIDER_NAME
+ provider_get0_provider_ctx     OSSL_FUNC_PROVIDER_GET0_PROVIDER_CTX
+ provider_get0_dispatch         OSSL_FUNC_PROVIDER_GET0_DISPATCH
+ provider_up_ref                OSSL_FUNC_PROVIDER_UP_REF
+ provider_free                  OSSL_FUNC_PROVIDER_FREE
 
 For I<*out> (the B<OSSL_DISPATCH> array passed from the provider to
 F<libcrypto>):
