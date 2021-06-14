@@ -94,6 +94,8 @@ struct loader_data_st {
     const char *scheme;          /* For get_loader_from_store() */
     const char *propquery;       /* For get_loader_from_store() */
 
+    OSSL_METHOD_STORE *tmp_store; /* For get_tmp_loader_store() */
+
     unsigned int flag_construct_error_occurred : 1;
 };
 
@@ -103,9 +105,13 @@ struct loader_data_st {
  */
 
 /* Temporary loader method store, constructor and destructor */
-static void *alloc_tmp_loader_store(OSSL_LIB_CTX *ctx)
+static void *get_tmp_loader_store(void *data)
 {
-    return ossl_method_store_new(ctx);
+    struct loader_data_st *methdata = data;
+
+    if (methdata->tmp_store == NULL)
+        methdata->tmp_store = ossl_method_store_new(methdata->libctx);
+    return methdata->tmp_store;
 }
 
  static void dealloc_tmp_loader_store(void *store)
@@ -267,12 +273,12 @@ static void destruct_loader(void *method, void *data)
 }
 
 /* Fetching support.  Can fetch by numeric identity or by scheme */
-static OSSL_STORE_LOADER *inner_loader_fetch(OSSL_LIB_CTX *libctx,
-                                             int id, const char *scheme,
-                                             const char *properties)
+static OSSL_STORE_LOADER *
+inner_loader_fetch(struct loader_data_st *methdata, int id,
+                   const char *scheme, const char *properties)
 {
-    OSSL_METHOD_STORE *store = get_loader_store(libctx);
-    OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
+    OSSL_METHOD_STORE *store = get_loader_store(methdata->libctx);
+    OSSL_NAMEMAP *namemap = ossl_namemap_stored(methdata->libctx);
     void *method = NULL;
     int unsupported = 0;
 
@@ -304,24 +310,21 @@ static OSSL_STORE_LOADER *inner_loader_fetch(OSSL_LIB_CTX *libctx,
     if (id == 0
         || !ossl_method_store_cache_get(store, id, properties, &method)) {
         OSSL_METHOD_CONSTRUCT_METHOD mcm = {
-            alloc_tmp_loader_store,
-            dealloc_tmp_loader_store,
+            get_tmp_loader_store,
             get_loader_from_store,
             put_loader_in_store,
             construct_loader,
             destruct_loader
         };
-        struct loader_data_st mcmdata;
 
-        mcmdata.libctx = libctx;
-        mcmdata.mcm = &mcm;
-        mcmdata.scheme_id = id;
-        mcmdata.scheme = scheme;
-        mcmdata.propquery = properties;
-        mcmdata.flag_construct_error_occurred = 0;
-        if ((method = ossl_method_construct(libctx, OSSL_OP_STORE,
+        methdata->mcm = &mcm;
+        methdata->scheme_id = id;
+        methdata->scheme = scheme;
+        methdata->propquery = properties;
+        methdata->flag_construct_error_occurred = 0;
+        if ((method = ossl_method_construct(methdata->libctx, OSSL_OP_STORE,
                                             0 /* !force_cache */,
-                                            &mcm, &mcmdata)) != NULL) {
+                                            &mcm, methdata)) != NULL) {
             /*
              * If construction did create a method for us, we know that there
              * is a correct scheme_id, since those have already been calculated
@@ -337,7 +340,7 @@ static OSSL_STORE_LOADER *inner_loader_fetch(OSSL_LIB_CTX *libctx,
          * If we never were in the constructor, the algorithm to be fetched
          * is unsupported.
          */
-        unsupported = !mcmdata.flag_construct_error_occurred;
+        unsupported = !methdata->flag_construct_error_occurred;
     }
 
     if (method == NULL) {
@@ -347,7 +350,7 @@ static OSSL_STORE_LOADER *inner_loader_fetch(OSSL_LIB_CTX *libctx,
             scheme = ossl_namemap_num2name(namemap, id, 0);
         ERR_raise_data(ERR_LIB_OSSL_STORE, code,
                        "%s, Scheme (%s : %d), Properties (%s)",
-                       ossl_lib_ctx_get_descriptor(libctx),
+                       ossl_lib_ctx_get_descriptor(methdata->libctx),
                        scheme = NULL ? "<null>" : scheme, id,
                        properties == NULL ? "<null>" : properties);
     }
@@ -359,14 +362,28 @@ OSSL_STORE_LOADER *OSSL_STORE_LOADER_fetch(OSSL_LIB_CTX *libctx,
                                            const char *scheme,
                                            const char *properties)
 {
-    return inner_loader_fetch(libctx, 0, scheme, properties);
+    struct loader_data_st methdata;
+    void *method;
+
+    methdata.libctx = libctx;
+    methdata.tmp_store = NULL;
+    method = inner_loader_fetch(&methdata, 0, scheme, properties);
+    dealloc_tmp_loader_store(methdata.tmp_store);
+    return method;
 }
 
 OSSL_STORE_LOADER *ossl_store_loader_fetch_by_number(OSSL_LIB_CTX *libctx,
                                                      int scheme_id,
                                                      const char *properties)
 {
-    return inner_loader_fetch(libctx, scheme_id, NULL, properties);
+    struct loader_data_st methdata;
+    void *method;
+
+    methdata.libctx = libctx;
+    methdata.tmp_store = NULL;
+    method = inner_loader_fetch(&methdata, scheme_id, NULL, properties);
+    dealloc_tmp_loader_store(methdata.tmp_store);
+    return method;
 }
 
 /*

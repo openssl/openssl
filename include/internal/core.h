@@ -28,10 +28,8 @@
  * says (for example, because the application knows better).
  */
 typedef struct ossl_method_construct_method_st {
-    /* Create store */
-    void *(*alloc_tmp_store)(OSSL_LIB_CTX *ctx);
-    /* Remove a store */
-    void (*dealloc_tmp_store)(void *store);
+    /* Get a temporary store */
+    void *(*get_tmp_store)(void *data);
     /* Get an already existing method from a store */
     void *(*get)(OSSL_LIB_CTX *libctx, void *store, void *data);
     /* Store a method in a store */
