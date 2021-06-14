@@ -856,7 +856,7 @@ const OPTIONS s_server_options[] = {
     {"brief", OPT_BRIEF, '-',
      "Restrict output to brief summary of connection parameters"},
     {"rev", OPT_REV, '-',
-     "act as a simple test server which just sends back with the received text reversed"},
+     "act as an echo server that sends back received text reversed"},
     {"debug", OPT_DEBUG, '-', "Print more output"},
     {"msg", OPT_MSG, '-', "Show protocol messages"},
     {"msgfile", OPT_MSGFILE, '>',
