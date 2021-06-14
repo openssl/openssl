@@ -116,6 +116,7 @@ void *ossl_method_construct(OSSL_LIB_CTX *libctx, int operation_id,
         struct construct_data_st cbdata;
 
         cbdata.libctx = libctx;
+        cbdata.store = NULL;
         cbdata.operation_id = operation_id;
         cbdata.force_store = force_store;
         cbdata.mcm = mcm;
