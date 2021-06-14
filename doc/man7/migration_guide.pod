@@ -581,6 +581,14 @@ L<ASN1_item_d2i_bio(3)>, L<ASN1_item_sign(3)> and L<ASN1_item_verify(3)>
 
 =item -
 
+L<BIO_new(3)>
+
+=item -
+
+b2i_RSA_PVK_bio() and i2b_PVK_bio()
+
+=item -
+
 L<BN_CTX_new(3)> and L<BN_CTX_secure_new(3)>
 
 =item -
@@ -624,6 +632,10 @@ L<EVP_DigestSignInit(3)> and L<EVP_DigestVerifyInit(3)>
 =item -
 
 L<EVP_PBE_CipherInit(3)>, L<EVP_PBE_find(3)> and L<EVP_PBE_scrypt(3)>
+
+=item -
+
+L<PKCS5_PBE_keyivgen(3)>
 
 =item -
 
@@ -747,6 +759,10 @@ Passing NULL will use the default library context.
 
 =item -
 
+L<BIO_new_from_core_bio(3)>
+
+=item -
+
 L<EVP_ASYM_CIPHER_fetch(3)> and L<EVP_ASYM_CIPHER_do_all_provided(3)>
 
 =item -
@@ -851,6 +867,14 @@ L<OSSL_PROVIDER_set_default_search_path(3)> and L<OSSL_PROVIDER_try_load(3)>
 =item -
 
 L<OSSL_SELF_TEST_get_callback(3)> and L<OSSL_SELF_TEST_set_callback(3)>
+
+=item -
+
+L<SSL_load_client_CA_file(3)>
+
+=item -
+
+L<SSL_CTX_new(3)>
 
 =item -
 
