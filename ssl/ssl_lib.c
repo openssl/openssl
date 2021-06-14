@@ -9,9 +9,11 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
-#include "ssl_local.h"
 #include "e_os.h"
+
+#include "e_winsock.h"
+#include "ssl_local.h"
+
 #include <openssl/objects.h>
 #include <openssl/x509v3.h>
 #include <openssl/rand.h>
@@ -21,7 +23,9 @@
 #include <openssl/async.h>
 #include <openssl/ct.h>
 #include <openssl/trace.h>
+
 #include "internal/cryptlib.h"
+#include "internal/nelem.h"
 #include "internal/refcount.h"
 #include "internal/ktls.h"
 

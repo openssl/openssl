@@ -12,7 +12,6 @@
 #ifndef OSSL_SSL_LOCAL_H
 # define OSSL_SSL_LOCAL_H
 
-# include "e_os.h"              /* struct timeval for DTLS */
 # include <stdlib.h>
 # include <time.h>
 # include <string.h>
@@ -1900,6 +1899,11 @@ pitem *pqueue_iterator(pqueue *pq);
 pitem *pqueue_next(piterator *iter);
 size_t pqueue_size(pqueue *pq);
 
+/* Forward-declare of `struct timeval`. On Windows, it is defined in winsock2.h
+ * and Windows headers define too many macros to be included in public headers.
+ * However, only a forward declaration is needed here */
+struct timeval;
+
 typedef struct dtls1_state_st {
     unsigned char cookie[DTLS1_COOKIE_LENGTH];
     size_t cookie_len;
@@ -1917,10 +1921,11 @@ typedef struct dtls1_state_st {
     struct hm_header_st w_msg_hdr;
     struct hm_header_st r_msg_hdr;
     struct dtls1_timeout_st timeout;
-    /*
-     * Indicates when the last handshake msg sent will timeout
-     */
-    struct timeval next_timeout;
+    /* Indicates when the last handshake msg sent will timeout */
+    struct {              /* *custom* timeval struct */ 
+        int64_t  tv_sec;
+        int32_t  tv_usec;   /* microseconds */
+    } next_timeout;
     /* Timeout duration */
     unsigned int timeout_duration_us;
 
@@ -2564,7 +2569,7 @@ void dtls1_clear_sent_buffer(SSL *s);
 void dtls1_get_message_header(unsigned char *data,
                               struct hm_header_st *msg_hdr);
 __owur long dtls1_default_timeout(void);
-__owur struct timeval *dtls1_get_timeout(SSL *s, struct timeval *timeleft);
+__owur int dtls1_get_timeout(SSL *s, struct timeval *timeleft);
 __owur int dtls1_check_timeout_num(SSL *s);
 __owur int dtls1_handle_timeout(SSL *s);
 void dtls1_start_timer(SSL *s);

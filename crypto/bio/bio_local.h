@@ -8,6 +8,7 @@
  */
 
 #include "e_os.h"
+#include "e_winsock.h"
 #include "internal/sockets.h"
 
 /* BEGIN BIO_ADDRINFO/BIO_ADDR stuff. */

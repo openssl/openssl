@@ -10,6 +10,8 @@
 /* We need to use some deprecated APIs */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
+#include "e_os.h"
+
 #include <string.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>

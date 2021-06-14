@@ -19,8 +19,10 @@
 
 #include <string.h>
 #include <ctype.h>
+#include "e_os.h"
 #include "http_server.h"
-#include "internal/sockets.h"
+#include "internal/sockets.h" /* for openssl_fdset() */
+
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include "s_apps.h"

@@ -8,6 +8,8 @@
  */
 
 #include "e_os.h"
+#include "e_winsock.h"          /* struct timeval for DTLS_CTRL_GET_TIMEOUT */
+
 #include <stdio.h>
 #include <openssl/objects.h>
 #include <openssl/rand.h>
@@ -210,7 +212,7 @@ long dtls1_ctrl(SSL *s, int cmd, long larg, void *parg)
 
     switch (cmd) {
     case DTLS_CTRL_GET_TIMEOUT:
-        if (dtls1_get_timeout(s, (struct timeval *)parg) != NULL) {
+        if (dtls1_get_timeout(s, (struct timeval *)parg) != 0) {
             ret = 1;
         }
         break;
@@ -240,8 +242,19 @@ long dtls1_ctrl(SSL *s, int cmd, long larg, void *parg)
     return ret;
 }
 
+static void dtls1_bio_set_next_timeout(BIO * bio, const DTLS1_STATE *d1)
+{
+    struct timeval next_timeout;
+
+    next_timeout.tv_sec = d1->next_timeout.tv_sec;
+    next_timeout.tv_usec = d1->next_timeout.tv_usec;
+
+    BIO_ctrl(bio, BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT, 0, &next_timeout);
+}
+
 void dtls1_start_timer(SSL *s)
 {
+    struct timeval timenow;
     unsigned int sec, usec;
 
 #ifndef OPENSSL_NO_SCTP
@@ -265,10 +278,12 @@ void dtls1_start_timer(SSL *s)
     }
 
     /* Set timeout to current time */
-    get_current_time(&(s->d1->next_timeout));
+    get_current_time(&timenow);
+
+    s->d1->next_timeout.tv_sec  = timenow.tv_sec;
+    s->d1->next_timeout.tv_usec = timenow.tv_usec;
 
     /* Add duration to current time */
-
     sec  = s->d1->timeout_duration_us / 1000000;
     usec = s->d1->timeout_duration_us - (sec * 1000000);
 
@@ -280,17 +295,17 @@ void dtls1_start_timer(SSL *s)
         s->d1->next_timeout.tv_usec -= 1000000;
     }
 
-    BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT, 0,
-             &(s->d1->next_timeout));
+    /* set s->d1->next_timeout into bio interface */
+    dtls1_bio_set_next_timeout(SSL_get_rbio(s), s->d1);
 }
 
-struct timeval *dtls1_get_timeout(SSL *s, struct timeval *timeleft)
+int dtls1_get_timeout(SSL *s, struct timeval *timeleft)
 {
     struct timeval timenow;
 
-    /* If no timeout is set, just return NULL */
+    /* If no timeout is set, just return 0 */
     if (s->d1->next_timeout.tv_sec == 0 && s->d1->next_timeout.tv_usec == 0) {
-        return NULL;
+        return 0;
     }
 
     /* Get current time */
@@ -301,11 +316,13 @@ struct timeval *dtls1_get_timeout(SSL *s, struct timeval *timeleft)
         (s->d1->next_timeout.tv_sec == timenow.tv_sec &&
          s->d1->next_timeout.tv_usec <= timenow.tv_usec)) {
         memset(timeleft, 0, sizeof(*timeleft));
-        return timeleft;
+        return 1;
     }
 
     /* Calculate time left until timer expires */
-    memcpy(timeleft, &(s->d1->next_timeout), sizeof(struct timeval));
+    timeleft->tv_sec = s->d1->next_timeout.tv_sec;
+    timeleft->tv_usec = s->d1->next_timeout.tv_usec;
+
     timeleft->tv_sec -= timenow.tv_sec;
     timeleft->tv_usec -= timenow.tv_usec;
     if (timeleft->tv_usec < 0) {
@@ -321,7 +338,7 @@ struct timeval *dtls1_get_timeout(SSL *s, struct timeval *timeleft)
         memset(timeleft, 0, sizeof(*timeleft));
     }
 
-    return timeleft;
+    return 1;
 }
 
 int dtls1_is_timer_expired(SSL *s)
@@ -329,7 +346,7 @@ int dtls1_is_timer_expired(SSL *s)
     struct timeval timeleft;
 
     /* Get time left until timeout, return false if no timer running */
-    if (dtls1_get_timeout(s, &timeleft) == NULL) {
+    if (dtls1_get_timeout(s, &timeleft) == 0) {
         return 0;
     }
 
@@ -355,8 +372,8 @@ void dtls1_stop_timer(SSL *s)
     memset(&s->d1->timeout, 0, sizeof(s->d1->timeout));
     memset(&s->d1->next_timeout, 0, sizeof(s->d1->next_timeout));
     s->d1->timeout_duration_us = 1000000;
-    BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT, 0,
-             &(s->d1->next_timeout));
+    /* set s->d1->next_timeout into bio interface */
+    dtls1_bio_set_next_timeout(SSL_get_rbio(s), s->d1);
     /* Clear retransmission buffer */
     dtls1_clear_sent_buffer(s);
 }

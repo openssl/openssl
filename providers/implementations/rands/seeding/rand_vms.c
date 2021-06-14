@@ -12,6 +12,7 @@
 #define __NEW_STARLET 1         /* New starlet definitions since VMS 7.0 */
 #include <unistd.h>
 #include "internal/cryptlib.h"
+#include "internal/nelem.h"
 #include <openssl/rand.h>
 #include "crypto/rand.h"
 #include "crypto/rand_pool.h"

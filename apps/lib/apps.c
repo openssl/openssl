@@ -15,6 +15,8 @@
 # define _POSIX_C_SOURCE 2
 #endif
 
+#include "e_os.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -42,6 +44,7 @@
 #include <openssl/core_names.h>
 #include "s_apps.h"
 #include "apps.h"
+#include "internal/sockets.h" /* for openssl_fdset() */
 
 #ifdef _WIN32
 static int WIN32_rename(const char *from, const char *to);
