@@ -56,7 +56,7 @@ IF[{- !$disabled{tests} -}]
           sysdefaulttest errtest ssl_ctx_test gosttest \
           context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
           keymgmt_internal_test hexstr_test provider_status_test defltfips_test \
-          bio_readbuffer_test user_property_test pkcs7_test
+          bio_readbuffer_test user_property_test pkcs7_test provfetchtest
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=enginetest
@@ -162,6 +162,10 @@ IF[{- !$disabled{tests} -}]
   IF[{- $disabled{fips} || !$target{dso_scheme} -}]
     DEFINE[evp_extra_test]=NO_FIPS_MODULE
   ENDIF
+
+  SOURCE[provfetchtest]=provfetchtest.c
+  INCLUDE[provfetchtest]=../include ../apps/include
+  DEPEND[provfetchtest]=../libcrypto.a libtestutil.a
 
   SOURCE[evp_pkey_provided_test]=evp_pkey_provided_test.c
   INCLUDE[evp_pkey_provided_test]=../include ../apps/include
