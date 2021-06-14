@@ -570,19 +570,6 @@ static void filter_on_operation_id(int id, void *method, void *arg)
         data->user_fn(method, data->user_arg);
 }
 
-void evp_generic_do_all_prefetched(OSSL_LIB_CTX *libctx, int operation_id,
-                                   void (*user_fn)(void *method, void *arg),
-                                   void *user_arg)
-{
-    struct filter_data_st data;
-
-    data.operation_id = operation_id;
-    data.user_fn = user_fn;
-    data.user_arg = user_arg;
-    ossl_method_store_do_all(get_evp_method_store(libctx),
-                             &filter_on_operation_id, &data);
-}
-
 void evp_generic_do_all(OSSL_LIB_CTX *libctx, int operation_id,
                         void (*user_fn)(void *method, void *arg),
                         void *user_arg,
@@ -592,9 +579,23 @@ void evp_generic_do_all(OSSL_LIB_CTX *libctx, int operation_id,
                         int (*up_ref_method)(void *),
                         void (*free_method)(void *))
 {
-    (void)inner_evp_generic_fetch(libctx, operation_id, 0, NULL, NULL,
+    struct evp_method_data_st methdata;
+    struct filter_data_st data;
+
+    methdata.libctx = libctx;
+    methdata.tmp_store = NULL;
+    (void)inner_evp_generic_fetch(&methdata, operation_id, 0, NULL, NULL,
                                   new_method, up_ref_method, free_method);
-    evp_generic_do_all_prefetched(libctx, operation_id, user_fn, user_arg);
+
+    data.operation_id = operation_id;
+    data.user_fn = user_fn;
+    data.user_arg = user_arg;
+    if (methdata.tmp_store != NULL)
+        ossl_method_store_do_all(methdata.tmp_store, &filter_on_operation_id,
+                                 &data);
+    ossl_method_store_do_all(get_evp_method_store(libctx),
+                             &filter_on_operation_id, &data);
+    dealloc_tmp_evp_method_store(methdata.tmp_store);
 }
 
 int evp_is_a(OSSL_PROVIDER *prov, int number,
