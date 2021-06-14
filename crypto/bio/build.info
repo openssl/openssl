@@ -5,7 +5,7 @@ SOURCE[../../libcrypto]=\
         bio_lib.c bio_cb.c bio_err.c \
         bio_print.c bio_dump.c bio_addr.c \
         bio_sock.c bio_sock2.c \
-        bio_meth.c bio_core.c
+        bio_meth.c ossl_core_bio.c
 
 # Source / sink implementations
 SOURCE[../../libcrypto]=\
