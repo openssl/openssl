@@ -41,15 +41,16 @@ static int asn1_print_info(BIO *bp, long offset, int depth, int hl, long len,
                          offset, depth, (long)hl, p) <= 0)
             goto err;
     }
-    if (BIO_set_prefix(bp, str) <= 0) {
-        if ((bp = BIO_push(BIO_new(BIO_f_prefix()), bp)) == NULL)
+    if (bp != NULL) {
+        if (BIO_set_prefix(bp, str) <= 0) {
+            if ((bp = BIO_push(BIO_new(BIO_f_prefix()), bp)) == NULL)
+                goto err;
+            pop_f_prefix = 1;
+        }
+        saved_indent = BIO_get_indent(bp);
+        if (BIO_set_prefix(bp, str) <= 0 || BIO_set_indent(bp, indent) < 0)
             goto err;
-        pop_f_prefix = 1;
     }
-    saved_indent = BIO_get_indent(bp);
-    if (BIO_set_prefix(bp, str) <= 0
-        || BIO_set_indent(bp, indent) < 0)
-        goto err;
 
     /*
      * BIO_set_prefix made a copy of |str|, so we can safely use it for
