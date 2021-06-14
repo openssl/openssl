@@ -17,9 +17,5 @@
 
 void ossl_store_cleanup_int(void);
 int ossl_store_loader_get_number(const OSSL_STORE_LOADER *loader);
-void ossl_store_loader_do_all_prefetched(OSSL_LIB_CTX *libctx,
-                                         void (*user_fn)(OSSL_STORE_LOADER *loader,
-                                                         void *arg),
-                                         void *user_arg);
 
 #endif

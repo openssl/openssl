@@ -448,25 +448,24 @@ static void do_one(ossl_unused int id, void *method, void *arg)
     data->user_fn(method, data->user_arg);
 }
 
-void ossl_store_loader_do_all_prefetched(OSSL_LIB_CTX *libctx,
-                                         void (*user_fn)(OSSL_STORE_LOADER *loader,
-                                                         void *arg),
-                                         void *user_arg)
+void OSSL_STORE_LOADER_do_all_provided(OSSL_LIB_CTX *libctx,
+                                       void (*user_fn)(OSSL_STORE_LOADER *loader,
+                                                       void *arg),
+                                       void *user_arg)
 {
+    struct loader_data_st methdata;
     struct do_one_data_st data;
+
+    methdata.libctx = libctx;
+    methdata.tmp_store = NULL;
+    (void)inner_loader_fetch(&methdata, 0, NULL, NULL /* properties */);
 
     data.user_fn = user_fn;
     data.user_arg = user_arg;
+    if (methdata.tmp_store != NULL)
+        ossl_method_store_do_all(methdata.tmp_store, &do_one, &data);
     ossl_method_store_do_all(get_loader_store(libctx), &do_one, &data);
-}
-
-void OSSL_STORE_LOADER_do_all_provided(OSSL_LIB_CTX *libctx,
-                                       void (*fn)(OSSL_STORE_LOADER *loader,
-                                                  void *arg),
-                                       void *arg)
-{
-    (void)OSSL_STORE_LOADER_fetch(libctx, NULL, NULL);
-    ossl_store_loader_do_all_prefetched(libctx, fn, arg);
+    dealloc_tmp_loader_store(methdata.tmp_store);
 }
 
 int OSSL_STORE_LOADER_names_do_all(const OSSL_STORE_LOADER *loader,
