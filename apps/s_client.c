@@ -2991,7 +2991,6 @@ int s_client_main(int argc, char **argv)
         }
     }
 
-    ret = 0;
  shut:
     if (in_init)
         print_stuff(bio_c_out, con, full_log);

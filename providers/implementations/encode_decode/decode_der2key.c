@@ -93,22 +93,6 @@ struct der2key_ctx_st {
     unsigned int flag_fatal : 1;
 };
 
-static int read_der(PROV_CTX *provctx, OSSL_CORE_BIO *cin,
-                    unsigned char **data, long *len)
-{
-    BUF_MEM *mem = NULL;
-    BIO *in = ossl_bio_new_from_core_bio(provctx, cin);
-    int ok = (asn1_d2i_read_bio(in, &mem) >= 0);
-
-    if (ok) {
-        *data = (unsigned char *)mem->data;
-        *len = (long)mem->length;
-        OPENSSL_free(mem);
-    }
-    BIO_free(in);
-    return ok;
-}
-
 typedef void *key_from_pkcs8_t(const PKCS8_PRIV_KEY_INFO *p8inf,
                                OSSL_LIB_CTX *libctx, const char *propq);
 static void *der2key_decode_p8(const unsigned char **input_der,
@@ -214,7 +198,7 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         return 0;
     }
 
-    ok = read_der(ctx->provctx, cin, &der, &der_len);
+    ok = ossl_read_der(ctx->provctx, cin, &der, &der_len);
     if (!ok)
         goto next;
 
