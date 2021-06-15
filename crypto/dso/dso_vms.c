@@ -464,15 +464,13 @@ static char *vms_name_converter(DSO *dso, const char *filename)
         transform = 0;
     } else {
         p = filename;
-        transform = (strrchr(p, '>') == NULL || strrchr(p, ']') == NULL);
+        transform = (strrchr(p, '>') == NULL && strrchr(p, ']') == NULL);
     }
 
     if (transform) {
         int rsize = len + sizeof(DSO_EXTENSION);
 
-        translated = OPENSSL_malloc(rsize);
-
-        if (translated != NULL) {
+        if ((translated = OPENSSL_malloc(rsize)) != NULL) {
             p = strrchr(filename, ';');
             if (p != NULL)
                 len = p - filename;
