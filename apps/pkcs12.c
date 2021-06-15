@@ -364,7 +364,7 @@ int pkcs12_main(int argc, char **argv)
         goto end;
 
     if (ciphername != NULL) {
-        if (!opt_cipher(ciphername, &enc))
+        if (!opt_cipher_any(ciphername, &enc))
             goto opthelp;
     }
     if (export_pkcs12) {
