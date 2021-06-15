@@ -2627,6 +2627,10 @@ DEPEND[html/man3/X509V3_set_ctx.html]=man3/X509V3_set_ctx.pod
 GENERATE[html/man3/X509V3_set_ctx.html]=man3/X509V3_set_ctx.pod
 DEPEND[man/man3/X509V3_set_ctx.3]=man3/X509V3_set_ctx.pod
 GENERATE[man/man3/X509V3_set_ctx.3]=man3/X509V3_set_ctx.pod
+DEPEND[html/man3/X509_ACERT_get0_holder_baseCertId.html]=man3/X509_ACERT_get0_holder_baseCertId.pod
+GENERATE[html/man3/X509_ACERT_get0_holder_baseCertId.html]=man3/X509_ACERT_get0_holder_baseCertId.pod
+DEPEND[man/man3/X509_ACERT_get0_holder_baseCertId.3]=man3/X509_ACERT_get0_holder_baseCertId.pod
+GENERATE[man/man3/X509_ACERT_get0_holder_baseCertId.3]=man3/X509_ACERT_get0_holder_baseCertId.pod
 DEPEND[html/man3/X509_ALGOR_dup.html]=man3/X509_ALGOR_dup.pod
 GENERATE[html/man3/X509_ALGOR_dup.html]=man3/X509_ALGOR_dup.pod
 DEPEND[man/man3/X509_ALGOR_dup.3]=man3/X509_ALGOR_dup.pod
@@ -3408,6 +3412,7 @@ html/man3/UI_create_method.html \
 html/man3/UI_new.html \
 html/man3/X509V3_get_d2i.html \
 html/man3/X509V3_set_ctx.html \
+html/man3/X509_ACERT_get0_holder_baseCertId.html \
 html/man3/X509_ALGOR_dup.html \
 html/man3/X509_CRL_get0_by_serial.html \
 html/man3/X509_EXTENSION_set_object.html \
@@ -4008,6 +4013,7 @@ man/man3/UI_create_method.3 \
 man/man3/UI_new.3 \
 man/man3/X509V3_get_d2i.3 \
 man/man3/X509V3_set_ctx.3 \
+man/man3/X509_ACERT_get0_holder_baseCertId.3 \
 man/man3/X509_ALGOR_dup.3 \
 man/man3/X509_CRL_get0_by_serial.3 \
 man/man3/X509_EXTENSION_set_object.3 \

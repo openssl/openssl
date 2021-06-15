@@ -128,6 +128,11 @@ void X509_ACERT_get0_signature(const X509_ACERT *x,
         *palg = &x->sig_alg;
 }
 
+int X509_ACERT_get_signature_nid(const X509_ACERT *x)
+{
+    return OBJ_obj2nid(x->sig_alg.algorithm);
+}
+
 GENERAL_NAMES *X509_ACERT_get0_holder_entityName(const X509_ACERT *x)
 {
     return x->acinfo->holder.entityName;
@@ -212,4 +217,35 @@ X509_ATTRIBUTE *X509_ACERT_delete_attr(X509_ACERT *x, int loc)
 const STACK_OF(X509_EXTENSION) *X509_ACERT_get0_extensions(const X509_ACERT *x)
 {
     return x->acinfo->extensions;
+}
+
+int X509_ACERT_add1_attr(X509_ACERT *x, X509_ATTRIBUTE *attr)
+{
+    STACK_OF(X509_ATTRIBUTE) **attrs = &x->acinfo->attributes;
+
+    return (X509at_add1_attr(attrs, attr) != NULL);
+}
+
+int X509_ACERT_add1_attr_by_OBJ(X509_ACERT *x, const ASN1_OBJECT *obj,
+                                int type, const void *bytes, int len)
+{
+    STACK_OF(X509_ATTRIBUTE) **attrs = &x->acinfo->attributes;
+
+    return (X509at_add1_attr_by_OBJ(attrs, obj, type, bytes, len) != NULL);
+}
+
+int X509_ACERT_add1_attr_by_NID(X509_ACERT *x, int nid, int type,
+                                const void *bytes, int len)
+{
+    STACK_OF(X509_ATTRIBUTE) **attrs = &x->acinfo->attributes;
+
+    return (X509at_add1_attr_by_NID(attrs, nid, type, bytes, len) != NULL);
+}
+
+int X509_ACERT_add1_attr_by_txt(X509_ACERT *x, const char *attrname, int type,
+                                const unsigned char *bytes, int len)
+{
+    STACK_OF(X509_ATTRIBUTE) **attrs = &x->acinfo->attributes;
+
+    return (X509at_add1_attr_by_txt(attrs, attrname, type, bytes, len) != NULL);
 }
