@@ -36,7 +36,7 @@ static EVP_PKEY *pkey_type2param(int ptype, const void *pval,
         if (!OSSL_DECODER_from_data(ctx, &pm, &pmlen)) {
             ERR_raise(ERR_LIB_CMS, CMS_R_DECODE_ERROR);
             goto err;
-        }    
+        }
         OSSL_DECODER_CTX_free(ctx);
         return pkey;
     } else if (ptype == V_ASN1_OBJECT) {
