@@ -32,9 +32,9 @@ static const OSSL_ALGORITHM dummy_decoders[] = {
 };
 
 static int dummy_encoder_encode(void *ctx, OSSL_CORE_BIO *out,
-                     const void *obj_raw, const OSSL_PARAM obj_abstract[],
-                     int selection,
-                     OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
+                                const void *obj_raw,
+                                const OSSL_PARAM obj_abstract[], int selection,
+                                OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     return 0;
 }
@@ -54,9 +54,9 @@ static void *dummy_store_open(void *provctx, const char *uri)
     return NULL;
 }
 
-static int dummy_store_load(void *loaderctx,
-                     OSSL_CALLBACK *object_cb, void *object_cbarg,
-                     OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
+static int dummy_store_load(void *loaderctx,  OSSL_CALLBACK *object_cb,
+                            void *object_cbarg, OSSL_PASSPHRASE_CALLBACK *pw_cb,
+                            void *pw_cbarg)
 {
     return 0;
 }
@@ -79,14 +79,13 @@ static const OSSL_DISPATCH dummy_store_functions[] = {
     { 0, NULL }
 };
 
-static const OSSL_ALGORITHM dummy_store[] = {                         \
+static const OSSL_ALGORITHM dummy_store[] = {
     { "DUMMY", "provider=dummy", dummy_store_functions },
     { NULL, NULL, NULL }
-#undef STORE
 };
 
 static const OSSL_ALGORITHM *dummy_query(void *provctx, int operation_id,
-                                       int *no_cache)
+                                         int *no_cache)
 {
     *no_cache = 0;
     switch (operation_id) {
