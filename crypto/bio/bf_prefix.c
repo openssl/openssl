@@ -151,9 +151,9 @@ static int prefix_write(BIO *b, const char *out, size_t outl,
 static long prefix_ctrl(BIO *b, int cmd, long num, void *ptr)
 {
     long ret = 0;
-    PREFIX_CTX *ctx = BIO_get_data(b);
+    PREFIX_CTX *ctx;
 
-    if (ctx == NULL)
+    if (b == NULL || (ctx = BIO_get_data(b)) == NULL)
         return -1;
 
     switch (cmd) {
