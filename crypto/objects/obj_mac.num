@@ -1245,3 +1245,10 @@ signedObject		1244
 rpkiNotify		1245
 id_ct_geofeedCSVwithCRLF		1246
 id_ct_signedChecklist		1247
+id_mod_cmp2000_02		1248
+id_mod_cmp2021_88		1249
+id_mod_cmp2021_02		1250
+id_it_rootCaCert		1251
+id_it_certProfile		1252
+id_regCtrl_algId		1253
+id_regCtrl_rsaKeyLen		1254
