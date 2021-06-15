@@ -9,10 +9,16 @@
 
 use strict;
 use File::Spec::Functions qw(devnull);
-use OpenSSL::Test qw(:DEFAULT srctop_file bldtop_dir bldtop_file);
+use OpenSSL::Test qw(:DEFAULT srctop_file srctop_dir bldtop_dir bldtop_file);
 use OpenSSL::Test::Utils;
 
-setup("test_symbol_presence");
+BEGIN {
+    setup("test_symbol_presence");
+}
+
+use lib srctop_dir('Configurations');
+use lib bldtop_dir('.');
+use platform;
 
 plan skip_all => "Test is disabled on NonStop" if config('target') =~ m|^nonstop|;
 plan skip_all => "Only useful when building shared libraries"
@@ -33,7 +39,7 @@ note
 foreach my $libname (@libnames) {
  SKIP:
     {
-        my $shlibpath = bldtop_file("lib" . $libname . ".so");
+        my $shlibpath = bldtop_file(platform->sharedlib("lib$libname"));
         *OSTDERR = *STDERR;
         *OSTDOUT = *STDOUT;
         open STDERR, ">", devnull();
