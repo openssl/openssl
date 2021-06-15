@@ -812,7 +812,7 @@ OSSL_CMP_MSG *ossl_cmp_certConf_new(OSSL_CMP_CTX *ctx, int fail_info,
     /*
      * The hash of the certificate, using the same hash algorithm
      * as is used to create and verify the certificate signature.
-     * If not available, some default hash algorithm is used.
+     * If not available, a default hash algorithm is used.
      */
     if ((certHash = X509_digest_sig(ctx->newCert, NULL)) == NULL)
         goto err;

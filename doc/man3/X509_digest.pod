@@ -45,7 +45,7 @@ is an integral part of the certificate signature algorithm identifier.
 In this case the I<default_md> argument is ignored.
 Otherwise, a default hash algorithm is determined as follows:
 SHA512 if the signature alorithm is ED25519,
-SHAKE256 if it is ED448, else SHA256.
+SHAKE256 if it is ED448, otherwise SHA256.
 If I<default_md> is not NULL, the chosen default hash algorithm
 is returned in I<*default_md> and must be freed by the caller.
 
