@@ -48,9 +48,10 @@ SHA512 if the signature alorithm is ED25519,
 SHAKE256 if it is ED448, otherwise SHA256.
 The output parmeters are assigned as follows.
 Unless I<md_used> is NULL, the hash algorithm used is provided
-in I<*default_md> and must be freed by the caller (if it is not NULL).
+in I<*md_used> and must be freed by the caller (if it is not NULL).
 Unless I<md_is_fallback> is NULL,
-I<*md_is_fallback> equals 1 if the hash algorithm used is a fallback, else 0.
+the I<*md_is_fallback> is set to 1 if the hash algorithm used is a fallback,
+otherwise to 0.
 
 X509_pubkey_digest() returns a digest of the DER representation of the public
 key in the specified X509 I<data> object.
