@@ -40,4 +40,3 @@ int ossl_decoder_ctx_setup_for_pkey(OSSL_DECODER_CTX *ctx,
 int ossl_decoder_get_number(const OSSL_DECODER *encoder);
 
 #endif
-
