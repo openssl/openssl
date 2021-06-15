@@ -69,7 +69,8 @@ typedef enum OPTION_choice {
     OPT_DIGEST, OPT_DIGEST_CREATE, OPT_COMPRESS, OPT_UNCOMPRESS,
     OPT_ED_DECRYPT, OPT_ED_ENCRYPT, OPT_DEBUG_DECRYPT, OPT_TEXT,
     OPT_ASCIICRLF, OPT_NOINTERN, OPT_NOVERIFY, OPT_NOCERTS,
-    OPT_NOATTR, OPT_NODETACH, OPT_NOSMIMECAP, OPT_BINARY, OPT_KEYID,
+    OPT_NOATTR, OPT_NODETACH, OPT_NOSMIMECAP, OPT_NO_SIGNING_TIME,
+    OPT_BINARY, OPT_KEYID,
     OPT_NOSIGS, OPT_NO_CONTENT_VERIFY, OPT_NO_ATTR_VERIFY, OPT_INDEF,
     OPT_NOINDEF, OPT_CRLFEOL, OPT_NOOUT, OPT_RR_PRINT,
     OPT_RR_ALL, OPT_RR_FIRST, OPT_RCTFORM, OPT_CERTFILE, OPT_CAFILE,
@@ -186,6 +187,8 @@ const OPTIONS cms_options[] = {
      "Don't include signer's certificate when signing"},
     {"noattr", OPT_NOATTR, '-', "Don't include any signed attributes"},
     {"nosmimecap", OPT_NOSMIMECAP, '-', "Omit the SMIMECapabilities attribute"},
+    {"no_signing_time", OPT_NO_SIGNING_TIME, '-',
+     "Omit the signing time attribute"},
     {"receipt_request_all", OPT_RR_ALL, '-',
      "When signing, create a receipt request for all recipients"},
     {"receipt_request_first", OPT_RR_FIRST, '-',
@@ -428,6 +431,9 @@ int cms_main(int argc, char **argv)
             break;
         case OPT_NOSMIMECAP:
             flags |= CMS_NOSMIMECAP;
+            break;
+        case OPT_NO_SIGNING_TIME:
+            flags |= CMS_NO_SIGNING_TIME;
             break;
         case OPT_BINARY:
             flags |= CMS_BINARY;

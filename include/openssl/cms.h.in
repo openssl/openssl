@@ -96,6 +96,7 @@ CMS_ContentInfo *CMS_ContentInfo_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
 # define CMS_ASCIICRLF                   0x80000
 # define CMS_CADES                       0x100000
 # define CMS_USE_ORIGINATOR_KEYID        0x200000
+# define CMS_NO_SIGNING_TIME             0x400000
 
 const ASN1_OBJECT *CMS_get0_type(const CMS_ContentInfo *cms);
 
