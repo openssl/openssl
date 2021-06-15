@@ -10,11 +10,13 @@
 #include <string.h>
 #include <stdio.h>
 #include "pkcs11_ctx.h"
+#include "pkcs11_kmgmt.h"
 #include <dlfcn.h>
 
 #include <openssl/err.h>
 #include <openssl/proverr.h>
 #include <openssl/params.h>
+#include <internal/provider.h>
 #include <prov/providercommon.h>
 #include <prov/names.h>
 
@@ -23,10 +25,6 @@ extern const OSSL_DISPATCH rsa_keymgmt_dp_tbl[];
 /* provider entry point (fixed name, exported) */
 OSSL_provider_init_fn OSSL_provider_init;
 
-static OSSL_ALGORITHM rsa_keymgmt_alg_tbl[] = {
-    { PROV_NAMES_RSA, "provider=pkcs11,fips=no", rsa_keymgmt_dp_tbl },
-    { NULL, NULL, NULL }
-};
 
 /*
  * Parameters we provide to the core.
@@ -73,9 +71,14 @@ static void pkcs11_set_error(PKCS11_CTX *ctx, int reason, const char *file, int 
 {
     va_list ap;
     va_start(ap, fmt);
-    ctx->core_new_error(ctx->ctx.handle);
-    ctx->core_set_error_debug(ctx->ctx.handle, file, line, func);
-    ctx->core_vset_error(ctx->ctx.handle, reason, fmt, ap);
+    if (ctx != NULL) {
+        if (ctx->core_new_error != NULL)
+            ctx->core_new_error(ctx->ctx.handle);
+        if (ctx->core_set_error_debug != NULL)
+            ctx->core_set_error_debug(ctx->ctx.handle, file, line, func);
+        if (ctx->core_vset_error != NULL)
+            ctx->core_vset_error(ctx->ctx.handle, reason, fmt, ap);
+    }
     va_end(ap);
 }
 
@@ -248,8 +251,10 @@ static int pkcs11_set_params(void *provctx, const OSSL_PARAM params[])
     p = OSSL_PARAM_locate((OSSL_PARAM *)params, OSSL_PROV_PARAM_PKCS11_SLOT);
     if (p != NULL && !OSSL_PARAM_get_int(p, &ival))
         return 0;
-    else
+    else {
         ctx->sel_slot = ival;
+        pkcs11_generate_dispatch_tables(ctx);
+    }
 
     p = OSSL_PARAM_locate((OSSL_PARAM *)params, OSSL_PROV_PARAM_PKCS11_TOKEN);
     if (p != NULL && !OSSL_PARAM_get_int(p, &ival))
@@ -318,6 +323,10 @@ static void pkcs11_teardown(void *provctx)
 {
     PKCS11_CTX *ctx = (PKCS11_CTX *)provctx;
     pkcs11_unload_module(ctx);
+    if (ctx->search_str != NULL)
+        OPENSSL_free(ctx->search_str);
+    if (ctx->userpin != NULL)
+        OPENSSL_clear_free(ctx->userpin, strlen((const char *)ctx->userpin));
     OSSL_LIB_CTX_free(PROV_LIBCTX_OF(provctx));
     OPENSSL_free(ctx);
 }
@@ -331,7 +340,9 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
                        void **provctx)
 {
     OSSL_LIB_CTX *libctx = NULL;
+    OSSL_PROVIDER *prov = NULL;
     PKCS11_CTX *ctx = NULL;
+    const char *searchfm = "provider=%s,fips=no";
     int ret = 0;
 
     if (handle == NULL || in == NULL || out == NULL || provctx == NULL)
@@ -341,6 +352,7 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
     }
 
     *provctx = NULL;
+    prov = (OSSL_PROVIDER *)handle;
 
     ctx = (PKCS11_CTX *)OPENSSL_zalloc(sizeof(PKCS11_CTX));
     if (ctx == NULL) {
@@ -369,6 +381,13 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
             break;
         }
     }
+    ctx->search_str = OPENSSL_zalloc(strlen(searchfm) + strlen( ossl_provider_name(prov)));
+    if (ctx->search_str == NULL) {
+        SET_PKCS11_PROV_ERR(ctx, ERR_PKCS11_MEM_ALLOC_FAILED);
+        goto end;
+    }
+
+    sprintf(ctx->search_str, searchfm, ossl_provider_name(prov));
     *provctx = ctx;
 
     ossl_prov_ctx_set0_libctx(*provctx, libctx);
@@ -430,7 +449,7 @@ int pkcs11_load_module(PKCS11_CTX *ctx, const char *libname)
 
     cinit_args.flags = CKF_OS_LOCKING_OK;
     rv = ctx->lib_functions->C_Initialize(&cinit_args);
-    if (rv != CKR_OK) {
+    if (rv != CKR_OK && rv != CKR_CRYPTOKI_ALREADY_INITIALIZED) {
         SET_PKCS11_PROV_ERR(ctx, rv);
         goto end;
     }
@@ -603,6 +622,7 @@ void pkcs11_free_slots(PKCS11_CTX *ctx)
                     }
                     OPENSSL_sk_free(slot->keymgmt.items);
                 }
+                OPENSSL_free(slot->keymgmt.algolist);
                 OPENSSL_free(slot);
             }
         }
@@ -626,9 +646,6 @@ void pkcs11_unload_module(PKCS11_CTX *ctx)
         if (ctx->module_filename)
             OPENSSL_free(ctx->module_filename);
         ctx->module_filename = NULL;
-        if (ctx->userpin != NULL)
-            OPENSSL_clear_free(ctx->userpin, strlen((const char *)ctx->userpin));
-        ctx->userpin = NULL;
     }
     pkcs11_free_slots(ctx);
 }
@@ -636,9 +653,12 @@ void pkcs11_unload_module(PKCS11_CTX *ctx)
 int pkcs11_generate_dispatch_tables(PKCS11_CTX *ctx)
 {
     PKCS11_SLOT *slot = NULL;
+    const char* id = NULL;
+
+    id = ctx->search_str;
     slot = pkcs11_get_slot(ctx);
-    if (slot != NULL) {
-        slot->keymgmt.algolist = rsa_keymgmt_alg_tbl;
+    if (slot != NULL && slot->keymgmt.algolist == NULL) {
+        slot->keymgmt.algolist = pkcs11_keymgmt_get_algo_tbl(slot->keymgmt.items, id);
     }
     return 1;
 }

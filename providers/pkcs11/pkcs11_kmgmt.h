@@ -1,8 +1,10 @@
-#ifndef PKCS11_RSA_H
-# define PKCS11_RSA_H
+#ifndef PKCS11_KEYMGMT_H
+# define PKCS11_KEYMGMT_H
 
 #include <prov/providercommon.h>
+#include "pkcs11_ctx.h"
 
+OSSL_ALGORITHM *pkcs11_keymgmt_get_algo_tbl(OPENSSL_STACK *sk, const char *id);
 
-#endif /* PKCS11_RSA_H */
+#endif /* PKCS11_KEYMGMT_H */
 
