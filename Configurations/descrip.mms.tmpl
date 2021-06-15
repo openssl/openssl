@@ -1041,8 +1041,6 @@ EOF
       my $incextra = join(',', map { "\"$_\"" }
                                @{$unified_info{includes_extra}->{$obj}});
       $incextra = "/INCLUDE=($incextra)" if $incextra;
-      print STDERR "DEBUG: Looking for extra include directories for $obj, found this: $incextra\n"
-          if $incextra;
 
       my $cflags;
       if ($args{attrs}->{noinst}) {
