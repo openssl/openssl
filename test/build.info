@@ -31,7 +31,7 @@ IF[{- !$disabled{tests} -}]
           aborttest test_test pkcs12_format_test \
           sanitytest rsa_complex exdatatest bntest \
           ecstresstest gmdifftest pbelutest \
-          destest mdc2test \
+          destest mdc2test sha_test \
           exptest pbetest \
           evp_pkey_provided_test evp_test evp_extra_test evp_extra_test2 \
           evp_fetch_prov_test evp_libctx_test ossl_store_test \
@@ -112,6 +112,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[mdc2test]=mdc2test.c
   INCLUDE[mdc2test]=../include ../apps/include
   DEPEND[mdc2test]=../libcrypto libtestutil.a
+
+  SOURCE[sha_test]=sha_test.c
+  INCLUDE[sha_test]=../include ../apps/include
+  DEPEND[sha_test]=../libcrypto libtestutil.a
 
   SOURCE[enginetest]=enginetest.c
   INCLUDE[enginetest]=../include ../apps/include
