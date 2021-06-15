@@ -39,7 +39,8 @@ note
 foreach my $libname (@libnames) {
  SKIP:
     {
-        my $shlibpath = bldtop_file(platform->sharedlib("lib$libname"));
+        my $shlibname = platform->sharedlib("lib$libname");
+        my $shlibpath = bldtop_file($shlibname);
         *OSTDERR = *STDERR;
         *OSTDOUT = *STDOUT;
         open STDERR, ">", devnull();
@@ -107,18 +108,18 @@ foreach my $libname (@libnames) {
         }
 
         if (scalar @missing) {
-            note "The following symbols are missing in lib$libname.so:";
+            note "The following symbols are missing in ${shlibname}:";
             foreach (@missing) {
                 note "  $_";
             }
         }
         if (scalar @extra) {
-            note "The following symbols are extra in lib$libname.so:";
+            note "The following symbols are extra in ${shlibname}:";
             foreach (@extra) {
                 note "  $_";
             }
         }
         ok(scalar @missing == 0,
-           "check that there are no missing symbols in lib$libname.so");
+           "check that there are no missing symbols in ${shlibname}");
     }
 }
