@@ -4,7 +4,7 @@
 
 OPTIONS, OPT_PAIR, OPT_COMMON, OPT_ERR, OPT_EOF, OPT_HELP,
 opt_init, opt_progname, opt_appname, opt_getprog, opt_help,
-opt_begin, opt_next, opt_flag, opt_arg, opt_unknown, opt_cipher_basic.
+opt_begin, opt_next, opt_flag, opt_arg, opt_unknown, opt_cipher_basic,
 opt_cipher_any, opt_cipher_silent, opt_md,
 opt_int, opt_int_arg, opt_long, opt_ulong, opt_intmax, opt_uintmax,
 opt_format, opt_isdir, opt_string, opt_pair,
