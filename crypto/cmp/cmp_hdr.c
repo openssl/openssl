@@ -297,7 +297,7 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
         return 0;
 
     /* set the CMP version */
-    if (!ossl_cmp_hdr_set_pvno(hdr, OSSL_CMP_PVNO))
+    if (!ossl_cmp_hdr_set_pvno(hdr, OSSL_CMP_PVNO_2))
         return 0;
 
     /*

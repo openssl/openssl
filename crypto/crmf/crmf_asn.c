@@ -136,8 +136,7 @@ ASN1_CHOICE(OSSL_CRMF_POPO) = {
 } ASN1_CHOICE_END(OSSL_CRMF_POPO)
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_CRMF_POPO)
 
-
-ASN1_ADB_TEMPLATE(attributetypeandvalue_default) =
+    ASN1_ADB_TEMPLATE(attributetypeandvalue_default) =
     ASN1_OPT(OSSL_CRMF_ATTRIBUTETYPEANDVALUE, value.other, ASN1_ANY);
 ASN1_ADB(OSSL_CRMF_ATTRIBUTETYPEANDVALUE) = {
     ADB_ENTRY(NID_id_regCtrl_regToken,
@@ -153,6 +152,12 @@ ASN1_ADB(OSSL_CRMF_ATTRIBUTETYPEANDVALUE) = {
     ADB_ENTRY(NID_id_regCtrl_oldCertID,
               ASN1_SIMPLE(OSSL_CRMF_ATTRIBUTETYPEANDVALUE,
                           value.oldCertID, OSSL_CRMF_CERTID)),
+    ADB_ENTRY(NID_id_regCtrl_algId,
+              ASN1_SIMPLE(OSSL_CRMF_ATTRIBUTETYPEANDVALUE,
+                          value.algId, X509_ALGOR)),
+    ADB_ENTRY(NID_id_regCtrl_rsaKeyLen,
+              ASN1_SIMPLE(OSSL_CRMF_ATTRIBUTETYPEANDVALUE,
+                          value.rsaKeyLen, ASN1_INTEGER)),
     ADB_ENTRY(NID_id_regCtrl_protocolEncrKey,
               ASN1_SIMPLE(OSSL_CRMF_ATTRIBUTETYPEANDVALUE,
                           value.protocolEncrKey, X509_PUBKEY)),

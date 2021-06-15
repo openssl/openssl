@@ -11,6 +11,7 @@
 
 #include <openssl/asn1t.h>
 
+#include "../crmf/crmf_local.h" /* for OSSL_CRMF_ATTRIBUTETYPEANDVALUE decls */
 #include "cmp_local.h"
 
 /* explicit #includes not strictly needed since implied by the above: */
@@ -130,6 +131,119 @@ ASN1_SEQUENCE(OSSL_CMP_ITAV) = {
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_ITAV)
 IMPLEMENT_ASN1_DUP_FUNCTION(OSSL_CMP_ITAV)
 
+ASN1_SEQUENCE(OSSL_CMP_ROOTCAKEYUPDATE) = {
+    /* OSSL_CMP_CMPCERTIFICATE is effectively X509 so it is used directly */
+    ASN1_SIMPLE(OSSL_CMP_ROOTCAKEYUPDATE, newWithNew, X509),
+    /* OSSL_CMP_CMPCERTIFICATE is effectively X509 so it is used directly */
+    ASN1_EXP_OPT(OSSL_CMP_ROOTCAKEYUPDATE, newWithOld, X509, 0),
+    /* OSSL_CMP_CMPCERTIFICATE is effectively X509 so it is used directly */
+    ASN1_EXP_OPT(OSSL_CMP_ROOTCAKEYUPDATE, oldWithNew, X509, 1)
+} ASN1_SEQUENCE_END(OSSL_CMP_ROOTCAKEYUPDATE)
+IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_ROOTCAKEYUPDATE)
+
+OSSL_CMP_ROOTCAKEYUPDATE *OSSL_CMP_ROOTCAKEYUPDATE_create(X509 *newWithNew,
+                                                          X509 *newWithOld,
+                                                          X509 *oldWithNew)
+{
+    OSSL_CMP_ROOTCAKEYUPDATE *upd;
+
+    if (newWithNew == NULL) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
+        return NULL;
+    }
+    if ((upd = OSSL_CMP_ROOTCAKEYUPDATE_new()) == NULL)
+        return NULL;
+    upd->newWithNew = newWithNew;
+    upd->newWithOld = newWithOld;
+    upd->oldWithNew = oldWithNew;
+    return upd;
+}
+
+X509
+*OSSL_CMP_ROOTCAKEYUPDATE_get0_newWithNew(const OSSL_CMP_ROOTCAKEYUPDATE *upd)
+{
+    if (upd == NULL) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
+        return NULL;
+    }
+    return upd->newWithNew;
+}
+
+X509
+*OSSL_CMP_ROOTCAKEYUPDATE_get0_newWithOld(const OSSL_CMP_ROOTCAKEYUPDATE *upd)
+{
+    if (upd == NULL) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
+        return NULL;
+    }
+    return upd->newWithOld;
+}
+
+X509
+*OSSL_CMP_ROOTCAKEYUPDATE_get0_oldWithNew(const OSSL_CMP_ROOTCAKEYUPDATE *upd)
+{
+    if (upd == NULL) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
+        return NULL;
+    }
+    return upd->oldWithNew;
+}
+
+ASN1_SEQUENCE(OSSL_CMP_CERTREQTEMPLATE) = {
+    ASN1_SIMPLE(OSSL_CMP_CERTREQTEMPLATE, certTemplate, OSSL_CRMF_CERTTEMPLATE),
+    ASN1_SEQUENCE_OF_OPT(OSSL_CMP_CERTREQTEMPLATE, keySpec,
+                         OSSL_CRMF_ATTRIBUTETYPEANDVALUE /* = OSSL_CMP_ATAV */)
+} ASN1_SEQUENCE_END(OSSL_CMP_CERTREQTEMPLATE)
+IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_CERTREQTEMPLATE)
+
+OSSL_CMP_CERTREQTEMPLATE
+*OSSL_CMP_CERTREQTEMPLATE_create(OSSL_CRMF_CERTTEMPLATE *certTemplate,
+                                 STACK_OF(OSSL_CMP_ATAV) *keySpec)
+{
+    OSSL_CMP_CERTREQTEMPLATE *tmpl;
+
+    if (certTemplate == NULL) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
+        return NULL;
+    }
+    if((tmpl = OSSL_CMP_CERTREQTEMPLATE_new()) == NULL)
+        return NULL;
+    tmpl->certTemplate = certTemplate;
+    tmpl->keySpec = keySpec;
+    return tmpl;
+}
+
+OSSL_CRMF_CERTTEMPLATE
+*OSSL_CMP_CERTREQTEMPLATE_get0_certTemplate(const OSSL_CMP_CERTREQTEMPLATE *tmpl)
+{
+    if (tmpl == NULL) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
+        return NULL;
+    }
+    return tmpl->certTemplate;
+}
+
+OSSL_CMP_ATAV
+*OSSL_CMP_CERTREQTEMPLATE_get0_keySpec_item(const OSSL_CMP_CERTREQTEMPLATE *tmpl,
+                                            int n)
+{
+    if (tmpl == NULL) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
+        return NULL;
+    }
+    return sk_OSSL_CRMF_ATTRIBUTETYPEANDVALUE_value(tmpl->keySpec, n);
+}
+
+int OSSL_CMP_CERTREQTEMPLATE_push0_keySpec_item(OSSL_CMP_CERTREQTEMPLATE *tmpl,
+                                                OSSL_CMP_ATAV *item)
+{
+    if (tmpl == NULL) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
+        return 0;
+    }
+    return sk_OSSL_CRMF_ATTRIBUTETYPEANDVALUE_push(tmpl->keySpec, item);
+}
+
 OSSL_CMP_ITAV *OSSL_CMP_ITAV_create(ASN1_OBJECT *type, ASN1_TYPE *value)
 {
     OSSL_CMP_ITAV *itav;
@@ -186,6 +300,74 @@ int OSSL_CMP_ITAV_push0_stack_item(STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
         *itav_sk_p = NULL;
     }
     return 0;
+}
+
+OSSL_CMP_ATAV *OSSL_CMP_ATAV_create(ASN1_OBJECT *type, ASN1_TYPE *value)
+{
+    OSSL_CMP_ATAV *atav;
+
+    if (type == NULL || (atav = OSSL_CRMF_ATTRIBUTETYPEANDVALUE_new()) == NULL)
+        return NULL;
+    OSSL_CMP_ATAV_set0(atav, type, value);
+    return atav;
+}
+
+void OSSL_CMP_ATAV_set0(OSSL_CMP_ATAV *atav, ASN1_OBJECT *type,
+                        ASN1_TYPE *value)
+{
+    atav->type = type;
+    atav->value.other = value;
+}
+
+ASN1_OBJECT *OSSL_CMP_ATAV_get0_type(const OSSL_CMP_ATAV *atav)
+{
+    if (atav == NULL)
+        return NULL;
+    return atav->type;
+}
+
+ASN1_TYPE *OSSL_CMP_ATAV_get0_value(const OSSL_CMP_ATAV *atav)
+{
+    if (atav == NULL)
+        return NULL;
+    return atav->value.other;
+}
+
+int OSSL_CMP_ATAV_push0_stack_item(STACK_OF(OSSL_CMP_ATAV) **sk_p,
+                                   OSSL_CMP_ATAV *atav)
+{
+    int created = 0;
+
+    if (sk_p == NULL || atav == NULL) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
+        goto err;
+    }
+
+    if (*sk_p == NULL) {
+        if ((*sk_p = sk_OSSL_CRMF_ATTRIBUTETYPEANDVALUE_new_null()) == NULL)
+            goto err;
+        created = 1;
+    }
+    if (!sk_OSSL_CRMF_ATTRIBUTETYPEANDVALUE_push(*sk_p, atav))
+        goto err;
+    return 1;
+
+ err:
+    if (created != 0) {
+        sk_OSSL_CRMF_ATTRIBUTETYPEANDVALUE_free(*sk_p);
+        *sk_p = NULL;
+    }
+    return 0;
+}
+
+OSSL_CMP_ATAV *OSSL_CMP_ATAV_dup(const OSSL_CMP_ATAV *a)
+{
+    return OSSL_CRMF_ATTRIBUTETYPEANDVALUE_dup(a);
+}
+
+void OSSL_CMP_ATAV_free(OSSL_CMP_ATAV *a)
+{
+    OSSL_CRMF_ATTRIBUTETYPEANDVALUE_free(a);
 }
 
 /* get ASN.1 encoded integer, return -1 on error */
@@ -319,6 +501,7 @@ IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_PKISI)
 IMPLEMENT_ASN1_DUP_FUNCTION(OSSL_CMP_PKISI)
 
 ASN1_SEQUENCE(OSSL_CMP_CERTSTATUS) = {
+    ASN1_EXP_OPT(OSSL_CMP_CERTSTATUS, hashAlg, X509_ALGOR, 0),
     ASN1_SIMPLE(OSSL_CMP_CERTSTATUS, certHash, ASN1_OCTET_STRING),
     ASN1_SIMPLE(OSSL_CMP_CERTSTATUS, certReqId, ASN1_INTEGER),
     ASN1_OPT(OSSL_CMP_CERTSTATUS, statusInfo, OSSL_CMP_PKISI)

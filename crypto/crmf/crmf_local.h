@@ -359,11 +359,15 @@ struct ossl_crmf_attributetypeandvalue_st {
         /* NID_id_regInfo_certReq */
         OSSL_CRMF_CERTREQUEST *certReq;
 
+        /* NID_id_regCtrl_algId */
+        X509_ALGOR *algId;
+
+        /* NID_id_regCtrl_rsaKeyLen */
+        ASN1_INTEGER *rsaKeyLen;
+
         ASN1_TYPE *other;
     } value;
 } /* OSSL_CRMF_ATTRIBUTETYPEANDVALUE */;
-DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_ATTRIBUTETYPEANDVALUE)
-DEFINE_STACK_OF(OSSL_CRMF_ATTRIBUTETYPEANDVALUE)
 DECLARE_ASN1_DUP_FUNCTION(OSSL_CRMF_ATTRIBUTETYPEANDVALUE)
 
 /*-

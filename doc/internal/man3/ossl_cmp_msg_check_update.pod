@@ -33,7 +33,7 @@ The B<msg> is checked for the following:
 =item its protection is present and valid (or a callback function B<cb>
 is present and indicates that a missing or invalid protection is acceptable),
 
-=item its CMP protocol version is acceptable, namely B<OSSL_CMP_PVNO>,
+=item its CMP protocol version is acceptable,
 
 =item its body type is valid,
 

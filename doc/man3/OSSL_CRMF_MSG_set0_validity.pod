@@ -24,7 +24,8 @@ OSSL_CRMF_MSGS_verify_popo
                                  EVP_PKEY *pubkey,
                                  const X509_NAME *subject,
                                  const X509_NAME *issuer,
-                                 const ASN1_INTEGER *serial);
+                                 const ASN1_INTEGER *serial,
+                                 const X509_EXTENSIONS *exts);
 
  int OSSL_CRMF_MSG_set0_extensions(OSSL_CRMF_MSG *crm, X509_EXTENSIONS *exts);
 
@@ -50,9 +51,10 @@ OSSL_CRMF_MSG_set_certReqId() sets I<rid> as the certReqId of I<crm>.
 
 OSSL_CRMF_CERTTEMPLATE_fill() sets those fields of the certTemplate I<tmpl>
 for which non-NULL values are provided: I<pubkey>, I<subject>, I<issuer>,
-and/or I<serial>.
+I<serial>, and/or I<exts>.
 On success the reference counter of the I<pubkey> (if given) is incremented,
-while the I<subject>, I<issuer>, and I<serial> structures (if given) are copied.
+while the I<subject>, I<issuer>, I<serial>, and I<exts> structures (if given)
+are copied.
 
 OSSL_CRMF_MSG_set0_extensions() sets I<exts> as the extensions in the
 certTemplate of I<crm>. Frees any pre-existing ones and consumes I<exts>.
