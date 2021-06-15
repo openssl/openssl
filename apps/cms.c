@@ -725,11 +725,11 @@ int cms_main(int argc, char **argv)
             goto end;
     }
     if (ciphername != NULL) {
-        if (!opt_cipher(ciphername, &cipher))
+        if (!opt_cipher_any(ciphername, &cipher))
             goto end;
     }
     if (wrapname != NULL) {
-        if (!opt_cipher(wrapname, &wrap_cipher))
+        if (!opt_cipher_any(wrapname, &wrap_cipher))
             goto end;
     }
 
