@@ -300,14 +300,6 @@ int enc_main(int argc, char **argv)
         if (!opt_cipher(ciphername, &cipher))
             goto opthelp;
     }
-    if (cipher && EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) {
-        BIO_printf(bio_err, "%s: AEAD ciphers not supported\n", prog);
-        goto end;
-    }
-    if (cipher && (EVP_CIPHER_get_mode(cipher) == EVP_CIPH_XTS_MODE)) {
-        BIO_printf(bio_err, "%s XTS ciphers not supported\n", prog);
-        goto end;
-    }
     if (digestname != NULL) {
         if (!opt_md(digestname, &dgst))
             goto opthelp;
@@ -660,9 +652,9 @@ static void show_ciphers(const OBJ_NAME *name, void *arg)
 
     /* Filter out ciphers that we cannot use */
     cipher = EVP_get_cipherbyname(name->name);
-    if (cipher == NULL ||
-            (EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0 ||
-            EVP_CIPHER_get_mode(cipher) == EVP_CIPH_XTS_MODE)
+    if (cipher == NULL
+            || (EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0
+            || EVP_CIPHER_get_mode(cipher) == EVP_CIPH_XTS_MODE)
         return;
 
     BIO_printf(dec->bio, "-%-25s", name->name);

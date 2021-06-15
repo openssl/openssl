@@ -70,7 +70,7 @@ int genpkey_main(int argc, char **argv)
     EVP_CIPHER *cipher = NULL;
     OPTION_CHOICE o;
     int outformat = FORMAT_PEM, text = 0, ret = 1, rv, do_param = 0;
-    int private = 0, i, m;
+    int private = 0, i;
     OSSL_LIB_CTX *libctx = app_get0_libctx();
     STACK_OF(OPENSSL_STRING) *keyopt = NULL;
 
@@ -163,16 +163,9 @@ int genpkey_main(int argc, char **argv)
             goto end;
         }
     }
-    if (ciphername != NULL) {
+    if (ciphername != NULL)
         if (!opt_cipher(ciphername, &cipher) || do_param == 1)
             goto opthelp;
-        m = EVP_CIPHER_get_mode(cipher);
-        if (m == EVP_CIPH_GCM_MODE || m == EVP_CIPH_CCM_MODE
-                || m == EVP_CIPH_XTS_MODE || m == EVP_CIPH_OCB_MODE) {
-            BIO_printf(bio_err, "%s: cipher mode not supported\n", prog);
-            goto end;
-        }
-    }
 
     private = do_param ? 0 : 1;
 
