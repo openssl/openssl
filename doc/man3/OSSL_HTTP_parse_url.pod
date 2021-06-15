@@ -78,7 +78,9 @@ OSSL_HTTP_parse_url(url, ssl, NULL, host, port, NULL, path, NULL, NULL).
 
 =head1 RETURN VALUES
 
-OSSL_HTTP_adapt_proxy() returns a constant proxy hostname string or NULL.
+OSSL_HTTP_adapt_proxy() returns NULL if no proxy is to be used,
+otherwise a constant proxy hostname string,
+which is either the proxy name handed in or an environment variable value.
 
 OSSL_parse_url(), OSSL_HTTP_parse_url(), and OCSP_parse_url()
 return 1 on success, 0 on error.
