@@ -717,6 +717,14 @@ L<SMIME_write_ASN1(3)>
 
 =item -
 
+L<SSL_load_client_CA_file(3)>
+
+=item -
+
+L<SSL_CTX_new(3)>
+
+=item -
+
 L<TS_RESP_CTX_new(3)>
 
 =item -
@@ -867,14 +875,6 @@ L<OSSL_PROVIDER_set_default_search_path(3)> and L<OSSL_PROVIDER_try_load(3)>
 =item -
 
 L<OSSL_SELF_TEST_get_callback(3)> and L<OSSL_SELF_TEST_set_callback(3)>
-
-=item -
-
-L<SSL_load_client_CA_file(3)>
-
-=item -
-
-L<SSL_CTX_new(3)>
 
 =item -
 
