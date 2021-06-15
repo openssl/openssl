@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[8103] = {
+static const unsigned char so[8186] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1118,9 +1118,19 @@ static const unsigned char so[8103] = {
     0x2A,0x81,0x1C,0xCF,0x55,0x01,0x68,0x08,       /* [ 8075] OBJ_sm4_gcm */
     0x2A,0x81,0x1C,0xCF,0x55,0x01,0x68,0x09,       /* [ 8083] OBJ_sm4_ccm */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x01,0x31,  /* [ 8091] OBJ_id_ct_ASPA */
+    0x2B,0x06,0x01,0x05,0x05,0x07,0x00,0x32,       /* [ 8102] OBJ_id_mod_cmp2000_02 */
+    0x2B,0x06,0x01,0x05,0x05,0x07,0x00,0x63,       /* [ 8110] OBJ_id_mod_cmp2021_88 */
+    0x2B,0x06,0x01,0x05,0x05,0x07,0x00,0x64,       /* [ 8118] OBJ_id_mod_cmp2021_02 */
+    0x2B,0x06,0x01,0x05,0x05,0x07,0x04,0x14,       /* [ 8126] OBJ_id_it_rootCaCert */
+    0x2B,0x06,0x01,0x05,0x05,0x07,0x04,0x15,       /* [ 8134] OBJ_id_it_certProfile */
+    0x2B,0x06,0x01,0x05,0x05,0x07,0x04,0x16,       /* [ 8142] OBJ_id_it_crlStatusList */
+    0x2B,0x06,0x01,0x05,0x05,0x07,0x04,0x17,       /* [ 8150] OBJ_id_it_crls */
+    0x2B,0x06,0x01,0x05,0x05,0x07,0x05,0x01,0x07,  /* [ 8158] OBJ_id_regCtrl_altCertTemplate */
+    0x2B,0x06,0x01,0x05,0x05,0x07,0x05,0x01,0x0B,  /* [ 8167] OBJ_id_regCtrl_algId */
+    0x2B,0x06,0x01,0x05,0x05,0x07,0x05,0x01,0x0C,  /* [ 8176] OBJ_id_regCtrl_rsaKeyLen */
 };
 
-#define NUM_NID 1251
+#define NUM_NID 1261
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2373,9 +2383,19 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"SM4-GCM", "sm4-gcm", NID_sm4_gcm, 8, &so[8075]},
     {"SM4-CCM", "sm4-ccm", NID_sm4_ccm, 8, &so[8083]},
     {"id-ct-ASPA", "id-ct-ASPA", NID_id_ct_ASPA, 11, &so[8091]},
+    {"id-mod-cmp2000-02", "id-mod-cmp2000-02", NID_id_mod_cmp2000_02, 8, &so[8102]},
+    {"id-mod-cmp2021-88", "id-mod-cmp2021-88", NID_id_mod_cmp2021_88, 8, &so[8110]},
+    {"id-mod-cmp2021-02", "id-mod-cmp2021-02", NID_id_mod_cmp2021_02, 8, &so[8118]},
+    {"id-it-rootCaCert", "id-it-rootCaCert", NID_id_it_rootCaCert, 8, &so[8126]},
+    {"id-it-certProfile", "id-it-certProfile", NID_id_it_certProfile, 8, &so[8134]},
+    {"id-it-crlStatusList", "id-it-crlStatusList", NID_id_it_crlStatusList, 8, &so[8142]},
+    {"id-it-crls", "id-it-crls", NID_id_it_crls, 8, &so[8150]},
+    {"id-regCtrl-altCertTemplate", "id-regCtrl-altCertTemplate", NID_id_regCtrl_altCertTemplate, 9, &so[8158]},
+    {"id-regCtrl-algId", "id-regCtrl-algId", NID_id_regCtrl_algId, 9, &so[8167]},
+    {"id-regCtrl-rsaKeyLen", "id-regCtrl-rsaKeyLen", NID_id_regCtrl_rsaKeyLen, 9, &so[8176]},
 };
 
-#define NUM_SN 1242
+#define NUM_SN 1252
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -3018,8 +3038,11 @@ static const unsigned int sn_objs[NUM_SN] = {
     1223,    /* "id-it-caCerts" */
      302,    /* "id-it-caKeyUpdateInfo" */
      298,    /* "id-it-caProtEncCert" */
+    1255,    /* "id-it-certProfile" */
     1225,    /* "id-it-certReqTemplate" */
      311,    /* "id-it-confirmWaitTime" */
+    1256,    /* "id-it-crlStatusList" */
+    1257,    /* "id-it-crls" */
      303,    /* "id-it-currentCRL" */
      300,    /* "id-it-encKeyPairTypes" */
      310,    /* "id-it-implicitConfirm" */
@@ -3028,6 +3051,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      312,    /* "id-it-origPKIMessage" */
      301,    /* "id-it-preferredSymmAlg" */
      309,    /* "id-it-revPassphrase" */
+    1254,    /* "id-it-rootCaCert" */
     1224,    /* "id-it-rootCaKeyUpdate" */
      299,    /* "id-it-signKeyPairTypes" */
      305,    /* "id-it-subscriptionRequest" */
@@ -3041,6 +3065,9 @@ static const unsigned int sn_objs[NUM_SN] = {
      274,    /* "id-mod-cmc" */
      277,    /* "id-mod-cmp" */
      284,    /* "id-mod-cmp2000" */
+    1251,    /* "id-mod-cmp2000-02" */
+    1253,    /* "id-mod-cmp2021-02" */
+    1252,    /* "id-mod-cmp2021-88" */
      273,    /* "id-mod-crmf" */
      283,    /* "id-mod-dvcs" */
      275,    /* "id-mod-kea-profile-88" */
@@ -3080,12 +3107,15 @@ static const unsigned int sn_objs[NUM_SN] = {
      164,    /* "id-qt-cps" */
      165,    /* "id-qt-unotice" */
      313,    /* "id-regCtrl" */
+    1259,    /* "id-regCtrl-algId" */
+    1258,    /* "id-regCtrl-altCertTemplate" */
      316,    /* "id-regCtrl-authenticator" */
      319,    /* "id-regCtrl-oldCertID" */
      318,    /* "id-regCtrl-pkiArchiveOptions" */
      317,    /* "id-regCtrl-pkiPublicationInfo" */
      320,    /* "id-regCtrl-protocolEncrKey" */
      315,    /* "id-regCtrl-regToken" */
+    1260,    /* "id-regCtrl-rsaKeyLen" */
      314,    /* "id-regInfo" */
      322,    /* "id-regInfo-certReq" */
      321,    /* "id-regInfo-utf8Pairs" */
@@ -3621,7 +3651,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1093,    /* "x509ExtAdmission" */
 };
 
-#define NUM_LN 1242
+#define NUM_LN 1252
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -4266,8 +4296,11 @@ static const unsigned int ln_objs[NUM_LN] = {
     1223,    /* "id-it-caCerts" */
      302,    /* "id-it-caKeyUpdateInfo" */
      298,    /* "id-it-caProtEncCert" */
+    1255,    /* "id-it-certProfile" */
     1225,    /* "id-it-certReqTemplate" */
      311,    /* "id-it-confirmWaitTime" */
+    1256,    /* "id-it-crlStatusList" */
+    1257,    /* "id-it-crls" */
      303,    /* "id-it-currentCRL" */
      300,    /* "id-it-encKeyPairTypes" */
      310,    /* "id-it-implicitConfirm" */
@@ -4276,6 +4309,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      312,    /* "id-it-origPKIMessage" */
      301,    /* "id-it-preferredSymmAlg" */
      309,    /* "id-it-revPassphrase" */
+    1254,    /* "id-it-rootCaCert" */
     1224,    /* "id-it-rootCaKeyUpdate" */
      299,    /* "id-it-signKeyPairTypes" */
      305,    /* "id-it-subscriptionRequest" */
@@ -4287,6 +4321,9 @@ static const unsigned int ln_objs[NUM_LN] = {
      274,    /* "id-mod-cmc" */
      277,    /* "id-mod-cmp" */
      284,    /* "id-mod-cmp2000" */
+    1251,    /* "id-mod-cmp2000-02" */
+    1253,    /* "id-mod-cmp2021-02" */
+    1252,    /* "id-mod-cmp2021-88" */
      273,    /* "id-mod-crmf" */
      283,    /* "id-mod-dvcs" */
      275,    /* "id-mod-kea-profile-88" */
@@ -4316,12 +4353,15 @@ static const unsigned int ln_objs[NUM_LN] = {
      359,    /* "id-qcs-pkixQCSyntax-v1" */
      259,    /* "id-qt" */
      313,    /* "id-regCtrl" */
+    1259,    /* "id-regCtrl-algId" */
+    1258,    /* "id-regCtrl-altCertTemplate" */
      316,    /* "id-regCtrl-authenticator" */
      319,    /* "id-regCtrl-oldCertID" */
      318,    /* "id-regCtrl-pkiArchiveOptions" */
      317,    /* "id-regCtrl-pkiPublicationInfo" */
      320,    /* "id-regCtrl-protocolEncrKey" */
      315,    /* "id-regCtrl-regToken" */
+    1260,    /* "id-regCtrl-rsaKeyLen" */
      314,    /* "id-regInfo" */
      322,    /* "id-regInfo-certReq" */
      321,    /* "id-regInfo-utf8Pairs" */
@@ -4867,7 +4907,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1113
+#define NUM_OBJ 1123
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -5447,6 +5487,9 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      282,    /* OBJ_id_mod_ocsp                  1 3 6 1 5 5 7 0 14 */
      283,    /* OBJ_id_mod_dvcs                  1 3 6 1 5 5 7 0 15 */
      284,    /* OBJ_id_mod_cmp2000               1 3 6 1 5 5 7 0 16 */
+    1251,    /* OBJ_id_mod_cmp2000_02            1 3 6 1 5 5 7 0 50 */
+    1252,    /* OBJ_id_mod_cmp2021_88            1 3 6 1 5 5 7 0 99 */
+    1253,    /* OBJ_id_mod_cmp2021_02            1 3 6 1 5 5 7 0 100 */
      177,    /* OBJ_info_access                  1 3 6 1 5 5 7 1 1 */
      285,    /* OBJ_biometricInfo                1 3 6 1 5 5 7 1 2 */
      286,    /* OBJ_qcStatements                 1 3 6 1 5 5 7 1 3 */
@@ -5509,6 +5552,10 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1223,    /* OBJ_id_it_caCerts                1 3 6 1 5 5 7 4 17 */
     1224,    /* OBJ_id_it_rootCaKeyUpdate        1 3 6 1 5 5 7 4 18 */
     1225,    /* OBJ_id_it_certReqTemplate        1 3 6 1 5 5 7 4 19 */
+    1254,    /* OBJ_id_it_rootCaCert             1 3 6 1 5 5 7 4 20 */
+    1255,    /* OBJ_id_it_certProfile            1 3 6 1 5 5 7 4 21 */
+    1256,    /* OBJ_id_it_crlStatusList          1 3 6 1 5 5 7 4 22 */
+    1257,    /* OBJ_id_it_crls                   1 3 6 1 5 5 7 4 23 */
      313,    /* OBJ_id_regCtrl                   1 3 6 1 5 5 7 5 1 */
      314,    /* OBJ_id_regInfo                   1 3 6 1 5 5 7 5 2 */
      323,    /* OBJ_id_alg_des40                 1 3 6 1 5 5 7 6 1 */
@@ -5679,6 +5726,9 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      318,    /* OBJ_id_regCtrl_pkiArchiveOptions 1 3 6 1 5 5 7 5 1 4 */
      319,    /* OBJ_id_regCtrl_oldCertID         1 3 6 1 5 5 7 5 1 5 */
      320,    /* OBJ_id_regCtrl_protocolEncrKey   1 3 6 1 5 5 7 5 1 6 */
+    1258,    /* OBJ_id_regCtrl_altCertTemplate   1 3 6 1 5 5 7 5 1 7 */
+    1259,    /* OBJ_id_regCtrl_algId             1 3 6 1 5 5 7 5 1 11 */
+    1260,    /* OBJ_id_regCtrl_rsaKeyLen         1 3 6 1 5 5 7 5 1 12 */
      321,    /* OBJ_id_regInfo_utf8Pairs         1 3 6 1 5 5 7 5 2 1 */
      322,    /* OBJ_id_regInfo_certReq           1 3 6 1 5 5 7 5 2 2 */
      365,    /* OBJ_id_pkix_OCSP_basic           1 3 6 1 5 5 7 48 1 1 */
