@@ -1248,3 +1248,13 @@ id_ct_signedChecklist		1247
 sm4_gcm		1248
 sm4_ccm		1249
 id_ct_ASPA		1250
+id_mod_cmp2000_02		1251
+id_mod_cmp2021_88		1252
+id_mod_cmp2021_02		1253
+id_it_rootCaCert		1254
+id_it_certProfile		1255
+id_it_crlStatusList		1256
+id_it_crls		1257
+id_regCtrl_altCertTemplate		1258
+id_regCtrl_algId		1259
+id_regCtrl_rsaKeyLen		1260
