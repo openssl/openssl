@@ -368,7 +368,10 @@ void print_format_error(int format, unsigned long flags)
     (void)opt_format_error(format2str(format), flags);
 }
 
-/* Parse a cipher name, put it in *EVP_CIPHER; return 0 on failure, else 1. */
+/*
+ * Parse a cipher name, put it in *cipherp after freeing what was there, if
+ * cipherp is not NULL.  Return 0 on failure, else 1.
+ */
 int opt_cipher_silent(const char *name, EVP_CIPHER **cipherp)
 {
     EVP_CIPHER *c;
@@ -402,7 +405,7 @@ int opt_cipher(const char *name, EVP_CIPHER **cipherp)
 {
      int mode, ret = 0;
      unsigned long int flags;
-     EVP_CIPHER *c;
+     EVP_CIPHER *c = NULL;
 
      if (opt_cipher_any(name, &c)) {
         mode = EVP_CIPHER_get_mode(c);
