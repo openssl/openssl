@@ -30,7 +30,7 @@ BEGIN {
     #Input file may be relative to cwd, but setup below changes the cwd, so
     #figure out the absolute path first
     $input_file = abs_path(shift);
-    $provider = shift;
+    $provider = shift // '';
 
     OpenSSL::Test::setup("no_test_here", quiet => 1);
 }

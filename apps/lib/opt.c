@@ -12,6 +12,7 @@
  */
 #include "opt.h"
 #include "fmt.h"
+#include "app_libctx.h"
 #include "internal/nelem.h"
 #include <string.h>
 #if !defined(OPENSSL_SYS_MSDOS)
