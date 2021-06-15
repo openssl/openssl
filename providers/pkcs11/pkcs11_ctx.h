@@ -142,7 +142,6 @@ struct pkcs11_st {
     char *type_name;
     const char *description;
 
-    const OSSL_CORE_HANDLE *handle;
     OPENSSL_CORE_CTX *corectx;
 
     /* default core params */
@@ -150,6 +149,7 @@ struct pkcs11_st {
     unsigned char *provider_name;
     unsigned char *module_filename;
     unsigned char *userpin;
+    char *search_str;
 
     /* pkcs11 module data */
     DSO *lib_handle;

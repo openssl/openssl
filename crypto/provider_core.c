@@ -1149,6 +1149,8 @@ int ossl_provider_set_fallback(OSSL_PROVIDER *prov)
 /* Getters of Provider Object data */
 const char *ossl_provider_name(const OSSL_PROVIDER *prov)
 {
+    if (prov->id != NULL)
+        return prov->id;
     return prov->libname;
 }
 

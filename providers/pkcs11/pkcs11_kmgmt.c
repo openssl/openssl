@@ -7,7 +7,7 @@
 #include <openssl/stack.h>
 #include "prov/names.h"
 #include "prov/providercommon.h"
-#include "pkcs11_ctx.h"
+#include "pkcs11_kmgmt.h"
 
 #define PKCS11_DEFAULT_RSA_MODULUS_BITS     2048
 #define PKCS11_RSA_DEFAULT_MD               "SHA256"
@@ -128,7 +128,11 @@ static void *pkcs11_rsa_keymgmt_gen_init(void *provctx, int selection, const OSS
         goto end;
 
     genctx->rsa.modulus_bits = PKCS11_DEFAULT_RSA_MODULUS_BITS;
-    genctx->provctx = (PKCS11_CTX*)provctx;
+    genctx->rsa.mechdata = pkcs11_get_mech_data((PKCS11_CTX *)provctx, CKM_RSA_PKCS_KEY_PAIR_GEN, PKCS11_DEFAULT_RSA_MODULUS_BITS);
+    if (!genctx->rsa.mechdata)
+        goto end;
+
+    genctx->provctx = (PKCS11_CTX *)provctx;
     ret = genctx;
 
 end:
@@ -162,8 +166,7 @@ static void *pkcs11_keymgmt_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg)
     PKCS11_GENCTX *gctx = (PKCS11_GENCTX*)genctx;
     PKCS11_KEY *key = NULL;
     PKCS11_KEY *ret = NULL;
-    CK_MECHANISM_TYPE mechtype = gctx->rsa.mechdata->type;
-    CK_MECHANISM mech = {mechtype, NULL, 0};
+    CK_MECHANISM mech = {0, NULL, 0};
     CK_BBOOL flag_token;
     CK_BBOOL flag_true = CK_TRUE;
     CK_RV rv = CKR_OK;
@@ -178,6 +181,13 @@ static void *pkcs11_keymgmt_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg)
     int i = 0;
     CK_ATTRIBUTE *pattr = NULL;
 
+    switch(gctx->type) {
+    case CKM_RSA_PKCS_KEY_PAIR_GEN:
+        mech.mechanism = gctx->rsa.mechdata->type;
+        break;
+    default:
+        goto end;
+    }
     pub_stack = OPENSSL_sk_new_null();
     if (pub_stack == NULL)
         goto end;
@@ -310,12 +320,11 @@ static int pkcs11_keymgmt_has(const void *keydata, int selection)
 
     if (key == NULL)
         return 0;
-    /* WB study that, looks wrong. Check the rsa_keymgmt */
-    if ((selection & (OSSL_KEYMGMT_SELECT_KEYPAIR
-                      | OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS)) != 0)
-        ok = 1;
-    if ((selection & OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS) != 0)
-        ok = ok && 0;
+
+    if ((selection & 
+         (OSSL_KEYMGMT_SELECT_KEYPAIR | OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS)) == 0)
+        return 1; /* the selection is not missing */
+
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
         ok = ok && (key->pub != CK_INVALID_HANDLE)
                 && (key->priv != CK_INVALID_HANDLE);
@@ -323,7 +332,6 @@ static int pkcs11_keymgmt_has(const void *keydata, int selection)
         ok = ok && (key->pub != CK_INVALID_HANDLE);
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
         ok = ok && (key->priv != CK_INVALID_HANDLE);
-
     return ok;
 }
 
@@ -388,4 +396,58 @@ static int pkcs11_keymgmt_gen_set_params(void *genctx, const OSSL_PARAM params[]
 end:
     return ret;
 }
+
+int pkcs11_add_algorithm(OPENSSL_STACK *stack, const char *algoname,
+                         const char *searchstr, const OSSL_DISPATCH *dispatch)
+{
+    OSSL_ALGORITHM *algo = (OSSL_ALGORITHM *)OPENSSL_zalloc(sizeof(OSSL_ALGORITHM));
+    if (algo == NULL)
+        return 0;
+    algo->algorithm_names = algoname;
+    algo->property_definition = searchstr;
+    algo->implementation = dispatch;
+    if (!OPENSSL_sk_push(stack, algo)){
+        OPENSSL_free(algo);
+        return 0;
+    }
+    return 1;
+}
+
+OSSL_ALGORITHM *pkcs11_keymgmt_get_algo_tbl(OPENSSL_STACK *sk, const char *id)
+{
+    OPENSSL_STACK *algo_sk = OPENSSL_sk_new_null();
+    OSSL_ALGORITHM *tblalgo = NULL;
+    OSSL_ALGORITHM *ptblalgo = NULL;
+    OSSL_ALGORITHM* item = NULL;
+    int i = 0;
+    for (i = 0; i < OPENSSL_sk_num(sk); i++)
+    {
+        PKCS11_TYPE_DATA_ITEM *item = (PKCS11_TYPE_DATA_ITEM *)OPENSSL_sk_value(sk, i);
+        if (item != NULL) {
+            switch(item->type)
+            {
+            case CKM_RSA_PKCS_KEY_PAIR_GEN:
+                pkcs11_add_algorithm(algo_sk, PROV_NAMES_RSA, id, rsa_keymgmt_dp_tbl);
+                break;
+            case CKM_DH_PKCS_KEY_PAIR_GEN:
+                break;
+            case CKM_ECDSA_KEY_PAIR_GEN:
+                break;
+            }
+        }
+    }
+    i = OPENSSL_sk_num(algo_sk);
+    if (i > 0) {
+        tblalgo = OPENSSL_zalloc((i + 1) * sizeof(*tblalgo));
+        ptblalgo = (OSSL_ALGORITHM *)tblalgo;
+        for(; i > 0; i--, ptblalgo++) {
+            item = (OSSL_ALGORITHM *)OPENSSL_sk_value(algo_sk, i - 1);
+            memcpy(ptblalgo, item, sizeof(*item));
+            OPENSSL_free(item);
+        }
+        OPENSSL_sk_free(algo_sk);
+    }
+    return tblalgo;
+}
+
 
