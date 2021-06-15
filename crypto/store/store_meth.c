@@ -89,7 +89,6 @@ static const OSSL_LIB_CTX_METHOD loader_store_method = {
 /* Data to be passed through ossl_method_construct() */
 struct loader_data_st {
     OSSL_LIB_CTX *libctx;
-    OSSL_METHOD_CONSTRUCT_METHOD *mcm;
     int scheme_id;               /* For get_loader_from_store() */
     const char *scheme;          /* For get_loader_from_store() */
     const char *propquery;       /* For get_loader_from_store() */
@@ -128,21 +127,20 @@ static OSSL_METHOD_STORE *get_loader_store(OSSL_LIB_CTX *libctx)
 }
 
 /* Get loader methods from a store, or put one in */
-static void *get_loader_from_store(OSSL_LIB_CTX *libctx, void *store,
-                                   void *data)
+static void *get_loader_from_store(void *store, void *data)
 {
     struct loader_data_st *methdata = data;
     void *method = NULL;
     int id;
 
     if ((id = methdata->scheme_id) == 0) {
-        OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
+        OSSL_NAMEMAP *namemap = ossl_namemap_stored(methdata->libctx);
 
         id = ossl_namemap_name2num(namemap, methdata->scheme);
     }
 
     if (store == NULL
-        && (store = get_loader_store(libctx)) == NULL)
+        && (store = get_loader_store(methdata->libctx)) == NULL)
         return NULL;
 
     if (!ossl_method_store_fetch(store, id, methdata->propquery, &method))
@@ -150,19 +148,20 @@ static void *get_loader_from_store(OSSL_LIB_CTX *libctx, void *store,
     return method;
 }
 
-static int put_loader_in_store(OSSL_LIB_CTX *libctx, void *store,
-                               void *method, const OSSL_PROVIDER *prov,
-                               int operation_id, const char *scheme,
-                               const char *propdef, void *unused)
+static int put_loader_in_store(void *store, void *method,
+                               const OSSL_PROVIDER *prov,
+                               const char *scheme, const char *propdef,
+                               void *data)
 {
+    struct loader_data_st *methdata = data;
     OSSL_NAMEMAP *namemap;
     int id;
 
-    if ((namemap = ossl_namemap_stored(libctx)) == NULL
+    if ((namemap = ossl_namemap_stored(methdata->libctx)) == NULL
         || (id = ossl_namemap_name2num(namemap, scheme)) == 0)
         return 0;
 
-    if (store == NULL && (store = get_loader_store(libctx)) == NULL)
+    if (store == NULL && (store = get_loader_store(methdata->libctx)) == NULL)
         return 0;
 
     return ossl_method_store_add(store, prov, id, propdef, method,
@@ -317,7 +316,6 @@ inner_loader_fetch(struct loader_data_st *methdata, int id,
             destruct_loader
         };
 
-        methdata->mcm = &mcm;
         methdata->scheme_id = id;
         methdata->scheme = scheme;
         methdata->propquery = properties;

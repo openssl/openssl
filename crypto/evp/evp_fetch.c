@@ -44,7 +44,6 @@ static const OSSL_LIB_CTX_METHOD evp_method_store_method = {
 /* Data to be passed through ossl_method_construct() */
 struct evp_method_data_st {
     OSSL_LIB_CTX *libctx;
-    OSSL_METHOD_CONSTRUCT_METHOD *mcm;
     int operation_id;            /* For get_evp_method_from_store() */
     int name_id;                 /* For get_evp_method_from_store() */
     const char *names;           /* For get_evp_method_from_store() */
@@ -116,8 +115,7 @@ static uint32_t evp_method_id(int name_id, unsigned int operation_id)
             | (operation_id & METHOD_ID_OPERATION_MASK));
 }
 
-static void *get_evp_method_from_store(OSSL_LIB_CTX *libctx, void *store,
-                                       void *data)
+static void *get_evp_method_from_store(void *store, void *data)
 {
     struct evp_method_data_st *methdata = data;
     void *method = NULL;
@@ -130,7 +128,7 @@ static void *get_evp_method_from_store(OSSL_LIB_CTX *libctx, void *store,
      * as the name or name id are passed via methdata.
      */
     if ((name_id = methdata->name_id) == 0 && methdata->names != NULL) {
-        OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
+        OSSL_NAMEMAP *namemap = ossl_namemap_stored(methdata->libctx);
         const char *names = methdata->names;
         const char *q = strchr(names, NAME_SEPARATOR);
         size_t l = (q == NULL ? strlen(names) : (size_t)(q - names));
@@ -145,7 +143,7 @@ static void *get_evp_method_from_store(OSSL_LIB_CTX *libctx, void *store,
         return NULL;
 
     if (store == NULL
-        && (store = get_evp_method_store(libctx)) == NULL)
+        && (store = get_evp_method_store(methdata->libctx)) == NULL)
         return NULL;
 
     if (!ossl_method_store_fetch(store, meth_id, methdata->propquery,
@@ -154,10 +152,10 @@ static void *get_evp_method_from_store(OSSL_LIB_CTX *libctx, void *store,
     return method;
 }
 
-static int put_evp_method_in_store(OSSL_LIB_CTX *libctx, void *store,
-                                   void *method, const OSSL_PROVIDER *prov,
-                                   int operation_id, const char *names,
-                                   const char *propdef, void *data)
+static int put_evp_method_in_store(void *store, void *method,
+                                   const OSSL_PROVIDER *prov,
+                                   const char *names, const char *propdef,
+                                   void *data)
 {
     struct evp_method_data_st *methdata = data;
     OSSL_NAMEMAP *namemap;
@@ -177,13 +175,13 @@ static int put_evp_method_in_store(OSSL_LIB_CTX *libctx, void *store,
         l = (q == NULL ? strlen(names) : (size_t)(q - names));
     }
 
-    if ((namemap = ossl_namemap_stored(libctx)) == NULL
+    if ((namemap = ossl_namemap_stored(methdata->libctx)) == NULL
         || (name_id = ossl_namemap_name2num_n(namemap, names, l)) == 0
-        || (meth_id = evp_method_id(name_id, operation_id)) == 0)
+        || (meth_id = evp_method_id(name_id, methdata->operation_id)) == 0)
         return 0;
 
     if (store == NULL
-        && (store = get_evp_method_store(libctx)) == NULL)
+        && (store = get_evp_method_store(methdata->libctx)) == NULL)
         return 0;
 
     return ossl_method_store_add(store, prov, meth_id, propdef, method,
@@ -308,7 +306,6 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata, int operation_id,
             destruct_evp_method
         };
 
-        methdata->mcm = &mcm;
         methdata->operation_id = operation_id;
         methdata->name_id = name_id;
         methdata->names = name;
