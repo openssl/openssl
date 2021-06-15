@@ -810,6 +810,28 @@ int X509_ACERT_print(BIO *bp, X509_ACERT *x);
 int X509_ACERT_print_ex(BIO *bp, X509_ACERT *x, unsigned long nmflags,
                         unsigned long cflag);
 
+int X509_ACERT_set_version(X509_ACERT *x, long version);
+void X509_ACERT_set0_holder_entityName(X509_ACERT *x, GENERAL_NAMES *name);
+void X509_ACERT_set0_holder_baseCertId(X509_ACERT *x, ISSUER_SERIAL *isss);
+void X509_ACERT_set0_holder_digest(X509_ACERT *x,
+                                   OBJECT_DIGEST_INFO *dinfo);
+
+int X509_ACERT_add1_attr(X509_ACERT *x, X509_ATTRIBUTE *attr);
+int X509_ACERT_add1_attr_by_OBJ(X509_ACERT *x, const ASN1_OBJECT *obj,
+                                int type, const void *bytes, int len);
+int X509_ACERT_add1_attr_by_NID(X509_ACERT *x, int nid, int type,
+                                const void *bytes, int len);
+int X509_ACERT_add1_attr_by_txt(X509_ACERT *x, const char *attrname, int type,
+                                const unsigned char *bytes, int len);
+
+int X509_ACERT_add1_ext_i2d(X509_ACERT *x, int nid, void *value, int crit,
+                            unsigned long flag);
+
+int X509_ACERT_set1_issuerName(X509_ACERT *x, const X509_NAME *name);
+int X509_ACERT_set1_serialNumber(X509_ACERT *x, ASN1_INTEGER *serial);
+int X509_ACERT_set1_notBefore(X509_ACERT *x, ASN1_GENERALIZEDTIME *time);
+int X509_ACERT_set1_notAfter(X509_ACERT *x, ASN1_GENERALIZEDTIME *time);
+
 # define OBJECT_DIGEST_INFO_PUBLIC_KEY        0
 # define OBJECT_DIGEST_INFO_PUBLIC_KEY_CERT   1
 # define OBJECT_DIGEST_INFO_OTHER             2  /* must not be used in RFC 5755 profile */
@@ -819,9 +841,18 @@ void OBJECT_DIGEST_INFO_get0_digest(OBJECT_DIGEST_INFO *o,
                                     X509_ALGOR **digestAlgorithm,
                                     ASN1_BIT_STRING **digest);
 
+void OBJECT_DIGEST_INFO_set0_digest(OBJECT_DIGEST_INFO *o,
+                                    ASN1_ENUMERATED *digestedObjectType,
+                                    X509_ALGOR *digestAlgorithm,
+                                    ASN1_BIT_STRING *digest);
+
 X509_NAME *ISSUER_SERIAL_get0_issuer(ISSUER_SERIAL *isss);
 ASN1_INTEGER *ISSUER_SERIAL_get0_serial(ISSUER_SERIAL *isss);
 ASN1_BIT_STRING *ISSUER_SERIAL_get0_issuerUID(ISSUER_SERIAL *isss);
+
+int ISSUER_SERIAL_set1_issuer(ISSUER_SERIAL *isss, X509_NAME *issuer);
+int ISSUER_SERIAL_set1_serial(ISSUER_SERIAL *isss, ASN1_INTEGER *serial);
+int ISSUER_SERIAL_set1_issuerUID(ISSUER_SERIAL *isss, ASN1_BIT_STRING *uid);
 
 void X509_POLICY_NODE_print(BIO *out, X509_POLICY_NODE *node, int indent);
 {-
