@@ -61,7 +61,7 @@ ENCODER_TEXT("ED448", ed448, yes),
 ENCODER_TEXT("X25519", x25519, yes),
 ENCODER_TEXT("X448", x448, yes),
 # ifndef OPENSSL_NO_SM2
-ENCODER_TEXT("SM2", sm2, yes),
+ENCODER_TEXT("SM2", sm2, no),
 # endif
 #endif
 
@@ -110,9 +110,9 @@ ENCODER_w_structure("EC", ec, yes, pem, type_specific_no_pub),
 /* EC supports blob output for the public key */
 ENCODER("EC", ec, yes, blob),
 # ifndef OPENSSL_NO_SM2
-ENCODER_w_structure("SM2", sm2, yes, der, type_specific_no_pub),
-ENCODER_w_structure("SM2", sm2, yes, pem, type_specific_no_pub),
-ENCODER("SM2", sm2, yes, blob),
+ENCODER_w_structure("SM2", sm2, no, der, type_specific_no_pub),
+ENCODER_w_structure("SM2", sm2, no, pem, type_specific_no_pub),
+ENCODER("SM2", sm2, no, blob),
 # endif
 #endif
 
@@ -189,10 +189,10 @@ ENCODER_w_structure("ED448", ed448, yes, der, SubjectPublicKeyInfo),
 ENCODER_w_structure("ED448", ed448, yes, pem, SubjectPublicKeyInfo),
 
 # ifndef OPENSSL_NO_SM2
-ENCODER_w_structure("SM2", sm2, yes, der, PrivateKeyInfo),
-ENCODER_w_structure("SM2", sm2, yes, pem, PrivateKeyInfo),
-ENCODER_w_structure("SM2", sm2, yes, der, SubjectPublicKeyInfo),
-ENCODER_w_structure("SM2", sm2, yes, pem, SubjectPublicKeyInfo),
+ENCODER_w_structure("SM2", sm2, no, der, PrivateKeyInfo),
+ENCODER_w_structure("SM2", sm2, no, pem, PrivateKeyInfo),
+ENCODER_w_structure("SM2", sm2, no, der, SubjectPublicKeyInfo),
+ENCODER_w_structure("SM2", sm2, no, pem, SubjectPublicKeyInfo),
 # endif
 #endif
 
