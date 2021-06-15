@@ -814,7 +814,7 @@ OSSL_CMP_MSG *ossl_cmp_certConf_new(OSSL_CMP_CTX *ctx, int fail_info,
      * as is used to create and verify the certificate signature.
      * If not available, a default hash algorithm is used.
      */
-    if ((certHash = X509_digest_sig(ctx->newCert, NULL)) == NULL)
+    if ((certHash = X509_digest_sig(ctx->newCert, NULL, NULL)) == NULL)
         goto err;
 
     if (!ossl_cmp_certstatus_set0_certHash(certStatus, certHash))

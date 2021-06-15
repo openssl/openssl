@@ -17,7 +17,8 @@ PKCS7_ISSUER_AND_SERIAL_digest
 
  int X509_digest(const X509 *data, const EVP_MD *type, unsigned char *md,
                  unsigned int *len);
- ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert, EVP_MD **default_md);
+ ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert,
+                                    EVP_MD **md_used, int *md_is_fallback);
 
  int X509_CRL_digest(const X509_CRL *data, const EVP_MD *type, unsigned char *md,
                      unsigned int *len);
@@ -42,12 +43,14 @@ PKCS7_ISSUER_AND_SERIAL_digest
 X509_digest_sig() calculates a digest of the given certificate I<cert>
 using the same hash algorithm as in its signature, if the digest
 is an integral part of the certificate signature algorithm identifier.
-In this case the I<default_md> argument is ignored.
-Otherwise, a default hash algorithm is determined as follows:
+Otherwise, a fallback hash algorithm is determined as follows:
 SHA512 if the signature alorithm is ED25519,
 SHAKE256 if it is ED448, otherwise SHA256.
-If I<default_md> is not NULL, the chosen default hash algorithm
-is returned in I<*default_md> and must be freed by the caller.
+The output parmeters are assigned as follows.
+Unless I<md_used> is NULL, the hash algorithm used is provided
+in I<*default_md> and must be freed by the caller (if it is not NULL).
+Unless I<md_is_fallback> is NULL,
+I<*md_is_fallback> equals 1 if the hash algorithm used is a fallback, else 0.
 
 X509_pubkey_digest() returns a digest of the DER representation of the public
 key in the specified X509 I<data> object.

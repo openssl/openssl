@@ -434,7 +434,8 @@ int X509_digest(const X509 *cert, const EVP_MD *md, unsigned char *data,
 }
 
 /* calculate cert digest using the same hash algorithm as in its signature */
-ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert, EVP_MD **default_md)
+ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert,
+                                   EVP_MD **md_used, int *md_is_fallback)
 {
     unsigned int len;
     unsigned char hash[EVP_MAX_MD_SIZE];
@@ -442,6 +443,11 @@ ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert, EVP_MD **default_md)
     EVP_MD *md = NULL;
     const char *md_name;
     ASN1_OCTET_STRING *new;
+
+    if (md_used != NULL)
+        *md_used = NULL;
+    if (md_is_fallback != NULL)
+        *md_is_fallback = 0;
 
     if (cert == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
@@ -490,8 +496,8 @@ ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert, EVP_MD **default_md)
             if ((md = EVP_MD_fetch(cert->libctx, md_name,
                                    cert->propq)) == NULL)
                 return NULL;
-            if (default_md != NULL)
-                *default_md = md;
+            if (md_is_fallback != NULL)
+                *md_is_fallback = 1;
         } else {
             /* A completely unknown algorithm */
             ERR_raise(ERR_LIB_X509, X509_R_UNSUPPORTED_ALGORITHM);
@@ -507,7 +513,9 @@ ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert, EVP_MD **default_md)
             || (new = ASN1_OCTET_STRING_new()) == NULL)
         goto err;
     if ((ASN1_OCTET_STRING_set(new, hash, len))) {
-        if (default_md == NULL)
+        if (md_used != NULL)
+            *md_used = md;
+        else
             EVP_MD_free(md);
         return new;
     }
