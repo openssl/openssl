@@ -29,7 +29,7 @@ int BIO_dump_indent_cb(int (*cb) (const void *data, size_t len, void *u),
                        void *u, const void *v, int len, int indent)
 {
     const unsigned char *s = v;
-    int ret = 0;
+    int res, ret = 0;
     char buf[288 + 1];
     int i, j, rows, n;
     unsigned char ch;
@@ -86,7 +86,10 @@ int BIO_dump_indent_cb(int (*cb) (const void *data, size_t len, void *u),
          * if this is the last call then update the ddt_dump thing so that we
          * will move the selection point in the debug window
          */
-        ret += cb((void *)buf, n, u);
+        res = cb((void *)buf, n, u);
+        if (res < 0)
+            return res;
+        ret += res;
     }
     return ret;
 }

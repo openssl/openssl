@@ -228,5 +228,5 @@ void EVP_KDF_do_all_provided(OSSL_LIB_CTX *libctx,
 {
     evp_generic_do_all(libctx, OSSL_OP_KDF,
                        (void (*)(void *, void *))fn, arg,
-                       evp_kdf_from_algorithm, evp_kdf_free);
+                       evp_kdf_from_algorithm, evp_kdf_up_ref, evp_kdf_free);
 }

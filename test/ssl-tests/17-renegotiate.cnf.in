@@ -261,6 +261,38 @@ our @tests_tls1_2 = (
             "ResumptionExpected" => "No",
             "ExpectedResult" => "ServerFail"
         }
+    },
+    {
+        name => "allow-client-renegotiation",
+        server => {
+            "MaxProtocol" => "TLSv1.2",
+        },
+        client => {
+            "MaxProtocol" => "TLSv1.2"
+        },
+        test => {
+            "Method" => "TLS",
+            "HandshakeMode" => "RenegotiateClient",
+            "ResumptionExpected" => "Yes",
+            "ExpectedResult" => "Success"
+        }
+    },
+    {
+        name => "no-client-renegotiation",
+        server => {
+            "MaxProtocol" => "TLSv1.2",
+            "Options" => "-ClientRenegotiation"
+        },
+        client => {
+            "MaxProtocol" => "TLSv1.2",
+        },
+        test => {
+            "Method" => "TLS",
+            "HandshakeMode" => "RenegotiateClient",
+            "ResumptionExpected" => "No",
+            "ExpectedResult" => "ClientFail",
+            "ExpectedServerAlert" => "NoRenegotiation"
+        }
     }
 );
 

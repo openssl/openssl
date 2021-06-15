@@ -48,6 +48,11 @@ int OSSL_DECODER_from_bio(OSSL_DECODER_CTX *ctx, BIO *in)
     int ok = 0;
     BIO *new_bio = NULL;
 
+    if (in == NULL) {
+        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
     if (OSSL_DECODER_CTX_get_num_decoders(ctx) == 0) {
         ERR_raise_data(ERR_LIB_OSSL_DECODER, OSSL_DECODER_R_DECODER_NOT_FOUND,
                        "No decoders were found. For standard decoders you need "
@@ -343,6 +348,16 @@ struct collect_extra_decoder_data_st {
     size_t w_new_start, w_new_end;   /* "new" decoders */
 };
 
+DEFINE_STACK_OF(OSSL_DECODER)
+
+static void collect_all_decoders(OSSL_DECODER *decoder, void *arg)
+{
+    STACK_OF(OSSL_DECODER) *skdecoders = arg;
+
+    if (OSSL_DECODER_up_ref(decoder))
+        sk_OSSL_DECODER_push(skdecoders, decoder);
+}
+
 static void collect_extra_decoder(OSSL_DECODER *decoder, void *arg)
 {
     struct collect_extra_decoder_data_st *data = arg;
@@ -459,6 +474,8 @@ int OSSL_DECODER_CTX_add_extra(OSSL_DECODER_CTX *ctx,
     struct collect_extra_decoder_data_st data;
     size_t depth = 0; /* Counts the number of iterations */
     size_t count; /* Calculates how many were added in each iteration */
+    size_t numdecoders;
+    STACK_OF(OSSL_DECODER) *skdecoders;
 
     if (!ossl_assert(ctx != NULL)) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_PASSED_NULL_PARAMETER);
@@ -477,12 +494,21 @@ int OSSL_DECODER_CTX_add_extra(OSSL_DECODER_CTX *ctx,
                    (void *)ctx);
     } OSSL_TRACE_END(DECODER);
 
+
+    skdecoders = sk_OSSL_DECODER_new_null();
+    if (skdecoders == NULL) {
+        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+    OSSL_DECODER_do_all_provided(libctx, collect_all_decoders, skdecoders);
+    numdecoders = sk_OSSL_DECODER_num(skdecoders);
+
     memset(&data, 0, sizeof(data));
     data.ctx = ctx;
     data.w_prev_start = 0;
     data.w_prev_end = sk_OSSL_DECODER_INSTANCE_num(ctx->decoder_insts);
     do {
-        size_t i;
+        size_t i, j;
 
         data.w_new_start = data.w_new_end = data.w_prev_end;
 
@@ -504,8 +530,9 @@ int OSSL_DECODER_CTX_add_extra(OSSL_DECODER_CTX *ctx,
                     = OSSL_DECODER_INSTANCE_get_input_type(decoder_inst);
 
 
-                OSSL_DECODER_do_all_provided(libctx,
-                                             collect_extra_decoder, &data);
+                for (j = 0; j < numdecoders; j++)
+                    collect_extra_decoder(sk_OSSL_DECODER_value(skdecoders, j),
+                                          &data);
             }
         }
         /* How many were added in this iteration */
@@ -518,6 +545,7 @@ int OSSL_DECODER_CTX_add_extra(OSSL_DECODER_CTX *ctx,
         depth++;
     } while (count != 0 && depth <= 10);
 
+    sk_OSSL_DECODER_pop_free(skdecoders, OSSL_DECODER_free);
     return 1;
 }
 
