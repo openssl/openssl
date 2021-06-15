@@ -1069,5 +1069,5 @@ void EVP_MD_do_all_provided(OSSL_LIB_CTX *libctx,
 {
     evp_generic_do_all(libctx, OSSL_OP_DIGEST,
                        (void (*)(void *, void *))fn, arg,
-                       evp_md_from_algorithm, evp_md_free);
+                       evp_md_from_algorithm, evp_md_up_ref, evp_md_free);
 }

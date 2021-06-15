@@ -20,12 +20,12 @@ static EVP_PKEY *pkey_type2param(int ptype, const void *pval,
 {
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *pctx = NULL;
+    OSSL_DECODER_CTX *ctx = NULL;
 
     if (ptype == V_ASN1_SEQUENCE) {
         const ASN1_STRING *pstr = pval;
         const unsigned char *pm = pstr->data;
         size_t pmlen = (size_t)pstr->length;
-        OSSL_DECODER_CTX *ctx = NULL;
         int selection = OSSL_KEYMGMT_SELECT_ALL_PARAMETERS;
 
         ctx = OSSL_DECODER_CTX_new_for_pkey(&pkey, "DER", NULL, "EC",
@@ -33,8 +33,12 @@ static EVP_PKEY *pkey_type2param(int ptype, const void *pval,
         if (ctx == NULL)
             goto err;
 
-        OSSL_DECODER_from_data(ctx, &pm, &pmlen);
+        if (!OSSL_DECODER_from_data(ctx, &pm, &pmlen)) {
+            ERR_raise(ERR_LIB_CMS, CMS_R_DECODE_ERROR);
+            goto err;
+        }
         OSSL_DECODER_CTX_free(ctx);
+        return pkey;
     } else if (ptype == V_ASN1_OBJECT) {
         const ASN1_OBJECT *poid = pval;
         char groupname[OSSL_MAX_NAME_SIZE];
@@ -50,16 +54,17 @@ static EVP_PKEY *pkey_type2param(int ptype, const void *pval,
         }
         if (EVP_PKEY_paramgen(pctx, &pkey) <= 0)
             goto err;
-    } else {
-        ERR_raise(ERR_LIB_CMS, CMS_R_DECODE_ERROR);
-        goto err;
+        EVP_PKEY_CTX_free(pctx);
+        return pkey;
     }
 
-    return pkey;
+    ERR_raise(ERR_LIB_CMS, CMS_R_DECODE_ERROR);
+    return NULL;
 
  err:
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(pctx);
+    OSSL_DECODER_CTX_free(ctx);
     return NULL;
 }
 
