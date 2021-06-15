@@ -84,8 +84,7 @@ static void ossl_method_construct_this(OSSL_PROVIDER *provider,
 
     if (data->force_store || !no_store) {
         /* If we haven't been told not to store, add to the global store */
-        data->mcm->put(data->libctx, NULL, method, provider,
-                       data->operation_id, algo->algorithm_names,
+        data->mcm->put(NULL, method, provider, algo->algorithm_names,
                        algo->property_definition, data->mcm_data);
     } else {
         /*
@@ -97,8 +96,7 @@ static void ossl_method_construct_this(OSSL_PROVIDER *provider,
         if ((data->store = data->mcm->get_tmp_store(data->mcm_data)) == NULL)
             return;
 
-        data->mcm->put(data->libctx, data->store, method, provider,
-                       data->operation_id, algo->algorithm_names,
+        data->mcm->put(data->store, method, provider, algo->algorithm_names,
                        algo->property_definition, data->mcm_data);
     }
 
@@ -112,12 +110,10 @@ void *ossl_method_construct(OSSL_LIB_CTX *libctx, int operation_id,
 {
     void *method = NULL;
 
-    if ((method = mcm->get(libctx, NULL, mcm_data)) == NULL) {
+    if ((method = mcm->get(NULL, mcm_data)) == NULL) {
         struct construct_data_st cbdata;
 
-        cbdata.libctx = libctx;
         cbdata.store = NULL;
-        cbdata.operation_id = operation_id;
         cbdata.force_store = force_store;
         cbdata.mcm = mcm;
         cbdata.mcm_data = mcm_data;
@@ -129,11 +125,11 @@ void *ossl_method_construct(OSSL_LIB_CTX *libctx, int operation_id,
 
         /* If there is a temporary store, try there first */
         if (cbdata.store != NULL)
-            method = mcm->get(libctx, cbdata.store, mcm_data);
+            method = mcm->get(cbdata.store, mcm_data);
 
         /* If no method was found yet, try the global store */
         if (method == NULL)
-            method = mcm->get(libctx, NULL, mcm_data);
+            method = mcm->get(NULL, mcm_data);
     }
 
     return method;
