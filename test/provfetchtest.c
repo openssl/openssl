@@ -12,6 +12,8 @@
 #include <openssl/decoder.h>
 #include <openssl/encoder.h>
 #include <openssl/store.h>
+#include <openssl/rand.h>
+#include <openssl/core_names.h>
 #include "testutil.h"
 
 static int dummy_decoder_decode(void *ctx, OSSL_CORE_BIO *cin, int selection,
@@ -84,6 +86,95 @@ static const OSSL_ALGORITHM dummy_store[] = {
     { NULL, NULL, NULL }
 };
 
+static void *dummy_rand_newctx(void *provctx, void *parent,
+                               const OSSL_DISPATCH *parent_calls)
+{
+    return provctx;
+}
+
+static void dummy_rand_freectx(void *vctx)
+{
+}
+
+static int dummy_rand_instantiate(void *vdrbg, unsigned int strength,
+                                  int prediction_resistance,
+                                  const unsigned char *pstr, size_t pstr_len,
+                                  const OSSL_PARAM params[])
+{
+    return 1;
+}
+
+static int dummy_rand_uninstantiate(void *vdrbg)
+{
+    return 1;
+}
+
+static int dummy_rand_generate(void *vctx, unsigned char *out, size_t outlen,
+                               unsigned int strength, int prediction_resistance,
+                               const unsigned char *addin, size_t addin_len)
+{
+    size_t i;
+
+    for (i = 0; i <outlen; i++)
+        out[i] = (unsigned char)(i & 0xff);
+
+    return 1;
+}
+
+static const OSSL_PARAM *dummy_rand_gettable_ctx_params(void *vctx, void *provctx)
+{
+    static const OSSL_PARAM known_gettable_ctx_params[] = {
+        OSSL_PARAM_size_t(OSSL_RAND_PARAM_MAX_REQUEST, NULL),
+        OSSL_PARAM_END
+    };
+    return known_gettable_ctx_params;
+}
+
+static int dummy_rand_get_ctx_params(void *vctx, OSSL_PARAM params[])
+{
+    OSSL_PARAM *p;
+
+    p = OSSL_PARAM_locate(params, OSSL_RAND_PARAM_MAX_REQUEST);
+    if (p != NULL && !OSSL_PARAM_set_size_t(p, INT_MAX))
+        return 0;
+
+    return 1;
+}
+
+static int dummy_rand_enable_locking(void *vtest)
+{
+    return 1;
+}
+
+static int dummy_rand_lock(void *vtest)
+{
+    return 1;
+}
+
+static void dummy_rand_unlock(void *vtest)
+{
+}
+
+static const OSSL_DISPATCH dummy_rand_functions[] = {
+    { OSSL_FUNC_RAND_NEWCTX, (void (*)(void))dummy_rand_newctx },
+    { OSSL_FUNC_RAND_FREECTX, (void (*)(void))dummy_rand_freectx },
+    { OSSL_FUNC_RAND_INSTANTIATE, (void (*)(void))dummy_rand_instantiate },
+    { OSSL_FUNC_RAND_UNINSTANTIATE, (void (*)(void))dummy_rand_uninstantiate },
+    { OSSL_FUNC_RAND_GENERATE, (void (*)(void))dummy_rand_generate },
+    { OSSL_FUNC_RAND_GETTABLE_CTX_PARAMS,
+      (void(*)(void))dummy_rand_gettable_ctx_params },
+    { OSSL_FUNC_RAND_GET_CTX_PARAMS, (void(*)(void))dummy_rand_get_ctx_params },
+    { OSSL_FUNC_RAND_ENABLE_LOCKING, (void(*)(void))dummy_rand_enable_locking },
+    { OSSL_FUNC_RAND_LOCK, (void(*)(void))dummy_rand_lock },
+    { OSSL_FUNC_RAND_UNLOCK, (void(*)(void))dummy_rand_unlock },
+    { 0, NULL }
+};
+
+static const OSSL_ALGORITHM dummy_rand[] = {
+    { "DUMMY", "provider=dummy", dummy_rand_functions },
+    { NULL, NULL, NULL }
+};
+
 static const OSSL_ALGORITHM *dummy_query(void *provctx, int operation_id,
                                          int *no_cache)
 {
@@ -95,6 +186,8 @@ static const OSSL_ALGORITHM *dummy_query(void *provctx, int operation_id,
         return dummy_encoders;
     case OSSL_OP_STORE:
         return dummy_store;
+    case OSSL_OP_RAND:
+        return dummy_rand;
     }
     return NULL;
 }
@@ -123,6 +216,7 @@ static int dummy_provider_init(const OSSL_CORE_HANDLE *handle,
  * Test 0: Decoder
  * Test 1: Encoder
  * Test 2: Store loader
+ * Test 3: EVP_RAND
  */
 static int fetch_test(int tst)
 {
@@ -132,6 +226,7 @@ static int fetch_test(int tst)
     OSSL_ENCODER *encoder = NULL;
     OSSL_STORE_LOADER *loader = NULL;
     int testresult = 0;
+    unsigned char buf[32];
 
     if (!TEST_ptr(libctx))
         goto err;
@@ -157,6 +252,11 @@ static int fetch_test(int tst)
         if (!TEST_ptr(loader))
             goto err;
         break;
+    case 3:
+        if (!TEST_true(RAND_set_DRBG_type(libctx, "DUMMY", NULL, NULL, NULL))
+                || !TEST_int_ge(RAND_bytes_ex(libctx, buf, sizeof(buf), 0), 1))
+            goto err;
+        break;
     default:
         goto err;
     }
@@ -173,7 +273,7 @@ static int fetch_test(int tst)
 
 int setup_tests(void)
 {
-    ADD_ALL_TESTS(fetch_test, 3);
+    ADD_ALL_TESTS(fetch_test, 4);
 
     return 1;
 }
