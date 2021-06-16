@@ -1337,7 +1337,7 @@ EOF
                                            "util", "dofile.pl")),
                            rel2abs($config{builddir}));
       return <<"EOF";
-$script : $sources
+$script : $sources configdata.pm
         \$(PERL) "-I\$(BLDDIR)" "-Mconfigdata" $dofile -
 	    "-o$target{build_file}" $sources > $script
         SET FILE/PROT=(S:RWED,O:RWED,G:RE,W:RE) $script
