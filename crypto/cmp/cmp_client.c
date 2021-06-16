@@ -34,7 +34,7 @@ static int unprotected_exception(const OSSL_CMP_CTX *ctx,
                                  int invalid_protection,
                                  int expected_type /* ignored here */)
 {
-    int rcvd_type = ossl_cmp_msg_get_bodytype(rep /* may be NULL */);
+    int rcvd_type = OSSL_CMP_MSG_get_bodytype(rep /* may be NULL */);
     const char *msg_type = NULL;
 
     if (!ossl_assert(ctx != NULL && rep != NULL))
@@ -132,7 +132,7 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
         || expected_type == OSSL_CMP_PKIBODY_POLLREP
         || expected_type == OSSL_CMP_PKIBODY_PKICONF;
     const char *req_type_str =
-        ossl_cmp_bodytype_to_string(ossl_cmp_msg_get_bodytype(req));
+        ossl_cmp_bodytype_to_string(OSSL_CMP_MSG_get_bodytype(req));
     const char *expected_type_str = ossl_cmp_bodytype_to_string(expected_type);
     int msg_timeout;
     int bt;
@@ -177,7 +177,7 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
         return 0;
     }
 
-    bt = ossl_cmp_msg_get_bodytype(*rep);
+    bt = OSSL_CMP_MSG_get_bodytype(*rep);
     /*
      * The body type in the 'bt' variable is not yet verified.
      * Still we use this preliminary value already for a progress report because
@@ -268,7 +268,7 @@ static int poll_for_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
             goto err;
 
         /* handle potential pollRep */
-        if (ossl_cmp_msg_get_bodytype(prep) == OSSL_CMP_PKIBODY_POLLREP) {
+        if (OSSL_CMP_MSG_get_bodytype(prep) == OSSL_CMP_PKIBODY_POLLREP) {
             OSSL_CMP_POLLREPCONTENT *prc = prep->body->value.pollRep;
             OSSL_CMP_POLLREP *pollRep = NULL;
             int64_t check_after;
@@ -818,6 +818,7 @@ int OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)
             goto err;
         }
         if ((cid = ossl_cmp_revrepcontent_get_CertId(rrep, rsid)) == NULL) {
+            ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_CERTID);
             ret = 0;
             goto err;
         }
