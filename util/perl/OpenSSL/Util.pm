@@ -16,7 +16,8 @@ use Exporter;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 $VERSION = "0.1";
 @ISA = qw(Exporter);
-@EXPORT = qw(cmp_versions quotify1 quotify_l dump_data);
+@EXPORT = qw(cmp_versions quotify1 quotify_l fixup_cmd_elements fixup_cmd
+             dump_data);
 @EXPORT_OK = qw();
 
 =head1 NAME
@@ -124,6 +125,95 @@ sub quotify_l {
             quotify1($_);
         }
     } @_;
+}
+
+=over 4
+
+=item fixup_cmd_elements LIST
+
+Fixes up the command line elements given by LIST in a platform specific
+manner.
+
+The result of this function is a copy of LIST with strings where quotes and
+escapes have been injected as necessary depending on the content of each
+LIST string.
+
+This can also be used to put quotes around the executable of a command.
+I<This must never ever be done on VMS.>
+
+=back
+
+=cut
+
+sub fixup_cmd_elements {
+    # A formatter for the command arguments, defaulting to the Unix setup
+    my $arg_formatter =
+        sub { $_ = shift;
+              ($_ eq '' || /\s|[\{\}\\\$\[\]\*\?\|\&:;<>]/) ? "'$_'" : $_ };
+
+    if ( $^O eq "VMS") {        # VMS setup
+        $arg_formatter = sub {
+            $_ = shift;
+            if ($_ eq '' || /\s|["[:upper:]]/) {
+                s/"/""/g;
+                '"'.$_.'"';
+            } else {
+                $_;
+            }
+        };
+    } elsif ( $^O eq "MSWin32") { # MSWin setup
+        $arg_formatter = sub {
+            $_ = shift;
+            if ($_ eq '' || /\s|["\|\&\*\;<>]/) {
+                s/(["\\])/\\$1/g;
+                '"'.$_.'"';
+            } else {
+                $_;
+            }
+        };
+    }
+
+    return ( map { $arg_formatter->($_) } @_ );
+}
+
+=over 4
+
+=item fixup_cmd LIST
+
+This is a sibling of fixup_cmd_elements() that expects the LIST to be a
+complete command line.  It does the same thing as fixup_cmd_elements(),
+expect that it treats the first LIST element specially on VMS.
+
+=back
+
+=cut
+
+sub fixup_cmd {
+    return fixup_cmd_elements(@_) unless $^O eq 'VMS';
+
+    # The rest is VMS specific
+    my $prog = shift;
+
+    # On VMS, running random executables without having a command symbol
+    # means running them with the MCR command.  This is an old PDP-11
+    # command that stuck around.
+    # This assumes that we're passed the name of an executable.  This is a
+    # safe assumption for OpenSSL command lines
+    my $prefix = 'MCR';
+
+    if ($prog =~ /^MCR$/i) {
+        # If the first element is "MCR" (independent of case) already, then
+        # we assume that the program it runs is already written the way it
+        # should, and just grab it.
+        $prog = shift;
+    } else {
+        # If the command itself doesn't have a directory spec, make sure
+        # that there is one.  Otherwise, MCR assumes that the program
+        # resides in SYS$SYSTEM:
+        $prog = '[]' . $prog unless $prog =~ /^(?:[\$a-z0-9_]+:)?[<\[]/i;
+    }
+
+    return ( $prefix, $prog, fixup_cmd_elements(@_) );
 }
 
 =item dump_data REF, OPTS
