@@ -64,24 +64,6 @@ static OSSL_FUNC_provider_query_operation_fn    pkcs11_query;
 static OSSL_FUNC_provider_get_reason_strings_fn pkcs11_get_reason_strings;
 static OSSL_FUNC_provider_teardown_fn           pkcs11_teardown;
 
-#define SET_PKCS11_PROV_ERR(ctx, reasonidx) \
-    pkcs11_set_error(ctx, reasonidx, OPENSSL_FILE, OPENSSL_LINE, OPENSSL_FUNC, NULL)
-static void pkcs11_set_error(PKCS11_CTX *ctx, int reason, const char *file, int line,
-                             const char *func, const char *fmt, ...)
-{
-    va_list ap;
-    va_start(ap, fmt);
-    if (ctx != NULL) {
-        if (ctx->core_new_error != NULL)
-            ctx->core_new_error(ctx->ctx.handle);
-        if (ctx->core_set_error_debug != NULL)
-            ctx->core_set_error_debug(ctx->ctx.handle, file, line, func);
-        if (ctx->core_vset_error != NULL)
-            ctx->core_vset_error(ctx->ctx.handle, reason, fmt, ap);
-    }
-    va_end(ap);
-}
-
 /* Define the reason string table */
 #define ERR_PKCS11_NO_USERPIN_SET (CKR_TOKEN_RESOURCE_EXCEEDED + 1)
 #define ERR_PKCS11_MEM_ALLOC_FAILED (CKR_TOKEN_RESOURCE_EXCEEDED + 2)
