@@ -22,7 +22,7 @@ $VERSION = "1.0";
                                          srctop_dir srctop_file
                                          data_file data_dir
                                          result_file result_dir
-                                         pipe with cmdstr quotify
+                                         pipe with cmdstr
                                          openssl_versions
                                          ok_nofips is_nofips isnt_nofips));
 
@@ -69,6 +69,7 @@ use File::Spec::Functions qw/file_name_is_absolute curdir canonpath splitdir
 use File::Path 2.00 qw/rmtree mkpath/;
 use File::Basename;
 use Cwd qw/getcwd abs_path/;
+use OpenSSL::Util;
 
 my $level = 0;
 
@@ -315,7 +316,7 @@ sub cmd {
         my @cmdargs = ( @$cmd );
         my @prog = __wrap_cmd(shift @cmdargs, $opts{exe_shell} // ());
 
-        return __decorate_cmd($num, [ @prog, quotify(@cmdargs) ],
+        return __decorate_cmd($num, [ @prog, fixup_cmd_elements(@cmdargs) ],
                               %opts);
     }
 }
@@ -809,50 +810,6 @@ sub cmdstr {
 
 =over 4
 
-=item B<quotify LIST>
-
-LIST is a list of strings that are going to be used as arguments for a
-command, and makes sure to inject quotes and escapes as necessary depending
-on the content of each string.
-
-This can also be used to put quotes around the executable of a command.
-I<This must never ever be done on VMS.>
-
-=back
-
-=cut
-
-sub quotify {
-    # Unix setup (default if nothing else is mentioned)
-    my $arg_formatter =
-	sub { $_ = shift;
-	      ($_ eq '' || /\s|[\{\}\\\$\[\]\*\?\|\&:;<>]/) ? "'$_'" : $_ };
-
-    if ( $^O eq "VMS") {	# VMS setup
-	$arg_formatter = sub {
-	    $_ = shift;
-	    if ($_ eq '' || /\s|["[:upper:]]/) {
-		s/"/""/g;
-		'"'.$_.'"';
-	    } else {
-		$_;
-	    }
-	};
-    } elsif ( $^O eq "MSWin32") { # MSWin setup
-	$arg_formatter = sub {
-	    $_ = shift;
-	    if ($_ eq '' || /\s|["\|\&\*\;<>]/) {
-		s/(["\\])/\\$1/g;
-		'"'.$_.'"';
-	    } else {
-		$_;
-	    }
-	};
-    }
-
-    return map { $arg_formatter->($_) } @_;
-}
-
 =over 4
 
 =item B<openssl_versions>
@@ -1247,16 +1204,11 @@ sub __wrap_cmd {
         # Otherwise, use the standard wrapper
         my $std_wrapper = __bldtop_file("util", "wrap.pl");
 
-        if ($^O eq "VMS") {
-            # On VMS, running random executables without having a command
-            # symbol means running them with the MCR command.  This is an
-            # old PDP-11 command that stuck around.  So we get a command
-            # running perl running the script.
-            @prefix = ( "MCR", $^X, $std_wrapper );
-        } elsif ($^O eq "MSWin32") {
-            # In the Windows case, we run perl explicitly.  We might not
-            # need it, but that depends on if the user has associated the
-            # '.pl' extension with a perl interpreter, so better be safe.
+        if ($^O eq "VMS" || $^O eq "MSWin32") {
+            # On VMS and Windows, we run the perl executable explicitly,
+            # with necessary fixups.  We might not need that for Windows,
+            # but that depends on if the user has associated the '.pl'
+            # extension with a perl interpreter, so better be safe.
             @prefix = ( __fixup_prg($^X), $std_wrapper );
         } else {
             # Otherwise, we assume Unix semantics, and trust that the #!
@@ -1277,23 +1229,7 @@ sub __wrap_cmd {
 sub __fixup_prg {
     my $prog = shift;
 
-    my $prefix = "";
-
-    if ($^O eq "VMS" ) {
-	$prefix = ($prog =~ /^(?:[\$a-z0-9_]+:)?[<\[]/i ? "mcr " : "mcr []");
-    }
-
-    if (defined($prog)) {
-	# Make sure to quotify the program file on platforms that may
-	# have spaces or similar in their path name.
-	# To our knowledge, VMS is the exception where quotifying should
-	# never happen.
-	($prog) = quotify($prog) unless $^O eq "VMS";
-	return $prefix.$prog;
-    }
-
-    print STDERR "$prog not found\n";
-    return undef;
+    return join(' ', fixup_cmd($prog));
 }
 
 # __decorate_cmd NUM, CMDARRAYREF
