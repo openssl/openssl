@@ -51,6 +51,7 @@ OSSL_CRMF_MSG_set_certReqId() sets I<rid> as the certReqId of I<crm>.
 OSSL_CRMF_CERTTEMPLATE_fill() sets those fields of the certTemplate I<tmpl>
 for which non-NULL values are provided: I<pubkey>, I<subject>, I<issuer>,
 and/or I<serial>.
+X.509 extensions may be set using OSSL_CRMF_MSG_set0_extensions().
 On success the reference counter of the I<pubkey> (if given) is incremented,
 while the I<subject>, I<issuer>, and I<serial> structures (if given) are copied.
 

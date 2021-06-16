@@ -406,7 +406,7 @@ static int check_msg_all_certs(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
 
     if (mode_3gpp
             && ((!ctx->permitTAInExtraCertsForIR
-                     || ossl_cmp_msg_get_bodytype(msg) != OSSL_CMP_PKIBODY_IP)))
+                     || OSSL_CMP_MSG_get_bodytype(msg) != OSSL_CMP_PKIBODY_IP)))
         return 0;
 
     ossl_cmp_info(ctx,
@@ -576,7 +576,7 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
              * the caPubs field may be directly trusted as a root CA
              * certificate by the initiator.'
              */
-            switch (ossl_cmp_msg_get_bodytype(msg)) {
+            switch (OSSL_CMP_MSG_get_bodytype(msg)) {
             case -1:
                 return 0;
             case OSSL_CMP_PKIBODY_IP:
@@ -732,7 +732,7 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
 #endif
     }
 
-    if (ossl_cmp_msg_get_bodytype(msg) < 0) {
+    if (OSSL_CMP_MSG_get_bodytype(msg) < 0) {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
         ERR_raise(ERR_LIB_CMP, CMP_R_PKIBODY_ERROR);
         return 0;
@@ -793,7 +793,7 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
          * the caPubs field may be directly trusted as a root CA
          * certificate by the initiator.'
          */
-        switch (ossl_cmp_msg_get_bodytype(msg)) {
+        switch (OSSL_CMP_MSG_get_bodytype(msg)) {
         case OSSL_CMP_PKIBODY_IP:
         case OSSL_CMP_PKIBODY_CP:
         case OSSL_CMP_PKIBODY_KUP:

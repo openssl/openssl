@@ -93,7 +93,7 @@ int ossl_cmp_msg_set_bodytype(OSSL_CMP_MSG *msg, int type)
     return 1;
 }
 
-int ossl_cmp_msg_get_bodytype(const OSSL_CMP_MSG *msg)
+int OSSL_CMP_MSG_get_bodytype(const OSSL_CMP_MSG *msg)
 {
     if (!ossl_assert(msg != NULL && msg->body != NULL))
         return -1;
@@ -651,7 +651,7 @@ int ossl_cmp_msg_gen_push0_ITAV(OSSL_CMP_MSG *msg, OSSL_CMP_ITAV *itav)
     if (!ossl_assert(msg != NULL && itav != NULL))
         return 0;
 
-    bodytype = ossl_cmp_msg_get_bodytype(msg);
+    bodytype = OSSL_CMP_MSG_get_bodytype(msg);
     if (bodytype != OSSL_CMP_PKIBODY_GENM
             && bodytype != OSSL_CMP_PKIBODY_GENP) {
         ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ARGS);
