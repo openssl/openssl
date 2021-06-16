@@ -345,12 +345,12 @@ sub save_registers($)
 	my $n = $self->{n};
 
 	$self->add_code(<<___);
-	mtvsrd	$vsrs[0],$lo
+	std	$lo,-8($sp)
 ___
 
 	for (my $j = 0; $j <= $n+1; $j++) {
 		$self->{code}.=<<___;
-	mtvsrd	$vsrs[$j+1],$tp[$j]
+	std	$tp[$j],-`($j+2)*8`($sp)
 ___
 	}
 
@@ -366,12 +366,12 @@ sub restore_registers($)
 	my $n = $self->{n};
 
 	$self->add_code(<<___);
-	mfvsrd	$lo,$vsrs[0]
+	ld	$lo,-8($sp)
 ___
 
 	for (my $j = 0; $j <= $n+1; $j++) {
 		$self->{code}.=<<___;
-	mfvsrd	$tp[$j],$vsrs[$j+1]
+	ld	$tp[$j],-`($j+2)*8`($sp)
 ___
 	}
 
