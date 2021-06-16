@@ -314,12 +314,23 @@ $ret =
     $harness->runtests(map { [ abs2rel($_, rel2abs(curdir())), basename($_) ] }
                        sort { reorder($a) cmp reorder($b) } keys %tests);
 
-# $ret->has_errors may be any number, not just 0 or 1.  On VMS, numbers
-# from 2 and on are used as is as VMS statuses, which has severity encoded
-# in the lower 3 bits.  0 and 1, on the other hand, generate SUCCESS and
-# FAILURE, so for currect reporting on all platforms, we make sure the only
-# exit codes are 0 and 1.  Double-bang is the trick to do so.
-exit !!$ret->has_errors if (ref($ret) eq "TAP::Parser::Aggregator");
+# If this is a TAP::Parser::Aggregator, $ret->has_errors is the count of
+# tests that failed.  We don't bother with that exact number, just exit
+# with an appropriate exit code when it isn't zero.
+if (ref($ret) eq "TAP::Parser::Aggregator") {
+    exit 0 unless $ret->has_errors;
+    exit 1 unless $^O eq 'VMS';
+    # On VMS, perl converts an exit 1 to SS$_ABORT (%SYSTEM-F-ABORT), which
+    # is a bit harsh.  As per perl recommendations, we explicitly use the
+    # same VMS status code as typical C programs would for exit(1), except
+    # we set the error severity rather than success.
+    # Ref: https://perldoc.perl.org/perlport#exit
+    #      https://perldoc.perl.org/perlvms#$?
+    exit  0x35a000              # C facility code
+        + 8                     # 1 << 3 (to make space for the 3 severity bits)
+        + 2                     # severity: E(rror)
+        + 0x10000000;           # bit 28 set => the shell stays silent
+}
 
 # If this isn't a TAP::Parser::Aggregator, it's the pre-TAP test harness,
 # which simply dies at the end if any test failed, so we don't need to bother
