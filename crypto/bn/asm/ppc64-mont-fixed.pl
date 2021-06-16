@@ -186,6 +186,7 @@ sub mul_mont_fixed($)
 	$self->add_code(<<___);
 
 .globl	.${fname}
+.align	5
 .${fname}:
 	mr	$rp,r3
 
@@ -226,6 +227,7 @@ ___
 	mtctr		$num
 	b		$label->{"enter"}
 
+.align	4
 $label->{"outer"}:
 	ldx		$bpi,$bp,$i
 
@@ -247,6 +249,7 @@ ___
 ___
 
 	$self->add_code(<<___);
+.align	4
 $label->{"enter"}:
 	mulld		$bpi,$tp[0],$n0
 
@@ -561,7 +564,6 @@ my $code;
 $code.=<<___;
 .machine "any"
 .text
-.align	5
 ___
 
 my $mont;
