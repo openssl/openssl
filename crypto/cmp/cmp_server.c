@@ -167,7 +167,7 @@ static OSSL_CMP_MSG *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
     if (!ossl_assert(srv_ctx != NULL && srv_ctx->ctx != NULL && req != NULL))
         return NULL;
 
-    switch (ossl_cmp_msg_get_bodytype(req)) {
+    switch (OSSL_CMP_MSG_get_bodytype(req)) {
     case OSSL_CMP_PKIBODY_P10CR:
     case OSSL_CMP_PKIBODY_CR:
         bodytype = OSSL_CMP_PKIBODY_CP;
@@ -183,7 +183,7 @@ static OSSL_CMP_MSG *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
         return NULL;
     }
 
-    if (ossl_cmp_msg_get_bodytype(req) == OSSL_CMP_PKIBODY_P10CR) {
+    if (OSSL_CMP_MSG_get_bodytype(req) == OSSL_CMP_PKIBODY_P10CR) {
         certReqId = OSSL_CMP_CERTREQID;
         p10cr = req->body->value.p10cr;
     } else {
@@ -428,7 +428,7 @@ static int unprotected_exception(const OSSL_CMP_CTX *ctx,
                       invalid_protection ? "invalid" : "missing");
         return 1;
     }
-    if (ossl_cmp_msg_get_bodytype(req) == OSSL_CMP_PKIBODY_ERROR
+    if (OSSL_CMP_MSG_get_bodytype(req) == OSSL_CMP_PKIBODY_ERROR
         && OSSL_CMP_CTX_get_option(ctx, OSSL_CMP_OPT_UNPROTECTED_ERRORS) == 1) {
         ossl_cmp_warn(ctx, "ignoring missing protection of error message");
         return 1;
@@ -469,7 +469,7 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
     if (!OSSL_CMP_CTX_set1_recipient(ctx, hdr->sender->d.directoryName))
         goto err;
 
-    req_type = ossl_cmp_msg_get_bodytype(req);
+    req_type = OSSL_CMP_MSG_get_bodytype(req);
     switch (req_type) {
     case OSSL_CMP_PKIBODY_IR:
     case OSSL_CMP_PKIBODY_CR:
@@ -588,7 +588,7 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
     ctx->secretValue = backup_secret;
 
     rsp_type =
-        rsp != NULL ? ossl_cmp_msg_get_bodytype(rsp) : OSSL_CMP_PKIBODY_ERROR;
+        rsp != NULL ? OSSL_CMP_MSG_get_bodytype(rsp) : OSSL_CMP_PKIBODY_ERROR;
     if (rsp != NULL)
         ossl_cmp_log1(DEBUG, ctx,
                       "sending %s", ossl_cmp_bodytype_to_string(rsp_type));
