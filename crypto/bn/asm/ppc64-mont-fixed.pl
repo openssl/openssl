@@ -72,6 +72,7 @@ my $np	= "r6";
 my $n0	= "r7";
 my $num	= "r8";
 
+my $i	= "r9";
 my $c0	= "r10";
 my $bp0	= "r11";
 my $bpi	= "r11";
@@ -81,7 +82,6 @@ my $apj	= "r12";
 my $npj	= "r12";
 my $lo	= "r14";
 my $c1	= "r14";
-my $i	= "r15";
 
 # Non-volatile registers used for tp[i]
 #
@@ -346,12 +346,11 @@ sub save_registers($)
 
 	$self->add_code(<<___);
 	mtvsrd	$vsrs[0],$lo
-	mtvsrd	$vsrs[1],$i
 ___
 
 	for (my $j = 0; $j <= $n+1; $j++) {
 		$self->{code}.=<<___;
-	mtvsrd	$vsrs[$j+2],$tp[$j]
+	mtvsrd	$vsrs[$j+1],$tp[$j]
 ___
 	}
 
@@ -368,12 +367,11 @@ sub restore_registers($)
 
 	$self->add_code(<<___);
 	mfvsrd	$lo,$vsrs[0]
-	mfvsrd	$i,$vsrs[1]
 ___
 
 	for (my $j = 0; $j <= $n+1; $j++) {
 		$self->{code}.=<<___;
-	mfvsrd	$tp[$j],$vsrs[$j+2]
+	mfvsrd	$tp[$j],$vsrs[$j+1]
 ___
 	}
 
