@@ -24,5 +24,5 @@ plan tests => 1;
 
 $ENV{OPENSSL_CONF} = abs_path(srctop_file("test", "default-and-legacy.cnf"));
 
-ok(run(test((["pbetest"])), "Running PBE test"));
+ok(run(test((["pbetest"]))), "Running PBE test");
 
