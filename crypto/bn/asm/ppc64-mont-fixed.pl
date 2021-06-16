@@ -562,7 +562,6 @@ $code.=<<___;
 .machine "any"
 .text
 .align	5
-.p2align	5,,31
 ___
 
 my $mont;
