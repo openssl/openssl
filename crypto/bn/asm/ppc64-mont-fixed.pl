@@ -72,8 +72,6 @@ my $np	= "r6";
 my $n0	= "r7";
 my $num	= "r8";
 
-$rp	= "r9";	# $rp is reassigned
-
 my $c0	= "r10";
 my $bp0	= "r11";
 my $bpi	= "r11";
@@ -188,7 +186,6 @@ sub mul_mont_fixed($)
 .globl	.${fname}
 .align	5
 .${fname}:
-	mr	$rp,r3
 
 ___
 
