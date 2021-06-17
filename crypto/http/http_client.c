@@ -29,7 +29,7 @@
 #define HTTP_PREFIX_VERSION HTTP_PREFIX""HTTP_VERSION_PATT
 #define HTTP_1_0 HTTP_PREFIX_VERSION"0" /* "HTTP/1.0" */
 #define HTTP_VERSION_STR_LEN (strlen(HTTP_PREFIX_VERSION) + 1)
-#define HTTP_LINE1_MINLEN ((int)strlen(HTTP_PREFIX_VERSION "x 200\n"))
+#define HTTP_LINE1_MINLEN (sizeof(HTTP_PREFIX_VERSION "x 200\n") - 1)
 #define HTTP_VERSION_MAX_REDIRECTIONS 50
 
 #define HTTP_STATUS_CODE_OK                200
@@ -1292,7 +1292,7 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
          */
         read_len = BIO_gets(fbio, mbuf, BUF_SIZE);
         /* the BIO may not block, so we must wait for the 1st line to come in */
-        if (read_len < HTTP_LINE1_MINLEN)
+        if (read_len < (int)HTTP_LINE1_MINLEN)
             continue;
 
         /* Check for HTTP/1.x */
