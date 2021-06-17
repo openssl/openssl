@@ -53,7 +53,7 @@ IF[{- !$disabled{tests} -}]
           recordlentest drbgtest rand_status_test sslbuffertest \
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
           http_test servername_test ocspapitest fatalerrtest tls13ccstest \
-          sysdefaulttest errtest ssl_ctx_test gosttest \
+          sysdefaulttest errtest ssl_ctx_test \
           context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
           keymgmt_internal_test hexstr_test provider_status_test defltfips_test \
           bio_readbuffer_test user_property_test pkcs7_test upcallstest \
@@ -783,10 +783,6 @@ IF[{- !$disabled{tests} -}]
   SOURCE[errtest]=errtest.c
   INCLUDE[errtest]=../include ../apps/include
   DEPEND[errtest]=../libcrypto libtestutil.a
-
-  SOURCE[gosttest]=gosttest.c helpers/ssltestlib.c
-  INCLUDE[gosttest]=../include ../apps/include ..
-  DEPEND[gosttest]=../libcrypto ../libssl libtestutil.a
 
   SOURCE[aesgcmtest]=aesgcmtest.c
   INCLUDE[aesgcmtest]=../include ../apps/include ..
