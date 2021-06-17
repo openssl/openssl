@@ -45,6 +45,7 @@ sub startproc($)
 
     $code.=<<___;
     .globl ${name}
+    .align 5
 ${name}:
 
 ___
