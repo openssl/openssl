@@ -492,7 +492,7 @@ static void rand_ossl_ctx_free(void *vdgbl)
 }
 
 static const OSSL_LIB_CTX_METHOD rand_drbg_ossl_ctx_method = {
-    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
+    OSSL_LIB_CTX_METHOD_PRIORITY_2,
     rand_ossl_ctx_new,
     rand_ossl_ctx_free,
 };
