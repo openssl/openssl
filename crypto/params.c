@@ -1009,57 +1009,61 @@ int OSSL_PARAM_set_double(OSSL_PARAM *p, double val)
             *(double *)p->data = val;
             return 1;
         }
-    } else if (p->data_type == OSSL_PARAM_UNSIGNED_INTEGER
-               && val == (ossl_uintmax_t)val) {
-        p->return_size = sizeof(double);
+    } else if (p->data_type == OSSL_PARAM_UNSIGNED_INTEGER) {
+        if (val >= 0) {
+            if (val <= UINT32_MAX)
+                p->return_size = sizeof(uint32_t);
+            else if (val >= 0
+                     /*
+                      * By subtracting 65535 (2^16-1) we cancel the low order
+                      * 15 bits of UINT64_MAX to avoid using imprecise floating
+                      * point values.
+                      */
+                     && val < (double)(UINT64_MAX - 65535) + 65536.0)
+                p->return_size = sizeof(uint64_t);
+        }
+
         if (p->data == NULL)
             return 1;
-        switch (p->data_size) {
-        case sizeof(uint32_t):
-            if (val >= 0 && val <= UINT32_MAX) {
+
+        if (p->return_size != 0 && p->data_size >= p->return_size) {
+            switch (p->data_size) {
+            case sizeof(uint32_t):
                 p->return_size = sizeof(uint32_t);
                 *(uint32_t *)p->data = (uint32_t)val;
                 return 1;
-            }
-            break;
-        case sizeof(uint64_t):
-            if (val >= 0
-                    /*
-                     * By subtracting 65535 (2^16-1) we cancel the low order
-                     * 15 bits of UINT64_MAX to avoid using imprecise floating
-                     * point values.
-                     */
-                    && (double)(UINT64_MAX - 65535) + 65536.0) {
+            case sizeof(uint64_t):
                 p->return_size = sizeof(uint64_t);
                 *(uint64_t *)p->data = (uint64_t)val;
                 return 1;
             }
-            break;            }
-    } else if (p->data_type == OSSL_PARAM_INTEGER && val == (ossl_intmax_t)val) {
-        p->return_size = sizeof(double);
+        }
+    } else if (p->data_type == OSSL_PARAM_INTEGER) {
+        if (val >= INT32_MIN && val <= INT32_MAX)
+            p->return_size = sizeof(int32_t);
+        else if (val >= INT64_MIN
+                 /*
+                  * By subtracting 65535 (2^16-1) we cancel the low order
+                  * 15 bits of INT64_MAX to avoid using imprecise floating
+                  * point values.
+                  */
+                 && val < (double)(INT64_MAX - 65535) + 65536.0)
+            p->return_size = sizeof(int64_t);
+
         if (p->data == NULL)
             return 1;
-        switch (p->data_size) {
-        case sizeof(int32_t):
-            if (val >= INT32_MIN && val <= INT32_MAX) {
+
+        if (p->return_size != 0 && p->data_size >= p->return_size) {
+            switch (p->data_size) {
+            case sizeof(int32_t):
                 p->return_size = sizeof(int32_t);
                 *(int32_t *)p->data = (int32_t)val;
                 return 1;
-            }
-            break;
-        case sizeof(int64_t):
-            if (val >= INT64_MIN
-                    /*
-                     * By subtracting 65535 (2^16-1) we cancel the low order
-                     * 15 bits of INT64_MAX to avoid using imprecise floating
-                     * point values.
-                     */
-                    && val < (double)(INT64_MAX - 65535) + 65536.0) {
+            case sizeof(int64_t):
                 p->return_size = sizeof(int64_t);
                 *(int64_t *)p->data = (int64_t)val;
                 return 1;
             }
-            break;
         }
     }
     return 0;
