@@ -5499,3 +5499,4 @@ IETF_ATTR_SYNTAX_get_value_num          ?	3_0_0	EXIST::FUNCTION:
 IETF_ATTR_SYNTAX_get0_value             ?	3_0_0	EXIST::FUNCTION:
 IETF_ATTR_SYNTAX_add1_value             ?	3_0_0	EXIST::FUNCTION:
 IETF_ATTR_SYNTAX_print                  ?	3_0_0	EXIST::FUNCTION:
+X509_ACERT_add_attr_nconf               ?	3_0_0	EXIST::FUNCTION:

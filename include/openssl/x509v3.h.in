@@ -824,6 +824,9 @@ int X509_ACERT_add1_attr_by_NID(X509_ACERT *x, int nid, int type,
 int X509_ACERT_add1_attr_by_txt(X509_ACERT *x, const char *attrname, int type,
                                 const unsigned char *bytes, int len);
 
+int X509_ACERT_add_attr_nconf(CONF *conf, const char *section,
+                              int strtype, X509_ACERT *acert);
+
 int X509_ACERT_add1_ext_i2d(X509_ACERT *x, int nid, void *value, int crit,
                             unsigned long flag);
 
