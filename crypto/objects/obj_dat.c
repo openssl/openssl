@@ -12,6 +12,7 @@
 #include <limits.h>
 #include "internal/cryptlib.h"
 #include "internal/thread_once.h"
+#include "internal/tsan_assist.h"
 #include <openssl/lhash.h>
 #include <openssl/asn1.h>
 #include "crypto/objects.h"
@@ -21,6 +22,14 @@
 
 /* obj_dat.h is generated from objects.h by obj_dat.pl */
 #include "obj_dat.h"
+
+/*
+ * If we don't have suitable TSAN support, we'll use a lock for generation of
+ * new NIDs.  This will be slower of course.
+ */
+#ifndef tsan_ld_acq
+# define OBJ_USE_LOCK_FOR_NEW_NID
+#endif
 
 DECLARE_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, sn);
 DECLARE_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, ln);
@@ -36,11 +45,23 @@ struct added_obj_st {
     ASN1_OBJECT *obj;
 };
 
-static int new_nid = NUM_NID;
 static LHASH_OF(ADDED_OBJ) *added = NULL;
 static CRYPTO_RWLOCK *ossl_obj_lock = NULL;
+#ifdef OBJ_USE_LOCK_FOR_NEW_NID
+static CRYPTO_RWLOCK *ossl_obj_nid_lock = NULL;
+#endif
 
 static CRYPTO_ONCE ossl_obj_lock_init = CRYPTO_ONCE_STATIC_INIT;
+
+static ossl_inline void objs_free_locks(void)
+{
+    CRYPTO_THREAD_lock_free(ossl_obj_lock);
+    ossl_obj_lock = NULL;
+#ifdef OBJ_USE_LOCK_FOR_NEW_NID
+    CRYPTO_THREAD_lock_free(ossl_obj_nid_lock);
+    ossl_obj_nid_lock = NULL;
+#endif
+}
 
 DEFINE_RUN_ONCE_STATIC(obj_lock_initialise)
 {
@@ -48,7 +69,17 @@ DEFINE_RUN_ONCE_STATIC(obj_lock_initialise)
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
 
     ossl_obj_lock = CRYPTO_THREAD_lock_new();
-    return ossl_obj_lock != NULL;
+    if (ossl_obj_lock == NULL)
+        return 0;
+
+#ifdef OBJ_USE_LOCK_FOR_NEW_NID
+    ossl_obj_nid_lock = CRYPTO_THREAD_lock_new();
+    if (ossl_obj_nid_lock == NULL) {
+        objs_free_locks();
+        return 0;
+    }
+#endif
+    return 1;
 }
 
 static ossl_inline int ossl_init_added_lock(void)
@@ -58,16 +89,20 @@ static ossl_inline int ossl_init_added_lock(void)
 
 static ossl_inline int ossl_obj_write_lock(int lock)
 {
+    if (!lock)
+        return 1;
     if (!ossl_init_added_lock())
         return 0;
-    return !lock || CRYPTO_THREAD_write_lock(ossl_obj_lock);
+    return CRYPTO_THREAD_write_lock(ossl_obj_lock);
 }
 
 static ossl_inline int ossl_obj_read_lock(int lock)
 {
+    if (!lock)
+        return 1;
     if (!ossl_init_added_lock())
         return 0;
-    return !lock || CRYPTO_THREAD_read_lock(ossl_obj_lock);
+    return CRYPTO_THREAD_read_lock(ossl_obj_lock);
 }
 
 static ossl_inline void ossl_obj_unlock(int lock)
@@ -190,12 +225,13 @@ void ossl_obj_cleanup_int(void)
         lh_ADDED_OBJ_free(added);
         added = NULL;
     }
-    CRYPTO_THREAD_lock_free(ossl_obj_lock);
-    ossl_obj_lock = NULL;
+    objs_free_locks();
 }
 
-static int ossl_obj_new_nid(int num, int lock)
+int OBJ_new_nid(int num)
 {
+#ifdef OBJ_USE_LOCK_FOR_NEW_NID
+    static int new_nid = NUM_NID;
     int i;
 
     if (!CRYPTO_THREAD_write_lock(ossl_obj_nid_lock)) {
@@ -204,8 +240,13 @@ static int ossl_obj_new_nid(int num, int lock)
     }
     i = new_nid;
     new_nid += num;
-    ossl_obj_unlock(lock);
+    CRYPTO_THREAD_unlock(ossl_obj_nid_lock);
     return i;
+#else
+    static TSAN_QUALIFIER int new_nid = NUM_NID;
+
+    return tsan_add(&new_nid, num);
+#endif
 }
 
 static int ossl_obj_add_object(const ASN1_OBJECT *obj, int lock)
@@ -721,7 +762,7 @@ int OBJ_create(const char *oid, const char *sn, const char *ln)
         goto err;
     }
 
-    tmpoid->nid = ossl_obj_new_nid(1, 0);
+    tmpoid->nid = OBJ_new_nid(1);
     tmpoid->sn = (char *)sn;
     tmpoid->ln = (char *)ln;
 
@@ -748,11 +789,6 @@ const unsigned char *OBJ_get0_data(const ASN1_OBJECT *obj)
     if (obj == NULL)
         return NULL;
     return obj->data;
-}
-
-int OBJ_new_nid(int num)
-{
-    return ossl_obj_new_nid(num, 1);
 }
 
 int OBJ_add_object(const ASN1_OBJECT *obj)
