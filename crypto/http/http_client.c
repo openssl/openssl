@@ -27,8 +27,7 @@
 #define HTTP_VERSION_PATT "1." /* allow 1.x */
 #define HTTP_PREFIX_VERSION HTTP_PREFIX""HTTP_VERSION_PATT
 #define HTTP_1_0 HTTP_PREFIX_VERSION"0" /* "HTTP/1.0" */
-#define HTTP_VERSION_PATT_LEN strlen(HTTP_PREFIX_VERSION)
-#define HTTP_VERSION_STR_LEN (HTTP_VERSION_PATT_LEN + 1)
+#define HTTP_VERSION_STR_LEN (strlen(HTTP_PREFIX_VERSION) + 1)
 #define HTTP_LINE1_MINLEN ((int)strlen(HTTP_PREFIX_VERSION "x 200\n"))
 #define HTTP_VERSION_MAX_REDIRECTIONS 50
 
@@ -377,10 +376,10 @@ static int parse_http_line1(char *line, int *found_keep_alive)
     int i, retcode;
     char *code, *reason, *end;
 
-    if (strncmp(line, HTTP_PREFIX_VERSION, HTTP_VERSION_PATT_LEN) != 0)
+    if (strncmp(line, HTTP_PREFIX_VERSION, strlen(HTTP_PREFIX_VERSION)) != 0)
         goto err;
     /* above HTTP 1.0, connection persistence is the default */
-    *found_keep_alive = line[HTTP_VERSION_PATT_LEN] > '0';
+    *found_keep_alive = line[strlen(HTTP_PREFIX_VERSION)] > '0';
 
     /* Skip to first whitespace (past protocol info) */
     for (code = line; *code != '\0' && !ossl_isspace(*code); code++)
@@ -1306,7 +1305,7 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
             goto end;
         }
         mbufp = mbuf + strlen(HTTP_PREFIX);
-        if (strncmp(mbufp, HTTP_VERSION_PATT, HTTP_VERSION_PATT_LEN) != 0) {
+        if (strncmp(mbufp, HTTP_VERSION_PATT, strlen(HTTP_VERSION_PATT)) != 0) {
             ERR_raise(ERR_LIB_HTTP, HTTP_R_RECEIVED_WRONG_HTTP_VERSION);
             BIO_printf(bio_err,
                        "%s: HTTP CONNECT failed, bad HTTP version %.*s\n",
