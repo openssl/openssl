@@ -28,7 +28,7 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 [Migration guide]: https://github.com/openssl/openssl/tree/master/doc/man7/migration_guide.pod
 
-### Changes between 1.1.1 and 3.0 beta 1 [17 Jun 2021]
+### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
  * Add a configurable flag to output date formats as ISO 8601. Does not
    change the default date format.
