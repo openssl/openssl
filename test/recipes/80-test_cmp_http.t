@@ -294,5 +294,5 @@ sub start_mock_server {
 sub stop_mock_server {
     my $pid = $_[0];
     print "Killing mock server with pid=$pid\n";
-    kill('QUIT', $pid);
+    kill('KILL', $pid);
 }
