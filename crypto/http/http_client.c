@@ -26,9 +26,9 @@
 #define HAS_PREFIX(str, prefix) (strncmp(str, prefix, sizeof(prefix) - 1) == 0)
 #define HTTP_PREFIX "HTTP/"
 #define HTTP_VERSION_PATT "1." /* allow 1.x */
+#define HTTP_VERSION_STR_LEN sizeof(HTTP_VERSION_PATT) /* == strlen("1.0") */
 #define HTTP_PREFIX_VERSION HTTP_PREFIX""HTTP_VERSION_PATT
 #define HTTP_1_0 HTTP_PREFIX_VERSION"0" /* "HTTP/1.0" */
-#define HTTP_VERSION_STR_LEN (strlen(HTTP_PREFIX_VERSION) + 1)
 #define HTTP_LINE1_MINLEN (sizeof(HTTP_PREFIX_VERSION "x 200\n") - 1)
 #define HTTP_VERSION_MAX_REDIRECTIONS 50
 
