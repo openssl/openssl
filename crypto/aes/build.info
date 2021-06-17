@@ -80,7 +80,7 @@ IF[{- !$disabled{module} && !$disabled{shared} -}]
 ENDIF
 
 GENERATE[aes-ia64.s]=asm/aes-ia64.S
-GENERATE[bsaes-armv8.S]=asm/bsaes-armv8.S
+GENERATE[bsaes-armv8.S]=asm/bsaes-armv8.pl
 
 GENERATE[aes-586.s]=asm/aes-586.pl
 DEPEND[aes-586.s]=../perlasm/x86asm.pl

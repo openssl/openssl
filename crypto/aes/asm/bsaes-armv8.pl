@@ -1,3 +1,37 @@
+#!/usr/bin/env perl
+# Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+use strict;
+
+my $output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
+my $flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
+my $xlate;
+
+$0 =~ m/(.*[\/\\])[^\/\\]+$/; my $dir=$1;
+( $xlate="${dir}arm-xlate.pl" and -f $xlate  ) or
+( $xlate="${dir}../../perlasm/arm-xlate.pl" and -f $xlate ) or
+die "can't locate arm-xlate.pl";
+
+open OUT,"| \"$^X\" $xlate $flavour $output";
+*STDOUT=*OUT;
+
+my $code = data();
+print $code;
+
+close STDOUT or die "error closing STDOUT: $!"; # enforce flush
+
+sub data
+{
+    local $/;
+    return <DATA>;
+}
+
+__END__
 // Copyright 2021 The OpenSSL Project Authors. All Rights Reserved.
 //
 // Licensed under the OpenSSL license (the "License").  You may not use
@@ -25,6 +59,10 @@
 #include "crypto/arm_arch.h"
 
 .text
+
+.extern AES_cbc_encrypt
+.extern AES_encrypt
+.extern AES_decrypt
 
 .type   _bsaes_decrypt8,%function
 .align  4
@@ -981,7 +1019,13 @@ _bsaes_key_convert:
 //   No output registers, usual AAPCS64 register preservation
 ossl_bsaes_cbc_encrypt:
         cmp     x2, #128
+#ifdef __APPLE__
+        bhs     .Lcbc_do_bsaes
+        b       AES_cbc_encrypt
+.Lcbc_do_bsaes:
+#else
         blo     AES_cbc_encrypt
+#endif
 
         // it is up to the caller to make sure we are called with enc == 0
 
