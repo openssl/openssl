@@ -434,10 +434,10 @@ static int parse_http_line1(char *line, int *found_keep_alive)
         else
             retcode = HTTP_R_RECEIVED_ERROR;
         if (*reason == '\0')
-            ERR_raise_data(ERR_LIB_HTTP, retcode, "Code=%s", code);
+            ERR_raise_data(ERR_LIB_HTTP, retcode, "code=%s", code);
         else
             ERR_raise_data(ERR_LIB_HTTP, retcode,
-                           "Code=%s, Reason=%s", code, reason);
+                           "code=%s, reason=%s", code, reason);
         return 0;
     }
 
@@ -1289,7 +1289,7 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
         /*-
          * The first line is the HTTP response.
          * According to RFC 7230, it is formatted exactly like this:
-         * HTTP/d.d ddd Reason text\r\n
+         * HTTP/d.d ddd reason text\r\n
          */
         read_len = BIO_gets(fbio, mbuf, BUF_SIZE);
         /* the BIO may not block, so we must wait for the 1st line to come in */
@@ -1316,14 +1316,13 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
 
         /* RFC 7231 4.3.6: any 2xx status code is valid */
         if (strncmp(mbufp, " 2", strlen(" 2")) != 0) {
-            mbufp += 1;
             /* chop any trailing whitespace */
             while (read_len > 0 && ossl_isspace(mbuf[read_len - 1]))
                 read_len--;
             mbuf[read_len] = '\0';
             ERR_raise_data(ERR_LIB_HTTP, HTTP_R_CONNECT_FAILURE,
-                           "Reason=%s", mbufp);
-            BIO_printf(bio_err, "%s: HTTP CONNECT failed, Reason=%s\n",
+                           "reason=%s", mbufp);
+            BIO_printf(bio_err, "%s: HTTP CONNECT failed, reason=%s\n",
                        prog, mbufp);
             goto end;
         }
