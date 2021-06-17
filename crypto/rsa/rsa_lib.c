@@ -316,7 +316,7 @@ uint16_t ossl_ifc_ffc_compute_security_bits(int n)
 
     /*
      * Look for common values as listed in standards.
-     * These values are not exactly equal to the results from the forumlæ in
+     * These values are not exactly equal to the results from the formulae in
      * the standards but are defined to be canonical.
      */
     switch (n) {
