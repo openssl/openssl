@@ -24,6 +24,8 @@
 #  include <unistd.h>
 #endif
 
+# include <assert.h>
+
 # ifdef PTHREAD_RWLOCK_INITIALIZER
 #  define USE_RWLOCK
 # endif
