@@ -139,6 +139,9 @@ struct provider_store_st {
     CRYPTO_RWLOCK *default_path_lock;
     CRYPTO_RWLOCK *lock;
     char *default_path;
+    struct provider_info_st *provinfo;
+    size_t numprovinfo;
+    size_t provinfosz;
     unsigned int use_fallbacks:1;
     unsigned int freeing:1;
 };
@@ -166,6 +169,7 @@ static void ossl_provider_child_cb_free(OSSL_PROVIDER_CHILD_CB *cb)
 static void provider_store_free(void *vstore)
 {
     struct provider_store_st *store = vstore;
+    size_t i;
 
     if (store == NULL)
         return;
@@ -178,6 +182,9 @@ static void provider_store_free(void *vstore)
 #endif
     CRYPTO_THREAD_lock_free(store->default_path_lock);
     CRYPTO_THREAD_lock_free(store->lock);
+    for (i = 0; i < store->numprovinfo; i++)
+        OPENSSL_free(store->provinfo[i].name);
+    OPENSSL_free(store->provinfo);
     OPENSSL_free(store);
 }
 
@@ -231,6 +238,62 @@ int ossl_provider_disable_fallback_loading(OSSL_LIB_CTX *libctx)
         return 1;
     }
     return 0;
+}
+
+#define BUILTINS_BLOCK_SIZE     10
+
+int OSSL_PROVIDER_add_builtin(OSSL_LIB_CTX *libctx, const char *name,
+                              OSSL_provider_init_fn *init_fn)
+{
+    struct provider_store_st *store = get_provider_store(libctx);
+    int ret = 0;
+
+    if (name == NULL || init_fn == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (store == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    if (!CRYPTO_THREAD_write_lock(store->lock))
+        return 0;
+    if (store->provinfosz == 0) {
+        store->provinfo = OPENSSL_zalloc(sizeof(*store->provinfo)
+                                         * BUILTINS_BLOCK_SIZE);
+        if (store->provinfo == NULL) {
+            ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+        store->provinfosz = BUILTINS_BLOCK_SIZE;
+    } else if (store->numprovinfo == store->provinfosz) {
+        struct provider_info_st *tmpbuiltins;
+        size_t newsz = store->provinfosz + BUILTINS_BLOCK_SIZE;
+
+        tmpbuiltins = OPENSSL_realloc(store->provinfo,
+                                      sizeof(*store->provinfo) * newsz);
+        if (tmpbuiltins == NULL) {
+            ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+        store->provinfo = tmpbuiltins;
+        store->provinfosz = newsz;
+    }
+    store->provinfo[store->numprovinfo].name = OPENSSL_strdup(name);
+    if (store->provinfo[store->numprovinfo].name == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+    store->provinfo[store->numprovinfo].init = init_fn;
+    store->provinfo[store->numprovinfo].is_fallback = 0;
+    store->numprovinfo++;
+
+    ret = 1;
+ err:
+    CRYPTO_THREAD_unlock(store->lock);
+    return ret;
 }
 
 OSSL_PROVIDER *ossl_provider_find(OSSL_LIB_CTX *libctx, const char *name,
@@ -354,15 +417,30 @@ OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
     }
 
     if (init_function == NULL) {
-        const struct predefined_providers_st *p;
+        const struct provider_info_st *p;
+        size_t i;
 
-        /* Check if this is a built-in provider */
+        /* Check if this is a predefined builtin provider */
         for (p = ossl_predefined_providers; p->name != NULL; p++) {
             if (strcmp(p->name, name) == 0) {
                 init_function = p->init;
                 break;
             }
         }
+        if (p->name == NULL) {
+            /* Check if this is a user added builtin provider */
+            if (!CRYPTO_THREAD_read_lock(store->lock))
+                return NULL;
+            for (i = 0, p = store->provinfo; i < store->numprovinfo; p++, i++) {
+                if (strcmp(p->name, name) == 0) {
+                    init_function = p->init;
+                    break;
+                }
+            }
+            CRYPTO_THREAD_unlock(store->lock);
+        }
+    } else {
+        template.init = init_function;
     }
 
     /* provider_new() generates an error, so no need here */
@@ -930,7 +1008,7 @@ static int provider_activate_fallbacks(struct provider_store_st *store)
     int use_fallbacks;
     int activated_fallback_count = 0;
     int ret = 0;
-    const struct predefined_providers_st *p;
+    const struct provider_info_st *p;
 
     if (!CRYPTO_THREAD_read_lock(store->lock))
         return 0;
