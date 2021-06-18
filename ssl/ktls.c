@@ -225,7 +225,7 @@ int ktls_configure_crypto(const SSL *s, const EVP_CIPHER *c, EVP_CIPHER_CTX *dd,
         crypto_info->chacha20poly1305.info.version = s->version;
         crypto_info->tls_crypto_info_len = sizeof(crypto_info->chacha20poly1305);
         memcpy(crypto_info->chacha20poly1305.iv, iiv,
-		TLS_CIPHER_CHACHA20_POLY1305_IV_SIZE);
+                TLS_CIPHER_CHACHA20_POLY1305_IV_SIZE);
         memcpy(crypto_info->chacha20poly1305.key, key,
                EVP_CIPHER_get_key_length(c));
         memcpy(crypto_info->chacha20poly1305.rec_seq, rl_sequence,

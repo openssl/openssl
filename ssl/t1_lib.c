@@ -1431,7 +1431,7 @@ static int sigalg_security_bits(SSL_CTX *ctx, const SIGALG_LOOKUP *lu)
          * SHA1 at 2^63.4 and MD5+SHA1 at 2^67.2
          * https://documents.epfl.ch/users/l/le/lenstra/public/papers/lat.pdf
          * puts a chosen-prefix attack for MD5 at 2^39.
-	 */
+         */
         if (md_type == NID_sha1)
             secbits = 64;
         else if (md_type == NID_md5_sha1)

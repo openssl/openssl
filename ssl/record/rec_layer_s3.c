@@ -1203,13 +1203,13 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf, size_t len,
             i = -1;
         }
 
-	/*
-	 * When an empty fragment is sent on a connection using KTLS,
-	 * it is sent as a write of zero bytes.  If this zero byte
-	 * write succeeds, i will be 0 rather than a non-zero value.
-	 * Treat i == 0 as success rather than an error for zero byte
-	 * writes to permit this case.
-	 */
+        /*
+         * When an empty fragment is sent on a connection using KTLS,
+         * it is sent as a write of zero bytes.  If this zero byte
+         * write succeeds, i will be 0 rather than a non-zero value.
+         * Treat i == 0 as success rather than an error for zero byte
+         * writes to permit this case.
+         */
         if (i >= 0 && tmpwrit == SSL3_BUFFER_get_left(&wb[currbuf])) {
             SSL3_BUFFER_set_left(&wb[currbuf], 0);
             SSL3_BUFFER_add_offset(&wb[currbuf], tmpwrit);
