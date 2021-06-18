@@ -70,3 +70,146 @@ IMPLEMENT_ASN1_FUNCTIONS(X509_ACERT_INFO)
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_ISSUER_SERIAL)
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_OBJECT_DIGEST_INFO)
 IMPLEMENT_ASN1_FUNCTIONS(X509_ACERT_ISSUER_V2FORM)
+
+static X509_NAME *get_dirName(const GENERAL_NAMES *names)
+{
+    GENERAL_NAME *dirName;
+
+    if (sk_GENERAL_NAME_num(names) != 1)
+        return NULL;
+
+    dirName = sk_GENERAL_NAME_value(names, 0);
+    if (dirName->type != GEN_DIRNAME)
+        return NULL;
+
+    return dirName->d.directoryName;
+}
+
+void OSSL_OBJECT_DIGEST_INFO_get0_digest(OSSL_OBJECT_DIGEST_INFO *o,
+                                    ASN1_ENUMERATED **digestedObjectType,
+                                    X509_ALGOR **digestAlgorithm,
+                                    ASN1_BIT_STRING **digest)
+{
+    if (digestedObjectType != NULL)
+        *digestedObjectType = o->digestedObjectType;
+    if (digestAlgorithm != NULL)
+        *digestAlgorithm = o->digestAlgorithm;
+    if (digest != NULL)
+        *digest = o->objectDigest;
+}
+
+X509_NAME *OSSL_ISSUER_SERIAL_get0_issuer(OSSL_ISSUER_SERIAL *isss)
+{
+    return get_dirName(isss->issuer);
+}
+
+ASN1_INTEGER *OSSL_ISSUER_SERIAL_get0_serial(OSSL_ISSUER_SERIAL *isss)
+{
+    return &isss->serial;
+}
+
+ASN1_BIT_STRING *OSSL_ISSUER_SERIAL_get0_issuerUID(OSSL_ISSUER_SERIAL *isss)
+{
+    return isss->issuerUID;
+}
+
+long X509_ACERT_get_version(const X509_ACERT *x)
+{
+    return ASN1_INTEGER_get(&x->acinfo->version);
+}
+
+void X509_ACERT_get0_signature(const X509_ACERT *x,
+                               const ASN1_BIT_STRING **psig,
+                               const X509_ALGOR **palg)
+{
+    if (psig != NULL)
+        *psig = &x->signature;
+    if (palg != NULL)
+        *palg = &x->sig_alg;
+}
+
+GENERAL_NAMES *X509_ACERT_get0_holder_entityName(const X509_ACERT *x)
+{
+    return x->acinfo->holder.entityName;
+}
+
+OSSL_ISSUER_SERIAL *X509_ACERT_get0_holder_baseCertId(const X509_ACERT *x)
+{
+    return x->acinfo->holder.baseCertificateID;
+}
+
+OSSL_OBJECT_DIGEST_INFO *X509_ACERT_get0_holder_digest(const X509_ACERT *x)
+{
+    return x->acinfo->holder.objectDigestInfo;
+}
+
+X509_NAME *X509_ACERT_get0_issuerName(const X509_ACERT *x)
+{
+    return get_dirName(x->acinfo->issuer.u.v2Form->issuerName);
+}
+
+ASN1_BIT_STRING *X509_ACERT_get0_issuerUID(X509_ACERT *x)
+{
+    return x->acinfo->issuerUID;
+}
+
+const X509_ALGOR *X509_ACERT_get0_info_sigalg(const X509_ACERT *x)
+{
+    return &x->acinfo->signature;
+}
+
+ASN1_INTEGER *X509_ACERT_get0_serialNumber(X509_ACERT *x)
+{
+    return &x->acinfo->serialNumber;
+}
+
+const ASN1_GENERALIZEDTIME *X509_ACERT_get0_notBefore(const X509_ACERT *x)
+{
+    ASN1_GENERALIZEDTIME *gentime = x->acinfo->validityPeriod.notBefore;
+
+    if (gentime->type != V_ASN1_GENERALIZEDTIME)
+        return 0;
+    return gentime;
+}
+
+const ASN1_GENERALIZEDTIME *X509_ACERT_get0_notAfter(const X509_ACERT *x)
+{
+    ASN1_GENERALIZEDTIME *gentime = x->acinfo->validityPeriod.notAfter;
+
+    if (gentime->type != V_ASN1_GENERALIZEDTIME)
+        return 0;
+    return gentime;
+}
+
+/* Attribute management functions */
+
+int X509_ACERT_get_attr_count(const X509_ACERT *x)
+{
+    return X509at_get_attr_count(x->acinfo->attributes);
+}
+
+int X509_ACERT_get_attr_by_NID(const X509_ACERT *x, int nid, int lastpos)
+{
+    return X509at_get_attr_by_NID(x->acinfo->attributes, nid, lastpos);
+}
+
+int X509_ACERT_get_attr_by_OBJ(const X509_ACERT *x, const ASN1_OBJECT *obj,
+                               int lastpos)
+{
+    return X509at_get_attr_by_OBJ(x->acinfo->attributes, obj, lastpos);
+}
+
+X509_ATTRIBUTE *X509_ACERT_get_attr(const X509_ACERT *x, int loc)
+{
+    return X509at_get_attr(x->acinfo->attributes, loc);
+}
+
+X509_ATTRIBUTE *X509_ACERT_delete_attr(X509_ACERT *x, int loc)
+{
+    return X509at_delete_attr(x->acinfo->attributes, loc);
+}
+
+const STACK_OF(X509_EXTENSION) *X509_ACERT_get0_extensions(const X509_ACERT *x)
+{
+    return x->acinfo->extensions;
+}
