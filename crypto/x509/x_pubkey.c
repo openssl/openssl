@@ -86,6 +86,9 @@ static void x509_pubkey_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
     X509_PUBKEY *pubkey = (X509_PUBKEY *)*pval;
 
+    if (pubkey == NULL)
+        return;
+
     X509_ALGOR_free(pubkey->algor);
     ASN1_BIT_STRING_free(pubkey->public_key);
     EVP_PKEY_free(pubkey->pkey);

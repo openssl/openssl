@@ -99,6 +99,9 @@ static void *init_object(void)
 {
     struct object_st *obj = OPENSSL_zalloc(sizeof(*obj));
 
+    if (!TEST_ptr(obj))
+        return 0;
+
     obj->p1 = p1_init;
     obj->p2 = p2_init;
     if (!TEST_true(BN_hex2bn(&obj->p3, p3_init)))

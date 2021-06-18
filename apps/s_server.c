@@ -3377,6 +3377,7 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
  err:
     OPENSSL_free(buf);
     BIO_free_all(io);
+    BIO_free(ssl_bio);
     return ret;
 }
 
@@ -3420,6 +3421,7 @@ static int rev_body(int s, int stype, int prot, unsigned char *context)
     /* No need to free |con| after this. Done by BIO_free(ssl_bio) */
     BIO_set_ssl(ssl_bio, con, BIO_CLOSE);
     BIO_push(io, ssl_bio);
+    ssl_bio = NULL;
 #ifdef CHARSET_EBCDIC
     io = BIO_push(BIO_new(BIO_f_ebcdic_filter()), io);
 #endif
@@ -3571,6 +3573,8 @@ static int add_session(SSL *ssl, SSL_SESSION *session)
     simple_ssl_session *sess = app_malloc(sizeof(*sess), "get session");
     unsigned char *p;
 
+    if (sess == NULL)
+        return 0;
     SSL_SESSION_get_id(session, &sess->idlen);
     sess->derlen = i2d_SSL_SESSION(session, NULL);
     if (sess->derlen < 0) {
