@@ -412,7 +412,7 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store, int nid,
 
 #ifndef FIPS_MODULE
     if (!OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL))
-	return 0;
+        return 0;
 #endif
 
     if (nid <= 0 || method == NULL || store == NULL)
