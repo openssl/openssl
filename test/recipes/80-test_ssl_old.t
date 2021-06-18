@@ -350,7 +350,7 @@ sub testssl {
 
     subtest 'standard SSL tests' => sub {
         ######################################################################
-      plan tests => 13;
+        plan tests => 13;
 
       SKIP: {
           skip "SSLv3 is not supported by this OpenSSL build", 4
