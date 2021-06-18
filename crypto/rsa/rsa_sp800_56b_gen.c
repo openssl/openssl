@@ -285,7 +285,7 @@ int ossl_rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
     if (rsa->dmp1 == NULL)
         rsa->dmp1 = BN_secure_new();
     if (rsa->dmp1 == NULL)
-	    goto err;
+            goto err;
     BN_set_flags(rsa->dmp1, BN_FLG_CONSTTIME);
     if (!BN_mod(rsa->dmp1, rsa->d, p1, ctx))
         goto err;
@@ -294,7 +294,7 @@ int ossl_rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
     if (rsa->dmq1 == NULL)
         rsa->dmq1 = BN_secure_new();
     if (rsa->dmq1 == NULL)
-	    goto err;
+            goto err;
     BN_set_flags(rsa->dmq1, BN_FLG_CONSTTIME);
     if (!BN_mod(rsa->dmq1, rsa->d, q1, ctx))
         goto err;
@@ -303,7 +303,7 @@ int ossl_rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
     BN_free(rsa->iqmp);
     rsa->iqmp = BN_secure_new();
     if (rsa->iqmp == NULL)
-	    goto err;
+            goto err;
     BN_set_flags(rsa->iqmp, BN_FLG_CONSTTIME);
     if (BN_mod_inverse(rsa->iqmp, rsa->q, rsa->p, ctx) == NULL)
         goto err;
