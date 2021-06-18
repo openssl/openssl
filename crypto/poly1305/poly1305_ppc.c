@@ -27,6 +27,7 @@ void poly1305_blocks_vsx(void *ctx, const unsigned char *inp, size_t len,
                          unsigned int padbit);
 void poly1305_emit_vsx(void *ctx, unsigned char mac[16],
                        const unsigned int nonce[4]);
+int poly1305_init(void *ctx, const unsigned char key[16], void *func[2]);
 int poly1305_init(void *ctx, const unsigned char key[16], void *func[2])
 {
     if (OPENSSL_ppccap_P & PPC_CRYPTO207) {
