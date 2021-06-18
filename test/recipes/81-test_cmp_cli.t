@@ -53,7 +53,7 @@ foreach (@cmp_basic_tests) {
     my $title = $$_[0];
     my $params = $$_[1];
     my $expected = $$_[2];
-    ok($expected == run(cmd([$app, "-config", '""', @$params])),
+    ok($expected == run(cmd([$app, "-config", '', @$params])),
        $title);
 }
 
@@ -66,7 +66,7 @@ foreach (@cmp_server_tests) {
     my $rsp_cert = srctop_file('test',  'certs', 'ee-cert-1024.pem');
     my $outfile = result_file("test.certout.pem");
     ok($expected ==
-       run(cmd([$app, "-config", '""', @$extra_args,
+       run(cmd([$app, "-config", '', @$extra_args,
                 "-use_mock_srv", "-srv_ref", "mock server",
                 "-srv_secret", $secret,
                 "-rsp_cert", $rsp_cert,
