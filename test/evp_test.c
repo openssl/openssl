@@ -1969,6 +1969,9 @@ static int pbe_test_init(EVP_TEST *t, const char *alg)
         TEST_error("Unknown pbe algorithm %s", alg);
     }
     pdat = OPENSSL_zalloc(sizeof(*pdat));
+    if (!pdat) {
+      return 0;
+    }
     pdat->pbe_type = pbe_type;
     t->data = pdat;
     return 1;
