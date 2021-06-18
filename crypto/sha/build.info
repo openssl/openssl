@@ -37,7 +37,8 @@ IF[{- !$disabled{asm} -}]
   $SHA1DEF_parisc20_64=$SHA1DEF_parisc11
 
   $SHA1ASM_ppc32=\
-        sha1-ppc.s sha256-ppc.s sha512-ppc.s sha256p8-ppc.s sha512p8-ppc.s
+        sha_ppc.c sha1-ppc.s sha256-ppc.s sha512-ppc.s sha256p8-ppc.s \
+        sha512p8-ppc.s
   $SHA1DEF_ppc32=SHA1_ASM SHA256_ASM SHA512_ASM
   $SHA1ASM_ppc64=$SHA1ASM_ppc32
   $SHA1DEF_ppc64=$SHA1DEF_ppc32

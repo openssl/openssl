@@ -683,7 +683,7 @@ void gcm_gmult_vis3(u64 Xi[2], const u128 Htable[16]);
 void gcm_ghash_vis3(u64 Xi[2], const u128 Htable[16], const u8 *inp,
                     size_t len);
 # elif defined(OPENSSL_CPUID_OBJ) && (defined(__powerpc__) || defined(__ppc__) || defined(_ARCH_PPC))
-#  include "ppc_arch.h"
+#  include "crypto/ppc_arch.h"
 #  define GHASH_ASM_PPC
 #  define GCM_FUNCREF_4BIT
 void gcm_init_p8(u128 Htable[16], const u64 Xi[2]);
