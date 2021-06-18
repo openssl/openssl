@@ -1646,6 +1646,7 @@ static int ocsp_server_cb(SSL *s, void *arg)
 
     SSL_set_tlsext_status_ocsp_resp(s, copy, sizeof(orespder));
     ocsp_server_called = 1;
+    OPENSSL_free(copy);
     return SSL_TLSEXT_ERR_OK;
 }
 
