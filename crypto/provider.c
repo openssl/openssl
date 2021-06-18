@@ -94,29 +94,6 @@ int OSSL_PROVIDER_get_capabilities(const OSSL_PROVIDER *prov,
     return ossl_provider_get_capabilities(prov, capability, cb, arg);
 }
 
-int OSSL_PROVIDER_add_builtin(OSSL_LIB_CTX *libctx, const char *name,
-                              OSSL_provider_init_fn *init_fn)
-{
-    OSSL_PROVIDER *prov = NULL;
-
-    if (name == NULL || init_fn == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
-    }
-
-    /* Create it */
-    if ((prov = ossl_provider_new(libctx, name, init_fn, 0)) == NULL)
-        return 0;
-
-    /*
-     * It's safely stored in the internal store at this point,
-     * free the returned extra reference
-     */
-    ossl_provider_free(prov);
-
-    return 1;
-}
-
 const char *OSSL_PROVIDER_get0_name(const OSSL_PROVIDER *prov)
 {
     return ossl_provider_name(prov);
