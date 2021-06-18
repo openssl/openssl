@@ -75,5 +75,11 @@ typedef __uint128_t uint128_t;
 #  define SIZE_MAX __MAXUINT__(size_t)
 # endif
 
+# ifndef OSSL_INTMAX_MAX
+#  define OSSL_INTMAX_MIN __MININT__(ossl_intmax_t)
+#  define OSSL_INTMAX_MAX __MAXINT__(ossl_intmax_t)
+#  define OSSL_UINTMAX_MAX __MAXUINT__(ossl_uintmax_t)
+# endif
+
 #endif
 
