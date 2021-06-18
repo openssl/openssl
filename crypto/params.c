@@ -1029,7 +1029,7 @@ int OSSL_PARAM_set_double(OSSL_PARAM *p, double val)
                      * 15 bits of UINT64_MAX to avoid using imprecise floating
                      * point values.
                      */
-                    && (double)(UINT64_MAX - 65535) + 65536.0) {
+                    && val < (double)(UINT64_MAX - 65535) + 65536.0) {
                 p->return_size = sizeof(uint64_t);
                 *(uint64_t *)p->data = (uint64_t)val;
                 return 1;
