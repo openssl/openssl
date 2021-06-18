@@ -15,7 +15,7 @@ SOURCE[../../libcrypto]=\
         v3_pcia.c v3_pci.c v3_ist.c \
         pcy_cache.c pcy_node.c pcy_data.c pcy_map.c pcy_tree.c pcy_lib.c \
         v3_asid.c v3_addr.c v3_tlsf.c v3_admis.c \
-        x509_acert.c
+        x509_acert.c t_acert.c
 
 IF[{- !$disabled{'deprecated-3.0'} -}]
   SOURCE[../../libcrypto]=x509type.c
