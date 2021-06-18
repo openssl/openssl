@@ -3377,6 +3377,7 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
  err:
     OPENSSL_free(buf);
     BIO_free_all(io);
+    BIO_free_all(ssl_bio);
     return ret;
 }
 
