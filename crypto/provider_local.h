@@ -9,10 +9,10 @@
 
 #include <openssl/core.h>
 
-struct predefined_providers_st {
-    const char *name;
+struct provider_info_st {
+    char *name;
     OSSL_provider_init_fn *init;
     unsigned int is_fallback:1;
 };
 
-extern const struct predefined_providers_st ossl_predefined_providers[];
+extern const struct provider_info_st ossl_predefined_providers[];
