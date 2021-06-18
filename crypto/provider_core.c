@@ -184,7 +184,6 @@ static void provider_store_free(void *vstore)
 static void *provider_store_new(OSSL_LIB_CTX *ctx)
 {
     struct provider_store_st *store = OPENSSL_zalloc(sizeof(*store));
-    const struct predefined_providers_st *p = NULL;
 
     if (store == NULL
         || (store->providers = sk_OSSL_PROVIDER_new(ossl_provider_cmp)) == NULL
@@ -198,31 +197,6 @@ static void *provider_store_new(OSSL_LIB_CTX *ctx)
     }
     store->libctx = ctx;
     store->use_fallbacks = 1;
-
-    for (p = ossl_predefined_providers; p->name != NULL; p++) {
-        OSSL_PROVIDER *prov = NULL;
-
-        /*
-         * We use the internal constructor directly here,
-         * otherwise we get a call loop
-         */
-        prov = provider_new(p->name, p->init);
-
-        if (prov == NULL
-            || sk_OSSL_PROVIDER_push(store->providers, prov) == 0) {
-            ossl_provider_free(prov);
-            provider_store_free(store);
-            ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
-            return NULL;
-        }
-        prov->libctx = ctx;
-        prov->store = store;
-#ifndef FIPS_MODULE
-        prov->error_lib = ERR_get_next_error_library();
-#endif
-        if(p->is_fallback)
-            ossl_provider_set_fallback(prov);
-    }
 
     return store;
 }
@@ -379,9 +353,27 @@ OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
         return NULL;
     }
 
+    if (init_function == NULL) {
+        const struct predefined_providers_st *p;
+
+        /* Check if this is a built-in provider */
+        for (p = ossl_predefined_providers; p->name != NULL; p++) {
+            if (strcmp(p->name, name) == 0) {
+                init_function = p->init;
+                break;
+            }
+        }
+    }
+
     /* provider_new() generates an error, so no need here */
     if ((prov = provider_new(name, init_function)) == NULL)
         return NULL;
+
+    prov->libctx = libctx;
+    prov->store = store;
+#ifndef FIPS_MODULE
+    prov->error_lib = ERR_get_next_error_library();
+#endif
 
     if (!CRYPTO_THREAD_write_lock(store->lock))
         return NULL;
@@ -392,12 +384,6 @@ OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
         ossl_provider_free(prov); /* -1 Store reference */
         ossl_provider_free(prov); /* -1 Reference that was to be returned */
         prov = NULL;
-    } else {
-        prov->libctx = libctx;
-        prov->store = store;
-#ifndef FIPS_MODULE
-        prov->error_lib = ERR_get_next_error_library();
-#endif
     }
     CRYPTO_THREAD_unlock(store->lock);
 
@@ -939,53 +925,68 @@ void *ossl_provider_ctx(const OSSL_PROVIDER *prov)
  * and then sets store->use_fallbacks = 0, so the second call and so on is
  * effectively a no-op.
  */
-static void provider_activate_fallbacks(struct provider_store_st *store)
+static int provider_activate_fallbacks(struct provider_store_st *store)
 {
     int use_fallbacks;
-    int num_provs;
     int activated_fallback_count = 0;
-    int i;
+    int ret = 0;
+    const struct predefined_providers_st *p;
 
     if (!CRYPTO_THREAD_read_lock(store->lock))
-        return;
+        return 0;
     use_fallbacks = store->use_fallbacks;
     CRYPTO_THREAD_unlock(store->lock);
     if (!use_fallbacks)
-        return;
+        return 1;
 
     if (!CRYPTO_THREAD_write_lock(store->lock))
-        return;
+        return 0;
     /* Check again, just in case another thread changed it */
     use_fallbacks = store->use_fallbacks;
     if (!use_fallbacks) {
         CRYPTO_THREAD_unlock(store->lock);
-        return;
+        return 1;
     }
 
-    num_provs = sk_OSSL_PROVIDER_num(store->providers);
-    for (i = 0; i < num_provs; i++) {
-        OSSL_PROVIDER *prov = sk_OSSL_PROVIDER_value(store->providers, i);
+    for (p = ossl_predefined_providers; p->name != NULL; p++) {
+        OSSL_PROVIDER *prov = NULL;
 
-        if (ossl_provider_up_ref(prov)) {
-            if (CRYPTO_THREAD_write_lock(prov->flag_lock)) {
-                if (prov->flag_fallback) {
-                    if (provider_activate(prov, 0, 0) > 0)
-                        activated_fallback_count++;
-                }
-                CRYPTO_THREAD_unlock(prov->flag_lock);
-            }
+        if (!p->is_fallback)
+            continue;
+        /*
+         * We use the internal constructor directly here,
+         * otherwise we get a call loop
+         */
+        prov = provider_new(p->name, p->init);
+        if (prov == NULL)
+            goto err;
+        prov->libctx = store->libctx;
+        prov->store = store;
+#ifndef FIPS_MODULE
+        prov->error_lib = ERR_get_next_error_library();
+#endif
+
+        /*
+         * We are calling provider_activate while holding the store lock. This
+         * means the init function will be called while holding a lock. Normally
+         * we try to avoid calling a user callback while holding a lock.
+         * However, fallbacks are never third party providers so we accept this.
+         */
+        if (provider_activate(prov, 0, 0) < 0
+                || sk_OSSL_PROVIDER_push(store->providers, prov) == 0) {
             ossl_provider_free(prov);
+            goto err;
         }
+        activated_fallback_count++;
     }
 
-    /*
-     * We assume that all fallbacks have been added to the store before
-     * any fallback is activated.
-     */
-    if (activated_fallback_count > 0)
+    if (activated_fallback_count > 0) {
         store->use_fallbacks = 0;
-
+        ret = 1;
+    }
+ err:
     CRYPTO_THREAD_unlock(store->lock);
+    return ret;
 }
 
 int ossl_provider_doall_activated(OSSL_LIB_CTX *ctx,
@@ -1008,7 +1009,8 @@ int ossl_provider_doall_activated(OSSL_LIB_CTX *ctx,
 
     if (store == NULL)
         return 1;
-    provider_activate_fallbacks(store);
+    if (!provider_activate_fallbacks(store))
+        return 0;
 
     /*
      * Under lock, grab a copy of the provider list and up_ref each
@@ -1085,20 +1087,24 @@ int ossl_provider_doall_activated(OSSL_LIB_CTX *ctx,
     return ret;
 }
 
-int ossl_provider_available(OSSL_PROVIDER *prov)
+int OSSL_PROVIDER_available(OSSL_LIB_CTX *libctx, const char *name)
 {
-    int ret;
+    OSSL_PROVIDER *prov = NULL;
+    int available = 0;
+    struct provider_store_st *store = get_provider_store(libctx);
 
+    if (store == NULL || !provider_activate_fallbacks(store))
+        return 0;
+
+    prov = ossl_provider_find(libctx, name, 0);
     if (prov != NULL) {
-        provider_activate_fallbacks(prov->store);
-
         if (!CRYPTO_THREAD_read_lock(prov->flag_lock))
             return 0;
-        ret = prov->flag_activated;
+        available = prov->flag_activated;
         CRYPTO_THREAD_unlock(prov->flag_lock);
-        return ret;
+        ossl_provider_free(prov);
     }
-    return 0;
+    return available;
 }
 
 /* Setters of Provider Object data */
