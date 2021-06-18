@@ -1,10 +1,22 @@
-#! /usr/bin/env perl
+#! {- $config{HASHBANGPERL} -}
 
 use strict;
 use warnings;
 
 use File::Basename;
 use File::Spec::Functions;
+
+BEGIN {
+    # This method corresponds exactly to 'use OpenSSL::Util',
+    # but allows us to use a platform specific file spec.
+    require {-
+         use Cwd qw(abs_path);
+
+         "'" . abs_path(catfile($config{sourcedir},
+                                'util', 'perl', 'OpenSSL', 'Util.pm')) . "'";
+         -};
+    OpenSSL::Util->import();
+}
 
 my $there = canonpath(catdir(dirname($0), updir()));
 my $std_engines = catdir($there, 'engines');
@@ -22,7 +34,10 @@ $ENV{OPENSSL_CONF} = $std_openssl_conf
 my $use_system = 0;
 my @cmd;
 
-if (-x $unix_shlib_wrap) {
+if ($^O eq 'VMS') {
+    # VMS needs the command to be appropriately quotified
+    @cmd = fixup_cmd(@ARGV);
+} elsif (-x $unix_shlib_wrap) {
     @cmd = ( $unix_shlib_wrap, @ARGV );
 } else {
     # Hope for the best
@@ -46,4 +61,18 @@ die "wrap.pl: Failed to execute '", join(' ', @cmd), "': $!\n"
 exit(($? & 255) | 128) if ($? & 255) != 0;
 
 # When not a signal, just shift down the subprocess exit code and use that.
-exit($? >> 8);
+my $exitcode = $? >> 8;
+
+# For VMS, perl recommendations is to emulate what the C library exit() does
+# for all non-zero exit codes, except we set the error severity rather than
+# success.
+# Ref: https://perldoc.perl.org/perlport#exit
+#      https://perldoc.perl.org/perlvms#$?
+if ($^O eq 'VMS' && $exitcode != 0) {
+    $exitcode =
+        0x35a000                # C facility code
+        + ($exitcode * 8)       # shift up to make space for the 3 severity bits
+        + 2                     # Severity: E(rror)
+        + 0x10000000;           # bit 28 set => the shell stays silent
+}
+exit($exitcode);

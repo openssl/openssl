@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -733,7 +733,7 @@ static int aesni_cbc_hmac_sha256_set_tls1_aad(void *vctx,
             if (len < AES_BLOCK_SIZE)
                 return 0;
             len -= AES_BLOCK_SIZE;
-            p[aad_len] = len >> 8;
+            p[aad_len - 2] = len >> 8;
             p[aad_len - 1] = len;
         }
         sctx->md = sctx->head;

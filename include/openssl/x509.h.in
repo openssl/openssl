@@ -346,7 +346,8 @@ int X509_pubkey_digest(const X509 *data, const EVP_MD *type,
                        unsigned char *md, unsigned int *len);
 int X509_digest(const X509 *data, const EVP_MD *type,
                 unsigned char *md, unsigned int *len);
-ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert);
+ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert,
+                                   EVP_MD **md_used, int *md_is_fallback);
 int X509_CRL_digest(const X509_CRL *data, const EVP_MD *type,
                     unsigned char *md, unsigned int *len);
 int X509_REQ_digest(const X509_REQ *data, const EVP_MD *type,

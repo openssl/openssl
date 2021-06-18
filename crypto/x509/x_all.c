@@ -434,13 +434,20 @@ int X509_digest(const X509 *cert, const EVP_MD *md, unsigned char *data,
 }
 
 /* calculate cert digest using the same hash algorithm as in its signature */
-ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert)
+ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert,
+                                   EVP_MD **md_used, int *md_is_fallback)
 {
     unsigned int len;
     unsigned char hash[EVP_MAX_MD_SIZE];
     int mdnid, pknid;
     EVP_MD *md = NULL;
-    ASN1_OCTET_STRING *new = NULL;
+    const char *md_name;
+    ASN1_OCTET_STRING *new;
+
+    if (md_used != NULL)
+        *md_used = NULL;
+    if (md_is_fallback != NULL)
+        *md_is_fallback = 0;
 
     if (cert == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
@@ -474,10 +481,23 @@ ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert)
                 /* Error code from fetch is sufficient */
                 return NULL;
         } else if (pknid != NID_undef) {
-            /* Default to SHA-256 for known algorithms without a digest */
-            if ((md = EVP_MD_fetch(cert->libctx, "SHA256",
+            /* A known algorithm, but without a digest */
+            switch (pknid) {
+            case NID_ED25519: /* Follow CMS default given in RFC8419 */
+                md_name = "SHA512";
+                break;
+            case NID_ED448: /* Follow CMS default given in RFC8419 */
+                md_name = "SHAKE256";
+                break;
+            default: /* Fall back to SHA-256 */
+                md_name = "SHA256";
+                break;
+            }
+            if ((md = EVP_MD_fetch(cert->libctx, md_name,
                                    cert->propq)) == NULL)
                 return NULL;
+            if (md_is_fallback != NULL)
+                *md_is_fallback = 1;
         } else {
             /* A completely unknown algorithm */
             ERR_raise(ERR_LIB_X509, X509_R_UNSUPPORTED_ALGORITHM);
@@ -492,13 +512,17 @@ ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert)
     if (!X509_digest(cert, md, hash, &len)
             || (new = ASN1_OCTET_STRING_new()) == NULL)
         goto err;
-    if (!(ASN1_OCTET_STRING_set(new, hash, len))) {
-        ASN1_OCTET_STRING_free(new);
-        new = NULL;
+    if ((ASN1_OCTET_STRING_set(new, hash, len))) {
+        if (md_used != NULL)
+            *md_used = md;
+        else
+            EVP_MD_free(md);
+        return new;
     }
+    ASN1_OCTET_STRING_free(new);
  err:
     EVP_MD_free(md);
-    return new;
+    return NULL;
 }
 
 int X509_CRL_digest(const X509_CRL *data, const EVP_MD *type,
