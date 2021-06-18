@@ -61,7 +61,7 @@ plan tests => 15;
 
 SKIP: {
     skip "SM2 is not supported by this OpenSSL build", 1
-              if disabled("sm2");
+        if disabled("sm2");
 
     is(yes(cmdstr(app(["openssl", "ca", "-config",
                        $cnf,
