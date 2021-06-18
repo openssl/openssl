@@ -252,6 +252,15 @@ typedef unsigned __int64 uint64_t;
 #  include <stdint.h>
 #  undef OPENSSL_NO_STDINT_H
 # endif
+# if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
+    defined(INTMAX_MAX) && defined(UINTMAX_MAX)
+typedef intmax_t ossl_intmax_t;
+typedef uintmax_t ossl_uintmax_t;
+# else
+/* Fall back to the largest we know we require and can handle */
+typedef int64_t ossl_intmax_t;
+typedef uint64_t ossl_uintmax_t;
+# endif
 
 /* ossl_inline: portable inline definition usable in public headers */
 # if !defined(inline) && !defined(__cplusplus)
