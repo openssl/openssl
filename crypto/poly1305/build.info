@@ -16,7 +16,7 @@ IF[{- !$disabled{asm} -}]
   $POLY1305ASM_armv4=poly1305-armv4.S
   $POLY1305ASM_aarch64=poly1305-armv8.S
 
-  $POLY1305ASM_ppc32=poly1305-ppc.s poly1305-ppcfp.s
+  $POLY1305ASM_ppc32=poly1305_ppc.c poly1305-ppc.s poly1305-ppcfp.s
   $POLY1305ASM_ppc64=$POLY1305ASM_ppc32
 
   $POLY1305ASM_c64xplus=poly1305-c64xplus.s
