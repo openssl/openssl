@@ -15,9 +15,6 @@
 
 # if defined(OPENSSL_SYS_VMS)
 
-/* ossl_provider_available vs OSSL_PROVIDER_available */
-#  undef ossl_provider_available
-#  define ossl_provider_available                 ossl_int_prov_available
 /* ossl_provider_gettable_params vs OSSL_PROVIDER_gettable_params */
 #  undef ossl_provider_gettable_params
 #  define ossl_provider_gettable_params            ossl_int_prov_gettable_params
