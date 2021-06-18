@@ -373,7 +373,7 @@ sub generate_cert {
     my $cn = $is_ca ? "CA" : "EE";
     my $ca_key = srctop_file(@certs, "ca-key.pem");
     my $key = $is_ca ? $ca_key : srctop_file(@certs, "ee-key.pem");
-    my @cmd = ("openssl", "req", "-config", "\"\"", "-x509",
+    my @cmd = ("openssl", "req", "-config", "", "-x509",
                "-key", $key, "-subj", "/CN=$cn", @_, "-out", $cert);
     push(@cmd, ("-CA", $ca_cert, "-CAkey", $ca_key)) unless $ss;
     ok(run(app([@cmd])), "generate $cert");
