@@ -3,7 +3,8 @@
 =head1 NAME
 
 X509_get_version, X509_set_version, X509_REQ_get_version, X509_REQ_set_version,
-X509_CRL_get_version, X509_CRL_set_version - get or set certificate,
+X509_ACERT_get_version, X509_ACERT_set_version, X509_CRL_get_version,
+X509_CRL_set_version - get or set certificate,
 certificate request or CRL version
 
 =head1 SYNOPSIS
@@ -19,6 +20,11 @@ certificate request or CRL version
  long X509_CRL_get_version(const X509_CRL *crl);
  int X509_CRL_set_version(X509_CRL *x, long version);
 
+ #include <openssl/x509_acert.h>
+
+ int X509_ACERT_set_version(X509_ACERT *x, long version);
+ long X509_ACERT_get_version(const X509_ACERT *x);
+
 =head1 DESCRIPTION
 
 X509_get_version() returns the numerical value of the version field of
@@ -31,9 +37,11 @@ X509_set_version() sets the numerical value of the version field of certificate
 I<x> to I<version>.
 
 Similarly X509_REQ_get_version(), X509_REQ_set_version(),
+X509_ACERT_get_version(), X509_ACERT_set_version(),
 X509_CRL_get_version() and X509_CRL_set_version() get and set the version
 number of certificate requests and CRLs. They use constants
-B<X509_REQ_VERSION_1>, B<X509_CRL_VERSION_1>, and B<X509_CRL_VERSION_2>.
+B<X509_REQ_VERSION_1>, B<X509_ACERT_VERSION_2>, B<X509_CRL_VERSION_1>,
+and B<X509_CRL_VERSION_2>.
 
 =head1 NOTES
 
