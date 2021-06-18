@@ -133,6 +133,9 @@ static int test_hmac_run(void)
     int ret = 0;
 
     ctx = HMAC_CTX_new();
+    if (!ctx) {
+      return ret;
+    }
     HMAC_CTX_reset(ctx);
 
     if (!TEST_ptr(ctx)
