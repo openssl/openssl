@@ -3573,6 +3573,9 @@ static int add_session(SSL *ssl, SSL_SESSION *session)
     simple_ssl_session *sess = app_malloc(sizeof(*sess), "get session");
     unsigned char *p;
 
+    if (!sess) {
+      return 0;
+    }
     SSL_SESSION_get_id(session, &sess->idlen);
     sess->derlen = i2d_SSL_SESSION(session, NULL);
     if (sess->derlen < 0) {
