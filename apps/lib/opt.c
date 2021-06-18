@@ -14,6 +14,7 @@
 #include "fmt.h"
 #include "app_libctx.h"
 #include "internal/nelem.h"
+#include "internal/numbers.h"
 #include <string.h>
 #if !defined(OPENSSL_SYS_MSDOS)
 # include <unistd.h>
@@ -555,7 +556,7 @@ int opt_long(const char *value, long *result)
     !defined(OPENSSL_NO_INTTYPES_H)
 
 /* Parse an intmax_t, put it into *result; return 0 on failure, else 1. */
-int opt_intmax(const char *value, intmax_t *result)
+int opt_intmax(const char *value, ossl_intmax_t *result)
 {
     int oerrno = errno;
     intmax_t m;
@@ -565,7 +566,8 @@ int opt_intmax(const char *value, intmax_t *result)
     m = strtoimax(value, &endp, 0);
     if (*endp
             || endp == value
-            || ((m == INTMAX_MAX || m == INTMAX_MIN) && errno == ERANGE)
+            || ((m == OSSL_INTMAX_MAX || m == OSSL_INTMAX_MIN)
+                && errno == ERANGE)
             || (m == 0 && errno != 0)) {
         opt_number_error(value);
         errno = oerrno;
@@ -577,7 +579,7 @@ int opt_intmax(const char *value, intmax_t *result)
 }
 
 /* Parse a uintmax_t, put it into *result; return 0 on failure, else 1. */
-int opt_uintmax(const char *value, uintmax_t *result)
+int opt_uintmax(const char *value, ossl_uintmax_t *result)
 {
     int oerrno = errno;
     uintmax_t m;
@@ -587,7 +589,7 @@ int opt_uintmax(const char *value, uintmax_t *result)
     m = strtoumax(value, &endp, 0);
     if (*endp
             || endp == value
-            || (m == UINTMAX_MAX && errno == ERANGE)
+            || (m == OSSL_UINTMAX_MAX && errno == ERANGE)
             || (m == 0 && errno != 0)) {
         opt_number_error(value);
         errno = oerrno;
@@ -596,6 +598,27 @@ int opt_uintmax(const char *value, uintmax_t *result)
     *result = m;
     errno = oerrno;
     return 1;
+}
+#else
+/* Fallback implementations based on long */
+int opt_intmax(const char *value, ossl_intmax_t *result)
+{
+    long m;
+    int ret;
+
+    if ((ret = opt_long(value, &m)))
+        *result = m;
+    return ret;
+}
+
+int opt_uintmax(const char *value, ossl_uintmax_t *result)
+{
+    unsigned long m;
+    int ret;
+
+    if ((ret = opt_ulong(value, &m)))
+        *result = m;
+    return ret;
 }
 #endif
 
