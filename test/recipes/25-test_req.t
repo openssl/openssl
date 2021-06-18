@@ -114,7 +114,7 @@ subtest "generating certificate requests with RSA" => sub {
                     "-config", srctop_file("test", "test.cnf"),
                     "-new", "-out", "testreq_withattrs_der.pem", "-utf8",
                     "-key", srctop_file("test", "testrsa_withattrs.der"),
-	            "-keyform", "DER"])),
+                    "-keyform", "DER"])),
            "Generating request from a key with extra attributes - PEM");
 
         ok(run(app(["openssl", "req",
