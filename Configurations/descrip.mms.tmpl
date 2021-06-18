@@ -447,7 +447,7 @@ NODEBUG=@
 
 # The main targets ###################################################
 
-{- dependmagic('build_sw'); -} : build_libs_nodep, build_modules_nodep, build_programs_nodep copy-utils
+{- dependmagic('build_sw'); -} : build_libs_nodep, build_modules_nodep, build_programs_nodep
 {- dependmagic('build_libs'); -} : build_libs_nodep
 {- dependmagic('build_modules'); -} : build_modules_nodep
 {- dependmagic('build_programs'); -} : build_programs_nodep
@@ -476,7 +476,7 @@ build_all_generated : $(GENERATED_MANDATORY) $(GENERATED) build_docs
 all : build_sw build_docs
 
 test : tests
-{- dependmagic('tests'); -} : build_programs_nodep, build_modules_nodep copy-utils run_tests
+{- dependmagic('tests'); -} : build_programs_nodep, build_modules_nodep run_tests
 run_tests :
         @ ! {- output_off() if $disabled{tests}; "" -}
         DEFINE SRCTOP "$(SRCDIR)"
@@ -737,16 +737,6 @@ check_INSTALLTOP :
                 WRITE SYS$ERROR "INSTALLTOP should not be empty"
         @ IF "$(INSTALLTOP)" .EQS. "" THEN -
                 EXIT %x10000002
-
-# Helper targets #####################################################
-
-copy-utils : [.util]wrap.pl
-
-[.util]wrap.pl : configdata.pm
-	@ IF "$(SRCDIR)" .NES. "$(BLDDIR)" THEN -
-		CREATE/DIR/LOG [.util]
-	@ IF "$(SRCDIR)" .NES. "$(BLDDIR)" THEN -
-		COPY/LOG ossl_sourceroot:[util]wrap.pl [.util]
 
 # Developer targets ##################################################
 
@@ -1041,8 +1031,6 @@ EOF
       my $incextra = join(',', map { "\"$_\"" }
                                @{$unified_info{includes_extra}->{$obj}});
       $incextra = "/INCLUDE=($incextra)" if $incextra;
-      print STDERR "DEBUG: Looking for extra include directories for $obj, found this: $incextra\n"
-          if $incextra;
 
       my $cflags;
       if ($args{attrs}->{noinst}) {
@@ -1337,7 +1325,7 @@ EOF
                                            "util", "dofile.pl")),
                            rel2abs($config{builddir}));
       return <<"EOF";
-$script : $sources
+$script : $sources configdata.pm
         \$(PERL) "-I\$(BLDDIR)" "-Mconfigdata" $dofile -
 	    "-o$target{build_file}" $sources > $script
         SET FILE/PROT=(S:RWED,O:RWED,G:RE,W:RE) $script
