@@ -12,7 +12,7 @@ IF[{- !$disabled{asm} -}]
   $CHACHAASM_armv4=chacha-armv4.S
   $CHACHAASM_aarch64=chacha-armv8.S
 
-  $CHACHAASM_ppc32=chacha-ppc.s
+  $CHACHAASM_ppc32=chacha_ppc.c chacha-ppc.s
   $CHACHAASM_ppc64=$CHACHAASM_ppc32
 
   $CHACHAASM_c64xplus=chacha-c64xplus.s
