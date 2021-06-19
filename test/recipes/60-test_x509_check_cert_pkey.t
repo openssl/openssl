@@ -37,8 +37,8 @@ SKIP: {
     skip "DSA disabled", 1, if disabled("dsa");
     # dsa
     ok(run(test(["x509_check_cert_pkey_test",
-		 src_file("server-dsa-cert.pem"),
-		 src_file("server-dsa-key.pem"), "cert", "ok"])));
+                 src_file("server-dsa-cert.pem"),
+                 src_file("server-dsa-key.pem"), "cert", "ok"])));
 }
 # ecc
 SKIP: {

@@ -32,20 +32,20 @@ plan tests => 15;
      my $cakey = srctop_file("test", "certs", "ca-key.pem");
      $ENV{OPENSSL_CONFIG} = '-config ' . $cnf;
      skip "failed creating CA structure", 4
-	 if !ok(run(perlapp(["CA.pl","-newca",
+         if !ok(run(perlapp(["CA.pl","-newca",
                              "-extra-req", "-key $cakey"], stdin => undef)),
-		'creating CA structure');
+                'creating CA structure');
 
      my $eekey = srctop_file("test", "certs", "ee-key.pem");
      $ENV{OPENSSL_CONFIG} = '-config ' . $cnf;
      skip "failed creating new certificate request", 3
-	 if !ok(run(perlapp(["CA.pl","-newreq",
+         if !ok(run(perlapp(["CA.pl","-newreq",
                              '-extra-req', "-outform DER -section userreq -key $eekey"])),
-		'creating certificate request');
+                'creating certificate request');
      $ENV{OPENSSL_CONFIG} = '-rand_serial -inform DER -config '.$std_openssl_cnf;
      skip "failed to sign certificate request", 2
-	 if !is(yes(cmdstr(perlapp(["CA.pl", "-sign"]))), 0,
-		'signing certificate request');
+         if !is(yes(cmdstr(perlapp(["CA.pl", "-sign"]))), 0,
+                'signing certificate request');
 
      ok(run(perlapp(["CA.pl", "-verify", "newcert.pem"])),
         'verifying new certificate');
@@ -61,7 +61,7 @@ plan tests => 15;
 
 SKIP: {
     skip "SM2 is not supported by this OpenSSL build", 1
-	      if disabled("sm2");
+        if disabled("sm2");
 
     is(yes(cmdstr(app(["openssl", "ca", "-config",
                        $cnf,
