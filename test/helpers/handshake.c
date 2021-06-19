@@ -283,7 +283,6 @@ static int server_ocsp_cb(SSL *s, void *arg)
         return SSL_TLSEXT_ERR_ALERT_FATAL;
     }
 
-    OPENSSL_free(resp);
     return SSL_TLSEXT_ERR_OK;
 }
 
