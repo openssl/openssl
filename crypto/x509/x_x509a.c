@@ -126,6 +126,7 @@ int X509_add1_reject_object(X509 *x, const ASN1_OBJECT *obj)
     X509_CERT_AUX *aux;
     ASN1_OBJECT *objtmp;
     int ret;
+    
     if ((objtmp = OBJ_dup(obj)) == NULL)
         return 0;
     if ((aux = aux_get(x)) == NULL)
@@ -134,9 +135,8 @@ int X509_add1_reject_object(X509 *x, const ASN1_OBJECT *obj)
         && (aux->reject = sk_ASN1_OBJECT_new_null()) == NULL)
         goto err;
     ret = sk_ASN1_OBJECT_push(aux->reject, objtmp);
-    if (!ret)
-      goto err;
-    return ret;
+    if (ret > 0)
+      return ret;
  err:
     ASN1_OBJECT_free(objtmp);
     return 0;
