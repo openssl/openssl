@@ -1010,7 +1010,7 @@ int OSSL_PARAM_set_double(OSSL_PARAM *p, double val)
             return 1;
         }
     } else if (p->data_type == OSSL_PARAM_UNSIGNED_INTEGER
-               && val == (ossl_uintmax_t)val) {
+               && val == (uint64_t)val) {
         p->return_size = sizeof(double);
         if (p->data == NULL)
             return 1;
@@ -1029,13 +1029,13 @@ int OSSL_PARAM_set_double(OSSL_PARAM *p, double val)
                      * 15 bits of UINT64_MAX to avoid using imprecise floating
                      * point values.
                      */
-                    && (double)(UINT64_MAX - 65535) + 65536.0) {
+                    && val < (double)(UINT64_MAX - 65535) + 65536.0) {
                 p->return_size = sizeof(uint64_t);
                 *(uint64_t *)p->data = (uint64_t)val;
                 return 1;
             }
             break;            }
-    } else if (p->data_type == OSSL_PARAM_INTEGER && val == (ossl_intmax_t)val) {
+    } else if (p->data_type == OSSL_PARAM_INTEGER && val == (int64_t)val) {
         p->return_size = sizeof(double);
         if (p->data == NULL)
             return 1;

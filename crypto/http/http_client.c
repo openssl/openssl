@@ -23,13 +23,13 @@
 #include "internal/sockets.h"
 #include "internal/cryptlib.h" /* for ossl_assert() */
 
+#define HAS_PREFIX(str, prefix) (strncmp(str, prefix, sizeof(prefix) - 1) == 0)
 #define HTTP_PREFIX "HTTP/"
 #define HTTP_VERSION_PATT "1." /* allow 1.x */
+#define HTTP_VERSION_STR_LEN sizeof(HTTP_VERSION_PATT) /* == strlen("1.0") */
 #define HTTP_PREFIX_VERSION HTTP_PREFIX""HTTP_VERSION_PATT
 #define HTTP_1_0 HTTP_PREFIX_VERSION"0" /* "HTTP/1.0" */
-#define HTTP_VERSION_PATT_LEN strlen(HTTP_PREFIX_VERSION)
-#define HTTP_VERSION_STR_LEN (HTTP_VERSION_PATT_LEN + 1)
-#define HTTP_LINE1_MINLEN ((int)strlen(HTTP_PREFIX_VERSION "x 200\n"))
+#define HTTP_LINE1_MINLEN (sizeof(HTTP_PREFIX_VERSION "x 200\n") - 1)
 #define HTTP_VERSION_MAX_REDIRECTIONS 50
 
 #define HTTP_STATUS_CODE_OK                200
@@ -377,10 +377,10 @@ static int parse_http_line1(char *line, int *found_keep_alive)
     int i, retcode;
     char *code, *reason, *end;
 
-    if (strncmp(line, HTTP_PREFIX_VERSION, HTTP_VERSION_PATT_LEN) != 0)
+    if (!HAS_PREFIX(line, HTTP_PREFIX_VERSION))
         goto err;
     /* above HTTP 1.0, connection persistence is the default */
-    *found_keep_alive = line[HTTP_VERSION_PATT_LEN] > '0';
+    *found_keep_alive = line[strlen(HTTP_PREFIX_VERSION)] > '0';
 
     /* Skip to first whitespace (past protocol info) */
     for (code = line; *code != '\0' && !ossl_isspace(*code); code++)
@@ -435,10 +435,10 @@ static int parse_http_line1(char *line, int *found_keep_alive)
         else
             retcode = HTTP_R_RECEIVED_ERROR;
         if (*reason == '\0')
-            ERR_raise_data(ERR_LIB_HTTP, retcode, "Code=%s", code);
+            ERR_raise_data(ERR_LIB_HTTP, retcode, "code=%s", code);
         else
             ERR_raise_data(ERR_LIB_HTTP, retcode,
-                           "Code=%s, Reason=%s", code, reason);
+                           "code=%s, reason=%s", code, reason);
         return 0;
     }
 
@@ -1038,16 +1038,14 @@ BIO *OSSL_HTTP_exchange(OSSL_HTTP_REQ_CTX *rctx, char **redirection_url)
 
 static int redirection_ok(int n_redir, const char *old_url, const char *new_url)
 {
-    size_t https_len = strlen(OSSL_HTTPS_NAME":");
-
     if (n_redir >= HTTP_VERSION_MAX_REDIRECTIONS) {
         ERR_raise(ERR_LIB_HTTP, HTTP_R_TOO_MANY_REDIRECTIONS);
         return 0;
     }
     if (*new_url == '/') /* redirection to same server => same protocol */
         return 1;
-    if (strncmp(old_url, OSSL_HTTPS_NAME":", https_len) == 0 &&
-        strncmp(new_url, OSSL_HTTPS_NAME":", https_len) != 0) {
+    if (HAS_PREFIX(old_url, OSSL_HTTPS_NAME":") &&
+        !HAS_PREFIX(new_url, OSSL_HTTPS_NAME":")) {
         ERR_raise(ERR_LIB_HTTP, HTTP_R_REDIRECTION_FROM_HTTPS_TO_HTTP);
         return 0;
     }
@@ -1290,15 +1288,15 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
         /*-
          * The first line is the HTTP response.
          * According to RFC 7230, it is formatted exactly like this:
-         * HTTP/d.d ddd Reason text\r\n
+         * HTTP/d.d ddd reason text\r\n
          */
         read_len = BIO_gets(fbio, mbuf, BUF_SIZE);
         /* the BIO may not block, so we must wait for the 1st line to come in */
-        if (read_len < HTTP_LINE1_MINLEN)
+        if (read_len < (int)HTTP_LINE1_MINLEN)
             continue;
 
         /* Check for HTTP/1.x */
-        if (strncmp(mbuf, HTTP_PREFIX, strlen(HTTP_PREFIX)) != 0) {
+        if (!HAS_PREFIX(mbuf, HTTP_PREFIX) != 0) {
             ERR_raise(ERR_LIB_HTTP, HTTP_R_HEADER_PARSE_ERROR);
             BIO_printf(bio_err, "%s: HTTP CONNECT failed, non-HTTP response\n",
                        prog);
@@ -1306,7 +1304,7 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
             goto end;
         }
         mbufp = mbuf + strlen(HTTP_PREFIX);
-        if (strncmp(mbufp, HTTP_VERSION_PATT, HTTP_VERSION_PATT_LEN) != 0) {
+        if (!HAS_PREFIX(mbufp, HTTP_VERSION_PATT) != 0) {
             ERR_raise(ERR_LIB_HTTP, HTTP_R_RECEIVED_WRONG_HTTP_VERSION);
             BIO_printf(bio_err,
                        "%s: HTTP CONNECT failed, bad HTTP version %.*s\n",
@@ -1316,15 +1314,14 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
         mbufp += HTTP_VERSION_STR_LEN;
 
         /* RFC 7231 4.3.6: any 2xx status code is valid */
-        if (strncmp(mbufp, " 2", strlen(" 2")) != 0) {
-            mbufp += 1;
+        if (!HAS_PREFIX(mbufp, " 2")) {
             /* chop any trailing whitespace */
             while (read_len > 0 && ossl_isspace(mbuf[read_len - 1]))
                 read_len--;
             mbuf[read_len] = '\0';
             ERR_raise_data(ERR_LIB_HTTP, HTTP_R_CONNECT_FAILURE,
-                           "Reason=%s", mbufp);
-            BIO_printf(bio_err, "%s: HTTP CONNECT failed, Reason=%s\n",
+                           "reason=%s", mbufp);
+            BIO_printf(bio_err, "%s: HTTP CONNECT failed, reason=%s\n",
                        prog, mbufp);
             goto end;
         }
