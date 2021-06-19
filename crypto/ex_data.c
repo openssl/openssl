@@ -13,13 +13,16 @@
 
 int ossl_do_ex_data_init(OSSL_LIB_CTX *ctx)
 {
+    int ret;
     OSSL_EX_DATA_GLOBAL *global = ossl_lib_ctx_get_ex_data_global(ctx);
 
     if (global == NULL)
         return 0;
 
     global->ex_data_lock = CRYPTO_THREAD_lock_new();
-    return global->ex_data_lock != NULL;
+    ret = global->ex_data_lock != NULL;
+    CRYPTO_THREAD_lock_free(global->ex_data_lock);
+    return ret;
 }
 
 /*
