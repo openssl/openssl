@@ -50,8 +50,10 @@ static int change_path(const char *file)
     while ((p = strpbrk(p, DIRSEP)) != NULL) {
         last = p++;
     }
-    if (last == NULL)
+    if (last == NULL) {
+        OPENSSL_free(s);
         return 0;
+    }
     last[DIRSEP_PRESERVE] = 0;
 
     TEST_note("changing path to %s", s);
