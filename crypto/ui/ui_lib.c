@@ -44,7 +44,6 @@ UI *UI_new_method(const UI_METHOD *method)
 
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_UI, ret, &ret->ex_data)) {
         CRYPTO_THREAD_lock_free(ret->lock);
-	ret->lock = NULL;
         OPENSSL_free(ret);
         return NULL;
     }
