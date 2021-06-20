@@ -566,14 +566,20 @@ int opt_intmax(const char *value, ossl_intmax_t *result)
     m = strtoimax(value, &endp, 0);
     if (*endp
             || endp == value
-            || ((m == OSSL_INTMAX_MAX || m == OSSL_INTMAX_MIN)
+            || ((m == INTMAX_MAX || m == INTMAX_MIN)
                 && errno == ERANGE)
             || (m == 0 && errno != 0)) {
         opt_number_error(value);
         errno = oerrno;
         return 0;
     }
-    *result = m;
+    /* Ensure that the value in |m| is never too big for |*result| */
+    if (sizeof(m) > sizeof(*result)
+        && (m < OSSL_INTMAX_MIN || m > OSSL_INTMAX_MAX)) {
+        opt_number_error(value);
+        return 0;
+    }
+    *result = (ossl_intmax_t)m;
     errno = oerrno;
     return 1;
 }
@@ -589,13 +595,19 @@ int opt_uintmax(const char *value, ossl_uintmax_t *result)
     m = strtoumax(value, &endp, 0);
     if (*endp
             || endp == value
-            || (m == OSSL_UINTMAX_MAX && errno == ERANGE)
+            || (m == UINTMAX_MAX && errno == ERANGE)
             || (m == 0 && errno != 0)) {
         opt_number_error(value);
         errno = oerrno;
         return 0;
     }
-    *result = m;
+    /* Ensure that the value in |m| is never too big for |*result| */
+    if (sizeof(m) > sizeof(*result)
+        && m > OSSL_UINTMAX_MAX) {
+        opt_number_error(value);
+        return 0;
+    }
+    *result = (ossl_intmax_ut)m;
     errno = oerrno;
     return 1;
 }
