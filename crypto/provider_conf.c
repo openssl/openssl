@@ -173,6 +173,9 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
         if (ok) {
             if (!ossl_provider_activate(prov, 0, 1)) {
                 ok = 0;
+            } else if (!ossl_provider_add_to_store(prov)) {
+                ossl_provider_deactivate(prov);
+                ok = 0;
             } else {
                 if (pcgbl->activated_providers == NULL)
                     pcgbl->activated_providers = sk_OSSL_PROVIDER_new_null();
@@ -181,7 +184,7 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
             }
         }
 
-        if (!(activate && ok))
+        if (!ok)
             ossl_provider_free(prov);
     } else {
         struct provider_info_st entry;
