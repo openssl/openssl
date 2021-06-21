@@ -137,7 +137,7 @@ static int provider_create_child_cb(const OSSL_CORE_HANDLE *prov, void *cbdata)
          * or it could have been explicitly loaded. If explicitly loaded it we
          * ignore it - i.e. we don't start treating it like a child.
          */
-        if (!ossl_provider_activate_child(cprov, prov, ossl_child_provider_init))
+        if (!ossl_provider_activate(cprov, 0, 1))
             goto err;
     } else {
         /*
@@ -148,7 +148,7 @@ static int provider_create_child_cb(const OSSL_CORE_HANDLE *prov, void *cbdata)
                                        1)) == NULL)
             goto err;
 
-        if (!ossl_provider_activate(cprov, 0))
+        if (!ossl_provider_activate(cprov, 0, 0))
             goto err;
 
         if (!ossl_provider_set_child(cprov, prov)
