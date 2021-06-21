@@ -2382,33 +2382,27 @@ static int rand_test_parse(EVP_TEST *t,
         if (n > rdata->n)
             rdata->n = n;
         item = rdata->data + n;
-        if (strncmp(keyword, "Entropy.", sizeof("Entropy")) == 0)
+        if (HAS_PREFIX(keyword, "Entropy."))
             return parse_bin(value, &item->entropy, &item->entropy_len);
-        if (strncmp(keyword, "ReseedEntropy.", sizeof("ReseedEntropy")) == 0)
+        if (HAS_PREFIX(keyword, "ReseedEntropy."))
             return parse_bin(value, &item->reseed_entropy,
                              &item->reseed_entropy_len);
-        if (strncmp(keyword, "Nonce.", sizeof("Nonce")) == 0)
+        if (HAS_PREFIX(keyword, "Nonce."))
             return parse_bin(value, &item->nonce, &item->nonce_len);
-        if (strncmp(keyword, "PersonalisationString.",
-                    sizeof("PersonalisationString")) == 0)
+        if (HAS_PREFIX(keyword, "PersonalisationString."))
             return parse_bin(value, &item->pers, &item->pers_len);
-        if (strncmp(keyword, "ReseedAdditionalInput.",
-                    sizeof("ReseedAdditionalInput")) == 0)
+        if (HAS_PREFIX(keyword, "ReseedAdditionalInput."))
             return parse_bin(value, &item->reseed_addin,
                              &item->reseed_addin_len);
-        if (strncmp(keyword, "AdditionalInputA.",
-                    sizeof("AdditionalInputA")) == 0)
+        if (HAS_PREFIX(keyword, "AdditionalInputA."))
             return parse_bin(value, &item->addinA, &item->addinA_len);
-        if (strncmp(keyword, "AdditionalInputB.",
-                    sizeof("AdditionalInputB")) == 0)
+        if (HAS_PREFIX(keyword, "AdditionalInputB."))
             return parse_bin(value, &item->addinB, &item->addinB_len);
-        if (strncmp(keyword, "EntropyPredictionResistanceA.",
-                    sizeof("EntropyPredictionResistanceA")) == 0)
+        if (HAS_PREFIX(keyword, "EntropyPredictionResistanceA."))
             return parse_bin(value, &item->pr_entropyA, &item->pr_entropyA_len);
-        if (strncmp(keyword, "EntropyPredictionResistanceB.",
-                    sizeof("EntropyPredictionResistanceB")) == 0)
+        if (HAS_PREFIX(keyword, "EntropyPredictionResistanceB."))
             return parse_bin(value, &item->pr_entropyB, &item->pr_entropyB_len);
-        if (strncmp(keyword, "Output.", sizeof("Output")) == 0)
+        if (HAS_PREFIX(keyword, "Output."))
             return parse_bin(value, &item->output, &item->output_len);
     } else {
         if (strcmp(keyword, "Cipher") == 0)
@@ -2656,7 +2650,7 @@ static int kdf_test_parse(EVP_TEST *t,
 
     if (strcmp(keyword, "Output") == 0)
         return parse_bin(value, &kdata->output, &kdata->output_len);
-    if (strncmp(keyword, "Ctrl", 4) == 0)
+    if (HAS_PREFIX(keyword, "Ctrl"))
         return kdf_test_ctrl(t, kdata->ctx, value);
     return 0;
 }
@@ -2756,7 +2750,7 @@ static int pkey_kdf_test_parse(EVP_TEST *t,
 
     if (strcmp(keyword, "Output") == 0)
         return parse_bin(value, &kdata->output, &kdata->output_len);
-    if (strncmp(keyword, "Ctrl", 4) == 0)
+    if (HAS_PREFIX(keyword, "Ctrl"))
         return pkey_test_ctrl(t, kdata->ctx, value);
     return 0;
 }
