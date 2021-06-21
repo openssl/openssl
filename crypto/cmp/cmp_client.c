@@ -295,18 +295,6 @@ static int poll_for_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
                     ERR_add_error_data(1, str);
                 goto err;
             }
-            if (ctx->total_timeout > 0) { /* timeout is not infinite */
-                const int exp = 5; /* expected max time per msg round trip */
-                int64_t time_left = (int64_t)(ctx->end_time - exp - time(NULL));
-
-                if (time_left <= 0) {
-                    ERR_raise(ERR_LIB_CMP, CMP_R_TOTAL_TIMEOUT);
-                    goto err;
-                }
-                if (time_left < check_after)
-                    check_after = time_left;
-                /* poll one last time just when timeout was reached */
-            }
 
             if (pollRep->reason == NULL
                     || (len = BIO_snprintf(str, OSSL_CMP_PKISI_BUFLEN,
@@ -325,6 +313,19 @@ static int poll_for_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
             ossl_cmp_log2(INFO, ctx,
                           "received polling response%s; checkAfter = %ld seconds",
                           str, check_after);
+
+            if (ctx->total_timeout > 0) { /* timeout is not infinite */
+                const int exp = 5; /* expected max time per msg round trip */
+                int64_t time_left = (int64_t)(ctx->end_time - exp - time(NULL));
+
+                if (time_left <= 0) {
+                    ERR_raise(ERR_LIB_CMP, CMP_R_TOTAL_TIMEOUT);
+                    goto err;
+                }
+                if (time_left < check_after)
+                    check_after = time_left;
+                /* poll one last time just when timeout was reached */
+            }
 
             OSSL_CMP_MSG_free(preq);
             preq = NULL;
