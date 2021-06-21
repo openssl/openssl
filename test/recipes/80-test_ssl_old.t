@@ -527,14 +527,11 @@ sub testssl {
                 if $no_tls1 || $provider eq "fips";
 
         SKIP: {
-            skip "skipping anonymous DH tests", 2
+            skip "skipping anonymous DH tests", 1
                 if ($no_dh);
 
             ok(run(test([@ssltest, "-v", "-bio_pair", "-tls1", "-cipher", "ADH", "-dhe1024dsa", "-num", "10", "-f", "-time"])),
                'test tlsv1 with 1024bit anonymous DH, multiple handshakes');
-
-            ok(run(test(['ssl_old_test', '-psk', '0102030405', '-cipher', '@SECLEVEL=2:DHE-PSK-AES128-CCM'])),
-               'test auto DH meets security strength');
           }
 
         SKIP: {
@@ -562,6 +559,14 @@ sub testssl {
                'test tls1 with PSK via BIO pair');
 	  }
 	}
+
+        SKIP: {
+            skip "skipping auto DH tests", 1
+                if ($no_dh || $no_psk);
+
+            ok(run(test(['ssl_old_test', '-psk', '0102030405', '-cipher', '@SECLEVEL=2:DHE-PSK-AES128-CCM'])),
+               'test auto DH meets security strength');
+          }
 
     };
 
