@@ -431,7 +431,7 @@ int ossl_provider_up_ref(OSSL_PROVIDER *prov)
 static int provider_up_ref_intern(OSSL_PROVIDER *prov, int activate)
 {
     if (activate)
-        return ossl_provider_activate(prov, 0, 1);
+        return ossl_provider_activate(prov, 1);
 
     return ossl_provider_up_ref(prov);
 }
@@ -512,7 +512,7 @@ OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
     return prov;
 }
 
-int ossl_provider_add_to_store(OSSL_PROVIDER *prov)
+int ossl_provider_add_to_store(OSSL_PROVIDER *prov, int retain_fallbacks)
 {
     struct provider_store_st *store = NULL;
     int ret = 1;
@@ -530,6 +530,8 @@ int ossl_provider_add_to_store(OSSL_PROVIDER *prov)
         ossl_provider_free(prov);
         ret = 0;
     }
+    if (!retain_fallbacks)
+        store->use_fallbacks = 0;
     CRYPTO_THREAD_unlock(store->lock);
 
     return ret;
@@ -1025,24 +1027,15 @@ static int provider_flush_store_cache(const OSSL_PROVIDER *prov)
     return 1;
 }
 
-int ossl_provider_activate(OSSL_PROVIDER *prov, int retain_fallbacks,
-                           int upcalls)
+int ossl_provider_activate(OSSL_PROVIDER *prov, int upcalls)
 {
     int count;
 
     if (prov == NULL)
         return 0;
-    if ((count = provider_activate(prov, 1, upcalls)) > 0) {
-        if (!retain_fallbacks) {
-            if (!CRYPTO_THREAD_write_lock(prov->store->lock)) {
-                provider_deactivate(prov);
-                return 0;
-            }
-            prov->store->use_fallbacks = 0;
-            CRYPTO_THREAD_unlock(prov->store->lock);
-        }
+    if ((count = provider_activate(prov, 1, upcalls)) > 0)
         return count == 1 ? provider_flush_store_cache(prov) : 1;
-    }
+
     return 0;
 }
 
@@ -1485,10 +1478,8 @@ int ossl_provider_activate_child(OSSL_PROVIDER *prov,
      * The provider could be in one of two states: (1) Already a child,
      * (2) Not a child (not eligible to be one).
      */
-    if (prov->ischild && provider_activate(prov, 0, 0)) {
+    if (prov->ischild && provider_activate(prov, 0, 0))
         flush = 1;
-        prov->store->use_fallbacks = 0;
-    }
 
     CRYPTO_THREAD_unlock(prov->flag_lock);
     CRYPTO_THREAD_unlock(prov->store->lock);
