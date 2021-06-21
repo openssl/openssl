@@ -26,12 +26,12 @@ OSSL_PROVIDER *OSSL_PROVIDER_try_load(OSSL_LIB_CTX *libctx, const char *name,
         isnew = 1;
     }
 
-    if (!ossl_provider_activate(prov, retain_fallbacks, 1)) {
+    if (!ossl_provider_activate(prov, 1)) {
         ossl_provider_free(prov);
         return NULL;
     }
 
-    if (isnew && !ossl_provider_add_to_store(prov)) {
+    if (isnew && !ossl_provider_add_to_store(prov, retain_fallbacks)) {
         ossl_provider_deactivate(prov);
         ossl_provider_free(prov);
         return NULL;
