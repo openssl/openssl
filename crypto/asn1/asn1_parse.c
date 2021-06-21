@@ -27,6 +27,7 @@ static int asn1_print_info(BIO *bp, long offset, int depth, int hl, long len,
     int pop_f_prefix = 0;
     long saved_indent = -1;
     int i = 0;
+    BIO *bio = NULL;
 
     if (constructed & V_ASN1_CONSTRUCTED)
         p = "cons: ";
@@ -43,7 +44,8 @@ static int asn1_print_info(BIO *bp, long offset, int depth, int hl, long len,
     }
     if (bp != NULL) {
         if (BIO_set_prefix(bp, str) <= 0) {
-            if ((bp = BIO_push(BIO_new(BIO_f_prefix()), bp)) == NULL)
+            if ((bio = BIO_new(BIO_f_prefix())) == NULL
+                    || (bp = BIO_push(bio, bp)) == NULL)
                 goto err;
             pop_f_prefix = 1;
         }
@@ -72,10 +74,9 @@ static int asn1_print_info(BIO *bp, long offset, int depth, int hl, long len,
  err:
     if (saved_indent >= 0)
         BIO_set_indent(bp, saved_indent);
-    if (pop_f_prefix) {
+    if (pop_f_prefix)
         BIO_pop(bp);
-        BIO_free(bp);
-    }
+    BIO_free(bio);
     return i;
 }
 
