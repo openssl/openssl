@@ -47,7 +47,7 @@ $proxy = chop_dblquot($ENV{http_proxy} // $ENV{HTTP_PROXY} // $proxy);
 $proxy =~ s{^https?://}{}i;
 my $no_proxy = $ENV{no_proxy} // $ENV{NO_PROXY};
 
-my $app = "apps/openssl cmp";
+my @app = qw(openssl cmp);
 
 # the CMP server configuration consists of:
 my $ca_dn;      # The CA's Distinguished Name
@@ -129,16 +129,14 @@ sub test_cmp_http {
     my $title = shift;
     my $params = shift;
     my $expected_result = shift;
-    my $path_app = bldtop_dir($app);
     $params = [ '-server', "127.0.0.1:$server_port", @$params ]
         unless grep { $_ eq '-server' } @$params;
+    my $cmd = app([@app, @$params]);
 
-    unless (is(my $actual_result = run(cmd([$path_app, @$params,])),
-               $expected_result,
-               $title)) {
+    unless (is(my $actual_result = run($cmd), $expected_result, $title)) {
         if ($faillog) {
             my $quote_spc_empty = sub { $_ eq "" ? '""' : $_ =~ m/ / ? '"'.$_.'"' : $_ };
-            my $invocation = "$path_app ".join(' ', map $quote_spc_empty->($_), @$params);
+            my $invocation = cmdstr($cmd, display => 1);
             print $faillog "$server_name $aspect \"$title\" ($i/$n)".
                 " expected=$expected_result actual=$actual_result\n";
             print $faillog "$invocation\n\n";
@@ -266,7 +264,7 @@ sub load_tests {
 
 sub start_mock_server {
     my $args = $_[0]; # optional further CLI arguments
-    my $cmd = cmdstr(app(['openssl', 'cmp', '-config', 'server.cnf',
+    my $cmd = cmdstr(app([@app, '-config', 'server.cnf',
                           $args ? $args : ()]), display => 1);
     print "Current directory is ".getcwd()."\n";
     print "Launching mock server: $cmd\n";
