@@ -41,15 +41,12 @@ static int mock_http_server(BIO *in, BIO *out, char version, int keep_alive,
     const char *req, *path;
     long count = BIO_get_mem_data(in, (unsigned char **)&req);
     const char *hdr = (char *)req;
-    int is_get = count >= 4 && strncmp(hdr, "GET ", 4) == 0;
     int len;
+    int is_get = count >= 4 && CHECK_AND_SKIP_PREFIX(hdr, "GET ");
 
     /* first line should contain "(GET|POST) <path> HTTP/1.x" */
-    if (is_get)
-        hdr += 4;
-    else if (TEST_true(count >= 5 && strncmp(hdr, "POST ", 5) == 0))
-        hdr += 5;
-    else
+    if (!is_get
+            && !(TEST_true(count >= 5 && CHECK_AND_SKIP_PREFIX(hdr, "POST "))))
         return 0;
 
     path = hdr;
@@ -69,7 +66,7 @@ static int mock_http_server(BIO *in, BIO *out, char version, int keep_alive,
     if (count < 0 || out == NULL)
         return 0;
 
-    if (strncmp(path, RPATH, strlen(RPATH)) != 0) {
+    if (!HAS_PREFIX(path, RPATH)) {
         if (!is_get)
             return 0;
         return BIO_printf(out, "HTTP/1.%c 301 Moved Permanently\r\n"
@@ -94,10 +91,9 @@ static int mock_http_server(BIO *in, BIO *out, char version, int keep_alive,
             return BIO_puts(out, txt);
         return ASN1_item_i2d_bio(it, out, rsp);
     } else {
-        len = strlen("Connection: ");
-        if (strncmp(hdr, "Connection: ", len) == 0) {
+        if (CHECK_AND_SKIP_PREFIX(hdr, "Connection: ")) {
             /* skip req Connection header */
-            hdr = strstr(hdr + len, "\r\n");
+            hdr = strstr(hdr, "\r\n");
             if (hdr == NULL)
                 return 0;
             hdr += 2;
