@@ -53,8 +53,7 @@ ossl_provider_get_capabilities
   * Activate the Provider
   * If the Provider is a module, the module will be loaded
   */
- int ossl_provider_activate(OSSL_PROVIDER *prov, int retain_fallbacks,
-                            int upcalls);
+ int ossl_provider_activate(OSSL_PROVIDER *prov, int upcalls);
  int ossl_provider_deactivate(OSSL_PROVIDER *prov);
 
  /* Return pointer to the provider's context */
@@ -218,10 +217,8 @@ be located in that module, and called.
 
 =back
 
-If I<retain_fallbacks> is zero, fallbacks are disabled.  If it is nonzero,
-fallbacks are left unchanged. If I<upcalls> is nonzero then, if this is a child
-provider, upcalls to the parent libctx will be made to inform it of an
-up-ref.
+If I<upcalls> is nonzero then, if this is a child provider, upcalls to the
+parent libctx will be made to inform it of an up-ref.
 
 ossl_provider_deactivate() "deactivates" the provider for the given
 provider object I<prov> by decrementing its activation count.  When
