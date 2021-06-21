@@ -15,17 +15,12 @@
  * below any attempt to generate 1024 bit RSA keys will result in an error (Note
  * that digital signature verification can still use deprecated 1024 bit keys).
  *
- * Also see FIPS1402IG A.14
  * FIPS 186-4 relies on the use of the auxiliary primes p1, p2, q1 and q2 that
  * must be generated before the module generates the RSA primes p and q.
- * Table B.1 in FIPS 186-4 specifies, for RSA modulus lengths of 2048 and
+ * Table B.1 in FIPS 186-4 specifies RSA modulus lengths of 2048 and
  * 3072 bits only, the min/max total length of the auxiliary primes.
- * When implementing the RSA signature generation algorithm
- * with other approved RSA modulus sizes, the vendor shall use the limitations
- * from Table B.1 that apply to the longest RSA modulus shown in Table B.1 of
- * FIPS 186-4 whose length does not exceed that of the implementation's RSA
- * modulus. In particular, when generating the primes for the 4096-bit RSA
- * modulus the limitations stated for the 3072-bit modulus shall apply.
+ * FIPS 186-5 Table A.1 includes an additional entry for 4096 which has been
+ * included here.
  */
 #include <stdio.h>
 #include <openssl/bn.h>
@@ -54,15 +49,18 @@ const BIGNUM ossl_bn_inv_sqrt_2 = {
 };
 
 /*
- * FIPS 186-4 Table B.1. "Min length of auxiliary primes p1, p2, q1, q2".
+ * FIPS 186-5 Table A.1. "Min length of auxiliary primes p1, p2, q1, q2".
+ * (FIPS 186-5 has an entry for >= 4096 bits).
  *
  * Params:
  *     nbits The key size in bits.
  * Returns:
  *     The minimum size of the auxiliary primes or 0 if nbits is invalid.
  */
-static int bn_rsa_fips186_4_aux_prime_min_size(int nbits)
+static int bn_rsa_fips186_5_aux_prime_min_size(int nbits)
 {
+    if (nbits >= 4096)
+        return 201;
     if (nbits >= 3072)
         return 171;
     if (nbits >= 2048)
@@ -71,16 +69,18 @@ static int bn_rsa_fips186_4_aux_prime_min_size(int nbits)
 }
 
 /*
- * FIPS 186-4 Table B.1 "Maximum length of len(p1) + len(p2) and
+ * FIPS 186-5 Table A.1 "Max of len(p1) + len(p2) and
  * len(q1) + len(q2) for p,q Probable Primes".
- *
+ * (FIPS 186-5 has an entry for >= 4096 bits).
  * Params:
  *     nbits The key size in bits.
  * Returns:
  *     The maximum length or 0 if nbits is invalid.
  */
-static int bn_rsa_fips186_4_aux_prime_max_sum_size_for_prob_primes(int nbits)
+static int bn_rsa_fips186_5_aux_prime_max_sum_size_for_prob_primes(int nbits)
 {
+    if (nbits >= 4096)
+        return 2030;
     if (nbits >= 3072)
         return 1518;
     if (nbits >= 2048)
@@ -170,7 +170,7 @@ int ossl_bn_rsa_fips186_4_gen_prob_primes(BIGNUM *p, BIGNUM *Xpout,
     if (p1i == NULL || p2i == NULL || Xp1i == NULL || Xp2i == NULL)
         goto err;
 
-    bitlen = bn_rsa_fips186_4_aux_prime_min_size(nlen);
+    bitlen = bn_rsa_fips186_5_aux_prime_min_size(nlen);
     if (bitlen == 0)
         goto err;
 
@@ -195,7 +195,7 @@ int ossl_bn_rsa_fips186_4_gen_prob_primes(BIGNUM *p, BIGNUM *Xpout,
         goto err;
     /* (Table B.1) auxiliary prime Max length check */
     if ((BN_num_bits(p1i) + BN_num_bits(p2i)) >=
-            bn_rsa_fips186_4_aux_prime_max_sum_size_for_prob_primes(nlen))
+            bn_rsa_fips186_5_aux_prime_max_sum_size_for_prob_primes(nlen))
         goto err;
     /* (Steps 4.3/5.3) - generate prime */
     if (!ossl_bn_rsa_fips186_4_derive_prime(p, Xpout, Xp, p1i, p2i, nlen, e,
