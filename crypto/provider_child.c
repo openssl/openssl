@@ -133,13 +133,11 @@ static int provider_create_child_cb(const OSSL_CORE_HANDLE *prov, void *cbdata)
         ossl_provider_free(cprov);
 
         /*
-         * The provider already exists. It could be an unused built-in, or a
-         * previously created child, or it could have been explicitly loaded. If
-         * explicitly loaded it cannot be converted to a child and we ignore it
-         * - i.e. we don't start treating it like a child.
+         * The provider already exists. It could be a previously created child,
+         * or it could have been explicitly loaded. If explicitly loaded it we
+         * ignore it - i.e. we don't start treating it like a child.
          */
-        if (!ossl_provider_convert_to_child(cprov, prov,
-                                            ossl_child_provider_init))
+        if (!ossl_provider_activate_child(cprov, prov, ossl_child_provider_init))
             goto err;
     } else {
         /*
