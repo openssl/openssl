@@ -17,13 +17,22 @@ OSSL_PROVIDER *OSSL_PROVIDER_try_load(OSSL_LIB_CTX *libctx, const char *name,
                                       int retain_fallbacks)
 {
     OSSL_PROVIDER *prov = NULL;
+    int isnew = 0;
 
     /* Find it or create it */
-    if ((prov = ossl_provider_find(libctx, name, 0)) == NULL
-        && (prov = ossl_provider_new(libctx, name, NULL, 0)) == NULL)
-        return NULL;
+    if ((prov = ossl_provider_find(libctx, name, 0)) == NULL) {
+        if ((prov = ossl_provider_new(libctx, name, NULL, 0)) == NULL)
+            return NULL;
+        isnew = 1;
+    }
 
     if (!ossl_provider_activate(prov, retain_fallbacks, 1)) {
+        ossl_provider_free(prov);
+        return NULL;
+    }
+
+    if (isnew && !ossl_provider_add_to_store(prov)) {
+        ossl_provider_deactivate(prov);
         ossl_provider_free(prov);
         return NULL;
     }
