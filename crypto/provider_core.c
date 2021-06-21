@@ -509,27 +509,36 @@ OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
     prov->error_lib = ERR_get_next_error_library();
 #endif
 
-    if (!CRYPTO_THREAD_write_lock(store->lock))
-        return NULL;
-    if (!ossl_provider_up_ref(prov)) { /* +1 One reference for the store */
-        ossl_provider_free(prov); /* -1 Reference that was to be returned */
-        prov = NULL;
-    } else if (sk_OSSL_PROVIDER_push(store->providers, prov) == 0) {
-        ossl_provider_free(prov); /* -1 Store reference */
-        ossl_provider_free(prov); /* -1 Reference that was to be returned */
-        prov = NULL;
-    }
-    CRYPTO_THREAD_unlock(store->lock);
-
-    if (prov == NULL)
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
-
     /*
      * At this point, the provider is only partially "loaded".  To be
-     * fully "loaded", ossl_provider_activate() must also be called.
+     * fully "loaded", ossl_provider_activate() must also be called and it must
+     * then be added to the provider store.
      */
 
     return prov;
+}
+
+int ossl_provider_add_to_store(OSSL_PROVIDER *prov)
+{
+    struct provider_store_st *store = NULL;
+    int ret = 1;
+
+    if ((store = get_provider_store(prov->libctx)) == NULL)
+        return 0;
+
+
+    if (!ossl_provider_up_ref(prov)) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+    if (!CRYPTO_THREAD_write_lock(store->lock)
+            || sk_OSSL_PROVIDER_push(store->providers, prov) == 0) {
+        ossl_provider_free(prov);
+        ret = 0;
+    }
+    CRYPTO_THREAD_unlock(store->lock);
+
+    return ret;
 }
 
 void ossl_provider_free(OSSL_PROVIDER *prov)
