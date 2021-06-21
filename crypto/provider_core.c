@@ -131,7 +131,7 @@ struct provider_store_st {
     CRYPTO_RWLOCK *default_path_lock;
     CRYPTO_RWLOCK *lock;
     char *default_path;
-    struct provider_info_st *provinfo;
+    OSSL_PROVIDER_INFO *provinfo;
     size_t numprovinfo;
     size_t provinfosz;
     unsigned int use_fallbacks:1;
@@ -188,7 +188,7 @@ static INFOPAIR *infopair_copy(const INFOPAIR *src)
     return NULL;
 }
 
-void ossl_provider_info_clear(struct provider_info_st *info)
+void ossl_provider_info_clear(OSSL_PROVIDER_INFO *info)
 {
     OPENSSL_free(info->name);
     OPENSSL_free(info->path);
@@ -272,7 +272,7 @@ int ossl_provider_disable_fallback_loading(OSSL_LIB_CTX *libctx)
 #define BUILTINS_BLOCK_SIZE     10
 
 int ossl_provider_info_add_to_store(OSSL_LIB_CTX *libctx,
-                                    const struct provider_info_st *entry)
+                                    OSSL_PROVIDER_INFO *entry)
 {
     struct provider_store_st *store = get_provider_store(libctx);
     int ret = 0;
@@ -298,7 +298,7 @@ int ossl_provider_info_add_to_store(OSSL_LIB_CTX *libctx,
         }
         store->provinfosz = BUILTINS_BLOCK_SIZE;
     } else if (store->numprovinfo == store->provinfosz) {
-        struct provider_info_st *tmpbuiltins;
+        OSSL_PROVIDER_INFO *tmpbuiltins;
         size_t newsz = store->provinfosz + BUILTINS_BLOCK_SIZE;
 
         tmpbuiltins = OPENSSL_realloc(store->provinfo,
@@ -322,7 +322,7 @@ int ossl_provider_info_add_to_store(OSSL_LIB_CTX *libctx,
 int OSSL_PROVIDER_add_builtin(OSSL_LIB_CTX *libctx, const char *name,
                               OSSL_provider_init_fn *init_fn)
 {
-    struct provider_info_st entry;
+    OSSL_PROVIDER_INFO entry;
 
     if (name == NULL || init_fn == NULL) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
@@ -451,7 +451,7 @@ OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
                                  int noconfig)
 {
     struct provider_store_st *store = NULL;
-    struct provider_info_st template;
+    OSSL_PROVIDER_INFO template;
     OSSL_PROVIDER *prov = NULL;
 
     if ((store = get_provider_store(libctx)) == NULL)
@@ -467,7 +467,7 @@ OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
 
     memset(&template, 0, sizeof(template));
     if (init_function == NULL) {
-        const struct provider_info_st *p;
+        const OSSL_PROVIDER_INFO *p;
         size_t i;
 
         /* Check if this is a predefined builtin provider */
@@ -666,7 +666,7 @@ int ossl_provider_add_parameter(OSSL_PROVIDER *prov,
     return infopair_add(&prov->parameters, name, value);
 }
 
-int ossl_provider_info_add_parameter(struct provider_info_st *provinfo,
+int ossl_provider_info_add_parameter(OSSL_PROVIDER_INFO *provinfo,
                                      const char *name,
                                      const char *value)
 {
@@ -1075,7 +1075,7 @@ static int provider_activate_fallbacks(struct provider_store_st *store)
     int use_fallbacks;
     int activated_fallback_count = 0;
     int ret = 0;
-    const struct provider_info_st *p;
+    const OSSL_PROVIDER_INFO *p;
 
     if (!CRYPTO_THREAD_read_lock(store->lock))
         return 0;
