@@ -223,13 +223,11 @@ static void *file_open(void *provctx, const char *uri)
     if (strncasecmp(uri, "file:", 5) == 0) {
         const char *p = &uri[5];
 
-        if (strncmp(&uri[5], "//", 2) == 0) {
+        if (CHECK_AND_SKIP_PREFIX(p, "//")) {
             path_data_n--;           /* Invalidate using the full URI */
-            if (strncasecmp(&uri[7], "localhost/", 10) == 0) {
-                p = &uri[16];
-            } else if (uri[7] == '/') {
-                p = &uri[7];
-            } else {
+            if (strncasecmp(p, "localhost/", 10) == 0) {
+                p += sizeof("localhost") - 1;
+            } else if (*p != '/') {
                 ERR_clear_last_mark();
                 ERR_raise(ERR_LIB_PROV, PROV_R_URI_AUTHORITY_UNSUPPORTED);
                 return NULL;

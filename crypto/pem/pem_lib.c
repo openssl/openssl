@@ -484,11 +484,11 @@ int PEM_do_header(EVP_CIPHER_INFO *cipher, unsigned char *data, long *plen,
  * presumably we also parse rfc822-style headers for S/MIME, so a common
  * abstraction might well be more generally useful.
  */
+#define PROC_TYPE "Proc-Type:"
+#define ENCRYPTED "ENCRYPTED"
+#define DEK_INFO "DEK-Info:"
 int PEM_get_EVP_CIPHER_INFO(char *header, EVP_CIPHER_INFO *cipher)
 {
-    static const char ProcType[] = "Proc-Type:";
-    static const char ENCRYPTED[] = "ENCRYPTED";
-    static const char DEKInfo[] = "DEK-Info:";
     const EVP_CIPHER *enc = NULL;
     int ivlen;
     char *dekinfostart, c;
@@ -498,11 +498,10 @@ int PEM_get_EVP_CIPHER_INFO(char *header, EVP_CIPHER_INFO *cipher)
     if ((header == NULL) || (*header == '\0') || (*header == '\n'))
         return 1;
 
-    if (strncmp(header, ProcType, sizeof(ProcType)-1) != 0) {
+    if (!CHECK_AND_SKIP_PREFIX(header, PROC_TYPE)) {
         ERR_raise(ERR_LIB_PEM, PEM_R_NOT_PROC_TYPE);
         return 0;
     }
-    header += sizeof(ProcType)-1;
     header += strspn(header, " \t");
 
     if (*header++ != '4' || *header++ != ',')
@@ -510,12 +509,11 @@ int PEM_get_EVP_CIPHER_INFO(char *header, EVP_CIPHER_INFO *cipher)
     header += strspn(header, " \t");
 
     /* We expect "ENCRYPTED" followed by optional white-space + line break */
-    if (strncmp(header, ENCRYPTED, sizeof(ENCRYPTED)-1) != 0 ||
-        strspn(header+sizeof(ENCRYPTED)-1, " \t\r\n") == 0) {
+    if (!CHECK_AND_SKIP_PREFIX(header, ENCRYPTED) ||
+        strspn(header, " \t\r\n") == 0) {
         ERR_raise(ERR_LIB_PEM, PEM_R_NOT_ENCRYPTED);
         return 0;
     }
-    header += sizeof(ENCRYPTED)-1;
     header += strspn(header, " \t\r");
     if (*header++ != '\n') {
         ERR_raise(ERR_LIB_PEM, PEM_R_SHORT_HEADER);
@@ -526,11 +524,10 @@ int PEM_get_EVP_CIPHER_INFO(char *header, EVP_CIPHER_INFO *cipher)
      * https://tools.ietf.org/html/rfc1421#section-4.6.1.3
      * We expect "DEK-Info: algo[,hex-parameters]"
      */
-    if (strncmp(header, DEKInfo, sizeof(DEKInfo)-1) != 0) {
+    if (!CHECK_AND_SKIP_PREFIX(header, DEK_INFO)) {
         ERR_raise(ERR_LIB_PEM, PEM_R_NOT_DEK_INFO);
         return 0;
     }
-    header += sizeof(DEKInfo)-1;
     header += strspn(header, " \t");
 
     /*
@@ -733,12 +730,12 @@ static int sanitize_line(char *linebuf, int len, unsigned int flags, int first_c
 
 #define LINESIZE 255
 /* Note trailing spaces for begin and end. */
-static const char beginstr[] = "-----BEGIN ";
-static const char endstr[] = "-----END ";
-static const char tailstr[] = "-----\n";
-#define BEGINLEN ((int)(sizeof(beginstr) - 1))
-#define ENDLEN ((int)(sizeof(endstr) - 1))
-#define TAILLEN ((int)(sizeof(tailstr) - 1))
+#define BEGINSTR "-----BEGIN "
+#define ENDSTR "-----END "
+#define TAILSTR "-----\n"
+#define BEGINLEN ((int)(sizeof(BEGINSTR) - 1))
+#define ENDLEN ((int)(sizeof(ENDSTR) - 1))
+#define TAILLEN ((int)(sizeof(TAILSTR) - 1))
 static int get_name(BIO *bp, char **name, unsigned int flags)
 {
     char *linebuf;
@@ -769,9 +766,9 @@ static int get_name(BIO *bp, char **name, unsigned int flags)
         first_call = 0;
 
         /* Allow leading empty or non-matching lines. */
-    } while (strncmp(linebuf, beginstr, BEGINLEN) != 0
+    } while (!HAS_PREFIX(linebuf, BEGINSTR)
              || len < TAILLEN
-             || strncmp(linebuf + len - TAILLEN, tailstr, TAILLEN) != 0);
+             || !HAS_PREFIX(linebuf + len - TAILLEN, TAILSTR));
     linebuf[len - TAILLEN] = '\0';
     len = len - BEGINLEN - TAILLEN + 1;
     *name = pem_malloc(len, flags);
@@ -844,7 +841,7 @@ static int get_header_and_data(BIO *bp, BIO **header, BIO **data, char *name,
             if (memchr(linebuf, ':', len) != NULL)
                 got_header = IN_HEADER;
         }
-        if (!strncmp(linebuf, endstr, ENDLEN) || got_header == IN_HEADER)
+        if (HAS_PREFIX(linebuf, ENDSTR) || got_header == IN_HEADER)
             flags_mask &= ~PEM_FLAG_ONLY_B64;
         len = sanitize_line(linebuf, len, flags & flags_mask, 0);
 
@@ -867,11 +864,11 @@ static int get_header_and_data(BIO *bp, BIO **header, BIO **data, char *name,
         }
 
         /* Check for end of stream (which means there is no header). */
-        if (strncmp(linebuf, endstr, ENDLEN) == 0) {
-            p = linebuf + ENDLEN;
+        p = linebuf;
+        if (CHECK_AND_SKIP_PREFIX(p, ENDSTR)) {
             namelen = strlen(name);
             if (strncmp(p, name, namelen) != 0 ||
-                strncmp(p + namelen, tailstr, TAILLEN) != 0) {
+                !HAS_PREFIX(p + namelen, TAILSTR)) {
                 ERR_raise(ERR_LIB_PEM, PEM_R_BAD_END_LINE);
                 goto err;
             }

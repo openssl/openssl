@@ -138,10 +138,10 @@ static void *v2i_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method,
         goto memerr;
     for (i = 0; i < sk_CONF_VALUE_num(nval); i++) {
         val = sk_CONF_VALUE_value(nval, i);
-        if (strncmp(val->name, "permitted", 9) == 0 && val->name[9]) {
+        if (HAS_PREFIX(val->name, "permitted") && val->name[9]) {
             ptree = &ncons->permittedSubtrees;
             tval.name = val->name + 10;
-        } else if (strncmp(val->name, "excluded", 8) == 0 && val->name[8]) {
+        } else if (HAS_PREFIX(val->name, "excluded") && val->name[8]) {
             ptree = &ncons->excludedSubtrees;
             tval.name = val->name + 9;
         } else {

@@ -338,13 +338,13 @@ int ssl3_get_record(SSL *s)
                         /* Go back to start of packet, look at the five bytes
                          * that we have. */
                         p = RECORD_LAYER_get_packet(&s->rlayer);
-                        if (strncmp((char *)p, "GET ", 4) == 0 ||
-                            strncmp((char *)p, "POST ", 5) == 0 ||
-                            strncmp((char *)p, "HEAD ", 5) == 0 ||
-                            strncmp((char *)p, "PUT ", 4) == 0) {
+                        if (HAS_PREFIX((char *)p, "GET ") ||
+                            HAS_PREFIX((char *)p, "POST ") ||
+                            HAS_PREFIX((char *)p, "HEAD ") ||
+                            HAS_PREFIX((char *)p, "PUT ")) {
                             SSLfatal(s, SSL_AD_NO_ALERT, SSL_R_HTTP_REQUEST);
                             return -1;
-                        } else if (strncmp((char *)p, "CONNE", 5) == 0) {
+                        } else if (HAS_PREFIX((char *)p, "CONNE")) {
                             SSLfatal(s, SSL_AD_NO_ALERT,
                                      SSL_R_HTTPS_PROXY_REQUEST);
                             return -1;

@@ -1216,10 +1216,10 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
          */
         if (rule == CIPHER_SPECIAL) { /* special command */
             ok = 0;
-            if ((buflen == 8) && strncmp(buf, "STRENGTH", 8) == 0) {
+            if ((buflen == 8) && HAS_PREFIX(buf, "STRENGTH")) {
                 ok = ssl_cipher_strength_sort(head_p, tail_p);
-            } else if (buflen == 10 && strncmp(buf, "SECLEVEL=", 9) == 0) {
-                int level = buf[9] - '0';
+            } else if (buflen == 10 && CHECK_AND_SKIP_PREFIX(buf, "SECLEVEL=")) {
+                int level = *buf - '0';
                 if (level < 0 || level > 5) {
                     ERR_raise(ERR_LIB_SSL, SSL_R_INVALID_COMMAND);
                 } else {
@@ -1259,14 +1259,14 @@ static int check_suiteb_cipher_list(const SSL_METHOD *meth, CERT *c,
                                     const char **prule_str)
 {
     unsigned int suiteb_flags = 0, suiteb_comb2 = 0;
-    if (strncmp(*prule_str, "SUITEB128ONLY", 13) == 0) {
+    if (HAS_PREFIX(*prule_str, "SUITEB128ONLY")) {
         suiteb_flags = SSL_CERT_FLAG_SUITEB_128_LOS_ONLY;
-    } else if (strncmp(*prule_str, "SUITEB128C2", 11) == 0) {
+    } else if (HAS_PREFIX(*prule_str, "SUITEB128C2")) {
         suiteb_comb2 = 1;
         suiteb_flags = SSL_CERT_FLAG_SUITEB_128_LOS;
-    } else if (strncmp(*prule_str, "SUITEB128", 9) == 0) {
+    } else if (HAS_PREFIX(*prule_str, "SUITEB128")) {
         suiteb_flags = SSL_CERT_FLAG_SUITEB_128_LOS;
-    } else if (strncmp(*prule_str, "SUITEB192", 9) == 0) {
+    } else if (HAS_PREFIX(*prule_str, "SUITEB192")) {
         suiteb_flags = SSL_CERT_FLAG_SUITEB_192_LOS;
     }
 
@@ -1601,7 +1601,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(SSL_CTX *ctx,
      */
     ok = 1;
     rule_p = rule_str;
-    if (strncmp(rule_str, "DEFAULT", 7) == 0) {
+    if (HAS_PREFIX(rule_str, "DEFAULT")) {
         ok = ssl_cipher_process_rulestr(OSSL_default_cipher_list(),
                                         &head, &tail, ca_list, c);
         rule_p += 7;
