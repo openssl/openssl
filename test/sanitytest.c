@@ -96,7 +96,7 @@ static int test_sanity_range(void)
 
     /* We want our long longs to be at least 64 bits */
     if (!TEST_size_t_ge(sizeof(long long int), 8)
-            || !!TEST_size_t_ge(sizeof(unsigned long long int), 8))
+            || !TEST_size_t_ge(sizeof(unsigned long long int), 8))
         return 0;
 
     /*
