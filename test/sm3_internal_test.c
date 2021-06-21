@@ -59,15 +59,15 @@ static int test_sm3(void)
     SM3_CTX ctx1, ctx2;
     unsigned char md1[SM3_DIGEST_LENGTH], md2[SM3_DIGEST_LENGTH];
 
-    if (!TEST_true(sm3_init(&ctx1))
-            || !TEST_true(sm3_update(&ctx1, input1, sizeof(input1)))
-            || !TEST_true(sm3_final(md1, &ctx1))
+    if (!TEST_true(ossl_sm3_init(&ctx1))
+            || !TEST_true(ossl_sm3_update(&ctx1, input1, sizeof(input1)))
+            || !TEST_true(ossl_sm3_final(md1, &ctx1))
             || !TEST_mem_eq(md1, SM3_DIGEST_LENGTH, expected1, SM3_DIGEST_LENGTH))
         return 0;
 
-    if (!TEST_true(sm3_init(&ctx2))
-            || !TEST_true(sm3_update(&ctx2, input2, sizeof(input2)))
-            || !TEST_true(sm3_final(md2, &ctx2))
+    if (!TEST_true(ossl_sm3_init(&ctx2))
+            || !TEST_true(ossl_sm3_update(&ctx2, input2, sizeof(input2)))
+            || !TEST_true(ossl_sm3_final(md2, &ctx2))
             || !TEST_mem_eq(md2, SM3_DIGEST_LENGTH, expected2, SM3_DIGEST_LENGTH))
         return 0;
 
