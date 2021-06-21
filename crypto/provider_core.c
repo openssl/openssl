@@ -498,7 +498,6 @@ OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
         return NULL;
 
     prov->libctx = libctx;
-    prov->store = store;
 #ifndef FIPS_MODULE
     prov->error_lib = ERR_get_next_error_library();
 #endif
@@ -530,6 +529,7 @@ int ossl_provider_add_to_store(OSSL_PROVIDER *prov, int retain_fallbacks)
         ossl_provider_free(prov);
         ret = 0;
     }
+    prov->store = store;
     if (!retain_fallbacks)
         store->use_fallbacks = 0;
     CRYPTO_THREAD_unlock(store->lock);
@@ -1100,7 +1100,6 @@ static int provider_activate_fallbacks(struct provider_store_st *store)
         if (prov == NULL)
             goto err;
         prov->libctx = store->libctx;
-        prov->store = store;
 #ifndef FIPS_MODULE
         prov->error_lib = ERR_get_next_error_library();
 #endif
@@ -1111,8 +1110,12 @@ static int provider_activate_fallbacks(struct provider_store_st *store)
          * we try to avoid calling a user callback while holding a lock.
          * However, fallbacks are never third party providers so we accept this.
          */
-        if (provider_activate(prov, 0, 0) < 0
-                || sk_OSSL_PROVIDER_push(store->providers, prov) == 0) {
+        if (provider_activate(prov, 0, 0) < 0) {
+            ossl_provider_free(prov);
+            goto err;
+        }
+        prov->store = store;
+        if (sk_OSSL_PROVIDER_push(store->providers, prov) == 0) {
             ossl_provider_free(prov);
             goto err;
         }
