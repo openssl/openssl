@@ -55,9 +55,6 @@ struct ossl_provider_st {
     unsigned int flag_initialized:1;
     unsigned int flag_activated:1;
     unsigned int flag_fallback:1; /* Can be used as fallback */
-#ifndef FIPS_MODULE
-    unsigned int flag_couldbechild:1;
-#endif
 
     /* Getting and setting the flags require synchronization */
     CRYPTO_RWLOCK *flag_lock;
@@ -407,9 +404,6 @@ static OSSL_PROVIDER *provider_new(const char *name,
 
     prov->refcnt = 1; /* 1 One reference to be returned */
     prov->init_function = init_function;
-#ifndef FIPS_MODULE
-    prov->flag_couldbechild = 1;
-#endif
 
     return prov;
 }
@@ -796,9 +790,6 @@ static int provider_init(OSSL_PROVIDER *prov, int flag_lock)
     }
     prov->provctx = tmp_provctx;
     prov->dispatch = provider_dispatch;
-#ifndef FIPS_MODULE
-    prov->flag_couldbechild = 0;
-#endif
 
     for (; provider_dispatch->function_id != 0; provider_dispatch++) {
         switch (provider_dispatch->function_id) {
@@ -1478,9 +1469,9 @@ int ossl_provider_set_child(OSSL_PROVIDER *prov, const OSSL_CORE_HANDLE *handle)
     return 1;
 }
 
-int ossl_provider_convert_to_child(OSSL_PROVIDER *prov,
-                                   const OSSL_CORE_HANDLE *handle,
-                                   OSSL_provider_init_fn *init_function)
+int ossl_provider_activate_child(OSSL_PROVIDER *prov,
+                                 const OSSL_CORE_HANDLE *handle,
+                                 OSSL_provider_init_fn *init_function)
 {
     int flush = 0;
 
@@ -1491,14 +1482,9 @@ int ossl_provider_convert_to_child(OSSL_PROVIDER *prov,
         return 0;
     }
     /*
-     * The provider could be in one of three states: (1) Already a child,
-     * (2) Not a child (but eligible to be one), or (3) Not a child (not
-     * eligible to be one).
+     * The provider could be in one of two states: (1) Already a child,
+     * (2) Not a child (not eligible to be one).
      */
-    if (prov->flag_couldbechild) {
-        ossl_provider_set_child(prov, handle);
-        prov->init_function = init_function;
-    }
     if (prov->ischild && provider_activate(prov, 0, 0)) {
         flush = 1;
         prov->store->use_fallbacks = 0;
@@ -1511,9 +1497,9 @@ int ossl_provider_convert_to_child(OSSL_PROVIDER *prov,
         provider_flush_store_cache(prov);
 
     /*
-     * We report success whether or not the provider was eligible for conversion
-     * to a child. If its not elgibile then it has already been loaded as a non
-     * child provider and we should keep it like that.
+     * We report success whether or not the provider was a child. If its not
+     * a child then it has been explicitly loaded as a non child provider and
+     * we should keep it like that.
      */
     return 1;
 }

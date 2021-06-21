@@ -44,9 +44,9 @@ int ossl_provider_add_parameter(OSSL_PROVIDER *prov, const char *name,
 
 int ossl_provider_is_child(const OSSL_PROVIDER *prov);
 int ossl_provider_set_child(OSSL_PROVIDER *prov, const OSSL_CORE_HANDLE *handle);
-int ossl_provider_convert_to_child(OSSL_PROVIDER *prov,
-                                   const OSSL_CORE_HANDLE *handle,
-                                   OSSL_provider_init_fn *init_function);
+int ossl_provider_activate_child(OSSL_PROVIDER *prov,
+                                 const OSSL_CORE_HANDLE *handle,
+                                 OSSL_provider_init_fn *init_function);
 const OSSL_CORE_HANDLE *ossl_provider_get_parent(OSSL_PROVIDER *prov);
 int ossl_provider_up_ref_parent(OSSL_PROVIDER *prov, int activate);
 int ossl_provider_free_parent(OSSL_PROVIDER *prov, int deactivate);
