@@ -26,6 +26,7 @@ typedef struct
     OSSL_CMP_MSG *certReq;     /* ir/cr/p10cr/kur remembered while polling */
     int certReqId;             /* id of last ir/cr/kur, used for polling */
     int pollCount;             /* number of polls before actual cert response */
+    int curr_pollCount;        /* number of polls so far for current request */
     int checkAfterTime;        /* time the client should wait between polling */
 } mock_srv_ctx;
 
@@ -195,13 +196,22 @@ static OSSL_CMP_PKISI *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
     *chainOut = NULL;
     *caPubs = NULL;
     ctx->certReqId = certReqId;
-    if (ctx->pollCount > 0) {
-        ctx->pollCount--;
-        OSSL_CMP_MSG_free(ctx->certReq);
+
+    if (ctx->pollCount > 0 && ctx->curr_pollCount == 0) {
+        /* start polling */
+        if (ctx->certReq != NULL) {
+            /* already in polling mode */
+            ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
+            return NULL;
+        }
         if ((ctx->certReq = OSSL_CMP_MSG_dup(cert_req)) == NULL)
             return NULL;
         return OSSL_CMP_STATUSINFO_new(OSSL_CMP_PKISTATUS_waiting, 0, NULL);
     }
+    if (ctx->curr_pollCount >= ctx->pollCount)
+        /* give final response after polling */
+        ctx->curr_pollCount = 0;
+
     if (ctx->certOut != NULL
             && (*certOut = X509_dup(ctx->certOut)) == NULL)
         goto err;
@@ -369,18 +379,24 @@ static int process_pollReq(OSSL_CMP_SRV_CTX *srv_ctx,
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return 0;
     }
-    if (ctx->sendError || ctx->certReq == NULL) {
+    if (ctx->sendError) {
         *certReq = NULL;
         ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROCESSING_MESSAGE);
         return 0;
     }
+    if (ctx->certReq == NULL) {
+        /* not currently in polling mode */
+        *certReq = NULL;
+        ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
+        return 0;
+    }
 
-    if (ctx->pollCount == 0) {
+    if (++ctx->curr_pollCount >= ctx->pollCount) {
+        /* end polling */
         *certReq = ctx->certReq;
         ctx->certReq = NULL;
         *check_after = 0;
     } else {
-        ctx->pollCount--;
         *certReq = NULL;
         *check_after = ctx->checkAfterTime;
     }
