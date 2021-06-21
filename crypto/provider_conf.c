@@ -62,7 +62,7 @@ static const char *skip_dot(const char *name)
 }
 
 static int provider_conf_params(OSSL_PROVIDER *prov,
-                                struct provider_info_st *provinfo,
+                                OSSL_PROVIDER_INFO *provinfo,
                                 const char *name, const char *value,
                                 const CONF *cnf)
 {
@@ -187,7 +187,7 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
         if (!ok)
             ossl_provider_free(prov);
     } else {
-        struct provider_info_st entry;
+        OSSL_PROVIDER_INFO entry;
 
         memset(&entry, 0, sizeof(entry));
         ok = 1;
