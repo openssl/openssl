@@ -431,7 +431,7 @@ int ossl_provider_up_ref(OSSL_PROVIDER *prov)
 static int provider_up_ref_intern(OSSL_PROVIDER *prov, int activate)
 {
     if (activate)
-        return ossl_provider_activate(prov, 1);
+        return ossl_provider_activate(prov, 1, 0);
 
     return ossl_provider_up_ref(prov);
 }
@@ -1027,12 +1027,20 @@ static int provider_flush_store_cache(const OSSL_PROVIDER *prov)
     return 1;
 }
 
-int ossl_provider_activate(OSSL_PROVIDER *prov, int upcalls)
+int ossl_provider_activate(OSSL_PROVIDER *prov, int upcalls, int aschild)
 {
     int count;
 
     if (prov == NULL)
         return 0;
+#ifndef FIPS_MODULE
+    /*
+     * If aschild is true, then we only actually do the activation if the
+     * provider is a child. If its not, this is still success.
+     */
+    if (aschild && !prov->ischild)
+        return 1;
+#endif
     if ((count = provider_activate(prov, 1, upcalls)) > 0)
         return count == 1 ? provider_flush_store_cache(prov) : 1;
 
@@ -1459,39 +1467,6 @@ int ossl_provider_set_child(OSSL_PROVIDER *prov, const OSSL_CORE_HANDLE *handle)
     prov->handle = handle;
     prov->ischild = 1;
 
-    return 1;
-}
-
-int ossl_provider_activate_child(OSSL_PROVIDER *prov,
-                                 const OSSL_CORE_HANDLE *handle,
-                                 OSSL_provider_init_fn *init_function)
-{
-    int flush = 0;
-
-    if (!CRYPTO_THREAD_write_lock(prov->store->lock))
-        return 0;
-    if (!CRYPTO_THREAD_write_lock(prov->flag_lock)) {
-        CRYPTO_THREAD_unlock(prov->store->lock);
-        return 0;
-    }
-    /*
-     * The provider could be in one of two states: (1) Already a child,
-     * (2) Not a child (not eligible to be one).
-     */
-    if (prov->ischild && provider_activate(prov, 0, 0))
-        flush = 1;
-
-    CRYPTO_THREAD_unlock(prov->flag_lock);
-    CRYPTO_THREAD_unlock(prov->store->lock);
-
-    if (flush)
-        provider_flush_store_cache(prov);
-
-    /*
-     * We report success whether or not the provider was a child. If its not
-     * a child then it has been explicitly loaded as a non child provider and
-     * we should keep it like that.
-     */
     return 1;
 }
 

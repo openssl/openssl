@@ -26,7 +26,7 @@ OSSL_PROVIDER *OSSL_PROVIDER_try_load(OSSL_LIB_CTX *libctx, const char *name,
         isnew = 1;
     }
 
-    if (!ossl_provider_activate(prov, 1)) {
+    if (!ossl_provider_activate(prov, 1, 0)) {
         ossl_provider_free(prov);
         return NULL;
     }
