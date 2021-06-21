@@ -3364,6 +3364,10 @@ STACK_OF(X509) *X509_build_chain(X509 *target, STACK_OF(X509) *certs,
     return result;
 }
 
+/*
+ * note that there's a corresponding minbits_table in ssl/ssl_cert.c
+ * in ssl_get_security_level_bits that's used for selection of DH parameters
+ */
 static const int minbits_table[] = { 80, 112, 128, 192, 256 };
 static const int NUM_AUTH_LEVELS = OSSL_NELEM(minbits_table);
 

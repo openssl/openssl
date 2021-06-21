@@ -963,6 +963,11 @@ int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain, int ref)
 int ssl_get_security_level_bits(const SSL *s, const SSL_CTX *ctx, int *levelp)
 {
     int level;
+    /*
+     * note that there's a corresponding minbits_table
+     * in crypto/x509/x509_vfy.c that's used for checking the security level
+     * of RSA and DSA keys
+     */
     static const int minbits_table[5 + 1] = { 0, 80, 112, 128, 192, 256 };
 
     if (ctx != NULL)
