@@ -204,9 +204,17 @@ static int dummy_provider_init(const OSSL_CORE_HANDLE *handle,
                                void **provctx)
 {
     OSSL_LIB_CTX *libctx = OSSL_LIB_CTX_new_child(handle, in);
+    unsigned char buf[32];
 
     *provctx = (void *)libctx;
     *out = dummy_dispatch_table;
+
+    /*
+     * Do some work using the child libctx, to make sure this is possible from
+     * inside the init function.
+     */
+    if (!RAND_bytes_ex(libctx, buf, sizeof(buf), 0))
+        return 0;
 
     return 1;
 }
@@ -222,6 +230,7 @@ static int fetch_test(int tst)
 {
     OSSL_LIB_CTX *libctx = OSSL_LIB_CTX_new();
     OSSL_PROVIDER *dummyprov = NULL;
+    OSSL_PROVIDER *nullprov = NULL;
     OSSL_DECODER *decoder = NULL;
     OSSL_ENCODER *encoder = NULL;
     OSSL_STORE_LOADER *loader = NULL;
@@ -233,6 +242,7 @@ static int fetch_test(int tst)
 
     if (!TEST_true(OSSL_PROVIDER_add_builtin(libctx, "dummy-prov",
                                              dummy_provider_init))
+            || !TEST_ptr(nullprov = OSSL_PROVIDER_load(libctx, "default"))
             || !TEST_ptr(dummyprov = OSSL_PROVIDER_load(libctx, "dummy-prov")))
         goto err;
 
@@ -267,6 +277,7 @@ static int fetch_test(int tst)
     OSSL_ENCODER_free(encoder);
     OSSL_STORE_LOADER_free(loader);
     OSSL_PROVIDER_unload(dummyprov);
+    OSSL_PROVIDER_unload(nullprov);
     OSSL_LIB_CTX_free(libctx);
     return testresult;
 }
