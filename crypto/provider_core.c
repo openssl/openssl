@@ -1550,13 +1550,7 @@ static int ossl_provider_register_child_cb(const OSSL_CORE_HANDLE *handle,
     max = sk_OSSL_PROVIDER_num(store->providers);
     for (i = 0; i < max; i++) {
         prov = sk_OSSL_PROVIDER_value(store->providers, i);
-        /*
-         * We require register_child_cb to be called during a provider init
-         * function. The currently initing provider will never be activated yet
-         * and we we should not attempt to aquire the flag_lock for it.
-         */
-        if (prov == thisprov)
-            continue;
+
         if (!CRYPTO_THREAD_read_lock(prov->flag_lock))
             break;
         /*
