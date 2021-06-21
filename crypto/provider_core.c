@@ -511,6 +511,31 @@ OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
     return prov;
 }
 
+/* Assumes that the store lock is held */
+static int create_provider_children(OSSL_PROVIDER *prov)
+{
+    int ret = 1;
+    struct provider_store_st *store = prov->store;
+#ifndef FIPS_MODULE
+    OSSL_PROVIDER_CHILD_CB *child_cb;
+    int i, max;
+
+    max = sk_OSSL_PROVIDER_CHILD_CB_num(store->child_cbs);
+    for (i = 0; i < max; i++) {
+        /*
+            * This is newly activated (activatecnt == 1), so we need to
+            * create child providers as necessary.
+            */
+        child_cb = sk_OSSL_PROVIDER_CHILD_CB_value(store->child_cbs,
+                                                    i);
+        ret &= child_cb->create_cb((OSSL_CORE_HANDLE *)prov,
+                                    child_cb->cbdata);
+    }
+#endif
+
+    return ret;
+}
+
 int ossl_provider_add_to_store(OSSL_PROVIDER *prov, int retain_fallbacks)
 {
     struct provider_store_st *store = NULL;
@@ -532,6 +557,9 @@ int ossl_provider_add_to_store(OSSL_PROVIDER *prov, int retain_fallbacks)
     prov->store = store;
     if (!retain_fallbacks)
         store->use_fallbacks = 0;
+    if (!create_provider_children(prov)) {
+        ret = 0;
+    }
     CRYPTO_THREAD_unlock(store->lock);
 
     return ret;
@@ -688,7 +716,7 @@ int OSSL_PROVIDER_set_default_search_path(OSSL_LIB_CTX *libctx,
  * locking.  Direct callers must remember to set the store flags when
  * appropriate.
  */
-static int provider_init(OSSL_PROVIDER *prov, int flag_lock)
+static int provider_init(OSSL_PROVIDER *prov)
 {
     const OSSL_DISPATCH *provider_dispatch = NULL;
     void *tmp_provctx = NULL;    /* safety measure */
@@ -699,16 +727,8 @@ static int provider_init(OSSL_PROVIDER *prov, int flag_lock)
 #endif
     int ok = 0;
 
-    /*
-     * The flag lock is used to lock init, not only because the flag is
-     * checked here and set at the end, but also because this function
-     * modifies a number of things in the provider structure that this
-     * function needs to perform under lock anyway.
-     */
-    if (flag_lock && !CRYPTO_THREAD_write_lock(prov->flag_lock))
-        goto end;
-    if (prov->flag_initialized) {
-        ok = 1;
+    if (!ossl_assert(!prov->flag_initialized)) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         goto end;
     }
 
@@ -885,8 +905,6 @@ static int provider_init(OSSL_PROVIDER *prov, int flag_lock)
     ok = 1;
 
  end:
-    if (flag_lock)
-        CRYPTO_THREAD_unlock(prov->flag_lock);
     return ok;
 }
 
@@ -952,59 +970,47 @@ static int provider_deactivate(OSSL_PROVIDER *prov)
 static int provider_activate(OSSL_PROVIDER *prov, int lock, int upcalls)
 {
     int count = -1;
-
-    if (provider_init(prov, lock)) {
+    struct provider_store_st *store;
         int ret = 1;
-        struct provider_store_st *store;
 
-        store = get_provider_store(prov->libctx);
-        if (store == NULL)
-            return -1;
-
-        if (lock && !CRYPTO_THREAD_read_lock(store->lock))
-            return -1;
-
-        if (lock && !CRYPTO_THREAD_write_lock(prov->flag_lock)) {
-            CRYPTO_THREAD_unlock(store->lock);
-            return -1;
-        }
-
-#ifndef FIPS_MODULE
-        if (prov->ischild && upcalls)
-            ret = ossl_provider_up_ref_parent(prov, 1);
-#endif
-
-        if (ret) {
-            count = ++prov->activatecnt;
-            prov->flag_activated = 1;
-
-#ifndef FIPS_MODULE
-            if (prov->activatecnt == 1) {
-                OSSL_PROVIDER_CHILD_CB *child_cb;
-                int i, max;
-
-                max = sk_OSSL_PROVIDER_CHILD_CB_num(store->child_cbs);
-                for (i = 0; i < max; i++) {
-                    /*
-                     * This is newly activated (activatecnt == 1), so we need to
-                     * create child providers as necessary.
-                     */
-                    child_cb = sk_OSSL_PROVIDER_CHILD_CB_value(store->child_cbs,
-                                                               i);
-                    ret &= child_cb->create_cb((OSSL_CORE_HANDLE *)prov,
-                                               child_cb->cbdata);
-                }
-            }
-#endif
-        }
-
-        if (lock) {
-            CRYPTO_THREAD_unlock(prov->flag_lock);
-            CRYPTO_THREAD_unlock(store->lock);
-        }
-        if (!ret)
+    store = prov->store;
+    /*
+    * If the provider hasn't been added to the store, then we don't need
+    * any locks because we've not shared it without other threads.
+    */
+    if (store == NULL) {
+        lock = 0;
+        if (!provider_init(prov))
             return -1;
     }
+
+    if (lock && !CRYPTO_THREAD_read_lock(store->lock))
+        return -1;
+
+    if (lock && !CRYPTO_THREAD_write_lock(prov->flag_lock)) {
+        CRYPTO_THREAD_unlock(store->lock);
+        return -1;
+    }
+
+#ifndef FIPS_MODULE
+    if (prov->ischild && upcalls)
+        ret = ossl_provider_up_ref_parent(prov, 1);
+#endif
+
+    if (ret) {
+        count = ++prov->activatecnt;
+        prov->flag_activated = 1;
+
+        if (prov->activatecnt == 1 && store != NULL)
+            ret = create_provider_children(prov);
+    }
+
+    if (lock) {
+        CRYPTO_THREAD_unlock(prov->flag_lock);
+        CRYPTO_THREAD_unlock(store->lock);
+    }
+    if (!ret)
+        return -1;
 
     return count;
 }
