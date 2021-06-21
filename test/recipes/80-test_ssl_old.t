@@ -561,7 +561,7 @@ sub testssl {
 	}
 
         SKIP: {
-            skip "skipping auto DH tests", 1
+            skip "skipping auto DH PSK tests", 1
                 if ($no_dh || $no_psk);
 
             ok(run(test(['ssl_old_test', '-psk', '0102030405', '-cipher', '@SECLEVEL=2:DHE-PSK-AES128-CCM'])),
