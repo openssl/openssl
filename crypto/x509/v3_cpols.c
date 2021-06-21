@@ -261,17 +261,17 @@ static int displaytext_str2tag(const char *tagstr, unsigned int *tag_len)
     if (len == -1)
         return V_ASN1_VISIBLESTRING;
     *tag_len = len;
-    if (len == sizeof("UTF8") - 1 && strncmp(tagstr, "UTF8", len) == 0)
+    if (len == sizeof("UTF8") - 1 && HAS_PREFIX(tagstr, "UTF8"))
         return V_ASN1_UTF8STRING;
-    if (len == sizeof("UTF8String") - 1 && strncmp(tagstr, "UTF8String", len) == 0)
+    if (len == sizeof("UTF8String") - 1 && HAS_PREFIX(tagstr, "UTF8String"))
         return V_ASN1_UTF8STRING;
-    if (len == sizeof("BMP") - 1 && strncmp(tagstr, "BMP", len) == 0)
+    if (len == sizeof("BMP") - 1 && HAS_PREFIX(tagstr, "BMP"))
         return V_ASN1_BMPSTRING;
-    if (len == sizeof("BMPSTRING") - 1 && strncmp(tagstr, "BMPSTRING", len) == 0)
+    if (len == sizeof("BMPSTRING") - 1 && HAS_PREFIX(tagstr, "BMPSTRING"))
         return V_ASN1_BMPSTRING;
-    if (len == sizeof("VISIBLE") - 1 && strncmp(tagstr, "VISIBLE", len) == 0)
+    if (len == sizeof("VISIBLE") - 1 && HAS_PREFIX(tagstr, "VISIBLE"))
         return V_ASN1_VISIBLESTRING;
-    if (len == sizeof("VISIBLESTRING") - 1 && strncmp(tagstr, "VISIBLESTRING", len) == 0)
+    if (len == sizeof("VISIBLESTRING") - 1 && HAS_PREFIX(tagstr, "VISIBLESTRING"))
         return V_ASN1_VISIBLESTRING;
     *tag_len = 0;
     return V_ASN1_VISIBLESTRING;

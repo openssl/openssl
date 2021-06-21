@@ -200,9 +200,8 @@ static int v3_check_critical(const char **value)
 {
     const char *p = *value;
 
-    if ((strlen(p) < 9) || strncmp(p, "critical,", 9))
+    if (!CHECK_AND_SKIP_PREFIX(p, "critical,"))
         return 0;
-    p += 9;
     while (ossl_isspace(*p))
         p++;
     *value = p;
@@ -215,11 +214,9 @@ static int v3_check_generic(const char **value)
     int gen_type = 0;
     const char *p = *value;
 
-    if ((strlen(p) >= 4) && strncmp(p, "DER:", 4) == 0) {
-        p += 4;
+    if (CHECK_AND_SKIP_PREFIX(p, "DER:")) {
         gen_type = 1;
-    } else if ((strlen(p) >= 5) && strncmp(p, "ASN1:", 5) == 0) {
-        p += 5;
+    } else if (CHECK_AND_SKIP_PREFIX(p, "ASN1:")) {
         gen_type = 2;
     } else
         return 0;

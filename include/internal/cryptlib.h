@@ -45,6 +45,12 @@ __owur static ossl_inline int ossl_assert_int(int expr, const char *exprstr,
 
 #endif
 
+/* Check if pre, which must be a string literal, is a prefix of str */
+# define HAS_PREFIX(str, pre) (strncmp(str, pre "", sizeof(pre) - 1) == 0)
+/* As before, and if check succeeds, advance the str ptr past the prefix */
+# define CHECK_AND_SKIP_PREFIX(str, pre) \
+    (HAS_PREFIX(str, pre) ? ((str) += sizeof(pre) - 1, 1) : 0)
+
 /*
  * Use this inside a union with the field that needs to be aligned to a
  * reasonable boundary for the platform.  The most pessimistic alignment

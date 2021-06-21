@@ -17,7 +17,6 @@
 # define _POSIX_C_SOURCE 2
 #endif
 
-#include <string.h>
 #include <ctype.h>
 #include "http_server.h"
 #include "internal/sockets.h"
@@ -37,6 +36,7 @@ static int verbosity = LOG_INFO;
 #define HTTP_VERSION_PATT "1." /* allow 1.x */
 #define HTTP_PREFIX_VERSION HTTP_PREFIX""HTTP_VERSION_PATT
 #define HTTP_1_0 HTTP_PREFIX_VERSION"0" /* "HTTP/1.0" */
+#define HTTP_VERSION_STR " "HTTP_PREFIX_VERSION
 
 #ifdef HTTP_DAEMON
 
@@ -336,15 +336,12 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
         *end = '\0';
     log_message(prog, LOG_INFO, "Received request, 1st line: %s", reqbuf);
 
-    meth = reqbuf;
-    url = meth + 3;
-    if ((accept_get && strncmp(meth, "GET ", 4) == 0)
-            || (url++, strncmp(meth, "POST ", 5) == 0)) {
-        static const char http_version_str[] = " "HTTP_PREFIX_VERSION;
-        static const size_t http_version_str_len = sizeof(http_version_str) - 1;
+    url = meth = reqbuf;
+    if ((accept_get && CHECK_AND_SKIP_PREFIX(url, "GET "))
+            || CHECK_AND_SKIP_PREFIX(url, "POST ")) {
 
         /* Expecting (GET|POST) {sp} /URL {sp} HTTP/1.x */
-        *(url++) = '\0';
+        url[-1] = '\0';
         while (*url == ' ')
             url++;
         if (*url != '/') {
@@ -360,7 +357,7 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
         for (end = url; *end != '\0'; end++)
             if (*end == ' ')
                 break;
-        if (strncmp(end, http_version_str, http_version_str_len) != 0) {
+        if (!HAS_PREFIX(end, HTTP_VERSION_STR)) {
             log_message(prog, LOG_WARNING,
                         "Invalid %s -- bad HTTP/version string: %s",
                         meth, end + 1);
@@ -370,7 +367,7 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
         *end = '\0';
         /* above HTTP 1.0, connection persistence is the default */
         if (found_keep_alive != NULL)
-            *found_keep_alive = end[http_version_str_len] > '0';
+            *found_keep_alive = end[sizeof(HTTP_VERSION_STR) - 1] > '0';
 
         /*-
          * Skip "GET / HTTP..." requests often used by load-balancers.

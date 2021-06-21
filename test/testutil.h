@@ -11,6 +11,7 @@
 # define OSSL_TESTUTIL_H
 
 # include <stdarg.h>
+# include "internal/cryptlib.h" /* for HAS_PREFIX */
 
 # include <openssl/provider.h>
 # include <openssl/err.h>
