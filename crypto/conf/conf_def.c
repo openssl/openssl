@@ -389,8 +389,8 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                 psection = section;
             }
             p = eat_ws(conf, end);
-            if (strncmp(pname, ".pragma", 7) == 0
-                && (p != pname + 7 || *p == '=')) {
+            if (CHECK_AND_SKIP_PREFIX(pname, ".pragma")
+                && (p != pname || *p == '=')) {
                 char *pval;
 
                 if (*p == '=') {
@@ -435,8 +435,8 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                  * We *ignore* any unknown pragma.
                  */
                 continue;
-            } else if (strncmp(pname, ".include", 8) == 0
-                && (p != pname + 8 || *p == '=')) {
+            } else if (CHECK_AND_SKIP_PREFIX(pname, ".include")
+                && (p != pname || *p == '=')) {
                 char *include = NULL;
                 BIO *next;
                 const char *include_dir = ossl_safe_getenv("OPENSSL_CONF_INCLUDE");
