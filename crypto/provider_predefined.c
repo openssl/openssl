@@ -17,7 +17,7 @@ OSSL_provider_init_fn ossl_fips_intern_provider_init;
 #ifdef STATIC_LEGACY
 OSSL_provider_init_fn ossl_legacy_provider_init;
 #endif
-const struct provider_info_st ossl_predefined_providers[] = {
+const OSSL_PROVIDER_INFO ossl_predefined_providers[] = {
 #ifdef FIPS_MODULE
     { "fips", NULL, ossl_fips_intern_provider_init, NULL, 1 },
 #else
