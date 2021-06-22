@@ -134,7 +134,7 @@ static int provider_create_child_cb(const OSSL_CORE_HANDLE *prov, void *cbdata)
 
         /*
          * The provider already exists. It could be a previously created child,
-         * or it could have been explicitly loaded. If explicitly loaded it we
+         * or it could have been explicitly loaded. If explicitly loaded we
          * ignore it - i.e. we don't start treating it like a child.
          */
         if (!ossl_provider_activate(cprov, 0, 1))
