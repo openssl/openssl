@@ -500,13 +500,11 @@ static int create_provider_children(OSSL_PROVIDER *prov)
     max = sk_OSSL_PROVIDER_CHILD_CB_num(store->child_cbs);
     for (i = 0; i < max; i++) {
         /*
-            * This is newly activated (activatecnt == 1), so we need to
-            * create child providers as necessary.
-            */
-        child_cb = sk_OSSL_PROVIDER_CHILD_CB_value(store->child_cbs,
-                                                    i);
-        ret &= child_cb->create_cb((OSSL_CORE_HANDLE *)prov,
-                                    child_cb->cbdata);
+         * This is newly activated (activatecnt == 1), so we need to
+         * create child providers as necessary.
+         */
+        child_cb = sk_OSSL_PROVIDER_CHILD_CB_value(store->child_cbs, i);
+        ret &= child_cb->create_cb((OSSL_CORE_HANDLE *)prov, child_cb->cbdata);
     }
 #endif
 
@@ -978,12 +976,12 @@ static int provider_activate(OSSL_PROVIDER *prov, int lock, int upcalls)
 {
     int count = -1;
     struct provider_store_st *store;
-        int ret = 1;
+    int ret = 1;
 
     store = prov->store;
     /*
     * If the provider hasn't been added to the store, then we don't need
-    * any locks because we've not shared it without other threads.
+    * any locks because we've not shared it with other threads.
     */
     if (store == NULL) {
         lock = 0;
