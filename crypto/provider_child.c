@@ -127,9 +127,9 @@ static int provider_create_child_cb(const OSSL_CORE_HANDLE *prov, void *cbdata)
 
     if ((cprov = ossl_provider_find(ctx, provname, 1)) != NULL) {
         /*
-        * We free the newly created ref. We rely on the provider sticking around
-        * in the provider store.
-        */
+         * We free the newly created ref. We rely on the provider sticking around
+         * in the provider store.
+         */
         ossl_provider_free(cprov);
 
         /*
@@ -152,17 +152,11 @@ static int provider_create_child_cb(const OSSL_CORE_HANDLE *prov, void *cbdata)
             goto err;
 
         if (!ossl_provider_set_child(cprov, prov)
-            || !ossl_provider_add_to_store(cprov, 0)) {
+            || !ossl_provider_add_to_store(cprov, NULL, 0)) {
             ossl_provider_deactivate(cprov);
             ossl_provider_free(cprov);
             goto err;
         }
-
-        /*
-        * We free the newly created ref. We rely on the provider sticking around
-        * in the provider store.
-        */
-        ossl_provider_free(cprov);
     }
 
     ret = 1;

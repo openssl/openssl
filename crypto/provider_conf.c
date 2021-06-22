@@ -113,7 +113,7 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
     int i;
     STACK_OF(CONF_VALUE) *ecmds;
     int soft = 0;
-    OSSL_PROVIDER *prov = NULL;
+    OSSL_PROVIDER *prov = NULL, *actual = NULL;
     const char *path = NULL;
     long activate = 0;
     int ok = 0;
@@ -173,13 +173,13 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
         if (ok) {
             if (!ossl_provider_activate(prov, 1, 0)) {
                 ok = 0;
-            } else if (!ossl_provider_add_to_store(prov, 0)) {
+            } else if (!ossl_provider_add_to_store(prov, &actual, 0)) {
                 ossl_provider_deactivate(prov);
                 ok = 0;
             } else {
                 if (pcgbl->activated_providers == NULL)
                     pcgbl->activated_providers = sk_OSSL_PROVIDER_new_null();
-                sk_OSSL_PROVIDER_push(pcgbl->activated_providers, prov);
+                sk_OSSL_PROVIDER_push(pcgbl->activated_providers, actual);
                 ok = 1;
             }
         }

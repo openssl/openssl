@@ -18,7 +18,7 @@
 OSSL_PROVIDER *OSSL_PROVIDER_try_load(OSSL_LIB_CTX *libctx, const char *name,
                                       int retain_fallbacks)
 {
-    OSSL_PROVIDER *prov = NULL;
+    OSSL_PROVIDER *prov = NULL, *actual;
     int isnew = 0;
 
     /* Find it or create it */
@@ -33,13 +33,14 @@ OSSL_PROVIDER *OSSL_PROVIDER_try_load(OSSL_LIB_CTX *libctx, const char *name,
         return NULL;
     }
 
-    if (isnew && !ossl_provider_add_to_store(prov, retain_fallbacks)) {
+    actual = prov;
+    if (isnew && !ossl_provider_add_to_store(prov, &actual, retain_fallbacks)) {
         ossl_provider_deactivate(prov);
         ossl_provider_free(prov);
         return NULL;
     }
 
-    return prov;
+    return actual;
 }
 
 OSSL_PROVIDER *OSSL_PROVIDER_load(OSSL_LIB_CTX *libctx, const char *name)

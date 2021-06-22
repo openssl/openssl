@@ -511,33 +511,69 @@ static int create_provider_children(OSSL_PROVIDER *prov)
     return ret;
 }
 
-int ossl_provider_add_to_store(OSSL_PROVIDER *prov, int retain_fallbacks)
+int ossl_provider_add_to_store(OSSL_PROVIDER *prov, OSSL_PROVIDER **actualprov,
+                               int retain_fallbacks)
 {
-    struct provider_store_st *store = NULL;
-    int ret = 1;
+    struct provider_store_st *store;
+    int idx;
+    OSSL_PROVIDER tmpl = { 0, };
+    OSSL_PROVIDER *actualtmp = NULL;
 
     if ((store = get_provider_store(prov->libctx)) == NULL)
         return 0;
 
-
-    if (!ossl_provider_up_ref(prov)) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+    if (!CRYPTO_THREAD_write_lock(store->lock))
         return 0;
+
+    tmpl.name = (char *)prov->name;
+    idx = sk_OSSL_PROVIDER_find(store->providers, &tmpl);
+    if (idx == -1)
+        actualtmp = prov;
+    else
+        actualtmp = sk_OSSL_PROVIDER_value(store->providers, idx);
+
+    if (actualprov != NULL) {
+        if (!ossl_provider_up_ref(actualtmp)) {
+            ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+            actualtmp = NULL;
+            goto err;
+        }
+        *actualprov = actualtmp;
     }
-    if (!CRYPTO_THREAD_write_lock(store->lock)
-            || sk_OSSL_PROVIDER_push(store->providers, prov) == 0) {
-        ossl_provider_free(prov);
-        ret = 0;
+
+    if (idx == -1) {
+        if (sk_OSSL_PROVIDER_push(store->providers, prov) == 0)
+            goto err;
+        prov->store = store;
+        if (!create_provider_children(prov)) {
+            sk_OSSL_PROVIDER_delete_ptr(store->providers, prov);
+            goto err;
+        }
+        if (!retain_fallbacks)
+            store->use_fallbacks = 0;
     }
-    prov->store = store;
-    if (!retain_fallbacks)
-        store->use_fallbacks = 0;
-    if (!create_provider_children(prov)) {
-        ret = 0;
-    }
+
     CRYPTO_THREAD_unlock(store->lock);
 
-    return ret;
+    if (actualtmp != prov) {
+        /*
+         * The provider is already in the store. Probably two threads
+         * independently initialised their own provider objects with the same
+         * name and raced to put them in the store. This thread lost. We
+         * deactivate the one we just created and use the one that already
+         * exists instead.
+         */
+        ossl_provider_deactivate(prov);
+        ossl_provider_free(prov);
+    }
+
+    return 1;
+
+ err:
+    CRYPTO_THREAD_unlock(store->lock);
+    if (actualprov != NULL)
+        ossl_provider_free(actualtmp);
+    return 0;
 }
 
 void ossl_provider_free(OSSL_PROVIDER *prov)
