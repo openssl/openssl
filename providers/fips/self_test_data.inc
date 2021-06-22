@@ -255,7 +255,7 @@ static const ST_KAT_CIPHER st_kat_cipher_tests[] = {
             ITM(aes_256_gcm_pt),
             ITM(aes_256_gcm_ct)
         },
-        CIPHER_MODE_ENCRYPT,
+        CIPHER_MODE_ENCRYPT | CIPHER_MODE_DECRYPT,
         ITM(aes_256_gcm_key),
         ITM(aes_256_gcm_iv),
         ITM(aes_256_gcm_aad),

@@ -549,7 +549,7 @@ sub testssl {
           }
 
         SKIP: {
-            skip "skipping PSK tests", 3
+            skip "skipping PSK tests", 2
                 if ($no_psk);
 
             ok(run(test([@ssltest, "-tls1", "-cipher", "PSK", "-psk", "abc123"])),
@@ -557,10 +557,15 @@ sub testssl {
 
             ok(run(test([@ssltest, "-bio_pair", "-tls1", "-cipher", "PSK", "-psk", "abc123"])),
                'test tls1 with PSK via BIO pair');
+	  }
+
+        SKIP: {
+            skip "skipping auto DH PSK tests", 1
+                if ($no_dh || $no_psk);
 
             ok(run(test(['ssl_old_test', '-psk', '0102030405', '-cipher', '@SECLEVEL=2:DHE-PSK-AES128-CCM'])),
                'test auto DH meets security strength');
-	  }
+          }
 	}
 
     };
