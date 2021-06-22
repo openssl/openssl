@@ -221,7 +221,7 @@ be located in that module, and called.
 If I<upcalls> is nonzero then, if this is a child provider, upcalls to the
 parent libctx will be made to inform it of an up-ref. If I<aschild> is nonzero
 then the provider will only be activated if it is a child provider. Otherwise
-no action is take and ossl_provider_activate() returns success.
+no action is taken and ossl_provider_activate() returns success.
 
 ossl_provider_deactivate() "deactivates" the provider for the given
 provider object I<prov> by decrementing its activation count.  When
