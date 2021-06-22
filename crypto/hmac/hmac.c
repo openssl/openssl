@@ -231,7 +231,8 @@ unsigned char *HMAC(const EVP_MD *evp_md, const void *key, int key_len,
         ret = EVP_Q_mac(NULL, "HMAC", NULL, EVP_MD_get0_name(evp_md), NULL,
                         key, key_len, data, data_len,
                         md == NULL ? static_md : md, size, &temp_md_len);
-        *md_len = (unsigned int)temp_md_len;
+        if (md_len != NULL)
+            *md_len = (unsigned int)temp_md_len;
     }
     return ret;
 }
