@@ -181,6 +181,10 @@ Instead I<buf> must point to a valid buffer and I<buf_len> should
 be set to a positive value. A buffer length of 80 should be more
 than enough to handle any OID encountered in practice.
 
+Neither OBJ_create() nor OBJ_add_sigid() do any locking and are thus not
+thread safe.  Moreover, none of the other functions should be called while
+concurrent calls to these two functions are possible.
+
 =head1 SEE ALSO
 
 L<ERR_get_error(3)>

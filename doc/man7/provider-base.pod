@@ -264,6 +264,7 @@ It will treat as success the case where the OID already exists (even if the
 short name I<sn> or long name I<ln> provided as arguments differ from those
 associated with the existing OID, in which case the new names are not
 associated).
+This function is not thread safe.
 
 The core_obj_add_sigid() function registers a new composite signature algorithm
 (I<sign_name>) consisting of an underlying signature algorithm (I<pkey_name>)
@@ -277,6 +278,7 @@ to identify the object. It will treat as success the case where the composite
 signature algorithm already exists (even if registered against a different
 underlying signature or digest algorithm). It returns 1 on success or 0 on
 failure.
+This function is not thread safe.
 
 CRYPTO_malloc(), CRYPTO_zalloc(), CRYPTO_memdup(), CRYPTO_strdup(),
 CRYPTO_strndup(), CRYPTO_free(), CRYPTO_clear_free(),
