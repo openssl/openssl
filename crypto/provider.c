@@ -7,11 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
 #include <openssl/err.h>
 #include <openssl/cryptoerr.h>
 #include <openssl/provider.h>
 #include <openssl/core_names.h>
 #include "internal/provider.h"
+#include "provider_local.h"
 
 OSSL_PROVIDER *OSSL_PROVIDER_try_load(OSSL_LIB_CTX *libctx, const char *name,
                                       int retain_fallbacks)
@@ -101,6 +103,29 @@ int OSSL_PROVIDER_get_capabilities(const OSSL_PROVIDER *prov,
                                    void *arg)
 {
     return ossl_provider_get_capabilities(prov, capability, cb, arg);
+}
+
+int OSSL_PROVIDER_add_builtin(OSSL_LIB_CTX *libctx, const char *name,
+                              OSSL_provider_init_fn *init_fn)
+{
+    OSSL_PROVIDER_INFO entry;
+
+    if (name == NULL || init_fn == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    memset(&entry, 0, sizeof(entry));
+    entry.name = OPENSSL_strdup(name);
+    if (entry.name == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+    entry.init = init_fn;
+    if (!ossl_provider_info_add_to_store(libctx, &entry)) {
+        ossl_provider_info_clear(&entry);
+        return 0;
+    }
+    return 1;
 }
 
 const char *OSSL_PROVIDER_get0_name(const OSSL_PROVIDER *prov)
