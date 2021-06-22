@@ -1892,7 +1892,7 @@ static int pbe_test_init(EVP_TEST *t, const char *alg)
     }
     pdat = OPENSSL_zalloc(sizeof(*pdat));
     if (pdat == NULL)
-      return 0;
+      TEST_error("Out of memory");
 
     pdat->pbe_type = pbe_type;
     t->data = pdat;
