@@ -309,8 +309,7 @@ size_t tls13_final_finish_mac(SSL *s, const char *str, size_t slen,
     unsigned char hash[EVP_MAX_MD_SIZE];
     unsigned char finsecret[EVP_MAX_MD_SIZE];
     unsigned char *key = NULL;
-    unsigned int len = 0;
-    size_t hashlen, ret = 0;
+    size_t len = 0, hashlen;
     OSSL_PARAM params[2], *p = params;
 
     /* Safe to cast away const here since we're not "getting" any data */
@@ -345,10 +344,9 @@ size_t tls13_final_finish_mac(SSL *s, const char *str, size_t slen,
         goto err;
     }
 
-    ret = len;
  err:
     OPENSSL_cleanse(finsecret, sizeof(finsecret));
-    return ret;
+    return len;
 }
 
 /*
