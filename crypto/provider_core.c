@@ -1039,12 +1039,14 @@ int ossl_provider_activate(OSSL_PROVIDER *prov, int upcalls, int aschild)
 
     if (prov == NULL)
         return 0;
+#ifndef FIPS_MODULE
     /*
      * If aschild is true, then we only actually do the activation if the
      * provider is a child. If its not, this is still success.
      */
     if (aschild && !prov->ischild)
         return 1;
+#endif
     if ((count = provider_activate(prov, 1, upcalls)) > 0)
         return count == 1 ? provider_flush_store_cache(prov) : 1;
 
