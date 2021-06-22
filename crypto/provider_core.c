@@ -515,8 +515,8 @@ OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
 static int create_provider_children(OSSL_PROVIDER *prov)
 {
     int ret = 1;
-    struct provider_store_st *store = prov->store;
 #ifndef FIPS_MODULE
+    struct provider_store_st *store = prov->store;
     OSSL_PROVIDER_CHILD_CB *child_cb;
     int i, max;
 
