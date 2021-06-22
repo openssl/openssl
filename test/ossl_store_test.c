@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
 #include <limits.h>
 #include <openssl/store.h>
 #include <openssl/ui.h>
@@ -101,6 +102,7 @@ static int get_params(const char *uri, const char *type)
 static int test_store_get_params(int idx)
 {
     const char *type;
+    const char *urifmt;
     char uri[PATH_MAX];
 
     switch(idx) {
@@ -128,8 +130,16 @@ static int test_store_get_params(int idx)
         return 0;
     }
 
-    if (!TEST_true(BIO_snprintf(uri, sizeof(uri), "%s/%s-params.pem",
-                                datadir, type)))
+    urifmt = "%s/%s-params.pem";
+#ifdef __VMS
+    {
+        char datadir_end = datadir[strlen(datadir) - 1];
+
+        if (datadir_end == ':' || datadir_end == ']' || datadir_end == '>')
+            urifmt = "%s%s-params.pem";
+    }
+#endif
+    if (!TEST_true(BIO_snprintf(uri, sizeof(uri), urifmt, datadir, type)))
         return 0;
 
     TEST_info("Testing uri: %s", uri);
