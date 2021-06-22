@@ -212,6 +212,29 @@ static OSSL_CMP_PKISI *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
         /* give final response after polling */
         ctx->curr_pollCount = 0;
 
+    if (OSSL_CMP_MSG_get_bodytype(cert_req) == OSSL_CMP_KUR
+            && crm != NULL && ctx->certOut != NULL) {
+        const OSSL_CRMF_CERTID *cid = OSSL_CRMF_MSG_get0_regCtrl_oldCertID(crm);
+        const X509_NAME *issuer = X509_get_issuer_name(ctx->certOut);
+        const ASN1_INTEGER *serial = X509_get0_serialNumber(ctx->certOut);
+
+        if (cid == NULL) {
+            ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_CERTID);
+            return NULL;
+        }
+        if (issuer != NULL
+            && X509_NAME_cmp(issuer, OSSL_CRMF_CERTID_get0_issuer(cid)) != 0) {
+            ERR_raise(ERR_LIB_CMP, CMP_R_WRONG_CERTID);
+            return NULL;
+        }
+        if (serial != NULL
+            && ASN1_INTEGER_cmp(serial,
+                                OSSL_CRMF_CERTID_get0_serialNumber(cid)) != 0) {
+            ERR_raise(ERR_LIB_CMP, CMP_R_WRONG_CERTID);
+            return NULL;
+        }
+    }
+
     if (ctx->certOut != NULL
             && (*certOut = X509_dup(ctx->certOut)) == NULL)
         goto err;
