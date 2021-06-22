@@ -715,8 +715,8 @@ __owur int EVP_Digest(const void *data, size_t count,
                           unsigned char *md, unsigned int *size,
                           const EVP_MD *type, ENGINE *impl);
 __owur int EVP_Q_digest(OSSL_LIB_CTX *libctx, const char *name,
-                        const char *propq, const void *data, size_t count,
-                        unsigned char *md, unsigned int *size);
+                        const char *propq, const void *data, size_t datalen,
+                        unsigned char *md, size_t *mdlen);
 
 __owur int EVP_MD_CTX_copy(EVP_MD_CTX *out, const EVP_MD_CTX *in);
 __owur int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type);
@@ -1216,7 +1216,7 @@ unsigned char *EVP_Q_mac(OSSL_LIB_CTX *libctx, const char *name, const char *pro
                          const char *subalg, const OSSL_PARAM *params,
                          const void *key, size_t keylen,
                          const unsigned char *data, size_t datalen,
-                         unsigned char *out, size_t outsize, unsigned int *outlen);
+                         unsigned char *out, size_t outsize, size_t *outlen);
 int EVP_MAC_init(EVP_MAC_CTX *ctx, const unsigned char *key, size_t keylen,
                  const OSSL_PARAM params[]);
 int EVP_MAC_update(EVP_MAC_CTX *ctx, const unsigned char *data, size_t datalen);
