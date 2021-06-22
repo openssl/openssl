@@ -1,4 +1,4 @@
-# Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -21,7 +21,8 @@ $VERSION = "1.0";
 @EXPORT_OK = (@Test::More::EXPORT_OK, qw(bldtop_dir bldtop_file
                                          srctop_dir srctop_file
                                          data_file data_dir
-                                         pipe with cmdstr quotify
+                                         result_file result_dir
+                                         pipe with cmdstr
                                          openssl_versions
                                          ok_nofips is_nofips isnt_nofips));
 
@@ -64,11 +65,11 @@ C<$SRCTOP/test/recipes/99-foo_data/>.
 
 use File::Copy;
 use File::Spec::Functions qw/file_name_is_absolute curdir canonpath splitdir
-                             catdir catfile splitpath catpath devnull abs2rel
-                             rel2abs/;
+                             catdir catfile splitpath catpath devnull abs2rel/;
 use File::Path 2.00 qw/rmtree mkpath/;
 use File::Basename;
 use Cwd qw/getcwd abs_path/;
+use OpenSSL::Util;
 
 my $level = 0;
 
@@ -124,8 +125,8 @@ most likely refuse to run.
 C<setup> checks for environment variables (see L</ENVIRONMENT> below),
 checks that C<$TOP/Configure> or C<$SRCTOP/Configure> exists, C<chdir>
 into the results directory (defined by the C<$RESULT_D> environment
-variable if defined, otherwise C<$BLDTOP/test> or C<$TOP/test>, whichever
-is defined).
+variable if defined, otherwise C<$BLDTOP/test-runs> or C<$TOP/test-runs>,
+whichever is defined).
 
 =back
 
@@ -221,7 +222,8 @@ used (currently only on Unix).
 
 It returns a CODEREF to be used by C<run>, C<pipe> or C<cmdstr>.
 
-The options that C<cmd> can take are in the form of hash values:
+The options that C<cmd> (as well as its derivatives described below) can take
+are in the form of hash values:
 
 =over 4
 
@@ -314,7 +316,7 @@ sub cmd {
         my @cmdargs = ( @$cmd );
         my @prog = __wrap_cmd(shift @cmdargs, $opts{exe_shell} // ());
 
-        return __decorate_cmd($num, [ @prog, quotify(@cmdargs) ],
+        return __decorate_cmd($num, [ @prog, fixup_cmd_elements(@cmdargs) ],
                               %opts);
     }
 }
@@ -389,7 +391,7 @@ derivatives, anything else will most likely cause an error unless you
 know what you're doing.
 
 C<run> executes the command returned by CODEREF and return either the
-resulting output (if the option C<capture> is set true) or a boolean
+resulting standard output (if the option C<capture> is set true) or a boolean
 indicating if the command succeeded or not.
 
 The options that C<run> can take are in the form of hash values:
@@ -398,10 +400,10 @@ The options that C<run> can take are in the form of hash values:
 
 =item B<capture =E<gt> 0|1>
 
-If true, the command will be executed with a perl backtick, and C<run> will
-return the resulting output as an array of lines.  If false or not given,
-the command will be executed with C<system()>, and C<run> will return 1 if
-the command was successful or 0 if it wasn't.
+If true, the command will be executed with a perl backtick,
+and C<run> will return the resulting standard output as an array of lines.
+If false or not given, the command will be executed with C<system()>,
+and C<run> will return 1 if the command was successful or 0 if it wasn't.
 
 =item B<prefix =E<gt> EXPR>
 
@@ -417,6 +419,7 @@ particularly useful together with B<capture>.
 
 =back
 
+Usually 1 indicates that the command was successful and 0 indicates failure.
 For further discussion on what is considered a successful command or not, see
 the function C<with> further down.
 
@@ -649,6 +652,43 @@ sub data_file {
 
 =over 4
 
+=item B<result_dir>
+
+C<result_dir> returns the directory where test output files should be placed
+as a string, adapted to the local operating system.
+
+=back
+
+=cut
+
+sub result_dir {
+    BAIL_OUT("Must run setup() first") if (! $test_name);
+
+    return catfile($directories{RESULTS});
+}
+
+=over 4
+
+=item B<result_file FILENAME>
+
+FILENAME is the name of a test output file.
+C<result_file> returns the path of the given file as a string,
+prepending to the file name the path to the directory where test output files
+should be placed, adapted to the local operating system.
+
+=back
+
+=cut
+
+sub result_file {
+    BAIL_OUT("Must run setup() first") if (! $test_name);
+
+    my $f = pop;
+    return catfile(result_dir(),@_,$f);
+}
+
+=over 4
+
 =item B<pipe LIST>
 
 LIST is a list of CODEREFs returned by C<app> or C<test>, from which C<pipe>
@@ -769,50 +809,6 @@ sub cmdstr {
 }
 
 =over 4
-
-=item B<quotify LIST>
-
-LIST is a list of strings that are going to be used as arguments for a
-command, and makes sure to inject quotes and escapes as necessary depending
-on the content of each string.
-
-This can also be used to put quotes around the executable of a command.
-I<This must never ever be done on VMS.>
-
-=back
-
-=cut
-
-sub quotify {
-    # Unix setup (default if nothing else is mentioned)
-    my $arg_formatter =
-	sub { $_ = shift;
-	      ($_ eq '' || /\s|[\{\}\\\$\[\]\*\?\|\&:;<>]/) ? "'$_'" : $_ };
-
-    if ( $^O eq "VMS") {	# VMS setup
-	$arg_formatter = sub {
-	    $_ = shift;
-	    if ($_ eq '' || /\s|["[:upper:]]/) {
-		s/"/""/g;
-		'"'.$_.'"';
-	    } else {
-		$_;
-	    }
-	};
-    } elsif ( $^O eq "MSWin32") { # MSWin setup
-	$arg_formatter = sub {
-	    $_ = shift;
-	    if ($_ eq '' || /\s|["\|\&\*\;<>]/) {
-		s/(["\\])/\\$1/g;
-		'"'.$_.'"';
-	    } else {
-		$_;
-	    }
-	};
-    }
-
-    return map { $arg_formatter->($_) } @_;
-}
 
 =over 4
 
@@ -956,6 +952,10 @@ sub __env {
     rmtree($directories{RESULTS}, { safe => 0, keep_root => 1 });
     mkpath($directories{RESULTS});
 
+    # All directories are assumed to exist, except for SRCDATA.  If that one
+    # doesn't exist, just drop it.
+    delete $directories{SRCDATA} unless -d $directories{SRCDATA};
+
     push @direnv, "TOP"       if $ENV{TOP};
     push @direnv, "SRCTOP"    if $ENV{SRCTOP};
     push @direnv, "BLDTOP"    if $ENV{BLDTOP};
@@ -1055,6 +1055,8 @@ sub __fuzz_file {
 sub __data_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
+    return undef unless exists $directories{SRCDATA};
+
     my $f = pop;
     return catfile($directories{SRCDATA},@_,$f);
 }
@@ -1062,14 +1064,9 @@ sub __data_file {
 sub __data_dir {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
+    return undef unless exists $directories{SRCDATA};
+
     return catdir($directories{SRCDATA},@_);
-}
-
-sub __results_file {
-    BAIL_OUT("Must run setup() first") if (! $test_name);
-
-    my $f = pop;
-    return catfile($directories{RESULTS},@_,$f);
 }
 
 # __cwd DIR
@@ -1084,8 +1081,16 @@ sub __results_file {
 sub __cwd {
     my $dir = catdir(shift);
     my %opts = @_;
-    my $abscurdir = rel2abs(curdir());
-    my $absdir = rel2abs($dir);
+
+    # If the directory is to be created, we must do that before using
+    # abs_path().
+    $dir = canonpath($dir);
+    if ($opts{create}) {
+	mkpath($dir);
+    }
+
+    my $abscurdir = abs_path(curdir());
+    my $absdir = abs_path($dir);
     my $reverse = abs2rel($abscurdir, $absdir);
 
     # PARANOIA: if we're not moving anywhere, we do nothing more
@@ -1103,11 +1108,6 @@ sub __cwd {
     # In this case, we won't even clean it out, for safety's sake.
     return "." if $reverse eq "";
 
-    $dir = canonpath($dir);
-    if ($opts{create}) {
-	mkpath($dir);
-    }
-
     # We are recalculating the directories we keep track of, but need to save
     # away the result for after having moved into the new directory.
     my %tmp_directories = ();
@@ -1119,7 +1119,13 @@ sub __cwd {
     my @dirtags = sort keys %directories;
     foreach (@dirtags) {
 	if (!file_name_is_absolute($directories{$_})) {
-	    my $newpath = abs2rel(rel2abs($directories{$_}), rel2abs($dir));
+	    my $oldpath = abs_path($directories{$_});
+	    my $newpath = abs2rel($oldpath, $absdir);
+	    if ($debug) {
+		print STDERR "DEBUG: [dir $_] old path: $oldpath\n";
+		print STDERR "DEBUG: [dir $_] new base: $absdir\n";
+		print STDERR "DEBUG: [dir $_] resulting new path: $newpath\n";
+	    }
 	    $tmp_directories{$_} = $newpath;
 	}
     }
@@ -1129,7 +1135,13 @@ sub __cwd {
     # process can use their values properly as well
     foreach (@direnv) {
 	if (!file_name_is_absolute($ENV{$_})) {
-	    my $newpath = abs2rel(rel2abs($ENV{$_}), rel2abs($dir));
+	    my $oldpath = abs_path($ENV{$_});
+	    my $newpath = abs2rel($oldpath, $absdir);
+	    if ($debug) {
+		print STDERR "DEBUG: [env $_] old path: $oldpath\n";
+		print STDERR "DEBUG: [env $_] new base: $absdir\n";
+		print STDERR "DEBUG: [env $_] resulting new path: $newpath\n";
+	    }
 	    $tmp_ENV{$_} = $newpath;
 	}
     }
@@ -1149,16 +1161,19 @@ sub __cwd {
 
     if ($debug) {
 	print STDERR "DEBUG: __cwd(), directories and files:\n";
-	print STDERR "  \$directories{BLDTEST} = \"$directories{BLDTEST}\"\n";
-	print STDERR "  \$directories{SRCTEST} = \"$directories{SRCTEST}\"\n";
-	print STDERR "  \$directories{SRCDATA} = \"$directories{SRCDATA}\"\n";
-	print STDERR "  \$directories{RESULTS} = \"$directories{RESULTS}\"\n";
-	print STDERR "  \$directories{BLDAPPS} = \"$directories{BLDAPPS}\"\n";
-	print STDERR "  \$directories{SRCAPPS} = \"$directories{SRCAPPS}\"\n";
-	print STDERR "  \$directories{SRCTOP}  = \"$directories{SRCTOP}\"\n";
-	print STDERR "  \$directories{BLDTOP}  = \"$directories{BLDTOP}\"\n";
+	print STDERR "	Moving from $abscurdir\n";
+	print STDERR "	Moving to $absdir\n";
 	print STDERR "\n";
-	print STDERR "  current directory is \"",curdir(),"\"\n";
+	print STDERR "	\$directories{BLDTEST} = \"$directories{BLDTEST}\"\n";
+	print STDERR "	\$directories{SRCTEST} = \"$directories{SRCTEST}\"\n";
+	print STDERR "	\$directories{SRCDATA} = \"$directories{SRCDATA}\"\n"
+            if exists $directories{SRCDATA};
+	print STDERR "	\$directories{RESULTS} = \"$directories{RESULTS}\"\n";
+	print STDERR "	\$directories{BLDAPPS} = \"$directories{BLDAPPS}\"\n";
+	print STDERR "	\$directories{SRCAPPS} = \"$directories{SRCAPPS}\"\n";
+	print STDERR "	\$directories{SRCTOP}  = \"$directories{SRCTOP}\"\n";
+	print STDERR "	\$directories{BLDTOP}  = \"$directories{BLDTOP}\"\n";
+	print STDERR "\n";
 	print STDERR "  the way back is \"$reverse\"\n";
     }
 
@@ -1189,17 +1204,12 @@ sub __wrap_cmd {
         # Otherwise, use the standard wrapper
         my $std_wrapper = __bldtop_file("util", "wrap.pl");
 
-        if ($^O eq "VMS") {
-            # On VMS, running random executables without having a command
-            # symbol means running them with the MCR command.  This is an
-            # old PDP-11 command that stuck around.  So we get a command
-            # running perl running the script.
-            @prefix = ( "MCR", $^X, $std_wrapper );
-        } elsif ($^O eq "MSWin32") {
-            # In the Windows case, we run perl explicitly.  We might not
-            # need it, but that depends on if the user has associated the
-            # '.pl' extension with a perl interpreter, so better be safe.
-            @prefix = ( $^X, $std_wrapper );
+        if ($^O eq "VMS" || $^O eq "MSWin32") {
+            # On VMS and Windows, we run the perl executable explicitly,
+            # with necessary fixups.  We might not need that for Windows,
+            # but that depends on if the user has associated the '.pl'
+            # extension with a perl interpreter, so better be safe.
+            @prefix = ( __fixup_prg($^X), $std_wrapper );
         } else {
             # Otherwise, we assume Unix semantics, and trust that the #!
             # line activates perl for us.
@@ -1219,23 +1229,7 @@ sub __wrap_cmd {
 sub __fixup_prg {
     my $prog = shift;
 
-    my $prefix = "";
-
-    if ($^O eq "VMS" ) {
-	$prefix = ($prog =~ /^(?:[\$a-z0-9_]+:)?[<\[]/i ? "mcr " : "mcr []");
-    }
-
-    if (defined($prog)) {
-	# Make sure to quotify the program file on platforms that may
-	# have spaces or similar in their path name.
-	# To our knowledge, VMS is the exception where quotifying should
-	# never happen.
-	($prog) = quotify($prog) unless $^O eq "VMS";
-	return $prefix.$prog;
-    }
-
-    print STDERR "$prog not found\n";
-    return undef;
+    return join(' ', fixup_cmd($prog));
 }
 
 # __decorate_cmd NUM, CMDARRAYREF

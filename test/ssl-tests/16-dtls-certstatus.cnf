@@ -15,11 +15,11 @@ client = 0-certstatus-good-client
 
 [0-certstatus-good-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [0-certstatus-good-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -43,11 +43,11 @@ client = 1-certstatus-bad-client
 
 [1-certstatus-bad-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [1-certstatus-bad-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,6 +17,7 @@
 # include "internal/tsan_assist.h"
 # include "internal/nelem.h"
 # include "internal/numbers.h"
+# include "prov/provider_ctx.h"
 
 /* How many times to read the TSC as a randomness source. */
 # define TSC_READ_COUNT                 4
@@ -71,7 +72,7 @@ typedef enum drbg_status_e {
  */
 struct prov_drbg_st {
     CRYPTO_RWLOCK *lock;
-    void *provctx;
+    PROV_CTX *provctx;
 
     /* Virtual functions are cache here */
     int (*instantiate)(PROV_DRBG *drbg,
@@ -90,8 +91,9 @@ struct prov_drbg_st {
     OSSL_FUNC_rand_lock_fn *parent_lock;
     OSSL_FUNC_rand_unlock_fn *parent_unlock;
     OSSL_FUNC_rand_get_ctx_params_fn *parent_get_ctx_params;
-    OSSL_FUNC_rand_generate_fn *parent_generate;
     OSSL_FUNC_rand_nonce_fn *parent_nonce;
+    OSSL_FUNC_rand_get_seed_fn *parent_get_seed;
+    OSSL_FUNC_rand_clear_seed_fn *parent_clear_seed;
 
     const OSSL_DISPATCH *parent_dispatch;
 
@@ -103,21 +105,6 @@ struct prov_drbg_st {
      */
     int fork_id;
     unsigned short flags; /* various external flags */
-
-    /*
-     * The random_data is used by PROV_add()/drbg_add() to attach random
-     * data to the global drbg, such that the rand_drbg_get_entropy() callback
-     * can pull it during instantiation and reseeding. This is necessary to
-     * reconcile the different philosophies of the PROV and the PROV_DRBG
-     * with respect to how randomness is added to the RNG during reseeding
-     * (see PR #4328).
-     */
-    struct rand_pool_st *seed_pool;
-
-    /*
-     * Auxiliary pool for additional data.
-     */
-    struct rand_pool_st *adin_pool;
 
     /*
      * The following parameters are setup by the per-type "init" function.
@@ -150,7 +137,7 @@ struct prov_drbg_st {
      * (Starts at 1). This value is the reseed_counter as defined in
      * NIST SP 800-90Ar1
      */
-    unsigned int reseed_gen_counter;
+    unsigned int generate_counter;
     /*
      * Maximum number of generate requests until a reseed is required.
      * This value is ignored if it is zero.
@@ -191,7 +178,7 @@ struct prov_drbg_st {
     OSSL_CALLBACK *cleanup_nonce_fn;
 };
 
-PROV_DRBG *prov_rand_drbg_new
+PROV_DRBG *ossl_rand_drbg_new
     (void *provctx, void *parent, const OSSL_DISPATCH *parent_dispatch,
      int (*dnew)(PROV_DRBG *ctx),
      int (*instantiate)(PROV_DRBG *drbg,
@@ -203,21 +190,25 @@ PROV_DRBG *prov_rand_drbg_new
                    const unsigned char *adin, size_t adin_len),
      int (*generate)(PROV_DRBG *, unsigned char *out, size_t outlen,
                      const unsigned char *adin, size_t adin_len));
-void prov_rand_drbg_free(PROV_DRBG *drbg);
+void ossl_rand_drbg_free(PROV_DRBG *drbg);
 
-int PROV_DRBG_instantiate(PROV_DRBG *drbg, unsigned int strength,
-                          int prediction_resistance,
-                          const unsigned char *pers, size_t perslen);
+int ossl_prov_drbg_instantiate(PROV_DRBG *drbg, unsigned int strength,
+                               int prediction_resistance,
+                               const unsigned char *pers, size_t perslen);
 
-int PROV_DRBG_uninstantiate(PROV_DRBG *drbg);
+int ossl_prov_drbg_uninstantiate(PROV_DRBG *drbg);
 
-int PROV_DRBG_reseed(PROV_DRBG *drbg, int prediction_resistance,
-                     const unsigned char *ent, size_t ent_len,
-                     const unsigned char *adin, size_t adinlen);
+int ossl_prov_drbg_reseed(PROV_DRBG *drbg, int prediction_resistance,
+                          const unsigned char *ent, size_t ent_len,
+                          const unsigned char *adin, size_t adinlen);
 
-int PROV_DRBG_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
-                       unsigned int strength, int prediction_resistance,
-                       const unsigned char *adin, size_t adinlen);
+int ossl_prov_drbg_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
+                            unsigned int strength, int prediction_resistance,
+                            const unsigned char *adin, size_t adinlen);
+
+/* Seeding api */
+OSSL_FUNC_rand_get_seed_fn ossl_drbg_get_seed;
+OSSL_FUNC_rand_clear_seed_fn ossl_drbg_clear_seed;
 
 /* Verify that an array of numeric values is all zero */
 #define PROV_DRBG_VERYIFY_ZEROIZATION(v)    \
@@ -230,39 +221,39 @@ int PROV_DRBG_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
     }
 
 /* locking api */
-OSSL_FUNC_rand_enable_locking_fn drbg_enable_locking;
-OSSL_FUNC_rand_lock_fn drbg_lock;
-OSSL_FUNC_rand_unlock_fn drbg_unlock;
+OSSL_FUNC_rand_enable_locking_fn ossl_drbg_enable_locking;
+OSSL_FUNC_rand_lock_fn ossl_drbg_lock;
+OSSL_FUNC_rand_unlock_fn ossl_drbg_unlock;
 
 /* Common parameters for all of our DRBGs */
-int drbg_get_ctx_params(PROV_DRBG *drbg, OSSL_PARAM params[]);
-int drbg_set_ctx_params(PROV_DRBG *drbg, const OSSL_PARAM params[]);
+int ossl_drbg_get_ctx_params(PROV_DRBG *drbg, OSSL_PARAM params[]);
+int ossl_drbg_set_ctx_params(PROV_DRBG *drbg, const OSSL_PARAM params[]);
 
 #define OSSL_PARAM_DRBG_SETTABLE_CTX_COMMON                                      \
     OSSL_PARAM_uint(OSSL_DRBG_PARAM_RESEED_REQUESTS, NULL),             \
     OSSL_PARAM_uint64(OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL, NULL)
 
-#define OSSL_PARAM_DRBG_GETTABLE_CTX_COMMON                              \
+#define OSSL_PARAM_DRBG_GETTABLE_CTX_COMMON                             \
     OSSL_PARAM_int(OSSL_RAND_PARAM_STATE, NULL),                        \
     OSSL_PARAM_uint(OSSL_RAND_PARAM_STRENGTH, NULL),                    \
-    OSSL_PARAM_size_t(OSSL_DRBG_PARAM_MAX_REQUEST, NULL),               \
+    OSSL_PARAM_size_t(OSSL_RAND_PARAM_MAX_REQUEST, NULL),               \
     OSSL_PARAM_size_t(OSSL_DRBG_PARAM_MIN_ENTROPYLEN, NULL),            \
     OSSL_PARAM_size_t(OSSL_DRBG_PARAM_MAX_ENTROPYLEN, NULL),            \
     OSSL_PARAM_size_t(OSSL_DRBG_PARAM_MIN_NONCELEN, NULL),              \
     OSSL_PARAM_size_t(OSSL_DRBG_PARAM_MAX_NONCELEN, NULL),              \
     OSSL_PARAM_size_t(OSSL_DRBG_PARAM_MAX_PERSLEN, NULL),               \
     OSSL_PARAM_size_t(OSSL_DRBG_PARAM_MAX_ADINLEN, NULL),               \
-    OSSL_PARAM_uint(OSSL_DRBG_PARAM_RESEED_CTR, NULL),                  \
+    OSSL_PARAM_uint(OSSL_DRBG_PARAM_RESEED_COUNTER, NULL),              \
     OSSL_PARAM_time_t(OSSL_DRBG_PARAM_RESEED_TIME, NULL),               \
     OSSL_PARAM_uint(OSSL_DRBG_PARAM_RESEED_REQUESTS, NULL),             \
     OSSL_PARAM_uint64(OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL, NULL)
 
 /* Continuous test "entropy" calls */
-size_t prov_crngt_get_entropy(PROV_DRBG *drbg,
+size_t ossl_crngt_get_entropy(PROV_DRBG *drbg,
                               unsigned char **pout,
                               int entropy, size_t min_len, size_t max_len,
                               int prediction_resistance);
-void prov_crngt_cleanup_entropy(PROV_DRBG *drbg,
+void ossl_crngt_cleanup_entropy(PROV_DRBG *drbg,
                                 unsigned char *out, size_t outlen);
 
 #endif

@@ -1,7 +1,7 @@
 /*
  * {- join("\n * ", @autowarntext) -}
  *
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -43,7 +43,7 @@ Key_Encryption_ID       rsaEncryption
 */
 
 typedef struct PKCS7_CTX_st {
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     char *propq;
 } PKCS7_CTX;
 
@@ -252,7 +252,7 @@ DECLARE_ASN1_FUNCTIONS(PKCS7_SIGN_ENVELOPE)
 DECLARE_ASN1_FUNCTIONS(PKCS7_DIGEST)
 DECLARE_ASN1_FUNCTIONS(PKCS7_ENCRYPT)
 DECLARE_ASN1_FUNCTIONS(PKCS7)
-PKCS7 *PKCS7_new_with_libctx(OPENSSL_CTX *libctx, const char *propq);
+PKCS7 *PKCS7_new_ex(OSSL_LIB_CTX *libctx, const char *propq);
 
 DECLARE_ASN1_ITEM(PKCS7_ATTR_SIGN)
 DECLARE_ASN1_ITEM(PKCS7_ATTR_VERIFY)
@@ -262,6 +262,7 @@ DECLARE_ASN1_PRINT_FUNCTION(PKCS7)
 
 long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg);
 
+int PKCS7_type_is_other(PKCS7 *p7);
 int PKCS7_set_type(PKCS7 *p7, int type);
 int PKCS7_set0_type_other(PKCS7 *p7, int type, ASN1_TYPE *other);
 int PKCS7_set_content(PKCS7 *p7, PKCS7 *p7_data);
@@ -297,13 +298,14 @@ int PKCS7_set_cipher(PKCS7 *p7, const EVP_CIPHER *cipher);
 int PKCS7_stream(unsigned char ***boundary, PKCS7 *p7);
 
 PKCS7_ISSUER_AND_SERIAL *PKCS7_get_issuer_and_serial(PKCS7 *p7, int idx);
+ASN1_OCTET_STRING *PKCS7_get_octet_string(PKCS7 *p7);
 ASN1_OCTET_STRING *PKCS7_digest_from_attributes(STACK_OF(X509_ATTRIBUTE) *sk);
 int PKCS7_add_signed_attribute(PKCS7_SIGNER_INFO *p7si, int nid, int type,
                                void *data);
 int PKCS7_add_attribute(PKCS7_SIGNER_INFO *p7si, int nid, int atrtype,
                         void *value);
-ASN1_TYPE *PKCS7_get_attribute(PKCS7_SIGNER_INFO *si, int nid);
-ASN1_TYPE *PKCS7_get_signed_attribute(PKCS7_SIGNER_INFO *si, int nid);
+ASN1_TYPE *PKCS7_get_attribute(const PKCS7_SIGNER_INFO *si, int nid);
+ASN1_TYPE *PKCS7_get_signed_attribute(const PKCS7_SIGNER_INFO *si, int nid);
 int PKCS7_set_signed_attributes(PKCS7_SIGNER_INFO *p7si,
                                 STACK_OF(X509_ATTRIBUTE) *sk);
 int PKCS7_set_attributes(PKCS7_SIGNER_INFO *p7si,
@@ -311,9 +313,9 @@ int PKCS7_set_attributes(PKCS7_SIGNER_INFO *p7si,
 
 PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
                   BIO *data, int flags);
-PKCS7 *PKCS7_sign_with_libctx(X509 *signcert, EVP_PKEY *pkey,
-                              STACK_OF(X509) *certs, BIO *data, int flags,
-                              OPENSSL_CTX *libctx, const char *propq);
+PKCS7 *PKCS7_sign_ex(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
+                     BIO *data, int flags, OSSL_LIB_CTX *libctx,
+                     const char *propq);
 
 PKCS7_SIGNER_INFO *PKCS7_sign_add_signer(PKCS7 *p7,
                                          X509 *signcert, EVP_PKEY *pkey,
@@ -326,9 +328,9 @@ STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs,
                                    int flags);
 PKCS7 *PKCS7_encrypt(STACK_OF(X509) *certs, BIO *in, const EVP_CIPHER *cipher,
                      int flags);
-PKCS7 *PKCS7_encrypt_with_libctx(STACK_OF(X509) *certs, BIO *in,
-                                 const EVP_CIPHER *cipher, int flags,
-                                 OPENSSL_CTX *libctx, const char *propq);
+PKCS7 *PKCS7_encrypt_ex(STACK_OF(X509) *certs, BIO *in,
+                        const EVP_CIPHER *cipher, int flags,
+                        OSSL_LIB_CTX *libctx, const char *propq);
 int PKCS7_decrypt(PKCS7 *p7, EVP_PKEY *pkey, X509 *cert, BIO *data,
                   int flags);
 

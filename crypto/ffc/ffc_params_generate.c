@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -46,7 +46,7 @@ static int ffc_validate_LN(size_t L, size_t N, int type, int verify)
         if (L == 2048 && (N == 224 || N == 256))
             return 112;
 # ifndef OPENSSL_NO_DH
-        DHerr(0, DH_R_BAD_FFC_PARAMETERS);
+        ERR_raise(ERR_LIB_DH, DH_R_BAD_FFC_PARAMETERS);
 # endif
     } else if (type == FFC_PARAM_TYPE_DSA) {
         /* Valid DSA L,N parameters from FIPS 186-4 Section 4.2 */
@@ -58,7 +58,7 @@ static int ffc_validate_LN(size_t L, size_t N, int type, int verify)
         if (L == 3072 && N == 256)
             return 128;
 # ifndef OPENSSL_NO_DSA
-        DSAerr(0, DSA_R_BAD_FFC_PARAMETERS);
+        ERR_raise(ERR_LIB_DSA, DSA_R_BAD_FFC_PARAMETERS);
 # endif
     }
     return 0;
@@ -74,17 +74,17 @@ static int ffc_validate_LN(size_t L, size_t N, int type, int verify)
         if (L == 2048 && (N == 224 || N == 256))
             return 112;
 # ifndef OPENSSL_NO_DH
-        DHerr(0, DH_R_BAD_FFC_PARAMETERS);
+        ERR_raise(ERR_LIB_DH, DH_R_BAD_FFC_PARAMETERS);
 # endif
     } else if (type == FFC_PARAM_TYPE_DSA) {
-        if (L == 1024 && N == 160)
-            return 80;
-        if (L == 2048 && (N == 224 || N == 256))
-            return 112;
-        if (L == 3072 && N == 256)
+        if (L >= 3072 && N >= 256)
             return 128;
+        if (L >= 2048 && N >= 224)
+            return 112;
+        if (L >= 1024 && N >= 160)
+            return 80;
 # ifndef OPENSSL_NO_DSA
-        DSAerr(0, DSA_R_BAD_FFC_PARAMETERS);
+        ERR_raise(ERR_LIB_DSA, DSA_R_BAD_FFC_PARAMETERS);
 # endif
     }
     return 0;
@@ -140,7 +140,7 @@ static int generate_canonical_g(BN_CTX *ctx, BN_MONT_CTX *mont,
     EVP_MD_CTX *mctx = NULL;
     int mdsize;
 
-    mdsize = EVP_MD_size(evpmd);
+    mdsize = EVP_MD_get_size(evpmd);
     if (mdsize <= 0)
         return 0;
 
@@ -211,7 +211,7 @@ static int generate_p(BN_CTX *ctx, const EVP_MD *evpmd, int max_counter, int n,
     if (!BN_lshift(test, BN_value_one(), L - 1))
         goto err;
 
-    mdsize = EVP_MD_size(evpmd);
+    mdsize = EVP_MD_get_size(evpmd);
     if (mdsize <= 0)
         goto err;
 
@@ -318,9 +318,9 @@ static int generate_q_fips186_4(BN_CTX *ctx, BIGNUM *q, const EVP_MD *evpmd,
     int ret = 0, r;
     int m = *retm;
     unsigned char md[EVP_MAX_MD_SIZE];
-    int mdsize = EVP_MD_size(evpmd);
+    int mdsize = EVP_MD_get_size(evpmd);
     unsigned char *pmd;
-    OPENSSL_CTX *libctx = bn_get_lib_ctx(ctx);
+    OSSL_LIB_CTX *libctx = ossl_bn_get_libctx(ctx);
 
     /* find q */
     for (;;) {
@@ -329,7 +329,7 @@ static int generate_q_fips186_4(BN_CTX *ctx, BIGNUM *q, const EVP_MD *evpmd,
 
         /* A.1.1.2 Step (5) : generate seed with size seed_len */
         if (generate_seed
-                && RAND_bytes_ex(libctx, seed, (int)seedlen) < 0)
+                && RAND_bytes_ex(libctx, seed, seedlen, 0) < 0)
             goto err;
         /*
          * A.1.1.2 Step (6) AND
@@ -391,7 +391,7 @@ static int generate_q_fips186_2(BN_CTX *ctx, BIGNUM *q, const EVP_MD *evpmd,
     unsigned char buf2[EVP_MAX_MD_SIZE];
     unsigned char md[EVP_MAX_MD_SIZE];
     int i, r, ret = 0, m = *retm;
-    OPENSSL_CTX *libctx = bn_get_lib_ctx(ctx);
+    OSSL_LIB_CTX *libctx = ossl_bn_get_libctx(ctx);
 
     /* find q */
     for (;;) {
@@ -399,7 +399,7 @@ static int generate_q_fips186_2(BN_CTX *ctx, BIGNUM *q, const EVP_MD *evpmd,
         if (!BN_GENCB_call(cb, 0, m++))
             goto err;
 
-        if (generate_seed && RAND_bytes_ex(libctx, seed, (int)qsize) <= 0)
+        if (generate_seed && RAND_bytes_ex(libctx, seed, qsize, 0) <= 0)
             goto err;
 
         memcpy(buf, seed, qsize);
@@ -479,7 +479,7 @@ static const char *default_mdname(size_t N)
  *  For validation one of:
  *   -FFC_PARAM_FLAG_VALIDATE_PQ
  *   -FFC_PARAM_FLAG_VALIDATE_G
- *   -FFC_PARAM_FLAG_VALIDATE_ALL
+ *   -FFC_PARAM_FLAG_VALIDATE_PQG
  *  For generation of p & q:
  *   - This is skipped if p & q are passed in.
  *   - If the seed is passed in then generation of p & q uses this seed (and if
@@ -510,9 +510,10 @@ static const char *default_mdname(size_t N)
  *   - FFC_PARAM_RET_STATUS_UNVERIFIABLE_G if the validation of G succeeded,
  *     but G is unverifiable.
  */
-int ffc_params_FIPS186_4_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
-                                    int mode, int type, size_t L, size_t N,
-                                    int *res, BN_GENCB *cb)
+int ossl_ffc_params_FIPS186_4_gen_verify(OSSL_LIB_CTX *libctx,
+                                         FFC_PARAMS *params, int mode, int type,
+                                         size_t L, size_t N, int *res,
+                                         BN_GENCB *cb)
 {
     int ok = FFC_PARAM_RET_STATUS_FAILED;
     unsigned char *seed = NULL, *seed_tmp = NULL;
@@ -546,7 +547,7 @@ int ffc_params_FIPS186_4_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
     }
     if (md == NULL)
         goto err;
-    mdsize = EVP_MD_size(md);
+    mdsize = EVP_MD_get_size(md);
     if (mdsize <= 0)
         goto err;
 
@@ -719,7 +720,7 @@ int ffc_params_FIPS186_4_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
         goto err;
 
     /* If validating p & q only then skip the g validation test */
-    if ((flags & FFC_PARAM_FLAG_VALIDATE_ALL) == FFC_PARAM_FLAG_VALIDATE_PQ)
+    if ((flags & FFC_PARAM_FLAG_VALIDATE_PQG) == FFC_PARAM_FLAG_VALIDATE_PQ)
         goto pass;
 g_only:
     if ((mont = BN_MONT_CTX_new()) == NULL)
@@ -728,8 +729,8 @@ g_only:
         goto err;
 
     if (((flags & FFC_PARAM_FLAG_VALIDATE_G) != 0)
-        && !ffc_params_validate_unverifiable_g(ctx, mont, p, q, params->g,
-                                               tmp, res))
+        && !ossl_ffc_params_validate_unverifiable_g(ctx, mont, p, q, params->g,
+                                                    tmp, res))
         goto err;
 
     /*
@@ -777,7 +778,8 @@ g_only:
         }
         if (params->p == NULL || params->q == NULL || params->g == NULL)
             goto err;
-        if (!ffc_params_set_validate_params(params, seed, seedlen, pcounter))
+        if (!ossl_ffc_params_set_validate_params(params, seed, seedlen,
+                                                 pcounter))
             goto err;
         params->h = hret;
     }
@@ -801,9 +803,10 @@ err:
 }
 
 /* Note this function is only used for verification in fips mode */
-int ffc_params_FIPS186_2_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
-                                    int mode, int type, size_t L, size_t N,
-                                    int *res, BN_GENCB *cb)
+int ossl_ffc_params_FIPS186_2_gen_verify(OSSL_LIB_CTX *libctx,
+                                         FFC_PARAMS *params, int mode, int type,
+                                         size_t L, size_t N, int *res,
+                                         BN_GENCB *cb)
 {
     int ok = FFC_PARAM_RET_STATUS_FAILED;
     unsigned char seed[SHA256_DIGEST_LENGTH];
@@ -840,7 +843,7 @@ int ffc_params_FIPS186_2_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
     if (md == NULL)
         goto err;
     if (N == 0)
-        N = EVP_MD_size(md) * 8;
+        N = EVP_MD_get_size(md) * 8;
     qsize = N >> 3;
 
     /*
@@ -969,7 +972,7 @@ int ffc_params_FIPS186_2_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
         }
     }
     /* If validating p & q only then skip the g validation test */
-    if ((flags & FFC_PARAM_FLAG_VALIDATE_ALL) == FFC_PARAM_FLAG_VALIDATE_PQ)
+    if ((flags & FFC_PARAM_FLAG_VALIDATE_PQG) == FFC_PARAM_FLAG_VALIDATE_PQ)
         goto pass;
 g_only:
     if ((mont = BN_MONT_CTX_new()) == NULL)
@@ -988,8 +991,9 @@ g_only:
         if (!generate_unverifiable_g(ctx, mont, g, tmp, p, r0, test, &hret))
             goto err;
     } else if (((flags & FFC_PARAM_FLAG_VALIDATE_G) != 0)
-               && !ffc_params_validate_unverifiable_g(ctx, mont, p, q,
-                                                      params->g, tmp, res)) {
+               && !ossl_ffc_params_validate_unverifiable_g(ctx, mont, p, q,
+                                                           params->g, tmp,
+                                                           res)) {
         goto err;
     }
 
@@ -1011,7 +1015,7 @@ g_only:
         }
         if (params->p == NULL || params->q == NULL || params->g == NULL)
             goto err;
-        if (!ffc_params_set_validate_params(params, seed, qsize, pcounter))
+        if (!ossl_ffc_params_set_validate_params(params, seed, qsize, pcounter))
             goto err;
         params->h = hret;
     }
@@ -1029,21 +1033,21 @@ err:
     return ok;
 }
 
-int ffc_params_FIPS186_4_generate(OPENSSL_CTX *libctx, FFC_PARAMS *params,
-                                  int type, size_t L, size_t N,
-                                  int *res, BN_GENCB *cb)
+int ossl_ffc_params_FIPS186_4_generate(OSSL_LIB_CTX *libctx, FFC_PARAMS *params,
+                                       int type, size_t L, size_t N,
+                                       int *res, BN_GENCB *cb)
 {
-    return ffc_params_FIPS186_4_gen_verify(libctx, params,
-                                           FFC_PARAM_MODE_GENERATE,
-                                           type, L, N, res, cb);
+    return ossl_ffc_params_FIPS186_4_gen_verify(libctx, params,
+                                                FFC_PARAM_MODE_GENERATE,
+                                                type, L, N, res, cb);
 }
 
 /* This should no longer be used in FIPS mode */
-int ffc_params_FIPS186_2_generate(OPENSSL_CTX *libctx, FFC_PARAMS *params,
-                                  int type, size_t L, size_t N,
-                                  int *res, BN_GENCB *cb)
+int ossl_ffc_params_FIPS186_2_generate(OSSL_LIB_CTX *libctx, FFC_PARAMS *params,
+                                       int type, size_t L, size_t N,
+                                       int *res, BN_GENCB *cb)
 {
-    return ffc_params_FIPS186_2_gen_verify(libctx, params,
-                                           FFC_PARAM_MODE_GENERATE,
-                                           type, L, N, res, cb);
+    return ossl_ffc_params_FIPS186_2_gen_verify(libctx, params,
+                                                FFC_PARAM_MODE_GENERATE,
+                                                type, L, N, res, cb);
 }

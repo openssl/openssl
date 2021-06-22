@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -27,14 +27,16 @@ static void provider_free(OSSL_PROVIDER *prov)
     OSSL_PROVIDER_unload(prov);
 }
 
-int app_provider_load(OPENSSL_CTX *libctx, const char *provider_name)
+int app_provider_load(OSSL_LIB_CTX *libctx, const char *provider_name)
 {
     OSSL_PROVIDER *prov;
 
     prov = OSSL_PROVIDER_load(libctx, provider_name);
     if (prov == NULL) {
-        opt_printf_stderr("%s: unable to load provider %s\n",
+        opt_printf_stderr("%s: unable to load provider %s\n"
+                          "Hint: use -provider-path option or OPENSSL_MODULES environment variable.\n",
                           opt_getprog(), provider_name);
+        ERR_print_errors(bio_err);
         return 0;
     }
     if (app_providers == NULL)
@@ -70,6 +72,8 @@ int opt_provider(int opt)
         return app_provider_load(app_get0_libctx(), opt_arg());
     case OPT_PROV_PROVIDER_PATH:
         return opt_provider_path(opt_arg());
+    case OPT_PROV_PROPQUERY:
+        return app_set_propq(opt_arg());
     }
     return 0;
 }

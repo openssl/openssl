@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2004, EdelKey Project. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -10,6 +10,9 @@
  * Originally written by Christophe Renou and Peter Sylvester,
  * for the EdelKey project.
  */
+
+/* SRP is deprecated, so we're going to have to use some deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <openssl/opensslconf.h>
 
@@ -187,7 +190,7 @@ static char *srp_create_user(char *user, char **srp_verifier,
 }
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_VERBOSE, OPT_CONFIG, OPT_NAME, OPT_SRPVFILE, OPT_ADD,
     OPT_DELETE, OPT_MODIFY, OPT_LIST, OPT_GN, OPT_USERINFO,
     OPT_PASSIN, OPT_PASSOUT, OPT_ENGINE, OPT_R_ENUM, OPT_PROV_ENUM
@@ -206,8 +209,8 @@ const OPTIONS srp_options[] = {
 #endif
 
     OPT_SECTION("Action"),
-    {"add", OPT_ADD, '-', "Add a user and srp verifier"},
-    {"modify", OPT_MODIFY, '-', "Modify the srp verifier of an existing user"},
+    {"add", OPT_ADD, '-', "Add a user and SRP verifier"},
+    {"modify", OPT_MODIFY, '-', "Modify the SRP verifier of an existing user"},
     {"delete", OPT_DELETE, '-', "Delete user from verifier file"},
     {"list", OPT_LIST, '-', "List users"},
 
@@ -301,8 +304,13 @@ int srp_main(int argc, char **argv)
             break;
         }
     }
+
+    /* Optional parameters are usernames. */
     argc = opt_num_rest();
     argv = opt_rest();
+
+    if (!app_RAND_load())
+        goto end;
 
     if (srpvfile != NULL && configfile != NULL) {
         BIO_printf(bio_err,
@@ -336,10 +344,7 @@ int srp_main(int argc, char **argv)
         if (configfile == NULL)
             configfile = default_config_file;
 
-        if (verbose)
-            BIO_printf(bio_err, "Using configuration from %s\n",
-                       configfile);
-        conf = app_load_config(configfile);
+        conf = app_load_config_verbose(configfile, verbose);
         if (conf == NULL)
             goto end;
         if (configfile != default_config_file && !app_load_modules(conf))
@@ -374,8 +379,10 @@ int srp_main(int argc, char **argv)
                    srpvfile);
 
     db = load_index(srpvfile, NULL);
-    if (db == NULL)
+    if (db == NULL) {
+        BIO_printf(bio_err, "Problem with index file: %s (could not load/parse file)\n", srpvfile);
         goto end;
+    }
 
     /* Lets check some fields */
     for (i = 0; i < sk_OPENSSL_PSTRING_num(db->db->data); i++) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -9,7 +9,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "cmp_testlib.h"
+#include "helpers/cmp_testlib.h"
 
 #include <openssl/x509_vfy.h>
 
@@ -143,7 +143,7 @@ static int execute_CTX_print_errors_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
         res = 0;
 
 # ifndef OPENSSL_NO_STDIO
-    CMPerr(0, CMP_R_MULTIPLE_SAN_SOURCES);
+    ERR_raise(ERR_LIB_CMP, CMP_R_MULTIPLE_SAN_SOURCES);
     OSSL_CMP_CTX_print_errors(ctx); /* should print above error to STDERR */
 # endif
 
@@ -153,13 +153,13 @@ static int execute_CTX_print_errors_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
     if (!TEST_true(ctx->log_cb == msg_total_size_log_cb)) {
         res = 0;
     } else {
-        CMPerr(0, CMP_R_INVALID_ARGS);
+        ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ARGS);
         base_err_msg_size = strlen("INVALID_ARGS");
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         base_err_msg_size += strlen("NULL_ARGUMENT");
         expected_size = base_err_msg_size;
-        ossl_cmp_add_error_data("data1"); /* should prepend separator " : " */
-        expected_size += strlen(" : " "data1");
+        ossl_cmp_add_error_data("data1"); /* should prepend separator ":" */
+        expected_size += strlen(":" "data1");
         ossl_cmp_add_error_data("data2"); /* should prepend separator " : " */
         expected_size += strlen(" : " "data2");
         ossl_cmp_add_error_line("new line"); /* should prepend separator "\n" */
@@ -168,8 +168,8 @@ static int execute_CTX_print_errors_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
         if (!TEST_int_eq(msg_total_size, expected_size))
             res = 0;
 
-        CMPerr(0, CMP_R_INVALID_ARGS);
-        base_err_msg_size = strlen("INVALID_ARGS") + strlen(" : ");
+        ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ARGS);
+        base_err_msg_size = strlen("INVALID_ARGS") + strlen(":");
         expected_size = base_err_msg_size;
         while (expected_size < 4096) { /* force split */
             ERR_add_error_txt(STR_SEP, max_str_literal);
@@ -498,7 +498,7 @@ static X509_STORE *X509_STORE_new_1(void)
 
 #define RET_IF_NULL_ARG(ctx, ret) \
     if (ctx == NULL) { \
-        CMPerr(0, CMP_R_NULL_ARGUMENT); \
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT); \
         return ret; \
     }
 
@@ -717,9 +717,8 @@ void cleanup_tests(void)
     return;
 }
 
-DEFINE_SET_GET_ARG_FN(set, get, option, 16, int)
-/* option == OSSL_CMP_OPT_IGNORE_KEYUSAGE */
-DEFINE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set, get, 0, option_16, int, -1, IS_0, \
+DEFINE_SET_GET_ARG_FN(set, get, option, 35, int) /* OPT_IGNORE_KEYUSAGE */
+DEFINE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set, get, 0, option_35, int, -1, IS_0, \
                          1 /* true */, DROP)
 
 DEFINE_SET_CB_TEST(log_cb)
@@ -792,7 +791,7 @@ int setup_tests(void)
     ADD_TEST(test_CTX_reinit);
 
     /* various CMP options: */
-    ADD_TEST(test_CTX_set_get_option_16);
+    ADD_TEST(test_CTX_set_get_option_35);
     /* CMP-specific callback for logging and outputting the error queue: */
     ADD_TEST(test_CTX_set_get_log_cb);
     /*
@@ -874,6 +873,5 @@ int setup_tests(void)
     ADD_TEST(test_CTX_set1_get0_transactionID);
     ADD_TEST(test_CTX_set1_get0_senderNonce);
     ADD_TEST(test_CTX_set1_get0_recipNonce);
-    /* ossl_cmp_build_cert_chain() is tested in cmp_protect.c */
     return 1;
 }

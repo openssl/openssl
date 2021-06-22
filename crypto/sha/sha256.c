@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -51,34 +51,6 @@ int SHA256_Init(SHA256_CTX *c)
     c->h[7] = 0x5be0cd19UL;
     c->md_len = SHA256_DIGEST_LENGTH;
     return 1;
-}
-
-unsigned char *SHA224(const unsigned char *d, size_t n, unsigned char *md)
-{
-    SHA256_CTX c;
-    static unsigned char m[SHA224_DIGEST_LENGTH];
-
-    if (md == NULL)
-        md = m;
-    SHA224_Init(&c);
-    SHA256_Update(&c, d, n);
-    SHA256_Final(md, &c);
-    OPENSSL_cleanse(&c, sizeof(c));
-    return md;
-}
-
-unsigned char *SHA256(const unsigned char *d, size_t n, unsigned char *md)
-{
-    SHA256_CTX c;
-    static unsigned char m[SHA256_DIGEST_LENGTH];
-
-    if (md == NULL)
-        md = m;
-    SHA256_Init(&c);
-    SHA256_Update(&c, d, n);
-    SHA256_Final(md, &c);
-    OPENSSL_cleanse(&c, sizeof(c));
-    return md;
 }
 
 int SHA224_Update(SHA256_CTX *c, const void *data, size_t len)

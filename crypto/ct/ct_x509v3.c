@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -75,7 +75,7 @@ static STACK_OF(SCT) *ocsp_ext_d2i_SCT_LIST(STACK_OF(SCT) **a,
 }
 
 /* Handlers for X509v3/OCSP Certificate Transparency extensions */
-const X509V3_EXT_METHOD v3_ct_scts[3] = {
+const X509V3_EXT_METHOD ossl_v3_ct_scts[3] = {
     /* X509v3 extension in certificates that contains SCTs */
     { NID_ct_precert_scts, 0, NULL,
     NULL, (X509V3_EXT_FREE)SCT_LIST_free,

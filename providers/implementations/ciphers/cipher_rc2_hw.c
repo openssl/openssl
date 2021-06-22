@@ -32,7 +32,7 @@ static const PROV_CIPHER_HW rc2_##mode = {                                     \
     cipher_hw_rc2_initkey,                                                     \
     cipher_hw_rc2_##mode##_cipher                                              \
 };                                                                             \
-const PROV_CIPHER_HW *PROV_CIPHER_HW_rc2_##mode(size_t keybits)                \
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_rc2_##mode(size_t keybits)           \
 {                                                                              \
     return &rc2_##mode;                                                        \
 }

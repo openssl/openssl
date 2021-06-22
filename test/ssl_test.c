@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,13 +15,13 @@
 #include <openssl/ssl.h>
 #include <openssl/provider.h>
 
-#include "handshake_helper.h"
-#include "ssl_test_ctx.h"
+#include "helpers/handshake.h"
+#include "helpers/ssl_test_ctx.h"
 #include "testutil.h"
 
 static CONF *conf = NULL;
 static OSSL_PROVIDER *defctxnull = NULL, *thisprov = NULL;
-static OPENSSL_CTX *libctx = NULL;
+static OSSL_LIB_CTX *libctx = NULL;
 
 /* Currently the section names are of the form test-<number>, e.g. test-15. */
 #define MAX_TESTCASE_NAME_LENGTH 100
@@ -408,26 +408,31 @@ static int test_handshake(int idx)
 
 #ifndef OPENSSL_NO_DTLS
     if (test_ctx->method == SSL_TEST_METHOD_DTLS) {
-        server_ctx = SSL_CTX_new_with_libctx(libctx, NULL, DTLS_server_method());
-        if (!TEST_true(SSL_CTX_set_max_proto_version(server_ctx, 0)))
+        server_ctx = SSL_CTX_new_ex(libctx, NULL, DTLS_server_method());
+        if (!TEST_true(SSL_CTX_set_options(server_ctx,
+                        SSL_OP_ALLOW_CLIENT_RENEGOTIATION))
+                || !TEST_true(SSL_CTX_set_max_proto_version(server_ctx, 0)))
             goto err;
         if (test_ctx->extra.server.servername_callback !=
             SSL_TEST_SERVERNAME_CB_NONE) {
             if (!TEST_ptr(server2_ctx =
-                            SSL_CTX_new_with_libctx(libctx, NULL,
-                                                    DTLS_server_method())))
+                            SSL_CTX_new_ex(libctx, NULL, DTLS_server_method()))
+                    || !TEST_true(SSL_CTX_set_options(server2_ctx,
+                            SSL_OP_ALLOW_CLIENT_RENEGOTIATION)))
                 goto err;
         }
-        client_ctx = SSL_CTX_new_with_libctx(libctx, NULL, DTLS_client_method());
+        client_ctx = SSL_CTX_new_ex(libctx, NULL, DTLS_client_method());
         if (!TEST_true(SSL_CTX_set_max_proto_version(client_ctx, 0)))
             goto err;
         if (test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RESUME) {
-            resume_server_ctx = SSL_CTX_new_with_libctx(libctx, NULL,
-                                                        DTLS_server_method());
-            if (!TEST_true(SSL_CTX_set_max_proto_version(resume_server_ctx, 0)))
+            resume_server_ctx = SSL_CTX_new_ex(libctx, NULL,
+                                               DTLS_server_method());
+            if (!TEST_true(SSL_CTX_set_max_proto_version(resume_server_ctx, 0))
+                    || !TEST_true(SSL_CTX_set_options(resume_server_ctx,
+                            SSL_OP_ALLOW_CLIENT_RENEGOTIATION)))
                 goto err;
-            resume_client_ctx = SSL_CTX_new_with_libctx(libctx, NULL,
-                                                        DTLS_client_method());
+            resume_client_ctx = SSL_CTX_new_ex(libctx, NULL,
+                                               DTLS_client_method());
             if (!TEST_true(SSL_CTX_set_max_proto_version(resume_client_ctx, 0)))
                 goto err;
             if (!TEST_ptr(resume_server_ctx)
@@ -437,31 +442,48 @@ static int test_handshake(int idx)
     }
 #endif
     if (test_ctx->method == SSL_TEST_METHOD_TLS) {
-        server_ctx = SSL_CTX_new_with_libctx(libctx, NULL, TLS_server_method());
-        if (!TEST_true(SSL_CTX_set_max_proto_version(server_ctx, 0)))
+#if !defined(OPENSSL_NO_TLS1_3) \
+    && defined(OPENSSL_NO_EC) \
+    && defined(OPENSSL_NO_DH)
+        /* Without ec or dh there are no built-in groups for TLSv1.3 */
+        int maxversion = TLS1_2_VERSION;
+#else
+        int maxversion = 0;
+#endif
+
+        server_ctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method());
+        if (!TEST_true(SSL_CTX_set_max_proto_version(server_ctx, maxversion))
+                || !TEST_true(SSL_CTX_set_options(server_ctx,
+                            SSL_OP_ALLOW_CLIENT_RENEGOTIATION)))
             goto err;
         /* SNI on resumption isn't supported/tested yet. */
         if (test_ctx->extra.server.servername_callback !=
             SSL_TEST_SERVERNAME_CB_NONE) {
             if (!TEST_ptr(server2_ctx =
-                            SSL_CTX_new_with_libctx(libctx, NULL,
-                                                    TLS_server_method())))
+                            SSL_CTX_new_ex(libctx, NULL, TLS_server_method()))
+                    || !TEST_true(SSL_CTX_set_options(server2_ctx,
+                            SSL_OP_ALLOW_CLIENT_RENEGOTIATION)))
                 goto err;
-            if (!TEST_true(SSL_CTX_set_max_proto_version(server2_ctx, 0)))
+            if (!TEST_true(SSL_CTX_set_max_proto_version(server2_ctx,
+                                                         maxversion)))
                 goto err;
         }
-        client_ctx = SSL_CTX_new_with_libctx(libctx, NULL, TLS_client_method());
-        if (!TEST_true(SSL_CTX_set_max_proto_version(client_ctx, 0)))
+        client_ctx = SSL_CTX_new_ex(libctx, NULL, TLS_client_method());
+        if (!TEST_true(SSL_CTX_set_max_proto_version(client_ctx, maxversion)))
             goto err;
 
         if (test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RESUME) {
-            resume_server_ctx = SSL_CTX_new_with_libctx(libctx, NULL,
-                                                        TLS_server_method());
-            if (!TEST_true(SSL_CTX_set_max_proto_version(resume_server_ctx, 0)))
+            resume_server_ctx = SSL_CTX_new_ex(libctx, NULL,
+                                               TLS_server_method());
+            if (!TEST_true(SSL_CTX_set_max_proto_version(resume_server_ctx,
+                                                         maxversion))
+                    || !TEST_true(SSL_CTX_set_options(resume_server_ctx,
+                            SSL_OP_ALLOW_CLIENT_RENEGOTIATION)))
                 goto err;
-            resume_client_ctx = SSL_CTX_new_with_libctx(libctx, NULL,
-                                                        TLS_client_method());
-            if (!TEST_true(SSL_CTX_set_max_proto_version(resume_client_ctx, 0)))
+            resume_client_ctx = SSL_CTX_new_ex(libctx, NULL,
+                                               TLS_client_method());
+            if (!TEST_true(SSL_CTX_set_max_proto_version(resume_client_ctx,
+                                                         maxversion)))
                 goto err;
             if (!TEST_ptr(resume_server_ctx)
                     || !TEST_ptr(resume_client_ctx))
@@ -532,7 +554,7 @@ int setup_tests(void)
         return 0;
     }
 
-    if (!test_get_libctx(&libctx, &defctxnull, &thisprov, 1, USAGE))
+    if (!test_arg_libctx(&libctx, &defctxnull, &thisprov, 1, USAGE))
         return 0;
 
     ADD_ALL_TESTS(test_handshake, (int)num_tests);
@@ -544,5 +566,5 @@ void cleanup_tests(void)
     NCONF_free(conf);
     OSSL_PROVIDER_unload(defctxnull);
     OSSL_PROVIDER_unload(thisprov);
-    OPENSSL_CTX_free(libctx);
+    OSSL_LIB_CTX_free(libctx);
 }

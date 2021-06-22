@@ -34,8 +34,6 @@ The type of padding to be used. Its value can be one of the following:
 
 =item "pkcs1" (B<OSSL_PKEY_RSA_PAD_MODE_PKCSV15>) 
 
-=item "sslv23" (B<OSSL_PKEY_RSA_PAD_MODE_SSLV23>)
-
 =item "x931" (B<OSSL_PKEY_RSA_PAD_MODE_X931>)
 
 =item "pss" (B<OSSL_PKEY_RSA_PAD_MODE_PSS>) 
@@ -102,7 +100,7 @@ L<provider-signature(7)>,
 
 =head1 COPYRIGHT
 
-Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2017, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -468,8 +468,8 @@ static const uint32_t X2[256] = {
         (Y) = (TMP2) ^ rotr32((TMP) ^ (TMP2), 16);  \
     } while(0)
 
-void aria_encrypt(const unsigned char *in, unsigned char *out,
-                  const ARIA_KEY *key)
+void ossl_aria_encrypt(const unsigned char *in, unsigned char *out,
+                       const ARIA_KEY *key)
 {
     register uint32_t reg0, reg1, reg2, reg3;
     int Nr;
@@ -535,8 +535,8 @@ void aria_encrypt(const unsigned char *in, unsigned char *out,
     PUT_U32_BE(out, 3, reg3);
 }
 
-int aria_set_encrypt_key(const unsigned char *userKey, const int bits,
-                         ARIA_KEY *key)
+int ossl_aria_set_encrypt_key(const unsigned char *userKey, const int bits,
+                              ARIA_KEY *key)
 {
     register uint32_t reg0, reg1, reg2, reg3;
     uint32_t w0[4], w1[4], w2[4], w3[4];
@@ -667,8 +667,8 @@ int aria_set_encrypt_key(const unsigned char *userKey, const int bits,
     return 0;
 }
 
-int aria_set_decrypt_key(const unsigned char *userKey, const int bits,
-                         ARIA_KEY *key)
+int ossl_aria_set_decrypt_key(const unsigned char *userKey, const int bits,
+                              ARIA_KEY *key)
 {
     ARIA_u128 *rk_head;
     ARIA_u128 *rk_tail;
@@ -676,7 +676,7 @@ int aria_set_decrypt_key(const unsigned char *userKey, const int bits,
     register uint32_t reg0, reg1, reg2, reg3;
     uint32_t s0, s1, s2, s3;
 
-    const int r = aria_set_encrypt_key(userKey, bits, key);
+    const int r = ossl_aria_set_encrypt_key(userKey, bits, key);
 
     if (r != 0) {
         return r;
@@ -1106,8 +1106,8 @@ static void do_encrypt(unsigned char *o, const unsigned char *pin,
  * Encrypt a single block
  * in and out can overlap
  */
-void aria_encrypt(const unsigned char *in, unsigned char *out,
-                  const ARIA_KEY *key)
+void ossl_aria_encrypt(const unsigned char *in, unsigned char *out,
+                       const ARIA_KEY *key)
 {
     assert(in != NULL && out != NULL && key != NULL);
     do_encrypt(out, in, key->rounds, key->rd_key);
@@ -1119,8 +1119,8 @@ void aria_encrypt(const unsigned char *in, unsigned char *out,
  * We short circuit execution of the last two
  * or four rotations based on the key size.
  */
-int aria_set_encrypt_key(const unsigned char *userKey, const int bits,
-                         ARIA_KEY *key)
+int ossl_aria_set_encrypt_key(const unsigned char *userKey, const int bits,
+                              ARIA_KEY *key)
 {
     const ARIA_u128 *ck1, *ck2, *ck3;
     ARIA_u128 kr, w0, w1, w2, w3;
@@ -1192,11 +1192,11 @@ int aria_set_encrypt_key(const unsigned char *userKey, const int bits,
 /*
  * Expand the cipher key into the decryption key schedule.
  */
-int aria_set_decrypt_key(const unsigned char *userKey, const int bits,
-                         ARIA_KEY *key)
+int ossl_aria_set_decrypt_key(const unsigned char *userKey, const int bits,
+                              ARIA_KEY *key)
 {
     ARIA_KEY ek;
-    const int r = aria_set_encrypt_key(userKey, bits, &ek);
+    const int r = ossl_aria_set_encrypt_key(userKey, bits, &ek);
     unsigned int i, rounds = ek.rounds;
 
     if (r == 0) {

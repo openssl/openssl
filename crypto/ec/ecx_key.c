@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,11 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
 #include <openssl/err.h>
 #include "crypto/ecx.h"
 
-ECX_KEY *ecx_key_new(OPENSSL_CTX *libctx, ECX_KEY_TYPE type, int haspubkey,
-                     const char *propq)
+ECX_KEY *ossl_ecx_key_new(OSSL_LIB_CTX *libctx, ECX_KEY_TYPE type, int haspubkey,
+                          const char *propq)
 {
     ECX_KEY *ret = OPENSSL_zalloc(sizeof(*ret));
 
@@ -39,7 +40,6 @@ ECX_KEY *ecx_key_new(OPENSSL_CTX *libctx, ECX_KEY_TYPE type, int haspubkey,
 
     if (propq != NULL) {
         ret->propq = OPENSSL_strdup(propq);
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         if (ret->propq == NULL)
             goto err;
     }
@@ -54,7 +54,7 @@ err:
     return NULL;
 }
 
-void ecx_key_free(ECX_KEY *key)
+void ossl_ecx_key_free(ECX_KEY *key)
 {
     int i;
 
@@ -62,7 +62,7 @@ void ecx_key_free(ECX_KEY *key)
         return;
 
     CRYPTO_DOWN_REF(&key->references, &i, key->lock);
-    REF_PRINT_COUNT("ECX_KEY", r);
+    REF_PRINT_COUNT("ECX_KEY", key);
     if (i > 0)
         return;
     REF_ASSERT_ISNT(i < 0);
@@ -73,7 +73,12 @@ void ecx_key_free(ECX_KEY *key)
     OPENSSL_free(key);
 }
 
-int ecx_key_up_ref(ECX_KEY *key)
+void ossl_ecx_key_set0_libctx(ECX_KEY *key, OSSL_LIB_CTX *libctx)
+{
+    key->libctx = libctx;
+}
+
+int ossl_ecx_key_up_ref(ECX_KEY *key)
 {
     int i;
 
@@ -85,7 +90,7 @@ int ecx_key_up_ref(ECX_KEY *key)
     return ((i > 1) ? 1 : 0);
 }
 
-unsigned char *ecx_key_allocate_privkey(ECX_KEY *key)
+unsigned char *ossl_ecx_key_allocate_privkey(ECX_KEY *key)
 {
     key->privkey = OPENSSL_secure_zalloc(key->keylen);
 

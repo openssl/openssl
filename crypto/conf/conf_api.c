@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,6 +15,7 @@
 #include <string.h>
 #include <openssl/conf.h>
 #include <openssl/conf_api.h>
+#include "conf_local.h"
 
 static void value_free_hash(const CONF_VALUE *a, LHASH_OF(CONF_VALUE) *conf);
 static void value_free_stack_doall(CONF_VALUE *a);
@@ -27,7 +28,7 @@ CONF_VALUE *_CONF_get_section(const CONF *conf, const char *section)
         return NULL;
     vv.name = NULL;
     vv.section = (char *)section;
-    return lh_CONF_VALUE_retrieve(conf->data, &vv);
+    return conf->data != NULL ? lh_CONF_VALUE_retrieve(conf->data, &vv) : NULL;
 }
 
 STACK_OF(CONF_VALUE) *_CONF_get_section_values(const CONF *conf,
@@ -72,6 +73,8 @@ char *_CONF_get_string(const CONF *conf, const char *section,
         return NULL;
     if (conf == NULL)
         return ossl_safe_getenv(name);
+    if (conf->data == NULL)
+        return NULL;
     if (section != NULL) {
         vv.name = (char *)name;
         vv.section = (char *)section;
@@ -144,6 +147,7 @@ void _CONF_free_data(CONF *conf)
      * with
      */
 
+    OPENSSL_free(conf->includedir);
     lh_CONF_VALUE_doall(conf->data, value_free_stack_doall);
     lh_CONF_VALUE_free(conf->data);
 }

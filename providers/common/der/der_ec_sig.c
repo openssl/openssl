@@ -12,20 +12,20 @@
 #include "prov/der_ec.h"
 
 /* Aliases so we can have a uniform MD_CASE */
-#define der_oid_id_ecdsa_with_sha1   der_oid_ecdsa_with_SHA1
-#define der_oid_id_ecdsa_with_sha224 der_oid_ecdsa_with_SHA224
-#define der_oid_id_ecdsa_with_sha256 der_oid_ecdsa_with_SHA256
-#define der_oid_id_ecdsa_with_sha384 der_oid_ecdsa_with_SHA384
-#define der_oid_id_ecdsa_with_sha512 der_oid_ecdsa_with_SHA512
+#define ossl_der_oid_id_ecdsa_with_sha1   ossl_der_oid_ecdsa_with_SHA1
+#define ossl_der_oid_id_ecdsa_with_sha224 ossl_der_oid_ecdsa_with_SHA224
+#define ossl_der_oid_id_ecdsa_with_sha256 ossl_der_oid_ecdsa_with_SHA256
+#define ossl_der_oid_id_ecdsa_with_sha384 ossl_der_oid_ecdsa_with_SHA384
+#define ossl_der_oid_id_ecdsa_with_sha512 ossl_der_oid_ecdsa_with_SHA512
 
 #define MD_CASE(name)                                                   \
     case NID_##name:                                                    \
-        precompiled = der_oid_id_ecdsa_with_##name;                     \
-        precompiled_sz = sizeof(der_oid_id_ecdsa_with_##name);          \
+        precompiled = ossl_der_oid_id_ecdsa_with_##name;                \
+        precompiled_sz = sizeof(ossl_der_oid_id_ecdsa_with_##name);     \
         break;
 
-int DER_w_algorithmIdentifier_ECDSA_with_MD(WPACKET *pkt, int cont,
-                                            EC_KEY *ec, int mdnid)
+int ossl_DER_w_algorithmIdentifier_ECDSA_with_MD(WPACKET *pkt, int cont,
+                                                 EC_KEY *ec, int mdnid)
 {
     const unsigned char *precompiled = NULL;
     size_t precompiled_sz = 0;
@@ -44,8 +44,8 @@ int DER_w_algorithmIdentifier_ECDSA_with_MD(WPACKET *pkt, int cont,
         return 0;
     }
 
-    return DER_w_begin_sequence(pkt, cont)
+    return ossl_DER_w_begin_sequence(pkt, cont)
         /* No parameters (yet?) */
-        && DER_w_precompiled(pkt, -1, precompiled, precompiled_sz)
-        && DER_w_end_sequence(pkt, cont);
+        && ossl_DER_w_precompiled(pkt, -1, precompiled, precompiled_sz)
+        && ossl_DER_w_end_sequence(pkt, cont);
 }

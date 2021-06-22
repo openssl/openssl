@@ -32,11 +32,11 @@ OSSL_CRMF_MSGS_verify_popo
 
  int OSSL_CRMF_MSG_create_popo(int meth, OSSL_CRMF_MSG *crm,
                                EVP_PKEY *pkey, const EVP_MD *digest,
-                               OPENSSL_CTX *libctx, const char *propq);
+                               OSSL_LIB_CTX *libctx, const char *propq);
 
  int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
                                 int rid, int acceptRAVerified,
-                                OPENSSL_CTX *libctx, const char *propq);
+                                OSSL_LIB_CTX *libctx, const char *propq);
 
 =head1 DESCRIPTION
 

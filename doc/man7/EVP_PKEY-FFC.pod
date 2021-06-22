@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-EVP_PKEY-FFC - EVP_PKEY DSA and DH shared FFC parameters.
+EVP_PKEY-FFC - EVP_PKEY DSA and DH/DHX shared FFC parameters.
 
 =head1 DESCRIPTION
 
@@ -11,9 +11,9 @@ cryptography using finite field mathematics. DSA is an example of FFC and
 Diffie-Hellman key establishment algorithms specified in SP800-56A can also be
 implemented as FFC.
 
-The B<DSA> and B<DH> keytypes are implemented in OpenSSL's default and FIPS
-providers.
-The implementations support the basic DSA and DH keys, containing the public
+The B<DSA>, B<DH> and B<DHX> keytypes are implemented in OpenSSL's default and
+FIPS providers.
+The implementations support the basic DSA, DH and DHX keys, containing the public
 and private keys I<pub> and I<priv> as well as the three main domain parameters
 I<p>, I<q> and I<g>.
 
@@ -26,10 +26,14 @@ For B<DH> the I<seed> and I<pcounter> can be stored in ASN1 data
 (but the I<gindex> is not). For B<DSA> however, these fields are not stored in
 the ASN1 data so they need to be stored externally if validation is required.
 
+The B<DH> key type uses PKCS#3 format which saves p and g, but not the 'q' value.
+The B<DHX> key type uses X9.42 format which saves the value of 'q' and this
+must be used for FIPS186-4.
+
 =head2 FFC parameters
 
 In addition to the common parameters that all keytypes should support (see
-L<provider-keymgmt(7)/Common parameters>), the B<DSA> and B<DH> keytype
+L<provider-keymgmt(7)/Common parameters>), the B<DSA>, B<DH> and B<DHX> keytype
 implementations support the following.
 
 =over 4
@@ -42,17 +46,29 @@ The public key value.
 
 The private key value.
 
+=back
+
+=head2 FFC DSA, DH and DHX domain parameters
+
+=over 4
+
 =item "p" (B<OSSL_PKEY_PARAM_FFC_P>) <unsigned integer>
 
 A DSA or Diffie-Hellman prime "p" value.
 
-=item "q" (B<OSSL_PKEY_PARAM_FFC_Q>) <unsigned integer>
-
-A DSA or Diffie-Hellman prime "q" value.
-
 =item "g" (B<OSSL_PKEY_PARAM_FFC_G>) <unsigned integer>
 
 A DSA or Diffie-Hellman generator "g" value.
+
+=back
+
+=head2 FFC DSA and DHX domain parameters
+
+=over 4
+
+=item "q" (B<OSSL_PKEY_PARAM_FFC_Q>) <unsigned integer>
+
+A DSA or Diffie-Hellman prime "q" value.
 
 =item "seed" (B<OSSL_PKEY_PARAM_FFC_SEED>) <octet string>
 
@@ -84,15 +100,32 @@ satisfies g = h^j mod p (where g != 1 and "j" is the cofactor).
 
 An optional informational cofactor parameter that should equal to (p - 1) / q.
 
+=item "validate-pq" (B<OSSL_PKEY_PARAM_FFC_VALIDATE_PQ>) <unsigned integer>
+
+=item "validate-g" (B<OSSL_PKEY_PARAM_FFC_VALIDATE_G>) <unsigned integer>
+
+These boolean values are used during FIPS186-4 or FIPS186-2 key validation checks
+(See L<EVP_PKEY_param_check(3)>) to select validation options. By default
+I<validate-pq> and I<validate-g> are both set to 1 to check that p,q and g are
+valid. Either of these may be set to 0 to skip a test, which is mainly useful
+for testing purposes.
+
+=item "validate-legacy" (B<OSSL_PKEY_PARAM_FFC_VALIDATE_LEGACY>) <unsigned integer>
+
+This boolean value is used during key validation checks
+(See L<EVP_PKEY_param_check(3)>) to select the validation type. The default
+value of 0 selects FIPS186-4 validation. Setting this value to 1 selects
+FIPS186-2 validation.
+
 =back
 
 =head2 FFC key generation parameters
 
-The following key generation types are available for DSA and DH algorithms:
+The following key generation types are available for DSA and DHX algorithms:
 
 =over 4
 
-=item "type" (B<OSSL_PKEY_PARAM_FFC_TYPE>) <utf8_string>
+=item "type" (B<OSSL_PKEY_PARAM_FFC_TYPE>) <UTF8 string>
 
 Sets the type of parameter generation. The shared valid values are:
 
@@ -100,7 +133,7 @@ Sets the type of parameter generation. The shared valid values are:
 
 =item "fips186_4"
 
-The current standard. This is the default value.
+The current standard.
 
 =item "fips186_2"
 
@@ -108,8 +141,8 @@ The old standard that should only be used for legacy purposes.
 
 =item "default"
 
-This is an alias to use the latest implemented standard.
-It is currently set to "fips186_4".
+This can choose one of "fips186_4" or "fips186_2" depending on other
+parameters set for parameter generation.
 
 =back
 
@@ -124,13 +157,13 @@ Sets the size (in bits) of the prime 'q'.
 For "fips186_4" this can be either 224 or 256.
 For "fips186_2" this has a size of 160.
 
-=item "digest" (B<OSSL_PKEY_PARAM_FFC_DIGEST>)  <utf8_string>
+=item "digest" (B<OSSL_PKEY_PARAM_FFC_DIGEST>)  <UTF8 string>
 
 Sets the Digest algorithm to be used as part of the Key Generation Function
 associated with the given Key Generation I<ctx>.
 This must also be set for key validation.
 
-=item "properties" (B<OSSL_PKEY_PARAM_FFC_DIGEST_PROPS>) <utf8_string>
+=item "properties" (B<OSSL_PKEY_PARAM_FFC_DIGEST_PROPS>) <UTF8 string>
 
 Sets properties to be used upon look up of the implementation for the selected
 Digest algorithm for the Key Generation Function associated with the given key
@@ -189,7 +222,7 @@ L<OSSL_PROVIDER-FIPS(7)>,
 
 =head1 COPYRIGHT
 
-Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

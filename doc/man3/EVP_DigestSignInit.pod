@@ -2,17 +2,16 @@
 
 =head1 NAME
 
-EVP_DigestSignInit_with_libctx, EVP_DigestSignInit, EVP_DigestSignUpdate,
+EVP_DigestSignInit_ex, EVP_DigestSignInit, EVP_DigestSignUpdate,
 EVP_DigestSignFinal, EVP_DigestSign - EVP signing functions
 
 =head1 SYNOPSIS
 
  #include <openssl/evp.h>
 
- int EVP_DigestSignInit_with_libctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
-                                    const char *mdname,
-                                    OPENSSL_CTX *libctx, const char *props,
-                                    EVP_PKEY *pkey);
+ int EVP_DigestSignInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
+                           const char *mdname, OSSL_LIB_CTX *libctx,
+                           const char *props, EVP_PKEY *pkey);
  int EVP_DigestSignInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                         const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey);
  int EVP_DigestSignUpdate(EVP_MD_CTX *ctx, const void *d, size_t cnt);
@@ -27,7 +26,7 @@ EVP_DigestSignFinal, EVP_DigestSign - EVP signing functions
 The EVP signature routines are a high-level interface to digital signatures.
 Input data is digested first before the signing takes place.
 
-EVP_DigestSignInit_with_libctx() sets up signing context I<ctx> to use a digest
+EVP_DigestSignInit_ex() sets up signing context I<ctx> to use a digest
 with the name I<mdname> and private key I<pkey>. The name of the digest to be
 used is passed to the provider of the signature algorithm in use. How that
 provider interprets the digest name is provider specific. The provider may
@@ -50,17 +49,17 @@ I<pctx> is not NULL, the EVP_PKEY_CTX of the signing operation will be written
 to I<*pctx>: this can be used to set alternative signing options. Note that any
 existing value in I<*pctx> is overwritten. The EVP_PKEY_CTX value returned must
 not be freed directly by the application if I<ctx> is not assigned an
-EVP_PKEY_CTX value before being passed to EVP_DigestSignInit_with_libctx()
-(which means the EVP_PKEY_CTX is created inside EVP_DigestSignInit_with_libctx()
+EVP_PKEY_CTX value before being passed to EVP_DigestSignInit_ex()
+(which means the EVP_PKEY_CTX is created inside EVP_DigestSignInit_ex()
 and it will be freed automatically when the EVP_MD_CTX is freed). If the
-EVP_PKEY_CTX to be used is created by EVP_DigestSignInit_with_libctx then it
-will use the B<OPENSSL_CTX> specified in I<libctx> and the property query string
+EVP_PKEY_CTX to be used is created by EVP_DigestSignInit_ex then it
+will use the B<OSSL_LIB_CTX> specified in I<libctx> and the property query string
 specified in I<props>.
 
 The digest I<mdname> may be NULL if the signing algorithm supports it. The
 I<props> argument can always be NULL.
 
-No B<EVP_PKEY_CTX> will be created by EVP_DigestSignInit_with_libctx() if the
+No B<EVP_PKEY_CTX> will be created by EVP_DigestSignInit_ex() if the
 passed I<ctx> has already been assigned one via L<EVP_MD_CTX_set_pkey_ctx(3)>.
 See also L<SM2(7)>.
 
@@ -110,7 +109,7 @@ Will ignore any digest provided.
 
 If RSA-PSS is used and restrictions apply then the digest must match.
 
-EVP_DigestSignInit() works in the same way as EVP_DigestSignInit_with_libctx()
+EVP_DigestSignInit() works in the same way as EVP_DigestSignInit_ex()
 except that the I<mdname> parameter will be inferred from the supplied
 digest I<type>, and I<props> will be NULL. Where supplied the ENGINE I<e> will
 be used for the signing and digest algorithm implementations. I<e> may be NULL.
@@ -119,8 +118,9 @@ EVP_DigestSignUpdate() hashes I<cnt> bytes of data at I<d> into the
 signature context I<ctx>. This function can be called several times on the
 same I<ctx> to include additional data.
 
-EVP_DigestSignFinal() signs the data in I<ctx> and places the signature in I<sig>.
-If I<sig> is NULL then the maximum size of the output buffer is written to
+Unless I<sig> is NULL EVP_DigestSignFinal() signs the data in I<ctx>
+and places the signature in I<sig>.
+Otherwise the maximum necessary size of the output buffer is written to
 the I<siglen> parameter. If I<sig> is not NULL then before the call the
 I<siglen> parameter should contain the length of the I<sig> buffer. If the
 call is successful the signature is written to I<sig> and the amount of data
@@ -165,9 +165,9 @@ Since only a copy of the digest context is ever finalized, the context must
 be cleaned up after use by calling EVP_MD_CTX_free() or a memory leak
 will occur.
 
-The use of EVP_PKEY_size() with these functions is discouraged because some
+The use of EVP_PKEY_get_size() with these functions is discouraged because some
 signature operations may have a signature length which depends on the
-parameters set. As a result EVP_PKEY_size() would have to return a value
+parameters set. As a result EVP_PKEY_get_size() would have to return a value
 which indicates the maximum possible signature for any set of parameters.
 
 =head1 SEE ALSO
@@ -184,13 +184,13 @@ L<RAND(7)>
 EVP_DigestSignInit(), EVP_DigestSignUpdate() and EVP_DigestSignFinal()
 were added in OpenSSL 1.0.0.
 
-EVP_DigestSignInit_with_libctx() was added in OpenSSL 3.0.
+EVP_DigestSignInit_ex() was added in OpenSSL 3.0.
 
 EVP_DigestSignUpdate() was converted from a macro to a function in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

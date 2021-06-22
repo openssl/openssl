@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,7 +18,7 @@ static int i2r_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *method,
                                  PKEY_USAGE_PERIOD *usage, BIO *out,
                                  int indent);
 
-const X509V3_EXT_METHOD v3_pkey_usage_period = {
+const X509V3_EXT_METHOD ossl_v3_pkey_usage_period = {
     NID_private_key_usage_period, 0, ASN1_ITEM_ref(PKEY_USAGE_PERIOD),
     0, 0, 0, 0,
     0, 0, 0, 0,

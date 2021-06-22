@@ -17,7 +17,7 @@ details from an application. If an application uses a BIO for its
 I/O it can transparently handle SSL connections, unencrypted network
 connections and file I/O.
 
-There are two type of BIO, a source/sink BIO and a filter BIO.
+There are two types of BIO, a source/sink BIO and a filter BIO.
 
 As its name implies a source/sink BIO is a source and/or sink of data,
 examples include a socket BIO and a file BIO.
@@ -31,7 +31,7 @@ BIO will encrypt data if it is being written to and decrypt data
 if it is being read from.
 
 BIOs can be joined together to form a chain (a single BIO is a chain
-with one component). A chain normally consist of one source/sink
+with one component). A chain normally consists of one source/sink
 BIO and one or more filter BIOs. Data read from or written to the
 first BIO then traverses the chain to the end (normally a source/sink
 BIO).
@@ -64,6 +64,7 @@ L<BIO_ctrl(3)>,
 L<BIO_f_base64(3)>, L<BIO_f_buffer(3)>,
 L<BIO_f_cipher(3)>, L<BIO_f_md(3)>,
 L<BIO_f_null(3)>, L<BIO_f_ssl(3)>,
+L<BIO_f_readbuffer(3)>,
 L<BIO_find_type(3)>, L<BIO_new(3)>,
 L<BIO_new_bio_pair(3)>,
 L<BIO_push(3)>, L<BIO_read_ex(3)>,
@@ -76,7 +77,7 @@ L<BIO_should_retry(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

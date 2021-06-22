@@ -16,8 +16,8 @@
  *
  * ret contains 0 on success, or error flags (see FFC_ERROR_PUBKEY_TOO_SMALL)
  */
-int ffc_validate_public_key_partial(const FFC_PARAMS *params,
-                                    const BIGNUM *pub_key, int *ret)
+int ossl_ffc_validate_public_key_partial(const FFC_PARAMS *params,
+                                         const BIGNUM *pub_key, int *ret)
 {
     int ok = 0;
     BIGNUM *tmp = NULL;
@@ -58,14 +58,14 @@ int ffc_validate_public_key_partial(const FFC_PARAMS *params,
 /*
  * See SP800-56Ar3 Section 5.6.2.3.1 : FFC Full public key validation.
  */
-int ffc_validate_public_key(const FFC_PARAMS *params, const BIGNUM *pub_key,
-                            int *ret)
+int ossl_ffc_validate_public_key(const FFC_PARAMS *params,
+                                 const BIGNUM *pub_key, int *ret)
 {
     int ok = 0;
     BIGNUM *tmp = NULL;
     BN_CTX *ctx = NULL;
 
-    if (!ffc_validate_public_key_partial(params, pub_key, ret))
+    if (!ossl_ffc_validate_public_key_partial(params, pub_key, ret))
         return 0;
 
     if (params->q != NULL) {
@@ -100,7 +100,8 @@ int ffc_validate_public_key(const FFC_PARAMS *params, const BIGNUM *pub_key,
  * is normally params->q but can be 2^N for approved safe prime groups.
  * Note: This assumes that the domain parameters are valid.
  */
-int ffc_validate_private_key(const BIGNUM *upper, const BIGNUM *priv, int *ret)
+int ossl_ffc_validate_private_key(const BIGNUM *upper, const BIGNUM *priv,
+                                  int *ret)
 {
     int ok = 0;
 

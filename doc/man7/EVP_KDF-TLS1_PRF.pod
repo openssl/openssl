@@ -80,10 +80,7 @@ and seed value "seed":
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
                                           "seed", (size_t)4);
  *p = OSSL_PARAM_construct_end();
- if (EVP_KDF_CTX_set_params(kctx, params) <= 0) {
-     error("EVP_KDF_CTX_set_params");
- }
- if (EVP_KDF_derive(kctx, out, sizeof(out)) <= 0) {
+ if (EVP_KDF_derive(kctx, out, sizeof(out), params) <= 0) {
      error("EVP_KDF_derive");
  }
  EVP_KDF_CTX_free(kctx);
@@ -103,7 +100,7 @@ L<EVP_KDF(3)/PARAMETERS>
 
 =head1 COPYRIGHT
 
-Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

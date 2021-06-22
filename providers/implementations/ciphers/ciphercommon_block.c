@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,11 +9,11 @@
 
 #include <assert.h>
 /* For SSL3_VERSION, TLS1_VERSION etc */
-#include <openssl/ssl.h>
+#include <openssl/prov_ssl.h>
 #include <openssl/rand.h>
+#include <openssl/proverr.h>
 #include "internal/constant_time.h"
 #include "ciphercommon_local.h"
-#include "prov/providercommonerr.h"
 
 /* Functions defined in ssl/tls_pad.c */
 int ssl3_cbc_remove_padding_and_mac(size_t *reclen,
@@ -22,7 +22,7 @@ int ssl3_cbc_remove_padding_and_mac(size_t *reclen,
                                     unsigned char **mac,
                                     int *alloced,
                                     size_t block_size, size_t mac_size,
-                                    OPENSSL_CTX *libctx);
+                                    OSSL_LIB_CTX *libctx);
 
 int tls1_cbc_remove_padding_and_mac(size_t *reclen,
                                     size_t origreclen,
@@ -31,7 +31,7 @@ int tls1_cbc_remove_padding_and_mac(size_t *reclen,
                                     int *alloced,
                                     size_t block_size, size_t mac_size,
                                     int aead,
-                                    OPENSSL_CTX *libctx);
+                                    OSSL_LIB_CTX *libctx);
 
 /*
  * Fills a single block of buffered data from the input, and returns the amount
@@ -53,8 +53,9 @@ int tls1_cbc_remove_padding_and_mac(size_t *reclen,
  * the remaining amount of data in *in. Returns the largest value <= *inlen
  * which is a multiple of the blocksize.
  */
-size_t fillblock(unsigned char *buf, size_t *buflen, size_t blocksize,
-                 const unsigned char **in, size_t *inlen)
+size_t ossl_cipher_fillblock(unsigned char *buf, size_t *buflen,
+                             size_t blocksize,
+                             const unsigned char **in, size_t *inlen)
 {
     size_t blockmask = ~(blocksize - 1);
     size_t bufremain = blocksize - *buflen;
@@ -76,8 +77,8 @@ size_t fillblock(unsigned char *buf, size_t *buflen, size_t blocksize,
  * Fills the buffer with trailing data from an encryption/decryption that didn't
  * fit into a full block.
  */
-int trailingdata(unsigned char *buf, size_t *buflen, size_t blocksize,
-                 const unsigned char **in, size_t *inlen)
+int ossl_cipher_trailingdata(unsigned char *buf, size_t *buflen, size_t blocksize,
+                             const unsigned char **in, size_t *inlen)
 {
     if (*inlen == 0)
         return 1;
@@ -95,7 +96,7 @@ int trailingdata(unsigned char *buf, size_t *buflen, size_t blocksize,
 }
 
 /* Pad the final block for encryption */
-void padblock(unsigned char *buf, size_t *buflen, size_t blocksize)
+void ossl_cipher_padblock(unsigned char *buf, size_t *buflen, size_t blocksize)
 {
     size_t i;
     unsigned char pad = (unsigned char)(blocksize - *buflen);
@@ -104,7 +105,7 @@ void padblock(unsigned char *buf, size_t *buflen, size_t blocksize)
         buf[i] = pad;
 }
 
-int unpadblock(unsigned char *buf, size_t *buflen, size_t blocksize)
+int ossl_cipher_unpadblock(unsigned char *buf, size_t *buflen, size_t blocksize)
 {
     size_t pad, i;
     size_t len = *buflen;
@@ -134,7 +135,7 @@ int unpadblock(unsigned char *buf, size_t *buflen, size_t blocksize)
 }
 
 /*-
- * tlsunpadblock removes the CBC padding from the decrypted, TLS, CBC
+ * ossl_cipher_tlsunpadblock removes the CBC padding from the decrypted, TLS, CBC
  * record in constant time. Also removes the MAC from the record in constant
  * time.
  *
@@ -154,9 +155,11 @@ int unpadblock(unsigned char *buf, size_t *buflen, size_t blocksize)
  *   1: (in constant time) Record is publicly valid. If padding is invalid then
  *      the mac is random
  */
-int tlsunpadblock(OPENSSL_CTX *libctx, unsigned int tlsversion,
-                  unsigned char *buf, size_t *buflen, size_t blocksize,
-                  unsigned char **mac, int *alloced, size_t macsize, int aead)
+int ossl_cipher_tlsunpadblock(OSSL_LIB_CTX *libctx, unsigned int tlsversion,
+                              unsigned char *buf, size_t *buflen,
+                              size_t blocksize,
+                              unsigned char **mac, int *alloced, size_t macsize,
+                              int aead)
 {
     int ret;
 

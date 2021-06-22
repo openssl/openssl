@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -128,6 +128,9 @@ my %OS_data = (
     NT          => 'WIN32',     # alias
     nt          => 'WIN32',     # alias
     mingw       => 'WINDOWS',   # alias
+    nonstop     => { writer     => \&writer_nonstop,
+                     sort       => OpenSSL::Ordinals::by_name(),
+                     platforms  => { TANDEM                     => 1 } },
    );
 
 do {
@@ -280,18 +283,28 @@ sub writer_aix {
     }
 }
 
+sub writer_nonstop {
+    for (@_) {
+        print "-export ",$_->name(),"\n";
+    }
+}
+
 sub writer_windows {
     print <<"_____";
 ;
 ; Definition file for the DLL version of the $libname library from OpenSSL
 ;
 
-LIBRARY         $libname
+LIBRARY         "$libname"
 
 EXPORTS
 _____
     for (@_) {
-        print "    ",$_->name(),"\n";
+        print "    ",$_->name();
+        if (platform->can('export2internal')) {
+            print "=". platform->export2internal($_->name());
+        }
+        print "\n";
     }
 }
 

@@ -12,7 +12,7 @@ ossl_namemap_doall_names
 
  #include "internal/cryptlib.h"
 
- OSSL_NAMEMAP *ossl_namemap_stored(OPENSSL_CTX *libctx);
+ OSSL_NAMEMAP *ossl_namemap_stored(OSSL_LIB_CTX *libctx);
 
  OSSL_NAMEMAP *ossl_namemap_new(void);
  void ossl_namemap_free(OSSL_NAMEMAP *namemap);
@@ -25,9 +25,9 @@ ossl_namemap_doall_names
  int ossl_namemap_name2num(const OSSL_NAMEMAP *namemap, const char *name);
  int ossl_namemap_name2num_n(const OSSL_NAMEMAP *namemap,
                              const char *name, size_t name_len);
- void ossl_namemap_doall_names(const OSSL_NAMEMAP *namemap, int number,
-                               void (*fn)(const char *name, void *data),
-                               void *data);
+ int ossl_namemap_doall_names(const OSSL_NAMEMAP *namemap, int number,
+                              void (*fn)(const char *name, void *data),
+                              void *data);
 
  int ossl_namemap_add_names(OSSL_NAMEMAP *namemap, int number,
                             const char *names, const char separator);
@@ -85,7 +85,8 @@ ossl_namemap_new() and ossl_namemap_stored() return the pointer to a
 B<OSSL_NAMEMAP>, or NULL on error.
 
 ossl_namemap_empty() returns 1 if the B<OSSL_NAMEMAP> is NULL or
-empty, or 0 if it's not empty.
+empty, 0 if it's not empty, or -1 on internal error (such as inability
+to lock).
 
 ossl_namemap_add_name() and ossl_namemap_add_name_n() return the number
 associated with the added string, or zero on error.
@@ -97,6 +98,9 @@ it's undefined in the given B<OSSL_NAMEMAP>.
 ossl_namemap_name2num() and ossl_namemap_name2num_n() return the number
 corresponding to the given name, or 0 if it's undefined in the given
 B<OSSL_NAMEMAP>.
+
+ossl_namemap_doall_names() returns 1 if the callback was called for all names. A
+return value of 0 means that the callback was not called for any names.
 
 ossl_namemap_add_names() returns the number associated with the added
 names, or zero on error.
@@ -115,7 +119,7 @@ The functions described here were all added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

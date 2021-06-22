@@ -55,14 +55,15 @@ depending on that item's I<data_type>, as follows:
 
 =item B<OSSL_PARAM_INTEGER> and B<OSSL_PARAM_UNSIGNED_INTEGER>
 
-If I<key> started with "hex", I<value> is assumed to contain
-I<value_n> hexadecimal characters, which are decoded, and the
-resulting bytes become the number stored in the I<< to->data >>
-storage.
-
 If I<key> didn't start with "hex", I<value> is assumed to contain
 I<value_n> decimal characters, which are decoded, and the resulting
 bytes become the number stored in the I<< to->data >> storage.
+
+If I<value> starts with "0x", it is assumed to contain I<value_n>
+hexadecimal characters.
+
+If I<key> started with "hex", I<value> is assumed to contain
+I<value_n> hexadecimal characters without the "0x" prefix.
 
 If I<value> contains characters that couldn't be decoded as
 hexadecimal or decimal characters, OSSL_PARAM_allocate_from_text()
@@ -73,8 +74,10 @@ considers that an error.
 If I<key> started with "hex", OSSL_PARAM_allocate_from_text()
 considers that an error.
 
-Otherwise, I<value> is considered a C string and is copied with no
-further checks to the I<< to->data >> storage.
+Otherwise, I<value> is considered a C string and is copied to the
+I<< to->data >> storage.
+On systems where the native character encoding is EBCDIC, the bytes in
+I<< to->data >> are converted to ASCII.
 
 =item B<OSSL_PARAM_OCTET_STRING>
 
@@ -194,7 +197,7 @@ L<OSSL_PARAM(3)>, L<OSSL_PARAM_int(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

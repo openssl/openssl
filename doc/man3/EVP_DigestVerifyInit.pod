@@ -2,17 +2,16 @@
 
 =head1 NAME
 
-EVP_DigestVerifyInit_with_libctx, EVP_DigestVerifyInit, EVP_DigestVerifyUpdate,
+EVP_DigestVerifyInit_ex, EVP_DigestVerifyInit, EVP_DigestVerifyUpdate,
 EVP_DigestVerifyFinal, EVP_DigestVerify - EVP signature verification functions
 
 =head1 SYNOPSIS
 
  #include <openssl/evp.h>
 
- int EVP_DigestVerifyInit_with_libctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
-                                      const char *mdname,
-                                      OPENSSL_CTX *libctx, const char *props,
-                                      EVP_PKEY *pkey);
+ int EVP_DigestVerifyInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
+                             const char *mdname, OSSL_LIB_CTX *libctx,
+                             const char *props, EVP_PKEY *pkey);
  int EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                           const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey);
  int EVP_DigestVerifyUpdate(EVP_MD_CTX *ctx, const void *d, size_t cnt);
@@ -26,7 +25,7 @@ EVP_DigestVerifyFinal, EVP_DigestVerify - EVP signature verification functions
 The EVP signature routines are a high-level interface to digital signatures.
 Input data is digested first before the signature verification takes place.
 
-EVP_DigestVerifyInit_with_libctx() sets up verification context B<ctx> to use a
+EVP_DigestVerifyInit_ex() sets up verification context B<ctx> to use a
 digest with the name B<mdname> and public key B<pkey>. The name of the digest to
 be used is passed to the provider of the signature algorithm in use. How that
 provider interprets the digest name is provider specific. The provider may
@@ -49,14 +48,14 @@ B<pctx> is not NULL, the EVP_PKEY_CTX of the verification operation will be
 written to B<*pctx>: this can be used to set alternative verification options.
 Note that any existing value in B<*pctx> is overwritten. The EVP_PKEY_CTX value
 returned must not be freed directly by the application if B<ctx> is not assigned
-an EVP_PKEY_CTX value before being passed to EVP_DigestVerifyInit_with_libctx()
+an EVP_PKEY_CTX value before being passed to EVP_DigestVerifyInit_ex()
 (which means the EVP_PKEY_CTX is created inside
-EVP_DigestVerifyInit_with_libctx() and it will be freed automatically when the
+EVP_DigestVerifyInit_ex() and it will be freed automatically when the
 EVP_MD_CTX is freed). If the EVP_PKEY_CTX to be used is created by
-EVP_DigestVerifyInit_with_libctx then it will use the B<OPENSSL_CTX> specified
+EVP_DigestVerifyInit_ex then it will use the B<OSSL_LIB_CTX> specified
 in I<libctx> and the property query string specified in I<props>.
 
-No B<EVP_PKEY_CTX> will be created by EVP_DigestSignInit_with_libctx() if the
+No B<EVP_PKEY_CTX> will be created by EVP_DigestSignInit_ex() if the
 passed B<ctx> has already been assigned one via L<EVP_MD_CTX_set_pkey_ctx(3)>.
 See also L<SM2(7)>.
 
@@ -102,7 +101,7 @@ Will ignore any digest provided.
 If RSA-PSS is used and restrictions apply then the digest must match.
 
 EVP_DigestVerifyInit() works in the same way as
-EVP_DigestVerifyInit_with_libctx() except that the B<mdname> parameter will be
+EVP_DigestVerifyInit_ex() except that the B<mdname> parameter will be
 inferred from the supplied digest B<type>, and B<props> will be NULL. Where
 supplied the ENGINE B<e> will be used for the signature verification and digest
 algorithm implementations. B<e> may be NULL.
@@ -173,7 +172,7 @@ L<RAND(7)>
 EVP_DigestVerifyInit(), EVP_DigestVerifyUpdate() and EVP_DigestVerifyFinal()
 were added in OpenSSL 1.0.0.
 
-EVP_DigestVerifyInit_with_libctx() was added in OpenSSL 3.0.
+EVP_DigestVerifyInit_ex() was added in OpenSSL 3.0.
 
 EVP_DigestVerifyUpdate() was converted from a macro to a function in OpenSSL
 3.0.

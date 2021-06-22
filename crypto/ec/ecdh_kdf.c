@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -21,16 +21,16 @@
 #include "ec_local.h"
 
 /* Key derivation function from X9.63/SECG */
-int ecdh_KDF_X9_63(unsigned char *out, size_t outlen,
-                   const unsigned char *Z, size_t Zlen,
-                   const unsigned char *sinfo, size_t sinfolen,
-                   const EVP_MD *md,
-                   OPENSSL_CTX *libctx, const char *propq)
+int ossl_ecdh_kdf_X9_63(unsigned char *out, size_t outlen,
+                        const unsigned char *Z, size_t Zlen,
+                        const unsigned char *sinfo, size_t sinfolen,
+                        const EVP_MD *md,
+                        OSSL_LIB_CTX *libctx, const char *propq)
 {
     int ret = 0;
     EVP_KDF_CTX *kctx = NULL;
     OSSL_PARAM params[4], *p = params;
-    const char *mdname = EVP_MD_name(md);
+    const char *mdname = EVP_MD_get0_name(md);
     EVP_KDF *kdf = EVP_KDF_fetch(libctx, OSSL_KDF_NAME_X963KDF, propq);
 
     if ((kctx = EVP_KDF_CTX_new(kdf)) != NULL) {
@@ -42,8 +42,7 @@ int ecdh_KDF_X9_63(unsigned char *out, size_t outlen,
                                                  (void *)sinfo, sinfolen);
         *p = OSSL_PARAM_construct_end();
 
-        ret = EVP_KDF_CTX_set_params(kctx, params) > 0
-            && EVP_KDF_derive(kctx, out, outlen) > 0;
+        ret = EVP_KDF_derive(kctx, out, outlen, params) > 0;
         EVP_KDF_CTX_free(kctx);
     }
     EVP_KDF_free(kdf);
@@ -60,6 +59,7 @@ int ECDH_KDF_X9_62(unsigned char *out, size_t outlen,
                    const unsigned char *sinfo, size_t sinfolen,
                    const EVP_MD *md)
 {
-    return ecdh_KDF_X9_63(out, outlen, Z, Zlen, sinfo, sinfolen, md, NULL, NULL);
+    return ossl_ecdh_kdf_X9_63(out, outlen, Z, Zlen, sinfo, sinfolen, md, NULL,
+                               NULL);
 }
 #endif

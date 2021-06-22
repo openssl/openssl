@@ -2,22 +2,22 @@
 
 =head1 NAME
 
-CMS_sign, CMS_sign_with_libctx - create a CMS SignedData structure
+CMS_sign, CMS_sign_ex - create a CMS SignedData structure
 
 =head1 SYNOPSIS
 
  #include <openssl/cms.h>
 
- CMS_ContentInfo *CMS_sign_with_libctx(X509 *signcert, EVP_PKEY *pkey,
-                                       STACK_OF(X509) *certs, BIO *data,
-                                       unsigned int flags,
-                                       OPENSSL_CTX *ctx, const char *propq);
+ CMS_ContentInfo *CMS_sign_ex(X509 *signcert, EVP_PKEY *pkey,
+                              STACK_OF(X509) *certs, BIO *data,
+                              unsigned int flags, OSSL_LIB_CTX *ctx,
+                              const char *propq);
  CMS_ContentInfo *CMS_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
                            BIO *data, unsigned int flags);
 
 =head1 DESCRIPTION
 
-CMS_sign_with_libctx() creates and returns a CMS SignedData structure.
+CMS_sign_ex() creates and returns a CMS SignedData structure.
 I<signcert> is the certificate to sign with, I<pkey> is the corresponding
 private key. I<certs> is an optional additional set of certificates to include
 in the CMS structure (for example any intermediate CAs in the chain). The
@@ -29,7 +29,7 @@ The data to be signed is read from BIO B<data>.
 
 B<flags> is an optional set of flags.
 
-CMS_sign() is similar to CMS_sign_with_libctx() but uses default values of NULL
+CMS_sign() is similar to CMS_sign_ex() but uses default values of NULL
 for the library context I<libctx> and the property query I<propq>.
 
 =head1 NOTES
@@ -115,7 +115,7 @@ Some attributes such as counter signatures are not supported.
 
 =head1 RETURN VALUES
 
-CMS_sign_with_libctx() and CMS_sign() return either a valid CMS_ContentInfo
+CMS_sign_ex() and CMS_sign() return either a valid CMS_ContentInfo
 structure or NULL if an error occurred. The error can be obtained from
 ERR_get_error(3).
 
@@ -128,11 +128,11 @@ L<ERR_get_error(3)>, L<CMS_verify(3)>
 The B<CMS_STREAM> flag is only supported for detached data in OpenSSL 0.9.8,
 it is supported for embedded data in OpenSSL 1.0.0 and later.
 
-The CMS_sign_with_libctx() method was added in OpenSSL 3.0.
+The CMS_sign_ex() method was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2008-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

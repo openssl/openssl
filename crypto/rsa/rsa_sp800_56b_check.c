@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2018-2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -21,7 +21,7 @@
  *   6.4.1.2.3: rsakpv1-crt Step 7
  *   6.4.1.3.3: rsakpv2-crt Step 7
  */
-int rsa_check_crt_components(const RSA *rsa, BN_CTX *ctx)
+int ossl_rsa_check_crt_components(const RSA *rsa, BN_CTX *ctx)
 {
     int ret = 0;
     BIGNUM *r = NULL, *p1 = NULL, *q1 = NULL;
@@ -85,14 +85,14 @@ int rsa_check_crt_components(const RSA *rsa, BN_CTX *ctx)
  *
  * (√2)(2^(nbits/2 - 1) = (√2/2)(2^(nbits/2))
  */
-int rsa_check_prime_factor_range(const BIGNUM *p, int nbits, BN_CTX *ctx)
+int ossl_rsa_check_prime_factor_range(const BIGNUM *p, int nbits, BN_CTX *ctx)
 {
     int ret = 0;
     BIGNUM *low;
     int shift;
 
     nbits >>= 1;
-    shift = nbits - BN_num_bits(&bn_inv_sqrt_2);
+    shift = nbits - BN_num_bits(&ossl_bn_inv_sqrt_2);
 
     /* Upper bound check */
     if (BN_num_bits(p) != nbits)
@@ -104,12 +104,12 @@ int rsa_check_prime_factor_range(const BIGNUM *p, int nbits, BN_CTX *ctx)
         goto err;
 
     /* set low = (√2)(2^(nbits/2 - 1) */
-    if (!BN_copy(low, &bn_inv_sqrt_2))
+    if (!BN_copy(low, &ossl_bn_inv_sqrt_2))
         goto err;
 
     if (shift >= 0) {
         /*
-         * We don't have all the bits. bn_inv_sqrt_2 contains a rounded up
+         * We don't have all the bits. ossl_bn_inv_sqrt_2 contains a rounded up
          * value, so there is a very low probability that we'll reject a valid
          * value.
          */
@@ -133,7 +133,7 @@ err:
  *
  * See SP800-56Br1 6.4.1.2.3 Step 5 (a to d) & (e to h).
  */
-int rsa_check_prime_factor(BIGNUM *p, BIGNUM *e, int nbits, BN_CTX *ctx)
+int ossl_rsa_check_prime_factor(BIGNUM *p, BIGNUM *e, int nbits, BN_CTX *ctx)
 {
     int ret = 0;
     BIGNUM *p1 = NULL, *gcd = NULL;
@@ -141,7 +141,7 @@ int rsa_check_prime_factor(BIGNUM *p, BIGNUM *e, int nbits, BN_CTX *ctx)
     /* (Steps 5 a-b) prime test */
     if (BN_check_prime(p, ctx, NULL) != 1
             /* (Step 5c) (√2)(2^(nbits/2 - 1) <= p <= 2^(nbits/2 - 1) */
-            || rsa_check_prime_factor_range(p, nbits, ctx) != 1)
+            || ossl_rsa_check_prime_factor_range(p, nbits, ctx) != 1)
         return 0;
 
     BN_CTX_start(ctx);
@@ -172,7 +172,7 @@ int rsa_check_prime_factor(BIGNUM *p, BIGNUM *e, int nbits, BN_CTX *ctx)
  *     (Step 6a) 2^(nBit/2) < d < LCM(p–1, q–1).
  *     (Step 6b) 1 = (d*e) mod LCM(p–1, q–1)
  */
-int rsa_check_private_exponent(const RSA *rsa, int nbits, BN_CTX *ctx)
+int ossl_rsa_check_private_exponent(const RSA *rsa, int nbits, BN_CTX *ctx)
 {
     int ret;
     BIGNUM *r, *p1, *q1, *lcm, *p1q1, *gcd;
@@ -201,7 +201,8 @@ int rsa_check_private_exponent(const RSA *rsa, int nbits, BN_CTX *ctx)
     }
     ret = (ret
           /* LCM(p - 1, q - 1) */
-          && (rsa_get_lcm(ctx, rsa->p, rsa->q, lcm, gcd, p1, q1, p1q1) == 1)
+          && (ossl_rsa_get_lcm(ctx, rsa->p, rsa->q, lcm, gcd, p1, q1,
+                               p1q1) == 1)
           /* (Step 6a) d < LCM(p - 1, q - 1) */
           && (BN_cmp(rsa->d, lcm) < 0)
           /* (Step 6b) 1 = (e . d) mod LCM(p - 1, q - 1) */
@@ -229,7 +230,7 @@ static int bn_is_three(const BIGNUM *bn)
 #endif /* FIPS_MODULE */
 
 /* Check exponent is odd, and has a bitlen ranging from [17..256] */
-int rsa_check_public_exponent(const BIGNUM *e)
+int ossl_rsa_check_public_exponent(const BIGNUM *e)
 {
     int bitlen;
 
@@ -247,7 +248,7 @@ int rsa_check_public_exponent(const BIGNUM *e)
  * SP800-56Br1 6.4.1.2.1 (Step 5i): |p - q| > 2^(nbits/2 - 100)
  * i.e- numbits(p-q-1) > (nbits/2 -100)
  */
-int rsa_check_pminusq_diff(BIGNUM *diff, const BIGNUM *p, const BIGNUM *q,
+int ossl_rsa_check_pminusq_diff(BIGNUM *diff, const BIGNUM *p, const BIGNUM *q,
                            int nbits)
 {
     int bitlen = (nbits >> 1) - 100;
@@ -270,9 +271,9 @@ int rsa_check_pminusq_diff(BIGNUM *diff, const BIGNUM *p, const BIGNUM *q,
  * Caller should ensure that lcm, gcd, p1, q1, p1q1 are flagged with
  * BN_FLG_CONSTTIME.
  */
-int rsa_get_lcm(BN_CTX *ctx, const BIGNUM *p, const BIGNUM *q,
-                BIGNUM *lcm, BIGNUM *gcd, BIGNUM *p1, BIGNUM *q1,
-                BIGNUM *p1q1)
+int ossl_rsa_get_lcm(BN_CTX *ctx, const BIGNUM *p, const BIGNUM *q,
+                     BIGNUM *lcm, BIGNUM *gcd, BIGNUM *p1, BIGNUM *q1,
+                     BIGNUM *p1q1)
 {
     return BN_sub(p1, p, BN_value_one())    /* p-1 */
            && BN_sub(q1, q, BN_value_one()) /* q-1 */
@@ -286,37 +287,34 @@ int rsa_get_lcm(BN_CTX *ctx, const BIGNUM *p, const BIGNUM *q,
  * SP800-89 5.3.3 (Explicit) Partial Public Key Validation for RSA
  * caveat is that the modulus must be as specified in SP800-56Br1
  */
-int rsa_sp800_56b_check_public(const RSA *rsa)
+int ossl_rsa_sp800_56b_check_public(const RSA *rsa)
 {
     int ret = 0, status;
-#ifdef FIPS_MODULE
     int nbits;
-#endif
     BN_CTX *ctx = NULL;
     BIGNUM *gcd = NULL;
 
     if (rsa->n == NULL || rsa->e == NULL)
         return 0;
 
+    nbits = BN_num_bits(rsa->n);
 #ifdef FIPS_MODULE
     /*
      * (Step a): modulus must be 2048 or 3072 (caveat from SP800-56Br1)
      * NOTE: changed to allow keys >= 2048
      */
-    nbits = BN_num_bits(rsa->n);
-    if (!rsa_sp800_56b_validate_strength(nbits, -1)) {
-        RSAerr(RSA_F_RSA_SP800_56B_CHECK_PUBLIC, RSA_R_INVALID_KEY_LENGTH);
+    if (!ossl_rsa_sp800_56b_validate_strength(nbits, -1)) {
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_KEY_LENGTH);
         return 0;
     }
 #endif
     if (!BN_is_odd(rsa->n)) {
-        RSAerr(RSA_F_RSA_SP800_56B_CHECK_PUBLIC, RSA_R_INVALID_MODULUS);
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_MODULUS);
         return 0;
     }
     /* (Steps b-c): 2^16 < e < 2^256, n and e must be odd */
-    if (!rsa_check_public_exponent(rsa->e)) {
-        RSAerr(RSA_F_RSA_SP800_56B_CHECK_PUBLIC,
-               RSA_R_PUB_EXPONENT_OUT_OF_RANGE);
+    if (!ossl_rsa_check_public_exponent(rsa->e)) {
+        ERR_raise(ERR_LIB_RSA, RSA_R_PUB_EXPONENT_OUT_OF_RANGE);
         return 0;
     }
 
@@ -329,14 +327,21 @@ int rsa_sp800_56b_check_public(const RSA *rsa)
      * The modulus is composite, but not a power of a prime.
      * The modulus has no factors smaller than 752.
      */
-    if (!BN_gcd(gcd, rsa->n, bn_get0_small_factors(), ctx) || !BN_is_one(gcd)) {
-        RSAerr(RSA_F_RSA_SP800_56B_CHECK_PUBLIC, RSA_R_INVALID_MODULUS);
+    if (!BN_gcd(gcd, rsa->n, ossl_bn_get0_small_factors(), ctx)
+        || !BN_is_one(gcd)) {
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_MODULUS);
         goto err;
     }
 
-    ret = bn_miller_rabin_is_prime(rsa->n, 0, ctx, NULL, 1, &status);
+    ret = ossl_bn_miller_rabin_is_prime(rsa->n, 0, ctx, NULL, 1, &status);
+#ifdef FIPS_MODULE
     if (ret != 1 || status != BN_PRIMETEST_COMPOSITE_NOT_POWER_OF_PRIME) {
-        RSAerr(RSA_F_RSA_SP800_56B_CHECK_PUBLIC, RSA_R_INVALID_MODULUS);
+#else
+    if (ret != 1 || (status != BN_PRIMETEST_COMPOSITE_NOT_POWER_OF_PRIME
+                     && (nbits >= RSA_MIN_MODULUS_BITS
+                         || status != BN_PRIMETEST_COMPOSITE_WITH_FACTOR))) {
+#endif
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_MODULUS);
         ret = 0;
         goto err;
     }
@@ -351,7 +356,7 @@ err:
 /*
  * Perform validation of the RSA private key to check that 0 < D < N.
  */
-int rsa_sp800_56b_check_private(const RSA *rsa)
+int ossl_rsa_sp800_56b_check_private(const RSA *rsa)
 {
     if (rsa->d == NULL || rsa->n == NULL)
         return 0;
@@ -369,8 +374,8 @@ int rsa_sp800_56b_check_private(const RSA *rsa)
  *     6.4.1.2.3 "rsakpv1 - crt"
  *     6.4.1.3.3 "rsakpv2 - crt"
  */
-int rsa_sp800_56b_check_keypair(const RSA *rsa, const BIGNUM *efixed,
-                                int strength, int nbits)
+int ossl_rsa_sp800_56b_check_keypair(const RSA *rsa, const BIGNUM *efixed,
+                                     int strength, int nbits)
 {
     int ret = 0;
     BN_CTX *ctx = NULL;
@@ -381,31 +386,30 @@ int rsa_sp800_56b_check_keypair(const RSA *rsa, const BIGNUM *efixed,
             || rsa->e == NULL
             || rsa->d == NULL
             || rsa->n == NULL) {
-        RSAerr(RSA_F_RSA_SP800_56B_CHECK_KEYPAIR, RSA_R_INVALID_REQUEST);
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_REQUEST);
         return 0;
     }
     /* (Step 1): Check Ranges */
-    if (!rsa_sp800_56b_validate_strength(nbits, strength))
+    if (!ossl_rsa_sp800_56b_validate_strength(nbits, strength))
         return 0;
 
     /* If the exponent is known */
     if (efixed != NULL) {
         /* (2): Check fixed exponent matches public exponent. */
         if (BN_cmp(efixed, rsa->e) != 0) {
-            RSAerr(RSA_F_RSA_SP800_56B_CHECK_KEYPAIR, RSA_R_INVALID_REQUEST);
+            ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_REQUEST);
             return 0;
         }
     }
     /* (Step 1.c): e is odd integer 65537 <= e < 2^256 */
-    if (!rsa_check_public_exponent(rsa->e)) {
+    if (!ossl_rsa_check_public_exponent(rsa->e)) {
         /* exponent out of range */
-        RSAerr(RSA_F_RSA_SP800_56B_CHECK_KEYPAIR,
-               RSA_R_PUB_EXPONENT_OUT_OF_RANGE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_PUB_EXPONENT_OUT_OF_RANGE);
         return 0;
     }
     /* (Step 3.b): check the modulus */
     if (nbits != BN_num_bits(rsa->n)) {
-        RSAerr(RSA_F_RSA_SP800_56B_CHECK_KEYPAIR, RSA_R_INVALID_KEYPAIR);
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_KEYPAIR);
         return 0;
     }
 
@@ -419,20 +423,20 @@ int rsa_sp800_56b_check_keypair(const RSA *rsa, const BIGNUM *efixed,
         goto err;
     /* (Step 4.c): Check n = pq */
     if (BN_cmp(rsa->n, r) != 0) {
-        RSAerr(RSA_F_RSA_SP800_56B_CHECK_KEYPAIR, RSA_R_INVALID_REQUEST);
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_REQUEST);
         goto err;
     }
 
     /* (Step 5): check prime factors p & q */
-    ret = rsa_check_prime_factor(rsa->p, rsa->e, nbits, ctx)
-          && rsa_check_prime_factor(rsa->q, rsa->e, nbits, ctx)
-          && (rsa_check_pminusq_diff(r, rsa->p, rsa->q, nbits) > 0)
+    ret = ossl_rsa_check_prime_factor(rsa->p, rsa->e, nbits, ctx)
+          && ossl_rsa_check_prime_factor(rsa->q, rsa->e, nbits, ctx)
+          && (ossl_rsa_check_pminusq_diff(r, rsa->p, rsa->q, nbits) > 0)
           /* (Step 6): Check the private exponent d */
-          && rsa_check_private_exponent(rsa, nbits, ctx)
+          && ossl_rsa_check_private_exponent(rsa, nbits, ctx)
           /* 6.4.1.2.3 (Step 7): Check the CRT components */
-          && rsa_check_crt_components(rsa, ctx);
+          && ossl_rsa_check_crt_components(rsa, ctx);
     if (ret != 1)
-        RSAerr(RSA_F_RSA_SP800_56B_CHECK_KEYPAIR, RSA_R_INVALID_KEYPAIR);
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_KEYPAIR);
 
 err:
     BN_clear(r);

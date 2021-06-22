@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 1998-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1998-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -140,8 +140,7 @@ my $guess_patterns = [
     [ 'Paragon.*?:.*',              'i860-intel-osf1' ],
     [ 'Rhapsody:.*',                'ppc-apple-rhapsody' ],
     [ 'Darwin:.*?:.*?:Power.*',     'ppc-apple-darwin' ],
-    [ 'Darwin:.*?:.*?:x86_64',      'x86_64-apple-darwin' ],
-    [ 'Darwin:.*',                  'i686-apple-darwin' ],
+    [ 'Darwin:.*',                  '${MACHINE}-apple-darwin' ],
     [ 'SunOS:5\..*',                '${MACHINE}-whatever-solaris2' ],
     [ 'SunOS:.*',                   '${MACHINE}-sun-sunos4' ],
     [ 'UNIX_System_V:4\..*?:.*',    '${MACHINE}-whatever-sysv4' ],
@@ -159,6 +158,11 @@ my $guess_patterns = [
     [ 'MINGW.*',                    '${MACHINE}-whatever-mingw' ],
     [ 'CYGWIN.*',                   '${MACHINE}-pc-cygwin' ],
     [ 'vxworks.*',                  '${MACHINE}-whatever-vxworks' ],
+
+    # Note: there's also NEO and NSR, but they are old and unsupported
+    [ 'NONSTOP_KERNEL:.*:NSE-.*?',  'nse-tandem-nsk${RELEASE}' ],
+    [ 'NONSTOP_KERNEL:.*:NSV-.*?',  'nsv-tandem-nsk${RELEASE}' ],
+    [ 'NONSTOP_KERNEL:.*:NSX-.*?',  'nsx-tandem-nsk${RELEASE}' ],
 
     [ sub { -d '/usr/apollo' },     'whatever-apollo-whatever' ],
 ];
@@ -189,15 +193,21 @@ sub maybe_abort {
 
 # Look for ISC/SCO with its unique uname program
 sub is_sco_uname {
+    return undef unless IPC::Cmd::can_run('uname');
+
     open UNAME, "uname -X 2>/dev/null|" or return '';
     my $line = "";
+    my $os = "";
     while ( <UNAME> ) {
         chop;
         $line = $_ if m@^Release@;
+        $os = $_ if m@^System@;
     }
     close UNAME;
-    return "" if $line eq '';
-    my @fields = split($line);
+
+    return undef if $line eq '' or $os eq 'System = SunOS';
+
+    my @fields = split(/\s+/, $line);
     return $fields[2];
 }
 
@@ -230,10 +240,10 @@ sub get_sco_type {
 sub guess_system {
     ($SYSTEM, undef, $RELEASE, $VERSION, $MACHINE) = POSIX::uname();
     my $sys = "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}";
-
+    
     # Special-cases for ISC, SCO, Unixware
     my $REL = is_sco_uname();
-    if ( $REL ne "" ) {
+    if ( defined $REL ) {
         my $result = get_sco_type($REL);
         return eval "\"$result\"" if $result ne '';
     }
@@ -272,8 +282,8 @@ sub _pairs (@) {
 
 # Figure out CC, GCCVAR, etc.
 sub determine_compiler_settings {
-    # Make a copy and don't touch it.  That helps determine if we're
-    # finding the compiler here
+    # Make a copy and don't touch it.  That helps determine if we're finding
+    # the compiler here (false), or if it was set by the user (true.
     my $cc = $CC;
 
     # Set certain default
@@ -289,51 +299,59 @@ sub determine_compiler_settings {
         }
     }
 
-    # Find the compiler vendor and version number for certain compilers
-    foreach my $pair (_pairs @cc_version) {
-        # Try to get the version number.
-        # Failure gets us undef or an empty string
-        my ( $k, $v ) = @$pair;
-        $v = $v->();
+    if ( $CC ) {
+        # Find the compiler vendor and version number for certain compilers
+        foreach my $pair (_pairs @cc_version) {
+            # Try to get the version number.
+            # Failure gets us undef or an empty string
+            my ( $k, $v ) = @$pair;
+            $v = $v->();
 
-        # If we got a version number, process it
-        if ($v) {
-            $CCVENDOR = $k;
+            # If we got a version number, process it
+            if ($v) {
+                $CCVENDOR = $k;
 
-            # The returned version is expected to be one of
-            #
-            # MAJOR
-            # MAJOR.MINOR
-            # MAJOR.MINOR.{whatever}
-            #
-            # We don't care what comes after MAJOR.MINOR.  All we need is to
-            # have them calculated into a single number, using this formula:
-            #
-            # MAJOR * 100 + MINOR
-            # Here are a few examples of what we should get:
-            #
-            # 2.95.1    => 295
-            # 3.1       => 301
-            # 9         => 900
-            my @numbers = split /\./, $v;
-            my @factors = (100, 1);
-            while (@numbers && @factors) {
-                $CCVER += shift(@numbers) * shift(@factors)
+                # The returned version is expected to be one of
+                #
+                # MAJOR
+                # MAJOR.MINOR
+                # MAJOR.MINOR.{whatever}
+                #
+                # We don't care what comes after MAJOR.MINOR.  All we need is
+                # to have them calculated into a single number, using this
+                # formula:
+                #
+                # MAJOR * 100 + MINOR
+                # Here are a few examples of what we should get:
+                #
+                # 2.95.1    => 295
+                # 3.1       => 301
+                # 9         => 900
+                my @numbers = split /\./, $v;
+                my @factors = (100, 1);
+                while (@numbers && @factors) {
+                    $CCVER += shift(@numbers) * shift(@factors)
+                }
+                last;
             }
-            last;
         }
     }
 
-    # If no C compiler has been determined at this point, we die.  Hard.
-    die <<_____
-ERROR!
-No C compiler found, please specify one with the environment variable CC,
-or configure with an explicit configuration target.
-_____
-        unless $CC;
-
-    # Vendor specific overrides, only if we determined the compiler here
+    # Vendor specific overrides, only if we didn't determine the compiler here
     if ( ! $cc ) {
+        if ( $SYSTEM eq 'OpenVMS' ) {
+            my $v = `CC/VERSION NLA0:`;
+            if ($? == 0) {
+                my ($vendor, $version) =
+                    ( $v =~ m/^([A-Z]+) C V([0-9\.-]+) on / );
+                my ($major, $minor, $patch) =
+                    ( $version =~ m/^([0-9]+)\.([0-9]+)-0*?(0|[1-9][0-9]*)$/ );
+                $CC = 'CC';
+                $CCVENDOR = $vendor;
+                $CCVER = ( $major * 100 + $minor ) * 100 + $patch;
+            }
+        }
+
         if ( ${SYSTEM} eq 'AIX' ) {
             # favor vendor cc over gcc
             if (IPC::Cmd::can_run('cc')) {
@@ -344,32 +362,31 @@ _____
         }
 
         if ( $SYSTEM eq "SunOS" ) {
-            # check for WorkShop C, expected output is "cc: blah-blah C x.x"
+            # check for Oracle Developer Studio, expected output is "cc: blah-blah C x.x blah-blah"
             my $v = `(cc -V 2>&1) 2>/dev/null | egrep -e '^cc: .* C [0-9]\.[0-9]'`;
-            chomp $v;
-            $v =~ s/.* C \([0-9]\)\.\([0-9]\).*/$1.$2/;
-            my @numbers = split /\./, $v;
+            my @numbers = 
+                    ( $v =~ m/^.* C ([0-9]+)\.([0-9]+) .*/ );
             my @factors = (100, 1);
             $v = 0;
             while (@numbers && @factors) {
                 $v += shift(@numbers) * shift(@factors)
             }
 
-            if ( $v > 40000 &&  $MACHINE ne 'i86pc' ) {
+            if ($v > 500) {
                 $CC = 'cc';
-                $CCVENDOR = ''; # Determine later
+                $CCVENDOR = 'sun';
                 $CCVER = $v;
-
-                if ( $CCVER == 50000 ) {
-                    print <<'EOF';
-WARNING! Found WorkShop C 5.0.
-         Make sure you have patch #107357-01 or later applied.
-EOF
-                    maybe_abort();
-                }
             }
         }
     }
+
+    # If no C compiler has been determined at this point, we die.  Hard.
+    die <<_____
+ERROR!
+No C compiler found, please specify one with the environment variable CC,
+or configure with an explicit configuration target.
+_____
+        unless $CC;
 
     # On some systems, we assume a cc vendor if it's not already determined
 
@@ -478,6 +495,7 @@ EOF
             return { target => "darwin64-x86_64" };
         }
       ],
+      [ 'arm64-apple-darwin.*', { target => "darwin64-arm64" } ],
       [ 'armv6\+7-.*-iphoneos',
         { target => "iphoneos-cross",
           cflags => [ qw(-arch armv6 -arch armv7) ],
@@ -654,16 +672,18 @@ EOF
         }
       ],
       [ '.*86-.*-linux1',         { target => "linux-aout" } ],
+      [ 'riscv64-.*-linux.',      { target => "linux64-riscv64" } ],
       [ '.*-.*-linux.',           { target => "linux-generic32" } ],
       [ 'sun4[uv].*-.*-solaris2',
         sub {
             my $KERNEL_BITS = $ENV{KERNEL_BITS};
             my $ISA64 = `isainfo 2>/dev/null | grep sparcv9`;
-            if ( $ISA64 ne "" && $KERNEL_BITS eq '' ) {
+            my $KB = $KERNEL_BITS // '64';
+            if ( $ISA64 ne "" && $KB eq '64' ) {
                 if ( $CCVENDOR eq "sun" && $CCVER >= 500 ) {
                     print <<EOF;
-WARNING! To build 64-bit package, do this:
-         $WHERE/Configure solaris64-sparcv9-cc
+WARNING! To build 32-bit package, do this:
+         $WHERE/Configure solaris-sparcv9-cc
 EOF
                     maybe_abort();
                 } elsif ( $CCVENDOR eq "gnu" && $GCC_ARCH eq "-m64" ) {
@@ -676,7 +696,7 @@ WARNING! To build 32-bit package, do this:
          $WHERE/Configure solaris-sparcv9-gcc
 EOF
                     maybe_abort();
-                    return { target => "solaris64-sparcv9" };
+                    return { target => "solaris64-sparcv9-gcc" };
                 } elsif ( $GCC_ARCH eq "-m32" ) {
                     print <<EOF;
 NOTICE! If you *know* that your GNU C supports 64-bit/V9 ABI and you wish
@@ -686,9 +706,9 @@ EOF
                     maybe_abort();
                 }
             }
-            return { target => "solaris64-sparcv9" }
-                if $ISA64 ne "" && $KERNEL_BITS eq '64';
-            return { target => "solaris-sparcv9" };
+            return { target => "solaris64-sparcv9-cc" }
+                if $ISA64 ne "" && $KB eq '64';
+            return { target => "solaris-sparcv9-cc" };
         }
       ],
       [ 'sun4m-.*-solaris2',      { target => "solaris-sparcv8" } ],
@@ -699,13 +719,16 @@ EOF
             my $KERNEL_BITS = $ENV{KERNEL_BITS};
             my $ISA64 = `isainfo 2>/dev/null | grep amd64`;
             my $KB = $KERNEL_BITS // '64';
-            return { target => "solaris64-x86_64" }
-                if $ISA64 ne "" && $KB eq '64';
+            if ($ISA64 ne "" && $KB eq '64') {
+                return { target => "solaris64-x86_64-gcc" } if $CCVENDOR eq "gnu";
+                return { target => "solaris64-x86_64-cc" };
+            }
             my $REL = uname('-r');
             $REL =~ s/5\.//;
             my @tmp_disable = ();
             push @tmp_disable, 'sse2' if int($REL) < 10;
-            return { target => "solaris-x86",
+            #There is no solaris-x86-cc target
+            return { target => "solaris-x86-gcc",
                      disable => [ @tmp_disable ] };
         }
       ],
@@ -859,6 +882,20 @@ EOF
       # we'll get in the upcoming x86_64 port...
       [ '.*Alpha.*?-.*?-OpenVMS', { target => 'vms-alpha' } ],
       [ '.*?-.*?-OpenVMS',        { target => 'vms-ia64'  } ],
+
+      # TODO: There are a few more choices among OpenSSL config targets, but
+      # reaching them involves a bit more than just a host tripet.  Select
+      # environment variables could do the job to cover for more granular
+      # build options such as data model (ILP32 or LP64), thread support
+      # model (PUT, SPT or nothing), target execution environment (OSS or
+      # GUARDIAN).  And still, there must be some kind of default when
+      # nothing else is said.
+      #
+      # nsv is a virtual x86 environment, equivalent to nsx, so we enforce
+      # the latter.
+      [ 'nse-tandem-nsk.*',       { target => 'nonstop-nse' } ],
+      [ 'nsv-tandem-nsk.*',       { target => 'nonstop-nsx' } ],
+      [ 'nsx-tandem-nsk.*',       { target => 'nonstop-nsx' } ],
 
     ];
 

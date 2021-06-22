@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,13 +14,53 @@
 #include <openssl/buffer.h>
 #include <openssl/params.h>
 #include <openssl/provider.h>
+#include <openssl/trace.h>
+#include "internal/bio.h"
+#include "internal/provider.h"
 #include "encoder_local.h"
 
-static int encoder_process(OSSL_ENCODER_CTX *ctx, BIO *out);
+struct encoder_process_data_st {
+    OSSL_ENCODER_CTX *ctx;
+
+    /* Current BIO */
+    BIO *bio;
+
+    /* Index of the current encoder instance to be processed */
+    int current_encoder_inst_index;
+
+    /* Processing data passed down through recursion */
+    int level;                   /* Recursion level */
+    OSSL_ENCODER_INSTANCE *next_encoder_inst;
+    int count_output_structure;
+
+    /* Processing data passed up through recursion */
+    OSSL_ENCODER_INSTANCE *prev_encoder_inst;
+    unsigned char *running_output;
+    size_t running_output_length;
+    /* Data type = the name of the first succeeding encoder implementation */
+    const char *data_type;
+};
+
+static int encoder_process(struct encoder_process_data_st *data);
 
 int OSSL_ENCODER_to_bio(OSSL_ENCODER_CTX *ctx, BIO *out)
 {
-    return encoder_process(ctx, out);
+    struct encoder_process_data_st data;
+
+    memset(&data, 0, sizeof(data));
+    data.ctx = ctx;
+    data.bio = out;
+    data.current_encoder_inst_index = OSSL_ENCODER_CTX_get_num_encoders(ctx);
+
+    if (data.current_encoder_inst_index == 0) {
+        ERR_raise_data(ERR_LIB_OSSL_ENCODER, OSSL_ENCODER_R_ENCODER_NOT_FOUND,
+                       "No encoders were found. For standard encoders you need "
+                       "at least one of the default or base providers "
+                       "available. Did you forget to load them?");
+        return 0;
+    }
+
+    return encoder_process(&data) > 0;
 }
 
 #ifndef OPENSSL_NO_STDIO
@@ -49,16 +89,52 @@ int OSSL_ENCODER_to_fp(OSSL_ENCODER_CTX *ctx, FILE *fp)
 }
 #endif
 
-int OSSL_ENCODER_CTX_set_output_type(OSSL_ENCODER_CTX *ctx,
-                                     const char *output_type)
+int OSSL_ENCODER_to_data(OSSL_ENCODER_CTX *ctx, unsigned char **pdata,
+                         size_t *pdata_len)
 {
-    if (!ossl_assert(ctx != NULL) || !ossl_assert(output_type != NULL)) {
+    BIO *out = BIO_new(BIO_s_mem());
+    BUF_MEM *buf = NULL;
+    int ret = 0;
+
+    if (pdata_len == NULL) {
         ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
-    ctx->output_type = output_type;
-    return 1;
+    if (OSSL_ENCODER_to_bio(ctx, out)
+        && BIO_get_mem_ptr(out, &buf) > 0) {
+        ret = 1; /* Hope for the best. A too small buffer will clear this */
+
+        if (pdata != NULL && *pdata != NULL) {
+            if (*pdata_len < buf->length)
+                /*
+                 * It's tempting to do |*pdata_len = (size_t)buf->length|
+                 * However, it's believed to be confusing more than helpful,
+                 * so we don't.
+                 */
+                ret = 0;
+            else
+                *pdata_len -= buf->length;
+        } else {
+            /* The buffer with the right size is already allocated for us */
+            *pdata_len = (size_t)buf->length;
+        }
+
+        if (ret) {
+            if (pdata != NULL) {
+                if (*pdata != NULL) {
+                    memcpy(*pdata, buf->data, buf->length);
+                    *pdata += buf->length;
+                } else {
+                    /* In this case, we steal the data from BIO_s_mem() */
+                    *pdata = (unsigned char *)buf->data;
+                    buf->data = NULL;
+                }
+            }
+        }
+    }
+    BIO_free(out);
+    return ret;
 }
 
 int OSSL_ENCODER_CTX_set_selection(OSSL_ENCODER_CTX *ctx, int selection)
@@ -77,20 +153,41 @@ int OSSL_ENCODER_CTX_set_selection(OSSL_ENCODER_CTX *ctx, int selection)
     return 1;
 }
 
-static OSSL_ENCODER_INSTANCE *ossl_encoder_instance_new(OSSL_ENCODER *encoder,
-                                                        void *encoderctx)
+int OSSL_ENCODER_CTX_set_output_type(OSSL_ENCODER_CTX *ctx,
+                                     const char *output_type)
 {
-    OSSL_ENCODER_INSTANCE *encoder_inst = NULL;
-    OSSL_PARAM params[3];
-
-    if (!ossl_assert(encoder != NULL)) {
+    if (!ossl_assert(ctx != NULL) || !ossl_assert(output_type != NULL)) {
         ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
-    if (encoder->get_params == NULL) {
-        ERR_raise(ERR_LIB_OSSL_ENCODER,
-                  OSSL_ENCODER_R_MISSING_GET_PARAMS);
+    ctx->output_type = output_type;
+    return 1;
+}
+
+int OSSL_ENCODER_CTX_set_output_structure(OSSL_ENCODER_CTX *ctx,
+                                          const char *output_structure)
+{
+    if (!ossl_assert(ctx != NULL) || !ossl_assert(output_structure != NULL)) {
+        ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    ctx->output_structure = output_structure;
+    return 1;
+}
+
+static OSSL_ENCODER_INSTANCE *ossl_encoder_instance_new(OSSL_ENCODER *encoder,
+                                                        void *encoderctx)
+{
+    OSSL_ENCODER_INSTANCE *encoder_inst = NULL;
+    const OSSL_PROVIDER *prov;
+    OSSL_LIB_CTX *libctx;
+    const OSSL_PROPERTY_LIST *props;
+    const OSSL_PROPERTY_DEFINITION *prop;
+
+    if (!ossl_assert(encoder != NULL)) {
+        ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
@@ -99,26 +196,38 @@ static OSSL_ENCODER_INSTANCE *ossl_encoder_instance_new(OSSL_ENCODER *encoder,
         return 0;
     }
 
-    /*
-     * Cache the input and output types for this encoder.  The output type
-     * is mandatory.
-     */
-    params[0] =
-        OSSL_PARAM_construct_utf8_ptr(OSSL_ENCODER_PARAM_OUTPUT_TYPE,
-                                      (char **)&encoder_inst->output_type, 0);
-    params[1] =
-        OSSL_PARAM_construct_utf8_ptr(OSSL_ENCODER_PARAM_INPUT_TYPE,
-                                      (char **)&encoder_inst->input_type, 0);
-    params[2] = OSSL_PARAM_construct_end();
-
-    if (!encoder->get_params(params)
-        || !OSSL_PARAM_modified(&params[1]))
-        goto err;
-
     if (!OSSL_ENCODER_up_ref(encoder)) {
         ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_INTERNAL_ERROR);
         goto err;
     }
+
+    prov = OSSL_ENCODER_get0_provider(encoder);
+    libctx = ossl_provider_libctx(prov);
+    props = ossl_encoder_parsed_properties(encoder);
+    if (props == NULL) {
+        ERR_raise_data(ERR_LIB_OSSL_DECODER, ERR_R_INVALID_PROPERTY_DEFINITION,
+                       "there are no property definitions with encoder %s",
+                       OSSL_ENCODER_get0_name(encoder));
+        goto err;
+    }
+
+    /* The "output" property is mandatory */
+    prop = ossl_property_find_property(props, libctx, "output");
+    encoder_inst->output_type = ossl_property_get_string_value(libctx, prop);
+    if (encoder_inst->output_type == NULL) {
+        ERR_raise_data(ERR_LIB_OSSL_DECODER, ERR_R_INVALID_PROPERTY_DEFINITION,
+                       "the mandatory 'output' property is missing "
+                       "for encoder %s (properties: %s)",
+                       OSSL_ENCODER_get0_name(encoder),
+                       OSSL_ENCODER_get0_properties(encoder));
+        goto err;
+    }
+
+    /* The "structure" property is optional */
+    prop = ossl_property_find_property(props, libctx, "structure");
+    if (prop != NULL)
+        encoder_inst->output_structure
+            = ossl_property_get_string_value(libctx, prop);
 
     encoder_inst->encoder = encoder;
     encoder_inst->encoderctx = encoderctx;
@@ -143,6 +252,8 @@ void ossl_encoder_instance_free(OSSL_ENCODER_INSTANCE *encoder_inst)
 static int ossl_encoder_ctx_add_encoder_inst(OSSL_ENCODER_CTX *ctx,
                                              OSSL_ENCODER_INSTANCE *ei)
 {
+    int ok;
+
     if (ctx->encoder_insts == NULL
         && (ctx->encoder_insts =
             sk_OSSL_ENCODER_INSTANCE_new_null()) == NULL) {
@@ -150,7 +261,18 @@ static int ossl_encoder_ctx_add_encoder_inst(OSSL_ENCODER_CTX *ctx,
         return 0;
     }
 
-    return (sk_OSSL_ENCODER_INSTANCE_push(ctx->encoder_insts, ei) > 0);
+    ok = (sk_OSSL_ENCODER_INSTANCE_push(ctx->encoder_insts, ei) > 0);
+    if (ok) {
+        OSSL_TRACE_BEGIN(ENCODER) {
+            BIO_printf(trc_out,
+                       "(ctx %p) Added encoder instance %p (encoder %p):\n"
+                       "    %s with %s\n",
+                       (void *)ctx, (void *)ei, (void *)ei->encoder,
+                       OSSL_ENCODER_get0_name(ei->encoder),
+                       OSSL_ENCODER_get0_properties(ei->encoder));
+        } OSSL_TRACE_END(ENCODER);
+    }
+    return ok;
 }
 
 int OSSL_ENCODER_CTX_add_encoder(OSSL_ENCODER_CTX *ctx, OSSL_ENCODER *encoder)
@@ -165,7 +287,7 @@ int OSSL_ENCODER_CTX_add_encoder(OSSL_ENCODER_CTX *ctx, OSSL_ENCODER *encoder)
         return 0;
     }
 
-    prov = OSSL_ENCODER_provider(encoder);
+    prov = OSSL_ENCODER_get0_provider(encoder);
     provctx = OSSL_PROVIDER_get0_provider_ctx(prov);
 
     if ((encoderctx = encoder->newctx(provctx)) == NULL
@@ -187,7 +309,7 @@ int OSSL_ENCODER_CTX_add_encoder(OSSL_ENCODER_CTX *ctx, OSSL_ENCODER *encoder)
 }
 
 int OSSL_ENCODER_CTX_add_extra(OSSL_ENCODER_CTX *ctx,
-                               OPENSSL_CTX *libctx, const char *propq)
+                               OSSL_LIB_CTX *libctx, const char *propq)
 {
     return 1;
 }
@@ -249,14 +371,6 @@ OSSL_ENCODER_INSTANCE_get_encoder_ctx(OSSL_ENCODER_INSTANCE *encoder_inst)
 }
 
 const char *
-OSSL_ENCODER_INSTANCE_get_input_type(OSSL_ENCODER_INSTANCE *encoder_inst)
-{
-    if (encoder_inst == NULL)
-        return NULL;
-    return encoder_inst->input_type;
-}
-
-const char *
 OSSL_ENCODER_INSTANCE_get_output_type(OSSL_ENCODER_INSTANCE *encoder_inst)
 {
     if (encoder_inst == NULL)
@@ -264,120 +378,295 @@ OSSL_ENCODER_INSTANCE_get_output_type(OSSL_ENCODER_INSTANCE *encoder_inst)
     return encoder_inst->output_type;
 }
 
-static int encoder_process(OSSL_ENCODER_CTX *ctx, BIO *out)
+const char *
+OSSL_ENCODER_INSTANCE_get_output_structure(OSSL_ENCODER_INSTANCE *encoder_inst)
 {
-    size_t i, end;
-    void *latest_output = NULL;
-    size_t latest_output_length = 0;
-    const char *latest_output_type = NULL;
-    const char *last_input_type = NULL;
-    int ok = 0;
+    if (encoder_inst == NULL)
+        return NULL;
+    return encoder_inst->output_structure;
+}
 
-    end = OSSL_ENCODER_CTX_get_num_encoders(ctx);
-    for (i = 0; i < end; i++) {
-        OSSL_ENCODER_INSTANCE *encoder_inst =
-            sk_OSSL_ENCODER_INSTANCE_value(ctx->encoder_insts, i);
-        OSSL_ENCODER *encoder = OSSL_ENCODER_INSTANCE_get_encoder(encoder_inst);
-        void *encoderctx = OSSL_ENCODER_INSTANCE_get_encoder_ctx(encoder_inst);
-        const char *current_input_type =
-            OSSL_ENCODER_INSTANCE_get_input_type(encoder_inst);
-        const char *current_output_type =
-            OSSL_ENCODER_INSTANCE_get_output_type(encoder_inst);
-        BIO *current_out;
-        BIO *allocated_out = NULL;
-        const void *current_data = NULL;
-        OSSL_PARAM abstract[3];
-        OSSL_PARAM *abstract_p;
-        const OSSL_PARAM *current_abstract = NULL;
+static int encoder_process(struct encoder_process_data_st *data)
+{
+    OSSL_ENCODER_INSTANCE *current_encoder_inst = NULL;
+    OSSL_ENCODER *current_encoder = NULL;
+    OSSL_ENCODER_CTX *current_encoder_ctx = NULL;
+    BIO *allocated_out = NULL;
+    const void *original_data = NULL;
+    OSSL_PARAM abstract[10];
+    const OSSL_PARAM *current_abstract = NULL;
+    int i;
+    int ok = -1;  /* -1 signifies that the lookup loop gave nothing */
+    int top = 0;
 
-        if (latest_output_type == NULL) {
-            /*
-             * This is the first iteration, so we prepare the object to be
-             * encoded
-             */
+    if (data->next_encoder_inst == NULL) {
+        /* First iteration, where we prepare for what is to come */
 
-            current_data = ctx->construct(encoder_inst, ctx->construct_data);
-
-            /* Assume that the constructor recorded an error */
-            if (current_data == NULL)
-                goto loop_end;
-        } else {
-            /*
-             * Check that the latest output type matches the currently
-             * considered encoder
-             */
-            if (!OSSL_ENCODER_is_a(encoder, latest_output_type))
-                continue;
-
-            /*
-             * If there is a latest output type, there should be a latest output
-             */
-            if (!ossl_assert(latest_output != NULL)) {
-                ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_INTERNAL_ERROR);
-                goto loop_end;
-            }
-
-            /*
-             * Create an object abstraction from the latest output, which was
-             * stolen from the previous round.
-             */
-            abstract_p = abstract;
-            if (last_input_type != NULL)
-                *abstract_p++ =
-                    OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_TYPE,
-                                                     (char *)last_input_type, 0);
-            *abstract_p++ =
-                OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_DATA,
-                                                  latest_output,
-                                                  latest_output_length);
-            *abstract_p = OSSL_PARAM_construct_end();
-            current_abstract = abstract;
-        }
-
-        /*
-         * If the desired output type matches the output type of the currently
-         * considered encoder, we're setting up final output.  Otherwise, set
-         * up an intermediary memory output.
-         */
-        if (strcasecmp(ctx->output_type, current_output_type) == 0)
-            current_out = out;
-        else if ((current_out = allocated_out = BIO_new(BIO_s_mem())) == NULL)
-            goto loop_end;     /* Assume BIO_new() recorded an error */
-
-        ok = encoder->encode(encoderctx, (OSSL_CORE_BIO *)current_out,
-                             current_data, current_abstract, ctx->selection,
-                             ossl_pw_passphrase_callback_enc, &ctx->pwdata);
-
-        if (current_input_type != NULL)
-            last_input_type = current_input_type;
-
-        if (!ok)
-            goto loop_end;
-
-        OPENSSL_free(latest_output);
-
-        /*
-         * Steal the output from the BIO_s_mem, if we did allocate one.
-         * That'll be the data for an object abstraction in the next round.
-         */
-        if (allocated_out != NULL) {
-            BUF_MEM *buf;
-
-            BIO_get_mem_ptr(allocated_out, &buf);
-            latest_output = buf->data;
-            latest_output_length = buf->length;
-            memset(buf, 0, sizeof(*buf));
-            BIO_free(allocated_out);
-        }
-
-     loop_end:
-        if (current_data != NULL)
-            ctx->cleanup(ctx->construct_data);
-
-        if (ok)
-            break;
+        data->count_output_structure =
+            data->ctx->output_structure == NULL ? -1 : 0;
+        top = 1;
     }
 
-    OPENSSL_free(latest_output);
+    for (i = data->current_encoder_inst_index; i-- > 0;) {
+        OSSL_ENCODER *next_encoder = NULL;
+        const char *current_output_type;
+        const char *current_output_structure;
+        struct encoder_process_data_st new_data;
+
+        if (!top)
+            next_encoder =
+                OSSL_ENCODER_INSTANCE_get_encoder(data->next_encoder_inst);
+
+        current_encoder_inst =
+            sk_OSSL_ENCODER_INSTANCE_value(data->ctx->encoder_insts, i);
+        current_encoder =
+            OSSL_ENCODER_INSTANCE_get_encoder(current_encoder_inst);
+        current_encoder_ctx =
+            OSSL_ENCODER_INSTANCE_get_encoder_ctx(current_encoder_inst);
+        current_output_type =
+            OSSL_ENCODER_INSTANCE_get_output_type(current_encoder_inst);
+        current_output_structure =
+            OSSL_ENCODER_INSTANCE_get_output_structure(current_encoder_inst);
+        memset(&new_data, 0, sizeof(new_data));
+        new_data.ctx = data->ctx;
+        new_data.current_encoder_inst_index = i;
+        new_data.next_encoder_inst = current_encoder_inst;
+        new_data.count_output_structure = data->count_output_structure;
+        new_data.level = data->level + 1;
+
+        OSSL_TRACE_BEGIN(ENCODER) {
+            BIO_printf(trc_out,
+                       "[%d] (ctx %p) Considering encoder instance %p (encoder %p)\n",
+                       data->level, (void *)data->ctx,
+                       (void *)current_encoder_inst, (void *)current_encoder);
+        } OSSL_TRACE_END(ENCODER);
+
+        /*
+         * If this is the top call, we check if the output type of the current
+         * encoder matches the desired output type.
+         * If this isn't the top call, i.e. this is deeper in the recursion,
+         * we instead check if the output type of the current encoder matches
+         * the name of the next encoder (the one found by the parent call).
+         */
+        if (top) {
+            if (data->ctx->output_type != NULL
+                && strcasecmp(current_output_type,
+                              data->ctx->output_type) != 0) {
+                OSSL_TRACE_BEGIN(ENCODER) {
+                    BIO_printf(trc_out,
+                               "[%d]    Skipping because current encoder output type (%s) != desired output type (%s)\n",
+                               data->level,
+                               current_output_type, data->ctx->output_type);
+                } OSSL_TRACE_END(ENCODER);
+                continue;
+            }
+        } else {
+            if (!OSSL_ENCODER_is_a(next_encoder, current_output_type)) {
+                OSSL_TRACE_BEGIN(ENCODER) {
+                    BIO_printf(trc_out,
+                               "[%d]    Skipping because current encoder output type (%s) != name of encoder %p\n",
+                               data->level,
+                               current_output_type, (void *)next_encoder);
+                } OSSL_TRACE_END(ENCODER);
+                continue;
+            }
+        }
+
+        /*
+         * If the caller and the current encoder specify an output structure,
+         * Check if they match.  If they do, count the match, otherwise skip
+         * the current encoder.
+         */
+        if (data->ctx->output_structure != NULL
+            && current_output_structure != NULL) {
+            if (strcasecmp(data->ctx->output_structure,
+                           current_output_structure) != 0) {
+                OSSL_TRACE_BEGIN(ENCODER) {
+                    BIO_printf(trc_out,
+                               "[%d]    Skipping because current encoder output structure (%s) != ctx output structure (%s)\n",
+                               data->level,
+                               current_output_structure,
+                               data->ctx->output_structure);
+                } OSSL_TRACE_END(ENCODER);
+                continue;
+            }
+
+            data->count_output_structure++;
+        }
+
+        /*
+         * Recurse to process the encoder implementations before the current
+         * one.
+         */
+        ok = encoder_process(&new_data);
+
+        data->prev_encoder_inst = new_data.prev_encoder_inst;
+        data->running_output = new_data.running_output;
+        data->running_output_length = new_data.running_output_length;
+
+        /*
+         * ok == -1     means that the recursion call above gave no further
+         *              encoders, and that the one we're currently at should
+         *              be tried.
+         * ok == 0      means that something failed in the recursion call
+         *              above, making the result unsuitable for a chain.
+         *              In this case, we simply continue to try finding a
+         *              suitable encoder at this recursion level.
+         * ok == 1      means that the recursion call was successful, and we
+         *              try to use the result at this recursion level.
+         */
+        if (ok != 0)
+            break;
+
+        OSSL_TRACE_BEGIN(ENCODER) {
+            BIO_printf(trc_out,
+                       "[%d]    Skipping because recusion level %d failed\n",
+                       data->level, new_data.level);
+        } OSSL_TRACE_END(ENCODER);
+    }
+
+    /*
+     * If |i < 0|, we didn't find any useful encoder in this recursion, so
+     * we do the rest of the process only if |i >= 0|.
+     */
+    if (i < 0) {
+        ok = -1;
+
+        OSSL_TRACE_BEGIN(ENCODER) {
+            BIO_printf(trc_out,
+                       "[%d] (ctx %p) No suitable encoder found\n",
+                       data->level, (void *)data->ctx);
+        } OSSL_TRACE_END(ENCODER);
+    } else {
+        /* Preparations */
+
+        switch (ok) {
+        case 0:
+            break;
+        case -1:
+            /*
+             * We have reached the beginning of the encoder instance sequence,
+             * so we prepare the object to be encoded.
+             */
+
+            /*
+             * |data->count_output_structure| is one of these values:
+             *
+             * -1       There is no desired output structure
+             *  0       There is a desired output structure, and it wasn't
+             *          matched by any of the encoder instances that were
+             *          considered
+             * >0       There is a desired output structure, and at least one
+             *          of the encoder instances matched it
+             */
+            if (data->count_output_structure == 0)
+                return 0;
+
+            original_data =
+                data->ctx->construct(current_encoder_inst,
+                                     data->ctx->construct_data);
+
+            /* Also set the data type, using the encoder implementation name */
+            data->data_type = OSSL_ENCODER_get0_name(current_encoder);
+
+            /* Assume that the constructor recorded an error */
+            if (original_data != NULL)
+                ok = 1;
+            else
+                ok = 0;
+            break;
+        case 1:
+            if (!ossl_assert(data->running_output != NULL)) {
+                ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_INTERNAL_ERROR);
+                ok = 0;
+                break;
+            }
+
+            {
+                /*
+                 * Create an object abstraction from the latest output, which
+                 * was stolen from the previous round.
+                 */
+
+                OSSL_PARAM *abstract_p = abstract;
+                const char *prev_output_structure =
+                    OSSL_ENCODER_INSTANCE_get_output_structure(data->prev_encoder_inst);
+
+                *abstract_p++ =
+                    OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_TYPE,
+                                                     (char *)data->data_type, 0);
+                if (prev_output_structure != NULL)
+                    *abstract_p++ =
+                        OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_STRUCTURE,
+                                                         (char *)prev_output_structure,
+                                                         0);
+                *abstract_p++ =
+                    OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_DATA,
+                                                      data->running_output,
+                                                      data->running_output_length);
+                *abstract_p = OSSL_PARAM_construct_end();
+                current_abstract = abstract;
+            }
+            break;
+        }
+
+        /* Calling the encoder implementation */
+
+        if (ok) {
+            OSSL_CORE_BIO *cbio = NULL;
+            BIO *current_out = NULL;
+
+            /*
+             * If we're at the last encoder instance to use, we're setting up
+             * final output.  Otherwise, set up an intermediary memory output.
+             */
+            if (top)
+                current_out = data->bio;
+            else if ((current_out = allocated_out = BIO_new(BIO_s_mem()))
+                     == NULL)
+                ok = 0;     /* Assume BIO_new() recorded an error */
+
+            if (ok)
+                ok = (cbio = ossl_core_bio_new_from_bio(current_out)) != NULL;
+            if (ok) {
+                ok = current_encoder->encode(current_encoder_ctx, cbio,
+                                             original_data, current_abstract,
+                                             data->ctx->selection,
+                                             ossl_pw_passphrase_callback_enc,
+                                             &data->ctx->pwdata);
+                OSSL_TRACE_BEGIN(ENCODER) {
+                    BIO_printf(trc_out,
+                               "[%d] (ctx %p) Running encoder instance %p => %d\n",
+                               data->level, (void *)data->ctx,
+                               (void *)current_encoder_inst, ok);
+                } OSSL_TRACE_END(ENCODER);
+            }
+
+            ossl_core_bio_free(cbio);
+            data->prev_encoder_inst = current_encoder_inst;
+        }
+    }
+
+    /* Cleanup and collecting the result */
+
+    OPENSSL_free(data->running_output);
+    data->running_output = NULL;
+
+    /*
+     * Steal the output from the BIO_s_mem, if we did allocate one.
+     * That'll be the data for an object abstraction in the next round.
+     */
+    if (allocated_out != NULL) {
+        BUF_MEM *buf;
+
+        BIO_get_mem_ptr(allocated_out, &buf);
+        data->running_output = (unsigned char *)buf->data;
+        data->running_output_length = buf->length;
+        memset(buf, 0, sizeof(*buf));
+    }
+
+    BIO_free(allocated_out);
+    if (original_data != NULL)
+        data->ctx->cleanup(data->ctx->construct_data);
     return ok;
 }

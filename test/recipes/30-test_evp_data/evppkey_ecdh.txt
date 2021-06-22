@@ -1,5 +1,5 @@
 #
-# Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2001-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -138,7 +138,6 @@ Ny3Ep0GVYms=
 -----END PUBLIC KEY-----
 
 PrivPubKeyPair = BOB_secp128r1:BOB_secp128r1_PUB
-
 
 # ECDH Alice with Bob peer
 
@@ -948,12 +947,14 @@ PrivPubKeyPair = BOB_sect163r1:BOB_sect163r1_PUB
 
 # ECDH Alice with Bob peer
 
+Availablein=default
 Derive=ALICE_sect163r1
 PeerKey=BOB_sect163r1_PUB
 SharedSecret=02355c765bbc07fcc44bb1496e490912f6df56e6d4
 
 # ECDH Bob with Alice peer
 
+Availablein=default
 Derive=BOB_sect163r1
 PeerKey=ALICE_sect163r1_PUB
 SharedSecret=02355c765bbc07fcc44bb1496e490912f6df56e6d4
@@ -994,12 +995,14 @@ PrivPubKeyPair = BOB_sect193r1:BOB_sect193r1_PUB
 
 # ECDH Alice with Bob peer
 
+Availablein=default
 Derive=ALICE_sect193r1
 PeerKey=BOB_sect193r1_PUB
 SharedSecret=00458b4c5ad122de5a377bea0adf1ab87bcb961b24ed764f47
 
 # ECDH Bob with Alice peer
 
+Availablein=default
 Derive=BOB_sect193r1
 PeerKey=ALICE_sect193r1_PUB
 SharedSecret=00458b4c5ad122de5a377bea0adf1ab87bcb961b24ed764f47
@@ -1040,12 +1043,14 @@ PrivPubKeyPair = BOB_sect193r2:BOB_sect193r2_PUB
 
 # ECDH Alice with Bob peer
 
+Availablein=default
 Derive=ALICE_sect193r2
 PeerKey=BOB_sect193r2_PUB
 SharedSecret=019d1f316d204a9cd1b9632cebb4accddb204158be3e435891
 
 # ECDH Bob with Alice peer
 
+Availablein=default
 Derive=BOB_sect193r2
 PeerKey=ALICE_sect193r2_PUB
 SharedSecret=019d1f316d204a9cd1b9632cebb4accddb204158be3e435891
@@ -1086,12 +1091,14 @@ PrivPubKeyPair = BOB_sect239k1:BOB_sect239k1_PUB
 
 # ECDH Alice with Bob peer
 
+Availablein=default
 Derive=ALICE_sect239k1
 PeerKey=BOB_sect239k1_PUB
 SharedSecret=4d1c9a8ae73f754d0a593d6e426114f4f67d7c8082ccc4e04a72b0d2aff8
 
 # ECDH Bob with Alice peer
 
+Availablein=default
 Derive=BOB_sect239k1
 PeerKey=ALICE_sect239k1_PUB
 SharedSecret=4d1c9a8ae73f754d0a593d6e426114f4f67d7c8082ccc4e04a72b0d2aff8
@@ -3609,3 +3616,11 @@ SharedSecret=01144C7D79AE6956BC8EDB8E7C787C4521CB086FA64407F97894E5E6B2D79B04D14
 Derive=SECP521R1_RFC5903-Peer
 PeerKey=SECP521R1_RFC5903-PUBLIC
 SharedSecret=01144C7D79AE6956BC8EDB8E7C787C4521CB086FA64407F97894E5E6B2D79B04D1427E73CA4BAA240A34786859810C06B3C715A3A8CC3151F2BEE417996D19F3DDEA
+
+Title = ECDH negative tests (with random keys)
+
+# ECDH Alice with BOB peer - mismatching curves.
+Availablein = default
+Derive=ALICE_secp112r1
+PeerKeyValidate=BOB_secp128r1_PUB
+Result = DERIVE_SET_PEER_ERROR

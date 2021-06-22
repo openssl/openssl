@@ -2,19 +2,17 @@
 
 =head1 NAME
 
-EVP_PKEY_param_fromdata_init, EVP_PKEY_key_fromdata_init, EVP_PKEY_fromdata,
-EVP_PKEY_param_fromdata_settable, EVP_PKEY_key_fromdata_settable
-- functions to create key parameters and keys from user data
+EVP_PKEY_fromdata_init, EVP_PKEY_fromdata, EVP_PKEY_fromdata_settable
+- functions to create keys and key parameters from user data
 
 =head1 SYNOPSIS
 
  #include <openssl/evp.h>
 
- int EVP_PKEY_param_fromdata_init(EVP_PKEY_CTX *ctx);
- int EVP_PKEY_key_fromdata_init(EVP_PKEY_CTX *ctx);
- int EVP_PKEY_fromdata(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey, OSSL_PARAM params[]);
- const OSSL_PARAM *EVP_PKEY_param_fromdata_settable(EVP_PKEY_CTX *ctx);
- const OSSL_PARAM *EVP_PKEY_key_fromdata_settable(EVP_PKEY_CTX *ctx);
+ int EVP_PKEY_fromdata_init(EVP_PKEY_CTX *ctx);
+ int EVP_PKEY_fromdata(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey, int selection,
+                       OSSL_PARAM params[]);
+ const OSSL_PARAM *EVP_PKEY_fromdata_settable(EVP_PKEY_CTX *ctx, int selection);
 
 =head1 DESCRIPTION
 
@@ -29,17 +27,15 @@ L<EVP_PKEY_CTX_new_id(3)>.
 The exact key data that the user can pass depends on the key type.
 These are passed as an L<OSSL_PARAM(3)> array.
 
-EVP_PKEY_param_fromdata_init() initializes a public key algorithm context
-for creating key parameters from user data.
+EVP_PKEY_fromdata_init() initializes a public key algorithm context
+for creating a key or key parameters from user data.
 
-EVP_PKEY_key_fromdata_init() initializes a public key algorithm context for
-creating a key from user data.
-
-EVP_PKEY_fromdata() creates the structure to store key parameters or a
-key, given data from I<params> and a context that's been initialized with
-EVP_PKEY_param_fromdata_init() or EVP_PKEY_key_fromdata_init().  The result is
-written to I<*ppkey>. The parameters that can be used for various types of key
-are as described by the diverse "Common parameters" sections of the
+EVP_PKEY_fromdata() creates the structure to store a key or key parameters,
+given data from I<params>, I<selection> and a context that's been initialized
+with EVP_PKEY_fromdata_init().  The result is written to I<*ppkey>.
+I<selection> is described in L</Selections>.
+The parameters that can be used for various types of key are as described by the
+diverse "Common parameters" sections of the
 L<B<EVP_PKEY-RSA>(7)|EVP_PKEY-RSA(7)/Common RSA parameters>,
 L<B<EVP_PKEY-DSA>(7)|EVP_PKEY-DSA(7)/Common DSA & DH parameters>,
 L<B<EVP_PKEY-DH>(7)|EVP_PKEY-DH(7)/Common DH parameters>,
@@ -52,24 +48,45 @@ and L<B<EVP_PKEY-ED25519>(7)|EVP_PKEY-ED25519(7)/Common X25519, X448, ED25519 an
 =for comment the awful list of links above is made this way so we get nice
 rendering as a man-page while still getting proper links in HTML
 
-EVP_PKEY_param_fromdata_settable() and EVP_PKEY_key_fromdata_settable()
-get a constant B<OSSL_PARAM> array that describes the settable parameters
-that can be used with EVP_PKEY_fromdata().
+EVP_PKEY_fromdata_settable() gets a constant B<OSSL_PARAM> array that describes
+the settable parameters that can be used with EVP_PKEY_fromdata().
+I<selection> is described in L</Selections>.
 See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
+
+=head2 Selections
+
+The following constants can be used for I<selection>:
+
+=over 4
+
+=item B<EVP_PKEY_KEY_PARAMETERS>
+
+Only key parameters will be selected.
+
+=item B<EVP_PKEY_PUBLIC_KEY>
+
+Only public key components will be selected. This includes optional key
+parameters.
+
+=item B<EVP_PKEY_KEYPAIR>
+
+Any keypair components will be selected. This includes the private key,
+public key and key parameters.
+
+=back
 
 =head1 NOTES
 
-These functions only work with key management methods coming from a
-provider.
+These functions only work with key management methods coming from a provider.
+This is the mirror function to L<EVP_PKEY_todata(3)>.
 
 =for comment We may choose to make this available for legacy methods too... 
 
 =head1 RETURN VALUES
 
-EVP_PKEY_key_fromdata_init(), EVP_PKEY_param_fromdata_init() and
-EVP_PKEY_fromdata() return 1 for success and 0 or a negative value for
-failure.  In particular a return value of -2 indicates the operation is
-not supported by the public key algorithm.
+EVP_PKEY_fromdata_init() and EVP_PKEY_fromdata() return 1 for success and 0 or
+a negative value for failure.  In particular a return value of -2 indicates the
+operation is not supported by the public key algorithm.
 
 =head1 EXAMPLES
 
@@ -110,8 +127,8 @@ TODO Write a set of cookbook documents and link to them.
      EVP_PKEY *pkey = NULL;
 
      if (ctx == NULL
-         || EVP_PKEY_key_fromdata_init(ctx) <= 0
-         || EVP_PKEY_fromdata(ctx, &pkey, params) <= 0)
+         || EVP_PKEY_fromdata_init(ctx) <= 0
+         || EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_KEYPAIR, params) <= 0)
          exit(1);
 
      /* Do what you want with |pkey| */
@@ -173,8 +190,8 @@ TODO Write a set of cookbook documents and link to them.
      ctx = EVP_PKEY_CTX_new_from_name(NULL, "EC", NULL);
      if (ctx == NULL
          || params != NULL
-         || EVP_PKEY_key_fromdata_init(ctx) <= 0
-         || EVP_PKEY_fromdata(ctx, &pkey, params) <= 0) {
+         || EVP_PKEY_fromdata_init(ctx) <= 0
+         || EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_KEYPAIR, params) <= 0) {
          exitcode = 1;
      } else {
          /* Do what you want with |pkey| */
@@ -182,7 +199,7 @@ TODO Write a set of cookbook documents and link to them.
 
      EVP_PKEY_free(pkey);
      EVP_PKEY_CTX_free(ctx);
-     OSSL_PARAM_BLD_free_params(params);
+     OSSL_PARAM_free(params);
      OSSL_PARAM_BLD_free(param_bld);
      BN_free(priv);
 
@@ -199,8 +216,10 @@ TODO Write a set of cookbook documents and link to them.
      EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_name(NULL, argv[1], NULL);
      const *OSSL_PARAM *settable_params = NULL;
 
-     if (ctx == NULL
-         || (settable_params = EVP_PKEY_key_fromdata_settable(ctx)) == NULL)
+     if (ctx == NULL)
+        exit(1);
+    settable_params = EVP_PKEY_fromdata_settable(ctx, EVP_PKEY_KEYPAIR);
+    if (settable_params == NULL)
          exit(1);
 
      for (; settable_params->key != NULL; settable_params++) {
@@ -235,13 +254,13 @@ TODO Write a set of cookbook documents and link to them.
  }
 
 The descriptor L<OSSL_PARAM(3)> returned by
-EVP_PKEY_key_fromdata_settable() may also be used programmatically, for
+EVP_PKEY_fromdata_settable() may also be used programmatically, for
 example with L<OSSL_PARAM_allocate_from_text(3)>.
 
 =head1 SEE ALSO
 
 L<EVP_PKEY_CTX_new(3)>, L<provider(7)>, L<EVP_PKEY_gettable_params(3)>,
-L<OSSL_PARAM(3)>,
+L<OSSL_PARAM(3)>, L<EVP_PKEY_todata(3)>,
 L<EVP_PKEY-RSA(7)>, L<EVP_PKEY-DSA(7)>, L<EVP_PKEY-DH(7)>, L<EVP_PKEY-EC(7)>,
 L<EVP_PKEY-ED448(7)>, L<EVP_PKEY-X25519(7)>, L<EVP_PKEY-X448(7)>,
 L<EVP_PKEY-ED25519(7)>
@@ -252,7 +271,7 @@ These functions were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

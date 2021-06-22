@@ -40,7 +40,7 @@ the processor along
 =end comment
 
 SPARSE_ARRAY_OF() returns the name for a sparse array of the specified
-B<I<TYPE>>.  DEFINE_STACK_OF() creates set of functions for a sparse
+B<I<TYPE>>.  DEFINE_SPARSE_ARRAY_OF() creates set of functions for a sparse
 array of B<I<TYPE>>. This will mean that a pointer to type B<I<TYPE>>
 is stored in each element of a sparse array, the type is referenced by
 B<SPARSE_ARRAY_OF>(B<I<TYPE>>) and each function name begins with
@@ -120,7 +120,7 @@ This functionality was added to OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.  Copyright
+Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.  Copyright
 (c) 2019, Oracle and/or its affiliates.  All rights reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use this

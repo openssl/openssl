@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,19 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "prov/rand_pool.h"
+#include "prov/provider_ctx.h"
+#include "crypto/rand_pool.h"
 
 /* Hardware-based seeding functions. */
-size_t prov_acquire_entropy_from_tsc(RAND_POOL *pool);
-size_t prov_acquire_entropy_from_cpu(RAND_POOL *pool);
-
-/* DRBG entropy callbacks. */
-size_t prov_drbg_get_additional_data(RAND_POOL *pool, unsigned char **pout);
-
-void prov_drbg_cleanup_additional_data(RAND_POOL *pool, unsigned char *out);
-
-size_t prov_pool_acquire_entropy(RAND_POOL *pool);
-int prov_pool_add_nonce_data(RAND_POOL *pool);
+size_t ossl_prov_acquire_entropy_from_tsc(RAND_POOL *pool);
+size_t ossl_prov_acquire_entropy_from_cpu(RAND_POOL *pool);
 
 /*
  * Add some platform specific additional data
@@ -30,5 +23,19 @@ int prov_pool_add_nonce_data(RAND_POOL *pool);
  *
  * Returns 1 on success and 0 on failure.
  */
-int rand_pool_add_additional_data(RAND_POOL *pool);
+int ossl_rand_pool_add_additional_data(RAND_POOL *pool);
 
+/*
+ * External seeding functions from the core dispatch table.
+ */
+int ossl_prov_seeding_from_dispatch(const OSSL_DISPATCH *fns);
+
+size_t ossl_prov_get_entropy(PROV_CTX *prov_ctx, unsigned char **pout,
+                             int entropy, size_t min_len, size_t max_len);
+void ossl_prov_cleanup_entropy(PROV_CTX *prov_ctx, unsigned char *buf,
+                               size_t len);
+size_t ossl_prov_get_nonce(PROV_CTX *prov_ctx, unsigned char **pout,
+                           size_t min_len, size_t max_len,
+                           const void *salt, size_t salt_len);
+void ossl_prov_cleanup_nonce(PROV_CTX *prov_ctx, unsigned char *buf,
+                             size_t len);

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,7 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <internal/cryptlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -69,6 +68,7 @@ static int apps_startup(void)
         return 0;
 
     (void)setup_ui_method();
+    (void)setup_engine_loader();
 
     /*
      * NOTE: This is an undocumented feature required for testing only.
@@ -89,7 +89,8 @@ static int apps_startup(void)
 static void apps_shutdown(void)
 {
     app_providers_cleanup();
-    OPENSSL_CTX_free(app_get0_libctx());
+    OSSL_LIB_CTX_free(app_get0_libctx());
+    destroy_engine_loader();
     destroy_ui_method();
 }
 
@@ -110,8 +111,10 @@ static size_t internal_trace_cb(const char *buf, size_t cnt,
 
     switch (cmd) {
     case OSSL_TRACE_CTRL_BEGIN:
-        if (!ossl_assert(!trace_data->ingroup))
+        if (trace_data->ingroup) {
+            BIO_printf(bio_err, "ERROR: tracing already started\n");
             return 0;
+        }
         trace_data->ingroup = 1;
 
         tid = CRYPTO_THREAD_get_current_id();
@@ -123,14 +126,18 @@ static size_t internal_trace_cb(const char *buf, size_t cnt,
         BIO_set_prefix(trace_data->bio, buffer);
         break;
     case OSSL_TRACE_CTRL_WRITE:
-        if (!ossl_assert(trace_data->ingroup))
+        if (!trace_data->ingroup) {
+            BIO_printf(bio_err, "ERROR: writing when tracing not started\n");
             return 0;
+        }
 
         ret = BIO_write(trace_data->bio, buf, cnt);
         break;
     case OSSL_TRACE_CTRL_END:
-        if (!ossl_assert(trace_data->ingroup))
+        if (!trace_data->ingroup) {
+            BIO_printf(bio_err, "ERROR: finishing when tracing not started\n");
             return 0;
+        }
         trace_data->ingroup = 0;
 
         BIO_set_prefix(trace_data->bio, NULL);
@@ -228,7 +235,9 @@ int main(int argc, char *argv[])
     FUNCTION f, *fp;
     LHASH_OF(FUNCTION) *prog = NULL;
     char *pname;
+    const char *fname;
     ARGS arg;
+    int global_help = 0;
     int ret = 0;
 
     arg.argv = NULL;
@@ -242,9 +251,7 @@ int main(int argc, char *argv[])
 #if defined(OPENSSL_SYS_VMS) && defined(__DECC)
     argv = copy_argv(&argc, argv);
 #elif defined(_WIN32)
-    /*
-     * Replace argv[] with UTF-8 encoded strings.
-     */
+    /* Replace argv[] with UTF-8 encoded strings. */
     win32_utf8argv(&argc, &argv);
 #endif
 
@@ -252,18 +259,11 @@ int main(int argc, char *argv[])
     setup_trace(getenv("OPENSSL_TRACE"));
 #endif
 
-    if (!apps_startup()) {
+    if ((fname = "apps_startup", !apps_startup())
+            || (fname = "prog_init", (prog = prog_init()) == NULL)) {
         BIO_printf(bio_err,
-                   "FATAL: Startup failure (dev note: apps_startup() failed)\n");
-        ERR_print_errors(bio_err);
-        ret = 1;
-        goto end;
-    }
-
-    prog = prog_init();
-    if (prog == NULL) {
-        BIO_printf(bio_err,
-                   "FATAL: Startup failure (dev note: prog_init() failed)\n");
+                   "FATAL: Startup failure (dev note: %s()) for %s\n",
+                   fname, argv[0]);
         ERR_print_errors(bio_err);
         ret = 1;
         goto end;
@@ -278,21 +278,28 @@ int main(int argc, char *argv[])
     f.name = pname;
     fp = lh_FUNCTION_retrieve(prog, &f);
     if (fp == NULL) {
-        /* We assume we've been called as 'openssl cmd' */
+        /* We assume we've been called as 'openssl ...' */
+        global_help = argc > 1
+            && (strcmp(argv[1], "-help") == 0 || strcmp(argv[1], "--help") == 0
+                || strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--h") == 0);
         argc--;
         argv++;
+        opt_appname(argc == 1 || global_help ? "help" : argv[0]);
+    } else {
+        argv[0] = pname;
     }
 
     /* If there's a command, run with that, otherwise "help". */
-    ret = argc > 0
-        ? do_cmd(prog, argc, argv)
-        : do_cmd(prog, 1, help_argv);
+    ret = argc == 0 || global_help
+        ? do_cmd(prog, 1, help_argv)
+        : do_cmd(prog, argc, argv);
 
  end:
     OPENSSL_free(default_config_file);
     lh_FUNCTION_free(prog);
     OPENSSL_free(arg.argv);
-    app_RAND_write();
+    if (!app_RAND_write())
+        ret = EXIT_FAILURE;
 
     BIO_free(bio_in);
     BIO_free_all(bio_out);
@@ -340,6 +347,7 @@ int help_main(int argc, char **argv)
         }
     }
 
+    /* One optional argument, the command to get help for. */
     if (opt_num_rest() == 1) {
         new_argv[0] = opt_rest()[0];
         new_argv[1] = "--help";
@@ -352,7 +360,7 @@ int help_main(int argc, char **argv)
     }
 
     calculate_columns(functions, &dc);
-    BIO_printf(bio_err, "Standard commands");
+    BIO_printf(bio_err, "%s:\n\nStandard commands", prog);
     i = 0;
     tp = FT_none;
     for (fp = functions; fp->name != NULL; fp++) {

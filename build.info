@@ -1,7 +1,10 @@
 # Note that some of these directories are filtered in Configure.  Look for
 # %skipdir there for further explanations.
 
-SUBDIRS=crypto ssl apps test util tools fuzz providers doc
+SUBDIRS=crypto ssl apps util tools fuzz providers doc
+IF[{- !$disabled{tests} -}]
+  SUBDIRS=test
+ENDIF
 IF[{- !$disabled{'deprecated-3.0'} -}]
   SUBDIRS=engines
 ENDIF
@@ -26,6 +29,7 @@ DEPEND[]=include/openssl/asn1.h \
          include/openssl/err.h \
          include/openssl/ess.h \
          include/openssl/fipskey.h \
+         include/openssl/lhash.h \
          include/openssl/opensslv.h \
          include/openssl/ocsp.h \
          include/openssl/pkcs12.h \
@@ -37,8 +41,7 @@ DEPEND[]=include/openssl/asn1.h \
          include/openssl/x509.h \
          include/openssl/x509v3.h \
          include/openssl/x509_vfy.h \
-         include/crypto/bn_conf.h include/crypto/dso_conf.h \
-         doc/man7/openssl_user_macros.pod
+         include/crypto/bn_conf.h include/crypto/dso_conf.h
 
 GENERATE[include/openssl/asn1.h]=include/openssl/asn1.h.in
 GENERATE[include/openssl/asn1t.h]=include/openssl/asn1t.h.in
@@ -53,6 +56,7 @@ GENERATE[include/openssl/ct.h]=include/openssl/ct.h.in
 GENERATE[include/openssl/err.h]=include/openssl/err.h.in
 GENERATE[include/openssl/ess.h]=include/openssl/ess.h.in
 GENERATE[include/openssl/fipskey.h]=include/openssl/fipskey.h.in
+GENERATE[include/openssl/lhash.h]=include/openssl/lhash.h.in
 GENERATE[include/openssl/ocsp.h]=include/openssl/ocsp.h.in
 GENERATE[include/openssl/opensslv.h]=include/openssl/opensslv.h.in
 GENERATE[include/openssl/pkcs12.h]=include/openssl/pkcs12.h.in
@@ -66,7 +70,6 @@ GENERATE[include/openssl/x509v3.h]=include/openssl/x509v3.h.in
 GENERATE[include/openssl/x509_vfy.h]=include/openssl/x509_vfy.h.in
 GENERATE[include/crypto/bn_conf.h]=include/crypto/bn_conf.h.in
 GENERATE[include/crypto/dso_conf.h]=include/crypto/dso_conf.h.in
-GENERATE[doc/man7/openssl_user_macros.pod]=doc/man7/openssl_user_macros.pod.in
 
 IF[{- defined $target{shared_defflag} -}]
   SHARED_SOURCE[libcrypto]=libcrypto.ld
@@ -74,11 +77,13 @@ IF[{- defined $target{shared_defflag} -}]
 
   GENERATE[libcrypto.ld]=util/libcrypto.num libcrypto
   GENERATE[libssl.ld]=util/libssl.num libssl
+  DEPEND[libcrypto.ld libssl.ld]=configdata.pm util/perl/OpenSSL/Ordinals.pm
 ENDIF
 
-IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-)/ -}]
+IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-|BC-)/ -}]
   GENERATE[libcrypto.rc]=util/mkrc.pl libcrypto
   GENERATE[libssl.rc]=util/mkrc.pl libssl
+  DEPEND[libcrypto.rc libssl.rc]=configdata.pm
 
   SHARED_SOURCE[libcrypto]=libcrypto.rc
   SHARED_SOURCE[libssl]=libssl.rc

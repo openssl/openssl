@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,6 +14,7 @@
 #include <openssl/evp.h>
 #include <openssl/trace.h>
 #include "ssl_local.h"
+#include "sslerr.h"
 #include "internal/thread_once.h"
 
 static int stopped;
@@ -53,8 +54,8 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_load_ssl_strings)
      * pulling in all the error strings during static linking
      */
 #if !defined(OPENSSL_NO_ERR) && !defined(OPENSSL_NO_AUTOERRINIT)
-    OSSL_TRACE(INIT, "ossl_init_load_ssl_strings: ERR_load_SSL_strings()\n");
-    ERR_load_SSL_strings();
+    OSSL_TRACE(INIT, "ossl_init_load_ssl_strings: ossl_err_load_SSL_strings()\n");
+    ossl_err_load_SSL_strings();
     ssl_strings_inited = 1;
 #endif
     return 1;
@@ -111,7 +112,7 @@ int OPENSSL_init_ssl(uint64_t opts, const OPENSSL_INIT_SETTINGS * settings)
              * sets an error etc
              */
             stoperrset = 1;
-            SSLerr(SSL_F_OPENSSL_INIT_SSL, ERR_R_INIT_FAIL);
+            ERR_raise(ERR_LIB_SSL, ERR_R_INIT_FAIL);
         }
         return 0;
     }

@@ -81,7 +81,6 @@ SOURCE[../../providers/libfips.a]= $COMMON
 # need to be applied to all affected libraries and modules.
 DEFINE[../../libcrypto]=$SHA1DEF $KECCAK1600DEF
 DEFINE[../../providers/libfips.a]=$SHA1DEF $KECCAK1600DEF
-DEFINE[../../providers/libimplementations.a]=$SHA1DEF $KECCAK1600DEF
 
 GENERATE[sha1-586.s]=asm/sha1-586.pl
 DEPEND[sha1-586.s]=../perlasm/x86asm.pl

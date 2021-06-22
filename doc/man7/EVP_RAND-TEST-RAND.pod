@@ -44,7 +44,7 @@ These parameter works as described in L<EVP_RAND(3)/PARAMETERS>.
 
 =item "max_adinlen" (B<OSSL_DRBG_PARAM_MAX_ADINLEN>) <unsigned integer>
 
-=item "reseed_counter" (B<OSSL_DRBG_PARAM_RESEED_CTR>) <unsigned integer>
+=item "reseed_counter" (B<OSSL_DRBG_PARAM_RESEED_COUNTER>) <unsigned integer>
 
 These parameters work as described in L<EVP_RAND(3)/PARAMETERS>, except that
 they can all be set as well as read.
@@ -90,7 +90,7 @@ A context for a test generator can be obtained by calling:
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_NONCE,
                                           nonce, sizeof(nonce));
  *p = OSSL_PARAM_construct_end();
- EVP_RAND_set_ctx_params(rctx, params);
+ EVP_RAND_instantiate(rctx, strength, 0, NULL, 0, params);
 
  EVP_RAND_generate(rctx, bytes, sizeof(bytes), strength, 0, NULL, 0);
 
@@ -103,7 +103,7 @@ L<EVP_RAND(3)/PARAMETERS>
 
 =head1 COPYRIGHT
 
-Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

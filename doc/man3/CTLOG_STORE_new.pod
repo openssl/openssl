@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-CTLOG_STORE_new_with_libctx,
+CTLOG_STORE_new_ex,
 CTLOG_STORE_new, CTLOG_STORE_free,
 CTLOG_STORE_load_default_file, CTLOG_STORE_load_file -
 Create and populate a Certificate Transparency log list
@@ -11,8 +11,7 @@ Create and populate a Certificate Transparency log list
 
  #include <openssl/ct.h>
 
- CTLOG_STORE *CTLOG_STORE_new_with_libctx(OPENSSL_CTX *libctx,
-                                          const char *propq);
+ CTLOG_STORE *CTLOG_STORE_new_ex(OSSL_LIB_CTX *libctx, const char *propq);
  CTLOG_STORE *CTLOG_STORE_new(void);
  void CTLOG_STORE_free(CTLOG_STORE *store);
 
@@ -25,10 +24,10 @@ A CTLOG_STORE is a container for a list of CTLOGs (Certificate Transparency
 logs). The list can be loaded from one or more files and then searched by LogID
 (see RFC 6962, Section 3.2, for the definition of a LogID).
 
-CTLOG_STORE_new_with_libctx() creates an empty list of CT logs associated with
+CTLOG_STORE_new_ex() creates an empty list of CT logs associated with
 the library context I<libctx> and the property query string I<propq>.
 
-CTLOG_STORE_new() does the same thing as CTLOG_STORE_new_with_libctx() but with
+CTLOG_STORE_new() does the same thing as CTLOG_STORE_new_ex() but with
 the default library context and property query string.
 
 The CTLOG_STORE is then populated by CTLOG_STORE_load_default_file() or
@@ -74,7 +73,7 @@ L<SSL_CTX_set_ctlog_list_file(3)>
 
 =head1 HISTORY
 
-CTLOG_STORE_new_with_libctx was added in OpenSSL 3.0. All other functions were
+CTLOG_STORE_new_ex was added in OpenSSL 3.0. All other functions were
 added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT

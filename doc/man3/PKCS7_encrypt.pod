@@ -2,22 +2,22 @@
 
 =head1 NAME
 
-PKCS7_encrypt_with_libctx, PKCS7_encrypt
+PKCS7_encrypt_ex, PKCS7_encrypt
 - create a PKCS#7 envelopedData structure
 
 =head1 SYNOPSIS
 
  #include <openssl/pkcs7.h>
 
- PKCS7 *PKCS7_encrypt_with_libctx(STACK_OF(X509) *certs, BIO *in,
-                                  const EVP_CIPHER *cipher, int flags,
-                                  OPENSSL_CTX *libctx, const char *propq);
+ PKCS7 *PKCS7_encrypt_ex(STACK_OF(X509) *certs, BIO *in,
+                         const EVP_CIPHER *cipher, int flags,
+                         OSSL_LIB_CTX *libctx, const char *propq);
  PKCS7 *PKCS7_encrypt(STACK_OF(X509) *certs, BIO *in, const EVP_CIPHER *cipher,
                       int flags);
 
 =head1 DESCRIPTION
 
-PKCS7_encrypt_with_libctx() creates and returns a PKCS#7 envelopedData structure.
+PKCS7_encrypt_ex() creates and returns a PKCS#7 envelopedData structure.
 I<certs> is a list of recipient certificates. I<in> is the content to be
 encrypted. I<cipher> is the symmetric cipher to use. I<flags> is an optional set
 of flags. The library context I<libctx> and the property query I<propq> are used
@@ -66,12 +66,12 @@ PEM_write_bio_PKCS7_stream() finalize the structure. Alternatively finalization
 can be performed by obtaining the streaming ASN1 B<BIO> directly using
 BIO_new_PKCS7().
 
-PKCS7_encrypt() is similar to PKCS7_encrypt_with_libctx() but uses default
+PKCS7_encrypt() is similar to PKCS7_encrypt_ex() but uses default
 values of NULL for the library context I<libctx> and the property query I<propq>.
 
 =head1 RETURN VALUES
 
-PKCS7_encrypt_with_libctx() and PKCS7_encrypt() return either a PKCS7 structure
+PKCS7_encrypt_ex() and PKCS7_encrypt() return either a PKCS7 structure
 or NULL if an error occurred. The error can be obtained from ERR_get_error(3).
 
 =head1 SEE ALSO
@@ -80,7 +80,7 @@ L<ERR_get_error(3)>, L<PKCS7_decrypt(3)>
 
 =head1 HISTORY
 
-The function PKCS7_encrypt_with_libctx() was added in OpenSSL 3.0.
+The function PKCS7_encrypt_ex() was added in OpenSSL 3.0.
 
 The B<PKCS7_STREAM> flag was added in OpenSSL 1.0.0.
 

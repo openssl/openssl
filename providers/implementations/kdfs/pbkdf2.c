@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -20,12 +20,12 @@
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
 #include <openssl/core_names.h>
+#include <openssl/proverr.h>
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
 #include "crypto/evp.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
 #include "pbkdf2.h"
@@ -111,7 +111,7 @@ static void kdf_pbkdf2_reset(void *vctx)
 static void kdf_pbkdf2_init(KDF_PBKDF2 *ctx)
 {
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    OPENSSL_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
+    OSSL_LIB_CTX *provctx = PROV_LIBCTX_OF(ctx->provctx);
 
     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
                                                  SN_sha1, 0);
@@ -119,7 +119,7 @@ static void kdf_pbkdf2_init(KDF_PBKDF2 *ctx)
         /* This is an error, but there is no way to indicate such directly */
         ossl_prov_digest_reset(&ctx->digest);
     ctx->iter = PKCS5_DEFAULT_ITER;
-    ctx->lower_bound_checks = kdf_pbkdf2_default_checks;
+    ctx->lower_bound_checks = ossl_kdf_pbkdf2_default_checks;
 }
 
 static int pbkdf2_set_membuf(unsigned char **buffer, size_t *buflen,
@@ -139,13 +139,13 @@ static int pbkdf2_set_membuf(unsigned char **buffer, size_t *buflen,
     return 1;
 }
 
-static int kdf_pbkdf2_derive(void *vctx, unsigned char *key,
-                             size_t keylen)
+static int kdf_pbkdf2_derive(void *vctx, unsigned char *key, size_t keylen,
+                             const OSSL_PARAM params[])
 {
     KDF_PBKDF2 *ctx = (KDF_PBKDF2 *)vctx;
     const EVP_MD *md;
 
-    if (!ossl_prov_is_running())
+    if (!ossl_prov_is_running() || !kdf_pbkdf2_set_ctx_params(ctx, params))
         return 0;
 
     if (ctx->pass == NULL) {
@@ -168,9 +168,12 @@ static int kdf_pbkdf2_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
     KDF_PBKDF2 *ctx = vctx;
-    OPENSSL_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
+    OSSL_LIB_CTX *provctx = PROV_LIBCTX_OF(ctx->provctx);
     int pkcs5;
     uint64_t iter, min_iter;
+
+    if (params == NULL)
+        return 1;
 
     if (!ossl_prov_digest_load_from_params(&ctx->digest, params, provctx))
         return 0;
@@ -208,7 +211,8 @@ static int kdf_pbkdf2_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *kdf_pbkdf2_settable_ctx_params(ossl_unused void *p_ctx)
+static const OSSL_PARAM *kdf_pbkdf2_settable_ctx_params(ossl_unused void *ctx,
+                                                        ossl_unused void *p_ctx)
 {
     static const OSSL_PARAM known_settable_ctx_params[] = {
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_PROPERTIES, NULL, 0),
@@ -231,7 +235,8 @@ static int kdf_pbkdf2_get_ctx_params(void *vctx, OSSL_PARAM params[])
     return -2;
 }
 
-static const OSSL_PARAM *kdf_pbkdf2_gettable_ctx_params(ossl_unused void *p_ctx)
+static const OSSL_PARAM *kdf_pbkdf2_gettable_ctx_params(ossl_unused void *ctx,
+                                                        ossl_unused void *p_ctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
         OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL),
@@ -240,7 +245,7 @@ static const OSSL_PARAM *kdf_pbkdf2_gettable_ctx_params(ossl_unused void *p_ctx)
     return known_gettable_ctx_params;
 }
 
-const OSSL_DISPATCH kdf_pbkdf2_functions[] = {
+const OSSL_DISPATCH ossl_kdf_pbkdf2_functions[] = {
     { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))kdf_pbkdf2_new },
     { OSSL_FUNC_KDF_FREECTX, (void(*)(void))kdf_pbkdf2_free },
     { OSSL_FUNC_KDF_RESET, (void(*)(void))kdf_pbkdf2_reset },
@@ -276,7 +281,7 @@ static int pbkdf2_derive(const char *pass, size_t passlen,
     unsigned long i = 1;
     HMAC_CTX *hctx_tpl = NULL, *hctx = NULL;
 
-    mdlen = EVP_MD_size(digest);
+    mdlen = EVP_MD_get_size(digest);
     if (mdlen <= 0)
         return 0;
 
@@ -285,13 +290,13 @@ static int pbkdf2_derive(const char *pass, size_t passlen,
      * results in an overflow of the loop counter 'i'.
      */
     if ((keylen / mdlen) >= KDF_PBKDF2_MAX_KEY_LEN_DIGEST_RATIO) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LEN);
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
         return 0;
     }
 
     if (lower_bound_checks) {
         if ((keylen * 8) < KDF_PBKDF2_MIN_KEY_LEN_BITS) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LEN);
+            ERR_raise(ERR_LIB_PROV, PROV_R_KEY_SIZE_TOO_SMALL);
             return 0;
         }
         if (saltlen < KDF_PBKDF2_MIN_SALT_LEN) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,18 +7,22 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/crypto.h>
+#ifndef OSSL_INTERNAL_THREAD_ONCE_H
+# define OSSL_INTERNAL_THREAD_ONCE_H
+# pragma once
+
+# include <openssl/crypto.h>
 
 /*
  * Initialisation of global data should never happen via "RUN_ONCE" inside the
  * FIPS module. Global data should instead always be associated with a specific
- * OPENSSL_CTX object. In this way data will get cleaned up correctly when the
+ * OSSL_LIB_CTX object. In this way data will get cleaned up correctly when the
  * module gets unloaded.
  */
-#if !defined(FIPS_MODULE) || defined(ALLOW_RUN_ONCE_IN_FIPS)
+# if !defined(FIPS_MODULE) || defined(ALLOW_RUN_ONCE_IN_FIPS)
 /*
  * DEFINE_RUN_ONCE: Define an initialiser function that should be run exactly
- * once. It takes no arguments and returns and int result (1 for success or
+ * once. It takes no arguments and returns an int result (1 for success or
  * 0 for failure). Typical usage might be:
  *
  * DEFINE_RUN_ONCE(myinitfunc)
@@ -30,7 +34,7 @@
  *     return 0;
  * }
  */
-# define DEFINE_RUN_ONCE(init)                   \
+#  define DEFINE_RUN_ONCE(init)                   \
     static int init(void);                     \
     int init##_ossl_ret_ = 0;                   \
     void init##_ossl_(void)                     \
@@ -43,14 +47,14 @@
  * DECLARE_RUN_ONCE: Declare an initialiser function that should be run exactly
  * once that has been defined in another file via DEFINE_RUN_ONCE().
  */
-# define DECLARE_RUN_ONCE(init)                  \
+#  define DECLARE_RUN_ONCE(init)                  \
     extern int init##_ossl_ret_;                \
     void init##_ossl_(void);
 
 /*
  * DEFINE_RUN_ONCE_STATIC: Define an initialiser function that should be run
  * exactly once. This function will be declared as static within the file. It
- * takes no arguments and returns and int result (1 for success or 0 for
+ * takes no arguments and returns an int result (1 for success or 0 for
  * failure). Typical usage might be:
  *
  * DEFINE_RUN_ONCE_STATIC(myinitfunc)
@@ -62,7 +66,7 @@
  *     return 0;
  * }
  */
-# define DEFINE_RUN_ONCE_STATIC(init)            \
+#  define DEFINE_RUN_ONCE_STATIC(init)            \
     static int init(void);                     \
     static int init##_ossl_ret_ = 0;            \
     static void init##_ossl_(void)              \
@@ -74,7 +78,7 @@
 /*
  * DEFINE_RUN_ONCE_STATIC_ALT: Define an alternative initialiser function. This
  * function will be declared as static within the file. It takes no arguments
- * and returns and int result (1 for success or 0 for failure). An alternative
+ * and returns an int result (1 for success or 0 for failure). An alternative
  * initialiser function is expected to be associated with a primary initialiser
  * function defined via DEFINE_ONCE_STATIC where both functions use the same
  * CRYPTO_ONCE object to synchronise. Where an alternative initialiser function
@@ -103,7 +107,7 @@
  *     return 0;
  * }
  */
-# define DEFINE_RUN_ONCE_STATIC_ALT(initalt, init) \
+#  define DEFINE_RUN_ONCE_STATIC_ALT(initalt, init) \
     static int initalt(void);                     \
     static void initalt##_ossl_(void)             \
     {                                             \
@@ -122,7 +126,7 @@
  *
  * (*) by convention, since the init function must return 1 on success.
  */
-# define RUN_ONCE(once, init)                                            \
+#  define RUN_ONCE(once, init)                                            \
     (CRYPTO_THREAD_run_once(once, init##_ossl_) ? init##_ossl_ret_ : 0)
 
 /*
@@ -140,7 +144,8 @@
  *
  * (*) by convention, since the init function must return 1 on success.
  */
-# define RUN_ONCE_ALT(once, initalt, init)                               \
+#  define RUN_ONCE_ALT(once, initalt, init)                               \
     (CRYPTO_THREAD_run_once(once, initalt##_ossl_) ? init##_ossl_ret_ : 0)
 
-#endif /* FIPS_MODULE */
+# endif /* FIPS_MODULE */
+#endif /* OSSL_INTERNAL_THREAD_ONCE_H */

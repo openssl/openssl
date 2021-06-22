@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2005 Nokia. All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -7,9 +7,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-
-/* We need to use some engine deprecated APIs */
-#define OPENSSL_SUPPRESS_DEPRECATED
 
 #include "e_os.h"
 #include <ctype.h>
@@ -43,9 +40,6 @@ typedef unsigned int u_int;
 #include <openssl/bn.h>
 #include <openssl/trace.h>
 #include <openssl/async.h>
-#ifndef OPENSSL_NO_SRP
-# include <openssl/srp.h>
-#endif
 #ifndef OPENSSL_NO_CT
 # include <openssl/ct.h>
 #endif
@@ -241,115 +235,6 @@ static int ssl_servername_cb(SSL *s, int *ad, void *arg)
     return SSL_TLSEXT_ERR_OK;
 }
 
-#ifndef OPENSSL_NO_SRP
-
-/* This is a context that we pass to all callbacks */
-typedef struct srp_arg_st {
-    char *srppassin;
-    char *srplogin;
-    int msg;                    /* copy from c_msg */
-    int debug;                  /* copy from c_debug */
-    int amp;                    /* allow more groups */
-    int strength;               /* minimal size for N */
-} SRP_ARG;
-
-static int srp_Verify_N_and_g(const BIGNUM *N, const BIGNUM *g)
-{
-    BN_CTX *bn_ctx = BN_CTX_new();
-    BIGNUM *p = BN_new();
-    BIGNUM *r = BN_new();
-    int ret =
-        g != NULL && N != NULL && bn_ctx != NULL && BN_is_odd(N) &&
-        BN_check_prime(N, bn_ctx, NULL) == 1 &&
-        p != NULL && BN_rshift1(p, N) &&
-        /* p = (N-1)/2 */
-        BN_check_prime(p, bn_ctx, NULL) == 1 &&
-        r != NULL &&
-        /* verify g^((N-1)/2) == -1 (mod N) */
-        BN_mod_exp(r, g, p, N, bn_ctx) &&
-        BN_add_word(r, 1) && BN_cmp(r, N) == 0;
-
-    BN_free(r);
-    BN_free(p);
-    BN_CTX_free(bn_ctx);
-    return ret;
-}
-
-/*-
- * This callback is used here for two purposes:
- * - extended debugging
- * - making some primality tests for unknown groups
- * The callback is only called for a non default group.
- *
- * An application does not need the call back at all if
- * only the standard groups are used.  In real life situations,
- * client and server already share well known groups,
- * thus there is no need to verify them.
- * Furthermore, in case that a server actually proposes a group that
- * is not one of those defined in RFC 5054, it is more appropriate
- * to add the group to a static list and then compare since
- * primality tests are rather cpu consuming.
- */
-
-static int ssl_srp_verify_param_cb(SSL *s, void *arg)
-{
-    SRP_ARG *srp_arg = (SRP_ARG *)arg;
-    BIGNUM *N = NULL, *g = NULL;
-
-    if (((N = SSL_get_srp_N(s)) == NULL) || ((g = SSL_get_srp_g(s)) == NULL))
-        return 0;
-    if (srp_arg->debug || srp_arg->msg || srp_arg->amp == 1) {
-        BIO_printf(bio_err, "SRP parameters:\n");
-        BIO_printf(bio_err, "\tN=");
-        BN_print(bio_err, N);
-        BIO_printf(bio_err, "\n\tg=");
-        BN_print(bio_err, g);
-        BIO_printf(bio_err, "\n");
-    }
-
-    if (SRP_check_known_gN_param(g, N))
-        return 1;
-
-    if (srp_arg->amp == 1) {
-        if (srp_arg->debug)
-            BIO_printf(bio_err,
-                       "SRP param N and g are not known params, going to check deeper.\n");
-
-        /*
-         * The srp_moregroups is a real debugging feature. Implementors
-         * should rather add the value to the known ones. The minimal size
-         * has already been tested.
-         */
-        if (BN_num_bits(g) <= BN_BITS && srp_Verify_N_and_g(N, g))
-            return 1;
-    }
-    BIO_printf(bio_err, "SRP param N and g rejected.\n");
-    return 0;
-}
-
-# define PWD_STRLEN 1024
-
-static char *ssl_give_srp_client_pwd_cb(SSL *s, void *arg)
-{
-    SRP_ARG *srp_arg = (SRP_ARG *)arg;
-    char *pass = app_malloc(PWD_STRLEN + 1, "SRP password buffer");
-    PW_CB_DATA cb_tmp;
-    int l;
-
-    cb_tmp.password = (char *)srp_arg->srppassin;
-    cb_tmp.prompt_info = "SRP user";
-    if ((l = password_callback(pass, PWD_STRLEN, 0, &cb_tmp)) < 0) {
-        BIO_printf(bio_err, "Can't read Password\n");
-        OPENSSL_free(pass);
-        return NULL;
-    }
-    *(pass + l) = '\0';
-
-    return pass;
-}
-
-#endif
-
 #ifndef OPENSSL_NO_NEXTPROTONEG
 /* This the context that we pass to next_proto_cb */
 typedef struct tlsextnextprotoctx_st {
@@ -544,7 +429,7 @@ static int tlsa_import_rrset(SSL *con, STACK_OF(OPENSSL_STRING) *rrset)
 }
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_4, OPT_6, OPT_HOST, OPT_PORT, OPT_CONNECT, OPT_BIND, OPT_UNIX,
     OPT_XMPPHOST, OPT_VERIFY, OPT_NAMEOPT,
     OPT_CERT, OPT_CRL, OPT_CRL_DOWNLOAD, OPT_SESS_OUT, OPT_SESS_IN,
@@ -770,13 +655,14 @@ const OPTIONS s_client_options[] = {
      "Offer SRTP key management with a colon-separated profile list"},
 #endif
 #ifndef OPENSSL_NO_SRP
-    {"srpuser", OPT_SRPUSER, 's', "SRP authentication for 'user'"},
-    {"srppass", OPT_SRPPASS, 's', "Password for 'user'"},
+    {"srpuser", OPT_SRPUSER, 's', "(deprecated) SRP authentication for 'user'"},
+    {"srppass", OPT_SRPPASS, 's', "(deprecated) Password for 'user'"},
     {"srp_lateuser", OPT_SRP_LATEUSER, '-',
-     "SRP username into second ClientHello message"},
+     "(deprecated) SRP username into second ClientHello message"},
     {"srp_moregroups", OPT_SRP_MOREGROUPS, '-',
-     "Tolerate other than the known g N values."},
-    {"srp_strength", OPT_SRP_STRENGTH, 'p', "Minimal length in bits for N"},
+     "(deprecated) Tolerate other than the known g N values."},
+    {"srp_strength", OPT_SRP_STRENGTH, 'p',
+     "(deprecated) Minimal length in bits for N"},
 #endif
 
     OPT_R_OPTIONS,
@@ -929,15 +815,15 @@ int s_client_main(int argc, char **argv)
     struct timeval timeout, *timeoutp;
     fd_set readfds, writefds;
     int noCApath = 0, noCAfile = 0, noCAstore = 0;
-    int build_chain = 0, cbuf_len, cbuf_off, cert_format = FORMAT_PEM;
-    int key_format = FORMAT_PEM, crlf = 0, full_log = 1, mbuf_len = 0;
+    int build_chain = 0, cbuf_len, cbuf_off, cert_format = FORMAT_UNDEF;
+    int key_format = FORMAT_UNDEF, crlf = 0, full_log = 1, mbuf_len = 0;
     int prexit = 0;
     int sdebug = 0;
     int reconnect = 0, verify = SSL_VERIFY_NONE, vpmtouched = 0;
     int ret = 1, in_init = 1, i, nbio_test = 0, sock = -1, k, width, state = 0;
     int sbuf_len, sbuf_off, cmdletters = 1;
     int socket_family = AF_UNSPEC, socket_type = SOCK_STREAM, protocol = 0;
-    int starttls_proto = PROTO_OFF, crl_format = FORMAT_PEM, crl_download = 0;
+    int starttls_proto = PROTO_OFF, crl_format = FORMAT_UNDEF, crl_download = 0;
     int write_tty, read_tty, write_ssl, read_ssl, tty_on, ssl_pending;
 #if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS)
     int at_eof = 0;
@@ -1013,7 +899,6 @@ int s_client_main(int argc, char **argv)
 # endif
 #endif
 
-    prog = opt_progname(argv[0]);
     c_quiet = 0;
     c_debug = 0;
     c_showcerts = 0;
@@ -1022,7 +907,7 @@ int s_client_main(int argc, char **argv)
     cctx = SSL_CONF_CTX_new();
 
     if (vpm == NULL || cctx == NULL) {
-        BIO_printf(bio_err, "%s: out of memory\n", prog);
+        BIO_printf(bio_err, "%s: out of memory\n", opt_getprog());
         goto end;
     }
 
@@ -1204,7 +1089,7 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_SSL_CLIENT_ENGINE:
 #ifndef OPENSSL_NO_ENGINE
-            ssl_client_engine = ENGINE_by_id(opt_arg());
+            ssl_client_engine = setup_engine(opt_arg(), 0);
             if (ssl_client_engine == NULL) {
                 BIO_printf(bio_err, "Error getting client auth engine\n");
                 goto opthelp;
@@ -1575,6 +1460,24 @@ int s_client_main(int argc, char **argv)
         }
     }
 
+    /* Optional argument is connect string if -connect not used. */
+    argc = opt_num_rest();
+    if (argc == 1) {
+        /* Don't allow -connect and a separate argument. */
+        if (connectstr != NULL) {
+            BIO_printf(bio_err,
+                       "%s: cannot provide both -connect option and target parameter\n",
+                       prog);
+            goto opthelp;
+        }
+        connect_type = use_inet;
+        freeandcopy(&connectstr, *opt_rest());
+    } else if (argc != 0) {
+        goto opthelp;
+    }
+    if (!app_RAND_load())
+        goto end;
+
     if (count4or6 >= 2) {
         BIO_printf(bio_err, "%s: Can't use both -4 and -6\n", prog);
         goto opthelp;
@@ -1592,23 +1495,6 @@ int s_client_main(int argc, char **argv)
                prog);
             goto opthelp;
         }
-    }
-    argc = opt_num_rest();
-    if (argc == 1) {
-        /* If there's a positional argument, it's the equivalent of
-         * OPT_CONNECT.
-         * Don't allow -connect and a separate argument.
-         */
-        if (connectstr != NULL) {
-            BIO_printf(bio_err,
-                       "%s: must not provide both -connect option and target parameter\n",
-                       prog);
-            goto opthelp;
-        }
-        connect_type = use_inet;
-        freeandcopy(&connectstr, *opt_rest());
-    } else if (argc != 0) {
-        goto opthelp;
     }
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
@@ -1728,25 +1614,26 @@ int s_client_main(int argc, char **argv)
 
     if (key_file != NULL) {
         key = load_key(key_file, key_format, 0, pass, e,
-                       "client certificate private key file");
+                       "client certificate private key");
         if (key == NULL)
             goto end;
     }
 
     if (cert_file != NULL) {
-        cert = load_cert_pass(cert_file, cert_format, pass, "client certificate file");
+        cert = load_cert_pass(cert_file, cert_format, 1, pass,
+                              "client certificate");
         if (cert == NULL)
             goto end;
     }
 
     if (chain_file != NULL) {
-        if (!load_certs(chain_file, &chain, pass, "client certificate chain"))
+        if (!load_certs(chain_file, 0, &chain, pass, "client certificate chain"))
             goto end;
     }
 
     if (crl_file != NULL) {
         X509_CRL *crl;
-        crl = load_crl(crl_file, crl_format, "CRL");
+        crl = load_crl(crl_file, crl_format, 0, "CRL");
         if (crl == NULL)
             goto end;
         crls = sk_X509_CRL_new_null();
@@ -1776,7 +1663,7 @@ int s_client_main(int argc, char **argv)
     }
 #endif
 
-    ctx = SSL_CTX_new(meth);
+    ctx = SSL_CTX_new_ex(app_get0_libctx(), app_get0_propq(), meth);
     if (ctx == NULL) {
         ERR_print_errors(bio_err);
         goto end;
@@ -1881,10 +1768,10 @@ int s_client_main(int argc, char **argv)
         if (!SSL_CTX_set_client_cert_engine(ctx, ssl_client_engine)) {
             BIO_puts(bio_err, "Error setting client auth engine\n");
             ERR_print_errors(bio_err);
-            ENGINE_free(ssl_client_engine);
+            release_engine(ssl_client_engine);
             goto end;
         }
-        ENGINE_free(ssl_client_engine);
+        release_engine(ssl_client_engine);
     }
 #endif
 
@@ -2004,21 +1891,10 @@ int s_client_main(int argc, char **argv)
         SSL_CTX_set_tlsext_servername_callback(ctx, ssl_servername_cb);
         SSL_CTX_set_tlsext_servername_arg(ctx, &tlsextcbp);
     }
-# ifndef OPENSSL_NO_SRP
-    if (srp_arg.srplogin) {
-        if (!srp_lateuser && !SSL_CTX_set_srp_username(ctx, srp_arg.srplogin)) {
-            BIO_printf(bio_err, "Unable to set SRP username\n");
-            goto end;
-        }
-        srp_arg.msg = c_msg;
-        srp_arg.debug = c_debug;
-        SSL_CTX_set_srp_cb_arg(ctx, &srp_arg);
-        SSL_CTX_set_srp_client_pwd_callback(ctx, ssl_give_srp_client_pwd_cb);
-        SSL_CTX_set_srp_strength(ctx, srp_arg.strength);
-        if (c_msg || c_debug || srp_arg.amp == 0)
-            SSL_CTX_set_srp_verify_param_callback(ctx,
-                                                  ssl_srp_verify_param_cb);
-    }
+#ifndef OPENSSL_NO_SRP
+    if (srp_arg.srplogin != NULL
+            && !set_up_srp_arg(ctx, &srp_arg, srp_lateuser, c_msg, c_debug))
+        goto end;
 # endif
 
     if (dane_tlsa_domain != NULL) {
@@ -2197,7 +2073,7 @@ int s_client_main(int argc, char **argv)
     }
 
     if (c_debug) {
-        BIO_set_callback(sbio, bio_dump_callback);
+        BIO_set_callback_ex(sbio, bio_dump_callback);
         BIO_set_callback_arg(sbio, (char *)bio_c_out);
     }
     if (c_msg) {
@@ -2797,7 +2673,6 @@ int s_client_main(int argc, char **argv)
             tty_on = 1;
             if (in_init) {
                 in_init = 0;
-
                 if (c_brief) {
                     BIO_puts(bio_err, "CONNECTION ESTABLISHED\n");
                     print_ssl_summary(con);
@@ -3113,7 +2988,6 @@ int s_client_main(int argc, char **argv)
         }
     }
 
-    ret = 0;
  shut:
     if (in_init)
         print_stuff(bio_c_out, con, full_log);
@@ -3221,8 +3095,8 @@ static void print_stuff(BIO *bio, SSL *s, int full)
                 public_key = X509_get_pubkey(sk_X509_value(sk, i));
                 if (public_key != NULL) {
                     BIO_printf(bio, "   a:PKEY: %s, %d (bit); sigalg: %s\n",
-                               OBJ_nid2sn(EVP_PKEY_base_id(public_key)),
-                               EVP_PKEY_bits(public_key),
+                               OBJ_nid2sn(EVP_PKEY_get_base_id(public_key)),
+                               EVP_PKEY_get_bits(public_key),
                                OBJ_nid2sn(X509_get_signature_nid(sk_X509_value(sk, i))));
                     EVP_PKEY_free(public_key);
                 }
@@ -3302,7 +3176,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 
         pktmp = X509_get0_pubkey(peer);
         BIO_printf(bio, "Server public key is %d bit\n",
-                   EVP_PKEY_bits(pktmp));
+                   EVP_PKEY_get_bits(pktmp));
     }
     BIO_printf(bio, "Secure Renegotiation IS%s supported\n",
                SSL_get_secure_renegotiation_support(s) ? "" : " NOT");

@@ -55,6 +55,7 @@ my %shared_info;
             # def_flag made to empty string so it still generates
             # something
             shared_defflag    => '',
+            shared_argfileflag => '@',
         };
     },
     'alpha-osf1-shared' => sub {

@@ -50,7 +50,7 @@ void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
                      unsigned char *ivec, const int enc)
 {
     size_t n;
-    size_t len = length;
+    size_t len = length / AES_BLOCK_SIZE;
 
     if (length == 0)
         return;
@@ -58,8 +58,6 @@ void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
     OPENSSL_assert(in && out && key && ivec);
     OPENSSL_assert((AES_ENCRYPT == enc) || (AES_DECRYPT == enc));
     OPENSSL_assert((length % AES_BLOCK_SIZE) == 0);
-
-    len = length / AES_BLOCK_SIZE;
 
     if (AES_ENCRYPT == enc) {
         if (in != out &&

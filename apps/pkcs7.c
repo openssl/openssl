@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -21,7 +21,7 @@
 #include <openssl/pem.h>
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_NOOUT,
     OPT_TEXT, OPT_PRINT, OPT_PRINT_CERTS, OPT_ENGINE,
     OPT_PROV_ENUM
@@ -60,8 +60,7 @@ int pkcs7_main(int argc, char **argv)
     char *infile = NULL, *outfile = NULL, *prog;
     int i, print_certs = 0, text = 0, noout = 0, p7_print = 0, ret = 1;
     OPTION_CHOICE o;
-    OPENSSL_CTX *libctx = app_get0_libctx();
-    const char *propq = app_get0_propq();
+    OSSL_LIB_CTX *libctx = app_get0_libctx();
 
     prog = opt_init(argc, argv, pkcs7_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -110,6 +109,8 @@ int pkcs7_main(int argc, char **argv)
             break;
         }
     }
+
+    /* No extra arguments. */
     argc = opt_num_rest();
     if (argc != 0)
         goto opthelp;
@@ -118,7 +119,7 @@ int pkcs7_main(int argc, char **argv)
     if (in == NULL)
         goto end;
 
-    p7 = PKCS7_new_with_libctx(libctx, propq);
+    p7 = PKCS7_new_ex(libctx, app_get0_propq());
     if (p7 == NULL) {
         BIO_printf(bio_err, "unable to allocate PKCS7 object\n");
         ERR_print_errors(bio_err);

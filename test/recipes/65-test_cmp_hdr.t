@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2007-2019 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
 # Copyright Nokia 2007-2019
 # Copyright Siemens AG 2015-2019
 #
@@ -12,7 +12,7 @@ use strict;
 use OpenSSL::Test qw/:DEFAULT data_file/;
 use OpenSSL::Test::Utils;
 
-setup("test_cmp_lib");
+setup("test_cmp_hdr");
 
 plan skip_all => "This test is not supported in a no-cmp build"
     if disabled("cmp");

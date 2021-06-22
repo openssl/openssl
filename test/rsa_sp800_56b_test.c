@@ -7,6 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * RSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <stdio.h>
 #include <string.h>
 
@@ -19,15 +25,8 @@
 
 #include "testutil.h"
 
-#ifdef OPENSSL_NO_RSA
-int setup_tests(void)
-{
-    /* No tests */
-    return 1;
-}
-#else
-# include "rsa_local.h"
-# include <openssl/rsa.h>
+#include "rsa_local.h"
+#include <openssl/rsa.h>
 
 /* taken from RSA2 cavs data */
 static const unsigned char cav_e[] = {
@@ -113,19 +112,19 @@ static int test_check_public_exponent(void)
     ret = TEST_ptr(e = BN_new())
           /* e is too small */
           && TEST_true(BN_set_word(e, 65535))
-          && TEST_false(rsa_check_public_exponent(e))
+          && TEST_false(ossl_rsa_check_public_exponent(e))
           /* e is even will fail */
           && TEST_true(BN_set_word(e, 65536))
-          && TEST_false(rsa_check_public_exponent(e))
+          && TEST_false(ossl_rsa_check_public_exponent(e))
           /* e is ok */
           && TEST_true(BN_set_word(e, 65537))
-          && TEST_true(rsa_check_public_exponent(e))
+          && TEST_true(ossl_rsa_check_public_exponent(e))
           /* e = 2^256 is too big */
           && TEST_true(BN_lshift(e, BN_value_one(), 256))
-          && TEST_false(rsa_check_public_exponent(e))
+          && TEST_false(ossl_rsa_check_public_exponent(e))
           /* e = 2^256-1 is odd and in range */
           && TEST_true(BN_sub(e, e, BN_value_one()))
-          && TEST_true(rsa_check_public_exponent(e));
+          && TEST_true(ossl_rsa_check_public_exponent(e));
     BN_free(e);
     return ret;
 }
@@ -153,19 +152,19 @@ static int test_check_prime_factor_range(void)
           && TEST_ptr(bn_p4 = bn_load_new(p4, sizeof(p4)))
           && TEST_ptr(ctx = BN_CTX_new())
           && TEST_true(BN_set_word(p, 0xA))
-          && TEST_false(rsa_check_prime_factor_range(p, 8, ctx))
+          && TEST_false(ossl_rsa_check_prime_factor_range(p, 8, ctx))
           && TEST_true(BN_set_word(p, 0x10))
-          && TEST_false(rsa_check_prime_factor_range(p, 8, ctx))
+          && TEST_false(ossl_rsa_check_prime_factor_range(p, 8, ctx))
           && TEST_true(BN_set_word(p, 0xB))
-          && TEST_false(rsa_check_prime_factor_range(p, 8, ctx))
+          && TEST_false(ossl_rsa_check_prime_factor_range(p, 8, ctx))
           && TEST_true(BN_set_word(p, 0xC))
-          && TEST_true(rsa_check_prime_factor_range(p, 8, ctx))
+          && TEST_true(ossl_rsa_check_prime_factor_range(p, 8, ctx))
           && TEST_true(BN_set_word(p, 0xF))
-          && TEST_true(rsa_check_prime_factor_range(p, 8, ctx))
-          && TEST_false(rsa_check_prime_factor_range(bn_p1, 72, ctx))
-          && TEST_false(rsa_check_prime_factor_range(bn_p2, 72, ctx))
-          && TEST_true(rsa_check_prime_factor_range(bn_p3, 72, ctx))
-          && TEST_true(rsa_check_prime_factor_range(bn_p4, 72, ctx));
+          && TEST_true(ossl_rsa_check_prime_factor_range(p, 8, ctx))
+          && TEST_false(ossl_rsa_check_prime_factor_range(bn_p1, 72, ctx))
+          && TEST_false(ossl_rsa_check_prime_factor_range(bn_p2, 72, ctx))
+          && TEST_true(ossl_rsa_check_prime_factor_range(bn_p3, 72, ctx))
+          && TEST_true(ossl_rsa_check_prime_factor_range(bn_p4, 72, ctx));
 
     BN_free(bn_p4);
     BN_free(bn_p3);
@@ -196,15 +195,15 @@ static int test_check_prime_factor(void)
           && TEST_ptr(ctx = BN_CTX_new())
           /* Fails the prime test */
           && TEST_true(BN_set_word(e, 0x1))
-          && TEST_false(rsa_check_prime_factor(bn_p1, e, 72, ctx))
+          && TEST_false(ossl_rsa_check_prime_factor(bn_p1, e, 72, ctx))
           /* p is prime and in range and gcd(p-1, e) = 1 */
-          && TEST_true(rsa_check_prime_factor(bn_p2, e, 72, ctx))
+          && TEST_true(ossl_rsa_check_prime_factor(bn_p2, e, 72, ctx))
           /* gcd(p-1,e) = 1 test fails */
           && TEST_true(BN_set_word(e, 0x2))
-          && TEST_false(rsa_check_prime_factor(p, e, 72, ctx))
+          && TEST_false(ossl_rsa_check_prime_factor(p, e, 72, ctx))
           /* p fails the range check */
           && TEST_true(BN_set_word(e, 0x1))
-          && TEST_false(rsa_check_prime_factor(bn_p3, e, 72, ctx));
+          && TEST_false(ossl_rsa_check_prime_factor(bn_p3, e, 72, ctx));
 
     BN_free(bn_p3);
     BN_free(bn_p2);
@@ -215,6 +214,7 @@ static int test_check_prime_factor(void)
     return ret;
 }
 
+/* This test uses legacy functions because they can take invalid numbers */
 static int test_check_private_exponent(void)
 {
     int ret = 0;
@@ -250,18 +250,18 @@ static int test_check_private_exponent(void)
         goto end;
     }
     /* fails since d >= lcm(p-1, q-1) */
-    ret = TEST_false(rsa_check_private_exponent(key, 8, ctx))
+    ret = TEST_false(ossl_rsa_check_private_exponent(key, 8, ctx))
           && TEST_true(BN_set_word(d, 45))
           /* d is correct size and 1 = e.d mod lcm(p-1, q-1) */
-          && TEST_true(rsa_check_private_exponent(key, 8, ctx))
+          && TEST_true(ossl_rsa_check_private_exponent(key, 8, ctx))
           /* d is too small compared to nbits */
-          && TEST_false(rsa_check_private_exponent(key, 16, ctx))
+          && TEST_false(ossl_rsa_check_private_exponent(key, 16, ctx))
           /* d is too small compared to nbits */
           && TEST_true(BN_set_word(d, 16))
-          && TEST_false(rsa_check_private_exponent(key, 8, ctx))
+          && TEST_false(ossl_rsa_check_private_exponent(key, 8, ctx))
           /* fail if 1 != e.d mod lcm(p-1, q-1) */
           && TEST_true(BN_set_word(d, 46))
-          && TEST_false(rsa_check_private_exponent(key, 8, ctx));
+          && TEST_false(ossl_rsa_check_private_exponent(key, 8, ctx));
 end:
     RSA_free(key);
     BN_CTX_free(ctx);
@@ -297,44 +297,44 @@ static int test_check_crt_components(void)
         BN_free(q);
         goto end;
     }
-    ret = TEST_true(rsa_sp800_56b_derive_params_from_pq(key, 8, e, ctx))
+    ret = TEST_true(ossl_rsa_sp800_56b_derive_params_from_pq(key, 8, e, ctx))
           && TEST_BN_eq_word(key->n, N)
           && TEST_BN_eq_word(key->dmp1, DP)
           && TEST_BN_eq_word(key->dmq1, DQ)
           && TEST_BN_eq_word(key->iqmp, QINV)
-          && TEST_true(rsa_check_crt_components(key, ctx))
+          && TEST_true(ossl_rsa_check_crt_components(key, ctx))
           /* (a) 1 < dP < (p – 1). */
           && TEST_true(BN_set_word(key->dmp1, 1))
-          && TEST_false(rsa_check_crt_components(key, ctx))
+          && TEST_false(ossl_rsa_check_crt_components(key, ctx))
           && TEST_true(BN_set_word(key->dmp1, P-1))
-          && TEST_false(rsa_check_crt_components(key, ctx))
+          && TEST_false(ossl_rsa_check_crt_components(key, ctx))
           && TEST_true(BN_set_word(key->dmp1, DP))
           /* (b) 1 < dQ < (q - 1). */
           && TEST_true(BN_set_word(key->dmq1, 1))
-          && TEST_false(rsa_check_crt_components(key, ctx))
+          && TEST_false(ossl_rsa_check_crt_components(key, ctx))
           && TEST_true(BN_set_word(key->dmq1, Q-1))
-          && TEST_false(rsa_check_crt_components(key, ctx))
+          && TEST_false(ossl_rsa_check_crt_components(key, ctx))
           && TEST_true(BN_set_word(key->dmq1, DQ))
           /* (c) 1 < qInv < p */
           && TEST_true(BN_set_word(key->iqmp, 1))
-          && TEST_false(rsa_check_crt_components(key, ctx))
+          && TEST_false(ossl_rsa_check_crt_components(key, ctx))
           && TEST_true(BN_set_word(key->iqmp, P))
-          && TEST_false(rsa_check_crt_components(key, ctx))
+          && TEST_false(ossl_rsa_check_crt_components(key, ctx))
           && TEST_true(BN_set_word(key->iqmp, QINV))
           /* (d) 1 = (dP . e) mod (p - 1)*/
           && TEST_true(BN_set_word(key->dmp1, DP+1))
-          && TEST_false(rsa_check_crt_components(key, ctx))
+          && TEST_false(ossl_rsa_check_crt_components(key, ctx))
           && TEST_true(BN_set_word(key->dmp1, DP))
           /* (e) 1 = (dQ . e) mod (q - 1) */
           && TEST_true(BN_set_word(key->dmq1, DQ-1))
-          && TEST_false(rsa_check_crt_components(key, ctx))
+          && TEST_false(ossl_rsa_check_crt_components(key, ctx))
           && TEST_true(BN_set_word(key->dmq1, DQ))
           /* (f) 1 = (qInv . q) mod p */
           && TEST_true(BN_set_word(key->iqmp, QINV+1))
-          && TEST_false(rsa_check_crt_components(key, ctx))
+          && TEST_false(ossl_rsa_check_crt_components(key, ctx))
           && TEST_true(BN_set_word(key->iqmp, QINV))
           /* check defaults are still valid */
-          && TEST_true(rsa_check_crt_components(key, ctx));
+          && TEST_true(ossl_rsa_check_crt_components(key, ctx));
 end:
     BN_free(e);
     RSA_free(key);
@@ -353,13 +353,13 @@ static int test_pq_diff(void)
           /* |1-(2+1)| > 2^1 */
           && TEST_true(BN_set_word(p, 1))
           && TEST_true(BN_set_word(q, 1+2))
-          && TEST_false(rsa_check_pminusq_diff(tmp, p, q, 202))
+          && TEST_false(ossl_rsa_check_pminusq_diff(tmp, p, q, 202))
           /* Check |p - q| > 2^(nbits/2 - 100) */
           && TEST_true(BN_set_word(q, 1+3))
-          && TEST_true(rsa_check_pminusq_diff(tmp, p, q, 202))
+          && TEST_true(ossl_rsa_check_pminusq_diff(tmp, p, q, 202))
           && TEST_true(BN_set_word(p, 1+3))
           && TEST_true(BN_set_word(q, 1))
-          && TEST_true(rsa_check_pminusq_diff(tmp, p, q, 202));
+          && TEST_true(ossl_rsa_check_pminusq_diff(tmp, p, q, 202));
     BN_free(p);
     BN_free(q);
     BN_free(tmp);
@@ -376,7 +376,7 @@ static int test_invalid_keypair(void)
     ret = TEST_ptr(key = RSA_new())
           && TEST_ptr(ctx = BN_CTX_new())
           /* NULL parameters */
-          && TEST_false(rsa_sp800_56b_check_keypair(key, NULL, -1, 2048))
+          && TEST_false(ossl_rsa_sp800_56b_check_keypair(key, NULL, -1, 2048))
           /* load key */
           && TEST_ptr(p = bn_load_new(cav_p, sizeof(cav_p)))
           && TEST_ptr(q = bn_load_new(cav_q, sizeof(cav_q)))
@@ -398,36 +398,35 @@ static int test_invalid_keypair(void)
         goto end;
     }
           /* bad strength/key size */
-    ret = TEST_false(rsa_sp800_56b_check_keypair(key, NULL, 100, 2048))
-          && TEST_false(rsa_sp800_56b_check_keypair(key, NULL, 112, 1024))
-          && TEST_false(rsa_sp800_56b_check_keypair(key, NULL, 128, 2048))
-          && TEST_false(rsa_sp800_56b_check_keypair(key, NULL, 140, 3072))
+    ret = TEST_false(ossl_rsa_sp800_56b_check_keypair(key, NULL, 100, 2048))
+          && TEST_false(ossl_rsa_sp800_56b_check_keypair(key, NULL, 112, 1024))
+          && TEST_false(ossl_rsa_sp800_56b_check_keypair(key, NULL, 128, 2048))
+          && TEST_false(ossl_rsa_sp800_56b_check_keypair(key, NULL, 140, 3072))
           /* mismatching exponent */
-          && TEST_false(rsa_sp800_56b_check_keypair(key, BN_value_one(), -1,
-                        2048))
+          && TEST_false(ossl_rsa_sp800_56b_check_keypair(key, BN_value_one(),
+                                                         -1, 2048))
           /* bad exponent */
           && TEST_true(BN_add_word(e, 1))
-          && TEST_false(rsa_sp800_56b_check_keypair(key, NULL, -1,
-                                                    2048))
+          && TEST_false(ossl_rsa_sp800_56b_check_keypair(key, NULL, -1, 2048))
           && TEST_true(BN_sub_word(e, 1))
 
           /* mismatch between bits and modulus */
-          && TEST_false(rsa_sp800_56b_check_keypair(key, NULL, -1, 3072))
-          && TEST_true(rsa_sp800_56b_check_keypair(key, e, 112, 2048))
+          && TEST_false(ossl_rsa_sp800_56b_check_keypair(key, NULL, -1, 3072))
+          && TEST_true(ossl_rsa_sp800_56b_check_keypair(key, e, 112, 2048))
           /* check n == pq failure */
           && TEST_true(BN_add_word(n, 1))
-          && TEST_false(rsa_sp800_56b_check_keypair(key, NULL, -1, 2048))
+          && TEST_false(ossl_rsa_sp800_56b_check_keypair(key, NULL, -1, 2048))
           && TEST_true(BN_sub_word(n, 1))
           /* check p  */
           && TEST_true(BN_sub_word(p, 2))
           && TEST_true(BN_mul(n, p, q, ctx))
-          && TEST_false(rsa_sp800_56b_check_keypair(key, NULL, -1, 2048))
+          && TEST_false(ossl_rsa_sp800_56b_check_keypair(key, NULL, -1, 2048))
           && TEST_true(BN_add_word(p, 2))
           && TEST_true(BN_mul(n, p, q, ctx))
           /* check q  */
           && TEST_true(BN_sub_word(q, 2))
           && TEST_true(BN_mul(n, p, q, ctx))
-          && TEST_false(rsa_sp800_56b_check_keypair(key, NULL, -1, 2048))
+          && TEST_false(ossl_rsa_sp800_56b_check_keypair(key, NULL, -1, 2048))
           && TEST_true(BN_add_word(q, 2))
           && TEST_true(BN_mul(n, p, q, ctx));
 end:
@@ -448,10 +447,10 @@ static int test_sp80056b_keygen(int id)
     int sz = keygen_size[id];
 
     ret = TEST_ptr(key = RSA_new())
-          && TEST_true(rsa_sp800_56b_generate_key(key, sz, NULL, NULL))
-          && TEST_true(rsa_sp800_56b_check_public(key))
-          && TEST_true(rsa_sp800_56b_check_private(key))
-          && TEST_true(rsa_sp800_56b_check_keypair(key, NULL, -1, sz));
+          && TEST_true(ossl_rsa_sp800_56b_generate_key(key, sz, NULL, NULL))
+          && TEST_true(ossl_rsa_sp800_56b_check_public(key))
+          && TEST_true(ossl_rsa_sp800_56b_check_private(key))
+          && TEST_true(ossl_rsa_sp800_56b_check_keypair(key, NULL, -1, sz));
 
     RSA_free(key);
     return ret;
@@ -465,7 +464,7 @@ static int test_check_private_key(void)
 
     ret = TEST_ptr(key = RSA_new())
           /* check NULL pointers fail */
-          && TEST_false(rsa_sp800_56b_check_private(key))
+          && TEST_false(ossl_rsa_sp800_56b_check_private(key))
           /* load private key */
           && TEST_ptr(n = bn_load_new(cav_n, sizeof(cav_n)))
           && TEST_ptr(d = bn_load_new(cav_d, sizeof(cav_d)))
@@ -478,13 +477,13 @@ static int test_check_private_key(void)
         goto end;
     }
     /* check d is in range */
-    ret = TEST_true(rsa_sp800_56b_check_private(key))
+    ret = TEST_true(ossl_rsa_sp800_56b_check_private(key))
           /* check d is too low */
           && TEST_true(BN_set_word(d, 0))
-          && TEST_false(rsa_sp800_56b_check_private(key))
+          && TEST_false(ossl_rsa_sp800_56b_check_private(key))
           /* check d is too high */
           && TEST_ptr(BN_copy(d, n))
-          && TEST_false(rsa_sp800_56b_check_private(key));
+          && TEST_false(ossl_rsa_sp800_56b_check_private(key));
 end:
     RSA_free(key);
     return ret;
@@ -498,7 +497,7 @@ static int test_check_public_key(void)
 
     ret = TEST_ptr(key = RSA_new())
           /* check NULL pointers fail */
-          && TEST_false(rsa_sp800_56b_check_public(key))
+          && TEST_false(ossl_rsa_sp800_56b_check_public(key))
           /* load public key */
           && TEST_ptr(e = bn_load_new(cav_e, sizeof(cav_e)))
           && TEST_ptr(n = bn_load_new(cav_n, sizeof(cav_n)))
@@ -509,22 +508,22 @@ static int test_check_public_key(void)
         goto end;
     }
     /* check public key is valid */
-    ret = TEST_true(rsa_sp800_56b_check_public(key))
+    ret = TEST_true(ossl_rsa_sp800_56b_check_public(key))
           /* check fail if n is even */
           && TEST_true(BN_add_word(n, 1))
-          && TEST_false(rsa_sp800_56b_check_public(key))
+          && TEST_false(ossl_rsa_sp800_56b_check_public(key))
           && TEST_true(BN_sub_word(n, 1))
           /* check fail if n is wrong number of bits */
           && TEST_true(BN_lshift1(n, n))
-          && TEST_false(rsa_sp800_56b_check_public(key))
+          && TEST_false(ossl_rsa_sp800_56b_check_public(key))
           && TEST_true(BN_rshift1(n, n))
           /* test odd exponent fails */
           && TEST_true(BN_add_word(e, 1))
-          && TEST_false(rsa_sp800_56b_check_public(key))
+          && TEST_false(ossl_rsa_sp800_56b_check_public(key))
           && TEST_true(BN_sub_word(e, 1))
           /* modulus fails composite check */
           && TEST_true(BN_add_word(n, 2))
-          && TEST_false(rsa_sp800_56b_check_public(key));
+          && TEST_false(ossl_rsa_sp800_56b_check_public(key));
 end:
     RSA_free(key);
     return ret;
@@ -544,4 +543,3 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_sp80056b_keygen, (int)OSSL_NELEM(keygen_size));
     return 1;
 }
-#endif

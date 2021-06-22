@@ -1,5 +1,5 @@
-INSTALLATION ON THE DOS PLATFORM WITH DJGPP
-===========================================
+Notes for the DOS platform with DJGPP
+=====================================
 
  OpenSSL has been ported to DJGPP, a Unix look-alike 32-bit run-time
  environment for 16-bit DOS, but only with long filename support.
@@ -10,7 +10,7 @@ INSTALLATION ON THE DOS PLATFORM WITH DJGPP
  You should have a full DJGPP environment installed, including the
  latest versions of DJGPP, GCC, BINUTILS, BASH, etc. This package
  requires that PERL and the PERL module `Text::Template` also be
- installed (see [NOTES-Perl.md](NOTES-Perl.md)).
+ installed (see [NOTES-PERL.md](NOTES-PERL.md)).
 
  All of these can be obtained from the usual DJGPP mirror sites or
  directly at <http://www.delorie.com/pub/djgpp>. For help on which

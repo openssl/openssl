@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "crypto/x509.h" /* for X509_add_cert_new() */
+#include "crypto/x509.h" /* for ossl_x509_add_cert_new() */
 
 /*-  CertID ::= SEQUENCE {
  *       hashAlgorithm            AlgorithmIdentifier,
@@ -217,22 +217,30 @@ struct ocsp_service_locator_st {
     STACK_OF(ACCESS_DESCRIPTION) *locator;
 };
 
-#  define OCSP_REQUEST_sign(o,pkey,md) \
-        ASN1_item_sign(ASN1_ITEM_rptr(OCSP_REQINFO),\
-                &(o)->optionalSignature->signatureAlgorithm,NULL,\
-                (o)->optionalSignature->signature,&(o)->tbsRequest,pkey,md)
+#  define OCSP_REQUEST_sign(o, pkey, md, libctx, propq)\
+        ASN1_item_sign_ex(ASN1_ITEM_rptr(OCSP_REQINFO),\
+                          &(o)->optionalSignature->signatureAlgorithm, NULL,\
+                         (o)->optionalSignature->signature, &(o)->tbsRequest,\
+                         NULL, pkey, md, libctx, propq)
 
-#  define OCSP_BASICRESP_sign(o,pkey,md,d) \
-        ASN1_item_sign(ASN1_ITEM_rptr(OCSP_RESPDATA),&(o)->signatureAlgorithm,\
-                NULL,(o)->signature,&(o)->tbsResponseData,pkey,md)
+#  define OCSP_BASICRESP_sign(o, pkey, md, d, libctx, propq)\
+        ASN1_item_sign_ex(ASN1_ITEM_rptr(OCSP_RESPDATA),\
+                          &(o)->signatureAlgorithm, NULL,\
+                          (o)->signature, &(o)->tbsResponseData,\
+                          NULL, pkey, md, libctx, propq)
 
-#  define OCSP_BASICRESP_sign_ctx(o,ctx,d) \
-        ASN1_item_sign_ctx(ASN1_ITEM_rptr(OCSP_RESPDATA),&(o)->signatureAlgorithm,\
-                NULL,(o)->signature,&(o)->tbsResponseData,ctx)
+#  define OCSP_BASICRESP_sign_ctx(o, ctx, d)\
+        ASN1_item_sign_ctx(ASN1_ITEM_rptr(OCSP_RESPDATA),\
+                           &(o)->signatureAlgorithm, NULL,\
+                           (o)->signature, &(o)->tbsResponseData, ctx)
 
-#  define OCSP_REQUEST_verify(a,r) ASN1_item_verify(ASN1_ITEM_rptr(OCSP_REQINFO),\
-        &(a)->optionalSignature->signatureAlgorithm,\
-        (a)->optionalSignature->signature,&(a)->tbsRequest,r)
+#  define OCSP_REQUEST_verify(a, r, libctx, propq)\
+        ASN1_item_verify_ex(ASN1_ITEM_rptr(OCSP_REQINFO),\
+                            &(a)->optionalSignature->signatureAlgorithm,\
+                            (a)->optionalSignature->signature, &(a)->tbsRequest,\
+                            NULL, r, libctx, propq)
 
-#  define OCSP_BASICRESP_verify(a,r) ASN1_item_verify(ASN1_ITEM_rptr(OCSP_RESPDATA),\
-        &(a)->signatureAlgorithm,(a)->signature,&(a)->tbsResponseData,r)
+#  define OCSP_BASICRESP_verify(a, r, libctx, propq)\
+        ASN1_item_verify_ex(ASN1_ITEM_rptr(OCSP_RESPDATA),\
+                            &(a)->signatureAlgorithm, (a)->signature,\
+                            &(a)->tbsResponseData, NULL, r, libctx, propq)

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,7 +9,7 @@
 
 #include "internal/cryptlib.h"
 #include <openssl/rand.h>
-#include "prov/rand_pool.h"
+#include "crypto/rand_pool.h"
 #include "crypto/rand.h"
 #include "prov/seeding.h"
 
@@ -42,7 +42,7 @@
 #  define INTEL_DEF_PROV L"Intel Hardware Cryptographic Service Provider"
 # endif
 
-size_t prov_pool_acquire_entropy(RAND_POOL *pool)
+size_t ossl_pool_acquire_entropy(RAND_POOL *pool)
 {
 # ifndef USE_BCRYPTGENRANDOM
     HCRYPTPROV hProvider;
@@ -53,34 +53,34 @@ size_t prov_pool_acquire_entropy(RAND_POOL *pool)
 
 
 # ifdef OPENSSL_RAND_SEED_RDTSC
-    entropy_available = prov_acquire_entropy_from_tsc(pool);
+    entropy_available = ossl_prov_acquire_entropy_from_tsc(pool);
     if (entropy_available > 0)
         return entropy_available;
 # endif
 
 # ifdef OPENSSL_RAND_SEED_RDCPU
-    entropy_available = prov_acquire_entropy_from_cpu(pool);
+    entropy_available = ossl_prov_acquire_entropy_from_cpu(pool);
     if (entropy_available > 0)
         return entropy_available;
 # endif
 
 # ifdef USE_BCRYPTGENRANDOM
-    bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
-    buffer = rand_pool_add_begin(pool, bytes_needed);
+    bytes_needed = ossl_rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
+    buffer = ossl_rand_pool_add_begin(pool, bytes_needed);
     if (buffer != NULL) {
         size_t bytes = 0;
         if (BCryptGenRandom(NULL, buffer, bytes_needed,
                             BCRYPT_USE_SYSTEM_PREFERRED_RNG) == STATUS_SUCCESS)
             bytes = bytes_needed;
 
-        rand_pool_add_end(pool, bytes, 8 * bytes);
-        entropy_available = rand_pool_entropy_available(pool);
+        ossl_rand_pool_add_end(pool, bytes, 8 * bytes);
+        entropy_available = ossl_rand_pool_entropy_available(pool);
     }
     if (entropy_available > 0)
         return entropy_available;
 # else
-    bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
-    buffer = rand_pool_add_begin(pool, bytes_needed);
+    bytes_needed = ossl_rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
+    buffer = ossl_rand_pool_add_begin(pool, bytes_needed);
     if (buffer != NULL) {
         size_t bytes = 0;
         /* poll the CryptoAPI PRNG */
@@ -92,14 +92,14 @@ size_t prov_pool_acquire_entropy(RAND_POOL *pool)
             CryptReleaseContext(hProvider, 0);
         }
 
-        rand_pool_add_end(pool, bytes, 8 * bytes);
-        entropy_available = rand_pool_entropy_available(pool);
+        ossl_rand_pool_add_end(pool, bytes, 8 * bytes);
+        entropy_available = ossl_rand_pool_entropy_available(pool);
     }
     if (entropy_available > 0)
         return entropy_available;
 
-    bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
-    buffer = rand_pool_add_begin(pool, bytes_needed);
+    bytes_needed = ossl_rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
+    buffer = ossl_rand_pool_add_begin(pool, bytes_needed);
     if (buffer != NULL) {
         size_t bytes = 0;
         /* poll the Pentium PRG with CryptoAPI */
@@ -111,18 +111,18 @@ size_t prov_pool_acquire_entropy(RAND_POOL *pool)
 
             CryptReleaseContext(hProvider, 0);
         }
-        rand_pool_add_end(pool, bytes, 8 * bytes);
-        entropy_available = rand_pool_entropy_available(pool);
+        ossl_rand_pool_add_end(pool, bytes, 8 * bytes);
+        entropy_available = ossl_rand_pool_entropy_available(pool);
     }
     if (entropy_available > 0)
         return entropy_available;
 # endif
 
-    return rand_pool_entropy_available(pool);
+    return ossl_rand_pool_entropy_available(pool);
 }
 
 
-int prov_pool_add_nonce_data(RAND_POOL *pool)
+int ossl_pool_add_nonce_data(RAND_POOL *pool)
 {
     struct {
         DWORD pid;
@@ -142,10 +142,10 @@ int prov_pool_add_nonce_data(RAND_POOL *pool)
     data.tid = GetCurrentThreadId();
     GetSystemTimeAsFileTime(&data.time);
 
-    return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
+    return ossl_rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
 }
 
-int rand_pool_add_additional_data(RAND_POOL *pool)
+int ossl_rand_pool_add_additional_data(RAND_POOL *pool)
 {
     struct {
         DWORD tid;
@@ -162,19 +162,19 @@ int rand_pool_add_additional_data(RAND_POOL *pool)
      */
     data.tid = GetCurrentThreadId();
     QueryPerformanceCounter(&data.time);
-    return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
+    return ossl_rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
 }
 
-int rand_pool_init(void)
+int ossl_rand_pool_init(void)
 {
     return 1;
 }
 
-void rand_pool_cleanup(void)
+void ossl_rand_pool_cleanup(void)
 {
 }
 
-void rand_pool_keep_random_devices_open(int keep)
+void ossl_rand_pool_keep_random_devices_open(int keep)
 {
 }
 

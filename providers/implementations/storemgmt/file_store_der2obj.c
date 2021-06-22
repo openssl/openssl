@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -27,6 +27,8 @@
 #include <openssl/core_object.h>
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
+#include <openssl/err.h>
+#include <openssl/asn1err.h>
 #include <openssl/params.h>
 #include "internal/asn1.h"
 #include "prov/bio.h"
@@ -34,7 +36,7 @@
 
 /*
  * newctx and freectx are not strictly necessary.  However, the method creator,
- * ossl_decoder_from_dispatch(), demands that they exist, so we make sure to
+ * ossl_decoder_from_algorithm(), demands that they exist, so we make sure to
  * oblige.
  */
 
@@ -50,32 +52,9 @@ static void der2obj_freectx(void *vctx)
 {
 }
 
-static OSSL_FUNC_decoder_gettable_params_fn der2obj_gettable_params;
-static OSSL_FUNC_decoder_get_params_fn der2obj_get_params;
 static OSSL_FUNC_decoder_decode_fn der2obj_decode;
 
-static const OSSL_PARAM *der2obj_gettable_params(void *provctx)
-{
-    static const OSSL_PARAM gettables[] = {
-        { OSSL_DECODER_PARAM_INPUT_TYPE, OSSL_PARAM_UTF8_PTR, NULL, 0, 0 },
-        OSSL_PARAM_END,
-    };
-
-    return gettables;
-}
-
-static int der2obj_get_params(OSSL_PARAM params[])
-{
-    OSSL_PARAM *p;
-
-    p = OSSL_PARAM_locate(params, OSSL_DECODER_PARAM_INPUT_TYPE);
-    if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, "DER"))
-        return 0;
-
-    return 1;
-}
-
-static int der2obj_decode(void *provctx, OSSL_CORE_BIO *cin,
+static int der2obj_decode(void *provctx, OSSL_CORE_BIO *cin, int selection,
                           OSSL_CALLBACK *data_cb, void *data_cbarg,
                           OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
 {
@@ -83,11 +62,24 @@ static int der2obj_decode(void *provctx, OSSL_CORE_BIO *cin,
      * We're called from file_store.c, so we know that OSSL_CORE_BIO is a
      * BIO in this case.
      */
-    BIO *in = (BIO *)cin;
+    BIO *in = ossl_bio_new_from_core_bio(provctx, cin);
     BUF_MEM *mem = NULL;
-    int ok = (asn1_d2i_read_bio(in, &mem) >= 0);
+    int ok;
 
-    if (ok) {
+    if (in == NULL)
+        return 0;
+
+    ERR_set_mark();
+    ok = (asn1_d2i_read_bio(in, &mem) >= 0);
+    ERR_pop_to_mark();
+    if (!ok && mem != NULL) {
+        OPENSSL_free(mem->data);
+        OPENSSL_free(mem);
+        mem = NULL;
+    }
+
+    ok = 1;
+    if (mem != NULL) {
         OSSL_PARAM params[3];
         int object_type = OSSL_OBJECT_UNKNOWN;
 
@@ -102,18 +94,16 @@ static int der2obj_decode(void *provctx, OSSL_CORE_BIO *cin,
         OPENSSL_free(mem->data);
         OPENSSL_free(mem);
     }
+    BIO_free(in);
     return ok;
 }
 
 static const OSSL_DISPATCH der_to_obj_decoder_functions[] = {
     { OSSL_FUNC_DECODER_NEWCTX, (void (*)(void))der2obj_newctx },
     { OSSL_FUNC_DECODER_FREECTX, (void (*)(void))der2obj_freectx },
-    { OSSL_FUNC_DECODER_GETTABLE_PARAMS,
-      (void (*)(void))der2obj_gettable_params },
-    { OSSL_FUNC_DECODER_GET_PARAMS, (void (*)(void))der2obj_get_params },
     { OSSL_FUNC_DECODER_DECODE, (void (*)(void))der2obj_decode },
     { 0, NULL }
 };
 
-const OSSL_ALGORITHM der_to_obj_algorithm =
-    { "obj", NULL, der_to_obj_decoder_functions };
+const OSSL_ALGORITHM ossl_der_to_obj_algorithm =
+    { "obj", "input=DER", der_to_obj_decoder_functions };

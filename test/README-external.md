@@ -5,69 +5,6 @@ It is possible to integrate external test suites into OpenSSL's `make test`.
 This capability is considered a developer option and does not work on all
 platforms.
 
-The BoringSSL test suite
-========================
-
-In order to run the BoringSSL tests with OpenSSL, first checkout the BoringSSL
-source code into an appropriate directory. This can be done in two ways:
-
-1) Separately from the OpenSSL checkout using:
-
-    $ git clone https://boringssl.googlesource.com/boringssl boringssl
-
-  The BoringSSL tests are only confirmed to work at a specific commit in the
-  BoringSSL repository. Later commits may or may not pass the test suite:
-
-    $ cd boringssl
-    $ git checkout 490469f850e
-
-2) Using the already configured submodule settings in OpenSSL:
-
-    $ git submodule update --init
-
-Configure the OpenSSL source code to enable the external tests:
-
-    $ cd ../openssl
-    $ ./config enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers \
-             enable-external-tests
-
-Note that using other config options than those given above may cause the tests
-to fail.
-
-Run the OpenSSL tests by providing the path to the BoringSSL test runner in the
-`BORING_RUNNER_DIR` environment variable:
-
-    $ BORING_RUNNER_DIR=/path/to/boringssl/ssl/test/runner make test
-
-Note that the test suite may change directory while running so the path provided
-should be absolute and not relative to the current working directory.
-
-To see more detailed output you can run just the BoringSSL tests with the
-verbose option:
-
-    $ VERBOSE=1 BORING_RUNNER_DIR=/path/to/boringssl/ssl/test/runner make \
-        TESTS="test_external_boringssl" test
-
-Test failures and suppressions
-------------------------------
-
-A large number of the BoringSSL tests are known to fail. A test could fail
-because of many possible reasons. For example:
-
-- A bug in OpenSSL
-- Different interpretations of standards
-- Assumptions about the way BoringSSL works that do not apply to OpenSSL
-- The test uses APIs added to BoringSSL that are not present in OpenSSL
-- etc
-
-In order to provide a "clean" baseline run with all the tests passing a config
-file has been provided that suppresses the running of tests that are known to
-fail. These suppressions are held in the file "test/ossl_shim/ossl_config.json"
-within the OpenSSL source code.
-
-The community is encouraged to contribute patches which reduce the number of
-suppressions that are currently present.
-
 Python PYCA/Cryptography test suite
 ===================================
 

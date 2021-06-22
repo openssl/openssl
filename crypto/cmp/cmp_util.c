@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -22,15 +22,19 @@
 
 int OSSL_CMP_log_open(void) /* is designed to be idempotent */
 {
-#ifndef OPENSSL_NO_STDIO
+#ifdef OPENSSL_NO_TRACE
+    return 1;
+#else
+# ifndef OPENSSL_NO_STDIO
     BIO *bio = BIO_new_fp(stdout, BIO_NOCLOSE);
 
     if (bio != NULL && OSSL_trace_set_channel(OSSL_TRACE_CATEGORY_CMP, bio))
         return 1;
     BIO_free(bio);
-#endif
-    CMPerr(0, CMP_R_NO_STDIO);
+# endif
+    ERR_raise(ERR_LIB_CMP, CMP_R_NO_STDIO);
     return 0;
+#endif
 }
 
 void OSSL_CMP_log_close(void) /* is designed to be idempotent */
@@ -155,12 +159,27 @@ void OSSL_CMP_print_errors_cb(OSSL_CMP_log_cb_t log_fn)
     while ((err = ERR_get_error_all(&file, &line, &func, &data, &flags)) != 0) {
         const char *component =
             improve_location_name(func, ERR_lib_error_string(err));
+        unsigned long reason = ERR_GET_REASON(err);
+        const char *rs = NULL;
+        char rsbuf[256];
 
-        if (!(flags & ERR_TXT_STRING))
-            data = NULL;
-        BIO_snprintf(msg, sizeof(msg), "%s%s%s", ERR_reason_error_string(err),
-                     data == NULL || *data == '\0' ? "" : " : ",
-                     data == NULL ? "" : data);
+#ifndef OPENSSL_NO_ERR
+        if (ERR_SYSTEM_ERROR(err)) {
+            if (openssl_strerror_r(reason, rsbuf, sizeof(rsbuf)))
+                rs = rsbuf;
+        } else {
+            rs = ERR_reason_error_string(err);
+        }
+#endif
+        if (rs == NULL) {
+            BIO_snprintf(rsbuf, sizeof(rsbuf), "reason(%lu)", reason);
+            rs = rsbuf;
+        }
+        if (data != NULL && (flags & ERR_TXT_STRING) != 0)
+            BIO_snprintf(msg, sizeof(msg), "%s:%s", rs, data);
+        else
+            BIO_snprintf(msg, sizeof(msg), "%s", rs);
+
         if (log_fn == NULL) {
 #ifndef OPENSSL_NO_STDIO
             BIO *bio = BIO_new_fp(stderr, BIO_NOCLOSE);
@@ -171,7 +190,7 @@ void OSSL_CMP_print_errors_cb(OSSL_CMP_log_cb_t log_fn)
                 BIO_free(bio);
             }
 #else
-            /* CMPerr(0, CMP_R_NO_STDIO) makes no sense during error printing */
+            /* ERR_raise(ERR_LIB_CMP, CMP_R_NO_STDIO) makes no sense during error printing */
 #endif
         } else {
             if (log_fn(component, file, line, OSSL_CMP_LOG_ERR, msg) <= 0)
@@ -186,7 +205,7 @@ int ossl_cmp_X509_STORE_add1_certs(X509_STORE *store, STACK_OF(X509) *certs,
     int i;
 
     if (store == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return 0;
     }
     if (certs == NULL)
@@ -199,69 +218,6 @@ int ossl_cmp_X509_STORE_add1_certs(X509_STORE *store, STACK_OF(X509) *certs,
                 return 0;
     }
     return 1;
-}
-
-/*-
- * Builds a certificate chain starting from <cert>
- * using the optional list of intermediate CA certificates <certs>.
- * If <store> is NULL builds the chain as far down as possible, ignoring errors.
- * Else the chain must reach a trust anchor contained in <store>.
- *
- * Returns NULL on error, else a pointer to a stack of (up_ref'ed) certificates
- * starting with given EE certificate and followed by all available intermediate
- * certificates down towards any trust anchor but without including the latter.
- *
- * NOTE: If a non-NULL stack is returned the caller is responsible for freeing.
- * NOTE: In case there is more than one possibility for the chain,
- * OpenSSL seems to take the first one; check X509_verify_cert() for details.
- */
-/* TODO this should be of more general interest and thus be exported. */
-STACK_OF(X509)
-    *ossl_cmp_build_cert_chain(OPENSSL_CTX *libctx, const char *propq,
-                               X509_STORE *store,
-                               STACK_OF(X509) *certs, X509 *cert)
-{
-    STACK_OF(X509) *chain = NULL, *result = NULL;
-    X509_STORE *ts = store == NULL ? X509_STORE_new() : store;
-    X509_STORE_CTX *csc = NULL;
-
-    if (ts == NULL || cert == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
-        goto err;
-    }
-
-    if ((csc = X509_STORE_CTX_new_with_libctx(libctx, propq)) == NULL)
-        goto err;
-    if (store == NULL && certs != NULL
-            && !ossl_cmp_X509_STORE_add1_certs(ts, certs, 0))
-        goto err;
-    if (!X509_STORE_CTX_init(csc, ts, cert,
-                             store == NULL ? NULL : certs))
-        goto err;
-    /* disable any cert status/revocation checking etc. */
-    X509_VERIFY_PARAM_clear_flags(X509_STORE_CTX_get0_param(csc),
-                                  ~(X509_V_FLAG_USE_CHECK_TIME
-                                    | X509_V_FLAG_NO_CHECK_TIME));
-
-    if (X509_verify_cert(csc) <= 0 && store != NULL)
-        goto err;
-    chain = X509_STORE_CTX_get0_chain(csc);
-
-    /* result list to store the up_ref'ed not self-signed certificates */
-    if ((result = sk_X509_new_null()) == NULL)
-        goto err;
-    if (!X509_add_certs(result, chain,
-                        X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
-                        | X509_ADD_FLAG_NO_SS)) {
-        sk_X509_free(result);
-        result = NULL;
-    }
-
- err:
-    if (store == NULL)
-        X509_STORE_free(ts);
-    X509_STORE_CTX_free(csc);
-    return result;
 }
 
 int ossl_cmp_sk_ASN1_UTF8STRING_push_str(STACK_OF(ASN1_UTF8STRING) *sk,
@@ -289,7 +245,7 @@ int ossl_cmp_asn1_octet_string_set1(ASN1_OCTET_STRING **tgt,
 {
     ASN1_OCTET_STRING *new;
     if (tgt == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return 0;
     }
     if (*tgt == src) /* self-assignment */
@@ -313,7 +269,7 @@ int ossl_cmp_asn1_octet_string_set1_bytes(ASN1_OCTET_STRING **tgt,
     ASN1_OCTET_STRING *new = NULL;
 
     if (tgt == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return 0;
     }
     if (bytes != NULL) {

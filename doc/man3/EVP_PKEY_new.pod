@@ -2,14 +2,16 @@
 
 =head1 NAME
 
+EVP_PKEY,
 EVP_PKEY_new,
 EVP_PKEY_up_ref,
+EVP_PKEY_dup,
 EVP_PKEY_free,
-EVP_PKEY_new_raw_private_key_with_libctx,
+EVP_PKEY_get0_description,
+EVP_PKEY_new_raw_private_key_ex,
 EVP_PKEY_new_raw_private_key,
-EVP_PKEY_new_raw_public_key_with_libctx,
+EVP_PKEY_new_raw_public_key_ex,
 EVP_PKEY_new_raw_public_key,
-EVP_PKEY_new_CMAC_key_with_libctx,
 EVP_PKEY_new_CMAC_key,
 EVP_PKEY_new_mac_key,
 EVP_PKEY_get_raw_private_key,
@@ -20,31 +22,28 @@ EVP_PKEY_get_raw_public_key
 
  #include <openssl/evp.h>
 
+ typedef evp_pkey_st EVP_PKEY;
+
  EVP_PKEY *EVP_PKEY_new(void);
  int EVP_PKEY_up_ref(EVP_PKEY *key);
+ EVP_PKEY *EVP_PKEY_dup(EVP_PKEY *key);
  void EVP_PKEY_free(EVP_PKEY *key);
+ const char *EVP_PKEY_get0_description(const EVP_PKEY *key);
 
- EVP_PKEY *EVP_PKEY_new_raw_private_key_with_libctx(OPENSSL_CTX *libctx,
-                                                    const char *keytype,
-                                                    const char *propq,
-                                                    const unsigned char *key,
-                                                    size_t keylen);
+ EVP_PKEY *EVP_PKEY_new_raw_private_key_ex(OSSL_LIB_CTX *libctx,
+                                           const char *keytype,
+                                           const char *propq,
+                                           const unsigned char *key,
+                                           size_t keylen);
  EVP_PKEY *EVP_PKEY_new_raw_private_key(int type, ENGINE *e,
                                         const unsigned char *key, size_t keylen);
- EVP_PKEY *EVP_PKEY_new_raw_public_key_with_libctx(OPENSSL_CTX *libctx,
-                                                   const char *keytype,
-                                                   const char *propq,
-                                                   const unsigned char *key,
-                                                   size_t keylen);
+ EVP_PKEY *EVP_PKEY_new_raw_public_key_ex(OSSL_LIB_CTX *libctx,
+                                          const char *keytype,
+                                          const char *propq,
+                                          const unsigned char *key,
+                                          size_t keylen);
  EVP_PKEY *EVP_PKEY_new_raw_public_key(int type, ENGINE *e,
                                        const unsigned char *key, size_t keylen);
- EVP_PKEY *EVP_PKEY_new_CMAC_key_with_libctx(const unsigned char *priv,
-                                             size_t len,
-                                             const char *cipher_name,
-                                             OPENSSL_CTX *libctx,
-                                             const char *propq);
- EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
-                                 size_t len, const EVP_CIPHER *cipher);
  EVP_PKEY *EVP_PKEY_new_mac_key(int type, ENGINE *e, const unsigned char *key,
                                 int keylen);
 
@@ -53,7 +52,33 @@ EVP_PKEY_get_raw_public_key
  int EVP_PKEY_get_raw_public_key(const EVP_PKEY *pkey, unsigned char *pub,
                                  size_t *len);
 
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
+ EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
+                                 size_t len, const EVP_CIPHER *cipher);
+
 =head1 DESCRIPTION
+
+B<EVP_PKEY> is a generic structure to hold diverse types of asymmetric keys
+(also known as "key pairs"), and can be used for diverse operations, like
+signing, verifying signatures, key derivation, etc.  The asymmetric keys
+themselves are often refered to as the "internal key", and are handled by
+backends, such as providers (through L<EVP_KEYMGMT(3)>) or B<ENGINE>s.
+
+Conceptually, an B<EVP_PKEY> internal key may hold a private key, a public
+key, or both (a keypair), and along with those, key parameters if the key type
+requires them.  The presence of these components determine what operations can
+be made; for example, signing normally requires the presence of a private key,
+and verifying normally requires the presence of a public key.
+
+=for comment ED signature require both the private and public key...
+
+B<EVP_PKEY> has also been used for MAC algorithm that were conceived as
+producing signatures, although not being public key algorithms; "POLY1305",
+"SIPHASH", "HMAC", "CMAC".  This usage is considered legacy and is discouraged
+in favor of the L<EVP_MAC(3)> API.
 
 The EVP_PKEY_new() function allocates an empty B<EVP_PKEY> structure which is
 used by OpenSSL to store public and private keys. The reference count is set to
@@ -61,34 +86,43 @@ B<1>.
 
 EVP_PKEY_up_ref() increments the reference count of I<key>.
 
+EVP_PKEY_dup() duplicates the I<key>. The I<key> must not be ENGINE based or
+a raw key, otherwise the duplication will fail.
+
 EVP_PKEY_free() decrements the reference count of I<key> and, if the reference
 count is zero, frees it up. If I<key> is NULL, nothing is done.
 
-EVP_PKEY_new_raw_private_key_with_libctx() allocates a new B<EVP_PKEY>. Unless
-an engine should be used for the key type, a provider for the key is found using
+EVP_PKEY_get0_description() returns a description of the type of B<EVP_PKEY>,
+meant for display and human consumption.  The description is at the
+discretion of the key type implementation.
+
+EVP_PKEY_new_raw_private_key_ex() allocates a new B<EVP_PKEY>. Unless an
+engine should be used for the key type, a provider for the key is found using
 the library context I<libctx> and the property query string I<propq>. The
 I<keytype> argument indicates what kind of key this is. The value should be a
 string for a public key algorithm that supports raw private keys, i.e one of
-"POLY1305", "SIPHASH", "X25519", "ED25519", "X448" or "ED448". Note that you may
-also use "HMAC" which is not a public key algorithm but is treated as such by
-some OpenSSL APIs. You are encouraged to use the EVP_MAC APIs instead for HMAC
-(see L<EVP_MAC(3)>). I<key> points to the raw private key data for this
-B<EVP_PKEY> which should be of length I<keylen>. The length should be
-appropriate for the type of the key. The public key data will be automatically
-derived from the given private key data (if appropriate for the algorithm type).
+"X25519", "ED25519", "X448" or "ED448". I<key> points to the raw private key
+data for this B<EVP_PKEY> which should be of length I<keylen>. The length
+should be appropriate for the type of the key. The public key data will be
+automatically derived from the given private key data (if appropriate for the
+algorithm type).
 
 EVP_PKEY_new_raw_private_key() does the same as
-EVP_PKEY_new_raw_private_key_with_libctx() except that the default library
-context and default property query are used instead. If I<e> is non-NULL then
-the new B<EVP_PKEY> structure is associated with the engine I<e>. The I<type>
-argument indicates what kind of key this is. The value should be a NID for a
-public key algorithm that supports raw private keys, i.e. one of
-B<EVP_PKEY_POLY1305>, B<EVP_PKEY_SIPHASH>, B<EVP_PKEY_X25519>,
-B<EVP_PKEY_ED25519>, B<EVP_PKEY_X448> or B<EVP_PKEY_ED448>. As for
-EVP_PKEY_new_raw_private_key_with_libctx() you may also use B<EVP_PKEY_HMAC>.
+EVP_PKEY_new_raw_private_key_ex() except that the default library context and
+default property query are used instead. If I<e> is non-NULL then the new
+B<EVP_PKEY> structure is associated with the engine I<e>. The I<type> argument
+indicates what kind of key this is. The value should be a NID for a public key
+algorithm that supports raw private keys, i.e. one of B<EVP_PKEY_X25519>,
+B<EVP_PKEY_ED25519>, B<EVP_PKEY_X448> or B<EVP_PKEY_ED448>.
 
-EVP_PKEY_new_raw_public_key_with_libctx() works in the same way as
-EVP_PKEY_new_raw_private_key_with_libctx() except that I<key> points to the raw
+EVP_PKEY_new_raw_private_key_ex() and EVP_PKEY_new_raw_private_key() may also
+be used with most MACs implemented as public key algorithms, so key types such
+as "HMAC", "POLY1305", "SIPHASH", or their NID form B<EVP_PKEY_POLY1305>,
+B<EVP_PKEY_SIPHASH>, B<EVP_PKEY_HMAC> are also accepted.  This usage is,
+as mentioned above, discouraged in favor of the L<EVP_MAC(3)> API.
+
+EVP_PKEY_new_raw_public_key_ex() works in the same way as
+EVP_PKEY_new_raw_private_key_ex() except that I<key> points to the raw
 public key data. The B<EVP_PKEY> structure will be initialised without any
 private key information. Algorithm types that support raw public keys are
 "X25519", "ED25519", "X448" or "ED448".
@@ -98,18 +132,6 @@ EVP_PKEY_new_raw_private_key() except that I<key> points to the raw public key
 data. The B<EVP_PKEY> structure will be initialised without any private key
 information. Algorithm types that support raw public keys are
 B<EVP_PKEY_X25519>, B<EVP_PKEY_ED25519>, B<EVP_PKEY_X448> or B<EVP_PKEY_ED448>.
-
-EVP_PKEY_new_CMAC_key_with_libctx() works in the same way as
-EVP_PKEY_new_raw_private_key() except it is only for the B<EVP_PKEY_CMAC>
-algorithm type. In addition to the raw private key data, it also takes a cipher
-algorithm to be used during creation of a CMAC in the I<cipher> argument. The
-cipher should be a standard encryption only cipher. For example AEAD and XTS
-ciphers should not be used. Finally it also takes a library context I<libctx>
-and property query I<propq> which are used when fetching any cryptographic
-algorithms which may be NULL to use the default values.
-
-EVP_PKEY_new_CMAC_key() is the same as EVP_PKEY_new_CMAC_key_with_libctx()
-except that the default values are used for I<libctx> and I<propq>.
 
 EVP_PKEY_new_mac_key() works in the same way as EVP_PKEY_new_raw_private_key().
 New applications should use EVP_PKEY_new_raw_private_key() instead.
@@ -134,6 +156,16 @@ key data. This function only works for algorithms that support raw public  keys.
 Currently this is: B<EVP_PKEY_X25519>, B<EVP_PKEY_ED25519>, B<EVP_PKEY_X448> or
 B<EVP_PKEY_ED448>.
 
+EVP_PKEY_new_CMAC_key() works in the same way as EVP_PKEY_new_raw_private_key()
+except it is only for the B<EVP_PKEY_CMAC> algorithm type. In addition to the
+raw private key data, it also takes a cipher algorithm to be used during
+creation of a CMAC in the B<cipher> argument. The cipher should be a standard
+encryption-only cipher. For example AEAD and XTS ciphers should not be used.
+
+Applications should use the L<EVP_MAC(3)> API instead
+and set the B<OSSL_MAC_PARAM_CIPHER> parameter on the B<EVP_MAC_CTX> object
+with the name of the cipher being used.
+
 =head1 NOTES
 
 The B<EVP_PKEY> structure is used by various OpenSSL functions which require a
@@ -148,7 +180,9 @@ L<EVP_PKEY_set1_EC_KEY(3)>.
 
 EVP_PKEY_new(), EVP_PKEY_new_raw_private_key(), EVP_PKEY_new_raw_public_key(),
 EVP_PKEY_new_CMAC_key() and EVP_PKEY_new_mac_key() return either the newly
-allocated B<EVP_PKEY> structure or B<NULL> if an error occurred.
+allocated B<EVP_PKEY> structure or NULL if an error occurred.
+
+EVP_PKEY_dup() returns the key duplicate or NULL if an error occurred.
 
 EVP_PKEY_up_ref(), EVP_PKEY_get_raw_private_key() and
 EVP_PKEY_get_raw_public_key() return 1 for success and 0 for failure.
@@ -170,13 +204,19 @@ EVP_PKEY_new_raw_private_key(), EVP_PKEY_new_raw_public_key(),
 EVP_PKEY_new_CMAC_key(), EVP_PKEY_new_raw_private_key() and
 EVP_PKEY_get_raw_public_key() functions were added in OpenSSL 1.1.1.
 
-The EVP_PKEY_new_raw_private_key_with_libctx(),
-EVP_PKEY_new_raw_public_key_with_libctx() and
-EVP_PKEY_new_CMAC_key_with_libctx() functions were added in OpenSSL 3.0.
+The EVP_PKEY_dup(), EVP_PKEY_new_raw_private_key_ex(), and
+EVP_PKEY_new_raw_public_key_ex()
+functions were added in OpenSSL 3.0.
+
+The EVP_PKEY_new_CMAC_key() was deprecated in OpenSSL 3.0.
+
+The documentation of B<EVP_PKEY> was amended in OpenSSL 3.0 to allow there to
+be the private part of the keypair without the public part, where this was
+previously implied to be disallowed.
 
 =head1 COPYRIGHT
 
-Copyright 2002-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2002-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -167,7 +167,7 @@ int OSSL_CMP_ITAV_push0_stack_item(STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
     int created = 0;
 
     if (itav_sk_p == NULL || itav == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         goto err;
     }
 
@@ -194,18 +194,57 @@ int ossl_cmp_asn1_get_int(const ASN1_INTEGER *a)
     int64_t res;
 
     if (!ASN1_INTEGER_get_int64(&res, a)) {
-        CMPerr(0, ASN1_R_INVALID_NUMBER);
+        ERR_raise(ERR_LIB_CMP, ASN1_R_INVALID_NUMBER);
         return -1;
     }
     if (res < INT_MIN) {
-        CMPerr(0, ASN1_R_TOO_SMALL);
+        ERR_raise(ERR_LIB_CMP, ASN1_R_TOO_SMALL);
         return -1;
     }
     if (res > INT_MAX) {
-        CMPerr(0, ASN1_R_TOO_LARGE);
+        ERR_raise(ERR_LIB_CMP, ASN1_R_TOO_LARGE);
         return -1;
     }
     return (int)res;
+}
+
+static int ossl_cmp_msg_cb(int operation, ASN1_VALUE **pval,
+                           const ASN1_ITEM *it, void *exarg)
+{
+    OSSL_CMP_MSG *msg = (OSSL_CMP_MSG *)*pval;
+
+    switch (operation) {
+    case ASN1_OP_FREE_POST:
+        OPENSSL_free(msg->propq);
+        break;
+
+    case ASN1_OP_DUP_POST:
+        {
+            OSSL_CMP_MSG *old = exarg;
+
+            if (!ossl_cmp_msg_set0_libctx(msg, old->libctx, old->propq))
+                return 0;
+        }
+        break;
+    case ASN1_OP_GET0_LIBCTX:
+        {
+            OSSL_LIB_CTX **libctx = exarg;
+
+            *libctx = msg->libctx;
+        }
+        break;
+    case ASN1_OP_GET0_PROPQ:
+        {
+            const char **propq = exarg;
+
+            *propq = msg->propq;
+        }
+        break;
+    default:
+        break;
+    }
+
+    return 1;
 }
 
 ASN1_CHOICE(OSSL_CMP_CERTORENCCERT) = {
@@ -405,14 +444,13 @@ ASN1_SEQUENCE(OSSL_CMP_PROTECTEDPART) = {
 } ASN1_SEQUENCE_END(OSSL_CMP_PROTECTEDPART)
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_PROTECTEDPART)
 
-ASN1_SEQUENCE(OSSL_CMP_MSG) = {
+ASN1_SEQUENCE_cb(OSSL_CMP_MSG, ossl_cmp_msg_cb) = {
     ASN1_SIMPLE(OSSL_CMP_MSG, header, OSSL_CMP_PKIHEADER),
     ASN1_SIMPLE(OSSL_CMP_MSG, body, OSSL_CMP_PKIBODY),
     ASN1_EXP_OPT(OSSL_CMP_MSG, protection, ASN1_BIT_STRING, 0),
     /* OSSL_CMP_CMPCERTIFICATE is effectively X509 so it is used directly */
     ASN1_EXP_SEQUENCE_OF_OPT(OSSL_CMP_MSG, extraCerts, X509, 1)
-} ASN1_SEQUENCE_END(OSSL_CMP_MSG)
-IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_MSG)
+} ASN1_SEQUENCE_END_cb(OSSL_CMP_MSG, OSSL_CMP_MSG)
 IMPLEMENT_ASN1_DUP_FUNCTION(OSSL_CMP_MSG)
 
 ASN1_ITEM_TEMPLATE(OSSL_CMP_MSGS) =

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -20,16 +20,16 @@
 #include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/safestack.h>
+#include <openssl/proverr.h>
 #include "internal/ffc.h"
 #include "crypto/bn.h"           /* bn_get_words() */
-#include "crypto/dh.h"           /* dh_get0_params() */
-#include "crypto/dsa.h"          /* dsa_get0_params() */
-#include "crypto/ec.h"           /* ec_key_get_libctx */
+#include "crypto/dh.h"           /* ossl_dh_get0_params() */
+#include "crypto/dsa.h"          /* ossl_dsa_get0_params() */
+#include "crypto/ec.h"           /* ossl_ec_key_get_libctx */
 #include "crypto/ecx.h"          /* ECX_KEY, etc... */
 #include "crypto/rsa.h"          /* RSA_PSS_PARAMS_30, etc... */
 #include "prov/bio.h"
 #include "prov/implementations.h"
-#include "prov/providercommonerr.h"
 #include "endecoder_local.h"
 
 DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)
@@ -126,6 +126,7 @@ err:
 /* Number of octets per line */
 #define LABELED_BUF_PRINT_WIDTH    15
 
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_EC)
 static int print_labeled_buf(BIO *out, const char *label,
                              const unsigned char *buf, size_t buflen)
 {
@@ -151,13 +152,15 @@ static int print_labeled_buf(BIO *out, const char *label,
 
     return 1;
 }
+#endif
 
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_DSA)
 static int ffc_params_to_text(BIO *out, const FFC_PARAMS *ffc)
 {
     if (ffc->nid != NID_undef) {
 #ifndef OPENSSL_NO_DH
-        const char *name = ffc_named_group_from_uid(ffc->nid);
+        const DH_NAMED_GROUP *group = ossl_ffc_uid_to_dh_named_group(ffc->nid);
+        const char *name = ossl_ffc_named_group_get_name(group);
 
         if (name == NULL)
             goto err;
@@ -242,7 +245,7 @@ static int dh_to_text(BIO *out, const void *key, int selection)
         }
     }
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0) {
-        params = dh_get0_params((DH *)dh);
+        params = ossl_dh_get0_params((DH *)dh);
         if (params == NULL) {
             ERR_raise(ERR_LIB_PROV, PROV_R_NOT_PARAMETERS);
             return 0;
@@ -312,7 +315,7 @@ static int dsa_to_text(BIO *out, const void *key, int selection)
         }
     }
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0) {
-        params = dsa_get0_params((DSA *)dsa);
+        params = ossl_dsa_get0_params((DSA *)dsa);
         if (params == NULL) {
             ERR_raise(ERR_LIB_PROV, PROV_R_NOT_PARAMETERS);
             return 0;
@@ -376,18 +379,17 @@ static int ec_param_explicit_curve_to_text(BIO *out, const EC_GROUP *group,
 static int ec_param_explicit_gen_to_text(BIO *out, const EC_GROUP *group,
                                          BN_CTX *ctx)
 {
-    const EC_POINT *point = NULL;
-    BIGNUM *gen = NULL;
-    const char *glabel = NULL;
+    int ret;
+    size_t buflen;
     point_conversion_form_t form;
+    const EC_POINT *point = NULL;
+    const char *glabel = NULL;
+    unsigned char *buf = NULL;
 
     form = EC_GROUP_get_point_conversion_form(group);
     point = EC_GROUP_get0_generator(group);
-    gen = BN_CTX_get(ctx);
 
-    if (gen == NULL
-        || point == NULL
-        || EC_POINT_point2bn(group, point, form, gen, ctx) == NULL)
+    if (point == NULL)
         return 0;
 
     switch (form) {
@@ -403,12 +405,19 @@ static int ec_param_explicit_gen_to_text(BIO *out, const EC_GROUP *group,
     default:
         return 0;
     }
-    return print_labeled_bignum(out, glabel, gen);
+
+    buflen = EC_POINT_point2buf(group, point, form, &buf, ctx);
+    if (buflen == 0)
+        return 0;
+
+    ret = print_labeled_buf(out, glabel, buf, buflen);
+    OPENSSL_clear_free(buf, buflen);
+    return ret;
 }
 
 /* Print explicit parameters */
 static int ec_param_explicit_to_text(BIO *out, const EC_GROUP *group,
-                                     OPENSSL_CTX *libctx)
+                                     OSSL_LIB_CTX *libctx)
 {
     int ret = 0, tmp_nid;
     BN_CTX *ctx = NULL;
@@ -449,7 +458,7 @@ err:
 }
 
 static int ec_param_to_text(BIO *out, const EC_GROUP *group,
-                            OPENSSL_CTX *libctx)
+                            OSSL_LIB_CTX *libctx)
 {
     if (EC_GROUP_get_asn1_flag(group) & OPENSSL_EC_NAMED_CURVE) {
         const char *curve_name;
@@ -530,7 +539,7 @@ static int ec_to_text(BIO *out, const void *key, int selection)
         && !print_labeled_buf(out, "pub:", pub, pub_len))
         goto err;
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
-        ret = ec_param_to_text(out, group, ec_key_get_libctx(ec));
+        ret = ec_param_to_text(out, group, ossl_ec_key_get_libctx(ec));
 err:
     OPENSSL_clear_free(priv, priv_len);
     OPENSSL_free(pub);
@@ -538,6 +547,10 @@ err:
 }
 
 # define ec_input_type          "EC"
+
+# ifndef OPENSSL_NO_SM2
+#  define sm2_input_type        "SM2"
+# endif
 #endif
 
 /* ---------------------------------------------------------------------- */
@@ -627,7 +640,7 @@ static int rsa_to_text(BIO *out, const void *key, int selection)
     STACK_OF(BIGNUM_const) *exps = NULL;
     STACK_OF(BIGNUM_const) *coeffs = NULL;
     int primes;
-    const RSA_PSS_PARAMS_30 *pss_params = rsa_get0_pss_params_30((RSA *)rsa);
+    const RSA_PSS_PARAMS_30 *pss_params = ossl_rsa_get0_pss_params_30((RSA *)rsa);
     int ret = 0;
 
     if (out == NULL || rsa == NULL) {
@@ -655,7 +668,7 @@ static int rsa_to_text(BIO *out, const void *key, int selection)
     }
 
     RSA_get0_key(rsa, &rsa_n, &rsa_e, &rsa_d);
-    rsa_get0_all_params((RSA *)rsa, factors, exps, coeffs);
+    ossl_rsa_get0_all_params((RSA *)rsa, factors, exps, coeffs);
     primes = sk_BIGNUM_const_num(factors);
 
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
@@ -714,33 +727,35 @@ static int rsa_to_text(BIO *out, const void *key, int selection)
     if ((selection & OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS) != 0) {
         switch (RSA_test_flags(rsa, RSA_FLAG_TYPE_MASK)) {
         case RSA_FLAG_TYPE_RSA:
-            if (!rsa_pss_params_30_is_unrestricted(pss_params)) {
+            if (!ossl_rsa_pss_params_30_is_unrestricted(pss_params)) {
                 if (BIO_printf(out, "(INVALID PSS PARAMETERS)\n") <= 0)
                     goto err;
             }
             break;
         case RSA_FLAG_TYPE_RSASSAPSS:
-            if (rsa_pss_params_30_is_unrestricted(pss_params)) {
+            if (ossl_rsa_pss_params_30_is_unrestricted(pss_params)) {
                 if (BIO_printf(out, "No PSS parameter restrictions\n") <= 0)
                     goto err;
             } else {
-                int hashalg_nid = rsa_pss_params_30_hashalg(pss_params);
-                int maskgenalg_nid = rsa_pss_params_30_maskgenalg(pss_params);
+                int hashalg_nid = ossl_rsa_pss_params_30_hashalg(pss_params);
+                int maskgenalg_nid =
+                    ossl_rsa_pss_params_30_maskgenalg(pss_params);
                 int maskgenhashalg_nid =
-                    rsa_pss_params_30_maskgenhashalg(pss_params);
-                int saltlen = rsa_pss_params_30_saltlen(pss_params);
-                int trailerfield = rsa_pss_params_30_trailerfield(pss_params);
+                    ossl_rsa_pss_params_30_maskgenhashalg(pss_params);
+                int saltlen = ossl_rsa_pss_params_30_saltlen(pss_params);
+                int trailerfield =
+                    ossl_rsa_pss_params_30_trailerfield(pss_params);
 
                 if (BIO_printf(out, "PSS parameter restrictions:\n") <= 0)
                     goto err;
                 if (BIO_printf(out, "  Hash Algorithm: %s%s\n",
-                               rsa_oaeppss_nid2name(hashalg_nid),
+                               ossl_rsa_oaeppss_nid2name(hashalg_nid),
                                (hashalg_nid == NID_sha1
                                 ? " (default)" : "")) <= 0)
                     goto err;
                 if (BIO_printf(out, "  Mask Algorithm: %s with %s%s\n",
-                               rsa_mgf_nid2name(maskgenalg_nid),
-                               rsa_oaeppss_nid2name(maskgenhashalg_nid),
+                               ossl_rsa_mgf_nid2name(maskgenalg_nid),
+                               ossl_rsa_oaeppss_nid2name(maskgenhashalg_nid),
                                (maskgenalg_nid == NID_mgf1
                                 && maskgenhashalg_nid == NID_sha1
                                 ? " (default)" : "")) <= 0)
@@ -749,13 +764,6 @@ static int rsa_to_text(BIO *out, const void *key, int selection)
                                saltlen,
                                (saltlen == 20 ? " (default)" : "")) <= 0)
                     goto err;
-                /*
-                 * TODO(3.0) Should we show the ASN.1 trailerField value, or
-                 * the actual trailerfield byte (i.e. 0xBC for 1)?
-                 * crypto/rsa/rsa_ameth.c isn't very clear on that, as it
-                 * does display 0xBC when the default applies, but the ASN.1
-                 * trailerField value otherwise...
-                 */
                 if (BIO_printf(out, "  Trailer Field: 0x%x%s\n",
                                trailerfield,
                                (trailerfield == 1 ? " (default)" : "")) <= 0)
@@ -787,38 +795,13 @@ static void key2text_freectx(ossl_unused void *vctx)
 {
 }
 
-static const OSSL_PARAM *key2text_gettable_params(void *provctx)
-{
-    static const OSSL_PARAM gettables[] = {
-        { OSSL_ENCODER_PARAM_OUTPUT_TYPE, OSSL_PARAM_UTF8_PTR, NULL, 0, 0 },
-        OSSL_PARAM_END,
-    };
-
-    return gettables;
-}
-
-static int key2text_get_params(OSSL_PARAM params[], const char *input_type)
-{
-    OSSL_PARAM *p;
-
-    p = OSSL_PARAM_locate(params, OSSL_ENCODER_PARAM_INPUT_TYPE);
-    if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, input_type))
-        return 0;
-
-    p = OSSL_PARAM_locate(params, OSSL_ENCODER_PARAM_OUTPUT_TYPE);
-    if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, "TEXT"))
-        return 0;
-
-    return 1;
-}
-
 static int key2text_encode(void *vctx, const void *key, int selection,
                            OSSL_CORE_BIO *cout,
                            int (*key2text)(BIO *out, const void *key,
                                            int selection),
                            OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    BIO *out = bio_new_from_core_bio(vctx, cout);
+    BIO *out = ossl_bio_new_from_core_bio(vctx, cout);
     int ret;
 
     if (out == NULL)
@@ -831,27 +814,21 @@ static int key2text_encode(void *vctx, const void *key, int selection,
 }
 
 #define MAKE_TEXT_ENCODER(impl, type)                                   \
-    static OSSL_FUNC_encoder_get_params_fn                              \
-    impl##2text_get_params;                                             \
     static OSSL_FUNC_encoder_import_object_fn                           \
     impl##2text_import_object;                                          \
     static OSSL_FUNC_encoder_free_object_fn                             \
     impl##2text_free_object;                                            \
     static OSSL_FUNC_encoder_encode_fn impl##2text_encode;              \
                                                                         \
-    static int impl##2text_get_params(OSSL_PARAM params[])              \
-    {                                                                   \
-        return key2text_get_params(params, impl##_input_type);           \
-    }                                                                   \
     static void *impl##2text_import_object(void *ctx, int selection,    \
                                            const OSSL_PARAM params[])   \
     {                                                                   \
-        return ossl_prov_import_key(impl##_keymgmt_functions,           \
+        return ossl_prov_import_key(ossl_##impl##_keymgmt_functions,    \
                                     ctx, selection, params);            \
     }                                                                   \
     static void impl##2text_free_object(void *key)                      \
     {                                                                   \
-        ossl_prov_free_key(impl##_keymgmt_functions, key);              \
+        ossl_prov_free_key(ossl_##impl##_keymgmt_functions, key);       \
     }                                                                   \
     static int impl##2text_encode(void *vctx, OSSL_CORE_BIO *cout,      \
                                   const void *key,                      \
@@ -868,15 +845,11 @@ static int key2text_encode(void *vctx, const void *key, int selection,
         return key2text_encode(vctx, key, selection, cout,              \
                                type##_to_text, cb, cbarg);              \
     }                                                                   \
-    const OSSL_DISPATCH impl##_to_text_encoder_functions[] = {          \
+    const OSSL_DISPATCH ossl_##impl##_to_text_encoder_functions[] = {   \
         { OSSL_FUNC_ENCODER_NEWCTX,                                     \
           (void (*)(void))key2text_newctx },                            \
         { OSSL_FUNC_ENCODER_FREECTX,                                    \
           (void (*)(void))key2text_freectx },                           \
-        { OSSL_FUNC_ENCODER_GETTABLE_PARAMS,                            \
-          (void (*)(void))key2text_gettable_params },                   \
-        { OSSL_FUNC_ENCODER_GET_PARAMS,                                 \
-          (void (*)(void))impl##2text_get_params },                     \
         { OSSL_FUNC_ENCODER_IMPORT_OBJECT,                              \
           (void (*)(void))impl##2text_import_object },                  \
         { OSSL_FUNC_ENCODER_FREE_OBJECT,                                \
@@ -895,6 +868,9 @@ MAKE_TEXT_ENCODER(dsa, dsa);
 #endif
 #ifndef OPENSSL_NO_EC
 MAKE_TEXT_ENCODER(ec, ec);
+# ifndef OPENSSL_NO_SM2
+MAKE_TEXT_ENCODER(sm2, ec);
+# endif
 MAKE_TEXT_ENCODER(ed25519, ecx);
 MAKE_TEXT_ENCODER(ed448, ecx);
 MAKE_TEXT_ENCODER(x25519, ecx);

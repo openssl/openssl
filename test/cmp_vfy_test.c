@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -9,7 +9,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "cmp_testlib.h"
+#include "helpers/cmp_testlib.h"
 #include "../crypto/crmf/crmf_local.h" /* for manipulating POPO signature */
 
 static const char *server_f;
@@ -37,7 +37,7 @@ typedef struct test_fixture {
     int additional_arg;
 } CMP_VFY_TEST_FIXTURE;
 
-static OPENSSL_CTX *libctx = NULL;
+static OSSL_LIB_CTX *libctx = NULL;
 static OSSL_PROVIDER *default_null_provider = NULL, *provider = NULL;
 
 static void tear_down(CMP_VFY_TEST_FIXTURE *fixture)
@@ -91,7 +91,7 @@ static int flip_bit(ASN1_BIT_STRING *bitstr)
 
 static int execute_verify_popo_test(CMP_VFY_TEST_FIXTURE *fixture)
 {
-    if ((fixture->msg = load_pkimsg(ir_protected_f)) == NULL)
+    if ((fixture->msg = load_pkimsg(ir_protected_f, libctx)) == NULL)
         return 0;
     if (fixture->expected == 0) {
         const OSSL_CRMF_MSGS *reqs = fixture->msg->body->value.ir;
@@ -153,7 +153,7 @@ static int test_validate_msg_mac_alg_protection(void)
     fixture->expected = 1;
     if (!TEST_true(OSSL_CMP_CTX_set1_secretValue(fixture->cmp_ctx, sec_1,
                                                  sizeof(sec_1)))
-            || !TEST_ptr(fixture->msg = load_pkimsg(ip_waiting_f))) {
+            || !TEST_ptr(fixture->msg = load_pkimsg(ip_waiting_f, libctx))) {
         tear_down(fixture);
         fixture = NULL;
     }
@@ -174,7 +174,7 @@ static int test_validate_msg_mac_alg_protection_bad(void)
 
     if (!TEST_true(OSSL_CMP_CTX_set1_secretValue(fixture->cmp_ctx, sec_bad,
                                                  sizeof(sec_bad)))
-            || !TEST_ptr(fixture->msg = load_pkimsg(ip_waiting_f))) {
+            || !TEST_ptr(fixture->msg = load_pkimsg(ip_waiting_f, libctx))) {
         tear_down(fixture);
         fixture = NULL;
     }
@@ -203,7 +203,7 @@ static int test_validate_msg_signature_partial_chain(int expired)
     ts = OSSL_CMP_CTX_get0_trustedStore(fixture->cmp_ctx);
     fixture->expected = !expired;
     if (ts == NULL
-            || !TEST_ptr(fixture->msg = load_pkimsg(ir_protected_f))
+            || !TEST_ptr(fixture->msg = load_pkimsg(ir_protected_f, libctx))
             || !add_trusted(fixture->cmp_ctx, srvcert)) {
         tear_down(fixture);
         fixture = NULL;
@@ -233,7 +233,7 @@ static int test_validate_msg_signature_srvcert_wrong(void)
 {
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
     fixture->expected = 0;
-    if (!TEST_ptr(fixture->msg = load_pkimsg(ir_protected_f))
+    if (!TEST_ptr(fixture->msg = load_pkimsg(ir_protected_f, libctx))
         || !TEST_true(OSSL_CMP_CTX_set1_srvCert(fixture->cmp_ctx, clcert))) {
         tear_down(fixture);
         fixture = NULL;
@@ -246,7 +246,7 @@ static int test_validate_msg_signature_srvcert(int bad_sig)
 {
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
     fixture->expected = !bad_sig;
-    if (!TEST_ptr(fixture->msg = load_pkimsg(ir_protected_f))
+    if (!TEST_ptr(fixture->msg = load_pkimsg(ir_protected_f, libctx))
         || !TEST_true(OSSL_CMP_CTX_set1_srvCert(fixture->cmp_ctx, srvcert))
         || (bad_sig && !flip_bit(fixture->msg->protection))) {
         tear_down(fixture);
@@ -272,7 +272,7 @@ static int test_validate_msg_signature_sender_cert_untrusted(void)
 {
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
     fixture->expected = 1;
-    if (!TEST_ptr(fixture->msg = load_pkimsg(ir_protected_0_extracerts))
+    if (!TEST_ptr(fixture->msg = load_pkimsg(ir_protected_0_extracerts, libctx))
             || !add_trusted(fixture->cmp_ctx, instaca_cert)
             || !add_untrusted(fixture->cmp_ctx, insta_cert)) {
         tear_down(fixture);
@@ -286,7 +286,7 @@ static int test_validate_msg_signature_sender_cert_trusted(void)
 {
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
     fixture->expected = 1;
-    if (!TEST_ptr(fixture->msg = load_pkimsg(ir_protected_0_extracerts))
+    if (!TEST_ptr(fixture->msg = load_pkimsg(ir_protected_0_extracerts, libctx))
             || !add_trusted(fixture->cmp_ctx, instaca_cert)
             || !add_trusted(fixture->cmp_ctx, insta_cert)) {
         tear_down(fixture);
@@ -300,7 +300,7 @@ static int test_validate_msg_signature_sender_cert_extracert(void)
 {
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
     fixture->expected = 1;
-    if (!TEST_ptr(fixture->msg = load_pkimsg(ir_protected_2_extracerts))
+    if (!TEST_ptr(fixture->msg = load_pkimsg(ir_protected_2_extracerts, libctx))
             || !add_trusted(fixture->cmp_ctx, instaca_cert)) {
         tear_down(fixture);
         fixture = NULL;
@@ -315,7 +315,7 @@ static int test_validate_msg_signature_sender_cert_absent(void)
 {
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
     fixture->expected = 0;
-    if (!TEST_ptr(fixture->msg = load_pkimsg(ir_protected_0_extracerts))) {
+    if (!TEST_ptr(fixture->msg = load_pkimsg(ir_protected_0_extracerts, libctx))) {
         tear_down(fixture);
         fixture = NULL;
     }
@@ -328,7 +328,7 @@ static int test_validate_with_sender(const X509_NAME *name, int expected)
 {
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
     fixture->expected = expected;
-    if (!TEST_ptr(fixture->msg = load_pkimsg(ir_protected_f))
+    if (!TEST_ptr(fixture->msg = load_pkimsg(ir_protected_f, libctx))
         || !TEST_true(OSSL_CMP_CTX_set1_expected_sender(fixture->cmp_ctx, name))
         || !TEST_true(OSSL_CMP_CTX_set1_srvCert(fixture->cmp_ctx, srvcert))) {
         tear_down(fixture);
@@ -353,7 +353,7 @@ static int test_validate_msg_unprotected_request(void)
 {
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
     fixture->expected = 0;
-    if (!TEST_ptr(fixture->msg = load_pkimsg(ir_unprotected_f))) {
+    if (!TEST_ptr(fixture->msg = load_pkimsg(ir_unprotected_f, libctx))) {
         tear_down(fixture);
         fixture = NULL;
     }
@@ -549,7 +549,7 @@ void cleanup_tests(void)
     X509_free(instaca_cert);
     OSSL_CMP_MSG_free(ir_unprotected);
     OSSL_CMP_MSG_free(ir_rmprotection);
-    OPENSSL_CTX_free(libctx);
+    OSSL_LIB_CTX_free(libctx);
     return;
 }
 
@@ -600,28 +600,28 @@ int setup_tests(void)
         return 0;
     }
 
-    if (!test_get_libctx(&libctx, &default_null_provider, &provider, 14, USAGE))
+    if (!test_arg_libctx(&libctx, &default_null_provider, &provider, 14, USAGE))
         return 0;
 
     /* Load certificates for cert chain */
-    if (!TEST_ptr(endentity1 = load_pem_cert(endentity1_f, libctx))
-            || !TEST_ptr(endentity2 = load_pem_cert(endentity2_f, libctx))
-            || !TEST_ptr(root = load_pem_cert(root_f, NULL))
-            || !TEST_ptr(intermediate = load_pem_cert(intermediate_f, libctx)))
+    if (!TEST_ptr(endentity1 = load_cert_pem(endentity1_f, libctx))
+            || !TEST_ptr(endentity2 = load_cert_pem(endentity2_f, libctx))
+            || !TEST_ptr(root = load_cert_pem(root_f, NULL))
+            || !TEST_ptr(intermediate = load_cert_pem(intermediate_f, libctx)))
         goto err;
 
-    if (!TEST_ptr(insta_cert = load_pem_cert(instacert_f, libctx))
-            || !TEST_ptr(instaca_cert = load_pem_cert(instaca_f, libctx)))
+    if (!TEST_ptr(insta_cert = load_cert_pem(instacert_f, libctx))
+            || !TEST_ptr(instaca_cert = load_cert_pem(instaca_f, libctx)))
         goto err;
 
     /* Load certificates for message validation */
-    if (!TEST_ptr(srvcert = load_pem_cert(server_f, libctx))
-            || !TEST_ptr(clcert = load_pem_cert(client_f, libctx)))
+    if (!TEST_ptr(srvcert = load_cert_pem(server_f, libctx))
+            || !TEST_ptr(clcert = load_cert_pem(client_f, libctx)))
         goto err;
     if (!TEST_int_eq(1, RAND_bytes(rand_data, OSSL_CMP_TRANSACTIONID_LENGTH)))
         goto err;
-    if (!TEST_ptr(ir_unprotected = load_pkimsg(ir_unprotected_f))
-            || !TEST_ptr(ir_rmprotection = load_pkimsg(ir_rmprotection_f)))
+    if (!TEST_ptr(ir_unprotected = load_pkimsg(ir_unprotected_f, libctx))
+            || !TEST_ptr(ir_rmprotection = load_pkimsg(ir_rmprotection_f, libctx)))
         goto err;
 
     /* Message validation tests */

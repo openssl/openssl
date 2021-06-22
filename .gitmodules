@@ -1,7 +1,3 @@
-[submodule "boringssl"]
-	path = boringssl
-	url = https://boringssl.googlesource.com/boringssl
-
 [submodule "pyca.cryptography"]
 	path = pyca-cryptography
 	url = https://github.com/pyca/cryptography.git
@@ -14,3 +10,6 @@
 	path = gost-engine
 	url = https://github.com/gost-engine/engine
 	update = rebase
+[submodule "wycheproof"]
+	path = wycheproof
+	url = https://github.com/google/wycheproof

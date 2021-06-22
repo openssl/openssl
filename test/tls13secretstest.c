@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -198,8 +198,11 @@ const EVP_MD *ssl_md(SSL_CTX *ctx, int idx)
     return EVP_sha256();
 }
 
-void ossl_statem_fatal(SSL *s, int al, int func, int reason, const char *file,
-                           int line)
+void ossl_statem_send_fatal(SSL *s, int al)
+{
+}
+
+void ossl_statem_fatal(SSL *s, int al, int reason, const char *fmt, ...)
 {
 }
 
@@ -311,7 +314,7 @@ static int test_handshake_secrets(void)
                      handshake_secret, sizeof(handshake_secret)))
         goto err;
 
-    hashsize = EVP_MD_size(ssl_handshake_md(s));
+    hashsize = EVP_MD_get_size(ssl_handshake_md(s));
     if (!TEST_size_t_eq(sizeof(client_hts), hashsize))
         goto err;
     if (!TEST_size_t_eq(sizeof(client_hts_key), KEYLEN))

@@ -15,13 +15,14 @@ our $fips_mode;
 
 my @protocols;
 my @is_disabled = (0);
-push @is_disabled, anydisabled("ssl3", "tls1", "tls1_1", "tls1_2", "dtls1", "dtls1_2");
 
 # We test version-flexible negotiation (undef) and each protocol version.
 if ($fips_mode) {
     @protocols = (undef, "TLSv1.2", "DTLSv1.2");
+    push @is_disabled, anydisabled("tls1_2", "dtls1_2");
 } else {
     @protocols = (undef, "SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2", "DTLSv1", "DTLSv1.2");
+    push @is_disabled, anydisabled("ssl3", "tls1", "tls1_1", "tls1_2", "dtls1", "dtls1_2");
 }
 
 our @tests = ();
@@ -115,7 +116,9 @@ sub generate_tests() {
                     test   => {
                         "ExpectedResult" => "ServerFail",
                         "ExpectedServerAlert" =>
-                        ($protocol_name eq "flex" && !disabled("tls1_3"))
+                        ($protocol_name eq "flex"
+                            && !disabled("tls1_3")
+                            && (!disabled("ec") || !disabled("dh")))
                         ? "CertificateRequired" : "HandshakeFailure",
                         "Method" => $method,
                     },

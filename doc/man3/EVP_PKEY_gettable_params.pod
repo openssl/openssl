@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-EVP_PKEY_gettable_params, EVP_PKEY_get_int_param, EVP_PKEY_get_size_t_param,
+EVP_PKEY_gettable_params, EVP_PKEY_get_params,
+EVP_PKEY_get_int_param, EVP_PKEY_get_size_t_param,
 EVP_PKEY_get_bn_param, EVP_PKEY_get_utf8_string_param,
 EVP_PKEY_get_octet_string_param
 - retrieve key parameters from a key
@@ -12,16 +13,25 @@ EVP_PKEY_get_octet_string_param
  #include <openssl/evp.h>
 
  const OSSL_PARAM *EVP_PKEY_gettable_params(EVP_PKEY *pkey);
- int EVP_PKEY_get_int_param(EVP_PKEY *pkey, const char *key_name, int *out);
- int EVP_PKEY_get_size_t_param(EVP_PKEY *pkey, const char *key_name, size_t *out);
- int EVP_PKEY_get_bn_param(EVP_PKEY *pkey, const char *key_name, BIGNUM **bn);
- int EVP_PKEY_get_utf8_string_param(EVP_PKEY *pkey, const char *key_name,
-                                    char *str, size_t max_buf_sz, size_t *out_sz);
- int EVP_PKEY_get_octet_string_param(EVP_PKEY *pkey, const char *key_name,
-                                    unsigned char *buf, size_t max_buf_sz,
+ int EVP_PKEY_get_params(const EVP_PKEY *pkey, OSSL_PARAM params[]);
+ int EVP_PKEY_get_int_param(const EVP_PKEY *pkey, const char *key_name,
+                            int *out);
+ int EVP_PKEY_get_size_t_param(const EVP_PKEY *pkey, const char *key_name,
+                               size_t *out);
+ int EVP_PKEY_get_bn_param(const EVP_PKEY *pkey, const char *key_name,
+                           BIGNUM **bn);
+ int EVP_PKEY_get_utf8_string_param(const EVP_PKEY *pkey, const char *key_name,
+                                    char *str, size_t max_buf_sz,
                                     size_t *out_sz);
+ int EVP_PKEY_get_octet_string_param(const EVP_PKEY *pkey, const char *key_name,
+                                     unsigned char *buf, size_t max_buf_sz,
+                                     size_t *out_sz);
 
 =head1 DESCRIPTION
+
+EVP_PKEY_get_params() retrieves parameters from the key I<pkey>, according to
+the contents of I<params>.
+See L<OSSL_PARAM(3)> for information about parameters.
 
 EVP_PKEY_gettable_params() returns a constant list of I<params> indicating
 the names and types of key parameters that can be retrieved.
@@ -57,7 +67,8 @@ All other methods return 1 if a value associated with the key's I<key_name> was
 successfully returned, or 0 if there was an error.
 An error may be returned by methods EVP_PKEY_get_utf8_string_param() and
 EVP_PKEY_get_octet_string_param() if I<max_buf_sz> is not big enough to hold the
-value.
+value.  If I<out_sz> is not NULL, I<*out_sz> will be assigned the required
+buffer size to hold the value.
 
 =head1 EXAMPLES
 
@@ -97,7 +108,7 @@ These functions were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

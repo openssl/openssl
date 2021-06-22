@@ -14,15 +14,19 @@ SRP_get_default_gN
 
  #include <openssl/srp.h>
 
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  int SRP_create_verifier_BN_ex(const char *user, const char *pass, BIGNUM **salt,
                                BIGNUM **verifier, const BIGNUM *N,
-                               const BIGNUM *g, OPENSSL_CTX *libctx,
+                               const BIGNUM *g, OSSL_LIB_CTX *libctx,
                                const char *propq);
  char *SRP_create_verifier_BN(const char *user, const char *pass, BIGNUM **salt,
                               BIGNUM **verifier, const BIGNUM *N, const BIGNUM *g);
  char *SRP_create_verifier_ex(const char *user, const char *pass, char **salt,
                               char **verifier, const char *N, const char *g,
-                              OPENSSL_CTX *libctx, const char *propq);
+                              OSSL_LIB_CTX *libctx, const char *propq);
  char *SRP_create_verifier(const char *user, const char *pass, char **salt,
                            char **verifier, const char *N, const char *g);
 
@@ -31,11 +35,14 @@ SRP_get_default_gN
 
 =head1 DESCRIPTION
 
+All of the functions described on this page are deprecated. There are no
+available replacement functions at this time.
+
 The SRP_create_verifier_BN_ex() function creates an SRP password verifier from
 the supplied parameters as defined in section 2.4 of RFC 5054 using the library
 context I<libctx> and property query string I<propq>. Any cryptographic
 algorithms that need to be fetched will use the I<libctx> and I<propq>. See
-L<provider(7)/Fetching algorithms>.
+L<crypto(7)/ALGORITHM FETCHING>.
 
 SRP_create_verifier_BN() is the same as SRP_create_verifier_BN_ex() except the
 default library context and property query string is used.
@@ -115,11 +122,14 @@ L<SRP_user_pwd_new(3)>
 
 =head1 HISTORY
 
-These functions were added in OpenSSL 1.0.1.
+SRP_create_verifier_BN_ex() and SRP_create_verifier_ex() were introduced in
+OpenSSL 3.0. All other functions were added in OpenSSL 1.0.1.
+
+All of these functions were deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

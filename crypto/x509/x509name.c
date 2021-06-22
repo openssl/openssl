@@ -222,7 +222,7 @@ int X509_NAME_add_entry(X509_NAME *name, const X509_NAME_ENTRY *ne, int loc,
         goto err;
     new_name->set = set;
     if (!sk_X509_NAME_ENTRY_insert(sk, new_name, loc)) {
-        X509err(X509_F_X509_NAME_ADD_ENTRY, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     if (inc) {
@@ -246,9 +246,8 @@ X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_txt(X509_NAME_ENTRY **ne,
 
     obj = OBJ_txt2obj(field, 0);
     if (obj == NULL) {
-        X509err(X509_F_X509_NAME_ENTRY_CREATE_BY_TXT,
-                X509_R_INVALID_FIELD_NAME);
-        ERR_add_error_data(2, "name=", field);
+        ERR_raise_data(ERR_LIB_X509, X509_R_INVALID_FIELD_NAME,
+                       "name=%s", field);
         return NULL;
     }
     nentry = X509_NAME_ENTRY_create_by_OBJ(ne, obj, type, bytes, len);
@@ -266,7 +265,7 @@ X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_NID(X509_NAME_ENTRY **ne, int nid,
 
     obj = OBJ_nid2obj(nid);
     if (obj == NULL) {
-        X509err(X509_F_X509_NAME_ENTRY_CREATE_BY_NID, X509_R_UNKNOWN_NID);
+        ERR_raise(ERR_LIB_X509, X509_R_UNKNOWN_NID);
         return NULL;
     }
     nentry = X509_NAME_ENTRY_create_by_OBJ(ne, obj, type, bytes, len);
@@ -304,8 +303,7 @@ X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_OBJ(X509_NAME_ENTRY **ne,
 int X509_NAME_ENTRY_set_object(X509_NAME_ENTRY *ne, const ASN1_OBJECT *obj)
 {
     if ((ne == NULL) || (obj == NULL)) {
-        X509err(X509_F_X509_NAME_ENTRY_SET_OBJECT,
-                ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
     ASN1_OBJECT_free(ne->object);

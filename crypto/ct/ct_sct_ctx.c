@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -20,12 +20,12 @@
 
 #include "ct_local.h"
 
-SCT_CTX *SCT_CTX_new(OPENSSL_CTX *libctx, const char *propq)
+SCT_CTX *SCT_CTX_new(OSSL_LIB_CTX *libctx, const char *propq)
 {
     SCT_CTX *sctx = OPENSSL_zalloc(sizeof(*sctx));
 
     if (sctx == NULL) {
-        CTerr(CT_F_SCT_CTX_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CT, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -33,7 +33,7 @@ SCT_CTX *SCT_CTX_new(OPENSSL_CTX *libctx, const char *propq)
     if (propq != NULL) {
         sctx->propq = OPENSSL_strdup(propq);
         if (sctx->propq == NULL) {
-            CTerr(CT_F_SCT_CTX_NEW, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_CT, ERR_R_MALLOC_FAILURE);
             OPENSSL_free(sctx);
             return NULL;
         }
@@ -168,15 +168,12 @@ int SCT_CTX_set1_cert(SCT_CTX *sctx, X509 *cert, X509 *presigner)
      * SCT.
      */
     if (idx >= 0) {
-        X509_EXTENSION *ext;
-
         /* Take a copy of certificate so we don't modify passed version */
         pretmp = X509_dup(cert);
         if (pretmp == NULL)
             goto err;
 
-        ext = X509_delete_ext(pretmp, idx);
-        X509_EXTENSION_free(ext);
+        X509_EXTENSION_free(X509_delete_ext(pretmp, idx));
 
         if (!ct_x509_cert_fixup(pretmp, presigner))
             goto err;

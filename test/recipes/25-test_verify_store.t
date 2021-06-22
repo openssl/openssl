@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -17,13 +17,15 @@ setup("test_verify_store");
 plan tests => 10;
 
 my $dummycnf = srctop_file("apps", "openssl.cnf");
+my $cakey = srctop_file("test", "certs", "ca-key.pem");
+my $ukey = srctop_file("test", "certs", "ee-key.pem");
 
 my $cnf = srctop_file("test", "ca-and-certs.cnf");
 my $CAkey = "keyCA.ss";
 my $CAcert="certCA.ss";
 my $CAserial="certCA.srl";
 my $CAreq="reqCA.ss";
-my $CAreq2="req2CA.ss";	# temp
+my $CAreq2="req2CA.ss"; # temp
 my $Ukey="keyU.ss";
 my $Ureq="reqU.ss";
 my $Ucert="certU.ss";
@@ -33,6 +35,7 @@ SKIP: {
          qw(-new -section userreq),
          -config       => $cnf,
          -out          => $CAreq,
+         -key          => $cakey,
          -keyout       => $CAkey );
 
     skip 'failure', 8 unless
@@ -73,6 +76,7 @@ SKIP: {
              qw(-new -section userreq),
              -config  => $cnf,
              -out     => $Ureq,
+             -key     => $ukey,
              -keyout  => $Ukey );
 
     skip 'failure', 2 unless

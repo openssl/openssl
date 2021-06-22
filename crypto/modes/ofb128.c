@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -29,6 +29,11 @@ void CRYPTO_ofb128_encrypt(const unsigned char *in, unsigned char *out,
     unsigned int n;
     size_t l = 0;
 
+    if (*num < 0) {
+        /* There is no good way to signal an error return from here */
+        *num = -1;
+        return;
+    }
     n = *num;
 
 #if !defined(OPENSSL_SMALL_FOOTPRINT)

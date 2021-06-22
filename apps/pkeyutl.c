@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -24,7 +24,8 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
                               const char *keyfile, int keyform, int key_type,
                               char *passinarg, int pkey_op, ENGINE *e,
                               const int impl, int rawin, EVP_PKEY **ppkey,
-                              OPENSSL_CTX *libctx, const char *propq);
+                              EVP_MD_CTX *mctx, const char *digestname,
+                              OSSL_LIB_CTX *libctx, const char *propq);
 
 static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
                       ENGINE *e);
@@ -33,13 +34,13 @@ static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
                     unsigned char *out, size_t *poutlen,
                     const unsigned char *in, size_t inlen);
 
-static int do_raw_keyop(int pkey_op, EVP_PKEY_CTX *ctx,
-                        const EVP_MD *md, EVP_PKEY *pkey, BIO *in,
+static int do_raw_keyop(int pkey_op, EVP_MD_CTX *mctx,
+                        EVP_PKEY *pkey, BIO *in,
                         int filesize, unsigned char *sig, int siglen,
                         unsigned char **out, size_t *poutlen);
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_ENGINE, OPT_ENGINE_IMPL, OPT_IN, OPT_OUT,
     OPT_PUBIN, OPT_CERTIN, OPT_ASN1PARSE, OPT_HEXDUMP, OPT_SIGN,
     OPT_VERIFY, OPT_VERIFYRECOVER, OPT_REV, OPT_ENCRYPT, OPT_DECRYPT,
@@ -110,22 +111,23 @@ int pkeyutl_main(int argc, char **argv)
     char hexdump = 0, asn1parse = 0, rev = 0, *prog;
     unsigned char *buf_in = NULL, *buf_out = NULL, *sig = NULL;
     OPTION_CHOICE o;
-    int buf_inlen = 0, siglen = -1, keyform = FORMAT_PEM, peerform = FORMAT_PEM;
+    int buf_inlen = 0, siglen = -1;
+    int keyform = FORMAT_UNDEF, peerform = FORMAT_UNDEF;
     int keysize = -1, pkey_op = EVP_PKEY_OP_SIGN, key_type = KEY_PRIVKEY;
     int engine_impl = 0;
     int ret = 1, rv = -1;
     size_t buf_outlen;
     const char *inkey = NULL;
     const char *peerkey = NULL;
-    const char *kdfalg = NULL;
+    const char *kdfalg = NULL, *digestname = NULL;
     int kdflen = 0;
     STACK_OF(OPENSSL_STRING) *pkeyopts = NULL;
     STACK_OF(OPENSSL_STRING) *pkeyopts_passin = NULL;
     int rawin = 0;
-    const EVP_MD *md = NULL;
+    EVP_MD_CTX *mctx = NULL;
+    EVP_MD *md = NULL;
     int filesize = -1;
-    OPENSSL_CTX *libctx = app_get0_libctx();
-    const char *propq = NULL;
+    OSSL_LIB_CTX *libctx = app_get0_libctx();
 
     prog = opt_init(argc, argv, pkeyutl_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -245,14 +247,18 @@ int pkeyutl_main(int argc, char **argv)
             rawin = 1;
             break;
         case OPT_DIGEST:
-            if (!opt_md(opt_arg(), &md))
-                goto end;
+            digestname = opt_arg();
             break;
         }
     }
+
+    /* No extra arguments. */
     argc = opt_num_rest();
     if (argc != 0)
         goto opthelp;
+
+    if (!app_RAND_load())
+        goto end;
 
     if (rawin && pkey_op != EVP_PKEY_OP_SIGN && pkey_op != EVP_PKEY_OP_VERIFY) {
         BIO_printf(bio_err,
@@ -261,7 +267,7 @@ int pkeyutl_main(int argc, char **argv)
         goto opthelp;
     }
 
-    if (md != NULL && !rawin) {
+    if (digestname != NULL && !rawin) {
         BIO_printf(bio_err,
                    "%s: -digest can only be used with -rawin\n",
                    prog);
@@ -289,9 +295,16 @@ int pkeyutl_main(int argc, char **argv)
                    "%s: no peer key given (-peerkey parameter).\n", prog);
         goto opthelp;
     }
+
+    if (rawin) {
+        if ((mctx = EVP_MD_CTX_new()) == NULL) {
+            BIO_printf(bio_err, "Error: out of memory\n");
+            goto end;
+        }
+    }
     ctx = init_ctx(kdfalg, &keysize, inkey, keyform, key_type,
                    passinarg, pkey_op, e, engine_impl, rawin, &pkey,
-                   libctx, propq);
+                   mctx, digestname, libctx, app_get0_propq());
     if (ctx == NULL) {
         BIO_printf(bio_err, "%s: Error initializing context\n", prog);
         ERR_print_errors(bio_err);
@@ -440,7 +453,7 @@ int pkeyutl_main(int argc, char **argv)
 
     if (pkey_op == EVP_PKEY_OP_VERIFY) {
         if (rawin) {
-            rv = do_raw_keyop(pkey_op, ctx, md, pkey, in, filesize, sig, siglen,
+            rv = do_raw_keyop(pkey_op, mctx, pkey, in, filesize, sig, siglen,
                               NULL, 0);
         } else {
             rv = EVP_PKEY_verify(ctx, sig, (size_t)siglen,
@@ -460,7 +473,7 @@ int pkeyutl_main(int argc, char **argv)
     } else {
         if (rawin) {
             /* rawin allocates the buffer in do_raw_keyop() */
-            rv = do_raw_keyop(pkey_op, ctx, md, pkey, in, filesize, NULL, 0,
+            rv = do_raw_keyop(pkey_op, mctx, pkey, in, filesize, NULL, 0,
                               &buf_out, (size_t *)&buf_outlen);
         } else {
             rv = do_keyop(ctx, pkey_op, NULL, (size_t *)&buf_outlen,
@@ -494,7 +507,9 @@ int pkeyutl_main(int argc, char **argv)
     }
 
  end:
+    EVP_MD_CTX_free(mctx);
     EVP_PKEY_CTX_free(ctx);
+    EVP_MD_free(md);
     release_engine(e);
     BIO_free(in);
     BIO_free_all(out);
@@ -511,8 +526,8 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
                               const char *keyfile, int keyform, int key_type,
                               char *passinarg, int pkey_op, ENGINE *e,
                               const int engine_impl, int rawin,
-                              EVP_PKEY **ppkey,
-                              OPENSSL_CTX *libctx, const char *propq)
+                              EVP_PKEY **ppkey, EVP_MD_CTX *mctx, const char *digestname,
+                              OSSL_LIB_CTX *libctx, const char *propq)
 {
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
@@ -520,6 +535,7 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
     char *passin = NULL;
     int rv = -1;
     X509 *x;
+
     if (((pkey_op == EVP_PKEY_OP_SIGN) || (pkey_op == EVP_PKEY_OP_DECRYPT)
          || (pkey_op == EVP_PKEY_OP_DERIVE))
         && (key_type != KEY_PRIVKEY && kdfalg == NULL)) {
@@ -532,15 +548,15 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
     }
     switch (key_type) {
     case KEY_PRIVKEY:
-        pkey = load_key(keyfile, keyform, 0, passin, e, "Private Key");
+        pkey = load_key(keyfile, keyform, 0, passin, e, "private key");
         break;
 
     case KEY_PUBKEY:
-        pkey = load_pubkey(keyfile, keyform, 0, NULL, e, "Public Key");
+        pkey = load_pubkey(keyfile, keyform, 0, NULL, e, "public key");
         break;
 
     case KEY_CERT:
-        x = load_cert(keyfile, FORMAT_UNDEF, "Certificate");
+        x = load_cert(keyfile, keyform, "Certificate");
         if (x) {
             pkey = X509_get_pubkey(x);
             X509_free(x);
@@ -576,7 +592,7 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
         if (pkey == NULL)
             goto end;
 
-        *pkeysize = EVP_PKEY_size(pkey);
+        *pkeysize = EVP_PKEY_get_size(pkey);
         if (impl != NULL)
             ctx = EVP_PKEY_CTX_new(pkey, impl);
         else
@@ -589,13 +605,21 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
     if (ctx == NULL)
         goto end;
 
-    /*
-     * If rawin then we don't need to actually initialise the EVP_PKEY_CTX
-     * itself. That will get initialised during EVP_DigestSignInit or
-     * EVP_DigestVerifyInit.
-     */
     if (rawin) {
-        rv = 1;
+        EVP_MD_CTX_set_pkey_ctx(mctx, ctx);
+
+        switch (pkey_op) {
+        case EVP_PKEY_OP_SIGN:
+            rv = EVP_DigestSignInit_ex(mctx, NULL, digestname, libctx, propq,
+                                       pkey, NULL);
+            break;
+
+        case EVP_PKEY_OP_VERIFY:
+            rv = EVP_DigestVerifyInit_ex(mctx, NULL, digestname, libctx, propq,
+                                         pkey, NULL);
+            break;
+        }
+
     } else {
         switch (pkey_op) {
         case EVP_PKEY_OP_SIGN:
@@ -644,7 +668,7 @@ static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
 
     if (peerform == FORMAT_ENGINE)
         engine = e;
-    peer = load_pubkey(file, peerform, 0, NULL, engine, "Peer Key");
+    peer = load_pubkey(file, peerform, 0, NULL, engine, "peer key");
     if (peer == NULL) {
         BIO_printf(bio_err, "Error reading peer key %s\n", file);
         ERR_print_errors(bio_err);
@@ -691,26 +715,19 @@ static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
 
 #define TBUF_MAXSIZE 2048
 
-static int do_raw_keyop(int pkey_op, EVP_PKEY_CTX *ctx,
-                        const EVP_MD *md, EVP_PKEY *pkey, BIO *in,
+static int do_raw_keyop(int pkey_op, EVP_MD_CTX *mctx,
+                        EVP_PKEY *pkey, BIO *in,
                         int filesize, unsigned char *sig, int siglen,
                         unsigned char **out, size_t *poutlen)
 {
     int rv = 0;
-    EVP_MD_CTX *mctx = NULL;
     unsigned char tbuf[TBUF_MAXSIZE];
     unsigned char *mbuf = NULL;
     int buf_len = 0;
 
-    if ((mctx = EVP_MD_CTX_new()) == NULL) {
-        BIO_printf(bio_err, "Error: out of memory\n");
-        return rv;
-    }
-    EVP_MD_CTX_set_pkey_ctx(mctx, ctx);
-
     /* Some algorithms only support oneshot digests */
-    if (EVP_PKEY_id(pkey) == EVP_PKEY_ED25519
-            || EVP_PKEY_id(pkey) == EVP_PKEY_ED448) {
+    if (EVP_PKEY_get_id(pkey) == EVP_PKEY_ED25519
+            || EVP_PKEY_get_id(pkey) == EVP_PKEY_ED448) {
         if (filesize < 0) {
             BIO_printf(bio_err,
                        "Error: unable to determine file size for oneshot operation\n");
@@ -719,8 +736,6 @@ static int do_raw_keyop(int pkey_op, EVP_PKEY_CTX *ctx,
         mbuf = app_malloc(filesize, "oneshot sign/verify buffer");
         switch(pkey_op) {
         case EVP_PKEY_OP_VERIFY:
-            if (EVP_DigestVerifyInit(mctx, NULL, md, NULL, pkey) != 1)
-                goto end;
             buf_len = BIO_read(in, mbuf, filesize);
             if (buf_len != filesize) {
                 BIO_printf(bio_err, "Error reading raw input data\n");
@@ -729,8 +744,6 @@ static int do_raw_keyop(int pkey_op, EVP_PKEY_CTX *ctx,
             rv = EVP_DigestVerify(mctx, sig, (size_t)siglen, mbuf, buf_len);
             break;
         case EVP_PKEY_OP_SIGN:
-            if (EVP_DigestSignInit(mctx, NULL, md, NULL, pkey) != 1)
-                goto end;
             buf_len = BIO_read(in, mbuf, filesize);
             if (buf_len != filesize) {
                 BIO_printf(bio_err, "Error reading raw input data\n");
@@ -748,8 +761,6 @@ static int do_raw_keyop(int pkey_op, EVP_PKEY_CTX *ctx,
 
     switch(pkey_op) {
     case EVP_PKEY_OP_VERIFY:
-        if (EVP_DigestVerifyInit(mctx, NULL, md, NULL, pkey) != 1)
-            goto end;
         for (;;) {
             buf_len = BIO_read(in, tbuf, TBUF_MAXSIZE);
             if (buf_len == 0)
@@ -767,8 +778,6 @@ static int do_raw_keyop(int pkey_op, EVP_PKEY_CTX *ctx,
         rv = EVP_DigestVerifyFinal(mctx, sig, (size_t)siglen);
         break;
     case EVP_PKEY_OP_SIGN:
-        if (EVP_DigestSignInit(mctx, NULL, md, NULL, pkey) != 1)
-            goto end;
         for (;;) {
             buf_len = BIO_read(in, tbuf, TBUF_MAXSIZE);
             if (buf_len == 0)
@@ -793,6 +802,5 @@ static int do_raw_keyop(int pkey_op, EVP_PKEY_CTX *ctx,
 
  end:
     OPENSSL_free(mbuf);
-    EVP_MD_CTX_free(mctx);
     return rv;
 }

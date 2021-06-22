@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,7 +17,7 @@ TS_VERIFY_CTX *TS_VERIFY_CTX_new(void)
     TS_VERIFY_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
     if (ctx == NULL)
-        TSerr(TS_F_TS_VERIFY_CTX_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_TS, ERR_R_MALLOC_FAILURE);
     return ctx;
 }
 
@@ -126,6 +126,8 @@ TS_VERIFY_CTX *TS_REQ_to_TS_VERIFY_CTX(TS_REQ *req, TS_VERIFY_CTX *ctx)
         goto err;
     msg = imprint->hashed_msg;
     ret->imprint_len = ASN1_STRING_length(msg);
+    if (ret->imprint_len <= 0)
+        goto err;
     if ((ret->imprint = OPENSSL_malloc(ret->imprint_len)) == NULL)
         goto err;
     memcpy(ret->imprint, ASN1_STRING_get0_data(msg), ret->imprint_len);

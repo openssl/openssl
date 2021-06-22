@@ -77,10 +77,10 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_MSGS)
 typedef struct ossl_crmf_optionalvalidity_st OSSL_CRMF_OPTIONALVALIDITY;
 
 /* crmf_pbm.c */
-OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(OPENSSL_CTX *libctx, size_t slen,
+OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(OSSL_LIB_CTX *libctx, size_t slen,
                                            int owfnid, size_t itercnt,
                                            int macnid);
-int OSSL_CRMF_pbm_new(OPENSSL_CTX *libctx, const char *propq,
+int OSSL_CRMF_pbm_new(OSSL_LIB_CTX *libctx, const char *propq,
                       const OSSL_CRMF_PBMPARAMETER *pbmp,
                       const unsigned char *msg, size_t msglen,
                       const unsigned char *sec, size_t seclen,
@@ -132,10 +132,10 @@ int OSSL_CRMF_MSG_push0_extension(OSSL_CRMF_MSG *crm, X509_EXTENSION *ext);
 #  define OSSL_CRMF_POPO_KEYAGREE   3
 int OSSL_CRMF_MSG_create_popo(int meth, OSSL_CRMF_MSG *crm,
                               EVP_PKEY *pkey, const EVP_MD *digest,
-                              OPENSSL_CTX *libctx, const char *propq);
+                              OSSL_LIB_CTX *libctx, const char *propq);
 int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
                                int rid, int acceptRAVerified,
-                               OPENSSL_CTX *libctx, const char *propq);
+                               OSSL_LIB_CTX *libctx, const char *propq);
 OSSL_CRMF_CERTTEMPLATE *OSSL_CRMF_MSG_get0_tmpl(const OSSL_CRMF_MSG *crm);
 ASN1_INTEGER
 *OSSL_CRMF_CERTTEMPLATE_get0_serialNumber(const OSSL_CRMF_CERTTEMPLATE *tmpl);
@@ -151,7 +151,7 @@ int OSSL_CRMF_CERTTEMPLATE_fill(OSSL_CRMF_CERTTEMPLATE *tmpl,
                                 const ASN1_INTEGER *serial);
 X509
 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(const OSSL_CRMF_ENCRYPTEDVALUE *ecert,
-                                       OPENSSL_CTX *libctx, const char *propq,
+                                       OSSL_LIB_CTX *libctx, const char *propq,
                                        EVP_PKEY *pkey);
 
 #  ifdef __cplusplus

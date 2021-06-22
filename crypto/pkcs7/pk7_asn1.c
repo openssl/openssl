@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -66,10 +66,18 @@ ASN1_NDEF_SEQUENCE_cb(PKCS7, pk7_cb) = {
 PKCS7 *d2i_PKCS7(PKCS7 **a, const unsigned char **in, long len)
 {
     PKCS7 *ret;
+    OSSL_LIB_CTX *libctx = NULL;
+    const char *propq = NULL;
 
-    ret = (PKCS7 *)ASN1_item_d2i((ASN1_VALUE **)a, in, len, (PKCS7_it()));
-    if (ret != NULL && a != NULL)
-        pkcs7_resolve_libctx(ret);
+    if (a != NULL && *a != NULL) {
+        libctx = (*a)->ctx.libctx;
+        propq = (*a)->ctx.propq;
+    }
+
+    ret = (PKCS7 *)ASN1_item_d2i_ex((ASN1_VALUE **)a, in, len, (PKCS7_it()),
+                                    libctx, propq);
+    if (ret != NULL)
+        ossl_pkcs7_resolve_libctx(ret);
     return ret;
 }
 
@@ -83,9 +91,10 @@ PKCS7 *PKCS7_new(void)
     return (PKCS7 *)ASN1_item_new(ASN1_ITEM_rptr(PKCS7));
 }
 
-PKCS7 *PKCS7_new_with_libctx(OPENSSL_CTX *libctx, const char *propq)
+PKCS7 *PKCS7_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
 {
-    PKCS7 *pkcs7 = PKCS7_new();
+    PKCS7 *pkcs7 = (PKCS7 *)ASN1_item_new_ex(ASN1_ITEM_rptr(PKCS7), libctx,
+                                             propq);
 
     if (pkcs7 != NULL) {
         pkcs7->ctx.libctx = libctx;

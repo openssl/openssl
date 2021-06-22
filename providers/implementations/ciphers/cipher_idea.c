@@ -27,7 +27,7 @@ static void idea_freectx(void *vctx)
 {
     PROV_IDEA_CTX *ctx = (PROV_IDEA_CTX *)vctx;
 
-    cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
+    ossl_cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
     OPENSSL_clear_free(ctx,  sizeof(*ctx));
 }
 
@@ -49,11 +49,11 @@ static void *idea_dupctx(void *ctx)
     return ret;
 }
 
-/* idea128ecb_functions */
+/* ossl_idea128ecb_functions */
 IMPLEMENT_generic_cipher(idea, IDEA, ecb, ECB, 0, 128, 64, 0, block)
-/* idea128cbc_functions */
+/* ossl_idea128cbc_functions */
 IMPLEMENT_generic_cipher(idea, IDEA, cbc, CBC, 0, 128, 64, 64, block)
-/* idea128ofb64_functions */
+/* ossl_idea128ofb64_functions */
 IMPLEMENT_generic_cipher(idea, IDEA, ofb64, OFB, 0, 128, 8, 64, stream)
-/* idea128cfb64_functions */
+/* ossl_idea128cfb64_functions */
 IMPLEMENT_generic_cipher(idea, IDEA, cfb64,  CFB, 0, 128, 8, 64, stream)

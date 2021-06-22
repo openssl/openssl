@@ -2,8 +2,9 @@
 
 =head1 NAME
 
-EVP_PKEY_check, EVP_PKEY_param_check, EVP_PKEY_public_check,
-EVP_PKEY_private_check, EVP_PKEY_pairwise_check
+EVP_PKEY_check, EVP_PKEY_param_check, EVP_PKEY_param_check_quick,
+EVP_PKEY_public_check, EVP_PKEY_public_check_quick, EVP_PKEY_private_check,
+EVP_PKEY_pairwise_check
 - key and parameter validation functions
 
 =head1 SYNOPSIS
@@ -12,16 +13,31 @@ EVP_PKEY_private_check, EVP_PKEY_pairwise_check
 
  int EVP_PKEY_check(EVP_PKEY_CTX *ctx);
  int EVP_PKEY_param_check(EVP_PKEY_CTX *ctx);
+ int EVP_PKEY_param_check_quick(EVP_PKEY_CTX *ctx);
  int EVP_PKEY_public_check(EVP_PKEY_CTX *ctx);
+ int EVP_PKEY_public_check_quick(EVP_PKEY_CTX *ctx);
  int EVP_PKEY_private_check(EVP_PKEY_CTX *ctx);
  int EVP_PKEY_pairwise_check(EVP_PKEY_CTX *ctx);
 
 =head1 DESCRIPTION
 
 EVP_PKEY_param_check() validates the parameters component of the key
-given by B<ctx>.
+given by B<ctx>. This check will always succeed for key types that do not have
+parameters.
+
+EVP_PKEY_param_check_quick() validates the parameters component of the key
+given by B<ctx> like EVP_PKEY_param_check() does. However some algorithm
+implementations may offer a quicker form of validation that omits some checks in
+order to perform a lightweight sanity check of the key. If a quicker form is not
+provided then this function call does the same thing as EVP_PKEY_param_check().
 
 EVP_PKEY_public_check() validates the public component of the key given by B<ctx>.
+
+EVP_PKEY_public_check_quick() validates the public component of the key
+given by B<ctx> like EVP_PKEY_public_check() does. However some algorithm
+implementations may offer a quicker form of validation that omits some checks in
+order to perform a lightweight sanity check of the key. If a quicker form is not
+provided then this function call does the same thing as EVP_PKEY_public_check().
 
 EVP_PKEY_private_check() validates the private component of the key given by B<ctx>.
 
@@ -38,11 +54,6 @@ It is not necessary to call these functions after locally calling an approved ke
 generation method, but may be required for assurance purposes when receiving
 keys from a third party.
 
-In OpenSSL an EVP_PKEY structure containing a private key also contains the
-public key components and parameters (if any). An OpenSSL private key is
-equivalent to what some libraries call a "key pair". A private key can be used
-in functions which require the use of a public key or parameters.
-
 =head1 RETURN VALUES
 
 All functions return 1 for success or others for failure.
@@ -58,12 +69,12 @@ L<EVP_PKEY_fromdata(3)>,
 EVP_PKEY_check(), EVP_PKEY_public_check() and EVP_PKEY_param_check() were added
 in OpenSSL 1.1.1.
 
-EVP_PKEY_private_check() and EVP_PKEY_pairwise_check() were added
-in OpenSSL 3.0.
+EVP_PKEY_param_check_quick(), EVP_PKEY_public_check_quick(),
+EVP_PKEY_private_check() and EVP_PKEY_pairwise_check() were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

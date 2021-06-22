@@ -4,10 +4,10 @@
 
 OPENSSL_VERSION_MAJOR, OPENSSL_VERSION_MINOR, OPENSSL_VERSION_PATCH,
 OPENSSL_VERSION_PRE_RELEASE, OPENSSL_VERSION_BUILD_METADATA,
-OPENSSL_VERSION_TEXT,
-OPENSSL_version_major, OPENSSL_version_minor, OPENSSL_version_patch,
-OPENSSL_version_pre_release, OPENSSL_version_build_metadata, OpenSSL_version,
-OPENSSL_VERSION_NUMBER, OpenSSL_version_num, OPENSSL_info
+OPENSSL_VERSION_TEXT, OPENSSL_VERSION_PREREQ, OPENSSL_version_major,
+OPENSSL_version_minor, OPENSSL_version_patch, OPENSSL_version_pre_release,
+OPENSSL_version_build_metadata, OpenSSL_version, OPENSSL_VERSION_NUMBER,
+OpenSSL_version_num, OPENSSL_info
 - get OpenSSL version number and other information
 
 =head1 SYNOPSIS
@@ -23,6 +23,8 @@ OPENSSL_VERSION_NUMBER, OpenSSL_version_num, OPENSSL_info
  #define OPENSSL_VERSION_BUILD_METADATA ""
 
  #define OPENSSL_VERSION_TEXT "OpenSSL x.y.z xx XXX xxxx"
+
+ #define OPENSSL_VERSION_PREREQ(maj,min)
 
  #include <openssl/crypto.h>
 
@@ -72,6 +74,12 @@ B<OPENSSL_VERSION_PRE_RELEASE> and B<OPENSSL_VERSION_BUILD_METADATA>.
 B<OPENSSL_VERSION_TEXT> is a convenience macro to get a full descriptive
 version text, which includes B<OPENSSL_FULL_VERSION_STR> and the release
 date.
+
+B<OPENSSL_VERSION_PREREQ> is a useful macro for checking whether the OpenSSL
+version for the headers in use is at least at the given pre-requisite major
+(B<maj>) and minor (B<min>) number or not. It will evaluate to true if the
+header version number (B<OPENSSL_VERSION_MAJOR>.B<OPENSSL_VERSION_MINOR>) is
+greater than or equal to B<maj>.B<min>.
 
 =head2 Functions
 
@@ -244,7 +252,7 @@ with the exception of the L</BACKWARD COMPATIBILITY> ones.
 
 =head1 COPYRIGHT
 
-Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -14,8 +14,10 @@ use configdata;
 my $cversion = "$config{version}";
 my $version = "$config{full_version}";
 
-# RC syntax for versions uses commas as separators, rather than period
-$cversion =~ s|\.|,|g;
+# RC syntax for versions uses commas as separators, rather than period,
+# and it must have exactly 4 numbers (16-bit integers).
+my @vernums = ( split(/\./, $cversion), 0, 0, 0, 0 );
+$cversion = join(',', @vernums[0..3]);
 
 my $filename = $ARGV[0];
 my $description = "OpenSSL library";

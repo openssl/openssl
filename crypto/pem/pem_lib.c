@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -29,7 +29,7 @@
 
 static int load_iv(char **fromp, unsigned char *to, int num);
 static int check_pem(const char *nm, const char *name);
-int pem_check_suffix(const char *pem_str, const char *suffix);
+int ossl_pem_check_suffix(const char *pem_str, const char *suffix);
 
 int PEM_def_callback(char *buf, int num, int rwflag, void *userdata)
 {
@@ -59,7 +59,7 @@ int PEM_def_callback(char *buf, int num, int rwflag, void *userdata)
 
     i = EVP_read_pw_string_min(buf, min_len, num, prompt, rwflag);
     if (i != 0) {
-        PEMerr(PEM_F_PEM_DEF_CALLBACK, PEM_R_PROBLEMS_GETTING_PASSWORD);
+        ERR_raise(ERR_LIB_PEM, PEM_R_PROBLEMS_GETTING_PASSWORD);
         memset(buf, 0, (unsigned int)num);
         return -1;
     }
@@ -113,7 +113,7 @@ void *PEM_ASN1_read(d2i_of_void *d2i, const char *name, FILE *fp, void **x,
     void *ret;
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
-        PEMerr(PEM_F_PEM_ASN1_READ, ERR_R_BUF_LIB);
+        ERR_raise(ERR_LIB_PEM, ERR_R_BUF_LIB);
         return 0;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);
@@ -138,7 +138,7 @@ static int check_pem(const char *nm, const char *name)
             return 1;
         if (strcmp(nm, PEM_STRING_PKCS8INF) == 0)
             return 1;
-        slen = pem_check_suffix(nm, "PRIVATE KEY");
+        slen = ossl_pem_check_suffix(nm, "PRIVATE KEY");
         if (slen > 0) {
             /*
              * NB: ENGINE implementations won't contain a deprecated old
@@ -154,7 +154,7 @@ static int check_pem(const char *nm, const char *name)
     if (strcmp(name, PEM_STRING_PARAMETERS) == 0) {
         int slen;
         const EVP_PKEY_ASN1_METHOD *ameth;
-        slen = pem_check_suffix(nm, "PARAMETERS");
+        slen = ossl_pem_check_suffix(nm, "PARAMETERS");
         if (slen > 0) {
             ENGINE *e;
             ameth = EVP_PKEY_asn1_find_str(&e, nm, slen);
@@ -299,7 +299,7 @@ int PEM_ASN1_write(i2d_of_void *i2d, const char *name, FILE *fp,
     int ret;
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
-        PEMerr(PEM_F_PEM_ASN1_WRITE, ERR_R_BUF_LIB);
+        ERR_raise(ERR_LIB_PEM, ERR_R_BUF_LIB);
         return 0;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);
@@ -323,22 +323,22 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
     unsigned char iv[EVP_MAX_IV_LENGTH];
 
     if (enc != NULL) {
-        objstr = OBJ_nid2sn(EVP_CIPHER_nid(enc));
-        if (objstr == NULL || EVP_CIPHER_iv_length(enc) == 0
-                || EVP_CIPHER_iv_length(enc) > (int)sizeof(iv)
+        objstr = EVP_CIPHER_get0_name(enc);
+        if (objstr == NULL || EVP_CIPHER_get_iv_length(enc) == 0
+                || EVP_CIPHER_get_iv_length(enc) > (int)sizeof(iv)
                    /*
                     * Check "Proc-Type: 4,Encrypted\nDEK-Info: objstr,hex-iv\n"
                     * fits into buf
                     */
-                || (strlen(objstr) + 23 + 2 * EVP_CIPHER_iv_length(enc) + 13)
+                || strlen(objstr) + 23 + 2 * EVP_CIPHER_get_iv_length(enc) + 13
                    > sizeof(buf)) {
-            PEMerr(PEM_F_PEM_ASN1_WRITE_BIO, PEM_R_UNSUPPORTED_CIPHER);
+            ERR_raise(ERR_LIB_PEM, PEM_R_UNSUPPORTED_CIPHER);
             goto err;
         }
     }
 
     if ((dsize = i2d(x, NULL)) <= 0) {
-        PEMerr(PEM_F_PEM_ASN1_WRITE_BIO, ERR_R_ASN1_LIB);
+        ERR_raise(ERR_LIB_PEM, ERR_R_ASN1_LIB);
         dsize = 0;
         goto err;
     }
@@ -346,7 +346,7 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
     /* actually it needs the cipher block size extra... */
     data = OPENSSL_malloc((unsigned int)dsize + 20);
     if (data == NULL) {
-        PEMerr(PEM_F_PEM_ASN1_WRITE_BIO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     p = data;
@@ -359,7 +359,7 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
             else
                 klen = (*callback) (buf, PEM_BUFSIZE, 1, u);
             if (klen <= 0) {
-                PEMerr(PEM_F_PEM_ASN1_WRITE_BIO, PEM_R_READ_KEY);
+                ERR_raise(ERR_LIB_PEM, PEM_R_READ_KEY);
                 goto err;
             }
 #ifdef CHARSET_EBCDIC
@@ -368,7 +368,8 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
 #endif
             kstr = (unsigned char *)buf;
         }
-        if (RAND_bytes(iv, EVP_CIPHER_iv_length(enc)) <= 0) /* Generate a salt */
+        /* Generate a salt */
+        if (RAND_bytes(iv, EVP_CIPHER_get_iv_length(enc)) <= 0)
             goto err;
         /*
          * The 'iv' is used as the iv and as a salt.  It is NOT taken from
@@ -382,7 +383,7 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
 
         buf[0] = '\0';
         PEM_proc_type(buf, PEM_TYPE_ENCRYPTED);
-        PEM_dek_info(buf, objstr, EVP_CIPHER_iv_length(enc), (char *)iv);
+        PEM_dek_info(buf, objstr, EVP_CIPHER_get_iv_length(enc), (char *)iv);
         /* k=strlen(buf); */
 
         ret = 1;
@@ -424,7 +425,7 @@ int PEM_do_header(EVP_CIPHER_INFO *cipher, unsigned char *data, long *plen,
 #if LONG_MAX > INT_MAX
     /* Check that we did not truncate the length */
     if (len > INT_MAX) {
-        PEMerr(PEM_F_PEM_DO_HEADER, PEM_R_HEADER_TOO_LONG);
+        ERR_raise(ERR_LIB_PEM, PEM_R_HEADER_TOO_LONG);
         return 0;
     }
 #endif
@@ -436,7 +437,7 @@ int PEM_do_header(EVP_CIPHER_INFO *cipher, unsigned char *data, long *plen,
     else
         keylen = callback(buf, PEM_BUFSIZE, 0, u);
     if (keylen < 0) {
-        PEMerr(PEM_F_PEM_DO_HEADER, PEM_R_BAD_PASSWORD_READ);
+        ERR_raise(ERR_LIB_PEM, PEM_R_BAD_PASSWORD_READ);
         return 0;
     }
 #ifdef CHARSET_EBCDIC
@@ -463,7 +464,7 @@ int PEM_do_header(EVP_CIPHER_INFO *cipher, unsigned char *data, long *plen,
     if (ok)
         *plen += ilen;
     else
-        PEMerr(PEM_F_PEM_DO_HEADER, PEM_R_BAD_DECRYPT);
+        ERR_raise(ERR_LIB_PEM, PEM_R_BAD_DECRYPT);
 
     EVP_CIPHER_CTX_free(ctx);
     OPENSSL_cleanse((char *)buf, sizeof(buf));
@@ -498,7 +499,7 @@ int PEM_get_EVP_CIPHER_INFO(char *header, EVP_CIPHER_INFO *cipher)
         return 1;
 
     if (strncmp(header, ProcType, sizeof(ProcType)-1) != 0) {
-        PEMerr(PEM_F_PEM_GET_EVP_CIPHER_INFO, PEM_R_NOT_PROC_TYPE);
+        ERR_raise(ERR_LIB_PEM, PEM_R_NOT_PROC_TYPE);
         return 0;
     }
     header += sizeof(ProcType)-1;
@@ -511,13 +512,13 @@ int PEM_get_EVP_CIPHER_INFO(char *header, EVP_CIPHER_INFO *cipher)
     /* We expect "ENCRYPTED" followed by optional white-space + line break */
     if (strncmp(header, ENCRYPTED, sizeof(ENCRYPTED)-1) != 0 ||
         strspn(header+sizeof(ENCRYPTED)-1, " \t\r\n") == 0) {
-        PEMerr(PEM_F_PEM_GET_EVP_CIPHER_INFO, PEM_R_NOT_ENCRYPTED);
+        ERR_raise(ERR_LIB_PEM, PEM_R_NOT_ENCRYPTED);
         return 0;
     }
     header += sizeof(ENCRYPTED)-1;
     header += strspn(header, " \t\r");
     if (*header++ != '\n') {
-        PEMerr(PEM_F_PEM_GET_EVP_CIPHER_INFO, PEM_R_SHORT_HEADER);
+        ERR_raise(ERR_LIB_PEM, PEM_R_SHORT_HEADER);
         return 0;
     }
 
@@ -526,7 +527,7 @@ int PEM_get_EVP_CIPHER_INFO(char *header, EVP_CIPHER_INFO *cipher)
      * We expect "DEK-Info: algo[,hex-parameters]"
      */
     if (strncmp(header, DEKInfo, sizeof(DEKInfo)-1) != 0) {
-        PEMerr(PEM_F_PEM_GET_EVP_CIPHER_INFO, PEM_R_NOT_DEK_INFO);
+        ERR_raise(ERR_LIB_PEM, PEM_R_NOT_DEK_INFO);
         return 0;
     }
     header += sizeof(DEKInfo)-1;
@@ -545,19 +546,19 @@ int PEM_get_EVP_CIPHER_INFO(char *header, EVP_CIPHER_INFO *cipher)
     header += strspn(header, " \t");
 
     if (enc == NULL) {
-        PEMerr(PEM_F_PEM_GET_EVP_CIPHER_INFO, PEM_R_UNSUPPORTED_ENCRYPTION);
+        ERR_raise(ERR_LIB_PEM, PEM_R_UNSUPPORTED_ENCRYPTION);
         return 0;
     }
-    ivlen = EVP_CIPHER_iv_length(enc);
+    ivlen = EVP_CIPHER_get_iv_length(enc);
     if (ivlen > 0 && *header++ != ',') {
-        PEMerr(PEM_F_PEM_GET_EVP_CIPHER_INFO, PEM_R_MISSING_DEK_IV);
+        ERR_raise(ERR_LIB_PEM, PEM_R_MISSING_DEK_IV);
         return 0;
     } else if (ivlen == 0 && *header == ',') {
-        PEMerr(PEM_F_PEM_GET_EVP_CIPHER_INFO, PEM_R_UNEXPECTED_DEK_IV);
+        ERR_raise(ERR_LIB_PEM, PEM_R_UNEXPECTED_DEK_IV);
         return 0;
     }
 
-    if (!load_iv(&header, cipher->iv, EVP_CIPHER_iv_length(enc)))
+    if (!load_iv(&header, cipher->iv, EVP_CIPHER_get_iv_length(enc)))
         return 0;
 
     return 1;
@@ -575,7 +576,7 @@ static int load_iv(char **fromp, unsigned char *to, int num)
     for (i = 0; i < num; i++) {
         v = OPENSSL_hexchar2int(*from);
         if (v < 0) {
-            PEMerr(PEM_F_LOAD_IV, PEM_R_BAD_IV_CHARS);
+            ERR_raise(ERR_LIB_PEM, PEM_R_BAD_IV_CHARS);
             return 0;
         }
         from++;
@@ -594,7 +595,7 @@ int PEM_write(FILE *fp, const char *name, const char *header,
     int ret;
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
-        PEMerr(PEM_F_PEM_WRITE, ERR_R_BUF_LIB);
+        ERR_raise(ERR_LIB_PEM, ERR_R_BUF_LIB);
         return 0;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);
@@ -660,7 +661,7 @@ int PEM_write_bio(BIO *bp, const char *name, const char *header,
 
  err:
     if (retval == 0)
-        PEMerr(PEM_F_PEM_WRITE_BIO, reason);
+        ERR_raise(ERR_LIB_PEM, reason);
     EVP_ENCODE_CTX_free(ctx);
     OPENSSL_clear_free(buf, PEM_BUFSIZE * 8);
     return retval;
@@ -674,7 +675,7 @@ int PEM_read(FILE *fp, char **name, char **header, unsigned char **data,
     int ret;
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
-        PEMerr(PEM_F_PEM_READ, ERR_R_BUF_LIB);
+        ERR_raise(ERR_LIB_PEM, ERR_R_BUF_LIB);
         return 0;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);
@@ -751,7 +752,7 @@ static int get_name(BIO *bp, char **name, unsigned int flags)
      */
     linebuf = pem_malloc(LINESIZE + 1, flags);
     if (linebuf == NULL) {
-        PEMerr(PEM_F_GET_NAME, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
@@ -759,7 +760,7 @@ static int get_name(BIO *bp, char **name, unsigned int flags)
         len = BIO_gets(bp, linebuf, LINESIZE);
 
         if (len <= 0) {
-            PEMerr(PEM_F_GET_NAME, PEM_R_NO_START_LINE);
+            ERR_raise(ERR_LIB_PEM, PEM_R_NO_START_LINE);
             goto err;
         }
 
@@ -775,7 +776,7 @@ static int get_name(BIO *bp, char **name, unsigned int flags)
     len = len - BEGINLEN - TAILLEN + 1;
     *name = pem_malloc(len, flags);
     if (*name == NULL) {
-        PEMerr(PEM_F_GET_NAME, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     memcpy(*name, linebuf + BEGINLEN, len);
@@ -819,7 +820,7 @@ static int get_header_and_data(BIO *bp, BIO **header, BIO **data, char *name,
      * that will be added by sanitize_line() (the extra '1'). */
     linebuf = pem_malloc(LINESIZE + 1, flags);
     if (linebuf == NULL) {
-        PEMerr(PEM_F_GET_HEADER_AND_DATA, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
@@ -827,7 +828,7 @@ static int get_header_and_data(BIO *bp, BIO **header, BIO **data, char *name,
         flags_mask = ~0u;
         len = BIO_gets(bp, linebuf, LINESIZE);
         if (len <= 0) {
-            PEMerr(PEM_F_GET_HEADER_AND_DATA, PEM_R_BAD_END_LINE);
+            ERR_raise(ERR_LIB_PEM, PEM_R_BAD_END_LINE);
             goto err;
         }
 
@@ -856,7 +857,7 @@ static int get_header_and_data(BIO *bp, BIO **header, BIO **data, char *name,
             if (!prev_partial_line_read) {
                 if (got_header == POST_HEADER) {
                     /* Another blank line is an error. */
-                    PEMerr(PEM_F_GET_HEADER_AND_DATA, PEM_R_BAD_END_LINE);
+                    ERR_raise(ERR_LIB_PEM, PEM_R_BAD_END_LINE);
                     goto err;
                 }
                 got_header = POST_HEADER;
@@ -871,7 +872,7 @@ static int get_header_and_data(BIO *bp, BIO **header, BIO **data, char *name,
             namelen = strlen(name);
             if (strncmp(p, name, namelen) != 0 ||
                 strncmp(p + namelen, tailstr, TAILLEN) != 0) {
-                PEMerr(PEM_F_GET_HEADER_AND_DATA, PEM_R_BAD_END_LINE);
+                ERR_raise(ERR_LIB_PEM, PEM_R_BAD_END_LINE);
                 goto err;
             }
             if (got_header == MAYBE_HEADER) {
@@ -881,7 +882,7 @@ static int get_header_and_data(BIO *bp, BIO **header, BIO **data, char *name,
             break;
         } else if (end) {
             /* Malformed input; short line not at end of data. */
-            PEMerr(PEM_F_GET_HEADER_AND_DATA, PEM_R_BAD_END_LINE);
+            ERR_raise(ERR_LIB_PEM, PEM_R_BAD_END_LINE);
             goto err;
         }
         /*
@@ -917,24 +918,19 @@ err:
 int PEM_read_bio_ex(BIO *bp, char **name_out, char **header,
                     unsigned char **data, long *len_out, unsigned int flags)
 {
-    EVP_ENCODE_CTX *ctx = EVP_ENCODE_CTX_new();
+    EVP_ENCODE_CTX *ctx = NULL;
     const BIO_METHOD *bmeth;
     BIO *headerB = NULL, *dataB = NULL;
     char *name = NULL;
     int len, taillen, headerlen, ret = 0;
     BUF_MEM * buf_mem;
 
-    if (ctx == NULL) {
-        PEMerr(PEM_F_PEM_READ_BIO_EX, ERR_R_MALLOC_FAILURE);
-        return 0;
-    }
-
     *len_out = 0;
     *name_out = *header = NULL;
     *data = NULL;
     if ((flags & PEM_FLAG_EAY_COMPATIBLE) && (flags & PEM_FLAG_ONLY_B64)) {
         /* These two are mutually incompatible; bail out. */
-        PEMerr(PEM_F_PEM_READ_BIO_EX, ERR_R_PASSED_INVALID_ARGUMENT);
+        ERR_raise(ERR_LIB_PEM, ERR_R_PASSED_INVALID_ARGUMENT);
         goto end;
     }
     bmeth = (flags & PEM_FLAG_SECURE) ? BIO_s_secmem() : BIO_s_mem();
@@ -942,7 +938,7 @@ int PEM_read_bio_ex(BIO *bp, char **name_out, char **header,
     headerB = BIO_new(bmeth);
     dataB = BIO_new(bmeth);
     if (headerB == NULL || dataB == NULL) {
-        PEMerr(PEM_F_PEM_READ_BIO_EX, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
         goto end;
     }
 
@@ -951,22 +947,30 @@ int PEM_read_bio_ex(BIO *bp, char **name_out, char **header,
     if (!get_header_and_data(bp, &headerB, &dataB, name, flags))
         goto end;
 
-    EVP_DecodeInit(ctx);
     BIO_get_mem_ptr(dataB, &buf_mem);
     len = buf_mem->length;
+
+    /* There was no data in the PEM file */
+    if (len == 0)
+        goto end;
+
+    ctx = EVP_ENCODE_CTX_new();
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
+        goto end;
+    }
+
+    EVP_DecodeInit(ctx);
     if (EVP_DecodeUpdate(ctx, (unsigned char*)buf_mem->data, &len,
                          (unsigned char*)buf_mem->data, len) < 0
             || EVP_DecodeFinal(ctx, (unsigned char*)&(buf_mem->data[len]),
                                &taillen) < 0) {
-        PEMerr(PEM_F_PEM_READ_BIO_EX, PEM_R_BAD_BASE64_DECODE);
+        ERR_raise(ERR_LIB_PEM, PEM_R_BAD_BASE64_DECODE);
         goto end;
     }
     len += taillen;
     buf_mem->length = len;
 
-    /* There was no data in the PEM file; avoid malloc(0). */
-    if (len == 0)
-        goto end;
     headerlen = BIO_get_mem_data(headerB, NULL);
     *header = pem_malloc(headerlen + 1, flags);
     *data = pem_malloc(len, flags);
@@ -1003,7 +1007,7 @@ int PEM_read_bio(BIO *bp, char **name, char **header, unsigned char **data,
  * string "RSA".
  */
 
-int pem_check_suffix(const char *pem_str, const char *suffix)
+int ossl_pem_check_suffix(const char *pem_str, const char *suffix)
 {
     int pem_len = strlen(pem_str);
     int suffix_len = strlen(suffix);

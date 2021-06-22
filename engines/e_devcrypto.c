@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -24,7 +24,7 @@
 #include <openssl/err.h>
 #include <openssl/engine.h>
 #include <openssl/objects.h>
-#include <crypto/cryptodev.h>
+#include "crypto/cryptodev.h"
 
 /* #define ENGINE_DEVCRYPTO_DEBUG */
 
@@ -33,6 +33,16 @@
 #endif
 
 #define engine_devcrypto_id "devcrypto"
+
+/*
+ * Use session2_op on FreeBSD which permits requesting specific
+ * drivers or classes of drivers at session creation time.
+ */
+#ifdef CIOCGSESSION2
+typedef struct session2_op session_op_t;
+#else
+typedef struct session_op session_op_t;
+#endif
 
 /*
  * ONE global file descriptor for all sessions.  This allows operations
@@ -73,12 +83,12 @@ struct driver_info_st {
 void engine_load_devcrypto_int(void);
 #endif
 
-static int clean_devcrypto_session(struct session_op *sess) {
+static int clean_devcrypto_session(session_op_t *sess) {
     if (ioctl(cfd, CIOCFSESSION, &sess->ses) < 0) {
         ERR_raise_data(ERR_LIB_SYS, errno, "calling ioctl()");
         return 0;
     }
-    memset(sess, 0, sizeof(struct session_op));
+    memset(sess, 0, sizeof(*sess));
     return 1;
 }
 
@@ -93,7 +103,7 @@ static int clean_devcrypto_session(struct session_op *sess) {
  *****/
 
 struct cipher_ctx {
-    struct session_op sess;
+    session_op_t sess;
     int op;                      /* COP_ENCRYPT or COP_DECRYPT */
     unsigned long mode;          /* EVP_CIPH_*_MODE */
 
@@ -197,7 +207,8 @@ static int cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     struct cipher_ctx *cipher_ctx =
         (struct cipher_ctx *)EVP_CIPHER_CTX_get_cipher_data(ctx);
     const struct cipher_data_st *cipher_d =
-        get_cipher_data(EVP_CIPHER_CTX_nid(ctx));
+        get_cipher_data(EVP_CIPHER_CTX_get_nid(ctx));
+    int ret;
 
     /* cleanup a previous session */
     if (cipher_ctx->sess.ses != 0 &&
@@ -210,7 +221,15 @@ static int cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     cipher_ctx->op = enc ? COP_ENCRYPT : COP_DECRYPT;
     cipher_ctx->mode = cipher_d->flags & EVP_CIPH_MODE;
     cipher_ctx->blocksize = cipher_d->blocksize;
-    if (ioctl(cfd, CIOCGSESSION, &cipher_ctx->sess) < 0) {
+#ifdef CIOCGSESSION2
+    cipher_ctx->sess.crid = (use_softdrivers == DEVCRYPTO_USE_SOFTWARE) ?
+        CRYPTO_FLAG_SOFTWARE | CRYPTO_FLAG_HARDWARE :
+        CRYPTO_FLAG_HARDWARE;
+    ret = ioctl(cfd, CIOCGSESSION2, &cipher_ctx->sess);
+#else
+    ret = ioctl(cfd, CIOCGSESSION, &cipher_ctx->sess);
+#endif
+    if (ret < 0) {
         ERR_raise_data(ERR_LIB_SYS, errno, "calling ioctl()");
         return 0;
     }
@@ -241,12 +260,12 @@ static int cipher_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 #if !defined(COP_FLAG_WRITE_IV)
     cryp.flags = 0;
 
-    ivlen = EVP_CIPHER_CTX_iv_length(ctx);
+    ivlen = EVP_CIPHER_CTX_get_iv_length(ctx);
     if (ivlen > 0)
         switch (cipher_ctx->mode) {
         case EVP_CIPH_CBC_MODE:
             assert(inl >= ivlen);
-            if (!EVP_CIPHER_CTX_encrypting(ctx)) {
+            if (!EVP_CIPHER_CTX_is_encrypting(ctx)) {
                 ivptr = in + inl - ivlen;
                 memcpy(saved_iv, ivptr, ivlen);
             }
@@ -272,7 +291,7 @@ static int cipher_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         switch (cipher_ctx->mode) {
         case EVP_CIPH_CBC_MODE:
             assert(inl >= ivlen);
-            if (EVP_CIPHER_CTX_encrypting(ctx))
+            if (EVP_CIPHER_CTX_is_encrypting(ctx))
                 ivptr = out + inl - ivlen;
             else
                 ivptr = saved_iv;
@@ -406,9 +425,12 @@ static int devcrypto_test_cipher(size_t cipher_data_index)
 static void prepare_cipher_methods(void)
 {
     size_t i;
-    struct session_op sess;
+    session_op_t sess;
     unsigned long cipher_mode;
-#ifdef CIOCGSESSINFO
+#ifdef CIOCGSESSION2
+    struct crypt_find_op fop;
+    enum devcrypto_accelerated_t accelerated;
+#elif defined(CIOCGSESSINFO)
     struct session_info_op siop;
 #endif
 
@@ -426,10 +448,29 @@ static void prepare_cipher_methods(void)
          */
         sess.cipher = cipher_data[i].devcryptoid;
         sess.keylen = cipher_data[i].keylen;
+#ifdef CIOCGSESSION2
+        /*
+         * When using CIOCGSESSION2, first try to allocate a hardware
+         * ("accelerated") session.  If that fails, fall back to
+         * allocating a software session.
+         */
+        sess.crid = CRYPTO_FLAG_HARDWARE;
+        if (ioctl(cfd, CIOCGSESSION2, &sess) == 0) {
+            accelerated = DEVCRYPTO_ACCELERATED;
+        } else {
+            sess.crid = CRYPTO_FLAG_SOFTWARE;
+            if (ioctl(cfd, CIOCGSESSION2, &sess) < 0) {
+                cipher_driver_info[i].status = DEVCRYPTO_STATUS_NO_CIOCGSESSION;
+                continue;
+            }
+            accelerated = DEVCRYPTO_NOT_ACCELERATED;
+        }
+#else
         if (ioctl(cfd, CIOCGSESSION, &sess) < 0) {
             cipher_driver_info[i].status = DEVCRYPTO_STATUS_NO_CIOCGSESSION;
             continue;
         }
+#endif
 
         cipher_mode = cipher_data[i].flags & EVP_CIPH_MODE;
 
@@ -460,7 +501,14 @@ static void prepare_cipher_methods(void)
             known_cipher_methods[i] = NULL;
         } else {
             cipher_driver_info[i].status = DEVCRYPTO_STATUS_USABLE;
-#ifdef CIOCGSESSINFO
+#ifdef CIOCGSESSION2
+            cipher_driver_info[i].accelerated = accelerated;
+            fop.crid = sess.crid;
+            if (ioctl(cfd, CIOCFINDDEV, &fop) == 0) {
+                cipher_driver_info[i].driver_name =
+                    OPENSSL_strndup(fop.name, sizeof(fop.name));
+            }
+#elif defined(CIOCGSESSINFO)
             siop.ses = sess.ses;
             if (ioctl(cfd, CIOCGSESSINFO, &siop) < 0) {
                 cipher_driver_info[i].accelerated = DEVCRYPTO_ACCELERATION_UNKNOWN;
@@ -562,7 +610,7 @@ static int cryptodev_select_cipher_cb(const char *str, int len, void *usr)
     EVP = EVP_get_cipherbyname(name);
     if (EVP == NULL)
         fprintf(stderr, "devcrypto: unknown cipher %s\n", name);
-    else if ((i = find_cipher_data_index(EVP_CIPHER_nid(EVP))) != (size_t)-1)
+    else if ((i = find_cipher_data_index(EVP_CIPHER_get_nid(EVP))) != (size_t)-1)
         cipher_list[i] = 1;
     else
         fprintf(stderr, "devcrypto: cipher %s not available\n", name);
@@ -624,7 +672,7 @@ static void dump_cipher_info(void)
  *****/
 
 struct digest_ctx {
-    struct session_op sess;
+    session_op_t sess;
     /* This signals that the init function was called, not that it succeeded. */
     int init_called;
     unsigned char digest_res[HASH_MAX_LEN];
@@ -698,9 +746,9 @@ static const struct digest_data_st *get_digest_data(int nid)
 static int digest_init(EVP_MD_CTX *ctx)
 {
     struct digest_ctx *digest_ctx =
-        (struct digest_ctx *)EVP_MD_CTX_md_data(ctx);
+        (struct digest_ctx *)EVP_MD_CTX_get0_md_data(ctx);
     const struct digest_data_st *digest_d =
-        get_digest_data(EVP_MD_CTX_type(ctx));
+        get_digest_data(EVP_MD_CTX_get_type(ctx));
 
     digest_ctx->init_called = 1;
 
@@ -731,7 +779,7 @@ static int digest_op(struct digest_ctx *ctx, const void *src, size_t srclen,
 static int digest_update(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
     struct digest_ctx *digest_ctx =
-        (struct digest_ctx *)EVP_MD_CTX_md_data(ctx);
+        (struct digest_ctx *)EVP_MD_CTX_get0_md_data(ctx);
 
     if (count == 0)
         return 1;
@@ -753,13 +801,13 @@ static int digest_update(EVP_MD_CTX *ctx, const void *data, size_t count)
 static int digest_final(EVP_MD_CTX *ctx, unsigned char *md)
 {
     struct digest_ctx *digest_ctx =
-        (struct digest_ctx *)EVP_MD_CTX_md_data(ctx);
+        (struct digest_ctx *)EVP_MD_CTX_get0_md_data(ctx);
 
     if (md == NULL || digest_ctx == NULL)
         return 0;
 
     if (EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_ONESHOT)) {
-        memcpy(md, digest_ctx->digest_res, EVP_MD_CTX_size(ctx));
+        memcpy(md, digest_ctx->digest_res, EVP_MD_CTX_get_size(ctx));
     } else if (digest_op(digest_ctx, NULL, 0, md, COP_FLAG_FINAL) < 0) {
         ERR_raise_data(ERR_LIB_SYS, errno, "calling ioctl()");
         return 0;
@@ -771,9 +819,9 @@ static int digest_final(EVP_MD_CTX *ctx, unsigned char *md)
 static int digest_copy(EVP_MD_CTX *to, const EVP_MD_CTX *from)
 {
     struct digest_ctx *digest_from =
-        (struct digest_ctx *)EVP_MD_CTX_md_data(from);
+        (struct digest_ctx *)EVP_MD_CTX_get0_md_data(from);
     struct digest_ctx *digest_to =
-        (struct digest_ctx *)EVP_MD_CTX_md_data(to);
+        (struct digest_ctx *)EVP_MD_CTX_get0_md_data(to);
     struct cphash_op cphash;
 
     if (digest_from == NULL || digest_from->init_called != 1)
@@ -796,7 +844,7 @@ static int digest_copy(EVP_MD_CTX *to, const EVP_MD_CTX *from)
 static int digest_cleanup(EVP_MD_CTX *ctx)
 {
     struct digest_ctx *digest_ctx =
-        (struct digest_ctx *)EVP_MD_CTX_md_data(ctx);
+        (struct digest_ctx *)EVP_MD_CTX_get0_md_data(ctx);
 
     if (digest_ctx == NULL)
         return 1;
@@ -843,7 +891,7 @@ static void rebuild_known_digest_nids(ENGINE *e)
 static void prepare_digest_methods(void)
 {
     size_t i;
-    struct session_op sess1, sess2;
+    session_op_t sess1, sess2;
 #ifdef CIOCGSESSINFO
     struct session_info_op siop;
 #endif
@@ -992,7 +1040,7 @@ static int cryptodev_select_digest_cb(const char *str, int len, void *usr)
     EVP = EVP_get_digestbyname(name);
     if (EVP == NULL)
         fprintf(stderr, "devcrypto: unknown digest %s\n", name);
-    else if ((i = find_digest_data_index(EVP_MD_type(EVP))) != (size_t)-1)
+    else if ((i = find_digest_data_index(EVP_MD_get_type(EVP))) != (size_t)-1)
         digest_list[i] = 1;
     else
         fprintf(stderr, "devcrypto: digest %s not available\n", name);
@@ -1051,7 +1099,7 @@ static void dump_digest_info(void)
 #define DEVCRYPTO_CMD_DUMP_INFO (ENGINE_CMD_BASE + 3)
 
 static const ENGINE_CMD_DEFN devcrypto_cmds[] = {
-#ifdef CIOCGSESSINFO
+#if defined(CIOCGSESSINFO) || defined(CIOCGSESSION2)
    {DEVCRYPTO_CMD_USE_SOFTDRIVERS,
     "USE_SOFTDRIVERS",
     "specifies whether to use software (not accelerated) drivers ("
@@ -1087,7 +1135,7 @@ static int devcrypto_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
 {
     int *new_list;
     switch (cmd) {
-#ifdef CIOCGSESSINFO
+#if defined(CIOCGSESSINFO) || defined(CIOCGSESSION2)
     case DEVCRYPTO_CMD_USE_SOFTDRIVERS:
         switch (i) {
         case DEVCRYPTO_REQUIRE_ACCELERATED:
@@ -1106,7 +1154,7 @@ static int devcrypto_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
 #endif
         rebuild_known_cipher_nids(e);
         return 1;
-#endif /* CIOCGSESSINFO */
+#endif /* CIOCGSESSINFO || CIOCGSESSION2 */
 
     case DEVCRYPTO_CMD_CIPHERS:
         if (p == NULL)
@@ -1172,16 +1220,30 @@ static int devcrypto_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
  */
 static int open_devcrypto(void)
 {
+    int fd;
+
     if (cfd >= 0)
         return 1;
 
-    if ((cfd = open("/dev/crypto", O_RDWR, 0)) < 0) {
+    if ((fd = open("/dev/crypto", O_RDWR, 0)) < 0) {
 #ifndef ENGINE_DEVCRYPTO_DEBUG
         if (errno != ENOENT)
 #endif
             fprintf(stderr, "Could not open /dev/crypto: %s\n", strerror(errno));
         return 0;
     }
+
+#ifdef CRIOGET
+    if (ioctl(fd, CRIOGET, &cfd) < 0) {
+        fprintf(stderr, "Could not create crypto fd: %s\n", strerror(errno));
+        close(fd);
+        cfd = -1;
+        return 0;
+    }
+    close(fd);
+#else
+    cfd = fd;
+#endif
 
     return 1;
 }
@@ -1252,9 +1314,7 @@ static int bind_devcrypto(ENGINE *e) {
  * /Richard Levitte, 2017-05-11
  */
 #if 0
-# ifndef OPENSSL_NO_RSA
         && ENGINE_set_RSA(e, devcrypto_rsa)
-# endif
 # ifndef OPENSSL_NO_DSA
         && ENGINE_set_DSA(e, devcrypto_dsa)
 # endif
@@ -1287,9 +1347,19 @@ void engine_load_devcrypto_int(void)
         return;
     }
 
+    ERR_set_mark();
     ENGINE_add(e);
+    /*
+     * If the "add" worked, it gets a structural reference. So either way, we
+     * release our just-created reference.
+     */
     ENGINE_free(e);          /* Loose our local reference */
-    ERR_clear_error();
+    /*
+     * If the "add" didn't work, it was probably a conflict because it was
+     * already added (eg. someone calling ENGINE_load_blah then calling
+     * ENGINE_load_builtin_engines() perhaps).
+     */
+    ERR_pop_to_mark();
 }
 
 #else

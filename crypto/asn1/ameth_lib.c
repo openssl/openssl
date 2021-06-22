@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -156,7 +156,7 @@ int EVP_PKEY_asn1_add0(const EVP_PKEY_ASN1_METHOD *ameth)
            && (ameth->pkey_flags & ASN1_PKEY_ALIAS) != 0)
           || (ameth->pem_str != NULL
               && (ameth->pkey_flags & ASN1_PKEY_ALIAS) == 0))) {
-        EVPerr(EVP_F_EVP_PKEY_ASN1_ADD0, ERR_R_PASSED_INVALID_ARGUMENT);
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
 
@@ -168,8 +168,8 @@ int EVP_PKEY_asn1_add0(const EVP_PKEY_ASN1_METHOD *ameth)
 
     tmp.pkey_id = ameth->pkey_id;
     if (sk_EVP_PKEY_ASN1_METHOD_find(app_methods, &tmp) >= 0) {
-        EVPerr(EVP_F_EVP_PKEY_ASN1_ADD0,
-               EVP_R_PKEY_APPLICATION_ASN1_METHOD_ALREADY_REGISTERED);
+        ERR_raise(ERR_LIB_EVP,
+                  EVP_R_PKEY_APPLICATION_ASN1_METHOD_ALREADY_REGISTERED);
         return 0;
     }
 
@@ -223,8 +223,10 @@ EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_new(int id, int flags,
 {
     EVP_PKEY_ASN1_METHOD *ameth = OPENSSL_zalloc(sizeof(*ameth));
 
-    if (ameth == NULL)
+    if (ameth == NULL) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
         return NULL;
+    }
 
     ameth->pkey_id = id;
     ameth->pkey_base_id = id;
@@ -232,13 +234,13 @@ EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_new(int id, int flags,
 
     if (info) {
         ameth->info = OPENSSL_strdup(info);
-        if (!ameth->info)
+        if (ameth->info == NULL)
             goto err;
     }
 
     if (pem_str) {
         ameth->pem_str = OPENSSL_strdup(pem_str);
-        if (!ameth->pem_str)
+        if (ameth->pem_str == NULL)
             goto err;
     }
 
@@ -246,8 +248,8 @@ EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_new(int id, int flags,
 
  err:
     EVP_PKEY_asn1_free(ameth);
+    ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
     return NULL;
-
 }
 
 void EVP_PKEY_asn1_copy(EVP_PKEY_ASN1_METHOD *dst,

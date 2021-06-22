@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,12 +14,12 @@
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
 #include <openssl/core_names.h>
+#include <openssl/proverr.h>
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
 #include "crypto/evp.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
 
@@ -62,8 +62,8 @@ static int pkcs12kdf_derive(const unsigned char *pass, size_t passlen,
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         goto end;
     }
-    vi = EVP_MD_block_size(md_type);
-    ui = EVP_MD_size(md_type);
+    vi = EVP_MD_get_block_size(md_type);
+    ui = EVP_MD_get_size(md_type);
     if (ui < 0 || vi <= 0) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST_SIZE);
         goto end;
@@ -195,13 +195,13 @@ static int pkcs12kdf_set_membuf(unsigned char **buffer, size_t *buflen,
     return 1;
 }
 
-static int kdf_pkcs12_derive(void *vctx, unsigned char *key,
-                             size_t keylen)
+static int kdf_pkcs12_derive(void *vctx, unsigned char *key, size_t keylen,
+                             const OSSL_PARAM params[])
 {
     KDF_PKCS12 *ctx = (KDF_PKCS12 *)vctx;
     const EVP_MD *md;
 
-    if (!ossl_prov_is_running())
+    if (!ossl_prov_is_running() || !kdf_pkcs12_set_ctx_params(ctx, params))
         return 0;
 
     if (ctx->pass == NULL) {
@@ -223,7 +223,10 @@ static int kdf_pkcs12_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
     KDF_PKCS12 *ctx = vctx;
-    OPENSSL_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
+    OSSL_LIB_CTX *provctx = PROV_LIBCTX_OF(ctx->provctx);
+
+    if (params == NULL)
+        return 1;
 
     if (!ossl_prov_digest_load_from_params(&ctx->digest, params, provctx))
         return 0;
@@ -246,7 +249,8 @@ static int kdf_pkcs12_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *kdf_pkcs12_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *kdf_pkcs12_settable_ctx_params(
+        ossl_unused void *ctx, ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_settable_ctx_params[] = {
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_PROPERTIES, NULL, 0),
@@ -269,7 +273,8 @@ static int kdf_pkcs12_get_ctx_params(void *vctx, OSSL_PARAM params[])
     return -2;
 }
 
-static const OSSL_PARAM *kdf_pkcs12_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *kdf_pkcs12_gettable_ctx_params(
+        ossl_unused void *ctx, ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
         OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL),
@@ -278,7 +283,7 @@ static const OSSL_PARAM *kdf_pkcs12_gettable_ctx_params(ossl_unused void *provct
     return known_gettable_ctx_params;
 }
 
-const OSSL_DISPATCH kdf_pkcs12_functions[] = {
+const OSSL_DISPATCH ossl_kdf_pkcs12_functions[] = {
     { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))kdf_pkcs12_new },
     { OSSL_FUNC_KDF_FREECTX, (void(*)(void))kdf_pkcs12_free },
     { OSSL_FUNC_KDF_RESET, (void(*)(void))kdf_pkcs12_reset },

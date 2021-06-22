@@ -66,7 +66,9 @@ OPENSSL_MALLOC_FD
  env OPENSSL_MALLOC_FAILURES=... <application>
  env OPENSSL_MALLOC_FD=... <application>
 
-Deprecated:
+Deprecated since OpenSSL 3.0.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
 
  int CRYPTO_mem_leaks(BIO *b);
  int CRYPTO_mem_leaks_fp(FILE *fp);
@@ -101,7 +103,7 @@ before ultimately calling OPENSSL_free().
 
 OPENSSL_cleanse() fills B<ptr> of size B<len> with a string of 0's.
 Use OPENSSL_cleanse() with care if the memory is a mapping of a file.
-If the storage controller uses write compression, then its possible
+If the storage controller uses write compression, then it's possible
 that sensitive tail bytes will survive zeroization because the block of
 zeros will be compressed. If the storage controller uses wear leveling,
 then the old sensitive data will not be overwritten; rather, a block of
@@ -195,7 +197,7 @@ clang's memory and leak sanitizer.
 
 =head1 COPYRIGHT
 
-Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

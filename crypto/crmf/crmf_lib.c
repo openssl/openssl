@@ -1,5 +1,5 @@
 /*-
- * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2018
  * Copyright Siemens AG 2015-2019
  *
@@ -30,6 +30,7 @@
 
 #include "crmf_local.h"
 #include "internal/constant_time.h"
+#include "internal/sizes.h"
 
 /* explicit #includes not strictly needed since implied by the above: */
 #include <openssl/crmf.h>
@@ -75,7 +76,7 @@ static int OSSL_CRMF_MSG_push0_regCtrl(OSSL_CRMF_MSG *crm,
     int new = 0;
 
     if (crm == NULL || crm->certReq == NULL || ctrl == NULL) {
-        CRMFerr(CRMF_F_OSSL_CRMF_MSG_PUSH0_REGCTRL, CRMF_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
         return 0;
     }
 
@@ -110,8 +111,7 @@ int OSSL_CRMF_MSG_set0_SinglePubInfo(OSSL_CRMF_SINGLEPUBINFO *spi,
     if (spi == NULL
             || method < OSSL_CRMF_PUB_METHOD_DONTCARE
             || method > OSSL_CRMF_PUB_METHOD_LDAP) {
-        CRMFerr(CRMF_F_OSSL_CRMF_MSG_SET0_SINGLEPUBINFO,
-                ERR_R_PASSED_INVALID_ARGUMENT);
+        ERR_raise(ERR_LIB_CRMF, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
 
@@ -127,8 +127,7 @@ OSSL_CRMF_MSG_PKIPublicationInfo_push0_SinglePubInfo(OSSL_CRMF_PKIPUBLICATIONINF
                                                      OSSL_CRMF_SINGLEPUBINFO *spi)
 {
     if (pi == NULL || spi == NULL) {
-        CRMFerr(CRMF_F_OSSL_CRMF_MSG_PKIPUBLICATIONINFO_PUSH0_SINGLEPUBINFO,
-                CRMF_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
         return 0;
     }
     if (pi->pubInfos == NULL)
@@ -145,8 +144,7 @@ int OSSL_CRMF_MSG_set_PKIPublicationInfo_action(OSSL_CRMF_PKIPUBLICATIONINFO *pi
     if (pi == NULL
             || action < OSSL_CRMF_PUB_ACTION_DONTPUBLISH
             || action > OSSL_CRMF_PUB_ACTION_PLEASEPUBLISH) {
-        CRMFerr(CRMF_F_OSSL_CRMF_MSG_SET_PKIPUBLICATIONINFO_ACTION,
-                ERR_R_PASSED_INVALID_ARGUMENT);
+        ERR_raise(ERR_LIB_CRMF, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
 
@@ -166,7 +164,7 @@ OSSL_CRMF_CERTID *OSSL_CRMF_CERTID_gen(const X509_NAME *issuer,
     OSSL_CRMF_CERTID *cid = NULL;
 
     if (issuer == NULL || serial == NULL) {
-        CRMFerr(CRMF_F_OSSL_CRMF_CERTID_GEN, CRMF_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
         return NULL;
     }
 
@@ -204,7 +202,7 @@ static int OSSL_CRMF_MSG_push0_regInfo(OSSL_CRMF_MSG *crm,
     STACK_OF(OSSL_CRMF_ATTRIBUTETYPEANDVALUE) *info = NULL;
 
     if (crm == NULL || ri == NULL) {
-        CRMFerr(CRMF_F_OSSL_CRMF_MSG_PUSH0_REGINFO, CRMF_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
         return 0;
     }
 
@@ -234,7 +232,7 @@ IMPLEMENT_CRMF_CTRL_FUNC(certReq, OSSL_CRMF_CERTREQUEST, regInfo)
 OSSL_CRMF_CERTTEMPLATE *OSSL_CRMF_MSG_get0_tmpl(const OSSL_CRMF_MSG *crm)
 {
     if (crm == NULL || crm->certReq == NULL) {
-        CRMFerr(CRMF_F_OSSL_CRMF_MSG_GET0_TMPL, CRMF_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
         return NULL;
     }
     return crm->certReq->certTemplate;
@@ -248,7 +246,7 @@ int OSSL_CRMF_MSG_set0_validity(OSSL_CRMF_MSG *crm,
     OSSL_CRMF_CERTTEMPLATE *tmpl = OSSL_CRMF_MSG_get0_tmpl(crm);
 
     if (tmpl == NULL) { /* also crm == NULL implies this */
-        CRMFerr(CRMF_F_OSSL_CRMF_MSG_SET0_VALIDITY, CRMF_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
         return 0;
     }
 
@@ -264,7 +262,7 @@ int OSSL_CRMF_MSG_set0_validity(OSSL_CRMF_MSG *crm,
 int OSSL_CRMF_MSG_set_certReqId(OSSL_CRMF_MSG *crm, int rid)
 {
     if (crm == NULL || crm->certReq == NULL || crm->certReq->certReqId == NULL) {
-        CRMFerr(CRMF_F_OSSL_CRMF_MSG_SET_CERTREQID, CRMF_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
         return 0;
     }
 
@@ -277,15 +275,15 @@ static int crmf_asn1_get_int(const ASN1_INTEGER *a)
     int64_t res;
 
     if (!ASN1_INTEGER_get_int64(&res, a)) {
-        CRMFerr(0, ASN1_R_INVALID_NUMBER);
+        ERR_raise(ERR_LIB_CRMF, ASN1_R_INVALID_NUMBER);
         return -1;
     }
     if (res < INT_MIN) {
-        CRMFerr(0, ASN1_R_TOO_SMALL);
+        ERR_raise(ERR_LIB_CRMF, ASN1_R_TOO_SMALL);
         return -1;
     }
     if (res > INT_MAX) {
-        CRMFerr(0, ASN1_R_TOO_LARGE);
+        ERR_raise(ERR_LIB_CRMF, ASN1_R_TOO_LARGE);
         return -1;
     }
     return (int)res;
@@ -294,7 +292,7 @@ static int crmf_asn1_get_int(const ASN1_INTEGER *a)
 int OSSL_CRMF_MSG_get_certReqId(const OSSL_CRMF_MSG *crm)
 {
     if (crm == NULL || /* not really needed: */ crm->certReq == NULL) {
-        CRMFerr(CRMF_F_OSSL_CRMF_MSG_GET_CERTREQID, CRMF_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
         return -1;
     }
     return crmf_asn1_get_int(crm->certReq->certReqId);
@@ -307,7 +305,7 @@ int OSSL_CRMF_MSG_set0_extensions(OSSL_CRMF_MSG *crm,
     OSSL_CRMF_CERTTEMPLATE *tmpl = OSSL_CRMF_MSG_get0_tmpl(crm);
 
     if (tmpl == NULL) { /* also crm == NULL implies this */
-        CRMFerr(CRMF_F_OSSL_CRMF_MSG_SET0_EXTENSIONS, CRMF_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
         return 0;
     }
 
@@ -329,7 +327,7 @@ int OSSL_CRMF_MSG_push0_extension(OSSL_CRMF_MSG *crm,
     OSSL_CRMF_CERTTEMPLATE *tmpl = OSSL_CRMF_MSG_get0_tmpl(crm);
 
     if (tmpl == NULL || ext == NULL) { /* also crm == NULL implies this */
-        CRMFerr(CRMF_F_OSSL_CRMF_MSG_PUSH0_EXTENSION, CRMF_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
         return 0;
     }
 
@@ -353,34 +351,33 @@ int OSSL_CRMF_MSG_push0_extension(OSSL_CRMF_MSG *crm,
 static int create_popo_signature(OSSL_CRMF_POPOSIGNINGKEY *ps,
                                  const OSSL_CRMF_CERTREQUEST *cr,
                                  EVP_PKEY *pkey, const EVP_MD *digest,
-                                 OPENSSL_CTX *libctx, const char *propq)
+                                 OSSL_LIB_CTX *libctx, const char *propq)
 {
     if (ps == NULL || cr == NULL || pkey == NULL) {
-        CRMFerr(0, CRMF_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
         return 0;
     }
     if (ps->poposkInput != NULL) {
-        /* TODO: support cases 1+2 defined in RFC 4211, section 4.1 */
-        CRMFerr(0, CRMF_R_POPOSKINPUT_NOT_SUPPORTED);
+        /* We do not support cases 1+2 defined in RFC 4211, section 4.1 */
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_POPOSKINPUT_NOT_SUPPORTED);
         return 0;
     }
 
-    return ASN1_item_sign_with_libctx(ASN1_ITEM_rptr(OSSL_CRMF_CERTREQUEST),
-                                      ps->algorithmIdentifier, NULL,
-                                      ps->signature, cr, NULL, pkey, digest,
-                                      libctx, propq);
+    return ASN1_item_sign_ex(ASN1_ITEM_rptr(OSSL_CRMF_CERTREQUEST),
+                             ps->algorithmIdentifier, NULL, ps->signature, cr,
+                             NULL, pkey, digest, libctx, propq);
 }
 
 
 int OSSL_CRMF_MSG_create_popo(int meth, OSSL_CRMF_MSG *crm,
                               EVP_PKEY *pkey, const EVP_MD *digest,
-                              OPENSSL_CTX *libctx, const char *propq)
+                              OSSL_LIB_CTX *libctx, const char *propq)
 {
     OSSL_CRMF_POPO *pp = NULL;
     ASN1_INTEGER *tag = NULL;
 
     if (crm == NULL || (meth == OSSL_CRMF_POPO_SIGNATURE && pkey == NULL)) {
-        CRMFerr(CRMF_F_OSSL_CRMF_MSG_CREATE_POPO, CRMF_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
         return 0;
     }
 
@@ -424,8 +421,7 @@ int OSSL_CRMF_MSG_create_popo(int meth, OSSL_CRMF_MSG *crm,
         break;
 
     default:
-        CRMFerr(CRMF_F_OSSL_CRMF_MSG_CREATE_POPO,
-                CRMF_R_UNSUPPORTED_METHOD_FOR_CREATING_POPO);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_UNSUPPORTED_METHOD_FOR_CREATING_POPO);
         goto err;
     }
 
@@ -442,7 +438,7 @@ int OSSL_CRMF_MSG_create_popo(int meth, OSSL_CRMF_MSG *crm,
 /* verifies the Proof-of-Possession of the request with the given rid in reqs */
 int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
                                int rid, int acceptRAVerified,
-                               OPENSSL_CTX *libctx, const char *propq)
+                               OSSL_LIB_CTX *libctx, const char *propq)
 {
     OSSL_CRMF_MSG *req = NULL;
     X509_PUBKEY *pubkey = NULL;
@@ -451,26 +447,26 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
     void *asn;
 
     if (reqs == NULL || (req = sk_OSSL_CRMF_MSG_value(reqs, rid)) == NULL) {
-        CRMFerr(CRMF_F_OSSL_CRMF_MSGS_VERIFY_POPO, CRMF_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
         return 0;
     }
 
     if (req->popo == NULL) {
-        CRMFerr(0, CRMF_R_POPO_MISSING);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_POPO_MISSING);
         return 0;
     }
 
     switch (req->popo->type) {
     case OSSL_CRMF_POPO_RAVERIFIED:
         if (!acceptRAVerified) {
-            CRMFerr(0, CRMF_R_POPO_RAVERIFIED_NOT_ACCEPTED);
+            ERR_raise(ERR_LIB_CRMF, CRMF_R_POPO_RAVERIFIED_NOT_ACCEPTED);
             return 0;
         }
         break;
     case OSSL_CRMF_POPO_SIGNATURE:
         pubkey = req->certReq->certTemplate->publicKey;
         if (pubkey == NULL) {
-            CRMFerr(0, CRMF_R_POPO_MISSING_PUBLIC_KEY);
+            ERR_raise(ERR_LIB_CRMF, CRMF_R_POPO_MISSING_PUBLIC_KEY);
             return 0;
         }
         sig = req->popo->value.signature;
@@ -481,44 +477,32 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
              * exactly the same value as contained in the certificate template.
              */
             if (sig->poposkInput->publicKey == NULL) {
-                CRMFerr(0, CRMF_R_POPO_MISSING_PUBLIC_KEY);
+                ERR_raise(ERR_LIB_CRMF, CRMF_R_POPO_MISSING_PUBLIC_KEY);
                 return 0;
             }
             if (X509_PUBKEY_eq(pubkey, sig->poposkInput->publicKey) != 1) {
-                CRMFerr(0, CRMF_R_POPO_INCONSISTENT_PUBLIC_KEY);
+                ERR_raise(ERR_LIB_CRMF, CRMF_R_POPO_INCONSISTENT_PUBLIC_KEY);
                 return 0;
             }
-            /*
-             * TODO check the contents of the authInfo sub-field,
-             * see RFC 4211 https://tools.ietf.org/html/rfc4211#section-4.1
-             */
             it = ASN1_ITEM_rptr(OSSL_CRMF_POPOSIGNINGKEYINPUT);
             asn = sig->poposkInput;
         } else {
             if (req->certReq->certTemplate->subject == NULL) {
-                CRMFerr(0, CRMF_R_POPO_MISSING_SUBJECT);
+                ERR_raise(ERR_LIB_CRMF, CRMF_R_POPO_MISSING_SUBJECT);
                 return 0;
             }
             it = ASN1_ITEM_rptr(OSSL_CRMF_CERTREQUEST);
             asn = req->certReq;
         }
-        if (ASN1_item_verify_with_libctx(it, sig->algorithmIdentifier,
-                                         sig->signature, asn, NULL,
-                                         X509_PUBKEY_get0(pubkey),
-                                         libctx, propq) < 1)
+        if (ASN1_item_verify_ex(it, sig->algorithmIdentifier, sig->signature,
+                                asn, NULL, X509_PUBKEY_get0(pubkey), libctx,
+                                propq) < 1)
             return 0;
         break;
     case OSSL_CRMF_POPO_KEYENC:
-        /*
-         * TODO: when OSSL_CMP_certrep_new() supports encrypted certs,
-         * return 1 if the type of req->popo->value.keyEncipherment
-         * is OSSL_CRMF_POPOPRIVKEY_SUBSEQUENTMESSAGE and
-         * its value.subsequentMessage == OSSL_CRMF_SUBSEQUENTMESSAGE_ENCRCERT
-         */
     case OSSL_CRMF_POPO_KEYAGREE:
     default:
-        CRMFerr(CRMF_F_OSSL_CRMF_MSGS_VERIFY_POPO,
-                CRMF_R_UNSUPPORTED_POPO_METHOD);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_UNSUPPORTED_POPO_METHOD);
         return 0;
     }
     return 1;
@@ -562,7 +546,7 @@ int OSSL_CRMF_CERTTEMPLATE_fill(OSSL_CRMF_CERTTEMPLATE *tmpl,
                                 const ASN1_INTEGER *serial)
 {
     if (tmpl == NULL) {
-        CRMFerr(CRMF_F_OSSL_CRMF_CERTTEMPLATE_FILL, CRMF_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
         return 0;
     }
     if (subject != NULL && !X509_NAME_set((X509_NAME **)&tmpl->subject, subject))
@@ -589,40 +573,45 @@ int OSSL_CRMF_CERTTEMPLATE_fill(OSSL_CRMF_CERTTEMPLATE *tmpl,
  */
 X509
 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(const OSSL_CRMF_ENCRYPTEDVALUE *ecert,
-                                       OPENSSL_CTX *libctx, const char *propq,
+                                       OSSL_LIB_CTX *libctx, const char *propq,
                                        EVP_PKEY *pkey)
 {
     X509 *cert = NULL; /* decrypted certificate */
     EVP_CIPHER_CTX *evp_ctx = NULL; /* context for symmetric encryption */
     unsigned char *ek = NULL; /* decrypted symmetric encryption key */
     size_t eksize = 0; /* size of decrypted symmetric encryption key */
-    const EVP_CIPHER *cipher = NULL; /* used cipher */
+    EVP_CIPHER *cipher = NULL; /* used cipher */
     int cikeysize = 0; /* key size from cipher */
     unsigned char *iv = NULL; /* initial vector for symmetric encryption */
     unsigned char *outbuf = NULL; /* decryption output buffer */
     const unsigned char *p = NULL; /* needed for decoding ASN1 */
-    int symmAlg = 0; /* NIDs for symmetric algorithm */
     int n, outlen = 0;
     EVP_PKEY_CTX *pkctx = NULL; /* private key context */
+    char name[OSSL_MAX_NAME_SIZE];
 
     if (ecert == NULL || ecert->symmAlg == NULL || ecert->encSymmKey == NULL
             || ecert->encValue == NULL || pkey == NULL) {
-        CRMFerr(CRMF_F_OSSL_CRMF_ENCRYPTEDVALUE_GET1_ENCCERT,
-                CRMF_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
         return NULL;
     }
-    if ((symmAlg = OBJ_obj2nid(ecert->symmAlg->algorithm)) == 0) {
-        CRMFerr(CRMF_F_OSSL_CRMF_ENCRYPTEDVALUE_GET1_ENCCERT,
-                CRMF_R_UNSUPPORTED_CIPHER);
-        return NULL;
-    }
+
     /* select symmetric cipher based on algorithm given in message */
-    if ((cipher = EVP_get_cipherbynid(symmAlg)) == NULL) {
-        CRMFerr(CRMF_F_OSSL_CRMF_ENCRYPTEDVALUE_GET1_ENCCERT,
-                CRMF_R_UNSUPPORTED_CIPHER);
+    OBJ_obj2txt(name, sizeof(name), ecert->symmAlg->algorithm, 0);
+
+    (void)ERR_set_mark();
+    cipher = EVP_CIPHER_fetch(NULL, name, NULL);
+
+    if (cipher == NULL)
+        cipher = (EVP_CIPHER *)EVP_get_cipherbyname(name);
+
+    if (cipher == NULL) {
+        (void)ERR_clear_last_mark();
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_UNSUPPORTED_CIPHER);
         goto end;
     }
-    cikeysize = EVP_CIPHER_key_length(cipher);
+    (void)ERR_pop_to_mark();
+
+    cikeysize = EVP_CIPHER_get_key_length(cipher);
     /* first the symmetric key needs to be decrypted */
     pkctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq);
     if (pkctx != NULL && EVP_PKEY_decrypt_init(pkctx)) {
@@ -641,20 +630,18 @@ X509
                                            | constant_time_is_zero(retval));
         failure |= ~constant_time_eq_s(eksize, (size_t)cikeysize);
         if (failure) {
-            CRMFerr(CRMF_F_OSSL_CRMF_ENCRYPTEDVALUE_GET1_ENCCERT,
-                    CRMF_R_ERROR_DECRYPTING_SYMMETRIC_KEY);
+            ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_DECRYPTING_SYMMETRIC_KEY);
             goto end;
         }
     } else {
         goto end;
     }
-    if ((iv = OPENSSL_malloc(EVP_CIPHER_iv_length(cipher))) == NULL)
+    if ((iv = OPENSSL_malloc(EVP_CIPHER_get_iv_length(cipher))) == NULL)
         goto end;
     if (ASN1_TYPE_get_octetstring(ecert->symmAlg->parameter, iv,
-                                  EVP_CIPHER_iv_length(cipher))
-        != EVP_CIPHER_iv_length(cipher)) {
-        CRMFerr(CRMF_F_OSSL_CRMF_ENCRYPTEDVALUE_GET1_ENCCERT,
-                CRMF_R_MALFORMED_IV);
+                                  EVP_CIPHER_get_iv_length(cipher))
+        != EVP_CIPHER_get_iv_length(cipher)) {
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_MALFORMED_IV);
         goto end;
     }
 
@@ -663,7 +650,7 @@ X509
      * keep the original pointer in outbuf so the memory can be freed later
      */
     if ((p = outbuf = OPENSSL_malloc(ecert->encValue->length +
-                                     EVP_CIPHER_block_size(cipher))) == NULL
+                                     EVP_CIPHER_get_block_size(cipher))) == NULL
             || (evp_ctx = EVP_CIPHER_CTX_new()) == NULL)
         goto end;
     EVP_CIPHER_CTX_set_padding(evp_ctx, 0);
@@ -673,22 +660,21 @@ X509
                                   ecert->encValue->data,
                                   ecert->encValue->length)
             || !EVP_DecryptFinal(evp_ctx, outbuf + outlen, &n)) {
-        CRMFerr(CRMF_F_OSSL_CRMF_ENCRYPTEDVALUE_GET1_ENCCERT,
-                CRMF_R_ERROR_DECRYPTING_CERTIFICATE);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_DECRYPTING_CERTIFICATE);
         goto end;
     }
     outlen += n;
 
     /* convert decrypted certificate from DER to internal ASN.1 structure */
-    if ((cert = X509_new_with_libctx(libctx, propq)) == NULL)
+    if ((cert = X509_new_ex(libctx, propq)) == NULL)
         goto end;
     if (d2i_X509(&cert, &p, outlen) == NULL)
-        CRMFerr(CRMF_F_OSSL_CRMF_ENCRYPTEDVALUE_GET1_ENCCERT,
-                CRMF_R_ERROR_DECODING_CERTIFICATE);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_DECODING_CERTIFICATE);
  end:
     EVP_PKEY_CTX_free(pkctx);
     OPENSSL_free(outbuf);
     EVP_CIPHER_CTX_free(evp_ctx);
+    EVP_CIPHER_free(cipher);
     OPENSSL_clear_free(ek, eksize);
     OPENSSL_free(iv);
     return cert;

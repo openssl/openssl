@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -11,15 +11,24 @@ use strict;
 use warnings;
 
 use File::Spec;
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_file srctop_dir bldtop_dir bldtop_file/;
 use OpenSSL::Test::Utils;
 
-setup("test_gendsa");
+BEGIN {
+    setup("test_gendsa");
+}
+
+use lib srctop_dir('Configurations');
+use lib bldtop_dir('.');
 
 plan skip_all => "This test is unsupported in a no-dsa build"
     if disabled("dsa");
 
-plan tests => 10;
+my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
+
+plan tests =>
+    ($no_fips ? 0 : 2)          # FIPS related tests
+    + 11;
 
 ok(run(app([ 'openssl', 'genpkey', '-genparam',
              '-algorithm', 'DSA',
@@ -33,6 +42,14 @@ ok(run(app([ 'openssl', 'genpkey', '-genparam',
              '-pkeyopt', 'type:fips186_4',
              '-text'])),
    "genpkey DSA params fips186_4 with unverifiable g");
+
+ok(run(app([ 'openssl', 'genpkey', '-genparam',
+             '-algorithm', 'DSA',
+             '-pkeyopt', 'pbits:2048',
+             '-pkeyopt', 'qbits:224',
+             '-pkeyopt', 'digest:SHA512-256',
+             '-pkeyopt', 'type:fips186_4'])),
+   "genpkey DSA params fips186_4 with truncated SHA");
 
 ok(run(app([ 'openssl', 'genpkey', '-genparam',
              '-algorithm', 'DSA',
@@ -79,6 +96,7 @@ ok(run(app([ 'openssl', 'genpkey',
 # Just put some dummy ones in to show it works.
 ok(run(app([ 'openssl', 'genpkey',
              '-paramfile', 'dsagen.der',
+             '-pkeyopt', 'type:fips186_4',
              '-pkeyopt', 'gindex:1',
              '-pkeyopt', 'hexseed:0102030405060708090A0B0C0D0E0F1011121314',
              '-pkeyopt', 'pcounter:25',
@@ -88,3 +106,31 @@ ok(run(app([ 'openssl', 'genpkey',
 ok(!run(app([ 'openssl', 'genpkey',
               '-algorithm', 'DSA'])),
    "genpkey DSA with no params should fail");
+
+unless ($no_fips) {
+    my $provconf = srctop_file("test", "fips-and-base.cnf");
+    my $provpath = bldtop_dir("providers");
+    my @prov = ( "-provider-path", $provpath,
+                 "-config", $provconf);
+
+    $ENV{OPENSSL_TEST_LIBCTX} = "1";
+
+    # Generate params
+    ok(run(app(['openssl', 'genpkey',
+                @prov,
+               '-genparam',
+               '-algorithm', 'DSA',
+               '-pkeyopt', 'pbits:3072',
+               '-pkeyopt', 'qbits:256',
+               '-out', 'gendsatest3072params.pem'])),
+       "Generating 3072-bit DSA params");
+
+    # Generate keypair
+    ok(run(app(['openssl', 'genpkey',
+                @prov,
+               '-paramfile', 'gendsatest3072params.pem',
+               '-text',
+               '-out', 'gendsatest3072.pem'])),
+       "Generating 3072-bit DSA keypair");
+
+}

@@ -27,7 +27,7 @@ error occurred.
 SMIME_read_PKCS7_ex() is similar to SMIME_read_PKCS7() but can optionally supply
 a previously created I<p7> PKCS#7 object. If I<p7> is NULL then it is identical
 to SMIME_read_PKCS7().
-To create a I<p7> object use L<PKCS7_new_with_libctx(3)>.
+To create a I<p7> object use L<PKCS7_new_ex(3)>.
 
 =head1 NOTES
 

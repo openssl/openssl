@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -72,7 +72,7 @@ typedef struct prov_gcm_ctx_st {
     unsigned char iv[GCM_IV_MAX_SIZE]; /* Buffer to use for IV's */
     unsigned char buf[AES_BLOCK_SIZE]; /* Buffer of partial blocks processed via update calls */
 
-    OPENSSL_CTX *libctx;    /* needed for rand calls */
+    OSSL_LIB_CTX *libctx;    /* needed for rand calls */
     const PROV_GCM_HW *hw;  /* hardware specific methods */
     GCM128_CONTEXT gcm;
     ctr128_f ctr;
@@ -102,25 +102,25 @@ struct prov_gcm_hw_st {
   OSSL_GCM_oneshot_fn oneshot;
 };
 
-OSSL_FUNC_cipher_encrypt_init_fn gcm_einit;
-OSSL_FUNC_cipher_decrypt_init_fn gcm_dinit;
-OSSL_FUNC_cipher_get_ctx_params_fn gcm_get_ctx_params;
-OSSL_FUNC_cipher_set_ctx_params_fn gcm_set_ctx_params;
-OSSL_FUNC_cipher_cipher_fn gcm_cipher;
-OSSL_FUNC_cipher_update_fn gcm_stream_update;
-OSSL_FUNC_cipher_final_fn gcm_stream_final;
-void gcm_initctx(void *provctx, PROV_GCM_CTX *ctx, size_t keybits,
-                 const PROV_GCM_HW *hw, size_t ivlen_min);
+OSSL_FUNC_cipher_encrypt_init_fn ossl_gcm_einit;
+OSSL_FUNC_cipher_decrypt_init_fn ossl_gcm_dinit;
+OSSL_FUNC_cipher_get_ctx_params_fn ossl_gcm_get_ctx_params;
+OSSL_FUNC_cipher_set_ctx_params_fn ossl_gcm_set_ctx_params;
+OSSL_FUNC_cipher_cipher_fn ossl_gcm_cipher;
+OSSL_FUNC_cipher_update_fn ossl_gcm_stream_update;
+OSSL_FUNC_cipher_final_fn ossl_gcm_stream_final;
+void ossl_gcm_initctx(void *provctx, PROV_GCM_CTX *ctx, size_t keybits,
+                      const PROV_GCM_HW *hw, size_t ivlen_min);
 
-int gcm_setiv(PROV_GCM_CTX *ctx, const unsigned char *iv, size_t ivlen);
-int gcm_aad_update(PROV_GCM_CTX *ctx, const unsigned char *aad,
-                   size_t aad_len);
-int gcm_cipher_final(PROV_GCM_CTX *ctx, unsigned char *tag);
-int gcm_one_shot(PROV_GCM_CTX *ctx, unsigned char *aad, size_t aad_len,
-                 const unsigned char *in, size_t in_len,
-                 unsigned char *out, unsigned char *tag, size_t tag_len);
-int gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
-                      size_t len, unsigned char *out);
+int ossl_gcm_setiv(PROV_GCM_CTX *ctx, const unsigned char *iv, size_t ivlen);
+int ossl_gcm_aad_update(PROV_GCM_CTX *ctx, const unsigned char *aad,
+                        size_t aad_len);
+int ossl_gcm_cipher_final(PROV_GCM_CTX *ctx, unsigned char *tag);
+int ossl_gcm_one_shot(PROV_GCM_CTX *ctx, unsigned char *aad, size_t aad_len,
+                      const unsigned char *in, size_t in_len,
+                      unsigned char *out, unsigned char *tag, size_t tag_len);
+int ossl_gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
+                           size_t len, unsigned char *out);
 
 #define GCM_HW_SET_KEY_CTR_FN(ks, fn_set_enc_key, fn_block, fn_ctr)            \
     ctx->ks = ks;                                                              \

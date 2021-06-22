@@ -274,8 +274,14 @@ id-smime-ct 8		: id-smime-ct-DVCSResponseData
 id-smime-ct 9		: id-smime-ct-compressedData
 id-smime-ct 19		: id-smime-ct-contentCollection
 id-smime-ct 23		: id-smime-ct-authEnvelopedData
+id-smime-ct 24		: id-ct-routeOriginAuthz
+id-smime-ct 26		: id-ct-rpkiManifest
 id-smime-ct 27		: id-ct-asciiTextWithCRLF
 id-smime-ct 28		: id-ct-xml
+id-smime-ct 35		: id-ct-rpkiGhostbusters
+id-smime-ct 36		: id-ct-resourceTaggedAttest
+id-smime-ct 47		: id-ct-geofeedCSVwithCRLF
+id-smime-ct 48		: id-ct-signedChecklist
 
 # S/MIME Attributes
 id-smime-aa 1		: id-smime-aa-receiptRequest
@@ -465,6 +471,7 @@ id-pkix 8		: id-on
 id-pkix 9		: id-pda
 id-pkix 10		: id-aca
 id-pkix 11		: id-qcs
+id-pkix 14		: id-cp
 id-pkix 12		: id-cct
 id-pkix 21		: id-ppl
 id-pkix 48		: id-ad
@@ -503,6 +510,8 @@ id-pe 10		: ac-proxying
 id-pe 11		: subjectInfoAccess	: Subject Information Access
 id-pe 14		: proxyCertInfo		: Proxy Certificate Information
 id-pe 24		: tlsfeature		: TLS Feature
+id-pe 28		: sbgp-ipAddrBlockv2
+id-pe 29		: sbgp-autonomousSysNumv2
 
 # PKIX policyQualifiers for Internet policy qualifiers
 id-qt 1			: id-qt-cps		: Policy Qualifier CPS
@@ -642,6 +651,10 @@ id-aca 6		: id-aca-encAttrs
 # qualified certificate statements
 id-qcs 1		: id-qcs-pkixQCSyntax-v1
 
+# PKIX Certificate Policies
+id-cp 2			: ipAddr-asNumber
+id-cp 3			: ipAddr-asNumberv2
+
 # CMC content types
 id-cct 1		: id-cct-crs
 id-cct 2		: id-cct-PKIData
@@ -662,7 +675,9 @@ id-ad 3			: ad_timestamping	: AD Time Stamping
 !Cname ad-dvcs
 id-ad 4			: AD_DVCS		: ad dvcs
 id-ad 5			: caRepository		: CA Repository
-
+id-ad 10		: rpkiManifest		: RPKI Manifest
+id-ad 11		: signedObject		: Signed Object
+id-ad 13		: rpkiNotify		: RPKI Notify
 
 !Alias id-pkix-OCSP ad-OCSP
 !module id-pkix-OCSP
@@ -1406,8 +1421,16 @@ id-tc26-gost-28147-constants 1	: id-tc26-gost-28147-param-Z : GOST 28147-89 TC26
 member-body 643 3 131 1 1	: INN	: INN
 member-body 643 100 1		: OGRN	: OGRN
 member-body 643 100 3		: SNILS	: SNILS
+member-body 643 100 5		: OGRNIP	: OGRNIP
 member-body 643 100 111	: subjectSignTool	: Signing Tool of Subject
 member-body 643 100 112	: issuerSignTool	: Signing Tool of Issuer
+member-body 643 100 113  : classSignTool   : Class of Signing Tool
+member-body 643 100 113 1 : classSignToolKC1 : Class of Signing Tool KC1
+member-body 643 100 113 2 : classSignToolKC2 : Class of Signing Tool KC2
+member-body 643 100 113 3 : classSignToolKC3 : Class of Signing Tool KC3
+member-body 643 100 113 4 : classSignToolKB1 : Class of Signing Tool KB1
+member-body 643 100 113 5 : classSignToolKB2 : Class of Signing Tool KB2
+member-body 643 100 113 6 : classSignToolKA1 : Class of Signing Tool KA1
 
 #GOST R34.13-2015 Grasshopper "Kuznechik"
 			: kuznyechik-ecb

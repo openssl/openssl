@@ -1,7 +1,7 @@
 /*
  * {- join("\n * ", @autowarntext) -}
  *
- * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -87,9 +87,12 @@ typedef struct X509V3_CONF_METHOD_st {
     void (*free_section) (void *db, STACK_OF(CONF_VALUE) *section);
 } X509V3_CONF_METHOD;
 
-/* Context specific info */
+/* Context specific info for producing X509 v3 extensions*/
 struct v3_ext_ctx {
-# define CTX_TEST 0x1
+# define X509V3_CTX_TEST 0x1
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  define CTX_TEST X509V3_CTX_TEST
+# endif
 # define X509V3_CTX_REPLACE 0x2
     int flags;
     X509 *issuer_cert;
@@ -98,6 +101,7 @@ struct v3_ext_ctx {
     X509_CRL *crl;
     X509V3_CONF_METHOD *db_meth;
     void *db;
+    EVP_PKEY *issuer_pkey;
 /* Maybe more here */
 };
 
@@ -362,7 +366,7 @@ struct ISSUING_DIST_POINT_st {
                         ",name:", (val)->name, ",value:", (val)->value)
 
 # define X509V3_set_ctx_test(ctx) \
-                        X509V3_set_ctx(ctx, NULL, NULL, NULL, NULL, CTX_TEST)
+    X509V3_set_ctx(ctx, NULL, NULL, NULL, NULL, X509V3_CTX_TEST)
 # define X509V3_set_ctx_nodb(ctx) (ctx)->db = NULL;
 
 # define EXT_BITSTRING(nid, table) { nid, 0, ASN1_ITEM_ref(ASN1_BIT_STRING), \
@@ -377,6 +381,13 @@ struct ISSUING_DIST_POINT_st {
                         0,0,0,0, \
                         (X509V3_EXT_I2S)i2s_ASN1_IA5STRING, \
                         (X509V3_EXT_S2I)s2i_ASN1_IA5STRING, \
+                        0,0,0,0, \
+                        NULL}
+
+#define EXT_UTF8STRING(nid) { nid, 0, ASN1_ITEM_ref(ASN1_UTF8STRING), \
+                        0,0,0,0, \
+                        (X509V3_EXT_I2S)i2s_ASN1_UTF8STRING, \
+                        (X509V3_EXT_S2I)s2i_ASN1_UTF8STRING, \
                         0,0,0,0, \
                         NULL}
 
@@ -406,6 +417,7 @@ struct ISSUING_DIST_POINT_st {
 # define EXFLAG_AKID_CRITICAL    0x20000
 # define EXFLAG_SKID_CRITICAL    0x40000
 # define EXFLAG_SAN_CRITICAL     0x80000
+# define EXFLAG_NO_FINGERPRINT   0x100000
 
 # define KU_DIGITAL_SIGNATURE    0x0080
 # define KU_NON_REPUDIATION      0x0040
@@ -430,7 +442,7 @@ struct ISSUING_DIST_POINT_st {
 # define XKU_SSL_CLIENT          0x2
 # define XKU_SMIME               0x4
 # define XKU_CODE_SIGN           0x8
-# define XKU_SGC                 0x10
+# define XKU_SGC                 0x10 /* Netscape or MS Server-Gated Crypto */
 # define XKU_OCSP_SIGN           0x20
 # define XKU_TIMESTAMP           0x40
 # define XKU_DVCS                0x80
@@ -523,6 +535,9 @@ STACK_OF(CONF_VALUE) *i2v_ASN1_BIT_STRING(X509V3_EXT_METHOD *method,
                                           STACK_OF(CONF_VALUE) *extlist);
 char *i2s_ASN1_IA5STRING(X509V3_EXT_METHOD *method, ASN1_IA5STRING *ia5);
 ASN1_IA5STRING *s2i_ASN1_IA5STRING(X509V3_EXT_METHOD *method,
+                                   X509V3_CTX *ctx, const char *str);
+char *i2s_ASN1_UTF8STRING(X509V3_EXT_METHOD *method, ASN1_UTF8STRING *utf8);
+ASN1_UTF8STRING *s2i_ASN1_UTF8STRING(X509V3_EXT_METHOD *method,
                                    X509V3_CTX *ctx, const char *str);
 
 STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
@@ -644,6 +659,8 @@ void X509V3_string_free(X509V3_CTX *ctx, char *str);
 void X509V3_section_free(X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *section);
 void X509V3_set_ctx(X509V3_CTX *ctx, X509 *issuer, X509 *subject,
                     X509_REQ *req, X509_CRL *crl, int flags);
+/* For API backward compatibility, this is separate from X509V3_set_ctx(): */
+int X509V3_set_issuer_pkey(X509V3_CTX *ctx, EVP_PKEY *pkey);
 
 int X509V3_add_value(const char *name, const char *value,
                      STACK_OF(CONF_VALUE) **extlist);

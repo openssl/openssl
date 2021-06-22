@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -869,7 +869,8 @@ static int test_gcm128(int idx)
     if (A.data != NULL)
         CRYPTO_gcm128_aad(&ctx, A.data, A.size);
     if (P.data != NULL)
-        CRYPTO_gcm128_encrypt( &ctx, P.data, out, P.size);
+        if (!TEST_int_ge(CRYPTO_gcm128_encrypt( &ctx, P.data, out, P.size), 0))
+            return 0;
     if (!TEST_false(CRYPTO_gcm128_finish(&ctx, T.data, 16))
             || (C.data != NULL
                     && !TEST_mem_eq(out, P.size, C.data, P.size)))

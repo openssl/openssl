@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -20,7 +20,10 @@
 # endif
 #endif
 /* If __SANITIZE_ADDRESS__ isn't defined, define it to be false */
-#ifndef __SANITIZE_ADDRESS__
+/* Leak detection is not yet supported with MSVC on Windows, so */
+/* set __SANITIZE_ADDRESS__ to false in this case as well.      */
+#if !defined(__SANITIZE_ADDRESS__) || defined(_MSC_VER)
+# undef __SANITIZE_ADDRESS__
 # define __SANITIZE_ADDRESS__ 0
 #endif
 

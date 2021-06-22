@@ -55,7 +55,7 @@ L<X509_NAME_add_entry_by_txt(3)>,
 L<X509_new(3)>,
 L<X509_verify_cert(3)>,
 L<X509_verify(3)>,
-L<X509_REQ_verify_with_libctx(3)>, L<X509_REQ_verify(3)>,
+L<X509_REQ_verify_ex(3)>, L<X509_REQ_verify(3)>,
 L<X509_CRL_verify(3)>
 
 =head1 HISTORY

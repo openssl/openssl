@@ -31,7 +31,7 @@ DEFINE[../../providers/liblegacy.a]=$DESDEF
 
 # When all deprecated symbols are removed, libcrypto doesn't export the
 # DES functions, so we must include them directly in liblegacy.a
-IF[{- $disabled{'deprecated-3.0'} && !$disabled{"mdc2"} -}]
+IF[{- $disabled{'deprecated-3.0'} && !$disabled{des} -}]
   SOURCE[../../providers/liblegacy.a]=$ALL
   DEFINE[../../providers/liblegacy.a]=$DESDEF
 ENDIF

@@ -2,8 +2,8 @@
 
 =head1 NAME
 
-CMS_EnvelopedData_create_with_libctx, CMS_EnvelopedData_create,
-CMS_AuthEnvelopedData_create, CMS_AuthEnvelopedData_create_with_libctx
+CMS_EnvelopedData_create_ex, CMS_EnvelopedData_create,
+CMS_AuthEnvelopedData_create, CMS_AuthEnvelopedData_create_ex
 - Create CMS envelope
 
 =head1 SYNOPSIS
@@ -11,25 +11,23 @@ CMS_AuthEnvelopedData_create, CMS_AuthEnvelopedData_create_with_libctx
  #include <openssl/cms.h>
 
  CMS_ContentInfo *
- CMS_EnvelopedData_create_with_libctx(const EVP_CIPHER *cipher,
-                                      OPENSSL_CTX *libctx,
-                                      const char *propq);
+ CMS_EnvelopedData_create_ex(const EVP_CIPHER *cipher, OSSL_LIB_CTX *libctx,
+                             const char *propq);
  CMS_ContentInfo *CMS_EnvelopedData_create(const EVP_CIPHER *cipher);
 
  CMS_ContentInfo *
- CMS_AuthEnvelopedData_create_with_libctx(const EVP_CIPHER *cipher,
-                                          OPENSSL_CTX *libctx,
-                                          const char *propq);
+ CMS_AuthEnvelopedData_create_ex(const EVP_CIPHER *cipher, OSSL_LIB_CTX *libctx,
+                                 const char *propq);
  CMS_ContentInfo *CMS_AuthEnvelopedData_create(const EVP_CIPHER *cipher);
 
 =head1 DESCRIPTION
 
-CMS_EnvelopedData_create_with_libctx() creates a B<CMS_ContentInfo> structure
+CMS_EnvelopedData_create_ex() creates a B<CMS_ContentInfo> structure
 with a type B<NID_pkcs7_enveloped>. I<cipher> is the symmetric cipher to use.
 The library context I<libctx> and the property query I<propq> are used when
 retrieving algorithms from providers.
 
-CMS_AuthEnvelopedData_create_with_libctx() creates a B<CMS_ContentInfo>
+CMS_AuthEnvelopedData_create_ex() creates a B<CMS_ContentInfo>
 structure with a type B<NID_id_smime_ct_authEnvelopedData>. B<cipher> is the
 symmetric AEAD cipher to use. Currently only AES variants with GCM mode are
 supported. The library context I<libctx> and the property query I<propq> are
@@ -45,8 +43,8 @@ The B<CMS_ContentInfo> structure needs to be finalized using L<CMS_final(3)>
 and then freed using L<CMS_ContentInfo_free(3)>.
 
 CMS_EnvelopedData_create() and  CMS_AuthEnvelopedData_create are similar to
-CMS_EnvelopedData_create_with_libctx() and
-CMS_AuthEnvelopedData_create_with_libctx() but use default values of NULL for
+CMS_EnvelopedData_create_ex() and
+CMS_AuthEnvelopedData_create_ex() but use default values of NULL for
 the library context I<libctx> and the property query I<propq>.
 
 =head1 NOTES
@@ -66,13 +64,13 @@ allocated structure.
 
 L<ERR_get_error(3)>, L<CMS_encrypt(3)>, L<CMS_decrypt(3)>, L<CMS_final(3)>
 
-head1 HISTORY
+=head1 HISTORY
 
-The CMS_EnvelopedData_create_with_libctx() method was added in OpenSSL 3.0.
+The CMS_EnvelopedData_create_ex() method was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

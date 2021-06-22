@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -38,7 +38,7 @@ ASN1_PCTX *ASN1_PCTX_new(void)
 
     ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
-        ASN1err(ASN1_F_ASN1_PCTX_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     return ret;
@@ -195,7 +195,7 @@ static int asn1_item_print_ctx(BIO *out, const ASN1_VALUE **fld, int indent,
 
     case ASN1_ITYPE_CHOICE:
         /* CHOICE type, get selector */
-        i = asn1_get_choice_selector_const(fld, it);
+        i = ossl_asn1_get_choice_selector_const(fld, it);
         /* This should never happen... */
         if ((i < 0) || (i >= it->tcount)) {
             if (BIO_printf(out, "ERROR: selector [%d] invalid\n", i) <= 0)
@@ -203,7 +203,7 @@ static int asn1_item_print_ctx(BIO *out, const ASN1_VALUE **fld, int indent,
             return 1;
         }
         tt = it->templates + i;
-        tmpfld = asn1_get_const_field_ptr(fld, tt);
+        tmpfld = ossl_asn1_get_const_field_ptr(fld, tt);
         if (!asn1_template_print_ctx(out, tmpfld, indent, tt, pctx))
             return 0;
         break;
@@ -233,10 +233,10 @@ static int asn1_item_print_ctx(BIO *out, const ASN1_VALUE **fld, int indent,
         /* Print each field entry */
         for (i = 0, tt = it->templates; i < it->tcount; i++, tt++) {
             const ASN1_TEMPLATE *seqtt;
-            seqtt = asn1_do_adb(*fld, tt, 1);
+            seqtt = ossl_asn1_do_adb(*fld, tt, 1);
             if (!seqtt)
                 return 0;
-            tmpfld = asn1_get_const_field_ptr(fld, seqtt);
+            tmpfld = ossl_asn1_get_const_field_ptr(fld, seqtt);
             if (!asn1_template_print_ctx(out, tmpfld,
                                          indent + 2, seqtt, pctx))
                 return 0;

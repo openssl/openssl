@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2004-2014, Akamai Technologies. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -21,11 +21,24 @@
 #include <string.h>
 
 #ifndef OPENSSL_NO_SECURE_MEMORY
+# if defined(_WIN32)
+#  include <windows.h>
+# endif
 # include <stdlib.h>
 # include <assert.h>
-# include <unistd.h>
+# if defined(OPENSSL_SYS_UNIX)
+#  include <unistd.h>
+# endif
 # include <sys/types.h>
-# include <sys/mman.h>
+# if defined(OPENSSL_SYS_UNIX)
+#  include <sys/mman.h>
+#  if defined(__FreeBSD__)
+#    define MADV_DONTDUMP MADV_NOCORE
+#  endif
+#  if !defined(MAP_CONCEAL)
+#    define MAP_CONCEAL 0
+#  endif
+# endif
 # if defined(OPENSSL_SYS_LINUX)
 #  include <sys/syscall.h>
 #  if defined(SYS_mlock2)
@@ -119,7 +132,8 @@ void *CRYPTO_secure_malloc(size_t num, const char *file, int line)
     if (!secure_mem_initialized) {
         return CRYPTO_malloc(num, file, line);
     }
-    CRYPTO_THREAD_write_lock(sec_malloc_lock);
+    if (!CRYPTO_THREAD_write_lock(sec_malloc_lock))
+        return NULL;
     ret = sh_malloc(num);
     actual_size = ret ? sh_actual_size(ret) : 0;
     secure_mem_used += actual_size;
@@ -151,7 +165,8 @@ void CRYPTO_secure_free(void *ptr, const char *file, int line)
         CRYPTO_free(ptr, file, line);
         return;
     }
-    CRYPTO_THREAD_write_lock(sec_malloc_lock);
+    if (!CRYPTO_THREAD_write_lock(sec_malloc_lock))
+        return;
     actual_size = sh_actual_size(ptr);
     CLEAR(ptr, actual_size);
     secure_mem_used -= actual_size;
@@ -175,7 +190,8 @@ void CRYPTO_secure_clear_free(void *ptr, size_t num,
         CRYPTO_free(ptr, file, line);
         return;
     }
-    CRYPTO_THREAD_write_lock(sec_malloc_lock);
+    if (!CRYPTO_THREAD_write_lock(sec_malloc_lock))
+        return;
     actual_size = sh_actual_size(ptr);
     CLEAR(ptr, actual_size);
     secure_mem_used -= actual_size;
@@ -192,14 +208,14 @@ void CRYPTO_secure_clear_free(void *ptr, size_t num,
 int CRYPTO_secure_allocated(const void *ptr)
 {
 #ifndef OPENSSL_NO_SECURE_MEMORY
-    int ret;
-
     if (!secure_mem_initialized)
         return 0;
-    CRYPTO_THREAD_write_lock(sec_malloc_lock);
-    ret = sh_allocated(ptr);
-    CRYPTO_THREAD_unlock(sec_malloc_lock);
-    return ret;
+    /*
+     * Only read accesses to the arena take place in sh_allocated() and this
+     * is only changed by the sh_init() and sh_done() calls which are not
+     * locked.  Hence, it is safe to make this check without a lock too.
+     */
+    return sh_allocated(ptr);
 #else
     return 0;
 #endif /* OPENSSL_NO_SECURE_MEMORY */
@@ -219,7 +235,8 @@ size_t CRYPTO_secure_actual_size(void *ptr)
 #ifndef OPENSSL_NO_SECURE_MEMORY
     size_t actual_size;
 
-    CRYPTO_THREAD_write_lock(sec_malloc_lock);
+    if (!CRYPTO_THREAD_write_lock(sec_malloc_lock))
+        return 0;
     actual_size = sh_actual_size(ptr);
     CRYPTO_THREAD_unlock(sec_malloc_lock);
     return actual_size;
@@ -375,6 +392,10 @@ static int sh_init(size_t size, size_t minsize)
     size_t i;
     size_t pgsize;
     size_t aligned;
+#if defined(_WIN32)
+    DWORD flOldProtect;
+    SYSTEM_INFO systemInfo;
+#endif
 
     memset(&sh, 0, sizeof(sh));
 
@@ -446,15 +467,19 @@ static int sh_init(size_t size, size_t minsize)
         else
             pgsize = (size_t)tmppgsize;
     }
+#elif defined(_WIN32)
+    GetSystemInfo(&systemInfo);
+    pgsize = (size_t)systemInfo.dwPageSize;
 #else
     pgsize = PAGE_SIZE;
 #endif
     sh.map_size = pgsize + sh.arena_size + pgsize;
 
-#ifdef MAP_ANON
+#if !defined(_WIN32)
+# ifdef MAP_ANON
     sh.map_result = mmap(NULL, sh.map_size,
-                         PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, -1, 0);
-#else
+                         PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE|MAP_CONCEAL, -1, 0);
+# else
     {
         int fd;
 
@@ -465,9 +490,16 @@ static int sh_init(size_t size, size_t minsize)
             close(fd);
         }
     }
-#endif
+# endif
     if (sh.map_result == MAP_FAILED)
         goto err;
+#else
+    sh.map_result = VirtualAlloc(NULL, sh.map_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+
+    if (sh.map_result == NULL)
+            goto err;
+#endif
+
     sh.arena = (char *)(sh.map_result + pgsize);
     sh_setbit(sh.arena, 0, sh.bittable);
     sh_add_to_list(&sh.freelist[0], sh.arena);
@@ -475,14 +507,24 @@ static int sh_init(size_t size, size_t minsize)
     /* Now try to add guard pages and lock into memory. */
     ret = 1;
 
+#if !defined(_WIN32)
     /* Starting guard is already aligned from mmap. */
     if (mprotect(sh.map_result, pgsize, PROT_NONE) < 0)
         ret = 2;
+#else
+    if (VirtualProtect(sh.map_result, pgsize, PAGE_NOACCESS, &flOldProtect) == FALSE)
+        ret = 2;
+#endif
 
     /* Ending guard page - need to round up to page boundary */
     aligned = (pgsize + sh.arena_size + (pgsize - 1)) & ~(pgsize - 1);
+#if !defined(_WIN32)
     if (mprotect(sh.map_result + aligned, pgsize, PROT_NONE) < 0)
         ret = 2;
+#else
+    if (VirtualProtect(sh.map_result + aligned, pgsize, PAGE_NOACCESS, &flOldProtect) == FALSE)
+        ret = 2;
+#endif
 
 #if defined(OPENSSL_SYS_LINUX) && defined(MLOCK_ONFAULT) && defined(SYS_mlock2)
     if (syscall(SYS_mlock2, sh.arena, sh.arena_size, MLOCK_ONFAULT) < 0) {
@@ -493,6 +535,9 @@ static int sh_init(size_t size, size_t minsize)
             ret = 2;
         }
     }
+#elif defined(_WIN32)
+    if (VirtualLock(sh.arena, sh.arena_size) == FALSE)
+        ret = 2;
 #else
     if (mlock(sh.arena, sh.arena_size) < 0)
         ret = 2;
@@ -514,8 +559,13 @@ static void sh_done(void)
     OPENSSL_free(sh.freelist);
     OPENSSL_free(sh.bittable);
     OPENSSL_free(sh.bitmalloc);
+#if !defined(_WIN32)
     if (sh.map_result != MAP_FAILED && sh.map_size)
         munmap(sh.map_result, sh.map_size);
+#else
+    if (sh.map_result != NULL && sh.map_size)
+        VirtualFree(sh.map_result, 0, MEM_RELEASE);
+#endif
     memset(&sh, 0, sizeof(sh));
 }
 

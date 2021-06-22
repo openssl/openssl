@@ -8,15 +8,18 @@
 
 Title = MDC2 test vectors
 
+Availablein = legacy
 Digest = MDC2
 Input = "Now is the time for all "
 Output = 42e50cd224baceba760bdd2bd409281a
 
+Availablein = legacy
 Digest = MDC2
 Padding = 1
 Input = "Now is the time for all "
 Output = 42e50cd224baceba760bdd2bd409281a
 
+Availablein = legacy
 Digest = MDC2
 Padding = 2
 Input = "Now is the time for all "

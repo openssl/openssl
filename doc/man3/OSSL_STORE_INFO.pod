@@ -166,7 +166,11 @@ Key parameters.
 
 =item OSSL_STORE_INFO_PKEY
 
-A private/public key of some sort.
+A keypair or just a private key (possibly with key parameters).
+
+=item OSSL_STORE_INFO_PUBKEY
+
+A public key (possibly with key parameters).
 
 =item OSSL_STORE_INFO_CERT
 
@@ -213,9 +217,11 @@ L<ossl_store(7)>, L<OSSL_STORE_open(3)>, L<OSSL_STORE_register_loader(3)>
 
 The OSSL_STORE API was added in OpenSSL 1.1.1.
 
+The OSSL_STORE_INFO_PUBKEY object type was added in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

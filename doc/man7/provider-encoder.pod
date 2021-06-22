@@ -16,13 +16,16 @@ provider-encoder - The OSSL_ENCODER library E<lt>-E<gt> provider functions
 
  /* Encoder parameter accessor and descriptor */
  const OSSL_PARAM *OSSL_FUNC_encoder_gettable_params(void *provctx);
- int encoder_get_params(OSSL_PARAM params[]);
+ int OSSL_FUNC_encoder_get_params(OSSL_PARAM params[]);
 
  /* Functions to construct / destruct / manipulate the encoder context */
  void *OSSL_FUNC_encoder_newctx(void *provctx);
  void OSSL_FUNC_encoder_freectx(void *ctx);
  int OSSL_FUNC_encoder_set_ctx_params(void *ctx, const OSSL_PARAM params[]);
- const OSSL_PARAM *OSSL_FUNC_encoder_settable_ctx_params(void *provctx)
+ const OSSL_PARAM *OSSL_FUNC_encoder_settable_ctx_params(void *provctx);
+
+ /* Functions to check selection support */
+ int OSSL_FUNC_encoder_does_selection(void *provctx, int selection);
 
  /* Functions to encode object data */
  int OSSL_FUNC_encoder_encode(void *ctx, OSSL_CORE_BIO *out,
@@ -33,9 +36,9 @@ provider-encoder - The OSSL_ENCODER library E<lt>-E<gt> provider functions
                               void *cbarg);
 
  /* Functions to import and free a temporary object to be encoded */
- void *encoder_import_object(void *ctx, int selection,
-                             const OSSL_PARAM params[]);
- void encoder_free_object(void *obj);
+ void *OSSL_FUNC_encoder_import_object(void *ctx, int selection,
+                                       const OSSL_PARAM params[]);
+ void OSSL_FUNC_encoder_free_object(void *obj);
 
 
 =head1 DESCRIPTION
@@ -47,7 +50,7 @@ The ENCODER operation is a generic method to encode a provider-native
 object (I<obj_raw>) or an object abstraction (I<object_abstract>, see
 L<provider-object(7)>) into an encoded form, and write the result to
 the given OSSL_CORE_BIO.  If the caller wants to get the encoded
-stream to memory, it should provide a L<BIO_s_membuf(3)>.
+stream to memory, it should provide a L<BIO_s_mem(3)> B<BIO>.
 
 The encoder doesn't need to know more about the B<OSSL_CORE_BIO>
 pointer than being able to pass it to the appropriate BIO upcalls (see
@@ -86,10 +89,10 @@ provider_query_operation() function
 (see L<provider-base(7)/Provider Functions>).
 
 All these "functions" have a corresponding function type definition
-named B<OSSL_{name}_fn>, and a helper function to retrieve the
-function pointer from a B<OSSL_DISPATCH> element named
+named B<OSSL_FUNC_{name}_fn>, and a helper function to retrieve the
+function pointer from an B<OSSL_DISPATCH> element named
 B<OSSL_FUNC_{name}>.
-For example, the "function" OSSL_FUNC_encoder_encode_data() has these:
+For example, the "function" OSSL_FUNC_encoder_encode() has these:
 
  typedef int
      (OSSL_FUNC_encoder_encode_fn)(void *ctx, OSSL_CORE_BIO *out,
@@ -98,7 +101,7 @@ For example, the "function" OSSL_FUNC_encoder_encode_data() has these:
                                    int selection,
                                    OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg);
  static ossl_inline OSSL_FUNC_encoder_encode_fn
-     OSSL_FUNC_encoder_encode_data(const OSSL_DISPATCH *opf);
+     OSSL_FUNC_encoder_encode(const OSSL_DISPATCH *opf);
 
 B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
 macros in L<openssl-core_dispatch.h(7)>, as follows:
@@ -111,7 +114,9 @@ macros in L<openssl-core_dispatch.h(7)>, as follows:
  OSSL_FUNC_encoder_set_ctx_params      OSSL_FUNC_ENCODER_SET_CTX_PARAMS
  OSSL_FUNC_encoder_settable_ctx_params OSSL_FUNC_ENCODER_SETTABLE_CTX_PARAMS
 
- OSSL_FUNC_encoder_encode              OSSL_FUNC_ENCODER_ENCODE_DATA
+ OSSL_FUNC_encoder_does_selection      OSSL_FUNC_ENCODER_DOES_SELECTION
+
+ OSSL_FUNC_encoder_encode              OSSL_FUNC_ENCODER_ENCODE
 
  OSSL_FUNC_encoder_import_object       OSSL_FUNC_ENCODER_IMPORT_OBJECT
  OSSL_FUNC_encoder_free_object         OSSL_FUNC_ENCODER_FREE_OBJECT
@@ -122,14 +127,18 @@ The name of an implementation should match the type of object it handles.
 For example, an implementation that encodes an RSA key should be named "RSA".
 Likewise, an implementation that further encodes DER should be named "DER".
 
-Properties can be use to further specify details about an implementation:
+Properties can be used to further specify details about an implementation:
 
 =over 4
 
 =item output
 
-This property is used to specify what type of output implementation
-produces.  Currently known output types are:
+This property is used to specify what type of output the implementation
+produces.
+
+This property is I<mandatory>.
+
+OpenSSL providers recognize the following output types:
 
 =over 4
 
@@ -147,6 +156,14 @@ An implementation with that output type outputs PEM formatted data.
 
 An implementation with that output type outputs DER formatted data.
 
+=item msblob
+
+An implementation with that output type outputs MSBLOB formatted data.
+
+=item pvk
+
+An implementation with that output type outputs PVK formatted data.
+
 =back
 
 =item structure
@@ -155,6 +172,8 @@ This property is used to specify the structure that is used for the encoded
 object.  An example could be C<pkcs8>, to specify explicitly that an object
 (presumably an asymmetric key pair, in this case) will be wrapped in a
 PKCS#8 structure as part of the encoding.
+
+This property is I<optional>.
 
 =back
 
@@ -171,12 +190,15 @@ be encoded, with a set of bits I<selection> that are passed in an B<int>.
 This set of bits depend entirely on what kind of provider-side object is
 passed.  For example, those bits are assumed to be the same as those used
 with L<provider-keymgmt(7)> (see L<provider-keymgmt(7)/Key Objects>) when
-the object is an asymmetric key.
+the object is an asymmetric keypair.
 
 ENCODER implementations are free to regard the I<selection> as a set of
 hints, but must do so with care.  In the end, the output must make sense,
 and if there's a corresponding decoder, the resulting decoded object must
 match the original object that was encoded.
+
+OSSL_FUNC_encoder_does_selection() should tell if a particular implementation
+supports any of the combinations given by I<selection>.
 
 =head2 Context functions
 
@@ -189,6 +211,7 @@ OSSL_FUNC_encoder_newctx().
 OSSL_FUNC_encoder_set_ctx_params() sets context data according to parameters
 from I<params> that it recognises.  Unrecognised parameters should be
 ignored.
+Passing NULL for I<params> should return true.
 
 OSSL_FUNC_encoder_settable_ctx_params() returns a constant B<OSSL_PARAM>
 array describing the parameters that OSSL_FUNC_encoder_set_ctx_params()
@@ -215,43 +238,13 @@ OSSL_FUNC_encoder_import_object().
 
 =head2 Encoding functions
 
-=for comment There will be a "Decoding functions" title as well
-
-OSSL_FUNC_encoder_encode() should take an provider-native object (in
+OSSL_FUNC_encoder_encode() should take a provider-native object (in
 I<obj_raw>) or an object abstraction (in I<obj_abstract>), and should output
 the object in encoded form to the B<OSSL_CORE_BIO>.  The I<selection> bits,
 if relevant, should determine in greater detail what will be output.
 The encoding functions also take an B<OSSL_PASSPHRASE_CALLBACK> function
 pointer along with a pointer to application data I<cbarg>, which should be
 used when a pass phrase prompt is needed.
-
-=head2 Encoder parameters
-
-The ENCODER implementation itself has parameters that can be used to
-determine how it fits in a chain of encoders:
-
-=over 4
-
-=item "input-type" (B<OSSL_ENCODER_PARAM_INPUT_TYPE>) <UTF8 string>
-
-This is used to specify a distinct type name for the object passed as
-I<obj_raw> to OSSL_FUNC_encoder_encode.
-
-This parameter is an optional parameter, to be used if the name of the
-implementation can be ambiguous because of aliases, and something more
-deterministic is needed.
-
-=item "output-type" (B<OSSL_ENCODER_PARAM_OUTPUT_TYPE>) <UTF8 string>
-
-This is used to specify the output type for an ENCODER implementation.
-
-This parameter is I<mandatory>.
-
-=for comment If we had functionality to get the value of a specific property
-in a set of properties, it would be possible to determine the output type
-from the C<output> property.
-
-=back
 
 =head2 Encoder operation parameters
 
@@ -283,6 +276,11 @@ However, it is recommended that implementations that do not handle
 property strings return an error on receiving this parameter unless
 its value NULL or the empty string.
 
+=item "save-parameters" (B<OSSL_ENCODER_PARAM_SAVE_PARAMETERS>) <integer>
+
+If set to 0 disables saving of key domain parameters. Default is 1.
+It currently has an effect only on DSA keys.
+
 =back
 
 Parameters currently recognised by the built-in pass phrase callback:
@@ -303,12 +301,15 @@ OSSL_FUNC_encoder_newctx() returns a pointer to a context, or NULL on
 failure.
 
 OSSL_FUNC_encoder_set_ctx_params() returns 1, unless a recognised
-parameters was invalid or caused an error, for which 0 is returned.
+parameter was invalid or caused an error, for which 0 is returned.
 
 OSSL_FUNC_encoder_settable_ctx_params() returns a pointer to an array of
 constant B<OSSL_PARAM> elements.
 
-OSSL_FUNC_encoder_encode() return 1 on success, or 0 on failure.
+OSSL_FUNC_encoder_does_selection() returns 1 if the encoder implementation
+supports any of the I<selection> bits, otherwise 0.
+
+OSSL_FUNC_encoder_encode() returns 1 on success, or 0 on failure.
 
 =head1 SEE ALSO
 
@@ -320,7 +321,7 @@ The ENCODER interface was introduced in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -24,6 +24,15 @@
 #if defined(OPENSSL_SYS_VMS_DECC) && !defined(__U_INT)
 # define __U_INT
 typedef unsigned int u_int;
+#endif
+
+#ifdef _WIN32
+/*
+ * With MSVC, certain POSIX functions have been renamed to have an underscore
+ * prefix.
+ */
+# include <process.h>
+# define getpid _getpid
 #endif
 
 #ifndef OPENSSL_NO_SOCK
@@ -166,7 +175,9 @@ int init_client(int *sock, const char *host, const char *port,
     if (*sock == INVALID_SOCKET) {
         if (bindaddr != NULL && !found) {
             BIO_printf(bio_err, "Can't bind %saddress for %s%s%s\n",
+#ifdef AF_INET6
                        BIO_ADDRINFO_family(res) == AF_INET6 ? "IPv6 " :
+#endif
                        BIO_ADDRINFO_family(res) == AF_INET ? "IPv4 " :
                        BIO_ADDRINFO_family(res) == AF_UNIX ? "unix " : "",
                        bindhost != NULL ? bindhost : "",
@@ -187,6 +198,42 @@ out:
     }
     BIO_ADDRINFO_free(res);
     return ret;
+}
+
+int report_server_accept(BIO *out, int asock, int with_address, int with_pid)
+{
+    int success = 1;
+
+    if (BIO_printf(out, "ACCEPT") <= 0)
+        return 0;
+    if (with_address) {
+        union BIO_sock_info_u info;
+        char *hostname = NULL;
+        char *service = NULL;
+
+        if ((info.addr = BIO_ADDR_new()) != NULL
+            && BIO_sock_info(asock, BIO_SOCK_INFO_ADDRESS, &info)
+            && (hostname = BIO_ADDR_hostname_string(info.addr, 1)) != NULL
+            && (service = BIO_ADDR_service_string(info.addr, 1)) != NULL) {
+            success = BIO_printf(out,
+                                 strchr(hostname, ':') == NULL
+                                 ? /* IPv4 */ " %s:%s"
+                                 : /* IPv6 */ " [%s]:%s",
+                                 hostname, service) > 0;
+        } else {
+            (void)BIO_printf(out, "unknown:error\n");
+            success = 0;
+        }
+        OPENSSL_free(hostname);
+        OPENSSL_free(service);
+        BIO_ADDR_free(info.addr);
+    }
+    if (with_pid)
+        success = success && BIO_printf(out, " PID=%d", getpid()) > 0;
+    success = success && BIO_printf(out, "\n") > 0;
+    (void)BIO_flush(out);
+
+    return success;
 }
 
 /*
@@ -243,6 +290,7 @@ int do_server(int *accept_sock, const char *host, const char *port,
     sock_protocol = BIO_ADDRINFO_protocol(res);
     sock_address = BIO_ADDRINFO_address(res);
     next = BIO_ADDRINFO_next(res);
+#ifdef AF_INET6
     if (sock_family == AF_INET6)
         sock_options |= BIO_SOCK_V6_ONLY;
     if (next != NULL
@@ -257,6 +305,7 @@ int do_server(int *accept_sock, const char *host, const char *port,
             sock_options &= ~BIO_SOCK_V6_ONLY;
         }
     }
+#endif
 
     asock = BIO_socket(sock_family, sock_type, sock_protocol, 0);
     if (asock == INVALID_SOCKET
@@ -292,36 +341,10 @@ int do_server(int *accept_sock, const char *host, const char *port,
     BIO_ADDRINFO_free(res);
     res = NULL;
 
-    if (sock_port == 0) {
-        /* dynamically allocated port, report which one */
-        union BIO_sock_info_u info;
-        char *hostname = NULL;
-        char *service = NULL;
-        int success = 0;
-
-        if ((info.addr = BIO_ADDR_new()) != NULL
-            && BIO_sock_info(asock, BIO_SOCK_INFO_ADDRESS, &info)
-            && (hostname = BIO_ADDR_hostname_string(info.addr, 1)) != NULL
-            && (service = BIO_ADDR_service_string(info.addr, 1)) != NULL
-            && BIO_printf(bio_s_out,
-                          strchr(hostname, ':') == NULL
-                          ? /* IPv4 */ "ACCEPT %s:%s\n"
-                          : /* IPv6 */ "ACCEPT [%s]:%s\n",
-                          hostname, service) > 0)
-            success = 1;
-
-        (void)BIO_flush(bio_s_out);
-        OPENSSL_free(hostname);
-        OPENSSL_free(service);
-        BIO_ADDR_free(info.addr);
-        if (!success) {
-            BIO_closesocket(asock);
-            ERR_print_errors(bio_err);
-            goto end;
-        }
-    } else {
-        (void)BIO_printf(bio_s_out, "ACCEPT\n");
-        (void)BIO_flush(bio_s_out);
+    if (!report_server_accept(bio_s_out, asock, sock_port == 0, 0)) {
+        BIO_closesocket(asock);
+        ERR_print_errors(bio_err);
+        goto end;
     }
 
     if (accept_sock != NULL)

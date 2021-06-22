@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -20,17 +20,17 @@
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
 #include <openssl/core_names.h>
+#include <openssl/proverr.h>
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
 #include "crypto/evp.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
 #include "e_os.h"
 
-#define HKDF_MAXBUF 1024
+#define HKDF_MAXBUF 2048
 
 static OSSL_FUNC_kdf_newctx_fn kdf_hkdf_new;
 static OSSL_FUNC_kdf_freectx_fn kdf_hkdf_free;
@@ -41,12 +41,12 @@ static OSSL_FUNC_kdf_set_ctx_params_fn kdf_hkdf_set_ctx_params;
 static OSSL_FUNC_kdf_gettable_ctx_params_fn kdf_hkdf_gettable_ctx_params;
 static OSSL_FUNC_kdf_get_ctx_params_fn kdf_hkdf_get_ctx_params;
 
-static int HKDF(const EVP_MD *evp_md,
+static int HKDF(OSSL_LIB_CTX *libctx, const EVP_MD *evp_md,
                 const unsigned char *salt, size_t salt_len,
                 const unsigned char *key, size_t key_len,
                 const unsigned char *info, size_t info_len,
                 unsigned char *okm, size_t okm_len);
-static int HKDF_Extract(const EVP_MD *evp_md,
+static int HKDF_Extract(OSSL_LIB_CTX *libctx, const EVP_MD *evp_md,
                         const unsigned char *salt, size_t salt_len,
                         const unsigned char *ikm, size_t ikm_len,
                         unsigned char *prk, size_t prk_len);
@@ -116,19 +116,21 @@ static size_t kdf_hkdf_size(KDF_HKDF *ctx)
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
         return 0;
     }
-    sz = EVP_MD_size(md);
+    sz = EVP_MD_get_size(md);
     if (sz < 0)
         return 0;
 
     return sz;
 }
 
-static int kdf_hkdf_derive(void *vctx, unsigned char *key, size_t keylen)
+static int kdf_hkdf_derive(void *vctx, unsigned char *key, size_t keylen,
+                           const OSSL_PARAM params[])
 {
     KDF_HKDF *ctx = (KDF_HKDF *)vctx;
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
     const EVP_MD *md;
 
-    if (!ossl_prov_is_running())
+    if (!ossl_prov_is_running() || !kdf_hkdf_set_ctx_params(ctx, params))
         return 0;
 
     md = ossl_prov_digest_md(&ctx->digest);
@@ -147,13 +149,12 @@ static int kdf_hkdf_derive(void *vctx, unsigned char *key, size_t keylen)
 
     switch (ctx->mode) {
     case EVP_KDF_HKDF_MODE_EXTRACT_AND_EXPAND:
-        return HKDF(md, ctx->salt, ctx->salt_len, ctx->key,
-                    ctx->key_len, ctx->info, ctx->info_len, key,
-                    keylen);
+        return HKDF(libctx, md, ctx->salt, ctx->salt_len,
+                    ctx->key, ctx->key_len, ctx->info, ctx->info_len, key, keylen);
 
     case EVP_KDF_HKDF_MODE_EXTRACT_ONLY:
-        return HKDF_Extract(md, ctx->salt, ctx->salt_len, ctx->key,
-                            ctx->key_len, key, keylen);
+        return HKDF_Extract(libctx, md, ctx->salt, ctx->salt_len,
+                            ctx->key, ctx->key_len, key, keylen);
 
     case EVP_KDF_HKDF_MODE_EXPAND_ONLY:
         return HKDF_Expand(md, ctx->key, ctx->key_len, ctx->info,
@@ -168,10 +169,13 @@ static int kdf_hkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
     KDF_HKDF *ctx = vctx;
-    OPENSSL_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
     int n;
 
-    if (!ossl_prov_digest_load_from_params(&ctx->digest, params, provctx))
+    if (params == NULL)
+        return 1;
+
+    if (!ossl_prov_digest_load_from_params(&ctx->digest, params, libctx))
         return 0;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_MODE)) != NULL) {
@@ -237,7 +241,8 @@ static int kdf_hkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *kdf_hkdf_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *kdf_hkdf_settable_ctx_params(ossl_unused void *ctx,
+                                                      ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_settable_ctx_params[] = {
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_MODE, NULL, 0),
@@ -262,7 +267,8 @@ static int kdf_hkdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
     return -2;
 }
 
-static const OSSL_PARAM *kdf_hkdf_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *kdf_hkdf_gettable_ctx_params(ossl_unused void *ctx,
+                                                      ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
         OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL),
@@ -271,7 +277,7 @@ static const OSSL_PARAM *kdf_hkdf_gettable_ctx_params(ossl_unused void *provctx)
     return known_gettable_ctx_params;
 }
 
-const OSSL_DISPATCH kdf_hkdf_functions[] = {
+const OSSL_DISPATCH ossl_kdf_hkdf_functions[] = {
     { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))kdf_hkdf_new },
     { OSSL_FUNC_KDF_FREECTX, (void(*)(void))kdf_hkdf_free },
     { OSSL_FUNC_KDF_RESET, (void(*)(void))kdf_hkdf_reset },
@@ -310,7 +316,7 @@ const OSSL_DISPATCH kdf_hkdf_functions[] = {
  *   2.3.  Step 2: Expand
  *     HKDF-Expand(PRK, info, L) -> OKM
  */
-static int HKDF(const EVP_MD *evp_md,
+static int HKDF(OSSL_LIB_CTX *libctx, const EVP_MD *evp_md,
                 const unsigned char *salt, size_t salt_len,
                 const unsigned char *ikm, size_t ikm_len,
                 const unsigned char *info, size_t info_len,
@@ -320,13 +326,14 @@ static int HKDF(const EVP_MD *evp_md,
     int ret, sz;
     size_t prk_len;
 
-    sz = EVP_MD_size(evp_md);
+    sz = EVP_MD_get_size(evp_md);
     if (sz < 0)
         return 0;
     prk_len = (size_t)sz;
 
     /* Step 1: HKDF-Extract(salt, IKM) -> PRK */
-    if (!HKDF_Extract(evp_md, salt, salt_len, ikm, ikm_len, prk, prk_len))
+    if (!HKDF_Extract(libctx, evp_md,
+                      salt, salt_len, ikm, ikm_len, prk, prk_len))
         return 0;
 
     /* Step 2: HKDF-Expand(PRK, info, L) -> OKM */
@@ -360,12 +367,12 @@ static int HKDF(const EVP_MD *evp_md,
  *
  *   PRK = HMAC-Hash(salt, IKM)
  */
-static int HKDF_Extract(const EVP_MD *evp_md,
+static int HKDF_Extract(OSSL_LIB_CTX *libctx, const EVP_MD *evp_md,
                         const unsigned char *salt, size_t salt_len,
                         const unsigned char *ikm, size_t ikm_len,
                         unsigned char *prk, size_t prk_len)
 {
-    int sz = EVP_MD_size(evp_md);
+    int sz = EVP_MD_get_size(evp_md);
 
     if (sz < 0)
         return 0;
@@ -374,7 +381,10 @@ static int HKDF_Extract(const EVP_MD *evp_md,
         return 0;
     }
     /* calc: PRK = HMAC-Hash(salt, IKM) */
-    return HMAC(evp_md, salt, salt_len, ikm, ikm_len, prk, NULL) != NULL;
+    return
+        EVP_Q_mac(libctx, "HMAC", NULL, EVP_MD_get0_name(evp_md), NULL, salt,
+                  salt_len, ikm, ikm_len, prk, EVP_MD_get_size(evp_md), NULL)
+        != NULL;
 }
 
 /*
@@ -427,7 +437,7 @@ static int HKDF_Expand(const EVP_MD *evp_md,
     unsigned char prev[EVP_MAX_MD_SIZE];
     size_t done_len = 0, dig_len, n;
 
-    sz = EVP_MD_size(evp_md);
+    sz = EVP_MD_get_size(evp_md);
     if (sz <= 0)
         return 0;
     dig_len = (size_t)sz;

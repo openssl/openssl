@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -114,9 +114,31 @@ static int test_property_parse(int n)
         && add_property_names("sky", "groan", "cold", "today", "tomorrow", "n",
                               NULL)
         && TEST_ptr(p = ossl_parse_property(NULL, parser_tests[n].defn))
-        && TEST_ptr(q = ossl_parse_query(NULL, parser_tests[n].query))
+        && TEST_ptr(q = ossl_parse_query(NULL, parser_tests[n].query, 0))
         && TEST_int_eq(ossl_property_match_count(q, p), parser_tests[n].e))
         r = 1;
+    ossl_property_free(p);
+    ossl_property_free(q);
+    ossl_method_store_free(store);
+    return r;
+}
+
+static int test_property_query_value_create(void)
+{
+    OSSL_METHOD_STORE *store;
+    OSSL_PROPERTY_LIST *p = NULL, *q = NULL, *o = NULL;
+    int r = 0;
+
+    /* The property value used here must not be used in other test cases */
+    if (TEST_ptr(store = ossl_method_store_new(NULL))
+        && add_property_names("wood", NULL)
+        && TEST_ptr(p = ossl_parse_query(NULL, "wood=oak", 0)) /* undefined */
+        && TEST_ptr(q = ossl_parse_query(NULL, "wood=oak", 1)) /* creates */
+        && TEST_ptr(o = ossl_parse_query(NULL, "wood=oak", 0)) /* defined */
+        && TEST_int_eq(ossl_property_match_count(q, p), -1)
+        && TEST_int_eq(ossl_property_match_count(q, o), 1))
+        r = 1;
+    ossl_property_free(o);
     ossl_property_free(p);
     ossl_property_free(q);
     ossl_method_store_free(store);
@@ -160,8 +182,9 @@ static int test_property_merge(int n)
         && add_property_names("colour", "urn", "clouds", "pot", "day", "night",
                               NULL)
         && TEST_ptr(prop = ossl_parse_property(NULL, merge_tests[n].prop))
-        && TEST_ptr(q_global = ossl_parse_query(NULL, merge_tests[n].q_global))
-        && TEST_ptr(q_local = ossl_parse_query(NULL, merge_tests[n].q_local))
+        && TEST_ptr(q_global = ossl_parse_query(NULL, merge_tests[n].q_global,
+                                                0))
+        && TEST_ptr(q_local = ossl_parse_query(NULL, merge_tests[n].q_local, 0))
         && TEST_ptr(q_combined = ossl_property_merge(q_local, q_global))
         && TEST_int_ge(ossl_property_match_count(q_combined, prop), 0))
         r = 1;
@@ -220,7 +243,7 @@ static int test_definition_compares(int n)
     r = TEST_ptr(store = ossl_method_store_new(NULL))
         && add_property_names("alpha", "omega", NULL)
         && TEST_ptr(d = ossl_parse_property(NULL, definition_tests[n].defn))
-        && TEST_ptr(q = ossl_parse_query(NULL, definition_tests[n].query))
+        && TEST_ptr(q = ossl_parse_query(NULL, definition_tests[n].query, 0))
         && TEST_int_eq(ossl_property_match_count(q, d), definition_tests[n].e);
 
     ossl_property_free(d);
@@ -387,9 +410,9 @@ err:
 static int test_fips_mode(void)
 {
     int ret = 0;
-    OPENSSL_CTX *ctx = NULL;
+    OSSL_LIB_CTX *ctx = NULL;
 
-    if (!TEST_ptr(ctx = OPENSSL_CTX_new()))
+    if (!TEST_ptr(ctx = OSSL_LIB_CTX_new()))
         goto err;
 
     ret = TEST_true(EVP_set_default_properties(ctx, "default=yes,fips=yes"))
@@ -408,14 +431,67 @@ static int test_fips_mode(void)
           && TEST_true(EVP_default_properties_enable_fips(ctx, 0))
           && TEST_false(EVP_default_properties_is_fips_enabled(ctx));
 err:
-    OPENSSL_CTX_free(ctx);
+    OSSL_LIB_CTX_free(ctx);
     return ret;
 }
 
+static struct {
+    const char *in;
+    const char *out;
+} to_string_tests[] = {
+    { "fips=yes", "fips=yes" },
+    { "fips!=yes", "fips!=yes" },
+    { "fips = yes", "fips=yes" },
+    { "fips", "fips=yes" },
+    { "fips=no", "fips=no" },
+    { "-fips", "-fips" },
+    { "?fips=yes", "?fips=yes" },
+    { "fips=yes,provider=fips", "fips=yes,provider=fips" },
+    { "fips = yes , provider = fips", "fips=yes,provider=fips" },
+    { "fips=yes,provider!=fips", "fips=yes,provider!=fips" },
+    { "fips=yes,?provider=fips", "fips=yes,?provider=fips" },
+    { "fips=yes,-provider", "fips=yes,-provider" },
+      /* foo is an unknown internal name */
+    { "foo=yes,fips=yes", "fips=yes"},
+    { "", "" },
+    { "fips=3", "fips=3" },
+    { "fips=-3", "fips=-3" },
+    { NULL, "" }
+};
+
+static int test_property_list_to_string(int i)
+{
+    OSSL_PROPERTY_LIST *pl = NULL;
+    int ret = 0;
+    size_t bufsize;
+    char *buf = NULL;
+
+    if (to_string_tests[i].in != NULL
+            && !TEST_ptr(pl = ossl_parse_query(NULL, to_string_tests[i].in, 1)))
+        goto err;
+    bufsize = ossl_property_list_to_string(NULL, pl, NULL, 0);
+    if (!TEST_size_t_gt(bufsize, 0))
+        goto err;
+    buf = OPENSSL_malloc(bufsize);
+    if (!TEST_ptr(buf)
+            || !TEST_size_t_eq(ossl_property_list_to_string(NULL, pl, buf,
+                                                            bufsize),
+                               bufsize)
+            || !TEST_str_eq(to_string_tests[i].out, buf)
+            || !TEST_size_t_eq(bufsize, strlen(to_string_tests[i].out) + 1))
+        goto err;
+
+    ret = 1;
+ err:
+    OPENSSL_free(buf);
+    ossl_property_free(pl);
+    return ret;
+}
 
 int setup_tests(void)
 {
     ADD_TEST(test_property_string);
+    ADD_TEST(test_property_query_value_create);
     ADD_ALL_TESTS(test_property_parse, OSSL_NELEM(parser_tests));
     ADD_ALL_TESTS(test_property_merge, OSSL_NELEM(merge_tests));
     ADD_TEST(test_property_defn_cache);
@@ -424,5 +500,6 @@ int setup_tests(void)
     ADD_TEST(test_property);
     ADD_TEST(test_query_cache_stochastic);
     ADD_TEST(test_fips_mode);
+    ADD_ALL_TESTS(test_property_list_to_string, OSSL_NELEM(to_string_tests));
     return 1;
 }

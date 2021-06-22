@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -22,58 +22,9 @@ static const char *untrusted_f;
 static const char *bad_f;
 static const char *req_f;
 
-static X509 *load_cert_from_file(const char *filename)
-{
-    X509 *cert = NULL;
-    BIO *bio;
+#define load_cert_from_file(file) load_cert_pem(file, NULL)
 
-    bio = BIO_new_file(filename, "r");
-    if (bio != NULL)
-        cert = PEM_read_bio_X509(bio, NULL, 0, NULL);
-    BIO_free(bio);
-    return cert;
-}
-
-static STACK_OF(X509) *load_certs_from_file(const char *filename)
-{
-    STACK_OF(X509) *certs;
-    BIO *bio;
-    X509 *x;
-
-    bio = BIO_new_file(filename, "r");
-
-    if (bio == NULL) {
-        return NULL;
-    }
-
-    certs = sk_X509_new_null();
-    if (certs == NULL) {
-        BIO_free(bio);
-        return NULL;
-    }
-
-    ERR_set_mark();
-    do {
-        x = PEM_read_bio_X509(bio, NULL, 0, NULL);
-        if (x != NULL && !sk_X509_push(certs, x)) {
-            sk_X509_pop_free(certs, X509_free);
-            BIO_free(bio);
-            return NULL;
-        } else if (x == NULL) {
-            /*
-             * We probably just ran out of certs, so ignore any errors
-             * generated
-             */
-            ERR_pop_to_mark();
-        }
-    } while (x != NULL);
-
-    BIO_free(bio);
-
-    return certs;
-}
-
-/*
+/*-
  * Test for CVE-2015-1793 (Alternate Chains Certificate Forgery)
  *
  * Chain is as follows:
@@ -122,7 +73,7 @@ static int test_alt_chains_cert_forgery(void)
     if (!X509_LOOKUP_load_file(lookup, roots_f, X509_FILETYPE_PEM))
         goto err;
 
-    untrusted = load_certs_from_file(untrusted_f);
+    untrusted = load_certs_pem(untrusted_f);
 
     if ((x = load_cert_from_file(bad_f)) == NULL)
         goto err;
@@ -146,37 +97,6 @@ static int test_alt_chains_cert_forgery(void)
     sk_X509_pop_free(untrusted, X509_free);
     X509_STORE_free(store);
     return ret;
-}
-
-static int test_store_ctx(void)
-{
-    X509_STORE_CTX *sctx = NULL;
-    X509 *x = NULL;
-    int testresult = 0, ret;
-
-    x = load_cert_from_file(bad_f);
-    if (x == NULL)
-        goto err;
-
-    sctx = X509_STORE_CTX_new();
-    if (sctx == NULL)
-        goto err;
-
-    if (!X509_STORE_CTX_init(sctx, NULL, x, NULL))
-        goto err;
-
-    /* Verifying a cert where we have no trusted certs should fail */
-    ret = X509_verify_cert(sctx);
-
-    if (ret == 0) {
-        /* This is the result we were expecting: Test passed */
-        testresult = 1;
-    }
-
- err:
-    X509_STORE_CTX_free(sctx);
-    X509_free(x);
-    return testresult;
 }
 
 OPT_TEST_DECLARE_USAGE("roots.pem untrusted.pem bad.pem\n")
@@ -255,30 +175,48 @@ static int test_req_distinguishing_id(void)
     return ret;
 }
 
-static int test_self_signed(const char *filename, int expected)
+static int test_self_signed(const char *filename, int use_trusted, int expected)
 {
-    X509 *cert;
+    X509 *cert = load_cert_from_file(filename); /* may result in NULL */
+    STACK_OF(X509) *trusted = sk_X509_new_null();
+    X509_STORE_CTX *ctx = X509_STORE_CTX_new();
     int ret;
 
-    cert = load_cert_from_file(filename); /* may result in NULL */
     ret = TEST_int_eq(X509_self_signed(cert, 1), expected);
+
+    if (cert != NULL) {
+        if (use_trusted)
+            ret = ret && TEST_true(sk_X509_push(trusted, cert));
+        ret = ret && TEST_true(X509_STORE_CTX_init(ctx, NULL, cert, NULL));
+        X509_STORE_CTX_set0_trusted_stack(ctx, trusted);
+        ret = ret && TEST_int_eq(X509_verify_cert(ctx), expected);
+    }
+
+    X509_STORE_CTX_free(ctx);
+    sk_X509_free(trusted);
     X509_free(cert);
     return ret;
 }
 
 static int test_self_signed_good(void)
 {
-    return test_self_signed(root_f, 1);
+    return test_self_signed(root_f, 1, 1);
 }
 
 static int test_self_signed_bad(void)
 {
-    return test_self_signed(bad_f, 0);
+    return test_self_signed(bad_f, 1, 0);
 }
 
 static int test_self_signed_error(void)
 {
-    return test_self_signed("nonexistent file name", -1);
+    return test_self_signed("nonexistent file name", 1, -1);
+}
+
+static int test_store_ctx(void)
+{
+    /* Verifying a cert where we have no trusted certs should fail */
+    return test_self_signed(bad_f, 0, 0);
 }
 
 int setup_tests(void)

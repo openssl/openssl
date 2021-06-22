@@ -26,11 +26,11 @@ int X509V3_EXT_add(X509V3_EXT_METHOD *ext)
 {
     if (ext_list == NULL
         && (ext_list = sk_X509V3_EXT_METHOD_new(ext_cmp)) == NULL) {
-        X509V3err(X509V3_F_X509V3_EXT_ADD, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     if (!sk_X509V3_EXT_METHOD_push(ext_list, ext)) {
-        X509V3err(X509V3_F_X509V3_EXT_ADD, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     return 1;
@@ -89,11 +89,11 @@ int X509V3_EXT_add_alias(int nid_to, int nid_from)
     X509V3_EXT_METHOD *tmpext;
 
     if ((ext = X509V3_EXT_get_nid(nid_from)) == NULL) {
-        X509V3err(X509V3_F_X509V3_EXT_ADD_ALIAS, X509V3_R_EXTENSION_NOT_FOUND);
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_EXTENSION_NOT_FOUND);
         return 0;
     }
     if ((tmpext = OPENSSL_malloc(sizeof(*tmpext))) == NULL) {
-        X509V3err(X509V3_F_X509V3_EXT_ADD_ALIAS, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     *tmpext = *ext;
@@ -265,8 +265,7 @@ int X509V3_add1_i2d(STACK_OF(X509_EXTENSION) **x, int nid, void *value,
     ext = X509V3_EXT_i2d(nid, crit, value);
 
     if (!ext) {
-        X509V3err(X509V3_F_X509V3_ADD1_I2D,
-                  X509V3_R_ERROR_CREATING_EXTENSION);
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_ERROR_CREATING_EXTENSION);
         return 0;
     }
 
@@ -290,7 +289,7 @@ int X509V3_add1_i2d(STACK_OF(X509_EXTENSION) **x, int nid, void *value,
     return 1;
 
  m_fail:
-    /* X509V3err(X509V3_F_X509V3_ADD1_I2D, ERR_R_MALLOC_FAILURE); */
+    /* ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE); */
     if (ret != *x)
         sk_X509_EXTENSION_free(ret);
     X509_EXTENSION_free(ext);
@@ -298,6 +297,6 @@ int X509V3_add1_i2d(STACK_OF(X509_EXTENSION) **x, int nid, void *value,
 
  err:
     if (!(flags & X509V3_ADD_SILENT))
-        X509V3err(X509V3_F_X509V3_ADD1_I2D, errcode);
+        ERR_raise(ERR_LIB_X509V3, errcode);
     return 0;
 }

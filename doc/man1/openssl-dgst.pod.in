@@ -16,9 +16,10 @@ B<openssl> B<dgst>|I<digest>
 [B<-list>]
 [B<-hex>]
 [B<-binary>]
+[B<-xoflen> I<length>]
 [B<-r>]
 [B<-out> I<filename>]
-[B<-sign> I<filename>]
+[B<-sign> I<filename>|I<uri>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-passin> I<arg>]
 [B<-verify> I<filename>]
@@ -29,8 +30,7 @@ B<openssl> B<dgst>|I<digest>
 [B<-mac> I<alg>]
 [B<-macopt> I<nm>:I<v>]
 [B<-fips-fingerprint>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- output_off() if $disabled{"deprecated-3.0"}; ""
+{- $OpenSSL::safe::opt_engine_synopsis -}{- output_off() if $disabled{"deprecated-3.0"}; ""
 -}[B<-engine_impl> I<id>]{-
   output_on() if $disabled{"deprecated-3.0"}; "" -}
 {- $OpenSSL::safe::opt_r_synopsis -}
@@ -85,6 +85,10 @@ signatures using B<-hex>.
 
 Output the digest or signature in binary form.
 
+=item B<-xoflen> I<length>
+
+Set the output length for XOF algorithms, such as B<shake128>.
+
 =item B<-r>
 
 =for openssl foreign manual sha1sum(1)
@@ -96,17 +100,16 @@ Used by programs like L<sha1sum(1)>.
 
 Filename to output to, or standard output by default.
 
-=item B<-sign> I<filename>
+=item B<-sign> I<filename>|I<uri>
 
-Digitally sign the digest using the private key in "filename". Note this option
+Digitally sign the digest using the given private key. Note this option
 does not support Ed25519 or Ed448 private keys. Use the L<openssl-pkeyutl(1)>
 command instead for this.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The format of the key to sign with; the default is B<PEM>.
-The only value with effect is B<ENGINE>; all others have become obsolete.
-See L<openssl(1)/Format Options> for details.
+The format of the key to sign with; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-sigopt> I<nm>:I<v>
 
@@ -116,12 +119,12 @@ Names and values of these options are algorithm-specific.
 =item B<-passin> I<arg>
 
 The private key password source. For more information about the format of I<arg>
-see L<openssl(1)/Pass Phrase Options>.
+see L<openssl-passphrase-options(1)>.
 
 =item B<-verify> I<filename>
 
 Verify the signature using the public key in "filename".
-The output is either "Verification OK" or "Verification Failure".
+The output is either "Verified OK" or "Verification Failure".
 
 =item B<-prverify> I<filename>
 
@@ -252,14 +255,11 @@ L<openssl-mac(1)>
 The default digest was changed from MD5 to SHA256 in OpenSSL 1.1.0.
 The FIPS-related options were removed in OpenSSL 1.1.0.
 
-All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
-and have no effect.
-
 The B<-engine> and B<-engine_impl> options were deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

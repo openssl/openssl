@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -75,7 +75,7 @@ my @opensslcpphandlers = (
 #if$1 OPENSSL_NO_DEPRECATEDIN_$2
 EOF
       }
-   }
+    }
 );
 my @cpphandlers = (
     ##################################################################
@@ -261,14 +261,25 @@ my @opensslchandlers = (
     #####
     # Deprecated stuff, by OpenSSL release.
 
-    # We trick the parser by pretending that the declaration is wrapped in a
-    # check if the DEPRECATEDIN macro is defined or not.  Callers of parse()
-    # will have to decide what to do with it.
-    { regexp   => qr/(DEPRECATEDIN_\d+_\d+(?:_\d+)?)<<<\((.*)\)>>>/,
-      massager => sub { return (<<"EOF");
-#ifndef $1
-$2;
-#endif
+    # OSSL_DEPRECATEDIN_x_y[_z] is simply ignored.  Such declarations are
+    # supposed to be guarded with an '#ifdef OPENSSL_NO_DEPRECATED_x_y[_z]'
+    { regexp   => qr/OSSL_DEPRECATEDIN_\d+_\d+(?:_\d+)?\s+(.*)/,
+      massager => sub { return $1; },
+    },
+    { regexp   => qr/(.*?)\s+OSSL_DEPRECATEDIN_\d+_\d+(?:_\d+)?\s+(.*)/,
+      massager => sub { return "$1 $2"; },
+    },
+
+    #####
+    # Core stuff
+
+    # OSSL_CORE_MAKE_FUNC is a macro to create the necessary data and inline
+    # function the libcrypto<->provider interface
+    { regexp   => qr/OSSL_CORE_MAKE_FUNC<<<\((.*?),(.*?),(.*?)\)>>>/,
+      massager => sub {
+          return (<<"EOF");
+typedef $1 OSSL_FUNC_$2_fn$3;
+static ossl_inline OSSL_FUNC_$2_fn *OSSL_FUNC_$2(const OSSL_DISPATCH *opf);
 EOF
       },
     },
@@ -498,9 +509,27 @@ int $2_dup(void);
 EOF
       }
     },
+    # Universal translator of attributed PEM declarators
+    { regexp   => qr/
+          DECLARE_ASN1
+          (_ENCODE_FUNCTIONS_only|_ENCODE_FUNCTIONS|_ENCODE_FUNCTIONS_name
+           |_ALLOC_FUNCTIONS_name|_ALLOC_FUNCTIONS|_FUNCTIONS_name|_FUNCTIONS
+           |_NDEF_FUNCTION|_PRINT_FUNCTION|_PRINT_FUNCTION_name
+           |_DUP_FUNCTION|_DUP_FUNCTION_name)
+          _attr
+          <<<\(\s*OSSL_DEPRECATEDIN_(.*?)\s*,(.*?)\)>>>
+      /x,
+      massager => sub { return (<<"EOF");
+DECLARE_ASN1$1($3)
+EOF
+      },
+    },
     { regexp   => qr/DECLARE_PKCS12_SET_OF<<<\((.*)\)>>>/,
       massager => sub { return (); }
     },
+
+    #####
+    # PEM stuff
     { regexp   => qr/DECLARE_PEM(?|_rw|_rw_cb|_rw_const)<<<\((.*?),.*\)>>>/,
       massager => sub { return (<<"EOF");
 #ifndef OPENSSL_NO_STDIO
@@ -512,9 +541,21 @@ int PEM_write_bio_$1(void);
 EOF
       },
     },
-
-    #####
-    # PEM stuff
+    { regexp   => qr/DECLARE_PEM(?|_rw|_rw_cb|_rw_const)_ex<<<\((.*?),.*\)>>>/,
+      massager => sub { return (<<"EOF");
+#ifndef OPENSSL_NO_STDIO
+int PEM_read_$1(void);
+int PEM_write_$1(void);
+int PEM_read_$1_ex(void);
+int PEM_write_$1_ex(void);
+#endif
+int PEM_read_bio_$1(void);
+int PEM_write_bio_$1(void);
+int PEM_read_bio_$1_ex(void);
+int PEM_write_bio_$1_ex(void);
+EOF
+      },
+    },
     { regexp   => qr/DECLARE_PEM(?|_write|_write_cb|_write_const)<<<\((.*?),.*\)>>>/,
       massager => sub { return (<<"EOF");
 #ifndef OPENSSL_NO_STDIO
@@ -524,12 +565,47 @@ int PEM_write_bio_$1(void);
 EOF
       },
     },
+    { regexp   => qr/DECLARE_PEM(?|_write|_write_cb|_write_const)_ex<<<\((.*?),.*\)>>>/,
+      massager => sub { return (<<"EOF");
+#ifndef OPENSSL_NO_STDIO
+int PEM_write_$1(void);
+int PEM_write_$1_ex(void);
+#endif
+int PEM_write_bio_$1(void);
+int PEM_write_bio_$1_ex(void);
+EOF
+      },
+    },
     { regexp   => qr/DECLARE_PEM(?|_read|_read_cb)<<<\((.*?),.*\)>>>/,
       massager => sub { return (<<"EOF");
 #ifndef OPENSSL_NO_STDIO
 int PEM_read_$1(void);
 #endif
 int PEM_read_bio_$1(void);
+EOF
+      },
+    },
+    { regexp   => qr/DECLARE_PEM(?|_read|_read_cb)_ex<<<\((.*?),.*\)>>>/,
+      massager => sub { return (<<"EOF");
+#ifndef OPENSSL_NO_STDIO
+int PEM_read_$1(void);
+int PEM_read_$1_ex(void);
+#endif
+int PEM_read_bio_$1(void);
+int PEM_read_bio_$1_ex(void);
+EOF
+      },
+    },
+    # Universal translator of attributed PEM declarators
+    { regexp   => qr/
+          DECLARE_PEM
+          ((?:_rw|_rw_cb|_rw_const|_write|_write_cb|_write_const|_read|_read_cb)
+           (?:_ex)?)
+          _attr
+          <<<\(\s*OSSL_DEPRECATEDIN_(.*?)\s*,(.*?)\)>>>
+      /x,
+      massager => sub { return (<<"EOF");
+DECLARE_PEM$1($3)
 EOF
       },
     },

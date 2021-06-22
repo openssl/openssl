@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,13 +9,13 @@
 
 #ifndef OSSL_CRYPTO_PUNYCODE_H
 # define OSSL_CRYPTO_PUNYCODE_H
-
+# pragma once
 
 int ossl_punycode_decode (
-	const char *pEncoded,
-	const size_t enc_len,
-	unsigned int *pDecoded,
-	unsigned int *pout_length
+    const char *pEncoded,
+    const size_t enc_len,
+    unsigned int *pDecoded,
+    unsigned int *pout_length
 );
 
 int ossl_a2ulabel(const char *in, char *out, size_t *outlen);

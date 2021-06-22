@@ -45,7 +45,7 @@ typedef struct {
  */
 int ossl_prov_cipher_load_from_params(PROV_CIPHER *pc,
                                       const OSSL_PARAM params[],
-                                      OPENSSL_CTX *ctx);
+                                      OSSL_LIB_CTX *ctx);
 
 /* Reset the PROV_CIPHER fields and free any allocated cipher reference */
 void ossl_prov_cipher_reset(PROV_CIPHER *pc);
@@ -58,6 +58,14 @@ const EVP_CIPHER *ossl_prov_cipher_cipher(const PROV_CIPHER *pc);
 ENGINE *ossl_prov_cipher_engine(const PROV_CIPHER *pc);
 
 /* Digest functions */
+
+/*
+ * Fetch a digest from the specified libctx using the provided mdname and
+ * propquery. Store the result in the PROV_DIGEST and return the fetched md.
+ */
+const EVP_MD *ossl_prov_digest_fetch(PROV_DIGEST *pd, OSSL_LIB_CTX *libctx,
+                                     const char *mdname, const char *propquery);
+
 /*
  * Load a digest from the specified parameters with the specified context.
  * The params "properties", "engine" and "digest" are used to determine the
@@ -66,7 +74,7 @@ ENGINE *ossl_prov_cipher_engine(const PROV_CIPHER *pc);
  */
 int ossl_prov_digest_load_from_params(PROV_DIGEST *pd,
                                       const OSSL_PARAM params[],
-                                      OPENSSL_CTX *ctx);
+                                      OSSL_LIB_CTX *ctx);
 
 /* Reset the PROV_DIGEST fields and free any allocated digest reference */
 void ossl_prov_digest_reset(PROV_DIGEST *pd);
@@ -115,7 +123,7 @@ int ossl_prov_macctx_load_from_params(EVP_MAC_CTX **macctx,
                                       const char *macname,
                                       const char *ciphername,
                                       const char *mdname,
-                                      OPENSSL_CTX *ctx);
+                                      OSSL_LIB_CTX *ctx);
 
 typedef struct ag_capable_st {
     OSSL_ALGORITHM alg;

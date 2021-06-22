@@ -1,0 +1,66 @@
+name: Cross Compile
+
+on: [pull_request, push]
+
+jobs:
+  cross-compilation:
+    strategy:
+      fail-fast: false
+      matrix:
+        # The platform matrix specifies the package to be loaded by apt,
+        # then the cross compilation prefix and finally the configuration
+        # target.
+        platform: [
+          {
+            package: gcc-aarch64-linux-gnu libc6-dev-arm64-cross,
+            cross: aarch64-linux-gnu-,
+            target: linux-aarch64
+          }, {
+            package: gcc-alpha-linux-gnu libc6.1-dev-alpha-cross,
+            cross: alpha-linux-gnu-,
+            target: linux-alpha-gcc
+          }, {
+            package: gcc-arm-linux-gnueabi libc6-dev-armel-cross,
+            cross: arm-linux-gnueabi-,
+            target: linux-armv4
+          }, {
+            package: gcc-arm-linux-gnueabihf libc6-dev-armhf-cross,
+            cross: arm-linux-gnueabihf-,
+            target: linux-armv4
+          }, {
+            package: gcc-mips-linux-gnu libc6-dev-mips-cross,
+            cross: mips-linux-gnu-,
+            target: linux-mips32
+          }, {
+            package: gcc-mipsel-linux-gnu libc6-dev-mipsel-cross,
+            cross: mipsel-linux-gnu-,
+            target: linux-mips32
+          }, {
+            package: gcc-powerpc64le-linux-gnu libc6-dev-ppc64el-cross,
+            cross: powerpc64le-linux-gnu-,
+            target: linux-ppc64le
+          }, {
+            package: gcc-riscv64-linux-gnu libc6-dev-riscv64-cross,
+            cross: riscv64-linux-gnu-,
+            target: linux64-riscv64
+          }, {
+            package: gcc-s390x-linux-gnu libc6-dev-s390x-cross,
+            cross: s390x-linux-gnu-,
+            target: linux64-s390x
+          }, {
+            package: gcc-sparc64-linux-gnu libc6-dev-sparc64-cross,
+            cross: sparc64-linux-gnu-,
+            target: linux64-sparcv9
+          }
+        ]
+    runs-on: ubuntu-latest
+    steps:
+    - name: install packages
+      run: |
+        sudo apt-get update
+        sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install ${{ matrix.platform.package }}
+    - uses: actions/checkout@v2
+    - name: config
+      run: ./config --banner=Configured --strict-warnings enable-fips --cross-compile-prefix=${{ matrix.platform.cross }} ${{ matrix.platform.target }} && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4

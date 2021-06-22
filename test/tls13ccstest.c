@@ -9,7 +9,7 @@
 
 #include <openssl/ssl.h>
 #include <string.h>
-#include "ssltestlib.h"
+#include "helpers/ssltestlib.h"
 #include "testutil.h"
 #include "internal/packet.h"
 

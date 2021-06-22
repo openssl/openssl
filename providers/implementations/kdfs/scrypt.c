@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,12 +14,12 @@
 #include <openssl/kdf.h>
 #include <openssl/err.h>
 #include <openssl/core_names.h>
+#include <openssl/proverr.h>
 #include "crypto/evp.h"
 #include "internal/numbers.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 
 #ifndef OPENSSL_NO_SCRYPT
@@ -37,10 +37,10 @@ static int scrypt_alg(const char *pass, size_t passlen,
                       const unsigned char *salt, size_t saltlen,
                       uint64_t N, uint64_t r, uint64_t p, uint64_t maxmem,
                       unsigned char *key, size_t keylen, EVP_MD *sha256,
-                      OPENSSL_CTX *libctx, const char *propq);
+                      OSSL_LIB_CTX *libctx, const char *propq);
 
 typedef struct {
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     char *propq;
     unsigned char *pass;
     size_t pass_len;
@@ -66,7 +66,7 @@ static void *kdf_scrypt_new(void *provctx)
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    ctx->libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+    ctx->libctx = PROV_LIBCTX_OF(provctx);
     kdf_scrypt_init(ctx);
     return ctx;
 }
@@ -147,12 +147,12 @@ static int set_property_query(KDF_SCRYPT *ctx, const char *propq)
     return 1;
 }
 
-static int kdf_scrypt_derive(void *vctx, unsigned char *key,
-                             size_t keylen)
+static int kdf_scrypt_derive(void *vctx, unsigned char *key, size_t keylen,
+                             const OSSL_PARAM params[])
 {
     KDF_SCRYPT *ctx = (KDF_SCRYPT *)vctx;
 
-    if (!ossl_prov_is_running())
+    if (!ossl_prov_is_running() || !kdf_scrypt_set_ctx_params(ctx, params))
         return 0;
 
     if (ctx->pass == NULL) {
@@ -184,6 +184,9 @@ static int kdf_scrypt_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     const OSSL_PARAM *p;
     KDF_SCRYPT *ctx = vctx;
     uint64_t u64_value;
+
+    if (params == NULL)
+        return 1;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PASSWORD)) != NULL)
         if (!scrypt_set_membuf(&ctx->pass, &ctx->pass_len, p))
@@ -233,7 +236,8 @@ static int kdf_scrypt_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *kdf_scrypt_settable_ctx_params(ossl_unused void *p_ctx)
+static const OSSL_PARAM *kdf_scrypt_settable_ctx_params(ossl_unused void *ctx,
+                                                        ossl_unused void *p_ctx)
 {
     static const OSSL_PARAM known_settable_ctx_params[] = {
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_PASSWORD, NULL, 0),
@@ -257,7 +261,8 @@ static int kdf_scrypt_get_ctx_params(void *vctx, OSSL_PARAM params[])
     return -2;
 }
 
-static const OSSL_PARAM *kdf_scrypt_gettable_ctx_params(ossl_unused void *p_ctx)
+static const OSSL_PARAM *kdf_scrypt_gettable_ctx_params(ossl_unused void *ctx,
+                                                        ossl_unused void *p_ctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
         OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL),
@@ -266,7 +271,7 @@ static const OSSL_PARAM *kdf_scrypt_gettable_ctx_params(ossl_unused void *p_ctx)
     return known_gettable_ctx_params;
 }
 
-const OSSL_DISPATCH kdf_scrypt_functions[] = {
+const OSSL_DISPATCH ossl_kdf_scrypt_functions[] = {
     { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))kdf_scrypt_new },
     { OSSL_FUNC_KDF_FREECTX, (void(*)(void))kdf_scrypt_free },
     { OSSL_FUNC_KDF_RESET, (void(*)(void))kdf_scrypt_reset },
@@ -404,7 +409,7 @@ static int scrypt_alg(const char *pass, size_t passlen,
                       const unsigned char *salt, size_t saltlen,
                       uint64_t N, uint64_t r, uint64_t p, uint64_t maxmem,
                       unsigned char *key, size_t keylen, EVP_MD *sha256,
-                      OPENSSL_CTX *libctx, const char *propq)
+                      OSSL_LIB_CTX *libctx, const char *propq)
 {
     int rv = 0;
     unsigned char *B;
@@ -417,7 +422,7 @@ static int scrypt_alg(const char *pass, size_t passlen,
         return 0;
     /* Check p * r < SCRYPT_PR_MAX avoiding overflow */
     if (p > SCRYPT_PR_MAX / r) {
-        EVPerr(EVP_F_SCRYPT_ALG, EVP_R_MEMORY_LIMIT_EXCEEDED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_MEMORY_LIMIT_EXCEEDED);
         return 0;
     }
 
@@ -428,7 +433,7 @@ static int scrypt_alg(const char *pass, size_t passlen,
 
     if (16 * r <= LOG2_UINT64_MAX) {
         if (N >= (((uint64_t)1) << (16 * r))) {
-            EVPerr(EVP_F_SCRYPT_ALG, EVP_R_MEMORY_LIMIT_EXCEEDED);
+            ERR_raise(ERR_LIB_EVP, EVP_R_MEMORY_LIMIT_EXCEEDED);
             return 0;
         }
     }
@@ -446,7 +451,7 @@ static int scrypt_alg(const char *pass, size_t passlen,
      * have to be revised when/if PKCS5_PBKDF2_HMAC accepts size_t.]
      */
     if (Blen > INT_MAX) {
-        EVPerr(EVP_F_SCRYPT_ALG, EVP_R_MEMORY_LIMIT_EXCEEDED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_MEMORY_LIMIT_EXCEEDED);
         return 0;
     }
 
@@ -456,14 +461,14 @@ static int scrypt_alg(const char *pass, size_t passlen,
      */
     i = UINT64_MAX / (32 * sizeof(uint32_t));
     if (N + 2 > i / r) {
-        EVPerr(EVP_F_SCRYPT_ALG, EVP_R_MEMORY_LIMIT_EXCEEDED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_MEMORY_LIMIT_EXCEEDED);
         return 0;
     }
     Vlen = 32 * r * (N + 2) * sizeof(uint32_t);
 
     /* check total allocated size fits in uint64_t */
     if (Blen > UINT64_MAX - Vlen) {
-        EVPerr(EVP_F_SCRYPT_ALG, EVP_R_MEMORY_LIMIT_EXCEEDED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_MEMORY_LIMIT_EXCEEDED);
         return 0;
     }
 
@@ -472,7 +477,7 @@ static int scrypt_alg(const char *pass, size_t passlen,
         maxmem = SIZE_MAX;
 
     if (Blen + Vlen > maxmem) {
-        EVPerr(EVP_F_SCRYPT_ALG, EVP_R_MEMORY_LIMIT_EXCEEDED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_MEMORY_LIMIT_EXCEEDED);
         return 0;
     }
 
@@ -482,26 +487,26 @@ static int scrypt_alg(const char *pass, size_t passlen,
 
     B = OPENSSL_malloc((size_t)(Blen + Vlen));
     if (B == NULL) {
-        EVPerr(EVP_F_SCRYPT_ALG, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     X = (uint32_t *)(B + Blen);
     T = X + 32 * r;
     V = T + 32 * r;
-    if (pkcs5_pbkdf2_hmac_with_libctx(pass, passlen, salt, saltlen, 1, sha256,
-                                      (int)Blen, B, libctx, propq) == 0)
+    if (ossl_pkcs5_pbkdf2_hmac_ex(pass, passlen, salt, saltlen, 1, sha256,
+                                  (int)Blen, B, libctx, propq) == 0)
         goto err;
 
     for (i = 0; i < p; i++)
         scryptROMix(B + 128 * r * i, r, N, X, T, V);
 
-    if (pkcs5_pbkdf2_hmac_with_libctx(pass, passlen, B, (int)Blen, 1, sha256,
-                                      keylen, key, libctx, propq) == 0)
+    if (ossl_pkcs5_pbkdf2_hmac_ex(pass, passlen, B, (int)Blen, 1, sha256,
+                                  keylen, key, libctx, propq) == 0)
         goto err;
     rv = 1;
  err:
     if (rv == 0)
-        EVPerr(EVP_F_SCRYPT_ALG, EVP_R_PBKDF2_ERROR);
+        ERR_raise(ERR_LIB_EVP, EVP_R_PBKDF2_ERROR);
 
     OPENSSL_clear_free(B, (size_t)(Blen + Vlen));
     return rv;

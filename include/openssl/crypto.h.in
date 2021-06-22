@@ -1,7 +1,7 @@
 /*
  * {- join("\n * ", @autowarntext) -}
  *
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -13,7 +13,6 @@
 {-
 use OpenSSL::stackhash qw(generate_stack_macros);
 -}
-
 
 #ifndef OPENSSL_CRYPTO_H
 # define OPENSSL_CRYPTO_H
@@ -38,6 +37,7 @@ use OpenSSL::stackhash qw(generate_stack_macros);
 # include <openssl/types.h>
 # include <openssl/opensslconf.h>
 # include <openssl/cryptoerr.h>
+# include <openssl/core.h>
 
 # ifdef CHARSET_EBCDIC
 #  include <openssl/ebcdic.h>
@@ -80,12 +80,15 @@ typedef struct {
 typedef void CRYPTO_RWLOCK;
 
 CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void);
-int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock);
-int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock);
+__owur int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock);
+__owur int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock);
 int CRYPTO_THREAD_unlock(CRYPTO_RWLOCK *lock);
 void CRYPTO_THREAD_lock_free(CRYPTO_RWLOCK *lock);
 
 int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock);
+int CRYPTO_atomic_or(uint64_t *val, uint64_t op, uint64_t *ret,
+                     CRYPTO_RWLOCK *lock);
+int CRYPTO_atomic_load(uint64_t *val, uint64_t *ret, CRYPTO_RWLOCK *lock);
 
 /* No longer needed, so this is a no-op */
 #define OPENSSL_malloc_init() while(0) continue
@@ -123,10 +126,11 @@ size_t OPENSSL_strlcpy(char *dst, const char *src, size_t siz);
 size_t OPENSSL_strlcat(char *dst, const char *src, size_t siz);
 size_t OPENSSL_strnlen(const char *str, size_t maxlen);
 int OPENSSL_buf2hexstr_ex(char *str, size_t str_n, size_t *strlen,
-                          const unsigned char *buf, size_t buflen);
+                          const unsigned char *buf, size_t buflen,
+                          const char sep);
 char *OPENSSL_buf2hexstr(const unsigned char *buf, long buflen);
 int OPENSSL_hexstr2buf_ex(unsigned char *buf, size_t buf_n, size_t *buflen,
-                          const char *str);
+                          const char *str, const char sep);
 unsigned char *OPENSSL_hexstr2buf(const char *str, long *buflen);
 int OPENSSL_hexchar2int(unsigned char c);
 
@@ -173,7 +177,7 @@ const char *OPENSSL_info(int type);
 int OPENSSL_issetugid(void);
 
 struct crypto_ex_data_st {
-    OPENSSL_CTX *ctx;
+    OSSL_LIB_CTX *ctx;
     STACK_OF(void) *sk;
 };
 
@@ -202,7 +206,7 @@ struct crypto_ex_data_st {
 # define CRYPTO_EX_INDEX_UI_METHOD       14
 # define CRYPTO_EX_INDEX_RAND_DRBG       15
 # define CRYPTO_EX_INDEX_DRBG            CRYPTO_EX_INDEX_RAND_DRBG
-# define CRYPTO_EX_INDEX_OPENSSL_CTX     16
+# define CRYPTO_EX_INDEX_OSSL_LIB_CTX    16
 # define CRYPTO_EX_INDEX_EVP_PKEY        17
 # define CRYPTO_EX_INDEX__COUNT          18
 
@@ -354,27 +358,32 @@ void CRYPTO_get_alloc_counts(int *mcount, int *rcount, int *fcount);
 #    define OPENSSL_mem_debug_pop() \
          CRYPTO_mem_debug_pop()
 #  endif
-DEPRECATEDIN_3_0(int CRYPTO_set_mem_debug(int flag))
-DEPRECATEDIN_3_0(int CRYPTO_mem_ctrl(int mode))
-DEPRECATEDIN_3_0(int CRYPTO_mem_debug_push(const char *info,
-                                           const char *file, int line))
-DEPRECATEDIN_3_0(int CRYPTO_mem_debug_pop(void))
-
-DEPRECATEDIN_3_0(void CRYPTO_mem_debug_malloc(void *addr, size_t num,
-                                              int flag,
-                                              const char *file, int line))
-DEPRECATEDIN_3_0(void CRYPTO_mem_debug_realloc(void *addr1, void *addr2,
-                                               size_t num, int flag,
-                                               const char *file, int line))
-DEPRECATEDIN_3_0(void CRYPTO_mem_debug_free(void *addr, int flag,
-                                            const char *file, int line))
-
-DEPRECATEDIN_3_0(int CRYPTO_mem_leaks_cb(
-                      int (*cb)(const char *str, size_t len, void *u), void *u))
-#  ifndef OPENSSL_NO_STDIO
-DEPRECATEDIN_3_0(int CRYPTO_mem_leaks_fp(FILE *))
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0 int CRYPTO_set_mem_debug(int flag);
+OSSL_DEPRECATEDIN_3_0 int CRYPTO_mem_ctrl(int mode);
+OSSL_DEPRECATEDIN_3_0 int CRYPTO_mem_debug_push(const char *info,
+                                                const char *file, int line);
+OSSL_DEPRECATEDIN_3_0 int CRYPTO_mem_debug_pop(void);
+OSSL_DEPRECATEDIN_3_0 void CRYPTO_mem_debug_malloc(void *addr, size_t num,
+                                                   int flag,
+                                                   const char *file, int line);
+OSSL_DEPRECATEDIN_3_0 void CRYPTO_mem_debug_realloc(void *addr1, void *addr2,
+                                                    size_t num, int flag,
+                                                    const char *file, int line);
+OSSL_DEPRECATEDIN_3_0 void CRYPTO_mem_debug_free(void *addr, int flag,
+                                                 const char *file, int line);
+OSSL_DEPRECATEDIN_3_0
+int CRYPTO_mem_leaks_cb(int (*cb)(const char *str, size_t len, void *u),
+                        void *u);
 #  endif
-DEPRECATEDIN_3_0(int CRYPTO_mem_leaks(BIO *bio))
+#  ifndef OPENSSL_NO_STDIO
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0 int CRYPTO_mem_leaks_fp(FILE *);
+#  endif
+#  endif
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0 int CRYPTO_mem_leaks(BIO *bio);
+# endif
 # endif /* OPENSSL_NO_CRYPTO_MDEBUG */
 
 /* die if we have to */
@@ -389,9 +398,11 @@ int OPENSSL_isservice(void);
 
 void OPENSSL_init(void);
 # ifdef OPENSSL_SYS_UNIX
-void OPENSSL_fork_prepare(void);
-void OPENSSL_fork_parent(void);
-void OPENSSL_fork_child(void);
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0 void OPENSSL_fork_prepare(void);
+OSSL_DEPRECATEDIN_3_0 void OPENSSL_fork_parent(void);
+OSSL_DEPRECATEDIN_3_0 void OPENSSL_fork_child(void);
+#  endif
 # endif
 
 struct tm *OPENSSL_gmtime(const time_t *timer, struct tm *result);
@@ -425,7 +436,7 @@ int CRYPTO_memcmp(const void * in_a, const void * in_b, size_t len);
 # define OPENSSL_INIT_ENGINE_CAPI            0x00002000L
 # define OPENSSL_INIT_ENGINE_PADLOCK         0x00004000L
 # define OPENSSL_INIT_ENGINE_AFALG           0x00008000L
-/* OPENSSL_INIT_ZLIB                         0x00010000L */
+/* FREE:                                     0x00010000L */
 # define OPENSSL_INIT_ATFORK                 0x00020000L
 /* OPENSSL_INIT_BASE_ONLY                    0x00040000L */
 # define OPENSSL_INIT_NO_ATEXIT              0x00080000L
@@ -449,7 +460,7 @@ void OPENSSL_cleanup(void);
 int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings);
 int OPENSSL_atexit(void (*handler)(void));
 void OPENSSL_thread_stop(void);
-void OPENSSL_thread_stop_ex(OPENSSL_CTX *ctx);
+void OPENSSL_thread_stop_ex(OSSL_LIB_CTX *ctx);
 
 /* Low-level control of initialization */
 OPENSSL_INIT_SETTINGS *OPENSSL_INIT_new(void);
@@ -506,10 +517,15 @@ int CRYPTO_THREAD_cleanup_local(CRYPTO_THREAD_LOCAL *key);
 CRYPTO_THREAD_ID CRYPTO_THREAD_get_current_id(void);
 int CRYPTO_THREAD_compare_id(CRYPTO_THREAD_ID a, CRYPTO_THREAD_ID b);
 
-OPENSSL_CTX *OPENSSL_CTX_new(void);
-int OPENSSL_CTX_load_config(OPENSSL_CTX *ctx, const char *config_file);
-void OPENSSL_CTX_free(OPENSSL_CTX *);
-OPENSSL_CTX *OPENSSL_CTX_set0_default(OPENSSL_CTX *libctx);
+OSSL_LIB_CTX *OSSL_LIB_CTX_new(void);
+OSSL_LIB_CTX *OSSL_LIB_CTX_new_from_dispatch(const OSSL_CORE_HANDLE *handle,
+                                             const OSSL_DISPATCH *in);
+OSSL_LIB_CTX *OSSL_LIB_CTX_new_child(const OSSL_CORE_HANDLE *handle,
+                                     const OSSL_DISPATCH *in);
+int OSSL_LIB_CTX_load_config(OSSL_LIB_CTX *ctx, const char *config_file);
+void OSSL_LIB_CTX_free(OSSL_LIB_CTX *);
+OSSL_LIB_CTX *OSSL_LIB_CTX_get0_global_default(void);
+OSSL_LIB_CTX *OSSL_LIB_CTX_set0_default(OSSL_LIB_CTX *libctx);
 
 # ifdef  __cplusplus
 }

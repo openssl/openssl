@@ -1797,17 +1797,17 @@ $code.=<<___;
 #ifndef __ARMEB__
 	rev		$ctr, $ctr
 #endif
-	vorr		$dat1,$dat0,$dat0
 	add		$tctr1, $ctr, #1
-	vorr		$dat2,$dat0,$dat0
-	add		$ctr, $ctr, #2
 	vorr		$ivec,$dat0,$dat0
 	rev		$tctr1, $tctr1
-	vmov.32		${dat1}[3],$tctr1
+	vmov.32		${ivec}[3],$tctr1
+	add		$ctr, $ctr, #2
+	vorr		$dat1,$ivec,$ivec
 	b.ls		.Lctr32_tail
 	rev		$tctr2, $ctr
+	vmov.32		${ivec}[3],$tctr2
 	sub		$len,$len,#3		// bias
-	vmov.32		${dat2}[3],$tctr2
+	vorr		$dat2,$ivec,$ivec
 ___
 $code.=<<___	if ($flavour =~ /64/);
 	cmp		$len,#2
@@ -2003,11 +2003,11 @@ $code.=<<___;
 	aese		$dat1,q8
 	aesmc		$tmp1,$dat1
 	 vld1.8		{$in0},[$inp],#16
-	 vorr		$dat0,$ivec,$ivec
+	 add		$tctr0,$ctr,#1
 	aese		$dat2,q8
 	aesmc		$dat2,$dat2
 	 vld1.8		{$in1},[$inp],#16
-	 vorr		$dat1,$ivec,$ivec
+	 rev		$tctr0,$tctr0
 	aese		$tmp0,q9
 	aesmc		$tmp0,$tmp0
 	aese		$tmp1,q9
@@ -2016,8 +2016,6 @@ $code.=<<___;
 	 mov		$key_,$key
 	aese		$dat2,q9
 	aesmc		$tmp2,$dat2
-	 vorr		$dat2,$ivec,$ivec
-	 add		$tctr0,$ctr,#1
 	aese		$tmp0,q12
 	aesmc		$tmp0,$tmp0
 	aese		$tmp1,q12
@@ -2033,20 +2031,22 @@ $code.=<<___;
 	aese		$tmp1,q13
 	aesmc		$tmp1,$tmp1
 	 veor		$in2,$in2,$rndlast
-	 rev		$tctr0,$tctr0
+	 vmov.32	${ivec}[3], $tctr0
 	aese		$tmp2,q13
 	aesmc		$tmp2,$tmp2
-	 vmov.32	${dat0}[3], $tctr0
+	 vorr		$dat0,$ivec,$ivec
 	 rev		$tctr1,$tctr1
 	aese		$tmp0,q14
 	aesmc		$tmp0,$tmp0
+	 vmov.32	${ivec}[3], $tctr1
+	 rev		$tctr2,$ctr
 	aese		$tmp1,q14
 	aesmc		$tmp1,$tmp1
-	 vmov.32	${dat1}[3], $tctr1
-	 rev		$tctr2,$ctr
+	 vorr		$dat1,$ivec,$ivec
+	 vmov.32	${ivec}[3], $tctr2
 	aese		$tmp2,q14
 	aesmc		$tmp2,$tmp2
-	 vmov.32	${dat2}[3], $tctr2
+	 vorr		$dat2,$ivec,$ivec
 	 subs		$len,$len,#3
 	aese		$tmp0,q15
 	aese		$tmp1,q15
@@ -2130,6 +2130,1432 @@ ___
 $code.=<<___;
 .size	${prefix}_ctr32_encrypt_blocks,.-${prefix}_ctr32_encrypt_blocks
 ___
+}}}
+# Performance in cycles per byte.
+# Processed with AES-XTS different key size.
+# It shows the value before and after optimization as below:
+# (before/after):
+#
+#		AES-128-XTS		AES-256-XTS
+# Cortex-A57	3.36/1.09		4.02/1.37
+# Cortex-A72	3.03/1.02		3.28/1.33
+
+# Optimization is implemented by loop unrolling and interleaving.
+# Commonly, we choose the unrolling factor as 5, if the input
+# data size smaller than 5 blocks, but not smaller than 3 blocks,
+# choose 3 as the unrolling factor.
+# If the input data size dsize >= 5*16 bytes, then take 5 blocks
+# as one iteration, every loop the left size lsize -= 5*16.
+# If lsize < 5*16 bytes, treat them as the tail. Note: left 4*16 bytes
+# will be processed specially, which be integrated into the 5*16 bytes
+# loop to improve the efficiency.
+# There is one special case, if the original input data size dsize
+# = 16 bytes, we will treat it seperately to improve the
+# performance: one independent code block without LR, FP load and
+# store.
+# Encryption will process the (length -tailcnt) bytes as mentioned
+# previously, then encrypt the composite block as last second
+# cipher block.
+# Decryption will process the (length -tailcnt -1) bytes as mentioned
+# previously, then decrypt the last second cipher block to get the
+# last plain block(tail), decrypt the composite block as last second
+# plain text block.
+
+{{{
+my ($inp,$out,$len,$key1,$key2,$ivp)=map("x$_",(0..5));
+my ($rounds0,$rounds,$key_,$step,$ivl,$ivh)=("w5","w6","x7","x8","x9","x10");
+my ($tmpoutp,$loutp,$l2outp,$tmpinp)=("x13","w14","w15","x20");
+my ($tailcnt,$midnum,$midnumx,$constnum,$constnumx)=("x21","w22","x22","w19","x19");
+my ($xoffset,$tmpmx,$tmpmw)=("x6","x11","w11");
+my ($dat0,$dat1,$in0,$in1,$tmp0,$tmp1,$tmp2,$rndlast)=map("q$_",(0..7));
+my ($iv0,$iv1,$iv2,$iv3,$iv4)=("v6.16b","v8.16b","v9.16b","v10.16b","v11.16b");
+my ($ivd00,$ivd01,$ivd20,$ivd21)=("d6","v6.d[1]","d9","v9.d[1]");
+my ($ivd10,$ivd11,$ivd30,$ivd31,$ivd40,$ivd41)=("d8","v8.d[1]","d10","v10.d[1]","d11","v11.d[1]");
+
+my ($tmpin)=("v26.16b");
+my ($dat,$tmp,$rndzero_n_last)=($dat0,$tmp0,$tmp1);
+
+# q7	last round key
+# q10-q15, q7	Last 7 round keys
+# q8-q9	preloaded round keys except last 7 keys for big size
+# q20, q21, q8-q9	preloaded round keys except last 7 keys for only 16 byte
+
+
+my ($dat2,$in2,$tmp2)=map("q$_",(10,11,9));
+
+my ($dat3,$in3,$tmp3);	# used only in 64-bit mode
+my ($dat4,$in4,$tmp4);
+if ($flavour =~ /64/) {
+    ($dat2,$dat3,$dat4,$in2,$in3,$in4,$tmp3,$tmp4)=map("q$_",(16..23));
+}
+
+$code.=<<___	if ($flavour =~ /64/);
+.globl	${prefix}_xts_encrypt
+.type	${prefix}_xts_encrypt,%function
+.align	5
+${prefix}_xts_encrypt:
+___
+$code.=<<___	if ($flavour =~ /64/);
+	cmp	$len,#16
+	// Original input data size bigger than 16, jump to big size processing.
+	b.ne	.Lxts_enc_big_size
+	// Encrypt the iv with key2, as the first XEX iv.
+	ldr	$rounds,[$key2,#240]
+	vld1.8	{$dat},[$key2],#16
+	vld1.8	{$iv0},[$ivp]
+	sub	$rounds,$rounds,#2
+	vld1.8	{$dat1},[$key2],#16
+
+.Loop_enc_iv_enc:
+	aese	$iv0,$dat
+	aesmc	$iv0,$iv0
+	vld1.32	{$dat},[$key2],#16
+	subs	$rounds,$rounds,#2
+	aese	$iv0,$dat1
+	aesmc	$iv0,$iv0
+	vld1.32	{$dat1},[$key2],#16
+	b.gt	.Loop_enc_iv_enc
+
+	aese	$iv0,$dat
+	aesmc	$iv0,$iv0
+	vld1.32	{$dat},[$key2]
+	aese	$iv0,$dat1
+	veor	$iv0,$iv0,$dat
+
+	vld1.8	{$dat0},[$inp]
+	veor	$dat0,$iv0,$dat0
+
+	ldr	$rounds,[$key1,#240]
+	vld1.32	{q20-q21},[$key1],#32		// load key schedule...
+
+	aese	$dat0,q20
+	aesmc	$dat0,$dat0
+	vld1.32	{q8-q9},[$key1],#32		// load key schedule...
+	aese	$dat0,q21
+	aesmc	$dat0,$dat0
+	subs	$rounds,$rounds,#10		// if rounds==10, jump to aes-128-xts processing
+	b.eq	.Lxts_128_enc
+.Lxts_enc_round_loop:
+	aese	$dat0,q8
+	aesmc	$dat0,$dat0
+	vld1.32	{q8},[$key1],#16		// load key schedule...
+	aese	$dat0,q9
+	aesmc	$dat0,$dat0
+	vld1.32	{q9},[$key1],#16		// load key schedule...
+	subs	$rounds,$rounds,#2		// bias
+	b.gt	.Lxts_enc_round_loop
+.Lxts_128_enc:
+	vld1.32	{q10-q11},[$key1],#32		// load key schedule...
+	aese	$dat0,q8
+	aesmc	$dat0,$dat0
+	aese	$dat0,q9
+	aesmc	$dat0,$dat0
+	vld1.32	{q12-q13},[$key1],#32		// load key schedule...
+	aese	$dat0,q10
+	aesmc	$dat0,$dat0
+	aese	$dat0,q11
+	aesmc	$dat0,$dat0
+	vld1.32	{q14-q15},[$key1],#32		// load key schedule...
+	aese	$dat0,q12
+	aesmc	$dat0,$dat0
+	aese	$dat0,q13
+	aesmc	$dat0,$dat0
+	vld1.32	{$rndlast},[$key1]
+	aese	$dat0,q14
+	aesmc	$dat0,$dat0
+	aese	$dat0,q15
+	veor	$dat0,$dat0,$rndlast
+	veor	$dat0,$dat0,$iv0
+	vst1.8	{$dat0},[$out]
+	b	.Lxts_enc_final_abort
+
+.align	4
+.Lxts_enc_big_size:
+___
+$code.=<<___	if ($flavour =~ /64/);
+	stp	$constnumx,$tmpinp,[sp,#-64]!
+	stp	$tailcnt,$midnumx,[sp,#48]
+	stp	$ivd10,$ivd20,[sp,#32]
+	stp	$ivd30,$ivd40,[sp,#16]
+
+	// tailcnt store the tail value of length%16.
+	and	$tailcnt,$len,#0xf
+	and	$len,$len,#-16
+	subs	$len,$len,#16
+	mov	$step,#16
+	b.lo	.Lxts_abort
+	csel	$step,xzr,$step,eq
+
+	// Firstly, encrypt the iv with key2, as the first iv of XEX.
+	ldr	$rounds,[$key2,#240]
+	vld1.32	{$dat},[$key2],#16
+	vld1.8	{$iv0},[$ivp]
+	sub	$rounds,$rounds,#2
+	vld1.32	{$dat1},[$key2],#16
+
+.Loop_iv_enc:
+	aese	$iv0,$dat
+	aesmc	$iv0,$iv0
+	vld1.32	{$dat},[$key2],#16
+	subs	$rounds,$rounds,#2
+	aese	$iv0,$dat1
+	aesmc	$iv0,$iv0
+	vld1.32	{$dat1},[$key2],#16
+	b.gt	.Loop_iv_enc
+
+	aese	$iv0,$dat
+	aesmc	$iv0,$iv0
+	vld1.32	{$dat},[$key2]
+	aese	$iv0,$dat1
+	veor	$iv0,$iv0,$dat
+
+	// The iv for second block
+	// $ivl- iv(low), $ivh - iv(high)
+	// the five ivs stored into, $iv0,$iv1,$iv2,$iv3,$iv4
+	fmov	$ivl,$ivd00
+	fmov	$ivh,$ivd01
+	mov	$constnum,#0x87
+	extr	$midnumx,$ivh,$ivh,#32
+	extr	$ivh,$ivh,$ivl,#63
+	and	$tmpmw,$constnum,$midnum,asr#31
+	eor	$ivl,$tmpmx,$ivl,lsl#1
+	fmov	$ivd10,$ivl
+	fmov	$ivd11,$ivh
+
+	ldr	$rounds0,[$key1,#240]		// next starting point
+	vld1.8	{$dat},[$inp],$step
+
+	vld1.32	{q8-q9},[$key1]			// load key schedule...
+	sub	$rounds0,$rounds0,#6
+	add	$key_,$key1,$ivp,lsl#4		// pointer to last 7 round keys
+	sub	$rounds0,$rounds0,#2
+	vld1.32	{q10-q11},[$key_],#32
+	vld1.32	{q12-q13},[$key_],#32
+	vld1.32	{q14-q15},[$key_],#32
+	vld1.32	{$rndlast},[$key_]
+
+	add	$key_,$key1,#32
+	mov	$rounds,$rounds0
+
+	// Encryption
+.Lxts_enc:
+	vld1.8	{$dat2},[$inp],#16
+	subs	$len,$len,#32			// bias
+	add	$rounds,$rounds0,#2
+	vorr	$in1,$dat,$dat
+	vorr	$dat1,$dat,$dat
+	vorr	$in3,$dat,$dat
+	vorr	$in2,$dat2,$dat2
+	vorr	$in4,$dat2,$dat2
+	b.lo	.Lxts_inner_enc_tail
+	veor	$dat,$dat,$iv0			// before encryption, xor with iv
+	veor	$dat2,$dat2,$iv1
+
+	// The iv for third block
+	extr	$midnumx,$ivh,$ivh,#32
+	extr	$ivh,$ivh,$ivl,#63
+	and	$tmpmw,$constnum,$midnum,asr#31
+	eor	$ivl,$tmpmx,$ivl,lsl#1
+	fmov	$ivd20,$ivl
+	fmov	$ivd21,$ivh
+
+
+	vorr	$dat1,$dat2,$dat2
+	vld1.8	{$dat2},[$inp],#16
+	vorr	$in0,$dat,$dat
+	vorr	$in1,$dat1,$dat1
+	veor	$in2,$dat2,$iv2 		// the third block
+	veor	$dat2,$dat2,$iv2
+	cmp	$len,#32
+	b.lo	.Lxts_outer_enc_tail
+
+	// The iv for fourth block
+	extr	$midnumx,$ivh,$ivh,#32
+	extr	$ivh,$ivh,$ivl,#63
+	and	$tmpmw,$constnum,$midnum,asr#31
+	eor	$ivl,$tmpmx,$ivl,lsl#1
+	fmov	$ivd30,$ivl
+	fmov	$ivd31,$ivh
+
+	vld1.8	{$dat3},[$inp],#16
+	// The iv for fifth block
+	extr	$midnumx,$ivh,$ivh,#32
+	extr	$ivh,$ivh,$ivl,#63
+	and	$tmpmw,$constnum,$midnum,asr#31
+	eor	$ivl,$tmpmx,$ivl,lsl#1
+	fmov	$ivd40,$ivl
+	fmov	$ivd41,$ivh
+
+	vld1.8	{$dat4},[$inp],#16
+	veor	$dat3,$dat3,$iv3		// the fourth block
+	veor	$dat4,$dat4,$iv4
+	sub	$len,$len,#32			// bias
+	mov	$rounds,$rounds0
+	b	.Loop5x_xts_enc
+
+.align	4
+.Loop5x_xts_enc:
+	aese	$dat0,q8
+	aesmc	$dat0,$dat0
+	aese	$dat1,q8
+	aesmc	$dat1,$dat1
+	aese	$dat2,q8
+	aesmc	$dat2,$dat2
+	aese	$dat3,q8
+	aesmc	$dat3,$dat3
+	aese	$dat4,q8
+	aesmc	$dat4,$dat4
+	vld1.32	{q8},[$key_],#16
+	subs	$rounds,$rounds,#2
+	aese	$dat0,q9
+	aesmc	$dat0,$dat0
+	aese	$dat1,q9
+	aesmc	$dat1,$dat1
+	aese	$dat2,q9
+	aesmc	$dat2,$dat2
+	aese	$dat3,q9
+	aesmc	$dat3,$dat3
+	aese	$dat4,q9
+	aesmc	$dat4,$dat4
+	vld1.32	{q9},[$key_],#16
+	b.gt	.Loop5x_xts_enc
+
+	aese	$dat0,q8
+	aesmc	$dat0,$dat0
+	aese	$dat1,q8
+	aesmc	$dat1,$dat1
+	aese	$dat2,q8
+	aesmc	$dat2,$dat2
+	aese	$dat3,q8
+	aesmc	$dat3,$dat3
+	aese	$dat4,q8
+	aesmc	$dat4,$dat4
+	subs	$len,$len,#0x50			// because .Lxts_enc_tail4x
+
+	aese	$dat0,q9
+	aesmc	$dat0,$dat0
+	aese	$dat1,q9
+	aesmc	$dat1,$dat1
+	aese	$dat2,q9
+	aesmc	$dat2,$dat2
+	aese	$dat3,q9
+	aesmc	$dat3,$dat3
+	aese	$dat4,q9
+	aesmc	$dat4,$dat4
+	csel	$xoffset,xzr,$len,gt		// borrow x6, w6, "gt" is not typo
+	mov	$key_,$key1
+
+	aese	$dat0,q10
+	aesmc	$dat0,$dat0
+	aese	$dat1,q10
+	aesmc	$dat1,$dat1
+	aese	$dat2,q10
+	aesmc	$dat2,$dat2
+	aese	$dat3,q10
+	aesmc	$dat3,$dat3
+	aese	$dat4,q10
+	aesmc	$dat4,$dat4
+	add	$inp,$inp,$xoffset		// x0 is adjusted in such way that
+						// at exit from the loop v1.16b-v26.16b
+						// are loaded with last "words"
+	add	$xoffset,$len,#0x60		// because .Lxts_enc_tail4x
+
+	aese	$dat0,q11
+	aesmc	$dat0,$dat0
+	aese	$dat1,q11
+	aesmc	$dat1,$dat1
+	aese	$dat2,q11
+	aesmc	$dat2,$dat2
+	aese	$dat3,q11
+	aesmc	$dat3,$dat3
+	aese	$dat4,q11
+	aesmc	$dat4,$dat4
+
+	aese	$dat0,q12
+	aesmc	$dat0,$dat0
+	aese	$dat1,q12
+	aesmc	$dat1,$dat1
+	aese	$dat2,q12
+	aesmc	$dat2,$dat2
+	aese	$dat3,q12
+	aesmc	$dat3,$dat3
+	aese	$dat4,q12
+	aesmc	$dat4,$dat4
+
+	aese	$dat0,q13
+	aesmc	$dat0,$dat0
+	aese	$dat1,q13
+	aesmc	$dat1,$dat1
+	aese	$dat2,q13
+	aesmc	$dat2,$dat2
+	aese	$dat3,q13
+	aesmc	$dat3,$dat3
+	aese	$dat4,q13
+	aesmc	$dat4,$dat4
+
+	aese	$dat0,q14
+	aesmc	$dat0,$dat0
+	aese	$dat1,q14
+	aesmc	$dat1,$dat1
+	aese	$dat2,q14
+	aesmc	$dat2,$dat2
+	aese	$dat3,q14
+	aesmc	$dat3,$dat3
+	aese	$dat4,q14
+	aesmc	$dat4,$dat4
+
+	veor	$tmp0,$rndlast,$iv0
+	aese	$dat0,q15
+	// The iv for first block of one iteration
+	extr	$midnumx,$ivh,$ivh,#32
+	extr	$ivh,$ivh,$ivl,#63
+	and	$tmpmw,$constnum,$midnum,asr#31
+	eor	$ivl,$tmpmx,$ivl,lsl#1
+	fmov	$ivd00,$ivl
+	fmov	$ivd01,$ivh
+	veor	$tmp1,$rndlast,$iv1
+	vld1.8	{$in0},[$inp],#16
+	aese	$dat1,q15
+	// The iv for second block
+	extr	$midnumx,$ivh,$ivh,#32
+	extr	$ivh,$ivh,$ivl,#63
+	and	$tmpmw,$constnum,$midnum,asr#31
+	eor	$ivl,$tmpmx,$ivl,lsl#1
+	fmov	$ivd10,$ivl
+	fmov	$ivd11,$ivh
+	veor	$tmp2,$rndlast,$iv2
+	vld1.8	{$in1},[$inp],#16
+	aese	$dat2,q15
+	// The iv for third block
+	extr	$midnumx,$ivh,$ivh,#32
+	extr	$ivh,$ivh,$ivl,#63
+	and	$tmpmw,$constnum,$midnum,asr#31
+	eor	$ivl,$tmpmx,$ivl,lsl#1
+	fmov	$ivd20,$ivl
+	fmov	$ivd21,$ivh
+	veor	$tmp3,$rndlast,$iv3
+	vld1.8	{$in2},[$inp],#16
+	aese	$dat3,q15
+	// The iv for fourth block
+	extr	$midnumx,$ivh,$ivh,#32
+	extr	$ivh,$ivh,$ivl,#63
+	and	$tmpmw,$constnum,$midnum,asr#31
+	eor	$ivl,$tmpmx,$ivl,lsl#1
+	fmov	$ivd30,$ivl
+	fmov	$ivd31,$ivh
+	veor	$tmp4,$rndlast,$iv4
+	vld1.8	{$in3},[$inp],#16
+	aese	$dat4,q15
+
+	// The iv for fifth block
+	extr	$midnumx,$ivh,$ivh,#32
+	extr	$ivh,$ivh,$ivl,#63
+	and	$tmpmw,$constnum,$midnum,asr #31
+	eor	$ivl,$tmpmx,$ivl,lsl #1
+	fmov	$ivd40,$ivl
+	fmov	$ivd41,$ivh
+
+	vld1.8	{$in4},[$inp],#16
+	cbz	$xoffset,.Lxts_enc_tail4x
+	vld1.32 {q8},[$key_],#16		// re-pre-load rndkey[0]
+	veor	$tmp0,$tmp0,$dat0
+	veor	$dat0,$in0,$iv0
+	veor	$tmp1,$tmp1,$dat1
+	veor	$dat1,$in1,$iv1
+	veor	$tmp2,$tmp2,$dat2
+	veor	$dat2,$in2,$iv2
+	veor	$tmp3,$tmp3,$dat3
+	veor	$dat3,$in3,$iv3
+	veor	$tmp4,$tmp4,$dat4
+	vst1.8	{$tmp0},[$out],#16
+	veor	$dat4,$in4,$iv4
+	vst1.8	{$tmp1},[$out],#16
+	mov	$rounds,$rounds0
+	vst1.8	{$tmp2},[$out],#16
+	vld1.32	{q9},[$key_],#16		// re-pre-load rndkey[1]
+	vst1.8	{$tmp3},[$out],#16
+	vst1.8	{$tmp4},[$out],#16
+	b.hs	.Loop5x_xts_enc
+
+
+	// If left 4 blocks, borrow the five block's processing.
+	cmn	$len,#0x10
+	b.ne	.Loop5x_enc_after
+	vorr	$iv4,$iv3,$iv3
+	vorr	$iv3,$iv2,$iv2
+	vorr	$iv2,$iv1,$iv1
+	vorr	$iv1,$iv0,$iv0
+	fmov	$ivl,$ivd40
+	fmov	$ivh,$ivd41
+	veor	$dat0,$iv0,$in0
+	veor	$dat1,$iv1,$in1
+	veor	$dat2,$in2,$iv2
+	veor	$dat3,$in3,$iv3
+	veor	$dat4,$in4,$iv4
+	b.eq	.Loop5x_xts_enc
+
+.Loop5x_enc_after:
+	add	$len,$len,#0x50
+	cbz	$len,.Lxts_enc_done
+
+	add	$rounds,$rounds0,#2
+	subs	$len,$len,#0x30
+	b.lo	.Lxts_inner_enc_tail
+
+	veor	$dat0,$iv0,$in2
+	veor	$dat1,$iv1,$in3
+	veor	$dat2,$in4,$iv2
+	b	.Lxts_outer_enc_tail
+
+.align	4
+.Lxts_enc_tail4x:
+	add	$inp,$inp,#16
+	veor	$tmp1,$dat1,$tmp1
+	vst1.8	{$tmp1},[$out],#16
+	veor	$tmp2,$dat2,$tmp2
+	vst1.8	{$tmp2},[$out],#16
+	veor	$tmp3,$dat3,$tmp3
+	veor	$tmp4,$dat4,$tmp4
+	vst1.8	{$tmp3-$tmp4},[$out],#32
+
+	b	.Lxts_enc_done
+.align	4
+.Lxts_outer_enc_tail:
+	aese	$dat0,q8
+	aesmc	$dat0,$dat0
+	aese	$dat1,q8
+	aesmc	$dat1,$dat1
+	aese	$dat2,q8
+	aesmc	$dat2,$dat2
+	vld1.32	{q8},[$key_],#16
+	subs	$rounds,$rounds,#2
+	aese	$dat0,q9
+	aesmc	$dat0,$dat0
+	aese	$dat1,q9
+	aesmc	$dat1,$dat1
+	aese	$dat2,q9
+	aesmc	$dat2,$dat2
+	vld1.32	{q9},[$key_],#16
+	b.gt	.Lxts_outer_enc_tail
+
+	aese	$dat0,q8
+	aesmc	$dat0,$dat0
+	aese	$dat1,q8
+	aesmc	$dat1,$dat1
+	aese	$dat2,q8
+	aesmc	$dat2,$dat2
+	veor	$tmp0,$iv0,$rndlast
+	subs	$len,$len,#0x30
+	// The iv for first block
+	fmov	$ivl,$ivd20
+	fmov	$ivh,$ivd21
+	//mov	$constnum,#0x87
+	extr	$midnumx,$ivh,$ivh,#32
+	extr	$ivh,$ivh,$ivl,#63
+	and	$tmpmw,$constnum,$midnum,asr#31
+	eor	$ivl,$tmpmx,$ivl,lsl#1
+	fmov	$ivd00,$ivl
+	fmov	$ivd01,$ivh
+	veor	$tmp1,$iv1,$rndlast
+	csel	$xoffset,$len,$xoffset,lo       // x6, w6, is zero at this point
+	aese	$dat0,q9
+	aesmc	$dat0,$dat0
+	aese	$dat1,q9
+	aesmc	$dat1,$dat1
+	aese	$dat2,q9
+	aesmc	$dat2,$dat2
+	veor	$tmp2,$iv2,$rndlast
+
+	add	$xoffset,$xoffset,#0x20
+	add	$inp,$inp,$xoffset
+	mov	$key_,$key1
+
+	aese	$dat0,q12
+	aesmc	$dat0,$dat0
+	aese	$dat1,q12
+	aesmc	$dat1,$dat1
+	aese	$dat2,q12
+	aesmc	$dat2,$dat2
+	aese	$dat0,q13
+	aesmc	$dat0,$dat0
+	aese	$dat1,q13
+	aesmc	$dat1,$dat1
+	aese	$dat2,q13
+	aesmc	$dat2,$dat2
+	aese	$dat0,q14
+	aesmc	$dat0,$dat0
+	aese	$dat1,q14
+	aesmc	$dat1,$dat1
+	aese	$dat2,q14
+	aesmc	$dat2,$dat2
+	aese	$dat0,q15
+	aese	$dat1,q15
+	aese	$dat2,q15
+	vld1.8	{$in2},[$inp],#16
+	add	$rounds,$rounds0,#2
+	vld1.32	{q8},[$key_],#16                // re-pre-load rndkey[0]
+	veor	$tmp0,$tmp0,$dat0
+	veor	$tmp1,$tmp1,$dat1
+	veor	$dat2,$dat2,$tmp2
+	vld1.32	{q9},[$key_],#16                // re-pre-load rndkey[1]
+	vst1.8	{$tmp0},[$out],#16
+	vst1.8	{$tmp1},[$out],#16
+	vst1.8	{$dat2},[$out],#16
+	cmn	$len,#0x30
+	b.eq	.Lxts_enc_done
+.Lxts_encxor_one:
+	vorr	$in3,$in1,$in1
+	vorr	$in4,$in2,$in2
+	nop
+
+.Lxts_inner_enc_tail:
+	cmn	$len,#0x10
+	veor	$dat1,$in3,$iv0
+	veor	$dat2,$in4,$iv1
+	b.eq	.Lxts_enc_tail_loop
+	veor	$dat2,$in4,$iv0
+.Lxts_enc_tail_loop:
+	aese	$dat1,q8
+	aesmc	$dat1,$dat1
+	aese	$dat2,q8
+	aesmc	$dat2,$dat2
+	vld1.32	{q8},[$key_],#16
+	subs	$rounds,$rounds,#2
+	aese	$dat1,q9
+	aesmc	$dat1,$dat1
+	aese	$dat2,q9
+	aesmc	$dat2,$dat2
+	vld1.32	{q9},[$key_],#16
+	b.gt	.Lxts_enc_tail_loop
+
+	aese	$dat1,q8
+	aesmc	$dat1,$dat1
+	aese	$dat2,q8
+	aesmc	$dat2,$dat2
+	aese	$dat1,q9
+	aesmc	$dat1,$dat1
+	aese	$dat2,q9
+	aesmc	$dat2,$dat2
+	aese	$dat1,q12
+	aesmc	$dat1,$dat1
+	aese	$dat2,q12
+	aesmc	$dat2,$dat2
+	cmn	$len,#0x20
+	aese	$dat1,q13
+	aesmc	$dat1,$dat1
+	aese	$dat2,q13
+	aesmc	$dat2,$dat2
+	veor	$tmp1,$iv0,$rndlast
+	aese	$dat1,q14
+	aesmc	$dat1,$dat1
+	aese	$dat2,q14
+	aesmc	$dat2,$dat2
+	veor	$tmp2,$iv1,$rndlast
+	aese	$dat1,q15
+	aese	$dat2,q15
+	b.eq	.Lxts_enc_one
+	veor	$tmp1,$tmp1,$dat1
+	vst1.8	{$tmp1},[$out],#16
+	veor	$tmp2,$tmp2,$dat2
+	vorr	$iv0,$iv1,$iv1
+	vst1.8	{$tmp2},[$out],#16
+	fmov	$ivl,$ivd10
+	fmov	$ivh,$ivd11
+	mov	$constnum,#0x87
+	extr	$midnumx,$ivh,$ivh,#32
+	extr	$ivh,$ivh,$ivl,#63
+	and	$tmpmw,$constnum,$midnum,asr #31
+	eor	$ivl,$tmpmx,$ivl,lsl #1
+	fmov	$ivd00,$ivl
+	fmov	$ivd01,$ivh
+	b	.Lxts_enc_done
+
+.Lxts_enc_one:
+	veor	$tmp1,$tmp1,$dat2
+	vorr	$iv0,$iv0,$iv0
+	vst1.8	{$tmp1},[$out],#16
+	fmov	$ivl,$ivd00
+	fmov	$ivh,$ivd01
+	mov	$constnum,#0x87
+	extr	$midnumx,$ivh,$ivh,#32
+	extr	$ivh,$ivh,$ivl,#63
+	and	$tmpmw,$constnum,$midnum,asr #31
+	eor	$ivl,$tmpmx,$ivl,lsl #1
+	fmov	$ivd00,$ivl
+	fmov	$ivd01,$ivh
+	b	.Lxts_enc_done
+.align	5
+.Lxts_enc_done:
+	// Process the tail block with cipher stealing.
+	tst	$tailcnt,#0xf
+	b.eq	.Lxts_abort
+
+	mov	$tmpinp,$inp
+	mov	$tmpoutp,$out
+	sub	$out,$out,#16
+.composite_enc_loop:
+	subs	$tailcnt,$tailcnt,#1
+	ldrb	$l2outp,[$out,$tailcnt]
+	ldrb	$loutp,[$tmpinp,$tailcnt]
+	strb	$l2outp,[$tmpoutp,$tailcnt]
+	strb	$loutp,[$out,$tailcnt]
+	b.gt	.composite_enc_loop
+.Lxts_enc_load_done:
+	vld1.8	{$tmpin},[$out]
+	veor	$tmpin,$tmpin,$iv0
+
+	// Encrypt the composite block to get the last second encrypted text block
+	ldr	$rounds,[$key1,#240]		// load key schedule...
+	vld1.8	{$dat},[$key1],#16
+	sub	$rounds,$rounds,#2
+	vld1.8	{$dat1},[$key1],#16		// load key schedule...
+.Loop_final_enc:
+	aese	$tmpin,$dat0
+	aesmc	$tmpin,$tmpin
+	vld1.32	{$dat0},[$key1],#16
+	subs	$rounds,$rounds,#2
+	aese	$tmpin,$dat1
+	aesmc	$tmpin,$tmpin
+	vld1.32	{$dat1},[$key1],#16
+	b.gt	.Loop_final_enc
+
+	aese	$tmpin,$dat0
+	aesmc	$tmpin,$tmpin
+	vld1.32	{$dat0},[$key1]
+	aese	$tmpin,$dat1
+	veor	$tmpin,$tmpin,$dat0
+	veor	$tmpin,$tmpin,$iv0
+	vst1.8	{$tmpin},[$out]
+
+.Lxts_abort:
+	ldp	$tailcnt,$midnumx,[sp,#48]
+	ldp	$ivd10,$ivd20,[sp,#32]
+	ldp	$ivd30,$ivd40,[sp,#16]
+	ldp	$constnumx,$tmpinp,[sp],#64
+.Lxts_enc_final_abort:
+	ret
+.size	${prefix}_xts_encrypt,.-${prefix}_xts_encrypt
+___
+
+}}}
+{{{
+my ($inp,$out,$len,$key1,$key2,$ivp)=map("x$_",(0..5));
+my ($rounds0,$rounds,$key_,$step,$ivl,$ivh)=("w5","w6","x7","x8","x9","x10");
+my ($tmpoutp,$loutp,$l2outp,$tmpinp)=("x13","w14","w15","x20");
+my ($tailcnt,$midnum,$midnumx,$constnum,$constnumx)=("x21","w22","x22","w19","x19");
+my ($xoffset,$tmpmx,$tmpmw)=("x6","x11","w11");
+my ($dat0,$dat1,$in0,$in1,$tmp0,$tmp1,$tmp2,$rndlast)=map("q$_",(0..7));
+my ($iv0,$iv1,$iv2,$iv3,$iv4,$tmpin)=("v6.16b","v8.16b","v9.16b","v10.16b","v11.16b","v26.16b");
+my ($ivd00,$ivd01,$ivd20,$ivd21)=("d6","v6.d[1]","d9","v9.d[1]");
+my ($ivd10,$ivd11,$ivd30,$ivd31,$ivd40,$ivd41)=("d8","v8.d[1]","d10","v10.d[1]","d11","v11.d[1]");
+
+my ($dat,$tmp,$rndzero_n_last)=($dat0,$tmp0,$tmp1);
+
+# q7	last round key
+# q10-q15, q7	Last 7 round keys
+# q8-q9	preloaded round keys except last 7 keys for big size
+# q20, q21, q8-q9	preloaded round keys except last 7 keys for only 16 byte
+
+{
+my ($dat2,$in2,$tmp2)=map("q$_",(10,11,9));
+
+my ($dat3,$in3,$tmp3);	# used only in 64-bit mode
+my ($dat4,$in4,$tmp4);
+if ($flavour =~ /64/) {
+    ($dat2,$dat3,$dat4,$in2,$in3,$in4,$tmp3,$tmp4)=map("q$_",(16..23));
+}
+
+$code.=<<___	if ($flavour =~ /64/);
+.globl	${prefix}_xts_decrypt
+.type	${prefix}_xts_decrypt,%function
+.align	5
+${prefix}_xts_decrypt:
+___
+$code.=<<___	if ($flavour =~ /64/);
+	cmp	$len,#16
+	// Original input data size bigger than 16, jump to big size processing.
+	b.ne	.Lxts_dec_big_size
+	// Encrypt the iv with key2, as the first XEX iv.
+	ldr	$rounds,[$key2,#240]
+	vld1.8	{$dat},[$key2],#16
+	vld1.8	{$iv0},[$ivp]
+	sub	$rounds,$rounds,#2
+	vld1.8	{$dat1},[$key2],#16
+
+.Loop_dec_small_iv_enc:
+	aese	$iv0,$dat
+	aesmc	$iv0,$iv0
+	vld1.32	{$dat},[$key2],#16
+	subs	$rounds,$rounds,#2
+	aese	$iv0,$dat1
+	aesmc	$iv0,$iv0
+	vld1.32	{$dat1},[$key2],#16
+	b.gt	.Loop_dec_small_iv_enc
+
+	aese	$iv0,$dat
+	aesmc	$iv0,$iv0
+	vld1.32	{$dat},[$key2]
+	aese	$iv0,$dat1
+	veor	$iv0,$iv0,$dat
+
+	vld1.8	{$dat0},[$inp]
+	veor	$dat0,$iv0,$dat0
+
+	ldr	$rounds,[$key1,#240]
+	vld1.32	{q20-q21},[$key1],#32			// load key schedule...
+
+	aesd	$dat0,q20
+	aesimc	$dat0,$dat0
+	vld1.32	{q8-q9},[$key1],#32			// load key schedule...
+	aesd	$dat0,q21
+	aesimc	$dat0,$dat0
+	subs	$rounds,$rounds,#10			// bias
+	b.eq	.Lxts_128_dec
+.Lxts_dec_round_loop:
+	aesd	$dat0,q8
+	aesimc	$dat0,$dat0
+	vld1.32	{q8},[$key1],#16			// load key schedule...
+	aesd	$dat0,q9
+	aesimc	$dat0,$dat0
+	vld1.32	{q9},[$key1],#16			// load key schedule...
+	subs	$rounds,$rounds,#2			// bias
+	b.gt	.Lxts_dec_round_loop
+.Lxts_128_dec:
+	vld1.32	{q10-q11},[$key1],#32			// load key schedule...
+	aesd	$dat0,q8
+	aesimc	$dat0,$dat0
+	aesd	$dat0,q9
+	aesimc	$dat0,$dat0
+	vld1.32	{q12-q13},[$key1],#32			// load key schedule...
+	aesd	$dat0,q10
+	aesimc	$dat0,$dat0
+	aesd	$dat0,q11
+	aesimc	$dat0,$dat0
+	vld1.32	{q14-q15},[$key1],#32			// load key schedule...
+	aesd	$dat0,q12
+	aesimc	$dat0,$dat0
+	aesd	$dat0,q13
+	aesimc	$dat0,$dat0
+	vld1.32	{$rndlast},[$key1]
+	aesd	$dat0,q14
+	aesimc	$dat0,$dat0
+	aesd	$dat0,q15
+	veor	$dat0,$dat0,$rndlast
+	veor	$dat0,$iv0,$dat0
+	vst1.8	{$dat0},[$out]
+	b	.Lxts_dec_final_abort
+.Lxts_dec_big_size:
+___
+$code.=<<___	if ($flavour =~ /64/);
+	stp	$constnumx,$tmpinp,[sp,#-64]!
+	stp	$tailcnt,$midnumx,[sp,#48]
+	stp	$ivd10,$ivd20,[sp,#32]
+	stp	$ivd30,$ivd40,[sp,#16]
+
+	and	$tailcnt,$len,#0xf
+	and	$len,$len,#-16
+	subs	$len,$len,#16
+	mov	$step,#16
+	b.lo	.Lxts_dec_abort
+
+	// Encrypt the iv with key2, as the first XEX iv
+	ldr	$rounds,[$key2,#240]
+	vld1.8	{$dat},[$key2],#16
+	vld1.8	{$iv0},[$ivp]
+	sub	$rounds,$rounds,#2
+	vld1.8	{$dat1},[$key2],#16
+
+.Loop_dec_iv_enc:
+	aese	$iv0,$dat
+	aesmc	$iv0,$iv0
+	vld1.32	{$dat},[$key2],#16
+	subs	$rounds,$rounds,#2
+	aese	$iv0,$dat1
+	aesmc	$iv0,$iv0
+	vld1.32	{$dat1},[$key2],#16
+	b.gt	.Loop_dec_iv_enc
+
+	aese	$iv0,$dat
+	aesmc	$iv0,$iv0
+	vld1.32	{$dat},[$key2]
+	aese	$iv0,$dat1
+	veor	$iv0,$iv0,$dat
+
+	// The iv for second block
+	// $ivl- iv(low), $ivh - iv(high)
+	// the five ivs stored into, $iv0,$iv1,$iv2,$iv3,$iv4
+	fmov	$ivl,$ivd00
+	fmov	$ivh,$ivd01
+	mov	$constnum,#0x87
+	extr	$midnumx,$ivh,$ivh,#32
+	extr	$ivh,$ivh,$ivl,#63
+	and	$tmpmw,$constnum,$midnum,asr #31
+	eor	$ivl,$tmpmx,$ivl,lsl #1
+	fmov	$ivd10,$ivl
+	fmov	$ivd11,$ivh
+
+	ldr	$rounds0,[$key1,#240]		// load rounds number
+
+	// The iv for third block
+	extr	$midnumx,$ivh,$ivh,#32
+	extr	$ivh,$ivh,$ivl,#63
+	and	$tmpmw,$constnum,$midnum,asr #31
+	eor	$ivl,$tmpmx,$ivl,lsl #1
+	fmov	$ivd20,$ivl
+	fmov	$ivd21,$ivh
+
+	vld1.32	{q8-q9},[$key1]			// load key schedule...
+	sub	$rounds0,$rounds0,#6
+	add	$key_,$key1,$ivp,lsl#4		// pointer to last 7 round keys
+	sub	$rounds0,$rounds0,#2
+	vld1.32	{q10-q11},[$key_],#32		// load key schedule...
+	vld1.32	{q12-q13},[$key_],#32
+	vld1.32	{q14-q15},[$key_],#32
+	vld1.32	{$rndlast},[$key_]
+
+	// The iv for fourth block
+	extr	$midnumx,$ivh,$ivh,#32
+	extr	$ivh,$ivh,$ivl,#63
+	and	$tmpmw,$constnum,$midnum,asr #31
+	eor	$ivl,$tmpmx,$ivl,lsl #1
+	fmov	$ivd30,$ivl
+	fmov	$ivd31,$ivh
+
+	add	$key_,$key1,#32
+	mov	$rounds,$rounds0
+	b	.Lxts_dec
+
+	// Decryption
+.align	5
+.Lxts_dec:
+	tst	$tailcnt,#0xf
+	b.eq	.Lxts_dec_begin
+	subs	$len,$len,#16
+	csel	$step,xzr,$step,eq
+	vld1.8	{$dat},[$inp],#16
+	b.lo	.Lxts_done
+	sub	$inp,$inp,#16
+.Lxts_dec_begin:
+	vld1.8	{$dat},[$inp],$step
+	subs	$len,$len,#32			// bias
+	add	$rounds,$rounds0,#2
+	vorr	$in1,$dat,$dat
+	vorr	$dat1,$dat,$dat
+	vorr	$in3,$dat,$dat
+	vld1.8	{$dat2},[$inp],#16
+	vorr	$in2,$dat2,$dat2
+	vorr	$in4,$dat2,$dat2
+	b.lo	.Lxts_inner_dec_tail
+	veor	$dat,$dat,$iv0			// before decryt, xor with iv
+	veor	$dat2,$dat2,$iv1
+
+	vorr	$dat1,$dat2,$dat2
+	vld1.8	{$dat2},[$inp],#16
+	vorr	$in0,$dat,$dat
+	vorr	$in1,$dat1,$dat1
+	veor	$in2,$dat2,$iv2			// third block xox with third iv
+	veor	$dat2,$dat2,$iv2
+	cmp	$len,#32
+	b.lo	.Lxts_outer_dec_tail
+
+	vld1.8	{$dat3},[$inp],#16
+
+	// The iv for fifth block
+	extr	$midnumx,$ivh,$ivh,#32
+	extr	$ivh,$ivh,$ivl,#63
+	and	$tmpmw,$constnum,$midnum,asr #31
+	eor	$ivl,$tmpmx,$ivl,lsl #1
+	fmov	$ivd40,$ivl
+	fmov	$ivd41,$ivh
+
+	vld1.8	{$dat4},[$inp],#16
+	veor	$dat3,$dat3,$iv3		// the fourth block
+	veor	$dat4,$dat4,$iv4
+	sub $len,$len,#32			// bias
+	mov	$rounds,$rounds0
+	b	.Loop5x_xts_dec
+
+.align	4
+.Loop5x_xts_dec:
+	aesd	$dat0,q8
+	aesimc	$dat0,$dat0
+	aesd	$dat1,q8
+	aesimc	$dat1,$dat1
+	aesd	$dat2,q8
+	aesimc	$dat2,$dat2
+	aesd	$dat3,q8
+	aesimc	$dat3,$dat3
+	aesd	$dat4,q8
+	aesimc	$dat4,$dat4
+	vld1.32	{q8},[$key_],#16		// load key schedule...
+	subs	$rounds,$rounds,#2
+	aesd	$dat0,q9
+	aesimc	$dat0,$dat0
+	aesd	$dat1,q9
+	aesimc	$dat1,$dat1
+	aesd	$dat2,q9
+	aesimc	$dat2,$dat2
+	aesd	$dat3,q9
+	aesimc	$dat3,$dat3
+	aesd	$dat4,q9
+	aesimc	$dat4,$dat4
+	vld1.32	{q9},[$key_],#16		// load key schedule...
+	b.gt	.Loop5x_xts_dec
+
+	aesd	$dat0,q8
+	aesimc	$dat0,$dat0
+	aesd	$dat1,q8
+	aesimc	$dat1,$dat1
+	aesd	$dat2,q8
+	aesimc	$dat2,$dat2
+	aesd	$dat3,q8
+	aesimc	$dat3,$dat3
+	aesd	$dat4,q8
+	aesimc	$dat4,$dat4
+	subs	$len,$len,#0x50			// because .Lxts_dec_tail4x
+
+	aesd	$dat0,q9
+	aesimc	$dat0,$dat
+	aesd	$dat1,q9
+	aesimc	$dat1,$dat1
+	aesd	$dat2,q9
+	aesimc	$dat2,$dat2
+	aesd	$dat3,q9
+	aesimc	$dat3,$dat3
+	aesd	$dat4,q9
+	aesimc	$dat4,$dat4
+	csel	$xoffset,xzr,$len,gt		// borrow x6, w6, "gt" is not typo
+	mov	$key_,$key1
+
+	aesd	$dat0,q10
+	aesimc	$dat0,$dat0
+	aesd	$dat1,q10
+	aesimc	$dat1,$dat1
+	aesd	$dat2,q10
+	aesimc	$dat2,$dat2
+	aesd	$dat3,q10
+	aesimc	$dat3,$dat3
+	aesd	$dat4,q10
+	aesimc	$dat4,$dat4
+	add	$inp,$inp,$xoffset		// x0 is adjusted in such way that
+						// at exit from the loop v1.16b-v26.16b
+						// are loaded with last "words"
+	add	$xoffset,$len,#0x60		// because .Lxts_dec_tail4x
+
+	aesd	$dat0,q11
+	aesimc	$dat0,$dat0
+	aesd	$dat1,q11
+	aesimc	$dat1,$dat1
+	aesd	$dat2,q11
+	aesimc	$dat2,$dat2
+	aesd	$dat3,q11
+	aesimc	$dat3,$dat3
+	aesd	$dat4,q11
+	aesimc	$dat4,$dat4
+
+	aesd	$dat0,q12
+	aesimc	$dat0,$dat0
+	aesd	$dat1,q12
+	aesimc	$dat1,$dat1
+	aesd	$dat2,q12
+	aesimc	$dat2,$dat2
+	aesd	$dat3,q12
+	aesimc	$dat3,$dat3
+	aesd	$dat4,q12
+	aesimc	$dat4,$dat4
+
+	aesd	$dat0,q13
+	aesimc	$dat0,$dat0
+	aesd	$dat1,q13
+	aesimc	$dat1,$dat1
+	aesd	$dat2,q13
+	aesimc	$dat2,$dat2
+	aesd	$dat3,q13
+	aesimc	$dat3,$dat3
+	aesd	$dat4,q13
+	aesimc	$dat4,$dat4
+
+	aesd	$dat0,q14
+	aesimc	$dat0,$dat0
+	aesd	$dat1,q14
+	aesimc	$dat1,$dat1
+	aesd	$dat2,q14
+	aesimc	$dat2,$dat2
+	aesd	$dat3,q14
+	aesimc	$dat3,$dat3
+	aesd	$dat4,q14
+	aesimc	$dat4,$dat4
+
+	veor	$tmp0,$rndlast,$iv0
+	aesd	$dat0,q15
+	// The iv for first block of next iteration.
+	extr	$midnumx,$ivh,$ivh,#32
+	extr	$ivh,$ivh,$ivl,#63
+	and	$tmpmw,$constnum,$midnum,asr #31
+	eor	$ivl,$tmpmx,$ivl,lsl #1
+	fmov	$ivd00,$ivl
+	fmov	$ivd01,$ivh
+	veor	$tmp1,$rndlast,$iv1
+	vld1.8	{$in0},[$inp],#16
+	aesd	$dat1,q15
+	// The iv for second block
+	extr	$midnumx,$ivh,$ivh,#32
+	extr	$ivh,$ivh,$ivl,#63
+	and	$tmpmw,$constnum,$midnum,asr #31
+	eor	$ivl,$tmpmx,$ivl,lsl #1
+	fmov	$ivd10,$ivl
+	fmov	$ivd11,$ivh
+	veor	$tmp2,$rndlast,$iv2
+	vld1.8	{$in1},[$inp],#16
+	aesd	$dat2,q15
+	// The iv for third block
+	extr	$midnumx,$ivh,$ivh,#32
+	extr	$ivh,$ivh,$ivl,#63
+	and	$tmpmw,$constnum,$midnum,asr #31
+	eor	$ivl,$tmpmx,$ivl,lsl #1
+	fmov	$ivd20,$ivl
+	fmov	$ivd21,$ivh
+	veor	$tmp3,$rndlast,$iv3
+	vld1.8	{$in2},[$inp],#16
+	aesd	$dat3,q15
+	// The iv for fourth block
+	extr	$midnumx,$ivh,$ivh,#32
+	extr	$ivh,$ivh,$ivl,#63
+	and	$tmpmw,$constnum,$midnum,asr #31
+	eor	$ivl,$tmpmx,$ivl,lsl #1
+	fmov	$ivd30,$ivl
+	fmov	$ivd31,$ivh
+	veor	$tmp4,$rndlast,$iv4
+	vld1.8	{$in3},[$inp],#16
+	aesd	$dat4,q15
+
+	// The iv for fifth block
+	extr	$midnumx,$ivh,$ivh,#32
+	extr	$ivh,$ivh,$ivl,#63
+	and	$tmpmw,$constnum,$midnum,asr #31
+	eor	$ivl,$tmpmx,$ivl,lsl #1
+	fmov	$ivd40,$ivl
+	fmov	$ivd41,$ivh
+
+	vld1.8	{$in4},[$inp],#16
+	cbz	$xoffset,.Lxts_dec_tail4x
+	vld1.32	{q8},[$key_],#16		// re-pre-load rndkey[0]
+	veor	$tmp0,$tmp0,$dat0
+	veor	$dat0,$in0,$iv0
+	veor	$tmp1,$tmp1,$dat1
+	veor	$dat1,$in1,$iv1
+	veor	$tmp2,$tmp2,$dat2
+	veor	$dat2,$in2,$iv2
+	veor	$tmp3,$tmp3,$dat3
+	veor	$dat3,$in3,$iv3
+	veor	$tmp4,$tmp4,$dat4
+	vst1.8	{$tmp0},[$out],#16
+	veor	$dat4,$in4,$iv4
+	vst1.8	{$tmp1},[$out],#16
+	mov	$rounds,$rounds0
+	vst1.8	{$tmp2},[$out],#16
+	vld1.32	{q9},[$key_],#16		// re-pre-load rndkey[1]
+	vst1.8	{$tmp3},[$out],#16
+	vst1.8	{$tmp4},[$out],#16
+	b.hs	.Loop5x_xts_dec
+
+	cmn	$len,#0x10
+	b.ne	.Loop5x_dec_after
+	// If x2($len) equal to -0x10, the left blocks is 4.
+	// After specially processing, utilize the five blocks processing again.
+	// It will use the following IVs: $iv0,$iv0,$iv1,$iv2,$iv3.
+	vorr	$iv4,$iv3,$iv3
+	vorr	$iv3,$iv2,$iv2
+	vorr	$iv2,$iv1,$iv1
+	vorr	$iv1,$iv0,$iv0
+	fmov	$ivl,$ivd40
+	fmov	$ivh,$ivd41
+	veor	$dat0,$iv0,$in0
+	veor	$dat1,$iv1,$in1
+	veor	$dat2,$in2,$iv2
+	veor	$dat3,$in3,$iv3
+	veor	$dat4,$in4,$iv4
+	b.eq	.Loop5x_xts_dec
+
+.Loop5x_dec_after:
+	add	$len,$len,#0x50
+	cbz	$len,.Lxts_done
+
+	add	$rounds,$rounds0,#2
+	subs	$len,$len,#0x30
+	b.lo	.Lxts_inner_dec_tail
+
+	veor	$dat0,$iv0,$in2
+	veor	$dat1,$iv1,$in3
+	veor	$dat2,$in4,$iv2
+	b	.Lxts_outer_dec_tail
+
+.align	4
+.Lxts_dec_tail4x:
+	add	$inp,$inp,#16
+	vld1.32	{$dat0},[$inp],#16
+	veor	$tmp1,$dat1,$tmp0
+	vst1.8	{$tmp1},[$out],#16
+	veor	$tmp2,$dat2,$tmp2
+	vst1.8	{$tmp2},[$out],#16
+	veor	$tmp3,$dat3,$tmp3
+	veor	$tmp4,$dat4,$tmp4
+	vst1.8	{$tmp3-$tmp4},[$out],#32
+
+	b	.Lxts_done
+.align	4
+.Lxts_outer_dec_tail:
+	aesd	$dat0,q8
+	aesimc	$dat0,$dat0
+	aesd	$dat1,q8
+	aesimc	$dat1,$dat1
+	aesd	$dat2,q8
+	aesimc	$dat2,$dat2
+	vld1.32	{q8},[$key_],#16
+	subs	$rounds,$rounds,#2
+	aesd	$dat0,q9
+	aesimc	$dat0,$dat0
+	aesd	$dat1,q9
+	aesimc	$dat1,$dat1
+	aesd	$dat2,q9
+	aesimc	$dat2,$dat2
+	vld1.32	{q9},[$key_],#16
+	b.gt	.Lxts_outer_dec_tail
+
+	aesd	$dat0,q8
+	aesimc	$dat0,$dat0
+	aesd	$dat1,q8
+	aesimc	$dat1,$dat1
+	aesd	$dat2,q8
+	aesimc	$dat2,$dat2
+	veor	$tmp0,$iv0,$rndlast
+	subs	$len,$len,#0x30
+	// The iv for first block
+	fmov	$ivl,$ivd20
+	fmov	$ivh,$ivd21
+	mov	$constnum,#0x87
+	extr	$midnumx,$ivh,$ivh,#32
+	extr	$ivh,$ivh,$ivl,#63
+	and	$tmpmw,$constnum,$midnum,asr #31
+	eor	$ivl,$tmpmx,$ivl,lsl #1
+	fmov	$ivd00,$ivl
+	fmov	$ivd01,$ivh
+	veor	$tmp1,$iv1,$rndlast
+	csel	$xoffset,$len,$xoffset,lo	// x6, w6, is zero at this point
+	aesd	$dat0,q9
+	aesimc	$dat0,$dat0
+	aesd	$dat1,q9
+	aesimc	$dat1,$dat1
+	aesd	$dat2,q9
+	aesimc	$dat2,$dat2
+	veor	$tmp2,$iv2,$rndlast
+	// The iv for second block
+	extr	$midnumx,$ivh,$ivh,#32
+	extr	$ivh,$ivh,$ivl,#63
+	and	$tmpmw,$constnum,$midnum,asr #31
+	eor	$ivl,$tmpmx,$ivl,lsl #1
+	fmov	$ivd10,$ivl
+	fmov	$ivd11,$ivh
+
+	add	$xoffset,$xoffset,#0x20
+	add	$inp,$inp,$xoffset		// $inp is adjusted to the last data
+
+	mov	$key_,$key1
+
+	// The iv for third block
+	extr	$midnumx,$ivh,$ivh,#32
+	extr	$ivh,$ivh,$ivl,#63
+	and	$tmpmw,$constnum,$midnum,asr #31
+	eor	$ivl,$tmpmx,$ivl,lsl #1
+	fmov	$ivd20,$ivl
+	fmov	$ivd21,$ivh
+
+	aesd	$dat0,q12
+	aesimc	$dat0,$dat0
+	aesd	$dat1,q12
+	aesimc	$dat1,$dat1
+	aesd	$dat2,q12
+	aesimc	$dat2,$dat2
+	aesd	$dat0,q13
+	aesimc	$dat0,$dat0
+	aesd	$dat1,q13
+	aesimc	$dat1,$dat1
+	aesd	$dat2,q13
+	aesimc	$dat2,$dat2
+	aesd	$dat0,q14
+	aesimc	$dat0,$dat0
+	aesd	$dat1,q14
+	aesimc	$dat1,$dat1
+	aesd	$dat2,q14
+	aesimc	$dat2,$dat2
+	vld1.8	{$in2},[$inp],#16
+	aesd	$dat0,q15
+	aesd	$dat1,q15
+	aesd	$dat2,q15
+	vld1.32	{q8},[$key_],#16		// re-pre-load rndkey[0]
+	add	$rounds,$rounds0,#2
+	veor	$tmp0,$tmp0,$dat0
+	veor	$tmp1,$tmp1,$dat1
+	veor	$dat2,$dat2,$tmp2
+	vld1.32	{q9},[$key_],#16		// re-pre-load rndkey[1]
+	vst1.8	{$tmp0},[$out],#16
+	vst1.8	{$tmp1},[$out],#16
+	vst1.8	{$dat2},[$out],#16
+
+	cmn	$len,#0x30
+	add	$len,$len,#0x30
+	b.eq	.Lxts_done
+	sub	$len,$len,#0x30
+	vorr	$in3,$in1,$in1
+	vorr	$in4,$in2,$in2
+	nop
+
+.Lxts_inner_dec_tail:
+	// $len == -0x10 means two blocks left.
+	cmn	$len,#0x10
+	veor	$dat1,$in3,$iv0
+	veor	$dat2,$in4,$iv1
+	b.eq	.Lxts_dec_tail_loop
+	veor	$dat2,$in4,$iv0
+.Lxts_dec_tail_loop:
+	aesd	$dat1,q8
+	aesimc	$dat1,$dat1
+	aesd	$dat2,q8
+	aesimc	$dat2,$dat2
+	vld1.32	{q8},[$key_],#16
+	subs	$rounds,$rounds,#2
+	aesd	$dat1,q9
+	aesimc	$dat1,$dat1
+	aesd	$dat2,q9
+	aesimc	$dat2,$dat2
+	vld1.32	{q9},[$key_],#16
+	b.gt	.Lxts_dec_tail_loop
+
+	aesd	$dat1,q8
+	aesimc	$dat1,$dat1
+	aesd	$dat2,q8
+	aesimc	$dat2,$dat2
+	aesd	$dat1,q9
+	aesimc	$dat1,$dat1
+	aesd	$dat2,q9
+	aesimc	$dat2,$dat2
+	aesd	$dat1,q12
+	aesimc	$dat1,$dat1
+	aesd	$dat2,q12
+	aesimc	$dat2,$dat2
+	cmn	$len,#0x20
+	aesd	$dat1,q13
+	aesimc	$dat1,$dat1
+	aesd	$dat2,q13
+	aesimc	$dat2,$dat2
+	veor	$tmp1,$iv0,$rndlast
+	aesd	$dat1,q14
+	aesimc	$dat1,$dat1
+	aesd	$dat2,q14
+	aesimc	$dat2,$dat2
+	veor	$tmp2,$iv1,$rndlast
+	aesd	$dat1,q15
+	aesd	$dat2,q15
+	b.eq	.Lxts_dec_one
+	veor	$tmp1,$tmp1,$dat1
+	veor	$tmp2,$tmp2,$dat2
+	vorr	$iv0,$iv2,$iv2
+	vorr	$iv1,$iv3,$iv3
+	vst1.8	{$tmp1},[$out],#16
+	vst1.8	{$tmp2},[$out],#16
+	add	$len,$len,#16
+	b	.Lxts_done
+
+.Lxts_dec_one:
+	veor	$tmp1,$tmp1,$dat2
+	vorr	$iv0,$iv1,$iv1
+	vorr	$iv1,$iv2,$iv2
+	vst1.8	{$tmp1},[$out],#16
+	add	$len,$len,#32
+
+.Lxts_done:
+	tst	$tailcnt,#0xf
+	b.eq	.Lxts_dec_abort
+	// Processing the last two blocks with cipher stealing.
+	mov	x7,x3
+	cbnz	x2,.Lxts_dec_1st_done
+	vld1.32	{$dat0},[$inp],#16
+
+	// Decrypt the last secod block to get the last plain text block
+.Lxts_dec_1st_done:
+	eor	$tmpin,$dat0,$iv1
+	ldr	$rounds,[$key1,#240]
+	vld1.32	{$dat0},[$key1],#16
+	sub	$rounds,$rounds,#2
+	vld1.32	{$dat1},[$key1],#16
+.Loop_final_2nd_dec:
+	aesd	$tmpin,$dat0
+	aesimc	$tmpin,$tmpin
+	vld1.32	{$dat0},[$key1],#16		// load key schedule...
+	subs	$rounds,$rounds,#2
+	aesd	$tmpin,$dat1
+	aesimc	$tmpin,$tmpin
+	vld1.32	{$dat1},[$key1],#16		// load key schedule...
+	b.gt	.Loop_final_2nd_dec
+
+	aesd	$tmpin,$dat0
+	aesimc	$tmpin,$tmpin
+	vld1.32	{$dat0},[$key1]
+	aesd	$tmpin,$dat1
+	veor	$tmpin,$tmpin,$dat0
+	veor	$tmpin,$tmpin,$iv1
+	vst1.8	{$tmpin},[$out]
+
+	mov	$tmpinp,$inp
+	add	$tmpoutp,$out,#16
+
+	// Composite the tailcnt "16 byte not aligned block" into the last second plain blocks
+	// to get the last encrypted block.
+.composite_dec_loop:
+	subs	$tailcnt,$tailcnt,#1
+	ldrb	$l2outp,[$out,$tailcnt]
+	ldrb	$loutp,[$tmpinp,$tailcnt]
+	strb	$l2outp,[$tmpoutp,$tailcnt]
+	strb	$loutp,[$out,$tailcnt]
+	b.gt	.composite_dec_loop
+.Lxts_dec_load_done:
+	vld1.8	{$tmpin},[$out]
+	veor	$tmpin,$tmpin,$iv0
+
+	// Decrypt the composite block to get the last second plain text block
+	ldr	$rounds,[$key_,#240]
+	vld1.8	{$dat},[$key_],#16
+	sub	$rounds,$rounds,#2
+	vld1.8	{$dat1},[$key_],#16
+.Loop_final_dec:
+	aesd	$tmpin,$dat0
+	aesimc	$tmpin,$tmpin
+	vld1.32	{$dat0},[$key_],#16		// load key schedule...
+	subs	$rounds,$rounds,#2
+	aesd	$tmpin,$dat1
+	aesimc	$tmpin,$tmpin
+	vld1.32	{$dat1},[$key_],#16		// load key schedule...
+	b.gt	.Loop_final_dec
+
+	aesd	$tmpin,$dat0
+	aesimc	$tmpin,$tmpin
+	vld1.32	{$dat0},[$key_]
+	aesd	$tmpin,$dat1
+	veor	$tmpin,$tmpin,$dat0
+	veor	$tmpin,$tmpin,$iv0
+	vst1.8	{$tmpin},[$out]
+
+.Lxts_dec_abort:
+	ldp	$tailcnt,$midnumx,[sp,#48]
+	ldp	$ivd10,$ivd20,[sp,#32]
+	ldp	$ivd30,$ivd40,[sp,#16]
+	ldp	$constnumx,$tmpinp,[sp],#64
+
+.Lxts_dec_final_abort:
+	ret
+.size	${prefix}_xts_decrypt,.-${prefix}_xts_decrypt
+___
+}
 }}}
 $code.=<<___;
 #endif

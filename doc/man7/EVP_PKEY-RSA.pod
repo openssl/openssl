@@ -202,14 +202,18 @@ An B<EVP_PKEY> context can be obtained by calling:
     EVP_PKEY_CTX *pctx =
         EVP_PKEY_CTX_new_from_name(NULL, "RSA", NULL);
 
-An B<RSA> key can be generated like this:
+An B<RSA> key can be generated simply like this:
+
+    pkey = EVP_RSA_gen(4096);
+
+or like this:
 
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *pctx =
         EVP_PKEY_CTX_new_from_name(NULL, "RSA", NULL);
 
     EVP_PKEY_keygen_init(pctx);
-    EVP_PKEY_gen(pctx, &pkey);
+    EVP_PKEY_generate(pctx, &pkey);
     EVP_PKEY_CTX_free(pctx);
 
 An B<RSA> key can be generated with key generation parameters:
@@ -227,17 +231,17 @@ An B<RSA> key can be generated with key generation parameters:
     params[2] = OSSL_PARAM_construct_end();
     EVP_PKEY_CTX_set_params(pctx, params);
 
-    EVP_PKEY_gen(pctx, &pkey);
+    EVP_PKEY_generate(pctx, &pkey);
     EVP_PKEY_print_private(bio_out, pkey, 0, NULL);
     EVP_PKEY_CTX_free(pctx);
 
 =head1 SEE ALSO
 
-L<EVP_KEYMGMT(3)>, L<EVP_PKEY(3)>, L<provider-keymgmt(7)>
+L<EVP_RSA_gen(3)>, L<EVP_KEYMGMT(3)>, L<EVP_PKEY(3)>, L<provider-keymgmt(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

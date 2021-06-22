@@ -37,7 +37,7 @@ static const PROV_CIPHER_HW rc4_hw = {
     cipher_hw_rc4_initkey,
     cipher_hw_rc4_cipher
 };
-const PROV_CIPHER_HW *PROV_CIPHER_HW_rc4(size_t keybits)
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_rc4(size_t keybits)
 {
     return &rc4_hw;
 }

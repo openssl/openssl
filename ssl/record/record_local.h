@@ -113,7 +113,7 @@ __owur int ssl3_cbc_remove_padding_and_mac(size_t *reclen,
                                            unsigned char **mac,
                                            int *alloced,
                                            size_t block_size, size_t mac_size,
-                                           OPENSSL_CTX *libctx);
+                                           OSSL_LIB_CTX *libctx);
 __owur int tls1_cbc_remove_padding_and_mac(size_t *reclen,
                                            size_t origreclen,
                                            unsigned char *recdata,
@@ -121,7 +121,7 @@ __owur int tls1_cbc_remove_padding_and_mac(size_t *reclen,
                                            int *alloced,
                                            size_t block_size, size_t mac_size,
                                            int aead,
-                                           OPENSSL_CTX *libctx);
+                                           OSSL_LIB_CTX *libctx);
 int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap);
 __owur int dtls1_get_record(SSL *s);
 int early_data_count_ok(SSL *s, size_t length, size_t overhead, int send);

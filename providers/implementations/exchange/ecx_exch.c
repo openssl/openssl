@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,11 +12,11 @@
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 #include "internal/cryptlib.h"
 #include "crypto/ecx.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 #ifdef S390X_EC_ASM
 # include "s390x_arch.h"
 #endif
@@ -69,7 +69,8 @@ static void *x448_newctx(void *provctx)
     return ecx_newctx(provctx, X448_KEYLEN);
 }
 
-static int ecx_init(void *vecxctx, void *vkey)
+static int ecx_init(void *vecxctx, void *vkey,
+                    ossl_unused const OSSL_PARAM params[])
 {
     PROV_ECX_CTX *ecxctx = (PROV_ECX_CTX *)vecxctx;
     ECX_KEY *key = vkey;
@@ -80,12 +81,12 @@ static int ecx_init(void *vecxctx, void *vkey)
     if (ecxctx == NULL
             || key == NULL
             || key->keylen != ecxctx->keylen
-            || !ecx_key_up_ref(key)) {
+            || !ossl_ecx_key_up_ref(key)) {
         ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
-    ecx_key_free(ecxctx->key);
+    ossl_ecx_key_free(ecxctx->key);
     ecxctx->key = key;
 
     return 1;
@@ -102,11 +103,11 @@ static int ecx_set_peer(void *vecxctx, void *vkey)
     if (ecxctx == NULL
             || key == NULL
             || key->keylen != ecxctx->keylen
-            || !ecx_key_up_ref(key)) {
+            || !ossl_ecx_key_up_ref(key)) {
         ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    ecx_key_free(ecxctx->peerkey);
+    ossl_ecx_key_free(ecxctx->peerkey);
     ecxctx->peerkey = key;
 
     return 1;
@@ -123,7 +124,7 @@ static int ecx_derive(void *vecxctx, unsigned char *secret, size_t *secretlen,
     if (ecxctx->key == NULL
             || ecxctx->key->privkey == NULL
             || ecxctx->peerkey == NULL) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY);
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
         return 0;
     }
 
@@ -138,7 +139,7 @@ static int ecx_derive(void *vecxctx, unsigned char *secret, size_t *secretlen,
         return 1;
     }
     if (outlen < ecxctx->keylen) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+        ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;
     }
 
@@ -153,7 +154,8 @@ static int ecx_derive(void *vecxctx, unsigned char *secret, size_t *secretlen,
             }
         } else
 #endif
-        if (X25519(secret, ecxctx->key->privkey, ecxctx->peerkey->pubkey) == 0) {
+        if (ossl_x25519(secret, ecxctx->key->privkey,
+                        ecxctx->peerkey->pubkey) == 0) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_DURING_DERIVATION);
             return 0;
         }
@@ -168,7 +170,8 @@ static int ecx_derive(void *vecxctx, unsigned char *secret, size_t *secretlen,
             }
         } else
 #endif
-        if (X448(secret, ecxctx->key->privkey, ecxctx->peerkey->pubkey) == 0) {
+        if (ossl_x448(secret, ecxctx->key->privkey,
+                      ecxctx->peerkey->pubkey) == 0) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_DURING_DERIVATION);
             return 0;
         }
@@ -182,8 +185,8 @@ static void ecx_freectx(void *vecxctx)
 {
     PROV_ECX_CTX *ecxctx = (PROV_ECX_CTX *)vecxctx;
 
-    ecx_key_free(ecxctx->key);
-    ecx_key_free(ecxctx->peerkey);
+    ossl_ecx_key_free(ecxctx->key);
+    ossl_ecx_key_free(ecxctx->peerkey);
 
     OPENSSL_free(ecxctx);
 }
@@ -203,15 +206,15 @@ static void *ecx_dupctx(void *vecxctx)
     }
 
     *dstctx = *srcctx;
-    if (dstctx->key != NULL && !ecx_key_up_ref(dstctx->key)) {
+    if (dstctx->key != NULL && !ossl_ecx_key_up_ref(dstctx->key)) {
         ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
         OPENSSL_free(dstctx);
         return NULL;
     }
 
-    if (dstctx->peerkey != NULL && !ecx_key_up_ref(dstctx->peerkey)) {
+    if (dstctx->peerkey != NULL && !ossl_ecx_key_up_ref(dstctx->peerkey)) {
         ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
-        ecx_key_free(dstctx->key);
+        ossl_ecx_key_free(dstctx->key);
         OPENSSL_free(dstctx);
         return NULL;
     }
@@ -219,7 +222,7 @@ static void *ecx_dupctx(void *vecxctx)
     return dstctx;
 }
 
-const OSSL_DISPATCH x25519_keyexch_functions[] = {
+const OSSL_DISPATCH ossl_x25519_keyexch_functions[] = {
     { OSSL_FUNC_KEYEXCH_NEWCTX, (void (*)(void))x25519_newctx },
     { OSSL_FUNC_KEYEXCH_INIT, (void (*)(void))ecx_init },
     { OSSL_FUNC_KEYEXCH_DERIVE, (void (*)(void))ecx_derive },
@@ -229,7 +232,7 @@ const OSSL_DISPATCH x25519_keyexch_functions[] = {
     { 0, NULL }
 };
 
-const OSSL_DISPATCH x448_keyexch_functions[] = {
+const OSSL_DISPATCH ossl_x448_keyexch_functions[] = {
     { OSSL_FUNC_KEYEXCH_NEWCTX, (void (*)(void))x448_newctx },
     { OSSL_FUNC_KEYEXCH_INIT, (void (*)(void))ecx_init },
     { OSSL_FUNC_KEYEXCH_DERIVE, (void (*)(void))ecx_derive },

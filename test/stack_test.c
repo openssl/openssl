@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2017, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -195,6 +195,10 @@ static int test_uchar_stack(int reserve)
         goto end;
 
     /* dup */
+    r = sk_uchar_dup(NULL);
+    if (sk_uchar_num(r) != 0)
+        goto end;
+    sk_uchar_free(r);
     r = sk_uchar_dup(s);
     if (!TEST_int_eq(sk_uchar_num(r), n))
         goto end;
@@ -291,6 +295,10 @@ static int test_SS_stack(void)
         goto end;
 
     /* deepcopy */
+    r = sk_SS_deep_copy(NULL, &SS_copy, &SS_free);
+    if (sk_SS_num(r) != 0)
+        goto end;
+    sk_SS_free(r);
     r = sk_SS_deep_copy(s, &SS_copy, &SS_free);
     if (!TEST_ptr(r))
         goto end;

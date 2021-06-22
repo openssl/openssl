@@ -59,6 +59,30 @@ IF[{- !$disabled{asm} && $config{processor} ne '386' -}]
   ENDIF
 ENDIF
 
+# CPUID support.  We need to add that explicitly in every shared library and
+# provider module that uses it.  ctype.c is included here because the CPUID
+# uses functions from there to parse magic environment variables.
+$CPUID_COMMON=$CPUIDASM cpuid.c ctype.c
+INCLUDE[cpuid.o]=..
+
+SOURCE[../libcrypto]=$CPUID_COMMON
+DEFINE[../libcrypto]=$CPUIDDEF
+SOURCE[../providers/libfips.a]=$CPUID_COMMON
+DEFINE[../providers/libfips.a]=$CPUIDDEF
+# We only need to include the CPUID stuff in the legacy provider when it's a
+# separate module and it's dynamically linked with libcrypto.  Otherwise, it
+# already gets everything that the static libcrypto.a has, and doesn't need it
+# added again.
+IF[{- !$disabled{module} && !$disabled{shared} -}]
+  SOURCE[../providers/liblegacy.a]=$CPUID_COMMON
+  DEFINE[../providers/liblegacy.a]=$CPUIDDEF
+ENDIF
+
+# Implementations are now spread across several libraries, so the CPUID define
+# need to be applied to all affected libraries and modules.
+DEFINE[../providers/libcommon.a]=$CPUIDDEF
+DEFINE[../providers/libdefault.a]=$CPUIDDEF
+
 # The Core
 $CORE_COMMON=provider_core.c provider_predefined.c \
         core_fetch.c core_algorithm.c core_namemap.c self_test_core.c
@@ -69,28 +93,19 @@ SOURCE[../providers/libfips.a]=$CORE_COMMON
 # Central utilities
 $UTIL_COMMON=\
         cryptlib.c params.c params_from_text.c bsearch.c ex_data.c o_str.c \
-        ctype.c threads_pthread.c threads_win.c threads_none.c initthread.c \
-        context.c sparse_array.c asn1_dsa.c packet.c param_build.c $CPUIDASM \
-        param_build_set.c der_writer.c passphrase.c
-$UTIL_DEFINE=$CPUIDDEF
+        threads_pthread.c threads_win.c threads_none.c initthread.c \
+        context.c sparse_array.c asn1_dsa.c packet.c param_build.c \
+        param_build_set.c der_writer.c threads_lib.c params_dup.c
 
 SOURCE[../libcrypto]=$UTIL_COMMON \
         mem.c mem_sec.c \
         cversion.c info.c cpt_err.c ebcdic.c uid.c o_time.c o_dir.c \
-        o_fopen.c getenv.c o_init.c init.c trace.c provider.c \
-        punycode.c \
-        $UPLINKSRC
+        o_fopen.c getenv.c o_init.c init.c trace.c provider.c provider_child.c \
+        punycode.c passphrase.c
 SOURCE[../providers/libfips.a]=$UTIL_COMMON
-SOURCE[../providers/liblegacy.a]=$UTIL_COMMON
 
-# Implementations are now spread across several libraries, so the defines
-# need to be applied to all affected libraries and modules.
-DEFINE[../libcrypto]=$UTIL_DEFINE $UPLINKDEF
-DEFINE[../providers/libfips.a]=$UTIL_DEFINE
-DEFINE[../providers/fips]=$UTIL_DEFINE
-DEFINE[../providers/libimplementations.a]=$UTIL_DEFINE
-DEFINE[../providers/liblegacy.a]=$UTIL_DEFINE
-DEFINE[../providers/libcommon.a]=$UTIL_DEFINE
+SOURCE[../libcrypto]=$UPLINKSRC
+DEFINE[../libcrypto]=$UPLINKDEF
 
 DEPEND[info.o]=buildinf.h
 DEPEND[cversion.o]=buildinf.h
@@ -116,6 +131,6 @@ INCLUDE[armv4cpuid.o]=.
 GENERATE[s390xcpuid.S]=s390xcpuid.pl
 INCLUDE[s390xcpuid.o]=.
 
-IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-)/ -}]
+IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-|BC-)/ -}]
   SHARED_SOURCE[../libcrypto]=dllmain.c
 ENDIF

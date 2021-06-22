@@ -17,20 +17,20 @@ B<openssl dhparam>
 [B<-check>]
 [B<-noout>]
 [B<-text>]
-[B<-C>]
 [B<-2>]
 [B<-3>]
 [B<-5>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 [I<numbits>]
-
-=for openssl ifdef dsaparam engine
 
 =head1 DESCRIPTION
 
 This command is used to manipulate DH parameter files.
+
+See L<openssl-genpkey(1)/EXAMPLES> for examples on how to generate
+a key using a named safe prime group without generating intermediate
+parameters.
 
 =head1 OPTIONS
 
@@ -44,7 +44,7 @@ Print out a usage message.
 
 The input format and output format; the default is B<PEM>.
 The object is compatible with the PKCS#3 B<DHparameter> structure.
-See L<openssl(1)/Format Options> for details.
+See L<openssl-format-options(1)> for details.
 
 =item B<-in> I<filename>
 
@@ -58,8 +58,6 @@ if this option is not present. The output filename should B<not> be the same
 as the input filename.
 
 =item B<-dsaparam>
-
-This option is deprecated.
 
 If this option is used, DSA rather than DH parameters are read or created;
 they are converted to DH format.  Otherwise, "strong" primes (such
@@ -100,11 +98,6 @@ This option inhibits the output of the encoded version of the parameters.
 
 This option prints out the DH parameters in human readable form.
 
-=item B<-C>
-
-This option converts the parameters into C code. The parameters can then
-be loaded by calling the get_dhNNNN() function.
-
 {- $OpenSSL::safe::opt_engine_item -}
 
 {- $OpenSSL::safe::opt_r_item -}
@@ -118,28 +111,22 @@ be loaded by calling the get_dhNNNN() function.
 This command replaces the B<dh> and B<gendh> commands of previous
 releases.
 
-OpenSSL currently only supports the older PKCS#3 DH, not the newer X9.42
-DH.
-
-This command manipulates DH parameters not keys.
-
-=head1 BUGS
-
-There should be a way to generate and manipulate DH keys.
-
 =head1 SEE ALSO
 
 L<openssl(1)>,
 L<openssl-pkeyparam(1)>,
-L<openssl-dsaparam(1)>
+L<openssl-dsaparam(1)>,
+L<openssl-genpkey(1)>.
 
 =head1 HISTORY
 
-The B<-dsaparam> and B<-engine> options were deprecated in OpenSSL 3.0.
+The B<-engine> option was deprecated in OpenSSL 3.0.
+
+The B<-C> option was removed in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

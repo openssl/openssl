@@ -20,7 +20,7 @@
  * A fixed table of names for the RSA prime factors starting with
  * P,Q and up to 8 additional primes.
  */
-const char *rsa_mp_factor_names[] = {
+const char *ossl_rsa_mp_factor_names[] = {
     OSSL_PKEY_PARAM_RSA_FACTOR1,
     OSSL_PKEY_PARAM_RSA_FACTOR2,
 #ifndef FIPS_MODULE
@@ -40,7 +40,7 @@ const char *rsa_mp_factor_names[] = {
  * A fixed table of names for the RSA exponents starting with
  * DP,DQ and up to 8 additional exponents.
  */
-const char *rsa_mp_exp_names[] = {
+const char *ossl_rsa_mp_exp_names[] = {
     OSSL_PKEY_PARAM_RSA_EXPONENT1,
     OSSL_PKEY_PARAM_RSA_EXPONENT2,
 #ifndef FIPS_MODULE
@@ -60,10 +60,10 @@ const char *rsa_mp_exp_names[] = {
  * A fixed table of names for the RSA coefficients starting with
  * QINV and up to 8 additional exponents.
  */
-const char *rsa_mp_coeff_names[] = {
+const char *ossl_rsa_mp_coeff_names[] = {
     OSSL_PKEY_PARAM_RSA_COEFFICIENT1,
-    OSSL_PKEY_PARAM_RSA_COEFFICIENT2,
 #ifndef FIPS_MODULE
+    OSSL_PKEY_PARAM_RSA_COEFFICIENT2,
     OSSL_PKEY_PARAM_RSA_COEFFICIENT3,
     OSSL_PKEY_PARAM_RSA_COEFFICIENT4,
     OSSL_PKEY_PARAM_RSA_COEFFICIENT5,

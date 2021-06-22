@@ -64,7 +64,7 @@ derived otherwise an error will occur.
 In this mode calling L<EVP_KDF_derive(3)> will just perform the extract
 operation. The value returned will be the intermediate fixed-length pseudorandom
 key K.  The I<keylen> parameter must match the size of K, which can be looked
-up by calling EVP_KDF_size() after setting the mode and digest.
+up by calling EVP_KDF_CTX_get_kdf_size() after setting the mode and digest.
 
 The digest, key and salt values must be set before a key is derived otherwise
 an error will occur.
@@ -93,7 +93,7 @@ The output length of an HKDF expand operation is specified via the I<keylen>
 parameter to the L<EVP_KDF_derive(3)> function.  When using
 EVP_KDF_HKDF_MODE_EXTRACT_ONLY the I<keylen> parameter must equal the size of
 the intermediate fixed-length pseudorandom key otherwise an error will occur.
-For that mode, the fixed output size can be looked up by calling EVP_KDF_size()
+For that mode, the fixed output size can be looked up by calling EVP_KDF_CTX_get_kdf_size()
 after setting the mode and digest on the B<EVP_KDF_CTX>.
 
 =head1 EXAMPLES
@@ -119,10 +119,7 @@ salt value "salt" and info value "label":
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
                                           "salt", (size_t)4);
  *p = OSSL_PARAM_construct_end();
- if (EVP_KDF_CTX_set_params(kctx, params) <= 0) {
-     error("EVP_KDF_CTX_set_params");
- }
- if (EVP_KDF_derive(kctx, out, sizeof(out)) <= 0) {
+ if (EVP_KDF_derive(kctx, out, sizeof(out), params) <= 0) {
      error("EVP_KDF_derive");
  }
 
@@ -137,14 +134,14 @@ RFC 5869
 L<EVP_KDF(3)>,
 L<EVP_KDF_CTX_new(3)>,
 L<EVP_KDF_CTX_free(3)>,
-L<EVP_KDF_size(3)>,
+L<EVP_KDF_CTX_get_kdf_size(3)>,
 L<EVP_KDF_CTX_set_params(3)>,
 L<EVP_KDF_derive(3)>,
 L<EVP_KDF(3)/PARAMETERS>
 
 =head1 COPYRIGHT
 
-Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -29,20 +29,23 @@ rmtree("demoCA", { safe => 0 });
 
 plan tests => 15;
  SKIP: {
+     my $cakey = srctop_file("test", "certs", "ca-key.pem");
      $ENV{OPENSSL_CONFIG} = '-config ' . $cnf;
      skip "failed creating CA structure", 4
-	 if !ok(run(perlapp(["CA.pl","-newca"], stdin => undef)),
-		'creating CA structure');
+         if !ok(run(perlapp(["CA.pl","-newca",
+                             "-extra-req", "-key $cakey"], stdin => undef)),
+                'creating CA structure');
 
+     my $eekey = srctop_file("test", "certs", "ee-key.pem");
      $ENV{OPENSSL_CONFIG} = '-config ' . $cnf;
      skip "failed creating new certificate request", 3
-	 if !ok(run(perlapp(["CA.pl","-newreq",
-                             '-extra-req', '-outform DER -section userreq'])),
-		'creating certificate request');
+         if !ok(run(perlapp(["CA.pl","-newreq",
+                             '-extra-req', "-outform DER -section userreq -key $eekey"])),
+                'creating certificate request');
      $ENV{OPENSSL_CONFIG} = '-rand_serial -inform DER -config '.$std_openssl_cnf;
      skip "failed to sign certificate request", 2
-	 if !is(yes(cmdstr(perlapp(["CA.pl", "-sign"]))), 0,
-		'signing certificate request');
+         if !is(yes(cmdstr(perlapp(["CA.pl", "-sign"]))), 0,
+                'signing certificate request');
 
      ok(run(perlapp(["CA.pl", "-verify", "newcert.pem"])),
         'verifying new certificate');
@@ -50,14 +53,15 @@ plan tests => 15;
      skip "CT not configured, can't use -precert", 1
          if disabled("ct");
 
+     my $eekey2 = srctop_file("test", "certs", "ee-key-3072.pem");
      $ENV{OPENSSL_CONFIG} = '-config ' . $cnf;
-     ok(run(perlapp(["CA.pl", "-precert", '-extra-req', '-section userreq'], stderr => undef)),
+     ok(run(perlapp(["CA.pl", "-precert", '-extra-req', "-section userreq -key $eekey2"], stderr => undef)),
         'creating new pre-certificate');
 }
 
 SKIP: {
     skip "SM2 is not supported by this OpenSSL build", 1
-	      if disabled("sm2");
+        if disabled("sm2");
 
     is(yes(cmdstr(app(["openssl", "ca", "-config",
                        $cnf,
@@ -113,16 +117,18 @@ test_revoke('both_generalizedtime', {
 sub test_revoke {
     my ($filename, $opts) = @_;
 
-    # Before Perl 5.12.0, the range of times Perl could represent was limited by
-    # the size of time_t, so Time::Local was hamstrung by the Y2038 problem -
-    # Perl 5.12.0 onwards use an internal time implementation with a guaranteed
-    # >32-bit time range on all architectures, so the tests involving post-2038
-    # times won't fail provided we're running under that version or newer
-    if ($] < 5.012000) {
-        plan skip_all => 'Perl >= 5.12.0 required to run certificate revocation tests';
-    }
-
     subtest "Revoke certificate and generate CRL: $filename" => sub {
+        # Before Perl 5.12.0, the range of times Perl could represent was
+        # limited by the size of time_t, so Time::Local was hamstrung by the
+        # Y2038 problem
+        # Perl 5.12.0 onwards use an internal time implementation with a
+        # guaranteed >32-bit time range on all architectures, so the tests
+        # involving post-2038 times won't fail provided we're running under
+        # that version or newer
+        plan skip_all =>
+            'Perl >= 5.12.0 required to run certificate revocation tests'
+            if $] < 5.012000;
+
         $ENV{CN2} = $filename;
         ok(
             run(app(['openssl',

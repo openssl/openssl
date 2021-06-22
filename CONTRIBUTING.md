@@ -1,13 +1,13 @@
 HOW TO CONTRIBUTE TO OpenSSL
 ============================
 
-Please visit our [Getting Started][gs] page for other ideas about how to contribute.
+Please visit our [Getting Started] page for other ideas about how to contribute.
 
-  [gs]: https://www.openssl.org/community/getting-started.html
+  [Getting Started]: <https://www.openssl.org/community/getting-started.html>
 
-Development is done on GitHub in the [openssl/openssl][gh] repository.
+Development is done on GitHub in the [openssl/openssl] repository.
 
-  [gh]: https://github.com/openssl/openssl
+  [openssl/openssl]: <https://github.com/openssl/openssl>
 
 To request new features or report bugs, please open an issue on GitHub
 
@@ -20,13 +20,13 @@ To make it easier to review and accept your pull request, please follow these
 guidelines:
 
  1. Anything other than a trivial contribution requires a [Contributor
-    License Agreement][CLA] (CLA), giving us permission to use your code.
+    License Agreement] (CLA), giving us permission to use your code.
     If your contribution is too small to require a CLA (e.g. fixing a spelling
     mistake), place the text "`CLA: trivial`" on a line by itself separated by
     an empty line from the rest of the commit message. It is not sufficient to
     only place the text in the GitHub pull request description.
 
-    [CLA]: https://www.openssl.org/policies/cla.html
+    [Contributor License Agreement]: <https://www.openssl.org/policies/cla.html>
 
     To amend a missing "`CLA: trivial`" line after submission, do the following:
 
@@ -53,11 +53,11 @@ guidelines:
     often. We do not accept merge commits, you will have to remove them
     (usually by rebasing) before it will be acceptable.
 
- 4. Patches should follow our [coding style][] and compile without warnings.
+ 4. Patches should follow our [coding style] and compile without warnings.
     Where `gcc` or `clang` is available you should use the
     `--strict-warnings` `Configure` option.  OpenSSL compiles on many varied
-    platforms: try to ensure you only use portable features.  Clean builds
-    via Travis and AppVeyor are required, and they are started automatically
+    platforms: try to ensure you only use portable features.  Clean builds via
+    GitHub Actions and AppVeyor are required, and they are started automatically
     whenever a PR is created or updated.
 
     [coding style]: https://www.openssl.org/policies/codingstyle.html

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -29,7 +29,7 @@
 static int uint64_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
     if ((*pval = (ASN1_VALUE *)OPENSSL_zalloc(sizeof(uint64_t))) == NULL) {
-        ASN1err(ASN1_F_UINT64_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     return 1;
@@ -62,12 +62,12 @@ static int uint64_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
         return -1;
     if ((it->size & INTxx_FLAG_SIGNED) == INTxx_FLAG_SIGNED
         && (int64_t)utmp < 0) {
-        /* i2c_uint64_int() assumes positive values */
+        /* ossl_i2c_uint64_int() assumes positive values */
         utmp = 0 - utmp;
         neg = 1;
     }
 
-    return i2c_uint64_int(cont, utmp, neg);
+    return ossl_i2c_uint64_int(cont, utmp, neg);
 }
 
 static int uint64_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
@@ -91,19 +91,19 @@ static int uint64_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
     if (len == 0)
         goto long_compat;
 
-    if (!c2i_uint64_int(&utmp, &neg, &cont, len))
+    if (!ossl_c2i_uint64_int(&utmp, &neg, &cont, len))
         return 0;
     if ((it->size & INTxx_FLAG_SIGNED) == 0 && neg) {
-        ASN1err(ASN1_F_UINT64_C2I, ASN1_R_ILLEGAL_NEGATIVE_VALUE);
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_ILLEGAL_NEGATIVE_VALUE);
         return 0;
     }
     if ((it->size & INTxx_FLAG_SIGNED) == INTxx_FLAG_SIGNED
             && !neg && utmp > INT64_MAX) {
-        ASN1err(ASN1_F_UINT64_C2I, ASN1_R_TOO_LARGE);
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_LARGE);
         return 0;
     }
     if (neg)
-        /* c2i_uint64_int() returns positive values */
+        /* ossl_c2i_uint64_int() returns positive values */
         utmp = 0 - utmp;
 
  long_compat:
@@ -124,7 +124,7 @@ static int uint64_print(BIO *out, const ASN1_VALUE **pval, const ASN1_ITEM *it,
 static int uint32_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
     if ((*pval = (ASN1_VALUE *)OPENSSL_zalloc(sizeof(uint32_t))) == NULL) {
-        ASN1err(ASN1_F_UINT32_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     return 1;
@@ -157,12 +157,12 @@ static int uint32_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
         return -1;
     if ((it->size & INTxx_FLAG_SIGNED) == INTxx_FLAG_SIGNED
         && (int32_t)utmp < 0) {
-        /* i2c_uint64_int() assumes positive values */
+        /* ossl_i2c_uint64_int() assumes positive values */
         utmp = 0 - utmp;
         neg = 1;
     }
 
-    return i2c_uint64_int(cont, (uint64_t)utmp, neg);
+    return ossl_i2c_uint64_int(cont, (uint64_t)utmp, neg);
 }
 
 /*
@@ -194,22 +194,22 @@ static int uint32_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
     if (len == 0)
         goto long_compat;
 
-    if (!c2i_uint64_int(&utmp, &neg, &cont, len))
+    if (!ossl_c2i_uint64_int(&utmp, &neg, &cont, len))
         return 0;
     if ((it->size & INTxx_FLAG_SIGNED) == 0 && neg) {
-        ASN1err(ASN1_F_UINT32_C2I, ASN1_R_ILLEGAL_NEGATIVE_VALUE);
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_ILLEGAL_NEGATIVE_VALUE);
         return 0;
     }
     if (neg) {
         if (utmp > ABS_INT32_MIN) {
-            ASN1err(ASN1_F_UINT32_C2I, ASN1_R_TOO_SMALL);
+            ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_SMALL);
             return 0;
         }
         utmp = 0 - utmp;
     } else {
         if (((it->size & INTxx_FLAG_SIGNED) != 0 && utmp > INT32_MAX)
             || ((it->size & INTxx_FLAG_SIGNED) == 0 && utmp > UINT32_MAX)) {
-            ASN1err(ASN1_F_UINT32_C2I, ASN1_R_TOO_LARGE);
+            ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_LARGE);
             return 0;
         }
     }

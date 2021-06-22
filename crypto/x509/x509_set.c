@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -61,7 +61,7 @@ int X509_set_subject_name(X509 *x, const X509_NAME *name)
     return X509_NAME_set(&x->cert_info.subject, name);
 }
 
-int x509_set1_time(ASN1_TIME **ptm, const ASN1_TIME *tm)
+int ossl_x509_set1_time(ASN1_TIME **ptm, const ASN1_TIME *tm)
 {
     ASN1_TIME *in;
     in = *ptm;
@@ -79,14 +79,14 @@ int X509_set1_notBefore(X509 *x, const ASN1_TIME *tm)
 {
     if (x == NULL)
         return 0;
-    return x509_set1_time(&x->cert_info.validity.notBefore, tm);
+    return ossl_x509_set1_time(&x->cert_info.validity.notBefore, tm);
 }
 
 int X509_set1_notAfter(X509 *x, const ASN1_TIME *tm)
 {
     if (x == NULL)
         return 0;
-    return x509_set1_time(&x->cert_info.validity.notAfter, tm);
+    return ossl_x509_set1_time(&x->cert_info.validity.notAfter, tm);
 }
 
 int X509_set_pubkey(X509 *x, EVP_PKEY *pkey)
@@ -206,7 +206,7 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
     siginf->flags = 0;
     if (!OBJ_find_sigid_algs(OBJ_obj2nid(alg->algorithm), &mdnid, &pknid)
             || pknid == NID_undef) {
-        X509err(0, X509_R_UNKNOWN_SIGID_ALGS);
+        ERR_raise(ERR_LIB_X509, X509_R_UNKNOWN_SIGID_ALGS);
         return 0;
     }
     siginf->mdnid = mdnid;
@@ -218,7 +218,7 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
         ameth = EVP_PKEY_asn1_find(NULL, pknid);
         if (ameth == NULL || ameth->siginf_set == NULL
                 || !ameth->siginf_set(siginf, alg, sig)) {
-            X509err(0, X509_R_ERROR_USING_SIGINF_SET);
+            ERR_raise(ERR_LIB_X509, X509_R_ERROR_USING_SIGINF_SET);
             return 0;
         }
         break;
@@ -252,10 +252,10 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
     default:
         /* Security bits: half number of bits in digest */
         if ((md = EVP_get_digestbynid(mdnid)) == NULL) {
-            X509err(0, X509_R_ERROR_GETTING_MD_BY_NID);
+            ERR_raise(ERR_LIB_X509, X509_R_ERROR_GETTING_MD_BY_NID);
             return 0;
         }
-        siginf->secbits = EVP_MD_size(md) * 4;
+        siginf->secbits = EVP_MD_get_size(md) * 4;
         break;
     }
     switch (mdnid) {
@@ -270,7 +270,7 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
 }
 
 /* Returns 1 on success, 0 on failure */
-int x509_init_sig_info(X509 *x)
+int ossl_x509_init_sig_info(X509 *x)
 {
     return x509_sig_info_init(&x->siginf, &x->sig_alg, &x->signature);
 }

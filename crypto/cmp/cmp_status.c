@@ -53,13 +53,9 @@ const char *ossl_cmp_PKIStatus_to_string(int status)
     case OSSL_CMP_PKISTATUS_keyUpdateWarning:
         return "PKIStatus: key update warning - update already done for the cert";
     default:
-        {
-            char buf[40];
-            BIO_snprintf(buf, sizeof(buf), "PKIStatus: invalid=%d", status);
-            CMPerr(0, CMP_R_ERROR_PARSING_PKISTATUS);
-            ERR_add_error_data(1, buf);
-            return NULL;
-        }
+        ERR_raise_data(ERR_LIB_CMP, CMP_R_ERROR_PARSING_PKISTATUS,
+                       "PKIStatus: invalid=%d", status);
+        return NULL;
     }
 }
 
@@ -154,7 +150,7 @@ int ossl_cmp_pkisi_check_pkifailureinfo(const OSSL_CMP_PKISI *si, int bit_index)
     if (!ossl_assert(si != NULL && si->failInfo != NULL))
         return -1;
     if (bit_index < 0 || bit_index > OSSL_CMP_PKIFAILUREINFO_MAX) {
-        CMPerr(0, CMP_R_INVALID_ARGS);
+        ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ARGS);
         return -1;
     }
 
@@ -240,7 +236,7 @@ char *OSSL_CMP_snprint_PKIStatusInfo(const OSSL_CMP_PKISI *statusInfo,
     int failure_info;
 
     if (statusInfo == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return NULL;
     }
 
@@ -255,7 +251,7 @@ char *OSSL_CMP_CTX_snprint_PKIStatus(const OSSL_CMP_CTX *ctx, char *buf,
                                      size_t bufsize)
 {
     if (ctx == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return NULL;
     }
 

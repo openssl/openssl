@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -20,7 +20,7 @@
 #include <openssl/rsa.h>
 #include <openssl/rand.h>
 /* Just for the SSL_MAX_MASTER_KEY_LENGTH value */
-#include <openssl/ssl.h>
+#include <openssl/prov_ssl.h>
 #include "internal/cryptlib.h"
 #include "crypto/rsa.h"
 #include "rsa_local.h"
@@ -32,8 +32,7 @@ int RSA_padding_add_PKCS1_type_1(unsigned char *to, int tlen,
     unsigned char *p;
 
     if (flen > (tlen - RSA_PKCS1_PADDING_SIZE)) {
-        RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_1,
-               RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
         return 0;
     }
 
@@ -73,16 +72,14 @@ int RSA_padding_check_PKCS1_type_1(unsigned char *to, int tlen,
     /* Accept inputs with and without the leading 0-byte. */
     if (num == flen) {
         if ((*p++) != 0x00) {
-            RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_1,
-                   RSA_R_INVALID_PADDING);
+            ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_PADDING);
             return -1;
         }
         flen--;
     }
 
     if ((num != (flen + 1)) || (*(p++) != 0x01)) {
-        RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_1,
-               RSA_R_BLOCK_TYPE_IS_NOT_01);
+        ERR_raise(ERR_LIB_RSA, RSA_R_BLOCK_TYPE_IS_NOT_01);
         return -1;
     }
 
@@ -94,8 +91,7 @@ int RSA_padding_check_PKCS1_type_1(unsigned char *to, int tlen,
                 p++;
                 break;
             } else {
-                RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_1,
-                       RSA_R_BAD_FIXED_HEADER_DECRYPT);
+                ERR_raise(ERR_LIB_RSA, RSA_R_BAD_FIXED_HEADER_DECRYPT);
                 return -1;
             }
         }
@@ -103,20 +99,18 @@ int RSA_padding_check_PKCS1_type_1(unsigned char *to, int tlen,
     }
 
     if (i == j) {
-        RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_1,
-               RSA_R_NULL_BEFORE_BLOCK_MISSING);
+        ERR_raise(ERR_LIB_RSA, RSA_R_NULL_BEFORE_BLOCK_MISSING);
         return -1;
     }
 
     if (i < 8) {
-        RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_1,
-               RSA_R_BAD_PAD_BYTE_COUNT);
+        ERR_raise(ERR_LIB_RSA, RSA_R_BAD_PAD_BYTE_COUNT);
         return -1;
     }
     i++;                        /* Skip over the '\0' */
     j -= i;
     if (j > tlen) {
-        RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_1, RSA_R_DATA_TOO_LARGE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE);
         return -1;
     }
     memcpy(to, p, (unsigned int)j);
@@ -124,16 +118,18 @@ int RSA_padding_check_PKCS1_type_1(unsigned char *to, int tlen,
     return j;
 }
 
-int rsa_padding_add_PKCS1_type_2_with_libctx(OPENSSL_CTX *libctx,
-                                             unsigned char *to, int tlen,
-                                             const unsigned char *from,
-                                             int flen)
+int ossl_rsa_padding_add_PKCS1_type_2_ex(OSSL_LIB_CTX *libctx, unsigned char *to,
+                                         int tlen, const unsigned char *from,
+                                         int flen)
 {
     int i, j;
     unsigned char *p;
 
     if (flen > (tlen - RSA_PKCS1_PADDING_SIZE)) {
-        RSAerr(0, RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
+        return 0;
+    } else if (flen < 0) {
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_LENGTH);
         return 0;
     }
 
@@ -145,12 +141,12 @@ int rsa_padding_add_PKCS1_type_2_with_libctx(OPENSSL_CTX *libctx,
     /* pad out with non-zero random data */
     j = tlen - 3 - flen;
 
-    if (RAND_bytes_ex(libctx, p, j) <= 0)
+    if (RAND_bytes_ex(libctx, p, j, 0) <= 0)
         return 0;
     for (i = 0; i < j; i++) {
         if (*p == '\0')
             do {
-                if (RAND_bytes_ex(libctx, p, 1) <= 0)
+                if (RAND_bytes_ex(libctx, p, 1, 0) <= 0)
                     return 0;
             } while (*p == '\0');
         p++;
@@ -165,7 +161,7 @@ int rsa_padding_add_PKCS1_type_2_with_libctx(OPENSSL_CTX *libctx,
 int RSA_padding_add_PKCS1_type_2(unsigned char *to, int tlen,
                                  const unsigned char *from, int flen)
 {
-    return rsa_padding_add_PKCS1_type_2_with_libctx(NULL, to, tlen, from, flen);
+    return ossl_rsa_padding_add_PKCS1_type_2_ex(NULL, to, tlen, from, flen);
 }
 
 int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
@@ -187,14 +183,13 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
      */
 
     if (flen > num || num < RSA_PKCS1_PADDING_SIZE) {
-        RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_2,
-               RSA_R_PKCS_DECODING_ERROR);
+        ERR_raise(ERR_LIB_RSA, RSA_R_PKCS_DECODING_ERROR);
         return -1;
     }
 
     em = OPENSSL_malloc(num);
     if (em == NULL) {
-        RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_2, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
         return -1;
     }
     /*
@@ -271,7 +266,7 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
      * the error stack. Instead we opt not to put an error on the stack at all
      * in case of padding failure in the FIPS provider.
      */
-    RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_2, RSA_R_PKCS_DECODING_ERROR);
+    ERR_raise(ERR_LIB_RSA, RSA_R_PKCS_DECODING_ERROR);
     err_clear_last_constant_time(1 & good);
 #endif
 
@@ -279,7 +274,7 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
 }
 
 /*
- * rsa_padding_check_PKCS1_type_2_TLS() checks and removes the PKCS1 type 2
+ * ossl_rsa_padding_check_PKCS1_type_2_TLS() checks and removes the PKCS1 type 2
  * padding from a decrypted RSA message in a TLS signature. The result is stored
  * in the buffer pointed to by |to| which should be |tlen| bytes long. |tlen|
  * must be at least SSL_MAX_MASTER_KEY_LENGTH. The original decrypted message
@@ -299,10 +294,11 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
  * decrypted data will be randomly generated (as per
  * https://tools.ietf.org/html/rfc5246#section-7.4.7.1).
  */
-int rsa_padding_check_PKCS1_type_2_TLS(OPENSSL_CTX *libctx, unsigned char *to,
-                                       size_t tlen, const unsigned char *from,
-                                       size_t flen, int client_version,
-                                       int alt_version)
+int ossl_rsa_padding_check_PKCS1_type_2_TLS(OSSL_LIB_CTX *libctx,
+                                            unsigned char *to, size_t tlen,
+                                            const unsigned char *from,
+                                            size_t flen, int client_version,
+                                            int alt_version)
 {
     unsigned int i, good, version_good;
     unsigned char rand_premaster_secret[SSL_MAX_MASTER_KEY_LENGTH];
@@ -322,7 +318,7 @@ int rsa_padding_check_PKCS1_type_2_TLS(OPENSSL_CTX *libctx, unsigned char *to,
      * to decrypt.
      */
     if (RAND_priv_bytes_ex(libctx, rand_premaster_secret,
-                           sizeof(rand_premaster_secret)) <= 0) {
+                           sizeof(rand_premaster_secret), 0) <= 0) {
         ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
         return -1;
     }

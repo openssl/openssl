@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,19 +10,6 @@
 #include <openssl/trace.h>
 #include "internal/cryptlib.h"
 #include "bn_local.h"
-
-/*-
- * TODO list
- *
- * 1. Check a bunch of "(words+1)" type hacks in various bignum functions and
- * check they can be safely removed.
- *  - Check +1 and other ugliness in BN_from_montgomery()
- *
- * 2. Consider allowing a BN_new_ex() that, at least, lets you specify an
- * appropriate 'block' size that will be honoured by bn_expand_internal() to
- * prevent piddly little reallocations. OTOH, profiling bignum expansions in
- * BN_CTX doesn't show this to be a big issue.
- */
 
 /* How many bignums are in each "pool item"; */
 #define BN_CTX_POOL_SIZE        16
@@ -87,7 +74,7 @@ struct bignum_ctx {
     /* Flags. */
     int flags;
     /* The library context */
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
 };
 
 #ifndef FIPS_MODULE
@@ -124,16 +111,16 @@ static void ctxdbg(BIO *channel, const char *text, BN_CTX *ctx)
         ctxdbg(trc_out, str, ctx);  \
     } OSSL_TRACE_END(BN_CTX)
 #else
-/* TODO(3.0): Consider if we want to do this in FIPS mode */
+/* We do not want tracing in FIPS module */
 # define CTXDBG(str, ctx) do {} while(0)
 #endif /* FIPS_MODULE */
 
-BN_CTX *BN_CTX_new_ex(OPENSSL_CTX *ctx)
+BN_CTX *BN_CTX_new_ex(OSSL_LIB_CTX *ctx)
 {
     BN_CTX *ret;
 
     if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
-        BNerr(BN_F_BN_CTX_NEW_EX, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BN, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     /* Initialise the structure */
@@ -150,7 +137,7 @@ BN_CTX *BN_CTX_new(void)
 }
 #endif
 
-BN_CTX *BN_CTX_secure_new_ex(OPENSSL_CTX *ctx)
+BN_CTX *BN_CTX_secure_new_ex(OSSL_LIB_CTX *ctx)
 {
     BN_CTX *ret = BN_CTX_new_ex(ctx);
 
@@ -199,7 +186,7 @@ void BN_CTX_start(BN_CTX *ctx)
         ctx->err_stack++;
     /* (Try to) get a new frame pointer */
     else if (!BN_STACK_push(&ctx->stack, ctx->used)) {
-        BNerr(BN_F_BN_CTX_START, BN_R_TOO_MANY_TEMPORARY_VARIABLES);
+        ERR_raise(ERR_LIB_BN, BN_R_TOO_MANY_TEMPORARY_VARIABLES);
         ctx->err_stack++;
     }
     CTXDBG("LEAVE BN_CTX_start()", ctx);
@@ -237,7 +224,7 @@ BIGNUM *BN_CTX_get(BN_CTX *ctx)
          * the error stack.
          */
         ctx->too_many = 1;
-        BNerr(BN_F_BN_CTX_GET, BN_R_TOO_MANY_TEMPORARY_VARIABLES);
+        ERR_raise(ERR_LIB_BN, BN_R_TOO_MANY_TEMPORARY_VARIABLES);
         return NULL;
     }
     /* OK, make sure the returned bignum is "zero" */
@@ -249,7 +236,7 @@ BIGNUM *BN_CTX_get(BN_CTX *ctx)
     return ret;
 }
 
-OPENSSL_CTX *bn_get_lib_ctx(BN_CTX *ctx)
+OSSL_LIB_CTX *ossl_bn_get_libctx(BN_CTX *ctx)
 {
     if (ctx == NULL)
         return NULL;
@@ -282,7 +269,7 @@ static int BN_STACK_push(BN_STACK *st, unsigned int idx)
         unsigned int *newitems;
 
         if ((newitems = OPENSSL_malloc(sizeof(*newitems) * newsize)) == NULL) {
-            BNerr(BN_F_BN_STACK_PUSH, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_BN, ERR_R_MALLOC_FAILURE);
             return 0;
         }
         if (st->depth)
@@ -336,7 +323,7 @@ static BIGNUM *BN_POOL_get(BN_POOL *p, int flag)
         BN_POOL_ITEM *item;
 
         if ((item = OPENSSL_malloc(sizeof(*item))) == NULL) {
-            BNerr(BN_F_BN_POOL_GET, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_BN, ERR_R_MALLOC_FAILURE);
             return NULL;
         }
         for (loop = 0, bn = item->vals; loop++ < BN_CTX_POOL_SIZE; bn++) {

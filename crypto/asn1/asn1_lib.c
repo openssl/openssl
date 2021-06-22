@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -52,8 +52,10 @@ int ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
     int tag, xclass, inf;
     long max = omax;
 
-    if (!max)
-        goto err;
+    if (omax <= 0) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_SMALL);
+        return 0x80;
+    }
     ret = (*p & V_ASN1_CONSTRUCTED);
     xclass = (*p & V_ASN1_PRIVATE);
     i = *p & V_ASN1_PRIMITIVE_TAG;
@@ -90,7 +92,7 @@ int ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
         goto err;
 
     if (*plength > (omax - (p - *pp))) {
-        ASN1err(ASN1_F_ASN1_GET_OBJECT, ASN1_R_TOO_LONG);
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_LONG);
         /*
          * Set this so that even if things are not long enough the values are
          * set correctly
@@ -100,7 +102,7 @@ int ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
     *pp = p;
     return ret | inf;
  err:
-    ASN1err(ASN1_F_ASN1_GET_OBJECT, ASN1_R_HEADER_TOO_LONG);
+    ERR_raise(ERR_LIB_ASN1, ASN1_R_HEADER_TOO_LONG);
     return 0x80;
 }
 
@@ -153,7 +155,7 @@ static int asn1_get_length(const unsigned char **pp, int *inf, long *rl,
 }
 
 /*
- * class 0 is constructed constructed == 2 for indefinite length constructed
+ * constructed == 2 for indefinite length constructed
  */
 void ASN1_put_object(unsigned char **pp, int constructed, int length, int tag,
                      int xclass)
@@ -294,14 +296,14 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len_in)
      * '\0' terminator even though this isn't strictly necessary.
      */
     if (len > INT_MAX - 1) {
-        ASN1err(0, ASN1_R_TOO_LARGE);
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_LARGE);
         return 0;
     }
     if ((size_t)str->length <= len || str->data == NULL) {
         c = str->data;
         str->data = OPENSSL_realloc(c, len + 1);
         if (str->data == NULL) {
-            ASN1err(ASN1_F_ASN1_STRING_SET, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
             str->data = c;
             return 0;
         }
@@ -333,14 +335,14 @@ ASN1_STRING *ASN1_STRING_type_new(int type)
 
     ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
-        ASN1err(ASN1_F_ASN1_STRING_TYPE_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     ret->type = type;
     return ret;
 }
 
-void asn1_string_embed_free(ASN1_STRING *a, int embed)
+void ossl_asn1_string_embed_free(ASN1_STRING *a, int embed)
 {
     if (a == NULL)
         return;
@@ -354,7 +356,7 @@ void ASN1_STRING_free(ASN1_STRING *a)
 {
     if (a == NULL)
         return;
-    asn1_string_embed_free(a, a->flags & ASN1_STRING_FLAG_EMBED);
+    ossl_asn1_string_embed_free(a, a->flags & ASN1_STRING_FLAG_EMBED);
 }
 
 void ASN1_STRING_clear_free(ASN1_STRING *a)
@@ -411,8 +413,9 @@ unsigned char *ASN1_STRING_data(ASN1_STRING *x)
 }
 #endif
 
-char *sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text, const char *sep,
-                              size_t max_len /* excluding NUL terminator */)
+char *ossl_sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text,
+                                   const char *sep,
+                                   size_t max_len /* excluding NUL terminator */)
 {
     int i;
     ASN1_UTF8STRING *current;

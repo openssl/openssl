@@ -16,7 +16,6 @@ ENDIF
 
 $COMMON=md5_dgst.c md5_one.c md5_sha1.c $MD5ASM
 SOURCE[../../libcrypto]=$COMMON
-SOURCE[../../providers/libimplementations.a]=$COMMON
 
 # A no-deprecated no-shared build ends up with double function definitions
 # without conditioning this on dso. The issue is MD5 which is needed in the
@@ -31,7 +30,6 @@ ENDIF
 # Implementations are now spread across several libraries, so the defines
 # need to be applied to all affected libraries and modules.
 DEFINE[../../libcrypto]=$MD5DEF
-DEFINE[../../providers/libimplementations.a]=$MD5DEF
 DEFINE[../../providers/liblegacy.a]=$MD5DEF
 
 GENERATE[md5-586.s]=asm/md5-586.pl

@@ -32,7 +32,7 @@ sub shlibextsimple      { (my $x = $target{shared_extension} || '.so')
                               =~ s|\.\$\(SHLIB_VERSION_NUMBER\)||;
                           $x; }
 sub shlibvariant        { $target{shlib_variant} || "" }
-sub makedepprog         { $disabled{makedepend} ? undef : $config{makedepprog} }
+sub makedepcmd          { $disabled{makedepend} ? undef : $config{makedepcmd} }
 
 # No conversion of assembler extension on Unix
 sub asm {
@@ -45,7 +45,8 @@ sub staticname {
     # Non-installed libraries are *always* static, and their names remain
     # the same, except for the mandatory extension
     my $in_libname = platform::BASE->staticname($_[1]);
-    return $in_libname if $unified_info{attributes}->{$_[1]}->{noinst};
+    return $in_libname
+        if $unified_info{attributes}->{libraries}->{$_[1]}->{noinst};
 
     # We currently return the same name anyway...  but we might choose to
     # append '_static' or '_a' some time in the future.
@@ -64,6 +65,10 @@ sub sharedname_simple {
 sub sharedlib_simple {
     return platform::BASE::__concat($_[0]->sharedname_simple($_[1]),
                                     $_[0]->shlibextsimple());
+}
+
+sub sharedlib_import {
+    return undef;
 }
 
 1;

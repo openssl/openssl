@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2003-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -35,11 +35,11 @@ static int nc_match_single(GENERAL_NAME *sub, GENERAL_NAME *gen);
 static int nc_dn(const X509_NAME *sub, const X509_NAME *nm);
 static int nc_dns(ASN1_IA5STRING *sub, ASN1_IA5STRING *dns);
 static int nc_email(ASN1_IA5STRING *sub, ASN1_IA5STRING *eml);
-static int nc_email_eai(ASN1_UTF8STRING *sub, ASN1_IA5STRING *eml);
+static int nc_email_eai(ASN1_TYPE *emltype, ASN1_IA5STRING *base);
 static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base);
 static int nc_ip(ASN1_OCTET_STRING *ip, ASN1_OCTET_STRING *base);
 
-const X509V3_EXT_METHOD v3_name_constraints = {
+const X509V3_EXT_METHOD ossl_v3_name_constraints = {
     NID_name_constraints, 0,
     ASN1_ITEM_ref(NAME_CONSTRAINTS),
     0, 0, 0, 0,
@@ -127,7 +127,7 @@ static void *v2i_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method,
             ptree = &ncons->excludedSubtrees;
             tval.name = val->name + 9;
         } else {
-            X509V3err(X509V3_F_V2I_NAME_CONSTRAINTS, X509V3_R_INVALID_SYNTAX);
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_SYNTAX);
             goto err;
         }
         tval.value = val->value;
@@ -146,7 +146,7 @@ static void *v2i_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method,
     return ncons;
 
  memerr:
-    X509V3err(X509V3_F_V2I_NAME_CONSTRAINTS, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
  err:
     NAME_CONSTRAINTS_free(ncons);
     GENERAL_SUBTREE_free(sub);
@@ -193,8 +193,8 @@ static int print_nc_ipadd(BIO *bp, ASN1_OCTET_STRING *ip)
     /* ip->length should be 8 or 32 and len1 == len2 == 4 or len1 == len2 == 16 */
     int len1 = ip->length >= 16 ? 16 : ip->length >= 4 ? 4 : ip->length;
     int len2 = ip->length - len1;
-    char *ip1 = ipaddr_to_asc(ip->data, len1);
-    char *ip2 = ipaddr_to_asc(ip->data + len1, len2);
+    char *ip1 = ossl_ipaddr_to_asc(ip->data, len1);
+    char *ip2 = ossl_ipaddr_to_asc(ip->data + len1, len2);
     int ret = ip1 != NULL && ip2 != NULL
         && BIO_printf(bp, "IP:%s/%s", ip1, ip2) > 0;
 
@@ -521,8 +521,8 @@ static int nc_match_single(GENERAL_NAME *gen, GENERAL_NAME *base)
          * We are here only when we have SmtpUTF8 name,
          * so we match the value of othername with base->d.rfc822Name
          */
-        return nc_email_eai(gen->d.otherName->value->value.utf8string,
-                            base->d.rfc822Name);
+        return nc_email_eai(gen->d.otherName->value, base->d.rfc822Name);
+
     case GEN_DIRNAME:
         return nc_dn(gen->d.directoryName, base->d.directoryName);
 
@@ -591,20 +591,27 @@ static int nc_dns(ASN1_IA5STRING *dns, ASN1_IA5STRING *base)
 }
 
 /*
- * This function implements comparison between ASCII/U-label in eml
+ * This function implements comparison between ASCII/U-label in emltype
  * and A-label in base according to RFC 8398, section 6.
  * Convert base to U-label and ASCII-parts of domain names, for base
- * Octet-to-octet comparison of `eml` and `base` hostname parts
+ * Octet-to-octet comparison of `emltype` and `base` hostname parts
  * (ASCII-parts should be compared in case-insensitive manner)
  */
-static int nc_email_eai(ASN1_UTF8STRING *eml, ASN1_IA5STRING *base)
+static int nc_email_eai(ASN1_TYPE *emltype, ASN1_IA5STRING *base)
 {
+    ASN1_UTF8STRING *eml;
     const char *baseptr = (char *)base->data;
-    const char *emlptr = (char *)eml->data;
-    const char *emlat = strrchr(emlptr, '@');
-
+    const char *emlptr;
+    const char *emlat;
     char ulabel[256];
     size_t size = sizeof(ulabel) - 1;
+
+    if (emltype->type != V_ASN1_UTF8STRING)
+        return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
+
+    eml = emltype->value.utf8string;
+    emlptr = (char *)eml->data;
+    emlat = strrchr(emlptr, '@');
 
     if (emlat == NULL)
         return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;

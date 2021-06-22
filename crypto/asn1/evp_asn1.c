@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -34,7 +34,7 @@ int ASN1_TYPE_get_octetstring(const ASN1_TYPE *a, unsigned char *data, int max_l
     const unsigned char *p;
 
     if ((a->type != V_ASN1_OCTET_STRING) || (a->value.octet_string == NULL)) {
-        ASN1err(ASN1_F_ASN1_TYPE_GET_OCTETSTRING, ASN1_R_DATA_IS_WRONG);
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_DATA_IS_WRONG);
         return -1;
     }
     p = ASN1_STRING_get0_data(a->value.octet_string);
@@ -121,7 +121,7 @@ int ASN1_TYPE_get_int_octetstring(const ASN1_TYPE *a, long *num,
 
     if (ret == -1) {
  err:
-        ASN1err(ASN1_F_ASN1_TYPE_GET_INT_OCTETSTRING, ASN1_R_DATA_IS_WRONG);
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_DATA_IS_WRONG);
     }
     M_ASN1_free_of(atmp, asn1_int_oct);
     return ret;
@@ -143,8 +143,8 @@ ASN1_SEQUENCE(asn1_oct_int) = {
 
 DECLARE_ASN1_ITEM(asn1_oct_int)
 
-int asn1_type_set_octetstring_int(ASN1_TYPE *a, long num, unsigned char *data,
-                                  int len)
+int ossl_asn1_type_set_octetstring_int(ASN1_TYPE *a, long num,
+                                       unsigned char *data, int len)
 {
     asn1_oct_int atmp;
     ASN1_OCTET_STRING oct;
@@ -158,8 +158,8 @@ int asn1_type_set_octetstring_int(ASN1_TYPE *a, long num, unsigned char *data,
     return 0;
 }
 
-int asn1_type_get_octetstring_int(const ASN1_TYPE *a, long *num,
-                                  unsigned char *data, int max_len)
+int ossl_asn1_type_get_octetstring_int(const ASN1_TYPE *a, long *num,
+                                       unsigned char *data, int max_len)
 {
     asn1_oct_int *atmp = NULL;
     int ret = -1;
@@ -176,7 +176,7 @@ int asn1_type_get_octetstring_int(const ASN1_TYPE *a, long *num,
 
     if (ret == -1) {
  err:
-        ASN1err(ASN1_F_ASN1_TYPE_GET_OCTETSTRING_INT, ASN1_R_DATA_IS_WRONG);
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_DATA_IS_WRONG);
     }
     M_ASN1_free_of(atmp, asn1_oct_int);
     return ret;

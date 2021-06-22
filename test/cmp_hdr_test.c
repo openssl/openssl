@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -9,7 +9,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "cmp_testlib.h"
+#include "helpers/cmp_testlib.h"
 
 static unsigned char rand_data[OSSL_CMP_TRANSACTIONID_LENGTH];
 
@@ -190,21 +190,23 @@ static int test_HDR_update_messageTime(void)
 static int execute_HDR_set1_senderKID_test(CMP_HDR_TEST_FIXTURE *fixture)
 {
     ASN1_OCTET_STRING *senderKID = ASN1_OCTET_STRING_new();
+    int res = 0;
 
     if (!TEST_ptr(senderKID))
         return 0;
 
     if (!TEST_int_eq(ASN1_OCTET_STRING_set(senderKID, rand_data,
                                            sizeof(rand_data)), 1))
-        return 0;
+        goto err;
     if (!TEST_int_eq(ossl_cmp_hdr_set1_senderKID(fixture->hdr, senderKID), 1))
-        return 0;
+        goto err;
     if (!TEST_int_eq(ASN1_OCTET_STRING_cmp(fixture->hdr->senderKID,
                                            senderKID), 0))
-        return 0;
-
+        goto err;
+    res = 1;
+ err:
     ASN1_OCTET_STRING_free(senderKID);
-    return 1;
+    return res;
 }
 
 static int test_HDR_set1_senderKID(void)
@@ -223,15 +225,19 @@ static int execute_HDR_push0_freeText_test(CMP_HDR_TEST_FIXTURE *fixture)
         return 0;
 
     if (!ASN1_STRING_set(text, "A free text", -1))
-        return 0;
+        goto err;
 
     if (!TEST_int_eq(ossl_cmp_hdr_push0_freeText(fixture->hdr, text), 1))
-        return 0;
+        goto err;
 
     if (!TEST_true(text == sk_ASN1_UTF8STRING_value(fixture->hdr->freeText, 0)))
-        return 0;
+        goto err;
 
     return 1;
+
+ err:
+    ASN1_UTF8STRING_free(text);
+    return 0;
 }
 
 static int test_HDR_push0_freeText(void)
@@ -246,22 +252,25 @@ static int execute_HDR_push1_freeText_test(CMP_HDR_TEST_FIXTURE *fixture)
 {
     ASN1_UTF8STRING *text = ASN1_UTF8STRING_new();
     ASN1_UTF8STRING *pushed_text;
+    int res = 0;
 
     if (!TEST_ptr(text))
         return 0;
 
     if (!ASN1_STRING_set(text, "A free text", -1))
-        return 0;
+        goto err;
 
     if (!TEST_int_eq(ossl_cmp_hdr_push1_freeText(fixture->hdr, text), 1))
-        return 0;
+        goto err;
 
     pushed_text = sk_ASN1_UTF8STRING_value(fixture->hdr->freeText, 0);
     if (!TEST_int_eq(ASN1_STRING_cmp(text, pushed_text), 0))
-        return 0;
+        goto err;
 
+    res = 1;
+ err:
     ASN1_UTF8STRING_free(text);
-    return 1;
+    return res;
 }
 
 static int test_HDR_push1_freeText(void)
@@ -309,33 +318,45 @@ execute_HDR_generalInfo_push1_items_test(CMP_HDR_TEST_FIXTURE *fixture)
     ASN1_INTEGER *asn1int = ASN1_INTEGER_new();
     ASN1_TYPE *val = ASN1_TYPE_new();
     ASN1_TYPE *pushed_val;
+    int res = 0;
 
     if (!TEST_ptr(asn1int))
         return 0;
 
-    if (!TEST_ptr(val))
+    if (!TEST_ptr(val)) {
+        ASN1_INTEGER_free(asn1int);
         return 0;
+    }
 
     ASN1_INTEGER_set(asn1int, 88);
     ASN1_TYPE_set(val, V_ASN1_INTEGER, asn1int);
-    itav = OSSL_CMP_ITAV_create(OBJ_txt2obj(oid, 1), val);
-    OSSL_CMP_ITAV_push0_stack_item(&itavs, itav);
+    if (!TEST_ptr(itav = OSSL_CMP_ITAV_create(OBJ_txt2obj(oid, 1), val))) {
+        ASN1_TYPE_free(val);
+        return 0;
+    }
+    if (!TEST_true(OSSL_CMP_ITAV_push0_stack_item(&itavs, itav))) {
+        OSSL_CMP_ITAV_free(itav);
+        return 0;
+    }
 
     if (!TEST_int_eq(ossl_cmp_hdr_generalInfo_push1_items(fixture->hdr, itavs),
                      1))
-        return 0;
+        goto err;
     ginfo = fixture->hdr->generalInfo;
     pushed_itav = sk_OSSL_CMP_ITAV_value(ginfo, 0);
     OBJ_obj2txt(buf, sizeof(buf), OSSL_CMP_ITAV_get0_type(pushed_itav), 0);
     if (!TEST_int_eq(memcmp(oid, buf, sizeof(oid)), 0))
-        return 0;
+        goto err;
 
     pushed_val = OSSL_CMP_ITAV_get0_value(sk_OSSL_CMP_ITAV_value(ginfo, 0));
     if (!TEST_int_eq(ASN1_TYPE_cmp(itav->infoValue.other, pushed_val), 0))
-        return 0;
+        goto err;
 
+    res = 1;
+
+ err:
     sk_OSSL_CMP_ITAV_pop_free(itavs, OSSL_CMP_ITAV_free);
-    return 1;
+    return res;
 }
 
 static int test_HDR_generalInfo_push1_items(void)
@@ -459,10 +480,5 @@ int setup_tests(void)
     /* also tests internal function ossl_cmp_hdr_get_pvno(): */
     ADD_TEST(test_HDR_init_with_ref);
     ADD_TEST(test_HDR_init_with_subject);
-    /*
-     *  TODO make sure that total number of tests (here currently 24) is shown,
-     *  also for other cmp_*text.c. Currently the test drivers always show 1.
-     */
-
     return 1;
 }

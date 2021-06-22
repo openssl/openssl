@@ -28,7 +28,7 @@ struct self_test_arg {
     int count;
 };
 
-static OPENSSL_CTX *libctx = NULL;
+static OSSL_LIB_CTX *libctx = NULL;
 static char *provider_name = NULL;
 static struct self_test_arg self_test_args = { 0 };
 
@@ -170,13 +170,13 @@ int setup_tests(void)
         }
     }
 
-    libctx = OPENSSL_CTX_new();
+    libctx = OSSL_LIB_CTX_new();
     if (libctx == NULL)
         return 0;
     self_test_args.count = 0;
     OSSL_SELF_TEST_set_callback(libctx, self_test_on_load, &self_test_args);
 
-    if (!OPENSSL_CTX_load_config(libctx, config_file)) {
+    if (!OSSL_LIB_CTX_load_config(libctx, config_file)) {
         opt_printf_stderr("Failed to load config\n");
         return 0;
     }

@@ -1,7 +1,7 @@
 /*
  * {- join("\n * ", @autowarntext) -}
  *
- * Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -36,6 +36,55 @@ use OpenSSL::stackhash qw(generate_stack_macros);
 #ifdef  __cplusplus
 extern "C" {
 #endif
+
+/*-
+ * These are the possible values for the itype field of the
+ * ASN1_ITEM structure and determine how it is interpreted.
+ *
+ * For PRIMITIVE types the underlying type
+ * determines the behaviour if items is NULL.
+ *
+ * Otherwise templates must contain a single
+ * template and the type is treated in the
+ * same way as the type specified in the template.
+ *
+ * For SEQUENCE types the templates field points
+ * to the members, the size field is the
+ * structure size.
+ *
+ * For CHOICE types the templates field points
+ * to each possible member (typically a union)
+ * and the 'size' field is the offset of the
+ * selector.
+ *
+ * The 'funcs' field is used for application-specific
+ * data and functions.
+ *
+ * The EXTERN type uses a new style d2i/i2d.
+ * The new style should be used where possible
+ * because it avoids things like the d2i IMPLICIT
+ * hack.
+ *
+ * MSTRING is a multiple string type, it is used
+ * for a CHOICE of character strings where the
+ * actual strings all occupy an ASN1_STRING
+ * structure. In this case the 'utype' field
+ * has a special meaning, it is used as a mask
+ * of acceptable types using the B_ASN1 constants.
+ *
+ * NDEF_SEQUENCE is the same as SEQUENCE except
+ * that it will use indefinite length constructed
+ * encoding if requested.
+ *
+ */
+
+# define ASN1_ITYPE_PRIMITIVE            0x0
+# define ASN1_ITYPE_SEQUENCE             0x1
+# define ASN1_ITYPE_CHOICE               0x2
+/* unused value                          0x3 */
+# define ASN1_ITYPE_EXTERN               0x4
+# define ASN1_ITYPE_MSTRING              0x5
+# define ASN1_ITYPE_NDEF_SEQUENCE        0x6
 
 /* Macro to obtain ASN1_ADB pointer from a type (only used internally) */
 # define ASN1_ADB_ptr(iptr) ((const ASN1_ADB *)((iptr)()))
@@ -557,63 +606,11 @@ struct ASN1_ITEM_st {
     const ASN1_TEMPLATE *templates; /* If SEQUENCE or CHOICE this contains
                                      * the contents */
     long tcount;                /* Number of templates if SEQUENCE or CHOICE */
-    const void *funcs;          /* functions that handle this type */
+    const void *funcs;          /* further data and type-specific functions */
+    /* funcs can be ASN1_PRIMITIVE_FUNCS*, ASN1_EXTERN_FUNCS*, or ASN1_AUX* */
     long size;                  /* Structure size (usually) */
     const char *sname;          /* Structure name */
 };
-
-/*-
- * These are values for the itype field and
- * determine how the type is interpreted.
- *
- * For PRIMITIVE types the underlying type
- * determines the behaviour if items is NULL.
- *
- * Otherwise templates must contain a single
- * template and the type is treated in the
- * same way as the type specified in the template.
- *
- * For SEQUENCE types the templates field points
- * to the members, the size field is the
- * structure size.
- *
- * For CHOICE types the templates field points
- * to each possible member (typically a union)
- * and the 'size' field is the offset of the
- * selector.
- *
- * The 'funcs' field is used for application
- * specific functions.
- *
- * The EXTERN type uses a new style d2i/i2d.
- * The new style should be used where possible
- * because it avoids things like the d2i IMPLICIT
- * hack.
- *
- * MSTRING is a multiple string type, it is used
- * for a CHOICE of character strings where the
- * actual strings all occupy an ASN1_STRING
- * structure. In this case the 'utype' field
- * has a special meaning, it is used as a mask
- * of acceptable types using the B_ASN1 constants.
- *
- * NDEF_SEQUENCE is the same as SEQUENCE except
- * that it will use indefinite length constructed
- * encoding if requested.
- *
- */
-
-# define ASN1_ITYPE_PRIMITIVE            0x0
-
-# define ASN1_ITYPE_SEQUENCE             0x1
-
-# define ASN1_ITYPE_CHOICE               0x2
-
-# define ASN1_ITYPE_EXTERN               0x4
-
-# define ASN1_ITYPE_MSTRING              0x5
-
-# define ASN1_ITYPE_NDEF_SEQUENCE        0x6
 
 /*
  * Cache for ASN1 tag and length, so we don't keep re-reading it for things
@@ -634,9 +631,15 @@ typedef int ASN1_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
                         const ASN1_ITEM *it, int tag, int aclass, char opt,
                         ASN1_TLC *ctx);
 
+typedef int ASN1_ex_d2i_ex(ASN1_VALUE **pval, const unsigned char **in, long len,
+                           const ASN1_ITEM *it, int tag, int aclass, char opt,
+                           ASN1_TLC *ctx, OSSL_LIB_CTX *libctx,
+                           const char *propq);
 typedef int ASN1_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
                         const ASN1_ITEM *it, int tag, int aclass);
 typedef int ASN1_ex_new_func(ASN1_VALUE **pval, const ASN1_ITEM *it);
+typedef int ASN1_ex_new_ex_func(ASN1_VALUE **pval, const ASN1_ITEM *it,
+                                OSSL_LIB_CTX *libctx, const char *propq);
 typedef void ASN1_ex_free_func(ASN1_VALUE **pval, const ASN1_ITEM *it);
 
 typedef int ASN1_ex_print_func(BIO *out, const ASN1_VALUE **pval,
@@ -660,6 +663,8 @@ typedef struct ASN1_EXTERN_FUNCS_st {
     ASN1_ex_d2i *asn1_ex_d2i;
     ASN1_ex_i2d *asn1_ex_i2d;
     ASN1_ex_print_func *asn1_ex_print;
+    ASN1_ex_new_ex_func *asn1_ex_new_ex;
+    ASN1_ex_d2i_ex *asn1_ex_d2i_ex;
 } ASN1_EXTERN_FUNCS;
 
 typedef struct ASN1_PRIMITIVE_FUNCS_st {
@@ -699,7 +704,7 @@ typedef struct ASN1_AUX_st {
     void *app_data;
     int flags;
     int ref_offset;             /* Offset of reference value */
-    int ref_lock;               /* Lock type to use */
+    int ref_lock;               /* Offset of lock value */
     ASN1_aux_cb *asn1_cb;
     int enc_offset;             /* Offset of ASN1_ENCODING structure */
     ASN1_aux_const_cb *asn1_const_cb; /* for ASN1_OP_I2D_ and ASN1_OP_PRINT_ */
@@ -749,6 +754,10 @@ typedef struct ASN1_STREAM_ARG_st {
 # define ASN1_OP_STREAM_POST     11
 # define ASN1_OP_DETACHED_PRE    12
 # define ASN1_OP_DETACHED_POST   13
+# define ASN1_OP_DUP_PRE         14
+# define ASN1_OP_DUP_POST        15
+# define ASN1_OP_GET0_LIBCTX     16
+# define ASN1_OP_GET0_PROPQ      17
 
 /* Macro to implement a primitive type */
 # define IMPLEMENT_ASN1_TYPE(stname) IMPLEMENT_ASN1_TYPE_ex(stname, stname, 0)

@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-PKCS12_add_cert, PKCS12_add_key,
+PKCS12_add_cert, PKCS12_add_key, PKCS12_add_key_ex,
 PKCS12_add_secret - Add an object to a set of PKCS#12 safeBags
 
 =head1 SYNOPSIS
@@ -13,6 +13,11 @@ PKCS12_add_secret - Add an object to a set of PKCS#12 safeBags
  PKCS12_SAFEBAG *PKCS12_add_key(STACK_OF(PKCS12_SAFEBAG) **pbags,
                                EVP_PKEY *key, int key_usage, int iter,
                                int key_nid, const char *pass);
+ PKCS12_SAFEBAG *PKCS12_add_key_ex(STACK_OF(PKCS12_SAFEBAG) **pbags,
+                                   EVP_PKEY *key, int key_usage, int iter,
+                                   int key_nid, const char *pass,
+                                   OSSL_LIB_CTX *ctx, const char *propq);
+
  PKCS12_SAFEBAG *PKCS12_add_secret(STACK_OF(PKCS12_SAFEBAG) **pbags,
                                   int nid_type, const unsigned char *value, int len);
 
@@ -30,13 +35,17 @@ safeBags. If I<key_nid> is not -1 then the key is encrypted with the supplied
 algorithm, using I<pass> as the passphrase and I<iter> as the iteration count. If
 I<iter> is zero then a default value for iteration count of 2048 is used.
 
+PKCS12_add_key_ex() is identical to PKCS12_add_key() but allows for a library
+context I<ctx> and property query I<propq> to be used to select algorithm
+implementations.
+
 PKCS12_add_secret() creates a PKCS#12 secretBag with an OID corresponding to
-the supplied B<nid_type> containing the supplied value as an ASN1 octet string.
+the supplied I<nid_type> containing the supplied value as an ASN1 octet string.
 This is then added to the set of PKCS#12 safeBags.
 
 =head1 NOTES
 
-If a certificate contains an B<alias> or a B<keyid> then this will be
+If a certificate contains an I<alias> or a I<keyid> then this will be
 used for the corresponding B<friendlyName> or B<localKeyID> in the
 PKCS12 structure.
 
@@ -44,19 +53,25 @@ PKCS12_add_key() makes assumptions regarding the encoding of the given pass
 phrase.
 See L<passphrase-encoding(7)> for more information.
 
-PKCS12_add_secret() was added in OpenSSL 3.0.
-
 =head1 RETURN VALUES
 
 A valid B<PKCS12_SAFEBAG> structure or NULL if an error occurred.
+
+=head1 CONFORMING TO
+
+IETF RFC 7292 (L<https://tools.ietf.org/html/rfc7292>)
 
 =head1 SEE ALSO
 
 L<PKCS12_create(3)>
 
+=head1 HISTORY
+
+PKCS12_add_secret() and PKCS12_add_key_ex() were added in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

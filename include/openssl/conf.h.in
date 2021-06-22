@@ -1,7 +1,7 @@
 /*
  * {- join("\n * ", @autowarntext) -}
  *
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -48,21 +48,11 @@ struct conf_st;
 struct conf_method_st;
 typedef struct conf_method_st CONF_METHOD;
 
-struct conf_method_st {
-    const char *name;
-    CONF *(*create) (CONF_METHOD *meth);
-    int (*init) (CONF *conf);
-    int (*destroy) (CONF *conf);
-    int (*destroy_data) (CONF *conf);
-    int (*load_bio) (CONF *conf, BIO *bp, long *eline);
-    int (*dump) (const CONF *conf, BIO *bp);
-    int (*is_number) (const CONF *conf, char c);
-    int (*to_int) (const CONF *conf, char c);
-    int (*load) (CONF *conf, const char *name, long *eline);
-};
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  include <openssl/conftypes.h>
+# endif
 
 /* Module definitions */
-
 typedef struct conf_imodule_st CONF_IMODULE;
 typedef struct conf_module_st CONF_MODULE;
 
@@ -101,8 +91,9 @@ void CONF_free(LHASH_OF(CONF_VALUE) *conf);
 int CONF_dump_fp(LHASH_OF(CONF_VALUE) *conf, FILE *out);
 #endif
 int CONF_dump_bio(LHASH_OF(CONF_VALUE) *conf, BIO *out);
-
-DEPRECATEDIN_1_1_0(void OPENSSL_config(const char *config_name))
+#ifndef OPENSSL_NO_DEPRECATED_1_1_0
+OSSL_DEPRECATEDIN_1_1_0 void OPENSSL_config(const char *config_name);
+#endif
 
 #ifndef OPENSSL_NO_DEPRECATED_1_1_0
 # define OPENSSL_no_config() \
@@ -114,18 +105,13 @@ DEPRECATEDIN_1_1_0(void OPENSSL_config(const char *config_name))
  * that wasn't the case, the above functions would have been replaced
  */
 
-struct conf_st {
-    CONF_METHOD *meth;
-    void *meth_data;
-    LHASH_OF(CONF_VALUE) *data;
-    unsigned int flag_dollarid:1;
-    OPENSSL_CTX *libctx;
-};
-
-CONF *NCONF_new_with_libctx(OPENSSL_CTX *libctx, CONF_METHOD *meth);
+CONF *NCONF_new_ex(OSSL_LIB_CTX *libctx, CONF_METHOD *meth);
+OSSL_LIB_CTX *NCONF_get0_libctx(const CONF *conf);
 CONF *NCONF_new(CONF_METHOD *meth);
 CONF_METHOD *NCONF_default(void);
-DEPRECATEDIN_3_0(CONF_METHOD *NCONF_WIN32(void))
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0 CONF_METHOD *NCONF_WIN32(void);
+#endif
 void NCONF_free(CONF *conf);
 void NCONF_free_data(CONF *conf);
 
@@ -134,6 +120,7 @@ int NCONF_load(CONF *conf, const char *file, long *eline);
 int NCONF_load_fp(CONF *conf, FILE *fp, long *eline);
 # endif
 int NCONF_load_bio(CONF *conf, BIO *bp, long *eline);
+STACK_OF(OPENSSL_CSTRING) *NCONF_get_section_names(const CONF *conf);
 STACK_OF(CONF_VALUE) *NCONF_get_section(const CONF *conf,
                                         const char *section);
 char *NCONF_get_string(const CONF *conf, const char *group, const char *name);
@@ -150,8 +137,8 @@ int NCONF_dump_bio(const CONF *conf, BIO *out);
 
 int CONF_modules_load(const CONF *cnf, const char *appname,
                       unsigned long flags);
-int CONF_modules_load_file_with_libctx(OPENSSL_CTX *libctx, const char *filename,
-                                       const char *appname, unsigned long flags);
+int CONF_modules_load_file_ex(OSSL_LIB_CTX *libctx, const char *filename,
+                              const char *appname, unsigned long flags);
 int CONF_modules_load_file(const char *filename, const char *appname,
                            unsigned long flags);
 void CONF_modules_unload(int all);

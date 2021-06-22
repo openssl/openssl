@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -70,11 +70,11 @@ int OSSL_STORE_LOADER_set_open(OSSL_STORE_LOADER *loader,
     return 1;
 }
 
-int OSSL_STORE_LOADER_set_open_with_libctx
+int OSSL_STORE_LOADER_set_open_ex
     (OSSL_STORE_LOADER *loader,
-     OSSL_STORE_open_with_libctx_fn open_with_libctx_function)
+     OSSL_STORE_open_ex_fn open_ex_function)
 {
-    loader->open_with_libctx = open_with_libctx_function;
+    loader->open_ex = open_ex_function;
     return 1;
 }
 
@@ -194,7 +194,8 @@ int ossl_store_register_loader_int(OSSL_STORE_LOADER *loader)
         ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    CRYPTO_THREAD_write_lock(registry_lock);
+    if (!CRYPTO_THREAD_write_lock(registry_lock))
+        return 0;
 
     if (ossl_store_register_init()
         && (lh_OSSL_STORE_LOADER_insert(loader_register, loader) != NULL
@@ -207,8 +208,6 @@ int ossl_store_register_loader_int(OSSL_STORE_LOADER *loader)
 }
 int OSSL_STORE_register_loader(OSSL_STORE_LOADER *loader)
 {
-    if (!ossl_store_init_once())
-        return 0;
     return ossl_store_register_loader_int(loader);
 }
 
@@ -222,16 +221,14 @@ const OSSL_STORE_LOADER *ossl_store_get0_loader_int(const char *scheme)
     template.load = NULL;
     template.eof = NULL;
     template.close = NULL;
-    template.open_with_libctx = NULL;
-
-    if (!ossl_store_init_once())
-        return NULL;
+    template.open_ex = NULL;
 
     if (!RUN_ONCE(&registry_init, do_registry_init)) {
         ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    CRYPTO_THREAD_write_lock(registry_lock);
+    if (!CRYPTO_THREAD_write_lock(registry_lock))
+        return NULL;
 
     if (!ossl_store_register_init())
         ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_INTERNAL_ERROR);
@@ -260,7 +257,8 @@ OSSL_STORE_LOADER *ossl_store_unregister_loader_int(const char *scheme)
         ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    CRYPTO_THREAD_write_lock(registry_lock);
+    if (!CRYPTO_THREAD_write_lock(registry_lock))
+        return NULL;
 
     if (!ossl_store_register_init())
         ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_INTERNAL_ERROR);
@@ -275,8 +273,6 @@ OSSL_STORE_LOADER *ossl_store_unregister_loader_int(const char *scheme)
 }
 OSSL_STORE_LOADER *OSSL_STORE_unregister_loader(const char *scheme)
 {
-    if (!ossl_store_init_once())
-        return 0;
     return ossl_store_unregister_loader_int(scheme);
 }
 

@@ -46,13 +46,13 @@ BIGNUM *BN_mpi2bn(const unsigned char *d, int n, BIGNUM *ain)
     BIGNUM *a = NULL;
 
     if (n < 4 || (d[0] & 0x80) != 0) {
-        BNerr(BN_F_BN_MPI2BN, BN_R_INVALID_LENGTH);
+        ERR_raise(ERR_LIB_BN, BN_R_INVALID_LENGTH);
         return NULL;
     }
     len = ((long)d[0] << 24) | ((long)d[1] << 16) | ((int)d[2] << 8) | (int)
         d[3];
     if ((len + 4) != n) {
-        BNerr(BN_F_BN_MPI2BN, BN_R_ENCODING_ERROR);
+        ERR_raise(ERR_LIB_BN, BN_R_ENCODING_ERROR);
         return NULL;
     }
 

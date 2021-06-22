@@ -35,7 +35,7 @@ B<openssl> B<s_client>
 [B<-CRL> I<filename>]
 [B<-CRLform> B<DER>|B<PEM>]
 [B<-crl_download>]
-[B<-key> I<filename>]
+[B<-key> I<filename>|I<uri>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-pass> I<arg>]
 [B<-chainCAfile> I<filename>]
@@ -56,6 +56,7 @@ B<openssl> B<s_client>
 [B<-msg>]
 [B<-timeout>]
 [B<-mtu> I<size>]
+[B<-no_etm>]
 [B<-keymatexport> I<label>]
 [B<-keymatexportlen> I<len>]
 [B<-msgfile> I<filename>]
@@ -83,6 +84,7 @@ B<openssl> B<s_client>
 [B<-comp>]
 [B<-no_comp>]
 [B<-brief>]
+[B<-legacy_server_connect>]
 [B<-allow_no_dhe_kex>]
 [B<-sigalgs> I<sigalglist>]
 [B<-curves> I<curvelist>]
@@ -121,20 +123,9 @@ B<openssl> B<s_client>
 {- $OpenSSL::safe::opt_s_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}
-[B<-ssl_client_engine> I<id>]
+{- $OpenSSL::safe::opt_engine_synopsis -}[B<-ssl_client_engine> I<id>]
 {- $OpenSSL::safe::opt_v_synopsis -}
 [I<host>:I<port>]
-
-=for openssl ifdef engine ssl_client_engine ct noct ctlogfile
-
-=for openssl ifdef ssl3 unix 4 6 use_srtp status trace wdebug nextprotoneg
-
-=for openssl ifdef ssl3 tls1 tls1_1 tls1_2 tls1_3 dtls mtu dtls1 dtls1_2
-
-=for openssl ifdef sctp_label_bug sctp
-
-=for openssl ifdef srpuser srppass srp_lateuser srp_moregroups srp_strength
 
 =head1 DESCRIPTION
 
@@ -199,7 +190,7 @@ the network. Use with caution.
 
 The proxy password source, used with the B<-proxy_user> flag.
 For more information about the format of B<arg>
-see L<openssl(1)/Pass Phrase Options>.
+see L<openssl-passphrase-options(1)>.
 
 =item B<-unix> I<path>
 
@@ -232,7 +223,7 @@ This option cannot be used in conjunction with B<-noservername>.
 
 Suppresses sending of the SNI (Server Name Indication) extension in the
 ClientHello message. Cannot be used in conjunction with the B<-servername> or
-<-dane_tlsa_domain> options.
+B<-dane_tlsa_domain> options.
 
 =item B<-cert> I<filename>
 
@@ -243,8 +234,8 @@ The chain for the client certificate may be specified using B<-cert_chain>.
 
 =item B<-certform> B<DER>|B<PEM>|B<P12>
 
-The client certificate file format to use; the default is B<PEM>.
-This option has no effect and is retained for backward compatibility only.
+The client certificate file format to use; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-cert_chain>
 
@@ -263,29 +254,28 @@ CRL file to use to check the server's certificate.
 
 =item B<-CRLform> B<DER>|B<PEM>
 
-The CRL file format; the default is B<PEM>.
-See L<openssl(1)/Format Options> for details.
+The CRL file format; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-crl_download>
 
 Download CRL from distribution points in the certificate.
 
-=item B<-key> I<keyfile>
+=item B<-key> I<filename>|I<uri>
 
-The client private key file to use.
+The client private key to use.
 If not specified then the certificate file will be used to read also the key.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The key format; the default is B<PEM>.
-The only value with effect is B<ENGINE>; all others have become obsolete.
-See L<openssl(1)/Format Options> for details.
+The key format; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-pass> I<arg>
 
 the private key and certifiate file password source.
 For more information about the format of I<arg>
-see L<openssl(1)/Pass phrase options>.
+see L<openssl-passphrase-options(1)>.
 
 =item B<-verify> I<depth>
 
@@ -459,6 +449,10 @@ Enable send/receive timeout on DTLS connections.
 
 Set MTU of the link layer to the specified size.
 
+=item B<-no_etm>
+
+Disable Encrypt-then-MAC negotiation.
+
 =item B<-keymatexport> I<label>
 
 Export keying material using the specified label.
@@ -471,8 +465,7 @@ Show all protocol messages with hex dump.
 
 =item B<-trace>
 
-Show verbose trace output of protocol messages. OpenSSL needs to be compiled
-with B<enable-ssl-trace> for this option to work.
+Show verbose trace output of protocol messages.
 
 =item B<-msgfile> I<filename>
 
@@ -753,23 +746,24 @@ Offer SRTP key management, where B<value> is a colon-separated profile list.
 
 =item B<-srpuser> I<value>
 
-Set the SRP username to the specified value.
+Set the SRP username to the specified value. This option is deprecated.
 
 =item B<-srppass> I<value>
 
-Set the SRP password to the specified value.
+Set the SRP password to the specified value. This option is deprecated.
 
 =item B<-srp_lateuser>
 
-SRP username for the second ClientHello message.
+SRP username for the second ClientHello message. This option is deprecated.
 
-=item B<-srp_moregroups>
+=item B<-srp_moregroups>  This option is deprecated.
 
 Tolerate other than the known B<g> and B<N> values.
 
 =item B<-srp_strength> I<number>
 
-Set the minimal acceptable length, in bits, for B<N>.
+Set the minimal acceptable length, in bits, for B<N>.  This option is
+deprecated.
 
 {- $OpenSSL::safe::opt_version_item -}
 
@@ -787,9 +781,11 @@ Set the minimal acceptable length, in bits, for B<N>.
 
 {- $OpenSSL::safe::opt_engine_item -}
 
+{- output_off() if $disabled{"deprecated-3.0"}; "" -}
 =item B<-ssl_client_engine> I<id>
 
 Specify engine to be used for client certificate operations.
+{- output_on() if $disabled{"deprecated-3.0"}; "" -}
 
 {- $OpenSSL::safe::opt_v_item -}
 
@@ -909,14 +905,11 @@ The B<-name> option was added in OpenSSL 1.1.1.
 
 The B<-certform> option has become obsolete in OpenSSL 3.0.0 and has no effect.
 
-All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
-and have no effect.
-
 The B<-engine> option was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -26,7 +26,7 @@ static int check(X509_STORE *ctx, const char *file,
 static int v_verbose = 0, vflags = 0;
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_ENGINE, OPT_CAPATH, OPT_CAFILE, OPT_CASTORE,
     OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOCASTORE,
     OPT_UNTRUSTED, OPT_TRUSTED, OPT_CRLFILE, OPT_CRL_DOWNLOAD, OPT_SHOW_CHAIN,
@@ -145,7 +145,7 @@ int verify_main(int argc, char **argv)
             break;
         case OPT_UNTRUSTED:
             /* Zero or more times */
-            if (!load_certs(opt_arg(), &untrusted, NULL,
+            if (!load_certs(opt_arg(), 0, &untrusted, NULL,
                             "untrusted certificates"))
                 goto end;
             break;
@@ -154,7 +154,7 @@ int verify_main(int argc, char **argv)
             noCAfile = 1;
             noCApath = 1;
             noCAstore = 1;
-            if (!load_certs(opt_arg(), &trusted, NULL, "trusted certificates"))
+            if (!load_certs(opt_arg(), 0, &trusted, NULL, "trusted certificates"))
                 goto end;
             break;
         case OPT_CRLFILE:
@@ -193,8 +193,11 @@ int verify_main(int argc, char **argv)
             break;
         }
     }
+
+    /* Extra arguments are certificates to verify. */
     argc = opt_num_rest();
     argv = opt_rest();
+
     if (trusted != NULL
         && (CAfile != NULL || CApath != NULL || CAstore != NULL)) {
         BIO_printf(bio_err,
@@ -356,13 +359,28 @@ static int cb(int ok, X509_STORE_CTX *ctx)
         case X509_V_ERR_INVALID_CA:
         case X509_V_ERR_INVALID_NON_CA:
         case X509_V_ERR_PATH_LENGTH_EXCEEDED:
-        case X509_V_ERR_INVALID_PURPOSE:
         case X509_V_ERR_CRL_HAS_EXPIRED:
         case X509_V_ERR_CRL_NOT_YET_VALID:
         case X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION:
+            /* errors due to strict conformance checking (-x509_strict) */
+        case X509_V_ERR_INVALID_PURPOSE:
+        case X509_V_ERR_PATHLEN_INVALID_FOR_NON_CA:
+        case X509_V_ERR_PATHLEN_WITHOUT_KU_KEY_CERT_SIGN:
+        case X509_V_ERR_CA_BCONS_NOT_CRITICAL:
+        case X509_V_ERR_CA_CERT_MISSING_KEY_USAGE:
+        case X509_V_ERR_KU_KEY_CERT_SIGN_INVALID_FOR_NON_CA:
+        case X509_V_ERR_ISSUER_NAME_EMPTY:
+        case X509_V_ERR_SUBJECT_NAME_EMPTY:
+        case X509_V_ERR_EMPTY_SUBJECT_SAN_NOT_CRITICAL:
+        case X509_V_ERR_EMPTY_SUBJECT_ALT_NAME:
+        case X509_V_ERR_SIGNATURE_ALGORITHM_INCONSISTENCY:
+        case X509_V_ERR_AUTHORITY_KEY_IDENTIFIER_CRITICAL:
+        case X509_V_ERR_SUBJECT_KEY_IDENTIFIER_CRITICAL:
+        case X509_V_ERR_MISSING_AUTHORITY_KEY_IDENTIFIER:
+        case X509_V_ERR_MISSING_SUBJECT_KEY_IDENTIFIER:
+        case X509_V_ERR_EXTENSIONS_REQUIRE_VERSION_3:
             ok = 1;
         }
-
         return ok;
 
     }

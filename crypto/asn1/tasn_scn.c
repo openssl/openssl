@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2010-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -27,7 +27,7 @@ ASN1_SCTX *ASN1_SCTX_new(int (*scan_cb) (ASN1_SCTX *ctx))
     ASN1_SCTX *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
-        ASN1err(ASN1_F_ASN1_SCTX_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     ret->scan_cb = scan_cb;

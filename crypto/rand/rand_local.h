@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -25,7 +25,9 @@
 # define PRIMARY_RESEED_TIME_INTERVAL            (60 * 60) /* 1 hour */
 # define SECONDARY_RESEED_TIME_INTERVAL          (7 * 60)  /* 7 minutes */
 
+# ifndef FIPS_MODULE
 /* The global RAND method, and the global buffer and DRBG instance. */
-extern RAND_METHOD rand_meth;
+extern RAND_METHOD ossl_rand_meth;
+# endif
 
 #endif

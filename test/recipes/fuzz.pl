@@ -9,22 +9,17 @@ use strict;
 use warnings;
 
 use OpenSSL::Glob;
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_dir/;
 
-sub fuzz_tests {
-    my @fuzzers = @_;
+sub fuzz_ok {
+    die "Only one argument accepted" if scalar @_ != 1;
 
-    foreach my $f (@fuzzers) {
-        subtest "Fuzzing $f" => sub {
-            my @dir = glob(srctop_file('fuzz', 'corpora', "$f"));
+    my $f = $_[0];
+    my $d = srctop_dir('fuzz', 'corpora', $f);
 
-            plan skip_all => "No directory fuzz/corpora/$f" unless @dir;
-            plan tests => scalar @dir; # likely 1
-
-            foreach (@dir) {
-                ok(run(fuzz(["$f-test", $_])));
-            }
-        }
+    SKIP: {
+        skip "No directory $d", 1 unless -d $d;
+        ok(run(fuzz(["$f-test", $d])), "Fuzzing $f");
     }
 }
 

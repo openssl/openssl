@@ -6,10 +6,11 @@ OSSL_ENCODER,
 OSSL_ENCODER_fetch,
 OSSL_ENCODER_up_ref,
 OSSL_ENCODER_free,
-OSSL_ENCODER_provider,
-OSSL_ENCODER_properties,
+OSSL_ENCODER_get0_provider,
+OSSL_ENCODER_get0_properties,
 OSSL_ENCODER_is_a,
-OSSL_ENCODER_number,
+OSSL_ENCODER_get0_name,
+OSSL_ENCODER_get0_description,
 OSSL_ENCODER_do_all_provided,
 OSSL_ENCODER_names_do_all,
 OSSL_ENCODER_gettable_params,
@@ -22,20 +23,21 @@ OSSL_ENCODER_get_params
 
  typedef struct ossl_encoder_st OSSL_ENCODER;
 
- OSSL_ENCODER *OSSL_ENCODER_fetch(OPENSSL_CTX *ctx, const char *name,
+ OSSL_ENCODER *OSSL_ENCODER_fetch(OSSL_LIB_CTX *ctx, const char *name,
                                   const char *properties);
  int OSSL_ENCODER_up_ref(OSSL_ENCODER *encoder);
  void OSSL_ENCODER_free(OSSL_ENCODER *encoder);
- const OSSL_PROVIDER *OSSL_ENCODER_provider(const OSSL_ENCODER *encoder);
- const char *OSSL_ENCODER_properties(const OSSL_ENCODER *encoder);
+ const OSSL_PROVIDER *OSSL_ENCODER_get0_provider(const OSSL_ENCODER *encoder);
+ const char *OSSL_ENCODER_get0_properties(const OSSL_ENCODER *encoder);
  int OSSL_ENCODER_is_a(const OSSL_ENCODER *encoder, const char *name);
- int OSSL_ENCODER_number(const OSSL_ENCODER *encoder);
- void OSSL_ENCODER_do_all_provided(OPENSSL_CTX *libctx,
+ const char *OSSL_ENCODER_get0_name(const OSSL_ENCODER *encoder);
+ const char *OSSL_ENCODER_get0_description(const OSSL_ENCODER *encoder);
+ void OSSL_ENCODER_do_all_provided(OSSL_LIB_CTX *libctx,
                                    void (*fn)(OSSL_ENCODER *encoder, void *arg),
                                    void *arg);
- void OSSL_ENCODER_names_do_all(const OSSL_ENCODER *encoder,
-                                void (*fn)(const char *name, void *data),
-                                void *data);
+ int OSSL_ENCODER_names_do_all(const OSSL_ENCODER *encoder,
+                               void (*fn)(const char *name, void *data),
+                               void *data);
  const OSSL_PARAM *OSSL_ENCODER_gettable_params(OSSL_ENCODER *encoder);
  int OSSL_ENCODER_get_params(OSSL_ENCODER_CTX *ctx, const OSSL_PARAM params[]);
 
@@ -46,7 +48,7 @@ encode an object of some kind to a encoded form, such as PEM,
 DER, or even human readable text.
 
 OSSL_ENCODER_fetch() looks for an algorithm within the provider that
-has been loaded into the B<OPENSSL_CTX> given by I<ctx>, having the
+has been loaded into the B<OSSL_LIB_CTX> given by I<ctx>, having the
 name given by I<name> and the properties given by I<properties>.
 The I<name> determines what type of object the fetched encoder
 method is expected to be able to encode, and the properties are
@@ -60,25 +62,28 @@ I<encoder>.
 OSSL_ENCODER_free() decrements the reference count for the given
 I<encoder>, and when the count reaches zero, frees it.
 
-OSSL_ENCODER_provider() returns the provider of the given
+OSSL_ENCODER_get0_provider() returns the provider of the given
 I<encoder>.
 
-OSSL_ENCODER_provider() returns the property definition associated
+OSSL_ENCODER_get0_properties() returns the property definition associated
 with the given I<encoder>.
 
 OSSL_ENCODER_is_a() checks if I<encoder> is an implementation of an
 algorithm that's identifiable with I<name>.
 
-OSSL_ENCODER_number() returns the internal dynamic number assigned to
-the given I<encoder>.
+OSSL_ENCODER_get0_name() returns the name used to fetch the given I<encoder>.
+
+OSSL_ENCODER_get0_description() returns a description of the I<loader>, meant
+for display and human consumption.  The description is at the discretion of the
+I<loader> implementation.
 
 OSSL_ENCODER_names_do_all() traverses all names for the given
-I<encoder>, and calls I<fn> with each name and I<data>.
+I<encoder>, and calls I<fn> with each name and I<data> as arguments.
 
 OSSL_ENCODER_do_all_provided() traverses all encoder
 implementations by all activated providers in the library context
 I<libctx>, and for each of the implementations, calls I<fn> with the
-implementation method and I<data> as arguments.
+implementation method and I<arg> as arguments.
 
 OSSL_ENCODER_gettable_params() returns an L<OSSL_PARAM(3)>
 array of parameter descriptors.
@@ -86,12 +91,6 @@ array of parameter descriptors.
 OSSL_ENCODER_get_params() attempts to get parameters specified
 with an L<OSSL_PARAM(3)> array I<params>.  Parameters that the
 implementation doesn't recognise should be ignored.
-
-=head1 NOTES
-
-OSSL_ENCODER_fetch() may be called implicitly by other fetching
-functions, using the same library context and properties.
-Any other API that uses keys will typically do this.
 
 =head1 RETURN VALUES
 
@@ -103,21 +102,31 @@ OSSL_ENCODER_up_ref() returns 1 on success, or 0 on error.
 
 OSSL_ENCODER_free() doesn't return any value.
 
-OSSL_ENCODER_provider() returns a pointer to a provider object, or
+OSSL_ENCODER_get0_provider() returns a pointer to a provider object, or
 NULL on error.
 
-OSSL_ENCODER_properties() returns a pointer to a property
+OSSL_ENCODER_get0_properties() returns a pointer to a property
 definition string, or NULL on error.
 
 OSSL_ENCODER_is_a() returns 1 of I<encoder> was identifiable,
 otherwise 0.
 
-OSSL_ENCODER_number() returns an integer.
+OSSL_ENCODER_get0_name() returns the algorithm name from the provided
+implementation for the given I<encoder>. Note that the I<encoder> may have
+multiple synonyms associated with it. In this case the first name from the
+algorithm definition is returned. Ownership of the returned string is retained
+by the I<encoder> object and should not be freed by the caller.
+
+OSSL_ENCODER_get0_description() returns a pointer to a decription, or NULL if
+there isn't one.
+
+OSSL_ENCODER_names_do_all() returns 1 if the callback was called for all
+names. A return value of 0 means that the callback was not called for any names.
 
 =head1 SEE ALSO
 
 L<provider(7)>, L<OSSL_ENCODER_CTX(3)>, L<OSSL_ENCODER_to_bio(3)>,
-L<OSSL_ENCODER_CTX_new_by_EVP_PKEY(3)>, L<OPENSSL_CTX(3)>
+L<OSSL_ENCODER_CTX_new_for_pkey(3)>, L<OSSL_LIB_CTX(3)>
 
 =head1 HISTORY
 
@@ -125,7 +134,7 @@ The functions described here were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

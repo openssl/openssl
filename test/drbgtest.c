@@ -1,11 +1,14 @@
 /*
- * Copyright 2011-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/* We need to use some deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <string.h>
 #include "internal/nelem.h"
@@ -38,13 +41,13 @@
 #endif
 
 #include "testutil.h"
-#include "drbgtest.h"
 
 /*
  * DRBG generate wrappers
  */
 static int gen_bytes(EVP_RAND_CTX *drbg, unsigned char *buf, int num)
 {
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     const RAND_METHOD *meth = RAND_get_rand_method();
 
     if (meth != NULL && meth != RAND_OpenSSL()) {
@@ -52,6 +55,7 @@ static int gen_bytes(EVP_RAND_CTX *drbg, unsigned char *buf, int num)
             return meth->bytes(buf, num);
         return -1;
     }
+#endif
 
     if (drbg != NULL)
         return EVP_RAND_generate(drbg, buf, num, 0, 0, NULL, 0);
@@ -77,7 +81,7 @@ static int rand_priv_bytes(unsigned char *buf, int num)
  */
 static int state(EVP_RAND_CTX *drbg)
 {
-    return EVP_RAND_state(drbg);
+    return EVP_RAND_get_state(drbg);
 }
 
 static unsigned int query_rand_uint(EVP_RAND_CTX *drbg, const char *name)
@@ -86,7 +90,7 @@ static unsigned int query_rand_uint(EVP_RAND_CTX *drbg, const char *name)
     unsigned int n;
 
     *params = OSSL_PARAM_construct_uint(name, &n);
-    if (EVP_RAND_get_ctx_params(drbg, params))
+    if (EVP_RAND_CTX_get_params(drbg, params))
         return n;
     return 0;
 }
@@ -100,7 +104,7 @@ DRBG_UINT(reseed_counter)
 
 static PROV_DRBG *prov_rand(EVP_RAND_CTX *drbg)
 {
-    return (PROV_DRBG *)drbg->data;
+    return (PROV_DRBG *)drbg->algctx;
 }
 
 static void set_reseed_counter(EVP_RAND_CTX *drbg, unsigned int n)
@@ -121,7 +125,7 @@ static time_t reseed_time(EVP_RAND_CTX *drbg)
     time_t t;
 
     *params = OSSL_PARAM_construct_time_t(OSSL_DRBG_PARAM_RESEED_TIME, &t);
-    if (EVP_RAND_get_ctx_params(drbg, params))
+    if (EVP_RAND_CTX_get_params(drbg, params))
         return t;
     return 0;
 }
@@ -549,9 +553,11 @@ static int test_rand_reseed(void)
     if (crngt_skip())
         return TEST_skip("CRNGT cannot be disabled");
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     /* Check whether RAND_OpenSSL() is the default method */
     if (!TEST_ptr_eq(RAND_get_rand_method(), RAND_OpenSSL()))
         return 0;
+#endif
 
     /* All three DRBGs should be non-null */
     if (!TEST_ptr(primary = RAND_get0_primary(NULL))
@@ -685,7 +691,7 @@ static int set_reseed_time_interval(EVP_RAND_CTX *drbg, int t)
     params[0] = OSSL_PARAM_construct_int(OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL,
                                          &t);
     params[1] = OSSL_PARAM_construct_end();
-    return EVP_RAND_set_ctx_params(drbg, params);
+    return EVP_RAND_CTX_set_params(drbg, params);
 }
 
 static void run_multi_thread_test(void)
@@ -802,7 +808,7 @@ static EVP_RAND_CTX *new_drbg(EVP_RAND_CTX *parent)
 
     if (!TEST_ptr(rand = EVP_RAND_fetch(NULL, "CTR-DRBG", NULL))
             || !TEST_ptr(drbg = EVP_RAND_CTX_new(rand, parent))
-            || !TEST_true(EVP_RAND_set_ctx_params(drbg, params))) {
+            || !TEST_true(EVP_RAND_CTX_set_params(drbg, params))) {
         EVP_RAND_CTX_free(drbg);
         drbg = NULL;
     }
@@ -822,11 +828,11 @@ static int test_rand_prediction_resistance(void)
     /* Initialise a three long DRBG chain */
     if (!TEST_ptr(x = new_drbg(NULL))
         || !TEST_true(disable_crngt(x))
-        || !TEST_true(EVP_RAND_instantiate(x, 0, 0, NULL, 0))
+        || !TEST_true(EVP_RAND_instantiate(x, 0, 0, NULL, 0, NULL))
         || !TEST_ptr(y = new_drbg(x))
-        || !TEST_true(EVP_RAND_instantiate(y, 0, 0, NULL, 0))
+        || !TEST_true(EVP_RAND_instantiate(y, 0, 0, NULL, 0, NULL))
         || !TEST_ptr(z = new_drbg(y))
-        || !TEST_true(EVP_RAND_instantiate(z, 0, 0, NULL, 0)))
+        || !TEST_true(EVP_RAND_instantiate(z, 0, 0, NULL, 0, NULL)))
         goto err;
 
     /*

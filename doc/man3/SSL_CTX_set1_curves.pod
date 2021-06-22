@@ -77,10 +77,15 @@ NID_undef is returned. If the NID for the shared group is unknown then the value
 is set to the bitwise OR of TLSEXT_nid_unknown (0x1000000) and the id of the
 group.
 
-SSL_get_negotiated_group() returns the NID of the negotiated group on a TLSv1.3
-connection for key exchange. This can be called by either client or server. If
-the NID for the shared group is unknown then the value is set to the bitwise OR
-of TLSEXT_nid_unknown (0x1000000) and the id of the group.
+SSL_get_negotiated_group() returns the NID of the negotiated group used for
+the handshake key exchange process.  For TLSv1.3 connections this typically
+reflects the state of the current connection, though in the case of PSK-only
+resumption, the returned value will be from a previous connection.  For earlier
+TLS versions, when a session has been resumed, it always reflects the group
+used for key exchange during the initial handshake (otherwise it is from the
+current, non-resumption, connection).  This can be called by either client or
+server. If the NID for the shared group is unknown then the value is set to the
+bitwise OR of TLSEXT_nid_unknown (0x1000000) and the id of the group.
 
 All these functions are implemented as macros.
 
@@ -110,9 +115,8 @@ is -1.
 When called on a client B<ssl>, SSL_get_shared_group() has no meaning and
 returns -1.
 
-SSL_get_negotiated_group() returns the NID of the negotiated group on a
-TLSv1.3 connection for key exchange. Or it returns NID_undef if no negotiated
-group.
+SSL_get_negotiated_group() returns the NID of the negotiated group used for
+key exchange, or NID_undef if there was no negotiated group.
 
 =head1 SEE ALSO
 
@@ -127,7 +131,7 @@ was added in OpenSSL 3.0.0.
 
 =head1 COPYRIGHT
 
-Copyright 2013-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2013-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -47,7 +47,7 @@ X509_STORE_CTX_set_verify_cb() sets the verification callback of B<ctx> to
 B<verify_cb> overwriting any existing callback.
 
 The verification callback can be used to customise the operation of certificate
-verification, either by overriding error conditions or logging errors for
+verification, for instance by overriding error conditions or logging errors for
 debugging purposes.
 
 However, a verification callback is B<not> essential and the default operation

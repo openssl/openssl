@@ -247,7 +247,7 @@ released on behalf of the caller.
 
 To clarify a particular function's handling of references, one should
 always consult that function's documentation "man" page, or failing that
-the openssl/engine.h header file includes some hints.
+the F<< <openssl/engine.h> >> header file includes some hints.
 
 I<Functional references>
 
@@ -498,10 +498,10 @@ and input parameters of the control commands supported by an ENGINE using a
 structural reference. Note that some control commands are defined by OpenSSL
 itself and it will intercept and handle these control commands on behalf of the
 ENGINE, i.e. the ENGINE's ctrl() handler is not used for the control command.
-openssl/engine.h defines an index, ENGINE_CMD_BASE, that all control commands
-implemented by ENGINEs should be numbered from. Any command value lower than
-this symbol is considered a "generic" command is handled directly by the
-OpenSSL core routines.
+F<< <openssl/engine.h> >> defines an index, ENGINE_CMD_BASE, that all control
+commands implemented by ENGINEs should be numbered from. Any command value
+lower than this symbol is considered a "generic" command is handled directly
+by the OpenSSL core routines.
 
 It is using these "core" control commands that one can discover the control
 commands implemented by a given ENGINE, specifically the commands:
@@ -666,7 +666,7 @@ and should not be used.
 
 =head1 COPYRIGHT
 
-Copyright 2002-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2002-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

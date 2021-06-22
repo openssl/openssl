@@ -41,7 +41,7 @@ Print out a usage message.
 =item B<-inform> B<DER>|B<PEM>
 
 The input format; the default is B<PEM>.
-See L<openssl(1)/Format Options> for details.
+See L<openssl-format-options(1)> for details.
 
 =item B<-in> I<filename>
 

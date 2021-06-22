@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,6 +11,8 @@
 
 #ifndef OSSL_CRYPTO_ECX_H
 # define OSSL_CRYPTO_ECX_H
+# pragma once
+
 # include <openssl/opensslconf.h>
 
 # ifndef OPENSSL_NO_EC
@@ -18,7 +20,9 @@
 #  include <openssl/core.h>
 #  include <openssl/e_os2.h>
 #  include <openssl/crypto.h>
+#  include <openssl/x509.h>
 #  include "internal/refcount.h"
+#  include "crypto/types.h"
 
 #  define X25519_KEYLEN         32
 #  define X448_KEYLEN           56
@@ -61,7 +65,7 @@ typedef enum {
            : EVP_PKEY_ED448)))
 
 struct ecx_key_st {
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     char *propq;
     unsigned int haspubkey:1;
     unsigned char pubkey[MAX_KEYLEN];
@@ -72,49 +76,76 @@ struct ecx_key_st {
     CRYPTO_RWLOCK *lock;
 };
 
-typedef struct ecx_key_st ECX_KEY;
+size_t ossl_ecx_key_length(ECX_KEY_TYPE type);
+ECX_KEY *ossl_ecx_key_new(OSSL_LIB_CTX *libctx, ECX_KEY_TYPE type,
+                          int haspubkey, const char *propq);
+void ossl_ecx_key_set0_libctx(ECX_KEY *key, OSSL_LIB_CTX *libctx);
+unsigned char *ossl_ecx_key_allocate_privkey(ECX_KEY *key);
+void ossl_ecx_key_free(ECX_KEY *key);
+int ossl_ecx_key_up_ref(ECX_KEY *key);
+ECX_KEY *ossl_ecx_key_dup(const ECX_KEY *key, int selection);
 
-size_t ecx_key_length(ECX_KEY_TYPE type);
-ECX_KEY *ecx_key_new(OPENSSL_CTX *libctx, ECX_KEY_TYPE type, int haspubkey,
-                     const char *propq);
-unsigned char *ecx_key_allocate_privkey(ECX_KEY *key);
-void ecx_key_free(ECX_KEY *key);
-int ecx_key_up_ref(ECX_KEY *key);
+int ossl_x25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
+                const uint8_t peer_public_value[32]);
+void ossl_x25519_public_from_private(uint8_t out_public_value[32],
+                                     const uint8_t private_key[32]);
 
-int X25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
-           const uint8_t peer_public_value[32]);
-void X25519_public_from_private(uint8_t out_public_value[32],
-                                const uint8_t private_key[32]);
+int
+ossl_ed25519_public_from_private(OSSL_LIB_CTX *ctx, uint8_t out_public_key[32],
+                                 const uint8_t private_key[32],
+                                 const char *propq);
+int
+ossl_ed25519_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
+                  const uint8_t public_key[32], const uint8_t private_key[32],
+                  OSSL_LIB_CTX *libctx, const char *propq);
+int
+ossl_ed25519_verify(const uint8_t *message, size_t message_len,
+                    const uint8_t signature[64], const uint8_t public_key[32],
+                    OSSL_LIB_CTX *libctx, const char *propq);
 
-int ED25519_public_from_private(OPENSSL_CTX *ctx, uint8_t out_public_key[32],
-                                const uint8_t private_key[32], const char *propq);
-int ED25519_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
-                 const uint8_t public_key[32], const uint8_t private_key[32],
-                 OPENSSL_CTX *libctx, const char *propq);
-int ED25519_verify(const uint8_t *message, size_t message_len,
-                   const uint8_t signature[64], const uint8_t public_key[32],
-                   OPENSSL_CTX *libctx, const char *propq);
+int
+ossl_ed448_public_from_private(OSSL_LIB_CTX *ctx, uint8_t out_public_key[57],
+                               const uint8_t private_key[57], const char *propq);
+int
+ossl_ed448_sign(OSSL_LIB_CTX *ctx, uint8_t *out_sig, const uint8_t *message,
+                size_t message_len, const uint8_t public_key[57],
+                const uint8_t private_key[57], const uint8_t *context,
+                size_t context_len, const char *propq);
 
-int ED448_public_from_private(OPENSSL_CTX *ctx, uint8_t out_public_key[57],
-                              const uint8_t private_key[57], const char *propq);
-int ED448_sign(OPENSSL_CTX *ctx, uint8_t *out_sig, const uint8_t *message,
-               size_t message_len, const uint8_t public_key[57],
-               const uint8_t private_key[57], const uint8_t *context,
-               size_t context_len, const char *propq);
+int
+ossl_ed448_verify(OSSL_LIB_CTX *ctx, const uint8_t *message, size_t message_len,
+                  const uint8_t signature[114], const uint8_t public_key[57],
+                  const uint8_t *context, size_t context_len, const char *propq);
 
-int ED448_verify(OPENSSL_CTX *ctx, const uint8_t *message, size_t message_len,
-                 const uint8_t signature[114], const uint8_t public_key[57],
-                 const uint8_t *context, size_t context_len, const char *propq);
-
-int X448(uint8_t out_shared_key[56], const uint8_t private_key[56],
-         const uint8_t peer_public_value[56]);
-void X448_public_from_private(uint8_t out_public_value[56],
+int
+ossl_x448(uint8_t out_shared_key[56], const uint8_t private_key[56],
+          const uint8_t peer_public_value[56]);
+void
+ossl_x448_public_from_private(uint8_t out_public_value[56],
                               const uint8_t private_key[56]);
 
-/* Backend support */
-int ecx_public_from_private(ECX_KEY *key);
-int ecx_key_fromdata(ECX_KEY *ecx, const OSSL_PARAM params[],
-                     int include_private);
 
+/* Backend support */
+typedef enum {
+    KEY_OP_PUBLIC,
+    KEY_OP_PRIVATE,
+    KEY_OP_KEYGEN
+} ecx_key_op_t;
+
+ECX_KEY *ossl_ecx_key_op(const X509_ALGOR *palg,
+                         const unsigned char *p, int plen,
+                         int pkey_id, ecx_key_op_t op,
+                         OSSL_LIB_CTX *libctx, const char *propq);
+
+int ossl_ecx_public_from_private(ECX_KEY *key);
+int ossl_ecx_key_fromdata(ECX_KEY *ecx, const OSSL_PARAM params[],
+                          int include_private);
+ECX_KEY *ossl_ecx_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
+                                 OSSL_LIB_CTX *libctx, const char *propq);
+
+ECX_KEY *ossl_evp_pkey_get1_X25519(EVP_PKEY *pkey);
+ECX_KEY *ossl_evp_pkey_get1_X448(EVP_PKEY *pkey);
+ECX_KEY *ossl_evp_pkey_get1_ED25519(EVP_PKEY *pkey);
+ECX_KEY *ossl_evp_pkey_get1_ED448(EVP_PKEY *pkey);
 # endif /* OPENSSL_NO_EC */
 #endif

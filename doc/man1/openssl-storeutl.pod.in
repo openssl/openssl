@@ -27,8 +27,7 @@ B<openssl> B<storeutl>
 [B<-alias> I<arg>]
 [B<-fingerprint> I<arg>]
 [B<-I<digest>>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 I<uri> ...
 
 =head1 DESCRIPTION
@@ -56,7 +55,7 @@ this option prevents output of the PEM data.
 =item B<-passin> I<arg>
 
 the key password source. For more information about the format of I<arg>
-see L<openssl(1)/Pass Phrase Options>.
+see L<openssl-passphrase-options(1)>.
 
 =item B<-text>
 

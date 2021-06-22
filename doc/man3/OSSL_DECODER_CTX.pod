@@ -7,7 +7,9 @@ OSSL_DECODER_CTX_new,
 OSSL_DECODER_settable_ctx_params,
 OSSL_DECODER_CTX_set_params,
 OSSL_DECODER_CTX_free,
+OSSL_DECODER_CTX_set_selection,
 OSSL_DECODER_CTX_set_input_type,
+OSSL_DECODER_CTX_set_input_structure,
 OSSL_DECODER_CTX_add_decoder,
 OSSL_DECODER_CTX_add_extra,
 OSSL_DECODER_CTX_get_num_decoders,
@@ -23,7 +25,8 @@ OSSL_DECODER_CTX_get_cleanup,
 OSSL_DECODER_export,
 OSSL_DECODER_INSTANCE_get_decoder,
 OSSL_DECODER_INSTANCE_get_decoder_ctx,
-OSSL_DECODER_INSTANCE_get_input_type
+OSSL_DECODER_INSTANCE_get_input_type,
+OSSL_DECODER_INSTANCE_get_input_structure
 - Decoder context routines
 
 =head1 SYNOPSIS
@@ -38,8 +41,11 @@ OSSL_DECODER_INSTANCE_get_input_type
                                  const OSSL_PARAM params[]);
  void OSSL_DECODER_CTX_free(OSSL_DECODER_CTX *ctx);
 
+ int OSSL_DECODER_CTX_set_selection(OSSL_DECODER_CTX *ctx, int selection);
  int OSSL_DECODER_CTX_set_input_type(OSSL_DECODER_CTX *ctx,
                                      const char *input_type);
+ int OSSL_DECODER_CTX_set_input_structure(OSSL_DECODER_CTX *ctx,
+                                          const char *input_structure);
  int OSSL_DECODER_CTX_add_decoder(OSSL_DECODER_CTX *ctx, OSSL_DECODER *decoder);
  int OSSL_DECODER_CTX_add_extra(OSSL_DECODER_CTX *ctx);
  int OSSL_DECODER_CTX_get_num_decoders(OSSL_DECODER_CTX *ctx);
@@ -51,6 +57,8 @@ OSSL_DECODER_INSTANCE_get_input_type
  OSSL_DECODER_INSTANCE_get_decoder_ctx(OSSL_DECODER_INSTANCE *decoder_inst);
  const char *
  OSSL_DECODER_INSTANCE_get_input_type(OSSL_DECODER_INSTANCE *decoder_inst);
+ OSSL_DECODER_INSTANCE_get_input_structure(OSSL_DECODER_INSTANCE *decoder_inst,
+                                           int *was_set);
 
  typedef int OSSL_DECODER_CONSTRUCT(OSSL_DECODER_INSTANCE *decoder_inst,
                                     const OSSL_PARAM *object,
@@ -128,6 +136,11 @@ OSSL_DECODER_CTX_set_input_type() sets the starting input type.  This limits
 the decoder chains to be considered, as explained in the general description
 above.
 
+OSSL_DECODER_CTX_set_input_structure() sets the name of the structure that
+the input is expected to have.  This may be used to determines what decoder
+implementations may be used.  NULL is a valid input structure, when it's not
+relevant, or when the decoder implementations are expected to figure it out.
+
 OSSL_DECODER_CTX_get_num_decoders() gets the number of decoders currently
 added to the context I<ctx>.
 
@@ -179,14 +192,19 @@ constructed, otherwise 0.
 
 These utility functions may be used by a constructor:
 
-OSSL_DECODER_INSTANCE_get_decoder() can be used to get the decoder method
-from a decoder instance I<decoder_inst>.
+OSSL_DECODER_INSTANCE_get_decoder() can be used to get the decoder
+implementation from a decoder instance I<decoder_inst>.
 
 OSSL_DECODER_INSTANCE_get_decoder_ctx() can be used to get the decoder
-method's provider context from a decoder instance I<decoder_inst>.
+implementation's provider context from a decoder instance I<decoder_inst>.
 
 OSSL_DECODER_INSTANCE_get_input_type() can be used to get the decoder
-method's input type from a decoder instance I<decoder_inst>.
+implementation's input type from a decoder instance I<decoder_inst>.
+
+OSSL_DECODER_INSTANCE_get_input_structure() can be used to get the input
+structure for the decoder implementation from a decoder instance
+I<decoder_inst>.
+This may be NULL.
 
 =head1 RETURN VALUES
 

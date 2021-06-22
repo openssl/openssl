@@ -13,11 +13,11 @@
 #include "apps_ui.h"
 
 static UI_METHOD *ui_method = NULL;
-static const UI_METHOD *ui_fallback_method = NULL;
+static const UI_METHOD *ui_base_method = NULL;
 
 static int ui_open(UI *ui)
 {
-    int (*opener)(UI *ui) = UI_method_get_opener(ui_fallback_method);
+    int (*opener)(UI *ui) = UI_method_get_opener(ui_base_method);
 
     if (opener != NULL)
         return opener(ui);
@@ -51,7 +51,7 @@ static int ui_read(UI *ui, UI_STRING *uis)
         }
     }
 
-    reader = UI_method_get_reader(ui_fallback_method);
+    reader = UI_method_get_reader(ui_base_method);
     if (reader != NULL)
         return reader(ui, uis);
     /* Default to the empty password if we've got nothing better */
@@ -84,7 +84,7 @@ static int ui_write(UI *ui, UI_STRING *uis)
         }
     }
 
-    writer = UI_method_get_writer(ui_fallback_method);
+    writer = UI_method_get_writer(ui_base_method);
     if (writer != NULL)
         return writer(ui, uis);
     return 1;
@@ -92,7 +92,7 @@ static int ui_write(UI *ui, UI_STRING *uis)
 
 static int ui_close(UI *ui)
 {
-    int (*closer)(UI *ui) = UI_method_get_closer(ui_fallback_method);
+    int (*closer)(UI *ui) = UI_method_get_closer(ui_base_method);
 
     if (closer != NULL)
         return closer(ui);
@@ -112,11 +112,19 @@ static char *ui_prompt_construct(UI *ui, const char *phrase_desc,
     return UI_construct_prompt(NULL, phrase_desc, object_name);
 }
 
+int set_base_ui_method(const UI_METHOD *ui_meth)
+{
+    if (ui_meth == NULL)
+        ui_meth = UI_null();
+    ui_base_method = ui_meth;
+    return 1;
+}
+
 int setup_ui_method(void)
 {
-    ui_fallback_method = UI_null();
+    ui_base_method = UI_null();
 #ifndef OPENSSL_NO_UI_CONSOLE
-    ui_fallback_method = UI_OpenSSL();
+    ui_base_method = UI_OpenSSL();
 #endif
     ui_method = UI_create_method("OpenSSL application user interface");
     return ui_method != NULL

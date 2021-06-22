@@ -6,7 +6,6 @@ RSA_padding_add_PKCS1_type_1, RSA_padding_check_PKCS1_type_1,
 RSA_padding_add_PKCS1_type_2, RSA_padding_check_PKCS1_type_2,
 RSA_padding_add_PKCS1_OAEP, RSA_padding_check_PKCS1_OAEP,
 RSA_padding_add_PKCS1_OAEP_mgf1, RSA_padding_check_PKCS1_OAEP_mgf1,
-RSA_padding_add_SSLv23, RSA_padding_check_SSLv23,
 RSA_padding_add_none, RSA_padding_check_none - asymmetric encryption
 padding
 
@@ -48,12 +47,6 @@ L<openssl_user_macros(7)>:
                                        const unsigned char *p, int pl,
                                        const EVP_MD *md, const EVP_MD *mgf1md);
 
- int RSA_padding_add_SSLv23(unsigned char *to, int tlen,
-                            const unsigned char *f, int fl);
-
- int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
-                              const unsigned char *f, int fl, int rsa_len);
-
  int RSA_padding_add_none(unsigned char *to, int tlen,
                           const unsigned char *f, int fl);
 
@@ -94,10 +87,6 @@ PKCS #1 v2.0 EME-PKCS1-v1_5 (PKCS #1 v1.5 block type 2)
 =item PKCS1_OAEP
 
 PKCS #1 v2.0 EME-OAEP
-
-=item SSLv23
-
-PKCS #1 EME-PKCS1-v1_5 with SSL-specific modification
 
 =item none
 
@@ -161,7 +150,7 @@ All of these functions were deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

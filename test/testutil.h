@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2014-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,6 +16,7 @@
 # include <openssl/err.h>
 # include <openssl/e_os2.h>
 # include <openssl/bn.h>
+# include <openssl/x509.h>
 # include "opt.h"
 
 /*-
@@ -173,9 +174,9 @@
  * the test system.
  *
  * Tests that need to use opt_next() need to specify
- *  (1) test_get_options() containing an options[] (Which should include either
- *    OPT_TEST_OPTIONS_DEFAULT_USAGE OR
- *    OPT_TEST_OPTIONS_WITH_EXTRA_USAGE).
+ *  (1) test_get_options() containing an options[] which should include either
+ *    OPT_TEST_OPTIONS_DEFAULT_USAGE or
+ *    OPT_TEST_OPTIONS_WITH_EXTRA_USAGE(...).
  *  (2) An enum outside the test_get_options() which contains OPT_TEST_ENUM, as
  *      well as the additional options that need to be handled.
  *  (3) case OPT_TEST_CASES: break; inside the opt_next() handling code.
@@ -205,8 +206,17 @@ size_t test_get_argument_count(void);
  */
 int test_skip_common_options(void);
 
-int test_get_libctx(OPENSSL_CTX **libctx,
-                    OSSL_PROVIDER **default_null_provider,
+/*
+ * Get a library context for the tests, populated with the specified provider
+ * and configuration. If default_null_prov is not NULL, a "null" provider is
+ * loaded into the default library context to prevent it being used.
+ * If libctx is NULL, the specified provider is loaded into the default library
+ * context.
+ */
+int test_get_libctx(OSSL_LIB_CTX **libctx, OSSL_PROVIDER **default_null_prov,
+                    const char *config_file,
+                    OSSL_PROVIDER **provider, const char *module_name);
+int test_arg_libctx(OSSL_LIB_CTX **libctx, OSSL_PROVIDER **default_null_prov,
                     OSSL_PROVIDER **provider, int argn, const char *usage);
 
 /*
@@ -229,7 +239,7 @@ void cleanup_tests(void);
  * Used to supply test specific command line options,
  * If non optional parameters are used, then the first entry in the OPTIONS[]
  * should contain:
- * { OPT_HELP_STR, 1, '-', "list of non optional commandline params\n"},
+ * { OPT_HELP_STR, 1, '-', "<list of non-optional commandline params>\n"},
  * The last entry should always be { NULL }.
  *
  * Run the test locally using './test/test_name -help' to check the usage.
@@ -563,7 +573,25 @@ char *glue_strings(const char *list[], size_t *out_len);
 uint32_t test_random(void);
 void test_random_seed(uint32_t sd);
 
+/* Fake non-secure random number generator */
+typedef int fake_random_generate_cb(unsigned char *out, size_t outlen,
+                                    const char *name, EVP_RAND_CTX *ctx);
+
+OSSL_PROVIDER *fake_rand_start(OSSL_LIB_CTX *libctx);
+void fake_rand_finish(OSSL_PROVIDER *p);
+void fake_rand_set_callback(EVP_RAND_CTX *ctx,
+                            int (*cb)(unsigned char *out, size_t outlen,
+                                      const char *name, EVP_RAND_CTX *ctx));
+void fake_rand_set_public_private_callbacks(OSSL_LIB_CTX *libctx,
+                                            fake_random_generate_cb *cb);
+
 /* Create a file path from a directory and a filename */
 char *test_mk_file_path(const char *dir, const char *file);
+
+EVP_PKEY *load_pkey_pem(const char *file, OSSL_LIB_CTX *libctx);
+X509 *load_cert_pem(const char *file, OSSL_LIB_CTX *libctx);
+X509 *load_cert_der(const unsigned char *bytes, int len);
+STACK_OF(X509) *load_certs_pem(const char *file);
+X509_REQ *load_csr_der(const char *file, OSSL_LIB_CTX *libctx);
 
 #endif                          /* OSSL_TESTUTIL_H */

@@ -9,7 +9,7 @@ x509v3_cache_extensions
 
  #include <openssl/x509v3.h>
 
- int x509v3_cache_extensions(X509 *x, OPENSSL_CTX *libctx, const char *propq);
+ int x509v3_cache_extensions(X509 *x, OSSL_LIB_CTX *libctx, const char *propq);
 
 =head1 DESCRIPTION
 
@@ -17,7 +17,8 @@ This function processes any X509v3 extensions present in an X509 object I<x>
 and caches the result of that processing as well as further derived info,
 for instance whether the certificate is self-issued or has version X.509v1.
 It computes the SHA1 digest of the certificate using the default library context
-and property query string and stores the result in x->sha1_hash.
+and property query string and stores the result in x->sha1_hash,
+or on failure sets B<EXFLAG_NO_FINGERPRINT> in x->flags.
 It sets B<X509_SIG_INFO_VALID> in x->flags if x->siginf was filled successfully,
 which may not be possible if a referenced algorithm is unknown or not available.
 Many OpenSSL functions that use an X509 object call this function implicitly.
@@ -30,7 +31,7 @@ Otherwise it returns 1.
 
 =head1 COPYRIGHT
 
-Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

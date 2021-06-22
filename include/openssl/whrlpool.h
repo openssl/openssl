@@ -43,15 +43,16 @@ typedef struct {
     size_t bitlen[WHIRLPOOL_COUNTER / sizeof(size_t)];
 } WHIRLPOOL_CTX;
 #  endif
-
-DEPRECATEDIN_3_0(int WHIRLPOOL_Init(WHIRLPOOL_CTX *c))
-DEPRECATEDIN_3_0(int WHIRLPOOL_Update(WHIRLPOOL_CTX *c,
-                                      const void *inp, size_t bytes))
-DEPRECATEDIN_3_0(void WHIRLPOOL_BitUpdate(WHIRLPOOL_CTX *c, const void *inp,
-                                          size_t bits))
-DEPRECATEDIN_3_0(int WHIRLPOOL_Final(unsigned char *md, WHIRLPOOL_CTX *c))
-DEPRECATEDIN_3_0(unsigned char *WHIRLPOOL(const void *inp, size_t bytes,
-                                          unsigned char *md))
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0 int WHIRLPOOL_Init(WHIRLPOOL_CTX *c);
+OSSL_DEPRECATEDIN_3_0 int WHIRLPOOL_Update(WHIRLPOOL_CTX *c,
+                                           const void *inp, size_t bytes);
+OSSL_DEPRECATEDIN_3_0 void WHIRLPOOL_BitUpdate(WHIRLPOOL_CTX *c,
+                                               const void *inp, size_t bits);
+OSSL_DEPRECATEDIN_3_0 int WHIRLPOOL_Final(unsigned char *md, WHIRLPOOL_CTX *c);
+OSSL_DEPRECATEDIN_3_0 unsigned char *WHIRLPOOL(const void *inp, size_t bytes,
+                                               unsigned char *md);
+#  endif
 
 #  ifdef __cplusplus
 }

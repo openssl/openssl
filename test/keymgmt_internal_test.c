@@ -1,11 +1,17 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/*
+ * RSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
 
 #include <string.h>
 
@@ -21,9 +27,9 @@
 #include "testutil.h"
 
 typedef struct {
-    OPENSSL_CTX *ctx1;
+    OSSL_LIB_CTX *ctx1;
     OSSL_PROVIDER *prov1;
-    OPENSSL_CTX *ctx2;
+    OSSL_LIB_CTX *ctx2;
     OSSL_PROVIDER *prov2;
 } FIXTURE;
 
@@ -32,8 +38,8 @@ static void tear_down(FIXTURE *fixture)
     if (fixture != NULL) {
         OSSL_PROVIDER_unload(fixture->prov1);
         OSSL_PROVIDER_unload(fixture->prov2);
-        OPENSSL_CTX_free(fixture->ctx1);
-        OPENSSL_CTX_free(fixture->ctx2);
+        OSSL_LIB_CTX_free(fixture->ctx1);
+        OSSL_LIB_CTX_free(fixture->ctx2);
         OPENSSL_free(fixture);
     }
 }
@@ -43,10 +49,10 @@ static FIXTURE *set_up(const char *testcase_name)
     FIXTURE *fixture;
 
     if (!TEST_ptr(fixture = OPENSSL_zalloc(sizeof(*fixture)))
-        || !TEST_ptr(fixture->ctx1 = OPENSSL_CTX_new())
+        || !TEST_ptr(fixture->ctx1 = OSSL_LIB_CTX_new())
         || !TEST_ptr(fixture->prov1 = OSSL_PROVIDER_load(fixture->ctx1,
                                                          "default"))
-        || !TEST_ptr(fixture->ctx2 = OPENSSL_CTX_new())
+        || !TEST_ptr(fixture->ctx2 = OSSL_LIB_CTX_new())
         || !TEST_ptr(fixture->prov2 = OSSL_PROVIDER_load(fixture->ctx2,
                                                          "default"))) {
         tear_down(fixture);
@@ -135,9 +141,9 @@ static int test_pass_rsa(FIXTURE *fixture)
     int ret = 0;
     RSA *rsa = NULL;
     BIGNUM *bn1 = NULL, *bn2 = NULL, *bn3 = NULL;
-    EVP_PKEY *pk = NULL;
-    EVP_KEYMGMT *km1 = NULL, *km2 = NULL;
-    void *provkey = NULL;
+    EVP_PKEY *pk = NULL, *dup_pk = NULL;
+    EVP_KEYMGMT *km = NULL, *km1 = NULL, *km2 = NULL, *km3 = NULL;
+    void *provkey = NULL, *provkey2 = NULL;
     BIGNUM *bn_primes[1] = { NULL };
     BIGNUM *bn_exps[1] = { NULL };
     BIGNUM *bn_coeffs[1] = { NULL };
@@ -210,30 +216,50 @@ static int test_pass_rsa(FIXTURE *fixture)
 
     if (!TEST_ptr(km1 = EVP_KEYMGMT_fetch(fixture->ctx1, "RSA", NULL))
         || !TEST_ptr(km2 = EVP_KEYMGMT_fetch(fixture->ctx2, "RSA", NULL))
+        || !TEST_ptr(km3 = EVP_KEYMGMT_fetch(fixture->ctx1, "RSA-PSS", NULL))
         || !TEST_ptr_ne(km1, km2))
         goto err;
 
-    if (!TEST_ptr(provkey = evp_pkey_export_to_provider(pk, NULL, &km1, NULL))
-        || !TEST_true(evp_keymgmt_export(km2, provkey,
-                                         OSSL_KEYMGMT_SELECT_KEYPAIR,
-                                         &export_cb, keydata)))
-        goto err;
+    while (dup_pk == NULL) {
+        ret = 0;
+        km = km3;
+        /* Check that we can't export an RSA key into a RSA-PSS keymanager */
+        if (!TEST_ptr_null(provkey2 = evp_pkey_export_to_provider(pk, NULL,
+                                                                  &km,
+                                                                  NULL)))
+            goto err;
 
-    /*
-     * At this point, the hope is that keydata will have all the numbers
-     * from the key.
-     */
+        if (!TEST_ptr(provkey = evp_pkey_export_to_provider(pk, NULL, &km1,
+                                                            NULL))
+            || !TEST_true(evp_keymgmt_export(km2, provkey,
+                                             OSSL_KEYMGMT_SELECT_KEYPAIR,
+                                             &export_cb, keydata)))
+            goto err;
 
-    for (i = 0; i < OSSL_NELEM(expected); i++) {
-        int rv = TEST_int_eq(expected[i], keydata[i]);
+        /*
+         * At this point, the hope is that keydata will have all the numbers
+         * from the key.
+         */
 
-        if (!rv)
-            TEST_info("i = %zu", i);
-        else
-            ret++;
+        for (i = 0; i < OSSL_NELEM(expected); i++) {
+            int rv = TEST_int_eq(expected[i], keydata[i]);
+
+            if (!rv)
+                TEST_info("i = %zu", i);
+            else
+                ret++;
+        }
+
+        ret = (ret == OSSL_NELEM(expected));
+        if (!ret || !TEST_ptr(dup_pk = EVP_PKEY_dup(pk)))
+            goto err;
+
+        ret = TEST_int_eq(EVP_PKEY_eq(pk, dup_pk), 1);
+        EVP_PKEY_free(pk);
+        pk = dup_pk;
+        if (!ret)
+            goto err;
     }
-
-    ret = (ret == OSSL_NELEM(expected));
 
  err:
     RSA_free(rsa);
@@ -243,6 +269,7 @@ static int test_pass_rsa(FIXTURE *fixture)
     EVP_PKEY_free(pk);
     EVP_KEYMGMT_free(km1);
     EVP_KEYMGMT_free(km2);
+    EVP_KEYMGMT_free(km3);
 
     return ret;
 }

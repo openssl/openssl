@@ -24,11 +24,11 @@ The supported parameters are:
 
 =item "strength" (B<OSSL_RAND_PARAM_STRENGTH>) <unsigned integer>
 
+=item "max_request" (B<OSSL_RAND_PARAM_MAX_REQUEST>) <unsigned integer>
+
 =item "reseed_requests" (B<OSSL_DRBG_PARAM_RESEED_REQUESTS>) <unsigned integer>
 
 =item "reseed_time_interval" (B<OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL>) <integer>
-
-=item "max_request" (B<OSSL_DRBG_PARAM_MAX_REQUEST>) <unsigned integer>
 
 =item "min_entropylen" (B<OSSL_DRBG_PARAM_MIN_ENTROPYLEN>) <unsigned integer>
 
@@ -42,7 +42,7 @@ The supported parameters are:
 
 =item "max_adinlen" (B<OSSL_DRBG_PARAM_MAX_ADINLEN>) <unsigned integer>
 
-=item "reseed_counter" (B<OSSL_DRBG_PARAM_RESEED_CTR>) <unsigned integer>
+=item "reseed_counter" (B<OSSL_DRBG_PARAM_RESEED_COUNTER>) <unsigned integer>
 
 =item "properties" (B<OSSL_DRBG_PARAM_PROPERTIES>) <UTF8 string>
 
@@ -76,7 +76,7 @@ A context for HMAC DRBG can be obtained by calling:
  *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_MAC, SN_hmac, 0);
  *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_DIGEST, SN_sha256, 0);
  *p = OSSL_PARAM_construct_end();
- EVP_RAND_set_ctx_params(rctx, params);
+ EVP_RAND_instantiate(rctx, strength, 0, NULL, 0, params);
 
  EVP_RAND_generate(rctx, bytes, sizeof(bytes), strength, 0, NULL, 0);
 
@@ -93,7 +93,7 @@ L<EVP_RAND(3)/PARAMETERS>
 
 =head1 COPYRIGHT
 
-Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

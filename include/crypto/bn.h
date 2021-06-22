@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2014-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,6 +9,7 @@
 
 #ifndef OSSL_CRYPTO_BN_H
 # define OSSL_CRYPTO_BN_H
+# pragma once
 
 # include <openssl/bn.h>
 # include <limits.h>
@@ -92,26 +93,25 @@ int bn_div_fixed_top(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m,
 #define BN_PRIMETEST_COMPOSITE_NOT_POWER_OF_PRIME 2
 #define BN_PRIMETEST_PROBABLY_PRIME               3
 
-int bn_miller_rabin_is_prime(const BIGNUM *w, int iterations, BN_CTX *ctx,
-                             BN_GENCB *cb, int enhanced, int *status);
+int ossl_bn_miller_rabin_is_prime(const BIGNUM *w, int iterations, BN_CTX *ctx,
+                                  BN_GENCB *cb, int enhanced, int *status);
 
-const BIGNUM *bn_get0_small_factors(void);
+const BIGNUM *ossl_bn_get0_small_factors(void);
 
-int bn_rsa_fips186_4_prime_MR_min_checks(int nbits);
+int ossl_bn_rsa_fips186_4_gen_prob_primes(BIGNUM *p, BIGNUM *Xpout,
+                                          BIGNUM *p1, BIGNUM *p2,
+                                          const BIGNUM *Xp, const BIGNUM *Xp1,
+                                          const BIGNUM *Xp2, int nlen,
+                                          const BIGNUM *e, BN_CTX *ctx,
+                                          BN_GENCB *cb);
 
-int bn_rsa_fips186_4_gen_prob_primes(BIGNUM *p, BIGNUM *Xpout,
-                                     BIGNUM *p1, BIGNUM *p2,
-                                     const BIGNUM *Xp, const BIGNUM *Xp1,
-                                     const BIGNUM *Xp2, int nlen,
-                                     const BIGNUM *e, BN_CTX *ctx,
-                                     BN_GENCB *cb);
+int ossl_bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
+                                       const BIGNUM *r1, const BIGNUM *r2,
+                                       int nlen, const BIGNUM *e, BN_CTX *ctx,
+                                       BN_GENCB *cb);
 
-int bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
-                                  const BIGNUM *r1, const BIGNUM *r2, int nlen,
-                                  const BIGNUM *e, BN_CTX *ctx, BN_GENCB *cb);
+OSSL_LIB_CTX *ossl_bn_get_libctx(BN_CTX *ctx);
 
-OPENSSL_CTX *bn_get_lib_ctx(BN_CTX *ctx);
-
-extern const BIGNUM bn_inv_sqrt_2;
+extern const BIGNUM ossl_bn_inv_sqrt_2;
 
 #endif

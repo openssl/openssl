@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -78,7 +78,7 @@ static int cipher_hw_aes_t4_initkey(PROV_CIPHER_CTX *dat,
     }
 
     if (ret < 0) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_AES_KEY_SETUP_FAILED);
+        ERR_raise(ERR_LIB_PROV, PROV_R_KEY_SETUP_FAILED);
         return 0;
     }
 
@@ -88,7 +88,7 @@ static int cipher_hw_aes_t4_initkey(PROV_CIPHER_CTX *dat,
 #define PROV_CIPHER_HW_declare(mode)                                           \
 static const PROV_CIPHER_HW aes_t4_##mode = {                                  \
     cipher_hw_aes_t4_initkey,                                                  \
-    cipher_hw_generic_##mode,                                                  \
+    ossl_cipher_hw_generic_##mode,                                             \
     cipher_hw_aes_copyctx                                                      \
 };
 #define PROV_CIPHER_HW_select(mode)                                            \

@@ -15,12 +15,10 @@ B<openssl dsaparam>
 [B<-out> I<filename>]
 [B<-noout>]
 [B<-text>]
-[B<-C>]
 [B<-genkey>]
 [B<-verbose>]
 {- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<numbits>]
 
 =head1 DESCRIPTION
@@ -38,10 +36,15 @@ DSA parameters is often used to generate several distinct keys.
 
 Print out a usage message.
 
-=item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
+=item B<-inform> B<DER>|B<PEM>
 
-The input and formats; the default is B<PEM>.
-See L<openssl(1)/Format Options> for details.
+The DSA parameters input format; unspecified by default.
+See L<openssl-format-options(1)> for details.
+
+=item B<-outform> B<DER>|B<PEM>
+
+The DSA parameters output format; the default is B<PEM>.
+See L<openssl-format-options(1)> for details.
 
 Parameters are a sequence of B<ASN.1 INTEGER>s: B<p>, B<q>, and B<g>.
 This is compatible with RFC 2459 B<DSS-Parms> structure.
@@ -65,11 +68,6 @@ This option inhibits the output of the encoded version of the parameters.
 =item B<-text>
 
 This option prints out the DSA parameters in human readable form.
-
-=item B<-C>
-
-This option converts the parameters into C code. The parameters can then
-be loaded by calling the get_dsaXXX() function.
 
 =item B<-genkey>
 
@@ -108,9 +106,11 @@ L<openssl-rsa(1)>
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
 
+The B<-C> option was removed in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

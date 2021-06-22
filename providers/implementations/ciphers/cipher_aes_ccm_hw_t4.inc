@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -23,14 +23,14 @@ static int ccm_t4_aes_initkey(PROV_CCM_CTX *ctx, const unsigned char *key,
 
 static const PROV_CCM_HW t4_aes_ccm = {
     ccm_t4_aes_initkey,
-    ccm_generic_setiv,
-    ccm_generic_setaad,
-    ccm_generic_auth_encrypt,
-    ccm_generic_auth_decrypt,
-    ccm_generic_gettag
+    ossl_ccm_generic_setiv,
+    ossl_ccm_generic_setaad,
+    ossl_ccm_generic_auth_encrypt,
+    ossl_ccm_generic_auth_decrypt,
+    ossl_ccm_generic_gettag
 };
 
-const PROV_CCM_HW *PROV_AES_HW_ccm(size_t keybits)
+const PROV_CCM_HW *ossl_prov_aes_hw_ccm(size_t keybits)
 {
     return SPARC_AES_CAPABLE ? &t4_aes_ccm : &aes_ccm;
 }

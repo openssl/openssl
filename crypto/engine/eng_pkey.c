@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -59,27 +59,25 @@ EVP_PKEY *ENGINE_load_private_key(ENGINE *e, const char *key_id,
     EVP_PKEY *pkey;
 
     if (e == NULL) {
-        ENGINEerr(ENGINE_F_ENGINE_LOAD_PRIVATE_KEY,
-                  ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
+        ERR_raise(ERR_LIB_ENGINE, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
     }
-    CRYPTO_THREAD_write_lock(global_engine_lock);
+    if (!CRYPTO_THREAD_write_lock(global_engine_lock))
+        return NULL;
     if (e->funct_ref == 0) {
         CRYPTO_THREAD_unlock(global_engine_lock);
-        ENGINEerr(ENGINE_F_ENGINE_LOAD_PRIVATE_KEY, ENGINE_R_NOT_INITIALISED);
-        return 0;
+        ERR_raise(ERR_LIB_ENGINE, ENGINE_R_NOT_INITIALISED);
+        return NULL;
     }
     CRYPTO_THREAD_unlock(global_engine_lock);
     if (!e->load_privkey) {
-        ENGINEerr(ENGINE_F_ENGINE_LOAD_PRIVATE_KEY,
-                  ENGINE_R_NO_LOAD_FUNCTION);
-        return 0;
+        ERR_raise(ERR_LIB_ENGINE, ENGINE_R_NO_LOAD_FUNCTION);
+        return NULL;
     }
     pkey = e->load_privkey(e, key_id, ui_method, callback_data);
     if (pkey == NULL) {
-        ENGINEerr(ENGINE_F_ENGINE_LOAD_PRIVATE_KEY,
-                  ENGINE_R_FAILED_LOADING_PRIVATE_KEY);
-        return 0;
+        ERR_raise(ERR_LIB_ENGINE, ENGINE_R_FAILED_LOADING_PRIVATE_KEY);
+        return NULL;
     }
     return pkey;
 }
@@ -90,26 +88,25 @@ EVP_PKEY *ENGINE_load_public_key(ENGINE *e, const char *key_id,
     EVP_PKEY *pkey;
 
     if (e == NULL) {
-        ENGINEerr(ENGINE_F_ENGINE_LOAD_PUBLIC_KEY,
-                  ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
+        ERR_raise(ERR_LIB_ENGINE, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
     }
-    CRYPTO_THREAD_write_lock(global_engine_lock);
+    if (!CRYPTO_THREAD_write_lock(global_engine_lock))
+        return NULL;
     if (e->funct_ref == 0) {
         CRYPTO_THREAD_unlock(global_engine_lock);
-        ENGINEerr(ENGINE_F_ENGINE_LOAD_PUBLIC_KEY, ENGINE_R_NOT_INITIALISED);
-        return 0;
+        ERR_raise(ERR_LIB_ENGINE, ENGINE_R_NOT_INITIALISED);
+        return NULL;
     }
     CRYPTO_THREAD_unlock(global_engine_lock);
     if (!e->load_pubkey) {
-        ENGINEerr(ENGINE_F_ENGINE_LOAD_PUBLIC_KEY, ENGINE_R_NO_LOAD_FUNCTION);
-        return 0;
+        ERR_raise(ERR_LIB_ENGINE, ENGINE_R_NO_LOAD_FUNCTION);
+        return NULL;
     }
     pkey = e->load_pubkey(e, key_id, ui_method, callback_data);
     if (pkey == NULL) {
-        ENGINEerr(ENGINE_F_ENGINE_LOAD_PUBLIC_KEY,
-                  ENGINE_R_FAILED_LOADING_PUBLIC_KEY);
-        return 0;
+        ERR_raise(ERR_LIB_ENGINE, ENGINE_R_FAILED_LOADING_PUBLIC_KEY);
+        return NULL;
     }
     return pkey;
 }
@@ -121,21 +118,19 @@ int ENGINE_load_ssl_client_cert(ENGINE *e, SSL *s,
 {
 
     if (e == NULL) {
-        ENGINEerr(ENGINE_F_ENGINE_LOAD_SSL_CLIENT_CERT,
-                  ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_ENGINE, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    CRYPTO_THREAD_write_lock(global_engine_lock);
+    if (!CRYPTO_THREAD_write_lock(global_engine_lock))
+        return 0;
     if (e->funct_ref == 0) {
         CRYPTO_THREAD_unlock(global_engine_lock);
-        ENGINEerr(ENGINE_F_ENGINE_LOAD_SSL_CLIENT_CERT,
-                  ENGINE_R_NOT_INITIALISED);
+        ERR_raise(ERR_LIB_ENGINE, ENGINE_R_NOT_INITIALISED);
         return 0;
     }
     CRYPTO_THREAD_unlock(global_engine_lock);
     if (!e->load_ssl_client_cert) {
-        ENGINEerr(ENGINE_F_ENGINE_LOAD_SSL_CLIENT_CERT,
-                  ENGINE_R_NO_LOAD_FUNCTION);
+        ERR_raise(ERR_LIB_ENGINE, ENGINE_R_NO_LOAD_FUNCTION);
         return 0;
     }
     return e->load_ssl_client_cert(e, s, ca_dn, pcert, ppkey, pother,

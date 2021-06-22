@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -26,7 +26,7 @@ static OSSL_FUNC_keymgmt_new_fn kdf_newdata;
 static OSSL_FUNC_keymgmt_free_fn kdf_freedata;
 static OSSL_FUNC_keymgmt_has_fn kdf_has;
 
-KDF_DATA *kdf_data_new(void *provctx)
+KDF_DATA *ossl_kdf_data_new(void *provctx)
 {
     KDF_DATA *kdfdata;
 
@@ -42,13 +42,13 @@ KDF_DATA *kdf_data_new(void *provctx)
         OPENSSL_free(kdfdata);
         return NULL;
     }
-    kdfdata->libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+    kdfdata->libctx = PROV_LIBCTX_OF(provctx);
     kdfdata->refcnt = 1;
 
     return kdfdata;
 }
 
-void kdf_data_free(KDF_DATA *kdfdata)
+void ossl_kdf_data_free(KDF_DATA *kdfdata)
 {
     int ref = 0;
 
@@ -63,7 +63,7 @@ void kdf_data_free(KDF_DATA *kdfdata)
     OPENSSL_free(kdfdata);
 }
 
-int kdf_data_up_ref(KDF_DATA *kdfdata)
+int ossl_kdf_data_up_ref(KDF_DATA *kdfdata)
 {
     int ref = 0;
 
@@ -83,20 +83,20 @@ int kdf_data_up_ref(KDF_DATA *kdfdata)
 
 static void *kdf_newdata(void *provctx)
 {
-    return kdf_data_new(provctx);
+    return ossl_kdf_data_new(provctx);
 }
 
 static void kdf_freedata(void *kdfdata)
 {
-    kdf_data_free(kdfdata);
+    ossl_kdf_data_free(kdfdata);
 }
 
-static int kdf_has(void *keydata, int selection)
+static int kdf_has(const void *keydata, int selection)
 {
-    return 0;
+    return 1; /* nothing is missing */
 }
 
-const OSSL_DISPATCH kdf_keymgmt_functions[] = {
+const OSSL_DISPATCH ossl_kdf_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))kdf_newdata },
     { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))kdf_freedata },
     { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))kdf_has },

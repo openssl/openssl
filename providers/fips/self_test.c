@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,20 +11,21 @@
 #include <openssl/evp.h>
 #include <openssl/params.h>
 #include <openssl/crypto.h>
+#include "internal/cryptlib.h"
 #include <openssl/fipskey.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 #include "e_os.h"
-#include "prov/providercommonerr.h"
 #include "prov/providercommon.h"
 
 /*
  * We're cheating here. Normally we don't allow RUN_ONCE usage inside the FIPS
  * module because all such initialisation should be associated with an
- * individual OPENSSL_CTX. That doesn't work with the self test though because
- * it should be run once regardless of the number of OPENSSL_CTXs we have.
+ * individual OSSL_LIB_CTX. That doesn't work with the self test though because
+ * it should be run once regardless of the number of OSSL_LIB_CTXs we have.
  */
 #define ALLOW_RUN_ONCE_IN_FIPS
-#include <internal/thread_once.h>
+#include "internal/thread_once.h"
 #include "self_test.h"
 
 #define FIPS_STATE_INIT     0
@@ -45,36 +46,37 @@
 #define DIGEST_NAME "SHA256"
 
 static int FIPS_conditional_error_check = 1;
-static int FIPS_state = FIPS_STATE_INIT;
 static CRYPTO_RWLOCK *self_test_lock = NULL;
+static CRYPTO_RWLOCK *fips_state_lock = NULL;
 static unsigned char fixed_key[32] = { FIPS_KEY_ELEMENTS };
 
 static CRYPTO_ONCE fips_self_test_init = CRYPTO_ONCE_STATIC_INIT;
 DEFINE_RUN_ONCE_STATIC(do_fips_self_test_init)
 {
     /*
-     * This lock gets freed in platform specific ways that may occur after we
+     * These locks get freed in platform specific ways that may occur after we
      * do mem leak checking. If we don't know how to free it for a particular
-     * platform then we just leak it deliberately. So we temporarily disable the
-     * mem leak checking while we allocate this.
+     * platform then we just leak it deliberately.
      */
     self_test_lock = CRYPTO_THREAD_lock_new();
+    fips_state_lock = CRYPTO_THREAD_lock_new();
     return self_test_lock != NULL;
 }
 
-#define DEP_DECLARE()                                                          \
-void init(void);                                                               \
-void cleanup(void);
+/*
+ * Declarations for the DEP entry/exit points.
+ * Ones not required or incorrect need to be undefined or redefined respectively.
+ */
+#define DEP_INITIAL_STATE   FIPS_STATE_INIT
+#define DEP_INIT_ATTRIBUTE  static
+#define DEP_FINI_ATTRIBUTE  static
+
+static void init(void);
+static void cleanup(void);
 
 /*
- * This is the Default Entry Point (DEP) code. Every platform must have a DEP.
+ * This is the Default Entry Point (DEP) code.
  * See FIPS 140-2 IG 9.10
- *
- * If we're run on a platform where we don't know how to define the DEP then
- * the self-tests will never get triggered (FIPS_state never moves to
- * FIPS_STATE_SELFTEST). This will be detected as an error when SELF_TEST_post()
- * is called from OSSL_provider_init(), and so the fips module will be unusable
- * on those platforms.
  */
 #if defined(_WIN32) || defined(__CYGWIN__)
 # ifdef __CYGWIN__
@@ -86,9 +88,6 @@ void cleanup(void);
  */
 # endif
 
-DEP_DECLARE()
-# define DEP_INIT_ATTRIBUTE
-# define DEP_FINI_ATTRIBUTE
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -104,31 +103,35 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     }
     return TRUE;
 }
-#elif defined(__sun) || defined(_AIX)
-
-DEP_DECLARE() /* must be declared before pragma */
-# define DEP_INIT_ATTRIBUTE
-# define DEP_FINI_ATTRIBUTE
+#elif defined(__sun)
 # pragma init(init)
 # pragma fini(cleanup)
 
-#elif defined(__hpux)
+#elif defined(_AIX)
+void _init(void);
+void _cleanup(void);
+# pragma init(_init)
+# pragma fini(_cleanup)
+void _init(void)
+{
+    init();
+}
+void _cleanup(void)
+{
+    cleanup();
+}
 
-DEP_DECLARE()
-# define DEP_INIT_ATTRIBUTE
-# define DEP_FINI_ATTRIBUTE
+#elif defined(__hpux)
 # pragma init "init"
 # pragma fini "cleanup"
 
 #elif defined(__GNUC__)
+# undef DEP_INIT_ATTRIBUTE
+# undef DEP_FINI_ATTRIBUTE
 # define DEP_INIT_ATTRIBUTE static __attribute__((constructor))
 # define DEP_FINI_ATTRIBUTE static __attribute__((destructor))
 
 #elif defined(__TANDEM)
-DEP_DECLARE() /* must be declared before calling init() or cleanup() */
-# define DEP_INIT_ATTRIBUTE
-# define DEP_FINI_ATTRIBUTE
-
 /* Method automatically called by the NonStop OS when the DLL loads */
 void __INIT__init(void) {
     init();
@@ -139,17 +142,32 @@ void __TERM__cleanup(void) {
     cleanup();
 }
 
+#else
+/*
+ * This build does not support any kind of DEP.
+ * We force the self-tests to run as part of the FIPS provider initialisation
+ * rather than being triggered by the DEP.
+ */
+# undef DEP_INIT_ATTRIBUTE
+# undef DEP_FINI_ATTRIBUTE
+# undef DEP_INITIAL_STATE
+# define DEP_INITIAL_STATE  FIPS_STATE_SELFTEST
 #endif
 
-#if defined(DEP_INIT_ATTRIBUTE) && defined(DEP_FINI_ATTRIBUTE)
+static int FIPS_state = DEP_INITIAL_STATE;
+
+#if defined(DEP_INIT_ATTRIBUTE)
 DEP_INIT_ATTRIBUTE void init(void)
 {
     FIPS_state = FIPS_STATE_SELFTEST;
 }
+#endif
 
+#if defined(DEP_FINI_ATTRIBUTE)
 DEP_FINI_ATTRIBUTE void cleanup(void)
 {
     CRYPTO_THREAD_lock_free(self_test_lock);
+    CRYPTO_THREAD_lock_free(fips_state_lock);
 }
 #endif
 
@@ -160,7 +178,7 @@ DEP_FINI_ATTRIBUTE void cleanup(void)
  */
 static int verify_integrity(OSSL_CORE_BIO *bio, OSSL_FUNC_BIO_read_ex_fn read_ex_cb,
                             unsigned char *expected, size_t expected_len,
-                            OPENSSL_CTX *libctx, OSSL_SELF_TEST *ev,
+                            OSSL_LIB_CTX *libctx, OSSL_SELF_TEST *ev,
                             const char *event_type)
 {
     int ret = 0, status;
@@ -169,7 +187,7 @@ static int verify_integrity(OSSL_CORE_BIO *bio, OSSL_FUNC_BIO_read_ex_fn read_ex
     size_t bytes_read = 0, out_len = 0;
     EVP_MAC *mac = NULL;
     EVP_MAC_CTX *ctx = NULL;
-    OSSL_PARAM params[3], *p = params;
+    OSSL_PARAM params[2], *p = params;
 
     OSSL_SELF_TEST_onbegin(ev, event_type, OSSL_SELF_TEST_DESC_INTEGRITY_HMAC);
 
@@ -180,14 +198,10 @@ static int verify_integrity(OSSL_CORE_BIO *bio, OSSL_FUNC_BIO_read_ex_fn read_ex
     if (ctx == NULL)
         goto err;
 
-    *p++ = OSSL_PARAM_construct_utf8_string("digest", DIGEST_NAME,
-                                            strlen(DIGEST_NAME) + 1);
-    *p++ = OSSL_PARAM_construct_octet_string("key", fixed_key,
-                                             sizeof(fixed_key));
+    *p++ = OSSL_PARAM_construct_utf8_string("digest", DIGEST_NAME, 0);
     *p = OSSL_PARAM_construct_end();
 
-    if (EVP_MAC_CTX_set_params(ctx, params) <= 0
-        || !EVP_MAC_init(ctx))
+    if (!EVP_MAC_init(ctx, fixed_key, sizeof(fixed_key), params))
         goto err;
 
     while (1) {
@@ -212,6 +226,14 @@ err:
     return ret;
 }
 
+static void set_fips_state(int state)
+{
+    if (ossl_assert(CRYPTO_THREAD_write_lock(fips_state_lock) != 0)) {
+        FIPS_state = state;
+        CRYPTO_THREAD_unlock(fips_state_lock);
+    }
+}
+
 /* This API is triggered either on loading of the FIPS module or on demand */
 int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
 {
@@ -227,9 +249,10 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
     if (!RUN_ONCE(&fips_self_test_init, do_fips_self_test_init))
         return 0;
 
-    CRYPTO_THREAD_read_lock(self_test_lock);
+    if (!CRYPTO_THREAD_read_lock(fips_state_lock))
+        return 0;
     loclstate = FIPS_state;
-    CRYPTO_THREAD_unlock(self_test_lock);
+    CRYPTO_THREAD_unlock(fips_state_lock);
 
     if (loclstate == FIPS_STATE_RUNNING) {
         if (!on_demand_test)
@@ -239,18 +262,28 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
         return 0;
     }
 
-    CRYPTO_THREAD_write_lock(self_test_lock);
+    if (!CRYPTO_THREAD_write_lock(self_test_lock))
+        return 0;
+    if (!CRYPTO_THREAD_read_lock(fips_state_lock)) {
+        CRYPTO_THREAD_unlock(self_test_lock);
+        return 0;
+    }
     if (FIPS_state == FIPS_STATE_RUNNING) {
+        CRYPTO_THREAD_unlock(fips_state_lock);
         if (!on_demand_test) {
             CRYPTO_THREAD_unlock(self_test_lock);
             return 1;
         }
-        FIPS_state = FIPS_STATE_SELFTEST;
+        set_fips_state(FIPS_STATE_SELFTEST);
     } else if (FIPS_state != FIPS_STATE_SELFTEST) {
+        CRYPTO_THREAD_unlock(fips_state_lock);
         CRYPTO_THREAD_unlock(self_test_lock);
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_STATE);
         return 0;
+    } else {
+        CRYPTO_THREAD_unlock(fips_state_lock);
     }
+
     if (st == NULL
             || st->module_checksum_data == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_CONFIG_DATA);
@@ -310,7 +343,11 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
         }
     }
 
-    /* Only runs the KAT's during installation OR on_demand() */
+    /*
+     * Only runs the KAT's during installation OR on_demand().
+     * NOTE: If the installation option 'self_test_onload' is chosen then this
+     * path will always be run, since kats_already_passed will always be 0.
+     */
     if (on_demand_test || kats_already_passed == 0) {
         if (!SELF_TEST_kats(ev, st->libctx)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_SELF_TEST_KAT_FAILURE);
@@ -328,7 +365,7 @@ end:
         (*st->bio_free_cb)(bio_module);
     }
     if (ok)
-        FIPS_state = FIPS_STATE_RUNNING;
+        set_fips_state(FIPS_STATE_RUNNING);
     else
         ossl_set_error_state(OSSL_SELF_TEST_TYPE_NONE);
     CRYPTO_THREAD_unlock(self_test_lock);
@@ -346,7 +383,7 @@ void ossl_set_error_state(const char *type)
     int cond_test = (type != NULL && strcmp(type, OSSL_SELF_TEST_TYPE_PCT) == 0);
 
     if (!cond_test || (FIPS_conditional_error_check == 1)) {
-        FIPS_state = FIPS_STATE_ERROR;
+        set_fips_state(FIPS_STATE_ERROR);
         ERR_raise(ERR_LIB_PROV, PROV_R_FIPS_MODULE_ENTERING_ERROR_STATE);
     } else {
         ERR_raise(ERR_LIB_PROV, PROV_R_FIPS_MODULE_CONDITIONAL_ERROR);
@@ -355,15 +392,20 @@ void ossl_set_error_state(const char *type)
 
 int ossl_prov_is_running(void)
 {
-    const int res = FIPS_state == FIPS_STATE_RUNNING
-                    || FIPS_state == FIPS_STATE_SELFTEST;
+    int res;
     static unsigned int rate_limit = 0;
 
-    if (res) {
-        rate_limit = 0;
-    } else if (FIPS_state == FIPS_STATE_ERROR) {
+    if (!CRYPTO_THREAD_read_lock(fips_state_lock))
+        return 0;
+    res = FIPS_state == FIPS_STATE_RUNNING
+                        || FIPS_state == FIPS_STATE_SELFTEST;
+    if (FIPS_state == FIPS_STATE_ERROR) {
+        CRYPTO_THREAD_unlock(fips_state_lock);
+        if (!CRYPTO_THREAD_write_lock(fips_state_lock))
+            return 0;
         if (rate_limit++ < FIPS_ERROR_REPORTING_RATE_LIMIT)
             ERR_raise(ERR_LIB_PROV, PROV_R_FIPS_MODULE_IN_ERROR_STATE);
     }
+    CRYPTO_THREAD_unlock(fips_state_lock);
     return res;
 }

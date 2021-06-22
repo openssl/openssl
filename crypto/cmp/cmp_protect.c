@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -44,7 +44,7 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
     prot_part.body = msg->body;
 
     if (msg->header->protectionAlg == NULL) {
-        CMPerr(0, CMP_R_UNKNOWN_ALGORITHM_ID);
+        ERR_raise(ERR_LIB_CMP, CMP_R_UNKNOWN_ALGORITHM_ID);
         return NULL;
     }
     X509_ALGOR_get0(&algorOID, &pptype, &ppval, msg->header->protectionAlg);
@@ -60,17 +60,17 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
         const unsigned char *pbm_str_uc = NULL;
 
         if (ctx->secretValue == NULL) {
-            CMPerr(0, CMP_R_MISSING_PBM_SECRET);
+            ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_PBM_SECRET);
             return NULL;
         }
         if (ppval == NULL) {
-            CMPerr(0, CMP_R_ERROR_CALCULATING_PROTECTION);
+            ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_CALCULATING_PROTECTION);
             return NULL;
         }
 
         len = i2d_OSSL_CMP_PROTECTEDPART(&prot_part, &prot_part_der);
         if (len < 0 || prot_part_der == NULL) {
-            CMPerr(0, CMP_R_ERROR_CALCULATING_PROTECTION);
+            ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_CALCULATING_PROTECTION);
             goto end;
         }
         prot_part_der_len = (size_t)len;
@@ -79,7 +79,7 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
         pbm_str_uc = pbm_str->data;
         pbm = d2i_OSSL_CRMF_PBMPARAMETER(NULL, &pbm_str_uc, pbm_str->length);
         if (pbm == NULL) {
-            CMPerr(0, CMP_R_WRONG_ALGORITHM_OID);
+            ERR_raise(ERR_LIB_CMP, CMP_R_WRONG_ALGORITHM_OID);
             goto end;
         }
 
@@ -108,20 +108,21 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
         const EVP_MD *md = NULL;
 
         if (ctx->pkey == NULL) {
-            CMPerr(0, CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION);
+            ERR_raise(ERR_LIB_CMP,
+                      CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION);
             return NULL;
         }
         if (!OBJ_find_sigid_algs(OBJ_obj2nid(algorOID), &md_nid, NULL)
                 || (md = EVP_get_digestbynid(md_nid)) == NULL) {
-            CMPerr(0, CMP_R_UNKNOWN_ALGORITHM_ID);
+            ERR_raise(ERR_LIB_CMP, CMP_R_UNKNOWN_ALGORITHM_ID);
             return NULL;
         }
 
         if ((prot = ASN1_BIT_STRING_new()) == NULL)
             return NULL;
-        if (ASN1_item_sign_with_libctx(ASN1_ITEM_rptr(OSSL_CMP_PROTECTEDPART),
-                                       NULL, NULL, prot, &prot_part, NULL,
-                                       ctx->pkey, md, ctx->libctx, ctx->propq))
+        if (ASN1_item_sign_ex(ASN1_ITEM_rptr(OSSL_CMP_PROTECTEDPART), NULL,
+                              NULL, prot, &prot_part, NULL, ctx->pkey, md,
+                              ctx->libctx, ctx->propq))
             return prot;
         ASN1_BIT_STRING_free(prot);
         return NULL;
@@ -133,23 +134,18 @@ int ossl_cmp_msg_add_extraCerts(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
     if (!ossl_assert(ctx != NULL && msg != NULL))
         return 0;
 
-    if (msg->extraCerts == NULL
-            && (msg->extraCerts = sk_X509_new_null()) == NULL)
-        return 0;
-
     /* Add first ctx->cert and its chain if using signature-based protection */
     if (!ctx->unprotectedSend && ctx->secretValue == NULL
             && ctx->cert != NULL && ctx->pkey != NULL) {
-        int flags_prepend = X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
+        int prepend = X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
             | X509_ADD_FLAG_PREPEND | X509_ADD_FLAG_NO_SS;
 
         /* if not yet done try to build chain using available untrusted certs */
         if (ctx->chain == NULL) {
             ossl_cmp_debug(ctx,
                            "trying to build chain for own CMP signer cert");
-            ctx->chain =
-                ossl_cmp_build_cert_chain(ctx->libctx, ctx->propq, NULL,
-                                          ctx->untrusted, ctx->cert);
+            ctx->chain = X509_build_chain(ctx->cert, ctx->untrusted, NULL, 0,
+                                          ctx->libctx, ctx->propq);
             if (ctx->chain != NULL) {
                 ossl_cmp_debug(ctx,
                                "success building chain for own CMP signer cert");
@@ -161,20 +157,19 @@ int ossl_cmp_msg_add_extraCerts(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
             }
         }
         if (ctx->chain != NULL) {
-            if (!X509_add_certs(msg->extraCerts, ctx->chain, flags_prepend))
+            if (!ossl_x509_add_certs_new(&msg->extraCerts, ctx->chain, prepend))
                 return 0;
         } else {
             /* make sure that at least our own signer cert is included first */
-            if (!X509_add_cert(msg->extraCerts, ctx->cert, flags_prepend))
+            if (!ossl_x509_add_cert_new(&msg->extraCerts, ctx->cert, prepend))
                 return 0;
-            ossl_cmp_debug(ctx,
-                           "fallback: adding just own CMP signer cert");
+            ossl_cmp_debug(ctx, "fallback: adding just own CMP signer cert");
         }
     }
 
     /* add any additional certificates from ctx->extraCertsOut */
-    if (!X509_add_certs(msg->extraCerts, ctx->extraCertsOut,
-                        X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP))
+    if (!ossl_x509_add_certs_new(&msg->extraCerts, ctx->extraCertsOut,
+                                 X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP))
         return 0;
 
     /* in case extraCerts are empty list avoid empty ASN.1 sequence */
@@ -200,7 +195,7 @@ static int set_pbmac_algor(const OSSL_CMP_CTX *ctx, X509_ALGOR **alg)
         return 0;
 
     pbm = OSSL_CRMF_pbmp_new(ctx->libctx, ctx->pbm_slen,
-                             EVP_MD_type(ctx->pbm_owf), ctx->pbm_itercnt,
+                             EVP_MD_get_type(ctx->pbm_owf), ctx->pbm_itercnt,
                              ctx->pbm_mac);
     pbm_str = ASN1_STRING_new();
     if (pbm == NULL || pbm_str == NULL)
@@ -232,9 +227,9 @@ static int set_sig_algor(const OSSL_CMP_CTX *ctx, X509_ALGOR **alg)
     int nid = 0;
     ASN1_OBJECT *algo = NULL;
 
-    if (!OBJ_find_sigid_by_algs(&nid, EVP_MD_type(ctx->digest),
-                                EVP_PKEY_id(ctx->pkey))) {
-        CMPerr(0, CMP_R_UNSUPPORTED_KEY_TYPE);
+    if (!OBJ_find_sigid_by_algs(&nid, EVP_MD_get_type(ctx->digest),
+                                EVP_PKEY_get_id(ctx->pkey))) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_UNSUPPORTED_KEY_TYPE);
         return 0;
     }
     if ((algo = OBJ_nid2obj(nid)) == NULL)
@@ -263,7 +258,6 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
 
     /*
      * For the case of re-protection remove pre-existing protection.
-     * TODO: Consider also removing any pre-existing extraCerts.
      */
     X509_ALGOR_free(msg->header->protectionAlg);
     msg->header->protectionAlg = NULL;
@@ -290,7 +284,7 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
 
         /* make sure that key and certificate match */
         if (!X509_check_private_key(ctx->cert, ctx->pkey)) {
-            CMPerr(0, CMP_R_CERT_AND_KEY_DO_NOT_MATCH);
+            ERR_raise(ERR_LIB_CMP, CMP_R_CERT_AND_KEY_DO_NOT_MATCH);
             goto err;
         }
 
@@ -305,7 +299,8 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
          * from ctx->untrusted, and then ctx->extraCertsOut
          */
     } else {
-        CMPerr(0, CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION);
+        ERR_raise(ERR_LIB_CMP,
+                  CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION);
         goto err;
     }
     if (!ctx->unprotectedSend
@@ -329,9 +324,9 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
     if (!(ossl_cmp_general_name_is_NULL_DN(msg->header->sender)
           && msg->header->senderKID == NULL))
         return 1;
-    CMPerr(0, CMP_R_MISSING_SENDER_IDENTIFICATION);
+    ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_SENDER_IDENTIFICATION);
 
  err:
-    CMPerr(0, CMP_R_ERROR_PROTECTING_MESSAGE);
+    ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROTECTING_MESSAGE);
     return 0;
 }

@@ -8,12 +8,10 @@
  */
 
 /*
- * Licensed under the Apache License 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * https://www.openssl.org/source/license.html
- * or in the file LICENSE in the source distribution.
+ * DSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
  */
+#include "internal/deprecated.h"
 
 #include "dsa_local.h"
 #include <string.h>
@@ -34,7 +32,7 @@ DSA_METHOD *DSA_meth_new(const char *name, int flags)
         OPENSSL_free(dsam);
     }
 
-    DSAerr(DSA_F_DSA_METH_NEW, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_DSA, ERR_R_MALLOC_FAILURE);
     return NULL;
 }
 
@@ -60,7 +58,7 @@ DSA_METHOD *DSA_meth_dup(const DSA_METHOD *dsam)
         OPENSSL_free(ret);
     }
 
-    DSAerr(DSA_F_DSA_METH_DUP, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_DSA, ERR_R_MALLOC_FAILURE);
     return NULL;
 }
 
@@ -74,7 +72,7 @@ int DSA_meth_set1_name(DSA_METHOD *dsam, const char *name)
     char *tmpname = OPENSSL_strdup(name);
 
     if (tmpname == NULL) {
-        DSAerr(DSA_F_DSA_METH_SET1_NAME, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_DSA, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 

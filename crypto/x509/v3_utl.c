@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -58,7 +58,7 @@ int X509V3_add_value(const char *name, const char *value,
         goto err;
     return 1;
  err:
-    X509V3err(X509V3_F_X509V3_ADD_VALUE, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
     if (sk_allocated) {
         sk_CONF_VALUE_free(*extlist);
         *extlist = NULL;
@@ -123,7 +123,7 @@ static char *bignum_to_string(const BIGNUM *bn)
     len = strlen(tmp) + 3;
     ret = OPENSSL_malloc(len);
     if (ret == NULL) {
-        X509V3err(X509V3_F_BIGNUM_TO_STRING, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(tmp);
         return NULL;
     }
@@ -149,7 +149,7 @@ char *i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *method, const ASN1_ENUMERATED *a)
         return NULL;
     if ((bntmp = ASN1_ENUMERATED_to_BN(a, NULL)) == NULL
         || (strtmp = bignum_to_string(bntmp)) == NULL)
-        X509V3err(X509V3_F_I2S_ASN1_ENUMERATED, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
     BN_free(bntmp);
     return strtmp;
 }
@@ -163,7 +163,7 @@ char *i2s_ASN1_INTEGER(X509V3_EXT_METHOD *method, const ASN1_INTEGER *a)
         return NULL;
     if ((bntmp = ASN1_INTEGER_to_BN(a, NULL)) == NULL
         || (strtmp = bignum_to_string(bntmp)) == NULL)
-        X509V3err(X509V3_F_I2S_ASN1_INTEGER, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
     BN_free(bntmp);
     return strtmp;
 }
@@ -176,12 +176,12 @@ ASN1_INTEGER *s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, const char *value)
     int ret;
 
     if (value == NULL) {
-        X509V3err(X509V3_F_S2I_ASN1_INTEGER, X509V3_R_INVALID_NULL_VALUE);
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_NULL_VALUE);
         return NULL;
     }
     bn = BN_new();
     if (bn == NULL) {
-        X509V3err(X509V3_F_S2I_ASN1_INTEGER, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     if (value[0] == '-') {
@@ -205,7 +205,7 @@ ASN1_INTEGER *s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, const char *value)
 
     if (!ret || value[ret]) {
         BN_free(bn);
-        X509V3err(X509V3_F_S2I_ASN1_INTEGER, X509V3_R_BN_DEC2BN_ERROR);
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_BN_DEC2BN_ERROR);
         return NULL;
     }
 
@@ -215,8 +215,7 @@ ASN1_INTEGER *s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, const char *value)
     aint = BN_to_ASN1_INTEGER(bn, NULL);
     BN_free(bn);
     if (!aint) {
-        X509V3err(X509V3_F_S2I_ASN1_INTEGER,
-                  X509V3_R_BN_TO_ASN1_INTEGER_ERROR);
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_BN_TO_ASN1_INTEGER_ERROR);
         return NULL;
     }
     if (isneg)
@@ -264,8 +263,7 @@ int X509V3_get_value_bool(const CONF_VALUE *value, int *asn1_bool)
         return 1;
     }
  err:
-    X509V3err(X509V3_F_X509V3_GET_VALUE_BOOL,
-              X509V3_R_INVALID_BOOLEAN_STRING);
+    ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_BOOLEAN_STRING);
     X509V3_conf_add_error_name_value(value);
     return 0;
 }
@@ -300,7 +298,7 @@ STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line)
     /* We are going to modify the line so copy it first */
     linebuf = OPENSSL_strdup(line);
     if (linebuf == NULL) {
-        X509V3err(X509V3_F_X509V3_PARSE_LIST, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     state = HDR_NAME;
@@ -316,8 +314,7 @@ STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line)
                 *p = 0;
                 ntmp = strip_spaces(q);
                 if (!ntmp) {
-                    X509V3err(X509V3_F_X509V3_PARSE_LIST,
-                              X509V3_R_INVALID_EMPTY_NAME);
+                    ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_EMPTY_NAME);
                     goto err;
                 }
                 q = p + 1;
@@ -326,8 +323,7 @@ STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line)
                 ntmp = strip_spaces(q);
                 q = p + 1;
                 if (!ntmp) {
-                    X509V3err(X509V3_F_X509V3_PARSE_LIST,
-                              X509V3_R_INVALID_EMPTY_NAME);
+                    ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_EMPTY_NAME);
                     goto err;
                 }
                 X509V3_add_value(ntmp, NULL, &values);
@@ -340,8 +336,7 @@ STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line)
                 *p = 0;
                 vtmp = strip_spaces(q);
                 if (!vtmp) {
-                    X509V3err(X509V3_F_X509V3_PARSE_LIST,
-                              X509V3_R_INVALID_NULL_VALUE);
+                    ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_NULL_VALUE);
                     goto err;
                 }
                 X509V3_add_value(ntmp, vtmp, &values);
@@ -355,15 +350,14 @@ STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line)
     if (state == HDR_VALUE) {
         vtmp = strip_spaces(q);
         if (!vtmp) {
-            X509V3err(X509V3_F_X509V3_PARSE_LIST,
-                      X509V3_R_INVALID_NULL_VALUE);
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_NULL_VALUE);
             goto err;
         }
         X509V3_add_value(ntmp, vtmp, &values);
     } else {
         ntmp = strip_spaces(q);
         if (!ntmp) {
-            X509V3err(X509V3_F_X509V3_PARSE_LIST, X509V3_R_INVALID_EMPTY_NAME);
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_EMPTY_NAME);
             goto err;
         }
         X509V3_add_value(ntmp, NULL, &values);
@@ -404,7 +398,7 @@ static char *strip_spaces(char *name)
  * V2I name comparison function: returns zero if 'name' matches cmp or cmp.*
  */
 
-int v3_name_cmp(const char *name, const char *cmp)
+int ossl_v3_name_cmp(const char *name, const char *cmp)
 {
     int len, ret;
     char c;
@@ -978,13 +972,13 @@ int X509_check_ip_asc(X509 *x, const char *ipasc, unsigned int flags)
 
     if (ipasc == NULL)
         return -2;
-    iplen = (size_t)a2i_ipadd(ipout, ipasc);
+    iplen = (size_t)ossl_a2i_ipadd(ipout, ipasc);
     if (iplen == 0)
         return -2;
     return do_x509_check(x, (char *)ipout, iplen, flags, GEN_IPADD, NULL);
 }
 
-char *ipaddr_to_asc(unsigned char *p, int len)
+char *ossl_ipaddr_to_asc(unsigned char *p, int len)
 {
     /*
      * 40 is enough space for the longest IPv6 address + nul terminator byte
@@ -997,7 +991,6 @@ char *ipaddr_to_asc(unsigned char *p, int len)
     case 4: /* IPv4 */
         BIO_snprintf(buf, sizeof(buf), "%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
         break;
-        /* TODO possibly combine with static i2r_address() in v3_addr.c */
     case 16: /* IPv6 */
         for (out = buf, i = 8, remain = sizeof(buf);
              i-- > 0 && bytes >= 0;
@@ -1028,7 +1021,7 @@ ASN1_OCTET_STRING *a2i_IPADDRESS(const char *ipasc)
 
     /* If string contains a ':' assume IPv6 */
 
-    iplen = a2i_ipadd(ipout, ipasc);
+    iplen = ossl_a2i_ipadd(ipout, ipasc);
 
     if (!iplen)
         return NULL;
@@ -1059,12 +1052,12 @@ ASN1_OCTET_STRING *a2i_IPADDRESS_NC(const char *ipasc)
     p = iptmp + (p - ipasc);
     *p++ = 0;
 
-    iplen1 = a2i_ipadd(ipout, iptmp);
+    iplen1 = ossl_a2i_ipadd(ipout, iptmp);
 
     if (!iplen1)
         goto err;
 
-    iplen2 = a2i_ipadd(ipout + iplen1, p);
+    iplen2 = ossl_a2i_ipadd(ipout + iplen1, p);
 
     OPENSSL_free(iptmp);
     iptmp = NULL;
@@ -1086,7 +1079,7 @@ ASN1_OCTET_STRING *a2i_IPADDRESS_NC(const char *ipasc)
     return NULL;
 }
 
-int a2i_ipadd(unsigned char *ipout, const char *ipasc)
+int ossl_a2i_ipadd(unsigned char *ipout, const char *ipasc)
 {
     /* If string contains a ':' assume IPv6 */
 

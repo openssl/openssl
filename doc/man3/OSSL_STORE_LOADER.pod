@@ -6,21 +6,21 @@ OSSL_STORE_LOADER,
 OSSL_STORE_LOADER_fetch,
 OSSL_STORE_LOADER_up_ref,
 OSSL_STORE_LOADER_free,
-OSSL_STORE_LOADER_provider,
-OSSL_STORE_LOADER_properties,
+OSSL_STORE_LOADER_get0_provider,
+OSSL_STORE_LOADER_get0_properties,
 OSSL_STORE_LOADER_is_a,
-OSSL_STORE_LOADER_number,
+OSSL_STORE_LOADER_get0_description,
 OSSL_STORE_LOADER_do_all_provided,
 OSSL_STORE_LOADER_names_do_all,
 OSSL_STORE_LOADER_CTX, OSSL_STORE_LOADER_new,
 OSSL_STORE_LOADER_get0_engine, OSSL_STORE_LOADER_get0_scheme,
-OSSL_STORE_LOADER_set_open, OSSL_STORE_LOADER_set_open_with_libctx,
+OSSL_STORE_LOADER_set_open, OSSL_STORE_LOADER_set_open_ex,
 OSSL_STORE_LOADER_set_attach, OSSL_STORE_LOADER_set_ctrl,
 OSSL_STORE_LOADER_set_expect, OSSL_STORE_LOADER_set_find,
 OSSL_STORE_LOADER_set_load, OSSL_STORE_LOADER_set_eof,
 OSSL_STORE_LOADER_set_error, OSSL_STORE_LOADER_set_close,
 OSSL_STORE_register_loader, OSSL_STORE_unregister_loader,
-OSSL_STORE_open_fn, OSSL_STORE_open_with_libctx_fn,
+OSSL_STORE_open_fn, OSSL_STORE_open_ex_fn,
 OSSL_STORE_attach_fn, OSSL_STORE_ctrl_fn,
 OSSL_STORE_expect_fn, OSSL_STORE_find_fn,
 OSSL_STORE_load_fn, OSSL_STORE_eof_fn, OSSL_STORE_error_fn,
@@ -33,24 +33,24 @@ unregister STORE loaders for different URI schemes
 
  typedef struct ossl_store_loader_st OSSL_STORE_LOADER;
 
- OSSL_STORE_LOADER *OSSL_STORE_LOADER_fetch(const char *scheme,
-                                            OPENSSL_CTX *libctx,
+ OSSL_STORE_LOADER *OSSL_STORE_LOADER_fetch(OSSL_LIB_CTX *libctx,
+                                            const char *scheme,
                                             const char *properties);
  int OSSL_STORE_LOADER_up_ref(OSSL_STORE_LOADER *loader);
  void OSSL_STORE_LOADER_free(OSSL_STORE_LOADER *loader);
- const OSSL_PROVIDER *OSSL_STORE_LOADER_provider(const OSSL_STORE_LOADER *
+ const OSSL_PROVIDER *OSSL_STORE_LOADER_get0_provider(const OSSL_STORE_LOADER *
                                                  loader);
- const char *OSSL_STORE_LOADER_properties(const OSSL_STORE_LOADER *loader);
- int OSSL_STORE_LOADER_number(const OSSL_STORE_LOADER *loader);
+ const char *OSSL_STORE_LOADER_get0_properties(const OSSL_STORE_LOADER *loader);
+ const char *OSSL_STORE_LOADER_get0_description(const OSSL_STORE_LOADER *loader);
  int OSSL_STORE_LOADER_is_a(const OSSL_STORE_LOADER *loader,
                             const char *scheme);
- void OSSL_STORE_LOADER_do_all_provided(OPENSSL_CTX *libctx,
+ void OSSL_STORE_LOADER_do_all_provided(OSSL_LIB_CTX *libctx,
                                         void (*fn)(OSSL_STORE_LOADER *loader,
                                                    void *arg),
                                         void *arg);
- void OSSL_STORE_LOADER_names_do_all(const OSSL_STORE_LOADER *loader,
-                                     void (*fn)(const char *name, void *data),
-                                     void *data);
+ int OSSL_STORE_LOADER_names_do_all(const OSSL_STORE_LOADER *loader,
+                                    void (*fn)(const char *name, void *data),
+                                    void *data);
 
 Deprecated since OpenSSL 3.0, can be hidden entirely by defining
 B<OPENSSL_API_COMPAT> with a suitable version value, see
@@ -69,14 +69,14 @@ L<openssl_user_macros(7)>:
      const char *uri, const UI_METHOD *ui_method, void *ui_data);
  int OSSL_STORE_LOADER_set_open(OSSL_STORE_LOADER *store_loader,
                                 OSSL_STORE_open_fn store_open_function);
- typedef OSSL_STORE_LOADER_CTX *(*OSSL_STORE_open_with_libctx_fn)(
+ typedef OSSL_STORE_LOADER_CTX *(*OSSL_STORE_open_ex_fn)(
      const char *uri, const UI_METHOD *ui_method, void *ui_data);
- int OSSL_STORE_LOADER_set_open_with_libctx
+ int OSSL_STORE_LOADER_set_open_ex
      (OSSL_STORE_LOADER *store_loader,
-      OSSL_STORE_open_with_libctx_fn store_open_with_libctx_function);
+      OSSL_STORE_open_ex_fn store_open_ex_function);
  typedef OSSL_STORE_LOADER_CTX *(*OSSL_STORE_attach_fn)
      (const OSSL_STORE_LOADER *loader, BIO *bio,
-      OPENSSL_CTX *libctx, const char *propq,
+      OSSL_LIB_CTX *libctx, const char *propq,
       const UI_METHOD *ui_method, void *ui_data);
  int OSSL_STORE_LOADER_set_attach(OSSL_STORE_LOADER *loader,
                                   OSSL_STORE_attach_fn attach_function);
@@ -113,13 +113,13 @@ L<openssl_user_macros(7)>:
 =head1 DESCRIPTION
 
 B<OSSL_STORE_LOADER> is a method for OSSL_STORE loaders, which implement
-OSSL_STORE_open(), OSSL_STORE_open_with_libctx(), OSSL_STORE_load(),
+OSSL_STORE_open(), OSSL_STORE_open_ex(), OSSL_STORE_load(),
 OSSL_STORE_eof(), OSSL_STORE_error() and OSSL_STORE_close() for specific
 storage schemes.
 
 OSSL_STORE_LOADER_fetch() looks for an implementation for a storage
-I<scheme> within the providers that has been loaded into the B<OPENSSL_CTX>
-given by I<ctx>, and with the properties given by I<properties>.
+I<scheme> within the providers that has been loaded into the B<OSSL_LIB_CTX>
+given by I<libctx>, and with the properties given by I<properties>.
 
 OSSL_STORE_LOADER_up_ref() increments the reference count for the given
 I<loader>.
@@ -127,17 +127,18 @@ I<loader>.
 OSSL_STORE_LOADER_free() decrements the reference count for the given
 I<loader>, and when the count reaches zero, frees it.
 
-OSSL_STORE_LOADER_provider() returns the provider of the given
+OSSL_STORE_LOADER_get0_provider() returns the provider of the given
 I<loader>.
 
-OSSL_STORE_LOADER_properties() returns the property definition associated
+OSSL_STORE_LOADER_get0_properties() returns the property definition associated
 with the given I<loader>.
 
 OSSL_STORE_LOADER_is_a() checks if I<loader> is an implementation
 of an algorithm that's identifiable with I<scheme>.
 
-OSSL_STORE_LOADER_number() returns the internal dynamic number assigned
-to the given I<loader>.
+OSSL_STORE_LOADER_get0_description() returns a description of the I<loader>, meant
+for display and human consumption.  The description is at the discretion of the
+I<loader> implementation.
 
 OSSL_STORE_LOADER_do_all_provided() traverses all store implementations
 by all activated providers in the library context I<libctx>, and for each
@@ -156,7 +157,7 @@ provider implementations, see L<provider-storemgmt(7)>.
 B<OSSL_STORE_LOADER_CTX> is a type template, to be defined by each loader
 using C<struct ossl_store_loader_ctx_st { ... }>.
 
-B<OSSL_STORE_open_fn>, B<OSSL_STORE_open_with_libctx_fn>,
+B<OSSL_STORE_open_fn>, B<OSSL_STORE_open_ex_fn>,
 B<OSSL_STORE_ctrl_fn>, B<OSSL_STORE_expect_fn>, B<OSSL_STORE_find_fn>,
 B<OSSL_STORE_load_fn>, B<OSSL_STORE_eof_fn>, and B<OSSL_STORE_close_fn>
 are the function pointer types used within a STORE loader.
@@ -164,9 +165,9 @@ The functions pointed at define the functionality of the given loader.
 
 =over 4
 
-=item B<OSSL_STORE_open_fn> and B<OSSL_STORE_open_with_libctx_fn>
+=item B<OSSL_STORE_open_fn> and B<OSSL_STORE_open_ex_fn>
 
-B<OSSL_STORE_open_with_libctx_fn> takes a URI and is expected to
+B<OSSL_STORE_open_ex_fn> takes a URI and is expected to
 interpret it in the best manner possible according to the scheme the
 loader implements.  It also takes a B<UI_METHOD> and associated data,
 to be used any time something needs to be prompted for, as well as a
@@ -178,13 +179,13 @@ see above), and to return it.
 If something goes wrong, this function is expected to return NULL.
 
 B<OSSL_STORE_open_fn> does the same thing as
-B<OSSL_STORE_open_with_libctx_fn> but uses NULL for the library
+B<OSSL_STORE_open_ex_fn> but uses NULL for the library
 context I<libctx> and property query I<propq>.
 
 =item B<OSSL_STORE_attach_fn>
 
 This function takes a B<BIO>, otherwise works like
-B<OSSL_STORE_open_with_libctx_fn>.
+B<OSSL_STORE_open_ex_fn>.
 
 =item B<OSSL_STORE_ctrl_fn>
 
@@ -274,7 +275,7 @@ OSSL_STORE_LOADER_get0_scheme() returns the scheme of the I<store_loader>.
 OSSL_STORE_LOADER_set_open() sets the opener function for the
 I<store_loader>.
 
-OSSL_STORE_LOADER_set_open_with_libctx() sets the opener with library context
+OSSL_STORE_LOADER_set_open_ex() sets the opener with library context
 function for the I<store_loader>.
 
 OSSL_STORE_LOADER_set_attach() sets the attacher function for the
@@ -299,7 +300,7 @@ OSSL_STORE_LOADER_free() frees the given I<store_loader>.
 
 OSSL_STORE_register_loader() register the given I<store_loader> and
 thereby makes it available for use with OSSL_STORE_open(),
-OSSL_STORE_open_with_libctx(), OSSL_STORE_load(), OSSL_STORE_eof()
+OSSL_STORE_open_ex(), OSSL_STORE_load(), OSSL_STORE_eof()
 and OSSL_STORE_close().
 
 OSSL_STORE_unregister_loader() unregister the store loader for the given
@@ -312,30 +313,34 @@ or NULL on error.
 
 OSSL_STORE_LOADER_up_ref() returns 1 on success, or 0 on error.
 
+OSSL_STORE_LOADER_names_do_all() returns 1 if the callback was called for all
+names. A return value of 0 means that the callback was not called for any names.
+
 OSSL_STORE_LOADER_free() doesn't return any value.
 
-OSSL_STORE_LOADER_provider() returns a pointer to a provider object, or
+OSSL_STORE_LOADER_get0_provider() returns a pointer to a provider object, or
 NULL on error.
 
-OSSL_STORE_LOADER_properties() returns a pointer to a property
+OSSL_STORE_LOADER_get0_properties() returns a pointer to a property
 definition string, or NULL on error.
 
 OSSL_STORE_LOADER_is_a() returns 1 if I<loader> was identifiable,
 otherwise 0.
 
-OSSL_STORE_LOADER_number() returns an integer.
+OSSL_STORE_LOADER_get0_description() returns a pointer to a decription, or NULL if
+there isn't one.
 
 The functions with the types B<OSSL_STORE_open_fn>,
-B<OSSL_STORE_open_with_libctx_fn>, B<OSSL_STORE_ctrl_fn>,
+B<OSSL_STORE_open_ex_fn>, B<OSSL_STORE_ctrl_fn>,
 B<OSSL_STORE_expect_fn>, B<OSSL_STORE_load_fn>, B<OSSL_STORE_eof_fn>
 and B<OSSL_STORE_close_fn> have the same return values as OSSL_STORE_open(),
-OSSL_STORE_open_with_libctx(), OSSL_STORE_ctrl(), OSSL_STORE_expect(),
+OSSL_STORE_open_ex(), OSSL_STORE_ctrl(), OSSL_STORE_expect(),
 OSSL_STORE_load(), OSSL_STORE_eof() and OSSL_STORE_close(), respectively.
 
 OSSL_STORE_LOADER_new() returns a pointer to a B<OSSL_STORE_LOADER> on success,
 or NULL on failure.
 
-OSSL_STORE_LOADER_set_open(), OSSL_STORE_LOADER_set_open_with_libctx(),
+OSSL_STORE_LOADER_set_open(), OSSL_STORE_LOADER_set_open_ex(),
 OSSL_STORE_LOADER_set_ctrl(), OSSL_STORE_LOADER_set_load(),
 OSSL_STORE_LOADER_set_eof() and OSSL_STORE_LOADER_set_close() return 1
 on success, or 0 on failure.
@@ -347,31 +352,35 @@ or NULL on failure.
 
 =head1 SEE ALSO
 
-L<ossl_store(7)>, L<OSSL_STORE_open(3)>, L<OPENSSL_CTX(3)>,
+L<ossl_store(7)>, L<OSSL_STORE_open(3)>, L<OSSL_LIB_CTX(3)>,
 L<provider-storemgmt(7)>
 
 =head1 HISTORY
 
 OSSL_STORE_LOADER_fetch(), OSSL_STORE_LOADER_up_ref(),
-OSSL_STORE_LOADER_free(), OSSL_STORE_LOADER_provider(),
-OSSL_STORE_LOADER_properties(), OSSL_STORE_LOADER_is_a(),
-OSSL_STORE_LOADER_number(), OSSL_STORE_LOADER_do_all_provided() and
+OSSL_STORE_LOADER_free(), OSSL_STORE_LOADER_get0_provider(),
+OSSL_STORE_LOADER_get0_properties(), OSSL_STORE_LOADER_is_a(),
+OSSL_STORE_LOADER_do_all_provided() and
 OSSL_STORE_LOADER_names_do_all() were added in OpenSSL 3.0.
 
-OSSL_STORE_open_with_libctx_fn() was added in OpenSSL 3.0.
+OSSL_STORE_open_ex_fn() was added in OpenSSL 3.0.
 
 B<OSSL_STORE_LOADER>, B<OSSL_STORE_LOADER_CTX>, OSSL_STORE_LOADER_new(),
-OSSL_STORE_LOADER_set0_scheme(), OSSL_STORE_LOADER_set_open(),
-OSSL_STORE_LOADER_set_ctrl(), OSSL_STORE_LOADER_set_load(),
-OSSL_STORE_LOADER_set_eof(), OSSL_STORE_LOADER_set_close(),
-OSSL_STORE_LOADER_free(), OSSL_STORE_register_loader(),
+OSSL_STORE_LOADER_set0_scheme(), OSSL_STORE_LOADER_get0_scheme(),
+OSSL_STORE_LOADER_get0_engine(), OSSL_STORE_LOADER_set_expect(),
+OSSL_STORE_LOADER_set_find(), OSSL_STORE_LOADER_set_attach(),
+OSSL_STORE_LOADER_set_open_ex(), OSSL_STORE_LOADER_set_open(),
+OSSL_STORE_LOADER_set_ctrl(),
+OSSL_STORE_LOADER_set_load(), OSSL_STORE_LOADER_set_eof(),
+OSSL_STORE_LOADER_set_close(), OSSL_STORE_LOADER_free(),
+OSSL_STORE_register_loader(), OSSL_STORE_LOADER_set_error(),
 OSSL_STORE_unregister_loader(), OSSL_STORE_open_fn(), OSSL_STORE_ctrl_fn(),
 OSSL_STORE_load_fn(), OSSL_STORE_eof_fn() and OSSL_STORE_close_fn()
 were added in OpenSSL 1.1.1, and became deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

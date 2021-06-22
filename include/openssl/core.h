@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,6 +9,7 @@
 
 #ifndef OPENSSL_CORE_H
 # define OPENSSL_CORE_H
+# pragma once
 
 # include <stddef.h>
 # include <openssl/types.h>
@@ -31,8 +32,8 @@ typedef struct openssl_core_ctx_st OPENSSL_CORE_CTX;
 typedef struct ossl_core_bio_st OSSL_CORE_BIO;
 
 /*
- * Dispatch table element.  function_id numbers are defined further down,
- * see macros with '_FUNC' in their names.
+ * Dispatch table element.  function_id numbers and the functions are defined
+ * in core_dispatch.h, see macros with 'OSSL_CORE_MAKE_FUNC' in their names.
  *
  * An array of these is always terminated by function_id == 0
  */
@@ -69,6 +70,7 @@ struct ossl_algorithm_st {
     const char *algorithm_names;     /* key */
     const char *property_definition; /* key */
     const OSSL_DISPATCH *implementation;
+    const char *algorithm_description;
 };
 
 /*

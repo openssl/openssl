@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,6 +9,7 @@
 
 #ifndef OSSL_INTERNAL_PACKET_H
 # define OSSL_INTERNAL_PACKET_H
+# pragma once
 
 # include <string.h>
 # include <openssl/bn.h>
@@ -799,7 +800,7 @@ int WPACKET_sub_allocate_bytes__(WPACKET *pkt, size_t len,
  * signature may not be known in advance. We can use WPACKET_reserve_bytes() to
  * handle this:
  *
- *  if (!WPACKET_sub_reserve_bytes_u16(&pkt, EVP_PKEY_size(pkey), &sigbytes1)
+ *  if (!WPACKET_sub_reserve_bytes_u16(&pkt, EVP_PKEY_get_size(pkey), &sigbytes1)
  *          || EVP_SignFinal(md_ctx, sigbytes1, &siglen, pkey) <= 0
  *          || !WPACKET_sub_allocate_bytes_u16(&pkt, siglen, &sigbytes2)
  *          || sigbytes1 != sigbytes2)

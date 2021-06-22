@@ -1,5 +1,5 @@
 #
-# Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2001-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -39,6 +39,7 @@ Verify = SM2_key1
 Ctrl = digest:SHA512
 Input = 40AA1B203C9D8EE150B21C3C7CDA8261492E5420C5F2B9F7380700E094C303B48E62F319C1DA0E32EB40D113C5F1749CC61AEB499167890AB82F2CC9BB706971
 Output = 3046022100AE018933B9BA041784380069F2DDF609694DCD299FDBF23D09F4B711FBC103EC0221008440BB1A48C132DE4FB91BE9F43B958142FDD29FB9DABE01B17514023A2F638C
+Result = PKEY_CTRL_ERROR
 
 Availablein = default
 Decrypt = SM2_key1
@@ -61,3 +62,12 @@ Ctrl = digest:SM3
 Input = D7AD397F6FFA5D4F7F11E7217F241607DC30618C236D2C09C1B9EA8FDADEE2E8
 Output = 3045022100f11bf36e75bb304f094fb42a4ca22377d0cc768637c5011cd59fb9ed4b130c98022035545ffe2c2efb3abee4fee661468946d886004fae8ea5311593e48f7fe21b91
 Result = KEYOP_MISMATCH
+
+Title = SM2 key generation tests
+
+KeyGen = SM2
+KeyName = SM2_genkey1
+
+KeyGen = SM2
+Ctrl = group:sm2
+KeyName = SM2_genkey2

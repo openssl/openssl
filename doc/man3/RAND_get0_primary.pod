@@ -11,10 +11,9 @@ RAND_get0_private
 
  #include <openssl/rand.h>
 
- EVP_RAND_CTX *RAND_get0_primary(OPENSSL_CTX *ctx);
- EVP_RAND_CTX *RAND_get0_public(OPENSSL_CTX *ctx);
- EVP_RAND_CTX *RAND_get0_private(OPENSSL_CTX *ctx);
-
+ EVP_RAND_CTX *RAND_get0_primary(OSSL_LIB_CTX *ctx);
+ EVP_RAND_CTX *RAND_get0_public(OSSL_LIB_CTX *ctx);
+ EVP_RAND_CTX *RAND_get0_private(OSSL_LIB_CTX *ctx);
 
 =head1 DESCRIPTION
 
@@ -31,16 +30,16 @@ These functions here provide access to the shared DRBG instances.
 =head1 RETURN VALUES
 
 RAND_get0_primary() returns a pointer to the I<primary> DRBG instance
-for the given OPENSSL_CTX B<ctx>.
+for the given OSSL_LIB_CTX B<ctx>.
 
 RAND_get0_public() returns a pointer to the I<public> DRBG instance
-for the given OPENSSL_CTX B<ctx>.
+for the given OSSL_LIB_CTX B<ctx>.
 
 RAND_get0_private() returns a pointer to the I<private> DRBG instance
-for the given OPENSSL_CTX B<ctx>.
+for the given OSSL_LIB_CTX B<ctx>.
 
 In all the above cases the B<ctx> parameter can
-be NULL in which case the default OPENSSL_CTX is used.
+be NULL in which case the default OSSL_LIB_CTX is used.
 
 =head1 NOTES
 
@@ -58,9 +57,14 @@ During initialization, it is possible to change the reseed interval
 and reseed time interval.
 It is also possible to exchange the reseeding callbacks entirely.
 
+To set the type of DRBG that will be instantiated, use the
+L<RAND_set_DRBG_type(3)> call before accessing the random number generation
+infrastructure.
+
 =head1 SEE ALSO
 
-L<EVP_RAND(3)>
+L<EVP_RAND(3)>,
+L<RAND_set_DRBG_type(3)>
 
 =head1 HISTORY
 
@@ -68,7 +72,7 @@ These functions were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

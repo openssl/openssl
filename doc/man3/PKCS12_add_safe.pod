@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-PKCS12_add_safe, PKCS12_add_safes - Create and add objects to a PKCS#12 structure
+PKCS12_add_safe, PKCS12_add_safe_ex,
+PKCS12_add_safes, PKCS12_add_safes_ex - Create and add objects to a PKCS#12 structure
 
 =head1 SYNOPSIS
 
@@ -10,7 +11,13 @@ PKCS12_add_safe, PKCS12_add_safes - Create and add objects to a PKCS#12 structur
 
  int PKCS12_add_safe(STACK_OF(PKCS7) **psafes, STACK_OF(PKCS12_SAFEBAG) *bags,
                     int safe_nid, int iter, const char *pass);
+ int PKCS12_add_safe_ex(STACK_OF(PKCS7) **psafes, STACK_OF(PKCS12_SAFEBAG) *bags,
+                        int safe_nid, int iter, const char *pass,
+                        OSSL_LIB_CTX *ctx, const char *propq);
+
  PKCS12 *PKCS12_add_safes(STACK_OF(PKCS7) *safes, int p7_nid);
+ PKCS12 *PKCS12_add_safes_ex(STACK_OF(PKCS7) *safes, int p7_nid,
+                             OSSL_LIB_CTX *ctx, const char *propq);
 
 =head1 DESCRIPTION
 
@@ -32,9 +39,17 @@ a default encryption algorithm, currently B<NID_pbe_WithSHA1And3_Key_TripleDES_C
 
 =back
 
+PKCS12_add_safe_ex() is identical to PKCS12_add_safe() but allows for a library
+context I<ctx> and property query I<propq> to be used to select algorithm
+implementations.
+
 PKCS12_add_safes() creates a B<PKCS12> structure containing the supplied set of
 PKCS7 contentInfos. The I<safes> are enclosed first within a PKCS7 contentInfo
 of type I<p7_nid>. Currently the only supported type is B<NID_pkcs7_data>.
+
+PKCS12_add_safes_ex() is identical to PKCS12_add_safes() but allows for a
+library context I<ctx> and property query I<propq> to be used to select
+algorithm implementations.
 
 =head1 NOTES
 
@@ -48,13 +63,21 @@ PKCS12_add_safe() returns a value of 1 indicating success or 0 for failure.
 
 PKCS12_add_safes() returns a valid B<PKCS12> structure or NULL if an error occurred.
 
+=head1 CONFORMING TO
+
+IETF RFC 7292 (L<https://tools.ietf.org/html/rfc7292>)
+
 =head1 SEE ALSO
 
 L<PKCS12_create(3)>
 
+=head1 HISTORY
+
+PKCS12_add_safe_ex() and PKCS12_add_safes_ex() were added in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

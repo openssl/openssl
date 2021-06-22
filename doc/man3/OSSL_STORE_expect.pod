@@ -21,11 +21,13 @@ OSSL_STORE_find
 
 OSSL_STORE_expect() helps applications filter what OSSL_STORE_load() returns
 by specifying a B<OSSL_STORE_INFO> type.
-For example, if C<file:/foo/bar/store.pem> contains several different objects
-and only the certificates are interesting, the application can simply say
+By default, no expectations on the types of objects to be loaded are made.
+I<expected_type> may be 0 to indicate explicitly that no expectation is made,
+or it may be any of the known object types (see
+L<OSSL_STORE_INFO(3)/SUPPORTED OBJECTS>) except for B<OSSL_STORE_INFO_NAME>.
+For example, if C<file:/foo/bar/store.pem> contains several objects of different
+type and only certificates are interesting, the application can simply say
 that it expects the type B<OSSL_STORE_INFO_CERT>.
-All known object types (see L<OSSL_STORE_INFO(3)/SUPPORTED OBJECTS>)
-except for B<OSSL_STORE_INFO_NAME> are supported.
 
 OSSL_STORE_find() helps applications specify a criterion for a more fine
 grained search of objects.
@@ -69,7 +71,7 @@ were added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
-Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,7 +9,7 @@
 
 #include <string.h>
 
-#include "ssltestlib.h"
+#include "helpers/ssltestlib.h"
 #include "testutil.h"
 
 static char *cert = NULL;
@@ -94,7 +94,8 @@ static int test_record_overflow(int idx)
             || idx == TEST_ENCRYPTED_OVERFLOW_TLS1_2_NOT_OK)
         return 1;
 #endif
-#ifdef OPENSSL_NO_TLS1_3
+#if defined(OPENSSL_NO_TLS1_3) \
+    || (defined(OPENSSL_NO_EC) && defined(OPENSSL_NO_DH))
     if (idx == TEST_ENCRYPTED_OVERFLOW_TLS1_3_OK
             || idx == TEST_ENCRYPTED_OVERFLOW_TLS1_3_NOT_OK)
         return 1;

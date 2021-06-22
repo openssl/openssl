@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -32,7 +32,7 @@ void OPENSSL_load_builtin_modules(void)
     ENGINE_add_conf_module();
 #endif
     EVP_add_alg_module();
-    conf_add_ssl_module();
+    ossl_config_add_ssl_module();
     ossl_provider_add_conf_module();
     ossl_random_add_conf_module();
 }

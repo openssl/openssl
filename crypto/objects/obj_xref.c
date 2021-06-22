@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -104,7 +104,7 @@ int OBJ_add_sigid(int signid, int dig_id, int pkey_id)
     if (sigx_app == NULL)
         return 0;
     if ((ntr = OPENSSL_malloc(sizeof(*ntr))) == NULL) {
-        OBJerr(OBJ_F_OBJ_ADD_SIGID, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OBJ, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     ntr->sign_id = signid;

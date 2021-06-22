@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -147,7 +147,7 @@ static int crl_set_issuers(X509_CRL *crl)
 
 /*
  * The X509_CRL structure needs a bit of customisation. Cache some extensions
- * and hash of the whole CRL.
+ * and hash of the whole CRL or set EXFLAG_NO_FINGERPRINT if this fails.
  */
 static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
                   void *exarg)
@@ -185,7 +185,7 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 
     case ASN1_OP_D2I_POST:
         if (!X509_CRL_digest(crl, EVP_sha1(), crl->sha1_hash, NULL))
-            crl->flags |= EXFLAG_INVALID;
+            crl->flags |= EXFLAG_NO_FINGERPRINT;
         crl->idp = X509_CRL_get_ext_d2i(crl,
                                         NID_issuing_distribution_point, &i,
                                         NULL);
@@ -264,6 +264,15 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         ASN1_INTEGER_free(crl->crl_number);
         ASN1_INTEGER_free(crl->base_crl_number);
         sk_GENERAL_NAMES_pop_free(crl->issuers, GENERAL_NAMES_free);
+        OPENSSL_free(crl->propq);
+        break;
+    case ASN1_OP_DUP_POST:
+        {
+            X509_CRL *old = exarg;
+
+            if (!ossl_x509_crl_set0_libctx(crl, old->libctx, old->propq))
+                return 0;
+        }
         break;
     }
     return 1;
@@ -331,6 +340,18 @@ static int X509_REVOKED_cmp(const X509_REVOKED *const *a,
                             (ASN1_STRING *)&(*b)->serialNumber));
 }
 
+X509_CRL *X509_CRL_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
+{
+    X509_CRL *crl = NULL;
+
+    crl = (X509_CRL *)ASN1_item_new((X509_CRL_it()));
+    if (!ossl_x509_crl_set0_libctx(crl, libctx, propq)) {
+        X509_CRL_free(crl);
+        crl = NULL;
+    }
+    return crl;
+}
+
 int X509_CRL_add0_revoked(X509_CRL *crl, X509_REVOKED *rev)
 {
     X509_CRL_INFO *inf;
@@ -339,7 +360,7 @@ int X509_CRL_add0_revoked(X509_CRL *crl, X509_REVOKED *rev)
     if (inf->revoked == NULL)
         inf->revoked = sk_X509_REVOKED_new(X509_REVOKED_cmp);
     if (inf->revoked == NULL || !sk_X509_REVOKED_push(inf->revoked, rev)) {
-        ASN1err(ASN1_F_X509_CRL_ADD0_REVOKED, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     inf->enc.modified = 1;
@@ -372,8 +393,9 @@ int X509_CRL_get0_by_cert(X509_CRL *crl, X509_REVOKED **ret, X509 *x)
 
 static int def_crl_verify(X509_CRL *crl, EVP_PKEY *r)
 {
-    return (ASN1_item_verify(ASN1_ITEM_rptr(X509_CRL_INFO),
-                             &crl->sig_alg, &crl->signature, &crl->crl, r));
+    return ASN1_item_verify_ex(ASN1_ITEM_rptr(X509_CRL_INFO),
+                               &crl->sig_alg, &crl->signature, &crl->crl, NULL,
+                               r, crl->libctx, crl->propq);
 }
 
 static int crl_revoked_issuer_match(X509_CRL *crl, const X509_NAME *nm,
@@ -418,7 +440,8 @@ static int def_crl_lookup(X509_CRL *crl,
      * under a lock to avoid race condition.
      */
     if (!sk_X509_REVOKED_is_sorted(crl->crl.revoked)) {
-        CRYPTO_THREAD_write_lock(crl->lock);
+        if (!CRYPTO_THREAD_write_lock(crl->lock))
+            return 0;
         sk_X509_REVOKED_sort(crl->crl.revoked);
         CRYPTO_THREAD_unlock(crl->lock);
     }
@@ -462,7 +485,7 @@ X509_CRL_METHOD *X509_CRL_METHOD_new(int (*crl_init) (X509_CRL *crl),
     X509_CRL_METHOD *m = OPENSSL_malloc(sizeof(*m));
 
     if (m == NULL) {
-        X509err(X509_F_X509_CRL_METHOD_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     m->crl_init = crl_init;
@@ -490,11 +513,18 @@ void *X509_CRL_get_meth_data(X509_CRL *crl)
     return crl->meth_data;
 }
 
-int x509_crl_set0_libctx(X509_CRL *x, OPENSSL_CTX *libctx, const char *propq)
+int ossl_x509_crl_set0_libctx(X509_CRL *x, OSSL_LIB_CTX *libctx,
+                              const char *propq)
 {
     if (x != NULL) {
         x->libctx = libctx;
-        x->propq = propq;
+        OPENSSL_free(x->propq);
+        x->propq = NULL;
+        if (propq != NULL) {
+            x->propq = OPENSSL_strdup(propq);
+            if (x->propq == NULL)
+                return 0;
+        }
     }
     return 1;
 }

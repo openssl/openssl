@@ -34,12 +34,12 @@ Print out a usage message.
 =item B<-inform> B<DER>|B<PEM>
 
 The input format of the CRL; the default is B<PEM>.
-See L<openssl(1)/Format Options> for details.
+See L<openssl-format-options(1)> for details.
 
 =item B<-outform> B<DER>|B<PEM>
 
 The output format of the PKCS#7 object; the default is B<PEM>.
-See L<openssl(1)/Format Options> for details.
+See L<openssl-format-options(1)> for details.
 
 =item B<-in> I<filename>
 
@@ -55,7 +55,7 @@ output by default.
 
 Specifies a filename containing one or more certificates in B<PEM> format.
 All certificates in the file will be added to the PKCS#7 structure. This
-option can be used more than once to read certificates form multiple
+option can be used more than once to read certificates from multiple
 files.
 
 =item B<-nocrl>
@@ -98,7 +98,7 @@ L<openssl-pkcs7(1)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

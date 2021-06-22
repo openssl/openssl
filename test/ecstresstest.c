@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 
 #define NUM_REPEATS "1000000"
 
-static intmax_t num_repeats;
+static ossl_intmax_t num_repeats;
 static int print_mode = 0;
 
 #ifndef OPENSSL_NO_EC
@@ -39,10 +39,11 @@ static const char *kP256DefaultResult =
  * point multiplication.
  * Returns the X-coordinate of the end result or NULL on error.
  */
-static BIGNUM *walk_curve(const EC_GROUP *group, EC_POINT *point, intmax_t num)
+static BIGNUM *walk_curve(const EC_GROUP *group, EC_POINT *point,
+                          ossl_intmax_t num)
 {
     BIGNUM *scalar = NULL;
-    intmax_t i;
+    ossl_intmax_t i;
 
     if (!TEST_ptr(scalar = BN_new())
             || !TEST_true(EC_POINT_get_affine_coordinates(group, point, scalar,
@@ -127,7 +128,7 @@ int setup_tests(void)
 {
     OPTION_CHOICE o;
 
-    if (!opt_imax(NUM_REPEATS, &num_repeats)) {
+    if (!opt_intmax(NUM_REPEATS, &num_repeats)) {
         TEST_error("Cannot parse " NUM_REPEATS);
         return 0;
     }
@@ -135,7 +136,7 @@ int setup_tests(void)
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
         case OPT_NUM_REPEATS:
-            if (!opt_imax(opt_arg(), &num_repeats)
+            if (!opt_intmax(opt_arg(), &num_repeats)
                     || num_repeats < 0)
                 return 0;
             print_mode = 1;

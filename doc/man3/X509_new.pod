@@ -2,16 +2,16 @@
 
 =head1 NAME
 
-X509_chain_up_ref,
-X509_new, X509_new_with_libctx,
-X509_free, X509_up_ref - X509 certificate ASN1 allocation functions
+X509_new, X509_new_ex,
+X509_free, X509_up_ref,
+X509_chain_up_ref - X509 certificate ASN1 allocation functions
 
 =head1 SYNOPSIS
 
  #include <openssl/x509.h>
 
  X509 *X509_new(void);
- X509 *X509_new_with_libctx(OPENSSL_CTX *libctx, const char *propq);
+ X509 *X509_new_ex(OSSL_LIB_CTX *libctx, const char *propq);
  void X509_free(X509 *a);
  int X509_up_ref(X509 *a);
  STACK_OF(X509) *X509_chain_up_ref(STACK_OF(X509) *x);
@@ -21,13 +21,14 @@ X509_free, X509_up_ref - X509 certificate ASN1 allocation functions
 The X509 ASN1 allocation routines, allocate and free an
 X509 structure, which represents an X509 certificate.
 
-X509_new_with_libctx() allocates and initializes a X509 structure with a
-library context of I<libctx>, property query of <propq> and a reference
+X509_new_ex() allocates and initializes a X509 structure with a
+library context of I<libctx>, property query of I<propq> and a reference
 count of B<1>. Many X509 functions such as X509_check_purpose(), and
 X509_verify() use this library context to select which providers supply the
-fetched algorithms (SHA1 is used internally).
+fetched algorithms (SHA1 is used internally). This created X509 object can then
+be used when loading binary data using d2i_X509().
 
-X509_new() is similar to X509_new_with_libctx() but sets the library context
+X509_new() is similar to X509_new_ex() but sets the library context
 and property query to NULL. This results in the default (NULL) library context
 being used for any X509 operations requiring algorithm fetches.
 
@@ -37,7 +38,7 @@ frees it up if the reference count is zero. If B<a> is NULL nothing is done.
 X509_up_ref() increments the reference count of B<a>.
 
 X509_chain_up_ref() increases the reference count of all certificates in
-chain B<x> and returns a copy of the stack.
+chain B<x> and returns a copy of the stack, or an empty stack if B<a> is NULL.
 
 =head1 NOTES
 
@@ -46,20 +47,19 @@ used by several different operations each of which will free it up after
 use: this avoids the need to duplicate the entire certificate structure.
 
 The function X509_chain_up_ref() doesn't just up the reference count of
-each certificate it also returns a copy of the stack, using sk_X509_dup(),
+each certificate. It also returns a copy of the stack, using sk_X509_dup(),
 but it serves a similar purpose: the returned chain persists after the
 original has been freed.
 
 =head1 RETURN VALUES
 
-If the allocation fails, X509_new() returns B<NULL> and sets an error
+If the allocation fails, X509_new() returns NULL and sets an error
 code that can be obtained by L<ERR_get_error(3)>.
 Otherwise it returns a pointer to the newly allocated structure.
 
 X509_up_ref() returns 1 for success and 0 for failure.
 
-X509_chain_up_ref() returns a copy of the stack or B<NULL> if an error
-occurred.
+X509_chain_up_ref() returns a copy of the stack or NULL if an error occurred.
 
 =head1 SEE ALSO
 
@@ -82,11 +82,11 @@ L<X509_verify_cert(3)>
 
 =head1 HISTORY
 
-The function X509_new_with_libctx() was added in OpenSSL 3.0.
+The function X509_new_ex() was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2002-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2002-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

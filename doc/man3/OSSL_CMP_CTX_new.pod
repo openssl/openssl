@@ -67,7 +67,7 @@ OSSL_CMP_CTX_set1_senderNonce
 
  #include <openssl/cmp.h>
 
- OSSL_CMP_CTX *OSSL_CMP_CTX_new(OPENSSL_CTX *libctx, const char *propq);
+ OSSL_CMP_CTX *OSSL_CMP_CTX_new(OSSL_LIB_CTX *libctx, const char *propq);
  void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx);
  int OSSL_CMP_CTX_reinit(OSSL_CMP_CTX *ctx);
  int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val);
@@ -194,10 +194,20 @@ The following options can be set:
         due to errors, warnings, general info, debugging, etc.
         Default is OSSL_CMP_LOG_INFO. See also L<OSSL_CMP_log_open(3)>.
 
+=item B<OSSL_CMP_OPT_KEEP_ALIVE>
+
+        If the given value is 0 then HTTP connections are not kept open
+        after receiving a response, which is the default behavior for HTTP 1.0.
+        If the value is 1 or 2 then persistent connections are requested.
+        If the value is 2 then persistent connections are required,
+        i.e., in case the server does not grant them an error occurs.
+        The default value is 1: prefer to keep the connection open.
+
 =item B<OSSL_CMP_OPT_MSG_TIMEOUT>
 
         Number of seconds (or 0 for infinite) a CMP message round trip is
-        allowed to take before a timeout error is returned. Default is 120.
+        allowed to take before a timeout error is returned.
+        Default is to use the B<OSSL_CMP_OPT_MSG_TIMEOUT> setting.
 
 =item B<OSSL_CMP_OPT_TOTAL_TIMEOUT>
 
@@ -313,7 +323,7 @@ OSSL_CMP_OPT_LOG_VERBOSITY context option to the given level.
 
 OSSL_CMP_CTX_print_errors() outputs any entries in the OpenSSL error queue. It
 is similar to L<ERR_print_errors_cb(3)> but uses the CMP log callback function
-if set in the C<ctx> for uniformity with CMP logging if given. Otherwise it uses
+if set in the I<ctx> for uniformity with CMP logging if given. Otherwise it uses
 L<ERR_print_errors(3)> to print to STDERR (unless OPENSSL_NO_STDIO is defined).
 
 OSSL_CMP_CTX_set1_serverPath() sets the HTTP path of the CMP server on the host,
@@ -437,9 +447,11 @@ Therefore the public key of this I<cert> must correspond to
 the private key set before or thereafter via OSSL_CMP_CTX_set1_pkey().
 When using signature-based protection of CMP request messages
 this CMP signer certificate will be included first in the extraCerts field.
+It serves as fallback reference certificate, see OSSL_CMP_CTX_set1_oldCert().
 The subject of this I<cert> will be used as the sender field of outgoing
 messages, while the subject of any cert set via OSSL_CMP_CTX_set1_oldCert()
 and any value set via OSSL_CMP_CTX_set1_subjectName() are used as fallback.
+
 The I<cert> argument may be NULL to clear the entry.
 
 OSSL_CMP_CTX_build_cert_chain() builds a certificate chain for the CMP signer
@@ -548,7 +560,8 @@ OSSL_CMP_CTX_set1_oldCert() sets the old certificate to be updated in
 Key Update Requests (KUR) or to be revoked in Revocation Requests (RR).
 It must be given for RR, else it defaults to the CMP signer certificate.
 The reference certificate determined in this way, if any, is also used for
-deriving default subject DN and Subject Alternative Names for IR, CR, and KUR.
+deriving default subject DN and Subject Alternative Names and the
+default issuer entry in the requested certificate template of IR/CR/KUR.
 The subject of the reference certificate is used as the sender field value
 in CMP message headers.
 Its issuer is used as default recipient in CMP message headers.
@@ -599,6 +612,7 @@ OSSL_CMP_CTX_set_certConf_cb_arg(), or NULL if unset.
 
 OSSL_CMP_CTX_get_status() returns the PKIstatus from the last received
 CertRepMessage or Revocation Response or error message, or -1 if unset.
+For server contexts it returns -2 if a transaction is open, else -1.
 
 OSSL_CMP_CTX_get0_statusString() returns the statusString from the last received
 CertRepMessage or Revocation Response or error message, or NULL if unset.
@@ -742,7 +756,7 @@ The OpenSSL CMP support was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

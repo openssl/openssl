@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -130,7 +130,7 @@ sub load {
         s|#.*||;
         next if /^\s*$/;
 
-        my $item = OpenSSL::Ordinals::Item->new(from => $_);
+        my $item = OpenSSL::Ordinals::Item->new(source => $filename, from => $_);
 
         my $num = $item->number();
         if ($num eq '?') {
@@ -179,7 +179,7 @@ sub renumber {
     my $self = shift;
 
     my $max_assigned = 0;
-    foreach ($self->items(by => by_number())) {
+    foreach ($self->items(sort => by_number())) {
         $_->number($_->intnum()) if $_->number() =~ m|^\?|;
         if ($max_assigned < $_->number()) {
             $max_assigned = $_->number();
@@ -190,34 +190,49 @@ sub renumber {
 
 =item B<< $ordinals->rewrite >>
 
+=item B<< $ordinals->rewrite >>, I<%options>
+
 If an ordinals file has been loaded, it gets rewritten with the data from
 the current work database.
+
+If there are more arguments, they are used as I<%options> with the
+same semantics as for B<< $ordinals->items >> described below, apart
+from B<sort>, which is forbidden here.
 
 =cut
 
 sub rewrite {
     my $self = shift;
+    my %opts = @_;
 
-    $self->write($self->{filename});
+    $self->write($self->{filename}, %opts);
 }
 
 =item B<< $ordinals->write FILENAME >>
 
+=item B<< $ordinals->write FILENAME >>, I<%options>
+
 Writes the current work database data to the ordinals file FILENAME.
 This also validates the data, see B<< $ordinals->validate >> below.
+
+If there are more arguments, they are used as I<%options> with the
+same semantics as for B<< $ordinals->items >> described next, apart
+from B<sort>, which is forbidden here.
 
 =cut
 
 sub write {
     my $self = shift;
     my $filename = shift;
+    my %opts = @_;
 
     croak "Undefined filename" unless defined($filename);
+    croak "The 'sort' option is not allowed" if $opts{sort};
 
     $self->validate();
 
     open F, '>', $filename or croak "Unable to open $filename";
-    foreach ($self->items(by => by_number())) {
+    foreach ($self->items(%opts, sort => by_number())) {
         print F $_->to_string(),"\n";
     }
     close F;
@@ -284,8 +299,10 @@ sub items {
 # Put an array of items back into the object after having checked consistency
 # If there are exactly two items:
 # - They MUST have the same number
+# - They MUST have the same version
 # - For platforms, both MUST hold the same ones, but with opposite values
 # - For features, both MUST hold the same ones.
+# - They MUST NOT have identical name, type, numeral, version, platforms, and features
 # If there's just one item, just put it in the slot of its number
 # In all other cases, something is wrong
 sub _putback {
@@ -293,8 +310,8 @@ sub _putback {
     my @items = @_;
 
     if (scalar @items < 1 || scalar @items > 2) {
-        croak "Wrong number of items: ", scalar @items, " : ",
-            join(", ", map { $_->name() } @items), "\n";
+        croak "Wrong number of items: ", scalar @items, "\n ",
+            join("\n ", map { $_->{source}.": ".$_->name() } @items), "\n";
     }
     if (scalar @items == 2) {
         # Collect some data
@@ -327,6 +344,13 @@ sub _putback {
             $items[0]->name(), " and ", $items[1]->name(), ":",
             join(", ", sort keys %features), "\n"
             if %features;
+
+        # Check for in addition identical name, type, and platforms
+        croak "Duplicate entries for ".$items[0]->name()." from ".
+            $items[0]->source()." and ".$items[1]->source()."\n"
+            if $items[0]->name() eq $items[1]->name()
+            && $items[0]->type() eq $items[2]->type()
+            && $items[0]->platforms() eq $items[1]->platforms();
 
         # Check that all platforms exist in both items, and have opposite values
         my @platforms = ( { $items[0]->platforms() },
@@ -392,7 +416,6 @@ sub _parse_features {
         if ($def =~ m{^ZLIB$})                      { $features{$&} =  $op; }
         if ($def =~ m{^OPENSSL_USE_})               { $features{$'} =  $op; }
         if ($def =~ m{^OPENSSL_NO_})                { $features{$'} = !$op; }
-        if ($def =~ m{^DEPRECATEDIN_(.*)$})         { $features{$&} = !$op; }
     }
 
     return %features;
@@ -410,9 +433,10 @@ sub _adjust_version {
     return $version;
 }
 
-=item B<< $ordinals->add NAME, TYPE, LIST >>
+=item B<< $ordinals->add SOURCE, NAME, TYPE, LIST >>
 
-Adds a new item named NAME with the type TYPE, and a set of C macros in
+Adds a new item from file SOURCE named NAME with the type TYPE,
+and a set of C macros in
 LIST that are expected to be defined or undefined to use this symbol, if
 any.  For undefined macros, they each must be prefixed with a C<!>.
 
@@ -424,6 +448,7 @@ If it's entirely new, it will get a '?' and the current default version.
 
 sub add {
     my $self = shift;
+    my $source = shift;         # file where item was defined
     my $name = shift;
     my $type = shift;           # FUNCTION or VARIABLE
     my @defs = @_;              # Macros from #ifdef and #ifndef
@@ -448,7 +473,8 @@ sub add {
     @items = grep { $_->exists() } @items;
 
     my $new_item =
-        OpenSSL::Ordinals::Item->new( name          => $name,
+        OpenSSL::Ordinals::Item->new( source        => $source,
+                                      name          => $name,
                                       type          => $type,
                                       number        => $number,
                                       intnum        => $intnum,
@@ -471,15 +497,15 @@ sub add {
 
     # For the caller to show
     my @returns = ( $new_item );
-    push @returns, $self->add_alias($alias->{name}, $name, @{$alias->{defs}})
+    push @returns, $self->add_alias($source, $alias->{name}, $name, @{$alias->{defs}})
         if defined $alias;
     return @returns;
 }
 
-=item B<< $ordinals->add_alias ALIAS, NAME, LIST >>
+=item B<< $ordinals->add_alias SOURCE, ALIAS, NAME, LIST >>
 
-Adds an alias ALIAS for the symbol NAME, and a set of C macros in LIST
-that are expected to be defined or undefined to use this symbol, if any.
+Adds an alias ALIAS for the symbol NAME from file SOURCE, and a set of C macros
+in LIST that are expected to be defined or undefined to use this symbol, if any.
 For undefined macros, they each must be prefixed with a C<!>.
 
 If this symbol already exists in loaded data, it will be rewritten using
@@ -490,15 +516,16 @@ that the symbol NAME shows up.
 
 sub add_alias {
     my $self = shift;
+    my $source = shift;
     my $alias = shift;          # This is the alias being added
     my $name  = shift;          # For this name (assuming it exists)
     my @defs = @_;              # Platform attributes for the alias
 
     # call signature for debug output
     my $verbsig =
-        "add_alias('$alias' , '$name' , [ " . join(', ', @defs) . " ])";
+        "add_alias('$source' , '$alias' , '$name' , [ " . join(', ', @defs) . " ])";
 
-    croak "You're kidding me..." if $alias eq $name;
+    croak "You're kidding me... $alias == $name" if $alias eq $name;
 
     my %platforms = _parse_platforms(@defs);
     my %features = _parse_features(@defs);
@@ -519,7 +546,8 @@ sub add_alias {
     if (scalar @items == 0) {
         # The item we want to alias for doesn't exist yet, so we cache the
         # alias and hope the item we're making an alias of shows up later
-        $self->{aliases}->{$name} = { name => $alias, defs => [ @defs ] };
+        $self->{aliases}->{$name} = { source => $source,
+                                      name => $alias, defs => [ @defs ] };
 
         print STDERR "DEBUG[",__PACKAGE__,":add_alias] $verbsig\n",
             "\tSet future alias $alias => $name\n"
@@ -539,6 +567,7 @@ sub add_alias {
         my $number =
             $items[0]->number() =~ m|^\?| ? '?+' : $items[0]->number();
         my $alias_item = OpenSSL::Ordinals::Item->new(
+            source        => $source,
             name          => $alias,
             type          => $items[0]->type(),
             number        => $number,
@@ -720,9 +749,9 @@ Available options are:
 
 =over 4
 
-=item B<< from => STRING >>
+=item B<< source => FILENAME >>, B<< from => STRING >>
 
-This will create a new item, filled with data coming from STRING.
+This will create a new item from FILENAME, filled with data coming from STRING.
 
 STRING must conform to the following EBNF description:
 
@@ -743,8 +772,8 @@ STRING must conform to the following EBNF description:
 
 (C<letter> and C<digit> are assumed self evident)
 
-=item B<< name => STRING >>, B<< number => NUMBER >>, B<< version => STRING >>,
-      B<< exists => BOOLEAN >>, B<< type => STRING >>,
+=item B<< source => FILENAME >>, B<< name => STRING >>, B<< number => NUMBER >>,
+      B<< version => STRING >>, B<< exists => BOOLEAN >>, B<< type => STRING >>,
       B<< platforms => HASHref >>, B<< features => LISTref >>
 
 This will create a new item with data coming from the arguments.
@@ -782,7 +811,8 @@ sub new {
                                  /x );
 
         my @b = split /:/, $a[3];
-        %opts = ( name          => $a[0],
+        %opts = ( source        => $opts{source},
+                  name          => $a[0],
                   number        => $a[1],
                   version       => $a[2],
                   exists        => $b[0] eq 'EXIST',
@@ -798,7 +828,8 @@ sub new {
         my $version = $opts{version};
         $version =~ s|_|.|g;
 
-        $instance = { name      => $opts{name},
+        $instance = { source    => $opts{source},
+                      name      => $opts{name},
                       type      => $opts{type},
                       number    => $opts{number},
                       intnum    => $opts{intnum},
@@ -832,7 +863,7 @@ handled by the caller.  The caller may change this to an actual number.
 =item B<< $item->version >> (read-only)
 
 The version number for this item.  Please note that these version numbers
-have underscore (C<_>) as a separator the the version parts.
+have underscore (C<_>) as a separator for the version parts.
 
 =item B<< $item->exists >> (read-only)
 

@@ -38,11 +38,8 @@ B<openssl> B<enc>|I<cipher>
 [B<-v>]
 [B<-debug>]
 [B<-none>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
-
-=for openssl ifdef z engine ciphers
 
 B<openssl> I<cipher> [B<...>]
 
@@ -56,6 +53,10 @@ either by itself or in addition to the encryption or decryption.
 =head1 OPTIONS
 
 =over 4
+
+=item B<-I<cipher>>
+
+The cipher to use.
 
 =item B<-help>
 
@@ -80,7 +81,7 @@ The output filename, standard output by default.
 =item B<-pass> I<arg>
 
 The password source. For more information about the format of I<arg>
-see L<openssl(1)/Pass Phrase Options>.
+see L<openssl-passphrase-options(1)>.
 
 =item B<-e>
 
@@ -144,6 +145,8 @@ encrypting, this is the default.
 =item B<-S> I<salt>
 
 The actual salt to use: this must be represented as a string of hex digits.
+If this option is used while encrypting, the same exact value will be needed
+again during decryption.
 
 =item B<-K> I<key>
 
@@ -188,8 +191,8 @@ Debug the BIOs used for I/O.
 
 =item B<-z>
 
-Compress or decompress clear text using zlib before encryption or after
-decryption. This option exists only if OpenSSL with compiled with zlib
+Compress or decompress encrypted data using zlib after encryption or before
+decryption. This option exists only if OpenSSL was compiled with the zlib
 or zlib-dynamic option.
 
 =item B<-none>
@@ -231,9 +234,11 @@ OpenSSL.
 Without the B<-salt> option it is possible to perform efficient dictionary
 attacks on the password and to attack stream cipher encrypted data. The reason
 for this is that without the salt the same password always generates the same
-encryption key. When the salt is being used the first eight bytes of the
-encrypted data are reserved for the salt: it is generated at random when
-encrypting a file and read from the encrypted file when it is decrypted.
+encryption key.
+
+When the salt is generated at random (that means when encrypting using a
+passphrase without explicit salt given using B<-S> option), the first bytes
+of the encrypted data are reserved to store the salt for later decrypting.
 
 Some of the ciphers do not have large keys and others have security
 implications if not used correctly. A beginner is advised to just use
@@ -256,7 +261,7 @@ Blowfish and RC5 algorithms use a 128 bit key.
 Note that some of these ciphers can be disabled at compile time
 and some are available only if an appropriate engine is configured
 in the configuration file. The output when invoking this command
-with the B<-ciphers> option (that is C<openssl enc -ciphers>) is
+with the B<-list> option (that is C<openssl enc -list>) is
 a list of ciphers, supported by your version of OpenSSL, including
 ones provided by configured engines.
 
@@ -430,7 +435,7 @@ The B<-ciphers> and B<-engine> options were deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

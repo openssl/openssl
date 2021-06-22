@@ -1,5 +1,5 @@
 # -*- mode: perl; -*-
-# Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -15,20 +15,26 @@ use warnings;
 package ssltests;
 use OpenSSL::Test::Utils;
 
+our $fips_mode;
+
 our @tests = ();
 
 foreach my $sctp ("No", "Yes")
 {
     next if disabled("sctp") && $sctp eq "Yes";
+    next if disabled("dtls1_2") && $fips_mode;
 
     my $suffix = ($sctp eq "No") ? "" : "-sctp";
     our @tests_basic = (
         {
             name => "renegotiate-client-no-resume".$suffix,
             server => {
+                "CipherString" => 'DEFAULT:@SECLEVEL=0',
                 "Options" => "NoResumptionOnRenegotiation"
             },
-            client => {},
+            client => {
+                "CipherString" => 'DEFAULT:@SECLEVEL=0'
+            },
             test => {
                 "Method" => "DTLS",
                 "UseSCTP" => $sctp,
@@ -39,8 +45,12 @@ foreach my $sctp ("No", "Yes")
         },
         {
             name => "renegotiate-client-resume".$suffix,
-            server => {},
-            client => {},
+            server => {
+                "CipherString" => 'DEFAULT:@SECLEVEL=0'
+            },
+            client => {
+                "CipherString" => 'DEFAULT:@SECLEVEL=0'
+            },
             test => {
                 "Method" => "DTLS",
                 "UseSCTP" => $sctp,
@@ -60,8 +70,12 @@ foreach my $sctp ("No", "Yes")
         # and if so, what to?
         {
             name => "renegotiate-server-resume".$suffix,
-            server => {},
-            client => {},
+            server => {
+                "CipherString" => 'DEFAULT:@SECLEVEL=0'
+            },
+            client => {
+                "CipherString" => 'DEFAULT:@SECLEVEL=0'
+            },
             test => {
                 "Method" => "DTLS",
                 "UseSCTP" => $sctp,
@@ -75,10 +89,12 @@ foreach my $sctp ("No", "Yes")
             server => {
                 "VerifyCAFile" => test_pem("root-cert.pem"),
                 "VerifyMode" => "Require",
+                "CipherString" => 'DEFAULT:@SECLEVEL=0'
             },
             client => {
                 "Certificate" => test_pem("ee-client-chain.pem"),
                 "PrivateKey"  => test_pem("ee-key.pem"),
+                "CipherString" => 'DEFAULT:@SECLEVEL=0'
             },
             test => {
                 "Method" => "DTLS",
@@ -93,10 +109,12 @@ foreach my $sctp ("No", "Yes")
             server => {
                 "VerifyCAFile" => test_pem("root-cert.pem"),
                 "VerifyMode" => "Once",
+                "CipherString" => 'DEFAULT:@SECLEVEL=0'
             },
             client => {
                 "Certificate" => test_pem("ee-client-chain.pem"),
                 "PrivateKey"  => test_pem("ee-key.pem"),
+                "CipherString" => 'DEFAULT:@SECLEVEL=0'
             },
             test => {
                 "Method" => "DTLS",

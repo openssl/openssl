@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -15,19 +15,26 @@
  */
 
 /*-
- * allow double space  in format-tagged multi-line comment
+ * allow extra SPC in format-tagged multi-line comment
  */
 int f(void) /*
              * trailing multi-line comment
              */
 {
-    if (ctx == NULL) { /* non-leading intra-line comment */
+    if (ctx == NULL) {    /* non-leading end-of-line comment */
         if (/* comment after '(' */ pem_name != NULL /* comment before ')' */)
             /* entire-line comment indent usually like for the following line */
             return NULL; /* hanging indent also for this line after comment */
         /* leading comment has same indentation as normal code */ stmt;
         /* entire-line comment may have same indent as normal code */
     }
+
+    for (;;)
+        ;
+    for (i = 0;;)
+        ;
+    for (i = 0; i < 1;)
+        ;
 
 #if X
     if (1) /* bad style: just part of control structure depends on #if */
@@ -143,6 +150,10 @@ int f(void) /*
         hanging_stmt;
 }
 
+/* should not trigger: constant on LHS of comparison or assignment operator */
+X509 *x509 = NULL;
+int y = a + 1 < b;
+
 const OPTIONS passwd_options[] = {
     {"aixmd5", OPT_AIXMD5, '-', "AIX MD5-based password algorithm"},
 #if !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_DEPRECATED_3_0)
@@ -235,9 +246,9 @@ struct s_type
 
 #define X  1          + 1
 #define Y  /* .. */ 2 + 2
-#define Z  3          + 3
+#define Z  3          + 3 * (*a++)
 
-static varref cmp_vars[] = { /* comment */
+static varref cmp_vars[] = { /* comment.  comment?  comment!  */
     {&opt_config}, {&opt_section},
 
     {&opt_server}, {&opt_proxy}, {&opt_path},
@@ -262,11 +273,12 @@ static varref cmp_vars[] = { /* comment */
         /* comment */ \
     }
 
-/* 'struct' in function header */
-static int f(struct pem_pass_data *pass_data)
+union un var; /* struct/union/enum in variable type */
+struct provider_store_st *f() /* struct/union/enum in function return type */
 {
-    if (pass_data == NULL)
-        return 0;
+}
+static void f(struct pem_pass_data *data) /* struct/union/enum in arg list */
+{
 }
 
 static void *fun(void)
@@ -275,10 +287,17 @@ static void *fun(void)
         /* comment */
         return NULL;
 
+label0:
+ label1: /* allow special indent 1 for label at outermost level in body */
     do {
+    label2:
         size_t available_len, data_len;
         const char *curr = txt, *next = txt;
         char *tmp;
+
+        {
+        label3:
+        }
     } while (1);
 
     char *intraline_string_with_comment_delimiters_and_dbl_space = "1  /*1";

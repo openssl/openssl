@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -205,8 +205,10 @@ static int test_default_cipherlist_explicit(void)
 {
     SETUP_CIPHERLIST_TEST_FIXTURE();
     if (!TEST_true(SSL_CTX_set_cipher_list(fixture->server, "DEFAULT"))
-            || !TEST_true(SSL_CTX_set_cipher_list(fixture->client, "DEFAULT")))
+            || !TEST_true(SSL_CTX_set_cipher_list(fixture->client, "DEFAULT"))) {
         tear_down(fixture);
+        fixture = NULL;
+    }
     EXECUTE_CIPHERLIST_TEST();
     return result;
 }

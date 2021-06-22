@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -32,7 +32,7 @@ struct dsa_st {
     /* functional reference if 'meth' is ENGINE-provided */
     ENGINE *engine;
     CRYPTO_RWLOCK *lock;
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
 
     /* Provider data */
     size_t dirty_cnt; /* If any key material changes, increment this */
@@ -69,4 +69,4 @@ struct dsa_method {
     int (*dsa_keygen) (DSA *dsa);
 };
 
-DSA_SIG *dsa_do_sign_int(const unsigned char *dgst, int dlen, DSA *dsa);
+DSA_SIG *ossl_dsa_do_sign_int(const unsigned char *dgst, int dlen, DSA *dsa);

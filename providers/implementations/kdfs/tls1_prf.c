@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -52,12 +52,12 @@
 #include <openssl/kdf.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
+#include <openssl/proverr.h>
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
 #include "crypto/evp.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
 #include "e_os.h"
@@ -131,12 +131,12 @@ static void kdf_tls1_prf_reset(void *vctx)
     ctx->provctx = provctx;
 }
 
-static int kdf_tls1_prf_derive(void *vctx, unsigned char *key,
-                               size_t keylen)
+static int kdf_tls1_prf_derive(void *vctx, unsigned char *key, size_t keylen,
+                               const OSSL_PARAM params[])
 {
     TLS1_PRF *ctx = (TLS1_PRF *)vctx;
 
-    if (!ossl_prov_is_running())
+    if (!ossl_prov_is_running() || !kdf_tls1_prf_set_ctx_params(ctx, params))
         return 0;
 
     if (ctx->P_hash == NULL) {
@@ -166,7 +166,10 @@ static int kdf_tls1_prf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
     TLS1_PRF *ctx = vctx;
-    OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
+
+    if (params == NULL)
+        return 1;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_DIGEST)) != NULL) {
         if (strcasecmp(p->data, SN_md5_sha1) == 0) {
@@ -211,7 +214,8 @@ static int kdf_tls1_prf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *kdf_tls1_prf_settable_ctx_params(ossl_unused void *ctx)
+static const OSSL_PARAM *kdf_tls1_prf_settable_ctx_params(
+        ossl_unused void *ctx, ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_settable_ctx_params[] = {
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_PROPERTIES, NULL, 0),
@@ -232,7 +236,8 @@ static int kdf_tls1_prf_get_ctx_params(void *vctx, OSSL_PARAM params[])
     return -2;
 }
 
-static const OSSL_PARAM *kdf_tls1_prf_gettable_ctx_params(ossl_unused void *ctx)
+static const OSSL_PARAM *kdf_tls1_prf_gettable_ctx_params(
+        ossl_unused void *ctx, ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
         OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL),
@@ -241,7 +246,7 @@ static const OSSL_PARAM *kdf_tls1_prf_gettable_ctx_params(ossl_unused void *ctx)
     return known_gettable_ctx_params;
 }
 
-const OSSL_DISPATCH kdf_tls1_prf_functions[] = {
+const OSSL_DISPATCH ossl_kdf_tls1_prf_functions[] = {
     { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))kdf_tls1_prf_new },
     { OSSL_FUNC_KDF_FREECTX, (void(*)(void))kdf_tls1_prf_free },
     { OSSL_FUNC_KDF_RESET, (void(*)(void))kdf_tls1_prf_reset },
@@ -287,16 +292,10 @@ static int tls1_prf_P_hash(EVP_MAC_CTX *ctx_init,
     unsigned char Ai[EVP_MAX_MD_SIZE];
     size_t Ai_len;
     int ret = 0;
-    OSSL_PARAM params[2], *p = params;
 
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
-                                             (void *)sec, sec_len);
-    *p = OSSL_PARAM_construct_end();
-    if (!EVP_MAC_CTX_set_params(ctx_init, params))
+    if (!EVP_MAC_init(ctx_init, sec, sec_len, NULL))
         goto err;
-    if (!EVP_MAC_init(ctx_init))
-        goto err;
-    chunk = EVP_MAC_size(ctx_init);
+    chunk = EVP_MAC_CTX_get_mac_size(ctx_init);
     if (chunk == 0)
         goto err;
     /* A(0) = seed */

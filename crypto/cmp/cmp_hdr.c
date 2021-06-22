@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -50,7 +50,7 @@ ASN1_OCTET_STRING *OSSL_CMP_HDR_get0_transactionID(const
                                                    OSSL_CMP_PKIHEADER *hdr)
 {
     if (hdr == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return NULL;
     }
     return hdr->transactionID;
@@ -66,21 +66,17 @@ ASN1_OCTET_STRING *ossl_cmp_hdr_get0_senderNonce(const OSSL_CMP_PKIHEADER *hdr)
 ASN1_OCTET_STRING *OSSL_CMP_HDR_get0_recipNonce(const OSSL_CMP_PKIHEADER *hdr)
 {
     if (hdr == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return NULL;
     }
     return hdr->recipNonce;
 }
 
+/* a NULL-DN as an empty sequence of RDNs */
 int ossl_cmp_general_name_is_NULL_DN(GENERAL_NAME *name)
 {
-    X509_NAME *null = X509_NAME_new();
-    int res = name == NULL || null == NULL
-        || (name->type == GEN_DIRNAME
-                && X509_NAME_cmp(name->d.directoryName, null) == 0);
-
-    X509_NAME_free(null);
-    return res;
+    return name == NULL
+        || (name->type == GEN_DIRNAME && IS_NULL_DN(name->d.directoryName));
 }
 
 /* assign to *tgt a copy of src (which may be NULL to indicate an empty DN) */
@@ -146,8 +142,8 @@ static int set_random(ASN1_OCTET_STRING **tgt, OSSL_CMP_CTX *ctx, size_t len)
     unsigned char *bytes = OPENSSL_malloc(len);
     int res = 0;
 
-    if (bytes == NULL || RAND_bytes_ex(ctx->libctx, bytes, len) <= 0)
-        CMPerr(0, CMP_R_FAILURE_OBTAINING_RANDOM);
+    if (bytes == NULL || RAND_bytes_ex(ctx->libctx, bytes, len, 0) <= 0)
+        ERR_raise(ERR_LIB_CMP, CMP_R_FAILURE_OBTAINING_RANDOM);
     else
         res = ossl_cmp_asn1_octet_string_set1_bytes(tgt, bytes, len);
     OPENSSL_free(bytes);
@@ -273,9 +269,20 @@ int ossl_cmp_hdr_has_implicitConfirm(const OSSL_CMP_PKIHEADER *hdr)
  */
 int ossl_cmp_hdr_set_transactionID(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
 {
-    if (ctx->transactionID == NULL
-        && !set_random(&ctx->transactionID, ctx, OSSL_CMP_TRANSACTIONID_LENGTH))
-        return 0;
+    if (ctx->transactionID == NULL) {
+        char *tid;
+
+        if (!set_random(&ctx->transactionID, ctx,
+                        OSSL_CMP_TRANSACTIONID_LENGTH))
+            return 0;
+        tid = OPENSSL_buf2hexstr(ctx->transactionID->data,
+                                 ctx->transactionID->length);
+        if (tid != NULL)
+            ossl_cmp_log1(DEBUG, ctx,
+                          "Starting new transaction with ID=%s", tid);
+        OPENSSL_free(tid);
+    }
+
     return ossl_cmp_asn1_octet_string_set1(&hdr->transactionID,
                                            ctx->transactionID);
 }

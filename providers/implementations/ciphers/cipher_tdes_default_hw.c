@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -19,8 +19,9 @@
 #define ks2 tks.ks[1]
 #define ks3 tks.ks[2]
 
-static int cipher_hw_tdes_ede2_initkey(PROV_CIPHER_CTX *ctx,
-                                       const unsigned char *key, size_t keylen)
+static int ossl_cipher_hw_tdes_ede2_initkey(PROV_CIPHER_CTX *ctx,
+                                            const unsigned char *key,
+                                            size_t keylen)
 {
     PROV_TDES_CTX *tctx = (PROV_TDES_CTX *)ctx;
     DES_cblock *deskey = (DES_cblock *)key;
@@ -44,8 +45,8 @@ static int cipher_hw_tdes_ede2_initkey(PROV_CIPHER_CTX *ctx,
     return 1;
 }
 
-static int cipher_hw_tdes_ofb(PROV_CIPHER_CTX *ctx, unsigned char *out,
-                              const unsigned char *in, size_t inl)
+static int ossl_cipher_hw_tdes_ofb(PROV_CIPHER_CTX *ctx, unsigned char *out,
+                                   const unsigned char *in, size_t inl)
 {
     PROV_TDES_CTX *tctx = (PROV_TDES_CTX *)ctx;
     int num = ctx->num;
@@ -65,8 +66,8 @@ static int cipher_hw_tdes_ofb(PROV_CIPHER_CTX *ctx, unsigned char *out,
     return 1;
 }
 
-static int cipher_hw_tdes_cfb(PROV_CIPHER_CTX *ctx, unsigned char *out,
-                              const unsigned char *in, size_t inl)
+static int ossl_cipher_hw_tdes_cfb(PROV_CIPHER_CTX *ctx, unsigned char *out,
+                                   const unsigned char *in, size_t inl)
 {
     PROV_TDES_CTX *tctx = (PROV_TDES_CTX *)ctx;
     int num = ctx->num;
@@ -93,14 +94,14 @@ static int cipher_hw_tdes_cfb(PROV_CIPHER_CTX *ctx, unsigned char *out,
  * Although we have a CFB-r implementation for 3-DES, it doesn't pack the
  * right way, so wrap it here
  */
-static int cipher_hw_tdes_cfb1(PROV_CIPHER_CTX *ctx, unsigned char *out,
-                               const unsigned char *in, size_t inl)
+static int ossl_cipher_hw_tdes_cfb1(PROV_CIPHER_CTX *ctx, unsigned char *out,
+                                    const unsigned char *in, size_t inl)
 {
     PROV_TDES_CTX *tctx = (PROV_TDES_CTX *)ctx;
     size_t n;
     unsigned char c[1], d[1];
 
-    if ((ctx->flags & EVP_CIPH_FLAG_LENGTH_BITS) == 0)
+    if (ctx->use_bits == 0)
         inl *= 8;
     for (n = 0; n < inl; ++n) {
         c[0] = (in[n / 8] & (1 << (7 - n % 8))) ? 0x80 : 0;
@@ -114,8 +115,8 @@ static int cipher_hw_tdes_cfb1(PROV_CIPHER_CTX *ctx, unsigned char *out,
     return 1;
 }
 
-static int cipher_hw_tdes_cfb8(PROV_CIPHER_CTX *ctx, unsigned char *out,
-                               const unsigned char *in, size_t inl)
+static int ossl_cipher_hw_tdes_cfb8(PROV_CIPHER_CTX *ctx, unsigned char *out,
+                                    const unsigned char *in, size_t inl)
 {
     PROV_TDES_CTX *tctx = (PROV_TDES_CTX *)ctx;
 

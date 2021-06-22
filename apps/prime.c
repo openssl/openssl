@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,7 +14,7 @@
 #include <openssl/bn.h>
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_HEX, OPT_GENERATE, OPT_BITS, OPT_SAFE, OPT_CHECKS,
     OPT_PROV_ENUM
 } OPTION_CHOICE;
@@ -81,16 +81,14 @@ opthelp:
             break;
         }
     }
+
+    /* Optional arguments are numbers to check. */
     argc = opt_num_rest();
     argv = opt_rest();
-
     if (generate) {
-        if (argc != 0) {
-            BIO_printf(bio_err, "Extra arguments given.\n");
+        if (argc != 0)
             goto opthelp;
-        }
     } else if (argc == 0) {
-        BIO_printf(bio_err, "%s: No prime specified\n", prog);
         goto opthelp;
     }
 

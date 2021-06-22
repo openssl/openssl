@@ -31,8 +31,7 @@ done
 if [ -z "$TARFILE" ]; then TARFILE="$NAME.tar"; fi
 
 # This counts on .gitattributes to specify what files should be ignored
-git archive --worktree-attributes --format=tar --prefix="$NAME/" -v HEAD \
-    | gzip -9 > "$TARFILE.gz"
+git archive --worktree-attributes -9 --prefix="$NAME/" -o $TARFILE.gz -v HEAD
 
 # Good old way to ensure we display an absolute path
 td=`dirname $TARFILE`

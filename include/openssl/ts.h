@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -266,6 +266,7 @@ typedef struct TS_resp_ctx TS_RESP_CTX;
 
 /* Creates a response context that can be used for generating responses. */
 TS_RESP_CTX *TS_RESP_CTX_new(void);
+TS_RESP_CTX *TS_RESP_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq);
 void TS_RESP_CTX_free(TS_RESP_CTX *ctx);
 
 /* This parameter must be set. */
@@ -486,7 +487,7 @@ int TS_CONF_set_def_policy(CONF *conf, const char *section,
 int TS_CONF_set_policies(CONF *conf, const char *section, TS_RESP_CTX *ctx);
 int TS_CONF_set_digests(CONF *conf, const char *section, TS_RESP_CTX *ctx);
 int TS_CONF_set_accuracy(CONF *conf, const char *section, TS_RESP_CTX *ctx);
-int TS_CONF_set_clock_precision_digits(CONF *conf, const char *section,
+int TS_CONF_set_clock_precision_digits(const CONF *conf, const char *section,
                                        TS_RESP_CTX *ctx);
 int TS_CONF_set_ordering(CONF *conf, const char *section, TS_RESP_CTX *ctx);
 int TS_CONF_set_tsa_name(CONF *conf, const char *section, TS_RESP_CTX *ctx);

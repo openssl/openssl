@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -230,7 +230,7 @@ BN_MONT_CTX *BN_MONT_CTX_new(void)
     BN_MONT_CTX *ret;
 
     if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL) {
-        BNerr(BN_F_BN_MONT_CTX_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BN, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -430,7 +430,8 @@ BN_MONT_CTX *BN_MONT_CTX_set_locked(BN_MONT_CTX **pmont, CRYPTO_RWLOCK *lock,
 {
     BN_MONT_CTX *ret;
 
-    CRYPTO_THREAD_read_lock(lock);
+    if (!CRYPTO_THREAD_read_lock(lock))
+        return NULL;
     ret = *pmont;
     CRYPTO_THREAD_unlock(lock);
     if (ret)
@@ -453,7 +454,11 @@ BN_MONT_CTX *BN_MONT_CTX_set_locked(BN_MONT_CTX **pmont, CRYPTO_RWLOCK *lock,
     }
 
     /* The locked compare-and-set, after the local work is done. */
-    CRYPTO_THREAD_write_lock(lock);
+    if (!CRYPTO_THREAD_write_lock(lock)) {
+        BN_MONT_CTX_free(ret);
+        return NULL;
+    }
+
     if (*pmont) {
         BN_MONT_CTX_free(ret);
         ret = *pmont;

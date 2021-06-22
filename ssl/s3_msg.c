@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -21,7 +21,7 @@ int ssl3_do_change_cipher_spec(SSL *s)
     if (s->s3.tmp.key_block == NULL) {
         if (s->session == NULL || s->session->master_key_length == 0) {
             /* might happen if dtls1_read_bytes() calls this */
-            SSLerr(SSL_F_SSL3_DO_CHANGE_CIPHER_SPEC, SSL_R_CCS_RECEIVED_EARLY);
+            ERR_raise(ERR_LIB_SSL, SSL_R_CCS_RECEIVED_EARLY);
             return 0;
         }
 
@@ -51,6 +51,8 @@ int ssl3_send_alert(SSL *s, int level, int desc)
         desc = SSL_AD_HANDSHAKE_FAILURE; /* SSL 3.0 does not have
                                           * protocol_version alerts */
     if (desc < 0)
+        return -1;
+    if (s->shutdown & SSL_SENT_SHUTDOWN && desc != SSL_AD_CLOSE_NOTIFY)
         return -1;
     /* If a fatal one, remove from cache */
     if ((level == SSL3_AL_FATAL) && (s->session != NULL))

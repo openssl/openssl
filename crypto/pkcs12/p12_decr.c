@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,10 +16,11 @@
  * Encrypt/Decrypt a buffer based on password and algor, result in a
  * OPENSSL_malloc'ed buffer
  */
-unsigned char *PKCS12_pbe_crypt(const X509_ALGOR *algor,
-                                const char *pass, int passlen,
-                                const unsigned char *in, int inlen,
-                                unsigned char **data, int *datalen, int en_de)
+unsigned char *PKCS12_pbe_crypt_ex(const X509_ALGOR *algor,
+                                   const char *pass, int passlen,
+                                   const unsigned char *in, int inlen,
+                                   unsigned char **data, int *datalen, int en_de,
+                                   OSSL_LIB_CTX *libctx, const char *propq)
 {
     unsigned char *out = NULL;
     int outlen, i;
@@ -27,17 +28,14 @@ unsigned char *PKCS12_pbe_crypt(const X509_ALGOR *algor,
     int max_out_len, mac_len = 0;
 
     if (ctx == NULL) {
-        PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
     /* Process data */
-    if (!EVP_PBE_CipherInit(algor->algorithm, pass, passlen,
-                            algor->parameter, ctx, en_de)) {
-        PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT,
-                  PKCS12_R_PKCS12_ALGOR_CIPHERINIT_ERROR);
+    if (!EVP_PBE_CipherInit_ex(algor->algorithm, pass, passlen,
+                               algor->parameter, ctx, en_de, libctx, propq))
         goto err;
-    }
 
     /*
      * GOST algorithm specifics:
@@ -45,39 +43,39 @@ unsigned char *PKCS12_pbe_crypt(const X509_ALGOR *algor,
      * It's appended to encrypted text on encrypting
      * MAC should be processed on decrypting separately from plain text
      */
-    max_out_len = inlen + EVP_CIPHER_CTX_block_size(ctx);
-    if (EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ctx)) & EVP_CIPH_FLAG_CIPHER_WITH_MAC) {
+    max_out_len = inlen + EVP_CIPHER_CTX_get_block_size(ctx);
+    if ((EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(ctx))
+                & EVP_CIPH_FLAG_CIPHER_WITH_MAC) != 0) {
         if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_TLS1_AAD, 0, &mac_len) < 0) {
-            PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT, ERR_R_INTERNAL_ERROR);
+            ERR_raise(ERR_LIB_PKCS12, ERR_R_INTERNAL_ERROR);
             goto err;
         }
 
-        if (EVP_CIPHER_CTX_encrypting(ctx)) {
+        if (EVP_CIPHER_CTX_is_encrypting(ctx)) {
             max_out_len += mac_len;
         } else {
             if (inlen < mac_len) {
-                PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT,
-                          PKCS12_R_UNSUPPORTED_PKCS12_MODE);
+                ERR_raise(ERR_LIB_PKCS12, PKCS12_R_UNSUPPORTED_PKCS12_MODE);
                 goto err;
             }
             inlen -= mac_len;
             if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
                                     (int)mac_len, (unsigned char *)in+inlen) < 0) {
-                PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT, ERR_R_INTERNAL_ERROR);
+                ERR_raise(ERR_LIB_PKCS12, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
         }
     }
 
     if ((out = OPENSSL_malloc(max_out_len)) == NULL) {
-        PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
     if (!EVP_CipherUpdate(ctx, out, &i, in, inlen)) {
         OPENSSL_free(out);
         out = NULL;
-        PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT, ERR_R_EVP_LIB);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_EVP_LIB);
         goto err;
     }
 
@@ -85,16 +83,18 @@ unsigned char *PKCS12_pbe_crypt(const X509_ALGOR *algor,
     if (!EVP_CipherFinal_ex(ctx, out + i, &i)) {
         OPENSSL_free(out);
         out = NULL;
-        PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT,
-                  PKCS12_R_PKCS12_CIPHERFINAL_ERROR);
+        ERR_raise_data(ERR_LIB_PKCS12, PKCS12_R_PKCS12_CIPHERFINAL_ERROR,
+                       passlen == 0 ? "empty password"
+                       : "maybe wrong password");
         goto err;
     }
     outlen += i;
-    if (EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ctx)) & EVP_CIPH_FLAG_CIPHER_WITH_MAC) {
-        if (EVP_CIPHER_CTX_encrypting(ctx)) {
+    if ((EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(ctx))
+                & EVP_CIPH_FLAG_CIPHER_WITH_MAC) != 0) {
+        if (EVP_CIPHER_CTX_is_encrypting(ctx)) {
             if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG,
                 (int)mac_len, out+outlen) < 0) {
-                PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT, ERR_R_INTERNAL_ERROR);
+                ERR_raise(ERR_LIB_PKCS12, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
             outlen += mac_len;
@@ -110,26 +110,34 @@ unsigned char *PKCS12_pbe_crypt(const X509_ALGOR *algor,
 
 }
 
+unsigned char *PKCS12_pbe_crypt(const X509_ALGOR *algor,
+                                const char *pass, int passlen,
+                                const unsigned char *in, int inlen,
+                                unsigned char **data, int *datalen, int en_de)
+{
+    return PKCS12_pbe_crypt_ex(algor, pass, passlen, in, inlen, data, datalen,
+                               en_de, NULL, NULL);
+}
+
 /*
  * Decrypt an OCTET STRING and decode ASN1 structure if zbuf set zero buffer
  * after use.
  */
 
-void *PKCS12_item_decrypt_d2i(const X509_ALGOR *algor, const ASN1_ITEM *it,
-                              const char *pass, int passlen,
-                              const ASN1_OCTET_STRING *oct, int zbuf)
+void *PKCS12_item_decrypt_d2i_ex(const X509_ALGOR *algor, const ASN1_ITEM *it,
+                                 const char *pass, int passlen,
+                                 const ASN1_OCTET_STRING *oct, int zbuf,
+                                 OSSL_LIB_CTX *libctx,
+                                 const char *propq)
 {
     unsigned char *out = NULL;
     const unsigned char *p;
     void *ret;
     int outlen = 0;
 
-    if (!PKCS12_pbe_crypt(algor, pass, passlen, oct->data, oct->length,
-                          &out, &outlen, 0)) {
-        PKCS12err(PKCS12_F_PKCS12_ITEM_DECRYPT_D2I,
-                  PKCS12_R_PKCS12_PBE_CRYPT_ERROR);
+    if (!PKCS12_pbe_crypt_ex(algor, pass, passlen, oct->data, oct->length,
+                             &out, &outlen, 0, libctx, propq))
         return NULL;
-    }
     p = out;
     OSSL_TRACE_BEGIN(PKCS12_DECRYPT) {
         BIO_printf(trc_out, "\n");
@@ -140,9 +148,17 @@ void *PKCS12_item_decrypt_d2i(const X509_ALGOR *algor, const ASN1_ITEM *it,
     if (zbuf)
         OPENSSL_cleanse(out, outlen);
     if (!ret)
-        PKCS12err(PKCS12_F_PKCS12_ITEM_DECRYPT_D2I, PKCS12_R_DECODE_ERROR);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_DECODE_ERROR);
     OPENSSL_free(out);
     return ret;
+}
+
+void *PKCS12_item_decrypt_d2i(const X509_ALGOR *algor, const ASN1_ITEM *it,
+                              const char *pass, int passlen,
+                              const ASN1_OCTET_STRING *oct, int zbuf)
+{
+    return PKCS12_item_decrypt_d2i_ex(algor, it, pass, passlen, oct, zbuf,
+                                      NULL, NULL);
 }
 
 /*
@@ -150,27 +166,29 @@ void *PKCS12_item_decrypt_d2i(const X509_ALGOR *algor, const ASN1_ITEM *it,
  * encoding.
  */
 
-ASN1_OCTET_STRING *PKCS12_item_i2d_encrypt(X509_ALGOR *algor,
-                                           const ASN1_ITEM *it,
-                                           const char *pass, int passlen,
-                                           void *obj, int zbuf)
+ASN1_OCTET_STRING *PKCS12_item_i2d_encrypt_ex(X509_ALGOR *algor,
+                                              const ASN1_ITEM *it,
+                                              const char *pass, int passlen,
+                                              void *obj, int zbuf,
+                                              OSSL_LIB_CTX *ctx,
+                                              const char *propq)
 {
     ASN1_OCTET_STRING *oct = NULL;
     unsigned char *in = NULL;
     int inlen;
 
     if ((oct = ASN1_OCTET_STRING_new()) == NULL) {
-        PKCS12err(PKCS12_F_PKCS12_ITEM_I2D_ENCRYPT, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     inlen = ASN1_item_i2d(obj, &in, it);
     if (!in) {
-        PKCS12err(PKCS12_F_PKCS12_ITEM_I2D_ENCRYPT, PKCS12_R_ENCODE_ERROR);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_ENCODE_ERROR);
         goto err;
     }
-    if (!PKCS12_pbe_crypt(algor, pass, passlen, in, inlen, &oct->data,
-                          &oct->length, 1)) {
-        PKCS12err(PKCS12_F_PKCS12_ITEM_I2D_ENCRYPT, PKCS12_R_ENCRYPT_ERROR);
+    if (!PKCS12_pbe_crypt_ex(algor, pass, passlen, in, inlen, &oct->data,
+                             &oct->length, 1, ctx, propq)) {
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_ENCRYPT_ERROR);
         OPENSSL_free(in);
         goto err;
     }
@@ -181,4 +199,12 @@ ASN1_OCTET_STRING *PKCS12_item_i2d_encrypt(X509_ALGOR *algor,
  err:
     ASN1_OCTET_STRING_free(oct);
     return NULL;
+}
+
+ASN1_OCTET_STRING *PKCS12_item_i2d_encrypt(X509_ALGOR *algor,
+                                           const ASN1_ITEM *it,
+                                           const char *pass, int passlen,
+                                           void *obj, int zbuf)
+{
+    return PKCS12_item_i2d_encrypt_ex(algor, it, pass, passlen, obj, zbuf, NULL, NULL);
 }

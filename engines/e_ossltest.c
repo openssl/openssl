@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -37,8 +37,13 @@
 #include <openssl/aes.h>
 #include <openssl/rand.h>
 #include <openssl/crypto.h>
+#include <openssl/pem.h>
 
 #include "e_ossltest_err.c"
+
+#ifdef _WIN32
+# define strncasecmp _strnicmp
+#endif
 
 /* Engine Id and Name */
 static const char *engine_ossltest_id = "ossltest";
@@ -221,15 +226,15 @@ static int ossltest_digest_nids(const int **nids)
     if (!init) {
         const EVP_MD *md;
         if ((md = digest_md5()) != NULL)
-            digest_nids[pos++] = EVP_MD_type(md);
+            digest_nids[pos++] = EVP_MD_get_type(md);
         if ((md = digest_sha1()) != NULL)
-            digest_nids[pos++] = EVP_MD_type(md);
+            digest_nids[pos++] = EVP_MD_get_type(md);
         if ((md = digest_sha256()) != NULL)
-            digest_nids[pos++] = EVP_MD_type(md);
+            digest_nids[pos++] = EVP_MD_get_type(md);
         if ((md = digest_sha384()) != NULL)
-            digest_nids[pos++] = EVP_MD_type(md);
+            digest_nids[pos++] = EVP_MD_get_type(md);
         if ((md = digest_sha512()) != NULL)
-            digest_nids[pos++] = EVP_MD_type(md);
+            digest_nids[pos++] = EVP_MD_get_type(md);
         digest_nids[pos] = 0;
         init = 1;
     }
@@ -274,7 +279,7 @@ static const EVP_CIPHER *ossltest_aes_128_cbc(void)
             || !EVP_CIPHER_meth_set_do_cipher(_hidden_aes_128_cbc,
                                               ossltest_aes128_cbc_cipher)
             || !EVP_CIPHER_meth_set_impl_ctx_size(_hidden_aes_128_cbc,
-                                                  EVP_CIPHER_impl_ctx_size(EVP_aes_128_cbc())))) {
+                    EVP_CIPHER_impl_ctx_size(EVP_aes_128_cbc())))) {
         EVP_CIPHER_meth_free(_hidden_aes_128_cbc);
         _hidden_aes_128_cbc = NULL;
     }
@@ -303,7 +308,7 @@ static const EVP_CIPHER *ossltest_aes_128_gcm(void)
             || !EVP_CIPHER_meth_set_ctrl(_hidden_aes_128_gcm,
                                               ossltest_aes128_gcm_ctrl)
             || !EVP_CIPHER_meth_set_impl_ctx_size(_hidden_aes_128_gcm,
-                              EVP_CIPHER_impl_ctx_size(EVP_aes_128_gcm())))) {
+                    EVP_CIPHER_impl_ctx_size(EVP_aes_128_gcm())))) {
         EVP_CIPHER_meth_free(_hidden_aes_128_gcm);
         _hidden_aes_128_gcm = NULL;
     }
@@ -317,6 +322,43 @@ static void destroy_ciphers(void)
     _hidden_aes_128_cbc = NULL;
 }
 
+/* Key loading */
+static EVP_PKEY *load_key(ENGINE *eng, const char *key_id, int pub,
+                          UI_METHOD *ui_method, void *ui_data)
+{
+    BIO *in;
+    EVP_PKEY *key;
+
+    if (strncasecmp(key_id, "ot:", 3) != 0)
+        return NULL;
+    key_id += 3;
+
+    fprintf(stderr, "[ossltest]Loading %s key %s\n",
+            pub ? "Public" : "Private", key_id);
+    in = BIO_new_file(key_id, "r");
+    if (!in)
+        return NULL;
+    if (pub)
+        key = PEM_read_bio_PUBKEY(in, NULL, 0, NULL);
+    else
+        key = PEM_read_bio_PrivateKey(in, NULL, 0, NULL);
+    BIO_free(in);
+    return key;
+}
+
+static EVP_PKEY *ossltest_load_privkey(ENGINE *eng, const char *key_id,
+                                       UI_METHOD *ui_method, void *ui_data)
+{
+    return load_key(eng, key_id, 0, ui_method, ui_data);
+}
+
+static EVP_PKEY *ossltest_load_pubkey(ENGINE *eng, const char *key_id,
+                                      UI_METHOD *ui_method, void *ui_data)
+{
+    return load_key(eng, key_id, 1, ui_method, ui_data);
+}
+
+
 static int bind_ossltest(ENGINE *e)
 {
     /* Ensure the ossltest error handling is set up */
@@ -328,6 +370,8 @@ static int bind_ossltest(ENGINE *e)
         || !ENGINE_set_ciphers(e, ossltest_ciphers)
         || !ENGINE_set_RAND(e, ossltest_rand_method())
         || !ENGINE_set_destroy_function(e, ossltest_destroy)
+        || !ENGINE_set_load_privkey_function(e, ossltest_load_privkey)
+        || !ENGINE_set_load_pubkey_function(e, ossltest_load_pubkey)
         || !ENGINE_set_init_function(e, ossltest_init)
         || !ENGINE_set_finish_function(e, ossltest_finish)) {
         OSSLTESTerr(OSSLTEST_F_BIND_OSSLTEST, OSSLTEST_R_INIT_FAILED);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,9 +68,9 @@ static int test_hexstr_sep_to_from(int test_index)
     char *out = NULL;
     struct testdata *test = &tbl_testdata[test_index];
 
-    if (!TEST_ptr(buf = openssl_hexstr2buf_sep(test->in, &len, test->sep))
+    if (!TEST_ptr(buf = ossl_hexstr2buf_sep(test->in, &len, test->sep))
         || !TEST_mem_eq(buf, len, test->expected, test->expected_len)
-        || !TEST_ptr(out = openssl_buf2hexstr_sep(buf, len, test->sep))
+        || !TEST_ptr(out = ossl_buf2hexstr_sep(buf, len, test->sep))
         || !TEST_str_eq(out, test->in))
        goto err;
 
@@ -118,9 +118,10 @@ static int test_hexstr_ex_to_from(int test_index)
     unsigned char buf[64];
     struct testdata *test = &tbl_testdata[test_index];
 
-    return TEST_true(OPENSSL_hexstr2buf_ex(buf, sizeof(buf), &len, test->in))
+    return TEST_true(OPENSSL_hexstr2buf_ex(buf, sizeof(buf), &len, test->in, ':'))
            && TEST_mem_eq(buf, len, test->expected, test->expected_len)
-           && TEST_true(OPENSSL_buf2hexstr_ex(out, sizeof(out), NULL, buf, len))
+           && TEST_true(OPENSSL_buf2hexstr_ex(out, sizeof(out), NULL, buf, len,
+                        ':'))
            && TEST_str_eq(out, test->in);
 }
 

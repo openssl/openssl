@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -38,6 +38,7 @@ static const EVP_CIPHER r4_cipher = {
     NID_rc4,
     1, EVP_RC4_KEY_SIZE, 0,
     EVP_CIPH_VARIABLE_LENGTH,
+    EVP_ORIG_GLOBAL,
     rc4_init_key,
     rc4_cipher,
     NULL,
@@ -52,6 +53,7 @@ static const EVP_CIPHER r4_40_cipher = {
     NID_rc4_40,
     1, 5 /* 40 bit */ , 0,
     EVP_CIPH_VARIABLE_LENGTH,
+    EVP_ORIG_GLOBAL,
     rc4_init_key,
     rc4_cipher,
     NULL,
@@ -75,7 +77,11 @@ const EVP_CIPHER *EVP_rc4_40(void)
 static int rc4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                         const unsigned char *iv, int enc)
 {
-    RC4_set_key(&data(ctx)->ks, EVP_CIPHER_CTX_key_length(ctx), key);
+    int keylen;
+
+    if ((keylen = EVP_CIPHER_CTX_get_key_length(ctx)) <= 0)
+        return 0;
+    RC4_set_key(&data(ctx)->ks, keylen, key);
     return 1;
 }
 

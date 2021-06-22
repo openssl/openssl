@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,8 +8,8 @@
  */
 
 /* Macros to build Self test data */
-#define ITM(x) x, sizeof(x)
-#define ITM_STR(x) x, (sizeof(x) - 1)
+#define ITM(x) ((void *)&x), sizeof(x)
+#define ITM_STR(x) ((void *)&x), (sizeof(x) - 1)
 
 #define ST_KAT_PARAM_END() { "", 0, NULL, 0 }
 #define ST_KAT_PARAM_BIGNUM(name, data)                                        \
@@ -18,6 +18,10 @@
     { name, OSSL_PARAM_OCTET_STRING, ITM(data) }
 #define ST_KAT_PARAM_UTF8STRING(name, data)                                    \
     { name, OSSL_PARAM_UTF8_STRING, ITM_STR(data) }
+#define ST_KAT_PARAM_UTF8CHAR(name, data)                                    \
+    { name, OSSL_PARAM_UTF8_STRING, ITM(data) }
+#define ST_KAT_PARAM_INT(name, i)                                              \
+    { name, OSSL_PARAM_INTEGER, ITM(i) }
 
 /* used to store raw parameters for keys and algorithms */
 typedef struct st_kat_param_st {
@@ -36,9 +40,14 @@ typedef struct st_kat_st {
     size_t expected_len;
 } ST_KAT;
 
+#define CIPHER_MODE_ENCRYPT 1
+#define CIPHER_MODE_DECRYPT 2
+#define CIPHER_MODE_ALL     (CIPHER_MODE_ENCRYPT | CIPHER_MODE_DECRYPT)
+
 typedef ST_KAT ST_KAT_DIGEST;
 typedef struct st_kat_cipher_st {
     ST_KAT base;
+    int mode;
     const unsigned char *key;
     size_t key_len;
     const unsigned char *iv;
@@ -211,6 +220,20 @@ static const unsigned char aes_256_gcm_tag[] = {
     0x14, 0xd9, 0xc5, 0x1e, 0x1d, 0xa4, 0x74, 0xab
 };
 
+/* AES-ECB test data */
+static const unsigned char aes_128_ecb_key[] = {
+    0x10, 0xa5, 0x88, 0x69, 0xd7, 0x4b, 0xe5, 0xa3,
+    0x74, 0xcf, 0x86, 0x7c, 0xfb, 0x47, 0x38, 0x59
+};
+static const unsigned char aes_128_ecb_pt[] = {
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+static const unsigned char aes_128_ecb_ct[] = {
+    0x6d, 0x25, 0x1e, 0x69, 0x44, 0xb0, 0x51, 0xe0,
+    0x4e, 0xaa, 0x6f, 0xb4, 0xdb, 0xf7, 0x84, 0x65
+};
+
 static const ST_KAT_CIPHER st_kat_cipher_tests[] = {
 #ifndef OPENSSL_NO_DES
     {
@@ -220,6 +243,7 @@ static const ST_KAT_CIPHER st_kat_cipher_tests[] = {
             ITM(des_ede3_cbc_pt),
             ITM(des_ede3_cbc_ct)
         },
+        CIPHER_MODE_ENCRYPT | CIPHER_MODE_DECRYPT,
         ITM(des_ede3_cbc_key),
         ITM(des_ede3_cbc_iv),
     },
@@ -229,12 +253,23 @@ static const ST_KAT_CIPHER st_kat_cipher_tests[] = {
             OSSL_SELF_TEST_DESC_CIPHER_AES_GCM,
             "AES-256-GCM",
             ITM(aes_256_gcm_pt),
-            ITM(aes_256_gcm_ct),
+            ITM(aes_256_gcm_ct)
         },
+        CIPHER_MODE_ENCRYPT | CIPHER_MODE_DECRYPT,
         ITM(aes_256_gcm_key),
         ITM(aes_256_gcm_iv),
         ITM(aes_256_gcm_aad),
         ITM(aes_256_gcm_tag)
+    },
+    {
+        {
+            OSSL_SELF_TEST_DESC_CIPHER_AES_ECB,
+            "AES-128-ECB",
+            ITM(aes_128_ecb_pt),
+            ITM(aes_128_ecb_ct)
+        },
+        CIPHER_MODE_DECRYPT,
+        ITM(aes_128_ecb_key)
     }
 };
 
@@ -284,8 +319,207 @@ static const ST_KAT_PARAM sskdf_params[] = {
     ST_KAT_PARAM_END()
 };
 
+static const char x942kdf_digest[] = "SHA1";
+static const char x942kdf_cekalg[] = "AES-128-WRAP";
+static const unsigned char x942kdf_secret[] = {
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+    0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+    0x10, 0x11, 0x12, 0x13
+};
+static const unsigned char x942kdf_expected[] = {
+    0xd6, 0xd6, 0xb0, 0x94, 0xc1, 0x02, 0x7a, 0x7d,
+    0xe6, 0xe3, 0x11, 0x72, 0x94, 0xa3, 0x53, 0x64
+};
+static const ST_KAT_PARAM x942kdf_params[] = {
+    ST_KAT_PARAM_UTF8STRING(OSSL_KDF_PARAM_DIGEST, x942kdf_digest),
+    ST_KAT_PARAM_UTF8STRING(OSSL_KDF_PARAM_CEK_ALG, x942kdf_cekalg),
+    ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_KEY, x942kdf_secret),
+    ST_KAT_PARAM_END()
+};
+
+static const char x963kdf_digest[] = "SHA256";
+static const unsigned char x963kdf_otherinfo[] = {
+    0x75, 0xee, 0xf8, 0x1a, 0xa3, 0x04, 0x1e, 0x33,
+    0xb8, 0x09, 0x71, 0x20, 0x3d, 0x2c, 0x0c, 0x52
+};
+static const unsigned char x963kdf_secret[] = {
+    0x22, 0x51, 0x8b, 0x10, 0xe7, 0x0f, 0x2a, 0x3f,
+    0x24, 0x38, 0x10, 0xae, 0x32, 0x54, 0x13, 0x9e,
+    0xfb, 0xee, 0x04, 0xaa, 0x57, 0xc7, 0xaf, 0x7d
+};
+static const unsigned char x963kdf_expected[] = {
+    0xc4, 0x98, 0xaf, 0x77, 0x16, 0x1c, 0xc5, 0x9f,
+    0x29, 0x62, 0xb9, 0xa7, 0x13, 0xe2, 0xb2, 0x15,
+    0x15, 0x2d, 0x13, 0x97, 0x66, 0xce, 0x34, 0xa7,
+    0x76, 0xdf, 0x11, 0x86, 0x6a, 0x69, 0xbf, 0x2e
+};
+static const ST_KAT_PARAM x963kdf_params[] = {
+    ST_KAT_PARAM_UTF8STRING(OSSL_KDF_PARAM_DIGEST, x963kdf_digest),
+    ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_KEY, x963kdf_secret),
+    ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_INFO, x963kdf_otherinfo),
+    ST_KAT_PARAM_END()
+};
+
+static const char pbkdf2_digest[] = "SHA256";
+static const unsigned char pbkdf2_password[] = {
+    0x70, 0x61, 0x73, 0x73, 0x00, 0x77, 0x6f, 0x72,
+    0x64
+};
+static const unsigned char pbkdf2_salt[] = {
+    0x73, 0x61, 0x00, 0x6c, 0x74
+};
+static const unsigned char pbkdf2_expected[] = {
+    0x89, 0xb6, 0x9d, 0x05, 0x16, 0xf8, 0x29, 0x89,
+    0x3c, 0x69, 0x62, 0x26, 0x65, 0x0a, 0x86, 0x87,
+};
+static int pbkdf2_iterations = 4096;
+static int pbkdf2_pkcs5 = 1;
+static const ST_KAT_PARAM pbkdf2_params[] = {
+    ST_KAT_PARAM_UTF8STRING(OSSL_KDF_PARAM_DIGEST, pbkdf2_digest),
+    ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_PASSWORD, pbkdf2_password),
+    ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_SALT, pbkdf2_salt),
+    ST_KAT_PARAM_INT(OSSL_KDF_PARAM_ITER, pbkdf2_iterations),
+    ST_KAT_PARAM_INT(OSSL_KDF_PARAM_PKCS5, pbkdf2_pkcs5),
+    ST_KAT_PARAM_END()
+};
+
+static const char sshkdf_digest[] = "SHA1";
+static const char sshkdf_type = EVP_KDF_SSHKDF_TYPE_INITIAL_IV_CLI_TO_SRV;
+static const unsigned char sshkdf_key[] = {
+    0x00, 0x00, 0x00, 0x80, 0x55, 0xba, 0xe9, 0x31,
+    0xc0, 0x7f, 0xd8, 0x24, 0xbf, 0x10, 0xad, 0xd1,
+    0x90, 0x2b, 0x6f, 0xbc, 0x7c, 0x66, 0x53, 0x47,
+    0x38, 0x34, 0x98, 0xa6, 0x86, 0x92, 0x9f, 0xf5,
+    0xa2, 0x5f, 0x8e, 0x40, 0xcb, 0x66, 0x45, 0xea,
+    0x81, 0x4f, 0xb1, 0xa5, 0xe0, 0xa1, 0x1f, 0x85,
+    0x2f, 0x86, 0x25, 0x56, 0x41, 0xe5, 0xed, 0x98,
+    0x6e, 0x83, 0xa7, 0x8b, 0xc8, 0x26, 0x94, 0x80,
+    0xea, 0xc0, 0xb0, 0xdf, 0xd7, 0x70, 0xca, 0xb9,
+    0x2e, 0x7a, 0x28, 0xdd, 0x87, 0xff, 0x45, 0x24,
+    0x66, 0xd6, 0xae, 0x86, 0x7c, 0xea, 0xd6, 0x3b,
+    0x36, 0x6b, 0x1c, 0x28, 0x6e, 0x6c, 0x48, 0x11,
+    0xa9, 0xf1, 0x4c, 0x27, 0xae, 0xa1, 0x4c, 0x51,
+    0x71, 0xd4, 0x9b, 0x78, 0xc0, 0x6e, 0x37, 0x35,
+    0xd3, 0x6e, 0x6a, 0x3b, 0xe3, 0x21, 0xdd, 0x5f,
+    0xc8, 0x23, 0x08, 0xf3, 0x4e, 0xe1, 0xcb, 0x17,
+    0xfb, 0xa9, 0x4a, 0x59,
+};
+static const unsigned char sshkdf_xcghash[] = {
+    0xa4, 0xeb, 0xd4, 0x59, 0x34, 0xf5, 0x67, 0x92,
+    0xb5, 0x11, 0x2d, 0xcd, 0x75, 0xa1, 0x07, 0x5f,
+    0xdc, 0x88, 0x92, 0x45,
+};
+static const unsigned char sshkdf_session_id[] = {
+    0xa4, 0xeb, 0xd4, 0x59, 0x34, 0xf5, 0x67, 0x92,
+    0xb5, 0x11, 0x2d, 0xcd, 0x75, 0xa1, 0x07, 0x5f,
+    0xdc, 0x88, 0x92, 0x45,
+};
+static const unsigned char sshkdf_expected[] = {
+    0xe2, 0xf6, 0x27, 0xc0, 0xb4, 0x3f, 0x1a, 0xc1,
+};
+static const ST_KAT_PARAM sshkdf_params[] = {
+    ST_KAT_PARAM_UTF8STRING(OSSL_KDF_PARAM_DIGEST, sshkdf_digest),
+    ST_KAT_PARAM_UTF8CHAR(OSSL_KDF_PARAM_SSHKDF_TYPE, sshkdf_type),
+    ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_KEY, sshkdf_key),
+    ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_SSHKDF_XCGHASH, sshkdf_xcghash),
+    ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_SSHKDF_SESSION_ID, sshkdf_session_id),
+    ST_KAT_PARAM_END()
+};
+
+static const char tls12prf_digest[] = "SHA256";
+static const unsigned char tls12prf_secret[] = {
+    0x20, 0x2c, 0x88, 0xc0, 0x0f, 0x84, 0xa1, 0x7a,
+    0x20, 0x02, 0x70, 0x79, 0x60, 0x47, 0x87, 0x46,
+    0x11, 0x76, 0x45, 0x55, 0x39, 0xe7, 0x05, 0xbe,
+    0x73, 0x08, 0x90, 0x60, 0x2c, 0x28, 0x9a, 0x50,
+    0x01, 0xe3, 0x4e, 0xeb, 0x3a, 0x04, 0x3e, 0x5d,
+    0x52, 0xa6, 0x5e, 0x66, 0x12, 0x51, 0x88, 0xbf,
+};
+static const unsigned char tls12prf_seed[] = {
+    'k', 'e', 'y', ' ', 'e', 'x', 'p', 'a', 'n', 's', 'i', 'o', 'n',
+    0xae, 0x6c, 0x80, 0x6f, 0x8a, 0xd4, 0xd8, 0x07,
+    0x84, 0x54, 0x9d, 0xff, 0x28, 0xa4, 0xb5, 0x8f,
+    0xd8, 0x37, 0x68, 0x1a, 0x51, 0xd9, 0x28, 0xc3,
+    0xe3, 0x0e, 0xe5, 0xff, 0x14, 0xf3, 0x98, 0x68,
+    0x62, 0xe1, 0xfd, 0x91, 0xf2, 0x3f, 0x55, 0x8a,
+    0x60, 0x5f, 0x28, 0x47, 0x8c, 0x58, 0xcf, 0x72,
+    0x63, 0x7b, 0x89, 0x78, 0x4d, 0x95, 0x9d, 0xf7,
+    0xe9, 0x46, 0xd3, 0xf0, 0x7b, 0xd1, 0xb6, 0x16,
+ };
+static const unsigned char tls12prf_expected[] = {
+    0xd0, 0x61, 0x39, 0x88, 0x9f, 0xff, 0xac, 0x1e,
+    0x3a, 0x71, 0x86, 0x5f, 0x50, 0x4a, 0xa5, 0xd0,
+    0xd2, 0xa2, 0xe8, 0x95, 0x06, 0xc6, 0xf2, 0x27,
+    0x9b, 0x67, 0x0c, 0x3e, 0x1b, 0x74, 0xf5, 0x31,
+    0x01, 0x6a, 0x25, 0x30, 0xc5, 0x1a, 0x3a, 0x0f,
+    0x7e, 0x1d, 0x65, 0x90, 0xd0, 0xf0, 0x56, 0x6b,
+    0x2f, 0x38, 0x7f, 0x8d, 0x11, 0xfd, 0x4f, 0x73,
+    0x1c, 0xdd, 0x57, 0x2d, 0x2e, 0xae, 0x92, 0x7f,
+    0x6f, 0x2f, 0x81, 0x41, 0x0b, 0x25, 0xe6, 0x96,
+    0x0b, 0xe6, 0x89, 0x85, 0xad, 0xd6, 0xc3, 0x84,
+    0x45, 0xad, 0x9f, 0x8c, 0x64, 0xbf, 0x80, 0x68,
+    0xbf, 0x9a, 0x66, 0x79, 0x48, 0x5d, 0x96, 0x6f,
+    0x1a, 0xd6, 0xf6, 0x8b, 0x43, 0x49, 0x5b, 0x10,
+    0xa6, 0x83, 0x75, 0x5e, 0xa2, 0xb8, 0x58, 0xd7,
+    0x0c, 0xca, 0xc7, 0xec, 0x8b, 0x05, 0x3c, 0x6b,
+    0xd4, 0x1c, 0xa2, 0x99, 0xd4, 0xe5, 0x19, 0x28,
+};
+static const ST_KAT_PARAM tls12prf_params[] = {
+    ST_KAT_PARAM_UTF8STRING(OSSL_KDF_PARAM_DIGEST, tls12prf_digest),
+    ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_SECRET, tls12prf_secret),
+    ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_SEED, tls12prf_seed),
+    ST_KAT_PARAM_END()
+};
+
+static const char kbkdf_digest[] = "SHA256";
+static const char kbkdf_mac[] = "HMAC";
+static const unsigned char kbkdf_salt[] = { 'p', 'r', 'f' };
+static const unsigned char kbkdf_prfinput[] = { 't', 'e', 's', 't' };
+static unsigned char kbkdf_key[] = {
+    0x37, 0x05, 0xD9, 0x60, 0x80, 0xC1, 0x77, 0x28,
+    0xA0, 0xE8, 0x00, 0xEA, 0xB6, 0xE0, 0xD2, 0x3C,
+};
+static unsigned char kbkdf_expected[] = {
+    0x9D, 0x18, 0x86, 0x16, 0xF6, 0x38, 0x52, 0xFE,
+    0x86, 0x91, 0x5B, 0xB8, 0x40, 0xB4, 0xA8, 0x86,
+    0xFF, 0x3E, 0x6B, 0xB0, 0xF8, 0x19, 0xB4, 0x9B,
+    0x89, 0x33, 0x93, 0xD3, 0x93, 0x85, 0x42, 0x95,
+};
+static const ST_KAT_PARAM kbkdf_params[] = {
+    ST_KAT_PARAM_UTF8STRING(OSSL_KDF_PARAM_DIGEST, kbkdf_digest),
+    ST_KAT_PARAM_UTF8STRING(OSSL_KDF_PARAM_MAC, kbkdf_mac),
+    ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_KEY, kbkdf_key),
+    ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_SALT, kbkdf_salt),
+    ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_INFO, kbkdf_prfinput),
+    ST_KAT_PARAM_END()
+};
+
 static const ST_KAT_KDF st_kat_kdf_tests[] =
 {
+    {
+        OSSL_SELF_TEST_DESC_KDF_TLS12_PRF,
+        OSSL_KDF_NAME_TLS1_PRF,
+        tls12prf_params,
+        ITM(tls12prf_expected)
+    },
+    {
+        OSSL_SELF_TEST_DESC_KDF_PBKDF2,
+        OSSL_KDF_NAME_PBKDF2,
+        pbkdf2_params,
+        ITM(pbkdf2_expected)
+    },
+    {
+        OSSL_SELF_TEST_DESC_KDF_SSHKDF,
+        OSSL_KDF_NAME_SSHKDF,
+        sshkdf_params,
+        ITM(sshkdf_expected)
+    },
+    {
+        OSSL_SELF_TEST_DESC_KDF_KBKDF,
+        OSSL_KDF_NAME_KBKDF,
+        kbkdf_params,
+        ITM(kbkdf_expected)
+    },
     {
         OSSL_SELF_TEST_DESC_KDF_HKDF,
         OSSL_KDF_NAME_HKDF,
@@ -297,7 +531,19 @@ static const ST_KAT_KDF st_kat_kdf_tests[] =
         OSSL_KDF_NAME_SSKDF,
         sskdf_params,
         ITM(sskdf_expected)
-    }
+    },
+    {
+        OSSL_SELF_TEST_DESC_KDF_X963KDF,
+        OSSL_KDF_NAME_X963KDF,
+        x963kdf_params,
+        ITM(x963kdf_expected)
+    },
+    {
+        OSSL_SELF_TEST_DESC_KDF_X942KDF,
+        OSSL_KDF_NAME_X942KDF_ASN1,
+        x942kdf_params,
+        ITM(x942kdf_expected)
+    },
 };
 
 /*-
@@ -769,9 +1015,10 @@ static const unsigned char ecdh_secret_expected[] = {
 };
 #endif /* OPENSSL_NO_EC */
 
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
 static const ST_KAT_KAS st_kat_kas_tests[] =
 {
-#ifndef OPENSSL_NO_DH
+# ifndef OPENSSL_NO_DH
     {
         OSSL_SELF_TEST_DESC_KA_DH,
         "DH",
@@ -780,8 +1027,8 @@ static const ST_KAT_KAS st_kat_kas_tests[] =
         dh_peer_key,
         ITM(dh_secret_expected)
     },
-#endif /* OPENSSL_NO_DH */
-#ifndef OPENSSL_NO_EC
+# endif /* OPENSSL_NO_DH */
+# ifndef OPENSSL_NO_EC
     {
         OSSL_SELF_TEST_DESC_KA_ECDH,
         "EC",
@@ -790,10 +1037,10 @@ static const ST_KAT_KAS st_kat_kas_tests[] =
         ecdh_peer_key,
         ITM(ecdh_secret_expected)
     },
-#endif /* OPENSSL_NO_EC */
+# endif /* OPENSSL_NO_EC */
 };
+#endif /* !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC) */
 
-#if !defined(OPENSSL_NO_RSA)
 /* RSA key data */
 static const unsigned char rsa_n[] = {
     0xDB, 0x10, 0x1A, 0xC2, 0xA3, 0xF1, 0xDC, 0xFF,
@@ -1060,18 +1307,16 @@ static const unsigned char rsa_asym_expected_encrypt[256] = {
     0x05, 0x52, 0x55, 0xc1, 0xc6, 0x06, 0x90, 0xab,
 };
 
-#endif /* OPENSSL_NO_RSA */
-
 #ifndef OPENSSL_NO_EC
 /* ECDSA key data */
-static const char ecd_curve_name[] = "secp224r1";
-static const unsigned char ecd_priv[] = {
+static const char ecd_prime_curve_name[] = "secp224r1";
+static const unsigned char ecd_prime_priv[] = {
     0x98, 0x1f, 0xb5, 0xf1, 0xfc, 0x87, 0x1d, 0x7d,
     0xde, 0x1e, 0x01, 0x64, 0x09, 0x9b, 0xe7, 0x1b,
     0x9f, 0xad, 0x63, 0xdd, 0x33, 0x01, 0xd1, 0x50,
     0x80, 0x93, 0x50, 0x30
 };
-static const unsigned char ecd_pub[] = {
+static const unsigned char ecd_prime_pub[] = {
     0x04, 0x95, 0x47, 0x99, 0x44, 0x29, 0x8f, 0x51,
     0x39, 0xe2, 0x53, 0xec, 0x79, 0xb0, 0x4d, 0xde,
     0x87, 0x1a, 0x76, 0x54, 0xd5, 0x96, 0xb8, 0x7a,
@@ -1081,13 +1326,38 @@ static const unsigned char ecd_pub[] = {
     0xc4, 0xb7, 0x33, 0x68, 0xe4, 0x24, 0xa9, 0x12,
     0x82
 };
-
-static const ST_KAT_PARAM ecdsa_key[] = {
-    ST_KAT_PARAM_UTF8STRING(OSSL_PKEY_PARAM_GROUP_NAME, ecd_curve_name),
-    ST_KAT_PARAM_OCTET(OSSL_PKEY_PARAM_PUB_KEY, ecd_pub),
-    ST_KAT_PARAM_BIGNUM(OSSL_PKEY_PARAM_PRIV_KEY, ecd_priv),
+static const ST_KAT_PARAM ecdsa_prime_key[] = {
+    ST_KAT_PARAM_UTF8STRING(OSSL_PKEY_PARAM_GROUP_NAME, ecd_prime_curve_name),
+    ST_KAT_PARAM_OCTET(OSSL_PKEY_PARAM_PUB_KEY, ecd_prime_pub),
+    ST_KAT_PARAM_BIGNUM(OSSL_PKEY_PARAM_PRIV_KEY, ecd_prime_priv),
     ST_KAT_PARAM_END()
 };
+
+# ifndef OPENSSL_NO_EC2M
+static const char ecd_bin_curve_name[] = "sect233r1";
+static const unsigned char ecd_bin_priv[] = {
+    0x00, 0x6d, 0xd6, 0x39, 0x9d, 0x2a, 0xa2, 0xc8,
+    0x8c, 0xfc, 0x7b, 0x80, 0x66, 0xaa, 0xe1, 0xaa,
+    0xba, 0xee, 0xcb, 0xfd, 0xc9, 0xe5, 0x36, 0x38,
+    0x2e, 0xf7, 0x37, 0x6d, 0xd3, 0x20
+};
+static const unsigned char ecd_bin_pub[] = {
+    0x04, 0x00, 0x06, 0xe2, 0x56, 0xf7, 0x37, 0xf9,
+    0xea, 0xb6, 0xd1, 0x0f, 0x59, 0xfa, 0x23, 0xc3,
+    0x93, 0xa8, 0xb2, 0x26, 0xe2, 0x5c, 0x08, 0xbe,
+    0x63, 0x49, 0x26, 0xdc, 0xc7, 0x1e, 0x6f, 0x01,
+    0x32, 0x3b, 0xe6, 0x54, 0x8d, 0xc1, 0x13, 0x3e,
+    0x54, 0xb2, 0x66, 0x89, 0xb2, 0x82, 0x0a, 0x72,
+    0x02, 0xa8, 0xe9, 0x6f, 0x54, 0xfd, 0x3a, 0x6b,
+    0x99, 0xb6, 0x8f, 0x80, 0x46
+};
+static const ST_KAT_PARAM ecdsa_bin_key[] = {
+    ST_KAT_PARAM_UTF8STRING(OSSL_PKEY_PARAM_GROUP_NAME, ecd_bin_curve_name),
+    ST_KAT_PARAM_OCTET(OSSL_PKEY_PARAM_PUB_KEY, ecd_bin_pub),
+    ST_KAT_PARAM_BIGNUM(OSSL_PKEY_PARAM_PRIV_KEY, ecd_bin_priv),
+    ST_KAT_PARAM_END()
+};
+# endif /* OPENSSL_NO_EC2M */
 #endif /* OPENSSL_NO_EC */
 
 #ifndef OPENSSL_NO_DSA
@@ -1218,7 +1488,6 @@ static const ST_KAT_PARAM dsa_key[] = {
 #endif /* OPENSSL_NO_DSA */
 
 static const ST_KAT_SIGN st_kat_sign_tests[] = {
-#ifndef OPENSSL_NO_RSA
     {
         OSSL_SELF_TEST_DESC_SIGN_RSA,
         "RSA",
@@ -1226,18 +1495,29 @@ static const ST_KAT_SIGN st_kat_sign_tests[] = {
         rsa_crt_key,
         ITM(rsa_expected_sig)
     },
-#endif /* OPENSSL_NO_RSA */
 #ifndef OPENSSL_NO_EC
     {
         OSSL_SELF_TEST_DESC_SIGN_ECDSA,
         "EC",
         "SHA-256",
-        ecdsa_key,
+        ecdsa_prime_key,
         /*
          * The ECDSA signature changes each time due to it using a random k.
          * So there is no expected KAT for this case.
          */
     },
+# ifndef OPENSSL_NO_EC2M
+    {
+        OSSL_SELF_TEST_DESC_SIGN_ECDSA,
+        "EC",
+        "SHA-256",
+        ecdsa_bin_key,
+        /*
+         * The ECDSA signature changes each time due to it using a random k.
+         * So there is no expected KAT for this case.
+         */
+    },
+# endif
 #endif /* OPENSSL_NO_EC */
 #ifndef OPENSSL_NO_DSA
     {
@@ -1254,7 +1534,6 @@ static const ST_KAT_SIGN st_kat_sign_tests[] = {
 };
 
 static const ST_KAT_ASYM_CIPHER st_kat_asym_cipher_tests[] = {
-#ifndef OPENSSL_NO_RSA
     {
         OSSL_SELF_TEST_DESC_ASYM_RSA_ENC,
         "RSA",
@@ -1282,5 +1561,4 @@ static const ST_KAT_ASYM_CIPHER st_kat_asym_cipher_tests[] = {
         ITM(rsa_asym_expected_encrypt),
         ITM(rsa_asym_plaintext_encrypt),
     },
-#endif /* OPENSSL_NO_RSA */
 };

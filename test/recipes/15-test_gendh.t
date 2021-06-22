@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -18,26 +18,7 @@ setup("test_gendh");
 
 plan skip_all => "This test is unsupported in a no-dh build" if disabled("dh");
 
-plan tests => 13;
-
-ok(run(app([ 'openssl', 'genpkey', '-genparam',
-             '-algorithm', 'DH',
-             '-pkeyopt', 'gindex:1',
-             '-pkeyopt', 'type:fips186_4',
-             '-text'])),
-   "genpkey DH params fips186_4 with verifiable g");
-
-ok(run(app([ 'openssl', 'genpkey', '-genparam',
-             '-algorithm', 'DH',
-             '-pkeyopt', 'type:fips186_4',
-             '-text'])),
-   "genpkey DH params fips186_4 with unverifiable g");
-
-ok(run(app([ 'openssl', 'genpkey', '-genparam',
-             '-algorithm', 'DH',
-             '-pkeyopt', 'type:fips186_2',
-             '-text'])),
-   "genpkey DH params fips186_2");
+plan tests => 9;
 
 ok(run(app([ 'openssl', 'genpkey', '-algorithm', 'DH',
              '-pkeyopt', 'type:group',
@@ -51,31 +32,21 @@ ok(run(app([ 'openssl', 'genpkey', '-algorithm', 'DH',
    "genpkey DH group ffdhe2048");
 
 ok(run(app([ 'openssl', 'genpkey', '-genparam',
-             '-algorithm', 'DH',
+             '-algorithm', 'DHX',
              '-pkeyopt', 'gindex:1',
              '-pkeyopt', 'type:fips186_4',
-             '-out', 'dhgen.pem'])),
+             '-out', 'dhgen.pem' ])),
    "genpkey DH params fips186_4 PEM");
-
-ok(run(app([ 'openssl', 'genpkey', '-genparam',
-             '-algorithm', 'DH',
-             '-pkeyopt', 'gindex:1',
-             '-pkeyopt', 'pbits:2048',
-             '-pkeyopt', 'qbits:256',
-             '-pkeyopt', 'type:fips186_4',
-             '-outform', 'DER',
-             '-out', 'dhgen.der'])),
-   "genpkey DH params fips186_4 DER");
 
 # The seed and counter should be the ones generated from the param generation
 # Just put some dummy ones in to show it works.
 ok(run(app([ 'openssl', 'genpkey',
-             '-paramfile', 'dhgen.der',
+             '-paramfile', 'dhgen.pem',
              '-pkeyopt', 'gindex:1',
-             '-pkeyopt', 'hexseed:0102030405060708090A0B0C0D0E0F1011121314',
+             '-pkeyopt', 'hexseed:ed2927f2139eb61495d6641efda1243f93ebe482b5bfc2c755a53825',
              '-pkeyopt', 'pcounter:25',
-             '-text'])),
-   "genpkey DH fips186_4 with DER params");
+             '-text' ])),
+   "genpkey DH fips186_4 with PEM params");
 
  ok(!run(app([ 'openssl', 'genpkey',
               '-algorithm', 'DH'])),

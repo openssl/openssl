@@ -7,16 +7,17 @@ OSSL_ENCODER_CTX_new,
 OSSL_ENCODER_settable_ctx_params,
 OSSL_ENCODER_CTX_set_params,
 OSSL_ENCODER_CTX_free,
-OSSL_ENCODER_CTX_set_output_type,
 OSSL_ENCODER_CTX_set_selection,
+OSSL_ENCODER_CTX_set_output_type,
+OSSL_ENCODER_CTX_set_output_structure,
 OSSL_ENCODER_CTX_add_encoder,
 OSSL_ENCODER_CTX_add_extra,
 OSSL_ENCODER_CTX_get_num_encoders,
 OSSL_ENCODER_INSTANCE,
 OSSL_ENCODER_INSTANCE_get_encoder,
 OSSL_ENCODER_INSTANCE_get_encoder_ctx,
-OSSL_ENCODER_INSTANCE_get_input_type,
 OSSL_ENCODER_INSTANCE_get_output_type,
+OSSL_ENCODER_INSTANCE_get_output_structure,
 OSSL_ENCODER_CONSTRUCT,
 OSSL_ENCODER_CLEANUP,
 OSSL_ENCODER_CTX_set_construct,
@@ -36,13 +37,15 @@ OSSL_ENCODER_CTX_set_cleanup
                                  const OSSL_PARAM params[]);
  void OSSL_ENCODER_CTX_free(OSSL_ENCODER_CTX *ctx);
 
+ int OSSL_ENCODER_CTX_set_selection(OSSL_ENCODER_CTX *ctx, int selection);
  int OSSL_ENCODER_CTX_set_output_type(OSSL_ENCODER_CTX *ctx,
                                       const char *output_type);
- int OSSL_ENCODER_CTX_set_selection(OSSL_ENCODER_CTX *ctx, int selection);
+ int OSSL_ENCODER_CTX_set_output_structure(OSSL_ENCODER_CTX *ctx,
+                                           const char *output_structure);
 
  int OSSL_ENCODER_CTX_add_encoder(OSSL_ENCODER_CTX *ctx, OSSL_ENCODER *encoder);
  int OSSL_ENCODER_CTX_add_extra(OSSL_ENCODER_CTX *ctx,
-                                OPENSSL_CTX *libctx, const char *propq);
+                                OSSL_LIB_CTX *libctx, const char *propq);
  int OSSL_ENCODER_CTX_get_num_encoders(OSSL_ENCODER_CTX *ctx);
 
  typedef struct ossl_encoder_instance_st OSSL_ENCODER_INSTANCE;
@@ -51,9 +54,9 @@ OSSL_ENCODER_CTX_set_cleanup
  void *
  OSSL_ENCODER_INSTANCE_get_encoder_ctx(OSSL_ENCODER_INSTANCE *encoder_inst);
  const char *
- OSSL_ENCODER_INSTANCE_get_input_type(OSSL_ENCODER_INSTANCE *encoder_inst);
- const char *
  OSSL_ENCODER_INSTANCE_get_output_type(OSSL_ENCODER_INSTANCE *encoder_inst);
+ const char *
+ OSSL_ENCODER_INSTANCE_get_output_structure(OSSL_ENCODER_INSTANCE *encoder_inst);
 
  typedef const void *OSSL_ENCODER_CONSTRUCT(OSSL_ENCODER_INSTANCE *encoder_inst,
                                             void *construct_data);
@@ -110,8 +113,13 @@ encoder chains.
 OSSL_ENCODER_CTX_set_output_type() sets the ending output type.  This must
 be specified, and determines if a complete encoder chain is available.
 
-OSSL_ENCODER_CTX_num_encoders() gets the number of encoders currently added
-to the context I<ctx>.
+OSSL_ENCODER_CTX_set_output_structure() sets the desired output structure.
+This may be used to determines what encoder implementations may be used.
+Depending on the type of object being encoded, the output structure may
+not be relevant.
+
+OSSL_ENCODER_CTX_get_num_encoders() gets the number of encoders currently
+added to the context I<ctx>.
 
 OSSL_ENCODER_CTX_set_construct() sets the constructor I<construct>.
 
@@ -144,18 +152,20 @@ or NULL to indicate that an error has occured.
 
 These utility functions may be used by a constructor:
 
-OSSL_ENCODER_INSTANCE_encoder() can be used to get the encoder method from a
-encoder instance I<encoder_inst>.
+OSSL_ENCODER_INSTANCE_get_encoder() can be used to get the encoder
+implementation of the encoder instance I<encoder_inst>.
 
-OSSL_ENCODER_INSTANCE_encoder_ctx() can be used to get the encoder method's
-provider context from a encoder instance I<encoder_inst>.
+OSSL_ENCODER_INSTANCE_get_encoder_ctx() can be used to get the encoder
+implementation's provider context of the encoder instance I<encoder_inst>.
 
-OSSL_ENCODER_INSTANCE_input_type() can be used to get the input type for
-encoder method from a encoder instance I<encoder_inst>.  This may be NULL.
+OSSL_ENCODER_INSTANCE_get_output_type() can be used to get the output type
+for the encoder implementation of the encoder instance I<encoder_inst>.
+This will never be NULL.
 
-OSSL_ENCODER_INSTANCE_output_type() can be used to get the output type for
-encoder method from a encoder instance I<encoder_inst>.  This will never be
-NULL.
+OSSL_ENCODER_INSTANCE_get_output_structure() can be used to get the output
+structure for the encoder implementation of the encoder instance
+I<encoder_inst>.
+This may be NULL.
 
 =head1 RETURN VALUES
 
@@ -169,24 +179,27 @@ OSSL_ENCODER_CTX_set_params() returns 1 if all recognised parameters were
 valid, or 0 if one of them was invalid or caused some other failure in the
 implementation.
 
-OSSL_DECODER_CTX_add_decoder(), OSSL_DECODER_CTX_add_extra(),
-OSSL_DECODER_CTX_set_construct(), OSSL_DECODER_CTX_set_construct_data() and
-OSSL_DECODER_CTX_set_cleanup() return 1 on success, or 0 on failure.
+OSSL_ENCODER_CTX_add_encoder(), OSSL_ENCODER_CTX_add_extra(),
+OSSL_ENCODER_CTX_set_construct(), OSSL_ENCODER_CTX_set_construct_data() and
+OSSL_ENCODER_CTX_set_cleanup() return 1 on success, or 0 on failure.
 
-OSSL_DECODER_CTX_num_decoders() returns the current number of decoders.  It
-returns 0 if I<ctx> is NULL.
+OSSL_ENCODER_CTX_get_num_encoders() returns the current number of encoders.
+It returns 0 if I<ctx> is NULL.
 
-OSSL_DECODER_INSTANCE_decoder() returns an B<OSSL_DECODER> pointer on
+OSSL_ENCODER_INSTANCE_get_encoder() returns an B<OSSL_ENCODER> pointer on
 success, or NULL on failure.
 
-OSSL_DECODER_INSTANCE_decoder_ctx() returns a provider context pointer on
+OSSL_ENCODER_INSTANCE_get_encoder_ctx() returns a provider context pointer on
 success, or NULL on failure.
 
-OSSL_ENCODER_INSTANCE_input_type() returns a string with the name of the
+OSSL_ENCODER_INSTANCE_get_output_type() returns a string with the name of the
 input type, if relevant.  NULL is a valid returned value.
 
-OSSL_ENCODER_INSTANCE_output_type() returns a string with the name of the
+OSSL_ENCODER_INSTANCE_get_output_type() returns a string with the name of the
 output type.
+
+OSSL_ENCODER_INSTANCE_get_output_structure() returns a string with the name
+of the output structure.
 
 =head1 SEE ALSO
 
@@ -198,7 +211,7 @@ The functions described here were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

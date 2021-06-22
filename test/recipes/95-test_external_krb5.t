@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -17,7 +17,7 @@ setup("test_external_krb5");
 plan skip_all => "No external tests in this configuration"
     if disabled("external-tests");
 plan skip_all => "krb5 not available"
-    if ! -f srctop_file("krb5", "data.txt");
+    if ! -f srctop_file("krb5", "src", "configure.ac");
 
 plan tests => 1;
 

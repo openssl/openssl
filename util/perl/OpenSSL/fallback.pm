@@ -1,4 +1,4 @@
-# Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -89,9 +89,24 @@ sub import {
             while (my $l = <$fh>) {
                 $l =~ s|\R$||;        # Better chomp
                 my $d = "$dir/$l";
+                my $checked = $d;
+
+                if ($^O eq 'VMS') {
+                    # Some VMS unpackers replace periods with underscores
+                    # We must be real careful not to convert the directories
+                    # '.' and '..', though.
+                    $checked =
+                        join('/',
+                             map { my $x = $_;
+                                   $x =~ s|\.|_|g
+                                       if ($x ne '..' && $x ne '.');
+                                   $x }
+                             split(m|/|, $checked))
+                        unless -e $checked && -d $checked;
+                }
                 croak "All lines in $path must be a directory, not a file: $l"
-                    unless -e $d && -d $d;
-                push @INC, $d;
+                    unless -e $checked && -d $checked;
+                push @INC, $checked;
             }
         } else {                # It's a directory
             push @INC, $path;

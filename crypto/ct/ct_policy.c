@@ -25,13 +25,13 @@
  */
 static const time_t SCT_CLOCK_DRIFT_TOLERANCE = 300;
 
-CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new_with_libctx(OPENSSL_CTX *libctx,
-                                                       const char *propq)
+CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new_ex(OSSL_LIB_CTX *libctx,
+                                              const char *propq)
 {
     CT_POLICY_EVAL_CTX *ctx = OPENSSL_zalloc(sizeof(CT_POLICY_EVAL_CTX));
 
     if (ctx == NULL) {
-        CTerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CT, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -39,7 +39,7 @@ CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new_with_libctx(OPENSSL_CTX *libctx,
     if (propq != NULL) {
         ctx->propq = OPENSSL_strdup(propq);
         if (ctx->propq == NULL) {
-            CTerr(0, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_CT, ERR_R_MALLOC_FAILURE);
             OPENSSL_free(ctx);
             return NULL;
         }
@@ -54,7 +54,7 @@ CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new_with_libctx(OPENSSL_CTX *libctx,
 
 CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new(void)
 {
-    return CT_POLICY_EVAL_CTX_new_with_libctx(NULL, NULL);
+    return CT_POLICY_EVAL_CTX_new_ex(NULL, NULL);
 }
 
 void CT_POLICY_EVAL_CTX_free(CT_POLICY_EVAL_CTX *ctx)

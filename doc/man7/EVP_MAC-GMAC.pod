@@ -8,6 +8,9 @@ EVP_MAC-GMAC - The GMAC EVP_MAC implementation
 
 Support for computing GMAC MACs through the B<EVP_MAC> API.
 
+This implementation uses EVP_CIPHER functions to get access to the underlying
+cipher.
+
 =head2 Identity
 
 This implementation is identified with this name and properties, to be
@@ -30,11 +33,22 @@ The following parameter can be set with EVP_MAC_CTX_set_params():
 
 =item "key" (B<OSSL_MAC_PARAM_KEY>) <octet string>
 
+Sets the MAC key.
+Setting this parameter is identical to passing a I<key> to L<EVP_MAC_init(3)>.
+
 =item "iv" (B<OSSL_MAC_PARAM_IV>) <octet string>
+
+Sets the IV of the underlying cipher, when applicable.
 
 =item "cipher" (B<OSSL_MAC_PARAM_CIPHER>) <UTF8 string>
 
+Sets the name of the underlying cipher to be used.
+
 =item "properties" (B<OSSL_MAC_PARAM_PROPERTIES>) <UTF8 string>
+
+Sets the properties to be queried when trying to fetch the underlying cipher.
+This must be given together with the cipher naming parameter to be considered
+valid.
 
 =back
 
@@ -45,9 +59,11 @@ EVP_MAC_CTX_get_params():
 
 =item "size" (B<OSSL_MAC_PARAM_SIZE>) <unsigned integer>
 
+Gets the MAC size.
+
 =back
 
-The "size" parameter can also be retrieved with EVP_MAC_size().
+The "size" parameter can also be retrieved with EVP_MAC_CTX_get_mac_size().
 The length of the "size" parameter is equal to that of an B<unsigned int>.
 
 =head1 SEE ALSO
@@ -57,7 +73,7 @@ L<EVP_MAC(3)/PARAMETERS>, L<OSSL_PARAM(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

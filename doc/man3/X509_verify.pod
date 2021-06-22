@@ -3,7 +3,7 @@
 =head1 NAME
 
 X509_verify, X509_self_signed,
-X509_REQ_verify_with_libctx, X509_REQ_verify,
+X509_REQ_verify_ex, X509_REQ_verify,
 X509_CRL_verify -
 verify certificate, certificate request, or CRL signature
 
@@ -14,8 +14,8 @@ verify certificate, certificate request, or CRL signature
  int X509_verify(X509 *x, EVP_PKEY *pkey);
  int X509_self_signed(X509 *cert, int verify_signature);
 
- int X509_REQ_verify_with_libctx(X509_REQ *a, EVP_PKEY *pkey,
-                                 OPENSSL_CTX *libctx, const char *propq);
+ int X509_REQ_verify_ex(X509_REQ *a, EVP_PKEY *pkey, OSSL_LIB_CTX *libctx,
+                        const char *propq);
  int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r);
  int X509_CRL_verify(X509_CRL *a, EVP_PKEY *r);
 
@@ -31,13 +31,13 @@ authority key identifier (if present) must match the subject key identifier etc.
 The signature itself is actually verified only if B<verify_signature> is 1, as
 for explicitly trusted certificates this verification is not worth the effort.
 
-X509_REQ_verify_with_libctx(), X509_REQ_verify() and X509_CRL_verify()
+X509_REQ_verify_ex(), X509_REQ_verify() and X509_CRL_verify()
 verify the signatures of certificate requests and CRLs, respectively.
 
 =head1 RETURN VALUES
 
 X509_verify(),
-X509_REQ_verify_with_libctx(), X509_REQ_verify() and X509_CRL_verify()
+X509_REQ_verify_ex(), X509_REQ_verify() and X509_CRL_verify()
 return 1 if the signature is valid and 0 if the signature check fails.
 If the signature could not be checked at all because it was ill-formed
 or some other error occurred then -1 is returned.
@@ -61,14 +61,14 @@ L<X509_NAME_get_index_by_NID(3)>,
 L<X509_NAME_print_ex(3)>,
 L<X509V3_get_d2i(3)>,
 L<X509_verify_cert(3)>,
-L<OPENSSL_CTX(3)>
+L<OSSL_LIB_CTX(3)>
 
 =head1 HISTORY
 
 The X509_verify(), X509_REQ_verify(), and X509_CRL_verify()
 functions are available in all versions of OpenSSL.
 
-X509_REQ_verify_with_libctx(), and X509_self_signed() were added in OpenSSL 3.0.
+X509_REQ_verify_ex(), and X509_self_signed() were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

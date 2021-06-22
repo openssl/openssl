@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,11 +12,11 @@
  * This file is included by cipher_aes_hw.c
  */
 
-#define cipher_hw_aesni_ofb128 cipher_hw_generic_ofb128
-#define cipher_hw_aesni_cfb128 cipher_hw_generic_cfb128
-#define cipher_hw_aesni_cfb8   cipher_hw_generic_cfb8
-#define cipher_hw_aesni_cfb1   cipher_hw_generic_cfb1
-#define cipher_hw_aesni_ctr    cipher_hw_generic_ctr
+#define cipher_hw_aesni_ofb128 ossl_cipher_hw_generic_ofb128
+#define cipher_hw_aesni_cfb128 ossl_cipher_hw_generic_cfb128
+#define cipher_hw_aesni_cfb8   ossl_cipher_hw_generic_cfb8
+#define cipher_hw_aesni_cfb1   ossl_cipher_hw_generic_cfb1
+#define cipher_hw_aesni_ctr    ossl_cipher_hw_generic_ctr
 
 static int cipher_hw_aesni_initkey(PROV_CIPHER_CTX *dat,
                                    const unsigned char *key, size_t keylen)
@@ -45,7 +45,7 @@ static int cipher_hw_aesni_initkey(PROV_CIPHER_CTX *dat,
     }
 
     if (ret < 0) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_AES_KEY_SETUP_FAILED);
+        ERR_raise(ERR_LIB_PROV, PROV_R_KEY_SETUP_FAILED);
         return 0;
     }
 

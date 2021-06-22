@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -59,13 +59,14 @@ static int cipher_hw_aes_xts_generic_initkey(PROV_CIPHER_CTX *ctx,
         XTS_SET_KEY_FN(HWAES_set_encrypt_key, HWAES_set_decrypt_key,
                        HWAES_encrypt, HWAES_decrypt,
                        stream_enc, stream_dec);
+        return 1;
     } else
 #endif /* HWAES_CAPABLE */
 
 #ifdef BSAES_CAPABLE
     if (BSAES_CAPABLE) {
-        stream_enc = bsaes_xts_encrypt;
-        stream_dec = bsaes_xts_decrypt;
+        stream_enc = ossl_bsaes_xts_encrypt;
+        stream_dec = ossl_bsaes_xts_decrypt;
     } else
 #endif /* BSAES_CAPABLE */
 #ifdef VPAES_CAPABLE
@@ -169,7 +170,7 @@ static const PROV_CIPHER_HW aes_generic_xts = {
     cipher_hw_aes_xts_copyctx
 };
 PROV_CIPHER_HW_declare_xts()
-const PROV_CIPHER_HW *PROV_CIPHER_HW_aes_xts(size_t keybits)
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_xts(size_t keybits)
 {
     PROV_CIPHER_HW_select_xts()
     return &aes_generic_xts;

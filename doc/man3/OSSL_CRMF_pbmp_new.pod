@@ -10,13 +10,13 @@ OSSL_CRMF_pbmp_new
 
  #include <openssl/crmf.h>
 
- int OSSL_CRMF_pbm_new(OPENSSL_CTX *libctx, const char *propq,
+ int OSSL_CRMF_pbm_new(OSSL_LIB_CTX *libctx, const char *propq,
                        const OSSL_CRMF_PBMPARAMETER *pbmp,
                        const unsigned char *msg, size_t msglen,
                        const unsigned char *sec, size_t seclen,
                        unsigned char **mac, size_t *maclen);
 
- OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(OPENSSL_CTX *libctx, size_t saltlen,
+ OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(OSSL_LIB_CTX *libctx, size_t saltlen,
                                             int owfnid, size_t itercnt,
                                             int macnid);
 
@@ -27,7 +27,7 @@ parameters I<pbmp>, message I<msg>, and secret I<sec>, along with the respective
 lengths I<msglen> and I<seclen>.
 The optional library context I<libctx> and I<propq> parameters may be used
 to influence the selection of the MAC algorithm referenced in the I<pbmp>;
-see L<provider(7)/Fetching algorithms> for further information.
+see L<crypto(7)/ALGORITHM FETCHING> for further information.
 On success writes the address of the newly
 allocated MAC via the I<mac> reference parameter and writes the length via the
 I<maclen> reference parameter unless it its NULL.
@@ -42,7 +42,7 @@ for the random number generation (DRBG) and may be NULL for the default.
 =head1 NOTES
 
 The algorithms for the OWF (one-way function) and for the MAC (message
-authentication code) may be any with a NID defined in C<openssl/objects.h>.
+authentication code) may be any with a NID defined in F<< <openssl/objects.h> >>.
 As specified by RFC 4210, these should include NID_hmac_sha1.
 
 RFC 4210 recommends that the salt SHOULD be at least 8 bytes (64 bits) long,
@@ -82,7 +82,7 @@ The OpenSSL CRMF support was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2007-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

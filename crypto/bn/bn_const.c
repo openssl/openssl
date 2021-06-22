@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -84,7 +84,7 @@ BIGNUM *BN_get_rfc2409_prime_1024(BIGNUM *bn)
 
 BIGNUM *BN_get_rfc3526_prime_1536(BIGNUM *bn)
 {
-    return COPY_BN(bn, _bignum_modp_1536_p);
+    return COPY_BN(bn, ossl_bignum_modp_1536_p);
 }
 
 /*-
@@ -97,7 +97,7 @@ BIGNUM *BN_get_rfc3526_prime_1536(BIGNUM *bn)
 
 BIGNUM *BN_get_rfc3526_prime_2048(BIGNUM *bn)
 {
-    return COPY_BN(bn, _bignum_modp_2048_p);
+    return COPY_BN(bn, ossl_bignum_modp_2048_p);
 }
 
 /*-
@@ -110,7 +110,7 @@ BIGNUM *BN_get_rfc3526_prime_2048(BIGNUM *bn)
 
 BIGNUM *BN_get_rfc3526_prime_3072(BIGNUM *bn)
 {
-    return COPY_BN(bn, _bignum_modp_3072_p);
+    return COPY_BN(bn, ossl_bignum_modp_3072_p);
 }
 
 /*-
@@ -123,7 +123,7 @@ BIGNUM *BN_get_rfc3526_prime_3072(BIGNUM *bn)
 
 BIGNUM *BN_get_rfc3526_prime_4096(BIGNUM *bn)
 {
-    return COPY_BN(bn, _bignum_modp_4096_p);
+    return COPY_BN(bn, ossl_bignum_modp_4096_p);
 }
 
 /*-
@@ -136,7 +136,7 @@ BIGNUM *BN_get_rfc3526_prime_4096(BIGNUM *bn)
 
 BIGNUM *BN_get_rfc3526_prime_6144(BIGNUM *bn)
 {
-    return COPY_BN(bn, _bignum_modp_6144_p);
+    return COPY_BN(bn, ossl_bignum_modp_6144_p);
 }
 
 /*-
@@ -149,5 +149,5 @@ BIGNUM *BN_get_rfc3526_prime_6144(BIGNUM *bn)
 
 BIGNUM *BN_get_rfc3526_prime_8192(BIGNUM *bn)
 {
-    return COPY_BN(bn, _bignum_modp_8192_p);
+    return COPY_BN(bn, ossl_bignum_modp_8192_p);
 }

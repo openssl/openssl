@@ -46,7 +46,7 @@ L<openssl_user_macros(7)>:
                              int (*init) (EVP_PKEY_CTX *ctx));
  void EVP_PKEY_meth_set_copy(EVP_PKEY_METHOD *pmeth,
                              int (*copy) (EVP_PKEY_CTX *dst,
-                                          EVP_PKEY_CTX *src));
+                                          const EVP_PKEY_CTX *src));
  void EVP_PKEY_meth_set_cleanup(EVP_PKEY_METHOD *pmeth,
                                 void (*cleanup) (EVP_PKEY_CTX *ctx));
  void EVP_PKEY_meth_set_paramgen(EVP_PKEY_METHOD *pmeth,
@@ -266,7 +266,7 @@ The methods are the underlying implementations of a particular public key
 algorithm present by the B<EVP_PKEY_CTX> object.
 
  int (*init) (EVP_PKEY_CTX *ctx);
- int (*copy) (EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src);
+ int (*copy) (EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src);
  void (*cleanup) (EVP_PKEY_CTX *ctx);
 
 The init() method is called to initialize algorithm-specific data when a new
@@ -451,9 +451,12 @@ arguments.
 
 All of these functions were deprecated in OpenSSL 3.0.
 
+The signature of the I<copy> functional argument of EVP_PKEY_meth_set_copy()
+has changed in OpenSSL 3.0 so its I<src> parameter is now constified.
+
 =head1 COPYRIGHT
 
-Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

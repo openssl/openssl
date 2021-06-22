@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -29,13 +29,13 @@ int SSL_use_certificate(SSL *ssl, X509 *x)
 {
     int rv;
     if (x == NULL) {
-        SSLerr(SSL_F_SSL_USE_CERTIFICATE, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
     rv = ssl_security_cert(ssl, NULL, x, 0, 1);
     if (rv != 1) {
-        SSLerr(SSL_F_SSL_USE_CERTIFICATE, rv);
+        ERR_raise(ERR_LIB_SSL, rv);
         return 0;
     }
 
@@ -51,22 +51,22 @@ int SSL_use_certificate_file(SSL *ssl, const char *file, int type)
 
     in = BIO_new(BIO_s_file());
     if (in == NULL) {
-        SSLerr(SSL_F_SSL_USE_CERTIFICATE_FILE, ERR_R_BUF_LIB);
+        ERR_raise(ERR_LIB_SSL, ERR_R_BUF_LIB);
         goto end;
     }
 
     if (BIO_read_filename(in, file) <= 0) {
-        SSLerr(SSL_F_SSL_USE_CERTIFICATE_FILE, ERR_R_SYS_LIB);
+        ERR_raise(ERR_LIB_SSL, ERR_R_SYS_LIB);
         goto end;
     }
 
     if (type != SSL_FILETYPE_ASN1 && type != SSL_FILETYPE_PEM) {
-        SSLerr(SSL_F_SSL_USE_CERTIFICATE_FILE, SSL_R_BAD_SSL_FILETYPE);
+        ERR_raise(ERR_LIB_SSL, SSL_R_BAD_SSL_FILETYPE);
         goto end;
     }
-    x = X509_new_with_libctx(ssl->ctx->libctx, ssl->ctx->propq);
+    x = X509_new_ex(ssl->ctx->libctx, ssl->ctx->propq);
     if (x == NULL) {
-        SSLerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         goto end;
     }
     if (type == SSL_FILETYPE_ASN1) {
@@ -77,12 +77,12 @@ int SSL_use_certificate_file(SSL *ssl, const char *file, int type)
         cert = PEM_read_bio_X509(in, &x, ssl->default_passwd_callback,
                                  ssl->default_passwd_callback_userdata);
     } else {
-        SSLerr(SSL_F_SSL_USE_CERTIFICATE_FILE, SSL_R_BAD_SSL_FILETYPE);
+        ERR_raise(ERR_LIB_SSL, SSL_R_BAD_SSL_FILETYPE);
         goto end;
     }
 
     if (cert == NULL) {
-        SSLerr(SSL_F_SSL_USE_CERTIFICATE_FILE, j);
+        ERR_raise(ERR_LIB_SSL, j);
         goto end;
     }
 
@@ -98,15 +98,15 @@ int SSL_use_certificate_ASN1(SSL *ssl, const unsigned char *d, int len)
     X509 *x;
     int ret;
 
-    x = X509_new_with_libctx(ssl->ctx->libctx, ssl->ctx->propq);
+    x = X509_new_ex(ssl->ctx->libctx, ssl->ctx->propq);
     if (x == NULL) {
-        SSLerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
     if (d2i_X509(&x, &d, (long)len)== NULL) {
         X509_free(x);
-        SSLerr(SSL_F_SSL_USE_CERTIFICATE_ASN1, ERR_R_ASN1_LIB);
+        ERR_raise(ERR_LIB_SSL, ERR_R_ASN1_LIB);
         return 0;
     }
 
@@ -115,63 +115,18 @@ int SSL_use_certificate_ASN1(SSL *ssl, const unsigned char *d, int len)
     return ret;
 }
 
-#ifndef OPENSSL_NO_RSA
-int SSL_use_RSAPrivateKey(SSL *ssl, RSA *rsa)
-{
-    EVP_PKEY *pkey;
-    int ret;
-
-    if (rsa == NULL) {
-        SSLerr(SSL_F_SSL_USE_RSAPRIVATEKEY, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
-    }
-    if ((pkey = EVP_PKEY_new()) == NULL) {
-        SSLerr(SSL_F_SSL_USE_RSAPRIVATEKEY, ERR_R_EVP_LIB);
-        return 0;
-    }
-
-    RSA_up_ref(rsa);
-    if (EVP_PKEY_assign_RSA(pkey, rsa) <= 0) {
-        RSA_free(rsa);
-        EVP_PKEY_free(pkey);
-        return 0;
-    }
-
-    ret = ssl_set_pkey(ssl->cert, pkey);
-    EVP_PKEY_free(pkey);
-    return ret;
-}
-#endif
-
 static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey)
 {
     size_t i;
 
     if (ssl_cert_lookup_by_pkey(pkey, &i) == NULL) {
-        SSLerr(SSL_F_SSL_SET_PKEY, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
+        ERR_raise(ERR_LIB_SSL, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
         return 0;
     }
 
-    if (c->pkeys[i].x509 != NULL) {
-        EVP_PKEY *pktmp;
-        pktmp = X509_get0_pubkey(c->pkeys[i].x509);
-        if (pktmp == NULL) {
-            SSLerr(SSL_F_SSL_SET_PKEY, ERR_R_MALLOC_FAILURE);
-            return 0;
-        }
-        /*
-         * The return code from EVP_PKEY_copy_parameters is deliberately
-         * ignored. Some EVP_PKEY types cannot do this.
-         */
-        EVP_PKEY_copy_parameters(pktmp, pkey);
-        ERR_clear_error();
-
-        if (!X509_check_private_key(c->pkeys[i].x509, pkey)) {
-            X509_free(c->pkeys[i].x509);
-            c->pkeys[i].x509 = NULL;
-            return 0;
-        }
-    }
+    if (c->pkeys[i].x509 != NULL
+            && !X509_check_private_key(c->pkeys[i].x509, pkey))
+        return 0;
 
     EVP_PKEY_free(c->pkeys[i].privatekey);
     EVP_PKEY_up_ref(pkey);
@@ -180,70 +135,12 @@ static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey)
     return 1;
 }
 
-#ifndef OPENSSL_NO_RSA
-int SSL_use_RSAPrivateKey_file(SSL *ssl, const char *file, int type)
-{
-    int j, ret = 0;
-    BIO *in;
-    RSA *rsa = NULL;
-
-    in = BIO_new(BIO_s_file());
-    if (in == NULL) {
-        SSLerr(SSL_F_SSL_USE_RSAPRIVATEKEY_FILE, ERR_R_BUF_LIB);
-        goto end;
-    }
-
-    if (BIO_read_filename(in, file) <= 0) {
-        SSLerr(SSL_F_SSL_USE_RSAPRIVATEKEY_FILE, ERR_R_SYS_LIB);
-        goto end;
-    }
-    if (type == SSL_FILETYPE_ASN1) {
-        j = ERR_R_ASN1_LIB;
-        rsa = d2i_RSAPrivateKey_bio(in, NULL);
-    } else if (type == SSL_FILETYPE_PEM) {
-        j = ERR_R_PEM_LIB;
-        rsa = PEM_read_bio_RSAPrivateKey(in, NULL,
-                                         ssl->default_passwd_callback,
-                                         ssl->default_passwd_callback_userdata);
-    } else {
-        SSLerr(SSL_F_SSL_USE_RSAPRIVATEKEY_FILE, SSL_R_BAD_SSL_FILETYPE);
-        goto end;
-    }
-    if (rsa == NULL) {
-        SSLerr(SSL_F_SSL_USE_RSAPRIVATEKEY_FILE, j);
-        goto end;
-    }
-    ret = SSL_use_RSAPrivateKey(ssl, rsa);
-    RSA_free(rsa);
- end:
-    BIO_free(in);
-    return ret;
-}
-
-int SSL_use_RSAPrivateKey_ASN1(SSL *ssl, const unsigned char *d, long len)
-{
-    int ret;
-    const unsigned char *p;
-    RSA *rsa;
-
-    p = d;
-    if ((rsa = d2i_RSAPrivateKey(NULL, &p, (long)len)) == NULL) {
-        SSLerr(SSL_F_SSL_USE_RSAPRIVATEKEY_ASN1, ERR_R_ASN1_LIB);
-        return 0;
-    }
-
-    ret = SSL_use_RSAPrivateKey(ssl, rsa);
-    RSA_free(rsa);
-    return ret;
-}
-#endif                          /* !OPENSSL_NO_RSA */
-
 int SSL_use_PrivateKey(SSL *ssl, EVP_PKEY *pkey)
 {
     int ret;
 
     if (pkey == NULL) {
-        SSLerr(SSL_F_SSL_USE_PRIVATEKEY, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
     ret = ssl_set_pkey(ssl->cert, pkey);
@@ -258,12 +155,12 @@ int SSL_use_PrivateKey_file(SSL *ssl, const char *file, int type)
 
     in = BIO_new(BIO_s_file());
     if (in == NULL) {
-        SSLerr(SSL_F_SSL_USE_PRIVATEKEY_FILE, ERR_R_BUF_LIB);
+        ERR_raise(ERR_LIB_SSL, ERR_R_BUF_LIB);
         goto end;
     }
 
     if (BIO_read_filename(in, file) <= 0) {
-        SSLerr(SSL_F_SSL_USE_PRIVATEKEY_FILE, ERR_R_SYS_LIB);
+        ERR_raise(ERR_LIB_SSL, ERR_R_SYS_LIB);
         goto end;
     }
     if (type == SSL_FILETYPE_PEM) {
@@ -278,11 +175,11 @@ int SSL_use_PrivateKey_file(SSL *ssl, const char *file, int type)
         pkey = d2i_PrivateKey_ex_bio(in, NULL, ssl->ctx->libctx,
                                      ssl->ctx->propq);
     } else {
-        SSLerr(SSL_F_SSL_USE_PRIVATEKEY_FILE, SSL_R_BAD_SSL_FILETYPE);
+        ERR_raise(ERR_LIB_SSL, SSL_R_BAD_SSL_FILETYPE);
         goto end;
     }
     if (pkey == NULL) {
-        SSLerr(SSL_F_SSL_USE_PRIVATEKEY_FILE, j);
+        ERR_raise(ERR_LIB_SSL, j);
         goto end;
     }
     ret = SSL_use_PrivateKey(ssl, pkey);
@@ -302,7 +199,7 @@ int SSL_use_PrivateKey_ASN1(int type, SSL *ssl, const unsigned char *d,
     p = d;
     if ((pkey = d2i_PrivateKey_ex(type, NULL, &p, (long)len, ssl->ctx->libctx,
                                   ssl->ctx->propq)) == NULL) {
-        SSLerr(SSL_F_SSL_USE_PRIVATEKEY_ASN1, ERR_R_ASN1_LIB);
+        ERR_raise(ERR_LIB_SSL, ERR_R_ASN1_LIB);
         return 0;
     }
 
@@ -315,13 +212,13 @@ int SSL_CTX_use_certificate(SSL_CTX *ctx, X509 *x)
 {
     int rv;
     if (x == NULL) {
-        SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
     rv = ssl_security_cert(NULL, ctx, x, 0, 1);
     if (rv != 1) {
-        SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE, rv);
+        ERR_raise(ERR_LIB_SSL, rv);
         return 0;
     }
     return ssl_set_cert(ctx->cert, x);
@@ -334,20 +231,20 @@ static int ssl_set_cert(CERT *c, X509 *x)
 
     pkey = X509_get0_pubkey(x);
     if (pkey == NULL) {
-        SSLerr(SSL_F_SSL_SET_CERT, SSL_R_X509_LIB);
+        ERR_raise(ERR_LIB_SSL, SSL_R_X509_LIB);
         return 0;
     }
 
     if (ssl_cert_lookup_by_pkey(pkey, &i) == NULL) {
-        SSLerr(SSL_F_SSL_SET_CERT, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
+        ERR_raise(ERR_LIB_SSL, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
         return 0;
     }
-#ifndef OPENSSL_NO_EC
+
     if (i == SSL_PKEY_ECC && !EVP_PKEY_can_sign(pkey)) {
-        SSLerr(SSL_F_SSL_SET_CERT, SSL_R_ECC_CERT_NOT_FOR_SIGNING);
+        ERR_raise(ERR_LIB_SSL, SSL_R_ECC_CERT_NOT_FOR_SIGNING);
         return 0;
     }
-#endif
+
     if (c->pkeys[i].privatekey != NULL) {
         /*
          * The return code from EVP_PKEY_copy_parameters is deliberately
@@ -386,21 +283,21 @@ int SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type)
 
     in = BIO_new(BIO_s_file());
     if (in == NULL) {
-        SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_FILE, ERR_R_BUF_LIB);
+        ERR_raise(ERR_LIB_SSL, ERR_R_BUF_LIB);
         goto end;
     }
 
     if (BIO_read_filename(in, file) <= 0) {
-        SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_FILE, ERR_R_SYS_LIB);
+        ERR_raise(ERR_LIB_SSL, ERR_R_SYS_LIB);
         goto end;
     }
     if (type != SSL_FILETYPE_ASN1 && type != SSL_FILETYPE_PEM) {
-        SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_FILE, SSL_R_BAD_SSL_FILETYPE);
+        ERR_raise(ERR_LIB_SSL, SSL_R_BAD_SSL_FILETYPE);
         goto end;
     }
-    x = X509_new_with_libctx(ctx->libctx, ctx->propq);
+    x = X509_new_ex(ctx->libctx, ctx->propq);
     if (x == NULL) {
-        SSLerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         goto end;
     }
     if (type == SSL_FILETYPE_ASN1) {
@@ -412,7 +309,7 @@ int SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type)
                                  ctx->default_passwd_callback_userdata);
     }
     if (cert == NULL) {
-        SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_FILE, j);
+        ERR_raise(ERR_LIB_SSL, j);
         goto end;
     }
 
@@ -428,15 +325,15 @@ int SSL_CTX_use_certificate_ASN1(SSL_CTX *ctx, int len, const unsigned char *d)
     X509 *x;
     int ret;
 
-    x = X509_new_with_libctx(ctx->libctx, ctx->propq);
+    x = X509_new_ex(ctx->libctx, ctx->propq);
     if (x == NULL) {
-        SSLerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
     if (d2i_X509(&x, &d, (long)len) == NULL) {
         X509_free(x);
-        SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_ASN1, ERR_R_ASN1_LIB);
+        ERR_raise(ERR_LIB_SSL, ERR_R_ASN1_LIB);
         return 0;
     }
 
@@ -445,95 +342,10 @@ int SSL_CTX_use_certificate_ASN1(SSL_CTX *ctx, int len, const unsigned char *d)
     return ret;
 }
 
-#ifndef OPENSSL_NO_RSA
-int SSL_CTX_use_RSAPrivateKey(SSL_CTX *ctx, RSA *rsa)
-{
-    int ret;
-    EVP_PKEY *pkey;
-
-    if (rsa == NULL) {
-        SSLerr(SSL_F_SSL_CTX_USE_RSAPRIVATEKEY, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
-    }
-    if ((pkey = EVP_PKEY_new()) == NULL) {
-        SSLerr(SSL_F_SSL_CTX_USE_RSAPRIVATEKEY, ERR_R_EVP_LIB);
-        return 0;
-    }
-
-    RSA_up_ref(rsa);
-    if (EVP_PKEY_assign_RSA(pkey, rsa) <= 0) {
-        RSA_free(rsa);
-        EVP_PKEY_free(pkey);
-        return 0;
-    }
-
-    ret = ssl_set_pkey(ctx->cert, pkey);
-    EVP_PKEY_free(pkey);
-    return ret;
-}
-
-int SSL_CTX_use_RSAPrivateKey_file(SSL_CTX *ctx, const char *file, int type)
-{
-    int j, ret = 0;
-    BIO *in;
-    RSA *rsa = NULL;
-
-    in = BIO_new(BIO_s_file());
-    if (in == NULL) {
-        SSLerr(SSL_F_SSL_CTX_USE_RSAPRIVATEKEY_FILE, ERR_R_BUF_LIB);
-        goto end;
-    }
-
-    if (BIO_read_filename(in, file) <= 0) {
-        SSLerr(SSL_F_SSL_CTX_USE_RSAPRIVATEKEY_FILE, ERR_R_SYS_LIB);
-        goto end;
-    }
-    if (type == SSL_FILETYPE_ASN1) {
-        j = ERR_R_ASN1_LIB;
-        rsa = d2i_RSAPrivateKey_bio(in, NULL);
-    } else if (type == SSL_FILETYPE_PEM) {
-        j = ERR_R_PEM_LIB;
-        rsa = PEM_read_bio_RSAPrivateKey(in, NULL,
-                                         ctx->default_passwd_callback,
-                                         ctx->default_passwd_callback_userdata);
-    } else {
-        SSLerr(SSL_F_SSL_CTX_USE_RSAPRIVATEKEY_FILE, SSL_R_BAD_SSL_FILETYPE);
-        goto end;
-    }
-    if (rsa == NULL) {
-        SSLerr(SSL_F_SSL_CTX_USE_RSAPRIVATEKEY_FILE, j);
-        goto end;
-    }
-    ret = SSL_CTX_use_RSAPrivateKey(ctx, rsa);
-    RSA_free(rsa);
- end:
-    BIO_free(in);
-    return ret;
-}
-
-int SSL_CTX_use_RSAPrivateKey_ASN1(SSL_CTX *ctx, const unsigned char *d,
-                                   long len)
-{
-    int ret;
-    const unsigned char *p;
-    RSA *rsa;
-
-    p = d;
-    if ((rsa = d2i_RSAPrivateKey(NULL, &p, (long)len)) == NULL) {
-        SSLerr(SSL_F_SSL_CTX_USE_RSAPRIVATEKEY_ASN1, ERR_R_ASN1_LIB);
-        return 0;
-    }
-
-    ret = SSL_CTX_use_RSAPrivateKey(ctx, rsa);
-    RSA_free(rsa);
-    return ret;
-}
-#endif                          /* !OPENSSL_NO_RSA */
-
 int SSL_CTX_use_PrivateKey(SSL_CTX *ctx, EVP_PKEY *pkey)
 {
     if (pkey == NULL) {
-        SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
     return ssl_set_pkey(ctx->cert, pkey);
@@ -547,12 +359,12 @@ int SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type)
 
     in = BIO_new(BIO_s_file());
     if (in == NULL) {
-        SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY_FILE, ERR_R_BUF_LIB);
+        ERR_raise(ERR_LIB_SSL, ERR_R_BUF_LIB);
         goto end;
     }
 
     if (BIO_read_filename(in, file) <= 0) {
-        SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY_FILE, ERR_R_SYS_LIB);
+        ERR_raise(ERR_LIB_SSL, ERR_R_SYS_LIB);
         goto end;
     }
     if (type == SSL_FILETYPE_PEM) {
@@ -565,11 +377,11 @@ int SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type)
         j = ERR_R_ASN1_LIB;
         pkey = d2i_PrivateKey_ex_bio(in, NULL, ctx->libctx, ctx->propq);
     } else {
-        SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY_FILE, SSL_R_BAD_SSL_FILETYPE);
+        ERR_raise(ERR_LIB_SSL, SSL_R_BAD_SSL_FILETYPE);
         goto end;
     }
     if (pkey == NULL) {
-        SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY_FILE, j);
+        ERR_raise(ERR_LIB_SSL, j);
         goto end;
     }
     ret = SSL_CTX_use_PrivateKey(ctx, pkey);
@@ -589,7 +401,7 @@ int SSL_CTX_use_PrivateKey_ASN1(int type, SSL_CTX *ctx,
     p = d;
     if ((pkey = d2i_PrivateKey_ex(type, NULL, &p, (long)len, ctx->libctx,
                                   ctx->propq)) == NULL) {
-        SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY_ASN1, ERR_R_ASN1_LIB);
+        ERR_raise(ERR_LIB_SSL, ERR_R_ASN1_LIB);
         return 0;
     }
 
@@ -612,6 +424,9 @@ static int use_certificate_chain_file(SSL_CTX *ctx, SSL *ssl, const char *file)
     void *passwd_callback_userdata;
     SSL_CTX *real_ctx = (ssl == NULL) ? ctx : ssl->ctx;
 
+    if (ctx == NULL && ssl == NULL)
+        return 0;
+
     ERR_clear_error();          /* clear error stack for
                                  * SSL_CTX_use_certificate() */
 
@@ -625,23 +440,23 @@ static int use_certificate_chain_file(SSL_CTX *ctx, SSL *ssl, const char *file)
 
     in = BIO_new(BIO_s_file());
     if (in == NULL) {
-        SSLerr(SSL_F_USE_CERTIFICATE_CHAIN_FILE, ERR_R_BUF_LIB);
+        ERR_raise(ERR_LIB_SSL, ERR_R_BUF_LIB);
         goto end;
     }
 
     if (BIO_read_filename(in, file) <= 0) {
-        SSLerr(SSL_F_USE_CERTIFICATE_CHAIN_FILE, ERR_R_SYS_LIB);
+        ERR_raise(ERR_LIB_SSL, ERR_R_SYS_LIB);
         goto end;
     }
 
-    x = X509_new_with_libctx(real_ctx->libctx, real_ctx->propq);
+    x = X509_new_ex(real_ctx->libctx, real_ctx->propq);
     if (x == NULL) {
-        SSLerr(SSL_F_USE_CERTIFICATE_CHAIN_FILE, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         goto end;
     }
     if (PEM_read_bio_X509_AUX(in, &x, passwd_callback,
                               passwd_callback_userdata) == NULL) {
-        SSLerr(SSL_F_USE_CERTIFICATE_CHAIN_FILE, ERR_R_PEM_LIB);
+        ERR_raise(ERR_LIB_SSL, ERR_R_PEM_LIB);
         goto end;
     }
 
@@ -673,9 +488,9 @@ static int use_certificate_chain_file(SSL_CTX *ctx, SSL *ssl, const char *file)
         }
 
         while (1) {
-            ca = X509_new_with_libctx(real_ctx->libctx, real_ctx->propq);
+            ca = X509_new_ex(real_ctx->libctx, real_ctx->propq);
             if (ca == NULL) {
-                SSLerr(SSL_F_USE_CERTIFICATE_CHAIN_FILE, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
                 goto end;
             }
             if (PEM_read_bio_X509(in, &ca, passwd_callback,
@@ -895,22 +710,22 @@ int SSL_CTX_use_serverinfo_ex(SSL_CTX *ctx, unsigned int version,
     unsigned char *new_serverinfo;
 
     if (ctx == NULL || serverinfo == NULL || serverinfo_length == 0) {
-        SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_EX, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
     if (!serverinfo_process_buffer(version, serverinfo, serverinfo_length,
                                    NULL)) {
-        SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_EX, SSL_R_INVALID_SERVERINFO_DATA);
+        ERR_raise(ERR_LIB_SSL, SSL_R_INVALID_SERVERINFO_DATA);
         return 0;
     }
     if (ctx->cert->key == NULL) {
-        SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_EX, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return 0;
     }
     new_serverinfo = OPENSSL_realloc(ctx->cert->key->serverinfo,
                                      serverinfo_length);
     if (new_serverinfo == NULL) {
-        SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_EX, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     ctx->cert->key->serverinfo = new_serverinfo;
@@ -923,7 +738,7 @@ int SSL_CTX_use_serverinfo_ex(SSL_CTX *ctx, unsigned int version,
      */
     if (!serverinfo_process_buffer(version, serverinfo, serverinfo_length,
                                    ctx)) {
-        SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_EX, SSL_R_INVALID_SERVERINFO_DATA);
+        ERR_raise(ERR_LIB_SSL, SSL_R_INVALID_SERVERINFO_DATA);
         return 0;
     }
     return 1;
@@ -953,17 +768,17 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
     size_t num_extensions = 0, contextoff = 0;
 
     if (ctx == NULL || file == NULL) {
-        SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         goto end;
     }
 
     bin = BIO_new(BIO_s_file());
     if (bin == NULL) {
-        SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, ERR_R_BUF_LIB);
+        ERR_raise(ERR_LIB_SSL, ERR_R_BUF_LIB);
         goto end;
     }
     if (BIO_read_filename(bin, file) <= 0) {
-        SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, ERR_R_SYS_LIB);
+        ERR_raise(ERR_LIB_SSL, ERR_R_SYS_LIB);
         goto end;
     }
 
@@ -976,8 +791,7 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
              * There must be at least one extension in this file
              */
             if (num_extensions == 0) {
-                SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE,
-                       SSL_R_NO_PEM_EXTENSIONS);
+                ERR_raise(ERR_LIB_SSL, SSL_R_NO_PEM_EXTENSIONS);
                 goto end;
             } else              /* End of file, we're done */
                 break;
@@ -985,20 +799,18 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
         /* Check that PEM name starts with "BEGIN SERVERINFO FOR " */
         name_len = strlen(name);
         if (name_len < sizeof(namePrefix1) - 1) {
-            SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, SSL_R_PEM_NAME_TOO_SHORT);
+            ERR_raise(ERR_LIB_SSL, SSL_R_PEM_NAME_TOO_SHORT);
             goto end;
         }
         if (strncmp(name, namePrefix1, sizeof(namePrefix1) - 1) == 0) {
             version = SSL_SERVERINFOV1;
         } else {
             if (name_len < sizeof(namePrefix2) - 1) {
-                SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE,
-                       SSL_R_PEM_NAME_TOO_SHORT);
+                ERR_raise(ERR_LIB_SSL, SSL_R_PEM_NAME_TOO_SHORT);
                 goto end;
             }
             if (strncmp(name, namePrefix2, sizeof(namePrefix2) - 1) != 0) {
-                SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE,
-                       SSL_R_PEM_NAME_BAD_PREFIX);
+                ERR_raise(ERR_LIB_SSL, SSL_R_PEM_NAME_BAD_PREFIX);
                 goto end;
             }
             version = SSL_SERVERINFOV2;
@@ -1011,7 +823,7 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
             if (extension_length < 4
                     || (extension[2] << 8) + extension[3]
                        != extension_length - 4) {
-                SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, SSL_R_BAD_DATA);
+                ERR_raise(ERR_LIB_SSL, SSL_R_BAD_DATA);
                 goto end;
             }
             /*
@@ -1024,7 +836,7 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
             if (extension_length < 8
                     || (extension[6] << 8) + extension[7]
                        != extension_length - 8) {
-                SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, SSL_R_BAD_DATA);
+                ERR_raise(ERR_LIB_SSL, SSL_R_BAD_DATA);
                 goto end;
             }
         }
@@ -1032,7 +844,7 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
         tmp = OPENSSL_realloc(serverinfo, serverinfo_length + extension_length
                                           + contextoff);
         if (tmp == NULL) {
-            SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
             goto end;
         }
         serverinfo = tmp;
@@ -1083,13 +895,13 @@ static int ssl_set_cert_and_key(SSL *ssl, SSL_CTX *ctx, X509 *x509, EVP_PKEY *pr
     /* Do all security checks before anything else */
     rv = ssl_security_cert(ssl, ctx, x509, 0, 1);
     if (rv != 1) {
-        SSLerr(SSL_F_SSL_SET_CERT_AND_KEY, rv);
+        ERR_raise(ERR_LIB_SSL, rv);
         goto out;
     }
     for (j = 0; j < sk_X509_num(chain); j++) {
         rv = ssl_security_cert(ssl, ctx, sk_X509_value(chain, j), 0, 0);
         if (rv != 1) {
-            SSLerr(SSL_F_SSL_SET_CERT_AND_KEY, rv);
+            ERR_raise(ERR_LIB_SSL, rv);
             goto out;
         }
     }
@@ -1104,7 +916,7 @@ static int ssl_set_cert_and_key(SSL *ssl, SSL_CTX *ctx, X509 *x509, EVP_PKEY *pr
         if (EVP_PKEY_missing_parameters(privatekey)) {
             if (EVP_PKEY_missing_parameters(pubkey)) {
                 /* nobody has parameters? - error */
-                SSLerr(SSL_F_SSL_SET_CERT_AND_KEY, SSL_R_MISSING_PARAMETERS);
+                ERR_raise(ERR_LIB_SSL, SSL_R_MISSING_PARAMETERS);
                 goto out;
             } else {
                 /* copy to privatekey from pubkey */
@@ -1117,12 +929,12 @@ static int ssl_set_cert_and_key(SSL *ssl, SSL_CTX *ctx, X509 *x509, EVP_PKEY *pr
 
         /* check that key <-> cert match */
         if (EVP_PKEY_eq(pubkey, privatekey) != 1) {
-            SSLerr(SSL_F_SSL_SET_CERT_AND_KEY, SSL_R_PRIVATE_KEY_MISMATCH);
+            ERR_raise(ERR_LIB_SSL, SSL_R_PRIVATE_KEY_MISMATCH);
             goto out;
         }
     }
     if (ssl_cert_lookup_by_pkey(pubkey, &i) == NULL) {
-        SSLerr(SSL_F_SSL_SET_CERT_AND_KEY, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
+        ERR_raise(ERR_LIB_SSL, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
         goto out;
     }
 
@@ -1130,14 +942,14 @@ static int ssl_set_cert_and_key(SSL *ssl, SSL_CTX *ctx, X509 *x509, EVP_PKEY *pr
                       || c->pkeys[i].privatekey != NULL
                       || c->pkeys[i].chain != NULL)) {
         /* No override, and something already there */
-        SSLerr(SSL_F_SSL_SET_CERT_AND_KEY, SSL_R_NOT_REPLACING_CERTIFICATE);
+        ERR_raise(ERR_LIB_SSL, SSL_R_NOT_REPLACING_CERTIFICATE);
         goto out;
     }
 
     if (chain != NULL) {
         dup_chain = X509_chain_up_ref(chain);
         if  (dup_chain == NULL) {
-            SSLerr(SSL_F_SSL_SET_CERT_AND_KEY, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
             goto out;
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -58,7 +58,7 @@ BIO *BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
     ASN1_STREAM_ARG sarg;
 
     if (!aux || !aux->asn1_cb) {
-        ASN1err(ASN1_F_BIO_NEW_NDEF, ASN1_R_STREAMING_NOT_SUPPORTED);
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_STREAMING_NOT_SUPPORTED);
         return NULL;
     }
     ndef_aux = OPENSSL_zalloc(sizeof(*ndef_aux));
@@ -114,14 +114,16 @@ static int ndef_prefix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
     ndef_aux = *(NDEF_SUPPORT **)parg;
 
     derlen = ASN1_item_ndef_i2d(ndef_aux->val, NULL, ndef_aux->it);
+    if (derlen < 0)
+        return 0;
     if ((p = OPENSSL_malloc(derlen)) == NULL) {
-        ASN1err(ASN1_F_NDEF_PREFIX, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
     ndef_aux->derbuf = p;
     *pbuf = p;
-    derlen = ASN1_item_ndef_i2d(ndef_aux->val, &p, ndef_aux->it);
+    ASN1_item_ndef_i2d(ndef_aux->val, &p, ndef_aux->it);
 
     if (*ndef_aux->boundary == NULL)
         return 0;
@@ -187,7 +189,7 @@ static int ndef_suffix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
     if (derlen < 0)
         return 0;
     if ((p = OPENSSL_malloc(derlen)) == NULL) {
-        ASN1err(ASN1_F_NDEF_SUFFIX, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 

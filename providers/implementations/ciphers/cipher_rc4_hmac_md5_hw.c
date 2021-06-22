@@ -42,6 +42,7 @@ static int cipher_hw_rc4_hmac_md5_initkey(PROV_CIPHER_CTX *bctx,
     ctx->tail = ctx->head;
     ctx->md = ctx->head;
     ctx->payload_length = NO_PAYLOAD_LENGTH;
+    bctx->removetlsfixed = MD5_DIGEST_LENGTH;
     return 1;
 }
 
@@ -225,7 +226,8 @@ static const PROV_CIPHER_HW_RC4_HMAC_MD5 rc4_hmac_md5_hw = {
     cipher_hw_rc4_hmac_md5_tls_init,
     cipher_hw_rc4_hmac_md5_init_mackey
 };
-const PROV_CIPHER_HW *PROV_CIPHER_HW_rc4_hmac_md5(size_t keybits)
+
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_rc4_hmac_md5(size_t keybits)
 {
     return (PROV_CIPHER_HW *)&rc4_hmac_md5_hw;
 }

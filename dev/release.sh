@@ -1,5 +1,5 @@
 #! /bin/bash -e
-# Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -30,7 +30,7 @@ Usage: release.sh [ options ... ]
                 key (default: use the default e-mail address’ key).
 
 --no-upload     Don't upload to upload@dev.openssl.org.
---no-update     Don't perform 'make update'.
+--no-update     Don't perform 'make update' and 'make update-fips-checksums'.
 --verbose       Verbose output.
 --debug         Include debug output.  Implies --no-upload.
 
@@ -121,7 +121,7 @@ while true; do
         ;;
     --local-user )
         shift
-        tagley=" -u $1"
+        tagkey=" -u $1"
         gpgkey=" -u $1"
         shift
         ;;
@@ -319,9 +319,11 @@ echo "== Configuring OpenSSL for update and release.  This may take a bit of tim
 
 ./Configure cc >&42
 
-$VERBOSE "== Checking source file updates"
+$VERBOSE "== Checking source file updates and fips checksums"
 
 make update >&42
+
+make update-fips-checksums >&42
 
 if [ -n "$(git status --porcelain)" ]; then
     $VERBOSE "== Committing updates"
@@ -337,7 +339,7 @@ fi
 if $do_branch; then
     $VERBOSE "== Creating a local update branch: $tmp_update_branch"
     git branch $git_quiet "$tmp_update_branch"
-fi    
+fi
 
 # Write the version information we updated
 set_version
@@ -410,7 +412,7 @@ cat "$HERE/dev/release-aux/$announce_template" \
           -e "s|\\\$sha256hash|$sha256hash|" \
     | perl -p "$HERE/dev/release-aux/fix-title.pl" \
     > "../$announce"
-              
+
 $VERBOSE "== Generating signatures: $tgzfile.asc $announce.asc"
 rm -f "../$tgzfile.asc" "../$announce.asc"
 echo "Signing the release files.  You may need to enter a pass phrase"
@@ -508,7 +510,7 @@ $VERBOSE "== Push what we have to the parent repository"
 git push parent HEAD
 
 # Done ###############################################################
-    
+
 $VERBOSE "== Done"
 
 cd $HERE
@@ -556,10 +558,12 @@ Push them to github, make PRs from them and have them approved:
 
 When merging them into the main repository, do it like this:
 
-    git push --follow-tags openssl-git@git.openssl.org:openssl.git \\
+    git push openssl-git@git.openssl.org:openssl.git \\
         $tmp_release_branch:$release_branch
     git push openssl-git@git.openssl.org:openssl.git \\
         $tmp_update_branch:$update_branch
+    git push openssl-git@git.openssl.org:openssl.git \\
+        $tag
 EOF
 else
 cat <<EOF
@@ -570,8 +574,10 @@ Push it to github, make a PR from it and have it approved:
 
 When merging it into the main repository, do it like this:
 
-    git push --follow-tags openssl-git@git.openssl.org:openssl.git \\
+    git push openssl-git@git.openssl.org:openssl.git \\
         $tmp_release_branch:$release_branch
+    git push openssl-git@git.openssl.org:openssl.git \\
+        $tag
 EOF
 fi
 
@@ -693,7 +699,7 @@ Don't upload the produced files.
 
 =item B<--no-update>
 
-Don't run C<make update>.
+Don't run C<make update> and C<make update-fips-checksums>.
 
 =item B<--verbose>
 
@@ -797,7 +803,7 @@ release date in the tar file of any release.
 
 =head1 COPYRIGHT
 
-Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

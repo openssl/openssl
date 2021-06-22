@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,9 +14,10 @@
 #include "progs.h"
 #include <openssl/err.h>
 #include <openssl/ssl.h>
+#include "s_apps.h"
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_STDNAME,
     OPT_CONVERT,
     OPT_SSL3,
@@ -63,7 +64,7 @@ const OPTIONS ciphers_options[] = {
     {"psk", OPT_PSK, '-', "Include ciphersuites requiring PSK"},
 #endif
 #ifndef OPENSSL_NO_SRP
-    {"srp", OPT_SRP, '-', "Include ciphersuites requiring SRP"},
+    {"srp", OPT_SRP, '-', "(deprecated) Include ciphersuites requiring SRP"},
 #endif
     {"ciphersuites", OPT_CIPHERSUITES, 's',
      "Configure the TLSv1.3 ciphersuites to use"},
@@ -81,12 +82,6 @@ static unsigned int dummy_psk(SSL *ssl, const char *hint, char *identity,
                               unsigned int max_psk_len)
 {
     return 0;
-}
-#endif
-#ifndef OPENSSL_NO_SRP
-static char *dummy_srp(SSL *ssl, void *arg)
-{
-    return "";
 }
 #endif
 
@@ -176,11 +171,12 @@ int ciphers_main(int argc, char **argv)
             break;
         }
     }
+
+    /* Optional arg is cipher name. */
     argv = opt_rest();
     argc = opt_num_rest();
-
     if (argc == 1)
-        ciphers = *argv;
+        ciphers = argv[0];
     else if (argc != 0)
         goto opthelp;
 
@@ -204,7 +200,7 @@ int ciphers_main(int argc, char **argv)
 #endif
 #ifndef OPENSSL_NO_SRP
     if (srp)
-        SSL_CTX_set_srp_client_pwd_callback(ctx, dummy_srp);
+        set_up_dummy_srp(ctx);
 #endif
 
     if (ciphersuites != NULL && !SSL_CTX_set_ciphersuites(ctx, ciphersuites)) {

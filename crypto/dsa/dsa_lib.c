@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,19 +13,15 @@
  */
 #include "internal/deprecated.h"
 
-#include <stdio.h>
+#include <openssl/bn.h>
+#include <openssl/engine.h>
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
-#include <openssl/bn.h>
-#include <openssl/asn1.h>
-#include <openssl/engine.h>
-#include <openssl/core_names.h>
-#include "dsa_local.h"
-#include "crypto/evp.h"
 #include "crypto/dsa.h"
 #include "crypto/dh.h" /* required by DSA_dup_DH() */
+#include "dsa_local.h"
 
-static DSA *dsa_new_intern(ENGINE *engine, OPENSSL_CTX *libctx);
+static DSA *dsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx);
 
 #ifndef FIPS_MODULE
 
@@ -56,7 +52,7 @@ DH *DSA_dup_DH(const DSA *r)
     if (ret == NULL)
         goto err;
 
-    if (!ffc_params_copy(dh_get0_params(ret), &r->params))
+    if (!ossl_ffc_params_copy(ossl_dh_get0_params(ret), &r->params))
         goto err;
 
     if (r->pub_key != NULL) {
@@ -132,19 +128,19 @@ const DSA_METHOD *DSA_get_method(DSA *d)
     return d->meth;
 }
 
-static DSA *dsa_new_intern(ENGINE *engine, OPENSSL_CTX *libctx)
+static DSA *dsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
 {
     DSA *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
-        DSAerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_DSA, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
     ret->references = 1;
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
-        DSAerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_DSA, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(ret);
         return NULL;
     }
@@ -155,7 +151,7 @@ static DSA *dsa_new_intern(ENGINE *engine, OPENSSL_CTX *libctx)
     ret->flags = ret->meth->flags & ~DSA_FLAG_NON_FIPS_ALLOW; /* early default init */
     if (engine) {
         if (!ENGINE_init(engine)) {
-            DSAerr(0, ERR_R_ENGINE_LIB);
+            ERR_raise(ERR_LIB_DSA, ERR_R_ENGINE_LIB);
             goto err;
         }
         ret->engine = engine;
@@ -164,7 +160,7 @@ static DSA *dsa_new_intern(ENGINE *engine, OPENSSL_CTX *libctx)
     if (ret->engine) {
         ret->meth = ENGINE_get_DSA(ret->engine);
         if (ret->meth == NULL) {
-            DSAerr(0, ERR_R_ENGINE_LIB);
+            ERR_raise(ERR_LIB_DSA, ERR_R_ENGINE_LIB);
             goto err;
         }
     }
@@ -173,12 +169,13 @@ static DSA *dsa_new_intern(ENGINE *engine, OPENSSL_CTX *libctx)
     ret->flags = ret->meth->flags & ~DSA_FLAG_NON_FIPS_ALLOW;
 
 #ifndef FIPS_MODULE
-    if (!crypto_new_ex_data_ex(libctx, CRYPTO_EX_INDEX_DSA, ret, &ret->ex_data))
+    if (!ossl_crypto_new_ex_data_ex(libctx, CRYPTO_EX_INDEX_DSA, ret,
+                                    &ret->ex_data))
         goto err;
 #endif
 
     if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
-        DSAerr(0, ERR_R_INIT_FAIL);
+        ERR_raise(ERR_LIB_DSA, ERR_R_INIT_FAIL);
         goto err;
     }
 
@@ -194,7 +191,7 @@ DSA *DSA_new_method(ENGINE *engine)
     return dsa_new_intern(engine, NULL);
 }
 
-DSA *dsa_new_with_ctx(OPENSSL_CTX *libctx)
+DSA *ossl_dsa_new(OSSL_LIB_CTX *libctx)
 {
     return dsa_new_intern(NULL, libctx);
 }
@@ -231,7 +228,7 @@ void DSA_free(DSA *r)
 
     CRYPTO_THREAD_lock_free(r->lock);
 
-    ffc_params_cleanup(&r->params);
+    ossl_ffc_params_cleanup(&r->params);
     BN_clear_free(r->pub_key);
     BN_clear_free(r->priv_key);
     OPENSSL_free(r);
@@ -249,10 +246,15 @@ int DSA_up_ref(DSA *r)
     return ((i > 1) ? 1 : 0);
 }
 
+void ossl_dsa_set0_libctx(DSA *d, OSSL_LIB_CTX *libctx)
+{
+    d->libctx = libctx;
+}
+
 void DSA_get0_pqg(const DSA *d,
                   const BIGNUM **p, const BIGNUM **q, const BIGNUM **g)
 {
-    ffc_params_get0_pqg(&d->params, p, q, g);
+    ossl_ffc_params_get0_pqg(&d->params, p, q, g);
 }
 
 int DSA_set0_pqg(DSA *d, BIGNUM *p, BIGNUM *q, BIGNUM *g)
@@ -265,7 +267,7 @@ int DSA_set0_pqg(DSA *d, BIGNUM *p, BIGNUM *q, BIGNUM *g)
         || (d->params.g == NULL && g == NULL))
         return 0;
 
-    ffc_params_set0_pqg(&d->params, p, q, g);
+    ossl_ffc_params_set0_pqg(&d->params, p, q, g);
     d->dirty_cnt++;
 
     return 1;
@@ -307,13 +309,6 @@ void DSA_get0_key(const DSA *d,
 
 int DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key)
 {
-    /* If the field pub_key in d is NULL, the corresponding input
-     * parameters MUST be non-NULL.  The priv_key field may
-     * be left NULL.
-     */
-    if (d->pub_key == NULL && pub_key == NULL)
-        return 0;
-
     if (pub_key != NULL) {
         BN_free(d->pub_key);
         d->pub_key = pub_key;
@@ -337,169 +332,29 @@ int DSA_security_bits(const DSA *d)
 
 int DSA_bits(const DSA *dsa)
 {
-    return BN_num_bits(dsa->params.p);
+    if (dsa->params.p != NULL)
+        return BN_num_bits(dsa->params.p);
+    return -1;
 }
 
-FFC_PARAMS *dsa_get0_params(DSA *dsa)
+FFC_PARAMS *ossl_dsa_get0_params(DSA *dsa)
 {
     return &dsa->params;
 }
 
-int dsa_ffc_params_fromdata(DSA *dsa, const OSSL_PARAM params[])
+int ossl_dsa_ffc_params_fromdata(DSA *dsa, const OSSL_PARAM params[])
 {
     int ret;
     FFC_PARAMS *ffc;
 
     if (dsa == NULL)
         return 0;
-    ffc = dsa_get0_params(dsa);
+    ffc = ossl_dsa_get0_params(dsa);
     if (ffc == NULL)
         return 0;
 
-    ret = ffc_params_fromdata(ffc, params);
+    ret = ossl_ffc_params_fromdata(ffc, params);
     if (ret)
         dsa->dirty_cnt++;
     return ret;
 }
-
-static int dsa_paramgen_check(EVP_PKEY_CTX *ctx)
-{
-    if (ctx == NULL || !EVP_PKEY_CTX_IS_GEN_OP(ctx)) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
-        /* Uses the same return values as EVP_PKEY_CTX_ctrl */
-        return -2;
-    }
-    /* If key type not DSA return error */
-    if (ctx->pmeth != NULL && ctx->pmeth->pkey_id != EVP_PKEY_DSA)
-        return -1;
-    return 1;
-}
-
-int EVP_PKEY_CTX_set_dsa_paramgen_type(EVP_PKEY_CTX *ctx, const char *name)
-{
-    int ret;
-    OSSL_PARAM params[2], *p = params;
-
-    if ((ret = dsa_paramgen_check(ctx)) <= 0)
-        return ret;
-
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_FFC_TYPE,
-                                            (char *)name, 0);
-    *p++ = OSSL_PARAM_construct_end();
-
-    return EVP_PKEY_CTX_set_params(ctx, params);
-}
-
-int EVP_PKEY_CTX_set_dsa_paramgen_gindex(EVP_PKEY_CTX *ctx, int gindex)
-{
-    int ret;
-    OSSL_PARAM params[2], *p = params;
-
-    if ((ret = dsa_paramgen_check(ctx)) <= 0)
-        return ret;
-
-    *p++ = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_FFC_GINDEX, &gindex);
-    *p++ = OSSL_PARAM_construct_end();
-
-    return EVP_PKEY_CTX_set_params(ctx, params);
-}
-
-int EVP_PKEY_CTX_set_dsa_paramgen_seed(EVP_PKEY_CTX *ctx,
-                                       const unsigned char *seed,
-                                       size_t seedlen)
-{
-    int ret;
-    OSSL_PARAM params[2], *p = params;
-
-    if ((ret = dsa_paramgen_check(ctx)) <= 0)
-        return ret;
-
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_FFC_SEED,
-                                             (void *)seed, seedlen);
-    *p++ = OSSL_PARAM_construct_end();
-
-    return EVP_PKEY_CTX_set_params(ctx, params);
-}
-
-int EVP_PKEY_CTX_set_dsa_paramgen_bits(EVP_PKEY_CTX *ctx, int nbits)
-{
-    int ret;
-    OSSL_PARAM params[2], *p = params;
-    size_t bits = nbits;
-
-    if ((ret = dsa_paramgen_check(ctx)) <= 0)
-        return ret;
-
-#if !defined(FIPS_MODULE)
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.keymgmt.genctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA,  EVP_PKEY_OP_PARAMGEN,
-                                 EVP_PKEY_CTRL_DSA_PARAMGEN_BITS, nbits, NULL);
-#endif
-
-    *p++ = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_FFC_PBITS, &bits);
-    *p++ = OSSL_PARAM_construct_end();
-
-    return EVP_PKEY_CTX_set_params(ctx, params);
-}
-
-int EVP_PKEY_CTX_set_dsa_paramgen_q_bits(EVP_PKEY_CTX *ctx, int qbits)
-{
-    int ret;
-    OSSL_PARAM params[2], *p = params;
-    size_t bits2 = qbits;
-
-    if ((ret = dsa_paramgen_check(ctx)) <= 0)
-        return ret;
-
-#if !defined(FIPS_MODULE)
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.keymgmt.genctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA,  EVP_PKEY_OP_PARAMGEN,
-                                 EVP_PKEY_CTRL_DSA_PARAMGEN_Q_BITS, qbits, NULL);
-#endif
-
-    *p++ = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_FFC_QBITS, &bits2);
-    *p++ = OSSL_PARAM_construct_end();
-
-    return EVP_PKEY_CTX_set_params(ctx, params);
-}
-
-int EVP_PKEY_CTX_set_dsa_paramgen_md_props(EVP_PKEY_CTX *ctx,
-                                           const char *md_name,
-                                           const char *md_properties)
-{
-    int ret;
-    OSSL_PARAM params[3], *p = params;
-
-    if ((ret = dsa_paramgen_check(ctx)) <= 0)
-        return ret;
-
-#if !defined(FIPS_MODULE)
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.keymgmt.genctx == NULL) {
-        const EVP_MD *md = EVP_get_digestbyname(md_name);
-
-         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN,
-                           EVP_PKEY_CTRL_DSA_PARAMGEN_MD, 0, (void *)(md));
-    }
-#endif
-
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_FFC_DIGEST,
-                                            (char *)md_name, 0);
-    if (md_properties != NULL)
-        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_FFC_DIGEST_PROPS,
-                                                (char *)md_properties, 0);
-    *p++ = OSSL_PARAM_construct_end();
-
-    return EVP_PKEY_CTX_set_params(ctx, params);
-}
-
-#if !defined(FIPS_MODULE)
-int EVP_PKEY_CTX_set_dsa_paramgen_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
-{
-    const char *md_name = (md == NULL) ? "" : EVP_MD_name(md);
-
-    return EVP_PKEY_CTX_set_dsa_paramgen_md_props(ctx, md_name, NULL);
-}
-#endif

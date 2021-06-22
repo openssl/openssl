@@ -14,7 +14,7 @@ B<openssl> B<pkeyutl>
 [B<-digest> I<algorithm>]
 [B<-out> I<file>]
 [B<-sigfile> I<file>]
-[B<-inkey> I<file>]
+[B<-inkey> I<filename>|I<uri>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-passin> I<arg>]
 [B<-peerkey> I<file>]
@@ -34,13 +34,10 @@ B<openssl> B<pkeyutl>
 [B<-pkeyopt_passin> I<opt>[:I<passarg>]]
 [B<-hexdump>]
 [B<-asn1parse>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
-[B<-engine_impl>]
+{- $OpenSSL::safe::opt_engine_synopsis -}[B<-engine_impl>]
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 {- $OpenSSL::safe::opt_config_synopsis -}
-
-=for openssl ifdef engine engine_impl
 
 =head1 DESCRIPTION
 
@@ -86,20 +83,19 @@ default.
 
 Signature file, required for B<-verify> operations only
 
-=item B<-inkey> I<file>
+=item B<-inkey> I<filename>|I<uri>
 
-The input key file, by default it should be a private key.
+The input key, by default it should be a private key.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The key format; the default is B<PEM>.
-The only value with effect is B<ENGINE>; all others have become obsolete.
-See L<openssl(1)/Format Options> for details.
+The key format; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-passin> I<arg>
 
 The input key password source. For more information about the format of I<arg>
-see L<openssl(1)/Pass Phrase Options>.
+see L<openssl-passphrase-options(1)>.
 
 =item B<-peerkey> I<file>
 
@@ -107,9 +103,8 @@ The peer key file, used by key derivation (agreement) operations.
 
 =item B<-peerform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The peer key format; the default is B<PEM>.
-The only value with effect is B<ENGINE>; all others have become obsolete.
-See L<openssl(1)/Format Options> for details.
+The peer key format; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-pubin>
 
@@ -172,7 +167,7 @@ Public key options specified as opt:value. See NOTES below for more details.
 Allows reading a public key option I<opt> from stdin or a password source.
 If only I<opt> is specified, the user will be prompted to enter a password on
 stdin.  Alternatively, I<passarg> can be specified which can be any value
-supported by L<openssl(1)/Pass phrase options>.
+supported by L<openssl-passphrase-options(1)>.
 
 =item B<-hexdump>
 
@@ -185,10 +180,12 @@ B<-verifyrecover> option when an ASN1 structure is signed.
 
 {- $OpenSSL::safe::opt_engine_item -}
 
+{- output_off() if $disabled{"deprecated-3.0"}; "" -}
 =item B<-engine_impl>
 
 When used with the B<-engine> option, it specifies to also use
 engine I<id> for crypto operations.
+{- output_on() if $disabled{"deprecated-3.0"}; "" -}
 
 {- $OpenSSL::safe::opt_r_item -}
 
@@ -235,7 +232,7 @@ B<pkeyopt> values are supported:
 =item B<rsa_padding_mode:>I<mode>
 
 This sets the RSA padding mode. Acceptable values for I<mode> are B<pkcs1> for
-PKCS#1 padding, B<sslv23> for SSLv23 padding, B<none> for no padding, B<oaep>
+PKCS#1 padding, B<none> for no padding, B<oaep>
 for B<OAEP> mode, B<x931> for X9.31 mode and B<pss> for PSS.
 
 In PKCS#1 padding if the message digest is not set then the supplied data is
@@ -409,14 +406,11 @@ L<EVP_PKEY_CTX_set_tls1_prf_md(3)>,
 
 =head1 HISTORY
 
-All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
-and have no effect.
-
 The B<-engine> option was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

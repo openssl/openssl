@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -68,9 +68,9 @@ static int chacha20_poly1305_initkey(PROV_CIPHER_CTX *bctx,
     ctx->tls_payload_length = NO_TLS_PAYLOAD_LENGTH;
 
     if (bctx->enc)
-        return chacha20_einit(&ctx->chacha, key, keylen, NULL, 0);
+        return ossl_chacha20_einit(&ctx->chacha, key, keylen, NULL, 0, NULL);
     else
-        return chacha20_dinit(&ctx->chacha, key, keylen, NULL, 0);
+        return ossl_chacha20_dinit(&ctx->chacha, key, keylen, NULL, 0, NULL);
 }
 
 static int chacha20_poly1305_initiv(PROV_CIPHER_CTX *bctx)
@@ -79,15 +79,23 @@ static int chacha20_poly1305_initiv(PROV_CIPHER_CTX *bctx)
     unsigned char tempiv[CHACHA_CTR_SIZE] = { 0 };
     int ret = 1;
 
+    ctx->len.aad = 0;
+    ctx->len.text = 0;
+    ctx->aad = 0;
+    ctx->mac_inited = 0;
+    ctx->tls_payload_length = NO_TLS_PAYLOAD_LENGTH;
+
         /* pad on the left */
     if (ctx->nonce_len <= CHACHA_CTR_SIZE) {
             memcpy(tempiv + CHACHA_CTR_SIZE - ctx->nonce_len, bctx->oiv,
                    ctx->nonce_len);
 
         if (bctx->enc)
-            ret = chacha20_einit(&ctx->chacha, NULL, 0, tempiv, sizeof(tempiv));
+            ret = ossl_chacha20_einit(&ctx->chacha, NULL, 0,
+                                      tempiv, sizeof(tempiv), NULL);
         else
-            ret = chacha20_dinit(&ctx->chacha, NULL, 0, tempiv, sizeof(tempiv));
+            ret = ossl_chacha20_dinit(&ctx->chacha, NULL, 0,
+                                      tempiv, sizeof(tempiv), NULL);
         ctx->nonce[0] = ctx->chacha.counter[1];
         ctx->nonce[1] = ctx->chacha.counter[2];
         ctx->nonce[2] = ctx->chacha.counter[3];
@@ -119,9 +127,6 @@ static int chacha20_poly1305_tls_cipher(PROV_CIPHER_CTX *bctx,
     unsigned char *buf, *tohash, *ctr, storage[sizeof(zero) + 32];
 
     DECLARE_IS_ENDIAN;
-
-    if (len != plen + POLY1305_BLOCK_SIZE)
-        return 0;
 
     buf = storage + ((0 - (size_t)storage) & 15);   /* align */
     ctr = buf + CHACHA_BLK_SIZE;
@@ -274,11 +279,14 @@ static int chacha20_poly1305_aead_cipher(PROV_CIPHER_CTX *bctx,
     DECLARE_IS_ENDIAN;
 
     if (!ctx->mac_inited) {
-#if !defined(OPENSSL_SMALL_FOOTPRINT)
         if (plen != NO_TLS_PAYLOAD_LENGTH && out != NULL) {
+            if (inl != plen + POLY1305_BLOCK_SIZE)
+                return 0;
+#if !defined(OPENSSL_SMALL_FOOTPRINT)
             return chacha20_poly1305_tls_cipher(bctx, out, outl, in, inl);
-        }
 #endif
+        }
+
         ctx->chacha.counter[0] = 0;
         ChaCha20_ctr32(ctx->chacha.buf, zero, CHACHA_BLK_SIZE,
                        ctx->chacha.key.d, ctx->chacha.counter);
@@ -375,6 +383,8 @@ static int chacha20_poly1305_aead_cipher(PROV_CIPHER_CTX *bctx,
                     memset(out - plen, 0, plen);
                     goto err;
                 }
+                /* Strip the tag */
+                inl -= POLY1305_BLOCK_SIZE;
             }
         }
         else if (!bctx->enc) {
@@ -399,7 +409,7 @@ static const PROV_CIPHER_HW_CHACHA20_POLY1305 chacha20poly1305_hw =
     chacha_poly1305_tls_iv_set_fixed
 };
 
-const PROV_CIPHER_HW *PROV_CIPHER_HW_chacha20_poly1305(size_t keybits)
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_chacha20_poly1305(size_t keybits)
 {
     return (PROV_CIPHER_HW *)&chacha20poly1305_hw;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2020
  * Copyright Siemens AG 2015-2020
  *
@@ -9,7 +9,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "cmp_testlib.h"
+#include "helpers/cmp_testlib.h"
 
 typedef struct test_fixture {
     const char *test_case_name;
@@ -18,7 +18,7 @@ typedef struct test_fixture {
     OSSL_CMP_MSG *req;
 } CMP_SRV_TEST_FIXTURE;
 
-static OPENSSL_CTX *libctx = NULL;
+static OSSL_LIB_CTX *libctx = NULL;
 static OSSL_PROVIDER *default_null_provider = NULL, *provider = NULL;
 static OSSL_CMP_MSG *request = NULL;
 
@@ -55,7 +55,7 @@ static OSSL_CMP_PKISI *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
                                             STACK_OF(X509) **chainOut,
                                             STACK_OF(X509) **caPubs)
 {
-    CMPerr(0, dummy_errorCode);
+    ERR_raise(ERR_LIB_CMP, dummy_errorCode);
     return NULL;
 }
 
@@ -123,7 +123,7 @@ void cleanup_tests(void)
     OSSL_CMP_MSG_free(request);
     OSSL_PROVIDER_unload(default_null_provider);
     OSSL_PROVIDER_unload(provider);
-    OPENSSL_CTX_free(libctx);
+    OSSL_LIB_CTX_free(libctx);
     return;
 }
 
@@ -145,10 +145,10 @@ int setup_tests(void)
         return 0;
     }
 
-    if (!test_get_libctx(&libctx, &default_null_provider, &provider, 1, USAGE))
+    if (!test_arg_libctx(&libctx, &default_null_provider, &provider, 1, USAGE))
         return 0;
 
-    if (!TEST_ptr(request = load_pkimsg(request_f))) {
+    if (!TEST_ptr(request = load_pkimsg(request_f, libctx))) {
         cleanup_tests();
         return 0;
     }

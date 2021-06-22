@@ -8,6 +8,10 @@ RAND_set_rand_method, RAND_get_rand_method, RAND_OpenSSL - select RAND method
 
  #include <openssl/rand.h>
 
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  RAND_METHOD *RAND_OpenSSL(void);
 
  int RAND_set_rand_method(const RAND_METHOD *meth);
@@ -15,6 +19,10 @@ RAND_set_rand_method, RAND_get_rand_method, RAND_OpenSSL - select RAND method
  const RAND_METHOD *RAND_get_rand_method(void);
 
 =head1 DESCRIPTION
+
+All of the functions described on this page are deprecated.
+Applications should instead use L<RAND_set_DRBG_type(3)>,
+L<EVP_RAND(3)> and L<EVP_RAND(7)>.
 
 A B<RAND_METHOD> specifies the functions that OpenSSL uses for random number
 generation.
@@ -55,18 +63,20 @@ methods.
 
 =head1 SEE ALSO
 
+L<EVP_RAND(3)>,
+L<RAND_set_DRBG_type(3)>,
 L<RAND_bytes(3)>,
 L<ENGINE_by_id(3)>,
+L<EVP_RAND(7)>,
 L<RAND(7)>
 
 =head1 HISTORY
 
-The ability for an B<ENGINE> to replace the RAND API was deprecated in
-OpenSSL 3.0.
+All of these functions were deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

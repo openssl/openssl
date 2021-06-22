@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED /* EVP_PKEY_new_CMAC_key */
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -26,7 +27,9 @@
 #include "internal/nelem.h"
 #include "crypto/evp.h"
 #include "testutil.h"
-#include "evp_test.h"
+
+typedef struct evp_test_buffer_st EVP_TEST_BUFFER;
+DEFINE_STACK_OF(EVP_TEST_BUFFER)
 
 #define AAD_NUM 4
 
@@ -73,7 +76,7 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 static OSSL_PROVIDER *prov_null = NULL;
-static OPENSSL_CTX *libctx = NULL;
+static OSSL_LIB_CTX *libctx = NULL;
 
 /* List of public and private keys */
 static KEY_LIST *private_keys;
@@ -428,7 +431,7 @@ static int digest_test_run(EVP_TEST *t)
         goto err;
     }
 
-    if (EVP_MD_flags(expected->digest) & EVP_MD_FLAG_XOF) {
+    if (EVP_MD_get_flags(expected->digest) & EVP_MD_FLAG_XOF) {
         EVP_MD_CTX *mctx_cpy;
         char dont[] = "touch";
 
@@ -501,19 +504,24 @@ typedef struct cipher_data_st {
     size_t key_len;
     size_t key_bits; /* Used by RC2 */
     unsigned char *iv;
+    unsigned char *next_iv; /* Expected IV state after operation */
     unsigned int rounds;
     size_t iv_len;
     unsigned char *plaintext;
     size_t plaintext_len;
     unsigned char *ciphertext;
     size_t ciphertext_len;
-    /* GCM, CCM, OCB and SIV only */
+    /* AEAD ciphers only */
     unsigned char *aad[AAD_NUM];
     size_t aad_len[AAD_NUM];
+    int tls_aad;
+    int tls_version;
     unsigned char *tag;
     const char *cts_mode;
     size_t tag_len;
     int tag_late;
+    unsigned char *mac_key;
+    size_t mac_key_len;
 } CIPHER_DATA;
 
 static int cipher_test_init(EVP_TEST *t, const char *alg)
@@ -529,22 +537,28 @@ static int cipher_test_init(EVP_TEST *t, const char *alg)
         return 1;
     }
 
+    ERR_set_mark();
     if ((cipher = fetched_cipher = EVP_CIPHER_fetch(libctx, alg, NULL)) == NULL
-        && (cipher = EVP_get_cipherbyname(alg)) == NULL)
+        && (cipher = EVP_get_cipherbyname(alg)) == NULL) {
+        /* a stitched cipher might not be available */
+        if (strstr(alg, "HMAC") != NULL) {
+            ERR_pop_to_mark();
+            t->skip = 1;
+            TEST_info("skipping, '%s' is not available", alg);
+            return 1;
+        }
+        ERR_clear_last_mark();
         return 0;
+    }
+    ERR_clear_last_mark();
 
     cdat = OPENSSL_zalloc(sizeof(*cdat));
     cdat->cipher = cipher;
     cdat->fetched_cipher = fetched_cipher;
     cdat->enc = -1;
-    m = EVP_CIPHER_mode(cipher);
-    if (m == EVP_CIPH_GCM_MODE
-            || m == EVP_CIPH_OCB_MODE
-            || m == EVP_CIPH_SIV_MODE
-            || m == EVP_CIPH_CCM_MODE)
-        cdat->aead = m;
-    else if (EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)
-        cdat->aead = -1;
+    m = EVP_CIPHER_get_mode(cipher);
+    if (EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)
+        cdat->aead = m != 0 ? m : -1;
     else
         cdat->aead = 0;
 
@@ -561,11 +575,13 @@ static void cipher_test_cleanup(EVP_TEST *t)
 
     OPENSSL_free(cdat->key);
     OPENSSL_free(cdat->iv);
+    OPENSSL_free(cdat->next_iv);
     OPENSSL_free(cdat->ciphertext);
     OPENSSL_free(cdat->plaintext);
     for (i = 0; i < AAD_NUM; i++)
         OPENSSL_free(cdat->aad[i]);
     OPENSSL_free(cdat->tag);
+    OPENSSL_free(cdat->mac_key);
     EVP_CIPHER_free(cdat->fetched_cipher);
 }
 
@@ -586,6 +602,8 @@ static int cipher_test_parse(EVP_TEST *t, const char *keyword,
     }
     if (strcmp(keyword, "IV") == 0)
         return parse_bin(value, &cdat->iv, &cdat->iv_len);
+    if (strcmp(keyword, "NextIV") == 0)
+        return parse_bin(value, &cdat->next_iv, &cdat->iv_len);
     if (strcmp(keyword, "Plaintext") == 0)
         return parse_bin(value, &cdat->plaintext, &cdat->plaintext_len);
     if (strcmp(keyword, "Ciphertext") == 0)
@@ -598,7 +616,11 @@ static int cipher_test_parse(EVP_TEST *t, const char *keyword,
         return 1;
     }
     if (cdat->aead) {
-        if (strcmp(keyword, "AAD") == 0) {
+        int tls_aad = 0;
+
+        if (strcmp(keyword, "TLSAAD") == 0)
+            cdat->tls_aad = tls_aad = 1;
+        if (strcmp(keyword, "AAD") == 0 || tls_aad) {
             for (i = 0; i < AAD_NUM; i++) {
                 if (cdat->aad[i] == NULL)
                     return parse_bin(value, &cdat->aad[i], &cdat->aad_len[i]);
@@ -615,6 +637,14 @@ static int cipher_test_parse(EVP_TEST *t, const char *keyword,
             else
                 return -1;
             return 1;
+        }
+        if (strcmp(keyword, "MACKey") == 0)
+            return parse_bin(value, &cdat->mac_key, &cdat->mac_key_len);
+        if (strcmp(keyword, "TLSVersion") == 0) {
+            char *endptr;
+
+            cdat->tls_version = (int)strtol(value, &endptr, 0);
+            return value[0] != '\0' && endptr[0] == '\0';
         }
     }
 
@@ -707,12 +737,12 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
                 t->err = "INVALID_IV_LENGTH";
                 goto err;
             }
-        } else if (expected->iv_len != (size_t)EVP_CIPHER_CTX_iv_length(ctx_base)) {
+        } else if (expected->iv_len != (size_t)EVP_CIPHER_CTX_get_iv_length(ctx_base)) {
             t->err = "INVALID_IV_LENGTH";
             goto err;
         }
     }
-    if (expected->aead) {
+    if (expected->aead && !expected->tls_aad) {
         unsigned char *tag;
         /*
          * If encrypting or OCB just set tag length initially, otherwise
@@ -762,22 +792,44 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
     if (expected->iv != NULL) {
         /* Some (e.g., GCM) tests use IVs longer than EVP_MAX_IV_LENGTH. */
         unsigned char iv[128];
-        if (!TEST_true(EVP_CIPHER_CTX_get_iv_state(ctx_base, iv, sizeof(iv)))
-                || ((EVP_CIPHER_flags(expected->cipher) & EVP_CIPH_CUSTOM_IV) == 0
-                    && !TEST_mem_eq(expected->iv, expected->iv_len, iv,
-                                    expected->iv_len))) {
+        if (!TEST_true(EVP_CIPHER_CTX_get_updated_iv(ctx_base, iv, sizeof(iv)))
+            || ((EVP_CIPHER_get_flags(expected->cipher) & EVP_CIPH_CUSTOM_IV) == 0
+                && !TEST_mem_eq(expected->iv, expected->iv_len, iv,
+                                expected->iv_len))) {
             t->err = "INVALID_IV";
             goto err;
         }
     }
 
     /* Test that the cipher dup functions correctly if it is supported */
+    ERR_set_mark();
     if (EVP_CIPHER_CTX_copy(ctx, ctx_base)) {
         EVP_CIPHER_CTX_free(ctx_base);
         ctx_base = NULL;
     } else {
         EVP_CIPHER_CTX_free(ctx);
         ctx = ctx_base;
+    }
+    ERR_pop_to_mark();
+
+    if (expected->mac_key != NULL
+        && !EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_MAC_KEY,
+                                (int)expected->mac_key_len,
+                                (void *)expected->mac_key)) {
+        t->err = "SET_MAC_KEY_ERROR";
+        goto err;
+    }
+
+    if (expected->tls_version) {
+        OSSL_PARAM params[2];
+
+        params[0] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_TLS_VERSION,
+                                             &expected->tls_version);
+        params[1] = OSSL_PARAM_construct_end();
+        if (!EVP_CIPHER_CTX_set_params(ctx, params)) {
+            t->err = "SET_TLS_VERSION_ERROR";
+            goto err;
+        }
     }
 
     if (expected->aead == EVP_CIPH_CCM_MODE) {
@@ -786,7 +838,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
             goto err;
         }
     }
-    if (expected->aad[0] != NULL) {
+    if (expected->aad[0] != NULL && !expected->tls_aad) {
         t->err = "AAD_SET_ERROR";
         if (!frag) {
             for (i = 0; expected->aad[i] != NULL; i++) {
@@ -819,7 +871,26 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
         }
     }
 
-    if (!enc && (expected->aead == EVP_CIPH_OCB_MODE || expected->tag_late)) {
+    if (expected->tls_aad) {
+        OSSL_PARAM params[2];
+        char *tls_aad;
+
+        /* duplicate the aad as the implementation might modify it */
+        if ((tls_aad = OPENSSL_memdup(expected->aad[0],
+                                      expected->aad_len[0])) == NULL)
+            goto err;
+        params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD,
+                                                      tls_aad,
+                                                      expected->aad_len[0]);
+        params[1] = OSSL_PARAM_construct_end();
+        if (!EVP_CIPHER_CTX_set_params(ctx, params)) {
+            OPENSSL_free(tls_aad);
+            t->err = "TLS1_AAD_ERROR";
+            goto err;
+        }
+        OPENSSL_free(tls_aad);
+    } else if (!enc && (expected->aead == EVP_CIPH_OCB_MODE
+                        || expected->tag_late)) {
         if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
                                  expected->tag_len, expected->tag)) {
             t->err = "TAG_SET_ERROR";
@@ -862,10 +933,21 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
         t->err = "CIPHERFINAL_ERROR";
         goto err;
     }
+    if (!enc && expected->tls_aad) {
+        if (expected->tls_version >= TLS1_1_VERSION
+            && (EVP_CIPHER_is_a(expected->cipher, "AES-128-CBC-HMAC-SHA1")
+                || EVP_CIPHER_is_a(expected->cipher, "AES-256-CBC-HMAC-SHA1"))) {
+            tmplen -= expected->iv_len;
+            expected_out += expected->iv_len;
+            out_misalign += expected->iv_len;
+        }
+        if ((int)out_len > tmplen + tmpflen)
+            out_len = tmplen + tmpflen;
+    }
     if (!memory_err_compare(t, "VALUE_MISMATCH", expected_out, out_len,
                             tmp + out_misalign, tmplen + tmpflen))
         goto err;
-    if (enc && expected->aead) {
+    if (enc && expected->aead && !expected->tls_aad) {
         unsigned char rtag[16];
 
         if (!TEST_size_t_le(expected->tag_len, sizeof(rtag))) {
@@ -882,6 +964,19 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
                                 rtag, expected->tag_len))
             goto err;
     }
+    /* Check the updated IV */
+    if (expected->next_iv != NULL) {
+        /* Some (e.g., GCM) tests use IVs longer than EVP_MAX_IV_LENGTH. */
+        unsigned char iv[128];
+        if (!TEST_true(EVP_CIPHER_CTX_get_updated_iv(ctx, iv, sizeof(iv)))
+            || ((EVP_CIPHER_get_flags(expected->cipher) & EVP_CIPH_CUSTOM_IV) == 0
+                && !TEST_mem_eq(expected->next_iv, expected->iv_len, iv,
+                                expected->iv_len))) {
+            t->err = "INVALID_NEXT_IV";
+            goto err;
+        }
+    }
+
     t->err = NULL;
     ok = 1;
  err:
@@ -902,14 +997,14 @@ static int cipher_test_run(EVP_TEST *t)
         t->err = "NO_KEY";
         return 0;
     }
-    if (!cdat->iv && EVP_CIPHER_iv_length(cdat->cipher)) {
+    if (!cdat->iv && EVP_CIPHER_get_iv_length(cdat->cipher)) {
         /* IV is optional and usually omitted in wrap mode */
-        if (EVP_CIPHER_mode(cdat->cipher) != EVP_CIPH_WRAP_MODE) {
+        if (EVP_CIPHER_get_mode(cdat->cipher) != EVP_CIPH_WRAP_MODE) {
             t->err = "NO_IV";
             return 0;
         }
     }
-    if (cdat->aead && !cdat->tag) {
+    if (cdat->aead && cdat->tag == NULL && !cdat->tls_aad) {
         t->err = "NO_TAG";
         return 0;
     }
@@ -952,14 +1047,17 @@ static int cipher_test_run(EVP_TEST *t)
 
         if (out_misalign == 1 && frag == 0) {
             /*
-             * XTS, SIV, CCM and Wrap modes have special requirements about input
-             * lengths so we don't fragment for those
+             * XTS, SIV, CCM, stitched ciphers and Wrap modes have special
+             * requirements about input lengths so we don't fragment for those
              */
             if (cdat->aead == EVP_CIPH_CCM_MODE
-                    || ((EVP_CIPHER_flags(cdat->cipher) & EVP_CIPH_FLAG_CTS) != 0)
-                    || EVP_CIPHER_mode(cdat->cipher) == EVP_CIPH_SIV_MODE
-                    || EVP_CIPHER_mode(cdat->cipher) == EVP_CIPH_XTS_MODE
-                    || EVP_CIPHER_mode(cdat->cipher) == EVP_CIPH_WRAP_MODE)
+                || cdat->aead == EVP_CIPH_CBC_MODE
+                || (cdat->aead == -1
+                    && EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_STREAM_CIPHER)
+                || ((EVP_CIPHER_get_flags(cdat->cipher) & EVP_CIPH_FLAG_CTS) != 0)
+                || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_SIV_MODE
+                || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_XTS_MODE
+                || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_WRAP_MODE)
                 break;
             out_misalign = 0;
             frag++;
@@ -1009,8 +1107,14 @@ typedef struct mac_data_st {
     /* MAC salt (blake2) */
     unsigned char *salt;
     size_t salt_len;
+    /* XOF mode? */
+    int xof;
     /* Collection of controls */
     STACK_OF(OPENSSL_STRING) *controls;
+    /* Output size */
+    int output_size;
+    /* Block size */
+    int block_size;
 } MAC_DATA;
 
 static int mac_test_init(EVP_TEST *t, const char *alg)
@@ -1054,6 +1158,7 @@ static int mac_test_init(EVP_TEST *t, const char *alg)
     mdat->mac_name = OPENSSL_strdup(alg);
     mdat->mac = mac;
     mdat->controls = sk_OPENSSL_STRING_new_null();
+    mdat->output_size = mdat->block_size = -1;
     t->data = mdat;
     return 1;
 }
@@ -1103,24 +1208,39 @@ static int mac_test_parse(EVP_TEST *t,
         return parse_bin(value, &mdata->input, &mdata->input_len);
     if (strcmp(keyword, "Output") == 0)
         return parse_bin(value, &mdata->output, &mdata->output_len);
+    if (strcmp(keyword, "XOF") == 0)
+        return mdata->xof = 1;
     if (strcmp(keyword, "Ctrl") == 0)
         return sk_OPENSSL_STRING_push(mdata->controls,
                                       OPENSSL_strdup(value)) != 0;
+    if (strcmp(keyword, "OutputSize") == 0) {
+        mdata->output_size = atoi(value);
+        if (mdata->output_size < 0)
+            return -1;
+        return 1;
+    }
+    if (strcmp(keyword, "BlockSize") == 0) {
+        mdata->block_size = atoi(value);
+        if (mdata->block_size < 0)
+            return -1;
+        return 1;
+    }
     return 0;
 }
 
 static int mac_test_ctrl_pkey(EVP_TEST *t, EVP_PKEY_CTX *pctx,
                               const char *value)
 {
-    int rv;
+    int rv = 0;
     char *p, *tmpval;
 
     if (!TEST_ptr(tmpval = OPENSSL_strdup(value)))
         return 0;
     p = strchr(tmpval, ':');
-    if (p != NULL)
+    if (p != NULL) {
         *p++ = '\0';
-    rv = EVP_PKEY_CTX_ctrl_str(pctx, tmpval, p);
+        rv = EVP_PKEY_CTX_ctrl_str(pctx, tmpval, p);
+    }
     if (rv == -2)
         t->err = "PKEY_CTRL_INVALID";
     else if (rv <= 0)
@@ -1143,6 +1263,10 @@ static int mac_test_run_pkey(EVP_TEST *t)
     size_t got_len;
     int i;
 
+    /* We don't do XOF mode via PKEY */
+    if (expected->xof)
+        return 1;
+
     if (expected->alg == NULL)
         TEST_info("Trying the EVP_PKEY %s test", OBJ_nid2sn(expected->type));
     else
@@ -1150,6 +1274,14 @@ static int mac_test_run_pkey(EVP_TEST *t)
                   OBJ_nid2sn(expected->type), expected->alg);
 
     if (expected->type == EVP_PKEY_CMAC) {
+#ifdef OPENSSL_NO_DEPRECATED_3_0
+        TEST_info("skipping, PKEY CMAC '%s' is disabled", expected->alg);
+        t->skip = 1;
+        t->err = NULL;
+        goto err;
+#else
+        OSSL_LIB_CTX *tmpctx;
+
         if (expected->alg != NULL && is_cipher_disabled(expected->alg)) {
             TEST_info("skipping, PKEY CMAC '%s' is disabled", expected->alg);
             t->skip = 1;
@@ -1160,15 +1292,15 @@ static int mac_test_run_pkey(EVP_TEST *t)
             t->err = "MAC_KEY_CREATE_ERROR";
             goto err;
         }
-        key = EVP_PKEY_new_CMAC_key_with_libctx(expected->key,
-                                                expected->key_len,
-                                                EVP_CIPHER_name(cipher),
-                                                libctx, NULL);
+        tmpctx = OSSL_LIB_CTX_set0_default(libctx);
+        key = EVP_PKEY_new_CMAC_key(NULL, expected->key, expected->key_len,
+                                    cipher);
+        OSSL_LIB_CTX_set0_default(tmpctx);
+#endif
     } else {
-        key = EVP_PKEY_new_raw_private_key_with_libctx(libctx,
-                                                       OBJ_nid2sn(expected->type),
-                                                       NULL, expected->key,
-                                                       expected->key_len);
+        key = EVP_PKEY_new_raw_private_key_ex(libctx,
+                                              OBJ_nid2sn(expected->type), NULL,
+                                              expected->key, expected->key_len);
     }
     if (key == NULL) {
         t->err = "MAC_KEY_CREATE_ERROR";
@@ -1188,7 +1320,7 @@ static int mac_test_run_pkey(EVP_TEST *t)
         t->err = "INTERNAL_ERROR";
         goto err;
     }
-    if (!EVP_DigestSignInit_with_libctx(mctx, &pctx, mdname, libctx, NULL, key)) {
+    if (!EVP_DigestSignInit_ex(mctx, &pctx, mdname, libctx, NULL, key, NULL)) {
         t->err = "DIGESTSIGNINIT_ERROR";
         goto err;
     }
@@ -1234,8 +1366,8 @@ static int mac_test_run_mac(EVP_TEST *t)
     EVP_MAC_CTX *ctx = NULL;
     unsigned char *got = NULL;
     size_t got_len;
-    int i;
-    OSSL_PARAM params[21];
+    int i, block_size = -1, output_size = -1;
+    OSSL_PARAM params[21], sizes[3], *psizes = sizes;
     size_t params_n = 0;
     size_t params_n_allocstart = 0;
     const OSSL_PARAM *defined_params =
@@ -1268,11 +1400,6 @@ static int mac_test_run_mac(EVP_TEST *t)
             goto err;
         }
     }
-    if (expected->key != NULL)
-        params[params_n++] =
-            OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
-                                              expected->key,
-                                              expected->key_len);
     if (expected->custom != NULL)
         params[params_n++] =
             OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_CUSTOM,
@@ -1328,32 +1455,65 @@ static int mac_test_run_mac(EVP_TEST *t)
         goto err;
     }
 
-    if (!EVP_MAC_CTX_set_params(ctx, params)) {
-        t->err = "MAC_BAD_PARAMS";
-        goto err;
-    }
-    if (!EVP_MAC_init(ctx)) {
+    if (!EVP_MAC_init(ctx, expected->key, expected->key_len, params)) {
         t->err = "MAC_INIT_ERROR";
         goto err;
+    }
+    if (expected->output_size >= 0)
+        *psizes++ = OSSL_PARAM_construct_int(OSSL_MAC_PARAM_SIZE,
+                                             &output_size);
+    if (expected->block_size >= 0)
+        *psizes++ = OSSL_PARAM_construct_int(OSSL_MAC_PARAM_BLOCK_SIZE,
+                                             &block_size);
+    if (psizes != sizes) {
+        *psizes = OSSL_PARAM_construct_end();
+        if (!TEST_true(EVP_MAC_CTX_get_params(ctx, sizes))) {
+            t->err = "INTERNAL_ERROR";
+            goto err;
+        }
+        if (expected->output_size >= 0
+                && !TEST_int_eq(output_size, expected->output_size)) {
+            t->err = "TEST_FAILURE";
+            goto err;
+        }
+        if (expected->block_size >= 0
+                && !TEST_int_eq(block_size, expected->block_size)) {
+            t->err = "TEST_FAILURE";
+            goto err;
+        }
     }
     if (!EVP_MAC_update(ctx, expected->input, expected->input_len)) {
         t->err = "MAC_UPDATE_ERROR";
         goto err;
     }
-    if (!EVP_MAC_final(ctx, NULL, &got_len, 0)) {
-        t->err = "MAC_FINAL_LENGTH_ERROR";
-        goto err;
-    }
-    if (!TEST_ptr(got = OPENSSL_malloc(got_len))) {
-        t->err = "TEST_FAILURE";
-        goto err;
-    }
-    if (!EVP_MAC_final(ctx, got, &got_len, got_len)
-        || !memory_err_compare(t, "TEST_MAC_ERR",
-                               expected->output, expected->output_len,
-                               got, got_len)) {
-        t->err = "TEST_MAC_ERR";
-        goto err;
+    if (expected->xof) {
+        if (!TEST_ptr(got = OPENSSL_malloc(expected->output_len))) {
+            t->err = "TEST_FAILURE";
+            goto err;
+        }
+        if (!EVP_MAC_finalXOF(ctx, got, expected->output_len)
+            || !memory_err_compare(t, "TEST_MAC_ERR",
+                                   expected->output, expected->output_len,
+                                   got, expected->output_len)) {
+            t->err = "MAC_FINAL_ERROR";
+            goto err;
+        }
+    } else {
+        if (!EVP_MAC_final(ctx, NULL, &got_len, 0)) {
+            t->err = "MAC_FINAL_LENGTH_ERROR";
+            goto err;
+        }
+        if (!TEST_ptr(got = OPENSSL_malloc(got_len))) {
+            t->err = "TEST_FAILURE";
+            goto err;
+        }
+        if (!EVP_MAC_final(ctx, got, &got_len, got_len)
+            || !memory_err_compare(t, "TEST_MAC_ERR",
+                                   expected->output, expected->output_len,
+                                   got, got_len)) {
+            t->err = "TEST_MAC_ERR";
+            goto err;
+        }
     }
     t->err = NULL;
  err:
@@ -1457,15 +1617,16 @@ static void pkey_test_cleanup(EVP_TEST *t)
 static int pkey_test_ctrl(EVP_TEST *t, EVP_PKEY_CTX *pctx,
                           const char *value)
 {
-    int rv;
+    int rv = 0;
     char *p, *tmpval;
 
     if (!TEST_ptr(tmpval = OPENSSL_strdup(value)))
         return 0;
     p = strchr(tmpval, ':');
-    if (p != NULL)
+    if (p != NULL) {
         *p++ = '\0';
-    rv = EVP_PKEY_CTX_ctrl_str(pctx, tmpval, p);
+        rv = EVP_PKEY_CTX_ctrl_str(pctx, tmpval, p);
+    }
     if (rv == -2) {
         t->err = "PKEY_CTRL_INVALID";
         rv = 1;
@@ -1623,12 +1784,16 @@ static int pderive_test_parse(EVP_TEST *t,
                               const char *keyword, const char *value)
 {
     PKEY_DATA *kdata = t->data;
+    int validate = 0;
 
-    if (strcmp(keyword, "PeerKey") == 0) {
+    if (strcmp(keyword, "PeerKeyValidate") == 0)
+        validate = 1;
+
+    if (validate || strcmp(keyword, "PeerKey") == 0) {
         EVP_PKEY *peer;
         if (find_key(&peer, value, public_keys) == 0)
             return -1;
-        if (EVP_PKEY_derive_set_peer(kdata->ctx, peer) <= 0) {
+        if (EVP_PKEY_derive_set_peer_ex(kdata->ctx, peer, validate) <= 0) {
             t->err = "DERIVE_SET_PEER_ERROR";
             return 1;
         }
@@ -1845,9 +2010,9 @@ static int pbe_test_run(EVP_TEST *t)
     PBE_DATA *expected = t->data;
     unsigned char *key;
     EVP_MD *fetched_digest = NULL;
-    OPENSSL_CTX *save_libctx;
+    OSSL_LIB_CTX *save_libctx;
 
-    save_libctx = OPENSSL_CTX_set0_default(libctx);
+    save_libctx = OSSL_LIB_CTX_set0_default(libctx);
 
     if (!TEST_ptr(key = OPENSSL_malloc(expected->key_len))) {
         t->err = "INTERNAL_ERROR";
@@ -1872,7 +2037,8 @@ static int pbe_test_run(EVP_TEST *t)
         }
 #endif
     } else if (expected->pbe_type == PBE_TYPE_PKCS12) {
-        fetched_digest = EVP_MD_fetch(libctx, EVP_MD_name(expected->md), NULL);
+        fetched_digest = EVP_MD_fetch(libctx, EVP_MD_get0_name(expected->md),
+                                      NULL);
         if (fetched_digest == NULL) {
             t->err = "PKCS12_ERROR";
             goto err;
@@ -1893,7 +2059,7 @@ static int pbe_test_run(EVP_TEST *t)
 err:
     EVP_MD_free(fetched_digest);
     OPENSSL_free(key);
-    OPENSSL_CTX_set0_default(save_libctx);
+    OSSL_LIB_CTX_set0_default(save_libctx);
     return 1;
 }
 
@@ -2109,7 +2275,7 @@ static int rand_test_init(EVP_TEST *t, const char *name)
         goto err;
 
     *params = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_STRENGTH, &strength);
-    if (!EVP_RAND_set_ctx_params(rdata->parent, params))
+    if (!EVP_RAND_CTX_set_params(rdata->parent, params))
         goto err;
 
     rand = EVP_RAND_fetch(libctx, name, NULL);
@@ -2242,10 +2408,10 @@ static int rand_test_run(EVP_TEST *t)
                                                 expected->digest, 0);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_MAC, "HMAC", 0);
     *p = OSSL_PARAM_construct_end();
-    if (!TEST_true(EVP_RAND_set_ctx_params(expected->ctx, params)))
+    if (!TEST_true(EVP_RAND_CTX_set_params(expected->ctx, params)))
         goto err;
 
-    strength = EVP_RAND_strength(expected->ctx);
+    strength = EVP_RAND_get_strength(expected->ctx);
     for (i = 0; i <= expected->n; i++) {
         item = expected->data + i;
 
@@ -2257,16 +2423,15 @@ static int rand_test_run(EVP_TEST *t)
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_NONCE,
                                                  z, item->nonce_len);
         *p = OSSL_PARAM_construct_end();
-        if (!TEST_true(EVP_RAND_set_ctx_params(expected->parent, params))
-                || !TEST_true(EVP_RAND_instantiate(expected->parent, strength,
-                                                   0, NULL, 0)))
+        if (!TEST_true(EVP_RAND_instantiate(expected->parent, strength,
+                                            0, NULL, 0, params)))
             goto err;
 
         z = item->pers != NULL ? item->pers : (unsigned char *)"";
         if (!TEST_true(EVP_RAND_instantiate
                            (expected->ctx, strength,
                             expected->prediction_resistance, z,
-                            item->pers_len)))
+                            item->pers_len, NULL)))
             goto err;
 
         if (item->reseed_entropy != NULL) {
@@ -2274,7 +2439,7 @@ static int rand_test_run(EVP_TEST *t)
                            (OSSL_RAND_PARAM_TEST_ENTROPY, item->reseed_entropy,
                             item->reseed_entropy_len);
             params[1] = OSSL_PARAM_construct_end();
-            if (!TEST_true(EVP_RAND_set_ctx_params(expected->parent, params)))
+            if (!TEST_true(EVP_RAND_CTX_set_params(expected->parent, params)))
                 goto err;
 
             if (!TEST_true(EVP_RAND_reseed
@@ -2288,7 +2453,7 @@ static int rand_test_run(EVP_TEST *t)
                            (OSSL_RAND_PARAM_TEST_ENTROPY, item->pr_entropyA,
                             item->pr_entropyA_len);
             params[1] = OSSL_PARAM_construct_end();
-            if (!TEST_true(EVP_RAND_set_ctx_params(expected->parent, params)))
+            if (!TEST_true(EVP_RAND_CTX_set_params(expected->parent, params)))
                 goto err;
         }
         if (!TEST_true(EVP_RAND_generate
@@ -2302,7 +2467,7 @@ static int rand_test_run(EVP_TEST *t)
                            (OSSL_RAND_PARAM_TEST_ENTROPY, item->pr_entropyB,
                             item->pr_entropyB_len);
             params[1] = OSSL_PARAM_construct_end();
-            if (!TEST_true(EVP_RAND_set_ctx_params(expected->parent, params)))
+            if (!TEST_true(EVP_RAND_CTX_set_params(expected->parent, params)))
                 return 0;
         }
         if (!TEST_true(EVP_RAND_generate
@@ -2315,7 +2480,7 @@ static int rand_test_run(EVP_TEST *t)
         if (!TEST_true(EVP_RAND_uninstantiate(expected->ctx))
                 || !TEST_true(EVP_RAND_uninstantiate(expected->parent))
                 || !TEST_true(EVP_RAND_verify_zeroization(expected->ctx))
-                || !TEST_int_eq(EVP_RAND_state(expected->ctx),
+                || !TEST_int_eq(EVP_RAND_get_state(expected->ctx),
                                 EVP_RAND_STATE_UNINITIALISED))
             goto err;
     }
@@ -2425,11 +2590,12 @@ static int kdf_test_ctrl(EVP_TEST *t, EVP_KDF_CTX *kctx,
             t->skip = 1;
         }
     }
-    if (p != NULL && strcmp(name, "cipher") == 0) {
-        if (is_cipher_disabled(p)) {
-            TEST_info("skipping, '%s' is disabled", p);
-            t->skip = 1;
-        }
+    if (p != NULL
+        && (strcmp(name, "cipher") == 0
+            || strcmp(name, "cekalg") == 0)
+        && is_cipher_disabled(p)) {
+        TEST_info("skipping, '%s' is disabled", p);
+        t->skip = 1;
     }
     OPENSSL_free(name);
     return 1;
@@ -2461,7 +2627,7 @@ static int kdf_test_run(EVP_TEST *t)
         t->err = "INTERNAL_ERROR";
         goto err;
     }
-    if (EVP_KDF_derive(expected->ctx, got, got_len) <= 0) {
+    if (EVP_KDF_derive(expected->ctx, got, got_len, NULL) <= 0) {
         t->err = "KDF_DERIVE_ERROR";
         goto err;
     }
@@ -2884,7 +3050,7 @@ static int digestsigver_test_parse(EVP_TEST *t,
     if (strcmp(keyword, "Key") == 0) {
         EVP_PKEY *pkey = NULL;
         int rv = 0;
-        const char *name = mdata->md == NULL ? NULL : EVP_MD_name(mdata->md);
+        const char *name = mdata->md == NULL ? NULL : EVP_MD_get0_name(mdata->md);
 
         if (mdata->is_verify)
             rv = find_key(&pkey, value, public_keys);
@@ -2895,13 +3061,13 @@ static int digestsigver_test_parse(EVP_TEST *t,
             return 1;
         }
         if (mdata->is_verify) {
-            if (!EVP_DigestVerifyInit_with_libctx(mdata->ctx, &mdata->pctx,
-                                                  name, libctx, NULL, pkey))
+            if (!EVP_DigestVerifyInit_ex(mdata->ctx, &mdata->pctx, name, libctx,
+                                         NULL, pkey, NULL))
                 t->err = "DIGESTVERIFYINIT_ERROR";
             return 1;
         }
-        if (!EVP_DigestSignInit_with_libctx(mdata->ctx, &mdata->pctx,
-                                            name, libctx, NULL, pkey))
+        if (!EVP_DigestSignInit_ex(mdata->ctx, &mdata->pctx, name, libctx, NULL,
+                                   pkey, NULL))
             t->err = "DIGESTSIGNINIT_ERROR";
         return 1;
     }
@@ -3256,9 +3422,12 @@ static void free_key_list(KEY_LIST *lst)
 static int key_unsupported(void)
 {
     long err = ERR_peek_last_error();
+    int lib = ERR_GET_LIB(err);
+    long reason = ERR_GET_REASON(err);
 
-    if (ERR_GET_LIB(err) == ERR_LIB_EVP
-            && (ERR_GET_REASON(err) == EVP_R_UNSUPPORTED_ALGORITHM)) {
+    if ((lib == ERR_LIB_EVP && reason == EVP_R_UNSUPPORTED_ALGORITHM)
+        || (lib == ERR_LIB_EVP && reason == EVP_R_DECODE_ERROR)
+        || reason == ERR_R_UNSUPPORTED) {
         ERR_clear_error();
         return 1;
     }
@@ -3268,9 +3437,9 @@ static int key_unsupported(void)
      * hint to an unsupported algorithm/curve (e.g. if binary EC support is
      * disabled).
      */
-    if (ERR_GET_LIB(err) == ERR_LIB_EC
-        && (ERR_GET_REASON(err) == EC_R_UNKNOWN_GROUP
-            || ERR_GET_REASON(err) == EC_R_INVALID_CURVE)) {
+    if (lib == ERR_LIB_EC
+        && (reason == EC_R_UNKNOWN_GROUP
+            || reason == EC_R_INVALID_CURVE)) {
         ERR_clear_error();
         return 1;
     }
@@ -3287,6 +3456,7 @@ static char *take_value(PAIR *pp)
     return p;
 }
 
+#if !defined(OPENSSL_NO_FIPS_SECURITYCHECKS)
 static int securitycheck_enabled(void)
 {
     static int enabled = -1;
@@ -3313,6 +3483,7 @@ static int securitycheck_enabled(void)
     }
     return enabled;
 }
+#endif
 
 /*
  * Return 1 if one of the providers named in the string is available.
@@ -3415,11 +3586,11 @@ start:
             return 0;
         }
         if (klist == &private_keys)
-            pkey = EVP_PKEY_new_raw_private_key_with_libctx(libctx, strnid, NULL,
-                                                            keybin, keylen);
+            pkey = EVP_PKEY_new_raw_private_key_ex(libctx, strnid, NULL, keybin,
+                                                   keylen);
         else
-            pkey = EVP_PKEY_new_raw_public_key_with_libctx(libctx, strnid, NULL,
-                                                           keybin, keylen);
+            pkey = EVP_PKEY_new_raw_public_key_ex(libctx, strnid, NULL, keybin,
+                                                  keylen);
         if (pkey == NULL && !key_unsupported()) {
             TEST_info("Can't read %s data", pp->key);
             OPENSSL_free(keybin);
@@ -3560,8 +3731,7 @@ const OPTIONS *test_get_options(void)
         OPT_TEST_OPTIONS_WITH_EXTRA_USAGE("[file...]\n"),
         { "config", OPT_CONFIG_FILE, '<',
           "The configuration file to use for the libctx" },
-        { OPT_HELP_STR, 1, '-',
-          "file\tFile to run tests on.\n" },
+        { OPT_HELP_STR, 1, '-', "file\tFile to run tests on.\n" },
         { NULL }
     };
     return test_options;
@@ -3588,22 +3758,12 @@ int setup_tests(void)
     }
 
     /*
+     * Load the provider via configuration into the created library context.
      * Load the 'null' provider into the default library context to ensure that
-     * the the tests do not fallback to using the default provider.
+     * the tests do not fallback to using the default provider.
      */
-    prov_null = OSSL_PROVIDER_load(NULL, "null");
-    if (prov_null == NULL) {
-        opt_printf_stderr("Failed to load null provider into default libctx\n");
+    if (!test_get_libctx(&libctx, &prov_null, config_file, NULL, NULL))
         return 0;
-    }
-
-    /* load the provider via configuration into the created library context */
-    libctx = OPENSSL_CTX_new();
-    if (libctx == NULL
-        || !OPENSSL_CTX_load_config(libctx, config_file)) {
-        TEST_error("Failed to load config %s\n", config_file);
-        return 0;
-    }
 
     n = test_get_argument_count();
     if (n == 0)
@@ -3616,7 +3776,7 @@ int setup_tests(void)
 void cleanup_tests(void)
 {
     OSSL_PROVIDER_unload(prov_null);
-    OPENSSL_CTX_free(libctx);
+    OSSL_LIB_CTX_free(libctx);
 }
 
 #define STR_STARTS_WITH(str, pre) strncasecmp(pre, str, strlen(pre)) == 0
@@ -3662,10 +3822,6 @@ static int is_digest_disabled(const char *name)
 
 static int is_pkey_disabled(const char *name)
 {
-#ifdef OPENSSL_NO_RSA
-    if (STR_STARTS_WITH(name, "RSA"))
-        return 1;
-#endif
 #ifdef OPENSSL_NO_EC
     if (STR_STARTS_WITH(name, "EC"))
         return 1;
@@ -3708,10 +3864,6 @@ static int is_kdf_disabled(const char *name)
     if (STR_ENDS_WITH(name, "SCRYPT"))
         return 1;
 #endif
-#ifdef OPENSSL_NO_CMS
-    if (strcasecmp(name, "X942KDF") == 0)
-        return 1;
-#endif /* OPENSSL_NO_CMS */
     return 0;
 }
 
@@ -3743,6 +3895,8 @@ static int is_cipher_disabled(const char *name)
 #endif
 #ifdef OPENSSL_NO_DES
     if (STR_STARTS_WITH(name, "DES"))
+        return 1;
+    if (STR_ENDS_WITH(name, "3DESwrap"))
         return 1;
 #endif
 #ifdef OPENSSL_NO_OCB

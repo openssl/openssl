@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,6 +9,7 @@
 
 #ifndef OSSL_INTERNAL_CRYPTLIB_H
 # define OSSL_INTERNAL_CRYPTLIB_H
+# pragma once
 
 # include <stdlib.h>
 # include <string.h>
@@ -91,8 +92,8 @@ void OPENSSL_cpuid_setup(void);
 extern unsigned int OPENSSL_ia32cap_P[];
 #endif
 void OPENSSL_showfatal(const char *fmta, ...);
-int do_ex_data_init(OPENSSL_CTX *ctx);
-void crypto_cleanup_all_ex_data_int(OPENSSL_CTX *ctx);
+int ossl_do_ex_data_init(OSSL_LIB_CTX *ctx);
+void ossl_crypto_cleanup_all_ex_data_int(OSSL_LIB_CTX *ctx);
 int openssl_init_fork_handlers(void);
 int openssl_get_fork_id(void);
 
@@ -119,6 +120,7 @@ size_t OPENSSL_instrument_bus2(unsigned int *, size_t, size_t);
 struct ex_callback_st {
     long argl;                  /* Arbitrary long */
     void *argp;                 /* Arbitrary void * */
+    int priority;               /* Priority ordering for freeing */
     CRYPTO_EX_new *new_func;
     CRYPTO_EX_free *free_func;
     CRYPTO_EX_dup *dup_func;
@@ -138,62 +140,75 @@ typedef struct ossl_ex_data_global_st {
 } OSSL_EX_DATA_GLOBAL;
 
 
-/* OPENSSL_CTX */
+/* OSSL_LIB_CTX */
 
-# define OPENSSL_CTX_PROVIDER_STORE_RUN_ONCE_INDEX          0
-# define OPENSSL_CTX_DEFAULT_METHOD_STORE_RUN_ONCE_INDEX    1
-# define OPENSSL_CTX_METHOD_STORE_RUN_ONCE_INDEX            2
-# define OPENSSL_CTX_MAX_RUN_ONCE                           3
+# define OSSL_LIB_CTX_PROVIDER_STORE_RUN_ONCE_INDEX          0
+# define OSSL_LIB_CTX_DEFAULT_METHOD_STORE_RUN_ONCE_INDEX    1
+# define OSSL_LIB_CTX_METHOD_STORE_RUN_ONCE_INDEX            2
+# define OSSL_LIB_CTX_MAX_RUN_ONCE                           3
 
-# define OPENSSL_CTX_EVP_METHOD_STORE_INDEX         0
-# define OPENSSL_CTX_PROVIDER_STORE_INDEX           1
-# define OPENSSL_CTX_PROPERTY_DEFN_INDEX            2
-# define OPENSSL_CTX_PROPERTY_STRING_INDEX          3
-# define OPENSSL_CTX_NAMEMAP_INDEX                  4
-# define OPENSSL_CTX_DRBG_INDEX                     5
-# define OPENSSL_CTX_DRBG_NONCE_INDEX               6
-# define OPENSSL_CTX_RAND_CRNGT_INDEX               7
-# define OPENSSL_CTX_THREAD_EVENT_HANDLER_INDEX     8
-# define OPENSSL_CTX_FIPS_PROV_INDEX                9
-# define OPENSSL_CTX_ENCODER_STORE_INDEX        10
-# define OPENSSL_CTX_DECODER_STORE_INDEX      11
-# define OPENSSL_CTX_SELF_TEST_CB_INDEX            12
-# define OPENSSL_CTX_BIO_PROV_INDEX                13
-# define OPENSSL_CTX_GLOBAL_PROPERTIES             14
-# define OPENSSL_CTX_STORE_LOADER_STORE_INDEX      15
-# define OPENSSL_CTX_MAX_INDEXES                   16
+# define OSSL_LIB_CTX_EVP_METHOD_STORE_INDEX         0
+# define OSSL_LIB_CTX_PROVIDER_STORE_INDEX           1
+# define OSSL_LIB_CTX_PROPERTY_DEFN_INDEX            2
+# define OSSL_LIB_CTX_PROPERTY_STRING_INDEX          3
+# define OSSL_LIB_CTX_NAMEMAP_INDEX                  4
+# define OSSL_LIB_CTX_DRBG_INDEX                     5
+# define OSSL_LIB_CTX_DRBG_NONCE_INDEX               6
+# define OSSL_LIB_CTX_RAND_CRNGT_INDEX               7
+# ifdef FIPS_MODULE
+#  define OSSL_LIB_CTX_THREAD_EVENT_HANDLER_INDEX    8
+# endif
+# define OSSL_LIB_CTX_FIPS_PROV_INDEX                9
+# define OSSL_LIB_CTX_ENCODER_STORE_INDEX           10
+# define OSSL_LIB_CTX_DECODER_STORE_INDEX           11
+# define OSSL_LIB_CTX_SELF_TEST_CB_INDEX            12
+# define OSSL_LIB_CTX_BIO_PROV_INDEX                13
+# define OSSL_LIB_CTX_GLOBAL_PROPERTIES             14
+# define OSSL_LIB_CTX_STORE_LOADER_STORE_INDEX      15
+# define OSSL_LIB_CTX_PROVIDER_CONF_INDEX           16
+# define OSSL_LIB_CTX_BIO_CORE_INDEX                17
+# define OSSL_LIB_CTX_CHILD_PROVIDER_INDEX          18
+# define OSSL_LIB_CTX_MAX_INDEXES                   19
 
-typedef struct openssl_ctx_method {
-    void *(*new_func)(OPENSSL_CTX *ctx);
+# define OSSL_LIB_CTX_METHOD_LOW_PRIORITY          -1
+# define OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY       0
+# define OSSL_LIB_CTX_METHOD_PRIORITY_1             1
+# define OSSL_LIB_CTX_METHOD_PRIORITY_2             2
+
+typedef struct ossl_lib_ctx_method {
+    int priority;
+    void *(*new_func)(OSSL_LIB_CTX *ctx);
     void (*free_func)(void *);
-} OPENSSL_CTX_METHOD;
+} OSSL_LIB_CTX_METHOD;
 
-OPENSSL_CTX *openssl_ctx_get_concrete(OPENSSL_CTX *ctx);
-int openssl_ctx_is_default(OPENSSL_CTX *ctx);
-int openssl_ctx_is_global_default(OPENSSL_CTX *ctx);
+OSSL_LIB_CTX *ossl_lib_ctx_get_concrete(OSSL_LIB_CTX *ctx);
+int ossl_lib_ctx_is_default(OSSL_LIB_CTX *ctx);
+int ossl_lib_ctx_is_global_default(OSSL_LIB_CTX *ctx);
 
 /* Functions to retrieve pointers to data by index */
-void *openssl_ctx_get_data(OPENSSL_CTX *, int /* index */,
-                           const OPENSSL_CTX_METHOD * ctx);
+void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *, int /* index */,
+                            const OSSL_LIB_CTX_METHOD * ctx);
 
-void openssl_ctx_default_deinit(void);
-OSSL_EX_DATA_GLOBAL *openssl_ctx_get_ex_data_global(OPENSSL_CTX *ctx);
-typedef int (openssl_ctx_run_once_fn)(OPENSSL_CTX *ctx);
-typedef void (openssl_ctx_onfree_fn)(OPENSSL_CTX *ctx);
+void ossl_lib_ctx_default_deinit(void);
+OSSL_EX_DATA_GLOBAL *ossl_lib_ctx_get_ex_data_global(OSSL_LIB_CTX *ctx);
+typedef int (ossl_lib_ctx_run_once_fn)(OSSL_LIB_CTX *ctx);
+typedef void (ossl_lib_ctx_onfree_fn)(OSSL_LIB_CTX *ctx);
 
-int openssl_ctx_run_once(OPENSSL_CTX *ctx, unsigned int idx,
-                         openssl_ctx_run_once_fn run_once_fn);
-int openssl_ctx_onfree(OPENSSL_CTX *ctx, openssl_ctx_onfree_fn onfreefn);
+int ossl_lib_ctx_run_once(OSSL_LIB_CTX *ctx, unsigned int idx,
+                          ossl_lib_ctx_run_once_fn run_once_fn);
+int ossl_lib_ctx_onfree(OSSL_LIB_CTX *ctx, ossl_lib_ctx_onfree_fn onfreefn);
+const char *ossl_lib_ctx_get_descriptor(OSSL_LIB_CTX *libctx);
 
-OPENSSL_CTX *crypto_ex_data_get_openssl_ctx(const CRYPTO_EX_DATA *ad);
-int crypto_new_ex_data_ex(OPENSSL_CTX *ctx, int class_index, void *obj,
-                          CRYPTO_EX_DATA *ad);
-int crypto_get_ex_new_index_ex(OPENSSL_CTX *ctx, int class_index,
-                               long argl, void *argp,
-                               CRYPTO_EX_new *new_func,
-                               CRYPTO_EX_dup *dup_func,
-                               CRYPTO_EX_free *free_func);
-int crypto_free_ex_index_ex(OPENSSL_CTX *ctx, int class_index, int idx);
+OSSL_LIB_CTX *ossl_crypto_ex_data_get_ossl_lib_ctx(const CRYPTO_EX_DATA *ad);
+int ossl_crypto_new_ex_data_ex(OSSL_LIB_CTX *ctx, int class_index, void *obj,
+                               CRYPTO_EX_DATA *ad);
+int ossl_crypto_get_ex_new_index_ex(OSSL_LIB_CTX *ctx, int class_index,
+                                    long argl, void *argp,
+                                    CRYPTO_EX_new *new_func,
+                                    CRYPTO_EX_dup *dup_func,
+                                    CRYPTO_EX_free *free_func,
+                                    int priority);
+int ossl_crypto_free_ex_index_ex(OSSL_LIB_CTX *ctx, int class_index, int idx);
 
 /* Function for simple binary search */
 
@@ -205,52 +220,42 @@ const void *ossl_bsearch(const void *key, const void *base, int num,
                          int size, int (*cmp) (const void *, const void *),
                          int flags);
 
-/* system-specific variants defining ossl_sleep() */
-#ifdef OPENSSL_SYS_UNIX
-# include <unistd.h>
-static ossl_inline void ossl_sleep(unsigned long millis)
+char *ossl_sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text,
+                                   const char *sep, size_t max_len);
+char *ossl_ipaddr_to_asc(unsigned char *p, int len);
+
+char *ossl_buf2hexstr_sep(const unsigned char *buf, long buflen, char sep);
+unsigned char *ossl_hexstr2buf_sep(const char *str, long *buflen,
+                                   const char sep);
+
+static ossl_inline int ossl_ends_with_dirsep(const char *path)
 {
-# ifdef OPENSSL_SYS_VXWORKS
-    struct timespec ts;
-    ts.tv_sec = (long int) (millis / 1000);
-    ts.tv_nsec = (long int) (millis % 1000) * 1000000ul;
-    nanosleep(&ts, NULL);
-# elif defined(__TANDEM) && !defined(_REENTRANT)
-#  include <cextdecs.h(PROCESS_DELAY_)>
-    /* HPNS does not support usleep for non threaded apps */
-    PROCESS_DELAY_(millis * 1000);
-# else
-    usleep(millis * 1000);
+    if (*path != '\0')
+        path += strlen(path) - 1;
+# if defined __VMS
+    if (*path == ']' || *path == '>' || *path == ':')
+        return 1;
+# elif defined _WIN32
+    if (*path == '\\')
+        return 1;
 # endif
+    return *path == '/';
 }
-#elif defined(_WIN32)
-# include <windows.h>
-static ossl_inline void ossl_sleep(unsigned long millis)
+
+static ossl_inline int ossl_is_absolute_path(const char *path)
 {
-    Sleep(millis);
+# if defined __VMS
+    if (strchr(path, ':') != NULL
+        || ((path[0] == '[' || path[0] == '<')
+            && path[1] != '.' && path[1] != '-'
+            && path[1] != ']' && path[1] != '>'))
+        return 1;
+# elif defined _WIN32
+    if (path[0] == '\\'
+        || (path[0] != '\0' && path[1] == ':'))
+        return 1;
+# endif
+    return path[0] == '/';
 }
-#else
-/* Fallback to a busy wait */
-static ossl_inline void ossl_sleep(unsigned long millis)
-{
-    struct timeval start, now;
-    unsigned long elapsedms;
-
-    gettimeofday(&start, NULL);
-    do {
-        gettimeofday(&now, NULL);
-        elapsedms = (((now.tv_sec - start.tv_sec) * 1000000)
-                     + now.tv_usec - start.tv_usec) / 1000;
-    } while (elapsedms < millis);
-}
-#endif /* defined OPENSSL_SYS_UNIX */
-
-char *sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text, const char *sep,
-                              size_t max_len);
-char *ipaddr_to_asc(unsigned char *p, int len);
-
-char *openssl_buf2hexstr_sep(const unsigned char *buf, long buflen, char sep);
-unsigned char *openssl_hexstr2buf_sep(const char *str, long *buflen,
-                                      const char sep);
 
 #endif

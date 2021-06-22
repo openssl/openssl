@@ -27,7 +27,7 @@
 # minimize register usage, which was used as "main thread" with RC4
 # weaved into it, one RC4 round per one MD5 round. In addition to the
 # stiched subroutine the script can generate standalone replacement
-# md5_block_asm_data_order and RC4. Below are performance numbers in
+# ossl_md5_block_asm_data_order and RC4. Below are performance numbers in
 # cycles per processed byte, less is better, for these the standalone
 # subroutines, sum of them, and stitched one:
 #
@@ -76,7 +76,7 @@ if ($rc4 && !$md5) {
   $func="RC4";				$nargs=4;
 } elsif ($md5 && !$rc4) {
   ($ctx,$inp,$len) = ("%rdi","%rsi","%rdx");
-  $func="md5_block_asm_data_order";	$nargs=3;
+  $func="ossl_md5_block_asm_data_order";	$nargs=3;
 } else {
   ($dat,$in0,$out,$ctx,$inp,$len) = ("%rdi","%rsi","%rdx","%rcx","%r8","%r9");
   $func="rc4_md5_enc";			$nargs=6;

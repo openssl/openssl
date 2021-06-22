@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -24,7 +24,7 @@ static void *aria_ccm_newctx(void *provctx, size_t keybits)
 
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL)
-        ccm_initctx(&ctx->base, keybits, PROV_ARIA_HW_ccm(keybits));
+        ossl_ccm_initctx(&ctx->base, keybits, ossl_prov_aria_hw_ccm(keybits));
     return ctx;
 }
 

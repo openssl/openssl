@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -138,18 +138,17 @@ static int ts_resp_set_tst_info(TS_RESP *a)
 
     if (a->token) {
         if (status != 0 && status != 1) {
-            TSerr(TS_F_TS_RESP_SET_TST_INFO, TS_R_TOKEN_PRESENT);
+            ERR_raise(ERR_LIB_TS, TS_R_TOKEN_PRESENT);
             return 0;
         }
         TS_TST_INFO_free(a->tst_info);
         a->tst_info = PKCS7_to_TS_TST_INFO(a->token);
         if (!a->tst_info) {
-            TSerr(TS_F_TS_RESP_SET_TST_INFO,
-                  TS_R_PKCS7_TO_TS_TST_INFO_FAILED);
+            ERR_raise(ERR_LIB_TS, TS_R_PKCS7_TO_TS_TST_INFO_FAILED);
             return 0;
         }
     } else if (status == 0 || status == 1) {
-        TSerr(TS_F_TS_RESP_SET_TST_INFO, TS_R_TOKEN_NOT_PRESENT);
+        ERR_raise(ERR_LIB_TS, TS_R_TOKEN_NOT_PRESENT);
         return 0;
     }
 
@@ -211,22 +210,22 @@ TS_TST_INFO *PKCS7_to_TS_TST_INFO(PKCS7 *token)
     const unsigned char *p;
 
     if (!PKCS7_type_is_signed(token)) {
-        TSerr(TS_F_PKCS7_TO_TS_TST_INFO, TS_R_BAD_PKCS7_TYPE);
+        ERR_raise(ERR_LIB_TS, TS_R_BAD_PKCS7_TYPE);
         return NULL;
     }
     if (PKCS7_get_detached(token)) {
-        TSerr(TS_F_PKCS7_TO_TS_TST_INFO, TS_R_DETACHED_CONTENT);
+        ERR_raise(ERR_LIB_TS, TS_R_DETACHED_CONTENT);
         return NULL;
     }
     pkcs7_signed = token->d.sign;
     enveloped = pkcs7_signed->contents;
     if (OBJ_obj2nid(enveloped->type) != NID_id_smime_ct_TSTInfo) {
-        TSerr(TS_F_PKCS7_TO_TS_TST_INFO, TS_R_BAD_PKCS7_TYPE);
+        ERR_raise(ERR_LIB_TS, TS_R_BAD_PKCS7_TYPE);
         return NULL;
     }
     tst_info_wrapper = enveloped->d.other;
     if (tst_info_wrapper->type != V_ASN1_OCTET_STRING) {
-        TSerr(TS_F_PKCS7_TO_TS_TST_INFO, TS_R_BAD_TYPE);
+        ERR_raise(ERR_LIB_TS, TS_R_BAD_TYPE);
         return NULL;
     }
     tst_info_der = tst_info_wrapper->value.octet_string;

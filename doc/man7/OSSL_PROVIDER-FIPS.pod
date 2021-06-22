@@ -18,7 +18,7 @@ defined:
 
 =over 4
 
-=item "provider=default"
+=item "provider=fips"
 
 =item "fips=yes"
 
@@ -62,7 +62,7 @@ The OpenSSL FIPS provider supports these operations and algorithms:
 
 =item AES, see L<EVP_CIPHER-AES(7)>
 
-=item DES-EDE3 (TrippleDES), see L<EVP_CIPHER-DES(7)>
+=item DES-EDE3 (TripleDES), see L<EVP_CIPHER-DES(7)>
 
 =back
 
@@ -90,9 +90,17 @@ The OpenSSL FIPS provider supports these operations and algorithms:
 
 =item PBKDF2, see L<EVP_KDF-PBKDF2(7)>
 
+=item SSHKDF, see L<EVP_KDF-SSHKDF(7)>
+
 =item TLS1-PRF, see L<EVP_KDF-TLS1-PRF(7)>
 
 =item KBKDF, see L<EVP_KDF-KBKDF(7)>
+
+=item X942KDF-ASN1, see L<EVP_KDF-X942-ASN1(7)>
+
+=item X942KDF-CONCAT, see L<EVP_KDF-X942-CONCAT(7)>
+
+=item X963KDF, see L<EVP_KDF-X963(7)>
 
 =back
 
@@ -261,6 +269,8 @@ Key generation tests used with the "Pairwise_Consistency_Test" type.
 
 =item "AES_GCM" (B<OSSL_SELF_TEST_DESC_CIPHER_AES_GCM>)
 
+=item "AES_ECB_Decrypt" (B<OSSL_SELF_TEST_DESC_CIPHER_AES_ECB>)
+
 =item "TDES" (B<OSSL_SELF_TEST_DESC_CIPHER_TDES>)
 
 Symmetric cipher tests used with the "KAT_Cipher" type.
@@ -290,6 +300,18 @@ Key agreement tests used with the "KAT_KA" type.
 =item "HKDF" (B<OSSL_SELF_TEST_DESC_KDF_HKDF>)
 
 =item "SSKDF" (B<OSSL_SELF_TEST_DESC_KDF_SSKDF>)
+
+=item "X963KDF" (B<OSSL_SELF_TEST_DESC_KDF_X963KDF>)
+
+=item "X942KDF" (B<OSSL_SELF_TEST_DESC_KDF_X942KDF>)
+
+=item "PBKDF2" (B<OSSL_SELF_TEST_DESC_KDF_PBKDF2>)
+
+=item "SSHKDF" (B<OSSL_SELF_TEST_DESC_KDF_SSHKDF>)
+
+=item "TLS12_PRF" (B<OSSL_SELF_TEST_DESC_KDF_TLS12_PRF>)
+
+=item "KBKDF" (B<OSSL_SELF_TEST_DESC_KDF_KBKDF>)
 
 Key Derivation Function tests used with the "KAT_KDF" type.
 
@@ -371,7 +393,7 @@ The type and functions described here were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

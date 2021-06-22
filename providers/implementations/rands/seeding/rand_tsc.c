@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,7 +9,7 @@
 
 #include "internal/cryptlib.h"
 #include <openssl/opensslconf.h>
-#include "prov/rand_pool.h"
+#include "crypto/rand_pool.h"
 #include "prov/seeding.h"
 
 #ifdef OPENSSL_RAND_SEED_RDTSC
@@ -30,7 +30,7 @@
  * Returns the total entropy count, if it exceeds the requested
  * entropy count. Otherwise, returns an entropy count of 0.
  */
-size_t prov_acquire_entropy_from_tsc(RAND_POOL *pool)
+size_t ossl_prov_acquire_entropy_from_tsc(RAND_POOL *pool)
 {
     unsigned char c;
     int i;
@@ -38,10 +38,10 @@ size_t prov_acquire_entropy_from_tsc(RAND_POOL *pool)
     if ((OPENSSL_ia32cap_P[0] & (1 << 4)) != 0) {
         for (i = 0; i < TSC_READ_COUNT; i++) {
             c = (unsigned char)(OPENSSL_rdtsc() & 0xFF);
-            rand_pool_add(pool, &c, 1, 4);
+            ossl_rand_pool_add(pool, &c, 1, 4);
         }
     }
-    return rand_pool_entropy_available(pool);
+    return ossl_rand_pool_entropy_available(pool);
 }
 #else
 NON_EMPTY_TRANSLATION_UNIT

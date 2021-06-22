@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -20,6 +20,7 @@
 
 # include <openssl/buffer.h>
 # include <openssl/x509.h>
+# include <openssl/prov_ssl.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -30,10 +31,7 @@ extern "C" {
 #  define OPENSSL_TLS_SECURITY_LEVEL 1
 # endif
 
-# define TLS1_VERSION                    0x0301
-# define TLS1_1_VERSION                  0x0302
-# define TLS1_2_VERSION                  0x0303
-# define TLS1_3_VERSION                  0x0304
+/* TLS*_VERSION constants are defined in prov_ssl.h */
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define TLS_MAX_VERSION                TLS1_3_VERSION
 # endif
@@ -1120,6 +1118,11 @@ int SSL_CTX_set_tlsext_ticket_key_evp_cb
 # define TLS_CT_GOST12_IANA_512_SIGN     68
 # define TLS_CT_GOST12_LEGACY_SIGN       238
 # define TLS_CT_GOST12_LEGACY_512_SIGN   239
+
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  define TLS_CT_GOST12_SIGN TLS_CT_GOST12_LEGACY_SIGN
+#  define TLS_CT_GOST12_512_SIGN TLS_CT_GOST12_LEGACY_512_SIGN
+# endif
 
 /*
  * when correcting this number, correct also SSL3_CT_NUMBER in ssl3.h (see

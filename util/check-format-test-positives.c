@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -42,15 +42,17 @@
 *@ multi-line comment indent off by -1
  *X*@ no spc after leading '*' in multi-line comment, reported unless sloppy-spc
  *@0 more than two spaces after .   in comment, reported unless sloppy-spc
-*/ /*@2 multi-line comment end indent off by -1 (relative to comment start) */
+ *@0 more than two spaces after ?   in comment, reported unless sloppy-spc
+ *@0 more than two spaces after !   in comment, reported unless sloppy-spc
+*/ /*@ multi-line comment end indent off by -1 (relative to comment start) */
 */ /*@ unexpected comment ending delimiter outside comment */
 /*@ comment line is 4 columns tooooooooooooooooo wide, reported unless sloppy-len */
 /*@ comment line is 5 columns toooooooooooooooooooooooooooooooooooooooooooooo wide */
-#define X   1       /*@0 double space false negative due to coincidence */
+#define X   1       /*@0 extra space false negative due to coincidence */
  #define Y  2       /*@ indent of preprocessor directive off by 1 (must be 0) */
-typedef struct  {   /*@0 double space in code, reported unless sloppy-spc */
-    enum {          /*@1 double space  in comment, reported unless sloppy-spc */
-           w = 0 /*@2 hanging expr indent off by 1, or 3 for lines after '{' */
+typedef struct  {   /*@0 extra space in code, reported unless sloppy-spc */
+    enum {          /*@1 extra space  in comment, reported unless sloppy-spc */
+           w = 0 /*@ hanging expr indent off by 1, or 3 for lines after '{' */
              && 1,  /*@ hanging expr indent off by 3, or -1 for leading '&&' */
          x = 1,     /*@ hanging expr indent off by -1 */
           y,z       /*@ no space after ',', reported unless sloppy-spc */
@@ -70,10 +72,11 @@ void main(int n) {  /*@ opening brace at end of function definition header */
 #endif              /*@ unexpected #endif */
 int f (int a,       /*@ space after fn before '(', reported unless sloppy-spc */
       int b,        /*@ hanging expr indent off by -1 */
-       long l)      /*@ one-letter name 'l' */
+       long I)      /*@ single-letter name 'I' */
 { int               /*@ code after '{' opening a block */
     xx = 1) +       /*@ unexpected closing parenthesis */
-        2] -        /*@ unexpected closing bracket */
+        0L <        /*@ constant on LHS of comparison operator */
+        a] -        /*@ unexpected closing bracket */
         3: *        /*@ unexpected ':' (without preceding '?') within expr */
         4};         /*@ unexpected closing brace within expression */
     char y[] = {    /*@0 unclosed brace within initializer/enum expression */
@@ -89,7 +92,7 @@ int f (int a,       /*@ space after fn before '(', reported unless sloppy-spc */
            b,       /*@ expr indent as on line above, accepted if sloppy-hang */
     b, /*@ expr indent off -8 but @ extra indent accepted if sloppy-hang */
    "again aligned" /*@ expr indent off by -9 (left of stmt indent, */ "right",
-            123 == /*@ .. so reported also with sloppy-hang; this line is too long */ 456
+            abc == /*@ .. so reported also with sloppy-hang; this line is too long */ 456
 # define MAC(A) (A) /*@ nesting indent of preprocessor directive off by 1 */
              ? 1    /*@ hanging expr indent off by 1 */
               : 2); /*@ hanging expr indent off by 2, or 1 for leading ':' */
@@ -117,7 +120,9 @@ int f (int a,       /*@ space after fn before '(', reported unless sloppy-spc */
         do f(c, c); /*@ (non-brace) code after 'do' */
         while ( 2); /*@ space after '(', reported unless sloppy-spc */
     b; c;           /*@ more than one statement per line */
+  outer:            /*@ outer label special indent off by 1 */
     do{             /*@ no space before '{', reported unless sloppy-spc */
+     inner:         /*@ inner label normal indent off by 1 */
         f (3,       /*@ space after fn before '(', reported unless sloppy-spc */
            4);      /*@0 false negative: should report single stmt in braces */
     }               /*@0 'while' not on same line as preceding '}' */
@@ -127,7 +132,6 @@ int f (int a,       /*@ space after fn before '(', reported unless sloppy-spc */
     case(2):        /*@ no space after 'case', reported unless sloppy-spc */
     default: ;      /*@ code after 'default:' */
 }                   /*@ statement indent off by -4 */
-  label:            /*@ label special statement indent off by 1 */
     return(         /*@ no space after 'return', reported unless sloppy-spc */
            x); }    /*@ code before block-level '}' */
 /* Here the tool should stop complaining apart from the below issues at EOF */

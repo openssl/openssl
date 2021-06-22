@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -33,12 +33,13 @@ static int self_test_log = 1;
 static int quiet = 0;
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_IN, OPT_OUT, OPT_MODULE,
     OPT_PROV_NAME, OPT_SECTION_NAME, OPT_MAC_NAME, OPT_MACOPT, OPT_VERIFY,
     OPT_NO_LOG, OPT_CORRUPT_DESC, OPT_CORRUPT_TYPE, OPT_QUIET, OPT_CONFIG,
     OPT_NO_CONDITIONAL_ERRORS,
-    OPT_NO_SECURITY_CHECKS
+    OPT_NO_SECURITY_CHECKS,
+    OPT_SELF_TEST_ONLOAD
 } OPTION_CHOICE;
 
 const OPTIONS fipsinstall_options[] = {
@@ -55,6 +56,8 @@ const OPTIONS fipsinstall_options[] = {
       " any conditional self tests fail"},
     {"no_security_checks", OPT_NO_SECURITY_CHECKS, '-',
      "Disable the run-time FIPS security checks in the module"},
+    {"self_test_onload", OPT_SELF_TEST_ONLOAD, '-',
+     "Forces self tests to always run on module load"},
     OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input config file, used when verifying"},
 
@@ -78,9 +81,9 @@ static int do_mac(EVP_MAC_CTX *ctx, unsigned char *tmp, BIO *in,
     int i;
     size_t outsz = *out_len;
 
-    if (!EVP_MAC_init(ctx))
+    if (!EVP_MAC_init(ctx, NULL, 0, NULL))
         goto err;
-    if (EVP_MAC_size(ctx) > outsz)
+    if (EVP_MAC_CTX_get_mac_size(ctx) > outsz)
         goto end;
     while ((i = BIO_read(in, (char *)tmp, BUFSIZE)) != 0) {
         if (i < 0 || !EVP_MAC_update(ctx, tmp, i))
@@ -163,7 +166,7 @@ static int write_config_fips_section(BIO *out, const char *section,
                       module_mac_len))
         goto end;
 
-    if (install_mac != NULL) {
+    if (install_mac != NULL && install_mac_len > 0) {
         if (!print_mac(out, OSSL_PROV_FIPS_PARAM_INSTALL_MAC, install_mac,
                        install_mac_len)
             || BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_INSTALL_STATUS,
@@ -220,7 +223,7 @@ static void free_config_and_unload(CONF *conf)
 
 static int verify_module_load(const char *parent_config_file)
 {
-    return OPENSSL_CTX_load_config(NULL, parent_config_file);
+    return OSSL_LIB_CTX_load_config(NULL, parent_config_file);
 }
 
 /*
@@ -247,11 +250,6 @@ static int verify_config(const char *infile, const char *section,
         BIO_printf(bio_err, "version not found\n");
         goto end;
     }
-    s = NCONF_get_string(conf, section, OSSL_PROV_FIPS_PARAM_INSTALL_STATUS);
-    if (s == NULL || strcmp(s, INSTALL_STATUS_VAL) != 0) {
-        BIO_printf(bio_err, "install status not found\n");
-        goto end;
-    }
     s = NCONF_get_string(conf, section, OSSL_PROV_FIPS_PARAM_MODULE_MAC);
     if (s == NULL) {
         BIO_printf(bio_err, "Module integrity MAC not found\n");
@@ -264,17 +262,24 @@ static int verify_config(const char *infile, const char *section,
         BIO_printf(bio_err, "Module integrity mismatch\n");
         goto end;
     }
-    s = NCONF_get_string(conf, section, OSSL_PROV_FIPS_PARAM_INSTALL_MAC);
-    if (s == NULL) {
-        BIO_printf(bio_err, "Install indicator MAC not found\n");
-        goto end;
-    }
-    buf2 = OPENSSL_hexstr2buf(s, &len);
-    if (buf2 == NULL
-            || (size_t)len != install_mac_len
-            || memcmp(install_mac, buf2, install_mac_len) != 0) {
-        BIO_printf(bio_err, "Install indicator status mismatch\n");
-        goto end;
+    if (install_mac != NULL && install_mac_len > 0) {
+        s = NCONF_get_string(conf, section, OSSL_PROV_FIPS_PARAM_INSTALL_STATUS);
+        if (s == NULL || strcmp(s, INSTALL_STATUS_VAL) != 0) {
+            BIO_printf(bio_err, "install status not found\n");
+            goto end;
+        }
+        s = NCONF_get_string(conf, section, OSSL_PROV_FIPS_PARAM_INSTALL_MAC);
+        if (s == NULL) {
+            BIO_printf(bio_err, "Install indicator MAC not found\n");
+            goto end;
+        }
+        buf2 = OPENSSL_hexstr2buf(s, &len);
+        if (buf2 == NULL
+                || (size_t)len != install_mac_len
+                || memcmp(install_mac, buf2, install_mac_len) != 0) {
+            BIO_printf(bio_err, "Install indicator status mismatch\n");
+            goto end;
+        }
     }
     ret = 1;
 end:
@@ -286,7 +291,7 @@ end:
 
 int fipsinstall_main(int argc, char **argv)
 {
-    int ret = 1, verify = 0, gotkey = 0, gotdigest = 0;
+    int ret = 1, verify = 0, gotkey = 0, gotdigest = 0, self_test_onload = 0;
     int enable_conditional_errors = 1, enable_security_checks = 1;
     const char *section_name = "fips_sect";
     const char *mac_name = "HMAC";
@@ -371,24 +376,28 @@ opthelp:
         case OPT_VERIFY:
             verify = 1;
             break;
+        case OPT_SELF_TEST_ONLOAD:
+            self_test_onload = 1;
+            break;
         }
     }
+
+    /* No extra arguments. */
     argc = opt_num_rest();
+    if (argc != 0 || (verify && in_fname == NULL))
+        goto opthelp;
 
     if (parent_config != NULL) {
         /* Test that a parent config can load the module */
         if (verify_module_load(parent_config)) {
             ret = OSSL_PROVIDER_available(NULL, prov_name) ? 0 : 1;
             if (!quiet)
-                BIO_printf(bio_out, "FIPS provider is %s\n",
+                BIO_printf(bio_err, "FIPS provider is %s\n",
                            ret == 0 ? "available" : " not available");
         }
         goto end;
     }
-    if (module_fname == NULL
-        || (verify && in_fname == NULL)
-        || (!verify && out_fname == NULL)
-        || argc != 0)
+    if (module_fname == NULL)
         goto opthelp;
 
     tail = opt_path_end(module_fname);
@@ -422,7 +431,7 @@ opthelp:
     if (read_buffer == NULL)
         goto end;
 
-    mac = EVP_MAC_fetch(NULL, mac_name, NULL);
+    mac = EVP_MAC_fetch(app_get0_libctx(), mac_name, app_get0_propq());
     if (mac == NULL) {
         BIO_printf(bio_err, "Unable to get MAC of type %s\n", mac_name);
         goto end;
@@ -461,21 +470,25 @@ opthelp:
     if (!do_mac(ctx, read_buffer, module_bio, module_mac, &module_mac_len))
         goto end;
 
-    mem_bio = BIO_new_mem_buf((const void *)INSTALL_STATUS_VAL,
-                              strlen(INSTALL_STATUS_VAL));
-    if (mem_bio == NULL) {
-        BIO_printf(bio_err, "Unable to create memory BIO\n");
-        goto end;
+    if (self_test_onload == 0) {
+        mem_bio = BIO_new_mem_buf((const void *)INSTALL_STATUS_VAL,
+                                  strlen(INSTALL_STATUS_VAL));
+        if (mem_bio == NULL) {
+            BIO_printf(bio_err, "Unable to create memory BIO\n");
+            goto end;
+        }
+        if (!do_mac(ctx2, read_buffer, mem_bio, install_mac, &install_mac_len))
+            goto end;
+    } else {
+        install_mac_len = 0;
     }
-    if (!do_mac(ctx2, read_buffer, mem_bio, install_mac, &install_mac_len))
-        goto end;
 
     if (verify) {
         if (!verify_config(in_fname, section_name, module_mac, module_mac_len,
                            install_mac, install_mac_len))
             goto end;
         if (!quiet)
-            BIO_printf(bio_out, "VERIFY PASSED\n");
+            BIO_printf(bio_err, "VERIFY PASSED\n");
     } else {
 
         conf = generate_config_and_load(prov_name, section_name, module_mac,
@@ -487,7 +500,9 @@ opthelp:
         if (!load_fips_prov_and_run_self_test(prov_name))
             goto end;
 
-        fout = bio_open_default(out_fname, 'w', FORMAT_TEXT);
+        fout =
+            out_fname == NULL ? dup_bio_out(FORMAT_TEXT)
+                              : bio_open_default(out_fname, 'w', FORMAT_TEXT);
         if (fout == NULL) {
             BIO_printf(bio_err, "Failed to open file\n");
             goto end;
@@ -499,7 +514,7 @@ opthelp:
                                        install_mac, install_mac_len))
             goto end;
         if (!quiet)
-            BIO_printf(bio_out, "INSTALL PASSED\n");
+            BIO_printf(bio_err, "INSTALL PASSED\n");
     }
 
     ret = 0;
@@ -547,10 +562,10 @@ static int self_test_events(const OSSL_PARAM params[], void *arg)
 
     if (self_test_log) {
         if (strcmp(phase, OSSL_SELF_TEST_PHASE_START) == 0)
-            BIO_printf(bio_out, "%s : (%s) : ", desc, type);
+            BIO_printf(bio_err, "%s : (%s) : ", desc, type);
         else if (strcmp(phase, OSSL_SELF_TEST_PHASE_PASS) == 0
                  || strcmp(phase, OSSL_SELF_TEST_PHASE_FAIL) == 0)
-            BIO_printf(bio_out, "%s\n", phase);
+            BIO_printf(bio_err, "%s\n", phase);
     }
     /*
      * The self test code will internally corrupt the KAT test result if an
@@ -565,7 +580,7 @@ static int self_test_events(const OSSL_PARAM params[], void *arg)
         if (self_test_corrupt_type != NULL
                 && strcmp(self_test_corrupt_type, type) != 0)
             goto end;
-        BIO_printf(bio_out, "%s ", phase);
+        BIO_printf(bio_err, "%s ", phase);
         goto err;
     }
 end:

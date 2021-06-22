@@ -72,10 +72,7 @@ value "label":
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
                                           "label", (size_t)5);
  *p = OSSL_PARAM_construct_end();
- if (EVP_KDF_CTX_set_params(kctx, params) <= 0) {
-     error("EVP_KDF_CTX_set_params");
- }
- if (EVP_KDF_derive(kctx, out, sizeof(out)) <= 0) {
+ if (EVP_KDF_derive(kctx, out, sizeof(out), params) <= 0) {
      error("EVP_KDF_derive");
  }
 
@@ -91,7 +88,7 @@ L<EVP_KDF(3)>,
 L<EVP_KDF_CTX_new(3)>,
 L<EVP_KDF_CTX_free(3)>,
 L<EVP_KDF_CTX_set_params(3)>,
-L<EVP_KDF_size(3)>,
+L<EVP_KDF_CTX_get_kdf_size(3)>,
 L<EVP_KDF_derive(3)>,
 L<EVP_KDF(3)/PARAMETERS>
 
@@ -101,7 +98,7 @@ This functionality was added to OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

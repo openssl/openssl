@@ -9,8 +9,8 @@
 
 #include "crypto/evp.h"
 
-OSSL_FUNC_cipher_update_fn aes_cbc_cts_block_update;
-OSSL_FUNC_cipher_final_fn aes_cbc_cts_block_final;
+OSSL_FUNC_cipher_update_fn ossl_aes_cbc_cts_block_update;
+OSSL_FUNC_cipher_final_fn ossl_aes_cbc_cts_block_final;
 
-const char *aes_cbc_cts_mode_id2name(unsigned int id);
-int aes_cbc_cts_mode_name2id(const char *name);
+const char *ossl_aes_cbc_cts_mode_id2name(unsigned int id);
+int ossl_aes_cbc_cts_mode_name2id(const char *name);

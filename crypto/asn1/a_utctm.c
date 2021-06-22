@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,17 +17,17 @@
 IMPLEMENT_ASN1_DUP_FUNCTION(ASN1_UTCTIME)
 
 /* This is the primary function used to parse ASN1_UTCTIME */
-int asn1_utctime_to_tm(struct tm *tm, const ASN1_UTCTIME *d)
+int ossl_asn1_utctime_to_tm(struct tm *tm, const ASN1_UTCTIME *d)
 {
-    /* wrapper around asn1_time_to_tm */
+    /* wrapper around ossl_asn1_time_to_tm */
     if (d->type != V_ASN1_UTCTIME)
         return 0;
-    return asn1_time_to_tm(tm, d);
+    return ossl_asn1_time_to_tm(tm, d);
 }
 
 int ASN1_UTCTIME_check(const ASN1_UTCTIME *d)
 {
-    return asn1_utctime_to_tm(NULL, d);
+    return ossl_asn1_utctime_to_tm(NULL, d);
 }
 
 /* Sets the string via simple copy without cleaning it up */
@@ -69,7 +69,7 @@ ASN1_UTCTIME *ASN1_UTCTIME_adj(ASN1_UTCTIME *s, time_t t,
             return NULL;
     }
 
-    return asn1_time_from_tm(s, ts, V_ASN1_UTCTIME);
+    return ossl_asn1_time_from_tm(s, ts, V_ASN1_UTCTIME);
 }
 
 int ASN1_UTCTIME_cmp_time_t(const ASN1_UTCTIME *s, time_t t)
@@ -77,7 +77,7 @@ int ASN1_UTCTIME_cmp_time_t(const ASN1_UTCTIME *s, time_t t)
     struct tm stm, ttm;
     int day, sec;
 
-    if (!asn1_utctime_to_tm(&stm, s))
+    if (!ossl_asn1_utctime_to_tm(&stm, s))
         return -2;
 
     if (OPENSSL_gmtime(&t, &ttm) == NULL)

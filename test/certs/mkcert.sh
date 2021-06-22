@@ -1,6 +1,6 @@
 #! /bin/bash
 #
-# Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
 # Copyright (c) 2016 Viktor Dukhovni <openssl-users@dukhovni.org>.
 # All rights reserved.
 #
@@ -100,10 +100,12 @@ genroot() {
     local cn=$1; shift
     local key=$1; shift
     local cert=$1; shift
+    local bcon="basicConstraints = critical,CA:true"
+    local ku="keyUsage = keyCertSign,cRLSign"
     local skid="subjectKeyIdentifier = hash"
     local akid="authorityKeyIdentifier = keyid"
 
-    exts=$(printf "%s\n%s\n%s\n" "$skid" "$akid" "basicConstraints = critical,CA:true")
+    exts=$(printf "%s\n%s\n%s\n" "$bcon" "$ku" "$skid" "$akid")
     for eku in "$@"
     do
         exts=$(printf "%s\nextendedKeyUsage = %s\n" "$exts" "$eku")
@@ -114,26 +116,40 @@ genroot() {
 }
 
 genca() {
+    local OPTIND=1
+    local purpose=
+
+    while getopts p: o
+    do
+        case $o in
+        p) purpose="$OPTARG";;
+        *) echo "Usage: $0 genca [-p EKU] cn keyname certname cakeyname cacertname" >&2
+           return 1;;
+        esac
+    done
+
+    shift $((OPTIND - 1))
     local cn=$1; shift
     local key=$1; shift
     local cert=$1; shift
     local cakey=$1; shift
     local cacert=$1; shift
+    local bcon="basicConstraints = critical,CA:true"
+    local ku="keyUsage = keyCertSign,cRLSign"
     local skid="subjectKeyIdentifier = hash"
     local akid="authorityKeyIdentifier = keyid"
 
-    exts=$(printf "%s\n%s\n%s\n" "$skid" "$akid" "basicConstraints = critical,CA:true")
-    for eku in "$@"
-    do
-        exts=$(printf "%s\nextendedKeyUsage = %s\n" "$exts" "$eku")
-    done
+    exts=$(printf "%s\n%s\n%s\n" "$bcon" "$ku" "$skid" "$akid")
+    if [ -n "$purpose" ]; then
+        exts=$(printf "%s\nextendedKeyUsage = %s\n" "$exts" "$purpose")
+    fi
     if [ -n "$NC" ]; then
         exts=$(printf "%s\nnameConstraints = %s\n" "$exts" "$NC")
     fi
     csr=$(req "$key" "CN = $cn") || return 1
     echo "$csr" |
         cert "$cert" "$exts" -CA "${cacert}.pem" -CAkey "${cakey}.pem" \
-	    -set_serial 2 -days "${DAYS}"
+	    -set_serial 2 -days "${DAYS}" "$@"
 }
 
 gen_nonbc_ca() {
@@ -179,11 +195,11 @@ genpc() {
 	 -set_serial 2 -days "${DAYS}"
 }
 
-# Usage: $0 geneealt keyname certname eekeyname eecertname alt1 alt2 ...
+# Usage: $0 geneealt keyname certname cakeyname cacertname alt1 alt2 ...
 #
 # Note: takes csr on stdin, so must be used with $0 req like this:
 #
-# $0 req keyname dn | $0 geneealt keyname certname eekeyname eecertname alt ...
+# $0 req keyname dn | $0 geneealt keyname certname cakeyname cacertname alt ...
 geneealt() {
     local key=$1; shift
     local cert=$1; shift
@@ -233,6 +249,40 @@ genee() {
 	    -set_serial 2 -days "${DAYS}" "$@"
 }
 
+geneeextra() {
+    local OPTIND=1
+    local purpose=serverAuth
+
+    while getopts p: o
+    do
+        case $o in
+        p) purpose="$OPTARG";;
+        *) echo "Usage: $0 geneeextra [-p EKU] cn keyname certname cakeyname cacertname extraext" >&2
+           return 1;;
+        esac
+    done
+
+    shift $((OPTIND - 1))
+    local cn=$1; shift
+    local key=$1; shift
+    local cert=$1; shift
+    local cakey=$1; shift
+    local ca=$1; shift
+    local extraext=$1; shift
+
+    exts=$(printf "%s\n%s\n%s\n%s\n%s\n%s\n[alts]\n%s\n" \
+	    "subjectKeyIdentifier = hash" \
+	    "authorityKeyIdentifier = keyid, issuer" \
+	    "basicConstraints = CA:false" \
+	    "extendedKeyUsage = $purpose" \
+	    "subjectAltName = @alts"\
+	    "$extraext" "DNS=${cn}")
+    csr=$(req "$key" "CN = $cn") || return 1
+    echo "$csr" |
+	cert "$cert" "$exts" -CA "${ca}.pem" -CAkey "${cakey}.pem" \
+	    -set_serial 2 -days "${DAYS}" "$@"
+}
+
 geneenocsr() {
     local OPTIND=1
     local purpose=serverAuth
@@ -241,7 +291,7 @@ geneenocsr() {
     do
         case $o in
         p) purpose="$OPTARG";;
-        *) echo "Usage: $0 genee [-p EKU] cn certname cakeyname cacertname" >&2
+        *) echo "Usage: $0 geneenocsr [-p EKU] cn certname cakeyname cacertname" >&2
            return 1;;
         esac
     done

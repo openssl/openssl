@@ -43,8 +43,8 @@ DSA_SIG_set0() returns 1 on success or 0 on failure.
 
 =head1 SEE ALSO
 
-L<DSA_new(3)>, L<ERR_get_error(3)>,
-L<DSA_do_sign(3)>
+L<EVP_PKEY_new(3)>, L<EVP_PKEY_free(3)>, L<EVP_PKEY_get_bn_param(3)>,
+L<ERR_get_error(3)>
 
 =head1 COPYRIGHT
 

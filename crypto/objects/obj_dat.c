@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -150,7 +150,7 @@ static void cleanup3_doall(ADDED_OBJ *a)
     OPENSSL_free(a);
 }
 
-void obj_cleanup_int(void)
+void ossl_obj_cleanup_int(void)
 {
     if (added == NULL)
         return;
@@ -209,7 +209,7 @@ int OBJ_add_object(const ASN1_OBJECT *obj)
 
     return o->nid;
  err2:
-    OBJerr(OBJ_F_OBJ_ADD_OBJECT, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_OBJ, ERR_R_MALLOC_FAILURE);
  err:
     for (i = ADDED_DATA; i <= ADDED_NID; i++)
         OPENSSL_free(ao[i]);
@@ -224,7 +224,7 @@ ASN1_OBJECT *OBJ_nid2obj(int n)
 
     if ((n >= 0) && (n < NUM_NID)) {
         if ((n != NID_undef) && (nid_objs[n].nid == NID_undef)) {
-            OBJerr(OBJ_F_OBJ_NID2OBJ, OBJ_R_UNKNOWN_NID);
+            ERR_raise(ERR_LIB_OBJ, OBJ_R_UNKNOWN_NID);
             return NULL;
         }
         return (ASN1_OBJECT *)&(nid_objs[n]);
@@ -243,7 +243,7 @@ ASN1_OBJECT *OBJ_nid2obj(int n)
     if (adp != NULL)
         return adp->obj;
 
-    OBJerr(OBJ_F_OBJ_NID2OBJ, OBJ_R_UNKNOWN_NID);
+    ERR_raise(ERR_LIB_OBJ, OBJ_R_UNKNOWN_NID);
     return NULL;
 }
 
@@ -254,7 +254,7 @@ const char *OBJ_nid2sn(int n)
 
     if ((n >= 0) && (n < NUM_NID)) {
         if ((n != NID_undef) && (nid_objs[n].nid == NID_undef)) {
-            OBJerr(OBJ_F_OBJ_NID2SN, OBJ_R_UNKNOWN_NID);
+            ERR_raise(ERR_LIB_OBJ, OBJ_R_UNKNOWN_NID);
             return NULL;
         }
         return nid_objs[n].sn;
@@ -273,7 +273,7 @@ const char *OBJ_nid2sn(int n)
     if (adp != NULL)
         return adp->obj->sn;
 
-    OBJerr(OBJ_F_OBJ_NID2SN, OBJ_R_UNKNOWN_NID);
+    ERR_raise(ERR_LIB_OBJ, OBJ_R_UNKNOWN_NID);
     return NULL;
 }
 
@@ -284,7 +284,7 @@ const char *OBJ_nid2ln(int n)
 
     if ((n >= 0) && (n < NUM_NID)) {
         if ((n != NID_undef) && (nid_objs[n].nid == NID_undef)) {
-            OBJerr(OBJ_F_OBJ_NID2LN, OBJ_R_UNKNOWN_NID);
+            ERR_raise(ERR_LIB_OBJ, OBJ_R_UNKNOWN_NID);
             return NULL;
         }
         return nid_objs[n].ln;
@@ -303,7 +303,7 @@ const char *OBJ_nid2ln(int n)
     if (adp != NULL)
         return adp->obj->ln;
 
-    OBJerr(OBJ_F_OBJ_NID2LN, OBJ_R_UNKNOWN_NID);
+    ERR_raise(ERR_LIB_OBJ, OBJ_R_UNKNOWN_NID);
     return NULL;
 }
 
@@ -373,7 +373,7 @@ ASN1_OBJECT *OBJ_txt2obj(const char *s, int no_name)
             ((nid = OBJ_ln2nid(s)) != NID_undef))
             return OBJ_nid2obj(nid);
         if (!ossl_isdigit(*s)) {
-            OBJerr(OBJ_F_OBJ_TXT2OBJ, OBJ_R_UNKNOWN_OBJECT_NAME);
+            ERR_raise(ERR_LIB_OBJ, OBJ_R_UNKNOWN_OBJECT_NAME);
             return NULL;
         }
     }
@@ -393,7 +393,7 @@ ASN1_OBJECT *OBJ_txt2obj(const char *s, int no_name)
         return NULL;
 
     if ((buf = OPENSSL_malloc(j)) == NULL) {
-        OBJerr(OBJ_F_OBJ_TXT2OBJ, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OBJ, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -697,7 +697,7 @@ int OBJ_create(const char *oid, const char *sn, const char *ln)
     /* Check to see if short or long name already present */
     if ((sn != NULL && OBJ_sn2nid(sn) != NID_undef)
             || (ln != NULL && OBJ_ln2nid(ln) != NID_undef)) {
-        OBJerr(OBJ_F_OBJ_CREATE, OBJ_R_OID_EXISTS);
+        ERR_raise(ERR_LIB_OBJ, OBJ_R_OID_EXISTS);
         return 0;
     }
 
@@ -708,7 +708,7 @@ int OBJ_create(const char *oid, const char *sn, const char *ln)
 
     /* If NID is not NID_undef then object already exists */
     if (OBJ_obj2nid(tmpoid) != NID_undef) {
-        OBJerr(OBJ_F_OBJ_CREATE, OBJ_R_OID_EXISTS);
+        ERR_raise(ERR_LIB_OBJ, OBJ_R_OID_EXISTS);
         goto err;
     }
 

@@ -26,9 +26,8 @@
 
 #include "testutil.h"
 
-#ifndef OPENSSL_NO_RSA
-# include <openssl/rsa.h>
-# include "crypto/rsa.h"
+#include <openssl/rsa.h>
+#include "crypto/rsa.h"
 
 #define NUM_EXTRA_PRIMES 1
 
@@ -231,7 +230,7 @@ static int key2048p3_v2(RSA *key)
         || !TEST_int_ne(sk_BIGNUM_push(coeffs, num), 0))
         goto err;
 
-    if (!TEST_true(rsa_set0_all_params(key, primes, exps, coeffs)))
+    if (!TEST_true(ossl_rsa_set0_all_params(key, primes, exps, coeffs)))
         goto err;
 
  ret:
@@ -289,12 +288,9 @@ err:
     RSA_free(key);
     return ret;
 }
-#endif
 
 int setup_tests(void)
 {
-#ifndef OPENSSL_NO_RSA
     ADD_ALL_TESTS(test_rsa_mp, 2);
-#endif
     return 1;
 }

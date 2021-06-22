@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,7 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/asn1.h>
+#ifndef OSSL_CRYPTO_ASN1_H
+# define OSSL_CRYPTO_ASN1_H
+# pragma once
+
+# include <openssl/asn1.h>
+# include <openssl/core_dispatch.h> /* OSSL_FUNC_keymgmt_import() */
 
 /* Internal ASN1 structures and functions: not for application use */
 
@@ -69,37 +74,34 @@ struct evp_pkey_asn1_method_st {
     int (*get_priv_key) (const EVP_PKEY *pk, unsigned char *priv, size_t *len);
     int (*get_pub_key) (const EVP_PKEY *pk, unsigned char *pub, size_t *len);
 
-    /*
-     * TODO: Make sure these functions are defined for key types that are
-     * implemented in providers.
-     */
     /* Exports and imports to / from providers */
     size_t (*dirty_cnt) (const EVP_PKEY *pk);
     int (*export_to) (const EVP_PKEY *pk, void *to_keydata,
-                      EVP_KEYMGMT *to_keymgmt, OPENSSL_CTX *libctx,
-                      const char *propq);
+                      OSSL_FUNC_keymgmt_import_fn *importer,
+                      OSSL_LIB_CTX *libctx, const char *propq);
     OSSL_CALLBACK *import_from;
+    int (*copy) (EVP_PKEY *to, EVP_PKEY *from);
 
-    int (*priv_decode_with_libctx) (EVP_PKEY *pk,
+    int (*priv_decode_ex) (EVP_PKEY *pk,
                                     const PKCS8_PRIV_KEY_INFO *p8inf,
-                                    OPENSSL_CTX *libctx,
+                                    OSSL_LIB_CTX *libctx,
                                     const char *propq);
 } /* EVP_PKEY_ASN1_METHOD */ ;
 
 DEFINE_STACK_OF_CONST(EVP_PKEY_ASN1_METHOD)
 
-extern const EVP_PKEY_ASN1_METHOD dh_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD dhx_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[5];
-extern const EVP_PKEY_ASN1_METHOD eckey_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD ecx25519_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD ecx448_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD ed448_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD sm2_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD ossl_dh_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD ossl_dhx_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD ossl_dsa_asn1_meths[5];
+extern const EVP_PKEY_ASN1_METHOD ossl_eckey_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD ossl_ecx25519_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD ossl_ecx448_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD ossl_ed25519_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD ossl_ed448_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD ossl_sm2_asn1_meth;
 
-extern const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[2];
-extern const EVP_PKEY_ASN1_METHOD rsa_pss_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD ossl_rsa_asn1_meths[2];
+extern const EVP_PKEY_ASN1_METHOD ossl_rsa_pss_asn1_meth;
 
 /*
  * These are used internally in the ASN1_OBJECT to keep track of whether the
@@ -129,7 +131,19 @@ struct asn1_pctx_st {
 
 /* ASN1 type functions */
 
-int asn1_type_set_octetstring_int(ASN1_TYPE *a, long num,
-                                  unsigned char *data, int len);
-int asn1_type_get_octetstring_int(const ASN1_TYPE *a, long *num,
-                                  unsigned char *data, int max_len);
+int ossl_asn1_type_set_octetstring_int(ASN1_TYPE *a, long num,
+                                       unsigned char *data, int len);
+int ossl_asn1_type_get_octetstring_int(const ASN1_TYPE *a, long *num,
+                                       unsigned char *data, int max_len);
+
+int ossl_x509_algor_new_from_md(X509_ALGOR **palg, const EVP_MD *md);
+const EVP_MD *ossl_x509_algor_get_md(X509_ALGOR *alg);
+X509_ALGOR *ossl_x509_algor_mgf1_decode(X509_ALGOR *alg);
+int ossl_x509_algor_md_to_mgf1(X509_ALGOR **palg, const EVP_MD *mgf1md);
+int ossl_asn1_time_print_ex(BIO *bp, const ASN1_TIME *tm, unsigned long flags);
+
+EVP_PKEY * ossl_d2i_PrivateKey_legacy(int keytype, EVP_PKEY **a,
+                                      const unsigned char **pp, long length,
+                                      OSSL_LIB_CTX *libctx, const char *propq);
+
+#endif /* ndef OSSL_CRYPTO_ASN1_H */
