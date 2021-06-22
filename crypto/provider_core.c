@@ -319,29 +319,6 @@ int ossl_provider_info_add_to_store(OSSL_LIB_CTX *libctx,
     return ret;
 }
 
-int OSSL_PROVIDER_add_builtin(OSSL_LIB_CTX *libctx, const char *name,
-                              OSSL_provider_init_fn *init_fn)
-{
-    OSSL_PROVIDER_INFO entry;
-
-    if (name == NULL || init_fn == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
-    }
-    memset(&entry, 0, sizeof(entry));
-    entry.name = OPENSSL_strdup(name);
-    if (entry.name == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
-        return 0;
-    }
-    entry.init = init_fn;
-    if (!ossl_provider_info_add_to_store(libctx, &entry)) {
-        ossl_provider_info_clear(&entry);
-        return 0;
-    }
-    return 1;
-}
-
 OSSL_PROVIDER *ossl_provider_find(OSSL_LIB_CTX *libctx, const char *name,
                                   int noconfig)
 {
