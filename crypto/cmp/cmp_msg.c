@@ -727,10 +727,11 @@ OSSL_CMP_MSG *ossl_cmp_genp_new(OSSL_CMP_CTX *ctx,
 }
 
 OSSL_CMP_MSG *ossl_cmp_error_new(OSSL_CMP_CTX *ctx, const OSSL_CMP_PKISI *si,
-                                 int errorCode, const char *details,
+                                 int64_t errorCode, const char *details,
                                  int unprotected)
 {
     OSSL_CMP_MSG *msg = NULL;
+    const char *lib = NULL, *reason = NULL;
     OSSL_CMP_PKIFREETEXT *ft;
 
     if (!ossl_assert(ctx != NULL && si != NULL))
@@ -743,17 +744,26 @@ OSSL_CMP_MSG *ossl_cmp_error_new(OSSL_CMP_CTX *ctx, const OSSL_CMP_PKISI *si,
     if ((msg->body->value.error->pKIStatusInfo = OSSL_CMP_PKISI_dup(si))
         == NULL)
         goto err;
-    if (errorCode >= 0) {
-        if ((msg->body->value.error->errorCode = ASN1_INTEGER_new()) == NULL)
-            goto err;
-        if (!ASN1_INTEGER_set(msg->body->value.error->errorCode, errorCode))
-            goto err;
+    if ((msg->body->value.error->errorCode = ASN1_INTEGER_new()) == NULL)
+        goto err;
+    if (!ASN1_INTEGER_set_int64(msg->body->value.error->errorCode, errorCode))
+        goto err;
+    if (errorCode > 0 && errorCode < (ERR_SYSTEM_FLAG << 1)) {
+        lib = ERR_lib_error_string((unsigned long)errorCode);
+        reason = ERR_reason_error_string((unsigned long)errorCode);
     }
-    if (details != NULL) {
+    if (lib != NULL || reason != NULL || details != NULL) {
         if ((ft = sk_ASN1_UTF8STRING_new_null()) == NULL)
             goto err;
         msg->body->value.error->errorDetails = ft;
-        if (!ossl_cmp_sk_ASN1_UTF8STRING_push_str(ft, details))
+        if (lib != NULL && *lib != '\0'
+                && !ossl_cmp_sk_ASN1_UTF8STRING_push_str(ft, lib))
+            goto err;
+        if (reason != NULL && *reason != '\0'
+                && !ossl_cmp_sk_ASN1_UTF8STRING_push_str(ft, reason))
+            goto err;
+        if (details != NULL
+                && !ossl_cmp_sk_ASN1_UTF8STRING_push_str(ft, details))
             goto err;
     }
 

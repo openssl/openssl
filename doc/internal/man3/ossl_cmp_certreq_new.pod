@@ -38,7 +38,7 @@ ossl_cmp_error_new
  OSSL_CMP_MSG *ossl_cmp_genm_new(OSSL_CMP_CTX *ctx);
  OSSL_CMP_MSG *ossl_cmp_genp_new(OSSL_CMP_CTX *ctx);
  OSSL_CMP_MSG *ossl_cmp_error_new(OSSL_CMP_CTX *ctx, const OSSL_CMP_PKISI *si,
-                                  int errorCode, const char *details,
+                                  int64_t errorCode, const char *details,
                                   int unprotected);
 
 =head1 DESCRIPTION
@@ -141,8 +141,11 @@ ossl_cmp_genm_new() creates a new General Message with an empty ITAV stack.
 ossl_cmp_genp_new() creates a new General Response with an empty ITAV stack.
 
 ossl_cmp_error_new() creates a new Error Message with the given contents
-with the given I<si>, I<errorCode> (if nonnegative), and optional I<details>.
-It does not protect the message if I<unprotectedErrors> is nonzero.
+I<si>, I<errorCode>, and optional I<details>.
+If I<errorCode> is positive and in the range of an OpenSSL error code, the
+respective library and reason strings are included in the B<errorDetails> field.
+If given, the I<details> are added to the contents of the B<errorDetails> field.
+The function does not protect the message if I<unprotectedErrors> is nonzero.
 
 =head1 NOTES
 
