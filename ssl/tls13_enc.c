@@ -309,7 +309,6 @@ size_t tls13_final_finish_mac(SSL *s, const char *str, size_t slen,
     unsigned char hash[EVP_MAX_MD_SIZE];
     unsigned char finsecret[EVP_MAX_MD_SIZE];
     unsigned char *key = NULL;
-    unsigned int len = 0;
     size_t hashlen, ret = 0;
     OSSL_PARAM params[2], *p = params;
 
@@ -340,12 +339,11 @@ size_t tls13_final_finish_mac(SSL *s, const char *str, size_t slen,
     if (!EVP_Q_mac(s->ctx->libctx, "HMAC", s->ctx->propq, mdname,
                    params, key, hashlen, hash, hashlen,
                    /* outsize as per sizeof(peer_finish_md) */
-                   out, EVP_MAX_MD_SIZE * 2, &len)) {
+                   out, EVP_MAX_MD_SIZE * 2, &ret)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
-    ret = len;
  err:
     OPENSSL_cleanse(finsecret, sizeof(finsecret));
     return ret;
