@@ -216,14 +216,14 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
                                                   sizeof(buf)) != NULL)
             ERR_add_error_data(1, buf);
         if (emc->errorCode != NULL
-                && BIO_snprintf(buf, sizeof(buf), "; errorCode: %ld",
+                && BIO_snprintf(buf, sizeof(buf), "; errorCode: %08lX",
                                 ASN1_INTEGER_get(emc->errorCode)) > 0)
             ERR_add_error_data(1, buf);
         if (emc->errorDetails != NULL) {
             char *text = ossl_sk_ASN1_UTF8STRING2text(emc->errorDetails, ", ",
                                                       OSSL_CMP_PKISI_BUFLEN - 1);
 
-            if (text != NULL)
+            if (text != NULL && *text != '\0')
                 ERR_add_error_data(2, "; errorDetails: ", text);
             OPENSSL_free(text);
         }

@@ -882,7 +882,7 @@ OSSL_CMP_MSG *ossl_cmp_genm_new(OSSL_CMP_CTX *ctx);
 OSSL_CMP_MSG *ossl_cmp_genp_new(OSSL_CMP_CTX *ctx,
                                 const STACK_OF(OSSL_CMP_ITAV) *itavs);
 OSSL_CMP_MSG *ossl_cmp_error_new(OSSL_CMP_CTX *ctx, const OSSL_CMP_PKISI *si,
-                                 int errorCode, const char *details,
+                                 int64_t errorCode, const char *details,
                                  int unprotected);
 int ossl_cmp_certstatus_set0_certHash(OSSL_CMP_CERTSTATUS *certStatus,
                                       ASN1_OCTET_STRING *hash);
