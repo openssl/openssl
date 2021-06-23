@@ -33,7 +33,7 @@ my $atexit_outfile;
 $atexit_outfile = 'atexit-cryptofirst.txt';
 1 while unlink $atexit_outfile;
 ok(run(test(["shlibloadtest", "-crypto_first", $libcrypto, $libssl, $atexit_outfile])),
-   "running shlibloadtest -crypto_first $atexit_");
+   "running shlibloadtest -crypto_first $atexit_outfile");
 ok(check_atexit($atexit_outfile));
 
 $atexit_outfile = 'atexit-sslfirst.txt';
