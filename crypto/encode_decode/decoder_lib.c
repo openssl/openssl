@@ -47,6 +47,7 @@ int OSSL_DECODER_from_bio(OSSL_DECODER_CTX *ctx, BIO *in)
     struct decoder_process_data_st data;
     int ok = 0;
     BIO *new_bio = NULL;
+    unsigned long lasterr;
 
     if (in == NULL) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_PASSED_NULL_PARAMETER);
@@ -60,6 +61,8 @@ int OSSL_DECODER_from_bio(OSSL_DECODER_CTX *ctx, BIO *in)
                        "available. Did you forget to load them?");
         return 0;
     }
+
+    lasterr = ERR_peek_last_error();
 
     if (BIO_tell(in) < 0) {
         new_bio = BIO_new(BIO_f_readbuffer());
@@ -92,8 +95,8 @@ int OSSL_DECODER_from_bio(OSSL_DECODER_CTX *ctx, BIO *in)
         const char *input_structure
             = ctx->input_structure != NULL ? ctx->input_structure : "";
 
-        if (BIO_eof(in) == 0 || ERR_peek_error() == 0)
-            /* Prevent spurious decoding error */
+        if (ERR_peek_last_error() == lasterr || ERR_peek_error() == 0)
+            /* Prevent spurious decoding error but add at least something */
             ERR_raise_data(ERR_LIB_OSSL_DECODER, ERR_R_UNSUPPORTED,
                            "No supported data to decode. %s%s%s%s%s%s",
                            spaces, input_type_label, input_type, comma,
