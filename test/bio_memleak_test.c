@@ -62,7 +62,7 @@ static int test_bio_get_mem(void)
         goto finish;
     ok = 1;
 
-finish:
+ finish:
     BIO_free(bio);
     BUF_MEM_free(bufmem);
     return ok;
@@ -98,7 +98,7 @@ static int test_bio_new_mem_buf(void)
         goto finish;
     ok = 1;
 
-finish:
+ finish:
     BIO_free(bio);
     return ok;
 }
@@ -139,7 +139,7 @@ static int test_bio_rdonly_mem_buf(void)
         goto finish;
     ok = 1;
 
-finish:
+ finish:
     BIO_free(bio);
     BIO_free(bio2);
     return ok;
@@ -176,7 +176,7 @@ static int test_bio_rdwr_rdonly(void)
 
     ok = 1;
 
-finish:
+ finish:
     BIO_free(bio);
     return ok;
 }
@@ -216,7 +216,7 @@ static int test_bio_nonclear_rst(void)
 
     ok = 1;
 
-finish:
+ finish:
     BIO_free(bio);
     return ok;
 }
@@ -279,7 +279,7 @@ static int test_bio_i2d_ASN1_mime(void)
 
     ok = 1;
 
-finish:
+ finish:
     BIO_free(bio);
     BIO_free(out);
     PKCS7_free(p7);
