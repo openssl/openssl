@@ -98,7 +98,7 @@ static int execute_test_handle_request(CMP_SRV_TEST_FIXTURE *fixture)
                             OSSL_CMP_PKIBODY_ERROR)
             || !TEST_ptr(errorContent = rsp->body->value.error)
             || !TEST_int_eq(ASN1_INTEGER_get(errorContent->errorCode),
-                            dummy_errorCode))
+                            ERR_PACK(ERR_LIB_CMP, 0, dummy_errorCode)))
         goto end;
 
     res = 1;
