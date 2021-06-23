@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
 #include <stdlib.h>              /* For NULL */
 #include <openssl/macros.h>      /* For NON_EMPTY_TRANSLATION_UNIT */
 #include <openssl/e_os2.h>
