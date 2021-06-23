@@ -527,6 +527,20 @@ int ossl_provider_add_to_store(OSSL_PROVIDER *prov, OSSL_PROVIDER **actualprov,
 
     tmpl.name = (char *)prov->name;
     idx = sk_OSSL_PROVIDER_find(store->providers, &tmpl);
+    if (idx == -1)
+        actualtmp = prov;
+    else
+        actualtmp = sk_OSSL_PROVIDER_value(store->providers, idx);
+
+    if (actualprov != NULL) {
+        if (!ossl_provider_up_ref(actualtmp)) {
+            ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+            actualtmp = NULL;
+            goto err;
+        }
+        *actualprov = actualtmp;
+    }
+
     if (idx == -1) {
         if (sk_OSSL_PROVIDER_push(store->providers, prov) == 0)
             goto err;
@@ -535,11 +549,8 @@ int ossl_provider_add_to_store(OSSL_PROVIDER *prov, OSSL_PROVIDER **actualprov,
             sk_OSSL_PROVIDER_delete_ptr(store->providers, prov);
             goto err;
         }
-        actualtmp = prov;
         if (!retain_fallbacks)
             store->use_fallbacks = 0;
-    } else {
-        actualtmp = sk_OSSL_PROVIDER_value(store->providers, idx);
     }
 
     CRYPTO_THREAD_unlock(store->lock);
@@ -556,17 +567,12 @@ int ossl_provider_add_to_store(OSSL_PROVIDER *prov, OSSL_PROVIDER **actualprov,
         ossl_provider_free(prov);
     }
 
-    if (actualprov != NULL) {
-        if (!ossl_provider_up_ref(actualtmp)) {
-            ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
-            return 0;
-        }
-        *actualprov = actualtmp;
-    }
     return 1;
 
  err:
     CRYPTO_THREAD_unlock(store->lock);
+    if (actualprov != NULL)
+        ossl_provider_free(actualtmp);
     return 0;
 }
 

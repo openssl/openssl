@@ -233,7 +233,10 @@ makes it available to other threads. This will prevent future automatic loading
 of fallback providers, unless I<retain_fallbacks> is true. If a provider of the
 same name already exists in the store then it is not added but this function
 still returns success. On success the I<actualprov> value is populated with a
-pointer to the provider of the given name that is now in the store.
+pointer to the provider of the given name that is now in the store. The
+reference passed in the I<prov> argument is consumed by this function. A
+reference to the provider that should be used is passed back in the
+I<actualprov> argument.
 
 ossl_provider_ctx() returns a context created by the provider.
 Outside of the provider, it's completely opaque, but it needs to be
