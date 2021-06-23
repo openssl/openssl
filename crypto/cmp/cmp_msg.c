@@ -454,9 +454,9 @@ OSSL_CMP_MSG *ossl_cmp_certreq_new(OSSL_CMP_CTX *ctx, int type,
 }
 
 OSSL_CMP_MSG *ossl_cmp_certrep_new(OSSL_CMP_CTX *ctx, int bodytype,
-                                   int certReqId, OSSL_CMP_PKISI *si,
-                                   X509 *cert, STACK_OF(X509) *chain,
-                                   STACK_OF(X509) *caPubs, int encrypted,
+                                   int certReqId, const OSSL_CMP_PKISI *si,
+                                   X509 *cert, const X509 *encryption_recip,
+                                   STACK_OF(X509) *chain, STACK_OF(X509) *caPubs,
                                    int unprotectedErrors)
 {
     OSSL_CMP_MSG *msg = NULL;
@@ -486,8 +486,8 @@ OSSL_CMP_MSG *ossl_cmp_certrep_new(OSSL_CMP_CTX *ctx, int bodytype,
     status = ossl_cmp_pkisi_get_status(resp->status);
     if (status != OSSL_CMP_PKISTATUS_rejection
             && status != OSSL_CMP_PKISTATUS_waiting && cert != NULL) {
-        if (encrypted) {
-            ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ARGS);
+        if (encryption_recip != NULL) {
+            ERR_raise(ERR_LIB_CMP, ERR_R_UNSUPPORTED);
             goto err;
         }
 
@@ -579,8 +579,8 @@ OSSL_CMP_MSG *ossl_cmp_rr_new(OSSL_CMP_CTX *ctx)
     return NULL;
 }
 
-OSSL_CMP_MSG *ossl_cmp_rp_new(OSSL_CMP_CTX *ctx, OSSL_CMP_PKISI *si,
-                              OSSL_CRMF_CERTID *cid, int unprot_err)
+OSSL_CMP_MSG *ossl_cmp_rp_new(OSSL_CMP_CTX *ctx, const OSSL_CMP_PKISI *si,
+                              const OSSL_CRMF_CERTID *cid, int unprotectedErrors)
 {
     OSSL_CMP_REVREPCONTENT *rep = NULL;
     OSSL_CMP_PKISI *si1 = NULL;
@@ -613,7 +613,7 @@ OSSL_CMP_MSG *ossl_cmp_rp_new(OSSL_CMP_CTX *ctx, OSSL_CMP_PKISI *si,
         }
     }
 
-    if (!unprot_err
+    if (!unprotectedErrors
             || ossl_cmp_pkisi_get_status(si) != OSSL_CMP_PKISTATUS_rejection)
         if (!ossl_cmp_msg_protect(ctx, msg))
             goto err;
@@ -726,9 +726,9 @@ OSSL_CMP_MSG *ossl_cmp_genp_new(OSSL_CMP_CTX *ctx,
                    OSSL_CMP_PKIBODY_GENP, CMP_R_ERROR_CREATING_GENP);
 }
 
-OSSL_CMP_MSG *ossl_cmp_error_new(OSSL_CMP_CTX *ctx, OSSL_CMP_PKISI *si,
-                                 int errorCode,
-                                 const char *details, int unprotected)
+OSSL_CMP_MSG *ossl_cmp_error_new(OSSL_CMP_CTX *ctx, const OSSL_CMP_PKISI *si,
+                                 int errorCode, const char *details,
+                                 int unprotected)
 {
     OSSL_CMP_MSG *msg = NULL;
     OSSL_CMP_PKIFREETEXT *ft;

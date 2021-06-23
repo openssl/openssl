@@ -226,7 +226,7 @@ static OSSL_CMP_MSG *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
     }
 
     msg = ossl_cmp_certrep_new(srv_ctx->ctx, bodytype, certReqId, si,
-                               certOut, chainOut, caPubs, 0 /* encrypted */,
+                               certOut, NULL /* enc */, chainOut, caPubs,
                                srv_ctx->sendUnprotectedErrors);
     if (msg == NULL)
         ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_CREATING_CERTREP);
