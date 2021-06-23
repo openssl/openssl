@@ -36,6 +36,12 @@ int OPENSSL_issetugid(void)
 #   include <sys/auxv.h>
 #   define OSSL_IMPLEMENT_GETAUXVAL
 #  endif
+# elif defined(__ANDROID_API__)
+/* see https://developer.android.google.cn/ndk/guides/cpu-features */
+#  if __ANDROID_API__ >= 18
+#   include <sys/auxv.h>
+#   define OSSL_IMPLEMENT_GETAUXVAL
+#  endif
 # endif
 
 int OPENSSL_issetugid(void)
