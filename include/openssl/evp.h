@@ -716,7 +716,7 @@ __owur int EVP_Digest(const void *data, size_t count,
                           const EVP_MD *type, ENGINE *impl);
 __owur int EVP_Q_digest(OSSL_LIB_CTX *libctx, const char *name,
                         const char *propq, const void *data, size_t count,
-                        unsigned char *md, unsigned int *size);
+                        unsigned char *md, size_t *size);
 
 __owur int EVP_MD_CTX_copy(EVP_MD_CTX *out, const EVP_MD_CTX *in);
 __owur int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type);

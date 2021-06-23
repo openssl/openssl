@@ -53,7 +53,7 @@ EVP_MD_CTX_type, EVP_MD_CTX_pkey_ctx, EVP_MD_CTX_md_data
 
  int EVP_Q_digest(OSSL_LIB_CTX *libctx, const char *name, const char *propq,
                   const void *data, size_t count,
-                  unsigned char *md, unsigned int *size);
+                  unsigned char *md, size_t *size);
  int EVP_Digest(const void *data, size_t count, unsigned char *md,
                 unsigned int *size, const EVP_MD *type, ENGINE *impl);
  int EVP_DigestInit_ex2(EVP_MD_CTX *ctx, const EVP_MD *type,
