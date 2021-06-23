@@ -360,7 +360,9 @@ call C<EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2)> to get SM2 computations.
 
 Parameter and key generation is also reworked to make it possible
 to generate EVP_PKEY_SM2 parameters and keys. Applications must now generate
-SM2 keys directly and must not create an EVP_PKEY_EC key first.
+SM2 keys directly and must not create an EVP_PKEY_EC key first. It is no longer
+possible to import an SM2 key with domain parameters other than the SM2 elliptic
+curve ones.
 
 Validation of SM2 keys has been separated from the validation of regular EC
 keys, allowing to improve the SM2 validation process to reject loaded private
