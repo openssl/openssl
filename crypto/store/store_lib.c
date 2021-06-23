@@ -513,7 +513,7 @@ static int ossl_store_close_it(OSSL_STORE_CTX *ctx)
         ret = ctx->loader->p_close(ctx->loader_ctx);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     if (ctx->fetched_loader == NULL)
-        ret = ctx->loader->close(ctx->loader_ctx);
+        ret = ctx->loader->closefn(ctx->loader_ctx);
 #endif
 
     sk_OSSL_STORE_INFO_pop_free(ctx->cached_info, OSSL_STORE_INFO_free);

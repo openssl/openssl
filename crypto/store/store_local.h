@@ -92,7 +92,7 @@ struct ossl_store_loader_st {
     OSSL_STORE_load_fn load;
     OSSL_STORE_eof_fn eof;
     OSSL_STORE_error_fn error;
-    OSSL_STORE_close_fn close;
+    OSSL_STORE_close_fn closefn;
     OSSL_STORE_open_ex_fn open_ex;
 #endif
 
