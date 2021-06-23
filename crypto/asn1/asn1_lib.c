@@ -413,9 +413,9 @@ unsigned char *ASN1_STRING_data(ASN1_STRING *x)
 }
 #endif
 
+/* |max_len| excludes NUL terminator and may be 0 to indicate no restriction */
 char *ossl_sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text,
-                                   const char *sep,
-                                   size_t max_len /* excluding NUL terminator */)
+                                   const char *sep, size_t max_len)
 {
     int i;
     ASN1_UTF8STRING *current;
@@ -423,26 +423,27 @@ char *ossl_sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text,
     char *result = NULL;
     char *p;
 
-    if (!ossl_assert(sep != NULL))
-        return NULL;
+    if (sep == NULL)
+        sep = "";
     sep_len = strlen(sep);
 
-    for (i = 0; i < sk_ASN1_UTF8STRING_num(text); ++i) {
+    for (i = 0; i < sk_ASN1_UTF8STRING_num(text); i++) {
         current = sk_ASN1_UTF8STRING_value(text, i);
         if (i > 0)
             length += sep_len;
         length += ASN1_STRING_length(current);
-        if (length > max_len)
+        if (max_len != 0 && length > max_len)
             return NULL;
     }
     if ((result = OPENSSL_malloc(length + 1)) == NULL)
         return NULL;
 
-    for (i = 0, p = result; i < sk_ASN1_UTF8STRING_num(text); ++i) {
+    p = result;
+    for (i = 0; i < sk_ASN1_UTF8STRING_num(text); i++) {
         current = sk_ASN1_UTF8STRING_value(text, i);
         length = ASN1_STRING_length(current);
         if (i > 0 && sep_len > 0) {
-            strncpy(p, sep, sep_len + 1);
+            strncpy(p, sep, sep_len + 1); /* using + 1 to silence gcc warning */
             p += sep_len;
         }
         strncpy(p, (const char *)ASN1_STRING_get0_data(current), length);
