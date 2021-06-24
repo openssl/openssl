@@ -142,8 +142,8 @@ ossl_cmp_genp_new() creates a new General Response with an empty ITAV stack.
 
 ossl_cmp_error_new() creates a new Error Message with the given contents
 I<si>, I<errorCode>, and optional I<details>.
-If I<errorCode> is positive and in the range of an OpenSSL error code, the
-respective library and reason strings are included in the B<errorDetails> field.
+If I<errorCode> is positive and in the range of an OpenSSL error code,
+the library and reason strings are included in the B<errorDetails> field.
 If given, the I<details> are added to the contents of the B<errorDetails> field.
 The function does not protect the message if I<unprotectedErrors> is nonzero.
 
