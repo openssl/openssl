@@ -730,7 +730,7 @@ static int EVP_Update_loop(void *args)
             rc = EVP_DecryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
             if (rc != 1) {
                 /* reset iv in case of counter overflow */
-                EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, -1);
+                rc = EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, -1);
             }
         }
     } else {
@@ -738,14 +738,14 @@ static int EVP_Update_loop(void *args)
             rc = EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
             if (rc != 1) {
                 /* reset iv in case of counter overflow */
-                EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, -1);
+                rc = EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, -1);
             }
         }
     }
     if (decrypt)
-        EVP_DecryptFinal_ex(ctx, buf, &outl);
+        rc = EVP_DecryptFinal_ex(ctx, buf, &outl);
     else
-        EVP_EncryptFinal_ex(ctx, buf, &outl);
+        rc = EVP_EncryptFinal_ex(ctx, buf, &outl);
     return count;
 }
 
@@ -761,27 +761,28 @@ static int EVP_Update_loop_ccm(void *args)
     EVP_CIPHER_CTX *ctx = tempargs->ctx;
     int outl, count;
     unsigned char tag[12];
+    int dummy = 1;
 
     if (decrypt) {
         for (count = 0; COND(c[D_EVP][testnum]); count++) {
             EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, sizeof(tag), tag);
             /* reset iv */
-            EVP_DecryptInit_ex(ctx, NULL, NULL, NULL, iv);
+            dummy *= EVP_DecryptInit_ex(ctx, NULL, NULL, NULL, iv);
             /* counter is reset on every update */
-            EVP_DecryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
+            dummy *= EVP_DecryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
         }
     } else {
         for (count = 0; COND(c[D_EVP][testnum]); count++) {
             /* restore iv length field */
-            EVP_EncryptUpdate(ctx, NULL, &outl, NULL, lengths[testnum]);
+            dummy *= EVP_EncryptUpdate(ctx, NULL, &outl, NULL, lengths[testnum]);
             /* counter is reset on every update */
-            EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
+            dummy *= EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
         }
     }
     if (decrypt)
-        EVP_DecryptFinal_ex(ctx, buf, &outl);
+        dummy *= EVP_DecryptFinal_ex(ctx, buf, &outl);
     else
-        EVP_EncryptFinal_ex(ctx, buf, &outl);
+        dummy *= EVP_EncryptFinal_ex(ctx, buf, &outl);
     return count;
 }
 
@@ -798,24 +799,26 @@ static int EVP_Update_loop_aead(void *args)
     int outl, count;
     unsigned char aad[13] = { 0xcc };
     unsigned char faketag[16] = { 0xcc };
+    int dummy = 1;
 
     if (decrypt) {
         for (count = 0; COND(c[D_EVP][testnum]); count++) {
-            (void)EVP_DecryptInit_ex(ctx, NULL, NULL, NULL, iv);
-            (void)EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
-                                      sizeof(faketag), faketag);
-            (void)EVP_DecryptUpdate(ctx, NULL, &outl, aad, sizeof(aad));
-            (void)EVP_DecryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
-            (void)EVP_DecryptFinal_ex(ctx, buf + outl, &outl);
+            dummy *= EVP_DecryptInit_ex(ctx, NULL, NULL, NULL, iv);
+            dummy *= EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
+                                        sizeof(faketag), faketag);
+            dummy *= EVP_DecryptUpdate(ctx, NULL, &outl, aad, sizeof(aad));
+            dummy *= EVP_DecryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
+            dummy *= EVP_DecryptFinal_ex(ctx, buf + outl, &outl);
         }
     } else {
         for (count = 0; COND(c[D_EVP][testnum]); count++) {
-            (void)EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, iv);
-            (void)EVP_EncryptUpdate(ctx, NULL, &outl, aad, sizeof(aad));
-            (void)EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
-            (void)EVP_EncryptFinal_ex(ctx, buf + outl, &outl);
+            dummy *= EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, iv);
+            dummy *= EVP_EncryptUpdate(ctx, NULL, &outl, aad, sizeof(aad));
+            dummy *= EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
+            dummy *= EVP_EncryptFinal_ex(ctx, buf + outl, &outl);
         }
     }
+
     return count;
 }
 
@@ -3571,6 +3574,7 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
     unsigned char *inp = NULL, *out = NULL, *key, no_key[32], no_iv[16];
     EVP_CIPHER_CTX *ctx = NULL;
     double d = 0.0;
+    int dummy = 1;
 
     if (lengths_single) {
         mblengths = &lengths_single;
@@ -3639,7 +3643,7 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
                 aad[12] = (unsigned char)(len);
                 pad = EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_TLS1_AAD,
                                           EVP_AEAD_TLS1_AAD_LEN, aad);
-                EVP_Cipher(ctx, out, inp, len + pad);
+                dummy *= EVP_Cipher(ctx, out, inp, len + pad);
             }
         }
         d = Time_F(STOP);
