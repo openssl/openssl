@@ -1710,11 +1710,10 @@ static int handle_opt_geninfo(OSSL_CMP_CTX *ctx)
     valptr[0] = '\0';
     valptr++;
 
-    if (strncasecmp(valptr, "int:", 4) != 0) {
+    if (!CHECK_AND_SKIP_CASE_PREFIX(valptr, "int:")) {
         CMP_err("missing 'int:' in -geninfo option");
         return 0;
     }
-    valptr += 4;
 
     value = strtol(valptr, &endstr, 10);
     if (endstr == valptr || *endstr != '\0') {
