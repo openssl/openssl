@@ -757,7 +757,7 @@ static int EVP_Update_loop(void *args)
             rc = EVP_DecryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
             if (rc != 1) {
                 /* reset iv in case of counter overflow */
-                (void)EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, -1);
+                rc = EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, -1);
             }
         }
     } else {
@@ -765,14 +765,17 @@ static int EVP_Update_loop(void *args)
             rc = EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
             if (rc != 1) {
                 /* reset iv in case of counter overflow */
-                (void)EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, -1);
+                rc = EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, -1);
             }
         }
     }
     if (decrypt)
-        EVP_DecryptFinal_ex(ctx, buf, &outl);
+        rc = EVP_DecryptFinal_ex(ctx, buf, &outl);
     else
-        EVP_EncryptFinal_ex(ctx, buf, &outl);
+        rc = EVP_EncryptFinal_ex(ctx, buf, &outl);
+
+    if (rc <= 1)
+        BIO_printf(bio_err, "Error finalizing cipher loop\n");
     return count;
 }
 
@@ -786,31 +789,36 @@ static int EVP_Update_loop_ccm(void *args)
     loopargs_t *tempargs = *(loopargs_t **) args;
     unsigned char *buf = tempargs->buf;
     EVP_CIPHER_CTX *ctx = tempargs->ctx;
-    int outl, count;
+    int outl, count, realcount = 0, final;
     unsigned char tag[12];
 
     if (decrypt) {
         for (count = 0; COND(c[D_EVP][testnum]); count++) {
-            (void)EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, sizeof(tag),
-                                      tag);
-            /* reset iv */
-            (void)EVP_DecryptInit_ex(ctx, NULL, NULL, NULL, iv);
-            /* counter is reset on every update */
-            (void)EVP_DecryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
+            if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, sizeof(tag),
+                                      tag) > 0
+                /* reset iv */
+                && EVP_DecryptInit_ex(ctx, NULL, NULL, NULL, iv) > 0
+                /* counter is reset on every update */
+                && EVP_DecryptUpdate(ctx, buf, &outl, buf, lengths[testnum]) > 0)
+                realcount++;
         }
     } else {
         for (count = 0; COND(c[D_EVP][testnum]); count++) {
             /* restore iv length field */
-            (void)EVP_EncryptUpdate(ctx, NULL, &outl, NULL, lengths[testnum]);
-            /* counter is reset on every update */
-            (void)EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
+            if (EVP_EncryptUpdate(ctx, NULL, &outl, NULL, lengths[testnum]) > 0
+                /* counter is reset on every update */
+                && EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[testnum]) > 0)
+                realcount++;
         }
     }
     if (decrypt)
-        (void)EVP_DecryptFinal_ex(ctx, buf, &outl);
+        final = EVP_DecryptFinal_ex(ctx, buf, &outl);
     else
-        (void)EVP_EncryptFinal_ex(ctx, buf, &outl);
-    return count;
+        final = EVP_EncryptFinal_ex(ctx, buf, &outl);
+
+    if (final <= 1)
+        BIO_printf(bio_err, "Error finalizing ccm loop\n");
+    return realcount;
 }
 
 /*
@@ -823,28 +831,30 @@ static int EVP_Update_loop_aead(void *args)
     loopargs_t *tempargs = *(loopargs_t **) args;
     unsigned char *buf = tempargs->buf;
     EVP_CIPHER_CTX *ctx = tempargs->ctx;
-    int outl, count;
+    int outl, count, realcount = 0;
     unsigned char aad[13] = { 0xcc };
     unsigned char faketag[16] = { 0xcc };
 
     if (decrypt) {
         for (count = 0; COND(c[D_EVP][testnum]); count++) {
-            (void)EVP_DecryptInit_ex(ctx, NULL, NULL, NULL, iv);
-            (void)EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
-                                      sizeof(faketag), faketag);
-            (void)EVP_DecryptUpdate(ctx, NULL, &outl, aad, sizeof(aad));
-            (void)EVP_DecryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
-            (void)EVP_DecryptFinal_ex(ctx, buf + outl, &outl);
+            if (EVP_DecryptInit_ex(ctx, NULL, NULL, NULL, iv) > 0
+                && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
+                                    sizeof(faketag), faketag) > 0
+                && EVP_DecryptUpdate(ctx, NULL, &outl, aad, sizeof(aad)) > 0
+                && EVP_DecryptUpdate(ctx, buf, &outl, buf, lengths[testnum]) > 0
+                && EVP_DecryptFinal_ex(ctx, buf + outl, &outl) >0)
+                realcount++;
         }
     } else {
         for (count = 0; COND(c[D_EVP][testnum]); count++) {
-            (void)EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, iv);
-            (void)EVP_EncryptUpdate(ctx, NULL, &outl, aad, sizeof(aad));
-            (void)EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
-            (void)EVP_EncryptFinal_ex(ctx, buf + outl, &outl);
+            if (EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, iv) > 0
+                && EVP_EncryptUpdate(ctx, NULL, &outl, aad, sizeof(aad)) > 0
+                && EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[testnum]) > 0
+                && EVP_EncryptFinal_ex(ctx, buf + outl, &outl) > 0)
+                realcount++;
         }
     }
-    return count;
+    return realcount;
 }
 
 static long rsa_c[RSA_NUM][2];  /* # RSA iteration test */
@@ -3662,7 +3672,7 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
     static const int mblengths_list[] =
         { 8 * 1024, 2 * 8 * 1024, 4 * 8 * 1024, 8 * 8 * 1024, 8 * 16 * 1024 };
     const int *mblengths = mblengths_list;
-    int j, count, keylen, num = OSSL_NELEM(mblengths_list);
+    int j, count, keylen, num = OSSL_NELEM(mblengths_list), ciph_success = 1;
     const char *alg_name;
     unsigned char *inp = NULL, *out = NULL, *key, no_key[32], no_iv[16];
     EVP_CIPHER_CTX *ctx = NULL;
@@ -3736,12 +3746,14 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
                 aad[12] = (unsigned char)(len);
                 pad = EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_TLS1_AAD,
                                           EVP_AEAD_TLS1_AAD_LEN, aad);
-                EVP_Cipher(ctx, out, inp, len + pad);
+                ciph_success = EVP_Cipher(ctx, out, inp, len + pad);
             }
         }
         d = Time_F(STOP);
         BIO_printf(bio_err, mr ? "+R:%d:%s:%f\n"
                    : "%d %s's in %.2fs\n", count, "evp", d);
+        if ((ciph_success <= 0) && (mr == 0))
+            BIO_printf(bio_err, "Error performing cipher op\n");
         results[D_EVP][j] = ((double)count) / d * mblengths[j];
     }
 
