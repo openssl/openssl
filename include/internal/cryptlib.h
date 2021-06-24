@@ -13,6 +13,7 @@
 
 # include <stdlib.h>
 # include <string.h>
+# include "../../e_os.h" /* To get strncasecmp() on Windows */
 
 # ifdef OPENSSL_USE_APPLINK
 #  define BIO_FLAGS_UPLINK_INTERNAL 0x8000
@@ -45,11 +46,20 @@ __owur static ossl_inline int ossl_assert_int(int expr, const char *exprstr,
 
 #endif
 
-/* Check if pre, which must be a string literal, is a prefix of str */
-# define HAS_PREFIX(str, pre) (strncmp(str, pre "", sizeof(pre) - 1) == 0)
-/* As before, and if check succeeds, advance the str ptr past the prefix */
-# define CHECK_AND_SKIP_PREFIX(str, pre) \
+/* Check if |pre|, which must be a string literal, is a prefix of |str| */
+#define HAS_PREFIX(str, pre) (strncmp(str, pre "", sizeof(pre) - 1) == 0)
+/* As before, and if check succeeds, advance |str| past the prefix |pre| */
+#define CHECK_AND_SKIP_PREFIX(str, pre) \
     (HAS_PREFIX(str, pre) ? ((str) += sizeof(pre) - 1, 1) : 0)
+/* Check if the string literal |p| is a case-insensitive prefix of |s| */
+#define HAS_CASE_PREFIX(s, p) (strncasecmp(s, p "", sizeof(p) - 1) == 0)
+/* As before, and if check succeeds, advance |str| past the prefix |pre| */
+#define CHECK_AND_SKIP_CASE_PREFIX(str, pre) \
+    (HAS_CASE_PREFIX(str, pre) ? ((str) += sizeof(pre) - 1, 1) : 0)
+/* Check if the string literal |suffix| is a case-insensitive suffix of |str| */
+#define HAS_CASE_SUFFIX(str, suffix) (strlen(str) < sizeof(suffix) - 1 ? 0 : \
+    strcasecmp(str + strlen(str) - sizeof(suffix) + 1, suffix "") == 0)
+
 
 /*
  * Use this inside a union with the field that needs to be aligned to a
