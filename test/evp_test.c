@@ -12,7 +12,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include "../e_os.h" /* strcasecmp */
+#include "../e_os.h" /* strcasecmp and strncasecmp */
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/err.h>
@@ -3821,14 +3821,10 @@ void cleanup_tests(void)
     OSSL_LIB_CTX_free(libctx);
 }
 
-#define STR_STARTS_WITH(str, pre) strncasecmp(pre, str, strlen(pre)) == 0
-#define STR_ENDS_WITH(str, pre)                                                \
-strlen(str) < strlen(pre) ? 0 : (strcasecmp(pre, str + strlen(str) - strlen(pre)) == 0)
-
 static int is_digest_disabled(const char *name)
 {
 #ifdef OPENSSL_NO_BLAKE2
-    if (STR_STARTS_WITH(name, "BLAKE"))
+    if (HAS_CASE_PREFIX(name, "BLAKE"))
         return 1;
 #endif
 #ifdef OPENSSL_NO_MD2
@@ -3865,15 +3861,15 @@ static int is_digest_disabled(const char *name)
 static int is_pkey_disabled(const char *name)
 {
 #ifdef OPENSSL_NO_EC
-    if (STR_STARTS_WITH(name, "EC"))
+    if (HAS_CASE_PREFIX(name, "EC"))
         return 1;
 #endif
 #ifdef OPENSSL_NO_DH
-    if (STR_STARTS_WITH(name, "DH"))
+    if (HAS_CASE_PREFIX(name, "DH"))
         return 1;
 #endif
 #ifdef OPENSSL_NO_DSA
-    if (STR_STARTS_WITH(name, "DSA"))
+    if (HAS_CASE_PREFIX(name, "DSA"))
         return 1;
 #endif
     return 0;
@@ -3882,20 +3878,20 @@ static int is_pkey_disabled(const char *name)
 static int is_mac_disabled(const char *name)
 {
 #ifdef OPENSSL_NO_BLAKE2
-    if (STR_STARTS_WITH(name, "BLAKE2BMAC")
-        || STR_STARTS_WITH(name, "BLAKE2SMAC"))
+    if (HAS_CASE_PREFIX(name, "BLAKE2BMAC")
+        || HAS_CASE_PREFIX(name, "BLAKE2SMAC"))
         return 1;
 #endif
 #ifdef OPENSSL_NO_CMAC
-    if (STR_STARTS_WITH(name, "CMAC"))
+    if (HAS_CASE_PREFIX(name, "CMAC"))
         return 1;
 #endif
 #ifdef OPENSSL_NO_POLY1305
-    if (STR_STARTS_WITH(name, "Poly1305"))
+    if (HAS_CASE_PREFIX(name, "Poly1305"))
         return 1;
 #endif
 #ifdef OPENSSL_NO_SIPHASH
-    if (STR_STARTS_WITH(name, "SipHash"))
+    if (HAS_CASE_PREFIX(name, "SipHash"))
         return 1;
 #endif
     return 0;
@@ -3903,7 +3899,7 @@ static int is_mac_disabled(const char *name)
 static int is_kdf_disabled(const char *name)
 {
 #ifdef OPENSSL_NO_SCRYPT
-    if (STR_ENDS_WITH(name, "SCRYPT"))
+    if (HAS_CASE_SUFFIX(name, "SCRYPT"))
         return 1;
 #endif
     return 0;
@@ -3912,65 +3908,65 @@ static int is_kdf_disabled(const char *name)
 static int is_cipher_disabled(const char *name)
 {
 #ifdef OPENSSL_NO_ARIA
-    if (STR_STARTS_WITH(name, "ARIA"))
+    if (HAS_CASE_PREFIX(name, "ARIA"))
         return 1;
 #endif
 #ifdef OPENSSL_NO_BF
-    if (STR_STARTS_WITH(name, "BF"))
+    if (HAS_CASE_PREFIX(name, "BF"))
         return 1;
 #endif
 #ifdef OPENSSL_NO_CAMELLIA
-    if (STR_STARTS_WITH(name, "CAMELLIA"))
+    if (HAS_CASE_PREFIX(name, "CAMELLIA"))
         return 1;
 #endif
 #ifdef OPENSSL_NO_CAST
-    if (STR_STARTS_WITH(name, "CAST"))
+    if (HAS_CASE_PREFIX(name, "CAST"))
         return 1;
 #endif
 #ifdef OPENSSL_NO_CHACHA
-    if (STR_STARTS_WITH(name, "CHACHA"))
+    if (HAS_CASE_PREFIX(name, "CHACHA"))
         return 1;
 #endif
 #ifdef OPENSSL_NO_POLY1305
-    if (STR_ENDS_WITH(name, "Poly1305"))
+    if (HAS_CASE_SUFFIX(name, "Poly1305"))
         return 1;
 #endif
 #ifdef OPENSSL_NO_DES
-    if (STR_STARTS_WITH(name, "DES"))
+    if (HAS_CASE_PREFIX(name, "DES"))
         return 1;
-    if (STR_ENDS_WITH(name, "3DESwrap"))
+    if (HAS_CASE_SUFFIX(name, "3DESwrap"))
         return 1;
 #endif
 #ifdef OPENSSL_NO_OCB
-    if (STR_ENDS_WITH(name, "OCB"))
+    if (HAS_CASE_SUFFIX(name, "OCB"))
         return 1;
 #endif
 #ifdef OPENSSL_NO_IDEA
-    if (STR_STARTS_WITH(name, "IDEA"))
+    if (HAS_CASE_PREFIX(name, "IDEA"))
         return 1;
 #endif
 #ifdef OPENSSL_NO_RC2
-    if (STR_STARTS_WITH(name, "RC2"))
+    if (HAS_CASE_PREFIX(name, "RC2"))
         return 1;
 #endif
 #ifdef OPENSSL_NO_RC4
-    if (STR_STARTS_WITH(name, "RC4"))
+    if (HAS_CASE_PREFIX(name, "RC4"))
         return 1;
 #endif
 #ifdef OPENSSL_NO_RC5
-    if (STR_STARTS_WITH(name, "RC5"))
+    if (HAS_CASE_PREFIX(name, "RC5"))
         return 1;
 #endif
 #ifdef OPENSSL_NO_SEED
-    if (STR_STARTS_WITH(name, "SEED"))
+    if (HAS_CASE_PREFIX(name, "SEED"))
         return 1;
 #endif
 #ifdef OPENSSL_NO_SIV
-    if (STR_ENDS_WITH(name, "SIV"))
+    if (HAS_CASE_SUFFIX(name, "SIV"))
         return 1;
 #endif
 #ifdef OPENSSL_NO_SM4
-    if (STR_STARTS_WITH(name, "SM4"))
+    if (HAS_CASE_PREFIX(name, "SM4"))
         return 1;
 #endif
     return 0;

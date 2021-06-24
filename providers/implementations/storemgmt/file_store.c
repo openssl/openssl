@@ -169,6 +169,7 @@ static struct file_ctx_st *file_open_stream(BIO *source, const char *uri,
     return NULL;
 }
 
+/* This function has quite some overlap with engines/e_loader_attic.c */
 static void *file_open_dir(const char *path, const char *uri, void *provctx)
 {
     struct file_ctx_st *ctx;
@@ -203,7 +204,7 @@ static void *file_open(void *provctx, const char *uri)
         unsigned int check_absolute:1;
     } path_data[2];
     size_t path_data_n = 0, i;
-    const char *path;
+    const char *path, *p = uri, *q;
     BIO *bio;
 
     ERR_set_mark();
@@ -215,19 +216,19 @@ static void *file_open(void *provctx, const char *uri)
     path_data[path_data_n++].path = uri;
 
     /*
-     * Second step, if the URI appears to start with the 'file' scheme,
+     * Second step, if the URI appears to start with the "file" scheme,
      * extract the path and make that the second path to check.
      * There's a special case if the URI also contains an authority, then
      * the full URI shouldn't be used as a path anywhere.
      */
-    if (strncasecmp(uri, "file:", 5) == 0) {
-        const char *p = &uri[5];
-
-        if (CHECK_AND_SKIP_PREFIX(p, "//")) {
+    if (CHECK_AND_SKIP_CASE_PREFIX(p, "file:")) {
+        q = p;
+        if (CHECK_AND_SKIP_CASE_PREFIX(q, "//")) {
             path_data_n--;           /* Invalidate using the full URI */
-            if (strncasecmp(p, "localhost/", 10) == 0) {
-                p += sizeof("localhost") - 1;
-            } else if (*p != '/') {
+            if (CHECK_AND_SKIP_CASE_PREFIX(q, "localhost/")
+                    || CHECK_AND_SKIP_CASE_PREFIX(q, "/")) {
+                p = q - 1;
+            } else {
                 ERR_clear_last_mark();
                 ERR_raise(ERR_LIB_PROV, PROV_R_URI_AUTHORITY_UNSUPPORTED);
                 return NULL;
@@ -236,7 +237,7 @@ static void *file_open(void *provctx, const char *uri)
 
         path_data[path_data_n].check_absolute = 1;
 #ifdef _WIN32
-        /* Windows file: URIs with a drive letter start with a / */
+        /* Windows "file:" URIs with a drive letter start with a '/' */
         if (p[0] == '/' && p[2] == ':' && p[3] == '/') {
             char c = tolower(p[1]);
 
