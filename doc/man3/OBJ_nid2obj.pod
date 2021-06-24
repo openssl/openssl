@@ -142,6 +142,8 @@ These functions cannot return B<const> because an B<ASN1_OBJECT> can
 represent both an internal, constant, OID and a dynamically-created one.
 The latter cannot be constant because it needs to be freed after use.
 
+These functions were not thread safe in OpenSSL 3.0 and before.
+
 =head1 RETURN VALUES
 
 OBJ_nid2obj() returns an B<ASN1_OBJECT> structure or B<NULL> is an
@@ -179,12 +181,6 @@ Create a new NID and initialize an object from it:
 Create a new object directly:
 
  obj = OBJ_txt2obj("1.2.3.4", 1);
-
-=head1 BUGS
-
-Neither OBJ_create() nor OBJ_add_sigid() do any locking and are thus not
-thread safe.  Moreover, none of the other functions should be called while
-concurrent calls to these two functions are possible.
 
 =head1 SEE ALSO
 
