@@ -443,27 +443,29 @@ char *test_mk_file_path(const char *dir, const char *file)
     char *full_file = OPENSSL_zalloc(len);
 
     if (full_file != NULL) {
-        OPENSSL_strlcpy(full_file, dir, len);
+        if (dir != NULL && dir[0] != '\0') {
+            OPENSSL_strlcpy(full_file, dir, len);
 # ifdef OPENSSL_SYS_VMS
-        /*
-         * If |file| contains a directory spec, we need to do some careful
-         * merging.
-         * "vol:[dir.dir]" + "[.certs]sm2-root.crt" should become
-         * "vol:[dir.dir.certs]sm2-root.crt"
-         */
-        dir_end = &full_file[strlen(full_file) - 1];
-        dir_end_sep = *dir_end;
-        if ((dir_end_sep == ']' || dir_end_sep == '>')
-            && (file[0] == '[' || file[0] == '<')) {
-            file++;
-            if (file[0] == '.')
-                *dir_end = '\0';
-            else
-                *dir_end = '.';
-        }
+            /*
+             * If |file| contains a directory spec, we need to do some
+             * careful merging.
+             * "vol:[dir.dir]" + "[.certs]sm2-root.crt" should become
+             * "vol:[dir.dir.certs]sm2-root.crt"
+             */
+            dir_end = &full_file[strlen(full_file) - 1];
+            dir_end_sep = *dir_end;
+            if ((dir_end_sep == ']' || dir_end_sep == '>')
+                && (file[0] == '[' || file[0] == '<')) {
+                file++;
+                if (file[0] == '.')
+                    *dir_end = '\0';
+                else
+                    *dir_end = '.';
+            }
 #else
-        OPENSSL_strlcat(full_file, sep, len);
+            OPENSSL_strlcat(full_file, sep, len);
 #endif
+        }
         OPENSSL_strlcat(full_file, file, len);
     }
 
