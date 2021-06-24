@@ -1131,8 +1131,10 @@ md-nits:
 #coverage: $(PROGRAMS) $(TESTPROGRAMS)
 #	...
 
+.PHONY: lint
 lint:
-	lint -DLINT $(INCLUDES) $(SRCS)
+	( cd $(SRCDIR); splint -DLINT -posixlib -preproc -D__gnuc_va_list=void \
+	  -I. -Iinclude -Iapps/include $(CRYPTOHEADERS) $(SSLHEADERS) $(SRCS) )
 
 generate_apps:
 	( cd $(SRCDIR); $(PERL) VMS/VMSify-conf.pl \
