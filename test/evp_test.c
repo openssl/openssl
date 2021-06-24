@@ -399,9 +399,12 @@ static int digest_update_fn(void *ctx, const unsigned char *buf, size_t buflen)
 static int digest_test_run(EVP_TEST *t)
 {
     DIGEST_DATA *expected = t->data;
+    EVP_TEST_BUFFER *inbuf;
     EVP_MD_CTX *mctx;
     unsigned char *got = NULL;
     unsigned int got_len;
+    size_t size;
+    int xof = 0;
     OSSL_PARAM params[2];
 
     t->err = "TEST_FAILURE";
@@ -431,7 +434,8 @@ static int digest_test_run(EVP_TEST *t)
         goto err;
     }
 
-    if (EVP_MD_get_flags(expected->digest) & EVP_MD_FLAG_XOF) {
+    xof = (EVP_MD_get_flags(expected->digest) & EVP_MD_FLAG_XOF) != 0;
+    if (xof) {
         EVP_MD_CTX *mctx_cpy;
         char dont[] = "touch";
 
@@ -475,6 +479,24 @@ static int digest_test_run(EVP_TEST *t)
         goto err;
 
     t->err = NULL;
+
+    /* Test the EVP_Q_ interface as well */
+    if (sk_EVP_TEST_BUFFER_num(expected->input) == 1
+            && !xof
+            /* This should never fail but we need the returned pointer now */
+            && !TEST_ptr(inbuf = sk_EVP_TEST_BUFFER_value(expected->input, 0))
+            && !inbuf->count_set) {
+        OPENSSL_cleanse(got, sizeof(got));
+        if (!TEST_true(EVP_Q_digest(libctx,
+                                    EVP_MD_get0_name(expected->fetched_digest),
+                                    NULL, inbuf->buf, inbuf->buflen,
+                                    got, &size))
+                || !TEST_mem_eq(got, size,
+                                expected->output, expected->output_len)) {
+            t->err = "EVP_Q_digest failed";
+            goto err;
+        }
+    }
 
  err:
     OPENSSL_free(got);
