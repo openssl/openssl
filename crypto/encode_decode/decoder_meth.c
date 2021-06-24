@@ -131,11 +131,24 @@ static void *get_decoder_from_store(void *store, void *data)
     void *method = NULL;
     int id;
 
-    if ((id = methdata->id) == 0) {
+    /*
+     * get_decoder_from_store() is only called to try and get the method
+     * that OSSL_DECODER_fetch() is asking for, and the name or name id are
+     * passed via methdata.
+     */
+    if ((id = methdata->id) == 0 && methdata->names != NULL) {
         OSSL_NAMEMAP *namemap = ossl_namemap_stored(methdata->libctx);
+        const char *names = methdata->names;
+        const char *q = strchr(names, NAME_SEPARATOR);
+        size_t l = (q == NULL ? strlen(names) : (size_t)(q - names));
 
-        id = ossl_namemap_name2num(namemap, methdata->names);
+        if (namemap == 0)
+            return NULL;
+        id = ossl_namemap_name2num_n(namemap, names, l);
     }
+
+    if (id == 0)
+        return NULL;
 
     if (store == NULL
         && (store = get_decoder_store(methdata->libctx)) == NULL)
@@ -154,9 +167,22 @@ static int put_decoder_in_store(void *store, void *method,
     struct decoder_data_st *methdata = data;
     OSSL_NAMEMAP *namemap;
     int id;
+    size_t l = 0;
+
+    /*
+     * put_decoder_in_store() is only called with an OSSL_DECODER method that
+     * was successfully created by construct_decoder() below, which means that
+     * all the names should already be stored in the namemap with the same
+     * numeric identity, so just use the first to get that identity.
+     */
+    if (names != NULL) {
+        const char *q = strchr(names, NAME_SEPARATOR);
+
+        l = (q == NULL ? strlen(names) : (size_t)(q - names));
+    }
 
     if ((namemap = ossl_namemap_stored(methdata->libctx)) == NULL
-        || (id = ossl_namemap_name2num(namemap, names)) == 0)
+        || (id = ossl_namemap_name2num_n(namemap, names, l)) == 0)
         return 0;
 
     if (store == NULL && (store = get_decoder_store(methdata->libctx)) == NULL)
