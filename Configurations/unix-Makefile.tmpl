@@ -1307,12 +1307,20 @@ SSLHEADERS={- join(" \\\n" . ' ' x 11,
                    fill_lines(" ", $COLUMNS - 11, sort keys %sslheaders)) -}
 
 renumber: build_generated
+<<<<<<< HEAD
 	$(PERL) $(SRCDIR)/util/mknum.pl --version $(VERSION_NUMBER) --no-warnings \
+=======
+	$(PERL) $(SRCDIR)/util/mknum.pl --version $(VERSION) --no-warnings \
+>>>>>>> fd6a77be6e... Ensure ordinals are created during release process
                 --ordinals $(SRCDIR)/util/libcrypto.num \
                 --symhacks $(SRCDIR)/include/openssl/symhacks.h \
                 --renumber \
                 $(CRYPTOHEADERS)
+<<<<<<< HEAD
 	$(PERL) $(SRCDIR)/util/mknum.pl --version $(VERSION_NUMBER) --no-warnings \
+=======
+	$(PERL) $(SRCDIR)/util/mknum.pl --version $(VERSION) --no-warnings \
+>>>>>>> fd6a77be6e... Ensure ordinals are created during release process
                 --ordinals $(SRCDIR)/util/libssl.num \
                 --symhacks $(SRCDIR)/include/openssl/symhacks.h \
                 --renumber \
