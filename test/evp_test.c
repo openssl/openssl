@@ -493,7 +493,7 @@ static int digest_test_run(EVP_TEST *t)
                                     got, &size))
                 || !TEST_mem_eq(got, size,
                                 expected->output, expected->output_len)) {
-            t->err = "EVP_Q failed";
+            t->err = "EVP_Q_digest failed";
             goto err;
         }
     }
