@@ -403,7 +403,7 @@ static int digest_test_run(EVP_TEST *t)
     EVP_MD_CTX *mctx;
     unsigned char *got = NULL;
     unsigned int got_len;
-    size_t size;
+    size_t size = 0;
     int xof = 0;
     OSSL_PARAM params[2];
 
@@ -480,7 +480,7 @@ static int digest_test_run(EVP_TEST *t)
 
     t->err = NULL;
 
-    /* Test the EVP_Q_ interface as well */
+    /* Test the EVP_Q_digest interface as well */
     if (sk_EVP_TEST_BUFFER_num(expected->input) == 1
             && !xof
             /* This should never fail but we need the returned pointer now */
@@ -1387,13 +1387,14 @@ static int mac_test_run_mac(EVP_TEST *t)
     MAC_DATA *expected = t->data;
     EVP_MAC_CTX *ctx = NULL;
     unsigned char *got = NULL;
-    size_t got_len;
+    size_t got_len = 0, size = 0;
     int i, block_size = -1, output_size = -1;
     OSSL_PARAM params[21], sizes[3], *psizes = sizes;
     size_t params_n = 0;
     size_t params_n_allocstart = 0;
     const OSSL_PARAM *defined_params =
         EVP_MAC_settable_ctx_params(expected->mac);
+    int xof;
 
     if (expected->alg == NULL)
         TEST_info("Trying the EVP_MAC %s test", expected->mac_name);
@@ -1508,7 +1509,8 @@ static int mac_test_run_mac(EVP_TEST *t)
         t->err = "MAC_UPDATE_ERROR";
         goto err;
     }
-    if (expected->xof) {
+    xof = expected->xof;
+    if (xof) {
         if (!TEST_ptr(got = OPENSSL_malloc(expected->output_len))) {
             t->err = "TEST_FAILURE";
             goto err;
@@ -1538,6 +1540,21 @@ static int mac_test_run_mac(EVP_TEST *t)
         }
     }
     t->err = NULL;
+
+    /* Test the EVP_Q_mac interface as well */
+    if (!xof) {
+        OPENSSL_cleanse(got, sizeof(got));
+        if (!TEST_true(EVP_Q_mac(libctx, expected->mac_name, NULL,
+                                 expected->alg, params,
+                                 expected->key, expected->key_len,
+                                 expected->input, expected->input_len,
+                                 got, got_len, &size))
+                || !TEST_mem_eq(got, size,
+                                expected->output, expected->output_len)) {
+            t->err = "EVP_Q failed";
+            goto err;
+        }
+    }
  err:
     while (params_n-- > params_n_allocstart) {
         OPENSSL_free(params[params_n].data);
