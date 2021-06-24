@@ -740,8 +740,8 @@ void tlsext_cb(SSL *s, int client_server, int type,
 }
 
 #ifndef OPENSSL_NO_SOCK
-int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
-                             unsigned int *cookie_len)
+int generate_stateless_cookie_callback(SSL *ssl, unsigned char *cookie,
+                                       size_t *cookie_len)
 {
     unsigned char *buffer = NULL;
     size_t length = 0;
@@ -800,16 +800,16 @@ end:
     return res;
 }
 
-int verify_cookie_callback(SSL *ssl, const unsigned char *cookie,
-                           unsigned int cookie_len)
+int verify_stateless_cookie_callback(SSL *ssl, const unsigned char *cookie,
+                                     size_t cookie_len)
 {
     unsigned char result[EVP_MAX_MD_SIZE];
-    unsigned int resultlength;
+    size_t resultlength;
 
     /* Note: we check cookie_initialized because if it's not,
      * it cannot be valid */
     if (cookie_initialized
-        && generate_cookie_callback(ssl, result, &resultlength)
+        && generate_stateless_cookie_callback(ssl, result, &resultlength)
         && cookie_len == resultlength
         && memcmp(result, cookie, resultlength) == 0)
         return 1;
@@ -817,20 +817,20 @@ int verify_cookie_callback(SSL *ssl, const unsigned char *cookie,
     return 0;
 }
 
-int generate_stateless_cookie_callback(SSL *ssl, unsigned char *cookie,
-                                       size_t *cookie_len)
+int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
+                             unsigned int *cookie_len)
 {
-    unsigned int temp = 0;
+    size_t temp = 0;
+    int res = generate_stateless_cookie_callback(ssl, cookie, &temp);
 
-    int res = generate_cookie_callback(ssl, cookie, &temp);
-    *cookie_len = temp;
+    *cookie_len = (unsigned int)temp;
     return res;
 }
 
-int verify_stateless_cookie_callback(SSL *ssl, const unsigned char *cookie,
-                                     size_t cookie_len)
+int verify_cookie_callback(SSL *ssl, const unsigned char *cookie,
+                           unsigned int cookie_len)
 {
-    return verify_cookie_callback(ssl, cookie, cookie_len);
+    return verify_stateless_cookie_callback(ssl, cookie, cookie_len);
 }
 
 #endif

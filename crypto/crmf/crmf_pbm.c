@@ -140,7 +140,6 @@ int OSSL_CRMF_pbm_new(OSSL_LIB_CTX *libctx, const char *propq,
     unsigned int bklen = EVP_MAX_MD_SIZE;
     int64_t iterations;
     unsigned char *mac_res = 0;
-    unsigned int maclen;
     int ok = 0;
 
     if (out == NULL || pbmp == NULL || pbmp->mac == NULL
@@ -207,10 +206,9 @@ int OSSL_CRMF_pbm_new(OSSL_LIB_CTX *libctx, const char *propq,
         goto err;
     }
     if (EVP_Q_mac(libctx, "HMAC", propq, hmac_mdname, NULL, basekey, bklen,
-                  msg, msglen, mac_res, EVP_MAX_MD_SIZE, &maclen) == NULL)
+                  msg, msglen, mac_res, EVP_MAX_MD_SIZE, outlen) == NULL)
         goto err;
 
-    *outlen = (size_t)maclen;
     ok = 1;
 
  err:
