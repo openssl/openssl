@@ -261,8 +261,11 @@ int ossl_pw_get_passphrase(char *pass, size_t pass_size, size_t *pass_len,
         ui_data = data->_.ui_method.ui_method_data;
     }
 
-    if (ui_method == NULL)
+    if (ui_method == NULL) {
+        ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT,
+                       "No password method specified");
         return 0;
+    }
 
     ret = do_ui_passphrase(pass, pass_size, pass_len, prompt_info, verify,
                            ui_method, ui_data);
