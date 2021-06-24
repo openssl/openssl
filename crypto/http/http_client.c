@@ -21,7 +21,7 @@
 #include <openssl/buffer.h>
 #include <openssl/http.h>
 #include "internal/sockets.h"
-#include "internal/cryptlib.h" /* for ossl_assert() */
+#include "internal/common.h" /* for ossl_assert() */
 
 #define HTTP_PREFIX "HTTP/"
 #define HTTP_VERSION_PATT "1." /* allow 1.x */

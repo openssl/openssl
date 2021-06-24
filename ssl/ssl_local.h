@@ -16,7 +16,7 @@
 # include <stdlib.h>
 # include <time.h>
 # include <errno.h>
-# include "internal/cryptlib.h" /* for HAS_PREFIX */
+# include "internal/common.h" /* for HAS_PREFIX */
 
 # include <openssl/buffer.h>
 # include <openssl/comp.h>

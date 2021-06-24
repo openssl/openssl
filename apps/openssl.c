@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "internal/cryptlib.h"
+#include "internal/common.h"
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
 #include <openssl/trace.h>

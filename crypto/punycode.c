@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <openssl/e_os2.h>
 #include "crypto/punycode.h"
-#include "internal/cryptlib.h" /* for HAS_PREFIX */
+#include "internal/common.h" /* for HAS_PREFIX */
 
 static const unsigned int base = 36;
 static const unsigned int tmin = 1;

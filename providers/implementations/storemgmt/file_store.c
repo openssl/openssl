@@ -167,7 +167,6 @@ static struct file_ctx_st *file_open_stream(BIO *source, const char *uri,
     return NULL;
 }
 
-/* This function has quite some overlap with engines/e_loader_attic.c */
 static void *file_open_dir(const char *path, const char *uri, void *provctx)
 {
     struct file_ctx_st *ctx;

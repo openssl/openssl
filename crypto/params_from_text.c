@@ -8,7 +8,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/cryptlib.h" /* for HAS_PREFIX */
+#include "internal/common.h" /* for HAS_PREFIX */
 #include <openssl/ebcdic.h>
 #include <openssl/err.h>
 #include <openssl/params.h>

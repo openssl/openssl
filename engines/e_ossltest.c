@@ -27,7 +27,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "internal/cryptlib.h"
+#include "internal/common.h" /* for CHECK_AND_SKIP_CASE_PREFIX */
 
 #include <openssl/engine.h>
 #include <openssl/sha.h>
