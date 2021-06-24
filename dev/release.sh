@@ -321,9 +321,7 @@ echo "== Configuring OpenSSL for update and release.  This may take a bit of tim
 
 $VERBOSE "== Checking source file updates and fips checksums"
 
-make update >&42
-
-make update-fips-checksums >&42
+make release-update >&42
 
 if [ -n "$(git status --porcelain)" ]; then
     $VERBOSE "== Committing updates"
