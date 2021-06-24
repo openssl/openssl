@@ -136,7 +136,7 @@ int X509_add1_reject_object(X509 *x, const ASN1_OBJECT *obj)
         goto err;
     ret = sk_ASN1_OBJECT_push(aux->reject, objtmp);
     if (ret > 0)
-      return ret;
+        return ret;
  err:
     ASN1_OBJECT_free(objtmp);
     return 0;

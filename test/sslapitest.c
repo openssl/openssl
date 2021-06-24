@@ -1645,8 +1645,8 @@ static int ocsp_server_cb(SSL *s, void *arg)
         return SSL_TLSEXT_ERR_ALERT_FATAL;
 
     if (!TEST_true(SSL_set_tlsext_status_ocsp_resp(s, copy, sizeof(orespder)))) {
-      OPENSSL_free(copy);
-      return SSL_TLSEXT_ERR_ALERT_FATAL;
+        OPENSSL_free(copy);
+        return SSL_TLSEXT_ERR_ALERT_FATAL;
     }
     
     ocsp_server_called = 1;
