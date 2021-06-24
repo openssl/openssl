@@ -322,7 +322,12 @@ echo "== Configuring OpenSSL for update and release.  This may take a bit of tim
 $VERBOSE "== Checking source file updates and fips checksums"
 
 make update >&42
-
+# As long as we're doing an alpha release, we can have symbols without specific
+# numbers assigned. In a beta or final release, all symbols MUST have an
+# assigned number.
+if [ "$next_method" != 'alpha' ]; then
+    make renumber >&42
+fi
 make update-fips-checksums >&42
 
 if [ -n "$(git status --porcelain)" ]; then
