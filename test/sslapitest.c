@@ -1644,7 +1644,7 @@ static int ocsp_server_cb(SSL *s, void *arg)
     if (!TEST_ptr(copy = OPENSSL_memdup(orespder, sizeof(orespder))))
         return SSL_TLSEXT_ERR_ALERT_FATAL;
 
-    if (!SSL_set_tlsext_status_ocsp_resp(s, copy, sizeof(orespder))) {
+    if (!TEST_true(SSL_set_tlsext_status_ocsp_resp(s, copy, sizeof(orespder)))) {
       OPENSSL_free(copy);
       return SSL_TLSEXT_ERR_ALERT_FATAL;
     }
