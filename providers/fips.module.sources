@@ -357,7 +357,6 @@ include/crypto/rand_pool.h
 include/crypto/rsa.h
 include/crypto/security_bits.h
 include/crypto/sha.h
-include/crypto/sm2.h
 include/crypto/sparse_array.h
 include/crypto/types.h
 include/crypto/x509.h
