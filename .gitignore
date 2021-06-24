@@ -124,6 +124,7 @@ providers/common/include/prov/der_sm2.h
 /tools/c_rehash
 /tools/c_rehash.pl
 /util/shlib_wrap.sh
+/util/wrap.pl
 /tags
 /TAGS
 *.map
