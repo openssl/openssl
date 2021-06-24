@@ -99,7 +99,7 @@ static void *init_object(void)
 {
     struct object_st *obj = OPENSSL_zalloc(sizeof(*obj));
 
-    if (obj == NULL)
+    if (!TEST_ptr(obj))
       return 0;
 
     obj->p1 = p1_init;
