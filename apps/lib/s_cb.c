@@ -956,8 +956,8 @@ static int ssl_excert_prepend(SSL_EXCERT **pexc)
 {
     SSL_EXCERT *exc = app_malloc(sizeof(*exc), "prepend cert");
 
-     if (exc == NULL)
-      return 0;
+    if (exc == NULL)
+        return 0;
     memset(exc, 0, sizeof(*exc));
 
     exc->next = *pexc;

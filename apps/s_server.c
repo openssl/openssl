@@ -3574,7 +3574,7 @@ static int add_session(SSL *ssl, SSL_SESSION *session)
     unsigned char *p;
 
     if (sess == NULL)
-      return 0;
+        return 0;
     SSL_SESSION_get_id(session, &sess->idlen);
     sess->derlen = i2d_SSL_SESSION(session, NULL);
     if (sess->derlen < 0) {
