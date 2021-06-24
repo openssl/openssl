@@ -92,8 +92,8 @@ Returns 1 on success, 0 on error.
 ossl_cmp_msg_create() creates and initializes an B<OSSL_CMP_MSG> structure,
 using fields of B<ctx> for the header and B<bodytype> for the body.
 If the current B<transactionID> field in I<ctx> indicates that there is no
-current transaction, it creates and stores random one with 128 bits length.
-Thus the I<ctx> may be modified by this and related ossl_cmp_*_new() functions.
+current transaction, it creates and stores a random one with 128 bits length.
+Thus, the I<ctx> may be modified by this and related ossl_cmp_*_new() functions.
 Returns pointer to created B<OSSL_CMP_MSG> on success, NULL on error.
 
 ossl_cmp_msg_gen_ITAV_push0() pushes the B<itav> to the body of the
