@@ -994,7 +994,7 @@ int req_main(int argc, char **argv)
         }
         fprintf(stdout, "Modulus=");
         if (EVP_PKEY_is_a(tpubkey, "RSA")) {
-            BIGNUM *n;
+            BIGNUM *n = NULL;
 
             /* Every RSA key has an 'n' */
             EVP_PKEY_get_bn_param(pkey, "n", &n);

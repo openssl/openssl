@@ -950,7 +950,7 @@ int x509_main(int argc, char **argv)
                 BN_print(out, n);
                 BN_free(n);
             } else if (EVP_PKEY_is_a(pkey, "DSA")) {
-                BIGNUM *dsapub;
+                BIGNUM *dsapub = NULL;
 
                 /* Every DSA key has a 'pub' */
                 EVP_PKEY_get_bn_param(pkey, "pub", &dsapub);
