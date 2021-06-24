@@ -943,7 +943,7 @@ int x509_main(int argc, char **argv)
         } else if (i == modulus) {
             BIO_printf(out, "Modulus=");
             if (EVP_PKEY_is_a(pkey, "RSA")) {
-                BIGNUM *n;
+                BIGNUM *n = NULL;
 
                 /* Every RSA key has an 'n' */
                 EVP_PKEY_get_bn_param(pkey, "n", &n);
