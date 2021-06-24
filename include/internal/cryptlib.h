@@ -25,6 +25,7 @@
 # include <openssl/bio.h>
 # include <openssl/asn1.h>
 # include <openssl/err.h>
+
 typedef struct ex_callback_st EX_CALLBACK;
 DEFINE_STACK_OF(EX_CALLBACK)
 
