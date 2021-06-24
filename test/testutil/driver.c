@@ -451,7 +451,8 @@ char *test_mk_file_path(const char *dir, const char *file)
          * "vol:[dir.dir]" + "[.certs]sm2-root.crt" should become
          * "vol:[dir.dir.certs]sm2-root.crt"
          */
-        dir_end_sep = *( dir_end = &full_file[strlen(full_file) - 1] );
+        dir_end = &full_file[strlen(full_file) - 1];
+        dir_end_sep = *dir_end;
         if ((dir_end_sep == ']' || dir_end_sep == '>')
             && (file[0] == '[' || file[0] == '<')) {
             file++;
