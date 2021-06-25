@@ -32,7 +32,7 @@ plan skip_all => "These tests are not supported in a no-sock build"
     if disabled("sock");
 
 plan skip_all => "Tests involving local HTTP server not available on Windows or VMS"
-    if $^O =~ /^(VMS|MSWin32)$/;
+    if $^O =~ /^(VMS|MSWin32|msys)$/;
 plan skip_all => "Tests involving local HTTP server not available in cross-compile builds"
     if defined $ENV{EXE_SHELL};
 

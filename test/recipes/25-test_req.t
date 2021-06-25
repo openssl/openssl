@@ -31,6 +31,10 @@ if (disabled("rsa")) {
     note("There should not be more that at most 80 per line");
 }
 
+# Prevent MSys2 filename munging for arguments that look like file paths but
+# aren't
+$ENV{MSYS2_ARG_CONV_EXCL} = "/CN=";
+
 # Check for duplicate -addext parameters, and one "working" case.
 my @addext_args = ( "openssl", "req", "-new", "-out", "testreq.pem",
                     "-key",  srctop_file("test", "certs", "ee-key.pem"),

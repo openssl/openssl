@@ -19,6 +19,7 @@ SKIP: {
     skip "OCSP disabled", 1 if disabled("ocsp");
     my $cmd = [qw{openssl ocsp -index any -port 0}];
     my @output = run(app($cmd), capture => 1);
+    $output[0] =~ s/\r\n/\n/g;
     ok($output[0] =~ /^ACCEPT (0.0.0.0|\[::\]):(\d+?) PID=(\d+)$/
        && $2 >= 1024 && $3 > 0,
        "HTTP server auto-selects and reports local port >= 1024 and pid > 0");

@@ -35,7 +35,12 @@ foreach (sort keys %input_result) {
           unless ok(run(test([ 'confdump', $input_path ],
                              stdout => $result_path)),
                     "dumping $_");
-      is(compare_text($result_path, $expected_path), 0,
-         "comparing the dump of $_ with $input_result{$_}");
+      is(compare_text($result_path, $expected_path, sub {
+            my $in1 = $_[0];
+            my $in2 = $_[1];
+            $in1 =~ s/\r\n/\n/g;
+            $in2 =~ s/\r\n/\n/g;
+            $in1 ne $in2}), 0,
+            "comparing the dump of $_ with $input_result{$_}");
     }
 }
