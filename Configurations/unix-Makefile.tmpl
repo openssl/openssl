@@ -1306,6 +1306,14 @@ errors:
    }
    "";
 -}
+SRCS={-
+sub uniq { my %seen; grep !$seen{$_}++, @_; }
+sub flat(@) { return map { ref eq 'ARRAY' ? @$_ : $_ } @_; }
+join(" \\\n" . ' ' x 5, fill_lines(" ", $COLUMNS - 5,
+     uniq(grep /\.(c|cc|cpp)$/,
+          flat (map { $unified_info{sources}->{$_} }
+                (sort keys %{$unified_info{sources}})))))
+-}
 CRYPTOHEADERS={- join(" \\\n" . ' ' x 14,
                       fill_lines(" ", $COLUMNS - 14, sort keys %cryptoheaders)) -}
 SSLHEADERS={- join(" \\\n" . ' ' x 11,
