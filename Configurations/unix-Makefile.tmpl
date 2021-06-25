@@ -1109,9 +1109,6 @@ uninstall_image_docs:
 # is sensitive to build.info changes.
 update: generate errors ordinals generate_buildinfo
 
-release-update: generate errors renumber generate_buildinfo \
-                update-fips-checksums
-
 generate: generate_apps generate_crypto_bn generate_crypto_objects \
           generate_crypto_conf generate_crypto_asn1 generate_fuzz_oids
 
