@@ -3016,6 +3016,7 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
     /* No need to free |con| after this. Done by BIO_free(ssl_bio) */
     BIO_set_ssl(ssl_bio, con, BIO_CLOSE);
     BIO_push(io, ssl_bio);
+    ssl_bio = NULL;
 #ifdef CHARSET_EBCDIC
     io = BIO_push(BIO_new(BIO_f_ebcdic_filter()), io);
 #endif
@@ -3376,6 +3377,7 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
 
  err:
     OPENSSL_free(buf);
+    BIO_free(ssl_bio);
     BIO_free_all(io);
     return ret;
 }
@@ -3420,6 +3422,7 @@ static int rev_body(int s, int stype, int prot, unsigned char *context)
     /* No need to free |con| after this. Done by BIO_free(ssl_bio) */
     BIO_set_ssl(ssl_bio, con, BIO_CLOSE);
     BIO_push(io, ssl_bio);
+    ssl_bio = NULL;
 #ifdef CHARSET_EBCDIC
     io = BIO_push(BIO_new(BIO_f_ebcdic_filter()), io);
 #endif
@@ -3517,6 +3520,7 @@ static int rev_body(int s, int stype, int prot, unsigned char *context)
  err:
 
     OPENSSL_free(buf);
+    BIO_free(ssl_bio);
     BIO_free_all(io);
     return ret;
 }
