@@ -50,7 +50,12 @@ sub checkcompare {
         my $testout = "$app.tst";
 
         ok(run(app(['openssl', $app, '-out', $testout, '-in', $_])));
-        ok(!compare_text($_, $testout), "Original file $_ is the same as new one");
+        ok(!compare_text($_, $testout, sub {
+            my $in1 = $_[0];
+            my $in2 = $_[1];
+            $in1 =~ s/\r\n/\n/g;
+            $in2 =~ s/\r\n/\n/g;
+            $in1 ne $in2}), "Original file $_ is the same as new one");
     }
 }
 
