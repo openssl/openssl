@@ -859,7 +859,7 @@ EOF
                 }
             }
             if ( okrun(
-                       "lsattr -E -O -l `lsdev -c processor|awk '{print \$1;exit}'`",
+                       "(lsattr -E -O -l `lsdev -c processor|awk '{print \$1;exit}'`",
                        'grep -i powerpc) >/dev/null 2>&1') ) {
                 # this applies even to Power3 and later, as they return
                 # PowerPC_POWER[345]
