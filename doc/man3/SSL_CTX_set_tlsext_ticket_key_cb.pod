@@ -179,14 +179,17 @@ Reference Implementation:
          }
          memcpy(key_name, key->name, 16);
 
-         EVP_EncryptInit_ex(&ctx, EVP_aes_256_cbc(), NULL, key->aes_key, iv);
+         if (EVP_EncryptInit_ex(&ctx, EVP_aes_256_cbc(), NULL, key->aes_key,
+                                iv) == 0)
+            return -1; /* error in cipher initialisation */
 
          params[0] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
                                                        key->hmac_key, 32);
          params[1] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
                                                       "sha256", 0);
          params[2] = OSSL_PARAM_construct_end();
-         EVP_MAC_CTX_set_params(hctx, params);
+         if (EVP_MAC_CTX_set_params(hctx, params) == 0)
+            return -1; /* error in mac initialisation */
 
          return 1;
 
@@ -202,9 +205,12 @@ Reference Implementation:
          params[1] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
                                                       "sha256", 0);
          params[2] = OSSL_PARAM_construct_end();
-         EVP_MAC_CTX_set_params(hctx, params);
+         if (EVP_MAC_CTX_set_params(hctx, params) == 0)
+            return -1; /* error in mac initialisation */
 
-         EVP_DecryptInit_ex(&ctx, EVP_aes_256_cbc(), NULL, key->aes_key, iv);
+         if (EVP_DecryptInit_ex(&ctx, EVP_aes_256_cbc(), NULL, key->aes_key,
+                                iv) == 0)
+            return -1; /* error in cipher initialisation */
 
          if (key->expire < t - RENEW_TIME) { /* RENEW_TIME: implement */
              /*
