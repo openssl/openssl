@@ -1127,14 +1127,19 @@ doc-nits: build_generated_pods
 md-nits:
 	mdl -s util/markdownlint.rb .
 
-# Test coverage is a good idea for the future
-#coverage: $(PROGRAMS) $(TESTPROGRAMS)
-#	...
-
 .PHONY: lint
 lint:
 	( cd $(SRCDIR); splint -DLINT -posixlib -preproc -D__gnuc_va_list=void \
 	  -I. -Iinclude -Iapps/include $(CRYPTOHEADERS) $(SSLHEADERS) $(SRCS) )
+
+.PHONY: check-format
+check-format:
+	( cd $(SRCDIR); $(PERL) util/check-format.pl \
+			$(SRCS) \$(CRYPTOHEADERS) $(SSLHEADERS) )
+
+# Test coverage is a good idea for the future
+#coverage: $(PROGRAMS) $(TESTPROGRAMS)
+#	...
 
 generate_apps:
 	( cd $(SRCDIR); $(PERL) VMS/VMSify-conf.pl \
