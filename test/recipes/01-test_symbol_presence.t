@@ -23,6 +23,7 @@ use platform;
 plan skip_all => "Test is disabled on NonStop" if config('target') =~ m|^nonstop|;
 # MacOS arranges symbol names differently
 plan skip_all => "Test is disabled on MacOS" if config('target') =~ m|^darwin|;
+plan skip_all => "Test is disabled on MinGW" if config('target') =~ m|^mingw|;
 plan skip_all => "Only useful when building shared libraries"
     if disabled("shared");
 
