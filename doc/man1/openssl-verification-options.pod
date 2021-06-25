@@ -154,9 +154,9 @@ The second step is to check the extensions of every untrusted certificate
 for consistency with the supplied purpose.
 If the B<-purpose> option is not given then no such checks are done
 except for SSL/TLS connection setup,
-where by default C<sslserver> or C<sslclient>, respectively, are checked.
+where by default C<sslserver> or C<sslclient>, are checked.
 The target or "leaf" certificate, as well as any other untrusted certificates,
-must have extensions compatible with the given purpose.
+must have extensions compatible with the specified purpose.
 All certificates except the target or "leaf" must also be valid CA certificates.
 The precise extensions required are described in more detail in
 L<openssl-x509(1)/CERTIFICATE EXTENSIONS>.
