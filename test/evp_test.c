@@ -486,7 +486,7 @@ static int digest_test_run(EVP_TEST *t)
             /* This should never fail but we need the returned pointer now */
             && !TEST_ptr(inbuf = sk_EVP_TEST_BUFFER_value(expected->input, 0))
             && !inbuf->count_set) {
-        OPENSSL_cleanse(got, sizeof(got));
+        OPENSSL_cleanse(got, got_len);
         if (!TEST_true(EVP_Q_digest(libctx,
                                     EVP_MD_get0_name(expected->fetched_digest),
                                     NULL, inbuf->buf, inbuf->buflen,
@@ -1543,7 +1543,7 @@ static int mac_test_run_mac(EVP_TEST *t)
 
     /* Test the EVP_Q_mac interface as well */
     if (!xof) {
-        OPENSSL_cleanse(got, sizeof(got));
+        OPENSSL_cleanse(got, got_len);
         if (!TEST_true(EVP_Q_mac(libctx, expected->mac_name, NULL,
                                  expected->alg, params,
                                  expected->key, expected->key_len,
