@@ -1136,6 +1136,11 @@ lint:
            echo splint -DLINT -posixlib -preproc -D__gnuc_va_list=void \
 	   -I. -Iinclude -Iapps/include $(CRYPTOHEADERS) $(SSLHEADERS) $(SRCS) )
 
+.PHONY: check-format
+check-format:
+	( cd $(SRCDIR); $(PERL) util/check-format.pl \
+			$(SRCS) \$(CRYPTOHEADERS) $(SSLHEADERS) )
+
 generate_apps:
 	( cd $(SRCDIR); $(PERL) VMS/VMSify-conf.pl \
 				< apps/openssl.cnf > apps/openssl-vms.cnf )
