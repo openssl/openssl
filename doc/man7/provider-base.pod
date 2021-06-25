@@ -168,9 +168,14 @@ provider):
  BIO_new_file                   OSSL_FUNC_BIO_NEW_FILE
  BIO_new_mem_buf                OSSL_FUNC_BIO_NEW_MEMBUF
  BIO_read_ex                    OSSL_FUNC_BIO_READ_EX
+ BIO_write_ex                   OSSL_FUNC_BIO_WRITE_EX
  BIO_up_ref                     OSSL_FUNC_BIO_UP_REF
  BIO_free                       OSSL_FUNC_BIO_FREE
  BIO_vprintf                    OSSL_FUNC_BIO_VPRINTF
+ BIO_vsnprintf                  OSSL_FUNC_BIO_VSNPRINTF
+ BIO_puts                       OSSL_FUNC_BIO_PUTS
+ BIO_gets                       OSSL_FUNC_BIO_GETS
+ BIO_ctrl                       OSSL_FUNC_BIO_CTRL
  OPENSSL_cleanse                OSSL_FUNC_OPENSSL_CLEANSE
  OSSL_SELF_TEST_set_callback    OSSL_FUNC_SELF_TEST_CB
  ossl_rand_get_entropy          OSSL_FUNC_GET_ENTROPY
@@ -286,7 +291,8 @@ CRYPTO_realloc(), CRYPTO_clear_realloc(), CRYPTO_secure_malloc(),
 CRYPTO_secure_zalloc(), CRYPTO_secure_free(),
 CRYPTO_secure_clear_free(), CRYPTO_secure_allocated(),
 BIO_new_file(), BIO_new_mem_buf(), BIO_read_ex(), BIO_write_ex(), BIO_up_ref(),
-BIO_free(), BIO_vprintf(), BIO_vsnprintf(), OPENSSL_cleanse() and
+BIO_free(), BIO_vprintf(), BIO_vsnprintf(), BIO_gets(), BIO_puts(),
+BIO_ctrl(), OPENSSL_cleanse() and
 OPENSSL_hexstr2buf() correspond exactly to the public functions with
 the same name.  As a matter of fact, the pointers in the B<OSSL_DISPATCH>
 array are typically direct pointers to those public functions. Note that the BIO
