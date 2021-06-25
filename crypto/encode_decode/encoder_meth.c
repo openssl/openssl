@@ -136,7 +136,7 @@ static void *get_encoder_from_store(void *store, void *data)
      * that OSSL_ENCODER_fetch() is asking for, and the name or name id are
      * passed via methdata.
      */
-    if ((id = methdata->id) == 0) {
+    if ((id = methdata->id) == 0 && methdata->names != NULL) {
         OSSL_NAMEMAP *namemap = ossl_namemap_stored(methdata->libctx);
         const char *names = methdata->names;
         const char *q = strchr(names, NAME_SEPARATOR);
@@ -146,6 +146,9 @@ static void *get_encoder_from_store(void *store, void *data)
             return NULL;
         id = ossl_namemap_name2num_n(namemap, methdata->names, l);
     }
+
+    if (id == 0)
+        return NULL;
 
     if (store == NULL
         && (store = get_encoder_store(methdata->libctx)) == NULL)
