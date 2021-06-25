@@ -2006,8 +2006,10 @@ static int pbe_test_init(EVP_TEST *t, const char *alg)
         pbe_type = PBE_TYPE_PKCS12;
     } else {
         TEST_error("Unknown pbe algorithm %s", alg);
+        return 0;
     }
-    pdat = OPENSSL_zalloc(sizeof(*pdat));
+    if (!TEST_ptr(pdat = OPENSSL_zalloc(sizeof(*pdat))))
+        return 0;
     pdat->pbe_type = pbe_type;
     t->data = pdat;
     return 1;
