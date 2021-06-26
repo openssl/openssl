@@ -40,6 +40,9 @@
 # include <sys/param.h>
 # include <sys/random.h>
 #endif
+#if defined(__APPLE__)
+# include <CommonCrypto/CommonRandom.h>
+#endif
 
 #if (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS)) \
      || defined(__DJGPP__)
@@ -366,7 +369,11 @@ static ssize_t syscall_random(void *buf, size_t buflen)
         if (errno != ENOSYS)
             return -1;
     }
+<<<<<<< HEAD
 #    elif defined(OPENSSL_APPLE_CRYPTO_RANDOM)
+=======
+#    elif defined(__APPLE__)
+>>>>>>> 3e8216ba49... darwin platform replacing getentropy usage by platform api instead.
 
     if (CCRandomGenerateBytes(buf, buflen) == kCCSuccess)
 	    return (ssize_t)buflen;
