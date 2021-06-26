@@ -73,8 +73,7 @@ B<clientAuth> (SSL client use), B<serverAuth> (SSL server use),
 B<emailProtection> (S/MIME email use), B<codeSigning> (object signer use),
 B<OCSPSigning> (OCSP responder use), B<OCSP> (OCSP request use),
 B<timeStamping> (TSA server use), and B<anyExtendedKeyUsage>.
-As of OpenSSL 1.1.0, the last of these blocks all uses when rejected or
-enables all uses when trusted.
+The last of these blocks all uses when rejected or enables all uses when trusted.
 
 A certificate, which may be CA certificate or an end-entity certificate,
 is considered a trust anchor for the given use
@@ -400,7 +399,7 @@ Allow the verification of proxy certificates.
 
 =item B<-trusted_first>
 
-As of OpenSSL 1.1.0 this option is on by default and cannot be disabled.
+This option is on by default and cannot be disabled.
 
 When constructing the certificate chain, the trusted certificates specified
 via B<-CAfile>, B<-CApath>, B<-CAstore> or B<-trusted> are always used
@@ -408,8 +407,7 @@ before any certificates specified via B<-untrusted>.
 
 =item B<-no_alt_chains>
 
-As of OpenSSL 1.1.0, since B<-trusted_first> always on, this option has no
-effect.
+Since B<-trusted_first> always on, this option has no effect.
 
 =item B<-trusted> I<file>
 
@@ -729,6 +727,8 @@ L<openssl-cmp(1)>,
 L<openssl-cms(1)>
 
 =head1 HISTORY
+
+Since OpenSSL 1.1.0, the B<-trusted_first> option is always enabled.
 
 The checks enabled by B<-x509_strict> have been extended in OpenSSL 3.0.
 
