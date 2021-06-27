@@ -630,16 +630,19 @@ int EVP_Digest(const void *data, size_t count,
 }
 
 int EVP_Q_digest(OSSL_LIB_CTX *libctx, const char *name, const char *propq,
-                 const void *data, size_t count,
-                 unsigned char *md, unsigned int *size)
+                 const void *data, size_t datalen,
+                 unsigned char *md, size_t *mdlen)
 {
     EVP_MD *digest = EVP_MD_fetch(libctx, name, propq);
+    unsigned int temp = 0;
     int ret = 0;
 
     if (digest != NULL) {
-        ret = EVP_Digest(data, count, md, size, digest, NULL);
+        ret = EVP_Digest(data, datalen, md, &temp, digest, NULL);
         EVP_MD_free(digest);
     }
+    if (mdlen != NULL)
+        *mdlen = temp;
     return ret;
 }
 

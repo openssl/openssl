@@ -55,6 +55,9 @@ or EVP_DigestVerifyInit() in such a scenario.
 SM2 can be tested with the L<openssl-speed(1)> application since version 3.0.
 Currently, the only valid algorithm name is B<sm2>.
 
+Since version 3.0, SM2 keys can be generated and loaded only when the domain
+parameters specify the SM2 elliptic curve.
+
 =head1 EXAMPLES
 
 This example demonstrates the calling sequence for using an B<EVP_PKEY> to verify

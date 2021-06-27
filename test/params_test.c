@@ -97,7 +97,10 @@ static void cleanup_object(void *vobj)
 
 static void *init_object(void)
 {
-    struct object_st *obj = OPENSSL_zalloc(sizeof(*obj));
+    struct object_st *obj;
+
+    if (!TEST_ptr(obj = OPENSSL_zalloc(sizeof(*obj))))
+        return NULL;
 
     obj->p1 = p1_init;
     obj->p2 = p2_init;

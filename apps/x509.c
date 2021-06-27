@@ -943,14 +943,14 @@ int x509_main(int argc, char **argv)
         } else if (i == modulus) {
             BIO_printf(out, "Modulus=");
             if (EVP_PKEY_is_a(pkey, "RSA")) {
-                BIGNUM *n;
+                BIGNUM *n = NULL;
 
                 /* Every RSA key has an 'n' */
                 EVP_PKEY_get_bn_param(pkey, "n", &n);
                 BN_print(out, n);
                 BN_free(n);
             } else if (EVP_PKEY_is_a(pkey, "DSA")) {
-                BIGNUM *dsapub;
+                BIGNUM *dsapub = NULL;
 
                 /* Every DSA key has a 'pub' */
                 EVP_PKEY_get_bn_param(pkey, "pub", &dsapub);

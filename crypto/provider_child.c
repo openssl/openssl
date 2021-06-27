@@ -127,19 +127,17 @@ static int provider_create_child_cb(const OSSL_CORE_HANDLE *prov, void *cbdata)
 
     if ((cprov = ossl_provider_find(ctx, provname, 1)) != NULL) {
         /*
-        * We free the newly created ref. We rely on the provider sticking around
-        * in the provider store.
-        */
+         * We free the newly created ref. We rely on the provider sticking around
+         * in the provider store.
+         */
         ossl_provider_free(cprov);
 
         /*
-         * The provider already exists. It could be an unused built-in, or a
-         * previously created child, or it could have been explicitly loaded. If
-         * explicitly loaded it cannot be converted to a child and we ignore it
-         * - i.e. we don't start treating it like a child.
+         * The provider already exists. It could be a previously created child,
+         * or it could have been explicitly loaded. If explicitly loaded we
+         * ignore it - i.e. we don't start treating it like a child.
          */
-        if (!ossl_provider_convert_to_child(cprov, prov,
-                                            ossl_child_provider_init))
+        if (!ossl_provider_activate(cprov, 0, 1))
             goto err;
     } else {
         /*
@@ -150,17 +148,13 @@ static int provider_create_child_cb(const OSSL_CORE_HANDLE *prov, void *cbdata)
                                        1)) == NULL)
             goto err;
 
-        /*
-        * We free the newly created ref. We rely on the provider sticking around
-        * in the provider store.
-        */
-        ossl_provider_free(cprov);
-
         if (!ossl_provider_activate(cprov, 0, 0))
             goto err;
 
-        if (!ossl_provider_set_child(cprov, prov)) {
+        if (!ossl_provider_set_child(cprov, prov)
+            || !ossl_provider_add_to_store(cprov, NULL, 0)) {
             ossl_provider_deactivate(cprov);
+            ossl_provider_free(cprov);
             goto err;
         }
     }
