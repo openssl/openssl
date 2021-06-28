@@ -56,6 +56,8 @@ static OSSL_FUNC_decoder_export_object_fn pvk2key_export_object;
 struct pvk2key_ctx_st {
     PROV_CTX *provctx;
     const struct keytype_desc_st *desc;
+    /* The selection that is passed to der2key_decode() */
+    int selection;
 };
 
 static struct pvk2key_ctx_st *
@@ -85,6 +87,8 @@ static int pvk2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     BIO *in = ossl_bio_new_from_core_bio(ctx->provctx, cin);
     void *key = NULL;
     int ok = 0;
+
+    ctx->selection = selection;
 
     if ((selection == 0
          || (selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
@@ -175,8 +179,7 @@ static int pvk2key_export_object(void *vctx,
         /* The contents of the reference is the address to our object */
         keydata = *(void **)reference;
 
-        return export(keydata, OSSL_KEYMGMT_SELECT_ALL,
-                      export_cb, export_cbarg);
+        return export(keydata, ctx->selection, export_cb, export_cbarg);
     }
     return 0;
 }
