@@ -36,7 +36,8 @@ use OpenSSL::stackhash qw(generate_stack_macros);
 extern "C" {
 #  endif
 
-#  define OSSL_CMP_PVNO 2
+#  define OSSL_CMP_PVNO_2 2
+#  define OSSL_CMP_PVNO_3 3
 
 /*-
  *   PKIFailureInfo ::= BIT STRING {
@@ -224,6 +225,10 @@ DECLARE_ASN1_DUP_FUNCTION(OSSL_CMP_ITAV)
 {-
     generate_stack_macros("OSSL_CMP_ITAV");
 -}
+typedef OSSL_CRMF_ATTRIBUTETYPEANDVALUE OSSL_CMP_ATAV;
+#define stack_st_OSSL_CMP_ATAV stack_st_OSSL_CRMF_ATTRIBUTETYPEANDVALUE
+DECLARE_ASN1_DUP_FUNCTION(OSSL_CMP_ATAV)
+
 typedef struct ossl_cmp_revrepcontent_st OSSL_CMP_REVREPCONTENT;
 typedef struct ossl_cmp_pkisi_st OSSL_CMP_PKISI;
 DECLARE_ASN1_FUNCTIONS(OSSL_CMP_PKISI)
@@ -243,11 +248,38 @@ typedef struct ossl_cmp_certresponse_st OSSL_CMP_CERTRESPONSE;
 -}
 typedef STACK_OF(ASN1_UTF8STRING) OSSL_CMP_PKIFREETEXT;
 
+typedef struct ossl_cmp_rootcakeyupdate_st OSSL_CMP_ROOTCAKEYUPDATE;
+DECLARE_ASN1_FUNCTIONS(OSSL_CMP_ROOTCAKEYUPDATE)
+
+typedef struct ossl_cmp_certreqtemplate_st OSSL_CMP_CERTREQTEMPLATE;
+DECLARE_ASN1_FUNCTIONS(OSSL_CMP_CERTREQTEMPLATE)
+
 /*
  * function DECLARATIONS
  */
 
 /* from cmp_asn.c */
+OSSL_CMP_ROOTCAKEYUPDATE *OSSL_CMP_ROOTCAKEYUPDATE_create(X509 *newWithNew,
+                                                          X509 *newWithOld,
+                                                          X509 *oldWithNew);
+X509
+*OSSL_CMP_ROOTCAKEYUPDATE_get0_newWithNew(const OSSL_CMP_ROOTCAKEYUPDATE *upd);
+X509
+*OSSL_CMP_ROOTCAKEYUPDATE_get0_newWithOld(const OSSL_CMP_ROOTCAKEYUPDATE *upd);
+X509
+*OSSL_CMP_ROOTCAKEYUPDATE_get0_oldWithNew(const OSSL_CMP_ROOTCAKEYUPDATE *upd);
+OSSL_CMP_CERTREQTEMPLATE
+
+*OSSL_CMP_CERTREQTEMPLATE_create(OSSL_CRMF_CERTTEMPLATE *certTemplate,
+                                 STACK_OF(OSSL_CMP_ATAV) *keySpec);
+OSSL_CRMF_CERTTEMPLATE
+*OSSL_CMP_CERTREQTEMPLATE_get0_certTemplate(const OSSL_CMP_CERTREQTEMPLATE *tmpl);
+OSSL_CMP_ATAV
+*OSSL_CMP_CERTREQTEMPLATE_get0_keySpec_item(const OSSL_CMP_CERTREQTEMPLATE *tmpl,
+                                            int n);
+int OSSL_CMP_CERTREQTEMPLATE_push0_keySpec_item(OSSL_CMP_CERTREQTEMPLATE *tmpl,
+                                                 OSSL_CMP_ATAV *item);
+
 OSSL_CMP_ITAV *OSSL_CMP_ITAV_create(ASN1_OBJECT *type, ASN1_TYPE *value);
 void OSSL_CMP_ITAV_set0(OSSL_CMP_ITAV *itav, ASN1_OBJECT *type,
                         ASN1_TYPE *value);
@@ -256,6 +288,16 @@ ASN1_TYPE *OSSL_CMP_ITAV_get0_value(const OSSL_CMP_ITAV *itav);
 int OSSL_CMP_ITAV_push0_stack_item(STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
                                    OSSL_CMP_ITAV *itav);
 void OSSL_CMP_ITAV_free(OSSL_CMP_ITAV *itav);
+
+OSSL_CMP_ATAV *OSSL_CMP_ATAV_create(ASN1_OBJECT *type, ASN1_TYPE *value);
+void OSSL_CMP_ATAV_set0(OSSL_CMP_ATAV *itav, ASN1_OBJECT *type,
+                        ASN1_TYPE *value);
+ASN1_OBJECT *OSSL_CMP_ATAV_get0_type(const OSSL_CMP_ATAV *itav);
+ASN1_TYPE *OSSL_CMP_ATAV_get0_value(const OSSL_CMP_ATAV *itav);
+int OSSL_CMP_ATAV_push0_stack_item(STACK_OF(OSSL_CMP_ATAV) **itav_sk_p,
+                                   OSSL_CMP_ATAV *itav);
+void OSSL_CMP_ATAV_free(OSSL_CMP_ATAV *itav);
+
 void OSSL_CMP_MSG_free(OSSL_CMP_MSG *msg);
 
 /* from cmp_ctx.c */

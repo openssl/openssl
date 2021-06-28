@@ -364,15 +364,17 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CMP_ERRORMSGCONTENT)
  *   CertConfirmContent ::= SEQUENCE OF CertStatus
  *
  *   CertStatus ::= SEQUENCE {
- *      certHash    OCTET STRING,
+ *      hashAlg [0] AlgorithmIdentifier OPTIONAL,
+ *      certHash     OCTET STRING,
  *      -- the hash of the certificate, using the same hash algorithm
  *      -- as is used to create and verify the certificate signature
- *      certReqId   INTEGER,
+ *      certReqId    INTEGER,
  *      -- to match this confirmation with the corresponding req/rep
- *      statusInfo  PKIStatusInfo OPTIONAL
+ *      statusInfo   PKIStatusInfo OPTIONAL
  *   }
  */
 struct ossl_cmp_certstatus_st {
+    X509_ALGOR *hashAlg; /* 0 */
     ASN1_OCTET_STRING *certHash;
     ASN1_INTEGER *certReqId;
     OSSL_CMP_PKISI *statusInfo;
@@ -446,7 +448,7 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CMP_POLLREPCONTENT)
 
 /*-
  * PKIHeader ::= SEQUENCE {
- *     pvno                INTEGER     { cmp1999(1), cmp2000(2) },
+ *     pvno                INTEGER     { cmp1999(1), cmp2000(2), cmp2021(3) },
  *     sender              GeneralName,
  *     -- identifies the sender
  *     recipient           GeneralName,
@@ -729,6 +731,32 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CMP_PROTECTEDPART)
  *           -- self-signed certificate with the identifier certID.
  *   }
  */
+
+/*
+ * RootCaKeyUpdateContent ::= SEQUENCE {
+ *      newWithNew       CMPCertificate,
+ *      newWithOld   [0] CMPCertificate OPTIONAL,
+ *      oldWithNew   [1] CMPCertificate OPTIONAL
+ * }
+ */
+
+struct ossl_cmp_rootcakeyupdate_st {
+    X509 *newWithNew;
+    X509 *newWithOld;
+    X509 *oldWithNew;
+} /* OSSL_CMP_ROOTCAKEYUPDATE */;
+DECLARE_ASN1_FUNCTIONS(OSSL_CMP_ROOTCAKEYUPDATE)
+
+/*-
+ * CertReqTemplateContent ::= SEQUENCE {
+ *      certTemplate      CertTemplate,
+ *      keySpec           Controls OPTIONAL
+ * }
+ */
+struct ossl_cmp_certreqtemplate_st {
+    OSSL_CRMF_CERTTEMPLATE *certTemplate;
+    STACK_OF(OSSL_CRMF_ATTRIBUTETYPEANDVALUE) *keySpec;
+} /* OSSL_CMP_CERTREQTEMPLATE */;
 
 /* from cmp_asn.c */
 int ossl_cmp_asn1_get_int(const ASN1_INTEGER *a);

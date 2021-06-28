@@ -1,0 +1,65 @@
+=pod
+
+=head1 NAME
+
+OSSL_CMP_ROOTCAKEYUPDATE_create,
+OSSL_CMP_ROOTCAKEYUPDATE_get0_newWithNew,
+OSSL_CMP_ROOTCAKEYUPDATE_get0_newWithOld,
+OSSL_CMP_ROOTCAKEYUPDATE_get0_oldWithNew
+- OSSL_CMP_ROOTCAKEYUPDATE utility functions
+
+=head1 SYNOPSIS
+
+  #include <openssl/cmp.h>
+
+ OSSL_CMP_ROOTCAKEYUPDATE *OSSL_CMP_ROOTCAKEYUPDATE_create(X509 *newWithNew,
+                                                           X509 *newWithOld,
+                                                           X509 *oldWithNew);
+ X509
+ *OSSL_CMP_ROOTCAKEYUPDATE_get0_newWithNew(const OSSL_CMP_ROOTCAKEYUPDATE *upd);
+ X509
+ *OSSL_CMP_ROOTCAKEYUPDATE_get0_newWithOld(const OSSL_CMP_ROOTCAKEYUPDATE *upd);
+ X509
+ *OSSL_CMP_ROOTCAKEYUPDATE_get0_oldWithNew(const OSSL_CMP_ROOTCAKEYUPDATE *upd);
+
+=head1 DESCRIPTION
+
+Certificate Management Protocol (CMP, RFC 4210) extension to OpenSSL
+
+OSSL_CMP_ROOTCAKEYUPDATE_create() creates a new B<OSSL_CMP_ROOTCAKEYUPDATE>
+structure and fills it in using I<newWithNew>
+and the optional parameters I<newWithOld> and I<oldWithNew>
+
+OSSL_CMP_ROOTCAKEYUPDATE_get0_newWithNew()
+OSSL_CMP_ROOTCAKEYUPDATE_get0_newWithOld(), and
+OSSL_CMP_ROOTCAKEYUPDATE_get0_oldWithNew()
+return a direct pointer to the respective component of I<upd>.
+
+=head1 NOTES
+
+CMP is defined in RFC 4210.
+
+=head1 RETURN VALUES
+
+OSSL_CMP_ROOTCAKEYUPDATE_create() returns a pointer to the created
+B<OSSL_CMP_ROOTCAKEYUPDATE> structure on success, NULL on error.
+
+OSSL_CMP_ROOTCAKEYUPDATE_get0_newWithNew()
+OSSL_CMP_ROOTCAKEYUPDATE_get0_newWithOld(), and
+OSSL_CMP_ROOTCAKEYUPDATE_get0_oldWithNew()
+return the respective pointer if the field is set, NULL if not or on error.
+
+=head1 HISTORY
+
+The OpenSSL CMP support was added in OpenSSL 3.0.
+
+=head1 COPYRIGHT
+
+Copyright 2021 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

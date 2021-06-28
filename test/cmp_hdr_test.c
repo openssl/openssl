@@ -395,7 +395,7 @@ static int execute_HDR_init_test(CMP_HDR_TEST_FIXTURE *fixture)
     if (fixture->expected == 0)
         return 1;
 
-    if (!TEST_int_eq(ossl_cmp_hdr_get_pvno(fixture->hdr), OSSL_CMP_PVNO))
+    if (!TEST_int_eq(ossl_cmp_hdr_get_pvno(fixture->hdr), OSSL_CMP_PVNO_2))
         return 0;
 
     header_nonce = ossl_cmp_hdr_get0_senderNonce(fixture->hdr);

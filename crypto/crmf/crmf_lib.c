@@ -42,13 +42,29 @@
  * valt = Value Type
  * ctrlinf = "regCtrl" or "regInfo"
  */
-#define IMPLEMENT_CRMF_CTRL_FUNC(atyp, valt, ctrlinf)                     \
-int OSSL_CRMF_MSG_set1_##ctrlinf##_##atyp(OSSL_CRMF_MSG *msg,             \
-                                          const valt *in)                 \
+#define IMPLEMENT_CRMF_CTRL_FUNC(atyp, valt, ctrlinf)                        \
+const valt *OSSL_CRMF_MSG_get0_##ctrlinf##_##atyp(const OSSL_CRMF_MSG *msg)  \
+{                                                                            \
+    int i;                                                                   \
+    STACK_OF(OSSL_CRMF_ATTRIBUTETYPEANDVALUE) *controls;                     \
+    OSSL_CRMF_ATTRIBUTETYPEANDVALUE *atav = NULL;                            \
+                                                                             \
+    if (msg == NULL || msg->certReq == NULL)                                 \
+        return NULL;                                                         \
+    controls = msg->certReq->controls;                                       \
+    for (i = 0; i < sk_OSSL_CRMF_ATTRIBUTETYPEANDVALUE_num(controls); i++) { \
+        atav = sk_OSSL_CRMF_ATTRIBUTETYPEANDVALUE_value(controls, i);        \
+        if (OBJ_obj2nid(atav->type) == NID_id_##ctrlinf##_##atyp)            \
+            return atav->value.atyp;                                         \
+    }                                                                        \
+    return NULL;                                                             \
+}                                                                            \
+ \
+int OSSL_CRMF_MSG_set1_##ctrlinf##_##atyp(OSSL_CRMF_MSG *msg, const valt *in) \
 {                                                                         \
     OSSL_CRMF_ATTRIBUTETYPEANDVALUE *atav = NULL;                         \
                                                                           \
-    if (msg == NULL || in == NULL)                                       \
+    if (msg == NULL || in == NULL)                                        \
         goto err;                                                         \
     if ((atav = OSSL_CRMF_ATTRIBUTETYPEANDVALUE_new()) == NULL)           \
         goto err;                                                         \
@@ -509,10 +525,16 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
 }
 
 /* retrieves the serialNumber of the given cert template or NULL on error */
-ASN1_INTEGER
+const ASN1_INTEGER
 *OSSL_CRMF_CERTTEMPLATE_get0_serialNumber(const OSSL_CRMF_CERTTEMPLATE *tmpl)
 {
     return tmpl != NULL ? tmpl->serialNumber : NULL;
+}
+
+const X509_NAME
+    *OSSL_CRMF_CERTTEMPLATE_get0_subject(const OSSL_CRMF_CERTTEMPLATE *tmpl)
+{
+    return tmpl != NULL ? tmpl->subject : NULL;
 }
 
 /* retrieves the issuer name of the given cert template or NULL on error */
@@ -520,6 +542,12 @@ const X509_NAME
     *OSSL_CRMF_CERTTEMPLATE_get0_issuer(const OSSL_CRMF_CERTTEMPLATE *tmpl)
 {
     return tmpl != NULL ? tmpl->issuer : NULL;
+}
+
+const X509_EXTENSIONS
+    *OSSL_CRMF_CERTTEMPLATE_get0_extensions(const OSSL_CRMF_CERTTEMPLATE *tmpl)
+{
+    return tmpl != NULL ? tmpl->extensions : NULL;
 }
 
 /* retrieves the issuer name of the given CertId or NULL on error */
@@ -543,7 +571,8 @@ int OSSL_CRMF_CERTTEMPLATE_fill(OSSL_CRMF_CERTTEMPLATE *tmpl,
                                 EVP_PKEY *pubkey,
                                 const X509_NAME *subject,
                                 const X509_NAME *issuer,
-                                const ASN1_INTEGER *serial)
+                                const ASN1_INTEGER *serial,
+                                const X509_EXTENSIONS *exts)
 {
     if (tmpl == NULL) {
         ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
@@ -560,6 +589,13 @@ int OSSL_CRMF_CERTTEMPLATE_fill(OSSL_CRMF_CERTTEMPLATE *tmpl,
     }
     if (pubkey != NULL && !X509_PUBKEY_set(&tmpl->publicKey, pubkey))
         return 0;
+    if (exts != NULL) {
+        sk_X509_EXTENSION_pop_free(tmpl->extensions, X509_EXTENSION_free);
+        if ((tmpl->extensions =
+             sk_X509_EXTENSION_deep_copy(exts, X509_EXTENSION_dup,
+                                         X509_EXTENSION_free)) == NULL)
+            return 0;
+    }
     return 1;
 }
 

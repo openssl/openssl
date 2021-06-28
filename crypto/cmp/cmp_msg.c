@@ -310,7 +310,8 @@ OSSL_CRMF_MSG *OSSL_CMP_CTX_setup_CRM(OSSL_CMP_CTX *ctx, int for_KUR, int rid)
              * it could be NULL if centralized key creation was supported
              */
             || !OSSL_CRMF_CERTTEMPLATE_fill(OSSL_CRMF_MSG_get0_tmpl(crm), rkey,
-                                            subject, issuer, NULL /* serial */))
+                                            subject, issuer, NULL /* serial */,
+                                            NULL /* exts */))
         goto err;
     if (ctx->days != 0) {
         time_t now = time(NULL);
@@ -546,11 +547,11 @@ OSSL_CMP_MSG *ossl_cmp_rr_new(OSSL_CMP_CTX *ctx)
                                   NULL /* pubkey would be redundant */,
                                   NULL /* subject would be redundant */,
                                   X509_get_issuer_name(ctx->oldCert),
-                                  X509_get0_serialNumber(ctx->oldCert))
+                                  X509_get0_serialNumber(ctx->oldCert), NULL)
     : OSSL_CRMF_CERTTEMPLATE_fill(rd->certDetails,
                                   X509_REQ_get0_pubkey(ctx->p10CSR),
                                   X509_REQ_get_subject_name(ctx->p10CSR),
-                                  NULL, NULL);
+                                  NULL, NULL, NULL);
     if (!ret)
         goto err;
 
@@ -819,6 +820,7 @@ OSSL_CMP_MSG *ossl_cmp_certConf_new(OSSL_CMP_CTX *ctx, int fail_info,
     /* set the ID of the certReq */
     if (!ASN1_INTEGER_set(certStatus->certReqId, OSSL_CMP_CERTREQID))
         goto err;
+    certStatus->hashAlg = NULL;
     /*
      * The hash of the certificate, using the same hash algorithm
      * as is used to create and verify the certificate signature.
