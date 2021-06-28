@@ -273,12 +273,7 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
     }
     impl->provider = prov;
 
-    /*
-     * Insert into the hash table if required.
-     *
-     * A write lock is used unconditionally because we wend our way down to the
-     * property string code which isn't locking friendly.
-     */
+    /* Insert into the hash table if required */
     if (!ossl_property_write_lock(store)) {
         OPENSSL_free(impl);
         return 0;
@@ -412,16 +407,13 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store, int nid,
 
 #ifndef FIPS_MODULE
     if (!OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL))
-	return 0;
+        return 0;
 #endif
 
     if (nid <= 0 || method == NULL || store == NULL)
         return 0;
 
-    /*
-     * This only needs to be a read lock, because queries never create property
-     * names or value and thus don't modify any of the property string layer.
-     */
+    /* This only needs to be a read lock, because the query won't create anything */
     if (!ossl_property_read_lock(store))
         return 0;
     alg = ossl_method_store_retrieve(store, nid);

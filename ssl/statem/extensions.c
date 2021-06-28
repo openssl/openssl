@@ -953,7 +953,7 @@ static int final_server_name(SSL *s, unsigned int context, int sent)
      * exceed sess_accept (zero) for the new context.
      */
     if (SSL_IS_FIRST_HANDSHAKE(s) && s->ctx != s->session_ctx
-		    && s->hello_retry_request == SSL_HRR_NONE) {
+            && s->hello_retry_request == SSL_HRR_NONE) {
         tsan_counter(&s->ctx->stats.sess_accept);
         tsan_decr(&s->session_ctx->stats.sess_accept);
     }

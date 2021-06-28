@@ -30,9 +30,13 @@ IF[{- !$disabled{asm} -}]
   $ECASM_parisc20_64=
 
   $ECASM_ppc32=
-  $ECASM_ppc64=ecp_nistz256.c ecp_nistz256-ppc64.s ecp_nistp521-ppc64.s x25519-ppc64.s
-  $ECDEF_ppc64=ECP_NISTZ256_ASM ECP_NISTP521_ASM X25519_ASM
-  INCLUDE[ecp_nistp521.o]=..
+  $ECASM_ppc64=ecp_nistz256.c ecp_ppc.c ecp_nistz256-ppc64.s x25519-ppc64.s
+  $ECDEF_ppc64=ECP_NISTZ256_ASM X25519_ASM
+  IF[{- !$disabled{'ec_nistp_64_gcc_128'} -}]
+    $ECASM_ppc64=$ECASM_ppc64 ecp_nistp521-ppc64.s
+    $ECDEF_ppc64=$ECDEF_ppc64 ECP_NISTP521_ASM
+    INCLUDE[ecp_nistp521.o]=..
+  ENDIF
 
   $ECASM_c64xplus=
 

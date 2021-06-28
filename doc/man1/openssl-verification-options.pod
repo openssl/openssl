@@ -151,10 +151,13 @@ The first step is to check that each certificate is well-formed.
 Part of these checks are enabled only if the B<-x509_strict> option is given.
 
 The second step is to check the extensions of every untrusted certificate
-for consistency with the given purpose.
-If the B<-purpose> option is not included then no such checks are done.
-The target certificate must not have an EKU extension that is incompatible with
-the given purpose, and all other certificates must be valid CA certificates.
+for consistency with the supplied purpose.
+If the B<-purpose> option is not given then no such checks are done
+except for SSL/TLS connection setup,
+where by default C<sslserver> or C<sslclient>, are checked.
+The target or "leaf" certificate, as well as any other untrusted certificates,
+must have extensions compatible with the specified purpose.
+All certificates except the target or "leaf" must also be valid CA certificates.
 The precise extensions required are described in more detail in
 L<openssl-x509(1)/CERTIFICATE EXTENSIONS>.
 
@@ -452,11 +455,17 @@ Set policy variable inhibit-policy-mapping (see RFC5280).
 
 =item B<-purpose> I<purpose>
 
-The intended use for the certificate. If this option is not specified, this
-command will not consider certificate purpose during chain verification.
-Currently accepted uses are B<sslclient>, B<sslserver>, B<nssslserver>,
-B<smimesign>, B<smimeencrypt>, B<crlsign>, B<ocsphelper>, B<timestampsign>,
-and <any>.
+The intended use for the certificate.
+Currently defined purposes are C<sslclient>, C<sslserver>, C<nssslserver>,
+C<smimesign>, C<smimeencrypt>, C<crlsign>, C<ocsphelper>, C<timestampsign>,
+and C<any>.
+If peer certificate verification is enabled, by default the TLS implementation
+as well as the commands B<s_client> and B<s_server> check for consistency
+with TLS server or TLS client use, respectively.
+
+While IETF RFC 5280 says that B<id-kp-serverAuth> and B<id-kp-clientAuth>
+are only for WWW use, in practice they are used for all kinds of TLS clients
+and servers, and this is what OpenSSL assumes as well.
 
 =item B<-verify_depth> I<num>
 

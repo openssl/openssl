@@ -278,8 +278,10 @@ static int server_ocsp_cb(SSL *s, void *arg)
      * For the purposes of testing we just send back a dummy OCSP response
      */
     *resp = *(unsigned char *)arg;
-    if (!SSL_set_tlsext_status_ocsp_resp(s, resp, 1))
+    if (!SSL_set_tlsext_status_ocsp_resp(s, resp, 1)) {
+        OPENSSL_free(resp);
         return SSL_TLSEXT_ERR_ALERT_FATAL;
+    }
 
     return SSL_TLSEXT_ERR_OK;
 }

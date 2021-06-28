@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* This file has quite some overlap with engines/e_loader_attic.c */
+
 #include "e_os.h"                /* To get strncasecmp() on Windows */
 
 #include <string.h>
@@ -577,6 +579,7 @@ static char *file_name_to_uri(struct file_ctx_st *ctx, const char *name)
 static int file_name_check(struct file_ctx_st *ctx, const char *name)
 {
     const char *p = NULL;
+    size_t len = strlen(ctx->_.dir.search_name);
 
     /* If there are no search criteria, all names are accepted */
     if (ctx->_.dir.search_name[0] == '\0')
@@ -591,11 +594,9 @@ static int file_name_check(struct file_ctx_st *ctx, const char *name)
     /*
      * First, check the basename
      */
-    if (strncasecmp(name, ctx->_.dir.search_name,
-                    sizeof(ctx->_.dir.search_name) - 1) != 0
-        || name[sizeof(ctx->_.dir.search_name) - 1] != '.')
+    if (strncasecmp(name, ctx->_.dir.search_name, len) != 0 || name[len] != '.')
         return 0;
-    p = &name[sizeof(ctx->_.dir.search_name)];
+    p = &name[len + 1];
 
     /*
      * Then, if the expected type is a CRL, check that the extension starts

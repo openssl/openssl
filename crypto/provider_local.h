@@ -9,10 +9,25 @@
 
 #include <openssl/core.h>
 
-struct predefined_providers_st {
-    const char *name;
-    OSSL_provider_init_fn *init;
-    unsigned int is_fallback:1;
-};
+typedef struct {
+    char *name;
+    char *value;
+} INFOPAIR;
+DEFINE_STACK_OF(INFOPAIR)
 
-extern const struct predefined_providers_st ossl_predefined_providers[];
+typedef struct {
+    char *name;
+    char *path;
+    OSSL_provider_init_fn *init;
+    STACK_OF(INFOPAIR) *parameters;
+    unsigned int is_fallback:1;
+} OSSL_PROVIDER_INFO;
+
+extern const OSSL_PROVIDER_INFO ossl_predefined_providers[];
+
+void ossl_provider_info_clear(OSSL_PROVIDER_INFO *info);
+int ossl_provider_info_add_to_store(OSSL_LIB_CTX *libctx,
+                                    OSSL_PROVIDER_INFO *entry);
+int ossl_provider_info_add_parameter(OSSL_PROVIDER_INFO *provinfo,
+                                     const char *name,
+                                     const char *value);

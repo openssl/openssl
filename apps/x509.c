@@ -553,11 +553,11 @@ int x509_main(int argc, char **argv)
         case OPT_CHECKEND:
             checkend = 1;
             {
-                intmax_t temp = 0;
+                ossl_intmax_t temp = 0;
                 if (!opt_intmax(opt_arg(), &temp))
                     goto opthelp;
                 checkoffset = (time_t)temp;
-                if ((intmax_t)checkoffset != temp) {
+                if ((ossl_intmax_t)checkoffset != temp) {
                     BIO_printf(bio_err, "%s: Checkend time out of range %s\n",
                                prog, opt_arg());
                     goto opthelp;
@@ -943,14 +943,14 @@ int x509_main(int argc, char **argv)
         } else if (i == modulus) {
             BIO_printf(out, "Modulus=");
             if (EVP_PKEY_is_a(pkey, "RSA")) {
-                BIGNUM *n;
+                BIGNUM *n = NULL;
 
                 /* Every RSA key has an 'n' */
                 EVP_PKEY_get_bn_param(pkey, "n", &n);
                 BN_print(out, n);
                 BN_free(n);
             } else if (EVP_PKEY_is_a(pkey, "DSA")) {
-                BIGNUM *dsapub;
+                BIGNUM *dsapub = NULL;
 
                 /* Every DSA key has a 'pub' */
                 EVP_PKEY_get_bn_param(pkey, "pub", &dsapub);
