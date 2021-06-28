@@ -370,10 +370,15 @@ void evp_keymgmt_gen_cleanup(const EVP_KEYMGMT *keymgmt, void *genctx)
         keymgmt->gen_cleanup(genctx);
 }
 
+int evp_keymgmt_has_load(const EVP_KEYMGMT *keymgmt)
+{
+    return keymgmt != NULL && keymgmt->load != NULL;
+}
+
 void *evp_keymgmt_load(const EVP_KEYMGMT *keymgmt,
                        const void *objref, size_t objref_sz)
 {
-    if (keymgmt->load != NULL)
+    if (evp_keymgmt_has_load(keymgmt))
         return keymgmt->load(objref, objref_sz);
     return NULL;
 }

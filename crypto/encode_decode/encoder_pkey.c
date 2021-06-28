@@ -78,6 +78,7 @@ struct collected_encoder_st {
 
     const OSSL_PROVIDER *keymgmt_prov;
     OSSL_ENCODER_CTX *ctx;
+    unsigned int flag_find_same_provider:1;
 
     int error_occurred;
 };
@@ -100,6 +101,15 @@ static void collect_encoder(OSSL_ENCODER *encoder, void *arg)
         const char *name = sk_OPENSSL_CSTRING_value(data->names, i);
         const OSSL_PROVIDER *prov = OSSL_ENCODER_get0_provider(encoder);
         void *provctx = OSSL_PROVIDER_get0_provider_ctx(prov);
+
+        /*
+         * collect_encoder() is called in two passes, one where the encoders
+         * from the same provider as the keymgmt are looked up, and one where
+         * the other encoders are looked up.  |data->flag_find_same_provider|
+         * tells us which pass we're in.
+         */
+        if ((data->keymgmt_prov == prov) != data->flag_find_same_provider)
+            continue;
 
         if (!OSSL_ENCODER_is_a(encoder, name)
             || (encoder->does_selection != NULL
@@ -257,7 +267,21 @@ static int ossl_encoder_ctx_setup_for_pkey(OSSL_ENCODER_CTX *ctx,
         encoder_data.error_occurred = 0;
         encoder_data.keymgmt_prov = prov;
         encoder_data.ctx = ctx;
+
+        /*
+         * Place the encoders with the a different provider as the keymgmt
+         * last (the chain is processed in reverse order)
+         */
+        encoder_data.flag_find_same_provider = 0;
         OSSL_ENCODER_do_all_provided(libctx, collect_encoder, &encoder_data);
+
+        /*
+         * Place the encoders with the same provider as the keymgmt first
+         * (the chain is processed in reverse order)
+         */
+        encoder_data.flag_find_same_provider = 1;
+        OSSL_ENCODER_do_all_provided(libctx, collect_encoder, &encoder_data);
+
         sk_OPENSSL_CSTRING_free(keymgmt_data.names);
         if (encoder_data.error_occurred) {
             ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_MALLOC_FAILURE);
