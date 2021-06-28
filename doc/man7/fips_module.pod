@@ -452,8 +452,7 @@ L<OSSL_PROVIDER_get0_name(3)>.
 
 =head1 SEE ALSO
 
-L<migration_guide(7)>,
-L<crypto(7)>
+L<migration_guide(7)>, L<crypto(7)>, L<fips_config(5)>
 
 =head1 COPYRIGHT
 
