@@ -57,6 +57,7 @@ DEFINE_STACK_OF(EVP_KEYMGMT)
 struct decoder_pkey_data_st {
     OSSL_LIB_CTX *libctx;
     char *propq;
+    int selection;
 
     STACK_OF(EVP_KEYMGMT) *keymgmts;
     char *object_type;           /* recorded object data type, may be NULL */
@@ -150,7 +151,7 @@ static int decoder_construct_pkey(OSSL_DECODER_INSTANCE *decoder_inst,
 
             import_data.keymgmt = keymgmt;
             import_data.keydata = NULL;
-            import_data.selection = OSSL_KEYMGMT_SELECT_ALL;
+            import_data.selection = data->selection;
 
             /*
              * No need to check for errors here, the value of
@@ -375,6 +376,7 @@ int ossl_decoder_ctx_setup_for_pkey(OSSL_DECODER_CTX *ctx,
 
     process_data->object = (void **)pkey;
     process_data->libctx = libctx;
+    process_data->selection = ctx->selection;
 
     /* First, find all keymgmts to form goals */
     EVP_KEYMGMT_do_all_provided(libctx, collect_keymgmt,
