@@ -116,6 +116,7 @@ static int x509_pubkey_ex_new_ex(ASN1_VALUE **pval, const ASN1_ITEM *it,
         || !x509_pubkey_ex_populate((ASN1_VALUE **)&ret, NULL)
         || !x509_pubkey_set0_libctx(ret, libctx, propq)) {
         x509_pubkey_ex_free((ASN1_VALUE **)&ret, NULL);
+        ret = NULL;
         ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
     } else {
         *pval = (ASN1_VALUE *)ret;
