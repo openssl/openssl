@@ -102,7 +102,13 @@ static void collect_encoder(OSSL_ENCODER *encoder, void *arg)
         const OSSL_PROVIDER *prov = OSSL_ENCODER_get0_provider(encoder);
         void *provctx = OSSL_PROVIDER_get0_provider_ctx(prov);
 
-        if (!!(data->keymgmt_prov == prov) != !!data->flag_find_same_provider)
+        /*
+         * collect_encoder() is called in two passes, one where the encoders
+         * from the same provider as the keymgmt are looked up, and one where
+         * the other encoders are looked up.  |data->flag_find_same_provider|
+         * tells us which pass we're in.
+         */
+        if ((data->keymgmt_prov == prov) != data->flag_find_same_provider)
             continue;
 
         if (!OSSL_ENCODER_is_a(encoder, name)
