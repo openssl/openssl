@@ -558,6 +558,7 @@ static int rfc5114_test(void)
     DH *dhB = NULL;
     unsigned char *Z1 = NULL;
     unsigned char *Z2 = NULL;
+    int szA, szB;
     const rfc5114_td *td = NULL;
     BIGNUM *priv_key = NULL, *pub_key = NULL;
     const BIGNUM *pub_key_tmp;
@@ -580,12 +581,14 @@ static int rfc5114_test(void)
             goto bad_err;
         priv_key = pub_key = NULL;
 
-        if (!TEST_uint_eq(td->Z_len, (size_t)DH_size(dhA))
-            || !TEST_uint_eq(td->Z_len, (size_t)DH_size(dhB)))
+        if (!TEST_int_gt(szA = DH_size(dhA), 0)
+                || !TEST_int_gt(szB = DH_size(dhB), 0)
+                || !TEST_size_t_eq(td->Z_len, (size_t)szA)
+                || !TEST_size_t_eq(td->Z_len, (size_t)szB))
             goto err;
 
-        if (!TEST_ptr(Z1 = OPENSSL_malloc(DH_size(dhA)))
-                || !TEST_ptr(Z2 = OPENSSL_malloc(DH_size(dhB))))
+        if (!TEST_ptr(Z1 = OPENSSL_malloc((size_t)szA))
+                || !TEST_ptr(Z2 = OPENSSL_malloc((size_t)szB)))
             goto bad_err;
         /*
          * Work out shared secrets using both sides and compare with expected
