@@ -134,11 +134,14 @@ jobs:
       - run:
           name: Trigger oqs-demos CI
           command: |
-            curl -u ${BUILD_TRIGGER_TOKEN}: \
-                 -X POST \
+            curl --silent \
+                 --write-out "\n%{response_code}\n" \
+                 --user ${BUILD_TRIGGER_TOKEN}: \
+                 --request POST \
                  --header "Content-Type: application/json" \
                  -d '{ "branch": "main", "parameters": { "new_openssl_commit": true } }' \
-                 https://circleci.com/api/v2/project/gh/open-quantum-safe/oqs-demos/pipeline
+                 https://circleci.com/api/v2/project/gh/open-quantum-safe/oqs-demos/pipeline | tee curl_out \
+            && grep -q "201" curl_out
       # don't trigger for now as it's too expensive
       #- run:
       #    name: Trigger profiling CI
