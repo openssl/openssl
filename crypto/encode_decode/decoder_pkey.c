@@ -126,9 +126,15 @@ static int decoder_construct_pkey(OSSL_DECODER_INSTANCE *decoder_inst,
         /* To allow it to be freed further down */
         if (!EVP_KEYMGMT_up_ref(keymgmt))
             return 0;
+<<<<<<< HEAD
     } else if ((keymgmt = EVP_KEYMGMT_fetch(data->libctx,
                                             data->object_type,
                                             data->propq)) != NULL) {
+=======
+    } else {
+        keymgmt = EVP_KEYMGMT_fetch(data->libctx,
+                                    data->object_type, data->propq);
+>>>>>>> 419b0a067d... ENCODER & DECODER: Make a tighter coupling between en/decoders and keymgmt
         keymgmt_prov = EVP_KEYMGMT_get0_provider(keymgmt);
     }
 
