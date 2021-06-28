@@ -748,7 +748,8 @@ OSSL_CMP_MSG *ossl_cmp_error_new(OSSL_CMP_CTX *ctx, const OSSL_CMP_PKISI *si,
         goto err;
     if (!ASN1_INTEGER_set_int64(msg->body->value.error->errorCode, errorCode))
         goto err;
-    if (errorCode > 0 && errorCode < (ERR_SYSTEM_FLAG << 1)) {
+    if (errorCode > 0
+            && (uint64_t)errorCode < ((uint64_t)ERR_SYSTEM_FLAG << 1)) {
         lib = ERR_lib_error_string((unsigned long)errorCode);
         reason = ERR_reason_error_string((unsigned long)errorCode);
     }
