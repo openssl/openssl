@@ -9,7 +9,7 @@ ossl_provider_add_parameter, ossl_provider_set_child, ossl_provider_get_parent,
 ossl_provider_up_ref_parent, ossl_provider_free_parent,
 ossl_provider_default_props_update, ossl_provider_get0_dispatch,
 ossl_provider_init_as_child,
-ossl_provider_activate, ossl_provider_deactivate, ossl_provider_available,
+ossl_provider_activate, ossl_provider_deactivate, ossl_provider_add_to_store,
 ossl_provider_ctx,
 ossl_provider_doall_activated,
 ossl_provider_name, ossl_provider_dso,
@@ -53,11 +53,10 @@ ossl_provider_get_capabilities
   * Activate the Provider
   * If the Provider is a module, the module will be loaded
   */
- int ossl_provider_activate(OSSL_PROVIDER *prov, int retain_fallbacks,
-                            int upcalls);
+ int ossl_provider_activate(OSSL_PROVIDER *prov, int upcalls, int aschild);
  int ossl_provider_deactivate(OSSL_PROVIDER *prov);
- /* Check if provider is available (activated) */
- int ossl_provider_available(OSSL_PROVIDER *prov);
+ int ossl_provider_add_to_store(OSSL_PROVIDER *prov, OSSL_PROVIDER **actualprov,
+                                int retain_fallbacks);
 
  /* Return pointer to the provider's context */
  void *ossl_provider_ctx(const OSSL_PROVIDER *prov);
@@ -220,18 +219,24 @@ be located in that module, and called.
 
 =back
 
-If I<retain_fallbacks> is zero, fallbacks are disabled.  If it is nonzero,
-fallbacks are left unchanged. If I<upcalls> is nonzero then, if this is a child
-provider, upcalls to the parent libctx will be made to inform it of an
-up-ref.
+If I<upcalls> is nonzero then, if this is a child provider, upcalls to the
+parent libctx will be made to inform it of an up-ref. If I<aschild> is nonzero
+then the provider will only be activated if it is a child provider. Otherwise
+no action is taken and ossl_provider_activate() returns success.
 
 ossl_provider_deactivate() "deactivates" the provider for the given
 provider object I<prov> by decrementing its activation count.  When
 that count reaches zero, the activation flag is cleared.
 
-ossl_provider_available() activates all fallbacks if no provider is
-activated yet, then checks if given provider object I<prov> is
-activated.
+ossl_provider_add_to_store() adds the provider I<prov> to the provider store and
+makes it available to other threads. This will prevent future automatic loading
+of fallback providers, unless I<retain_fallbacks> is true. If a provider of the
+same name already exists in the store then it is not added but this function
+still returns success. On success the I<actualprov> value is populated with a
+pointer to the provider of the given name that is now in the store. The
+reference passed in the I<prov> argument is consumed by this function. A
+reference to the provider that should be used is passed back in the
+I<actualprov> argument.
 
 ossl_provider_ctx() returns a context created by the provider.
 Outside of the provider, it's completely opaque, but it needs to be
@@ -345,11 +350,8 @@ called for any activated providers.
 
 ossl_provider_set_module_path(), ossl_provider_set_fallback(),
 ossl_provider_activate(), ossl_provider_activate_leave_fallbacks() and
-ossl_provider_deactivate(), ossl_provider_default_props_update() return 1 on
-success, or 0 on error.
-
-ossl_provider_available() return 1 if the provider is available,
-otherwise 0.
+ossl_provider_deactivate(), ossl_provider_add_to_store(),
+ossl_provider_default_props_update() return 1 on success, or 0 on error.
 
 ossl_provider_name(), ossl_provider_dso(),
 ossl_provider_module_name(), and ossl_provider_module_path() return a

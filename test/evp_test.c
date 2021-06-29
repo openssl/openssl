@@ -399,9 +399,12 @@ static int digest_update_fn(void *ctx, const unsigned char *buf, size_t buflen)
 static int digest_test_run(EVP_TEST *t)
 {
     DIGEST_DATA *expected = t->data;
+    EVP_TEST_BUFFER *inbuf;
     EVP_MD_CTX *mctx;
     unsigned char *got = NULL;
     unsigned int got_len;
+    size_t size = 0;
+    int xof = 0;
     OSSL_PARAM params[2];
 
     t->err = "TEST_FAILURE";
@@ -431,7 +434,8 @@ static int digest_test_run(EVP_TEST *t)
         goto err;
     }
 
-    if (EVP_MD_get_flags(expected->digest) & EVP_MD_FLAG_XOF) {
+    xof = (EVP_MD_get_flags(expected->digest) & EVP_MD_FLAG_XOF) != 0;
+    if (xof) {
         EVP_MD_CTX *mctx_cpy;
         char dont[] = "touch";
 
@@ -475,6 +479,24 @@ static int digest_test_run(EVP_TEST *t)
         goto err;
 
     t->err = NULL;
+
+    /* Test the EVP_Q_digest interface as well */
+    if (sk_EVP_TEST_BUFFER_num(expected->input) == 1
+            && !xof
+            /* This should never fail but we need the returned pointer now */
+            && !TEST_ptr(inbuf = sk_EVP_TEST_BUFFER_value(expected->input, 0))
+            && !inbuf->count_set) {
+        OPENSSL_cleanse(got, got_len);
+        if (!TEST_true(EVP_Q_digest(libctx,
+                                    EVP_MD_get0_name(expected->fetched_digest),
+                                    NULL, inbuf->buf, inbuf->buflen,
+                                    got, &size))
+                || !TEST_mem_eq(got, size,
+                                expected->output, expected->output_len)) {
+            t->err = "EVP_Q_digest failed";
+            goto err;
+        }
+    }
 
  err:
     OPENSSL_free(got);
@@ -1365,13 +1387,14 @@ static int mac_test_run_mac(EVP_TEST *t)
     MAC_DATA *expected = t->data;
     EVP_MAC_CTX *ctx = NULL;
     unsigned char *got = NULL;
-    size_t got_len;
+    size_t got_len = 0, size = 0;
     int i, block_size = -1, output_size = -1;
     OSSL_PARAM params[21], sizes[3], *psizes = sizes;
     size_t params_n = 0;
     size_t params_n_allocstart = 0;
     const OSSL_PARAM *defined_params =
         EVP_MAC_settable_ctx_params(expected->mac);
+    int xof;
 
     if (expected->alg == NULL)
         TEST_info("Trying the EVP_MAC %s test", expected->mac_name);
@@ -1486,7 +1509,8 @@ static int mac_test_run_mac(EVP_TEST *t)
         t->err = "MAC_UPDATE_ERROR";
         goto err;
     }
-    if (expected->xof) {
+    xof = expected->xof;
+    if (xof) {
         if (!TEST_ptr(got = OPENSSL_malloc(expected->output_len))) {
             t->err = "TEST_FAILURE";
             goto err;
@@ -1516,6 +1540,21 @@ static int mac_test_run_mac(EVP_TEST *t)
         }
     }
     t->err = NULL;
+
+    /* Test the EVP_Q_mac interface as well */
+    if (!xof) {
+        OPENSSL_cleanse(got, got_len);
+        if (!TEST_true(EVP_Q_mac(libctx, expected->mac_name, NULL,
+                                 expected->alg, params,
+                                 expected->key, expected->key_len,
+                                 expected->input, expected->input_len,
+                                 got, got_len, &size))
+                || !TEST_mem_eq(got, size,
+                                expected->output, expected->output_len)) {
+            t->err = "EVP_Q_mac failed";
+            goto err;
+        }
+    }
  err:
     while (params_n-- > params_n_allocstart) {
         OPENSSL_free(params[params_n].data);
@@ -1967,8 +2006,10 @@ static int pbe_test_init(EVP_TEST *t, const char *alg)
         pbe_type = PBE_TYPE_PKCS12;
     } else {
         TEST_error("Unknown pbe algorithm %s", alg);
+        return 0;
     }
-    pdat = OPENSSL_zalloc(sizeof(*pdat));
+    if (!TEST_ptr(pdat = OPENSSL_zalloc(sizeof(*pdat))))
+        return 0;
     pdat->pbe_type = pbe_type;
     t->data = pdat;
     return 1;

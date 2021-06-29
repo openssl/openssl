@@ -56,6 +56,8 @@ static OSSL_FUNC_decoder_export_object_fn msblob2key_export_object;
 struct msblob2key_ctx_st {
     PROV_CTX *provctx;
     const struct keytype_desc_st *desc;
+    /* The selection that is passed to msblob2key_decode() */
+    int selection;
 };
 
 static struct msblob2key_ctx_st *
@@ -102,6 +104,7 @@ static int msblob2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     if (!ok)
         goto next;
 
+    ctx->selection = selection;
     ok = 0;                      /* Assume that we fail */
 
     if ((isdss && ctx->desc->type != EVP_PKEY_DSA)
@@ -208,8 +211,7 @@ msblob2key_export_object(void *vctx,
         /* The contents of the reference is the address to our object */
         keydata = *(void **)reference;
 
-        return export(keydata, OSSL_KEYMGMT_SELECT_ALL,
-                      export_cb, export_cbarg);
+        return export(keydata, ctx->selection, export_cb, export_cbarg);
     }
     return 0;
 }

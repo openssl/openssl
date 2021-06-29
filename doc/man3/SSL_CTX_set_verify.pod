@@ -9,7 +9,7 @@ SSL_verify_cb,
 SSL_verify_client_post_handshake,
 SSL_set_post_handshake_auth,
 SSL_CTX_set_post_handshake_auth
-- set peer certificate verification parameters
+- set various SSL/TLS parameters for peer certificate verification
 
 =head1 SYNOPSIS
 

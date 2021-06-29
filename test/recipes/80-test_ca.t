@@ -20,7 +20,7 @@ setup("test_ca");
 
 $ENV{OPENSSL} = cmdstr(app(["openssl"]), display => 1);
 
-my $cnf = '"' . srctop_file("test","ca-and-certs.cnf") . '"';;
+my $cnf = srctop_file("test","ca-and-certs.cnf");
 my $std_openssl_cnf = '"'
     . srctop_file("apps", $^O eq "VMS" ? "openssl-vms.cnf" : "openssl.cnf")
     . '"';
@@ -30,19 +30,19 @@ rmtree("demoCA", { safe => 0 });
 plan tests => 15;
  SKIP: {
      my $cakey = srctop_file("test", "certs", "ca-key.pem");
-     $ENV{OPENSSL_CONFIG} = '-config ' . $cnf;
+     $ENV{OPENSSL_CONFIG} = qq(-config "$cnf");
      skip "failed creating CA structure", 4
          if !ok(run(perlapp(["CA.pl","-newca",
                              "-extra-req", "-key $cakey"], stdin => undef)),
                 'creating CA structure');
 
      my $eekey = srctop_file("test", "certs", "ee-key.pem");
-     $ENV{OPENSSL_CONFIG} = '-config ' . $cnf;
+     $ENV{OPENSSL_CONFIG} = qq(-config "$cnf");
      skip "failed creating new certificate request", 3
          if !ok(run(perlapp(["CA.pl","-newreq",
                              '-extra-req', "-outform DER -section userreq -key $eekey"])),
                 'creating certificate request');
-     $ENV{OPENSSL_CONFIG} = '-rand_serial -inform DER -config '.$std_openssl_cnf;
+     $ENV{OPENSSL_CONFIG} = qq(-rand_serial -inform DER -config "$std_openssl_cnf");
      skip "failed to sign certificate request", 2
          if !is(yes(cmdstr(perlapp(["CA.pl", "-sign"]))), 0,
                 'signing certificate request');
@@ -54,7 +54,7 @@ plan tests => 15;
          if disabled("ct");
 
      my $eekey2 = srctop_file("test", "certs", "ee-key-3072.pem");
-     $ENV{OPENSSL_CONFIG} = '-config ' . $cnf;
+     $ENV{OPENSSL_CONFIG} = qq(-config "$cnf");
      ok(run(perlapp(["CA.pl", "-precert", '-extra-req', "-section userreq -key $eekey2"], stderr => undef)),
         'creating new pre-certificate');
 }

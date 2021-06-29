@@ -226,7 +226,7 @@ static OSSL_CMP_MSG *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
     }
 
     msg = ossl_cmp_certrep_new(srv_ctx->ctx, bodytype, certReqId, si,
-                               certOut, chainOut, caPubs, 0 /* encrypted */,
+                               certOut, NULL /* enc */, chainOut, caPubs,
                                srv_ctx->sendUnprotectedErrors);
     if (msg == NULL)
         ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_CREATING_CERTREP);
@@ -337,7 +337,8 @@ static OSSL_CMP_MSG *process_certConf(OSSL_CMP_SRV_CTX *srv_ctx,
     ccc = req->body->value.certConf;
     num = sk_OSSL_CMP_CERTSTATUS_num(ccc);
 
-    if (OSSL_CMP_CTX_get_option(ctx, OSSL_CMP_OPT_IMPLICIT_CONFIRM) == 1) {
+    if (OSSL_CMP_CTX_get_option(ctx, OSSL_CMP_OPT_IMPLICIT_CONFIRM) == 1
+            || ctx->status != -2 /* transaction not open */) {
         ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_UNEXPECTED_CERTCONF);
         return NULL;
     }
@@ -561,7 +562,7 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
  err:
     if (rsp == NULL) {
         /* on error, try to respond with CMP error message to client */
-        const char *data = NULL;
+        const char *data = NULL, *reason = NULL;
         int flags = 0;
         unsigned long err = ERR_peek_error_data(&data, &flags);
         int fail_info = 1 << OSSL_CMP_PKIFAILUREINFO_badRequest;
@@ -573,12 +574,12 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
             (void)ossl_cmp_ctx_set1_recipNonce(ctx, hdr->senderNonce);
         }
 
+        if ((flags & ERR_TXT_STRING) == 0 || *data == '\0')
+            data = NULL;
+        reason = ERR_reason_error_string(err);
         if ((si = OSSL_CMP_STATUSINFO_new(OSSL_CMP_PKISTATUS_rejection,
-                                          fail_info, data)) != NULL) {
-            if (err != 0 && (flags & ERR_TXT_STRING) != 0)
-                data = ERR_reason_error_string(err);
-            rsp = ossl_cmp_error_new(srv_ctx->ctx, si,
-                                     err != 0 ? ERR_GET_REASON(err) : -1,
+                                          fail_info, reason)) != NULL) {
+            rsp = ossl_cmp_error_new(srv_ctx->ctx, si, err,
                                      data, srv_ctx->sendUnprotectedErrors);
             OSSL_CMP_PKISI_free(si);
         }

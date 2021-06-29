@@ -122,7 +122,10 @@ sub match_any {
         $desc = "match '$first' ($desc) with '$strings[0]'";
     }
 
-    return ( scalar( grep { $first eq $_ } @strings ) > 0,
+    return ( scalar(
+                 grep { ref $_ eq 'Regexp' ? $first =~ $_ : $first eq $_ }
+                 @strings
+             ) > 0,
              $desc );
 }
 
@@ -150,6 +153,9 @@ sub match_syserr_reason {
           # ... and $! will give you the error string back
           $!
     };
+    # Occasionally, we get an error code that is simply not translatable
+    # to POSIX semantics on VMS, and we get an error string saying so.
+    push @strings, qr/^non-translatable vms error code:/ if $^O eq 'VMS';
     # The OpenSSL fallback string
     push @strings, "reason($errcode)";
 

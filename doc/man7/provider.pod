@@ -69,6 +69,9 @@ the provider multiple simultaneous uses.
 This pointer will be passed to various operation functions offered by
 the provider.
 
+Note that the provider will not be made available for applications to use until
+the initialization function has completed and returned successfully.
+
 One of the functions the provider offers to the OpenSSL libraries is
 the central mechanism for the OpenSSL libraries to get access to
 operation implementations for diverse algorithms.

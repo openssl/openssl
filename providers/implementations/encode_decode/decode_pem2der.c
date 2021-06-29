@@ -92,35 +92,49 @@ static int pem2der_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
                           OSSL_CALLBACK *data_cb, void *data_cbarg,
                           OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
 {
-    /* Strings to peel off the pem name */
-    static struct peelablee_pem_name_endings_st {
-        const char *ending;
+    /*
+     * PEM names we recognise.  Other PEM names should be recognised by
+     * other decoder implementations.
+     */
+    static struct pem_name_map_st {
+        const char *pem_name;
+        int object_type;
+        const char *data_type;
         const char *data_structure;
-    } peelable_pem_name_endings[] = {
-        /*
-         * These entries should be in longest to shortest order to avoid
-         * mixups.
-         */
-        { "ENCRYPTED PRIVATE KEY", "EncryptedPrivateKeyInfo" },
-        { "PRIVATE KEY", "PrivateKeyInfo" },
-        { "PUBLIC KEY", "SubjectPublicKeyInfo" },
-        { "PARAMETERS", NULL }
+    } pem_name_map[] = {
+        /* PKCS#8 and SubjectPublicKeyInfo */
+        { PEM_STRING_PKCS8, OSSL_OBJECT_PKEY, NULL, "EncryptedPrivateKeyInfo" },
+        { PEM_STRING_PKCS8INF, OSSL_OBJECT_PKEY, NULL, "PrivateKeyInfo" },
+        { PEM_STRING_PUBLIC, OSSL_OBJECT_PKEY, NULL, "SubjectPublicKeyInfo" },
+
+        /* Our set of type specific PEM types */
+        { PEM_STRING_DHPARAMS, OSSL_OBJECT_PKEY, "DH", "type-specific" },
+        { PEM_STRING_DHXPARAMS, OSSL_OBJECT_PKEY, "X9.42 DH", "type-specific" },
+        { PEM_STRING_DSA, OSSL_OBJECT_PKEY, "DSA", "type-specific" },
+        { PEM_STRING_DSA_PUBLIC, OSSL_OBJECT_PKEY, "DSA", "type-specific" },
+        { PEM_STRING_DSAPARAMS, OSSL_OBJECT_PKEY, "DSA", "type-specific" },
+        { PEM_STRING_ECPRIVATEKEY, OSSL_OBJECT_PKEY, "EC", "type-specific" },
+        { PEM_STRING_ECPARAMETERS, OSSL_OBJECT_PKEY, "EC", "type-specific" },
+        { PEM_STRING_RSA, OSSL_OBJECT_PKEY, "RSA", "type-specific" },
+        { PEM_STRING_RSA_PUBLIC, OSSL_OBJECT_PKEY, "RSA", "type-specific" },
 
         /*
-         * Libcrypto currently only supports decoding keys with provider side
-         * decoders, so we don't try to peel any other PEM name.  That's an
-         * exercise for when libcrypto starts to treat other types of objects
-         * via providers.
+         * A few others that there is at least have an object type for, even
+         * though there is no provider interface to handle such objects, yet.
+         * However, this is beneficial for the OSSL_STORE result handler.
          */
+        { PEM_STRING_X509, OSSL_OBJECT_CERT, NULL, NULL },
+        { PEM_STRING_X509_TRUSTED, OSSL_OBJECT_CERT, NULL, NULL },
+        { PEM_STRING_X509_OLD, OSSL_OBJECT_CERT, NULL, NULL },
+        { PEM_STRING_X509_CRL, OSSL_OBJECT_CRL, NULL, NULL }
     };
     struct pem2der_ctx_st *ctx = vctx;
     char *pem_name = NULL, *pem_header = NULL;
-    size_t pem_name_len, i;
+    size_t i;
     unsigned char *der = NULL;
     long der_len = 0;
     int ok = 0;
     int objtype = OSSL_OBJECT_UNKNOWN;
-    const char *data_structure = NULL;
 
     ok = read_pem(ctx->provctx, cin, &pem_name, &pem_header,
                   &der, &der_len) > 0;
@@ -153,71 +167,27 @@ static int pem2der_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
      */
     ok = 1;
 
-    /*
-     * Peal off certain strings from the end of |pem_name|, as they serve
-     * no further purpose.
-     */
-    for (i = 0, pem_name_len = strlen(pem_name);
-         i < OSSL_NELEM(peelable_pem_name_endings);
-         i++) {
-        size_t peel_len = strlen(peelable_pem_name_endings[i].ending);
-        size_t pem_name_offset;
+    /* Have a look to see if we recognise anything */
+    for (i = 0; i < OSSL_NELEM(pem_name_map); i++)
+        if (strcmp(pem_name, pem_name_map[i].pem_name) == 0)
+            break;
 
-        if (peel_len <= pem_name_len) {
-            pem_name_offset = pem_name_len - peel_len;
-            if (strcmp(pem_name + pem_name_offset,
-                       peelable_pem_name_endings[i].ending) == 0) {
-
-                do {
-                    pem_name[pem_name_offset] = '\0';
-                } while (pem_name_offset > 0
-                         && pem_name[--pem_name_offset] == ' ');
-
-                if (pem_name[0] == '\0') {
-                    OPENSSL_free(pem_name);
-                    pem_name = NULL;
-                }
-                /* All of these peelable endings are for EVP_PKEYs */
-                objtype = OSSL_OBJECT_PKEY;
-                if (pem_name == NULL) {
-                    data_structure = peelable_pem_name_endings[i].data_structure;
-                    if (data_structure == NULL)
-                        goto end;
-                } else {
-                    /*
-                     * If there is an algorithm name prefix then it is a
-                     * type-specific data structure
-                     */
-                    data_structure = "type-specific";
-                }
-                break;
-            }
-        }
-    }
-
-    /* If we don't know the object type yet check if it's one we know about */
-    if (objtype == OSSL_OBJECT_UNKNOWN) {
-        if (strcmp(pem_name, PEM_STRING_X509) == 0
-                || strcmp(pem_name, PEM_STRING_X509_TRUSTED) == 0
-                || strcmp(pem_name, PEM_STRING_X509_OLD) == 0)
-            objtype = OSSL_OBJECT_CERT;
-        else if (strcmp(pem_name, PEM_STRING_X509_CRL) == 0)
-            objtype = OSSL_OBJECT_CRL;
-    }
-
-    {
+    if (i < OSSL_NELEM(pem_name_map)) {
         OSSL_PARAM params[5], *p = params;
+        /* We expect these to be read only so casting away the const is ok */
+        char *data_type = (char *)pem_name_map[i].data_type;
+        char *data_structure = (char *)pem_name_map[i].data_structure;
 
-        if (pem_name != NULL)
+        if (data_type != NULL)
             *p++ =
                 OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_TYPE,
-                                                 pem_name, 0);
+                                                 data_type, 0);
 
         /* We expect this to be read only so casting away the const is ok */
         if (data_structure != NULL)
             *p++ =
                 OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_STRUCTURE,
-                                                 (char *)data_structure, 0);
+                                                 data_structure, 0);
         *p++ =
             OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_DATA,
                                               der, der_len);

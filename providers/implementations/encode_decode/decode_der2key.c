@@ -89,6 +89,8 @@ struct keytype_desc_st {
 struct der2key_ctx_st {
     PROV_CTX *provctx;
     const struct keytype_desc_st *desc;
+    /* The selection that is passed to der2key_decode() */
+    int selection;
     /* Flag used to signal that a failure is fatal */
     unsigned int flag_fatal : 1;
 };
@@ -180,9 +182,9 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     const unsigned char *derp;
     long der_len = 0;
     void *key = NULL;
-    int orig_selection = selection;
     int ok = 0;
 
+    ctx->selection = selection;
     /*
      * The caller is allowed to specify 0 as a selection mark, to have the
      * structure and key type guessed.  For type-specific structures, this
@@ -213,7 +215,7 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         } else if (ctx->desc->d2i_private_key != NULL) {
             key = ctx->desc->d2i_private_key(NULL, &derp, der_len);
         }
-        if (key == NULL && orig_selection != 0)
+        if (key == NULL && ctx->selection != 0)
             goto next;
     }
     if (key == NULL && (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
@@ -222,14 +224,14 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
             key = ctx->desc->d2i_PUBKEY(NULL, &derp, der_len);
         else
             key = ctx->desc->d2i_public_key(NULL, &derp, der_len);
-        if (key == NULL && orig_selection != 0)
+        if (key == NULL && ctx->selection != 0)
             goto next;
     }
     if (key == NULL && (selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0) {
         derp = der;
         if (ctx->desc->d2i_key_params != NULL)
             key = ctx->desc->d2i_key_params(NULL, &derp, der_len);
-        if (key == NULL && orig_selection != 0)
+        if (key == NULL && ctx->selection != 0)
             goto next;
     }
 
@@ -304,8 +306,7 @@ static int der2key_export_object(void *vctx,
         /* The contents of the reference is the address to our object */
         keydata = *(void **)reference;
 
-        return export(keydata, OSSL_KEYMGMT_SELECT_ALL,
-                      export_cb, export_cbarg);
+        return export(keydata, ctx->selection, export_cb, export_cbarg);
     }
     return 0;
 }

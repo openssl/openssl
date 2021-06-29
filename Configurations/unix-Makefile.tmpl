@@ -1196,12 +1196,12 @@ providers/fips.module.sources.new: configdata.pm
 	  cd sources-tmp \
 	  && $$srcdir/Configure --banner=Configured enable-fips -O0 \
 	  && ./configdata.pm --query 'get_sources("providers/fips")' > sources1 \
-	  && $(MAKE) -sj 4 \
+	  && $(MAKE) -sj 4 build_generated providers/fips.so \
 	  && find . -name '*.d' | xargs cat > dep1 \
           && $(MAKE) distclean \
 	  && $$srcdir/Configure --banner=Configured enable-fips no-asm -O0 \
 	  && ./configdata.pm --query 'get_sources("providers/fips")' > sources2 \
-	  && $(MAKE) -sj 4 \
+	  && $(MAKE) -sj 4 build_generated providers/fips.so \
 	  && find . -name '*.d' | xargs cat > dep2 \
 	  && cat sources1 sources2 \
 	     | grep -v ' : \\$$' | grep -v util/providers.num \
@@ -1310,6 +1310,19 @@ CRYPTOHEADERS={- join(" \\\n" . ' ' x 14,
                       fill_lines(" ", $COLUMNS - 14, sort keys %cryptoheaders)) -}
 SSLHEADERS={- join(" \\\n" . ' ' x 11,
                    fill_lines(" ", $COLUMNS - 11, sort keys %sslheaders)) -}
+
+renumber: build_generated
+	$(PERL) $(SRCDIR)/util/mknum.pl --version $(VERSION) --no-warnings \
+                --ordinals $(SRCDIR)/util/libcrypto.num \
+                --symhacks $(SRCDIR)/include/openssl/symhacks.h \
+                --renumber \
+                $(CRYPTOHEADERS)
+	$(PERL) $(SRCDIR)/util/mknum.pl --version $(VERSION) --no-warnings \
+                --ordinals $(SRCDIR)/util/libssl.num \
+                --symhacks $(SRCDIR)/include/openssl/symhacks.h \
+                --renumber \
+                $(SSLHEADERS)
+
 ordinals: build_generated
 	$(PERL) $(SRCDIR)/util/mknum.pl --version $(VERSION) --no-warnings \
                 --ordinals $(SRCDIR)/util/libcrypto.num \
