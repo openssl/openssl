@@ -54,7 +54,7 @@ if (eval { require Win32::API; 1; }) {
 }
 $ENV{OPENSSL_WIN32_UTF8}=1;
 
-plan tests => 7;
+plan tests => 10;
 
 # Test different PKCS#12 formats
 ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
@@ -78,6 +78,7 @@ my @path = qw(test certs);
 my $outfile1 = "out1.p12";
 my $outfile2 = "out2.p12";
 my $outfile3 = "out3.p12";
+my $outfile4 = "out4.p12";
 
 # Test the -chain option with -untrusted
 ok(run(app(["openssl", "pkcs12", "-export", "-chain",
@@ -112,5 +113,25 @@ SKIP: {
                 "-out", $outfile3])),
     "test_pkcs12_passcerts_legacy");
 }
+
+# Test export of PEM file with both cert and key
+# -nomac necessary to avoid legacy provider requirement
+ok(run(app(["openssl", "pkcs12", "-export",
+        "-inkey", srctop_file(@path, "cert-key-cert.pem"),
+        "-in", srctop_file(@path, "cert-key-cert.pem"),
+        "-passout", "pass:v3-certs",
+        "-nomac", "-out", $outfile4], stderr => "outerr.txt")),
+   "test_export_pkcs12_cert_key_cert");
+open DATA, "outerr.txt";
+my @match = grep /:error:/, <DATA>;
+close DATA;
+ok(scalar @match > 0 ? 0 : 1, "test_export_pkcs12_outerr_empty");
+
+ok(run(app(["openssl", "pkcs12",
+            "-in", $outfile4,
+            "-passin", "pass:v3-certs",
+            "-nomacver", "-nodes"])),
+  "test_import_pkcs12_cert_key_cert");
+
 
 SetConsoleOutputCP($savedcp) if (defined($savedcp));
