@@ -78,12 +78,65 @@ The current OpenSSL default memory model uses the default platform address
 model. If you need a different address model, you must specify the appropriate
 c99 options for compile (`CFLAGS`) and linkers (`LDFLAGS`).
 
+Cross Compiling on Windows
+--------------------------
+
+To configure and compile OpenSSL, you will need to set up a Cygwin environment.
+The Cygwin tools should include bash, make, and any other normal tools required
+for building programs.
+
+Your `PATH` must include the bin directory for the c99 cross-compiler, as in:
+
+    export PATH=/cygdrive/c/Program\ Files\ \(x86\)/HPE\ NonStop/L16.05/usr/bin:$PATH
+
+This should be set before Configure is run. For the c99 cross-compiler to work
+correctly, you also need the `COMP_ROOT` set, as in:
+
+    export COMP_ROOT="C:\Program Files (x86)\HPE NonStop\L16.05"
+
+`COMP_ROOT` needs to be in Windows form.
+
+`Configure` must specify the `no-makedepend` option otherwise errors will
+result when running the build because the c99 cross-compiler does not support
+the `gcc -MT` option. An example of a `Configure` command to be run from the
+OpenSSL directory is:
+
+    ./Configure nonstop-nsx_64 no-makedepend --with-rand-seed=rdcpu
+
+Do not forget to include any OpenSSL cross-compiling prefix and certificate
+options when creating your libraries.
+
+The OpenSSL test suite will not run on your workstation. In order to verify the
+build, you will need to perform the build and test steps in OSS in your NonStop
+server. You can also build under gcc and run the test suite for Windows but that
+is not equivalent.
+
+**Note:** In the event that you are attempting a FIPS-compliant cross-compile,
+be aware that signatures may not match between builds done under OSS and under
+cross-compiles as the compilers do not necessarily generate identical objects.
+Anything and everything to do with FIPS is outside the scope of this document.
+Refer to the FIPS security policy for more information.
+
+The following build configurations have been successfully attempted at one
+point or another. If you are successful in your cross-compile efforts, please
+update this list:
+
+- nonstop-nsx_64
+- nonstop-nsx_64_put
+
+**Note:** Cross-compile builds for TNS/E have not been attempted, but should
+follow the same considerations as for TNS/X above. SPT builds generally require
+FLOSS, which is not available for workstation builds. As a result, SPT builds
+of OpenSSL cannot be cross-compiled.
+
+Also see the NSDEE discussion below for more historical information.
+
 Cross Compiling with NSDEE
 --------------------------
 
-**Note:** None of these builds have been tested by the platform maintainer and are
-supplied for historical value. Please submit a Pull Request to OpenSSL should
-these need to be adjusted.
+**Note:** None of these builds have been tested by the platform maintainer and
+are supplied for historical value. Please submit a Pull Request to OpenSSL
+should these need to be adjusted.
 
 If you are attempting to build OpenSSL with NSDEE, you will need to specify
 the following variables. The following set of compiler defines are required:
