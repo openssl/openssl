@@ -55,6 +55,8 @@ L<ERR_get_error(3)>
 ERR_GET_LIB(), ERR_GET_FUNC() and ERR_GET_REASON() are available in
 all versions of OpenSSL.
 
+The ERR_GET_FUNC() function was deprecated in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
 Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
