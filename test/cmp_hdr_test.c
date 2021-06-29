@@ -172,11 +172,11 @@ static int execute_HDR_update_messageTime_test(CMP_HDR_TEST_FIXTURE *fixture)
         return 0;
 
     hdrtime = mktime(&hdrtm);
-    if (!TEST_true(before <= hdrtime))
+    if (!TEST_time_t_le(before, hdrtime))
         return 0;
     now = time(NULL);
     after = mktime(gmtime(&now));
-    return TEST_true(hdrtime <= after);
+    return TEST_time_t_le(hdrtime, after);
 }
 
 static int test_HDR_update_messageTime(void)
