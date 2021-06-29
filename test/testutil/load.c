@@ -73,9 +73,17 @@ EVP_PKEY *load_pkey_pem(const char *file, OSSL_LIB_CTX *libctx)
 
     if (!TEST_ptr(file) || !TEST_ptr(bio = BIO_new(BIO_s_file())))
         return NULL;
-    if (TEST_int_gt(BIO_read_filename(bio, file), 0))
-        (void)TEST_ptr(key = PEM_read_bio_PrivateKey_ex(bio, NULL, NULL, NULL,
-                                                        libctx, NULL));
+    if (TEST_int_gt(BIO_read_filename(bio, file), 0)) {
+        unsigned long err = ERR_peek_error();
+
+        if (TEST_ptr(key = PEM_read_bio_PrivateKey_ex(bio, NULL, NULL, NULL,
+                                                      libctx, NULL))
+            && err != ERR_peek_error()) {
+            TEST_info("Spurious error from reading PEM");
+            EVP_PKEY_free(key);
+            key = NULL;
+        }
+    }
 
     BIO_free(bio);
     return key;
