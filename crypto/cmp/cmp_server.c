@@ -247,7 +247,7 @@ static OSSL_CMP_MSG *process_rr(OSSL_CMP_SRV_CTX *srv_ctx,
     OSSL_CRMF_CERTID *certId = NULL;
     OSSL_CRMF_CERTTEMPLATE *tmpl;
     const X509_NAME *issuer;
-    ASN1_INTEGER *serial;
+    const ASN1_INTEGER *serial;
     OSSL_CMP_PKISI *si;
 
     if (!ossl_assert(srv_ctx != NULL && srv_ctx->ctx != NULL && req != NULL))

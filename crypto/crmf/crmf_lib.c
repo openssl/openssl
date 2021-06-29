@@ -525,7 +525,7 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
 }
 
 /* retrieves the serialNumber of the given cert template or NULL on error */
-ASN1_INTEGER
+const ASN1_INTEGER
 *OSSL_CRMF_CERTTEMPLATE_get0_serialNumber(const OSSL_CRMF_CERTTEMPLATE *tmpl)
 {
     return tmpl != NULL ? tmpl->serialNumber : NULL;
@@ -558,7 +558,7 @@ const X509_NAME *OSSL_CRMF_CERTID_get0_issuer(const OSSL_CRMF_CERTID *cid)
 }
 
 /* retrieves the serialNumber of the given CertId or NULL on error */
-ASN1_INTEGER *OSSL_CRMF_CERTID_get0_serialNumber(const OSSL_CRMF_CERTID *cid)
+const ASN1_INTEGER *OSSL_CRMF_CERTID_get0_serialNumber(const OSSL_CRMF_CERTID *cid)
 {
     return cid != NULL ? cid->serialNumber : NULL;
 }
