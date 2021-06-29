@@ -391,15 +391,12 @@ int X509_check_private_key(const X509 *x, const EVP_PKEY *k)
     int ret;
 
     xk = X509_get0_pubkey(x);
+    if (xk == NULL) {
+        ERR_raise(ERR_LIB_X509, X509_R_UNABLE_TO_GET_CERTS_PUBLIC_KEY);
+        return 0;
+    }
 
-    if (xk)
-        ret = EVP_PKEY_eq(xk, k);
-    else
-        ret = -2;
-
-    switch (ret) {
-    case 1:
-        break;
+    switch (ret = EVP_PKEY_eq(xk, k)) {
     case 0:
         ERR_raise(ERR_LIB_X509, X509_R_KEY_VALUES_MISMATCH);
         break;
@@ -408,10 +405,10 @@ int X509_check_private_key(const X509 *x, const EVP_PKEY *k)
         break;
     case -2:
         ERR_raise(ERR_LIB_X509, X509_R_UNKNOWN_KEY_TYPE);
+        break;
     }
-    if (ret > 0)
-        return 1;
-    return 0;
+
+    return ret > 0;
 }
 
 /*
