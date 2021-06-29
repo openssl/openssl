@@ -55,11 +55,24 @@ static EVP_PKEY *pem_read_bio_key_decoder(BIO *bp, EVP_PKEY **x,
     if (!OSSL_DECODER_CTX_set_pem_password_cb(dctx, cb, u))
         goto err;
 
+    ERR_set_mark();
     while (!OSSL_DECODER_from_bio(dctx, bp) || pkey == NULL)
-        if (BIO_eof(bp) != 0 || (newpos = BIO_tell(bp)) < 0 || newpos <= pos)
+        if (BIO_eof(bp) != 0 || (newpos = BIO_tell(bp)) < 0 || newpos <= pos) {
+            ERR_clear_last_mark();
             goto err;
-        else
+        } else {
+            if (ERR_GET_REASON(ERR_peek_error()) == ERR_R_UNSUPPORTED) {
+                /* unsupported PEM data, try again */
+                ERR_pop_to_mark();
+                ERR_set_mark();
+            } else {
+                /* other error, bail out */
+                ERR_clear_last_mark();
+                goto err;
+            }
             pos = newpos;
+        }
+    ERR_pop_to_mark();
 
     if (!evp_keymgmt_util_has(pkey, selection)) {
         EVP_PKEY_free(pkey);
