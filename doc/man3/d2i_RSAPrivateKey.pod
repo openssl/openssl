@@ -265,8 +265,8 @@ Functions such as strlen() will B<not> return the correct length
 of the encoded structure.
 
 The ways that I<*ppin> and I<*ppout> are incremented after the operation
-can trap the unwary. See the B<WARNINGS> section for some common
-errors.
+can trap the unwary. See the B<WARNINGS> section in L<d2i_X509(3)> for some
+common errors.
 The reason for this-auto increment behaviour is to reflect a typical
 usage of ASN1 functions: after one structure is encoded or decoded
 another will be processed after it.
