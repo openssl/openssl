@@ -86,6 +86,10 @@ functions described in L<d2i_X509(3)>.
 
 =head1 NOTES
 
+All the functions that operate on data in memory update the data pointer I<*pp>
+after a successful operation, just like the other d2i and i2d functions;
+see L<d2i_X509(3)>.
+
 All these functions use DER format and unencrypted keys. Applications wishing
 to encrypt or decrypt private keys should use other functions such as
 d2i_PKCS8PrivateKey() instead.
