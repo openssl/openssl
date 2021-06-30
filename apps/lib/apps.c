@@ -968,9 +968,6 @@ int load_key_certs_crls_suppress(const char *uri, int format, int maybe_stdin,
          * certificate in it. We just retry until eof.
          */
         if (info == NULL) {
-            if (OSSL_STORE_error(ctx) && !OSSL_STORE_eof(ctx))
-                /* do not care about any errors from garbage in the middle */
-                ERR_clear_error();
             continue;
         }
 
