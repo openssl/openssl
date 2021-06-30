@@ -324,6 +324,15 @@ static int afalg_fin_cipher_aio(afalg_aio *aio, int sfd, unsigned char *buf,
         }
         if (eval > 0) {
 
+#ifdef OSSL_SANITIZE_MEMORY
+            /*
+             * In a memory sanitiser build, the changes to memory made by the
+             * system call aren't reliably detected.  By initialising the
+             * memory here, the sanitiser is told that they are okay.
+             */
+            memset(events, 0, sizeof(events));
+#endif
+
             /* Get results of AIO read */
             r = io_getevents(aio->aio_ctx, 1, MAX_INFLIGHTS,
                              events, &timeout);
