@@ -871,9 +871,6 @@ int load_key_certs_crls_suppress(const char *uri, int format, int maybe_stdin,
     OSSL_PARAM itp[2];
     const OSSL_PARAM *params = NULL;
 
-    if (suppress_decode_errors)
-        ERR_set_mark();
-
     if (ppkey != NULL) {
         *ppkey = NULL;
         cnt_expectations++;
@@ -971,10 +968,6 @@ int load_key_certs_crls_suppress(const char *uri, int format, int maybe_stdin,
          * certificate in it. We just retry until eof.
          */
         if (info == NULL) {
-            if (OSSL_STORE_error(ctx)) {
-                ERR_print_errors(bio_err);
-                ERR_clear_error();
-            }
             continue;
         }
 
@@ -1078,8 +1071,9 @@ int load_key_certs_crls_suppress(const char *uri, int format, int maybe_stdin,
         BIO_printf(bio_err, "\n");
         ERR_print_errors(bio_err);
     }
-    if (suppress_decode_errors)
-        ERR_pop_to_mark();
+    if (suppress_decode_errors || failed == NULL)
+        /* clear any spurious errors */
+        ERR_clear_error();
     return failed == NULL;
 }
 
