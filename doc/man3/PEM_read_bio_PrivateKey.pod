@@ -358,6 +358,10 @@ will be used.
 
 =head1 NOTES
 
+The PEM reading functions will skip any extraneous content or PEM data of
+a different type than they expect. This allows for example having a certificate
+(or multiple certificates) and a key in the PEM format in a single file.
+
 The old B<PrivateKey> write routines are retained for compatibility.
 New applications should write private keys using the
 PEM_write_bio_PKCS8PrivateKey() or PEM_write_PKCS8PrivateKey() routines
