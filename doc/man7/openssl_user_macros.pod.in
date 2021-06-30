@@ -74,7 +74,7 @@ minor and patch components of the version number.  For example:
 
 =back
 
-If B<OPENSSL_API_COMPAT> is undefined, this default value is be used in its
+If B<OPENSSL_API_COMPAT> is undefined, this default value is used in its
 place:
 C<{- join('', map { my @x = split /=/,$_; $x[1] }
               grep /^OPENSSL_CONFIGURED_API=/, @{$config{openssl_api_defines} // []})
