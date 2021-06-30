@@ -1627,6 +1627,15 @@ L<ERR_get_error(3)>.
 
 =item -
 
+ERR_GET_FUNC(), B<ERR_F_*>
+
+There is no replacement.
+
+If available, ERR_GET_FUNC() returns C<-1>.
+The B<ERR_F_...> macros resolve to C<0>.
+
+=item -
+
 EVP_CIPHER_CTX_iv(), EVP_CIPHER_CTX_iv_noconst(), EVP_CIPHER_CTX_original_iv()
 
 Applications should instead use L<EVP_CIPHER_CTX_get_updated_iv(3)>,
