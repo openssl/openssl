@@ -916,3 +916,10 @@ void err_clear_last_constant_time(int clear)
                                      0, ERR_FLAG_CLEAR);
     es->err_flags[top] |= clear;
 }
+
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+int ERR_GET_FUNC(unsigned long errcode)
+{
+    return -1;
+}
+#endif
