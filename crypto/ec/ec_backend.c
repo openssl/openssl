@@ -17,7 +17,9 @@
 #include <openssl/objects.h>
 #include <openssl/params.h>
 #include <openssl/err.h>
-#include <openssl/engine.h>
+#ifndef FIPS_MODULE
+# include <openssl/engine.h>
+#endif
 #include "crypto/bn.h"
 #include "crypto/ec.h"
 #include "ec_local.h"

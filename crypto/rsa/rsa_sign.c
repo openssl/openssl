@@ -18,8 +18,6 @@
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
 #include <openssl/objects.h>
-#include <openssl/x509.h>
-#include "crypto/x509.h"
 #ifndef OPENSSL_NO_MD2
 # include <openssl/md2.h> /* uses MD2_DIGEST_LENGTH */
 #endif

@@ -18,6 +18,9 @@
 #include <openssl/params.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#ifndef FIPS_MODULE
+# include <openssl/x509.h>
+#endif
 #include "internal/sizes.h"
 #include "internal/param_build_set.h"
 #include "crypto/asn1.h"

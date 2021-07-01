@@ -13,6 +13,9 @@
 #include <openssl/ec.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
+#ifndef FIPS_MODULE
+# include <openssl/x509.h>
+#endif
 #include "crypto/ecx.h"
 #include "ecx_backend.h"
 
