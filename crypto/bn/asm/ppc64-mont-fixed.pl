@@ -322,7 +322,7 @@ ___
 	$self->add_code(<<___);
 	li		r3,1
 	blr
-.size ${fname},.-${fname}
+.size .${fname},.-.${fname}
 ___
 
 }
