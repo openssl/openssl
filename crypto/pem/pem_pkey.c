@@ -212,7 +212,7 @@ static EVP_PKEY *pem_read_bio_key(BIO *bp, EVP_PKEY **x,
     EVP_PKEY *ret = NULL;
     BIO *new_bio = NULL;
     int pos;
-    struct ossl_passphrase_data_st pwdata = { 0, };
+    struct ossl_passphrase_data_st pwdata = { 0 };
 
     if ((pos = BIO_tell(bp)) < 0) {
         new_bio = BIO_new(BIO_f_readbuffer());
