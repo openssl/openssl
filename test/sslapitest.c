@@ -32,6 +32,7 @@
 #include <openssl/provider.h>
 #include <openssl/param_build.h>
 #include <openssl/x509v3.h>
+#include <openssl/dh.h>
 
 #include "helpers/ssltestlib.h"
 #include "testutil.h"
