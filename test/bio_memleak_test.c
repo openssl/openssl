@@ -241,10 +241,8 @@ static int test_bio_i2d_ASN1_mime(void)
     BUF_MEM bufmem;
     static const char str[] = "BIO mime test\n";
     PKCS7 *p7 = NULL;
-    error_callback_fired = 0;
 
-    bio = BIO_new(BIO_s_mem());
-    if (!TEST_ptr(bio))
+    if (!TEST_ptr(bio = BIO_new(BIO_s_mem())))
         goto finish;
 
     bufmem.length = sizeof(str);
@@ -254,27 +252,26 @@ static int test_bio_i2d_ASN1_mime(void)
     BIO_set_flags(bio, BIO_FLAGS_MEM_RDONLY);
     BIO_set_callback_ex(bio, BIO_error_callback);
 
-    out = BIO_new(BIO_s_mem());
-    if (!TEST_ptr(out))
+    if (!TEST_ptr(out = BIO_new(BIO_s_mem())))
+        goto finish;
+    if (!TEST_ptr(p7 = PKCS7_new()))
+        goto finish;
+    if (!TEST_true(PKCS7_set_type(p7, NID_pkcs7_data)))
         goto finish;
 
-    p7 = PKCS7_new();
-    if (!TEST_ptr(p7))
-        goto finish;
-    if (!PKCS7_set_type(p7, NID_pkcs7_data))
-        goto finish;
+    error_callback_fired = 0;
 
     /*
      * The call succeeds even if the input stream ends unexpectedly as
      * there is no handling for this case in SMIME_crlf_copy().
      */
-    if (!i2d_ASN1_bio_stream(out, (ASN1_VALUE*) p7, bio,
-                             SMIME_STREAM | SMIME_BINARY,
-                             ASN1_ITEM_rptr(PKCS7))) {
+    if (!TEST_true(i2d_ASN1_bio_stream(out, (ASN1_VALUE*) p7, bio,
+                                       SMIME_STREAM | SMIME_BINARY,
+                                       ASN1_ITEM_rptr(PKCS7)))) {
         goto finish;
     }
 
-    if (!TEST_int_eq(1, error_callback_fired))
+    if (!TEST_int_eq(error_callback_fired, 1))
         goto finish;
 
     ok = 1;
