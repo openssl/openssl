@@ -7,6 +7,7 @@ $KBKDF_GOAL=../../libdefault.a ../../libfips.a
 $KRB5KDF_GOAL=../../libdefault.a
 $PBKDF1_GOAL=../../liblegacy.a
 $PBKDF2_GOAL=../../libdefault.a ../../libfips.a
+$PVKKDF_GOAL=../../liblegacy.a
 $PKCS12KDF_GOAL=../../libdefault.a
 $SSKDF_GOAL=../../libdefault.a ../../libfips.a
 $SCRYPT_GOAL=../../libdefault.a
@@ -27,6 +28,8 @@ SOURCE[$PBKDF2_GOAL]=pbkdf2.c
 # Extra code to satisfy the FIPS and non-FIPS separation.
 # When the PBKDF2 moves to legacy, this can be removed.
 SOURCE[$PBKDF2_GOAL]=pbkdf2_fips.c
+
+SOURCE[$PBKDF1_GOAL]=pvkkdf.c
 
 SOURCE[$PKCS12KDF_GOAL]=pkcs12kdf.c
 
