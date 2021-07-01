@@ -15,6 +15,9 @@
 
 #include <openssl/pem.h>
 #include <openssl/bio.h>
+#include <openssl/dh.h>
+#include <openssl/dsa.h>
+#include <openssl/rsa.h>
 
 #include "testutil.h"
 
