@@ -18,7 +18,6 @@
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
-#include <openssl/engine.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 
