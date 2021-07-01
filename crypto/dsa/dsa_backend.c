@@ -15,6 +15,9 @@
 
 #include <openssl/core_names.h>
 #include <openssl/err.h>
+#ifndef FIPS_MODULE
+# include <openssl/x509.h>
+#endif
 #include "crypto/dsa.h"
 #include "dsa_local.h"
 

@@ -8,7 +8,7 @@
  */
 
 #include <openssl/provider.h>
-#include <openssl/engine.h>
+#include <openssl/types.h>
 
 typedef struct {
     /*

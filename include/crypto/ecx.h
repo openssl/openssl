@@ -20,7 +20,6 @@
 #  include <openssl/core.h>
 #  include <openssl/e_os2.h>
 #  include <openssl/crypto.h>
-#  include <openssl/x509.h>
 #  include "internal/refcount.h"
 #  include "crypto/types.h"
 

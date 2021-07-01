@@ -14,7 +14,9 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/ec.h>
-#include <openssl/engine.h>
+#ifndef FIPS_MODULE
+# include <openssl/engine.h>
+#endif
 #include <openssl/params.h>
 #include <openssl/core_names.h>
 #include "internal/cryptlib.h"

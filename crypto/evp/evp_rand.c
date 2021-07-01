@@ -7,13 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/evp.h>
-
 #include <stdio.h>
 #include <stdlib.h>
-#include <openssl/engine.h>
 #include <openssl/evp.h>
-#include <openssl/x509v3.h>
 #include <openssl/rand.h>
 #include <openssl/core.h>
 #include <openssl/core_names.h>
@@ -22,7 +18,6 @@
 #include "internal/numbers.h"
 #include "internal/provider.h"
 #include "internal/core.h"
-#include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
 

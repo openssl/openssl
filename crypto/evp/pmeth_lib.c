@@ -15,15 +15,18 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <openssl/engine.h>
+#ifndef FIPS_MODULE
+# include <openssl/engine.h>
+#endif
 #include <openssl/evp.h>
-#include <openssl/x509v3.h>
 #include <openssl/core_names.h>
 #include <openssl/dh.h>
 #include <openssl/rsa.h>
 #include <openssl/kdf.h>
 #include "internal/cryptlib.h"
-#include "crypto/asn1.h"
+#ifndef FIPS_MODULE
+# include "crypto/asn1.h"
+#endif
 #include "crypto/evp.h"
 #include "crypto/dh.h"
 #include "crypto/ec.h"

@@ -13,7 +13,6 @@
 
 # include <openssl/core.h>
 # include <openssl/dsa.h>
-# include <openssl/x509.h>
 # include "internal/ffc.h"
 
 #define DSA_PARAMGEN_TYPE_FIPS_186_4   0   /* Use FIPS186-4 standard */

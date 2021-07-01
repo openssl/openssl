@@ -15,7 +15,9 @@
 
 #include <stdio.h>
 #include <openssl/bn.h>
-#include <openssl/engine.h>
+#ifndef FIPS_MODULE
+# include <openssl/engine.h>
+#endif
 #include <openssl/obj_mac.h>
 #include <openssl/core_names.h>
 #include "internal/cryptlib.h"
