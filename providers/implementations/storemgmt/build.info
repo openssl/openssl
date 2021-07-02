@@ -3,4 +3,4 @@
 
 $STORE_GOAL=../../libdefault.a
 
-SOURCE[$STORE_GOAL]=file_store.c file_store_der2obj.c
+SOURCE[$STORE_GOAL]=file_store.c file_store_any2obj.c
