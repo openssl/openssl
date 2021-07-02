@@ -193,3 +193,12 @@ Ctrl.digest = digest:SHA1
 Ctrl.IKM = hexkey:0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c
 Ctrl.salt = salt:
 Output = 2c91117204d745f3500d636a62f64f0ab3bae548aa53d423b0d1f27ebba6f5e5673a081d70cce7acfc48
+
+# The output key size should match the digest size for EXTRACT_ONLY mode
+KDF = HKDF
+Ctrl.mode = mode:EXTRACT_ONLY
+Ctrl.digest = digest:SHA1
+Ctrl.IKM = hexkey:0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b
+Ctrl.salt = salt:
+Output = da8c8a73
+Result = KDF_DERIVE_ERROR
