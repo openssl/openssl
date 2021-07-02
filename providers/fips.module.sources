@@ -336,7 +336,6 @@ crypto/threads_win.c
 crypto/x86_64cpuid.pl
 e_os.h
 include/crypto/aes_platform.h
-include/crypto/asn1.h
 include/crypto/asn1_dsa.h
 include/crypto/bn.h
 include/crypto/bn_conf.h.in
@@ -425,9 +424,6 @@ include/openssl/hmac.h
 include/openssl/kdf.h
 include/openssl/lhash.h.in
 include/openssl/macros.h
-include/openssl/md4.h
-include/openssl/md5.h
-include/openssl/mdc2.h
 include/openssl/modes.h
 include/openssl/obj_mac.h
 include/openssl/objects.h
@@ -441,7 +437,6 @@ include/openssl/proverr.h
 include/openssl/provider.h
 include/openssl/rand.h
 include/openssl/randerr.h
-include/openssl/ripemd.h
 include/openssl/rsa.h
 include/openssl/rsaerr.h
 include/openssl/safestack.h.in
