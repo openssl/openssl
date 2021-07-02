@@ -222,7 +222,7 @@ static int rsa_cms_verify(CMS_SignerInfo *si)
     CMS_SignerInfo_get0_algs(si, NULL, NULL, NULL, &alg);
     nid = OBJ_obj2nid(alg->algorithm);
     if (nid == EVP_PKEY_RSA_PSS)
-        return ossl_rsa_pss_to_ctx(NULL, pkctx, alg, NULL);
+        return ossl_rsa_pss_to_ctx(NULL, pkctx, alg, NULL) > 0;
     /* Only PSS allowed for PSS keys */
     if (EVP_PKEY_is_a(pkey, "RSA-PSS")) {
         ERR_raise(ERR_LIB_RSA, RSA_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE);
