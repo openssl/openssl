@@ -420,8 +420,7 @@ void file_load_cleanup(void *construct_data)
 static int file_setup_decoders(struct file_ctx_st *ctx)
 {
     OSSL_LIB_CTX *libctx = ossl_prov_ctx_get0_libctx(ctx->provctx);
-    OSSL_DECODER *to_obj = NULL; /* Last resort decoder */
-    OSSL_DECODER_INSTANCE *to_obj_inst = NULL;
+    const OSSL_ALGORITHM *to_algo = NULL;
     int ok = 0;
 
     /* Setup for this session, so only if not already done */
@@ -438,32 +437,34 @@ static int file_setup_decoders(struct file_ctx_st *ctx)
             goto err;
         }
 
-        /*
-         * Create the internal last resort decoder implementation together
-         * with a "decoder instance".
-         * The decoder doesn't need any identification or to be attached to
-         * any provider, since it's only used locally.
-         */
-        to_obj = ossl_decoder_from_algorithm(0, &ossl_der_to_obj_algorithm,
-                                             NULL);
-        if (to_obj == NULL)
-            goto err;
-        to_obj_inst = ossl_decoder_instance_new(to_obj, ctx->provctx);
-        if (to_obj_inst == NULL)
-            goto err;
+        for (to_algo = ossl_any_to_obj_algorithm;
+             to_algo->algorithm_names != NULL;
+             to_algo++) {
+            OSSL_DECODER *to_obj;
+            OSSL_DECODER_INSTANCE *to_obj_inst;
 
-        if (!ossl_decoder_ctx_add_decoder_inst(ctx->_.file.decoderctx,
-                                               to_obj_inst)) {
-            ERR_raise(ERR_LIB_PROV, ERR_R_OSSL_DECODER_LIB);
-            goto err;
+            /*
+             * Create the internal last resort decoder implementation
+             * together with a "decoder instance".
+             * The decoder doesn't need any identification or to be
+             * attached to any provider, since it's only used locally.
+             */
+            to_obj = ossl_decoder_from_algorithm(0, to_algo, NULL);
+            if (to_obj == NULL)
+                goto err;
+            to_obj_inst = ossl_decoder_instance_new(to_obj, ctx->provctx);
+            if (to_obj_inst == NULL) {
+                OSSL_DECODER_free(to_obj);
+                goto err;
+            }
+
+            if (!ossl_decoder_ctx_add_decoder_inst(ctx->_.file.decoderctx,
+                                                   to_obj_inst)) {
+                ossl_decoder_instance_free(to_obj_inst);
+                ERR_raise(ERR_LIB_PROV, ERR_R_OSSL_DECODER_LIB);
+                goto err;
+            }
         }
-
-        /*
-         * OSSL_DECODER_INSTANCE shouldn't be freed from this point on.
-         * That's going to happen whenever the OSSL_DECODER_CTX is freed.
-         */
-        to_obj_inst = NULL;
-
         /* Add on the usual extra decoders */
         if (!OSSL_DECODER_CTX_add_extra(ctx->_.file.decoderctx,
                                         libctx, ctx->_.file.propq)) {
@@ -486,7 +487,6 @@ static int file_setup_decoders(struct file_ctx_st *ctx)
 
     ok = 1;
  err:
-    OSSL_DECODER_free(to_obj);
     return ok;
 }
 
