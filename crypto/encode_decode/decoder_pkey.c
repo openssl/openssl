@@ -126,9 +126,9 @@ static int decoder_construct_pkey(OSSL_DECODER_INSTANCE *decoder_inst,
         /* To allow it to be freed further down */
         if (!EVP_KEYMGMT_up_ref(keymgmt))
             return 0;
-    } else {
-        keymgmt = EVP_KEYMGMT_fetch(data->libctx,
-                                    data->object_type, data->propq);
+    } else if ((keymgmt = EVP_KEYMGMT_fetch(data->libctx,
+                                            data->object_type,
+                                            data->propq)) != NULL) {
         keymgmt_prov = EVP_KEYMGMT_get0_provider(keymgmt);
     }
 
