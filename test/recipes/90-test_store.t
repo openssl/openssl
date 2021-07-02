@@ -36,7 +36,7 @@ my @data_files =
     ( "testrsa.msb" );
 push(@data_files,
      ( "testrsa.pvk" ))
-    unless disabled("legacy");
+    unless disabled("legacy") || disabled("rc4");
 my @src_rsa_files =
     ( "test/testrsa.pem",
       "test/testrsapub.pem" );
