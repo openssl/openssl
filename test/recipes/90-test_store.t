@@ -32,6 +32,9 @@ my @src_files =
       "test/testrsapub.pem",
       "test/testcrl.pem",
       "apps/server.pem" );
+my @data_files =
+    ( "testrsa.pvk",
+      "testrsa.msb" );
 my @src_rsa_files =
     ( "test/testrsa.pem",
       "test/testrsapub.pem" );
@@ -106,6 +109,7 @@ push @methods, [qw(-engine loader_attic)]
 my $n = scalar @methods
     * ( (3 * scalar @noexist_files)
         + (6 * scalar @src_files)
+        + (2 * scalar @data_files)
         + (4 * scalar @generated_files)
         + (scalar keys %generated_file_files)
         + (scalar @noexist_file_files)
@@ -192,11 +196,19 @@ indir "store_$$" => sub {
                                  to_abs_file_uri($file, 0, "dummy")])));
                 }
             }
+            foreach (@data_files) {
+                my $file = data_file($_);
+
+                ok(run(app([@storeutl, "-noout", "-passin", "pass:password",
+                            $file])));
+                ok(run(app([@storeutl, "-noout", "-passin", "pass:password",
+                            to_abs_file($file)])));
+            }
             foreach (@generated_files) {
-                ok(run(app([@storeutl, "-noout", "-passin",
-                            "pass:password", $_])));
-                ok(run(app([@storeutl,  "-noout", "-passin",
-                            "pass:password", to_abs_file($_)])));
+                ok(run(app([@storeutl, "-noout", "-passin", "pass:password",
+                            $_])));
+                ok(run(app([@storeutl,  "-noout", "-passin", "pass:password",
+                            to_abs_file($_)])));
 
               SKIP:
                 {
