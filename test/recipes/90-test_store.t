@@ -33,8 +33,10 @@ my @src_files =
       "test/testcrl.pem",
       "apps/server.pem" );
 my @data_files =
-    ( "testrsa.pvk",
-      "testrsa.msb" );
+    ( "testrsa.msb" );
+push(@data_files,
+     ( "testrsa.pvk" ))
+    unless disabled("legacy");
 my @src_rsa_files =
     ( "test/testrsa.pem",
       "test/testrsapub.pem" );
