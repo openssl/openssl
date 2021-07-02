@@ -262,9 +262,10 @@ static int kdf_hkdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
 
     if ((p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_SIZE)) != NULL) {
         size_t sz = kdf_hkdf_size(ctx);
-        int ret = OSSL_PARAM_set_size_t(p, sz);
 
-        return ret && (sz != 0); /* A sz of 0 indicates an error occurred */
+        if (sz == 0)
+            return 0;
+        return OSSL_PARAM_set_size_t(p, sz);
     }
     return -2;
 }

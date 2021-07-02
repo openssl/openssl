@@ -288,10 +288,12 @@ static int test_kdf_hkdf_gettables(void)
 {
     return do_kdf_hkdf_gettables(0, 1);
 }
+
 static int test_kdf_hkdf_gettables_expandonly(void)
 {
     return do_kdf_hkdf_gettables(1, 1);
 }
+
 static int test_kdf_hkdf_gettables_no_digest(void)
 {
     return do_kdf_hkdf_gettables(1, 0);
@@ -323,7 +325,10 @@ static int test_kdf_hkdf_derive_set_params_fail(void)
 
     if (!TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_HKDF)))
         goto end;
-    /* Set the wrong type for the digest so that it causes a failure */
+    /*
+     * Set the wrong type for the digest so that it causes a failure
+     * inside kdf_hkdf_derive() when kdf_hkdf_set_ctx_params() is called
+     */
     params[0] = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_DIGEST, &i);
     params[1] = OSSL_PARAM_construct_end();
     if (!TEST_int_eq(EVP_KDF_derive(kctx, out, sizeof(out), params), 0))
