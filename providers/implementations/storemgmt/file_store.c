@@ -440,8 +440,8 @@ static int file_setup_decoders(struct file_ctx_st *ctx)
         for (to_algo = ossl_any_to_obj_algorithm;
              to_algo->algorithm_names != NULL;
              to_algo++) {
-            OSSL_DECODER *to_obj;
-            OSSL_DECODER_INSTANCE *to_obj_inst;
+            OSSL_DECODER *to_obj = NULL;
+            OSSL_DECODER_INSTANCE *to_obj_inst = NULL;
 
             /*
              * Create the internal last resort decoder implementation
