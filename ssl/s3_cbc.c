@@ -27,7 +27,9 @@
 #include "internal/cryptlib.h"
 
 #include <openssl/evp.h>
-#include <openssl/md5.h>
+#ifndef FIPS_MODULE
+# include <openssl/md5.h>
+#endif
 #include <openssl/sha.h>
 
 char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx);

@@ -25,11 +25,11 @@
 #include <openssl/dh.h>
 #include <openssl/ec.h>
 #include "crypto/evp.h"
-#include "crypto/asn1.h"
 #include "internal/provider.h"
 #include "evp_local.h"
 
 #if !defined(FIPS_MODULE)
+# include "crypto/asn1.h"
 
 int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 {
