@@ -142,8 +142,14 @@ static const struct cipher_data_st {
     { NID_aes_256_ctr, 16, 256 / 8, 16, EVP_CIPH_CTR_MODE, CRYPTO_AES_CTR },
 #endif
 #if 0                            /* Not yet supported */
-    { NID_aes_128_xts, 16, 128 / 8 * 2, 16, EVP_CIPH_XTS_MODE, CRYPTO_AES_XTS },
-    { NID_aes_256_xts, 16, 256 / 8 * 2, 16, EVP_CIPH_XTS_MODE, CRYPTO_AES_XTS },
+    { NID_aes_128_xts, 16, 128 / 8 * 2, 16, EVP_CIPH_XTS_MODE | EVP_CIPH_CUSTOM_IV, CRYPTO_AES_XTS },
+    { NID_aes_256_xts, 16, 256 / 8 * 2, 16, EVP_CIPH_XTS_MODE | EVP_CIPH_CUSTOM_IV, CRYPTO_AES_XTS },
+    { NID_aes_128_ofb128, 16, 128 / 8, 16, EVP_CIPH_OFB_MODE, CRYPTO_AES_OFB },
+    { NID_aes_192_ofb128, 16, 192 / 8, 16, EVP_CIPH_OFB_MODE, CRYPTO_AES_OFB },
+    { NID_aes_256_ofb128, 16, 256 / 8, 16, EVP_CIPH_OFB_MODE, CRYPTO_AES_OFB },
+    { NID_aes_128_cfb128, 16, 128 / 8, 16, EVP_CIPH_CFB_MODE, CRYPTO_AES_CFB },
+    { NID_aes_192_cfb128, 16, 192 / 8, 16, EVP_CIPH_CFB_MODE, CRYPTO_AES_CFB },
+    { NID_aes_256_cfb128, 16, 256 / 8, 16, EVP_CIPH_CFB_MODE, CRYPTO_AES_CFB },
 #endif
 #if !defined(CHECK_BSD_STYLE_MACROS) || defined(CRYPTO_AES_ECB)
     { NID_aes_128_ecb, 16, 128 / 8, 0, EVP_CIPH_ECB_MODE, CRYPTO_AES_ECB },
