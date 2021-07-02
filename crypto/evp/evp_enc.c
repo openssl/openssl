@@ -336,7 +336,6 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
 
         case EVP_CIPH_CFB_MODE:
         case EVP_CIPH_OFB_MODE:
-        case EVP_CIPH_XTS_MODE:
 
             ctx->num = 0;
             /* fall-through */
