@@ -419,13 +419,10 @@ void file_load_cleanup(void *construct_data)
 
 static int file_setup_decoders(struct file_ctx_st *ctx)
 {
-    EVP_PKEY *dummy; /* for ossl_decoder_ctx_setup_for_pkey() */
     OSSL_LIB_CTX *libctx = ossl_prov_ctx_get0_libctx(ctx->provctx);
     OSSL_DECODER *to_obj = NULL; /* Last resort decoder */
     OSSL_DECODER_INSTANCE *to_obj_inst = NULL;
-    OSSL_DECODER_CLEANUP *old_cleanup = NULL;
-    void *old_construct_data = NULL;
-    int ok = 0, expect_evp_pkey = 0;
+    int ok = 0;
 
     /* Setup for this session, so only if not already done */
     if (ctx->_.file.decoderctx == NULL) {
@@ -433,11 +430,6 @@ static int file_setup_decoders(struct file_ctx_st *ctx)
             ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
             goto err;
         }
-
-        expect_evp_pkey = (ctx->expected_type == 0
-                           || ctx->expected_type == OSSL_STORE_INFO_PARAMS
-                           || ctx->expected_type == OSSL_STORE_INFO_PUBKEY
-                           || ctx->expected_type == OSSL_STORE_INFO_PKEY);
 
         /* Make sure the input type is set */
         if (!OSSL_DECODER_CTX_set_input_type(ctx->_.file.decoderctx,
@@ -472,33 +464,16 @@ static int file_setup_decoders(struct file_ctx_st *ctx)
          */
         to_obj_inst = NULL;
 
-        /*
-         * Add on the usual decoder context for keys, with a dummy object.
-         * Since we're setting up our own constructor, we don't need to care
-         * more than that...
-         */
-        if ((expect_evp_pkey
-             && !ossl_decoder_ctx_setup_for_pkey(ctx->_.file.decoderctx,
-                                                 &dummy, NULL,
-                                                 libctx, ctx->_.file.propq))
-            || !OSSL_DECODER_CTX_add_extra(ctx->_.file.decoderctx,
-                                           libctx, ctx->_.file.propq)) {
+        /* Add on the usual extra decoders */
+        if (!OSSL_DECODER_CTX_add_extra(ctx->_.file.decoderctx,
+                                        libctx, ctx->_.file.propq)) {
             ERR_raise(ERR_LIB_PROV, ERR_R_OSSL_DECODER_LIB);
             goto err;
         }
 
         /*
-         * Then we throw away the installed finalizer data, and install our
-         * own instead.
-         */
-        old_cleanup = OSSL_DECODER_CTX_get_cleanup(ctx->_.file.decoderctx);
-        old_construct_data =
-            OSSL_DECODER_CTX_get_construct_data(ctx->_.file.decoderctx);
-        if (old_cleanup != NULL)
-            old_cleanup(old_construct_data);
-
-        /*
-         * Set the hooks.
+         * Then install our constructor hooks, which just passes decoded
+         * data to the load callback
          */
         if (!OSSL_DECODER_CTX_set_construct(ctx->_.file.decoderctx,
                                             file_load_construct)
