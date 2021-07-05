@@ -764,24 +764,25 @@ static int EVP_Update_loop_ccm(void *args)
 
     if (decrypt) {
         for (count = 0; COND(c[D_EVP][testnum]); count++) {
-            EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, sizeof(tag), tag);
+            (void)EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, sizeof(tag),
+                                      tag);
             /* reset iv */
-            EVP_DecryptInit_ex(ctx, NULL, NULL, NULL, iv);
+            (void)EVP_DecryptInit_ex(ctx, NULL, NULL, NULL, iv);
             /* counter is reset on every update */
-            EVP_DecryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
+            (void)EVP_DecryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
         }
     } else {
         for (count = 0; COND(c[D_EVP][testnum]); count++) {
             /* restore iv length field */
-            EVP_EncryptUpdate(ctx, NULL, &outl, NULL, lengths[testnum]);
+            (void)EVP_EncryptUpdate(ctx, NULL, &outl, NULL, lengths[testnum]);
             /* counter is reset on every update */
-            EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
+            (void)EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
         }
     }
     if (decrypt)
-        EVP_DecryptFinal_ex(ctx, buf, &outl);
+        (void)EVP_DecryptFinal_ex(ctx, buf, &outl);
     else
-        EVP_EncryptFinal_ex(ctx, buf, &outl);
+        (void)EVP_EncryptFinal_ex(ctx, buf, &outl);
     return count;
 }
 
@@ -2231,8 +2232,8 @@ int speed_main(int argc, char **argv)
 
                     /* SIV mode only allows for a single Update operation */
                     if (EVP_CIPHER_get_mode(evp_cipher) == EVP_CIPH_SIV_MODE)
-                        EVP_CIPHER_CTX_ctrl(loopargs[k].ctx, EVP_CTRL_SET_SPEED,
-                                            1, NULL);
+                        (void)EVP_CIPHER_CTX_ctrl(loopargs[k].ctx,
+                                                  EVP_CTRL_SET_SPEED, 1, NULL);
                 }
 
                 Time_F(START);
@@ -3628,8 +3629,9 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
                 mb_param.out = out;
                 mb_param.inp = inp;
                 mb_param.len = len;
-                EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_TLS1_1_MULTIBLOCK_ENCRYPT,
-                                    sizeof(mb_param), &mb_param);
+                (void)EVP_CIPHER_CTX_ctrl(ctx,
+                                          EVP_CTRL_TLS1_1_MULTIBLOCK_ENCRYPT,
+                                          sizeof(mb_param), &mb_param);
             } else {
                 int pad;
 
