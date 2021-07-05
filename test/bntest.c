@@ -320,11 +320,11 @@ static struct {
 static BIGNUM *set_signed_bn(int value)
 {
     BIGNUM *bn = BN_new();
-    const int abs = value < 0 ? -value : value;
+    const int abs_value = value < 0 ? -value : value;
 
     if (bn == NULL)
         return NULL;
-    if (!BN_set_word(bn, abs)) {
+    if (!BN_set_word(bn, abs_value)) {
         BN_free(bn);
         return NULL;
     }
