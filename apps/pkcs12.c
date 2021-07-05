@@ -571,8 +571,6 @@ int pkcs12_main(int argc, char **argv)
                                infile);
                     goto export_end;
                 }
-            } else {
-                ee_cert = X509_dup(sk_X509_value(certs, 0)); /* take 1st cert */
             }
         }
 
@@ -588,8 +586,13 @@ int pkcs12_main(int argc, char **argv)
             int vret;
             STACK_OF(X509) *chain2;
             X509_STORE *store;
+            X509 *ee_cert_tmp = ee_cert;
 
-            if (ee_cert == NULL) {
+            /* Assume the first cert if we haven't got anything else */
+            if (ee_cert_tmp == NULL && certs != NULL)
+                ee_cert_tmp = sk_X509_value(certs, 0);
+
+            if (ee_cert_tmp == NULL) {
                 BIO_printf(bio_err,
                            "No end entity certificate to check with -chain\n");
                 goto export_end;
@@ -600,7 +603,7 @@ int pkcs12_main(int argc, char **argv)
                     == NULL)
                 goto export_end;
 
-            vret = get_cert_chain(ee_cert, store, untrusted_certs, &chain2);
+            vret = get_cert_chain(ee_cert_tmp, store, untrusted_certs, &chain2);
             X509_STORE_free(store);
 
             if (vret == X509_V_OK) {
