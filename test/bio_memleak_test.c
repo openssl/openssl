@@ -10,6 +10,8 @@
 #include <string.h>
 #include <openssl/buffer.h>
 #include <openssl/bio.h>
+#include <openssl/pkcs7.h>
+#include <openssl/obj_mac.h>
 
 #include "testutil.h"
 
