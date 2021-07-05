@@ -896,6 +896,12 @@ unsigned char *WPACKET_get_curr(WPACKET *pkt);
 /* Returns true if the underlying buffer is actually NULL */
 int WPACKET_is_null_buf(WPACKET *pkt);
 
+/*
+ * Advances current write location, but does not allocate any bytes
+ * Intended to be used just after calling WPACKET_reserve_bytes()
+ */
+int WPACKET_advance_write(WPACKET *pkt, size_t len);
+
 /* Release resources in a WPACKET if a failure has occurred. */
 void WPACKET_cleanup(WPACKET *pkt);
 

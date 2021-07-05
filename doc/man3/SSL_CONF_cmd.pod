@@ -162,6 +162,19 @@ This is a synonym for the B<-groups> command.
 This sets the temporary curve used for ephemeral ECDH modes. Only used
 by servers.
 
+=item B<-cert_comp>
+
+Enables support for SSL/TLS compression, same as clearing
+B<SSL_OP_NO_CERTIFICATE_COMPRESSION>.
+This command was introduced in OpenSSL 3.0.0.
+
+=item B<-no_cert_comp>
+
+Disables support for SSL/TLS compression, same as setting
+B<SSL_OP_NO_CERTIFICATE_COMPRESSION>.
+
+=item B<-comp>
+
 The B<groups> argument is a curve name or the special value B<auto> which
 picks an appropriate curve based on client and server preferences. The
 curve can be either the B<NIST> name (e.g. B<P-256>) or an OpenSSL OID name
@@ -460,7 +473,7 @@ B<SessionTicket>: session ticket support, enabled by default. Inverse of
 B<SSL_OP_NO_TICKET>: that is B<-SessionTicket> is the same as setting
 B<SSL_OP_NO_TICKET>.
 
-B<Compression>: SSL/TLS compression support, enabled by default. Inverse
+B<Compression>: SSL/TLS compression support, disabled by default. Inverse
 of B<SSL_OP_NO_COMPRESSION>.
 
 B<EmptyFragments>: use empty fragments as a countermeasure against a
@@ -532,6 +545,10 @@ B<-CANames> is the same as setting B<SSL_OP_DISABLE_TLSEXT_CA_NAMES>.
 B<KTLS>: Enables kernel TLS if support has been compiled in, and it is supported
 by the negotiated ciphersuites and extensions. Equivalent to
 B<SSL_OP_ENABLE_KTLS>.
+
+B<CertificateCompression>: use the certificate compression extension, enabled by
+default. Inverse of B<SSL_OP_NO_CERTIFICATE_COMPRESSION>: that is,
+B<-CertificateCompression> is the same as setting B<SSL_OP_NO_CERTIFICATE_COMPRESSION>.
 
 =item B<VerifyMode>
 

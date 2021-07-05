@@ -194,6 +194,15 @@ servers. See the B<SECURE RENEGOTIATION> section for more details.
 Allow legacy insecure renegotiation between OpenSSL and unpatched servers
 B<only>. See the B<SECURE RENEGOTIATION> section for more details.
 
+=item SSL_OP_NO_CERTIFICATE_COMPRESSION
+
+Normally clients and servers will transparently attempt to negotiate the
+RFC8879 certificate compression option on TLSv1.3 connections.
+
+If this option is set, certificate compression is disabled. The extension
+will not be sent by either client or server, and will be ignored upon
+receipt.
+
 =item SSL_OP_NO_ENCRYPT_THEN_MAC
 
 Normally clients and servers will transparently attempt to negotiate the

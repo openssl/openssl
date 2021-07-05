@@ -373,9 +373,18 @@ CMS_R_UNWRAP_ERROR:157:unwrap error
 CMS_R_UNWRAP_FAILURE:180:unwrap failure
 CMS_R_VERIFICATION_FAILURE:158:verification failure
 CMS_R_WRAP_ERROR:159:wrap error
+COMP_R_BROTLI_DECODE_ERROR:102:brotli decode error
+COMP_R_BROTLI_DEFLATE_ERROR:103:brotli deflate error
+COMP_R_BROTLI_ENCODE_ERROR:106:brotli encode error
+COMP_R_BROTLI_INFLATE_ERROR:104:brotli inflate error
+COMP_R_BROTLI_NOT_SUPPORTED:105:brotli not supported
 COMP_R_ZLIB_DEFLATE_ERROR:99:zlib deflate error
 COMP_R_ZLIB_INFLATE_ERROR:100:zlib inflate error
 COMP_R_ZLIB_NOT_SUPPORTED:101:zlib not supported
+COMP_R_ZSTD_COMPRESS_ERROR:107:zstd compress error
+COMP_R_ZSTD_DECODE_ERROR:108:zstd decode error
+COMP_R_ZSTD_DECOMPRESS_ERROR:109:zstd decompress error
+COMP_R_ZSTD_NOT_SUPPORTED:110:zstd not supported
 CONF_R_ERROR_LOADING_DSO:110:error loading dso
 CONF_R_INVALID_PRAGMA:122:invalid pragma
 CONF_R_LIST_CANNOT_BE_NULL:115:list cannot be null
@@ -1236,6 +1245,7 @@ SSL_R_AT_LEAST_TLS_1_2_NEEDED_IN_SUITEB_MODE:158:\
 	at least (D)TLS 1.2 needed in Suite B mode
 SSL_R_BAD_CHANGE_CIPHER_SPEC:103:bad change cipher spec
 SSL_R_BAD_CIPHER:186:bad cipher
+SSL_R_BAD_COMPRESSION_ALGORITHM:305:bad compression algorithm
 SSL_R_BAD_DATA:390:bad data
 SSL_R_BAD_DATA_RETURNED_BY_CALLBACK:106:bad data returned by callback
 SSL_R_BAD_DECOMPRESSION:107:bad decompression
@@ -1319,6 +1329,7 @@ SSL_R_DH_PUBLIC_VALUE_LENGTH_IS_WRONG:148:dh public value length is wrong
 SSL_R_DIGEST_CHECK_FAILED:149:digest check failed
 SSL_R_DTLS_MESSAGE_TOO_BIG:334:dtls message too big
 SSL_R_DUPLICATE_COMPRESSION_ID:309:duplicate compression id
+SSL_R_DUPLICATE_EXTENSION:310:duplicate extension
 SSL_R_ECC_CERT_NOT_FOR_SIGNING:318:ecc cert not for signing
 SSL_R_ECDH_REQUIRED_FOR_SUITEB_MODE:374:ecdh required for suiteb mode
 SSL_R_EE_KEY_TOO_SMALL:399:ee key too small

@@ -132,6 +132,14 @@ int enc_main(int argc, char **argv)
     int do_zlib = 0;
     BIO *bzl = NULL;
 #endif
+#ifdef BROTLI
+    int do_brotli = 0;
+    BIO *bbrot = NULL;
+#endif
+#ifdef ZSTD
+    int do_zstd = 0;
+    BIO *bzstd = NULL;
+#endif
 
     /* first check the command name */
     if (strcmp(argv[0], "base64") == 0)
@@ -139,6 +147,14 @@ int enc_main(int argc, char **argv)
 #ifdef ZLIB
     else if (strcmp(argv[0], "zlib") == 0)
         do_zlib = 1;
+#endif
+#ifdef BROTLI
+    else if (strcmp(argv[0], "brotli") == 0)
+        do_brotli = 1;
+#endif
+#ifdef ZSTD
+    else if (strcmp(argv[0], "zstd") == 0)
+        do_zstd = 1;
 #endif
     else if (strcmp(argv[0], "enc") != 0)
         ciphername = argv[0];
@@ -317,14 +333,23 @@ int enc_main(int argc, char **argv)
         BIO_printf(bio_err, "bufsize=%d\n", bsize);
 
 #ifdef ZLIB
-    if (!do_zlib)
+    if (do_zlib)
+        base64 = 0;
 #endif
-        if (base64) {
-            if (enc)
-                outformat = FORMAT_BASE64;
-            else
-                informat = FORMAT_BASE64;
-        }
+#ifdef BROTLI
+    if (do_brotli)
+        base64 = 0;
+#endif
+#ifdef ZSTD
+    if (do_zstd)
+        base64 = 0;
+#endif
+    if (base64) {
+        if (enc)
+            outformat = FORMAT_BASE64;
+        else
+            informat = FORMAT_BASE64;
+    }
 
     strbuf = app_malloc(SIZE, "strbuf");
     buff = app_malloc(EVP_ENCODE_LENGTH(bsize), "evp buffer");
@@ -402,6 +427,36 @@ int enc_main(int argc, char **argv)
             wbio = BIO_push(bzl, wbio);
         else
             rbio = BIO_push(bzl, rbio);
+    }
+#endif
+
+#ifdef BROTLI
+    if (do_brotli) {
+        if ((bbrot = BIO_new(BIO_f_brotli())) == NULL)
+            goto end;
+        if (debug) {
+            BIO_set_callback_ex(bbrot, BIO_debug_callback_ex);
+            BIO_set_callback_arg(bbrot, (char *)bio_err);
+        }
+        if (enc)
+            wbio = BIO_push(bbrot, wbio);
+        else
+            rbio = BIO_push(bbrot, rbio);
+    }
+#endif
+
+#ifdef ZSTD
+    if (do_zstd) {
+        if ((bzstd = BIO_new(BIO_f_zstd())) == NULL)
+            goto end;
+        if (debug) {
+            BIO_set_callback(bzstd, BIO_debug_callback);
+            BIO_set_callback_arg(bzstd, (char *)bio_err);
+        }
+        if (enc)
+            wbio = BIO_push(bzstd, wbio);
+        else
+            rbio = BIO_push(bzstd, rbio);
     }
 #endif
 
@@ -636,6 +691,12 @@ int enc_main(int argc, char **argv)
     EVP_CIPHER_free(cipher);
 #ifdef ZLIB
     BIO_free(bzl);
+#endif
+#ifdef BROTLI
+    BIO_free(bbrot);
+#endif
+#ifdef ZSTD
+    BIO_free(bzstd);
 #endif
     release_engine(e);
     OPENSSL_free(pass);

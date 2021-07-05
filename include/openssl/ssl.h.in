@@ -331,6 +331,8 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
     /* Enable support for Kernel TLS */
 # define SSL_OP_ENABLE_KTLS                              SSL_OP_BIT(3)
 # define SSL_OP_TLSEXT_PADDING                           SSL_OP_BIT(4)
+/* Disable RFC8879 certificate compression */
+# define SSL_OP_NO_CERTIFICATE_COMPRESSION               SSL_OP_BIT(5)
 # define SSL_OP_SAFARI_ECDHE_ECDSA_BUG                   SSL_OP_BIT(6)
 # define SSL_OP_IGNORE_UNEXPECTED_EOF                    SSL_OP_BIT(7)
 # define SSL_OP_ALLOW_CLIENT_RENEGOTIATION               SSL_OP_BIT(8)
@@ -994,6 +996,7 @@ typedef enum {
     DTLS_ST_CR_HELLO_VERIFY_REQUEST,
     TLS_ST_CR_SRVR_HELLO,
     TLS_ST_CR_CERT,
+    TLS_ST_CR_COMP_CERT,
     TLS_ST_CR_CERT_STATUS,
     TLS_ST_CR_KEY_EXCH,
     TLS_ST_CR_CERT_REQ,
@@ -1003,6 +1006,7 @@ typedef enum {
     TLS_ST_CR_FINISHED,
     TLS_ST_CW_CLNT_HELLO,
     TLS_ST_CW_CERT,
+    TLS_ST_CW_COMP_CERT,
     TLS_ST_CW_KEY_EXCH,
     TLS_ST_CW_CERT_VRFY,
     TLS_ST_CW_CHANGE,
@@ -1013,10 +1017,12 @@ typedef enum {
     DTLS_ST_SW_HELLO_VERIFY_REQUEST,
     TLS_ST_SW_SRVR_HELLO,
     TLS_ST_SW_CERT,
+    TLS_ST_SW_COMP_CERT,
     TLS_ST_SW_KEY_EXCH,
     TLS_ST_SW_CERT_REQ,
     TLS_ST_SW_SRVR_DONE,
     TLS_ST_SR_CERT,
+    TLS_ST_SR_COMP_CERT,
     TLS_ST_SR_KEY_EXCH,
     TLS_ST_SR_CERT_VRFY,
     TLS_ST_SR_NEXT_PROTO,

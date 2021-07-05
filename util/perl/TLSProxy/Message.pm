@@ -28,6 +28,7 @@ use constant {
     MT_CLIENT_KEY_EXCHANGE => 16,
     MT_FINISHED => 20,
     MT_CERTIFICATE_STATUS => 22,
+    MT_COMPRESSED_CERTIFICATE => 25,
     MT_NEXT_PROTO => 67
 };
 
@@ -59,6 +60,7 @@ my %message_type = (
     MT_CLIENT_KEY_EXCHANGE, "ClientKeyExchange",
     MT_FINISHED, "Finished",
     MT_CERTIFICATE_STATUS, "CertificateStatus",
+    MT_COMPRESSED_CERTIFICATE, "CompressedCertificate",
     MT_NEXT_PROTO, "NextProto"
 );
 
@@ -76,6 +78,7 @@ use constant {
     EXT_PADDING => 21,
     EXT_ENCRYPT_THEN_MAC => 22,
     EXT_EXTENDED_MASTER_SECRET => 23,
+    EXT_COMPRESS_CERTIFICATE => 27,
     EXT_SESSION_TICKET => 35,
     EXT_KEY_SHARE => 51,
     EXT_PSK => 41,
