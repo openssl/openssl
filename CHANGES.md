@@ -30,6 +30,12 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * The ERR_GET_FUNC() function was removed.  With the loss of meaningful
+   function codes, this function can only cause problems for calling
+   applications.
+
+   *Paul Dale*
+
  * Add a configurable flag to output date formats as ISO 8601. Does not
    change the default date format.
 
@@ -1060,6 +1066,8 @@ breaking changes, and mappings for the large list of deprecated functions.
 
  * Removed the function names from error messages and deprecated the
    xxx_F_xxx define's.
+
+   *Richard Levitte*
 
  * Removed NextStep support and the macro OPENSSL_UNISTD
 
