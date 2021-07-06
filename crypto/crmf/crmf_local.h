@@ -188,6 +188,7 @@ typedef struct ossl_crmf_popoprivkey_st {
         ASN1_BIT_STRING *dhMAC; /* 2 */ /* Deprecated */
         OSSL_CRMF_PKMACVALUE *agreeMAC; /* 3 */
         ASN1_NULL *encryptedKey; /* 4 */
+        /* When supported, ASN1_NULL needs to be replaced by CMS_ENVELOPEDDATA */
     } value;
 } OSSL_CRMF_POPOPRIVKEY;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_POPOPRIVKEY)
@@ -329,11 +330,12 @@ struct ossl_crmf_certtemplate_st {
 struct ossl_crmf_certrequest_st {
     ASN1_INTEGER *certReqId;
     OSSL_CRMF_CERTTEMPLATE *certTemplate;
-    STACK_OF(OSSL_CRMF_ATTRIBUTETYPEANDVALUE) *controls;
+    STACK_OF(OSSL_CRMF_ATTRIBUTETYPEANDVALUE /* Controls expanded */) *controls;
 } /* OSSL_CRMF_CERTREQUEST */;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_CERTREQUEST)
 DECLARE_ASN1_DUP_FUNCTION(OSSL_CRMF_CERTREQUEST)
 
+/* Isn't there a better way to have this for ANY type? */
 struct ossl_crmf_attributetypeandvalue_st {
     ASN1_OBJECT *type;
     union {

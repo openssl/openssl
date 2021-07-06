@@ -456,6 +456,7 @@ static int check_msg_find_cert(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
     if (sender == NULL || msg->body == NULL)
         return 0; /* other NULL cases already have been checked */
     if (sender->type != GEN_DIRNAME) {
+        /* Possibly support more than X509_NAME */
         ERR_raise(ERR_LIB_CMP, CMP_R_SENDER_GENERALNAME_TYPE_NOT_SUPPORTED);
         return 0;
     }

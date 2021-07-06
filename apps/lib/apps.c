@@ -2315,6 +2315,7 @@ int do_X509_sign(X509 *cert, EVP_PKEY *pkey, const char *md,
             goto end;
     }
 
+    /* Should add further measures for ensuring default RFC 5280 compliance */
     if (mctx != NULL && do_sign_init(mctx, pkey, md, sigopts) > 0)
         rv = (X509_sign_ctx(cert, mctx) > 0);
  end:
