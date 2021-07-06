@@ -103,7 +103,8 @@ const OPTIONS req_options[] = {
      "Specify engine to be used for key generation operations"},
 #endif
     {"in", OPT_IN, '<', "X.509 request input file (default stdin)"},
-    {"inform", OPT_INFORM, 'F', "Input format - DER or PEM"},
+    {"inform", OPT_INFORM, 'F',
+     "CSR input format to use (PEM or DER; by default try PEM first)"},
     {"verify", OPT_VERIFY, '-', "Verify self-signature on the request"},
 
     OPT_SECTION("Certificate"),
@@ -729,8 +730,8 @@ int req_main(int argc, char **argv)
         if (keyfile != NULL)
             BIO_printf(bio_err,
                        "Warning: Not placing -key in cert or request since request is used\n");
-        req = load_csr(infile /* if NULL, reads from stdin */,
-                       informat, "X509 request");
+        req = load_csr_autofmt(infile /* if NULL, reads from stdin */,
+                               informat, "X509 request");
         if (req == NULL)
             goto end;
     } else if (infile != NULL) {

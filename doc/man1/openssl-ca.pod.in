@@ -119,8 +119,8 @@ signed by the CA.
 
 =item B<-inform> B<DER>|B<PEM>
 
-The format of the data in certificate request input files;
-unspecified by default.
+The format to use when loading certificate request (CSR) input files;
+by default PEM is tried first.
 See L<openssl-format-options(1)> for details.
 
 =item B<-ss_cert> I<filename>

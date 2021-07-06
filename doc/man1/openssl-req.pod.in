@@ -70,9 +70,14 @@ for use as root CAs for example.
 
 Print out a usage message.
 
-=item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
+=item B<-inform> B<DER>|B<PEM>
 
-The input and output formats; unspecified by default.
+The CSR input file format to use; by default PEM is tried first.
+See L<openssl-format-options(1)> for details.
+
+=item B<-outform> B<DER>|B<PEM>
+
+The output format; unspecified by default.
 See L<openssl-format-options(1)> for details.
 
 The data is a PKCS#10 object.

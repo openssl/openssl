@@ -155,7 +155,7 @@ The B<-ext> option can be used to further restrict which extensions to copy.
 
 =item B<-inform> B<DER>|B<PEM>
 
-The input file format; unspecified by default.
+The input file format to use; by default PEM is tried first.
 See L<openssl-format-options(1)> for details.
 
 =item B<-vfyopt> I<nm>:I<v>
