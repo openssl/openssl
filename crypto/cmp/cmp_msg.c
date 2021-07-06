@@ -566,6 +566,7 @@ OSSL_CMP_MSG *ossl_cmp_rr_new(OSSL_CMP_CTX *ctx)
     if (!sk_OSSL_CMP_REVDETAILS_push(msg->body->value.rr, rd))
         goto err;
     rd = NULL;
+    /* Revocation Passphrase according to section 5.3.19.9 could be set here */
 
     if (!ossl_cmp_msg_protect(ctx, msg))
         goto err;
