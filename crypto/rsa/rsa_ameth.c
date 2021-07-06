@@ -738,13 +738,6 @@ static int rsa_int_export_to(const EVP_PKEY *from, int rsa_type,
 
     if (tmpl == NULL)
         return 0;
-    /*
-     * If the RSA method is foreign, then we can't be sure of anything, and
-     * can therefore not export or pretend to export.
-     */
-    if (RSA_get_method(rsa) != RSA_PKCS1_OpenSSL())
-        goto err;
-
     /* Public parameters must always be present */
     if (RSA_get0_n(rsa) == NULL || RSA_get0_e(rsa) == NULL)
         goto err;
