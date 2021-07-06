@@ -234,7 +234,6 @@ DTLS_get_link_min_mtu                   define
 DTLS_set_link_mtu                       define
 ENGINE_cleanup                          define deprecated 1.1.0
 ERR_FATAL_ERROR                         define
-ERR_GET_FUNC                            define
 ERR_GET_LIB                             define
 ERR_GET_REASON                          define
 ERR_PACK                                define
