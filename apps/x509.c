@@ -70,7 +70,7 @@ const OPTIONS x509_options[] = {
     {"copy_extensions", OPT_COPY_EXTENSIONS, 's',
      "copy extensions when converting from CSR to x509 or vice versa"},
     {"inform", OPT_INFORM, 'f',
-     "CSR input file format (DER or PEM) - default PEM"},
+     "CSR input file format to try first (DER or PEM) - default PEM"},
     {"vfyopt", OPT_VFYOPT, 's', "CSR verification parameter in n:v form"},
     {"key", OPT_KEY, 's',
      "Key for signing, and to include unless using -force_pubkey"},
@@ -706,7 +706,7 @@ int x509_main(int argc, char **argv)
         if (infile == NULL)
             BIO_printf(bio_err,
                        "Warning: Reading cert request from stdin since no -in option is given\n");
-        req = load_csr(infile, informat, "certificate request input");
+        req = load_csr_autofmt(infile, informat, "certificate request input");
         if (req == NULL)
             goto end;
 
