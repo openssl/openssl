@@ -686,7 +686,7 @@ struct evp_pkey_st {
 #ifndef FIPS_MODULE
     STACK_OF(X509_ATTRIBUTE) *attributes; /* [ 0 ] */
     int save_parameters;
-    int foreign:1; /* the low-level key is using an engine or an app-method */
+    unsigned int foreign:1; /* the low-level key is using an engine or an app-method */
     CRYPTO_EX_DATA ex_data;
 #endif
 
