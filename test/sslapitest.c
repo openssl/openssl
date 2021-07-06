@@ -4751,14 +4751,14 @@ static int set_ssl_groups(SSL *serverssl, SSL *clientssl, int clientmulti,
  * was offered in the resumption ClientHello.
  *
  * Using E for the number of EC groups and F for the number of FF groups:
- * E tests of ECDHE with TLS 1.3, client sends only one group
- * F tests of FFDHE with TLS 1.3, client sends only one group
- * E tests of ECDHE with TLS 1.2, client sends only one group
- * F tests of FFDHE with TLS 1.2, client sends only one group
  * E tests of ECDHE with TLS 1.3, server only has one group
  * F tests of FFDHE with TLS 1.3, server only has one group
  * E tests of ECDHE with TLS 1.2, server only has one group
  * F tests of FFDHE with TLS 1.2, server only has one group
+ * E tests of ECDHE with TLS 1.3, client sends only one group
+ * F tests of FFDHE with TLS 1.3, client sends only one group
+ * E tests of ECDHE with TLS 1.2, client sends only one group
+ * F tests of FFDHE with TLS 1.2, client sends only one group
  */
 static int test_negotiated_group(int idx)
 {
