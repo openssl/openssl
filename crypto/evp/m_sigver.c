@@ -214,7 +214,8 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
      */
     if (ret > 0 || mdname != NULL)
         goto end;
-    ERR_raise(ERR_LIB_EVP, EVP_R_NO_DEFAULT_DIGEST);
+    if (type == NULL)   /* This check is redundant but clarifies matters */
+        ERR_raise(ERR_LIB_EVP, EVP_R_NO_DEFAULT_DIGEST);
 
  err:
     evp_pkey_ctx_free_old_ops(locpctx);
