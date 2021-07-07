@@ -204,11 +204,11 @@ int ec_key_simple_generate_key(EC_KEY *eckey)
     const BIGNUM *order = NULL;
     EC_POINT *pub_key = NULL;
 
-    if ((ctx = BN_CTX_new()) == NULL)
+    if ((ctx = BN_CTX_secure_new()) == NULL)
         goto err;
 
     if (eckey->priv_key == NULL) {
-        priv_key = BN_new();
+        priv_key = BN_secure_new();
         if (priv_key == NULL)
             goto err;
     } else
@@ -242,7 +242,7 @@ int ec_key_simple_generate_key(EC_KEY *eckey)
     if (eckey->pub_key == NULL)
         EC_POINT_free(pub_key);
     if (eckey->priv_key != priv_key)
-        BN_free(priv_key);
+        BN_clear_free(priv_key);
     BN_CTX_free(ctx);
     return ok;
 }
