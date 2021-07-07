@@ -29,8 +29,7 @@
 
 #undef SPARC_T4_MONT
 #if defined(OPENSSL_BN_ASM_MONT) && (defined(__sparc__) || defined(__sparc))
-# include "sparc_arch.h"
-extern unsigned int OPENSSL_sparcv9cap_P[];
+# include "crypto/sparc_arch.h"
 # define SPARC_T4_MONT
 #endif
 

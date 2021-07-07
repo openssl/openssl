@@ -39,7 +39,10 @@ $output = pop and open STDOUT,">$output";
 my ($inp,$out,$key,$rounds,$tmp,$mask) = map("%o$_",(0..5));
 
 $code.=<<___;
-#include "sparc_arch.h"
+#ifndef __ASSEMBLER__
+# define __ASSEMBLER__ 1
+#endif
+#include "crypto/sparc_arch.h"
 
 #define LOCALS (STACK_BIAS+STACK_FRAME)
 
