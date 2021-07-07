@@ -40,7 +40,7 @@ IF[{- !$disabled{asm} -}]
   ENDIF
 
   $BNASM_sparcv9=asm/sparcv8plus.S sparcv9-mont.S sparcv9a-mont.S vis3-mont.S \
-          sparct4-mont.S
+          sparct4-mont.S bn_sparc.c
   $BNDEF_sparcv9=OPENSSL_BN_ASM_MONT
   $BNASM_sparcv9_ec2m=sparcv9-gf2m.S
   $BNDEF_sparcv9_ec2m=OPENSSL_BN_ASM_GF2m

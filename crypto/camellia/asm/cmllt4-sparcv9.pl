@@ -66,7 +66,10 @@ $::evp=1;	# if $evp is set to 0, script generates module with
 my ($inp,$out,$key,$rounds,$tmp,$mask)=map("%o$_",(0..5));
 
 $code=<<___;
-#include "sparc_arch.h"
+#ifndef __ASSEMBLER__
+# define __ASSEMBLER__ 1
+#endif
+#include "crypto/sparc_arch.h"
 
 .text
 
