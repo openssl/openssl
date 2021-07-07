@@ -80,7 +80,10 @@ $inp="%i2";
 $len="%i3";
 
 $code.=<<___;
-#include "sparc_arch.h"
+#ifndef __ASSEMBLER__
+# define __ASSEMBLER__ 1
+#endif
+#include "crypto/sparc_arch.h"
 
 #ifdef  __arch64__
 .register	%g2,#scratch

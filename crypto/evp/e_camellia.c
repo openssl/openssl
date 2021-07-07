@@ -46,8 +46,7 @@ typedef struct {
 #if defined(AES_ASM) && (defined(__sparc) || defined(__sparc__))
 /* ---------^^^ this is not a typo, just a way to detect that
  * assembler support was in general requested... */
-# include "sparc_arch.h"
-
+# include "crypto/sparc_arch.h"
 
 static int cmll_t4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                             const unsigned char *iv, int enc)

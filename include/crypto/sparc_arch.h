@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2012-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -113,6 +113,10 @@
         mov     %o7, tmp;                       \
         SPARC_LOAD_ADDRESS(SYM, reg)            \
         mov     tmp, %o7;
+# endif
+
+# ifndef __ASSEMBLER__
+extern unsigned int OPENSSL_sparcv9cap_P[2];
 # endif
 
 #endif                          /* OSSL_CRYPTO_SPARC_ARCH_H */

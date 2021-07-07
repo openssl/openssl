@@ -52,7 +52,10 @@ my ($h0,$h1,$h2,$h3, $t0,$t1,$t2)	= map("%o$_",(0..5,7));
 my ($d0,$d1,$d2,$d3)			= map("%g$_",(1..4));
 
 $code.=<<___;
-#include "sparc_arch.h"
+#ifndef __ASSEMBLER__
+# define __ASSEMBLER__ 1
+#endif
+#include "crypto/sparc_arch.h"
 
 #ifdef	__arch64__
 .register	%g2,#scratch

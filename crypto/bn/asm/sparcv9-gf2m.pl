@@ -38,7 +38,10 @@ $tab="%l0";
 ($lo,$hi,$b)=("%g1",$a8,"%o7"); $a=$lo;
 
 $code.=<<___;
-#include <sparc_arch.h>
+#ifndef __ASSEMBLER__
+# define __ASSEMBLER__ 1
+#endif
+#include "crypto/sparc_arch.h"
 
 #ifdef __arch64__
 .register	%g2,#scratch
