@@ -362,7 +362,7 @@ libclean:
 	-del /Q /F $(LIBS) libcrypto.* libssl.* ossl_static.pdb
 
 clean: libclean
-	{- join("\n\t", map { "-del /Q /F $_" } @PROGRAMS) -}
+	@{- join("\n\t", map { "-del /Q /F $_" } @PROGRAMS) -}
 	-del /Q /F $(ENGINES)
 	-del /Q /F $(SCRIPTS)
 	-del /Q /F $(GENERATED_MANDATORY)
