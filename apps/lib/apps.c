@@ -15,6 +15,12 @@
 # define _POSIX_C_SOURCE 2
 #endif
 
+#ifndef OPENSSL_NO_ENGINE
+/* We need to use some deprecated APIs */
+# define OPENSSL_SUPPRESS_DEPRECATED
+# include <openssl/engine.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -3294,4 +3300,30 @@ EVP_PKEY *app_paramgen(EVP_PKEY_CTX *ctx, const char *alg)
         app_bail_out("%s: Generating %s key parameters failed\n",
                      opt_getprog(), alg != NULL ? alg : "asymmetric");
     return res;
+}
+
+/*
+ * Return non-zero if the legacy path is still an option.
+ * This decision is based on the global command line operations and the
+ * behaviour thus far.
+ */
+int opt_legacy_okay(void)
+{
+    int provider_options = opt_provider_option_given();
+    int libctx = app_get0_libctx() != NULL || app_get0_propq() != NULL;
+#ifndef OPENSSL_NO_ENGINE
+    ENGINE *e = ENGINE_get_first();
+
+    if (e != NULL) {
+        ENGINE_free(e);
+        return 1;
+    }
+#endif
+    /*
+     * Having a provider option specified or a custom library context or
+     * property query, is a sure sign we're not using legacy.
+     */
+    if (provider_options || libctx)
+        return 0;
+    return 1;
 }
