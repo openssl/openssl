@@ -3312,18 +3312,5 @@ int opt_legacy_okay(void)
      */
     if (provider_options || libctx)
         return 0;
-#if 0
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-    /* Having a loaded engine is a strong indication for legacy being in use */
-    {
-        ENGINE *e;
-
-        if ((e = ENGINE_get_first()) != NULL) {
-            ENGINE_free(e); /* Just a down ref, not a free */
-            return 1;
-        }
-    }
-#endif
-#endif
     return 1;
 }
