@@ -63,6 +63,7 @@ sub sharedname_simple {
 }
 
 sub sharedlib_simple {
+    return undef if $_[0]->shlibext() eq $_[0]->shlibextsimple();
     return platform::BASE::__concat($_[0]->sharedname_simple($_[1]),
                                     $_[0]->shlibextsimple());
 }
