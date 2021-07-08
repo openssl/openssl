@@ -1392,7 +1392,7 @@ FORCE:
 
 # Building targets ###################################################
 
-libcrypto.pc libssl.pc openssl.pc: configdata.pm $(LIBS) {- join(" ",map { platform->sharedlib_simple($_) // platform->sharedlib_import($_) // () } @{$unified_info{libraries}}) -}
+libcrypto.pc libssl.pc openssl.pc: configdata.pm $(LIBS) {- join(" ",map { platform->sharedlib_simple($_) // platform->sharedlib_import($_) // platform->sharedlib($_) // () } @{$unified_info{libraries}}) -}
 libcrypto.pc:
 	@ ( echo 'prefix=$(INSTALLTOP)'; \
 	    echo 'exec_prefix=$${prefix}'; \
@@ -1484,6 +1484,7 @@ reconfigure reconf:
       # On Unix platforms, we depend on {shlibname}.so
       return map { platform->sharedlib_simple($_)
                    // platform->sharedlib_import($_)
+                   // platform->sharedlib($_)
                    // platform->staticlib($_)
                  } @_;
   }
