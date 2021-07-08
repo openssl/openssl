@@ -257,7 +257,7 @@ int OSSL_HTTP_REQ_CTX_set_expected(OSSL_HTTP_REQ_CTX *rctx,
     rctx->expect_asn1 = asn1;
     if (timeout >= 0)
         rctx->max_time = timeout > 0 ? time(NULL) + timeout : 0;
-    else
+    else /* take over any |overall_timeout| arg of OSSL_HTTP_open(), else 0 */
         rctx->max_time = rctx->max_total_time;
     rctx->keep_alive = keep_alive;
     return 1;
