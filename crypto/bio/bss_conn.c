@@ -42,6 +42,7 @@ typedef struct bio_connect_st {
 static int conn_write(BIO *h, const char *buf, int num);
 static int conn_read(BIO *h, char *buf, int size);
 static int conn_puts(BIO *h, const char *str);
+static int conn_gets(BIO *h, char *buf, int size);
 static long conn_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int conn_new(BIO *h);
 static int conn_free(BIO *data);
@@ -68,7 +69,7 @@ static const BIO_METHOD methods_connectp = {
     bread_conv,
     conn_read,
     conn_puts,
-    NULL,                       /* conn_gets, */
+    conn_gets,
     conn_ctrl,
     conn_new,
     conn_free,
@@ -593,6 +594,56 @@ static int conn_puts(BIO *bp, const char *str)
     n = strlen(str);
     ret = conn_write(bp, str, n);
     return ret;
+}
+
+int conn_gets(BIO *bio, char *buf, int size)
+{
+    BIO_CONNECT *data;
+    char *ptr = buf;
+    int ret = 0;
+
+    if (buf == NULL) {
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
+    }
+    if (size <= 0) {
+        ERR_raise(ERR_LIB_BIO, BIO_R_INVALID_ARGUMENT);
+        return -1;
+    }
+    *buf = '\0';
+
+    if (bio == NULL || bio->ptr == NULL) {
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
+    }
+    data = (BIO_CONNECT *)bio->ptr;
+    if (data->state != BIO_CONN_S_OK) {
+        ret = conn_state(bio, data);
+        if (ret <= 0)
+            return ret;
+    }
+
+    clear_socket_error();
+    while (size-- > 1) {
+# ifndef OPENSSL_NO_KTLS
+        if (BIO_get_ktls_recv(bio))
+            ret = ktls_read_record(bio->num, ptr, 1);
+        else
+# endif
+            ret = readsocket(bio->num, ptr, 1);
+        BIO_clear_retry_flags(bio);
+        if (ret <= 0) {
+            if (BIO_sock_should_retry(ret))
+                BIO_set_retry_read(bio);
+            else if (ret == 0)
+                bio->flags |= BIO_FLAGS_IN_EOF;
+            break;
+        }
+        if (*ptr++ == '\n')
+            break;
+    }
+    *ptr = '\0';
+    return ret > 0 || (bio->flags & BIO_FLAGS_IN_EOF) != 0 ? ptr - buf : ret;
 }
 
 BIO *BIO_new_connect(const char *str)
