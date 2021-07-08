@@ -8,7 +8,7 @@ opt_begin, opt_next, opt_flag, opt_arg, opt_unknown, opt_cipher,
 opt_cipher_any, opt_cipher_silent, opt_md,
 opt_int, opt_int_arg, opt_long, opt_ulong, opt_intmax, opt_uintmax,
 opt_format, opt_isdir, opt_string, opt_pair,
-opt_num_rest, opt_rest
+opt_num_rest, opt_rest, opt_legacy_okay
 - Option parsing for commands and tests
 
 =head1 SYNOPSIS
@@ -52,6 +52,8 @@ opt_num_rest, opt_rest
 
  int opt_num_rest(void);
  char **opt_rest(void);
+
+ int opt_legacy_okay(void);
 
 =head1 DESCRIPTION
 
@@ -289,6 +291,12 @@ The opt_num_rest() function returns what is left.
 The opt_rest() function returns a pointer to the first non-option.
 If there were no parameters, it will point to the NULL that is
 at the end of the standard I<argv> array.
+
+The opt_legacy_okay() function returns true if no options have been
+specified that would preclude using legacy code paths.  Currently,
+the various provider options preclude legacy operation.  This means,
+for example, that specifying both B<-provider> and B<-engine> in the
+same command line will not work as expected.
 
 =head2 Common Options
 
