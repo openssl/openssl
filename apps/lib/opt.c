@@ -378,8 +378,10 @@ int opt_cipher_silent(const char *name, EVP_CIPHER **cipherp)
     EVP_CIPHER *c;
 
     ERR_set_mark();
-    if ((c = EVP_CIPHER_fetch(NULL, name, NULL)) != NULL
-        || (c = (EVP_CIPHER *)EVP_get_cipherbyname(name)) != NULL) {
+    if ((c = EVP_CIPHER_fetch(app_get0_libctx(), name,
+                              app_get0_propq())) != NULL
+        || (opt_legacy_okay()
+            && (c = (EVP_CIPHER *)EVP_get_cipherbyname(name)) != NULL)) {
         ERR_pop_to_mark();
         if (cipherp != NULL) {
             EVP_CIPHER_free(*cipherp);
@@ -429,12 +431,19 @@ int opt_cipher(const char *name, EVP_CIPHER **cipherp)
  */
 int opt_md_silent(const char *name, EVP_MD **mdp)
 {
-    EVP_MD_free(*mdp);
+    EVP_MD *md;
 
     ERR_set_mark();
-    if ((*mdp = EVP_MD_fetch(NULL, name, NULL)) != NULL
-        || (*mdp = (EVP_MD *)EVP_get_digestbyname(name)) != NULL) {
+    if ((md = EVP_MD_fetch(app_get0_libctx(), name, app_get0_propq())) != NULL
+        || (opt_legacy_okay()
+            && (md = (EVP_MD *)EVP_get_digestbyname(name)) != NULL)) {
         ERR_pop_to_mark();
+        if (mdp != NULL) {
+            EVP_MD_free(*mdp);
+            *mdp = md;
+        } else {
+            EVP_MD_free(md);
+        }
         return 1;
     }
     ERR_clear_last_mark();
