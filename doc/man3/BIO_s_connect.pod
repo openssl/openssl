@@ -44,7 +44,7 @@ on the underlying connection. If no connection is established
 and the port and hostname (see below) is set up properly then
 a connection is established first.
 
-Connect BIOs support BIO_puts() but not BIO_gets().
+Connect BIOs support BIO_puts() and BIO_gets().
 
 If the close flag is set on a connect BIO then any active
 connection is shutdown and the socket closed when the BIO
@@ -198,6 +198,8 @@ L<BIO_ADDR(3)>, L<BIO_parse_hostserv(3)>
 BIO_set_conn_int_port(), BIO_get_conn_int_port(), BIO_set_conn_ip(), and BIO_get_conn_ip()
 were removed in OpenSSL 1.1.0.
 Use BIO_set_conn_address() and BIO_get_conn_address() instead.
+
+Connect BIOs support BIO_gets() since OpenSSL 3.1.
 
 =head1 COPYRIGHT
 
