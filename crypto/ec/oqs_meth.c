@@ -76,9 +76,6 @@ typedef enum {
 
 int oqssl_sig_nids_list[] = {
 ///// OQS_TEMPLATE_FRAGMENT_LIST_KNOWN_NIDS_START
-        NID_oqs_sig_default,
-        NID_p256_oqs_sig_default,
-        NID_rsa3072_oqs_sig_default,
         NID_dilithium2,
         NID_p256_dilithium2,
         NID_rsa3072_dilithium2,
@@ -129,8 +126,6 @@ int oqssl_kem_nids_list[] = {
         NID_frodo976shake,
         NID_frodo1344aes,
         NID_frodo1344shake,
-        NID_bike1l1cpa,
-        NID_bike1l3cpa,
         NID_kyber512,
         NID_kyber768,
         NID_kyber1024,
@@ -149,8 +144,8 @@ int oqssl_kem_nids_list[] = {
         NID_sikep503,
         NID_sikep610,
         NID_sikep751,
-        NID_bike1l1fo,
-        NID_bike1l3fo,
+        NID_bikel1,
+        NID_bikel3,
         NID_kyber90s512,
         NID_kyber90s768,
         NID_kyber90s1024,
@@ -193,10 +188,6 @@ char* get_oqs_alg_name(int openssl_nid)
   switch (openssl_nid)
   {
 ///// OQS_TEMPLATE_FRAGMENT_ASSIGN_SIG_ALG_START
-    case NID_oqs_sig_default:
-    case NID_p256_oqs_sig_default:
-    case NID_rsa3072_oqs_sig_default:
-      return OQS_SIG_alg_default;
     case NID_dilithium2:
     case NID_p256_dilithium2:
     case NID_rsa3072_dilithium2:
@@ -251,8 +242,6 @@ char* get_oqs_alg_name(int openssl_nid)
     case NID_p256_sphincsshake256128frobust:
     case NID_rsa3072_sphincsshake256128frobust:
       return OQS_SIG_alg_sphincs_shake256_128f_robust;
-    case NID_oqs_kem_default:
-      return OQS_KEM_alg_default;
     case NID_frodo640aes:
     case NID_p256_frodo640aes:
       return OQS_KEM_alg_frodokem_640_aes;
@@ -271,12 +260,6 @@ char* get_oqs_alg_name(int openssl_nid)
     case NID_frodo1344shake:
     case NID_p521_frodo1344shake:
       return OQS_KEM_alg_frodokem_1344_shake;
-    case NID_bike1l1cpa:
-    case NID_p256_bike1l1cpa:
-      return OQS_KEM_alg_bike1_l1_cpa;
-    case NID_bike1l3cpa:
-    case NID_p384_bike1l3cpa:
-      return OQS_KEM_alg_bike1_l3_cpa;
     case NID_kyber512:
     case NID_p256_kyber512:
       return OQS_KEM_alg_kyber_512;
@@ -331,12 +314,12 @@ char* get_oqs_alg_name(int openssl_nid)
     case NID_sikep751:
     case NID_p521_sikep751:
       return OQS_KEM_alg_sike_p751;
-    case NID_bike1l1fo:
-    case NID_p256_bike1l1fo:
-      return OQS_KEM_alg_bike1_l1_fo;
-    case NID_bike1l3fo:
-    case NID_p384_bike1l3fo:
-      return OQS_KEM_alg_bike1_l3_fo;
+    case NID_bikel1:
+    case NID_p256_bikel1:
+      return OQS_KEM_alg_bike_l1;
+    case NID_bikel3:
+    case NID_p384_bikel3:
+      return OQS_KEM_alg_bike_l3;
     case NID_kyber90s512:
     case NID_p256_kyber90s512:
       return OQS_KEM_alg_kyber_512_90s;
@@ -384,8 +367,6 @@ static int is_oqs_hybrid_alg(int openssl_nid)
   switch (openssl_nid)
   {
 ///// OQS_TEMPLATE_FRAGMENT_LIST_HYBRID_NIDS_START
-    case NID_p256_oqs_sig_default:
-    case NID_rsa3072_oqs_sig_default:
     case NID_p256_dilithium2:
     case NID_rsa3072_dilithium2:
     case NID_p384_dilithium3:
@@ -423,7 +404,6 @@ static int get_classical_nid(int hybrid_id)
   switch (hybrid_id)
   {
 ///// OQS_TEMPLATE_FRAGMENT_ASSIGN_CLASSICAL_NIDS_START
-    case NID_rsa3072_oqs_sig_default:
     case NID_rsa3072_dilithium2:
     case NID_rsa3072_dilithium2_aes:
     case NID_rsa3072_falcon512:
@@ -434,7 +414,6 @@ static int get_classical_nid(int hybrid_id)
     case NID_rsa3072_sphincssha256128frobust:
     case NID_rsa3072_sphincsshake256128frobust:
       return NID_rsaEncryption;
-    case NID_p256_oqs_sig_default:
     case NID_p256_dilithium2:
     case NID_p256_dilithium2_aes:
     case NID_p256_falcon512:
@@ -463,9 +442,6 @@ static int get_oqs_nid(int hybrid_id)
   switch (hybrid_id)
   {
 ///// OQS_TEMPLATE_FRAGMENT_ASSIGN_OQS_NID_START
-    case NID_p256_oqs_sig_default:
-    case NID_rsa3072_oqs_sig_default:
-      return NID_oqs_sig_default;
     case NID_p256_dilithium2:
     case NID_rsa3072_dilithium2:
       return NID_dilithium2;
@@ -622,10 +598,6 @@ static int get_oqs_security_bits(int openssl_nid)
   switch (openssl_nid)
   {
 ///// OQS_TEMPLATE_FRAGMENT_GET_SIG_SECURITY_BITS_START
-    case NID_oqs_sig_default:
-    case NID_p256_oqs_sig_default:
-    case NID_rsa3072_oqs_sig_default:
-      return 128;
     case NID_dilithium2:
     case NID_p256_dilithium2:
     case NID_rsa3072_dilithium2:
@@ -1252,9 +1224,6 @@ static int oqs_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
     if (
     (
 ///// OQS_TEMPLATE_FRAGMENT_CHECK_IF_KNOWN_NID_START
-        nid != NID_oqs_sig_default &&
-        nid != NID_p256_oqs_sig_default &&
-        nid != NID_rsa3072_oqs_sig_default &&
         nid != NID_dilithium2 &&
         nid != NID_p256_dilithium2 &&
         nid != NID_rsa3072_dilithium2 &&
@@ -1854,9 +1823,6 @@ DEFINE_OQS_SIGN_INFO_SET(ALG, NID_ALG)                                \
 DEFINE_OQS_EVP_PKEY_METHOD(ALG, NID_ALG)                              \
 DEFINE_OQS_EVP_PKEY_ASN1_METHOD(ALG, NID_ALG, SHORT_NAME, LONG_NAME)
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_OQS_EVP_METHS_START
-DEFINE_OQS_EVP_METHODS(oqs_sig_default, NID_oqs_sig_default, "oqs_sig_default", "OpenSSL OQS Default Signature Algorithm algorithm")
-DEFINE_OQS_EVP_METHODS(p256_oqs_sig_default, NID_p256_oqs_sig_default, "p256_oqs_sig_default", "OpenSSL ECDSA p256 OQS Default Signature Algorithm algorithm")
-DEFINE_OQS_EVP_METHODS(rsa3072_oqs_sig_default, NID_rsa3072_oqs_sig_default, "rsa3072_oqs_sig_default", "OpenSSL RSA3072 OQS Default Signature Algorithm algorithm")
 DEFINE_OQS_EVP_METHODS(dilithium2, NID_dilithium2, "dilithium2", "OpenSSL Dilithium2 algorithm")
 DEFINE_OQS_EVP_METHODS(p256_dilithium2, NID_p256_dilithium2, "p256_dilithium2", "OpenSSL ECDSA p256 Dilithium2 algorithm")
 DEFINE_OQS_EVP_METHODS(rsa3072_dilithium2, NID_rsa3072_dilithium2, "rsa3072_dilithium2", "OpenSSL RSA3072 Dilithium2 algorithm")

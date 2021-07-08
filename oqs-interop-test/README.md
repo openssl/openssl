@@ -4,7 +4,7 @@ This directory contains tests of interoperability between OQS-OpenSSL and OQS-Bo
 
 There are two types of tests:
 
-- The "basic" TLS test suite: This first sets the server signature algorithm to `oqs_sig_default` and establishes a TLS connection for each key-exchange algorithm, and next sets the server key-exchange algorithm to `oqs_kem_default` and establishes a TLS connection for each signature algorithm.
+- The "basic" TLS test suite: This first sets the server signature algorithm to `dilithium2` and establishes a TLS connection for each key-exchange algorithm, and next sets the server key-exchange algorithm to `frodo640aes` and establishes a TLS connection for each signature algorithm.
 
 - The "full" TLS test suite, which tests TLS connections for all possible pairs of signature and key-exchange algorithms.
 

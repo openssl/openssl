@@ -60,9 +60,6 @@ static const EVP_PKEY_ASN1_METHOD *standard_methods[] = {
     &sm2_asn1_meth,
 #endif
 ///// OQS_TEMPLATE_FRAGMENT_SIG_ASN1_METHS_START
-    &oqs_sig_default_asn1_meth,
-    &p256_oqs_sig_default_asn1_meth,
-    &rsa3072_oqs_sig_default_asn1_meth,
     &dilithium2_asn1_meth,
     &p256_dilithium2_asn1_meth,
     &rsa3072_dilithium2_asn1_meth,

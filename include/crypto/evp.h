@@ -113,9 +113,6 @@ extern const EVP_PKEY_METHOD hkdf_pkey_meth;
 extern const EVP_PKEY_METHOD poly1305_pkey_meth;
 extern const EVP_PKEY_METHOD siphash_pkey_meth;
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_EVP_METHS_START
-extern const EVP_PKEY_METHOD oqs_sig_default_pkey_meth;
-extern const EVP_PKEY_METHOD p256_oqs_sig_default_pkey_meth;
-extern const EVP_PKEY_METHOD rsa3072_oqs_sig_default_pkey_meth;
 extern const EVP_PKEY_METHOD dilithium2_pkey_meth;
 extern const EVP_PKEY_METHOD p256_dilithium2_pkey_meth;
 extern const EVP_PKEY_METHOD rsa3072_dilithium2_pkey_meth;

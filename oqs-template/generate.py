@@ -8,6 +8,8 @@ import os
 import shutil
 import subprocess
 import yaml
+import json
+import sys
 
 # For list.append in Jinja templates
 Jinja2 = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath="."),extensions=['jinja2.ext.do'])
@@ -50,13 +52,48 @@ def populate(filename, config, delimiter, overwrite=False):
 def load_config(include_disabled_sigs=False):
     config = file_get_contents(os.path.join('oqs-template', 'generate.yml'), encoding='utf-8')
     config = yaml.safe_load(config)
+
+    # remove KEMs without NID (old stuff)
+    newkems = []
+    for kem in config['kems']:
+        if 'nid' in kem:
+           newkems.append(kem)
+    config['kems']=newkems
+
     if include_disabled_sigs:
         return config
     for sig in config['sigs']:
         sig['variants'] = [variant for variant in sig['variants'] if variant['enable']]
+
     return config
 
 config = load_config()
+
+if len(sys.argv)>2: 
+   # short term approach: iterate KEMs looking for OQS alg names: Argument needs to be v040 KEM KATS list
+   # long term solution: Embed KEM KATs as arguments to generate.yml and compare against current liboqs KEM KATs
+   kems={}
+   v040kats=[]
+   kats=[]
+   for kem in config['kems']:
+      with open(os.path.join('oqs', 'include', 'oqs', 'kem.h')) as fh:
+        for line in fh:
+            if line.startswith("#define "+kem['oqs_alg'] + " "):
+                kem_name = line.split(' ')[2]
+                kem_name = kem_name[1:-2]
+                #print("SSL %s -> OQS: %s -> KAT name %s" % (kem['name_group'], kem['oqs_alg'], kem_name))
+                kems[kem['name_group']] = kem_name
+   with open(sys.argv[1], 'r') as fp:
+      kats = json.load(fp)
+   # temporary solution until generate.yml contains all KATs:
+   with open(sys.argv[2], 'r') as fp:
+      v040kats = json.load(fp)
+   for k in kems.keys():
+      try: 
+         if v040kats[kems[k]] != kats[kems[k]]:
+            print("Different KATs for %s: Code point update needed" % k)
+      except KeyError as ke:
+         print("No KAT for KEM %s: New code point needed" % (k))
 
 # sigs
 populate('crypto/asn1/standard_methods.h', config, '/////')

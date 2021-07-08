@@ -1,9 +1,8 @@
 
 #define OQS_KEM_NID(curveID) \
-  (curveID == 0x01FF || curveID == 0x2FFF ? NID_oqs_kem_default : \
 {%- for kem in config['kems'] %}
   (curveID == {{ kem['nid'] }} || curveID == {{ kem['nid_hybrid'] }} ? NID_{{ kem['name_group'] }} : \
 {%- endfor %}
   0 \
-  {% for kem in config['kems'] %}){% endfor %})
+  {% for kem in config['kems'] %}){% endfor %}
 

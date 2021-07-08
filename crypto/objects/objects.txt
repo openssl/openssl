@@ -1677,8 +1677,6 @@ dstu4145le 2 8 : uacurve8 : DSTU curve 8
 dstu4145le 2 9 : uacurve9 : DSTU curve 9
 
 ##### OQS_TEMPLATE_FRAGMENT_LIST_KEMS_START
- : oqs_kem_default : oqs_kem_default
- : p256_oqs_kem_default : p256_oqs_kem_default
  : frodo640aes : frodo640aes
  : p256_frodo640aes : p256_frodo640aes
  : frodo640shake : frodo640shake
@@ -1691,10 +1689,6 @@ dstu4145le 2 9 : uacurve9 : DSTU curve 9
  : p521_frodo1344aes : p521_frodo1344aes
  : frodo1344shake : frodo1344shake
  : p521_frodo1344shake : p521_frodo1344shake
- : bike1l1cpa : bike1l1cpa
- : p256_bike1l1cpa : p256_bike1l1cpa
- : bike1l3cpa : bike1l3cpa
- : p384_bike1l3cpa : p384_bike1l3cpa
  : kyber512 : kyber512
  : p256_kyber512 : p256_kyber512
  : kyber768 : kyber768
@@ -1731,10 +1725,10 @@ dstu4145le 2 9 : uacurve9 : DSTU curve 9
  : p384_sikep610 : p384_sikep610
  : sikep751 : sikep751
  : p521_sikep751 : p521_sikep751
- : bike1l1fo : bike1l1fo
- : p256_bike1l1fo : p256_bike1l1fo
- : bike1l3fo : bike1l3fo
- : p384_bike1l3fo : p384_bike1l3fo
+ : bikel1 : bikel1
+ : p256_bikel1 : p256_bikel1
+ : bikel3 : bikel3
+ : p384_bikel3 : p384_bikel3
  : kyber90s512 : kyber90s512
  : p256_kyber90s512 : p256_kyber90s512
  : kyber90s768 : kyber90s768
@@ -1762,9 +1756,6 @@ dstu4145le 2 9 : uacurve9 : DSTU curve 9
 ##### OQS_TEMPLATE_FRAGMENT_LIST_KEMS_END
 
 ##### OQS_TEMPLATE_FRAGMENT_ASSIGN_SIG_OIDS_START
-1 3 9999 1 1 : oqs_sig_default : oqs_sig_default
-1 3 9999 1 2 : p256_oqs_sig_default : p256_oqs_sig_default
-1 3 9999 1 3 : rsa3072_oqs_sig_default : rsa3072_oqs_sig_default
 1 3 6 1 4 1 2 267 7 4 4 : dilithium2 : dilithium2
 1 3 9999 2 7 1 : p256_dilithium2 : p256_dilithium2
 1 3 9999 2 7 2 : rsa3072_dilithium2 : rsa3072_dilithium2

@@ -6,7 +6,7 @@ import os
 
 @pytest.fixture()
 def sig_default_server_port(client_type, test_artifacts_dir, worker_id):
-    server, server_port = common.start_server(client_type, test_artifacts_dir, "oqs_sig_default", worker_id)
+    server, server_port = common.start_server(client_type, test_artifacts_dir, "dilithium2", worker_id)
 
     # Run tests
     yield server_port
@@ -44,8 +44,8 @@ def test_kex(kex_name, bssl_alg_to_id, test_artifacts_dir, sig_default_server_po
                                                  '-expect-version', 'TLSv1.3',
                                                  '-curves', bssl_alg_to_id[kex_name],
                                                  '-expect-curve-id', bssl_alg_to_id[kex_name],
-                                                 '-expect-peer-signature-algorithm', bssl_alg_to_id['oqs_sig_default'],
-                                                 '-expect-peer-cert-file', os.path.join(test_artifacts_dir, '{}_oqs_sig_default_cert_chain'.format(worker_id)),
+                                                 '-expect-peer-signature-algorithm', bssl_alg_to_id['dilithium2'],
+                                                 '-expect-peer-cert-file', os.path.join(test_artifacts_dir, '{}_dilithium2_cert_chain'.format(worker_id)),
                                                  '-verify-fail',
                                                  '-shim-shuts-down'])
 
@@ -55,18 +55,18 @@ def test_sig(parametrized_sig_server, bssl_alg_to_id, client_type, test_artifact
 
     if client_type == "ossl":
         client_output = common.run_subprocess([common.OSSL, 's_client',
-                                                            '-groups', 'oqs_kem_default',
+                                                            '-groups', 'frodo640aes',
                                                             '-connect', 'localhost:{}'.format(server_port)],
                                                input='Q'.encode())
-        if not (("Server Temp Key: oqs_kem_default" in client_output) or ("issuer=C = US, O = BoringSSL" in client_output)) :
+        if not (("Server Temp Key: frodo640aes" in client_output) or ("issuer=C = US, O = BoringSSL" in client_output)) :
             print(client_output)
             assert False
 
     elif client_type == "bssl":
         common.run_subprocess([common.BSSL_SHIM, '-port', str(server_port),
                                                  '-expect-version', 'TLSv1.3',
-                                                 '-curves', bssl_alg_to_id['oqs_kem_default'],
-                                                 '-expect-curve-id', bssl_alg_to_id['oqs_kem_default'],
+                                                 '-curves', bssl_alg_to_id['frodo640aes'],
+                                                 '-expect-curve-id', bssl_alg_to_id['frodo640aes'],
                                                  '-expect-peer-signature-algorithm', bssl_alg_to_id[server_sig],
                                                  '-expect-peer-cert-file', os.path.join(test_artifacts_dir, '{}_{}_cert_chain'.format(worker_id, server_sig)),
                                                  '-verify-fail',

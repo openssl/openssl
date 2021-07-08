@@ -5197,21 +5197,13 @@
 #define NID_uacurve9            1169
 #define OBJ_uacurve9            OBJ_dstu4145le,2L,9L
 
-#define SN_oqs_kem_default              "oqs_kem_default"
-#define LN_oqs_kem_default              "oqs_kem_default"
-#define NID_oqs_kem_default             1195
-
-#define SN_p256_oqs_kem_default         "p256_oqs_kem_default"
-#define LN_p256_oqs_kem_default         "p256_oqs_kem_default"
-#define NID_p256_oqs_kem_default                1236
-
 #define SN_frodo640aes          "frodo640aes"
 #define LN_frodo640aes          "frodo640aes"
 #define NID_frodo640aes         1196
 
 #define SN_p256_frodo640aes             "p256_frodo640aes"
 #define LN_p256_frodo640aes             "p256_frodo640aes"
-#define NID_p256_frodo640aes            1237
+#define NID_p256_frodo640aes            1235
 
 #define SN_frodo640shake                "frodo640shake"
 #define LN_frodo640shake                "frodo640shake"
@@ -5219,7 +5211,7 @@
 
 #define SN_p256_frodo640shake           "p256_frodo640shake"
 #define LN_p256_frodo640shake           "p256_frodo640shake"
-#define NID_p256_frodo640shake          1238
+#define NID_p256_frodo640shake          1236
 
 #define SN_frodo976aes          "frodo976aes"
 #define LN_frodo976aes          "frodo976aes"
@@ -5227,7 +5219,7 @@
 
 #define SN_p384_frodo976aes             "p384_frodo976aes"
 #define LN_p384_frodo976aes             "p384_frodo976aes"
-#define NID_p384_frodo976aes            1319
+#define NID_p384_frodo976aes            1312
 
 #define SN_frodo976shake                "frodo976shake"
 #define LN_frodo976shake                "frodo976shake"
@@ -5235,7 +5227,7 @@
 
 #define SN_p384_frodo976shake           "p384_frodo976shake"
 #define LN_p384_frodo976shake           "p384_frodo976shake"
-#define NID_p384_frodo976shake          1320
+#define NID_p384_frodo976shake          1313
 
 #define SN_frodo1344aes         "frodo1344aes"
 #define LN_frodo1344aes         "frodo1344aes"
@@ -5243,7 +5235,7 @@
 
 #define SN_p521_frodo1344aes            "p521_frodo1344aes"
 #define LN_p521_frodo1344aes            "p521_frodo1344aes"
-#define NID_p521_frodo1344aes           1321
+#define NID_p521_frodo1344aes           1314
 
 #define SN_frodo1344shake               "frodo1344shake"
 #define LN_frodo1344shake               "frodo1344shake"
@@ -5251,486 +5243,455 @@
 
 #define SN_p521_frodo1344shake          "p521_frodo1344shake"
 #define LN_p521_frodo1344shake          "p521_frodo1344shake"
-#define NID_p521_frodo1344shake         1322
-
-#define SN_bike1l1cpa           "bike1l1cpa"
-#define LN_bike1l1cpa           "bike1l1cpa"
-#define NID_bike1l1cpa          1202
-
-#define SN_p256_bike1l1cpa              "p256_bike1l1cpa"
-#define LN_p256_bike1l1cpa              "p256_bike1l1cpa"
-#define NID_p256_bike1l1cpa             1243
-
-#define SN_bike1l3cpa           "bike1l3cpa"
-#define LN_bike1l3cpa           "bike1l3cpa"
-#define NID_bike1l3cpa          1203
-
-#define SN_p384_bike1l3cpa              "p384_bike1l3cpa"
-#define LN_p384_bike1l3cpa              "p384_bike1l3cpa"
-#define NID_p384_bike1l3cpa             1323
+#define NID_p521_frodo1344shake         1315
 
 #define SN_kyber512             "kyber512"
 #define LN_kyber512             "kyber512"
-#define NID_kyber512            1204
+#define NID_kyber512            1202
 
 #define SN_p256_kyber512                "p256_kyber512"
 #define LN_p256_kyber512                "p256_kyber512"
-#define NID_p256_kyber512               1245
+#define NID_p256_kyber512               1241
 
 #define SN_kyber768             "kyber768"
 #define LN_kyber768             "kyber768"
-#define NID_kyber768            1205
+#define NID_kyber768            1203
 
 #define SN_p384_kyber768                "p384_kyber768"
 #define LN_p384_kyber768                "p384_kyber768"
-#define NID_p384_kyber768               1324
+#define NID_p384_kyber768               1316
 
 #define SN_kyber1024            "kyber1024"
 #define LN_kyber1024            "kyber1024"
-#define NID_kyber1024           1206
+#define NID_kyber1024           1204
 
 #define SN_p521_kyber1024               "p521_kyber1024"
 #define LN_p521_kyber1024               "p521_kyber1024"
-#define NID_p521_kyber1024              1325
+#define NID_p521_kyber1024              1317
 
 #define SN_ntru_hps2048509              "ntru_hps2048509"
 #define LN_ntru_hps2048509              "ntru_hps2048509"
-#define NID_ntru_hps2048509             1207
+#define NID_ntru_hps2048509             1205
 
 #define SN_p256_ntru_hps2048509         "p256_ntru_hps2048509"
 #define LN_p256_ntru_hps2048509         "p256_ntru_hps2048509"
-#define NID_p256_ntru_hps2048509                1248
+#define NID_p256_ntru_hps2048509                1244
 
 #define SN_ntru_hps2048677              "ntru_hps2048677"
 #define LN_ntru_hps2048677              "ntru_hps2048677"
-#define NID_ntru_hps2048677             1208
+#define NID_ntru_hps2048677             1206
 
 #define SN_p384_ntru_hps2048677         "p384_ntru_hps2048677"
 #define LN_p384_ntru_hps2048677         "p384_ntru_hps2048677"
-#define NID_p384_ntru_hps2048677                1326
+#define NID_p384_ntru_hps2048677                1318
 
 #define SN_ntru_hps4096821              "ntru_hps4096821"
 #define LN_ntru_hps4096821              "ntru_hps4096821"
-#define NID_ntru_hps4096821             1209
+#define NID_ntru_hps4096821             1207
 
 #define SN_p521_ntru_hps4096821         "p521_ntru_hps4096821"
 #define LN_p521_ntru_hps4096821         "p521_ntru_hps4096821"
-#define NID_p521_ntru_hps4096821                1327
+#define NID_p521_ntru_hps4096821                1319
 
 #define SN_ntru_hrss701         "ntru_hrss701"
 #define LN_ntru_hrss701         "ntru_hrss701"
-#define NID_ntru_hrss701                1210
+#define NID_ntru_hrss701                1208
 
 #define SN_p384_ntru_hrss701            "p384_ntru_hrss701"
 #define LN_p384_ntru_hrss701            "p384_ntru_hrss701"
-#define NID_p384_ntru_hrss701           1328
+#define NID_p384_ntru_hrss701           1320
 
 #define SN_lightsaber           "lightsaber"
 #define LN_lightsaber           "lightsaber"
-#define NID_lightsaber          1211
+#define NID_lightsaber          1209
 
 #define SN_p256_lightsaber              "p256_lightsaber"
 #define LN_p256_lightsaber              "p256_lightsaber"
-#define NID_p256_lightsaber             1252
+#define NID_p256_lightsaber             1248
 
 #define SN_saber                "saber"
 #define LN_saber                "saber"
-#define NID_saber               1212
+#define NID_saber               1210
 
 #define SN_p384_saber           "p384_saber"
 #define LN_p384_saber           "p384_saber"
-#define NID_p384_saber          1329
+#define NID_p384_saber          1321
 
 #define SN_firesaber            "firesaber"
 #define LN_firesaber            "firesaber"
-#define NID_firesaber           1213
+#define NID_firesaber           1211
 
 #define SN_p521_firesaber               "p521_firesaber"
 #define LN_p521_firesaber               "p521_firesaber"
-#define NID_p521_firesaber              1330
+#define NID_p521_firesaber              1322
 
 #define SN_sidhp434             "sidhp434"
 #define LN_sidhp434             "sidhp434"
-#define NID_sidhp434            1214
+#define NID_sidhp434            1212
 
 #define SN_p256_sidhp434                "p256_sidhp434"
 #define LN_p256_sidhp434                "p256_sidhp434"
-#define NID_p256_sidhp434               1255
+#define NID_p256_sidhp434               1251
 
 #define SN_sidhp503             "sidhp503"
 #define LN_sidhp503             "sidhp503"
-#define NID_sidhp503            1215
+#define NID_sidhp503            1213
 
 #define SN_p256_sidhp503                "p256_sidhp503"
 #define LN_p256_sidhp503                "p256_sidhp503"
-#define NID_p256_sidhp503               1256
+#define NID_p256_sidhp503               1252
 
 #define SN_sidhp610             "sidhp610"
 #define LN_sidhp610             "sidhp610"
-#define NID_sidhp610            1216
+#define NID_sidhp610            1214
 
 #define SN_p384_sidhp610                "p384_sidhp610"
 #define LN_p384_sidhp610                "p384_sidhp610"
-#define NID_p384_sidhp610               1331
+#define NID_p384_sidhp610               1323
 
 #define SN_sidhp751             "sidhp751"
 #define LN_sidhp751             "sidhp751"
-#define NID_sidhp751            1217
+#define NID_sidhp751            1215
 
 #define SN_p521_sidhp751                "p521_sidhp751"
 #define LN_p521_sidhp751                "p521_sidhp751"
-#define NID_p521_sidhp751               1332
+#define NID_p521_sidhp751               1324
 
 #define SN_sikep434             "sikep434"
 #define LN_sikep434             "sikep434"
-#define NID_sikep434            1218
+#define NID_sikep434            1216
 
 #define SN_p256_sikep434                "p256_sikep434"
 #define LN_p256_sikep434                "p256_sikep434"
-#define NID_p256_sikep434               1259
+#define NID_p256_sikep434               1255
 
 #define SN_sikep503             "sikep503"
 #define LN_sikep503             "sikep503"
-#define NID_sikep503            1219
+#define NID_sikep503            1217
 
 #define SN_p256_sikep503                "p256_sikep503"
 #define LN_p256_sikep503                "p256_sikep503"
-#define NID_p256_sikep503               1260
+#define NID_p256_sikep503               1256
 
 #define SN_sikep610             "sikep610"
 #define LN_sikep610             "sikep610"
-#define NID_sikep610            1220
+#define NID_sikep610            1218
 
 #define SN_p384_sikep610                "p384_sikep610"
 #define LN_p384_sikep610                "p384_sikep610"
-#define NID_p384_sikep610               1333
+#define NID_p384_sikep610               1325
 
 #define SN_sikep751             "sikep751"
 #define LN_sikep751             "sikep751"
-#define NID_sikep751            1221
+#define NID_sikep751            1219
 
 #define SN_p521_sikep751                "p521_sikep751"
 #define LN_p521_sikep751                "p521_sikep751"
-#define NID_p521_sikep751               1334
+#define NID_p521_sikep751               1326
 
-#define SN_bike1l1fo            "bike1l1fo"
-#define LN_bike1l1fo            "bike1l1fo"
-#define NID_bike1l1fo           1222
+#define SN_bikel1               "bikel1"
+#define LN_bikel1               "bikel1"
+#define NID_bikel1              1220
 
-#define SN_p256_bike1l1fo               "p256_bike1l1fo"
-#define LN_p256_bike1l1fo               "p256_bike1l1fo"
-#define NID_p256_bike1l1fo              1263
+#define SN_p256_bikel1          "p256_bikel1"
+#define LN_p256_bikel1          "p256_bikel1"
+#define NID_p256_bikel1         1259
 
-#define SN_bike1l3fo            "bike1l3fo"
-#define LN_bike1l3fo            "bike1l3fo"
-#define NID_bike1l3fo           1223
+#define SN_bikel3               "bikel3"
+#define LN_bikel3               "bikel3"
+#define NID_bikel3              1221
 
-#define SN_p384_bike1l3fo               "p384_bike1l3fo"
-#define LN_p384_bike1l3fo               "p384_bike1l3fo"
-#define NID_p384_bike1l3fo              1335
+#define SN_p384_bikel3          "p384_bikel3"
+#define LN_p384_bikel3          "p384_bikel3"
+#define NID_p384_bikel3         1327
 
 #define SN_kyber90s512          "kyber90s512"
 #define LN_kyber90s512          "kyber90s512"
-#define NID_kyber90s512         1224
+#define NID_kyber90s512         1222
 
 #define SN_p256_kyber90s512             "p256_kyber90s512"
 #define LN_p256_kyber90s512             "p256_kyber90s512"
-#define NID_p256_kyber90s512            1265
+#define NID_p256_kyber90s512            1261
 
 #define SN_kyber90s768          "kyber90s768"
 #define LN_kyber90s768          "kyber90s768"
-#define NID_kyber90s768         1225
+#define NID_kyber90s768         1223
 
 #define SN_p384_kyber90s768             "p384_kyber90s768"
 #define LN_p384_kyber90s768             "p384_kyber90s768"
-#define NID_p384_kyber90s768            1336
+#define NID_p384_kyber90s768            1328
 
 #define SN_kyber90s1024         "kyber90s1024"
 #define LN_kyber90s1024         "kyber90s1024"
-#define NID_kyber90s1024                1226
+#define NID_kyber90s1024                1224
 
 #define SN_p521_kyber90s1024            "p521_kyber90s1024"
 #define LN_p521_kyber90s1024            "p521_kyber90s1024"
-#define NID_p521_kyber90s1024           1337
+#define NID_p521_kyber90s1024           1329
 
 #define SN_hqc128               "hqc128"
 #define LN_hqc128               "hqc128"
-#define NID_hqc128              1227
+#define NID_hqc128              1225
 
 #define SN_p256_hqc128          "p256_hqc128"
 #define LN_p256_hqc128          "p256_hqc128"
-#define NID_p256_hqc128         1268
+#define NID_p256_hqc128         1264
 
 #define SN_hqc192               "hqc192"
 #define LN_hqc192               "hqc192"
-#define NID_hqc192              1228
+#define NID_hqc192              1226
 
 #define SN_p384_hqc192          "p384_hqc192"
 #define LN_p384_hqc192          "p384_hqc192"
-#define NID_p384_hqc192         1338
+#define NID_p384_hqc192         1330
 
 #define SN_hqc256               "hqc256"
 #define LN_hqc256               "hqc256"
-#define NID_hqc256              1229
+#define NID_hqc256              1227
 
 #define SN_p521_hqc256          "p521_hqc256"
 #define LN_p521_hqc256          "p521_hqc256"
-#define NID_p521_hqc256         1339
+#define NID_p521_hqc256         1331
 
 #define SN_ntrulpr653           "ntrulpr653"
 #define LN_ntrulpr653           "ntrulpr653"
-#define NID_ntrulpr653          1230
+#define NID_ntrulpr653          1228
 
 #define SN_p256_ntrulpr653              "p256_ntrulpr653"
 #define LN_p256_ntrulpr653              "p256_ntrulpr653"
-#define NID_p256_ntrulpr653             1271
+#define NID_p256_ntrulpr653             1267
 
 #define SN_ntrulpr761           "ntrulpr761"
 #define LN_ntrulpr761           "ntrulpr761"
-#define NID_ntrulpr761          1231
+#define NID_ntrulpr761          1229
 
 #define SN_p384_ntrulpr761              "p384_ntrulpr761"
 #define LN_p384_ntrulpr761              "p384_ntrulpr761"
-#define NID_p384_ntrulpr761             1340
+#define NID_p384_ntrulpr761             1332
 
 #define SN_ntrulpr857           "ntrulpr857"
 #define LN_ntrulpr857           "ntrulpr857"
-#define NID_ntrulpr857          1232
+#define NID_ntrulpr857          1230
 
 #define SN_p384_ntrulpr857              "p384_ntrulpr857"
 #define LN_p384_ntrulpr857              "p384_ntrulpr857"
-#define NID_p384_ntrulpr857             1341
+#define NID_p384_ntrulpr857             1333
 
 #define SN_sntrup653            "sntrup653"
 #define LN_sntrup653            "sntrup653"
-#define NID_sntrup653           1233
+#define NID_sntrup653           1231
 
 #define SN_p256_sntrup653               "p256_sntrup653"
 #define LN_p256_sntrup653               "p256_sntrup653"
-#define NID_p256_sntrup653              1274
+#define NID_p256_sntrup653              1270
 
 #define SN_sntrup761            "sntrup761"
 #define LN_sntrup761            "sntrup761"
-#define NID_sntrup761           1234
+#define NID_sntrup761           1232
 
 #define SN_p384_sntrup761               "p384_sntrup761"
 #define LN_p384_sntrup761               "p384_sntrup761"
-#define NID_p384_sntrup761              1342
+#define NID_p384_sntrup761              1334
 
 #define SN_sntrup857            "sntrup857"
 #define LN_sntrup857            "sntrup857"
-#define NID_sntrup857           1235
+#define NID_sntrup857           1233
 
 #define SN_p384_sntrup857               "p384_sntrup857"
 #define LN_p384_sntrup857               "p384_sntrup857"
-#define NID_p384_sntrup857              1343
-
-#define SN_oqs_sig_default              "oqs_sig_default"
-#define LN_oqs_sig_default              "oqs_sig_default"
-#define NID_oqs_sig_default             1277
-#define OBJ_oqs_sig_default             1L,3L,9999L,1L,1L
-
-#define SN_p256_oqs_sig_default         "p256_oqs_sig_default"
-#define LN_p256_oqs_sig_default         "p256_oqs_sig_default"
-#define NID_p256_oqs_sig_default                1278
-#define OBJ_p256_oqs_sig_default                1L,3L,9999L,1L,2L
-
-#define SN_rsa3072_oqs_sig_default              "rsa3072_oqs_sig_default"
-#define LN_rsa3072_oqs_sig_default              "rsa3072_oqs_sig_default"
-#define NID_rsa3072_oqs_sig_default             1279
-#define OBJ_rsa3072_oqs_sig_default             1L,3L,9999L,1L,3L
+#define NID_p384_sntrup857              1335
 
 #define SN_dilithium2           "dilithium2"
 #define LN_dilithium2           "dilithium2"
-#define NID_dilithium2          1280
+#define NID_dilithium2          1273
 #define OBJ_dilithium2          1L,3L,6L,1L,4L,1L,2L,267L,7L,4L,4L
 
 #define SN_p256_dilithium2              "p256_dilithium2"
 #define LN_p256_dilithium2              "p256_dilithium2"
-#define NID_p256_dilithium2             1281
+#define NID_p256_dilithium2             1274
 #define OBJ_p256_dilithium2             1L,3L,9999L,2L,7L,1L
 
 #define SN_rsa3072_dilithium2           "rsa3072_dilithium2"
 #define LN_rsa3072_dilithium2           "rsa3072_dilithium2"
-#define NID_rsa3072_dilithium2          1282
+#define NID_rsa3072_dilithium2          1275
 #define OBJ_rsa3072_dilithium2          1L,3L,9999L,2L,7L,2L
 
 #define SN_dilithium3           "dilithium3"
 #define LN_dilithium3           "dilithium3"
-#define NID_dilithium3          1283
+#define NID_dilithium3          1276
 #define OBJ_dilithium3          1L,3L,6L,1L,4L,1L,2L,267L,7L,6L,5L
 
 #define SN_p384_dilithium3              "p384_dilithium3"
 #define LN_p384_dilithium3              "p384_dilithium3"
-#define NID_p384_dilithium3             1284
+#define NID_p384_dilithium3             1277
 #define OBJ_p384_dilithium3             1L,3L,9999L,2L,7L,3L
 
 #define SN_dilithium5           "dilithium5"
 #define LN_dilithium5           "dilithium5"
-#define NID_dilithium5          1285
+#define NID_dilithium5          1278
 #define OBJ_dilithium5          1L,3L,6L,1L,4L,1L,2L,267L,7L,8L,7L
 
 #define SN_p521_dilithium5              "p521_dilithium5"
 #define LN_p521_dilithium5              "p521_dilithium5"
-#define NID_p521_dilithium5             1286
+#define NID_p521_dilithium5             1279
 #define OBJ_p521_dilithium5             1L,3L,9999L,2L,7L,4L
 
 #define SN_dilithium2_aes               "dilithium2_aes"
 #define LN_dilithium2_aes               "dilithium2_aes"
-#define NID_dilithium2_aes              1287
+#define NID_dilithium2_aes              1280
 #define OBJ_dilithium2_aes              1L,3L,6L,1L,4L,1L,2L,267L,11L,4L,4L
 
 #define SN_p256_dilithium2_aes          "p256_dilithium2_aes"
 #define LN_p256_dilithium2_aes          "p256_dilithium2_aes"
-#define NID_p256_dilithium2_aes         1288
+#define NID_p256_dilithium2_aes         1281
 #define OBJ_p256_dilithium2_aes         1L,3L,9999L,2L,11L,1L
 
 #define SN_rsa3072_dilithium2_aes               "rsa3072_dilithium2_aes"
 #define LN_rsa3072_dilithium2_aes               "rsa3072_dilithium2_aes"
-#define NID_rsa3072_dilithium2_aes              1289
+#define NID_rsa3072_dilithium2_aes              1282
 #define OBJ_rsa3072_dilithium2_aes              1L,3L,9999L,2L,11L,2L
 
 #define SN_dilithium3_aes               "dilithium3_aes"
 #define LN_dilithium3_aes               "dilithium3_aes"
-#define NID_dilithium3_aes              1290
+#define NID_dilithium3_aes              1283
 #define OBJ_dilithium3_aes              1L,3L,6L,1L,4L,1L,2L,267L,11L,6L,5L
 
 #define SN_p384_dilithium3_aes          "p384_dilithium3_aes"
 #define LN_p384_dilithium3_aes          "p384_dilithium3_aes"
-#define NID_p384_dilithium3_aes         1291
+#define NID_p384_dilithium3_aes         1284
 #define OBJ_p384_dilithium3_aes         1L,3L,9999L,2L,11L,3L
 
 #define SN_dilithium5_aes               "dilithium5_aes"
 #define LN_dilithium5_aes               "dilithium5_aes"
-#define NID_dilithium5_aes              1292
+#define NID_dilithium5_aes              1285
 #define OBJ_dilithium5_aes              1L,3L,6L,1L,4L,1L,2L,267L,11L,8L,7L
 
 #define SN_p521_dilithium5_aes          "p521_dilithium5_aes"
 #define LN_p521_dilithium5_aes          "p521_dilithium5_aes"
-#define NID_p521_dilithium5_aes         1293
+#define NID_p521_dilithium5_aes         1286
 #define OBJ_p521_dilithium5_aes         1L,3L,9999L,2L,11L,4L
 
 #define SN_falcon512            "falcon512"
 #define LN_falcon512            "falcon512"
-#define NID_falcon512           1294
+#define NID_falcon512           1287
 #define OBJ_falcon512           1L,3L,9999L,3L,1L
 
 #define SN_p256_falcon512               "p256_falcon512"
 #define LN_p256_falcon512               "p256_falcon512"
-#define NID_p256_falcon512              1295
+#define NID_p256_falcon512              1288
 #define OBJ_p256_falcon512              1L,3L,9999L,3L,2L
 
 #define SN_rsa3072_falcon512            "rsa3072_falcon512"
 #define LN_rsa3072_falcon512            "rsa3072_falcon512"
-#define NID_rsa3072_falcon512           1296
+#define NID_rsa3072_falcon512           1289
 #define OBJ_rsa3072_falcon512           1L,3L,9999L,3L,3L
 
 #define SN_falcon1024           "falcon1024"
 #define LN_falcon1024           "falcon1024"
-#define NID_falcon1024          1297
+#define NID_falcon1024          1290
 #define OBJ_falcon1024          1L,3L,9999L,3L,4L
 
 #define SN_p521_falcon1024              "p521_falcon1024"
 #define LN_p521_falcon1024              "p521_falcon1024"
-#define NID_p521_falcon1024             1298
+#define NID_p521_falcon1024             1291
 #define OBJ_p521_falcon1024             1L,3L,9999L,3L,5L
 
 #define SN_picnicl1full         "picnicl1full"
 #define LN_picnicl1full         "picnicl1full"
-#define NID_picnicl1full                1299
+#define NID_picnicl1full                1292
 #define OBJ_picnicl1full                1L,3L,6L,1L,4L,1L,311L,89L,2L,1L,7L
 
 #define SN_p256_picnicl1full            "p256_picnicl1full"
 #define LN_p256_picnicl1full            "p256_picnicl1full"
-#define NID_p256_picnicl1full           1300
+#define NID_p256_picnicl1full           1293
 #define OBJ_p256_picnicl1full           1L,3L,6L,1L,4L,1L,311L,89L,2L,1L,8L
 
 #define SN_rsa3072_picnicl1full         "rsa3072_picnicl1full"
 #define LN_rsa3072_picnicl1full         "rsa3072_picnicl1full"
-#define NID_rsa3072_picnicl1full                1301
+#define NID_rsa3072_picnicl1full                1294
 #define OBJ_rsa3072_picnicl1full                1L,3L,6L,1L,4L,1L,311L,89L,2L,1L,9L
 
 #define SN_picnic3l1            "picnic3l1"
 #define LN_picnic3l1            "picnic3l1"
-#define NID_picnic3l1           1302
+#define NID_picnic3l1           1295
 #define OBJ_picnic3l1           1L,3L,6L,1L,4L,1L,311L,89L,2L,1L,21L
 
 #define SN_p256_picnic3l1               "p256_picnic3l1"
 #define LN_p256_picnic3l1               "p256_picnic3l1"
-#define NID_p256_picnic3l1              1303
+#define NID_p256_picnic3l1              1296
 #define OBJ_p256_picnic3l1              1L,3L,6L,1L,4L,1L,311L,89L,2L,1L,22L
 
 #define SN_rsa3072_picnic3l1            "rsa3072_picnic3l1"
 #define LN_rsa3072_picnic3l1            "rsa3072_picnic3l1"
-#define NID_rsa3072_picnic3l1           1304
+#define NID_rsa3072_picnic3l1           1297
 #define OBJ_rsa3072_picnic3l1           1L,3L,6L,1L,4L,1L,311L,89L,2L,1L,23L
 
 #define SN_rainbowIclassic              "rainbowIclassic"
 #define LN_rainbowIclassic              "rainbowIclassic"
-#define NID_rainbowIclassic             1305
+#define NID_rainbowIclassic             1298
 #define OBJ_rainbowIclassic             1L,3L,9999L,5L,1L,1L,1L
 
 #define SN_p256_rainbowIclassic         "p256_rainbowIclassic"
 #define LN_p256_rainbowIclassic         "p256_rainbowIclassic"
-#define NID_p256_rainbowIclassic                1306
+#define NID_p256_rainbowIclassic                1299
 #define OBJ_p256_rainbowIclassic                1L,3L,9999L,5L,1L,2L,1L
 
 #define SN_rsa3072_rainbowIclassic              "rsa3072_rainbowIclassic"
 #define LN_rsa3072_rainbowIclassic              "rsa3072_rainbowIclassic"
-#define NID_rsa3072_rainbowIclassic             1307
+#define NID_rsa3072_rainbowIclassic             1300
 #define OBJ_rsa3072_rainbowIclassic             1L,3L,9999L,5L,1L,3L,1L
 
 #define SN_rainbowVclassic              "rainbowVclassic"
 #define LN_rainbowVclassic              "rainbowVclassic"
-#define NID_rainbowVclassic             1308
+#define NID_rainbowVclassic             1301
 #define OBJ_rainbowVclassic             1L,3L,9999L,5L,3L,1L,1L
 
 #define SN_p521_rainbowVclassic         "p521_rainbowVclassic"
 #define LN_p521_rainbowVclassic         "p521_rainbowVclassic"
-#define NID_p521_rainbowVclassic                1309
+#define NID_p521_rainbowVclassic                1302
 #define OBJ_p521_rainbowVclassic                1L,3L,9999L,5L,3L,2L,1L
 
 #define SN_sphincsharaka128frobust              "sphincsharaka128frobust"
 #define LN_sphincsharaka128frobust              "sphincsharaka128frobust"
-#define NID_sphincsharaka128frobust             1310
+#define NID_sphincsharaka128frobust             1303
 #define OBJ_sphincsharaka128frobust             1L,3L,9999L,6L,1L,1L
 
 #define SN_p256_sphincsharaka128frobust         "p256_sphincsharaka128frobust"
 #define LN_p256_sphincsharaka128frobust         "p256_sphincsharaka128frobust"
-#define NID_p256_sphincsharaka128frobust                1311
+#define NID_p256_sphincsharaka128frobust                1304
 #define OBJ_p256_sphincsharaka128frobust                1L,3L,9999L,6L,1L,2L
 
 #define SN_rsa3072_sphincsharaka128frobust              "rsa3072_sphincsharaka128frobust"
 #define LN_rsa3072_sphincsharaka128frobust              "rsa3072_sphincsharaka128frobust"
-#define NID_rsa3072_sphincsharaka128frobust             1312
+#define NID_rsa3072_sphincsharaka128frobust             1305
 #define OBJ_rsa3072_sphincsharaka128frobust             1L,3L,9999L,6L,1L,3L
 
 #define SN_sphincssha256128frobust              "sphincssha256128frobust"
 #define LN_sphincssha256128frobust              "sphincssha256128frobust"
-#define NID_sphincssha256128frobust             1313
+#define NID_sphincssha256128frobust             1306
 #define OBJ_sphincssha256128frobust             1L,3L,9999L,6L,4L,1L
 
 #define SN_p256_sphincssha256128frobust         "p256_sphincssha256128frobust"
 #define LN_p256_sphincssha256128frobust         "p256_sphincssha256128frobust"
-#define NID_p256_sphincssha256128frobust                1314
+#define NID_p256_sphincssha256128frobust                1307
 #define OBJ_p256_sphincssha256128frobust                1L,3L,9999L,6L,4L,2L
 
 #define SN_rsa3072_sphincssha256128frobust              "rsa3072_sphincssha256128frobust"
 #define LN_rsa3072_sphincssha256128frobust              "rsa3072_sphincssha256128frobust"
-#define NID_rsa3072_sphincssha256128frobust             1315
+#define NID_rsa3072_sphincssha256128frobust             1308
 #define OBJ_rsa3072_sphincssha256128frobust             1L,3L,9999L,6L,4L,3L
 
 #define SN_sphincsshake256128frobust            "sphincsshake256128frobust"
 #define LN_sphincsshake256128frobust            "sphincsshake256128frobust"
-#define NID_sphincsshake256128frobust           1316
+#define NID_sphincsshake256128frobust           1309
 #define OBJ_sphincsshake256128frobust           1L,3L,9999L,6L,7L,1L
 
 #define SN_p256_sphincsshake256128frobust               "p256_sphincsshake256128frobust"
 #define LN_p256_sphincsshake256128frobust               "p256_sphincsshake256128frobust"
-#define NID_p256_sphincsshake256128frobust              1317
+#define NID_p256_sphincsshake256128frobust              1310
 #define OBJ_p256_sphincsshake256128frobust              1L,3L,9999L,6L,7L,2L
 
 #define SN_rsa3072_sphincsshake256128frobust            "rsa3072_sphincsshake256128frobust"
 #define LN_rsa3072_sphincsshake256128frobust            "rsa3072_sphincsshake256128frobust"
-#define NID_rsa3072_sphincsshake256128frobust           1318
+#define NID_rsa3072_sphincsshake256128frobust           1311
 #define OBJ_rsa3072_sphincsshake256128frobust           1L,3L,9999L,6L,7L,3L

@@ -69,9 +69,6 @@ static const EVP_PKEY_METHOD *standard_methods[] = {
     &sm2_pkey_meth,
 #endif
 ///// OQS_TEMPLATE_FRAGMENT_LIST_PKEY_METHS_START
-    &oqs_sig_default_pkey_meth,
-    &p256_oqs_sig_default_pkey_meth,
-    &rsa3072_oqs_sig_default_pkey_meth,
     &dilithium2_pkey_meth,
     &p256_dilithium2_pkey_meth,
     &rsa3072_dilithium2_pkey_meth,

@@ -246,12 +246,6 @@ static const char *get_sigtype(int nid)
         return "gost2012_512";
 
 ///// OQS_TEMPLATE_FRAGMENT_SIG_NAME_STR_START
-    case NID_oqs_sig_default:
-        return "OQS Default Signature Algorithm";
-    case NID_p256_oqs_sig_default:
-        return "ECDSA p256 - OQS Default Signature Algorithm";
-    case NID_rsa3072_oqs_sig_default:
-        return "RSA3072 - OQS Default Signature Algorithm";
     case NID_dilithium2:
         return "Dilithium2";
     case NID_p256_dilithium2:
@@ -482,7 +476,6 @@ int ssl_print_groups(BIO *out, SSL *s, int noshared)
 /* OQS note: is there a better place to put this? we only need it here... */
 static const char* OQS_CURVE_ID_NAME_STR(int id) {
   switch(id) {
-  case 0x01FF: return "oqs_kem_default";
   ///// OQS_TEMPLATE_FRAGMENT_OQS_CURVE_ID_NAME_STR_START
   case 0x0200: return "frodo640aes";
   case 0x0201: return "frodo640shake";
@@ -490,11 +483,9 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
   case 0x0203: return "frodo976shake";
   case 0x0204: return "frodo1344aes";
   case 0x0205: return "frodo1344shake";
-  case 0x0206: return "bike1l1cpa";
-  case 0x0207: return "bike1l3cpa";
-  case 0x020F: return "kyber512";
-  case 0x0210: return "kyber768";
-  case 0x0211: return "kyber1024";
+  case 0x023A: return "kyber512";
+  case 0x023C: return "kyber768";
+  case 0x023D: return "kyber1024";
   case 0x0214: return "ntru_hps2048509";
   case 0x0215: return "ntru_hps2048677";
   case 0x0216: return "ntru_hps4096821";
@@ -510,11 +501,11 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
   case 0x0220: return "sikep503";
   case 0x0221: return "sikep610";
   case 0x0222: return "sikep751";
-  case 0x0223: return "bike1l1fo";
-  case 0x0224: return "bike1l3fo";
-  case 0x0229: return "kyber90s512";
-  case 0x022A: return "kyber90s768";
-  case 0x022B: return "kyber90s1024";
+  case 0x0238: return "bikel1";
+  case 0x023B: return "bikel3";
+  case 0x023E: return "kyber90s512";
+  case 0x023F: return "kyber90s768";
+  case 0x0240: return "kyber90s1024";
   case 0x022C: return "hqc128";
   case 0x022D: return "hqc192";
   case 0x022E: return "hqc256";
@@ -525,7 +516,6 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
   case 0x0233: return "sntrup761";
   case 0x0234: return "sntrup857";
   ///// OQS_TEMPLATE_FRAGMENT_OQS_CURVE_ID_NAME_STR_END
-  case 0x2FFF: return "p256_oqs_kem_default hybrid";
   ///// OQS_TEMPLATE_FRAGMENT_OQS_CURVE_ID_NAME_STR_HYBRID_START
    case 0x2F00: return "p256_frodo640aes hybrid";
    case 0x2F01: return "p256_frodo640shake hybrid";
@@ -533,11 +523,9 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
    case 0x2F03: return "p384_frodo976shake hybrid";
    case 0x2F04: return "p521_frodo1344aes hybrid";
    case 0x2F05: return "p521_frodo1344shake hybrid";
-   case 0x2F06: return "p256_bike1l1cpa hybrid";
-   case 0x2F07: return "p384_bike1l3cpa hybrid";
-   case 0x2F0F: return "p256_kyber512 hybrid";
-   case 0x2F10: return "p384_kyber768 hybrid";
-   case 0x2F11: return "p521_kyber1024 hybrid";
+   case 0x2F3A: return "p256_kyber512 hybrid";
+   case 0x2F3C: return "p384_kyber768 hybrid";
+   case 0x2F3D: return "p521_kyber1024 hybrid";
    case 0x2F14: return "p256_ntru_hps2048509 hybrid";
    case 0x2F15: return "p384_ntru_hps2048677 hybrid";
    case 0x2F16: return "p521_ntru_hps4096821 hybrid";
@@ -553,11 +541,11 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
    case 0x2F20: return "p256_sikep503 hybrid";
    case 0x2F21: return "p384_sikep610 hybrid";
    case 0x2F22: return "p521_sikep751 hybrid";
-   case 0x2F23: return "p256_bike1l1fo hybrid";
-   case 0x2F24: return "p384_bike1l3fo hybrid";
-   case 0x2F29: return "p256_kyber90s512 hybrid";
-   case 0x2F2A: return "p384_kyber90s768 hybrid";
-   case 0x2F2B: return "p521_kyber90s1024 hybrid";
+   case 0x2F38: return "p256_bikel1 hybrid";
+   case 0x2F3B: return "p384_bikel3 hybrid";
+   case 0x2F3E: return "p256_kyber90s512 hybrid";
+   case 0x2F3F: return "p384_kyber90s768 hybrid";
+   case 0x2F40: return "p521_kyber90s1024 hybrid";
    case 0x2F2C: return "p256_hqc128 hybrid";
    case 0x2F2D: return "p384_hqc192 hybrid";
    case 0x2F2E: return "p521_hqc256 hybrid";

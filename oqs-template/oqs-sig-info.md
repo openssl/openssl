@@ -1,19 +1,19 @@
 | Algorithm                                         | Implementation Version   |   Claimed NIST Level | Code Point   | OID                       |
 |:--------------------------------------------------|:-------------------------|---------------------:|:-------------|:--------------------------|
-| dilithium2                                        | NIST Round 3 submission  |                    1 | 0xfea0       | 1.3.6.1.4.1.2.267.7.4.4   |
-| dilithium2 **hybrid with** p256                   | NIST Round 3 submission  |                    1 | 0xfea1       | 1.3.9999.2.7.1            |
-| dilithium2 **hybrid with** rsa3072                | NIST Round 3 submission  |                    1 | 0xfea2       | 1.3.9999.2.7.2            |
-| dilithium3                                        | NIST Round 3 submission  |                    3 | 0xfea3       | 1.3.6.1.4.1.2.267.7.6.5   |
-| dilithium3 **hybrid with** p384                   | NIST Round 3 submission  |                    3 | 0xfea4       | 1.3.9999.2.7.3            |
-| dilithium5                                        | NIST Round 3 submission  |                    5 | 0xfea5       | 1.3.6.1.4.1.2.267.7.8.7   |
-| dilithium5 **hybrid with** p521                   | NIST Round 3 submission  |                    5 | 0xfea6       | 1.3.9999.2.7.4            |
-| dilithium2_aes                                    | NIST Round 3 submission  |                    1 | 0xfea7       | 1.3.6.1.4.1.2.267.11.4.4  |
-| dilithium2_aes **hybrid with** p256               | NIST Round 3 submission  |                    1 | 0xfea8       | 1.3.9999.2.11.1           |
-| dilithium2_aes **hybrid with** rsa3072            | NIST Round 3 submission  |                    1 | 0xfea9       | 1.3.9999.2.11.2           |
-| dilithium3_aes                                    | NIST Round 3 submission  |                    3 | 0xfeaa       | 1.3.6.1.4.1.2.267.11.6.5  |
-| dilithium3_aes **hybrid with** p384               | NIST Round 3 submission  |                    3 | 0xfeab       | 1.3.9999.2.11.3           |
-| dilithium5_aes                                    | NIST Round 3 submission  |                    5 | 0xfeac       | 1.3.6.1.4.1.2.267.11.8.7  |
-| dilithium5_aes **hybrid with** p521               | NIST Round 3 submission  |                    5 | 0xfead       | 1.3.9999.2.11.4           |
+| dilithium2                                        | 3.1                      |                    1 | 0xfea0       | 1.3.6.1.4.1.2.267.7.4.4   |
+| dilithium2 **hybrid with** p256                   | 3.1                      |                    1 | 0xfea1       | 1.3.9999.2.7.1            |
+| dilithium2 **hybrid with** rsa3072                | 3.1                      |                    1 | 0xfea2       | 1.3.9999.2.7.2            |
+| dilithium3                                        | 3.1                      |                    3 | 0xfea3       | 1.3.6.1.4.1.2.267.7.6.5   |
+| dilithium3 **hybrid with** p384                   | 3.1                      |                    3 | 0xfea4       | 1.3.9999.2.7.3            |
+| dilithium5                                        | 3.1                      |                    5 | 0xfea5       | 1.3.6.1.4.1.2.267.7.8.7   |
+| dilithium5 **hybrid with** p521                   | 3.1                      |                    5 | 0xfea6       | 1.3.9999.2.7.4            |
+| dilithium2_aes                                    | 3.1                      |                    1 | 0xfea7       | 1.3.6.1.4.1.2.267.11.4.4  |
+| dilithium2_aes **hybrid with** p256               | 3.1                      |                    1 | 0xfea8       | 1.3.9999.2.11.1           |
+| dilithium2_aes **hybrid with** rsa3072            | 3.1                      |                    1 | 0xfea9       | 1.3.9999.2.11.2           |
+| dilithium3_aes                                    | 3.1                      |                    3 | 0xfeaa       | 1.3.6.1.4.1.2.267.11.6.5  |
+| dilithium3_aes **hybrid with** p384               | 3.1                      |                    3 | 0xfeab       | 1.3.9999.2.11.3           |
+| dilithium5_aes                                    | 3.1                      |                    5 | 0xfeac       | 1.3.6.1.4.1.2.267.11.8.7  |
+| dilithium5_aes **hybrid with** p521               | 3.1                      |                    5 | 0xfead       | 1.3.9999.2.11.4           |
 | falcon512                                         | 20201018                 |                    1 | 0xfe0b       | 1.3.9999.3.1              |
 | falcon512 **hybrid with** p256                    | 20201018                 |                    1 | 0xfe0c       | 1.3.9999.3.2              |
 | falcon512 **hybrid with** rsa3072                 | 20201018                 |                    1 | 0xfe0d       | 1.3.9999.3.3              |

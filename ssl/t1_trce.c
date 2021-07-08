@@ -530,7 +530,6 @@ static const ssl_trace_tbl ssl_groups_tbl[] = {
     /* OQS groups, using private code points. The TLS 1.3 spec only reserves
        FF and EC ranges for code points; we'll update our values if/when
        this gets updated for PQC. */
-    {OQS_KEM_CURVEID(NID_oqs_kem_default), "OQS KEM default"},
 ///// OQS_TEMPLATE_FRAGMENT_SSL_GROUPS_TBL_START
     {OQS_KEM_CURVEID(NID_frodo640aes), "frodo640aes"},
     {OQS_KEM_CURVEID(NID_frodo640shake), "frodo640shake"},
@@ -538,8 +537,6 @@ static const ssl_trace_tbl ssl_groups_tbl[] = {
     {OQS_KEM_CURVEID(NID_frodo976shake), "frodo976shake"},
     {OQS_KEM_CURVEID(NID_frodo1344aes), "frodo1344aes"},
     {OQS_KEM_CURVEID(NID_frodo1344shake), "frodo1344shake"},
-    {OQS_KEM_CURVEID(NID_bike1l1cpa), "bike1l1cpa"},
-    {OQS_KEM_CURVEID(NID_bike1l3cpa), "bike1l3cpa"},
     {OQS_KEM_CURVEID(NID_kyber512), "kyber512"},
     {OQS_KEM_CURVEID(NID_kyber768), "kyber768"},
     {OQS_KEM_CURVEID(NID_kyber1024), "kyber1024"},
@@ -558,8 +555,8 @@ static const ssl_trace_tbl ssl_groups_tbl[] = {
     {OQS_KEM_CURVEID(NID_sikep503), "sikep503"},
     {OQS_KEM_CURVEID(NID_sikep610), "sikep610"},
     {OQS_KEM_CURVEID(NID_sikep751), "sikep751"},
-    {OQS_KEM_CURVEID(NID_bike1l1fo), "bike1l1fo"},
-    {OQS_KEM_CURVEID(NID_bike1l3fo), "bike1l3fo"},
+    {OQS_KEM_CURVEID(NID_bikel1), "bikel1"},
+    {OQS_KEM_CURVEID(NID_bikel3), "bikel3"},
     {OQS_KEM_CURVEID(NID_kyber90s512), "kyber90s512"},
     {OQS_KEM_CURVEID(NID_kyber90s768), "kyber90s768"},
     {OQS_KEM_CURVEID(NID_kyber90s1024), "kyber90s1024"},
@@ -573,7 +570,6 @@ static const ssl_trace_tbl ssl_groups_tbl[] = {
     {OQS_KEM_CURVEID(NID_sntrup761), "sntrup761"},
     {OQS_KEM_CURVEID(NID_sntrup857), "sntrup857"},
 ///// OQS_TEMPLATE_FRAGMENT_SSL_GROUPS_TBL_END
-    {OQS_KEM_CURVEID(NID_p256_oqs_kem_default), "p256 - OQS KEM default hybrid"},
 ///// OQS_TEMPLATE_FRAGMENT_SSL_GROUPS_TBL_HYBRID_START
     {OQS_KEM_CURVEID(NID_p256_frodo640aes), "p256 - frodo640aes hybrid"},
     {OQS_KEM_CURVEID(NID_p256_frodo640shake), "p256 - frodo640shake hybrid"},
@@ -581,8 +577,6 @@ static const ssl_trace_tbl ssl_groups_tbl[] = {
     {OQS_KEM_CURVEID(NID_p384_frodo976shake), "p384 - frodo976shake hybrid"},
     {OQS_KEM_CURVEID(NID_p521_frodo1344aes), "p521 - frodo1344aes hybrid"},
     {OQS_KEM_CURVEID(NID_p521_frodo1344shake), "p521 - frodo1344shake hybrid"},
-    {OQS_KEM_CURVEID(NID_p256_bike1l1cpa), "p256 - bike1l1cpa hybrid"},
-    {OQS_KEM_CURVEID(NID_p384_bike1l3cpa), "p384 - bike1l3cpa hybrid"},
     {OQS_KEM_CURVEID(NID_p256_kyber512), "p256 - kyber512 hybrid"},
     {OQS_KEM_CURVEID(NID_p384_kyber768), "p384 - kyber768 hybrid"},
     {OQS_KEM_CURVEID(NID_p521_kyber1024), "p521 - kyber1024 hybrid"},
@@ -601,8 +595,8 @@ static const ssl_trace_tbl ssl_groups_tbl[] = {
     {OQS_KEM_CURVEID(NID_p256_sikep503), "p256 - sikep503 hybrid"},
     {OQS_KEM_CURVEID(NID_p384_sikep610), "p384 - sikep610 hybrid"},
     {OQS_KEM_CURVEID(NID_p521_sikep751), "p521 - sikep751 hybrid"},
-    {OQS_KEM_CURVEID(NID_p256_bike1l1fo), "p256 - bike1l1fo hybrid"},
-    {OQS_KEM_CURVEID(NID_p384_bike1l3fo), "p384 - bike1l3fo hybrid"},
+    {OQS_KEM_CURVEID(NID_p256_bikel1), "p256 - bikel1 hybrid"},
+    {OQS_KEM_CURVEID(NID_p384_bikel3), "p384 - bikel3 hybrid"},
     {OQS_KEM_CURVEID(NID_p256_kyber90s512), "p256 - kyber90s512 hybrid"},
     {OQS_KEM_CURVEID(NID_p384_kyber90s768), "p384 - kyber90s768 hybrid"},
     {OQS_KEM_CURVEID(NID_p521_kyber90s1024), "p521 - kyber90s1024 hybrid"},
@@ -662,9 +656,6 @@ static const ssl_trace_tbl ssl_sigalg_tbl[] = {
     {TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512, "gost2012_512"},
     {TLSEXT_SIGALG_gostr34102001_gostr3411, "gost2001_gost94"},
 ///// OQS_TEMPLATE_FRAGMENT_POPULATE_SIGALG_TBL_START
-    {TLSEXT_SIGALG_oqs_sig_default, "oqs_sig_default"},
-    {TLSEXT_SIGALG_p256_oqs_sig_default, "p256_oqs_sig_default"},
-    {TLSEXT_SIGALG_rsa3072_oqs_sig_default, "rsa3072_oqs_sig_default"},
     {TLSEXT_SIGALG_dilithium2, "dilithium2"},
     {TLSEXT_SIGALG_p256_dilithium2, "p256_dilithium2"},
     {TLSEXT_SIGALG_rsa3072_dilithium2, "rsa3072_dilithium2"},

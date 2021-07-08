@@ -7,8 +7,6 @@
       return {{ variant['oqs_meth'] }};
     {%- endfor %}
 {%- endfor %}
-    case NID_oqs_kem_default:
-      return OQS_KEM_alg_default;
 {%- for kem in config['kems'] %}
     case NID_{{ kem['name_group'] }}:
     {% if kem['bit_security'] == 128 -%} case NID_p256_{{ kem['name_group'] }}: 

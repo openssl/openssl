@@ -21,7 +21,8 @@
 {%- else -%}
    {%- set hybrid_curve = "" -%}
 {%- endif %}
-#define IS_OQS_OPENSSL_KEM_NID(a) ((a >= NID_oqs_kem_default) && (a <= NID_{{ hybrid_curve }}{{ (config['kems'] | last)['name_group'] }}))
+#define IS_OQS_OPENSSL_KEM_NID(a) ((a >= 0x01FF) && (a <= NID_{{ hybrid_curve }}{{ (config['kems'] | last)['name_group'] }}))
+{%- set first_sig_variant = (config['sigs']|first)['variants']|first %}
 {%- set last_sig_variant = (config['sigs']|last)['variants']|last %}
-#define IS_OQS_OPENSSL_SIG_NID(a) ((a >= NID_oqs_sig_default) && (a <= NID_{{ (last_sig_variant['mix_with']|last)['name'] }}_{{ last_sig_variant['name'] }}))
+#define IS_OQS_OPENSSL_SIG_NID(a) ((a >= NID_{{ first_sig_variant['name'] }}) && (a <= NID_{{ (last_sig_variant['mix_with']|last)['name'] }}_{{ last_sig_variant['name'] }}))
 //

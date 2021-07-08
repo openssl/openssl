@@ -24,9 +24,6 @@ rsassaPss		undef	rsaEncryption
 ED25519		    undef	ED25519
 ED448		    undef	ED448
 ##### OQS_TEMPLATE_FRAGMENT_LIST_OQS_SIGS_START
-oqs_sig_default	sha512	oqs_sig_default
-p256_oqs_sig_default	sha512	p256_oqs_sig_default
-rsa3072_oqs_sig_default	sha512	rsa3072_oqs_sig_default
 dilithium2	sha512	dilithium2
 p256_dilithium2	sha512	p256_dilithium2
 rsa3072_dilithium2	sha512	rsa3072_dilithium2

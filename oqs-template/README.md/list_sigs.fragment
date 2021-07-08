@@ -1,4 +1,4 @@
-{%- for sig in config['sigs'][1:] %}
+{%- for sig in config['sigs'] %}
 - **{{ sig['family'] }}**:
     {%- for variant in sig['variants'] -%}
 `{{ variant['name'] }}`

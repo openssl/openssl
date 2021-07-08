@@ -64,9 +64,6 @@
 # define EVP_PKEY_X448 NID_X448
 # define EVP_PKEY_ED448 NID_ED448
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_EVP_PKEYS_START
-# define EVP_PKEY_OQS_SIG_DEFAULT NID_oqs_sig_default
-# define EVP_PKEY_P256_OQS_SIG_DEFAULT NID_p256_oqs_sig_default
-# define EVP_PKEY_RSA3072_OQS_SIG_DEFAULT NID_rsa3072_oqs_sig_default
 # define EVP_PKEY_DILITHIUM2 NID_dilithium2
 # define EVP_PKEY_P256_DILITHIUM2 NID_p256_dilithium2
 # define EVP_PKEY_RSA3072_DILITHIUM2 NID_rsa3072_dilithium2
@@ -106,10 +103,10 @@
 # define EVP_PKEY_SPHINCSSHAKE256128FROBUST NID_sphincsshake256128frobust
 # define EVP_PKEY_P256_SPHINCSSHAKE256128FROBUST NID_p256_sphincsshake256128frobust
 # define EVP_PKEY_RSA3072_SPHINCSSHAKE256128FROBUST NID_rsa3072_sphincsshake256128frobust
-#define OQS_OPENSSL_SIG_algs_length 42
-#define OQS_OPENSSL_KEM_algs_length 40
-#define IS_OQS_OPENSSL_KEM_NID(a) ((a >= NID_oqs_kem_default) && (a <= NID_p384_sntrup857))
-#define IS_OQS_OPENSSL_SIG_NID(a) ((a >= NID_oqs_sig_default) && (a <= NID_rsa3072_sphincsshake256128frobust))
+#define OQS_OPENSSL_SIG_algs_length 39
+#define OQS_OPENSSL_KEM_algs_length 38
+#define IS_OQS_OPENSSL_KEM_NID(a) ((a >= 0x01FF) && (a <= NID_p384_sntrup857))
+#define IS_OQS_OPENSSL_SIG_NID(a) ((a >= NID_dilithium2) && (a <= NID_rsa3072_sphincsshake256128frobust))
 /////// OQS_TEMPLATE_FRAGMENT_DEFINE_EVP_PKEYS_END
 const char *OQSKEM_options(void);
 const char *OQSSIG_options(void);

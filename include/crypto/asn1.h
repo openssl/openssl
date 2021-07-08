@@ -87,9 +87,6 @@ extern const EVP_PKEY_ASN1_METHOD rsa_pss_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD siphash_asn1_meth;
 
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_ASN1_METHS_START
-extern const EVP_PKEY_ASN1_METHOD oqs_sig_default_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD p256_oqs_sig_default_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD rsa3072_oqs_sig_default_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD dilithium2_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD p256_dilithium2_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD rsa3072_dilithium2_asn1_meth;

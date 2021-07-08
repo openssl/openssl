@@ -6,8 +6,8 @@ import os
 @pytest.fixture()
 def sig_default_server_port(ossl, ossl_config, test_artifacts_dir, worker_id):
     # Setup: start ossl server
-    common.gen_keys(ossl, ossl_config, 'oqs_sig_default', test_artifacts_dir, worker_id)
-    server, port = common.start_server(ossl, test_artifacts_dir, 'oqs_sig_default', worker_id)
+    common.gen_keys(ossl, ossl_config, 'dilithium2', test_artifacts_dir, worker_id)
+    server, port = common.start_server(ossl, test_artifacts_dir, 'dilithium2', worker_id)
     # Run tests
     yield port
     # Teardown: stop ossl server
@@ -31,7 +31,7 @@ def test_kem(ossl, sig_default_server_port, test_artifacts_dir, kex_name, worker
         pytest.skip('BIKE not supported in windows')
     client_output = common.run_subprocess([ossl, 's_client',
                                                   '-groups', kex_name,
-                                                  '-CAfile', os.path.join(test_artifacts_dir, '{}_oqs_sig_default_CA.crt'.format(worker_id)),
+                                                  '-CAfile', os.path.join(test_artifacts_dir, '{}_dilithium2_CA.crt'.format(worker_id)),
                                                   '-verify_return_error',
                                                   '-connect', 'localhost:{}'.format(sig_default_server_port)],
                                             input='Q'.encode())
@@ -50,12 +50,12 @@ def test_sig(parametrized_sig_server, ossl, test_artifacts_dir, worker_id):
     server_port = parametrized_sig_server[1]
 
     client_output = common.run_subprocess([ossl, 's_client',
-                                                  '-groups', 'oqs_kem_default',
+                                                  '-groups', 'frodo640aes',
                                                   '-CAfile', os.path.join(test_artifacts_dir, '{}_{}_CA.crt'.format(worker_id, server_sig)),
                                                   '-verify_return_error',
                                                   '-connect', 'localhost:{}'.format(server_port)],
                                     input='Q'.encode())
-    if not "Server Temp Key: oqs_kem_default" in client_output:
+    if not "Server Temp Key: frodo640aes" in client_output:
         print(client_output)
         assert False, "Server temp key missing."
 
