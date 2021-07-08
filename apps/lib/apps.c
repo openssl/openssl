@@ -3295,3 +3295,35 @@ EVP_PKEY *app_paramgen(EVP_PKEY_CTX *ctx, const char *alg)
                      opt_getprog(), alg != NULL ? alg : "asymmetric");
     return res;
 }
+
+/*
+ * Return non-zero if the legacy path is still an option.
+ * This decision is based on the global command line operations and the
+ * behaviour thus far.
+ */
+int opt_legacy_okay(void)
+{
+    int provider_options = opt_provider_option_given();
+    int libctx = app_get0_libctx() != NULL || app_get0_propq() != NULL;
+
+    /*
+     * Having a provider option specified or a custom library context or
+     * property query, is a sure sign we're not using legacy.
+     */
+    if (provider_options || libctx)
+        return 0;
+#if 0
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    /* Having a loaded engine is a strong indication for legacy being in use */
+    {
+        ENGINE *e;
+
+        if ((e = ENGINE_get_first()) != NULL) {
+            ENGINE_free(e); /* Just a down ref, not a free */
+            return 1;
+        }
+    }
+#endif
+#endif
+    return 1;
+}
