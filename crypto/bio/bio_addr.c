@@ -696,7 +696,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
         hints.ai_protocol = protocol;
 # ifdef AI_ADDRCONFIG
 #  ifdef AF_UNSPEC
-        if (family == AF_UNSPEC)
+        if (host != NULL && family == AF_UNSPEC)
 #  endif
             hints.ai_flags |= AI_ADDRCONFIG;
 # endif
