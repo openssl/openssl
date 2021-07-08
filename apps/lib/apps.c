@@ -15,6 +15,12 @@
 # define _POSIX_C_SOURCE 2
 #endif
 
+#ifndef OPENSSL_NO_ENGINE
+/* We need to use some deprecated APIs */
+# define OPENSSL_SUPPRESS_DEPRECATED
+# include <openssl/engine.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
