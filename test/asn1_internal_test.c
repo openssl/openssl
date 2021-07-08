@@ -107,9 +107,47 @@ static int test_standard_methods(void)
     return 0;
 }
 
+/**********************************************************************
+ *
+ * Test of that i2d fail on non-existing non-optional items
+ *
+ ***/
+
+#include <openssl/rsa.h>
+
+static int test_empty_nonoptional_content(void)
+{
+    RSA *rsa = NULL;
+    BIGNUM *n = NULL;
+    BIGNUM *e = NULL;
+    int ok = 0;
+
+    if (!TEST_ptr(rsa = RSA_new())
+        || !TEST_ptr(n = BN_new())
+        || !TEST_ptr(e = BN_new())
+        || !TEST_true(RSA_set0_key(rsa, n, e, NULL)))
+        goto end;
+
+    n = e = NULL;                /* They are now "owned" by |rsa| */
+
+    /*
+     * This SHOULD fail, as we're trying to encode a public key as a private
+     * key.  The private key bits MUST be present for a proper RSAPrivateKey.
+     */
+    if (TEST_int_le(i2d_RSAPrivateKey(rsa, NULL), 0))
+        ok = 1;
+
+ end:
+    RSA_free(rsa);
+    BN_free(n);
+    BN_free(e);
+    return ok;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_tbl_standard);
     ADD_TEST(test_standard_methods);
+    ADD_TEST(test_empty_nonoptional_content);
     return 1;
 }
