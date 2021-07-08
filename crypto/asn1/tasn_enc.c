@@ -83,7 +83,7 @@ int ASN1_item_ex_i2d(ASN1_VALUE **pval, unsigned char **out,
                      const ASN1_ITEM *it, int tag, int aclass)
 {
     const ASN1_TEMPLATE *tt = NULL;
-    int i, seqcontlen, seqlen, ndef = 1;
+    int i, seqcontlen, seqlen, ndef = 1, len;
     const ASN1_EXTERN_FUNCS *ef;
     const ASN1_AUX *aux = it->funcs;
     ASN1_aux_cb *asn1_cb = 0;
@@ -100,7 +100,12 @@ int ASN1_item_ex_i2d(ASN1_VALUE **pval, unsigned char **out,
         if (it->templates)
             return asn1_template_ex_i2d(pval, out, it->templates,
                                         tag, aclass);
-        return asn1_i2d_ex_primitive(pval, out, it, tag, aclass);
+        len = asn1_i2d_ex_primitive(pval, out, it, tag, aclass);
+        if (len == 0 && (aclass & ASN1_TFLG_OPTIONAL) == 0) {
+            ASN1err(ASN1_F_ASN1_ITEM_EX_I2D, ASN1_R_ILLEGAL_ZERO_CONTENT);
+            return -1;
+        }
+        return len;
 
     case ASN1_ITYPE_MSTRING:
         /*
@@ -111,7 +116,12 @@ int ASN1_item_ex_i2d(ASN1_VALUE **pval, unsigned char **out,
             ASN1err(ASN1_F_ASN1_ITEM_EX_I2D, ASN1_R_BAD_TEMPLATE);
             return -1;
         }
-        return asn1_i2d_ex_primitive(pval, out, it, -1, aclass);
+        len = asn1_i2d_ex_primitive(pval, out, it, -1, aclass);
+        if (len == 0 && (aclass & ASN1_TFLG_OPTIONAL) == 0) {
+            ASN1err(ASN1_F_ASN1_ITEM_EX_I2D, ASN1_R_ILLEGAL_ZERO_CONTENT);
+            return -1;
+        }
+        return len;
 
     case ASN1_ITYPE_CHOICE:
         /*
