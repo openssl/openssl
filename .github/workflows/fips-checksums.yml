@@ -57,3 +57,29 @@ jobs:
         with:
           name: fips_checksum
           path: artifact/
+  verify-checksums:
+    runs-on: ubuntu-latest
+    steps:
+      - name: install unifdef
+        run: |
+            sudo apt-get update
+            sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install unifdef
+      - uses: actions/checkout@v2
+      - name: create build dirs
+        run: |
+          mkdir ./build
+      - name: config
+        run: ../config enable-fips && perl configdata.pm --dump
+        working-directory: ./build
+      - name: make build_generated
+        run: make -s build_generated
+        working-directory: ./build
+      - name: make fips-checksums
+        run: make fips-checksums
+        working-directory: ./build
+      - name: make fips-checksums
+        run: make fips-checksums
+        working-directory: ./build
+      - name: make diff-fips-checksums
+        run: make diff-fips-checksums
+        working-directory: ./build
