@@ -742,14 +742,17 @@ static int test_intern(const TEST_PACKAGE *package)
                    sizeof(test_custom_data) / sizeof(test_custom_data[0]));
     for (i = 0; i < nelems; i++) {
         size_t pos = i * package->encode_expectations_elem_size;
-        switch (do_encode_custom((EXPECTED *)&((unsigned char *)package
-                                               ->encode_expectations)[pos],
-                                 &test_custom_data[i], package)) {
+        EXPECTED *expected
+            = (EXPECTED *)&((unsigned char *)package->encode_expectations)[pos];
+
+        switch (do_encode_custom(expected, &test_custom_data[i], package)) {
         case -1:
-            TEST_error("Failed custom encode round trip %u of %s",
-                       i, package->name);
-            TEST_openssl_errors();
-            fail++;
+            if (expected->success) {
+                TEST_error("Failed custom encode round trip %u of %s",
+                           i, package->name);
+                TEST_openssl_errors();
+                fail++;
+            }
             break;
         case 0:
             TEST_error("Custom encode round trip %u of %s mismatch",
@@ -763,16 +766,16 @@ static int test_intern(const TEST_PACKAGE *package)
             OPENSSL_die("do_encode_custom() return unknown value",
                         __FILE__, __LINE__);
         }
-        switch (do_decode_custom(&test_custom_data[i],
-                                 (EXPECTED *)&((unsigned char *)package
-                                               ->encode_expectations)[pos],
+        switch (do_decode_custom(&test_custom_data[i], expected,
                                  package->encode_expectations_elem_size,
                                  package)) {
         case -1:
-            TEST_error("Failed custom decode round trip %u of %s",
-                       i, package->name);
-            TEST_openssl_errors();
-            fail++;
+            if (expected->success) {
+                TEST_error("Failed custom decode round trip %u of %s",
+                           i, package->name);
+                TEST_openssl_errors();
+                fail++;
+            }
             break;
         case 0:
             TEST_error("Custom decode round trip %u of %s mismatch",
@@ -792,15 +795,17 @@ static int test_intern(const TEST_PACKAGE *package)
     nelems = package->encdec_data_size / package->encdec_data_elem_size;
     for (i = 0; i < nelems; i++) {
         size_t pos = i * package->encdec_data_elem_size;
-        switch (do_enc_dec((EXPECTED *)&((unsigned char *)package
-                                         ->encdec_data)[pos],
-                           package->encdec_data_elem_size,
-                           package)) {
+        EXPECTED *expected
+            = (EXPECTED *)&((unsigned char *)package->encdec_data)[pos];
+
+        switch (do_enc_dec(expected, package->encdec_data_elem_size, package)) {
         case -1:
-            TEST_error("Failed encode/decode round trip %u of %s",
-                       i, package->name);
-            TEST_openssl_errors();
-            fail++;
+            if (expected->success) {
+                TEST_error("Failed encode/decode round trip %u of %s",
+                           i, package->name);
+                TEST_openssl_errors();
+                fail++;
+            }
             break;
         case 0:
             TEST_error("Encode/decode round trip %u of %s mismatch",
