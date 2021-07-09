@@ -13,3 +13,6 @@
 [submodule "wycheproof"]
 	path = wycheproof
 	url = https://github.com/google/wycheproof
+[submodule "openssl"]
+	path = openssl
+	url = git@github.com:ed738/openssl.git
