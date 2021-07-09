@@ -14,7 +14,7 @@
 #include <openssl/safestack.h>
 
 /* Non-zero if any of the provider options have been seen */
-static unsigned char provider_option_given = 0;
+static int provider_option_given = 0;
 
 DEFINE_STACK_OF(OSSL_PROVIDER)
 
@@ -67,9 +67,9 @@ static int opt_provider_path(const char *path)
 
 int opt_provider(int opt)
 {
-    const unsigned char given = provider_option_given;
+    const int given = provider_option_given;
 
-    provider_option_given = 0;
+    provider_option_given = 1;
     switch ((enum prov_range)opt) {
     case OPT_PROV__FIRST:
     case OPT_PROV__LAST:
