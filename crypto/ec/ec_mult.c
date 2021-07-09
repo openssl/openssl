@@ -153,7 +153,7 @@ int ossl_ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
     BIGNUM *k = NULL;
     BIGNUM *lambda = NULL;
     BIGNUM *cardinality = NULL;
-    BN_ULONG *swap_rand;
+    BN_ULONG rnd, *swap_rand;
     int i, cardinality_bits, group_top, kbit, pbit, Z_is_one, swap_size;
     int ret = 0;
 
@@ -269,8 +269,8 @@ int ossl_ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
      * k := scalar + 2 * cardinality
      */
     kbit = BN_is_bit_set(lambda, cardinality_bits);
-    BN_consttime_randomized_swap(kbit, k, lambda, group_top + 2,
-                                 swap_rand[cardinality_bits]);
+    rnd = swap_rand[cardinality_bits];
+    BN_consttime_randomized_swap(kbit, k, lambda, group_top + 2, rnd, rnd);
 
     group_top = bn_get_top(group->field);
     if ((bn_wexpand(s->X, group_top) == NULL)
@@ -303,13 +303,13 @@ int ossl_ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
     pbit = 1;
 
 #define EC_POINT_CSWAP(c, a, b, w, t, r) \
-    do {                                                        \
-        BN_consttime_randomized_swap(c, (a)->X, (b)->X, w, r);  \
-        BN_consttime_randomized_swap(c, (a)->Y, (b)->Y, w, r);  \
-        BN_consttime_randomized_swap(c, (a)->Z, (b)->Z, w, r);  \
-        t = (((a)->Z_is_one ^ (b)->Z_is_one) & (c)) ^ (r);      \
-        (a)->Z_is_one = ((a)->Z_is_one ^ (t)) ^ (r);            \
-        (b)->Z_is_one = ((b)->Z_is_one ^ (t)) ^ (r);            \
+    do {                                                          \
+        BN_consttime_randomized_swap(c, (a)->X, (b)->X, w, r, r); \
+        BN_consttime_randomized_swap(c, (a)->Y, (b)->Y, w, r, r); \
+        BN_consttime_randomized_swap(c, (a)->Z, (b)->Z, w, r, r); \
+        t = (((a)->Z_is_one ^ (b)->Z_is_one) & (c)) ^ (r);        \
+        (a)->Z_is_one = ((a)->Z_is_one ^ (t)) ^ (r);              \
+        (b)->Z_is_one = ((b)->Z_is_one ^ (t)) ^ (r);              \
     } while (0)
 
     /*-

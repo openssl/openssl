@@ -12,7 +12,7 @@ BN_swap, BN_consttime_swap, BN_consttime_randomized_swap
  void BN_swap(BIGNUM *a, BIGNUM *b);
  void BN_consttime_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords);
  void BN_consttime_randomized_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b,
-                                   int nwords, BN_ULONG r);
+                                   int nwords, BN_ULONG rand1, BN_ULONG rand2);
 
 =head1 DESCRIPTION
 
@@ -24,8 +24,10 @@ each of I<a> and I<b> most have at least that many words allocated,
 and not use more than that many words.
 
 BN_consttime_randomized_swap() is the same as BN_consttime_swap()
-except that it uses I<r> as a randomization value to avoid a class
-of timing attacks.
+except that it uses I<rand1> and I<rand2> as a randomization value to
+avoid a class of timing attacks. The two values must be the same, and
+are only passed twice to avoid a clever compiler optimizing away the
+protection.
 
 =head1 RETURN VALUES
 

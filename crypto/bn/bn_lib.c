@@ -884,11 +884,12 @@ void BN_consttime_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords)
 
 /*-
  * Constant-time randomized conditional swap of |a| and |b|.  |a| and |b|
- * are swapped if condition is not 0.
- * |r| is the value to use for randomization during the swap.  |nwords|
- * is the number of words to swap.  Assumes that at least |nwords| are
- * allocated in both |a| and |b| and that no more than nwords are used by
- * either |a| or |b|.
+ * are swapped if condition is not 0. |rand1| and |rand2| are the values
+ * use for randomization during the swap. When called, they are the same,
+ * but given as two different parameters to avoid the compiler optimizing
+ * out the XOR operations. |nwords| is the number of words to swap.
+ * Assumes that at least |nwords| are allocated in both |a| and |b| and
+ * that no more than nwords are used by either |a| or |b|.
  *
  * The randomization avoids creating a systematic bias in the values used
  * by XOR operations, where the swap with condition==0 does a lot of XORs
@@ -901,7 +902,7 @@ void BN_consttime_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords)
  * and M. Prvulovic, in IEEE Euro S&P 2021).
  */
 void BN_consttime_randomized_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b,
-                                  int nwords, BN_ULONG r)
+                                  int nwords, BN_ULONG rand1, BN_ULONG rand2)
 {
     BN_ULONG t;
     int i;
@@ -914,13 +915,13 @@ void BN_consttime_randomized_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b,
 
     condition = ((~condition & ((condition - 1))) >> (BN_BITS2 - 1)) - 1;
 
-    t = ((a->top ^ b->top) & condition) ^ r;
-    a->top = (a->top ^ t) ^ r;
-    b->top = (b->top ^ t) ^ r;
+    t = ((a->top ^ b->top) & condition) ^ rand1;
+    a->top = (a->top ^ t) ^ rand2;
+    b->top = (b->top ^ t) ^ rand2;
 
-    t = ((a->neg ^ b->neg) & condition) ^ r;
-    a->neg = (a->neg ^ t) ^ r;
-    b->neg = (b->neg ^ t) ^ r;
+    t = ((a->neg ^ b->neg) & condition) ^ rand1;
+    a->neg = (a->neg ^ t) ^ rand2;
+    b->neg = (b->neg ^ t) ^ rand2;
 
     /*-
      * BN_FLG_STATIC_DATA: indicates that data may not be written to. Intention
@@ -945,15 +946,15 @@ void BN_consttime_randomized_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b,
      */
 #define BN_CONSTTIME_SWAP_FLAGS (BN_FLG_CONSTTIME | BN_FLG_FIXED_TOP)
 
-    t = (((a->flags ^ b->flags) & BN_CONSTTIME_SWAP_FLAGS) & condition) ^ r;
-    a->flags = (a->flags ^ t) ^ r;
-    b->flags = (b->flags ^ t) ^ r;
+    t = (((a->flags ^ b->flags) & BN_CONSTTIME_SWAP_FLAGS) & condition) ^ rand1;
+    a->flags = (a->flags ^ t) ^ rand2;
+    b->flags = (b->flags ^ t) ^ rand2;
 
     /* conditionally swap the data */
     for (i = 0; i < nwords; i++) {
-        t = ((a->d[i] ^ b->d[i]) & condition) ^ r;
-        a->d[i] = (a->d[i] ^ t) ^ r;
-        b->d[i] = (b->d[i] ^ t) ^ r;
+        t = ((a->d[i] ^ b->d[i]) & condition) ^ rand1;
+        a->d[i] = (a->d[i] ^ t) ^ rand2;
+        b->d[i] = (b->d[i] ^ t) ^ rand2;
     }
 }
 
