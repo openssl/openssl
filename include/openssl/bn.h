@@ -351,7 +351,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *ret,
 
 void BN_consttime_swap(BN_ULONG swap, BIGNUM *a, BIGNUM *b, int nwords);
 void BN_consttime_randomized_swap(BN_ULONG swap, BIGNUM *a, BIGNUM *b,
-                                  int nwords, BN_ULONG r);
+                                  int nwords, BN_ULONG rand1, BN_ULONG rand2);
 
 /* Deprecated versions */
 # ifndef OPENSSL_NO_DEPRECATED_0_9_8
