@@ -76,7 +76,7 @@ test_script:
         }
     - ps: >-
         if ($env:Configuration -Match "shared") {
-            mkdir ..\_install
+           + mkdir ..\_install
             cmd /c "%NMAKE% install DESTDIR=..\_install 2>&1"
         }
     - cd ..
