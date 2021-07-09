@@ -306,7 +306,8 @@ static int asn1_template_ex_i2d(ASN1_VALUE **pval, unsigned char **out,
             if (len == -1 || (skcontlen > INT_MAX - len))
                 return -1;
             if (len == 0 && (tt->flags & ASN1_TFLG_OPTIONAL) == 0) {
-                ASN1err(ASN1_F_ASN1_ITEM_EX_I2D, ASN1_R_ILLEGAL_ZERO_CONTENT);
+                ASN1err(ASN1_F_ASN1_TEMPLATE_EX_I2D,
+                        ASN1_R_ILLEGAL_ZERO_CONTENT);
                 return -1;
             }
             skcontlen += len;
@@ -348,7 +349,7 @@ static int asn1_template_ex_i2d(ASN1_VALUE **pval, unsigned char **out,
         if (!i)
             return 0;
         if (i == 0 && (tt->flags & ASN1_TFLG_OPTIONAL) == 0) {
-            ASN1err(ASN1_F_ASN1_ITEM_EX_I2D, ASN1_R_ILLEGAL_ZERO_CONTENT);
+            ASN1err(ASN1_F_ASN1_TEMPLATE_EX_I2D, ASN1_R_ILLEGAL_ZERO_CONTENT);
             return -1;
         }
         /* Find length of EXPLICIT tag */
@@ -367,7 +368,7 @@ static int asn1_template_ex_i2d(ASN1_VALUE **pval, unsigned char **out,
     len = ASN1_item_ex_i2d(pval, out, ASN1_ITEM_ptr(tt->item),
                               ttag, tclass | iclass);
     if (len == 0 && (tt->flags & ASN1_TFLG_OPTIONAL) == 0) {
-        ASN1err(ASN1_F_ASN1_ITEM_EX_I2D, ASN1_R_ILLEGAL_ZERO_CONTENT);
+        ASN1err(ASN1_F_ASN1_TEMPLATE_EX_I2D, ASN1_R_ILLEGAL_ZERO_CONTENT);
         return -1;
     }
     return len;
