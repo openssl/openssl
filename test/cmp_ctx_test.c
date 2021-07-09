@@ -13,6 +13,11 @@
 
 #include <openssl/x509_vfy.h>
 
+static X509 *test_cert;
+
+/* Avoid using X509_new() via the generic macros below. */
+#define X509_new() X509_dup(test_cert)
+
 typedef struct test_fixture {
     const char *test_case_name;
     OSSL_CMP_CTX *ctx;
@@ -42,7 +47,7 @@ static OSSL_CMP_CTX_TEST_FIXTURE *set_up(const char *const test_case_name)
 static STACK_OF(X509) *sk_X509_new_1(void)
 {
     STACK_OF(X509) *sk = sk_X509_new_null();
-    X509 *x = X509_new();
+    X509 *x = X509_dup(test_cert);
 
     if (x == NULL || !sk_X509_push(sk, x)) {
         sk_X509_free(sk);
@@ -68,12 +73,12 @@ static int execute_CTX_reinit_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
     ctx->status = 1;
     ctx->failInfoCode = 1;
     if (!ossl_cmp_ctx_set0_statusString(ctx, sk_ASN1_UTF8STRING_new_null())
-            || !ossl_cmp_ctx_set0_newCert(ctx, X509_new())
+            || !ossl_cmp_ctx_set0_newCert(ctx, X509_dup(test_cert))
             || !TEST_ptr(certs = sk_X509_new_1())
             || !ossl_cmp_ctx_set1_newChain(ctx, certs)
             || !ossl_cmp_ctx_set1_caPubs(ctx, certs)
             || !ossl_cmp_ctx_set1_extraCertsIn(ctx, certs)
-            || !ossl_cmp_ctx_set0_validatedSrvCert(ctx, X509_new())
+            || !ossl_cmp_ctx_set0_validatedSrvCert(ctx, X509_dup(test_cert))
             || !TEST_ptr(bytes = ASN1_OCTET_STRING_new())
             || !OSSL_CMP_CTX_set1_transactionID(ctx, bytes)
             || !OSSL_CMP_CTX_set1_senderNonce(ctx, bytes)
@@ -786,6 +791,17 @@ DEFINE_SET_TEST(ossl_cmp, ctx, 1, 1, recipNonce, ASN1_OCTET_STRING)
 
 int setup_tests(void)
 {
+    char *cert_file;
+
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+
+    if (!TEST_ptr(cert_file = test_get_argument(0))
+        || !TEST_ptr(test_cert = load_cert_pem(cert_file, NULL)))
+        return 0;
+
     /* OSSL_CMP_CTX_new() is tested by set_up() */
     /* OSSL_CMP_CTX_free() is tested by tear_down() */
     ADD_TEST(test_CTX_reinit);
