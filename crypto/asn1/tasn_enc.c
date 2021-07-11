@@ -348,9 +348,9 @@ static int asn1_template_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
         /* EXPLICIT tagging */
         /* Find length of tagged item */
         i = ASN1_item_ex_i2d(pval, NULL, ASN1_ITEM_ptr(tt->item), -1, iclass);
-        if (!i)
+        if (i == 0)
             return 0;
-        if (i == 0 && (tt->flags & ASN1_TFLG_OPTIONAL) == 0) {
+        if ((tt->flags & ASN1_TFLG_OPTIONAL) == 0) {
             ERR_raise(ERR_LIB_ASN1, ASN1_R_ILLEGAL_ZERO_CONTENT);
             return -1;
         }
