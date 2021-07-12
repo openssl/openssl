@@ -1262,6 +1262,7 @@ not called a default IV length is used.
 
 For GCM AES and OCB AES the default is 12 (i.e. 96 bits). For OCB mode the
 maximum is 15.
+For GCM AES the minimum is 8 (i.e. 64 bits).
 
 =item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen, tag)
 
@@ -1670,6 +1671,8 @@ EVP_CIPHER_CTX_is_encrypting() in OpenSSL 3.0. The old name is kept as
 non-deprecated alias macro.
 
 The EVP_CIPHER_CTX_flags() macro was deprecated in OpenSSL 1.1.0.
+
+The minimum IV length for GCM AES was raised to 64 bits in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
