@@ -9,6 +9,7 @@ srv_secret = pass:test
 no_check_time = 1
 srv_trusted = signer_root.crt
 
+ref_cert = signer_only.crt
 rsp_cert = signer_only.crt
 rsp_capubs = signer_root.crt
 rsp_extracerts = signer_issuing.crt

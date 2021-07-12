@@ -18,6 +18,7 @@
 /* the context for the CMP mock server */
 typedef struct
 {
+    X509 *refCert;             /* cert to expect for oldCertID in kur/rr msg */
     X509 *certOut;             /* certificate to be returned in cp/ip/kup msg */
     STACK_OF(X509) *chainOut;  /* chain of certOut to add to extraCerts field */
     STACK_OF(X509) *caPubsOut; /* certs to return in caPubs field of ip msg */
@@ -37,6 +38,7 @@ static void mock_srv_ctx_free(mock_srv_ctx *ctx)
         return;
 
     OSSL_CMP_PKISI_free(ctx->statusOut);
+    X509_free(ctx->refCert);
     X509_free(ctx->certOut);
     OSSL_STACK_OF_X509_free(ctx->chainOut);
     OSSL_STACK_OF_X509_free(ctx->caPubsOut);
@@ -61,6 +63,22 @@ static mock_srv_ctx *mock_srv_ctx_new(void)
  err:
     mock_srv_ctx_free(ctx);
     return NULL;
+}
+
+int ossl_cmp_mock_srv_set1_refCert(OSSL_CMP_SRV_CTX *srv_ctx, X509 *cert)
+{
+    mock_srv_ctx *ctx = OSSL_CMP_SRV_CTX_get0_custom_ctx(srv_ctx);
+
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
+        return 0;
+    }
+    if (cert == NULL || X509_up_ref(cert)) {
+        X509_free(ctx->refCert);
+        ctx->refCert = cert;
+        return 1;
+    }
+    return 0;
 }
 
 int ossl_cmp_mock_srv_set1_certOut(OSSL_CMP_SRV_CTX *srv_ctx, X509 *cert)
@@ -170,6 +188,21 @@ int ossl_cmp_mock_srv_set_checkAfterTime(OSSL_CMP_SRV_CTX *srv_ctx, int sec)
     return 1;
 }
 
+/* check for matching reference cert components, as far as given */
+static int refcert_cmp(const X509 *refcert,
+                       const X509_NAME *issuer, const ASN1_INTEGER *serial)
+{
+    const X509_NAME *ref_issuer;
+    const ASN1_INTEGER *ref_serial;
+
+    if (refcert == NULL)
+        return 1;
+    ref_issuer = X509_get_issuer_name(refcert);
+    ref_serial = X509_get0_serialNumber(refcert);
+    return (ref_issuer == NULL || X509_NAME_cmp(issuer, ref_issuer) == 0)
+        && (ref_serial == NULL || ASN1_INTEGER_cmp(serial, ref_serial) == 0);
+}
+
 static OSSL_CMP_PKISI *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
                                             const OSSL_CMP_MSG *cert_req,
                                             int certReqId,
@@ -212,24 +245,18 @@ static OSSL_CMP_PKISI *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
         /* give final response after polling */
         ctx->curr_pollCount = 0;
 
+    /* accept cert update request only for the reference cert, if given */
     if (OSSL_CMP_MSG_get_bodytype(cert_req) == OSSL_CMP_KUR
-            && crm != NULL && ctx->certOut != NULL) {
+            && crm != NULL /* thus not p10cr */ && ctx->refCert != NULL) {
         const OSSL_CRMF_CERTID *cid = OSSL_CRMF_MSG_get0_regCtrl_oldCertID(crm);
-        const X509_NAME *issuer = X509_get_issuer_name(ctx->certOut);
-        const ASN1_INTEGER *serial = X509_get0_serialNumber(ctx->certOut);
 
         if (cid == NULL) {
             ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_CERTID);
             return NULL;
         }
-        if (issuer != NULL
-            && X509_NAME_cmp(issuer, OSSL_CRMF_CERTID_get0_issuer(cid)) != 0) {
-            ERR_raise(ERR_LIB_CMP, CMP_R_WRONG_CERTID);
-            return NULL;
-        }
-        if (serial != NULL
-            && ASN1_INTEGER_cmp(serial,
-                                OSSL_CRMF_CERTID_get0_serialNumber(cid)) != 0) {
+        if (!refcert_cmp(ctx->refCert,
+                         OSSL_CRMF_CERTID_get0_issuer(cid),
+                         OSSL_CRMF_CERTID_get0_serialNumber(cid))) {
             ERR_raise(ERR_LIB_CMP, CMP_R_WRONG_CERTID);
             return NULL;
         }
@@ -270,19 +297,15 @@ static OSSL_CMP_PKISI *process_rr(OSSL_CMP_SRV_CTX *srv_ctx,
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return NULL;
     }
-    if (ctx->sendError || ctx->certOut == NULL) {
+    if (ctx->sendError) {
         ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROCESSING_MESSAGE);
         return NULL;
     }
 
-    /* Allow any RR derived from CSR, which may include subject and serial */
-    if (issuer == NULL || serial == NULL)
-        return OSSL_CMP_PKISI_dup(ctx->statusOut);
-
-    /* accept revocation only for the certificate we sent in ir/cr/kur */
-    if (X509_NAME_cmp(issuer, X509_get_issuer_name(ctx->certOut)) != 0
-            || ASN1_INTEGER_cmp(serial,
-                                X509_get0_serialNumber(ctx->certOut)) != 0) {
+    /* allow any RR derived from CSR which does not include issuer and serial */
+    if ((issuer != NULL || serial != NULL)
+        /* accept revocation only for the reference cert, if given */
+            && !refcert_cmp(ctx->refCert, issuer, serial)) {
         ERR_raise_data(ERR_LIB_CMP, CMP_R_REQUEST_NOT_ACCEPTED,
                        "wrong certificate to revoke");
         return NULL;
