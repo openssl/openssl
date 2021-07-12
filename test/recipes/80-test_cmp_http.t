@@ -242,7 +242,8 @@ sub load_tests {
         } else {
             $line =~ s{-section,,}{-section,,-proxy,$proxy,};
         }
-        $line =~ s{-section,,}{-section,,-certout,$result_dir/test.cert.pem,};
+        $line =~ s{-section,,}{-section,,-certout,$result_dir/test.cert.pem,}
+            if $aspect ne "commands" || $line =~ m/,\s*-cmd\s*,\s*(ir|cr|p10cr|kur)\s*,/;
         $line =~ s{-section,,}{-config,../$test_config,-section,$server_name $aspect,};
 
         my @fields = grep /\S/, split ",", $line;
