@@ -123,6 +123,7 @@ Mock server options:
 [B<-srv_keypass> I<arg>]
 [B<-srv_trusted> I<filenames>|I<uris>]
 [B<-srv_untrusted> I<filenames>|I<uris>]
+[B<-ref_cert> I<filename>|I<uri>]
 [B<-rsp_cert> I<filename>|I<uri>]
 [B<-rsp_extracerts> I<filenames>|I<uris>]
 [B<-rsp_capubs> I<filenames>|I<uris>]
@@ -958,6 +959,10 @@ have no effect on the certificate verification enabled via this option.
 =item B<-srv_untrusted> I<filenames>|I<uris>
 
 Intermediate CA certs that may be useful when validating client certificates.
+
+=item B<-ref_cert> I<filename>|I<uri>
+
+Certificate to be expected for RR messages and any oldCertID in KUR messages.
 
 =item B<-rsp_cert> I<filename>|I<uri>
 

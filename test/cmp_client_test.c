@@ -62,6 +62,7 @@ static CMP_SES_TEST_FIXTURE *set_up(const char *const test_case_name)
     fixture->test_case_name = test_case_name;
     if (!TEST_ptr(fixture->srv_ctx = ossl_cmp_mock_srv_new(libctx, NULL))
             || !OSSL_CMP_SRV_CTX_set_accept_unprotected(fixture->srv_ctx, 1)
+            || !ossl_cmp_mock_srv_set1_refCert(fixture->srv_ctx, client_cert)
             || !ossl_cmp_mock_srv_set1_certOut(fixture->srv_ctx, client_cert)
             || (srv_cmp_ctx =
                 OSSL_CMP_SRV_CTX_get0_cmp_ctx(fixture->srv_ctx)) == NULL
