@@ -429,28 +429,28 @@ build_apps build_tests: build_programs
 # Convenience target to prebuild all generated files, not just the mandatory
 # ones
 build_all_generated: $(GENERATED_MANDATORY) $(GENERATED) build_docs
-	@{- output_off() if $disabled{makedepend}; "" -}
+	@{- output_off() if $disabled{makedepend}; "\@rem" -}
 	@$(ECHO) "Warning: consider configuring with no-makedepend, because if"
 	@$(ECHO) "         target system doesn't have $(PERL),"
 	@$(ECHO) "         then make will fail..."
-	@{- output_on() if $disabled{makedepend}; "" -}
+	@{- output_on() if $disabled{makedepend}; "\@rem" -}
 
 all: build_sw build_docs
 
 test: tests
 {- dependmagic('tests'); -}: build_programs_nodep build_modules_nodep copy-utils
-	@{- output_off() if $disabled{tests}; "" -}
+	@{- output_off() if $disabled{tests}; "\@rem" -}
 	cmd /C "set "SRCTOP=$(SRCDIR)" & set "BLDTOP=$(BLDDIR)" & set "PERL=$(PERL)" & set "FIPSKEY=$(FIPSKEY)" & "$(PERL)" "$(SRCDIR)\test\run_tests.pl" $(TESTS)"
 	@{- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
 	@$(ECHO) "Tests are not supported with your chosen Configure options"
-	@{- output_on() if !$disabled{tests}; "" -}
+	@{- output_on() if !$disabled{tests}; "\@rem" -}
 
 list-tests:
-	@{- output_off() if $disabled{tests}; "" -}
+	@{- output_off() if $disabled{tests}; "\@rem" -}
 	@cmd /C "set "SRCTOP=$(SRCDIR)" & "$(PERL)" "$(SRCDIR)\test\run_tests.pl" list"
 	@{- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
 	@$(ECHO) "Tests are not supported with your chosen Configure options"
-	@{- output_on() if !$disabled{tests}; "" -}
+	@{- output_on() if !$disabled{tests}; "\@rem" -}
 
 install: install_sw install_ssldirs install_docs
 
@@ -465,11 +465,11 @@ clean: libclean
 	-rd /Q /S $(HTMLDOCS3_BLDDIRS)
 	-rd /Q /S $(HTMLDOCS5_BLDDIRS)
 	-rd /Q /S $(HTMLDOCS7_BLDDIRS)
-	{- join("\n\t", map { "-del /Q /F $_" } @PROGRAMS) -}
-	{- join("\n\t", map { "-del /Q /F $_" } @MODULES) -}
-	{- join("\n\t", map { "-del /Q /F $_" } @SCRIPTS) -}
-	{- join("\n\t", map { "-del /Q /F $_" } @GENERATED_MANDATORY) -}
-	{- join("\n\t", map { "-del /Q /F $_" } @GENERATED) -}
+	{- join("\n\t", map { "-del /Q /F $_" } @PROGRAMS) || "\@rem" -}
+	{- join("\n\t", map { "-del /Q /F $_" } @MODULES) || "\@rem" -}
+	{- join("\n\t", map { "-del /Q /F $_" } @SCRIPTS) || "\@rem" -}
+	{- join("\n\t", map { "-del /Q /F $_" } @GENERATED_MANDATORY) || "\@rem" -}
+	{- join("\n\t", map { "-del /Q /F $_" } @GENERATED) || "\@rem" -}
 	-del /Q /S /F *.d *.obj *.pdb *.ilk *.manifest
 	-del /Q /S /F engines\*.lib engines\*.exp
 	-del /Q /S /F apps\*.lib apps\*.rc apps\*.res apps\*.exp
@@ -481,9 +481,9 @@ distclean: clean
 	-del /Q /F makefile
 
 depend:
-	@ {- output_off() if $disabled{makedepend}; "" -}
+	@ {- output_off() if $disabled{makedepend}; "\@rem" -}
 	@ "$(PERL)" "$(SRCDIR)\util\add-depends.pl" "{- $target{makedep_scheme} -}"
-	@ {- output_on() if $disabled{makedepend}; "" -}
+	@ {- output_on() if $disabled{makedepend}; "\@rem" -}
 
 # Install helper targets #############################################
 
