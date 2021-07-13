@@ -73,7 +73,6 @@ int ssl3_setup_read_buffer(SSL *s)
         b->len = len;
     }
 
-    RECORD_LAYER_set_packet(&s->rlayer, &(b->buf[0]));
     return 1;
 }
 
