@@ -48,7 +48,6 @@ typedef struct prov_gcm_ctx_st {
     unsigned int mode;          /* The mode that we are using */
     size_t keylen;
     size_t ivlen;
-    size_t ivlen_min;
     size_t taglen;
     size_t tls_aad_pad_sz;
     size_t tls_aad_len;         /* TLS AAD length */
@@ -110,7 +109,7 @@ OSSL_FUNC_cipher_cipher_fn ossl_gcm_cipher;
 OSSL_FUNC_cipher_update_fn ossl_gcm_stream_update;
 OSSL_FUNC_cipher_final_fn ossl_gcm_stream_final;
 void ossl_gcm_initctx(void *provctx, PROV_GCM_CTX *ctx, size_t keybits,
-                      const PROV_GCM_HW *hw, size_t ivlen_min);
+                      const PROV_GCM_HW *hw);
 
 int ossl_gcm_setiv(PROV_GCM_CTX *ctx, const unsigned char *iv, size_t ivlen);
 int ossl_gcm_aad_update(PROV_GCM_CTX *ctx, const unsigned char *aad,
