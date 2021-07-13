@@ -13,8 +13,6 @@
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 
-#define ARIA_GCM_IV_MIN_SIZE     (32 / 8) /* size in bytes */
-
 static void *aria_gcm_newctx(void *provctx, size_t keybits)
 {
     PROV_ARIA_GCM_CTX *ctx;
@@ -25,7 +23,7 @@ static void *aria_gcm_newctx(void *provctx, size_t keybits)
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL)
         ossl_gcm_initctx(provctx, &ctx->base, keybits,
-                         ossl_prov_aria_hw_gcm(keybits), ARIA_GCM_IV_MIN_SIZE);
+                         ossl_prov_aria_hw_gcm(keybits));
     return ctx;
 }
 
