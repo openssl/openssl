@@ -13,7 +13,8 @@ X509_check_ca - check if given certificate is CA certificate
 =head1 DESCRIPTION
 
 This function checks if given certificate is CA certificate (can be used
-to sign other certificates).
+to sign other certificates). The certificate must be a complete certificate
+otherwise an error is returned.
 
 =head1 RETURN VALUES
 

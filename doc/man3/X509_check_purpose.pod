@@ -15,7 +15,8 @@ X509_check_purpose - Check the purpose of a certificate
 This function checks if certificate I<x> was created with the purpose
 represented by I<id>. If I<ca> is nonzero, then certificate I<x> is
 checked to determine if it's a possible CA with various levels of certainty
-possibly returned.
+possibly returned. The certificate I<x> must be a complete certificate
+otherwise the function returns an error.
 
 Below are the potential ID's that can be checked:
 
