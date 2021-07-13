@@ -57,7 +57,7 @@ supports signing, otherwise 0.
 
 EVP_PKEY_get0_type_name() returns the name that is found or NULL on error.
 
-EVP_PKEY_get0_description() returns the name that is found or NULL if not.
+EVP_PKEY_get0_description() returns the description if found or NULL if not.
 
 EVP_PKEY_get0_provider() returns the provider if found or NULL if not.
 
