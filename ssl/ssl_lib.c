@@ -2262,6 +2262,11 @@ int SSL_key_update(SSL *s, int updatetype)
         return 0;
     }
 
+    if (RECORD_LAYER_write_pending(&s->rlayer)) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_BAD_WRITE_RETRY);
+        return 0;
+    }
+
     ossl_statem_set_in_init(s, 1);
     s->key_update = updatetype;
     return 1;
