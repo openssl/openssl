@@ -20,8 +20,6 @@
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 
-/* Note: GCM_IV_MAX_SIZE is listed in ciphercommon_gcm.h */
-
 static void *aes_gcm_newctx(void *provctx, size_t keybits)
 {
     PROV_AES_GCM_CTX *ctx;

@@ -50,7 +50,7 @@ static int gcm_init(void *vctx, const unsigned char *key, size_t keylen,
     ctx->enc = enc;
 
     if (iv != NULL) {
-        if (ivlen > sizeof(ctx->iv)) {
+        if (ivlen == 0 || ivlen > sizeof(ctx->iv)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
             return 0;
         }
