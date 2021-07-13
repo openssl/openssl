@@ -207,6 +207,25 @@ out:
     return ret;
 }
 
+void get_sock_info_address(int asock, char **hostname, char **service)
+{
+    union BIO_sock_info_u info;
+
+    if (hostname != NULL)
+        *hostname = NULL;
+    if (service != NULL)
+        *service = NULL;
+
+    if ((info.addr = BIO_ADDR_new()) != NULL
+            && BIO_sock_info(asock, BIO_SOCK_INFO_ADDRESS, &info)) {
+        if (hostname != NULL)
+            *hostname = BIO_ADDR_hostname_string(info.addr, 1);
+        if (service != NULL)
+            *service = BIO_ADDR_service_string(info.addr, 1);
+    }
+    BIO_ADDR_free(info.addr);
+}
+
 int report_server_accept(BIO *out, int asock, int with_address, int with_pid)
 {
     int success = 1;
@@ -214,30 +233,24 @@ int report_server_accept(BIO *out, int asock, int with_address, int with_pid)
     if (BIO_printf(out, "ACCEPT") <= 0)
         return 0;
     if (with_address) {
-        union BIO_sock_info_u info;
-        char *hostname = NULL;
-        char *service = NULL;
+        char *hostname, *service;
 
-        if ((info.addr = BIO_ADDR_new()) != NULL
-            && BIO_sock_info(asock, BIO_SOCK_INFO_ADDRESS, &info)
-            && (hostname = BIO_ADDR_hostname_string(info.addr, 1)) != NULL
-            && (service = BIO_ADDR_service_string(info.addr, 1)) != NULL) {
+        get_sock_info_address(asock, &hostname, &service);
+        success = hostname != NULL && service != NULL;
+        if (success)
             success = BIO_printf(out,
                                  strchr(hostname, ':') == NULL
                                  ? /* IPv4 */ " %s:%s"
                                  : /* IPv6 */ " [%s]:%s",
                                  hostname, service) > 0;
-        } else {
+        else
             (void)BIO_printf(out, "unknown:error\n");
-            success = 0;
-        }
         OPENSSL_free(hostname);
         OPENSSL_free(service);
-        BIO_ADDR_free(info.addr);
     }
     if (with_pid)
-        success = success && BIO_printf(out, " PID=%d", getpid()) > 0;
-    success = success && BIO_printf(out, "\n") > 0;
+        success *= BIO_printf(out, " PID=%d", getpid()) > 0;
+    success *= BIO_printf(out, "\n") > 0;
     (void)BIO_flush(out);
 
     return success;
