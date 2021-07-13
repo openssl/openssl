@@ -59,7 +59,7 @@ EVP_PKEY_get0_type_name() returns the name that is found or NULL on error.
 
 EVP_PKEY_get0_description() returns the name that is found or NULL if not.
 
-EVP_PKEY_get0_provider() returns the provider that is found or NULL if not.
+EVP_PKEY_get0_provider() returns the provider if found or NULL if not.
 
 EVP_PKEY_type_names_do_all() returns 1 if the callback was called for all
 names. A return value of 0 means that the callback was not called for any
