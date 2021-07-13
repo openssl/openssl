@@ -4,7 +4,7 @@
 
 EVP_PKEY_CTX_get0_libctx,
 EVP_PKEY_CTX_get0_propq,
-EVP_PKEY_CTX_get0_provider,
+EVP_PKEY_CTX_get0_provider
 - functions for getting diverse information from an EVP_PKEY_CTX
 
 =head1 SYNOPSIS
