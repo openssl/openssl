@@ -126,8 +126,11 @@ static int rsa_check_padding(const PROV_RSA_CTX *prsactx,
 {
     switch(prsactx->pad_mode) {
         case RSA_NO_PADDING:
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_PADDING_MODE);
-            return 0;
+            if (mdname != NULL || mdnid != NID_undef) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_PADDING_MODE);
+                return 0;
+            }
+            break;
         case RSA_X931_PADDING:
             if (RSA_X931_hash_id(mdnid) == -1) {
                 ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_X931_DIGEST);
