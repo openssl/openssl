@@ -2568,7 +2568,7 @@ static int cmp_server(OSSL_CMP_CTX *srv_cmp_ctx) {
     int retry = 1;
     int ret = 1;
 
-    if ((acbio = http_server_init_bio(prog, opt_port)) == NULL)
+    if ((acbio = http_server_init(prog, opt_port, opt_verbosity)) == NULL)
         return 0;
     while (opt_max_msgs <= 0 || msgs < opt_max_msgs) {
         char *path = NULL;
@@ -2578,7 +2578,7 @@ static int cmp_server(OSSL_CMP_CTX *srv_cmp_ctx) {
         ret = http_server_get_asn1_req(ASN1_ITEM_rptr(OSSL_CMP_MSG),
                                        (ASN1_VALUE **)&req, &path,
                                        &cbio, acbio, &keep_alive,
-                                       prog, opt_port, 0, 0);
+                                       prog, 0, 0);
         if (ret == 0) { /* no request yet */
             if (retry) {
                 ossl_sleep(1000);
