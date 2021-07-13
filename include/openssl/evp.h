@@ -1380,6 +1380,7 @@ int EVP_PKEY_up_ref(EVP_PKEY *pkey);
 EVP_PKEY *EVP_PKEY_dup(EVP_PKEY *pkey);
 void EVP_PKEY_free(EVP_PKEY *pkey);
 const char *EVP_PKEY_get0_description(const EVP_PKEY *pkey);
+const OSSL_PROVIDER *EVP_PKEY_get0_provider(const EVP_PKEY *key);
 
 EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, const unsigned char **pp,
                         long length);
@@ -2161,6 +2162,7 @@ int EVP_PKEY_get_group_name(const EVP_PKEY *pkey, char *name, size_t name_sz,
 
 OSSL_LIB_CTX *EVP_PKEY_CTX_get0_libctx(EVP_PKEY_CTX *ctx);
 const char *EVP_PKEY_CTX_get0_propq(EVP_PKEY_CTX *ctx);
+const OSSL_PROVIDER *EVP_PKEY_CTX_get0_provider(EVP_PKEY_CTX *ctx);
 
 # ifdef  __cplusplus
 }

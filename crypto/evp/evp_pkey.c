@@ -237,3 +237,10 @@ const char *EVP_PKEY_get0_type_name(const EVP_PKEY *key)
 
     return name;
 }
+
+const OSSL_PROVIDER *EVP_PKEY_get0_provider(const EVP_PKEY *key)
+{
+    if (evp_pkey_is_provided(key))
+        return EVP_KEYMGMT_get0_provider(key->keymgmt);
+    return NULL;
+}
