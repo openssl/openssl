@@ -215,7 +215,7 @@ jobs:
         mkdir ./build
         mkdir ./install
     - name: config
-      run: ../config --banner=Configured enable-fips --strict-warnings --prefix=$(cd ../install; pwd) && perl configdata.pm --dump
+      run: ../config --banner=Configured enable-fips enable-acvp-tests --strict-warnings --prefix=$(cd ../install; pwd) && perl configdata.pm --dump
       working-directory: ./build
     - name: make
       run: make -s -j4
