@@ -1227,10 +1227,10 @@ static int rsa_sigver_test(int id)
         || !TEST_ptr(md_ctx = EVP_MD_CTX_new())
         || !TEST_true(EVP_DigestVerifyInit_ex(md_ctx, &pkey_ctx,
                                               tst->digest_alg, libctx, NULL,
-                                              pkey, NULL)
+                                              pkey, NULL))
         || !TEST_true(EVP_PKEY_CTX_set_params(pkey_ctx, params))
         || !TEST_int_eq(EVP_DigestVerify(md_ctx, tst->sig, tst->sig_len,
-                                         tst->msg, tst->msg_len), tst->pass)))
+                                         tst->msg, tst->msg_len), tst->pass))
         goto err;
     ret = 1;
 err:
