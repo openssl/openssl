@@ -3003,7 +3003,7 @@ BIO *bio_open_owner(const char *filename, int format, int private)
     fp = fdopen(fd, modestr('w', format));
 #else   /* OPENSSL_NO_POSIX_IO */
     /* Have stdio but not Posix IO, do the best we can */
-    fp = fopen(filename, textmode ? "w" : "wb");
+    fp = fopen(filename, modestr('w', format));
 #endif  /* OPENSSL_NO_POSIX_IO */
     if (fp == NULL)
         goto err;
