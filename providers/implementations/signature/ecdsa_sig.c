@@ -234,6 +234,17 @@ static int ecdsa_setup_md(PROV_ECDSA_CTX *ctx, const char *mdname,
         return 0;
     }
 
+    if (!ctx->flag_allow_md) {
+        if (ctx->mdname[0] != '\0' && !EVP_MD_is_a(md, ctx->mdname)) {
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED,
+                           "digest %s != %s", mdname, ctx->mdname);
+            EVP_MD_free(md);
+            return 0;
+        }
+        EVP_MD_free(md);
+        return 1;
+    }
+
     EVP_MD_CTX_free(ctx->mdctx);
     EVP_MD_free(ctx->md);
 
@@ -263,11 +274,11 @@ static int ecdsa_digest_signverify_init(void *vctx, const char *mdname,
     if (!ossl_prov_is_running())
         return 0;
 
-    ctx->flag_allow_md = 0;
     if (!ecdsa_signverify_init(vctx, ec, params, operation)
         || !ecdsa_setup_md(ctx, mdname, NULL))
         return 0;
 
+    ctx->flag_allow_md = 0;
     ctx->mdctx = EVP_MD_CTX_new();
     if (ctx->mdctx == NULL)
         goto error;
@@ -452,6 +463,7 @@ static int ecdsa_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     PROV_ECDSA_CTX *ctx = (PROV_ECDSA_CTX *)vctx;
     const OSSL_PARAM *p;
+    size_t mdsize = 0;
 
     if (ctx == NULL)
         return 0;
@@ -465,9 +477,6 @@ static int ecdsa_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 #endif
 
     p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_DIGEST);
-    /* Not allowed during certain operations */
-    if (p != NULL && !ctx->flag_allow_md)
-        return 0;
     if (p != NULL) {
         char mdname[OSSL_MAX_NAME_SIZE] = "", *pmdname = mdname;
         char mdprops[OSSL_MAX_PROPQUERY_SIZE] = "", *pmdprops = mdprops;
@@ -485,10 +494,12 @@ static int ecdsa_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     }
 
     p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_DIGEST_SIZE);
-    if (p != NULL
-        && (!ctx->flag_allow_md
-            || !OSSL_PARAM_get_size_t(p, &ctx->mdsize)))
-        return 0;
+    if (p != NULL) {
+        if (!OSSL_PARAM_get_size_t(p, &mdsize)
+            || (!ctx->flag_allow_md && mdsize != ctx->mdsize))
+            return 0;
+        ctx->mdsize = mdsize;
+    }
 
     return 1;
 }
