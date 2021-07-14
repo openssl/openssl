@@ -1436,7 +1436,7 @@ static int test_ktls(int test)
     struct ktls_test_cipher *cipher;
     int cis_ktls, sis_ktls;
 
-    OPENSSL_assert(test / 4 < NUM_KTLS_TEST_CIPHERS);
+    OPENSSL_assert(test / 4 < (int)NUM_KTLS_TEST_CIPHERS);
     cipher = &ktls_test_ciphers[test / 4];
 
     cis_ktls = (test & 1) != 0;
@@ -1450,7 +1450,7 @@ static int test_ktls_sendfile(int tst)
 {
     struct ktls_test_cipher *cipher;
 
-    OPENSSL_assert(tst < NUM_KTLS_TEST_CIPHERS);
+    OPENSSL_assert(tst < (int)NUM_KTLS_TEST_CIPHERS);
     cipher = &ktls_test_ciphers[tst];
 
     return execute_test_ktls_sendfile(cipher->tls_version, cipher->cipher);
