@@ -267,6 +267,8 @@ int do_server(int *accept_sock, const char *host, const char *port,
     const BIO_ADDRINFO *next;
     int sock_family, sock_type, sock_protocol, sock_port;
     const BIO_ADDR *sock_address;
+    int sock_family_fallback = AF_UNSPEC;
+    const BIO_ADDR *sock_address_fallback = NULL;
     int sock_options = BIO_SOCK_REUSEADDR;
     int ret = 0;
 
@@ -298,6 +300,10 @@ int do_server(int *accept_sock, const char *host, const char *port,
             && BIO_ADDRINFO_protocol(next) == sock_protocol) {
         if (sock_family == AF_INET
                 && BIO_ADDRINFO_family(next) == AF_INET6) {
+            /* In case AF_INET6 is returned but not supported by the
+             * kernel, retry with the first detected address family */
+            sock_family_fallback = sock_family;
+            sock_address_fallback = sock_address;
             sock_family = AF_INET6;
             sock_address = BIO_ADDRINFO_address(next);
         } else if (sock_family == AF_INET6
@@ -308,6 +314,10 @@ int do_server(int *accept_sock, const char *host, const char *port,
 #endif
 
     asock = BIO_socket(sock_family, sock_type, sock_protocol, 0);
+    if (asock == INVALID_SOCKET && sock_family_fallback != AF_UNSPEC) {
+        asock = BIO_socket(sock_family_fallback, sock_type, sock_protocol, 0);
+        sock_address = sock_address_fallback;
+    }
     if (asock == INVALID_SOCKET
         || !BIO_listen(asock, sock_address, sock_options)) {
         BIO_ADDRINFO_free(res);
