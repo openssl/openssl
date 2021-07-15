@@ -2025,8 +2025,8 @@ See L</Deprecated low-level encryption functions>
 
 RSA_private_encrypt(), RSA_public_decrypt()
 
-This is equivalent to doing sign and verify operations (with a padding mode
-of none). See L</Deprecated low-level signing functions>.
+This is equivalent to doing sign and verify recover operations (with a padding
+mode of none). See L</Deprecated low-level signing functions>.
 
 =item -
 
