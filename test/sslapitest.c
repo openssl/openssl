@@ -6109,12 +6109,12 @@ static int test_key_update(void)
 }
 
 /*
- * Test we can handle a KeyUpdate (update requested) message while write data
- * is pending.
+ * Test we can handle a KeyUpdate (update requested) message while
+ * write data is pending in peer.
  * Test 0: Client sends KeyUpdate while Server is writing
  * Test 1: Server sends KeyUpdate while Client is writing
  */
-static int test_key_update_in_write(int tst)
+static int test_key_update_peer_in_write(int tst)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
@@ -6141,7 +6141,7 @@ static int test_key_update_in_write(int tst)
     peerwrite = tst == 0 ? serverssl : clientssl;
 
     if (!TEST_true(SSL_key_update(peerupdate, SSL_KEY_UPDATE_REQUESTED))
-            || !TEST_true(SSL_do_handshake(peerupdate)))
+            || !TEST_int_eq(SSL_do_handshake(peerupdate), 1))
         goto end;
 
     /* Swap the writing endpoint's write BIO to force a retry */
@@ -6189,6 +6189,264 @@ static int test_key_update_in_write(int tst)
     SSL_CTX_free(cctx);
     BIO_free(bretry);
     BIO_free(tmp);
+
+    return testresult;
+}
+
+/*
+ * Test we can handle a KeyUpdate (update requested) message while
+ * peer read data is pending after peer accepted keyupdate(the msg header
+ * had been read 5 bytes).
+ * Test 0: Client sends KeyUpdate while Server is reading
+ * Test 1: Server sends KeyUpdate while Client is reading
+ */
+static int test_key_update_peer_in_read(int tst)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    char prbuf[515], lwbuf[515] = {0};
+    static char *mess = "A test message";
+    BIO *lbio = NULL, *pbio = NULL;
+    SSL *local = NULL, *peer = NULL;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                              TLS_client_method(),
+                                              TLS1_3_VERSION,
+                                              0,
+                                              &sctx, &cctx, cert, privkey))
+            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                             NULL, NULL))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE)))
+        goto end;
+
+    local = tst == 0 ? clientssl : serverssl;
+    peer = tst == 0 ? serverssl : clientssl;
+
+    if (!TEST_int_eq(BIO_new_bio_pair(&lbio, 512, &pbio, 512), 1))
+        goto end;
+
+    SSL_set_bio(local, lbio, lbio);
+    SSL_set_bio(peer, pbio, pbio);
+
+    /*
+     * we first write keyupdate msg then appdata in local
+     * write data in local will fail with SSL_ERROR_WANT_WRITE,because
+     * lwbuf app data msg size + key updata msg size > 512(the size of
+     * the bio pair buffer)
+     */
+    if (!TEST_true(SSL_key_update(local, SSL_KEY_UPDATE_REQUESTED))
+            || !TEST_int_eq(SSL_write(local, lwbuf, sizeof(lwbuf)), -1)
+            || !TEST_int_eq(SSL_get_error(local, -1), SSL_ERROR_WANT_WRITE))
+        goto end;
+
+    /*
+     * first read keyupdate msg in peer in peer
+     * then read appdata that we know will fail with SSL_ERROR_WANT_READ
+     */
+    if (!TEST_int_eq(SSL_read(peer, prbuf, sizeof(prbuf)), -1)
+            || !TEST_int_eq(SSL_get_error(peer, -1), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /* Now write some data in peer - we will write the key update */
+    if (!TEST_int_eq(SSL_write(peer, mess, strlen(mess)), strlen(mess)))
+        goto end;
+
+    /*
+     * write data in local previously that we will complete
+     * read data in peer previously that we will complete
+     */
+    if (!TEST_int_eq(SSL_write(local, lwbuf, sizeof(lwbuf)), sizeof(lwbuf))
+            || !TEST_int_eq(SSL_read(peer, prbuf, sizeof(prbuf)), sizeof(prbuf)))
+        goto end;
+
+    /* check that sending and receiving appdata ok */
+    if (!TEST_int_eq(SSL_write(local, mess, strlen(mess)), strlen(mess))
+            || !TEST_int_eq(SSL_read(peer, prbuf, sizeof(prbuf)), strlen(mess)))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+/*
+ * Test we can't send a KeyUpdate (update requested) message while
+ * local write data is pending.
+ * Test 0: Client sends KeyUpdate while Client is writing
+ * Test 1: Server sends KeyUpdate while Server is writing
+ */
+static int test_key_update_local_in_write(int tst)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    char buf[20];
+    static char *mess = "A test message";
+    BIO *bretry = BIO_new(bio_s_always_retry());
+    BIO *tmp = NULL;
+    SSL *local = NULL, *peer = NULL;
+
+    if (!TEST_ptr(bretry)
+            || !TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                              TLS_client_method(),
+                                              TLS1_3_VERSION,
+                                              0,
+                                              &sctx, &cctx, cert, privkey))
+            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                             NULL, NULL))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE)))
+        goto end;
+
+    local = tst == 0 ? clientssl : serverssl;
+    peer = tst == 0 ? serverssl : clientssl;
+
+    /* Swap the writing endpoint's write BIO to force a retry */
+    tmp = SSL_get_wbio(local);
+    if (!TEST_ptr(tmp) || !TEST_true(BIO_up_ref(tmp))) {
+        tmp = NULL;
+        goto end;
+    }
+    SSL_set0_wbio(local, bretry);
+    bretry = NULL;
+
+    /* write data in local will fail with SSL_ERROR_WANT_WRITE */
+    if (!TEST_int_eq(SSL_write(local, mess, strlen(mess)), -1)
+            || !TEST_int_eq(SSL_get_error(local, -1), SSL_ERROR_WANT_WRITE))
+        goto end;
+
+    /* Reinstate the original writing endpoint's write BIO */
+    SSL_set0_wbio(local, tmp);
+    tmp = NULL;
+
+    /* SSL_key_update will fail, because writing in local*/
+    if (!TEST_false(SSL_key_update(local, SSL_KEY_UPDATE_REQUESTED))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_error()), SSL_R_BAD_WRITE_RETRY))
+    goto end;
+
+    ERR_clear_error();
+    /* write data in local previously that we will complete */
+    if (!TEST_int_eq(SSL_write(local, mess, strlen(mess)), strlen(mess)))
+        goto end;
+
+    /* SSL_key_update will succeed because there is no pending write data */
+    if (!TEST_true(SSL_key_update(local, SSL_KEY_UPDATE_REQUESTED))
+        || !TEST_int_eq(SSL_do_handshake(local), 1))
+        goto end;
+
+    /*
+     * we write some appdata in local
+     * read data in peer - we will read the keyupdate msg
+     */
+    if (!TEST_int_eq(SSL_write(local, mess, strlen(mess)), strlen(mess))
+        || !TEST_int_eq(SSL_read(peer, buf, sizeof(buf)), strlen(mess)))
+        goto end;
+
+    /* Write more peer more data to ensure we send the keyupdate message back */
+    if (!TEST_int_eq(SSL_write(peer, mess, strlen(mess)), strlen(mess))
+            || !TEST_int_eq(SSL_read(local, buf, sizeof(buf)), strlen(mess)))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    BIO_free(bretry);
+    BIO_free(tmp);
+
+    return testresult;
+}
+
+/*
+ * Test we can handle a KeyUpdate (update requested) message while
+ * local read data is pending(the msg header had been read 5 bytes).
+ * Test 0: Client sends KeyUpdate while Client is reading
+ * Test 1: Server sends KeyUpdate while Server is reading
+ */
+static int test_key_update_local_in_read(int tst)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    char lrbuf[515], pwbuf[515] = {0}, prbuf[20];
+    static char *mess = "A test message";
+    BIO *lbio = NULL, *pbio = NULL;
+    SSL *local = NULL, *peer = NULL;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                              TLS_client_method(),
+                                              TLS1_3_VERSION,
+                                              0,
+                                              &sctx, &cctx, cert, privkey))
+            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                             NULL, NULL))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE)))
+        goto end;
+
+    local = tst == 0 ? clientssl : serverssl;
+    peer = tst == 0 ? serverssl : clientssl;
+
+    if (!TEST_int_eq(BIO_new_bio_pair(&lbio, 512, &pbio, 512), 1))
+        goto end;
+
+    SSL_set_bio(local, lbio, lbio);
+    SSL_set_bio(peer, pbio, pbio);
+
+    /* write app data in peer will fail with SSL_ERROR_WANT_WRITE */
+    if (!TEST_int_eq(SSL_write(peer, pwbuf, sizeof(pwbuf)), -1)
+        || !TEST_int_eq(SSL_get_error(peer, -1), SSL_ERROR_WANT_WRITE))
+        goto end;
+
+    /* read appdata in local will fail with SSL_ERROR_WANT_READ */
+    if (!TEST_int_eq(SSL_read(local, lrbuf, sizeof(lrbuf)), -1)
+            || !TEST_int_eq(SSL_get_error(local, -1), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /* SSL_do_handshake will send keyupdate msg */
+    if (!TEST_true(SSL_key_update(local, SSL_KEY_UPDATE_REQUESTED))
+            || !TEST_int_eq(SSL_do_handshake(local), 1))
+        goto end;
+
+    /*
+     * write data in peer previously that we will complete
+     * read data in local previously that we will complete
+     */
+    if (!TEST_int_eq(SSL_write(peer, pwbuf, sizeof(pwbuf)), sizeof(pwbuf))
+        || !TEST_int_eq(SSL_read(local, lrbuf, sizeof(lrbuf)), sizeof(lrbuf)))
+        goto end;
+
+    /*
+     * write data in local
+     * read data in peer - we will read the key update
+     */
+    if (!TEST_int_eq(SSL_write(local, mess, strlen(mess)), strlen(mess))
+        || !TEST_int_eq(SSL_read(peer, prbuf, sizeof(prbuf)), strlen(mess)))
+        goto end;
+
+  /* Write more peer data to ensure we send the keyupdate message back */
+    if (!TEST_int_eq(SSL_write(peer, mess, strlen(mess)), strlen(mess))
+            || !TEST_int_eq(SSL_read(local, lrbuf, sizeof(lrbuf)), strlen(mess)))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
 
     return testresult;
 }
@@ -9402,7 +9660,10 @@ int setup_tests(void)
 #ifndef OSSL_NO_USABLE_TLS1_3
     ADD_ALL_TESTS(test_export_key_mat_early, 3);
     ADD_TEST(test_key_update);
-    ADD_ALL_TESTS(test_key_update_in_write, 2);
+    ADD_ALL_TESTS(test_key_update_peer_in_write, 2);
+    ADD_ALL_TESTS(test_key_update_peer_in_read, 2);
+    ADD_ALL_TESTS(test_key_update_local_in_write, 2);
+    ADD_ALL_TESTS(test_key_update_local_in_read, 2);
 #endif
     ADD_ALL_TESTS(test_ssl_clear, 2);
     ADD_ALL_TESTS(test_max_fragment_len_ext, OSSL_NELEM(max_fragment_len_test));
