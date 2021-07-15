@@ -2235,7 +2235,9 @@ SSL and SSL_CTX options are now 64 bit instead of 32 bit.
 The signatures of the functions to get and set options on SSL and
 SSL_CTX objects changed from "unsigned long" to "uint64_t" type.
 
-This may require source code changes.
+This may require source code changes. For example it is no longer possible
+to use the B<SSL_OP_> macro values in preprocessor C<#if> conditions.
+However it is still possible to test whether these macros are defined or not.
 
 See L<SSL_CTX_get_options(3)>, L<SSL_CTX_set_options(3)>,
 L<SSL_get_options(3)> and L<SSL_set_options(3)>.
