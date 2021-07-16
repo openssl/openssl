@@ -54,7 +54,7 @@ typedef enum OPTION_choice {
     OPT_IN,
     OPT_NOVERIFY, OPT_QUIET, OPT_TABLE, OPT_REVERSE, OPT_APR1,
     OPT_1, OPT_5, OPT_6, OPT_AIXMD5, OPT_SALT, OPT_STDIN,
-    OPT_R_ENUM, OPT_PROV_ENUM
+    OPT_R_ENUM, OPT_P_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS passwd_options[] = {
@@ -83,7 +83,7 @@ const OPTIONS passwd_options[] = {
     {"aixmd5", OPT_AIXMD5, '-', "AIX MD5-based password algorithm"},
 
     OPT_R_OPTIONS,
-    OPT_PROV_OPTIONS,
+    OPT_P_OPTIONS,
 
     OPT_PARAMETERS(),
     {"password", 0, 0, "Password text to digest (optional)"},
@@ -178,7 +178,7 @@ int passwd_main(int argc, char **argv)
             if (!opt_rand(o))
                 goto end;
             break;
-        case OPT_PROV_CASES:
+        case OPT_P_CASES:
             if (!opt_provider(o))
                 goto end;
             break;

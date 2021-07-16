@@ -15,7 +15,7 @@ B<openssl> B<crl2pkcs7>
 [B<-out> I<filename>]
 [B<-certfile> I<filename>]
 [B<-nocrl>]
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_p_synopsis -}
 
 =head1 DESCRIPTION
 
@@ -63,7 +63,7 @@ files.
 Normally a CRL is included in the output file. With this option no CRL is
 included in the output file and a CRL is not read from the input file.
 
-{- $OpenSSL::safe::opt_provider_item -}
+{- $OpenSSL::safe::opt_p_item -}
 
 =back
 

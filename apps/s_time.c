@@ -49,7 +49,7 @@ typedef enum OPTION_choice {
     OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOCASTORE,
     OPT_NEW, OPT_REUSE, OPT_BUGS, OPT_VERIFY, OPT_TIME, OPT_SSL3,
     OPT_WWW, OPT_TLS1, OPT_TLS1_1, OPT_TLS1_2, OPT_TLS1_3,
-    OPT_PROV_ENUM
+    OPT_P_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS s_time_options[] = {
@@ -100,7 +100,7 @@ const OPTIONS s_time_options[] = {
     {"no-CAstore", OPT_NOCASTORE, '-',
      "Do not load certificates from the default certificates store URI"},
 
-    OPT_PROV_OPTIONS,
+    OPT_P_OPTIONS,
     {NULL}
 };
 
@@ -226,7 +226,7 @@ int s_time_main(int argc, char **argv)
             min_version = TLS1_3_VERSION;
             max_version = TLS1_3_VERSION;
             break;
-        case OPT_PROV_CASES:
+        case OPT_P_CASES:
             if (!opt_provider(o))
                 goto end;
             break;

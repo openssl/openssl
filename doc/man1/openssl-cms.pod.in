@@ -56,7 +56,7 @@ Keys and password options:
 [B<-passin> I<arg>]
 [B<-keyopt> I<name>:I<parameter>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_p_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 
 Encryption options:
@@ -361,7 +361,7 @@ See L<openssl-format-options(1)> for details.
 
 {- $OpenSSL::safe::opt_engine_item -}
 
-{- $OpenSSL::safe::opt_provider_item -}
+{- $OpenSSL::safe::opt_p_item -}
 
 {- $OpenSSL::safe::opt_r_item -}
 

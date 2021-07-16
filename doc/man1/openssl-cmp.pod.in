@@ -85,7 +85,7 @@ Credentials format options:
 [B<-certform> I<PEM|DER>]
 [B<-keyform> I<PEM|DER|P12|ENGINE>]
 [B<-otherpass> I<arg>]
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_p_synopsis -}
 
 Random state options:
 
@@ -776,7 +776,7 @@ B<-tls_key>.
 
 =over 4
 
-{- $OpenSSL::safe::opt_provider_item -}
+{- $OpenSSL::safe::opt_p_item -}
 
 =back
 

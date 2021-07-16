@@ -25,7 +25,7 @@ typedef enum OPTION_choice {
     OPT_NOOUT, OPT_PUBKEY, OPT_VERIFY, OPT_IN, OPT_OUT,
     OPT_ENGINE, OPT_KEY, OPT_CHALLENGE, OPT_PASSIN, OPT_SPKAC,
     OPT_SPKSECT, OPT_KEYFORM, OPT_DIGEST,
-    OPT_PROV_ENUM
+    OPT_P_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS spkac_options[] = {
@@ -52,7 +52,7 @@ const OPTIONS spkac_options[] = {
     {"pubkey", OPT_PUBKEY, '-', "Output public key"},
     {"verify", OPT_VERIFY, '-', "Verify SPKAC signature"},
 
-    OPT_PROV_OPTIONS,
+    OPT_P_OPTIONS,
     {NULL}
 };
 
@@ -125,7 +125,7 @@ int spkac_main(int argc, char **argv)
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 0);
             break;
-        case OPT_PROV_CASES:
+        case OPT_P_CASES:
             if (!opt_provider(o))
                 goto end;
             break;

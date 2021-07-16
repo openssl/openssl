@@ -144,7 +144,7 @@ B<openssl> B<s_server>
 {- $OpenSSL::safe::opt_x_synopsis -}
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_p_synopsis -}
 
 =head1 DESCRIPTION
 
@@ -817,7 +817,7 @@ data that was sent will be rejected.
 
 {- $OpenSSL::safe::opt_engine_item -}
 
-{- $OpenSSL::safe::opt_provider_item -}
+{- $OpenSSL::safe::opt_p_item -}
 
 {- $OpenSSL::safe::opt_v_item -}
 

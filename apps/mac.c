@@ -24,7 +24,7 @@ typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_MACOPT, OPT_BIN, OPT_IN, OPT_OUT,
     OPT_CIPHER, OPT_DIGEST,
-    OPT_PROV_ENUM
+    OPT_P_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS mac_options[] = {
@@ -45,7 +45,7 @@ const OPTIONS mac_options[] = {
     {"binary", OPT_BIN, '-',
         "Output in binary format (default is hexadecimal)"},
 
-    OPT_PROV_OPTIONS,
+    OPT_P_OPTIONS,
 
     OPT_PARAMETERS(),
     {"mac_name", 0, 0, "MAC algorithm"},
@@ -129,7 +129,7 @@ opthelp:
             if (digest == NULL)
                 goto opthelp;
             break;
-        case OPT_PROV_CASES:
+        case OPT_P_CASES:
             if (!opt_provider(o))
                 goto err;
             break;

@@ -63,7 +63,7 @@ B<openssl> B<ca>
 [B<-rand_serial>]
 [B<-multivalue-rdn>]
 {- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_p_synopsis -}
 [I<certreq>...]
 
 =head1 DESCRIPTION
@@ -335,7 +335,7 @@ This option has been deprecated and has no effect.
 
 {- $OpenSSL::safe::opt_engine_item -}
 
-{- $OpenSSL::safe::opt_provider_item -}
+{- $OpenSSL::safe::opt_p_item -}
 
 =back
 

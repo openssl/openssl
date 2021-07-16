@@ -23,7 +23,7 @@ typedef enum OPTION_choice {
     OPT_IN, OPT_OUT, OPT_PUBIN, OPT_PUBOUT, OPT_TEXT_PUB,
     OPT_TEXT, OPT_NOOUT, OPT_CIPHER, OPT_TRADITIONAL, OPT_CHECK, OPT_PUB_CHECK,
     OPT_EC_PARAM_ENC, OPT_EC_CONV_FORM,
-    OPT_PROV_ENUM
+    OPT_P_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS pkey_options[] = {
@@ -32,7 +32,7 @@ const OPTIONS pkey_options[] = {
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
-    OPT_PROV_OPTIONS,
+    OPT_P_OPTIONS,
 
     {"check", OPT_CHECK, '-', "Check key consistency"},
     {"pubcheck", OPT_PUB_CHECK, '-', "Check public key consistency"},
@@ -163,7 +163,7 @@ int pkey_main(int argc, char **argv)
                 goto opthelp;
             break;
 #endif
-        case OPT_PROV_CASES:
+        case OPT_P_CASES:
             if (!opt_provider(o))
                 goto end;
             break;

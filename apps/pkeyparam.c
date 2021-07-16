@@ -20,7 +20,7 @@ typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_IN, OPT_OUT, OPT_TEXT, OPT_NOOUT,
     OPT_ENGINE, OPT_CHECK,
-    OPT_PROV_ENUM
+    OPT_P_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS pkeyparam_options[] = {
@@ -39,7 +39,7 @@ const OPTIONS pkeyparam_options[] = {
     {"text", OPT_TEXT, '-', "Print parameters as text"},
     {"noout", OPT_NOOUT, '-', "Don't output encoded parameters"},
 
-    OPT_PROV_OPTIONS,
+    OPT_P_OPTIONS,
     {NULL}
 };
 
@@ -83,7 +83,7 @@ int pkeyparam_main(int argc, char **argv)
         case OPT_CHECK:
             check = 1;
             break;
-        case OPT_PROV_CASES:
+        case OPT_P_CASES:
             if (!opt_provider(o))
                 goto end;
             break;

@@ -15,7 +15,7 @@ B<openssl mac>
 [B<-in> I<filename>]
 [B<-out> I<filename>]
 [B<-binary>]
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_p_synopsis -}
 I<mac_name>
 
 =head1 DESCRIPTION
@@ -111,7 +111,7 @@ This option is identical to the B<-cipher> option.
 
 =back
 
-{- $OpenSSL::safe::opt_provider_item -}
+{- $OpenSSL::safe::opt_p_item -}
 
 =item I<mac_name>
 

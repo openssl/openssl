@@ -13,7 +13,7 @@ B<openssl prime>
 [B<-generate>]
 [B<-bits> I<num>]
 [B<-safe>]
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_p_synopsis -}
 [B<-checks> I<num>]
 [I<number> ...]
 
@@ -50,7 +50,7 @@ Generate a prime with I<num> bits.
 When used with B<-generate>, generates a "safe" prime. If the number
 generated is I<n>, then check that C<(I<n>-1)/2> is also prime.
 
-{- $OpenSSL::safe::opt_provider_item -}
+{- $OpenSSL::safe::opt_p_item -}
 
 =item B<-checks> I<num>
 

@@ -28,7 +28,7 @@ B<openssl> B<rsautl>
 [B<-hexdump>]
 [B<-asn1parse>]
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_p_synopsis -}
 
 =head1 DESCRIPTION
 
@@ -118,7 +118,7 @@ B<-verify> option.
 
 {- $OpenSSL::safe::opt_r_item -}
 
-{- $OpenSSL::safe::opt_provider_item -}
+{- $OpenSSL::safe::opt_p_item -}
 
 =back
 

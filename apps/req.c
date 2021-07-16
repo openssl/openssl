@@ -92,7 +92,7 @@ typedef enum OPTION_choice {
     OPT_COPY_EXTENSIONS, OPT_ADDEXT, OPT_EXTENSIONS,
     OPT_REQEXTS, OPT_PRECERT, OPT_MD,
     OPT_SECTION,
-    OPT_R_ENUM, OPT_PROV_ENUM
+    OPT_R_ENUM, OPT_P_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS req_options[] = {
@@ -165,7 +165,7 @@ const OPTIONS req_options[] = {
     {"modulus", OPT_MODULUS, '-', "RSA modulus"},
 
     OPT_R_OPTIONS,
-    OPT_PROV_OPTIONS,
+    OPT_P_OPTIONS,
     {NULL}
 };
 
@@ -338,7 +338,7 @@ int req_main(int argc, char **argv)
             if (!opt_rand(o))
                 goto end;
             break;
-        case OPT_PROV_CASES:
+        case OPT_P_CASES:
             if (!opt_provider(o))
                 goto end;
             break;

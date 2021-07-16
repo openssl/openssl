@@ -28,7 +28,7 @@ typedef enum OPTION_choice {
     OPT_PSK,
     OPT_SRP,
     OPT_CIPHERSUITES,
-    OPT_V, OPT_UPPER_V, OPT_S, OPT_PROV_ENUM
+    OPT_V, OPT_UPPER_V, OPT_S, OPT_P_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS ciphers_options[] = {
@@ -68,7 +68,7 @@ const OPTIONS ciphers_options[] = {
 #endif
     {"ciphersuites", OPT_CIPHERSUITES, 's',
      "Configure the TLSv1.3 ciphersuites to use"},
-    OPT_PROV_OPTIONS,
+    OPT_P_OPTIONS,
 
     OPT_PARAMETERS(),
     {"cipher", 0, 0, "Cipher string to decode (optional)"},
@@ -165,7 +165,7 @@ int ciphers_main(int argc, char **argv)
         case OPT_CIPHERSUITES:
             ciphersuites = opt_arg();
             break;
-        case OPT_PROV_CASES:
+        case OPT_P_CASES:
             if (!opt_provider(o))
                 goto end;
             break;

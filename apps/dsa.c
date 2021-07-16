@@ -39,7 +39,7 @@ typedef enum OPTION_choice {
     OPT_PVK_NONE, OPT_PVK_WEAK, OPT_PVK_STRONG,
     OPT_NOOUT, OPT_TEXT, OPT_MODULUS, OPT_PUBIN,
     OPT_PUBOUT, OPT_CIPHER, OPT_PASSIN, OPT_PASSOUT,
-    OPT_PROV_ENUM
+    OPT_P_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS dsa_options[] = {
@@ -70,7 +70,7 @@ const OPTIONS dsa_options[] = {
     {"pubout", OPT_PUBOUT, '-', "Output public key, not private"},
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
 
-    OPT_PROV_OPTIONS,
+    OPT_P_OPTIONS,
     {NULL}
 };
 
@@ -153,7 +153,7 @@ int dsa_main(int argc, char **argv)
         case OPT_CIPHER:
             ciphername = opt_unknown();
             break;
-        case OPT_PROV_CASES:
+        case OPT_P_CASES:
             if (!opt_provider(o))
                 goto end;
             break;
