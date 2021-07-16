@@ -216,18 +216,27 @@ void spawn_loop(const char *prog)
 #endif
 
 #ifndef OPENSSL_NO_SOCK
-BIO *http_server_init_bio(const char *prog, const char *port)
+BIO *http_server_init(const char *prog, const char *port, int verb)
 {
     BIO *acbio = NULL, *bufbio;
     int asock;
+    int port_num;
 
+    if (verb >= 0) {
+        if (verb > LOG_TRACE) {
+            log_message(prog, LOG_ERR,
+                        "Logging verbosity level %d too high", verb);
+            return NULL;
+        }
+        verbosity = verb;
+    }
     bufbio = BIO_new(BIO_f_buffer());
     if (bufbio == NULL)
         goto err;
     acbio = BIO_new(BIO_s_accept());
     if (acbio == NULL
         || BIO_set_bind_mode(acbio, BIO_BIND_REUSEADDR) < 0
-        || BIO_set_accept_port(acbio, port) < 0) {
+        || BIO_set_accept_port(acbio, port /* may be "0" */) < 0) {
         log_message(prog, LOG_ERR, "Error setting up accept BIO");
         goto err;
     }
@@ -241,7 +250,8 @@ BIO *http_server_init_bio(const char *prog, const char *port)
 
     /* Report back what address and port are used */
     BIO_get_fd(acbio, &asock);
-    if (!report_server_accept(bio_out, asock, 1, 1)) {
+    port_num = report_server_accept(bio_out, asock, 1, 1);
+    if (port_num == 0) {
         log_message(prog, LOG_ERR, "Error printing ACCEPT string");
         goto err;
     }
@@ -283,8 +293,7 @@ static int urldecode(char *p)
 int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
                              char **ppath, BIO **pcbio, BIO *acbio,
                              int *found_keep_alive,
-                             const char *prog, const char *port,
-                             int accept_get, int timeout)
+                             const char *prog, int accept_get, int timeout)
 {
     BIO *cbio = *pcbio, *getbio = NULL, *b64 = NULL;
     int len;
@@ -298,15 +307,24 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
         *ppath = NULL;
 
     if (cbio == NULL) {
+        char *port;
+
+        get_sock_info_address(BIO_get_fd(acbio, NULL), NULL, &port);
+        if (port == NULL) {
+            log_message(prog, LOG_ERR, "Cannot get port listening on");
+            goto fatal;
+        }
         log_message(prog, LOG_DEBUG,
-                    "Awaiting new connection on port %s...", port);
+                    "Awaiting new connection on port %s ...", port);
+        OPENSSL_free(port);
+
         if (BIO_do_accept(acbio) <= 0)
             /* Connection loss before accept() is routine, ignore silently */
             return ret;
 
         *pcbio = cbio = BIO_pop(acbio);
     } else {
-        log_message(prog, LOG_DEBUG, "Awaiting next request...");
+        log_message(prog, LOG_DEBUG, "Awaiting next request ...");
     }
     if (cbio == NULL) {
         /* Cannot call http_server_send_status(cbio, ...) */
