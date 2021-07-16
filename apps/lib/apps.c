@@ -501,6 +501,7 @@ X509_CRL *load_crl(const char *uri, int format, int maybe_stdin,
     return crl;
 }
 
+/* Could be simplified if OSSL_STORE supported CSRs, see FR #15725 */
 X509_REQ *load_csr(const char *file, int format, const char *desc)
 {
     X509_REQ *req = NULL;
@@ -528,6 +529,37 @@ X509_REQ *load_csr(const char *file, int format, const char *desc)
     }
     BIO_free(in);
     return req;
+}
+
+/* Better extend OSSL_STORE to support CSRs, see FR #15725 */
+X509_REQ *load_csr_autofmt(const char *infile, const char *desc)
+{
+    X509_REQ *csr;
+    BIO *bio_bak = bio_err;
+
+    bio_err = NULL; /* do not show errors on more than one try */
+    csr = load_csr(infile, FORMAT_PEM, desc);
+    bio_err = bio_bak;
+    if (csr == NULL) {
+        ERR_clear_error();
+        csr = load_csr(infile, FORMAT_ASN1, desc);
+    }
+    if (csr == NULL) {
+        BIO_printf(bio_err, "error: unable to load %s from file '%s'\n", desc,
+                   infile);
+    } else {
+        EVP_PKEY *pkey = X509_REQ_get0_pubkey(csr);
+        int ret = do_X509_REQ_verify(csr, pkey, NULL /* vfyopts */);
+
+        if (pkey == NULL || ret < 0)
+            BIO_puts(bio_err, "Warning: error while verifying CSR self-signature");
+        else if (ret == 0)
+            BIO_puts(bio_err, "Warning: CSR self-signature does not match the contents");
+        else
+            return csr;
+    }
+    ERR_print_errors(bio_err);
+    return NULL;
 }
 
 void cleanse(char *str)
@@ -2271,6 +2303,7 @@ int do_X509_sign(X509 *cert, EVP_PKEY *pkey, const char *md,
             goto end;
     }
 
+    /* Should add further measures for ensuring default RFC 5280 compliance */
     if (mctx != NULL && do_sign_init(mctx, pkey, md, sigopts) > 0)
         rv = (X509_sign_ctx(cert, mctx) > 0);
  end:

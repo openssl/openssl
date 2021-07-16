@@ -643,34 +643,6 @@ static X509 *load_cert_pwd(const char *uri, const char *pass, const char *desc)
     return cert;
 }
 
-static X509_REQ *load_csr_autofmt(const char *infile, const char *desc)
-{
-    X509_REQ *csr;
-    BIO *bio_bak = bio_err;
-
-    bio_err = NULL; /* do not show errors on more than one try */
-    csr = load_csr(infile, FORMAT_PEM, desc);
-    bio_err = bio_bak;
-    if (csr == NULL) {
-        ERR_clear_error();
-        csr = load_csr(infile, FORMAT_ASN1, desc);
-    }
-    if (csr == NULL) {
-        ERR_print_errors(bio_err);
-        BIO_printf(bio_err, "error: unable to load %s from file '%s'\n", desc,
-                   infile);
-    } else {
-        EVP_PKEY *pkey = X509_REQ_get0_pubkey(csr);
-        int ret = do_X509_REQ_verify(csr, pkey, NULL /* vfyopts */);
-
-        if (pkey == NULL || ret < 0)
-            CMP_warn("error while verifying CSR self-signature");
-        else if (ret == 0)
-            CMP_warn("CSR self-signature does not match the contents");
-    }
-    return csr;
-}
-
 /* set expected host name/IP addr and clears the email addr in the given ts */
 static int truststore_set_host_etc(X509_STORE *ts, const char *host)
 {
