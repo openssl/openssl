@@ -100,6 +100,11 @@ breaking changes, and mappings for the large list of deprecated functions.
 
    *Matt Caswell*
 
+ * Parallel dual-prime 1536/2048-bit modular exponentiation for
+   AVX512_IFMA capable processors.
+
+   *Sergey Kirillov, Andrey Matyukov (Intel Corp)*
+
  * Added support for Kernel TLS (KTLS).
 
    *Boris Pismenny, John Baldwin and Andrew Gallatin*
