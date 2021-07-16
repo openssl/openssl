@@ -22,6 +22,8 @@
 #include "ec_local.h"
 #include "internal/refcount.h"
 
+#include <openssl/rand.h>
+
 /*
  * This file implements the wNAF-based interleaving multi-exponentiation method
  * Formerly at:
@@ -146,12 +148,13 @@ int ossl_ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
                               const BIGNUM *scalar, const EC_POINT *point,
                               BN_CTX *ctx)
 {
-    int i, cardinality_bits, group_top, kbit, pbit, Z_is_one;
     EC_POINT *p = NULL;
     EC_POINT *s = NULL;
     BIGNUM *k = NULL;
     BIGNUM *lambda = NULL;
     BIGNUM *cardinality = NULL;
+    BN_ULONG rnd, *swap_rand;
+    int i, cardinality_bits, group_top, kbit, pbit, Z_is_one, swap_size;
     int ret = 0;
 
     /* early exit if the input point is the point at infinity */
@@ -236,6 +239,22 @@ int ossl_ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
         }
     }
 
+    /*
+     * Create random values for BN_consttime_randomized_swap(), and for
+     * constant-time swapping of |Z_is_one| in EC_POINT_SWAP below.
+     */
+    swap_size = (cardinality_bits + 2) * sizeof (BN_ULONG);
+    swap_rand = OPENSSL_malloc(swap_size);
+    if (swap_rand == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+    if (RAND_bytes_ex(ossl_bn_get_libctx(ctx), (unsigned char *)swap_rand,
+                      swap_size, 0) <= 0) {
+       ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+       goto err;
+    }
+
     if (!BN_add(lambda, k, cardinality)) {
         ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto err;
@@ -247,10 +266,11 @@ int ossl_ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
     }
     /*
      * lambda := scalar + cardinality
-     * k := scalar + 2*cardinality
+     * k := scalar + 2 * cardinality
      */
     kbit = BN_is_bit_set(lambda, cardinality_bits);
-    BN_consttime_swap(kbit, k, lambda, group_top + 2);
+    rnd = swap_rand[cardinality_bits];
+    BN_consttime_randomized_swap(kbit, k, lambda, group_top + 2, rnd, rnd);
 
     group_top = bn_get_top(group->field);
     if ((bn_wexpand(s->X, group_top) == NULL)
@@ -282,14 +302,15 @@ int ossl_ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
     /* top bit is a 1, in a fixed pos */
     pbit = 1;
 
-#define EC_POINT_CSWAP(c, a, b, w, t) do {         \
-        BN_consttime_swap(c, (a)->X, (b)->X, w);   \
-        BN_consttime_swap(c, (a)->Y, (b)->Y, w);   \
-        BN_consttime_swap(c, (a)->Z, (b)->Z, w);   \
-        t = ((a)->Z_is_one ^ (b)->Z_is_one) & (c); \
-        (a)->Z_is_one ^= (t);                      \
-        (b)->Z_is_one ^= (t);                      \
-} while(0)
+#define EC_POINT_CSWAP(c, a, b, w, t, r) \
+    do {                                                          \
+        BN_consttime_randomized_swap(c, (a)->X, (b)->X, w, r, r); \
+        BN_consttime_randomized_swap(c, (a)->Y, (b)->Y, w, r, r); \
+        BN_consttime_randomized_swap(c, (a)->Z, (b)->Z, w, r, r); \
+        t = (((a)->Z_is_one ^ (b)->Z_is_one) & (c)) ^ (r);        \
+        (a)->Z_is_one = ((a)->Z_is_one ^ (t)) ^ (r);              \
+        (b)->Z_is_one = ((b)->Z_is_one ^ (t)) ^ (r);              \
+    } while (0)
 
     /*-
      * The ladder step, with branches, is
@@ -351,7 +372,7 @@ int ossl_ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
 
     for (i = cardinality_bits - 1; i >= 0; i--) {
         kbit = BN_is_bit_set(k, i) ^ pbit;
-        EC_POINT_CSWAP(kbit, r, s, group_top, Z_is_one);
+        EC_POINT_CSWAP(kbit, r, s, group_top, Z_is_one, swap_rand[i]);
 
         /* Perform a single step of the Montgomery ladder */
         if (!ec_point_ladder_step(group, r, s, p, ctx)) {
@@ -365,8 +386,11 @@ int ossl_ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
         pbit ^= kbit;
     }
     /* one final cswap to move the right value into r */
-    EC_POINT_CSWAP(pbit, r, s, group_top, Z_is_one);
+    EC_POINT_CSWAP(pbit, r, s, group_top, Z_is_one,
+                   swap_rand[cardinality_bits + 1]);
 #undef EC_POINT_CSWAP
+
+    OPENSSL_free(swap_rand);
 
     /* Finalize ladder (and recover full point coordinates) */
     if (!ec_point_ladder_post(group, r, s, p, ctx)) {
