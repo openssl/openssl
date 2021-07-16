@@ -2301,9 +2301,12 @@ int s_client_main(int argc, char **argv)
         break;
     case PROTO_IRC:
         {
-            int numeric;
+            int numeric, pos;
+            char *buf;
+            char command[11] = { 0 };
             BIO *fbio = BIO_new(BIO_f_buffer());
 
+            BIO_printf(bio_c_out, "[sending plaintext] STARTTLS\n");
             BIO_push(fbio, sbio);
             BIO_printf(fbio, "STARTTLS\r\n");
             (void)BIO_flush(fbio);
@@ -2335,17 +2338,28 @@ int s_client_main(int argc, char **argv)
                 }
 
                 mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
-                if (mbuf_len < 1 || sscanf(mbuf, "%*s %d", &numeric) != 1)
+                if (mbuf_len < 1)
                     break;
+                pos = 0;
+                buf = mbuf;
+                /* :irc.server.net (optional) */
+                sscanf(buf, ":%*s %n", &pos);
+                buf += pos;
+                if (sscanf(buf, "%10s %n", &command[0], &pos) != 1)
+                    break;
+                buf += pos;
+                /* :example.net NOTICE AUTH :*** Looking up your hostname... */
+                BIO_printf(bio_c_out, "[plaintext %s] %s", command, buf);
+                numeric = atoi(command);
                 /* :example.net 451 STARTTLS :You have not registered */
                 /* :example.net 421 STARTTLS :Unknown command */
                 if ((numeric == 451 || numeric == 421)
-                    && strstr(mbuf, "STARTTLS") != NULL) {
-                    BIO_printf(bio_err, "STARTTLS not supported: %s", mbuf);
+                    && strstr(buf, "STARTTLS") != NULL) {
+                    BIO_printf(bio_err, "STARTTLS not supported: %s", buf);
                     break;
                 }
                 if (numeric == 691) {
-                    BIO_printf(bio_err, "STARTTLS negotiation failed: ");
+                    BIO_printf(bio_err, "STARTTLS negotiation failed: %s", buf);
                     ERR_print_errors(bio_err);
                     break;
                 }
