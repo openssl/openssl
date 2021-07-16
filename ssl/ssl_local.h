@@ -629,6 +629,7 @@ struct ssl_session_st {
          * performed at all.
          */
         uint8_t max_fragment_len_mode;
+        uint16_t grease_value;
     } ext;
 # ifndef OPENSSL_NO_SRP
     char *srp_username;
@@ -1202,6 +1203,19 @@ struct ssl_ctx_st {
 };
 
 typedef struct cert_pkey_st CERT_PKEY;
+
+typedef enum {
+    ssl_grease_cipher = 0,
+    ssl_grease_group,
+    ssl_grease_extension1,
+    ssl_grease_extension2,
+    ssl_grease_version,
+    ssl_grease_ticket_extension,
+    ssl_grease_last_index = ssl_grease_ticket_extension,
+} SSL_GREASE_INDEX;
+
+uint16_t SSL_get_grease_value(SSL *s,
+                              SSL_GREASE_INDEX index);
 
 struct ssl_st {
     /*
@@ -1793,6 +1807,10 @@ struct ssl_st {
      */
     const struct sigalg_lookup_st **shared_sigalgs;
     size_t shared_sigalgslen;
+    uint8_t grease_seed[ssl_grease_last_index + 1];
+
+    /* grease_seeded is true if |grease_seed| has been initialized. */
+    uint8_t grease_seeded : 1;
 };
 
 /*
