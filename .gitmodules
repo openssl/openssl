@@ -10,6 +10,11 @@
 	path = gost-engine
 	url = https://github.com/gost-engine/engine
 	update = rebase
+
 [submodule "wycheproof"]
 	path = wycheproof
 	url = https://github.com/google/wycheproof
+
+[submodule "keyfile-corpus"]
+	path = keyfile-corpus
+	url = https://github.com/redhat-qe-security/keyfile-corpus.git
