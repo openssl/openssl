@@ -1534,6 +1534,28 @@ const char *EVP_PKEY_CTX_get0_propq(EVP_PKEY_CTX *ctx)
     return ctx->propquery;
 }
 
+const OSSL_PROVIDER *EVP_PKEY_CTX_get0_provider(EVP_PKEY_CTX *ctx)
+{
+    if (EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)) {
+        if (ctx->op.sig.signature != NULL)
+            return EVP_SIGNATURE_get0_provider(ctx->op.sig.signature);
+    } else if (EVP_PKEY_CTX_IS_DERIVE_OP(ctx)) {
+        if (ctx->op.kex.exchange != NULL)
+            return EVP_KEYEXCH_get0_provider(ctx->op.kex.exchange);
+    } else if (EVP_PKEY_CTX_IS_KEM_OP(ctx)) {
+        if (ctx->op.encap.kem != NULL)
+            return EVP_KEM_get0_provider(ctx->op.encap.kem);
+    } else if (EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)) {
+        if (ctx->op.ciph.cipher != NULL)
+            return EVP_ASYM_CIPHER_get0_provider(ctx->op.ciph.cipher);
+    } else if (EVP_PKEY_CTX_IS_GEN_OP(ctx)) {
+        if (ctx->keymgmt != NULL)
+            return EVP_KEYMGMT_get0_provider(ctx->keymgmt);
+    }
+
+    return NULL;
+}
+
 /* Utility functions to send a string of hex string to a ctrl */
 
 int EVP_PKEY_CTX_str2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *str)
