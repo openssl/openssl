@@ -43,7 +43,8 @@ int ASN1_TYPE_get_octetstring(const ASN1_TYPE *a, unsigned char *data, int max_l
         num = ret;
     else
         num = max_len;
-    memcpy(data, p, num);
+    if (num > 0)
+        memcpy(data, p, num);
     return ret;
 }
 
