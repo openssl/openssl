@@ -73,6 +73,7 @@
 extern unsigned int OPENSSL_armcap_P;
 extern unsigned int OPENSSL_arm_midr;
 extern unsigned int OPENSSL_armv8_rsa_neonized;
+extern unsigned int OPENSSL_armv8_aes_unroll8_eor3;
 # endif
 
 # define ARMV7_NEON      (1<<0)
@@ -83,6 +84,8 @@ extern unsigned int OPENSSL_armv8_rsa_neonized;
 # define ARMV8_PMULL     (1<<5)
 # define ARMV8_SHA512    (1<<6)
 # define ARMV8_CPUID     (1<<7)
+
+# define ARMV8_SHA3      (1<<8)
 
 /*
  * MIDR_EL1 system register
@@ -98,6 +101,7 @@ extern unsigned int OPENSSL_armv8_rsa_neonized;
 
 # define ARM_CPU_PART_CORTEX_A72   0xD08
 # define ARM_CPU_PART_N1           0xD0C
+# define ARM_CPU_PART_V1           0xD40
 
 # define MIDR_PARTNUM_SHIFT       4
 # define MIDR_PARTNUM_MASK        (0xfff << MIDR_PARTNUM_SHIFT)
@@ -126,4 +130,6 @@ extern unsigned int OPENSSL_armv8_rsa_neonized;
 
 # define MIDR_IS_CPU_MODEL(midr, imp, partnum) \
            (((midr) & MIDR_CPU_MODEL_MASK) == MIDR_CPU_MODEL(imp, partnum))
+# define IS_CPU_SUPPORT_UNROLL8_EOR3() \
+           (OPENSSL_armv8_aes_unroll8_eor3 == 1)
 #endif
