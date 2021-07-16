@@ -84,6 +84,7 @@ extracertsout =
 
 [commands]
 cmd =
+certout =
 cacertsout =
 infotype =
 oldcert =

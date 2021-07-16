@@ -13,8 +13,6 @@
 
 #include "cmp_mock_srv.h"
 
-#ifndef NDEBUG /* tests need mock server, which is available only if !NDEBUG */
-
 static const char *server_key_f;
 static const char *server_cert_f;
 static const char *client_key_f;
@@ -344,7 +342,7 @@ void cleanup_tests(void)
     return;
 }
 
-# define USAGE "server.key server.crt client.key client.crt client.csr module_name [module_conf_file]\n"
+#define USAGE "server.key server.crt client.key client.crt client.csr module_name [module_conf_file]\n"
 OPT_TEST_DECLARE_USAGE(USAGE)
 
 int setup_tests(void)
@@ -391,13 +389,3 @@ int setup_tests(void)
     ADD_TEST(test_exchange_error);
     return 1;
 }
-
-#else /* !defined (NDEBUG) */
-
-int setup_tests(void)
-{
-    TEST_note("CMP session tests are disabled in this build (NDEBUG).");
-    return 1;
-}
-
-#endif
