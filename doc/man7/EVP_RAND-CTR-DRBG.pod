@@ -54,8 +54,7 @@ These parameters work as described in L<EVP_RAND(3)/PARAMETERS>.
 
 This Boolean indicates if a derivation function should be used or not.
 A nonzero value (the default) uses the derivation function.  A zero value
-does not.  The FIPS provider always uses the derivation function and attempts
-to set this value result in an error.
+does not.
 
 =back
 
