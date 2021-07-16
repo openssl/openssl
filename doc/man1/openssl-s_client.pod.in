@@ -116,6 +116,7 @@ B<openssl> B<s_client>
 [B<-srp_lateuser>]
 [B<-srp_moregroups>]
 [B<-srp_strength> I<number>]
+[B<-tfo>]
 {- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_version_synopsis -}
 {- $OpenSSL::safe::opt_x_synopsis -}
@@ -764,6 +765,10 @@ Tolerate other than the known B<g> and B<N> values.
 
 Set the minimal acceptable length, in bits, for B<N>.  This option is
 deprecated.
+
+=item B<-tfo>
+
+Enable creation of connections via TCP fast open (RFC7413).
 
 {- $OpenSSL::safe::opt_version_item -}
 

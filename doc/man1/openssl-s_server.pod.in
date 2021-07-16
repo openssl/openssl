@@ -137,6 +137,7 @@ B<openssl> B<s_server>
 [B<-anti_replay>]
 [B<-no_anti_replay>]
 [B<-num_tickets>]
+[B<-tfo>]
 {- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_version_synopsis -}
 {- $OpenSSL::safe::opt_v_synopsis -}
@@ -802,6 +803,11 @@ automatically detect if a session ticket has been used more than once, TLSv1.3
 has been negotiated, and early data is enabled on the server. A full handshake
 is forced if a session ticket is used a second or subsequent time. Any early
 data that was sent will be rejected.
+
+=item B<-tfo>
+
+Enable acceptance of TCP fast open (RFC7413) connections.
+
 
 {- $OpenSSL::safe::opt_name_item -}
 

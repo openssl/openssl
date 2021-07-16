@@ -107,7 +107,9 @@ B<BIO_BIND_REUSEADDR> is set then other sockets can bind to the
 same port. If B<BIO_BIND_REUSEADDR_IF_UNUSED> is set then and
 attempt is first made to use BIO_BIN_NORMAL, if this fails
 and the port is not in use then a second attempt is made
-using B<BIO_BIND_REUSEADDR>.
+using B<BIO_BIND_REUSEADDR>. If B<BIO_SOCK_TFO> is set, then
+the socket will be configured to accept TCP fast open
+connections.
 
 BIO_do_accept() serves two functions. When it is first
 called, after the accept BIO has been setup, it will attempt

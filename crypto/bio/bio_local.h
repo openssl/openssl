@@ -134,6 +134,12 @@ struct bio_st {
     uint64_t num_write;
     CRYPTO_EX_DATA ex_data;
     CRYPTO_RWLOCK *lock;
+#ifndef OPENSSL_NO_SOCK
+    struct {
+        BIO_ADDR peer;
+        int first;
+    } tfo;
+#endif
 };
 
 #ifndef OPENSSL_NO_SOCK

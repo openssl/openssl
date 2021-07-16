@@ -717,6 +717,7 @@ typedef enum OPTION_choice {
     OPT_KEYLOG_FILE, OPT_MAX_EARLY, OPT_RECV_MAX_EARLY, OPT_EARLY_DATA,
     OPT_S_NUM_TICKETS, OPT_ANTI_REPLAY, OPT_NO_ANTI_REPLAY, OPT_SCTP_LABEL_BUG,
     OPT_HTTP_SERVER_BINMODE, OPT_NOCANAMES, OPT_IGNORE_UNEXPECTED_EOF,
+    OPT_TFO,
     OPT_R_ENUM,
     OPT_S_ENUM,
     OPT_V_ENUM,
@@ -747,6 +748,9 @@ const OPTIONS s_server_options[] = {
 #endif
     {"4", OPT_4, '-', "Use IPv4 only"},
     {"6", OPT_6, '-', "Use IPv6 only"},
+#ifdef TCP_FASTOPEN
+    {"tfo", OPT_TFO, '-', "Listen for TCP Fast Open connections"},
+#endif
 
     OPT_SECTION("Identity"),
     {"context", OPT_CONTEXT, 's', "Set session ID context"},
@@ -1053,6 +1057,7 @@ int s_server_main(int argc, char *argv[])
     int sctp_label_bug = 0;
 #endif
     int ignore_unexpected_eof = 0;
+    int tfo = 0;
 
     /* Init of few remaining global variables */
     local_argc = argc;
@@ -1635,6 +1640,9 @@ int s_server_main(int argc, char *argv[])
         case OPT_IGNORE_UNEXPECTED_EOF:
             ignore_unexpected_eof = 1;
             break;
+        case OPT_TFO:
+            tfo = 1;
+            break;
         }
     }
 
@@ -2210,8 +2218,10 @@ int s_server_main(int argc, char *argv[])
         && unlink_unix_path)
         unlink(host);
 #endif
+    if (tfo)
+        BIO_printf(bio_err, "Listening for TFO\n");
     do_server(&accept_socket, host, port, socket_family, socket_type, protocol,
-              server_cb, context, naccept, bio_s_out);
+              server_cb, context, naccept, bio_s_out, tfo);
     print_stats(bio_s_out, ctx);
     ret = 0;
  end:
