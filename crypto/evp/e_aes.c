@@ -100,6 +100,25 @@ typedef struct {
 
 #define MAXBITCHUNK     ((size_t)1<<(sizeof(size_t)*8-4))
 
+#if defined(OPENSSL_CPUID_OBJ) && !defined(AES_ASM)
+int aes_set_encrypt_key(const unsigned char *userKey, const int bits,
+                        AES_KEY *key);
+int aes_set_decrypt_key(const unsigned char *userKey, const int bits,
+                        AES_KEY *key);
+void aes_encrypt(const unsigned char *in, unsigned char *out,
+                 const AES_KEY *key);
+void aes_decrypt(const unsigned char *in, unsigned char *out,
+                 const AES_KEY *key);
+void aes_cbc_encrypt(const unsigned char *in, unsigned char *out,
+                     size_t len, const AES_KEY *key,
+                     unsigned char *ivec, const int enc);
+# define AES_set_encrypt_key aes_set_encrypt_key
+# define AES_set_dncrypt_key aes_set_decrypt_key
+# define AES_encrypt aes_encrypt
+# define AES_dncrypt aes_dncrypt
+# define AES_cbc_encrypt aes_cbc_encrypt
+#endif
+
 #ifdef VPAES_ASM
 int vpaes_set_encrypt_key(const unsigned char *userKey, int bits,
                           AES_KEY *key);
@@ -4269,3 +4288,88 @@ BLOCK_CIPHER_custom(NID_aes, 192, 16, 12, ocb, OCB,
 BLOCK_CIPHER_custom(NID_aes, 256, 16, 12, ocb, OCB,
                     EVP_CIPH_FLAG_AEAD_CIPHER | CUSTOM_FLAGS)
 #endif                         /* OPENSSL_NO_OCB */
+
+#if defined(OPENSSL_CPUID_OBJ) && !defined(AES_ASM)
+# undef AES_set_encrypt_key
+# undef AES_set_decrypt_key
+# undef AES_encrypt
+# undef AES_decrypt
+# undef AES_cbc_encrypt
+
+int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
+                        AES_KEY *key)
+{
+# ifdef AESNI_CAPABLE
+    if (AESNI_CAPABLE)
+        return aesni_set_encrypt_key(userKey, bits, key);
+# endif
+# ifdef VPAES_CAPABLE
+    if (VPAES_CAPABLE)
+        return vpaes_set_encrypt_key(userKey, bits, key);
+# endif
+    return aes_set_encrypt_key(userKey, bits, key);
+}
+
+int AES_set_decrypt_key(const unsigned char *userKey, const int bits,
+                        AES_KEY *key)
+{
+# ifdef AESNI_CAPABLE
+    if (AESNI_CAPABLE)
+        return aesni_set_decrypt_key(userKey, bits, key);
+# endif
+# ifdef VPAES_CAPABLE
+    if (VPAES_CAPABLE)
+        return vpaes_set_decrypt_key(userKey, bits, key);
+# endif
+    return aes_set_decrypt_key(userKey, bits, key);
+}
+
+void AES_encrypt(const unsigned char *in, unsigned char *out,
+                 const AES_KEY *key)
+{
+# ifdef AESNI_CAPABLE
+    if (AESNI_CAPABLE)
+        aesni_encrypt(in, out, key);
+    else
+# endif
+# ifdef VPAES_CAPABLE
+    if (VPAES_CAPABLE)
+        vpaes_encrypt(in, out, key);
+    else
+# endif
+    aes_encrypt(in, out, key);
+}
+
+void AES_decrypt(const unsigned char *in, unsigned char *out,
+                 const AES_KEY *key)
+{
+# ifdef AESNI_CAPABLE
+    if (AESNI_CAPABLE)
+        aesni_decrypt(in, out, key);
+    else
+# endif
+# ifdef VPAES_CAPABLE
+    if (VPAES_CAPABLE)
+        vpaes_decrypt(in, out, key);
+    else
+# endif
+    aes_decrypt(in, out, key);
+}
+
+void AES_cbc_encrypt(const unsigned char *in, unsigned char *out,
+                     size_t len, const AES_KEY *key,
+                     unsigned char *ivec, const int enc)
+{
+# ifdef AESNI_CAPABLE
+    if (AESNI_CAPABLE)
+        aesni_cbc_encrypt(in, out, len, key, ivec, enc);
+    else
+# endif
+# ifdef VPAES_CAPABLE
+    if (VPAES_CAPABLE)
+        vpaes_cbc_encrypt(in, out, len, key, ivec, enc);
+    else
+# endif
+    aes_cbc_encrypt(in, out, len, key, ivec, enc);
+}
+#endif
