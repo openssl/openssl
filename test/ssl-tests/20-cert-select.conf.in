@@ -153,9 +153,8 @@ our @tests = (
             "Groups" => "brainpoolP256r1",
         },
         client => {
-            #We don't restrict this to TLSv1.2, although use of brainpool
-            #should force this anyway so that this should succeed
             "CipherString" => "aECDSA",
+            "MaxProtocol" => "TLSv1.2",
             "RequestCAFile" => test_pem("root-cert.pem"),
             "Groups" => "brainpoolP256r1",
         },
@@ -859,6 +858,7 @@ my @tests_tls_1_3 = (
             "Certificate" => test_pem("server-ecdsa-brainpoolP256r1-cert.pem"),
             "PrivateKey" => test_pem("server-ecdsa-brainpoolP256r1-key.pem"),
             "Groups" => "brainpoolP256r1",
+            "MaxProtocol" => "TLSv1.2"
         },
         client => {
             "RequestCAFile" => test_pem("root-cert.pem"),
@@ -868,6 +868,24 @@ my @tests_tls_1_3 = (
         },
         test   => {
             "ExpectedResult" => "ServerFail"
+        },
+    },
+    {
+        name => "TLS 1.3 ECDSA with brainpool 2",
+        server =>  {
+            "Certificate" => test_pem("server-ecdsa-brainpoolP256r1-cert.pem"),
+            "PrivateKey" => test_pem("server-ecdsa-brainpoolP256r1-key.pem"),
+            "Groups" => "brainpoolP256r1",
+            "MaxProtocol" => "TLSv1.3"
+        },
+        client => {
+            "RequestCAFile" => test_pem("root-cert.pem"),
+            "Groups" => "brainpoolP256r1",
+            "MinProtocol" => "TLSv1.3",
+            "MaxProtocol" => "TLSv1.3"
+        },
+        test   => {
+            "ExpectedResult" => "Success"
         },
     },
 );

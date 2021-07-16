@@ -16,6 +16,8 @@ unsigned long OpenSSL_version_num(void)
     return OPENSSL_VERSION_NUMBER;
 }
 
+extern char ossl_cpu_info_str[];
+
 const char *OpenSSL_version(int t)
 {
     switch (t) {
@@ -39,6 +41,17 @@ const char *OpenSSL_version(int t)
 #else
         return "ENGINESDIR: N/A";
 #endif
+    case OPENSSL_MODULES_DIR:
+#ifdef MODULESDIR
+        return "MODULESDIR: \"" MODULESDIR "\"";
+#else
+        return "MODULESDIR: N/A";
+#endif
+    case OPENSSL_CPU_INFO:
+        if (OPENSSL_info(OPENSSL_INFO_CPU_SETTINGS) != NULL)
+            return ossl_cpu_info_str;
+        else
+            return "CPUINFO: N/A";
     }
     return "not available";
 }

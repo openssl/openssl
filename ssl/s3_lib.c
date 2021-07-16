@@ -3609,7 +3609,10 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
                 int *cptr = parg;
 
                 for (i = 0; i < clistlen; i++) {
-                    const TLS_GROUP_INFO *cinf = tls1_group_id_lookup(clist[i]);
+                    uint16_t cid = SSL_IS_TLS13(s)
+                                   ? ssl_group_id_tls13_to_internal(clist[i])
+                                   : clist[i];
+                    const TLS_GROUP_INFO *cinf = tls1_group_id_lookup(cid);
 
                     if (cinf != NULL)
                         cptr[i] = cinf->nid;

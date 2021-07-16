@@ -319,6 +319,8 @@ static int bind_ossltest(ENGINE *e)
         return 0;
     }
 
+    OBJ_NAME_remove("AES-128-CBC-HMAC-SHA1", OBJ_NAME_TYPE_CIPHER_METH);
+    OBJ_NAME_remove("AES-128-CBC-HMAC-SHA256", OBJ_NAME_TYPE_CIPHER_METH);
     return 1;
 }
 

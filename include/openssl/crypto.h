@@ -154,12 +154,30 @@ int OPENSSL_hexchar2int(unsigned char c);
 
 unsigned long OpenSSL_version_num(void);
 const char *OpenSSL_version(int type);
-# define OPENSSL_VERSION          0
-# define OPENSSL_CFLAGS           1
-# define OPENSSL_BUILT_ON         2
-# define OPENSSL_PLATFORM         3
-# define OPENSSL_DIR              4
-# define OPENSSL_ENGINES_DIR      5
+# define OPENSSL_VERSION                0
+# define OPENSSL_CFLAGS                 1
+# define OPENSSL_BUILT_ON               2
+# define OPENSSL_PLATFORM               3
+# define OPENSSL_DIR                    4
+# define OPENSSL_ENGINES_DIR            5
+# define OPENSSL_VERSION_STRING         6
+# define OPENSSL_FULL_VERSION_STRING    7
+# define OPENSSL_MODULES_DIR            8
+# define OPENSSL_CPU_INFO               9
+
+const char *OPENSSL_info(int type);
+/*
+ * The series starts at 1001 to avoid confusion with the OpenSSL_version
+ * types.
+ */
+# define OPENSSL_INFO_CONFIG_DIR                1001
+# define OPENSSL_INFO_ENGINES_DIR               1002
+# define OPENSSL_INFO_MODULES_DIR               1003
+# define OPENSSL_INFO_DSO_EXTENSION             1004
+# define OPENSSL_INFO_DIR_FILENAME_SEPARATOR    1005
+# define OPENSSL_INFO_LIST_SEPARATOR            1006
+# define OPENSSL_INFO_SEED_SOURCE               1007
+# define OPENSSL_INFO_CPU_SETTINGS              1008
 
 int OPENSSL_issetugid(void);
 
@@ -168,7 +186,7 @@ typedef void CRYPTO_EX_new (void *parent, void *ptr, CRYPTO_EX_DATA *ad,
 typedef void CRYPTO_EX_free (void *parent, void *ptr, CRYPTO_EX_DATA *ad,
                              int idx, long argl, void *argp);
 typedef int CRYPTO_EX_dup (CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
-                           void *from_d, int idx, long argl, void *argp);
+                           void **from_d, int idx, long argl, void *argp);
 __owur int CRYPTO_get_ex_new_index(int class_index, long argl, void *argp,
                             CRYPTO_EX_new *new_func, CRYPTO_EX_dup *dup_func,
                             CRYPTO_EX_free *free_func);

@@ -317,6 +317,7 @@ static int des_ede3_unwrap(EVP_CIPHER_CTX *ctx, unsigned char *out,
                            const unsigned char *in, size_t inl)
 {
     unsigned char icv[8], iv[8], sha1tmp[SHA_DIGEST_LENGTH];
+    unsigned char tmp[8];
     int rv = -1;
     if (inl < 24)
         return -1;
@@ -330,13 +331,11 @@ static int des_ede3_unwrap(EVP_CIPHER_CTX *ctx, unsigned char *out,
      * If decrypting in place move whole output along a block so the next
      * des_ede_cbc_cipher is in place.
      */
-    if (out == in) {
-        memmove(out, out + 8, inl - 8);
-        in -= 8;
-    }
-    des_ede_cbc_cipher(ctx, out, in + 8, inl - 16);
+    memcpy(tmp, in + inl - 8, 8);
+    memmove(out, in + 8, inl - 16);
+    des_ede_cbc_cipher(ctx, out, out, inl - 16);
     /* Decrypt final block which will be IV */
-    des_ede_cbc_cipher(ctx, iv, in + inl - 8, 8);
+    des_ede_cbc_cipher(ctx, iv, tmp, 8);
     /* Reverse order of everything */
     BUF_reverse(icv, NULL, 8);
     BUF_reverse(out, NULL, inl - 16);
@@ -349,6 +348,7 @@ static int des_ede3_unwrap(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
     if (!CRYPTO_memcmp(sha1tmp, icv, 8))
         rv = inl - 16;
+    OPENSSL_cleanse(tmp, 8);
     OPENSSL_cleanse(icv, 8);
     OPENSSL_cleanse(sha1tmp, SHA_DIGEST_LENGTH);
     OPENSSL_cleanse(iv, 8);
@@ -393,11 +393,6 @@ static int des_ede3_wrap_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
      */
     if (inl >= EVP_MAXCHUNK || inl % 8)
         return -1;
-
-    if (is_partially_overlapping(out, in, inl)) {
-        EVPerr(EVP_F_DES_EDE3_WRAP_CIPHER, EVP_R_PARTIALLY_OVERLAPPING);
-        return 0;
-    }
 
     if (EVP_CIPHER_CTX_encrypting(ctx))
         return des_ede3_wrap(ctx, out, in, inl);
