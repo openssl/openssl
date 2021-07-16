@@ -142,7 +142,7 @@ The signature of the certificate is invalid.
 
 =item B<X509_V_ERR_CRL_SIGNATURE_FAILURE: CRL signature failure>
 
-The signature of the certificate is invalid.
+The signature of the CRL is invalid.
 
 =item B<X509_V_ERR_CERT_NOT_YET_VALID: certificate is not yet valid>
 
@@ -243,6 +243,7 @@ The root CA is marked to reject the specified purpose.
 
 The current candidate issuer certificate was rejected because its subject name
 did not match the issuer name of the current certificate.
+Not used as of OpenSSL 1.1.0.
 
 =item B<X509_V_ERR_AKID_SKID_MISMATCH:
 authority and subject key identifier mismatch>
@@ -435,11 +436,11 @@ Returned by the verify callback to indicate OCSP verification failed.
 Returned by the verify callback to indicate that the certificate is not
 recognized by the OCSP responder.
 
-=item B<509_V_ERROR_NO_ISSUER_PUBLI_KEY, issuer certificate doesn't have a public key>
+=item B<X509_V_ERR_NO_ISSUER_PUBLIC_KEY: issuer certificate doesn't have a public key>
 
 The issuer certificate does not have a public key.
 
-=item B<X509_V_ERROR_SIGNATURE_ALGORITHM_MISMATCH, Subject signature algorithm and issuer public key algorithm mismatch>
+=item B<X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH: Subject signature algorithm and issuer public key algorithm mismatch>
 
 The issuer's public key is not of the type required by the signature in
 the subject's certificate.
