@@ -333,6 +333,7 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
     si->signer = signer;
     si->mctx = EVP_MD_CTX_new();
     si->pctx = NULL;
+    si->omit_signing_time = 0;
 
     if (si->mctx == NULL) {
         ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
@@ -419,6 +420,12 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
             sk_X509_ALGOR_pop_free(smcap, X509_ALGOR_free);
             if (!i)
                 goto merr;
+        }
+        if (flags & CMS_NO_SIGNING_TIME) {
+            /* The signing-time signed attribute (NID_pkcs9_signingTime)
+             * would normally be added later, in CMS_SignerInfo_sign(),
+             * unless we set this flag here */
+            si->omit_signing_time = 1;
         }
         if (flags & CMS_CADES) {
             ESS_SIGNING_CERT *sc = NULL;
@@ -788,7 +795,7 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
                      si->digestAlgorithm->algorithm, 0))
         return 0;
 
-    if (CMS_signed_get_attr_by_NID(si, NID_pkcs9_signingTime, -1) < 0) {
+    if ((!si->omit_signing_time) && (CMS_signed_get_attr_by_NID(si, NID_pkcs9_signingTime, -1) < 0)) {
         if (!cms_add1_signingTime(si, NULL))
             goto err;
     }
