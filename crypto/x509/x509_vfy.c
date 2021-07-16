@@ -110,6 +110,7 @@ int X509_self_signed(X509 *cert, int verify_signature)
 /*
  * Given a certificate, try and find an exact match in the store.
  * Returns 1 on success, 0 on not found, -1 on internal error.
+ * If result is not NULL, on success *result will hold the up-ref'd found cert.
  */
 static int lookup_cert_match(X509 **result, X509_STORE_CTX *ctx, X509 *x)
 {
@@ -117,7 +118,8 @@ static int lookup_cert_match(X509 **result, X509_STORE_CTX *ctx, X509 *x)
     X509 *xtmp = NULL;
     int i, ret;
 
-    *result = NULL;
+    if (result != NULL)
+        *result = NULL;
     /* Lookup all certs with matching subject name */
     ERR_set_mark();
     certs = ctx->lookup_certs(ctx, X509_get_subject_name(x));
@@ -132,7 +134,7 @@ static int lookup_cert_match(X509 **result, X509_STORE_CTX *ctx, X509 *x)
         xtmp = NULL;
     }
     ret = xtmp != NULL;
-    if (ret) {
+    if (ret && result != NULL) {
         if (!X509_up_ref(xtmp))
             ret = -1;
         else
@@ -140,6 +142,13 @@ static int lookup_cert_match(X509 **result, X509_STORE_CTX *ctx, X509 *x)
     }
     sk_X509_pop_free(certs, X509_free);
     return ret;
+}
+
+static int directly_trusted(X509_STORE_CTX *ctx, X509 *cert)
+{
+    return X509_check_trust(cert, ctx->param->trust,
+                            ctx->param->flags) != X509_TRUST_REJECTED
+        && lookup_cert_match(NULL, ctx, cert) != 0;
 }
 
 /*-
@@ -224,6 +233,15 @@ static int verify_chain(X509_STORE_CTX *ctx)
     err = X509_chain_check_suiteb(&ctx->error_depth, NULL, ctx->chain,
                                   ctx->param->flags);
     CB_FAIL_IF(err != X509_V_OK, ctx, NULL, ctx->error_depth, err);
+
+    /* In the non-DANE case (re-)check direct trust in the root of the chain */
+    if (!DANETLS_ENABLED(ctx->dane)) {
+        int n = sk_X509_num(ctx->chain) - 1;
+        X509 *root = sk_X509_value(ctx->chain, n);
+
+        CB_FAIL_IF(!directly_trusted(ctx, root),
+                   ctx, root, n, X509_V_ERR_CERT_UNTRUSTED);
+    }
 
     /* Verify chain signatures and expiration times */
     ok = ctx->verify != NULL ? ctx->verify(ctx) : internal_verify(ctx);
@@ -1731,7 +1749,7 @@ int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
 }
 
 /*
- * Verify the issuer signatures and cert times of ctx->chain.
+ * Verify issuer signatures and cert times of ctx->chain, not checking trust.
  * Sadly, returns 0 also on internal error.
  */
 static int internal_verify(X509_STORE_CTX *ctx)
