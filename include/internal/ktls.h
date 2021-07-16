@@ -40,6 +40,11 @@
 #   define OPENSSL_KTLS_AES_GCM_128
 #   define OPENSSL_KTLS_AES_GCM_256
 #   define OPENSSL_KTLS_TLS13
+#   ifdef TLS_CHACHA20_IV_LEN
+#    ifndef OPENSSL_NO_CHACHA
+#     define OPENSSL_KTLS_CHACHA20_POLY1305
+#    endif
+#   endif
 
 typedef struct tls_enable ktls_crypto_info_t;
 

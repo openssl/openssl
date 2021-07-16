@@ -37,6 +37,10 @@ int ktls_check_supported_cipher(const SSL *s, const EVP_CIPHER *c,
     case SSL_AES128GCM:
     case SSL_AES256GCM:
         return 1;
+# ifdef OPENSSL_KTLS_CHACHA20_POLY1305
+    case SSL_CHACHA20POLY1305:
+        return 1;
+# endif
     case SSL_AES128:
     case SSL_AES256:
         if (s->ext.use_etm)
@@ -71,6 +75,12 @@ int ktls_configure_crypto(const SSL *s, const EVP_CIPHER *c, EVP_CIPHER_CTX *dd,
         else
             crypto_info->iv_len = EVP_GCM_TLS_FIXED_IV_LEN;
         break;
+# ifdef OPENSSL_KTLS_CHACHA20_POLY1305
+    case SSL_CHACHA20POLY1305:
+        crypto_info->cipher_algorithm = CRYPTO_CHACHA20_POLY1305;
+        crypto_info->iv_len = EVP_CIPHER_CTX_iv_length(dd);
+        break;
+# endif
     case SSL_AES128:
     case SSL_AES256:
         switch (s->s3.tmp.new_cipher->algorithm_mac) {
