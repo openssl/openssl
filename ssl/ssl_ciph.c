@@ -1400,6 +1400,51 @@ int SSL_set_ciphersuites(SSL *s, const char *str)
     return ret;
 }
 
+static int ciphersuite13_cb(const char *elem, int len, void *arg)
+{
+    STACK_OF(SSL_CIPHER) *ciphersuites = (STACK_OF(SSL_CIPHER) *)arg;
+    const SSL_CIPHER *cipher;
+    /* Arbitrary sized temp buffer for the cipher name. Should be big enough */
+    char name[80];
+
+    if (len > (int)(sizeof(name) - 1)) {
+        SSLerr(SSL_F_CIPHERSUITE_CB, SSL_R_NO_CIPHER_MATCH);
+        return 0;
+    }
+
+    memcpy(name, elem, len);
+    name[len] = '\0';
+
+    cipher = ssl3_get_cipher_by_std_name(name);
+    if (cipher && cipher->min_tls == TLS1_3_VERSION) {
+        if (!sk_SSL_CIPHER_push(ciphersuites, cipher)) {
+            SSLerr(SSL_F_CIPHERSUITE_CB, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+STACK_OF(SSL_CIPHER) *ssl_get_tls13_suites(const char *str)
+{
+    STACK_OF(SSL_CIPHER) *newciphers;
+    if (str == NULL || *str == '\0')
+        return NULL;
+
+    newciphers = sk_SSL_CIPHER_new_null();
+
+    if (newciphers != NULL) {
+        if (!CONF_parse_list(str, ':', 1, ciphersuite13_cb, newciphers) ||
+            !sk_SSL_CIPHER_num(newciphers)) {
+            sk_SSL_CIPHER_free(newciphers);
+            newciphers = NULL;
+        }
+    }
+
+    return newciphers;
+}
+
 STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
                                              STACK_OF(SSL_CIPHER) *tls13_ciphersuites,
                                              STACK_OF(SSL_CIPHER) **cipher_list,

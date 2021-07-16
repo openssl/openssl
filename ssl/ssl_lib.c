@@ -2549,6 +2549,13 @@ static int cipher_list_tls12_num(STACK_OF(SSL_CIPHER) *sk)
 int SSL_CTX_set_cipher_list(SSL_CTX *ctx, const char *str)
 {
     STACK_OF(SSL_CIPHER) *sk;
+    STACK_OF(SSL_CIPHER) *tls13_sk;
+
+    tls13_sk = ssl_get_tls13_suites(str);
+    if (tls13_sk != NULL) {
+        sk_SSL_CIPHER_free(ctx->tls13_ciphersuites);
+        ctx->tls13_ciphersuites = tls13_sk;
+    }
 
     sk = ssl_create_cipher_list(ctx->method, ctx->tls13_ciphersuites,
                                 &ctx->cipher_list, &ctx->cipher_list_by_id, str,
@@ -2573,6 +2580,13 @@ int SSL_CTX_set_cipher_list(SSL_CTX *ctx, const char *str)
 int SSL_set_cipher_list(SSL *s, const char *str)
 {
     STACK_OF(SSL_CIPHER) *sk;
+    STACK_OF(SSL_CIPHER) *tls13_sk;
+
+    tls13_sk = ssl_get_tls13_suites(str);
+    if (tls13_sk != NULL) {
+        sk_SSL_CIPHER_free(s->tls13_ciphersuites);
+        s->tls13_ciphersuites = tls13_sk;
+    }
 
     sk = ssl_create_cipher_list(s->ctx->method, s->tls13_ciphersuites,
                                 &s->cipher_list, &s->cipher_list_by_id, str,
