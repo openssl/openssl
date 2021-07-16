@@ -23,6 +23,16 @@ static int pkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         if (key->pkey)
             OPENSSL_cleanse(key->pkey->data, key->pkey->length);
     }
+
+    if (operation == ASN1_OP_D2I_POST) {
+        PKCS8_PRIV_KEY_INFO *key = (PKCS8_PRIV_KEY_INFO *)*pval;
+
+        if (key->version == 0 && key->pubkey != NULL) {
+            ERR_raise_data(ERR_LIB_ASN1, ERR_R_UNSUPPORTED,
+                           "Version 1 PKCS#8 doesn't support public key");
+            return 0;
+        }
+    }
     return 1;
 }
 
@@ -30,7 +40,8 @@ ASN1_SEQUENCE_cb(PKCS8_PRIV_KEY_INFO, pkey_cb) = {
         ASN1_SIMPLE(PKCS8_PRIV_KEY_INFO, version, ASN1_INTEGER),
         ASN1_SIMPLE(PKCS8_PRIV_KEY_INFO, pkeyalg, X509_ALGOR),
         ASN1_SIMPLE(PKCS8_PRIV_KEY_INFO, pkey, ASN1_OCTET_STRING),
-        ASN1_IMP_SET_OF_OPT(PKCS8_PRIV_KEY_INFO, attributes, X509_ATTRIBUTE, 0)
+        ASN1_IMP_SET_OF_OPT(PKCS8_PRIV_KEY_INFO, attributes, X509_ATTRIBUTE, 0),
+        ASN1_IMP_OPT(PKCS8_PRIV_KEY_INFO, pubkey, ASN1_BIT_STRING, 1)
 } ASN1_SEQUENCE_END_cb(PKCS8_PRIV_KEY_INFO, PKCS8_PRIV_KEY_INFO)
 
 IMPLEMENT_ASN1_FUNCTIONS(PKCS8_PRIV_KEY_INFO)
