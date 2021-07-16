@@ -976,7 +976,7 @@ size_t ossl_statem_client_max_message_size(SSL *s)
         return s->max_cert_list;
 
     case TLS_ST_CR_CERT_VRFY:
-        return SSL3_RT_MAX_PLAIN_LENGTH;
+        return CERT_VERIFY_MAX_LENGTH;
 
     case TLS_ST_CR_CERT_STATUS:
         return SSL3_RT_MAX_PLAIN_LENGTH;
