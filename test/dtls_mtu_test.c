@@ -168,7 +168,7 @@ static int run_mtu_tests(void)
         const char *cipher_name = SSL_CIPHER_get_name(cipher);
 
         /* As noted above, only one test for each enc/mac variant. */
-        if (strncmp(cipher_name, "PSK-", 4) != 0)
+        if (!HAS_PREFIX(cipher_name, "PSK-"))
             continue;
 
         if (!TEST_int_gt(ret = mtu_test(ctx, cipher_name, 0), 0))

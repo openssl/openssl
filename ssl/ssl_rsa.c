@@ -25,6 +25,9 @@ static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey);
                              | SSL_EXT_TLS1_2_SERVER_HELLO \
                              | SSL_EXT_IGNORE_ON_RESUMPTION)
 
+#define NAME_PREFIX1 "SERVERINFO FOR "
+#define NAME_PREFIX2 "SERVERINFOV2 FOR "
+
 int SSL_use_certificate(SSL *ssl, X509 *x)
 {
     int rv;
@@ -760,8 +763,6 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
     long extension_length = 0;
     char *name = NULL;
     char *header = NULL;
-    static const char namePrefix1[] = "SERVERINFO FOR ";
-    static const char namePrefix2[] = "SERVERINFOV2 FOR ";
     unsigned int name_len;
     int ret = 0;
     BIO *bin = NULL;
@@ -798,18 +799,18 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
         }
         /* Check that PEM name starts with "BEGIN SERVERINFO FOR " */
         name_len = strlen(name);
-        if (name_len < sizeof(namePrefix1) - 1) {
+        if (name_len < sizeof(NAME_PREFIX1) - 1) {
             ERR_raise(ERR_LIB_SSL, SSL_R_PEM_NAME_TOO_SHORT);
             goto end;
         }
-        if (strncmp(name, namePrefix1, sizeof(namePrefix1) - 1) == 0) {
+        if (HAS_PREFIX(name, NAME_PREFIX1)) {
             version = SSL_SERVERINFOV1;
         } else {
-            if (name_len < sizeof(namePrefix2) - 1) {
+            if (name_len < sizeof(NAME_PREFIX2) - 1) {
                 ERR_raise(ERR_LIB_SSL, SSL_R_PEM_NAME_TOO_SHORT);
                 goto end;
             }
-            if (strncmp(name, namePrefix2, sizeof(namePrefix2) - 1) != 0) {
+            if (!HAS_PREFIX(name, NAME_PREFIX2)) {
                 ERR_raise(ERR_LIB_SSL, SSL_R_PEM_NAME_BAD_PREFIX);
                 goto end;
             }

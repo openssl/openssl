@@ -7,7 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <string.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/provider.h>
@@ -368,9 +367,9 @@ opthelp:
         case OPT_MACOPT:
             if (!sk_OPENSSL_STRING_push(opts, opt_arg()))
                 goto opthelp;
-            if (strncmp(opt_arg(), "hexkey:", 7) == 0)
+            if (HAS_PREFIX(opt_arg(), "hexkey:"))
                 gotkey = 1;
-            else if (strncmp(opt_arg(), "digest:", 7) == 0)
+            else if (HAS_PREFIX(opt_arg(), "digest:"))
                 gotdigest = 1;
             break;
         case OPT_VERIFY:

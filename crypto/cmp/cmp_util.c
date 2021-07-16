@@ -53,8 +53,7 @@ static OSSL_CMP_severity parse_level(const char *level)
     if (end_level == NULL)
         return -1;
 
-    if (strncmp(level, OSSL_CMP_LOG_PREFIX,
-                strlen(OSSL_CMP_LOG_PREFIX)) == 0)
+    if (HAS_PREFIX(level, OSSL_CMP_LOG_PREFIX))
         level += strlen(OSSL_CMP_LOG_PREFIX);
     len = end_level - level;
     if (len > max_level_len)

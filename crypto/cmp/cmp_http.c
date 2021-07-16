@@ -14,7 +14,6 @@
 
 #include <openssl/asn1t.h>
 #include <openssl/http.h>
-#include "internal/sockets.h"
 
 #include <openssl/cmp.h>
 #include "cmp_local.h"

@@ -94,7 +94,7 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
     if ((p = strchr(scheme_copy, ':')) != NULL) {
         *p++ = '\0';
         if (strcasecmp(scheme_copy, "file") != 0) {
-            if (strncmp(p, "//", 2) == 0)
+            if (HAS_PREFIX(p, "//"))
                 schemes_n--;         /* Invalidate the file scheme */
             schemes[schemes_n++] = scheme_copy;
         }

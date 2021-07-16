@@ -325,13 +325,13 @@ static int asn1_cb(const char *elem, int len, void *bitstr)
             ERR_raise(ERR_LIB_ASN1, ASN1_R_UNKNOWN_FORMAT);
             return -1;
         }
-        if (strncmp(vstart, "ASCII", 5) == 0)
+        if (HAS_PREFIX(vstart, "ASCII"))
             arg->format = ASN1_GEN_FORMAT_ASCII;
-        else if (strncmp(vstart, "UTF8", 4) == 0)
+        else if (HAS_PREFIX(vstart, "UTF8"))
             arg->format = ASN1_GEN_FORMAT_UTF8;
-        else if (strncmp(vstart, "HEX", 3) == 0)
+        else if (HAS_PREFIX(vstart, "HEX"))
             arg->format = ASN1_GEN_FORMAT_HEX;
-        else if (strncmp(vstart, "BITLIST", 7) == 0)
+        else if (HAS_PREFIX(vstart, "BITLIST"))
             arg->format = ASN1_GEN_FORMAT_BITLIST;
         else {
             ERR_raise(ERR_LIB_ASN1, ASN1_R_UNKNOWN_FORMAT);
@@ -765,7 +765,7 @@ static int mask_cb(const char *elem, int len, void *arg)
     int tag;
     if (elem == NULL)
         return 0;
-    if ((len == 3) && (strncmp(elem, "DIR", 3) == 0)) {
+    if (len == 3 && HAS_PREFIX(elem, "DIR")) {
         *pmask |= B_ASN1_DIRECTORYSTRING;
         return 1;
     }
