@@ -54,6 +54,7 @@ extern "C" {
 # define PEM_STRING_ECPRIVATEKEY "EC PRIVATE KEY"
 # define PEM_STRING_PARAMETERS   "PARAMETERS"
 # define PEM_STRING_CMS          "CMS"
+# define PEM_STRING_ACERT        "ATTRIBUTE CERTIFICATE"
 
 # define PEM_TYPE_ENCRYPTED      10
 # define PEM_TYPE_MIC_ONLY       20
@@ -472,6 +473,7 @@ DECLARE_PEM_write_attr(OSSL_DEPRECATEDIN_3_0, DHxparams, DH)
 # endif
 DECLARE_PEM_rw_cb_ex(PrivateKey, EVP_PKEY)
 DECLARE_PEM_rw_ex(PUBKEY, EVP_PKEY)
+DECLARE_PEM_rw(X509_ACERT, X509_ACERT)
 
 int PEM_write_bio_PrivateKey_traditional(BIO *bp, const EVP_PKEY *x,
                                          const EVP_CIPHER *enc,

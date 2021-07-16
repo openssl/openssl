@@ -605,6 +605,9 @@ DECLARE_ASN1_ALLOC_FUNCTIONS(NAME_CONSTRAINTS)
 DECLARE_ASN1_ALLOC_FUNCTIONS(POLICY_CONSTRAINTS)
 DECLARE_ASN1_ITEM(POLICY_CONSTRAINTS)
 
+DECLARE_ASN1_FUNCTIONS(OBJECT_DIGEST_INFO)
+DECLARE_ASN1_FUNCTIONS(ISSUER_SERIAL)
+
 GENERAL_NAME *a2i_GENERAL_NAME(GENERAL_NAME *out,
                                const X509V3_EXT_METHOD *method,
                                X509V3_CTX *ctx, int gen_type,
@@ -779,6 +782,80 @@ ASN1_OCTET_STRING *a2i_IPADDRESS(const char *ipasc);
 ASN1_OCTET_STRING *a2i_IPADDRESS_NC(const char *ipasc);
 int X509V3_NAME_from_section(X509_NAME *nm, STACK_OF(CONF_VALUE) *dn_sk,
                              unsigned long chtype);
+
+/* Attribute certificate functions */
+# define X509_ACERT_VERSION_2 1
+
+const GENERAL_NAMES *X509_ACERT_get0_holder_entityName(const X509_ACERT *x);
+ISSUER_SERIAL *X509_ACERT_get0_holder_baseCertId(const X509_ACERT *x);
+OBJECT_DIGEST_INFO * X509_ACERT_get0_holder_digest(const X509_ACERT *x);
+const X509_NAME *X509_ACERT_get0_issuerName(const X509_ACERT *x);
+long X509_ACERT_get_version(const X509_ACERT *x);
+void X509_ACERT_get0_signature(const X509_ACERT *x,
+                               const ASN1_BIT_STRING **psig,
+                               const X509_ALGOR **palg);
+X509_ALGOR *X509_ACERT_get0_info_signature(const X509_ACERT *x);
+ASN1_INTEGER *X509_ACERT_get0_serialNumber(X509_ACERT *x);
+const ASN1_TIME *X509_ACERT_get0_notBefore(const X509_ACERT *x);
+const ASN1_TIME *X509_ACERT_get0_notAfter(const X509_ACERT *x);
+int X509_ACERT_get_attr_count(const X509_ACERT *x);
+int X509_ACERT_get_attr_by_NID(const X509_ACERT *x, int nid, int lastpos);
+int X509_ACERT_get_attr_by_OBJ(const X509_ACERT *x, const ASN1_OBJECT *obj,
+                               int lastpos);
+X509_ATTRIBUTE *X509_ACERT_get_attr(const X509_ACERT *x, int loc);
+X509_ATTRIBUTE *X509_ACERT_delete_attr(X509_ACERT *x, int loc);
+ASN1_BIT_STRING *X509_ACERT_get0_issuerUID(X509_ACERT *x);
+const STACK_OF(X509_EXTENSION) *X509_ACERT_get0_extensions(const X509_ACERT *x);
+int X509_ACERT_print(BIO *bp, X509_ACERT *x);
+int X509_ACERT_print_ex(BIO *bp, X509_ACERT *x, unsigned long nmflags,
+                        unsigned long cflag);
+
+int X509_ACERT_set_version(X509_ACERT *x, long version);
+void X509_ACERT_set0_holder_entityName(X509_ACERT *x, GENERAL_NAMES *name);
+void X509_ACERT_set0_holder_baseCertId(X509_ACERT *x, ISSUER_SERIAL *isss);
+void X509_ACERT_set0_holder_digest(X509_ACERT *x,
+                                   OBJECT_DIGEST_INFO *dinfo);
+
+int X509_ACERT_add1_attr(X509_ACERT *x, X509_ATTRIBUTE *attr);
+int X509_ACERT_add1_attr_by_OBJ(X509_ACERT *x, const ASN1_OBJECT *obj,
+                                int type, const void *bytes, int len);
+int X509_ACERT_add1_attr_by_NID(X509_ACERT *x, int nid, int type,
+                                const void *bytes, int len);
+int X509_ACERT_add1_attr_by_txt(X509_ACERT *x, const char *attrname, int type,
+                                const unsigned char *bytes, int len);
+
+int X509_ACERT_add_attr_nconf(CONF *conf, const char *section,
+                              int strtype, X509_ACERT *acert);
+
+int X509_ACERT_add1_ext_i2d(X509_ACERT *x, int nid, void *value, int crit,
+                            unsigned long flag);
+
+int X509_ACERT_set1_issuerName(X509_ACERT *x, const X509_NAME *name);
+int X509_ACERT_set1_serialNumber(X509_ACERT *x, ASN1_INTEGER *serial);
+int X509_ACERT_set1_notBefore(X509_ACERT *x, ASN1_GENERALIZEDTIME *time);
+int X509_ACERT_set1_notAfter(X509_ACERT *x, ASN1_GENERALIZEDTIME *time);
+
+# define OBJECT_DIGEST_INFO_PUBLIC_KEY        0
+# define OBJECT_DIGEST_INFO_PUBLIC_KEY_CERT   1
+# define OBJECT_DIGEST_INFO_OTHER             2  /* must not be used in RFC 5755 profile */
+
+void OBJECT_DIGEST_INFO_get0_digest(OBJECT_DIGEST_INFO *o,
+                                    ASN1_ENUMERATED **digestedObjectType,
+                                    X509_ALGOR **digestAlgorithm,
+                                    ASN1_BIT_STRING **digest);
+
+void OBJECT_DIGEST_INFO_set0_digest(OBJECT_DIGEST_INFO *o,
+                                    ASN1_ENUMERATED *digestedObjectType,
+                                    X509_ALGOR *digestAlgorithm,
+                                    ASN1_BIT_STRING *digest);
+
+X509_NAME *ISSUER_SERIAL_get0_issuer(ISSUER_SERIAL *isss);
+ASN1_INTEGER *ISSUER_SERIAL_get0_serial(ISSUER_SERIAL *isss);
+ASN1_BIT_STRING *ISSUER_SERIAL_get0_issuerUID(ISSUER_SERIAL *isss);
+
+int ISSUER_SERIAL_set1_issuer(ISSUER_SERIAL *isss, X509_NAME *issuer);
+int ISSUER_SERIAL_set1_serial(ISSUER_SERIAL *isss, ASN1_INTEGER *serial);
+int ISSUER_SERIAL_set1_issuerUID(ISSUER_SERIAL *isss, ASN1_BIT_STRING *uid);
 
 void X509_POLICY_NODE_print(BIO *out, X509_POLICY_NODE *node, int indent);
 {-
@@ -1010,6 +1087,28 @@ const ASN1_PRINTABLESTRING *PROFESSION_INFO_get0_registrationNumber(
     const PROFESSION_INFO *pi);
 void PROFESSION_INFO_set0_registrationNumber(
     PROFESSION_INFO *pi, ASN1_PRINTABLESTRING *rn);
+
+# define IETFAS_OCTETS  0
+# define IETFAS_OID     1
+# define IETFAS_STRING  2
+
+typedef struct IETF_ATTR_SYNTAX_VALUE_st IETF_ATTR_SYNTAX_VALUE;
+typedef struct IETF_ATTR_SYNTAX_st IETF_ATTR_SYNTAX;
+{-
+    generate_stack_macros("IETF_ATTR_SYNTAX_VALUE");
+-}
+
+DECLARE_ASN1_FUNCTIONS(IETF_ATTR_SYNTAX_VALUE)
+DECLARE_ASN1_FUNCTIONS(IETF_ATTR_SYNTAX)
+
+const GENERAL_NAMES *
+IETF_ATTR_SYNTAX_get0_policyAuthority(const IETF_ATTR_SYNTAX *a);
+void IETF_ATTR_SYNTAX_set0_policyAuthority(IETF_ATTR_SYNTAX *a, GENERAL_NAMES *names);
+
+int IETF_ATTR_SYNTAX_get_value_num(const IETF_ATTR_SYNTAX *a);
+void *IETF_ATTR_SYNTAX_get0_value(const IETF_ATTR_SYNTAX *a, int ind, int *type);
+int IETF_ATTR_SYNTAX_add1_value(IETF_ATTR_SYNTAX *a, int type, void *data);
+int IETF_ATTR_SYNTAX_print(BIO *bp, IETF_ATTR_SYNTAX *a, int indent);
 
 # ifdef  __cplusplus
 }

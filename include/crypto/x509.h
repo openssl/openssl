@@ -307,6 +307,58 @@ struct x509_object_st {
     } data;
 };
 
+/* Attribute certificate definitions */
+struct object_digest_info_st {
+    ASN1_ENUMERATED *digestedObjectType;
+    ASN1_OBJECT *otherObjectTypeID;
+    X509_ALGOR *digestAlgorithm;
+    ASN1_BIT_STRING *objectDigest;
+};
+
+struct IssuerSerial_st {
+    STACK_OF(GENERAL_NAME) *issuer;
+    ASN1_INTEGER serial;
+    ASN1_BIT_STRING *issuerUID;
+};
+
+typedef struct ACertIssuer_v2Form_st {
+    STACK_OF(GENERAL_NAME) *issuerName;
+    ISSUER_SERIAL *baseCertificateId;
+    OBJECT_DIGEST_INFO *objectDigestInfo;
+} ACERT_ISSUER_V2FORM;
+
+typedef struct ACertIssuer_st {
+    int type;
+    union {
+        STACK_OF(GENERAL_NAME) *v1Form;
+        ACERT_ISSUER_V2FORM *v2Form;
+    } u;
+} ACERT_ISSUER;
+
+typedef struct Holder_st {
+    ISSUER_SERIAL *baseCertificateID;
+    STACK_OF(GENERAL_NAME) *entityName;
+    OBJECT_DIGEST_INFO *objectDigestInfo;
+} HOLDER;
+
+struct x509ACertInfo_st {
+    ASN1_INTEGER version;      /* default of v2 */
+    HOLDER holder;
+    ACERT_ISSUER issuer;
+    X509_ALGOR signature;
+    ASN1_INTEGER serialNumber;
+    X509_VAL validityPeriod;
+    STACK_OF(X509_ATTRIBUTE) *attributes;
+    ASN1_BIT_STRING *issuerUID;
+    X509_EXTENSIONS *extensions;
+};
+
+struct x509ACert_st {
+    X509_ACERT_INFO *acinfo;
+    X509_ALGOR sig_alg;
+    ASN1_BIT_STRING signature;
+};
+
 int ossl_a2i_ipadd(unsigned char *ipout, const char *ipasc);
 int ossl_x509_set1_time(ASN1_TIME **ptm, const ASN1_TIME *tm);
 int ossl_x509_print_ex_brief(BIO *bio, X509 *cert, unsigned long neg_cflags);
