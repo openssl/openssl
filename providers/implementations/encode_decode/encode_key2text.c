@@ -633,8 +633,8 @@ static int rsa_to_text(BIO *out, const void *key, int selection)
 {
     const RSA *rsa = key;
     const char *type_label = "RSA key";
-    const char *modulus_label;
-    const char *exponent_label;
+    const char *modulus_label = NULL;
+    const char *exponent_label = NULL;
     const BIGNUM *rsa_d = NULL, *rsa_n = NULL, *rsa_e = NULL;
     STACK_OF(BIGNUM_const) *factors = NULL;
     STACK_OF(BIGNUM_const) *exps = NULL;
