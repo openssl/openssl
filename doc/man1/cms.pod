@@ -100,6 +100,7 @@ B<openssl> B<cms>
 [B<-to addr>]
 [B<-from addr>]
 [B<-subject subj>]
+[B<-win-comp>]
 [cert.pem]...
 
 =head1 DESCRIPTION
@@ -502,6 +503,14 @@ B<-verify_ip>, B<-verify_name>, B<-x509_strict>
 
 Set various certificate chain validation options. See the
 L<verify(1)> manual page for details.
+
+=item B<-win-comp>
+
+Set Windows 10 compatible wrapping algorithm for KARI
+recipients. Windows 10 expects wrapping algorithm parameter to be NULL
+on key agreement recipients. Set this option, when Windows recipients
+with ECC certificates can't decrypt CMS messages. Use together with a
+-*-wrap parameter, for example -aes128-wrap or -aes256-wrap.
 
 =back
 
