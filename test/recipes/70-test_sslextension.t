@@ -41,7 +41,6 @@ use constant {
 my $testtype;
 my $fatal_alert = 0;    # set by filter on fatal alert
 
-$ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 my $proxy = TLSProxy::Proxy->new(
     \&inject_duplicate_extension_clienthello,
     cmdstr(app(["openssl"]), display => 1),
