@@ -123,6 +123,9 @@ DEPS={- join(" \\\n" . ' ' x 5,
 GENERATED_MANDATORY={- join(" \\\n" . ' ' x 20,
                             fill_lines(" ", $COLUMNS - 20,
                                        @{$unified_info{depends}->{""}})) -}
+GENERATED_FIPS_FILES={- join(" \\\n" . ' ' x 20,
+                            fill_lines(" ", $COLUMNS - 20,
+                                       @{$unified_info{depends}->{"providers/common/der/GENFIPSFILES"}})) -}
 GENERATED_PODS={- # common0.tmpl provides @generated
                   join(" \\\n" . ' ' x 15,
                        fill_lines(" ", $COLUMNS - 15,
@@ -1114,7 +1117,7 @@ generate: generate_apps generate_crypto_bn generate_crypto_objects \
 
 generate_buildinfo: generate_doc_buildinfo
 
-.PHONY: doc-nits md-nits
+.PHONY: doc-nits md-nits include-nits
 doc-nits: build_generated_pods
 	$(PERL) $(SRCDIR)/util/find-doc-nits -c -n -l -e
 
@@ -1126,6 +1129,12 @@ doc-nits: build_generated_pods
 # can be found at https://github.com/DavidAnson/markdownlint
 md-nits:
 	mdl -s util/markdownlint.rb .
+
+# First check the source tree (via 'get ls-files') then check the
+# generated files
+include-nits: build_generated $(GENERATED_FIPS_FILES)
+	$(PERL) $(SRCDIR)/util/find-include-nits
+	$(PERL) $(SRCDIR)/util/find-include-nits $(GENERATED_FIPS_FILES)
 
 # Test coverage is a good idea for the future
 #coverage: $(PROGRAMS) $(TESTPROGRAMS)
