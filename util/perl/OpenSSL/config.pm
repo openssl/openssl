@@ -739,11 +739,16 @@ EOF
                                     disable => [ 'sse2' ] } ],
       [ 'alpha.*-.*-.*bsd.*',     { target => "BSD-generic64",
                                     defines => [ 'L_ENDIAN' ] } ],
+      [ 'powerpc64-.*-openbsd.*', { target => "BSD-nodef-generic64",
+                                    defines => [ 'B_ENDIAN' ] } ],
       [ 'powerpc64-.*-.*bsd.*',   { target => "BSD-generic64",
                                     defines => [ 'B_ENDIAN' ] } ],
+      [ 'sparc64-.*-openbsd.*',   { target => "BSD-nodef-sparc64" } ],
       [ 'sparc64-.*-.*bsd.*',     { target => "BSD-sparc64" } ],
+      [ 'ia64-.*-openbsd.*',      { target => "BSD-nodef-ia64" } ],
       [ 'ia64-.*-.*bsd.*',        { target => "BSD-ia64" } ],
       [ 'x86_64-.*-dragonfly.*',  { target => "BSD-x86_64" } ],
+      [ 'amd64-.*-openbsd.*',    { target => "BSD-nodef-x86_64" } ],
       [ 'amd64-.*-.*bsd.*',       { target => "BSD-x86_64" } ],
       [ '.*86.*-.*-.*bsd.*',
         sub {
@@ -762,6 +767,7 @@ EOF
                      disable => [ 'sse2' ] };
         }
       ],
+      [ '.*-.*-openbsd.*',        { target => "BSD-nodef-generic32" } ],
       [ '.*-.*-.*bsd.*',          { target => "BSD-generic32" } ],
       [ 'x86_64-.*-haiku',        { target => "haiku-x86_64" } ],
       [ '.*-.*-haiku',            { target => "haiku-x86" } ],
