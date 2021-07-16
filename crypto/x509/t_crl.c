@@ -45,6 +45,16 @@ int X509_CRL_print_ex(BIO *out, X509_CRL *x, unsigned long nmflag)
     const ASN1_BIT_STRING *sig;
     long l;
     int i;
+    char mlch = ' ';
+    int nmindent = 0;
+
+    if ((nmflag & XN_FLAG_SEP_MASK) == XN_FLAG_SEP_MULTILINE) {
+        mlch = '\n';
+        nmindent = 12;
+    }
+
+    if (nmflag == X509_FLAG_COMPAT)
+        nmindent = 16;
 
     BIO_printf(out, "Certificate Revocation List (CRL):\n");
     l = X509_CRL_get_version(x);
@@ -55,8 +65,8 @@ int X509_CRL_print_ex(BIO *out, X509_CRL *x, unsigned long nmflag)
     X509_CRL_get0_signature(x, &sig, &sig_alg);
     BIO_puts(out, "    ");
     X509_signature_print(out, sig_alg, NULL);
-    BIO_printf(out, "%8sIssuer: ", "");
-    X509_NAME_print_ex(out, X509_CRL_get_issuer(x), 0, nmflag);
+    BIO_printf(out, "%8sIssuer:%c", "", mlch);
+    X509_NAME_print_ex(out, X509_CRL_get_issuer(x), nmindent, nmflag);
     BIO_puts(out, "\n");
     BIO_printf(out, "%8sLast Update: ", "");
     ASN1_TIME_print(out, X509_CRL_get0_lastUpdate(x));
