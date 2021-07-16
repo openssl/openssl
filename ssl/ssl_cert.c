@@ -680,7 +680,7 @@ int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
         goto err;
 
     for (;;) {
-        if (PEM_read_bio_X509(in, &x, NULL, NULL) == NULL)
+        if (PEM_read_bio_X509_AUX(in, &x, NULL, NULL) == NULL)
             break;
         if ((xn = X509_get_subject_name(x)) == NULL)
             goto err;
