@@ -1160,6 +1160,7 @@ static int rsa_siggen_test(int id)
     size_t sig_len = 0, n_len = 0, e_len = 0;
     OSSL_PARAM params[4], *p;
     const struct rsa_siggen_st *tst = &rsa_siggen_data[id];
+    int salt_len = tst->pss_salt_len;
 
     TEST_note("RSA %s signature generation", tst->sig_pad_mode);
 
@@ -1168,12 +1169,9 @@ static int rsa_siggen_test(int id)
                                             (char *)tst->sig_pad_mode, 0);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST,
                                             (char *)tst->digest_alg, 0);
-    if (tst->pss_salt_len >= 0) {
-        int salt_len = tst->pss_salt_len;
-
+    if (salt_len >= 0)
         *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_PSS_SALTLEN,
                                         &salt_len);
-    }
     *p++ = OSSL_PARAM_construct_end();
 
     if (!TEST_ptr(pkey = EVP_PKEY_Q_keygen(libctx, NULL, "RSA", tst->mod))
@@ -1204,6 +1202,7 @@ static int rsa_sigver_test(int id)
     BN_CTX *bn_ctx = NULL;
     OSSL_PARAM params[4], *p;
     const struct rsa_sigver_st *tst  = &rsa_sigver_data[id];
+    int salt_len = tst->pss_salt_len;
 
     TEST_note("RSA %s Signature Verify : expected to %s ", tst->sig_pad_mode,
                tst->pass == PASS ? "pass" : "fail");
@@ -1213,12 +1212,9 @@ static int rsa_sigver_test(int id)
                                             (char *)tst->sig_pad_mode, 0);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST,
                                             (char *)tst->digest_alg, 0);
-    if (tst->pss_salt_len >= 0) {
-        int salt_len = tst->pss_salt_len;
-
+    if (salt_len >= 0)
         *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_PSS_SALTLEN,
                                         &salt_len);
-    }
     *p++ = OSSL_PARAM_construct_end();
 
     if (!TEST_ptr(bn_ctx = BN_CTX_new())
