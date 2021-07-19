@@ -184,36 +184,33 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
 
 {
     EVP_PKEY_CTX *ret = NULL;
-    const EVP_PKEY_METHOD *pmeth = NULL;
+    const EVP_PKEY_METHOD *pmeth = NULL, *app_pmeth = NULL;
     EVP_KEYMGMT *keymgmt = NULL;
 
-    /*
-     * If the given |pkey| is provided, we extract the keytype from its
-     * keymgmt and skip over the legacy code.
-     */
-    if (pkey != NULL && evp_pkey_is_provided(pkey)) {
-        /* If we have an engine, something went wrong somewhere... */
-        if (!ossl_assert(e == NULL))
-            return NULL;
-        keytype = EVP_KEYMGMT_get0_name(pkey->keymgmt);
-        goto common;
-    }
-
-#ifndef FIPS_MODULE
     /* Code below to be removed when legacy support is dropped. */
     /* BEGIN legacy */
     if (id == -1) {
-        if (pkey != NULL)
+        if (pkey != NULL && !evp_pkey_is_provided(pkey)) {
             id = pkey->type;
-        else if (keytype != NULL)
-            id = evp_pkey_name2type(keytype);
-        if (id == NID_undef)
-            id = -1;
+        }  else {
+            if (pkey != NULL) {
+                /* Must be provided if we get here */
+                keytype = EVP_KEYMGMT_get0_name(pkey->keymgmt);
+            }
+#ifndef FIPS_MODULE
+            if (keytype != NULL) {
+                id = evp_pkey_name2type(keytype);
+                if (id == NID_undef)
+                    id = -1;
+            }
+#endif
+        }
     }
     /* If no ID was found here, we can only resort to find a keymgmt */
     if (id == -1)
         goto common;
 
+#ifndef FIPS_MODULE
     /*
      * Here, we extract what information we can for the purpose of
      * supporting usage with implementations from providers, to make
@@ -253,16 +250,16 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
         pmeth = EVP_PKEY_meth_find(id);
     else
 # endif
-        pmeth = evp_pkey_meth_find_added_by_application(id);
+        app_pmeth = pmeth = evp_pkey_meth_find_added_by_application(id);
 
     /* END legacy */
 #endif /* FIPS_MODULE */
  common:
     /*
-     * If there's no engine and there's a name, we try fetching a provider
-     * implementation.
+     * If there's no engine and no app supplied pmeth and there's a name, we try
+     * fetching a provider implementation.
      */
-    if (e == NULL && keytype != NULL) {
+    if (e == NULL && app_pmeth == NULL && keytype != NULL) {
         keymgmt = EVP_KEYMGMT_fetch(libctx, keytype, propquery);
         if (keymgmt == NULL)
             return NULL;   /* EVP_KEYMGMT_fetch() recorded an error */
