@@ -19,14 +19,28 @@
  * https://datatracker.ietf.org/doc/html/rfc7914
  */
 
+/*
+ * Hard coding a password into an application is very bad.
+ * It is done here solely for educational purposes.
+ */
 static unsigned char password[] = {
     'p', 'a', 's', 's', 'w', 'o', 'r', 'd'
 };
 
+/*
+ * The salt is better not being hard coded too.  Each password should have a
+ * different salt if possible.  The salt is not considered secret information
+ * and is safe to store with an encrypted password.
+ */
 static unsigned char scrypt_salt[] = {
     'N', 'a', 'C', 'l'
 };
-    
+
+/*
+ * The SCRYPT parameters can be variable or hard coded.  The disadvantage with
+ * hard coding them is that they cannot easily be adjusted for future
+ * technological improvements appear.
+ */
 static unsigned int scrypt_n = 1024;
 static unsigned int scrypt_r = 8;
 static unsigned int scrypt_p = 16;
