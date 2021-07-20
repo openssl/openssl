@@ -2116,11 +2116,11 @@ OSSL_DEPRECATEDIN_3_0 void EVP_PKEY_meth_get_ctrl
      int (**pctrl_str) (EVP_PKEY_CTX *ctx, const char *type,
                         const char *value));
 OSSL_DEPRECATEDIN_3_0 void EVP_PKEY_meth_get_digestsign
-    (EVP_PKEY_METHOD *pmeth,
+    (const EVP_PKEY_METHOD *pmeth,
      int (**digestsign) (EVP_MD_CTX *ctx, unsigned char *sig, size_t *siglen,
                          const unsigned char *tbs, size_t tbslen));
 OSSL_DEPRECATEDIN_3_0 void EVP_PKEY_meth_get_digestverify
-    (EVP_PKEY_METHOD *pmeth,
+    (const EVP_PKEY_METHOD *pmeth,
      int (**digestverify) (EVP_MD_CTX *ctx, const unsigned char *sig,
                            size_t siglen, const unsigned char *tbs,
                            size_t tbslen));
@@ -2131,7 +2131,7 @@ OSSL_DEPRECATEDIN_3_0 void EVP_PKEY_meth_get_public_check
 OSSL_DEPRECATEDIN_3_0 void EVP_PKEY_meth_get_param_check
     (const EVP_PKEY_METHOD *pmeth, int (**pcheck) (EVP_PKEY *pkey));
 OSSL_DEPRECATEDIN_3_0 void EVP_PKEY_meth_get_digest_custom
-    (EVP_PKEY_METHOD *pmeth,
+    (const EVP_PKEY_METHOD *pmeth,
      int (**pdigest_custom) (EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx));
 # endif
 

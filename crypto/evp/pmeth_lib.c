@@ -1963,7 +1963,7 @@ void EVP_PKEY_meth_get_ctrl(const EVP_PKEY_METHOD *pmeth,
         *pctrl_str = pmeth->ctrl_str;
 }
 
-void EVP_PKEY_meth_get_digestsign(EVP_PKEY_METHOD *pmeth,
+void EVP_PKEY_meth_get_digestsign(const EVP_PKEY_METHOD *pmeth,
     int (**digestsign) (EVP_MD_CTX *ctx, unsigned char *sig, size_t *siglen,
                         const unsigned char *tbs, size_t tbslen))
 {
@@ -1971,7 +1971,7 @@ void EVP_PKEY_meth_get_digestsign(EVP_PKEY_METHOD *pmeth,
         *digestsign = pmeth->digestsign;
 }
 
-void EVP_PKEY_meth_get_digestverify(EVP_PKEY_METHOD *pmeth,
+void EVP_PKEY_meth_get_digestverify(const EVP_PKEY_METHOD *pmeth,
     int (**digestverify) (EVP_MD_CTX *ctx, const unsigned char *sig,
                           size_t siglen, const unsigned char *tbs,
                           size_t tbslen))
@@ -2001,7 +2001,7 @@ void EVP_PKEY_meth_get_param_check(const EVP_PKEY_METHOD *pmeth,
         *pcheck = pmeth->param_check;
 }
 
-void EVP_PKEY_meth_get_digest_custom(EVP_PKEY_METHOD *pmeth,
+void EVP_PKEY_meth_get_digest_custom(const EVP_PKEY_METHOD *pmeth,
                                      int (**pdigest_custom) (EVP_PKEY_CTX *ctx,
                                                              EVP_MD_CTX *mctx))
 {
