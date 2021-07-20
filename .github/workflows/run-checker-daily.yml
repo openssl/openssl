@@ -62,7 +62,6 @@ jobs:
           no-hw,
           no-hw-padlock,
           no-idea,
-          no-ktls,
           no-makedepend,
           enable-md2,
           no-md2,
