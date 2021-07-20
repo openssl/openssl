@@ -3478,7 +3478,7 @@ static int custom_pmeth_digestsign(EVP_MD_CTX *ctx, unsigned char *sig,
     int (*pdigestsign)(EVP_MD_CTX *ctx, unsigned char *sig, size_t *siglen,
                        const unsigned char *tbs, size_t tbslen);
 
-    EVP_PKEY_meth_get_digestsign((EVP_PKEY_METHOD *)orig_pmeth, &pdigestsign);
+    EVP_PKEY_meth_get_digestsign(orig_pmeth, &pdigestsign);
     return pdigestsign(ctx, sig, siglen, tbs, tbslen);
 }
 
