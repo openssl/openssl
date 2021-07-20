@@ -732,8 +732,8 @@ static int validate_ecx_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
         ERR_raise(ERR_LIB_EC, EC_R_KEYS_NOT_SET);
         return 0;
     }
-    ecxkey = ctx->pkey->pkey.ecx;
-    peerkey = EVP_PKEY_get0(ctx->peerkey);
+    ecxkey = evp_pkey_get_legacy(ctx->pkey);
+    peerkey = evp_pkey_get_legacy(ctx->peerkey);
     if (ecxkey == NULL || ecxkey->privkey == NULL) {
         ERR_raise(ERR_LIB_EC, EC_R_INVALID_PRIVATE_KEY);
         return 0;
@@ -806,7 +806,7 @@ static int pkey_ecd_digestsign25519(EVP_MD_CTX *ctx, unsigned char *sig,
                                     size_t *siglen, const unsigned char *tbs,
                                     size_t tbslen)
 {
-    const ECX_KEY *edkey = EVP_MD_CTX_get_pkey_ctx(ctx)->pkey->pkey.ecx;
+    const ECX_KEY *edkey = evp_pkey_get_legacy(EVP_MD_CTX_get_pkey_ctx(ctx)->pkey);
 
     if (sig == NULL) {
         *siglen = ED25519_SIGSIZE;
@@ -828,7 +828,7 @@ static int pkey_ecd_digestsign448(EVP_MD_CTX *ctx, unsigned char *sig,
                                   size_t *siglen, const unsigned char *tbs,
                                   size_t tbslen)
 {
-    const ECX_KEY *edkey = EVP_MD_CTX_get_pkey_ctx(ctx)->pkey->pkey.ecx;
+    const ECX_KEY *edkey = evp_pkey_get_legacy(EVP_MD_CTX_get_pkey_ctx(ctx)->pkey);
 
     if (sig == NULL) {
         *siglen = ED448_SIGSIZE;
@@ -850,7 +850,7 @@ static int pkey_ecd_digestverify25519(EVP_MD_CTX *ctx, const unsigned char *sig,
                                       size_t siglen, const unsigned char *tbs,
                                       size_t tbslen)
 {
-    const ECX_KEY *edkey = EVP_MD_CTX_get_pkey_ctx(ctx)->pkey->pkey.ecx;
+    const ECX_KEY *edkey = evp_pkey_get_legacy(EVP_MD_CTX_get_pkey_ctx(ctx)->pkey);
 
     if (siglen != ED25519_SIGSIZE)
         return 0;
@@ -863,7 +863,7 @@ static int pkey_ecd_digestverify448(EVP_MD_CTX *ctx, const unsigned char *sig,
                                     size_t siglen, const unsigned char *tbs,
                                     size_t tbslen)
 {
-    const ECX_KEY *edkey = EVP_MD_CTX_get_pkey_ctx(ctx)->pkey->pkey.ecx;
+    const ECX_KEY *edkey = evp_pkey_get_legacy(EVP_MD_CTX_get_pkey_ctx(ctx)->pkey);
 
     if (siglen != ED448_SIGSIZE)
         return 0;
@@ -1177,7 +1177,7 @@ static int s390x_pkey_ecd_digestsign25519(EVP_MD_CTX *ctx,
         } ed25519;
         unsigned long long buff[512];
     } param;
-    const ECX_KEY *edkey = EVP_MD_CTX_get_pkey_ctx(ctx)->pkey->pkey.ecx;
+    const ECX_KEY *edkey = evp_pkey_get_legacy(EVP_MD_CTX_get_pkey_ctx(ctx)->pkey);
     int rc;
 
     if (sig == NULL) {
@@ -1217,7 +1217,7 @@ static int s390x_pkey_ecd_digestsign448(EVP_MD_CTX *ctx,
         } ed448;
         unsigned long long buff[512];
     } param;
-    const ECX_KEY *edkey = EVP_MD_CTX_get_pkey_ctx(ctx)->pkey->pkey.ecx;
+    const ECX_KEY *edkey = evp_pkey_get_legacy(EVP_MD_CTX_get_pkey_ctx(ctx)->pkey);
     int rc;
 
     if (sig == NULL) {
@@ -1260,7 +1260,7 @@ static int s390x_pkey_ecd_digestverify25519(EVP_MD_CTX *ctx,
         } ed25519;
         unsigned long long buff[512];
     } param;
-    const ECX_KEY *edkey = EVP_MD_CTX_get_pkey_ctx(ctx)->pkey->pkey.ecx;
+    const ECX_KEY *edkey = evp_pkey_get_legacy(EVP_MD_CTX_get_pkey_ctx(ctx)->pkey);
 
     if (siglen != ED25519_SIGSIZE)
         return 0;
@@ -1287,7 +1287,7 @@ static int s390x_pkey_ecd_digestverify448(EVP_MD_CTX *ctx,
         } ed448;
         unsigned long long buff[512];
     } param;
-    const ECX_KEY *edkey = EVP_MD_CTX_get_pkey_ctx(ctx)->pkey->pkey.ecx;
+    const ECX_KEY *edkey = evp_pkey_get_legacy(EVP_MD_CTX_get_pkey_ctx(ctx)->pkey);
 
     if (siglen != ED448_SIGSIZE)
         return 0;
