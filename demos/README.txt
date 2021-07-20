@@ -23,6 +23,9 @@ hkdf.c                 Demonstration of HMAC based key derivation
 pbkdf2.c               Demonstration of PBKDF2 password based key derivation
 scrypt.c               Demonstration of SCRYPT password based key derivation
 
+mac:
+gmac.c                 Demonstration of GMAC message authentication
+
 pkey:
 EVP_PKEY_EC_keygen.c   Generate an EC key.
 
