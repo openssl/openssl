@@ -133,7 +133,8 @@ int ktls_check_supported_cipher(const SSL *s, const EVP_CIPHER *c,
     {
 # ifdef OPENSSL_KTLS_AES_CCM_128
     case NID_aes_128_ccm:
-        if (EVP_CIPHER_CTX_get_tag_length(dd) != EVP_CCM_TLS_TAG_LEN)
+        if (s->version == TLS_1_3_VERSION /* broken on 5.x kernels */
+            || EVP_CIPHER_CTX_get_tag_length(dd) != EVP_CCM_TLS_TAG_LEN)
           return 0;
 # endif
 # ifdef OPENSSL_KTLS_AES_GCM_128
