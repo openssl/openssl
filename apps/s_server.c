@@ -2544,7 +2544,7 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
             }
 
             if (!s_quiet && !s_brief) {
-                if ((i <= 0) || (buf[0] == 'Q')) {
+                if ((i > 0) && (buf[0] == 'Q')) {
                     BIO_printf(bio_s_out, "DONE\n");
                     (void)BIO_flush(bio_s_out);
                     BIO_closesocket(s);
@@ -2552,7 +2552,7 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
                     ret = -11;
                     goto err;
                 }
-                if ((i <= 0) || (buf[0] == 'q')) {
+                if ((i > 0) && (buf[0] == 'q')) {
                     BIO_printf(bio_s_out, "DONE\n");
                     (void)BIO_flush(bio_s_out);
                     if (SSL_version(con) != DTLS1_VERSION)
