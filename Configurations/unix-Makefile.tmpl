@@ -297,14 +297,7 @@ OPENSSLDIR={- #
               $openssldir -}
 LIBDIR={- our $libdir = $config{libdir};
           unless ($libdir) {
-              #
-              # if $prefix/lib$target{multilib} is not an existing
-              # directory, then assume that it's not searched by linker
-              # automatically, in which case adding $target{multilib} suffix
-              # causes more grief than we're ready to tolerate, so don't...
-              our $multilib =
-                  -d "$prefix/lib$target{multilib}" ? $target{multilib} : "";
-              $libdir = "lib$multilib";
+              $libdir = "lib$target{multilib}";
           }
           file_name_is_absolute($libdir) ? "" : $libdir -}
 # $(libdir) is chosen to be compatible with the GNU coding standards
