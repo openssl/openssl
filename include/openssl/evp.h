@@ -2161,8 +2161,8 @@ int EVP_PKEY_get_group_name(const EVP_PKEY *pkey, char *name, size_t name_sz,
                             size_t *gname_len);
 
 OSSL_LIB_CTX *EVP_PKEY_CTX_get0_libctx(EVP_PKEY_CTX *ctx);
-const char *EVP_PKEY_CTX_get0_propq(EVP_PKEY_CTX *ctx);
-const OSSL_PROVIDER *EVP_PKEY_CTX_get0_provider(EVP_PKEY_CTX *ctx);
+const char *EVP_PKEY_CTX_get0_propq(const EVP_PKEY_CTX *ctx);
+const OSSL_PROVIDER *EVP_PKEY_CTX_get0_provider(const EVP_PKEY_CTX *ctx);
 
 # ifdef  __cplusplus
 }

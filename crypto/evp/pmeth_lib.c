@@ -1529,12 +1529,12 @@ OSSL_LIB_CTX *EVP_PKEY_CTX_get0_libctx(EVP_PKEY_CTX *ctx)
     return ctx->libctx;
 }
 
-const char *EVP_PKEY_CTX_get0_propq(EVP_PKEY_CTX *ctx)
+const char *EVP_PKEY_CTX_get0_propq(const EVP_PKEY_CTX *ctx)
 {
     return ctx->propquery;
 }
 
-const OSSL_PROVIDER *EVP_PKEY_CTX_get0_provider(EVP_PKEY_CTX *ctx)
+const OSSL_PROVIDER *EVP_PKEY_CTX_get0_provider(const EVP_PKEY_CTX *ctx)
 {
     if (EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)) {
         if (ctx->op.sig.signature != NULL)
