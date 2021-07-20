@@ -111,7 +111,8 @@ static int setup_tbuf(RSA_PKEY_CTX *ctx, EVP_PKEY_CTX *pk)
 {
     if (ctx->tbuf != NULL)
         return 1;
-    if ((ctx->tbuf = OPENSSL_malloc(RSA_size(pk->pkey->pkey.rsa))) == NULL) {
+    if ((ctx->tbuf =
+            OPENSSL_malloc(RSA_size(EVP_PKEY_get0_RSA(pk->pkey)))) == NULL) {
         ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -135,7 +136,12 @@ static int pkey_rsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig,
 {
     int ret;
     RSA_PKEY_CTX *rctx = ctx->data;
-    RSA *rsa = ctx->pkey->pkey.rsa;
+    /*
+     * Discard const. Its marked as const because this may be a cached copy of
+     * the "real" key. These calls don't make any modifications that need to
+     * be reflected back in the "original" key.
+     */
+    RSA *rsa = (RSA *)EVP_PKEY_get0_RSA(ctx->pkey);
 
     if (rctx->md) {
         if (tbslen != (size_t)EVP_MD_get_size(rctx->md)) {
@@ -147,8 +153,7 @@ static int pkey_rsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig,
             unsigned int sltmp;
             if (rctx->pad_mode != RSA_PKCS1_PADDING)
                 return -1;
-            ret = RSA_sign_ASN1_OCTET_STRING(0,
-                                             tbs, tbslen, sig, &sltmp, rsa);
+            ret = RSA_sign_ASN1_OCTET_STRING(0, tbs, tbslen, sig, &sltmp, rsa);
 
             if (ret <= 0)
                 return ret;
@@ -187,8 +192,7 @@ static int pkey_rsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig,
             return -1;
         }
     } else {
-        ret = RSA_private_encrypt(tbslen, tbs, sig, ctx->pkey->pkey.rsa,
-                                  rctx->pad_mode);
+        ret = RSA_private_encrypt(tbslen, tbs, sig, rsa, rctx->pad_mode);
     }
     if (ret < 0)
         return ret;
@@ -202,13 +206,18 @@ static int pkey_rsa_verifyrecover(EVP_PKEY_CTX *ctx,
 {
     int ret;
     RSA_PKEY_CTX *rctx = ctx->data;
+    /*
+     * Discard const. Its marked as const because this may be a cached copy of
+     * the "real" key. These calls don't make any modifications that need to
+     * be reflected back in the "original" key.
+     */
+    RSA *rsa = (RSA *)EVP_PKEY_get0_RSA(ctx->pkey);
 
     if (rctx->md) {
         if (rctx->pad_mode == RSA_X931_PADDING) {
             if (!setup_tbuf(rctx, ctx))
                 return -1;
-            ret = RSA_public_decrypt(siglen, sig,
-                                     rctx->tbuf, ctx->pkey->pkey.rsa,
+            ret = RSA_public_decrypt(siglen, sig, rctx->tbuf, rsa,
                                      RSA_X931_PADDING);
             if (ret < 1)
                 return 0;
@@ -227,7 +236,7 @@ static int pkey_rsa_verifyrecover(EVP_PKEY_CTX *ctx,
             size_t sltmp;
             ret = ossl_rsa_verify(EVP_MD_get_type(rctx->md),
                                   NULL, 0, rout, &sltmp,
-                                  sig, siglen, ctx->pkey->pkey.rsa);
+                                  sig, siglen, rsa);
             if (ret <= 0)
                 return 0;
             ret = sltmp;
@@ -235,8 +244,7 @@ static int pkey_rsa_verifyrecover(EVP_PKEY_CTX *ctx,
             return -1;
         }
     } else {
-        ret = RSA_public_decrypt(siglen, sig, rout, ctx->pkey->pkey.rsa,
-                                 rctx->pad_mode);
+        ret = RSA_public_decrypt(siglen, sig, rout, rsa, rctx->pad_mode);
     }
     if (ret < 0)
         return ret;
@@ -249,7 +257,12 @@ static int pkey_rsa_verify(EVP_PKEY_CTX *ctx,
                            const unsigned char *tbs, size_t tbslen)
 {
     RSA_PKEY_CTX *rctx = ctx->data;
-    RSA *rsa = ctx->pkey->pkey.rsa;
+    /*
+     * Discard const. Its marked as const because this may be a cached copy of
+     * the "real" key. These calls don't make any modifications that need to
+     * be reflected back in the "original" key.
+     */
+    RSA *rsa = (RSA *)EVP_PKEY_get0_RSA(ctx->pkey);
     size_t rslen;
 
     if (rctx->md) {
@@ -302,9 +315,15 @@ static int pkey_rsa_encrypt(EVP_PKEY_CTX *ctx,
 {
     int ret;
     RSA_PKEY_CTX *rctx = ctx->data;
+    /*
+     * Discard const. Its marked as const because this may be a cached copy of
+     * the "real" key. These calls don't make any modifications that need to
+     * be reflected back in the "original" key.
+     */
+    RSA *rsa = (RSA *)EVP_PKEY_get0_RSA(ctx->pkey);
 
     if (rctx->pad_mode == RSA_PKCS1_OAEP_PADDING) {
-        int klen = RSA_size(ctx->pkey->pkey.rsa);
+        int klen = RSA_size(rsa);
         if (!setup_tbuf(rctx, ctx))
             return -1;
         if (!RSA_padding_add_PKCS1_OAEP_mgf1(rctx->tbuf, klen,
@@ -313,11 +332,9 @@ static int pkey_rsa_encrypt(EVP_PKEY_CTX *ctx,
                                              rctx->oaep_labellen,
                                              rctx->md, rctx->mgf1md))
             return -1;
-        ret = RSA_public_encrypt(klen, rctx->tbuf, out,
-                                 ctx->pkey->pkey.rsa, RSA_NO_PADDING);
+        ret = RSA_public_encrypt(klen, rctx->tbuf, out, rsa, RSA_NO_PADDING);
     } else {
-        ret = RSA_public_encrypt(inlen, in, out, ctx->pkey->pkey.rsa,
-                                 rctx->pad_mode);
+        ret = RSA_public_encrypt(inlen, in, out, rsa, rctx->pad_mode);
     }
     if (ret < 0)
         return ret;
@@ -331,12 +348,17 @@ static int pkey_rsa_decrypt(EVP_PKEY_CTX *ctx,
 {
     int ret;
     RSA_PKEY_CTX *rctx = ctx->data;
+    /*
+     * Discard const. Its marked as const because this may be a cached copy of
+     * the "real" key. These calls don't make any modifications that need to
+     * be reflected back in the "original" key.
+     */
+    RSA *rsa = (RSA *)EVP_PKEY_get0_RSA(ctx->pkey);
 
     if (rctx->pad_mode == RSA_PKCS1_OAEP_PADDING) {
         if (!setup_tbuf(rctx, ctx))
             return -1;
-        ret = RSA_private_decrypt(inlen, in, rctx->tbuf,
-                                  ctx->pkey->pkey.rsa, RSA_NO_PADDING);
+        ret = RSA_private_decrypt(inlen, in, rctx->tbuf, rsa, RSA_NO_PADDING);
         if (ret <= 0)
             return ret;
         ret = RSA_padding_check_PKCS1_OAEP_mgf1(out, ret, rctx->tbuf,
@@ -345,8 +367,7 @@ static int pkey_rsa_decrypt(EVP_PKEY_CTX *ctx,
                                                 rctx->oaep_labellen,
                                                 rctx->md, rctx->mgf1md);
     } else {
-        ret = RSA_private_decrypt(inlen, in, out, ctx->pkey->pkey.rsa,
-                                  rctx->pad_mode);
+        ret = RSA_private_decrypt(inlen, in, out, rsa, rctx->pad_mode);
     }
     *outlen = constant_time_select_s(constant_time_msb_s(ret), *outlen, ret);
     ret = constant_time_select_int(constant_time_msb(ret), ret, 1);
@@ -805,7 +826,7 @@ const EVP_PKEY_METHOD *ossl_rsa_pkey_method(void)
 
 static int pkey_pss_init(EVP_PKEY_CTX *ctx)
 {
-    RSA *rsa;
+    const RSA *rsa;
     RSA_PKEY_CTX *rctx = ctx->data;
     const EVP_MD *md;
     const EVP_MD *mgf1md;
@@ -814,7 +835,7 @@ static int pkey_pss_init(EVP_PKEY_CTX *ctx)
     /* Should never happen */
     if (!pkey_ctx_is_pss(ctx))
         return 0;
-    rsa = ctx->pkey->pkey.rsa;
+    rsa = EVP_PKEY_get0_RSA(ctx->pkey);
     /* If no restrictions just return */
     if (rsa->pss == NULL)
         return 1;
