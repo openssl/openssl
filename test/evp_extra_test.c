@@ -3478,7 +3478,7 @@ static int custom_pmeth_digestsign(EVP_MD_CTX *ctx, unsigned char *sig,
     int (*pdigestsign)(EVP_MD_CTX *ctx, unsigned char *sig, size_t *siglen,
                        const unsigned char *tbs, size_t tbslen);
 
-    EVP_PKEY_meth_get_digestsign(orig_pmeth, &pdigestsign);
+    EVP_PKEY_meth_get_digestsign((EVP_PKEY_METHOD *)orig_pmeth, &pdigestsign);
     return pdigestsign(ctx, sig, siglen, tbs, tbslen);
 }
 
@@ -3545,49 +3545,49 @@ static int test_custom_pmeth(int idx)
 # ifndef OPENSSL_NO_DSA
         id = EVP_PKEY_DSA;
         pkey = load_example_dsa_key();
+        break;
 # else
         return 1;
 # endif
-        break;
     case 2:
     case 8:
 # ifndef OPENSSL_NO_EC
         id = EVP_PKEY_EC;
         pkey = load_example_ec_key();
+        break;
 # else
         return 1;
 # endif
-        break;
     case 3:
     case 9:
 # ifndef OPENSSL_NO_EC
         id = EVP_PKEY_ED25519;
         md = NULL;
         pkey = load_example_ed25519_key();
+        break;
 # else
         return 1;
 # endif
-        break;
     case 4:
     case 10:
 # ifndef OPENSSL_NO_DH
         id = EVP_PKEY_DH;
         doderive = 1;
         pkey = load_example_dh_key();
+        break;
 # else
         return 1;
 # endif
-        break;
     case 5:
     case 11:
 # ifndef OPENSSL_NO_EC
         id = EVP_PKEY_X25519;
         doderive = 1;
         pkey = load_example_x25519_key();
+        break;
 # else
         return 1;
 # endif
-        break;
     default:
         TEST_error("Should not happen");
         goto err;
