@@ -123,7 +123,7 @@ jobs:
     - name: make
       run: make -s -j4
     - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0 TESTS="-test_fuzz* -test_ssl_* -test_evp -test_cmp_http -test_verify -test_cms -test_store -test_enc -[01][0-9]"
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0 TESTS="-test_fuzz* -test_ssl_* -test_sslapi -test_passwd -test_evp -test_cmp_http -test_verify -test_cms -test_store -test_enc -[01][0-9]"
 
   address_ub_sanitizer:
     runs-on: ubuntu-latest
