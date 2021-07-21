@@ -1347,8 +1347,8 @@ const BIGNUM *ECDSA_SIG_get0_s(const ECDSA_SIG *sig);
 
 /** Setter for r and s fields of ECDSA_SIG
  *  \param  sig  pointer to ECDSA_SIG structure
- *  \param  r    pointer to BIGNUM for r (may be NULL)
- *  \param  s    pointer to BIGNUM for s (may be NULL)
+ *  \param  r    pointer to BIGNUM for r
+ *  \param  s    pointer to BIGNUM for s
  */
 int ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s);
 
