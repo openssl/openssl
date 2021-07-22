@@ -17,8 +17,8 @@ jobs:
     steps:
     - name: install unifdef
       run: |
-        echo ${{ github.action }}
-        ecco ${{ github.event_name }}
+        echo 'action' ${{ github.action }}
+        echo 'name' ${{ github.event_name }}
     - name: more
       if: github.event_name == 'push'
       run: echo push event
