@@ -20,8 +20,8 @@ jobs:
         echo ${{ github.action }}
         ecco ${{ github.event_name }}
     - name: more
-      if: github.event_name == "push"
+      if: github.event_name == 'push'
       run: echo push event
     - name: make build_generated
-      if: github.event_name != "push"
+      if: github.event_name != 'push'
       run: echo not push event
