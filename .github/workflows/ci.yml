@@ -23,7 +23,7 @@ jobs:
       if: contains('push', github.event_name)
       run: echo push event
     - name: make build_generated
-      if: !contains('push', github.event_name)
+      if: ${{ !contains('push', github.event_name) }}
       run: echo not push event
     - name: pr1
       if: contains('pull_request', github.event_name)
