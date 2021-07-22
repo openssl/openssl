@@ -192,7 +192,7 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
     if (id == -1) {
         if (pkey != NULL && !evp_pkey_is_provided(pkey)) {
             id = pkey->type;
-        }  else {
+        } else {
             if (pkey != NULL) {
                 /* Must be provided if we get here */
                 keytype = EVP_KEYMGMT_get0_name(pkey->keymgmt);
@@ -207,8 +207,16 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
         }
     }
     /* If no ID was found here, we can only resort to find a keymgmt */
-    if (id == -1)
+    if (id == -1) {
+#ifndef FIPS_MODULE
+        /* Using engine with a key without id will not work */
+        if (e != NULL) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_ALGORITHM);
+            return NULL;
+        }
+#endif
         goto common;
+    }
 
 #ifndef FIPS_MODULE
     /*
@@ -217,13 +225,10 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
      * for a smooth transition from legacy stuff to provider based stuff.
      *
      * If an engine is given, this is entirely legacy, and we should not
-     * pretend anything else, so we only set the name when no engine is
-     * given.  If both are already given, someone made a mistake, and
-     * since that can only happen internally, it's safe to make an
-     * assertion.
+     * pretend anything else, so we clear the name.
      */
-    if (!ossl_assert(e == NULL || keytype == NULL))
-        return NULL;
+    if (e != NULL)
+        keytype = NULL;
     if (e == NULL && (pkey == NULL || pkey->foreign == 0))
         keytype = OBJ_nid2sn(id);
 
@@ -231,7 +236,7 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
     if (e == NULL && pkey != NULL)
         e = pkey->pmeth_engine != NULL ? pkey->pmeth_engine : pkey->engine;
     /* Try to find an ENGINE which implements this method */
-    if (e) {
+    if (e != NULL) {
         if (!ENGINE_init(e)) {
             ERR_raise(ERR_LIB_EVP, ERR_R_ENGINE_LIB);
             return NULL;
