@@ -31,3 +31,6 @@ jobs:
     - name: pr2
       if: contains(github.event_name, 'pull_request')
       run: echo pr2
+    - name: pr3
+      if: github.event_name == 'pull_request'
+      run: echo pr2
