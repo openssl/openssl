@@ -29,5 +29,5 @@ jobs:
       if: contains('pull_request', github.event_name)
       run: echo pr1
     - name: pr2
-      if: contains([pull_request], github.event_name)
+      if: contains(github.event_name, 'pull_request')
       run: echo pr2
