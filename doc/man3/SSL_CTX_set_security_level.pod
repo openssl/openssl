@@ -115,7 +115,7 @@ I<Documentation to be provided.>
 =head1 NOTES
 
 The default security level can be configured when OpenSSL is compiled by
-setting B<-DOPENSSL_TLS_SECURITY_LEVEL=level>. If not set then 1 is used.
+setting B<-DOPENSSL_TLS_SECURITY_LEVEL=level>. If not set then 2 is used.
 
 The security framework disables or reject parameters inconsistent with the
 set security level. In the past this was difficult as applications had to set
