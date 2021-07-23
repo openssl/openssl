@@ -14,6 +14,8 @@ jobs:
         #   libs: the Debian package for the necessary link/runtime libraries.
         #   target: the OpenSSL configuration target to use, this is passed
         #           directly to the config command line.
+        #   fips:   set to "no" to disable building FIPS, leave unset to
+        #           build the FIPS provider.
         #   tests: omit this to run all the tests using QEMU, set it to "none"
         #          to never run the tests, otherwise it's value is passed to
         #          the "make test" command to allow selectiving disabling of
@@ -40,23 +42,26 @@ jobs:
           }, {
             arch: hppa-linux-gnu,
             libs: libc6-dev-hppa-cross,
-            target: linux-generic32,
-            tests: none #-test_includes -test_store -test_x509_store
+            target: -static linux-generic32,
+            fips: no,
+            tests: -test_includes -test_store -test_x509_store
           }, {
             arch: m68k-linux-gnu,
             libs: libc6-dev-m68k-cross,
-            target: linux-latomic no-asm,
-            tests: none #-test_includes -test_store -test_x509_store -test_includes
+            target: -static no-asm linux-latomic,
+            fips: no,
+            tests: -test_includes -test_store -test_x509_store -test_params_conversion
           }, {
             arch: mips-linux-gnu,
             libs: libc6-dev-mips-cross,
-            target: linux-mips32,
-            tests: none
+            target: -static linux-mips32,
+            fips: no,
+            tests: -test_includes -test_store -test_x509_store
           }, {
             arch: mips64-linux-gnuabi64,
             libs: libc6-dev-mips64-cross,
-            target: linux64-mips64,
-            tests: none
+            target: -static linux64-mips64,
+            fips: no
           }, {
             arch: mipsel-linux-gnu,
             libs: libc6-dev-mipsel-cross,
@@ -79,7 +84,35 @@ jobs:
             libs: libc6-dev-sh4-cross,
             target: linux-latomic,
             tests: -test_includes -test_store -test_x509_store -test_async
+          },
+
+          # These build with shared libraries but they crash when run
+          # They mirror static builds above in order to cover more of the
+          # code base.
+          {
+            arch: hppa-linux-gnu,
+            libs: libc6-dev-hppa-cross,
+            target: linux-generic32,
+            tests: none
           }, {
+            arch: m68k-linux-gnu,
+            libs: libc6-dev-m68k-cross,
+            target: no-asm linux-latomic,
+            tests: none
+          }, {
+            arch: mips-linux-gnu,
+            libs: libc6-dev-mips-cross,
+            target: linux-mips32,
+            tests: none
+          }, {
+            arch: mips64-linux-gnuabi64,
+            libs: libc6-dev-mips64-cross,
+            target: linux64-mips64,
+            tests: none
+          },
+
+          # This build doesn't execute either with or without shared libraries.
+          {
             arch: sparc64-linux-gnu,
             libs: libc6-dev-sparc64-cross,
             target: linux64-sparcv9,
@@ -96,9 +129,16 @@ jobs:
             ${{ matrix.platform.libs }}
     - uses: actions/checkout@v2
 
-    - name: config
+    - name: config with FIPS
+      if: matrix.platform.fips != 'no'
       run: |
         ./config --banner=Configured --strict-warnings enable-fips \
+                 --cross-compile-prefix=${{ matrix.platform.arch }}- \
+                 ${{ matrix.platform.target }}
+    - name: config without FIPS
+      if: matrix.platform.fips == 'no'
+      run: |
+        ./config --banner=Configured --strict-warnings \
                  --cross-compile-prefix=${{ matrix.platform.arch }}- \
                  ${{ matrix.platform.target }}
     - name: config dump
