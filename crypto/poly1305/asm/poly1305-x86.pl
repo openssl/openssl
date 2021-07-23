@@ -114,15 +114,15 @@ if ($sse2) {
 	&cmp	("ecx",1<<26|1<<24);		# SSE2 and XMM?
 	&jne	(&label("no_sse2"));
 
-	&lea	("eax",&DWP("_poly1305_blocks_sse2-".&label("pic_point"),"ebx"));
-	&lea	("edx",&DWP("_poly1305_emit_sse2-".&label("pic_point"),"ebx"));
+	&lea	("eax",&DWP("poly1305_blocks_sse2-".&label("pic_point"),"ebx"));
+	&lea	("edx",&DWP("poly1305_emit_sse2-".&label("pic_point"),"ebx"));
 
       if ($avx>1) {
 	&mov	("ecx",&DWP(8,"edi"));
 	&test	("ecx",1<<5);			# AVX2?
 	&jz	(&label("no_sse2"));
 
-	&lea	("eax",&DWP("_poly1305_blocks_avx2-".&label("pic_point"),"ebx"));
+	&lea	("eax",&DWP("poly1305_blocks_avx2-".&label("pic_point"),"ebx"));
       }
     &set_label("no_sse2");
 	&mov	("edi",&wparam(0));		# reload context
@@ -651,7 +651,7 @@ my $extra = shift;
 &function_end_B("_poly1305_init_sse2");
 
 &align	(32);
-&function_begin("_poly1305_blocks_sse2");
+&function_begin("poly1305_blocks_sse2");
 	&mov	("edi",&wparam(0));			# ctx
 	&mov	("esi",&wparam(1));			# inp
 	&mov	("ecx",&wparam(2));			# len
@@ -1133,10 +1133,10 @@ my $addr = shift;
 	&movd		(&DWP(-16*3+4*4,"edi"),$D4);
 	&mov	("esp","ebp");
 &set_label("nodata");
-&function_end("_poly1305_blocks_sse2");
+&function_end("poly1305_blocks_sse2");
 
 &align	(32);
-&function_begin("_poly1305_emit_sse2");
+&function_begin("poly1305_emit_sse2");
 	&mov	("ebp",&wparam(0));		# context
 
 	&cmp	(&DWP(4*5,"ebp"),0);		# is_base2_26?
@@ -1227,7 +1227,7 @@ my $addr = shift;
 	&adc	("edx",&DWP(4*3,"ebp"));
 	&mov	(&DWP(4*2,"edi"),"ecx");
 	&mov	(&DWP(4*3,"edi"),"edx");
-&function_end("_poly1305_emit_sse2");
+&function_end("poly1305_emit_sse2");
 
 if ($avx>1) {
 ########################################################################
@@ -1441,7 +1441,7 @@ my $MASK=$T2;
 sub X { my $reg=shift; $reg=~s/^ymm/xmm/; $reg; }
 
 &align	(32);
-&function_begin("_poly1305_blocks_avx2");
+&function_begin("poly1305_blocks_avx2");
 	&mov	("edi",&wparam(0));			# ctx
 	&mov	("esi",&wparam(1));			# inp
 	&mov	("ecx",&wparam(2));			# len
@@ -1799,7 +1799,7 @@ sub vlazy_reduction {
 	&vzeroupper	();
 	&mov	("esp","ebp");
 &set_label("nodata");
-&function_end("_poly1305_blocks_avx2");
+&function_end("poly1305_blocks_avx2");
 }
 &set_label("const_sse2",64);
 	&data_word(1<<24,0,	1<<24,0,	1<<24,0,	1<<24,0);
