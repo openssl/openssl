@@ -352,7 +352,7 @@ static void dtls1_double_timeout(SSL *s)
 void dtls1_stop_timer(SSL *s)
 {
     /* Reset everything */
-    memset(&s->d1->timeout, 0, sizeof(s->d1->timeout));
+    s->d1->timeout_num_alerts = 0;
     memset(&s->d1->next_timeout, 0, sizeof(s->d1->next_timeout));
     s->d1->timeout_duration_us = 1000000;
     BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT, 0,
@@ -365,10 +365,10 @@ int dtls1_check_timeout_num(SSL *s)
 {
     size_t mtu;
 
-    s->d1->timeout.num_alerts++;
+    s->d1->timeout_num_alerts++;
 
     /* Reduce MTU after 2 unsuccessful retransmissions */
-    if (s->d1->timeout.num_alerts > 2
+    if (s->d1->timeout_num_alerts > 2
         && !(SSL_get_options(s) & SSL_OP_NO_QUERY_MTU)) {
         mtu =
             BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_GET_FALLBACK_MTU, 0, NULL);
@@ -376,7 +376,7 @@ int dtls1_check_timeout_num(SSL *s)
             s->d1->mtu = mtu;
     }
 
-    if (s->d1->timeout.num_alerts > DTLS1_TMO_ALERT_COUNT) {
+    if (s->d1->timeout_num_alerts > DTLS1_TMO_ALERT_COUNT) {
         /* fail the connection, enough alerts have been sent */
         SSLfatal(s, SSL_AD_NO_ALERT, SSL_R_READ_TIMEOUT_EXPIRED);
         return -1;
@@ -400,11 +400,6 @@ int dtls1_handle_timeout(SSL *s)
     if (dtls1_check_timeout_num(s) < 0) {
         /* SSLfatal() already called */
         return -1;
-    }
-
-    s->d1->timeout.read_timeouts++;
-    if (s->d1->timeout.read_timeouts > DTLS1_TMO_READ_COUNT) {
-        s->d1->timeout.read_timeouts = 1;
     }
 
     dtls1_start_timer(s);
