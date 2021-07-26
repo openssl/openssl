@@ -48,7 +48,7 @@ jobs:
           }, {
             arch: m68k-linux-gnu,
             libs: libc6-dev-m68k-cross,
-            target: -static no-asm linux-latomic,
+            target: -static -m68040 linux-latomic,
             fips: no,
             tests: -test_includes -test_store -test_x509_store
           }, {
@@ -97,7 +97,7 @@ jobs:
           }, {
             arch: m68k-linux-gnu,
             libs: libc6-dev-m68k-cross,
-            target: no-asm linux-latomic,
+            target: -mcfv4e linux-latomic,
             tests: none
           }, {
             arch: mips-linux-gnu,
