@@ -71,14 +71,14 @@ int main(int argc, char **argv)
         goto end;
     }
 
-    /* Fetch the key derivation function implementation */
+    /* Fetch the GMAC implementation */
     mac = EVP_MAC_fetch(library_context, "GMAC", propq);
     if (mac == NULL) {
         fprintf(stderr, "EVP_MAC_fetch() returned NULL\n");
         goto end;
     }
 
-    /* Create a context for the key derivation operation */
+    /* Create a context for the GMAC operation */
     mctx = EVP_MAC_CTX_new(mac);
     if (mctx == NULL) {
         fprintf(stderr, "EVP_MAC_CTX_new() returned NULL\n");
