@@ -279,8 +279,28 @@ static int param_conversion_test(const PARAM_CONVERSION *pc, int line)
             return 0;
         }
     } else {
-        if (!TEST_true(OSSL_PARAM_get_double(pc->param, &d))
-            || !TEST_true(d == pc->d)) {
+        if (!TEST_true(OSSL_PARAM_get_double(pc->param, &d))) {
+            TEST_note("unable to convert to double on line %d", line);
+            return 0;
+        }
+        /*
+         * Check for not a number (NaN) without using the libm functions.
+         * When d is a NaN, the standard requires d == d to be false.
+         * It's less clear if d != d should be true even though it generally is.
+         * Hence we use the equality test and a not.
+         */
+        if (!(d == d)) {
+            /*
+             * We've encountered a NaN so check it's really meant to be a NaN.
+             * We ignore the case where the two values are both different NaN,
+             * that's not resolvable without knowing the underlying format
+             * or using libm functions.
+             */
+            if (!TEST_false(pc->d == pc->d)) {
+                TEST_note("unexpected NaN on line %d", line);
+                return 0;
+            }
+        } else if (!TEST_true(d == pc->d)) {
             TEST_note("unexpected conversion to double on line %d", line);
             return 0;
         }
