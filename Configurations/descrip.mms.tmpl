@@ -391,6 +391,8 @@ CPPFLAGS_Q={- (my $c = $lib_cppflags.$cppflags) =~ s|"|""|g;
 # .FIRST and .LAST are special targets with MMS and MMK.
 NODEBUG=@
 .FIRST :
+        {- join( "\n        \$(NODEBUG) ", @{ $target{setup_commands} // [] },
+                                           '!' ) -}
         $(NODEBUG) sourcetop = F$PARSE("$(SRCDIR)","[]A.;",,,"SYNTAX_ONLY,NO_CONCEAL") - ".][000000" - "[000000." - "][" - "]A.;" + ".]"
         $(NODEBUG) DEFINE ossl_sourceroot 'sourcetop'
         $(NODEBUG) !
