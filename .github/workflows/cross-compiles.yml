@@ -50,7 +50,7 @@ jobs:
             libs: libc6-dev-m68k-cross,
             target: -static no-asm linux-latomic,
             fips: no,
-            tests: -test_includes -test_store -test_x509_store -test_params_conversion
+            tests: -test_includes -test_store -test_x509_store
           }, {
             arch: mips-linux-gnu,
             libs: libc6-dev-mips-cross,
