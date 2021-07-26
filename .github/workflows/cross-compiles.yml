@@ -82,8 +82,8 @@ jobs:
           }, {
             arch: sh4-linux-gnu,
             libs: libc6-dev-sh4-cross,
-            target: linux-latomic,
-            tests: -test_includes -test_store -test_x509_store -test_async
+            target: no-async linux-latomic,
+            tests: -test_includes -test_store -test_x509_store
           },
 
           # These build with shared libraries but they crash when run
