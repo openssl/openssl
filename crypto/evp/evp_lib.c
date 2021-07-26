@@ -823,6 +823,7 @@ EVP_MD *EVP_MD_meth_dup(const EVP_MD *md)
 
         memcpy(to, md, sizeof(*to));
         to->lock = lock;
+        to->origin = EVP_ORIG_METH;
     }
     return to;
 }
