@@ -162,7 +162,7 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
         * intended provider does not get loaded. Subsequent fetches could then
         * fallback to the default provider - which may be the wrong thing.
         */
-        if (!ossl_provider_disable_fallback_loading(NULL)) {
+        if (!ossl_provider_disable_fallback_loading(libctx)) {
             ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
             return 0;
         }
