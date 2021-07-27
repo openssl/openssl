@@ -1,5 +1,7 @@
+#The MAC here is meant to be incorrect, do not modify it
+
 [fips_sect]
 activate = 1
 conditional-errors = 1
 security-checks = 1
-module-mac = B9:C9:E1:F5:B7:49:18:1B:BF:63:68:DF:1A:66:40:2E:04:2A:8F:E2:B1:D9:F7:7C:08:6F:80:A0:1D:47:F2:00
+module-mac = 00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00
