@@ -3690,7 +3690,25 @@ static int test_custom_pmeth(int idx)
     custom_pmeth = NULL;
     return testresult;
 }
-#endif
+
+static int test_evp_md_cipher_meth(void)
+{
+    EVP_MD *md = EVP_MD_meth_dup(EVP_sha256());
+    EVP_CIPHER *ciph = EVP_CIPHER_meth_dup(EVP_aes_128_cbc());
+    int testresult = 0;
+
+    if (!TEST_ptr(md) || !TEST_ptr(ciph))
+        goto err;
+
+    testresult = 1;
+
+ err:
+    EVP_MD_meth_free(md);
+    EVP_CIPHER_meth_free(ciph);
+
+    return testresult;
+}
+#endif /* OPENSSL_NO_DEPRECATED_3_0 */
 
 typedef enum OPTION_choice {
     OPT_ERR = -1,
@@ -3814,6 +3832,7 @@ int setup_tests(void)
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_ALL_TESTS(test_custom_pmeth, 12);
+    ADD_TEST(test_evp_md_cipher_meth);
 #endif
 
     return 1;
