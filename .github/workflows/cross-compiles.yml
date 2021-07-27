@@ -96,6 +96,11 @@ jobs:
             ${{ matrix.platform.libs }}
     - uses: actions/checkout@v2
 
+    - name: llvm
+      run: |
+        llc --version
+        clang --version
+        ls -d /usr/bin/clang-*
     - name: config
       run: |
         ./config --banner=Configured --strict-warnings enable-fips \
