@@ -3690,7 +3690,6 @@ static int test_custom_pmeth(int idx)
     custom_pmeth = NULL;
     return testresult;
 }
-#endif
 
 static int test_evp_md_cipher_meth(void)
 {
@@ -3709,6 +3708,7 @@ static int test_evp_md_cipher_meth(void)
 
     return testresult;
 }
+#endif /* OPENSSL_NO_DEPRECATED_3_0 */
 
 typedef enum OPTION_choice {
     OPT_ERR = -1,
@@ -3832,9 +3832,8 @@ int setup_tests(void)
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_ALL_TESTS(test_custom_pmeth, 12);
-#endif
-
     ADD_TEST(test_evp_md_cipher_meth);
+#endif
 
     return 1;
 }
