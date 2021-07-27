@@ -98,9 +98,9 @@ jobs:
 
     - name: llvm
       run: |
-        llc --version
-        clang --version
-        ls -d /usr/bin/clang-*
+        /usr/bin/env llc --version
+        /usr/bin/env clang --version
+        /usr/bin/ls -d /usr/bin/clang-*
     - name: config
       run: |
         ./config --banner=Configured --strict-warnings enable-fips \
