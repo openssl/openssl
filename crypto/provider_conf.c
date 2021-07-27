@@ -156,6 +156,16 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
     }
 
     if (activate) {
+        /*
+        * There is an attempt to activate a provider, so we should disable
+        * loading of fallbacks. Otherwise a misconfiguration could mean the
+        * intended provider does not get loaded. Subsequent fetches could then
+        * fallback to the default provider - which may be the wrong thing.
+        */
+        if (!ossl_provider_disable_fallback_loading(libctx)) {
+            ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
         prov = ossl_provider_find(libctx, name, 1);
         if (prov == NULL)
             prov = ossl_provider_new(libctx, name, NULL, 1);
@@ -215,7 +225,11 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
 
     }
 
-    return ok;
+    /*
+     * Even if ok is 0, we still return success. Failure to load a provider is
+     * not fatal. We want to continue to load the rest of the config file.
+     */
+    return 1;
 }
 
 static int provider_conf_init(CONF_IMODULE *md, const CONF *cnf)
