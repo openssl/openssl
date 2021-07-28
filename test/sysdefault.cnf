@@ -1,5 +1,8 @@
 # Configuration file to test system default SSL configuration
 
+# Comment out the next line to ignore configuration errors
+config_diagnostics = 1
+
 openssl_conf = default_conf
 
 [ default_conf ]
