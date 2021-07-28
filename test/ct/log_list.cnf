@@ -1,5 +1,8 @@
 enabled_logs=test,pilot,aviator,rocketeer,digicert,certly,izempe,symantec,venafi
 
+# Comment out the next line to ignore configuration errors
+config_diagnostics = 1
+
 [test]
 description = https://github.com/google/certificate-transparency/tree/99218b6445906a81f219d84e9c6d2683e13e4e58/test/testdata
 key = MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEmXg8sUUzwBYaWrRb+V0IopzQ6o3UyEJ04r5ZrRXGdpYM8K+hB0pXrGRLI0eeWz+3skXrS0IO83AhA3GpRL6s6w==
