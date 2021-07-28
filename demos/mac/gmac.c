@@ -120,6 +120,10 @@ int main(int argc, char **argv)
         goto end;
     }
 
+    printf("Generated MAC:\n");
+    BIO_dump_indent_fp(stdout, out, out_len, 2);
+    putchar('\n');
+
     if (out_len != sizeof(expected_output)) {
         fprintf(stderr, "Generated MAC has an unexpected length\n");
         goto end;
@@ -135,5 +139,7 @@ end:
     EVP_MAC_CTX_free(mctx);
     EVP_MAC_free(mac);
     OSSL_LIB_CTX_free(library_context);
+    if (rv != EXIT_SUCCESS)
+        ERR_print_errors_fp(stderr);
     return rv;
 }
