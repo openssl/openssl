@@ -1,3 +1,6 @@
+# Comment out the next line to ignore configuration errors
+config_diagnostics = 1
+
 {- use platform -}
 openssl_conf = openssl_init
 
