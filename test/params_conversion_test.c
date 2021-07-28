@@ -301,7 +301,6 @@ static int param_conversion_test(const PARAM_CONVERSION *pc, int line)
                 return 0;
             }
         } else if (!TEST_true(d == pc->d)) {
-            printf("%20g vs %20g\n", d, pc->d);
             TEST_note("unexpected conversion to double on line %d", line);
             return 0;
         }
