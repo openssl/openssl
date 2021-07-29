@@ -261,6 +261,7 @@ crypto/provider_local.h
 crypto/provider_predefined.c
 crypto/rand/rand_lib.c
 crypto/rand/rand_local.h
+crypto/rsa/rsa_acvp_test_params.c
 crypto/rsa/rsa_backend.c
 crypto/rsa/rsa_chk.c
 crypto/rsa/rsa_crpt.c
