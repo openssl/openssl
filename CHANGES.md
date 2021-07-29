@@ -24,6 +24,11 @@ OpenSSL 3.1
 
 ### Changes between 3.0 and 3.1 [xx XXX xxxx]
 
+ * The SSL_CTX_set_cipher_list family functions now accept ciphers using their
+   IANA standard names.
+
+   *Erik Lax*
+
  * The PVK key derivation function has been moved from b2i_PVK_bio_ex() into
    the legacy crypto provider as an EVP_KDF. Applications requiring this KDF
    will need to load the legacy crypto provider.
