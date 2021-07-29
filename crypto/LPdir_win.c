@@ -104,6 +104,7 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
              * the ending NUL.
              */
             if ((len_0 - 1) > MAX_PATH * sizeof(TCHAR)) {
+                free(extdirbuf);
                 free(*ctx);
                 *ctx = NULL;
                 errno = EINVAL;
