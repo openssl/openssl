@@ -475,6 +475,7 @@ config command name separated by periods.
 
 For example, let's say we have the following config example:
 
+ config_diagnostics = 1
  openssl_conf = openssl_init
 
  [openssl_init]
