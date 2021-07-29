@@ -1042,9 +1042,9 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
             while (((ch >= 'A') && (ch <= 'Z')) ||
                    ((ch >= '0') && (ch <= '9')) ||
                    ((ch >= 'a') && (ch <= 'z')) ||
-                   (ch == '-') || (ch == '.') || (ch == '='))
+                   (ch == '-') || (ch == '_') || (ch == '.') || (ch == '='))
 #else
-            while (isalnum((unsigned char)ch) || (ch == '-') || (ch == '.')
+            while (isalnum((unsigned char)ch) || (ch == '-') || (ch == '_') || (ch == '.')
                    || (ch == '='))
 #endif
             {
@@ -1093,6 +1093,11 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
             while (ca_list[j]) {
                 if (strncmp(buf, ca_list[j]->name, buflen) == 0
                     && (ca_list[j]->name[buflen] == '\0')) {
+                    found = 1;
+                    break;
+                } else if (ca_list[j]->stdname != NULL
+                           && strncmp(buf, ca_list[j]->stdname, buflen) == 0
+                           && ca_list[j]->stdname[buflen] == '\0') {
                     found = 1;
                     break;
                 } else
