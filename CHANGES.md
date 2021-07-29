@@ -56,6 +56,11 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * The SSL_CTX_set_cipher_list family functions now accept ciphers using their
+   standard names.
+
+   *Erik Lax*
+
  * TLS_MAX_VERSION, DTLS_MAX_VERSION and DTLS_MIN_VERSION constants are now
    deprecated.
 
