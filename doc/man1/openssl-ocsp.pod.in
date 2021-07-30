@@ -371,7 +371,7 @@ subject name.
 
 Port to listen for OCSP requests on. The port may also be specified
 using the B<url> option.
-A `0` argument indicates that any available port shall be chosen automatically.
+A C<0> argument indicates that any available port shall be chosen automatically.
 
 =item B<-ignore_err>
 
