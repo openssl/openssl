@@ -302,6 +302,11 @@ static const uint16_t eccurves_default[] = {
 ///// OQS_TEMPLATE_FRAGMENT_ECCURVES_DEFAULT_HYBRID_END
 };
 
+#ifdef OQS_DEFAULT_GROUPS
+static uint16_t *oqsgroups_default = NULL;
+static size_t oqsgroups_default_len = -1; // indicates missing initialization
+#endif
+
 /* OQS note: We introduced this list for use
  * by oqs_tls13_get_server_supported_groups(). See that
  * function's documentation in ssl_local.h
@@ -493,8 +498,18 @@ void tls1_get_supported_groups(SSL *s, const uint16_t **pgroups,
 #else
 #define STRINGIZE(x) #x
 #define STRINGIZE_VALUE_OF(x) STRINGIZE(x)
-            if (!tls1_set_groups_list((uint16_t **)pgroups, pgroupslen, STRINGIZE_VALUE_OF(OQS_DEFAULT_GROUPS))) {
-               fprintf(stderr, "Failed to set default curves to '%s'. Falling back to default.\n", STRINGIZE_VALUE_OF(OQS_DEFAULT_GROUPS));
+            // Only set OQS_DEFAULT_GROUPS if running TLS1.3:
+            if (SSL_IS_TLS13(s) && (oqsgroups_default_len == -1)) { // initialization required
+                if (!tls1_set_groups_list((uint16_t **)&oqsgroups_default, &oqsgroups_default_len, strdup(STRINGIZE_VALUE_OF(OQS_DEFAULT_GROUPS)))) {
+                    fprintf(stderr, "Failed to set default curves to '%s'. Falling back to default ECcurves.\n", STRINGIZE_VALUE_OF(OQS_DEFAULT_GROUPS));
+                    oqsgroups_default_len = 0;
+                }
+            }
+            if (SSL_IS_TLS13(s) && (oqsgroups_default_len > 0)) {
+                   *pgroups = oqsgroups_default;
+                   *pgroupslen = oqsgroups_default_len;
+                }
+            else {
                *pgroups = eccurves_default;
                *pgroupslen = OSSL_NELEM(eccurves_default);
             }

@@ -204,10 +204,12 @@ Now we follow the standard instructions for building OpenSSL:
 
 ##### Default algorithms announced
 
-By default, the fork is built to only announce 128-bit strength QSC hybrid KEM algorithms in the initial TLS handshake (using the EC groups announced extension). This algorithm set can be changed to an arbitrary collection at build time by setting the variable `OQS_DEFAULT_GROUPS` to a colon-separated list of [KEM algorithms supported](#key-exchange), e.g., by running
+By default, the fork is built to only announce 128-bit strength QSC hybrid KEM algorithms in the initial TLS handshake (using the EC groups announced extension of TLS1.3). This algorithm set can be changed to an arbitrary collection at build time by setting the variable `OQS_DEFAULT_GROUPS` to a colon-separated list of [KEM algorithms supported](#key-exchange), e.g., by running
 ```
 ./Configure no-shared linux-x86_64 -DOQS_DEFAULT_GROUPS=\"p384_kyber768:X25519:newhope1024cca\" -lm
 ```
+
+*Note*: When executing the SSL test suite via `make test`, be sure to include not only `X25519` but also `ED448` in the algorithm list specified in `OQS_DEFAULT_GROUPS` to ensure classic algorithm tests pass.
 
 The announced algorithms can also be modified at runtime by setting the `-curves` or `-groups` parameter with programs supporting this option (e.g., `openssl s_client` or `openssl s_server`) or by using the `SSL_CTX_set1_groups_list` API call.
 
