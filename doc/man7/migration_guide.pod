@@ -467,6 +467,19 @@ Remove your usage of the low level APIs. In this case you will need to rewrite y
 
 =back
 
+=head3 Error code changes
+
+As OpenSSL 3.0 provides a brand new Encoder/Decoder mechanism for working with
+widely used file formats, an application code that checks for particular error
+reason codes on key loading failures might need an update.
+
+The password-protected keys may deserve a special attention. If only some errors
+are treated as an indicator that the user should be asked about the password again,
+it's worth adding processing the error lib B<ERR_LIB_OSSL_DECODER> and error
+reason B<ERR_R_UNSUPPORTED> as a new case.
+There may be more cases to treat specially, depending on the calling application code.
+
+
 =head2 Upgrading from OpenSSL 1.0.2
 
 Upgrading to OpenSSL 3.0 from OpenSSL 1.0.2 is likely to be significantly more
