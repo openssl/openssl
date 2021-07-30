@@ -274,50 +274,50 @@ among others, the following certificate well-formedness conditions are checked:
 
 =over 4
 
-=item -
+=item *
 
 The basicConstraints of CA certificates must be marked critical.
 
-=item -
+=item *
 
 CA certificates must explicitly include the keyUsage extension.
 
-=item -
+=item *
 
 If a pathlenConstraint is given the key usage keyCertSign must be allowed.
 
-=item -
+=item *
 
 The pathlenConstraint must not be given for non-CA certificates.
 
-=item -
+=item *
 
 The issuer name of any certificate must not be empty.
 
-=item -
+=item *
 
 The subject name of CA certs, certs with keyUsage crlSign, and certs
 without subjectAlternativeName must not be empty.
 
-=item -
+=item *
 
 If a subjectAlternativeName extension is given it must not be empty.
 
-=item -
+=item *
 
 The signatureAlgorithm field and the cert signature must be consistent.
 
-=item -
+=item *
 
 Any given authorityKeyIdentifier and any given subjectKeyIdentifier
 must not be marked critical.
 
-=item -
+=item *
 
 The authorityKeyIdentifier must be given for X.509v3 certs unless they
 are self-signed.
 
-=item -
+=item *
 
 The subjectKeyIdentifier must be given for all X.509v3 CA certs.
 
