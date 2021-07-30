@@ -1566,12 +1566,6 @@ OpenSSL 1.1.1
 
    *Richard Levitte*
 
- * Added newline escaping functionality to a filename when using openssl dgst.
-   This output format is to replicate the output format found in the `*sum`
-   checksum programs. This aims to preserve backward compatibility.
-
-   *Matt Eaton, Richard Levitte, and Paul Dale*
-
  * Print all values for a PKCS#12 attribute with 'openssl pkcs12', not just
    the first value.
 
