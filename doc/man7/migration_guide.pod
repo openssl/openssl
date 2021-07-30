@@ -2324,7 +2324,7 @@ The security strength of SHA1 and MD5 based signatures in TLS has been reduced.
 This results in SSL 3, TLS 1.0, TLS 1.1 and DTLS 1.0 no longer
 working at the default security level of 1 and instead requires security
 level 0. The security level can be changed either using the cipher string
-with `C<@SECLEVEL>, or calling L<SSL_CTX_set_security_level(3)>. This also means
+with C<@SECLEVEL>, or calling L<SSL_CTX_set_security_level(3)>. This also means
 that where the signature algorithms extension is missing from a ClientHello
 then the handshake will fail in TLS 1.2 at security level 1. This is because,
 although this extension is optional, failing to provide one means that
