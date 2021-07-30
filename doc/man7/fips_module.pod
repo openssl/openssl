@@ -22,15 +22,15 @@ legacy APIs or features that avoid the FIPS module. Specifically this includes:
 
 =over 4
 
-=item -
+=item *
 
 Low level cryptographic APIs (use the high level APIs, such as EVP, instead)
 
-=item -
+=item *
 
 Engines
 
-=item -
+=item *
 
 Any functions that create or modify custom "METHODS" (for example
 EVP_MD_meth_new(), EVP_CIPHER_meth_new(), EVP_PKEY_meth_new(), RSA_meth_new(),
@@ -110,21 +110,21 @@ some disadvantages to this approach:
 
 =over 4
 
-=item -
+=item *
 
 You may not want all applications to use the FIPS module.
 
 It may be the case that some applications should and some should not use the
 FIPS module.
 
-=item -
+=item *
 
 If applications take explicit steps to not load the default config file or
 set different settings.
 
 This method will not work for these cases.
 
-=item -
+=item *
 
 The algorithms available in the FIPS module are a subset of the algorithms
 that are available in the default OpenSSL Provider.
@@ -132,7 +132,7 @@ that are available in the default OpenSSL Provider.
 If any applications attempt to use any algorithms that are not present,
 then they will fail.
 
-=item -
+=item *
 
 Usage of certain deprecated APIs avoids the use of the FIPS module.
 
