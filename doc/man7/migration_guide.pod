@@ -369,8 +369,8 @@ curve ones.
 Validation of SM2 keys has been separated from the validation of regular EC
 keys, allowing to improve the SM2 validation process to reject loaded private
 keys that are not conforming to the SM2 ISO standard.
-In particular, a private scalar `k` outside the range `1 <= k < n-1` is now
-correctly rejected.
+In particular, a private scalar I<k> outside the range I<< 1 <= k < n-1 >> is
+now correctly rejected.
 
 =head4 EVP_PKEY_set_alias_type() method has been removed
 
