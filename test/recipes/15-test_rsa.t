@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -34,14 +34,14 @@ sub run_rsa_tests {
 
      SKIP: {
          skip "Skipping $cmd conversion test", 3
-	     if disabled("rsa");
+             if disabled("rsa");
 
          subtest "$cmd conversions -- private key" => sub {
-	     tconversion( -type => $cmd, -prefix => "$cmd-priv",
+             tconversion( -type => $cmd, -prefix => "$cmd-priv",
                           -in => srctop_file("test", "testrsa.pem") );
          };
          subtest "$cmd conversions -- private key PKCS#8" => sub {
-	     tconversion( -type => $cmd, -prefix => "$cmd-pkcs8",
+             tconversion( -type => $cmd, -prefix => "$cmd-pkcs8",
                           -in => srctop_file("test", "testrsa.pem"),
                           -args => ["pkey"] );
          };
@@ -49,10 +49,10 @@ sub run_rsa_tests {
 
      SKIP: {
          skip "Skipping msblob conversion test", 1
-	     if disabled($cmd) || $cmd eq 'pkey';
+             if disabled($cmd) || $cmd eq 'pkey';
 
          subtest "$cmd conversions -- public key" => sub {
-	     tconversion( -type => 'msb', -prefix => "$cmd-msb-pub",
+             tconversion( -type => 'msb', -prefix => "$cmd-msb-pub",
                           -in => srctop_file("test", "testrsapub.pem"),
                           -args => ["rsa", "-pubin", "-pubout"] );
          };

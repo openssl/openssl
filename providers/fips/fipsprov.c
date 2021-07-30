@@ -712,6 +712,7 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
     return 1;
  err:
     fips_teardown(*provctx);
+    OSSL_LIB_CTX_free(libctx);
     *provctx = NULL;
     return 0;
 }

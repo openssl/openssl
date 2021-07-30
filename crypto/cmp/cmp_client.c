@@ -34,7 +34,7 @@ static int unprotected_exception(const OSSL_CMP_CTX *ctx,
                                  int invalid_protection,
                                  int expected_type /* ignored here */)
 {
-    int rcvd_type = ossl_cmp_msg_get_bodytype(rep /* may be NULL */);
+    int rcvd_type = OSSL_CMP_MSG_get_bodytype(rep /* may be NULL */);
     const char *msg_type = NULL;
 
     if (!ossl_assert(ctx != NULL && rep != NULL))
@@ -132,7 +132,7 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
         || expected_type == OSSL_CMP_PKIBODY_POLLREP
         || expected_type == OSSL_CMP_PKIBODY_PKICONF;
     const char *req_type_str =
-        ossl_cmp_bodytype_to_string(ossl_cmp_msg_get_bodytype(req));
+        ossl_cmp_bodytype_to_string(OSSL_CMP_MSG_get_bodytype(req));
     const char *expected_type_str = ossl_cmp_bodytype_to_string(expected_type);
     int msg_timeout;
     int bt;
@@ -177,7 +177,7 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
         return 0;
     }
 
-    bt = ossl_cmp_msg_get_bodytype(*rep);
+    bt = OSSL_CMP_MSG_get_bodytype(*rep);
     /*
      * The body type in the 'bt' variable is not yet verified.
      * Still we use this preliminary value already for a progress report because
@@ -216,14 +216,14 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
                                                   sizeof(buf)) != NULL)
             ERR_add_error_data(1, buf);
         if (emc->errorCode != NULL
-                && BIO_snprintf(buf, sizeof(buf), "; errorCode: %ld",
+                && BIO_snprintf(buf, sizeof(buf), "; errorCode: %08lX",
                                 ASN1_INTEGER_get(emc->errorCode)) > 0)
             ERR_add_error_data(1, buf);
         if (emc->errorDetails != NULL) {
             char *text = ossl_sk_ASN1_UTF8STRING2text(emc->errorDetails, ", ",
                                                       OSSL_CMP_PKISI_BUFLEN - 1);
 
-            if (text != NULL)
+            if (text != NULL && *text != '\0')
                 ERR_add_error_data(2, "; errorDetails: ", text);
             OPENSSL_free(text);
         }
@@ -268,7 +268,7 @@ static int poll_for_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
             goto err;
 
         /* handle potential pollRep */
-        if (ossl_cmp_msg_get_bodytype(prep) == OSSL_CMP_PKIBODY_POLLREP) {
+        if (OSSL_CMP_MSG_get_bodytype(prep) == OSSL_CMP_PKIBODY_POLLREP) {
             OSSL_CMP_POLLREPCONTENT *prc = prep->body->value.pollRep;
             OSSL_CMP_POLLREP *pollRep = NULL;
             int64_t check_after;
@@ -295,18 +295,6 @@ static int poll_for_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
                     ERR_add_error_data(1, str);
                 goto err;
             }
-            if (ctx->total_timeout > 0) { /* timeout is not infinite */
-                const int exp = 5; /* expected max time per msg round trip */
-                int64_t time_left = (int64_t)(ctx->end_time - exp - time(NULL));
-
-                if (time_left <= 0) {
-                    ERR_raise(ERR_LIB_CMP, CMP_R_TOTAL_TIMEOUT);
-                    goto err;
-                }
-                if (time_left < check_after)
-                    check_after = time_left;
-                /* poll one last time just when timeout was reached */
-            }
 
             if (pollRep->reason == NULL
                     || (len = BIO_snprintf(str, OSSL_CMP_PKISI_BUFLEN,
@@ -325,6 +313,19 @@ static int poll_for_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
             ossl_cmp_log2(INFO, ctx,
                           "received polling response%s; checkAfter = %ld seconds",
                           str, check_after);
+
+            if (ctx->total_timeout > 0) { /* timeout is not infinite */
+                const int exp = 5; /* expected max time per msg round trip */
+                int64_t time_left = (int64_t)(ctx->end_time - exp - time(NULL));
+
+                if (time_left <= 0) {
+                    ERR_raise(ERR_LIB_CMP, CMP_R_TOTAL_TIMEOUT);
+                    goto err;
+                }
+                if (time_left < check_after)
+                    check_after = time_left;
+                /* poll one last time just when timeout was reached */
+            }
 
             OSSL_CMP_MSG_free(preq);
             preq = NULL;
@@ -809,7 +810,7 @@ int OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)
         OSSL_CRMF_CERTTEMPLATE *tmpl =
             sk_OSSL_CMP_REVDETAILS_value(rr->body->value.rr, rsid)->certDetails;
         const X509_NAME *issuer = OSSL_CRMF_CERTTEMPLATE_get0_issuer(tmpl);
-        ASN1_INTEGER *serial = OSSL_CRMF_CERTTEMPLATE_get0_serialNumber(tmpl);
+        const ASN1_INTEGER *serial = OSSL_CRMF_CERTTEMPLATE_get0_serialNumber(tmpl);
 
         if (sk_OSSL_CRMF_CERTID_num(rrep->revCerts) != num_RevDetails) {
             ERR_raise(ERR_LIB_CMP, CMP_R_WRONG_RP_COMPONENT_COUNT);
@@ -817,6 +818,7 @@ int OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)
             goto err;
         }
         if ((cid = ossl_cmp_revrepcontent_get_CertId(rrep, rsid)) == NULL) {
+            ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_CERTID);
             ret = 0;
             goto err;
         }

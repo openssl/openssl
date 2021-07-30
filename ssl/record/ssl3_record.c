@@ -428,7 +428,7 @@ int ssl3_get_record(SSL *s)
         }
 
         if (more > 0) {
-            /* now s->packet_length == SSL3_RT_HEADER_LENGTH */
+            /* now s->rlayer.packet_length == SSL3_RT_HEADER_LENGTH */
 
             rret = ssl3_read_n(s, more, more, 1, 0, &n);
             if (rret <= 0)
@@ -439,9 +439,9 @@ int ssl3_get_record(SSL *s)
         RECORD_LAYER_set_rstate(&s->rlayer, SSL_ST_READ_HEADER);
 
         /*
-         * At this point, s->packet_length == SSL3_RT_HEADER_LENGTH
-         * + thisrr->length, or s->packet_length == SSL2_RT_HEADER_LENGTH
-         * + thisrr->length and we have that many bytes in s->packet
+         * At this point, s->rlayer.packet_length == SSL3_RT_HEADER_LENGTH
+         * + thisrr->length, or s->rlayer.packet_length == SSL2_RT_HEADER_LENGTH
+         * + thisrr->length and we have that many bytes in s->rlayer.packet
          */
         if (thisrr->rec_version == SSL2_VERSION) {
             thisrr->input =
@@ -452,11 +452,11 @@ int ssl3_get_record(SSL *s)
         }
 
         /*
-         * ok, we can now read from 's->packet' data into 'thisrr' thisrr->input
-         * points at thisrr->length bytes, which need to be copied into
-         * thisrr->data by either the decryption or by the decompression When
-         * the data is 'copied' into the thisrr->data buffer, thisrr->input will
-         * be pointed at the new buffer
+         * ok, we can now read from 's->rlayer.packet' data into 'thisrr'.
+         * thisrr->input points at thisrr->length bytes, which need to be copied
+         * into thisrr->data by either the decryption or by the decompression.
+         * When the data is 'copied' into the thisrr->data buffer,
+         * thisrr->input will be updated to point at the new buffer
          */
 
         /*
@@ -1512,16 +1512,16 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
     sess = s->session;
 
     /*
-     * At this point, s->packet_length == SSL3_RT_HEADER_LNGTH + rr->length,
-     * and we have that many bytes in s->packet
+     * At this point, s->rlayer.packet_length == SSL3_RT_HEADER_LNGTH + rr->length,
+     * and we have that many bytes in s->rlayer.packet
      */
     rr->input = &(RECORD_LAYER_get_packet(&s->rlayer)[DTLS1_RT_HEADER_LENGTH]);
 
     /*
-     * ok, we can now read from 's->packet' data into 'rr' rr->input points
-     * at rr->length bytes, which need to be copied into rr->data by either
-     * the decryption or by the decompression When the data is 'copied' into
-     * the rr->data buffer, rr->input will be pointed at the new buffer
+     * ok, we can now read from 's->rlayer.packet' data into 'rr'. rr->input
+     * points at rr->length bytes, which need to be copied into rr->data by
+     * either the decryption or by the decompression. When the data is 'copied'
+     * into the rr->data buffer, rr->input will be pointed at the new buffer
      */
 
     /*
@@ -1807,7 +1807,7 @@ int dtls1_get_record(SSL *s)
 
     if (rr->length >
         RECORD_LAYER_get_packet_length(&s->rlayer) - DTLS1_RT_HEADER_LENGTH) {
-        /* now s->packet_length == DTLS1_RT_HEADER_LENGTH */
+        /* now s->rlayer.packet_length == DTLS1_RT_HEADER_LENGTH */
         more = rr->length;
         rret = ssl3_read_n(s, more, more, 1, 1, &n);
         /* this packet contained a partial record, dump it */
@@ -1823,7 +1823,7 @@ int dtls1_get_record(SSL *s)
         }
 
         /*
-         * now n == rr->length, and s->packet_length ==
+         * now n == rr->length, and s->rlayer.packet_length ==
          * DTLS1_RT_HEADER_LENGTH + rr->length
          */
     }

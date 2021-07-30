@@ -127,6 +127,8 @@ static ERR_STRING_DATA ERR_str_reasons[] = {
     {ERR_R_FETCH_FAILED, "fetch failed"},
 
     {ERR_R_INVALID_PROPERTY_DEFINITION, "invalid property definition"},
+    {ERR_R_UNABLE_TO_GET_READ_LOCK, "unable to get read lock"},
+    {ERR_R_UNABLE_TO_GET_WRITE_LOCK, "unable to get write lock"},
     {0, NULL},
 };
 #endif

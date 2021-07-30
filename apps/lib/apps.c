@@ -15,6 +15,12 @@
 # define _POSIX_C_SOURCE 2
 #endif
 
+#ifndef OPENSSL_NO_ENGINE
+/* We need to use some deprecated APIs */
+# define OPENSSL_SUPPRESS_DEPRECATED
+# include <openssl/engine.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -871,9 +877,6 @@ int load_key_certs_crls_suppress(const char *uri, int format, int maybe_stdin,
     OSSL_PARAM itp[2];
     const OSSL_PARAM *params = NULL;
 
-    if (suppress_decode_errors)
-        ERR_set_mark();
-
     if (ppkey != NULL) {
         *ppkey = NULL;
         cnt_expectations++;
@@ -971,10 +974,6 @@ int load_key_certs_crls_suppress(const char *uri, int format, int maybe_stdin,
          * certificate in it. We just retry until eof.
          */
         if (info == NULL) {
-            if (OSSL_STORE_error(ctx)) {
-                ERR_print_errors(bio_err);
-                ERR_clear_error();
-            }
             continue;
         }
 
@@ -1078,8 +1077,9 @@ int load_key_certs_crls_suppress(const char *uri, int format, int maybe_stdin,
         BIO_printf(bio_err, "\n");
         ERR_print_errors(bio_err);
     }
-    if (suppress_decode_errors)
-        ERR_pop_to_mark();
+    if (suppress_decode_errors || failed == NULL)
+        /* clear any spurious errors */
+        ERR_clear_error();
     return failed == NULL;
 }
 
@@ -2962,28 +2962,32 @@ BIO *bio_open_owner(const char *filename, int format, int private)
 {
     FILE *fp = NULL;
     BIO *b = NULL;
-    int fd = -1, bflags, mode, textmode;
+    int textmode, bflags;
+#ifndef OPENSSL_NO_POSIX_IO
+    int fd = -1, mode;
+#endif
 
     if (!private || filename == NULL || strcmp(filename, "-") == 0)
         return bio_open_default(filename, 'w', format);
 
-    mode = O_WRONLY;
-#ifdef O_CREAT
-    mode |= O_CREAT;
-#endif
-#ifdef O_TRUNC
-    mode |= O_TRUNC;
-#endif
     textmode = FMT_istext(format);
+#ifndef OPENSSL_NO_POSIX_IO
+    mode = O_WRONLY;
+# ifdef O_CREAT
+    mode |= O_CREAT;
+# endif
+# ifdef O_TRUNC
+    mode |= O_TRUNC;
+# endif
     if (!textmode) {
-#ifdef O_BINARY
+# ifdef O_BINARY
         mode |= O_BINARY;
-#elif defined(_O_BINARY)
+# elif defined(_O_BINARY)
         mode |= _O_BINARY;
-#endif
+# endif
     }
 
-#ifdef OPENSSL_SYS_VMS
+# ifdef OPENSSL_SYS_VMS
     /* VMS doesn't have O_BINARY, it just doesn't make sense.  But,
      * it still needs to know that we're going binary, or fdopen()
      * will fail with "invalid argument"...  so we tell VMS what the
@@ -2992,18 +2996,22 @@ BIO *bio_open_owner(const char *filename, int format, int private)
     if (!textmode)
         fd = open(filename, mode, 0600, "ctx=bin");
     else
-#endif
+# endif
         fd = open(filename, mode, 0600);
     if (fd < 0)
         goto err;
     fp = fdopen(fd, modestr('w', format));
+#else   /* OPENSSL_NO_POSIX_IO */
+    /* Have stdio but not Posix IO, do the best we can */
+    fp = fopen(filename, modestr('w', format));
+#endif  /* OPENSSL_NO_POSIX_IO */
     if (fp == NULL)
         goto err;
     bflags = BIO_CLOSE;
     if (textmode)
         bflags |= BIO_FP_TEXT;
     b = BIO_new_fp(fp, bflags);
-    if (b)
+    if (b != NULL)
         return b;
 
  err:
@@ -3011,10 +3019,12 @@ BIO *bio_open_owner(const char *filename, int format, int private)
                opt_getprog(), filename, strerror(errno));
     ERR_print_errors(bio_err);
     /* If we have fp, then fdopen took over fd, so don't close both. */
-    if (fp)
+    if (fp != NULL)
         fclose(fp);
+#ifndef OPENSSL_NO_POSIX_IO
     else if (fd >= 0)
         close(fd);
+#endif
     return NULL;
 }
 
@@ -3300,4 +3310,30 @@ EVP_PKEY *app_paramgen(EVP_PKEY_CTX *ctx, const char *alg)
         app_bail_out("%s: Generating %s key parameters failed\n",
                      opt_getprog(), alg != NULL ? alg : "asymmetric");
     return res;
+}
+
+/*
+ * Return non-zero if the legacy path is still an option.
+ * This decision is based on the global command line operations and the
+ * behaviour thus far.
+ */
+int opt_legacy_okay(void)
+{
+    int provider_options = opt_provider_option_given();
+    int libctx = app_get0_libctx() != NULL || app_get0_propq() != NULL;
+#ifndef OPENSSL_NO_ENGINE
+    ENGINE *e = ENGINE_get_first();
+
+    if (e != NULL) {
+        ENGINE_free(e);
+        return 1;
+    }
+#endif
+    /*
+     * Having a provider option specified or a custom library context or
+     * property query, is a sure sign we're not using legacy.
+     */
+    if (provider_options || libctx)
+        return 0;
+    return 1;
 }

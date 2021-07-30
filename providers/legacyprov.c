@@ -144,7 +144,7 @@ static const OSSL_ALGORITHM legacy_ciphers[] = {
 };
 
 static const OSSL_ALGORITHM legacy_kdfs[] = {
-    ALG("PBKDF1", ossl_kdf_pbkdf1_functions),
+    ALG(PROV_NAMES_PBKDF1, ossl_kdf_pbkdf1_functions),
     { NULL, NULL, NULL }
 };
 

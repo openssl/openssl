@@ -859,18 +859,18 @@ int ossl_cmp_msg_set0_libctx(OSSL_CMP_MSG *msg, OSSL_LIB_CTX *libctx,
                              const char *propq);
 const char *ossl_cmp_bodytype_to_string(int type);
 int ossl_cmp_msg_set_bodytype(OSSL_CMP_MSG *msg, int type);
-int ossl_cmp_msg_get_bodytype(const OSSL_CMP_MSG *msg);
 OSSL_CMP_MSG *ossl_cmp_msg_create(OSSL_CMP_CTX *ctx, int bodytype);
 OSSL_CMP_MSG *ossl_cmp_certreq_new(OSSL_CMP_CTX *ctx, int bodytype,
                                    const OSSL_CRMF_MSG *crm);
 OSSL_CMP_MSG *ossl_cmp_certrep_new(OSSL_CMP_CTX *ctx, int bodytype,
-                                   int certReqId, OSSL_CMP_PKISI *si,
-                                   X509 *cert, STACK_OF(X509) *chain,
-                                   STACK_OF(X509) *caPubs, int encrypted,
+                                   int certReqId, const OSSL_CMP_PKISI *si,
+                                   X509 *cert, const X509 *encryption_recip,
+                                   STACK_OF(X509) *chain, STACK_OF(X509) *caPubs,
                                    int unprotectedErrors);
 OSSL_CMP_MSG *ossl_cmp_rr_new(OSSL_CMP_CTX *ctx);
-OSSL_CMP_MSG *ossl_cmp_rp_new(OSSL_CMP_CTX *ctx, OSSL_CMP_PKISI *si,
-                              OSSL_CRMF_CERTID *certId, int unprot_err);
+OSSL_CMP_MSG *ossl_cmp_rp_new(OSSL_CMP_CTX *ctx, const OSSL_CMP_PKISI *si,
+                              const OSSL_CRMF_CERTID *cid,
+                              int unprotectedErrors);
 OSSL_CMP_MSG *ossl_cmp_pkiconf_new(OSSL_CMP_CTX *ctx);
 OSSL_CMP_MSG *ossl_cmp_pollRep_new(OSSL_CMP_CTX *ctx, int crid,
                                    int64_t poll_after);
@@ -880,9 +880,9 @@ int ossl_cmp_msg_gen_push1_ITAVs(OSSL_CMP_MSG *msg,
 OSSL_CMP_MSG *ossl_cmp_genm_new(OSSL_CMP_CTX *ctx);
 OSSL_CMP_MSG *ossl_cmp_genp_new(OSSL_CMP_CTX *ctx,
                                 const STACK_OF(OSSL_CMP_ITAV) *itavs);
-OSSL_CMP_MSG *ossl_cmp_error_new(OSSL_CMP_CTX *ctx, OSSL_CMP_PKISI *si,
-                                 int errorCode,
-                                 const char *details, int unprotected);
+OSSL_CMP_MSG *ossl_cmp_error_new(OSSL_CMP_CTX *ctx, const OSSL_CMP_PKISI *si,
+                                 int64_t errorCode, const char *details,
+                                 int unprotected);
 int ossl_cmp_certstatus_set0_certHash(OSSL_CMP_CERTSTATUS *certStatus,
                                       ASN1_OCTET_STRING *hash);
 OSSL_CMP_MSG *ossl_cmp_certConf_new(OSSL_CMP_CTX *ctx, int fail_info,

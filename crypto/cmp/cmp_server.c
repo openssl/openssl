@@ -167,7 +167,7 @@ static OSSL_CMP_MSG *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
     if (!ossl_assert(srv_ctx != NULL && srv_ctx->ctx != NULL && req != NULL))
         return NULL;
 
-    switch (ossl_cmp_msg_get_bodytype(req)) {
+    switch (OSSL_CMP_MSG_get_bodytype(req)) {
     case OSSL_CMP_PKIBODY_P10CR:
     case OSSL_CMP_PKIBODY_CR:
         bodytype = OSSL_CMP_PKIBODY_CP;
@@ -183,7 +183,7 @@ static OSSL_CMP_MSG *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
         return NULL;
     }
 
-    if (ossl_cmp_msg_get_bodytype(req) == OSSL_CMP_PKIBODY_P10CR) {
+    if (OSSL_CMP_MSG_get_bodytype(req) == OSSL_CMP_PKIBODY_P10CR) {
         certReqId = OSSL_CMP_CERTREQID;
         p10cr = req->body->value.p10cr;
     } else {
@@ -226,7 +226,7 @@ static OSSL_CMP_MSG *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
     }
 
     msg = ossl_cmp_certrep_new(srv_ctx->ctx, bodytype, certReqId, si,
-                               certOut, chainOut, caPubs, 0 /* encrypted */,
+                               certOut, NULL /* enc */, chainOut, caPubs,
                                srv_ctx->sendUnprotectedErrors);
     if (msg == NULL)
         ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_CREATING_CERTREP);
@@ -247,7 +247,7 @@ static OSSL_CMP_MSG *process_rr(OSSL_CMP_SRV_CTX *srv_ctx,
     OSSL_CRMF_CERTID *certId = NULL;
     OSSL_CRMF_CERTTEMPLATE *tmpl;
     const X509_NAME *issuer;
-    ASN1_INTEGER *serial;
+    const ASN1_INTEGER *serial;
     OSSL_CMP_PKISI *si;
 
     if (!ossl_assert(srv_ctx != NULL && srv_ctx->ctx != NULL && req != NULL))
@@ -337,7 +337,8 @@ static OSSL_CMP_MSG *process_certConf(OSSL_CMP_SRV_CTX *srv_ctx,
     ccc = req->body->value.certConf;
     num = sk_OSSL_CMP_CERTSTATUS_num(ccc);
 
-    if (OSSL_CMP_CTX_get_option(ctx, OSSL_CMP_OPT_IMPLICIT_CONFIRM) == 1) {
+    if (OSSL_CMP_CTX_get_option(ctx, OSSL_CMP_OPT_IMPLICIT_CONFIRM) == 1
+            || ctx->status != -2 /* transaction not open */) {
         ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_UNEXPECTED_CERTCONF);
         return NULL;
     }
@@ -427,7 +428,7 @@ static int unprotected_exception(const OSSL_CMP_CTX *ctx,
                       invalid_protection ? "invalid" : "missing");
         return 1;
     }
-    if (ossl_cmp_msg_get_bodytype(req) == OSSL_CMP_PKIBODY_ERROR
+    if (OSSL_CMP_MSG_get_bodytype(req) == OSSL_CMP_PKIBODY_ERROR
         && OSSL_CMP_CTX_get_option(ctx, OSSL_CMP_OPT_UNPROTECTED_ERRORS) == 1) {
         ossl_cmp_warn(ctx, "ignoring missing protection of error message");
         return 1;
@@ -468,7 +469,7 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
     if (!OSSL_CMP_CTX_set1_recipient(ctx, hdr->sender->d.directoryName))
         goto err;
 
-    req_type = ossl_cmp_msg_get_bodytype(req);
+    req_type = OSSL_CMP_MSG_get_bodytype(req);
     switch (req_type) {
     case OSSL_CMP_PKIBODY_IR:
     case OSSL_CMP_PKIBODY_CR:
@@ -561,7 +562,7 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
  err:
     if (rsp == NULL) {
         /* on error, try to respond with CMP error message to client */
-        const char *data = NULL;
+        const char *data = NULL, *reason = NULL;
         int flags = 0;
         unsigned long err = ERR_peek_error_data(&data, &flags);
         int fail_info = 1 << OSSL_CMP_PKIFAILUREINFO_badRequest;
@@ -573,12 +574,12 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
             (void)ossl_cmp_ctx_set1_recipNonce(ctx, hdr->senderNonce);
         }
 
+        if ((flags & ERR_TXT_STRING) == 0 || *data == '\0')
+            data = NULL;
+        reason = ERR_reason_error_string(err);
         if ((si = OSSL_CMP_STATUSINFO_new(OSSL_CMP_PKISTATUS_rejection,
-                                          fail_info, data)) != NULL) {
-            if (err != 0 && (flags & ERR_TXT_STRING) != 0)
-                data = ERR_reason_error_string(err);
-            rsp = ossl_cmp_error_new(srv_ctx->ctx, si,
-                                     err != 0 ? ERR_GET_REASON(err) : -1,
+                                          fail_info, reason)) != NULL) {
+            rsp = ossl_cmp_error_new(srv_ctx->ctx, si, err,
                                      data, srv_ctx->sendUnprotectedErrors);
             OSSL_CMP_PKISI_free(si);
         }
@@ -587,7 +588,7 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
     ctx->secretValue = backup_secret;
 
     rsp_type =
-        rsp != NULL ? ossl_cmp_msg_get_bodytype(rsp) : OSSL_CMP_PKIBODY_ERROR;
+        rsp != NULL ? OSSL_CMP_MSG_get_bodytype(rsp) : OSSL_CMP_PKIBODY_ERROR;
     if (rsp != NULL)
         ossl_cmp_log1(DEBUG, ctx,
                       "sending %s", ossl_cmp_bodytype_to_string(rsp_type));

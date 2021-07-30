@@ -257,7 +257,7 @@ int OSSL_HTTP_REQ_CTX_set_expected(OSSL_HTTP_REQ_CTX *rctx,
     rctx->expect_asn1 = asn1;
     if (timeout >= 0)
         rctx->max_time = timeout > 0 ? time(NULL) + timeout : 0;
-    else
+    else /* take over any |overall_timeout| arg of OSSL_HTTP_open(), else 0 */
         rctx->max_time = rctx->max_total_time;
     rctx->keep_alive = keep_alive;
     return 1;
@@ -926,7 +926,8 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
 
         cbio = (*bio_update_fn)(cbio, arg, 1 /* connect */, use_ssl);
         if (cbio == NULL) {
-            cbio = orig_bio;
+            if (bio == NULL) /* cbio was not provided by caller */
+                BIO_free_all(orig_bio);
             goto end;
         }
     }

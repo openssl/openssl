@@ -16,6 +16,9 @@
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include <openssl/err.h>
+#ifndef FIPS_MODULE
+# include <openssl/engine.h>
+#endif
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/macsignature.h"

@@ -130,6 +130,17 @@ static unsigned int psk_server_cb(SSL *ssl, const char *identity,
 
     if (s_debug)
         BIO_printf(bio_s_out, "psk_server_cb\n");
+
+    if (SSL_version(ssl) >= TLS1_3_VERSION) {
+        /*
+         * This callback is designed for use in TLSv1.2. It is possible to use
+         * a single callback for all protocol versions - but it is preferred to
+         * use a dedicated callback for TLSv1.3. For TLSv1.3 we have
+         * psk_find_session_cb.
+         */
+        return 0;
+    }
+
     if (identity == NULL) {
         BIO_printf(bio_err, "Error: client did not send PSK identity\n");
         goto out_err;
@@ -3016,6 +3027,7 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
     /* No need to free |con| after this. Done by BIO_free(ssl_bio) */
     BIO_set_ssl(ssl_bio, con, BIO_CLOSE);
     BIO_push(io, ssl_bio);
+    ssl_bio = NULL;
 #ifdef CHARSET_EBCDIC
     io = BIO_push(BIO_new(BIO_f_ebcdic_filter()), io);
 #endif
@@ -3376,6 +3388,7 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
 
  err:
     OPENSSL_free(buf);
+    BIO_free(ssl_bio);
     BIO_free_all(io);
     return ret;
 }
@@ -3420,6 +3433,7 @@ static int rev_body(int s, int stype, int prot, unsigned char *context)
     /* No need to free |con| after this. Done by BIO_free(ssl_bio) */
     BIO_set_ssl(ssl_bio, con, BIO_CLOSE);
     BIO_push(io, ssl_bio);
+    ssl_bio = NULL;
 #ifdef CHARSET_EBCDIC
     io = BIO_push(BIO_new(BIO_f_ebcdic_filter()), io);
 #endif
@@ -3517,6 +3531,7 @@ static int rev_body(int s, int stype, int prot, unsigned char *context)
  err:
 
     OPENSSL_free(buf);
+    BIO_free(ssl_bio);
     BIO_free_all(io);
     return ret;
 }

@@ -15,15 +15,18 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <openssl/engine.h>
+#ifndef FIPS_MODULE
+# include <openssl/engine.h>
+#endif
 #include <openssl/evp.h>
-#include <openssl/x509v3.h>
 #include <openssl/core_names.h>
 #include <openssl/dh.h>
 #include <openssl/rsa.h>
 #include <openssl/kdf.h>
 #include "internal/cryptlib.h"
-#include "crypto/asn1.h"
+#ifndef FIPS_MODULE
+# include "crypto/asn1.h"
+#endif
 #include "crypto/evp.h"
 #include "crypto/dh.h"
 #include "crypto/ec.h"
@@ -181,49 +184,51 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
 
 {
     EVP_PKEY_CTX *ret = NULL;
-    const EVP_PKEY_METHOD *pmeth = NULL;
+    const EVP_PKEY_METHOD *pmeth = NULL, *app_pmeth = NULL;
     EVP_KEYMGMT *keymgmt = NULL;
 
-    /*
-     * If the given |pkey| is provided, we extract the keytype from its
-     * keymgmt and skip over the legacy code.
-     */
-    if (pkey != NULL && evp_pkey_is_provided(pkey)) {
-        /* If we have an engine, something went wrong somewhere... */
-        if (!ossl_assert(e == NULL))
+    /* Code below to be removed when legacy support is dropped. */
+    /* BEGIN legacy */
+    if (id == -1) {
+        if (pkey != NULL && !evp_pkey_is_provided(pkey)) {
+            id = pkey->type;
+        } else {
+            if (pkey != NULL) {
+                /* Must be provided if we get here */
+                keytype = EVP_KEYMGMT_get0_name(pkey->keymgmt);
+            }
+#ifndef FIPS_MODULE
+            if (keytype != NULL) {
+                id = evp_pkey_name2type(keytype);
+                if (id == NID_undef)
+                    id = -1;
+            }
+#endif
+        }
+    }
+    /* If no ID was found here, we can only resort to find a keymgmt */
+    if (id == -1) {
+#ifndef FIPS_MODULE
+        /* Using engine with a key without id will not work */
+        if (e != NULL) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_ALGORITHM);
             return NULL;
-        keytype = EVP_KEYMGMT_get0_name(pkey->keymgmt);
+        }
+#endif
         goto common;
     }
 
 #ifndef FIPS_MODULE
-    /* Code below to be removed when legacy support is dropped. */
-    /* BEGIN legacy */
-    if (id == -1) {
-        if (pkey != NULL)
-            id = pkey->type;
-        else if (keytype != NULL)
-            id = evp_pkey_name2type(keytype);
-        if (id == NID_undef)
-            id = -1;
-    }
-    /* If no ID was found here, we can only resort to find a keymgmt */
-    if (id == -1)
-        goto common;
-
     /*
      * Here, we extract what information we can for the purpose of
      * supporting usage with implementations from providers, to make
      * for a smooth transition from legacy stuff to provider based stuff.
      *
      * If an engine is given, this is entirely legacy, and we should not
-     * pretend anything else, so we only set the name when no engine is
-     * given.  If both are already given, someone made a mistake, and
-     * since that can only happen internally, it's safe to make an
-     * assertion.
+     * pretend anything else, so we clear the name.
      */
-    if (!ossl_assert(e == NULL || keytype == NULL))
-        return NULL;
+    if (e != NULL)
+        keytype = NULL;
     if (e == NULL && (pkey == NULL || pkey->foreign == 0))
         keytype = OBJ_nid2sn(id);
 
@@ -231,7 +236,7 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
     if (e == NULL && pkey != NULL)
         e = pkey->pmeth_engine != NULL ? pkey->pmeth_engine : pkey->engine;
     /* Try to find an ENGINE which implements this method */
-    if (e) {
+    if (e != NULL) {
         if (!ENGINE_init(e)) {
             ERR_raise(ERR_LIB_EVP, ERR_R_ENGINE_LIB);
             return NULL;
@@ -250,16 +255,16 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
         pmeth = EVP_PKEY_meth_find(id);
     else
 # endif
-        pmeth = evp_pkey_meth_find_added_by_application(id);
+        app_pmeth = pmeth = evp_pkey_meth_find_added_by_application(id);
 
     /* END legacy */
 #endif /* FIPS_MODULE */
  common:
     /*
-     * If there's no engine and there's a name, we try fetching a provider
-     * implementation.
+     * If there's no engine and no app supplied pmeth and there's a name, we try
+     * fetching a provider implementation.
      */
-    if (e == NULL && keytype != NULL) {
+    if (e == NULL && app_pmeth == NULL && keytype != NULL) {
         keymgmt = EVP_KEYMGMT_fetch(libctx, keytype, propquery);
         if (keymgmt == NULL)
             return NULL;   /* EVP_KEYMGMT_fetch() recorded an error */
@@ -1526,9 +1531,31 @@ OSSL_LIB_CTX *EVP_PKEY_CTX_get0_libctx(EVP_PKEY_CTX *ctx)
     return ctx->libctx;
 }
 
-const char *EVP_PKEY_CTX_get0_propq(EVP_PKEY_CTX *ctx)
+const char *EVP_PKEY_CTX_get0_propq(const EVP_PKEY_CTX *ctx)
 {
     return ctx->propquery;
+}
+
+const OSSL_PROVIDER *EVP_PKEY_CTX_get0_provider(const EVP_PKEY_CTX *ctx)
+{
+    if (EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)) {
+        if (ctx->op.sig.signature != NULL)
+            return EVP_SIGNATURE_get0_provider(ctx->op.sig.signature);
+    } else if (EVP_PKEY_CTX_IS_DERIVE_OP(ctx)) {
+        if (ctx->op.kex.exchange != NULL)
+            return EVP_KEYEXCH_get0_provider(ctx->op.kex.exchange);
+    } else if (EVP_PKEY_CTX_IS_KEM_OP(ctx)) {
+        if (ctx->op.encap.kem != NULL)
+            return EVP_KEM_get0_provider(ctx->op.encap.kem);
+    } else if (EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)) {
+        if (ctx->op.ciph.cipher != NULL)
+            return EVP_ASYM_CIPHER_get0_provider(ctx->op.ciph.cipher);
+    } else if (EVP_PKEY_CTX_IS_GEN_OP(ctx)) {
+        if (ctx->keymgmt != NULL)
+            return EVP_KEYMGMT_get0_provider(ctx->keymgmt);
+    }
+
+    return NULL;
 }
 
 /* Utility functions to send a string of hex string to a ctrl */
@@ -1963,7 +1990,7 @@ void EVP_PKEY_meth_get_ctrl(const EVP_PKEY_METHOD *pmeth,
         *pctrl_str = pmeth->ctrl_str;
 }
 
-void EVP_PKEY_meth_get_digestsign(EVP_PKEY_METHOD *pmeth,
+void EVP_PKEY_meth_get_digestsign(const EVP_PKEY_METHOD *pmeth,
     int (**digestsign) (EVP_MD_CTX *ctx, unsigned char *sig, size_t *siglen,
                         const unsigned char *tbs, size_t tbslen))
 {
@@ -1971,7 +1998,7 @@ void EVP_PKEY_meth_get_digestsign(EVP_PKEY_METHOD *pmeth,
         *digestsign = pmeth->digestsign;
 }
 
-void EVP_PKEY_meth_get_digestverify(EVP_PKEY_METHOD *pmeth,
+void EVP_PKEY_meth_get_digestverify(const EVP_PKEY_METHOD *pmeth,
     int (**digestverify) (EVP_MD_CTX *ctx, const unsigned char *sig,
                           size_t siglen, const unsigned char *tbs,
                           size_t tbslen))
@@ -2001,7 +2028,7 @@ void EVP_PKEY_meth_get_param_check(const EVP_PKEY_METHOD *pmeth,
         *pcheck = pmeth->param_check;
 }
 
-void EVP_PKEY_meth_get_digest_custom(EVP_PKEY_METHOD *pmeth,
+void EVP_PKEY_meth_get_digest_custom(const EVP_PKEY_METHOD *pmeth,
                                      int (**pdigest_custom) (EVP_PKEY_CTX *ctx,
                                                              EVP_MD_CTX *mctx))
 {

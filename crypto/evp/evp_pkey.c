@@ -70,6 +70,7 @@ EVP_PKEY *EVP_PKCS82PKEY_ex(const PKCS8_PRIV_KEY_INFO *p8, OSSL_LIB_CTX *libctx,
     const unsigned char *p8_data = NULL;
     unsigned char *encoded_data = NULL;
     int encoded_len;
+    int selection;
     size_t len;
     OSSL_DECODER_CTX *dctx = NULL;
 
@@ -79,8 +80,9 @@ EVP_PKEY *EVP_PKCS82PKEY_ex(const PKCS8_PRIV_KEY_INFO *p8, OSSL_LIB_CTX *libctx,
 
     p8_data = encoded_data;
     len = encoded_len;
+    selection = EVP_PKEY_KEYPAIR | EVP_PKEY_KEY_PARAMETERS;
     dctx = OSSL_DECODER_CTX_new_for_pkey(&pkey, "DER", "PrivateKeyInfo",
-                                         EVP_PKEY_NONE, 0, libctx, propq);
+                                         NULL, selection, libctx, propq);
     if (dctx == NULL
         || !OSSL_DECODER_from_data(dctx, &p8_data, &len))
         /* try legacy */
@@ -234,4 +236,11 @@ const char *EVP_PKEY_get0_type_name(const EVP_PKEY *key)
                                 NULL, NULL, &name, ameth);
 
     return name;
+}
+
+const OSSL_PROVIDER *EVP_PKEY_get0_provider(const EVP_PKEY *key)
+{
+    if (evp_pkey_is_provided(key))
+        return EVP_KEYMGMT_get0_provider(key->keymgmt);
+    return NULL;
 }

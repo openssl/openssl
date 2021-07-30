@@ -18,6 +18,9 @@
 #include <openssl/evp.h>
 #include <openssl/proverr.h>
 #include <openssl/param_build.h>
+#ifndef FIPS_MODULE
+# include <openssl/engine.h>
+#endif
 #include "internal/param_build_set.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"

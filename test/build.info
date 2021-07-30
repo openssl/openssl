@@ -21,7 +21,7 @@ IF[{- !$disabled{tests} -}]
           testutil/format_output.c testutil/load.c testutil/fake_random.c \
           testutil/test_cleanup.c testutil/main.c testutil/testutil_init.c \
           testutil/options.c testutil/test_options.c testutil/provider.c \
-          testutil/apps_mem.c testutil/random.c $LIBAPPSSRC
+          testutil/apps_shims.c testutil/random.c $LIBAPPSSRC
   INCLUDE[libtestutil.a]=../include ../apps/include ..
   DEPEND[libtestutil.a]=../libcrypto
 
@@ -585,6 +585,9 @@ IF[{- !$disabled{tests} -}]
     IF[{- !$disabled{sm2} -}]
       PROGRAMS{noinst}=sm2_internal_test
     ENDIF
+    IF[{- !$disabled{sm3} -}]
+      PROGRAMS{noinst}=sm3_internal_test
+    ENDIF
     IF[{- !$disabled{sm4} -}]
       PROGRAMS{noinst}=sm4_internal_test
     ENDIF
@@ -680,6 +683,10 @@ IF[{- !$disabled{tests} -}]
     SOURCE[sm2_internal_test]=sm2_internal_test.c
     INCLUDE[sm2_internal_test]=../include ../apps/include
     DEPEND[sm2_internal_test]=../libcrypto.a libtestutil.a
+
+    SOURCE[sm3_internal_test]=sm3_internal_test.c
+    INCLUDE[sm3_internal_test]=../include ../apps/include
+    DEPEND[sm3_internal_test]=../libcrypto.a libtestutil.a
 
     SOURCE[sm4_internal_test]=sm4_internal_test.c
     INCLUDE[sm4_internal_test]=.. ../include ../apps/include
@@ -852,9 +859,9 @@ IF[{- !$disabled{tests} -}]
   DEPEND[namemap_internal_test]=../libcrypto.a libtestutil.a
 
   PROGRAMS{noinst}=bio_prefix_text
-  SOURCE[bio_prefix_text]=bio_prefix_text.c $LIBAPPSSRC
+  SOURCE[bio_prefix_text]=bio_prefix_text.c
   INCLUDE[bio_prefix_text]=.. ../include ../apps/include
-  DEPEND[bio_prefix_text]=../libcrypto
+  DEPEND[bio_prefix_text]=../libcrypto libtestutil.a
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=pem_read_depr_test

@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* This file has quite some overlap with engines/e_loader_attic.c */
+
 #include "e_os.h"                /* To get strncasecmp() on Windows */
 
 #include <string.h>
@@ -417,13 +419,9 @@ void file_load_cleanup(void *construct_data)
 
 static int file_setup_decoders(struct file_ctx_st *ctx)
 {
-    EVP_PKEY *dummy; /* for ossl_decoder_ctx_setup_for_pkey() */
     OSSL_LIB_CTX *libctx = ossl_prov_ctx_get0_libctx(ctx->provctx);
-    OSSL_DECODER *to_obj = NULL; /* Last resort decoder */
-    OSSL_DECODER_INSTANCE *to_obj_inst = NULL;
-    OSSL_DECODER_CLEANUP *old_cleanup = NULL;
-    void *old_construct_data = NULL;
-    int ok = 0, expect_evp_pkey = 0;
+    const OSSL_ALGORITHM *to_algo = NULL;
+    int ok = 0;
 
     /* Setup for this session, so only if not already done */
     if (ctx->_.file.decoderctx == NULL) {
@@ -432,11 +430,6 @@ static int file_setup_decoders(struct file_ctx_st *ctx)
             goto err;
         }
 
-        expect_evp_pkey = (ctx->expected_type == 0
-                           || ctx->expected_type == OSSL_STORE_INFO_PARAMS
-                           || ctx->expected_type == OSSL_STORE_INFO_PUBKEY
-                           || ctx->expected_type == OSSL_STORE_INFO_PKEY);
-
         /* Make sure the input type is set */
         if (!OSSL_DECODER_CTX_set_input_type(ctx->_.file.decoderctx,
                                              ctx->_.file.input_type)) {
@@ -444,59 +437,42 @@ static int file_setup_decoders(struct file_ctx_st *ctx)
             goto err;
         }
 
-        /*
-         * Create the internal last resort decoder implementation together
-         * with a "decoder instance".
-         * The decoder doesn't need any identification or to be attached to
-         * any provider, since it's only used locally.
-         */
-        to_obj = ossl_decoder_from_algorithm(0, &ossl_der_to_obj_algorithm,
-                                             NULL);
-        if (to_obj == NULL)
-            goto err;
-        to_obj_inst = ossl_decoder_instance_new(to_obj, ctx->provctx);
-        if (to_obj_inst == NULL)
-            goto err;
+        for (to_algo = ossl_any_to_obj_algorithm;
+             to_algo->algorithm_names != NULL;
+             to_algo++) {
+            OSSL_DECODER *to_obj = NULL;
+            OSSL_DECODER_INSTANCE *to_obj_inst = NULL;
 
-        if (!ossl_decoder_ctx_add_decoder_inst(ctx->_.file.decoderctx,
-                                               to_obj_inst)) {
+            /*
+             * Create the internal last resort decoder implementation
+             * together with a "decoder instance".
+             * The decoder doesn't need any identification or to be
+             * attached to any provider, since it's only used locally.
+             */
+            to_obj = ossl_decoder_from_algorithm(0, to_algo, NULL);
+            if (to_obj != NULL)
+                to_obj_inst = ossl_decoder_instance_new(to_obj, ctx->provctx);
+            OSSL_DECODER_free(to_obj);
+            if (to_obj_inst == NULL)
+                goto err;
+
+            if (!ossl_decoder_ctx_add_decoder_inst(ctx->_.file.decoderctx,
+                                                   to_obj_inst)) {
+                ossl_decoder_instance_free(to_obj_inst);
+                ERR_raise(ERR_LIB_PROV, ERR_R_OSSL_DECODER_LIB);
+                goto err;
+            }
+        }
+        /* Add on the usual extra decoders */
+        if (!OSSL_DECODER_CTX_add_extra(ctx->_.file.decoderctx,
+                                        libctx, ctx->_.file.propq)) {
             ERR_raise(ERR_LIB_PROV, ERR_R_OSSL_DECODER_LIB);
             goto err;
         }
 
         /*
-         * OSSL_DECODER_INSTANCE shouldn't be freed from this point on.
-         * That's going to happen whenever the OSSL_DECODER_CTX is freed.
-         */
-        to_obj_inst = NULL;
-
-        /*
-         * Add on the usual decoder context for keys, with a dummy object.
-         * Since we're setting up our own constructor, we don't need to care
-         * more than that...
-         */
-        if ((expect_evp_pkey
-             && !ossl_decoder_ctx_setup_for_pkey(ctx->_.file.decoderctx,
-                                                 &dummy, NULL,
-                                                 libctx, ctx->_.file.propq))
-            || !OSSL_DECODER_CTX_add_extra(ctx->_.file.decoderctx,
-                                           libctx, ctx->_.file.propq)) {
-            ERR_raise(ERR_LIB_PROV, ERR_R_OSSL_DECODER_LIB);
-            goto err;
-        }
-
-        /*
-         * Then we throw away the installed finalizer data, and install our
-         * own instead.
-         */
-        old_cleanup = OSSL_DECODER_CTX_get_cleanup(ctx->_.file.decoderctx);
-        old_construct_data =
-            OSSL_DECODER_CTX_get_construct_data(ctx->_.file.decoderctx);
-        if (old_cleanup != NULL)
-            old_cleanup(old_construct_data);
-
-        /*
-         * Set the hooks.
+         * Then install our constructor hooks, which just passes decoded
+         * data to the load callback
          */
         if (!OSSL_DECODER_CTX_set_construct(ctx->_.file.decoderctx,
                                             file_load_construct)
@@ -509,7 +485,6 @@ static int file_setup_decoders(struct file_ctx_st *ctx)
 
     ok = 1;
  err:
-    OSSL_DECODER_free(to_obj);
     return ok;
 }
 
@@ -577,6 +552,7 @@ static char *file_name_to_uri(struct file_ctx_st *ctx, const char *name)
 static int file_name_check(struct file_ctx_st *ctx, const char *name)
 {
     const char *p = NULL;
+    size_t len = strlen(ctx->_.dir.search_name);
 
     /* If there are no search criteria, all names are accepted */
     if (ctx->_.dir.search_name[0] == '\0')
@@ -591,11 +567,9 @@ static int file_name_check(struct file_ctx_st *ctx, const char *name)
     /*
      * First, check the basename
      */
-    if (strncasecmp(name, ctx->_.dir.search_name,
-                    sizeof(ctx->_.dir.search_name) - 1) != 0
-        || name[sizeof(ctx->_.dir.search_name) - 1] != '.')
+    if (strncasecmp(name, ctx->_.dir.search_name, len) != 0 || name[len] != '.')
         return 0;
-    p = &name[sizeof(ctx->_.dir.search_name)];
+    p = &name[len + 1];
 
     /*
      * Then, if the expected type is a CRL, check that the extension starts

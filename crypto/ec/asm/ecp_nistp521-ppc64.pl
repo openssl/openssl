@@ -45,8 +45,8 @@ sub startproc($)
 
     $code.=<<___;
     .globl ${name}
+    .align 5
 ${name}:
-	.cfi_startproc
 
 ___
 }
@@ -57,7 +57,6 @@ sub endproc($)
 
     $code.=<<___;
 	blr
-	.cfi_endproc
 	    .size	${name},.-${name}
 
 ___

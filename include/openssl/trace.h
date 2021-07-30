@@ -270,10 +270,18 @@ void OSSL_trace_end(int category, BIO *channel);
  *                42, "What do you get when you multiply six by nine?");
  */
 
-# define OSSL_TRACEV(category, args) \
+# if !defined OPENSSL_NO_TRACE && !defined FIPS_MODULE
+
+#  define OSSL_TRACEV(category, args) \
     OSSL_TRACE_BEGIN(category) \
         BIO_printf args; \
     OSSL_TRACE_END(category)
+
+# else
+
+#  define OSSL_TRACEV(category, args) ((void)0)
+
+# endif
 
 # define OSSL_TRACE(category, text) \
     OSSL_TRACEV(category, (trc_out, "%s", text))
@@ -294,7 +302,7 @@ void OSSL_trace_end(int category, BIO *channel);
     OSSL_TRACEV(category, (trc_out, format, arg1, arg2, arg3, arg4, arg5, arg6, arg7))
 # define OSSL_TRACE8(category, format, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) \
     OSSL_TRACEV(category, (trc_out, format, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8))
-# define OSSL_TRACE9(category, format, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) \
+# define OSSL_TRACE9(category, format, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9) \
     OSSL_TRACEV(category, (trc_out, format, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9))
 
 # ifdef  __cplusplus

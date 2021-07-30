@@ -40,7 +40,7 @@ IF[{- !$disabled{asm} -}]
   ENDIF
 
   $BNASM_sparcv9=asm/sparcv8plus.S sparcv9-mont.S sparcv9a-mont.S vis3-mont.S \
-          sparct4-mont.S
+          sparct4-mont.S bn_sparc.c
   $BNDEF_sparcv9=OPENSSL_BN_ASM_MONT
   $BNASM_sparcv9_ec2m=sparcv9-gf2m.S
   $BNDEF_sparcv9_ec2m=OPENSSL_BN_ASM_GF2m
@@ -77,7 +77,7 @@ IF[{- !$disabled{asm} -}]
   $BNASM_parisc20_64=$BNASM_parisc11
   $BNDEF_parisc20_64=$BNDEF_parisc11
 
-  $BNASM_ppc32=bn-ppc.s ppc-mont.s
+  $BNASM_ppc32=bn_ppc.c bn-ppc.s ppc-mont.s
   $BNDEF_ppc32=OPENSSL_BN_ASM_MONT
   $BNASM_ppc64=$BNASM_ppc32 ppc64-mont-fixed.s
   $BNDEF_ppc64=$BNDEF_ppc32
@@ -108,8 +108,11 @@ $COMMON=bn_add.c bn_div.c bn_exp.c bn_lib.c bn_ctx.c bn_mul.c \
         bn_intern.c bn_dh.c bn_rsa_fips186_4.c bn_const.c
 SOURCE[../../libcrypto]=$COMMON $BNASM bn_print.c bn_err.c bn_srp.c
 DEFINE[../../libcrypto]=$BNDEF
+IF[{- !$disabled{'deprecated-0.9.8'} -}]
+  SOURCE[../../libcrypto]=bn_depr.c
+ENDIF
 IF[{- !$disabled{'deprecated-3.0'} -}]
-  SOURCE[../../libcrypto]=bn_depr.c bn_x931p.c
+  SOURCE[../../libcrypto]=bn_x931p.c
 ENDIF
 SOURCE[../../providers/libfips.a]=$COMMON $BNASM
 DEFINE[../../providers/libfips.a]=$BNDEF

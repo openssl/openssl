@@ -479,15 +479,16 @@ int EVP_set_default_properties(OSSL_LIB_CTX *libctx, const char *propq)
     return evp_set_default_properties_int(libctx, propq, 1, 0);
 }
 
-static int evp_default_properties_merge(OSSL_LIB_CTX *libctx, const char *propq)
+static int evp_default_properties_merge(OSSL_LIB_CTX *libctx, const char *propq,
+                                        int loadconfig)
 {
-    OSSL_PROPERTY_LIST **plp = ossl_ctx_global_properties(libctx, 1);
+    OSSL_PROPERTY_LIST **plp = ossl_ctx_global_properties(libctx, loadconfig);
     OSSL_PROPERTY_LIST *pl1, *pl2;
 
     if (propq == NULL)
         return 1;
     if (plp == NULL || *plp == NULL)
-        return EVP_set_default_properties(libctx, propq);
+        return evp_set_default_properties_int(libctx, propq, 0, 0);
     if ((pl1 = ossl_parse_query(libctx, propq, 1)) == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_DEFAULT_QUERY_PARSE_ERROR);
         return 0;
@@ -518,11 +519,17 @@ int EVP_default_properties_is_fips_enabled(OSSL_LIB_CTX *libctx)
     return evp_default_property_is_enabled(libctx, "fips");
 }
 
-int EVP_default_properties_enable_fips(OSSL_LIB_CTX *libctx, int enable)
+int evp_default_properties_enable_fips_int(OSSL_LIB_CTX *libctx, int enable,
+                                           int loadconfig)
 {
     const char *query = (enable != 0) ? "fips=yes" : "-fips";
 
-    return evp_default_properties_merge(libctx, query);
+    return evp_default_properties_merge(libctx, query, loadconfig);
+}
+
+int EVP_default_properties_enable_fips(OSSL_LIB_CTX *libctx, int enable)
+{
+    return evp_default_properties_enable_fips_int(libctx, enable, 1);
 }
 
 char *evp_get_global_properties_str(OSSL_LIB_CTX *libctx, int loadconfig)

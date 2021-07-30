@@ -225,6 +225,7 @@ CMP_R_FAILURE_OBTAINING_RANDOM:110:failure obtaining random
 CMP_R_FAIL_INFO_OUT_OF_RANGE:129:fail info out of range
 CMP_R_INVALID_ARGS:100:invalid args
 CMP_R_INVALID_OPTION:174:invalid option
+CMP_R_MISSING_CERTID:165:missing certid
 CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION:130:\
 	missing key input for creating protection
 CMP_R_MISSING_KEY_USAGE_DIGITALSIGNATURE:142:missing key usage digitalsignature
@@ -268,6 +269,7 @@ CMP_R_UNSUPPORTED_PROTECTION_ALG_DHBASEDMAC:154:\
 CMP_R_VALUE_TOO_LARGE:175:value too large
 CMP_R_VALUE_TOO_SMALL:177:value too small
 CMP_R_WRONG_ALGORITHM_OID:138:wrong algorithm oid
+CMP_R_WRONG_CERTID:189:wrong certid
 CMP_R_WRONG_CERTID_IN_RP:187:wrong certid in rp
 CMP_R_WRONG_PBM_VALUE:155:wrong pbm value
 CMP_R_WRONG_RP_COMPONENT_COUNT:188:wrong rp component count
@@ -1082,8 +1084,6 @@ RAND_R_ADDITIONAL_INPUT_TOO_LONG:102:additional input too long
 RAND_R_ALREADY_INSTANTIATED:103:already instantiated
 RAND_R_ARGUMENT_OUT_OF_RANGE:105:argument out of range
 RAND_R_CANNOT_OPEN_FILE:121:Cannot open file
-RAND_R_DERIVATION_FUNCTION_MANDATORY_FOR_FIPS:137:\
-	derivation function mandatory for fips
 RAND_R_DRBG_ALREADY_INITIALIZED:129:drbg already initialized
 RAND_R_DRBG_NOT_INITIALISED:104:drbg not initialised
 RAND_R_ENTROPY_INPUT_TOO_LONG:106:entropy input too long

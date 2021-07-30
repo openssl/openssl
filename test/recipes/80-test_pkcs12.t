@@ -40,7 +40,7 @@ if (eval { require Win32::API; 1; }) {
     }
 } elsif ($^O eq "MSWin32") {
     plan skip_all => "Win32::API unavailable";
-} else {
+} elsif ($^O ne "VMS") {
     # Running MinGW tests transparently under Wine apparently requires
     # UTF-8 locale...
 
@@ -54,7 +54,7 @@ if (eval { require Win32::API; 1; }) {
 }
 $ENV{OPENSSL_WIN32_UTF8}=1;
 
-plan tests => 7;
+plan tests => 13;
 
 # Test different PKCS#12 formats
 ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
@@ -63,16 +63,23 @@ ok(run(test(["pkcs12_format_test", "-legacy"])), "test pkcs12 formats using lega
 # Test with a non-default library context (and no loaded providers in the default context)
 ok(run(test(["pkcs12_format_test", "-context"])), "test pkcs12 formats using a non-default library context");
 
-# just see that we can read shibboleth.pfx protected with $pass
-ok(run(app(["openssl", "pkcs12", "-noout",
-            "-password", "pass:$pass",
-            "-in", srctop_file("test", "shibboleth.pfx")])),
-   "test_load_cert_pkcs12");
+SKIP: {
+     skip "VMS doesn't have command line UTF-8 support yet in DCL", 1
+         if $^O eq "VMS";
+
+     # just see that we can read shibboleth.pfx protected with $pass
+     ok(run(app(["openssl", "pkcs12", "-noout",
+                 "-password", "pass:$pass",
+                 "-in", srctop_file("test", "shibboleth.pfx")])),
+        "test_load_cert_pkcs12");
+}
 
 my @path = qw(test certs);
 my $outfile1 = "out1.p12";
 my $outfile2 = "out2.p12";
 my $outfile3 = "out3.p12";
+my $outfile4 = "out4.p12";
+my $outfile5 = "out5.p12";
 
 # Test the -chain option with -untrusted
 ok(run(app(["openssl", "pkcs12", "-export", "-chain",
@@ -107,5 +114,38 @@ SKIP: {
                 "-out", $outfile3])),
     "test_pkcs12_passcerts_legacy");
 }
+
+# Test export of PEM file with both cert and key
+# -nomac necessary to avoid legacy provider requirement
+ok(run(app(["openssl", "pkcs12", "-export",
+        "-inkey", srctop_file(@path, "cert-key-cert.pem"),
+        "-in", srctop_file(@path, "cert-key-cert.pem"),
+        "-passout", "pass:v3-certs",
+        "-nomac", "-out", $outfile4], stderr => "outerr.txt")),
+   "test_export_pkcs12_cert_key_cert");
+open DATA, "outerr.txt";
+my @match = grep /:error:/, <DATA>;
+close DATA;
+ok(scalar @match > 0 ? 0 : 1, "test_export_pkcs12_outerr_empty");
+
+ok(run(app(["openssl", "pkcs12",
+            "-in", $outfile4,
+            "-passin", "pass:v3-certs",
+            "-nomacver", "-nodes"])),
+  "test_import_pkcs12_cert_key_cert");
+
+ok(run(app(["openssl", "pkcs12", "-export", "-out", $outfile5,
+            "-in", srctop_file(@path, "ee-cert.pem"), "-caname", "testname",
+            "-nokeys", "-passout", "pass:", "-certpbe", "NONE"])),
+   "test nokeys single cert");
+
+my @pkcs12info = run(app(["openssl", "pkcs12", "-info", "-in", $outfile5,
+                          "-passin", "pass:"]), capture => 1);
+
+# Test that with one input certificate, we get one output certificate
+ok(grep(/subject=CN = server.example/, @pkcs12info) == 1,
+   "test one cert in output");
+# Test that the expected friendly name is present in the output
+ok(grep(/testname/, @pkcs12info) == 1, "test friendly name in output");
 
 SetConsoleOutputCP($savedcp) if (defined($savedcp));

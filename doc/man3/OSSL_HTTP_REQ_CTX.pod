@@ -97,14 +97,16 @@ If the I<asn1> parameter is nonzero a structure in ASN.1 encoding will be
 expected as the response content and input streaming is disabled.  This means
 that an ASN.1 sequence header is required, its length field is checked, and
 OSSL_HTTP_REQ_CTX_get0_mem_bio() should be used to get the buffered response.
-Else any form of input is allowed without length checks, which is the default.
+Otherwise any input format is allowed without length checks, which is the default.
 In this case the BIO given as I<rbio> argument to OSSL_HTTP_REQ_CTX_new() should
 be used directly to read the response contents, which may support streaming.
 If the I<timeout> parameter is > 0 this indicates the maximum number of seconds
 the subsequent HTTP transfer (sending the request and receiving a response)
 is allowed to take.
-A value <= 0 enables waiting indefinitely, i.e., no timeout can occur.
+I<timeout> == 0 enables waiting indefinitely, i.e., no timeout can occur.
 This is the default.
+I<timeout> < 0 takes over any value set via the I<overall_timeout> argument of
+L<OSSL_HTTP_open(3)> with the default being 0, which means no timeout.
 If the I<keep_alive> parameter is 0, which is the default, the connection is not
 kept open after receiving a response. This is the default behavior for HTTP 1.0.
 If the value is 1 or 2 then a persistent connection is requested.

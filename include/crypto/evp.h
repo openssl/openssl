@@ -22,19 +22,8 @@
  */
 #define EVP_MD_CTX_FLAG_KEEP_PKEY_CTX   0x0400
 
-/*
- * An EVP_PKEY_CTX can have the following support states:
- *
- * Supports legacy implementations only:
- *
- *      engine != NULL || keytype == NULL
- *
- * Supports provided implementations:
- *
- *      engine == NULL && keytype != NULL
- */
 #define evp_pkey_ctx_is_legacy(ctx)                             \
-    ((ctx)->engine != NULL || (ctx)->keytype == NULL)
+    ((ctx)->keymgmt == NULL)
 #define evp_pkey_ctx_is_provided(ctx)                           \
     (!evp_pkey_ctx_is_legacy(ctx))
 
@@ -686,7 +675,7 @@ struct evp_pkey_st {
 #ifndef FIPS_MODULE
     STACK_OF(X509_ATTRIBUTE) *attributes; /* [ 0 ] */
     int save_parameters;
-    int foreign:1; /* the low-level key is using an engine or an app-method */
+    unsigned int foreign:1; /* the low-level key is using an engine or an app-method */
     CRYPTO_EX_DATA ex_data;
 #endif
 
@@ -825,6 +814,7 @@ void *evp_keymgmt_gen(const EVP_KEYMGMT *keymgmt, void *genctx,
                       OSSL_CALLBACK *cb, void *cbarg);
 void evp_keymgmt_gen_cleanup(const EVP_KEYMGMT *keymgmt, void *genctx);
 
+int evp_keymgmt_has_load(const EVP_KEYMGMT *keymgmt);
 void *evp_keymgmt_load(const EVP_KEYMGMT *keymgmt,
                        const void *objref, size_t objref_sz);
 
@@ -901,6 +891,8 @@ int evp_pkey_ctx_use_cached_data(EVP_PKEY_CTX *ctx);
 # endif /* !defined(FIPS_MODULE) */
 
 int evp_method_store_flush(OSSL_LIB_CTX *libctx);
+int evp_default_properties_enable_fips_int(OSSL_LIB_CTX *libctx, int enable,
+                                           int loadconfig);
 int evp_set_default_properties_int(OSSL_LIB_CTX *libctx, const char *propq,
                                    int loadconfig, int mirrored);
 char *evp_get_global_properties_str(OSSL_LIB_CTX *libctx, int loadconfig);

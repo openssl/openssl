@@ -375,17 +375,8 @@ int opt_int(const char *arg, int *result);
 int opt_int_arg(void);
 int opt_long(const char *arg, long *result);
 int opt_ulong(const char *arg, unsigned long *result);
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
-    defined(INTMAX_MAX) && defined(UINTMAX_MAX) && \
-    !defined(OPENSSL_NO_INTTYPES_H)
-int opt_intmax(const char *arg, intmax_t *result);
-int opt_uintmax(const char *arg, uintmax_t *result);
-#else
-# define opt_intmax opt_long
-# define opt_uintmax opt_ulong
-# define intmax_t long
-# define uintmax_t unsigned long
-#endif
+int opt_intmax(const char *arg, ossl_intmax_t *result);
+int opt_uintmax(const char *arg, ossl_uintmax_t *result);
 
 int opt_isdir(const char *name);
 int opt_format(const char *s, unsigned long flags, int *result);
@@ -397,8 +388,13 @@ int opt_pair(const char *arg, const OPT_PAIR * pairs, int *result);
 int opt_verify(int i, X509_VERIFY_PARAM *vpm);
 int opt_rand(int i);
 int opt_provider(int i);
+int opt_provider_option_given(void);
 
 char **opt_rest(void);
 int opt_num_rest(void);
+
+/* Returns non-zero if legacy paths are still available */
+int opt_legacy_okay(void);
+
 
 #endif /* OSSL_APPS_OPT_H */

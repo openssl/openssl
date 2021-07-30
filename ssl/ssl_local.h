@@ -1862,15 +1862,6 @@ struct hm_header_st {
     struct dtls1_retransmit_state saved_retransmit_state;
 };
 
-struct dtls1_timeout_st {
-    /* Number of read timeouts so far */
-    unsigned int read_timeouts;
-    /* Number of write timeouts so far */
-    unsigned int write_timeouts;
-    /* Number of alerts received so far */
-    unsigned int num_alerts;
-};
-
 typedef struct hm_fragment_st {
     struct hm_header_st msg_header;
     unsigned char *fragment;
@@ -1916,7 +1907,8 @@ typedef struct dtls1_state_st {
     size_t mtu;           /* max DTLS packet size */
     struct hm_header_st w_msg_hdr;
     struct hm_header_st r_msg_hdr;
-    struct dtls1_timeout_st timeout;
+    /* Number of alerts received so far */
+    unsigned int timeout_num_alerts;
     /*
      * Indicates when the last handshake msg sent will timeout
      */
@@ -2436,6 +2428,7 @@ __owur int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain,
 __owur int ssl_security(const SSL *s, int op, int bits, int nid, void *other);
 __owur int ssl_ctx_security(const SSL_CTX *ctx, int op, int bits, int nid,
                             void *other);
+int ssl_get_security_level_bits(const SSL *s, const SSL_CTX *ctx, int *levelp);
 
 __owur int ssl_cert_lookup_by_nid(int nid, size_t *pidx);
 __owur const SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk,

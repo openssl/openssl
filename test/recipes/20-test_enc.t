@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -52,24 +52,24 @@ plan tests => 2 + (scalar @ciphers)*2;
      }
 
      foreach my $c (@ciphers) {
-	 my %variant = ("$c" => [],
-			"$c base64" => [ "-a" ]);
+         my %variant = ("$c" => [],
+                        "$c base64" => [ "-a" ]);
 
-	 foreach my $t (sort keys %variant) {
-	     my $cipherfile = "$test.$c.cipher";
-	     my $clearfile = "$test.$c.clear";
-	     my @e = ( "$c", "-bufsize", "113", @{$variant{$t}}, "-e", "-k", "test" );
-	     my @d = ( "$c", "-bufsize", "157", @{$variant{$t}}, "-d", "-k", "test" );
-	     if ($c eq "cat") {
-		 $cipherfile = "$test.cipher";
-		 $clearfile = "$test.clear";
-		 @e = ( "enc", @{$variant{$t}}, "-e" );
-		 @d = ( "enc", @{$variant{$t}}, "-d" );
-	     }
+         foreach my $t (sort keys %variant) {
+             my $cipherfile = "$test.$c.cipher";
+             my $clearfile = "$test.$c.clear";
+             my @e = ( "$c", "-bufsize", "113", @{$variant{$t}}, "-e", "-k", "test" );
+             my @d = ( "$c", "-bufsize", "157", @{$variant{$t}}, "-d", "-k", "test" );
+             if ($c eq "cat") {
+                 $cipherfile = "$test.cipher";
+                 $clearfile = "$test.clear";
+                 @e = ( "enc", @{$variant{$t}}, "-e" );
+                 @d = ( "enc", @{$variant{$t}}, "-d" );
+             }
 
-	     ok(run(app([$cmd, @e, @prov, "-in", $test, "-out", $cipherfile]))
-		&& run(app([$cmd, @d, @prov, "-in", $cipherfile, "-out", $clearfile]))
-		&& compare_text($test,$clearfile) == 0, $t);
-	 }
+             ok(run(app([$cmd, @e, @prov, "-in", $test, "-out", $cipherfile]))
+                && run(app([$cmd, @d, @prov, "-in", $cipherfile, "-out", $clearfile]))
+                && compare_text($test,$clearfile) == 0, $t);
+         }
      }
 }

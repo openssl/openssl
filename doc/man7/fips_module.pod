@@ -73,6 +73,7 @@ F</usr/local/ssl/openssl.cnf>.
 
 Edit the config file to add the following lines near the beginning:
 
+    config_diagnostics = 1
     openssl_conf = openssl_init
 
     .include /usr/local/ssl/fipsmodule.cnf
@@ -90,6 +91,10 @@ Edit the config file to add the following lines near the beginning:
 Obviously the include file location above should match the path and name of the
 FIPS module config file that you installed earlier.
 See L<https://github.com/openssl/openssl/blob/master/README-FIPS.md>.
+
+For FIPS usage, it is recommened that the B<config_diagnostics> option is
+enabled to prevent accidental use of non-FIPS validated algorithms via broken
+or mistaken configuration.  See L<config(5)>.
 
 Any applications that use OpenSSL 3.0 and are started after these changes are
 made will start using only the FIPS module unless those applications take
@@ -273,6 +278,7 @@ sets the default property value to be C<fips=yes>. Note that this config file
 does not load the "base" provider. All supporting algorithms that are in "base"
 are also in "default", so it is unnecessary in this case:
 
+    config_diagnostics = 1
     openssl_conf = openssl_init
 
     .include /usr/local/ssl/fipsmodule.cnf
@@ -452,8 +458,7 @@ L<OSSL_PROVIDER_get0_name(3)>.
 
 =head1 SEE ALSO
 
-L<migration_guide(7)>,
-L<crypto(7)>
+L<migration_guide(7)>, L<crypto(7)>, L<fips_config(5)>
 
 =head1 COPYRIGHT
 

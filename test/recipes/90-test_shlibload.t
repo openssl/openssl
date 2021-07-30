@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -8,7 +8,6 @@
 
 use OpenSSL::Test qw/:DEFAULT srctop_dir bldtop_dir/;
 use OpenSSL::Test::Utils;
-use File::Temp qw(tempfile);
 
 #Load configdata.pm
 
@@ -29,35 +28,44 @@ plan tests => 10;
 
 my $libcrypto = platform->sharedlib('libcrypto');
 my $libssl = platform->sharedlib('libssl');
+my $atexit_outfile;
 
-(my $fh, my $filename) = tempfile();
-ok(run(test(["shlibloadtest", "-crypto_first", $libcrypto, $libssl, $filename])),
-   "running shlibloadtest -crypto_first $filename");
-ok(check_atexit($fh));
-unlink $filename;
-($fh, $filename) = tempfile();
-ok(run(test(["shlibloadtest", "-ssl_first", $libcrypto, $libssl, $filename])),
-   "running shlibloadtest -ssl_first $filename");
-ok(check_atexit($fh));
-unlink $filename;
-($fh, $filename) = tempfile();
-ok(run(test(["shlibloadtest", "-just_crypto", $libcrypto, $libssl, $filename])),
-   "running shlibloadtest -just_crypto $filename");
-ok(check_atexit($fh));
-unlink $filename;
-($fh, $filename) = tempfile();
-ok(run(test(["shlibloadtest", "-dso_ref", $libcrypto, $libssl, $filename])),
-   "running shlibloadtest -dso_ref $filename");
-ok(check_atexit($fh));
-unlink $filename;
-($fh, $filename) = tempfile();
-ok(run(test(["shlibloadtest", "-no_atexit", $libcrypto, $libssl, $filename])),
-   "running shlibloadtest -no_atexit $filename");
-ok(!check_atexit($fh));
-unlink $filename;
+$atexit_outfile = 'atexit-cryptofirst.txt';
+1 while unlink $atexit_outfile;
+ok(run(test(["shlibloadtest", "-crypto_first", $libcrypto, $libssl, $atexit_outfile])),
+   "running shlibloadtest -crypto_first $atexit_outfile");
+ok(check_atexit($atexit_outfile));
+
+$atexit_outfile = 'atexit-sslfirst.txt';
+1 while unlink $atexit_outfile;
+ok(run(test(["shlibloadtest", "-ssl_first", $libcrypto, $libssl, $atexit_outfile])),
+   "running shlibloadtest -ssl_first $atexit_outfile");
+ok(check_atexit($atexit_outfile));
+
+$atexit_outfile = 'atexit-justcrypto.txt';
+1 while unlink $atexit_outfile;
+ok(run(test(["shlibloadtest", "-just_crypto", $libcrypto, $libssl, $atexit_outfile])),
+   "running shlibloadtest -just_crypto $atexit_outfile");
+ok(check_atexit($atexit_outfile));
+
+$atexit_outfile = 'atexit-dsoref.txt';
+1 while unlink $atexit_outfile;
+ok(run(test(["shlibloadtest", "-dso_ref", $libcrypto, $libssl, $atexit_outfile])),
+   "running shlibloadtest -dso_ref $atexit_outfile");
+ok(check_atexit($atexit_outfile));
+
+$atexit_outfile = 'atexit-noatexit.txt';
+1 while unlink $atexit_outfile;
+ok(run(test(["shlibloadtest", "-no_atexit", $libcrypto, $libssl, $atexit_outfile])),
+   "running shlibloadtest -no_atexit $atexit_outfile");
+ok(!check_atexit($atexit_outfile));
 
 sub check_atexit {
-    my $fh = shift;
+    my $filename = shift;
+
+    open my $fh, '<', $filename;
+    return 0 unless defined $fh;
+
     my $data = <$fh>;
 
     return 1 if (defined $data && $data =~ m/atexit\(\) run/);

@@ -994,7 +994,7 @@ int req_main(int argc, char **argv)
         }
         fprintf(stdout, "Modulus=");
         if (EVP_PKEY_is_a(tpubkey, "RSA")) {
-            BIGNUM *n;
+            BIGNUM *n = NULL;
 
             /* Every RSA key has an 'n' */
             EVP_PKEY_get_bn_param(pkey, "n", &n);
@@ -1615,14 +1615,14 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
         EVP_PKEY_free(param);
     } else {
         if (keygen_engine != NULL) {
-            int pkey_id = get_legacy_pkey_id(app_get0_libctx(), keytype,
+            int pkey_id = get_legacy_pkey_id(app_get0_libctx(), *pkeytype,
                                              keygen_engine);
 
             if (pkey_id != NID_undef)
                 gctx = EVP_PKEY_CTX_new_id(pkey_id, keygen_engine);
         } else {
             gctx = EVP_PKEY_CTX_new_from_name(app_get0_libctx(),
-                                              keytype, app_get0_propq());
+                                              *pkeytype, app_get0_propq());
         }
     }
 

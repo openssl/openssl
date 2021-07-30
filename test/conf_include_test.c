@@ -42,7 +42,7 @@ static int change_path(const char *file)
     char *s = OPENSSL_strdup(file);
     char *p = s;
     char *last = NULL;
-    int ret;
+    int ret = 0;
 
     if (s == NULL)
         return -1;
@@ -51,11 +51,12 @@ static int change_path(const char *file)
         last = p++;
     }
     if (last == NULL)
-        return 0;
+        goto err;
     last[DIRSEP_PRESERVE] = 0;
 
     TEST_note("changing path to %s", s);
     ret = chdir(s);
+ err:
     OPENSSL_free(s);
     return ret;
 }

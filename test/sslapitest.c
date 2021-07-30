@@ -32,6 +32,7 @@
 #include <openssl/provider.h>
 #include <openssl/param_build.h>
 #include <openssl/x509v3.h>
+#include <openssl/dh.h>
 
 #include "helpers/ssltestlib.h"
 #include "testutil.h"
@@ -1034,7 +1035,6 @@ static int execute_test_large_message(const SSL_METHOD *smeth,
 
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_KTLS) && \
     !(defined(OSSL_NO_USABLE_TLS1_3) && defined(OPENSSL_NO_TLS1_2))
-#define TLS_CIPHER_MAX_REC_SEQ_SIZE 8
 /* sock must be connected */
 static int ktls_chk_platform(int sock)
 {
@@ -1043,26 +1043,26 @@ static int ktls_chk_platform(int sock)
     return 1;
 }
 
-static int ping_pong_query(SSL *clientssl, SSL *serverssl, int cfd, int sfd, int rec_seq_size)
+static int ping_pong_query(SSL *clientssl, SSL *serverssl)
 {
     static char count = 1;
     unsigned char cbuf[16000] = {0};
     unsigned char sbuf[16000];
     size_t err = 0;
-    char crec_wseq_before[TLS_CIPHER_MAX_REC_SEQ_SIZE];
-    char crec_wseq_after[TLS_CIPHER_MAX_REC_SEQ_SIZE];
-    char crec_rseq_before[TLS_CIPHER_MAX_REC_SEQ_SIZE];
-    char crec_rseq_after[TLS_CIPHER_MAX_REC_SEQ_SIZE];
-    char srec_wseq_before[TLS_CIPHER_MAX_REC_SEQ_SIZE];
-    char srec_wseq_after[TLS_CIPHER_MAX_REC_SEQ_SIZE];
-    char srec_rseq_before[TLS_CIPHER_MAX_REC_SEQ_SIZE];
-    char srec_rseq_after[TLS_CIPHER_MAX_REC_SEQ_SIZE];
+    char crec_wseq_before[SEQ_NUM_SIZE];
+    char crec_wseq_after[SEQ_NUM_SIZE];
+    char crec_rseq_before[SEQ_NUM_SIZE];
+    char crec_rseq_after[SEQ_NUM_SIZE];
+    char srec_wseq_before[SEQ_NUM_SIZE];
+    char srec_wseq_after[SEQ_NUM_SIZE];
+    char srec_rseq_before[SEQ_NUM_SIZE];
+    char srec_rseq_after[SEQ_NUM_SIZE];
 
     cbuf[0] = count++;
-    memcpy(crec_wseq_before, &clientssl->rlayer.write_sequence, rec_seq_size);
-    memcpy(crec_rseq_before, &clientssl->rlayer.read_sequence, rec_seq_size);
-    memcpy(srec_wseq_before, &serverssl->rlayer.write_sequence, rec_seq_size);
-    memcpy(srec_rseq_before, &serverssl->rlayer.read_sequence, rec_seq_size);
+    memcpy(crec_wseq_before, &clientssl->rlayer.write_sequence, SEQ_NUM_SIZE);
+    memcpy(crec_rseq_before, &clientssl->rlayer.read_sequence, SEQ_NUM_SIZE);
+    memcpy(srec_wseq_before, &serverssl->rlayer.write_sequence, SEQ_NUM_SIZE);
+    memcpy(srec_rseq_before, &serverssl->rlayer.read_sequence, SEQ_NUM_SIZE);
 
     if (!TEST_true(SSL_write(clientssl, cbuf, sizeof(cbuf)) == sizeof(cbuf)))
         goto end;
@@ -1082,61 +1082,56 @@ static int ping_pong_query(SSL *clientssl, SSL *serverssl, int cfd, int sfd, int
         }
     }
 
-    memcpy(crec_wseq_after, &clientssl->rlayer.write_sequence, rec_seq_size);
-    memcpy(crec_rseq_after, &clientssl->rlayer.read_sequence, rec_seq_size);
-    memcpy(srec_wseq_after, &serverssl->rlayer.write_sequence, rec_seq_size);
-    memcpy(srec_rseq_after, &serverssl->rlayer.read_sequence, rec_seq_size);
+    memcpy(crec_wseq_after, &clientssl->rlayer.write_sequence, SEQ_NUM_SIZE);
+    memcpy(crec_rseq_after, &clientssl->rlayer.read_sequence, SEQ_NUM_SIZE);
+    memcpy(srec_wseq_after, &serverssl->rlayer.write_sequence, SEQ_NUM_SIZE);
+    memcpy(srec_rseq_after, &serverssl->rlayer.read_sequence, SEQ_NUM_SIZE);
 
     /* verify the payload */
     if (!TEST_mem_eq(cbuf, sizeof(cbuf), sbuf, sizeof(sbuf)))
         goto end;
 
-    /* ktls is used then kernel sequences are used instead of OpenSSL sequences */
-    if ((SSL_get_options(clientssl) & SSL_OP_ENABLE_KTLS) == 0) {
-        if (!TEST_mem_ne(crec_wseq_before, rec_seq_size,
-                         crec_wseq_after, rec_seq_size))
+    /*
+     * If ktls is used then kernel sequences are used instead of
+     * OpenSSL sequences
+     */
+    if (!BIO_get_ktls_send(clientssl->wbio)) {
+        if (!TEST_mem_ne(crec_wseq_before, SEQ_NUM_SIZE,
+                         crec_wseq_after, SEQ_NUM_SIZE))
             goto end;
     } else {
-        if (!TEST_mem_eq(crec_wseq_before, rec_seq_size,
-                         crec_wseq_after, rec_seq_size))
+        if (!TEST_mem_eq(crec_wseq_before, SEQ_NUM_SIZE,
+                         crec_wseq_after, SEQ_NUM_SIZE))
             goto end;
     }
 
-    if ((SSL_get_options(serverssl) & SSL_OP_ENABLE_KTLS) == 0) {
-        if (!TEST_mem_ne(srec_wseq_before, rec_seq_size,
-                         srec_wseq_after, rec_seq_size))
+    if (!BIO_get_ktls_send(serverssl->wbio)) {
+        if (!TEST_mem_ne(srec_wseq_before, SEQ_NUM_SIZE,
+                         srec_wseq_after, SEQ_NUM_SIZE))
             goto end;
     } else {
-        if (!TEST_mem_eq(srec_wseq_before, rec_seq_size,
-                         srec_wseq_after, rec_seq_size))
+        if (!TEST_mem_eq(srec_wseq_before, SEQ_NUM_SIZE,
+                         srec_wseq_after, SEQ_NUM_SIZE))
             goto end;
     }
 
-    if ((SSL_get_options(clientssl) & SSL_OP_ENABLE_KTLS) == 0
-#if defined(OPENSSL_NO_KTLS_RX)
-        || 1
-#endif
-       ) {
-        if (!TEST_mem_ne(crec_rseq_before, rec_seq_size,
-                         crec_rseq_after, rec_seq_size))
+    if (!BIO_get_ktls_recv(clientssl->wbio)) {
+        if (!TEST_mem_ne(crec_rseq_before, SEQ_NUM_SIZE,
+                         crec_rseq_after, SEQ_NUM_SIZE))
             goto end;
     } else {
-        if (!TEST_mem_eq(crec_rseq_before, rec_seq_size,
-                         crec_rseq_after, rec_seq_size))
+        if (!TEST_mem_eq(crec_rseq_before, SEQ_NUM_SIZE,
+                         crec_rseq_after, SEQ_NUM_SIZE))
             goto end;
     }
 
-    if ((SSL_get_options(serverssl) & SSL_OP_ENABLE_KTLS) == 0
-#if defined(OPENSSL_NO_KTLS_RX)
-        || 1
-#endif
-       ) {
-        if (!TEST_mem_ne(srec_rseq_before, rec_seq_size,
-                         srec_rseq_after, rec_seq_size))
+    if (!BIO_get_ktls_recv(serverssl->wbio)) {
+        if (!TEST_mem_ne(srec_rseq_before, SEQ_NUM_SIZE,
+                         srec_rseq_after, SEQ_NUM_SIZE))
             goto end;
     } else {
-        if (!TEST_mem_eq(srec_rseq_before, rec_seq_size,
-                         srec_rseq_after, rec_seq_size))
+        if (!TEST_mem_eq(srec_rseq_before, SEQ_NUM_SIZE,
+                         srec_rseq_after, SEQ_NUM_SIZE))
             goto end;
     }
 
@@ -1146,30 +1141,42 @@ end:
 }
 
 static int execute_test_ktls(int cis_ktls, int sis_ktls,
-                             int tls_version, const char *cipher,
-                             int rec_seq_size)
+                             int tls_version, const char *cipher)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
-    int testresult = 0;
-    int cfd, sfd;
+    int ktls_used = 0, testresult = 0;
+    int cfd = -1, sfd = -1;
+    int rx_supported;
 
     if (!TEST_true(create_test_sockets(&cfd, &sfd)))
         goto end;
 
     /* Skip this test if the platform does not support ktls */
-    if (!ktls_chk_platform(cfd))
-        return 1;
+    if (!ktls_chk_platform(cfd)) {
+        testresult = TEST_skip("Kernel does not support KTLS");
+        goto end;
+    }
 
     /* Create a session based on SHA-256 */
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
                                        TLS_client_method(),
                                        tls_version, tls_version,
-                                       &sctx, &cctx, cert, privkey))
-            || !TEST_true(SSL_CTX_set_cipher_list(cctx, cipher))
-            || !TEST_true(SSL_CTX_set_cipher_list(sctx, cipher))
-            || !TEST_true(create_ssl_objects2(sctx, cctx, &serverssl,
-                                          &clientssl, sfd, cfd)))
+                                       &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (tls_version == TLS1_3_VERSION) {
+        if (!TEST_true(SSL_CTX_set_ciphersuites(cctx, cipher))
+            || !TEST_true(SSL_CTX_set_ciphersuites(sctx, cipher)))
+            goto end;
+    } else {
+        if (!TEST_true(SSL_CTX_set_cipher_list(cctx, cipher))
+            || !TEST_true(SSL_CTX_set_cipher_list(sctx, cipher)))
+            goto end;
+    }
+
+    if (!TEST_true(create_ssl_objects2(sctx, cctx, &serverssl,
+                                       &clientssl, sfd, cfd)))
         goto end;
 
     if (cis_ktls) {
@@ -1178,56 +1185,63 @@ static int execute_test_ktls(int cis_ktls, int sis_ktls,
     }
 
     if (sis_ktls) {
-        if (!TEST_true(SSL_set_mode(serverssl, SSL_OP_ENABLE_KTLS)))
+        if (!TEST_true(SSL_set_options(serverssl, SSL_OP_ENABLE_KTLS)))
             goto end;
     }
 
-    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
-                                                SSL_ERROR_NONE)))
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
         goto end;
 
+    /*
+     * The running kernel may not support a given cipher suite
+     * or direction, so just check that KTLS isn't used when it
+     * isn't enabled.
+     */
     if (!cis_ktls) {
         if (!TEST_false(BIO_get_ktls_send(clientssl->wbio)))
             goto end;
     } else {
-        if (!TEST_true(BIO_get_ktls_send(clientssl->wbio)))
-            goto end;
+        if (BIO_get_ktls_send(clientssl->wbio))
+            ktls_used = 1;
     }
 
     if (!sis_ktls) {
         if (!TEST_false(BIO_get_ktls_send(serverssl->wbio)))
             goto end;
     } else {
-        if (!TEST_true(BIO_get_ktls_send(serverssl->wbio)))
-            goto end;
+        if (BIO_get_ktls_send(serverssl->wbio))
+            ktls_used = 1;
     }
 
-    if (!cis_ktls
 #if defined(OPENSSL_NO_KTLS_RX)
-        || 1
+    rx_supported = 0;
+#else
+    rx_supported = (tls_version != TLS1_3_VERSION);
 #endif
-       ) {
+    if (!cis_ktls || !rx_supported) {
         if (!TEST_false(BIO_get_ktls_recv(clientssl->rbio)))
             goto end;
     } else {
-        if (!TEST_true(BIO_get_ktls_recv(clientssl->rbio)))
-            goto end;
+        if (BIO_get_ktls_send(clientssl->rbio))
+            ktls_used = 1;
     }
 
-    if (!sis_ktls
-#if defined(OPENSSL_NO_KTLS_RX)
-        || 1
-#endif
-       ) {
+    if (!sis_ktls || !rx_supported) {
         if (!TEST_false(BIO_get_ktls_recv(serverssl->rbio)))
             goto end;
     } else {
-        if (!TEST_true(BIO_get_ktls_recv(serverssl->rbio)))
-            goto end;
+        if (BIO_get_ktls_send(serverssl->rbio))
+            ktls_used = 1;
     }
 
-    if (!TEST_true(ping_pong_query(clientssl, serverssl, cfd, sfd,
-				   rec_seq_size)))
+    if ((cis_ktls || sis_ktls) && !ktls_used) {
+        testresult = TEST_skip("KTLS not supported for %s cipher %s",
+                               tls_version == TLS1_3_VERSION ? "TLS 1.3" :
+                               "TLS 1.2", cipher);
+        goto end;
+    }
+
+    if (!TEST_true(ping_pong_query(clientssl, serverssl)))
         goto end;
 
     testresult = 1;
@@ -1243,6 +1257,10 @@ end:
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
     serverssl = clientssl = NULL;
+    if (cfd != -1)
+        close(cfd);
+    if (sfd != -1)
+        close(sfd);
     return testresult;
 }
 
@@ -1250,13 +1268,13 @@ end:
 #define SENDFILE_CHUNK                  (4 * 4096)
 #define min(a,b)                        ((a) > (b) ? (b) : (a))
 
-static int test_ktls_sendfile(int tls_version, const char *cipher)
+static int execute_test_ktls_sendfile(int tls_version, const char *cipher)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
     unsigned char *buf, *buf_dst;
     BIO *out = NULL, *in = NULL;
-    int cfd, sfd, ffd, err;
+    int cfd = -1, sfd = -1, ffd, err;
     ssize_t chunk_size = 0;
     off_t chunk_off = 0;
     int testresult = 0;
@@ -1270,7 +1288,7 @@ static int test_ktls_sendfile(int tls_version, const char *cipher)
 
     /* Skip this test if the platform does not support ktls */
     if (!ktls_chk_platform(sfd)) {
-        testresult = 1;
+        testresult = TEST_skip("Kernel does not support KTLS");
         goto end;
     }
 
@@ -1278,17 +1296,36 @@ static int test_ktls_sendfile(int tls_version, const char *cipher)
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
                                        TLS_client_method(),
                                        tls_version, tls_version,
-                                       &sctx, &cctx, cert, privkey))
-        || !TEST_true(SSL_CTX_set_cipher_list(cctx, cipher))
-        || !TEST_true(SSL_CTX_set_cipher_list(sctx, cipher))
-        || !TEST_true(create_ssl_objects2(sctx, cctx, &serverssl,
-                                          &clientssl, sfd, cfd)))
+                                       &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (tls_version == TLS1_3_VERSION) {
+        if (!TEST_true(SSL_CTX_set_ciphersuites(cctx, cipher))
+            || !TEST_true(SSL_CTX_set_ciphersuites(sctx, cipher)))
+            goto end;
+    } else {
+        if (!TEST_true(SSL_CTX_set_cipher_list(cctx, cipher))
+            || !TEST_true(SSL_CTX_set_cipher_list(sctx, cipher)))
+            goto end;
+    }
+
+    if (!TEST_true(create_ssl_objects2(sctx, cctx, &serverssl,
+                                       &clientssl, sfd, cfd)))
+        goto end;
+
+    if (!TEST_true(SSL_set_options(serverssl, SSL_OP_ENABLE_KTLS)))
         goto end;
 
     if (!TEST_true(create_ssl_connection(serverssl, clientssl,
-                                         SSL_ERROR_NONE))
-        || !TEST_true(BIO_get_ktls_send(serverssl->wbio)))
+                                         SSL_ERROR_NONE)))
         goto end;
+
+    if (!BIO_get_ktls_send(serverssl->wbio)) {
+        testresult = TEST_skip("Failed to enable KTLS for %s cipher %s",
+                               tls_version == TLS1_3_VERSION ? "TLS 1.3" :
+                               "TLS 1.2", cipher);
+        goto end;
+    }
 
     if (!TEST_true(RAND_bytes_ex(libctx, buf, SENDFILE_SZ, 0)))
         goto end;
@@ -1348,86 +1385,76 @@ end:
     serverssl = clientssl = NULL;
     BIO_free(out);
     BIO_free(in);
+    if (cfd != -1)
+        close(cfd);
+    if (sfd != -1)
+        close(sfd);
     OPENSSL_free(buf);
     OPENSSL_free(buf_dst);
     return testresult;
 }
 
-#if !defined(OPENSSL_NO_TLS1_2) || !defined(OSSL_NO_USABLE_TLS1_3)
+static struct ktls_test_cipher {
+    int tls_version;
+    const char *cipher;
+} ktls_test_ciphers[] = {
+# if !defined(OPENSSL_NO_TLS1_2)
+#  ifdef OPENSSL_KTLS_AES_GCM_128
+    { TLS1_2_VERSION, "AES128-GCM-SHA256" },
+#  endif
+#  ifdef OPENSSL_KTLS_AES_CCM_128
+    { TLS1_2_VERSION, "AES128-CCM"},
+#  endif
+#  ifdef OPENSSL_KTLS_AES_GCM_256
+    { TLS1_2_VERSION, "AES256-GCM-SHA384"},
+#  endif
+#  ifdef OPENSSL_KTLS_CHACHA20_POLY1305
+    { TLS1_2_VERSION, "ECDHE-RSA-CHACHA20-POLY1305"},
+#  endif
+# endif
+# if !defined(OSSL_NO_USABLE_TLS1_3)
+#  ifdef OPENSSL_KTLS_AES_GCM_128
+    { TLS1_3_VERSION, "TLS_AES_128_GCM_SHA256" },
+#  endif
+#  ifdef OPENSSL_KTLS_AES_CCM_128
+    { TLS1_3_VERSION, "TLS_AES_128_CCM_SHA256" },
+#  endif
+#  ifdef OPENSSL_KTLS_AES_GCM_256
+    { TLS1_3_VERSION, "TLS_AES_256_GCM_SHA384" },
+#  endif
+#  ifdef OPENSSL_KTLS_CHACHA20_POLY1305
+    { TLS1_3_VERSION, "TLS_CHACHA20_POLY1305_SHA256" },
+#  endif
+# endif
+};
+
+#define NUM_KTLS_TEST_CIPHERS \
+    (sizeof(ktls_test_ciphers) / sizeof(ktls_test_ciphers[0]))
+
 static int test_ktls(int test)
 {
+    struct ktls_test_cipher *cipher;
     int cis_ktls, sis_ktls;
-    int tlsver, testresult;
 
-    if (test > 3) {
-#if defined(OSSL_NO_USABLE_TLS1_3)
-        return 1;
-#else
-        test -= 4;
-        tlsver = TLS1_3_VERSION;
-#endif
-    } else {
-#if defined(OPENSSL_NO_TLS1_2)
-        return 1;
-#else
-        tlsver = TLS1_2_VERSION;
-#endif
-    }
+    OPENSSL_assert(test / 4 < (int)NUM_KTLS_TEST_CIPHERS);
+    cipher = &ktls_test_ciphers[test / 4];
 
     cis_ktls = (test & 1) != 0;
     sis_ktls = (test & 2) != 0;
 
-    testresult = 1;
-#ifdef OPENSSL_KTLS_AES_GCM_128
-    testresult &= execute_test_ktls(cis_ktls, sis_ktls, tlsver,
-                                    "AES128-GCM-SHA256",
-                                    TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_CCM_128
-    testresult &= execute_test_ktls(cis_ktls, sis_ktls, tlsver, "AES128-CCM",
-                                    TLS_CIPHER_AES_CCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_GCM_256
-    testresult &= execute_test_ktls(cis_ktls, sis_ktls, tlsver,
-                                    "AES256-GCM-SHA384",
-                                    TLS_CIPHER_AES_GCM_256_REC_SEQ_SIZE);
-#endif
-    return testresult;
+    return execute_test_ktls(cis_ktls, sis_ktls, cipher->tls_version,
+                             cipher->cipher);
 }
 
-static int test_ktls_sendfile_anytls(int tst)
+static int test_ktls_sendfile(int tst)
 {
-    char *cipher[] = {"AES128-GCM-SHA256","AES128-CCM","AES256-GCM-SHA384"};
-    int tlsver;
+    struct ktls_test_cipher *cipher;
 
-    if (tst > 2) {
-#if defined(OSSL_NO_USABLE_TLS1_3)
-        return 1;
-#else
-        tst -= 3;
-        tlsver = TLS1_3_VERSION;
-#endif
-    } else {
-#if defined(OPENSSL_NO_TLS1_2)
-        return 1;
-#else
-        tlsver = TLS1_2_VERSION;
-#endif
-    }
+    OPENSSL_assert(tst < (int)NUM_KTLS_TEST_CIPHERS);
+    cipher = &ktls_test_ciphers[tst];
 
-#ifndef OPENSSL_KTLS_AES_GCM_128
-   if(tst == 0) return 1;
-#endif
-#ifndef OPENSSL_KTLS_AES_CCM_128
-   if(tst == 1) return 1;
-#endif
-#ifndef OPENSSL_KTLS_AES_GCM_256
-   if(tst == 2) return 1;
-#endif
-   return test_ktls_sendfile(tlsver, cipher[tst]);
+    return execute_test_ktls_sendfile(cipher->tls_version, cipher->cipher);
 }
-
-#endif
 #endif
 
 static int test_large_message_tls(void)
@@ -1618,7 +1645,11 @@ static int ocsp_server_cb(SSL *s, void *arg)
     if (!TEST_ptr(copy = OPENSSL_memdup(orespder, sizeof(orespder))))
         return SSL_TLSEXT_ERR_ALERT_FATAL;
 
-    SSL_set_tlsext_status_ocsp_resp(s, copy, sizeof(orespder));
+    if (!TEST_true(SSL_set_tlsext_status_ocsp_resp(s, copy,
+                                                   sizeof(orespder)))) {
+        OPENSSL_free(copy);
+        return SSL_TLSEXT_ERR_ALERT_FATAL;
+    }
     ocsp_server_called = 1;
     return SSL_TLSEXT_ERR_OK;
 }
@@ -4720,14 +4751,14 @@ static int set_ssl_groups(SSL *serverssl, SSL *clientssl, int clientmulti,
  * was offered in the resumption ClientHello.
  *
  * Using E for the number of EC groups and F for the number of FF groups:
- * E tests of ECDHE with TLS 1.3, client sends only one group
- * F tests of FFDHE with TLS 1.3, client sends only one group
- * E tests of ECDHE with TLS 1.2, client sends only one group
- * F tests of FFDHE with TLS 1.2, client sends only one group
  * E tests of ECDHE with TLS 1.3, server only has one group
  * F tests of FFDHE with TLS 1.3, server only has one group
  * E tests of ECDHE with TLS 1.2, server only has one group
  * F tests of FFDHE with TLS 1.2, server only has one group
+ * E tests of ECDHE with TLS 1.3, client sends only one group
+ * F tests of FFDHE with TLS 1.3, client sends only one group
+ * E tests of ECDHE with TLS 1.2, client sends only one group
+ * F tests of FFDHE with TLS 1.2, client sends only one group
  */
 static int test_negotiated_group(int idx)
 {
@@ -6078,12 +6109,12 @@ static int test_key_update(void)
 }
 
 /*
- * Test we can handle a KeyUpdate (update requested) message while write data
- * is pending.
+ * Test we can handle a KeyUpdate (update requested) message while
+ * write data is pending in peer.
  * Test 0: Client sends KeyUpdate while Server is writing
  * Test 1: Server sends KeyUpdate while Client is writing
  */
-static int test_key_update_in_write(int tst)
+static int test_key_update_peer_in_write(int tst)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
@@ -6110,7 +6141,7 @@ static int test_key_update_in_write(int tst)
     peerwrite = tst == 0 ? serverssl : clientssl;
 
     if (!TEST_true(SSL_key_update(peerupdate, SSL_KEY_UPDATE_REQUESTED))
-            || !TEST_true(SSL_do_handshake(peerupdate)))
+            || !TEST_int_eq(SSL_do_handshake(peerupdate), 1))
         goto end;
 
     /* Swap the writing endpoint's write BIO to force a retry */
@@ -6158,6 +6189,264 @@ static int test_key_update_in_write(int tst)
     SSL_CTX_free(cctx);
     BIO_free(bretry);
     BIO_free(tmp);
+
+    return testresult;
+}
+
+/*
+ * Test we can handle a KeyUpdate (update requested) message while
+ * peer read data is pending after peer accepted keyupdate(the msg header
+ * had been read 5 bytes).
+ * Test 0: Client sends KeyUpdate while Server is reading
+ * Test 1: Server sends KeyUpdate while Client is reading
+ */
+static int test_key_update_peer_in_read(int tst)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    char prbuf[515], lwbuf[515] = {0};
+    static char *mess = "A test message";
+    BIO *lbio = NULL, *pbio = NULL;
+    SSL *local = NULL, *peer = NULL;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                              TLS_client_method(),
+                                              TLS1_3_VERSION,
+                                              0,
+                                              &sctx, &cctx, cert, privkey))
+            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                             NULL, NULL))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE)))
+        goto end;
+
+    local = tst == 0 ? clientssl : serverssl;
+    peer = tst == 0 ? serverssl : clientssl;
+
+    if (!TEST_int_eq(BIO_new_bio_pair(&lbio, 512, &pbio, 512), 1))
+        goto end;
+
+    SSL_set_bio(local, lbio, lbio);
+    SSL_set_bio(peer, pbio, pbio);
+
+    /*
+     * we first write keyupdate msg then appdata in local
+     * write data in local will fail with SSL_ERROR_WANT_WRITE,because
+     * lwbuf app data msg size + key updata msg size > 512(the size of
+     * the bio pair buffer)
+     */
+    if (!TEST_true(SSL_key_update(local, SSL_KEY_UPDATE_REQUESTED))
+            || !TEST_int_eq(SSL_write(local, lwbuf, sizeof(lwbuf)), -1)
+            || !TEST_int_eq(SSL_get_error(local, -1), SSL_ERROR_WANT_WRITE))
+        goto end;
+
+    /*
+     * first read keyupdate msg in peer in peer
+     * then read appdata that we know will fail with SSL_ERROR_WANT_READ
+     */
+    if (!TEST_int_eq(SSL_read(peer, prbuf, sizeof(prbuf)), -1)
+            || !TEST_int_eq(SSL_get_error(peer, -1), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /* Now write some data in peer - we will write the key update */
+    if (!TEST_int_eq(SSL_write(peer, mess, strlen(mess)), strlen(mess)))
+        goto end;
+
+    /*
+     * write data in local previously that we will complete
+     * read data in peer previously that we will complete
+     */
+    if (!TEST_int_eq(SSL_write(local, lwbuf, sizeof(lwbuf)), sizeof(lwbuf))
+            || !TEST_int_eq(SSL_read(peer, prbuf, sizeof(prbuf)), sizeof(prbuf)))
+        goto end;
+
+    /* check that sending and receiving appdata ok */
+    if (!TEST_int_eq(SSL_write(local, mess, strlen(mess)), strlen(mess))
+            || !TEST_int_eq(SSL_read(peer, prbuf, sizeof(prbuf)), strlen(mess)))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+/*
+ * Test we can't send a KeyUpdate (update requested) message while
+ * local write data is pending.
+ * Test 0: Client sends KeyUpdate while Client is writing
+ * Test 1: Server sends KeyUpdate while Server is writing
+ */
+static int test_key_update_local_in_write(int tst)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    char buf[20];
+    static char *mess = "A test message";
+    BIO *bretry = BIO_new(bio_s_always_retry());
+    BIO *tmp = NULL;
+    SSL *local = NULL, *peer = NULL;
+
+    if (!TEST_ptr(bretry)
+            || !TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                              TLS_client_method(),
+                                              TLS1_3_VERSION,
+                                              0,
+                                              &sctx, &cctx, cert, privkey))
+            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                             NULL, NULL))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE)))
+        goto end;
+
+    local = tst == 0 ? clientssl : serverssl;
+    peer = tst == 0 ? serverssl : clientssl;
+
+    /* Swap the writing endpoint's write BIO to force a retry */
+    tmp = SSL_get_wbio(local);
+    if (!TEST_ptr(tmp) || !TEST_true(BIO_up_ref(tmp))) {
+        tmp = NULL;
+        goto end;
+    }
+    SSL_set0_wbio(local, bretry);
+    bretry = NULL;
+
+    /* write data in local will fail with SSL_ERROR_WANT_WRITE */
+    if (!TEST_int_eq(SSL_write(local, mess, strlen(mess)), -1)
+            || !TEST_int_eq(SSL_get_error(local, -1), SSL_ERROR_WANT_WRITE))
+        goto end;
+
+    /* Reinstate the original writing endpoint's write BIO */
+    SSL_set0_wbio(local, tmp);
+    tmp = NULL;
+
+    /* SSL_key_update will fail, because writing in local*/
+    if (!TEST_false(SSL_key_update(local, SSL_KEY_UPDATE_REQUESTED))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_error()), SSL_R_BAD_WRITE_RETRY))
+    goto end;
+
+    ERR_clear_error();
+    /* write data in local previously that we will complete */
+    if (!TEST_int_eq(SSL_write(local, mess, strlen(mess)), strlen(mess)))
+        goto end;
+
+    /* SSL_key_update will succeed because there is no pending write data */
+    if (!TEST_true(SSL_key_update(local, SSL_KEY_UPDATE_REQUESTED))
+        || !TEST_int_eq(SSL_do_handshake(local), 1))
+        goto end;
+
+    /*
+     * we write some appdata in local
+     * read data in peer - we will read the keyupdate msg
+     */
+    if (!TEST_int_eq(SSL_write(local, mess, strlen(mess)), strlen(mess))
+        || !TEST_int_eq(SSL_read(peer, buf, sizeof(buf)), strlen(mess)))
+        goto end;
+
+    /* Write more peer more data to ensure we send the keyupdate message back */
+    if (!TEST_int_eq(SSL_write(peer, mess, strlen(mess)), strlen(mess))
+            || !TEST_int_eq(SSL_read(local, buf, sizeof(buf)), strlen(mess)))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    BIO_free(bretry);
+    BIO_free(tmp);
+
+    return testresult;
+}
+
+/*
+ * Test we can handle a KeyUpdate (update requested) message while
+ * local read data is pending(the msg header had been read 5 bytes).
+ * Test 0: Client sends KeyUpdate while Client is reading
+ * Test 1: Server sends KeyUpdate while Server is reading
+ */
+static int test_key_update_local_in_read(int tst)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    char lrbuf[515], pwbuf[515] = {0}, prbuf[20];
+    static char *mess = "A test message";
+    BIO *lbio = NULL, *pbio = NULL;
+    SSL *local = NULL, *peer = NULL;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                              TLS_client_method(),
+                                              TLS1_3_VERSION,
+                                              0,
+                                              &sctx, &cctx, cert, privkey))
+            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                             NULL, NULL))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE)))
+        goto end;
+
+    local = tst == 0 ? clientssl : serverssl;
+    peer = tst == 0 ? serverssl : clientssl;
+
+    if (!TEST_int_eq(BIO_new_bio_pair(&lbio, 512, &pbio, 512), 1))
+        goto end;
+
+    SSL_set_bio(local, lbio, lbio);
+    SSL_set_bio(peer, pbio, pbio);
+
+    /* write app data in peer will fail with SSL_ERROR_WANT_WRITE */
+    if (!TEST_int_eq(SSL_write(peer, pwbuf, sizeof(pwbuf)), -1)
+        || !TEST_int_eq(SSL_get_error(peer, -1), SSL_ERROR_WANT_WRITE))
+        goto end;
+
+    /* read appdata in local will fail with SSL_ERROR_WANT_READ */
+    if (!TEST_int_eq(SSL_read(local, lrbuf, sizeof(lrbuf)), -1)
+            || !TEST_int_eq(SSL_get_error(local, -1), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /* SSL_do_handshake will send keyupdate msg */
+    if (!TEST_true(SSL_key_update(local, SSL_KEY_UPDATE_REQUESTED))
+            || !TEST_int_eq(SSL_do_handshake(local), 1))
+        goto end;
+
+    /*
+     * write data in peer previously that we will complete
+     * read data in local previously that we will complete
+     */
+    if (!TEST_int_eq(SSL_write(peer, pwbuf, sizeof(pwbuf)), sizeof(pwbuf))
+        || !TEST_int_eq(SSL_read(local, lrbuf, sizeof(lrbuf)), sizeof(lrbuf)))
+        goto end;
+
+    /*
+     * write data in local
+     * read data in peer - we will read the key update
+     */
+    if (!TEST_int_eq(SSL_write(local, mess, strlen(mess)), strlen(mess))
+        || !TEST_int_eq(SSL_read(peer, prbuf, sizeof(prbuf)), strlen(mess)))
+        goto end;
+
+  /* Write more peer data to ensure we send the keyupdate message back */
+    if (!TEST_int_eq(SSL_write(peer, mess, strlen(mess)), strlen(mess))
+            || !TEST_int_eq(SSL_read(local, lrbuf, sizeof(lrbuf)), strlen(mess)))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
 
     return testresult;
 }
@@ -9277,8 +9566,8 @@ int setup_tests(void)
 
 #if !defined(OPENSSL_NO_KTLS) && !defined(OPENSSL_NO_SOCK)
 # if !defined(OPENSSL_NO_TLS1_2) || !defined(OSSL_NO_USABLE_TLS1_3)
-    ADD_ALL_TESTS(test_ktls, 8);
-    ADD_ALL_TESTS(test_ktls_sendfile_anytls, 6);
+    ADD_ALL_TESTS(test_ktls, NUM_KTLS_TEST_CIPHERS * 4);
+    ADD_ALL_TESTS(test_ktls_sendfile, NUM_KTLS_TEST_CIPHERS);
 # endif
 #endif
     ADD_TEST(test_large_message_tls);
@@ -9371,7 +9660,10 @@ int setup_tests(void)
 #ifndef OSSL_NO_USABLE_TLS1_3
     ADD_ALL_TESTS(test_export_key_mat_early, 3);
     ADD_TEST(test_key_update);
-    ADD_ALL_TESTS(test_key_update_in_write, 2);
+    ADD_ALL_TESTS(test_key_update_peer_in_write, 2);
+    ADD_ALL_TESTS(test_key_update_peer_in_read, 2);
+    ADD_ALL_TESTS(test_key_update_local_in_write, 2);
+    ADD_ALL_TESTS(test_key_update_local_in_read, 2);
 #endif
     ADD_ALL_TESTS(test_ssl_clear, 2);
     ADD_ALL_TESTS(test_max_fragment_len_ext, OSSL_NELEM(max_fragment_len_test));

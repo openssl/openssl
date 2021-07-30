@@ -12,10 +12,10 @@
 # pragma once
 
 int ossl_punycode_decode (
-	const char *pEncoded,
-	const size_t enc_len,
-	unsigned int *pDecoded,
-	unsigned int *pout_length
+    const char *pEncoded,
+    const size_t enc_len,
+    unsigned int *pDecoded,
+    unsigned int *pout_length
 );
 
 int ossl_a2ulabel(const char *in, char *out, size_t *outlen);

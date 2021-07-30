@@ -25,6 +25,7 @@
 static int do_fips = 0;
 static char *privkey;
 static char *config_file = NULL;
+static int multidefault_run = 0;
 
 static int test_lock(void)
 {
@@ -477,25 +478,18 @@ static void test_multi_load_worker(void)
     (void)TEST_true(OSSL_PROVIDER_unload(prov));
 }
 
-static int test_multi_load(void)
-{
-    thread_t threads[MULTI_LOAD_THREADS];
-    int i;
-
-    for (i = 0; i < MULTI_LOAD_THREADS; i++)
-        (void)TEST_true(run_thread(&threads[i], test_multi_load_worker));
-
-    for (i = 0; i < MULTI_LOAD_THREADS; i++)
-        (void)TEST_true(wait_for_thread(threads[i]));
-
-    return 1;
-}
-
 static int test_multi_default(void)
 {
     thread_t thread1, thread2;
     int testresult = 0;
     OSSL_PROVIDER *prov = NULL;
+
+    /* Avoid running this test twice */
+    if (multidefault_run) {
+        TEST_skip("multi default test already run");
+        return 1;
+    }
+    multidefault_run = 1;
 
     multi_success = 1;
     multi_libctx = NULL;
@@ -519,6 +513,26 @@ static int test_multi_default(void)
  err:
     OSSL_PROVIDER_unload(prov);
     return testresult;
+}
+
+static int test_multi_load(void)
+{
+    thread_t threads[MULTI_LOAD_THREADS];
+    int i, res = 1;
+
+    /* The multidefault test must run prior to this test */
+    if (!multidefault_run) {
+        TEST_info("Running multi default test first");
+        res = test_multi_default();
+    }
+
+    for (i = 0; i < MULTI_LOAD_THREADS; i++)
+        (void)TEST_true(run_thread(&threads[i], test_multi_load_worker));
+
+    for (i = 0; i < MULTI_LOAD_THREADS; i++)
+        (void)TEST_true(wait_for_thread(threads[i]));
+
+    return res;
 }
 
 typedef enum OPTION_choice {

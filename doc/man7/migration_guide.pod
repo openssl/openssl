@@ -60,6 +60,12 @@ There is however a dedicated C<install_fips> make target, which serves the
 special purpose of installing only the FIPS provider into an existing
 OpenSSL installation.
 
+Not all algorithms may be available for the application at a particular moment.
+If the application code uses any digest or cipher algorithm via the EVP interface,
+the application should verify the result of the L<EVP_EncryptInit(3)>,
+L<EVP_EncryptInit_ex(3)>, and L<EVP_DigestInit(3)> functions. In case when
+the requested algorithm is not available, these functions will fail.
+
 See also L</Legacy Algorithms> for information on the legacy provider.
 
 See also L</Completing the installation of the FIPS Module> and
@@ -354,7 +360,9 @@ call C<EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2)> to get SM2 computations.
 
 Parameter and key generation is also reworked to make it possible
 to generate EVP_PKEY_SM2 parameters and keys. Applications must now generate
-SM2 keys directly and must not create an EVP_PKEY_EC key first.
+SM2 keys directly and must not create an EVP_PKEY_EC key first. It is no longer
+possible to import an SM2 key with domain parameters other than the SM2 elliptic
+curve ones.
 
 Validation of SM2 keys has been separated from the validation of regular EC
 keys, allowing to improve the SM2 validation process to reject loaded private
@@ -2017,8 +2025,8 @@ See L</Deprecated low-level encryption functions>
 
 RSA_private_encrypt(), RSA_public_decrypt()
 
-This is equivalent to doing sign and verify operations (with a padding mode
-of none). See L</Deprecated low-level signing functions>.
+This is equivalent to doing sign and verify recover operations (with a padding
+mode of none). See L</Deprecated low-level signing functions>.
 
 =item -
 
@@ -2227,7 +2235,9 @@ SSL and SSL_CTX options are now 64 bit instead of 32 bit.
 The signatures of the functions to get and set options on SSL and
 SSL_CTX objects changed from "unsigned long" to "uint64_t" type.
 
-This may require source code changes.
+This may require source code changes. For example it is no longer possible
+to use the B<SSL_OP_> macro values in preprocessor C<#if> conditions.
+However it is still possible to test whether these macros are defined or not.
 
 See L<SSL_CTX_get_options(3)>, L<SSL_CTX_set_options(3)>,
 L<SSL_get_options(3)> and L<SSL_set_options(3)>.

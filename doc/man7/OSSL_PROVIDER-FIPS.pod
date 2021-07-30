@@ -267,7 +267,7 @@ Key generation tests used with the "Pairwise_Consistency_Test" type.
 
 "KAT_AsymmetricCipher" uses this to indicate an encrypt or decrypt KAT.
 
-=item "AES_GCM_Encrypt" (B<OSSL_SELF_TEST_DESC_CIPHER_AES_GCM>)
+=item "AES_GCM" (B<OSSL_SELF_TEST_DESC_CIPHER_AES_GCM>)
 
 =item "AES_ECB_Decrypt" (B<OSSL_SELF_TEST_DESC_CIPHER_AES_ECB>)
 

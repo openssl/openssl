@@ -1431,7 +1431,7 @@ static int sigalg_security_bits(SSL_CTX *ctx, const SIGALG_LOOKUP *lu)
          * SHA1 at 2^63.4 and MD5+SHA1 at 2^67.2
          * https://documents.epfl.ch/users/l/le/lenstra/public/papers/lat.pdf
          * puts a chosen-prefix attack for MD5 at 2^39.
-	 */
+         */
         if (md_type == NID_sha1)
             secbits = 64;
         else if (md_type == NID_md5_sha1)
@@ -2884,7 +2884,7 @@ EVP_PKEY *ssl_get_auto_dh(SSL *s)
 {
     EVP_PKEY *dhp = NULL;
     BIGNUM *p;
-    int dh_secbits = 80;
+    int dh_secbits = 80, sec_level_bits;
     EVP_PKEY_CTX *pctx = NULL;
     OSSL_PARAM_BLD *tmpl = NULL;
     OSSL_PARAM *params = NULL;
@@ -2901,6 +2901,11 @@ EVP_PKEY *ssl_get_auto_dh(SSL *s)
             dh_secbits = EVP_PKEY_get_security_bits(s->s3.tmp.cert->privatekey);
         }
     }
+
+    /* Do not pick a prime that is too weak for the current security level */
+    sec_level_bits = ssl_get_security_level_bits(s, NULL, NULL);
+    if (dh_secbits < sec_level_bits)
+        dh_secbits = sec_level_bits;
 
     if (dh_secbits >= 192)
         p = BN_get_rfc3526_prime_8192(NULL);

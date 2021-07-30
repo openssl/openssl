@@ -90,6 +90,7 @@ static int epki2pki_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
 
         if (!pw_cb(pbuf, sizeof(pbuf), &plen, NULL, pw_cbarg)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_GET_PASSPHRASE);
+            ok = 0;
         } else {
             const ASN1_OCTET_STRING *oct;
             unsigned char *new_der = NULL;

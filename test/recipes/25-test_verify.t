@@ -417,7 +417,7 @@ ok(verify("ee-ss-with-keyCertSign", "", ["ee-ss-with-keyCertSign"], []),
 
 SKIP: {
     skip "Ed25519 is not supported by this OpenSSL build", 6
-	      if disabled("ec");
+        if disabled("ec");
 
     # ED25519 certificate from draft-ietf-curdle-pkix-04
     ok(verify("ee-ed25519", "", ["root-ed25519"], []),

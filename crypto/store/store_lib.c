@@ -71,7 +71,8 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
     OSSL_STORE_LOADER_CTX *loader_ctx = NULL;
     OSSL_STORE_CTX *ctx = NULL;
     char *propq_copy = NULL;
-    char scheme_copy[256], *p, *schemes[2];
+    int no_loader_found = 1;
+    char scheme_copy[256], *p, *schemes[2], *scheme = NULL;
     size_t schemes_n = 0;
     size_t i;
 
@@ -110,9 +111,11 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
      * elsewhere.
      */
     for (i = 0; loader_ctx == NULL && i < schemes_n; i++) {
-        OSSL_TRACE1(STORE, "Looking up scheme %s\n", schemes[i]);
+        scheme = schemes[i];
+        OSSL_TRACE1(STORE, "Looking up scheme %s\n", scheme);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
-        if ((loader = ossl_store_get0_loader_int(schemes[i])) != NULL) {
+        if ((loader = ossl_store_get0_loader_int(scheme)) != NULL) {
+            no_loader_found = 0;
             if (loader->open_ex != NULL)
                 loader_ctx = loader->open_ex(loader, uri, libctx, propq,
                                              ui_method, ui_data);
@@ -122,11 +125,12 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
 #endif
         if (loader == NULL
             && (fetched_loader =
-                OSSL_STORE_LOADER_fetch(libctx, schemes[i], propq)) != NULL) {
+                OSSL_STORE_LOADER_fetch(libctx, scheme, propq)) != NULL) {
             const OSSL_PROVIDER *provider =
                 OSSL_STORE_LOADER_get0_provider(fetched_loader);
             void *provctx = OSSL_PROVIDER_get0_provider_ctx(provider);
 
+            no_loader_found = 0;
             loader_ctx = fetched_loader->p_open(provctx, uri);
             if (loader_ctx == NULL) {
                 OSSL_STORE_LOADER_free(fetched_loader);
@@ -141,16 +145,21 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
         }
     }
 
-    if (loader != NULL)
-        OSSL_TRACE1(STORE, "Found loader for scheme %s\n", schemes[i]);
-
-    if (loader_ctx == NULL) {
-        ERR_raise_data(ERR_LIB_OSSL_STORE, OSSL_STORE_R_NO_LOADERS_FOUND,
-                       "No store loaders were found. For standard store "
-                       "loaders you need at least one of the default or base "
-                       "providers available. Did you forget to load them?");
+    if (no_loader_found)
+        /*
+         * It's assumed that ossl_store_get0_loader_int() and
+         * OSSL_STORE_LOADER_fetch() report their own errors
+         */
         goto err;
-    }
+
+    OSSL_TRACE1(STORE, "Found loader for scheme %s\n", scheme);
+
+    if (loader_ctx == NULL)
+        /*
+         * It's assumed that the loader's open() method reports its own
+         * errors
+         */
+        goto err;
 
     OSSL_TRACE2(STORE, "Opened %s => %p\n", uri, (void *)loader_ctx);
 
@@ -505,7 +514,7 @@ static int ossl_store_close_it(OSSL_STORE_CTX *ctx)
         ret = ctx->loader->p_close(ctx->loader_ctx);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     if (ctx->fetched_loader == NULL)
-        ret = ctx->loader->close(ctx->loader_ctx);
+        ret = ctx->loader->closefn(ctx->loader_ctx);
 #endif
 
     sk_OSSL_STORE_INFO_pop_free(ctx->cached_info, OSSL_STORE_INFO_free);

@@ -11,7 +11,6 @@ jobs:
       matrix:
         opt: [
           386,
-          enable-acvp-tests,
           no-afalgeng,
           no-aria,
           no-asan,
@@ -63,7 +62,6 @@ jobs:
           no-hw,
           no-hw-padlock,
           no-idea,
-          no-ktls,
           no-makedepend,
           enable-md2,
           no-md2,

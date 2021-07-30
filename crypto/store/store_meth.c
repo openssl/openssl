@@ -344,11 +344,18 @@ inner_loader_fetch(struct loader_data_st *methdata, int id,
 
     if ((id != 0 || scheme != NULL) && method == NULL) {
         int code = unsupported ? ERR_R_UNSUPPORTED : ERR_R_FETCH_FAILED;
+        const char *helpful_msg =
+            unsupported
+            ? ( "No store loader found. For standard store loaders you need "
+                "at least one of the default or base providers available. "
+                "Did you forget to load them? Info: " )
+            : "";
 
         if (scheme == NULL)
             scheme = ossl_namemap_num2name(namemap, id, 0);
         ERR_raise_data(ERR_LIB_OSSL_STORE, code,
-                       "%s, Scheme (%s : %d), Properties (%s)",
+                       "%s%s, Scheme (%s : %d), Properties (%s)",
+                       helpful_msg,
                        ossl_lib_ctx_get_descriptor(methdata->libctx),
                        scheme = NULL ? "<null>" : scheme, id,
                        properties == NULL ? "<null>" : properties);

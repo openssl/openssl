@@ -126,8 +126,11 @@ static int rsa_check_padding(const PROV_RSA_CTX *prsactx,
 {
     switch(prsactx->pad_mode) {
         case RSA_NO_PADDING:
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_PADDING_MODE);
-            return 0;
+            if (mdname != NULL || mdnid != NID_undef) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_PADDING_MODE);
+                return 0;
+            }
+            break;
         case RSA_X931_PADDING:
             if (RSA_X931_hash_id(mdnid) == -1) {
                 ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_X931_DIGEST);
@@ -303,6 +306,17 @@ static int rsa_setup_md(PROV_RSA_CTX *ctx, const char *mdname,
                                "%s exceeds name buffer length", mdname);
             EVP_MD_free(md);
             return 0;
+        }
+
+        if (!ctx->flag_allow_md) {
+            if (ctx->mdname[0] != '\0' && !EVP_MD_is_a(md, ctx->mdname)) {
+                ERR_raise_data(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED,
+                               "digest %s != %s", mdname, ctx->mdname);
+                EVP_MD_free(md);
+                return 0;
+            }
+            EVP_MD_free(md);
+            return 1;
         }
 
         if (!ctx->mgf1_md_set) {
@@ -826,8 +840,6 @@ static int rsa_digest_signverify_init(void *vprsactx, const char *mdname,
     if (!ossl_prov_is_running())
         return 0;
 
-    if (prsactx != NULL)
-        prsactx->flag_allow_md = 0;
     if (!rsa_signverify_init(vprsactx, vrsa, params, operation))
         return 0;
     if (mdname != NULL
@@ -836,6 +848,7 @@ static int rsa_digest_signverify_init(void *vprsactx, const char *mdname,
         && !rsa_setup_md(prsactx, mdname, prsactx->propq))
         return 0;
 
+    prsactx->flag_allow_md = 0;
     prsactx->mdctx = EVP_MD_CTX_new();
     if (prsactx->mdctx == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
@@ -1141,9 +1154,6 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
     saltlen = prsactx->saltlen;
 
     p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_DIGEST);
-    /* Not allowed during certain operations */
-    if (p != NULL && !prsactx->flag_allow_md)
-        return 0;
     if (p != NULL) {
         const OSSL_PARAM *propsp =
             OSSL_PARAM_locate_const(params,

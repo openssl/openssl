@@ -229,21 +229,6 @@ typedef struct ossl_decoder_ctx_st OSSL_DECODER_CTX;
 
 typedef struct ossl_self_test_st OSSL_SELF_TEST;
 
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
-    defined(INTMAX_MAX) && defined(UINTMAX_MAX)
-typedef intmax_t ossl_intmax_t;
-typedef uintmax_t ossl_uintmax_t;
-#else
-/*
- * Not long long, because the C-library can only be expected to provide
- * strtoll(), strtoull() at the same time as intmax_t and strtoimax(),
- * strtoumax().  Since we use these for parsing arguments, we need the
- * conversion functions, not just the sizes.
- */
-typedef long ossl_intmax_t;
-typedef unsigned long ossl_uintmax_t;
-#endif
-
 #ifdef  __cplusplus
 }
 #endif

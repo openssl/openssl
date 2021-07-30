@@ -72,8 +72,7 @@ my $np	= "r6";
 my $n0	= "r7";
 my $num	= "r8";
 
-$rp	= "r9";	# $rp is reassigned
-
+my $i	= "r9";
 my $c0	= "r10";
 my $bp0	= "r11";
 my $bpi	= "r11";
@@ -83,7 +82,6 @@ my $apj	= "r12";
 my $npj	= "r12";
 my $lo	= "r14";
 my $c1	= "r14";
-my $i	= "r15";
 
 # Non-volatile registers used for tp[i]
 #
@@ -186,8 +184,8 @@ sub mul_mont_fixed($)
 	$self->add_code(<<___);
 
 .globl	.${fname}
+.align	5
 .${fname}:
-	mr	$rp,r3
 
 ___
 
@@ -226,6 +224,7 @@ ___
 	mtctr		$num
 	b		$label->{"enter"}
 
+.align	4
 $label->{"outer"}:
 	ldx		$bpi,$bp,$i
 
@@ -247,6 +246,7 @@ ___
 ___
 
 	$self->add_code(<<___);
+.align	4
 $label->{"enter"}:
 	mulld		$bpi,$tp[0],$n0
 
@@ -267,7 +267,7 @@ ___
 	addze		$tp[$n],$tp[$n+1]
 
 	addi		$i,$i,$SIZE_T
-	bc		25,0,$label->{"outer"}
+	bdnz		$label->{"outer"}
 
 	and.		$tp[$n],$tp[$n],$tp[$n]
 	bne		$label->{"sub"}
@@ -322,7 +322,7 @@ ___
 	$self->add_code(<<___);
 	li		r3,1
 	blr
-.size ${fname},.-${fname}
+.size .${fname},.-.${fname}
 ___
 
 }
@@ -345,13 +345,12 @@ sub save_registers($)
 	my $n = $self->{n};
 
 	$self->add_code(<<___);
-	mtvsrd	$vsrs[0],$lo
-	mtvsrd	$vsrs[1],$i
+	std	$lo,-8($sp)
 ___
 
 	for (my $j = 0; $j <= $n+1; $j++) {
 		$self->{code}.=<<___;
-	mtvsrd	$vsrs[$j+2],$tp[$j]
+	std	$tp[$j],-`($j+2)*8`($sp)
 ___
 	}
 
@@ -367,13 +366,12 @@ sub restore_registers($)
 	my $n = $self->{n};
 
 	$self->add_code(<<___);
-	mfvsrd	$lo,$vsrs[0]
-	mfvsrd	$i,$vsrs[1]
+	ld	$lo,-8($sp)
 ___
 
 	for (my $j = 0; $j <= $n+1; $j++) {
 		$self->{code}.=<<___;
-	mfvsrd	$tp[$j],$vsrs[$j+2]
+	ld	$tp[$j],-`($j+2)*8`($sp)
 ___
 	}
 
@@ -561,8 +559,6 @@ my $code;
 $code.=<<___;
 .machine "any"
 .text
-.align	5
-.p2align	5,,31
 ___
 
 my $mont;

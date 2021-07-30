@@ -138,7 +138,10 @@ and so it should not be free'd by the caller.
 
 X509_STORE_CTX_set_default() looks up and sets the default verification
 method to I<name>. This uses the function X509_VERIFY_PARAM_lookup() to
-find an appropriate set of parameters from I<name>.
+find an appropriate set of parameters from the purpose identifier I<name>.
+Currently defined purposes are C<sslclient>, C<sslserver>, C<nssslserver>,
+C<smimesign>, C<smimeencrypt>, C<crlsign>, C<ocsphelper>, C<timestampsign>,
+and C<any>.
 
 X509_STORE_CTX_set_verify() provides the capability for overriding the default
 verify function. This function is responsible for verifying chain signatures and

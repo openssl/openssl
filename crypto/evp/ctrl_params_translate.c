@@ -1353,7 +1353,9 @@ static int fix_rsa_pss_saltlen(enum state state,
         if (i == OSSL_NELEM(str_value_map)) {
             BIO_snprintf(ctx->name_buf, sizeof(ctx->name_buf), "%d", ctx->p1);
         } else {
-            strcpy(ctx->name_buf, str_value_map[i].ptr);
+            /* This won't truncate but it will quiet static analysers */
+            strncpy(ctx->name_buf, str_value_map[i].ptr, sizeof(ctx->name_buf) - 1);
+            ctx->name_buf[sizeof(ctx->name_buf) - 1] = '\0';
         }
         ctx->p2 = ctx->name_buf;
         ctx->p1 = strlen(ctx->p2);

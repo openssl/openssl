@@ -3,6 +3,7 @@
 =head1 NAME
 
 OSSL_CMP_MSG_get0_header,
+OSSL_CMP_MSG_get_bodytype,
 OSSL_CMP_MSG_update_transactionID,
 OSSL_CMP_CTX_setup_CRM,
 OSSL_CMP_MSG_read,
@@ -16,6 +17,7 @@ i2d_OSSL_CMP_MSG_bio
   #include <openssl/cmp.h>
 
   OSSL_CMP_PKIHEADER *OSSL_CMP_MSG_get0_header(const OSSL_CMP_MSG *msg);
+  int OSSL_CMP_MSG_get_bodytype(const OSSL_CMP_MSG *msg);
   int OSSL_CMP_MSG_update_transactionID(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg);
   OSSL_CRMF_MSG *OSSL_CMP_CTX_setup_CRM(OSSL_CMP_CTX *ctx, int for_KUR, int rid);
   OSSL_CMP_MSG *OSSL_CMP_MSG_read(const char *file);
@@ -26,6 +28,8 @@ i2d_OSSL_CMP_MSG_bio
 =head1 DESCRIPTION
 
 OSSL_CMP_MSG_get0_header() returns the header of the given CMP message.
+
+OSSL_CMP_MSG_get_bodytype() returns the body type of the given CMP message.
 
 OSSL_CMP_MSG_update_transactionID() updates the transactionID field
 in the header of the given message according to the CMP_CTX.
@@ -57,6 +61,8 @@ CMP is defined in RFC 4210.
 
 OSSL_CMP_MSG_get0_header() returns the intended pointer value as described above
 or NULL if the respective entry does not exist and on error.
+
+OSSL_CMP_MSG_get_bodytype() returns the body type or -1 on error.
 
 OSSL_CMP_CTX_setup_CRM() returns a pointer to a OSSL_CRMF_MSG on success,
 NULL on error.

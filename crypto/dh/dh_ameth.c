@@ -453,13 +453,6 @@ static int dh_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     int selection = 0;
     int rv = 0;
 
-    /*
-     * If the DH method is foreign, then we can't be sure of anything, and
-     * can therefore not export or pretend to export.
-     */
-    if (ossl_dh_get_method(dh) != DH_OpenSSL())
-        return 0;
-
     if (p == NULL || g == NULL)
         return 0;
 

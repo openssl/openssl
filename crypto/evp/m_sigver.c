@@ -11,7 +11,6 @@
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/objects.h>
-#include <openssl/x509.h>
 #include "crypto/evp.h"
 #include "internal/provider.h"
 #include "internal/numbers.h"   /* includes SIZE_MAX */
@@ -41,7 +40,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                           const EVP_MD *type, const char *mdname,
                           OSSL_LIB_CTX *libctx, const char *props,
                           ENGINE *e, EVP_PKEY *pkey, int ver,
-                          OSSL_PARAM params[])
+                          const OSSL_PARAM params[])
 {
     EVP_PKEY_CTX *locpctx = NULL;
     EVP_SIGNATURE *signature = NULL;
@@ -88,6 +87,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     provkey = evp_pkey_export_to_provider(locpctx->pkey, locpctx->libctx,
                                           &tmp_keymgmt, locpctx->propquery);
     if (provkey == NULL) {
+        ERR_clear_last_mark();
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         goto err;
     }
@@ -209,7 +209,14 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                                           mdname, provkey, params);
     }
 
-    goto end;
+    /*
+     * If the operation was not a success and no digest was found, an error
+     * needs to be raised.
+     */
+    if (ret > 0 || mdname != NULL)
+        goto end;
+    if (type == NULL)   /* This check is redundant but clarifies matters */
+        ERR_raise(ERR_LIB_EVP, EVP_R_NO_DEFAULT_DIGEST);
 
  err:
     evp_pkey_ctx_free_old_ops(locpctx);
@@ -298,7 +305,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 int EVP_DigestSignInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                           const char *mdname, OSSL_LIB_CTX *libctx,
                           const char *props, EVP_PKEY *pkey,
-                          OSSL_PARAM params[])
+                          const OSSL_PARAM params[])
 {
     return do_sigver_init(ctx, pctx, NULL, mdname, libctx, props, NULL, pkey, 0,
                           params);
@@ -314,7 +321,7 @@ int EVP_DigestSignInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 int EVP_DigestVerifyInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                             const char *mdname, OSSL_LIB_CTX *libctx,
                             const char *props, EVP_PKEY *pkey,
-                            OSSL_PARAM params[])
+                            const OSSL_PARAM params[])
 {
     return do_sigver_init(ctx, pctx, NULL, mdname, libctx, props, NULL, pkey, 1,
                           params);

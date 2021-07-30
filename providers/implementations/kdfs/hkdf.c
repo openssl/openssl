@@ -149,6 +149,7 @@ static int kdf_hkdf_derive(void *vctx, unsigned char *key, size_t keylen,
 
     switch (ctx->mode) {
     case EVP_KDF_HKDF_MODE_EXTRACT_AND_EXPAND:
+    default:
         return HKDF(libctx, md, ctx->salt, ctx->salt_len,
                     ctx->key, ctx->key_len, ctx->info, ctx->info_len, key, keylen);
 
@@ -159,9 +160,6 @@ static int kdf_hkdf_derive(void *vctx, unsigned char *key, size_t keylen,
     case EVP_KDF_HKDF_MODE_EXPAND_ONLY:
         return HKDF_Expand(md, ctx->key, ctx->key_len, ctx->info,
                            ctx->info_len, key, keylen);
-
-    default:
-        return 0;
     }
 }
 
@@ -262,8 +260,13 @@ static int kdf_hkdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
     KDF_HKDF *ctx = (KDF_HKDF *)vctx;
     OSSL_PARAM *p;
 
-    if ((p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_SIZE)) != NULL)
-        return OSSL_PARAM_set_size_t(p, kdf_hkdf_size(ctx));
+    if ((p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_SIZE)) != NULL) {
+        size_t sz = kdf_hkdf_size(ctx);
+
+        if (sz == 0)
+            return 0;
+        return OSSL_PARAM_set_size_t(p, sz);
+    }
     return -2;
 }
 

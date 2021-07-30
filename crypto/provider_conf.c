@@ -14,6 +14,7 @@
 #include <openssl/safestack.h>
 #include "internal/provider.h"
 #include "internal/cryptlib.h"
+#include "provider_local.h"
 
 DEFINE_STACK_OF(OSSL_PROVIDER)
 
@@ -61,6 +62,7 @@ static const char *skip_dot(const char *name)
 }
 
 static int provider_conf_params(OSSL_PROVIDER *prov,
+                                OSSL_PROVIDER_INFO *provinfo,
                                 const char *name, const char *value,
                                 const CONF *cnf)
 {
@@ -88,14 +90,18 @@ static int provider_conf_params(OSSL_PROVIDER *prov,
                 return 0;
             buffer[buffer_len] = '\0';
             OPENSSL_strlcat(buffer, sectconf->name, sizeof(buffer));
-            if (!provider_conf_params(prov, buffer, sectconf->value, cnf))
+            if (!provider_conf_params(prov, provinfo, buffer, sectconf->value,
+                                      cnf))
                 return 0;
         }
 
         OSSL_TRACE1(CONF, "Provider params: finish section %s\n", value);
     } else {
         OSSL_TRACE2(CONF, "Provider params: %s = %s\n", name, value);
-        ok = ossl_provider_add_parameter(prov, name, value);
+        if (prov != NULL)
+            ok = ossl_provider_add_parameter(prov, name, value);
+        else
+            ok = ossl_provider_info_add_parameter(provinfo, name, value);
     }
 
     return ok;
@@ -107,7 +113,7 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
     int i;
     STACK_OF(CONF_VALUE) *ecmds;
     int soft = 0;
-    OSSL_PROVIDER *prov = NULL;
+    OSSL_PROVIDER *prov = NULL, *actual = NULL;
     const char *path = NULL;
     long activate = 0;
     int ok = 0;
@@ -149,35 +155,81 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
             activate = 1;
     }
 
-    prov = ossl_provider_find(libctx, name, 1);
-    if (prov == NULL)
-        prov = ossl_provider_new(libctx, name, NULL, 1);
-    if (prov == NULL) {
-        if (soft)
-            ERR_clear_error();
-        return 0;
-    }
-
-    if (path != NULL)
-        ossl_provider_set_module_path(prov, path);
-
-    ok = provider_conf_params(prov, NULL, value, cnf);
-
-    if (ok && activate) {
-        if (!ossl_provider_activate(prov, 0, 1)) {
-            ok = 0;
-        } else {
-            if (pcgbl->activated_providers == NULL)
-                pcgbl->activated_providers = sk_OSSL_PROVIDER_new_null();
-            sk_OSSL_PROVIDER_push(pcgbl->activated_providers, prov);
-            ok = 1;
+    if (activate) {
+        /*
+        * There is an attempt to activate a provider, so we should disable
+        * loading of fallbacks. Otherwise a misconfiguration could mean the
+        * intended provider does not get loaded. Subsequent fetches could then
+        * fallback to the default provider - which may be the wrong thing.
+        */
+        if (!ossl_provider_disable_fallback_loading(libctx)) {
+            ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
+            return 0;
         }
+        prov = ossl_provider_find(libctx, name, 1);
+        if (prov == NULL)
+            prov = ossl_provider_new(libctx, name, NULL, 1);
+        if (prov == NULL) {
+            if (soft)
+                ERR_clear_error();
+            return 0;
+        }
+
+        if (path != NULL)
+            ossl_provider_set_module_path(prov, path);
+
+        ok = provider_conf_params(prov, NULL, NULL, value, cnf);
+
+        if (ok) {
+            if (!ossl_provider_activate(prov, 1, 0)) {
+                ok = 0;
+            } else if (!ossl_provider_add_to_store(prov, &actual, 0)) {
+                ossl_provider_deactivate(prov);
+                ok = 0;
+            } else {
+                if (pcgbl->activated_providers == NULL)
+                    pcgbl->activated_providers = sk_OSSL_PROVIDER_new_null();
+                sk_OSSL_PROVIDER_push(pcgbl->activated_providers, actual);
+                ok = 1;
+            }
+        }
+
+        if (!ok)
+            ossl_provider_free(prov);
+    } else {
+        OSSL_PROVIDER_INFO entry;
+
+        memset(&entry, 0, sizeof(entry));
+        ok = 1;
+        if (name != NULL) {
+            entry.name = OPENSSL_strdup(name);
+            if (entry.name == NULL) {
+                ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+                ok = 0;
+            }
+        }
+        if (ok && path != NULL) {
+            entry.path = OPENSSL_strdup(path);
+            if (entry.path == NULL) {
+                ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+                ok = 0;
+            }
+        }
+        if (ok)
+            ok = provider_conf_params(NULL, &entry, NULL, value, cnf);
+        if (ok && (entry.path != NULL || entry.parameters != NULL))
+            ok = ossl_provider_info_add_to_store(libctx, &entry);
+        if (!ok || (entry.path == NULL && entry.parameters == NULL)) {
+            ossl_provider_info_clear(&entry);
+        }
+
     }
 
-    if (!(activate && ok))
-        ossl_provider_free(prov);
-
-    return ok;
+    /*
+     * Even if ok is 0, we still return success. Failure to load a provider is
+     * not fatal. We want to continue to load the rest of the config file.
+     */
+    return 1;
 }
 
 static int provider_conf_init(CONF_IMODULE *md, const CONF *cnf)

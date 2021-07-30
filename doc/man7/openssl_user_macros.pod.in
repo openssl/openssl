@@ -74,23 +74,25 @@ minor and patch components of the version number.  For example:
 
 =back
 
-If not set, this macro will default to
+If B<OPENSSL_API_COMPAT> is undefined, this default value is used in its
+place:
 C<{- join('', map { my @x = split /=/,$_; $x[1] }
               grep /^OPENSSL_CONFIGURED_API=/, @{$config{openssl_api_defines} // []})
      || '0x00000000L'
-  -}>.
+  -}>
 
 =item B<OPENSSL_NO_DEPRECATED>
 
 If this macro is defined, all deprecated public symbols in all OpenSSL
 versions up to and including the version given by B<OPENSSL_API_COMPAT>
+(or the default value given above, when B<OPENSSL_API_COMPAT> isn't defined)
 will be hidden.
 
 =back
 
 =head1 COPYRIGHT
 
-Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

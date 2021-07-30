@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2005-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2005-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -126,7 +126,10 @@ $nhia="%f56"; $nhib="%f58"; $nhic="%f60"; $nhid="%f62";
 $ASI_FL16_P=0xD2;	# magic ASI value to engage 16-bit FP load
 
 $code=<<___;
-#include "sparc_arch.h"
+#ifndef __ASSEMBLER__
+# define __ASSEMBLER__ 1
+#endif
+#include "crypto/sparc_arch.h"
 
 .section	".text",#alloc,#execinstr
 

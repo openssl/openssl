@@ -28,7 +28,11 @@ plan skip_all => "These tests are not supported in a fuzz build"
 plan skip_all => "These tests are not supported in a no-cmp build"
     if disabled("cmp");
 
-my $app = bldtop_dir("apps/openssl cmp");
+# Prevent MSys2 filename munging for arguments that look like file paths but
+# aren't
+$ENV{MSYS2_ARG_CONV_EXCL} = "/CN=";
+
+my @app = qw(openssl cmp);
 
 my @cmp_basic_tests = (
     [ "show help",                        [ "-help"               ], 1 ],
@@ -41,11 +45,14 @@ my @cmp_basic_tests = (
     );
 
 my @cmp_server_tests = (
-    [ "with polling",             [ "-poll_count", "1"       ], 1 ],
-    [ "with loader_attic engine", [ "-engine", "loader_attic"],
-      !disabled('dynamic-engine') &&
-      !disabled("deprecated-3.0")  ]
+    [ "with polling",             [ "-poll_count", "1"       ], 1 ]
     );
+
+# loader_attic doesn't build on VMS, so we don't test it
+push @cmp_server_tests, (
+    [ "with loader_attic engine", [ "-engine", "loader_attic"], 1 ]
+    )
+    unless disabled('loadereng');
 
 plan tests => @cmp_basic_tests + @cmp_server_tests;
 
@@ -53,7 +60,7 @@ foreach (@cmp_basic_tests) {
     my $title = $$_[0];
     my $params = $$_[1];
     my $expected = $$_[2];
-    ok($expected == run(cmd([$app, "-config", '""', @$params])),
+    ok($expected == run(app([@app, "-config", '', @$params])),
        $title);
 }
 
@@ -66,7 +73,7 @@ foreach (@cmp_server_tests) {
     my $rsp_cert = srctop_file('test',  'certs', 'ee-cert-1024.pem');
     my $outfile = result_file("test.certout.pem");
     ok($expected ==
-       run(cmd([$app, "-config", '""', @$extra_args,
+       run(app([@app, "-config", '', @$extra_args,
                 "-use_mock_srv", "-srv_ref", "mock server",
                 "-srv_secret", $secret,
                 "-rsp_cert", $rsp_cert,

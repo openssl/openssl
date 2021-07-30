@@ -532,7 +532,6 @@ my %deprecated_disablables = (
 
 our %disabled = ( # "what"         => "comment"
                   "fips"                => "default",
-                  "acvp-tests"          => "default",
                   "asan"                => "default",
                   "buildtest-c++"       => "default",
                   "crypto-mdebug"       => "default",
@@ -618,6 +617,7 @@ my @disable_cascades = (
     "module"            => [ "fips", "dso" ],
 
     "engine"            => [ "dynamic-engine", grep(/eng$/, @disablables) ],
+    "dynamic-engine"    => [ "loadereng" ],
     "hw"                => [ "padlockeng" ],
 
     # no-autoalginit is only useful when building non-shared
@@ -637,7 +637,7 @@ my @disable_cascades = (
 
     "cmp"               => [ "crmf" ],
 
-    "fips"              => [ "fips-securitychecks" ],
+    "fips"              => [ "fips-securitychecks", "acvp-tests" ],
 
     "deprecated-3.0"    => [ "engine", "srp" ]
     );

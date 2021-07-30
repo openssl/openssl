@@ -14,6 +14,9 @@
 #include <openssl/core_names.h>
 #include <openssl/err.h>
 #include <openssl/proverr.h>
+#ifndef FIPS_MODULE
+# include <openssl/engine.h>
+#endif
 #include "prov/provider_util.h"
 #include "internal/nelem.h"
 

@@ -195,7 +195,7 @@ ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips_fail.cnf', '-module', $infi
 ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips_fail.cnf', '-module', $infile,
             '-provider_name', 'fips', '-mac_name', 'HMAC',
             '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
-            '-section_name', 'fips_sect', '-corrupt_desc', 'AES_GCM_Encrypt'])),
+            '-section_name', 'fips_sect', '-corrupt_desc', 'AES_GCM'])),
    "fipsinstall fails when the AES_GCM result is corrupted");
 
 # corrupt cipher decrypt test
