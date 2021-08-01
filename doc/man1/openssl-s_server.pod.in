@@ -83,6 +83,7 @@ B<openssl> B<s_server>
 [B<-security_debug>]
 [B<-security_debug_verbose>]
 [B<-brief>]
+[B<-noninteractive>]
 [B<-rev>]
 [B<-async>]
 [B<-max_send_frag> I<+int>]
@@ -547,6 +548,11 @@ Show verbose trace output of protocol messages.
 
 Provide a brief summary of connection parameters instead of the normal verbose
 output.
+
+=item B<-noninteractive>
+
+Prevent s_server from reading user's input from terminal, like B<-brief> and
+B<-quiet> do, but don't inhibit printing of session and certificate information.
 
 =item B<-rev>
 

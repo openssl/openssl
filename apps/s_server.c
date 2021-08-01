@@ -90,6 +90,7 @@ static int s_msg = 0;
 static int s_quiet = 0;
 static int s_ign_eof = 0;
 static int s_brief = 0;
+static int s_noninteractive = 0;
 
 static char *keymatexportlabel = NULL;
 static int keymatexportlen = 20;
@@ -704,7 +705,7 @@ typedef enum OPTION_choice {
     OPT_STATUS_TIMEOUT, OPT_PROXY, OPT_NO_PROXY, OPT_STATUS_URL,
     OPT_STATUS_FILE, OPT_MSG, OPT_MSGFILE,
     OPT_TRACE, OPT_SECURITY_DEBUG, OPT_SECURITY_DEBUG_VERBOSE, OPT_STATE,
-    OPT_CRLF, OPT_QUIET, OPT_BRIEF, OPT_NO_DHE,
+    OPT_CRLF, OPT_QUIET, OPT_BRIEF, OPT_NONINTERACTIVE, OPT_NO_DHE,
     OPT_NO_RESUME_EPHEMERAL, OPT_PSK_IDENTITY, OPT_PSK_HINT, OPT_PSK,
     OPT_PSK_SESS, OPT_SRPVFILE, OPT_SRPUSERSEED, OPT_REV, OPT_WWW,
     OPT_UPPER_WWW, OPT_HTTP, OPT_ASYNC, OPT_SSL_CONFIG,
@@ -866,6 +867,8 @@ const OPTIONS s_server_options[] = {
      "Print more output from SSL/TLS security framework"},
     {"brief", OPT_BRIEF, '-',
      "Restrict output to brief summary of connection parameters"},
+    {"noninteractive", OPT_NONINTERACTIVE, '-',
+     "Prevent s_server from reading user's input from terminal"},
     {"rev", OPT_REV, '-',
      "act as an echo server that sends back received text reversed"},
     {"debug", OPT_DEBUG, '-', "Print more output"},
@@ -1066,6 +1069,7 @@ int s_server_main(int argc, char *argv[])
     s_msg = 0;
     s_quiet = 0;
     s_brief = 0;
+    s_noninteractive = 0;
     async = 0;
     use_sendfile = 0;
 
@@ -1413,6 +1417,8 @@ int s_server_main(int argc, char *argv[])
         case OPT_BRIEF:
             s_quiet = s_brief = verify_args.quiet = 1;
             break;
+        case OPT_NONINTERACTIVE:
+            s_noninteractive = 1;
         case OPT_NO_DHE:
             no_dhe = 1;
             break;
@@ -2543,7 +2549,7 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
                 i = raw_read_stdin(buf, bufsize);
             }
 
-            if (!s_quiet && !s_brief) {
+            if (!s_quiet && !s_brief && !s_noninteractive) {
                 if ((i <= 0) || (buf[0] == 'Q')) {
                     BIO_printf(bio_s_out, "DONE\n");
                     (void)BIO_flush(bio_s_out);
