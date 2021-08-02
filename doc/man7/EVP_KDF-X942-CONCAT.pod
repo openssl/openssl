@@ -17,7 +17,7 @@ can be used with the EVP_KDF_fetch() function.
 
 This is an alias for "X963KDF".
 
-See <EVP_KDF-X963(7)> for a list of supported parameters and examples.
+See L<EVP_KDF-X963(7)> for a list of supported parameters and examples.
 
 =head1 HISTORY
 
