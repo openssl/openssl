@@ -686,7 +686,7 @@ int req_main(int argc, char **argv)
         EVP_PKEY_CTX_free(genctx);
         genctx = NULL;
     }
-    if (keyout == NULL) {
+    if (keyout == NULL && keyfile == NULL) {
         keyout = NCONF_get_string(req_conf, section, KEYFILE);
         if (keyout == NULL)
             ERR_clear_error();
