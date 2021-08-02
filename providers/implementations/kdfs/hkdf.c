@@ -23,6 +23,7 @@
 #include <openssl/proverr.h>
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
+#include "internal/packet.h"
 #include "crypto/evp.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
@@ -40,6 +41,9 @@ static OSSL_FUNC_kdf_settable_ctx_params_fn kdf_hkdf_settable_ctx_params;
 static OSSL_FUNC_kdf_set_ctx_params_fn kdf_hkdf_set_ctx_params;
 static OSSL_FUNC_kdf_gettable_ctx_params_fn kdf_hkdf_gettable_ctx_params;
 static OSSL_FUNC_kdf_get_ctx_params_fn kdf_hkdf_get_ctx_params;
+static OSSL_FUNC_kdf_derive_fn kdf_tls1_3_derive;
+static OSSL_FUNC_kdf_settable_ctx_params_fn kdf_tls1_3_settable_ctx_params;
+static OSSL_FUNC_kdf_set_ctx_params_fn kdf_tls1_3_set_ctx_params;
 
 static int HKDF(OSSL_LIB_CTX *libctx, const EVP_MD *evp_md,
                 const unsigned char *salt, size_t salt_len,
@@ -55,6 +59,15 @@ static int HKDF_Expand(const EVP_MD *evp_md,
                        const unsigned char *info, size_t info_len,
                        unsigned char *okm, size_t okm_len);
 
+/* Settable context parameters that are common across HKDF and the TLS KDF */
+#define HKDF_COMMON_SETTABLES                                           \
+        OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_MODE, NULL, 0),           \
+        OSSL_PARAM_int(OSSL_KDF_PARAM_MODE, NULL),                      \
+        OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_PROPERTIES, NULL, 0),     \
+        OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_DIGEST, NULL, 0),         \
+        OSSL_PARAM_octet_string(OSSL_KDF_PARAM_KEY, NULL, 0),           \
+        OSSL_PARAM_octet_string(OSSL_KDF_PARAM_SALT, NULL, 0)
+
 typedef struct {
     void *provctx;
     int mode;
@@ -63,6 +76,12 @@ typedef struct {
     size_t salt_len;
     unsigned char *key;
     size_t key_len;
+    unsigned char *prefix;
+    size_t prefix_len;
+    unsigned char *label;
+    size_t label_len;
+    unsigned char *data;
+    size_t data_len;
     unsigned char info[HKDF_MAXBUF];
     size_t info_len;
 } KDF_HKDF;
@@ -98,6 +117,9 @@ static void kdf_hkdf_reset(void *vctx)
 
     ossl_prov_digest_reset(&ctx->digest);
     OPENSSL_free(ctx->salt);
+    OPENSSL_free(ctx->prefix);
+    OPENSSL_free(ctx->label);
+    OPENSSL_clear_free(ctx->data, ctx->data_len);
     OPENSSL_clear_free(ctx->key, ctx->key_len);
     OPENSSL_cleanse(ctx->info, ctx->info_len);
     memset(ctx, 0, sizeof(*ctx));
@@ -163,11 +185,10 @@ static int kdf_hkdf_derive(void *vctx, unsigned char *key, size_t keylen,
     }
 }
 
-static int kdf_hkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+static int hkdf_common_set_ctx_params(KDF_HKDF *ctx, const OSSL_PARAM params[])
 {
-    const OSSL_PARAM *p;
-    KDF_HKDF *ctx = vctx;
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
+    const OSSL_PARAM *p;
     int n;
 
     if (params == NULL)
@@ -219,6 +240,21 @@ static int kdf_hkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
                 return 0;
         }
     }
+
+    return 1;
+}
+
+static int kdf_hkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+{
+    const OSSL_PARAM *p;
+    KDF_HKDF *ctx = vctx;
+
+    if (params == NULL)
+        return 1;
+
+    if (!hkdf_common_set_ctx_params(ctx, params))
+        return 0;
+
     /* The info fields concatenate, so process them all */
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_INFO)) != NULL) {
         ctx->info_len = 0;
@@ -243,12 +279,7 @@ static const OSSL_PARAM *kdf_hkdf_settable_ctx_params(ossl_unused void *ctx,
                                                       ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_settable_ctx_params[] = {
-        OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_MODE, NULL, 0),
-        OSSL_PARAM_int(OSSL_KDF_PARAM_MODE, NULL),
-        OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_PROPERTIES, NULL, 0),
-        OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_DIGEST, NULL, 0),
-        OSSL_PARAM_octet_string(OSSL_KDF_PARAM_SALT, NULL, 0),
-        OSSL_PARAM_octet_string(OSSL_KDF_PARAM_KEY, NULL, 0),
+        HKDF_COMMON_SETTABLES,
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_INFO, NULL, 0),
         OSSL_PARAM_END
     };
@@ -496,3 +527,215 @@ static int HKDF_Expand(const EVP_MD *evp_md,
     HMAC_CTX_free(hmac);
     return ret;
 }
+
+/*
+ * TLS uses slight variations of the above and for FIPS validation purposes,
+ * they need to be present here.
+ * Refer to RFC 8446 section 7 for specific details.
+ */
+
+/*
+ * Given a |secret|; a |label| of length |labellen|; and |data| of length
+ * |datalen| (e.g. typically a hash of the handshake messages), derive a new
+ * secret |outlen| bytes long and store it in the location pointed to be |out|.
+ * The |data| value may be zero length. Returns 1 on success and 0 on failure.
+ */
+static int prov_tls13_hkdf_expand(const EVP_MD *md,
+                                  const unsigned char *key, size_t keylen,
+                                  const unsigned char *prefix, size_t prefixlen,
+                                  const unsigned char *label, size_t labellen,
+                                  const unsigned char *data, size_t datalen,
+                                  unsigned char *out, size_t outlen)
+{
+    size_t hkdflabellen;
+    unsigned char hkdflabel[HKDF_MAXBUF];
+    WPACKET pkt;
+
+    /*
+     * 2 bytes for length of derived secret + 1 byte for length of combined
+     * prefix and label + bytes for the label itself + 1 byte length of hash
+     * + bytes for the hash itself.  We've got the maximum the KDF can handle
+     * which should always be sufficient.
+     */
+    if (!WPACKET_init_static_len(&pkt, hkdflabel, sizeof(hkdflabel), 0)
+            || !WPACKET_put_bytes_u16(&pkt, outlen)
+            || !WPACKET_start_sub_packet_u8(&pkt)
+            || !WPACKET_memcpy(&pkt, prefix, prefixlen)
+            || !WPACKET_memcpy(&pkt, label, labellen)
+            || !WPACKET_close(&pkt)
+            || !WPACKET_sub_memcpy_u8(&pkt, data, (data == NULL) ? 0 : datalen)
+            || !WPACKET_get_total_written(&pkt, &hkdflabellen)
+            || !WPACKET_finish(&pkt)) {
+        WPACKET_cleanup(&pkt);
+        return 0;
+    }
+
+    return HKDF_Expand(md, key, keylen, hkdflabel, hkdflabellen,
+                       out, outlen);
+}
+
+static int prov_tls13_hkdf_generate_secret(OSSL_LIB_CTX *libctx,
+                                           const EVP_MD *md,
+                                           const unsigned char *prevsecret,
+                                           size_t prevsecretlen,
+                                           const unsigned char *insecret,
+                                           size_t insecretlen,
+                                           const unsigned char *prefix,
+                                           size_t prefixlen,
+                                           const unsigned char *label,
+                                           size_t labellen,
+                                           unsigned char *out, size_t outlen)
+{
+    size_t mdlen;
+    int ret;
+    unsigned char preextractsec[EVP_MAX_MD_SIZE];
+    /* Always filled with zeros */
+    static const unsigned char default_zeros[EVP_MAX_MD_SIZE];
+
+    ret = EVP_MD_get_size(md);
+    /* Ensure cast to size_t is safe */
+    if (ret <= 0)
+        return 0;
+    mdlen = (size_t)ret;
+
+    if (insecret == NULL) {
+        insecret = default_zeros;
+        insecretlen = mdlen;
+    }
+    if (prevsecret == NULL) {
+        prevsecret = default_zeros;
+        prevsecretlen = 0;
+    } else {
+        EVP_MD_CTX *mctx = EVP_MD_CTX_new();
+        unsigned char hash[EVP_MAX_MD_SIZE];
+
+        /* The pre-extract derive step uses a hash of no messages */
+        if (mctx == NULL
+                || EVP_DigestInit_ex(mctx, md, NULL) <= 0
+                || EVP_DigestFinal_ex(mctx, hash, NULL) <= 0) {
+            EVP_MD_CTX_free(mctx);
+            return 0;
+        }
+        EVP_MD_CTX_free(mctx);
+
+        /* Generate the pre-extract secret */
+        if (!prov_tls13_hkdf_expand(md, prevsecret, mdlen,
+                                    prefix, prefixlen, label, labellen,
+                                    hash, mdlen, preextractsec, mdlen))
+            return 0;
+        prevsecret = preextractsec;
+        prevsecretlen = mdlen;
+    }
+
+    ret = HKDF_Extract(libctx, md, prevsecret, prevsecretlen,
+                       insecret, insecretlen, out, outlen);
+
+    if (prevsecret == preextractsec)
+        OPENSSL_cleanse(preextractsec, mdlen);
+    return ret;
+}
+
+static int kdf_tls1_3_derive(void *vctx, unsigned char *key, size_t keylen,
+                             const OSSL_PARAM params[])
+{
+    KDF_HKDF *ctx = (KDF_HKDF *)vctx;
+    const EVP_MD *md;
+
+    if (!ossl_prov_is_running() || !kdf_tls1_3_set_ctx_params(ctx, params))
+        return 0;
+
+    md = ossl_prov_digest_md(&ctx->digest);
+    if (md == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
+        return 0;
+    }
+
+    switch (ctx->mode) {
+    default:
+        return 0;
+
+    case EVP_KDF_HKDF_MODE_EXTRACT_ONLY:
+        return prov_tls13_hkdf_generate_secret(PROV_LIBCTX_OF(ctx->provctx),
+                                               md,
+                                               ctx->salt, ctx->salt_len,
+                                               ctx->key, ctx->key_len,
+                                               ctx->prefix, ctx->prefix_len,
+                                               ctx->label, ctx->label_len,
+                                               key, keylen);
+
+    case EVP_KDF_HKDF_MODE_EXPAND_ONLY:
+        return prov_tls13_hkdf_expand(md, ctx->key, ctx->key_len,
+                                      ctx->prefix, ctx->prefix_len,
+                                      ctx->label, ctx->label_len,
+                                      ctx->data, ctx->data_len,
+                                      key, keylen);
+    }
+}
+
+static int kdf_tls1_3_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+{
+    const OSSL_PARAM *p;
+    KDF_HKDF *ctx = vctx;
+
+    if (params == NULL)
+        return 1;
+
+    if (!hkdf_common_set_ctx_params(ctx, params))
+        return 0;
+
+    if (ctx->mode == EVP_KDF_HKDF_MODE_EXTRACT_AND_EXPAND) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_MODE);
+        return 0;
+    }
+
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PREFIX)) != NULL) {
+        OPENSSL_free(ctx->prefix);
+        ctx->prefix = NULL;
+        if (!OSSL_PARAM_get_octet_string(p, (void **)&ctx->prefix, 0,
+                                         &ctx->prefix_len))
+            return 0;
+    }
+
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_LABEL)) != NULL) {
+        OPENSSL_free(ctx->label);
+        ctx->label = NULL;
+        if (!OSSL_PARAM_get_octet_string(p, (void **)&ctx->label, 0,
+                                         &ctx->label_len))
+            return 0;
+    }
+
+    OPENSSL_clear_free(ctx->data, ctx->data_len);
+    ctx->data = NULL;
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_DATA)) != NULL
+            && !OSSL_PARAM_get_octet_string(p, (void **)&ctx->data, 0,
+                                            &ctx->data_len))
+        return 0;
+    return 1;
+}
+
+static const OSSL_PARAM *kdf_tls1_3_settable_ctx_params(ossl_unused void *ctx,
+                                                        ossl_unused void *provctx)
+{
+    static const OSSL_PARAM known_settable_ctx_params[] = {
+        HKDF_COMMON_SETTABLES,
+        OSSL_PARAM_octet_string(OSSL_KDF_PARAM_PREFIX, NULL, 0),
+        OSSL_PARAM_octet_string(OSSL_KDF_PARAM_LABEL, NULL, 0),
+        OSSL_PARAM_octet_string(OSSL_KDF_PARAM_DATA, NULL, 0),
+        OSSL_PARAM_END
+    };
+    return known_settable_ctx_params;
+}
+
+const OSSL_DISPATCH ossl_kdf_tls1_3_kdf_functions[] = {
+    { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))kdf_hkdf_new },
+    { OSSL_FUNC_KDF_FREECTX, (void(*)(void))kdf_hkdf_free },
+    { OSSL_FUNC_KDF_RESET, (void(*)(void))kdf_hkdf_reset },
+    { OSSL_FUNC_KDF_DERIVE, (void(*)(void))kdf_tls1_3_derive },
+    { OSSL_FUNC_KDF_SETTABLE_CTX_PARAMS,
+      (void(*)(void))kdf_tls1_3_settable_ctx_params },
+    { OSSL_FUNC_KDF_SET_CTX_PARAMS, (void(*)(void))kdf_tls1_3_set_ctx_params },
+    { OSSL_FUNC_KDF_GETTABLE_CTX_PARAMS,
+      (void(*)(void))kdf_hkdf_gettable_ctx_params },
+    { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))kdf_hkdf_get_ctx_params },
+    { 0, NULL }
+};
