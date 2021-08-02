@@ -346,6 +346,8 @@ static const OSSL_ALGORITHM fips_macs[] = {
 
 static const OSSL_ALGORITHM fips_kdfs[] = {
     { PROV_NAMES_HKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_hkdf_functions },
+    { PROV_NAMES_TLS1_3_KDF, FIPS_DEFAULT_PROPERTIES,
+      ossl_kdf_tls1_3_kdf_functions },
     { PROV_NAMES_SSKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_sskdf_functions },
     { PROV_NAMES_PBKDF2, FIPS_DEFAULT_PROPERTIES, ossl_kdf_pbkdf2_functions },
     { PROV_NAMES_SSHKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_sshkdf_functions },

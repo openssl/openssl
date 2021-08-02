@@ -320,6 +320,8 @@ static const OSSL_ALGORITHM deflt_macs[] = {
 
 static const OSSL_ALGORITHM deflt_kdfs[] = {
     { PROV_NAMES_HKDF, "provider=default", ossl_kdf_hkdf_functions },
+    { PROV_NAMES_TLS1_3_KDF, "provider=default",
+      ossl_kdf_tls1_3_kdf_functions },
     { PROV_NAMES_SSKDF, "provider=default", ossl_kdf_sskdf_functions },
     { PROV_NAMES_PBKDF2, "provider=default", ossl_kdf_pbkdf2_functions },
     { PROV_NAMES_PKCS12KDF, "provider=default", ossl_kdf_pkcs12_functions },
