@@ -257,6 +257,7 @@ extern const OSSL_DISPATCH ossl_kdf_scrypt_functions[];
 #endif
 extern const OSSL_DISPATCH ossl_kdf_tls1_prf_functions[];
 extern const OSSL_DISPATCH ossl_kdf_hkdf_functions[];
+extern const OSSL_DISPATCH ossl_kdf_tls1_3_kdf_functions[];
 extern const OSSL_DISPATCH ossl_kdf_sshkdf_functions[];
 extern const OSSL_DISPATCH ossl_kdf_sskdf_functions[];
 extern const OSSL_DISPATCH ossl_kdf_x963_kdf_functions[];
