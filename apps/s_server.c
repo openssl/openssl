@@ -1419,6 +1419,7 @@ int s_server_main(int argc, char *argv[])
             break;
         case OPT_NONINTERACTIVE:
             s_noninteractive = 1;
+            break;
         case OPT_NO_DHE:
             no_dhe = 1;
             break;
