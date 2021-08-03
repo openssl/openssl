@@ -86,13 +86,15 @@ The OpenSSL FIPS provider supports these operations and algorithms:
 
 =item HKDF, see L<EVP_KDF-HKDF(7)>
 
+=item TLS13-KDF, see L<EVP_KDF-TLS13_KDF(7)>
+
 =item SSKDF, see L<EVP_KDF-SSKDF(7)>
 
 =item PBKDF2, see L<EVP_KDF-PBKDF2(7)>
 
 =item SSHKDF, see L<EVP_KDF-SSHKDF(7)>
 
-=item TLS1-PRF, see L<EVP_KDF-TLS1-PRF(7)>
+=item TLS1-PRF, see L<EVP_KDF-TLS1_PRF(7)>
 
 =item KBKDF, see L<EVP_KDF-KBKDF(7)>
 
@@ -298,6 +300,10 @@ Signature tests used with the "KAT_Signature" type.
 Key agreement tests used with the "KAT_KA" type.
 
 =item "HKDF" (B<OSSL_SELF_TEST_DESC_KDF_HKDF>)
+
+=item "TLS13_KDF_EXTRACT" (B<OSSL_SELF_TEST_DESC_KDF_TLS13_EXTRACT>)
+
+=item "TLS13_KDF_EXPAND" (B<OSSL_SELF_TEST_DESC_KDF_TLS13_EXPAND>)
 
 =item "SSKDF" (B<OSSL_SELF_TEST_DESC_KDF_SSKDF>)
 
