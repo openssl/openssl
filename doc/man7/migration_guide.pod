@@ -470,7 +470,7 @@ Remove your usage of the low level APIs. In this case you will need to rewrite y
 =head3 Error code changes
 
 As OpenSSL 3.0 provides a brand new Encoder/Decoder mechanism for working with
-widely used file formats, an application code that checks for particular error
+widely used file formats, application code that checks for particular error
 reason codes on key loading failures might need an update.
 
 Password-protected keys may deserve special attention. If only some errors
