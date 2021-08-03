@@ -473,9 +473,9 @@ As OpenSSL 3.0 provides a brand new Encoder/Decoder mechanism for working with
 widely used file formats, an application code that checks for particular error
 reason codes on key loading failures might need an update.
 
-The password-protected keys may deserve a special attention. If only some errors
+Password-protected keys may deserve special attention. If only some errors
 are treated as an indicator that the user should be asked about the password again,
-it's worth adding processing the error lib B<ERR_LIB_OSSL_DECODER>.
+it's worth testing these scenarios and processing the newly relevant codes.
 
 There may be more cases to treat specially, depending on the calling application code.
 
