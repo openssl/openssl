@@ -501,12 +501,10 @@ install_fips: build_sw $(INSTALL_FIPSMODULECONF)
 	@$(PERL) $(SRCDIR)\util\mkdir-p.pl $(MODULESDIR)
 	@$(ECHO) "*** Installing FIPS module"
 	@$(ECHO) "install $(INSTALL_FIPSMODULE) -> $(MODULESDIR)\$(FIPSMODULENAME)"
-	@copy "$(INSTALL_FIPSMODULE)" $(MODULESDIR)\$(FIPSMODULENAME).new
-	@move /Y $(MODULESDIR)\$(FIPSMODULENAME).new \
-	       $(MODULESDIR)\$(FIPSMODULENAME)
+	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(INSTALL_FIPSMODULE)" "$(MODULESDIR)"
 	@$(ECHO) "*** Installing FIPS module configuration"
 	@$(ECHO) "install $(INSTALL_FIPSMODULECONF) -> $(OPENSSLDIR)\fipsmodule.cnf"
-	@copy $(INSTALL_FIPSMODULECONF) "$(OPENSSLDIR)\fipsmodule.cnf"
+	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(INSTALL_FIPSMODULECONF)" "$(OPENSSLDIR)"
 
 uninstall_fips:
 	@$(ECHO) "*** Uninstalling FIPS module configuration"
