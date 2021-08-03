@@ -500,7 +500,7 @@ list-tests :
         @ WRITE SYS$OUTPUT "Tests are not supported with your chosen Configure options"
         @ ! {- output_on() if !$disabled{tests}; "" -}
 
-install : install_sw install_ssldirs install_docs install_msg {- $disabled{fips} ? "" : "install_fips" -}
+install : install_sw install_ssldirs install_docs {- $disabled{fips} ? "" : "install_fips" -} install_msg
 
 install_msg :
         @ WRITE SYS$OUTPUT ""
