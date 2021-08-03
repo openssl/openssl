@@ -494,8 +494,72 @@ static const ST_KAT_PARAM kbkdf_params[] = {
     ST_KAT_PARAM_END()
 };
 
+static const char tls13_kdf_digest[] = "SHA256";
+static int tls13_kdf_extract_mode = EVP_KDF_HKDF_MODE_EXTRACT_ONLY;
+static int tls13_kdf_expand_mode = EVP_KDF_HKDF_MODE_EXPAND_ONLY;
+static const unsigned char tls13_kdf_prefix[] = {
+    0x74, 0x6C, 0x73, 0x31, 0x33, 0x20          /* "tls13 " */
+};
+static const unsigned char tls13_kdf_client_early_secret_label[] = {
+    0x63, 0x20, 0x65, 0x20, 0x74, 0x72, 0x61, 0x66,
+    0x66, 0x69, 0x63                            /* "c e traffic"*/
+};
+static const unsigned char tls13_kdf_psk[] = {
+    0xF8, 0xAF, 0x6A, 0xEA, 0x2D, 0x39, 0x7B, 0xAF,
+    0x29, 0x48, 0xA2, 0x5B, 0x28, 0x34, 0x20, 0x06,
+    0x92, 0xCF, 0xF1, 0x7E, 0xEE, 0x91, 0x65, 0xE4,
+    0xE2, 0x7B, 0xAB, 0xEE, 0x9E, 0xDE, 0xFD, 0x05
+};
+static const unsigned char tls13_kdf_client_hello_hash[] = {
+    0x7c, 0x92, 0xf6, 0x8b, 0xd5, 0xbf, 0x36, 0x38,
+    0xea, 0x33, 0x8a, 0x64, 0x94, 0x72, 0x2e, 0x1b,
+    0x44, 0x12, 0x7e, 0x1b, 0x7e, 0x8a, 0xad, 0x53,
+    0x5f, 0x23, 0x22, 0xa6, 0x44, 0xff, 0x22, 0xb3
+};
+
+static const unsigned char tls13_kdf_early_secret[] = {
+    0x15, 0x3B, 0x63, 0x94, 0xA9, 0xC0, 0x3C, 0xF3,
+    0xF5, 0xAC, 0xCC, 0x6E, 0x45, 0x5A, 0x76, 0x93,
+    0x28, 0x11, 0x38, 0xA1, 0xBC, 0xFA, 0x38, 0x03,
+    0xC2, 0x67, 0x35, 0xDD, 0x11, 0x94, 0xD2, 0x16
+};
+static const unsigned char tls13_kdf_client_early_traffic_secret[] = {
+    0xC8, 0x05, 0x83, 0xA9, 0x0E, 0x99, 0x5C, 0x48,
+    0x96, 0x00, 0x49, 0x2A, 0x5D, 0xA6, 0x42, 0xE6,
+    0xB1, 0xF6, 0x79, 0xBA, 0x67, 0x48, 0x28, 0x79,
+    0x2D, 0xF0, 0x87, 0xB9, 0x39, 0x63, 0x61, 0x71
+};
+static const ST_KAT_PARAM tls13_kdf_early_secret_params[] = {
+    ST_KAT_PARAM_INT(OSSL_KDF_PARAM_MODE, tls13_kdf_extract_mode),
+    ST_KAT_PARAM_UTF8STRING(OSSL_KDF_PARAM_DIGEST, tls13_kdf_digest),
+    ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_KEY, tls13_kdf_psk),
+    ST_KAT_PARAM_END()
+};
+static const ST_KAT_PARAM tls13_kdf_client_early_secret_params[] = {
+    ST_KAT_PARAM_INT(OSSL_KDF_PARAM_MODE, tls13_kdf_expand_mode),
+    ST_KAT_PARAM_UTF8STRING(OSSL_KDF_PARAM_DIGEST, tls13_kdf_digest),
+    ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_KEY, tls13_kdf_early_secret),
+    ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_DATA, tls13_kdf_client_hello_hash),
+    ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_PREFIX, tls13_kdf_prefix),
+    ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_LABEL,
+                       tls13_kdf_client_early_secret_label),
+    ST_KAT_PARAM_END()
+};
+
 static const ST_KAT_KDF st_kat_kdf_tests[] =
 {
+    {
+        OSSL_SELF_TEST_DESC_KDF_TLS13_EXTRACT,
+        OSSL_KDF_NAME_TLS1_3_KDF,
+        tls13_kdf_early_secret_params,
+        ITM(tls13_kdf_early_secret)
+    },
+    {
+        OSSL_SELF_TEST_DESC_KDF_TLS13_EXPAND,
+        OSSL_KDF_NAME_TLS1_3_KDF,
+        tls13_kdf_client_early_secret_params,
+        ITM(tls13_kdf_client_early_traffic_secret)
+    },
     {
         OSSL_SELF_TEST_DESC_KDF_TLS12_PRF,
         OSSL_KDF_NAME_TLS1_PRF,
