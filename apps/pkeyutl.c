@@ -307,12 +307,10 @@ int pkeyutl_main(int argc, char **argv)
                    mctx, digestname, libctx, app_get0_propq());
     if (ctx == NULL) {
         BIO_printf(bio_err, "%s: Error initializing context\n", prog);
-        ERR_print_errors(bio_err);
         goto end;
     }
     if (peerkey != NULL && !setup_peer(ctx, peerform, peerkey, e)) {
         BIO_printf(bio_err, "%s: Error setting up peer key\n", prog);
-        ERR_print_errors(bio_err);
         goto end;
     }
     if (pkeyopts != NULL) {
@@ -325,7 +323,6 @@ int pkeyutl_main(int argc, char **argv)
             if (pkey_ctrl_string(ctx, opt) <= 0) {
                 BIO_printf(bio_err, "%s: Can't set parameter \"%s\":\n",
                            prog, opt);
-                ERR_print_errors(bio_err);
                 goto end;
             }
         }
@@ -492,14 +489,13 @@ int pkeyutl_main(int argc, char **argv)
         } else {
             BIO_puts(bio_err, "Key derivation failed\n");
         }
-        ERR_print_errors(bio_err);
         goto end;
     }
     ret = 0;
 
     if (asn1parse) {
         if (!ASN1_parse_dump(out, buf_out, buf_outlen, 1, -1))
-            ERR_print_errors(bio_err);
+            ERR_print_errors(bio_err); /* but still return success */
     } else if (hexdump) {
         BIO_dump(out, (char *)buf_out, buf_outlen);
     } else {
@@ -507,6 +503,8 @@ int pkeyutl_main(int argc, char **argv)
     }
 
  end:
+    if (ret != 0)
+        ERR_print_errors(bio_err);
     EVP_MD_CTX_free(mctx);
     EVP_PKEY_CTX_free(ctx);
     EVP_MD_free(md);
@@ -671,15 +669,12 @@ static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
     peer = load_pubkey(file, peerform, 0, NULL, engine, "peer key");
     if (peer == NULL) {
         BIO_printf(bio_err, "Error reading peer key %s\n", file);
-        ERR_print_errors(bio_err);
         return 0;
     }
 
-    ret = EVP_PKEY_derive_set_peer(ctx, peer);
+    ret = EVP_PKEY_derive_set_peer(ctx, peer) > 0;
 
     EVP_PKEY_free(peer);
-    if (ret <= 0)
-        ERR_print_errors(bio_err);
     return ret;
 }
 
