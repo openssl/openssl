@@ -44,6 +44,7 @@ struct ossl_init_stop_st {
 
 static OPENSSL_INIT_STOP *stop_handlers = NULL;
 static CRYPTO_RWLOCK *init_lock = NULL;
+static CRYPTO_THREAD_LOCAL in_init_config_local;
 
 static CRYPTO_ONCE base = CRYPTO_ONCE_STATIC_INIT;
 static int base_inited = 0;
@@ -61,7 +62,10 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
     OPENSSL_cpuid_setup();
 
     if (!ossl_init_thread())
-        return 0;
+        goto err;
+
+    if (!CRYPTO_THREAD_init_local(&in_init_config_local, NULL))
+        goto err;
 
     base_inited = 1;
     return 1;
@@ -366,6 +370,8 @@ void OPENSSL_cleanup(void)
     CRYPTO_THREAD_lock_free(init_lock);
     init_lock = NULL;
 
+    CRYPTO_THREAD_cleanup_local(&in_init_config_local);
+
     /*
      * We assume we are single-threaded for this function, i.e. no race
      * conditions for the various "*_inited" vars below.
@@ -566,22 +572,29 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
         return 0;
 
     if (opts & OPENSSL_INIT_LOAD_CONFIG) {
-        int ret;
+        int loading = CRYPTO_THREAD_get_local(&in_init_config_local) != NULL;
 
-        if (settings == NULL) {
-            ret = RUN_ONCE(&config, ossl_init_config);
-        } else {
-            if (!CRYPTO_THREAD_write_lock(init_lock))
+        /* If called recursively from OBJ_ calls, just skip it. */
+        if (!loading) {
+            int ret;
+
+            if (!CRYPTO_THREAD_set_local(&in_init_config_local, (void *)-1))
                 return 0;
-            conf_settings = settings;
-            ret = RUN_ONCE_ALT(&config, ossl_init_config_settings,
-                               ossl_init_config);
-            conf_settings = NULL;
-            CRYPTO_THREAD_unlock(init_lock);
-        }
+            if (settings == NULL) {
+                ret = RUN_ONCE(&config, ossl_init_config);
+            } else {
+                if (!CRYPTO_THREAD_write_lock(init_lock))
+                    return 0;
+                conf_settings = settings;
+                ret = RUN_ONCE_ALT(&config, ossl_init_config_settings,
+                                   ossl_init_config);
+                conf_settings = NULL;
+                CRYPTO_THREAD_unlock(init_lock);
+            }
 
-        if (ret <= 0)
-            return 0;
+            if (ret <= 0)
+                return 0;
+        }
     }
 
     if ((opts & OPENSSL_INIT_ASYNC)
