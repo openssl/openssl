@@ -475,10 +475,9 @@ reason codes on key loading failures might need an update.
 
 The password-protected keys may deserve a special attention. If only some errors
 are treated as an indicator that the user should be asked about the password again,
-it's worth adding processing the error lib B<ERR_LIB_OSSL_DECODER> and error
-reason B<ERR_R_UNSUPPORTED> as a new case.
-There may be more cases to treat specially, depending on the calling application code.
+it's worth adding processing the error lib B<ERR_LIB_OSSL_DECODER>.
 
+There may be more cases to treat specially, depending on the calling application code.
 
 =head2 Upgrading from OpenSSL 1.0.2
 
