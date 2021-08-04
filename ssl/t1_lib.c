@@ -3302,7 +3302,7 @@ int tls_choose_sigalg(SSL *s, int fatalerrs)
                 if ((lu = tls1_get_legacy_sigalg(s, -1)) == NULL) {
                     if (!fatalerrs)
                         return 1;
-                    SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                    SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
                              SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM);
                     return 0;
                 }
@@ -3317,7 +3317,7 @@ int tls_choose_sigalg(SSL *s, int fatalerrs)
                 if (i == sent_sigslen) {
                     if (!fatalerrs)
                         return 1;
-                    SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
+                    SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
                              SSL_R_WRONG_SIGNATURE_TYPE);
                     return 0;
                 }
