@@ -551,6 +551,12 @@ static int prov_tls13_hkdf_expand(const EVP_MD *md,
     unsigned char hkdflabel[HKDF_MAXBUF];
     WPACKET pkt;
 
+    /*
+     * 2 bytes for length of derived secret + 1 byte for length of combined
+     * prefix and label + bytes for the label itself + 1 byte length of hash
+     * + bytes for the hash itself.  We've got the maximum the KDF can handle
+     * which should always be sufficient.
+     */
     if (!WPACKET_init_static_len(&pkt, hkdflabel, sizeof(hkdflabel), 0)
             || !WPACKET_put_bytes_u16(&pkt, outlen)
             || !WPACKET_start_sub_packet_u8(&pkt)
