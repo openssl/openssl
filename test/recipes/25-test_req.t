@@ -78,7 +78,7 @@ subtest "generating alt certificate requests with RSA" => sub {
 
 
 subtest "generating certificate requests with RSA" => sub {
-    plan tests => 7;
+    plan tests => 8;
 
     SKIP: {
         skip "RSA is not supported by this OpenSSL build", 2
@@ -102,6 +102,11 @@ subtest "generating certificate requests with RSA" => sub {
                     "-config", srctop_file("test", "test.cnf"),
                     "-verify", "-in", "testreq-rsa.pem", "-noout"])),
            "Verifying signature on request");
+
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-modulus", "-in", "testreq-rsa.pem", "-noout"])),
+           "Printing a modulus of the request key");
 
         ok(run(app(["openssl", "req",
                     "-config", srctop_file("test", "test.cnf"),

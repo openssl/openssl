@@ -996,8 +996,8 @@ int req_main(int argc, char **argv)
         if (EVP_PKEY_is_a(tpubkey, "RSA")) {
             BIGNUM *n = NULL;
 
-            /* Every RSA key has an 'n' */
-            EVP_PKEY_get_bn_param(pkey, "n", &n);
+            if (!EVP_PKEY_get_bn_param(tpubkey, "n", &n))
+                goto end;
             BN_print(out, n);
             BN_free(n);
         } else {
