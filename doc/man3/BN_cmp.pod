@@ -19,18 +19,18 @@ BN_cmp, BN_ucmp, BN_is_zero, BN_is_one, BN_is_word, BN_abs_is_word, BN_is_odd - 
 
 =head1 DESCRIPTION
 
-BN_cmp() compares the numbers B<a> and B<b>. BN_ucmp() compares their
+BN_cmp() compares the numbers I<a> and I<b>. BN_ucmp() compares their
 absolute values.
 
 BN_is_zero(), BN_is_one(), BN_is_word() and BN_abs_is_word() test if
-B<a> equals 0, 1, B<w>, or E<verbar>B<w>E<verbar> respectively.
-BN_is_odd() tests if a is odd.
+I<a> equals 0, 1, I<w>, or E<verbar>I<w>E<verbar> respectively.
+BN_is_odd() tests if I<a> is odd.
 
 =head1 RETURN VALUES
 
-BN_cmp() returns -1 if B<a> E<lt> B<b>, 0 if B<a> == B<b> and 1 if
-B<a> E<gt> B<b>. BN_ucmp() is the same using the absolute values
-of B<a> and B<b>.
+BN_cmp() returns -1 if I<a> E<lt> I<b>, 0 if I<a> == I<b> and 1 if
+I<a> E<gt> I<b>. BN_ucmp() is the same using the absolute values
+of I<a> and I<b>.
 
 BN_is_zero(), BN_is_one() BN_is_word(), BN_abs_is_word() and
 BN_is_odd() return 1 if the condition is true, 0 otherwise.
