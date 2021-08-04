@@ -1732,6 +1732,49 @@ static int file_gcd(STANZA *s)
     return st;
 }
 
+static int file_modinv(STANZA *s)
+{
+    BIGNUM *a = NULL, *m = NULL, *ainv = NULL, *ret = NULL;
+    int st = 0;
+    unsigned long error;
+
+    if (!TEST_ptr(a = getBN(s, "A"))
+        || !TEST_ptr(m = getBN(s, "M"))
+        || !TEST_ptr(ainv = getBN(s, "ModInv"))
+        || !TEST_ptr(ret = BN_new()))
+        goto err;
+
+    if (BN_is_zero(ainv)) {
+        /* negative test */
+        ERR_set_mark();
+        if (!TEST_ptr_null(BN_mod_inverse(ret, a, m, ctx))) {
+            ERR_pop_to_mark();
+            goto err;
+        }
+        error = ERR_peek_last_error();
+        ERR_pop_to_mark();
+        if (!TEST_true(ERR_GET_LIB(error) == ERR_LIB_BN)
+            || !TEST_true(ERR_GET_REASON(error) == BN_R_NO_INVERSE))
+            goto err;
+    } else {
+        /* positive test */
+        if (!TEST_ptr(BN_mod_inverse(ret, a, m, ctx))
+            || !equalBN("1/A (mod M)", ainv, ret)
+            /* product should be unity */
+            || !TEST_true(BN_mod_mul(ret, ret, a, m, ctx))
+            || !TEST_BN_eq_one(ret))
+            goto err;
+    }
+
+    st = 1;
+ err:
+    BN_free(a);
+    BN_free(m);
+    BN_free(ainv);
+    BN_free(ret);
+    return st;
+}
+
 static int test_bn2padded(void)
 {
 #if HAVE_BN_PADDED
@@ -2852,6 +2895,7 @@ static int file_test_run(STANZA *s)
         {"Quotient", file_quotient},
         {"ModMul", file_modmul},
         {"ModExp", file_modexp},
+        {"ModInv", file_modinv},
         {"Exp", file_exp},
         {"ModSqrt", file_modsqrt},
         {"GCD", file_gcd},

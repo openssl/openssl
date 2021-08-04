@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,196 +10,203 @@
 #include "internal/cryptlib.h"
 #include "bn_local.h"
 
-/*
- * bn_mod_inverse_no_branch is a special version of BN_mod_inverse. It does
- * not contain branches that may leak sensitive information.
- *
- * This is a static function, we ensure all callers in this file pass valid
- * arguments: all passed pointers here are non-NULL.
- */
-static ossl_inline
-BIGNUM *bn_mod_inverse_no_branch(BIGNUM *in,
-                                 const BIGNUM *a, const BIGNUM *n,
-                                 BN_CTX *ctx, int *pnoinv)
+/* same as bn_mod_inverse_pow2, but with a single word */
+static int bn_mod_inverse_pow2_word(BIGNUM *r, const BIGNUM *a, int e)
 {
-    BIGNUM *A, *B, *X, *Y, *M, *D, *T, *R = NULL;
-    BIGNUM *ret = NULL;
-    int sign;
+    int i;
+    BN_ULONG ibs, x, t0, t1;
 
-    bn_check_top(a);
-    bn_check_top(n);
+    x = 0;
+    t0 = a->d[0];
+    t1 = 1;
+
+    for (i = 0; i < e; i++) {
+        ibs = t1 & 1;
+        x |= ibs << i;
+        t1 = (t1 - (t0 & -ibs)) >> 1;
+    }
+
+    return BN_set_word(r, x);
+}
+
+/*-
+ * Inversion modulo 2**e
+ * See Sect. 7, (Koc 2017), "A New Algorithm for Inversion mod p**k",
+ * http://eprint.iacr.org/2017/411
+ */
+static BIGNUM *bn_mod_inverse_pow2(BIGNUM *r, const BIGNUM *a, int e,
+                                   BN_CTX *ctx, int *pnoinv)
+{
+    BIGNUM *rv = NULL, *t0 = NULL, *t1 = NULL, *t2 = NULL;
+    BN_ULONG ibs;
+    int i, top, wi, bi;
+
+    if (!BN_is_odd(a)) {
+        *pnoinv = 1;
+        return NULL;
+    }
+
+    /* early exit if we can work with a single word instead of BIGNUM */
+    if (e <= BN_BITS2)
+        return (!bn_mod_inverse_pow2_word(r, a, e)) ? NULL : r;
 
     BN_CTX_start(ctx);
-    A = BN_CTX_get(ctx);
-    B = BN_CTX_get(ctx);
-    X = BN_CTX_get(ctx);
-    D = BN_CTX_get(ctx);
-    M = BN_CTX_get(ctx);
-    Y = BN_CTX_get(ctx);
-    T = BN_CTX_get(ctx);
-    if (T == NULL)
+    t2 = BN_CTX_get(ctx);
+    t1 = BN_CTX_get(ctx);
+    if ((t0 = BN_CTX_get(ctx)) == NULL
+        || !BN_one(t1)
+        || BN_copy(t0, a) == NULL
+        || !BN_set_bit(t0, e)
+        || !(top = t0->top)
+        || bn_wexpand(r, top) == NULL
+        || bn_wexpand(t1, top) == NULL
+        || bn_wexpand(t2, top) == NULL
+        || !BN_mask_bits(t0, e))
         goto err;
 
-    if (in == NULL)
-        R = BN_new();
-    else
-        R = in;
-    if (R == NULL)
-        goto err;
+    BN_zero(r);
+    wi = bi = 0;
 
-    BN_one(X);
-    BN_zero(Y);
-    if (BN_copy(B, a) == NULL)
-        goto err;
-    if (BN_copy(A, n) == NULL)
-        goto err;
-    A->neg = 0;
-
-    if (B->neg || (BN_ucmp(B, A) >= 0)) {
-        /*
-         * Turn BN_FLG_CONSTTIME flag on, so that when BN_div is invoked,
-         * BN_div_no_branch will be called eventually.
-         */
-         {
-            BIGNUM local_B;
-            bn_init(&local_B);
-            BN_with_flags(&local_B, B, BN_FLG_CONSTTIME);
-            if (!BN_nnmod(B, &local_B, A, ctx))
-                goto err;
-            /* Ensure local_B goes out of scope before any further use of B */
-        }
-    }
-    sign = -1;
-    /*-
-     * From  B = a mod |n|,  A = |n|  it follows that
-     *
-     *      0 <= B < A,
-     *     -sign*X*a  ==  B   (mod |n|),
-     *      sign*Y*a  ==  A   (mod |n|).
-     */
-
-    while (!BN_is_zero(B)) {
-        BIGNUM *tmp;
-
-        /*-
-         *      0 < B < A,
-         * (*) -sign*X*a  ==  B   (mod |n|),
-         *      sign*Y*a  ==  A   (mod |n|)
-         */
-
-        /*
-         * Turn BN_FLG_CONSTTIME flag on, so that when BN_div is invoked,
-         * BN_div_no_branch will be called eventually.
-         */
-        {
-            BIGNUM local_A;
-            bn_init(&local_A);
-            BN_with_flags(&local_A, A, BN_FLG_CONSTTIME);
-
-            /* (D, M) := (A/B, A%B) ... */
-            if (!BN_div(D, M, &local_A, B, ctx))
-                goto err;
-            /* Ensure local_A goes out of scope before any further use of A */
-        }
-
-        /*-
-         * Now
-         *      A = D*B + M;
-         * thus we have
-         * (**)  sign*Y*a  ==  D*B + M   (mod |n|).
-         */
-
-        tmp = A;                /* keep the BIGNUM object, the value does not
-                                 * matter */
-
-        /* (A, B) := (B, A mod B) ... */
-        A = B;
-        B = M;
-        /* ... so we have  0 <= B < A  again */
-
-        /*-
-         * Since the former  M  is now  B  and the former  B  is now  A,
-         * (**) translates into
-         *       sign*Y*a  ==  D*A + B    (mod |n|),
-         * i.e.
-         *       sign*Y*a - D*A  ==  B    (mod |n|).
-         * Similarly, (*) translates into
-         *      -sign*X*a  ==  A          (mod |n|).
-         *
-         * Thus,
-         *   sign*Y*a + D*sign*X*a  ==  B  (mod |n|),
-         * i.e.
-         *        sign*(Y + D*X)*a  ==  B  (mod |n|).
-         *
-         * So if we set  (X, Y, sign) := (Y + D*X, X, -sign), we arrive back at
-         *      -sign*X*a  ==  B   (mod |n|),
-         *       sign*Y*a  ==  A   (mod |n|).
-         * Note that  X  and  Y  stay non-negative all the time.
-         */
-
-        if (!BN_mul(tmp, D, X, ctx))
+    for (i = 0; i < e; i++) {
+        if (!bi)
+            r->d[wi] = 0;
+        /* assign bit i value to the result */
+        ibs = t1->d[0] & 1 && t1->top;
+        r->d[wi] |= ibs << bi;
+        /* subtract conditionally on bit i value */
+        if (!BN_sub(t2, t1, t0))
             goto err;
-        if (!BN_add(tmp, tmp, Y))
+        BN_consttime_swap(ibs, t1, t2, top);
+        if (!BN_rshift1(t1, t1))
             goto err;
 
-        M = Y;                  /* keep the BIGNUM object, the value does not
-                                 * matter */
-        Y = X;
-        X = tmp;
-        sign = -sign;
-    }
-
-    /*-
-     * The while loop (Euclid's algorithm) ends when
-     *      A == gcd(a,n);
-     * we have
-     *       sign*Y*a  ==  A  (mod |n|),
-     * where  Y  is non-negative.
-     */
-
-    if (sign < 0) {
-        if (!BN_sub(Y, n, Y))
-            goto err;
-    }
-    /* Now  Y*a  ==  A  (mod |n|).  */
-
-    if (BN_is_one(A)) {
-        /* Y*a == 1  (mod |n|) */
-        if (!Y->neg && BN_ucmp(Y, n) < 0) {
-            if (!BN_copy(R, Y))
-                goto err;
-        } else {
-            if (!BN_nnmod(R, Y, n, ctx))
-                goto err;
+        if (++bi == BN_BITS2) {
+            wi++;
+            bi = 0;
         }
-    } else {
-        *pnoinv = 1;
-        /* caller sets the BN_R_NO_INVERSE error */
-        goto err;
     }
 
-    ret = R;
+    r->top = top;
     *pnoinv = 0;
+    rv = r;
 
  err:
-    if ((ret == NULL) && (in == NULL))
-        BN_free(R);
     BN_CTX_end(ctx);
-    bn_check_top(ret);
-    return ret;
+    bn_check_top(r);
+    return rv;
+}
+
+/*-
+ * Inversion modulo odd n.
+ * Computes the modular inverse using the constant-time algorithm
+ * by Bernstein and Yang (https://eprint.iacr.org/2019/266)
+ * "Fast constant-time gcd computation and modular inversion"
+ */
+static BIGNUM *bn_mod_inverse_odd(BIGNUM *in, const BIGNUM *a, const BIGNUM *n,
+                                  BN_CTX *ctx, int *pnoinv)
+{
+    BIGNUM *v = NULL, *r = NULL, *f = NULL, *g = NULL, *temp = NULL, *rv = NULL;
+    int i, top, flen, glen, its;
+    BN_ULONG cond, delta = 1;
+
+    BN_CTX_start(ctx);
+    temp = BN_CTX_get(ctx);
+    g = BN_CTX_get(ctx);
+    f = BN_CTX_get(ctx);
+    r = BN_CTX_get(ctx);
+    if ((v = BN_CTX_get(ctx)) == NULL
+        || !BN_one(r)
+        || BN_copy(g, a) == NULL
+        || BN_copy(f, n) == NULL)
+        goto err;
+
+    BN_zero(v);
+
+    /* grow BIGNUMs */
+    top = 1 + ((f->top >= g->top) ? f->top : g->top);
+    if (bn_wexpand(temp, top) == NULL
+        || bn_wexpand(g, top) == NULL
+        || bn_wexpand(f, top) == NULL
+        || bn_wexpand(r, top) == NULL
+        || bn_wexpand(v, top) == NULL)
+        goto err;
+
+    /* Upper bound for the total iterations. */
+    flen = BN_num_bits(f);
+    glen = BN_num_bits(g);
+    its = 4 + 3 * ((flen >= glen) ? flen : glen);
+
+    for (i = 0; i < its; i++) {
+        /* Step 1: conditional swap. */
+        /* Set cond if delta > 0 and g is odd. */
+        cond = (-delta >> (BN_BITS2 - 1)) & g->d[0] & 1 && g->top;
+        /* If cond is set replace (delta,f,v) with (-delta,-f,-v). */
+        delta = (-cond & -delta) | ((cond - 1) & delta);
+        f->neg ^= cond;
+        v->neg ^= cond;
+        /* If cond is set swap (f,v) with (g,r). */
+        BN_consttime_swap(cond, f, g, top);
+        BN_consttime_swap(cond, v, r, top);
+
+        /* Step 2: elemination. */
+        /* Update delta */
+        delta++;
+        /* If g is odd replace r with (r+v). */
+        if (!BN_add(temp, r, v))
+            goto err;
+        cond = g->d[0] & 1 && g->top;
+        BN_consttime_swap(cond, r, temp, top);
+        /* If g is odd, right shift (g+f) else right shift g. */
+        if (!BN_add(temp, g, f))
+            goto err;
+        cond = g->d[0] & 1 && g->top;
+        BN_consttime_swap(cond, g, temp, top);
+        if (!BN_rshift1(g, g))
+            goto err;
+        /*-
+         * If r is even, right shift it.
+         * If r is odd, right shift (r+n) which is even because n is odd.
+         * We want the result modulo n, so adding multiples of n here vanish.
+         */
+        if (!BN_add(temp, r, n))
+            goto err;
+        cond = r->d[0] & 1 && r->top;
+        BN_consttime_swap(cond, r, temp, top);
+        if (!BN_rshift1(r, r))
+            goto err;
+    }
+
+    /* We have the inverse in v, propagate sign from f. */
+    v->neg ^= f->neg;
+
+    /* If f = GCD != 1, not invertible. */
+    if (!BN_abs_is_word(f, 1)) {
+        *pnoinv = 1;
+        goto err;
+    }
+
+    /* Return inverse modulo n. */
+    if (!BN_nnmod(in, v, n, ctx))
+        goto err;
+
+    *pnoinv = 0;
+    rv = in;
+
+ err:
+    BN_CTX_end(ctx);
+    bn_check_top(in);
+    return rv;
 }
 
 /*
  * This is an internal function, we assume all callers pass valid arguments:
  * all pointers passed here are assumed non-NULL.
  */
-BIGNUM *int_bn_mod_inverse(BIGNUM *in,
-                           const BIGNUM *a, const BIGNUM *n, BN_CTX *ctx,
-                           int *pnoinv)
+BIGNUM *int_bn_mod_inverse(BIGNUM *in, const BIGNUM *a, const BIGNUM *n,
+                           BN_CTX *ctx, int *pnoinv)
 {
-    BIGNUM *A, *B, *X, *Y, *M, *D, *T, *R = NULL;
-    BIGNUM *ret = NULL;
-    int sign;
+    BIGNUM *rv = NULL, *m_e = NULL, *m_o = NULL, *a_e = NULL, *a_o = NULL;
+    int idx_o = 1;
 
     /* This is invalid input so we don't worry about constant time here */
     if (BN_abs_is_word(n, 1) || BN_is_zero(n)) {
@@ -207,306 +214,66 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
         return NULL;
     }
 
-    *pnoinv = 0;
+    /* If the modulus is odd, skip directly to the result */
+    if (BN_is_odd(n))
+        return bn_mod_inverse_odd(in, a, n, ctx, pnoinv);
 
-    if ((BN_get_flags(a, BN_FLG_CONSTTIME) != 0)
-        || (BN_get_flags(n, BN_FLG_CONSTTIME) != 0)) {
-        return bn_mod_inverse_no_branch(in, a, n, ctx, pnoinv);
-    }
+    /*-
+     * Otherwise, express the modulus as n = m_o * 2**idx_o
+     * where m_o is odd. Assumes idx_o is public.
+     */
+    while (!BN_is_bit_set(n, idx_o))
+        idx_o++;
 
-    bn_check_top(a);
-    bn_check_top(n);
+    /* If the modulus is a power of two, skip directly to the result */
+    if (BN_num_bits(n) == idx_o + 1)
+        return bn_mod_inverse_pow2(in, a, idx_o, ctx, pnoinv);
 
+    /*-
+     * Otherwise, we have an even modulus that is not a power of two.
+     * Compute the inverses modulo m_o and m_e = 2**idx_o,
+     * then combine with the Chinese Remainder Theorem (CRT).
+     */
     BN_CTX_start(ctx);
-    A = BN_CTX_get(ctx);
-    B = BN_CTX_get(ctx);
-    X = BN_CTX_get(ctx);
-    D = BN_CTX_get(ctx);
-    M = BN_CTX_get(ctx);
-    Y = BN_CTX_get(ctx);
-    T = BN_CTX_get(ctx);
-    if (T == NULL)
+    a_o = BN_CTX_get(ctx);
+    a_e = BN_CTX_get(ctx);
+    m_o = BN_CTX_get(ctx);
+
+    if ((m_e = BN_CTX_get(ctx)) == NULL)
         goto err;
 
-    if (in == NULL)
-        R = BN_new();
-    else
-        R = in;
-    if (R == NULL)
+    BN_zero(m_e);
+
+    /* construct m_o and m_e */
+    if (!BN_rshift(m_o, n, idx_o)
+        || !BN_set_bit(m_e, idx_o))
         goto err;
 
-    BN_one(X);
-    BN_zero(Y);
-    if (BN_copy(B, a) == NULL)
+    /* Garner's alg for CRT: Handbook of Applied Crypto, 14.5.2, Note 14.75i */
+    if (bn_mod_inverse_odd(a_o, a, m_o, ctx, pnoinv) == NULL
+        || bn_mod_inverse_pow2(a_e, a, idx_o, ctx, pnoinv) == NULL
+        || bn_mod_inverse_pow2(in, m_o, idx_o, ctx, pnoinv) == NULL
+        || !BN_sub(a_e, a_e, a_o)
+        || !BN_mul(in, in, a_e, ctx)
+        /* now the mod m_e part */
+        || !BN_set_bit(in, idx_o)
+        || !BN_mask_bits(in, idx_o)
+        /* result is now in [-2**idx_o + 1, 2**idx_o - 1] */
+        || !BN_add(in, in, m_e)
+        /* result is now in [1, 2**(idx_o + 1) - 1] */
+        || !BN_set_bit(in, idx_o)
+        || !BN_mask_bits(in, idx_o)
+        /* result is now in [0, 2**idx_o - 1] */
+        || !BN_mul(in, in, m_o, ctx)
+        || !BN_add(in, in, a_o))
         goto err;
-    if (BN_copy(A, n) == NULL)
-        goto err;
-    A->neg = 0;
-    if (B->neg || (BN_ucmp(B, A) >= 0)) {
-        if (!BN_nnmod(B, B, A, ctx))
-            goto err;
-    }
-    sign = -1;
-    /*-
-     * From  B = a mod |n|,  A = |n|  it follows that
-     *
-     *      0 <= B < A,
-     *     -sign*X*a  ==  B   (mod |n|),
-     *      sign*Y*a  ==  A   (mod |n|).
-     */
 
-    if (BN_is_odd(n) && (BN_num_bits(n) <= 2048)) {
-        /*
-         * Binary inversion algorithm; requires odd modulus. This is faster
-         * than the general algorithm if the modulus is sufficiently small
-         * (about 400 .. 500 bits on 32-bit systems, but much more on 64-bit
-         * systems)
-         */
-        int shift;
+    *pnoinv = 0;
+    rv = in;
 
-        while (!BN_is_zero(B)) {
-            /*-
-             *      0 < B < |n|,
-             *      0 < A <= |n|,
-             * (1) -sign*X*a  ==  B   (mod |n|),
-             * (2)  sign*Y*a  ==  A   (mod |n|)
-             */
-
-            /*
-             * Now divide B by the maximum possible power of two in the
-             * integers, and divide X by the same value mod |n|. When we're
-             * done, (1) still holds.
-             */
-            shift = 0;
-            while (!BN_is_bit_set(B, shift)) { /* note that 0 < B */
-                shift++;
-
-                if (BN_is_odd(X)) {
-                    if (!BN_uadd(X, X, n))
-                        goto err;
-                }
-                /*
-                 * now X is even, so we can easily divide it by two
-                 */
-                if (!BN_rshift1(X, X))
-                    goto err;
-            }
-            if (shift > 0) {
-                if (!BN_rshift(B, B, shift))
-                    goto err;
-            }
-
-            /*
-             * Same for A and Y.  Afterwards, (2) still holds.
-             */
-            shift = 0;
-            while (!BN_is_bit_set(A, shift)) { /* note that 0 < A */
-                shift++;
-
-                if (BN_is_odd(Y)) {
-                    if (!BN_uadd(Y, Y, n))
-                        goto err;
-                }
-                /* now Y is even */
-                if (!BN_rshift1(Y, Y))
-                    goto err;
-            }
-            if (shift > 0) {
-                if (!BN_rshift(A, A, shift))
-                    goto err;
-            }
-
-            /*-
-             * We still have (1) and (2).
-             * Both  A  and  B  are odd.
-             * The following computations ensure that
-             *
-             *     0 <= B < |n|,
-             *      0 < A < |n|,
-             * (1) -sign*X*a  ==  B   (mod |n|),
-             * (2)  sign*Y*a  ==  A   (mod |n|),
-             *
-             * and that either  A  or  B  is even in the next iteration.
-             */
-            if (BN_ucmp(B, A) >= 0) {
-                /* -sign*(X + Y)*a == B - A  (mod |n|) */
-                if (!BN_uadd(X, X, Y))
-                    goto err;
-                /*
-                 * NB: we could use BN_mod_add_quick(X, X, Y, n), but that
-                 * actually makes the algorithm slower
-                 */
-                if (!BN_usub(B, B, A))
-                    goto err;
-            } else {
-                /*  sign*(X + Y)*a == A - B  (mod |n|) */
-                if (!BN_uadd(Y, Y, X))
-                    goto err;
-                /*
-                 * as above, BN_mod_add_quick(Y, Y, X, n) would slow things down
-                 */
-                if (!BN_usub(A, A, B))
-                    goto err;
-            }
-        }
-    } else {
-        /* general inversion algorithm */
-
-        while (!BN_is_zero(B)) {
-            BIGNUM *tmp;
-
-            /*-
-             *      0 < B < A,
-             * (*) -sign*X*a  ==  B   (mod |n|),
-             *      sign*Y*a  ==  A   (mod |n|)
-             */
-
-            /* (D, M) := (A/B, A%B) ... */
-            if (BN_num_bits(A) == BN_num_bits(B)) {
-                if (!BN_one(D))
-                    goto err;
-                if (!BN_sub(M, A, B))
-                    goto err;
-            } else if (BN_num_bits(A) == BN_num_bits(B) + 1) {
-                /* A/B is 1, 2, or 3 */
-                if (!BN_lshift1(T, B))
-                    goto err;
-                if (BN_ucmp(A, T) < 0) {
-                    /* A < 2*B, so D=1 */
-                    if (!BN_one(D))
-                        goto err;
-                    if (!BN_sub(M, A, B))
-                        goto err;
-                } else {
-                    /* A >= 2*B, so D=2 or D=3 */
-                    if (!BN_sub(M, A, T))
-                        goto err;
-                    if (!BN_add(D, T, B))
-                        goto err; /* use D (:= 3*B) as temp */
-                    if (BN_ucmp(A, D) < 0) {
-                        /* A < 3*B, so D=2 */
-                        if (!BN_set_word(D, 2))
-                            goto err;
-                        /*
-                         * M (= A - 2*B) already has the correct value
-                         */
-                    } else {
-                        /* only D=3 remains */
-                        if (!BN_set_word(D, 3))
-                            goto err;
-                        /*
-                         * currently M = A - 2*B, but we need M = A - 3*B
-                         */
-                        if (!BN_sub(M, M, B))
-                            goto err;
-                    }
-                }
-            } else {
-                if (!BN_div(D, M, A, B, ctx))
-                    goto err;
-            }
-
-            /*-
-             * Now
-             *      A = D*B + M;
-             * thus we have
-             * (**)  sign*Y*a  ==  D*B + M   (mod |n|).
-             */
-
-            tmp = A;    /* keep the BIGNUM object, the value does not matter */
-
-            /* (A, B) := (B, A mod B) ... */
-            A = B;
-            B = M;
-            /* ... so we have  0 <= B < A  again */
-
-            /*-
-             * Since the former  M  is now  B  and the former  B  is now  A,
-             * (**) translates into
-             *       sign*Y*a  ==  D*A + B    (mod |n|),
-             * i.e.
-             *       sign*Y*a - D*A  ==  B    (mod |n|).
-             * Similarly, (*) translates into
-             *      -sign*X*a  ==  A          (mod |n|).
-             *
-             * Thus,
-             *   sign*Y*a + D*sign*X*a  ==  B  (mod |n|),
-             * i.e.
-             *        sign*(Y + D*X)*a  ==  B  (mod |n|).
-             *
-             * So if we set  (X, Y, sign) := (Y + D*X, X, -sign), we arrive back at
-             *      -sign*X*a  ==  B   (mod |n|),
-             *       sign*Y*a  ==  A   (mod |n|).
-             * Note that  X  and  Y  stay non-negative all the time.
-             */
-
-            /*
-             * most of the time D is very small, so we can optimize tmp := D*X+Y
-             */
-            if (BN_is_one(D)) {
-                if (!BN_add(tmp, X, Y))
-                    goto err;
-            } else {
-                if (BN_is_word(D, 2)) {
-                    if (!BN_lshift1(tmp, X))
-                        goto err;
-                } else if (BN_is_word(D, 4)) {
-                    if (!BN_lshift(tmp, X, 2))
-                        goto err;
-                } else if (D->top == 1) {
-                    if (!BN_copy(tmp, X))
-                        goto err;
-                    if (!BN_mul_word(tmp, D->d[0]))
-                        goto err;
-                } else {
-                    if (!BN_mul(tmp, D, X, ctx))
-                        goto err;
-                }
-                if (!BN_add(tmp, tmp, Y))
-                    goto err;
-            }
-
-            M = Y;      /* keep the BIGNUM object, the value does not matter */
-            Y = X;
-            X = tmp;
-            sign = -sign;
-        }
-    }
-
-    /*-
-     * The while loop (Euclid's algorithm) ends when
-     *      A == gcd(a,n);
-     * we have
-     *       sign*Y*a  ==  A  (mod |n|),
-     * where  Y  is non-negative.
-     */
-
-    if (sign < 0) {
-        if (!BN_sub(Y, n, Y))
-            goto err;
-    }
-    /* Now  Y*a  ==  A  (mod |n|).  */
-
-    if (BN_is_one(A)) {
-        /* Y*a == 1  (mod |n|) */
-        if (!Y->neg && BN_ucmp(Y, n) < 0) {
-            if (!BN_copy(R, Y))
-                goto err;
-        } else {
-            if (!BN_nnmod(R, Y, n, ctx))
-                goto err;
-        }
-    } else {
-        *pnoinv = 1;
-        goto err;
-    }
-    ret = R;
  err:
-    if ((ret == NULL) && (in == NULL))
-        BN_free(R);
     BN_CTX_end(ctx);
-    bn_check_top(ret);
-    return ret;
+    return rv;
 }
 
 /* solves ax == 1 (mod n) */
@@ -514,7 +281,7 @@ BIGNUM *BN_mod_inverse(BIGNUM *in,
                        const BIGNUM *a, const BIGNUM *n, BN_CTX *ctx)
 {
     BN_CTX *new_ctx = NULL;
-    BIGNUM *rv;
+    BIGNUM *rv = NULL, *a_pos = NULL, *n_pos = NULL;
     int noinv = 0;
 
     if (ctx == NULL) {
@@ -525,9 +292,29 @@ BIGNUM *BN_mod_inverse(BIGNUM *in,
         }
     }
 
-    rv = int_bn_mod_inverse(in, a, n, ctx, &noinv);
+    BN_CTX_start(ctx);
+
+    /* ensure n is non-negative */
+    if (BN_is_negative(n)) {
+        if ((n_pos = BN_CTX_get(ctx)) == NULL
+            || BN_copy(n_pos, n) == NULL)
+            goto err;
+        n_pos->neg = 0;
+    }
+
+    /* ensure a is non-negative */
+    if (BN_is_negative(a) && !BN_is_zero(n)) {
+        if ((a_pos = BN_CTX_get(ctx)) == NULL
+            || !BN_nnmod(a_pos, a, n, ctx))
+            goto err;
+    }
+
+    rv = int_bn_mod_inverse(in, (a_pos == NULL) ? a : a_pos,
+                                (n_pos == NULL) ? n : n_pos, ctx, &noinv);
     if (noinv)
         ERR_raise(ERR_LIB_BN, BN_R_NO_INVERSE);
+ err:
+    BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);
     return rv;
 }

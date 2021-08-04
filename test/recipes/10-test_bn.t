@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT data_file/;
 
 setup("test_bn");
 
-my @files = qw( bnexp.txt bnmod.txt bnmul.txt bnshift.txt bnsum.txt bngcd.txt );
+my @files = qw( bnexp.txt bnmod.txt bnmul.txt bnshift.txt bnsum.txt bngcd.txt bnmodinv.txt );
 
 plan tests => 1 + scalar(@files);
 
