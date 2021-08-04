@@ -538,8 +538,7 @@ static int HKDF_Expand(const EVP_MD *evp_md,
  * Given a |secret|; a |label| of length |labellen|; and |data| of length
  * |datalen| (e.g. typically a hash of the handshake messages), derive a new
  * secret |outlen| bytes long and store it in the location pointed to be |out|.
- * The |data| value may be zero length. Any errors will be treated as fatal if
- * |fatal| is set. Returns 1 on success  0 on failure.
+ * The |data| value may be zero length. Returns 1 on success and 0 on failure.
  */
 static int prov_tls13_hkdf_expand(const EVP_MD *md,
                                   const unsigned char *key, size_t keylen,
@@ -549,12 +548,6 @@ static int prov_tls13_hkdf_expand(const EVP_MD *md,
                                   unsigned char *out, size_t outlen)
 {
     size_t hkdflabellen;
-    /*
-     * 2 bytes for length of derived secret + 1 byte for length of combined
-     * prefix and label + bytes for the label itself + 1 byte length of hash
-     * + bytes for the hash itself, however it is easier to just have the
-     * maximum the KDF can handle.
-     */
     unsigned char hkdflabel[HKDF_MAXBUF];
     WPACKET pkt;
 
