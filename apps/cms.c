@@ -484,13 +484,9 @@ int cms_main(int argc, char **argv)
             rr_allorfirst = 1;
             break;
         case OPT_RCTFORM:
-            if (rctformat == FORMAT_ASN1) {
-                if (!opt_format(opt_arg(),
-                                OPT_FMT_PEMDER | OPT_FMT_SMIME, &rctformat))
-                    goto opthelp;
-            } else {
-                rcms = load_content_info(rctformat, rctin, 0, NULL, "recipient");
-            }
+            if (!opt_format(opt_arg(),
+                            OPT_FMT_PEMDER | OPT_FMT_SMIME, &rctformat))
+                goto opthelp;
             break;
         case OPT_CERTFILE:
             certfile = opt_arg();
@@ -956,7 +952,7 @@ int cms_main(int argc, char **argv)
             goto end;
         }
 
-        rcms = load_content_info(rctformat, rctin, 0, NULL, "recipient");
+        rcms = load_content_info(rctformat, rctin, 0, NULL, "receipt");
         if (rcms == NULL)
             goto end;
     }
