@@ -81,8 +81,8 @@ an error will occur.
 
 =head1 NOTES
 
-This KDF is intended for use by the TLS 1.3 stack in libssl.  It does not
-support all the options and capabilities that HKDF does.
+This KDF is intended for use by the TLS 1.3 implementation in libssl.
+It does not support all the options and capabilities that HKDF does.
 
 The I<OSSL_PARAM> array passed to L<EVP_KDF_derive(3)> or
 L<EVP_KDF_CTX_set_params(3)> must specify all of the parameters required.
