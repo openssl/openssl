@@ -61,7 +61,6 @@ typedef struct {
     const char *ipasc;
     const char *data;
     int length;
-    ASN1_OCTET_STRING ip;
 } IP_TESTDATA;
 
 static IP_TESTDATA a2i_ipaddress_tests[] = {
@@ -81,8 +80,10 @@ static IP_TESTDATA a2i_ipaddress_tests[] = {
     {"example.test", NULL, 0},
     {"", NULL, 0},
 
+    {"1.2.3.4 ", "\x01\x02\x03\x04", 4},
+    {" 1.2.3.4", "\x01\x02\x03\x04", 4},
+    {" 1.2.3.4 ", "\x01\x02\x03\x04", 4},
     {"1.2.3.4.example.test", NULL, 0},
-    {"1.2.3.4 ", NULL, 0},
 };
 
 
