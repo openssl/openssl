@@ -67,18 +67,18 @@ The following B<bug workaround> options are available:
 Don't prefer ECDHE-ECDSA ciphers when the client appears to be Safari on OS X.
 OS X 10.8..10.8.3 has broken support for ECDHE-ECDSA ciphers.
 
-=item SSL_OP_DISABLE_TLSEXT_CA_NAMES
-
-Disable TLS Extension CA Names. You may want to disable it for security reasons
-or for compatibility with some Windows TLS implementations crashing when this
-extension is larger than 1024 bytes.
-
 =item SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS
 
 Disables a countermeasure against a SSL 3.0/TLS 1.0 protocol
 vulnerability affecting CBC ciphers, which cannot be handled by some
 broken SSL implementations.  This option has no effect for connections
 using other ciphers.
+
+=item SSL_OP_CRYPTOPRO_TLSEXT_BUG
+
+Make server add server-hello extension from early version of cryptopro draft,
+when GOST ciphersuite is negotiated. Required for interoperability with CryptoPro
+CSP 3.x.
 
 =item SSL_OP_TLSEXT_PADDING
 
@@ -99,6 +99,17 @@ desired.
 The following B<modifying> options are available:
 
 =over 4
+
+=item SSL_OP_ALLOW_CLIENT_RENEGOTIATION
+
+Client-initiated renegotiation is disabled by default. To allow it, use the
+this option to enable it.
+
+=item SSL_OP_DISABLE_TLSEXT_CA_NAMES
+
+Disable TLS Extension CA Names. You may want to disable it for security reasons
+or for compatibility with some Windows TLS implementations crashing when this
+extension is larger than 1024 bytes.
 
 =item SSL_OP_TLS_ROLLBACK_BUG
 
@@ -137,7 +148,9 @@ handshake). This option is not needed for clients.
 
 =item SSL_OP_NO_COMPRESSION
 
-Do not use compression even if it is supported.
+Do not use compression even if it is supported. This option is set by default.
+To switch it off use SSL_clear_options(). A future version of OpenSSL may not
+set this by default.
 
 =item SSL_OP_NO_QUERY_MTU
 
@@ -242,6 +255,11 @@ ChaCha20-Poly1305 cipher is at the top of the client cipher list. This helps
 those clients (e.g. mobile) use ChaCha20-Poly1305 if that cipher is anywhere
 in the server cipher list; but still allows other clients to use AES and other
 ciphers. Requires B<SSL_OP_CIPHER_SERVER_PREFERENCE>.
+
+=item SSL_OP_CISCO_ANYCONNECT
+
+Use Cisco's version identifier of DTLS_BAD_VER when establishing a DTLSv1
+connection. Only available when using the deprecated DTLSv1_client_method() API.
 
 =item SSL_OP_ENABLE_MIDDLEBOX_COMPAT
 
