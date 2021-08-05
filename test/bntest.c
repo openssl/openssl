@@ -1735,7 +1735,7 @@ static int file_gcd(STANZA *s)
 static int file_modinv(STANZA *s)
 {
     BIGNUM *a = NULL, *m = NULL, *ainv = NULL, *ret = NULL;
-    int st = 0;
+    int i, st = 0;
     unsigned long error;
 
     if (!TEST_ptr(a = getBN(s, "A"))
@@ -1744,26 +1744,29 @@ static int file_modinv(STANZA *s)
         || !TEST_ptr(ret = BN_new()))
         goto err;
 
-    if (BN_is_zero(ainv)) {
-        /* negative test */
-        ERR_set_mark();
-        if (!TEST_ptr_null(BN_mod_inverse(ret, a, m, ctx))) {
+    for (i = 0; i < 2; i++) {
+        if (BN_is_zero(ainv)) {
+            /* negative test */
+            ERR_set_mark();
+            if (!TEST_ptr_null(BN_mod_inverse(ret, a, m, ctx))) {
+                ERR_pop_to_mark();
+                goto err;
+            }
+            error = ERR_peek_last_error();
             ERR_pop_to_mark();
-            goto err;
+            if (!TEST_true(ERR_GET_LIB(error) == ERR_LIB_BN)
+                || !TEST_true(ERR_GET_REASON(error) == BN_R_NO_INVERSE))
+                goto err;
+        } else {
+            /* positive test */
+            if (!TEST_ptr(BN_mod_inverse(ret, a, m, ctx))
+                || !equalBN("1/A (mod M)", ainv, ret)
+                /* product should be unity */
+                || !TEST_true(BN_mod_mul(ret, ret, a, m, ctx))
+                || !TEST_BN_eq_one(ret))
+                goto err;
         }
-        error = ERR_peek_last_error();
-        ERR_pop_to_mark();
-        if (!TEST_true(ERR_GET_LIB(error) == ERR_LIB_BN)
-            || !TEST_true(ERR_GET_REASON(error) == BN_R_NO_INVERSE))
-            goto err;
-    } else {
-        /* positive test */
-        if (!TEST_ptr(BN_mod_inverse(ret, a, m, ctx))
-            || !equalBN("1/A (mod M)", ainv, ret)
-            /* product should be unity */
-            || !TEST_true(BN_mod_mul(ret, ret, a, m, ctx))
-            || !TEST_BN_eq_one(ret))
-            goto err;
+        BN_set_negative(m, !BN_is_negative(m));
     }
 
     st = 1;
