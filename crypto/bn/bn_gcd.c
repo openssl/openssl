@@ -23,7 +23,11 @@ static int bn_mod_inverse_pow2_word(BIGNUM *r, const BIGNUM *a, int e)
     for (i = 0; i < e; i++) {
         ibs = t1 & 1;
         x |= ibs << i;
-        t1 = (t1 - (t0 & -ibs)) >> 1;
+        /*-
+         * the "0 - " silliness is to avoid MSVC warning C4146:
+         * unary minus operator applied to unsigned type, result still unsigned
+         */
+        t1 = (t1 - (t0 & (0 - ibs))) >> 1;
     }
 
     return BN_set_word(r, x);
@@ -106,8 +110,7 @@ static BIGNUM *bn_mod_inverse_odd(BIGNUM *in, const BIGNUM *a, const BIGNUM *n,
                                   BN_CTX *ctx, int *pnoinv)
 {
     BIGNUM *v = NULL, *r = NULL, *f = NULL, *g = NULL, *temp = NULL, *rv = NULL;
-    int i, top, flen, glen, its;
-    BN_ULONG cond, delta = 1;
+    int i, top, flen, glen, its, cond, delta = 1;
 
     BN_CTX_start(ctx);
     temp = BN_CTX_get(ctx);
@@ -139,7 +142,7 @@ static BIGNUM *bn_mod_inverse_odd(BIGNUM *in, const BIGNUM *a, const BIGNUM *n,
     for (i = 0; i < its; i++) {
         /* Step 1: conditional swap. */
         /* Set cond if delta > 0 and g is odd. */
-        cond = (-delta >> (BN_BITS2 - 1)) & g->d[0] & 1 && g->top;
+        cond = (-delta >> (8 * sizeof(delta) - 1)) & g->d[0] & 1 && g->top;
         /* If cond is set replace (delta,f,v) with (-delta,-f,-v). */
         delta = (-cond & -delta) | ((cond - 1) & delta);
         f->neg ^= cond;
@@ -305,7 +308,7 @@ BIGNUM *BN_mod_inverse(BIGNUM *in,
     /* ensure a is non-negative */
     if (BN_is_negative(a) && !BN_is_zero(n)) {
         if ((a_pos = BN_CTX_get(ctx)) == NULL
-            || !BN_nnmod(a_pos, a, n, ctx))
+            || !BN_nnmod(a_pos, a, (n_pos == NULL) ? n : n_pos, ctx))
             goto err;
     }
 
