@@ -860,7 +860,8 @@ int load_key_certs_crls_suppress(const char *uri, int format, int maybe_stdin,
                                  X509_CRL **pcrl, STACK_OF(X509_CRL) **pcrls,
                                  int suppress_decode_errors)
 {
-    PW_CB_DATA uidata;
+    PW_CB_DATA uidata, *puidata = NULL;
+    const UI_METHOD *uimeth = NULL;
     OSSL_STORE_CTX *ctx = NULL;
     OSSL_LIB_CTX *libctx = app_get0_libctx();
     const char *propq = app_get0_propq();
@@ -924,8 +925,12 @@ int load_key_certs_crls_suppress(const char *uri, int format, int maybe_stdin,
         return 0;
     }
 
-    uidata.password = pass;
-    uidata.prompt_info = uri;
+    if (expect != OSSL_STORE_INFO_CRL && expect != OSSL_STORE_INFO_CERT) {
+        uidata.password = pass;
+        uidata.prompt_info = uri;
+        puidata = &uidata;
+        uimeth = get_ui_method();
+    }
 
     if ((input_type = format2string(format)) != NULL) {
        itp[0] = OSSL_PARAM_construct_utf8_string(OSSL_STORE_PARAM_INPUT_TYPE,
@@ -946,12 +951,12 @@ int load_key_certs_crls_suppress(const char *uri, int format, int maybe_stdin,
         bio = BIO_new_fp(stdin, 0);
         if (bio != NULL) {
             ctx = OSSL_STORE_attach(bio, "file", libctx, propq,
-                                    get_ui_method(), &uidata, params,
+                                    uimeth, puidata, params,
                                     NULL, NULL);
             BIO_free(bio);
         }
     } else {
-        ctx = OSSL_STORE_open_ex(uri, libctx, propq, get_ui_method(), &uidata,
+        ctx = OSSL_STORE_open_ex(uri, libctx, propq, uimeth, puidata,
                                  params, NULL, NULL);
     }
     if (ctx == NULL) {
