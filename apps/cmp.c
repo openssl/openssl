@@ -871,7 +871,7 @@ static X509_STORE *load_trusted(char *input, int for_new_cert, const char *desc)
     if (X509_STORE_set1_param(ts, vpm /* may be NULL */)
             && (for_new_cert || truststore_set_host_etc(ts, NULL)))
         return ts;
-    BIO_printf(bio_err, "error setting verification parameters\n");
+    BIO_printf(bio_err, "error setting verification parameters for %s\n", desc);
     OSSL_CMP_CTX_print_errors(cmp_ctx);
     X509_STORE_free(ts);
     return NULL;
@@ -1193,13 +1193,10 @@ static SSL_CTX *setup_ssl_ctx(OSSL_CMP_CTX *ctx, const char *host,
         return NULL;
 
     if (opt_tls_trusted != NULL) {
-        trust_store = load_certstore(opt_tls_trusted, opt_otherpass,
-                                     "trusted TLS certificates", vpm);
+        trust_store = load_trusted(opt_tls_trusted, 0, "trusted TLS certs");
         if (trust_store == NULL)
             goto err;
         SSL_CTX_set_cert_store(ssl_ctx, trust_store);
-        /* for improved diagnostics on SSL_CTX_build_cert_chain() errors: */
-        X509_STORE_set_verify_cb(trust_store, X509_STORE_CTX_print_verify_cb);
     }
 
     if (opt_tls_cert != NULL && opt_tls_key != NULL) {
