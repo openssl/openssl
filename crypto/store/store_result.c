@@ -378,7 +378,7 @@ static int try_key(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
     if ((ctx->expected_type == 0
          || ctx->expected_type == OSSL_STORE_INFO_PARAMS
          || ctx->expected_type == OSSL_STORE_INFO_PUBKEY
-         || ctx->expected_type == OSSL_STORE_INFO_PARAMS)
+         || ctx->expected_type == OSSL_STORE_INFO_PKEY)
         && (data->object_type == OSSL_OBJECT_UNKNOWN
             || data->object_type == OSSL_OBJECT_PKEY)) {
         EVP_PKEY *pk = NULL;
