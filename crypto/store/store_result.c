@@ -71,14 +71,15 @@ struct extracted_param_data_st {
     const char *desc;
 };
 
-static int try_name(struct extracted_param_data_st *, OSSL_STORE_INFO **);
+static int try_name(struct extracted_param_data_st *, OSSL_STORE_INFO **,
+                    OSSL_STORE_CTX *);
 static int try_key(struct extracted_param_data_st *, OSSL_STORE_INFO **,
                    OSSL_STORE_CTX *, const OSSL_PROVIDER *,
                    OSSL_LIB_CTX *, const char *);
 static int try_cert(struct extracted_param_data_st *, OSSL_STORE_INFO **,
-                    OSSL_LIB_CTX *, const char *);
+                    OSSL_STORE_CTX *, OSSL_LIB_CTX *, const char *);
 static int try_crl(struct extracted_param_data_st *, OSSL_STORE_INFO **,
-                   OSSL_LIB_CTX *, const char *);
+                   OSSL_STORE_CTX *, OSSL_LIB_CTX *, const char *);
 static int try_pkcs12(struct extracted_param_data_st *, OSSL_STORE_INFO **,
                       OSSL_STORE_CTX *, OSSL_LIB_CTX *, const char *);
 
@@ -127,7 +128,7 @@ int ossl_store_handle_load_result(const OSSL_PARAM params[], void *arg)
      * they didn't fill out |*v|.
      */
     ERR_set_mark();
-    if (*v == NULL && !try_name(&helper_data, v))
+    if (*v == NULL && !try_name(&helper_data, v, ctx))
         goto err;
     ERR_pop_to_mark();
     ERR_set_mark();
@@ -135,11 +136,11 @@ int ossl_store_handle_load_result(const OSSL_PARAM params[], void *arg)
         goto err;
     ERR_pop_to_mark();
     ERR_set_mark();
-    if (*v == NULL && !try_cert(&helper_data, v, libctx, propq))
+    if (*v == NULL && !try_cert(&helper_data, v, ctx, libctx, propq))
         goto err;
     ERR_pop_to_mark();
     ERR_set_mark();
-    if (*v == NULL && !try_crl(&helper_data, v, libctx, propq))
+    if (*v == NULL && !try_crl(&helper_data, v, ctx, libctx, propq))
         goto err;
     ERR_pop_to_mark();
     ERR_set_mark();
@@ -156,9 +157,12 @@ int ossl_store_handle_load_result(const OSSL_PARAM params[], void *arg)
     return 0;
 }
 
-static int try_name(struct extracted_param_data_st *data, OSSL_STORE_INFO **v)
+static int try_name(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
+                    OSSL_STORE_CTX *ctx)
 {
-    if (data->object_type == OSSL_OBJECT_NAME) {
+    if ((ctx->expected_type == 0
+         || ctx->expected_type == OSSL_STORE_INFO_NAME)
+        && data->object_type == OSSL_OBJECT_NAME) {
         char *newname = NULL, *newdesc = NULL;
 
         if (data->utf8_data == NULL)
@@ -194,7 +198,7 @@ static EVP_PKEY *try_key_ref(struct extracted_param_data_st *data,
 
     /* If we have an object reference, we must have a data type */
     if (data->data_type == NULL)
-        return 0;
+        return NULL;
 
     keymgmt = EVP_KEYMGMT_fetch(libctx, data->data_type, propq);
     if (keymgmt != NULL) {
@@ -371,8 +375,12 @@ static int try_key(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
 {
     store_info_new_fn *store_info_new = NULL;
 
-    if (data->object_type == OSSL_OBJECT_UNKNOWN
-        || data->object_type == OSSL_OBJECT_PKEY) {
+    if ((ctx->expected_type == 0
+         || ctx->expected_type == OSSL_STORE_INFO_PARAMS
+         || ctx->expected_type == OSSL_STORE_INFO_PUBKEY
+         || ctx->expected_type == OSSL_STORE_INFO_PARAMS)
+        && (data->object_type == OSSL_OBJECT_UNKNOWN
+            || data->object_type == OSSL_OBJECT_PKEY)) {
         EVP_PKEY *pk = NULL;
 
         /* Prefer key by reference than key by value */
@@ -436,10 +444,13 @@ static int try_key(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
 }
 
 static int try_cert(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
+                    OSSL_STORE_CTX *ctx,
                     OSSL_LIB_CTX *libctx, const char *propq)
 {
-    if (data->object_type == OSSL_OBJECT_UNKNOWN
-        || data->object_type == OSSL_OBJECT_CERT) {
+    if ((ctx->expected_type == 0
+         || ctx->expected_type == OSSL_STORE_INFO_CERT)
+        && (data->object_type == OSSL_OBJECT_UNKNOWN
+            || data->object_type == OSSL_OBJECT_CERT)) {
         /*
          * In most cases, we can try to interpret the serialized
          * data as a trusted cert (X509 + X509_AUX) and fall back
@@ -482,10 +493,13 @@ static int try_cert(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
 }
 
 static int try_crl(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
+                   OSSL_STORE_CTX *ctx,
                    OSSL_LIB_CTX *libctx, const char *propq)
 {
-    if (data->object_type == OSSL_OBJECT_UNKNOWN
-        || data->object_type == OSSL_OBJECT_CRL) {
+    if ((ctx->expected_type == 0
+         || ctx->expected_type == OSSL_STORE_INFO_CRL)
+        && (data->object_type == OSSL_OBJECT_UNKNOWN
+            || data->object_type == OSSL_OBJECT_CRL)) {
         X509_CRL *crl;
 
         crl = d2i_X509_CRL(NULL, (const unsigned char **)&data->octet_data,
