@@ -487,6 +487,7 @@ X509_EXTENSION *X509V3_EXT_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
         return NULL;
     CONF_set_nconf(ctmp, conf);
     ret = X509V3_EXT_nconf(ctmp, ctx, name, value);
+    CONF_set_nconf(ctmp, NULL);
     NCONF_free(ctmp);
     return ret;
 }
@@ -501,6 +502,7 @@ X509_EXTENSION *X509V3_EXT_conf_nid(LHASH_OF(CONF_VALUE) *conf,
         return NULL;
     CONF_set_nconf(ctmp, conf);
     ret = X509V3_EXT_nconf_nid(ctmp, ctx, ext_nid, value);
+    CONF_set_nconf(ctmp, NULL);
     NCONF_free(ctmp);
     return ret;
 }
@@ -542,6 +544,7 @@ int X509V3_EXT_add_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
         return 0;
     CONF_set_nconf(ctmp, conf);
     ret = X509V3_EXT_add_nconf(ctmp, ctx, section, cert);
+    CONF_set_nconf(ctmp, NULL);
     NCONF_free(ctmp);
     return ret;
 }
@@ -558,6 +561,7 @@ int X509V3_EXT_CRL_add_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
         return 0;
     CONF_set_nconf(ctmp, conf);
     ret = X509V3_EXT_CRL_add_nconf(ctmp, ctx, section, crl);
+    CONF_set_nconf(ctmp, NULL);
     NCONF_free(ctmp);
     return ret;
 }
@@ -574,6 +578,7 @@ int X509V3_EXT_REQ_add_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
         return 0;
     CONF_set_nconf(ctmp, conf);
     ret = X509V3_EXT_REQ_add_nconf(ctmp, ctx, section, req);
+    CONF_set_nconf(ctmp, NULL);
     NCONF_free(ctmp);
     return ret;
 }
