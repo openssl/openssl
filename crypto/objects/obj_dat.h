@@ -1117,7 +1117,7 @@ static const unsigned char so[8056] = {
     0x2B,0xCE,0x0F,0x06,0x07,0x03,                 /* [ 8049] OBJ_rsa3072_sphincsshake256128frobust */
 };
 
-#define NUM_NID 1336
+#define NUM_NID 1312
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2356,42 +2356,42 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     { NULL, NULL, NID_undef },
     {"p256_frodo640aes", "p256_frodo640aes", NID_p256_frodo640aes},
     {"p256_frodo640shake", "p256_frodo640shake", NID_p256_frodo640shake},
-    { NULL, NULL, NID_undef },
-    { NULL, NULL, NID_undef },
-    { NULL, NULL, NID_undef },
-    { NULL, NULL, NID_undef },
+    {"p384_frodo976aes", "p384_frodo976aes", NID_p384_frodo976aes},
+    {"p384_frodo976shake", "p384_frodo976shake", NID_p384_frodo976shake},
+    {"p521_frodo1344aes", "p521_frodo1344aes", NID_p521_frodo1344aes},
+    {"p521_frodo1344shake", "p521_frodo1344shake", NID_p521_frodo1344shake},
     {"p256_kyber512", "p256_kyber512", NID_p256_kyber512},
-    { NULL, NULL, NID_undef },
-    { NULL, NULL, NID_undef },
+    {"p384_kyber768", "p384_kyber768", NID_p384_kyber768},
+    {"p521_kyber1024", "p521_kyber1024", NID_p521_kyber1024},
     {"p256_ntru_hps2048509", "p256_ntru_hps2048509", NID_p256_ntru_hps2048509},
-    { NULL, NULL, NID_undef },
-    { NULL, NULL, NID_undef },
-    { NULL, NULL, NID_undef },
+    {"p384_ntru_hps2048677", "p384_ntru_hps2048677", NID_p384_ntru_hps2048677},
+    {"p521_ntru_hps4096821", "p521_ntru_hps4096821", NID_p521_ntru_hps4096821},
+    {"p384_ntru_hrss701", "p384_ntru_hrss701", NID_p384_ntru_hrss701},
     {"p256_lightsaber", "p256_lightsaber", NID_p256_lightsaber},
-    { NULL, NULL, NID_undef },
-    { NULL, NULL, NID_undef },
+    {"p384_saber", "p384_saber", NID_p384_saber},
+    {"p521_firesaber", "p521_firesaber", NID_p521_firesaber},
     {"p256_sidhp434", "p256_sidhp434", NID_p256_sidhp434},
     {"p256_sidhp503", "p256_sidhp503", NID_p256_sidhp503},
-    { NULL, NULL, NID_undef },
-    { NULL, NULL, NID_undef },
+    {"p384_sidhp610", "p384_sidhp610", NID_p384_sidhp610},
+    {"p521_sidhp751", "p521_sidhp751", NID_p521_sidhp751},
     {"p256_sikep434", "p256_sikep434", NID_p256_sikep434},
     {"p256_sikep503", "p256_sikep503", NID_p256_sikep503},
-    { NULL, NULL, NID_undef },
-    { NULL, NULL, NID_undef },
+    {"p384_sikep610", "p384_sikep610", NID_p384_sikep610},
+    {"p521_sikep751", "p521_sikep751", NID_p521_sikep751},
     {"p256_bikel1", "p256_bikel1", NID_p256_bikel1},
-    { NULL, NULL, NID_undef },
+    {"p384_bikel3", "p384_bikel3", NID_p384_bikel3},
     {"p256_kyber90s512", "p256_kyber90s512", NID_p256_kyber90s512},
-    { NULL, NULL, NID_undef },
-    { NULL, NULL, NID_undef },
+    {"p384_kyber90s768", "p384_kyber90s768", NID_p384_kyber90s768},
+    {"p521_kyber90s1024", "p521_kyber90s1024", NID_p521_kyber90s1024},
     {"p256_hqc128", "p256_hqc128", NID_p256_hqc128},
-    { NULL, NULL, NID_undef },
-    { NULL, NULL, NID_undef },
+    {"p384_hqc192", "p384_hqc192", NID_p384_hqc192},
+    {"p521_hqc256", "p521_hqc256", NID_p521_hqc256},
     {"p256_ntrulpr653", "p256_ntrulpr653", NID_p256_ntrulpr653},
-    { NULL, NULL, NID_undef },
-    { NULL, NULL, NID_undef },
+    {"p384_ntrulpr761", "p384_ntrulpr761", NID_p384_ntrulpr761},
+    {"p384_ntrulpr857", "p384_ntrulpr857", NID_p384_ntrulpr857},
     {"p256_sntrup653", "p256_sntrup653", NID_p256_sntrup653},
-    { NULL, NULL, NID_undef },
-    { NULL, NULL, NID_undef },
+    {"p384_sntrup761", "p384_sntrup761", NID_p384_sntrup761},
+    {"p384_sntrup857", "p384_sntrup857", NID_p384_sntrup857},
     {"dilithium2", "dilithium2", NID_dilithium2, 11, &so[7761]},
     {"p256_dilithium2", "p256_dilithium2", NID_p256_dilithium2, 6, &so[7772]},
     {"rsa3072_dilithium2", "rsa3072_dilithium2", NID_rsa3072_dilithium2, 6, &so[7778]},
@@ -2431,30 +2431,6 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"sphincsshake256128frobust", "sphincsshake256128frobust", NID_sphincsshake256128frobust, 6, &so[8037]},
     {"p256_sphincsshake256128frobust", "p256_sphincsshake256128frobust", NID_p256_sphincsshake256128frobust, 6, &so[8043]},
     {"rsa3072_sphincsshake256128frobust", "rsa3072_sphincsshake256128frobust", NID_rsa3072_sphincsshake256128frobust, 6, &so[8049]},
-    {"p384_frodo976aes", "p384_frodo976aes", NID_p384_frodo976aes},
-    {"p384_frodo976shake", "p384_frodo976shake", NID_p384_frodo976shake},
-    {"p521_frodo1344aes", "p521_frodo1344aes", NID_p521_frodo1344aes},
-    {"p521_frodo1344shake", "p521_frodo1344shake", NID_p521_frodo1344shake},
-    {"p384_kyber768", "p384_kyber768", NID_p384_kyber768},
-    {"p521_kyber1024", "p521_kyber1024", NID_p521_kyber1024},
-    {"p384_ntru_hps2048677", "p384_ntru_hps2048677", NID_p384_ntru_hps2048677},
-    {"p521_ntru_hps4096821", "p521_ntru_hps4096821", NID_p521_ntru_hps4096821},
-    {"p384_ntru_hrss701", "p384_ntru_hrss701", NID_p384_ntru_hrss701},
-    {"p384_saber", "p384_saber", NID_p384_saber},
-    {"p521_firesaber", "p521_firesaber", NID_p521_firesaber},
-    {"p384_sidhp610", "p384_sidhp610", NID_p384_sidhp610},
-    {"p521_sidhp751", "p521_sidhp751", NID_p521_sidhp751},
-    {"p384_sikep610", "p384_sikep610", NID_p384_sikep610},
-    {"p521_sikep751", "p521_sikep751", NID_p521_sikep751},
-    {"p384_bikel3", "p384_bikel3", NID_p384_bikel3},
-    {"p384_kyber90s768", "p384_kyber90s768", NID_p384_kyber90s768},
-    {"p521_kyber90s1024", "p521_kyber90s1024", NID_p521_kyber90s1024},
-    {"p384_hqc192", "p384_hqc192", NID_p384_hqc192},
-    {"p521_hqc256", "p521_hqc256", NID_p521_hqc256},
-    {"p384_ntrulpr761", "p384_ntrulpr761", NID_p384_ntrulpr761},
-    {"p384_ntrulpr857", "p384_ntrulpr857", NID_p384_ntrulpr857},
-    {"p384_sntrup761", "p384_sntrup761", NID_p384_sntrup761},
-    {"p384_sntrup857", "p384_sntrup857", NID_p384_sntrup857},
 };
 
 #define NUM_SN 1301
@@ -3388,36 +3364,36 @@ static const unsigned int sn_objs[NUM_SN] = {
     1304,    /* "p256_sphincsharaka128frobust" */
     1307,    /* "p256_sphincssha256128frobust" */
     1310,    /* "p256_sphincsshake256128frobust" */
-    1327,    /* "p384_bikel3" */
+    1260,    /* "p384_bikel3" */
     1277,    /* "p384_dilithium3" */
     1284,    /* "p384_dilithium3_aes" */
-    1312,    /* "p384_frodo976aes" */
-    1313,    /* "p384_frodo976shake" */
-    1330,    /* "p384_hqc192" */
-    1316,    /* "p384_kyber768" */
-    1328,    /* "p384_kyber90s768" */
-    1318,    /* "p384_ntru_hps2048677" */
-    1320,    /* "p384_ntru_hrss701" */
-    1332,    /* "p384_ntrulpr761" */
-    1333,    /* "p384_ntrulpr857" */
-    1321,    /* "p384_saber" */
-    1323,    /* "p384_sidhp610" */
-    1325,    /* "p384_sikep610" */
-    1334,    /* "p384_sntrup761" */
-    1335,    /* "p384_sntrup857" */
+    1237,    /* "p384_frodo976aes" */
+    1238,    /* "p384_frodo976shake" */
+    1265,    /* "p384_hqc192" */
+    1242,    /* "p384_kyber768" */
+    1262,    /* "p384_kyber90s768" */
+    1245,    /* "p384_ntru_hps2048677" */
+    1247,    /* "p384_ntru_hrss701" */
+    1268,    /* "p384_ntrulpr761" */
+    1269,    /* "p384_ntrulpr857" */
+    1249,    /* "p384_saber" */
+    1253,    /* "p384_sidhp610" */
+    1257,    /* "p384_sikep610" */
+    1271,    /* "p384_sntrup761" */
+    1272,    /* "p384_sntrup857" */
     1279,    /* "p521_dilithium5" */
     1286,    /* "p521_dilithium5_aes" */
     1291,    /* "p521_falcon1024" */
-    1322,    /* "p521_firesaber" */
-    1314,    /* "p521_frodo1344aes" */
-    1315,    /* "p521_frodo1344shake" */
-    1331,    /* "p521_hqc256" */
-    1317,    /* "p521_kyber1024" */
-    1329,    /* "p521_kyber90s1024" */
-    1319,    /* "p521_ntru_hps4096821" */
+    1250,    /* "p521_firesaber" */
+    1239,    /* "p521_frodo1344aes" */
+    1240,    /* "p521_frodo1344shake" */
+    1266,    /* "p521_hqc256" */
+    1243,    /* "p521_kyber1024" */
+    1263,    /* "p521_kyber90s1024" */
+    1246,    /* "p521_ntru_hps4096821" */
     1302,    /* "p521_rainbowVclassic" */
-    1324,    /* "p521_sidhp751" */
-    1326,    /* "p521_sikep751" */
+    1254,    /* "p521_sidhp751" */
+    1258,    /* "p521_sikep751" */
      489,    /* "pagerTelephoneNumber" */
      374,    /* "path" */
      112,    /* "pbeWithMD5AndCast5CBC" */
@@ -4666,36 +4642,36 @@ static const unsigned int ln_objs[NUM_LN] = {
     1304,    /* "p256_sphincsharaka128frobust" */
     1307,    /* "p256_sphincssha256128frobust" */
     1310,    /* "p256_sphincsshake256128frobust" */
-    1327,    /* "p384_bikel3" */
+    1260,    /* "p384_bikel3" */
     1277,    /* "p384_dilithium3" */
     1284,    /* "p384_dilithium3_aes" */
-    1312,    /* "p384_frodo976aes" */
-    1313,    /* "p384_frodo976shake" */
-    1330,    /* "p384_hqc192" */
-    1316,    /* "p384_kyber768" */
-    1328,    /* "p384_kyber90s768" */
-    1318,    /* "p384_ntru_hps2048677" */
-    1320,    /* "p384_ntru_hrss701" */
-    1332,    /* "p384_ntrulpr761" */
-    1333,    /* "p384_ntrulpr857" */
-    1321,    /* "p384_saber" */
-    1323,    /* "p384_sidhp610" */
-    1325,    /* "p384_sikep610" */
-    1334,    /* "p384_sntrup761" */
-    1335,    /* "p384_sntrup857" */
+    1237,    /* "p384_frodo976aes" */
+    1238,    /* "p384_frodo976shake" */
+    1265,    /* "p384_hqc192" */
+    1242,    /* "p384_kyber768" */
+    1262,    /* "p384_kyber90s768" */
+    1245,    /* "p384_ntru_hps2048677" */
+    1247,    /* "p384_ntru_hrss701" */
+    1268,    /* "p384_ntrulpr761" */
+    1269,    /* "p384_ntrulpr857" */
+    1249,    /* "p384_saber" */
+    1253,    /* "p384_sidhp610" */
+    1257,    /* "p384_sikep610" */
+    1271,    /* "p384_sntrup761" */
+    1272,    /* "p384_sntrup857" */
     1279,    /* "p521_dilithium5" */
     1286,    /* "p521_dilithium5_aes" */
     1291,    /* "p521_falcon1024" */
-    1322,    /* "p521_firesaber" */
-    1314,    /* "p521_frodo1344aes" */
-    1315,    /* "p521_frodo1344shake" */
-    1331,    /* "p521_hqc256" */
-    1317,    /* "p521_kyber1024" */
-    1329,    /* "p521_kyber90s1024" */
-    1319,    /* "p521_ntru_hps4096821" */
+    1250,    /* "p521_firesaber" */
+    1239,    /* "p521_frodo1344aes" */
+    1240,    /* "p521_frodo1344shake" */
+    1266,    /* "p521_hqc256" */
+    1243,    /* "p521_kyber1024" */
+    1263,    /* "p521_kyber90s1024" */
+    1246,    /* "p521_ntru_hps4096821" */
     1302,    /* "p521_rainbowVclassic" */
-    1324,    /* "p521_sidhp751" */
-    1326,    /* "p521_sikep751" */
+    1254,    /* "p521_sidhp751" */
+    1258,    /* "p521_sikep751" */
      935,    /* "pSpecified" */
      489,    /* "pagerTelephoneNumber" */
      782,    /* "password based MAC" */

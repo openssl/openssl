@@ -7,42 +7,36 @@ kems:
     nid: '0x0200'
     nid_hybrid: '0x2F00'
     oqs_alg: 'OQS_KEM_alg_frodokem_640_aes'
-    bit_security: 128
   -
     family: 'FrodoKEM'
     name_group: 'frodo640shake'
     nid: '0x0201'
     nid_hybrid: '0x2F01'
     oqs_alg: 'OQS_KEM_alg_frodokem_640_shake'
-    bit_security: 128
   -
     family: 'FrodoKEM'
     name_group: 'frodo976aes'
     nid: '0x0202'
     nid_hybrid: '0x2F02'
     oqs_alg: 'OQS_KEM_alg_frodokem_976_aes'
-    bit_security: 192
   -
     family: 'FrodoKEM'
     name_group: 'frodo976shake'
     nid: '0x0203'
     nid_hybrid: '0x2F03'
     oqs_alg: 'OQS_KEM_alg_frodokem_976_shake'
-    bit_security: 192
   -
     family: 'FrodoKEM'
     name_group: 'frodo1344aes'
     nid: '0x0204'
     nid_hybrid: '0x2F04'
     oqs_alg: 'OQS_KEM_alg_frodokem_1344_aes'
-    bit_security: 256
   -
     family: 'FrodoKEM'
     name_group: 'frodo1344shake'
     nid: '0x0205'
     nid_hybrid: '0x2F05'
     oqs_alg: 'OQS_KEM_alg_frodokem_1344_shake'
-    bit_security: 256
   -
     family: 'BIKE'
     name_group: 'bike1l1cpa'
@@ -54,7 +48,6 @@ kems:
           hybrid_group: secp256_r1
           nid: '0x2F06'
     oqs_alg: 'OQS_KEM_alg_bike1_l1_cpa'
-    bit_security: 128
   -
     family: 'BIKE'
     name_group: 'bike1l3cpa'
@@ -66,14 +59,12 @@ kems:
           hybrid_group: secp384_r1
           nid: '0x2F07'
     oqs_alg: 'OQS_KEM_alg_bike1_l3_cpa'
-    bit_security: 192
   -
     family: 'CRYSTALS-Kyber'
     name_group: 'kyber512'
     nid: '0x023A'
     nid_hybrid: '0x2F3A'
     oqs_alg: 'OQS_KEM_alg_kyber_512'
-    bit_security: 128
     extra_nids:
       current:
         - hybrid_group: "x25519"
@@ -100,7 +91,6 @@ kems:
           hybrid_group: secp384_r1
           nid: '0x2F10'
     oqs_alg: 'OQS_KEM_alg_kyber_768'
-    bit_security: 192
   -
     family: 'CRYSTALS-Kyber'
     name_group: 'kyber1024'
@@ -114,91 +104,78 @@ kems:
           hybrid_group: secp521_r1
           nid: '0x2F11'
     oqs_alg: 'OQS_KEM_alg_kyber_1024'
-    bit_security: 256
   -
     family: 'NTRU'
     name_group: 'ntru_hps2048509'
     nid: '0x0214'
     nid_hybrid: '0x2F14'
     oqs_alg: 'OQS_KEM_alg_ntru_hps2048509'
-    bit_security: 128
   -
     family: 'NTRU'
     name_group: 'ntru_hps2048677'
     nid: '0x0215'
     nid_hybrid: '0x2F15'
     oqs_alg: 'OQS_KEM_alg_ntru_hps2048677'
-    bit_security: 192
   -
     family: 'NTRU'
     name_group: 'ntru_hps4096821'
     nid: '0x0216'
     nid_hybrid: '0x2F16'
     oqs_alg: 'OQS_KEM_alg_ntru_hps4096821'
-    bit_security: 256
   -
     family: 'NTRU'
     name_group: 'ntru_hrss701'
     nid: '0x0217'
     nid_hybrid: '0x2F17'
     oqs_alg: 'OQS_KEM_alg_ntru_hrss701'
-    bit_security: 192
   -
     family: 'SABER'
     name_group: 'lightsaber'
     nid: '0x0218'
     nid_hybrid: '0x2F18'
     oqs_alg: 'OQS_KEM_alg_saber_lightsaber'
-    bit_security: 128
   -
     family: 'SABER'
     name_group: 'saber'
     nid: '0x0219'
     nid_hybrid: '0x2F19'
     oqs_alg: 'OQS_KEM_alg_saber_saber'
-    bit_security: 192
   -
     family: 'SABER'
     name_group: 'firesaber'
     nid: '0x021A'
     nid_hybrid: '0x2F1A'
     oqs_alg: 'OQS_KEM_alg_saber_firesaber'
-    bit_security: 256
   -
     family: 'SIDH'
     name_group: 'sidhp434'
     nid: '0x021B'
     nid_hybrid: '0x2F1B'
     oqs_alg: 'OQS_KEM_alg_sidh_p434'
-    bit_security: 128
   -
     family: 'SIDH'
     name_group: 'sidhp503'
     nid: '0x021C'
     nid_hybrid: '0x2F1C'
     oqs_alg: 'OQS_KEM_alg_sidh_p503'
-    bit_security: 128
   -
     family: 'SIDH'
     name_group: 'sidhp610'
     nid: '0x021D'
     nid_hybrid: '0x2F1D'
     oqs_alg: 'OQS_KEM_alg_sidh_p610'
-    bit_security: 192
   -
     family: 'SIDH'
     name_group: 'sidhp751'
     nid: '0x021E'
     nid_hybrid: '0x2F1E'
     oqs_alg: 'OQS_KEM_alg_sidh_p751'
-    bit_security: 256
   -
     family: 'SIKE'
     name_group: 'sikep434'
     nid: '0x021F'
     nid_hybrid: '0x2F1F'
     oqs_alg: 'OQS_KEM_alg_sike_p434'
-    bit_security: 128
     extra_nids:
       current:
         - hybrid_group: "x25519"
@@ -209,21 +186,18 @@ kems:
     nid: '0x0220'
     nid_hybrid: '0x2F20'
     oqs_alg: 'OQS_KEM_alg_sike_p503'
-    bit_security: 128
   -
     family: 'SIKE'
     name_group: 'sikep610'
     nid: '0x0221'
     nid_hybrid: '0x2F21'
     oqs_alg: 'OQS_KEM_alg_sike_p610'
-    bit_security: 192
   -
     family: 'SIKE'
     name_group: 'sikep751'
     nid: '0x0222'
     nid_hybrid: '0x2F22'
     oqs_alg: 'OQS_KEM_alg_sike_p751'
-    bit_security: 256
   -
     family: 'BIKE'
     name_group: 'bike1l1fo'
@@ -238,7 +212,6 @@ kems:
           hybrid_group: "x25519"
           nid: '0x2F28'
     oqs_alg: 'OQS_KEM_alg_bike1_l1_fo'
-    bit_security: 128
   -
     family: 'BIKE'
     name_group: 'bike1l3fo'
@@ -250,7 +223,6 @@ kems:
           hybrid_group: secp384_r1
           nid: '0x2F24'
     oqs_alg: 'OQS_KEM_alg_bike1_l3_fo'
-    bit_security: 192
   -
     family: 'BIKE'
     name_group: 'bikel1'
@@ -258,7 +230,6 @@ kems:
     nid: '0x0238'
     nid_hybrid: '0x2F38'
     oqs_alg: 'OQS_KEM_alg_bike_l1'
-    bit_security: 128
     extra_nids:
       current:
         - hybrid_group: "x25519"
@@ -271,7 +242,6 @@ kems:
     nid: '0x023B'
     nid_hybrid: '0x2F3B'
     oqs_alg: 'OQS_KEM_alg_bike_l3'
-    bit_security: 192
   -
     family: 'CRYSTALS-Kyber'
     name_group: 'kyber90s512'
@@ -285,7 +255,6 @@ kems:
           hybrid_group: secp256_r1
           nid: '0x2F29'
     oqs_alg: 'OQS_KEM_alg_kyber_512_90s'
-    bit_security: 128
   -
     family: 'CRYSTALS-Kyber'
     name_group: 'kyber90s768'
@@ -299,7 +268,6 @@ kems:
           hybrid_group: secp384_r1
           nid: '0x2F2A'
     oqs_alg: 'OQS_KEM_alg_kyber_768_90s'
-    bit_security: 192
   -
     family: 'CRYSTALS-Kyber'
     name_group: 'kyber90s1024'
@@ -313,70 +281,60 @@ kems:
           hybrid_group: secp521_r1
           nid: '0x2F2B'
     oqs_alg: 'OQS_KEM_alg_kyber_1024_90s'
-    bit_security: 256
   -
     family: 'HQC'
     name_group: 'hqc128'
     nid: '0x022C'
     nid_hybrid: '0x2F2C'
     oqs_alg: 'OQS_KEM_alg_hqc_128'
-    bit_security: 128
   -
     family: 'HQC'
     name_group: 'hqc192'
     nid: '0x022D'
     nid_hybrid: '0x2F2D'
     oqs_alg: 'OQS_KEM_alg_hqc_192'
-    bit_security: 192
   -
     family: 'HQC'
     name_group: 'hqc256'
     nid: '0x022E'
     nid_hybrid: '0x2F2E'
     oqs_alg: 'OQS_KEM_alg_hqc_256'
-    bit_security: 256
   -
     family: 'NTRU-Prime'
     name_group: 'ntrulpr653'
     nid: '0x022F'
     nid_hybrid: '0x2F2F'
     oqs_alg: 'OQS_KEM_alg_ntruprime_ntrulpr653'
-    bit_security: 128
   -
     family: 'NTRU-Prime'
     name_group: 'ntrulpr761'
     nid: '0x0230'
     nid_hybrid: '0x2F30'
     oqs_alg: 'OQS_KEM_alg_ntruprime_ntrulpr761'
-    bit_security: 192
   -
     family: 'NTRU-Prime'
     name_group: 'ntrulpr857'
     nid: '0x0231'
     nid_hybrid: '0x2F31'
     oqs_alg: 'OQS_KEM_alg_ntruprime_ntrulpr857'
-    bit_security: 192
   -
     family: 'NTRU-Prime'
     name_group: 'sntrup653'
     nid: '0x0232'
     nid_hybrid: '0x2F32'
     oqs_alg: 'OQS_KEM_alg_ntruprime_sntrup653'
-    bit_security: 128
   -
     family: 'NTRU-Prime'
     name_group: 'sntrup761'
     nid: '0x0233'
     nid_hybrid: '0x2F33'
     oqs_alg: 'OQS_KEM_alg_ntruprime_sntrup761'
-    bit_security: 192
   -
     family: 'NTRU-Prime'
     name_group: 'sntrup857'
     nid: '0x0234'
     nid_hybrid: '0x2F34'
     oqs_alg: 'OQS_KEM_alg_ntruprime_sntrup857'
-    bit_security: 192
 
 kem_nid_end: '0x0250'
 kem_nid_hybrid_end: '0x2FFF'
@@ -396,7 +354,6 @@ sigs:
     #    name: 'oqs_sig_default'
     #    pretty_name: 'OQS Default Signature Algorithm'
     #    oqs_meth: 'OQS_SIG_alg_default'
-    #    security: 128
     #    oid: '1.3.9999.1.1'
     #    code_point: '0xfe00'
     #    enable: true
@@ -430,7 +387,6 @@ sigs:
         name: 'dilithium2'
         pretty_name: 'Dilithium2'
         oqs_meth: 'OQS_SIG_alg_dilithium_2'
-        security: 128
         oid: '1.3.6.1.4.1.2.267.7.4.4'
         code_point: '0xfea0'
         enable: true
@@ -446,7 +402,6 @@ sigs:
         name: 'dilithium3'
         pretty_name: 'Dilithium3'
         oqs_meth: 'OQS_SIG_alg_dilithium_3'
-        security: 192
         oid: '1.3.6.1.4.1.2.267.7.6.5'
         code_point: '0xfea3'
         enable: true
@@ -458,7 +413,6 @@ sigs:
         name: 'dilithium5'
         pretty_name: 'Dilithium5'
         oqs_meth: 'OQS_SIG_alg_dilithium_5'
-        security: 256
         oid: '1.3.6.1.4.1.2.267.7.8.7'
         code_point: '0xfea5'
         enable: true
@@ -470,7 +424,6 @@ sigs:
         name: 'dilithium2_aes'
         pretty_name: 'Dilithium2_AES'
         oqs_meth: 'OQS_SIG_alg_dilithium_2_aes'
-        security: 128
         oid: '1.3.6.1.4.1.2.267.11.4.4'
         code_point: '0xfea7'
         enable: true
@@ -486,7 +439,6 @@ sigs:
         name: 'dilithium3_aes'
         pretty_name: 'Dilithium3_AES'
         oqs_meth: 'OQS_SIG_alg_dilithium_3_aes'
-        security: 192
         oid: '1.3.6.1.4.1.2.267.11.6.5'
         code_point: '0xfeaa'
         enable: true
@@ -498,7 +450,6 @@ sigs:
         name: 'dilithium5_aes'
         pretty_name: 'Dilithium5_AES'
         oqs_meth: 'OQS_SIG_alg_dilithium_5_aes'
-        security: 256
         oid: '1.3.6.1.4.1.2.267.11.8.7'
         code_point: '0xfeac'
         enable: true
@@ -517,7 +468,6 @@ sigs:
         name: 'falcon512'
         pretty_name: 'Falcon-512'
         oqs_meth: 'OQS_SIG_alg_falcon_512'
-        security: 128
         oid: '1.3.9999.3.1'
         code_point: '0xfe0b'
         enable: true
@@ -533,7 +483,6 @@ sigs:
         name: 'falcon1024'
         pretty_name: 'Falcon-1024'
         oqs_meth: 'OQS_SIG_alg_falcon_1024'
-        security: 256
         oid: '1.3.9999.3.4'
         code_point: '0xfe0e'
         enable: true
@@ -558,7 +507,6 @@ sigs:
         name: 'picnicl1fs'
         pretty_name: 'Picnic L1 FS'
         oqs_meth: 'OQS_SIG_alg_picnic_L1_FS'
-        security: 128
         oid: '1.3.6.1.4.1.311.89.2.1.1'
         code_point: '0xfe15'
         enable: false
@@ -574,7 +522,6 @@ sigs:
         name: 'picnicl1ur'
         pretty_name: 'Picnic L1 UR'
         oqs_meth: 'OQS_SIG_alg_picnic_L1_UR'
-        security: 128
         oid: '1.3.6.1.4.1.311.89.2.1.4'
         code_point: '0xfe18'
         enable: false
@@ -590,7 +537,6 @@ sigs:
         name: 'picnicl1full'
         pretty_name: 'Picnic L1 full'
         oqs_meth: 'OQS_SIG_alg_picnic_L1_full'
-        security: 128
         oid: '1.3.6.1.4.1.311.89.2.1.7'
         code_point: '0xfe96'
         enable: true
@@ -606,7 +552,6 @@ sigs:
         name: 'picnic3l1'
         pretty_name: 'Picnic3 L1'
         oqs_meth: 'OQS_SIG_alg_picnic3_L1'
-        security: 128
         oid: '1.3.6.1.4.1.311.89.2.1.21'
         code_point: '0xfe1b'
         enable: true
@@ -622,7 +567,6 @@ sigs:
         name: 'picnic3l3'
         pretty_name: 'Picnic3 L3'
         oqs_meth: 'OQS_SIG_alg_picnic3_L3'
-        security: 192
         oid: '1.3.6.1.4.1.311.89.2.1.24'
         code_point: '0xfe1e'
         enable: false
@@ -634,7 +578,6 @@ sigs:
         name: 'picnic3l5'
         pretty_name: 'Picnic3 L5'
         oqs_meth: 'OQS_SIG_alg_picnic3_L5'
-        security: 256
         oid: '1.3.6.1.4.1.311.89.2.1.26'
         code_point: '0xfe20'
         enable: false
@@ -649,7 +592,6 @@ sigs:
         name: 'rainbowIclassic'
         pretty_name: 'Rainbow-I-Classic'
         oqs_meth: 'OQS_SIG_alg_rainbow_I_classic'
-        security: 128
         oid: '1.3.9999.5.1.1.1'
         code_point: '0xfe27'
         enable: true
@@ -665,7 +607,6 @@ sigs:
         name: 'rainbowIcircumzenithal'
         pretty_name: 'Rainbow-I-Circumzenithal'
         oqs_meth: 'OQS_SIG_alg_rainbow_I_circumzenithal'
-        security: 128
         oid: '1.3.9999.5.1.4.1'
         code_point: '0xfe30'
         enable: false
@@ -681,7 +622,6 @@ sigs:
         name: 'rainbowIcompressed'
         pretty_name: 'Rainbow-I-Compressed'
         oqs_meth: 'OQS_SIG_alg_rainbow_I_compressed'
-        security: 128
         oid: '1.3.9999.5.1.7.1'
         code_point: '0xfe33'
         enable: false
@@ -697,7 +637,6 @@ sigs:
         name: 'rainbowIIIclassic'
         pretty_name: 'Rainbow-III-Classic'
         oqs_meth: 'OQS_SIG_alg_rainbow_III_classic'
-        security: 192
         oid: '1.3.9999.5.2.1.1'
         code_point: '0xfe36'
         enable: false
@@ -709,7 +648,6 @@ sigs:
         name: 'rainbowIIIcircumzenithal'
         pretty_name: 'Rainbow-III-Circumzenithal'
         oqs_meth: 'OQS_SIG_alg_rainbow_III_circumzenithal'
-        security: 192
         oid: '1.3.9999.5.2.3.1'
         code_point: '0xfe38'
         enable: false
@@ -721,7 +659,6 @@ sigs:
         name: 'rainbowIIIcompressed'
         pretty_name: 'Rainbow-III-Compressed'
         oqs_meth: 'OQS_SIG_alg_rainbow_III_compressed'
-        security: 192
         oid: '1.3.9999.5.2.5.1'
         code_point: '0xfe3a'
         enable: false
@@ -733,7 +670,6 @@ sigs:
         name: 'rainbowVclassic'
         pretty_name: 'Rainbow-V-Classic'
         oqs_meth: 'OQS_SIG_alg_rainbow_V_classic'
-        security: 256
         oid: '1.3.9999.5.3.1.1'
         code_point: '0xfe3c'
         enable: true
@@ -745,7 +681,6 @@ sigs:
         name: 'rainbowVcircumzenithal'
         pretty_name: 'Rainbow-V-Circumzenithal'
         oqs_meth: 'OQS_SIG_alg_rainbow_V_circumzenithal'
-        security: 256
         oid: '1.3.9999.5.3.3.1'
         code_point: '0xfe3e'
         enable: false
@@ -757,7 +692,6 @@ sigs:
         name: 'rainbowVcompressed'
         pretty_name: 'Rainbow-V-Compressed'
         oqs_meth: 'OQS_SIG_alg_rainbow_V_compressed'
-        security: 256
         oid: '1.3.9999.5.3.5.1'
         code_point: '0xfe40'
         enable: false
@@ -772,7 +706,6 @@ sigs:
         name: 'sphincsharaka128frobust'
         pretty_name: 'SPHINCS+-Haraka-128f-robust'
         oqs_meth: 'OQS_SIG_alg_sphincs_haraka_128f_robust'
-        security: 128
         oid: '1.3.9999.6.1.1'
         code_point: '0xfe42'
         enable: true
@@ -788,7 +721,6 @@ sigs:
         name: 'sphincsharaka128fsimple'
         pretty_name: 'SPHINCS+-Haraka-128f-simple'
         oqs_meth: 'OQS_SIG_alg_sphincs_haraka_128f_simple'
-        security: 128
         oid: '1.3.9999.6.1.4'
         code_point: '0xfe45'
         enable: false
@@ -804,7 +736,6 @@ sigs:
         name: 'sphincsharaka128srobust'
         pretty_name: 'SPHINCS+-Haraka-128s-robust'
         oqs_meth: 'OQS_SIG_alg_sphincs_haraka_128s_robust'
-        security: 128
         oid: '1.3.9999.6.1.7'
         code_point: '0xfe48'
         enable: false
@@ -820,7 +751,6 @@ sigs:
         name: 'sphincsharaka128ssimple'
         pretty_name: 'SPHINCS+-Haraka-128s-simple'
         oqs_meth: 'OQS_SIG_alg_sphincs_haraka_128s_simple'
-        security: 128
         oid: '1.3.9999.6.1.10'
         code_point: '0xfe4b'
         enable: false
@@ -836,7 +766,6 @@ sigs:
         name: 'sphincsharaka192frobust'
         pretty_name: 'SPHINCS+-Haraka-192f-robust'
         oqs_meth: 'OQS_SIG_alg_sphincs_haraka_192f_robust'
-        security: 192
         oid: '1.3.9999.6.2.1'
         code_point: '0xfe4e'
         enable: false
@@ -848,7 +777,6 @@ sigs:
         name: 'sphincsharaka192fsimple'
         pretty_name: 'SPHINCS+-Haraka-192f-simple'
         oqs_meth: 'OQS_SIG_alg_sphincs_haraka_192f_simple'
-        security: 192
         oid: '1.3.9999.6.2.3'
         code_point: '0xfe50'
         enable: false
@@ -860,7 +788,6 @@ sigs:
         name: 'sphincsharaka192srobust'
         pretty_name: 'SPHINCS+-Haraka-192s-robust'
         oqs_meth: 'OQS_SIG_alg_sphincs_haraka_192s_robust'
-        security: 192
         oid: '1.3.9999.6.2.5'
         code_point: '0xfe52'
         enable: false
@@ -872,7 +799,6 @@ sigs:
         name: 'sphincsharaka192ssimple'
         pretty_name: 'SPHINCS+-Haraka-192s-simple'
         oqs_meth: 'OQS_SIG_alg_sphincs_haraka_192s_simple'
-        security: 192
         oid: '1.3.9999.6.2.7'
         code_point: '0xfe54'
         enable: false
@@ -884,7 +810,6 @@ sigs:
         name: 'sphincsharaka256frobust'
         pretty_name: 'SPHINCS+-Haraka-256f-robust'
         oqs_meth: 'OQS_SIG_alg_sphincs_haraka_256f_robust'
-        security: 256
         oid: '1.3.9999.6.3.1'
         code_point: '0xfe56'
         enable: false
@@ -896,7 +821,6 @@ sigs:
         name: 'sphincsharaka256fsimple'
         pretty_name: 'SPHINCS+-Haraka-256f-simple'
         oqs_meth: 'OQS_SIG_alg_sphincs_haraka_256f_simple'
-        security: 256
         oid: '1.3.9999.6.3.3'
         code_point: '0xfe58'
         enable: false
@@ -908,7 +832,6 @@ sigs:
         name: 'sphincsharaka256srobust'
         pretty_name: 'SPHINCS+-Haraka-256s-robust'
         oqs_meth: 'OQS_SIG_alg_sphincs_haraka_256s_robust'
-        security: 256
         oid: '1.3.9999.6.3.5'
         code_point: '0xfe5a'
         enable: false
@@ -920,7 +843,6 @@ sigs:
         name: 'sphincsharaka256ssimple'
         pretty_name: 'SPHINCS+-Haraka-256s-simple'
         oqs_meth: 'OQS_SIG_alg_sphincs_haraka_256s_simple'
-        security: 256
         oid: '1.3.9999.6.3.7'
         code_point: '0xfe5c'
         enable: false
@@ -935,7 +857,6 @@ sigs:
         name: 'sphincssha256128frobust'
         pretty_name: 'SPHINCS+-SHA256-128f-robust'
         oqs_meth: 'OQS_SIG_alg_sphincs_sha256_128f_robust'
-        security: 128
         oid: '1.3.9999.6.4.1'
         code_point: '0xfe5e'
         enable: true
@@ -951,7 +872,6 @@ sigs:
         name: 'sphincssha256128fsimple'
         pretty_name: 'SPHINCS+-SHA256-128f-simple'
         oqs_meth: 'OQS_SIG_alg_sphincs_sha256_128f_simple'
-        security: 128
         oid: '1.3.9999.6.4.4'
         code_point: '0xfe61'
         enable: false
@@ -967,7 +887,6 @@ sigs:
         name: 'sphincssha256128srobust'
         pretty_name: 'SPHINCS+-SHA256-128s-robust'
         oqs_meth: 'OQS_SIG_alg_sphincs_sha256_128s_robust'
-        security: 128
         oid: '1.3.9999.6.4.7'
         code_point: '0xfe64'
         enable: false
@@ -983,7 +902,6 @@ sigs:
         name: 'sphincssha256128ssimple'
         pretty_name: 'SPHINCS+-SHA256-128s-simple'
         oqs_meth: 'OQS_SIG_alg_sphincs_sha256_128s_simple'
-        security: 128
         oid: '1.3.9999.6.4.10'
         code_point: '0xfe67'
         enable: false
@@ -999,7 +917,6 @@ sigs:
         name: 'sphincssha256192frobust'
         pretty_name: 'SPHINCS+-SHA256-192f-robust'
         oqs_meth: 'OQS_SIG_alg_sphincs_sha256_192f_robust'
-        security: 192
         oid: '1.3.9999.6.5.1'
         code_point: '0xfe6a'
         enable: false
@@ -1011,7 +928,6 @@ sigs:
         name: 'sphincssha256192fsimple'
         pretty_name: 'SPHINCS+-SHA256-192f-simple'
         oqs_meth: 'OQS_SIG_alg_sphincs_sha256_192f_simple'
-        security: 192
         oid: '1.3.9999.6.5.3'
         code_point: '0xfe6c'
         enable: false
@@ -1023,7 +939,6 @@ sigs:
         name: 'sphincssha256192srobust'
         pretty_name: 'SPHINCS+-SHA256-192s-robust'
         oqs_meth: 'OQS_SIG_alg_sphincs_sha256_192s_robust'
-        security: 192
         oid: '1.3.9999.6.5.5'
         code_point: '0xfe6e'
         enable: false
@@ -1035,7 +950,6 @@ sigs:
         name: 'sphincssha256192ssimple'
         pretty_name: 'SPHINCS+-SHA256-192s-simple'
         oqs_meth: 'OQS_SIG_alg_sphincs_sha256_192s_simple'
-        security: 192
         oid: '1.3.9999.6.5.7'
         code_point: '0xfe70'
         enable: false
@@ -1047,7 +961,6 @@ sigs:
         name: 'sphincssha256256frobust'
         pretty_name: 'SPHINCS+-SHA256-256f-robust'
         oqs_meth: 'OQS_SIG_alg_sphincs_sha256_256f_robust'
-        security: 256
         oid: '1.3.9999.6.6.1'
         code_point: '0xfe72'
         enable: false
@@ -1059,7 +972,6 @@ sigs:
         name: 'sphincssha256256fsimple'
         pretty_name: 'SPHINCS+-SHA256-256f-simple'
         oqs_meth: 'OQS_SIG_alg_sphincs_sha256_256f_simple'
-        security: 256
         oid: '1.3.9999.6.6.3'
         code_point: '0xfe74'
         enable: false
@@ -1071,7 +983,6 @@ sigs:
         name: 'sphincssha256256srobust'
         pretty_name: 'SPHINCS+-SHA256-256s-robust'
         oqs_meth: 'OQS_SIG_alg_sphincs_sha256_256s_robust'
-        security: 256
         oid: '1.3.9999.6.6.5'
         code_point: '0xfe76'
         enable: false
@@ -1083,7 +994,6 @@ sigs:
         name: 'sphincssha256256ssimple'
         pretty_name: 'SPHINCS+-SHA256-256s-simple'
         oqs_meth: 'OQS_SIG_alg_sphincs_sha256_256s_simple'
-        security: 256
         oid: '1.3.9999.6.6.7'
         code_point: '0xfe78'
         enable: false
@@ -1098,7 +1008,6 @@ sigs:
         name: 'sphincsshake256128frobust'
         pretty_name: 'SPHINCS+-SHAKE256-128f-robust'
         oqs_meth: 'OQS_SIG_alg_sphincs_shake256_128f_robust'
-        security: 128
         oid: '1.3.9999.6.7.1'
         code_point: '0xfe7a'
         enable: true
@@ -1114,7 +1023,6 @@ sigs:
         name: 'sphincsshake256128fsimple'
         pretty_name: 'SPHINCS+-SHAKE256-128f-simple'
         oqs_meth: 'OQS_SIG_alg_sphincs_shake256_128f_simple'
-        security: 128
         oid: '1.3.9999.6.7.4'
         code_point: '0xfe7d'
         enable: false
@@ -1130,7 +1038,6 @@ sigs:
         name: 'sphincsshake256128srobust'
         pretty_name: 'SPHINCS+-SHAKE256-128s-robust'
         oqs_meth: 'OQS_SIG_alg_sphincs_shake256_128s_robust'
-        security: 128
         oid: '1.3.9999.6.7.7'
         code_point: '0xfe80'
         enable: false
@@ -1146,7 +1053,6 @@ sigs:
         name: 'sphincsshake256128ssimple'
         pretty_name: 'SPHINCS+-SHAKE256-128s-simple'
         oqs_meth: 'OQS_SIG_alg_sphincs_shake256_128s_simple'
-        security: 128
         oid: '1.3.9999.6.7.10'
         code_point: '0xfe83'
         enable: false
@@ -1162,7 +1068,6 @@ sigs:
         name: 'sphincsshake256192frobust'
         pretty_name: 'SPHINCS+-SHAKE256-192f-robust'
         oqs_meth: 'OQS_SIG_alg_sphincs_shake256_192f_robust'
-        security: 192
         oid: '1.3.9999.6.8.1'
         code_point: '0xfe86'
         enable: false
@@ -1174,7 +1079,6 @@ sigs:
         name: 'sphincsshake256192fsimple'
         pretty_name: 'SPHINCS+-SHAKE256-192f-simple'
         oqs_meth: 'OQS_SIG_alg_sphincs_shake256_192f_simple'
-        security: 192
         oid: '1.3.9999.6.8.3'
         code_point: '0xfe88'
         enable: false
@@ -1186,7 +1090,6 @@ sigs:
         name: 'sphincsshake256192srobust'
         pretty_name: 'SPHINCS+-SHAKE256-192s-robust'
         oqs_meth: 'OQS_SIG_alg_sphincs_shake256_192s_robust'
-        security: 192
         oid: '1.3.9999.6.8.5'
         code_point: '0xfe8a'
         enable: false
@@ -1198,7 +1101,6 @@ sigs:
         name: 'sphincsshake256192ssimple'
         pretty_name: 'SPHINCS+-SHAKE256-192s-simple'
         oqs_meth: 'OQS_SIG_alg_sphincs_shake256_192s_simple'
-        security: 192
         oid: '1.3.9999.6.8.7'
         code_point: '0xfe8c'
         enable: false
@@ -1210,7 +1112,6 @@ sigs:
         name: 'sphincsshake256256frobust'
         pretty_name: 'SPHINCS+-SHAKE256-256f-robust'
         oqs_meth: 'OQS_SIG_alg_sphincs_shake256_256f_robust'
-        security: 256
         oid: '1.3.9999.6.9.1'
         code_point: '0xfe8e'
         enable: false
@@ -1222,7 +1123,6 @@ sigs:
         name: 'sphincsshake256256fsimple'
         pretty_name: 'SPHINCS+-SHAKE256-256f-simple'
         oqs_meth: 'OQS_SIG_alg_sphincs_shake256_256f_simple'
-        security: 256
         oid: '1.3.9999.6.9.3'
         code_point: '0xfe90'
         enable: false
@@ -1234,7 +1134,6 @@ sigs:
         name: 'sphincsshake256256srobust'
         pretty_name: 'SPHINCS+-SHAKE256-256s-robust'
         oqs_meth: 'OQS_SIG_alg_sphincs_shake256_256s_robust'
-        security: 256
         oid: '1.3.9999.6.9.5'
         code_point: '0xfe92'
         enable: false
@@ -1246,7 +1145,6 @@ sigs:
         name: 'sphincsshake256256ssimple'
         pretty_name: 'SPHINCS+-SHAKE256-256s-simple'
         oqs_meth: 'OQS_SIG_alg_sphincs_shake256_256s_simple'
-        security: 256
         oid: '1.3.9999.6.9.7'
         code_point: '0xfe94'
         enable: false

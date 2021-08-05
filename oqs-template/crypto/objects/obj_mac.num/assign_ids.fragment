@@ -6,7 +6,9 @@
 {%- endfor -%}
 {% set count.val = count.val + 1 -%}
 {%- for kem in config['kems'] -%}
-p256_{{ kem['name_group'] }}		{{ count.val }}
+{%- if kem['bit_security'] == 128 -%} p256_{{ kem['name_group'] }}            {{ count.val }} {%- endif %}
+{%- if kem['bit_security'] == 192 -%} p384_{{ kem['name_group'] }}            {{ count.val }} {%- endif %}
+{%- if kem['bit_security'] == 256 -%} p521_{{ kem['name_group'] }}            {{ count.val }} {%- endif %}
 {% set count.val = count.val + 1 -%}
 {%- endfor -%}
 {%- for sig in config['sigs'] -%}
