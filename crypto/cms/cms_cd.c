@@ -50,8 +50,9 @@ CMS_ContentInfo *ossl_cms_CompressedData_create(int comp_nid,
 
     cd->version = 0;
 
-    X509_ALGOR_set0(cd->compressionAlgorithm,
-                    OBJ_nid2obj(NID_zlib_compression), V_ASN1_UNDEF, NULL);
+    (void)X509_ALGOR_set0(cd->compressionAlgorithm,
+                          OBJ_nid2obj(NID_zlib_compression),
+                          V_ASN1_UNDEF, NULL); /* cannot fail */
 
     cd->encapContentInfo->eContentType = OBJ_nid2obj(NID_pkcs7_data);
 
