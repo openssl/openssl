@@ -654,9 +654,21 @@ static int default_fixup_args(enum state state,
             } else if ((state == POST_PARAMS_TO_CTRL || state == PKEY)
                        && ctx->action_type == GET) {
                 /* For the POST state, only getting needs some work to be done */
+                unsigned int param_data_type = translation->param_data_type;
+                size_t size = (size_t)ctx->p1;
 
+                if (state == PKEY)
+                    size = ctx->sz;
+                if (param_data_type == 0) {
+                    /* we must have a fixup_args function to work */
+                    if (!ossl_assert(translation->fixup_args != NULL)) {
+                        ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
+                        return 0;
+                    }
+                    param_data_type = ctx->params->data_type;
+                }
                 /* When getting, we populate |*params| from |p1| and |p2| */
-                switch (translation->param_data_type) {
+                switch (param_data_type) {
                 case OSSL_PARAM_INTEGER:
                     return OSSL_PARAM_set_int(ctx->params, ctx->p1);
                 case OSSL_PARAM_UNSIGNED_INTEGER:
@@ -673,10 +685,10 @@ static int default_fixup_args(enum state state,
                     return OSSL_PARAM_set_utf8_string(ctx->params, ctx->p2);
                 case OSSL_PARAM_OCTET_STRING:
                     return OSSL_PARAM_set_octet_string(ctx->params, ctx->p2,
-                                                       (size_t)ctx->p1);
+                                                       size);
                 case OSSL_PARAM_OCTET_PTR:
                     return OSSL_PARAM_set_octet_ptr(ctx->params, ctx->p2,
-                                                    (size_t)ctx->p1);
+                                                    size);
                 default:
                     ERR_raise_data(ERR_LIB_EVP, ERR_R_UNSUPPORTED,
                                    "[action:%d, state:%d] "
@@ -1552,6 +1564,7 @@ static int get_payload_public_key(enum state state,
     ctx->p2 = NULL;
     switch (EVP_PKEY_get_base_id(pkey)) {
 #ifndef OPENSSL_NO_DH
+    case EVP_PKEY_DHX:
     case EVP_PKEY_DH:
         switch (ctx->params->data_type) {
         case OSSL_PARAM_OCTET_STRING:
@@ -2249,7 +2262,7 @@ static const struct translation_st evp_pkey_translations[] = {
       get_payload_private_key },
     { GET, -1, -1, -1, 0, NULL, NULL,
       OSSL_PKEY_PARAM_PUB_KEY,
-      0 /* no data type, let get_payload_pub_key() handle that */,
+      0 /* no data type, let get_payload_public_key() handle that */,
       get_payload_public_key },
 
     /* DH and DSA */
