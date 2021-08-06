@@ -354,6 +354,7 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
 
     if (md == NULL) {
         int def_nid;
+
         if (EVP_PKEY_get_default_digest_nid(pk, &def_nid) <= 0)
             goto err;
         md = EVP_get_digestbynid(def_nid);
@@ -361,11 +362,6 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
             ERR_raise(ERR_LIB_CMS, CMS_R_NO_DEFAULT_DIGEST);
             goto err;
         }
-    }
-
-    if (!md) {
-        ERR_raise(ERR_LIB_CMS, CMS_R_NO_DIGEST_SET);
-        goto err;
     }
 
     if (md == NULL) {
@@ -388,8 +384,7 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
     }
 
     if (i == sk_X509_ALGOR_num(sd->digestAlgorithms)) {
-        alg = X509_ALGOR_new();
-        if (alg == NULL)
+        if ((alg = X509_ALGOR_new()) == NULL)
             goto merr;
         X509_ALGOR_set_md(alg, md);
         if (!sk_X509_ALGOR_push(sd->digestAlgorithms, alg)) {

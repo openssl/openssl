@@ -561,17 +561,23 @@ static int ecd_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it,
     return 2;
 }
 
+static int ecd_item_sign(X509_ALGOR *alg1, X509_ALGOR *alg2, int nid)
+{
+    /* Note that X509_ALGOR_set0(..., ..., V_ASN1_UNDEF, ...) cannot fail */
+    /* Set algorithms identifiers */
+    (void)X509_ALGOR_set0(alg1, OBJ_nid2obj(nid), V_ASN1_UNDEF, NULL);
+    if (alg2 != NULL)
+        (void)X509_ALGOR_set0(alg2, OBJ_nid2obj(nid), V_ASN1_UNDEF, NULL);
+    /* Algorithm identifiers set: carry on as normal */
+    return 3;
+}
+
 static int ecd_item_sign25519(EVP_MD_CTX *ctx, const ASN1_ITEM *it,
                               const void *asn,
                               X509_ALGOR *alg1, X509_ALGOR *alg2,
                               ASN1_BIT_STRING *str)
 {
-    /* Set algorithms identifiers */
-    X509_ALGOR_set0(alg1, OBJ_nid2obj(NID_ED25519), V_ASN1_UNDEF, NULL);
-    if (alg2)
-        X509_ALGOR_set0(alg2, OBJ_nid2obj(NID_ED25519), V_ASN1_UNDEF, NULL);
-    /* Algorithm identifiers set: carry on as normal */
-    return 3;
+    return ecd_item_sign(alg1, alg2, NID_ED25519);
 }
 
 static int ecd_sig_info_set25519(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
@@ -587,12 +593,7 @@ static int ecd_item_sign448(EVP_MD_CTX *ctx, const ASN1_ITEM *it,
                             X509_ALGOR *alg1, X509_ALGOR *alg2,
                             ASN1_BIT_STRING *str)
 {
-    /* Set algorithm identifier */
-    X509_ALGOR_set0(alg1, OBJ_nid2obj(NID_ED448), V_ASN1_UNDEF, NULL);
-    if (alg2 != NULL)
-        X509_ALGOR_set0(alg2, OBJ_nid2obj(NID_ED448), V_ASN1_UNDEF, NULL);
-    /* Algorithm identifier set: carry on as normal */
-    return 3;
+    return ecd_item_sign(alg1, alg2, NID_ED448);
 }
 
 static int ecd_sig_info_set448(X509_SIG_INFO *siginf, const X509_ALGOR *alg,

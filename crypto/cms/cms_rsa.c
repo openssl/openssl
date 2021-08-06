@@ -123,10 +123,10 @@ static int rsa_cms_encrypt(CMS_RecipientInfo *ri)
         if (EVP_PKEY_CTX_get_rsa_padding(pkctx, &pad_mode) <= 0)
             return 0;
     }
-    if (pad_mode == RSA_PKCS1_PADDING) {
-        X509_ALGOR_set0(alg, OBJ_nid2obj(NID_rsaEncryption), V_ASN1_NULL, 0);
-        return 1;
-    }
+    if (pad_mode == RSA_PKCS1_PADDING)
+        return X509_ALGOR_set0(alg, OBJ_nid2obj(NID_rsaEncryption),
+                               V_ASN1_NULL, NULL);
+
     /* Not supported */
     if (pad_mode != RSA_PKCS1_OAEP_PADDING)
         return 0;
@@ -160,8 +160,9 @@ static int rsa_cms_encrypt(CMS_RecipientInfo *ri)
     }
     /* create string with pss parameter encoding. */
     if (!ASN1_item_pack(oaep, ASN1_ITEM_rptr(RSA_OAEP_PARAMS), &os))
-         goto err;
-    X509_ALGOR_set0(alg, OBJ_nid2obj(NID_rsaesOaep), V_ASN1_SEQUENCE, os);
+        goto err;
+    if (!X509_ALGOR_set0(alg, OBJ_nid2obj(NID_rsaesOaep), V_ASN1_SEQUENCE, os))
+        goto err;
     os = NULL;
     rv = 1;
  err:
@@ -196,18 +197,21 @@ static int rsa_cms_sign(CMS_SignerInfo *si)
         if (EVP_PKEY_CTX_get_rsa_padding(pkctx, &pad_mode) <= 0)
             return 0;
     }
-    if (pad_mode == RSA_PKCS1_PADDING) {
-        X509_ALGOR_set0(alg, OBJ_nid2obj(NID_rsaEncryption), V_ASN1_NULL, 0);
-        return 1;
-    }
+    if (pad_mode == RSA_PKCS1_PADDING)
+        return X509_ALGOR_set0(alg, OBJ_nid2obj(NID_rsaEncryption),
+                               V_ASN1_NULL, NULL);
+
     /* We don't support it */
     if (pad_mode != RSA_PKCS1_PSS_PADDING)
         return 0;
     os = ossl_rsa_ctx_to_pss_string(pkctx);
     if (os == NULL)
         return 0;
-    X509_ALGOR_set0(alg, OBJ_nid2obj(EVP_PKEY_RSA_PSS), V_ASN1_SEQUENCE, os);
-    return 1;
+    if (X509_ALGOR_set0(alg, OBJ_nid2obj(EVP_PKEY_RSA_PSS),
+                        V_ASN1_SEQUENCE, os))
+        return 1;
+    ASN1_STRING_free(os);
+    return 0;
 }
 
 static int rsa_cms_verify(CMS_SignerInfo *si)
