@@ -2481,13 +2481,21 @@ static int test_EVP_PKEY_set1_DH(void)
     EVP_PKEY *pkey1 = NULL, *pkey2 = NULL;
     int ret = 0;
     BIGNUM *p, *g = NULL;
+    BIGNUM *pubkey = NULL;
+    unsigned char pub[2048 / 8];
+    size_t len = 0;
 
     if (!TEST_ptr(p = BN_new())
             || !TEST_ptr(g = BN_new())
-            || !BN_set_word(p, 9999)
-            || !BN_set_word(g, 2)
+            || !TEST_ptr(pubkey = BN_new())
+            || !TEST_true(BN_set_word(p, 9999))
+            || !TEST_true(BN_set_word(g, 2))
+            || !TEST_true(BN_set_word(pubkey, 4321))
             || !TEST_ptr(noqdh = DH_new())
-            || !DH_set0_pqg(noqdh, p, NULL, g))
+            || !TEST_true(DH_set0_pqg(noqdh, p, NULL, g))
+            || !TEST_true(DH_set0_key(noqdh, pubkey, NULL))
+            || !TEST_ptr(pubkey = BN_new())
+            || !TEST_true(BN_set_word(pubkey, 4321)))
         goto err;
     p = g = NULL;
 
@@ -2497,21 +2505,35 @@ static int test_EVP_PKEY_set1_DH(void)
     if (!TEST_ptr(x942dh)
             || !TEST_ptr(noqdh)
             || !TEST_ptr(pkey1)
-            || !TEST_ptr(pkey2))
+            || !TEST_ptr(pkey2)
+            || !TEST_true(DH_set0_key(x942dh, pubkey, NULL)))
         goto err;
+    pubkey = NULL;
 
-    if(!TEST_true(EVP_PKEY_set1_DH(pkey1, x942dh))
+    if (!TEST_true(EVP_PKEY_set1_DH(pkey1, x942dh))
             || !TEST_int_eq(EVP_PKEY_get_id(pkey1), EVP_PKEY_DHX))
         goto err;
 
-    if(!TEST_true(EVP_PKEY_set1_DH(pkey2, noqdh))
+    if (!TEST_true(EVP_PKEY_get_bn_param(pkey1, OSSL_PKEY_PARAM_PUB_KEY,
+                                         &pubkey))
+            || !TEST_ptr(pubkey))
+        goto err;
+
+    if (!TEST_true(EVP_PKEY_set1_DH(pkey2, noqdh))
             || !TEST_int_eq(EVP_PKEY_get_id(pkey2), EVP_PKEY_DH))
+        goto err;
+
+    if (!TEST_true(EVP_PKEY_get_octet_string_param(pkey2,
+                                                   OSSL_PKEY_PARAM_PUB_KEY,
+                                                   pub, sizeof(pub), &len))
+            || !TEST_size_t_ne(len, 0))
         goto err;
 
     ret = 1;
  err:
     BN_free(p);
     BN_free(g);
+    BN_free(pubkey);
     EVP_PKEY_free(pkey1);
     EVP_PKEY_free(pkey2);
     DH_free(x942dh);
