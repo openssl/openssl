@@ -64,7 +64,7 @@ The following B<bug workaround> options are available:
 
 =item SSL_OP_CRYPTOPRO_TLSEXT_BUG
 
-Make server add server-hello extension from early version of cryptopro draft,
+Add server-hello extension from the early version of cryptopro draft
 when GOST ciphersuite is negotiated. Required for interoperability with CryptoPro
 CSP 3.x.
 
@@ -102,7 +102,7 @@ The following B<modifying> options are available:
 
 =item SSL_OP_ALLOW_CLIENT_RENEGOTIATION
 
-Client-initiated renegotiation is disabled by default. To allow it, use the
+Client-initiated renegotiation is disabled by default. Use the
 this option to enable it.
 
 =item SSL_OP_ALLOW_NO_DHE_KEX
