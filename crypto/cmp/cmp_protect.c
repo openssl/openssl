@@ -10,6 +10,7 @@
  */
 
 #include "cmp_local.h"
+#include "crypto/asn1.h"
 
 /* explicit #includes not strictly needed since implied by the above: */
 #include <openssl/asn1t.h>
@@ -184,15 +185,16 @@ int ossl_cmp_msg_add_extraCerts(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
  * Create an X509_ALGOR structure for PasswordBasedMAC protection based on
  * the pbm settings in the context
  */
-static int set_pbmac_algor(const OSSL_CMP_CTX *ctx, X509_ALGOR **alg)
+static X509_ALGOR *pbmac_algor(const OSSL_CMP_CTX *ctx)
 {
     OSSL_CRMF_PBMPARAMETER *pbm = NULL;
     unsigned char *pbm_der = NULL;
     int pbm_der_len;
     ASN1_STRING *pbm_str = NULL;
+    X509_ALGOR *alg = NULL;
 
     if (!ossl_assert(ctx != NULL))
-        return 0;
+        return NULL;
 
     pbm = OSSL_CRMF_pbmp_new(ctx->libctx, ctx->pbm_slen,
                              EVP_MD_get_type(ctx->pbm_owf), ctx->pbm_itercnt,
@@ -200,47 +202,30 @@ static int set_pbmac_algor(const OSSL_CMP_CTX *ctx, X509_ALGOR **alg)
     pbm_str = ASN1_STRING_new();
     if (pbm == NULL || pbm_str == NULL)
         goto err;
-
     if ((pbm_der_len = i2d_OSSL_CRMF_PBMPARAMETER(pbm, &pbm_der)) < 0)
         goto err;
-
     if (!ASN1_STRING_set(pbm_str, pbm_der, pbm_der_len))
         goto err;
-    if (*alg == NULL && (*alg = X509_ALGOR_new()) == NULL)
-        goto err;
-    OPENSSL_free(pbm_der);
-
-    X509_ALGOR_set0(*alg, OBJ_nid2obj(NID_id_PasswordBasedMAC),
-                    V_ASN1_SEQUENCE, pbm_str);
-    OSSL_CRMF_PBMPARAMETER_free(pbm);
-    return 1;
-
+    alg = ossl_X509_ALGOR_from_nid(NID_id_PasswordBasedMAC,
+                                   V_ASN1_SEQUENCE, pbm_str);
  err:
-    ASN1_STRING_free(pbm_str);
+    if (alg == NULL)
+        ASN1_STRING_free(pbm_str);
     OPENSSL_free(pbm_der);
     OSSL_CRMF_PBMPARAMETER_free(pbm);
-    return 0;
+    return alg;
 }
 
-static int set_sig_algor(const OSSL_CMP_CTX *ctx, X509_ALGOR **alg)
+static X509_ALGOR *sig_algor(const OSSL_CMP_CTX *ctx)
 {
     int nid = 0;
-    ASN1_OBJECT *algo = NULL;
 
     if (!OBJ_find_sigid_by_algs(&nid, EVP_MD_get_type(ctx->digest),
                                 EVP_PKEY_get_id(ctx->pkey))) {
         ERR_raise(ERR_LIB_CMP, CMP_R_UNSUPPORTED_KEY_TYPE);
         return 0;
     }
-    if ((algo = OBJ_nid2obj(nid)) == NULL)
-        return 0;
-    if (*alg == NULL && (*alg = X509_ALGOR_new()) == NULL)
-        return 0;
-
-    if (X509_ALGOR_set0(*alg, algo, V_ASN1_UNDEF, NULL))
-        return 1;
-    ASN1_OBJECT_free(algo);
-    return 0;
+    return ossl_X509_ALGOR_from_nid(nid, V_ASN1_UNDEF, NULL);
 }
 
 static int set_senderKID(const OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg,
@@ -269,7 +254,7 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
             goto err;
     } else if (ctx->secretValue != NULL) {
         /* use PasswordBasedMac according to 5.1.3.1 if secretValue is given */
-        if (!set_pbmac_algor(ctx, &msg->header->protectionAlg))
+        if ((msg->header->protectionAlg = pbmac_algor(ctx)) == NULL)
             goto err;
         if (!set_senderKID(ctx, msg, NULL))
             goto err;
@@ -288,7 +273,7 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
             goto err;
         }
 
-        if (!set_sig_algor(ctx, &msg->header->protectionAlg))
+        if ((msg->header->protectionAlg = sig_algor(ctx)) == NULL)
             goto err;
         /* set senderKID to keyIdentifier of the cert according to 5.1.1 */
         if (!set_senderKID(ctx, msg, X509_get0_subject_key_id(ctx->cert)))
