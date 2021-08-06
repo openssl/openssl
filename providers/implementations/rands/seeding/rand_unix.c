@@ -41,6 +41,7 @@
 # include <sys/random.h>
 #endif
 #if defined(__APPLE__)
+# include <CommonCrypto/CommonCryptoError.h>
 # include <CommonCrypto/CommonRandom.h>
 #endif
 
