@@ -378,6 +378,14 @@ The top of the installation directory tree.  Defaults are:
     Windows:        C:\Program Files\OpenSSL
     OpenVMS:        SYS$COMMON:[OPENSSL]
 
+### multilib
+
+    --multilib=STRING
+
+The STRING will be used as a postfix of the libdir name when the default libdir
+is used overriding eventual multilib value from the configuration targets.
+Applies only to Unix systems.
+
 Compiler Warnings
 -----------------
 

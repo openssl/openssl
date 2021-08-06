@@ -297,7 +297,9 @@ OPENSSLDIR={- #
               $openssldir -}
 LIBDIR={- our $libdir = $config{libdir};
           unless ($libdir) {
-              $libdir = "lib$target{multilib}";
+              our $multilib = defined($config{multilib}) ?
+                  $config{multilib} : $target{multilib};
+              $libdir = "lib$multilib";
           }
           file_name_is_absolute($libdir) ? "" : $libdir -}
 # $(libdir) is chosen to be compatible with the GNU coding standards

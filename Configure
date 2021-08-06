@@ -71,6 +71,9 @@ EOF
 #               given, do not compile support for interfaces deprecated
 #               up to and including the specified OpenSSL version.
 #
+# --multilib    Override the libdir multilib postfix from the target.
+#               For example use --multilib='' to use empty postfix.
+#
 # no-hw-xxx     do not compile support for specific crypto hardware.
 #               Generic OpenSSL-style methods relating to this support
 #               are always compiled but return NULL if the hardware
@@ -947,6 +950,10 @@ while (@argvcopy)
                 elsif (/^--libdir=(.*)$/)
                         {
                         $config{libdir}=$1;
+                        }
+                elsif (/^--multilib=(.*)$/)
+                        {
+                        $config{multilib}=$1;
                         }
                 elsif (/^--openssldir=(.*)$/)
                         {
