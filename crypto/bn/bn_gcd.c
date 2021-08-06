@@ -209,7 +209,8 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in, const BIGNUM *a, const BIGNUM *n,
                            BN_CTX *ctx, int *pnoinv)
 {
     BIGNUM *rv = NULL, *m_e = NULL, *m_o = NULL, *a_e = NULL, *a_o = NULL;
-    int idx_o = 1;
+    int idx_o = 0, bit = 1, i = 0;
+    BN_ULONG mask = 0;
 
     /* This is invalid input so we don't worry about constant time here */
     if (BN_abs_is_word(n, 1) || BN_is_zero(n)) {
@@ -223,10 +224,16 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in, const BIGNUM *a, const BIGNUM *n,
 
     /*-
      * Otherwise, express the modulus as n = m_o * 2**idx_o
-     * where m_o is odd. Assumes idx_o is public.
+     * where m_o is odd. Assumes the word position of idx_o is public.
      */
-    while (!BN_is_bit_set(n, idx_o))
-        idx_o++;
+    while (i < n->top && !(mask = n->d[i++]))
+        idx_o += BN_BITS2;
+    mask -= 1;
+    for (i = 0; i < BN_BITS2; i++) {
+            bit &= mask;
+            idx_o += bit;
+            mask >>= 1;
+    }
 
     /* If the modulus is a power of two, skip directly to the result */
     if (BN_num_bits(n) == idx_o + 1)
