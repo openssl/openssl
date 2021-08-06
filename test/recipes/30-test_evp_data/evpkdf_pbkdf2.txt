@@ -130,6 +130,38 @@ Ctrl.iter = iter:4096
 Ctrl.digest = digest:sha512
 Output = 9d9e9c4cd21fe4be24d5b8244c759665
 
+KDF = PBKDF2
+Ctrl.pkcs5 = pkcs5:1
+Ctrl.pass = pass:password
+Ctrl.salt = salt:salt
+Ctrl.iter = iter:4096
+Ctrl.digest = digest:sha3-224
+Output = 691292bc3683d7d41ea2910f5b3eed23
+
+KDF = PBKDF2
+Ctrl.pkcs5 = pkcs5:1
+Ctrl.pass = pass:password
+Ctrl.salt = salt:salt
+Ctrl.iter = iter:4096
+Ctrl.digest = digest:sha3-256
+Output = 778b6e237a0f49621549ff70d218d208
+
+KDF = PBKDF2
+Ctrl.pkcs5 = pkcs5:1
+Ctrl.pass = pass:password
+Ctrl.salt = salt:salt
+Ctrl.iter = iter:4096
+Ctrl.digest = digest:sha3-384
+Output = 9a5f1e45e8b83f1b259ba72d11c59087
+
+KDF = PBKDF2
+Ctrl.pkcs5 = pkcs5:1
+Ctrl.pass = pass:password
+Ctrl.salt = salt:salt
+Ctrl.iter = iter:4096
+Ctrl.digest = digest:sha3-512
+Output = 2bfaf2d5ceb6d10f5e262cd902488cfd
+
 Title = PBKDF2 tests for empty inputs
 
 KDF = PBKDF2
