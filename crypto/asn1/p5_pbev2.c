@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "crypto/asn1.h"
 #include <openssl/asn1t.h>
 #include <openssl/core.h>
 #include <openssl/core_names.h>
@@ -208,10 +209,9 @@ X509_ALGOR *PKCS5_pbkdf2_set_ex(int iter, unsigned char *salt, int saltlen,
 
     /* prf can stay NULL if we are using hmacWithSHA1 */
     if (prf_nid > 0 && prf_nid != NID_hmacWithSHA1) {
-        kdf->prf = X509_ALGOR_new();
+        kdf->prf = ossl_X509_ALGOR_from_nid(prf_nid, V_ASN1_NULL, NULL);
         if (kdf->prf == NULL)
             goto merr;
-        X509_ALGOR_set0(kdf->prf, OBJ_nid2obj(prf_nid), V_ASN1_NULL, NULL);
     }
 
     /* Finally setup the keyfunc structure */

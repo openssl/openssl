@@ -43,7 +43,7 @@ int X509_ALGOR_set0(X509_ALGOR *alg, ASN1_OBJECT *aobj, int ptype, void *pval)
     ASN1_OBJECT_free(alg->algorithm);
     alg->algorithm = aobj;
 
-    if (ptype == 0)
+    if (ptype == V_ASN1_EOC)
         return 1;
     if (ptype == V_ASN1_UNDEF) {
         ASN1_TYPE_free(alg->parameter);
@@ -51,6 +51,25 @@ int X509_ALGOR_set0(X509_ALGOR *alg, ASN1_OBJECT *aobj, int ptype, void *pval)
     } else
         ASN1_TYPE_set(alg->parameter, ptype, pval);
     return 1;
+}
+
+X509_ALGOR *ossl_X509_ALGOR_from_nid(int nid, int ptype, void *pval)
+{
+    ASN1_OBJECT *algo = OBJ_nid2obj(nid);
+    X509_ALGOR *alg = NULL;
+
+    if (algo == NULL)
+        return NULL;
+    if ((alg = X509_ALGOR_new()) == NULL)
+        goto err;
+    if (X509_ALGOR_set0(alg, algo, ptype, pval))
+        return alg;
+    alg->algorithm = NULL; /* precaution to prevent double free */
+
+ err:
+    X509_ALGOR_free(alg);
+    ASN1_OBJECT_free(algo);
+    return NULL;
 }
 
 void X509_ALGOR_get0(const ASN1_OBJECT **paobj, int *pptype,
@@ -176,15 +195,12 @@ int ossl_x509_algor_md_to_mgf1(X509_ALGOR **palg, const EVP_MD *mgf1md)
         goto err;
     if (ASN1_item_pack(algtmp, ASN1_ITEM_rptr(X509_ALGOR), &stmp) == NULL)
          goto err;
-    *palg = X509_ALGOR_new();
+    *palg = ossl_X509_ALGOR_from_nid(NID_mgf1, V_ASN1_SEQUENCE, stmp);
     if (*palg == NULL)
         goto err;
-    X509_ALGOR_set0(*palg, OBJ_nid2obj(NID_mgf1), V_ASN1_SEQUENCE, stmp);
     stmp = NULL;
  err:
     ASN1_STRING_free(stmp);
     X509_ALGOR_free(algtmp);
-    if (*palg != NULL)
-        return 1;
-    return 0;
+    return *palg != NULL;
 }

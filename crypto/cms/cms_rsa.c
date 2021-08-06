@@ -145,20 +145,18 @@ static int rsa_cms_encrypt(CMS_RecipientInfo *ri)
     if (!ossl_x509_algor_md_to_mgf1(&oaep->maskGenFunc, mgf1md))
         goto err;
     if (labellen > 0) {
-        ASN1_OCTET_STRING *los;
+        ASN1_OCTET_STRING *los = ASN1_OCTET_STRING_new();
 
-        oaep->pSourceFunc = X509_ALGOR_new();
-        if (oaep->pSourceFunc == NULL)
-            goto err;
-        los = ASN1_OCTET_STRING_new();
         if (los == NULL)
             goto err;
         if (!ASN1_OCTET_STRING_set(los, label, labellen)) {
             ASN1_OCTET_STRING_free(los);
             goto err;
         }
-        X509_ALGOR_set0(oaep->pSourceFunc, OBJ_nid2obj(NID_pSpecified),
-                        V_ASN1_OCTET_STRING, los);
+        oaep->pSourceFunc = ossl_X509_ALGOR_from_nid(NID_pSpecified,
+                                                     V_ASN1_OCTET_STRING, los);
+        if (oaep->pSourceFunc == NULL)
+            goto err;
     }
     /* create string with pss parameter encoding. */
     if (!ASN1_item_pack(oaep, ASN1_ITEM_rptr(RSA_OAEP_PARAMS), &os))
