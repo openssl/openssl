@@ -20,7 +20,7 @@ static int bn_mod_inverse_pow2_word(BIGNUM *r, const BIGNUM *a, int e)
     t0 = a->d[0];
     t1 = 1;
 
-    for (i = 0; i < e; i++) {
+    for (i = 0; i < BN_BITS2; i++) {
         ibs = t1 & 1;
         x |= ibs << i;
         /*-
@@ -30,7 +30,7 @@ static int bn_mod_inverse_pow2_word(BIGNUM *r, const BIGNUM *a, int e)
         t1 = (t1 - (t0 & (0 - ibs))) >> 1;
     }
 
-    return BN_set_word(r, x);
+    return BN_set_word(r, x & (BN_MASK2 >> (BN_BITS2 - e)));
 }
 
 /*-
