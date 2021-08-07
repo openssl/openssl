@@ -33,7 +33,7 @@ static int bn_mod_inverse_pow2_word(BIGNUM *r, const BIGNUM *a, int e)
         t1 = (t1 - (t0 & (0 - ibs))) >> 1;
     }
 
-    return BN_set_word(r, x & (BN_MASK2 >> (BN_BITS2 - e)));
+    return BN_set_word(r, x & ((BN_ULONG)BN_MASK2 >> (BN_BITS2 - e)));
 }
 
 /*-
