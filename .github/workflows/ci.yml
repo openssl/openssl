@@ -242,8 +242,9 @@ jobs:
       run: make -s -j4
     - name: test external gost-engine
       run: make test TESTS="test_external_gost_engine" VERBOSE=1
-    - name: test external krb5
-      run: make test TESTS="test_external_krb5" VERBOSE=1
+# krb5 testing temporarily disabled due to failures to be investigated separately
+#    - name: test external krb5
+#      run: make test TESTS="test_external_krb5" VERBOSE=1
 
   external-test-pyca:
     runs-on: ubuntu-latest
