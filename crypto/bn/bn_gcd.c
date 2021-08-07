@@ -16,6 +16,9 @@ static int bn_mod_inverse_pow2_word(BIGNUM *r, const BIGNUM *a, int e)
     int i;
     BN_ULONG ibs, x, t0, t1;
 
+    if (e <= 0 || e > BN_BITS2)
+        return 0;
+
     x = 0;
     t0 = a->d[0];
     t1 = 1;
