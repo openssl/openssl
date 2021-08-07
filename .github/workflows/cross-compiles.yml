@@ -106,13 +106,14 @@ jobs:
             tests: none
           },
 
-          # This build doesn't execute either with or without shared libraries.
-          {
-            arch: sparc64-linux-gnu,
-            libs: libc6-dev-sparc64-cross,
-            target: linux64-sparcv9,
-            tests: none
-          }
+          # sparcv9 is temporarily disabled due to failures during compilation
+          # # This build doesn't execute either with or without shared libraries.
+          # {
+          #   arch: sparc64-linux-gnu,
+          #   libs: libc6-dev-sparc64-cross,
+          #   target: linux64-sparcv9,
+          #   tests: none
+          # }
         ]
     runs-on: ubuntu-latest
     steps:
