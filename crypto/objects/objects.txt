@@ -1744,3 +1744,3039 @@ dstu4145le 2 9 : uacurve9 : DSTU curve 9
                             : AES-128-SIV  : aes-128-siv
                             : AES-192-SIV  : aes-192-siv
                             : AES-256-SIV  : aes-256-siv
+
+0 0 24 790 0 10 : x790Notification
+0 0 24 790 0 3 : x790ObjectClass
+0 0 24 790 0 4 : x790Package
+0 0 24 790 0 5 : x790Parameter
+0 0 24 790 0 6 : x790NameBinding
+0 0 24 790 0 7 : x790Attribute
+0 0 7 774 127 3 0 : sdhProt
+0 0 7 774 127 3 0 10 : g774-03Notification
+0 0 7 774 127 3 0 3 : g774-03MObjectClass
+0 0 7 774 127 3 0 4 : g774-03Package
+0 0 7 774 127 3 0 5 : g774-03Parameter
+0 0 7 774 127 3 0 6 : g774-03NameBinding
+0 0 7 774 127 3 0 7 : g774-03Attribute
+0 0 7 774 127 3 0 9 : g774-03Action
+0 13 3100 0 : m3100InformationModel
+0 13 3100 0 0 : m3100standardSpecificExtension
+0 13 3100 0 0 0 : characteristicInfo
+0 13 3100 0 0 0 1 : opticalSTM1SPICI
+0 13 3100 0 0 0 10 : msSTM16SPICI
+0 13 3100 0 0 0 11 : au3TU3VC3CI
+0 13 3100 0 0 0 12 : au4VC4CI
+0 13 3100 0 0 0 13 : tu11VC11CI
+0 13 3100 0 0 0 14 : tu12VC12CI
+0 13 3100 0 0 0 15 : tu2VC2CI
+0 13 3100 0 0 0 16 : tu12VC11CI
+0 13 3100 0 0 0 17 : vpCI
+0 13 3100 0 0 0 18 : vcCI
+0 13 3100 0 0 0 19 : e0CI
+0 13 3100 0 0 0 2 : opticalSTM4SPICI
+0 13 3100 0 0 0 20 : e1CI
+0 13 3100 0 0 0 21 : e2CI
+0 13 3100 0 0 0 22 : e3CI
+0 13 3100 0 0 0 23 : e4CI
+0 13 3100 0 0 0 24 : e5-565M
+0 13 3100 0 0 0 25 : sts3c-and-VC4-1c
+0 13 3100 0 0 0 26 : sts12c-and-VC4-4c
+0 13 3100 0 0 0 27 : sts48c-and-VC4-16c
+0 13 3100 0 0 0 28 : sts192c-and-VC4-64c
+0 13 3100 0 0 0 29 : section-OC1-STS1-and-RS-STM0
+0 13 3100 0 0 0 3 : opticalSTM16SPICI
+0 13 3100 0 0 0 30 : section-OC192-STS192-and-RS-STM64
+0 13 3100 0 0 0 31 : line-OC1-STS1-and-MS-STM0
+0 13 3100 0 0 0 32 : line-OC192-STS192-and-MS-STM64
+0 13 3100 0 0 0 33 : fc-12-133M
+0 13 3100 0 0 0 34 : fc-25-266M
+0 13 3100 0 0 0 35 : fc-50-531M
+0 13 3100 0 0 0 36 : fc-100-1063M
+0 13 3100 0 0 0 37 : fddi
+0 13 3100 0 0 0 38 : fast-Ethernet
+0 13 3100 0 0 0 39 : gigabit-Ethernet
+0 13 3100 0 0 0 4 : electricalSTM1SPICI
+0 13 3100 0 0 0 40 : isdn-BRI
+0 13 3100 0 0 0 41 : dsr-OC192-and-STM64
+0 13 3100 0 0 0 42 : dsr-OC768-and-STM256
+0 13 3100 0 0 0 43 : section-OC24-STS24-and-RS-STM8
+0 13 3100 0 0 0 44 : line-OC24-STS24-and-MS-STM8
+0 13 3100 0 0 0 45 : section-OC768-STS768-and-RS-STM256
+0 13 3100 0 0 0 46 : line-OC768-STS768-and-MS-STM256
+0 13 3100 0 0 0 47 : tenGigabit-Ethernet
+0 13 3100 0 0 0 5 : rsSTM1SPICI
+0 13 3100 0 0 0 6 : rsSTM4SPICI
+0 13 3100 0 0 0 7 : rsSTM16SPICI
+0 13 3100 0 0 0 8 : msSTM1SPICI
+0 13 3100 0 0 0 9 : msSTM4SPICI
+0 13 3100 0 10 : m3100Notification
+0 13 3100 0 3 : m3100ObjectClass
+0 13 3100 0 4 : m3100Package
+0 13 3100 0 5 : m3100Parameter
+0 13 3100 0 6 : m3100NameBinding
+0 13 3100 0 7 : m3100Attribute
+0 13 3100 0 9 : m3100Action
+0 13 3108 2 0 2 0 : m3108Part2Identifier
+0 13 3108 2 0 2 0 3 : m3108Part2ObjectClass
+0 13 3108 2 0 2 0 4 : m3108Part2Parameter
+0 13 3108 2 0 2 0 5 : m3108Part2NameBinding
+0 13 3108 2 0 2 0 6 : m3108Part2Attribute
+0 13 3108 3 0 : m3108PartVPNInformationModel
+0 13 3108 3 0 1 : m3108PartVPNObjectClass
+0 13 3108 3 0 2 : m3108PartVPNPackage
+0 13 3108 3 0 3 : m3108PartVPNAttribute
+0 13 3108 3 0 4 : m3108PartVPNNameBinding
+0 13 3108 3 0 5 : m3108PartVPNNotification
+0 13 3108 3 0 6 : m3108PartVPNParameter
+0 13 3108 3 0 7 : m3108PartVPNAction
+0 17 773 1 1 1 : dialogue-as-id
+0 17 773 1 2 1 : uniDialogue-as-id
+0 24 894 2 0 : id-signerInfo
+0 24 894 2 1 : id-signerInfos
+0 24 894 2 2 : id-contentLocation
+0 24 894 2 3 : id-contentLocations
+0 24 894 2 4 : id-precedingBlock
+0 24 894 2 5 : id-timeStamped
+0 24 894 2 6 : id-sidechains
+0 24 894 2 7 : id-parentBlock
+1 0 : iso-standard
+1 0 10021 7 : id-iso-ipms
+1 0 10021 7 0 : id-iso-mod
+1 0 10021 7 0 0 : id-mod-object-identifiers-2
+1 0 10021 7 0 1 : id-mod-extended-body-part-types-2
+1 0 10021 7 1 : id-iso-cs
+1 0 10021 7 1 0 : id-cs-eit-authority
+1 0 24761 2 1 : id-signedDataACBio
+1 0 24761 2 2 : id-authenticatedDataACBio
+1 0 24761 2 3 : id-acbioContentInformation
+1 0 24761 2 4 : id-bpuReport
+1 0 24761 2 5 : id-bpuReportContentInformation
+1 0 24761 2 6 : id-brtCertificate
+1 0 24761 2 7 : id-brtcContentInformation
+1 0 9797 : iso9797
+1 2 826 0 1 3344810 2 3 : matchedValues
+1 2 840 10045 1 : id-fieldType
+1 2 840 10045 2 : id-publicKeyType
+1 2 840 10045 2 2 : id-ecPublicKeyRestricted
+1 2 840 10045 3 : ellipticCurve
+1 2 840 10045 3 0 : c-TwoCurve
+1 2 840 10045 3 1 : primeCurve
+1 2 840 10045 4 : id-ecSigType
+1 2 840 10046 : ansi-X9-42
+1 2 840 10046 0 : fieldType
+1 2 840 10046 0 1 : gfPrime
+1 2 840 10046 1 2 : tripleDES
+1 2 840 10046 2 : numberType
+1 2 840 10046 3 : scheme
+1 2 840 10046 3 1 : dhStatic
+1 2 840 10046 3 2 : dhEphem
+1 2 840 10046 3 3 : dhOneFlow
+1 2 840 10046 3 4 : dhHybrid1
+1 2 840 10046 3 5 : dhHybrid2
+1 2 840 10046 3 6 : dhHybridOneFlow
+1 2 840 10046 3 7 : mqv2
+1 2 840 10046 3 8 : mqv1
+1 2 840 10046 4 : namedScheme
+1 2 840 10046 4 1 : dhStatic-sha1
+1 2 840 10046 4 2 : dhEphem-sha1
+1 2 840 10046 4 3 : dhOneFlow-sha1
+1 2 840 10046 4 4 : dhHybrid1-sha1
+1 2 840 10046 4 5 : dhHybrid2-sha1
+1 2 840 10046 4 6 : dhHybridOneFlow-sha1
+1 2 840 10046 4 7 : mqv2-sha1
+1 2 840 10046 4 8 : mqv1-sha1
+1 2 840 10046 5 : keyDerivationMethod
+1 2 840 10046 5 0 : kdasn1der
+1 2 840 10046 5 1 : kdConcatenation
+1 2 840 10060 1 2 : id-namedkeyencryptedData
+1 2 840 10060 1 3 : id-signcryptedData
+1 2 840 10060 1 3 1 : signcryption-manifest
+1 2 840 10060 1 3 1 0 : xPath
+1 2 840 10060 1 3 1 1 : id-signcryptedParts
+1 2 840 10060 1 3 1 2 : id-XPathSigncryptionSet
+1 2 840 10060 2 1 : id-ckm-recip-info
+1 2 840 10060 2 2 : id-ckm-recip-info2
+1 2 840 10060 2 3 : id-dbekm-recip-info
+1 2 840 10060 3 : id-ckm-algorithms
+1 2 840 10060 3 1 : id-ckm-symmetric
+1 2 840 10060 3 2 : id-ckm-key-transport
+1 2 840 10060 3 3 : id-ckm-key-agree-multiple-encrypt
+1 2 840 10060 3 4 : id-ckm-key-agree-hash
+1 2 840 10060 4 : id-ckm-header
+1 2 840 113549 1 12 : pkcs-12
+1 2 840 113549 1 12 1 : pkcs-12PbeIds
+1 2 840 113549 1 12 10 1 : bagtypes
+1 2 840 113549 1 15 : pkcs15
+1 2 840 113549 1 15 1 : pkcs15-mo
+1 2 840 113549 1 15 2 : pkcs15-at
+1 2 840 113549 1 15 3 : pkcs15-ct
+1 2 840 113549 1 9 0 : pkcs-9-mo
+1 2 840 113549 1 9 13 : pkcs-9-at-signingDescription
+1 2 840 113549 1 9 16 1 10 : id-ct-scvp-certValRequest
+1 2 840 113549 1 9 16 1 11 : id-ct-scvp-certValResponse
+1 2 840 113549 1 9 16 1 12 : id-ct-scvp-valPolRequest
+1 2 840 113549 1 9 16 1 13 : id-ct-scvp-valPolResponse
+1 2 840 113549 1 9 16 1 21 : id-ct-encKeyWithID
+1 2 840 113549 1 9 16 1 34 : id-ct-trustAnchorList
+1 2 840 113549 1 9 16 11 : id-cap
+1 2 840 113549 1 9 16 11 1 : id-cap-preferBinaryInside
+1 2 840 113549 1 9 16 2 30 : id-aa-CEKReference
+1 2 840 113549 1 9 16 2 31 : id-aa-CEKMaxDecrypts
+1 2 840 113549 1 9 16 2 32 : id-aa-KEKDerivationAlg
+1 2 840 113549 1 9 16 2 49 : id-aa-er-internal
+1 2 840 113549 1 9 16 2 50 : id-aa-er-external
+1 2 840 113549 1 9 16 3 10 : id-alg-SSDH
+1 2 840 113549 1 9 24 : pkcs-9-oc
+1 2 840 113549 1 9 24 1 : pkcs-9-oc-pkcsEntity
+1 2 840 113549 1 9 24 2 : pkcs-9-oc-naturalPerson
+1 2 840 113549 1 9 25 : pkcs-9-at
+1 2 840 113549 1 9 25 1 : pkcs-9-at-pkcs15Token
+1 2 840 113549 1 9 25 2 : pkcs-9-at-encryptedPrivateKeyInfo
+1 2 840 113549 1 9 25 3 : pkcs-9-at-randomNonce
+1 2 840 113549 1 9 25 4 : pkcs-9-at-sequenceNumber
+1 2 840 113549 1 9 25 5 : pkcs-9-at-pkcs7PDU
+1 2 840 113549 1 9 26 : pkcs-9-sx
+1 2 840 113549 1 9 26 1 : pkcs-9-sx-pkcs9String
+1 2 840 113549 1 9 26 2 : pkcs-9-sx-signingTime
+1 2 840 113549 1 9 27 : pkcs-9-mr
+1 2 840 113549 1 9 27 1 : pkcs-9-mr-caseIgnoreMatch
+1 2 840 113549 1 9 27 2 : pkcs-9-mr-signingTimeMatch
+1 2 840 113549 2 : digestAlgorithm
+1 2 840 113549 3 : encryptionAlgorithm
+1 2 840 113549 3 9 : rc5-CBC-PAD
+1 2 840 113556 1 4 319 : simpledPagedResults
+1 2 840 113556 1 4 473 : sortRequest
+1 2 840 113556 1 4 474 : sortResponse
+1 2 840 63 0 16 : mqvSinglePass-sha1kdf
+1 2 840 63 0 17 : mqvFull-sha1kdf
+1 2 840 63 0 2 : dhSinglePass-stdDH-sha1kdf
+1 2 840 63 0 3 : dhSinglePass-cofactorDH-sha1kdf
+1 3 101 : id-edwards-curve-algs
+1 3 132 0 : secgCurve
+1 3 132 1 0 : id-ecPublicKeyTypeSupplemented
+1 3 132 1 1 : dhSinglePass-cofactorDH-recommendedKDF
+1 3 132 1 10 : ecwkt-specifiedParameters
+1 3 132 1 12 : id-ecDH
+1 3 132 1 13 : id-ecMQV
+1 3 132 1 15 0 : mqvSinglePass-sha224kdf-scheme
+1 3 132 1 15 1 : mqvSinglePass-sha256kdf-scheme
+1 3 132 1 15 2 : mqvSinglePass-sha384kdf-scheme
+1 3 132 1 15 3 : mqvSinglePass-sha512kdf-scheme
+1 3 132 1 16 0 : mqvFull-sha224kdf-scheme
+1 3 132 1 16 1 : mqvFull-sha256kdf-scheme
+1 3 132 1 16 2 : mqvFull-sha384kdf-scheme
+1 3 132 1 16 3 : mqvFull-sha512kdf-scheme
+1 3 132 1 17 0 : x9-63-kdf
+1 3 132 1 17 1 : nist-concatenation-kdf
+1 3 132 1 17 2 : tls-kdf
+1 3 132 1 17 3 : ikev2-kdf
+1 3 132 1 18 : xor-in-ecies
+1 3 132 1 19 : tdes-cbc-in-ecies
+1 3 132 1 2 : dhSinglePass-cofactorDH-specifiedKDF
+1 3 132 1 20 0 : aes128-cbc-in-ecies
+1 3 132 1 20 1 : aes192-cbc-in-ecies
+1 3 132 1 20 2 : aes256-cbc-in-ecies
+1 3 132 1 21 0 : aes128-ctr-in-ecies
+1 3 132 1 21 1 : aes192-ctr-in-ecies
+1 3 132 1 21 2 : aes256-ctr-in-ecies
+1 3 132 1 22 : hmac-full-ecies
+1 3 132 1 23 : hmac-half-ecies
+1 3 132 1 24 0 : cmac-aes128-ecies
+1 3 132 1 24 1 : cmac-aes192-ecies
+1 3 132 1 24 2 : cmac-aes256-ecies
+1 3 132 1 25 0 : aes128-key-wrap
+1 3 132 1 25 1 : aes192-key-wrap
+1 3 132 1 25 2 : aes256-key-wrap
+1 3 132 1 3 : mqvSinglePass-recommendedKDF
+1 3 132 1 4 : mqvSinglePass-specifiedKDF
+1 3 132 1 5 : mqvFull-recommendedKDF
+1 3 132 1 6 : mqvFull-specifiedKDF
+1 3 132 1 7 : ecies-recommendedParameters
+1 3 132 1 8 : ecies-specifiedParameters
+1 3 132 1 9 : ecwkt-recommendedParameters
+1 3 133 16 840 9 73 1 : id-cms-attributes
+1 3 133 16 840 9 73 1 0 : xmlMarkup
+1 3 133 16 840 9 73 1 0 1 : id-cms-SAML
+1 3 133 16 840 9 73 1 0 2 : id-cms-XKMS
+1 3 133 16 840 9 73 1 0 3 : id-messageComponents
+1 3 133 16 840 9 73 2 : id-cms-namespaces
+1 3 133 16 840 9 73 2 0 : cms
+1 3 133 16 840 9 73 3 : id-tokenization-manifest
+1 3 133 16 840 9 73 3 0 : id-tokenizedParts
+1 3 133 16 840 9 73 3 1 : id-XPathTokensSet
+1 3 133 16 840 9 73 4 : signcryption
+1 3 133 16 840 9 73 4 1 : signcryption-mode
+1 3 133 16 840 9 73 4 1 1 : signcrypted-content
+1 3 133 16 840 9 73 4 1 2 : signcrypted-attributes
+1 3 133 16 840 9 73 4 1 3 : signcrypted-components
+1 3 133 16 840 9 73 4 1 4 : signcrypted-envelope
+1 3 14 : oiw
+1 3 36 : teletrust
+1 3 36 3 3 2 8 : ecStdCurvesAndGen
+1 3 36 3 3 2 8 1 1 : versionOne
+1 3 6 1 1 12 : assertion
+1 3 6 1 1 13 1 : preread
+1 3 6 1 1 13 2 : postread
+1 3 6 1 1 14 : modifyIncrement
+1 3 6 1 1 15 : id-ldx
+1 3 6 1 1 15 1 : id-ldx-certExactAssertion
+1 3 6 1 1 15 2 : id-ldx-certAssertion
+1 3 6 1 1 15 3 : id-ldx-certPairExactAssertion
+1 3 6 1 1 15 4 : id-ldx-certPairAssertion
+1 3 6 1 1 15 5 : id-ldx-certListExactAssertion
+1 3 6 1 1 15 6 : id-ldx-certListAssertion
+1 3 6 1 1 15 7 : id-ldx-algorithmIdentifier
+1 3 6 1 1 16 1 : uuid
+1 3 6 1 1 17 1 : startLBURPRequest
+1 3 6 1 1 17 2 : startLBURPResponse
+1 3 6 1 1 17 3 : endLBURPRequest
+1 3 6 1 1 17 4 : endLBURPResponse
+1 3 6 1 1 17 5 : lburpUpdateRequest
+1 3 6 1 1 17 6 : lburpUpdateResponse
+1 3 6 1 1 17 7 : lburpIncrementalUpdateStyle
+1 3 6 1 1 19 : turn
+1 3 6 1 1 21 1 : startTransactionExtendedRequest
+1 3 6 1 1 21 2 : transactionSpecification
+1 3 6 1 1 21 3 : endTransactionExtendedRequest
+1 3 6 1 1 21 4 : abortedTransaction
+1 3 6 1 1 22 : dontUseCopy
+1 3 6 1 1 7 1 : lcupSyncRequest
+1 3 6 1 1 7 2 : lcupSyncUpdate
+1 3 6 1 1 7 3 : lcupSyncDone
+1 3 6 1 1 8 : cancel
+1 3 6 1 4 1 1466 : ldap-wall
+1 3 6 1 4 1 1466 101 119 : ldap-dynExt
+1 3 6 1 4 1 1466 101 119 1 : dynamicRefresh
+1 3 6 1 4 1 1466 101 120 : id-lat
+1 3 6 1 4 1 1466 101 120 13 : id-lat-supportedControl
+1 3 6 1 4 1 1466 101 120 14 : id-lat-supportedSASLMechanisms
+1 3 6 1 4 1 1466 101 120 15 : id-lat-supportedLDAPVersion
+1 3 6 1 4 1 1466 101 120 16 : id-soa-ldapSyntaxes
+1 3 6 1 4 1 1466 101 120 5 : id-lat-namingContexts
+1 3 6 1 4 1 1466 101 120 6 : id-lat-altServer
+1 3 6 1 4 1 1466 101 120 7 : id-lat-supportedExtension
+1 3 6 1 4 1 1466 109 114 : id-lmr
+1 3 6 1 4 1 1466 109 114 1 : id-lmr-caseExactIA5Match
+1 3 6 1 4 1 1466 109 114 2 : id-lmr-caseIgnoreIA5Match
+1 3 6 1 4 1 1466 109 114 3 : id-lmr-caseIgnoreIA5SubstringsMatch
+1 3 6 1 4 1 1466 115 121 1 : id-lsx
+1 3 6 1 4 1 1466 115 121 1 10 : id-lsx-x509CertificatePair
+1 3 6 1 4 1 1466 115 121 1 11 : countryString
+1 3 6 1 4 1 1466 115 121 1 12 : dn
+1 3 6 1 4 1 1466 115 121 1 14 : deliveryMethod
+1 3 6 1 4 1 1466 115 121 1 15 : directoryString
+1 3 6 1 4 1 1466 115 121 1 16 : ditContentRuleDescription
+1 3 6 1 4 1 1466 115 121 1 17 : ditStructureRuleDescription
+1 3 6 1 4 1 1466 115 121 1 21 : enhancedGuide
+1 3 6 1 4 1 1466 115 121 1 23 : fax
+1 3 6 1 4 1 1466 115 121 1 24 : generalizedTime
+1 3 6 1 4 1 1466 115 121 1 25 : guide
+1 3 6 1 4 1 1466 115 121 1 26 : ia5String
+1 3 6 1 4 1 1466 115 121 1 27 : integer
+1 3 6 1 4 1 1466 115 121 1 28 : jpeg
+1 3 6 1 4 1 1466 115 121 1 3 : attributeTypeDescription
+1 3 6 1 4 1 1466 115 121 1 30 : matchingRuleDescription
+1 3 6 1 4 1 1466 115 121 1 31 : matchingRuleUseDescription
+1 3 6 1 4 1 1466 115 121 1 34 : nameAndOptionalUID
+1 3 6 1 4 1 1466 115 121 1 35 : nameFormDescription
+1 3 6 1 4 1 1466 115 121 1 36 : numericString
+1 3 6 1 4 1 1466 115 121 1 37 : objectClassDescription
+1 3 6 1 4 1 1466 115 121 1 38 : oid
+1 3 6 1 4 1 1466 115 121 1 40 : octetString
+1 3 6 1 4 1 1466 115 121 1 43 : id-lsx-presentationAddr
+1 3 6 1 4 1 1466 115 121 1 44 : printableString
+1 3 6 1 4 1 1466 115 121 1 45 : id-lsx-subtreeSpec
+1 3 6 1 4 1 1466 115 121 1 49 : id-lsx-x509SupportedAlgorithm
+1 3 6 1 4 1 1466 115 121 1 53 : utcTime
+1 3 6 1 4 1 1466 115 121 1 54 : ldapSyntaxDescription
+1 3 6 1 4 1 1466 115 121 1 58 : substringAssertion
+1 3 6 1 4 1 1466 115 121 1 6 : bitString
+1 3 6 1 4 1 1466 115 121 1 7 : boolean-
+1 3 6 1 4 1 1466 115 121 1 8 : id-lsx-x509Certificate
+1 3 6 1 4 1 1466 115 121 1 9 : id-lsx-x509CertificateList
+1 3 6 1 4 1 1466 20037 : startTLS
+1 3 6 1 4 1 1722 12 2 : hashAlg
+1 3 6 1 4 1 4203 1 : ldap-openLDAP
+1 3 6 1 4 1 4203 1 10 : openLDAP-controls
+1 3 6 1 4 1 4203 1 10 1 : subentries
+1 3 6 1 4 1 4203 1 11 1 : modifyPassword
+1 3 6 1 4 1 4203 1 11 3 : whoAmI
+1 3 6 1 4 1 4203 1 3 : id-oat
+1 3 6 1 4 1 4203 1 3 5 : id-oat-supportedFeatures
+1 3 6 1 4 1 4203 1 5 1 : allOpAttrs
+1 3 6 1 4 1 4203 1 5 2 : ocadLists
+1 3 6 1 4 1 4203 1 5 3 : trueFalseFilters
+1 3 6 1 4 1 4203 1 5 4 : languageTag
+1 3 6 1 4 1 4203 1 5 5 : languageRange
+1 3 6 1 4 1 4203 1 9 1 1 : contentSynchronization
+1 3 6 1 5 2 : id-krb5
+1 3 6 1 5 3 1 : md5-DES-CBC
+1 3 6 1 5 3 2 : sum64-DES-CBC
+1 3 6 1 5 5 1 1 : spkm-1
+1 3 6 1 5 5 1 2 : spkm-2
+1 3 6 1 5 5 11 : ltans
+1 3 6 1 5 5 7 11 2 : id-qcs-pkixQCSyntax-v2
+1 3 6 1 5 5 7 17 : id-stc
+1 3 6 1 5 5 7 17 1 : id-stc-build-pkc-path
+1 3 6 1 5 5 7 17 2 : id-stc-build-valid-pkc-path
+1 3 6 1 5 5 7 17 3 : id-stc-build-status-checked-pkc-path
+1 3 6 1 5 5 7 17 4 : id-stc-build-aa-path
+1 3 6 1 5 5 7 17 5 : id-stc-build-valid-aa-path
+1 3 6 1 5 5 7 17 6 : id-stc-build-status-checked-aa-path
+1 3 6 1 5 5 7 17 7 : id-stc-status-check-ac-and-build-status-checked-aa-path
+1 3 6 1 5 5 7 18 : id-swb
+1 3 6 1 5 5 7 18 1 : id-swb-pkc-best-cert-path
+1 3 6 1 5 5 7 18 10 : id-swb-pkc-cert
+1 3 6 1 5 5 7 18 11 : id-swb-ac-cert
+1 3 6 1 5 5 7 18 12 : id-swb-pkc-all-cert-paths
+1 3 6 1 5 5 7 18 13 : id-swb-pkc-ee-revocation-info
+1 3 6 1 5 5 7 18 14 : id-swb-pkc-CAs-revocation-info
+1 3 6 1 5 5 7 18 2 : id-swb-pkc-revocation-info
+1 3 6 1 5 5 7 18 4 : id-swb-pkc-public-key-info
+1 3 6 1 5 5 7 18 5 : id-swb-aa-cert-path
+1 3 6 1 5 5 7 18 6 : id-swb-aa-revocation-info
+1 3 6 1 5 5 7 18 7 : id-swb-ac-revocation-info
+1 3 6 1 5 5 7 18 9 : id-swb-relayed-responses
+1 3 6 1 5 5 7 19 : id-svp
+1 3 6 1 5 5 7 19 1 : id-svp-defaultValPolicy
+1 3 6 1 5 5 7 19 2 : id-nvae
+1 3 6 1 5 5 7 19 2 1 : id-nvae-name-mismatch
+1 3 6 1 5 5 7 19 2 2 : id-nvae-no-name
+1 3 6 1 5 5 7 19 2 3 : id-nvae-unknown-alg
+1 3 6 1 5 5 7 19 2 4 : id-nvae-bad-name
+1 3 6 1 5 5 7 19 2 5 : id-nvae-bad-name-type
+1 3 6 1 5 5 7 19 2 6 : id-nvae-mixed-names
+1 3 6 1 5 5 7 19 3 : id-bvae
+1 3 6 1 5 5 7 19 3 1 : id-bvae-expired
+1 3 6 1 5 5 7 19 3 10 : id-bvae-invalidKeyUsage
+1 3 6 1 5 5 7 19 3 11 : id-bvae-invalidCertPolicy
+1 3 6 1 5 5 7 19 3 2 : id-bvae-not-yet-valid
+1 3 6 1 5 5 7 19 3 3 : id-bvae-wrongTrustAnchor
+1 3 6 1 5 5 7 19 3 4 : id-bvae-noValidCertPath
+1 3 6 1 5 5 7 19 3 5 : id-bvae-revoked
+1 3 6 1 5 5 7 19 3 9 : id-bvae-invalidKeyPurpose
+1 3 6 1 5 5 7 19 4 : id-nva-dnCompAlg
+1 3 6 1 5 5 7 3 15 : id-kp-scvpServer
+1 3 6 1 5 5 7 3 16 : id-kp-scvpClient
+2 1 1 : ccr-basic-encoding
+2 1 10 0 1 0 : finf-doc-opt-decl
+2 1 10 0 1 1 : finf-doc-no-decl
+2 1 2 1 : der
+2 1 3 0 0 : basic-per-aligned
+2 13 : network-layer
+2 13 0 : nl
+2 13 0 0 : cmoi
+2 13 0 0 0 : sseoi
+2 13 0 0 1 : fupoi
+2 13 0 0 1 1000 : informationEventReports
+2 13 0 0 10 : noi
+2 13 0 0 3 : moi
+2 13 0 0 4 : poi
+2 13 0 0 5 : proi
+2 13 0 0 5 1001 : responseCode
+2 13 0 0 5 1001 1001 : failureResponse
+2 13 0 0 5 1001 1002 : successResponse
+2 13 0 0 7 : aoi
+2 13 0 0 8 : agoi
+2 13 0 0 9 : acoi
+2 13 0 1 : isisoi
+2 13 0 1 0 3 : se
+2 13 0 1 0 3 0 : areaMismatch
+2 13 0 1 0 3 1 : attemptToExceedMaximumSequenceNumber
+2 13 0 1 0 3 10 : ownLSPPurge
+2 13 0 1 0 3 11 : partitionVirtualLinkChange
+2 13 0 1 0 3 12 : rejectedAdjacency
+2 13 0 1 0 3 13 : sequenceNumberSkip
+2 13 0 1 0 3 14 : versionSkew
+2 13 0 1 0 3 15 : originatingLSPBufferSizeMismatch
+2 13 0 1 0 3 3 : corruptedLSPsDetected
+2 13 0 1 0 3 4 : iDFieldLengthMismatch
+2 13 0 1 0 3 5 : lanL1DesignatedIntermediateSystemChange
+2 13 0 1 0 3 6 : lSPL1DatabaseOverload
+2 13 0 1 0 3 7 : lSPL2DatabaseOverload
+2 13 0 1 0 3 8 : manualAddressDroppedFromArea
+2 13 0 1 0 3 9 : maximumAreaAddressesMismatch
+2 13 0 1 6 : nboi
+2 13 0 2 : nloi
+2 13 0 2 0 3 1 : pDUDiscard
+2 13 0 2 0 3 1 0 : pDUDiscardReasonNotSpecified
+2 13 0 2 0 3 1 1 : pDUDiscardProtocolProcedureError
+2 13 0 2 0 3 1 128 : pDUDiscardDestinationAddressUnreachable
+2 13 0 2 0 3 1 129 : pDUDiscardDestinationAddressUnknown
+2 13 0 2 0 3 1 144 : pDUDiscardUnspecifiedSourceRouteingError
+2 13 0 2 0 3 1 145 : pDUDiscardSyntaxErrorInSourceRouteingField
+2 13 0 2 0 3 1 146 : pDUDiscardUnknownAddressInSourceRouteingField
+2 13 0 2 0 3 1 147 : pDUDiscardPathNotAcceptable
+2 13 0 2 0 3 1 160 : pDUDiscardLifetimeExpiredWhileDataUnitInTransit
+2 13 0 2 0 3 1 161 : pDUDiscardLifetimeExpiredDuringReassembly
+2 13 0 2 0 3 1 176 : pDUDiscardUnsupportedOptionNotSpecified
+2 13 0 2 0 3 1 177 : pDUDiscardUnsupportedProtocolVersion
+2 13 0 2 0 3 1 178 : pDUDiscardUnsupportedSecurityOption
+2 13 0 2 0 3 1 179 : pDUDiscardUnsupportedSourceRouteingOption
+2 13 0 2 0 3 1 180 : pDUDiscardUnsupportedRecordingOfRouteOption
+2 13 0 2 0 3 1 181 : pDUDiscardReassemblyInterference
+2 13 0 2 0 3 1 2 : pDUDiscardIncorrectChecksum
+2 13 0 2 0 3 1 4 : pDUDiscardHeaderSyntaxError
+2 13 0 2 0 3 1 5 : pDUDiscardSegmentationNeededButNotPermitted
+2 13 0 2 0 3 1 6 : pDUDiscardIncompletePDUReceived
+2 13 0 2 0 3 1 7 : pDUDiscardDuplicateOption
+2 13 0 2 0 3 2 : iSO9542PDUDiscard
+2 13 0 2 0 4 1 : iSReachabilityChange
+2 13 0 2 0 4 2 : eSReachabilityChange
+2 13 0 2 0 4 3 : successfulConnectionEstablishment
+2 13 0 2 0 5 1 : sNPADTEAddress
+2 13 0 2 0 5 2 : sNPAMACAddress
+2 13 0 2 7 103 : defaultPacketSizes
+2 13 0 2 7 104 : defaultWindowSizes
+2 13 0 2 7 112 : defaultThroughputClasses
+2 13 0 2 7 119 : flowControlParameterNegotiation
+2 13 0 2 7 139 : dBitModification
+2 13 0 2 7 145 : fastSelectAcceptance
+2 13 0 2 7 148 : incomingCallsBarred
+2 13 0 2 7 151 : nonStandardDefaultPacketSizes
+2 13 0 2 7 152 : nonStandardDefaultWindowSizes
+2 13 0 2 7 158 : onlineFacilityRegistration
+2 13 0 2 7 159 : outgoingCallsBarred
+2 13 0 2 7 161 : packetRetransmission
+2 13 0 2 7 168 : throughputClassNegotiation
+2 13 0 2 7 49 : extendedPacketSequenceNumbering
+2 16 840 : us-joint
+2 16 840 1 101 : usgov
+2 16 840 1 101 2 1 1 : dodAlgorithms
+2 16 840 1 101 2 1 1 22 : id-keyExchangeAlgorithm
+2 16 840 1 101 2 1 2 78 5 : id-ct-KP-aKeyPackage
+2 16 840 1 101 2 1 5 68 : id-clearanceSponsor
+2 16 840 1 101 2 1 5 69 : id-deviceOwner
+2 16 840 1 101 3 4 2 : hashAlgs
+2 16 840 1 101 3 4 2 17 : id-shake128-len
+2 16 840 1 101 3 4 2 18 : id-shake256-len
+2 16 840 1 113730 3 1 216 : pkcs-9-at-userPKCS12
+2 16 840 1 113730 3 4 15 : authorizationIdentityResponse
+2 16 840 1 113730 3 4 16 : authorizationIdentityRequest
+2 16 840 1 113730 3 4 18 : proxyAuthorization
+2 16 840 1 113730 3 4 2 : managedDSAIT
+2 16 840 1 114171 4 1 2 0 : dbEKM
+2 16 840 1 114171 4 1 2 0 1 : id-SimpleString
+2 16 840 1 114171 4 1 2 0 2 : id-UniqueIdentifier
+2 17 1 2 : id
+2 17 1 2 0 : id-oidC1
+2 17 1 2 1 : id-oidC2
+2 17 1 2 2 : id-oidC
+2 17 1 2 3 : id-oidRoot
+2 17 1 2 4 : id-oidRootNf
+2 17 1 2 5 : id-oidArc
+2 17 1 2 6 : id-oidArcNf
+2 2 1 0 1 : acse-as-id
+2 2 3 1 1 : aCSE-id
+2 20 : genericULS
+2 20 1 : modules
+2 20 1 0 : objectIdentifiers
+2 20 1 1 : notation
+2 20 1 2 : gulsSecurityExchanges
+2 20 1 3 : gulsSecurityTransformations
+2 20 1 4 : dirProtectionMappings
+2 20 1 5 : gulsProtectionMappings
+2 20 1 6 : seseAPDUs
+2 20 1 7 : genericProtectingTransferSyntax
+2 20 2 : generalTransferSyntax
+2 20 3 : specificTransferSyntax
+2 20 4 : securityExchanges
+2 20 5 : securityTransformations
+2 23 133 : tcg
+2 23 133 1 : tcg-tcpaSpecVersion
+2 23 133 17 : tcg-address
+2 23 133 17 1 : tcg-address-ethernetmac
+2 23 133 17 2 : tcg-address-wlanmac
+2 23 133 17 3 : tcg-address-bluetoothmac
+2 23 133 18 : tcg-registry
+2 23 133 18 3 : tcg-registry-componentClass
+2 23 133 18 3 1 : tcg-registry-componentClass-tcg
+2 23 133 18 3 2 : tcg-registry-componentClass-ietf
+2 23 133 18 3 3 : tcg-registry-componentClass-dmtf
+2 23 133 2 : tcg-attribute
+2 23 133 2 1 : tcg-at-tpmManufacturer
+2 23 133 2 10 : tcg-at-securityQualities
+2 23 133 2 11 : tcg-at-tpmProtectionProfile
+2 23 133 2 12 : tcg-at-tpmSecurityTarget
+2 23 133 2 13 : tcg-at-tbbProtectionProfile
+2 23 133 2 14 : tcg-at-tbbSecurityTarget
+2 23 133 2 15 : tcg-at-tpmIdLabel
+2 23 133 2 16 : tcg-at-tpmSpecification
+2 23 133 2 17 : tcg-at-tcgPlatformSpecification
+2 23 133 2 18 : tcg-at-tpmSecurityAssertions
+2 23 133 2 19 : tcg-at-tbbSecurityAssertions
+2 23 133 2 2 : tcg-at-tpmModel
+2 23 133 2 23 : tcg-at-tcgCredentialSpecification
+2 23 133 2 25 : tcg-at-tcgCredentialType
+2 23 133 2 3 : tcg-at-tpmVersion
+2 23 133 3 : tcg-protocol
+2 23 133 3 1 : tcg-prt-tpmIdProtocol
+2 23 133 4 : tcg-algorithm
+2 23 133 4 1 : tcg-algorithm-null
+2 23 133 5 : tcg-platformClass
+2 23 133 5 1 : tcg-common
+2 23 133 5 1 1 : tcg-at-platformManufacturerStr
+2 23 133 5 1 2 : tcg-at-platformManufacturerId
+2 23 133 5 1 3 : tcg-at-platformConfigUri
+2 23 133 5 1 4 : tcg-at-platformModel
+2 23 133 5 1 5 : tcg-at-platformVersion
+2 23 133 5 1 6 : tcg-at-platformSerial
+2 23 133 5 1 7 : tcg-at-platformConfiguration
+2 23 133 5 1 7 1 : tcg-at-platformConfiguration-v1
+2 23 133 5 1 7 2 : tcg-at-platformConfiguration-v2
+2 23 133 6 : tcg-ce
+2 23 133 6 2 : tcg-ce-relevantCredentials
+2 23 133 6 3 : tcg-ce-relevantManifests
+2 23 133 6 4 : tcg-ce-virtualPlatformAttestationService
+2 23 133 6 5 : tcg-ce-migrationControllerAttestationService
+2 23 133 6 6 : tcg-ce-migrationControllerRegistrationService
+2 23 133 6 7 : tcg-ce-virtualPlatformBackupService
+2 23 133 8 : tcg-kp
+2 23 133 8 1 : tcg-kp-EKCertificate
+2 23 133 8 2 : tcg-kp-PlatformAttributeCertificate
+2 23 133 8 3 : tcg-kp-AIKCertificate
+2 23 133 8 4 : tcg-kp-PlatformKeyCertificate
+2 23 133 8 5 : tcg-kp-DeltaPlatformAttributeCertificate
+2 23 42 9 10 3 0 2 2 : ckm-CMS
+2 23 42 9 10 3 0 2 2 1 : id-Ivec
+2 23 42 9 10 3 0 2 2 10 : id-SignKey
+2 23 42 9 10 3 0 2 2 11 : id-KeyUsage
+2 23 42 9 10 3 0 2 2 12 : id-BitSpray
+2 23 42 9 10 3 0 2 2 12 1 : id-BitSprayMeta
+2 23 42 9 10 3 0 2 2 12 2 : id-BitSprayShares
+2 23 42 9 10 3 0 2 2 13 : id-FavoriteName
+2 23 42 9 10 3 0 2 2 14 : id-DataSignature
+2 23 42 9 10 3 0 2 2 15 : id-BlockSize
+2 23 42 9 10 3 0 2 2 16 : id-DataFormat
+2 23 42 9 10 3 0 2 2 2 : id-Secryptm
+2 23 42 9 10 3 0 2 2 3 : id-Filelength
+2 23 42 9 10 3 0 2 2 4 : id-Filehash
+2 23 42 9 10 3 0 2 2 5 : id-Filename
+2 23 42 9 10 3 0 2 2 6 : id-Domainlist
+2 23 42 9 10 3 0 2 2 7 : id-Accessgrouplist
+2 23 42 9 10 3 0 2 2 8 : id-Issuer
+2 23 42 9 10 3 0 2 2 9 : id-Credentiallist
+2 24 0 1 0 : id-ConfidentialityLabel
+2 3 2 : rTSE-abstract-syntax
+2 42 : id-telebio
+2 42 0 : id-thprot
+2 42 0 1 : id-x1080-1
+2 42 0 1 0 : id-x1080-1-modules
+2 42 0 1 1 : id-x1080-1-cms-content
+2 42 0 1 1 1 : id-health-setup-req
+2 42 0 1 1 2 : id-health-setup-rsp
+2 42 0 1 1 3 : id-health-setup-err
+2 42 0 1 1 4 : id-health-term-req
+2 42 0 1 1 5 : id-health-term-rsp
+2 42 0 1 1 6 : id-health-term-err
+2 42 1 : id-tmm
+2 42 1 1 : id-measures
+2 42 1 1 1 : id-quantities
+2 42 1 1 1 1 : id-quantities-physics
+2 42 1 1 1 2 : id-quantities-chemistry
+2 42 1 1 1 3 : id-quantities-biology
+2 42 1 1 1 4 : id-quantities-culturology
+2 42 1 1 1 5 : id-quantities-psychology
+2 42 1 1 2 : id-units
+2 42 1 1 3 : id-symbols
+2 42 1 1 4 : id-conditions
+2 42 1 1 5 : id-methods
+2 42 1 1 5 1 : id-methods-physics
+2 42 1 1 5 2 : id-methods-chemistry
+2 42 1 1 5 3 : id-methods-biology
+2 42 1 1 5 4 : id-methods-culturology
+2 42 1 1 5 5 : id-methods-psychology
+2 42 1 2 : id-fields-of-study
+2 42 1 2 1 : id-physics
+2 42 1 2 2 : id-chemistry
+2 42 1 2 3 : id-biology
+2 42 1 2 4 : id-culturology
+2 42 1 2 5 : id-psychology
+2 42 1 3 : id-modalities
+2 42 1 3 1 : id-tango
+2 42 1 3 2 : id-video
+2 42 1 3 3 : id-audio
+2 42 1 3 4 : id-chemo
+2 42 1 3 5 : id-radio
+2 42 1 3 6 : id-calor
+2 42 1 3 7 : id-electro
+2 42 10 0 : id-x1080-0
+2 42 10 0 0 : id-x1080-0-module
+2 42 10 0 1 : id-x1080-0-Cont
+2 42 10 0 1 1 : id-privAssignRequest
+2 42 10 0 1 10 : id-deleteResult
+2 42 10 0 1 11 : id-modifyRequest
+2 42 10 0 1 12 : id-modifyResult
+2 42 10 0 1 13 : id-renameRequest
+2 42 10 0 1 14 : id-renameResult
+2 42 10 0 1 2 : id-privAssignResult
+2 42 10 0 1 3 : id-readRequest
+2 42 10 0 1 4 : id-readResult
+2 42 10 0 1 5 : id-compareRequest
+2 42 10 0 1 6 : id-compareResult
+2 42 10 0 1 7 : id-addRequest
+2 42 10 0 1 8 : id-addResult
+2 42 10 0 1 9 : id-deleteRequest
+2 42 10 0 2 : id-x1080-0-attr
+2 42 10 0 2 1 : id-at-accessService
+2 42 2 : id-hum-phys
+2 42 3 : id-obj-cat
+2 42 3 1 : id-patient
+2 42 3 10 : id-med-rec
+2 42 3 2 : id-med-staff
+2 42 3 3 : id-observer
+2 42 3 4 : id-pharm-staff
+2 42 3 5 : id-lab
+2 42 3 6 : id-drug-manufac
+2 42 3 7 : id-med-device
+2 42 3 8 : id-med-softw
+2 42 3 9 : id-med-insur
+2 5 1 : module-
+2 5 1 0 9 : usefulDefinitions
+2 5 1 1 9 : informationFramework
+2 5 1 10 9 : upperBounds
+2 5 1 11 9 : dap
+2 5 1 12 9 : dsp
+2 5 1 13 : distributedDirectoryObjectIdentifiers
+2 5 1 13 9 : distributedDirectoryOIDs
+2 5 1 14 9 : directoryShadowOIDs
+2 5 1 15 9 : directoryShadowAbstractService
+2 5 1 16 7 : disp
+2 5 1 17 7 : dop
+2 5 1 18 9 : opBindingManagement
+2 5 1 19 9 : opBindingOIDs
+2 5 1 2 9 : directoryAbstractService
+2 5 1 20 9 : hierarchicalOperationalBindings
+2 5 1 22 9 : dsaOperationalAttributeTypes
+2 5 1 23 9 : schemaAdministration
+2 5 1 24 9 : basicAccessControl
+2 5 1 25 : operationalBindingOIDs
+2 5 1 25 9 : directoryOperationalBindingTypes
+2 5 1 26 9 : certificateExtensions
+2 5 1 27 9 : directoryManagement
+2 5 1 28 9 : enhancedSecurity
+2 5 1 29 9 : directorySecurityExchanges
+2 5 1 3 9 : distributedOperations
+2 5 1 30 9 : iDMProtocolSpecification
+2 5 1 31 9 : directoryIDMProtocols
+2 5 1 32 9 : attributeCertificateDefinitions
+2 5 1 33 9 : serviceAdministration
+2 5 1 34 9 : ldapAttributes
+2 5 1 35 9 : commonProtocolSpecification
+2 5 1 36 9 : oSIProtocolSpecification
+2 5 1 37 9 : directoryOSIProtocols
+2 5 1 38 9 : ldapSystemSchema
+2 5 1 39 9 : passwordPolicy
+2 5 1 4 9 : protocolObjectIdentifiers
+2 5 1 40 9 : pkiPmiExternalDataTypes
+2 5 1 41 9 : extensionAttributes
+2 5 1 42 9 : pkiPmiWrapper
+2 5 1 43 9 : avlManagement
+2 5 1 44 9 : trustBrokerProtocol
+2 5 1 5 9 : selectedAttributeTypes
+2 5 1 6 9 : selectedObjectClasses
+2 5 1 7 9 : authenticationFramework
+2 5 1 8 9 : algorithmObjectIdentifiers
+2 5 1 9 9 : directoryObjectIdentifiers
+2 5 10 : object
+2 5 11 : port
+2 5 12 : id-doa
+2 5 12 0 : id-doa-dseType
+2 5 12 1 : id-doa-myAccessPoint
+2 5 12 2 : id-doa-superiorKnowledge
+2 5 12 3 : id-doa-specificKnowledge
+2 5 12 4 : id-doa-nonSpecificKnowledge
+2 5 12 5 : id-doa-supplierKnowledge
+2 5 12 6 : id-doa-consumerKnowledge
+2 5 12 7 : id-doa-secondaryShadows
+2 5 12 8 : id-doa-ditBridgeKnowledge
+2 5 13 : matchingRule
+2 5 13 0 : id-mr-objectIdentifierMatch
+2 5 13 1 : id-mr-distinguishedNameMatch
+2 5 13 10 : id-mr-numericStringSubstringsMatch
+2 5 13 11 : id-mr-caseIgnoreListMatch
+2 5 13 12 : id-mr-caseIgnoreListSubstringsMatch
+2 5 13 13 : id-mr-booleanMatch
+2 5 13 14 : id-mr-integerMatch
+2 5 13 15 : id-mr-integerOrderingMatch
+2 5 13 16 : id-mr-bitStringMatch
+2 5 13 17 : id-mr-octetStringMatch
+2 5 13 18 : id-mr-octetStringOrderingMatch
+2 5 13 19 : id-mr-octetStringSubstringsMatch
+2 5 13 2 : id-mr-caseIgnoreMatch
+2 5 13 20 : id-mr-telephoneNumberMatch
+2 5 13 21 : id-mr-telephoneNumberSubstringsMatch
+2 5 13 22 : id-mr-presentationAddressMatch
+2 5 13 23 : id-mr-uniqueMemberMatch
+2 5 13 24 : id-mr-protocolInformationMatch
+2 5 13 25 : id-mr-uTCTimeMatch
+2 5 13 26 : id-mr-uTCTimeOrderingMatch
+2 5 13 27 : id-mr-generalizedTimeMatch
+2 5 13 28 : id-mr-generalizedTimeOrderingMatch
+2 5 13 29 : id-mr-integerFirstComponentMatch
+2 5 13 3 : id-mr-caseIgnoreOrderingMatch
+2 5 13 30 : id-mr-objectIdentifierFirstComponentMatch
+2 5 13 31 : id-mr-directoryStringFirstComponentMatch
+2 5 13 32 : id-mr-wordMatch
+2 5 13 33 : id-mr-keywordMatch
+2 5 13 34 : id-mr-certificateExactMatch
+2 5 13 35 : id-mr-certificateMatch
+2 5 13 36 : id-mr-certificatePairExactMatch
+2 5 13 37 : id-mr-certificatePairMatch
+2 5 13 38 : id-mr-certificateListExactMatch
+2 5 13 39 : id-mr-certificateListMatch
+2 5 13 4 : id-mr-caseIgnoreSubstringsMatch
+2 5 13 40 : id-mr-algorithmIdentifierMatch
+2 5 13 41 : id-mr-storedPrefixMatch
+2 5 13 42 : id-mr-attributeCertificateMatch
+2 5 13 45 : id-mr-attributeCertificateExactMatch
+2 5 13 46 : id-mr-holderIssuerMatch
+2 5 13 47 : id-mr-systemProposedMatch
+2 5 13 48 : id-mr-generalWordMatch
+2 5 13 49 : id-mr-approximateStringMatch
+2 5 13 5 : id-mr-caseExactMatch
+2 5 13 50 : id-mr-ignoreIfAbsentMatch
+2 5 13 51 : id-mr-nullMatch
+2 5 13 52 : id-mr-zonalMatch
+2 5 13 53 : id-mr-authAttIdMatch
+2 5 13 54 : id-mr-roleSpecCertIdMatch
+2 5 13 55 : id-mr-basicAttConstraintsMatch
+2 5 13 56 : id-mr-delegatedNameConstraintsMatch
+2 5 13 57 : id-mr-timeSpecMatch
+2 5 13 58 : id-mr-attDescriptorMatch
+2 5 13 59 : id-mr-acceptableCertPoliciesMatch
+2 5 13 6 : id-mr-caseExactOrderingMatch
+2 5 13 60 : id-mr-policyMatch
+2 5 13 61 : id-mr-delegationPathMatch
+2 5 13 62 : id-mr-pkiPathMatch
+2 5 13 63 : id-mr-facsimileNumberMatch
+2 5 13 64 : id-mr-facsimileNumberSubstringsMatch
+2 5 13 65 : id-mr-enhancedCertificateMatch
+2 5 13 66 : id-mr-sOAIdentifierMatch
+2 5 13 67 : id-mr-extensionPresenceMatch
+2 5 13 68 : id-mr-uuidpairmatch
+2 5 13 69 : id-mr-dualStringMatch
+2 5 13 7 : id-mr-caseExactSubstringsMatch
+2 5 13 70 : id-mr-uriMatch
+2 5 13 71 : id-mr-userPwdMatch
+2 5 13 72 : id-mr-userPwdHistoryMatch
+2 5 13 73 : id-mr-pwdEncAlgMatch
+2 5 13 74 : id-mr-dnsNameMatch
+2 5 13 75 : id-mr-intEmailMatch
+2 5 13 76 : id-mr-jidMatch
+2 5 13 8 : id-mr-numericStringMatch
+2 5 13 9 : id-mr-numericStringOrderingMatch
+2 5 14 : id-kmr
+2 5 14 0 : id-kmr-accessPointMatch
+2 5 14 1 : id-kmr-masterShadowMatch
+2 5 14 2 : id-kmr-supplierConsumerMatch
+2 5 14 3 : id-kmr-supplierConsumersMatch
+2 5 15 : nameForm
+2 5 15 0 : id-nf-countryNameForm
+2 5 15 1 : id-nf-locNameForm
+2 5 15 10 : id-nf-applProcessNameForm
+2 5 15 11 : id-nf-applEntityNameForm
+2 5 15 12 : id-nf-dSANameForm
+2 5 15 13 : id-nf-deviceNameForm
+2 5 15 14 : id-nf-cRLDistPtNameForm
+2 5 15 15 : id-nf-dMDNameForm
+2 5 15 16 : id-nf-subentryNameForm
+2 5 15 17 : id-nf-oidC1NameForm
+2 5 15 18 : id-nf-oidC2NameForm
+2 5 15 19 : id-nf-oidCNameForm
+2 5 15 2 : id-nf-sOPNameForm
+2 5 15 20 : id-nf-urnCNameForm
+2 5 15 3 : id-nf-orgNameForm
+2 5 15 4 : id-nf-orgUnitNameForm
+2 5 15 5 : id-nf-personNameForm
+2 5 15 6 : id-nf-orgPersonNameForm
+2 5 15 7 : id-nf-orgRoleNameForm
+2 5 15 8 : id-nf-gONNameForm
+2 5 15 9 : id-nf-resPersonNameForm
+2 5 16 : group
+2 5 17 : id-sc
+2 5 17 0 : id-sc-subentry
+2 5 17 1 : id-sc-accessControlSubentry
+2 5 17 2 : id-sc-collectiveAttributeSubentry
+2 5 17 3 : id-sc-contextAssertionSubentry
+2 5 17 4 : id-sc-serviceAdminSubentry
+2 5 17 5 : id-sc-pwdAdminSubentry
+2 5 18 : id-oa
+2 5 18 0 : id-oa-excludeAllCollectiveAttributes
+2 5 18 1 : id-oa-createTimestamp
+2 5 18 10 : id-oa-subschemaSubentryList
+2 5 18 11 : id-oa-accessControlSubentryList
+2 5 18 12 : id-oa-collectiveAttributeSubentryList
+2 5 18 13 : id-oa-contextDefaultSubentryList
+2 5 18 14 : id-oa-contextAssertionDefault
+2 5 18 15 : id-oa-serviceAdminSubentryList
+2 5 18 16 : id-oa-searchRules
+2 5 18 17 : id-oa-hierarchyLevel
+2 5 18 18 : id-oa-hierarchyBelow
+2 5 18 19 : id-oa-hierarchyParent
+2 5 18 2 : id-oa-modifyTimestamp
+2 5 18 20 : id-oa-hierarchyTop
+2 5 18 21 : id-oa-pwdAdminSubentryList
+2 5 18 22 : id-oa-pwdStartTime
+2 5 18 23 : id-oa-pwdExpiryTime
+2 5 18 24 : id-oa-pwdEndTime
+2 5 18 25 : id-oa-pwdFails
+2 5 18 26 : id-oa-pwdFailureTime
+2 5 18 27 : id-oa-pwdGracesUsed
+2 5 18 28 : id-oa-userPwdHistory
+2 5 18 29 : id-oa-userPwdRecentlyExpired
+2 5 18 3 : id-oa-creatorsName
+2 5 18 30 : id-oa-pwdModifyEntryAllowed
+2 5 18 31 : id-oa-pwdChangeAllowed
+2 5 18 32 : id-oa-pwdMaxAge
+2 5 18 33 : id-oa-pwdExpiryAge
+2 5 18 34 : id-oa-pwdMinLength
+2 5 18 35 : id-oa-pwdVocabulary
+2 5 18 36 : id-oa-pwdAlphabet
+2 5 18 37 : id-oa-pwdDictionaries
+2 5 18 38 : id-oa-pwdExpiryWarning
+2 5 18 39 : id-oa-pwdGraces
+2 5 18 4 : id-oa-modifiersName
+2 5 18 40 : id-oa-pwdFailureDuration
+2 5 18 41 : id-oa-pwdLockoutDuration
+2 5 18 42 : id-oa-pwdMaxFailures
+2 5 18 43 : id-oa-pwdMaxTimeInHistory
+2 5 18 44 : id-oa-pwdMinTimeInHistory
+2 5 18 45 : id-oa-pwdHistorySlots
+2 5 18 46 : id-oa-pwdRecentlyExpiredDuration
+2 5 18 47 : id-oa-pwdEncAlg
+2 5 18 48 : id-oa-allAttributeTypes
+2 5 18 5 : id-oa-administrativeRole
+2 5 18 6 : id-oa-subtreeSpecification
+2 5 18 7 : id-oa-collectiveExclusions
+2 5 18 8 : id-oa-subschemaTimestamp
+2 5 18 9 : id-oa-hasSubordinates
+2 5 19 : id-ob
+2 5 19 1 : id-op-binding-shadow
+2 5 19 2 : id-op-binding-hierarchical
+2 5 19 3 : id-op-binding-non-specific-hierarchical
+2 5 2 : serviceElement
+2 5 20 : id-soc
+2 5 20 1 : id-soc-subschema
+2 5 21 : id-soa
+2 5 21 1 : id-soa-dITStructureRule
+2 5 21 10 : id-soa-governingStructureRule
+2 5 21 11 : id-soa-contextTypes
+2 5 21 12 : id-soa-dITContextUse
+2 5 21 13 : id-soa-friends
+2 5 21 2 : id-soa-dITContentRules
+2 5 21 4 : id-soa-matchingRules
+2 5 21 5 : id-soa-attributeTypes
+2 5 21 6 : id-soa-objectClasses
+2 5 21 7 : id-soa-nameForms
+2 5 21 8 : id-soa-matchingRuleUse
+2 5 21 9 : id-soa-structuralObjectClass
+2 5 23 : id-ar
+2 5 23 1 : id-ar-autonomousArea
+2 5 23 2 : id-ar-accessControlSpecificArea
+2 5 23 3 : id-ar-accessControlInnerArea
+2 5 23 4 : id-ar-subschemaAdminSpecificArea
+2 5 23 5 : id-ar-collectiveAttributeSpecificArea
+2 5 23 6 : id-ar-collectiveAttributeInnerArea
+2 5 23 7 : id-ar-contextDefaultSpecificArea
+2 5 23 8 : id-ar-serviceSpecificArea
+2 5 23 9 : id-ar-pwdAdminSpecificArea
+2 5 24 1 : id-aca-accessControlScheme
+2 5 24 4 : id-aca-prescriptiveACI
+2 5 24 5 : id-aca-entryACI
+2 5 24 6 : id-aca-subentryACI
+2 5 25 : id-rosObject
+2 5 25 1 : id-rosObject-dua
+2 5 25 10 : id-rosObject-initiatingSupplierDSA
+2 5 25 11 : id-rosObject-respondingConsumerDSA
+2 5 25 2 : id-rosObject-directory
+2 5 25 3 : id-rosObject-dapDSA
+2 5 25 4 : id-rosObject-dspDSA
+2 5 25 7 : id-rosObject-dopDSA
+2 5 25 8 : id-rosObject-initiatingConsumerDSA
+2 5 25 9 : id-rosObject-respondingSupplierDSA
+2 5 26 : id-contract
+2 5 26 1 : id-contract-dap
+2 5 26 2 : id-contract-dsp
+2 5 26 3 : id-contract-shadowConsumer
+2 5 26 4 : id-contract-shadowSupplier
+2 5 26 5 : id-contract-dop
+2 5 27 : package-
+2 5 27 1 : id-package-read
+2 5 27 10 : id-package-dapConnection
+2 5 27 11 : id-package-dspConnection
+2 5 27 12 : id-package-dispConnection
+2 5 27 13 : id-package-dopConnection
+2 5 27 2 : id-package-search
+2 5 27 3 : id-package-modify
+2 5 27 4 : id-package-chainedRead
+2 5 27 5 : id-package-chainedSearch
+2 5 27 6 : id-package-chainedModify
+2 5 27 7 : id-package-shadowConsumer
+2 5 27 8 : id-package-shadowSupplier
+2 5 27 9 : id-package-operationalBindingManagement
+2 5 28 : id-acScheme
+2 5 28 1 : basicAccessControlScheme
+2 5 28 2 : simplifiedAccessControlScheme
+2 5 28 3 : rule-based-access-control
+2 5 28 4 : rule-and-basic-access-control
+2 5 28 5 : rule-and-simple-access-control
+2 5 29 14 1 : id-ce-a-subjectKeyIdentifier
+2 5 29 14 2 : id-asx-subjectKeyIdentifier
+2 5 29 15 1 : id-ce-a-keyUsage
+2 5 29 15 2 : id-asx-keyUsage
+2 5 29 16 1 : id-ce-a-privateKeyUsagePeriod
+2 5 29 16 2 : id-asx-privateKeyUsagePeriod
+2 5 29 17 1 : id-ce-a-subjectAltName
+2 5 29 17 2 : id-asx-subjectAltName
+2 5 29 18 1 : id-ce-a-issuerAltName
+2 5 29 18 2 : id-asx-issuerAltName
+2 5 29 19 1 : id-ce-a-basicConstraints
+2 5 29 19 2 : id-asx-basicConstraints
+2 5 29 20 1 : id-ce-a-cRLNumber
+2 5 29 20 2 : id-asx-cRLNumber
+2 5 29 21 1 : id-ce-a-reasonCode
+2 5 29 21 2 : id-asx-reasonCode
+2 5 29 23 1 : id-ce-a-holdInstructionCode
+2 5 29 23 2 : id-asx-holdInstructionCode
+2 5 29 24 1 : id-ce-a-invalidityDate
+2 5 29 24 2 : id-asx-invalidityDate
+2 5 29 27 1 : id-ce-a-deltaCRLIndicator
+2 5 29 27 2 : id-asx-deltaCRLIndicator
+2 5 29 28 1 : id-ce-a-issuingDistributionPoint
+2 5 29 28 2 : id-asx-issuingDistributionPoint
+2 5 29 29 1 : id-ce-a-certificateIssuer
+2 5 29 29 2 : id-asx-certificateIssuer
+2 5 29 30 1 : id-ce-a-nameConstraints
+2 5 29 30 2 : id-asx-nameConstraints
+2 5 29 31 1 : id-ce-a-cRLDistributionPoints
+2 5 29 31 2 : id-asx-cRLDistributionPoints
+2 5 29 32 1 : id-ce-a-certificatePolicies
+2 5 29 32 2 : id-asx-certificatePolicies
+2 5 29 33 1 : id-ce-a-policyMappings
+2 5 29 33 2 : id-asx-policyMappings
+2 5 29 35 1 : id-ce-a-authorityKeyIdentifier
+2 5 29 35 2 : id-asx-authorityKeyIdentifier
+2 5 29 36 1 : id-ce-a-policyConstraints
+2 5 29 36 2 : id-asx-policyConstraints
+2 5 29 37 1 : id-ce-a-extKeyUsage
+2 5 29 37 2 : id-asx-extKeyUsage
+2 5 29 38 : id-ce-authorityAttributeIdentifier
+2 5 29 38 1 : id-ce-a-authorityAttributeIdentifier
+2 5 29 38 2 : id-asx-authorityAttributeIdentifier
+2 5 29 39 : id-ce-roleSpecCertIdentifier
+2 5 29 39 1 : id-ce-a-roleSpecCertIdentifier
+2 5 29 39 2 : id-asx-roleSpecCertIdentifier
+2 5 29 40 : id-ce-cRLStreamIdentifier
+2 5 29 40 1 : id-ce-a-cRLStreamIdentifier
+2 5 29 40 2 : id-asx-cRLStreamIdentifier
+2 5 29 41 : id-ce-basicAttConstraints
+2 5 29 41 1 : id-ce-a-basicAttConstraints
+2 5 29 41 2 : id-asx-basicAttConstraints
+2 5 29 42 : id-ce-delegatedNameConstraints
+2 5 29 42 1 : id-ce-a-delegatedNameConstraints
+2 5 29 42 2 : id-asx-delegatedNameConstraints
+2 5 29 43 : id-ce-timeSpecification
+2 5 29 43 1 : id-ce-a-timeSpecification
+2 5 29 43 2 : id-asx-timeSpecification
+2 5 29 44 : id-ce-cRLScope
+2 5 29 44 1 : id-ce-a-cRLScope
+2 5 29 44 2 : id-asx-cRLScope
+2 5 29 45 : id-ce-statusReferrals
+2 5 29 45 1 : id-ce-a-statusReferrals
+2 5 29 45 2 : id-asx-statusReferrals
+2 5 29 46 1 : id-ce-a-freshestCRL
+2 5 29 46 2 : id-asx-freshestCRL
+2 5 29 47 : id-ce-orderedList
+2 5 29 47 1 : id-ce-a-orderedList
+2 5 29 47 2 : id-asx-orderedList
+2 5 29 48 : id-ce-attributeDescriptor
+2 5 29 48 1 : id-ce-a-attributeDescriptor
+2 5 29 48 2 : id-asx-attributeDescriptor
+2 5 29 49 : id-ce-userNotice
+2 5 29 49 1 : id-ce-a-userNotice
+2 5 29 49 2 : id-asx-userNotice
+2 5 29 50 : id-ce-sOAIdentifier
+2 5 29 50 1 : id-ce-a-sOAIdentifier
+2 5 29 50 2 : id-asx-sOAIdentifier
+2 5 29 51 : id-ce-baseUpdateTime
+2 5 29 51 1 : id-ce-a-baseUpdateTime
+2 5 29 51 2 : id-asx-baseUpdateTime
+2 5 29 52 : id-ce-acceptableCertPolicies
+2 5 29 52 1 : id-ce-a-acceptableCertPolicies
+2 5 29 52 2 : id-asx-acceptableCertPolicies
+2 5 29 53 : id-ce-deltaInfo
+2 5 29 53 1 : id-ce-a-deltaInfo
+2 5 29 53 2 : id-asx-deltaInfo
+2 5 29 54 1 : id-ce-a-inhibitAnyPolicy
+2 5 29 54 2 : id-asx-inhibitAnyPolicy
+2 5 29 55 1 : id-ce-a-targetingInformation
+2 5 29 55 2 : id-asx-targetingInformation
+2 5 29 56 1 : id-ce-a-noRevAvail
+2 5 29 56 2 : id-asx-noRevAvail
+2 5 29 57 : id-ce-acceptablePrivilegePolicies
+2 5 29 57 1 : id-ce-a-acceptablePrivilegePolicies
+2 5 29 57 2 : id-asx-acceptablePrivilegePolicies
+2 5 29 58 : id-ce-toBeRevoked
+2 5 29 58 1 : id-ce-a-toBeRevoked
+2 5 29 58 2 : id-asx-toBeRevoked
+2 5 29 59 : id-ce-revokedGroups
+2 5 29 59 1 : id-ce-a-revokedGroups
+2 5 29 59 2 : id-asx-revokedGroups
+2 5 29 60 : id-ce-expiredCertsOnCRL
+2 5 29 60 1 : id-ce-a-expiredCertsOnCRL
+2 5 29 60 2 : id-asx-expiredCertsOnCRL
+2 5 29 61 : id-ce-indirectIssuer
+2 5 29 61 1 : id-ce-a-indirectIssuer
+2 5 29 61 2 : id-asx-indirectIssuer
+2 5 29 62 : id-ce-noAssertion
+2 5 29 62 1 : id-ce-a-noAssertion
+2 5 29 62 2 : id-asx-noAssertion
+2 5 29 63 : id-ce-aAissuingDistributionPoint
+2 5 29 63 1 : id-ce-a-aAissuingDistributionPoint
+2 5 29 63 2 : id-asx-aAissuingDistributionPoint
+2 5 29 64 : id-ce-issuedOnBehalfOf
+2 5 29 64 1 : id-ce-a-issuedOnBehalfOf
+2 5 29 64 2 : id-asx-issuedOnBehalfOf
+2 5 29 65 : id-ce-singleUse
+2 5 29 65 1 : id-ce-a-singleUse
+2 5 29 65 2 : id-asx-singleUse
+2 5 29 66 : id-ce-groupAC
+2 5 29 66 1 : id-ce-a-groupAC
+2 5 29 66 2 : id-asx-groupAC
+2 5 29 67 : id-ce-allowedAttributeAssignments
+2 5 29 67 1 : id-ce-a-allowedAttributeAssignments
+2 5 29 67 2 : id-asx-allowedAttributeAssignments
+2 5 29 68 : id-ce-attributeMappings
+2 5 29 68 1 : id-ce-a-attributeMappings
+2 5 29 68 2 : id-asx-attributeMappings
+2 5 29 69 : id-ce-holderNameConstraints
+2 5 29 69 1 : id-ce-a-holderNameConstraints
+2 5 29 69 2 : id-asx-holderNameConstraints
+2 5 29 70 : id-ce-authorizationValidation
+2 5 29 70 1 : id-ce-a-authorizationValidation
+2 5 29 70 2 : id-asx-authorizationValidation
+2 5 29 71 : id-ce-protRestrict
+2 5 29 71 1 : id-ce-a-protRestrict
+2 5 29 71 2 : id-asx-protRestrict
+2 5 29 72 : id-ce-subjectAltPublicKeyInfo
+2 5 29 72 1 : id-ce-a-subjectAltPublicKeyInfo
+2 5 29 72 2 : id-asx-subjectAltPublicKeyInfo
+2 5 29 73 : id-ce-altSignatureAlgorithm
+2 5 29 73 1 : id-ce-a-altSignatureAlgorithm
+2 5 29 73 2 : id-asx-altSignatureAlgorithm
+2 5 29 74 : id-ce-altSignatureValue
+2 5 29 74 1 : id-ce-a-altSignatureValue
+2 5 29 74 2 : id-asx-altSignatureValue
+2 5 29 75 : id-ce-associatedInformation
+2 5 29 9 1 : id-ce-a-subjectDirectoryAttributes
+2 5 29 9 2 : id-asx-subjectDirectoryAttributes
+2 5 3 : applicationContext
+2 5 3 1 : id-ac-directoryAccessAC
+2 5 3 2 : id-ac-directorySystemAC
+2 5 3 3 : id-ac-directoryOperationalBindingManagementAC
+2 5 3 4 : id-ac-shadowConsumerInitiatedAC
+2 5 3 5 : id-ac-shadowSupplierInitiatedAC
+2 5 3 6 : id-ac-reliableShadowSupplierInitiatedAC
+2 5 3 7 : id-ac-reliableShadowConsumerInitiatedAC
+2 5 3 8 : id-ac-shadowSupplierInitiatedAsynchronousAC
+2 5 3 9 : id-ac-shadowConsumerInitiatedAsynchronousAC
+2 5 30 : id-mgt
+2 5 30 0 : id-mac
+2 5 30 0 0 : id-mac-useRemoteDSA
+2 5 30 0 1 : id-mac-useHomeDSA
+2 5 30 0 2 : id-mac-update
+2 5 30 1 : id-mat
+2 5 30 1 0 : id-mat-accessPoint
+2 5 30 1 1 : id-mat-masterEntries
+2 5 30 1 10 : id-mat-chainings
+2 5 30 1 100 : id-mat-accessor
+2 5 30 1 101 : id-mat-allowedInfoService
+2 5 30 1 102 : id-mat-applicationContextInUse
+2 5 30 1 103 : id-mat-associationId
+2 5 30 1 104 : id-mat-callingAETitle
+2 5 30 1 105 : id-mat-disAllowedInfoService
+2 5 30 1 106 : id-mat-maxEntriesReturned
+2 5 30 1 107 : id-mat-maxTimeForResult
+2 5 30 1 108 : id-mat-modifyDNRenameOnlyOpsProc
+2 5 30 1 109 : id-mat-serviceDesc
+2 5 30 1 11 : id-mat-invalidReferences
+2 5 30 1 110 : id-mat-serviceId
+2 5 30 1 111 : id-mat-subSchema
+2 5 30 1 112 : id-mat-sizeLimit
+2 5 30 1 113 : id-mat-timeLimit
+2 5 30 1 114 : id-mat-dirCustName
+2 5 30 1 115 : id-mat-dirUserName
+2 5 30 1 116 : id-mat-dirCustAddr
+2 5 30 1 117 : id-mat-dMDName
+2 5 30 1 119 : id-mat-accessControlScheme
+2 5 30 1 12 : id-mat-unableToProceed
+2 5 30 1 120 : id-mat-administrativeRole
+2 5 30 1 121 : id-mat-aliasedEntryName
+2 5 30 1 122 : id-mat-attributeTypes
+2 5 30 1 123 : id-mat-collectiveExclusions
+2 5 30 1 124 : id-mat-consumerKnowledge
+2 5 30 1 125 : id-mat-createTimestamp
+2 5 30 1 126 : id-mat-creatorsName
+2 5 30 1 127 : id-mat-credentials
+2 5 30 1 128 : id-mat-distName
+2 5 30 1 129 : id-mat-dITContentRules
+2 5 30 1 13 : id-mat-outOfScope
+2 5 30 1 130 : id-mat-dITStructureRule
+2 5 30 1 131 : id-mat-dseType
+2 5 30 1 132 : id-mat-entryACI
+2 5 30 1 133 : id-mat-governingSR
+2 5 30 1 134 : id-mat-matchingRules
+2 5 30 1 135 : id-mat-matchingRuleUse
+2 5 30 1 136 : id-mat-modifiersName
+2 5 30 1 137 : id-mat-modifyTimestamp
+2 5 30 1 138 : id-mat-myAccessPoint
+2 5 30 1 139 : id-mat-nonSpecificKnowledge
+2 5 30 1 14 : id-mat-noSuchObject
+2 5 30 1 140 : id-mat-objectClass
+2 5 30 1 141 : id-mat-objectClasses
+2 5 30 1 142 : id-mat-prescriptiveACI
+2 5 30 1 143 : id-mat-nameForms
+2 5 30 1 144 : id-mat-specificKnowledge
+2 5 30 1 145 : id-mat-structuralObjectClass
+2 5 30 1 146 : id-mat-subentryACI
+2 5 30 1 147 : id-mat-subtreeSpecification
+2 5 30 1 148 : id-mat-superiorKnowledge
+2 5 30 1 149 : id-mat-supplierKnowledge
+2 5 30 1 15 : id-mat-aliasProblem
+2 5 30 1 150 : id-mat-dirCommonName
+2 5 30 1 16 : id-mat-aliasDereferencingProblem
+2 5 30 1 17 : id-mat-affectsMultipleDSAs
+2 5 30 1 18 : id-mat-unavailableCriticalExtension
+2 5 30 1 19 : id-mat-timeLimitExceeded
+2 5 30 1 2 : id-mat-copyEntries
+2 5 30 1 20 : id-mat-sizeLimitExceeded
+2 5 30 1 21 : id-mat-adminLimitExceeded
+2 5 30 1 24 : id-mat-prohibitChaining
+2 5 30 1 25 : id-mat-readOpsProc
+2 5 30 1 26 : id-mat-compareOpsProc
+2 5 30 1 27 : id-mat-abandonOpsProc
+2 5 30 1 28 : id-mat-listOpsProc
+2 5 30 1 29 : id-mat-searchBaseOpsProc
+2 5 30 1 3 : id-mat-loopsDetected
+2 5 30 1 30 : id-mat-search1LevelOpsProc
+2 5 30 1 31 : id-mat-searchSubtreeOpsProc
+2 5 30 1 32 : id-mat-addEntryOpsProc
+2 5 30 1 33 : id-mat-removeEntryOpsProc
+2 5 30 1 34 : id-mat-modifyEntryOpsProc
+2 5 30 1 35 : id-mat-modifyDNOpsProc
+2 5 30 1 36 : id-mat-chReadOpsProc
+2 5 30 1 37 : id-mat-chCompareOpsProc
+2 5 30 1 38 : id-mat-chAbandonOpsProc
+2 5 30 1 39 : id-mat-chListOpsProc
+2 5 30 1 4 : id-mat-securityErrors
+2 5 30 1 40 : id-mat-chSearchBaseOpsProc
+2 5 30 1 41 : id-mat-chSearch1LevelOpsProc
+2 5 30 1 42 : id-mat-chSearchSubtreeOpsProc
+2 5 30 1 43 : id-mat-chAddEntryOpsProc
+2 5 30 1 44 : id-mat-chRemoveEntryOpsProc
+2 5 30 1 45 : id-mat-chModifyEntryOpsProc
+2 5 30 1 46 : id-mat-chModifyDNOpsProc
+2 5 30 1 47 : id-mat-dSAScopeOfReferral
+2 5 30 1 48 : id-mat-dSAScopeOfChaining
+2 5 30 1 49 : id-mat-peerEntityAuthenticationPolicy
+2 5 30 1 5 : id-mat-nameErrors
+2 5 30 1 50 : id-mat-requestAuthenticationPolicy
+2 5 30 1 51 : id-mat-resultAuthenticationPolicy
+2 5 30 1 52 : id-mat-dSPAssociationEstablishment
+2 5 30 1 53 : id-mat-dOPAssociationEstablishment
+2 5 30 1 54 : id-mat-dISPAssociationEstablishment
+2 5 30 1 55 : id-mat-maxDAPAssociations
+2 5 30 1 56 : id-mat-maxDSPAssociations
+2 5 30 1 57 : id-mat-maxDOPAssociations
+2 5 30 1 58 : id-mat-maxDISPAssociations
+2 5 30 1 59 : id-mat-dAPAssociationTimeout
+2 5 30 1 6 : id-mat-foundLocalEntries
+2 5 30 1 60 : id-mat-dSPAssociationTimeout
+2 5 30 1 61 : id-mat-dOPAssociationTimeout
+2 5 30 1 62 : id-mat-dISPAssociationTimeout
+2 5 30 1 63 : id-mat-dSAActiveAssociations
+2 5 30 1 64 : id-mat-pagedResultsMaxIDs
+2 5 30 1 65 : id-mat-pagedResultsTimer
+2 5 30 1 66 : id-mat-homeDSA
+2 5 30 1 68 : id-mat-dUATimeout
+2 5 30 1 69 : id-mat-supportedApplicationContexts
+2 5 30 1 7 : id-mat-referrals
+2 5 30 1 70 : id-mat-reverseCredentials
+2 5 30 1 71 : id-mat-remoteAccessPoint
+2 5 30 1 72 : id-mat-maxInboundAssociations
+2 5 30 1 73 : id-mat-maxOutboundAssociations
+2 5 30 1 74 : id-mat-currentActiveAssocs
+2 5 30 1 75 : id-mat-currentActiveInboundAssocs
+2 5 30 1 76 : id-mat-currentActiveOutboundAssocs
+2 5 30 1 77 : id-mat-accumAssocs
+2 5 30 1 78 : id-mat-accumInboundAssocs
+2 5 30 1 79 : id-mat-accumOutboundAssocs
+2 5 30 1 8 : id-mat-serviceErrors
+2 5 30 1 80 : id-mat-accumFailedInboundAssocs
+2 5 30 1 81 : id-mat-accumFailedOutboundAssocs
+2 5 30 1 82 : id-mat-timeOfLastAttempt
+2 5 30 1 83 : id-mat-timeOfLastSuccess
+2 5 30 1 84 : id-mat-requestCounter
+2 5 30 1 85 : id-mat-replyCounter
+2 5 30 1 86 : id-mat-requestsFailedCounter
+2 5 30 1 87 : id-mat-timeOfLastAccess
+2 5 30 1 88 : id-mat-agreementID
+2 5 30 1 89 : id-mat-agreementVersion
+2 5 30 1 9 : id-mat-aliasDereferences
+2 5 30 1 90 : id-mat-hOBRole
+2 5 30 1 91 : id-mat-shadowingSubject
+2 5 30 1 92 : id-mat-updateMode
+2 5 30 1 93 : id-mat-masterAccessPoint
+2 5 30 1 94 : id-mat-secondaryShadows
+2 5 30 1 95 : id-mat-shadowingRole
+2 5 30 1 96 : id-mat-lastUpdateTime
+2 5 30 1 97 : id-mat-shadowingSchedule
+2 5 30 1 98 : id-mat-nextUpdateTime
+2 5 30 1 99 : id-mat-useDOP
+2 5 30 2 0 : id-moc-dsa
+2 5 30 2 1 : id-moc-dse
+2 5 30 2 10 : id-moc-dirCust
+2 5 30 2 11 : id-moc-dirUser
+2 5 30 2 12 : id-moc-dMD
+2 5 30 2 2 : id-moc-knownDSA
+2 5 30 2 3 : id-moc-knownDUA
+2 5 30 2 4 : id-moc-dUA
+2 5 30 2 5 : id-moc-nHOBMO
+2 5 30 2 6 : id-moc-hOBMO
+2 5 30 2 7 : id-moc-shadowingAgreement
+2 5 30 2 8 : id-moc-ULconnEnd
+2 5 30 2 9 : id-moc-disManagedObject
+2 5 30 3 : id-mnb
+2 5 30 3 0 : id-mnb-dsa-name-binding
+2 5 30 3 1 : id-mnb-dse-name-binding
+2 5 30 3 10 : id-mnb-ULconnEnd-knownDUA
+2 5 30 3 11 : id-mnb-dis-Customer-name-binding
+2 5 30 3 12 : id-mnb-knownDSA-dUA-name-binding
+2 5 30 3 13 : id-mnb-DirCust-DMD
+2 5 30 3 14 : id-mnb-DirUser-DirCust
+2 5 30 3 2 : id-mnb-knownDSA-dSA-name-binding
+2 5 30 3 3 : id-mnb-knownDUA-dSA-name-binding
+2 5 30 3 4 : id-mnb-acseInvoc-knownDSA
+2 5 30 3 5 : id-mnb-acseInvoc-knownDUA
+2 5 30 3 6 : id-mnb-nHOB-name-binding
+2 5 30 3 7 : id-mnb-hOB-name-binding
+2 5 30 3 8 : id-mnb-shadowingAgreement-nb
+2 5 30 3 9 : id-mnb-ULconnEnd-knownDSA
+2 5 30 4 : id-mp
+2 5 30 4 0 : id-mp-dsaPackage
+2 5 30 4 1 : id-mp-readPackage
+2 5 30 4 10 : id-mp-chainedReadPackage
+2 5 30 4 11 : id-mp-chainedComparePackage
+2 5 30 4 12 : id-mp-chainedAbandonPackage
+2 5 30 4 13 : id-mp-chainedListPackage
+2 5 30 4 14 : id-mp-chainedSearchPackage
+2 5 30 4 15 : id-mp-chainedAddPackage
+2 5 30 4 16 : id-mp-chainedRemovePackage
+2 5 30 4 17 : id-mp-chainedModifyPackage
+2 5 30 4 18 : id-mp-chainedModifyDNPackage
+2 5 30 4 19 : id-mp-dsePackage
+2 5 30 4 2 : id-mp-comparePackage
+2 5 30 4 20 : id-mp-knownDSAPackage
+2 5 30 4 21 : id-mp-knownDUAPackage
+2 5 30 4 22 : id-mp-dUAPackage
+2 5 30 4 23 : id-mp-nHOBPackage
+2 5 30 4 24 : id-mp-hOBPackage
+2 5 30 4 25 : id-mp-shadowingAgreementPackage
+2 5 30 4 26 : id-mp-ULconnEndPackage
+2 5 30 4 27 : id-mp-disPackage
+2 5 30 4 28 : id-mp-dcsPackage
+2 5 30 4 29 : id-mp-dirCust
+2 5 30 4 3 : id-mp-abandonPackage
+2 5 30 4 30 : id-mp-dirUser
+2 5 30 4 31 : id-mp-dMD
+2 5 30 4 32 : id-mp-dsPackage
+2 5 30 4 4 : id-mp-listPackage
+2 5 30 4 5 : id-mp-searchPackage
+2 5 30 4 6 : id-mp-addPackage
+2 5 30 4 7 : id-mp-removePackage
+2 5 30 4 8 : id-mp-modifyPackage
+2 5 30 4 9 : id-mp-modifyDNPackage
+2 5 30 5 : id-mpa
+2 5 30 5 1 : id-mpa-nameProblem
+2 5 30 5 10 : id-mpa-resource
+2 5 30 5 11 : id-mpa-authenReason
+2 5 30 5 12 : id-mpa-updateProblem
+2 5 30 5 15 : id-mpa-extensions
+2 5 30 5 16 : id-mpa-aliasedRDNs
+2 5 30 5 17 : id-mpa-aliasDereferenced
+2 5 30 5 18 : id-mpa-referenceType
+2 5 30 5 19 : id-mpa-operationProgress
+2 5 30 5 2 : id-mpa-traceInformation
+2 5 30 5 20 : id-mpa-pDU
+2 5 30 5 21 : id-mpa-opId
+2 5 30 5 22 : id-mpa-nhob-bind-id
+2 5 30 5 23 : id-mpa-mhob-dop-prob
+2 5 30 5 24 : id-mpa-hob-bind-id
+2 5 30 5 25 : id-mpa-hob-dop-prob
+2 5 30 5 26 : id-mpa-shadowing-dop-prob
+2 5 30 5 27 : id-mpa-opIdDN
+2 5 30 5 3 : id-mpa-serviceProblem
+2 5 30 5 4 : id-mpa-entryName
+2 5 30 5 5 : id-mpa-operation
+2 5 30 5 6 : id-mpa-attributeProblem
+2 5 30 5 7 : id-mpa-attributeType
+2 5 30 5 8 : id-mpa-shadowProblem
+2 5 30 5 9 : id-mpa-attributeValue
+2 5 31 : id-avc
+2 5 31 0 : id-avc-language
+2 5 31 1 : id-avc-temporal
+2 5 31 2 : id-avc-locale
+2 5 31 3 : id-avc-attributeValueSecurityLabelContext
+2 5 31 4 : id-avc-attributeValueIntegrityInfoContext
+2 5 31 5 : id-avc-ldapAttributeOption
+2 5 32 : id-se
+2 5 33 : id-idm
+2 5 33 0 : id-idm-dap
+2 5 33 1 : id-idm-dsp
+2 5 33 2 : id-idm-disp
+2 5 33 3 : id-idm-dop
+2 5 34 : id-pr
+2 5 34 1 : id-pr-targetDsaUnavailable
+2 5 34 10 : id-pr-attributeNegationViolation
+2 5 34 11 : id-pr-searchValueRequired
+2 5 34 12 : id-pr-invalidSearchValue
+2 5 34 13 : id-pr-searchContextViolation
+2 5 34 14 : id-pr-searchContextCombinationViolation
+2 5 34 15 : id-pr-missingSearchContext
+2 5 34 16 : id-pr-searchContextValueViolation
+2 5 34 17 : id-pr-searchContextValueRequired
+2 5 34 18 : id-pr-invalidContextSearchValue
+2 5 34 19 : id-pr-unsupportedMatchingRule
+2 5 34 2 : id-pr-dataSourceUnavailable
+2 5 34 20 : id-pr-attributeMatchingViolation
+2 5 34 21 : id-pr-unsupportedMatchingUse
+2 5 34 22 : id-pr-matchingUseViolation
+2 5 34 23 : id-pr-hierarchySelectForbidden
+2 5 34 24 : id-pr-invalidHierarchySelect
+2 5 34 25 : id-pr-unavailableHierarchySelect
+2 5 34 26 : id-pr-invalidSearchControlOptions
+2 5 34 27 : id-pr-invalidServiceControlOptions
+2 5 34 28 : id-pr-searchSubsetViolation
+2 5 34 29 : id-pr-unmatchedKeyAttributes
+2 5 34 3 : id-pr-unidentifiedOperation
+2 5 34 30 : id-pr-ambiguousKeyAttributes
+2 5 34 31 : id-pr-unavailableRelaxationLevel
+2 5 34 32 : id-pr-emptyHierarchySelection
+2 5 34 33 : id-pr-administratorImposedLimit
+2 5 34 34 : id-pr-permanentRestriction
+2 5 34 35 : id-pr-temporaryRestriction
+2 5 34 36 : id-pr-relaxationNotSupported
+2 5 34 4 : id-pr-unavailableOperation
+2 5 34 5 : id-pr-searchAttributeViolation
+2 5 34 6 : id-pr-searchAttributeCombinationViolation
+2 5 34 7 : id-pr-searchValueNotAllowed
+2 5 34 8 : id-pr-missingSearchAttribute
+2 5 34 9 : id-pr-searchValueViolation
+2 5 35 : id-not
+2 5 35 0 : id-not-dSAProblem
+2 5 35 1 : id-not-searchServiceProblem
+2 5 35 10 : id-not-hierarchySelectList
+2 5 35 11 : id-not-searchControlOptionsList
+2 5 35 12 : id-not-serviceControlOptionsList
+2 5 35 13 : id-not-multipleMatchingLocalities
+2 5 35 14 : id-not-proposedRelaxation
+2 5 35 15 : id-not-appliedRelaxation
+2 5 35 16 : id-not-pwdResponse
+2 5 35 17 : id-not-ldapDiagnosticMsg
+2 5 35 2 : id-not-serviceType
+2 5 35 3 : id-not-attributeTypeList
+2 5 35 4 : id-not-matchingRuleList
+2 5 35 5 : id-not-filterItem
+2 5 35 6 : id-not-attributeCombinations
+2 5 35 7 : id-not-contextTypeList
+2 5 35 8 : id-not-contextList
+2 5 35 9 : id-not-contextCombinations
+2 5 36 : id-mre
+2 5 37 : controlAttributeType
+2 5 37 1 : id-cat-sequenceMatchType
+2 5 37 2 : id-cat-wordMatchType
+2 5 37 3 : id-cat-characterMatchTypes
+2 5 37 4 : id-cat-selectedContexts
+2 5 38 9 : id-kp-OCSPSigning
+2 5 39 : id-pq
+2 5 4 0 : id-at-objectClass
+2 5 4 1 : id-at-aliasedEntryName
+2 5 4 10 1 : id-at-collectiveOrganizationName
+2 5 4 101 : id-at-eepkCertificateRevocationList
+2 5 4 102 : id-at-eeAttrCertificateRevocationList
+2 5 4 103 : id-at-supportedPublicKeyAlgorithms
+2 5 4 104 : id-at-intEmail
+2 5 4 105 : id-at-jid
+2 5 4 106 : id-at-objectIdentifier
+2 5 4 11 1 : id-at-collectiveOrganizationalUnitName
+2 5 4 16 1 : id-at-collectivePostalAddress
+2 5 4 17 1 : id-at-collectivePostalCode
+2 5 4 18 1 : id-at-collectivePostOfficeBox
+2 5 4 19 1 : id-at-collectivePhysicalDeliveryOfficeName
+2 5 4 2 : id-at-knowledgeInformation
+2 5 4 20 1 : id-at-collectiveTelephoneNumber
+2 5 4 21 1 : id-at-collectiveTelexNumber
+2 5 4 23 1 : id-at-collectiveFacsimileTelephoneNumber
+2 5 4 25 1 : id-at-collectiveInternationalISDNNumber
+2 5 4 55 : id-at-clearance
+2 5 4 57 : id-at-attributeIntegrityInfo
+2 5 4 58 : id-at-attributeCertificate
+2 5 4 59 : id-at-attributeCertificateRevocationList
+2 5 4 61 : id-at-aACertificate
+2 5 4 62 : id-at-attributeDescriptorCertificate
+2 5 4 63 : id-at-attributeAuthorityRevocationList
+2 5 4 64 : id-at-family-information
+2 5 4 66 : id-at-communicationsService
+2 5 4 67 : id-at-communicationsNetwork
+2 5 4 68 : id-at-certificationPracticeStmt
+2 5 4 69 : id-at-certificatePolicy
+2 5 4 7 1 : id-at-collectiveLocalityName
+2 5 4 70 : id-at-pkiPath
+2 5 4 71 : id-at-privPolicy
+2 5 4 73 : id-at-delegationPath
+2 5 4 74 : id-at-protPrivPolicy
+2 5 4 75 : id-at-xMLPrivilegeInfo
+2 5 4 76 : id-at-xmlPrivPolicy
+2 5 4 77 : id-at-uuidpair
+2 5 4 78 : id-at-tagOid
+2 5 4 79 : id-at-uiiFormat
+2 5 4 8 1 : id-at-collectiveStateOrProvinceName
+2 5 4 80 : id-at-uiiInUrn
+2 5 4 81 : id-at-contentUrl
+2 5 4 82 : id-at-permission
+2 5 4 83 : id-at-uri
+2 5 4 84 : id-at-pwdAttribute
+2 5 4 85 : id-at-userPwd
+2 5 4 86 : id-at-urn
+2 5 4 87 : id-at-url
+2 5 4 88 : id-at-utmCoordinates
+2 5 4 89 : id-at-urnC
+2 5 4 9 1 : id-at-collectiveStreetAddress
+2 5 4 90 : id-at-uii
+2 5 4 91 : id-at-epc
+2 5 4 92 : id-at-tagAfi
+2 5 4 93 : id-at-epcFormat
+2 5 4 94 : id-at-epcInUrn
+2 5 4 95 : id-at-ldapUrl
+2 5 4 96 : id-at-tagLocation
+2 5 40 : id-asx
+2 5 40 0 : id-asx-userPwdDescription
+2 5 40 1 : id-asx-pwdVocabularyDescription
+2 5 40 10 : id-asx-x509SupportedPublicKeyAlgos
+2 5 40 11 : id-asx-intEmailString
+2 5 40 12 : id-asx-jidString
+2 5 40 2 : id-asx-pwdAlphabetDescription
+2 5 40 3 : id-asx-pwdEncAlgDescription
+2 5 40 4 : id-asx-utmCoords
+2 5 40 5 : id-asx-uiiForm
+2 5 40 6 : id-asx-epcForm
+2 5 40 7 : id-asx-countryString3c
+2 5 40 8 : id-asx-countryString3n
+2 5 40 9 : id-asx-dnsString
+2 5 41 : avRestriction
+2 5 42 : id-cmsct
+2 5 42 0 : id-certReq
+2 5 42 1 : id-certRsp
+2 5 42 10 : id-rejectAVL
+2 5 42 11 : id-certSubscribeReq
+2 5 42 12 : id-certSubscribeRsp
+2 5 42 13 : id-certUnsubscribeReq
+2 5 42 14 : id-certUnsubscribeRsp
+2 5 42 15 : id-certReplaceReq
+2 5 42 16 : id-certReplaceRsp
+2 5 42 17 : id-certUpdateReq
+2 5 42 18 : id-certUpdateRsp
+2 5 42 19 : id-rejectCAsubscribe
+2 5 42 2 : id-addAvlReq
+2 5 42 3 : id-addAvlRsp
+2 5 42 4 : id-replaceAvlReq
+2 5 42 5 : id-replaceAvlRsp
+2 5 42 6 : id-updateAvlReq
+2 5 42 7 : id-updateAvlRsp
+2 5 42 8 : id-deleteAvlReq
+2 5 42 9 : id-deleteAvlRsp
+2 5 43 : id-wrprot
+2 5 43 0 : id-avlprot
+2 5 43 1 : id-casubprot
+2 5 43 2 : id-tbprot
+2 5 44 : algorithms
+2 5 44 1 : id-algo-mca
+2 5 44 1 1 : id-algo-multipleSignaturesAlgo
+2 5 44 1 2 : id-algo-multipleSymmetricKeyAlgo
+2 5 44 1 3 : id-algo-multiplePublicKeyAlgo
+2 5 44 1 4 : id-algo-multipleHashAlgo
+2 5 44 1 5 : id-algo-multipleAuthenEncryptAlgo
+2 5 44 1 6 : id-algo-multipleIcvAlgo
+2 5 44 2 : id-algo-ska
+2 5 44 3 : id-algo-aead
+2 5 44 4 : id-algo-pka
+2 5 44 5 : id-algo-ha
+2 5 44 6 : id-algo-dsa
+2 5 44 7 : id-algo-kea
+2 5 44 7 1 : id-algo-dhModpGr14Hkdf256Algo
+2 5 44 7 10 : id-algo-dhModpGr23Hkdf256Algo
+2 5 44 7 15 : id-algo-dhModpGr28Hkdf256Algo
+2 5 44 7 2 : id-algo-dhModpGr15Hkdf384Algo
+2 5 44 7 3 : id-algo-dhModpGr16Hkdf512Algo
+2 5 44 7 4 : id-algo-dhModpGr17Hkdf768Algo
+2 5 44 7 5 : id-algo-dhModpGr18Hkdf1024Algo
+2 5 5 : dummyCurv
+2 5 6 : objectClass
+2 5 6 0 : id-oc-top
+2 5 6 1 : id-oc-alias
+2 5 6 10 : id-oc-residentialPerson
+2 5 6 11 : id-oc-applicationProcess
+2 5 6 12 : id-oc-applicationEntity
+2 5 6 13 : id-oc-dSA
+2 5 6 14 : id-oc-device
+2 5 6 15 : id-oc-strongAuthenticationUser
+2 5 6 16 : id-oc-certificationAuthority
+2 5 6 16 2 : id-oc-certificationAuthority-V2
+2 5 6 17 : id-oc-groupOfUniqueNames
+2 5 6 18 : id-oc-userSecurityInformation
+2 5 6 19 : id-oc-cRLDistributionPoint
+2 5 6 2 : id-oc-country
+2 5 6 20 : id-oc-dmd
+2 5 6 21 : id-oc-pkiUser
+2 5 6 22 : id-oc-pkiCA
+2 5 6 23 : id-oc-deltaCRL
+2 5 6 24 : id-oc-pmiUser
+2 5 6 25 : id-oc-pmiAA
+2 5 6 26 : id-oc-pmiSOA
+2 5 6 27 : id-oc-attCertCRLDistributionPts
+2 5 6 28 : id-oc-parent
+2 5 6 29 : id-oc-child
+2 5 6 3 : id-oc-locality
+2 5 6 30 : id-oc-cpCps
+2 5 6 31 : id-oc-pkiCertPath
+2 5 6 32 : id-oc-privilegePolicy
+2 5 6 33 : id-oc-pmiDelegationPath
+2 5 6 34 : id-oc-protectedPrivilegePolicy
+2 5 6 35 : id-oc-oidC1obj
+2 5 6 36 : id-oc-oidC2obj
+2 5 6 37 : id-oc-oidCobj
+2 5 6 38 : id-oc-isoTagInfo
+2 5 6 39 : id-oc-isoTagType
+2 5 6 4 : id-oc-organization
+2 5 6 40 : id-oc-integrityInfo
+2 5 6 41 : id-oc-userPwdClass
+2 5 6 42 : id-oc-urnCobj
+2 5 6 43 : id-oc-epcTagInfoObj
+2 5 6 44 : id-oc-epcTagTypeObj
+2 5 6 5 : id-oc-organizationalUnit
+2 5 6 6 : id-oc-person
+2 5 6 7 : id-oc-organizationalPerson
+2 5 6 8 : id-oc-organizationalRole
+2 5 6 9 : id-oc-groupOfNames
+2 5 7 : attributeSet
+2 5 8 0 : nullAlgorithm
+2 5 8 1 : id-ea
+2 5 8 2 : hashAlgorithm
+2 5 8 2 1 : id-ha-sqMod-n
+2 5 8 3 : signatureAlgorithm
+2 5 8 3 1 : id-sa-sqMod-nWithRSA
+2 5 9 : abstractSyntax
+2 5 9 1 : id-as-directoryAccessAS
+2 5 9 2 : id-as-directorySystemAS
+2 5 9 3 : id-as-directoryShadowAS
+2 5 9 4 : id-as-directoryOperationalBindingManagementAS
+2 5 9 5 : id-as-directoryReliableShadowAS
+2 5 9 6 : id-as-reliableShadowBindingAS
+2 5 9 7 : id-as-2or3se
+2 6 0 : id-mhs-protocols
+2 6 0 0 1 : id-mod-mts-access-protocol
+2 6 0 0 2 : id-mod-ms-access-protocol
+2 6 0 0 3 : id-mod-mts-transfer-protocol
+2 6 0 1 : id-ac
+2 6 0 1 0 : id-ac-mts-access-88
+2 6 0 1 1 : id-ac-mts-forced-access-88
+2 6 0 1 10 : id-ac-mts-forced-reliable-access-94
+2 6 0 1 11 : id-ac-ms-access-94
+2 6 0 1 12 : id-ac-ms-reliable-access-94
+2 6 0 1 2 : id-ac-mts-reliable-access-88
+2 6 0 1 3 : id-ac-mts-forced-reliable-access-88
+2 6 0 1 4 : id-ac-ms-access-88
+2 6 0 1 5 : id-ac-ms-reliable-access-88
+2 6 0 1 6 : id-ac-mts-transfer
+2 6 0 1 7 : id-ac-mts-access-94
+2 6 0 1 8 : id-ac-mts-forced-access-94
+2 6 0 1 9 : id-ac-mts-reliable-access-94
+2 6 0 2 : id-as
+2 6 0 2 1 : id-as-msse
+2 6 0 2 10 : id-as-ms-rtse
+2 6 0 2 11 : id-as-mts
+2 6 0 2 12 : id-as-mta-rtse
+2 6 0 2 13 : id-as-ms-msse
+2 6 0 2 14 : id-as-mdse-94
+2 6 0 2 15 : id-as-mrse-94
+2 6 0 2 16 : id-as-mase-94
+2 6 0 2 17 : id-as-ms-94
+2 6 0 2 2 : id-as-mdse-88
+2 6 0 2 5 : id-as-mrse-88
+2 6 0 2 6 : id-as-mase-88
+2 6 0 2 7 : id-as-mtse
+2 6 0 2 8 : id-as-mts-rtse
+2 6 0 2 9 : id-as-ms-88
+2 6 0 3 : id-ase
+2 6 0 3 0 : id-ase-msse
+2 6 0 3 1 : id-ase-mdse
+2 6 0 3 2 : id-ase-mrse
+2 6 0 3 3 : id-ase-mase
+2 6 0 3 4 : id-ase-mtse
+2 6 1 : id-ipms
+2 6 1 0 11 : id-mod-extended-voice-body-part-type
+2 6 1 0 12 : id-mod-forwarded-report-body-part-type
+2 6 1 0 13 : id-mod-auto-actions
+2 6 1 0 14 : id-mod-ipm-security-extensions
+2 6 1 0 15 : id-mod-forwarded-content-body-part-type
+2 6 1 0 16 : id-mod-pkcs7-body-part-type
+2 6 1 0 6 : id-mod-heading-extensions
+2 6 1 0 7 : id-mod-extended-body-part-types
+2 6 1 0 9 : id-mod-file-transfer-body-part-type
+2 6 1 1 1 : id-ot-ipms-user
+2 6 1 1 2 : id-ot-ipms
+2 6 1 10 0 : id-mct-p2-1984
+2 6 1 10 1 : id-mct-p2-1988
+2 6 1 11 : id-ep
+2 6 1 11 0 : id-ep-ia5-text
+2 6 1 11 11 : id-ep-general-text
+2 6 1 11 12 : id-ep-file-transfer
+2 6 1 11 15 : id-ep-notification
+2 6 1 11 16 : id-ep-voice
+2 6 1 11 17 : id-ep-content
+2 6 1 11 2 : id-ep-g3-facsimile
+2 6 1 11 4 : id-ep-teletex
+2 6 1 11 5 : id-ep-videotex
+2 6 1 11 6 : id-ep-encrypted
+2 6 1 11 7 : id-ep-message
+2 6 1 12 : id-eit
+2 6 1 12 0 : id-eit-file-transfer
+2 6 1 12 1 : id-eit-voice
+2 6 1 12 1 0 : id-voice-11khz-sample
+2 6 1 12 1 1 : id-voice-22khz-sample
+2 6 1 12 1 2 : id-voice-cd-quality
+2 6 1 12 1 3 : id-voice-g711-mu-law
+2 6 1 12 1 4 : id-voice-g726-32k-adpcm
+2 6 1 12 1 5 : id-voice-g728-16k-ld-celp
+2 6 1 13 0 : id-cat-correlated-delivered-ipns
+2 6 1 13 1 : id-cat-correlated-delivered-replies
+2 6 1 13 10 : id-cat-relating-ipms
+2 6 1 13 11 : id-cat-replied-to-ipm
+2 6 1 13 12 : id-cat-replying-ipms
+2 6 1 13 13 : id-cat-revised-reply-time
+2 6 1 13 14 : id-cat-submitted-ipn-status
+2 6 1 13 15 : id-cat-submitted-ipns
+2 6 1 13 16 : id-cat-submitted-reply-status
+2 6 1 13 17 : id-cat-subject-ipm
+2 6 1 13 18 : id-cat-recipient-category
+2 6 1 13 2 : id-cat-delivered-ipn-summary
+2 6 1 13 3 : id-cat-delivered-replies-summary
+2 6 1 13 4 : id-cat-forwarded-ipms
+2 6 1 13 5 : id-cat-forwarding-ipms
+2 6 1 13 6 : id-cat-ipm-recipients
+2 6 1 13 7 : id-cat-obsoleted-ipms
+2 6 1 13 8 : id-cat-obsoleting-ipms
+2 6 1 13 9 : id-cat-related-ipms
+2 6 1 14 : id-mr
+2 6 1 14 0 : id-mr-ipm-identifier
+2 6 1 14 1 : id-mr-or-descriptor
+2 6 1 14 10 : id-mr-circulation-member
+2 6 1 14 11 : id-mr-circulation-member-elements
+2 6 1 14 12 : id-mr-circulation-member-substring-elements
+2 6 1 14 13 : id-mr-circulation-member-single-element
+2 6 1 14 14 : id-mr-circulation-member-checkmark
+2 6 1 14 15 : id-mr-distribution-code
+2 6 1 14 16 : id-mr-information-category
+2 6 1 14 2 : id-mr-or-descriptor-elements
+2 6 1 14 3 : id-mr-or-descriptor-substring-elements
+2 6 1 14 4 : id-mr-recipient-specifier
+2 6 1 14 5 : id-mr-recipient-specifier-elements
+2 6 1 14 6 : id-mr-recipient-specifier-substring-elements
+2 6 1 14 7 : id-mr-ipm-location
+2 6 1 14 8 : id-mr-or-descriptor-single-element
+2 6 1 14 9 : id-mr-recipient-specifier-single-element
+2 6 1 15 : id-aa
+2 6 1 15 0 : id-aa-ipm-auto-acknowledgement
+2 6 1 15 1 : id-aa-ipm-auto-correlate
+2 6 1 15 2 : id-aa-ipm-auto-discard
+2 6 1 15 3 : id-aa-ipm-auto-advise
+2 6 1 16 0 : id-aae-auto-discard-error
+2 6 1 16 1 : id-aae-auto-forwarding-loop
+2 6 1 16 2 : id-aae-duplicate-ipn
+2 6 1 17 : id-mst
+2 6 1 17 0 : id-mst-invalid-assembly-instructions
+2 6 1 17 1 : id-mst-invalid-ipn
+2 6 1 17 2 : id-mst-assembly-instructions
+2 6 1 17 3 : id-mst-suspend-auto-acknowledgement
+2 6 1 17 4 : id-mst-prevent-nrn-generation
+2 6 1 17 5 : id-mst-originator-body-part-encryption-token
+2 6 1 17 6 : id-mst-originator-forwarded-content-token
+2 6 1 17 7 : id-mst-assembly-capability
+2 6 1 18 : id-sec
+2 6 1 18 0 : id-sec-ipm-security-request
+2 6 1 18 1 : id-sec-security-common-fields
+2 6 1 19 0 : id-on-absence-advice
+2 6 1 19 1 : id-on-change-of-address-advice
+2 6 1 2 2 : id-pt-management
+2 6 1 20 : id-rex
+2 6 1 20 0 : id-rex-circulation-list-indicator
+2 6 1 20 1 : id-rex-precedence
+2 6 1 4 : id-et
+2 6 1 4 0 : id-et-ia5-text
+2 6 1 4 10 : id-et-nationally-defined
+2 6 1 4 11 : id-et-general-text
+2 6 1 4 12 : id-et-file-transfer
+2 6 1 4 14 : id-et-report
+2 6 1 4 15 : id-et-notification
+2 6 1 4 16 : id-et-voice
+2 6 1 4 17 : id-et-content
+2 6 1 4 18 : id-et-pkcs7
+2 6 1 4 2 : id-et-g3-facsimile
+2 6 1 4 3 : id-et-g4-class1
+2 6 1 4 4 : id-et-teletex
+2 6 1 4 5 : id-et-videotex
+2 6 1 4 6 : id-et-encrypted
+2 6 1 4 7 : id-et-message
+2 6 1 4 8 : id-et-mixed-mode
+2 6 1 4 9 : id-et-bilaterally-defined
+2 6 1 5 : id-hex
+2 6 1 5 0 : id-hex-incomplete-copy
+2 6 1 5 1 : id-hex-languages
+2 6 1 5 10 : id-hex-manual-handling-instructions
+2 6 1 5 11 : id-hex-originators-reference
+2 6 1 5 12 : id-hex-precedence-policy-id
+2 6 1 5 2 : id-hex-auto-submitted
+2 6 1 5 3 : id-hex-body-part-signatures
+2 6 1 5 4 : id-hex-ipm-security-label
+2 6 1 5 5 : id-hex-authorization-time
+2 6 1 5 6 : id-hex-circulation-list-recipients
+2 6 1 5 7 : id-hex-distribution-codes
+2 6 1 5 8 : id-hex-extended-subject
+2 6 1 5 9 : id-hex-information-category
+2 6 1 6 0 : id-sat-ipm-entry-type
+2 6 1 6 1 : id-sat-ipm-synopsis
+2 6 1 6 2 : id-sat-body-parts-summary
+2 6 1 6 3 : id-sat-ipm-auto-discarded
+2 6 1 7 1 : id-hat-this-ipm
+2 6 1 7 10 : id-hat-authorizing-users
+2 6 1 7 11 : id-hat-primary-recipients
+2 6 1 7 12 : id-hat-copy-recipients
+2 6 1 7 13 : id-hat-blind-copy-recipients
+2 6 1 7 14 : id-hat-obsoleted-IPMs
+2 6 1 7 15 : id-hat-related-IPMs
+2 6 1 7 16 : id-hat-reply-recipients
+2 6 1 7 18 : id-hat-languages
+2 6 1 7 19 : id-hat-rn-requestors
+2 6 1 7 20 : id-hat-nrn-requestors
+2 6 1 7 21 : id-hat-reply-requestors
+2 6 1 7 22 : id-hat-auto-submitted
+2 6 1 7 23 : id-hat-body-part-signatures
+2 6 1 7 24 : id-hat-ipm-security-label
+2 6 1 7 25 : id-hat-body-part-security-label
+2 6 1 7 26 : id-hat-body-part-encryption-token
+2 6 1 7 27 : id-hat-authorization-time
+2 6 1 7 28 : id-hat-circulation-list-recipients
+2 6 1 7 29 : id-hat-distribution-codes
+2 6 1 7 3 : id-hat-replied-to-IPM
+2 6 1 7 30 : id-hat-extended-subject
+2 6 1 7 31 : id-hat-information-category
+2 6 1 7 32 : id-hat-manual-handling-instructions
+2 6 1 7 33 : id-hat-originators-reference
+2 6 1 7 34 : id-hat-precedence-policy-id
+2 6 1 7 35 : id-hat-forwarded-content-token
+2 6 1 7 36 : id-hat-forwarding-token
+2 6 1 7 37 : id-hat-precedence
+2 6 1 7 38 : id-hat-body-part-signature-verification-status
+2 6 1 7 4 : id-hat-subject
+2 6 1 7 6 : id-hat-reply-time
+2 6 1 7 7 : id-hat-importance
+2 6 1 7 8 : id-hat-sensitivity
+2 6 1 7 9 : id-hat-auto-forwarded
+2 6 1 8 1 : id-bat-ia5-text-body-parts
+2 6 1 8 10 : id-bat-bilaterally-defined-body-parts
+2 6 1 8 11 : id-bat-nationally-defined-body-parts
+2 6 1 8 13 : id-bat-ia5-text-parameters
+2 6 1 8 15 : id-bat-g3-facsimile-parameters
+2 6 1 8 16 : id-bat-teletex-parameters
+2 6 1 8 17 : id-bat-videotex-parameters
+2 6 1 8 18 : id-bat-encrypted-parameters
+2 6 1 8 20 : id-bat-ia5-text-data
+2 6 1 8 22 : id-bat-g3-facsimile-data
+2 6 1 8 23 : id-bat-teletex-data
+2 6 1 8 24 : id-bat-videotex-data
+2 6 1 8 25 : id-bat-encrypted-data
+2 6 1 8 3 : id-bat-g3-facsimile-body-parts
+2 6 1 8 4 : id-bat-g4-class1-body-parts
+2 6 1 8 5 : id-bat-teletex-body-parts
+2 6 1 8 6 : id-bat-videotex-body-parts
+2 6 1 8 7 : id-bat-encrypted-body-parts
+2 6 1 8 8 : id-bat-message-body-parts
+2 6 1 8 9 : id-bat-mixed-mode-body-parts
+2 6 1 9 0 : id-nat-subject-ipm
+2 6 1 9 1 : id-nat-ipn-originator
+2 6 1 9 10 : id-nat-suppl-receipt-info
+2 6 1 9 12 : id-nat-nrn-extensions
+2 6 1 9 13 : id-nat-rn-extensions
+2 6 1 9 14 : id-nat-other-notification-type-fields
+2 6 1 9 2 : id-nat-ipm-intended-recipient
+2 6 1 9 3 : id-nat-conversion-eits
+2 6 1 9 4 : id-nat-non-receipt-reason
+2 6 1 9 5 : id-nat-discard-reason
+2 6 1 9 6 : id-nat-auto-forward-comment
+2 6 1 9 7 : id-nat-returned-ipm
+2 6 1 9 8 : id-nat-receipt-time
+2 6 1 9 9 : id-nat-acknowledgment-mode
+2 6 10 : id-routing
+2 6 10 0 1 : id-mod-directory-objects
+2 6 10 0 2 : id-mod-oraddress-subtree
+2 6 10 1 0 : id-oc-connection-group
+2 6 10 1 1 : id-oc-mhs-admd
+2 6 10 1 10 : id-oc-mhs-or-address-element
+2 6 10 1 11 : id-oc-mhs-organization
+2 6 10 1 12 : id-oc-mhs-organizational-unit
+2 6 10 1 13 : id-oc-mhs-pds-name
+2 6 10 1 14 : id-oc-mhs-physical-delivery-country-name
+2 6 10 1 15 : id-oc-mhs-postal-code
+2 6 10 1 16 : id-oc-mhs-prmd
+2 6 10 1 17 : id-oc-mhs-surname
+2 6 10 1 18 : id-oc-mhs-terminal-identifier
+2 6 10 1 19 : id-oc-mhs-terminal-type
+2 6 10 1 2 : id-oc-mhs-common-name
+2 6 10 1 20 : id-oc-mta-information
+2 6 10 1 21 : id-oc-oraddress-subtree-base
+2 6 10 1 22 : id-oc-routing-collective
+2 6 10 1 23 : id-oc-routing-mta
+2 6 10 1 3 : id-oc-mhs-country
+2 6 10 1 4 : id-oc-mhs-extended-network-address
+2 6 10 1 5 : id-oc-mhs-generation-qualifier
+2 6 10 1 6 : id-oc-mhs-given-name
+2 6 10 1 7 : id-oc-mhs-initials
+2 6 10 1 8 : id-oc-mhs-network-address
+2 6 10 1 9 : id-oc-mhs-numeric-user-identifier
+2 6 10 2 : id-nf
+2 6 10 2 0 : id-nf-connection-group
+2 6 10 2 1 : id-nf-mhs-admd
+2 6 10 2 10 : id-nf-mhs-organization
+2 6 10 2 11 : id-nf-mhs-organizational-unit
+2 6 10 2 12 : id-nf-mhs-pds-name
+2 6 10 2 13 : id-nf-mhs-physical-delivery-country
+2 6 10 2 14 : id-nf-mhs-postal-code
+2 6 10 2 15 : id-nf-mhs-prmd
+2 6 10 2 16 : id-nf-mhs-surname
+2 6 10 2 17 : id-nf-mhs-terminal-identifier
+2 6 10 2 18 : id-nf-mhs-terminal-type
+2 6 10 2 19 : id-nf-routing-collective
+2 6 10 2 2 : id-nf-mhs-common-name
+2 6 10 2 3 : id-nf-mhs-country
+2 6 10 2 4 : id-nf-mhs-extended-network-address
+2 6 10 2 5 : id-nf-mhs-generation-qualifier
+2 6 10 2 6 : id-nf-mhs-given-name
+2 6 10 2 7 : id-nf-mhs-initials
+2 6 10 2 8 : id-nf-mhs-network-address
+2 6 10 2 9 : id-nf-mhs-numeric-user-identifier
+2 6 10 3 0 : id-at-calling-psaps
+2 6 10 3 1 : id-at-connection-group-name
+2 6 10 3 10 : id-at-mhs-common-name
+2 6 10 3 11 : id-at-mhs-country-name
+2 6 10 3 12 : id-at-mhs-expression-matches
+2 6 10 3 13 : id-at-mhs-extended-network-address
+2 6 10 3 14 : id-at-mhs-generation-qualifier
+2 6 10 3 15 : id-at-mhs-given-name
+2 6 10 3 16 : id-at-mhs-initials
+2 6 10 3 17 : id-at-mhs-message-transfer-agent
+2 6 10 3 18 : id-at-mhs-network-address
+2 6 10 3 19 : id-at-mhs-next-level-complete
+2 6 10 3 2 : id-at-connection-type
+2 6 10 3 20 : id-at-mhs-numeric-user-identifier
+2 6 10 3 21 : id-at-mhs-organization-name
+2 6 10 3 22 : id-at-mhs-organizational-unit-name
+2 6 10 3 23 : id-at-mhs-pds-name-attribute
+2 6 10 3 24 : id-at-mhs-postal-code
+2 6 10 3 25 : id-at-mhs-prmd-name
+2 6 10 3 26 : id-at-mhs-routing-advice
+2 6 10 3 27 : id-at-mhs-surname
+2 6 10 3 28 : id-at-mhs-terminal-identifier
+2 6 10 3 29 : id-at-mhs-terminal-type
+2 6 10 3 3 : id-at-entry-connection-group-name
+2 6 10 3 30 : id-at-mta-name
+2 6 10 3 31 : id-at-mta-password
+2 6 10 3 32 : id-at-oraddress-element-name
+2 6 10 3 33 : id-at-oraddress-subtrees
+2 6 10 3 34 : id-at-recipient-md-assigned-alternate-recipient
+2 6 10 3 35 : id-at-routing-collective-name
+2 6 10 3 36 : id-at-security-context
+2 6 10 3 37 : id-at-specific-passwords
+2 6 10 3 38 : id-at-transit-exit-connection-group-name
+2 6 10 3 4 : id-at-enumerated-flag
+2 6 10 3 5 : id-at-global-domain-identifier
+2 6 10 3 6 : id-at-group-mta-password
+2 6 10 3 7 : id-at-local-exit-connection-group-name
+2 6 10 3 8 : id-at-member-mta
+2 6 10 3 9 : id-at-mhs-admd-name
+2 6 10 4 : id-pro
+2 6 10 4 0 : id-pro-x25
+2 6 10 4 1 : id-pro-rfc1006
+2 6 10 4 2 : id-pro-x445
+2 6 10 5 : id-wf
+2 6 10 5 0 : id-wf-integer
+2 6 3 : id-mts
+2 6 3 0 1 : id-mod-mts-abstract-service
+2 6 3 0 2 : id-mod-mta-abstract-service
+2 6 3 1 0 : id-ot-mts
+2 6 3 1 1 : id-ot-mts-user
+2 6 3 1 2 : id-ot-mta
+2 6 3 2 0 : id-pt-submission
+2 6 3 2 1 : id-pt-delivery
+2 6 3 2 2 : id-pt-administration
+2 6 3 2 3 : id-pt-transfer
+2 6 3 3 : id-cont
+2 6 3 3 0 : id-cont-unidentified
+2 6 3 3 1 : id-cont-inner-envelope
+2 6 3 4 0 : id-eit-unknown
+2 6 3 4 2 : id-eit-ia5-text
+2 6 3 4 3 : id-eit-g3-facsimile
+2 6 3 4 4 : id-eit-g4-class-1
+2 6 3 4 5 : id-eit-teletex
+2 6 3 4 6 : id-eit-videotex
+2 6 3 4 8 : id-eit-sfd
+2 6 3 4 9 : id-eit-mixed-mode
+2 6 3 5 0 : id-att-physicalRendition-basic
+2 6 3 5 1 : id-att-physicalRendition-no-cover-page
+2 6 3 6 : id-tok
+2 6 3 6 0 : id-tok-asymmetricToken
+2 6 3 7 : id-sa
+2 6 3 7 0 : id-sa-ua
+2 6 3 7 1 : id-sa-ms
+2 6 3 8 : id-ct
+2 6 3 8 0 : id-ct-mts-access
+2 6 3 8 1 : id-ct-mts-forced-access
+2 6 3 8 2 : id-ct-mta-transfer
+2 6 3 9 0 : id-cp-mts-connect
+2 6 3 9 1 : id-cp-mta-connect
+2 6 4 0 2 : id-mod-attribute-types
+2 6 4 0 3 : id-mod-action-types
+2 6 4 0 5 : id-mod-matching-rules
+2 6 4 1 0 : id-ot-ms
+2 6 4 1 1 : id-ot-ms-user
+2 6 4 10 0 : id-alg-password-xor
+2 6 4 2 0 : id-pt-retrieval-88
+2 6 4 2 1 : id-pt-retrieval-94
+2 6 4 2 2 : id-pt-ms-submission
+2 6 4 3 : id-att
+2 6 4 3 0 : id-att-child-sequence-numbers
+2 6 4 3 1 : id-att-content
+2 6 4 3 10 : id-att-converted-EITs
+2 6 4 3 11 : id-att-creation-time
+2 6 4 3 12 : id-att-delivered-EITs
+2 6 4 3 13 : id-att-delivery-flags
+2 6 4 3 14 : id-att-dl-expansion-history
+2 6 4 3 15 : id-att-retrieval-status
+2 6 4 3 16 : id-att-entry-type
+2 6 4 3 17 : id-att-originally-intended-recipient-name
+2 6 4 3 18 : id-att-message-delivery-envelope
+2 6 4 3 19 : id-att-message-identifier
+2 6 4 3 2 : id-att-content-confidentiality-algorithm-identifier
+2 6 4 3 20 : id-att-message-delivery-time
+2 6 4 3 21 : id-att-message-origin-authentication-check
+2 6 4 3 22 : id-att-message-security-label
+2 6 4 3 23 : id-att-message-submission-time
+2 6 4 3 24 : id-att-message-token
+2 6 4 3 25 : id-att-original-EITs
+2 6 4 3 26 : id-att-originator-certificate
+2 6 4 3 27 : id-att-originator-name
+2 6 4 3 28 : id-att-other-recipient-names
+2 6 4 3 29 : id-att-parent-sequence-number
+2 6 4 3 3 : id-att-content-correlator
+2 6 4 3 30 : id-att-per-recipient-report-delivery-fields
+2 6 4 3 31 : id-att-priority
+2 6 4 3 32 : id-att-proof-of-delivery-request
+2 6 4 3 33 : id-att-redirection-history
+2 6 4 3 34 : id-att-report-delivery-envelope
+2 6 4 3 35 : id-att-reporting-DL-name
+2 6 4 3 36 : id-att-reporting-MTA-certificate
+2 6 4 3 37 : id-att-report-origin-authentication-check
+2 6 4 3 38 : id-att-security-classification
+2 6 4 3 39 : id-att-sequence-number
+2 6 4 3 4 : id-att-content-identifier
+2 6 4 3 40 : id-att-subject-submission-identifier
+2 6 4 3 41 : id-att-this-recipient-name
+2 6 4 3 42 : id-att-ac-correlated-report-list
+2 6 4 3 43 : id-att-ac-report-summary
+2 6 4 3 44 : id-att-ac-uncorrelated-report-list
+2 6 4 3 46 : id-att-auto-action-error
+2 6 4 3 47 : id-att-auto-action-registration-identifier
+2 6 4 3 48 : id-att-auto-action-subject-entry
+2 6 4 3 49 : id-att-auto-action-type
+2 6 4 3 5 : id-att-content-integrity-check
+2 6 4 3 50 : id-att-deferred-delivery-cancellation-time
+2 6 4 3 51 : id-att-deferred-delivery-time
+2 6 4 3 52 : id-att-deletion-time
+2 6 4 3 53 : id-att-dl-expansion-prohibited
+2 6 4 3 54 : id-att-internal-trace-information
+2 6 4 3 55 : id-att-latest-delivery-time
+2 6 4 3 56 : id-att-marked-for-deletion
+2 6 4 3 57 : id-att-message-group-name
+2 6 4 3 58 : id-att-message-notes
+2 6 4 3 59 : id-att-message-submission-envelope
+2 6 4 3 6 : id-att-content-length
+2 6 4 3 60 : id-att-ms-originated
+2 6 4 3 61 : id-att-ms-submission-error
+2 6 4 3 62 : id-att-originating-MTA-certificate
+2 6 4 3 63 : id-att-originator-report-request
+2 6 4 3 64 : id-att-originator-return-address
+2 6 4 3 65 : id-att-per-message-indicators
+2 6 4 3 66 : id-att-per-recipient-message-submission-fields
+2 6 4 3 67 : id-att-per-recipient-probe-submission-fields
+2 6 4 3 68 : id-att-probe-origin-authentication-check
+2 6 4 3 69 : id-att-probe-submission-envelope
+2 6 4 3 7 : id-att-content-returned
+2 6 4 3 70 : id-att-proof-of-submission
+2 6 4 3 71 : id-att-recipient-names
+2 6 4 3 72 : id-att-recipient-reassignment-prohibited
+2 6 4 3 73 : id-att-storage-period
+2 6 4 3 74 : id-att-storage-time
+2 6 4 3 75 : id-att-trace-information
+2 6 4 3 76 : id-att-ac-report-subject-entry
+2 6 4 3 77 : id-att-locally-originated
+2 6 4 3 78 : id-att-dl-exempted-recipients
+2 6 4 3 79 : id-att-signature-verification-status
+2 6 4 3 8 : id-att-content-type
+2 6 4 3 80 : id-att-certificate-selectors
+2 6 4 3 81 : id-att-multiple-originator-certificates
+2 6 4 3 82 : id-att-recipient-certificate
+2 6 4 3 9 : id-att-conversion-with-loss-prohibited
+2 6 4 4 0 : id-act-ipm-auto-forward
+2 6 4 4 1 : id-act-auto-alert
+2 6 4 4 2 : id-act-auto-correlate-reports
+2 6 4 4 3 : id-act-auto-delete
+2 6 4 4 4 : id-act-auto-modify
+2 6 4 5 : id-crt
+2 6 4 5 0 : id-crt-ms-access-88
+2 6 4 5 1 : id-crt-ms-access-94
+2 6 4 6 0 : id-cp-ms-connection
+2 6 4 7 0 : id-aae-auto-alert-error
+2 6 4 8 1 : id-mr-content-correlator-match
+2 6 4 8 10 : id-mr-msstring-match
+2 6 4 8 11 : id-mr-msstring-ordering-match
+2 6 4 8 12 : id-mr-mts-identifier-match
+2 6 4 8 13 : id-mr-oraddress-elements-match
+2 6 4 8 14 : id-mr-oraddress-match
+2 6 4 8 15 : id-mr-oraddress-substring-elements-match
+2 6 4 8 16 : id-mr-orname-elements-match
+2 6 4 8 17 : id-mr-orname-match
+2 6 4 8 18 : id-mr-orname-single-element-match
+2 6 4 8 19 : id-mr-orname-substring-elements-match
+2 6 4 8 2 : id-mr-content-identifier-match
+2 6 4 8 20 : id-mr-redirection-or-dl-expansion-elements-match
+2 6 4 8 21 : id-mr-redirection-or-dl-expansion-match
+2 6 4 8 22 : id-mr-redirection-or-dl-expansion-substring-elements-match
+2 6 4 8 23 : id-mr-redirection-reason-match
+2 6 4 8 24 : id-mr-value-count-match
+2 6 4 8 25 : id-mr-redirection-or-dl-expansion-single-element-match
+2 6 4 8 3 : id-mr-ms-single-substring-list-elements-match
+2 6 4 8 4 : id-mr-ms-single-substring-list-match
+2 6 4 8 5 : id-mr-ms-single-substring-match
+2 6 4 8 6 : id-mr-ms-substrings-match
+2 6 4 8 7 : id-mr-msstring-case-sensitive-match
+2 6 4 8 8 : id-mr-msstring-list-elements-match
+2 6 4 8 9 : id-mr-msstring-list-match
+2 6 4 9 0 : id-ext-modify-capability
+2 6 4 9 1 : id-ext-modify-retrieval-status-capability
+2 6 4 9 2 : id-ext-originator-certificate-selectors-override
+2 6 4 9 3 : id-ext-originator-token
+2 6 4 9 4 : id-ext-protected-change-credentials
+2 6 4 9 5 : id-ext-protected-change-credentials-capability
+2 6 5 : id-arch
+2 6 5 0 0 : id-object-identifiers
+2 6 5 0 1 : id-directory-objects-and-attributes
+2 6 5 1 : id-oc
+2 6 5 1 0 : id-oc-mhs-distribution-list
+2 6 5 1 1 : id-oc-mhs-message-store
+2 6 5 1 2 : id-oc-mhs-message-transfer-agent
+2 6 5 1 3 : id-oc-mhs-user
+2 6 5 1 4 : id-oc-mhs-user-agent
+2 6 5 2 : id-at
+2 6 5 2 0 : id-at-mhs-maximum-content-length
+2 6 5 2 0 2 : id-at-encrypted-mhs-maximum-content-length
+2 6 5 2 1 : id-at-mhs-deliverable-content-types
+2 6 5 2 1 2 : id-at-encrypted-mhs-deliverable-content-types
+2 6 5 2 10 : id-at-mhs-supported-attributes
+2 6 5 2 10 2 : id-at-encrypted-mhs-supported-attributes
+2 6 5 2 11 : id-at-mhs-supported-matching-rules
+2 6 5 2 11 2 : id-at-encrypted-mhs-supported-matching-rules
+2 6 5 2 12 : id-at-mhs-dl-archive-service
+2 6 5 2 12 2 : id-at-encrypted-mhs-dl-archive-service
+2 6 5 2 13 : id-at-mhs-dl-policy
+2 6 5 2 13 2 : id-at-encrypted-mhs-dl-policy
+2 6 5 2 14 : id-at-mhs-dl-related-lists
+2 6 5 2 14 2 : id-at-encrypted-mhs-dl-related-lists
+2 6 5 2 15 : id-at-mhs-dl-subscription-service
+2 6 5 2 15 2 : id-at-encrypted-mhs-dl-subscription-service
+2 6 5 2 16 : id-at-mhs-or-addresses-with-capabilities
+2 6 5 2 16 2 : id-at-encrypted-mhs-or-addresses-with-capabilities
+2 6 5 2 17 : id-at-mhs-acceptable-eits
+2 6 5 2 17 2 : id-at-encrypted-mhs-acceptable-eits
+2 6 5 2 18 : id-at-mhs-unacceptable-eits
+2 6 5 2 18 2 : id-at-encrypted-mhs-unacceptable-eits
+2 6 5 2 19 : id-at-mhs-deliverable-classes
+2 6 5 2 19 2 : id-at-encrypted-mhs-deliverable-classes
+2 6 5 2 2 : id-at-mhs-exclusively-acceptable-eits
+2 6 5 2 2 2 : id-at-encrypted-mhs-exclusively-acceptable-eits
+2 6 5 2 3 : id-at-mhs-dl-members
+2 6 5 2 3 2 : id-at-encrypted-mhs-dl-members
+2 6 5 2 4 : id-at-mhs-dl-submit-permissions
+2 6 5 2 4 2 : id-at-encrypted-mhs-dl-submit-permissions
+2 6 5 2 5 : id-at-mhs-message-store-dn
+2 6 5 2 5 2 : id-at-encrypted-mhs-message-store-dn
+2 6 5 2 6 : id-at-mhs-or-addresses
+2 6 5 2 6 2 : id-at-encrypted-mhs-or-addresses
+2 6 5 2 8 : id-at-mhs-supported-automatic-actions
+2 6 5 2 8 2 : id-at-encrypted-mhs-supported-automatic-actions
+2 6 5 2 9 : id-at-mhs-supported-content-types
+2 6 5 2 9 2 : id-at-encrypted-mhs-supported-content-types
+2 6 5 4 0 : id-mr-orname-exact-match
+2 6 5 4 1 : id-mr-address-capabilities-match
+2 6 5 4 2 : id-mr-capability-match
+2 6 5 5 : id-con
+2 6 5 5 0 : id-con-dl-administrator-annotation
+2 6 5 5 1 : id-con-dl-nested-dl
+2 6 5 5 2 : id-con-dl-reset-originator
+2 6 5 6 : id-san
+2 6 5 6 0 : id-san-mta-name
+2 6 6 : id-group
+2 6 7 : id-edims
+2 6 7 0 : id-mod
+2 6 7 0 0 : id-mod-object-identifiers
+2 6 7 0 1 : id-mod-functional-objects
+2 6 7 0 2 : id-mod-information-objects
+2 6 7 0 3 : id-mod-abstract-service
+2 6 7 0 4 : id-mod-message-store-attributes
+2 6 7 0 5 : id-mod-upper-bounds
+2 6 7 0 6 : id-mod-edi-directory-cl-att
+2 6 7 0 7 : id-mod-message-store-auto-actions
+2 6 7 1 : id-edi
+2 6 7 1 0 : id-edi-compression
+2 6 7 1 1 : id-edi-compression-v42bis
+2 6 7 10 : id-mct
+2 6 7 10 0 : id-mct-pedi
+2 6 7 11 : id-bp
+2 6 7 11 0 : id-bp-edifact-ISO646
+2 6 7 11 1 : id-bp-edifact-TeletexString
+2 6 7 11 10 : id-bp-private-octet
+2 6 7 11 11 : id-bp-undefined-octet
+2 6 7 11 12 : id-bp-edifact-8859
+2 6 7 11 2 : id-bp-edifact-octet
+2 6 7 11 3 : id-bp-ansiX12-ISO646
+2 6 7 11 4 : id-bp-ansiX12-TeletexString
+2 6 7 11 5 : id-bp-ansiX12-octet
+2 6 7 11 6 : id-bp-ansiX12-ebcdic
+2 6 7 11 7 : id-bp-untdi-ISO646
+2 6 7 11 8 : id-bp-untdi-TeletexString
+2 6 7 11 9 : id-bp-untdi-octet
+2 6 7 12 : id-nt
+2 6 7 13 : id-for
+2 6 7 13 0 : id-for-action
+2 6 7 13 1 : id-for-copy
+2 6 7 14 : id-act
+2 6 7 14 0 : id-act-edi-auto-forward
+2 6 7 14 1 : id-act-edi-auto-correlate
+2 6 7 14 2 : id-act-edi-auto-acknowledgement
+2 6 7 14 3 : id-act-edi-auto-forward-v2
+2 6 7 15 : id-dir
+2 6 7 15 0 : id-doc
+2 6 7 15 0 0 : id-doc-edi-user
+2 6 7 15 0 1 : id-doc-edi-user-agent
+2 6 7 15 0 2 : id-doc-edi-message-store
+2 6 7 15 1 : id-dat
+2 6 7 15 1 0 : id-dat-edi-name
+2 6 7 15 1 1 : id-dat-edi-routing-address
+2 6 7 15 1 2 : id-dat-edi-capabilities
+2 6 7 16 : id-syn
+2 6 7 16 0 : id-syn-removed
+2 6 7 16 1 : id-syn-place-holder
+2 6 7 17 : id-cat
+2 6 7 17 0 : id-cat-correlated-delivered-edins
+2 6 7 17 1 : id-cat-delivered-edin-summary
+2 6 7 17 10 : id-cat-submitted-edin-status
+2 6 7 17 11 : id-cat-submitted-edins
+2 6 7 17 2 : id-cat-edim-recipients
+2 6 7 17 3 : id-cat-forwarded-edims
+2 6 7 17 4 : id-cat-forwarding-edims
+2 6 7 17 5 : id-cat-obsoleted-edims
+2 6 7 17 6 : id-cat-obsoleting-edims
+2 6 7 17 7 : id-cat-related-edims
+2 6 7 17 8 : id-cat-relating-edims
+2 6 7 17 9 : id-cat-subject-edim
+2 6 7 18 : id-aae
+2 6 7 18 0 : id-aae-edi-auto-forwarding-loop
+2 6 7 18 1 : id-aae-duplicate-edin
+2 6 7 19 : id-ext
+2 6 7 19 0 : id-ext-submission-options
+2 6 7 19 1 : id-ext-invalid-assembly-instructions
+2 6 7 2 : id-ot
+2 6 7 2 0 : id-ot-edime
+2 6 7 2 1 : id-ot-edimg-user
+2 6 7 2 2 : id-ot-edims
+2 6 7 2 3 : id-ot-edi-ua
+2 6 7 2 4 : id-ot-edi-ms
+2 6 7 2 5 : id-ot-pdau
+2 6 7 3 : id-pt
+2 6 7 3 0 : id-pt-origination
+2 6 7 3 1 : id-pt-reception
+2 6 7 4 : id-ref
+2 6 7 5 : id-sat
+2 6 7 5 0 : id-sat-edims-entry-type
+2 6 7 5 1 : id-sat-edim-synopsis
+2 6 7 5 2 : id-sat-edi-notification-indicator
+2 6 7 6 : id-hat
+2 6 7 6 0 : id-hat-heading
+2 6 7 6 1 : id-hat-this-edim
+2 6 7 6 10 : id-hat-obsoleted-edims
+2 6 7 6 11 : id-hat-edi-application-security-element
+2 6 7 6 12 : id-hat-edi-application-security-extensions
+2 6 7 6 13 : id-hat-cross-referencing-information
+2 6 7 6 14 : id-hat-edi-message-type
+2 6 7 6 15 : id-hat-service-string-advice
+2 6 7 6 16 : id-hat-syntax-identifier
+2 6 7 6 17 : id-hat-interchange-sender
+2 6 7 6 18 : id-hat-date-and-time-of-preparation
+2 6 7 6 19 : id-hat-application-reference
+2 6 7 6 2 : id-hat-originator
+2 6 7 6 20 : id-hat-heading-extensions
+2 6 7 6 3 : id-hat-recipients
+2 6 7 6 4 : id-hat-edin-receiver
+2 6 7 6 5 : id-hat-responsibility-forwarded
+2 6 7 6 6 : id-hat-edi-bodypart-type
+2 6 7 6 7 : id-hat-incomplete-copy
+2 6 7 6 8 : id-hat-expiry-time
+2 6 7 6 9 : id-hat-related-messages
+2 6 7 7 : id-rat
+2 6 7 7 0 : id-rat-this-recipient
+2 6 7 7 1 : id-rat-action-request-for-this-recipient
+2 6 7 7 10 : id-rat-test-indicator-for-this-recipient
+2 6 7 7 11 : id-rat-edi-notification-security-for-this-recipient
+2 6 7 7 12 : id-rat-edi-reception-security-for-this-recipient
+2 6 7 7 13 : id-rat-recipient-extensions-for-this-recipient
+2 6 7 7 14 : id-rat-authorization-information-for-this-recipient
+2 6 7 7 2 : id-rat-edi-notification-requests-for-this-recipient
+2 6 7 7 3 : id-rat-responsibility-passing-allowed-for-this-recipient
+2 6 7 7 4 : id-rat-interchange-recipient-for-this-recipient
+2 6 7 7 5 : id-rat-recipient-reference-for-this-recipient
+2 6 7 7 6 : id-rat-interchange-control-reference-for-this-recipient
+2 6 7 7 7 : id-rat-processing-priority-code-for-this-recipient
+2 6 7 7 8 : id-rat-acknowledgement-request-for-this-recipient
+2 6 7 7 9 : id-rat-communications-agreement-id-for-this-recipient
+2 6 7 8 : id-bat
+2 6 7 8 0 : id-bat-body
+2 6 7 8 1 : id-bat-interchange-length
+2 6 7 8 2 : id-bat-edi-body-part
+2 6 7 8 3 : id-bat-edim-body-part
+2 6 7 8 4 : id-bat-message-parameters
+2 6 7 8 5 : id-bat-message-data
+2 6 7 8 6 : id-bat-extended-body-part-types
+2 6 7 9 : id-nat
+2 6 7 9 0 : id-nat-subject-edim
+2 6 7 9 1 : id-nat-edin-originator
+2 6 7 9 10 : id-nat-nn-supplementary-info
+2 6 7 9 11 : id-nat-nn-extensions
+2 6 7 9 12 : id-nat-forwarded-to
+2 6 7 9 13 : id-nat-fn-reason-code
+2 6 7 9 14 : id-nat-fn-supplementary-info
+2 6 7 9 15 : id-nat-fn-extensions
+2 6 7 9 2 : id-nat-first-recipient
+2 6 7 9 3 : id-nat-notification-time
+2 6 7 9 4 : id-nat-notification-security-elements
+2 6 7 9 5 : id-nat-notification-extensions
+2 6 7 9 6 : id-nat-edin-initiator
+2 6 7 9 7 : id-nat-pn-supplementary-info
+2 6 7 9 8 : id-nat-pn-extensions
+2 6 7 9 9 : id-nat-nn-reason-code
+2 6 9 : mhs-management
+2 6 9 1 : id-model
+2 6 9 10 : id-ms
+2 6 9 11 : id-au
+2 6 9 2 : id-information
+2 6 9 3 : id-accounting
+2 6 9 3 0 : id-moc
+2 6 9 3 0 0 : id-moc-acctRequest
+2 6 9 3 0 1 : id-moc-bindEventRecord
+2 6 9 3 0 10 : id-moc-maseEventRecord
+2 6 9 3 0 11 : id-moc-mdseEventRecord
+2 6 9 3 0 12 : id-moc-mdServiceMgtPOA
+2 6 9 3 0 13 : id-moc-messageEventRecord
+2 6 9 3 0 14 : id-moc-mhsEventLog
+2 6 9 3 0 15 : id-moc-misManagementDomain
+2 6 9 3 0 16 : id-moc-mrseEventRecord
+2 6 9 3 0 17 : id-moc-msseEventRecord
+2 6 9 3 0 18 : id-moc-mtseEventRecord
+2 6 9 3 0 19 : id-moc-securityAcctRecord
+2 6 9 3 0 2 : id-moc-contact
+2 6 9 3 0 20 : id-moc-serviceRequest
+2 6 9 3 0 21 : id-moc-settlementAcctRecord
+2 6 9 3 0 22 : id-moc-settlementAcctLog
+2 6 9 3 0 3 : id-moc-customer
+2 6 9 3 0 4 : id-moc-customerAcctLog
+2 6 9 3 0 5 : id-moc-customerAcctRecord
+2 6 9 3 0 6 : id-moc-customerEFD
+2 6 9 3 0 7 : id-moc-discardEventRecord
+2 6 9 3 0 8 : id-moc-interworkingMD
+2 6 9 3 0 9 : id-moc-interworkingMD-EFD
+2 6 9 3 1 : id-package
+2 6 9 3 1 0 : id-package-acctRequest
+2 6 9 3 1 1 : id-package-alert
+2 6 9 3 1 10 : id-package-customerEFD
+2 6 9 3 1 11 : id-package-d36-commonAttributes
+2 6 9 3 1 12 : id-package-d36-deliveryViaAccessUnit
+2 6 9 3 1 13 : id-package-d36-directDelivery
+2 6 9 3 1 14 : id-package-delete
+2 6 9 3 1 15 : id-package-deliveryControl
+2 6 9 3 1 16 : id-package-destinationDomainDelivery
+2 6 9 3 1 17 : id-package-discardEventRecord
+2 6 9 3 1 18 : id-package-fetch
+2 6 9 3 1 19 : id-package-interworkingMD
+2 6 9 3 1 2 : id-package-bindEventRecord
+2 6 9 3 1 20 : id-package-interworkingMD-EFD
+2 6 9 3 1 21 : id-package-list
+2 6 9 3 1 22 : id-package-maseEventRecord
+2 6 9 3 1 23 : id-package-mdseEventRecord
+2 6 9 3 1 24 : id-package-mdServiceMgtPOA
+2 6 9 3 1 25 : id-package-messageDelivery
+2 6 9 3 1 26 : id-package-messageDeliveryEnvelope
+2 6 9 3 1 27 : id-package-messageEventRecord
+2 6 9 3 1 28 : id-package-messageSubmission
+2 6 9 3 1 29 : id-package-messageSubmissionEnvelope
+2 6 9 3 1 3 : id-package-cancelDeferredDelivery
+2 6 9 3 1 30 : id-package-messageTransfer
+2 6 9 3 1 31 : id-package-mrseEventRecord
+2 6 9 3 1 32 : id-package-msBindArguments
+2 6 9 3 1 33 : id-package-msseEventRecord
+2 6 9 3 1 34 : id-package-mtaBindArguments
+2 6 9 3 1 35 : id-package-mtsBindArguments
+2 6 9 3 1 36 : id-package-mtseEventControl
+2 6 9 3 1 37 : id-package-originatingDomainTransferOut
+2 6 9 3 1 38 : id-package-probeSubmission
+2 6 9 3 1 39 : id-package-probeSubmissionEnvelope
+2 6 9 3 1 4 : id-package-changeCredential
+2 6 9 3 1 40 : id-package-probeTransfer
+2 6 9 3 1 41 : id-package-processing
+2 6 9 3 1 42 : id-package-register
+2 6 9 3 1 43 : id-package-registerMS
+2 6 9 3 1 44 : id-package-reportDelivery
+2 6 9 3 1 45 : id-package-reportDeliveryEnvelope
+2 6 9 3 1 46 : id-package-reportTransfer
+2 6 9 3 1 47 : id-package-securityAcctRecord
+2 6 9 3 1 48 : id-package-serviceRequest
+2 6 9 3 1 49 : id-package-settlementAcctLog
+2 6 9 3 1 5 : id-package-commonBindArguments
+2 6 9 3 1 50 : id-package-settlementAcctRecord
+2 6 9 3 1 51 : id-package-settlementAcctRequest
+2 6 9 3 1 52 : id-package-submissionControl
+2 6 9 3 1 53 : id-package-summarize
+2 6 9 3 1 54 : id-package-trace
+2 6 9 3 1 55 : id-package-transitDomainTransferOut
+2 6 9 3 1 6 : id-package-commonCreationDeletion
+2 6 9 3 1 7 : id-package-contact
+2 6 9 3 1 8 : id-package-customer
+2 6 9 3 1 9 : id-package-customerAcctRequest
+2 6 9 3 2 : id-attribute
+2 6 9 3 2 0 : id-attribute-accessRatePerDeliveryServiceType
+2 6 9 3 2 1 : id-attribute-actualRecipientName
+2 6 9 3 2 10 : id-attribute-certificate
+2 6 9 3 2 100 : id-attribute-registerMSArgument
+2 6 9 3 2 101 : id-attribute-registerMSResult
+2 6 9 3 2 102 : id-attribute-reportDeliveryEnvelope
+2 6 9 3 2 103 : id-attribute-reportIdentifier
+2 6 9 3 2 104 : id-attribute-reportingMtaCertificate
+2 6 9 3 2 105 : id-attribute-reportOriginAuthenticationCheck
+2 6 9 3 2 106 : id-attribute-reportTransferEnvelope
+2 6 9 3 2 107 : id-attribute-responderCredentials
+2 6 9 3 2 108 : id-attribute-responderName
+2 6 9 3 2 109 : id-attribute-retrievalError
+2 6 9 3 2 11 : id-attribute-componentRatesPerOctetsPerDeliveryServiceType
+2 6 9 3 2 110 : id-attribute-securityContext
+2 6 9 3 2 111 : id-attribute-securityError
+2 6 9 3 2 112 : id-attribute-securityProblem
+2 6 9 3 2 113 : id-attribute-serviceAccessCharge
+2 6 9 3 2 114 : id-attribute-serviceFlag
+2 6 9 3 2 115 : id-attribute-serviceRequestId
+2 6 9 3 2 116 : id-attribute-settlementPolicy
+2 6 9 3 2 117 : id-attribute-signatureCheck
+2 6 9 3 2 118 : id-attribute-signatureGeneration
+2 6 9 3 2 119 : id-attribute-startUpDate
+2 6 9 3 2 12 : id-attribute-consumerOfOperation
+2 6 9 3 2 120 : id-attribute-status
+2 6 9 3 2 121 : id-attribute-subjectIdentifier
+2 6 9 3 2 122 : id-attribute-subjectSubmissionIdentifier
+2 6 9 3 2 123 : id-attribute-submissionControls
+2 6 9 3 2 124 : id-attribute-submissionError
+2 6 9 3 2 125 : id-attribute-summarizeArgument
+2 6 9 3 2 126 : id-attribute-summarizeResult
+2 6 9 3 2 127 : id-attribute-supplierOfOperation
+2 6 9 3 2 128 : id-attribute-telephoneNumberList
+2 6 9 3 2 129 : id-attribute-thisRecipientName
+2 6 9 3 2 13 : id-attribute-contactCompany
+2 6 9 3 2 130 : id-attribute-totalNumberOfORAddresses
+2 6 9 3 2 131 : id-attribute-trace
+2 6 9 3 2 132 : id-attribute-transitDomainTransferOutList
+2 6 9 3 2 133 : id-attribute-userAddress
+2 6 9 3 2 134 : id-attribute-userName
+2 6 9 3 2 135 : id-attribute-userSecurityLabel
+2 6 9 3 2 14 : id-attribute-contactDetails
+2 6 9 3 2 15 : id-attribute-contactFunction
+2 6 9 3 2 16 : id-attribute-contactId
+2 6 9 3 2 17 : id-attribute-contactInstance
+2 6 9 3 2 18 : id-attribute-contactName
+2 6 9 3 2 19 : id-attribute-contentConfidentialityAlgorithmIdentifier
+2 6 9 3 2 2 : id-attribute-administrationError
+2 6 9 3 2 20 : id-attribute-contentIdentifier
+2 6 9 3 2 21 : id-attribute-contentIntegrityCheck
+2 6 9 3 2 22 : id-attribute-contentType
+2 6 9 3 2 23 : id-attribute-currency
+2 6 9 3 2 24 : id-attribute-customerAcctPolicy
+2 6 9 3 2 25 : id-attribute-customerId
+2 6 9 3 2 26 : id-attribute-customerName
+2 6 9 3 2 27 : id-attribute-decipherment
+2 6 9 3 2 28 : id-attribute-defaultDeliveryControls
+2 6 9 3 2 29 : id-attribute-deleteArgument
+2 6 9 3 2 3 : id-attribute-alertArgument
+2 6 9 3 2 30 : id-attribute-deleteResult
+2 6 9 3 2 31 : id-attribute-deliverableContentTypes
+2 6 9 3 2 32 : id-attribute-deliverableEncodedInformationTypes
+2 6 9 3 2 33 : id-attribute-deliverableMaximumContentLength
+2 6 9 3 2 34 : id-attribute-deliveryComponentRateToPrmd
+2 6 9 3 2 35 : id-attribute-deliveryComponentRateToUa
+2 6 9 3 2 36 : id-attribute-deliveryControls
+2 6 9 3 2 37 : id-attribute-deliveryError
+2 6 9 3 2 38 : id-attribute-deliveryServiceTypes
+2 6 9 3 2 39 : id-attribute-destinationAdmd
+2 6 9 3 2 4 : id-attribute-alertResult
+2 6 9 3 2 40 : id-attribute-destinationDomainDeliveryList
+2 6 9 3 2 41 : id-attribute-electronicMailAddress
+2 6 9 3 2 42 : id-attribute-encipherment
+2 6 9 3 2 43 : id-attribute-encodedInformationTypes
+2 6 9 3 2 44 : id-attribute-entryExitMtaNames
+2 6 9 3 2 45 : id-attribute-envelopeType
+2 6 9 3 2 46 : id-attribute-faxTelephoneNumberList
+2 6 9 3 2 47 : id-attribute-fetchArgument
+2 6 9 3 2 48 : id-attribute-fetchResult
+2 6 9 3 2 49 : id-attribute-globalDomainId
+2 6 9 3 2 5 : id-attribute-authenticationCheck
+2 6 9 3 2 50 : id-attribute-initiatorCredentials
+2 6 9 3 2 51 : id-attribute-initiatorName
+2 6 9 3 2 52 : id-attribute-internalTrace
+2 6 9 3 2 53 : id-attribute-interworkingMDId
+2 6 9 3 2 54 : id-attribute-interworkingMDName
+2 6 9 3 2 55 : id-attribute-labelsAndRedirections
+2 6 9 3 2 56 : id-attribute-limitValidityDate
+2 6 9 3 2 57 : id-attribute-listArgument
+2 6 9 3 2 58 : id-attribute-listResult
+2 6 9 3 2 59 : id-attribute-logStartTime
+2 6 9 3 2 6 : id-attribute-authenticationGeneration
+2 6 9 3 2 60 : id-attribute-logStopTime
+2 6 9 3 2 61 : id-attribute-messageContentSize
+2 6 9 3 2 62 : id-attribute-messageDeliveryEnvelope
+2 6 9 3 2 63 : id-attribute-MTSIdentifier
+2 6 9 3 2 64 : id-attribute-messageOriginAuthenticationCheck
+2 6 9 3 2 65 : id-attribute-messageSecurityLabel
+2 6 9 3 2 66 : id-attribute-messageSize
+2 6 9 3 2 67 : id-attribute-messageSubmissionEnvelope
+2 6 9 3 2 68 : id-attribute-submissionTime
+2 6 9 3 2 69 : id-attribute-messageToken
+2 6 9 3 2 7 : id-attribute-bindAuthenticationCheck
+2 6 9 3 2 70 : id-attribute-messageTransferEnvelope
+2 6 9 3 2 71 : id-attribute-msBindAuthenticationCheck
+2 6 9 3 2 72 : id-attribute-newCredentials
+2 6 9 3 2 73 : id-attribute-numberOfAddressedPrmds
+2 6 9 3 2 74 : id-attribute-numberOfAddressedUas
+2 6 9 3 2 75 : id-attribute-numberOfMessagesPerDeliveryServiceType
+2 6 9 3 2 76 : id-attribute-oldCredentials
+2 6 9 3 2 77 : id-attribute-operationStatus
+2 6 9 3 2 78 : id-attribute-operationTime
+2 6 9 3 2 79 : id-attribute-originalMtaCertification
+2 6 9 3 2 8 : id-attribute-bindingError
+2 6 9 3 2 80 : id-attribute-originatingDomainTransferOutList
+2 6 9 3 2 81 : id-attribute-originatingAdmd
+2 6 9 3 2 82 : id-attribute-originatingMTACertificate
+2 6 9 3 2 83 : id-attribute-originatorCertificate
+2 6 9 3 2 84 : id-attribute-originatorName
+2 6 9 3 2 85 : id-attribute-permissibleSecurityContext
+2 6 9 3 2 86 : id-attribute-priority
+2 6 9 3 2 87 : id-attribute-probeOriginAuthenticationCheck
+2 6 9 3 2 88 : id-attribute-probeSubmissionEnvelope
+2 6 9 3 2 89 : id-attribute-probeTransferEnvelope
+2 6 9 3 2 9 : id-attribute-bindToken
+2 6 9 3 2 90 : id-attribute-processingComponentRate
+2 6 9 3 2 91 : id-attribute-processingDetails
+2 6 9 3 2 92 : id-attribute-processingErrorFlag
+2 6 9 3 2 93 : id-attribute-processingSummary
+2 6 9 3 2 94 : id-attribute-proofOfDelivery
+2 6 9 3 2 95 : id-attribute-proofOfDeliveryRequest
+2 6 9 3 2 96 : id-attribute-proofOfSubmission
+2 6 9 3 2 97 : id-attribute-proofOfSubmissionRequest
+2 6 9 3 2 98 : id-attribute-recipientCertificate
+2 6 9 3 2 99 : id-attribute-recipientOnResponsibilityList
+2 6 9 3 3 : id-attribute-group
+2 6 9 3 4 : id-notification
+2 6 9 3 4 0 : id-notification-objectCreation
+2 6 9 3 4 1 : id-notification-objectDeletion
+2 6 9 3 5 : id-action
+2 6 9 3 6 : id-parameter
+2 6 9 3 6 0 : id-parameter-attributeError
+2 6 9 3 6 1 : id-parameter-autoActionRequestError
+2 6 9 3 6 2 : id-parameter-deleteError
+2 6 9 3 6 3 : id-parameter-fetchRestrictionError
+2 6 9 3 6 4 : id-parameter-improperlySpecifiedRecipients
+2 6 9 3 6 5 : id-parameter-rangeError
+2 6 9 3 6 6 : id-parameter-securityError
+2 6 9 3 6 7 : id-parameter-sequenceNumberError
+2 6 9 3 6 8 : id-parameter-serviceError
+2 6 9 3 7 : id-name-binding
+2 6 9 3 7 0 : id-name-binding-acctRequest-customer
+2 6 9 3 7 1 : id-name-binding-acctRequest-interworkingMD
+2 6 9 3 7 10 : id-name-binding-settlementAcctLog-interworkingMD
+2 6 9 3 7 2 : id-name-binding-contact-customer
+2 6 9 3 7 3 : id-name-binding-contact-interworkingMD
+2 6 9 3 7 4 : id-name-binding-customer-mdServiceManagementPointOfAccess
+2 6 9 3 7 5 : id-name-binding-customerAcctLog-customer
+2 6 9 3 7 6 : id-name-binding-customerEFD-customer
+2 6 9 3 7 7 : id-name-binding-interworkingMD-EFD-interworkingMD
+2 6 9 3 7 8 : id-name-binding-interworkingMD-mdServiceManagementPointOfAccess
+2 6 9 3 7 9 : id-name-binding-mdServiceManagementPointOfAccess-misManagementDomain
+2 6 9 3 8 : id-modules
+2 6 9 4 : id-security
+2 6 9 5 : id-configuration
+2 6 9 6 : id-fault
+2 6 9 7 : id-performance
+2 6 9 8 : id-mta
+2 6 9 8 0 0 : id-moc-adjMTA
+2 6 9 8 0 1 : id-moc-association
+2 6 9 8 0 10 : id-moc-perfMTACurrentData
+2 6 9 8 0 11 : id-moc-perfMTAHistoryData
+2 6 9 8 0 12 : id-moc-routingFunction
+2 6 9 8 0 13 : id-moc-secAdjMTA
+2 6 9 8 0 14 : id-moc-secAssociation
+2 6 9 8 0 15 : id-moc-secConversion
+2 6 9 8 0 16 : id-moc-secGenROACFunction
+2 6 9 8 0 17 : id-moc-secMessage
+2 6 9 8 0 18 : id-moc-secMtsUser
+2 6 9 8 0 19 : id-moc-secProbe
+2 6 9 8 0 2 : id-moc-conversionFunction
+2 6 9 8 0 20 : id-moc-secReport
+2 6 9 8 0 21 : id-moc-SecVerifGenMsgFunction
+2 6 9 8 0 22 : id-moc-SecVerifGenRecipFunction
+2 6 9 8 0 23 : id-moc-SecVerifMOACFunction
+2 6 9 8 0 24 : id-moc-SecVerifPOACFunction
+2 6 9 8 0 25 : id-moc-SecVerifROACFunction
+2 6 9 8 0 3 : id-moc-distributionListFunction
+2 6 9 8 0 4 : id-moc-mpr
+2 6 9 8 0 5 : id-moc-mprList
+2 6 9 8 0 6 : id-moc-mta
+2 6 9 8 0 7 : id-moc-mtsUser
+2 6 9 8 0 8 : id-moc-perfFunctionCurrentData
+2 6 9 8 0 9 : id-moc-perfFunctionHistoryData
+2 6 9 8 1 0 : id-package-adjMTAPackage
+2 6 9 8 1 1 : id-package-associationPackage
+2 6 9 8 1 10 : id-package-mprProcessingControlPackage
+2 6 9 8 1 11 : id-package-mtaFunctionStatisticsPackage
+2 6 9 8 1 12 : id-package-mtaPackage
+2 6 9 8 1 13 : id-package-mtaStatisticsPackage
+2 6 9 8 1 14 : id-package-mtsUserPackage
+2 6 9 8 1 15 : id-package-restrictedDeliveryPackage
+2 6 9 8 1 16 : id-package-routingPackage
+2 6 9 8 1 17 : id-package-secAdjMTAPackage
+2 6 9 8 1 18 : id-package-secAssociationPackage
+2 6 9 8 1 19 : id-package-secConversionPackage
+2 6 9 8 1 2 : id-package-conversionPackage
+2 6 9 8 1 20 : id-package-secGenROACFunctionPackage
+2 6 9 8 1 21 : id-package-secMessagePackage
+2 6 9 8 1 22 : id-package-secMtsUserPackage
+2 6 9 8 1 23 : id-package-secProbePackage
+2 6 9 8 1 24 : id-package-secReportPackage
+2 6 9 8 1 25 : id-package-secureRedirectionPackage
+2 6 9 8 1 26 : id-package-SecurityAlarmPackage
+2 6 9 8 1 27 : id-package-secVerifGenMsgFunctionPackage
+2 6 9 8 1 28 : id-package-secVerifGenRecipFunctionPackage
+2 6 9 8 1 29 : id-package-secVerifMOACFunctionPackage
+2 6 9 8 1 3 : id-package-defaultDeliveryControlsPackage
+2 6 9 8 1 30 : id-package-secVerifPOACFunctionPackage
+2 6 9 8 1 31 : id-package-secVerifROACFunctionPackage
+2 6 9 8 1 32 : id-package-simpleCredentialsPackage
+2 6 9 8 1 33 : id-package-simpleRedirectionPackage
+2 6 9 8 1 34 : id-package-statesOfMtaFunctionPackage
+2 6 9 8 1 4 : id-package-dirServiceReferencePackage
+2 6 9 8 1 5 : id-package-distributionListPackage
+2 6 9 8 1 6 : id-package-filterPackage
+2 6 9 8 1 7 : id-package-mdAssignedAlternateRecipientPackage
+2 6 9 8 1 8 : id-package-mprListPackage
+2 6 9 8 1 9 : id-package-mprPackage
+2 6 9 8 2 0 : id-attribute-adjMtaAccessPointAddress
+2 6 9 8 2 1 : id-attribute-adjMtaGlobalDomainId
+2 6 9 8 2 10 : id-attribute-arrivalTime
+2 6 9 8 2 100 : id-attribute-mtsUserSupportedApplicationContexts
+2 6 9 8 2 101 : id-attribute-mtsUserType
+2 6 9 8 2 102 : id-attribute-newMessageEncAlg
+2 6 9 8 2 103 : id-attribute-newMessageMOACAlg
+2 6 9 8 2 104 : id-attribute-newMessageOriginatorCertificate
+2 6 9 8 2 105 : id-attribute-newRecipientCicAlg
+2 6 9 8 2 106 : id-attribute-newRecipientName
+2 6 9 8 2 107 : id-attribute-newRecipientTokenAlg
+2 6 9 8 2 108 : id-attribute-newRecipientTokenEncAlg
+2 6 9 8 2 109 : id-attribute-newRecipientTokenSigAlg
+2 6 9 8 2 11 : id-attribute-associationInitiator
+2 6 9 8 2 110 : id-attribute-nextAdjMTAName
+2 6 9 8 2 111 : id-attribute-nrOfMprDeferred
+2 6 9 8 2 112 : id-attribute-nrOfMprDelivered
+2 6 9 8 2 113 : id-attribute-nrOfInvocations
+2 6 9 8 2 114 : id-attribute-nrOfRecipientsProcessed
+2 6 9 8 2 115 : id-attribute-nrOfMprRedirected
+2 6 9 8 2 116 : id-attribute-nrOfMprRejected
+2 6 9 8 2 117 : id-attribute-nrOfRejectedInvocations
+2 6 9 8 2 118 : id-attribute-nrOfMprSubmitted
+2 6 9 8 2 119 : id-attribute-nrOfMprTransferredIn
+2 6 9 8 2 12 : id-attribute-associationObjectInstanceId
+2 6 9 8 2 120 : id-attribute-nrOfMprTransferredOut
+2 6 9 8 2 122 : id-attribute-permittedMessages
+2 6 9 8 2 124 : id-attribute-priorityList
+2 6 9 8 2 125 : id-attribute-probeOriginatorCertificate
+2 6 9 8 2 127 : id-attribute-probePOACAlg
+2 6 9 8 2 128 : id-attribute-probeSecurityLabel
+2 6 9 8 2 129 : id-attribute-processingState
+2 6 9 8 2 13 : id-attribute-bilateralDeferral
+2 6 9 8 2 134 : id-attribute-recipientCicAlg
+2 6 9 8 2 135 : id-attribute-recipientName
+2 6 9 8 2 136 : id-attribute-recipientsNames
+2 6 9 8 2 137 : id-attribute-recipientTokenAlg
+2 6 9 8 2 138 : id-attribute-recipientTokenEncAlg
+2 6 9 8 2 139 : id-attribute-recipientTokenSigAlg
+2 6 9 8 2 14 : id-attribute-colocated
+2 6 9 8 2 140 : id-attribute-redirectionRecipient
+2 6 9 8 2 141 : id-attribute-redirections
+2 6 9 8 2 142 : id-attribute-reportOriginatorCertificate
+2 6 9 8 2 144 : id-attribute-reportROACAlg
+2 6 9 8 2 145 : id-attribute-reportSecurityLabel
+2 6 9 8 2 146 : id-attribute-responderAccessPointAddress
+2 6 9 8 2 148 : id-attribute-responderStrongCredentials
+2 6 9 8 2 149 : id-attribute-routingFunctionObjectInstanceId
+2 6 9 8 2 150 : id-attribute-secAdjMTAObjectInstanceId
+2 6 9 8 2 151 : id-attribute-secAssociationObjectInstanceId
+2 6 9 8 2 152 : id-attribute-secConversionObjectInstanceId
+2 6 9 8 2 153 : id-attribute-secGenROACObjectInstanceId
+2 6 9 8 2 154 : id-attribute-secMessageObjectInstanceId
+2 6 9 8 2 155 : id-attribute-secMtsUserObjectInstanceId
+2 6 9 8 2 156 : id-attribute-secProbeObjectInstanceId
+2 6 9 8 2 157 : id-attribute-secReportObjectInstanceId
+2 6 9 8 2 158 : id-attribute-securityLabels
+2 6 9 8 2 159 : id-attribute-secVerifGenMsgObjectInstanceId
+2 6 9 8 2 161 : id-attribute-SecVerifGenRecipObjectInstanceId
+2 6 9 8 2 162 : id-attribute-secVerifPOACObjectInstanceId
+2 6 9 8 2 163 : id-attribute-secVerifROACObjectInstanceId
+2 6 9 8 2 164 : id-attribute-supportedApplicationContexts
+2 6 9 8 2 165 : id-attribute-typeOfMpr
+2 6 9 8 2 166 : id-attribute-waitTimeToRelease
+2 6 9 8 2 17 : id-attribute-contentTypesSupported
+2 6 9 8 2 18 : id-attribute-conversionCredentials
+2 6 9 8 2 19 : id-attribute-conversionFunctionObjectInstanceId
+2 6 9 8 2 2 : id-attribute-adjMtaMaxMessageSize
+2 6 9 8 2 20 : id-attribute-conversionSecurityContext
+2 6 9 8 2 21 : id-attribute-conversionSecurityLabels
+2 6 9 8 2 22 : id-attribute-conversionType
+2 6 9 8 2 23 : id-attribute-creationTime
+2 6 9 8 2 24 : id-attribute-defaultNonUrgentMprExpiryDuration
+2 6 9 8 2 25 : id-attribute-defaultNormalMprExpiryDuration
+2 6 9 8 2 26 : id-attribute-defaultPermissibleContentTypes
+2 6 9 8 2 27 : id-attribute-defaultPermissibleEITs
+2 6 9 8 2 28 : id-attribute-defaultPermissibleLowestPriority
+2 6 9 8 2 29 : id-attribute-defaultPermissibleMaxContentLength
+2 6 9 8 2 3 : id-attribute-adjMtaName
+2 6 9 8 2 30 : id-attribute-defaultPermissibleOperations
+2 6 9 8 2 31 : id-attribute-defaultUrgentMprExpiryDuration
+2 6 9 8 2 32 : id-attribute-deferralTime
+2 6 9 8 2 33 : id-attribute-directoryName
+2 6 9 8 2 34 : id-attribute-disallowedMessages
+2 6 9 8 2 35 : id-attribute-distributionListObjectInstanceId
+2 6 9 8 2 36 : id-attribute-eits
+2 6 9 8 2 37 : id-attribute-forcedExpiryDuration
+2 6 9 8 2 38 : id-attribute-forcedProcessingPriority
+2 6 9 8 2 4 : id-attribute-adjMtaObjectInstanceId
+2 6 9 8 2 40 : id-attribute-heldByManager
+2 6 9 8 2 41 : id-attribute-informationLossSuspected
+2 6 9 8 2 42 : id-attribute-initiatorAccessPointAddress
+2 6 9 8 2 44 : id-attribute-initiatorSecurityContext
+2 6 9 8 2 45 : id-attribute-initiatorStrongCredentials
+2 6 9 8 2 46 : id-attribute-lastAdjMtaName
+2 6 9 8 2 47 : id-attribute-localMTAMaxMessageSize
+2 6 9 8 2 48 : id-attribute-localMTASimpleCredentials
+2 6 9 8 2 49 : id-attribute-localMTAStrongCredentials
+2 6 9 8 2 5 : id-attribute-adjMtaPossibleConversions
+2 6 9 8 2 50 : id-attribute-maxAdjMTAInboundAssocs
+2 6 9 8 2 51 : id-attribute-maxAdjMTAOutboundAssocs
+2 6 9 8 2 52 : id-attribute-maxFunctionProcessingTime
+2 6 9 8 2 53 : id-attribute-maxMTAResponseTime
+2 6 9 8 2 54 : id-attribute-maxMtsUserInboundAssocs
+2 6 9 8 2 55 : id-attribute-maxMtsUsersOutboundAssocs
+2 6 9 8 2 56 : id-attribute-maxSizeMprDelivered
+2 6 9 8 2 57 : id-attribute-maxSizeMprPassingFunction
+2 6 9 8 2 58 : id-attribute-maxSizeMprSubmitted
+2 6 9 8 2 59 : id-attribute-maxSizeMprTransferredIn
+2 6 9 8 2 6 : id-attribute-adjMtaSimpleCredentials
+2 6 9 8 2 60 : id-attribute-maxSizeMprTransferredOut
+2 6 9 8 2 61 : id-attribute-mdAssignedAlternateRecipient
+2 6 9 8 2 62 : id-attribute-meanFunctionProcessingTime
+2 6 9 8 2 63 : id-attribute-meanMTAResponseTime
+2 6 9 8 2 64 : id-attribute-meanNbOfStoredMpr
+2 6 9 8 2 65 : id-attribute-meanSizeMprDelivered
+2 6 9 8 2 66 : id-attribute-meanSizeMprPassingFunction
+2 6 9 8 2 67 : id-attribute-meanSizeMprSubmitted
+2 6 9 8 2 68 : id-attribute-meanSizeMprTransferredIn
+2 6 9 8 2 69 : id-attribute-meanSizeMprTransferredOut
+2 6 9 8 2 7 : id-attribute-adjMtaStrongCredentials
+2 6 9 8 2 70 : id-attribute-meanStorageOccupied
+2 6 9 8 2 72 : id-attribute-messageEncAlg
+2 6 9 8 2 73 : id-attribute-messageMOACAlg
+2 6 9 8 2 74 : id-attribute-messageOriginatorCertificate
+2 6 9 8 2 78 : id-attribute-minFunctionProcessingTime
+2 6 9 8 2 79 : id-attribute-minMTAResponseTime
+2 6 9 8 2 8 : id-attribute-adjMtaSupportedApplicationContexts
+2 6 9 8 2 80 : id-attribute-minSizeMprDelivered
+2 6 9 8 2 81 : id-attribute-minSizeMprPassingFunction
+2 6 9 8 2 82 : id-attribute-minSizeMprSubmitted
+2 6 9 8 2 83 : id-attribute-minSizeMprTransferredIn
+2 6 9 8 2 84 : id-attribute-minSizeMprTransferredOut
+2 6 9 8 2 85 : id-attribute-mprInfo
+2 6 9 8 2 86 : id-attribute-mprListObjectInstanceId
+2 6 9 8 2 87 : id-attribute-mprObjectInstanceId
+2 6 9 8 2 88 : id-attribute-mtaName
+2 6 9 8 2 89 : id-attribute-mtsIdentifier
+2 6 9 8 2 9 : id-attribute-applicationContext
+2 6 9 8 2 90 : id-attribute-mtsUserAccessPointAddress
+2 6 9 8 2 91 : id-attribute-mtsUserDeliverableContentTypes
+2 6 9 8 2 92 : id-attribute-mtsUserDeliverableEits
+2 6 9 8 2 93 : id-attribute-mtsUserDeliverableMaxContentLength
+2 6 9 8 2 94 : id-attribute-mtsUserDeliveryControls
+2 6 9 8 2 95 : id-attribute-mtsUserName
+2 6 9 8 2 96 : id-attribute-mtsUserObjectInstanceId
+2 6 9 8 2 97 : id-attribute-mtsUserPreferredDeliveryMethod
+2 6 9 8 2 98 : id-attribute-mtsUserSimpleCredentials
+2 6 9 8 2 99 : id-attribute-mtsUserStrongCredentials
+2 6 9 8 7 0 : id-name-binding-adjMTA-mta
+2 6 9 8 7 1 : id-name-binding-association-adjMTA
+2 6 9 8 7 10 : id-name-binding-mprlist-mta
+2 6 9 8 7 11 : id-name-binding-mta-md
+2 6 9 8 7 12 : id-name-binding-MtsUser-mta
+2 6 9 8 7 13 : id-name-binding-perfMTACurrentData-mta
+2 6 9 8 7 14 : id-name-binding-perfMTAHistoryData-perfMTACurrentData
+2 6 9 8 7 15 : id-name-binding-routing-mta
+2 6 9 8 7 16 : id-name-binding-routingCurrentData-routingFunction
+2 6 9 8 7 17 : id-name-binding-routingHistoryData-routingCurrentData
+2 6 9 8 7 18 : id-name-binding-routingIndicator-routing
+2 6 9 8 7 19 : id-name-binding-secAdjMTA-adjMTA
+2 6 9 8 7 2 : id-name-binding-association-MtsUser
+2 6 9 8 7 20 : id-name-binding-secAssociation-association
+2 6 9 8 7 21 : id-name-binding-secConversion-conversionFunction
+2 6 9 8 7 22 : id-name-binding-secDistributionList-distributionListFunction
+2 6 9 8 7 23 : id-name-binding-secGenROACFunction-mta
+2 6 9 8 7 24 : id-name-binding-secMessage-mpr
+2 6 9 8 7 25 : id-name-binding-secMtsUser-MtsUser
+2 6 9 8 7 26 : id-name-binding-secProbe-mpr
+2 6 9 8 7 27 : id-name-binding-secReport-mpr
+2 6 9 8 7 28 : id-name-binding-secRouting-routingIndicator
+2 6 9 8 7 29 : id-name-binding-secVerifGenMsgFunction-mta
+2 6 9 8 7 3 : id-name-binding-conversionCurrentData-ConversionFunction
+2 6 9 8 7 30 : id-name-binding-secVerifGenRecipFunction-mta
+2 6 9 8 7 31 : id-name-binding-secVerifMOACFunction-mta
+2 6 9 8 7 32 : id-name-binding-secVerifPOACFunction-mta
+2 6 9 8 7 33 : id-name-binding-secVerifROACFunction-mta
+2 6 9 8 7 34 : id-name-binding-thresholdData-conversionCurrentData
+2 6 9 8 7 35 : id-name-binding-thresholdData-dLCurrentData
+2 6 9 8 7 36 : id-name-binding-thresholdData-perfMTACurrentData
+2 6 9 8 7 37 : id-name-binding-thresholdData-routingCurrentData
+2 6 9 8 7 4 : id-name-binding-conversionFunction-mta
+2 6 9 8 7 5 : id-name-binding-conversionHistoryData-ConversionCurrentData
+2 6 9 8 7 6 : id-name-binding-distributionListFunction-mta
+2 6 9 8 7 7 : id-name-binding-dLCurrentData-distibutionListFunction
+2 6 9 8 7 8 : id-name-binding-dLHistoryData-dLCurrentData
+2 6 9 8 7 9 : id-name-binding-mpr-mprList
+2 6 9 9 : id-ua
+2 7 : joint-CCR
+2 7 2 1 2 : ccr-syntax-apdus-2
+2 9 2 10 10 : umf-not
+2 9 2 10 3 : umf-mo
+2 9 2 10 4 : umf-pkg
+2 9 2 10 5 : umf-par
+2 9 2 10 6 : umf-nb
+2 9 2 10 7 : umf-att
+2 9 2 10 9 : umf-act
+2 9 2 11 0 0 : moaSpecificProblems
+2 9 2 11 0 1 : moaAlgorithmIdentifiers
+2 9 2 11 0 1 0 : ewmaAlgorithm
+2 9 2 11 0 1 1 : uwmaAlgorithm
+2 9 2 12 10 : part12Notification
+2 9 2 12 3 : part12MObjectClass
+2 9 2 12 4 : part12Package
+2 9 2 12 5 : part12Parameter
+2 9 2 12 7 : part12AttributeId
+2 9 2 12 9 : part12Action
+2 9 2 13 10 : summarizationNotification
+2 9 2 13 3 : summarizationManagedObjectClass
+2 9 2 13 4 : summarizationPackage
+2 9 2 13 5 : summarizationParameter
+2 9 2 13 6 : summarizationNameBinding
+2 9 2 13 7 : summarizationAttribute
+2 9 2 13 9 : summarizationAction
+2 9 2 15 10 : schedNotif
+2 9 2 15 3 : schedMo
+2 9 2 15 4 : schedPkg
+2 9 2 15 6 : schedNb
+2 9 2 15 7 : schedAtt
+2 9 2 16 0 4 : mkmDirectoryAttributeType
+2 9 2 16 0 6 : mkmDirectoryObjectClass
+2 9 2 16 0 7 : mkmDirectoryNameForm
+2 9 2 16 3 : mkmMObjectClass
+2 9 2 16 4 : mkmPackage
+2 9 2 16 5 : mkmParameter
+2 9 2 16 6 : mkmNameBinding
+2 9 2 16 7 : mkmAttribute
+2 9 2 16 9 : mkmAction
+2 9 2 17 11 : part17MRelClass
+2 9 2 17 13 : part17Role
+2 9 2 17 3 : part17MObjectClass
+2 9 2 17 4 : part17Package
+2 9 2 17 5 : part17Parameter
+2 9 2 17 7 : part17Attribute
+2 9 2 17 9 : part17Action
+2 9 2 18 : softwareManagement
+2 9 2 19 1 : mdmpmfFunctionalUnitPackage
+2 9 2 19 10 : mdmpmfNotification
+2 9 2 19 11 : mdmpmfRelationship
+2 9 2 19 12 : mdmpmfRelationshipMapping
+2 9 2 19 13 : assertedValueIdentifier
+2 9 2 19 13 1 : operationType
+2 9 2 19 13 2 : errorType
+2 9 2 19 13 3 : notificationType
+2 9 2 19 13 4 : actionType
+2 9 2 19 13 5 : eventInfo
+2 9 2 19 13 6 : eventReply
+2 9 2 19 13 7 : actionInfo
+2 9 2 19 13 8 : actionReply
+2 9 2 19 3 : mdmpmfManagedObject
+2 9 2 19 4 : mdmpmfPackage
+2 9 2 19 5 : mdmpmfParameter
+2 9 2 19 6 : mdmpmfNameBinding
+2 9 2 19 7 : mdmpmfAttribute
+2 9 2 19 8 : mdmpmfAction
+2 9 2 20 : timeManagement
+2 9 2 20 20 1 : ntp
+2 9 2 20 3 0 : clockSourceOID
+2 9 2 20 3 1 : localClockOID
+2 9 2 20 3 2 : referenceClockOID
+2 9 2 20 3 3 : synchronizationProtocolOID
+2 9 2 20 3 4 : ntpProtocolOID
+2 9 2 20 4 0 : clockSourceDetailPkgOID
+2 9 2 20 4 1 : leapSecondPkgOID
+2 9 2 20 6 1 : synchronizationProtocol-systemOID
+2 9 2 20 6 2 : clockSource-systemOID
+2 9 2 20 7 0 : clockAdjustmentIntervalOID
+2 9 2 20 7 1 : clockDriftOID
+2 9 2 20 7 10 : clockStratumOID
+2 9 2 20 7 11 : clockValueOID
+2 9 2 20 7 12 : filterSizeOID
+2 9 2 20 7 13 : filterWeightOID
+2 9 2 20 7 14 : leapSecondCountOID
+2 9 2 20 7 15 : leapSecondIndicationOID
+2 9 2 20 7 16 : localClockAddressOID
+2 9 2 20 7 17 : maximumClockAgeOID
+2 9 2 20 7 18 : maximumDispersionOID
+2 9 2 20 7 19 : maximumDistanceOID
+2 9 2 20 7 2 : clockEstimatedErrorOID
+2 9 2 20 7 20 : maximumPollIntervalOID
+2 9 2 20 7 21 : maximumSelectClockOID
+2 9 2 20 7 22 : maximumSkewOID
+2 9 2 20 7 23 : maximumStratumOID
+2 9 2 20 7 24 : minimumDispersionOID
+2 9 2 20 7 25 : minimumPollIntervalOID
+2 9 2 20 7 26 : minimumSelectClockOID
+2 9 2 20 7 27 : peerClockAddressesOID
+2 9 2 20 7 28 : reachabilityRegisterSizeOID
+2 9 2 20 7 29 : referenceClockTypeOID
+2 9 2 20 7 3 : clockEventCodeOID
+2 9 2 20 7 30 : selectWeightOID
+2 9 2 20 7 31 : synchronizationProtocolIDOID
+2 9 2 20 7 32 : synchronizationProtocolTypeOID
+2 9 2 20 7 33 : synchronizationSourceAddressOID
+2 9 2 20 7 34 : synchronizedClockOID
+2 9 2 20 7 35 : synchronizingClocksOID
+2 9 2 20 7 4 : clockEventCounterOID
+2 9 2 20 7 5 : clockEventTimeOID
+2 9 2 20 7 6 : clockIDOID
+2 9 2 20 7 7 : clockMaximumErrorOID
+2 9 2 20 7 8 : clockPrecisionOID
+2 9 2 20 7 9 : clockStatusOID
+2 9 2 20 9 1 : clockResetActionOID
+2 9 2 20 9 2 : leapSecondActionOID
+2 9 2 20 9 3 : protocolResetActionOID
+2 9 2 21 11 : cmdSeqRelationshipClasses
+2 9 2 21 12 : cmdSeqRelationshipMappings
+2 9 2 21 13 : cmdSeqRelationshipRoles
+2 9 2 22 10 : rTM-Notification
+2 9 2 22 3 : rTM-ManagedObjectClass
+2 9 2 22 4 : rTM-Package
+2 9 2 22 7 : rTM-Attribute
+2 9 2 8 0 1 : serviceReportCause
+2 9 2 8 0 1 1 : serviceRequest
+2 9 2 8 0 1 2 : serviceDenial
+2 9 2 8 0 1 3 : serviceResponse
+2 9 2 8 0 1 4 : serviceFailure
+2 9 2 8 0 1 5 : serviceRecovery
+2 9 2 8 0 1 6 : otherReason
+2 9 2 8 10 : securityAuditTrail-Notification
+2 9 2 8 3 : securityAuditTrail-Object
+2 9 2 8 4 : securityAuditTrail-Package
+2 9 2 8 7 : securityAuditTrail-Attribute
+2 9 2 9 3 : accessControl-Object
+2 9 2 9 4 : accessControl-Package
+2 9 2 9 5 : accessControl-Parameter
+2 9 2 9 6 : accessControl-NameBinding
+2 9 2 9 7 : accessControl-Attribute
+2 9 3 2 0 0 : arfProbableCause
+2 9 3 2 0 1 : securityAlarmCause
+2 9 3 2 0 1 1 : authenticationFailure
+2 9 3 2 0 1 10 : intrusionDetection
+2 9 3 2 0 1 11 : keyExpired
+2 9 3 2 0 1 12 : nonRepudiationFailure
+2 9 3 2 0 1 13 : outOfHoursActivity
+2 9 3 2 0 1 14 : outOfService
+2 9 3 2 0 1 15 : proceduralError
+2 9 3 2 0 1 16 : unauthorizedAccessAttempt
+2 9 3 2 0 1 17 : unexpectedInformation
+2 9 3 2 0 1 18 : unspecifiedReason
+2 9 3 2 0 1 2 : breachOfConfidentiality
+2 9 3 2 0 1 3 : cableTamper
+2 9 3 2 0 1 4 : delayedInformation
+2 9 3 2 0 1 5 : denialOfService
+2 9 3 2 0 1 6 : duplicateInformation
+2 9 3 2 0 1 7 : informationMissing
+2 9 3 2 0 1 8 : informationModificationDetected
+2 9 3 2 0 1 9 : informationOutOfSequence
+2 9 3 2 0 2 : arfProposedRepairAction
+2 9 3 2 0 2 1 : noActionRequired
+2 9 3 2 0 2 2 : repairActionRequired
+2 9 3 2 10 : dmiNotification
+2 9 3 2 3 : smi2MObjectClass
+2 9 3 2 4 : smi2Package
+2 9 3 2 5 : smi2Parameter
+2 9 3 2 6 : smi2NameBinding
+2 9 3 2 7 : smi2AttributeID
+2 9 3 2 8 : smi2AttributeGroup
+2 9 3 7 11 : grm-RelationshipClass
+2 9 3 7 12 : grm-RelationshipMapping
+2 9 3 7 13 : grm-RelationshipRole
+2 9 3 7 3 : grm-Object
+2 9 3 7 4 : grm-Package
+2 9 3 7 5 : grm-Parameter
+2 9 3 7 6 : grm-NameBinding
+2 9 3 7 7 : grm-Attribute
+2 9 3 9 3 : crsMObjectClass
+2 9 3 9 4 : crsMPackage
+2 9 3 9 6 : crsMNameBinding
+2 9 3 9 7 : crsAttribute

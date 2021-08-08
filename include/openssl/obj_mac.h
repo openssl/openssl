@@ -1092,6 +1092,7 @@
 #define NID_LocalKeySet         856
 #define OBJ_LocalKeySet         1L,3L,6L,1L,4L,1L,311L,17L,2L
 
+#define NID_certTypes           1459
 #define OBJ_certTypes           OBJ_pkcs9,22L
 
 #define LN_x509Certificate              "x509Certificate"
@@ -1102,6 +1103,7 @@
 #define NID_sdsiCertificate             159
 #define OBJ_sdsiCertificate             OBJ_certTypes,2L
 
+#define NID_crlTypes            1460
 #define OBJ_crlTypes            OBJ_pkcs9,23L
 
 #define LN_x509Crl              "x509Crl"
@@ -2830,10 +2832,13 @@
 #define NID_zlib_compression            125
 #define OBJ_zlib_compression            OBJ_id_smime_alg,8L
 
+#define NID_csor                1784
 #define OBJ_csor                2L,16L,840L,1L,101L,3L
 
+#define NID_nistAlgorithms              1785
 #define OBJ_nistAlgorithms              OBJ_csor,4L
 
+#define NID_aes         1786
 #define OBJ_aes         OBJ_nistAlgorithms,1L
 
 #define SN_aes_128_ecb          "AES-128-ECB"
@@ -3126,6 +3131,7 @@
 #define NID_dsa_with_SHA256             803
 #define OBJ_dsa_with_SHA256             OBJ_dsa_with_sha2,2L
 
+#define NID_sigAlgs             1790
 #define OBJ_sigAlgs             OBJ_nistAlgorithms,3L
 
 #define SN_dsa_with_SHA384              "id-dsa-with-sha384"
@@ -5057,8 +5063,10 @@
 #define NID_brainpoolP512t1             934
 #define OBJ_brainpoolP512t1             1L,3L,36L,3L,3L,2L,8L,1L,1L,14L
 
+#define NID_x9_63_scheme                1482
 #define OBJ_x9_63_scheme                1L,3L,133L,16L,840L,63L,0L
 
+#define NID_secg_scheme         1489
 #define OBJ_secg_scheme         OBJ_certicom_arc,1L
 
 #define SN_dhSinglePass_stdDH_sha1kdf_scheme            "dhSinglePass-stdDH-sha1kdf-scheme"
@@ -5431,6 +5439,12146 @@
 #define SN_aes_256_siv          "AES-256-SIV"
 #define LN_aes_256_siv          "aes-256-siv"
 #define NID_aes_256_siv         1200
+
+#define SN_x790Notification             "x790Notification"
+#define NID_x790Notification            1278
+#define OBJ_x790Notification            0L,0L,24L,790L,0L,10L
+
+#define SN_x790ObjectClass              "x790ObjectClass"
+#define NID_x790ObjectClass             1279
+#define OBJ_x790ObjectClass             0L,0L,24L,790L,0L,3L
+
+#define SN_x790Package          "x790Package"
+#define NID_x790Package         1280
+#define OBJ_x790Package         0L,0L,24L,790L,0L,4L
+
+#define SN_x790Parameter                "x790Parameter"
+#define NID_x790Parameter               1281
+#define OBJ_x790Parameter               0L,0L,24L,790L,0L,5L
+
+#define SN_x790NameBinding              "x790NameBinding"
+#define NID_x790NameBinding             1282
+#define OBJ_x790NameBinding             0L,0L,24L,790L,0L,6L
+
+#define SN_x790Attribute                "x790Attribute"
+#define NID_x790Attribute               1283
+#define OBJ_x790Attribute               0L,0L,24L,790L,0L,7L
+
+#define SN_sdhProt              "sdhProt"
+#define NID_sdhProt             1284
+#define OBJ_sdhProt             0L,0L,7L,774L,127L,3L,0L
+
+#define SN_g774_03Notification          "g774-03Notification"
+#define NID_g774_03Notification         1285
+#define OBJ_g774_03Notification         0L,0L,7L,774L,127L,3L,0L,10L
+
+#define SN_g774_03MObjectClass          "g774-03MObjectClass"
+#define NID_g774_03MObjectClass         1286
+#define OBJ_g774_03MObjectClass         0L,0L,7L,774L,127L,3L,0L,3L
+
+#define SN_g774_03Package               "g774-03Package"
+#define NID_g774_03Package              1287
+#define OBJ_g774_03Package              0L,0L,7L,774L,127L,3L,0L,4L
+
+#define SN_g774_03Parameter             "g774-03Parameter"
+#define NID_g774_03Parameter            1288
+#define OBJ_g774_03Parameter            0L,0L,7L,774L,127L,3L,0L,5L
+
+#define SN_g774_03NameBinding           "g774-03NameBinding"
+#define NID_g774_03NameBinding          1289
+#define OBJ_g774_03NameBinding          0L,0L,7L,774L,127L,3L,0L,6L
+
+#define SN_g774_03Attribute             "g774-03Attribute"
+#define NID_g774_03Attribute            1290
+#define OBJ_g774_03Attribute            0L,0L,7L,774L,127L,3L,0L,7L
+
+#define SN_g774_03Action                "g774-03Action"
+#define NID_g774_03Action               1291
+#define OBJ_g774_03Action               0L,0L,7L,774L,127L,3L,0L,9L
+
+#define SN_m3100InformationModel                "m3100InformationModel"
+#define NID_m3100InformationModel               1292
+#define OBJ_m3100InformationModel               0L,13L,3100L,0L
+
+#define SN_m3100standardSpecificExtension               "m3100standardSpecificExtension"
+#define NID_m3100standardSpecificExtension              1293
+#define OBJ_m3100standardSpecificExtension              0L,13L,3100L,0L,0L
+
+#define SN_characteristicInfo           "characteristicInfo"
+#define NID_characteristicInfo          1294
+#define OBJ_characteristicInfo          0L,13L,3100L,0L,0L,0L
+
+#define SN_opticalSTM1SPICI             "opticalSTM1SPICI"
+#define NID_opticalSTM1SPICI            1295
+#define OBJ_opticalSTM1SPICI            0L,13L,3100L,0L,0L,0L,1L
+
+#define SN_msSTM16SPICI         "msSTM16SPICI"
+#define NID_msSTM16SPICI                1296
+#define OBJ_msSTM16SPICI                0L,13L,3100L,0L,0L,0L,10L
+
+#define SN_au3TU3VC3CI          "au3TU3VC3CI"
+#define NID_au3TU3VC3CI         1297
+#define OBJ_au3TU3VC3CI         0L,13L,3100L,0L,0L,0L,11L
+
+#define SN_au4VC4CI             "au4VC4CI"
+#define NID_au4VC4CI            1298
+#define OBJ_au4VC4CI            0L,13L,3100L,0L,0L,0L,12L
+
+#define SN_tu11VC11CI           "tu11VC11CI"
+#define NID_tu11VC11CI          1299
+#define OBJ_tu11VC11CI          0L,13L,3100L,0L,0L,0L,13L
+
+#define SN_tu12VC12CI           "tu12VC12CI"
+#define NID_tu12VC12CI          1300
+#define OBJ_tu12VC12CI          0L,13L,3100L,0L,0L,0L,14L
+
+#define SN_tu2VC2CI             "tu2VC2CI"
+#define NID_tu2VC2CI            1301
+#define OBJ_tu2VC2CI            0L,13L,3100L,0L,0L,0L,15L
+
+#define SN_tu12VC11CI           "tu12VC11CI"
+#define NID_tu12VC11CI          1302
+#define OBJ_tu12VC11CI          0L,13L,3100L,0L,0L,0L,16L
+
+#define SN_vpCI         "vpCI"
+#define NID_vpCI                1303
+#define OBJ_vpCI                0L,13L,3100L,0L,0L,0L,17L
+
+#define SN_vcCI         "vcCI"
+#define NID_vcCI                1304
+#define OBJ_vcCI                0L,13L,3100L,0L,0L,0L,18L
+
+#define SN_e0CI         "e0CI"
+#define NID_e0CI                1305
+#define OBJ_e0CI                0L,13L,3100L,0L,0L,0L,19L
+
+#define SN_opticalSTM4SPICI             "opticalSTM4SPICI"
+#define NID_opticalSTM4SPICI            1306
+#define OBJ_opticalSTM4SPICI            0L,13L,3100L,0L,0L,0L,2L
+
+#define SN_e1CI         "e1CI"
+#define NID_e1CI                1307
+#define OBJ_e1CI                0L,13L,3100L,0L,0L,0L,20L
+
+#define SN_e2CI         "e2CI"
+#define NID_e2CI                1308
+#define OBJ_e2CI                0L,13L,3100L,0L,0L,0L,21L
+
+#define SN_e3CI         "e3CI"
+#define NID_e3CI                1309
+#define OBJ_e3CI                0L,13L,3100L,0L,0L,0L,22L
+
+#define SN_e4CI         "e4CI"
+#define NID_e4CI                1310
+#define OBJ_e4CI                0L,13L,3100L,0L,0L,0L,23L
+
+#define SN_e5_565M              "e5-565M"
+#define NID_e5_565M             1311
+#define OBJ_e5_565M             0L,13L,3100L,0L,0L,0L,24L
+
+#define SN_sts3c_and_VC4_1c             "sts3c-and-VC4-1c"
+#define NID_sts3c_and_VC4_1c            1312
+#define OBJ_sts3c_and_VC4_1c            0L,13L,3100L,0L,0L,0L,25L
+
+#define SN_sts12c_and_VC4_4c            "sts12c-and-VC4-4c"
+#define NID_sts12c_and_VC4_4c           1313
+#define OBJ_sts12c_and_VC4_4c           0L,13L,3100L,0L,0L,0L,26L
+
+#define SN_sts48c_and_VC4_16c           "sts48c-and-VC4-16c"
+#define NID_sts48c_and_VC4_16c          1314
+#define OBJ_sts48c_and_VC4_16c          0L,13L,3100L,0L,0L,0L,27L
+
+#define SN_sts192c_and_VC4_64c          "sts192c-and-VC4-64c"
+#define NID_sts192c_and_VC4_64c         1315
+#define OBJ_sts192c_and_VC4_64c         0L,13L,3100L,0L,0L,0L,28L
+
+#define SN_section_OC1_STS1_and_RS_STM0         "section-OC1-STS1-and-RS-STM0"
+#define NID_section_OC1_STS1_and_RS_STM0                1316
+#define OBJ_section_OC1_STS1_and_RS_STM0                0L,13L,3100L,0L,0L,0L,29L
+
+#define SN_opticalSTM16SPICI            "opticalSTM16SPICI"
+#define NID_opticalSTM16SPICI           1317
+#define OBJ_opticalSTM16SPICI           0L,13L,3100L,0L,0L,0L,3L
+
+#define SN_section_OC192_STS192_and_RS_STM64            "section-OC192-STS192-and-RS-STM64"
+#define NID_section_OC192_STS192_and_RS_STM64           1318
+#define OBJ_section_OC192_STS192_and_RS_STM64           0L,13L,3100L,0L,0L,0L,30L
+
+#define SN_line_OC1_STS1_and_MS_STM0            "line-OC1-STS1-and-MS-STM0"
+#define NID_line_OC1_STS1_and_MS_STM0           1319
+#define OBJ_line_OC1_STS1_and_MS_STM0           0L,13L,3100L,0L,0L,0L,31L
+
+#define SN_line_OC192_STS192_and_MS_STM64               "line-OC192-STS192-and-MS-STM64"
+#define NID_line_OC192_STS192_and_MS_STM64              1320
+#define OBJ_line_OC192_STS192_and_MS_STM64              0L,13L,3100L,0L,0L,0L,32L
+
+#define SN_fc_12_133M           "fc-12-133M"
+#define NID_fc_12_133M          1321
+#define OBJ_fc_12_133M          0L,13L,3100L,0L,0L,0L,33L
+
+#define SN_fc_25_266M           "fc-25-266M"
+#define NID_fc_25_266M          1322
+#define OBJ_fc_25_266M          0L,13L,3100L,0L,0L,0L,34L
+
+#define SN_fc_50_531M           "fc-50-531M"
+#define NID_fc_50_531M          1323
+#define OBJ_fc_50_531M          0L,13L,3100L,0L,0L,0L,35L
+
+#define SN_fc_100_1063M         "fc-100-1063M"
+#define NID_fc_100_1063M                1324
+#define OBJ_fc_100_1063M                0L,13L,3100L,0L,0L,0L,36L
+
+#define SN_fddi         "fddi"
+#define NID_fddi                1325
+#define OBJ_fddi                0L,13L,3100L,0L,0L,0L,37L
+
+#define SN_fast_Ethernet                "fast-Ethernet"
+#define NID_fast_Ethernet               1326
+#define OBJ_fast_Ethernet               0L,13L,3100L,0L,0L,0L,38L
+
+#define SN_gigabit_Ethernet             "gigabit-Ethernet"
+#define NID_gigabit_Ethernet            1327
+#define OBJ_gigabit_Ethernet            0L,13L,3100L,0L,0L,0L,39L
+
+#define SN_electricalSTM1SPICI          "electricalSTM1SPICI"
+#define NID_electricalSTM1SPICI         1328
+#define OBJ_electricalSTM1SPICI         0L,13L,3100L,0L,0L,0L,4L
+
+#define SN_isdn_BRI             "isdn-BRI"
+#define NID_isdn_BRI            1329
+#define OBJ_isdn_BRI            0L,13L,3100L,0L,0L,0L,40L
+
+#define SN_dsr_OC192_and_STM64          "dsr-OC192-and-STM64"
+#define NID_dsr_OC192_and_STM64         1330
+#define OBJ_dsr_OC192_and_STM64         0L,13L,3100L,0L,0L,0L,41L
+
+#define SN_dsr_OC768_and_STM256         "dsr-OC768-and-STM256"
+#define NID_dsr_OC768_and_STM256                1331
+#define OBJ_dsr_OC768_and_STM256                0L,13L,3100L,0L,0L,0L,42L
+
+#define SN_section_OC24_STS24_and_RS_STM8               "section-OC24-STS24-and-RS-STM8"
+#define NID_section_OC24_STS24_and_RS_STM8              1332
+#define OBJ_section_OC24_STS24_and_RS_STM8              0L,13L,3100L,0L,0L,0L,43L
+
+#define SN_line_OC24_STS24_and_MS_STM8          "line-OC24-STS24-and-MS-STM8"
+#define NID_line_OC24_STS24_and_MS_STM8         1333
+#define OBJ_line_OC24_STS24_and_MS_STM8         0L,13L,3100L,0L,0L,0L,44L
+
+#define SN_section_OC768_STS768_and_RS_STM256           "section-OC768-STS768-and-RS-STM256"
+#define NID_section_OC768_STS768_and_RS_STM256          1334
+#define OBJ_section_OC768_STS768_and_RS_STM256          0L,13L,3100L,0L,0L,0L,45L
+
+#define SN_line_OC768_STS768_and_MS_STM256              "line-OC768-STS768-and-MS-STM256"
+#define NID_line_OC768_STS768_and_MS_STM256             1335
+#define OBJ_line_OC768_STS768_and_MS_STM256             0L,13L,3100L,0L,0L,0L,46L
+
+#define SN_tenGigabit_Ethernet          "tenGigabit-Ethernet"
+#define NID_tenGigabit_Ethernet         1336
+#define OBJ_tenGigabit_Ethernet         0L,13L,3100L,0L,0L,0L,47L
+
+#define SN_rsSTM1SPICI          "rsSTM1SPICI"
+#define NID_rsSTM1SPICI         1337
+#define OBJ_rsSTM1SPICI         0L,13L,3100L,0L,0L,0L,5L
+
+#define SN_rsSTM4SPICI          "rsSTM4SPICI"
+#define NID_rsSTM4SPICI         1338
+#define OBJ_rsSTM4SPICI         0L,13L,3100L,0L,0L,0L,6L
+
+#define SN_rsSTM16SPICI         "rsSTM16SPICI"
+#define NID_rsSTM16SPICI                1339
+#define OBJ_rsSTM16SPICI                0L,13L,3100L,0L,0L,0L,7L
+
+#define SN_msSTM1SPICI          "msSTM1SPICI"
+#define NID_msSTM1SPICI         1340
+#define OBJ_msSTM1SPICI         0L,13L,3100L,0L,0L,0L,8L
+
+#define SN_msSTM4SPICI          "msSTM4SPICI"
+#define NID_msSTM4SPICI         1341
+#define OBJ_msSTM4SPICI         0L,13L,3100L,0L,0L,0L,9L
+
+#define SN_m3100Notification            "m3100Notification"
+#define NID_m3100Notification           1342
+#define OBJ_m3100Notification           0L,13L,3100L,0L,10L
+
+#define SN_m3100ObjectClass             "m3100ObjectClass"
+#define NID_m3100ObjectClass            1343
+#define OBJ_m3100ObjectClass            0L,13L,3100L,0L,3L
+
+#define SN_m3100Package         "m3100Package"
+#define NID_m3100Package                1344
+#define OBJ_m3100Package                0L,13L,3100L,0L,4L
+
+#define SN_m3100Parameter               "m3100Parameter"
+#define NID_m3100Parameter              1345
+#define OBJ_m3100Parameter              0L,13L,3100L,0L,5L
+
+#define SN_m3100NameBinding             "m3100NameBinding"
+#define NID_m3100NameBinding            1346
+#define OBJ_m3100NameBinding            0L,13L,3100L,0L,6L
+
+#define SN_m3100Attribute               "m3100Attribute"
+#define NID_m3100Attribute              1347
+#define OBJ_m3100Attribute              0L,13L,3100L,0L,7L
+
+#define SN_m3100Action          "m3100Action"
+#define NID_m3100Action         1348
+#define OBJ_m3100Action         0L,13L,3100L,0L,9L
+
+#define SN_m3108Part2Identifier         "m3108Part2Identifier"
+#define NID_m3108Part2Identifier                1349
+#define OBJ_m3108Part2Identifier                0L,13L,3108L,2L,0L,2L,0L
+
+#define SN_m3108Part2ObjectClass                "m3108Part2ObjectClass"
+#define NID_m3108Part2ObjectClass               1350
+#define OBJ_m3108Part2ObjectClass               0L,13L,3108L,2L,0L,2L,0L,3L
+
+#define SN_m3108Part2Parameter          "m3108Part2Parameter"
+#define NID_m3108Part2Parameter         1351
+#define OBJ_m3108Part2Parameter         0L,13L,3108L,2L,0L,2L,0L,4L
+
+#define SN_m3108Part2NameBinding                "m3108Part2NameBinding"
+#define NID_m3108Part2NameBinding               1352
+#define OBJ_m3108Part2NameBinding               0L,13L,3108L,2L,0L,2L,0L,5L
+
+#define SN_m3108Part2Attribute          "m3108Part2Attribute"
+#define NID_m3108Part2Attribute         1353
+#define OBJ_m3108Part2Attribute         0L,13L,3108L,2L,0L,2L,0L,6L
+
+#define SN_m3108PartVPNInformationModel         "m3108PartVPNInformationModel"
+#define NID_m3108PartVPNInformationModel                1354
+#define OBJ_m3108PartVPNInformationModel                0L,13L,3108L,3L,0L
+
+#define SN_m3108PartVPNObjectClass              "m3108PartVPNObjectClass"
+#define NID_m3108PartVPNObjectClass             1355
+#define OBJ_m3108PartVPNObjectClass             0L,13L,3108L,3L,0L,1L
+
+#define SN_m3108PartVPNPackage          "m3108PartVPNPackage"
+#define NID_m3108PartVPNPackage         1356
+#define OBJ_m3108PartVPNPackage         0L,13L,3108L,3L,0L,2L
+
+#define SN_m3108PartVPNAttribute                "m3108PartVPNAttribute"
+#define NID_m3108PartVPNAttribute               1357
+#define OBJ_m3108PartVPNAttribute               0L,13L,3108L,3L,0L,3L
+
+#define SN_m3108PartVPNNameBinding              "m3108PartVPNNameBinding"
+#define NID_m3108PartVPNNameBinding             1358
+#define OBJ_m3108PartVPNNameBinding             0L,13L,3108L,3L,0L,4L
+
+#define SN_m3108PartVPNNotification             "m3108PartVPNNotification"
+#define NID_m3108PartVPNNotification            1359
+#define OBJ_m3108PartVPNNotification            0L,13L,3108L,3L,0L,5L
+
+#define SN_m3108PartVPNParameter                "m3108PartVPNParameter"
+#define NID_m3108PartVPNParameter               1360
+#define OBJ_m3108PartVPNParameter               0L,13L,3108L,3L,0L,6L
+
+#define SN_m3108PartVPNAction           "m3108PartVPNAction"
+#define NID_m3108PartVPNAction          1361
+#define OBJ_m3108PartVPNAction          0L,13L,3108L,3L,0L,7L
+
+#define SN_dialogue_as_id               "dialogue-as-id"
+#define NID_dialogue_as_id              1362
+#define OBJ_dialogue_as_id              0L,17L,773L,1L,1L,1L
+
+#define SN_uniDialogue_as_id            "uniDialogue-as-id"
+#define NID_uniDialogue_as_id           1363
+#define OBJ_uniDialogue_as_id           0L,17L,773L,1L,2L,1L
+
+#define SN_id_signerInfo                "id-signerInfo"
+#define NID_id_signerInfo               1364
+#define OBJ_id_signerInfo               0L,24L,894L,2L,0L
+
+#define SN_id_signerInfos               "id-signerInfos"
+#define NID_id_signerInfos              1365
+#define OBJ_id_signerInfos              0L,24L,894L,2L,1L
+
+#define SN_id_contentLocation           "id-contentLocation"
+#define NID_id_contentLocation          1366
+#define OBJ_id_contentLocation          0L,24L,894L,2L,2L
+
+#define SN_id_contentLocations          "id-contentLocations"
+#define NID_id_contentLocations         1367
+#define OBJ_id_contentLocations         0L,24L,894L,2L,3L
+
+#define SN_id_precedingBlock            "id-precedingBlock"
+#define NID_id_precedingBlock           1368
+#define OBJ_id_precedingBlock           0L,24L,894L,2L,4L
+
+#define SN_id_timeStamped               "id-timeStamped"
+#define NID_id_timeStamped              1369
+#define OBJ_id_timeStamped              0L,24L,894L,2L,5L
+
+#define SN_id_sidechains                "id-sidechains"
+#define NID_id_sidechains               1370
+#define OBJ_id_sidechains               0L,24L,894L,2L,6L
+
+#define SN_id_parentBlock               "id-parentBlock"
+#define NID_id_parentBlock              1371
+#define OBJ_id_parentBlock              0L,24L,894L,2L,7L
+
+#define SN_iso_standard         "iso-standard"
+#define NID_iso_standard                1372
+#define OBJ_iso_standard                1L,0L
+
+#define SN_id_iso_ipms          "id-iso-ipms"
+#define NID_id_iso_ipms         1373
+#define OBJ_id_iso_ipms         1L,0L,10021L,7L
+
+#define SN_id_iso_mod           "id-iso-mod"
+#define NID_id_iso_mod          1374
+#define OBJ_id_iso_mod          1L,0L,10021L,7L,0L
+
+#define SN_id_mod_object_identifiers_2          "id-mod-object-identifiers-2"
+#define NID_id_mod_object_identifiers_2         1375
+#define OBJ_id_mod_object_identifiers_2         1L,0L,10021L,7L,0L,0L
+
+#define SN_id_mod_extended_body_part_types_2            "id-mod-extended-body-part-types-2"
+#define NID_id_mod_extended_body_part_types_2           1376
+#define OBJ_id_mod_extended_body_part_types_2           1L,0L,10021L,7L,0L,1L
+
+#define SN_id_iso_cs            "id-iso-cs"
+#define NID_id_iso_cs           1377
+#define OBJ_id_iso_cs           1L,0L,10021L,7L,1L
+
+#define SN_id_cs_eit_authority          "id-cs-eit-authority"
+#define NID_id_cs_eit_authority         1378
+#define OBJ_id_cs_eit_authority         1L,0L,10021L,7L,1L,0L
+
+#define SN_id_signedDataACBio           "id-signedDataACBio"
+#define NID_id_signedDataACBio          1379
+#define OBJ_id_signedDataACBio          1L,0L,24761L,2L,1L
+
+#define SN_id_authenticatedDataACBio            "id-authenticatedDataACBio"
+#define NID_id_authenticatedDataACBio           1380
+#define OBJ_id_authenticatedDataACBio           1L,0L,24761L,2L,2L
+
+#define SN_id_acbioContentInformation           "id-acbioContentInformation"
+#define NID_id_acbioContentInformation          1381
+#define OBJ_id_acbioContentInformation          1L,0L,24761L,2L,3L
+
+#define SN_id_bpuReport         "id-bpuReport"
+#define NID_id_bpuReport                1382
+#define OBJ_id_bpuReport                1L,0L,24761L,2L,4L
+
+#define SN_id_bpuReportContentInformation               "id-bpuReportContentInformation"
+#define NID_id_bpuReportContentInformation              1383
+#define OBJ_id_bpuReportContentInformation              1L,0L,24761L,2L,5L
+
+#define SN_id_brtCertificate            "id-brtCertificate"
+#define NID_id_brtCertificate           1384
+#define OBJ_id_brtCertificate           1L,0L,24761L,2L,6L
+
+#define SN_id_brtcContentInformation            "id-brtcContentInformation"
+#define NID_id_brtcContentInformation           1385
+#define OBJ_id_brtcContentInformation           1L,0L,24761L,2L,7L
+
+#define SN_iso9797              "iso9797"
+#define NID_iso9797             1386
+#define OBJ_iso9797             1L,0L,9797L
+
+#define SN_matchedValues                "matchedValues"
+#define NID_matchedValues               1387
+#define OBJ_matchedValues               1L,2L,826L,0L,1L,3344810L,2L,3L
+
+#define SN_id_fieldType         "id-fieldType"
+#define NID_id_fieldType                1388
+#define OBJ_id_fieldType                1L,2L,840L,10045L,1L
+
+#define SN_id_publicKeyType             "id-publicKeyType"
+#define NID_id_publicKeyType            1389
+#define OBJ_id_publicKeyType            1L,2L,840L,10045L,2L
+
+#define SN_id_ecPublicKeyRestricted             "id-ecPublicKeyRestricted"
+#define NID_id_ecPublicKeyRestricted            1390
+#define OBJ_id_ecPublicKeyRestricted            1L,2L,840L,10045L,2L,2L
+
+#define SN_ellipticCurve                "ellipticCurve"
+#define NID_ellipticCurve               1391
+#define OBJ_ellipticCurve               1L,2L,840L,10045L,3L
+
+#define SN_c_TwoCurve           "c-TwoCurve"
+#define NID_c_TwoCurve          1392
+#define OBJ_c_TwoCurve          1L,2L,840L,10045L,3L,0L
+
+#define SN_primeCurve           "primeCurve"
+#define NID_primeCurve          1393
+#define OBJ_primeCurve          1L,2L,840L,10045L,3L,1L
+
+#define SN_id_ecSigType         "id-ecSigType"
+#define NID_id_ecSigType                1394
+#define OBJ_id_ecSigType                1L,2L,840L,10045L,4L
+
+#define SN_ansi_X9_42           "ansi-X9-42"
+#define NID_ansi_X9_42          1395
+#define OBJ_ansi_X9_42          1L,2L,840L,10046L
+
+#define SN_fieldType            "fieldType"
+#define NID_fieldType           1396
+#define OBJ_fieldType           1L,2L,840L,10046L,0L
+
+#define SN_gfPrime              "gfPrime"
+#define NID_gfPrime             1397
+#define OBJ_gfPrime             1L,2L,840L,10046L,0L,1L
+
+#define SN_tripleDES            "tripleDES"
+#define NID_tripleDES           1398
+#define OBJ_tripleDES           1L,2L,840L,10046L,1L,2L
+
+#define SN_numberType           "numberType"
+#define NID_numberType          1399
+#define OBJ_numberType          1L,2L,840L,10046L,2L
+
+#define SN_scheme               "scheme"
+#define NID_scheme              1400
+#define OBJ_scheme              1L,2L,840L,10046L,3L
+
+#define SN_dhStatic             "dhStatic"
+#define NID_dhStatic            1401
+#define OBJ_dhStatic            1L,2L,840L,10046L,3L,1L
+
+#define SN_dhEphem              "dhEphem"
+#define NID_dhEphem             1402
+#define OBJ_dhEphem             1L,2L,840L,10046L,3L,2L
+
+#define SN_dhOneFlow            "dhOneFlow"
+#define NID_dhOneFlow           1403
+#define OBJ_dhOneFlow           1L,2L,840L,10046L,3L,3L
+
+#define SN_dhHybrid1            "dhHybrid1"
+#define NID_dhHybrid1           1404
+#define OBJ_dhHybrid1           1L,2L,840L,10046L,3L,4L
+
+#define SN_dhHybrid2            "dhHybrid2"
+#define NID_dhHybrid2           1405
+#define OBJ_dhHybrid2           1L,2L,840L,10046L,3L,5L
+
+#define SN_dhHybridOneFlow              "dhHybridOneFlow"
+#define NID_dhHybridOneFlow             1406
+#define OBJ_dhHybridOneFlow             1L,2L,840L,10046L,3L,6L
+
+#define SN_mqv2         "mqv2"
+#define NID_mqv2                1407
+#define OBJ_mqv2                1L,2L,840L,10046L,3L,7L
+
+#define SN_mqv1         "mqv1"
+#define NID_mqv1                1408
+#define OBJ_mqv1                1L,2L,840L,10046L,3L,8L
+
+#define SN_namedScheme          "namedScheme"
+#define NID_namedScheme         1409
+#define OBJ_namedScheme         1L,2L,840L,10046L,4L
+
+#define SN_dhStatic_sha1                "dhStatic-sha1"
+#define NID_dhStatic_sha1               1410
+#define OBJ_dhStatic_sha1               1L,2L,840L,10046L,4L,1L
+
+#define SN_dhEphem_sha1         "dhEphem-sha1"
+#define NID_dhEphem_sha1                1411
+#define OBJ_dhEphem_sha1                1L,2L,840L,10046L,4L,2L
+
+#define SN_dhOneFlow_sha1               "dhOneFlow-sha1"
+#define NID_dhOneFlow_sha1              1412
+#define OBJ_dhOneFlow_sha1              1L,2L,840L,10046L,4L,3L
+
+#define SN_dhHybrid1_sha1               "dhHybrid1-sha1"
+#define NID_dhHybrid1_sha1              1413
+#define OBJ_dhHybrid1_sha1              1L,2L,840L,10046L,4L,4L
+
+#define SN_dhHybrid2_sha1               "dhHybrid2-sha1"
+#define NID_dhHybrid2_sha1              1414
+#define OBJ_dhHybrid2_sha1              1L,2L,840L,10046L,4L,5L
+
+#define SN_dhHybridOneFlow_sha1         "dhHybridOneFlow-sha1"
+#define NID_dhHybridOneFlow_sha1                1415
+#define OBJ_dhHybridOneFlow_sha1                1L,2L,840L,10046L,4L,6L
+
+#define SN_mqv2_sha1            "mqv2-sha1"
+#define NID_mqv2_sha1           1416
+#define OBJ_mqv2_sha1           1L,2L,840L,10046L,4L,7L
+
+#define SN_mqv1_sha1            "mqv1-sha1"
+#define NID_mqv1_sha1           1417
+#define OBJ_mqv1_sha1           1L,2L,840L,10046L,4L,8L
+
+#define SN_keyDerivationMethod          "keyDerivationMethod"
+#define NID_keyDerivationMethod         1418
+#define OBJ_keyDerivationMethod         1L,2L,840L,10046L,5L
+
+#define SN_kdasn1der            "kdasn1der"
+#define NID_kdasn1der           1419
+#define OBJ_kdasn1der           1L,2L,840L,10046L,5L,0L
+
+#define SN_kdConcatenation              "kdConcatenation"
+#define NID_kdConcatenation             1420
+#define OBJ_kdConcatenation             1L,2L,840L,10046L,5L,1L
+
+#define SN_id_namedkeyencryptedData             "id-namedkeyencryptedData"
+#define NID_id_namedkeyencryptedData            1421
+#define OBJ_id_namedkeyencryptedData            1L,2L,840L,10060L,1L,2L
+
+#define SN_id_signcryptedData           "id-signcryptedData"
+#define NID_id_signcryptedData          1422
+#define OBJ_id_signcryptedData          1L,2L,840L,10060L,1L,3L
+
+#define SN_signcryption_manifest                "signcryption-manifest"
+#define NID_signcryption_manifest               1423
+#define OBJ_signcryption_manifest               1L,2L,840L,10060L,1L,3L,1L
+
+#define SN_xPath                "xPath"
+#define NID_xPath               1424
+#define OBJ_xPath               1L,2L,840L,10060L,1L,3L,1L,0L
+
+#define SN_id_signcryptedParts          "id-signcryptedParts"
+#define NID_id_signcryptedParts         1425
+#define OBJ_id_signcryptedParts         1L,2L,840L,10060L,1L,3L,1L,1L
+
+#define SN_id_XPathSigncryptionSet              "id-XPathSigncryptionSet"
+#define NID_id_XPathSigncryptionSet             1426
+#define OBJ_id_XPathSigncryptionSet             1L,2L,840L,10060L,1L,3L,1L,2L
+
+#define SN_id_ckm_recip_info            "id-ckm-recip-info"
+#define NID_id_ckm_recip_info           1427
+#define OBJ_id_ckm_recip_info           1L,2L,840L,10060L,2L,1L
+
+#define SN_id_ckm_recip_info2           "id-ckm-recip-info2"
+#define NID_id_ckm_recip_info2          1428
+#define OBJ_id_ckm_recip_info2          1L,2L,840L,10060L,2L,2L
+
+#define SN_id_dbekm_recip_info          "id-dbekm-recip-info"
+#define NID_id_dbekm_recip_info         1429
+#define OBJ_id_dbekm_recip_info         1L,2L,840L,10060L,2L,3L
+
+#define SN_id_ckm_algorithms            "id-ckm-algorithms"
+#define NID_id_ckm_algorithms           1430
+#define OBJ_id_ckm_algorithms           1L,2L,840L,10060L,3L
+
+#define SN_id_ckm_symmetric             "id-ckm-symmetric"
+#define NID_id_ckm_symmetric            1431
+#define OBJ_id_ckm_symmetric            1L,2L,840L,10060L,3L,1L
+
+#define SN_id_ckm_key_transport         "id-ckm-key-transport"
+#define NID_id_ckm_key_transport                1432
+#define OBJ_id_ckm_key_transport                1L,2L,840L,10060L,3L,2L
+
+#define SN_id_ckm_key_agree_multiple_encrypt            "id-ckm-key-agree-multiple-encrypt"
+#define NID_id_ckm_key_agree_multiple_encrypt           1433
+#define OBJ_id_ckm_key_agree_multiple_encrypt           1L,2L,840L,10060L,3L,3L
+
+#define SN_id_ckm_key_agree_hash                "id-ckm-key-agree-hash"
+#define NID_id_ckm_key_agree_hash               1434
+#define OBJ_id_ckm_key_agree_hash               1L,2L,840L,10060L,3L,4L
+
+#define SN_id_ckm_header                "id-ckm-header"
+#define NID_id_ckm_header               1435
+#define OBJ_id_ckm_header               1L,2L,840L,10060L,4L
+
+#define SN_pkcs_12              "pkcs-12"
+#define NID_pkcs_12             1436
+#define OBJ_pkcs_12             1L,2L,840L,113549L,1L,12L
+
+#define SN_pkcs_12PbeIds                "pkcs-12PbeIds"
+#define NID_pkcs_12PbeIds               1437
+#define OBJ_pkcs_12PbeIds               1L,2L,840L,113549L,1L,12L,1L
+
+#define SN_bagtypes             "bagtypes"
+#define NID_bagtypes            1438
+#define OBJ_bagtypes            1L,2L,840L,113549L,1L,12L,10L,1L
+
+#define SN_pkcs15               "pkcs15"
+#define NID_pkcs15              1439
+#define OBJ_pkcs15              1L,2L,840L,113549L,1L,15L
+
+#define SN_pkcs15_mo            "pkcs15-mo"
+#define NID_pkcs15_mo           1440
+#define OBJ_pkcs15_mo           1L,2L,840L,113549L,1L,15L,1L
+
+#define SN_pkcs15_at            "pkcs15-at"
+#define NID_pkcs15_at           1441
+#define OBJ_pkcs15_at           1L,2L,840L,113549L,1L,15L,2L
+
+#define SN_pkcs15_ct            "pkcs15-ct"
+#define NID_pkcs15_ct           1442
+#define OBJ_pkcs15_ct           1L,2L,840L,113549L,1L,15L,3L
+
+#define SN_pkcs_9_mo            "pkcs-9-mo"
+#define NID_pkcs_9_mo           1443
+#define OBJ_pkcs_9_mo           1L,2L,840L,113549L,1L,9L,0L
+
+#define SN_pkcs_9_at_signingDescription         "pkcs-9-at-signingDescription"
+#define NID_pkcs_9_at_signingDescription                1444
+#define OBJ_pkcs_9_at_signingDescription                1L,2L,840L,113549L,1L,9L,13L
+
+#define SN_id_ct_scvp_certValRequest            "id-ct-scvp-certValRequest"
+#define NID_id_ct_scvp_certValRequest           1445
+#define OBJ_id_ct_scvp_certValRequest           1L,2L,840L,113549L,1L,9L,16L,1L,10L
+
+#define SN_id_ct_scvp_certValResponse           "id-ct-scvp-certValResponse"
+#define NID_id_ct_scvp_certValResponse          1446
+#define OBJ_id_ct_scvp_certValResponse          1L,2L,840L,113549L,1L,9L,16L,1L,11L
+
+#define SN_id_ct_scvp_valPolRequest             "id-ct-scvp-valPolRequest"
+#define NID_id_ct_scvp_valPolRequest            1447
+#define OBJ_id_ct_scvp_valPolRequest            1L,2L,840L,113549L,1L,9L,16L,1L,12L
+
+#define SN_id_ct_scvp_valPolResponse            "id-ct-scvp-valPolResponse"
+#define NID_id_ct_scvp_valPolResponse           1448
+#define OBJ_id_ct_scvp_valPolResponse           1L,2L,840L,113549L,1L,9L,16L,1L,13L
+
+#define SN_id_ct_encKeyWithID           "id-ct-encKeyWithID"
+#define NID_id_ct_encKeyWithID          1449
+#define OBJ_id_ct_encKeyWithID          1L,2L,840L,113549L,1L,9L,16L,1L,21L
+
+#define SN_id_ct_trustAnchorList                "id-ct-trustAnchorList"
+#define NID_id_ct_trustAnchorList               1450
+#define OBJ_id_ct_trustAnchorList               1L,2L,840L,113549L,1L,9L,16L,1L,34L
+
+#define SN_id_cap               "id-cap"
+#define NID_id_cap              1451
+#define OBJ_id_cap              1L,2L,840L,113549L,1L,9L,16L,11L
+
+#define SN_id_cap_preferBinaryInside            "id-cap-preferBinaryInside"
+#define NID_id_cap_preferBinaryInside           1452
+#define OBJ_id_cap_preferBinaryInside           1L,2L,840L,113549L,1L,9L,16L,11L,1L
+
+#define SN_id_aa_CEKReference           "id-aa-CEKReference"
+#define NID_id_aa_CEKReference          1453
+#define OBJ_id_aa_CEKReference          1L,2L,840L,113549L,1L,9L,16L,2L,30L
+
+#define SN_id_aa_CEKMaxDecrypts         "id-aa-CEKMaxDecrypts"
+#define NID_id_aa_CEKMaxDecrypts                1454
+#define OBJ_id_aa_CEKMaxDecrypts                1L,2L,840L,113549L,1L,9L,16L,2L,31L
+
+#define SN_id_aa_KEKDerivationAlg               "id-aa-KEKDerivationAlg"
+#define NID_id_aa_KEKDerivationAlg              1455
+#define OBJ_id_aa_KEKDerivationAlg              1L,2L,840L,113549L,1L,9L,16L,2L,32L
+
+#define SN_id_aa_er_internal            "id-aa-er-internal"
+#define NID_id_aa_er_internal           1456
+#define OBJ_id_aa_er_internal           1L,2L,840L,113549L,1L,9L,16L,2L,49L
+
+#define SN_id_aa_er_external            "id-aa-er-external"
+#define NID_id_aa_er_external           1457
+#define OBJ_id_aa_er_external           1L,2L,840L,113549L,1L,9L,16L,2L,50L
+
+#define SN_id_alg_SSDH          "id-alg-SSDH"
+#define NID_id_alg_SSDH         1458
+#define OBJ_id_alg_SSDH         1L,2L,840L,113549L,1L,9L,16L,3L,10L
+
+#define SN_pkcs_9_oc            "pkcs-9-oc"
+#define NID_pkcs_9_oc           1461
+#define OBJ_pkcs_9_oc           1L,2L,840L,113549L,1L,9L,24L
+
+#define SN_pkcs_9_oc_pkcsEntity         "pkcs-9-oc-pkcsEntity"
+#define NID_pkcs_9_oc_pkcsEntity                1462
+#define OBJ_pkcs_9_oc_pkcsEntity                1L,2L,840L,113549L,1L,9L,24L,1L
+
+#define SN_pkcs_9_oc_naturalPerson              "pkcs-9-oc-naturalPerson"
+#define NID_pkcs_9_oc_naturalPerson             1463
+#define OBJ_pkcs_9_oc_naturalPerson             1L,2L,840L,113549L,1L,9L,24L,2L
+
+#define SN_pkcs_9_at            "pkcs-9-at"
+#define NID_pkcs_9_at           1464
+#define OBJ_pkcs_9_at           1L,2L,840L,113549L,1L,9L,25L
+
+#define SN_pkcs_9_at_pkcs15Token                "pkcs-9-at-pkcs15Token"
+#define NID_pkcs_9_at_pkcs15Token               1465
+#define OBJ_pkcs_9_at_pkcs15Token               1L,2L,840L,113549L,1L,9L,25L,1L
+
+#define SN_pkcs_9_at_encryptedPrivateKeyInfo            "pkcs-9-at-encryptedPrivateKeyInfo"
+#define NID_pkcs_9_at_encryptedPrivateKeyInfo           1466
+#define OBJ_pkcs_9_at_encryptedPrivateKeyInfo           1L,2L,840L,113549L,1L,9L,25L,2L
+
+#define SN_pkcs_9_at_randomNonce                "pkcs-9-at-randomNonce"
+#define NID_pkcs_9_at_randomNonce               1467
+#define OBJ_pkcs_9_at_randomNonce               1L,2L,840L,113549L,1L,9L,25L,3L
+
+#define SN_pkcs_9_at_sequenceNumber             "pkcs-9-at-sequenceNumber"
+#define NID_pkcs_9_at_sequenceNumber            1468
+#define OBJ_pkcs_9_at_sequenceNumber            1L,2L,840L,113549L,1L,9L,25L,4L
+
+#define SN_pkcs_9_at_pkcs7PDU           "pkcs-9-at-pkcs7PDU"
+#define NID_pkcs_9_at_pkcs7PDU          1469
+#define OBJ_pkcs_9_at_pkcs7PDU          1L,2L,840L,113549L,1L,9L,25L,5L
+
+#define SN_pkcs_9_sx            "pkcs-9-sx"
+#define NID_pkcs_9_sx           1470
+#define OBJ_pkcs_9_sx           1L,2L,840L,113549L,1L,9L,26L
+
+#define SN_pkcs_9_sx_pkcs9String                "pkcs-9-sx-pkcs9String"
+#define NID_pkcs_9_sx_pkcs9String               1471
+#define OBJ_pkcs_9_sx_pkcs9String               1L,2L,840L,113549L,1L,9L,26L,1L
+
+#define SN_pkcs_9_sx_signingTime                "pkcs-9-sx-signingTime"
+#define NID_pkcs_9_sx_signingTime               1472
+#define OBJ_pkcs_9_sx_signingTime               1L,2L,840L,113549L,1L,9L,26L,2L
+
+#define SN_pkcs_9_mr            "pkcs-9-mr"
+#define NID_pkcs_9_mr           1473
+#define OBJ_pkcs_9_mr           1L,2L,840L,113549L,1L,9L,27L
+
+#define SN_pkcs_9_mr_caseIgnoreMatch            "pkcs-9-mr-caseIgnoreMatch"
+#define NID_pkcs_9_mr_caseIgnoreMatch           1474
+#define OBJ_pkcs_9_mr_caseIgnoreMatch           1L,2L,840L,113549L,1L,9L,27L,1L
+
+#define SN_pkcs_9_mr_signingTimeMatch           "pkcs-9-mr-signingTimeMatch"
+#define NID_pkcs_9_mr_signingTimeMatch          1475
+#define OBJ_pkcs_9_mr_signingTimeMatch          1L,2L,840L,113549L,1L,9L,27L,2L
+
+#define SN_digestAlgorithm              "digestAlgorithm"
+#define NID_digestAlgorithm             1476
+#define OBJ_digestAlgorithm             1L,2L,840L,113549L,2L
+
+#define SN_encryptionAlgorithm          "encryptionAlgorithm"
+#define NID_encryptionAlgorithm         1477
+#define OBJ_encryptionAlgorithm         1L,2L,840L,113549L,3L
+
+#define SN_rc5_CBC_PAD          "rc5-CBC-PAD"
+#define NID_rc5_CBC_PAD         1478
+#define OBJ_rc5_CBC_PAD         1L,2L,840L,113549L,3L,9L
+
+#define SN_simpledPagedResults          "simpledPagedResults"
+#define NID_simpledPagedResults         1479
+#define OBJ_simpledPagedResults         1L,2L,840L,113556L,1L,4L,319L
+
+#define SN_sortRequest          "sortRequest"
+#define NID_sortRequest         1480
+#define OBJ_sortRequest         1L,2L,840L,113556L,1L,4L,473L
+
+#define SN_sortResponse         "sortResponse"
+#define NID_sortResponse                1481
+#define OBJ_sortResponse                1L,2L,840L,113556L,1L,4L,474L
+
+#define SN_mqvSinglePass_sha1kdf                "mqvSinglePass-sha1kdf"
+#define NID_mqvSinglePass_sha1kdf               1483
+#define OBJ_mqvSinglePass_sha1kdf               1L,2L,840L,63L,0L,16L
+
+#define SN_mqvFull_sha1kdf              "mqvFull-sha1kdf"
+#define NID_mqvFull_sha1kdf             1484
+#define OBJ_mqvFull_sha1kdf             1L,2L,840L,63L,0L,17L
+
+#define SN_dhSinglePass_stdDH_sha1kdf           "dhSinglePass-stdDH-sha1kdf"
+#define NID_dhSinglePass_stdDH_sha1kdf          1485
+#define OBJ_dhSinglePass_stdDH_sha1kdf          1L,2L,840L,63L,0L,2L
+
+#define SN_dhSinglePass_cofactorDH_sha1kdf              "dhSinglePass-cofactorDH-sha1kdf"
+#define NID_dhSinglePass_cofactorDH_sha1kdf             1486
+#define OBJ_dhSinglePass_cofactorDH_sha1kdf             1L,2L,840L,63L,0L,3L
+
+#define SN_id_edwards_curve_algs                "id-edwards-curve-algs"
+#define NID_id_edwards_curve_algs               1487
+#define OBJ_id_edwards_curve_algs               1L,3L,101L
+
+#define SN_secgCurve            "secgCurve"
+#define NID_secgCurve           1488
+#define OBJ_secgCurve           1L,3L,132L,0L
+
+#define SN_id_ecPublicKeyTypeSupplemented               "id-ecPublicKeyTypeSupplemented"
+#define NID_id_ecPublicKeyTypeSupplemented              1490
+#define OBJ_id_ecPublicKeyTypeSupplemented              1L,3L,132L,1L,0L
+
+#define SN_dhSinglePass_cofactorDH_recommendedKDF               "dhSinglePass-cofactorDH-recommendedKDF"
+#define NID_dhSinglePass_cofactorDH_recommendedKDF              1491
+#define OBJ_dhSinglePass_cofactorDH_recommendedKDF              1L,3L,132L,1L,1L
+
+#define SN_ecwkt_specifiedParameters            "ecwkt-specifiedParameters"
+#define NID_ecwkt_specifiedParameters           1492
+#define OBJ_ecwkt_specifiedParameters           1L,3L,132L,1L,10L
+
+#define SN_id_ecDH              "id-ecDH"
+#define NID_id_ecDH             1493
+#define OBJ_id_ecDH             1L,3L,132L,1L,12L
+
+#define SN_id_ecMQV             "id-ecMQV"
+#define NID_id_ecMQV            1494
+#define OBJ_id_ecMQV            1L,3L,132L,1L,13L
+
+#define SN_mqvSinglePass_sha224kdf_scheme               "mqvSinglePass-sha224kdf-scheme"
+#define NID_mqvSinglePass_sha224kdf_scheme              1495
+#define OBJ_mqvSinglePass_sha224kdf_scheme              1L,3L,132L,1L,15L,0L
+
+#define SN_mqvSinglePass_sha256kdf_scheme               "mqvSinglePass-sha256kdf-scheme"
+#define NID_mqvSinglePass_sha256kdf_scheme              1496
+#define OBJ_mqvSinglePass_sha256kdf_scheme              1L,3L,132L,1L,15L,1L
+
+#define SN_mqvSinglePass_sha384kdf_scheme               "mqvSinglePass-sha384kdf-scheme"
+#define NID_mqvSinglePass_sha384kdf_scheme              1497
+#define OBJ_mqvSinglePass_sha384kdf_scheme              1L,3L,132L,1L,15L,2L
+
+#define SN_mqvSinglePass_sha512kdf_scheme               "mqvSinglePass-sha512kdf-scheme"
+#define NID_mqvSinglePass_sha512kdf_scheme              1498
+#define OBJ_mqvSinglePass_sha512kdf_scheme              1L,3L,132L,1L,15L,3L
+
+#define SN_mqvFull_sha224kdf_scheme             "mqvFull-sha224kdf-scheme"
+#define NID_mqvFull_sha224kdf_scheme            1499
+#define OBJ_mqvFull_sha224kdf_scheme            1L,3L,132L,1L,16L,0L
+
+#define SN_mqvFull_sha256kdf_scheme             "mqvFull-sha256kdf-scheme"
+#define NID_mqvFull_sha256kdf_scheme            1500
+#define OBJ_mqvFull_sha256kdf_scheme            1L,3L,132L,1L,16L,1L
+
+#define SN_mqvFull_sha384kdf_scheme             "mqvFull-sha384kdf-scheme"
+#define NID_mqvFull_sha384kdf_scheme            1501
+#define OBJ_mqvFull_sha384kdf_scheme            1L,3L,132L,1L,16L,2L
+
+#define SN_mqvFull_sha512kdf_scheme             "mqvFull-sha512kdf-scheme"
+#define NID_mqvFull_sha512kdf_scheme            1502
+#define OBJ_mqvFull_sha512kdf_scheme            1L,3L,132L,1L,16L,3L
+
+#define SN_x9_63_kdf            "x9-63-kdf"
+#define NID_x9_63_kdf           1503
+#define OBJ_x9_63_kdf           1L,3L,132L,1L,17L,0L
+
+#define SN_nist_concatenation_kdf               "nist-concatenation-kdf"
+#define NID_nist_concatenation_kdf              1504
+#define OBJ_nist_concatenation_kdf              1L,3L,132L,1L,17L,1L
+
+#define SN_tls_kdf              "tls-kdf"
+#define NID_tls_kdf             1505
+#define OBJ_tls_kdf             1L,3L,132L,1L,17L,2L
+
+#define SN_ikev2_kdf            "ikev2-kdf"
+#define NID_ikev2_kdf           1506
+#define OBJ_ikev2_kdf           1L,3L,132L,1L,17L,3L
+
+#define SN_xor_in_ecies         "xor-in-ecies"
+#define NID_xor_in_ecies                1507
+#define OBJ_xor_in_ecies                1L,3L,132L,1L,18L
+
+#define SN_tdes_cbc_in_ecies            "tdes-cbc-in-ecies"
+#define NID_tdes_cbc_in_ecies           1508
+#define OBJ_tdes_cbc_in_ecies           1L,3L,132L,1L,19L
+
+#define SN_dhSinglePass_cofactorDH_specifiedKDF         "dhSinglePass-cofactorDH-specifiedKDF"
+#define NID_dhSinglePass_cofactorDH_specifiedKDF                1509
+#define OBJ_dhSinglePass_cofactorDH_specifiedKDF                1L,3L,132L,1L,2L
+
+#define SN_aes128_cbc_in_ecies          "aes128-cbc-in-ecies"
+#define NID_aes128_cbc_in_ecies         1510
+#define OBJ_aes128_cbc_in_ecies         1L,3L,132L,1L,20L,0L
+
+#define SN_aes192_cbc_in_ecies          "aes192-cbc-in-ecies"
+#define NID_aes192_cbc_in_ecies         1511
+#define OBJ_aes192_cbc_in_ecies         1L,3L,132L,1L,20L,1L
+
+#define SN_aes256_cbc_in_ecies          "aes256-cbc-in-ecies"
+#define NID_aes256_cbc_in_ecies         1512
+#define OBJ_aes256_cbc_in_ecies         1L,3L,132L,1L,20L,2L
+
+#define SN_aes128_ctr_in_ecies          "aes128-ctr-in-ecies"
+#define NID_aes128_ctr_in_ecies         1513
+#define OBJ_aes128_ctr_in_ecies         1L,3L,132L,1L,21L,0L
+
+#define SN_aes192_ctr_in_ecies          "aes192-ctr-in-ecies"
+#define NID_aes192_ctr_in_ecies         1514
+#define OBJ_aes192_ctr_in_ecies         1L,3L,132L,1L,21L,1L
+
+#define SN_aes256_ctr_in_ecies          "aes256-ctr-in-ecies"
+#define NID_aes256_ctr_in_ecies         1515
+#define OBJ_aes256_ctr_in_ecies         1L,3L,132L,1L,21L,2L
+
+#define SN_hmac_full_ecies              "hmac-full-ecies"
+#define NID_hmac_full_ecies             1516
+#define OBJ_hmac_full_ecies             1L,3L,132L,1L,22L
+
+#define SN_hmac_half_ecies              "hmac-half-ecies"
+#define NID_hmac_half_ecies             1517
+#define OBJ_hmac_half_ecies             1L,3L,132L,1L,23L
+
+#define SN_cmac_aes128_ecies            "cmac-aes128-ecies"
+#define NID_cmac_aes128_ecies           1518
+#define OBJ_cmac_aes128_ecies           1L,3L,132L,1L,24L,0L
+
+#define SN_cmac_aes192_ecies            "cmac-aes192-ecies"
+#define NID_cmac_aes192_ecies           1519
+#define OBJ_cmac_aes192_ecies           1L,3L,132L,1L,24L,1L
+
+#define SN_cmac_aes256_ecies            "cmac-aes256-ecies"
+#define NID_cmac_aes256_ecies           1520
+#define OBJ_cmac_aes256_ecies           1L,3L,132L,1L,24L,2L
+
+#define SN_aes128_key_wrap              "aes128-key-wrap"
+#define NID_aes128_key_wrap             1521
+#define OBJ_aes128_key_wrap             1L,3L,132L,1L,25L,0L
+
+#define SN_aes192_key_wrap              "aes192-key-wrap"
+#define NID_aes192_key_wrap             1522
+#define OBJ_aes192_key_wrap             1L,3L,132L,1L,25L,1L
+
+#define SN_aes256_key_wrap              "aes256-key-wrap"
+#define NID_aes256_key_wrap             1523
+#define OBJ_aes256_key_wrap             1L,3L,132L,1L,25L,2L
+
+#define SN_mqvSinglePass_recommendedKDF         "mqvSinglePass-recommendedKDF"
+#define NID_mqvSinglePass_recommendedKDF                1524
+#define OBJ_mqvSinglePass_recommendedKDF                1L,3L,132L,1L,3L
+
+#define SN_mqvSinglePass_specifiedKDF           "mqvSinglePass-specifiedKDF"
+#define NID_mqvSinglePass_specifiedKDF          1525
+#define OBJ_mqvSinglePass_specifiedKDF          1L,3L,132L,1L,4L
+
+#define SN_mqvFull_recommendedKDF               "mqvFull-recommendedKDF"
+#define NID_mqvFull_recommendedKDF              1526
+#define OBJ_mqvFull_recommendedKDF              1L,3L,132L,1L,5L
+
+#define SN_mqvFull_specifiedKDF         "mqvFull-specifiedKDF"
+#define NID_mqvFull_specifiedKDF                1527
+#define OBJ_mqvFull_specifiedKDF                1L,3L,132L,1L,6L
+
+#define SN_ecies_recommendedParameters          "ecies-recommendedParameters"
+#define NID_ecies_recommendedParameters         1528
+#define OBJ_ecies_recommendedParameters         1L,3L,132L,1L,7L
+
+#define SN_ecies_specifiedParameters            "ecies-specifiedParameters"
+#define NID_ecies_specifiedParameters           1529
+#define OBJ_ecies_specifiedParameters           1L,3L,132L,1L,8L
+
+#define SN_ecwkt_recommendedParameters          "ecwkt-recommendedParameters"
+#define NID_ecwkt_recommendedParameters         1530
+#define OBJ_ecwkt_recommendedParameters         1L,3L,132L,1L,9L
+
+#define SN_id_cms_attributes            "id-cms-attributes"
+#define NID_id_cms_attributes           1531
+#define OBJ_id_cms_attributes           1L,3L,133L,16L,840L,9L,73L,1L
+
+#define SN_xmlMarkup            "xmlMarkup"
+#define NID_xmlMarkup           1532
+#define OBJ_xmlMarkup           1L,3L,133L,16L,840L,9L,73L,1L,0L
+
+#define SN_id_cms_SAML          "id-cms-SAML"
+#define NID_id_cms_SAML         1533
+#define OBJ_id_cms_SAML         1L,3L,133L,16L,840L,9L,73L,1L,0L,1L
+
+#define SN_id_cms_XKMS          "id-cms-XKMS"
+#define NID_id_cms_XKMS         1534
+#define OBJ_id_cms_XKMS         1L,3L,133L,16L,840L,9L,73L,1L,0L,2L
+
+#define SN_id_messageComponents         "id-messageComponents"
+#define NID_id_messageComponents                1535
+#define OBJ_id_messageComponents                1L,3L,133L,16L,840L,9L,73L,1L,0L,3L
+
+#define SN_id_cms_namespaces            "id-cms-namespaces"
+#define NID_id_cms_namespaces           1536
+#define OBJ_id_cms_namespaces           1L,3L,133L,16L,840L,9L,73L,2L
+
+#define SN_cms          "cms"
+#define NID_cms         1537
+#define OBJ_cms         1L,3L,133L,16L,840L,9L,73L,2L,0L
+
+#define SN_id_tokenization_manifest             "id-tokenization-manifest"
+#define NID_id_tokenization_manifest            1538
+#define OBJ_id_tokenization_manifest            1L,3L,133L,16L,840L,9L,73L,3L
+
+#define SN_id_tokenizedParts            "id-tokenizedParts"
+#define NID_id_tokenizedParts           1539
+#define OBJ_id_tokenizedParts           1L,3L,133L,16L,840L,9L,73L,3L,0L
+
+#define SN_id_XPathTokensSet            "id-XPathTokensSet"
+#define NID_id_XPathTokensSet           1540
+#define OBJ_id_XPathTokensSet           1L,3L,133L,16L,840L,9L,73L,3L,1L
+
+#define SN_signcryption         "signcryption"
+#define NID_signcryption                1541
+#define OBJ_signcryption                1L,3L,133L,16L,840L,9L,73L,4L
+
+#define SN_signcryption_mode            "signcryption-mode"
+#define NID_signcryption_mode           1542
+#define OBJ_signcryption_mode           1L,3L,133L,16L,840L,9L,73L,4L,1L
+
+#define SN_signcrypted_content          "signcrypted-content"
+#define NID_signcrypted_content         1543
+#define OBJ_signcrypted_content         1L,3L,133L,16L,840L,9L,73L,4L,1L,1L
+
+#define SN_signcrypted_attributes               "signcrypted-attributes"
+#define NID_signcrypted_attributes              1544
+#define OBJ_signcrypted_attributes              1L,3L,133L,16L,840L,9L,73L,4L,1L,2L
+
+#define SN_signcrypted_components               "signcrypted-components"
+#define NID_signcrypted_components              1545
+#define OBJ_signcrypted_components              1L,3L,133L,16L,840L,9L,73L,4L,1L,3L
+
+#define SN_signcrypted_envelope         "signcrypted-envelope"
+#define NID_signcrypted_envelope                1546
+#define OBJ_signcrypted_envelope                1L,3L,133L,16L,840L,9L,73L,4L,1L,4L
+
+#define SN_oiw          "oiw"
+#define NID_oiw         1547
+#define OBJ_oiw         1L,3L,14L
+
+#define SN_teletrust            "teletrust"
+#define NID_teletrust           1548
+#define OBJ_teletrust           1L,3L,36L
+
+#define SN_ecStdCurvesAndGen            "ecStdCurvesAndGen"
+#define NID_ecStdCurvesAndGen           1549
+#define OBJ_ecStdCurvesAndGen           1L,3L,36L,3L,3L,2L,8L
+
+#define SN_versionOne           "versionOne"
+#define NID_versionOne          1550
+#define OBJ_versionOne          1L,3L,36L,3L,3L,2L,8L,1L,1L
+
+#define SN_assertion            "assertion"
+#define NID_assertion           1551
+#define OBJ_assertion           1L,3L,6L,1L,1L,12L
+
+#define SN_preread              "preread"
+#define NID_preread             1552
+#define OBJ_preread             1L,3L,6L,1L,1L,13L,1L
+
+#define SN_postread             "postread"
+#define NID_postread            1553
+#define OBJ_postread            1L,3L,6L,1L,1L,13L,2L
+
+#define SN_modifyIncrement              "modifyIncrement"
+#define NID_modifyIncrement             1554
+#define OBJ_modifyIncrement             1L,3L,6L,1L,1L,14L
+
+#define SN_id_ldx               "id-ldx"
+#define NID_id_ldx              1555
+#define OBJ_id_ldx              1L,3L,6L,1L,1L,15L
+
+#define SN_id_ldx_certExactAssertion            "id-ldx-certExactAssertion"
+#define NID_id_ldx_certExactAssertion           1556
+#define OBJ_id_ldx_certExactAssertion           1L,3L,6L,1L,1L,15L,1L
+
+#define SN_id_ldx_certAssertion         "id-ldx-certAssertion"
+#define NID_id_ldx_certAssertion                1557
+#define OBJ_id_ldx_certAssertion                1L,3L,6L,1L,1L,15L,2L
+
+#define SN_id_ldx_certPairExactAssertion                "id-ldx-certPairExactAssertion"
+#define NID_id_ldx_certPairExactAssertion               1558
+#define OBJ_id_ldx_certPairExactAssertion               1L,3L,6L,1L,1L,15L,3L
+
+#define SN_id_ldx_certPairAssertion             "id-ldx-certPairAssertion"
+#define NID_id_ldx_certPairAssertion            1559
+#define OBJ_id_ldx_certPairAssertion            1L,3L,6L,1L,1L,15L,4L
+
+#define SN_id_ldx_certListExactAssertion                "id-ldx-certListExactAssertion"
+#define NID_id_ldx_certListExactAssertion               1560
+#define OBJ_id_ldx_certListExactAssertion               1L,3L,6L,1L,1L,15L,5L
+
+#define SN_id_ldx_certListAssertion             "id-ldx-certListAssertion"
+#define NID_id_ldx_certListAssertion            1561
+#define OBJ_id_ldx_certListAssertion            1L,3L,6L,1L,1L,15L,6L
+
+#define SN_id_ldx_algorithmIdentifier           "id-ldx-algorithmIdentifier"
+#define NID_id_ldx_algorithmIdentifier          1562
+#define OBJ_id_ldx_algorithmIdentifier          1L,3L,6L,1L,1L,15L,7L
+
+#define SN_uuid         "uuid"
+#define NID_uuid                1563
+#define OBJ_uuid                1L,3L,6L,1L,1L,16L,1L
+
+#define SN_startLBURPRequest            "startLBURPRequest"
+#define NID_startLBURPRequest           1564
+#define OBJ_startLBURPRequest           1L,3L,6L,1L,1L,17L,1L
+
+#define SN_startLBURPResponse           "startLBURPResponse"
+#define NID_startLBURPResponse          1565
+#define OBJ_startLBURPResponse          1L,3L,6L,1L,1L,17L,2L
+
+#define SN_endLBURPRequest              "endLBURPRequest"
+#define NID_endLBURPRequest             1566
+#define OBJ_endLBURPRequest             1L,3L,6L,1L,1L,17L,3L
+
+#define SN_endLBURPResponse             "endLBURPResponse"
+#define NID_endLBURPResponse            1567
+#define OBJ_endLBURPResponse            1L,3L,6L,1L,1L,17L,4L
+
+#define SN_lburpUpdateRequest           "lburpUpdateRequest"
+#define NID_lburpUpdateRequest          1568
+#define OBJ_lburpUpdateRequest          1L,3L,6L,1L,1L,17L,5L
+
+#define SN_lburpUpdateResponse          "lburpUpdateResponse"
+#define NID_lburpUpdateResponse         1569
+#define OBJ_lburpUpdateResponse         1L,3L,6L,1L,1L,17L,6L
+
+#define SN_lburpIncrementalUpdateStyle          "lburpIncrementalUpdateStyle"
+#define NID_lburpIncrementalUpdateStyle         1570
+#define OBJ_lburpIncrementalUpdateStyle         1L,3L,6L,1L,1L,17L,7L
+
+#define SN_turn         "turn"
+#define NID_turn                1571
+#define OBJ_turn                1L,3L,6L,1L,1L,19L
+
+#define SN_startTransactionExtendedRequest              "startTransactionExtendedRequest"
+#define NID_startTransactionExtendedRequest             1572
+#define OBJ_startTransactionExtendedRequest             1L,3L,6L,1L,1L,21L,1L
+
+#define SN_transactionSpecification             "transactionSpecification"
+#define NID_transactionSpecification            1573
+#define OBJ_transactionSpecification            1L,3L,6L,1L,1L,21L,2L
+
+#define SN_endTransactionExtendedRequest                "endTransactionExtendedRequest"
+#define NID_endTransactionExtendedRequest               1574
+#define OBJ_endTransactionExtendedRequest               1L,3L,6L,1L,1L,21L,3L
+
+#define SN_abortedTransaction           "abortedTransaction"
+#define NID_abortedTransaction          1575
+#define OBJ_abortedTransaction          1L,3L,6L,1L,1L,21L,4L
+
+#define SN_dontUseCopy          "dontUseCopy"
+#define NID_dontUseCopy         1576
+#define OBJ_dontUseCopy         1L,3L,6L,1L,1L,22L
+
+#define SN_lcupSyncRequest              "lcupSyncRequest"
+#define NID_lcupSyncRequest             1577
+#define OBJ_lcupSyncRequest             1L,3L,6L,1L,1L,7L,1L
+
+#define SN_lcupSyncUpdate               "lcupSyncUpdate"
+#define NID_lcupSyncUpdate              1578
+#define OBJ_lcupSyncUpdate              1L,3L,6L,1L,1L,7L,2L
+
+#define SN_lcupSyncDone         "lcupSyncDone"
+#define NID_lcupSyncDone                1579
+#define OBJ_lcupSyncDone                1L,3L,6L,1L,1L,7L,3L
+
+#define SN_cancel               "cancel"
+#define NID_cancel              1580
+#define OBJ_cancel              1L,3L,6L,1L,1L,8L
+
+#define SN_ldap_wall            "ldap-wall"
+#define NID_ldap_wall           1581
+#define OBJ_ldap_wall           1L,3L,6L,1L,4L,1L,1466L
+
+#define SN_ldap_dynExt          "ldap-dynExt"
+#define NID_ldap_dynExt         1582
+#define OBJ_ldap_dynExt         1L,3L,6L,1L,4L,1L,1466L,101L,119L
+
+#define SN_dynamicRefresh               "dynamicRefresh"
+#define NID_dynamicRefresh              1583
+#define OBJ_dynamicRefresh              1L,3L,6L,1L,4L,1L,1466L,101L,119L,1L
+
+#define SN_id_lat               "id-lat"
+#define NID_id_lat              1584
+#define OBJ_id_lat              1L,3L,6L,1L,4L,1L,1466L,101L,120L
+
+#define SN_id_lat_supportedControl              "id-lat-supportedControl"
+#define NID_id_lat_supportedControl             1585
+#define OBJ_id_lat_supportedControl             1L,3L,6L,1L,4L,1L,1466L,101L,120L,13L
+
+#define SN_id_lat_supportedSASLMechanisms               "id-lat-supportedSASLMechanisms"
+#define NID_id_lat_supportedSASLMechanisms              1586
+#define OBJ_id_lat_supportedSASLMechanisms              1L,3L,6L,1L,4L,1L,1466L,101L,120L,14L
+
+#define SN_id_lat_supportedLDAPVersion          "id-lat-supportedLDAPVersion"
+#define NID_id_lat_supportedLDAPVersion         1587
+#define OBJ_id_lat_supportedLDAPVersion         1L,3L,6L,1L,4L,1L,1466L,101L,120L,15L
+
+#define SN_id_soa_ldapSyntaxes          "id-soa-ldapSyntaxes"
+#define NID_id_soa_ldapSyntaxes         1588
+#define OBJ_id_soa_ldapSyntaxes         1L,3L,6L,1L,4L,1L,1466L,101L,120L,16L
+
+#define SN_id_lat_namingContexts                "id-lat-namingContexts"
+#define NID_id_lat_namingContexts               1589
+#define OBJ_id_lat_namingContexts               1L,3L,6L,1L,4L,1L,1466L,101L,120L,5L
+
+#define SN_id_lat_altServer             "id-lat-altServer"
+#define NID_id_lat_altServer            1590
+#define OBJ_id_lat_altServer            1L,3L,6L,1L,4L,1L,1466L,101L,120L,6L
+
+#define SN_id_lat_supportedExtension            "id-lat-supportedExtension"
+#define NID_id_lat_supportedExtension           1591
+#define OBJ_id_lat_supportedExtension           1L,3L,6L,1L,4L,1L,1466L,101L,120L,7L
+
+#define SN_id_lmr               "id-lmr"
+#define NID_id_lmr              1592
+#define OBJ_id_lmr              1L,3L,6L,1L,4L,1L,1466L,109L,114L
+
+#define SN_id_lmr_caseExactIA5Match             "id-lmr-caseExactIA5Match"
+#define NID_id_lmr_caseExactIA5Match            1593
+#define OBJ_id_lmr_caseExactIA5Match            1L,3L,6L,1L,4L,1L,1466L,109L,114L,1L
+
+#define SN_id_lmr_caseIgnoreIA5Match            "id-lmr-caseIgnoreIA5Match"
+#define NID_id_lmr_caseIgnoreIA5Match           1594
+#define OBJ_id_lmr_caseIgnoreIA5Match           1L,3L,6L,1L,4L,1L,1466L,109L,114L,2L
+
+#define SN_id_lmr_caseIgnoreIA5SubstringsMatch          "id-lmr-caseIgnoreIA5SubstringsMatch"
+#define NID_id_lmr_caseIgnoreIA5SubstringsMatch         1595
+#define OBJ_id_lmr_caseIgnoreIA5SubstringsMatch         1L,3L,6L,1L,4L,1L,1466L,109L,114L,3L
+
+#define SN_id_lsx               "id-lsx"
+#define NID_id_lsx              1596
+#define OBJ_id_lsx              1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L
+
+#define SN_id_lsx_x509CertificatePair           "id-lsx-x509CertificatePair"
+#define NID_id_lsx_x509CertificatePair          1597
+#define OBJ_id_lsx_x509CertificatePair          1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,10L
+
+#define SN_countryString                "countryString"
+#define NID_countryString               1598
+#define OBJ_countryString               1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,11L
+
+#define SN_dn           "dn"
+#define NID_dn          1599
+#define OBJ_dn          1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,12L
+
+#define SN_deliveryMethod               "deliveryMethod"
+#define NID_deliveryMethod              1600
+#define OBJ_deliveryMethod              1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,14L
+
+#define SN_directoryString              "directoryString"
+#define NID_directoryString             1601
+#define OBJ_directoryString             1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,15L
+
+#define SN_ditContentRuleDescription            "ditContentRuleDescription"
+#define NID_ditContentRuleDescription           1602
+#define OBJ_ditContentRuleDescription           1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,16L
+
+#define SN_ditStructureRuleDescription          "ditStructureRuleDescription"
+#define NID_ditStructureRuleDescription         1603
+#define OBJ_ditStructureRuleDescription         1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,17L
+
+#define SN_enhancedGuide                "enhancedGuide"
+#define NID_enhancedGuide               1604
+#define OBJ_enhancedGuide               1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,21L
+
+#define SN_fax          "fax"
+#define NID_fax         1605
+#define OBJ_fax         1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,23L
+
+#define SN_generalizedTime              "generalizedTime"
+#define NID_generalizedTime             1606
+#define OBJ_generalizedTime             1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,24L
+
+#define SN_guide                "guide"
+#define NID_guide               1607
+#define OBJ_guide               1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,25L
+
+#define SN_ia5String            "ia5String"
+#define NID_ia5String           1608
+#define OBJ_ia5String           1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,26L
+
+#define SN_integer              "integer"
+#define NID_integer             1609
+#define OBJ_integer             1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,27L
+
+#define SN_jpeg         "jpeg"
+#define NID_jpeg                1610
+#define OBJ_jpeg                1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,28L
+
+#define SN_attributeTypeDescription             "attributeTypeDescription"
+#define NID_attributeTypeDescription            1611
+#define OBJ_attributeTypeDescription            1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,3L
+
+#define SN_matchingRuleDescription              "matchingRuleDescription"
+#define NID_matchingRuleDescription             1612
+#define OBJ_matchingRuleDescription             1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,30L
+
+#define SN_matchingRuleUseDescription           "matchingRuleUseDescription"
+#define NID_matchingRuleUseDescription          1613
+#define OBJ_matchingRuleUseDescription          1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,31L
+
+#define SN_nameAndOptionalUID           "nameAndOptionalUID"
+#define NID_nameAndOptionalUID          1614
+#define OBJ_nameAndOptionalUID          1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,34L
+
+#define SN_nameFormDescription          "nameFormDescription"
+#define NID_nameFormDescription         1615
+#define OBJ_nameFormDescription         1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,35L
+
+#define SN_numericString                "numericString"
+#define NID_numericString               1616
+#define OBJ_numericString               1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,36L
+
+#define SN_objectClassDescription               "objectClassDescription"
+#define NID_objectClassDescription              1617
+#define OBJ_objectClassDescription              1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,37L
+
+#define SN_oid          "oid"
+#define NID_oid         1618
+#define OBJ_oid         1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,38L
+
+#define SN_octetString          "octetString"
+#define NID_octetString         1619
+#define OBJ_octetString         1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,40L
+
+#define SN_id_lsx_presentationAddr              "id-lsx-presentationAddr"
+#define NID_id_lsx_presentationAddr             1620
+#define OBJ_id_lsx_presentationAddr             1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,43L
+
+#define SN_printableString              "printableString"
+#define NID_printableString             1621
+#define OBJ_printableString             1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,44L
+
+#define SN_id_lsx_subtreeSpec           "id-lsx-subtreeSpec"
+#define NID_id_lsx_subtreeSpec          1622
+#define OBJ_id_lsx_subtreeSpec          1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,45L
+
+#define SN_id_lsx_x509SupportedAlgorithm                "id-lsx-x509SupportedAlgorithm"
+#define NID_id_lsx_x509SupportedAlgorithm               1623
+#define OBJ_id_lsx_x509SupportedAlgorithm               1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,49L
+
+#define SN_utcTime              "utcTime"
+#define NID_utcTime             1624
+#define OBJ_utcTime             1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,53L
+
+#define SN_ldapSyntaxDescription                "ldapSyntaxDescription"
+#define NID_ldapSyntaxDescription               1625
+#define OBJ_ldapSyntaxDescription               1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,54L
+
+#define SN_substringAssertion           "substringAssertion"
+#define NID_substringAssertion          1626
+#define OBJ_substringAssertion          1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,58L
+
+#define SN_bitString            "bitString"
+#define NID_bitString           1627
+#define OBJ_bitString           1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,6L
+
+#define SN_boolean_             "boolean-"
+#define NID_boolean_            1628
+#define OBJ_boolean_            1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,7L
+
+#define SN_id_lsx_x509Certificate               "id-lsx-x509Certificate"
+#define NID_id_lsx_x509Certificate              1629
+#define OBJ_id_lsx_x509Certificate              1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,8L
+
+#define SN_id_lsx_x509CertificateList           "id-lsx-x509CertificateList"
+#define NID_id_lsx_x509CertificateList          1630
+#define OBJ_id_lsx_x509CertificateList          1L,3L,6L,1L,4L,1L,1466L,115L,121L,1L,9L
+
+#define SN_startTLS             "startTLS"
+#define NID_startTLS            1631
+#define OBJ_startTLS            1L,3L,6L,1L,4L,1L,1466L,20037L
+
+#define SN_hashAlg              "hashAlg"
+#define NID_hashAlg             1632
+#define OBJ_hashAlg             1L,3L,6L,1L,4L,1L,1722L,12L,2L
+
+#define SN_ldap_openLDAP                "ldap-openLDAP"
+#define NID_ldap_openLDAP               1633
+#define OBJ_ldap_openLDAP               1L,3L,6L,1L,4L,1L,4203L,1L
+
+#define SN_openLDAP_controls            "openLDAP-controls"
+#define NID_openLDAP_controls           1634
+#define OBJ_openLDAP_controls           1L,3L,6L,1L,4L,1L,4203L,1L,10L
+
+#define SN_subentries           "subentries"
+#define NID_subentries          1635
+#define OBJ_subentries          1L,3L,6L,1L,4L,1L,4203L,1L,10L,1L
+
+#define SN_modifyPassword               "modifyPassword"
+#define NID_modifyPassword              1636
+#define OBJ_modifyPassword              1L,3L,6L,1L,4L,1L,4203L,1L,11L,1L
+
+#define SN_whoAmI               "whoAmI"
+#define NID_whoAmI              1637
+#define OBJ_whoAmI              1L,3L,6L,1L,4L,1L,4203L,1L,11L,3L
+
+#define SN_id_oat               "id-oat"
+#define NID_id_oat              1638
+#define OBJ_id_oat              1L,3L,6L,1L,4L,1L,4203L,1L,3L
+
+#define SN_id_oat_supportedFeatures             "id-oat-supportedFeatures"
+#define NID_id_oat_supportedFeatures            1639
+#define OBJ_id_oat_supportedFeatures            1L,3L,6L,1L,4L,1L,4203L,1L,3L,5L
+
+#define SN_allOpAttrs           "allOpAttrs"
+#define NID_allOpAttrs          1640
+#define OBJ_allOpAttrs          1L,3L,6L,1L,4L,1L,4203L,1L,5L,1L
+
+#define SN_ocadLists            "ocadLists"
+#define NID_ocadLists           1641
+#define OBJ_ocadLists           1L,3L,6L,1L,4L,1L,4203L,1L,5L,2L
+
+#define SN_trueFalseFilters             "trueFalseFilters"
+#define NID_trueFalseFilters            1642
+#define OBJ_trueFalseFilters            1L,3L,6L,1L,4L,1L,4203L,1L,5L,3L
+
+#define SN_languageTag          "languageTag"
+#define NID_languageTag         1643
+#define OBJ_languageTag         1L,3L,6L,1L,4L,1L,4203L,1L,5L,4L
+
+#define SN_languageRange                "languageRange"
+#define NID_languageRange               1644
+#define OBJ_languageRange               1L,3L,6L,1L,4L,1L,4203L,1L,5L,5L
+
+#define SN_contentSynchronization               "contentSynchronization"
+#define NID_contentSynchronization              1645
+#define OBJ_contentSynchronization              1L,3L,6L,1L,4L,1L,4203L,1L,9L,1L,1L
+
+#define SN_id_krb5              "id-krb5"
+#define NID_id_krb5             1646
+#define OBJ_id_krb5             1L,3L,6L,1L,5L,2L
+
+#define SN_md5_DES_CBC          "md5-DES-CBC"
+#define NID_md5_DES_CBC         1647
+#define OBJ_md5_DES_CBC         1L,3L,6L,1L,5L,3L,1L
+
+#define SN_sum64_DES_CBC                "sum64-DES-CBC"
+#define NID_sum64_DES_CBC               1648
+#define OBJ_sum64_DES_CBC               1L,3L,6L,1L,5L,3L,2L
+
+#define SN_spkm_1               "spkm-1"
+#define NID_spkm_1              1649
+#define OBJ_spkm_1              1L,3L,6L,1L,5L,5L,1L,1L
+
+#define SN_spkm_2               "spkm-2"
+#define NID_spkm_2              1650
+#define OBJ_spkm_2              1L,3L,6L,1L,5L,5L,1L,2L
+
+#define SN_ltans                "ltans"
+#define NID_ltans               1651
+#define OBJ_ltans               1L,3L,6L,1L,5L,5L,11L
+
+#define SN_id_qcs_pkixQCSyntax_v2               "id-qcs-pkixQCSyntax-v2"
+#define NID_id_qcs_pkixQCSyntax_v2              1652
+#define OBJ_id_qcs_pkixQCSyntax_v2              1L,3L,6L,1L,5L,5L,7L,11L,2L
+
+#define SN_id_stc               "id-stc"
+#define NID_id_stc              1653
+#define OBJ_id_stc              1L,3L,6L,1L,5L,5L,7L,17L
+
+#define SN_id_stc_build_pkc_path                "id-stc-build-pkc-path"
+#define NID_id_stc_build_pkc_path               1654
+#define OBJ_id_stc_build_pkc_path               1L,3L,6L,1L,5L,5L,7L,17L,1L
+
+#define SN_id_stc_build_valid_pkc_path          "id-stc-build-valid-pkc-path"
+#define NID_id_stc_build_valid_pkc_path         1655
+#define OBJ_id_stc_build_valid_pkc_path         1L,3L,6L,1L,5L,5L,7L,17L,2L
+
+#define SN_id_stc_build_status_checked_pkc_path         "id-stc-build-status-checked-pkc-path"
+#define NID_id_stc_build_status_checked_pkc_path                1656
+#define OBJ_id_stc_build_status_checked_pkc_path                1L,3L,6L,1L,5L,5L,7L,17L,3L
+
+#define SN_id_stc_build_aa_path         "id-stc-build-aa-path"
+#define NID_id_stc_build_aa_path                1657
+#define OBJ_id_stc_build_aa_path                1L,3L,6L,1L,5L,5L,7L,17L,4L
+
+#define SN_id_stc_build_valid_aa_path           "id-stc-build-valid-aa-path"
+#define NID_id_stc_build_valid_aa_path          1658
+#define OBJ_id_stc_build_valid_aa_path          1L,3L,6L,1L,5L,5L,7L,17L,5L
+
+#define SN_id_stc_build_status_checked_aa_path          "id-stc-build-status-checked-aa-path"
+#define NID_id_stc_build_status_checked_aa_path         1659
+#define OBJ_id_stc_build_status_checked_aa_path         1L,3L,6L,1L,5L,5L,7L,17L,6L
+
+#define SN_id_stc_status_check_ac_and_build_status_checked_aa_path              "id-stc-status-check-ac-and-build-status-checked-aa-path"
+#define NID_id_stc_status_check_ac_and_build_status_checked_aa_path             1660
+#define OBJ_id_stc_status_check_ac_and_build_status_checked_aa_path             1L,3L,6L,1L,5L,5L,7L,17L,7L
+
+#define SN_id_swb               "id-swb"
+#define NID_id_swb              1661
+#define OBJ_id_swb              1L,3L,6L,1L,5L,5L,7L,18L
+
+#define SN_id_swb_pkc_best_cert_path            "id-swb-pkc-best-cert-path"
+#define NID_id_swb_pkc_best_cert_path           1662
+#define OBJ_id_swb_pkc_best_cert_path           1L,3L,6L,1L,5L,5L,7L,18L,1L
+
+#define SN_id_swb_pkc_cert              "id-swb-pkc-cert"
+#define NID_id_swb_pkc_cert             1663
+#define OBJ_id_swb_pkc_cert             1L,3L,6L,1L,5L,5L,7L,18L,10L
+
+#define SN_id_swb_ac_cert               "id-swb-ac-cert"
+#define NID_id_swb_ac_cert              1664
+#define OBJ_id_swb_ac_cert              1L,3L,6L,1L,5L,5L,7L,18L,11L
+
+#define SN_id_swb_pkc_all_cert_paths            "id-swb-pkc-all-cert-paths"
+#define NID_id_swb_pkc_all_cert_paths           1665
+#define OBJ_id_swb_pkc_all_cert_paths           1L,3L,6L,1L,5L,5L,7L,18L,12L
+
+#define SN_id_swb_pkc_ee_revocation_info                "id-swb-pkc-ee-revocation-info"
+#define NID_id_swb_pkc_ee_revocation_info               1666
+#define OBJ_id_swb_pkc_ee_revocation_info               1L,3L,6L,1L,5L,5L,7L,18L,13L
+
+#define SN_id_swb_pkc_CAs_revocation_info               "id-swb-pkc-CAs-revocation-info"
+#define NID_id_swb_pkc_CAs_revocation_info              1667
+#define OBJ_id_swb_pkc_CAs_revocation_info              1L,3L,6L,1L,5L,5L,7L,18L,14L
+
+#define SN_id_swb_pkc_revocation_info           "id-swb-pkc-revocation-info"
+#define NID_id_swb_pkc_revocation_info          1668
+#define OBJ_id_swb_pkc_revocation_info          1L,3L,6L,1L,5L,5L,7L,18L,2L
+
+#define SN_id_swb_pkc_public_key_info           "id-swb-pkc-public-key-info"
+#define NID_id_swb_pkc_public_key_info          1669
+#define OBJ_id_swb_pkc_public_key_info          1L,3L,6L,1L,5L,5L,7L,18L,4L
+
+#define SN_id_swb_aa_cert_path          "id-swb-aa-cert-path"
+#define NID_id_swb_aa_cert_path         1670
+#define OBJ_id_swb_aa_cert_path         1L,3L,6L,1L,5L,5L,7L,18L,5L
+
+#define SN_id_swb_aa_revocation_info            "id-swb-aa-revocation-info"
+#define NID_id_swb_aa_revocation_info           1671
+#define OBJ_id_swb_aa_revocation_info           1L,3L,6L,1L,5L,5L,7L,18L,6L
+
+#define SN_id_swb_ac_revocation_info            "id-swb-ac-revocation-info"
+#define NID_id_swb_ac_revocation_info           1672
+#define OBJ_id_swb_ac_revocation_info           1L,3L,6L,1L,5L,5L,7L,18L,7L
+
+#define SN_id_swb_relayed_responses             "id-swb-relayed-responses"
+#define NID_id_swb_relayed_responses            1673
+#define OBJ_id_swb_relayed_responses            1L,3L,6L,1L,5L,5L,7L,18L,9L
+
+#define SN_id_svp               "id-svp"
+#define NID_id_svp              1674
+#define OBJ_id_svp              1L,3L,6L,1L,5L,5L,7L,19L
+
+#define SN_id_svp_defaultValPolicy              "id-svp-defaultValPolicy"
+#define NID_id_svp_defaultValPolicy             1675
+#define OBJ_id_svp_defaultValPolicy             1L,3L,6L,1L,5L,5L,7L,19L,1L
+
+#define SN_id_nvae              "id-nvae"
+#define NID_id_nvae             1676
+#define OBJ_id_nvae             1L,3L,6L,1L,5L,5L,7L,19L,2L
+
+#define SN_id_nvae_name_mismatch                "id-nvae-name-mismatch"
+#define NID_id_nvae_name_mismatch               1677
+#define OBJ_id_nvae_name_mismatch               1L,3L,6L,1L,5L,5L,7L,19L,2L,1L
+
+#define SN_id_nvae_no_name              "id-nvae-no-name"
+#define NID_id_nvae_no_name             1678
+#define OBJ_id_nvae_no_name             1L,3L,6L,1L,5L,5L,7L,19L,2L,2L
+
+#define SN_id_nvae_unknown_alg          "id-nvae-unknown-alg"
+#define NID_id_nvae_unknown_alg         1679
+#define OBJ_id_nvae_unknown_alg         1L,3L,6L,1L,5L,5L,7L,19L,2L,3L
+
+#define SN_id_nvae_bad_name             "id-nvae-bad-name"
+#define NID_id_nvae_bad_name            1680
+#define OBJ_id_nvae_bad_name            1L,3L,6L,1L,5L,5L,7L,19L,2L,4L
+
+#define SN_id_nvae_bad_name_type                "id-nvae-bad-name-type"
+#define NID_id_nvae_bad_name_type               1681
+#define OBJ_id_nvae_bad_name_type               1L,3L,6L,1L,5L,5L,7L,19L,2L,5L
+
+#define SN_id_nvae_mixed_names          "id-nvae-mixed-names"
+#define NID_id_nvae_mixed_names         1682
+#define OBJ_id_nvae_mixed_names         1L,3L,6L,1L,5L,5L,7L,19L,2L,6L
+
+#define SN_id_bvae              "id-bvae"
+#define NID_id_bvae             1683
+#define OBJ_id_bvae             1L,3L,6L,1L,5L,5L,7L,19L,3L
+
+#define SN_id_bvae_expired              "id-bvae-expired"
+#define NID_id_bvae_expired             1684
+#define OBJ_id_bvae_expired             1L,3L,6L,1L,5L,5L,7L,19L,3L,1L
+
+#define SN_id_bvae_invalidKeyUsage              "id-bvae-invalidKeyUsage"
+#define NID_id_bvae_invalidKeyUsage             1685
+#define OBJ_id_bvae_invalidKeyUsage             1L,3L,6L,1L,5L,5L,7L,19L,3L,10L
+
+#define SN_id_bvae_invalidCertPolicy            "id-bvae-invalidCertPolicy"
+#define NID_id_bvae_invalidCertPolicy           1686
+#define OBJ_id_bvae_invalidCertPolicy           1L,3L,6L,1L,5L,5L,7L,19L,3L,11L
+
+#define SN_id_bvae_not_yet_valid                "id-bvae-not-yet-valid"
+#define NID_id_bvae_not_yet_valid               1687
+#define OBJ_id_bvae_not_yet_valid               1L,3L,6L,1L,5L,5L,7L,19L,3L,2L
+
+#define SN_id_bvae_wrongTrustAnchor             "id-bvae-wrongTrustAnchor"
+#define NID_id_bvae_wrongTrustAnchor            1688
+#define OBJ_id_bvae_wrongTrustAnchor            1L,3L,6L,1L,5L,5L,7L,19L,3L,3L
+
+#define SN_id_bvae_noValidCertPath              "id-bvae-noValidCertPath"
+#define NID_id_bvae_noValidCertPath             1689
+#define OBJ_id_bvae_noValidCertPath             1L,3L,6L,1L,5L,5L,7L,19L,3L,4L
+
+#define SN_id_bvae_revoked              "id-bvae-revoked"
+#define NID_id_bvae_revoked             1690
+#define OBJ_id_bvae_revoked             1L,3L,6L,1L,5L,5L,7L,19L,3L,5L
+
+#define SN_id_bvae_invalidKeyPurpose            "id-bvae-invalidKeyPurpose"
+#define NID_id_bvae_invalidKeyPurpose           1691
+#define OBJ_id_bvae_invalidKeyPurpose           1L,3L,6L,1L,5L,5L,7L,19L,3L,9L
+
+#define SN_id_nva_dnCompAlg             "id-nva-dnCompAlg"
+#define NID_id_nva_dnCompAlg            1692
+#define OBJ_id_nva_dnCompAlg            1L,3L,6L,1L,5L,5L,7L,19L,4L
+
+#define SN_id_kp_scvpServer             "id-kp-scvpServer"
+#define NID_id_kp_scvpServer            1693
+#define OBJ_id_kp_scvpServer            1L,3L,6L,1L,5L,5L,7L,3L,15L
+
+#define SN_id_kp_scvpClient             "id-kp-scvpClient"
+#define NID_id_kp_scvpClient            1694
+#define OBJ_id_kp_scvpClient            1L,3L,6L,1L,5L,5L,7L,3L,16L
+
+#define SN_ccr_basic_encoding           "ccr-basic-encoding"
+#define NID_ccr_basic_encoding          1695
+#define OBJ_ccr_basic_encoding          2L,1L,1L
+
+#define SN_finf_doc_opt_decl            "finf-doc-opt-decl"
+#define NID_finf_doc_opt_decl           1696
+#define OBJ_finf_doc_opt_decl           2L,1L,10L,0L,1L,0L
+
+#define SN_finf_doc_no_decl             "finf-doc-no-decl"
+#define NID_finf_doc_no_decl            1697
+#define OBJ_finf_doc_no_decl            2L,1L,10L,0L,1L,1L
+
+#define SN_der          "der"
+#define NID_der         1698
+#define OBJ_der         2L,1L,2L,1L
+
+#define SN_basic_per_aligned            "basic-per-aligned"
+#define NID_basic_per_aligned           1699
+#define OBJ_basic_per_aligned           2L,1L,3L,0L,0L
+
+#define SN_network_layer                "network-layer"
+#define NID_network_layer               1700
+#define OBJ_network_layer               2L,13L
+
+#define SN_nl           "nl"
+#define NID_nl          1701
+#define OBJ_nl          2L,13L,0L
+
+#define SN_cmoi         "cmoi"
+#define NID_cmoi                1702
+#define OBJ_cmoi                2L,13L,0L,0L
+
+#define SN_sseoi                "sseoi"
+#define NID_sseoi               1703
+#define OBJ_sseoi               2L,13L,0L,0L,0L
+
+#define SN_fupoi                "fupoi"
+#define NID_fupoi               1704
+#define OBJ_fupoi               2L,13L,0L,0L,1L
+
+#define SN_informationEventReports              "informationEventReports"
+#define NID_informationEventReports             1705
+#define OBJ_informationEventReports             2L,13L,0L,0L,1L,1000L
+
+#define SN_noi          "noi"
+#define NID_noi         1706
+#define OBJ_noi         2L,13L,0L,0L,10L
+
+#define SN_moi          "moi"
+#define NID_moi         1707
+#define OBJ_moi         2L,13L,0L,0L,3L
+
+#define SN_poi          "poi"
+#define NID_poi         1708
+#define OBJ_poi         2L,13L,0L,0L,4L
+
+#define SN_proi         "proi"
+#define NID_proi                1709
+#define OBJ_proi                2L,13L,0L,0L,5L
+
+#define SN_responseCode         "responseCode"
+#define NID_responseCode                1710
+#define OBJ_responseCode                2L,13L,0L,0L,5L,1001L
+
+#define SN_failureResponse              "failureResponse"
+#define NID_failureResponse             1711
+#define OBJ_failureResponse             2L,13L,0L,0L,5L,1001L,1001L
+
+#define SN_successResponse              "successResponse"
+#define NID_successResponse             1712
+#define OBJ_successResponse             2L,13L,0L,0L,5L,1001L,1002L
+
+#define SN_aoi          "aoi"
+#define NID_aoi         1713
+#define OBJ_aoi         2L,13L,0L,0L,7L
+
+#define SN_agoi         "agoi"
+#define NID_agoi                1714
+#define OBJ_agoi                2L,13L,0L,0L,8L
+
+#define SN_acoi         "acoi"
+#define NID_acoi                1715
+#define OBJ_acoi                2L,13L,0L,0L,9L
+
+#define SN_isisoi               "isisoi"
+#define NID_isisoi              1716
+#define OBJ_isisoi              2L,13L,0L,1L
+
+#define SN_se           "se"
+#define NID_se          1717
+#define OBJ_se          2L,13L,0L,1L,0L,3L
+
+#define SN_areaMismatch         "areaMismatch"
+#define NID_areaMismatch                1718
+#define OBJ_areaMismatch                2L,13L,0L,1L,0L,3L,0L
+
+#define SN_attemptToExceedMaximumSequenceNumber         "attemptToExceedMaximumSequenceNumber"
+#define NID_attemptToExceedMaximumSequenceNumber                1719
+#define OBJ_attemptToExceedMaximumSequenceNumber                2L,13L,0L,1L,0L,3L,1L
+
+#define SN_ownLSPPurge          "ownLSPPurge"
+#define NID_ownLSPPurge         1720
+#define OBJ_ownLSPPurge         2L,13L,0L,1L,0L,3L,10L
+
+#define SN_partitionVirtualLinkChange           "partitionVirtualLinkChange"
+#define NID_partitionVirtualLinkChange          1721
+#define OBJ_partitionVirtualLinkChange          2L,13L,0L,1L,0L,3L,11L
+
+#define SN_rejectedAdjacency            "rejectedAdjacency"
+#define NID_rejectedAdjacency           1722
+#define OBJ_rejectedAdjacency           2L,13L,0L,1L,0L,3L,12L
+
+#define SN_sequenceNumberSkip           "sequenceNumberSkip"
+#define NID_sequenceNumberSkip          1723
+#define OBJ_sequenceNumberSkip          2L,13L,0L,1L,0L,3L,13L
+
+#define SN_versionSkew          "versionSkew"
+#define NID_versionSkew         1724
+#define OBJ_versionSkew         2L,13L,0L,1L,0L,3L,14L
+
+#define SN_originatingLSPBufferSizeMismatch             "originatingLSPBufferSizeMismatch"
+#define NID_originatingLSPBufferSizeMismatch            1725
+#define OBJ_originatingLSPBufferSizeMismatch            2L,13L,0L,1L,0L,3L,15L
+
+#define SN_corruptedLSPsDetected                "corruptedLSPsDetected"
+#define NID_corruptedLSPsDetected               1726
+#define OBJ_corruptedLSPsDetected               2L,13L,0L,1L,0L,3L,3L
+
+#define SN_iDFieldLengthMismatch                "iDFieldLengthMismatch"
+#define NID_iDFieldLengthMismatch               1727
+#define OBJ_iDFieldLengthMismatch               2L,13L,0L,1L,0L,3L,4L
+
+#define SN_lanL1DesignatedIntermediateSystemChange              "lanL1DesignatedIntermediateSystemChange"
+#define NID_lanL1DesignatedIntermediateSystemChange             1728
+#define OBJ_lanL1DesignatedIntermediateSystemChange             2L,13L,0L,1L,0L,3L,5L
+
+#define SN_lSPL1DatabaseOverload                "lSPL1DatabaseOverload"
+#define NID_lSPL1DatabaseOverload               1729
+#define OBJ_lSPL1DatabaseOverload               2L,13L,0L,1L,0L,3L,6L
+
+#define SN_lSPL2DatabaseOverload                "lSPL2DatabaseOverload"
+#define NID_lSPL2DatabaseOverload               1730
+#define OBJ_lSPL2DatabaseOverload               2L,13L,0L,1L,0L,3L,7L
+
+#define SN_manualAddressDroppedFromArea         "manualAddressDroppedFromArea"
+#define NID_manualAddressDroppedFromArea                1731
+#define OBJ_manualAddressDroppedFromArea                2L,13L,0L,1L,0L,3L,8L
+
+#define SN_maximumAreaAddressesMismatch         "maximumAreaAddressesMismatch"
+#define NID_maximumAreaAddressesMismatch                1732
+#define OBJ_maximumAreaAddressesMismatch                2L,13L,0L,1L,0L,3L,9L
+
+#define SN_nboi         "nboi"
+#define NID_nboi                1733
+#define OBJ_nboi                2L,13L,0L,1L,6L
+
+#define SN_nloi         "nloi"
+#define NID_nloi                1734
+#define OBJ_nloi                2L,13L,0L,2L
+
+#define SN_pDUDiscard           "pDUDiscard"
+#define NID_pDUDiscard          1735
+#define OBJ_pDUDiscard          2L,13L,0L,2L,0L,3L,1L
+
+#define SN_pDUDiscardReasonNotSpecified         "pDUDiscardReasonNotSpecified"
+#define NID_pDUDiscardReasonNotSpecified                1736
+#define OBJ_pDUDiscardReasonNotSpecified                2L,13L,0L,2L,0L,3L,1L,0L
+
+#define SN_pDUDiscardProtocolProcedureError             "pDUDiscardProtocolProcedureError"
+#define NID_pDUDiscardProtocolProcedureError            1737
+#define OBJ_pDUDiscardProtocolProcedureError            2L,13L,0L,2L,0L,3L,1L,1L
+
+#define SN_pDUDiscardDestinationAddressUnreachable              "pDUDiscardDestinationAddressUnreachable"
+#define NID_pDUDiscardDestinationAddressUnreachable             1738
+#define OBJ_pDUDiscardDestinationAddressUnreachable             2L,13L,0L,2L,0L,3L,1L,128L
+
+#define SN_pDUDiscardDestinationAddressUnknown          "pDUDiscardDestinationAddressUnknown"
+#define NID_pDUDiscardDestinationAddressUnknown         1739
+#define OBJ_pDUDiscardDestinationAddressUnknown         2L,13L,0L,2L,0L,3L,1L,129L
+
+#define SN_pDUDiscardUnspecifiedSourceRouteingError             "pDUDiscardUnspecifiedSourceRouteingError"
+#define NID_pDUDiscardUnspecifiedSourceRouteingError            1740
+#define OBJ_pDUDiscardUnspecifiedSourceRouteingError            2L,13L,0L,2L,0L,3L,1L,144L
+
+#define SN_pDUDiscardSyntaxErrorInSourceRouteingField           "pDUDiscardSyntaxErrorInSourceRouteingField"
+#define NID_pDUDiscardSyntaxErrorInSourceRouteingField          1741
+#define OBJ_pDUDiscardSyntaxErrorInSourceRouteingField          2L,13L,0L,2L,0L,3L,1L,145L
+
+#define SN_pDUDiscardUnknownAddressInSourceRouteingField                "pDUDiscardUnknownAddressInSourceRouteingField"
+#define NID_pDUDiscardUnknownAddressInSourceRouteingField               1742
+#define OBJ_pDUDiscardUnknownAddressInSourceRouteingField               2L,13L,0L,2L,0L,3L,1L,146L
+
+#define SN_pDUDiscardPathNotAcceptable          "pDUDiscardPathNotAcceptable"
+#define NID_pDUDiscardPathNotAcceptable         1743
+#define OBJ_pDUDiscardPathNotAcceptable         2L,13L,0L,2L,0L,3L,1L,147L
+
+#define SN_pDUDiscardLifetimeExpiredWhileDataUnitInTransit              "pDUDiscardLifetimeExpiredWhileDataUnitInTransit"
+#define NID_pDUDiscardLifetimeExpiredWhileDataUnitInTransit             1744
+#define OBJ_pDUDiscardLifetimeExpiredWhileDataUnitInTransit             2L,13L,0L,2L,0L,3L,1L,160L
+
+#define SN_pDUDiscardLifetimeExpiredDuringReassembly            "pDUDiscardLifetimeExpiredDuringReassembly"
+#define NID_pDUDiscardLifetimeExpiredDuringReassembly           1745
+#define OBJ_pDUDiscardLifetimeExpiredDuringReassembly           2L,13L,0L,2L,0L,3L,1L,161L
+
+#define SN_pDUDiscardUnsupportedOptionNotSpecified              "pDUDiscardUnsupportedOptionNotSpecified"
+#define NID_pDUDiscardUnsupportedOptionNotSpecified             1746
+#define OBJ_pDUDiscardUnsupportedOptionNotSpecified             2L,13L,0L,2L,0L,3L,1L,176L
+
+#define SN_pDUDiscardUnsupportedProtocolVersion         "pDUDiscardUnsupportedProtocolVersion"
+#define NID_pDUDiscardUnsupportedProtocolVersion                1747
+#define OBJ_pDUDiscardUnsupportedProtocolVersion                2L,13L,0L,2L,0L,3L,1L,177L
+
+#define SN_pDUDiscardUnsupportedSecurityOption          "pDUDiscardUnsupportedSecurityOption"
+#define NID_pDUDiscardUnsupportedSecurityOption         1748
+#define OBJ_pDUDiscardUnsupportedSecurityOption         2L,13L,0L,2L,0L,3L,1L,178L
+
+#define SN_pDUDiscardUnsupportedSourceRouteingOption            "pDUDiscardUnsupportedSourceRouteingOption"
+#define NID_pDUDiscardUnsupportedSourceRouteingOption           1749
+#define OBJ_pDUDiscardUnsupportedSourceRouteingOption           2L,13L,0L,2L,0L,3L,1L,179L
+
+#define SN_pDUDiscardUnsupportedRecordingOfRouteOption          "pDUDiscardUnsupportedRecordingOfRouteOption"
+#define NID_pDUDiscardUnsupportedRecordingOfRouteOption         1750
+#define OBJ_pDUDiscardUnsupportedRecordingOfRouteOption         2L,13L,0L,2L,0L,3L,1L,180L
+
+#define SN_pDUDiscardReassemblyInterference             "pDUDiscardReassemblyInterference"
+#define NID_pDUDiscardReassemblyInterference            1751
+#define OBJ_pDUDiscardReassemblyInterference            2L,13L,0L,2L,0L,3L,1L,181L
+
+#define SN_pDUDiscardIncorrectChecksum          "pDUDiscardIncorrectChecksum"
+#define NID_pDUDiscardIncorrectChecksum         1752
+#define OBJ_pDUDiscardIncorrectChecksum         2L,13L,0L,2L,0L,3L,1L,2L
+
+#define SN_pDUDiscardHeaderSyntaxError          "pDUDiscardHeaderSyntaxError"
+#define NID_pDUDiscardHeaderSyntaxError         1753
+#define OBJ_pDUDiscardHeaderSyntaxError         2L,13L,0L,2L,0L,3L,1L,4L
+
+#define SN_pDUDiscardSegmentationNeededButNotPermitted          "pDUDiscardSegmentationNeededButNotPermitted"
+#define NID_pDUDiscardSegmentationNeededButNotPermitted         1754
+#define OBJ_pDUDiscardSegmentationNeededButNotPermitted         2L,13L,0L,2L,0L,3L,1L,5L
+
+#define SN_pDUDiscardIncompletePDUReceived              "pDUDiscardIncompletePDUReceived"
+#define NID_pDUDiscardIncompletePDUReceived             1755
+#define OBJ_pDUDiscardIncompletePDUReceived             2L,13L,0L,2L,0L,3L,1L,6L
+
+#define SN_pDUDiscardDuplicateOption            "pDUDiscardDuplicateOption"
+#define NID_pDUDiscardDuplicateOption           1756
+#define OBJ_pDUDiscardDuplicateOption           2L,13L,0L,2L,0L,3L,1L,7L
+
+#define SN_iSO9542PDUDiscard            "iSO9542PDUDiscard"
+#define NID_iSO9542PDUDiscard           1757
+#define OBJ_iSO9542PDUDiscard           2L,13L,0L,2L,0L,3L,2L
+
+#define SN_iSReachabilityChange         "iSReachabilityChange"
+#define NID_iSReachabilityChange                1758
+#define OBJ_iSReachabilityChange                2L,13L,0L,2L,0L,4L,1L
+
+#define SN_eSReachabilityChange         "eSReachabilityChange"
+#define NID_eSReachabilityChange                1759
+#define OBJ_eSReachabilityChange                2L,13L,0L,2L,0L,4L,2L
+
+#define SN_successfulConnectionEstablishment            "successfulConnectionEstablishment"
+#define NID_successfulConnectionEstablishment           1760
+#define OBJ_successfulConnectionEstablishment           2L,13L,0L,2L,0L,4L,3L
+
+#define SN_sNPADTEAddress               "sNPADTEAddress"
+#define NID_sNPADTEAddress              1761
+#define OBJ_sNPADTEAddress              2L,13L,0L,2L,0L,5L,1L
+
+#define SN_sNPAMACAddress               "sNPAMACAddress"
+#define NID_sNPAMACAddress              1762
+#define OBJ_sNPAMACAddress              2L,13L,0L,2L,0L,5L,2L
+
+#define SN_defaultPacketSizes           "defaultPacketSizes"
+#define NID_defaultPacketSizes          1763
+#define OBJ_defaultPacketSizes          2L,13L,0L,2L,7L,103L
+
+#define SN_defaultWindowSizes           "defaultWindowSizes"
+#define NID_defaultWindowSizes          1764
+#define OBJ_defaultWindowSizes          2L,13L,0L,2L,7L,104L
+
+#define SN_defaultThroughputClasses             "defaultThroughputClasses"
+#define NID_defaultThroughputClasses            1765
+#define OBJ_defaultThroughputClasses            2L,13L,0L,2L,7L,112L
+
+#define SN_flowControlParameterNegotiation              "flowControlParameterNegotiation"
+#define NID_flowControlParameterNegotiation             1766
+#define OBJ_flowControlParameterNegotiation             2L,13L,0L,2L,7L,119L
+
+#define SN_dBitModification             "dBitModification"
+#define NID_dBitModification            1767
+#define OBJ_dBitModification            2L,13L,0L,2L,7L,139L
+
+#define SN_fastSelectAcceptance         "fastSelectAcceptance"
+#define NID_fastSelectAcceptance                1768
+#define OBJ_fastSelectAcceptance                2L,13L,0L,2L,7L,145L
+
+#define SN_incomingCallsBarred          "incomingCallsBarred"
+#define NID_incomingCallsBarred         1769
+#define OBJ_incomingCallsBarred         2L,13L,0L,2L,7L,148L
+
+#define SN_nonStandardDefaultPacketSizes                "nonStandardDefaultPacketSizes"
+#define NID_nonStandardDefaultPacketSizes               1770
+#define OBJ_nonStandardDefaultPacketSizes               2L,13L,0L,2L,7L,151L
+
+#define SN_nonStandardDefaultWindowSizes                "nonStandardDefaultWindowSizes"
+#define NID_nonStandardDefaultWindowSizes               1771
+#define OBJ_nonStandardDefaultWindowSizes               2L,13L,0L,2L,7L,152L
+
+#define SN_onlineFacilityRegistration           "onlineFacilityRegistration"
+#define NID_onlineFacilityRegistration          1772
+#define OBJ_onlineFacilityRegistration          2L,13L,0L,2L,7L,158L
+
+#define SN_outgoingCallsBarred          "outgoingCallsBarred"
+#define NID_outgoingCallsBarred         1773
+#define OBJ_outgoingCallsBarred         2L,13L,0L,2L,7L,159L
+
+#define SN_packetRetransmission         "packetRetransmission"
+#define NID_packetRetransmission                1774
+#define OBJ_packetRetransmission                2L,13L,0L,2L,7L,161L
+
+#define SN_throughputClassNegotiation           "throughputClassNegotiation"
+#define NID_throughputClassNegotiation          1775
+#define OBJ_throughputClassNegotiation          2L,13L,0L,2L,7L,168L
+
+#define SN_extendedPacketSequenceNumbering              "extendedPacketSequenceNumbering"
+#define NID_extendedPacketSequenceNumbering             1776
+#define OBJ_extendedPacketSequenceNumbering             2L,13L,0L,2L,7L,49L
+
+#define SN_us_joint             "us-joint"
+#define NID_us_joint            1777
+#define OBJ_us_joint            2L,16L,840L
+
+#define SN_usgov                "usgov"
+#define NID_usgov               1778
+#define OBJ_usgov               2L,16L,840L,1L,101L
+
+#define SN_dodAlgorithms                "dodAlgorithms"
+#define NID_dodAlgorithms               1779
+#define OBJ_dodAlgorithms               2L,16L,840L,1L,101L,2L,1L,1L
+
+#define SN_id_keyExchangeAlgorithm              "id-keyExchangeAlgorithm"
+#define NID_id_keyExchangeAlgorithm             1780
+#define OBJ_id_keyExchangeAlgorithm             2L,16L,840L,1L,101L,2L,1L,1L,22L
+
+#define SN_id_ct_KP_aKeyPackage         "id-ct-KP-aKeyPackage"
+#define NID_id_ct_KP_aKeyPackage                1781
+#define OBJ_id_ct_KP_aKeyPackage                2L,16L,840L,1L,101L,2L,1L,2L,78L,5L
+
+#define SN_id_clearanceSponsor          "id-clearanceSponsor"
+#define NID_id_clearanceSponsor         1782
+#define OBJ_id_clearanceSponsor         2L,16L,840L,1L,101L,2L,1L,5L,68L
+
+#define SN_id_deviceOwner               "id-deviceOwner"
+#define NID_id_deviceOwner              1783
+#define OBJ_id_deviceOwner              2L,16L,840L,1L,101L,2L,1L,5L,69L
+
+#define SN_hashAlgs             "hashAlgs"
+#define NID_hashAlgs            1787
+#define OBJ_hashAlgs            2L,16L,840L,1L,101L,3L,4L,2L
+
+#define SN_id_shake128_len              "id-shake128-len"
+#define NID_id_shake128_len             1788
+#define OBJ_id_shake128_len             2L,16L,840L,1L,101L,3L,4L,2L,17L
+
+#define SN_id_shake256_len              "id-shake256-len"
+#define NID_id_shake256_len             1789
+#define OBJ_id_shake256_len             2L,16L,840L,1L,101L,3L,4L,2L,18L
+
+#define SN_pkcs_9_at_userPKCS12         "pkcs-9-at-userPKCS12"
+#define NID_pkcs_9_at_userPKCS12                1791
+#define OBJ_pkcs_9_at_userPKCS12                2L,16L,840L,1L,113730L,3L,1L,216L
+
+#define SN_authorizationIdentityResponse                "authorizationIdentityResponse"
+#define NID_authorizationIdentityResponse               1792
+#define OBJ_authorizationIdentityResponse               2L,16L,840L,1L,113730L,3L,4L,15L
+
+#define SN_authorizationIdentityRequest         "authorizationIdentityRequest"
+#define NID_authorizationIdentityRequest                1793
+#define OBJ_authorizationIdentityRequest                2L,16L,840L,1L,113730L,3L,4L,16L
+
+#define SN_proxyAuthorization           "proxyAuthorization"
+#define NID_proxyAuthorization          1794
+#define OBJ_proxyAuthorization          2L,16L,840L,1L,113730L,3L,4L,18L
+
+#define SN_managedDSAIT         "managedDSAIT"
+#define NID_managedDSAIT                1795
+#define OBJ_managedDSAIT                2L,16L,840L,1L,113730L,3L,4L,2L
+
+#define SN_dbEKM                "dbEKM"
+#define NID_dbEKM               1796
+#define OBJ_dbEKM               2L,16L,840L,1L,114171L,4L,1L,2L,0L
+
+#define SN_id_SimpleString              "id-SimpleString"
+#define NID_id_SimpleString             1797
+#define OBJ_id_SimpleString             2L,16L,840L,1L,114171L,4L,1L,2L,0L,1L
+
+#define SN_id_UniqueIdentifier          "id-UniqueIdentifier"
+#define NID_id_UniqueIdentifier         1798
+#define OBJ_id_UniqueIdentifier         2L,16L,840L,1L,114171L,4L,1L,2L,0L,2L
+
+#define SN_id           "id"
+#define NID_id          1799
+#define OBJ_id          2L,17L,1L,2L
+
+#define SN_id_oidC1             "id-oidC1"
+#define NID_id_oidC1            1800
+#define OBJ_id_oidC1            2L,17L,1L,2L,0L
+
+#define SN_id_oidC2             "id-oidC2"
+#define NID_id_oidC2            1801
+#define OBJ_id_oidC2            2L,17L,1L,2L,1L
+
+#define SN_id_oidC              "id-oidC"
+#define NID_id_oidC             1802
+#define OBJ_id_oidC             2L,17L,1L,2L,2L
+
+#define SN_id_oidRoot           "id-oidRoot"
+#define NID_id_oidRoot          1803
+#define OBJ_id_oidRoot          2L,17L,1L,2L,3L
+
+#define SN_id_oidRootNf         "id-oidRootNf"
+#define NID_id_oidRootNf                1804
+#define OBJ_id_oidRootNf                2L,17L,1L,2L,4L
+
+#define SN_id_oidArc            "id-oidArc"
+#define NID_id_oidArc           1805
+#define OBJ_id_oidArc           2L,17L,1L,2L,5L
+
+#define SN_id_oidArcNf          "id-oidArcNf"
+#define NID_id_oidArcNf         1806
+#define OBJ_id_oidArcNf         2L,17L,1L,2L,6L
+
+#define SN_acse_as_id           "acse-as-id"
+#define NID_acse_as_id          1807
+#define OBJ_acse_as_id          2L,2L,1L,0L,1L
+
+#define SN_aCSE_id              "aCSE-id"
+#define NID_aCSE_id             1808
+#define OBJ_aCSE_id             2L,2L,3L,1L,1L
+
+#define SN_genericULS           "genericULS"
+#define NID_genericULS          1809
+#define OBJ_genericULS          2L,20L
+
+#define SN_modules              "modules"
+#define NID_modules             1810
+#define OBJ_modules             2L,20L,1L
+
+#define SN_objectIdentifiers            "objectIdentifiers"
+#define NID_objectIdentifiers           1811
+#define OBJ_objectIdentifiers           2L,20L,1L,0L
+
+#define SN_notation             "notation"
+#define NID_notation            1812
+#define OBJ_notation            2L,20L,1L,1L
+
+#define SN_gulsSecurityExchanges                "gulsSecurityExchanges"
+#define NID_gulsSecurityExchanges               1813
+#define OBJ_gulsSecurityExchanges               2L,20L,1L,2L
+
+#define SN_gulsSecurityTransformations          "gulsSecurityTransformations"
+#define NID_gulsSecurityTransformations         1814
+#define OBJ_gulsSecurityTransformations         2L,20L,1L,3L
+
+#define SN_dirProtectionMappings                "dirProtectionMappings"
+#define NID_dirProtectionMappings               1815
+#define OBJ_dirProtectionMappings               2L,20L,1L,4L
+
+#define SN_gulsProtectionMappings               "gulsProtectionMappings"
+#define NID_gulsProtectionMappings              1816
+#define OBJ_gulsProtectionMappings              2L,20L,1L,5L
+
+#define SN_seseAPDUs            "seseAPDUs"
+#define NID_seseAPDUs           1817
+#define OBJ_seseAPDUs           2L,20L,1L,6L
+
+#define SN_genericProtectingTransferSyntax              "genericProtectingTransferSyntax"
+#define NID_genericProtectingTransferSyntax             1818
+#define OBJ_genericProtectingTransferSyntax             2L,20L,1L,7L
+
+#define SN_generalTransferSyntax                "generalTransferSyntax"
+#define NID_generalTransferSyntax               1819
+#define OBJ_generalTransferSyntax               2L,20L,2L
+
+#define SN_specificTransferSyntax               "specificTransferSyntax"
+#define NID_specificTransferSyntax              1820
+#define OBJ_specificTransferSyntax              2L,20L,3L
+
+#define SN_securityExchanges            "securityExchanges"
+#define NID_securityExchanges           1821
+#define OBJ_securityExchanges           2L,20L,4L
+
+#define SN_securityTransformations              "securityTransformations"
+#define NID_securityTransformations             1822
+#define OBJ_securityTransformations             2L,20L,5L
+
+#define SN_tcg          "tcg"
+#define NID_tcg         1823
+#define OBJ_tcg         2L,23L,133L
+
+#define SN_tcg_tcpaSpecVersion          "tcg-tcpaSpecVersion"
+#define NID_tcg_tcpaSpecVersion         1824
+#define OBJ_tcg_tcpaSpecVersion         2L,23L,133L,1L
+
+#define SN_tcg_address          "tcg-address"
+#define NID_tcg_address         1825
+#define OBJ_tcg_address         2L,23L,133L,17L
+
+#define SN_tcg_address_ethernetmac              "tcg-address-ethernetmac"
+#define NID_tcg_address_ethernetmac             1826
+#define OBJ_tcg_address_ethernetmac             2L,23L,133L,17L,1L
+
+#define SN_tcg_address_wlanmac          "tcg-address-wlanmac"
+#define NID_tcg_address_wlanmac         1827
+#define OBJ_tcg_address_wlanmac         2L,23L,133L,17L,2L
+
+#define SN_tcg_address_bluetoothmac             "tcg-address-bluetoothmac"
+#define NID_tcg_address_bluetoothmac            1828
+#define OBJ_tcg_address_bluetoothmac            2L,23L,133L,17L,3L
+
+#define SN_tcg_registry         "tcg-registry"
+#define NID_tcg_registry                1829
+#define OBJ_tcg_registry                2L,23L,133L,18L
+
+#define SN_tcg_registry_componentClass          "tcg-registry-componentClass"
+#define NID_tcg_registry_componentClass         1830
+#define OBJ_tcg_registry_componentClass         2L,23L,133L,18L,3L
+
+#define SN_tcg_registry_componentClass_tcg              "tcg-registry-componentClass-tcg"
+#define NID_tcg_registry_componentClass_tcg             1831
+#define OBJ_tcg_registry_componentClass_tcg             2L,23L,133L,18L,3L,1L
+
+#define SN_tcg_registry_componentClass_ietf             "tcg-registry-componentClass-ietf"
+#define NID_tcg_registry_componentClass_ietf            1832
+#define OBJ_tcg_registry_componentClass_ietf            2L,23L,133L,18L,3L,2L
+
+#define SN_tcg_registry_componentClass_dmtf             "tcg-registry-componentClass-dmtf"
+#define NID_tcg_registry_componentClass_dmtf            1833
+#define OBJ_tcg_registry_componentClass_dmtf            2L,23L,133L,18L,3L,3L
+
+#define SN_tcg_attribute                "tcg-attribute"
+#define NID_tcg_attribute               1834
+#define OBJ_tcg_attribute               2L,23L,133L,2L
+
+#define SN_tcg_at_tpmManufacturer               "tcg-at-tpmManufacturer"
+#define NID_tcg_at_tpmManufacturer              1835
+#define OBJ_tcg_at_tpmManufacturer              2L,23L,133L,2L,1L
+
+#define SN_tcg_at_securityQualities             "tcg-at-securityQualities"
+#define NID_tcg_at_securityQualities            1836
+#define OBJ_tcg_at_securityQualities            2L,23L,133L,2L,10L
+
+#define SN_tcg_at_tpmProtectionProfile          "tcg-at-tpmProtectionProfile"
+#define NID_tcg_at_tpmProtectionProfile         1837
+#define OBJ_tcg_at_tpmProtectionProfile         2L,23L,133L,2L,11L
+
+#define SN_tcg_at_tpmSecurityTarget             "tcg-at-tpmSecurityTarget"
+#define NID_tcg_at_tpmSecurityTarget            1838
+#define OBJ_tcg_at_tpmSecurityTarget            2L,23L,133L,2L,12L
+
+#define SN_tcg_at_tbbProtectionProfile          "tcg-at-tbbProtectionProfile"
+#define NID_tcg_at_tbbProtectionProfile         1839
+#define OBJ_tcg_at_tbbProtectionProfile         2L,23L,133L,2L,13L
+
+#define SN_tcg_at_tbbSecurityTarget             "tcg-at-tbbSecurityTarget"
+#define NID_tcg_at_tbbSecurityTarget            1840
+#define OBJ_tcg_at_tbbSecurityTarget            2L,23L,133L,2L,14L
+
+#define SN_tcg_at_tpmIdLabel            "tcg-at-tpmIdLabel"
+#define NID_tcg_at_tpmIdLabel           1841
+#define OBJ_tcg_at_tpmIdLabel           2L,23L,133L,2L,15L
+
+#define SN_tcg_at_tpmSpecification              "tcg-at-tpmSpecification"
+#define NID_tcg_at_tpmSpecification             1842
+#define OBJ_tcg_at_tpmSpecification             2L,23L,133L,2L,16L
+
+#define SN_tcg_at_tcgPlatformSpecification              "tcg-at-tcgPlatformSpecification"
+#define NID_tcg_at_tcgPlatformSpecification             1843
+#define OBJ_tcg_at_tcgPlatformSpecification             2L,23L,133L,2L,17L
+
+#define SN_tcg_at_tpmSecurityAssertions         "tcg-at-tpmSecurityAssertions"
+#define NID_tcg_at_tpmSecurityAssertions                1844
+#define OBJ_tcg_at_tpmSecurityAssertions                2L,23L,133L,2L,18L
+
+#define SN_tcg_at_tbbSecurityAssertions         "tcg-at-tbbSecurityAssertions"
+#define NID_tcg_at_tbbSecurityAssertions                1845
+#define OBJ_tcg_at_tbbSecurityAssertions                2L,23L,133L,2L,19L
+
+#define SN_tcg_at_tpmModel              "tcg-at-tpmModel"
+#define NID_tcg_at_tpmModel             1846
+#define OBJ_tcg_at_tpmModel             2L,23L,133L,2L,2L
+
+#define SN_tcg_at_tcgCredentialSpecification            "tcg-at-tcgCredentialSpecification"
+#define NID_tcg_at_tcgCredentialSpecification           1847
+#define OBJ_tcg_at_tcgCredentialSpecification           2L,23L,133L,2L,23L
+
+#define SN_tcg_at_tcgCredentialType             "tcg-at-tcgCredentialType"
+#define NID_tcg_at_tcgCredentialType            1848
+#define OBJ_tcg_at_tcgCredentialType            2L,23L,133L,2L,25L
+
+#define SN_tcg_at_tpmVersion            "tcg-at-tpmVersion"
+#define NID_tcg_at_tpmVersion           1849
+#define OBJ_tcg_at_tpmVersion           2L,23L,133L,2L,3L
+
+#define SN_tcg_protocol         "tcg-protocol"
+#define NID_tcg_protocol                1850
+#define OBJ_tcg_protocol                2L,23L,133L,3L
+
+#define SN_tcg_prt_tpmIdProtocol                "tcg-prt-tpmIdProtocol"
+#define NID_tcg_prt_tpmIdProtocol               1851
+#define OBJ_tcg_prt_tpmIdProtocol               2L,23L,133L,3L,1L
+
+#define SN_tcg_algorithm                "tcg-algorithm"
+#define NID_tcg_algorithm               1852
+#define OBJ_tcg_algorithm               2L,23L,133L,4L
+
+#define SN_tcg_algorithm_null           "tcg-algorithm-null"
+#define NID_tcg_algorithm_null          1853
+#define OBJ_tcg_algorithm_null          2L,23L,133L,4L,1L
+
+#define SN_tcg_platformClass            "tcg-platformClass"
+#define NID_tcg_platformClass           1854
+#define OBJ_tcg_platformClass           2L,23L,133L,5L
+
+#define SN_tcg_common           "tcg-common"
+#define NID_tcg_common          1855
+#define OBJ_tcg_common          2L,23L,133L,5L,1L
+
+#define SN_tcg_at_platformManufacturerStr               "tcg-at-platformManufacturerStr"
+#define NID_tcg_at_platformManufacturerStr              1856
+#define OBJ_tcg_at_platformManufacturerStr              2L,23L,133L,5L,1L,1L
+
+#define SN_tcg_at_platformManufacturerId                "tcg-at-platformManufacturerId"
+#define NID_tcg_at_platformManufacturerId               1857
+#define OBJ_tcg_at_platformManufacturerId               2L,23L,133L,5L,1L,2L
+
+#define SN_tcg_at_platformConfigUri             "tcg-at-platformConfigUri"
+#define NID_tcg_at_platformConfigUri            1858
+#define OBJ_tcg_at_platformConfigUri            2L,23L,133L,5L,1L,3L
+
+#define SN_tcg_at_platformModel         "tcg-at-platformModel"
+#define NID_tcg_at_platformModel                1859
+#define OBJ_tcg_at_platformModel                2L,23L,133L,5L,1L,4L
+
+#define SN_tcg_at_platformVersion               "tcg-at-platformVersion"
+#define NID_tcg_at_platformVersion              1860
+#define OBJ_tcg_at_platformVersion              2L,23L,133L,5L,1L,5L
+
+#define SN_tcg_at_platformSerial                "tcg-at-platformSerial"
+#define NID_tcg_at_platformSerial               1861
+#define OBJ_tcg_at_platformSerial               2L,23L,133L,5L,1L,6L
+
+#define SN_tcg_at_platformConfiguration         "tcg-at-platformConfiguration"
+#define NID_tcg_at_platformConfiguration                1862
+#define OBJ_tcg_at_platformConfiguration                2L,23L,133L,5L,1L,7L
+
+#define SN_tcg_at_platformConfiguration_v1              "tcg-at-platformConfiguration-v1"
+#define NID_tcg_at_platformConfiguration_v1             1863
+#define OBJ_tcg_at_platformConfiguration_v1             2L,23L,133L,5L,1L,7L,1L
+
+#define SN_tcg_at_platformConfiguration_v2              "tcg-at-platformConfiguration-v2"
+#define NID_tcg_at_platformConfiguration_v2             1864
+#define OBJ_tcg_at_platformConfiguration_v2             2L,23L,133L,5L,1L,7L,2L
+
+#define SN_tcg_ce               "tcg-ce"
+#define NID_tcg_ce              1865
+#define OBJ_tcg_ce              2L,23L,133L,6L
+
+#define SN_tcg_ce_relevantCredentials           "tcg-ce-relevantCredentials"
+#define NID_tcg_ce_relevantCredentials          1866
+#define OBJ_tcg_ce_relevantCredentials          2L,23L,133L,6L,2L
+
+#define SN_tcg_ce_relevantManifests             "tcg-ce-relevantManifests"
+#define NID_tcg_ce_relevantManifests            1867
+#define OBJ_tcg_ce_relevantManifests            2L,23L,133L,6L,3L
+
+#define SN_tcg_ce_virtualPlatformAttestationService             "tcg-ce-virtualPlatformAttestationService"
+#define NID_tcg_ce_virtualPlatformAttestationService            1868
+#define OBJ_tcg_ce_virtualPlatformAttestationService            2L,23L,133L,6L,4L
+
+#define SN_tcg_ce_migrationControllerAttestationService         "tcg-ce-migrationControllerAttestationService"
+#define NID_tcg_ce_migrationControllerAttestationService                1869
+#define OBJ_tcg_ce_migrationControllerAttestationService                2L,23L,133L,6L,5L
+
+#define SN_tcg_ce_migrationControllerRegistrationService                "tcg-ce-migrationControllerRegistrationService"
+#define NID_tcg_ce_migrationControllerRegistrationService               1870
+#define OBJ_tcg_ce_migrationControllerRegistrationService               2L,23L,133L,6L,6L
+
+#define SN_tcg_ce_virtualPlatformBackupService          "tcg-ce-virtualPlatformBackupService"
+#define NID_tcg_ce_virtualPlatformBackupService         1871
+#define OBJ_tcg_ce_virtualPlatformBackupService         2L,23L,133L,6L,7L
+
+#define SN_tcg_kp               "tcg-kp"
+#define NID_tcg_kp              1872
+#define OBJ_tcg_kp              2L,23L,133L,8L
+
+#define SN_tcg_kp_EKCertificate         "tcg-kp-EKCertificate"
+#define NID_tcg_kp_EKCertificate                1873
+#define OBJ_tcg_kp_EKCertificate                2L,23L,133L,8L,1L
+
+#define SN_tcg_kp_PlatformAttributeCertificate          "tcg-kp-PlatformAttributeCertificate"
+#define NID_tcg_kp_PlatformAttributeCertificate         1874
+#define OBJ_tcg_kp_PlatformAttributeCertificate         2L,23L,133L,8L,2L
+
+#define SN_tcg_kp_AIKCertificate                "tcg-kp-AIKCertificate"
+#define NID_tcg_kp_AIKCertificate               1875
+#define OBJ_tcg_kp_AIKCertificate               2L,23L,133L,8L,3L
+
+#define SN_tcg_kp_PlatformKeyCertificate                "tcg-kp-PlatformKeyCertificate"
+#define NID_tcg_kp_PlatformKeyCertificate               1876
+#define OBJ_tcg_kp_PlatformKeyCertificate               2L,23L,133L,8L,4L
+
+#define SN_tcg_kp_DeltaPlatformAttributeCertificate             "tcg-kp-DeltaPlatformAttributeCertificate"
+#define NID_tcg_kp_DeltaPlatformAttributeCertificate            1877
+#define OBJ_tcg_kp_DeltaPlatformAttributeCertificate            2L,23L,133L,8L,5L
+
+#define SN_ckm_CMS              "ckm-CMS"
+#define NID_ckm_CMS             1878
+#define OBJ_ckm_CMS             2L,23L,42L,9L,10L,3L,0L,2L,2L
+
+#define SN_id_Ivec              "id-Ivec"
+#define NID_id_Ivec             1879
+#define OBJ_id_Ivec             2L,23L,42L,9L,10L,3L,0L,2L,2L,1L
+
+#define SN_id_SignKey           "id-SignKey"
+#define NID_id_SignKey          1880
+#define OBJ_id_SignKey          2L,23L,42L,9L,10L,3L,0L,2L,2L,10L
+
+#define SN_id_KeyUsage          "id-KeyUsage"
+#define NID_id_KeyUsage         1881
+#define OBJ_id_KeyUsage         2L,23L,42L,9L,10L,3L,0L,2L,2L,11L
+
+#define SN_id_BitSpray          "id-BitSpray"
+#define NID_id_BitSpray         1882
+#define OBJ_id_BitSpray         2L,23L,42L,9L,10L,3L,0L,2L,2L,12L
+
+#define SN_id_BitSprayMeta              "id-BitSprayMeta"
+#define NID_id_BitSprayMeta             1883
+#define OBJ_id_BitSprayMeta             2L,23L,42L,9L,10L,3L,0L,2L,2L,12L,1L
+
+#define SN_id_BitSprayShares            "id-BitSprayShares"
+#define NID_id_BitSprayShares           1884
+#define OBJ_id_BitSprayShares           2L,23L,42L,9L,10L,3L,0L,2L,2L,12L,2L
+
+#define SN_id_FavoriteName              "id-FavoriteName"
+#define NID_id_FavoriteName             1885
+#define OBJ_id_FavoriteName             2L,23L,42L,9L,10L,3L,0L,2L,2L,13L
+
+#define SN_id_DataSignature             "id-DataSignature"
+#define NID_id_DataSignature            1886
+#define OBJ_id_DataSignature            2L,23L,42L,9L,10L,3L,0L,2L,2L,14L
+
+#define SN_id_BlockSize         "id-BlockSize"
+#define NID_id_BlockSize                1887
+#define OBJ_id_BlockSize                2L,23L,42L,9L,10L,3L,0L,2L,2L,15L
+
+#define SN_id_DataFormat                "id-DataFormat"
+#define NID_id_DataFormat               1888
+#define OBJ_id_DataFormat               2L,23L,42L,9L,10L,3L,0L,2L,2L,16L
+
+#define SN_id_Secryptm          "id-Secryptm"
+#define NID_id_Secryptm         1889
+#define OBJ_id_Secryptm         2L,23L,42L,9L,10L,3L,0L,2L,2L,2L
+
+#define SN_id_Filelength                "id-Filelength"
+#define NID_id_Filelength               1890
+#define OBJ_id_Filelength               2L,23L,42L,9L,10L,3L,0L,2L,2L,3L
+
+#define SN_id_Filehash          "id-Filehash"
+#define NID_id_Filehash         1891
+#define OBJ_id_Filehash         2L,23L,42L,9L,10L,3L,0L,2L,2L,4L
+
+#define SN_id_Filename          "id-Filename"
+#define NID_id_Filename         1892
+#define OBJ_id_Filename         2L,23L,42L,9L,10L,3L,0L,2L,2L,5L
+
+#define SN_id_Domainlist                "id-Domainlist"
+#define NID_id_Domainlist               1893
+#define OBJ_id_Domainlist               2L,23L,42L,9L,10L,3L,0L,2L,2L,6L
+
+#define SN_id_Accessgrouplist           "id-Accessgrouplist"
+#define NID_id_Accessgrouplist          1894
+#define OBJ_id_Accessgrouplist          2L,23L,42L,9L,10L,3L,0L,2L,2L,7L
+
+#define SN_id_Issuer            "id-Issuer"
+#define NID_id_Issuer           1895
+#define OBJ_id_Issuer           2L,23L,42L,9L,10L,3L,0L,2L,2L,8L
+
+#define SN_id_Credentiallist            "id-Credentiallist"
+#define NID_id_Credentiallist           1896
+#define OBJ_id_Credentiallist           2L,23L,42L,9L,10L,3L,0L,2L,2L,9L
+
+#define SN_id_ConfidentialityLabel              "id-ConfidentialityLabel"
+#define NID_id_ConfidentialityLabel             1897
+#define OBJ_id_ConfidentialityLabel             2L,24L,0L,1L,0L
+
+#define SN_rTSE_abstract_syntax         "rTSE-abstract-syntax"
+#define NID_rTSE_abstract_syntax                1898
+#define OBJ_rTSE_abstract_syntax                2L,3L,2L
+
+#define SN_id_telebio           "id-telebio"
+#define NID_id_telebio          1899
+#define OBJ_id_telebio          2L,42L
+
+#define SN_id_thprot            "id-thprot"
+#define NID_id_thprot           1900
+#define OBJ_id_thprot           2L,42L,0L
+
+#define SN_id_x1080_1           "id-x1080-1"
+#define NID_id_x1080_1          1901
+#define OBJ_id_x1080_1          2L,42L,0L,1L
+
+#define SN_id_x1080_1_modules           "id-x1080-1-modules"
+#define NID_id_x1080_1_modules          1902
+#define OBJ_id_x1080_1_modules          2L,42L,0L,1L,0L
+
+#define SN_id_x1080_1_cms_content               "id-x1080-1-cms-content"
+#define NID_id_x1080_1_cms_content              1903
+#define OBJ_id_x1080_1_cms_content              2L,42L,0L,1L,1L
+
+#define SN_id_health_setup_req          "id-health-setup-req"
+#define NID_id_health_setup_req         1904
+#define OBJ_id_health_setup_req         2L,42L,0L,1L,1L,1L
+
+#define SN_id_health_setup_rsp          "id-health-setup-rsp"
+#define NID_id_health_setup_rsp         1905
+#define OBJ_id_health_setup_rsp         2L,42L,0L,1L,1L,2L
+
+#define SN_id_health_setup_err          "id-health-setup-err"
+#define NID_id_health_setup_err         1906
+#define OBJ_id_health_setup_err         2L,42L,0L,1L,1L,3L
+
+#define SN_id_health_term_req           "id-health-term-req"
+#define NID_id_health_term_req          1907
+#define OBJ_id_health_term_req          2L,42L,0L,1L,1L,4L
+
+#define SN_id_health_term_rsp           "id-health-term-rsp"
+#define NID_id_health_term_rsp          1908
+#define OBJ_id_health_term_rsp          2L,42L,0L,1L,1L,5L
+
+#define SN_id_health_term_err           "id-health-term-err"
+#define NID_id_health_term_err          1909
+#define OBJ_id_health_term_err          2L,42L,0L,1L,1L,6L
+
+#define SN_id_tmm               "id-tmm"
+#define NID_id_tmm              1910
+#define OBJ_id_tmm              2L,42L,1L
+
+#define SN_id_measures          "id-measures"
+#define NID_id_measures         1911
+#define OBJ_id_measures         2L,42L,1L,1L
+
+#define SN_id_quantities                "id-quantities"
+#define NID_id_quantities               1912
+#define OBJ_id_quantities               2L,42L,1L,1L,1L
+
+#define SN_id_quantities_physics                "id-quantities-physics"
+#define NID_id_quantities_physics               1913
+#define OBJ_id_quantities_physics               2L,42L,1L,1L,1L,1L
+
+#define SN_id_quantities_chemistry              "id-quantities-chemistry"
+#define NID_id_quantities_chemistry             1914
+#define OBJ_id_quantities_chemistry             2L,42L,1L,1L,1L,2L
+
+#define SN_id_quantities_biology                "id-quantities-biology"
+#define NID_id_quantities_biology               1915
+#define OBJ_id_quantities_biology               2L,42L,1L,1L,1L,3L
+
+#define SN_id_quantities_culturology            "id-quantities-culturology"
+#define NID_id_quantities_culturology           1916
+#define OBJ_id_quantities_culturology           2L,42L,1L,1L,1L,4L
+
+#define SN_id_quantities_psychology             "id-quantities-psychology"
+#define NID_id_quantities_psychology            1917
+#define OBJ_id_quantities_psychology            2L,42L,1L,1L,1L,5L
+
+#define SN_id_units             "id-units"
+#define NID_id_units            1918
+#define OBJ_id_units            2L,42L,1L,1L,2L
+
+#define SN_id_symbols           "id-symbols"
+#define NID_id_symbols          1919
+#define OBJ_id_symbols          2L,42L,1L,1L,3L
+
+#define SN_id_conditions                "id-conditions"
+#define NID_id_conditions               1920
+#define OBJ_id_conditions               2L,42L,1L,1L,4L
+
+#define SN_id_methods           "id-methods"
+#define NID_id_methods          1921
+#define OBJ_id_methods          2L,42L,1L,1L,5L
+
+#define SN_id_methods_physics           "id-methods-physics"
+#define NID_id_methods_physics          1922
+#define OBJ_id_methods_physics          2L,42L,1L,1L,5L,1L
+
+#define SN_id_methods_chemistry         "id-methods-chemistry"
+#define NID_id_methods_chemistry                1923
+#define OBJ_id_methods_chemistry                2L,42L,1L,1L,5L,2L
+
+#define SN_id_methods_biology           "id-methods-biology"
+#define NID_id_methods_biology          1924
+#define OBJ_id_methods_biology          2L,42L,1L,1L,5L,3L
+
+#define SN_id_methods_culturology               "id-methods-culturology"
+#define NID_id_methods_culturology              1925
+#define OBJ_id_methods_culturology              2L,42L,1L,1L,5L,4L
+
+#define SN_id_methods_psychology                "id-methods-psychology"
+#define NID_id_methods_psychology               1926
+#define OBJ_id_methods_psychology               2L,42L,1L,1L,5L,5L
+
+#define SN_id_fields_of_study           "id-fields-of-study"
+#define NID_id_fields_of_study          1927
+#define OBJ_id_fields_of_study          2L,42L,1L,2L
+
+#define SN_id_physics           "id-physics"
+#define NID_id_physics          1928
+#define OBJ_id_physics          2L,42L,1L,2L,1L
+
+#define SN_id_chemistry         "id-chemistry"
+#define NID_id_chemistry                1929
+#define OBJ_id_chemistry                2L,42L,1L,2L,2L
+
+#define SN_id_biology           "id-biology"
+#define NID_id_biology          1930
+#define OBJ_id_biology          2L,42L,1L,2L,3L
+
+#define SN_id_culturology               "id-culturology"
+#define NID_id_culturology              1931
+#define OBJ_id_culturology              2L,42L,1L,2L,4L
+
+#define SN_id_psychology                "id-psychology"
+#define NID_id_psychology               1932
+#define OBJ_id_psychology               2L,42L,1L,2L,5L
+
+#define SN_id_modalities                "id-modalities"
+#define NID_id_modalities               1933
+#define OBJ_id_modalities               2L,42L,1L,3L
+
+#define SN_id_tango             "id-tango"
+#define NID_id_tango            1934
+#define OBJ_id_tango            2L,42L,1L,3L,1L
+
+#define SN_id_video             "id-video"
+#define NID_id_video            1935
+#define OBJ_id_video            2L,42L,1L,3L,2L
+
+#define SN_id_audio             "id-audio"
+#define NID_id_audio            1936
+#define OBJ_id_audio            2L,42L,1L,3L,3L
+
+#define SN_id_chemo             "id-chemo"
+#define NID_id_chemo            1937
+#define OBJ_id_chemo            2L,42L,1L,3L,4L
+
+#define SN_id_radio             "id-radio"
+#define NID_id_radio            1938
+#define OBJ_id_radio            2L,42L,1L,3L,5L
+
+#define SN_id_calor             "id-calor"
+#define NID_id_calor            1939
+#define OBJ_id_calor            2L,42L,1L,3L,6L
+
+#define SN_id_electro           "id-electro"
+#define NID_id_electro          1940
+#define OBJ_id_electro          2L,42L,1L,3L,7L
+
+#define SN_id_x1080_0           "id-x1080-0"
+#define NID_id_x1080_0          1941
+#define OBJ_id_x1080_0          2L,42L,10L,0L
+
+#define SN_id_x1080_0_module            "id-x1080-0-module"
+#define NID_id_x1080_0_module           1942
+#define OBJ_id_x1080_0_module           2L,42L,10L,0L,0L
+
+#define SN_id_x1080_0_Cont              "id-x1080-0-Cont"
+#define NID_id_x1080_0_Cont             1943
+#define OBJ_id_x1080_0_Cont             2L,42L,10L,0L,1L
+
+#define SN_id_privAssignRequest         "id-privAssignRequest"
+#define NID_id_privAssignRequest                1944
+#define OBJ_id_privAssignRequest                2L,42L,10L,0L,1L,1L
+
+#define SN_id_deleteResult              "id-deleteResult"
+#define NID_id_deleteResult             1945
+#define OBJ_id_deleteResult             2L,42L,10L,0L,1L,10L
+
+#define SN_id_modifyRequest             "id-modifyRequest"
+#define NID_id_modifyRequest            1946
+#define OBJ_id_modifyRequest            2L,42L,10L,0L,1L,11L
+
+#define SN_id_modifyResult              "id-modifyResult"
+#define NID_id_modifyResult             1947
+#define OBJ_id_modifyResult             2L,42L,10L,0L,1L,12L
+
+#define SN_id_renameRequest             "id-renameRequest"
+#define NID_id_renameRequest            1948
+#define OBJ_id_renameRequest            2L,42L,10L,0L,1L,13L
+
+#define SN_id_renameResult              "id-renameResult"
+#define NID_id_renameResult             1949
+#define OBJ_id_renameResult             2L,42L,10L,0L,1L,14L
+
+#define SN_id_privAssignResult          "id-privAssignResult"
+#define NID_id_privAssignResult         1950
+#define OBJ_id_privAssignResult         2L,42L,10L,0L,1L,2L
+
+#define SN_id_readRequest               "id-readRequest"
+#define NID_id_readRequest              1951
+#define OBJ_id_readRequest              2L,42L,10L,0L,1L,3L
+
+#define SN_id_readResult                "id-readResult"
+#define NID_id_readResult               1952
+#define OBJ_id_readResult               2L,42L,10L,0L,1L,4L
+
+#define SN_id_compareRequest            "id-compareRequest"
+#define NID_id_compareRequest           1953
+#define OBJ_id_compareRequest           2L,42L,10L,0L,1L,5L
+
+#define SN_id_compareResult             "id-compareResult"
+#define NID_id_compareResult            1954
+#define OBJ_id_compareResult            2L,42L,10L,0L,1L,6L
+
+#define SN_id_addRequest                "id-addRequest"
+#define NID_id_addRequest               1955
+#define OBJ_id_addRequest               2L,42L,10L,0L,1L,7L
+
+#define SN_id_addResult         "id-addResult"
+#define NID_id_addResult                1956
+#define OBJ_id_addResult                2L,42L,10L,0L,1L,8L
+
+#define SN_id_deleteRequest             "id-deleteRequest"
+#define NID_id_deleteRequest            1957
+#define OBJ_id_deleteRequest            2L,42L,10L,0L,1L,9L
+
+#define SN_id_x1080_0_attr              "id-x1080-0-attr"
+#define NID_id_x1080_0_attr             1958
+#define OBJ_id_x1080_0_attr             2L,42L,10L,0L,2L
+
+#define SN_id_at_accessService          "id-at-accessService"
+#define NID_id_at_accessService         1959
+#define OBJ_id_at_accessService         2L,42L,10L,0L,2L,1L
+
+#define SN_id_hum_phys          "id-hum-phys"
+#define NID_id_hum_phys         1960
+#define OBJ_id_hum_phys         2L,42L,2L
+
+#define SN_id_obj_cat           "id-obj-cat"
+#define NID_id_obj_cat          1961
+#define OBJ_id_obj_cat          2L,42L,3L
+
+#define SN_id_patient           "id-patient"
+#define NID_id_patient          1962
+#define OBJ_id_patient          2L,42L,3L,1L
+
+#define SN_id_med_rec           "id-med-rec"
+#define NID_id_med_rec          1963
+#define OBJ_id_med_rec          2L,42L,3L,10L
+
+#define SN_id_med_staff         "id-med-staff"
+#define NID_id_med_staff                1964
+#define OBJ_id_med_staff                2L,42L,3L,2L
+
+#define SN_id_observer          "id-observer"
+#define NID_id_observer         1965
+#define OBJ_id_observer         2L,42L,3L,3L
+
+#define SN_id_pharm_staff               "id-pharm-staff"
+#define NID_id_pharm_staff              1966
+#define OBJ_id_pharm_staff              2L,42L,3L,4L
+
+#define SN_id_lab               "id-lab"
+#define NID_id_lab              1967
+#define OBJ_id_lab              2L,42L,3L,5L
+
+#define SN_id_drug_manufac              "id-drug-manufac"
+#define NID_id_drug_manufac             1968
+#define OBJ_id_drug_manufac             2L,42L,3L,6L
+
+#define SN_id_med_device                "id-med-device"
+#define NID_id_med_device               1969
+#define OBJ_id_med_device               2L,42L,3L,7L
+
+#define SN_id_med_softw         "id-med-softw"
+#define NID_id_med_softw                1970
+#define OBJ_id_med_softw                2L,42L,3L,8L
+
+#define SN_id_med_insur         "id-med-insur"
+#define NID_id_med_insur                1971
+#define OBJ_id_med_insur                2L,42L,3L,9L
+
+#define SN_module_              "module-"
+#define NID_module_             1972
+#define OBJ_module_             2L,5L,1L
+
+#define SN_usefulDefinitions            "usefulDefinitions"
+#define NID_usefulDefinitions           1973
+#define OBJ_usefulDefinitions           2L,5L,1L,0L,9L
+
+#define SN_informationFramework         "informationFramework"
+#define NID_informationFramework                1974
+#define OBJ_informationFramework                2L,5L,1L,1L,9L
+
+#define SN_upperBounds          "upperBounds"
+#define NID_upperBounds         1975
+#define OBJ_upperBounds         2L,5L,1L,10L,9L
+
+#define SN_dap          "dap"
+#define NID_dap         1976
+#define OBJ_dap         2L,5L,1L,11L,9L
+
+#define SN_dsp          "dsp"
+#define NID_dsp         1977
+#define OBJ_dsp         2L,5L,1L,12L,9L
+
+#define SN_distributedDirectoryObjectIdentifiers                "distributedDirectoryObjectIdentifiers"
+#define NID_distributedDirectoryObjectIdentifiers               1978
+#define OBJ_distributedDirectoryObjectIdentifiers               2L,5L,1L,13L
+
+#define SN_distributedDirectoryOIDs             "distributedDirectoryOIDs"
+#define NID_distributedDirectoryOIDs            1979
+#define OBJ_distributedDirectoryOIDs            2L,5L,1L,13L,9L
+
+#define SN_directoryShadowOIDs          "directoryShadowOIDs"
+#define NID_directoryShadowOIDs         1980
+#define OBJ_directoryShadowOIDs         2L,5L,1L,14L,9L
+
+#define SN_directoryShadowAbstractService               "directoryShadowAbstractService"
+#define NID_directoryShadowAbstractService              1981
+#define OBJ_directoryShadowAbstractService              2L,5L,1L,15L,9L
+
+#define SN_disp         "disp"
+#define NID_disp                1982
+#define OBJ_disp                2L,5L,1L,16L,7L
+
+#define SN_dop          "dop"
+#define NID_dop         1983
+#define OBJ_dop         2L,5L,1L,17L,7L
+
+#define SN_opBindingManagement          "opBindingManagement"
+#define NID_opBindingManagement         1984
+#define OBJ_opBindingManagement         2L,5L,1L,18L,9L
+
+#define SN_opBindingOIDs                "opBindingOIDs"
+#define NID_opBindingOIDs               1985
+#define OBJ_opBindingOIDs               2L,5L,1L,19L,9L
+
+#define SN_directoryAbstractService             "directoryAbstractService"
+#define NID_directoryAbstractService            1986
+#define OBJ_directoryAbstractService            2L,5L,1L,2L,9L
+
+#define SN_hierarchicalOperationalBindings              "hierarchicalOperationalBindings"
+#define NID_hierarchicalOperationalBindings             1987
+#define OBJ_hierarchicalOperationalBindings             2L,5L,1L,20L,9L
+
+#define SN_dsaOperationalAttributeTypes         "dsaOperationalAttributeTypes"
+#define NID_dsaOperationalAttributeTypes                1988
+#define OBJ_dsaOperationalAttributeTypes                2L,5L,1L,22L,9L
+
+#define SN_schemaAdministration         "schemaAdministration"
+#define NID_schemaAdministration                1989
+#define OBJ_schemaAdministration                2L,5L,1L,23L,9L
+
+#define SN_basicAccessControl           "basicAccessControl"
+#define NID_basicAccessControl          1990
+#define OBJ_basicAccessControl          2L,5L,1L,24L,9L
+
+#define SN_operationalBindingOIDs               "operationalBindingOIDs"
+#define NID_operationalBindingOIDs              1991
+#define OBJ_operationalBindingOIDs              2L,5L,1L,25L
+
+#define SN_directoryOperationalBindingTypes             "directoryOperationalBindingTypes"
+#define NID_directoryOperationalBindingTypes            1992
+#define OBJ_directoryOperationalBindingTypes            2L,5L,1L,25L,9L
+
+#define SN_certificateExtensions                "certificateExtensions"
+#define NID_certificateExtensions               1993
+#define OBJ_certificateExtensions               2L,5L,1L,26L,9L
+
+#define SN_directoryManagement          "directoryManagement"
+#define NID_directoryManagement         1994
+#define OBJ_directoryManagement         2L,5L,1L,27L,9L
+
+#define SN_enhancedSecurity             "enhancedSecurity"
+#define NID_enhancedSecurity            1995
+#define OBJ_enhancedSecurity            2L,5L,1L,28L,9L
+
+#define SN_directorySecurityExchanges           "directorySecurityExchanges"
+#define NID_directorySecurityExchanges          1996
+#define OBJ_directorySecurityExchanges          2L,5L,1L,29L,9L
+
+#define SN_distributedOperations                "distributedOperations"
+#define NID_distributedOperations               1997
+#define OBJ_distributedOperations               2L,5L,1L,3L,9L
+
+#define SN_iDMProtocolSpecification             "iDMProtocolSpecification"
+#define NID_iDMProtocolSpecification            1998
+#define OBJ_iDMProtocolSpecification            2L,5L,1L,30L,9L
+
+#define SN_directoryIDMProtocols                "directoryIDMProtocols"
+#define NID_directoryIDMProtocols               1999
+#define OBJ_directoryIDMProtocols               2L,5L,1L,31L,9L
+
+#define SN_attributeCertificateDefinitions              "attributeCertificateDefinitions"
+#define NID_attributeCertificateDefinitions             2000
+#define OBJ_attributeCertificateDefinitions             2L,5L,1L,32L,9L
+
+#define SN_serviceAdministration                "serviceAdministration"
+#define NID_serviceAdministration               2001
+#define OBJ_serviceAdministration               2L,5L,1L,33L,9L
+
+#define SN_ldapAttributes               "ldapAttributes"
+#define NID_ldapAttributes              2002
+#define OBJ_ldapAttributes              2L,5L,1L,34L,9L
+
+#define SN_commonProtocolSpecification          "commonProtocolSpecification"
+#define NID_commonProtocolSpecification         2003
+#define OBJ_commonProtocolSpecification         2L,5L,1L,35L,9L
+
+#define SN_oSIProtocolSpecification             "oSIProtocolSpecification"
+#define NID_oSIProtocolSpecification            2004
+#define OBJ_oSIProtocolSpecification            2L,5L,1L,36L,9L
+
+#define SN_directoryOSIProtocols                "directoryOSIProtocols"
+#define NID_directoryOSIProtocols               2005
+#define OBJ_directoryOSIProtocols               2L,5L,1L,37L,9L
+
+#define SN_ldapSystemSchema             "ldapSystemSchema"
+#define NID_ldapSystemSchema            2006
+#define OBJ_ldapSystemSchema            2L,5L,1L,38L,9L
+
+#define SN_passwordPolicy               "passwordPolicy"
+#define NID_passwordPolicy              2007
+#define OBJ_passwordPolicy              2L,5L,1L,39L,9L
+
+#define SN_protocolObjectIdentifiers            "protocolObjectIdentifiers"
+#define NID_protocolObjectIdentifiers           2008
+#define OBJ_protocolObjectIdentifiers           2L,5L,1L,4L,9L
+
+#define SN_pkiPmiExternalDataTypes              "pkiPmiExternalDataTypes"
+#define NID_pkiPmiExternalDataTypes             2009
+#define OBJ_pkiPmiExternalDataTypes             2L,5L,1L,40L,9L
+
+#define SN_extensionAttributes          "extensionAttributes"
+#define NID_extensionAttributes         2010
+#define OBJ_extensionAttributes         2L,5L,1L,41L,9L
+
+#define SN_pkiPmiWrapper                "pkiPmiWrapper"
+#define NID_pkiPmiWrapper               2011
+#define OBJ_pkiPmiWrapper               2L,5L,1L,42L,9L
+
+#define SN_avlManagement                "avlManagement"
+#define NID_avlManagement               2012
+#define OBJ_avlManagement               2L,5L,1L,43L,9L
+
+#define SN_trustBrokerProtocol          "trustBrokerProtocol"
+#define NID_trustBrokerProtocol         2013
+#define OBJ_trustBrokerProtocol         2L,5L,1L,44L,9L
+
+#define SN_selectedAttributeTypes               "selectedAttributeTypes"
+#define NID_selectedAttributeTypes              2014
+#define OBJ_selectedAttributeTypes              2L,5L,1L,5L,9L
+
+#define SN_selectedObjectClasses                "selectedObjectClasses"
+#define NID_selectedObjectClasses               2015
+#define OBJ_selectedObjectClasses               2L,5L,1L,6L,9L
+
+#define SN_authenticationFramework              "authenticationFramework"
+#define NID_authenticationFramework             2016
+#define OBJ_authenticationFramework             2L,5L,1L,7L,9L
+
+#define SN_algorithmObjectIdentifiers           "algorithmObjectIdentifiers"
+#define NID_algorithmObjectIdentifiers          2017
+#define OBJ_algorithmObjectIdentifiers          2L,5L,1L,8L,9L
+
+#define SN_directoryObjectIdentifiers           "directoryObjectIdentifiers"
+#define NID_directoryObjectIdentifiers          2018
+#define OBJ_directoryObjectIdentifiers          2L,5L,1L,9L,9L
+
+#define SN_object               "object"
+#define NID_object              2019
+#define OBJ_object              2L,5L,10L
+
+#define SN_port         "port"
+#define NID_port                2020
+#define OBJ_port                2L,5L,11L
+
+#define SN_id_doa               "id-doa"
+#define NID_id_doa              2021
+#define OBJ_id_doa              2L,5L,12L
+
+#define SN_id_doa_dseType               "id-doa-dseType"
+#define NID_id_doa_dseType              2022
+#define OBJ_id_doa_dseType              2L,5L,12L,0L
+
+#define SN_id_doa_myAccessPoint         "id-doa-myAccessPoint"
+#define NID_id_doa_myAccessPoint                2023
+#define OBJ_id_doa_myAccessPoint                2L,5L,12L,1L
+
+#define SN_id_doa_superiorKnowledge             "id-doa-superiorKnowledge"
+#define NID_id_doa_superiorKnowledge            2024
+#define OBJ_id_doa_superiorKnowledge            2L,5L,12L,2L
+
+#define SN_id_doa_specificKnowledge             "id-doa-specificKnowledge"
+#define NID_id_doa_specificKnowledge            2025
+#define OBJ_id_doa_specificKnowledge            2L,5L,12L,3L
+
+#define SN_id_doa_nonSpecificKnowledge          "id-doa-nonSpecificKnowledge"
+#define NID_id_doa_nonSpecificKnowledge         2026
+#define OBJ_id_doa_nonSpecificKnowledge         2L,5L,12L,4L
+
+#define SN_id_doa_supplierKnowledge             "id-doa-supplierKnowledge"
+#define NID_id_doa_supplierKnowledge            2027
+#define OBJ_id_doa_supplierKnowledge            2L,5L,12L,5L
+
+#define SN_id_doa_consumerKnowledge             "id-doa-consumerKnowledge"
+#define NID_id_doa_consumerKnowledge            2028
+#define OBJ_id_doa_consumerKnowledge            2L,5L,12L,6L
+
+#define SN_id_doa_secondaryShadows              "id-doa-secondaryShadows"
+#define NID_id_doa_secondaryShadows             2029
+#define OBJ_id_doa_secondaryShadows             2L,5L,12L,7L
+
+#define SN_id_doa_ditBridgeKnowledge            "id-doa-ditBridgeKnowledge"
+#define NID_id_doa_ditBridgeKnowledge           2030
+#define OBJ_id_doa_ditBridgeKnowledge           2L,5L,12L,8L
+
+#define SN_matchingRule         "matchingRule"
+#define NID_matchingRule                2031
+#define OBJ_matchingRule                2L,5L,13L
+
+#define SN_id_mr_objectIdentifierMatch          "id-mr-objectIdentifierMatch"
+#define NID_id_mr_objectIdentifierMatch         2032
+#define OBJ_id_mr_objectIdentifierMatch         2L,5L,13L,0L
+
+#define SN_id_mr_distinguishedNameMatch         "id-mr-distinguishedNameMatch"
+#define NID_id_mr_distinguishedNameMatch                2033
+#define OBJ_id_mr_distinguishedNameMatch                2L,5L,13L,1L
+
+#define SN_id_mr_numericStringSubstringsMatch           "id-mr-numericStringSubstringsMatch"
+#define NID_id_mr_numericStringSubstringsMatch          2034
+#define OBJ_id_mr_numericStringSubstringsMatch          2L,5L,13L,10L
+
+#define SN_id_mr_caseIgnoreListMatch            "id-mr-caseIgnoreListMatch"
+#define NID_id_mr_caseIgnoreListMatch           2035
+#define OBJ_id_mr_caseIgnoreListMatch           2L,5L,13L,11L
+
+#define SN_id_mr_caseIgnoreListSubstringsMatch          "id-mr-caseIgnoreListSubstringsMatch"
+#define NID_id_mr_caseIgnoreListSubstringsMatch         2036
+#define OBJ_id_mr_caseIgnoreListSubstringsMatch         2L,5L,13L,12L
+
+#define SN_id_mr_booleanMatch           "id-mr-booleanMatch"
+#define NID_id_mr_booleanMatch          2037
+#define OBJ_id_mr_booleanMatch          2L,5L,13L,13L
+
+#define SN_id_mr_integerMatch           "id-mr-integerMatch"
+#define NID_id_mr_integerMatch          2038
+#define OBJ_id_mr_integerMatch          2L,5L,13L,14L
+
+#define SN_id_mr_integerOrderingMatch           "id-mr-integerOrderingMatch"
+#define NID_id_mr_integerOrderingMatch          2039
+#define OBJ_id_mr_integerOrderingMatch          2L,5L,13L,15L
+
+#define SN_id_mr_bitStringMatch         "id-mr-bitStringMatch"
+#define NID_id_mr_bitStringMatch                2040
+#define OBJ_id_mr_bitStringMatch                2L,5L,13L,16L
+
+#define SN_id_mr_octetStringMatch               "id-mr-octetStringMatch"
+#define NID_id_mr_octetStringMatch              2041
+#define OBJ_id_mr_octetStringMatch              2L,5L,13L,17L
+
+#define SN_id_mr_octetStringOrderingMatch               "id-mr-octetStringOrderingMatch"
+#define NID_id_mr_octetStringOrderingMatch              2042
+#define OBJ_id_mr_octetStringOrderingMatch              2L,5L,13L,18L
+
+#define SN_id_mr_octetStringSubstringsMatch             "id-mr-octetStringSubstringsMatch"
+#define NID_id_mr_octetStringSubstringsMatch            2043
+#define OBJ_id_mr_octetStringSubstringsMatch            2L,5L,13L,19L
+
+#define SN_id_mr_caseIgnoreMatch                "id-mr-caseIgnoreMatch"
+#define NID_id_mr_caseIgnoreMatch               2044
+#define OBJ_id_mr_caseIgnoreMatch               2L,5L,13L,2L
+
+#define SN_id_mr_telephoneNumberMatch           "id-mr-telephoneNumberMatch"
+#define NID_id_mr_telephoneNumberMatch          2045
+#define OBJ_id_mr_telephoneNumberMatch          2L,5L,13L,20L
+
+#define SN_id_mr_telephoneNumberSubstringsMatch         "id-mr-telephoneNumberSubstringsMatch"
+#define NID_id_mr_telephoneNumberSubstringsMatch                2046
+#define OBJ_id_mr_telephoneNumberSubstringsMatch                2L,5L,13L,21L
+
+#define SN_id_mr_presentationAddressMatch               "id-mr-presentationAddressMatch"
+#define NID_id_mr_presentationAddressMatch              2047
+#define OBJ_id_mr_presentationAddressMatch              2L,5L,13L,22L
+
+#define SN_id_mr_uniqueMemberMatch              "id-mr-uniqueMemberMatch"
+#define NID_id_mr_uniqueMemberMatch             2048
+#define OBJ_id_mr_uniqueMemberMatch             2L,5L,13L,23L
+
+#define SN_id_mr_protocolInformationMatch               "id-mr-protocolInformationMatch"
+#define NID_id_mr_protocolInformationMatch              2049
+#define OBJ_id_mr_protocolInformationMatch              2L,5L,13L,24L
+
+#define SN_id_mr_uTCTimeMatch           "id-mr-uTCTimeMatch"
+#define NID_id_mr_uTCTimeMatch          2050
+#define OBJ_id_mr_uTCTimeMatch          2L,5L,13L,25L
+
+#define SN_id_mr_uTCTimeOrderingMatch           "id-mr-uTCTimeOrderingMatch"
+#define NID_id_mr_uTCTimeOrderingMatch          2051
+#define OBJ_id_mr_uTCTimeOrderingMatch          2L,5L,13L,26L
+
+#define SN_id_mr_generalizedTimeMatch           "id-mr-generalizedTimeMatch"
+#define NID_id_mr_generalizedTimeMatch          2052
+#define OBJ_id_mr_generalizedTimeMatch          2L,5L,13L,27L
+
+#define SN_id_mr_generalizedTimeOrderingMatch           "id-mr-generalizedTimeOrderingMatch"
+#define NID_id_mr_generalizedTimeOrderingMatch          2053
+#define OBJ_id_mr_generalizedTimeOrderingMatch          2L,5L,13L,28L
+
+#define SN_id_mr_integerFirstComponentMatch             "id-mr-integerFirstComponentMatch"
+#define NID_id_mr_integerFirstComponentMatch            2054
+#define OBJ_id_mr_integerFirstComponentMatch            2L,5L,13L,29L
+
+#define SN_id_mr_caseIgnoreOrderingMatch                "id-mr-caseIgnoreOrderingMatch"
+#define NID_id_mr_caseIgnoreOrderingMatch               2055
+#define OBJ_id_mr_caseIgnoreOrderingMatch               2L,5L,13L,3L
+
+#define SN_id_mr_objectIdentifierFirstComponentMatch            "id-mr-objectIdentifierFirstComponentMatch"
+#define NID_id_mr_objectIdentifierFirstComponentMatch           2056
+#define OBJ_id_mr_objectIdentifierFirstComponentMatch           2L,5L,13L,30L
+
+#define SN_id_mr_directoryStringFirstComponentMatch             "id-mr-directoryStringFirstComponentMatch"
+#define NID_id_mr_directoryStringFirstComponentMatch            2057
+#define OBJ_id_mr_directoryStringFirstComponentMatch            2L,5L,13L,31L
+
+#define SN_id_mr_wordMatch              "id-mr-wordMatch"
+#define NID_id_mr_wordMatch             2058
+#define OBJ_id_mr_wordMatch             2L,5L,13L,32L
+
+#define SN_id_mr_keywordMatch           "id-mr-keywordMatch"
+#define NID_id_mr_keywordMatch          2059
+#define OBJ_id_mr_keywordMatch          2L,5L,13L,33L
+
+#define SN_id_mr_certificateExactMatch          "id-mr-certificateExactMatch"
+#define NID_id_mr_certificateExactMatch         2060
+#define OBJ_id_mr_certificateExactMatch         2L,5L,13L,34L
+
+#define SN_id_mr_certificateMatch               "id-mr-certificateMatch"
+#define NID_id_mr_certificateMatch              2061
+#define OBJ_id_mr_certificateMatch              2L,5L,13L,35L
+
+#define SN_id_mr_certificatePairExactMatch              "id-mr-certificatePairExactMatch"
+#define NID_id_mr_certificatePairExactMatch             2062
+#define OBJ_id_mr_certificatePairExactMatch             2L,5L,13L,36L
+
+#define SN_id_mr_certificatePairMatch           "id-mr-certificatePairMatch"
+#define NID_id_mr_certificatePairMatch          2063
+#define OBJ_id_mr_certificatePairMatch          2L,5L,13L,37L
+
+#define SN_id_mr_certificateListExactMatch              "id-mr-certificateListExactMatch"
+#define NID_id_mr_certificateListExactMatch             2064
+#define OBJ_id_mr_certificateListExactMatch             2L,5L,13L,38L
+
+#define SN_id_mr_certificateListMatch           "id-mr-certificateListMatch"
+#define NID_id_mr_certificateListMatch          2065
+#define OBJ_id_mr_certificateListMatch          2L,5L,13L,39L
+
+#define SN_id_mr_caseIgnoreSubstringsMatch              "id-mr-caseIgnoreSubstringsMatch"
+#define NID_id_mr_caseIgnoreSubstringsMatch             2066
+#define OBJ_id_mr_caseIgnoreSubstringsMatch             2L,5L,13L,4L
+
+#define SN_id_mr_algorithmIdentifierMatch               "id-mr-algorithmIdentifierMatch"
+#define NID_id_mr_algorithmIdentifierMatch              2067
+#define OBJ_id_mr_algorithmIdentifierMatch              2L,5L,13L,40L
+
+#define SN_id_mr_storedPrefixMatch              "id-mr-storedPrefixMatch"
+#define NID_id_mr_storedPrefixMatch             2068
+#define OBJ_id_mr_storedPrefixMatch             2L,5L,13L,41L
+
+#define SN_id_mr_attributeCertificateMatch              "id-mr-attributeCertificateMatch"
+#define NID_id_mr_attributeCertificateMatch             2069
+#define OBJ_id_mr_attributeCertificateMatch             2L,5L,13L,42L
+
+#define SN_id_mr_attributeCertificateExactMatch         "id-mr-attributeCertificateExactMatch"
+#define NID_id_mr_attributeCertificateExactMatch                2070
+#define OBJ_id_mr_attributeCertificateExactMatch                2L,5L,13L,45L
+
+#define SN_id_mr_holderIssuerMatch              "id-mr-holderIssuerMatch"
+#define NID_id_mr_holderIssuerMatch             2071
+#define OBJ_id_mr_holderIssuerMatch             2L,5L,13L,46L
+
+#define SN_id_mr_systemProposedMatch            "id-mr-systemProposedMatch"
+#define NID_id_mr_systemProposedMatch           2072
+#define OBJ_id_mr_systemProposedMatch           2L,5L,13L,47L
+
+#define SN_id_mr_generalWordMatch               "id-mr-generalWordMatch"
+#define NID_id_mr_generalWordMatch              2073
+#define OBJ_id_mr_generalWordMatch              2L,5L,13L,48L
+
+#define SN_id_mr_approximateStringMatch         "id-mr-approximateStringMatch"
+#define NID_id_mr_approximateStringMatch                2074
+#define OBJ_id_mr_approximateStringMatch                2L,5L,13L,49L
+
+#define SN_id_mr_caseExactMatch         "id-mr-caseExactMatch"
+#define NID_id_mr_caseExactMatch                2075
+#define OBJ_id_mr_caseExactMatch                2L,5L,13L,5L
+
+#define SN_id_mr_ignoreIfAbsentMatch            "id-mr-ignoreIfAbsentMatch"
+#define NID_id_mr_ignoreIfAbsentMatch           2076
+#define OBJ_id_mr_ignoreIfAbsentMatch           2L,5L,13L,50L
+
+#define SN_id_mr_nullMatch              "id-mr-nullMatch"
+#define NID_id_mr_nullMatch             2077
+#define OBJ_id_mr_nullMatch             2L,5L,13L,51L
+
+#define SN_id_mr_zonalMatch             "id-mr-zonalMatch"
+#define NID_id_mr_zonalMatch            2078
+#define OBJ_id_mr_zonalMatch            2L,5L,13L,52L
+
+#define SN_id_mr_authAttIdMatch         "id-mr-authAttIdMatch"
+#define NID_id_mr_authAttIdMatch                2079
+#define OBJ_id_mr_authAttIdMatch                2L,5L,13L,53L
+
+#define SN_id_mr_roleSpecCertIdMatch            "id-mr-roleSpecCertIdMatch"
+#define NID_id_mr_roleSpecCertIdMatch           2080
+#define OBJ_id_mr_roleSpecCertIdMatch           2L,5L,13L,54L
+
+#define SN_id_mr_basicAttConstraintsMatch               "id-mr-basicAttConstraintsMatch"
+#define NID_id_mr_basicAttConstraintsMatch              2081
+#define OBJ_id_mr_basicAttConstraintsMatch              2L,5L,13L,55L
+
+#define SN_id_mr_delegatedNameConstraintsMatch          "id-mr-delegatedNameConstraintsMatch"
+#define NID_id_mr_delegatedNameConstraintsMatch         2082
+#define OBJ_id_mr_delegatedNameConstraintsMatch         2L,5L,13L,56L
+
+#define SN_id_mr_timeSpecMatch          "id-mr-timeSpecMatch"
+#define NID_id_mr_timeSpecMatch         2083
+#define OBJ_id_mr_timeSpecMatch         2L,5L,13L,57L
+
+#define SN_id_mr_attDescriptorMatch             "id-mr-attDescriptorMatch"
+#define NID_id_mr_attDescriptorMatch            2084
+#define OBJ_id_mr_attDescriptorMatch            2L,5L,13L,58L
+
+#define SN_id_mr_acceptableCertPoliciesMatch            "id-mr-acceptableCertPoliciesMatch"
+#define NID_id_mr_acceptableCertPoliciesMatch           2085
+#define OBJ_id_mr_acceptableCertPoliciesMatch           2L,5L,13L,59L
+
+#define SN_id_mr_caseExactOrderingMatch         "id-mr-caseExactOrderingMatch"
+#define NID_id_mr_caseExactOrderingMatch                2086
+#define OBJ_id_mr_caseExactOrderingMatch                2L,5L,13L,6L
+
+#define SN_id_mr_policyMatch            "id-mr-policyMatch"
+#define NID_id_mr_policyMatch           2087
+#define OBJ_id_mr_policyMatch           2L,5L,13L,60L
+
+#define SN_id_mr_delegationPathMatch            "id-mr-delegationPathMatch"
+#define NID_id_mr_delegationPathMatch           2088
+#define OBJ_id_mr_delegationPathMatch           2L,5L,13L,61L
+
+#define SN_id_mr_pkiPathMatch           "id-mr-pkiPathMatch"
+#define NID_id_mr_pkiPathMatch          2089
+#define OBJ_id_mr_pkiPathMatch          2L,5L,13L,62L
+
+#define SN_id_mr_facsimileNumberMatch           "id-mr-facsimileNumberMatch"
+#define NID_id_mr_facsimileNumberMatch          2090
+#define OBJ_id_mr_facsimileNumberMatch          2L,5L,13L,63L
+
+#define SN_id_mr_facsimileNumberSubstringsMatch         "id-mr-facsimileNumberSubstringsMatch"
+#define NID_id_mr_facsimileNumberSubstringsMatch                2091
+#define OBJ_id_mr_facsimileNumberSubstringsMatch                2L,5L,13L,64L
+
+#define SN_id_mr_enhancedCertificateMatch               "id-mr-enhancedCertificateMatch"
+#define NID_id_mr_enhancedCertificateMatch              2092
+#define OBJ_id_mr_enhancedCertificateMatch              2L,5L,13L,65L
+
+#define SN_id_mr_sOAIdentifierMatch             "id-mr-sOAIdentifierMatch"
+#define NID_id_mr_sOAIdentifierMatch            2093
+#define OBJ_id_mr_sOAIdentifierMatch            2L,5L,13L,66L
+
+#define SN_id_mr_extensionPresenceMatch         "id-mr-extensionPresenceMatch"
+#define NID_id_mr_extensionPresenceMatch                2094
+#define OBJ_id_mr_extensionPresenceMatch                2L,5L,13L,67L
+
+#define SN_id_mr_uuidpairmatch          "id-mr-uuidpairmatch"
+#define NID_id_mr_uuidpairmatch         2095
+#define OBJ_id_mr_uuidpairmatch         2L,5L,13L,68L
+
+#define SN_id_mr_dualStringMatch                "id-mr-dualStringMatch"
+#define NID_id_mr_dualStringMatch               2096
+#define OBJ_id_mr_dualStringMatch               2L,5L,13L,69L
+
+#define SN_id_mr_caseExactSubstringsMatch               "id-mr-caseExactSubstringsMatch"
+#define NID_id_mr_caseExactSubstringsMatch              2097
+#define OBJ_id_mr_caseExactSubstringsMatch              2L,5L,13L,7L
+
+#define SN_id_mr_uriMatch               "id-mr-uriMatch"
+#define NID_id_mr_uriMatch              2098
+#define OBJ_id_mr_uriMatch              2L,5L,13L,70L
+
+#define SN_id_mr_userPwdMatch           "id-mr-userPwdMatch"
+#define NID_id_mr_userPwdMatch          2099
+#define OBJ_id_mr_userPwdMatch          2L,5L,13L,71L
+
+#define SN_id_mr_userPwdHistoryMatch            "id-mr-userPwdHistoryMatch"
+#define NID_id_mr_userPwdHistoryMatch           2100
+#define OBJ_id_mr_userPwdHistoryMatch           2L,5L,13L,72L
+
+#define SN_id_mr_pwdEncAlgMatch         "id-mr-pwdEncAlgMatch"
+#define NID_id_mr_pwdEncAlgMatch                2101
+#define OBJ_id_mr_pwdEncAlgMatch                2L,5L,13L,73L
+
+#define SN_id_mr_dnsNameMatch           "id-mr-dnsNameMatch"
+#define NID_id_mr_dnsNameMatch          2102
+#define OBJ_id_mr_dnsNameMatch          2L,5L,13L,74L
+
+#define SN_id_mr_intEmailMatch          "id-mr-intEmailMatch"
+#define NID_id_mr_intEmailMatch         2103
+#define OBJ_id_mr_intEmailMatch         2L,5L,13L,75L
+
+#define SN_id_mr_jidMatch               "id-mr-jidMatch"
+#define NID_id_mr_jidMatch              2104
+#define OBJ_id_mr_jidMatch              2L,5L,13L,76L
+
+#define SN_id_mr_numericStringMatch             "id-mr-numericStringMatch"
+#define NID_id_mr_numericStringMatch            2105
+#define OBJ_id_mr_numericStringMatch            2L,5L,13L,8L
+
+#define SN_id_mr_numericStringOrderingMatch             "id-mr-numericStringOrderingMatch"
+#define NID_id_mr_numericStringOrderingMatch            2106
+#define OBJ_id_mr_numericStringOrderingMatch            2L,5L,13L,9L
+
+#define SN_id_kmr               "id-kmr"
+#define NID_id_kmr              2107
+#define OBJ_id_kmr              2L,5L,14L
+
+#define SN_id_kmr_accessPointMatch              "id-kmr-accessPointMatch"
+#define NID_id_kmr_accessPointMatch             2108
+#define OBJ_id_kmr_accessPointMatch             2L,5L,14L,0L
+
+#define SN_id_kmr_masterShadowMatch             "id-kmr-masterShadowMatch"
+#define NID_id_kmr_masterShadowMatch            2109
+#define OBJ_id_kmr_masterShadowMatch            2L,5L,14L,1L
+
+#define SN_id_kmr_supplierConsumerMatch         "id-kmr-supplierConsumerMatch"
+#define NID_id_kmr_supplierConsumerMatch                2110
+#define OBJ_id_kmr_supplierConsumerMatch                2L,5L,14L,2L
+
+#define SN_id_kmr_supplierConsumersMatch                "id-kmr-supplierConsumersMatch"
+#define NID_id_kmr_supplierConsumersMatch               2111
+#define OBJ_id_kmr_supplierConsumersMatch               2L,5L,14L,3L
+
+#define SN_nameForm             "nameForm"
+#define NID_nameForm            2112
+#define OBJ_nameForm            2L,5L,15L
+
+#define SN_id_nf_countryNameForm                "id-nf-countryNameForm"
+#define NID_id_nf_countryNameForm               2113
+#define OBJ_id_nf_countryNameForm               2L,5L,15L,0L
+
+#define SN_id_nf_locNameForm            "id-nf-locNameForm"
+#define NID_id_nf_locNameForm           2114
+#define OBJ_id_nf_locNameForm           2L,5L,15L,1L
+
+#define SN_id_nf_applProcessNameForm            "id-nf-applProcessNameForm"
+#define NID_id_nf_applProcessNameForm           2115
+#define OBJ_id_nf_applProcessNameForm           2L,5L,15L,10L
+
+#define SN_id_nf_applEntityNameForm             "id-nf-applEntityNameForm"
+#define NID_id_nf_applEntityNameForm            2116
+#define OBJ_id_nf_applEntityNameForm            2L,5L,15L,11L
+
+#define SN_id_nf_dSANameForm            "id-nf-dSANameForm"
+#define NID_id_nf_dSANameForm           2117
+#define OBJ_id_nf_dSANameForm           2L,5L,15L,12L
+
+#define SN_id_nf_deviceNameForm         "id-nf-deviceNameForm"
+#define NID_id_nf_deviceNameForm                2118
+#define OBJ_id_nf_deviceNameForm                2L,5L,15L,13L
+
+#define SN_id_nf_cRLDistPtNameForm              "id-nf-cRLDistPtNameForm"
+#define NID_id_nf_cRLDistPtNameForm             2119
+#define OBJ_id_nf_cRLDistPtNameForm             2L,5L,15L,14L
+
+#define SN_id_nf_dMDNameForm            "id-nf-dMDNameForm"
+#define NID_id_nf_dMDNameForm           2120
+#define OBJ_id_nf_dMDNameForm           2L,5L,15L,15L
+
+#define SN_id_nf_subentryNameForm               "id-nf-subentryNameForm"
+#define NID_id_nf_subentryNameForm              2121
+#define OBJ_id_nf_subentryNameForm              2L,5L,15L,16L
+
+#define SN_id_nf_oidC1NameForm          "id-nf-oidC1NameForm"
+#define NID_id_nf_oidC1NameForm         2122
+#define OBJ_id_nf_oidC1NameForm         2L,5L,15L,17L
+
+#define SN_id_nf_oidC2NameForm          "id-nf-oidC2NameForm"
+#define NID_id_nf_oidC2NameForm         2123
+#define OBJ_id_nf_oidC2NameForm         2L,5L,15L,18L
+
+#define SN_id_nf_oidCNameForm           "id-nf-oidCNameForm"
+#define NID_id_nf_oidCNameForm          2124
+#define OBJ_id_nf_oidCNameForm          2L,5L,15L,19L
+
+#define SN_id_nf_sOPNameForm            "id-nf-sOPNameForm"
+#define NID_id_nf_sOPNameForm           2125
+#define OBJ_id_nf_sOPNameForm           2L,5L,15L,2L
+
+#define SN_id_nf_urnCNameForm           "id-nf-urnCNameForm"
+#define NID_id_nf_urnCNameForm          2126
+#define OBJ_id_nf_urnCNameForm          2L,5L,15L,20L
+
+#define SN_id_nf_orgNameForm            "id-nf-orgNameForm"
+#define NID_id_nf_orgNameForm           2127
+#define OBJ_id_nf_orgNameForm           2L,5L,15L,3L
+
+#define SN_id_nf_orgUnitNameForm                "id-nf-orgUnitNameForm"
+#define NID_id_nf_orgUnitNameForm               2128
+#define OBJ_id_nf_orgUnitNameForm               2L,5L,15L,4L
+
+#define SN_id_nf_personNameForm         "id-nf-personNameForm"
+#define NID_id_nf_personNameForm                2129
+#define OBJ_id_nf_personNameForm                2L,5L,15L,5L
+
+#define SN_id_nf_orgPersonNameForm              "id-nf-orgPersonNameForm"
+#define NID_id_nf_orgPersonNameForm             2130
+#define OBJ_id_nf_orgPersonNameForm             2L,5L,15L,6L
+
+#define SN_id_nf_orgRoleNameForm                "id-nf-orgRoleNameForm"
+#define NID_id_nf_orgRoleNameForm               2131
+#define OBJ_id_nf_orgRoleNameForm               2L,5L,15L,7L
+
+#define SN_id_nf_gONNameForm            "id-nf-gONNameForm"
+#define NID_id_nf_gONNameForm           2132
+#define OBJ_id_nf_gONNameForm           2L,5L,15L,8L
+
+#define SN_id_nf_resPersonNameForm              "id-nf-resPersonNameForm"
+#define NID_id_nf_resPersonNameForm             2133
+#define OBJ_id_nf_resPersonNameForm             2L,5L,15L,9L
+
+#define SN_group                "group"
+#define NID_group               2134
+#define OBJ_group               2L,5L,16L
+
+#define SN_id_sc                "id-sc"
+#define NID_id_sc               2135
+#define OBJ_id_sc               2L,5L,17L
+
+#define SN_id_sc_subentry               "id-sc-subentry"
+#define NID_id_sc_subentry              2136
+#define OBJ_id_sc_subentry              2L,5L,17L,0L
+
+#define SN_id_sc_accessControlSubentry          "id-sc-accessControlSubentry"
+#define NID_id_sc_accessControlSubentry         2137
+#define OBJ_id_sc_accessControlSubentry         2L,5L,17L,1L
+
+#define SN_id_sc_collectiveAttributeSubentry            "id-sc-collectiveAttributeSubentry"
+#define NID_id_sc_collectiveAttributeSubentry           2138
+#define OBJ_id_sc_collectiveAttributeSubentry           2L,5L,17L,2L
+
+#define SN_id_sc_contextAssertionSubentry               "id-sc-contextAssertionSubentry"
+#define NID_id_sc_contextAssertionSubentry              2139
+#define OBJ_id_sc_contextAssertionSubentry              2L,5L,17L,3L
+
+#define SN_id_sc_serviceAdminSubentry           "id-sc-serviceAdminSubentry"
+#define NID_id_sc_serviceAdminSubentry          2140
+#define OBJ_id_sc_serviceAdminSubentry          2L,5L,17L,4L
+
+#define SN_id_sc_pwdAdminSubentry               "id-sc-pwdAdminSubentry"
+#define NID_id_sc_pwdAdminSubentry              2141
+#define OBJ_id_sc_pwdAdminSubentry              2L,5L,17L,5L
+
+#define SN_id_oa                "id-oa"
+#define NID_id_oa               2142
+#define OBJ_id_oa               2L,5L,18L
+
+#define SN_id_oa_excludeAllCollectiveAttributes         "id-oa-excludeAllCollectiveAttributes"
+#define NID_id_oa_excludeAllCollectiveAttributes                2143
+#define OBJ_id_oa_excludeAllCollectiveAttributes                2L,5L,18L,0L
+
+#define SN_id_oa_createTimestamp                "id-oa-createTimestamp"
+#define NID_id_oa_createTimestamp               2144
+#define OBJ_id_oa_createTimestamp               2L,5L,18L,1L
+
+#define SN_id_oa_subschemaSubentryList          "id-oa-subschemaSubentryList"
+#define NID_id_oa_subschemaSubentryList         2145
+#define OBJ_id_oa_subschemaSubentryList         2L,5L,18L,10L
+
+#define SN_id_oa_accessControlSubentryList              "id-oa-accessControlSubentryList"
+#define NID_id_oa_accessControlSubentryList             2146
+#define OBJ_id_oa_accessControlSubentryList             2L,5L,18L,11L
+
+#define SN_id_oa_collectiveAttributeSubentryList                "id-oa-collectiveAttributeSubentryList"
+#define NID_id_oa_collectiveAttributeSubentryList               2147
+#define OBJ_id_oa_collectiveAttributeSubentryList               2L,5L,18L,12L
+
+#define SN_id_oa_contextDefaultSubentryList             "id-oa-contextDefaultSubentryList"
+#define NID_id_oa_contextDefaultSubentryList            2148
+#define OBJ_id_oa_contextDefaultSubentryList            2L,5L,18L,13L
+
+#define SN_id_oa_contextAssertionDefault                "id-oa-contextAssertionDefault"
+#define NID_id_oa_contextAssertionDefault               2149
+#define OBJ_id_oa_contextAssertionDefault               2L,5L,18L,14L
+
+#define SN_id_oa_serviceAdminSubentryList               "id-oa-serviceAdminSubentryList"
+#define NID_id_oa_serviceAdminSubentryList              2150
+#define OBJ_id_oa_serviceAdminSubentryList              2L,5L,18L,15L
+
+#define SN_id_oa_searchRules            "id-oa-searchRules"
+#define NID_id_oa_searchRules           2151
+#define OBJ_id_oa_searchRules           2L,5L,18L,16L
+
+#define SN_id_oa_hierarchyLevel         "id-oa-hierarchyLevel"
+#define NID_id_oa_hierarchyLevel                2152
+#define OBJ_id_oa_hierarchyLevel                2L,5L,18L,17L
+
+#define SN_id_oa_hierarchyBelow         "id-oa-hierarchyBelow"
+#define NID_id_oa_hierarchyBelow                2153
+#define OBJ_id_oa_hierarchyBelow                2L,5L,18L,18L
+
+#define SN_id_oa_hierarchyParent                "id-oa-hierarchyParent"
+#define NID_id_oa_hierarchyParent               2154
+#define OBJ_id_oa_hierarchyParent               2L,5L,18L,19L
+
+#define SN_id_oa_modifyTimestamp                "id-oa-modifyTimestamp"
+#define NID_id_oa_modifyTimestamp               2155
+#define OBJ_id_oa_modifyTimestamp               2L,5L,18L,2L
+
+#define SN_id_oa_hierarchyTop           "id-oa-hierarchyTop"
+#define NID_id_oa_hierarchyTop          2156
+#define OBJ_id_oa_hierarchyTop          2L,5L,18L,20L
+
+#define SN_id_oa_pwdAdminSubentryList           "id-oa-pwdAdminSubentryList"
+#define NID_id_oa_pwdAdminSubentryList          2157
+#define OBJ_id_oa_pwdAdminSubentryList          2L,5L,18L,21L
+
+#define SN_id_oa_pwdStartTime           "id-oa-pwdStartTime"
+#define NID_id_oa_pwdStartTime          2158
+#define OBJ_id_oa_pwdStartTime          2L,5L,18L,22L
+
+#define SN_id_oa_pwdExpiryTime          "id-oa-pwdExpiryTime"
+#define NID_id_oa_pwdExpiryTime         2159
+#define OBJ_id_oa_pwdExpiryTime         2L,5L,18L,23L
+
+#define SN_id_oa_pwdEndTime             "id-oa-pwdEndTime"
+#define NID_id_oa_pwdEndTime            2160
+#define OBJ_id_oa_pwdEndTime            2L,5L,18L,24L
+
+#define SN_id_oa_pwdFails               "id-oa-pwdFails"
+#define NID_id_oa_pwdFails              2161
+#define OBJ_id_oa_pwdFails              2L,5L,18L,25L
+
+#define SN_id_oa_pwdFailureTime         "id-oa-pwdFailureTime"
+#define NID_id_oa_pwdFailureTime                2162
+#define OBJ_id_oa_pwdFailureTime                2L,5L,18L,26L
+
+#define SN_id_oa_pwdGracesUsed          "id-oa-pwdGracesUsed"
+#define NID_id_oa_pwdGracesUsed         2163
+#define OBJ_id_oa_pwdGracesUsed         2L,5L,18L,27L
+
+#define SN_id_oa_userPwdHistory         "id-oa-userPwdHistory"
+#define NID_id_oa_userPwdHistory                2164
+#define OBJ_id_oa_userPwdHistory                2L,5L,18L,28L
+
+#define SN_id_oa_userPwdRecentlyExpired         "id-oa-userPwdRecentlyExpired"
+#define NID_id_oa_userPwdRecentlyExpired                2165
+#define OBJ_id_oa_userPwdRecentlyExpired                2L,5L,18L,29L
+
+#define SN_id_oa_creatorsName           "id-oa-creatorsName"
+#define NID_id_oa_creatorsName          2166
+#define OBJ_id_oa_creatorsName          2L,5L,18L,3L
+
+#define SN_id_oa_pwdModifyEntryAllowed          "id-oa-pwdModifyEntryAllowed"
+#define NID_id_oa_pwdModifyEntryAllowed         2167
+#define OBJ_id_oa_pwdModifyEntryAllowed         2L,5L,18L,30L
+
+#define SN_id_oa_pwdChangeAllowed               "id-oa-pwdChangeAllowed"
+#define NID_id_oa_pwdChangeAllowed              2168
+#define OBJ_id_oa_pwdChangeAllowed              2L,5L,18L,31L
+
+#define SN_id_oa_pwdMaxAge              "id-oa-pwdMaxAge"
+#define NID_id_oa_pwdMaxAge             2169
+#define OBJ_id_oa_pwdMaxAge             2L,5L,18L,32L
+
+#define SN_id_oa_pwdExpiryAge           "id-oa-pwdExpiryAge"
+#define NID_id_oa_pwdExpiryAge          2170
+#define OBJ_id_oa_pwdExpiryAge          2L,5L,18L,33L
+
+#define SN_id_oa_pwdMinLength           "id-oa-pwdMinLength"
+#define NID_id_oa_pwdMinLength          2171
+#define OBJ_id_oa_pwdMinLength          2L,5L,18L,34L
+
+#define SN_id_oa_pwdVocabulary          "id-oa-pwdVocabulary"
+#define NID_id_oa_pwdVocabulary         2172
+#define OBJ_id_oa_pwdVocabulary         2L,5L,18L,35L
+
+#define SN_id_oa_pwdAlphabet            "id-oa-pwdAlphabet"
+#define NID_id_oa_pwdAlphabet           2173
+#define OBJ_id_oa_pwdAlphabet           2L,5L,18L,36L
+
+#define SN_id_oa_pwdDictionaries                "id-oa-pwdDictionaries"
+#define NID_id_oa_pwdDictionaries               2174
+#define OBJ_id_oa_pwdDictionaries               2L,5L,18L,37L
+
+#define SN_id_oa_pwdExpiryWarning               "id-oa-pwdExpiryWarning"
+#define NID_id_oa_pwdExpiryWarning              2175
+#define OBJ_id_oa_pwdExpiryWarning              2L,5L,18L,38L
+
+#define SN_id_oa_pwdGraces              "id-oa-pwdGraces"
+#define NID_id_oa_pwdGraces             2176
+#define OBJ_id_oa_pwdGraces             2L,5L,18L,39L
+
+#define SN_id_oa_modifiersName          "id-oa-modifiersName"
+#define NID_id_oa_modifiersName         2177
+#define OBJ_id_oa_modifiersName         2L,5L,18L,4L
+
+#define SN_id_oa_pwdFailureDuration             "id-oa-pwdFailureDuration"
+#define NID_id_oa_pwdFailureDuration            2178
+#define OBJ_id_oa_pwdFailureDuration            2L,5L,18L,40L
+
+#define SN_id_oa_pwdLockoutDuration             "id-oa-pwdLockoutDuration"
+#define NID_id_oa_pwdLockoutDuration            2179
+#define OBJ_id_oa_pwdLockoutDuration            2L,5L,18L,41L
+
+#define SN_id_oa_pwdMaxFailures         "id-oa-pwdMaxFailures"
+#define NID_id_oa_pwdMaxFailures                2180
+#define OBJ_id_oa_pwdMaxFailures                2L,5L,18L,42L
+
+#define SN_id_oa_pwdMaxTimeInHistory            "id-oa-pwdMaxTimeInHistory"
+#define NID_id_oa_pwdMaxTimeInHistory           2181
+#define OBJ_id_oa_pwdMaxTimeInHistory           2L,5L,18L,43L
+
+#define SN_id_oa_pwdMinTimeInHistory            "id-oa-pwdMinTimeInHistory"
+#define NID_id_oa_pwdMinTimeInHistory           2182
+#define OBJ_id_oa_pwdMinTimeInHistory           2L,5L,18L,44L
+
+#define SN_id_oa_pwdHistorySlots                "id-oa-pwdHistorySlots"
+#define NID_id_oa_pwdHistorySlots               2183
+#define OBJ_id_oa_pwdHistorySlots               2L,5L,18L,45L
+
+#define SN_id_oa_pwdRecentlyExpiredDuration             "id-oa-pwdRecentlyExpiredDuration"
+#define NID_id_oa_pwdRecentlyExpiredDuration            2184
+#define OBJ_id_oa_pwdRecentlyExpiredDuration            2L,5L,18L,46L
+
+#define SN_id_oa_pwdEncAlg              "id-oa-pwdEncAlg"
+#define NID_id_oa_pwdEncAlg             2185
+#define OBJ_id_oa_pwdEncAlg             2L,5L,18L,47L
+
+#define SN_id_oa_allAttributeTypes              "id-oa-allAttributeTypes"
+#define NID_id_oa_allAttributeTypes             2186
+#define OBJ_id_oa_allAttributeTypes             2L,5L,18L,48L
+
+#define SN_id_oa_administrativeRole             "id-oa-administrativeRole"
+#define NID_id_oa_administrativeRole            2187
+#define OBJ_id_oa_administrativeRole            2L,5L,18L,5L
+
+#define SN_id_oa_subtreeSpecification           "id-oa-subtreeSpecification"
+#define NID_id_oa_subtreeSpecification          2188
+#define OBJ_id_oa_subtreeSpecification          2L,5L,18L,6L
+
+#define SN_id_oa_collectiveExclusions           "id-oa-collectiveExclusions"
+#define NID_id_oa_collectiveExclusions          2189
+#define OBJ_id_oa_collectiveExclusions          2L,5L,18L,7L
+
+#define SN_id_oa_subschemaTimestamp             "id-oa-subschemaTimestamp"
+#define NID_id_oa_subschemaTimestamp            2190
+#define OBJ_id_oa_subschemaTimestamp            2L,5L,18L,8L
+
+#define SN_id_oa_hasSubordinates                "id-oa-hasSubordinates"
+#define NID_id_oa_hasSubordinates               2191
+#define OBJ_id_oa_hasSubordinates               2L,5L,18L,9L
+
+#define SN_id_ob                "id-ob"
+#define NID_id_ob               2192
+#define OBJ_id_ob               2L,5L,19L
+
+#define SN_id_op_binding_shadow         "id-op-binding-shadow"
+#define NID_id_op_binding_shadow                2193
+#define OBJ_id_op_binding_shadow                2L,5L,19L,1L
+
+#define SN_id_op_binding_hierarchical           "id-op-binding-hierarchical"
+#define NID_id_op_binding_hierarchical          2194
+#define OBJ_id_op_binding_hierarchical          2L,5L,19L,2L
+
+#define SN_id_op_binding_non_specific_hierarchical              "id-op-binding-non-specific-hierarchical"
+#define NID_id_op_binding_non_specific_hierarchical             2195
+#define OBJ_id_op_binding_non_specific_hierarchical             2L,5L,19L,3L
+
+#define SN_serviceElement               "serviceElement"
+#define NID_serviceElement              2196
+#define OBJ_serviceElement              2L,5L,2L
+
+#define SN_id_soc               "id-soc"
+#define NID_id_soc              2197
+#define OBJ_id_soc              2L,5L,20L
+
+#define SN_id_soc_subschema             "id-soc-subschema"
+#define NID_id_soc_subschema            2198
+#define OBJ_id_soc_subschema            2L,5L,20L,1L
+
+#define SN_id_soa               "id-soa"
+#define NID_id_soa              2199
+#define OBJ_id_soa              2L,5L,21L
+
+#define SN_id_soa_dITStructureRule              "id-soa-dITStructureRule"
+#define NID_id_soa_dITStructureRule             2200
+#define OBJ_id_soa_dITStructureRule             2L,5L,21L,1L
+
+#define SN_id_soa_governingStructureRule                "id-soa-governingStructureRule"
+#define NID_id_soa_governingStructureRule               2201
+#define OBJ_id_soa_governingStructureRule               2L,5L,21L,10L
+
+#define SN_id_soa_contextTypes          "id-soa-contextTypes"
+#define NID_id_soa_contextTypes         2202
+#define OBJ_id_soa_contextTypes         2L,5L,21L,11L
+
+#define SN_id_soa_dITContextUse         "id-soa-dITContextUse"
+#define NID_id_soa_dITContextUse                2203
+#define OBJ_id_soa_dITContextUse                2L,5L,21L,12L
+
+#define SN_id_soa_friends               "id-soa-friends"
+#define NID_id_soa_friends              2204
+#define OBJ_id_soa_friends              2L,5L,21L,13L
+
+#define SN_id_soa_dITContentRules               "id-soa-dITContentRules"
+#define NID_id_soa_dITContentRules              2205
+#define OBJ_id_soa_dITContentRules              2L,5L,21L,2L
+
+#define SN_id_soa_matchingRules         "id-soa-matchingRules"
+#define NID_id_soa_matchingRules                2206
+#define OBJ_id_soa_matchingRules                2L,5L,21L,4L
+
+#define SN_id_soa_attributeTypes                "id-soa-attributeTypes"
+#define NID_id_soa_attributeTypes               2207
+#define OBJ_id_soa_attributeTypes               2L,5L,21L,5L
+
+#define SN_id_soa_objectClasses         "id-soa-objectClasses"
+#define NID_id_soa_objectClasses                2208
+#define OBJ_id_soa_objectClasses                2L,5L,21L,6L
+
+#define SN_id_soa_nameForms             "id-soa-nameForms"
+#define NID_id_soa_nameForms            2209
+#define OBJ_id_soa_nameForms            2L,5L,21L,7L
+
+#define SN_id_soa_matchingRuleUse               "id-soa-matchingRuleUse"
+#define NID_id_soa_matchingRuleUse              2210
+#define OBJ_id_soa_matchingRuleUse              2L,5L,21L,8L
+
+#define SN_id_soa_structuralObjectClass         "id-soa-structuralObjectClass"
+#define NID_id_soa_structuralObjectClass                2211
+#define OBJ_id_soa_structuralObjectClass                2L,5L,21L,9L
+
+#define SN_id_ar                "id-ar"
+#define NID_id_ar               2212
+#define OBJ_id_ar               2L,5L,23L
+
+#define SN_id_ar_autonomousArea         "id-ar-autonomousArea"
+#define NID_id_ar_autonomousArea                2213
+#define OBJ_id_ar_autonomousArea                2L,5L,23L,1L
+
+#define SN_id_ar_accessControlSpecificArea              "id-ar-accessControlSpecificArea"
+#define NID_id_ar_accessControlSpecificArea             2214
+#define OBJ_id_ar_accessControlSpecificArea             2L,5L,23L,2L
+
+#define SN_id_ar_accessControlInnerArea         "id-ar-accessControlInnerArea"
+#define NID_id_ar_accessControlInnerArea                2215
+#define OBJ_id_ar_accessControlInnerArea                2L,5L,23L,3L
+
+#define SN_id_ar_subschemaAdminSpecificArea             "id-ar-subschemaAdminSpecificArea"
+#define NID_id_ar_subschemaAdminSpecificArea            2216
+#define OBJ_id_ar_subschemaAdminSpecificArea            2L,5L,23L,4L
+
+#define SN_id_ar_collectiveAttributeSpecificArea                "id-ar-collectiveAttributeSpecificArea"
+#define NID_id_ar_collectiveAttributeSpecificArea               2217
+#define OBJ_id_ar_collectiveAttributeSpecificArea               2L,5L,23L,5L
+
+#define SN_id_ar_collectiveAttributeInnerArea           "id-ar-collectiveAttributeInnerArea"
+#define NID_id_ar_collectiveAttributeInnerArea          2218
+#define OBJ_id_ar_collectiveAttributeInnerArea          2L,5L,23L,6L
+
+#define SN_id_ar_contextDefaultSpecificArea             "id-ar-contextDefaultSpecificArea"
+#define NID_id_ar_contextDefaultSpecificArea            2219
+#define OBJ_id_ar_contextDefaultSpecificArea            2L,5L,23L,7L
+
+#define SN_id_ar_serviceSpecificArea            "id-ar-serviceSpecificArea"
+#define NID_id_ar_serviceSpecificArea           2220
+#define OBJ_id_ar_serviceSpecificArea           2L,5L,23L,8L
+
+#define SN_id_ar_pwdAdminSpecificArea           "id-ar-pwdAdminSpecificArea"
+#define NID_id_ar_pwdAdminSpecificArea          2221
+#define OBJ_id_ar_pwdAdminSpecificArea          2L,5L,23L,9L
+
+#define SN_id_aca_accessControlScheme           "id-aca-accessControlScheme"
+#define NID_id_aca_accessControlScheme          2222
+#define OBJ_id_aca_accessControlScheme          2L,5L,24L,1L
+
+#define SN_id_aca_prescriptiveACI               "id-aca-prescriptiveACI"
+#define NID_id_aca_prescriptiveACI              2223
+#define OBJ_id_aca_prescriptiveACI              2L,5L,24L,4L
+
+#define SN_id_aca_entryACI              "id-aca-entryACI"
+#define NID_id_aca_entryACI             2224
+#define OBJ_id_aca_entryACI             2L,5L,24L,5L
+
+#define SN_id_aca_subentryACI           "id-aca-subentryACI"
+#define NID_id_aca_subentryACI          2225
+#define OBJ_id_aca_subentryACI          2L,5L,24L,6L
+
+#define SN_id_rosObject         "id-rosObject"
+#define NID_id_rosObject                2226
+#define OBJ_id_rosObject                2L,5L,25L
+
+#define SN_id_rosObject_dua             "id-rosObject-dua"
+#define NID_id_rosObject_dua            2227
+#define OBJ_id_rosObject_dua            2L,5L,25L,1L
+
+#define SN_id_rosObject_initiatingSupplierDSA           "id-rosObject-initiatingSupplierDSA"
+#define NID_id_rosObject_initiatingSupplierDSA          2228
+#define OBJ_id_rosObject_initiatingSupplierDSA          2L,5L,25L,10L
+
+#define SN_id_rosObject_respondingConsumerDSA           "id-rosObject-respondingConsumerDSA"
+#define NID_id_rosObject_respondingConsumerDSA          2229
+#define OBJ_id_rosObject_respondingConsumerDSA          2L,5L,25L,11L
+
+#define SN_id_rosObject_directory               "id-rosObject-directory"
+#define NID_id_rosObject_directory              2230
+#define OBJ_id_rosObject_directory              2L,5L,25L,2L
+
+#define SN_id_rosObject_dapDSA          "id-rosObject-dapDSA"
+#define NID_id_rosObject_dapDSA         2231
+#define OBJ_id_rosObject_dapDSA         2L,5L,25L,3L
+
+#define SN_id_rosObject_dspDSA          "id-rosObject-dspDSA"
+#define NID_id_rosObject_dspDSA         2232
+#define OBJ_id_rosObject_dspDSA         2L,5L,25L,4L
+
+#define SN_id_rosObject_dopDSA          "id-rosObject-dopDSA"
+#define NID_id_rosObject_dopDSA         2233
+#define OBJ_id_rosObject_dopDSA         2L,5L,25L,7L
+
+#define SN_id_rosObject_initiatingConsumerDSA           "id-rosObject-initiatingConsumerDSA"
+#define NID_id_rosObject_initiatingConsumerDSA          2234
+#define OBJ_id_rosObject_initiatingConsumerDSA          2L,5L,25L,8L
+
+#define SN_id_rosObject_respondingSupplierDSA           "id-rosObject-respondingSupplierDSA"
+#define NID_id_rosObject_respondingSupplierDSA          2235
+#define OBJ_id_rosObject_respondingSupplierDSA          2L,5L,25L,9L
+
+#define SN_id_contract          "id-contract"
+#define NID_id_contract         2236
+#define OBJ_id_contract         2L,5L,26L
+
+#define SN_id_contract_dap              "id-contract-dap"
+#define NID_id_contract_dap             2237
+#define OBJ_id_contract_dap             2L,5L,26L,1L
+
+#define SN_id_contract_dsp              "id-contract-dsp"
+#define NID_id_contract_dsp             2238
+#define OBJ_id_contract_dsp             2L,5L,26L,2L
+
+#define SN_id_contract_shadowConsumer           "id-contract-shadowConsumer"
+#define NID_id_contract_shadowConsumer          2239
+#define OBJ_id_contract_shadowConsumer          2L,5L,26L,3L
+
+#define SN_id_contract_shadowSupplier           "id-contract-shadowSupplier"
+#define NID_id_contract_shadowSupplier          2240
+#define OBJ_id_contract_shadowSupplier          2L,5L,26L,4L
+
+#define SN_id_contract_dop              "id-contract-dop"
+#define NID_id_contract_dop             2241
+#define OBJ_id_contract_dop             2L,5L,26L,5L
+
+#define SN_package_             "package-"
+#define NID_package_            2242
+#define OBJ_package_            2L,5L,27L
+
+#define SN_id_package_read              "id-package-read"
+#define NID_id_package_read             2243
+#define OBJ_id_package_read             2L,5L,27L,1L
+
+#define SN_id_package_dapConnection             "id-package-dapConnection"
+#define NID_id_package_dapConnection            2244
+#define OBJ_id_package_dapConnection            2L,5L,27L,10L
+
+#define SN_id_package_dspConnection             "id-package-dspConnection"
+#define NID_id_package_dspConnection            2245
+#define OBJ_id_package_dspConnection            2L,5L,27L,11L
+
+#define SN_id_package_dispConnection            "id-package-dispConnection"
+#define NID_id_package_dispConnection           2246
+#define OBJ_id_package_dispConnection           2L,5L,27L,12L
+
+#define SN_id_package_dopConnection             "id-package-dopConnection"
+#define NID_id_package_dopConnection            2247
+#define OBJ_id_package_dopConnection            2L,5L,27L,13L
+
+#define SN_id_package_search            "id-package-search"
+#define NID_id_package_search           2248
+#define OBJ_id_package_search           2L,5L,27L,2L
+
+#define SN_id_package_modify            "id-package-modify"
+#define NID_id_package_modify           2249
+#define OBJ_id_package_modify           2L,5L,27L,3L
+
+#define SN_id_package_chainedRead               "id-package-chainedRead"
+#define NID_id_package_chainedRead              2250
+#define OBJ_id_package_chainedRead              2L,5L,27L,4L
+
+#define SN_id_package_chainedSearch             "id-package-chainedSearch"
+#define NID_id_package_chainedSearch            2251
+#define OBJ_id_package_chainedSearch            2L,5L,27L,5L
+
+#define SN_id_package_chainedModify             "id-package-chainedModify"
+#define NID_id_package_chainedModify            2252
+#define OBJ_id_package_chainedModify            2L,5L,27L,6L
+
+#define SN_id_package_shadowConsumer            "id-package-shadowConsumer"
+#define NID_id_package_shadowConsumer           2253
+#define OBJ_id_package_shadowConsumer           2L,5L,27L,7L
+
+#define SN_id_package_shadowSupplier            "id-package-shadowSupplier"
+#define NID_id_package_shadowSupplier           2254
+#define OBJ_id_package_shadowSupplier           2L,5L,27L,8L
+
+#define SN_id_package_operationalBindingManagement              "id-package-operationalBindingManagement"
+#define NID_id_package_operationalBindingManagement             2255
+#define OBJ_id_package_operationalBindingManagement             2L,5L,27L,9L
+
+#define SN_id_acScheme          "id-acScheme"
+#define NID_id_acScheme         2256
+#define OBJ_id_acScheme         2L,5L,28L
+
+#define SN_basicAccessControlScheme             "basicAccessControlScheme"
+#define NID_basicAccessControlScheme            2257
+#define OBJ_basicAccessControlScheme            2L,5L,28L,1L
+
+#define SN_simplifiedAccessControlScheme                "simplifiedAccessControlScheme"
+#define NID_simplifiedAccessControlScheme               2258
+#define OBJ_simplifiedAccessControlScheme               2L,5L,28L,2L
+
+#define SN_rule_based_access_control            "rule-based-access-control"
+#define NID_rule_based_access_control           2259
+#define OBJ_rule_based_access_control           2L,5L,28L,3L
+
+#define SN_rule_and_basic_access_control                "rule-and-basic-access-control"
+#define NID_rule_and_basic_access_control               2260
+#define OBJ_rule_and_basic_access_control               2L,5L,28L,4L
+
+#define SN_rule_and_simple_access_control               "rule-and-simple-access-control"
+#define NID_rule_and_simple_access_control              2261
+#define OBJ_rule_and_simple_access_control              2L,5L,28L,5L
+
+#define SN_id_ce_a_subjectKeyIdentifier         "id-ce-a-subjectKeyIdentifier"
+#define NID_id_ce_a_subjectKeyIdentifier                2262
+#define OBJ_id_ce_a_subjectKeyIdentifier                2L,5L,29L,14L,1L
+
+#define SN_id_asx_subjectKeyIdentifier          "id-asx-subjectKeyIdentifier"
+#define NID_id_asx_subjectKeyIdentifier         2263
+#define OBJ_id_asx_subjectKeyIdentifier         2L,5L,29L,14L,2L
+
+#define SN_id_ce_a_keyUsage             "id-ce-a-keyUsage"
+#define NID_id_ce_a_keyUsage            2264
+#define OBJ_id_ce_a_keyUsage            2L,5L,29L,15L,1L
+
+#define SN_id_asx_keyUsage              "id-asx-keyUsage"
+#define NID_id_asx_keyUsage             2265
+#define OBJ_id_asx_keyUsage             2L,5L,29L,15L,2L
+
+#define SN_id_ce_a_privateKeyUsagePeriod                "id-ce-a-privateKeyUsagePeriod"
+#define NID_id_ce_a_privateKeyUsagePeriod               2266
+#define OBJ_id_ce_a_privateKeyUsagePeriod               2L,5L,29L,16L,1L
+
+#define SN_id_asx_privateKeyUsagePeriod         "id-asx-privateKeyUsagePeriod"
+#define NID_id_asx_privateKeyUsagePeriod                2267
+#define OBJ_id_asx_privateKeyUsagePeriod                2L,5L,29L,16L,2L
+
+#define SN_id_ce_a_subjectAltName               "id-ce-a-subjectAltName"
+#define NID_id_ce_a_subjectAltName              2268
+#define OBJ_id_ce_a_subjectAltName              2L,5L,29L,17L,1L
+
+#define SN_id_asx_subjectAltName                "id-asx-subjectAltName"
+#define NID_id_asx_subjectAltName               2269
+#define OBJ_id_asx_subjectAltName               2L,5L,29L,17L,2L
+
+#define SN_id_ce_a_issuerAltName                "id-ce-a-issuerAltName"
+#define NID_id_ce_a_issuerAltName               2270
+#define OBJ_id_ce_a_issuerAltName               2L,5L,29L,18L,1L
+
+#define SN_id_asx_issuerAltName         "id-asx-issuerAltName"
+#define NID_id_asx_issuerAltName                2271
+#define OBJ_id_asx_issuerAltName                2L,5L,29L,18L,2L
+
+#define SN_id_ce_a_basicConstraints             "id-ce-a-basicConstraints"
+#define NID_id_ce_a_basicConstraints            2272
+#define OBJ_id_ce_a_basicConstraints            2L,5L,29L,19L,1L
+
+#define SN_id_asx_basicConstraints              "id-asx-basicConstraints"
+#define NID_id_asx_basicConstraints             2273
+#define OBJ_id_asx_basicConstraints             2L,5L,29L,19L,2L
+
+#define SN_id_ce_a_cRLNumber            "id-ce-a-cRLNumber"
+#define NID_id_ce_a_cRLNumber           2274
+#define OBJ_id_ce_a_cRLNumber           2L,5L,29L,20L,1L
+
+#define SN_id_asx_cRLNumber             "id-asx-cRLNumber"
+#define NID_id_asx_cRLNumber            2275
+#define OBJ_id_asx_cRLNumber            2L,5L,29L,20L,2L
+
+#define SN_id_ce_a_reasonCode           "id-ce-a-reasonCode"
+#define NID_id_ce_a_reasonCode          2276
+#define OBJ_id_ce_a_reasonCode          2L,5L,29L,21L,1L
+
+#define SN_id_asx_reasonCode            "id-asx-reasonCode"
+#define NID_id_asx_reasonCode           2277
+#define OBJ_id_asx_reasonCode           2L,5L,29L,21L,2L
+
+#define SN_id_ce_a_holdInstructionCode          "id-ce-a-holdInstructionCode"
+#define NID_id_ce_a_holdInstructionCode         2278
+#define OBJ_id_ce_a_holdInstructionCode         2L,5L,29L,23L,1L
+
+#define SN_id_asx_holdInstructionCode           "id-asx-holdInstructionCode"
+#define NID_id_asx_holdInstructionCode          2279
+#define OBJ_id_asx_holdInstructionCode          2L,5L,29L,23L,2L
+
+#define SN_id_ce_a_invalidityDate               "id-ce-a-invalidityDate"
+#define NID_id_ce_a_invalidityDate              2280
+#define OBJ_id_ce_a_invalidityDate              2L,5L,29L,24L,1L
+
+#define SN_id_asx_invalidityDate                "id-asx-invalidityDate"
+#define NID_id_asx_invalidityDate               2281
+#define OBJ_id_asx_invalidityDate               2L,5L,29L,24L,2L
+
+#define SN_id_ce_a_deltaCRLIndicator            "id-ce-a-deltaCRLIndicator"
+#define NID_id_ce_a_deltaCRLIndicator           2282
+#define OBJ_id_ce_a_deltaCRLIndicator           2L,5L,29L,27L,1L
+
+#define SN_id_asx_deltaCRLIndicator             "id-asx-deltaCRLIndicator"
+#define NID_id_asx_deltaCRLIndicator            2283
+#define OBJ_id_asx_deltaCRLIndicator            2L,5L,29L,27L,2L
+
+#define SN_id_ce_a_issuingDistributionPoint             "id-ce-a-issuingDistributionPoint"
+#define NID_id_ce_a_issuingDistributionPoint            2284
+#define OBJ_id_ce_a_issuingDistributionPoint            2L,5L,29L,28L,1L
+
+#define SN_id_asx_issuingDistributionPoint              "id-asx-issuingDistributionPoint"
+#define NID_id_asx_issuingDistributionPoint             2285
+#define OBJ_id_asx_issuingDistributionPoint             2L,5L,29L,28L,2L
+
+#define SN_id_ce_a_certificateIssuer            "id-ce-a-certificateIssuer"
+#define NID_id_ce_a_certificateIssuer           2286
+#define OBJ_id_ce_a_certificateIssuer           2L,5L,29L,29L,1L
+
+#define SN_id_asx_certificateIssuer             "id-asx-certificateIssuer"
+#define NID_id_asx_certificateIssuer            2287
+#define OBJ_id_asx_certificateIssuer            2L,5L,29L,29L,2L
+
+#define SN_id_ce_a_nameConstraints              "id-ce-a-nameConstraints"
+#define NID_id_ce_a_nameConstraints             2288
+#define OBJ_id_ce_a_nameConstraints             2L,5L,29L,30L,1L
+
+#define SN_id_asx_nameConstraints               "id-asx-nameConstraints"
+#define NID_id_asx_nameConstraints              2289
+#define OBJ_id_asx_nameConstraints              2L,5L,29L,30L,2L
+
+#define SN_id_ce_a_cRLDistributionPoints                "id-ce-a-cRLDistributionPoints"
+#define NID_id_ce_a_cRLDistributionPoints               2290
+#define OBJ_id_ce_a_cRLDistributionPoints               2L,5L,29L,31L,1L
+
+#define SN_id_asx_cRLDistributionPoints         "id-asx-cRLDistributionPoints"
+#define NID_id_asx_cRLDistributionPoints                2291
+#define OBJ_id_asx_cRLDistributionPoints                2L,5L,29L,31L,2L
+
+#define SN_id_ce_a_certificatePolicies          "id-ce-a-certificatePolicies"
+#define NID_id_ce_a_certificatePolicies         2292
+#define OBJ_id_ce_a_certificatePolicies         2L,5L,29L,32L,1L
+
+#define SN_id_asx_certificatePolicies           "id-asx-certificatePolicies"
+#define NID_id_asx_certificatePolicies          2293
+#define OBJ_id_asx_certificatePolicies          2L,5L,29L,32L,2L
+
+#define SN_id_ce_a_policyMappings               "id-ce-a-policyMappings"
+#define NID_id_ce_a_policyMappings              2294
+#define OBJ_id_ce_a_policyMappings              2L,5L,29L,33L,1L
+
+#define SN_id_asx_policyMappings                "id-asx-policyMappings"
+#define NID_id_asx_policyMappings               2295
+#define OBJ_id_asx_policyMappings               2L,5L,29L,33L,2L
+
+#define SN_id_ce_a_authorityKeyIdentifier               "id-ce-a-authorityKeyIdentifier"
+#define NID_id_ce_a_authorityKeyIdentifier              2296
+#define OBJ_id_ce_a_authorityKeyIdentifier              2L,5L,29L,35L,1L
+
+#define SN_id_asx_authorityKeyIdentifier                "id-asx-authorityKeyIdentifier"
+#define NID_id_asx_authorityKeyIdentifier               2297
+#define OBJ_id_asx_authorityKeyIdentifier               2L,5L,29L,35L,2L
+
+#define SN_id_ce_a_policyConstraints            "id-ce-a-policyConstraints"
+#define NID_id_ce_a_policyConstraints           2298
+#define OBJ_id_ce_a_policyConstraints           2L,5L,29L,36L,1L
+
+#define SN_id_asx_policyConstraints             "id-asx-policyConstraints"
+#define NID_id_asx_policyConstraints            2299
+#define OBJ_id_asx_policyConstraints            2L,5L,29L,36L,2L
+
+#define SN_id_ce_a_extKeyUsage          "id-ce-a-extKeyUsage"
+#define NID_id_ce_a_extKeyUsage         2300
+#define OBJ_id_ce_a_extKeyUsage         2L,5L,29L,37L,1L
+
+#define SN_id_asx_extKeyUsage           "id-asx-extKeyUsage"
+#define NID_id_asx_extKeyUsage          2301
+#define OBJ_id_asx_extKeyUsage          2L,5L,29L,37L,2L
+
+#define SN_id_ce_authorityAttributeIdentifier           "id-ce-authorityAttributeIdentifier"
+#define NID_id_ce_authorityAttributeIdentifier          2302
+#define OBJ_id_ce_authorityAttributeIdentifier          2L,5L,29L,38L
+
+#define SN_id_ce_a_authorityAttributeIdentifier         "id-ce-a-authorityAttributeIdentifier"
+#define NID_id_ce_a_authorityAttributeIdentifier                2303
+#define OBJ_id_ce_a_authorityAttributeIdentifier                2L,5L,29L,38L,1L
+
+#define SN_id_asx_authorityAttributeIdentifier          "id-asx-authorityAttributeIdentifier"
+#define NID_id_asx_authorityAttributeIdentifier         2304
+#define OBJ_id_asx_authorityAttributeIdentifier         2L,5L,29L,38L,2L
+
+#define SN_id_ce_roleSpecCertIdentifier         "id-ce-roleSpecCertIdentifier"
+#define NID_id_ce_roleSpecCertIdentifier                2305
+#define OBJ_id_ce_roleSpecCertIdentifier                2L,5L,29L,39L
+
+#define SN_id_ce_a_roleSpecCertIdentifier               "id-ce-a-roleSpecCertIdentifier"
+#define NID_id_ce_a_roleSpecCertIdentifier              2306
+#define OBJ_id_ce_a_roleSpecCertIdentifier              2L,5L,29L,39L,1L
+
+#define SN_id_asx_roleSpecCertIdentifier                "id-asx-roleSpecCertIdentifier"
+#define NID_id_asx_roleSpecCertIdentifier               2307
+#define OBJ_id_asx_roleSpecCertIdentifier               2L,5L,29L,39L,2L
+
+#define SN_id_ce_cRLStreamIdentifier            "id-ce-cRLStreamIdentifier"
+#define NID_id_ce_cRLStreamIdentifier           2308
+#define OBJ_id_ce_cRLStreamIdentifier           2L,5L,29L,40L
+
+#define SN_id_ce_a_cRLStreamIdentifier          "id-ce-a-cRLStreamIdentifier"
+#define NID_id_ce_a_cRLStreamIdentifier         2309
+#define OBJ_id_ce_a_cRLStreamIdentifier         2L,5L,29L,40L,1L
+
+#define SN_id_asx_cRLStreamIdentifier           "id-asx-cRLStreamIdentifier"
+#define NID_id_asx_cRLStreamIdentifier          2310
+#define OBJ_id_asx_cRLStreamIdentifier          2L,5L,29L,40L,2L
+
+#define SN_id_ce_basicAttConstraints            "id-ce-basicAttConstraints"
+#define NID_id_ce_basicAttConstraints           2311
+#define OBJ_id_ce_basicAttConstraints           2L,5L,29L,41L
+
+#define SN_id_ce_a_basicAttConstraints          "id-ce-a-basicAttConstraints"
+#define NID_id_ce_a_basicAttConstraints         2312
+#define OBJ_id_ce_a_basicAttConstraints         2L,5L,29L,41L,1L
+
+#define SN_id_asx_basicAttConstraints           "id-asx-basicAttConstraints"
+#define NID_id_asx_basicAttConstraints          2313
+#define OBJ_id_asx_basicAttConstraints          2L,5L,29L,41L,2L
+
+#define SN_id_ce_delegatedNameConstraints               "id-ce-delegatedNameConstraints"
+#define NID_id_ce_delegatedNameConstraints              2314
+#define OBJ_id_ce_delegatedNameConstraints              2L,5L,29L,42L
+
+#define SN_id_ce_a_delegatedNameConstraints             "id-ce-a-delegatedNameConstraints"
+#define NID_id_ce_a_delegatedNameConstraints            2315
+#define OBJ_id_ce_a_delegatedNameConstraints            2L,5L,29L,42L,1L
+
+#define SN_id_asx_delegatedNameConstraints              "id-asx-delegatedNameConstraints"
+#define NID_id_asx_delegatedNameConstraints             2316
+#define OBJ_id_asx_delegatedNameConstraints             2L,5L,29L,42L,2L
+
+#define SN_id_ce_timeSpecification              "id-ce-timeSpecification"
+#define NID_id_ce_timeSpecification             2317
+#define OBJ_id_ce_timeSpecification             2L,5L,29L,43L
+
+#define SN_id_ce_a_timeSpecification            "id-ce-a-timeSpecification"
+#define NID_id_ce_a_timeSpecification           2318
+#define OBJ_id_ce_a_timeSpecification           2L,5L,29L,43L,1L
+
+#define SN_id_asx_timeSpecification             "id-asx-timeSpecification"
+#define NID_id_asx_timeSpecification            2319
+#define OBJ_id_asx_timeSpecification            2L,5L,29L,43L,2L
+
+#define SN_id_ce_cRLScope               "id-ce-cRLScope"
+#define NID_id_ce_cRLScope              2320
+#define OBJ_id_ce_cRLScope              2L,5L,29L,44L
+
+#define SN_id_ce_a_cRLScope             "id-ce-a-cRLScope"
+#define NID_id_ce_a_cRLScope            2321
+#define OBJ_id_ce_a_cRLScope            2L,5L,29L,44L,1L
+
+#define SN_id_asx_cRLScope              "id-asx-cRLScope"
+#define NID_id_asx_cRLScope             2322
+#define OBJ_id_asx_cRLScope             2L,5L,29L,44L,2L
+
+#define SN_id_ce_statusReferrals                "id-ce-statusReferrals"
+#define NID_id_ce_statusReferrals               2323
+#define OBJ_id_ce_statusReferrals               2L,5L,29L,45L
+
+#define SN_id_ce_a_statusReferrals              "id-ce-a-statusReferrals"
+#define NID_id_ce_a_statusReferrals             2324
+#define OBJ_id_ce_a_statusReferrals             2L,5L,29L,45L,1L
+
+#define SN_id_asx_statusReferrals               "id-asx-statusReferrals"
+#define NID_id_asx_statusReferrals              2325
+#define OBJ_id_asx_statusReferrals              2L,5L,29L,45L,2L
+
+#define SN_id_ce_a_freshestCRL          "id-ce-a-freshestCRL"
+#define NID_id_ce_a_freshestCRL         2326
+#define OBJ_id_ce_a_freshestCRL         2L,5L,29L,46L,1L
+
+#define SN_id_asx_freshestCRL           "id-asx-freshestCRL"
+#define NID_id_asx_freshestCRL          2327
+#define OBJ_id_asx_freshestCRL          2L,5L,29L,46L,2L
+
+#define SN_id_ce_orderedList            "id-ce-orderedList"
+#define NID_id_ce_orderedList           2328
+#define OBJ_id_ce_orderedList           2L,5L,29L,47L
+
+#define SN_id_ce_a_orderedList          "id-ce-a-orderedList"
+#define NID_id_ce_a_orderedList         2329
+#define OBJ_id_ce_a_orderedList         2L,5L,29L,47L,1L
+
+#define SN_id_asx_orderedList           "id-asx-orderedList"
+#define NID_id_asx_orderedList          2330
+#define OBJ_id_asx_orderedList          2L,5L,29L,47L,2L
+
+#define SN_id_ce_attributeDescriptor            "id-ce-attributeDescriptor"
+#define NID_id_ce_attributeDescriptor           2331
+#define OBJ_id_ce_attributeDescriptor           2L,5L,29L,48L
+
+#define SN_id_ce_a_attributeDescriptor          "id-ce-a-attributeDescriptor"
+#define NID_id_ce_a_attributeDescriptor         2332
+#define OBJ_id_ce_a_attributeDescriptor         2L,5L,29L,48L,1L
+
+#define SN_id_asx_attributeDescriptor           "id-asx-attributeDescriptor"
+#define NID_id_asx_attributeDescriptor          2333
+#define OBJ_id_asx_attributeDescriptor          2L,5L,29L,48L,2L
+
+#define SN_id_ce_userNotice             "id-ce-userNotice"
+#define NID_id_ce_userNotice            2334
+#define OBJ_id_ce_userNotice            2L,5L,29L,49L
+
+#define SN_id_ce_a_userNotice           "id-ce-a-userNotice"
+#define NID_id_ce_a_userNotice          2335
+#define OBJ_id_ce_a_userNotice          2L,5L,29L,49L,1L
+
+#define SN_id_asx_userNotice            "id-asx-userNotice"
+#define NID_id_asx_userNotice           2336
+#define OBJ_id_asx_userNotice           2L,5L,29L,49L,2L
+
+#define SN_id_ce_sOAIdentifier          "id-ce-sOAIdentifier"
+#define NID_id_ce_sOAIdentifier         2337
+#define OBJ_id_ce_sOAIdentifier         2L,5L,29L,50L
+
+#define SN_id_ce_a_sOAIdentifier                "id-ce-a-sOAIdentifier"
+#define NID_id_ce_a_sOAIdentifier               2338
+#define OBJ_id_ce_a_sOAIdentifier               2L,5L,29L,50L,1L
+
+#define SN_id_asx_sOAIdentifier         "id-asx-sOAIdentifier"
+#define NID_id_asx_sOAIdentifier                2339
+#define OBJ_id_asx_sOAIdentifier                2L,5L,29L,50L,2L
+
+#define SN_id_ce_baseUpdateTime         "id-ce-baseUpdateTime"
+#define NID_id_ce_baseUpdateTime                2340
+#define OBJ_id_ce_baseUpdateTime                2L,5L,29L,51L
+
+#define SN_id_ce_a_baseUpdateTime               "id-ce-a-baseUpdateTime"
+#define NID_id_ce_a_baseUpdateTime              2341
+#define OBJ_id_ce_a_baseUpdateTime              2L,5L,29L,51L,1L
+
+#define SN_id_asx_baseUpdateTime                "id-asx-baseUpdateTime"
+#define NID_id_asx_baseUpdateTime               2342
+#define OBJ_id_asx_baseUpdateTime               2L,5L,29L,51L,2L
+
+#define SN_id_ce_acceptableCertPolicies         "id-ce-acceptableCertPolicies"
+#define NID_id_ce_acceptableCertPolicies                2343
+#define OBJ_id_ce_acceptableCertPolicies                2L,5L,29L,52L
+
+#define SN_id_ce_a_acceptableCertPolicies               "id-ce-a-acceptableCertPolicies"
+#define NID_id_ce_a_acceptableCertPolicies              2344
+#define OBJ_id_ce_a_acceptableCertPolicies              2L,5L,29L,52L,1L
+
+#define SN_id_asx_acceptableCertPolicies                "id-asx-acceptableCertPolicies"
+#define NID_id_asx_acceptableCertPolicies               2345
+#define OBJ_id_asx_acceptableCertPolicies               2L,5L,29L,52L,2L
+
+#define SN_id_ce_deltaInfo              "id-ce-deltaInfo"
+#define NID_id_ce_deltaInfo             2346
+#define OBJ_id_ce_deltaInfo             2L,5L,29L,53L
+
+#define SN_id_ce_a_deltaInfo            "id-ce-a-deltaInfo"
+#define NID_id_ce_a_deltaInfo           2347
+#define OBJ_id_ce_a_deltaInfo           2L,5L,29L,53L,1L
+
+#define SN_id_asx_deltaInfo             "id-asx-deltaInfo"
+#define NID_id_asx_deltaInfo            2348
+#define OBJ_id_asx_deltaInfo            2L,5L,29L,53L,2L
+
+#define SN_id_ce_a_inhibitAnyPolicy             "id-ce-a-inhibitAnyPolicy"
+#define NID_id_ce_a_inhibitAnyPolicy            2349
+#define OBJ_id_ce_a_inhibitAnyPolicy            2L,5L,29L,54L,1L
+
+#define SN_id_asx_inhibitAnyPolicy              "id-asx-inhibitAnyPolicy"
+#define NID_id_asx_inhibitAnyPolicy             2350
+#define OBJ_id_asx_inhibitAnyPolicy             2L,5L,29L,54L,2L
+
+#define SN_id_ce_a_targetingInformation         "id-ce-a-targetingInformation"
+#define NID_id_ce_a_targetingInformation                2351
+#define OBJ_id_ce_a_targetingInformation                2L,5L,29L,55L,1L
+
+#define SN_id_asx_targetingInformation          "id-asx-targetingInformation"
+#define NID_id_asx_targetingInformation         2352
+#define OBJ_id_asx_targetingInformation         2L,5L,29L,55L,2L
+
+#define SN_id_ce_a_noRevAvail           "id-ce-a-noRevAvail"
+#define NID_id_ce_a_noRevAvail          2353
+#define OBJ_id_ce_a_noRevAvail          2L,5L,29L,56L,1L
+
+#define SN_id_asx_noRevAvail            "id-asx-noRevAvail"
+#define NID_id_asx_noRevAvail           2354
+#define OBJ_id_asx_noRevAvail           2L,5L,29L,56L,2L
+
+#define SN_id_ce_acceptablePrivilegePolicies            "id-ce-acceptablePrivilegePolicies"
+#define NID_id_ce_acceptablePrivilegePolicies           2355
+#define OBJ_id_ce_acceptablePrivilegePolicies           2L,5L,29L,57L
+
+#define SN_id_ce_a_acceptablePrivilegePolicies          "id-ce-a-acceptablePrivilegePolicies"
+#define NID_id_ce_a_acceptablePrivilegePolicies         2356
+#define OBJ_id_ce_a_acceptablePrivilegePolicies         2L,5L,29L,57L,1L
+
+#define SN_id_asx_acceptablePrivilegePolicies           "id-asx-acceptablePrivilegePolicies"
+#define NID_id_asx_acceptablePrivilegePolicies          2357
+#define OBJ_id_asx_acceptablePrivilegePolicies          2L,5L,29L,57L,2L
+
+#define SN_id_ce_toBeRevoked            "id-ce-toBeRevoked"
+#define NID_id_ce_toBeRevoked           2358
+#define OBJ_id_ce_toBeRevoked           2L,5L,29L,58L
+
+#define SN_id_ce_a_toBeRevoked          "id-ce-a-toBeRevoked"
+#define NID_id_ce_a_toBeRevoked         2359
+#define OBJ_id_ce_a_toBeRevoked         2L,5L,29L,58L,1L
+
+#define SN_id_asx_toBeRevoked           "id-asx-toBeRevoked"
+#define NID_id_asx_toBeRevoked          2360
+#define OBJ_id_asx_toBeRevoked          2L,5L,29L,58L,2L
+
+#define SN_id_ce_revokedGroups          "id-ce-revokedGroups"
+#define NID_id_ce_revokedGroups         2361
+#define OBJ_id_ce_revokedGroups         2L,5L,29L,59L
+
+#define SN_id_ce_a_revokedGroups                "id-ce-a-revokedGroups"
+#define NID_id_ce_a_revokedGroups               2362
+#define OBJ_id_ce_a_revokedGroups               2L,5L,29L,59L,1L
+
+#define SN_id_asx_revokedGroups         "id-asx-revokedGroups"
+#define NID_id_asx_revokedGroups                2363
+#define OBJ_id_asx_revokedGroups                2L,5L,29L,59L,2L
+
+#define SN_id_ce_expiredCertsOnCRL              "id-ce-expiredCertsOnCRL"
+#define NID_id_ce_expiredCertsOnCRL             2364
+#define OBJ_id_ce_expiredCertsOnCRL             2L,5L,29L,60L
+
+#define SN_id_ce_a_expiredCertsOnCRL            "id-ce-a-expiredCertsOnCRL"
+#define NID_id_ce_a_expiredCertsOnCRL           2365
+#define OBJ_id_ce_a_expiredCertsOnCRL           2L,5L,29L,60L,1L
+
+#define SN_id_asx_expiredCertsOnCRL             "id-asx-expiredCertsOnCRL"
+#define NID_id_asx_expiredCertsOnCRL            2366
+#define OBJ_id_asx_expiredCertsOnCRL            2L,5L,29L,60L,2L
+
+#define SN_id_ce_indirectIssuer         "id-ce-indirectIssuer"
+#define NID_id_ce_indirectIssuer                2367
+#define OBJ_id_ce_indirectIssuer                2L,5L,29L,61L
+
+#define SN_id_ce_a_indirectIssuer               "id-ce-a-indirectIssuer"
+#define NID_id_ce_a_indirectIssuer              2368
+#define OBJ_id_ce_a_indirectIssuer              2L,5L,29L,61L,1L
+
+#define SN_id_asx_indirectIssuer                "id-asx-indirectIssuer"
+#define NID_id_asx_indirectIssuer               2369
+#define OBJ_id_asx_indirectIssuer               2L,5L,29L,61L,2L
+
+#define SN_id_ce_noAssertion            "id-ce-noAssertion"
+#define NID_id_ce_noAssertion           2370
+#define OBJ_id_ce_noAssertion           2L,5L,29L,62L
+
+#define SN_id_ce_a_noAssertion          "id-ce-a-noAssertion"
+#define NID_id_ce_a_noAssertion         2371
+#define OBJ_id_ce_a_noAssertion         2L,5L,29L,62L,1L
+
+#define SN_id_asx_noAssertion           "id-asx-noAssertion"
+#define NID_id_asx_noAssertion          2372
+#define OBJ_id_asx_noAssertion          2L,5L,29L,62L,2L
+
+#define SN_id_ce_aAissuingDistributionPoint             "id-ce-aAissuingDistributionPoint"
+#define NID_id_ce_aAissuingDistributionPoint            2373
+#define OBJ_id_ce_aAissuingDistributionPoint            2L,5L,29L,63L
+
+#define SN_id_ce_a_aAissuingDistributionPoint           "id-ce-a-aAissuingDistributionPoint"
+#define NID_id_ce_a_aAissuingDistributionPoint          2374
+#define OBJ_id_ce_a_aAissuingDistributionPoint          2L,5L,29L,63L,1L
+
+#define SN_id_asx_aAissuingDistributionPoint            "id-asx-aAissuingDistributionPoint"
+#define NID_id_asx_aAissuingDistributionPoint           2375
+#define OBJ_id_asx_aAissuingDistributionPoint           2L,5L,29L,63L,2L
+
+#define SN_id_ce_issuedOnBehalfOf               "id-ce-issuedOnBehalfOf"
+#define NID_id_ce_issuedOnBehalfOf              2376
+#define OBJ_id_ce_issuedOnBehalfOf              2L,5L,29L,64L
+
+#define SN_id_ce_a_issuedOnBehalfOf             "id-ce-a-issuedOnBehalfOf"
+#define NID_id_ce_a_issuedOnBehalfOf            2377
+#define OBJ_id_ce_a_issuedOnBehalfOf            2L,5L,29L,64L,1L
+
+#define SN_id_asx_issuedOnBehalfOf              "id-asx-issuedOnBehalfOf"
+#define NID_id_asx_issuedOnBehalfOf             2378
+#define OBJ_id_asx_issuedOnBehalfOf             2L,5L,29L,64L,2L
+
+#define SN_id_ce_singleUse              "id-ce-singleUse"
+#define NID_id_ce_singleUse             2379
+#define OBJ_id_ce_singleUse             2L,5L,29L,65L
+
+#define SN_id_ce_a_singleUse            "id-ce-a-singleUse"
+#define NID_id_ce_a_singleUse           2380
+#define OBJ_id_ce_a_singleUse           2L,5L,29L,65L,1L
+
+#define SN_id_asx_singleUse             "id-asx-singleUse"
+#define NID_id_asx_singleUse            2381
+#define OBJ_id_asx_singleUse            2L,5L,29L,65L,2L
+
+#define SN_id_ce_groupAC                "id-ce-groupAC"
+#define NID_id_ce_groupAC               2382
+#define OBJ_id_ce_groupAC               2L,5L,29L,66L
+
+#define SN_id_ce_a_groupAC              "id-ce-a-groupAC"
+#define NID_id_ce_a_groupAC             2383
+#define OBJ_id_ce_a_groupAC             2L,5L,29L,66L,1L
+
+#define SN_id_asx_groupAC               "id-asx-groupAC"
+#define NID_id_asx_groupAC              2384
+#define OBJ_id_asx_groupAC              2L,5L,29L,66L,2L
+
+#define SN_id_ce_allowedAttributeAssignments            "id-ce-allowedAttributeAssignments"
+#define NID_id_ce_allowedAttributeAssignments           2385
+#define OBJ_id_ce_allowedAttributeAssignments           2L,5L,29L,67L
+
+#define SN_id_ce_a_allowedAttributeAssignments          "id-ce-a-allowedAttributeAssignments"
+#define NID_id_ce_a_allowedAttributeAssignments         2386
+#define OBJ_id_ce_a_allowedAttributeAssignments         2L,5L,29L,67L,1L
+
+#define SN_id_asx_allowedAttributeAssignments           "id-asx-allowedAttributeAssignments"
+#define NID_id_asx_allowedAttributeAssignments          2387
+#define OBJ_id_asx_allowedAttributeAssignments          2L,5L,29L,67L,2L
+
+#define SN_id_ce_attributeMappings              "id-ce-attributeMappings"
+#define NID_id_ce_attributeMappings             2388
+#define OBJ_id_ce_attributeMappings             2L,5L,29L,68L
+
+#define SN_id_ce_a_attributeMappings            "id-ce-a-attributeMappings"
+#define NID_id_ce_a_attributeMappings           2389
+#define OBJ_id_ce_a_attributeMappings           2L,5L,29L,68L,1L
+
+#define SN_id_asx_attributeMappings             "id-asx-attributeMappings"
+#define NID_id_asx_attributeMappings            2390
+#define OBJ_id_asx_attributeMappings            2L,5L,29L,68L,2L
+
+#define SN_id_ce_holderNameConstraints          "id-ce-holderNameConstraints"
+#define NID_id_ce_holderNameConstraints         2391
+#define OBJ_id_ce_holderNameConstraints         2L,5L,29L,69L
+
+#define SN_id_ce_a_holderNameConstraints                "id-ce-a-holderNameConstraints"
+#define NID_id_ce_a_holderNameConstraints               2392
+#define OBJ_id_ce_a_holderNameConstraints               2L,5L,29L,69L,1L
+
+#define SN_id_asx_holderNameConstraints         "id-asx-holderNameConstraints"
+#define NID_id_asx_holderNameConstraints                2393
+#define OBJ_id_asx_holderNameConstraints                2L,5L,29L,69L,2L
+
+#define SN_id_ce_authorizationValidation                "id-ce-authorizationValidation"
+#define NID_id_ce_authorizationValidation               2394
+#define OBJ_id_ce_authorizationValidation               2L,5L,29L,70L
+
+#define SN_id_ce_a_authorizationValidation              "id-ce-a-authorizationValidation"
+#define NID_id_ce_a_authorizationValidation             2395
+#define OBJ_id_ce_a_authorizationValidation             2L,5L,29L,70L,1L
+
+#define SN_id_asx_authorizationValidation               "id-asx-authorizationValidation"
+#define NID_id_asx_authorizationValidation              2396
+#define OBJ_id_asx_authorizationValidation              2L,5L,29L,70L,2L
+
+#define SN_id_ce_protRestrict           "id-ce-protRestrict"
+#define NID_id_ce_protRestrict          2397
+#define OBJ_id_ce_protRestrict          2L,5L,29L,71L
+
+#define SN_id_ce_a_protRestrict         "id-ce-a-protRestrict"
+#define NID_id_ce_a_protRestrict                2398
+#define OBJ_id_ce_a_protRestrict                2L,5L,29L,71L,1L
+
+#define SN_id_asx_protRestrict          "id-asx-protRestrict"
+#define NID_id_asx_protRestrict         2399
+#define OBJ_id_asx_protRestrict         2L,5L,29L,71L,2L
+
+#define SN_id_ce_subjectAltPublicKeyInfo                "id-ce-subjectAltPublicKeyInfo"
+#define NID_id_ce_subjectAltPublicKeyInfo               2400
+#define OBJ_id_ce_subjectAltPublicKeyInfo               2L,5L,29L,72L
+
+#define SN_id_ce_a_subjectAltPublicKeyInfo              "id-ce-a-subjectAltPublicKeyInfo"
+#define NID_id_ce_a_subjectAltPublicKeyInfo             2401
+#define OBJ_id_ce_a_subjectAltPublicKeyInfo             2L,5L,29L,72L,1L
+
+#define SN_id_asx_subjectAltPublicKeyInfo               "id-asx-subjectAltPublicKeyInfo"
+#define NID_id_asx_subjectAltPublicKeyInfo              2402
+#define OBJ_id_asx_subjectAltPublicKeyInfo              2L,5L,29L,72L,2L
+
+#define SN_id_ce_altSignatureAlgorithm          "id-ce-altSignatureAlgorithm"
+#define NID_id_ce_altSignatureAlgorithm         2403
+#define OBJ_id_ce_altSignatureAlgorithm         2L,5L,29L,73L
+
+#define SN_id_ce_a_altSignatureAlgorithm                "id-ce-a-altSignatureAlgorithm"
+#define NID_id_ce_a_altSignatureAlgorithm               2404
+#define OBJ_id_ce_a_altSignatureAlgorithm               2L,5L,29L,73L,1L
+
+#define SN_id_asx_altSignatureAlgorithm         "id-asx-altSignatureAlgorithm"
+#define NID_id_asx_altSignatureAlgorithm                2405
+#define OBJ_id_asx_altSignatureAlgorithm                2L,5L,29L,73L,2L
+
+#define SN_id_ce_altSignatureValue              "id-ce-altSignatureValue"
+#define NID_id_ce_altSignatureValue             2406
+#define OBJ_id_ce_altSignatureValue             2L,5L,29L,74L
+
+#define SN_id_ce_a_altSignatureValue            "id-ce-a-altSignatureValue"
+#define NID_id_ce_a_altSignatureValue           2407
+#define OBJ_id_ce_a_altSignatureValue           2L,5L,29L,74L,1L
+
+#define SN_id_asx_altSignatureValue             "id-asx-altSignatureValue"
+#define NID_id_asx_altSignatureValue            2408
+#define OBJ_id_asx_altSignatureValue            2L,5L,29L,74L,2L
+
+#define SN_id_ce_associatedInformation          "id-ce-associatedInformation"
+#define NID_id_ce_associatedInformation         2409
+#define OBJ_id_ce_associatedInformation         2L,5L,29L,75L
+
+#define SN_id_ce_a_subjectDirectoryAttributes           "id-ce-a-subjectDirectoryAttributes"
+#define NID_id_ce_a_subjectDirectoryAttributes          2410
+#define OBJ_id_ce_a_subjectDirectoryAttributes          2L,5L,29L,9L,1L
+
+#define SN_id_asx_subjectDirectoryAttributes            "id-asx-subjectDirectoryAttributes"
+#define NID_id_asx_subjectDirectoryAttributes           2411
+#define OBJ_id_asx_subjectDirectoryAttributes           2L,5L,29L,9L,2L
+
+#define SN_applicationContext           "applicationContext"
+#define NID_applicationContext          2412
+#define OBJ_applicationContext          2L,5L,3L
+
+#define SN_id_ac_directoryAccessAC              "id-ac-directoryAccessAC"
+#define NID_id_ac_directoryAccessAC             2413
+#define OBJ_id_ac_directoryAccessAC             2L,5L,3L,1L
+
+#define SN_id_ac_directorySystemAC              "id-ac-directorySystemAC"
+#define NID_id_ac_directorySystemAC             2414
+#define OBJ_id_ac_directorySystemAC             2L,5L,3L,2L
+
+#define SN_id_ac_directoryOperationalBindingManagementAC                "id-ac-directoryOperationalBindingManagementAC"
+#define NID_id_ac_directoryOperationalBindingManagementAC               2415
+#define OBJ_id_ac_directoryOperationalBindingManagementAC               2L,5L,3L,3L
+
+#define SN_id_ac_shadowConsumerInitiatedAC              "id-ac-shadowConsumerInitiatedAC"
+#define NID_id_ac_shadowConsumerInitiatedAC             2416
+#define OBJ_id_ac_shadowConsumerInitiatedAC             2L,5L,3L,4L
+
+#define SN_id_ac_shadowSupplierInitiatedAC              "id-ac-shadowSupplierInitiatedAC"
+#define NID_id_ac_shadowSupplierInitiatedAC             2417
+#define OBJ_id_ac_shadowSupplierInitiatedAC             2L,5L,3L,5L
+
+#define SN_id_ac_reliableShadowSupplierInitiatedAC              "id-ac-reliableShadowSupplierInitiatedAC"
+#define NID_id_ac_reliableShadowSupplierInitiatedAC             2418
+#define OBJ_id_ac_reliableShadowSupplierInitiatedAC             2L,5L,3L,6L
+
+#define SN_id_ac_reliableShadowConsumerInitiatedAC              "id-ac-reliableShadowConsumerInitiatedAC"
+#define NID_id_ac_reliableShadowConsumerInitiatedAC             2419
+#define OBJ_id_ac_reliableShadowConsumerInitiatedAC             2L,5L,3L,7L
+
+#define SN_id_ac_shadowSupplierInitiatedAsynchronousAC          "id-ac-shadowSupplierInitiatedAsynchronousAC"
+#define NID_id_ac_shadowSupplierInitiatedAsynchronousAC         2420
+#define OBJ_id_ac_shadowSupplierInitiatedAsynchronousAC         2L,5L,3L,8L
+
+#define SN_id_ac_shadowConsumerInitiatedAsynchronousAC          "id-ac-shadowConsumerInitiatedAsynchronousAC"
+#define NID_id_ac_shadowConsumerInitiatedAsynchronousAC         2421
+#define OBJ_id_ac_shadowConsumerInitiatedAsynchronousAC         2L,5L,3L,9L
+
+#define SN_id_mgt               "id-mgt"
+#define NID_id_mgt              2422
+#define OBJ_id_mgt              2L,5L,30L
+
+#define SN_id_mac               "id-mac"
+#define NID_id_mac              2423
+#define OBJ_id_mac              2L,5L,30L,0L
+
+#define SN_id_mac_useRemoteDSA          "id-mac-useRemoteDSA"
+#define NID_id_mac_useRemoteDSA         2424
+#define OBJ_id_mac_useRemoteDSA         2L,5L,30L,0L,0L
+
+#define SN_id_mac_useHomeDSA            "id-mac-useHomeDSA"
+#define NID_id_mac_useHomeDSA           2425
+#define OBJ_id_mac_useHomeDSA           2L,5L,30L,0L,1L
+
+#define SN_id_mac_update                "id-mac-update"
+#define NID_id_mac_update               2426
+#define OBJ_id_mac_update               2L,5L,30L,0L,2L
+
+#define SN_id_mat               "id-mat"
+#define NID_id_mat              2427
+#define OBJ_id_mat              2L,5L,30L,1L
+
+#define SN_id_mat_accessPoint           "id-mat-accessPoint"
+#define NID_id_mat_accessPoint          2428
+#define OBJ_id_mat_accessPoint          2L,5L,30L,1L,0L
+
+#define SN_id_mat_masterEntries         "id-mat-masterEntries"
+#define NID_id_mat_masterEntries                2429
+#define OBJ_id_mat_masterEntries                2L,5L,30L,1L,1L
+
+#define SN_id_mat_chainings             "id-mat-chainings"
+#define NID_id_mat_chainings            2430
+#define OBJ_id_mat_chainings            2L,5L,30L,1L,10L
+
+#define SN_id_mat_accessor              "id-mat-accessor"
+#define NID_id_mat_accessor             2431
+#define OBJ_id_mat_accessor             2L,5L,30L,1L,100L
+
+#define SN_id_mat_allowedInfoService            "id-mat-allowedInfoService"
+#define NID_id_mat_allowedInfoService           2432
+#define OBJ_id_mat_allowedInfoService           2L,5L,30L,1L,101L
+
+#define SN_id_mat_applicationContextInUse               "id-mat-applicationContextInUse"
+#define NID_id_mat_applicationContextInUse              2433
+#define OBJ_id_mat_applicationContextInUse              2L,5L,30L,1L,102L
+
+#define SN_id_mat_associationId         "id-mat-associationId"
+#define NID_id_mat_associationId                2434
+#define OBJ_id_mat_associationId                2L,5L,30L,1L,103L
+
+#define SN_id_mat_callingAETitle                "id-mat-callingAETitle"
+#define NID_id_mat_callingAETitle               2435
+#define OBJ_id_mat_callingAETitle               2L,5L,30L,1L,104L
+
+#define SN_id_mat_disAllowedInfoService         "id-mat-disAllowedInfoService"
+#define NID_id_mat_disAllowedInfoService                2436
+#define OBJ_id_mat_disAllowedInfoService                2L,5L,30L,1L,105L
+
+#define SN_id_mat_maxEntriesReturned            "id-mat-maxEntriesReturned"
+#define NID_id_mat_maxEntriesReturned           2437
+#define OBJ_id_mat_maxEntriesReturned           2L,5L,30L,1L,106L
+
+#define SN_id_mat_maxTimeForResult              "id-mat-maxTimeForResult"
+#define NID_id_mat_maxTimeForResult             2438
+#define OBJ_id_mat_maxTimeForResult             2L,5L,30L,1L,107L
+
+#define SN_id_mat_modifyDNRenameOnlyOpsProc             "id-mat-modifyDNRenameOnlyOpsProc"
+#define NID_id_mat_modifyDNRenameOnlyOpsProc            2439
+#define OBJ_id_mat_modifyDNRenameOnlyOpsProc            2L,5L,30L,1L,108L
+
+#define SN_id_mat_serviceDesc           "id-mat-serviceDesc"
+#define NID_id_mat_serviceDesc          2440
+#define OBJ_id_mat_serviceDesc          2L,5L,30L,1L,109L
+
+#define SN_id_mat_invalidReferences             "id-mat-invalidReferences"
+#define NID_id_mat_invalidReferences            2441
+#define OBJ_id_mat_invalidReferences            2L,5L,30L,1L,11L
+
+#define SN_id_mat_serviceId             "id-mat-serviceId"
+#define NID_id_mat_serviceId            2442
+#define OBJ_id_mat_serviceId            2L,5L,30L,1L,110L
+
+#define SN_id_mat_subSchema             "id-mat-subSchema"
+#define NID_id_mat_subSchema            2443
+#define OBJ_id_mat_subSchema            2L,5L,30L,1L,111L
+
+#define SN_id_mat_sizeLimit             "id-mat-sizeLimit"
+#define NID_id_mat_sizeLimit            2444
+#define OBJ_id_mat_sizeLimit            2L,5L,30L,1L,112L
+
+#define SN_id_mat_timeLimit             "id-mat-timeLimit"
+#define NID_id_mat_timeLimit            2445
+#define OBJ_id_mat_timeLimit            2L,5L,30L,1L,113L
+
+#define SN_id_mat_dirCustName           "id-mat-dirCustName"
+#define NID_id_mat_dirCustName          2446
+#define OBJ_id_mat_dirCustName          2L,5L,30L,1L,114L
+
+#define SN_id_mat_dirUserName           "id-mat-dirUserName"
+#define NID_id_mat_dirUserName          2447
+#define OBJ_id_mat_dirUserName          2L,5L,30L,1L,115L
+
+#define SN_id_mat_dirCustAddr           "id-mat-dirCustAddr"
+#define NID_id_mat_dirCustAddr          2448
+#define OBJ_id_mat_dirCustAddr          2L,5L,30L,1L,116L
+
+#define SN_id_mat_dMDName               "id-mat-dMDName"
+#define NID_id_mat_dMDName              2449
+#define OBJ_id_mat_dMDName              2L,5L,30L,1L,117L
+
+#define SN_id_mat_accessControlScheme           "id-mat-accessControlScheme"
+#define NID_id_mat_accessControlScheme          2450
+#define OBJ_id_mat_accessControlScheme          2L,5L,30L,1L,119L
+
+#define SN_id_mat_unableToProceed               "id-mat-unableToProceed"
+#define NID_id_mat_unableToProceed              2451
+#define OBJ_id_mat_unableToProceed              2L,5L,30L,1L,12L
+
+#define SN_id_mat_administrativeRole            "id-mat-administrativeRole"
+#define NID_id_mat_administrativeRole           2452
+#define OBJ_id_mat_administrativeRole           2L,5L,30L,1L,120L
+
+#define SN_id_mat_aliasedEntryName              "id-mat-aliasedEntryName"
+#define NID_id_mat_aliasedEntryName             2453
+#define OBJ_id_mat_aliasedEntryName             2L,5L,30L,1L,121L
+
+#define SN_id_mat_attributeTypes                "id-mat-attributeTypes"
+#define NID_id_mat_attributeTypes               2454
+#define OBJ_id_mat_attributeTypes               2L,5L,30L,1L,122L
+
+#define SN_id_mat_collectiveExclusions          "id-mat-collectiveExclusions"
+#define NID_id_mat_collectiveExclusions         2455
+#define OBJ_id_mat_collectiveExclusions         2L,5L,30L,1L,123L
+
+#define SN_id_mat_consumerKnowledge             "id-mat-consumerKnowledge"
+#define NID_id_mat_consumerKnowledge            2456
+#define OBJ_id_mat_consumerKnowledge            2L,5L,30L,1L,124L
+
+#define SN_id_mat_createTimestamp               "id-mat-createTimestamp"
+#define NID_id_mat_createTimestamp              2457
+#define OBJ_id_mat_createTimestamp              2L,5L,30L,1L,125L
+
+#define SN_id_mat_creatorsName          "id-mat-creatorsName"
+#define NID_id_mat_creatorsName         2458
+#define OBJ_id_mat_creatorsName         2L,5L,30L,1L,126L
+
+#define SN_id_mat_credentials           "id-mat-credentials"
+#define NID_id_mat_credentials          2459
+#define OBJ_id_mat_credentials          2L,5L,30L,1L,127L
+
+#define SN_id_mat_distName              "id-mat-distName"
+#define NID_id_mat_distName             2460
+#define OBJ_id_mat_distName             2L,5L,30L,1L,128L
+
+#define SN_id_mat_dITContentRules               "id-mat-dITContentRules"
+#define NID_id_mat_dITContentRules              2461
+#define OBJ_id_mat_dITContentRules              2L,5L,30L,1L,129L
+
+#define SN_id_mat_outOfScope            "id-mat-outOfScope"
+#define NID_id_mat_outOfScope           2462
+#define OBJ_id_mat_outOfScope           2L,5L,30L,1L,13L
+
+#define SN_id_mat_dITStructureRule              "id-mat-dITStructureRule"
+#define NID_id_mat_dITStructureRule             2463
+#define OBJ_id_mat_dITStructureRule             2L,5L,30L,1L,130L
+
+#define SN_id_mat_dseType               "id-mat-dseType"
+#define NID_id_mat_dseType              2464
+#define OBJ_id_mat_dseType              2L,5L,30L,1L,131L
+
+#define SN_id_mat_entryACI              "id-mat-entryACI"
+#define NID_id_mat_entryACI             2465
+#define OBJ_id_mat_entryACI             2L,5L,30L,1L,132L
+
+#define SN_id_mat_governingSR           "id-mat-governingSR"
+#define NID_id_mat_governingSR          2466
+#define OBJ_id_mat_governingSR          2L,5L,30L,1L,133L
+
+#define SN_id_mat_matchingRules         "id-mat-matchingRules"
+#define NID_id_mat_matchingRules                2467
+#define OBJ_id_mat_matchingRules                2L,5L,30L,1L,134L
+
+#define SN_id_mat_matchingRuleUse               "id-mat-matchingRuleUse"
+#define NID_id_mat_matchingRuleUse              2468
+#define OBJ_id_mat_matchingRuleUse              2L,5L,30L,1L,135L
+
+#define SN_id_mat_modifiersName         "id-mat-modifiersName"
+#define NID_id_mat_modifiersName                2469
+#define OBJ_id_mat_modifiersName                2L,5L,30L,1L,136L
+
+#define SN_id_mat_modifyTimestamp               "id-mat-modifyTimestamp"
+#define NID_id_mat_modifyTimestamp              2470
+#define OBJ_id_mat_modifyTimestamp              2L,5L,30L,1L,137L
+
+#define SN_id_mat_myAccessPoint         "id-mat-myAccessPoint"
+#define NID_id_mat_myAccessPoint                2471
+#define OBJ_id_mat_myAccessPoint                2L,5L,30L,1L,138L
+
+#define SN_id_mat_nonSpecificKnowledge          "id-mat-nonSpecificKnowledge"
+#define NID_id_mat_nonSpecificKnowledge         2472
+#define OBJ_id_mat_nonSpecificKnowledge         2L,5L,30L,1L,139L
+
+#define SN_id_mat_noSuchObject          "id-mat-noSuchObject"
+#define NID_id_mat_noSuchObject         2473
+#define OBJ_id_mat_noSuchObject         2L,5L,30L,1L,14L
+
+#define SN_id_mat_objectClass           "id-mat-objectClass"
+#define NID_id_mat_objectClass          2474
+#define OBJ_id_mat_objectClass          2L,5L,30L,1L,140L
+
+#define SN_id_mat_objectClasses         "id-mat-objectClasses"
+#define NID_id_mat_objectClasses                2475
+#define OBJ_id_mat_objectClasses                2L,5L,30L,1L,141L
+
+#define SN_id_mat_prescriptiveACI               "id-mat-prescriptiveACI"
+#define NID_id_mat_prescriptiveACI              2476
+#define OBJ_id_mat_prescriptiveACI              2L,5L,30L,1L,142L
+
+#define SN_id_mat_nameForms             "id-mat-nameForms"
+#define NID_id_mat_nameForms            2477
+#define OBJ_id_mat_nameForms            2L,5L,30L,1L,143L
+
+#define SN_id_mat_specificKnowledge             "id-mat-specificKnowledge"
+#define NID_id_mat_specificKnowledge            2478
+#define OBJ_id_mat_specificKnowledge            2L,5L,30L,1L,144L
+
+#define SN_id_mat_structuralObjectClass         "id-mat-structuralObjectClass"
+#define NID_id_mat_structuralObjectClass                2479
+#define OBJ_id_mat_structuralObjectClass                2L,5L,30L,1L,145L
+
+#define SN_id_mat_subentryACI           "id-mat-subentryACI"
+#define NID_id_mat_subentryACI          2480
+#define OBJ_id_mat_subentryACI          2L,5L,30L,1L,146L
+
+#define SN_id_mat_subtreeSpecification          "id-mat-subtreeSpecification"
+#define NID_id_mat_subtreeSpecification         2481
+#define OBJ_id_mat_subtreeSpecification         2L,5L,30L,1L,147L
+
+#define SN_id_mat_superiorKnowledge             "id-mat-superiorKnowledge"
+#define NID_id_mat_superiorKnowledge            2482
+#define OBJ_id_mat_superiorKnowledge            2L,5L,30L,1L,148L
+
+#define SN_id_mat_supplierKnowledge             "id-mat-supplierKnowledge"
+#define NID_id_mat_supplierKnowledge            2483
+#define OBJ_id_mat_supplierKnowledge            2L,5L,30L,1L,149L
+
+#define SN_id_mat_aliasProblem          "id-mat-aliasProblem"
+#define NID_id_mat_aliasProblem         2484
+#define OBJ_id_mat_aliasProblem         2L,5L,30L,1L,15L
+
+#define SN_id_mat_dirCommonName         "id-mat-dirCommonName"
+#define NID_id_mat_dirCommonName                2485
+#define OBJ_id_mat_dirCommonName                2L,5L,30L,1L,150L
+
+#define SN_id_mat_aliasDereferencingProblem             "id-mat-aliasDereferencingProblem"
+#define NID_id_mat_aliasDereferencingProblem            2486
+#define OBJ_id_mat_aliasDereferencingProblem            2L,5L,30L,1L,16L
+
+#define SN_id_mat_affectsMultipleDSAs           "id-mat-affectsMultipleDSAs"
+#define NID_id_mat_affectsMultipleDSAs          2487
+#define OBJ_id_mat_affectsMultipleDSAs          2L,5L,30L,1L,17L
+
+#define SN_id_mat_unavailableCriticalExtension          "id-mat-unavailableCriticalExtension"
+#define NID_id_mat_unavailableCriticalExtension         2488
+#define OBJ_id_mat_unavailableCriticalExtension         2L,5L,30L,1L,18L
+
+#define SN_id_mat_timeLimitExceeded             "id-mat-timeLimitExceeded"
+#define NID_id_mat_timeLimitExceeded            2489
+#define OBJ_id_mat_timeLimitExceeded            2L,5L,30L,1L,19L
+
+#define SN_id_mat_copyEntries           "id-mat-copyEntries"
+#define NID_id_mat_copyEntries          2490
+#define OBJ_id_mat_copyEntries          2L,5L,30L,1L,2L
+
+#define SN_id_mat_sizeLimitExceeded             "id-mat-sizeLimitExceeded"
+#define NID_id_mat_sizeLimitExceeded            2491
+#define OBJ_id_mat_sizeLimitExceeded            2L,5L,30L,1L,20L
+
+#define SN_id_mat_adminLimitExceeded            "id-mat-adminLimitExceeded"
+#define NID_id_mat_adminLimitExceeded           2492
+#define OBJ_id_mat_adminLimitExceeded           2L,5L,30L,1L,21L
+
+#define SN_id_mat_prohibitChaining              "id-mat-prohibitChaining"
+#define NID_id_mat_prohibitChaining             2493
+#define OBJ_id_mat_prohibitChaining             2L,5L,30L,1L,24L
+
+#define SN_id_mat_readOpsProc           "id-mat-readOpsProc"
+#define NID_id_mat_readOpsProc          2494
+#define OBJ_id_mat_readOpsProc          2L,5L,30L,1L,25L
+
+#define SN_id_mat_compareOpsProc                "id-mat-compareOpsProc"
+#define NID_id_mat_compareOpsProc               2495
+#define OBJ_id_mat_compareOpsProc               2L,5L,30L,1L,26L
+
+#define SN_id_mat_abandonOpsProc                "id-mat-abandonOpsProc"
+#define NID_id_mat_abandonOpsProc               2496
+#define OBJ_id_mat_abandonOpsProc               2L,5L,30L,1L,27L
+
+#define SN_id_mat_listOpsProc           "id-mat-listOpsProc"
+#define NID_id_mat_listOpsProc          2497
+#define OBJ_id_mat_listOpsProc          2L,5L,30L,1L,28L
+
+#define SN_id_mat_searchBaseOpsProc             "id-mat-searchBaseOpsProc"
+#define NID_id_mat_searchBaseOpsProc            2498
+#define OBJ_id_mat_searchBaseOpsProc            2L,5L,30L,1L,29L
+
+#define SN_id_mat_loopsDetected         "id-mat-loopsDetected"
+#define NID_id_mat_loopsDetected                2499
+#define OBJ_id_mat_loopsDetected                2L,5L,30L,1L,3L
+
+#define SN_id_mat_search1LevelOpsProc           "id-mat-search1LevelOpsProc"
+#define NID_id_mat_search1LevelOpsProc          2500
+#define OBJ_id_mat_search1LevelOpsProc          2L,5L,30L,1L,30L
+
+#define SN_id_mat_searchSubtreeOpsProc          "id-mat-searchSubtreeOpsProc"
+#define NID_id_mat_searchSubtreeOpsProc         2501
+#define OBJ_id_mat_searchSubtreeOpsProc         2L,5L,30L,1L,31L
+
+#define SN_id_mat_addEntryOpsProc               "id-mat-addEntryOpsProc"
+#define NID_id_mat_addEntryOpsProc              2502
+#define OBJ_id_mat_addEntryOpsProc              2L,5L,30L,1L,32L
+
+#define SN_id_mat_removeEntryOpsProc            "id-mat-removeEntryOpsProc"
+#define NID_id_mat_removeEntryOpsProc           2503
+#define OBJ_id_mat_removeEntryOpsProc           2L,5L,30L,1L,33L
+
+#define SN_id_mat_modifyEntryOpsProc            "id-mat-modifyEntryOpsProc"
+#define NID_id_mat_modifyEntryOpsProc           2504
+#define OBJ_id_mat_modifyEntryOpsProc           2L,5L,30L,1L,34L
+
+#define SN_id_mat_modifyDNOpsProc               "id-mat-modifyDNOpsProc"
+#define NID_id_mat_modifyDNOpsProc              2505
+#define OBJ_id_mat_modifyDNOpsProc              2L,5L,30L,1L,35L
+
+#define SN_id_mat_chReadOpsProc         "id-mat-chReadOpsProc"
+#define NID_id_mat_chReadOpsProc                2506
+#define OBJ_id_mat_chReadOpsProc                2L,5L,30L,1L,36L
+
+#define SN_id_mat_chCompareOpsProc              "id-mat-chCompareOpsProc"
+#define NID_id_mat_chCompareOpsProc             2507
+#define OBJ_id_mat_chCompareOpsProc             2L,5L,30L,1L,37L
+
+#define SN_id_mat_chAbandonOpsProc              "id-mat-chAbandonOpsProc"
+#define NID_id_mat_chAbandonOpsProc             2508
+#define OBJ_id_mat_chAbandonOpsProc             2L,5L,30L,1L,38L
+
+#define SN_id_mat_chListOpsProc         "id-mat-chListOpsProc"
+#define NID_id_mat_chListOpsProc                2509
+#define OBJ_id_mat_chListOpsProc                2L,5L,30L,1L,39L
+
+#define SN_id_mat_securityErrors                "id-mat-securityErrors"
+#define NID_id_mat_securityErrors               2510
+#define OBJ_id_mat_securityErrors               2L,5L,30L,1L,4L
+
+#define SN_id_mat_chSearchBaseOpsProc           "id-mat-chSearchBaseOpsProc"
+#define NID_id_mat_chSearchBaseOpsProc          2511
+#define OBJ_id_mat_chSearchBaseOpsProc          2L,5L,30L,1L,40L
+
+#define SN_id_mat_chSearch1LevelOpsProc         "id-mat-chSearch1LevelOpsProc"
+#define NID_id_mat_chSearch1LevelOpsProc                2512
+#define OBJ_id_mat_chSearch1LevelOpsProc                2L,5L,30L,1L,41L
+
+#define SN_id_mat_chSearchSubtreeOpsProc                "id-mat-chSearchSubtreeOpsProc"
+#define NID_id_mat_chSearchSubtreeOpsProc               2513
+#define OBJ_id_mat_chSearchSubtreeOpsProc               2L,5L,30L,1L,42L
+
+#define SN_id_mat_chAddEntryOpsProc             "id-mat-chAddEntryOpsProc"
+#define NID_id_mat_chAddEntryOpsProc            2514
+#define OBJ_id_mat_chAddEntryOpsProc            2L,5L,30L,1L,43L
+
+#define SN_id_mat_chRemoveEntryOpsProc          "id-mat-chRemoveEntryOpsProc"
+#define NID_id_mat_chRemoveEntryOpsProc         2515
+#define OBJ_id_mat_chRemoveEntryOpsProc         2L,5L,30L,1L,44L
+
+#define SN_id_mat_chModifyEntryOpsProc          "id-mat-chModifyEntryOpsProc"
+#define NID_id_mat_chModifyEntryOpsProc         2516
+#define OBJ_id_mat_chModifyEntryOpsProc         2L,5L,30L,1L,45L
+
+#define SN_id_mat_chModifyDNOpsProc             "id-mat-chModifyDNOpsProc"
+#define NID_id_mat_chModifyDNOpsProc            2517
+#define OBJ_id_mat_chModifyDNOpsProc            2L,5L,30L,1L,46L
+
+#define SN_id_mat_dSAScopeOfReferral            "id-mat-dSAScopeOfReferral"
+#define NID_id_mat_dSAScopeOfReferral           2518
+#define OBJ_id_mat_dSAScopeOfReferral           2L,5L,30L,1L,47L
+
+#define SN_id_mat_dSAScopeOfChaining            "id-mat-dSAScopeOfChaining"
+#define NID_id_mat_dSAScopeOfChaining           2519
+#define OBJ_id_mat_dSAScopeOfChaining           2L,5L,30L,1L,48L
+
+#define SN_id_mat_peerEntityAuthenticationPolicy                "id-mat-peerEntityAuthenticationPolicy"
+#define NID_id_mat_peerEntityAuthenticationPolicy               2520
+#define OBJ_id_mat_peerEntityAuthenticationPolicy               2L,5L,30L,1L,49L
+
+#define SN_id_mat_nameErrors            "id-mat-nameErrors"
+#define NID_id_mat_nameErrors           2521
+#define OBJ_id_mat_nameErrors           2L,5L,30L,1L,5L
+
+#define SN_id_mat_requestAuthenticationPolicy           "id-mat-requestAuthenticationPolicy"
+#define NID_id_mat_requestAuthenticationPolicy          2522
+#define OBJ_id_mat_requestAuthenticationPolicy          2L,5L,30L,1L,50L
+
+#define SN_id_mat_resultAuthenticationPolicy            "id-mat-resultAuthenticationPolicy"
+#define NID_id_mat_resultAuthenticationPolicy           2523
+#define OBJ_id_mat_resultAuthenticationPolicy           2L,5L,30L,1L,51L
+
+#define SN_id_mat_dSPAssociationEstablishment           "id-mat-dSPAssociationEstablishment"
+#define NID_id_mat_dSPAssociationEstablishment          2524
+#define OBJ_id_mat_dSPAssociationEstablishment          2L,5L,30L,1L,52L
+
+#define SN_id_mat_dOPAssociationEstablishment           "id-mat-dOPAssociationEstablishment"
+#define NID_id_mat_dOPAssociationEstablishment          2525
+#define OBJ_id_mat_dOPAssociationEstablishment          2L,5L,30L,1L,53L
+
+#define SN_id_mat_dISPAssociationEstablishment          "id-mat-dISPAssociationEstablishment"
+#define NID_id_mat_dISPAssociationEstablishment         2526
+#define OBJ_id_mat_dISPAssociationEstablishment         2L,5L,30L,1L,54L
+
+#define SN_id_mat_maxDAPAssociations            "id-mat-maxDAPAssociations"
+#define NID_id_mat_maxDAPAssociations           2527
+#define OBJ_id_mat_maxDAPAssociations           2L,5L,30L,1L,55L
+
+#define SN_id_mat_maxDSPAssociations            "id-mat-maxDSPAssociations"
+#define NID_id_mat_maxDSPAssociations           2528
+#define OBJ_id_mat_maxDSPAssociations           2L,5L,30L,1L,56L
+
+#define SN_id_mat_maxDOPAssociations            "id-mat-maxDOPAssociations"
+#define NID_id_mat_maxDOPAssociations           2529
+#define OBJ_id_mat_maxDOPAssociations           2L,5L,30L,1L,57L
+
+#define SN_id_mat_maxDISPAssociations           "id-mat-maxDISPAssociations"
+#define NID_id_mat_maxDISPAssociations          2530
+#define OBJ_id_mat_maxDISPAssociations          2L,5L,30L,1L,58L
+
+#define SN_id_mat_dAPAssociationTimeout         "id-mat-dAPAssociationTimeout"
+#define NID_id_mat_dAPAssociationTimeout                2531
+#define OBJ_id_mat_dAPAssociationTimeout                2L,5L,30L,1L,59L
+
+#define SN_id_mat_foundLocalEntries             "id-mat-foundLocalEntries"
+#define NID_id_mat_foundLocalEntries            2532
+#define OBJ_id_mat_foundLocalEntries            2L,5L,30L,1L,6L
+
+#define SN_id_mat_dSPAssociationTimeout         "id-mat-dSPAssociationTimeout"
+#define NID_id_mat_dSPAssociationTimeout                2533
+#define OBJ_id_mat_dSPAssociationTimeout                2L,5L,30L,1L,60L
+
+#define SN_id_mat_dOPAssociationTimeout         "id-mat-dOPAssociationTimeout"
+#define NID_id_mat_dOPAssociationTimeout                2534
+#define OBJ_id_mat_dOPAssociationTimeout                2L,5L,30L,1L,61L
+
+#define SN_id_mat_dISPAssociationTimeout                "id-mat-dISPAssociationTimeout"
+#define NID_id_mat_dISPAssociationTimeout               2535
+#define OBJ_id_mat_dISPAssociationTimeout               2L,5L,30L,1L,62L
+
+#define SN_id_mat_dSAActiveAssociations         "id-mat-dSAActiveAssociations"
+#define NID_id_mat_dSAActiveAssociations                2536
+#define OBJ_id_mat_dSAActiveAssociations                2L,5L,30L,1L,63L
+
+#define SN_id_mat_pagedResultsMaxIDs            "id-mat-pagedResultsMaxIDs"
+#define NID_id_mat_pagedResultsMaxIDs           2537
+#define OBJ_id_mat_pagedResultsMaxIDs           2L,5L,30L,1L,64L
+
+#define SN_id_mat_pagedResultsTimer             "id-mat-pagedResultsTimer"
+#define NID_id_mat_pagedResultsTimer            2538
+#define OBJ_id_mat_pagedResultsTimer            2L,5L,30L,1L,65L
+
+#define SN_id_mat_homeDSA               "id-mat-homeDSA"
+#define NID_id_mat_homeDSA              2539
+#define OBJ_id_mat_homeDSA              2L,5L,30L,1L,66L
+
+#define SN_id_mat_dUATimeout            "id-mat-dUATimeout"
+#define NID_id_mat_dUATimeout           2540
+#define OBJ_id_mat_dUATimeout           2L,5L,30L,1L,68L
+
+#define SN_id_mat_supportedApplicationContexts          "id-mat-supportedApplicationContexts"
+#define NID_id_mat_supportedApplicationContexts         2541
+#define OBJ_id_mat_supportedApplicationContexts         2L,5L,30L,1L,69L
+
+#define SN_id_mat_referrals             "id-mat-referrals"
+#define NID_id_mat_referrals            2542
+#define OBJ_id_mat_referrals            2L,5L,30L,1L,7L
+
+#define SN_id_mat_reverseCredentials            "id-mat-reverseCredentials"
+#define NID_id_mat_reverseCredentials           2543
+#define OBJ_id_mat_reverseCredentials           2L,5L,30L,1L,70L
+
+#define SN_id_mat_remoteAccessPoint             "id-mat-remoteAccessPoint"
+#define NID_id_mat_remoteAccessPoint            2544
+#define OBJ_id_mat_remoteAccessPoint            2L,5L,30L,1L,71L
+
+#define SN_id_mat_maxInboundAssociations                "id-mat-maxInboundAssociations"
+#define NID_id_mat_maxInboundAssociations               2545
+#define OBJ_id_mat_maxInboundAssociations               2L,5L,30L,1L,72L
+
+#define SN_id_mat_maxOutboundAssociations               "id-mat-maxOutboundAssociations"
+#define NID_id_mat_maxOutboundAssociations              2546
+#define OBJ_id_mat_maxOutboundAssociations              2L,5L,30L,1L,73L
+
+#define SN_id_mat_currentActiveAssocs           "id-mat-currentActiveAssocs"
+#define NID_id_mat_currentActiveAssocs          2547
+#define OBJ_id_mat_currentActiveAssocs          2L,5L,30L,1L,74L
+
+#define SN_id_mat_currentActiveInboundAssocs            "id-mat-currentActiveInboundAssocs"
+#define NID_id_mat_currentActiveInboundAssocs           2548
+#define OBJ_id_mat_currentActiveInboundAssocs           2L,5L,30L,1L,75L
+
+#define SN_id_mat_currentActiveOutboundAssocs           "id-mat-currentActiveOutboundAssocs"
+#define NID_id_mat_currentActiveOutboundAssocs          2549
+#define OBJ_id_mat_currentActiveOutboundAssocs          2L,5L,30L,1L,76L
+
+#define SN_id_mat_accumAssocs           "id-mat-accumAssocs"
+#define NID_id_mat_accumAssocs          2550
+#define OBJ_id_mat_accumAssocs          2L,5L,30L,1L,77L
+
+#define SN_id_mat_accumInboundAssocs            "id-mat-accumInboundAssocs"
+#define NID_id_mat_accumInboundAssocs           2551
+#define OBJ_id_mat_accumInboundAssocs           2L,5L,30L,1L,78L
+
+#define SN_id_mat_accumOutboundAssocs           "id-mat-accumOutboundAssocs"
+#define NID_id_mat_accumOutboundAssocs          2552
+#define OBJ_id_mat_accumOutboundAssocs          2L,5L,30L,1L,79L
+
+#define SN_id_mat_serviceErrors         "id-mat-serviceErrors"
+#define NID_id_mat_serviceErrors                2553
+#define OBJ_id_mat_serviceErrors                2L,5L,30L,1L,8L
+
+#define SN_id_mat_accumFailedInboundAssocs              "id-mat-accumFailedInboundAssocs"
+#define NID_id_mat_accumFailedInboundAssocs             2554
+#define OBJ_id_mat_accumFailedInboundAssocs             2L,5L,30L,1L,80L
+
+#define SN_id_mat_accumFailedOutboundAssocs             "id-mat-accumFailedOutboundAssocs"
+#define NID_id_mat_accumFailedOutboundAssocs            2555
+#define OBJ_id_mat_accumFailedOutboundAssocs            2L,5L,30L,1L,81L
+
+#define SN_id_mat_timeOfLastAttempt             "id-mat-timeOfLastAttempt"
+#define NID_id_mat_timeOfLastAttempt            2556
+#define OBJ_id_mat_timeOfLastAttempt            2L,5L,30L,1L,82L
+
+#define SN_id_mat_timeOfLastSuccess             "id-mat-timeOfLastSuccess"
+#define NID_id_mat_timeOfLastSuccess            2557
+#define OBJ_id_mat_timeOfLastSuccess            2L,5L,30L,1L,83L
+
+#define SN_id_mat_requestCounter                "id-mat-requestCounter"
+#define NID_id_mat_requestCounter               2558
+#define OBJ_id_mat_requestCounter               2L,5L,30L,1L,84L
+
+#define SN_id_mat_replyCounter          "id-mat-replyCounter"
+#define NID_id_mat_replyCounter         2559
+#define OBJ_id_mat_replyCounter         2L,5L,30L,1L,85L
+
+#define SN_id_mat_requestsFailedCounter         "id-mat-requestsFailedCounter"
+#define NID_id_mat_requestsFailedCounter                2560
+#define OBJ_id_mat_requestsFailedCounter                2L,5L,30L,1L,86L
+
+#define SN_id_mat_timeOfLastAccess              "id-mat-timeOfLastAccess"
+#define NID_id_mat_timeOfLastAccess             2561
+#define OBJ_id_mat_timeOfLastAccess             2L,5L,30L,1L,87L
+
+#define SN_id_mat_agreementID           "id-mat-agreementID"
+#define NID_id_mat_agreementID          2562
+#define OBJ_id_mat_agreementID          2L,5L,30L,1L,88L
+
+#define SN_id_mat_agreementVersion              "id-mat-agreementVersion"
+#define NID_id_mat_agreementVersion             2563
+#define OBJ_id_mat_agreementVersion             2L,5L,30L,1L,89L
+
+#define SN_id_mat_aliasDereferences             "id-mat-aliasDereferences"
+#define NID_id_mat_aliasDereferences            2564
+#define OBJ_id_mat_aliasDereferences            2L,5L,30L,1L,9L
+
+#define SN_id_mat_hOBRole               "id-mat-hOBRole"
+#define NID_id_mat_hOBRole              2565
+#define OBJ_id_mat_hOBRole              2L,5L,30L,1L,90L
+
+#define SN_id_mat_shadowingSubject              "id-mat-shadowingSubject"
+#define NID_id_mat_shadowingSubject             2566
+#define OBJ_id_mat_shadowingSubject             2L,5L,30L,1L,91L
+
+#define SN_id_mat_updateMode            "id-mat-updateMode"
+#define NID_id_mat_updateMode           2567
+#define OBJ_id_mat_updateMode           2L,5L,30L,1L,92L
+
+#define SN_id_mat_masterAccessPoint             "id-mat-masterAccessPoint"
+#define NID_id_mat_masterAccessPoint            2568
+#define OBJ_id_mat_masterAccessPoint            2L,5L,30L,1L,93L
+
+#define SN_id_mat_secondaryShadows              "id-mat-secondaryShadows"
+#define NID_id_mat_secondaryShadows             2569
+#define OBJ_id_mat_secondaryShadows             2L,5L,30L,1L,94L
+
+#define SN_id_mat_shadowingRole         "id-mat-shadowingRole"
+#define NID_id_mat_shadowingRole                2570
+#define OBJ_id_mat_shadowingRole                2L,5L,30L,1L,95L
+
+#define SN_id_mat_lastUpdateTime                "id-mat-lastUpdateTime"
+#define NID_id_mat_lastUpdateTime               2571
+#define OBJ_id_mat_lastUpdateTime               2L,5L,30L,1L,96L
+
+#define SN_id_mat_shadowingSchedule             "id-mat-shadowingSchedule"
+#define NID_id_mat_shadowingSchedule            2572
+#define OBJ_id_mat_shadowingSchedule            2L,5L,30L,1L,97L
+
+#define SN_id_mat_nextUpdateTime                "id-mat-nextUpdateTime"
+#define NID_id_mat_nextUpdateTime               2573
+#define OBJ_id_mat_nextUpdateTime               2L,5L,30L,1L,98L
+
+#define SN_id_mat_useDOP                "id-mat-useDOP"
+#define NID_id_mat_useDOP               2574
+#define OBJ_id_mat_useDOP               2L,5L,30L,1L,99L
+
+#define SN_id_moc_dsa           "id-moc-dsa"
+#define NID_id_moc_dsa          2575
+#define OBJ_id_moc_dsa          2L,5L,30L,2L,0L
+
+#define SN_id_moc_dse           "id-moc-dse"
+#define NID_id_moc_dse          2576
+#define OBJ_id_moc_dse          2L,5L,30L,2L,1L
+
+#define SN_id_moc_dirCust               "id-moc-dirCust"
+#define NID_id_moc_dirCust              2577
+#define OBJ_id_moc_dirCust              2L,5L,30L,2L,10L
+
+#define SN_id_moc_dirUser               "id-moc-dirUser"
+#define NID_id_moc_dirUser              2578
+#define OBJ_id_moc_dirUser              2L,5L,30L,2L,11L
+
+#define SN_id_moc_dMD           "id-moc-dMD"
+#define NID_id_moc_dMD          2579
+#define OBJ_id_moc_dMD          2L,5L,30L,2L,12L
+
+#define SN_id_moc_knownDSA              "id-moc-knownDSA"
+#define NID_id_moc_knownDSA             2580
+#define OBJ_id_moc_knownDSA             2L,5L,30L,2L,2L
+
+#define SN_id_moc_knownDUA              "id-moc-knownDUA"
+#define NID_id_moc_knownDUA             2581
+#define OBJ_id_moc_knownDUA             2L,5L,30L,2L,3L
+
+#define SN_id_moc_dUA           "id-moc-dUA"
+#define NID_id_moc_dUA          2582
+#define OBJ_id_moc_dUA          2L,5L,30L,2L,4L
+
+#define SN_id_moc_nHOBMO                "id-moc-nHOBMO"
+#define NID_id_moc_nHOBMO               2583
+#define OBJ_id_moc_nHOBMO               2L,5L,30L,2L,5L
+
+#define SN_id_moc_hOBMO         "id-moc-hOBMO"
+#define NID_id_moc_hOBMO                2584
+#define OBJ_id_moc_hOBMO                2L,5L,30L,2L,6L
+
+#define SN_id_moc_shadowingAgreement            "id-moc-shadowingAgreement"
+#define NID_id_moc_shadowingAgreement           2585
+#define OBJ_id_moc_shadowingAgreement           2L,5L,30L,2L,7L
+
+#define SN_id_moc_ULconnEnd             "id-moc-ULconnEnd"
+#define NID_id_moc_ULconnEnd            2586
+#define OBJ_id_moc_ULconnEnd            2L,5L,30L,2L,8L
+
+#define SN_id_moc_disManagedObject              "id-moc-disManagedObject"
+#define NID_id_moc_disManagedObject             2587
+#define OBJ_id_moc_disManagedObject             2L,5L,30L,2L,9L
+
+#define SN_id_mnb               "id-mnb"
+#define NID_id_mnb              2588
+#define OBJ_id_mnb              2L,5L,30L,3L
+
+#define SN_id_mnb_dsa_name_binding              "id-mnb-dsa-name-binding"
+#define NID_id_mnb_dsa_name_binding             2589
+#define OBJ_id_mnb_dsa_name_binding             2L,5L,30L,3L,0L
+
+#define SN_id_mnb_dse_name_binding              "id-mnb-dse-name-binding"
+#define NID_id_mnb_dse_name_binding             2590
+#define OBJ_id_mnb_dse_name_binding             2L,5L,30L,3L,1L
+
+#define SN_id_mnb_ULconnEnd_knownDUA            "id-mnb-ULconnEnd-knownDUA"
+#define NID_id_mnb_ULconnEnd_knownDUA           2591
+#define OBJ_id_mnb_ULconnEnd_knownDUA           2L,5L,30L,3L,10L
+
+#define SN_id_mnb_dis_Customer_name_binding             "id-mnb-dis-Customer-name-binding"
+#define NID_id_mnb_dis_Customer_name_binding            2592
+#define OBJ_id_mnb_dis_Customer_name_binding            2L,5L,30L,3L,11L
+
+#define SN_id_mnb_knownDSA_dUA_name_binding             "id-mnb-knownDSA-dUA-name-binding"
+#define NID_id_mnb_knownDSA_dUA_name_binding            2593
+#define OBJ_id_mnb_knownDSA_dUA_name_binding            2L,5L,30L,3L,12L
+
+#define SN_id_mnb_DirCust_DMD           "id-mnb-DirCust-DMD"
+#define NID_id_mnb_DirCust_DMD          2594
+#define OBJ_id_mnb_DirCust_DMD          2L,5L,30L,3L,13L
+
+#define SN_id_mnb_DirUser_DirCust               "id-mnb-DirUser-DirCust"
+#define NID_id_mnb_DirUser_DirCust              2595
+#define OBJ_id_mnb_DirUser_DirCust              2L,5L,30L,3L,14L
+
+#define SN_id_mnb_knownDSA_dSA_name_binding             "id-mnb-knownDSA-dSA-name-binding"
+#define NID_id_mnb_knownDSA_dSA_name_binding            2596
+#define OBJ_id_mnb_knownDSA_dSA_name_binding            2L,5L,30L,3L,2L
+
+#define SN_id_mnb_knownDUA_dSA_name_binding             "id-mnb-knownDUA-dSA-name-binding"
+#define NID_id_mnb_knownDUA_dSA_name_binding            2597
+#define OBJ_id_mnb_knownDUA_dSA_name_binding            2L,5L,30L,3L,3L
+
+#define SN_id_mnb_acseInvoc_knownDSA            "id-mnb-acseInvoc-knownDSA"
+#define NID_id_mnb_acseInvoc_knownDSA           2598
+#define OBJ_id_mnb_acseInvoc_knownDSA           2L,5L,30L,3L,4L
+
+#define SN_id_mnb_acseInvoc_knownDUA            "id-mnb-acseInvoc-knownDUA"
+#define NID_id_mnb_acseInvoc_knownDUA           2599
+#define OBJ_id_mnb_acseInvoc_knownDUA           2L,5L,30L,3L,5L
+
+#define SN_id_mnb_nHOB_name_binding             "id-mnb-nHOB-name-binding"
+#define NID_id_mnb_nHOB_name_binding            2600
+#define OBJ_id_mnb_nHOB_name_binding            2L,5L,30L,3L,6L
+
+#define SN_id_mnb_hOB_name_binding              "id-mnb-hOB-name-binding"
+#define NID_id_mnb_hOB_name_binding             2601
+#define OBJ_id_mnb_hOB_name_binding             2L,5L,30L,3L,7L
+
+#define SN_id_mnb_shadowingAgreement_nb         "id-mnb-shadowingAgreement-nb"
+#define NID_id_mnb_shadowingAgreement_nb                2602
+#define OBJ_id_mnb_shadowingAgreement_nb                2L,5L,30L,3L,8L
+
+#define SN_id_mnb_ULconnEnd_knownDSA            "id-mnb-ULconnEnd-knownDSA"
+#define NID_id_mnb_ULconnEnd_knownDSA           2603
+#define OBJ_id_mnb_ULconnEnd_knownDSA           2L,5L,30L,3L,9L
+
+#define SN_id_mp                "id-mp"
+#define NID_id_mp               2604
+#define OBJ_id_mp               2L,5L,30L,4L
+
+#define SN_id_mp_dsaPackage             "id-mp-dsaPackage"
+#define NID_id_mp_dsaPackage            2605
+#define OBJ_id_mp_dsaPackage            2L,5L,30L,4L,0L
+
+#define SN_id_mp_readPackage            "id-mp-readPackage"
+#define NID_id_mp_readPackage           2606
+#define OBJ_id_mp_readPackage           2L,5L,30L,4L,1L
+
+#define SN_id_mp_chainedReadPackage             "id-mp-chainedReadPackage"
+#define NID_id_mp_chainedReadPackage            2607
+#define OBJ_id_mp_chainedReadPackage            2L,5L,30L,4L,10L
+
+#define SN_id_mp_chainedComparePackage          "id-mp-chainedComparePackage"
+#define NID_id_mp_chainedComparePackage         2608
+#define OBJ_id_mp_chainedComparePackage         2L,5L,30L,4L,11L
+
+#define SN_id_mp_chainedAbandonPackage          "id-mp-chainedAbandonPackage"
+#define NID_id_mp_chainedAbandonPackage         2609
+#define OBJ_id_mp_chainedAbandonPackage         2L,5L,30L,4L,12L
+
+#define SN_id_mp_chainedListPackage             "id-mp-chainedListPackage"
+#define NID_id_mp_chainedListPackage            2610
+#define OBJ_id_mp_chainedListPackage            2L,5L,30L,4L,13L
+
+#define SN_id_mp_chainedSearchPackage           "id-mp-chainedSearchPackage"
+#define NID_id_mp_chainedSearchPackage          2611
+#define OBJ_id_mp_chainedSearchPackage          2L,5L,30L,4L,14L
+
+#define SN_id_mp_chainedAddPackage              "id-mp-chainedAddPackage"
+#define NID_id_mp_chainedAddPackage             2612
+#define OBJ_id_mp_chainedAddPackage             2L,5L,30L,4L,15L
+
+#define SN_id_mp_chainedRemovePackage           "id-mp-chainedRemovePackage"
+#define NID_id_mp_chainedRemovePackage          2613
+#define OBJ_id_mp_chainedRemovePackage          2L,5L,30L,4L,16L
+
+#define SN_id_mp_chainedModifyPackage           "id-mp-chainedModifyPackage"
+#define NID_id_mp_chainedModifyPackage          2614
+#define OBJ_id_mp_chainedModifyPackage          2L,5L,30L,4L,17L
+
+#define SN_id_mp_chainedModifyDNPackage         "id-mp-chainedModifyDNPackage"
+#define NID_id_mp_chainedModifyDNPackage                2615
+#define OBJ_id_mp_chainedModifyDNPackage                2L,5L,30L,4L,18L
+
+#define SN_id_mp_dsePackage             "id-mp-dsePackage"
+#define NID_id_mp_dsePackage            2616
+#define OBJ_id_mp_dsePackage            2L,5L,30L,4L,19L
+
+#define SN_id_mp_comparePackage         "id-mp-comparePackage"
+#define NID_id_mp_comparePackage                2617
+#define OBJ_id_mp_comparePackage                2L,5L,30L,4L,2L
+
+#define SN_id_mp_knownDSAPackage                "id-mp-knownDSAPackage"
+#define NID_id_mp_knownDSAPackage               2618
+#define OBJ_id_mp_knownDSAPackage               2L,5L,30L,4L,20L
+
+#define SN_id_mp_knownDUAPackage                "id-mp-knownDUAPackage"
+#define NID_id_mp_knownDUAPackage               2619
+#define OBJ_id_mp_knownDUAPackage               2L,5L,30L,4L,21L
+
+#define SN_id_mp_dUAPackage             "id-mp-dUAPackage"
+#define NID_id_mp_dUAPackage            2620
+#define OBJ_id_mp_dUAPackage            2L,5L,30L,4L,22L
+
+#define SN_id_mp_nHOBPackage            "id-mp-nHOBPackage"
+#define NID_id_mp_nHOBPackage           2621
+#define OBJ_id_mp_nHOBPackage           2L,5L,30L,4L,23L
+
+#define SN_id_mp_hOBPackage             "id-mp-hOBPackage"
+#define NID_id_mp_hOBPackage            2622
+#define OBJ_id_mp_hOBPackage            2L,5L,30L,4L,24L
+
+#define SN_id_mp_shadowingAgreementPackage              "id-mp-shadowingAgreementPackage"
+#define NID_id_mp_shadowingAgreementPackage             2623
+#define OBJ_id_mp_shadowingAgreementPackage             2L,5L,30L,4L,25L
+
+#define SN_id_mp_ULconnEndPackage               "id-mp-ULconnEndPackage"
+#define NID_id_mp_ULconnEndPackage              2624
+#define OBJ_id_mp_ULconnEndPackage              2L,5L,30L,4L,26L
+
+#define SN_id_mp_disPackage             "id-mp-disPackage"
+#define NID_id_mp_disPackage            2625
+#define OBJ_id_mp_disPackage            2L,5L,30L,4L,27L
+
+#define SN_id_mp_dcsPackage             "id-mp-dcsPackage"
+#define NID_id_mp_dcsPackage            2626
+#define OBJ_id_mp_dcsPackage            2L,5L,30L,4L,28L
+
+#define SN_id_mp_dirCust                "id-mp-dirCust"
+#define NID_id_mp_dirCust               2627
+#define OBJ_id_mp_dirCust               2L,5L,30L,4L,29L
+
+#define SN_id_mp_abandonPackage         "id-mp-abandonPackage"
+#define NID_id_mp_abandonPackage                2628
+#define OBJ_id_mp_abandonPackage                2L,5L,30L,4L,3L
+
+#define SN_id_mp_dirUser                "id-mp-dirUser"
+#define NID_id_mp_dirUser               2629
+#define OBJ_id_mp_dirUser               2L,5L,30L,4L,30L
+
+#define SN_id_mp_dMD            "id-mp-dMD"
+#define NID_id_mp_dMD           2630
+#define OBJ_id_mp_dMD           2L,5L,30L,4L,31L
+
+#define SN_id_mp_dsPackage              "id-mp-dsPackage"
+#define NID_id_mp_dsPackage             2631
+#define OBJ_id_mp_dsPackage             2L,5L,30L,4L,32L
+
+#define SN_id_mp_listPackage            "id-mp-listPackage"
+#define NID_id_mp_listPackage           2632
+#define OBJ_id_mp_listPackage           2L,5L,30L,4L,4L
+
+#define SN_id_mp_searchPackage          "id-mp-searchPackage"
+#define NID_id_mp_searchPackage         2633
+#define OBJ_id_mp_searchPackage         2L,5L,30L,4L,5L
+
+#define SN_id_mp_addPackage             "id-mp-addPackage"
+#define NID_id_mp_addPackage            2634
+#define OBJ_id_mp_addPackage            2L,5L,30L,4L,6L
+
+#define SN_id_mp_removePackage          "id-mp-removePackage"
+#define NID_id_mp_removePackage         2635
+#define OBJ_id_mp_removePackage         2L,5L,30L,4L,7L
+
+#define SN_id_mp_modifyPackage          "id-mp-modifyPackage"
+#define NID_id_mp_modifyPackage         2636
+#define OBJ_id_mp_modifyPackage         2L,5L,30L,4L,8L
+
+#define SN_id_mp_modifyDNPackage                "id-mp-modifyDNPackage"
+#define NID_id_mp_modifyDNPackage               2637
+#define OBJ_id_mp_modifyDNPackage               2L,5L,30L,4L,9L
+
+#define SN_id_mpa               "id-mpa"
+#define NID_id_mpa              2638
+#define OBJ_id_mpa              2L,5L,30L,5L
+
+#define SN_id_mpa_nameProblem           "id-mpa-nameProblem"
+#define NID_id_mpa_nameProblem          2639
+#define OBJ_id_mpa_nameProblem          2L,5L,30L,5L,1L
+
+#define SN_id_mpa_resource              "id-mpa-resource"
+#define NID_id_mpa_resource             2640
+#define OBJ_id_mpa_resource             2L,5L,30L,5L,10L
+
+#define SN_id_mpa_authenReason          "id-mpa-authenReason"
+#define NID_id_mpa_authenReason         2641
+#define OBJ_id_mpa_authenReason         2L,5L,30L,5L,11L
+
+#define SN_id_mpa_updateProblem         "id-mpa-updateProblem"
+#define NID_id_mpa_updateProblem                2642
+#define OBJ_id_mpa_updateProblem                2L,5L,30L,5L,12L
+
+#define SN_id_mpa_extensions            "id-mpa-extensions"
+#define NID_id_mpa_extensions           2643
+#define OBJ_id_mpa_extensions           2L,5L,30L,5L,15L
+
+#define SN_id_mpa_aliasedRDNs           "id-mpa-aliasedRDNs"
+#define NID_id_mpa_aliasedRDNs          2644
+#define OBJ_id_mpa_aliasedRDNs          2L,5L,30L,5L,16L
+
+#define SN_id_mpa_aliasDereferenced             "id-mpa-aliasDereferenced"
+#define NID_id_mpa_aliasDereferenced            2645
+#define OBJ_id_mpa_aliasDereferenced            2L,5L,30L,5L,17L
+
+#define SN_id_mpa_referenceType         "id-mpa-referenceType"
+#define NID_id_mpa_referenceType                2646
+#define OBJ_id_mpa_referenceType                2L,5L,30L,5L,18L
+
+#define SN_id_mpa_operationProgress             "id-mpa-operationProgress"
+#define NID_id_mpa_operationProgress            2647
+#define OBJ_id_mpa_operationProgress            2L,5L,30L,5L,19L
+
+#define SN_id_mpa_traceInformation              "id-mpa-traceInformation"
+#define NID_id_mpa_traceInformation             2648
+#define OBJ_id_mpa_traceInformation             2L,5L,30L,5L,2L
+
+#define SN_id_mpa_pDU           "id-mpa-pDU"
+#define NID_id_mpa_pDU          2649
+#define OBJ_id_mpa_pDU          2L,5L,30L,5L,20L
+
+#define SN_id_mpa_opId          "id-mpa-opId"
+#define NID_id_mpa_opId         2650
+#define OBJ_id_mpa_opId         2L,5L,30L,5L,21L
+
+#define SN_id_mpa_nhob_bind_id          "id-mpa-nhob-bind-id"
+#define NID_id_mpa_nhob_bind_id         2651
+#define OBJ_id_mpa_nhob_bind_id         2L,5L,30L,5L,22L
+
+#define SN_id_mpa_mhob_dop_prob         "id-mpa-mhob-dop-prob"
+#define NID_id_mpa_mhob_dop_prob                2652
+#define OBJ_id_mpa_mhob_dop_prob                2L,5L,30L,5L,23L
+
+#define SN_id_mpa_hob_bind_id           "id-mpa-hob-bind-id"
+#define NID_id_mpa_hob_bind_id          2653
+#define OBJ_id_mpa_hob_bind_id          2L,5L,30L,5L,24L
+
+#define SN_id_mpa_hob_dop_prob          "id-mpa-hob-dop-prob"
+#define NID_id_mpa_hob_dop_prob         2654
+#define OBJ_id_mpa_hob_dop_prob         2L,5L,30L,5L,25L
+
+#define SN_id_mpa_shadowing_dop_prob            "id-mpa-shadowing-dop-prob"
+#define NID_id_mpa_shadowing_dop_prob           2655
+#define OBJ_id_mpa_shadowing_dop_prob           2L,5L,30L,5L,26L
+
+#define SN_id_mpa_opIdDN                "id-mpa-opIdDN"
+#define NID_id_mpa_opIdDN               2656
+#define OBJ_id_mpa_opIdDN               2L,5L,30L,5L,27L
+
+#define SN_id_mpa_serviceProblem                "id-mpa-serviceProblem"
+#define NID_id_mpa_serviceProblem               2657
+#define OBJ_id_mpa_serviceProblem               2L,5L,30L,5L,3L
+
+#define SN_id_mpa_entryName             "id-mpa-entryName"
+#define NID_id_mpa_entryName            2658
+#define OBJ_id_mpa_entryName            2L,5L,30L,5L,4L
+
+#define SN_id_mpa_operation             "id-mpa-operation"
+#define NID_id_mpa_operation            2659
+#define OBJ_id_mpa_operation            2L,5L,30L,5L,5L
+
+#define SN_id_mpa_attributeProblem              "id-mpa-attributeProblem"
+#define NID_id_mpa_attributeProblem             2660
+#define OBJ_id_mpa_attributeProblem             2L,5L,30L,5L,6L
+
+#define SN_id_mpa_attributeType         "id-mpa-attributeType"
+#define NID_id_mpa_attributeType                2661
+#define OBJ_id_mpa_attributeType                2L,5L,30L,5L,7L
+
+#define SN_id_mpa_shadowProblem         "id-mpa-shadowProblem"
+#define NID_id_mpa_shadowProblem                2662
+#define OBJ_id_mpa_shadowProblem                2L,5L,30L,5L,8L
+
+#define SN_id_mpa_attributeValue                "id-mpa-attributeValue"
+#define NID_id_mpa_attributeValue               2663
+#define OBJ_id_mpa_attributeValue               2L,5L,30L,5L,9L
+
+#define SN_id_avc               "id-avc"
+#define NID_id_avc              2664
+#define OBJ_id_avc              2L,5L,31L
+
+#define SN_id_avc_language              "id-avc-language"
+#define NID_id_avc_language             2665
+#define OBJ_id_avc_language             2L,5L,31L,0L
+
+#define SN_id_avc_temporal              "id-avc-temporal"
+#define NID_id_avc_temporal             2666
+#define OBJ_id_avc_temporal             2L,5L,31L,1L
+
+#define SN_id_avc_locale                "id-avc-locale"
+#define NID_id_avc_locale               2667
+#define OBJ_id_avc_locale               2L,5L,31L,2L
+
+#define SN_id_avc_attributeValueSecurityLabelContext            "id-avc-attributeValueSecurityLabelContext"
+#define NID_id_avc_attributeValueSecurityLabelContext           2668
+#define OBJ_id_avc_attributeValueSecurityLabelContext           2L,5L,31L,3L
+
+#define SN_id_avc_attributeValueIntegrityInfoContext            "id-avc-attributeValueIntegrityInfoContext"
+#define NID_id_avc_attributeValueIntegrityInfoContext           2669
+#define OBJ_id_avc_attributeValueIntegrityInfoContext           2L,5L,31L,4L
+
+#define SN_id_avc_ldapAttributeOption           "id-avc-ldapAttributeOption"
+#define NID_id_avc_ldapAttributeOption          2670
+#define OBJ_id_avc_ldapAttributeOption          2L,5L,31L,5L
+
+#define SN_id_se                "id-se"
+#define NID_id_se               2671
+#define OBJ_id_se               2L,5L,32L
+
+#define SN_id_idm               "id-idm"
+#define NID_id_idm              2672
+#define OBJ_id_idm              2L,5L,33L
+
+#define SN_id_idm_dap           "id-idm-dap"
+#define NID_id_idm_dap          2673
+#define OBJ_id_idm_dap          2L,5L,33L,0L
+
+#define SN_id_idm_dsp           "id-idm-dsp"
+#define NID_id_idm_dsp          2674
+#define OBJ_id_idm_dsp          2L,5L,33L,1L
+
+#define SN_id_idm_disp          "id-idm-disp"
+#define NID_id_idm_disp         2675
+#define OBJ_id_idm_disp         2L,5L,33L,2L
+
+#define SN_id_idm_dop           "id-idm-dop"
+#define NID_id_idm_dop          2676
+#define OBJ_id_idm_dop          2L,5L,33L,3L
+
+#define SN_id_pr                "id-pr"
+#define NID_id_pr               2677
+#define OBJ_id_pr               2L,5L,34L
+
+#define SN_id_pr_targetDsaUnavailable           "id-pr-targetDsaUnavailable"
+#define NID_id_pr_targetDsaUnavailable          2678
+#define OBJ_id_pr_targetDsaUnavailable          2L,5L,34L,1L
+
+#define SN_id_pr_attributeNegationViolation             "id-pr-attributeNegationViolation"
+#define NID_id_pr_attributeNegationViolation            2679
+#define OBJ_id_pr_attributeNegationViolation            2L,5L,34L,10L
+
+#define SN_id_pr_searchValueRequired            "id-pr-searchValueRequired"
+#define NID_id_pr_searchValueRequired           2680
+#define OBJ_id_pr_searchValueRequired           2L,5L,34L,11L
+
+#define SN_id_pr_invalidSearchValue             "id-pr-invalidSearchValue"
+#define NID_id_pr_invalidSearchValue            2681
+#define OBJ_id_pr_invalidSearchValue            2L,5L,34L,12L
+
+#define SN_id_pr_searchContextViolation         "id-pr-searchContextViolation"
+#define NID_id_pr_searchContextViolation                2682
+#define OBJ_id_pr_searchContextViolation                2L,5L,34L,13L
+
+#define SN_id_pr_searchContextCombinationViolation              "id-pr-searchContextCombinationViolation"
+#define NID_id_pr_searchContextCombinationViolation             2683
+#define OBJ_id_pr_searchContextCombinationViolation             2L,5L,34L,14L
+
+#define SN_id_pr_missingSearchContext           "id-pr-missingSearchContext"
+#define NID_id_pr_missingSearchContext          2684
+#define OBJ_id_pr_missingSearchContext          2L,5L,34L,15L
+
+#define SN_id_pr_searchContextValueViolation            "id-pr-searchContextValueViolation"
+#define NID_id_pr_searchContextValueViolation           2685
+#define OBJ_id_pr_searchContextValueViolation           2L,5L,34L,16L
+
+#define SN_id_pr_searchContextValueRequired             "id-pr-searchContextValueRequired"
+#define NID_id_pr_searchContextValueRequired            2686
+#define OBJ_id_pr_searchContextValueRequired            2L,5L,34L,17L
+
+#define SN_id_pr_invalidContextSearchValue              "id-pr-invalidContextSearchValue"
+#define NID_id_pr_invalidContextSearchValue             2687
+#define OBJ_id_pr_invalidContextSearchValue             2L,5L,34L,18L
+
+#define SN_id_pr_unsupportedMatchingRule                "id-pr-unsupportedMatchingRule"
+#define NID_id_pr_unsupportedMatchingRule               2688
+#define OBJ_id_pr_unsupportedMatchingRule               2L,5L,34L,19L
+
+#define SN_id_pr_dataSourceUnavailable          "id-pr-dataSourceUnavailable"
+#define NID_id_pr_dataSourceUnavailable         2689
+#define OBJ_id_pr_dataSourceUnavailable         2L,5L,34L,2L
+
+#define SN_id_pr_attributeMatchingViolation             "id-pr-attributeMatchingViolation"
+#define NID_id_pr_attributeMatchingViolation            2690
+#define OBJ_id_pr_attributeMatchingViolation            2L,5L,34L,20L
+
+#define SN_id_pr_unsupportedMatchingUse         "id-pr-unsupportedMatchingUse"
+#define NID_id_pr_unsupportedMatchingUse                2691
+#define OBJ_id_pr_unsupportedMatchingUse                2L,5L,34L,21L
+
+#define SN_id_pr_matchingUseViolation           "id-pr-matchingUseViolation"
+#define NID_id_pr_matchingUseViolation          2692
+#define OBJ_id_pr_matchingUseViolation          2L,5L,34L,22L
+
+#define SN_id_pr_hierarchySelectForbidden               "id-pr-hierarchySelectForbidden"
+#define NID_id_pr_hierarchySelectForbidden              2693
+#define OBJ_id_pr_hierarchySelectForbidden              2L,5L,34L,23L
+
+#define SN_id_pr_invalidHierarchySelect         "id-pr-invalidHierarchySelect"
+#define NID_id_pr_invalidHierarchySelect                2694
+#define OBJ_id_pr_invalidHierarchySelect                2L,5L,34L,24L
+
+#define SN_id_pr_unavailableHierarchySelect             "id-pr-unavailableHierarchySelect"
+#define NID_id_pr_unavailableHierarchySelect            2695
+#define OBJ_id_pr_unavailableHierarchySelect            2L,5L,34L,25L
+
+#define SN_id_pr_invalidSearchControlOptions            "id-pr-invalidSearchControlOptions"
+#define NID_id_pr_invalidSearchControlOptions           2696
+#define OBJ_id_pr_invalidSearchControlOptions           2L,5L,34L,26L
+
+#define SN_id_pr_invalidServiceControlOptions           "id-pr-invalidServiceControlOptions"
+#define NID_id_pr_invalidServiceControlOptions          2697
+#define OBJ_id_pr_invalidServiceControlOptions          2L,5L,34L,27L
+
+#define SN_id_pr_searchSubsetViolation          "id-pr-searchSubsetViolation"
+#define NID_id_pr_searchSubsetViolation         2698
+#define OBJ_id_pr_searchSubsetViolation         2L,5L,34L,28L
+
+#define SN_id_pr_unmatchedKeyAttributes         "id-pr-unmatchedKeyAttributes"
+#define NID_id_pr_unmatchedKeyAttributes                2699
+#define OBJ_id_pr_unmatchedKeyAttributes                2L,5L,34L,29L
+
+#define SN_id_pr_unidentifiedOperation          "id-pr-unidentifiedOperation"
+#define NID_id_pr_unidentifiedOperation         2700
+#define OBJ_id_pr_unidentifiedOperation         2L,5L,34L,3L
+
+#define SN_id_pr_ambiguousKeyAttributes         "id-pr-ambiguousKeyAttributes"
+#define NID_id_pr_ambiguousKeyAttributes                2701
+#define OBJ_id_pr_ambiguousKeyAttributes                2L,5L,34L,30L
+
+#define SN_id_pr_unavailableRelaxationLevel             "id-pr-unavailableRelaxationLevel"
+#define NID_id_pr_unavailableRelaxationLevel            2702
+#define OBJ_id_pr_unavailableRelaxationLevel            2L,5L,34L,31L
+
+#define SN_id_pr_emptyHierarchySelection                "id-pr-emptyHierarchySelection"
+#define NID_id_pr_emptyHierarchySelection               2703
+#define OBJ_id_pr_emptyHierarchySelection               2L,5L,34L,32L
+
+#define SN_id_pr_administratorImposedLimit              "id-pr-administratorImposedLimit"
+#define NID_id_pr_administratorImposedLimit             2704
+#define OBJ_id_pr_administratorImposedLimit             2L,5L,34L,33L
+
+#define SN_id_pr_permanentRestriction           "id-pr-permanentRestriction"
+#define NID_id_pr_permanentRestriction          2705
+#define OBJ_id_pr_permanentRestriction          2L,5L,34L,34L
+
+#define SN_id_pr_temporaryRestriction           "id-pr-temporaryRestriction"
+#define NID_id_pr_temporaryRestriction          2706
+#define OBJ_id_pr_temporaryRestriction          2L,5L,34L,35L
+
+#define SN_id_pr_relaxationNotSupported         "id-pr-relaxationNotSupported"
+#define NID_id_pr_relaxationNotSupported                2707
+#define OBJ_id_pr_relaxationNotSupported                2L,5L,34L,36L
+
+#define SN_id_pr_unavailableOperation           "id-pr-unavailableOperation"
+#define NID_id_pr_unavailableOperation          2708
+#define OBJ_id_pr_unavailableOperation          2L,5L,34L,4L
+
+#define SN_id_pr_searchAttributeViolation               "id-pr-searchAttributeViolation"
+#define NID_id_pr_searchAttributeViolation              2709
+#define OBJ_id_pr_searchAttributeViolation              2L,5L,34L,5L
+
+#define SN_id_pr_searchAttributeCombinationViolation            "id-pr-searchAttributeCombinationViolation"
+#define NID_id_pr_searchAttributeCombinationViolation           2710
+#define OBJ_id_pr_searchAttributeCombinationViolation           2L,5L,34L,6L
+
+#define SN_id_pr_searchValueNotAllowed          "id-pr-searchValueNotAllowed"
+#define NID_id_pr_searchValueNotAllowed         2711
+#define OBJ_id_pr_searchValueNotAllowed         2L,5L,34L,7L
+
+#define SN_id_pr_missingSearchAttribute         "id-pr-missingSearchAttribute"
+#define NID_id_pr_missingSearchAttribute                2712
+#define OBJ_id_pr_missingSearchAttribute                2L,5L,34L,8L
+
+#define SN_id_pr_searchValueViolation           "id-pr-searchValueViolation"
+#define NID_id_pr_searchValueViolation          2713
+#define OBJ_id_pr_searchValueViolation          2L,5L,34L,9L
+
+#define SN_id_not               "id-not"
+#define NID_id_not              2714
+#define OBJ_id_not              2L,5L,35L
+
+#define SN_id_not_dSAProblem            "id-not-dSAProblem"
+#define NID_id_not_dSAProblem           2715
+#define OBJ_id_not_dSAProblem           2L,5L,35L,0L
+
+#define SN_id_not_searchServiceProblem          "id-not-searchServiceProblem"
+#define NID_id_not_searchServiceProblem         2716
+#define OBJ_id_not_searchServiceProblem         2L,5L,35L,1L
+
+#define SN_id_not_hierarchySelectList           "id-not-hierarchySelectList"
+#define NID_id_not_hierarchySelectList          2717
+#define OBJ_id_not_hierarchySelectList          2L,5L,35L,10L
+
+#define SN_id_not_searchControlOptionsList              "id-not-searchControlOptionsList"
+#define NID_id_not_searchControlOptionsList             2718
+#define OBJ_id_not_searchControlOptionsList             2L,5L,35L,11L
+
+#define SN_id_not_serviceControlOptionsList             "id-not-serviceControlOptionsList"
+#define NID_id_not_serviceControlOptionsList            2719
+#define OBJ_id_not_serviceControlOptionsList            2L,5L,35L,12L
+
+#define SN_id_not_multipleMatchingLocalities            "id-not-multipleMatchingLocalities"
+#define NID_id_not_multipleMatchingLocalities           2720
+#define OBJ_id_not_multipleMatchingLocalities           2L,5L,35L,13L
+
+#define SN_id_not_proposedRelaxation            "id-not-proposedRelaxation"
+#define NID_id_not_proposedRelaxation           2721
+#define OBJ_id_not_proposedRelaxation           2L,5L,35L,14L
+
+#define SN_id_not_appliedRelaxation             "id-not-appliedRelaxation"
+#define NID_id_not_appliedRelaxation            2722
+#define OBJ_id_not_appliedRelaxation            2L,5L,35L,15L
+
+#define SN_id_not_pwdResponse           "id-not-pwdResponse"
+#define NID_id_not_pwdResponse          2723
+#define OBJ_id_not_pwdResponse          2L,5L,35L,16L
+
+#define SN_id_not_ldapDiagnosticMsg             "id-not-ldapDiagnosticMsg"
+#define NID_id_not_ldapDiagnosticMsg            2724
+#define OBJ_id_not_ldapDiagnosticMsg            2L,5L,35L,17L
+
+#define SN_id_not_serviceType           "id-not-serviceType"
+#define NID_id_not_serviceType          2725
+#define OBJ_id_not_serviceType          2L,5L,35L,2L
+
+#define SN_id_not_attributeTypeList             "id-not-attributeTypeList"
+#define NID_id_not_attributeTypeList            2726
+#define OBJ_id_not_attributeTypeList            2L,5L,35L,3L
+
+#define SN_id_not_matchingRuleList              "id-not-matchingRuleList"
+#define NID_id_not_matchingRuleList             2727
+#define OBJ_id_not_matchingRuleList             2L,5L,35L,4L
+
+#define SN_id_not_filterItem            "id-not-filterItem"
+#define NID_id_not_filterItem           2728
+#define OBJ_id_not_filterItem           2L,5L,35L,5L
+
+#define SN_id_not_attributeCombinations         "id-not-attributeCombinations"
+#define NID_id_not_attributeCombinations                2729
+#define OBJ_id_not_attributeCombinations                2L,5L,35L,6L
+
+#define SN_id_not_contextTypeList               "id-not-contextTypeList"
+#define NID_id_not_contextTypeList              2730
+#define OBJ_id_not_contextTypeList              2L,5L,35L,7L
+
+#define SN_id_not_contextList           "id-not-contextList"
+#define NID_id_not_contextList          2731
+#define OBJ_id_not_contextList          2L,5L,35L,8L
+
+#define SN_id_not_contextCombinations           "id-not-contextCombinations"
+#define NID_id_not_contextCombinations          2732
+#define OBJ_id_not_contextCombinations          2L,5L,35L,9L
+
+#define SN_id_mre               "id-mre"
+#define NID_id_mre              2733
+#define OBJ_id_mre              2L,5L,36L
+
+#define SN_controlAttributeType         "controlAttributeType"
+#define NID_controlAttributeType                2734
+#define OBJ_controlAttributeType                2L,5L,37L
+
+#define SN_id_cat_sequenceMatchType             "id-cat-sequenceMatchType"
+#define NID_id_cat_sequenceMatchType            2735
+#define OBJ_id_cat_sequenceMatchType            2L,5L,37L,1L
+
+#define SN_id_cat_wordMatchType         "id-cat-wordMatchType"
+#define NID_id_cat_wordMatchType                2736
+#define OBJ_id_cat_wordMatchType                2L,5L,37L,2L
+
+#define SN_id_cat_characterMatchTypes           "id-cat-characterMatchTypes"
+#define NID_id_cat_characterMatchTypes          2737
+#define OBJ_id_cat_characterMatchTypes          2L,5L,37L,3L
+
+#define SN_id_cat_selectedContexts              "id-cat-selectedContexts"
+#define NID_id_cat_selectedContexts             2738
+#define OBJ_id_cat_selectedContexts             2L,5L,37L,4L
+
+#define SN_id_kp_OCSPSigning            "id-kp-OCSPSigning"
+#define NID_id_kp_OCSPSigning           2739
+#define OBJ_id_kp_OCSPSigning           2L,5L,38L,9L
+
+#define SN_id_pq                "id-pq"
+#define NID_id_pq               2740
+#define OBJ_id_pq               2L,5L,39L
+
+#define SN_id_at_objectClass            "id-at-objectClass"
+#define NID_id_at_objectClass           2741
+#define OBJ_id_at_objectClass           2L,5L,4L,0L
+
+#define SN_id_at_aliasedEntryName               "id-at-aliasedEntryName"
+#define NID_id_at_aliasedEntryName              2742
+#define OBJ_id_at_aliasedEntryName              2L,5L,4L,1L
+
+#define SN_id_at_collectiveOrganizationName             "id-at-collectiveOrganizationName"
+#define NID_id_at_collectiveOrganizationName            2743
+#define OBJ_id_at_collectiveOrganizationName            2L,5L,4L,10L,1L
+
+#define SN_id_at_eepkCertificateRevocationList          "id-at-eepkCertificateRevocationList"
+#define NID_id_at_eepkCertificateRevocationList         2744
+#define OBJ_id_at_eepkCertificateRevocationList         2L,5L,4L,101L
+
+#define SN_id_at_eeAttrCertificateRevocationList                "id-at-eeAttrCertificateRevocationList"
+#define NID_id_at_eeAttrCertificateRevocationList               2745
+#define OBJ_id_at_eeAttrCertificateRevocationList               2L,5L,4L,102L
+
+#define SN_id_at_supportedPublicKeyAlgorithms           "id-at-supportedPublicKeyAlgorithms"
+#define NID_id_at_supportedPublicKeyAlgorithms          2746
+#define OBJ_id_at_supportedPublicKeyAlgorithms          2L,5L,4L,103L
+
+#define SN_id_at_intEmail               "id-at-intEmail"
+#define NID_id_at_intEmail              2747
+#define OBJ_id_at_intEmail              2L,5L,4L,104L
+
+#define SN_id_at_jid            "id-at-jid"
+#define NID_id_at_jid           2748
+#define OBJ_id_at_jid           2L,5L,4L,105L
+
+#define SN_id_at_objectIdentifier               "id-at-objectIdentifier"
+#define NID_id_at_objectIdentifier              2749
+#define OBJ_id_at_objectIdentifier              2L,5L,4L,106L
+
+#define SN_id_at_collectiveOrganizationalUnitName               "id-at-collectiveOrganizationalUnitName"
+#define NID_id_at_collectiveOrganizationalUnitName              2750
+#define OBJ_id_at_collectiveOrganizationalUnitName              2L,5L,4L,11L,1L
+
+#define SN_id_at_collectivePostalAddress                "id-at-collectivePostalAddress"
+#define NID_id_at_collectivePostalAddress               2751
+#define OBJ_id_at_collectivePostalAddress               2L,5L,4L,16L,1L
+
+#define SN_id_at_collectivePostalCode           "id-at-collectivePostalCode"
+#define NID_id_at_collectivePostalCode          2752
+#define OBJ_id_at_collectivePostalCode          2L,5L,4L,17L,1L
+
+#define SN_id_at_collectivePostOfficeBox                "id-at-collectivePostOfficeBox"
+#define NID_id_at_collectivePostOfficeBox               2753
+#define OBJ_id_at_collectivePostOfficeBox               2L,5L,4L,18L,1L
+
+#define SN_id_at_collectivePhysicalDeliveryOfficeName           "id-at-collectivePhysicalDeliveryOfficeName"
+#define NID_id_at_collectivePhysicalDeliveryOfficeName          2754
+#define OBJ_id_at_collectivePhysicalDeliveryOfficeName          2L,5L,4L,19L,1L
+
+#define SN_id_at_knowledgeInformation           "id-at-knowledgeInformation"
+#define NID_id_at_knowledgeInformation          2755
+#define OBJ_id_at_knowledgeInformation          2L,5L,4L,2L
+
+#define SN_id_at_collectiveTelephoneNumber              "id-at-collectiveTelephoneNumber"
+#define NID_id_at_collectiveTelephoneNumber             2756
+#define OBJ_id_at_collectiveTelephoneNumber             2L,5L,4L,20L,1L
+
+#define SN_id_at_collectiveTelexNumber          "id-at-collectiveTelexNumber"
+#define NID_id_at_collectiveTelexNumber         2757
+#define OBJ_id_at_collectiveTelexNumber         2L,5L,4L,21L,1L
+
+#define SN_id_at_collectiveFacsimileTelephoneNumber             "id-at-collectiveFacsimileTelephoneNumber"
+#define NID_id_at_collectiveFacsimileTelephoneNumber            2758
+#define OBJ_id_at_collectiveFacsimileTelephoneNumber            2L,5L,4L,23L,1L
+
+#define SN_id_at_collectiveInternationalISDNNumber              "id-at-collectiveInternationalISDNNumber"
+#define NID_id_at_collectiveInternationalISDNNumber             2759
+#define OBJ_id_at_collectiveInternationalISDNNumber             2L,5L,4L,25L,1L
+
+#define SN_id_at_clearance              "id-at-clearance"
+#define NID_id_at_clearance             2760
+#define OBJ_id_at_clearance             2L,5L,4L,55L
+
+#define SN_id_at_attributeIntegrityInfo         "id-at-attributeIntegrityInfo"
+#define NID_id_at_attributeIntegrityInfo                2761
+#define OBJ_id_at_attributeIntegrityInfo                2L,5L,4L,57L
+
+#define SN_id_at_attributeCertificate           "id-at-attributeCertificate"
+#define NID_id_at_attributeCertificate          2762
+#define OBJ_id_at_attributeCertificate          2L,5L,4L,58L
+
+#define SN_id_at_attributeCertificateRevocationList             "id-at-attributeCertificateRevocationList"
+#define NID_id_at_attributeCertificateRevocationList            2763
+#define OBJ_id_at_attributeCertificateRevocationList            2L,5L,4L,59L
+
+#define SN_id_at_aACertificate          "id-at-aACertificate"
+#define NID_id_at_aACertificate         2764
+#define OBJ_id_at_aACertificate         2L,5L,4L,61L
+
+#define SN_id_at_attributeDescriptorCertificate         "id-at-attributeDescriptorCertificate"
+#define NID_id_at_attributeDescriptorCertificate                2765
+#define OBJ_id_at_attributeDescriptorCertificate                2L,5L,4L,62L
+
+#define SN_id_at_attributeAuthorityRevocationList               "id-at-attributeAuthorityRevocationList"
+#define NID_id_at_attributeAuthorityRevocationList              2766
+#define OBJ_id_at_attributeAuthorityRevocationList              2L,5L,4L,63L
+
+#define SN_id_at_family_information             "id-at-family-information"
+#define NID_id_at_family_information            2767
+#define OBJ_id_at_family_information            2L,5L,4L,64L
+
+#define SN_id_at_communicationsService          "id-at-communicationsService"
+#define NID_id_at_communicationsService         2768
+#define OBJ_id_at_communicationsService         2L,5L,4L,66L
+
+#define SN_id_at_communicationsNetwork          "id-at-communicationsNetwork"
+#define NID_id_at_communicationsNetwork         2769
+#define OBJ_id_at_communicationsNetwork         2L,5L,4L,67L
+
+#define SN_id_at_certificationPracticeStmt              "id-at-certificationPracticeStmt"
+#define NID_id_at_certificationPracticeStmt             2770
+#define OBJ_id_at_certificationPracticeStmt             2L,5L,4L,68L
+
+#define SN_id_at_certificatePolicy              "id-at-certificatePolicy"
+#define NID_id_at_certificatePolicy             2771
+#define OBJ_id_at_certificatePolicy             2L,5L,4L,69L
+
+#define SN_id_at_collectiveLocalityName         "id-at-collectiveLocalityName"
+#define NID_id_at_collectiveLocalityName                2772
+#define OBJ_id_at_collectiveLocalityName                2L,5L,4L,7L,1L
+
+#define SN_id_at_pkiPath                "id-at-pkiPath"
+#define NID_id_at_pkiPath               2773
+#define OBJ_id_at_pkiPath               2L,5L,4L,70L
+
+#define SN_id_at_privPolicy             "id-at-privPolicy"
+#define NID_id_at_privPolicy            2774
+#define OBJ_id_at_privPolicy            2L,5L,4L,71L
+
+#define SN_id_at_delegationPath         "id-at-delegationPath"
+#define NID_id_at_delegationPath                2775
+#define OBJ_id_at_delegationPath                2L,5L,4L,73L
+
+#define SN_id_at_protPrivPolicy         "id-at-protPrivPolicy"
+#define NID_id_at_protPrivPolicy                2776
+#define OBJ_id_at_protPrivPolicy                2L,5L,4L,74L
+
+#define SN_id_at_xMLPrivilegeInfo               "id-at-xMLPrivilegeInfo"
+#define NID_id_at_xMLPrivilegeInfo              2777
+#define OBJ_id_at_xMLPrivilegeInfo              2L,5L,4L,75L
+
+#define SN_id_at_xmlPrivPolicy          "id-at-xmlPrivPolicy"
+#define NID_id_at_xmlPrivPolicy         2778
+#define OBJ_id_at_xmlPrivPolicy         2L,5L,4L,76L
+
+#define SN_id_at_uuidpair               "id-at-uuidpair"
+#define NID_id_at_uuidpair              2779
+#define OBJ_id_at_uuidpair              2L,5L,4L,77L
+
+#define SN_id_at_tagOid         "id-at-tagOid"
+#define NID_id_at_tagOid                2780
+#define OBJ_id_at_tagOid                2L,5L,4L,78L
+
+#define SN_id_at_uiiFormat              "id-at-uiiFormat"
+#define NID_id_at_uiiFormat             2781
+#define OBJ_id_at_uiiFormat             2L,5L,4L,79L
+
+#define SN_id_at_collectiveStateOrProvinceName          "id-at-collectiveStateOrProvinceName"
+#define NID_id_at_collectiveStateOrProvinceName         2782
+#define OBJ_id_at_collectiveStateOrProvinceName         2L,5L,4L,8L,1L
+
+#define SN_id_at_uiiInUrn               "id-at-uiiInUrn"
+#define NID_id_at_uiiInUrn              2783
+#define OBJ_id_at_uiiInUrn              2L,5L,4L,80L
+
+#define SN_id_at_contentUrl             "id-at-contentUrl"
+#define NID_id_at_contentUrl            2784
+#define OBJ_id_at_contentUrl            2L,5L,4L,81L
+
+#define SN_id_at_permission             "id-at-permission"
+#define NID_id_at_permission            2785
+#define OBJ_id_at_permission            2L,5L,4L,82L
+
+#define SN_id_at_uri            "id-at-uri"
+#define NID_id_at_uri           2786
+#define OBJ_id_at_uri           2L,5L,4L,83L
+
+#define SN_id_at_pwdAttribute           "id-at-pwdAttribute"
+#define NID_id_at_pwdAttribute          2787
+#define OBJ_id_at_pwdAttribute          2L,5L,4L,84L
+
+#define SN_id_at_userPwd                "id-at-userPwd"
+#define NID_id_at_userPwd               2788
+#define OBJ_id_at_userPwd               2L,5L,4L,85L
+
+#define SN_id_at_urn            "id-at-urn"
+#define NID_id_at_urn           2789
+#define OBJ_id_at_urn           2L,5L,4L,86L
+
+#define SN_id_at_url            "id-at-url"
+#define NID_id_at_url           2790
+#define OBJ_id_at_url           2L,5L,4L,87L
+
+#define SN_id_at_utmCoordinates         "id-at-utmCoordinates"
+#define NID_id_at_utmCoordinates                2791
+#define OBJ_id_at_utmCoordinates                2L,5L,4L,88L
+
+#define SN_id_at_urnC           "id-at-urnC"
+#define NID_id_at_urnC          2792
+#define OBJ_id_at_urnC          2L,5L,4L,89L
+
+#define SN_id_at_collectiveStreetAddress                "id-at-collectiveStreetAddress"
+#define NID_id_at_collectiveStreetAddress               2793
+#define OBJ_id_at_collectiveStreetAddress               2L,5L,4L,9L,1L
+
+#define SN_id_at_uii            "id-at-uii"
+#define NID_id_at_uii           2794
+#define OBJ_id_at_uii           2L,5L,4L,90L
+
+#define SN_id_at_epc            "id-at-epc"
+#define NID_id_at_epc           2795
+#define OBJ_id_at_epc           2L,5L,4L,91L
+
+#define SN_id_at_tagAfi         "id-at-tagAfi"
+#define NID_id_at_tagAfi                2796
+#define OBJ_id_at_tagAfi                2L,5L,4L,92L
+
+#define SN_id_at_epcFormat              "id-at-epcFormat"
+#define NID_id_at_epcFormat             2797
+#define OBJ_id_at_epcFormat             2L,5L,4L,93L
+
+#define SN_id_at_epcInUrn               "id-at-epcInUrn"
+#define NID_id_at_epcInUrn              2798
+#define OBJ_id_at_epcInUrn              2L,5L,4L,94L
+
+#define SN_id_at_ldapUrl                "id-at-ldapUrl"
+#define NID_id_at_ldapUrl               2799
+#define OBJ_id_at_ldapUrl               2L,5L,4L,95L
+
+#define SN_id_at_tagLocation            "id-at-tagLocation"
+#define NID_id_at_tagLocation           2800
+#define OBJ_id_at_tagLocation           2L,5L,4L,96L
+
+#define SN_id_asx               "id-asx"
+#define NID_id_asx              2801
+#define OBJ_id_asx              2L,5L,40L
+
+#define SN_id_asx_userPwdDescription            "id-asx-userPwdDescription"
+#define NID_id_asx_userPwdDescription           2802
+#define OBJ_id_asx_userPwdDescription           2L,5L,40L,0L
+
+#define SN_id_asx_pwdVocabularyDescription              "id-asx-pwdVocabularyDescription"
+#define NID_id_asx_pwdVocabularyDescription             2803
+#define OBJ_id_asx_pwdVocabularyDescription             2L,5L,40L,1L
+
+#define SN_id_asx_x509SupportedPublicKeyAlgos           "id-asx-x509SupportedPublicKeyAlgos"
+#define NID_id_asx_x509SupportedPublicKeyAlgos          2804
+#define OBJ_id_asx_x509SupportedPublicKeyAlgos          2L,5L,40L,10L
+
+#define SN_id_asx_intEmailString                "id-asx-intEmailString"
+#define NID_id_asx_intEmailString               2805
+#define OBJ_id_asx_intEmailString               2L,5L,40L,11L
+
+#define SN_id_asx_jidString             "id-asx-jidString"
+#define NID_id_asx_jidString            2806
+#define OBJ_id_asx_jidString            2L,5L,40L,12L
+
+#define SN_id_asx_pwdAlphabetDescription                "id-asx-pwdAlphabetDescription"
+#define NID_id_asx_pwdAlphabetDescription               2807
+#define OBJ_id_asx_pwdAlphabetDescription               2L,5L,40L,2L
+
+#define SN_id_asx_pwdEncAlgDescription          "id-asx-pwdEncAlgDescription"
+#define NID_id_asx_pwdEncAlgDescription         2808
+#define OBJ_id_asx_pwdEncAlgDescription         2L,5L,40L,3L
+
+#define SN_id_asx_utmCoords             "id-asx-utmCoords"
+#define NID_id_asx_utmCoords            2809
+#define OBJ_id_asx_utmCoords            2L,5L,40L,4L
+
+#define SN_id_asx_uiiForm               "id-asx-uiiForm"
+#define NID_id_asx_uiiForm              2810
+#define OBJ_id_asx_uiiForm              2L,5L,40L,5L
+
+#define SN_id_asx_epcForm               "id-asx-epcForm"
+#define NID_id_asx_epcForm              2811
+#define OBJ_id_asx_epcForm              2L,5L,40L,6L
+
+#define SN_id_asx_countryString3c               "id-asx-countryString3c"
+#define NID_id_asx_countryString3c              2812
+#define OBJ_id_asx_countryString3c              2L,5L,40L,7L
+
+#define SN_id_asx_countryString3n               "id-asx-countryString3n"
+#define NID_id_asx_countryString3n              2813
+#define OBJ_id_asx_countryString3n              2L,5L,40L,8L
+
+#define SN_id_asx_dnsString             "id-asx-dnsString"
+#define NID_id_asx_dnsString            2814
+#define OBJ_id_asx_dnsString            2L,5L,40L,9L
+
+#define SN_avRestriction                "avRestriction"
+#define NID_avRestriction               2815
+#define OBJ_avRestriction               2L,5L,41L
+
+#define SN_id_cmsct             "id-cmsct"
+#define NID_id_cmsct            2816
+#define OBJ_id_cmsct            2L,5L,42L
+
+#define SN_id_certReq           "id-certReq"
+#define NID_id_certReq          2817
+#define OBJ_id_certReq          2L,5L,42L,0L
+
+#define SN_id_certRsp           "id-certRsp"
+#define NID_id_certRsp          2818
+#define OBJ_id_certRsp          2L,5L,42L,1L
+
+#define SN_id_rejectAVL         "id-rejectAVL"
+#define NID_id_rejectAVL                2819
+#define OBJ_id_rejectAVL                2L,5L,42L,10L
+
+#define SN_id_certSubscribeReq          "id-certSubscribeReq"
+#define NID_id_certSubscribeReq         2820
+#define OBJ_id_certSubscribeReq         2L,5L,42L,11L
+
+#define SN_id_certSubscribeRsp          "id-certSubscribeRsp"
+#define NID_id_certSubscribeRsp         2821
+#define OBJ_id_certSubscribeRsp         2L,5L,42L,12L
+
+#define SN_id_certUnsubscribeReq                "id-certUnsubscribeReq"
+#define NID_id_certUnsubscribeReq               2822
+#define OBJ_id_certUnsubscribeReq               2L,5L,42L,13L
+
+#define SN_id_certUnsubscribeRsp                "id-certUnsubscribeRsp"
+#define NID_id_certUnsubscribeRsp               2823
+#define OBJ_id_certUnsubscribeRsp               2L,5L,42L,14L
+
+#define SN_id_certReplaceReq            "id-certReplaceReq"
+#define NID_id_certReplaceReq           2824
+#define OBJ_id_certReplaceReq           2L,5L,42L,15L
+
+#define SN_id_certReplaceRsp            "id-certReplaceRsp"
+#define NID_id_certReplaceRsp           2825
+#define OBJ_id_certReplaceRsp           2L,5L,42L,16L
+
+#define SN_id_certUpdateReq             "id-certUpdateReq"
+#define NID_id_certUpdateReq            2826
+#define OBJ_id_certUpdateReq            2L,5L,42L,17L
+
+#define SN_id_certUpdateRsp             "id-certUpdateRsp"
+#define NID_id_certUpdateRsp            2827
+#define OBJ_id_certUpdateRsp            2L,5L,42L,18L
+
+#define SN_id_rejectCAsubscribe         "id-rejectCAsubscribe"
+#define NID_id_rejectCAsubscribe                2828
+#define OBJ_id_rejectCAsubscribe                2L,5L,42L,19L
+
+#define SN_id_addAvlReq         "id-addAvlReq"
+#define NID_id_addAvlReq                2829
+#define OBJ_id_addAvlReq                2L,5L,42L,2L
+
+#define SN_id_addAvlRsp         "id-addAvlRsp"
+#define NID_id_addAvlRsp                2830
+#define OBJ_id_addAvlRsp                2L,5L,42L,3L
+
+#define SN_id_replaceAvlReq             "id-replaceAvlReq"
+#define NID_id_replaceAvlReq            2831
+#define OBJ_id_replaceAvlReq            2L,5L,42L,4L
+
+#define SN_id_replaceAvlRsp             "id-replaceAvlRsp"
+#define NID_id_replaceAvlRsp            2832
+#define OBJ_id_replaceAvlRsp            2L,5L,42L,5L
+
+#define SN_id_updateAvlReq              "id-updateAvlReq"
+#define NID_id_updateAvlReq             2833
+#define OBJ_id_updateAvlReq             2L,5L,42L,6L
+
+#define SN_id_updateAvlRsp              "id-updateAvlRsp"
+#define NID_id_updateAvlRsp             2834
+#define OBJ_id_updateAvlRsp             2L,5L,42L,7L
+
+#define SN_id_deleteAvlReq              "id-deleteAvlReq"
+#define NID_id_deleteAvlReq             2835
+#define OBJ_id_deleteAvlReq             2L,5L,42L,8L
+
+#define SN_id_deleteAvlRsp              "id-deleteAvlRsp"
+#define NID_id_deleteAvlRsp             2836
+#define OBJ_id_deleteAvlRsp             2L,5L,42L,9L
+
+#define SN_id_wrprot            "id-wrprot"
+#define NID_id_wrprot           2837
+#define OBJ_id_wrprot           2L,5L,43L
+
+#define SN_id_avlprot           "id-avlprot"
+#define NID_id_avlprot          2838
+#define OBJ_id_avlprot          2L,5L,43L,0L
+
+#define SN_id_casubprot         "id-casubprot"
+#define NID_id_casubprot                2839
+#define OBJ_id_casubprot                2L,5L,43L,1L
+
+#define SN_id_tbprot            "id-tbprot"
+#define NID_id_tbprot           2840
+#define OBJ_id_tbprot           2L,5L,43L,2L
+
+#define SN_algorithms           "algorithms"
+#define NID_algorithms          2841
+#define OBJ_algorithms          2L,5L,44L
+
+#define SN_id_algo_mca          "id-algo-mca"
+#define NID_id_algo_mca         2842
+#define OBJ_id_algo_mca         2L,5L,44L,1L
+
+#define SN_id_algo_multipleSignaturesAlgo               "id-algo-multipleSignaturesAlgo"
+#define NID_id_algo_multipleSignaturesAlgo              2843
+#define OBJ_id_algo_multipleSignaturesAlgo              2L,5L,44L,1L,1L
+
+#define SN_id_algo_multipleSymmetricKeyAlgo             "id-algo-multipleSymmetricKeyAlgo"
+#define NID_id_algo_multipleSymmetricKeyAlgo            2844
+#define OBJ_id_algo_multipleSymmetricKeyAlgo            2L,5L,44L,1L,2L
+
+#define SN_id_algo_multiplePublicKeyAlgo                "id-algo-multiplePublicKeyAlgo"
+#define NID_id_algo_multiplePublicKeyAlgo               2845
+#define OBJ_id_algo_multiplePublicKeyAlgo               2L,5L,44L,1L,3L
+
+#define SN_id_algo_multipleHashAlgo             "id-algo-multipleHashAlgo"
+#define NID_id_algo_multipleHashAlgo            2846
+#define OBJ_id_algo_multipleHashAlgo            2L,5L,44L,1L,4L
+
+#define SN_id_algo_multipleAuthenEncryptAlgo            "id-algo-multipleAuthenEncryptAlgo"
+#define NID_id_algo_multipleAuthenEncryptAlgo           2847
+#define OBJ_id_algo_multipleAuthenEncryptAlgo           2L,5L,44L,1L,5L
+
+#define SN_id_algo_multipleIcvAlgo              "id-algo-multipleIcvAlgo"
+#define NID_id_algo_multipleIcvAlgo             2848
+#define OBJ_id_algo_multipleIcvAlgo             2L,5L,44L,1L,6L
+
+#define SN_id_algo_ska          "id-algo-ska"
+#define NID_id_algo_ska         2849
+#define OBJ_id_algo_ska         2L,5L,44L,2L
+
+#define SN_id_algo_aead         "id-algo-aead"
+#define NID_id_algo_aead                2850
+#define OBJ_id_algo_aead                2L,5L,44L,3L
+
+#define SN_id_algo_pka          "id-algo-pka"
+#define NID_id_algo_pka         2851
+#define OBJ_id_algo_pka         2L,5L,44L,4L
+
+#define SN_id_algo_ha           "id-algo-ha"
+#define NID_id_algo_ha          2852
+#define OBJ_id_algo_ha          2L,5L,44L,5L
+
+#define SN_id_algo_dsa          "id-algo-dsa"
+#define NID_id_algo_dsa         2853
+#define OBJ_id_algo_dsa         2L,5L,44L,6L
+
+#define SN_id_algo_kea          "id-algo-kea"
+#define NID_id_algo_kea         2854
+#define OBJ_id_algo_kea         2L,5L,44L,7L
+
+#define SN_id_algo_dhModpGr14Hkdf256Algo                "id-algo-dhModpGr14Hkdf256Algo"
+#define NID_id_algo_dhModpGr14Hkdf256Algo               2855
+#define OBJ_id_algo_dhModpGr14Hkdf256Algo               2L,5L,44L,7L,1L
+
+#define SN_id_algo_dhModpGr23Hkdf256Algo                "id-algo-dhModpGr23Hkdf256Algo"
+#define NID_id_algo_dhModpGr23Hkdf256Algo               2856
+#define OBJ_id_algo_dhModpGr23Hkdf256Algo               2L,5L,44L,7L,10L
+
+#define SN_id_algo_dhModpGr28Hkdf256Algo                "id-algo-dhModpGr28Hkdf256Algo"
+#define NID_id_algo_dhModpGr28Hkdf256Algo               2857
+#define OBJ_id_algo_dhModpGr28Hkdf256Algo               2L,5L,44L,7L,15L
+
+#define SN_id_algo_dhModpGr15Hkdf384Algo                "id-algo-dhModpGr15Hkdf384Algo"
+#define NID_id_algo_dhModpGr15Hkdf384Algo               2858
+#define OBJ_id_algo_dhModpGr15Hkdf384Algo               2L,5L,44L,7L,2L
+
+#define SN_id_algo_dhModpGr16Hkdf512Algo                "id-algo-dhModpGr16Hkdf512Algo"
+#define NID_id_algo_dhModpGr16Hkdf512Algo               2859
+#define OBJ_id_algo_dhModpGr16Hkdf512Algo               2L,5L,44L,7L,3L
+
+#define SN_id_algo_dhModpGr17Hkdf768Algo                "id-algo-dhModpGr17Hkdf768Algo"
+#define NID_id_algo_dhModpGr17Hkdf768Algo               2860
+#define OBJ_id_algo_dhModpGr17Hkdf768Algo               2L,5L,44L,7L,4L
+
+#define SN_id_algo_dhModpGr18Hkdf1024Algo               "id-algo-dhModpGr18Hkdf1024Algo"
+#define NID_id_algo_dhModpGr18Hkdf1024Algo              2861
+#define OBJ_id_algo_dhModpGr18Hkdf1024Algo              2L,5L,44L,7L,5L
+
+#define SN_dummyCurv            "dummyCurv"
+#define NID_dummyCurv           2862
+#define OBJ_dummyCurv           2L,5L,5L
+
+#define SN_objectClass          "objectClass"
+#define NID_objectClass         2863
+#define OBJ_objectClass         2L,5L,6L
+
+#define SN_id_oc_top            "id-oc-top"
+#define NID_id_oc_top           2864
+#define OBJ_id_oc_top           2L,5L,6L,0L
+
+#define SN_id_oc_alias          "id-oc-alias"
+#define NID_id_oc_alias         2865
+#define OBJ_id_oc_alias         2L,5L,6L,1L
+
+#define SN_id_oc_residentialPerson              "id-oc-residentialPerson"
+#define NID_id_oc_residentialPerson             2866
+#define OBJ_id_oc_residentialPerson             2L,5L,6L,10L
+
+#define SN_id_oc_applicationProcess             "id-oc-applicationProcess"
+#define NID_id_oc_applicationProcess            2867
+#define OBJ_id_oc_applicationProcess            2L,5L,6L,11L
+
+#define SN_id_oc_applicationEntity              "id-oc-applicationEntity"
+#define NID_id_oc_applicationEntity             2868
+#define OBJ_id_oc_applicationEntity             2L,5L,6L,12L
+
+#define SN_id_oc_dSA            "id-oc-dSA"
+#define NID_id_oc_dSA           2869
+#define OBJ_id_oc_dSA           2L,5L,6L,13L
+
+#define SN_id_oc_device         "id-oc-device"
+#define NID_id_oc_device                2870
+#define OBJ_id_oc_device                2L,5L,6L,14L
+
+#define SN_id_oc_strongAuthenticationUser               "id-oc-strongAuthenticationUser"
+#define NID_id_oc_strongAuthenticationUser              2871
+#define OBJ_id_oc_strongAuthenticationUser              2L,5L,6L,15L
+
+#define SN_id_oc_certificationAuthority         "id-oc-certificationAuthority"
+#define NID_id_oc_certificationAuthority                2872
+#define OBJ_id_oc_certificationAuthority                2L,5L,6L,16L
+
+#define SN_id_oc_certificationAuthority_V2              "id-oc-certificationAuthority-V2"
+#define NID_id_oc_certificationAuthority_V2             2873
+#define OBJ_id_oc_certificationAuthority_V2             2L,5L,6L,16L,2L
+
+#define SN_id_oc_groupOfUniqueNames             "id-oc-groupOfUniqueNames"
+#define NID_id_oc_groupOfUniqueNames            2874
+#define OBJ_id_oc_groupOfUniqueNames            2L,5L,6L,17L
+
+#define SN_id_oc_userSecurityInformation                "id-oc-userSecurityInformation"
+#define NID_id_oc_userSecurityInformation               2875
+#define OBJ_id_oc_userSecurityInformation               2L,5L,6L,18L
+
+#define SN_id_oc_cRLDistributionPoint           "id-oc-cRLDistributionPoint"
+#define NID_id_oc_cRLDistributionPoint          2876
+#define OBJ_id_oc_cRLDistributionPoint          2L,5L,6L,19L
+
+#define SN_id_oc_country                "id-oc-country"
+#define NID_id_oc_country               2877
+#define OBJ_id_oc_country               2L,5L,6L,2L
+
+#define SN_id_oc_dmd            "id-oc-dmd"
+#define NID_id_oc_dmd           2878
+#define OBJ_id_oc_dmd           2L,5L,6L,20L
+
+#define SN_id_oc_pkiUser                "id-oc-pkiUser"
+#define NID_id_oc_pkiUser               2879
+#define OBJ_id_oc_pkiUser               2L,5L,6L,21L
+
+#define SN_id_oc_pkiCA          "id-oc-pkiCA"
+#define NID_id_oc_pkiCA         2880
+#define OBJ_id_oc_pkiCA         2L,5L,6L,22L
+
+#define SN_id_oc_deltaCRL               "id-oc-deltaCRL"
+#define NID_id_oc_deltaCRL              2881
+#define OBJ_id_oc_deltaCRL              2L,5L,6L,23L
+
+#define SN_id_oc_pmiUser                "id-oc-pmiUser"
+#define NID_id_oc_pmiUser               2882
+#define OBJ_id_oc_pmiUser               2L,5L,6L,24L
+
+#define SN_id_oc_pmiAA          "id-oc-pmiAA"
+#define NID_id_oc_pmiAA         2883
+#define OBJ_id_oc_pmiAA         2L,5L,6L,25L
+
+#define SN_id_oc_pmiSOA         "id-oc-pmiSOA"
+#define NID_id_oc_pmiSOA                2884
+#define OBJ_id_oc_pmiSOA                2L,5L,6L,26L
+
+#define SN_id_oc_attCertCRLDistributionPts              "id-oc-attCertCRLDistributionPts"
+#define NID_id_oc_attCertCRLDistributionPts             2885
+#define OBJ_id_oc_attCertCRLDistributionPts             2L,5L,6L,27L
+
+#define SN_id_oc_parent         "id-oc-parent"
+#define NID_id_oc_parent                2886
+#define OBJ_id_oc_parent                2L,5L,6L,28L
+
+#define SN_id_oc_child          "id-oc-child"
+#define NID_id_oc_child         2887
+#define OBJ_id_oc_child         2L,5L,6L,29L
+
+#define SN_id_oc_locality               "id-oc-locality"
+#define NID_id_oc_locality              2888
+#define OBJ_id_oc_locality              2L,5L,6L,3L
+
+#define SN_id_oc_cpCps          "id-oc-cpCps"
+#define NID_id_oc_cpCps         2889
+#define OBJ_id_oc_cpCps         2L,5L,6L,30L
+
+#define SN_id_oc_pkiCertPath            "id-oc-pkiCertPath"
+#define NID_id_oc_pkiCertPath           2890
+#define OBJ_id_oc_pkiCertPath           2L,5L,6L,31L
+
+#define SN_id_oc_privilegePolicy                "id-oc-privilegePolicy"
+#define NID_id_oc_privilegePolicy               2891
+#define OBJ_id_oc_privilegePolicy               2L,5L,6L,32L
+
+#define SN_id_oc_pmiDelegationPath              "id-oc-pmiDelegationPath"
+#define NID_id_oc_pmiDelegationPath             2892
+#define OBJ_id_oc_pmiDelegationPath             2L,5L,6L,33L
+
+#define SN_id_oc_protectedPrivilegePolicy               "id-oc-protectedPrivilegePolicy"
+#define NID_id_oc_protectedPrivilegePolicy              2893
+#define OBJ_id_oc_protectedPrivilegePolicy              2L,5L,6L,34L
+
+#define SN_id_oc_oidC1obj               "id-oc-oidC1obj"
+#define NID_id_oc_oidC1obj              2894
+#define OBJ_id_oc_oidC1obj              2L,5L,6L,35L
+
+#define SN_id_oc_oidC2obj               "id-oc-oidC2obj"
+#define NID_id_oc_oidC2obj              2895
+#define OBJ_id_oc_oidC2obj              2L,5L,6L,36L
+
+#define SN_id_oc_oidCobj                "id-oc-oidCobj"
+#define NID_id_oc_oidCobj               2896
+#define OBJ_id_oc_oidCobj               2L,5L,6L,37L
+
+#define SN_id_oc_isoTagInfo             "id-oc-isoTagInfo"
+#define NID_id_oc_isoTagInfo            2897
+#define OBJ_id_oc_isoTagInfo            2L,5L,6L,38L
+
+#define SN_id_oc_isoTagType             "id-oc-isoTagType"
+#define NID_id_oc_isoTagType            2898
+#define OBJ_id_oc_isoTagType            2L,5L,6L,39L
+
+#define SN_id_oc_organization           "id-oc-organization"
+#define NID_id_oc_organization          2899
+#define OBJ_id_oc_organization          2L,5L,6L,4L
+
+#define SN_id_oc_integrityInfo          "id-oc-integrityInfo"
+#define NID_id_oc_integrityInfo         2900
+#define OBJ_id_oc_integrityInfo         2L,5L,6L,40L
+
+#define SN_id_oc_userPwdClass           "id-oc-userPwdClass"
+#define NID_id_oc_userPwdClass          2901
+#define OBJ_id_oc_userPwdClass          2L,5L,6L,41L
+
+#define SN_id_oc_urnCobj                "id-oc-urnCobj"
+#define NID_id_oc_urnCobj               2902
+#define OBJ_id_oc_urnCobj               2L,5L,6L,42L
+
+#define SN_id_oc_epcTagInfoObj          "id-oc-epcTagInfoObj"
+#define NID_id_oc_epcTagInfoObj         2903
+#define OBJ_id_oc_epcTagInfoObj         2L,5L,6L,43L
+
+#define SN_id_oc_epcTagTypeObj          "id-oc-epcTagTypeObj"
+#define NID_id_oc_epcTagTypeObj         2904
+#define OBJ_id_oc_epcTagTypeObj         2L,5L,6L,44L
+
+#define SN_id_oc_organizationalUnit             "id-oc-organizationalUnit"
+#define NID_id_oc_organizationalUnit            2905
+#define OBJ_id_oc_organizationalUnit            2L,5L,6L,5L
+
+#define SN_id_oc_person         "id-oc-person"
+#define NID_id_oc_person                2906
+#define OBJ_id_oc_person                2L,5L,6L,6L
+
+#define SN_id_oc_organizationalPerson           "id-oc-organizationalPerson"
+#define NID_id_oc_organizationalPerson          2907
+#define OBJ_id_oc_organizationalPerson          2L,5L,6L,7L
+
+#define SN_id_oc_organizationalRole             "id-oc-organizationalRole"
+#define NID_id_oc_organizationalRole            2908
+#define OBJ_id_oc_organizationalRole            2L,5L,6L,8L
+
+#define SN_id_oc_groupOfNames           "id-oc-groupOfNames"
+#define NID_id_oc_groupOfNames          2909
+#define OBJ_id_oc_groupOfNames          2L,5L,6L,9L
+
+#define SN_attributeSet         "attributeSet"
+#define NID_attributeSet                2910
+#define OBJ_attributeSet                2L,5L,7L
+
+#define SN_nullAlgorithm                "nullAlgorithm"
+#define NID_nullAlgorithm               2911
+#define OBJ_nullAlgorithm               2L,5L,8L,0L
+
+#define SN_id_ea                "id-ea"
+#define NID_id_ea               2912
+#define OBJ_id_ea               2L,5L,8L,1L
+
+#define SN_hashAlgorithm                "hashAlgorithm"
+#define NID_hashAlgorithm               2913
+#define OBJ_hashAlgorithm               2L,5L,8L,2L
+
+#define SN_id_ha_sqMod_n                "id-ha-sqMod-n"
+#define NID_id_ha_sqMod_n               2914
+#define OBJ_id_ha_sqMod_n               2L,5L,8L,2L,1L
+
+#define SN_signatureAlgorithm           "signatureAlgorithm"
+#define NID_signatureAlgorithm          2915
+#define OBJ_signatureAlgorithm          2L,5L,8L,3L
+
+#define SN_id_sa_sqMod_nWithRSA         "id-sa-sqMod-nWithRSA"
+#define NID_id_sa_sqMod_nWithRSA                2916
+#define OBJ_id_sa_sqMod_nWithRSA                2L,5L,8L,3L,1L
+
+#define SN_abstractSyntax               "abstractSyntax"
+#define NID_abstractSyntax              2917
+#define OBJ_abstractSyntax              2L,5L,9L
+
+#define SN_id_as_directoryAccessAS              "id-as-directoryAccessAS"
+#define NID_id_as_directoryAccessAS             2918
+#define OBJ_id_as_directoryAccessAS             2L,5L,9L,1L
+
+#define SN_id_as_directorySystemAS              "id-as-directorySystemAS"
+#define NID_id_as_directorySystemAS             2919
+#define OBJ_id_as_directorySystemAS             2L,5L,9L,2L
+
+#define SN_id_as_directoryShadowAS              "id-as-directoryShadowAS"
+#define NID_id_as_directoryShadowAS             2920
+#define OBJ_id_as_directoryShadowAS             2L,5L,9L,3L
+
+#define SN_id_as_directoryOperationalBindingManagementAS                "id-as-directoryOperationalBindingManagementAS"
+#define NID_id_as_directoryOperationalBindingManagementAS               2921
+#define OBJ_id_as_directoryOperationalBindingManagementAS               2L,5L,9L,4L
+
+#define SN_id_as_directoryReliableShadowAS              "id-as-directoryReliableShadowAS"
+#define NID_id_as_directoryReliableShadowAS             2922
+#define OBJ_id_as_directoryReliableShadowAS             2L,5L,9L,5L
+
+#define SN_id_as_reliableShadowBindingAS                "id-as-reliableShadowBindingAS"
+#define NID_id_as_reliableShadowBindingAS               2923
+#define OBJ_id_as_reliableShadowBindingAS               2L,5L,9L,6L
+
+#define SN_id_as_2or3se         "id-as-2or3se"
+#define NID_id_as_2or3se                2924
+#define OBJ_id_as_2or3se                2L,5L,9L,7L
+
+#define SN_id_mhs_protocols             "id-mhs-protocols"
+#define NID_id_mhs_protocols            2925
+#define OBJ_id_mhs_protocols            2L,6L,0L
+
+#define SN_id_mod_mts_access_protocol           "id-mod-mts-access-protocol"
+#define NID_id_mod_mts_access_protocol          2926
+#define OBJ_id_mod_mts_access_protocol          2L,6L,0L,0L,1L
+
+#define SN_id_mod_ms_access_protocol            "id-mod-ms-access-protocol"
+#define NID_id_mod_ms_access_protocol           2927
+#define OBJ_id_mod_ms_access_protocol           2L,6L,0L,0L,2L
+
+#define SN_id_mod_mts_transfer_protocol         "id-mod-mts-transfer-protocol"
+#define NID_id_mod_mts_transfer_protocol                2928
+#define OBJ_id_mod_mts_transfer_protocol                2L,6L,0L,0L,3L
+
+#define SN_id_ac                "id-ac"
+#define NID_id_ac               2929
+#define OBJ_id_ac               2L,6L,0L,1L
+
+#define SN_id_ac_mts_access_88          "id-ac-mts-access-88"
+#define NID_id_ac_mts_access_88         2930
+#define OBJ_id_ac_mts_access_88         2L,6L,0L,1L,0L
+
+#define SN_id_ac_mts_forced_access_88           "id-ac-mts-forced-access-88"
+#define NID_id_ac_mts_forced_access_88          2931
+#define OBJ_id_ac_mts_forced_access_88          2L,6L,0L,1L,1L
+
+#define SN_id_ac_mts_forced_reliable_access_94          "id-ac-mts-forced-reliable-access-94"
+#define NID_id_ac_mts_forced_reliable_access_94         2932
+#define OBJ_id_ac_mts_forced_reliable_access_94         2L,6L,0L,1L,10L
+
+#define SN_id_ac_ms_access_94           "id-ac-ms-access-94"
+#define NID_id_ac_ms_access_94          2933
+#define OBJ_id_ac_ms_access_94          2L,6L,0L,1L,11L
+
+#define SN_id_ac_ms_reliable_access_94          "id-ac-ms-reliable-access-94"
+#define NID_id_ac_ms_reliable_access_94         2934
+#define OBJ_id_ac_ms_reliable_access_94         2L,6L,0L,1L,12L
+
+#define SN_id_ac_mts_reliable_access_88         "id-ac-mts-reliable-access-88"
+#define NID_id_ac_mts_reliable_access_88                2935
+#define OBJ_id_ac_mts_reliable_access_88                2L,6L,0L,1L,2L
+
+#define SN_id_ac_mts_forced_reliable_access_88          "id-ac-mts-forced-reliable-access-88"
+#define NID_id_ac_mts_forced_reliable_access_88         2936
+#define OBJ_id_ac_mts_forced_reliable_access_88         2L,6L,0L,1L,3L
+
+#define SN_id_ac_ms_access_88           "id-ac-ms-access-88"
+#define NID_id_ac_ms_access_88          2937
+#define OBJ_id_ac_ms_access_88          2L,6L,0L,1L,4L
+
+#define SN_id_ac_ms_reliable_access_88          "id-ac-ms-reliable-access-88"
+#define NID_id_ac_ms_reliable_access_88         2938
+#define OBJ_id_ac_ms_reliable_access_88         2L,6L,0L,1L,5L
+
+#define SN_id_ac_mts_transfer           "id-ac-mts-transfer"
+#define NID_id_ac_mts_transfer          2939
+#define OBJ_id_ac_mts_transfer          2L,6L,0L,1L,6L
+
+#define SN_id_ac_mts_access_94          "id-ac-mts-access-94"
+#define NID_id_ac_mts_access_94         2940
+#define OBJ_id_ac_mts_access_94         2L,6L,0L,1L,7L
+
+#define SN_id_ac_mts_forced_access_94           "id-ac-mts-forced-access-94"
+#define NID_id_ac_mts_forced_access_94          2941
+#define OBJ_id_ac_mts_forced_access_94          2L,6L,0L,1L,8L
+
+#define SN_id_ac_mts_reliable_access_94         "id-ac-mts-reliable-access-94"
+#define NID_id_ac_mts_reliable_access_94                2942
+#define OBJ_id_ac_mts_reliable_access_94                2L,6L,0L,1L,9L
+
+#define SN_id_as                "id-as"
+#define NID_id_as               2943
+#define OBJ_id_as               2L,6L,0L,2L
+
+#define SN_id_as_msse           "id-as-msse"
+#define NID_id_as_msse          2944
+#define OBJ_id_as_msse          2L,6L,0L,2L,1L
+
+#define SN_id_as_ms_rtse                "id-as-ms-rtse"
+#define NID_id_as_ms_rtse               2945
+#define OBJ_id_as_ms_rtse               2L,6L,0L,2L,10L
+
+#define SN_id_as_mts            "id-as-mts"
+#define NID_id_as_mts           2946
+#define OBJ_id_as_mts           2L,6L,0L,2L,11L
+
+#define SN_id_as_mta_rtse               "id-as-mta-rtse"
+#define NID_id_as_mta_rtse              2947
+#define OBJ_id_as_mta_rtse              2L,6L,0L,2L,12L
+
+#define SN_id_as_ms_msse                "id-as-ms-msse"
+#define NID_id_as_ms_msse               2948
+#define OBJ_id_as_ms_msse               2L,6L,0L,2L,13L
+
+#define SN_id_as_mdse_94                "id-as-mdse-94"
+#define NID_id_as_mdse_94               2949
+#define OBJ_id_as_mdse_94               2L,6L,0L,2L,14L
+
+#define SN_id_as_mrse_94                "id-as-mrse-94"
+#define NID_id_as_mrse_94               2950
+#define OBJ_id_as_mrse_94               2L,6L,0L,2L,15L
+
+#define SN_id_as_mase_94                "id-as-mase-94"
+#define NID_id_as_mase_94               2951
+#define OBJ_id_as_mase_94               2L,6L,0L,2L,16L
+
+#define SN_id_as_ms_94          "id-as-ms-94"
+#define NID_id_as_ms_94         2952
+#define OBJ_id_as_ms_94         2L,6L,0L,2L,17L
+
+#define SN_id_as_mdse_88                "id-as-mdse-88"
+#define NID_id_as_mdse_88               2953
+#define OBJ_id_as_mdse_88               2L,6L,0L,2L,2L
+
+#define SN_id_as_mrse_88                "id-as-mrse-88"
+#define NID_id_as_mrse_88               2954
+#define OBJ_id_as_mrse_88               2L,6L,0L,2L,5L
+
+#define SN_id_as_mase_88                "id-as-mase-88"
+#define NID_id_as_mase_88               2955
+#define OBJ_id_as_mase_88               2L,6L,0L,2L,6L
+
+#define SN_id_as_mtse           "id-as-mtse"
+#define NID_id_as_mtse          2956
+#define OBJ_id_as_mtse          2L,6L,0L,2L,7L
+
+#define SN_id_as_mts_rtse               "id-as-mts-rtse"
+#define NID_id_as_mts_rtse              2957
+#define OBJ_id_as_mts_rtse              2L,6L,0L,2L,8L
+
+#define SN_id_as_ms_88          "id-as-ms-88"
+#define NID_id_as_ms_88         2958
+#define OBJ_id_as_ms_88         2L,6L,0L,2L,9L
+
+#define SN_id_ase               "id-ase"
+#define NID_id_ase              2959
+#define OBJ_id_ase              2L,6L,0L,3L
+
+#define SN_id_ase_msse          "id-ase-msse"
+#define NID_id_ase_msse         2960
+#define OBJ_id_ase_msse         2L,6L,0L,3L,0L
+
+#define SN_id_ase_mdse          "id-ase-mdse"
+#define NID_id_ase_mdse         2961
+#define OBJ_id_ase_mdse         2L,6L,0L,3L,1L
+
+#define SN_id_ase_mrse          "id-ase-mrse"
+#define NID_id_ase_mrse         2962
+#define OBJ_id_ase_mrse         2L,6L,0L,3L,2L
+
+#define SN_id_ase_mase          "id-ase-mase"
+#define NID_id_ase_mase         2963
+#define OBJ_id_ase_mase         2L,6L,0L,3L,3L
+
+#define SN_id_ase_mtse          "id-ase-mtse"
+#define NID_id_ase_mtse         2964
+#define OBJ_id_ase_mtse         2L,6L,0L,3L,4L
+
+#define SN_id_ipms              "id-ipms"
+#define NID_id_ipms             2965
+#define OBJ_id_ipms             2L,6L,1L
+
+#define SN_id_mod_extended_voice_body_part_type         "id-mod-extended-voice-body-part-type"
+#define NID_id_mod_extended_voice_body_part_type                2966
+#define OBJ_id_mod_extended_voice_body_part_type                2L,6L,1L,0L,11L
+
+#define SN_id_mod_forwarded_report_body_part_type               "id-mod-forwarded-report-body-part-type"
+#define NID_id_mod_forwarded_report_body_part_type              2967
+#define OBJ_id_mod_forwarded_report_body_part_type              2L,6L,1L,0L,12L
+
+#define SN_id_mod_auto_actions          "id-mod-auto-actions"
+#define NID_id_mod_auto_actions         2968
+#define OBJ_id_mod_auto_actions         2L,6L,1L,0L,13L
+
+#define SN_id_mod_ipm_security_extensions               "id-mod-ipm-security-extensions"
+#define NID_id_mod_ipm_security_extensions              2969
+#define OBJ_id_mod_ipm_security_extensions              2L,6L,1L,0L,14L
+
+#define SN_id_mod_forwarded_content_body_part_type              "id-mod-forwarded-content-body-part-type"
+#define NID_id_mod_forwarded_content_body_part_type             2970
+#define OBJ_id_mod_forwarded_content_body_part_type             2L,6L,1L,0L,15L
+
+#define SN_id_mod_pkcs7_body_part_type          "id-mod-pkcs7-body-part-type"
+#define NID_id_mod_pkcs7_body_part_type         2971
+#define OBJ_id_mod_pkcs7_body_part_type         2L,6L,1L,0L,16L
+
+#define SN_id_mod_heading_extensions            "id-mod-heading-extensions"
+#define NID_id_mod_heading_extensions           2972
+#define OBJ_id_mod_heading_extensions           2L,6L,1L,0L,6L
+
+#define SN_id_mod_extended_body_part_types              "id-mod-extended-body-part-types"
+#define NID_id_mod_extended_body_part_types             2973
+#define OBJ_id_mod_extended_body_part_types             2L,6L,1L,0L,7L
+
+#define SN_id_mod_file_transfer_body_part_type          "id-mod-file-transfer-body-part-type"
+#define NID_id_mod_file_transfer_body_part_type         2974
+#define OBJ_id_mod_file_transfer_body_part_type         2L,6L,1L,0L,9L
+
+#define SN_id_ot_ipms_user              "id-ot-ipms-user"
+#define NID_id_ot_ipms_user             2975
+#define OBJ_id_ot_ipms_user             2L,6L,1L,1L,1L
+
+#define SN_id_ot_ipms           "id-ot-ipms"
+#define NID_id_ot_ipms          2976
+#define OBJ_id_ot_ipms          2L,6L,1L,1L,2L
+
+#define SN_id_mct_p2_1984               "id-mct-p2-1984"
+#define NID_id_mct_p2_1984              2977
+#define OBJ_id_mct_p2_1984              2L,6L,1L,10L,0L
+
+#define SN_id_mct_p2_1988               "id-mct-p2-1988"
+#define NID_id_mct_p2_1988              2978
+#define OBJ_id_mct_p2_1988              2L,6L,1L,10L,1L
+
+#define SN_id_ep                "id-ep"
+#define NID_id_ep               2979
+#define OBJ_id_ep               2L,6L,1L,11L
+
+#define SN_id_ep_ia5_text               "id-ep-ia5-text"
+#define NID_id_ep_ia5_text              2980
+#define OBJ_id_ep_ia5_text              2L,6L,1L,11L,0L
+
+#define SN_id_ep_general_text           "id-ep-general-text"
+#define NID_id_ep_general_text          2981
+#define OBJ_id_ep_general_text          2L,6L,1L,11L,11L
+
+#define SN_id_ep_file_transfer          "id-ep-file-transfer"
+#define NID_id_ep_file_transfer         2982
+#define OBJ_id_ep_file_transfer         2L,6L,1L,11L,12L
+
+#define SN_id_ep_notification           "id-ep-notification"
+#define NID_id_ep_notification          2983
+#define OBJ_id_ep_notification          2L,6L,1L,11L,15L
+
+#define SN_id_ep_voice          "id-ep-voice"
+#define NID_id_ep_voice         2984
+#define OBJ_id_ep_voice         2L,6L,1L,11L,16L
+
+#define SN_id_ep_content                "id-ep-content"
+#define NID_id_ep_content               2985
+#define OBJ_id_ep_content               2L,6L,1L,11L,17L
+
+#define SN_id_ep_g3_facsimile           "id-ep-g3-facsimile"
+#define NID_id_ep_g3_facsimile          2986
+#define OBJ_id_ep_g3_facsimile          2L,6L,1L,11L,2L
+
+#define SN_id_ep_teletex                "id-ep-teletex"
+#define NID_id_ep_teletex               2987
+#define OBJ_id_ep_teletex               2L,6L,1L,11L,4L
+
+#define SN_id_ep_videotex               "id-ep-videotex"
+#define NID_id_ep_videotex              2988
+#define OBJ_id_ep_videotex              2L,6L,1L,11L,5L
+
+#define SN_id_ep_encrypted              "id-ep-encrypted"
+#define NID_id_ep_encrypted             2989
+#define OBJ_id_ep_encrypted             2L,6L,1L,11L,6L
+
+#define SN_id_ep_message                "id-ep-message"
+#define NID_id_ep_message               2990
+#define OBJ_id_ep_message               2L,6L,1L,11L,7L
+
+#define SN_id_eit               "id-eit"
+#define NID_id_eit              2991
+#define OBJ_id_eit              2L,6L,1L,12L
+
+#define SN_id_eit_file_transfer         "id-eit-file-transfer"
+#define NID_id_eit_file_transfer                2992
+#define OBJ_id_eit_file_transfer                2L,6L,1L,12L,0L
+
+#define SN_id_eit_voice         "id-eit-voice"
+#define NID_id_eit_voice                2993
+#define OBJ_id_eit_voice                2L,6L,1L,12L,1L
+
+#define SN_id_voice_11khz_sample                "id-voice-11khz-sample"
+#define NID_id_voice_11khz_sample               2994
+#define OBJ_id_voice_11khz_sample               2L,6L,1L,12L,1L,0L
+
+#define SN_id_voice_22khz_sample                "id-voice-22khz-sample"
+#define NID_id_voice_22khz_sample               2995
+#define OBJ_id_voice_22khz_sample               2L,6L,1L,12L,1L,1L
+
+#define SN_id_voice_cd_quality          "id-voice-cd-quality"
+#define NID_id_voice_cd_quality         2996
+#define OBJ_id_voice_cd_quality         2L,6L,1L,12L,1L,2L
+
+#define SN_id_voice_g711_mu_law         "id-voice-g711-mu-law"
+#define NID_id_voice_g711_mu_law                2997
+#define OBJ_id_voice_g711_mu_law                2L,6L,1L,12L,1L,3L
+
+#define SN_id_voice_g726_32k_adpcm              "id-voice-g726-32k-adpcm"
+#define NID_id_voice_g726_32k_adpcm             2998
+#define OBJ_id_voice_g726_32k_adpcm             2L,6L,1L,12L,1L,4L
+
+#define SN_id_voice_g728_16k_ld_celp            "id-voice-g728-16k-ld-celp"
+#define NID_id_voice_g728_16k_ld_celp           2999
+#define OBJ_id_voice_g728_16k_ld_celp           2L,6L,1L,12L,1L,5L
+
+#define SN_id_cat_correlated_delivered_ipns             "id-cat-correlated-delivered-ipns"
+#define NID_id_cat_correlated_delivered_ipns            3000
+#define OBJ_id_cat_correlated_delivered_ipns            2L,6L,1L,13L,0L
+
+#define SN_id_cat_correlated_delivered_replies          "id-cat-correlated-delivered-replies"
+#define NID_id_cat_correlated_delivered_replies         3001
+#define OBJ_id_cat_correlated_delivered_replies         2L,6L,1L,13L,1L
+
+#define SN_id_cat_relating_ipms         "id-cat-relating-ipms"
+#define NID_id_cat_relating_ipms                3002
+#define OBJ_id_cat_relating_ipms                2L,6L,1L,13L,10L
+
+#define SN_id_cat_replied_to_ipm                "id-cat-replied-to-ipm"
+#define NID_id_cat_replied_to_ipm               3003
+#define OBJ_id_cat_replied_to_ipm               2L,6L,1L,13L,11L
+
+#define SN_id_cat_replying_ipms         "id-cat-replying-ipms"
+#define NID_id_cat_replying_ipms                3004
+#define OBJ_id_cat_replying_ipms                2L,6L,1L,13L,12L
+
+#define SN_id_cat_revised_reply_time            "id-cat-revised-reply-time"
+#define NID_id_cat_revised_reply_time           3005
+#define OBJ_id_cat_revised_reply_time           2L,6L,1L,13L,13L
+
+#define SN_id_cat_submitted_ipn_status          "id-cat-submitted-ipn-status"
+#define NID_id_cat_submitted_ipn_status         3006
+#define OBJ_id_cat_submitted_ipn_status         2L,6L,1L,13L,14L
+
+#define SN_id_cat_submitted_ipns                "id-cat-submitted-ipns"
+#define NID_id_cat_submitted_ipns               3007
+#define OBJ_id_cat_submitted_ipns               2L,6L,1L,13L,15L
+
+#define SN_id_cat_submitted_reply_status                "id-cat-submitted-reply-status"
+#define NID_id_cat_submitted_reply_status               3008
+#define OBJ_id_cat_submitted_reply_status               2L,6L,1L,13L,16L
+
+#define SN_id_cat_subject_ipm           "id-cat-subject-ipm"
+#define NID_id_cat_subject_ipm          3009
+#define OBJ_id_cat_subject_ipm          2L,6L,1L,13L,17L
+
+#define SN_id_cat_recipient_category            "id-cat-recipient-category"
+#define NID_id_cat_recipient_category           3010
+#define OBJ_id_cat_recipient_category           2L,6L,1L,13L,18L
+
+#define SN_id_cat_delivered_ipn_summary         "id-cat-delivered-ipn-summary"
+#define NID_id_cat_delivered_ipn_summary                3011
+#define OBJ_id_cat_delivered_ipn_summary                2L,6L,1L,13L,2L
+
+#define SN_id_cat_delivered_replies_summary             "id-cat-delivered-replies-summary"
+#define NID_id_cat_delivered_replies_summary            3012
+#define OBJ_id_cat_delivered_replies_summary            2L,6L,1L,13L,3L
+
+#define SN_id_cat_forwarded_ipms                "id-cat-forwarded-ipms"
+#define NID_id_cat_forwarded_ipms               3013
+#define OBJ_id_cat_forwarded_ipms               2L,6L,1L,13L,4L
+
+#define SN_id_cat_forwarding_ipms               "id-cat-forwarding-ipms"
+#define NID_id_cat_forwarding_ipms              3014
+#define OBJ_id_cat_forwarding_ipms              2L,6L,1L,13L,5L
+
+#define SN_id_cat_ipm_recipients                "id-cat-ipm-recipients"
+#define NID_id_cat_ipm_recipients               3015
+#define OBJ_id_cat_ipm_recipients               2L,6L,1L,13L,6L
+
+#define SN_id_cat_obsoleted_ipms                "id-cat-obsoleted-ipms"
+#define NID_id_cat_obsoleted_ipms               3016
+#define OBJ_id_cat_obsoleted_ipms               2L,6L,1L,13L,7L
+
+#define SN_id_cat_obsoleting_ipms               "id-cat-obsoleting-ipms"
+#define NID_id_cat_obsoleting_ipms              3017
+#define OBJ_id_cat_obsoleting_ipms              2L,6L,1L,13L,8L
+
+#define SN_id_cat_related_ipms          "id-cat-related-ipms"
+#define NID_id_cat_related_ipms         3018
+#define OBJ_id_cat_related_ipms         2L,6L,1L,13L,9L
+
+#define SN_id_mr                "id-mr"
+#define NID_id_mr               3019
+#define OBJ_id_mr               2L,6L,1L,14L
+
+#define SN_id_mr_ipm_identifier         "id-mr-ipm-identifier"
+#define NID_id_mr_ipm_identifier                3020
+#define OBJ_id_mr_ipm_identifier                2L,6L,1L,14L,0L
+
+#define SN_id_mr_or_descriptor          "id-mr-or-descriptor"
+#define NID_id_mr_or_descriptor         3021
+#define OBJ_id_mr_or_descriptor         2L,6L,1L,14L,1L
+
+#define SN_id_mr_circulation_member             "id-mr-circulation-member"
+#define NID_id_mr_circulation_member            3022
+#define OBJ_id_mr_circulation_member            2L,6L,1L,14L,10L
+
+#define SN_id_mr_circulation_member_elements            "id-mr-circulation-member-elements"
+#define NID_id_mr_circulation_member_elements           3023
+#define OBJ_id_mr_circulation_member_elements           2L,6L,1L,14L,11L
+
+#define SN_id_mr_circulation_member_substring_elements          "id-mr-circulation-member-substring-elements"
+#define NID_id_mr_circulation_member_substring_elements         3024
+#define OBJ_id_mr_circulation_member_substring_elements         2L,6L,1L,14L,12L
+
+#define SN_id_mr_circulation_member_single_element              "id-mr-circulation-member-single-element"
+#define NID_id_mr_circulation_member_single_element             3025
+#define OBJ_id_mr_circulation_member_single_element             2L,6L,1L,14L,13L
+
+#define SN_id_mr_circulation_member_checkmark           "id-mr-circulation-member-checkmark"
+#define NID_id_mr_circulation_member_checkmark          3026
+#define OBJ_id_mr_circulation_member_checkmark          2L,6L,1L,14L,14L
+
+#define SN_id_mr_distribution_code              "id-mr-distribution-code"
+#define NID_id_mr_distribution_code             3027
+#define OBJ_id_mr_distribution_code             2L,6L,1L,14L,15L
+
+#define SN_id_mr_information_category           "id-mr-information-category"
+#define NID_id_mr_information_category          3028
+#define OBJ_id_mr_information_category          2L,6L,1L,14L,16L
+
+#define SN_id_mr_or_descriptor_elements         "id-mr-or-descriptor-elements"
+#define NID_id_mr_or_descriptor_elements                3029
+#define OBJ_id_mr_or_descriptor_elements                2L,6L,1L,14L,2L
+
+#define SN_id_mr_or_descriptor_substring_elements               "id-mr-or-descriptor-substring-elements"
+#define NID_id_mr_or_descriptor_substring_elements              3030
+#define OBJ_id_mr_or_descriptor_substring_elements              2L,6L,1L,14L,3L
+
+#define SN_id_mr_recipient_specifier            "id-mr-recipient-specifier"
+#define NID_id_mr_recipient_specifier           3031
+#define OBJ_id_mr_recipient_specifier           2L,6L,1L,14L,4L
+
+#define SN_id_mr_recipient_specifier_elements           "id-mr-recipient-specifier-elements"
+#define NID_id_mr_recipient_specifier_elements          3032
+#define OBJ_id_mr_recipient_specifier_elements          2L,6L,1L,14L,5L
+
+#define SN_id_mr_recipient_specifier_substring_elements         "id-mr-recipient-specifier-substring-elements"
+#define NID_id_mr_recipient_specifier_substring_elements                3033
+#define OBJ_id_mr_recipient_specifier_substring_elements                2L,6L,1L,14L,6L
+
+#define SN_id_mr_ipm_location           "id-mr-ipm-location"
+#define NID_id_mr_ipm_location          3034
+#define OBJ_id_mr_ipm_location          2L,6L,1L,14L,7L
+
+#define SN_id_mr_or_descriptor_single_element           "id-mr-or-descriptor-single-element"
+#define NID_id_mr_or_descriptor_single_element          3035
+#define OBJ_id_mr_or_descriptor_single_element          2L,6L,1L,14L,8L
+
+#define SN_id_mr_recipient_specifier_single_element             "id-mr-recipient-specifier-single-element"
+#define NID_id_mr_recipient_specifier_single_element            3036
+#define OBJ_id_mr_recipient_specifier_single_element            2L,6L,1L,14L,9L
+
+#define SN_id_aa                "id-aa"
+#define NID_id_aa               3037
+#define OBJ_id_aa               2L,6L,1L,15L
+
+#define SN_id_aa_ipm_auto_acknowledgement               "id-aa-ipm-auto-acknowledgement"
+#define NID_id_aa_ipm_auto_acknowledgement              3038
+#define OBJ_id_aa_ipm_auto_acknowledgement              2L,6L,1L,15L,0L
+
+#define SN_id_aa_ipm_auto_correlate             "id-aa-ipm-auto-correlate"
+#define NID_id_aa_ipm_auto_correlate            3039
+#define OBJ_id_aa_ipm_auto_correlate            2L,6L,1L,15L,1L
+
+#define SN_id_aa_ipm_auto_discard               "id-aa-ipm-auto-discard"
+#define NID_id_aa_ipm_auto_discard              3040
+#define OBJ_id_aa_ipm_auto_discard              2L,6L,1L,15L,2L
+
+#define SN_id_aa_ipm_auto_advise                "id-aa-ipm-auto-advise"
+#define NID_id_aa_ipm_auto_advise               3041
+#define OBJ_id_aa_ipm_auto_advise               2L,6L,1L,15L,3L
+
+#define SN_id_aae_auto_discard_error            "id-aae-auto-discard-error"
+#define NID_id_aae_auto_discard_error           3042
+#define OBJ_id_aae_auto_discard_error           2L,6L,1L,16L,0L
+
+#define SN_id_aae_auto_forwarding_loop          "id-aae-auto-forwarding-loop"
+#define NID_id_aae_auto_forwarding_loop         3043
+#define OBJ_id_aae_auto_forwarding_loop         2L,6L,1L,16L,1L
+
+#define SN_id_aae_duplicate_ipn         "id-aae-duplicate-ipn"
+#define NID_id_aae_duplicate_ipn                3044
+#define OBJ_id_aae_duplicate_ipn                2L,6L,1L,16L,2L
+
+#define SN_id_mst               "id-mst"
+#define NID_id_mst              3045
+#define OBJ_id_mst              2L,6L,1L,17L
+
+#define SN_id_mst_invalid_assembly_instructions         "id-mst-invalid-assembly-instructions"
+#define NID_id_mst_invalid_assembly_instructions                3046
+#define OBJ_id_mst_invalid_assembly_instructions                2L,6L,1L,17L,0L
+
+#define SN_id_mst_invalid_ipn           "id-mst-invalid-ipn"
+#define NID_id_mst_invalid_ipn          3047
+#define OBJ_id_mst_invalid_ipn          2L,6L,1L,17L,1L
+
+#define SN_id_mst_assembly_instructions         "id-mst-assembly-instructions"
+#define NID_id_mst_assembly_instructions                3048
+#define OBJ_id_mst_assembly_instructions                2L,6L,1L,17L,2L
+
+#define SN_id_mst_suspend_auto_acknowledgement          "id-mst-suspend-auto-acknowledgement"
+#define NID_id_mst_suspend_auto_acknowledgement         3049
+#define OBJ_id_mst_suspend_auto_acknowledgement         2L,6L,1L,17L,3L
+
+#define SN_id_mst_prevent_nrn_generation                "id-mst-prevent-nrn-generation"
+#define NID_id_mst_prevent_nrn_generation               3050
+#define OBJ_id_mst_prevent_nrn_generation               2L,6L,1L,17L,4L
+
+#define SN_id_mst_originator_body_part_encryption_token         "id-mst-originator-body-part-encryption-token"
+#define NID_id_mst_originator_body_part_encryption_token                3051
+#define OBJ_id_mst_originator_body_part_encryption_token                2L,6L,1L,17L,5L
+
+#define SN_id_mst_originator_forwarded_content_token            "id-mst-originator-forwarded-content-token"
+#define NID_id_mst_originator_forwarded_content_token           3052
+#define OBJ_id_mst_originator_forwarded_content_token           2L,6L,1L,17L,6L
+
+#define SN_id_mst_assembly_capability           "id-mst-assembly-capability"
+#define NID_id_mst_assembly_capability          3053
+#define OBJ_id_mst_assembly_capability          2L,6L,1L,17L,7L
+
+#define SN_id_sec               "id-sec"
+#define NID_id_sec              3054
+#define OBJ_id_sec              2L,6L,1L,18L
+
+#define SN_id_sec_ipm_security_request          "id-sec-ipm-security-request"
+#define NID_id_sec_ipm_security_request         3055
+#define OBJ_id_sec_ipm_security_request         2L,6L,1L,18L,0L
+
+#define SN_id_sec_security_common_fields                "id-sec-security-common-fields"
+#define NID_id_sec_security_common_fields               3056
+#define OBJ_id_sec_security_common_fields               2L,6L,1L,18L,1L
+
+#define SN_id_on_absence_advice         "id-on-absence-advice"
+#define NID_id_on_absence_advice                3057
+#define OBJ_id_on_absence_advice                2L,6L,1L,19L,0L
+
+#define SN_id_on_change_of_address_advice               "id-on-change-of-address-advice"
+#define NID_id_on_change_of_address_advice              3058
+#define OBJ_id_on_change_of_address_advice              2L,6L,1L,19L,1L
+
+#define SN_id_pt_management             "id-pt-management"
+#define NID_id_pt_management            3059
+#define OBJ_id_pt_management            2L,6L,1L,2L,2L
+
+#define SN_id_rex               "id-rex"
+#define NID_id_rex              3060
+#define OBJ_id_rex              2L,6L,1L,20L
+
+#define SN_id_rex_circulation_list_indicator            "id-rex-circulation-list-indicator"
+#define NID_id_rex_circulation_list_indicator           3061
+#define OBJ_id_rex_circulation_list_indicator           2L,6L,1L,20L,0L
+
+#define SN_id_rex_precedence            "id-rex-precedence"
+#define NID_id_rex_precedence           3062
+#define OBJ_id_rex_precedence           2L,6L,1L,20L,1L
+
+#define SN_id_et                "id-et"
+#define NID_id_et               3063
+#define OBJ_id_et               2L,6L,1L,4L
+
+#define SN_id_et_ia5_text               "id-et-ia5-text"
+#define NID_id_et_ia5_text              3064
+#define OBJ_id_et_ia5_text              2L,6L,1L,4L,0L
+
+#define SN_id_et_nationally_defined             "id-et-nationally-defined"
+#define NID_id_et_nationally_defined            3065
+#define OBJ_id_et_nationally_defined            2L,6L,1L,4L,10L
+
+#define SN_id_et_general_text           "id-et-general-text"
+#define NID_id_et_general_text          3066
+#define OBJ_id_et_general_text          2L,6L,1L,4L,11L
+
+#define SN_id_et_file_transfer          "id-et-file-transfer"
+#define NID_id_et_file_transfer         3067
+#define OBJ_id_et_file_transfer         2L,6L,1L,4L,12L
+
+#define SN_id_et_report         "id-et-report"
+#define NID_id_et_report                3068
+#define OBJ_id_et_report                2L,6L,1L,4L,14L
+
+#define SN_id_et_notification           "id-et-notification"
+#define NID_id_et_notification          3069
+#define OBJ_id_et_notification          2L,6L,1L,4L,15L
+
+#define SN_id_et_voice          "id-et-voice"
+#define NID_id_et_voice         3070
+#define OBJ_id_et_voice         2L,6L,1L,4L,16L
+
+#define SN_id_et_content                "id-et-content"
+#define NID_id_et_content               3071
+#define OBJ_id_et_content               2L,6L,1L,4L,17L
+
+#define SN_id_et_pkcs7          "id-et-pkcs7"
+#define NID_id_et_pkcs7         3072
+#define OBJ_id_et_pkcs7         2L,6L,1L,4L,18L
+
+#define SN_id_et_g3_facsimile           "id-et-g3-facsimile"
+#define NID_id_et_g3_facsimile          3073
+#define OBJ_id_et_g3_facsimile          2L,6L,1L,4L,2L
+
+#define SN_id_et_g4_class1              "id-et-g4-class1"
+#define NID_id_et_g4_class1             3074
+#define OBJ_id_et_g4_class1             2L,6L,1L,4L,3L
+
+#define SN_id_et_teletex                "id-et-teletex"
+#define NID_id_et_teletex               3075
+#define OBJ_id_et_teletex               2L,6L,1L,4L,4L
+
+#define SN_id_et_videotex               "id-et-videotex"
+#define NID_id_et_videotex              3076
+#define OBJ_id_et_videotex              2L,6L,1L,4L,5L
+
+#define SN_id_et_encrypted              "id-et-encrypted"
+#define NID_id_et_encrypted             3077
+#define OBJ_id_et_encrypted             2L,6L,1L,4L,6L
+
+#define SN_id_et_message                "id-et-message"
+#define NID_id_et_message               3078
+#define OBJ_id_et_message               2L,6L,1L,4L,7L
+
+#define SN_id_et_mixed_mode             "id-et-mixed-mode"
+#define NID_id_et_mixed_mode            3079
+#define OBJ_id_et_mixed_mode            2L,6L,1L,4L,8L
+
+#define SN_id_et_bilaterally_defined            "id-et-bilaterally-defined"
+#define NID_id_et_bilaterally_defined           3080
+#define OBJ_id_et_bilaterally_defined           2L,6L,1L,4L,9L
+
+#define SN_id_hex               "id-hex"
+#define NID_id_hex              3081
+#define OBJ_id_hex              2L,6L,1L,5L
+
+#define SN_id_hex_incomplete_copy               "id-hex-incomplete-copy"
+#define NID_id_hex_incomplete_copy              3082
+#define OBJ_id_hex_incomplete_copy              2L,6L,1L,5L,0L
+
+#define SN_id_hex_languages             "id-hex-languages"
+#define NID_id_hex_languages            3083
+#define OBJ_id_hex_languages            2L,6L,1L,5L,1L
+
+#define SN_id_hex_manual_handling_instructions          "id-hex-manual-handling-instructions"
+#define NID_id_hex_manual_handling_instructions         3084
+#define OBJ_id_hex_manual_handling_instructions         2L,6L,1L,5L,10L
+
+#define SN_id_hex_originators_reference         "id-hex-originators-reference"
+#define NID_id_hex_originators_reference                3085
+#define OBJ_id_hex_originators_reference                2L,6L,1L,5L,11L
+
+#define SN_id_hex_precedence_policy_id          "id-hex-precedence-policy-id"
+#define NID_id_hex_precedence_policy_id         3086
+#define OBJ_id_hex_precedence_policy_id         2L,6L,1L,5L,12L
+
+#define SN_id_hex_auto_submitted                "id-hex-auto-submitted"
+#define NID_id_hex_auto_submitted               3087
+#define OBJ_id_hex_auto_submitted               2L,6L,1L,5L,2L
+
+#define SN_id_hex_body_part_signatures          "id-hex-body-part-signatures"
+#define NID_id_hex_body_part_signatures         3088
+#define OBJ_id_hex_body_part_signatures         2L,6L,1L,5L,3L
+
+#define SN_id_hex_ipm_security_label            "id-hex-ipm-security-label"
+#define NID_id_hex_ipm_security_label           3089
+#define OBJ_id_hex_ipm_security_label           2L,6L,1L,5L,4L
+
+#define SN_id_hex_authorization_time            "id-hex-authorization-time"
+#define NID_id_hex_authorization_time           3090
+#define OBJ_id_hex_authorization_time           2L,6L,1L,5L,5L
+
+#define SN_id_hex_circulation_list_recipients           "id-hex-circulation-list-recipients"
+#define NID_id_hex_circulation_list_recipients          3091
+#define OBJ_id_hex_circulation_list_recipients          2L,6L,1L,5L,6L
+
+#define SN_id_hex_distribution_codes            "id-hex-distribution-codes"
+#define NID_id_hex_distribution_codes           3092
+#define OBJ_id_hex_distribution_codes           2L,6L,1L,5L,7L
+
+#define SN_id_hex_extended_subject              "id-hex-extended-subject"
+#define NID_id_hex_extended_subject             3093
+#define OBJ_id_hex_extended_subject             2L,6L,1L,5L,8L
+
+#define SN_id_hex_information_category          "id-hex-information-category"
+#define NID_id_hex_information_category         3094
+#define OBJ_id_hex_information_category         2L,6L,1L,5L,9L
+
+#define SN_id_sat_ipm_entry_type                "id-sat-ipm-entry-type"
+#define NID_id_sat_ipm_entry_type               3095
+#define OBJ_id_sat_ipm_entry_type               2L,6L,1L,6L,0L
+
+#define SN_id_sat_ipm_synopsis          "id-sat-ipm-synopsis"
+#define NID_id_sat_ipm_synopsis         3096
+#define OBJ_id_sat_ipm_synopsis         2L,6L,1L,6L,1L
+
+#define SN_id_sat_body_parts_summary            "id-sat-body-parts-summary"
+#define NID_id_sat_body_parts_summary           3097
+#define OBJ_id_sat_body_parts_summary           2L,6L,1L,6L,2L
+
+#define SN_id_sat_ipm_auto_discarded            "id-sat-ipm-auto-discarded"
+#define NID_id_sat_ipm_auto_discarded           3098
+#define OBJ_id_sat_ipm_auto_discarded           2L,6L,1L,6L,3L
+
+#define SN_id_hat_this_ipm              "id-hat-this-ipm"
+#define NID_id_hat_this_ipm             3099
+#define OBJ_id_hat_this_ipm             2L,6L,1L,7L,1L
+
+#define SN_id_hat_authorizing_users             "id-hat-authorizing-users"
+#define NID_id_hat_authorizing_users            3100
+#define OBJ_id_hat_authorizing_users            2L,6L,1L,7L,10L
+
+#define SN_id_hat_primary_recipients            "id-hat-primary-recipients"
+#define NID_id_hat_primary_recipients           3101
+#define OBJ_id_hat_primary_recipients           2L,6L,1L,7L,11L
+
+#define SN_id_hat_copy_recipients               "id-hat-copy-recipients"
+#define NID_id_hat_copy_recipients              3102
+#define OBJ_id_hat_copy_recipients              2L,6L,1L,7L,12L
+
+#define SN_id_hat_blind_copy_recipients         "id-hat-blind-copy-recipients"
+#define NID_id_hat_blind_copy_recipients                3103
+#define OBJ_id_hat_blind_copy_recipients                2L,6L,1L,7L,13L
+
+#define SN_id_hat_obsoleted_IPMs                "id-hat-obsoleted-IPMs"
+#define NID_id_hat_obsoleted_IPMs               3104
+#define OBJ_id_hat_obsoleted_IPMs               2L,6L,1L,7L,14L
+
+#define SN_id_hat_related_IPMs          "id-hat-related-IPMs"
+#define NID_id_hat_related_IPMs         3105
+#define OBJ_id_hat_related_IPMs         2L,6L,1L,7L,15L
+
+#define SN_id_hat_reply_recipients              "id-hat-reply-recipients"
+#define NID_id_hat_reply_recipients             3106
+#define OBJ_id_hat_reply_recipients             2L,6L,1L,7L,16L
+
+#define SN_id_hat_languages             "id-hat-languages"
+#define NID_id_hat_languages            3107
+#define OBJ_id_hat_languages            2L,6L,1L,7L,18L
+
+#define SN_id_hat_rn_requestors         "id-hat-rn-requestors"
+#define NID_id_hat_rn_requestors                3108
+#define OBJ_id_hat_rn_requestors                2L,6L,1L,7L,19L
+
+#define SN_id_hat_nrn_requestors                "id-hat-nrn-requestors"
+#define NID_id_hat_nrn_requestors               3109
+#define OBJ_id_hat_nrn_requestors               2L,6L,1L,7L,20L
+
+#define SN_id_hat_reply_requestors              "id-hat-reply-requestors"
+#define NID_id_hat_reply_requestors             3110
+#define OBJ_id_hat_reply_requestors             2L,6L,1L,7L,21L
+
+#define SN_id_hat_auto_submitted                "id-hat-auto-submitted"
+#define NID_id_hat_auto_submitted               3111
+#define OBJ_id_hat_auto_submitted               2L,6L,1L,7L,22L
+
+#define SN_id_hat_body_part_signatures          "id-hat-body-part-signatures"
+#define NID_id_hat_body_part_signatures         3112
+#define OBJ_id_hat_body_part_signatures         2L,6L,1L,7L,23L
+
+#define SN_id_hat_ipm_security_label            "id-hat-ipm-security-label"
+#define NID_id_hat_ipm_security_label           3113
+#define OBJ_id_hat_ipm_security_label           2L,6L,1L,7L,24L
+
+#define SN_id_hat_body_part_security_label              "id-hat-body-part-security-label"
+#define NID_id_hat_body_part_security_label             3114
+#define OBJ_id_hat_body_part_security_label             2L,6L,1L,7L,25L
+
+#define SN_id_hat_body_part_encryption_token            "id-hat-body-part-encryption-token"
+#define NID_id_hat_body_part_encryption_token           3115
+#define OBJ_id_hat_body_part_encryption_token           2L,6L,1L,7L,26L
+
+#define SN_id_hat_authorization_time            "id-hat-authorization-time"
+#define NID_id_hat_authorization_time           3116
+#define OBJ_id_hat_authorization_time           2L,6L,1L,7L,27L
+
+#define SN_id_hat_circulation_list_recipients           "id-hat-circulation-list-recipients"
+#define NID_id_hat_circulation_list_recipients          3117
+#define OBJ_id_hat_circulation_list_recipients          2L,6L,1L,7L,28L
+
+#define SN_id_hat_distribution_codes            "id-hat-distribution-codes"
+#define NID_id_hat_distribution_codes           3118
+#define OBJ_id_hat_distribution_codes           2L,6L,1L,7L,29L
+
+#define SN_id_hat_replied_to_IPM                "id-hat-replied-to-IPM"
+#define NID_id_hat_replied_to_IPM               3119
+#define OBJ_id_hat_replied_to_IPM               2L,6L,1L,7L,3L
+
+#define SN_id_hat_extended_subject              "id-hat-extended-subject"
+#define NID_id_hat_extended_subject             3120
+#define OBJ_id_hat_extended_subject             2L,6L,1L,7L,30L
+
+#define SN_id_hat_information_category          "id-hat-information-category"
+#define NID_id_hat_information_category         3121
+#define OBJ_id_hat_information_category         2L,6L,1L,7L,31L
+
+#define SN_id_hat_manual_handling_instructions          "id-hat-manual-handling-instructions"
+#define NID_id_hat_manual_handling_instructions         3122
+#define OBJ_id_hat_manual_handling_instructions         2L,6L,1L,7L,32L
+
+#define SN_id_hat_originators_reference         "id-hat-originators-reference"
+#define NID_id_hat_originators_reference                3123
+#define OBJ_id_hat_originators_reference                2L,6L,1L,7L,33L
+
+#define SN_id_hat_precedence_policy_id          "id-hat-precedence-policy-id"
+#define NID_id_hat_precedence_policy_id         3124
+#define OBJ_id_hat_precedence_policy_id         2L,6L,1L,7L,34L
+
+#define SN_id_hat_forwarded_content_token               "id-hat-forwarded-content-token"
+#define NID_id_hat_forwarded_content_token              3125
+#define OBJ_id_hat_forwarded_content_token              2L,6L,1L,7L,35L
+
+#define SN_id_hat_forwarding_token              "id-hat-forwarding-token"
+#define NID_id_hat_forwarding_token             3126
+#define OBJ_id_hat_forwarding_token             2L,6L,1L,7L,36L
+
+#define SN_id_hat_precedence            "id-hat-precedence"
+#define NID_id_hat_precedence           3127
+#define OBJ_id_hat_precedence           2L,6L,1L,7L,37L
+
+#define SN_id_hat_body_part_signature_verification_status               "id-hat-body-part-signature-verification-status"
+#define NID_id_hat_body_part_signature_verification_status              3128
+#define OBJ_id_hat_body_part_signature_verification_status              2L,6L,1L,7L,38L
+
+#define SN_id_hat_subject               "id-hat-subject"
+#define NID_id_hat_subject              3129
+#define OBJ_id_hat_subject              2L,6L,1L,7L,4L
+
+#define SN_id_hat_reply_time            "id-hat-reply-time"
+#define NID_id_hat_reply_time           3130
+#define OBJ_id_hat_reply_time           2L,6L,1L,7L,6L
+
+#define SN_id_hat_importance            "id-hat-importance"
+#define NID_id_hat_importance           3131
+#define OBJ_id_hat_importance           2L,6L,1L,7L,7L
+
+#define SN_id_hat_sensitivity           "id-hat-sensitivity"
+#define NID_id_hat_sensitivity          3132
+#define OBJ_id_hat_sensitivity          2L,6L,1L,7L,8L
+
+#define SN_id_hat_auto_forwarded                "id-hat-auto-forwarded"
+#define NID_id_hat_auto_forwarded               3133
+#define OBJ_id_hat_auto_forwarded               2L,6L,1L,7L,9L
+
+#define SN_id_bat_ia5_text_body_parts           "id-bat-ia5-text-body-parts"
+#define NID_id_bat_ia5_text_body_parts          3134
+#define OBJ_id_bat_ia5_text_body_parts          2L,6L,1L,8L,1L
+
+#define SN_id_bat_bilaterally_defined_body_parts                "id-bat-bilaterally-defined-body-parts"
+#define NID_id_bat_bilaterally_defined_body_parts               3135
+#define OBJ_id_bat_bilaterally_defined_body_parts               2L,6L,1L,8L,10L
+
+#define SN_id_bat_nationally_defined_body_parts         "id-bat-nationally-defined-body-parts"
+#define NID_id_bat_nationally_defined_body_parts                3136
+#define OBJ_id_bat_nationally_defined_body_parts                2L,6L,1L,8L,11L
+
+#define SN_id_bat_ia5_text_parameters           "id-bat-ia5-text-parameters"
+#define NID_id_bat_ia5_text_parameters          3137
+#define OBJ_id_bat_ia5_text_parameters          2L,6L,1L,8L,13L
+
+#define SN_id_bat_g3_facsimile_parameters               "id-bat-g3-facsimile-parameters"
+#define NID_id_bat_g3_facsimile_parameters              3138
+#define OBJ_id_bat_g3_facsimile_parameters              2L,6L,1L,8L,15L
+
+#define SN_id_bat_teletex_parameters            "id-bat-teletex-parameters"
+#define NID_id_bat_teletex_parameters           3139
+#define OBJ_id_bat_teletex_parameters           2L,6L,1L,8L,16L
+
+#define SN_id_bat_videotex_parameters           "id-bat-videotex-parameters"
+#define NID_id_bat_videotex_parameters          3140
+#define OBJ_id_bat_videotex_parameters          2L,6L,1L,8L,17L
+
+#define SN_id_bat_encrypted_parameters          "id-bat-encrypted-parameters"
+#define NID_id_bat_encrypted_parameters         3141
+#define OBJ_id_bat_encrypted_parameters         2L,6L,1L,8L,18L
+
+#define SN_id_bat_ia5_text_data         "id-bat-ia5-text-data"
+#define NID_id_bat_ia5_text_data                3142
+#define OBJ_id_bat_ia5_text_data                2L,6L,1L,8L,20L
+
+#define SN_id_bat_g3_facsimile_data             "id-bat-g3-facsimile-data"
+#define NID_id_bat_g3_facsimile_data            3143
+#define OBJ_id_bat_g3_facsimile_data            2L,6L,1L,8L,22L
+
+#define SN_id_bat_teletex_data          "id-bat-teletex-data"
+#define NID_id_bat_teletex_data         3144
+#define OBJ_id_bat_teletex_data         2L,6L,1L,8L,23L
+
+#define SN_id_bat_videotex_data         "id-bat-videotex-data"
+#define NID_id_bat_videotex_data                3145
+#define OBJ_id_bat_videotex_data                2L,6L,1L,8L,24L
+
+#define SN_id_bat_encrypted_data                "id-bat-encrypted-data"
+#define NID_id_bat_encrypted_data               3146
+#define OBJ_id_bat_encrypted_data               2L,6L,1L,8L,25L
+
+#define SN_id_bat_g3_facsimile_body_parts               "id-bat-g3-facsimile-body-parts"
+#define NID_id_bat_g3_facsimile_body_parts              3147
+#define OBJ_id_bat_g3_facsimile_body_parts              2L,6L,1L,8L,3L
+
+#define SN_id_bat_g4_class1_body_parts          "id-bat-g4-class1-body-parts"
+#define NID_id_bat_g4_class1_body_parts         3148
+#define OBJ_id_bat_g4_class1_body_parts         2L,6L,1L,8L,4L
+
+#define SN_id_bat_teletex_body_parts            "id-bat-teletex-body-parts"
+#define NID_id_bat_teletex_body_parts           3149
+#define OBJ_id_bat_teletex_body_parts           2L,6L,1L,8L,5L
+
+#define SN_id_bat_videotex_body_parts           "id-bat-videotex-body-parts"
+#define NID_id_bat_videotex_body_parts          3150
+#define OBJ_id_bat_videotex_body_parts          2L,6L,1L,8L,6L
+
+#define SN_id_bat_encrypted_body_parts          "id-bat-encrypted-body-parts"
+#define NID_id_bat_encrypted_body_parts         3151
+#define OBJ_id_bat_encrypted_body_parts         2L,6L,1L,8L,7L
+
+#define SN_id_bat_message_body_parts            "id-bat-message-body-parts"
+#define NID_id_bat_message_body_parts           3152
+#define OBJ_id_bat_message_body_parts           2L,6L,1L,8L,8L
+
+#define SN_id_bat_mixed_mode_body_parts         "id-bat-mixed-mode-body-parts"
+#define NID_id_bat_mixed_mode_body_parts                3153
+#define OBJ_id_bat_mixed_mode_body_parts                2L,6L,1L,8L,9L
+
+#define SN_id_nat_subject_ipm           "id-nat-subject-ipm"
+#define NID_id_nat_subject_ipm          3154
+#define OBJ_id_nat_subject_ipm          2L,6L,1L,9L,0L
+
+#define SN_id_nat_ipn_originator                "id-nat-ipn-originator"
+#define NID_id_nat_ipn_originator               3155
+#define OBJ_id_nat_ipn_originator               2L,6L,1L,9L,1L
+
+#define SN_id_nat_suppl_receipt_info            "id-nat-suppl-receipt-info"
+#define NID_id_nat_suppl_receipt_info           3156
+#define OBJ_id_nat_suppl_receipt_info           2L,6L,1L,9L,10L
+
+#define SN_id_nat_nrn_extensions                "id-nat-nrn-extensions"
+#define NID_id_nat_nrn_extensions               3157
+#define OBJ_id_nat_nrn_extensions               2L,6L,1L,9L,12L
+
+#define SN_id_nat_rn_extensions         "id-nat-rn-extensions"
+#define NID_id_nat_rn_extensions                3158
+#define OBJ_id_nat_rn_extensions                2L,6L,1L,9L,13L
+
+#define SN_id_nat_other_notification_type_fields                "id-nat-other-notification-type-fields"
+#define NID_id_nat_other_notification_type_fields               3159
+#define OBJ_id_nat_other_notification_type_fields               2L,6L,1L,9L,14L
+
+#define SN_id_nat_ipm_intended_recipient                "id-nat-ipm-intended-recipient"
+#define NID_id_nat_ipm_intended_recipient               3160
+#define OBJ_id_nat_ipm_intended_recipient               2L,6L,1L,9L,2L
+
+#define SN_id_nat_conversion_eits               "id-nat-conversion-eits"
+#define NID_id_nat_conversion_eits              3161
+#define OBJ_id_nat_conversion_eits              2L,6L,1L,9L,3L
+
+#define SN_id_nat_non_receipt_reason            "id-nat-non-receipt-reason"
+#define NID_id_nat_non_receipt_reason           3162
+#define OBJ_id_nat_non_receipt_reason           2L,6L,1L,9L,4L
+
+#define SN_id_nat_discard_reason                "id-nat-discard-reason"
+#define NID_id_nat_discard_reason               3163
+#define OBJ_id_nat_discard_reason               2L,6L,1L,9L,5L
+
+#define SN_id_nat_auto_forward_comment          "id-nat-auto-forward-comment"
+#define NID_id_nat_auto_forward_comment         3164
+#define OBJ_id_nat_auto_forward_comment         2L,6L,1L,9L,6L
+
+#define SN_id_nat_returned_ipm          "id-nat-returned-ipm"
+#define NID_id_nat_returned_ipm         3165
+#define OBJ_id_nat_returned_ipm         2L,6L,1L,9L,7L
+
+#define SN_id_nat_receipt_time          "id-nat-receipt-time"
+#define NID_id_nat_receipt_time         3166
+#define OBJ_id_nat_receipt_time         2L,6L,1L,9L,8L
+
+#define SN_id_nat_acknowledgment_mode           "id-nat-acknowledgment-mode"
+#define NID_id_nat_acknowledgment_mode          3167
+#define OBJ_id_nat_acknowledgment_mode          2L,6L,1L,9L,9L
+
+#define SN_id_routing           "id-routing"
+#define NID_id_routing          3168
+#define OBJ_id_routing          2L,6L,10L
+
+#define SN_id_mod_directory_objects             "id-mod-directory-objects"
+#define NID_id_mod_directory_objects            3169
+#define OBJ_id_mod_directory_objects            2L,6L,10L,0L,1L
+
+#define SN_id_mod_oraddress_subtree             "id-mod-oraddress-subtree"
+#define NID_id_mod_oraddress_subtree            3170
+#define OBJ_id_mod_oraddress_subtree            2L,6L,10L,0L,2L
+
+#define SN_id_oc_connection_group               "id-oc-connection-group"
+#define NID_id_oc_connection_group              3171
+#define OBJ_id_oc_connection_group              2L,6L,10L,1L,0L
+
+#define SN_id_oc_mhs_admd               "id-oc-mhs-admd"
+#define NID_id_oc_mhs_admd              3172
+#define OBJ_id_oc_mhs_admd              2L,6L,10L,1L,1L
+
+#define SN_id_oc_mhs_or_address_element         "id-oc-mhs-or-address-element"
+#define NID_id_oc_mhs_or_address_element                3173
+#define OBJ_id_oc_mhs_or_address_element                2L,6L,10L,1L,10L
+
+#define SN_id_oc_mhs_organization               "id-oc-mhs-organization"
+#define NID_id_oc_mhs_organization              3174
+#define OBJ_id_oc_mhs_organization              2L,6L,10L,1L,11L
+
+#define SN_id_oc_mhs_organizational_unit                "id-oc-mhs-organizational-unit"
+#define NID_id_oc_mhs_organizational_unit               3175
+#define OBJ_id_oc_mhs_organizational_unit               2L,6L,10L,1L,12L
+
+#define SN_id_oc_mhs_pds_name           "id-oc-mhs-pds-name"
+#define NID_id_oc_mhs_pds_name          3176
+#define OBJ_id_oc_mhs_pds_name          2L,6L,10L,1L,13L
+
+#define SN_id_oc_mhs_physical_delivery_country_name             "id-oc-mhs-physical-delivery-country-name"
+#define NID_id_oc_mhs_physical_delivery_country_name            3177
+#define OBJ_id_oc_mhs_physical_delivery_country_name            2L,6L,10L,1L,14L
+
+#define SN_id_oc_mhs_postal_code                "id-oc-mhs-postal-code"
+#define NID_id_oc_mhs_postal_code               3178
+#define OBJ_id_oc_mhs_postal_code               2L,6L,10L,1L,15L
+
+#define SN_id_oc_mhs_prmd               "id-oc-mhs-prmd"
+#define NID_id_oc_mhs_prmd              3179
+#define OBJ_id_oc_mhs_prmd              2L,6L,10L,1L,16L
+
+#define SN_id_oc_mhs_surname            "id-oc-mhs-surname"
+#define NID_id_oc_mhs_surname           3180
+#define OBJ_id_oc_mhs_surname           2L,6L,10L,1L,17L
+
+#define SN_id_oc_mhs_terminal_identifier                "id-oc-mhs-terminal-identifier"
+#define NID_id_oc_mhs_terminal_identifier               3181
+#define OBJ_id_oc_mhs_terminal_identifier               2L,6L,10L,1L,18L
+
+#define SN_id_oc_mhs_terminal_type              "id-oc-mhs-terminal-type"
+#define NID_id_oc_mhs_terminal_type             3182
+#define OBJ_id_oc_mhs_terminal_type             2L,6L,10L,1L,19L
+
+#define SN_id_oc_mhs_common_name                "id-oc-mhs-common-name"
+#define NID_id_oc_mhs_common_name               3183
+#define OBJ_id_oc_mhs_common_name               2L,6L,10L,1L,2L
+
+#define SN_id_oc_mta_information                "id-oc-mta-information"
+#define NID_id_oc_mta_information               3184
+#define OBJ_id_oc_mta_information               2L,6L,10L,1L,20L
+
+#define SN_id_oc_oraddress_subtree_base         "id-oc-oraddress-subtree-base"
+#define NID_id_oc_oraddress_subtree_base                3185
+#define OBJ_id_oc_oraddress_subtree_base                2L,6L,10L,1L,21L
+
+#define SN_id_oc_routing_collective             "id-oc-routing-collective"
+#define NID_id_oc_routing_collective            3186
+#define OBJ_id_oc_routing_collective            2L,6L,10L,1L,22L
+
+#define SN_id_oc_routing_mta            "id-oc-routing-mta"
+#define NID_id_oc_routing_mta           3187
+#define OBJ_id_oc_routing_mta           2L,6L,10L,1L,23L
+
+#define SN_id_oc_mhs_country            "id-oc-mhs-country"
+#define NID_id_oc_mhs_country           3188
+#define OBJ_id_oc_mhs_country           2L,6L,10L,1L,3L
+
+#define SN_id_oc_mhs_extended_network_address           "id-oc-mhs-extended-network-address"
+#define NID_id_oc_mhs_extended_network_address          3189
+#define OBJ_id_oc_mhs_extended_network_address          2L,6L,10L,1L,4L
+
+#define SN_id_oc_mhs_generation_qualifier               "id-oc-mhs-generation-qualifier"
+#define NID_id_oc_mhs_generation_qualifier              3190
+#define OBJ_id_oc_mhs_generation_qualifier              2L,6L,10L,1L,5L
+
+#define SN_id_oc_mhs_given_name         "id-oc-mhs-given-name"
+#define NID_id_oc_mhs_given_name                3191
+#define OBJ_id_oc_mhs_given_name                2L,6L,10L,1L,6L
+
+#define SN_id_oc_mhs_initials           "id-oc-mhs-initials"
+#define NID_id_oc_mhs_initials          3192
+#define OBJ_id_oc_mhs_initials          2L,6L,10L,1L,7L
+
+#define SN_id_oc_mhs_network_address            "id-oc-mhs-network-address"
+#define NID_id_oc_mhs_network_address           3193
+#define OBJ_id_oc_mhs_network_address           2L,6L,10L,1L,8L
+
+#define SN_id_oc_mhs_numeric_user_identifier            "id-oc-mhs-numeric-user-identifier"
+#define NID_id_oc_mhs_numeric_user_identifier           3194
+#define OBJ_id_oc_mhs_numeric_user_identifier           2L,6L,10L,1L,9L
+
+#define SN_id_nf                "id-nf"
+#define NID_id_nf               3195
+#define OBJ_id_nf               2L,6L,10L,2L
+
+#define SN_id_nf_connection_group               "id-nf-connection-group"
+#define NID_id_nf_connection_group              3196
+#define OBJ_id_nf_connection_group              2L,6L,10L,2L,0L
+
+#define SN_id_nf_mhs_admd               "id-nf-mhs-admd"
+#define NID_id_nf_mhs_admd              3197
+#define OBJ_id_nf_mhs_admd              2L,6L,10L,2L,1L
+
+#define SN_id_nf_mhs_organization               "id-nf-mhs-organization"
+#define NID_id_nf_mhs_organization              3198
+#define OBJ_id_nf_mhs_organization              2L,6L,10L,2L,10L
+
+#define SN_id_nf_mhs_organizational_unit                "id-nf-mhs-organizational-unit"
+#define NID_id_nf_mhs_organizational_unit               3199
+#define OBJ_id_nf_mhs_organizational_unit               2L,6L,10L,2L,11L
+
+#define SN_id_nf_mhs_pds_name           "id-nf-mhs-pds-name"
+#define NID_id_nf_mhs_pds_name          3200
+#define OBJ_id_nf_mhs_pds_name          2L,6L,10L,2L,12L
+
+#define SN_id_nf_mhs_physical_delivery_country          "id-nf-mhs-physical-delivery-country"
+#define NID_id_nf_mhs_physical_delivery_country         3201
+#define OBJ_id_nf_mhs_physical_delivery_country         2L,6L,10L,2L,13L
+
+#define SN_id_nf_mhs_postal_code                "id-nf-mhs-postal-code"
+#define NID_id_nf_mhs_postal_code               3202
+#define OBJ_id_nf_mhs_postal_code               2L,6L,10L,2L,14L
+
+#define SN_id_nf_mhs_prmd               "id-nf-mhs-prmd"
+#define NID_id_nf_mhs_prmd              3203
+#define OBJ_id_nf_mhs_prmd              2L,6L,10L,2L,15L
+
+#define SN_id_nf_mhs_surname            "id-nf-mhs-surname"
+#define NID_id_nf_mhs_surname           3204
+#define OBJ_id_nf_mhs_surname           2L,6L,10L,2L,16L
+
+#define SN_id_nf_mhs_terminal_identifier                "id-nf-mhs-terminal-identifier"
+#define NID_id_nf_mhs_terminal_identifier               3205
+#define OBJ_id_nf_mhs_terminal_identifier               2L,6L,10L,2L,17L
+
+#define SN_id_nf_mhs_terminal_type              "id-nf-mhs-terminal-type"
+#define NID_id_nf_mhs_terminal_type             3206
+#define OBJ_id_nf_mhs_terminal_type             2L,6L,10L,2L,18L
+
+#define SN_id_nf_routing_collective             "id-nf-routing-collective"
+#define NID_id_nf_routing_collective            3207
+#define OBJ_id_nf_routing_collective            2L,6L,10L,2L,19L
+
+#define SN_id_nf_mhs_common_name                "id-nf-mhs-common-name"
+#define NID_id_nf_mhs_common_name               3208
+#define OBJ_id_nf_mhs_common_name               2L,6L,10L,2L,2L
+
+#define SN_id_nf_mhs_country            "id-nf-mhs-country"
+#define NID_id_nf_mhs_country           3209
+#define OBJ_id_nf_mhs_country           2L,6L,10L,2L,3L
+
+#define SN_id_nf_mhs_extended_network_address           "id-nf-mhs-extended-network-address"
+#define NID_id_nf_mhs_extended_network_address          3210
+#define OBJ_id_nf_mhs_extended_network_address          2L,6L,10L,2L,4L
+
+#define SN_id_nf_mhs_generation_qualifier               "id-nf-mhs-generation-qualifier"
+#define NID_id_nf_mhs_generation_qualifier              3211
+#define OBJ_id_nf_mhs_generation_qualifier              2L,6L,10L,2L,5L
+
+#define SN_id_nf_mhs_given_name         "id-nf-mhs-given-name"
+#define NID_id_nf_mhs_given_name                3212
+#define OBJ_id_nf_mhs_given_name                2L,6L,10L,2L,6L
+
+#define SN_id_nf_mhs_initials           "id-nf-mhs-initials"
+#define NID_id_nf_mhs_initials          3213
+#define OBJ_id_nf_mhs_initials          2L,6L,10L,2L,7L
+
+#define SN_id_nf_mhs_network_address            "id-nf-mhs-network-address"
+#define NID_id_nf_mhs_network_address           3214
+#define OBJ_id_nf_mhs_network_address           2L,6L,10L,2L,8L
+
+#define SN_id_nf_mhs_numeric_user_identifier            "id-nf-mhs-numeric-user-identifier"
+#define NID_id_nf_mhs_numeric_user_identifier           3215
+#define OBJ_id_nf_mhs_numeric_user_identifier           2L,6L,10L,2L,9L
+
+#define SN_id_at_calling_psaps          "id-at-calling-psaps"
+#define NID_id_at_calling_psaps         3216
+#define OBJ_id_at_calling_psaps         2L,6L,10L,3L,0L
+
+#define SN_id_at_connection_group_name          "id-at-connection-group-name"
+#define NID_id_at_connection_group_name         3217
+#define OBJ_id_at_connection_group_name         2L,6L,10L,3L,1L
+
+#define SN_id_at_mhs_common_name                "id-at-mhs-common-name"
+#define NID_id_at_mhs_common_name               3218
+#define OBJ_id_at_mhs_common_name               2L,6L,10L,3L,10L
+
+#define SN_id_at_mhs_country_name               "id-at-mhs-country-name"
+#define NID_id_at_mhs_country_name              3219
+#define OBJ_id_at_mhs_country_name              2L,6L,10L,3L,11L
+
+#define SN_id_at_mhs_expression_matches         "id-at-mhs-expression-matches"
+#define NID_id_at_mhs_expression_matches                3220
+#define OBJ_id_at_mhs_expression_matches                2L,6L,10L,3L,12L
+
+#define SN_id_at_mhs_extended_network_address           "id-at-mhs-extended-network-address"
+#define NID_id_at_mhs_extended_network_address          3221
+#define OBJ_id_at_mhs_extended_network_address          2L,6L,10L,3L,13L
+
+#define SN_id_at_mhs_generation_qualifier               "id-at-mhs-generation-qualifier"
+#define NID_id_at_mhs_generation_qualifier              3222
+#define OBJ_id_at_mhs_generation_qualifier              2L,6L,10L,3L,14L
+
+#define SN_id_at_mhs_given_name         "id-at-mhs-given-name"
+#define NID_id_at_mhs_given_name                3223
+#define OBJ_id_at_mhs_given_name                2L,6L,10L,3L,15L
+
+#define SN_id_at_mhs_initials           "id-at-mhs-initials"
+#define NID_id_at_mhs_initials          3224
+#define OBJ_id_at_mhs_initials          2L,6L,10L,3L,16L
+
+#define SN_id_at_mhs_message_transfer_agent             "id-at-mhs-message-transfer-agent"
+#define NID_id_at_mhs_message_transfer_agent            3225
+#define OBJ_id_at_mhs_message_transfer_agent            2L,6L,10L,3L,17L
+
+#define SN_id_at_mhs_network_address            "id-at-mhs-network-address"
+#define NID_id_at_mhs_network_address           3226
+#define OBJ_id_at_mhs_network_address           2L,6L,10L,3L,18L
+
+#define SN_id_at_mhs_next_level_complete                "id-at-mhs-next-level-complete"
+#define NID_id_at_mhs_next_level_complete               3227
+#define OBJ_id_at_mhs_next_level_complete               2L,6L,10L,3L,19L
+
+#define SN_id_at_connection_type                "id-at-connection-type"
+#define NID_id_at_connection_type               3228
+#define OBJ_id_at_connection_type               2L,6L,10L,3L,2L
+
+#define SN_id_at_mhs_numeric_user_identifier            "id-at-mhs-numeric-user-identifier"
+#define NID_id_at_mhs_numeric_user_identifier           3229
+#define OBJ_id_at_mhs_numeric_user_identifier           2L,6L,10L,3L,20L
+
+#define SN_id_at_mhs_organization_name          "id-at-mhs-organization-name"
+#define NID_id_at_mhs_organization_name         3230
+#define OBJ_id_at_mhs_organization_name         2L,6L,10L,3L,21L
+
+#define SN_id_at_mhs_organizational_unit_name           "id-at-mhs-organizational-unit-name"
+#define NID_id_at_mhs_organizational_unit_name          3231
+#define OBJ_id_at_mhs_organizational_unit_name          2L,6L,10L,3L,22L
+
+#define SN_id_at_mhs_pds_name_attribute         "id-at-mhs-pds-name-attribute"
+#define NID_id_at_mhs_pds_name_attribute                3232
+#define OBJ_id_at_mhs_pds_name_attribute                2L,6L,10L,3L,23L
+
+#define SN_id_at_mhs_postal_code                "id-at-mhs-postal-code"
+#define NID_id_at_mhs_postal_code               3233
+#define OBJ_id_at_mhs_postal_code               2L,6L,10L,3L,24L
+
+#define SN_id_at_mhs_prmd_name          "id-at-mhs-prmd-name"
+#define NID_id_at_mhs_prmd_name         3234
+#define OBJ_id_at_mhs_prmd_name         2L,6L,10L,3L,25L
+
+#define SN_id_at_mhs_routing_advice             "id-at-mhs-routing-advice"
+#define NID_id_at_mhs_routing_advice            3235
+#define OBJ_id_at_mhs_routing_advice            2L,6L,10L,3L,26L
+
+#define SN_id_at_mhs_surname            "id-at-mhs-surname"
+#define NID_id_at_mhs_surname           3236
+#define OBJ_id_at_mhs_surname           2L,6L,10L,3L,27L
+
+#define SN_id_at_mhs_terminal_identifier                "id-at-mhs-terminal-identifier"
+#define NID_id_at_mhs_terminal_identifier               3237
+#define OBJ_id_at_mhs_terminal_identifier               2L,6L,10L,3L,28L
+
+#define SN_id_at_mhs_terminal_type              "id-at-mhs-terminal-type"
+#define NID_id_at_mhs_terminal_type             3238
+#define OBJ_id_at_mhs_terminal_type             2L,6L,10L,3L,29L
+
+#define SN_id_at_entry_connection_group_name            "id-at-entry-connection-group-name"
+#define NID_id_at_entry_connection_group_name           3239
+#define OBJ_id_at_entry_connection_group_name           2L,6L,10L,3L,3L
+
+#define SN_id_at_mta_name               "id-at-mta-name"
+#define NID_id_at_mta_name              3240
+#define OBJ_id_at_mta_name              2L,6L,10L,3L,30L
+
+#define SN_id_at_mta_password           "id-at-mta-password"
+#define NID_id_at_mta_password          3241
+#define OBJ_id_at_mta_password          2L,6L,10L,3L,31L
+
+#define SN_id_at_oraddress_element_name         "id-at-oraddress-element-name"
+#define NID_id_at_oraddress_element_name                3242
+#define OBJ_id_at_oraddress_element_name                2L,6L,10L,3L,32L
+
+#define SN_id_at_oraddress_subtrees             "id-at-oraddress-subtrees"
+#define NID_id_at_oraddress_subtrees            3243
+#define OBJ_id_at_oraddress_subtrees            2L,6L,10L,3L,33L
+
+#define SN_id_at_recipient_md_assigned_alternate_recipient              "id-at-recipient-md-assigned-alternate-recipient"
+#define NID_id_at_recipient_md_assigned_alternate_recipient             3244
+#define OBJ_id_at_recipient_md_assigned_alternate_recipient             2L,6L,10L,3L,34L
+
+#define SN_id_at_routing_collective_name                "id-at-routing-collective-name"
+#define NID_id_at_routing_collective_name               3245
+#define OBJ_id_at_routing_collective_name               2L,6L,10L,3L,35L
+
+#define SN_id_at_security_context               "id-at-security-context"
+#define NID_id_at_security_context              3246
+#define OBJ_id_at_security_context              2L,6L,10L,3L,36L
+
+#define SN_id_at_specific_passwords             "id-at-specific-passwords"
+#define NID_id_at_specific_passwords            3247
+#define OBJ_id_at_specific_passwords            2L,6L,10L,3L,37L
+
+#define SN_id_at_transit_exit_connection_group_name             "id-at-transit-exit-connection-group-name"
+#define NID_id_at_transit_exit_connection_group_name            3248
+#define OBJ_id_at_transit_exit_connection_group_name            2L,6L,10L,3L,38L
+
+#define SN_id_at_enumerated_flag                "id-at-enumerated-flag"
+#define NID_id_at_enumerated_flag               3249
+#define OBJ_id_at_enumerated_flag               2L,6L,10L,3L,4L
+
+#define SN_id_at_global_domain_identifier               "id-at-global-domain-identifier"
+#define NID_id_at_global_domain_identifier              3250
+#define OBJ_id_at_global_domain_identifier              2L,6L,10L,3L,5L
+
+#define SN_id_at_group_mta_password             "id-at-group-mta-password"
+#define NID_id_at_group_mta_password            3251
+#define OBJ_id_at_group_mta_password            2L,6L,10L,3L,6L
+
+#define SN_id_at_local_exit_connection_group_name               "id-at-local-exit-connection-group-name"
+#define NID_id_at_local_exit_connection_group_name              3252
+#define OBJ_id_at_local_exit_connection_group_name              2L,6L,10L,3L,7L
+
+#define SN_id_at_member_mta             "id-at-member-mta"
+#define NID_id_at_member_mta            3253
+#define OBJ_id_at_member_mta            2L,6L,10L,3L,8L
+
+#define SN_id_at_mhs_admd_name          "id-at-mhs-admd-name"
+#define NID_id_at_mhs_admd_name         3254
+#define OBJ_id_at_mhs_admd_name         2L,6L,10L,3L,9L
+
+#define SN_id_pro               "id-pro"
+#define NID_id_pro              3255
+#define OBJ_id_pro              2L,6L,10L,4L
+
+#define SN_id_pro_x25           "id-pro-x25"
+#define NID_id_pro_x25          3256
+#define OBJ_id_pro_x25          2L,6L,10L,4L,0L
+
+#define SN_id_pro_rfc1006               "id-pro-rfc1006"
+#define NID_id_pro_rfc1006              3257
+#define OBJ_id_pro_rfc1006              2L,6L,10L,4L,1L
+
+#define SN_id_pro_x445          "id-pro-x445"
+#define NID_id_pro_x445         3258
+#define OBJ_id_pro_x445         2L,6L,10L,4L,2L
+
+#define SN_id_wf                "id-wf"
+#define NID_id_wf               3259
+#define OBJ_id_wf               2L,6L,10L,5L
+
+#define SN_id_wf_integer                "id-wf-integer"
+#define NID_id_wf_integer               3260
+#define OBJ_id_wf_integer               2L,6L,10L,5L,0L
+
+#define SN_id_mts               "id-mts"
+#define NID_id_mts              3261
+#define OBJ_id_mts              2L,6L,3L
+
+#define SN_id_mod_mts_abstract_service          "id-mod-mts-abstract-service"
+#define NID_id_mod_mts_abstract_service         3262
+#define OBJ_id_mod_mts_abstract_service         2L,6L,3L,0L,1L
+
+#define SN_id_mod_mta_abstract_service          "id-mod-mta-abstract-service"
+#define NID_id_mod_mta_abstract_service         3263
+#define OBJ_id_mod_mta_abstract_service         2L,6L,3L,0L,2L
+
+#define SN_id_ot_mts            "id-ot-mts"
+#define NID_id_ot_mts           3264
+#define OBJ_id_ot_mts           2L,6L,3L,1L,0L
+
+#define SN_id_ot_mts_user               "id-ot-mts-user"
+#define NID_id_ot_mts_user              3265
+#define OBJ_id_ot_mts_user              2L,6L,3L,1L,1L
+
+#define SN_id_ot_mta            "id-ot-mta"
+#define NID_id_ot_mta           3266
+#define OBJ_id_ot_mta           2L,6L,3L,1L,2L
+
+#define SN_id_pt_submission             "id-pt-submission"
+#define NID_id_pt_submission            3267
+#define OBJ_id_pt_submission            2L,6L,3L,2L,0L
+
+#define SN_id_pt_delivery               "id-pt-delivery"
+#define NID_id_pt_delivery              3268
+#define OBJ_id_pt_delivery              2L,6L,3L,2L,1L
+
+#define SN_id_pt_administration         "id-pt-administration"
+#define NID_id_pt_administration                3269
+#define OBJ_id_pt_administration                2L,6L,3L,2L,2L
+
+#define SN_id_pt_transfer               "id-pt-transfer"
+#define NID_id_pt_transfer              3270
+#define OBJ_id_pt_transfer              2L,6L,3L,2L,3L
+
+#define SN_id_cont              "id-cont"
+#define NID_id_cont             3271
+#define OBJ_id_cont             2L,6L,3L,3L
+
+#define SN_id_cont_unidentified         "id-cont-unidentified"
+#define NID_id_cont_unidentified                3272
+#define OBJ_id_cont_unidentified                2L,6L,3L,3L,0L
+
+#define SN_id_cont_inner_envelope               "id-cont-inner-envelope"
+#define NID_id_cont_inner_envelope              3273
+#define OBJ_id_cont_inner_envelope              2L,6L,3L,3L,1L
+
+#define SN_id_eit_unknown               "id-eit-unknown"
+#define NID_id_eit_unknown              3274
+#define OBJ_id_eit_unknown              2L,6L,3L,4L,0L
+
+#define SN_id_eit_ia5_text              "id-eit-ia5-text"
+#define NID_id_eit_ia5_text             3275
+#define OBJ_id_eit_ia5_text             2L,6L,3L,4L,2L
+
+#define SN_id_eit_g3_facsimile          "id-eit-g3-facsimile"
+#define NID_id_eit_g3_facsimile         3276
+#define OBJ_id_eit_g3_facsimile         2L,6L,3L,4L,3L
+
+#define SN_id_eit_g4_class_1            "id-eit-g4-class-1"
+#define NID_id_eit_g4_class_1           3277
+#define OBJ_id_eit_g4_class_1           2L,6L,3L,4L,4L
+
+#define SN_id_eit_teletex               "id-eit-teletex"
+#define NID_id_eit_teletex              3278
+#define OBJ_id_eit_teletex              2L,6L,3L,4L,5L
+
+#define SN_id_eit_videotex              "id-eit-videotex"
+#define NID_id_eit_videotex             3279
+#define OBJ_id_eit_videotex             2L,6L,3L,4L,6L
+
+#define SN_id_eit_sfd           "id-eit-sfd"
+#define NID_id_eit_sfd          3280
+#define OBJ_id_eit_sfd          2L,6L,3L,4L,8L
+
+#define SN_id_eit_mixed_mode            "id-eit-mixed-mode"
+#define NID_id_eit_mixed_mode           3281
+#define OBJ_id_eit_mixed_mode           2L,6L,3L,4L,9L
+
+#define SN_id_att_physicalRendition_basic               "id-att-physicalRendition-basic"
+#define NID_id_att_physicalRendition_basic              3282
+#define OBJ_id_att_physicalRendition_basic              2L,6L,3L,5L,0L
+
+#define SN_id_att_physicalRendition_no_cover_page               "id-att-physicalRendition-no-cover-page"
+#define NID_id_att_physicalRendition_no_cover_page              3283
+#define OBJ_id_att_physicalRendition_no_cover_page              2L,6L,3L,5L,1L
+
+#define SN_id_tok               "id-tok"
+#define NID_id_tok              3284
+#define OBJ_id_tok              2L,6L,3L,6L
+
+#define SN_id_tok_asymmetricToken               "id-tok-asymmetricToken"
+#define NID_id_tok_asymmetricToken              3285
+#define OBJ_id_tok_asymmetricToken              2L,6L,3L,6L,0L
+
+#define SN_id_sa                "id-sa"
+#define NID_id_sa               3286
+#define OBJ_id_sa               2L,6L,3L,7L
+
+#define SN_id_sa_ua             "id-sa-ua"
+#define NID_id_sa_ua            3287
+#define OBJ_id_sa_ua            2L,6L,3L,7L,0L
+
+#define SN_id_sa_ms             "id-sa-ms"
+#define NID_id_sa_ms            3288
+#define OBJ_id_sa_ms            2L,6L,3L,7L,1L
+
+#define SN_id_ct                "id-ct"
+#define NID_id_ct               3289
+#define OBJ_id_ct               2L,6L,3L,8L
+
+#define SN_id_ct_mts_access             "id-ct-mts-access"
+#define NID_id_ct_mts_access            3290
+#define OBJ_id_ct_mts_access            2L,6L,3L,8L,0L
+
+#define SN_id_ct_mts_forced_access              "id-ct-mts-forced-access"
+#define NID_id_ct_mts_forced_access             3291
+#define OBJ_id_ct_mts_forced_access             2L,6L,3L,8L,1L
+
+#define SN_id_ct_mta_transfer           "id-ct-mta-transfer"
+#define NID_id_ct_mta_transfer          3292
+#define OBJ_id_ct_mta_transfer          2L,6L,3L,8L,2L
+
+#define SN_id_cp_mts_connect            "id-cp-mts-connect"
+#define NID_id_cp_mts_connect           3293
+#define OBJ_id_cp_mts_connect           2L,6L,3L,9L,0L
+
+#define SN_id_cp_mta_connect            "id-cp-mta-connect"
+#define NID_id_cp_mta_connect           3294
+#define OBJ_id_cp_mta_connect           2L,6L,3L,9L,1L
+
+#define SN_id_mod_attribute_types               "id-mod-attribute-types"
+#define NID_id_mod_attribute_types              3295
+#define OBJ_id_mod_attribute_types              2L,6L,4L,0L,2L
+
+#define SN_id_mod_action_types          "id-mod-action-types"
+#define NID_id_mod_action_types         3296
+#define OBJ_id_mod_action_types         2L,6L,4L,0L,3L
+
+#define SN_id_mod_matching_rules                "id-mod-matching-rules"
+#define NID_id_mod_matching_rules               3297
+#define OBJ_id_mod_matching_rules               2L,6L,4L,0L,5L
+
+#define SN_id_ot_ms             "id-ot-ms"
+#define NID_id_ot_ms            3298
+#define OBJ_id_ot_ms            2L,6L,4L,1L,0L
+
+#define SN_id_ot_ms_user                "id-ot-ms-user"
+#define NID_id_ot_ms_user               3299
+#define OBJ_id_ot_ms_user               2L,6L,4L,1L,1L
+
+#define SN_id_alg_password_xor          "id-alg-password-xor"
+#define NID_id_alg_password_xor         3300
+#define OBJ_id_alg_password_xor         2L,6L,4L,10L,0L
+
+#define SN_id_pt_retrieval_88           "id-pt-retrieval-88"
+#define NID_id_pt_retrieval_88          3301
+#define OBJ_id_pt_retrieval_88          2L,6L,4L,2L,0L
+
+#define SN_id_pt_retrieval_94           "id-pt-retrieval-94"
+#define NID_id_pt_retrieval_94          3302
+#define OBJ_id_pt_retrieval_94          2L,6L,4L,2L,1L
+
+#define SN_id_pt_ms_submission          "id-pt-ms-submission"
+#define NID_id_pt_ms_submission         3303
+#define OBJ_id_pt_ms_submission         2L,6L,4L,2L,2L
+
+#define SN_id_att               "id-att"
+#define NID_id_att              3304
+#define OBJ_id_att              2L,6L,4L,3L
+
+#define SN_id_att_child_sequence_numbers                "id-att-child-sequence-numbers"
+#define NID_id_att_child_sequence_numbers               3305
+#define OBJ_id_att_child_sequence_numbers               2L,6L,4L,3L,0L
+
+#define SN_id_att_content               "id-att-content"
+#define NID_id_att_content              3306
+#define OBJ_id_att_content              2L,6L,4L,3L,1L
+
+#define SN_id_att_converted_EITs                "id-att-converted-EITs"
+#define NID_id_att_converted_EITs               3307
+#define OBJ_id_att_converted_EITs               2L,6L,4L,3L,10L
+
+#define SN_id_att_creation_time         "id-att-creation-time"
+#define NID_id_att_creation_time                3308
+#define OBJ_id_att_creation_time                2L,6L,4L,3L,11L
+
+#define SN_id_att_delivered_EITs                "id-att-delivered-EITs"
+#define NID_id_att_delivered_EITs               3309
+#define OBJ_id_att_delivered_EITs               2L,6L,4L,3L,12L
+
+#define SN_id_att_delivery_flags                "id-att-delivery-flags"
+#define NID_id_att_delivery_flags               3310
+#define OBJ_id_att_delivery_flags               2L,6L,4L,3L,13L
+
+#define SN_id_att_dl_expansion_history          "id-att-dl-expansion-history"
+#define NID_id_att_dl_expansion_history         3311
+#define OBJ_id_att_dl_expansion_history         2L,6L,4L,3L,14L
+
+#define SN_id_att_retrieval_status              "id-att-retrieval-status"
+#define NID_id_att_retrieval_status             3312
+#define OBJ_id_att_retrieval_status             2L,6L,4L,3L,15L
+
+#define SN_id_att_entry_type            "id-att-entry-type"
+#define NID_id_att_entry_type           3313
+#define OBJ_id_att_entry_type           2L,6L,4L,3L,16L
+
+#define SN_id_att_originally_intended_recipient_name            "id-att-originally-intended-recipient-name"
+#define NID_id_att_originally_intended_recipient_name           3314
+#define OBJ_id_att_originally_intended_recipient_name           2L,6L,4L,3L,17L
+
+#define SN_id_att_message_delivery_envelope             "id-att-message-delivery-envelope"
+#define NID_id_att_message_delivery_envelope            3315
+#define OBJ_id_att_message_delivery_envelope            2L,6L,4L,3L,18L
+
+#define SN_id_att_message_identifier            "id-att-message-identifier"
+#define NID_id_att_message_identifier           3316
+#define OBJ_id_att_message_identifier           2L,6L,4L,3L,19L
+
+#define SN_id_att_content_confidentiality_algorithm_identifier          "id-att-content-confidentiality-algorithm-identifier"
+#define NID_id_att_content_confidentiality_algorithm_identifier         3317
+#define OBJ_id_att_content_confidentiality_algorithm_identifier         2L,6L,4L,3L,2L
+
+#define SN_id_att_message_delivery_time         "id-att-message-delivery-time"
+#define NID_id_att_message_delivery_time                3318
+#define OBJ_id_att_message_delivery_time                2L,6L,4L,3L,20L
+
+#define SN_id_att_message_origin_authentication_check           "id-att-message-origin-authentication-check"
+#define NID_id_att_message_origin_authentication_check          3319
+#define OBJ_id_att_message_origin_authentication_check          2L,6L,4L,3L,21L
+
+#define SN_id_att_message_security_label                "id-att-message-security-label"
+#define NID_id_att_message_security_label               3320
+#define OBJ_id_att_message_security_label               2L,6L,4L,3L,22L
+
+#define SN_id_att_message_submission_time               "id-att-message-submission-time"
+#define NID_id_att_message_submission_time              3321
+#define OBJ_id_att_message_submission_time              2L,6L,4L,3L,23L
+
+#define SN_id_att_message_token         "id-att-message-token"
+#define NID_id_att_message_token                3322
+#define OBJ_id_att_message_token                2L,6L,4L,3L,24L
+
+#define SN_id_att_original_EITs         "id-att-original-EITs"
+#define NID_id_att_original_EITs                3323
+#define OBJ_id_att_original_EITs                2L,6L,4L,3L,25L
+
+#define SN_id_att_originator_certificate                "id-att-originator-certificate"
+#define NID_id_att_originator_certificate               3324
+#define OBJ_id_att_originator_certificate               2L,6L,4L,3L,26L
+
+#define SN_id_att_originator_name               "id-att-originator-name"
+#define NID_id_att_originator_name              3325
+#define OBJ_id_att_originator_name              2L,6L,4L,3L,27L
+
+#define SN_id_att_other_recipient_names         "id-att-other-recipient-names"
+#define NID_id_att_other_recipient_names                3326
+#define OBJ_id_att_other_recipient_names                2L,6L,4L,3L,28L
+
+#define SN_id_att_parent_sequence_number                "id-att-parent-sequence-number"
+#define NID_id_att_parent_sequence_number               3327
+#define OBJ_id_att_parent_sequence_number               2L,6L,4L,3L,29L
+
+#define SN_id_att_content_correlator            "id-att-content-correlator"
+#define NID_id_att_content_correlator           3328
+#define OBJ_id_att_content_correlator           2L,6L,4L,3L,3L
+
+#define SN_id_att_per_recipient_report_delivery_fields          "id-att-per-recipient-report-delivery-fields"
+#define NID_id_att_per_recipient_report_delivery_fields         3329
+#define OBJ_id_att_per_recipient_report_delivery_fields         2L,6L,4L,3L,30L
+
+#define SN_id_att_priority              "id-att-priority"
+#define NID_id_att_priority             3330
+#define OBJ_id_att_priority             2L,6L,4L,3L,31L
+
+#define SN_id_att_proof_of_delivery_request             "id-att-proof-of-delivery-request"
+#define NID_id_att_proof_of_delivery_request            3331
+#define OBJ_id_att_proof_of_delivery_request            2L,6L,4L,3L,32L
+
+#define SN_id_att_redirection_history           "id-att-redirection-history"
+#define NID_id_att_redirection_history          3332
+#define OBJ_id_att_redirection_history          2L,6L,4L,3L,33L
+
+#define SN_id_att_report_delivery_envelope              "id-att-report-delivery-envelope"
+#define NID_id_att_report_delivery_envelope             3333
+#define OBJ_id_att_report_delivery_envelope             2L,6L,4L,3L,34L
+
+#define SN_id_att_reporting_DL_name             "id-att-reporting-DL-name"
+#define NID_id_att_reporting_DL_name            3334
+#define OBJ_id_att_reporting_DL_name            2L,6L,4L,3L,35L
+
+#define SN_id_att_reporting_MTA_certificate             "id-att-reporting-MTA-certificate"
+#define NID_id_att_reporting_MTA_certificate            3335
+#define OBJ_id_att_reporting_MTA_certificate            2L,6L,4L,3L,36L
+
+#define SN_id_att_report_origin_authentication_check            "id-att-report-origin-authentication-check"
+#define NID_id_att_report_origin_authentication_check           3336
+#define OBJ_id_att_report_origin_authentication_check           2L,6L,4L,3L,37L
+
+#define SN_id_att_security_classification               "id-att-security-classification"
+#define NID_id_att_security_classification              3337
+#define OBJ_id_att_security_classification              2L,6L,4L,3L,38L
+
+#define SN_id_att_sequence_number               "id-att-sequence-number"
+#define NID_id_att_sequence_number              3338
+#define OBJ_id_att_sequence_number              2L,6L,4L,3L,39L
+
+#define SN_id_att_content_identifier            "id-att-content-identifier"
+#define NID_id_att_content_identifier           3339
+#define OBJ_id_att_content_identifier           2L,6L,4L,3L,4L
+
+#define SN_id_att_subject_submission_identifier         "id-att-subject-submission-identifier"
+#define NID_id_att_subject_submission_identifier                3340
+#define OBJ_id_att_subject_submission_identifier                2L,6L,4L,3L,40L
+
+#define SN_id_att_this_recipient_name           "id-att-this-recipient-name"
+#define NID_id_att_this_recipient_name          3341
+#define OBJ_id_att_this_recipient_name          2L,6L,4L,3L,41L
+
+#define SN_id_att_ac_correlated_report_list             "id-att-ac-correlated-report-list"
+#define NID_id_att_ac_correlated_report_list            3342
+#define OBJ_id_att_ac_correlated_report_list            2L,6L,4L,3L,42L
+
+#define SN_id_att_ac_report_summary             "id-att-ac-report-summary"
+#define NID_id_att_ac_report_summary            3343
+#define OBJ_id_att_ac_report_summary            2L,6L,4L,3L,43L
+
+#define SN_id_att_ac_uncorrelated_report_list           "id-att-ac-uncorrelated-report-list"
+#define NID_id_att_ac_uncorrelated_report_list          3344
+#define OBJ_id_att_ac_uncorrelated_report_list          2L,6L,4L,3L,44L
+
+#define SN_id_att_auto_action_error             "id-att-auto-action-error"
+#define NID_id_att_auto_action_error            3345
+#define OBJ_id_att_auto_action_error            2L,6L,4L,3L,46L
+
+#define SN_id_att_auto_action_registration_identifier           "id-att-auto-action-registration-identifier"
+#define NID_id_att_auto_action_registration_identifier          3346
+#define OBJ_id_att_auto_action_registration_identifier          2L,6L,4L,3L,47L
+
+#define SN_id_att_auto_action_subject_entry             "id-att-auto-action-subject-entry"
+#define NID_id_att_auto_action_subject_entry            3347
+#define OBJ_id_att_auto_action_subject_entry            2L,6L,4L,3L,48L
+
+#define SN_id_att_auto_action_type              "id-att-auto-action-type"
+#define NID_id_att_auto_action_type             3348
+#define OBJ_id_att_auto_action_type             2L,6L,4L,3L,49L
+
+#define SN_id_att_content_integrity_check               "id-att-content-integrity-check"
+#define NID_id_att_content_integrity_check              3349
+#define OBJ_id_att_content_integrity_check              2L,6L,4L,3L,5L
+
+#define SN_id_att_deferred_delivery_cancellation_time           "id-att-deferred-delivery-cancellation-time"
+#define NID_id_att_deferred_delivery_cancellation_time          3350
+#define OBJ_id_att_deferred_delivery_cancellation_time          2L,6L,4L,3L,50L
+
+#define SN_id_att_deferred_delivery_time                "id-att-deferred-delivery-time"
+#define NID_id_att_deferred_delivery_time               3351
+#define OBJ_id_att_deferred_delivery_time               2L,6L,4L,3L,51L
+
+#define SN_id_att_deletion_time         "id-att-deletion-time"
+#define NID_id_att_deletion_time                3352
+#define OBJ_id_att_deletion_time                2L,6L,4L,3L,52L
+
+#define SN_id_att_dl_expansion_prohibited               "id-att-dl-expansion-prohibited"
+#define NID_id_att_dl_expansion_prohibited              3353
+#define OBJ_id_att_dl_expansion_prohibited              2L,6L,4L,3L,53L
+
+#define SN_id_att_internal_trace_information            "id-att-internal-trace-information"
+#define NID_id_att_internal_trace_information           3354
+#define OBJ_id_att_internal_trace_information           2L,6L,4L,3L,54L
+
+#define SN_id_att_latest_delivery_time          "id-att-latest-delivery-time"
+#define NID_id_att_latest_delivery_time         3355
+#define OBJ_id_att_latest_delivery_time         2L,6L,4L,3L,55L
+
+#define SN_id_att_marked_for_deletion           "id-att-marked-for-deletion"
+#define NID_id_att_marked_for_deletion          3356
+#define OBJ_id_att_marked_for_deletion          2L,6L,4L,3L,56L
+
+#define SN_id_att_message_group_name            "id-att-message-group-name"
+#define NID_id_att_message_group_name           3357
+#define OBJ_id_att_message_group_name           2L,6L,4L,3L,57L
+
+#define SN_id_att_message_notes         "id-att-message-notes"
+#define NID_id_att_message_notes                3358
+#define OBJ_id_att_message_notes                2L,6L,4L,3L,58L
+
+#define SN_id_att_message_submission_envelope           "id-att-message-submission-envelope"
+#define NID_id_att_message_submission_envelope          3359
+#define OBJ_id_att_message_submission_envelope          2L,6L,4L,3L,59L
+
+#define SN_id_att_content_length                "id-att-content-length"
+#define NID_id_att_content_length               3360
+#define OBJ_id_att_content_length               2L,6L,4L,3L,6L
+
+#define SN_id_att_ms_originated         "id-att-ms-originated"
+#define NID_id_att_ms_originated                3361
+#define OBJ_id_att_ms_originated                2L,6L,4L,3L,60L
+
+#define SN_id_att_ms_submission_error           "id-att-ms-submission-error"
+#define NID_id_att_ms_submission_error          3362
+#define OBJ_id_att_ms_submission_error          2L,6L,4L,3L,61L
+
+#define SN_id_att_originating_MTA_certificate           "id-att-originating-MTA-certificate"
+#define NID_id_att_originating_MTA_certificate          3363
+#define OBJ_id_att_originating_MTA_certificate          2L,6L,4L,3L,62L
+
+#define SN_id_att_originator_report_request             "id-att-originator-report-request"
+#define NID_id_att_originator_report_request            3364
+#define OBJ_id_att_originator_report_request            2L,6L,4L,3L,63L
+
+#define SN_id_att_originator_return_address             "id-att-originator-return-address"
+#define NID_id_att_originator_return_address            3365
+#define OBJ_id_att_originator_return_address            2L,6L,4L,3L,64L
+
+#define SN_id_att_per_message_indicators                "id-att-per-message-indicators"
+#define NID_id_att_per_message_indicators               3366
+#define OBJ_id_att_per_message_indicators               2L,6L,4L,3L,65L
+
+#define SN_id_att_per_recipient_message_submission_fields               "id-att-per-recipient-message-submission-fields"
+#define NID_id_att_per_recipient_message_submission_fields              3367
+#define OBJ_id_att_per_recipient_message_submission_fields              2L,6L,4L,3L,66L
+
+#define SN_id_att_per_recipient_probe_submission_fields         "id-att-per-recipient-probe-submission-fields"
+#define NID_id_att_per_recipient_probe_submission_fields                3368
+#define OBJ_id_att_per_recipient_probe_submission_fields                2L,6L,4L,3L,67L
+
+#define SN_id_att_probe_origin_authentication_check             "id-att-probe-origin-authentication-check"
+#define NID_id_att_probe_origin_authentication_check            3369
+#define OBJ_id_att_probe_origin_authentication_check            2L,6L,4L,3L,68L
+
+#define SN_id_att_probe_submission_envelope             "id-att-probe-submission-envelope"
+#define NID_id_att_probe_submission_envelope            3370
+#define OBJ_id_att_probe_submission_envelope            2L,6L,4L,3L,69L
+
+#define SN_id_att_content_returned              "id-att-content-returned"
+#define NID_id_att_content_returned             3371
+#define OBJ_id_att_content_returned             2L,6L,4L,3L,7L
+
+#define SN_id_att_proof_of_submission           "id-att-proof-of-submission"
+#define NID_id_att_proof_of_submission          3372
+#define OBJ_id_att_proof_of_submission          2L,6L,4L,3L,70L
+
+#define SN_id_att_recipient_names               "id-att-recipient-names"
+#define NID_id_att_recipient_names              3373
+#define OBJ_id_att_recipient_names              2L,6L,4L,3L,71L
+
+#define SN_id_att_recipient_reassignment_prohibited             "id-att-recipient-reassignment-prohibited"
+#define NID_id_att_recipient_reassignment_prohibited            3374
+#define OBJ_id_att_recipient_reassignment_prohibited            2L,6L,4L,3L,72L
+
+#define SN_id_att_storage_period                "id-att-storage-period"
+#define NID_id_att_storage_period               3375
+#define OBJ_id_att_storage_period               2L,6L,4L,3L,73L
+
+#define SN_id_att_storage_time          "id-att-storage-time"
+#define NID_id_att_storage_time         3376
+#define OBJ_id_att_storage_time         2L,6L,4L,3L,74L
+
+#define SN_id_att_trace_information             "id-att-trace-information"
+#define NID_id_att_trace_information            3377
+#define OBJ_id_att_trace_information            2L,6L,4L,3L,75L
+
+#define SN_id_att_ac_report_subject_entry               "id-att-ac-report-subject-entry"
+#define NID_id_att_ac_report_subject_entry              3378
+#define OBJ_id_att_ac_report_subject_entry              2L,6L,4L,3L,76L
+
+#define SN_id_att_locally_originated            "id-att-locally-originated"
+#define NID_id_att_locally_originated           3379
+#define OBJ_id_att_locally_originated           2L,6L,4L,3L,77L
+
+#define SN_id_att_dl_exempted_recipients                "id-att-dl-exempted-recipients"
+#define NID_id_att_dl_exempted_recipients               3380
+#define OBJ_id_att_dl_exempted_recipients               2L,6L,4L,3L,78L
+
+#define SN_id_att_signature_verification_status         "id-att-signature-verification-status"
+#define NID_id_att_signature_verification_status                3381
+#define OBJ_id_att_signature_verification_status                2L,6L,4L,3L,79L
+
+#define SN_id_att_content_type          "id-att-content-type"
+#define NID_id_att_content_type         3382
+#define OBJ_id_att_content_type         2L,6L,4L,3L,8L
+
+#define SN_id_att_certificate_selectors         "id-att-certificate-selectors"
+#define NID_id_att_certificate_selectors                3383
+#define OBJ_id_att_certificate_selectors                2L,6L,4L,3L,80L
+
+#define SN_id_att_multiple_originator_certificates              "id-att-multiple-originator-certificates"
+#define NID_id_att_multiple_originator_certificates             3384
+#define OBJ_id_att_multiple_originator_certificates             2L,6L,4L,3L,81L
+
+#define SN_id_att_recipient_certificate         "id-att-recipient-certificate"
+#define NID_id_att_recipient_certificate                3385
+#define OBJ_id_att_recipient_certificate                2L,6L,4L,3L,82L
+
+#define SN_id_att_conversion_with_loss_prohibited               "id-att-conversion-with-loss-prohibited"
+#define NID_id_att_conversion_with_loss_prohibited              3386
+#define OBJ_id_att_conversion_with_loss_prohibited              2L,6L,4L,3L,9L
+
+#define SN_id_act_ipm_auto_forward              "id-act-ipm-auto-forward"
+#define NID_id_act_ipm_auto_forward             3387
+#define OBJ_id_act_ipm_auto_forward             2L,6L,4L,4L,0L
+
+#define SN_id_act_auto_alert            "id-act-auto-alert"
+#define NID_id_act_auto_alert           3388
+#define OBJ_id_act_auto_alert           2L,6L,4L,4L,1L
+
+#define SN_id_act_auto_correlate_reports                "id-act-auto-correlate-reports"
+#define NID_id_act_auto_correlate_reports               3389
+#define OBJ_id_act_auto_correlate_reports               2L,6L,4L,4L,2L
+
+#define SN_id_act_auto_delete           "id-act-auto-delete"
+#define NID_id_act_auto_delete          3390
+#define OBJ_id_act_auto_delete          2L,6L,4L,4L,3L
+
+#define SN_id_act_auto_modify           "id-act-auto-modify"
+#define NID_id_act_auto_modify          3391
+#define OBJ_id_act_auto_modify          2L,6L,4L,4L,4L
+
+#define SN_id_crt               "id-crt"
+#define NID_id_crt              3392
+#define OBJ_id_crt              2L,6L,4L,5L
+
+#define SN_id_crt_ms_access_88          "id-crt-ms-access-88"
+#define NID_id_crt_ms_access_88         3393
+#define OBJ_id_crt_ms_access_88         2L,6L,4L,5L,0L
+
+#define SN_id_crt_ms_access_94          "id-crt-ms-access-94"
+#define NID_id_crt_ms_access_94         3394
+#define OBJ_id_crt_ms_access_94         2L,6L,4L,5L,1L
+
+#define SN_id_cp_ms_connection          "id-cp-ms-connection"
+#define NID_id_cp_ms_connection         3395
+#define OBJ_id_cp_ms_connection         2L,6L,4L,6L,0L
+
+#define SN_id_aae_auto_alert_error              "id-aae-auto-alert-error"
+#define NID_id_aae_auto_alert_error             3396
+#define OBJ_id_aae_auto_alert_error             2L,6L,4L,7L,0L
+
+#define SN_id_mr_content_correlator_match               "id-mr-content-correlator-match"
+#define NID_id_mr_content_correlator_match              3397
+#define OBJ_id_mr_content_correlator_match              2L,6L,4L,8L,1L
+
+#define SN_id_mr_msstring_match         "id-mr-msstring-match"
+#define NID_id_mr_msstring_match                3398
+#define OBJ_id_mr_msstring_match                2L,6L,4L,8L,10L
+
+#define SN_id_mr_msstring_ordering_match                "id-mr-msstring-ordering-match"
+#define NID_id_mr_msstring_ordering_match               3399
+#define OBJ_id_mr_msstring_ordering_match               2L,6L,4L,8L,11L
+
+#define SN_id_mr_mts_identifier_match           "id-mr-mts-identifier-match"
+#define NID_id_mr_mts_identifier_match          3400
+#define OBJ_id_mr_mts_identifier_match          2L,6L,4L,8L,12L
+
+#define SN_id_mr_oraddress_elements_match               "id-mr-oraddress-elements-match"
+#define NID_id_mr_oraddress_elements_match              3401
+#define OBJ_id_mr_oraddress_elements_match              2L,6L,4L,8L,13L
+
+#define SN_id_mr_oraddress_match                "id-mr-oraddress-match"
+#define NID_id_mr_oraddress_match               3402
+#define OBJ_id_mr_oraddress_match               2L,6L,4L,8L,14L
+
+#define SN_id_mr_oraddress_substring_elements_match             "id-mr-oraddress-substring-elements-match"
+#define NID_id_mr_oraddress_substring_elements_match            3403
+#define OBJ_id_mr_oraddress_substring_elements_match            2L,6L,4L,8L,15L
+
+#define SN_id_mr_orname_elements_match          "id-mr-orname-elements-match"
+#define NID_id_mr_orname_elements_match         3404
+#define OBJ_id_mr_orname_elements_match         2L,6L,4L,8L,16L
+
+#define SN_id_mr_orname_match           "id-mr-orname-match"
+#define NID_id_mr_orname_match          3405
+#define OBJ_id_mr_orname_match          2L,6L,4L,8L,17L
+
+#define SN_id_mr_orname_single_element_match            "id-mr-orname-single-element-match"
+#define NID_id_mr_orname_single_element_match           3406
+#define OBJ_id_mr_orname_single_element_match           2L,6L,4L,8L,18L
+
+#define SN_id_mr_orname_substring_elements_match                "id-mr-orname-substring-elements-match"
+#define NID_id_mr_orname_substring_elements_match               3407
+#define OBJ_id_mr_orname_substring_elements_match               2L,6L,4L,8L,19L
+
+#define SN_id_mr_content_identifier_match               "id-mr-content-identifier-match"
+#define NID_id_mr_content_identifier_match              3408
+#define OBJ_id_mr_content_identifier_match              2L,6L,4L,8L,2L
+
+#define SN_id_mr_redirection_or_dl_expansion_elements_match             "id-mr-redirection-or-dl-expansion-elements-match"
+#define NID_id_mr_redirection_or_dl_expansion_elements_match            3409
+#define OBJ_id_mr_redirection_or_dl_expansion_elements_match            2L,6L,4L,8L,20L
+
+#define SN_id_mr_redirection_or_dl_expansion_match              "id-mr-redirection-or-dl-expansion-match"
+#define NID_id_mr_redirection_or_dl_expansion_match             3410
+#define OBJ_id_mr_redirection_or_dl_expansion_match             2L,6L,4L,8L,21L
+
+#define SN_id_mr_redirection_or_dl_expansion_substring_elements_match           "id-mr-redirection-or-dl-expansion-substring-elements-match"
+#define NID_id_mr_redirection_or_dl_expansion_substring_elements_match          3411
+#define OBJ_id_mr_redirection_or_dl_expansion_substring_elements_match          2L,6L,4L,8L,22L
+
+#define SN_id_mr_redirection_reason_match               "id-mr-redirection-reason-match"
+#define NID_id_mr_redirection_reason_match              3412
+#define OBJ_id_mr_redirection_reason_match              2L,6L,4L,8L,23L
+
+#define SN_id_mr_value_count_match              "id-mr-value-count-match"
+#define NID_id_mr_value_count_match             3413
+#define OBJ_id_mr_value_count_match             2L,6L,4L,8L,24L
+
+#define SN_id_mr_redirection_or_dl_expansion_single_element_match               "id-mr-redirection-or-dl-expansion-single-element-match"
+#define NID_id_mr_redirection_or_dl_expansion_single_element_match              3414
+#define OBJ_id_mr_redirection_or_dl_expansion_single_element_match              2L,6L,4L,8L,25L
+
+#define SN_id_mr_ms_single_substring_list_elements_match                "id-mr-ms-single-substring-list-elements-match"
+#define NID_id_mr_ms_single_substring_list_elements_match               3415
+#define OBJ_id_mr_ms_single_substring_list_elements_match               2L,6L,4L,8L,3L
+
+#define SN_id_mr_ms_single_substring_list_match         "id-mr-ms-single-substring-list-match"
+#define NID_id_mr_ms_single_substring_list_match                3416
+#define OBJ_id_mr_ms_single_substring_list_match                2L,6L,4L,8L,4L
+
+#define SN_id_mr_ms_single_substring_match              "id-mr-ms-single-substring-match"
+#define NID_id_mr_ms_single_substring_match             3417
+#define OBJ_id_mr_ms_single_substring_match             2L,6L,4L,8L,5L
+
+#define SN_id_mr_ms_substrings_match            "id-mr-ms-substrings-match"
+#define NID_id_mr_ms_substrings_match           3418
+#define OBJ_id_mr_ms_substrings_match           2L,6L,4L,8L,6L
+
+#define SN_id_mr_msstring_case_sensitive_match          "id-mr-msstring-case-sensitive-match"
+#define NID_id_mr_msstring_case_sensitive_match         3419
+#define OBJ_id_mr_msstring_case_sensitive_match         2L,6L,4L,8L,7L
+
+#define SN_id_mr_msstring_list_elements_match           "id-mr-msstring-list-elements-match"
+#define NID_id_mr_msstring_list_elements_match          3420
+#define OBJ_id_mr_msstring_list_elements_match          2L,6L,4L,8L,8L
+
+#define SN_id_mr_msstring_list_match            "id-mr-msstring-list-match"
+#define NID_id_mr_msstring_list_match           3421
+#define OBJ_id_mr_msstring_list_match           2L,6L,4L,8L,9L
+
+#define SN_id_ext_modify_capability             "id-ext-modify-capability"
+#define NID_id_ext_modify_capability            3422
+#define OBJ_id_ext_modify_capability            2L,6L,4L,9L,0L
+
+#define SN_id_ext_modify_retrieval_status_capability            "id-ext-modify-retrieval-status-capability"
+#define NID_id_ext_modify_retrieval_status_capability           3423
+#define OBJ_id_ext_modify_retrieval_status_capability           2L,6L,4L,9L,1L
+
+#define SN_id_ext_originator_certificate_selectors_override             "id-ext-originator-certificate-selectors-override"
+#define NID_id_ext_originator_certificate_selectors_override            3424
+#define OBJ_id_ext_originator_certificate_selectors_override            2L,6L,4L,9L,2L
+
+#define SN_id_ext_originator_token              "id-ext-originator-token"
+#define NID_id_ext_originator_token             3425
+#define OBJ_id_ext_originator_token             2L,6L,4L,9L,3L
+
+#define SN_id_ext_protected_change_credentials          "id-ext-protected-change-credentials"
+#define NID_id_ext_protected_change_credentials         3426
+#define OBJ_id_ext_protected_change_credentials         2L,6L,4L,9L,4L
+
+#define SN_id_ext_protected_change_credentials_capability               "id-ext-protected-change-credentials-capability"
+#define NID_id_ext_protected_change_credentials_capability              3427
+#define OBJ_id_ext_protected_change_credentials_capability              2L,6L,4L,9L,5L
+
+#define SN_id_arch              "id-arch"
+#define NID_id_arch             3428
+#define OBJ_id_arch             2L,6L,5L
+
+#define SN_id_object_identifiers                "id-object-identifiers"
+#define NID_id_object_identifiers               3429
+#define OBJ_id_object_identifiers               2L,6L,5L,0L,0L
+
+#define SN_id_directory_objects_and_attributes          "id-directory-objects-and-attributes"
+#define NID_id_directory_objects_and_attributes         3430
+#define OBJ_id_directory_objects_and_attributes         2L,6L,5L,0L,1L
+
+#define SN_id_oc                "id-oc"
+#define NID_id_oc               3431
+#define OBJ_id_oc               2L,6L,5L,1L
+
+#define SN_id_oc_mhs_distribution_list          "id-oc-mhs-distribution-list"
+#define NID_id_oc_mhs_distribution_list         3432
+#define OBJ_id_oc_mhs_distribution_list         2L,6L,5L,1L,0L
+
+#define SN_id_oc_mhs_message_store              "id-oc-mhs-message-store"
+#define NID_id_oc_mhs_message_store             3433
+#define OBJ_id_oc_mhs_message_store             2L,6L,5L,1L,1L
+
+#define SN_id_oc_mhs_message_transfer_agent             "id-oc-mhs-message-transfer-agent"
+#define NID_id_oc_mhs_message_transfer_agent            3434
+#define OBJ_id_oc_mhs_message_transfer_agent            2L,6L,5L,1L,2L
+
+#define SN_id_oc_mhs_user               "id-oc-mhs-user"
+#define NID_id_oc_mhs_user              3435
+#define OBJ_id_oc_mhs_user              2L,6L,5L,1L,3L
+
+#define SN_id_oc_mhs_user_agent         "id-oc-mhs-user-agent"
+#define NID_id_oc_mhs_user_agent                3436
+#define OBJ_id_oc_mhs_user_agent                2L,6L,5L,1L,4L
+
+#define SN_id_at                "id-at"
+#define NID_id_at               3437
+#define OBJ_id_at               2L,6L,5L,2L
+
+#define SN_id_at_mhs_maximum_content_length             "id-at-mhs-maximum-content-length"
+#define NID_id_at_mhs_maximum_content_length            3438
+#define OBJ_id_at_mhs_maximum_content_length            2L,6L,5L,2L,0L
+
+#define SN_id_at_encrypted_mhs_maximum_content_length           "id-at-encrypted-mhs-maximum-content-length"
+#define NID_id_at_encrypted_mhs_maximum_content_length          3439
+#define OBJ_id_at_encrypted_mhs_maximum_content_length          2L,6L,5L,2L,0L,2L
+
+#define SN_id_at_mhs_deliverable_content_types          "id-at-mhs-deliverable-content-types"
+#define NID_id_at_mhs_deliverable_content_types         3440
+#define OBJ_id_at_mhs_deliverable_content_types         2L,6L,5L,2L,1L
+
+#define SN_id_at_encrypted_mhs_deliverable_content_types                "id-at-encrypted-mhs-deliverable-content-types"
+#define NID_id_at_encrypted_mhs_deliverable_content_types               3441
+#define OBJ_id_at_encrypted_mhs_deliverable_content_types               2L,6L,5L,2L,1L,2L
+
+#define SN_id_at_mhs_supported_attributes               "id-at-mhs-supported-attributes"
+#define NID_id_at_mhs_supported_attributes              3442
+#define OBJ_id_at_mhs_supported_attributes              2L,6L,5L,2L,10L
+
+#define SN_id_at_encrypted_mhs_supported_attributes             "id-at-encrypted-mhs-supported-attributes"
+#define NID_id_at_encrypted_mhs_supported_attributes            3443
+#define OBJ_id_at_encrypted_mhs_supported_attributes            2L,6L,5L,2L,10L,2L
+
+#define SN_id_at_mhs_supported_matching_rules           "id-at-mhs-supported-matching-rules"
+#define NID_id_at_mhs_supported_matching_rules          3444
+#define OBJ_id_at_mhs_supported_matching_rules          2L,6L,5L,2L,11L
+
+#define SN_id_at_encrypted_mhs_supported_matching_rules         "id-at-encrypted-mhs-supported-matching-rules"
+#define NID_id_at_encrypted_mhs_supported_matching_rules                3445
+#define OBJ_id_at_encrypted_mhs_supported_matching_rules                2L,6L,5L,2L,11L,2L
+
+#define SN_id_at_mhs_dl_archive_service         "id-at-mhs-dl-archive-service"
+#define NID_id_at_mhs_dl_archive_service                3446
+#define OBJ_id_at_mhs_dl_archive_service                2L,6L,5L,2L,12L
+
+#define SN_id_at_encrypted_mhs_dl_archive_service               "id-at-encrypted-mhs-dl-archive-service"
+#define NID_id_at_encrypted_mhs_dl_archive_service              3447
+#define OBJ_id_at_encrypted_mhs_dl_archive_service              2L,6L,5L,2L,12L,2L
+
+#define SN_id_at_mhs_dl_policy          "id-at-mhs-dl-policy"
+#define NID_id_at_mhs_dl_policy         3448
+#define OBJ_id_at_mhs_dl_policy         2L,6L,5L,2L,13L
+
+#define SN_id_at_encrypted_mhs_dl_policy                "id-at-encrypted-mhs-dl-policy"
+#define NID_id_at_encrypted_mhs_dl_policy               3449
+#define OBJ_id_at_encrypted_mhs_dl_policy               2L,6L,5L,2L,13L,2L
+
+#define SN_id_at_mhs_dl_related_lists           "id-at-mhs-dl-related-lists"
+#define NID_id_at_mhs_dl_related_lists          3450
+#define OBJ_id_at_mhs_dl_related_lists          2L,6L,5L,2L,14L
+
+#define SN_id_at_encrypted_mhs_dl_related_lists         "id-at-encrypted-mhs-dl-related-lists"
+#define NID_id_at_encrypted_mhs_dl_related_lists                3451
+#define OBJ_id_at_encrypted_mhs_dl_related_lists                2L,6L,5L,2L,14L,2L
+
+#define SN_id_at_mhs_dl_subscription_service            "id-at-mhs-dl-subscription-service"
+#define NID_id_at_mhs_dl_subscription_service           3452
+#define OBJ_id_at_mhs_dl_subscription_service           2L,6L,5L,2L,15L
+
+#define SN_id_at_encrypted_mhs_dl_subscription_service          "id-at-encrypted-mhs-dl-subscription-service"
+#define NID_id_at_encrypted_mhs_dl_subscription_service         3453
+#define OBJ_id_at_encrypted_mhs_dl_subscription_service         2L,6L,5L,2L,15L,2L
+
+#define SN_id_at_mhs_or_addresses_with_capabilities             "id-at-mhs-or-addresses-with-capabilities"
+#define NID_id_at_mhs_or_addresses_with_capabilities            3454
+#define OBJ_id_at_mhs_or_addresses_with_capabilities            2L,6L,5L,2L,16L
+
+#define SN_id_at_encrypted_mhs_or_addresses_with_capabilities           "id-at-encrypted-mhs-or-addresses-with-capabilities"
+#define NID_id_at_encrypted_mhs_or_addresses_with_capabilities          3455
+#define OBJ_id_at_encrypted_mhs_or_addresses_with_capabilities          2L,6L,5L,2L,16L,2L
+
+#define SN_id_at_mhs_acceptable_eits            "id-at-mhs-acceptable-eits"
+#define NID_id_at_mhs_acceptable_eits           3456
+#define OBJ_id_at_mhs_acceptable_eits           2L,6L,5L,2L,17L
+
+#define SN_id_at_encrypted_mhs_acceptable_eits          "id-at-encrypted-mhs-acceptable-eits"
+#define NID_id_at_encrypted_mhs_acceptable_eits         3457
+#define OBJ_id_at_encrypted_mhs_acceptable_eits         2L,6L,5L,2L,17L,2L
+
+#define SN_id_at_mhs_unacceptable_eits          "id-at-mhs-unacceptable-eits"
+#define NID_id_at_mhs_unacceptable_eits         3458
+#define OBJ_id_at_mhs_unacceptable_eits         2L,6L,5L,2L,18L
+
+#define SN_id_at_encrypted_mhs_unacceptable_eits                "id-at-encrypted-mhs-unacceptable-eits"
+#define NID_id_at_encrypted_mhs_unacceptable_eits               3459
+#define OBJ_id_at_encrypted_mhs_unacceptable_eits               2L,6L,5L,2L,18L,2L
+
+#define SN_id_at_mhs_deliverable_classes                "id-at-mhs-deliverable-classes"
+#define NID_id_at_mhs_deliverable_classes               3460
+#define OBJ_id_at_mhs_deliverable_classes               2L,6L,5L,2L,19L
+
+#define SN_id_at_encrypted_mhs_deliverable_classes              "id-at-encrypted-mhs-deliverable-classes"
+#define NID_id_at_encrypted_mhs_deliverable_classes             3461
+#define OBJ_id_at_encrypted_mhs_deliverable_classes             2L,6L,5L,2L,19L,2L
+
+#define SN_id_at_mhs_exclusively_acceptable_eits                "id-at-mhs-exclusively-acceptable-eits"
+#define NID_id_at_mhs_exclusively_acceptable_eits               3462
+#define OBJ_id_at_mhs_exclusively_acceptable_eits               2L,6L,5L,2L,2L
+
+#define SN_id_at_encrypted_mhs_exclusively_acceptable_eits              "id-at-encrypted-mhs-exclusively-acceptable-eits"
+#define NID_id_at_encrypted_mhs_exclusively_acceptable_eits             3463
+#define OBJ_id_at_encrypted_mhs_exclusively_acceptable_eits             2L,6L,5L,2L,2L,2L
+
+#define SN_id_at_mhs_dl_members         "id-at-mhs-dl-members"
+#define NID_id_at_mhs_dl_members                3464
+#define OBJ_id_at_mhs_dl_members                2L,6L,5L,2L,3L
+
+#define SN_id_at_encrypted_mhs_dl_members               "id-at-encrypted-mhs-dl-members"
+#define NID_id_at_encrypted_mhs_dl_members              3465
+#define OBJ_id_at_encrypted_mhs_dl_members              2L,6L,5L,2L,3L,2L
+
+#define SN_id_at_mhs_dl_submit_permissions              "id-at-mhs-dl-submit-permissions"
+#define NID_id_at_mhs_dl_submit_permissions             3466
+#define OBJ_id_at_mhs_dl_submit_permissions             2L,6L,5L,2L,4L
+
+#define SN_id_at_encrypted_mhs_dl_submit_permissions            "id-at-encrypted-mhs-dl-submit-permissions"
+#define NID_id_at_encrypted_mhs_dl_submit_permissions           3467
+#define OBJ_id_at_encrypted_mhs_dl_submit_permissions           2L,6L,5L,2L,4L,2L
+
+#define SN_id_at_mhs_message_store_dn           "id-at-mhs-message-store-dn"
+#define NID_id_at_mhs_message_store_dn          3468
+#define OBJ_id_at_mhs_message_store_dn          2L,6L,5L,2L,5L
+
+#define SN_id_at_encrypted_mhs_message_store_dn         "id-at-encrypted-mhs-message-store-dn"
+#define NID_id_at_encrypted_mhs_message_store_dn                3469
+#define OBJ_id_at_encrypted_mhs_message_store_dn                2L,6L,5L,2L,5L,2L
+
+#define SN_id_at_mhs_or_addresses               "id-at-mhs-or-addresses"
+#define NID_id_at_mhs_or_addresses              3470
+#define OBJ_id_at_mhs_or_addresses              2L,6L,5L,2L,6L
+
+#define SN_id_at_encrypted_mhs_or_addresses             "id-at-encrypted-mhs-or-addresses"
+#define NID_id_at_encrypted_mhs_or_addresses            3471
+#define OBJ_id_at_encrypted_mhs_or_addresses            2L,6L,5L,2L,6L,2L
+
+#define SN_id_at_mhs_supported_automatic_actions                "id-at-mhs-supported-automatic-actions"
+#define NID_id_at_mhs_supported_automatic_actions               3472
+#define OBJ_id_at_mhs_supported_automatic_actions               2L,6L,5L,2L,8L
+
+#define SN_id_at_encrypted_mhs_supported_automatic_actions              "id-at-encrypted-mhs-supported-automatic-actions"
+#define NID_id_at_encrypted_mhs_supported_automatic_actions             3473
+#define OBJ_id_at_encrypted_mhs_supported_automatic_actions             2L,6L,5L,2L,8L,2L
+
+#define SN_id_at_mhs_supported_content_types            "id-at-mhs-supported-content-types"
+#define NID_id_at_mhs_supported_content_types           3474
+#define OBJ_id_at_mhs_supported_content_types           2L,6L,5L,2L,9L
+
+#define SN_id_at_encrypted_mhs_supported_content_types          "id-at-encrypted-mhs-supported-content-types"
+#define NID_id_at_encrypted_mhs_supported_content_types         3475
+#define OBJ_id_at_encrypted_mhs_supported_content_types         2L,6L,5L,2L,9L,2L
+
+#define SN_id_mr_orname_exact_match             "id-mr-orname-exact-match"
+#define NID_id_mr_orname_exact_match            3476
+#define OBJ_id_mr_orname_exact_match            2L,6L,5L,4L,0L
+
+#define SN_id_mr_address_capabilities_match             "id-mr-address-capabilities-match"
+#define NID_id_mr_address_capabilities_match            3477
+#define OBJ_id_mr_address_capabilities_match            2L,6L,5L,4L,1L
+
+#define SN_id_mr_capability_match               "id-mr-capability-match"
+#define NID_id_mr_capability_match              3478
+#define OBJ_id_mr_capability_match              2L,6L,5L,4L,2L
+
+#define SN_id_con               "id-con"
+#define NID_id_con              3479
+#define OBJ_id_con              2L,6L,5L,5L
+
+#define SN_id_con_dl_administrator_annotation           "id-con-dl-administrator-annotation"
+#define NID_id_con_dl_administrator_annotation          3480
+#define OBJ_id_con_dl_administrator_annotation          2L,6L,5L,5L,0L
+
+#define SN_id_con_dl_nested_dl          "id-con-dl-nested-dl"
+#define NID_id_con_dl_nested_dl         3481
+#define OBJ_id_con_dl_nested_dl         2L,6L,5L,5L,1L
+
+#define SN_id_con_dl_reset_originator           "id-con-dl-reset-originator"
+#define NID_id_con_dl_reset_originator          3482
+#define OBJ_id_con_dl_reset_originator          2L,6L,5L,5L,2L
+
+#define SN_id_san               "id-san"
+#define NID_id_san              3483
+#define OBJ_id_san              2L,6L,5L,6L
+
+#define SN_id_san_mta_name              "id-san-mta-name"
+#define NID_id_san_mta_name             3484
+#define OBJ_id_san_mta_name             2L,6L,5L,6L,0L
+
+#define SN_id_group             "id-group"
+#define NID_id_group            3485
+#define OBJ_id_group            2L,6L,6L
+
+#define SN_id_edims             "id-edims"
+#define NID_id_edims            3486
+#define OBJ_id_edims            2L,6L,7L
+
+#define SN_id_mod               "id-mod"
+#define NID_id_mod              3487
+#define OBJ_id_mod              2L,6L,7L,0L
+
+#define SN_id_mod_object_identifiers            "id-mod-object-identifiers"
+#define NID_id_mod_object_identifiers           3488
+#define OBJ_id_mod_object_identifiers           2L,6L,7L,0L,0L
+
+#define SN_id_mod_functional_objects            "id-mod-functional-objects"
+#define NID_id_mod_functional_objects           3489
+#define OBJ_id_mod_functional_objects           2L,6L,7L,0L,1L
+
+#define SN_id_mod_information_objects           "id-mod-information-objects"
+#define NID_id_mod_information_objects          3490
+#define OBJ_id_mod_information_objects          2L,6L,7L,0L,2L
+
+#define SN_id_mod_abstract_service              "id-mod-abstract-service"
+#define NID_id_mod_abstract_service             3491
+#define OBJ_id_mod_abstract_service             2L,6L,7L,0L,3L
+
+#define SN_id_mod_message_store_attributes              "id-mod-message-store-attributes"
+#define NID_id_mod_message_store_attributes             3492
+#define OBJ_id_mod_message_store_attributes             2L,6L,7L,0L,4L
+
+#define SN_id_mod_upper_bounds          "id-mod-upper-bounds"
+#define NID_id_mod_upper_bounds         3493
+#define OBJ_id_mod_upper_bounds         2L,6L,7L,0L,5L
+
+#define SN_id_mod_edi_directory_cl_att          "id-mod-edi-directory-cl-att"
+#define NID_id_mod_edi_directory_cl_att         3494
+#define OBJ_id_mod_edi_directory_cl_att         2L,6L,7L,0L,6L
+
+#define SN_id_mod_message_store_auto_actions            "id-mod-message-store-auto-actions"
+#define NID_id_mod_message_store_auto_actions           3495
+#define OBJ_id_mod_message_store_auto_actions           2L,6L,7L,0L,7L
+
+#define SN_id_edi               "id-edi"
+#define NID_id_edi              3496
+#define OBJ_id_edi              2L,6L,7L,1L
+
+#define SN_id_edi_compression           "id-edi-compression"
+#define NID_id_edi_compression          3497
+#define OBJ_id_edi_compression          2L,6L,7L,1L,0L
+
+#define SN_id_edi_compression_v42bis            "id-edi-compression-v42bis"
+#define NID_id_edi_compression_v42bis           3498
+#define OBJ_id_edi_compression_v42bis           2L,6L,7L,1L,1L
+
+#define SN_id_mct               "id-mct"
+#define NID_id_mct              3499
+#define OBJ_id_mct              2L,6L,7L,10L
+
+#define SN_id_mct_pedi          "id-mct-pedi"
+#define NID_id_mct_pedi         3500
+#define OBJ_id_mct_pedi         2L,6L,7L,10L,0L
+
+#define SN_id_bp                "id-bp"
+#define NID_id_bp               3501
+#define OBJ_id_bp               2L,6L,7L,11L
+
+#define SN_id_bp_edifact_ISO646         "id-bp-edifact-ISO646"
+#define NID_id_bp_edifact_ISO646                3502
+#define OBJ_id_bp_edifact_ISO646                2L,6L,7L,11L,0L
+
+#define SN_id_bp_edifact_TeletexString          "id-bp-edifact-TeletexString"
+#define NID_id_bp_edifact_TeletexString         3503
+#define OBJ_id_bp_edifact_TeletexString         2L,6L,7L,11L,1L
+
+#define SN_id_bp_private_octet          "id-bp-private-octet"
+#define NID_id_bp_private_octet         3504
+#define OBJ_id_bp_private_octet         2L,6L,7L,11L,10L
+
+#define SN_id_bp_undefined_octet                "id-bp-undefined-octet"
+#define NID_id_bp_undefined_octet               3505
+#define OBJ_id_bp_undefined_octet               2L,6L,7L,11L,11L
+
+#define SN_id_bp_edifact_8859           "id-bp-edifact-8859"
+#define NID_id_bp_edifact_8859          3506
+#define OBJ_id_bp_edifact_8859          2L,6L,7L,11L,12L
+
+#define SN_id_bp_edifact_octet          "id-bp-edifact-octet"
+#define NID_id_bp_edifact_octet         3507
+#define OBJ_id_bp_edifact_octet         2L,6L,7L,11L,2L
+
+#define SN_id_bp_ansiX12_ISO646         "id-bp-ansiX12-ISO646"
+#define NID_id_bp_ansiX12_ISO646                3508
+#define OBJ_id_bp_ansiX12_ISO646                2L,6L,7L,11L,3L
+
+#define SN_id_bp_ansiX12_TeletexString          "id-bp-ansiX12-TeletexString"
+#define NID_id_bp_ansiX12_TeletexString         3509
+#define OBJ_id_bp_ansiX12_TeletexString         2L,6L,7L,11L,4L
+
+#define SN_id_bp_ansiX12_octet          "id-bp-ansiX12-octet"
+#define NID_id_bp_ansiX12_octet         3510
+#define OBJ_id_bp_ansiX12_octet         2L,6L,7L,11L,5L
+
+#define SN_id_bp_ansiX12_ebcdic         "id-bp-ansiX12-ebcdic"
+#define NID_id_bp_ansiX12_ebcdic                3511
+#define OBJ_id_bp_ansiX12_ebcdic                2L,6L,7L,11L,6L
+
+#define SN_id_bp_untdi_ISO646           "id-bp-untdi-ISO646"
+#define NID_id_bp_untdi_ISO646          3512
+#define OBJ_id_bp_untdi_ISO646          2L,6L,7L,11L,7L
+
+#define SN_id_bp_untdi_TeletexString            "id-bp-untdi-TeletexString"
+#define NID_id_bp_untdi_TeletexString           3513
+#define OBJ_id_bp_untdi_TeletexString           2L,6L,7L,11L,8L
+
+#define SN_id_bp_untdi_octet            "id-bp-untdi-octet"
+#define NID_id_bp_untdi_octet           3514
+#define OBJ_id_bp_untdi_octet           2L,6L,7L,11L,9L
+
+#define SN_id_nt                "id-nt"
+#define NID_id_nt               3515
+#define OBJ_id_nt               2L,6L,7L,12L
+
+#define SN_id_for               "id-for"
+#define NID_id_for              3516
+#define OBJ_id_for              2L,6L,7L,13L
+
+#define SN_id_for_action                "id-for-action"
+#define NID_id_for_action               3517
+#define OBJ_id_for_action               2L,6L,7L,13L,0L
+
+#define SN_id_for_copy          "id-for-copy"
+#define NID_id_for_copy         3518
+#define OBJ_id_for_copy         2L,6L,7L,13L,1L
+
+#define SN_id_act               "id-act"
+#define NID_id_act              3519
+#define OBJ_id_act              2L,6L,7L,14L
+
+#define SN_id_act_edi_auto_forward              "id-act-edi-auto-forward"
+#define NID_id_act_edi_auto_forward             3520
+#define OBJ_id_act_edi_auto_forward             2L,6L,7L,14L,0L
+
+#define SN_id_act_edi_auto_correlate            "id-act-edi-auto-correlate"
+#define NID_id_act_edi_auto_correlate           3521
+#define OBJ_id_act_edi_auto_correlate           2L,6L,7L,14L,1L
+
+#define SN_id_act_edi_auto_acknowledgement              "id-act-edi-auto-acknowledgement"
+#define NID_id_act_edi_auto_acknowledgement             3522
+#define OBJ_id_act_edi_auto_acknowledgement             2L,6L,7L,14L,2L
+
+#define SN_id_act_edi_auto_forward_v2           "id-act-edi-auto-forward-v2"
+#define NID_id_act_edi_auto_forward_v2          3523
+#define OBJ_id_act_edi_auto_forward_v2          2L,6L,7L,14L,3L
+
+#define SN_id_dir               "id-dir"
+#define NID_id_dir              3524
+#define OBJ_id_dir              2L,6L,7L,15L
+
+#define SN_id_doc               "id-doc"
+#define NID_id_doc              3525
+#define OBJ_id_doc              2L,6L,7L,15L,0L
+
+#define SN_id_doc_edi_user              "id-doc-edi-user"
+#define NID_id_doc_edi_user             3526
+#define OBJ_id_doc_edi_user             2L,6L,7L,15L,0L,0L
+
+#define SN_id_doc_edi_user_agent                "id-doc-edi-user-agent"
+#define NID_id_doc_edi_user_agent               3527
+#define OBJ_id_doc_edi_user_agent               2L,6L,7L,15L,0L,1L
+
+#define SN_id_doc_edi_message_store             "id-doc-edi-message-store"
+#define NID_id_doc_edi_message_store            3528
+#define OBJ_id_doc_edi_message_store            2L,6L,7L,15L,0L,2L
+
+#define SN_id_dat               "id-dat"
+#define NID_id_dat              3529
+#define OBJ_id_dat              2L,6L,7L,15L,1L
+
+#define SN_id_dat_edi_name              "id-dat-edi-name"
+#define NID_id_dat_edi_name             3530
+#define OBJ_id_dat_edi_name             2L,6L,7L,15L,1L,0L
+
+#define SN_id_dat_edi_routing_address           "id-dat-edi-routing-address"
+#define NID_id_dat_edi_routing_address          3531
+#define OBJ_id_dat_edi_routing_address          2L,6L,7L,15L,1L,1L
+
+#define SN_id_dat_edi_capabilities              "id-dat-edi-capabilities"
+#define NID_id_dat_edi_capabilities             3532
+#define OBJ_id_dat_edi_capabilities             2L,6L,7L,15L,1L,2L
+
+#define SN_id_syn               "id-syn"
+#define NID_id_syn              3533
+#define OBJ_id_syn              2L,6L,7L,16L
+
+#define SN_id_syn_removed               "id-syn-removed"
+#define NID_id_syn_removed              3534
+#define OBJ_id_syn_removed              2L,6L,7L,16L,0L
+
+#define SN_id_syn_place_holder          "id-syn-place-holder"
+#define NID_id_syn_place_holder         3535
+#define OBJ_id_syn_place_holder         2L,6L,7L,16L,1L
+
+#define SN_id_cat               "id-cat"
+#define NID_id_cat              3536
+#define OBJ_id_cat              2L,6L,7L,17L
+
+#define SN_id_cat_correlated_delivered_edins            "id-cat-correlated-delivered-edins"
+#define NID_id_cat_correlated_delivered_edins           3537
+#define OBJ_id_cat_correlated_delivered_edins           2L,6L,7L,17L,0L
+
+#define SN_id_cat_delivered_edin_summary                "id-cat-delivered-edin-summary"
+#define NID_id_cat_delivered_edin_summary               3538
+#define OBJ_id_cat_delivered_edin_summary               2L,6L,7L,17L,1L
+
+#define SN_id_cat_submitted_edin_status         "id-cat-submitted-edin-status"
+#define NID_id_cat_submitted_edin_status                3539
+#define OBJ_id_cat_submitted_edin_status                2L,6L,7L,17L,10L
+
+#define SN_id_cat_submitted_edins               "id-cat-submitted-edins"
+#define NID_id_cat_submitted_edins              3540
+#define OBJ_id_cat_submitted_edins              2L,6L,7L,17L,11L
+
+#define SN_id_cat_edim_recipients               "id-cat-edim-recipients"
+#define NID_id_cat_edim_recipients              3541
+#define OBJ_id_cat_edim_recipients              2L,6L,7L,17L,2L
+
+#define SN_id_cat_forwarded_edims               "id-cat-forwarded-edims"
+#define NID_id_cat_forwarded_edims              3542
+#define OBJ_id_cat_forwarded_edims              2L,6L,7L,17L,3L
+
+#define SN_id_cat_forwarding_edims              "id-cat-forwarding-edims"
+#define NID_id_cat_forwarding_edims             3543
+#define OBJ_id_cat_forwarding_edims             2L,6L,7L,17L,4L
+
+#define SN_id_cat_obsoleted_edims               "id-cat-obsoleted-edims"
+#define NID_id_cat_obsoleted_edims              3544
+#define OBJ_id_cat_obsoleted_edims              2L,6L,7L,17L,5L
+
+#define SN_id_cat_obsoleting_edims              "id-cat-obsoleting-edims"
+#define NID_id_cat_obsoleting_edims             3545
+#define OBJ_id_cat_obsoleting_edims             2L,6L,7L,17L,6L
+
+#define SN_id_cat_related_edims         "id-cat-related-edims"
+#define NID_id_cat_related_edims                3546
+#define OBJ_id_cat_related_edims                2L,6L,7L,17L,7L
+
+#define SN_id_cat_relating_edims                "id-cat-relating-edims"
+#define NID_id_cat_relating_edims               3547
+#define OBJ_id_cat_relating_edims               2L,6L,7L,17L,8L
+
+#define SN_id_cat_subject_edim          "id-cat-subject-edim"
+#define NID_id_cat_subject_edim         3548
+#define OBJ_id_cat_subject_edim         2L,6L,7L,17L,9L
+
+#define SN_id_aae               "id-aae"
+#define NID_id_aae              3549
+#define OBJ_id_aae              2L,6L,7L,18L
+
+#define SN_id_aae_edi_auto_forwarding_loop              "id-aae-edi-auto-forwarding-loop"
+#define NID_id_aae_edi_auto_forwarding_loop             3550
+#define OBJ_id_aae_edi_auto_forwarding_loop             2L,6L,7L,18L,0L
+
+#define SN_id_aae_duplicate_edin                "id-aae-duplicate-edin"
+#define NID_id_aae_duplicate_edin               3551
+#define OBJ_id_aae_duplicate_edin               2L,6L,7L,18L,1L
+
+#define SN_id_ext               "id-ext"
+#define NID_id_ext              3552
+#define OBJ_id_ext              2L,6L,7L,19L
+
+#define SN_id_ext_submission_options            "id-ext-submission-options"
+#define NID_id_ext_submission_options           3553
+#define OBJ_id_ext_submission_options           2L,6L,7L,19L,0L
+
+#define SN_id_ext_invalid_assembly_instructions         "id-ext-invalid-assembly-instructions"
+#define NID_id_ext_invalid_assembly_instructions                3554
+#define OBJ_id_ext_invalid_assembly_instructions                2L,6L,7L,19L,1L
+
+#define SN_id_ot                "id-ot"
+#define NID_id_ot               3555
+#define OBJ_id_ot               2L,6L,7L,2L
+
+#define SN_id_ot_edime          "id-ot-edime"
+#define NID_id_ot_edime         3556
+#define OBJ_id_ot_edime         2L,6L,7L,2L,0L
+
+#define SN_id_ot_edimg_user             "id-ot-edimg-user"
+#define NID_id_ot_edimg_user            3557
+#define OBJ_id_ot_edimg_user            2L,6L,7L,2L,1L
+
+#define SN_id_ot_edims          "id-ot-edims"
+#define NID_id_ot_edims         3558
+#define OBJ_id_ot_edims         2L,6L,7L,2L,2L
+
+#define SN_id_ot_edi_ua         "id-ot-edi-ua"
+#define NID_id_ot_edi_ua                3559
+#define OBJ_id_ot_edi_ua                2L,6L,7L,2L,3L
+
+#define SN_id_ot_edi_ms         "id-ot-edi-ms"
+#define NID_id_ot_edi_ms                3560
+#define OBJ_id_ot_edi_ms                2L,6L,7L,2L,4L
+
+#define SN_id_ot_pdau           "id-ot-pdau"
+#define NID_id_ot_pdau          3561
+#define OBJ_id_ot_pdau          2L,6L,7L,2L,5L
+
+#define SN_id_pt                "id-pt"
+#define NID_id_pt               3562
+#define OBJ_id_pt               2L,6L,7L,3L
+
+#define SN_id_pt_origination            "id-pt-origination"
+#define NID_id_pt_origination           3563
+#define OBJ_id_pt_origination           2L,6L,7L,3L,0L
+
+#define SN_id_pt_reception              "id-pt-reception"
+#define NID_id_pt_reception             3564
+#define OBJ_id_pt_reception             2L,6L,7L,3L,1L
+
+#define SN_id_ref               "id-ref"
+#define NID_id_ref              3565
+#define OBJ_id_ref              2L,6L,7L,4L
+
+#define SN_id_sat               "id-sat"
+#define NID_id_sat              3566
+#define OBJ_id_sat              2L,6L,7L,5L
+
+#define SN_id_sat_edims_entry_type              "id-sat-edims-entry-type"
+#define NID_id_sat_edims_entry_type             3567
+#define OBJ_id_sat_edims_entry_type             2L,6L,7L,5L,0L
+
+#define SN_id_sat_edim_synopsis         "id-sat-edim-synopsis"
+#define NID_id_sat_edim_synopsis                3568
+#define OBJ_id_sat_edim_synopsis                2L,6L,7L,5L,1L
+
+#define SN_id_sat_edi_notification_indicator            "id-sat-edi-notification-indicator"
+#define NID_id_sat_edi_notification_indicator           3569
+#define OBJ_id_sat_edi_notification_indicator           2L,6L,7L,5L,2L
+
+#define SN_id_hat               "id-hat"
+#define NID_id_hat              3570
+#define OBJ_id_hat              2L,6L,7L,6L
+
+#define SN_id_hat_heading               "id-hat-heading"
+#define NID_id_hat_heading              3571
+#define OBJ_id_hat_heading              2L,6L,7L,6L,0L
+
+#define SN_id_hat_this_edim             "id-hat-this-edim"
+#define NID_id_hat_this_edim            3572
+#define OBJ_id_hat_this_edim            2L,6L,7L,6L,1L
+
+#define SN_id_hat_obsoleted_edims               "id-hat-obsoleted-edims"
+#define NID_id_hat_obsoleted_edims              3573
+#define OBJ_id_hat_obsoleted_edims              2L,6L,7L,6L,10L
+
+#define SN_id_hat_edi_application_security_element              "id-hat-edi-application-security-element"
+#define NID_id_hat_edi_application_security_element             3574
+#define OBJ_id_hat_edi_application_security_element             2L,6L,7L,6L,11L
+
+#define SN_id_hat_edi_application_security_extensions           "id-hat-edi-application-security-extensions"
+#define NID_id_hat_edi_application_security_extensions          3575
+#define OBJ_id_hat_edi_application_security_extensions          2L,6L,7L,6L,12L
+
+#define SN_id_hat_cross_referencing_information         "id-hat-cross-referencing-information"
+#define NID_id_hat_cross_referencing_information                3576
+#define OBJ_id_hat_cross_referencing_information                2L,6L,7L,6L,13L
+
+#define SN_id_hat_edi_message_type              "id-hat-edi-message-type"
+#define NID_id_hat_edi_message_type             3577
+#define OBJ_id_hat_edi_message_type             2L,6L,7L,6L,14L
+
+#define SN_id_hat_service_string_advice         "id-hat-service-string-advice"
+#define NID_id_hat_service_string_advice                3578
+#define OBJ_id_hat_service_string_advice                2L,6L,7L,6L,15L
+
+#define SN_id_hat_syntax_identifier             "id-hat-syntax-identifier"
+#define NID_id_hat_syntax_identifier            3579
+#define OBJ_id_hat_syntax_identifier            2L,6L,7L,6L,16L
+
+#define SN_id_hat_interchange_sender            "id-hat-interchange-sender"
+#define NID_id_hat_interchange_sender           3580
+#define OBJ_id_hat_interchange_sender           2L,6L,7L,6L,17L
+
+#define SN_id_hat_date_and_time_of_preparation          "id-hat-date-and-time-of-preparation"
+#define NID_id_hat_date_and_time_of_preparation         3581
+#define OBJ_id_hat_date_and_time_of_preparation         2L,6L,7L,6L,18L
+
+#define SN_id_hat_application_reference         "id-hat-application-reference"
+#define NID_id_hat_application_reference                3582
+#define OBJ_id_hat_application_reference                2L,6L,7L,6L,19L
+
+#define SN_id_hat_originator            "id-hat-originator"
+#define NID_id_hat_originator           3583
+#define OBJ_id_hat_originator           2L,6L,7L,6L,2L
+
+#define SN_id_hat_heading_extensions            "id-hat-heading-extensions"
+#define NID_id_hat_heading_extensions           3584
+#define OBJ_id_hat_heading_extensions           2L,6L,7L,6L,20L
+
+#define SN_id_hat_recipients            "id-hat-recipients"
+#define NID_id_hat_recipients           3585
+#define OBJ_id_hat_recipients           2L,6L,7L,6L,3L
+
+#define SN_id_hat_edin_receiver         "id-hat-edin-receiver"
+#define NID_id_hat_edin_receiver                3586
+#define OBJ_id_hat_edin_receiver                2L,6L,7L,6L,4L
+
+#define SN_id_hat_responsibility_forwarded              "id-hat-responsibility-forwarded"
+#define NID_id_hat_responsibility_forwarded             3587
+#define OBJ_id_hat_responsibility_forwarded             2L,6L,7L,6L,5L
+
+#define SN_id_hat_edi_bodypart_type             "id-hat-edi-bodypart-type"
+#define NID_id_hat_edi_bodypart_type            3588
+#define OBJ_id_hat_edi_bodypart_type            2L,6L,7L,6L,6L
+
+#define SN_id_hat_incomplete_copy               "id-hat-incomplete-copy"
+#define NID_id_hat_incomplete_copy              3589
+#define OBJ_id_hat_incomplete_copy              2L,6L,7L,6L,7L
+
+#define SN_id_hat_expiry_time           "id-hat-expiry-time"
+#define NID_id_hat_expiry_time          3590
+#define OBJ_id_hat_expiry_time          2L,6L,7L,6L,8L
+
+#define SN_id_hat_related_messages              "id-hat-related-messages"
+#define NID_id_hat_related_messages             3591
+#define OBJ_id_hat_related_messages             2L,6L,7L,6L,9L
+
+#define SN_id_rat               "id-rat"
+#define NID_id_rat              3592
+#define OBJ_id_rat              2L,6L,7L,7L
+
+#define SN_id_rat_this_recipient                "id-rat-this-recipient"
+#define NID_id_rat_this_recipient               3593
+#define OBJ_id_rat_this_recipient               2L,6L,7L,7L,0L
+
+#define SN_id_rat_action_request_for_this_recipient             "id-rat-action-request-for-this-recipient"
+#define NID_id_rat_action_request_for_this_recipient            3594
+#define OBJ_id_rat_action_request_for_this_recipient            2L,6L,7L,7L,1L
+
+#define SN_id_rat_test_indicator_for_this_recipient             "id-rat-test-indicator-for-this-recipient"
+#define NID_id_rat_test_indicator_for_this_recipient            3595
+#define OBJ_id_rat_test_indicator_for_this_recipient            2L,6L,7L,7L,10L
+
+#define SN_id_rat_edi_notification_security_for_this_recipient          "id-rat-edi-notification-security-for-this-recipient"
+#define NID_id_rat_edi_notification_security_for_this_recipient         3596
+#define OBJ_id_rat_edi_notification_security_for_this_recipient         2L,6L,7L,7L,11L
+
+#define SN_id_rat_edi_reception_security_for_this_recipient             "id-rat-edi-reception-security-for-this-recipient"
+#define NID_id_rat_edi_reception_security_for_this_recipient            3597
+#define OBJ_id_rat_edi_reception_security_for_this_recipient            2L,6L,7L,7L,12L
+
+#define SN_id_rat_recipient_extensions_for_this_recipient               "id-rat-recipient-extensions-for-this-recipient"
+#define NID_id_rat_recipient_extensions_for_this_recipient              3598
+#define OBJ_id_rat_recipient_extensions_for_this_recipient              2L,6L,7L,7L,13L
+
+#define SN_id_rat_authorization_information_for_this_recipient          "id-rat-authorization-information-for-this-recipient"
+#define NID_id_rat_authorization_information_for_this_recipient         3599
+#define OBJ_id_rat_authorization_information_for_this_recipient         2L,6L,7L,7L,14L
+
+#define SN_id_rat_edi_notification_requests_for_this_recipient          "id-rat-edi-notification-requests-for-this-recipient"
+#define NID_id_rat_edi_notification_requests_for_this_recipient         3600
+#define OBJ_id_rat_edi_notification_requests_for_this_recipient         2L,6L,7L,7L,2L
+
+#define SN_id_rat_responsibility_passing_allowed_for_this_recipient             "id-rat-responsibility-passing-allowed-for-this-recipient"
+#define NID_id_rat_responsibility_passing_allowed_for_this_recipient            3601
+#define OBJ_id_rat_responsibility_passing_allowed_for_this_recipient            2L,6L,7L,7L,3L
+
+#define SN_id_rat_interchange_recipient_for_this_recipient              "id-rat-interchange-recipient-for-this-recipient"
+#define NID_id_rat_interchange_recipient_for_this_recipient             3602
+#define OBJ_id_rat_interchange_recipient_for_this_recipient             2L,6L,7L,7L,4L
+
+#define SN_id_rat_recipient_reference_for_this_recipient                "id-rat-recipient-reference-for-this-recipient"
+#define NID_id_rat_recipient_reference_for_this_recipient               3603
+#define OBJ_id_rat_recipient_reference_for_this_recipient               2L,6L,7L,7L,5L
+
+#define SN_id_rat_interchange_control_reference_for_this_recipient              "id-rat-interchange-control-reference-for-this-recipient"
+#define NID_id_rat_interchange_control_reference_for_this_recipient             3604
+#define OBJ_id_rat_interchange_control_reference_for_this_recipient             2L,6L,7L,7L,6L
+
+#define SN_id_rat_processing_priority_code_for_this_recipient           "id-rat-processing-priority-code-for-this-recipient"
+#define NID_id_rat_processing_priority_code_for_this_recipient          3605
+#define OBJ_id_rat_processing_priority_code_for_this_recipient          2L,6L,7L,7L,7L
+
+#define SN_id_rat_acknowledgement_request_for_this_recipient            "id-rat-acknowledgement-request-for-this-recipient"
+#define NID_id_rat_acknowledgement_request_for_this_recipient           3606
+#define OBJ_id_rat_acknowledgement_request_for_this_recipient           2L,6L,7L,7L,8L
+
+#define SN_id_rat_communications_agreement_id_for_this_recipient                "id-rat-communications-agreement-id-for-this-recipient"
+#define NID_id_rat_communications_agreement_id_for_this_recipient               3607
+#define OBJ_id_rat_communications_agreement_id_for_this_recipient               2L,6L,7L,7L,9L
+
+#define SN_id_bat               "id-bat"
+#define NID_id_bat              3608
+#define OBJ_id_bat              2L,6L,7L,8L
+
+#define SN_id_bat_body          "id-bat-body"
+#define NID_id_bat_body         3609
+#define OBJ_id_bat_body         2L,6L,7L,8L,0L
+
+#define SN_id_bat_interchange_length            "id-bat-interchange-length"
+#define NID_id_bat_interchange_length           3610
+#define OBJ_id_bat_interchange_length           2L,6L,7L,8L,1L
+
+#define SN_id_bat_edi_body_part         "id-bat-edi-body-part"
+#define NID_id_bat_edi_body_part                3611
+#define OBJ_id_bat_edi_body_part                2L,6L,7L,8L,2L
+
+#define SN_id_bat_edim_body_part                "id-bat-edim-body-part"
+#define NID_id_bat_edim_body_part               3612
+#define OBJ_id_bat_edim_body_part               2L,6L,7L,8L,3L
+
+#define SN_id_bat_message_parameters            "id-bat-message-parameters"
+#define NID_id_bat_message_parameters           3613
+#define OBJ_id_bat_message_parameters           2L,6L,7L,8L,4L
+
+#define SN_id_bat_message_data          "id-bat-message-data"
+#define NID_id_bat_message_data         3614
+#define OBJ_id_bat_message_data         2L,6L,7L,8L,5L
+
+#define SN_id_bat_extended_body_part_types              "id-bat-extended-body-part-types"
+#define NID_id_bat_extended_body_part_types             3615
+#define OBJ_id_bat_extended_body_part_types             2L,6L,7L,8L,6L
+
+#define SN_id_nat               "id-nat"
+#define NID_id_nat              3616
+#define OBJ_id_nat              2L,6L,7L,9L
+
+#define SN_id_nat_subject_edim          "id-nat-subject-edim"
+#define NID_id_nat_subject_edim         3617
+#define OBJ_id_nat_subject_edim         2L,6L,7L,9L,0L
+
+#define SN_id_nat_edin_originator               "id-nat-edin-originator"
+#define NID_id_nat_edin_originator              3618
+#define OBJ_id_nat_edin_originator              2L,6L,7L,9L,1L
+
+#define SN_id_nat_nn_supplementary_info         "id-nat-nn-supplementary-info"
+#define NID_id_nat_nn_supplementary_info                3619
+#define OBJ_id_nat_nn_supplementary_info                2L,6L,7L,9L,10L
+
+#define SN_id_nat_nn_extensions         "id-nat-nn-extensions"
+#define NID_id_nat_nn_extensions                3620
+#define OBJ_id_nat_nn_extensions                2L,6L,7L,9L,11L
+
+#define SN_id_nat_forwarded_to          "id-nat-forwarded-to"
+#define NID_id_nat_forwarded_to         3621
+#define OBJ_id_nat_forwarded_to         2L,6L,7L,9L,12L
+
+#define SN_id_nat_fn_reason_code                "id-nat-fn-reason-code"
+#define NID_id_nat_fn_reason_code               3622
+#define OBJ_id_nat_fn_reason_code               2L,6L,7L,9L,13L
+
+#define SN_id_nat_fn_supplementary_info         "id-nat-fn-supplementary-info"
+#define NID_id_nat_fn_supplementary_info                3623
+#define OBJ_id_nat_fn_supplementary_info                2L,6L,7L,9L,14L
+
+#define SN_id_nat_fn_extensions         "id-nat-fn-extensions"
+#define NID_id_nat_fn_extensions                3624
+#define OBJ_id_nat_fn_extensions                2L,6L,7L,9L,15L
+
+#define SN_id_nat_first_recipient               "id-nat-first-recipient"
+#define NID_id_nat_first_recipient              3625
+#define OBJ_id_nat_first_recipient              2L,6L,7L,9L,2L
+
+#define SN_id_nat_notification_time             "id-nat-notification-time"
+#define NID_id_nat_notification_time            3626
+#define OBJ_id_nat_notification_time            2L,6L,7L,9L,3L
+
+#define SN_id_nat_notification_security_elements                "id-nat-notification-security-elements"
+#define NID_id_nat_notification_security_elements               3627
+#define OBJ_id_nat_notification_security_elements               2L,6L,7L,9L,4L
+
+#define SN_id_nat_notification_extensions               "id-nat-notification-extensions"
+#define NID_id_nat_notification_extensions              3628
+#define OBJ_id_nat_notification_extensions              2L,6L,7L,9L,5L
+
+#define SN_id_nat_edin_initiator                "id-nat-edin-initiator"
+#define NID_id_nat_edin_initiator               3629
+#define OBJ_id_nat_edin_initiator               2L,6L,7L,9L,6L
+
+#define SN_id_nat_pn_supplementary_info         "id-nat-pn-supplementary-info"
+#define NID_id_nat_pn_supplementary_info                3630
+#define OBJ_id_nat_pn_supplementary_info                2L,6L,7L,9L,7L
+
+#define SN_id_nat_pn_extensions         "id-nat-pn-extensions"
+#define NID_id_nat_pn_extensions                3631
+#define OBJ_id_nat_pn_extensions                2L,6L,7L,9L,8L
+
+#define SN_id_nat_nn_reason_code                "id-nat-nn-reason-code"
+#define NID_id_nat_nn_reason_code               3632
+#define OBJ_id_nat_nn_reason_code               2L,6L,7L,9L,9L
+
+#define SN_mhs_management               "mhs-management"
+#define NID_mhs_management              3633
+#define OBJ_mhs_management              2L,6L,9L
+
+#define SN_id_model             "id-model"
+#define NID_id_model            3634
+#define OBJ_id_model            2L,6L,9L,1L
+
+#define SN_id_ms                "id-ms"
+#define NID_id_ms               3635
+#define OBJ_id_ms               2L,6L,9L,10L
+
+#define SN_id_au                "id-au"
+#define NID_id_au               3636
+#define OBJ_id_au               2L,6L,9L,11L
+
+#define SN_id_information               "id-information"
+#define NID_id_information              3637
+#define OBJ_id_information              2L,6L,9L,2L
+
+#define SN_id_accounting                "id-accounting"
+#define NID_id_accounting               3638
+#define OBJ_id_accounting               2L,6L,9L,3L
+
+#define SN_id_moc               "id-moc"
+#define NID_id_moc              3639
+#define OBJ_id_moc              2L,6L,9L,3L,0L
+
+#define SN_id_moc_acctRequest           "id-moc-acctRequest"
+#define NID_id_moc_acctRequest          3640
+#define OBJ_id_moc_acctRequest          2L,6L,9L,3L,0L,0L
+
+#define SN_id_moc_bindEventRecord               "id-moc-bindEventRecord"
+#define NID_id_moc_bindEventRecord              3641
+#define OBJ_id_moc_bindEventRecord              2L,6L,9L,3L,0L,1L
+
+#define SN_id_moc_maseEventRecord               "id-moc-maseEventRecord"
+#define NID_id_moc_maseEventRecord              3642
+#define OBJ_id_moc_maseEventRecord              2L,6L,9L,3L,0L,10L
+
+#define SN_id_moc_mdseEventRecord               "id-moc-mdseEventRecord"
+#define NID_id_moc_mdseEventRecord              3643
+#define OBJ_id_moc_mdseEventRecord              2L,6L,9L,3L,0L,11L
+
+#define SN_id_moc_mdServiceMgtPOA               "id-moc-mdServiceMgtPOA"
+#define NID_id_moc_mdServiceMgtPOA              3644
+#define OBJ_id_moc_mdServiceMgtPOA              2L,6L,9L,3L,0L,12L
+
+#define SN_id_moc_messageEventRecord            "id-moc-messageEventRecord"
+#define NID_id_moc_messageEventRecord           3645
+#define OBJ_id_moc_messageEventRecord           2L,6L,9L,3L,0L,13L
+
+#define SN_id_moc_mhsEventLog           "id-moc-mhsEventLog"
+#define NID_id_moc_mhsEventLog          3646
+#define OBJ_id_moc_mhsEventLog          2L,6L,9L,3L,0L,14L
+
+#define SN_id_moc_misManagementDomain           "id-moc-misManagementDomain"
+#define NID_id_moc_misManagementDomain          3647
+#define OBJ_id_moc_misManagementDomain          2L,6L,9L,3L,0L,15L
+
+#define SN_id_moc_mrseEventRecord               "id-moc-mrseEventRecord"
+#define NID_id_moc_mrseEventRecord              3648
+#define OBJ_id_moc_mrseEventRecord              2L,6L,9L,3L,0L,16L
+
+#define SN_id_moc_msseEventRecord               "id-moc-msseEventRecord"
+#define NID_id_moc_msseEventRecord              3649
+#define OBJ_id_moc_msseEventRecord              2L,6L,9L,3L,0L,17L
+
+#define SN_id_moc_mtseEventRecord               "id-moc-mtseEventRecord"
+#define NID_id_moc_mtseEventRecord              3650
+#define OBJ_id_moc_mtseEventRecord              2L,6L,9L,3L,0L,18L
+
+#define SN_id_moc_securityAcctRecord            "id-moc-securityAcctRecord"
+#define NID_id_moc_securityAcctRecord           3651
+#define OBJ_id_moc_securityAcctRecord           2L,6L,9L,3L,0L,19L
+
+#define SN_id_moc_contact               "id-moc-contact"
+#define NID_id_moc_contact              3652
+#define OBJ_id_moc_contact              2L,6L,9L,3L,0L,2L
+
+#define SN_id_moc_serviceRequest                "id-moc-serviceRequest"
+#define NID_id_moc_serviceRequest               3653
+#define OBJ_id_moc_serviceRequest               2L,6L,9L,3L,0L,20L
+
+#define SN_id_moc_settlementAcctRecord          "id-moc-settlementAcctRecord"
+#define NID_id_moc_settlementAcctRecord         3654
+#define OBJ_id_moc_settlementAcctRecord         2L,6L,9L,3L,0L,21L
+
+#define SN_id_moc_settlementAcctLog             "id-moc-settlementAcctLog"
+#define NID_id_moc_settlementAcctLog            3655
+#define OBJ_id_moc_settlementAcctLog            2L,6L,9L,3L,0L,22L
+
+#define SN_id_moc_customer              "id-moc-customer"
+#define NID_id_moc_customer             3656
+#define OBJ_id_moc_customer             2L,6L,9L,3L,0L,3L
+
+#define SN_id_moc_customerAcctLog               "id-moc-customerAcctLog"
+#define NID_id_moc_customerAcctLog              3657
+#define OBJ_id_moc_customerAcctLog              2L,6L,9L,3L,0L,4L
+
+#define SN_id_moc_customerAcctRecord            "id-moc-customerAcctRecord"
+#define NID_id_moc_customerAcctRecord           3658
+#define OBJ_id_moc_customerAcctRecord           2L,6L,9L,3L,0L,5L
+
+#define SN_id_moc_customerEFD           "id-moc-customerEFD"
+#define NID_id_moc_customerEFD          3659
+#define OBJ_id_moc_customerEFD          2L,6L,9L,3L,0L,6L
+
+#define SN_id_moc_discardEventRecord            "id-moc-discardEventRecord"
+#define NID_id_moc_discardEventRecord           3660
+#define OBJ_id_moc_discardEventRecord           2L,6L,9L,3L,0L,7L
+
+#define SN_id_moc_interworkingMD                "id-moc-interworkingMD"
+#define NID_id_moc_interworkingMD               3661
+#define OBJ_id_moc_interworkingMD               2L,6L,9L,3L,0L,8L
+
+#define SN_id_moc_interworkingMD_EFD            "id-moc-interworkingMD-EFD"
+#define NID_id_moc_interworkingMD_EFD           3662
+#define OBJ_id_moc_interworkingMD_EFD           2L,6L,9L,3L,0L,9L
+
+#define SN_id_package           "id-package"
+#define NID_id_package          3663
+#define OBJ_id_package          2L,6L,9L,3L,1L
+
+#define SN_id_package_acctRequest               "id-package-acctRequest"
+#define NID_id_package_acctRequest              3664
+#define OBJ_id_package_acctRequest              2L,6L,9L,3L,1L,0L
+
+#define SN_id_package_alert             "id-package-alert"
+#define NID_id_package_alert            3665
+#define OBJ_id_package_alert            2L,6L,9L,3L,1L,1L
+
+#define SN_id_package_customerEFD               "id-package-customerEFD"
+#define NID_id_package_customerEFD              3666
+#define OBJ_id_package_customerEFD              2L,6L,9L,3L,1L,10L
+
+#define SN_id_package_d36_commonAttributes              "id-package-d36-commonAttributes"
+#define NID_id_package_d36_commonAttributes             3667
+#define OBJ_id_package_d36_commonAttributes             2L,6L,9L,3L,1L,11L
+
+#define SN_id_package_d36_deliveryViaAccessUnit         "id-package-d36-deliveryViaAccessUnit"
+#define NID_id_package_d36_deliveryViaAccessUnit                3668
+#define OBJ_id_package_d36_deliveryViaAccessUnit                2L,6L,9L,3L,1L,12L
+
+#define SN_id_package_d36_directDelivery                "id-package-d36-directDelivery"
+#define NID_id_package_d36_directDelivery               3669
+#define OBJ_id_package_d36_directDelivery               2L,6L,9L,3L,1L,13L
+
+#define SN_id_package_delete            "id-package-delete"
+#define NID_id_package_delete           3670
+#define OBJ_id_package_delete           2L,6L,9L,3L,1L,14L
+
+#define SN_id_package_deliveryControl           "id-package-deliveryControl"
+#define NID_id_package_deliveryControl          3671
+#define OBJ_id_package_deliveryControl          2L,6L,9L,3L,1L,15L
+
+#define SN_id_package_destinationDomainDelivery         "id-package-destinationDomainDelivery"
+#define NID_id_package_destinationDomainDelivery                3672
+#define OBJ_id_package_destinationDomainDelivery                2L,6L,9L,3L,1L,16L
+
+#define SN_id_package_discardEventRecord                "id-package-discardEventRecord"
+#define NID_id_package_discardEventRecord               3673
+#define OBJ_id_package_discardEventRecord               2L,6L,9L,3L,1L,17L
+
+#define SN_id_package_fetch             "id-package-fetch"
+#define NID_id_package_fetch            3674
+#define OBJ_id_package_fetch            2L,6L,9L,3L,1L,18L
+
+#define SN_id_package_interworkingMD            "id-package-interworkingMD"
+#define NID_id_package_interworkingMD           3675
+#define OBJ_id_package_interworkingMD           2L,6L,9L,3L,1L,19L
+
+#define SN_id_package_bindEventRecord           "id-package-bindEventRecord"
+#define NID_id_package_bindEventRecord          3676
+#define OBJ_id_package_bindEventRecord          2L,6L,9L,3L,1L,2L
+
+#define SN_id_package_interworkingMD_EFD                "id-package-interworkingMD-EFD"
+#define NID_id_package_interworkingMD_EFD               3677
+#define OBJ_id_package_interworkingMD_EFD               2L,6L,9L,3L,1L,20L
+
+#define SN_id_package_list              "id-package-list"
+#define NID_id_package_list             3678
+#define OBJ_id_package_list             2L,6L,9L,3L,1L,21L
+
+#define SN_id_package_maseEventRecord           "id-package-maseEventRecord"
+#define NID_id_package_maseEventRecord          3679
+#define OBJ_id_package_maseEventRecord          2L,6L,9L,3L,1L,22L
+
+#define SN_id_package_mdseEventRecord           "id-package-mdseEventRecord"
+#define NID_id_package_mdseEventRecord          3680
+#define OBJ_id_package_mdseEventRecord          2L,6L,9L,3L,1L,23L
+
+#define SN_id_package_mdServiceMgtPOA           "id-package-mdServiceMgtPOA"
+#define NID_id_package_mdServiceMgtPOA          3681
+#define OBJ_id_package_mdServiceMgtPOA          2L,6L,9L,3L,1L,24L
+
+#define SN_id_package_messageDelivery           "id-package-messageDelivery"
+#define NID_id_package_messageDelivery          3682
+#define OBJ_id_package_messageDelivery          2L,6L,9L,3L,1L,25L
+
+#define SN_id_package_messageDeliveryEnvelope           "id-package-messageDeliveryEnvelope"
+#define NID_id_package_messageDeliveryEnvelope          3683
+#define OBJ_id_package_messageDeliveryEnvelope          2L,6L,9L,3L,1L,26L
+
+#define SN_id_package_messageEventRecord                "id-package-messageEventRecord"
+#define NID_id_package_messageEventRecord               3684
+#define OBJ_id_package_messageEventRecord               2L,6L,9L,3L,1L,27L
+
+#define SN_id_package_messageSubmission         "id-package-messageSubmission"
+#define NID_id_package_messageSubmission                3685
+#define OBJ_id_package_messageSubmission                2L,6L,9L,3L,1L,28L
+
+#define SN_id_package_messageSubmissionEnvelope         "id-package-messageSubmissionEnvelope"
+#define NID_id_package_messageSubmissionEnvelope                3686
+#define OBJ_id_package_messageSubmissionEnvelope                2L,6L,9L,3L,1L,29L
+
+#define SN_id_package_cancelDeferredDelivery            "id-package-cancelDeferredDelivery"
+#define NID_id_package_cancelDeferredDelivery           3687
+#define OBJ_id_package_cancelDeferredDelivery           2L,6L,9L,3L,1L,3L
+
+#define SN_id_package_messageTransfer           "id-package-messageTransfer"
+#define NID_id_package_messageTransfer          3688
+#define OBJ_id_package_messageTransfer          2L,6L,9L,3L,1L,30L
+
+#define SN_id_package_mrseEventRecord           "id-package-mrseEventRecord"
+#define NID_id_package_mrseEventRecord          3689
+#define OBJ_id_package_mrseEventRecord          2L,6L,9L,3L,1L,31L
+
+#define SN_id_package_msBindArguments           "id-package-msBindArguments"
+#define NID_id_package_msBindArguments          3690
+#define OBJ_id_package_msBindArguments          2L,6L,9L,3L,1L,32L
+
+#define SN_id_package_msseEventRecord           "id-package-msseEventRecord"
+#define NID_id_package_msseEventRecord          3691
+#define OBJ_id_package_msseEventRecord          2L,6L,9L,3L,1L,33L
+
+#define SN_id_package_mtaBindArguments          "id-package-mtaBindArguments"
+#define NID_id_package_mtaBindArguments         3692
+#define OBJ_id_package_mtaBindArguments         2L,6L,9L,3L,1L,34L
+
+#define SN_id_package_mtsBindArguments          "id-package-mtsBindArguments"
+#define NID_id_package_mtsBindArguments         3693
+#define OBJ_id_package_mtsBindArguments         2L,6L,9L,3L,1L,35L
+
+#define SN_id_package_mtseEventControl          "id-package-mtseEventControl"
+#define NID_id_package_mtseEventControl         3694
+#define OBJ_id_package_mtseEventControl         2L,6L,9L,3L,1L,36L
+
+#define SN_id_package_originatingDomainTransferOut              "id-package-originatingDomainTransferOut"
+#define NID_id_package_originatingDomainTransferOut             3695
+#define OBJ_id_package_originatingDomainTransferOut             2L,6L,9L,3L,1L,37L
+
+#define SN_id_package_probeSubmission           "id-package-probeSubmission"
+#define NID_id_package_probeSubmission          3696
+#define OBJ_id_package_probeSubmission          2L,6L,9L,3L,1L,38L
+
+#define SN_id_package_probeSubmissionEnvelope           "id-package-probeSubmissionEnvelope"
+#define NID_id_package_probeSubmissionEnvelope          3697
+#define OBJ_id_package_probeSubmissionEnvelope          2L,6L,9L,3L,1L,39L
+
+#define SN_id_package_changeCredential          "id-package-changeCredential"
+#define NID_id_package_changeCredential         3698
+#define OBJ_id_package_changeCredential         2L,6L,9L,3L,1L,4L
+
+#define SN_id_package_probeTransfer             "id-package-probeTransfer"
+#define NID_id_package_probeTransfer            3699
+#define OBJ_id_package_probeTransfer            2L,6L,9L,3L,1L,40L
+
+#define SN_id_package_processing                "id-package-processing"
+#define NID_id_package_processing               3700
+#define OBJ_id_package_processing               2L,6L,9L,3L,1L,41L
+
+#define SN_id_package_register          "id-package-register"
+#define NID_id_package_register         3701
+#define OBJ_id_package_register         2L,6L,9L,3L,1L,42L
+
+#define SN_id_package_registerMS                "id-package-registerMS"
+#define NID_id_package_registerMS               3702
+#define OBJ_id_package_registerMS               2L,6L,9L,3L,1L,43L
+
+#define SN_id_package_reportDelivery            "id-package-reportDelivery"
+#define NID_id_package_reportDelivery           3703
+#define OBJ_id_package_reportDelivery           2L,6L,9L,3L,1L,44L
+
+#define SN_id_package_reportDeliveryEnvelope            "id-package-reportDeliveryEnvelope"
+#define NID_id_package_reportDeliveryEnvelope           3704
+#define OBJ_id_package_reportDeliveryEnvelope           2L,6L,9L,3L,1L,45L
+
+#define SN_id_package_reportTransfer            "id-package-reportTransfer"
+#define NID_id_package_reportTransfer           3705
+#define OBJ_id_package_reportTransfer           2L,6L,9L,3L,1L,46L
+
+#define SN_id_package_securityAcctRecord                "id-package-securityAcctRecord"
+#define NID_id_package_securityAcctRecord               3706
+#define OBJ_id_package_securityAcctRecord               2L,6L,9L,3L,1L,47L
+
+#define SN_id_package_serviceRequest            "id-package-serviceRequest"
+#define NID_id_package_serviceRequest           3707
+#define OBJ_id_package_serviceRequest           2L,6L,9L,3L,1L,48L
+
+#define SN_id_package_settlementAcctLog         "id-package-settlementAcctLog"
+#define NID_id_package_settlementAcctLog                3708
+#define OBJ_id_package_settlementAcctLog                2L,6L,9L,3L,1L,49L
+
+#define SN_id_package_commonBindArguments               "id-package-commonBindArguments"
+#define NID_id_package_commonBindArguments              3709
+#define OBJ_id_package_commonBindArguments              2L,6L,9L,3L,1L,5L
+
+#define SN_id_package_settlementAcctRecord              "id-package-settlementAcctRecord"
+#define NID_id_package_settlementAcctRecord             3710
+#define OBJ_id_package_settlementAcctRecord             2L,6L,9L,3L,1L,50L
+
+#define SN_id_package_settlementAcctRequest             "id-package-settlementAcctRequest"
+#define NID_id_package_settlementAcctRequest            3711
+#define OBJ_id_package_settlementAcctRequest            2L,6L,9L,3L,1L,51L
+
+#define SN_id_package_submissionControl         "id-package-submissionControl"
+#define NID_id_package_submissionControl                3712
+#define OBJ_id_package_submissionControl                2L,6L,9L,3L,1L,52L
+
+#define SN_id_package_summarize         "id-package-summarize"
+#define NID_id_package_summarize                3713
+#define OBJ_id_package_summarize                2L,6L,9L,3L,1L,53L
+
+#define SN_id_package_trace             "id-package-trace"
+#define NID_id_package_trace            3714
+#define OBJ_id_package_trace            2L,6L,9L,3L,1L,54L
+
+#define SN_id_package_transitDomainTransferOut          "id-package-transitDomainTransferOut"
+#define NID_id_package_transitDomainTransferOut         3715
+#define OBJ_id_package_transitDomainTransferOut         2L,6L,9L,3L,1L,55L
+
+#define SN_id_package_commonCreationDeletion            "id-package-commonCreationDeletion"
+#define NID_id_package_commonCreationDeletion           3716
+#define OBJ_id_package_commonCreationDeletion           2L,6L,9L,3L,1L,6L
+
+#define SN_id_package_contact           "id-package-contact"
+#define NID_id_package_contact          3717
+#define OBJ_id_package_contact          2L,6L,9L,3L,1L,7L
+
+#define SN_id_package_customer          "id-package-customer"
+#define NID_id_package_customer         3718
+#define OBJ_id_package_customer         2L,6L,9L,3L,1L,8L
+
+#define SN_id_package_customerAcctRequest               "id-package-customerAcctRequest"
+#define NID_id_package_customerAcctRequest              3719
+#define OBJ_id_package_customerAcctRequest              2L,6L,9L,3L,1L,9L
+
+#define SN_id_attribute         "id-attribute"
+#define NID_id_attribute                3720
+#define OBJ_id_attribute                2L,6L,9L,3L,2L
+
+#define SN_id_attribute_accessRatePerDeliveryServiceType                "id-attribute-accessRatePerDeliveryServiceType"
+#define NID_id_attribute_accessRatePerDeliveryServiceType               3721
+#define OBJ_id_attribute_accessRatePerDeliveryServiceType               2L,6L,9L,3L,2L,0L
+
+#define SN_id_attribute_actualRecipientName             "id-attribute-actualRecipientName"
+#define NID_id_attribute_actualRecipientName            3722
+#define OBJ_id_attribute_actualRecipientName            2L,6L,9L,3L,2L,1L
+
+#define SN_id_attribute_certificate             "id-attribute-certificate"
+#define NID_id_attribute_certificate            3723
+#define OBJ_id_attribute_certificate            2L,6L,9L,3L,2L,10L
+
+#define SN_id_attribute_registerMSArgument              "id-attribute-registerMSArgument"
+#define NID_id_attribute_registerMSArgument             3724
+#define OBJ_id_attribute_registerMSArgument             2L,6L,9L,3L,2L,100L
+
+#define SN_id_attribute_registerMSResult                "id-attribute-registerMSResult"
+#define NID_id_attribute_registerMSResult               3725
+#define OBJ_id_attribute_registerMSResult               2L,6L,9L,3L,2L,101L
+
+#define SN_id_attribute_reportDeliveryEnvelope          "id-attribute-reportDeliveryEnvelope"
+#define NID_id_attribute_reportDeliveryEnvelope         3726
+#define OBJ_id_attribute_reportDeliveryEnvelope         2L,6L,9L,3L,2L,102L
+
+#define SN_id_attribute_reportIdentifier                "id-attribute-reportIdentifier"
+#define NID_id_attribute_reportIdentifier               3727
+#define OBJ_id_attribute_reportIdentifier               2L,6L,9L,3L,2L,103L
+
+#define SN_id_attribute_reportingMtaCertificate         "id-attribute-reportingMtaCertificate"
+#define NID_id_attribute_reportingMtaCertificate                3728
+#define OBJ_id_attribute_reportingMtaCertificate                2L,6L,9L,3L,2L,104L
+
+#define SN_id_attribute_reportOriginAuthenticationCheck         "id-attribute-reportOriginAuthenticationCheck"
+#define NID_id_attribute_reportOriginAuthenticationCheck                3729
+#define OBJ_id_attribute_reportOriginAuthenticationCheck                2L,6L,9L,3L,2L,105L
+
+#define SN_id_attribute_reportTransferEnvelope          "id-attribute-reportTransferEnvelope"
+#define NID_id_attribute_reportTransferEnvelope         3730
+#define OBJ_id_attribute_reportTransferEnvelope         2L,6L,9L,3L,2L,106L
+
+#define SN_id_attribute_responderCredentials            "id-attribute-responderCredentials"
+#define NID_id_attribute_responderCredentials           3731
+#define OBJ_id_attribute_responderCredentials           2L,6L,9L,3L,2L,107L
+
+#define SN_id_attribute_responderName           "id-attribute-responderName"
+#define NID_id_attribute_responderName          3732
+#define OBJ_id_attribute_responderName          2L,6L,9L,3L,2L,108L
+
+#define SN_id_attribute_retrievalError          "id-attribute-retrievalError"
+#define NID_id_attribute_retrievalError         3733
+#define OBJ_id_attribute_retrievalError         2L,6L,9L,3L,2L,109L
+
+#define SN_id_attribute_componentRatesPerOctetsPerDeliveryServiceType           "id-attribute-componentRatesPerOctetsPerDeliveryServiceType"
+#define NID_id_attribute_componentRatesPerOctetsPerDeliveryServiceType          3734
+#define OBJ_id_attribute_componentRatesPerOctetsPerDeliveryServiceType          2L,6L,9L,3L,2L,11L
+
+#define SN_id_attribute_securityContext         "id-attribute-securityContext"
+#define NID_id_attribute_securityContext                3735
+#define OBJ_id_attribute_securityContext                2L,6L,9L,3L,2L,110L
+
+#define SN_id_attribute_securityError           "id-attribute-securityError"
+#define NID_id_attribute_securityError          3736
+#define OBJ_id_attribute_securityError          2L,6L,9L,3L,2L,111L
+
+#define SN_id_attribute_securityProblem         "id-attribute-securityProblem"
+#define NID_id_attribute_securityProblem                3737
+#define OBJ_id_attribute_securityProblem                2L,6L,9L,3L,2L,112L
+
+#define SN_id_attribute_serviceAccessCharge             "id-attribute-serviceAccessCharge"
+#define NID_id_attribute_serviceAccessCharge            3738
+#define OBJ_id_attribute_serviceAccessCharge            2L,6L,9L,3L,2L,113L
+
+#define SN_id_attribute_serviceFlag             "id-attribute-serviceFlag"
+#define NID_id_attribute_serviceFlag            3739
+#define OBJ_id_attribute_serviceFlag            2L,6L,9L,3L,2L,114L
+
+#define SN_id_attribute_serviceRequestId                "id-attribute-serviceRequestId"
+#define NID_id_attribute_serviceRequestId               3740
+#define OBJ_id_attribute_serviceRequestId               2L,6L,9L,3L,2L,115L
+
+#define SN_id_attribute_settlementPolicy                "id-attribute-settlementPolicy"
+#define NID_id_attribute_settlementPolicy               3741
+#define OBJ_id_attribute_settlementPolicy               2L,6L,9L,3L,2L,116L
+
+#define SN_id_attribute_signatureCheck          "id-attribute-signatureCheck"
+#define NID_id_attribute_signatureCheck         3742
+#define OBJ_id_attribute_signatureCheck         2L,6L,9L,3L,2L,117L
+
+#define SN_id_attribute_signatureGeneration             "id-attribute-signatureGeneration"
+#define NID_id_attribute_signatureGeneration            3743
+#define OBJ_id_attribute_signatureGeneration            2L,6L,9L,3L,2L,118L
+
+#define SN_id_attribute_startUpDate             "id-attribute-startUpDate"
+#define NID_id_attribute_startUpDate            3744
+#define OBJ_id_attribute_startUpDate            2L,6L,9L,3L,2L,119L
+
+#define SN_id_attribute_consumerOfOperation             "id-attribute-consumerOfOperation"
+#define NID_id_attribute_consumerOfOperation            3745
+#define OBJ_id_attribute_consumerOfOperation            2L,6L,9L,3L,2L,12L
+
+#define SN_id_attribute_status          "id-attribute-status"
+#define NID_id_attribute_status         3746
+#define OBJ_id_attribute_status         2L,6L,9L,3L,2L,120L
+
+#define SN_id_attribute_subjectIdentifier               "id-attribute-subjectIdentifier"
+#define NID_id_attribute_subjectIdentifier              3747
+#define OBJ_id_attribute_subjectIdentifier              2L,6L,9L,3L,2L,121L
+
+#define SN_id_attribute_subjectSubmissionIdentifier             "id-attribute-subjectSubmissionIdentifier"
+#define NID_id_attribute_subjectSubmissionIdentifier            3748
+#define OBJ_id_attribute_subjectSubmissionIdentifier            2L,6L,9L,3L,2L,122L
+
+#define SN_id_attribute_submissionControls              "id-attribute-submissionControls"
+#define NID_id_attribute_submissionControls             3749
+#define OBJ_id_attribute_submissionControls             2L,6L,9L,3L,2L,123L
+
+#define SN_id_attribute_submissionError         "id-attribute-submissionError"
+#define NID_id_attribute_submissionError                3750
+#define OBJ_id_attribute_submissionError                2L,6L,9L,3L,2L,124L
+
+#define SN_id_attribute_summarizeArgument               "id-attribute-summarizeArgument"
+#define NID_id_attribute_summarizeArgument              3751
+#define OBJ_id_attribute_summarizeArgument              2L,6L,9L,3L,2L,125L
+
+#define SN_id_attribute_summarizeResult         "id-attribute-summarizeResult"
+#define NID_id_attribute_summarizeResult                3752
+#define OBJ_id_attribute_summarizeResult                2L,6L,9L,3L,2L,126L
+
+#define SN_id_attribute_supplierOfOperation             "id-attribute-supplierOfOperation"
+#define NID_id_attribute_supplierOfOperation            3753
+#define OBJ_id_attribute_supplierOfOperation            2L,6L,9L,3L,2L,127L
+
+#define SN_id_attribute_telephoneNumberList             "id-attribute-telephoneNumberList"
+#define NID_id_attribute_telephoneNumberList            3754
+#define OBJ_id_attribute_telephoneNumberList            2L,6L,9L,3L,2L,128L
+
+#define SN_id_attribute_thisRecipientName               "id-attribute-thisRecipientName"
+#define NID_id_attribute_thisRecipientName              3755
+#define OBJ_id_attribute_thisRecipientName              2L,6L,9L,3L,2L,129L
+
+#define SN_id_attribute_contactCompany          "id-attribute-contactCompany"
+#define NID_id_attribute_contactCompany         3756
+#define OBJ_id_attribute_contactCompany         2L,6L,9L,3L,2L,13L
+
+#define SN_id_attribute_totalNumberOfORAddresses                "id-attribute-totalNumberOfORAddresses"
+#define NID_id_attribute_totalNumberOfORAddresses               3757
+#define OBJ_id_attribute_totalNumberOfORAddresses               2L,6L,9L,3L,2L,130L
+
+#define SN_id_attribute_trace           "id-attribute-trace"
+#define NID_id_attribute_trace          3758
+#define OBJ_id_attribute_trace          2L,6L,9L,3L,2L,131L
+
+#define SN_id_attribute_transitDomainTransferOutList            "id-attribute-transitDomainTransferOutList"
+#define NID_id_attribute_transitDomainTransferOutList           3759
+#define OBJ_id_attribute_transitDomainTransferOutList           2L,6L,9L,3L,2L,132L
+
+#define SN_id_attribute_userAddress             "id-attribute-userAddress"
+#define NID_id_attribute_userAddress            3760
+#define OBJ_id_attribute_userAddress            2L,6L,9L,3L,2L,133L
+
+#define SN_id_attribute_userName                "id-attribute-userName"
+#define NID_id_attribute_userName               3761
+#define OBJ_id_attribute_userName               2L,6L,9L,3L,2L,134L
+
+#define SN_id_attribute_userSecurityLabel               "id-attribute-userSecurityLabel"
+#define NID_id_attribute_userSecurityLabel              3762
+#define OBJ_id_attribute_userSecurityLabel              2L,6L,9L,3L,2L,135L
+
+#define SN_id_attribute_contactDetails          "id-attribute-contactDetails"
+#define NID_id_attribute_contactDetails         3763
+#define OBJ_id_attribute_contactDetails         2L,6L,9L,3L,2L,14L
+
+#define SN_id_attribute_contactFunction         "id-attribute-contactFunction"
+#define NID_id_attribute_contactFunction                3764
+#define OBJ_id_attribute_contactFunction                2L,6L,9L,3L,2L,15L
+
+#define SN_id_attribute_contactId               "id-attribute-contactId"
+#define NID_id_attribute_contactId              3765
+#define OBJ_id_attribute_contactId              2L,6L,9L,3L,2L,16L
+
+#define SN_id_attribute_contactInstance         "id-attribute-contactInstance"
+#define NID_id_attribute_contactInstance                3766
+#define OBJ_id_attribute_contactInstance                2L,6L,9L,3L,2L,17L
+
+#define SN_id_attribute_contactName             "id-attribute-contactName"
+#define NID_id_attribute_contactName            3767
+#define OBJ_id_attribute_contactName            2L,6L,9L,3L,2L,18L
+
+#define SN_id_attribute_contentConfidentialityAlgorithmIdentifier               "id-attribute-contentConfidentialityAlgorithmIdentifier"
+#define NID_id_attribute_contentConfidentialityAlgorithmIdentifier              3768
+#define OBJ_id_attribute_contentConfidentialityAlgorithmIdentifier              2L,6L,9L,3L,2L,19L
+
+#define SN_id_attribute_administrationError             "id-attribute-administrationError"
+#define NID_id_attribute_administrationError            3769
+#define OBJ_id_attribute_administrationError            2L,6L,9L,3L,2L,2L
+
+#define SN_id_attribute_contentIdentifier               "id-attribute-contentIdentifier"
+#define NID_id_attribute_contentIdentifier              3770
+#define OBJ_id_attribute_contentIdentifier              2L,6L,9L,3L,2L,20L
+
+#define SN_id_attribute_contentIntegrityCheck           "id-attribute-contentIntegrityCheck"
+#define NID_id_attribute_contentIntegrityCheck          3771
+#define OBJ_id_attribute_contentIntegrityCheck          2L,6L,9L,3L,2L,21L
+
+#define SN_id_attribute_contentType             "id-attribute-contentType"
+#define NID_id_attribute_contentType            3772
+#define OBJ_id_attribute_contentType            2L,6L,9L,3L,2L,22L
+
+#define SN_id_attribute_currency                "id-attribute-currency"
+#define NID_id_attribute_currency               3773
+#define OBJ_id_attribute_currency               2L,6L,9L,3L,2L,23L
+
+#define SN_id_attribute_customerAcctPolicy              "id-attribute-customerAcctPolicy"
+#define NID_id_attribute_customerAcctPolicy             3774
+#define OBJ_id_attribute_customerAcctPolicy             2L,6L,9L,3L,2L,24L
+
+#define SN_id_attribute_customerId              "id-attribute-customerId"
+#define NID_id_attribute_customerId             3775
+#define OBJ_id_attribute_customerId             2L,6L,9L,3L,2L,25L
+
+#define SN_id_attribute_customerName            "id-attribute-customerName"
+#define NID_id_attribute_customerName           3776
+#define OBJ_id_attribute_customerName           2L,6L,9L,3L,2L,26L
+
+#define SN_id_attribute_decipherment            "id-attribute-decipherment"
+#define NID_id_attribute_decipherment           3777
+#define OBJ_id_attribute_decipherment           2L,6L,9L,3L,2L,27L
+
+#define SN_id_attribute_defaultDeliveryControls         "id-attribute-defaultDeliveryControls"
+#define NID_id_attribute_defaultDeliveryControls                3778
+#define OBJ_id_attribute_defaultDeliveryControls                2L,6L,9L,3L,2L,28L
+
+#define SN_id_attribute_deleteArgument          "id-attribute-deleteArgument"
+#define NID_id_attribute_deleteArgument         3779
+#define OBJ_id_attribute_deleteArgument         2L,6L,9L,3L,2L,29L
+
+#define SN_id_attribute_alertArgument           "id-attribute-alertArgument"
+#define NID_id_attribute_alertArgument          3780
+#define OBJ_id_attribute_alertArgument          2L,6L,9L,3L,2L,3L
+
+#define SN_id_attribute_deleteResult            "id-attribute-deleteResult"
+#define NID_id_attribute_deleteResult           3781
+#define OBJ_id_attribute_deleteResult           2L,6L,9L,3L,2L,30L
+
+#define SN_id_attribute_deliverableContentTypes         "id-attribute-deliverableContentTypes"
+#define NID_id_attribute_deliverableContentTypes                3782
+#define OBJ_id_attribute_deliverableContentTypes                2L,6L,9L,3L,2L,31L
+
+#define SN_id_attribute_deliverableEncodedInformationTypes              "id-attribute-deliverableEncodedInformationTypes"
+#define NID_id_attribute_deliverableEncodedInformationTypes             3783
+#define OBJ_id_attribute_deliverableEncodedInformationTypes             2L,6L,9L,3L,2L,32L
+
+#define SN_id_attribute_deliverableMaximumContentLength         "id-attribute-deliverableMaximumContentLength"
+#define NID_id_attribute_deliverableMaximumContentLength                3784
+#define OBJ_id_attribute_deliverableMaximumContentLength                2L,6L,9L,3L,2L,33L
+
+#define SN_id_attribute_deliveryComponentRateToPrmd             "id-attribute-deliveryComponentRateToPrmd"
+#define NID_id_attribute_deliveryComponentRateToPrmd            3785
+#define OBJ_id_attribute_deliveryComponentRateToPrmd            2L,6L,9L,3L,2L,34L
+
+#define SN_id_attribute_deliveryComponentRateToUa               "id-attribute-deliveryComponentRateToUa"
+#define NID_id_attribute_deliveryComponentRateToUa              3786
+#define OBJ_id_attribute_deliveryComponentRateToUa              2L,6L,9L,3L,2L,35L
+
+#define SN_id_attribute_deliveryControls                "id-attribute-deliveryControls"
+#define NID_id_attribute_deliveryControls               3787
+#define OBJ_id_attribute_deliveryControls               2L,6L,9L,3L,2L,36L
+
+#define SN_id_attribute_deliveryError           "id-attribute-deliveryError"
+#define NID_id_attribute_deliveryError          3788
+#define OBJ_id_attribute_deliveryError          2L,6L,9L,3L,2L,37L
+
+#define SN_id_attribute_deliveryServiceTypes            "id-attribute-deliveryServiceTypes"
+#define NID_id_attribute_deliveryServiceTypes           3789
+#define OBJ_id_attribute_deliveryServiceTypes           2L,6L,9L,3L,2L,38L
+
+#define SN_id_attribute_destinationAdmd         "id-attribute-destinationAdmd"
+#define NID_id_attribute_destinationAdmd                3790
+#define OBJ_id_attribute_destinationAdmd                2L,6L,9L,3L,2L,39L
+
+#define SN_id_attribute_alertResult             "id-attribute-alertResult"
+#define NID_id_attribute_alertResult            3791
+#define OBJ_id_attribute_alertResult            2L,6L,9L,3L,2L,4L
+
+#define SN_id_attribute_destinationDomainDeliveryList           "id-attribute-destinationDomainDeliveryList"
+#define NID_id_attribute_destinationDomainDeliveryList          3792
+#define OBJ_id_attribute_destinationDomainDeliveryList          2L,6L,9L,3L,2L,40L
+
+#define SN_id_attribute_electronicMailAddress           "id-attribute-electronicMailAddress"
+#define NID_id_attribute_electronicMailAddress          3793
+#define OBJ_id_attribute_electronicMailAddress          2L,6L,9L,3L,2L,41L
+
+#define SN_id_attribute_encipherment            "id-attribute-encipherment"
+#define NID_id_attribute_encipherment           3794
+#define OBJ_id_attribute_encipherment           2L,6L,9L,3L,2L,42L
+
+#define SN_id_attribute_encodedInformationTypes         "id-attribute-encodedInformationTypes"
+#define NID_id_attribute_encodedInformationTypes                3795
+#define OBJ_id_attribute_encodedInformationTypes                2L,6L,9L,3L,2L,43L
+
+#define SN_id_attribute_entryExitMtaNames               "id-attribute-entryExitMtaNames"
+#define NID_id_attribute_entryExitMtaNames              3796
+#define OBJ_id_attribute_entryExitMtaNames              2L,6L,9L,3L,2L,44L
+
+#define SN_id_attribute_envelopeType            "id-attribute-envelopeType"
+#define NID_id_attribute_envelopeType           3797
+#define OBJ_id_attribute_envelopeType           2L,6L,9L,3L,2L,45L
+
+#define SN_id_attribute_faxTelephoneNumberList          "id-attribute-faxTelephoneNumberList"
+#define NID_id_attribute_faxTelephoneNumberList         3798
+#define OBJ_id_attribute_faxTelephoneNumberList         2L,6L,9L,3L,2L,46L
+
+#define SN_id_attribute_fetchArgument           "id-attribute-fetchArgument"
+#define NID_id_attribute_fetchArgument          3799
+#define OBJ_id_attribute_fetchArgument          2L,6L,9L,3L,2L,47L
+
+#define SN_id_attribute_fetchResult             "id-attribute-fetchResult"
+#define NID_id_attribute_fetchResult            3800
+#define OBJ_id_attribute_fetchResult            2L,6L,9L,3L,2L,48L
+
+#define SN_id_attribute_globalDomainId          "id-attribute-globalDomainId"
+#define NID_id_attribute_globalDomainId         3801
+#define OBJ_id_attribute_globalDomainId         2L,6L,9L,3L,2L,49L
+
+#define SN_id_attribute_authenticationCheck             "id-attribute-authenticationCheck"
+#define NID_id_attribute_authenticationCheck            3802
+#define OBJ_id_attribute_authenticationCheck            2L,6L,9L,3L,2L,5L
+
+#define SN_id_attribute_initiatorCredentials            "id-attribute-initiatorCredentials"
+#define NID_id_attribute_initiatorCredentials           3803
+#define OBJ_id_attribute_initiatorCredentials           2L,6L,9L,3L,2L,50L
+
+#define SN_id_attribute_initiatorName           "id-attribute-initiatorName"
+#define NID_id_attribute_initiatorName          3804
+#define OBJ_id_attribute_initiatorName          2L,6L,9L,3L,2L,51L
+
+#define SN_id_attribute_internalTrace           "id-attribute-internalTrace"
+#define NID_id_attribute_internalTrace          3805
+#define OBJ_id_attribute_internalTrace          2L,6L,9L,3L,2L,52L
+
+#define SN_id_attribute_interworkingMDId                "id-attribute-interworkingMDId"
+#define NID_id_attribute_interworkingMDId               3806
+#define OBJ_id_attribute_interworkingMDId               2L,6L,9L,3L,2L,53L
+
+#define SN_id_attribute_interworkingMDName              "id-attribute-interworkingMDName"
+#define NID_id_attribute_interworkingMDName             3807
+#define OBJ_id_attribute_interworkingMDName             2L,6L,9L,3L,2L,54L
+
+#define SN_id_attribute_labelsAndRedirections           "id-attribute-labelsAndRedirections"
+#define NID_id_attribute_labelsAndRedirections          3808
+#define OBJ_id_attribute_labelsAndRedirections          2L,6L,9L,3L,2L,55L
+
+#define SN_id_attribute_limitValidityDate               "id-attribute-limitValidityDate"
+#define NID_id_attribute_limitValidityDate              3809
+#define OBJ_id_attribute_limitValidityDate              2L,6L,9L,3L,2L,56L
+
+#define SN_id_attribute_listArgument            "id-attribute-listArgument"
+#define NID_id_attribute_listArgument           3810
+#define OBJ_id_attribute_listArgument           2L,6L,9L,3L,2L,57L
+
+#define SN_id_attribute_listResult              "id-attribute-listResult"
+#define NID_id_attribute_listResult             3811
+#define OBJ_id_attribute_listResult             2L,6L,9L,3L,2L,58L
+
+#define SN_id_attribute_logStartTime            "id-attribute-logStartTime"
+#define NID_id_attribute_logStartTime           3812
+#define OBJ_id_attribute_logStartTime           2L,6L,9L,3L,2L,59L
+
+#define SN_id_attribute_authenticationGeneration                "id-attribute-authenticationGeneration"
+#define NID_id_attribute_authenticationGeneration               3813
+#define OBJ_id_attribute_authenticationGeneration               2L,6L,9L,3L,2L,6L
+
+#define SN_id_attribute_logStopTime             "id-attribute-logStopTime"
+#define NID_id_attribute_logStopTime            3814
+#define OBJ_id_attribute_logStopTime            2L,6L,9L,3L,2L,60L
+
+#define SN_id_attribute_messageContentSize              "id-attribute-messageContentSize"
+#define NID_id_attribute_messageContentSize             3815
+#define OBJ_id_attribute_messageContentSize             2L,6L,9L,3L,2L,61L
+
+#define SN_id_attribute_messageDeliveryEnvelope         "id-attribute-messageDeliveryEnvelope"
+#define NID_id_attribute_messageDeliveryEnvelope                3816
+#define OBJ_id_attribute_messageDeliveryEnvelope                2L,6L,9L,3L,2L,62L
+
+#define SN_id_attribute_MTSIdentifier           "id-attribute-MTSIdentifier"
+#define NID_id_attribute_MTSIdentifier          3817
+#define OBJ_id_attribute_MTSIdentifier          2L,6L,9L,3L,2L,63L
+
+#define SN_id_attribute_messageOriginAuthenticationCheck                "id-attribute-messageOriginAuthenticationCheck"
+#define NID_id_attribute_messageOriginAuthenticationCheck               3818
+#define OBJ_id_attribute_messageOriginAuthenticationCheck               2L,6L,9L,3L,2L,64L
+
+#define SN_id_attribute_messageSecurityLabel            "id-attribute-messageSecurityLabel"
+#define NID_id_attribute_messageSecurityLabel           3819
+#define OBJ_id_attribute_messageSecurityLabel           2L,6L,9L,3L,2L,65L
+
+#define SN_id_attribute_messageSize             "id-attribute-messageSize"
+#define NID_id_attribute_messageSize            3820
+#define OBJ_id_attribute_messageSize            2L,6L,9L,3L,2L,66L
+
+#define SN_id_attribute_messageSubmissionEnvelope               "id-attribute-messageSubmissionEnvelope"
+#define NID_id_attribute_messageSubmissionEnvelope              3821
+#define OBJ_id_attribute_messageSubmissionEnvelope              2L,6L,9L,3L,2L,67L
+
+#define SN_id_attribute_submissionTime          "id-attribute-submissionTime"
+#define NID_id_attribute_submissionTime         3822
+#define OBJ_id_attribute_submissionTime         2L,6L,9L,3L,2L,68L
+
+#define SN_id_attribute_messageToken            "id-attribute-messageToken"
+#define NID_id_attribute_messageToken           3823
+#define OBJ_id_attribute_messageToken           2L,6L,9L,3L,2L,69L
+
+#define SN_id_attribute_bindAuthenticationCheck         "id-attribute-bindAuthenticationCheck"
+#define NID_id_attribute_bindAuthenticationCheck                3824
+#define OBJ_id_attribute_bindAuthenticationCheck                2L,6L,9L,3L,2L,7L
+
+#define SN_id_attribute_messageTransferEnvelope         "id-attribute-messageTransferEnvelope"
+#define NID_id_attribute_messageTransferEnvelope                3825
+#define OBJ_id_attribute_messageTransferEnvelope                2L,6L,9L,3L,2L,70L
+
+#define SN_id_attribute_msBindAuthenticationCheck               "id-attribute-msBindAuthenticationCheck"
+#define NID_id_attribute_msBindAuthenticationCheck              3826
+#define OBJ_id_attribute_msBindAuthenticationCheck              2L,6L,9L,3L,2L,71L
+
+#define SN_id_attribute_newCredentials          "id-attribute-newCredentials"
+#define NID_id_attribute_newCredentials         3827
+#define OBJ_id_attribute_newCredentials         2L,6L,9L,3L,2L,72L
+
+#define SN_id_attribute_numberOfAddressedPrmds          "id-attribute-numberOfAddressedPrmds"
+#define NID_id_attribute_numberOfAddressedPrmds         3828
+#define OBJ_id_attribute_numberOfAddressedPrmds         2L,6L,9L,3L,2L,73L
+
+#define SN_id_attribute_numberOfAddressedUas            "id-attribute-numberOfAddressedUas"
+#define NID_id_attribute_numberOfAddressedUas           3829
+#define OBJ_id_attribute_numberOfAddressedUas           2L,6L,9L,3L,2L,74L
+
+#define SN_id_attribute_numberOfMessagesPerDeliveryServiceType          "id-attribute-numberOfMessagesPerDeliveryServiceType"
+#define NID_id_attribute_numberOfMessagesPerDeliveryServiceType         3830
+#define OBJ_id_attribute_numberOfMessagesPerDeliveryServiceType         2L,6L,9L,3L,2L,75L
+
+#define SN_id_attribute_oldCredentials          "id-attribute-oldCredentials"
+#define NID_id_attribute_oldCredentials         3831
+#define OBJ_id_attribute_oldCredentials         2L,6L,9L,3L,2L,76L
+
+#define SN_id_attribute_operationStatus         "id-attribute-operationStatus"
+#define NID_id_attribute_operationStatus                3832
+#define OBJ_id_attribute_operationStatus                2L,6L,9L,3L,2L,77L
+
+#define SN_id_attribute_operationTime           "id-attribute-operationTime"
+#define NID_id_attribute_operationTime          3833
+#define OBJ_id_attribute_operationTime          2L,6L,9L,3L,2L,78L
+
+#define SN_id_attribute_originalMtaCertification                "id-attribute-originalMtaCertification"
+#define NID_id_attribute_originalMtaCertification               3834
+#define OBJ_id_attribute_originalMtaCertification               2L,6L,9L,3L,2L,79L
+
+#define SN_id_attribute_bindingError            "id-attribute-bindingError"
+#define NID_id_attribute_bindingError           3835
+#define OBJ_id_attribute_bindingError           2L,6L,9L,3L,2L,8L
+
+#define SN_id_attribute_originatingDomainTransferOutList                "id-attribute-originatingDomainTransferOutList"
+#define NID_id_attribute_originatingDomainTransferOutList               3836
+#define OBJ_id_attribute_originatingDomainTransferOutList               2L,6L,9L,3L,2L,80L
+
+#define SN_id_attribute_originatingAdmd         "id-attribute-originatingAdmd"
+#define NID_id_attribute_originatingAdmd                3837
+#define OBJ_id_attribute_originatingAdmd                2L,6L,9L,3L,2L,81L
+
+#define SN_id_attribute_originatingMTACertificate               "id-attribute-originatingMTACertificate"
+#define NID_id_attribute_originatingMTACertificate              3838
+#define OBJ_id_attribute_originatingMTACertificate              2L,6L,9L,3L,2L,82L
+
+#define SN_id_attribute_originatorCertificate           "id-attribute-originatorCertificate"
+#define NID_id_attribute_originatorCertificate          3839
+#define OBJ_id_attribute_originatorCertificate          2L,6L,9L,3L,2L,83L
+
+#define SN_id_attribute_originatorName          "id-attribute-originatorName"
+#define NID_id_attribute_originatorName         3840
+#define OBJ_id_attribute_originatorName         2L,6L,9L,3L,2L,84L
+
+#define SN_id_attribute_permissibleSecurityContext              "id-attribute-permissibleSecurityContext"
+#define NID_id_attribute_permissibleSecurityContext             3841
+#define OBJ_id_attribute_permissibleSecurityContext             2L,6L,9L,3L,2L,85L
+
+#define SN_id_attribute_priority                "id-attribute-priority"
+#define NID_id_attribute_priority               3842
+#define OBJ_id_attribute_priority               2L,6L,9L,3L,2L,86L
+
+#define SN_id_attribute_probeOriginAuthenticationCheck          "id-attribute-probeOriginAuthenticationCheck"
+#define NID_id_attribute_probeOriginAuthenticationCheck         3843
+#define OBJ_id_attribute_probeOriginAuthenticationCheck         2L,6L,9L,3L,2L,87L
+
+#define SN_id_attribute_probeSubmissionEnvelope         "id-attribute-probeSubmissionEnvelope"
+#define NID_id_attribute_probeSubmissionEnvelope                3844
+#define OBJ_id_attribute_probeSubmissionEnvelope                2L,6L,9L,3L,2L,88L
+
+#define SN_id_attribute_probeTransferEnvelope           "id-attribute-probeTransferEnvelope"
+#define NID_id_attribute_probeTransferEnvelope          3845
+#define OBJ_id_attribute_probeTransferEnvelope          2L,6L,9L,3L,2L,89L
+
+#define SN_id_attribute_bindToken               "id-attribute-bindToken"
+#define NID_id_attribute_bindToken              3846
+#define OBJ_id_attribute_bindToken              2L,6L,9L,3L,2L,9L
+
+#define SN_id_attribute_processingComponentRate         "id-attribute-processingComponentRate"
+#define NID_id_attribute_processingComponentRate                3847
+#define OBJ_id_attribute_processingComponentRate                2L,6L,9L,3L,2L,90L
+
+#define SN_id_attribute_processingDetails               "id-attribute-processingDetails"
+#define NID_id_attribute_processingDetails              3848
+#define OBJ_id_attribute_processingDetails              2L,6L,9L,3L,2L,91L
+
+#define SN_id_attribute_processingErrorFlag             "id-attribute-processingErrorFlag"
+#define NID_id_attribute_processingErrorFlag            3849
+#define OBJ_id_attribute_processingErrorFlag            2L,6L,9L,3L,2L,92L
+
+#define SN_id_attribute_processingSummary               "id-attribute-processingSummary"
+#define NID_id_attribute_processingSummary              3850
+#define OBJ_id_attribute_processingSummary              2L,6L,9L,3L,2L,93L
+
+#define SN_id_attribute_proofOfDelivery         "id-attribute-proofOfDelivery"
+#define NID_id_attribute_proofOfDelivery                3851
+#define OBJ_id_attribute_proofOfDelivery                2L,6L,9L,3L,2L,94L
+
+#define SN_id_attribute_proofOfDeliveryRequest          "id-attribute-proofOfDeliveryRequest"
+#define NID_id_attribute_proofOfDeliveryRequest         3852
+#define OBJ_id_attribute_proofOfDeliveryRequest         2L,6L,9L,3L,2L,95L
+
+#define SN_id_attribute_proofOfSubmission               "id-attribute-proofOfSubmission"
+#define NID_id_attribute_proofOfSubmission              3853
+#define OBJ_id_attribute_proofOfSubmission              2L,6L,9L,3L,2L,96L
+
+#define SN_id_attribute_proofOfSubmissionRequest                "id-attribute-proofOfSubmissionRequest"
+#define NID_id_attribute_proofOfSubmissionRequest               3854
+#define OBJ_id_attribute_proofOfSubmissionRequest               2L,6L,9L,3L,2L,97L
+
+#define SN_id_attribute_recipientCertificate            "id-attribute-recipientCertificate"
+#define NID_id_attribute_recipientCertificate           3855
+#define OBJ_id_attribute_recipientCertificate           2L,6L,9L,3L,2L,98L
+
+#define SN_id_attribute_recipientOnResponsibilityList           "id-attribute-recipientOnResponsibilityList"
+#define NID_id_attribute_recipientOnResponsibilityList          3856
+#define OBJ_id_attribute_recipientOnResponsibilityList          2L,6L,9L,3L,2L,99L
+
+#define SN_id_attribute_group           "id-attribute-group"
+#define NID_id_attribute_group          3857
+#define OBJ_id_attribute_group          2L,6L,9L,3L,3L
+
+#define SN_id_notification              "id-notification"
+#define NID_id_notification             3858
+#define OBJ_id_notification             2L,6L,9L,3L,4L
+
+#define SN_id_notification_objectCreation               "id-notification-objectCreation"
+#define NID_id_notification_objectCreation              3859
+#define OBJ_id_notification_objectCreation              2L,6L,9L,3L,4L,0L
+
+#define SN_id_notification_objectDeletion               "id-notification-objectDeletion"
+#define NID_id_notification_objectDeletion              3860
+#define OBJ_id_notification_objectDeletion              2L,6L,9L,3L,4L,1L
+
+#define SN_id_action            "id-action"
+#define NID_id_action           3861
+#define OBJ_id_action           2L,6L,9L,3L,5L
+
+#define SN_id_parameter         "id-parameter"
+#define NID_id_parameter                3862
+#define OBJ_id_parameter                2L,6L,9L,3L,6L
+
+#define SN_id_parameter_attributeError          "id-parameter-attributeError"
+#define NID_id_parameter_attributeError         3863
+#define OBJ_id_parameter_attributeError         2L,6L,9L,3L,6L,0L
+
+#define SN_id_parameter_autoActionRequestError          "id-parameter-autoActionRequestError"
+#define NID_id_parameter_autoActionRequestError         3864
+#define OBJ_id_parameter_autoActionRequestError         2L,6L,9L,3L,6L,1L
+
+#define SN_id_parameter_deleteError             "id-parameter-deleteError"
+#define NID_id_parameter_deleteError            3865
+#define OBJ_id_parameter_deleteError            2L,6L,9L,3L,6L,2L
+
+#define SN_id_parameter_fetchRestrictionError           "id-parameter-fetchRestrictionError"
+#define NID_id_parameter_fetchRestrictionError          3866
+#define OBJ_id_parameter_fetchRestrictionError          2L,6L,9L,3L,6L,3L
+
+#define SN_id_parameter_improperlySpecifiedRecipients           "id-parameter-improperlySpecifiedRecipients"
+#define NID_id_parameter_improperlySpecifiedRecipients          3867
+#define OBJ_id_parameter_improperlySpecifiedRecipients          2L,6L,9L,3L,6L,4L
+
+#define SN_id_parameter_rangeError              "id-parameter-rangeError"
+#define NID_id_parameter_rangeError             3868
+#define OBJ_id_parameter_rangeError             2L,6L,9L,3L,6L,5L
+
+#define SN_id_parameter_securityError           "id-parameter-securityError"
+#define NID_id_parameter_securityError          3869
+#define OBJ_id_parameter_securityError          2L,6L,9L,3L,6L,6L
+
+#define SN_id_parameter_sequenceNumberError             "id-parameter-sequenceNumberError"
+#define NID_id_parameter_sequenceNumberError            3870
+#define OBJ_id_parameter_sequenceNumberError            2L,6L,9L,3L,6L,7L
+
+#define SN_id_parameter_serviceError            "id-parameter-serviceError"
+#define NID_id_parameter_serviceError           3871
+#define OBJ_id_parameter_serviceError           2L,6L,9L,3L,6L,8L
+
+#define SN_id_name_binding              "id-name-binding"
+#define NID_id_name_binding             3872
+#define OBJ_id_name_binding             2L,6L,9L,3L,7L
+
+#define SN_id_name_binding_acctRequest_customer         "id-name-binding-acctRequest-customer"
+#define NID_id_name_binding_acctRequest_customer                3873
+#define OBJ_id_name_binding_acctRequest_customer                2L,6L,9L,3L,7L,0L
+
+#define SN_id_name_binding_acctRequest_interworkingMD           "id-name-binding-acctRequest-interworkingMD"
+#define NID_id_name_binding_acctRequest_interworkingMD          3874
+#define OBJ_id_name_binding_acctRequest_interworkingMD          2L,6L,9L,3L,7L,1L
+
+#define SN_id_name_binding_settlementAcctLog_interworkingMD             "id-name-binding-settlementAcctLog-interworkingMD"
+#define NID_id_name_binding_settlementAcctLog_interworkingMD            3875
+#define OBJ_id_name_binding_settlementAcctLog_interworkingMD            2L,6L,9L,3L,7L,10L
+
+#define SN_id_name_binding_contact_customer             "id-name-binding-contact-customer"
+#define NID_id_name_binding_contact_customer            3876
+#define OBJ_id_name_binding_contact_customer            2L,6L,9L,3L,7L,2L
+
+#define SN_id_name_binding_contact_interworkingMD               "id-name-binding-contact-interworkingMD"
+#define NID_id_name_binding_contact_interworkingMD              3877
+#define OBJ_id_name_binding_contact_interworkingMD              2L,6L,9L,3L,7L,3L
+
+#define SN_id_name_binding_customer_mdServiceManagementPointOfAccess            "id-name-binding-customer-mdServiceManagementPointOfAccess"
+#define NID_id_name_binding_customer_mdServiceManagementPointOfAccess           3878
+#define OBJ_id_name_binding_customer_mdServiceManagementPointOfAccess           2L,6L,9L,3L,7L,4L
+
+#define SN_id_name_binding_customerAcctLog_customer             "id-name-binding-customerAcctLog-customer"
+#define NID_id_name_binding_customerAcctLog_customer            3879
+#define OBJ_id_name_binding_customerAcctLog_customer            2L,6L,9L,3L,7L,5L
+
+#define SN_id_name_binding_customerEFD_customer         "id-name-binding-customerEFD-customer"
+#define NID_id_name_binding_customerEFD_customer                3880
+#define OBJ_id_name_binding_customerEFD_customer                2L,6L,9L,3L,7L,6L
+
+#define SN_id_name_binding_interworkingMD_EFD_interworkingMD            "id-name-binding-interworkingMD-EFD-interworkingMD"
+#define NID_id_name_binding_interworkingMD_EFD_interworkingMD           3881
+#define OBJ_id_name_binding_interworkingMD_EFD_interworkingMD           2L,6L,9L,3L,7L,7L
+
+#define SN_id_name_binding_interworkingMD_mdServiceManagementPointOfAccess              "id-name-binding-interworkingMD-mdServiceManagementPointOfAccess"
+#define NID_id_name_binding_interworkingMD_mdServiceManagementPointOfAccess             3882
+#define OBJ_id_name_binding_interworkingMD_mdServiceManagementPointOfAccess             2L,6L,9L,3L,7L,8L
+
+#define SN_id_name_binding_mdServiceManagementPointOfAccess_misManagementDomain         "id-name-binding-mdServiceManagementPointOfAccess-misManagementDomain"
+#define NID_id_name_binding_mdServiceManagementPointOfAccess_misManagementDomain                3883
+#define OBJ_id_name_binding_mdServiceManagementPointOfAccess_misManagementDomain                2L,6L,9L,3L,7L,9L
+
+#define SN_id_modules           "id-modules"
+#define NID_id_modules          3884
+#define OBJ_id_modules          2L,6L,9L,3L,8L
+
+#define SN_id_security          "id-security"
+#define NID_id_security         3885
+#define OBJ_id_security         2L,6L,9L,4L
+
+#define SN_id_configuration             "id-configuration"
+#define NID_id_configuration            3886
+#define OBJ_id_configuration            2L,6L,9L,5L
+
+#define SN_id_fault             "id-fault"
+#define NID_id_fault            3887
+#define OBJ_id_fault            2L,6L,9L,6L
+
+#define SN_id_performance               "id-performance"
+#define NID_id_performance              3888
+#define OBJ_id_performance              2L,6L,9L,7L
+
+#define SN_id_mta               "id-mta"
+#define NID_id_mta              3889
+#define OBJ_id_mta              2L,6L,9L,8L
+
+#define SN_id_moc_adjMTA                "id-moc-adjMTA"
+#define NID_id_moc_adjMTA               3890
+#define OBJ_id_moc_adjMTA               2L,6L,9L,8L,0L,0L
+
+#define SN_id_moc_association           "id-moc-association"
+#define NID_id_moc_association          3891
+#define OBJ_id_moc_association          2L,6L,9L,8L,0L,1L
+
+#define SN_id_moc_perfMTACurrentData            "id-moc-perfMTACurrentData"
+#define NID_id_moc_perfMTACurrentData           3892
+#define OBJ_id_moc_perfMTACurrentData           2L,6L,9L,8L,0L,10L
+
+#define SN_id_moc_perfMTAHistoryData            "id-moc-perfMTAHistoryData"
+#define NID_id_moc_perfMTAHistoryData           3893
+#define OBJ_id_moc_perfMTAHistoryData           2L,6L,9L,8L,0L,11L
+
+#define SN_id_moc_routingFunction               "id-moc-routingFunction"
+#define NID_id_moc_routingFunction              3894
+#define OBJ_id_moc_routingFunction              2L,6L,9L,8L,0L,12L
+
+#define SN_id_moc_secAdjMTA             "id-moc-secAdjMTA"
+#define NID_id_moc_secAdjMTA            3895
+#define OBJ_id_moc_secAdjMTA            2L,6L,9L,8L,0L,13L
+
+#define SN_id_moc_secAssociation                "id-moc-secAssociation"
+#define NID_id_moc_secAssociation               3896
+#define OBJ_id_moc_secAssociation               2L,6L,9L,8L,0L,14L
+
+#define SN_id_moc_secConversion         "id-moc-secConversion"
+#define NID_id_moc_secConversion                3897
+#define OBJ_id_moc_secConversion                2L,6L,9L,8L,0L,15L
+
+#define SN_id_moc_secGenROACFunction            "id-moc-secGenROACFunction"
+#define NID_id_moc_secGenROACFunction           3898
+#define OBJ_id_moc_secGenROACFunction           2L,6L,9L,8L,0L,16L
+
+#define SN_id_moc_secMessage            "id-moc-secMessage"
+#define NID_id_moc_secMessage           3899
+#define OBJ_id_moc_secMessage           2L,6L,9L,8L,0L,17L
+
+#define SN_id_moc_secMtsUser            "id-moc-secMtsUser"
+#define NID_id_moc_secMtsUser           3900
+#define OBJ_id_moc_secMtsUser           2L,6L,9L,8L,0L,18L
+
+#define SN_id_moc_secProbe              "id-moc-secProbe"
+#define NID_id_moc_secProbe             3901
+#define OBJ_id_moc_secProbe             2L,6L,9L,8L,0L,19L
+
+#define SN_id_moc_conversionFunction            "id-moc-conversionFunction"
+#define NID_id_moc_conversionFunction           3902
+#define OBJ_id_moc_conversionFunction           2L,6L,9L,8L,0L,2L
+
+#define SN_id_moc_secReport             "id-moc-secReport"
+#define NID_id_moc_secReport            3903
+#define OBJ_id_moc_secReport            2L,6L,9L,8L,0L,20L
+
+#define SN_id_moc_SecVerifGenMsgFunction                "id-moc-SecVerifGenMsgFunction"
+#define NID_id_moc_SecVerifGenMsgFunction               3904
+#define OBJ_id_moc_SecVerifGenMsgFunction               2L,6L,9L,8L,0L,21L
+
+#define SN_id_moc_SecVerifGenRecipFunction              "id-moc-SecVerifGenRecipFunction"
+#define NID_id_moc_SecVerifGenRecipFunction             3905
+#define OBJ_id_moc_SecVerifGenRecipFunction             2L,6L,9L,8L,0L,22L
+
+#define SN_id_moc_SecVerifMOACFunction          "id-moc-SecVerifMOACFunction"
+#define NID_id_moc_SecVerifMOACFunction         3906
+#define OBJ_id_moc_SecVerifMOACFunction         2L,6L,9L,8L,0L,23L
+
+#define SN_id_moc_SecVerifPOACFunction          "id-moc-SecVerifPOACFunction"
+#define NID_id_moc_SecVerifPOACFunction         3907
+#define OBJ_id_moc_SecVerifPOACFunction         2L,6L,9L,8L,0L,24L
+
+#define SN_id_moc_SecVerifROACFunction          "id-moc-SecVerifROACFunction"
+#define NID_id_moc_SecVerifROACFunction         3908
+#define OBJ_id_moc_SecVerifROACFunction         2L,6L,9L,8L,0L,25L
+
+#define SN_id_moc_distributionListFunction              "id-moc-distributionListFunction"
+#define NID_id_moc_distributionListFunction             3909
+#define OBJ_id_moc_distributionListFunction             2L,6L,9L,8L,0L,3L
+
+#define SN_id_moc_mpr           "id-moc-mpr"
+#define NID_id_moc_mpr          3910
+#define OBJ_id_moc_mpr          2L,6L,9L,8L,0L,4L
+
+#define SN_id_moc_mprList               "id-moc-mprList"
+#define NID_id_moc_mprList              3911
+#define OBJ_id_moc_mprList              2L,6L,9L,8L,0L,5L
+
+#define SN_id_moc_mta           "id-moc-mta"
+#define NID_id_moc_mta          3912
+#define OBJ_id_moc_mta          2L,6L,9L,8L,0L,6L
+
+#define SN_id_moc_mtsUser               "id-moc-mtsUser"
+#define NID_id_moc_mtsUser              3913
+#define OBJ_id_moc_mtsUser              2L,6L,9L,8L,0L,7L
+
+#define SN_id_moc_perfFunctionCurrentData               "id-moc-perfFunctionCurrentData"
+#define NID_id_moc_perfFunctionCurrentData              3914
+#define OBJ_id_moc_perfFunctionCurrentData              2L,6L,9L,8L,0L,8L
+
+#define SN_id_moc_perfFunctionHistoryData               "id-moc-perfFunctionHistoryData"
+#define NID_id_moc_perfFunctionHistoryData              3915
+#define OBJ_id_moc_perfFunctionHistoryData              2L,6L,9L,8L,0L,9L
+
+#define SN_id_package_adjMTAPackage             "id-package-adjMTAPackage"
+#define NID_id_package_adjMTAPackage            3916
+#define OBJ_id_package_adjMTAPackage            2L,6L,9L,8L,1L,0L
+
+#define SN_id_package_associationPackage                "id-package-associationPackage"
+#define NID_id_package_associationPackage               3917
+#define OBJ_id_package_associationPackage               2L,6L,9L,8L,1L,1L
+
+#define SN_id_package_mprProcessingControlPackage               "id-package-mprProcessingControlPackage"
+#define NID_id_package_mprProcessingControlPackage              3918
+#define OBJ_id_package_mprProcessingControlPackage              2L,6L,9L,8L,1L,10L
+
+#define SN_id_package_mtaFunctionStatisticsPackage              "id-package-mtaFunctionStatisticsPackage"
+#define NID_id_package_mtaFunctionStatisticsPackage             3919
+#define OBJ_id_package_mtaFunctionStatisticsPackage             2L,6L,9L,8L,1L,11L
+
+#define SN_id_package_mtaPackage                "id-package-mtaPackage"
+#define NID_id_package_mtaPackage               3920
+#define OBJ_id_package_mtaPackage               2L,6L,9L,8L,1L,12L
+
+#define SN_id_package_mtaStatisticsPackage              "id-package-mtaStatisticsPackage"
+#define NID_id_package_mtaStatisticsPackage             3921
+#define OBJ_id_package_mtaStatisticsPackage             2L,6L,9L,8L,1L,13L
+
+#define SN_id_package_mtsUserPackage            "id-package-mtsUserPackage"
+#define NID_id_package_mtsUserPackage           3922
+#define OBJ_id_package_mtsUserPackage           2L,6L,9L,8L,1L,14L
+
+#define SN_id_package_restrictedDeliveryPackage         "id-package-restrictedDeliveryPackage"
+#define NID_id_package_restrictedDeliveryPackage                3923
+#define OBJ_id_package_restrictedDeliveryPackage                2L,6L,9L,8L,1L,15L
+
+#define SN_id_package_routingPackage            "id-package-routingPackage"
+#define NID_id_package_routingPackage           3924
+#define OBJ_id_package_routingPackage           2L,6L,9L,8L,1L,16L
+
+#define SN_id_package_secAdjMTAPackage          "id-package-secAdjMTAPackage"
+#define NID_id_package_secAdjMTAPackage         3925
+#define OBJ_id_package_secAdjMTAPackage         2L,6L,9L,8L,1L,17L
+
+#define SN_id_package_secAssociationPackage             "id-package-secAssociationPackage"
+#define NID_id_package_secAssociationPackage            3926
+#define OBJ_id_package_secAssociationPackage            2L,6L,9L,8L,1L,18L
+
+#define SN_id_package_secConversionPackage              "id-package-secConversionPackage"
+#define NID_id_package_secConversionPackage             3927
+#define OBJ_id_package_secConversionPackage             2L,6L,9L,8L,1L,19L
+
+#define SN_id_package_conversionPackage         "id-package-conversionPackage"
+#define NID_id_package_conversionPackage                3928
+#define OBJ_id_package_conversionPackage                2L,6L,9L,8L,1L,2L
+
+#define SN_id_package_secGenROACFunctionPackage         "id-package-secGenROACFunctionPackage"
+#define NID_id_package_secGenROACFunctionPackage                3929
+#define OBJ_id_package_secGenROACFunctionPackage                2L,6L,9L,8L,1L,20L
+
+#define SN_id_package_secMessagePackage         "id-package-secMessagePackage"
+#define NID_id_package_secMessagePackage                3930
+#define OBJ_id_package_secMessagePackage                2L,6L,9L,8L,1L,21L
+
+#define SN_id_package_secMtsUserPackage         "id-package-secMtsUserPackage"
+#define NID_id_package_secMtsUserPackage                3931
+#define OBJ_id_package_secMtsUserPackage                2L,6L,9L,8L,1L,22L
+
+#define SN_id_package_secProbePackage           "id-package-secProbePackage"
+#define NID_id_package_secProbePackage          3932
+#define OBJ_id_package_secProbePackage          2L,6L,9L,8L,1L,23L
+
+#define SN_id_package_secReportPackage          "id-package-secReportPackage"
+#define NID_id_package_secReportPackage         3933
+#define OBJ_id_package_secReportPackage         2L,6L,9L,8L,1L,24L
+
+#define SN_id_package_secureRedirectionPackage          "id-package-secureRedirectionPackage"
+#define NID_id_package_secureRedirectionPackage         3934
+#define OBJ_id_package_secureRedirectionPackage         2L,6L,9L,8L,1L,25L
+
+#define SN_id_package_SecurityAlarmPackage              "id-package-SecurityAlarmPackage"
+#define NID_id_package_SecurityAlarmPackage             3935
+#define OBJ_id_package_SecurityAlarmPackage             2L,6L,9L,8L,1L,26L
+
+#define SN_id_package_secVerifGenMsgFunctionPackage             "id-package-secVerifGenMsgFunctionPackage"
+#define NID_id_package_secVerifGenMsgFunctionPackage            3936
+#define OBJ_id_package_secVerifGenMsgFunctionPackage            2L,6L,9L,8L,1L,27L
+
+#define SN_id_package_secVerifGenRecipFunctionPackage           "id-package-secVerifGenRecipFunctionPackage"
+#define NID_id_package_secVerifGenRecipFunctionPackage          3937
+#define OBJ_id_package_secVerifGenRecipFunctionPackage          2L,6L,9L,8L,1L,28L
+
+#define SN_id_package_secVerifMOACFunctionPackage               "id-package-secVerifMOACFunctionPackage"
+#define NID_id_package_secVerifMOACFunctionPackage              3938
+#define OBJ_id_package_secVerifMOACFunctionPackage              2L,6L,9L,8L,1L,29L
+
+#define SN_id_package_defaultDeliveryControlsPackage            "id-package-defaultDeliveryControlsPackage"
+#define NID_id_package_defaultDeliveryControlsPackage           3939
+#define OBJ_id_package_defaultDeliveryControlsPackage           2L,6L,9L,8L,1L,3L
+
+#define SN_id_package_secVerifPOACFunctionPackage               "id-package-secVerifPOACFunctionPackage"
+#define NID_id_package_secVerifPOACFunctionPackage              3940
+#define OBJ_id_package_secVerifPOACFunctionPackage              2L,6L,9L,8L,1L,30L
+
+#define SN_id_package_secVerifROACFunctionPackage               "id-package-secVerifROACFunctionPackage"
+#define NID_id_package_secVerifROACFunctionPackage              3941
+#define OBJ_id_package_secVerifROACFunctionPackage              2L,6L,9L,8L,1L,31L
+
+#define SN_id_package_simpleCredentialsPackage          "id-package-simpleCredentialsPackage"
+#define NID_id_package_simpleCredentialsPackage         3942
+#define OBJ_id_package_simpleCredentialsPackage         2L,6L,9L,8L,1L,32L
+
+#define SN_id_package_simpleRedirectionPackage          "id-package-simpleRedirectionPackage"
+#define NID_id_package_simpleRedirectionPackage         3943
+#define OBJ_id_package_simpleRedirectionPackage         2L,6L,9L,8L,1L,33L
+
+#define SN_id_package_statesOfMtaFunctionPackage                "id-package-statesOfMtaFunctionPackage"
+#define NID_id_package_statesOfMtaFunctionPackage               3944
+#define OBJ_id_package_statesOfMtaFunctionPackage               2L,6L,9L,8L,1L,34L
+
+#define SN_id_package_dirServiceReferencePackage                "id-package-dirServiceReferencePackage"
+#define NID_id_package_dirServiceReferencePackage               3945
+#define OBJ_id_package_dirServiceReferencePackage               2L,6L,9L,8L,1L,4L
+
+#define SN_id_package_distributionListPackage           "id-package-distributionListPackage"
+#define NID_id_package_distributionListPackage          3946
+#define OBJ_id_package_distributionListPackage          2L,6L,9L,8L,1L,5L
+
+#define SN_id_package_filterPackage             "id-package-filterPackage"
+#define NID_id_package_filterPackage            3947
+#define OBJ_id_package_filterPackage            2L,6L,9L,8L,1L,6L
+
+#define SN_id_package_mdAssignedAlternateRecipientPackage               "id-package-mdAssignedAlternateRecipientPackage"
+#define NID_id_package_mdAssignedAlternateRecipientPackage              3948
+#define OBJ_id_package_mdAssignedAlternateRecipientPackage              2L,6L,9L,8L,1L,7L
+
+#define SN_id_package_mprListPackage            "id-package-mprListPackage"
+#define NID_id_package_mprListPackage           3949
+#define OBJ_id_package_mprListPackage           2L,6L,9L,8L,1L,8L
+
+#define SN_id_package_mprPackage                "id-package-mprPackage"
+#define NID_id_package_mprPackage               3950
+#define OBJ_id_package_mprPackage               2L,6L,9L,8L,1L,9L
+
+#define SN_id_attribute_adjMtaAccessPointAddress                "id-attribute-adjMtaAccessPointAddress"
+#define NID_id_attribute_adjMtaAccessPointAddress               3951
+#define OBJ_id_attribute_adjMtaAccessPointAddress               2L,6L,9L,8L,2L,0L
+
+#define SN_id_attribute_adjMtaGlobalDomainId            "id-attribute-adjMtaGlobalDomainId"
+#define NID_id_attribute_adjMtaGlobalDomainId           3952
+#define OBJ_id_attribute_adjMtaGlobalDomainId           2L,6L,9L,8L,2L,1L
+
+#define SN_id_attribute_arrivalTime             "id-attribute-arrivalTime"
+#define NID_id_attribute_arrivalTime            3953
+#define OBJ_id_attribute_arrivalTime            2L,6L,9L,8L,2L,10L
+
+#define SN_id_attribute_mtsUserSupportedApplicationContexts             "id-attribute-mtsUserSupportedApplicationContexts"
+#define NID_id_attribute_mtsUserSupportedApplicationContexts            3954
+#define OBJ_id_attribute_mtsUserSupportedApplicationContexts            2L,6L,9L,8L,2L,100L
+
+#define SN_id_attribute_mtsUserType             "id-attribute-mtsUserType"
+#define NID_id_attribute_mtsUserType            3955
+#define OBJ_id_attribute_mtsUserType            2L,6L,9L,8L,2L,101L
+
+#define SN_id_attribute_newMessageEncAlg                "id-attribute-newMessageEncAlg"
+#define NID_id_attribute_newMessageEncAlg               3956
+#define OBJ_id_attribute_newMessageEncAlg               2L,6L,9L,8L,2L,102L
+
+#define SN_id_attribute_newMessageMOACAlg               "id-attribute-newMessageMOACAlg"
+#define NID_id_attribute_newMessageMOACAlg              3957
+#define OBJ_id_attribute_newMessageMOACAlg              2L,6L,9L,8L,2L,103L
+
+#define SN_id_attribute_newMessageOriginatorCertificate         "id-attribute-newMessageOriginatorCertificate"
+#define NID_id_attribute_newMessageOriginatorCertificate                3958
+#define OBJ_id_attribute_newMessageOriginatorCertificate                2L,6L,9L,8L,2L,104L
+
+#define SN_id_attribute_newRecipientCicAlg              "id-attribute-newRecipientCicAlg"
+#define NID_id_attribute_newRecipientCicAlg             3959
+#define OBJ_id_attribute_newRecipientCicAlg             2L,6L,9L,8L,2L,105L
+
+#define SN_id_attribute_newRecipientName                "id-attribute-newRecipientName"
+#define NID_id_attribute_newRecipientName               3960
+#define OBJ_id_attribute_newRecipientName               2L,6L,9L,8L,2L,106L
+
+#define SN_id_attribute_newRecipientTokenAlg            "id-attribute-newRecipientTokenAlg"
+#define NID_id_attribute_newRecipientTokenAlg           3961
+#define OBJ_id_attribute_newRecipientTokenAlg           2L,6L,9L,8L,2L,107L
+
+#define SN_id_attribute_newRecipientTokenEncAlg         "id-attribute-newRecipientTokenEncAlg"
+#define NID_id_attribute_newRecipientTokenEncAlg                3962
+#define OBJ_id_attribute_newRecipientTokenEncAlg                2L,6L,9L,8L,2L,108L
+
+#define SN_id_attribute_newRecipientTokenSigAlg         "id-attribute-newRecipientTokenSigAlg"
+#define NID_id_attribute_newRecipientTokenSigAlg                3963
+#define OBJ_id_attribute_newRecipientTokenSigAlg                2L,6L,9L,8L,2L,109L
+
+#define SN_id_attribute_associationInitiator            "id-attribute-associationInitiator"
+#define NID_id_attribute_associationInitiator           3964
+#define OBJ_id_attribute_associationInitiator           2L,6L,9L,8L,2L,11L
+
+#define SN_id_attribute_nextAdjMTAName          "id-attribute-nextAdjMTAName"
+#define NID_id_attribute_nextAdjMTAName         3965
+#define OBJ_id_attribute_nextAdjMTAName         2L,6L,9L,8L,2L,110L
+
+#define SN_id_attribute_nrOfMprDeferred         "id-attribute-nrOfMprDeferred"
+#define NID_id_attribute_nrOfMprDeferred                3966
+#define OBJ_id_attribute_nrOfMprDeferred                2L,6L,9L,8L,2L,111L
+
+#define SN_id_attribute_nrOfMprDelivered                "id-attribute-nrOfMprDelivered"
+#define NID_id_attribute_nrOfMprDelivered               3967
+#define OBJ_id_attribute_nrOfMprDelivered               2L,6L,9L,8L,2L,112L
+
+#define SN_id_attribute_nrOfInvocations         "id-attribute-nrOfInvocations"
+#define NID_id_attribute_nrOfInvocations                3968
+#define OBJ_id_attribute_nrOfInvocations                2L,6L,9L,8L,2L,113L
+
+#define SN_id_attribute_nrOfRecipientsProcessed         "id-attribute-nrOfRecipientsProcessed"
+#define NID_id_attribute_nrOfRecipientsProcessed                3969
+#define OBJ_id_attribute_nrOfRecipientsProcessed                2L,6L,9L,8L,2L,114L
+
+#define SN_id_attribute_nrOfMprRedirected               "id-attribute-nrOfMprRedirected"
+#define NID_id_attribute_nrOfMprRedirected              3970
+#define OBJ_id_attribute_nrOfMprRedirected              2L,6L,9L,8L,2L,115L
+
+#define SN_id_attribute_nrOfMprRejected         "id-attribute-nrOfMprRejected"
+#define NID_id_attribute_nrOfMprRejected                3971
+#define OBJ_id_attribute_nrOfMprRejected                2L,6L,9L,8L,2L,116L
+
+#define SN_id_attribute_nrOfRejectedInvocations         "id-attribute-nrOfRejectedInvocations"
+#define NID_id_attribute_nrOfRejectedInvocations                3972
+#define OBJ_id_attribute_nrOfRejectedInvocations                2L,6L,9L,8L,2L,117L
+
+#define SN_id_attribute_nrOfMprSubmitted                "id-attribute-nrOfMprSubmitted"
+#define NID_id_attribute_nrOfMprSubmitted               3973
+#define OBJ_id_attribute_nrOfMprSubmitted               2L,6L,9L,8L,2L,118L
+
+#define SN_id_attribute_nrOfMprTransferredIn            "id-attribute-nrOfMprTransferredIn"
+#define NID_id_attribute_nrOfMprTransferredIn           3974
+#define OBJ_id_attribute_nrOfMprTransferredIn           2L,6L,9L,8L,2L,119L
+
+#define SN_id_attribute_associationObjectInstanceId             "id-attribute-associationObjectInstanceId"
+#define NID_id_attribute_associationObjectInstanceId            3975
+#define OBJ_id_attribute_associationObjectInstanceId            2L,6L,9L,8L,2L,12L
+
+#define SN_id_attribute_nrOfMprTransferredOut           "id-attribute-nrOfMprTransferredOut"
+#define NID_id_attribute_nrOfMprTransferredOut          3976
+#define OBJ_id_attribute_nrOfMprTransferredOut          2L,6L,9L,8L,2L,120L
+
+#define SN_id_attribute_permittedMessages               "id-attribute-permittedMessages"
+#define NID_id_attribute_permittedMessages              3977
+#define OBJ_id_attribute_permittedMessages              2L,6L,9L,8L,2L,122L
+
+#define SN_id_attribute_priorityList            "id-attribute-priorityList"
+#define NID_id_attribute_priorityList           3978
+#define OBJ_id_attribute_priorityList           2L,6L,9L,8L,2L,124L
+
+#define SN_id_attribute_probeOriginatorCertificate              "id-attribute-probeOriginatorCertificate"
+#define NID_id_attribute_probeOriginatorCertificate             3979
+#define OBJ_id_attribute_probeOriginatorCertificate             2L,6L,9L,8L,2L,125L
+
+#define SN_id_attribute_probePOACAlg            "id-attribute-probePOACAlg"
+#define NID_id_attribute_probePOACAlg           3980
+#define OBJ_id_attribute_probePOACAlg           2L,6L,9L,8L,2L,127L
+
+#define SN_id_attribute_probeSecurityLabel              "id-attribute-probeSecurityLabel"
+#define NID_id_attribute_probeSecurityLabel             3981
+#define OBJ_id_attribute_probeSecurityLabel             2L,6L,9L,8L,2L,128L
+
+#define SN_id_attribute_processingState         "id-attribute-processingState"
+#define NID_id_attribute_processingState                3982
+#define OBJ_id_attribute_processingState                2L,6L,9L,8L,2L,129L
+
+#define SN_id_attribute_bilateralDeferral               "id-attribute-bilateralDeferral"
+#define NID_id_attribute_bilateralDeferral              3983
+#define OBJ_id_attribute_bilateralDeferral              2L,6L,9L,8L,2L,13L
+
+#define SN_id_attribute_recipientCicAlg         "id-attribute-recipientCicAlg"
+#define NID_id_attribute_recipientCicAlg                3984
+#define OBJ_id_attribute_recipientCicAlg                2L,6L,9L,8L,2L,134L
+
+#define SN_id_attribute_recipientName           "id-attribute-recipientName"
+#define NID_id_attribute_recipientName          3985
+#define OBJ_id_attribute_recipientName          2L,6L,9L,8L,2L,135L
+
+#define SN_id_attribute_recipientsNames         "id-attribute-recipientsNames"
+#define NID_id_attribute_recipientsNames                3986
+#define OBJ_id_attribute_recipientsNames                2L,6L,9L,8L,2L,136L
+
+#define SN_id_attribute_recipientTokenAlg               "id-attribute-recipientTokenAlg"
+#define NID_id_attribute_recipientTokenAlg              3987
+#define OBJ_id_attribute_recipientTokenAlg              2L,6L,9L,8L,2L,137L
+
+#define SN_id_attribute_recipientTokenEncAlg            "id-attribute-recipientTokenEncAlg"
+#define NID_id_attribute_recipientTokenEncAlg           3988
+#define OBJ_id_attribute_recipientTokenEncAlg           2L,6L,9L,8L,2L,138L
+
+#define SN_id_attribute_recipientTokenSigAlg            "id-attribute-recipientTokenSigAlg"
+#define NID_id_attribute_recipientTokenSigAlg           3989
+#define OBJ_id_attribute_recipientTokenSigAlg           2L,6L,9L,8L,2L,139L
+
+#define SN_id_attribute_colocated               "id-attribute-colocated"
+#define NID_id_attribute_colocated              3990
+#define OBJ_id_attribute_colocated              2L,6L,9L,8L,2L,14L
+
+#define SN_id_attribute_redirectionRecipient            "id-attribute-redirectionRecipient"
+#define NID_id_attribute_redirectionRecipient           3991
+#define OBJ_id_attribute_redirectionRecipient           2L,6L,9L,8L,2L,140L
+
+#define SN_id_attribute_redirections            "id-attribute-redirections"
+#define NID_id_attribute_redirections           3992
+#define OBJ_id_attribute_redirections           2L,6L,9L,8L,2L,141L
+
+#define SN_id_attribute_reportOriginatorCertificate             "id-attribute-reportOriginatorCertificate"
+#define NID_id_attribute_reportOriginatorCertificate            3993
+#define OBJ_id_attribute_reportOriginatorCertificate            2L,6L,9L,8L,2L,142L
+
+#define SN_id_attribute_reportROACAlg           "id-attribute-reportROACAlg"
+#define NID_id_attribute_reportROACAlg          3994
+#define OBJ_id_attribute_reportROACAlg          2L,6L,9L,8L,2L,144L
+
+#define SN_id_attribute_reportSecurityLabel             "id-attribute-reportSecurityLabel"
+#define NID_id_attribute_reportSecurityLabel            3995
+#define OBJ_id_attribute_reportSecurityLabel            2L,6L,9L,8L,2L,145L
+
+#define SN_id_attribute_responderAccessPointAddress             "id-attribute-responderAccessPointAddress"
+#define NID_id_attribute_responderAccessPointAddress            3996
+#define OBJ_id_attribute_responderAccessPointAddress            2L,6L,9L,8L,2L,146L
+
+#define SN_id_attribute_responderStrongCredentials              "id-attribute-responderStrongCredentials"
+#define NID_id_attribute_responderStrongCredentials             3997
+#define OBJ_id_attribute_responderStrongCredentials             2L,6L,9L,8L,2L,148L
+
+#define SN_id_attribute_routingFunctionObjectInstanceId         "id-attribute-routingFunctionObjectInstanceId"
+#define NID_id_attribute_routingFunctionObjectInstanceId                3998
+#define OBJ_id_attribute_routingFunctionObjectInstanceId                2L,6L,9L,8L,2L,149L
+
+#define SN_id_attribute_secAdjMTAObjectInstanceId               "id-attribute-secAdjMTAObjectInstanceId"
+#define NID_id_attribute_secAdjMTAObjectInstanceId              3999
+#define OBJ_id_attribute_secAdjMTAObjectInstanceId              2L,6L,9L,8L,2L,150L
+
+#define SN_id_attribute_secAssociationObjectInstanceId          "id-attribute-secAssociationObjectInstanceId"
+#define NID_id_attribute_secAssociationObjectInstanceId         4000
+#define OBJ_id_attribute_secAssociationObjectInstanceId         2L,6L,9L,8L,2L,151L
+
+#define SN_id_attribute_secConversionObjectInstanceId           "id-attribute-secConversionObjectInstanceId"
+#define NID_id_attribute_secConversionObjectInstanceId          4001
+#define OBJ_id_attribute_secConversionObjectInstanceId          2L,6L,9L,8L,2L,152L
+
+#define SN_id_attribute_secGenROACObjectInstanceId              "id-attribute-secGenROACObjectInstanceId"
+#define NID_id_attribute_secGenROACObjectInstanceId             4002
+#define OBJ_id_attribute_secGenROACObjectInstanceId             2L,6L,9L,8L,2L,153L
+
+#define SN_id_attribute_secMessageObjectInstanceId              "id-attribute-secMessageObjectInstanceId"
+#define NID_id_attribute_secMessageObjectInstanceId             4003
+#define OBJ_id_attribute_secMessageObjectInstanceId             2L,6L,9L,8L,2L,154L
+
+#define SN_id_attribute_secMtsUserObjectInstanceId              "id-attribute-secMtsUserObjectInstanceId"
+#define NID_id_attribute_secMtsUserObjectInstanceId             4004
+#define OBJ_id_attribute_secMtsUserObjectInstanceId             2L,6L,9L,8L,2L,155L
+
+#define SN_id_attribute_secProbeObjectInstanceId                "id-attribute-secProbeObjectInstanceId"
+#define NID_id_attribute_secProbeObjectInstanceId               4005
+#define OBJ_id_attribute_secProbeObjectInstanceId               2L,6L,9L,8L,2L,156L
+
+#define SN_id_attribute_secReportObjectInstanceId               "id-attribute-secReportObjectInstanceId"
+#define NID_id_attribute_secReportObjectInstanceId              4006
+#define OBJ_id_attribute_secReportObjectInstanceId              2L,6L,9L,8L,2L,157L
+
+#define SN_id_attribute_securityLabels          "id-attribute-securityLabels"
+#define NID_id_attribute_securityLabels         4007
+#define OBJ_id_attribute_securityLabels         2L,6L,9L,8L,2L,158L
+
+#define SN_id_attribute_secVerifGenMsgObjectInstanceId          "id-attribute-secVerifGenMsgObjectInstanceId"
+#define NID_id_attribute_secVerifGenMsgObjectInstanceId         4008
+#define OBJ_id_attribute_secVerifGenMsgObjectInstanceId         2L,6L,9L,8L,2L,159L
+
+#define SN_id_attribute_SecVerifGenRecipObjectInstanceId                "id-attribute-SecVerifGenRecipObjectInstanceId"
+#define NID_id_attribute_SecVerifGenRecipObjectInstanceId               4009
+#define OBJ_id_attribute_SecVerifGenRecipObjectInstanceId               2L,6L,9L,8L,2L,161L
+
+#define SN_id_attribute_secVerifPOACObjectInstanceId            "id-attribute-secVerifPOACObjectInstanceId"
+#define NID_id_attribute_secVerifPOACObjectInstanceId           4010
+#define OBJ_id_attribute_secVerifPOACObjectInstanceId           2L,6L,9L,8L,2L,162L
+
+#define SN_id_attribute_secVerifROACObjectInstanceId            "id-attribute-secVerifROACObjectInstanceId"
+#define NID_id_attribute_secVerifROACObjectInstanceId           4011
+#define OBJ_id_attribute_secVerifROACObjectInstanceId           2L,6L,9L,8L,2L,163L
+
+#define SN_id_attribute_supportedApplicationContexts            "id-attribute-supportedApplicationContexts"
+#define NID_id_attribute_supportedApplicationContexts           4012
+#define OBJ_id_attribute_supportedApplicationContexts           2L,6L,9L,8L,2L,164L
+
+#define SN_id_attribute_typeOfMpr               "id-attribute-typeOfMpr"
+#define NID_id_attribute_typeOfMpr              4013
+#define OBJ_id_attribute_typeOfMpr              2L,6L,9L,8L,2L,165L
+
+#define SN_id_attribute_waitTimeToRelease               "id-attribute-waitTimeToRelease"
+#define NID_id_attribute_waitTimeToRelease              4014
+#define OBJ_id_attribute_waitTimeToRelease              2L,6L,9L,8L,2L,166L
+
+#define SN_id_attribute_contentTypesSupported           "id-attribute-contentTypesSupported"
+#define NID_id_attribute_contentTypesSupported          4015
+#define OBJ_id_attribute_contentTypesSupported          2L,6L,9L,8L,2L,17L
+
+#define SN_id_attribute_conversionCredentials           "id-attribute-conversionCredentials"
+#define NID_id_attribute_conversionCredentials          4016
+#define OBJ_id_attribute_conversionCredentials          2L,6L,9L,8L,2L,18L
+
+#define SN_id_attribute_conversionFunctionObjectInstanceId              "id-attribute-conversionFunctionObjectInstanceId"
+#define NID_id_attribute_conversionFunctionObjectInstanceId             4017
+#define OBJ_id_attribute_conversionFunctionObjectInstanceId             2L,6L,9L,8L,2L,19L
+
+#define SN_id_attribute_adjMtaMaxMessageSize            "id-attribute-adjMtaMaxMessageSize"
+#define NID_id_attribute_adjMtaMaxMessageSize           4018
+#define OBJ_id_attribute_adjMtaMaxMessageSize           2L,6L,9L,8L,2L,2L
+
+#define SN_id_attribute_conversionSecurityContext               "id-attribute-conversionSecurityContext"
+#define NID_id_attribute_conversionSecurityContext              4019
+#define OBJ_id_attribute_conversionSecurityContext              2L,6L,9L,8L,2L,20L
+
+#define SN_id_attribute_conversionSecurityLabels                "id-attribute-conversionSecurityLabels"
+#define NID_id_attribute_conversionSecurityLabels               4020
+#define OBJ_id_attribute_conversionSecurityLabels               2L,6L,9L,8L,2L,21L
+
+#define SN_id_attribute_conversionType          "id-attribute-conversionType"
+#define NID_id_attribute_conversionType         4021
+#define OBJ_id_attribute_conversionType         2L,6L,9L,8L,2L,22L
+
+#define SN_id_attribute_creationTime            "id-attribute-creationTime"
+#define NID_id_attribute_creationTime           4022
+#define OBJ_id_attribute_creationTime           2L,6L,9L,8L,2L,23L
+
+#define SN_id_attribute_defaultNonUrgentMprExpiryDuration               "id-attribute-defaultNonUrgentMprExpiryDuration"
+#define NID_id_attribute_defaultNonUrgentMprExpiryDuration              4023
+#define OBJ_id_attribute_defaultNonUrgentMprExpiryDuration              2L,6L,9L,8L,2L,24L
+
+#define SN_id_attribute_defaultNormalMprExpiryDuration          "id-attribute-defaultNormalMprExpiryDuration"
+#define NID_id_attribute_defaultNormalMprExpiryDuration         4024
+#define OBJ_id_attribute_defaultNormalMprExpiryDuration         2L,6L,9L,8L,2L,25L
+
+#define SN_id_attribute_defaultPermissibleContentTypes          "id-attribute-defaultPermissibleContentTypes"
+#define NID_id_attribute_defaultPermissibleContentTypes         4025
+#define OBJ_id_attribute_defaultPermissibleContentTypes         2L,6L,9L,8L,2L,26L
+
+#define SN_id_attribute_defaultPermissibleEITs          "id-attribute-defaultPermissibleEITs"
+#define NID_id_attribute_defaultPermissibleEITs         4026
+#define OBJ_id_attribute_defaultPermissibleEITs         2L,6L,9L,8L,2L,27L
+
+#define SN_id_attribute_defaultPermissibleLowestPriority                "id-attribute-defaultPermissibleLowestPriority"
+#define NID_id_attribute_defaultPermissibleLowestPriority               4027
+#define OBJ_id_attribute_defaultPermissibleLowestPriority               2L,6L,9L,8L,2L,28L
+
+#define SN_id_attribute_defaultPermissibleMaxContentLength              "id-attribute-defaultPermissibleMaxContentLength"
+#define NID_id_attribute_defaultPermissibleMaxContentLength             4028
+#define OBJ_id_attribute_defaultPermissibleMaxContentLength             2L,6L,9L,8L,2L,29L
+
+#define SN_id_attribute_adjMtaName              "id-attribute-adjMtaName"
+#define NID_id_attribute_adjMtaName             4029
+#define OBJ_id_attribute_adjMtaName             2L,6L,9L,8L,2L,3L
+
+#define SN_id_attribute_defaultPermissibleOperations            "id-attribute-defaultPermissibleOperations"
+#define NID_id_attribute_defaultPermissibleOperations           4030
+#define OBJ_id_attribute_defaultPermissibleOperations           2L,6L,9L,8L,2L,30L
+
+#define SN_id_attribute_defaultUrgentMprExpiryDuration          "id-attribute-defaultUrgentMprExpiryDuration"
+#define NID_id_attribute_defaultUrgentMprExpiryDuration         4031
+#define OBJ_id_attribute_defaultUrgentMprExpiryDuration         2L,6L,9L,8L,2L,31L
+
+#define SN_id_attribute_deferralTime            "id-attribute-deferralTime"
+#define NID_id_attribute_deferralTime           4032
+#define OBJ_id_attribute_deferralTime           2L,6L,9L,8L,2L,32L
+
+#define SN_id_attribute_directoryName           "id-attribute-directoryName"
+#define NID_id_attribute_directoryName          4033
+#define OBJ_id_attribute_directoryName          2L,6L,9L,8L,2L,33L
+
+#define SN_id_attribute_disallowedMessages              "id-attribute-disallowedMessages"
+#define NID_id_attribute_disallowedMessages             4034
+#define OBJ_id_attribute_disallowedMessages             2L,6L,9L,8L,2L,34L
+
+#define SN_id_attribute_distributionListObjectInstanceId                "id-attribute-distributionListObjectInstanceId"
+#define NID_id_attribute_distributionListObjectInstanceId               4035
+#define OBJ_id_attribute_distributionListObjectInstanceId               2L,6L,9L,8L,2L,35L
+
+#define SN_id_attribute_eits            "id-attribute-eits"
+#define NID_id_attribute_eits           4036
+#define OBJ_id_attribute_eits           2L,6L,9L,8L,2L,36L
+
+#define SN_id_attribute_forcedExpiryDuration            "id-attribute-forcedExpiryDuration"
+#define NID_id_attribute_forcedExpiryDuration           4037
+#define OBJ_id_attribute_forcedExpiryDuration           2L,6L,9L,8L,2L,37L
+
+#define SN_id_attribute_forcedProcessingPriority                "id-attribute-forcedProcessingPriority"
+#define NID_id_attribute_forcedProcessingPriority               4038
+#define OBJ_id_attribute_forcedProcessingPriority               2L,6L,9L,8L,2L,38L
+
+#define SN_id_attribute_adjMtaObjectInstanceId          "id-attribute-adjMtaObjectInstanceId"
+#define NID_id_attribute_adjMtaObjectInstanceId         4039
+#define OBJ_id_attribute_adjMtaObjectInstanceId         2L,6L,9L,8L,2L,4L
+
+#define SN_id_attribute_heldByManager           "id-attribute-heldByManager"
+#define NID_id_attribute_heldByManager          4040
+#define OBJ_id_attribute_heldByManager          2L,6L,9L,8L,2L,40L
+
+#define SN_id_attribute_informationLossSuspected                "id-attribute-informationLossSuspected"
+#define NID_id_attribute_informationLossSuspected               4041
+#define OBJ_id_attribute_informationLossSuspected               2L,6L,9L,8L,2L,41L
+
+#define SN_id_attribute_initiatorAccessPointAddress             "id-attribute-initiatorAccessPointAddress"
+#define NID_id_attribute_initiatorAccessPointAddress            4042
+#define OBJ_id_attribute_initiatorAccessPointAddress            2L,6L,9L,8L,2L,42L
+
+#define SN_id_attribute_initiatorSecurityContext                "id-attribute-initiatorSecurityContext"
+#define NID_id_attribute_initiatorSecurityContext               4043
+#define OBJ_id_attribute_initiatorSecurityContext               2L,6L,9L,8L,2L,44L
+
+#define SN_id_attribute_initiatorStrongCredentials              "id-attribute-initiatorStrongCredentials"
+#define NID_id_attribute_initiatorStrongCredentials             4044
+#define OBJ_id_attribute_initiatorStrongCredentials             2L,6L,9L,8L,2L,45L
+
+#define SN_id_attribute_lastAdjMtaName          "id-attribute-lastAdjMtaName"
+#define NID_id_attribute_lastAdjMtaName         4045
+#define OBJ_id_attribute_lastAdjMtaName         2L,6L,9L,8L,2L,46L
+
+#define SN_id_attribute_localMTAMaxMessageSize          "id-attribute-localMTAMaxMessageSize"
+#define NID_id_attribute_localMTAMaxMessageSize         4046
+#define OBJ_id_attribute_localMTAMaxMessageSize         2L,6L,9L,8L,2L,47L
+
+#define SN_id_attribute_localMTASimpleCredentials               "id-attribute-localMTASimpleCredentials"
+#define NID_id_attribute_localMTASimpleCredentials              4047
+#define OBJ_id_attribute_localMTASimpleCredentials              2L,6L,9L,8L,2L,48L
+
+#define SN_id_attribute_localMTAStrongCredentials               "id-attribute-localMTAStrongCredentials"
+#define NID_id_attribute_localMTAStrongCredentials              4048
+#define OBJ_id_attribute_localMTAStrongCredentials              2L,6L,9L,8L,2L,49L
+
+#define SN_id_attribute_adjMtaPossibleConversions               "id-attribute-adjMtaPossibleConversions"
+#define NID_id_attribute_adjMtaPossibleConversions              4049
+#define OBJ_id_attribute_adjMtaPossibleConversions              2L,6L,9L,8L,2L,5L
+
+#define SN_id_attribute_maxAdjMTAInboundAssocs          "id-attribute-maxAdjMTAInboundAssocs"
+#define NID_id_attribute_maxAdjMTAInboundAssocs         4050
+#define OBJ_id_attribute_maxAdjMTAInboundAssocs         2L,6L,9L,8L,2L,50L
+
+#define SN_id_attribute_maxAdjMTAOutboundAssocs         "id-attribute-maxAdjMTAOutboundAssocs"
+#define NID_id_attribute_maxAdjMTAOutboundAssocs                4051
+#define OBJ_id_attribute_maxAdjMTAOutboundAssocs                2L,6L,9L,8L,2L,51L
+
+#define SN_id_attribute_maxFunctionProcessingTime               "id-attribute-maxFunctionProcessingTime"
+#define NID_id_attribute_maxFunctionProcessingTime              4052
+#define OBJ_id_attribute_maxFunctionProcessingTime              2L,6L,9L,8L,2L,52L
+
+#define SN_id_attribute_maxMTAResponseTime              "id-attribute-maxMTAResponseTime"
+#define NID_id_attribute_maxMTAResponseTime             4053
+#define OBJ_id_attribute_maxMTAResponseTime             2L,6L,9L,8L,2L,53L
+
+#define SN_id_attribute_maxMtsUserInboundAssocs         "id-attribute-maxMtsUserInboundAssocs"
+#define NID_id_attribute_maxMtsUserInboundAssocs                4054
+#define OBJ_id_attribute_maxMtsUserInboundAssocs                2L,6L,9L,8L,2L,54L
+
+#define SN_id_attribute_maxMtsUsersOutboundAssocs               "id-attribute-maxMtsUsersOutboundAssocs"
+#define NID_id_attribute_maxMtsUsersOutboundAssocs              4055
+#define OBJ_id_attribute_maxMtsUsersOutboundAssocs              2L,6L,9L,8L,2L,55L
+
+#define SN_id_attribute_maxSizeMprDelivered             "id-attribute-maxSizeMprDelivered"
+#define NID_id_attribute_maxSizeMprDelivered            4056
+#define OBJ_id_attribute_maxSizeMprDelivered            2L,6L,9L,8L,2L,56L
+
+#define SN_id_attribute_maxSizeMprPassingFunction               "id-attribute-maxSizeMprPassingFunction"
+#define NID_id_attribute_maxSizeMprPassingFunction              4057
+#define OBJ_id_attribute_maxSizeMprPassingFunction              2L,6L,9L,8L,2L,57L
+
+#define SN_id_attribute_maxSizeMprSubmitted             "id-attribute-maxSizeMprSubmitted"
+#define NID_id_attribute_maxSizeMprSubmitted            4058
+#define OBJ_id_attribute_maxSizeMprSubmitted            2L,6L,9L,8L,2L,58L
+
+#define SN_id_attribute_maxSizeMprTransferredIn         "id-attribute-maxSizeMprTransferredIn"
+#define NID_id_attribute_maxSizeMprTransferredIn                4059
+#define OBJ_id_attribute_maxSizeMprTransferredIn                2L,6L,9L,8L,2L,59L
+
+#define SN_id_attribute_adjMtaSimpleCredentials         "id-attribute-adjMtaSimpleCredentials"
+#define NID_id_attribute_adjMtaSimpleCredentials                4060
+#define OBJ_id_attribute_adjMtaSimpleCredentials                2L,6L,9L,8L,2L,6L
+
+#define SN_id_attribute_maxSizeMprTransferredOut                "id-attribute-maxSizeMprTransferredOut"
+#define NID_id_attribute_maxSizeMprTransferredOut               4061
+#define OBJ_id_attribute_maxSizeMprTransferredOut               2L,6L,9L,8L,2L,60L
+
+#define SN_id_attribute_mdAssignedAlternateRecipient            "id-attribute-mdAssignedAlternateRecipient"
+#define NID_id_attribute_mdAssignedAlternateRecipient           4062
+#define OBJ_id_attribute_mdAssignedAlternateRecipient           2L,6L,9L,8L,2L,61L
+
+#define SN_id_attribute_meanFunctionProcessingTime              "id-attribute-meanFunctionProcessingTime"
+#define NID_id_attribute_meanFunctionProcessingTime             4063
+#define OBJ_id_attribute_meanFunctionProcessingTime             2L,6L,9L,8L,2L,62L
+
+#define SN_id_attribute_meanMTAResponseTime             "id-attribute-meanMTAResponseTime"
+#define NID_id_attribute_meanMTAResponseTime            4064
+#define OBJ_id_attribute_meanMTAResponseTime            2L,6L,9L,8L,2L,63L
+
+#define SN_id_attribute_meanNbOfStoredMpr               "id-attribute-meanNbOfStoredMpr"
+#define NID_id_attribute_meanNbOfStoredMpr              4065
+#define OBJ_id_attribute_meanNbOfStoredMpr              2L,6L,9L,8L,2L,64L
+
+#define SN_id_attribute_meanSizeMprDelivered            "id-attribute-meanSizeMprDelivered"
+#define NID_id_attribute_meanSizeMprDelivered           4066
+#define OBJ_id_attribute_meanSizeMprDelivered           2L,6L,9L,8L,2L,65L
+
+#define SN_id_attribute_meanSizeMprPassingFunction              "id-attribute-meanSizeMprPassingFunction"
+#define NID_id_attribute_meanSizeMprPassingFunction             4067
+#define OBJ_id_attribute_meanSizeMprPassingFunction             2L,6L,9L,8L,2L,66L
+
+#define SN_id_attribute_meanSizeMprSubmitted            "id-attribute-meanSizeMprSubmitted"
+#define NID_id_attribute_meanSizeMprSubmitted           4068
+#define OBJ_id_attribute_meanSizeMprSubmitted           2L,6L,9L,8L,2L,67L
+
+#define SN_id_attribute_meanSizeMprTransferredIn                "id-attribute-meanSizeMprTransferredIn"
+#define NID_id_attribute_meanSizeMprTransferredIn               4069
+#define OBJ_id_attribute_meanSizeMprTransferredIn               2L,6L,9L,8L,2L,68L
+
+#define SN_id_attribute_meanSizeMprTransferredOut               "id-attribute-meanSizeMprTransferredOut"
+#define NID_id_attribute_meanSizeMprTransferredOut              4070
+#define OBJ_id_attribute_meanSizeMprTransferredOut              2L,6L,9L,8L,2L,69L
+
+#define SN_id_attribute_adjMtaStrongCredentials         "id-attribute-adjMtaStrongCredentials"
+#define NID_id_attribute_adjMtaStrongCredentials                4071
+#define OBJ_id_attribute_adjMtaStrongCredentials                2L,6L,9L,8L,2L,7L
+
+#define SN_id_attribute_meanStorageOccupied             "id-attribute-meanStorageOccupied"
+#define NID_id_attribute_meanStorageOccupied            4072
+#define OBJ_id_attribute_meanStorageOccupied            2L,6L,9L,8L,2L,70L
+
+#define SN_id_attribute_messageEncAlg           "id-attribute-messageEncAlg"
+#define NID_id_attribute_messageEncAlg          4073
+#define OBJ_id_attribute_messageEncAlg          2L,6L,9L,8L,2L,72L
+
+#define SN_id_attribute_messageMOACAlg          "id-attribute-messageMOACAlg"
+#define NID_id_attribute_messageMOACAlg         4074
+#define OBJ_id_attribute_messageMOACAlg         2L,6L,9L,8L,2L,73L
+
+#define SN_id_attribute_messageOriginatorCertificate            "id-attribute-messageOriginatorCertificate"
+#define NID_id_attribute_messageOriginatorCertificate           4075
+#define OBJ_id_attribute_messageOriginatorCertificate           2L,6L,9L,8L,2L,74L
+
+#define SN_id_attribute_minFunctionProcessingTime               "id-attribute-minFunctionProcessingTime"
+#define NID_id_attribute_minFunctionProcessingTime              4076
+#define OBJ_id_attribute_minFunctionProcessingTime              2L,6L,9L,8L,2L,78L
+
+#define SN_id_attribute_minMTAResponseTime              "id-attribute-minMTAResponseTime"
+#define NID_id_attribute_minMTAResponseTime             4077
+#define OBJ_id_attribute_minMTAResponseTime             2L,6L,9L,8L,2L,79L
+
+#define SN_id_attribute_adjMtaSupportedApplicationContexts              "id-attribute-adjMtaSupportedApplicationContexts"
+#define NID_id_attribute_adjMtaSupportedApplicationContexts             4078
+#define OBJ_id_attribute_adjMtaSupportedApplicationContexts             2L,6L,9L,8L,2L,8L
+
+#define SN_id_attribute_minSizeMprDelivered             "id-attribute-minSizeMprDelivered"
+#define NID_id_attribute_minSizeMprDelivered            4079
+#define OBJ_id_attribute_minSizeMprDelivered            2L,6L,9L,8L,2L,80L
+
+#define SN_id_attribute_minSizeMprPassingFunction               "id-attribute-minSizeMprPassingFunction"
+#define NID_id_attribute_minSizeMprPassingFunction              4080
+#define OBJ_id_attribute_minSizeMprPassingFunction              2L,6L,9L,8L,2L,81L
+
+#define SN_id_attribute_minSizeMprSubmitted             "id-attribute-minSizeMprSubmitted"
+#define NID_id_attribute_minSizeMprSubmitted            4081
+#define OBJ_id_attribute_minSizeMprSubmitted            2L,6L,9L,8L,2L,82L
+
+#define SN_id_attribute_minSizeMprTransferredIn         "id-attribute-minSizeMprTransferredIn"
+#define NID_id_attribute_minSizeMprTransferredIn                4082
+#define OBJ_id_attribute_minSizeMprTransferredIn                2L,6L,9L,8L,2L,83L
+
+#define SN_id_attribute_minSizeMprTransferredOut                "id-attribute-minSizeMprTransferredOut"
+#define NID_id_attribute_minSizeMprTransferredOut               4083
+#define OBJ_id_attribute_minSizeMprTransferredOut               2L,6L,9L,8L,2L,84L
+
+#define SN_id_attribute_mprInfo         "id-attribute-mprInfo"
+#define NID_id_attribute_mprInfo                4084
+#define OBJ_id_attribute_mprInfo                2L,6L,9L,8L,2L,85L
+
+#define SN_id_attribute_mprListObjectInstanceId         "id-attribute-mprListObjectInstanceId"
+#define NID_id_attribute_mprListObjectInstanceId                4085
+#define OBJ_id_attribute_mprListObjectInstanceId                2L,6L,9L,8L,2L,86L
+
+#define SN_id_attribute_mprObjectInstanceId             "id-attribute-mprObjectInstanceId"
+#define NID_id_attribute_mprObjectInstanceId            4086
+#define OBJ_id_attribute_mprObjectInstanceId            2L,6L,9L,8L,2L,87L
+
+#define SN_id_attribute_mtaName         "id-attribute-mtaName"
+#define NID_id_attribute_mtaName                4087
+#define OBJ_id_attribute_mtaName                2L,6L,9L,8L,2L,88L
+
+#define SN_id_attribute_mtsIdentifier           "id-attribute-mtsIdentifier"
+#define NID_id_attribute_mtsIdentifier          4088
+#define OBJ_id_attribute_mtsIdentifier          2L,6L,9L,8L,2L,89L
+
+#define SN_id_attribute_applicationContext              "id-attribute-applicationContext"
+#define NID_id_attribute_applicationContext             4089
+#define OBJ_id_attribute_applicationContext             2L,6L,9L,8L,2L,9L
+
+#define SN_id_attribute_mtsUserAccessPointAddress               "id-attribute-mtsUserAccessPointAddress"
+#define NID_id_attribute_mtsUserAccessPointAddress              4090
+#define OBJ_id_attribute_mtsUserAccessPointAddress              2L,6L,9L,8L,2L,90L
+
+#define SN_id_attribute_mtsUserDeliverableContentTypes          "id-attribute-mtsUserDeliverableContentTypes"
+#define NID_id_attribute_mtsUserDeliverableContentTypes         4091
+#define OBJ_id_attribute_mtsUserDeliverableContentTypes         2L,6L,9L,8L,2L,91L
+
+#define SN_id_attribute_mtsUserDeliverableEits          "id-attribute-mtsUserDeliverableEits"
+#define NID_id_attribute_mtsUserDeliverableEits         4092
+#define OBJ_id_attribute_mtsUserDeliverableEits         2L,6L,9L,8L,2L,92L
+
+#define SN_id_attribute_mtsUserDeliverableMaxContentLength              "id-attribute-mtsUserDeliverableMaxContentLength"
+#define NID_id_attribute_mtsUserDeliverableMaxContentLength             4093
+#define OBJ_id_attribute_mtsUserDeliverableMaxContentLength             2L,6L,9L,8L,2L,93L
+
+#define SN_id_attribute_mtsUserDeliveryControls         "id-attribute-mtsUserDeliveryControls"
+#define NID_id_attribute_mtsUserDeliveryControls                4094
+#define OBJ_id_attribute_mtsUserDeliveryControls                2L,6L,9L,8L,2L,94L
+
+#define SN_id_attribute_mtsUserName             "id-attribute-mtsUserName"
+#define NID_id_attribute_mtsUserName            4095
+#define OBJ_id_attribute_mtsUserName            2L,6L,9L,8L,2L,95L
+
+#define SN_id_attribute_mtsUserObjectInstanceId         "id-attribute-mtsUserObjectInstanceId"
+#define NID_id_attribute_mtsUserObjectInstanceId                4096
+#define OBJ_id_attribute_mtsUserObjectInstanceId                2L,6L,9L,8L,2L,96L
+
+#define SN_id_attribute_mtsUserPreferredDeliveryMethod          "id-attribute-mtsUserPreferredDeliveryMethod"
+#define NID_id_attribute_mtsUserPreferredDeliveryMethod         4097
+#define OBJ_id_attribute_mtsUserPreferredDeliveryMethod         2L,6L,9L,8L,2L,97L
+
+#define SN_id_attribute_mtsUserSimpleCredentials                "id-attribute-mtsUserSimpleCredentials"
+#define NID_id_attribute_mtsUserSimpleCredentials               4098
+#define OBJ_id_attribute_mtsUserSimpleCredentials               2L,6L,9L,8L,2L,98L
+
+#define SN_id_attribute_mtsUserStrongCredentials                "id-attribute-mtsUserStrongCredentials"
+#define NID_id_attribute_mtsUserStrongCredentials               4099
+#define OBJ_id_attribute_mtsUserStrongCredentials               2L,6L,9L,8L,2L,99L
+
+#define SN_id_name_binding_adjMTA_mta           "id-name-binding-adjMTA-mta"
+#define NID_id_name_binding_adjMTA_mta          4100
+#define OBJ_id_name_binding_adjMTA_mta          2L,6L,9L,8L,7L,0L
+
+#define SN_id_name_binding_association_adjMTA           "id-name-binding-association-adjMTA"
+#define NID_id_name_binding_association_adjMTA          4101
+#define OBJ_id_name_binding_association_adjMTA          2L,6L,9L,8L,7L,1L
+
+#define SN_id_name_binding_mprlist_mta          "id-name-binding-mprlist-mta"
+#define NID_id_name_binding_mprlist_mta         4102
+#define OBJ_id_name_binding_mprlist_mta         2L,6L,9L,8L,7L,10L
+
+#define SN_id_name_binding_mta_md               "id-name-binding-mta-md"
+#define NID_id_name_binding_mta_md              4103
+#define OBJ_id_name_binding_mta_md              2L,6L,9L,8L,7L,11L
+
+#define SN_id_name_binding_MtsUser_mta          "id-name-binding-MtsUser-mta"
+#define NID_id_name_binding_MtsUser_mta         4104
+#define OBJ_id_name_binding_MtsUser_mta         2L,6L,9L,8L,7L,12L
+
+#define SN_id_name_binding_perfMTACurrentData_mta               "id-name-binding-perfMTACurrentData-mta"
+#define NID_id_name_binding_perfMTACurrentData_mta              4105
+#define OBJ_id_name_binding_perfMTACurrentData_mta              2L,6L,9L,8L,7L,13L
+
+#define SN_id_name_binding_perfMTAHistoryData_perfMTACurrentData                "id-name-binding-perfMTAHistoryData-perfMTACurrentData"
+#define NID_id_name_binding_perfMTAHistoryData_perfMTACurrentData               4106
+#define OBJ_id_name_binding_perfMTAHistoryData_perfMTACurrentData               2L,6L,9L,8L,7L,14L
+
+#define SN_id_name_binding_routing_mta          "id-name-binding-routing-mta"
+#define NID_id_name_binding_routing_mta         4107
+#define OBJ_id_name_binding_routing_mta         2L,6L,9L,8L,7L,15L
+
+#define SN_id_name_binding_routingCurrentData_routingFunction           "id-name-binding-routingCurrentData-routingFunction"
+#define NID_id_name_binding_routingCurrentData_routingFunction          4108
+#define OBJ_id_name_binding_routingCurrentData_routingFunction          2L,6L,9L,8L,7L,16L
+
+#define SN_id_name_binding_routingHistoryData_routingCurrentData                "id-name-binding-routingHistoryData-routingCurrentData"
+#define NID_id_name_binding_routingHistoryData_routingCurrentData               4109
+#define OBJ_id_name_binding_routingHistoryData_routingCurrentData               2L,6L,9L,8L,7L,17L
+
+#define SN_id_name_binding_routingIndicator_routing             "id-name-binding-routingIndicator-routing"
+#define NID_id_name_binding_routingIndicator_routing            4110
+#define OBJ_id_name_binding_routingIndicator_routing            2L,6L,9L,8L,7L,18L
+
+#define SN_id_name_binding_secAdjMTA_adjMTA             "id-name-binding-secAdjMTA-adjMTA"
+#define NID_id_name_binding_secAdjMTA_adjMTA            4111
+#define OBJ_id_name_binding_secAdjMTA_adjMTA            2L,6L,9L,8L,7L,19L
+
+#define SN_id_name_binding_association_MtsUser          "id-name-binding-association-MtsUser"
+#define NID_id_name_binding_association_MtsUser         4112
+#define OBJ_id_name_binding_association_MtsUser         2L,6L,9L,8L,7L,2L
+
+#define SN_id_name_binding_secAssociation_association           "id-name-binding-secAssociation-association"
+#define NID_id_name_binding_secAssociation_association          4113
+#define OBJ_id_name_binding_secAssociation_association          2L,6L,9L,8L,7L,20L
+
+#define SN_id_name_binding_secConversion_conversionFunction             "id-name-binding-secConversion-conversionFunction"
+#define NID_id_name_binding_secConversion_conversionFunction            4114
+#define OBJ_id_name_binding_secConversion_conversionFunction            2L,6L,9L,8L,7L,21L
+
+#define SN_id_name_binding_secDistributionList_distributionListFunction         "id-name-binding-secDistributionList-distributionListFunction"
+#define NID_id_name_binding_secDistributionList_distributionListFunction                4115
+#define OBJ_id_name_binding_secDistributionList_distributionListFunction                2L,6L,9L,8L,7L,22L
+
+#define SN_id_name_binding_secGenROACFunction_mta               "id-name-binding-secGenROACFunction-mta"
+#define NID_id_name_binding_secGenROACFunction_mta              4116
+#define OBJ_id_name_binding_secGenROACFunction_mta              2L,6L,9L,8L,7L,23L
+
+#define SN_id_name_binding_secMessage_mpr               "id-name-binding-secMessage-mpr"
+#define NID_id_name_binding_secMessage_mpr              4117
+#define OBJ_id_name_binding_secMessage_mpr              2L,6L,9L,8L,7L,24L
+
+#define SN_id_name_binding_secMtsUser_MtsUser           "id-name-binding-secMtsUser-MtsUser"
+#define NID_id_name_binding_secMtsUser_MtsUser          4118
+#define OBJ_id_name_binding_secMtsUser_MtsUser          2L,6L,9L,8L,7L,25L
+
+#define SN_id_name_binding_secProbe_mpr         "id-name-binding-secProbe-mpr"
+#define NID_id_name_binding_secProbe_mpr                4119
+#define OBJ_id_name_binding_secProbe_mpr                2L,6L,9L,8L,7L,26L
+
+#define SN_id_name_binding_secReport_mpr                "id-name-binding-secReport-mpr"
+#define NID_id_name_binding_secReport_mpr               4120
+#define OBJ_id_name_binding_secReport_mpr               2L,6L,9L,8L,7L,27L
+
+#define SN_id_name_binding_secRouting_routingIndicator          "id-name-binding-secRouting-routingIndicator"
+#define NID_id_name_binding_secRouting_routingIndicator         4121
+#define OBJ_id_name_binding_secRouting_routingIndicator         2L,6L,9L,8L,7L,28L
+
+#define SN_id_name_binding_secVerifGenMsgFunction_mta           "id-name-binding-secVerifGenMsgFunction-mta"
+#define NID_id_name_binding_secVerifGenMsgFunction_mta          4122
+#define OBJ_id_name_binding_secVerifGenMsgFunction_mta          2L,6L,9L,8L,7L,29L
+
+#define SN_id_name_binding_conversionCurrentData_ConversionFunction             "id-name-binding-conversionCurrentData-ConversionFunction"
+#define NID_id_name_binding_conversionCurrentData_ConversionFunction            4123
+#define OBJ_id_name_binding_conversionCurrentData_ConversionFunction            2L,6L,9L,8L,7L,3L
+
+#define SN_id_name_binding_secVerifGenRecipFunction_mta         "id-name-binding-secVerifGenRecipFunction-mta"
+#define NID_id_name_binding_secVerifGenRecipFunction_mta                4124
+#define OBJ_id_name_binding_secVerifGenRecipFunction_mta                2L,6L,9L,8L,7L,30L
+
+#define SN_id_name_binding_secVerifMOACFunction_mta             "id-name-binding-secVerifMOACFunction-mta"
+#define NID_id_name_binding_secVerifMOACFunction_mta            4125
+#define OBJ_id_name_binding_secVerifMOACFunction_mta            2L,6L,9L,8L,7L,31L
+
+#define SN_id_name_binding_secVerifPOACFunction_mta             "id-name-binding-secVerifPOACFunction-mta"
+#define NID_id_name_binding_secVerifPOACFunction_mta            4126
+#define OBJ_id_name_binding_secVerifPOACFunction_mta            2L,6L,9L,8L,7L,32L
+
+#define SN_id_name_binding_secVerifROACFunction_mta             "id-name-binding-secVerifROACFunction-mta"
+#define NID_id_name_binding_secVerifROACFunction_mta            4127
+#define OBJ_id_name_binding_secVerifROACFunction_mta            2L,6L,9L,8L,7L,33L
+
+#define SN_id_name_binding_thresholdData_conversionCurrentData          "id-name-binding-thresholdData-conversionCurrentData"
+#define NID_id_name_binding_thresholdData_conversionCurrentData         4128
+#define OBJ_id_name_binding_thresholdData_conversionCurrentData         2L,6L,9L,8L,7L,34L
+
+#define SN_id_name_binding_thresholdData_dLCurrentData          "id-name-binding-thresholdData-dLCurrentData"
+#define NID_id_name_binding_thresholdData_dLCurrentData         4129
+#define OBJ_id_name_binding_thresholdData_dLCurrentData         2L,6L,9L,8L,7L,35L
+
+#define SN_id_name_binding_thresholdData_perfMTACurrentData             "id-name-binding-thresholdData-perfMTACurrentData"
+#define NID_id_name_binding_thresholdData_perfMTACurrentData            4130
+#define OBJ_id_name_binding_thresholdData_perfMTACurrentData            2L,6L,9L,8L,7L,36L
+
+#define SN_id_name_binding_thresholdData_routingCurrentData             "id-name-binding-thresholdData-routingCurrentData"
+#define NID_id_name_binding_thresholdData_routingCurrentData            4131
+#define OBJ_id_name_binding_thresholdData_routingCurrentData            2L,6L,9L,8L,7L,37L
+
+#define SN_id_name_binding_conversionFunction_mta               "id-name-binding-conversionFunction-mta"
+#define NID_id_name_binding_conversionFunction_mta              4132
+#define OBJ_id_name_binding_conversionFunction_mta              2L,6L,9L,8L,7L,4L
+
+#define SN_id_name_binding_conversionHistoryData_ConversionCurrentData          "id-name-binding-conversionHistoryData-ConversionCurrentData"
+#define NID_id_name_binding_conversionHistoryData_ConversionCurrentData         4133
+#define OBJ_id_name_binding_conversionHistoryData_ConversionCurrentData         2L,6L,9L,8L,7L,5L
+
+#define SN_id_name_binding_distributionListFunction_mta         "id-name-binding-distributionListFunction-mta"
+#define NID_id_name_binding_distributionListFunction_mta                4134
+#define OBJ_id_name_binding_distributionListFunction_mta                2L,6L,9L,8L,7L,6L
+
+#define SN_id_name_binding_dLCurrentData_distibutionListFunction                "id-name-binding-dLCurrentData-distibutionListFunction"
+#define NID_id_name_binding_dLCurrentData_distibutionListFunction               4135
+#define OBJ_id_name_binding_dLCurrentData_distibutionListFunction               2L,6L,9L,8L,7L,7L
+
+#define SN_id_name_binding_dLHistoryData_dLCurrentData          "id-name-binding-dLHistoryData-dLCurrentData"
+#define NID_id_name_binding_dLHistoryData_dLCurrentData         4136
+#define OBJ_id_name_binding_dLHistoryData_dLCurrentData         2L,6L,9L,8L,7L,8L
+
+#define SN_id_name_binding_mpr_mprList          "id-name-binding-mpr-mprList"
+#define NID_id_name_binding_mpr_mprList         4137
+#define OBJ_id_name_binding_mpr_mprList         2L,6L,9L,8L,7L,9L
+
+#define SN_id_ua                "id-ua"
+#define NID_id_ua               4138
+#define OBJ_id_ua               2L,6L,9L,9L
+
+#define SN_joint_CCR            "joint-CCR"
+#define NID_joint_CCR           4139
+#define OBJ_joint_CCR           2L,7L
+
+#define SN_ccr_syntax_apdus_2           "ccr-syntax-apdus-2"
+#define NID_ccr_syntax_apdus_2          4140
+#define OBJ_ccr_syntax_apdus_2          2L,7L,2L,1L,2L
+
+#define SN_umf_not              "umf-not"
+#define NID_umf_not             4141
+#define OBJ_umf_not             2L,9L,2L,10L,10L
+
+#define SN_umf_mo               "umf-mo"
+#define NID_umf_mo              4142
+#define OBJ_umf_mo              2L,9L,2L,10L,3L
+
+#define SN_umf_pkg              "umf-pkg"
+#define NID_umf_pkg             4143
+#define OBJ_umf_pkg             2L,9L,2L,10L,4L
+
+#define SN_umf_par              "umf-par"
+#define NID_umf_par             4144
+#define OBJ_umf_par             2L,9L,2L,10L,5L
+
+#define SN_umf_nb               "umf-nb"
+#define NID_umf_nb              4145
+#define OBJ_umf_nb              2L,9L,2L,10L,6L
+
+#define SN_umf_att              "umf-att"
+#define NID_umf_att             4146
+#define OBJ_umf_att             2L,9L,2L,10L,7L
+
+#define SN_umf_act              "umf-act"
+#define NID_umf_act             4147
+#define OBJ_umf_act             2L,9L,2L,10L,9L
+
+#define SN_moaSpecificProblems          "moaSpecificProblems"
+#define NID_moaSpecificProblems         4148
+#define OBJ_moaSpecificProblems         2L,9L,2L,11L,0L,0L
+
+#define SN_moaAlgorithmIdentifiers              "moaAlgorithmIdentifiers"
+#define NID_moaAlgorithmIdentifiers             4149
+#define OBJ_moaAlgorithmIdentifiers             2L,9L,2L,11L,0L,1L
+
+#define SN_ewmaAlgorithm                "ewmaAlgorithm"
+#define NID_ewmaAlgorithm               4150
+#define OBJ_ewmaAlgorithm               2L,9L,2L,11L,0L,1L,0L
+
+#define SN_uwmaAlgorithm                "uwmaAlgorithm"
+#define NID_uwmaAlgorithm               4151
+#define OBJ_uwmaAlgorithm               2L,9L,2L,11L,0L,1L,1L
+
+#define SN_part12Notification           "part12Notification"
+#define NID_part12Notification          4152
+#define OBJ_part12Notification          2L,9L,2L,12L,10L
+
+#define SN_part12MObjectClass           "part12MObjectClass"
+#define NID_part12MObjectClass          4153
+#define OBJ_part12MObjectClass          2L,9L,2L,12L,3L
+
+#define SN_part12Package                "part12Package"
+#define NID_part12Package               4154
+#define OBJ_part12Package               2L,9L,2L,12L,4L
+
+#define SN_part12Parameter              "part12Parameter"
+#define NID_part12Parameter             4155
+#define OBJ_part12Parameter             2L,9L,2L,12L,5L
+
+#define SN_part12AttributeId            "part12AttributeId"
+#define NID_part12AttributeId           4156
+#define OBJ_part12AttributeId           2L,9L,2L,12L,7L
+
+#define SN_part12Action         "part12Action"
+#define NID_part12Action                4157
+#define OBJ_part12Action                2L,9L,2L,12L,9L
+
+#define SN_summarizationNotification            "summarizationNotification"
+#define NID_summarizationNotification           4158
+#define OBJ_summarizationNotification           2L,9L,2L,13L,10L
+
+#define SN_summarizationManagedObjectClass              "summarizationManagedObjectClass"
+#define NID_summarizationManagedObjectClass             4159
+#define OBJ_summarizationManagedObjectClass             2L,9L,2L,13L,3L
+
+#define SN_summarizationPackage         "summarizationPackage"
+#define NID_summarizationPackage                4160
+#define OBJ_summarizationPackage                2L,9L,2L,13L,4L
+
+#define SN_summarizationParameter               "summarizationParameter"
+#define NID_summarizationParameter              4161
+#define OBJ_summarizationParameter              2L,9L,2L,13L,5L
+
+#define SN_summarizationNameBinding             "summarizationNameBinding"
+#define NID_summarizationNameBinding            4162
+#define OBJ_summarizationNameBinding            2L,9L,2L,13L,6L
+
+#define SN_summarizationAttribute               "summarizationAttribute"
+#define NID_summarizationAttribute              4163
+#define OBJ_summarizationAttribute              2L,9L,2L,13L,7L
+
+#define SN_summarizationAction          "summarizationAction"
+#define NID_summarizationAction         4164
+#define OBJ_summarizationAction         2L,9L,2L,13L,9L
+
+#define SN_schedNotif           "schedNotif"
+#define NID_schedNotif          4165
+#define OBJ_schedNotif          2L,9L,2L,15L,10L
+
+#define SN_schedMo              "schedMo"
+#define NID_schedMo             4166
+#define OBJ_schedMo             2L,9L,2L,15L,3L
+
+#define SN_schedPkg             "schedPkg"
+#define NID_schedPkg            4167
+#define OBJ_schedPkg            2L,9L,2L,15L,4L
+
+#define SN_schedNb              "schedNb"
+#define NID_schedNb             4168
+#define OBJ_schedNb             2L,9L,2L,15L,6L
+
+#define SN_schedAtt             "schedAtt"
+#define NID_schedAtt            4169
+#define OBJ_schedAtt            2L,9L,2L,15L,7L
+
+#define SN_mkmDirectoryAttributeType            "mkmDirectoryAttributeType"
+#define NID_mkmDirectoryAttributeType           4170
+#define OBJ_mkmDirectoryAttributeType           2L,9L,2L,16L,0L,4L
+
+#define SN_mkmDirectoryObjectClass              "mkmDirectoryObjectClass"
+#define NID_mkmDirectoryObjectClass             4171
+#define OBJ_mkmDirectoryObjectClass             2L,9L,2L,16L,0L,6L
+
+#define SN_mkmDirectoryNameForm         "mkmDirectoryNameForm"
+#define NID_mkmDirectoryNameForm                4172
+#define OBJ_mkmDirectoryNameForm                2L,9L,2L,16L,0L,7L
+
+#define SN_mkmMObjectClass              "mkmMObjectClass"
+#define NID_mkmMObjectClass             4173
+#define OBJ_mkmMObjectClass             2L,9L,2L,16L,3L
+
+#define SN_mkmPackage           "mkmPackage"
+#define NID_mkmPackage          4174
+#define OBJ_mkmPackage          2L,9L,2L,16L,4L
+
+#define SN_mkmParameter         "mkmParameter"
+#define NID_mkmParameter                4175
+#define OBJ_mkmParameter                2L,9L,2L,16L,5L
+
+#define SN_mkmNameBinding               "mkmNameBinding"
+#define NID_mkmNameBinding              4176
+#define OBJ_mkmNameBinding              2L,9L,2L,16L,6L
+
+#define SN_mkmAttribute         "mkmAttribute"
+#define NID_mkmAttribute                4177
+#define OBJ_mkmAttribute                2L,9L,2L,16L,7L
+
+#define SN_mkmAction            "mkmAction"
+#define NID_mkmAction           4178
+#define OBJ_mkmAction           2L,9L,2L,16L,9L
+
+#define SN_part17MRelClass              "part17MRelClass"
+#define NID_part17MRelClass             4179
+#define OBJ_part17MRelClass             2L,9L,2L,17L,11L
+
+#define SN_part17Role           "part17Role"
+#define NID_part17Role          4180
+#define OBJ_part17Role          2L,9L,2L,17L,13L
+
+#define SN_part17MObjectClass           "part17MObjectClass"
+#define NID_part17MObjectClass          4181
+#define OBJ_part17MObjectClass          2L,9L,2L,17L,3L
+
+#define SN_part17Package                "part17Package"
+#define NID_part17Package               4182
+#define OBJ_part17Package               2L,9L,2L,17L,4L
+
+#define SN_part17Parameter              "part17Parameter"
+#define NID_part17Parameter             4183
+#define OBJ_part17Parameter             2L,9L,2L,17L,5L
+
+#define SN_part17Attribute              "part17Attribute"
+#define NID_part17Attribute             4184
+#define OBJ_part17Attribute             2L,9L,2L,17L,7L
+
+#define SN_part17Action         "part17Action"
+#define NID_part17Action                4185
+#define OBJ_part17Action                2L,9L,2L,17L,9L
+
+#define SN_softwareManagement           "softwareManagement"
+#define NID_softwareManagement          4186
+#define OBJ_softwareManagement          2L,9L,2L,18L
+
+#define SN_mdmpmfFunctionalUnitPackage          "mdmpmfFunctionalUnitPackage"
+#define NID_mdmpmfFunctionalUnitPackage         4187
+#define OBJ_mdmpmfFunctionalUnitPackage         2L,9L,2L,19L,1L
+
+#define SN_mdmpmfNotification           "mdmpmfNotification"
+#define NID_mdmpmfNotification          4188
+#define OBJ_mdmpmfNotification          2L,9L,2L,19L,10L
+
+#define SN_mdmpmfRelationship           "mdmpmfRelationship"
+#define NID_mdmpmfRelationship          4189
+#define OBJ_mdmpmfRelationship          2L,9L,2L,19L,11L
+
+#define SN_mdmpmfRelationshipMapping            "mdmpmfRelationshipMapping"
+#define NID_mdmpmfRelationshipMapping           4190
+#define OBJ_mdmpmfRelationshipMapping           2L,9L,2L,19L,12L
+
+#define SN_assertedValueIdentifier              "assertedValueIdentifier"
+#define NID_assertedValueIdentifier             4191
+#define OBJ_assertedValueIdentifier             2L,9L,2L,19L,13L
+
+#define SN_operationType                "operationType"
+#define NID_operationType               4192
+#define OBJ_operationType               2L,9L,2L,19L,13L,1L
+
+#define SN_errorType            "errorType"
+#define NID_errorType           4193
+#define OBJ_errorType           2L,9L,2L,19L,13L,2L
+
+#define SN_notificationType             "notificationType"
+#define NID_notificationType            4194
+#define OBJ_notificationType            2L,9L,2L,19L,13L,3L
+
+#define SN_actionType           "actionType"
+#define NID_actionType          4195
+#define OBJ_actionType          2L,9L,2L,19L,13L,4L
+
+#define SN_eventInfo            "eventInfo"
+#define NID_eventInfo           4196
+#define OBJ_eventInfo           2L,9L,2L,19L,13L,5L
+
+#define SN_eventReply           "eventReply"
+#define NID_eventReply          4197
+#define OBJ_eventReply          2L,9L,2L,19L,13L,6L
+
+#define SN_actionInfo           "actionInfo"
+#define NID_actionInfo          4198
+#define OBJ_actionInfo          2L,9L,2L,19L,13L,7L
+
+#define SN_actionReply          "actionReply"
+#define NID_actionReply         4199
+#define OBJ_actionReply         2L,9L,2L,19L,13L,8L
+
+#define SN_mdmpmfManagedObject          "mdmpmfManagedObject"
+#define NID_mdmpmfManagedObject         4200
+#define OBJ_mdmpmfManagedObject         2L,9L,2L,19L,3L
+
+#define SN_mdmpmfPackage                "mdmpmfPackage"
+#define NID_mdmpmfPackage               4201
+#define OBJ_mdmpmfPackage               2L,9L,2L,19L,4L
+
+#define SN_mdmpmfParameter              "mdmpmfParameter"
+#define NID_mdmpmfParameter             4202
+#define OBJ_mdmpmfParameter             2L,9L,2L,19L,5L
+
+#define SN_mdmpmfNameBinding            "mdmpmfNameBinding"
+#define NID_mdmpmfNameBinding           4203
+#define OBJ_mdmpmfNameBinding           2L,9L,2L,19L,6L
+
+#define SN_mdmpmfAttribute              "mdmpmfAttribute"
+#define NID_mdmpmfAttribute             4204
+#define OBJ_mdmpmfAttribute             2L,9L,2L,19L,7L
+
+#define SN_mdmpmfAction         "mdmpmfAction"
+#define NID_mdmpmfAction                4205
+#define OBJ_mdmpmfAction                2L,9L,2L,19L,8L
+
+#define SN_timeManagement               "timeManagement"
+#define NID_timeManagement              4206
+#define OBJ_timeManagement              2L,9L,2L,20L
+
+#define SN_ntp          "ntp"
+#define NID_ntp         4207
+#define OBJ_ntp         2L,9L,2L,20L,20L,1L
+
+#define SN_clockSourceOID               "clockSourceOID"
+#define NID_clockSourceOID              4208
+#define OBJ_clockSourceOID              2L,9L,2L,20L,3L,0L
+
+#define SN_localClockOID                "localClockOID"
+#define NID_localClockOID               4209
+#define OBJ_localClockOID               2L,9L,2L,20L,3L,1L
+
+#define SN_referenceClockOID            "referenceClockOID"
+#define NID_referenceClockOID           4210
+#define OBJ_referenceClockOID           2L,9L,2L,20L,3L,2L
+
+#define SN_synchronizationProtocolOID           "synchronizationProtocolOID"
+#define NID_synchronizationProtocolOID          4211
+#define OBJ_synchronizationProtocolOID          2L,9L,2L,20L,3L,3L
+
+#define SN_ntpProtocolOID               "ntpProtocolOID"
+#define NID_ntpProtocolOID              4212
+#define OBJ_ntpProtocolOID              2L,9L,2L,20L,3L,4L
+
+#define SN_clockSourceDetailPkgOID              "clockSourceDetailPkgOID"
+#define NID_clockSourceDetailPkgOID             4213
+#define OBJ_clockSourceDetailPkgOID             2L,9L,2L,20L,4L,0L
+
+#define SN_leapSecondPkgOID             "leapSecondPkgOID"
+#define NID_leapSecondPkgOID            4214
+#define OBJ_leapSecondPkgOID            2L,9L,2L,20L,4L,1L
+
+#define SN_synchronizationProtocol_systemOID            "synchronizationProtocol-systemOID"
+#define NID_synchronizationProtocol_systemOID           4215
+#define OBJ_synchronizationProtocol_systemOID           2L,9L,2L,20L,6L,1L
+
+#define SN_clockSource_systemOID                "clockSource-systemOID"
+#define NID_clockSource_systemOID               4216
+#define OBJ_clockSource_systemOID               2L,9L,2L,20L,6L,2L
+
+#define SN_clockAdjustmentIntervalOID           "clockAdjustmentIntervalOID"
+#define NID_clockAdjustmentIntervalOID          4217
+#define OBJ_clockAdjustmentIntervalOID          2L,9L,2L,20L,7L,0L
+
+#define SN_clockDriftOID                "clockDriftOID"
+#define NID_clockDriftOID               4218
+#define OBJ_clockDriftOID               2L,9L,2L,20L,7L,1L
+
+#define SN_clockStratumOID              "clockStratumOID"
+#define NID_clockStratumOID             4219
+#define OBJ_clockStratumOID             2L,9L,2L,20L,7L,10L
+
+#define SN_clockValueOID                "clockValueOID"
+#define NID_clockValueOID               4220
+#define OBJ_clockValueOID               2L,9L,2L,20L,7L,11L
+
+#define SN_filterSizeOID                "filterSizeOID"
+#define NID_filterSizeOID               4221
+#define OBJ_filterSizeOID               2L,9L,2L,20L,7L,12L
+
+#define SN_filterWeightOID              "filterWeightOID"
+#define NID_filterWeightOID             4222
+#define OBJ_filterWeightOID             2L,9L,2L,20L,7L,13L
+
+#define SN_leapSecondCountOID           "leapSecondCountOID"
+#define NID_leapSecondCountOID          4223
+#define OBJ_leapSecondCountOID          2L,9L,2L,20L,7L,14L
+
+#define SN_leapSecondIndicationOID              "leapSecondIndicationOID"
+#define NID_leapSecondIndicationOID             4224
+#define OBJ_leapSecondIndicationOID             2L,9L,2L,20L,7L,15L
+
+#define SN_localClockAddressOID         "localClockAddressOID"
+#define NID_localClockAddressOID                4225
+#define OBJ_localClockAddressOID                2L,9L,2L,20L,7L,16L
+
+#define SN_maximumClockAgeOID           "maximumClockAgeOID"
+#define NID_maximumClockAgeOID          4226
+#define OBJ_maximumClockAgeOID          2L,9L,2L,20L,7L,17L
+
+#define SN_maximumDispersionOID         "maximumDispersionOID"
+#define NID_maximumDispersionOID                4227
+#define OBJ_maximumDispersionOID                2L,9L,2L,20L,7L,18L
+
+#define SN_maximumDistanceOID           "maximumDistanceOID"
+#define NID_maximumDistanceOID          4228
+#define OBJ_maximumDistanceOID          2L,9L,2L,20L,7L,19L
+
+#define SN_clockEstimatedErrorOID               "clockEstimatedErrorOID"
+#define NID_clockEstimatedErrorOID              4229
+#define OBJ_clockEstimatedErrorOID              2L,9L,2L,20L,7L,2L
+
+#define SN_maximumPollIntervalOID               "maximumPollIntervalOID"
+#define NID_maximumPollIntervalOID              4230
+#define OBJ_maximumPollIntervalOID              2L,9L,2L,20L,7L,20L
+
+#define SN_maximumSelectClockOID                "maximumSelectClockOID"
+#define NID_maximumSelectClockOID               4231
+#define OBJ_maximumSelectClockOID               2L,9L,2L,20L,7L,21L
+
+#define SN_maximumSkewOID               "maximumSkewOID"
+#define NID_maximumSkewOID              4232
+#define OBJ_maximumSkewOID              2L,9L,2L,20L,7L,22L
+
+#define SN_maximumStratumOID            "maximumStratumOID"
+#define NID_maximumStratumOID           4233
+#define OBJ_maximumStratumOID           2L,9L,2L,20L,7L,23L
+
+#define SN_minimumDispersionOID         "minimumDispersionOID"
+#define NID_minimumDispersionOID                4234
+#define OBJ_minimumDispersionOID                2L,9L,2L,20L,7L,24L
+
+#define SN_minimumPollIntervalOID               "minimumPollIntervalOID"
+#define NID_minimumPollIntervalOID              4235
+#define OBJ_minimumPollIntervalOID              2L,9L,2L,20L,7L,25L
+
+#define SN_minimumSelectClockOID                "minimumSelectClockOID"
+#define NID_minimumSelectClockOID               4236
+#define OBJ_minimumSelectClockOID               2L,9L,2L,20L,7L,26L
+
+#define SN_peerClockAddressesOID                "peerClockAddressesOID"
+#define NID_peerClockAddressesOID               4237
+#define OBJ_peerClockAddressesOID               2L,9L,2L,20L,7L,27L
+
+#define SN_reachabilityRegisterSizeOID          "reachabilityRegisterSizeOID"
+#define NID_reachabilityRegisterSizeOID         4238
+#define OBJ_reachabilityRegisterSizeOID         2L,9L,2L,20L,7L,28L
+
+#define SN_referenceClockTypeOID                "referenceClockTypeOID"
+#define NID_referenceClockTypeOID               4239
+#define OBJ_referenceClockTypeOID               2L,9L,2L,20L,7L,29L
+
+#define SN_clockEventCodeOID            "clockEventCodeOID"
+#define NID_clockEventCodeOID           4240
+#define OBJ_clockEventCodeOID           2L,9L,2L,20L,7L,3L
+
+#define SN_selectWeightOID              "selectWeightOID"
+#define NID_selectWeightOID             4241
+#define OBJ_selectWeightOID             2L,9L,2L,20L,7L,30L
+
+#define SN_synchronizationProtocolIDOID         "synchronizationProtocolIDOID"
+#define NID_synchronizationProtocolIDOID                4242
+#define OBJ_synchronizationProtocolIDOID                2L,9L,2L,20L,7L,31L
+
+#define SN_synchronizationProtocolTypeOID               "synchronizationProtocolTypeOID"
+#define NID_synchronizationProtocolTypeOID              4243
+#define OBJ_synchronizationProtocolTypeOID              2L,9L,2L,20L,7L,32L
+
+#define SN_synchronizationSourceAddressOID              "synchronizationSourceAddressOID"
+#define NID_synchronizationSourceAddressOID             4244
+#define OBJ_synchronizationSourceAddressOID             2L,9L,2L,20L,7L,33L
+
+#define SN_synchronizedClockOID         "synchronizedClockOID"
+#define NID_synchronizedClockOID                4245
+#define OBJ_synchronizedClockOID                2L,9L,2L,20L,7L,34L
+
+#define SN_synchronizingClocksOID               "synchronizingClocksOID"
+#define NID_synchronizingClocksOID              4246
+#define OBJ_synchronizingClocksOID              2L,9L,2L,20L,7L,35L
+
+#define SN_clockEventCounterOID         "clockEventCounterOID"
+#define NID_clockEventCounterOID                4247
+#define OBJ_clockEventCounterOID                2L,9L,2L,20L,7L,4L
+
+#define SN_clockEventTimeOID            "clockEventTimeOID"
+#define NID_clockEventTimeOID           4248
+#define OBJ_clockEventTimeOID           2L,9L,2L,20L,7L,5L
+
+#define SN_clockIDOID           "clockIDOID"
+#define NID_clockIDOID          4249
+#define OBJ_clockIDOID          2L,9L,2L,20L,7L,6L
+
+#define SN_clockMaximumErrorOID         "clockMaximumErrorOID"
+#define NID_clockMaximumErrorOID                4250
+#define OBJ_clockMaximumErrorOID                2L,9L,2L,20L,7L,7L
+
+#define SN_clockPrecisionOID            "clockPrecisionOID"
+#define NID_clockPrecisionOID           4251
+#define OBJ_clockPrecisionOID           2L,9L,2L,20L,7L,8L
+
+#define SN_clockStatusOID               "clockStatusOID"
+#define NID_clockStatusOID              4252
+#define OBJ_clockStatusOID              2L,9L,2L,20L,7L,9L
+
+#define SN_clockResetActionOID          "clockResetActionOID"
+#define NID_clockResetActionOID         4253
+#define OBJ_clockResetActionOID         2L,9L,2L,20L,9L,1L
+
+#define SN_leapSecondActionOID          "leapSecondActionOID"
+#define NID_leapSecondActionOID         4254
+#define OBJ_leapSecondActionOID         2L,9L,2L,20L,9L,2L
+
+#define SN_protocolResetActionOID               "protocolResetActionOID"
+#define NID_protocolResetActionOID              4255
+#define OBJ_protocolResetActionOID              2L,9L,2L,20L,9L,3L
+
+#define SN_cmdSeqRelationshipClasses            "cmdSeqRelationshipClasses"
+#define NID_cmdSeqRelationshipClasses           4256
+#define OBJ_cmdSeqRelationshipClasses           2L,9L,2L,21L,11L
+
+#define SN_cmdSeqRelationshipMappings           "cmdSeqRelationshipMappings"
+#define NID_cmdSeqRelationshipMappings          4257
+#define OBJ_cmdSeqRelationshipMappings          2L,9L,2L,21L,12L
+
+#define SN_cmdSeqRelationshipRoles              "cmdSeqRelationshipRoles"
+#define NID_cmdSeqRelationshipRoles             4258
+#define OBJ_cmdSeqRelationshipRoles             2L,9L,2L,21L,13L
+
+#define SN_rTM_Notification             "rTM-Notification"
+#define NID_rTM_Notification            4259
+#define OBJ_rTM_Notification            2L,9L,2L,22L,10L
+
+#define SN_rTM_ManagedObjectClass               "rTM-ManagedObjectClass"
+#define NID_rTM_ManagedObjectClass              4260
+#define OBJ_rTM_ManagedObjectClass              2L,9L,2L,22L,3L
+
+#define SN_rTM_Package          "rTM-Package"
+#define NID_rTM_Package         4261
+#define OBJ_rTM_Package         2L,9L,2L,22L,4L
+
+#define SN_rTM_Attribute                "rTM-Attribute"
+#define NID_rTM_Attribute               4262
+#define OBJ_rTM_Attribute               2L,9L,2L,22L,7L
+
+#define SN_serviceReportCause           "serviceReportCause"
+#define NID_serviceReportCause          4263
+#define OBJ_serviceReportCause          2L,9L,2L,8L,0L,1L
+
+#define SN_serviceRequest               "serviceRequest"
+#define NID_serviceRequest              4264
+#define OBJ_serviceRequest              2L,9L,2L,8L,0L,1L,1L
+
+#define SN_serviceDenial                "serviceDenial"
+#define NID_serviceDenial               4265
+#define OBJ_serviceDenial               2L,9L,2L,8L,0L,1L,2L
+
+#define SN_serviceResponse              "serviceResponse"
+#define NID_serviceResponse             4266
+#define OBJ_serviceResponse             2L,9L,2L,8L,0L,1L,3L
+
+#define SN_serviceFailure               "serviceFailure"
+#define NID_serviceFailure              4267
+#define OBJ_serviceFailure              2L,9L,2L,8L,0L,1L,4L
+
+#define SN_serviceRecovery              "serviceRecovery"
+#define NID_serviceRecovery             4268
+#define OBJ_serviceRecovery             2L,9L,2L,8L,0L,1L,5L
+
+#define SN_otherReason          "otherReason"
+#define NID_otherReason         4269
+#define OBJ_otherReason         2L,9L,2L,8L,0L,1L,6L
+
+#define SN_securityAuditTrail_Notification              "securityAuditTrail-Notification"
+#define NID_securityAuditTrail_Notification             4270
+#define OBJ_securityAuditTrail_Notification             2L,9L,2L,8L,10L
+
+#define SN_securityAuditTrail_Object            "securityAuditTrail-Object"
+#define NID_securityAuditTrail_Object           4271
+#define OBJ_securityAuditTrail_Object           2L,9L,2L,8L,3L
+
+#define SN_securityAuditTrail_Package           "securityAuditTrail-Package"
+#define NID_securityAuditTrail_Package          4272
+#define OBJ_securityAuditTrail_Package          2L,9L,2L,8L,4L
+
+#define SN_securityAuditTrail_Attribute         "securityAuditTrail-Attribute"
+#define NID_securityAuditTrail_Attribute                4273
+#define OBJ_securityAuditTrail_Attribute                2L,9L,2L,8L,7L
+
+#define SN_accessControl_Object         "accessControl-Object"
+#define NID_accessControl_Object                4274
+#define OBJ_accessControl_Object                2L,9L,2L,9L,3L
+
+#define SN_accessControl_Package                "accessControl-Package"
+#define NID_accessControl_Package               4275
+#define OBJ_accessControl_Package               2L,9L,2L,9L,4L
+
+#define SN_accessControl_Parameter              "accessControl-Parameter"
+#define NID_accessControl_Parameter             4276
+#define OBJ_accessControl_Parameter             2L,9L,2L,9L,5L
+
+#define SN_accessControl_NameBinding            "accessControl-NameBinding"
+#define NID_accessControl_NameBinding           4277
+#define OBJ_accessControl_NameBinding           2L,9L,2L,9L,6L
+
+#define SN_accessControl_Attribute              "accessControl-Attribute"
+#define NID_accessControl_Attribute             4278
+#define OBJ_accessControl_Attribute             2L,9L,2L,9L,7L
+
+#define SN_arfProbableCause             "arfProbableCause"
+#define NID_arfProbableCause            4279
+#define OBJ_arfProbableCause            2L,9L,3L,2L,0L,0L
+
+#define SN_securityAlarmCause           "securityAlarmCause"
+#define NID_securityAlarmCause          4280
+#define OBJ_securityAlarmCause          2L,9L,3L,2L,0L,1L
+
+#define SN_authenticationFailure                "authenticationFailure"
+#define NID_authenticationFailure               4281
+#define OBJ_authenticationFailure               2L,9L,3L,2L,0L,1L,1L
+
+#define SN_intrusionDetection           "intrusionDetection"
+#define NID_intrusionDetection          4282
+#define OBJ_intrusionDetection          2L,9L,3L,2L,0L,1L,10L
+
+#define SN_keyExpired           "keyExpired"
+#define NID_keyExpired          4283
+#define OBJ_keyExpired          2L,9L,3L,2L,0L,1L,11L
+
+#define SN_nonRepudiationFailure                "nonRepudiationFailure"
+#define NID_nonRepudiationFailure               4284
+#define OBJ_nonRepudiationFailure               2L,9L,3L,2L,0L,1L,12L
+
+#define SN_outOfHoursActivity           "outOfHoursActivity"
+#define NID_outOfHoursActivity          4285
+#define OBJ_outOfHoursActivity          2L,9L,3L,2L,0L,1L,13L
+
+#define SN_outOfService         "outOfService"
+#define NID_outOfService                4286
+#define OBJ_outOfService                2L,9L,3L,2L,0L,1L,14L
+
+#define SN_proceduralError              "proceduralError"
+#define NID_proceduralError             4287
+#define OBJ_proceduralError             2L,9L,3L,2L,0L,1L,15L
+
+#define SN_unauthorizedAccessAttempt            "unauthorizedAccessAttempt"
+#define NID_unauthorizedAccessAttempt           4288
+#define OBJ_unauthorizedAccessAttempt           2L,9L,3L,2L,0L,1L,16L
+
+#define SN_unexpectedInformation                "unexpectedInformation"
+#define NID_unexpectedInformation               4289
+#define OBJ_unexpectedInformation               2L,9L,3L,2L,0L,1L,17L
+
+#define SN_unspecifiedReason            "unspecifiedReason"
+#define NID_unspecifiedReason           4290
+#define OBJ_unspecifiedReason           2L,9L,3L,2L,0L,1L,18L
+
+#define SN_breachOfConfidentiality              "breachOfConfidentiality"
+#define NID_breachOfConfidentiality             4291
+#define OBJ_breachOfConfidentiality             2L,9L,3L,2L,0L,1L,2L
+
+#define SN_cableTamper          "cableTamper"
+#define NID_cableTamper         4292
+#define OBJ_cableTamper         2L,9L,3L,2L,0L,1L,3L
+
+#define SN_delayedInformation           "delayedInformation"
+#define NID_delayedInformation          4293
+#define OBJ_delayedInformation          2L,9L,3L,2L,0L,1L,4L
+
+#define SN_denialOfService              "denialOfService"
+#define NID_denialOfService             4294
+#define OBJ_denialOfService             2L,9L,3L,2L,0L,1L,5L
+
+#define SN_duplicateInformation         "duplicateInformation"
+#define NID_duplicateInformation                4295
+#define OBJ_duplicateInformation                2L,9L,3L,2L,0L,1L,6L
+
+#define SN_informationMissing           "informationMissing"
+#define NID_informationMissing          4296
+#define OBJ_informationMissing          2L,9L,3L,2L,0L,1L,7L
+
+#define SN_informationModificationDetected              "informationModificationDetected"
+#define NID_informationModificationDetected             4297
+#define OBJ_informationModificationDetected             2L,9L,3L,2L,0L,1L,8L
+
+#define SN_informationOutOfSequence             "informationOutOfSequence"
+#define NID_informationOutOfSequence            4298
+#define OBJ_informationOutOfSequence            2L,9L,3L,2L,0L,1L,9L
+
+#define SN_arfProposedRepairAction              "arfProposedRepairAction"
+#define NID_arfProposedRepairAction             4299
+#define OBJ_arfProposedRepairAction             2L,9L,3L,2L,0L,2L
+
+#define SN_noActionRequired             "noActionRequired"
+#define NID_noActionRequired            4300
+#define OBJ_noActionRequired            2L,9L,3L,2L,0L,2L,1L
+
+#define SN_repairActionRequired         "repairActionRequired"
+#define NID_repairActionRequired                4301
+#define OBJ_repairActionRequired                2L,9L,3L,2L,0L,2L,2L
+
+#define SN_dmiNotification              "dmiNotification"
+#define NID_dmiNotification             4302
+#define OBJ_dmiNotification             2L,9L,3L,2L,10L
+
+#define SN_smi2MObjectClass             "smi2MObjectClass"
+#define NID_smi2MObjectClass            4303
+#define OBJ_smi2MObjectClass            2L,9L,3L,2L,3L
+
+#define SN_smi2Package          "smi2Package"
+#define NID_smi2Package         4304
+#define OBJ_smi2Package         2L,9L,3L,2L,4L
+
+#define SN_smi2Parameter                "smi2Parameter"
+#define NID_smi2Parameter               4305
+#define OBJ_smi2Parameter               2L,9L,3L,2L,5L
+
+#define SN_smi2NameBinding              "smi2NameBinding"
+#define NID_smi2NameBinding             4306
+#define OBJ_smi2NameBinding             2L,9L,3L,2L,6L
+
+#define SN_smi2AttributeID              "smi2AttributeID"
+#define NID_smi2AttributeID             4307
+#define OBJ_smi2AttributeID             2L,9L,3L,2L,7L
+
+#define SN_smi2AttributeGroup           "smi2AttributeGroup"
+#define NID_smi2AttributeGroup          4308
+#define OBJ_smi2AttributeGroup          2L,9L,3L,2L,8L
+
+#define SN_grm_RelationshipClass                "grm-RelationshipClass"
+#define NID_grm_RelationshipClass               4309
+#define OBJ_grm_RelationshipClass               2L,9L,3L,7L,11L
+
+#define SN_grm_RelationshipMapping              "grm-RelationshipMapping"
+#define NID_grm_RelationshipMapping             4310
+#define OBJ_grm_RelationshipMapping             2L,9L,3L,7L,12L
+
+#define SN_grm_RelationshipRole         "grm-RelationshipRole"
+#define NID_grm_RelationshipRole                4311
+#define OBJ_grm_RelationshipRole                2L,9L,3L,7L,13L
+
+#define SN_grm_Object           "grm-Object"
+#define NID_grm_Object          4312
+#define OBJ_grm_Object          2L,9L,3L,7L,3L
+
+#define SN_grm_Package          "grm-Package"
+#define NID_grm_Package         4313
+#define OBJ_grm_Package         2L,9L,3L,7L,4L
+
+#define SN_grm_Parameter                "grm-Parameter"
+#define NID_grm_Parameter               4314
+#define OBJ_grm_Parameter               2L,9L,3L,7L,5L
+
+#define SN_grm_NameBinding              "grm-NameBinding"
+#define NID_grm_NameBinding             4315
+#define OBJ_grm_NameBinding             2L,9L,3L,7L,6L
+
+#define SN_grm_Attribute                "grm-Attribute"
+#define NID_grm_Attribute               4316
+#define OBJ_grm_Attribute               2L,9L,3L,7L,7L
+
+#define SN_crsMObjectClass              "crsMObjectClass"
+#define NID_crsMObjectClass             4317
+#define OBJ_crsMObjectClass             2L,9L,3L,9L,3L
+
+#define SN_crsMPackage          "crsMPackage"
+#define NID_crsMPackage         4318
+#define OBJ_crsMPackage         2L,9L,3L,9L,4L
+
+#define SN_crsMNameBinding              "crsMNameBinding"
+#define NID_crsMNameBinding             4319
+#define OBJ_crsMNameBinding             2L,9L,3L,9L,6L
+
+#define SN_crsAttribute         "crsAttribute"
+#define NID_crsAttribute                4320
+#define OBJ_crsAttribute                2L,9L,3L,9L,7L
 
 #endif /* OPENSSL_OBJ_MAC_H */
 
