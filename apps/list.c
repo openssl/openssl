@@ -1424,6 +1424,9 @@ static void list_disabled(void)
 #ifndef ZLIB
     BIO_puts(bio_out, "ZLIB\n");
 #endif
+#ifdef OPENSSL_NO_BROTLI
+    BIO_puts(bio_out, "BROTLI\n");
+#endif
 }
 
 /* Unified enum for help and list commands. */

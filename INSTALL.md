@@ -19,7 +19,7 @@ Table of Contents
    - [Build Type](#build-type)
    - [Directories](#directories)
    - [Compiler Warnings](#compiler-warnings)
-   - [ZLib Flags](#zlib-flags)
+   - [Compression Algorithm Flags](#compression-algorithm-flags)
    - [Seeding the Random Generator](#seeding-the-random-generator)
    - [Setting the FIPS HMAC key](#setting-the-FIPS-HMAC-key)
    - [Enable and Disable Features](#enable-and-disable-features)
@@ -382,8 +382,39 @@ for OpenSSL development.  It only works when using gcc or clang as the compiler.
 If you are developing a patch for OpenSSL then it is recommended that you use
 this option where possible.
 
-ZLib Flags
-----------
+Compression Algorithm Flags
+---------------------------
+
+### with-brotli-include
+
+    --with-brotli-include=DIR
+
+The directory for the location of the brotli include files (i.e. the location
+of the **brotli** include directory).  This option is only necessary if
+[enable-brotli](#enable-brotli) is used and the include files are not already
+on the system include path.
+
+### with-brotli-lib
+
+    --with-brotli-lib=LIB
+
+**On Unix**: this is the directory containing the brotli libraries.
+If not provided, the system library path will be used.
+
+The names of the libraries are:
+
+* libbrotlicommon.a or libbrotlicommon.so
+* libbrotlidec.a or libbrotlidec.so
+* libbrotlienc.a or libbrotlienc.so
+
+**On Windows:** this is the directory containing the brotli libraries.
+If not provided, the system library path will be used.
+
+The names of the libraries are:
+
+* brotlicommon.lib
+* brotlidec.lib
+* brotlienc.lib
 
 ### with-zlib-include
 
@@ -555,6 +586,17 @@ Don't automatically load all libcrypto/libssl error strings.
 Typically OpenSSL will automatically load human readable error strings.  For a
 statically linked application this may be undesirable if small executable size
 is an objective.
+
+### enable-brotli
+
+Build with support for brotli compression/decompression.
+
+### enable-brotli-dynamic
+
+Like the enable-brotli option, but has OpenSSL load the brotli library dynamically
+when needed.
+
+This is only supported on systems where loading of shared libraries is supported.
 
 ### no-autoload-config
 
