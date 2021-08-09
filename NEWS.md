@@ -21,6 +21,8 @@ OpenSSL 3.2
 
 ### Major changes between OpenSSL 3.0 and OpenSSL 3.2 [under development]
 
+  * Added support for certificate compression (RFC8879), including
+    library support for Brotli and Zstandard compression.
   * Subject or issuer names in X.509 objects are now displayed as UTF-8 strings
     by default.
   * TCP Fast Open (RFC7413) support is available on Linux, macOS, and FreeBSD

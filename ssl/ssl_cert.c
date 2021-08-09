@@ -74,6 +74,9 @@ CERT *ssl_cert_dup(CERT *cert)
 {
     CERT *ret = OPENSSL_zalloc(sizeof(*ret));
     int i;
+#ifndef OPENSSL_NO_COMP_ALG
+    int j;
+#endif
 
     if (ret == NULL)
         return NULL;
@@ -98,6 +101,7 @@ CERT *ssl_cert_dup(CERT *cert)
     for (i = 0; i < SSL_PKEY_NUM; i++) {
         CERT_PKEY *cpk = cert->pkeys + i;
         CERT_PKEY *rpk = ret->pkeys + i;
+
         if (cpk->x509 != NULL) {
             rpk->x509 = cpk->x509;
             X509_up_ref(rpk->x509);
@@ -115,16 +119,22 @@ CERT *ssl_cert_dup(CERT *cert)
                 goto err;
             }
         }
-        if (cert->pkeys[i].serverinfo != NULL) {
+        if (cpk->serverinfo != NULL) {
             /* Just copy everything. */
-            ret->pkeys[i].serverinfo =
-                OPENSSL_malloc(cert->pkeys[i].serverinfo_length);
-            if (ret->pkeys[i].serverinfo == NULL)
+            rpk->serverinfo = OPENSSL_memdup(cpk->serverinfo, cpk->serverinfo_length);
+            if (rpk->serverinfo == NULL)
                 goto err;
-            ret->pkeys[i].serverinfo_length = cert->pkeys[i].serverinfo_length;
-            memcpy(ret->pkeys[i].serverinfo,
-                   cert->pkeys[i].serverinfo, cert->pkeys[i].serverinfo_length);
+            rpk->serverinfo_length = cpk->serverinfo_length;
         }
+#ifndef OPENSSL_NO_COMP_ALG
+        for (j = TLSEXT_comp_cert_none; j < TLSEXT_comp_cert_limit; j++) {
+            if (cpk->comp_cert[j] != NULL) {
+                if (!OSSL_COMP_CERT_up_ref(cpk->comp_cert[j]))
+                    goto err;
+                rpk->comp_cert[j] = cpk->comp_cert[j];
+            }
+        }
+#endif
     }
 
     /* Configured sigalgs copied across */
@@ -198,6 +208,10 @@ CERT *ssl_cert_dup(CERT *cert)
 void ssl_cert_clear_certs(CERT *c)
 {
     int i;
+#ifndef OPENSSL_NO_COMP_ALG
+    int j;
+#endif
+    
     if (c == NULL)
         return;
     for (i = 0; i < SSL_PKEY_NUM; i++) {
@@ -211,6 +225,13 @@ void ssl_cert_clear_certs(CERT *c)
         OPENSSL_free(cpk->serverinfo);
         cpk->serverinfo = NULL;
         cpk->serverinfo_length = 0;
+#ifndef OPENSSL_NO_COMP_ALG
+        for (j = 0; j < TLSEXT_comp_cert_limit; j++) {
+            OSSL_COMP_CERT_free(cpk->comp_cert[j]);
+            cpk->comp_cert[j] = NULL;
+            cpk->cert_comp_used = 0;
+        }
+#endif
     }
 }
 

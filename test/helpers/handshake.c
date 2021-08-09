@@ -695,6 +695,14 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
                                          server2_ctx_data, client_ctx_data))
         goto err;
 #endif  /* !OPENSSL_NO_SRP */
+#ifndef OPENSSL_NO_COMP_ALG
+    if (test->compress_certificates) {
+        if (!TEST_true(SSL_CTX_compress_certs(server_ctx, 0)))
+            goto err;
+        if (server2_ctx != NULL && !TEST_true(SSL_CTX_compress_certs(server2_ctx, 0)))
+            goto err;
+    }
+#endif
     return 1;
 err:
     return 0;

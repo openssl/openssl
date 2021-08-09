@@ -615,6 +615,9 @@ int ossl_ssl_connection_reset(SSL *s)
     sc->first_packet = 0;
 
     sc->key_update = SSL_KEY_UPDATE_NONE;
+    memset(sc->ext.compress_certificate_from_peer, 0,
+           sizeof(sc->ext.compress_certificate_from_peer));
+    sc->ext.compress_certificate_sent = 0;
 
     EVP_MD_CTX_free(sc->pha_dgst);
     sc->pha_dgst = NULL;
@@ -889,6 +892,10 @@ SSL *ossl_ssl_connection_new(SSL_CTX *ctx)
     s->async_cb_arg = ctx->async_cb_arg;
 
     s->job = NULL;
+
+#ifndef OPENSSL_NO_COMP_ALG
+    memcpy(s->cert_comp_prefs, ctx->cert_comp_prefs, sizeof(s->cert_comp_prefs));
+#endif
 
 #ifndef OPENSSL_NO_CT
     if (!SSL_set_ct_validation_callback(ssl, ctx->ct_validation_callback,
@@ -3657,6 +3664,9 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
                         const SSL_METHOD *meth)
 {
     SSL_CTX *ret = NULL;
+#ifndef OPENSSL_NO_COMP_ALG
+    int i;
+#endif
 
     if (meth == NULL) {
         ERR_raise(ERR_LIB_SSL, SSL_R_NULL_SSL_METHOD_PASSED);
@@ -3830,6 +3840,21 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
             ERR_clear_error();
     }
 # endif
+#endif
+
+#ifndef OPENSSL_NO_COMP_ALG
+    /*
+     * Set the default order: brotli, zlib, zstd
+     * Including only those enabled algorithms
+     */
+    memset(ret->cert_comp_prefs, 0, sizeof(ret->cert_comp_prefs));
+    i = 0;
+    if (ossl_comp_has_alg(TLSEXT_comp_cert_brotli))
+        ret->cert_comp_prefs[i++] = TLSEXT_comp_cert_brotli;
+    if (ossl_comp_has_alg(TLSEXT_comp_cert_zlib))
+        ret->cert_comp_prefs[i++] = TLSEXT_comp_cert_zlib;
+    if (ossl_comp_has_alg(TLSEXT_comp_cert_zstd))
+        ret->cert_comp_prefs[i++] = TLSEXT_comp_cert_zstd;
 #endif
     /*
      * Disable compression by default to prevent CRIME. Applications can

@@ -716,7 +716,7 @@ typedef enum OPTION_choice {
     OPT_KEYLOG_FILE, OPT_MAX_EARLY, OPT_RECV_MAX_EARLY, OPT_EARLY_DATA,
     OPT_S_NUM_TICKETS, OPT_ANTI_REPLAY, OPT_NO_ANTI_REPLAY, OPT_SCTP_LABEL_BUG,
     OPT_HTTP_SERVER_BINMODE, OPT_NOCANAMES, OPT_IGNORE_UNEXPECTED_EOF, OPT_KTLS,
-    OPT_TFO,
+    OPT_TFO, OPT_CERT_COMP,
     OPT_R_ENUM,
     OPT_S_ENUM,
     OPT_V_ENUM,
@@ -843,6 +843,9 @@ const OPTIONS s_server_options[] = {
      "No verify output except verify errors"},
     {"ign_eof", OPT_IGN_EOF, '-', "Ignore input EOF (default when -quiet)"},
     {"no_ign_eof", OPT_NO_IGN_EOF, '-', "Do not ignore input EOF"},
+#ifndef OPENSSL_NO_COMP_ALG
+    {"cert_comp", OPT_CERT_COMP, '-', "Pre-compress server certificates"},
+#endif
 
 #ifndef OPENSSL_NO_OCSP
     OPT_SECTION("OCSP"),
@@ -1061,6 +1064,7 @@ int s_server_main(int argc, char *argv[])
     int enable_ktls = 0;
 #endif
     int tfo = 0;
+    int cert_comp = 0;
 
     /* Init of few remaining global variables */
     local_argc = argc;
@@ -1658,6 +1662,9 @@ int s_server_main(int argc, char *argv[])
         case OPT_TFO:
             tfo = 1;
             break;
+        case OPT_CERT_COMP:
+            cert_comp = 1;
+            break;
         }
     }
 
@@ -2242,6 +2249,14 @@ int s_server_main(int argc, char *argv[])
         SSL_CTX_set_max_early_data(ctx, max_early_data);
     if (recv_max_early_data >= 0)
         SSL_CTX_set_recv_max_early_data(ctx, recv_max_early_data);
+
+    if (cert_comp) {
+        BIO_printf(bio_s_out, "Compressing certificates\n");
+        if (!SSL_CTX_compress_certs(ctx, 0))
+            BIO_printf(bio_s_out, "Error compressing certs on ctx\n");
+        if (ctx2 != NULL && !SSL_CTX_compress_certs(ctx2, 0))
+            BIO_printf(bio_s_out, "Error compressing certs on ctx2\n");
+    }
 
     if (rev)
         server_cb = rev_body;

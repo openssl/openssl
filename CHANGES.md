@@ -24,6 +24,11 @@ OpenSSL 3.2
 
 ### Changes between 3.0 and 3.2 [xx XXX xxxx]
 
+ * Add support for certificate compression (RFC8879), including
+   library support for Brotli and Zstandard compression.
+
+   *Todd Short*
+
  * Add the ability to add custom attributes to PKCS12 files. Add a new API
    PKCS12_create_ex2, identical to the existing PKCS12_create_ex but allows
    for a user specified callback and optional argument.

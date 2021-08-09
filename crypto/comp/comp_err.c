@@ -19,12 +19,8 @@
 static const ERR_STRING_DATA COMP_str_reasons[] = {
     {ERR_PACK(ERR_LIB_COMP, 0, COMP_R_BROTLI_DECODE_ERROR),
     "brotli decode error"},
-    {ERR_PACK(ERR_LIB_COMP, 0, COMP_R_BROTLI_DEFLATE_ERROR),
-    "brotli deflate error"},
     {ERR_PACK(ERR_LIB_COMP, 0, COMP_R_BROTLI_ENCODE_ERROR),
     "brotli encode error"},
-    {ERR_PACK(ERR_LIB_COMP, 0, COMP_R_BROTLI_INFLATE_ERROR),
-    "brotli inflate error"},
     {ERR_PACK(ERR_LIB_COMP, 0, COMP_R_BROTLI_NOT_SUPPORTED),
     "brotli not supported"},
     {ERR_PACK(ERR_LIB_COMP, 0, COMP_R_ZLIB_DEFLATE_ERROR),

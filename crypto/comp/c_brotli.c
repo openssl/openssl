@@ -419,10 +419,10 @@ static const BIO_METHOD bio_meth_brotli = {
 const BIO_METHOD *BIO_f_brotli(void)
 {
 #ifndef OPENSSL_NO_BROTLI
-    return &bio_meth_brotli;
-#else
-    return NULL;
+    if (RUN_ONCE(&brotli_once, ossl_comp_brotli_init))
+        return &bio_meth_brotli;
 #endif
+    return NULL;
 }
 
 #ifndef OPENSSL_NO_BROTLI

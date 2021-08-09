@@ -2466,3 +2466,76 @@ int tls13_restore_handshake_digest_for_pha(SSL_CONNECTION *s)
     }
     return 1;
 }
+
+#ifndef OPENSSL_NO_COMP_ALG
+MSG_PROCESS_RETURN tls13_process_compressed_certificate(SSL_CONNECTION *sc,
+                                                        PACKET *pkt,
+                                                        PACKET *tmppkt,
+                                                        BUF_MEM *buf)
+{
+    MSG_PROCESS_RETURN ret = MSG_PROCESS_ERROR;
+    int comp_alg;
+    COMP_METHOD *method = NULL;
+    COMP_CTX *comp = NULL;
+    size_t expected_length;
+    size_t comp_length;
+    int i;
+    int found = 0;
+
+    if (buf == NULL) {
+        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    if (!PACKET_get_net_2(pkt, (unsigned int*)&comp_alg)) {
+        SSLfatal(sc, SSL_AD_BAD_CERTIFICATE, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    /* If we have a prefs list, make sure the algorithm is in it */
+    if (sc->cert_comp_prefs[0] != TLSEXT_comp_cert_none) {
+        for (i = 0; sc->cert_comp_prefs[i] != TLSEXT_comp_cert_none; i++) {
+            if (sc->cert_comp_prefs[i] == comp_alg) {
+                found = 1;
+                break;
+            }
+        }
+        if (!found) {
+            SSLfatal(sc, SSL_AD_BAD_CERTIFICATE, SSL_R_BAD_COMPRESSION_ALGORITHM);
+            goto err;
+        }
+    }
+    if (!ossl_comp_has_alg(comp_alg)) {
+        SSLfatal(sc, SSL_AD_BAD_CERTIFICATE, SSL_R_BAD_COMPRESSION_ALGORITHM);
+        goto err;
+    }
+    switch (comp_alg) {
+    case TLSEXT_comp_cert_zlib:
+        method = COMP_zlib();
+        break;
+    case TLSEXT_comp_cert_brotli:
+        method = COMP_brotli_oneshot();
+        break;
+    case TLSEXT_comp_cert_zstd:
+        method = COMP_zstd_oneshot();
+        break;
+    default:
+        SSLfatal(sc, SSL_AD_BAD_CERTIFICATE, SSL_R_BAD_COMPRESSION_ALGORITHM);
+        goto err;
+    }
+
+    if (!PACKET_get_net_3_len(pkt, &expected_length)
+        || !PACKET_get_net_3_len(pkt, &comp_length)
+        || PACKET_remaining(pkt) != comp_length
+        || !BUF_MEM_grow(buf, expected_length)
+        || !PACKET_buf_init(tmppkt, (unsigned char *)buf->data, expected_length)
+        || (comp = COMP_CTX_new(method)) == NULL
+        || COMP_expand_block(comp, (unsigned char *)buf->data, expected_length,
+                             (unsigned char*)PACKET_data(pkt), comp_length) != (int)expected_length) {
+        SSLfatal(sc, SSL_AD_BAD_CERTIFICATE, SSL_R_BAD_DECOMPRESSION);
+        goto err;
+    }
+    ret = MSG_PROCESS_CONTINUE_PROCESSING;
+ err:
+    COMP_CTX_free(comp);
+    return ret;
+}
+#endif

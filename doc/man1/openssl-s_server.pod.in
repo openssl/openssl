@@ -92,6 +92,8 @@ B<openssl> B<s_server>
 [B<-naccept> I<+int>]
 [B<-read_buf> I<+int>]
 [B<-bugs>]
+[B<-no_tx_cert_comp>]
+[B<-no_rx_cert_comp>]
 [B<-no_comp>]
 [B<-comp>]
 [B<-no_ticket>]
@@ -139,6 +141,7 @@ B<openssl> B<s_server>
 [B<-no_anti_replay>]
 [B<-num_tickets>]
 [B<-tfo>]
+[B<-cert_comp>]
 {- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_version_synopsis -}
 {- $OpenSSL::safe::opt_v_synopsis -}
@@ -604,6 +607,14 @@ further information).
 There are several known bugs in SSL and TLS implementations. Adding this
 option enables various workarounds.
 
+=item B<-no_tx_cert_comp>
+
+Disables support for sending TLSv1.3 compressed certificates.
+
+=item B<-no_rx_cert_comp>
+
+Disables support for receiving TLSv1.3 compressed certificates.
+
 =item B<-no_comp>
 
 Disable negotiation of TLS compression.
@@ -820,6 +831,9 @@ data that was sent will be rejected.
 
 Enable acceptance of TCP Fast Open (RFC7413) connections.
 
+=item B<-cert_comp>
+
+Pre-compresses certificates (RFC8879) that will be sent during the handshake.
 
 {- $OpenSSL::safe::opt_name_item -}
 
@@ -947,7 +961,8 @@ The
 The B<-srpvfile>, B<-srpuserseed>, and B<-engine>
 option were deprecated in OpenSSL 3.0.
 
-The -tfo option was added in OpenSSL 3.2.
+The B<-tfo>, B<-no_tx_cert_comp>, and B<-no_rx_cert_comp> options were added
+in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
