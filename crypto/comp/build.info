@@ -1,4 +1,5 @@
 LIBS=../../libcrypto
 SOURCE[../../libcrypto]= \
         comp_lib.c comp_err.c \
+	c_brotli.c \
         c_zlib.c

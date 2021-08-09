@@ -899,6 +899,13 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[context_internal_test]=.. ../include ../apps/include
   DEPEND[context_internal_test]=../libcrypto.a libtestutil.a
 
+  IF[{- !$disabled{zlib} || !$disabled{brotli} -}]
+    PROGRAMS{noinst}=bio_comp_test
+    SOURCE[bio_comp_test]=bio_comp_test.c
+    INCLUDE[bio_comp_test]=../include ../apps/include
+    DEPEND[bio_comp_test]=../libcrypto.a libtestutil.a
+  ENDIF
+
   PROGRAMS{noinst}=provider_internal_test
   DEFINE[provider_internal_test]=PROVIDER_INIT_FUNCTION_NAME=p_test_init
   SOURCE[provider_internal_test]=provider_internal_test.c p_test.c
