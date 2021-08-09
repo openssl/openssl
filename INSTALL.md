@@ -440,6 +440,29 @@ then this flag is optional and defaults to `ZLIB1` if not provided.
 This flag is optional and if not provided then `GNV$LIBZSHR`, `GNV$LIBZSHR32`
 or `GNV$LIBZSHR64` is used by default depending on the pointer size chosen.
 
+### with-zstd-include
+
+    --with-zstd-include=DIR
+
+The directory for the location of the zstd include file. This option is only
+necessary if [zstd](#zstd) is used and the include file is not
+already on the system include path.
+
+Note that the Linux kernel source contains a *zstd.h* file that is not compatible
+with the 1.4.x zstd distribution.
+
+### with-zstd-lib
+
+    --with-zstd-lib=LIB
+
+**On Unix**: this is the directory containing the zstd library.
+If not provided the system library path will be used.
+
+**On Windows:** this is the filename of the zstd library (with or
+without a path).  This flag must be provided if the
+[zstd-dynamic](#zstd-dynamic) option is not also used. If `zstd-dynamic` is used
+then this flag is optional and defaults to `LIBZSTD` if not provided.
+
 Seeding the Random Generator
 ----------------------------
 
@@ -984,6 +1007,17 @@ Build with support for zlib compression/decompression.
 ### zlib-dynamic
 
 Like the zlib option, but has OpenSSL load the zlib library dynamically
+when needed.
+
+This is only supported on systems where loading of shared libraries is supported.
+
+### zstd
+
+Build with support for zstd compression/decompression.
+
+### zstd-dynamic
+
+Like the zstd option, but has OpenSSL load the zstd library dynamically
 when needed.
 
 This is only supported on systems where loading of shared libraries is supported.

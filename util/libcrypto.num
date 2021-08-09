@@ -5441,3 +5441,6 @@ CMS_final_digest                        ?	3_1_0	EXIST::FUNCTION:CMS
 COMP_brotli                             ?	3_1_0	EXIST::FUNCTION:COMP
 COMP_brotli_oneshot                     ?	3_1_0	EXIST::FUNCTION:COMP
 BIO_f_brotli                            ?	3_1_0	EXIST::FUNCTION:BROTLI,COMP
+COMP_zstd                               ?	3_1_0	EXIST::FUNCTION:COMP
+COMP_zstd_oneshot                       ?	3_1_0	EXIST::FUNCTION:COMP
+BIO_f_zstd                              ?	3_1_0	EXIST::FUNCTION:COMP,ZSTD

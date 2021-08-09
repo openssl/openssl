@@ -17,7 +17,7 @@
 #include "testutil/output.h"
 #include "testutil/tu_local.h"
 
-#if defined(ZLIB) || defined(BROTLI)
+#if defined(ZLIB) || defined(BROTLI) || defined(ZSTD)
 
 # define COMPRESS  1
 # define EXPAND    0
@@ -89,20 +89,20 @@ static int do_bio_comp(const BIO_METHOD *meth, int n)
 
     switch (type) {
     case 0:
-        test_printf_stdout("# zeros of size %d\n", size);
+        test_printf_stdout("zeros of size %d\n", size);
         memset(original, 0, BUFFER_SIZE);
         break;
     case 1:
-        test_printf_stdout("# ones of size %d\n", size);
+        test_printf_stdout("ones of size %d\n", size);
         memset(original, 0, BUFFER_SIZE);
         break;
     case 2:
-        test_printf_stdout("# sequential of size %d\n", size);
+        test_printf_stdout("sequential of size %d\n", size);
         for (i = 0; i < BUFFER_SIZE; i++)
             original[i] = i & 0xFF;
         break;
     case 3:
-        test_printf_stdout("# random of size %d\n", size);
+        test_printf_stdout("random of size %d\n", size);
         if (!TEST_int_gt(RAND_bytes(original, BUFFER_SIZE), 0))
             goto err;
         break;
@@ -120,16 +120,22 @@ static int do_bio_comp(const BIO_METHOD *meth, int n)
 }
 #endif
 
+#ifdef ZLIB
+static int test_zlib(int n)
+{
+    return do_bio_comp(BIO_f_zlib(), n);
+}
+#endif
 #ifdef BROTLI
 static int test_brotli(int n)
 {
     return do_bio_comp(BIO_f_brotli(), n);
 }
 #endif
-#ifdef ZLIB
-static int test_zlib(int n)
+#ifdef ZSTD
+static int test_zstd(int n)
 {
-    return do_bio_comp(BIO_f_zlib(), n);
+    return do_bio_comp(BIO_f_zstd(), n);
 }
 #endif
 
@@ -140,6 +146,9 @@ int setup_tests(void)
 #endif
 #ifdef BROTLI
     ADD_ALL_TESTS(test_brotli, NUM_SIZES * 4);
+#endif
+#ifdef ZSTD
+    ADD_ALL_TESTS(test_zstd, NUM_SIZES * 4);
 #endif
     return 1;
 }

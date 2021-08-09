@@ -1249,3 +1249,4 @@ sm4_gcm		1248
 sm4_ccm		1249
 id_ct_ASPA		1250
 brotli		1251
+zstd		1252

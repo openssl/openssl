@@ -1427,6 +1427,9 @@ static void list_disabled(void)
 #ifndef BROTLI
     BIO_puts(bio_out, "BROTLI\n");
 #endif
+#ifndef ZSTD
+    BIO_puts(bio_out, "ZSTD\n");
+#endif
 }
 
 /* Unified enum for help and list commands. */

@@ -1120,7 +1120,7 @@ static const unsigned char so[8103] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x01,0x31,  /* [ 8091] OBJ_id_ct_ASPA */
 };
 
-#define NUM_NID 1252
+#define NUM_NID 1253
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2374,9 +2374,10 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"SM4-CCM", "sm4-ccm", NID_sm4_ccm, 8, &so[8083]},
     {"id-ct-ASPA", "id-ct-ASPA", NID_id_ct_ASPA, 11, &so[8091]},
     {"brotli", "Brotli compression", NID_brotli},
+    {"zstd", "Zstandard compression", NID_zstd},
 };
 
-#define NUM_SN 1243
+#define NUM_SN 1244
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -3621,9 +3622,10 @@ static const unsigned int sn_objs[NUM_SN] = {
      158,    /* "x509Certificate" */
      160,    /* "x509Crl" */
     1093,    /* "x509ExtAdmission" */
+    1252,    /* "zstd" */
 };
 
-#define NUM_LN 1243
+#define NUM_LN 1244
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -3851,6 +3853,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      184,    /* "X9.57" */
      185,    /* "X9.57 CM ?" */
     1209,    /* "XmppAddr" */
+    1252,    /* "Zstandard compression" */
      478,    /* "aRecord" */
      289,    /* "aaControls" */
      287,    /* "ac-auditEntity" */
