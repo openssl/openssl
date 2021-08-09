@@ -73,6 +73,10 @@ IF[{- !$disabled{tests} -}]
     PROGRAMS{noinst}=priority_queue_test event_queue_test
   ENDIF
 
+  IF[{- !$disabled{comp} && (!$disabled{brotli} || !$disabled{zstd} || !$disabled{zlib}) -}]
+    PROGRAMS{noinst}=cert_comp_test
+  ENDIF
+
   SOURCE[confdump]=confdump.c
   INCLUDE[confdump]=../include ../apps/include
   DEPEND[confdump]=../libcrypto
@@ -1021,6 +1025,10 @@ ENDIF
   SOURCE[quic_ackm_test]=quic_ackm_test.c
   INCLUDE[quic_ackm_test]=../include ../apps/include
   DEPEND[quic_ackm_test]=../libcrypto.a ../libssl.a libtestutil.a
+
+  SOURCE[cert_comp_test]=cert_comp_test.c helpers/ssltestlib.c
+  INCLUDE[cert_comp_test]=../include ../apps/include ..
+  DEPEND[cert_comp_test]=../libcrypto ../libssl libtestutil.a
 
 {-
    use File::Spec::Functions;

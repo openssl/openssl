@@ -44,6 +44,8 @@ static int do_bio_comp_test(const BIO_METHOD *meth, size_t size)
     int ret = 0;
 
     /* Compress */
+    if (!TEST_ptr(meth))
+        goto err;
     if (!TEST_ptr(bcomp = BIO_new(meth)))
         goto err;
     if (!TEST_ptr(bmem = BIO_new(BIO_s_mem())))

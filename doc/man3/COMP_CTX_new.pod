@@ -98,7 +98,7 @@ COMP_zstd_oneshot() returns a B<COMP_METHOD> for one-shot Zstandard compression.
 BIO_f_zlib(), BIO_f_brotli() BIO_f_zstd() each return a B<BIO_METHOD> that may be used to
 create a B<BIO> via B<BIO_new(3)> to read and write compressed files or streams.
 The functions are only available if the corresponding algorithm is compiled into
-the OpenSSL library.
+the OpenSSL library. NULL may be returned if the algorithm fails to load dynamically.
 
 =head1 NOTES
 
@@ -123,11 +123,12 @@ L<SSL_set_options(3)> functions.
 
 Compression is also used to support certificate compression as described
 in RFC8879 L<https://datatracker.ietf.org/doc/html/rfc8879>.
-It may be disabled via the SSL_OP_NO_CERTIFICATE_COMPRESSION option of
-the L<SSL_CTX_set_options(3)> or L<SSL_set_options(3)> functions.
+It may be disabled via the SSL_OP_NO_TX_CERTIFICATE_COMPRESSION and
+SSL_OP_NO_RX_CERTIFICATE_COMPRESSION options of the
+L<SSL_CTX_set_options(3)> or L<SSL_set_options(3)> functions.
 
 COMP_zlib(), COMP_brotli() and COMP_zstd() are stream-based compression methods.
-Internal state (including compression dictionary) is maintained between calls. 
+Internal state (including compression dictionary) is maintained between calls.
 If an error is returned, the stream is corrupted, and should be closed.
 
 COMP_brotli_oneshot() and COMP_zstd_oneshot() are not stream-based. These
@@ -152,7 +153,8 @@ bytes stored in the output buffer I<out>. This may be 0. On failure,
 COMP_get_name() returns a B<const char *> that must not be freed
 on success, or NULL on failure.
 
-BIO_f_zlib(), BIO_f_brotli() and BIO_f_zstd() return a B<BIO_METHOD>.
+BIO_f_zlib(), BIO_f_brotli() and BIO_f_zstd() return NULL on error, and
+a B<BIO_METHOD> on success.
 
 =head1 SEE ALSO
 

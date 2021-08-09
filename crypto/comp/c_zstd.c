@@ -481,10 +481,10 @@ static const BIO_METHOD bio_meth_zstd = {
 const BIO_METHOD *BIO_f_zstd(void)
 {
 #ifndef OPENSSL_NO_ZSTD
-    return &bio_meth_zstd;
-#else
-    return NULL;
+    if (RUN_ONCE(&zstd_once, ossl_comp_zstd_init))
+        return &bio_meth_zstd;
 #endif
+    return NULL;
 }
 
 #ifndef OPENSSL_NO_ZSTD

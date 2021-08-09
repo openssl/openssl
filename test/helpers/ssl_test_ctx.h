@@ -218,6 +218,8 @@ typedef struct {
     STACK_OF(X509_NAME) *expected_client_ca_names;
     /* Whether to use SCTP for the transport */
     int use_sctp;
+    /* Whether to pre-compress server certificates */
+    int compress_certificates;
     /* Enable SSL_MODE_DTLS_SCTP_LABEL_LENGTH_BUG on client side */
     int enable_client_sctp_label_bug;
     /* Enable SSL_MODE_DTLS_SCTP_LABEL_LENGTH_BUG on server side */

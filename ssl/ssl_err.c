@@ -26,6 +26,8 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_BAD_CHANGE_CIPHER_SPEC),
     "bad change cipher spec"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_BAD_CIPHER), "bad cipher"},
+    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_BAD_COMPRESSION_ALGORITHM),
+    "bad compression algorithm"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_BAD_DATA), "bad data"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_BAD_DATA_RETURNED_BY_CALLBACK),
     "bad data returned by callback"},

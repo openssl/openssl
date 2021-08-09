@@ -410,6 +410,15 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
      * interoperability with CryptoPro CSP 3.x
      */
 # define SSL_OP_CRYPTOPRO_TLSEXT_BUG                     SSL_OP_BIT(31)
+/*
+ * Disable RFC8879 certificate compression
+ * SSL_OP_NO_TX_CERTIFICATE_COMPRESSION: don't send compressed certificates,
+ *     and ignore the extension when received.
+ * SSL_OP_NO_RX_CERTIFICATE_COMPRESSION: don't send the extension, and
+ *     subsequently indicating that receiving is not supported
+ */
+# define SSL_OP_NO_TX_CERTIFICATE_COMPRESSION            SSL_OP_BIT(32)
+# define SSL_OP_NO_RX_CERTIFICATE_COMPRESSION            SSL_OP_BIT(33)
 
 /*
  * Option "collections."
@@ -998,6 +1007,7 @@ typedef enum {
     DTLS_ST_CR_HELLO_VERIFY_REQUEST,
     TLS_ST_CR_SRVR_HELLO,
     TLS_ST_CR_CERT,
+    TLS_ST_CR_COMP_CERT,
     TLS_ST_CR_CERT_STATUS,
     TLS_ST_CR_KEY_EXCH,
     TLS_ST_CR_CERT_REQ,
@@ -1007,6 +1017,7 @@ typedef enum {
     TLS_ST_CR_FINISHED,
     TLS_ST_CW_CLNT_HELLO,
     TLS_ST_CW_CERT,
+    TLS_ST_CW_COMP_CERT,
     TLS_ST_CW_KEY_EXCH,
     TLS_ST_CW_CERT_VRFY,
     TLS_ST_CW_CHANGE,
@@ -1017,10 +1028,12 @@ typedef enum {
     DTLS_ST_SW_HELLO_VERIFY_REQUEST,
     TLS_ST_SW_SRVR_HELLO,
     TLS_ST_SW_CERT,
+    TLS_ST_SW_COMP_CERT,
     TLS_ST_SW_KEY_EXCH,
     TLS_ST_SW_CERT_REQ,
     TLS_ST_SW_SRVR_DONE,
     TLS_ST_SR_CERT,
+    TLS_ST_SR_COMP_CERT,
     TLS_ST_SR_KEY_EXCH,
     TLS_ST_SR_CERT_VRFY,
     TLS_ST_SR_NEXT_PROTO,
@@ -2529,6 +2542,22 @@ void SSL_set_allow_early_data_cb(SSL *s,
 /* store the default cipher strings inside the library */
 const char *OSSL_default_cipher_list(void);
 const char *OSSL_default_ciphersuites(void);
+
+/* RFC8879 Certificate compression APIs */
+
+int SSL_CTX_compress_certs(SSL_CTX *ctx, int alg);
+int SSL_compress_certs(SSL *ssl, int alg);
+
+int SSL_CTX_set1_cert_comp_preference(SSL_CTX *ctx, int *algs, size_t len);
+int SSL_set1_cert_comp_preference(SSL *ssl, int *algs, size_t len);
+
+int SSL_CTX_set1_compressed_cert(SSL_CTX *ctx, int algorithm, unsigned char *comp_data,
+                                size_t comp_length, size_t orig_length);
+int SSL_set1_compressed_cert(SSL *ssl, int algorithm, unsigned char *comp_data,
+                            size_t comp_length, size_t orig_length);
+size_t SSL_CTX_get1_compressed_cert(SSL_CTX *ctx, int alg, unsigned char **data, size_t *orig_len);
+size_t SSL_get1_compressed_cert(SSL *ssl, int alg, unsigned char **data, size_t *orig_len);
+
 
 # ifdef  __cplusplus
 }

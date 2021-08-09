@@ -135,6 +135,13 @@ static int ossl_statem_client13_read_transition(SSL_CONNECTION *s, int mt)
                 st->hand_state = TLS_ST_CR_CERT;
                 return 1;
             }
+#ifndef OPENSSL_NO_COMP_ALG
+            if (mt == SSL3_MT_COMPRESSED_CERTIFICATE
+                    && s->ext.compress_certificate_sent) {
+                st->hand_state = TLS_ST_CR_COMP_CERT;
+                return 1;
+            }
+#endif
         }
         break;
 
@@ -143,9 +150,17 @@ static int ossl_statem_client13_read_transition(SSL_CONNECTION *s, int mt)
             st->hand_state = TLS_ST_CR_CERT;
             return 1;
         }
+#ifndef OPENSSL_NO_COMP_ALG
+        if (mt == SSL3_MT_COMPRESSED_CERTIFICATE
+                && s->ext.compress_certificate_sent) {
+            st->hand_state = TLS_ST_CR_COMP_CERT;
+            return 1;
+        }
+#endif
         break;
 
     case TLS_ST_CR_CERT:
+    case TLS_ST_CR_COMP_CERT:
         if (mt == SSL3_MT_CERTIFICATE_VERIFY) {
             st->hand_state = TLS_ST_CR_CERT_VRFY;
             return 1;
@@ -309,6 +324,7 @@ int ossl_statem_client_read_transition(SSL_CONNECTION *s, int mt)
         break;
 
     case TLS_ST_CR_CERT:
+    case TLS_ST_CR_COMP_CERT:
         /*
          * The CertificateStatus message is optional even if
          * |ext.status_expected| is set
@@ -425,7 +441,10 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL_CONNECTION *s)
 
     case TLS_ST_CR_CERT_REQ:
         if (s->post_handshake_auth == SSL_PHA_REQUESTED) {
-            st->hand_state = TLS_ST_CW_CERT;
+            if (s->ext.compress_certificate_from_peer[0] != TLSEXT_comp_cert_none)
+                st->hand_state = TLS_ST_CW_COMP_CERT;
+            else
+                st->hand_state = TLS_ST_CW_CERT;
             return WRITE_TRAN_CONTINUE;
         }
         /*
@@ -447,9 +466,12 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL_CONNECTION *s)
         else if ((s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0
                  && s->hello_retry_request == SSL_HRR_NONE)
             st->hand_state = TLS_ST_CW_CHANGE;
+        else if (s->s3.tmp.cert_req == 0)
+            st->hand_state = TLS_ST_CW_FINISHED;
+        else if (s->ext.compress_certificate_from_peer[0] != TLSEXT_comp_cert_none)
+            st->hand_state = TLS_ST_CW_COMP_CERT;
         else
-            st->hand_state = (s->s3.tmp.cert_req != 0) ? TLS_ST_CW_CERT
-                                                        : TLS_ST_CW_FINISHED;
+            st->hand_state = TLS_ST_CW_CERT;
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_PENDING_EARLY_DATA_END:
@@ -461,10 +483,15 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL_CONNECTION *s)
 
     case TLS_ST_CW_END_OF_EARLY_DATA:
     case TLS_ST_CW_CHANGE:
-        st->hand_state = (s->s3.tmp.cert_req != 0) ? TLS_ST_CW_CERT
-                                                    : TLS_ST_CW_FINISHED;
+        if (s->s3.tmp.cert_req == 0)
+            st->hand_state = TLS_ST_CW_FINISHED;
+        else if (s->ext.compress_certificate_from_peer[0] != TLSEXT_comp_cert_none)
+            st->hand_state = TLS_ST_CW_COMP_CERT;
+        else
+            st->hand_state = TLS_ST_CW_CERT;
         return WRITE_TRAN_CONTINUE;
 
+    case TLS_ST_CW_COMP_CERT:
     case TLS_ST_CW_CERT:
         /* If a non-empty Certificate we also send CertificateVerify */
         st->hand_state = (s->s3.tmp.cert_req == 1) ? TLS_ST_CW_CERT_VRFY
@@ -931,6 +958,13 @@ int ossl_statem_client_construct_message(SSL_CONNECTION *s,
         *mt = SSL3_MT_CERTIFICATE;
         break;
 
+#ifndef OPENSSL_NO_COMP_ALG
+    case TLS_ST_CW_COMP_CERT:
+        *confunc = tls_construct_client_compressed_certificate;
+        *mt = SSL3_MT_COMPRESSED_CERTIFICATE;
+        break;
+#endif
+
     case TLS_ST_CW_KEY_EXCH:
         *confunc = tls_construct_client_key_exchange;
         *mt = SSL3_MT_CLIENT_KEY_EXCHANGE;
@@ -980,6 +1014,7 @@ size_t ossl_statem_client_max_message_size(SSL_CONNECTION *s)
     case DTLS_ST_CR_HELLO_VERIFY_REQUEST:
         return HELLO_VERIFY_REQUEST_MAX_LENGTH;
 
+    case TLS_ST_CR_COMP_CERT:
     case TLS_ST_CR_CERT:
         return s->max_cert_list;
 
@@ -1046,6 +1081,11 @@ MSG_PROCESS_RETURN ossl_statem_client_process_message(SSL_CONNECTION *s,
     case TLS_ST_CR_CERT:
         return tls_process_server_certificate(s, pkt);
 
+#ifndef OPENSSL_NO_COMP_ALG
+    case TLS_ST_CR_COMP_CERT:
+        return tls_process_server_compressed_certificate(s, pkt);
+#endif
+
     case TLS_ST_CR_CERT_VRFY:
         return tls_process_cert_verify(s, pkt);
 
@@ -1097,6 +1137,7 @@ WORK_STATE ossl_statem_client_post_process_message(SSL_CONNECTION *s,
         return WORK_ERROR;
 
     case TLS_ST_CR_CERT:
+    case TLS_ST_CR_COMP_CERT:
         return tls_post_process_server_certificate(s, wst);
 
     case TLS_ST_CR_CERT_VRFY:
@@ -1967,6 +2008,21 @@ WORK_STATE tls_post_process_server_certificate(SSL_CONNECTION *s,
     }
     return WORK_FINISHED_CONTINUE;
 }
+
+#ifndef OPENSSL_NO_COMP_ALG
+MSG_PROCESS_RETURN tls_process_server_compressed_certificate(SSL_CONNECTION *sc, PACKET *pkt)
+{
+    MSG_PROCESS_RETURN ret = MSG_PROCESS_ERROR;
+    PACKET tmppkt;
+    BUF_MEM *buf = BUF_MEM_new();
+
+    if (tls13_process_compressed_certificate(sc, pkt, &tmppkt, buf) != MSG_PROCESS_ERROR)
+        ret = tls_process_server_certificate(sc, &tmppkt);
+
+    BUF_MEM_free(buf);
+    return ret;
+}
+#endif
 
 static int tls_process_ske_psk_preamble(SSL_CONNECTION *s, PACKET *pkt)
 {
@@ -3531,12 +3587,17 @@ WORK_STATE tls_prepare_client_certificate(SSL_CONNECTION *s, WORK_STATE wst)
                 return WORK_FINISHED_CONTINUE;
             } else {
                 s->s3.tmp.cert_req = 2;
+                s->ext.compress_certificate_from_peer[0] = TLSEXT_comp_cert_none;
                 if (!ssl3_digest_cached_records(s, 0)) {
                     /* SSLfatal() already called */
                     return WORK_ERROR;
                 }
             }
         }
+
+        if (!SSL_CONNECTION_IS_TLS13(s)
+                || (s->options & SSL_OP_NO_TX_CERTIFICATE_COMPRESSION) != 0)
+            s->ext.compress_certificate_from_peer[0] = TLSEXT_comp_cert_none;
 
         if (s->post_handshake_auth == SSL_PHA_REQUESTED)
             return WORK_FINISHED_STOP;
@@ -3586,6 +3647,97 @@ CON_FUNC_RETURN tls_construct_client_certificate(SSL_CONNECTION *s,
 
     return CON_FUNC_SUCCESS;
 }
+
+#ifndef OPENSSL_NO_COMP_ALG
+CON_FUNC_RETURN tls_construct_client_compressed_certificate(SSL_CONNECTION *sc,
+                                                            WPACKET *pkt)
+{
+    SSL *ssl = SSL_CONNECTION_GET_SSL(sc);
+    WPACKET tmppkt;
+    BUF_MEM *buf = NULL;
+    size_t length;
+    size_t max_length;
+    COMP_METHOD *method;
+    COMP_CTX *comp = NULL;
+    int comp_len;
+    int ret = 0;
+    int alg = sc->ext.compress_certificate_from_peer[0];
+
+    /* Note that sc->s3.tmp.cert_req == 2 is checked in write transition */
+
+    if ((buf = BUF_MEM_new()) == NULL || !WPACKET_init(&tmppkt, buf))
+        goto err;
+
+    /* Use the |tmppkt| for the to-be-compressed data */
+    if (sc->pha_context == NULL) {
+        /* no context available, add 0-length context */
+        if (!WPACKET_put_bytes_u8(&tmppkt, 0))
+            goto err;
+    } else if (!WPACKET_sub_memcpy_u8(&tmppkt, sc->pha_context, sc->pha_context_len))
+        goto err;
+
+    if (!ssl3_output_cert_chain(sc, &tmppkt, sc->cert->key)) {
+        /* SSLfatal() already called */
+        goto out;
+    }
+
+    /* continue with the real |pkt| */
+    if (!WPACKET_put_bytes_u16(pkt, alg)
+            || !WPACKET_get_total_written(&tmppkt, &length)
+            || !WPACKET_put_bytes_u24(pkt, length))
+        goto err;
+
+    switch (alg) {
+    case TLSEXT_comp_cert_zlib:
+        method = COMP_zlib();
+        break;
+    case TLSEXT_comp_cert_brotli:
+        method = COMP_brotli_oneshot();
+        break;
+    case TLSEXT_comp_cert_zstd:
+        method = COMP_zstd_oneshot();
+        break;
+    default:
+        goto err;
+    }
+    max_length = ossl_calculate_comp_expansion(alg, length);
+
+    if (!WPACKET_start_sub_packet_u24(pkt)
+            || !WPACKET_reserve_bytes(pkt, max_length, NULL)
+            || (comp = COMP_CTX_new(method)) == NULL)
+        goto err;
+
+    comp_len = COMP_compress_block(comp, WPACKET_get_curr(pkt), max_length,
+                                   (unsigned char *)buf->data, length);
+    if (comp_len <= 0)
+        goto err;
+
+    if (!WPACKET_allocate_bytes(pkt, comp_len, NULL)
+            || !WPACKET_close(pkt))
+        goto err;
+
+    if (SSL_IS_FIRST_HANDSHAKE(sc)
+            && (!ssl->method->ssl3_enc->change_cipher_state(sc,
+                    SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE))) {
+        /*
+         * This is a fatal error, which leaves sc->enc_write_ctx in an
+         * inconsistent state and thus ssl3_send_alert may crash.
+         */
+        SSLfatal(sc, SSL_AD_NO_ALERT, SSL_R_CANNOT_CHANGE_CIPHER);
+        goto out;
+    }
+    ret = 1;
+    goto out;
+
+ err:
+    SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+ out:
+    WPACKET_cleanup(&tmppkt);
+    BUF_MEM_free(buf);
+    COMP_CTX_free(comp);
+    return ret;
+}
+#endif
 
 int ssl3_check_cert_and_algorithm(SSL_CONNECTION *s)
 {

@@ -2167,6 +2167,10 @@ DEPEND[html/man3/SSL_CTX_set0_CA_list.html]=man3/SSL_CTX_set0_CA_list.pod
 GENERATE[html/man3/SSL_CTX_set0_CA_list.html]=man3/SSL_CTX_set0_CA_list.pod
 DEPEND[man/man3/SSL_CTX_set0_CA_list.3]=man3/SSL_CTX_set0_CA_list.pod
 GENERATE[man/man3/SSL_CTX_set0_CA_list.3]=man3/SSL_CTX_set0_CA_list.pod
+DEPEND[html/man3/SSL_CTX_set1_cert_comp_preference.html]=man3/SSL_CTX_set1_cert_comp_preference.pod
+GENERATE[html/man3/SSL_CTX_set1_cert_comp_preference.html]=man3/SSL_CTX_set1_cert_comp_preference.pod
+DEPEND[man/man3/SSL_CTX_set1_cert_comp_preference.3]=man3/SSL_CTX_set1_cert_comp_preference.pod
+GENERATE[man/man3/SSL_CTX_set1_cert_comp_preference.3]=man3/SSL_CTX_set1_cert_comp_preference.pod
 DEPEND[html/man3/SSL_CTX_set1_curves.html]=man3/SSL_CTX_set1_curves.pod
 GENERATE[html/man3/SSL_CTX_set1_curves.html]=man3/SSL_CTX_set1_curves.pod
 DEPEND[man/man3/SSL_CTX_set1_curves.3]=man3/SSL_CTX_set1_curves.pod
@@ -3313,6 +3317,7 @@ html/man3/SSL_CTX_sess_set_cache_size.html \
 html/man3/SSL_CTX_sess_set_get_cb.html \
 html/man3/SSL_CTX_sessions.html \
 html/man3/SSL_CTX_set0_CA_list.html \
+html/man3/SSL_CTX_set1_cert_comp_preference.html \
 html/man3/SSL_CTX_set1_curves.html \
 html/man3/SSL_CTX_set1_sigalgs.html \
 html/man3/SSL_CTX_set1_verify_cert_store.html \
@@ -3918,6 +3923,7 @@ man/man3/SSL_CTX_sess_set_cache_size.3 \
 man/man3/SSL_CTX_sess_set_get_cb.3 \
 man/man3/SSL_CTX_sessions.3 \
 man/man3/SSL_CTX_set0_CA_list.3 \
+man/man3/SSL_CTX_set1_cert_comp_preference.3 \
 man/man3/SSL_CTX_set1_curves.3 \
 man/man3/SSL_CTX_set1_sigalgs.3 \
 man/man3/SSL_CTX_set1_verify_cert_store.3 \

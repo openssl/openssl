@@ -19,8 +19,8 @@
 # include "internal/common.h" /* for HAS_PREFIX */
 
 # include <openssl/buffer.h>
-# include <openssl/comp.h>
 # include <openssl/bio.h>
+# include <openssl/comp.h>
 # include <openssl/dsa.h>
 # include <openssl/err.h>
 # include <openssl/ssl.h>
@@ -771,6 +771,7 @@ typedef enum tlsext_index_en {
     TLSEXT_IDX_key_share,
     TLSEXT_IDX_cookie,
     TLSEXT_IDX_cryptopro_bug,
+    TLSEXT_IDX_compress_certificate,
     TLSEXT_IDX_early_data,
     TLSEXT_IDX_certificate_authorities,
     TLSEXT_IDX_padding,
@@ -1212,6 +1213,11 @@ struct ssl_ctx_st {
     uint32_t disabled_mac_mask;
     uint32_t disabled_mkey_mask;
     uint32_t disabled_auth_mask;
+
+#ifndef OPENSSL_NO_COMP_ALG
+    /* certificate compression preferences */
+    int cert_comp_prefs[TLSEXT_comp_cert_limit];
+#endif
 };
 
 typedef struct cert_pkey_st CERT_PKEY;
@@ -1699,6 +1705,11 @@ struct ssl_connection_st {
          * selected.
          */
         int tick_identity;
+
+        /* This is the list of algorithms the peer supports that we also support */
+        int compress_certificate_from_peer[TLSEXT_comp_cert_limit];
+        /* indicate that we sent the extension, so we'll accept it */
+        int compress_certificate_sent;
     } ext;
 
     /*
@@ -1814,6 +1825,11 @@ struct ssl_connection_st {
      */
     const struct sigalg_lookup_st **shared_sigalgs;
     size_t shared_sigalgslen;
+
+#ifndef OPENSSL_NO_COMP_ALG
+    /* certificate compression preferences */
+    int cert_comp_prefs[TLSEXT_comp_cert_limit];
+#endif
 };
 
 # define SSL_CONNECTION_FROM_SSL_ONLY_int(ssl, c) \
@@ -1986,6 +2002,21 @@ typedef struct dtls1_state_st {
 #  define EXPLICIT_CHAR2_CURVE_TYPE  2
 #  define NAMED_CURVE_TYPE           3
 
+# ifndef OPENSSL_NO_COMP_ALG
+struct ossl_comp_cert_st {
+    unsigned char *data;
+    size_t len;
+    size_t orig_len;
+    CRYPTO_REF_COUNT references;
+    CRYPTO_RWLOCK *lock;
+    int alg;
+};
+typedef struct ossl_comp_cert_st OSSL_COMP_CERT;
+
+void OSSL_COMP_CERT_free(OSSL_COMP_CERT *c);
+int OSSL_COMP_CERT_up_ref(OSSL_COMP_CERT *c);
+# endif
+
 struct cert_pkey_st {
     X509 *x509;
     EVP_PKEY *privatekey;
@@ -2000,6 +2031,11 @@ struct cert_pkey_st {
      */
     unsigned char *serverinfo;
     size_t serverinfo_length;
+# ifndef OPENSSL_NO_COMP_ALG
+    /* Compressed certificate data - index 0 is unused */
+    OSSL_COMP_CERT *comp_cert[TLSEXT_comp_cert_limit];
+    int cert_comp_used;
+# endif
 };
 /* Retrieve Suite B flags */
 # define tls1_suiteb(s)  (s->cert->cert_flags & SSL_CERT_FLAG_SUITEB_128_LOS)
@@ -2955,5 +2991,8 @@ static ossl_unused ossl_inline void ssl_tsan_counter(const SSL_CTX *ctx,
         ssl_tsan_unlock(ctx);
     }
 }
+
+int ossl_comp_has_alg(int a);
+size_t ossl_calculate_comp_expansion(int alg, size_t length);
 
 #endif

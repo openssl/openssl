@@ -7165,6 +7165,38 @@ static struct info_cb_states_st {
         {SSL_CB_EXIT, NULL}, {SSL_CB_LOOP, "SSLOK"}, {SSL_CB_LOOP, "SSLOK"},
         {SSL_CB_LOOP, "TRST"}, {SSL_CB_EXIT, NULL}, {0, NULL},
     }, {
+        /* TLSv1.3 server, certificate compression, followed by resumption */
+        {SSL_CB_HANDSHAKE_START, NULL}, {SSL_CB_LOOP, "PINIT"},
+        {SSL_CB_LOOP, "PINIT"}, {SSL_CB_LOOP, "TRCH"}, {SSL_CB_LOOP, "TWSH"},
+        {SSL_CB_LOOP, "TWCCS"}, {SSL_CB_LOOP, "TWEE"}, {SSL_CB_LOOP, "TWSCC"},
+        {SSL_CB_LOOP, "TWSCV"}, {SSL_CB_LOOP, "TWFIN"}, {SSL_CB_LOOP, "TED"},
+        {SSL_CB_EXIT, NULL}, {SSL_CB_LOOP, "TED"}, {SSL_CB_LOOP, "TRFIN"},
+        {SSL_CB_HANDSHAKE_DONE, NULL}, {SSL_CB_LOOP, "TWST"},
+        {SSL_CB_LOOP, "TWST"}, {SSL_CB_EXIT, NULL}, {SSL_CB_ALERT, NULL},
+        {SSL_CB_HANDSHAKE_START, NULL}, {SSL_CB_LOOP, "PINIT"},
+        {SSL_CB_LOOP, "PINIT"}, {SSL_CB_LOOP, "TRCH"}, {SSL_CB_LOOP, "TWSH"},
+        {SSL_CB_LOOP, "TWCCS"}, {SSL_CB_LOOP, "TWEE"}, {SSL_CB_LOOP, "TWFIN"},
+        {SSL_CB_LOOP, "TED"}, {SSL_CB_EXIT, NULL}, {SSL_CB_LOOP, "TED"},
+        {SSL_CB_LOOP, "TRFIN"}, {SSL_CB_HANDSHAKE_DONE, NULL},
+        {SSL_CB_LOOP, "TWST"}, {SSL_CB_EXIT, NULL}, {0, NULL},
+    }, {
+        /* TLSv1.3 client, certificate compression, followed by resumption */
+        {SSL_CB_HANDSHAKE_START, NULL}, {SSL_CB_LOOP, "PINIT"},
+        {SSL_CB_LOOP, "TWCH"}, {SSL_CB_EXIT, NULL}, {SSL_CB_LOOP, "TWCH"},
+        {SSL_CB_LOOP, "TRSH"}, {SSL_CB_LOOP, "TREE"}, {SSL_CB_LOOP, "TRSCC"},
+        {SSL_CB_LOOP, "TRSCV"}, {SSL_CB_LOOP, "TRFIN"}, {SSL_CB_LOOP, "TWCCS"},
+        {SSL_CB_LOOP, "TWFIN"},  {SSL_CB_HANDSHAKE_DONE, NULL},
+        {SSL_CB_EXIT, NULL}, {SSL_CB_LOOP, "SSLOK"}, {SSL_CB_LOOP, "SSLOK"},
+        {SSL_CB_LOOP, "TRST"}, {SSL_CB_EXIT, NULL}, {SSL_CB_LOOP, "SSLOK"},
+        {SSL_CB_LOOP, "SSLOK"}, {SSL_CB_LOOP, "TRST"}, {SSL_CB_EXIT, NULL},
+        {SSL_CB_ALERT, NULL}, {SSL_CB_HANDSHAKE_START, NULL},
+        {SSL_CB_LOOP, "PINIT"}, {SSL_CB_LOOP, "TWCH"}, {SSL_CB_EXIT, NULL},
+        {SSL_CB_LOOP, "TWCH"}, {SSL_CB_LOOP, "TRSH"},  {SSL_CB_LOOP, "TREE"},
+        {SSL_CB_LOOP, "TRFIN"}, {SSL_CB_LOOP, "TWCCS"}, {SSL_CB_LOOP, "TWFIN"},
+        {SSL_CB_HANDSHAKE_DONE, NULL}, {SSL_CB_EXIT, NULL},
+        {SSL_CB_LOOP, "SSLOK"}, {SSL_CB_LOOP, "SSLOK"}, {SSL_CB_LOOP, "TRST"},
+        {SSL_CB_EXIT, NULL}, {0, NULL},
+    }, {
         {0, NULL},
     }
 };
@@ -7221,6 +7253,8 @@ static void sslapi_info_callback(const SSL *s, int where, int ret)
  * Test 3: TLSv1.3, client
  * Test 4: TLSv1.3, server, early_data
  * Test 5: TLSv1.3, client, early_data
+ * Test 6: TLSv1.3, server, compressed certificate
+ * Test 7: TLSv1.3, client, compressed certificate
  */
 static int test_info_callback(int tst)
 {
@@ -7252,7 +7286,7 @@ static int test_info_callback(int tst)
     info_cb_offset = tst;
 
 #ifndef OSSL_NO_USABLE_TLS1_3
-    if (tst >= 4) {
+    if (tst >= 4 && tst < 6) {
         SSL_SESSION *sess = NULL;
         size_t written, readbytes;
         unsigned char buf[80];
@@ -7303,6 +7337,10 @@ static int test_info_callback(int tst)
      */
     SSL_CTX_set_info_callback((tst % 2) == 0 ? sctx : cctx,
                               sslapi_info_callback);
+    if (tst >= 6) {
+        if (!SSL_CTX_compress_certs(sctx, 0))
+            goto end;
+    }
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
                                           &clientssl, NULL, NULL))
@@ -10339,7 +10377,12 @@ int setup_tests(void)
 #if !defined(OPENSSL_NO_SRP) && !defined(OPENSSL_NO_TLS1_2)
     ADD_ALL_TESTS(test_srp, 6);
 #endif
+#if !defined(OPENSSL_NO_COMP_ALG)
+    /* Add compression case */
+    ADD_ALL_TESTS(test_info_callback, 8);
+#else
     ADD_ALL_TESTS(test_info_callback, 6);
+#endif
     ADD_ALL_TESTS(test_ssl_pending, 2);
     ADD_ALL_TESTS(test_ssl_get_shared_ciphers, OSSL_NELEM(shared_ciphers_data));
     ADD_ALL_TESTS(test_ticket_callbacks, 20);
