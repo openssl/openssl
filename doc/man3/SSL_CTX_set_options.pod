@@ -217,8 +217,7 @@ clients.
 =item SSL_OP_NO_COMPRESSION
 
 Do not use compression even if it is supported. This option is set by default.
-To switch it off use SSL_clear_options(). A future version of OpenSSL may not
-set this by default.
+To switch it off use SSL_clear_options().
 
 =item SSL_OP_NO_ENCRYPT_THEN_MAC
 
