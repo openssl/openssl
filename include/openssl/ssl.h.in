@@ -2532,6 +2532,18 @@ void SSL_set_allow_early_data_cb(SSL *s,
 const char *OSSL_default_cipher_list(void);
 const char *OSSL_default_ciphersuites(void);
 
+/* RFC8879 Certificate compression APIs */
+
+typedef int (*OSSL_cert_comp_fn)(struct ssl_st *ssl, uint16_t alg, void *arg);
+int SSL_CTX_set_cert_comp_cb(SSL_CTX *ctx, OSSL_cert_comp_fn cert_comp_cb, void *arg);
+int SSL_set_cert_comp_cb(SSL *ssl, OSSL_cert_comp_fn cert_comp_cb, void *arg);
+
+int SSL_CTX_set_cert_comp_preference(SSL_CTX *ctx, uint16_t *algs, int num_algs);
+int SSL_set_cert_comp_preference(SSL *ssl, uint16_t *algs, int num_algs);
+
+int SSL_get_cert_to_compress(SSL*, BUF_MEM*);
+int SSL_set1_compressed_cert(SSL*, uint16_t algorithm, BUF_MEM*);
+
 # ifdef  __cplusplus
 }
 # endif

@@ -1206,6 +1206,36 @@ struct ssl_ctx_st {
     uint32_t disabled_mac_mask;
     uint32_t disabled_mkey_mask;
     uint32_t disabled_auth_mask;
+
+#ifndef OPENSSL_NO_COMP
+    /* certificate compression preferences */
+    uint16_t cert_comp_prefs[TLSEXT_comp_cert_limit];
+    /*
+     * args:
+     * shared algorithms (values + length) - or just use the chosen one, based on pref?
+     * cert context (0 for server) - include in the ssl3_output_cert_chain()?
+     * cert to compress (data + length) - use soemthing like ssl3_output_cert_chain()? use BUF?
+     * Return values:
+     * output (data + length) - use a function? use BUF?
+     * algorithm (or not compress)
+     *
+     * Don't call if only algorithm is 0 (none)
+     */
+
+    OSSL_cert_comp_fn cert_comp_cb;
+    void* cert_comp_arg;
+    /* Example:
+     * if don't want to compress, return 0
+     * if you're ok with OpenSSL doing the compression, return 1
+     * if server (context == 0) and we have the cert pre-compressed for the given algorithm
+     * then set the pre-compressed cert via ssl_set_comp_cert() and return 1
+     * get the cert+context body to compress via ssl_get_cert_to_comp(?)
+     * compress the certificate
+     * if it grew, optionally return 0 to not compress, and free the data
+     * set the compressed body via ssl_set_comp_cert(?)
+     * return 1
+     */
+#endif
 };
 
 typedef struct cert_pkey_st CERT_PKEY;
@@ -1382,6 +1412,12 @@ struct ssl_st {
              */
             int min_ver;
             int max_ver;
+
+#ifndef OPENSSL_NO_COMP
+            /* Certificate compression stuff */
+            uint16_t cert_comp_alg;
+            BUF_MEM *cert_comp_buf;
+#endif
         } tmp;
 
         /* Connection binding to prevent renegotiation attacks */
@@ -1808,6 +1844,13 @@ struct ssl_st {
      */
     const struct sigalg_lookup_st **shared_sigalgs;
     size_t shared_sigalgslen;
+
+#ifndef OPENSSL_NO_COMP
+    /* certificate compression preferences */
+    uint16_t cert_comp_prefs[TLSEXT_comp_cert_limit];
+    OSSL_cert_comp_fn cert_comp_cb;
+    void* cert_comp_arg;
+#endif
 };
 
 /*

@@ -425,6 +425,9 @@ int send_certificate_request(SSL *s)
 static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
 {
     OSSL_STATEM *st = &s->statem;
+#ifndef OPENSSL_NO_COMP
+    int ret;
+#endif
 
     /*
      * No case for TLS_ST_BEFORE, because at that stage we have not negotiated
@@ -479,20 +482,57 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
             st->hand_state = TLS_ST_SW_FINISHED;
         else if (send_certificate_request(s))
             st->hand_state = TLS_ST_SW_CERT_REQ;
-        else if (s->ext.compress_certificate_rx == TLSEXT_comp_cert_none)
+        else {
+#ifndef OPENSSL_NO_COMP
+            if (s->options & SSL_OP_NO_CERTIFICATE_COMPRESSION ||
+                    s->ext.compress_certificate_rx == TLSEXT_comp_cert_none)
+                ret = 0;
+            else if (s->cert_comp_cb != NULL)
+                ret = s->cert_comp_cb(s, s->ext.compress_certificate_rx, s->ctx->cert_comp_arg);
+            else
+                ret = 1;
+
+            if (ret == 0) {
+                st->hand_state = TLS_ST_SW_CERT;
+                s->ext.compress_certificate_rx = TLSEXT_comp_cert_none;
+            } else if (ret > 0) {
+                st->hand_state = TLS_ST_SW_COMP_CERT;
+            } else {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return WRITE_TRAN_ERROR;
+            }
+#else
             st->hand_state = TLS_ST_SW_CERT;
-        else
-            st->hand_state = TLS_ST_SW_COMP_CERT;
+#endif
+        }
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_CERT_REQ:
         if (s->post_handshake_auth == SSL_PHA_REQUEST_PENDING) {
             s->post_handshake_auth = SSL_PHA_REQUESTED;
             st->hand_state = TLS_ST_OK;
-        } else if (s->ext.compress_certificate_rx == TLSEXT_comp_cert_none) {
-            st->hand_state = TLS_ST_SW_CERT;
         } else {
-            st->hand_state = TLS_ST_SW_COMP_CERT;
+#ifndef OPENSSL_NO_COMP
+            if (s->options & SSL_OP_NO_CERTIFICATE_COMPRESSION ||
+                    s->ext.compress_certificate_rx == TLSEXT_comp_cert_none)
+                ret = 0;
+            else if (s->cert_comp_cb != NULL)
+                ret = s->cert_comp_cb(s, s->ext.compress_certificate_rx, s->ctx->cert_comp_arg);
+            else
+                ret = 1;
+
+            if (ret == 0) {
+                st->hand_state = TLS_ST_SW_CERT;
+                s->ext.compress_certificate_rx = TLSEXT_comp_cert_none;
+            } else if (ret > 0) {
+                st->hand_state = TLS_ST_SW_COMP_CERT;
+            } else {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return WRITE_TRAN_ERROR;
+            }
+#else
+            st->hand_state = TLS_ST_SW_CERT;
+#endif
         }
         return WRITE_TRAN_CONTINUE;
 

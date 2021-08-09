@@ -843,6 +843,12 @@ SSL *SSL_new(SSL_CTX *ctx)
 
     s->job = NULL;
 
+#ifndef OPENSSL_NO_COMP
+    memcpy(s->cert_comp_prefs, ctx->cert_comp_prefs, sizeof(s->cert_comp_prefs));
+    s->cert_comp_cb = ctx->cert_comp_cb;
+    s->cert_comp_arg = ctx->cert_comp_arg;
+#endif
+
 #ifndef OPENSSL_NO_CT
     if (!SSL_set_ct_validation_callback(s, ctx->ct_validation_callback,
                                         ctx->ct_validation_callback_arg))
@@ -6055,5 +6061,143 @@ int SSL_CTX_set0_tmp_dh_pkey(SSL_CTX *ctx, EVP_PKEY *dhpkey)
     }
     EVP_PKEY_free(ctx->cert->dh_tmp);
     ctx->cert->dh_tmp = dhpkey;
+    return 1;
+}
+
+#ifndef OPENSSL_NO_COMP
+
+static int ssl_set_cert_comp_pref(uint16_t *array, size_t array_size, uint16_t *algs, int num_algs)
+{
+    int i, j = 0;
+
+    /* This will 0-terminate the array */
+    memset(array, 0, array_size);
+    /* include only those algorithms we support, ifnore the rest if the list fills */
+    for (i = 0; i < num_algs && j < TLSEXT_comp_cert_limit; i++) {
+#if defined(BROTLI)
+        if (algs[i] == TLSEXT_comp_cert_brotli)
+            array[j++] = algs[i];
+#endif
+#if defined(ZLIB)
+        if (algs[i] == TLSEXT_comp_cert_zlib)
+            array[j++] = algs[i];
+#endif
+#if defined(ZSTD)
+        if (algs[i] == TLSEXT_comp_cert_zstd)
+            array[j++] = algs[i];
+#endif
+    }
+    return 1;
+}
+#endif
+
+int SSL_CTX_set_cert_comp_preference(SSL_CTX *ctx, uint16_t *algs, int num_algs)
+{
+#ifndef OPENSSL_NO_COMP
+    return ssl_set_cert_comp_pref(ctx->cert_comp_prefs, sizeof(ctx->cert_comp_prefs),
+                                  algs, num_algs);
+#else
+    return 1;
+#endif
+}
+
+int SSL_set_cert_comp_preference(SSL *ssl, uint16_t *algs, int num_algs)
+{
+#ifndef OPENSSL_NO_COMP
+    return ssl_set_cert_comp_pref(ssl->cert_comp_prefs, sizeof(ssl->cert_comp_prefs),
+                                  algs, num_algs);
+#else
+    return 1;
+#endif
+}
+
+int SSL_CTX_set_cert_comp_cb(SSL_CTX *ctx, OSSL_cert_comp_fn cert_comp_cb, void *arg)
+{
+#ifndef OPENSSL_NO_COMP
+    ctx->cert_comp_cb = cert_comp_cb;
+    ctx->cert_comp_arg = arg;
+#endif
+    return 1;
+}
+
+int SSL_set_cert_comp_cb(SSL *ssl, OSSL_cert_comp_fn cert_comp_cb, void *arg)
+{
+#ifndef OPENSSL_NO_COMP
+    ssl->cert_comp_cb = cert_comp_cb;
+    ssl->cert_comp_arg = arg;
+#endif
+    return 1;
+}
+
+int SSL_get_cert_to_compress(SSL *s, BUF_MEM *buf)
+{
+#ifndef OPENSSL_NO_COMP
+    WPACKET tmppkt;
+    int ret = 0;
+
+    if (s->ext.compress_certificate_rx == TLSEXT_comp_cert_none
+            || buf == NULL
+            || !WPACKET_init(&tmppkt, buf)) {
+        goto err;
+    }
+
+    /* Use the |tmppkt| for the to-be-compressed data */
+    if (s->server) {
+        /* no context present, add 0-length context */
+        if (!WPACKET_put_bytes_u8(&tmppkt, 0))
+            goto err;
+        if (!ssl3_output_cert_chain(s, &tmppkt, s->s3.tmp.cert)) {
+            /* SSLfatal() already called */
+            goto out;
+        }
+    } else {
+        if (s->pha_context == NULL || s->pha_context_len == 0)
+            goto err;
+        if (!WPACKET_sub_memcpy_u8(&tmppkt, s->pha_context, s->pha_context_len))
+            goto err;
+        if (!ssl3_output_cert_chain(s, &tmppkt, (s->s3.tmp.cert_req == 2) ? NULL : s->cert->key)) {
+            /* SSLfatal() already called */
+            goto out;
+        }
+    }
+    if (!WPACKET_get_total_written(&tmppkt, &buf->length))
+        goto err;
+
+    ret = 1;
+    goto out;
+
+ err:
+    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+ out:
+    return ret;
+#else
+    return 1;
+#endif
+}
+
+int SSL_set1_compressed_cert(SSL *s, uint16_t algorithm, BUF_MEM *buf)
+{
+#ifndef OPENSSL_NO_COMP
+    switch (algorithm) {
+# if defined(ZLIB)
+    case TLSEXT_comp_cert_zlib:
+        break;
+# endif
+# if defined(BROTLI)
+    case TLSEXT_comp_cert_brotli:
+        break;
+# endif
+# if defined(ZSTD)
+    case TLSEXT_comp_cert_zstd:
+        break;
+# endif
+    case TLSEXT_comp_cert_none:
+    default:
+        return 0;
+    }
+    s->s3.tmp.cert_comp_alg = algorithm;
+    BUF_MEM_free(s->s3.tmp.cert_comp_buf);
+    s->s3.tmp.cert_comp_buf = buf;
+#endif
     return 1;
 }

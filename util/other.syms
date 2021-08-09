@@ -86,6 +86,7 @@ OSSL_STORE_load_fn                      datatype
 OSSL_STORE_open_fn                      datatype
 OSSL_STORE_open_ex_fn                   datatype
 OSSL_STORE_post_process_info_fn         datatype
+OSSL_cert_comp_fn                       datatype
 OSSL_trace_cb                           datatype
 PROFESSION_INFO                         datatype
 PROFESSION_INFOS                        datatype

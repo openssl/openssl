@@ -9829,6 +9829,259 @@ end:
 #endif
 }
 
+#if !defined(OSSL_NO_USEABLE_TLS1_3) && !defined(OPENSSL_NO_COMP) && (defined(ZIP) || defined(BROTLI) || defined(ZSTD))
+/*
+ * Test 0 = Skip compression
+ * Test 1 = libssl does the compression
+ * Test 2 = error out during compression
+ * Test 3 = libssl does compression, client authentication
+ * Test 4 = app does the compression
+ */
+/* This callback just says to skip compression */
+static int cert_comp_cb0(SSL *ssl, uint16_t alg, void* arg)
+{
+    *(int*)arg = alg;
+    return 0;
+}
+/* This callback just says to do the compression */
+static int cert_comp_cb1(SSL *ssl, uint16_t alg, void* arg)
+{
+    *(int*)arg = alg;
+    return alg;
+}
+/* This callback just says to error out */
+static int cert_comp_cb2(SSL *ssl, uint16_t alg, void* arg)
+{
+    return -1;
+}
+static int cert_comp_cb4(SSL *ssl, uint16_t alg, void* arg)
+{
+    BUF_MEM *cert_buf = BUF_MEM_new();
+    BUF_MEM *comp_buf = BUF_MEM_new();
+    int retval = 0;
+    COMP_METHOD *method;
+    COMP_CTX *comp_ctx = NULL;
+    size_t max_length;
+    int comp_length;
+
+    if (!TEST_ptr(cert_buf)|| !TEST_ptr(comp_buf))
+        goto err;
+
+    if (!TEST_true(SSL_get_cert_to_compress(ssl, cert_buf)))
+        goto err;
+
+    /* Assume 50% - just for testing */
+    max_length = cert_buf->length + (cert_buf->length >> 1);
+    if (!TEST_true(BUF_MEM_grow(comp_buf, max_length)))
+        goto err;
+
+    switch (alg) {
+#if defined(BROTLI)
+    case TLSEXT_comp_cert_brotli:
+        method = COMP_brotli_oneshot();
+        break;
+#endif
+#if defined(ZLIB)
+    case TLSEXT_comp_cert_zlib:
+        method = COMP_zlib();
+        break;
+#endif
+#if defined(ZSTD)
+    case TLSEXT_comp_cert_zstd:
+        method = COMP_zstd_oneshot();
+        break;
+#endif
+    default:
+        goto err;
+    }
+
+    if (!TEST_ptr(method) || !TEST_ptr(comp_ctx = COMP_CTX_new(method)))
+        goto err;
+
+    comp_length = COMP_compress_block(comp_ctx,
+                                      (unsigned char*)comp_buf->data, max_length,
+                                      (unsigned char*)cert_buf->data, cert_buf->length);
+    if (!TEST_int_gt(comp_length, 0))
+        goto err;
+
+    if (!TEST_true(BUF_MEM_grow(comp_buf, comp_length)))
+        goto err;
+
+    /* Did we expand? This cert shouldn't expand */
+    if (TEST_size_t_ge(comp_buf->length, cert_buf->length))
+        goto err;
+
+    if (!TEST_true(SSL_set1_compressed_cert(ssl, alg, comp_buf)))
+        goto err;
+    comp_buf = NULL;
+    retval = alg;
+    *(int*)arg = alg;
+
+ err:
+    BUF_MEM_free(comp_buf);
+    BUF_MEM_free(cert_buf);
+    COMP_CTX_free(comp_ctx);
+    return retval;
+}
+
+static void cert_comp_info_cb(const SSL *s, int where, int ret)
+{
+    int *seen = (int*)SSL_get_app_data(s);
+
+    if (SSL_is_server(s)) {
+        /* TLS_ST_SR_COMP_CERT */
+        if (!strcmp(SSL_state_string(s), "TRCCC") && seen != NULL)
+            *seen = 1;
+    } else {
+        /* TLS_ST_CR_COMP_CERT */
+        if (!strcmp(SSL_state_string(s), "TRSCC") && seen != NULL)
+            *seen = 1;
+    }
+}
+static void no_cert_comp_info_cb(const SSL *s, int where, int ret)
+{
+    int *seen = (int*)SSL_get_app_data(s);
+
+    if (SSL_is_server(s)) {
+        /* TLS_ST_SR_CERT */
+        if (!strcmp(SSL_state_string(s), "TRCC") && seen != NULL)
+            *seen = 1;
+    } else {
+        /* TLS_ST_CR_CERT */
+        if (!strcmp(SSL_state_string(s), "TRSC") && seen != NULL)
+            *seen = 1;
+    }
+}
+static int test_ssl_cert_comp(int test)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    int expected_client = TLSEXT_comp_cert_none, result_client = TLSEXT_comp_cert_none;
+    int expected_server = TLSEXT_comp_cert_none, result_server = TLSEXT_comp_cert_none;
+    int client_seen = 0;
+    int server_seen = 0;
+    /* reverse default order */
+    uint16_t server_pref[] = { TLSEXT_comp_cert_zstd, TLSEXT_comp_cert_zlib, TLSEXT_comp_cert_brotli };
+    /* default order */
+    uint16_t client_pref[] = { TLSEXT_comp_cert_brotli, TLSEXT_comp_cert_zlib, TLSEXT_comp_cert_zstd };
+
+    /* one of these *must be defined! */
+#if defined(BROTLI)
+    expected_server = TLSEXT_comp_cert_brotli;
+    expected_client = TLSEXT_comp_cert_brotli;
+#endif
+#if defined(ZLIB)
+    expected_server = TLSEXT_comp_cert_zlib;
+    if (expected_client == TLSEXT_comp_cert_none)
+        expected_client = TLSEXT_comp_cert_zlib;
+#endif
+#if defined(ZSTD)
+    expected_server = TLSEXT_comp_cert_zstd;
+    if (expected_client == TLSEXT_comp_cert_none)
+        expected_client = TLSEXT_comp_cert_zstd;
+#endif
+    /* if there's only one comp algorithm, pref won't do much */
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                       TLS_client_method(),
+                                       TLS1_3_VERSION, 0,
+                                       &sctx, &cctx, cert, privkey)))
+        goto end;
+    if (!TEST_true(SSL_CTX_set_cert_comp_preference(sctx, server_pref, 3)))
+        goto end;
+    if (!TEST_true(SSL_CTX_set_cert_comp_preference(cctx, client_pref, 3)))
+        goto end;
+
+    switch (test) {
+    case 0: /* don't do cert compression */
+        if (!TEST_true(SSL_CTX_set_cert_comp_cb(sctx, cert_comp_cb0, &result_server)))
+            goto end;
+        if (!TEST_true(SSL_CTX_set_cert_comp_cb(cctx, cert_comp_cb0, &result_client)))
+            goto end;
+        break;
+    case 1: /* have libssl do cert compression */
+        if (!TEST_true(SSL_CTX_set_cert_comp_cb(sctx, cert_comp_cb1, &result_server)))
+            goto end;
+        if (!TEST_true(SSL_CTX_set_cert_comp_cb(cctx, cert_comp_cb1, &result_client)))
+            goto end;
+        break;
+    case 2: /* error while doing cert compression */
+        if (!TEST_true(SSL_CTX_set_cert_comp_cb(sctx, cert_comp_cb2, &result_server)))
+            goto end;
+        if (!TEST_true(SSL_CTX_set_cert_comp_cb(cctx, cert_comp_cb2, &result_client)))
+            goto end;
+        break;
+    case 3: /* have libssl do cert compression, client auth */
+        if (!TEST_true(SSL_CTX_set_cert_comp_cb(sctx, cert_comp_cb1, &result_server)))
+            goto end;
+        if (!TEST_true(SSL_CTX_set_cert_comp_cb(cctx, cert_comp_cb1, &result_client)))
+            goto end;
+        /* Use callbacks from test_client_cert_cb() */
+        SSL_CTX_set_client_cert_cb(cctx, client_cert_cb);
+        SSL_CTX_set_verify(sctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, verify_cb);
+        break;
+    case 4: /* application does the compression */
+        if (!TEST_true(SSL_CTX_set_cert_comp_cb(sctx, cert_comp_cb4, &result_server)))
+            goto end;
+        if (!TEST_true(SSL_CTX_set_cert_comp_cb(cctx, cert_comp_cb4, &result_client)))
+            goto end;
+        break;
+    default:
+        break;
+    }
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                      NULL, NULL)))
+        goto end;
+
+    if (!TEST_true(SSL_set_app_data(clientssl, &client_seen)))
+        goto end;
+    if (!TEST_true(SSL_set_app_data(serverssl, &server_seen)))
+        goto end;
+    if (test == 0) {
+        SSL_set_info_callback(clientssl, no_cert_comp_info_cb);
+        SSL_set_info_callback(serverssl, no_cert_comp_info_cb);
+    } else {
+        SSL_set_info_callback(clientssl, cert_comp_info_cb);
+        SSL_set_info_callback(serverssl, cert_comp_info_cb);
+    }
+
+    /* This is the error-out test... */
+    if (test == 2) {
+        if (!TEST_false(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+            goto end;
+        goto pass;
+    }
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+    if (!TEST_int_eq(expected_server, result_server))
+        goto end;
+    if (!TEST_true(*(int*)SSL_get_app_data(clientssl)))
+        goto end;
+
+    if (test == 3) {
+        /* Only for client auth */
+        if (!TEST_int_eq(expected_client, result_client))
+            goto end;
+        if (!TEST_true(*(int*)SSL_get_app_data(serverssl)))
+            goto end;
+    }
+
+ pass:
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+#endif
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile provider config dhfile\n")
 
 int setup_tests(void)
@@ -10099,6 +10352,9 @@ int setup_tests(void)
     ADD_TEST(test_set_verify_cert_store_ssl);
     ADD_ALL_TESTS(test_session_timeout, 1);
     ADD_TEST(test_load_dhfile);
+#if !defined(OSSL_NO_USEABLE_TLS1_3) && !defined(OPENSSL_NO_COMP) && (defined(ZIP) || defined(BROTLI) || defined(ZSTD))
+    ADD_ALL_TESTS(test_ssl_cert_comp, 5);
+#endif
     return 1;
 
  err:

@@ -1,0 +1,129 @@
+=pod
+
+=head1 NAME
+
+SSL_CTX_set_cert_comp_preference,
+SSL_set_cert_comp_preference,
+OSSL_cert_comp_fn,
+SSL_CTX_set_cert_comp_cb,
+SSL_set_cert_comp_cb,
+SSL_get_cert_to_compress,
+SSL_set1_compressed_cert - Certificate compression functions
+
+=head1 SYNOPSIS
+
+ #include <openssl/ssl.h>
+
+ int SSL_CTX_set_cert_comp_preference(SSL_CTX *ctx, uint16_t *algs, int num_algs);
+ int SSL_set_cert_comp_preference(SSL *ssl, uint16_t *algs, int num_algs);
+
+ typedef int (*OSSL_cert_comp_fn)(SSL *ssl, uint16_t alg, void *arg);
+ int SSL_CTX_set_cert_comp_cb(SSL_CTX *ctx, OSSL_cert_comp_fn cert_comp_cb, void *arg);
+ int SSL_set_cert_comp_cb(SSL *ssl, OSSL_cert_comp_fn cert_comp_cb, void *arg);
+
+ int SSL_get_cert_to_compress(SSL *ssl, BUF_MEM *buf_mem);
+ int SSL_set1_compressed_cert(SSL *ssl, uint16_t algorithm, BUF_MEM *buf_mem);
+
+=head1 DESCRIPTION
+
+These functions control the certificate compression feature. Certificate
+compression is only available for TLSv1.3 as defined in RFC8879.
+
+SSL_CTX_set_cert_comp_preference() and SSL_set_cert_comp_preference() are used
+to specify the preferred compression algorithms. Only those algorithms enabled
+in the library will be accepted, unknown algorithms are ignored. The B<algs>
+argument is an array of algorithms, and B<num_args> is the number of algorithms.
+The following compression algorithms may be used:
+
+=over 4
+
+=item TLSEXT_comp_cert_brotli
+
+=item TLSEXT_comp_cert_zlib
+
+=item TLSEXT_comp_cert_zstd
+
+=back
+
+The above is also the default preference order.
+
+SSL_CTX_set_cert_comp_cb() and SSL_set_cert_comp_cb() set the certificate
+compression callback, defined as type I<OSSL_cert_comp_fn>. When certificate
+compression is not disabled via SSL_OP_NO_CERTIFICATE_COMPRESSION, and the
+TLSv1.3 peer has offered a supported certificate compression extension, the
+B<cert_comp_cb> callback is invoked with the B<arg>.
+
+The certificate compression callback must return one of the following:
+
+=over 4
+
+=item Z<>0
+
+No certificate compression is desired; the state machine will send a regular
+Certificate message.
+
+=item E<gt>0
+
+Use the compressed certificate specified by SSL_set1_compressed_cert(). If
+SSL_set1_compressed_cert() has not been called, the state machine will
+compress the certificate.
+
+=item E<lt>0
+
+An error has occured; terminate the connection.
+
+=back
+
+SSL_get_cert_to_compress() is called by the certificate compression callback
+to get the certificate in a ready-to-compress format (i.e. it includes the
+certificate context and certificate chain). The caller must provide a BUF_MEM
+structure.
+
+SSL_set_compressed_cert() is called by the certificate compression callback
+to set the now-compressed certificate into the state machine. The BUF_MEM
+must have been allocated by BUF_MEM_new(), as its ownership is passed to
+the SSL structure upon success. After setting the certificate, the certificate
+compression callback must return 1 to use the now-compressed certificate.
+
+=head1 NOTES
+
+Certificate compression may be disabled on a connection via the
+SSL_OP_NO_CERTIFICATE_COMPRESSION option.
+
+If, after calling SSL_get_cert_to_compress() and compressing the
+certificate, the data expands, the application can discard the results and
+return 0 from the certificate compression callback.
+
+Since servers do not have a certificate context, a server may pre-compress
+its certificate and give it to SSL_set1_compressed_cert() during the callback.
+Clients receive a unique certificate context on every connection, and thus,
+cannot pre-compress their certificate.
+
+=head1 RETURN VALUES
+
+SSL_CTX_set_cert_comp_preference(),
+SSL_set_cert_comp_preference(),
+SSL_CTX_set_cert_comp_cb(),
+SSL_set_cert_comp_cb(),
+SSL_get_cert_to_compress(), and
+SSL_set1_compressed_cert()
+return 1 for success and 0 for failure.
+
+=head1 SEE ALSO
+
+L<SSL_CTX_set_options(3)>
+
+=head1 HISTORY
+
+These functions were added in OpenSSL 3.1.0.
+
+=head1 COPYRIGHT
+
+Copyright 2021 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

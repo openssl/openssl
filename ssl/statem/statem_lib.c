@@ -2440,7 +2440,7 @@ int tls13_construct_compressed_certificate(SSL *s, WPACKET *pkt, CERT_PKEY *cpk,
     size_t length;
     size_t max_length;
     COMP_METHOD *method;
-    COMP_CTX* comp = NULL;
+    COMP_CTX *comp = NULL;
     int comp_len;
 
     if (s->ext.compress_certificate_rx == TLSEXT_comp_cert_none
@@ -2472,7 +2472,7 @@ int tls13_construct_compressed_certificate(SSL *s, WPACKET *pkt, CERT_PKEY *cpk,
      * Uncompressibility expansion:
      * Brotli: per RFC7932: N + 5 + 3 * (N >> 16)
      * ZLIB: N + 11 + 5 * (N >> 14)
-     * ZSTD: N + 4 + 14  \+ 3 * (N >> 17) + 4
+     * ZSTD: N + 4 + 14 + 3 * (N >> 17) + 4
      */
     switch (s->ext.compress_certificate_rx) {
 # ifdef ZLIB
@@ -2532,7 +2532,7 @@ MSG_PROCESS_RETURN tls13_process_compressed_certificate(SSL *s, PACKET *pkt, PAC
     size_t comp_length;
 
     if (!PACKET_get_net_2(pkt, &comp_alg)) {
-        SSLfatal(s, SSL_AD_BAD_CERTIFICARTE, ERR_R_INTERNAL_ERROR);
+        SSLfatal(s, SSL_AD_BAD_CERTIFICATE, ERR_R_INTERNAL_ERROR);
         goto err;
     }
     switch (comp_alg) {

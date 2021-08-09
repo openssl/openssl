@@ -1736,10 +1736,24 @@ static EXT_RETURN tls_construct_compress_certificate(SSL *s, WPACKET *pkt, unsig
                                                      X509 *x, size_t chainidx)
 {
 #if !defined(OPENSSL_NO_COMP) && (defined(ZLIB) || defined(BROTLI) || defined(ZSTD))
+    int i;
+
     if (s->options & SSL_OP_NO_CERTIFICATE_COMPRESSION)
         return EXT_RETURN_NOT_SENT;
 
-    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_compress_certificate)
+    if (s->cert_comp_prefs[0] != TLSEXT_comp_cert_none) {
+        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_compress_certificate)
+                || !WPACKET_start_sub_packet_u16(pkt)
+                || !WPACKET_start_sub_packet_u8(pkt))
+            goto err;
+
+        for (i = 0; s->cert_comp_prefs[i] != TLSEXT_comp_cert_none; i++) {
+            if (!WPACKET_put_bytes_u16(pkt, s->cert_comp_prefs[i]))
+                goto err;
+        }
+        if (!WPACKET_close(pkt) || !WPACKET_close(pkt))
+            goto err;
+    } else if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_compress_certificate)
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_start_sub_packet_u8(pkt)
 # if defined(BROTLI)
@@ -1753,16 +1767,32 @@ static EXT_RETURN tls_construct_compress_certificate(SSL *s, WPACKET *pkt, unsig
 # endif
             || !WPACKET_close(pkt)
             || !WPACKET_close(pkt)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return EXT_RETURN_FAIL;
+        goto err;
     }
 
     s->ext.compress_certificate_tx = 1;
     return EXT_RETURN_SENT;
+ err:
+    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+    return EXT_RETURN_FAIL;
+
 #else
     return EXT_RETURN_NOT_SENT;
 #endif
 }
+
+#if !defined(OPENSSL_NO_COMP) && (defined(ZLIB) || defined(BROTLI) || defined(ZSTD))
+static int tls_comp_idx(SSL *s, uint16_t alg)
+{
+    int i;
+
+    for (i = 0; i < TLSEXT_comp_cert_limit; i++)
+        if (s->cert_comp_prefs[i] == alg)
+            return i;
+    /* if not found, return the limit */
+    return TLSEXT_comp_cert_limit;
+}
+#endif
 
 int tls_parse_compress_certificate(SSL *s, PACKET *pkt, unsigned int context,
                                    X509 *x, size_t chainidx)
@@ -1770,14 +1800,10 @@ int tls_parse_compress_certificate(SSL *s, PACKET *pkt, unsigned int context,
 #if !defined(OPENSSL_NO_COMP) && (defined(ZLIB) || defined(BROTLI) || defined(ZSTD))
     PACKET supported_comp_algs;
     unsigned int comp;
+    int idx;
 
     if (s->options & SSL_OP_NO_CERTIFICATE_COMPRESSION)
         return 1;
-
-    if (s->ext.compress_certificate_rx != TLSEXT_comp_cert_none) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_DUPLICATE_EXTENSION);
-        return 0;
-    }
 
     if (!PACKET_as_length_prefixed_1(pkt, &supported_comp_algs)
         || PACKET_remaining(&supported_comp_algs) == 0) {
@@ -1785,25 +1811,41 @@ int tls_parse_compress_certificate(SSL *s, PACKET *pkt, unsigned int context,
         return 0;
     }
 
-    /* save the first one we like */
-    while (s->ext.compress_certificate_rx == TLSEXT_comp_cert_none
-           && PACKET_get_1(&supported_comp_algs, &comp)) {
-        switch (comp) {
+    if (s->cert_comp_prefs[0] != TLSEXT_comp_cert_none) {
+        /*
+         * The preference array has real values, so take a look at each
+         * value coming in, and compare against our preference list.
+         * Pick the one closest to be begining (i.e. lowest index)
+         * If a value is not in the list, it gets the limit value
+         * The array is 0 (i.e. "none") terminated
+         * The preference list only contains supported algorithms
+         */
+        while (PACKET_get_1(&supported_comp_algs, &comp)) {
+            if ((idx = tls_comp_idx(s, (uint16_t)comp)) != TLSEXT_comp_cert_limit)
+                if (idx < tls_comp_idx(s, s->ext.compress_certificate_rx))
+                    s->ext.compress_certificate_rx = comp;
+        }
+    } else {
+        /* save the first one we support */
+        while (s->ext.compress_certificate_rx == TLSEXT_comp_cert_none
+               && PACKET_get_1(&supported_comp_algs, &comp)) {
+            switch (comp) {
 # if defined(BROTLI)
-        case TLSEXT_comp_cert_brotli:
+            case TLSEXT_comp_cert_brotli:
 # endif
 # if defined(ZLIB)
-        case TLSEXT_comp_cert_zlib:
+            case TLSEXT_comp_cert_zlib:
 # endif
 # if defined(ZSTD)
-        case TLSEXT_comp_cert_zstd:
+            case TLSEXT_comp_cert_zstd:
 # endif
-            s->ext.compress_certificate_rx = comp;
-            break;
+                s->ext.compress_certificate_rx = comp;
+                break;
 
-        default:
-            /* unsupported */
-            break;
+            default:
+                /* unsupported */
+                break;
+            }
         }
     }
 

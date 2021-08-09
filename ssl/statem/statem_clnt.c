@@ -423,6 +423,9 @@ int ossl_statem_client_read_transition(SSL *s, int mt)
 static WRITE_TRAN ossl_statem_client13_write_transition(SSL *s)
 {
     OSSL_STATEM *st = &s->statem;
+#ifndef OPENSSL_NO_COMP
+    int ret;
+#endif
 
     /*
      * Note: There are no cases for TLS_ST_BEFORE because we haven't negotiated
@@ -437,10 +440,27 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL *s)
 
     case TLS_ST_CR_CERT_REQ:
         if (s->post_handshake_auth == SSL_PHA_REQUESTED) {
-            if (s->ext.compress_certificate_rx == TLSEXT_comp_cert_none)
-                st->hand_state = TLS_ST_CW_CERT;
+#ifndef OPENSSL_NO_COMP
+            if (s->options & SSL_OP_NO_CERTIFICATE_COMPRESSION ||
+                    s->ext.compress_certificate_rx == TLSEXT_comp_cert_none)
+                ret = 0;
+            else if (s->cert_comp_cb != NULL)
+                ret = s->cert_comp_cb(s, s->ext.compress_certificate_rx, s->ctx->cert_comp_arg);
             else
+                ret = 1;
+
+            if (ret == 0) {
+                st->hand_state = TLS_ST_CW_CERT;
+                s->ext.compress_certificate_rx = TLSEXT_comp_cert_none;
+            } else if (ret > 0) {
                 st->hand_state = TLS_ST_CW_COMP_CERT;
+            } else {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return WRITE_TRAN_ERROR;
+            }
+#else
+            st->hand_state = TLS_ST_CW_CERT;
+#endif
             return WRITE_TRAN_CONTINUE;
         }
         /*
@@ -464,10 +484,29 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL *s)
             st->hand_state = TLS_ST_CW_CHANGE;
         else if (s->s3.tmp.cert_req == 0)
             st->hand_state = TLS_ST_CW_FINISHED;
-        else if (s->ext.compress_certificate_rx == TLSEXT_comp_cert_none)
+        else {
+#ifndef OPENSSL_NO_COMP
+            if (s->options & SSL_OP_NO_CERTIFICATE_COMPRESSION ||
+                    s->ext.compress_certificate_rx == TLSEXT_comp_cert_none)
+                ret = 0;
+            else if (s->cert_comp_cb != NULL)
+                ret = s->cert_comp_cb(s, s->ext.compress_certificate_rx, s->ctx->cert_comp_arg);
+            else
+                ret = 1;
+
+            if (ret == 0) {
+                st->hand_state = TLS_ST_CW_CERT;
+                s->ext.compress_certificate_rx = TLSEXT_comp_cert_none;
+            } else if (ret > 0) {
+                st->hand_state = TLS_ST_CW_COMP_CERT;
+            } else {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return WRITE_TRAN_ERROR;
+            }
+#else
             st->hand_state = TLS_ST_CW_CERT;
-        else
-            st->hand_state = TLS_ST_CW_COMP_CERT;
+#endif
+        }
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_PENDING_EARLY_DATA_END:
@@ -481,10 +520,29 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL *s)
     case TLS_ST_CW_CHANGE:
         if (s->s3.tmp.cert_req == 0)
             st->hand_state = TLS_ST_CW_FINISHED;
-        else if (s->ext.compress_certificate_rx == TLSEXT_comp_cert_none)
+        else {
+#ifndef OPENSSL_NO_COMP
+            if (s->options & SSL_OP_NO_CERTIFICATE_COMPRESSION ||
+                    s->ext.compress_certificate_rx == TLSEXT_comp_cert_none)
+                ret = 0;
+            else if (s->cert_comp_cb != NULL)
+                ret = s->cert_comp_cb(s, s->ext.compress_certificate_rx, s->ctx->cert_comp_arg);
+            else
+                ret = 1;
+
+            if (ret == 0) {
+                st->hand_state = TLS_ST_CW_CERT;
+                s->ext.compress_certificate_rx = TLSEXT_comp_cert_none;
+            } else if (ret > 0) {
+                st->hand_state = TLS_ST_CW_COMP_CERT;
+            } else {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return WRITE_TRAN_ERROR;
+            }
+#else
             st->hand_state = TLS_ST_CW_CERT;
-        else
-            st->hand_state = TLS_ST_CW_COMP_CERT;
+#endif
+        }
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_CW_COMP_CERT:
