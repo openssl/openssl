@@ -1120,7 +1120,7 @@ static const unsigned char so[8103] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x01,0x31,  /* [ 8091] OBJ_id_ct_ASPA */
 };
 
-#define NUM_NID 1251
+#define NUM_NID 1252
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2373,9 +2373,10 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"SM4-GCM", "sm4-gcm", NID_sm4_gcm, 8, &so[8075]},
     {"SM4-CCM", "sm4-ccm", NID_sm4_ccm, 8, &so[8083]},
     {"id-ct-ASPA", "id-ct-ASPA", NID_id_ct_ASPA, 11, &so[8091]},
+    {"brotli", "Brotli compression", NID_brotli},
 };
 
-#define NUM_SN 1242
+#define NUM_SN 1243
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -2720,6 +2721,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      932,    /* "brainpoolP384t1" */
      933,    /* "brainpoolP512r1" */
      934,    /* "brainpoolP512t1" */
+    1251,    /* "brotli" */
      494,    /* "buildingName" */
      860,    /* "businessCategory" */
      691,    /* "c2onb191v4" */
@@ -3621,7 +3623,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1093,    /* "x509ExtAdmission" */
 };
 
-#define NUM_LN 1242
+#define NUM_LN 1243
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -3633,6 +3635,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      365,    /* "Basic OCSP Response" */
      285,    /* "Biometric Info" */
     1221,    /* "Brand Indicator for Message Identification" */
+    1251,    /* "Brotli compression" */
      179,    /* "CA Issuers" */
      785,    /* "CA Repository" */
     1219,    /* "CMC Archive Server" */

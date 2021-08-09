@@ -5438,3 +5438,6 @@ ASYNC_set_mem_functions                 ?	3_1_0	EXIST::FUNCTION:
 ASYNC_get_mem_functions                 ?	3_1_0	EXIST::FUNCTION:
 BIO_ADDR_dup                            ?	3_1_0	EXIST::FUNCTION:SOCK
 CMS_final_digest                        ?	3_1_0	EXIST::FUNCTION:CMS
+COMP_brotli                             ?	3_1_0	EXIST::FUNCTION:COMP
+COMP_brotli_oneshot                     ?	3_1_0	EXIST::FUNCTION:COMP
+BIO_f_brotli                            ?	3_1_0	EXIST::FUNCTION:BROTLI,COMP
