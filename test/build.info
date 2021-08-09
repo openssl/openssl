@@ -899,7 +899,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[context_internal_test]=.. ../include ../apps/include
   DEPEND[context_internal_test]=../libcrypto.a libtestutil.a
 
-  IF[{- !$disabled{zlib} || !$disabled{brotli} -}]
+  IF[{- !$disabled{zlib} || !$disabled{brotli} || !$disabled{zstd} -}]
     PROGRAMS{noinst}=bio_comp_test
     SOURCE[bio_comp_test]=bio_comp_test.c
     INCLUDE[bio_comp_test]=../include ../apps/include

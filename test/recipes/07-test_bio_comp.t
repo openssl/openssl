@@ -14,6 +14,6 @@ use OpenSSL::Test::Utils;
 setup("test_bio_comp");
 
 plan skip_all => "No compression algorithms"
-    if disabled("zlib") && disabled("brotli");
+    if disabled("zlib") && disabled("brotli") && disabled("zstd");
 
 simple_test("test_bio_comp", "bio_comp_test");

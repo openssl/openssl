@@ -70,6 +70,10 @@ following compression methods available:
 
 =item COMP_brotli_oneshot()
 
+=item COMP_zstd()
+
+=item COMP_zstd_oneshot()
+
 =back
 
 =head1 RETURN VALUES

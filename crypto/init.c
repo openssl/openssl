@@ -391,6 +391,8 @@ void OPENSSL_cleanup(void)
     ossl_comp_zlib_cleanup();
     OSSL_TRACE(INIT, "OPENSSL_cleanup: ossl_comp_brotli_cleanup()\n");
     ossl_comp_brotli_cleanup();
+    OSSL_TRACE(INIT, "OPENSSL_cleanup: ossl_comp_zstd_cleanup()\n");
+    ossl_comp_zstd_cleanup();
 #endif
 
     if (async_inited) {
