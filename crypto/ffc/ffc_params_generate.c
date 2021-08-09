@@ -1047,7 +1047,11 @@ int ossl_ffc_params_FIPS186_2_generate(OSSL_LIB_CTX *libctx, FFC_PARAMS *params,
                                        int type, size_t L, size_t N,
                                        int *res, BN_GENCB *cb)
 {
-    return ossl_ffc_params_FIPS186_2_gen_verify(libctx, params,
-                                                FFC_PARAM_MODE_GENERATE,
-                                                type, L, N, res, cb);
+    if (!ossl_ffc_params_FIPS186_2_gen_verify(libctx, params,
+                                              FFC_PARAM_MODE_GENERATE,
+                                              type, L, N, res, cb))
+        return 0;
+
+    ossl_ffc_params_enable_flags(params, FFC_PARAM_FLAG_VALIDATE_LEGACY, 1);
+    return 1;
 }
