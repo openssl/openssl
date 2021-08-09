@@ -194,6 +194,78 @@ jobs:
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
+  enable_brotli_dynamic:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout openssl
+      uses: actions/checkout@v2
+    - name: checkout brotli
+      uses: actions/checkout@v2
+      with:
+        path: brotli
+        repository: google/brotli
+        ref: v1.0.9
+    - name: build brotli
+      working-directory: brotli
+      run:  mkdir out && cd out && mkdir install && ../configure-cmake --prefix=${PWD}/install && make -s -j4 && make install
+    - name: config
+      run: ./config enable-comp enable-brotli enable-brotli-dynamic --with-brotli-include=${PWD}/brotli/out/install/include --with-brotli-lib=${PWD}/brotli/out/install/lib && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: make test
+      run: LD_LIBRARY_PATH=${PWD}/brotli/out/install/lib make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+
+  enable_zstd_dynamic:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout openssl
+      uses: actions/checkout@v2
+    - name: checkout zstd
+      uses: actions/checkout@v2
+      with:
+        path: zstd
+        repository: facebook/zstd
+        ref: v1.4.9
+    - name: build zstd
+      working-directory: zstd
+      run: make -s -j4 && make install PREFIX=${PWD}/install
+    - name: config
+      run: ./config enable-comp enable-zstd enable-zstd-dynamic --with-zstd-include=${PWD}/zstd/install/include --with-zstd-lib=${PWD}/zstd/install/lib && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: make test
+      run: LD_LIBRARY_PATH=${PWD}/zstd/install/lib make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+
+  enable_brotli_and_zstd_dynamic:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout openssl
+      uses: actions/checkout@v2
+    - name: checkout brotli
+      uses: actions/checkout@v2
+      with:
+        path: brotli
+        repository: google/brotli
+        ref: v1.0.9
+    - name: build brotli
+      working-directory: brotli
+      run:  mkdir out && cd out && mkdir install && ../configure-cmake --prefix=${PWD}/install && make -s -j4 && make install
+    - name: checkout zstd
+      uses: actions/checkout@v2
+      with:
+        path: zstd
+        repository: facebook/zstd
+        ref: v1.4.9
+    - name: build zstd
+      working-directory: zstd
+      run: make -s -j4 && make install PREFIX=${PWD}/install
+    - name: config
+      run: ./config enable-comp enable-brotli enable-brotli-dynamic enable-zstd enable-zstd-dynamic --with-brotli-include=${PWD}/brotli/out/install/include --with-brotli-lib=${PWD}/brotli/out/install/lib --with-zstd-include=${PWD}/zstd/install/include --with-zstd-lib=${PWD}/zstd/install/lib && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: make test
+      run: LD_LIBRARY_PATH=${PWD}/brotli/out/install/lib:${PWD}/zstd/install/lib  make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+
   no-legacy:
     runs-on: ubuntu-latest
     steps:
