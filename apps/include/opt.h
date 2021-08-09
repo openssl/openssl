@@ -164,7 +164,9 @@
         OPT_S_RECORD_PADDING, OPT_S_DEBUGBROKE, OPT_S_COMP, \
         OPT_S_MINPROTO, OPT_S_MAXPROTO, \
         OPT_S_NO_RENEGOTIATION, OPT_S_NO_MIDDLEBOX, OPT_S_NO_ETM, \
-        OPT_S_NO_EMS, OPT_S__LAST
+        OPT_S_NO_EMS, \
+        OPT_S_NO_CERT_COMP, OPT_S_CERT_COMP, \
+        OPT_S__LAST
 
 # define OPT_S_OPTIONS \
         OPT_SECTION("TLS/SSL"), \
@@ -176,6 +178,8 @@
         {"bugs", OPT_S_BUGS, '-', "Turn on SSL bug compatibility"}, \
         {"no_comp", OPT_S_NO_COMP, '-', "Disable SSL/TLS compression (default)" }, \
         {"comp", OPT_S_COMP, '-', "Use SSL/TLS-level compression" }, \
+        {"no_cert_comp", OPT_S_NO_CERT_COMP, '-', "Disable TLSv1.3 certificate compression" }, \
+        {"cert_comp", OPT_S_CERT_COMP, '-', "Use TLSv1.3 certificate compression (default)" }, \
         {"no_ticket", OPT_S_NOTICKET, '-', \
             "Disable use of TLS session tickets"}, \
         {"serverpref", OPT_S_SERVERPREF, '-', "Use server's cipher preferences"}, \
@@ -233,6 +237,8 @@
         case OPT_S_BUGS: \
         case OPT_S_NO_COMP: \
         case OPT_S_COMP: \
+        case OPT_S_NO_CERT_COMP: \
+        case OPT_S_CERT_COMP: \
         case OPT_S_NOTICKET: \
         case OPT_S_SERVERPREF: \
         case OPT_S_LEGACYRENEG: \

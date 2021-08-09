@@ -166,14 +166,20 @@ sub expand
 	return $string;
 	}
 
+# Avoid mucking up the FIPS checksums, which look at include/openssl/obj_mac.h
+my @fips_exclude_list = qw(brotli zstd);
+my %fips_exclude = map { $_ => undef } @fips_exclude_list;
+
 foreach (sort { $a <=> $b } keys %ordern)
 	{
 	$Cname=$ordern{$_};
 	print "\n";
+	print "#ifndef FIPS_MODULE\n" if exists $fips_exclude{$sn{$Cname}};
 	print expand("#define SN_$Cname\t\t\"$sn{$Cname}\"\n") if $sn{$Cname} ne "";
 	print expand("#define LN_$Cname\t\t\"$ln{$Cname}\"\n") if $ln{$Cname} ne "";
 	print expand("#define NID_$Cname\t\t$nid{$Cname}\n") if $nid{$Cname} ne "";
 	print expand("#define OBJ_$Cname\t\t$obj{$Cname}\n") if $obj{$Cname} ne "";
+	print "#endif\n" if exists $fips_exclude{$sn{$Cname}};
 	}
 
 print <<EOF;

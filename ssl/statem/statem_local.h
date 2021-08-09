@@ -114,6 +114,13 @@ __owur WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs,
                                        int stop);
 __owur WORK_STATE dtls_wait_for_dry(SSL *s);
 
+#if !defined(OPENSSL_NO_COMP)
+__owur int tls13_construct_compressed_certificate(SSL *s, WPACKET *pkt, CERT_PKEY *cpk,
+                                                  uint8_t *context, size_t context_len);
+__owur MSG_PROCESS_RETURN tls13_process_compressed_certificate(SSL *s, PACKET *pkt,
+                                                               PACKET *tmppkt, BUF_MEM **buf);
+#endif
+
 /* some client-only functions */
 __owur int tls_construct_client_hello(SSL *s, WPACKET *pkt);
 __owur MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt);
@@ -125,6 +132,9 @@ __owur MSG_PROCESS_RETURN tls_process_server_done(SSL *s, PACKET *pkt);
 __owur int tls_construct_cert_verify(SSL *s, WPACKET *pkt);
 __owur WORK_STATE tls_prepare_client_certificate(SSL *s, WORK_STATE wst);
 __owur int tls_construct_client_certificate(SSL *s, WPACKET *pkt);
+#if !defined(OPENSL_NO_COMP)
+__owur int tls_construct_client_compressed_certificate(SSL *s, WPACKET *pkt);
+#endif
 __owur int ssl_do_client_cert_cb(SSL *s, X509 **px509, EVP_PKEY **ppkey);
 __owur int tls_construct_client_key_exchange(SSL *s, WPACKET *pkt);
 __owur int tls_client_key_exchange_post_work(SSL *s);
@@ -133,6 +143,9 @@ __owur int tls_construct_cert_status(SSL *s, WPACKET *pkt);
 __owur MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt);
 __owur MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt);
 __owur WORK_STATE tls_post_process_server_certificate(SSL *s, WORK_STATE wst);
+#if !defined(OPENSSL_NO_COMP)
+__owur MSG_PROCESS_RETURN tls_process_server_compressed_certificate(SSL *s, PACKET *pkt);
+#endif
 __owur int ssl3_check_cert_and_algorithm(SSL *s);
 #ifndef OPENSSL_NO_NEXTPROTONEG
 __owur int tls_construct_next_proto(SSL *s, WPACKET *pkt);
@@ -147,10 +160,16 @@ __owur WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst);
 __owur int tls_construct_server_hello(SSL *s, WPACKET *pkt);
 __owur int dtls_construct_hello_verify_request(SSL *s, WPACKET *pkt);
 __owur int tls_construct_server_certificate(SSL *s, WPACKET *pkt);
+#if !defined(OPENSSL_NO_COMP)
+__owur int tls_construct_server_compressed_certificate(SSL *s, WPACKET *pkt);
+#endif
 __owur int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt);
 __owur int tls_construct_certificate_request(SSL *s, WPACKET *pkt);
 __owur int tls_construct_server_done(SSL *s, WPACKET *pkt);
 __owur MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt);
+#if !defined(OPENSSL_NO_COMP)
+__owur MSG_PROCESS_RETURN tls_process_client_compressed_certificate(SSL *s, PACKET *pkt);
+#endif
 __owur MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt);
 __owur WORK_STATE tls_post_process_client_key_exchange(SSL *s, WORK_STATE wst);
 __owur MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt);

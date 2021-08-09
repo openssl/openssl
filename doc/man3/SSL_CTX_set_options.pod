@@ -214,6 +214,15 @@ functionality is not required. Those applications can turn this feature off by
 setting this option. This is a server-side opton only. It is ignored by
 clients.
 
+=item SSL_OP_NO_CERTIFICATE_COMPRESSION
+
+Normally clients and servers will transparently attempt to negotiate the
+RFC8879 certificate compression option on TLSv1.3 connections.
+
+If this option is set, certificate compression is disabled. The extension
+will not be sent by either client or server, and will be ignored upon
+receipt.
+
 =item SSL_OP_NO_COMPRESSION
 
 Do not use compression even if it is supported. This option is set by default.

@@ -606,6 +606,8 @@ int SSL_clear(SSL *s)
     s->first_packet = 0;
 
     s->key_update = SSL_KEY_UPDATE_NONE;
+    s->ext.compress_certificate_rx = TLSEXT_comp_cert_none;
+    s->ext.compress_certificate_tx = 0;
 
     EVP_MD_CTX_free(s->pha_dgst);
     s->pha_dgst = NULL;

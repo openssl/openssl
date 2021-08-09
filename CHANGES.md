@@ -24,6 +24,11 @@ OpenSSL 3.1
 
 ### Changes between 3.0 and 3.1 [xx XXX xxxx]
 
+ * Added support for certificate compression (RFC8879), including
+   library support for Brotli and Zstandard compression.
+
+   *Todd Short*
+
  * Extended Kernel TLS (KTLS) to support TLS 1.3 receive offload.
 
    *Daiki Ueno, John Baldwin and Dmitry Podgorny*

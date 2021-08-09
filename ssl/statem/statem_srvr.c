@@ -26,6 +26,7 @@
 #include <openssl/trace.h>
 #include <openssl/core_names.h>
 #include <openssl/asn1t.h>
+#include <openssl/comp.h>
 
 #define TICKET_NONCE_SIZE       8
 
@@ -90,6 +91,11 @@ static int ossl_statem_server13_read_transition(SSL *s, int mt)
                 st->hand_state = TLS_ST_SR_CERT;
                 return 1;
             }
+            if (mt == SSL3_MT_COMPRESSED_CERTIFICATE
+                    && s->ext.compress_certificate_tx) {
+                st->hand_state = TLS_ST_SR_COMP_CERT;
+                return 1;
+            }
         } else {
             if (mt == SSL3_MT_FINISHED) {
                 st->hand_state = TLS_ST_SR_FINISHED;
@@ -98,6 +104,7 @@ static int ossl_statem_server13_read_transition(SSL *s, int mt)
         }
         break;
 
+    case TLS_ST_SR_COMP_CERT:
     case TLS_ST_SR_CERT:
         if (s->session->peer == NULL) {
             if (mt == SSL3_MT_FINISHED) {
@@ -127,10 +134,16 @@ static int ossl_statem_server13_read_transition(SSL *s, int mt)
         if (s->early_data_state == SSL_EARLY_DATA_READING)
             break;
 
-        if (mt == SSL3_MT_CERTIFICATE
-                && s->post_handshake_auth == SSL_PHA_REQUESTED) {
-            st->hand_state = TLS_ST_SR_CERT;
-            return 1;
+        if (s->post_handshake_auth == SSL_PHA_REQUESTED) {
+            if (mt == SSL3_MT_CERTIFICATE) {
+                st->hand_state = TLS_ST_SR_CERT;
+                return 1;
+            }
+            if (mt == SSL3_MT_COMPRESSED_CERTIFICATE
+                    && s->ext.compress_certificate_tx) {
+                st->hand_state = TLS_ST_SR_COMP_CERT;
+                return 1;
+            }
         }
 
         if (mt == SSL3_MT_KEY_UPDATE) {
@@ -466,20 +479,24 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
             st->hand_state = TLS_ST_SW_FINISHED;
         else if (send_certificate_request(s))
             st->hand_state = TLS_ST_SW_CERT_REQ;
-        else
+        else if (s->ext.compress_certificate_rx == TLSEXT_comp_cert_none)
             st->hand_state = TLS_ST_SW_CERT;
-
+        else
+            st->hand_state = TLS_ST_SW_COMP_CERT;
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_CERT_REQ:
         if (s->post_handshake_auth == SSL_PHA_REQUEST_PENDING) {
             s->post_handshake_auth = SSL_PHA_REQUESTED;
             st->hand_state = TLS_ST_OK;
-        } else {
+        } else if (s->ext.compress_certificate_rx == TLSEXT_comp_cert_none) {
             st->hand_state = TLS_ST_SW_CERT;
+        } else {
+            st->hand_state = TLS_ST_SW_COMP_CERT;
         }
         return WRITE_TRAN_CONTINUE;
 
+    case TLS_ST_SW_COMP_CERT:
     case TLS_ST_SW_CERT:
         st->hand_state = TLS_ST_SW_CERT_VRFY;
         return WRITE_TRAN_CONTINUE;
@@ -1054,6 +1071,13 @@ int ossl_statem_server_construct_message(SSL *s,
         *mt = SSL3_MT_CERTIFICATE;
         break;
 
+#if !defined(OPENSSL_NO_COMP)
+    case TLS_ST_SW_COMP_CERT:
+        *confunc = tls_construct_server_compressed_certificate;
+        *mt = SSL3_MT_COMPRESSED_CERTIFICATE;
+        break;
+#endif
+
     case TLS_ST_SW_CERT_VRFY:
         *confunc = tls_construct_cert_verify;
         *mt = SSL3_MT_CERTIFICATE_VERIFY;
@@ -1148,6 +1172,7 @@ size_t ossl_statem_server_max_message_size(SSL *s)
     case TLS_ST_SR_END_OF_EARLY_DATA:
         return END_OF_EARLY_DATA_MAX_LENGTH;
 
+    case TLS_ST_SR_COMP_CERT:
     case TLS_ST_SR_CERT:
         return s->max_cert_list;
 
@@ -1194,6 +1219,11 @@ MSG_PROCESS_RETURN ossl_statem_server_process_message(SSL *s, PACKET *pkt)
 
     case TLS_ST_SR_CERT:
         return tls_process_client_certificate(s, pkt);
+
+#if !defined(OPENSSL_NO_COMP)
+    case TLS_ST_SR_COMP_CERT:
+        return tls_process_client_compressed_certificate(s, pkt);
+#endif
 
     case TLS_ST_SR_KEY_EXCH:
         return tls_process_client_key_exchange(s, pkt);
@@ -3593,6 +3623,21 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
     return ret;
 }
 
+#if !defined(OPENSSL_NO_COMP)
+MSG_PROCESS_RETURN tls_process_client_compressed_certificate(SSL *s, PACKET *pkt)
+{
+    MSG_PROCESS_RETURN ret = MSG_PROCESS_ERROR;
+    PACKET tmppkt;
+    BUF_MEM *buf = NULL;
+
+    if (tls13_process_compressed_certificate(s, pkt, &tmppkt, &buf) != MSG_PROCESS_ERROR)
+        ret = tls_process_client_certificate(s, &tmppkt);
+
+    BUF_MEM_free(buf);
+    return ret;
+}
+#endif
+
 int tls_construct_server_certificate(SSL *s, WPACKET *pkt)
 {
     CERT_PKEY *cpk = s->s3.tmp.cert;
@@ -3617,6 +3662,18 @@ int tls_construct_server_certificate(SSL *s, WPACKET *pkt)
 
     return 1;
 }
+
+#if !defined(OPENSSL_NO_COMP)
+int tls_construct_server_compressed_certificate(SSL *s, WPACKET *pkt)
+{
+    if (s->s3.tmp.cert == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    return tls13_construct_compressed_certificate(s, pkt, s->s3.tmp.cert,
+                                                  NULL, 0);
+}
+#endif
 
 static int create_ticket_prequel(SSL *s, WPACKET *pkt, uint32_t age_add,
                                  unsigned char *tick_nonce)

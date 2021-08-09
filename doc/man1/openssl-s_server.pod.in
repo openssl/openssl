@@ -92,6 +92,8 @@ B<openssl> B<s_server>
 [B<-naccept> I<+int>]
 [B<-read_buf> I<+int>]
 [B<-bugs>]
+[B<-no_cert_comp>]
+[B<-cert_comp>]
 [B<-no_comp>]
 [B<-comp>]
 [B<-no_ticket>]
@@ -604,6 +606,17 @@ further information).
 
 There are several known bugs in SSL and TLS implementations. Adding this
 option enables various workarounds.
+
+=item B<-cert_comp>
+
+Enables support for TLSv1.3 certificate compression, same as clearing
+B<SSL_OP_NO_CERTIFICATE_COMPRESSION>.
+This command was introduced in OpenSSL 3.1.0.
+
+=item B<-no_cert_comp>
+
+Disables support for TLSv1.3 certificate compression, same as setting
+B<SSL_OP_NO_CERTIFICATE_COMPRESSION>.
 
 =item B<-no_comp>
 

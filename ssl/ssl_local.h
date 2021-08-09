@@ -764,6 +764,7 @@ typedef enum tlsext_index_en {
     TLSEXT_IDX_key_share,
     TLSEXT_IDX_cookie,
     TLSEXT_IDX_cryptopro_bug,
+    TLSEXT_IDX_compress_certificate,
     TLSEXT_IDX_early_data,
     TLSEXT_IDX_certificate_authorities,
     TLSEXT_IDX_padding,
@@ -1680,6 +1681,14 @@ struct ssl_st {
          * selected.
          */
         int tick_identity;
+
+        /*
+         * If the peer supports certificate compression, this is what
+         * we will use: TLXEXT_comp_cert_XXX
+         */
+        int compress_certificate_rx;
+        /* indicate that we sent the extension, so we'll accept it */
+        int compress_certificate_tx;
     } ext;
 
     /*

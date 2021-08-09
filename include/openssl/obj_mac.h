@@ -5446,13 +5446,17 @@
 #define LN_aes_256_siv          "aes-256-siv"
 #define NID_aes_256_siv         1200
 
+#ifndef FIPS_MODULE
 #define SN_brotli               "brotli"
 #define LN_brotli               "Brotli compression"
 #define NID_brotli              1251
+#endif
 
+#ifndef FIPS_MODULE
 #define SN_zstd         "zstd"
 #define LN_zstd         "Zstandard compression"
 #define NID_zstd                1252
+#endif
 
 #endif /* OPENSSL_OBJ_MAC_H */
 

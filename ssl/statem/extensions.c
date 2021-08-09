@@ -59,6 +59,11 @@ static int final_early_data(SSL *s, unsigned int context, int sent);
 static int final_maxfragmentlen(SSL *s, unsigned int context, int sent);
 static int init_post_handshake_auth(SSL *s, unsigned int context);
 static int final_psk(SSL *s, unsigned int context, int sent);
+static int tls_init_compress_certificate(SSL *s, unsigned int context);
+static EXT_RETURN tls_construct_compress_certificate(SSL *s, WPACKET *pkt, unsigned int context,
+                                                     X509 *x, size_t chainidx);
+static int tls_parse_compress_certificate(SSL *, PACKET *pkt, unsigned int context,
+                                          X509 *x, size_t chainidx);
 
 /* Structure to define a built-in extension */
 typedef struct extensions_definition_st {
@@ -349,6 +354,15 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_2_SERVER_HELLO
         | SSL_EXT_TLS1_2_AND_BELOW_ONLY,
         NULL, NULL, NULL, tls_construct_stoc_cryptopro_bug, NULL, NULL
+    },
+    {
+        TLSEXT_TYPE_compress_certificate,
+        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_CERTIFICATE_REQUEST
+        | SSL_EXT_TLS_IMPLEMENTATION_ONLY | SSL_EXT_TLS1_3_ONLY,
+        tls_init_compress_certificate,
+        tls_parse_compress_certificate, tls_parse_compress_certificate,
+        tls_construct_compress_certificate, tls_construct_compress_certificate,
+        NULL
     },
     {
         TLSEXT_TYPE_early_data,
@@ -1709,4 +1723,93 @@ static int final_psk(SSL *s, unsigned int context, int sent)
     }
 
     return 1;
+}
+
+static int tls_init_compress_certificate(SSL *s, unsigned int context)
+{
+    s->ext.compress_certificate_rx = TLSEXT_comp_cert_none;
+    return 1;
+}
+
+/* The order these are put into the packet imply a preference order: [brotli, zlib, zstd] */
+static EXT_RETURN tls_construct_compress_certificate(SSL *s, WPACKET *pkt, unsigned int context,
+                                                     X509 *x, size_t chainidx)
+{
+#if !defined(OPENSSL_NO_COMP) && (defined(ZLIB) || defined(BROTLI) || defined(ZSTD))
+    if (s->options & SSL_OP_NO_CERTIFICATE_COMPRESSION)
+        return EXT_RETURN_NOT_SENT;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_compress_certificate)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_start_sub_packet_u8(pkt)
+# if defined(BROTLI)
+            || !WPACKET_put_bytes_u16(pkt, TLSEXT_comp_cert_brotli)
+# endif
+# if defined(ZLIB)
+            || !WPACKET_put_bytes_u16(pkt, TLSEXT_comp_cert_zlib)
+# endif
+# if defined(ZSTD)
+            || !WPACKET_put_bytes_u16(pkt, TLSEXT_comp_cert_zstd)
+# endif
+            || !WPACKET_close(pkt)
+            || !WPACKET_close(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+
+    s->ext.compress_certificate_tx = 1;
+    return EXT_RETURN_SENT;
+#else
+    return EXT_RETURN_NOT_SENT;
+#endif
+}
+
+int tls_parse_compress_certificate(SSL *s, PACKET *pkt, unsigned int context,
+                                   X509 *x, size_t chainidx)
+{
+#if !defined(OPENSSL_NO_COMP) && (defined(ZLIB) || defined(BROTLI) || defined(ZSTD))
+    PACKET supported_comp_algs;
+    unsigned int comp;
+
+    if (s->options & SSL_OP_NO_CERTIFICATE_COMPRESSION)
+        return 1;
+
+    if (s->ext.compress_certificate_rx != TLSEXT_comp_cert_none) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_DUPLICATE_EXTENSION);
+        return 0;
+    }
+
+    if (!PACKET_as_length_prefixed_1(pkt, &supported_comp_algs)
+        || PACKET_remaining(&supported_comp_algs) == 0) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+
+    /* save the first one we like */
+    while (s->ext.compress_certificate_rx == TLSEXT_comp_cert_none
+           && PACKET_get_1(&supported_comp_algs, &comp)) {
+        switch (comp) {
+# if defined(BROTLI)
+        case TLSEXT_comp_cert_brotli:
+# endif
+# if defined(ZLIB)
+        case TLSEXT_comp_cert_zlib:
+# endif
+# if defined(ZSTD)
+        case TLSEXT_comp_cert_zstd:
+# endif
+            s->ext.compress_certificate_rx = comp;
+            break;
+
+        default:
+            /* unsupported */
+            break;
+        }
+    }
+
+    return 1;
+#else
+    /* ignore it */
+    return 1;
+#endif
 }

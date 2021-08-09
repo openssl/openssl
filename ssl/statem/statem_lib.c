@@ -2415,3 +2415,162 @@ int tls13_restore_handshake_digest_for_pha(SSL *s)
     }
     return 1;
 }
+
+#if !defined(OPENSSL_NO_COMP)
+
+/* Intended to be used after WPACKET_reserve_bytes() */
+static int wpacket_advance_write(WPACKET *pkt, size_t len)
+{
+    if (pkt->maxsize - pkt->written < len)
+        return 0;
+    if (pkt->staticbuf == NULL && (pkt->buf->length - pkt->written < len))
+        return 0;
+
+    pkt->written += len;
+    pkt->curr += len;
+    return 1;
+}
+
+int tls13_construct_compressed_certificate(SSL *s, WPACKET *pkt, CERT_PKEY *cpk,
+                                           uint8_t *context, size_t context_len)
+{
+    WPACKET tmppkt;
+    BUF_MEM *buf = NULL;
+    int ret = 0;
+    size_t length;
+    size_t max_length;
+    COMP_METHOD *method;
+    COMP_CTX* comp = NULL;
+    int comp_len;
+
+    if (s->ext.compress_certificate_rx == TLSEXT_comp_cert_none
+            || (buf = BUF_MEM_new()) == NULL
+            || !WPACKET_init(&tmppkt, buf)) {
+        goto err;
+    }
+
+    /* Use the |tmppkt| for the to-be-compressed data */
+    if (context == NULL) {
+        /* no context available, add 0-length context */
+        if (!WPACKET_put_bytes_u8(&tmppkt, 0))
+            goto err;
+    } else if (!WPACKET_sub_memcpy_u8(&tmppkt, context, context_len))
+        goto err;
+
+    if (!ssl3_output_cert_chain(s, &tmppkt, cpk)) {
+        /* SSLfatal() already called */
+        goto out;
+    }
+
+    /* continue with the real |pkt| */
+    if (!WPACKET_put_bytes_u16(pkt, s->ext.compress_certificate_rx)
+            || !WPACKET_get_total_written(&tmppkt, &length)
+            || !WPACKET_put_bytes_u24(pkt, length))
+        goto err;
+
+    /*
+     * Uncompressibility expansion:
+     * Brotli: per RFC7932: N + 5 + 3 * (N >> 16)
+     * ZLIB: N + 11 + 5 * (N >> 14)
+     * ZSTD: N + 4 + 14  \+ 3 * (N >> 17) + 4
+     */
+    switch (s->ext.compress_certificate_rx) {
+# ifdef ZLIB
+    case TLSEXT_comp_cert_zlib:
+        max_length = length + 11 + 5 * (length >> 14);
+        method = COMP_zlib();
+        break;
+# endif
+# ifdef BROTLI
+    case TLSEXT_comp_cert_brotli:
+        max_length = length + 5 + 3 * (length >> 16);
+        method = COMP_brotli_oneshot();
+        break;
+# endif
+# ifdef ZSTD
+    case TLSEXT_comp_cert_zstd:
+        max_length = length + 22 + 3 * (length >> 17);
+        method = COMP_zstd_oneshot();
+        break;
+# endif
+    default:
+        goto err;
+    }
+
+    if (!WPACKET_reserve_bytes(pkt, max_length+3, NULL)
+            || (comp = COMP_CTX_new(method)) == NULL)
+        goto err;
+
+    comp_len = COMP_compress_block(comp, WPACKET_get_curr(pkt)+3, max_length,
+                                   (unsigned char*)buf->data, length);
+    if (comp_len <= 0)
+        goto err;
+
+    /* Put length then move write pointer past certificate */
+    if (!WPACKET_put_bytes_u24(pkt, comp_len)
+            || !wpacket_advance_write(pkt, comp_len))
+        goto err;
+
+    ret = 1;
+    goto out;
+ err:
+    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+ out:
+    BUF_MEM_free(buf);
+    COMP_CTX_free(comp);
+
+    return ret;
+}
+
+MSG_PROCESS_RETURN tls13_process_compressed_certificate(SSL *s, PACKET *pkt, PACKET *tmppkt, BUF_MEM **buf)
+{
+    MSG_PROCESS_RETURN ret = MSG_PROCESS_ERROR;
+    unsigned int comp_alg;
+    COMP_METHOD *method = NULL;
+    COMP_CTX *comp = NULL;
+    size_t expected_length;
+    size_t comp_length;
+
+    if (!PACKET_get_net_2(pkt, &comp_alg)) {
+        SSLfatal(s, SSL_AD_BAD_CERTIFICARTE, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    switch (comp_alg) {
+# ifdef ZLIB
+    case TLSEXT_comp_cert_zlib:
+        method = COMP_zlib();
+        break;
+# endif
+# ifdef BROTLI
+    case TLSEXT_comp_cert_brotli:
+        method = COMP_brotli_oneshot();
+        break;
+# endif
+# ifdef ZSTD
+    case TLSEXT_comp_cert_zstd:
+        method = COMP_zstd_oneshot();
+        break;
+# endif
+    default:
+        SSLfatal(s, SSL_AD_BAD_CERTIFICATE, SSL_R_BAD_COMPRESSION_ALGORITHM);
+        goto err;
+    }
+
+    if (!PACKET_get_net_3_len(pkt, &expected_length)
+        || !PACKET_get_net_3_len(pkt, &comp_length)
+        || PACKET_remaining(pkt) != comp_length
+        || (*buf = BUF_MEM_new()) == NULL
+        || !BUF_MEM_grow(*buf, expected_length)
+        || !PACKET_buf_init(tmppkt, (unsigned char*)(*buf)->data, expected_length)
+        || (comp = COMP_CTX_new(method)) == NULL
+        || COMP_expand_block(comp, (unsigned char*)(*buf)->data, expected_length,
+                             (unsigned char*)PACKET_data(pkt), comp_length) != (int)expected_length) {
+        SSLfatal(s, SSL_AD_BAD_CERTIFICATE, SSL_R_BAD_DECOMPRESSION);
+        goto err;
+    }
+    ret = MSG_PROCESS_CONTINUE_PROCESSING;
+ err:
+    COMP_CTX_free(comp);
+    return ret;
+}
+#endif
