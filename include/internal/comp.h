@@ -11,3 +11,4 @@
 
 void ossl_comp_zlib_cleanup(void);
 void ossl_comp_brotli_cleanup(void);
+void ossl_comp_zstd_cleanup(void);

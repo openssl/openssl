@@ -5472,3 +5472,6 @@ OSSL_get_max_threads                    ?	3_2_0	EXIST::FUNCTION:
 COMP_brotli                             ?	3_2_0	EXIST::FUNCTION:COMP
 COMP_brotli_oneshot                     ?	3_2_0	EXIST::FUNCTION:COMP
 BIO_f_brotli                            ?	3_2_0	EXIST::FUNCTION:COMP
+COMP_zstd                               ?	3_2_0	EXIST::FUNCTION:COMP
+COMP_zstd_oneshot                       ?	3_2_0	EXIST::FUNCTION:COMP
+BIO_f_zstd                              ?	3_2_0	EXIST::FUNCTION:COMP

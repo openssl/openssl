@@ -1803,5 +1803,6 @@ joint-iso-itu-t 16 840 1 113894 : oracle-organization : Oracle organization
 # Jdk trustedKeyUsage attribute
 oracle 746875 1 1 : oracle-jdk-trustedkeyusage : Trusted key usage (Oracle)
 
-# NID for brotli
+# NID for compression
                             : brotli : Brotli compression
+			    : zstd : Zstandard compression

@@ -25,8 +25,8 @@
 static int sizes[NUM_SIZES] = { 64, 512, 2048, 16 * 1024 };
 
 /* using global buffers */
-uint8_t *original = NULL;
-uint8_t *result = NULL;
+unsigned char *original = NULL;
+unsigned char *result = NULL;
 
 /*
  * For compression:
@@ -62,8 +62,7 @@ static int do_bio_comp_test(const BIO_METHOD *meth, size_t size)
     BIO_push(bexp, bmem);
     rsize = BIO_read(bexp, result, size);
 
-    if (!TEST_int_eq(size, osize)
-        || !TEST_int_eq(size, rsize)
+    if (!TEST_int_eq(size, rsize)
         || !TEST_mem_eq(original, osize, result, rsize))
         goto err;
 
@@ -88,20 +87,20 @@ static int do_bio_comp(const BIO_METHOD *meth, int n)
 
     switch (type) {
     case 0:
-        test_printf_stdout("# zeros of size %d\n", size);
+        TEST_info("zeros of size %d\n", size);
         memset(original, 0, BUFFER_SIZE);
         break;
     case 1:
-        test_printf_stdout("# ones of size %d\n", size);
-        memset(original, 0, BUFFER_SIZE);
+        TEST_info("ones of size %d\n", size);
+        memset(original, 1, BUFFER_SIZE);
         break;
     case 2:
-        test_printf_stdout("# sequential of size %d\n", size);
+        TEST_info("sequential of size %d\n", size);
         for (i = 0; i < BUFFER_SIZE; i++)
             original[i] = i & 0xFF;
         break;
     case 3:
-        test_printf_stdout("# random of size %d\n", size);
+        TEST_info("random of size %d\n", size);
         if (!TEST_int_gt(RAND_bytes(original, BUFFER_SIZE), 0))
             goto err;
         break;
@@ -118,6 +117,12 @@ static int do_bio_comp(const BIO_METHOD *meth, int n)
     return success;
 }
 
+#ifndef OPENSSL_NO_ZSTD
+static int test_zstd(int n)
+{
+    return do_bio_comp(BIO_f_zstd(), n);
+}
+#endif
 #ifndef OPENSSL_NO_BROTLI
 static int test_brotli(int n)
 {
@@ -138,6 +143,9 @@ int setup_tests(void)
 #endif
 #ifndef OPENSSL_NO_BROTLI
     ADD_ALL_TESTS(test_brotli, NUM_SIZES * 4);
+#endif
+#ifndef OPENSSL_NO_ZSTD
+    ADD_ALL_TESTS(test_zstd, NUM_SIZES * 4);
 #endif
     return 1;
 }
