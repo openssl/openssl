@@ -7,7 +7,7 @@
 
 if [ -d oqs-scripts ]; then
     # just a temp setup
-    git checkout -b reltest
+    git checkout -b reltest && \
     sed -i "s/enable\: false/enable\: true/g" oqs-template/generate.yml && \
     python3 oqs-template/generate.py && \
     oqs-scripts/clone_liboqs.sh && \
@@ -19,9 +19,8 @@ if [ -d oqs-scripts ]; then
     cp oqs/lib/*.so* . && \
     make clean && ./Configure shared linux-x86_64 -lm && \
     make -j 48 && LD_LIBRARY_PATH=. make test && \
-    LD_LIBRARY_PATH=. python3 -m pytest --numprocesses=auto oqs-test/test_tls_full.py oqs-test/test_cms.py oqs-test/test_speed.py
-    # revert temp setup
-    git reset --hard
+    LD_LIBRARY_PATH=. python3 -m pytest --numprocesses=auto oqs-test/test_tls_full.py oqs-test/test_cms.py oqs-test/test_speed.py && \
+    git reset --hard && git checkout OQS-OpenSSL_1_1_1-stable && git branch -D reltest
 else
     echo "$0 must be run in main oqs-openssl folder. Exiting."
 fi
