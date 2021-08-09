@@ -199,6 +199,87 @@ jobs:
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
+  enable_brotli_dynamic:
+    runs-on: ubuntu-latest
+    steps:
+    - name: install brotli
+      run: |
+        sudo apt-get update
+        sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install brotli libbrotli1 libbrotli-dev
+    - name: checkout openssl
+      uses: actions/checkout@v2
+    - name: config
+      run: ./config enable-comp enable-brotli enable-brotli-dynamic && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: make test
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+
+  enable_zstd_dynamic:
+    runs-on: ubuntu-latest
+    steps:
+    - name: install zstd
+      run: |
+        sudo apt-get update
+        sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install zstd libzstd1 libzstd-dev
+    - name: checkout openssl
+      uses: actions/checkout@v2
+    - name: config
+      run: ./config enable-comp enable-zstd enable-zstd-dynamic && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: make test
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+
+  enable_brotli_and_zstd_dynamic:
+    runs-on: ubuntu-latest
+    steps:
+    - name: install brotli and zstd
+      run: |
+        sudo apt-get update
+        sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install brotli libbrotli1 libbrotli-dev
+        sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install zstd libzstd1 libzstd-dev
+    - name: checkout openssl
+      uses: actions/checkout@v2
+    - name: config
+      run: ./config enable-comp enable-brotli enable-brotli-dynamic enable-zstd enable-zstd-dynamic && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: make test
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+
+  enable_brotli_and_asan_ubsan:
+    runs-on: ubuntu-latest
+    steps:
+    - name: install brotli
+      run: |
+        sudo apt-get update
+        sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install brotli libbrotli1 libbrotli-dev
+    - name: checkout openssl
+      uses: actions/checkout@v2
+    - name: config
+      run: ./config --banner=Configured --debug enable-asan enable-ubsan enable-comp enable-brotli -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -DPEDANTIC && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: make test
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0
+
+  enable_zstd_and_asan_ubsan:
+    runs-on: ubuntu-latest
+    steps:
+    - name: install zstd
+      run: |
+        sudo apt-get update
+        sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install zstd libzstd1 libzstd-dev
+    - name: checkout openssl
+      uses: actions/checkout@v2
+    - name: config
+      run: ./config --banner=Configured --debug enable-asan enable-ubsan enable-comp enable-zstd -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -DPEDANTIC && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: make test
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0
+
   no-legacy:
     runs-on: ubuntu-latest
     steps:
