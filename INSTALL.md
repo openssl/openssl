@@ -350,9 +350,13 @@ Directories
 
 The name of the directory under the top of the installation directory tree
 (see the `--prefix` option) where libraries will be installed.  By default
-this is `lib/`. Note that on Windows only static libraries (`*.lib`) will
+this is `lib`. Note that on Windows only static libraries (`*.lib`) will
 be stored in this location. Shared libraries (`*.dll`) will always be
-installed to the `bin/` directory.
+installed to the `bin` directory.
+
+Some build targets have a multilib postfix set in the build configuration.
+For these targets the default libdir is `lib<multilib-postfix>`. Please use
+`--libdir=lib` to override the libdir if adding the postfix is undesirable.
 
 ### openssldir
 
