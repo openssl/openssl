@@ -273,6 +273,15 @@ significant.
 All parameters in the section as well as sub-sections are made
 available to the provider.
 
+=head3 Default provider and its activation
+
+If no providers are activated explicitly, the default one is activated implicitly.
+See L<OSSL_PROVIDER-default(7)> for more details.
+
+If you add a section explicitly activating any other provider(s),
+you most probably need to explicitly activate the default provider,
+otherwise it becomes unavailable in openssl. It may make the system remotely unavailable.
+
 =head2 EVP Configuration
 
 The name B<alg_section> in the initialization section names the section
