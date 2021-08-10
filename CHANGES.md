@@ -30,6 +30,16 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * On build targets where the multilib postfix is set in the build
+   configuration the libdir directory was changing based on whether
+   the lib directory with the multilib postfix exists on the system
+   or not. This unpredictable behavior was removed and eventual
+   multilib postfix is now always added to the default libdir. Use
+   `--libdir=lib` to override the libdir if adding the postfix is
+   undesirable.
+
+   *Jan Lána*
+
  * The ERR_GET_FUNC() function was removed.  With the loss of meaningful
    function codes, this function can only cause problems for calling
    applications.
