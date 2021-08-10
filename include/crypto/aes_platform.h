@@ -92,7 +92,7 @@ void AES_xts_decrypt(const unsigned char *inp, unsigned char *out, size_t len,
 #    define HWAES_decrypt aes_v8_decrypt
 #    define HWAES_cbc_encrypt aes_v8_cbc_encrypt
 #    define HWAES_ecb_encrypt aes_v8_ecb_encrypt
-#    if __ARM_MAX_ARCH__>=8
+#    if __ARM_MAX_ARCH__>=8 && defined(__aarch64__)
 #     define HWAES_xts_encrypt aes_v8_xts_encrypt
 #     define HWAES_xts_decrypt aes_v8_xts_decrypt
 #    endif
