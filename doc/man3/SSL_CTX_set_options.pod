@@ -102,7 +102,7 @@ The following B<modifying> options are available:
 
 =item SSL_OP_ALLOW_CLIENT_RENEGOTIATION
 
-Client-initiated renegotiation is disabled by default. Use the
+Client-initiated renegotiation is disabled by default. Use
 this option to enable it.
 
 =item SSL_OP_ALLOW_NO_DHE_KEX
