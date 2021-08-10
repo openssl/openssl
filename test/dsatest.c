@@ -108,9 +108,11 @@ static int dsa_test(void)
     if (!TEST_int_eq(i, j) || !TEST_mem_eq(buf, i, out_g, i))
         goto end;
 
-    DSA_generate_key(dsa);
-    DSA_sign(0, str1, 20, sig, &siglen, dsa);
-    if (TEST_true(DSA_verify(0, str1, 20, sig, siglen, dsa)))
+    if (!TEST_true(DSA_generate_key(dsa)))
+        goto end;
+    if (!TEST_true(DSA_sign(0, str1, 20, sig, &siglen, dsa)))
+        goto end;
+    if (TEST_int_gt(DSA_verify(0, str1, 20, sig, siglen, dsa), 0))
         ret = 1;
 
  end:
