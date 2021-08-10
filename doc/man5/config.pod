@@ -280,7 +280,7 @@ See L<OSSL_PROVIDER-default(7)> for more details.
 
 If you add a section explicitly activating any other provider(s),
 you most probably need to explicitly activate the default provider,
-otherwise become unavailable in openssl. It may make the system remotely unavailable.
+otherwise it becomes unavailable in openssl. It may make the system remotely unavailable.
 
 =head2 EVP Configuration
 

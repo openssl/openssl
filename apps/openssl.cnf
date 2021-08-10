@@ -65,7 +65,7 @@ default = default_sect
 #
 # If you add a section explicitly activating any other provider(s),
 # you most probably need to explicitly activate the default provider,
-# otherwise become unavailable in openssl.
+# otherwise it becomes unavailable in openssl.
 # As a consequence the system may for example become unreachable via SSH.
 [default_sect]
 # activate = 1
