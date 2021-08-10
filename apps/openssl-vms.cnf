@@ -63,10 +63,11 @@ default = default_sect
 # If no providers are activated explicitly, the default one is activated implicitly.
 # See man 7 OSSL_PROVIDER-default for more details.
 #
-# If you add a section explicitly activating any other provider(s),
-# you most probably need to explicitly activate the default provider,
-# otherwise it becomes unavailable in openssl.
-# As a consequence the system may for example become unreachable via SSH.
+# If you add a section explicitly activating any other provider(s), you most
+# probably need to explicitly activate the default provider, otherwise it
+# becomes unavailable in openssl.  As a consequence applications depending on
+# OpenSSL may not work correctly which could lead to significant system
+# problems including inability to remotely access the system.
 [default_sect]
 # activate = 1
 
