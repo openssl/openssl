@@ -60,11 +60,13 @@ default = default_sect
 # included fipsmodule.cnf.
 # fips = fips_sect
 
-# XXX If no providers are activated, the default one is activated implicitly.
-# If you add a section explicitly activating any other providers,
-# you MAY need to explicitly activate the default provider, otherwise
-# some algorithms will become unavailable and system MAY become
-# unreachavble via SSH
+# If no providers are activated explicitly, the default one is activated implicitly.
+# See man 7 OSSL_PROVIDER-default for more details.
+#
+# If you add a section explicitly activating any other provider(s),
+# you most probably need to explicitly activate the default provider,
+# otherwise become unavailable in openssl.
+# As a consequence the system may for example become unreachable via SSH.
 [default_sect]
 # activate = 1
 
