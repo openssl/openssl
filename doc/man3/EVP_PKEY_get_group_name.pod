@@ -15,8 +15,8 @@ EVP_PKEY_get_group_name - get group name of a key
 
 EVP_PKEY_get_group_name() fills in the group name of the I<pkey> into
 I<gname>, up to at most I<gname_sz> bytes including the ending NUL byte
-and assigns I<*gname_len> the actual size of the name, if I<pkey>'s key type
-supports it.
+and assigns I<*gname_len> the actual length of the name not including
+the NUL byte, if I<pkey>'s key type supports it.
 I<gname> as well as I<gname_len> may individually be NULL, and won't be
 filled in or assigned in that case.
 
