@@ -91,7 +91,8 @@ must exist until after OSSL_PARAM_BLD_to_param() has been called.
 
 OSSL_PARAM_BLD_push_utf8_string() is a function that will create an OSSL_PARAM
 object that references the UTF8 string specified by I<buf>.
-If the length of the string, I<bsize>, is zero then it will be calculated.
+The length of the string I<bsize> should not include the terminating NUL byte.
+If it is zero then it will be calculated.
 The string that I<buf> points to is stored by reference and must remain in
 scope until after OSSL_PARAM_BLD_to_param() has been called.
 
@@ -102,7 +103,8 @@ scope until after OSSL_PARAM_BLD_to_param() has been called.
 
 OSSL_PARAM_BLD_push_utf8_ptr() is a function that will create an OSSL_PARAM
 object that references the UTF8 string specified by I<buf>.
-If the length of the string, I<bsize>, is zero then it will be calculated.
+The length of the string I<bsize> should not include the terminating NUL byte.
+If it is zero then it will be calculated.
 The string I<buf> points to is stored by reference and must remain in
 scope until the OSSL_PARAM array is freed.
 
