@@ -49,6 +49,7 @@ Notes for UNIX-like platforms
  OpenSSL's configuration scripts recognise all these options and pass
  them to the Makefile that they build. (In fact, all arguments starting
  with `-Wl,` are recognised as linker options.)
+ Please note that 'l' in '-Wl' is lowercase L and not 1.
 
  Please do not use verbatim directories in your runtime shared library
  search path!  Some OpenSSL config targets add an extra directory level
