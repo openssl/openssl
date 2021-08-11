@@ -62,16 +62,11 @@ The following B<bug workaround> options are available:
 
 =over 4
 
-=item SSL_OP_SAFARI_ECDHE_ECDSA_BUG
+=item SSL_OP_CRYPTOPRO_TLSEXT_BUG
 
-Don't prefer ECDHE-ECDSA ciphers when the client appears to be Safari on OS X.
-OS X 10.8..10.8.3 has broken support for ECDHE-ECDSA ciphers.
-
-=item SSL_OP_DISABLE_TLSEXT_CA_NAMES
-
-Disable TLS Extension CA Names. You may want to disable it for security reasons
-or for compatibility with some Windows TLS implementations crashing when this
-extension is larger than 1024 bytes.
+Add server-hello extension from the early version of cryptopro draft
+when GOST ciphersuite is negotiated. Required for interoperability with CryptoPro
+CSP 3.x.
 
 =item SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS
 
@@ -79,6 +74,11 @@ Disables a countermeasure against a SSL 3.0/TLS 1.0 protocol
 vulnerability affecting CBC ciphers, which cannot be handled by some
 broken SSL implementations.  This option has no effect for connections
 using other ciphers.
+
+=item SSL_OP_SAFARI_ECDHE_ECDSA_BUG
+
+Don't prefer ECDHE-ECDSA ciphers when the client appears to be Safari on OS X.
+OS X 10.8..10.8.3 has broken support for ECDHE-ECDSA ciphers.
 
 =item SSL_OP_TLSEXT_PADDING
 
@@ -100,17 +100,20 @@ The following B<modifying> options are available:
 
 =over 4
 
-=item SSL_OP_TLS_ROLLBACK_BUG
+=item SSL_OP_ALLOW_CLIENT_RENEGOTIATION
 
-Disable version rollback attack detection.
+Client-initiated renegotiation is disabled by default. Use
+this option to enable it.
 
-During the client key exchange, the client must send the same information
-about acceptable SSL/TLS protocol levels as during the first hello. Some
-clients violate this rule by adapting to the server's answer. (Example:
-the client sends a SSLv2 hello and accepts up to SSLv3.1=TLSv1, the server
-only understands up to SSLv3. In this case the client must still use the
-same SSLv3.1=TLSv1 announcement. Some clients step down to SSLv3 with respect
-to the server's answer and violate the version rollback protection.)
+=item SSL_OP_ALLOW_NO_DHE_KEX
+
+In TLSv1.3 allow a non-(ec)dhe based key exchange mode on resumption. This means
+that there will be no forward secrecy for the resumed session.
+
+=item SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION
+
+Allow legacy insecure renegotiation between OpenSSL and unpatched clients or
+servers. See the B<SECURE RENEGOTIATION> section for more details.
 
 =item SSL_OP_CIPHER_SERVER_PREFERENCE
 
@@ -118,6 +121,134 @@ When choosing a cipher, use the server's preferences instead of the client
 preferences. When not set, the SSL server will always follow the clients
 preferences. When set, the SSL/TLS server will choose following its
 own preferences.
+
+=item SSL_OP_CISCO_ANYCONNECT
+
+Use Cisco's version identifier of DTLS_BAD_VER when establishing a DTLSv1
+connection. Only available when using the deprecated DTLSv1_client_method() API.
+
+=item SSL_OP_CLEANSE_PLAINTEXT
+
+By default TLS connections keep a copy of received plaintext
+application data in a static buffer until it is overwritten by the
+next portion of data. When enabling SSL_OP_CLEANSE_PLAINTEXT
+deciphered application data is cleansed by calling OPENSSL_cleanse(3)
+after passing data to the application. Data is also cleansed when
+releasing the connection (e.g. L<SSL_free(3)>).
+
+Since OpenSSL only cleanses internal buffers, the application is still
+responsible for cleansing all other buffers. Most notably, this
+applies to buffers passed to functions like L<SSL_read(3)>,
+L<SSL_peek(3)> but also like L<SSL_write(3)>.
+
+=item SSL_OP_COOKIE_EXCHANGE
+
+Turn on Cookie Exchange as described in RFC4347 Section 4.2.1. Only affects
+DTLS connections.
+
+=item SSL_OP_DISABLE_TLSEXT_CA_NAMES
+
+Disable TLS Extension CA Names. You may want to disable it for security reasons
+or for compatibility with some Windows TLS implementations crashing when this
+extension is larger than 1024 bytes.
+
+=item SSL_OP_ENABLE_KTLS
+
+Enable the use of kernel TLS. In order to benefit from kernel TLS OpenSSL must
+have been compiled with support for it, and it must be supported by the
+negotiated ciphersuites and extensions. The specific ciphersuites and extensions
+that are supported may vary by platform and kernel version.
+
+The kernel TLS data-path implements the record layer, and the encryption
+algorithm. The kernel will utilize the best hardware
+available for encryption. Using the kernel data-path should reduce the memory
+footprint of OpenSSL because no buffering is required. Also, the throughput
+should improve because data copy is avoided when user data is encrypted into
+kernel memory instead of the usual encrypt then copy to kernel.
+
+Kernel TLS might not support all the features of OpenSSL. For instance,
+renegotiation, and setting the maximum fragment size is not possible as of
+Linux 4.20.
+
+Note that with kernel TLS enabled some cryptographic operations are performed
+by the kernel directly and not via any available OpenSSL Providers. This might
+be undesirable if, for example, the application requires all cryptographic
+operations to be performed by the FIPS provider.
+
+=item SSL_OP_ENABLE_MIDDLEBOX_COMPAT
+
+If set then dummy Change Cipher Spec (CCS) messages are sent in TLSv1.3. This
+has the effect of making TLSv1.3 look more like TLSv1.2 so that middleboxes that
+do not understand TLSv1.3 will not drop the connection. Regardless of whether
+this option is set or not CCS messages received from the peer will always be
+ignored in TLSv1.3. This option is set by default. To switch it off use
+SSL_clear_options(). A future version of OpenSSL may not set this by default.
+
+=item SSL_OP_IGNORE_UNEXPECTED_EOF
+
+Some TLS implementations do not send the mandatory close_notify alert on
+shutdown. If the application tries to wait for the close_notify alert but the
+peer closes the connection without sending it, an error is generated. When this
+option is enabled the peer does not need to send the close_notify alert and a
+closed connection will be treated as if the close_notify alert was received.
+
+You should only enable this option if the protocol running over TLS
+can detect a truncation attack itself, and that the application is checking for
+that truncation attack.
+
+For more information on shutting down a connection, see L<SSL_shutdown(3)>.
+
+=item SSL_OP_LEGACY_SERVER_CONNECT
+
+Allow legacy insecure renegotiation between OpenSSL and unpatched servers
+B<only>. See the B<SECURE RENEGOTIATION> section for more details.
+
+=item SSL_OP_NO_ANTI_REPLAY
+
+By default, when a server is configured for early data (i.e., max_early_data > 0),
+OpenSSL will switch on replay protection. See L<SSL_read_early_data(3)> for a
+description of the replay protection feature. Anti-replay measures are required
+to comply with the TLSv1.3 specification. Some applications may be able to
+mitigate the replay risks in other ways and in such cases the built in OpenSSL
+functionality is not required. Those applications can turn this feature off by
+setting this option. This is a server-side opton only. It is ignored by
+clients.
+
+=item SSL_OP_NO_COMPRESSION
+
+Do not use compression even if it is supported. This option is set by default.
+To switch it off use SSL_clear_options().
+
+=item SSL_OP_NO_ENCRYPT_THEN_MAC
+
+Normally clients and servers will transparently attempt to negotiate the
+RFC7366 Encrypt-then-MAC option on TLS and DTLS connection.
+
+If this option is set, Encrypt-then-MAC is disabled. Clients will not
+propose, and servers will not accept the extension.
+
+=item SSL_OP_NO_EXTENDED_MASTER_SECRET
+
+Normally clients and servers will transparently attempt to negotiate the
+RFC7627 Extended Master Secret option on TLS and DTLS connection.
+
+If this option is set, Extended Master Secret is disabled. Clients will
+not propose, and servers will not accept the extension.
+
+=item SSL_OP_NO_QUERY_MTU
+
+Do not query the MTU. Only affects DTLS connections.
+
+=item SSL_OP_NO_RENEGOTIATION
+
+Disable all renegotiation in TLSv1.2 and earlier. Do not send HelloRequest
+messages, and ignore renegotiation requests via ClientHello.
+
+=item SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
+
+When performing renegotiation as a server, always start a new session
+(i.e., session resumption requests are only accepted in the initial
+handshake). This option is not needed for clients.
 
 =item SSL_OP_NO_SSLv3, SSL_OP_NO_TLSv1, SSL_OP_NO_TLSv1_1,
 SSL_OP_NO_TLSv1_2, SSL_OP_NO_TLSv1_3, SSL_OP_NO_DTLSv1, SSL_OP_NO_DTLSv1_2
@@ -128,25 +259,6 @@ respectively.
 As of OpenSSL 1.1.0, these options are deprecated, use
 L<SSL_CTX_set_min_proto_version(3)> and
 L<SSL_CTX_set_max_proto_version(3)> instead.
-
-=item SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
-
-When performing renegotiation as a server, always start a new session
-(i.e., session resumption requests are only accepted in the initial
-handshake). This option is not needed for clients.
-
-=item SSL_OP_NO_COMPRESSION
-
-Do not use compression even if it is supported.
-
-=item SSL_OP_NO_QUERY_MTU
-
-Do not query the MTU. Only affects DTLS connections.
-
-=item SSL_OP_COOKIE_EXCHANGE
-
-Turn on Cookie Exchange as described in RFC4347 Section 4.2.1. Only affects
-DTLS connections.
 
 =item SSL_OP_NO_TICKET
 
@@ -184,56 +296,6 @@ In TLSv1.3 it is possible to suppress all tickets (stateful and stateless) from
 being sent by calling L<SSL_CTX_set_num_tickets(3)> or
 L<SSL_set_num_tickets(3)>.
 
-=item SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION
-
-Allow legacy insecure renegotiation between OpenSSL and unpatched clients or
-servers. See the B<SECURE RENEGOTIATION> section for more details.
-
-=item SSL_OP_LEGACY_SERVER_CONNECT
-
-Allow legacy insecure renegotiation between OpenSSL and unpatched servers
-B<only>. See the B<SECURE RENEGOTIATION> section for more details.
-
-=item SSL_OP_NO_ENCRYPT_THEN_MAC
-
-Normally clients and servers will transparently attempt to negotiate the
-RFC7366 Encrypt-then-MAC option on TLS and DTLS connection.
-
-If this option is set, Encrypt-then-MAC is disabled. Clients will not
-propose, and servers will not accept the extension.
-
-=item SSL_OP_NO_EXTENDED_MASTER_SECRET
-
-Normally clients and servers will transparently attempt to negotiate the
-RFC7627 Extended Master Secret option on TLS and DTLS connection.
-
-If this option is set, Extended Master Secret is disabled. Clients will
-not propose, and servers will not accept the extension.
-
-=item SSL_OP_NO_RENEGOTIATION
-
-Disable all renegotiation in TLSv1.2 and earlier. Do not send HelloRequest
-messages, and ignore renegotiation requests via ClientHello.
-
-=item SSL_OP_IGNORE_UNEXPECTED_EOF
-
-Some TLS implementations do not send the mandatory close_notify alert on
-shutdown. If the application tries to wait for the close_notify alert but the
-peer closes the connection without sending it, an error is generated. When this
-option is enabled the peer does not need to send the close_notify alert and a
-closed connection will be treated as if the close_notify alert was received.
-
-You should only enable this option if the protocol running over TLS
-can detect a truncation attack itself, and that the application is checking for
-that truncation attack.
-
-For more information on shutting down a connection, see L<SSL_shutdown(3)>.
-
-=item SSL_OP_ALLOW_NO_DHE_KEX
-
-In TLSv1.3 allow a non-(ec)dhe based key exchange mode on resumption. This means
-that there will be no forward secrecy for the resumed session.
-
 =item SSL_OP_PRIORITIZE_CHACHA
 
 When SSL_OP_CIPHER_SERVER_PREFERENCE is set, temporarily reprioritize
@@ -243,62 +305,17 @@ those clients (e.g. mobile) use ChaCha20-Poly1305 if that cipher is anywhere
 in the server cipher list; but still allows other clients to use AES and other
 ciphers. Requires B<SSL_OP_CIPHER_SERVER_PREFERENCE>.
 
-=item SSL_OP_ENABLE_MIDDLEBOX_COMPAT
+=item SSL_OP_TLS_ROLLBACK_BUG
 
-If set then dummy Change Cipher Spec (CCS) messages are sent in TLSv1.3. This
-has the effect of making TLSv1.3 look more like TLSv1.2 so that middleboxes that
-do not understand TLSv1.3 will not drop the connection. Regardless of whether
-this option is set or not CCS messages received from the peer will always be
-ignored in TLSv1.3. This option is set by default. To switch it off use
-SSL_clear_options(). A future version of OpenSSL may not set this by default.
+Disable version rollback attack detection.
 
-=item SSL_OP_NO_ANTI_REPLAY
-
-By default, when a server is configured for early data (i.e., max_early_data > 0),
-OpenSSL will switch on replay protection. See L<SSL_read_early_data(3)> for a
-description of the replay protection feature. Anti-replay measures are required
-to comply with the TLSv1.3 specification. Some applications may be able to
-mitigate the replay risks in other ways and in such cases the built in OpenSSL
-functionality is not required. Those applications can turn this feature off by
-setting this option. This is a server-side opton only. It is ignored by
-clients.
-
-=item SSL_OP_CLEANSE_PLAINTEXT
-
-By default TLS connections keep a copy of received plaintext
-application data in a static buffer until it is overwritten by the
-next portion of data. When enabling SSL_OP_CLEANSE_PLAINTEXT
-deciphered application data is cleansed by calling OPENSSL_cleanse(3)
-after passing data to the application. Data is also cleansed when
-releasing the connection (e.g. L<SSL_free(3)>).
-
-Since OpenSSL only cleanses internal buffers, the application is still
-responsible for cleansing all other buffers. Most notably, this
-applies to buffers passed to functions like L<SSL_read(3)>,
-L<SSL_peek(3)> but also like L<SSL_write(3)>.
-
-=item SSL_OP_ENABLE_KTLS
-
-Enable the use of kernel TLS. In order to benefit from kernel TLS OpenSSL must
-have been compiled with support for it, and it must be supported by the
-negotiated ciphersuites and extensions. The specific ciphersuites and extensions
-that are supported may vary by platform and kernel version.
-
-The kernel TLS data-path implements the record layer, and the encryption
-algorithm. The kernel will utilize the best hardware
-available for encryption. Using the kernel data-path should reduce the memory
-footprint of OpenSSL because no buffering is required. Also, the throughput
-should improve because data copy is avoided when user data is encrypted into
-kernel memory instead of the usual encrypt then copy to kernel.
-
-Kernel TLS might not support all the features of OpenSSL. For instance,
-renegotiation, and setting the maximum fragment size is not possible as of
-Linux 4.20.
-
-Note that with kernel TLS enabled some cryptographic operations are performed
-by the kernel directly and not via any available OpenSSL Providers. This might
-be undesirable if, for example, the application requires all cryptographic
-operations to be performed by the FIPS provider.
+During the client key exchange, the client must send the same information
+about acceptable SSL/TLS protocol levels as during the first hello. Some
+clients violate this rule by adapting to the server's answer. (Example:
+the client sends a SSLv2 hello and accepts up to SSLv3.1=TLSv1, the server
+only understands up to SSLv3. In this case the client must still use the
+same SSLv3.1=TLSv1 announcement. Some clients step down to SSLv3 with respect
+to the server's answer and violate the version rollback protection.)
 
 =back
 

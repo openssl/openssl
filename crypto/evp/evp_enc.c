@@ -986,8 +986,10 @@ int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
 
         /* Check the cipher actually understands this parameter */
         if (OSSL_PARAM_locate_const(EVP_CIPHER_settable_ctx_params(c->cipher),
-                                    OSSL_CIPHER_PARAM_KEYLEN) == NULL)
+                                    OSSL_CIPHER_PARAM_KEYLEN) == NULL) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_KEY_LENGTH);
             return 0;
+        }
 
         params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_KEYLEN, &len);
         ok = evp_do_ciph_ctx_setparams(c->cipher, c->algctx, params);
