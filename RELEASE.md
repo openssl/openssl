@@ -1,4 +1,4 @@
-OQS-OpenSSL_1\_1\_1-stable snapshot 2021-08-rc1
+OQS-OpenSSL_1\_1\_1-stable snapshot 2021-08
 ===============================================
 
 About
@@ -13,7 +13,7 @@ The **Open Quantum Safe (OQS) project** has the goal of developing and prototypi
 Release notes
 =============
 
-This is release candidate 1 for the the 2021-08 snapshot release of OQS-OpenSSL, which was released on August 8, 2021. This release is intended to be used with liboqs version 0.7.0.
+This is the 2021-08 snapshot release of OQS-OpenSSL, which was released on August 11, 2021. This release is intended to be used with liboqs version 0.7.0.
 
 What's New
 ----------
