@@ -1010,9 +1010,12 @@ static int s390x_aes_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                 const unsigned char *in, size_t len)
 {
     S390X_AES_OFB_CTX *cctx = EVP_C_DATA(S390X_AES_OFB_CTX, ctx);
+    const int ivlen = EVP_CIPHER_CTX_get_iv_length(ctx);
+    unsigned char *iv = EVP_CIPHER_CTX_iv_noconst(ctx);
     int n = cctx->res;
     int rem;
 
+    memcpy(cctx->kmo.param.cv, iv, ivlen);
     while (n && len) {
         *out = *in ^ cctx->kmo.param.cv[n];
         n = (n + 1) & 0xf;
@@ -1041,6 +1044,7 @@ static int s390x_aes_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         }
     }
 
+    memcpy(iv, cctx->kmo.param.cv, ivlen);
     cctx->res = n;
     return 1;
 }
@@ -1071,10 +1075,13 @@ static int s390x_aes_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     S390X_AES_CFB_CTX *cctx = EVP_C_DATA(S390X_AES_CFB_CTX, ctx);
     const int keylen = EVP_CIPHER_CTX_get_key_length(ctx);
     const int enc = EVP_CIPHER_CTX_is_encrypting(ctx);
+    const int ivlen = EVP_CIPHER_CTX_get_iv_length(ctx);
+    unsigned char *iv = EVP_CIPHER_CTX_iv_noconst(ctx);
     int n = cctx->res;
     int rem;
     unsigned char tmp;
 
+    memcpy(cctx->kmf.param.cv, iv, ivlen);
     while (n && len) {
         tmp = *in;
         *out = cctx->kmf.param.cv[n] ^ tmp;
@@ -1107,6 +1114,7 @@ static int s390x_aes_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         }
     }
 
+    memcpy(iv, cctx->kmf.param.cv, ivlen);
     cctx->res = n;
     return 1;
 }
@@ -1134,8 +1142,12 @@ static int s390x_aes_cfb8_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                  const unsigned char *in, size_t len)
 {
     S390X_AES_CFB_CTX *cctx = EVP_C_DATA(S390X_AES_CFB_CTX, ctx);
+    const int ivlen = EVP_CIPHER_CTX_get_iv_length(ctx);
+    unsigned char *iv = EVP_CIPHER_CTX_iv_noconst(ctx);
 
+    memcpy(cctx->kmf.param.cv, iv, ivlen);
     s390x_kmf(in, len, out, cctx->fc, &cctx->kmf.param);
+    memcpy(iv, cctx->kmf.param.cv, ivlen);
     return 1;
 }
 
