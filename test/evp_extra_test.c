@@ -3312,6 +3312,113 @@ static int test_evp_reset(int idx)
 }
 
 typedef struct {
+    const char *cipher;
+    int enc;
+} EVP_UPDATED_IV_TEST_st;
+
+static const EVP_UPDATED_IV_TEST_st evp_updated_iv_tests[] = {
+    {
+        "aes-128-cfb", 1
+    },
+    {
+        "aes-128-cfb", 0
+    },
+    {
+        "aes-128-cfb1", 1
+    },
+    {
+        "aes-128-cfb1", 0
+    },
+    {
+        "aes-128-cfb8", 1
+    },
+    {
+        "aes-128-cfb8", 0
+    },
+    {
+        "aes-128-ofb", 1
+    },
+    {
+        "aes-128-ofb", 0
+    },
+    {
+        "aes-128-ctr", 1
+    },
+    {
+        "aes-128-ctr", 0
+    },
+    {
+        "aes-128-cbc", 1
+    },
+    {
+        "aes-128-cbc", 0
+    }
+};
+
+/*
+ * Test that the IV in the context is updated during a crypto operation for CFB
+ * and OFB.
+ */
+static int test_evp_updated_iv(int idx)
+{
+    const EVP_UPDATED_IV_TEST_st *t = &evp_updated_iv_tests[idx];
+    int outlen1, outlen2;
+    int testresult = 0;
+    unsigned char outbuf[1024];
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *type = NULL;
+    unsigned char updated_iv[EVP_MAX_IV_LENGTH];
+    int iv_len;
+    char *errmsg = NULL;
+
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())) {
+        errmsg = "CTX_ALLOC";
+        goto err;
+    }
+    if ((type = EVP_CIPHER_fetch(testctx, t->cipher, testpropq)) == NULL) {
+        TEST_info("cipher %s not supported, skipping", t->cipher);
+        goto ok;
+    }
+
+    if (!TEST_true(EVP_CipherInit_ex(ctx, type, NULL, kCFBDefaultKey, iCFBIV, t->enc))) {
+        errmsg = "CIPHER_INIT";
+        goto err;
+    }
+    if (!TEST_true(EVP_CIPHER_CTX_set_padding(ctx, 0))) {
+        errmsg = "PADDING";
+        goto err;
+    }
+    if (!TEST_true(EVP_CipherUpdate(ctx, outbuf, &outlen1, cfbPlaintext, sizeof(cfbPlaintext)))) {
+        errmsg = "CIPHER_UPDATE";
+        goto err;
+    }
+    if (!TEST_true(EVP_CIPHER_CTX_get_updated_iv(ctx, updated_iv, sizeof(updated_iv)))) {
+        errmsg = "CIPHER_CTX_GET_UPDATED_IV";
+        goto err;
+    }
+    if (!TEST_true(iv_len = EVP_CIPHER_CTX_get_iv_length(ctx))) {
+        errmsg = "CIPHER_CTX_GET_IV_LEN";
+        goto err;
+    }
+    if (!TEST_mem_ne(iCFBIV, sizeof(iCFBIV), updated_iv, iv_len)) {
+        errmsg = "IV_NOT_UPDATED";
+        goto err;
+    }
+    if (!TEST_true(EVP_CipherFinal_ex(ctx, outbuf + outlen1, &outlen2))) {
+        errmsg = "CIPHER_FINAL";
+        goto err;
+    }
+ ok:
+    testresult = 1;
+ err:
+    if (errmsg != NULL)
+        TEST_info("test_evp_updated_iv %d: %s", idx, errmsg);
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(type);
+    return testresult;
+}
+
+typedef struct {
     const unsigned char *iv1;
     const unsigned char *iv2;
     const unsigned char *expected1;
@@ -3829,6 +3936,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_evp_init_seq, OSSL_NELEM(evp_init_tests));
     ADD_ALL_TESTS(test_evp_reset, OSSL_NELEM(evp_reset_tests));
     ADD_ALL_TESTS(test_gcm_reinit, OSSL_NELEM(gcm_reinit_tests));
+    ADD_ALL_TESTS(test_evp_updated_iv, OSSL_NELEM(evp_updated_iv_tests));
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_ALL_TESTS(test_custom_pmeth, 12);
