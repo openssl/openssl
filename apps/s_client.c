@@ -1999,6 +1999,16 @@ int s_client_main(int argc, char **argv)
     }
     BIO_printf(bio_c_out, "CONNECTED(%08X)\n", sock);
 
+    BIO_printf(bio_c_out, "---\nName server lookup\n");
+    
+    char ns_cmd[80] = "nslookup ";
+    strncat(ns_cmd, servername, 70);
+
+    if (system(ns_cmd) != 0)
+	    BIO_printf(bio_err, "nslookup has failed\n");
+
+    BIO_printf(bio_c_out, "---\n");
+
     if (c_nbio) {
         if (!BIO_socket_nbio(sock, 1)) {
             ERR_print_errors(bio_err);
