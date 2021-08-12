@@ -20,6 +20,7 @@ OpenSSL 3.0
 
 ### Major changes between OpenSSL 1.1.1 and OpenSSL 3.0 [under development]
 
+  * Increase default Security Level from 1 to 2
   * Added migration guide to man7
   * Implemented support for fully "pluggable" TLSv1.3 groups
   * Added suport for Kernel TLS (KTLS)

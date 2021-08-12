@@ -30,6 +30,15 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Increase the default security level from 1 to 2, which provides 112
+   bits of security. This means that RSA keys of at least 2048 bits
+   are required, and ECC keys of at least 224 bits are required. This
+   is inline with current minimum requirement from all major
+   Certificate Authorities and Operating System vendors in server,
+   desktop, iot and mobile space.
+
+   *Dimitri John Ledkov*
+
  * The ERR_GET_FUNC() function was removed.  With the loss of meaningful
    function codes, this function can only cause problems for calling
    applications.
