@@ -47,7 +47,7 @@ SOURCE[$AES_GOAL]=\
         cipher_aes_wrp.c \
         cipher_aes_cbc_hmac_sha.c \
         cipher_aes_cbc_hmac_sha256_hw.c cipher_aes_cbc_hmac_sha1_hw.c \
-        cipher_aes_cts.c
+        cipher_cts.c
 
 # Extra code to satisfy the FIPS and non-FIPS separation.
 # When the AES-xxx-XTS moves to legacy, cipher_aes_xts_fips.c can be removed.
