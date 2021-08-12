@@ -195,8 +195,12 @@ static size_t cts128_cs3_encrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
     aligned_16bytes tmp_in;
     size_t residue;
 
-    if (len <= CTS_BLOCK_SIZE)  /* CS3 requires 2 blocks */
+    if (len < CTS_BLOCK_SIZE)  /* CS3 requires at least one block */
         return 0;
+
+    /* If we only have one block then just process the aligned block */
+    if (len == CTS_BLOCK_SIZE)
+        return ctx->hw->cipher(ctx, out, in, len) ? len : 0;
 
     residue = len % CTS_BLOCK_SIZE;
     if (residue == 0)
@@ -231,8 +235,12 @@ static size_t cts128_cs3_decrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
     aligned_16bytes mid_iv, ct_mid, pt_last;
     size_t residue;
 
-    if (len <= CTS_BLOCK_SIZE) /* CS3 requires 2 blocks */
+    if (len < CTS_BLOCK_SIZE) /* CS3 requires at least one block */
         return 0;
+
+    /* If we only have one block then just process the aligned block */
+    if (len == CTS_BLOCK_SIZE)
+        return ctx->hw->cipher(ctx, out, in, len) ? len : 0;
 
     /* Process blocks at the start - but leave the last 2 blocks */
     residue = len % CTS_BLOCK_SIZE;
