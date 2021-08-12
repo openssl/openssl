@@ -86,6 +86,7 @@ my @defltfiles = qw(
                      evpciph_aria.txt 
                      evpciph_bf.txt
                      evpciph_camellia.txt
+                     evpciph_camellia_cts.txt
                      evpciph_cast5.txt
                      evpciph_chacha.txt
                      evpciph_des.txt
