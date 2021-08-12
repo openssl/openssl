@@ -1,0 +1,58 @@
+Performing C SOURCE FILE Test CMAKE_HAVE_LIBC_PTHREAD failed with the following output:
+Change Dir: /mnt/c/Users/Xboxe/Desktop/EPFL/papers/bolt/klee/examples/taint_rsa/openssl/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_e1254/fast && /usr/bin/make -f CMakeFiles/cmTC_e1254.dir/build.make CMakeFiles/cmTC_e1254.dir/build
+make[1]: Entering directory '/mnt/c/Users/Xboxe/Desktop/EPFL/papers/bolt/klee/examples/taint_rsa/openssl/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_e1254.dir/src.c.o
+/usr/bin/clang-8   -DCMAKE_HAVE_LIBC_PTHREAD   -o CMakeFiles/cmTC_e1254.dir/src.c.o   -c /mnt/c/Users/Xboxe/Desktop/EPFL/papers/bolt/klee/examples/taint_rsa/openssl/build/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_e1254
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_e1254.dir/link.txt --verbose=1
+/usr/bin/clang-8  -DCMAKE_HAVE_LIBC_PTHREAD    -rdynamic CMakeFiles/cmTC_e1254.dir/src.c.o  -o cmTC_e1254 
+/usr/bin/ld: CMakeFiles/cmTC_e1254.dir/src.c.o: in function `main':
+src.c:(.text+0x35): undefined reference to `pthread_create'
+/usr/bin/ld: src.c:(.text+0x41): undefined reference to `pthread_detach'
+/usr/bin/ld: src.c:(.text+0x53): undefined reference to `pthread_join'
+clang: error: linker command failed with exit code 1 (use -v to see invocation)
+make[1]: *** [CMakeFiles/cmTC_e1254.dir/build.make:87: cmTC_e1254] Error 1
+make[1]: Leaving directory '/mnt/c/Users/Xboxe/Desktop/EPFL/papers/bolt/klee/examples/taint_rsa/openssl/build/CMakeFiles/CMakeTmp'
+make: *** [Makefile:121: cmTC_e1254/fast] Error 2
+
+
+Source file was:
+#include <pthread.h>
+
+void* test_func(void* data)
+{
+  return data;
+}
+
+int main(void)
+{
+  pthread_t thread;
+  pthread_create(&thread, NULL, test_func, NULL);
+  pthread_detach(thread);
+  pthread_join(thread, NULL);
+  pthread_atfork(NULL, NULL, NULL);
+  pthread_exit(NULL);
+
+  return 0;
+}
+
+Determining if the function pthread_create exists in the pthreads failed with the following output:
+Change Dir: /mnt/c/Users/Xboxe/Desktop/EPFL/papers/bolt/klee/examples/taint_rsa/openssl/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_3c5e4/fast && /usr/bin/make -f CMakeFiles/cmTC_3c5e4.dir/build.make CMakeFiles/cmTC_3c5e4.dir/build
+make[1]: Entering directory '/mnt/c/Users/Xboxe/Desktop/EPFL/papers/bolt/klee/examples/taint_rsa/openssl/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_3c5e4.dir/CheckFunctionExists.c.o
+/usr/bin/clang-8   -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_3c5e4.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.16/Modules/CheckFunctionExists.c
+Linking C executable cmTC_3c5e4
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_3c5e4.dir/link.txt --verbose=1
+/usr/bin/clang-8  -DCHECK_FUNCTION_EXISTS=pthread_create    -rdynamic CMakeFiles/cmTC_3c5e4.dir/CheckFunctionExists.c.o  -o cmTC_3c5e4  -lpthreads 
+/usr/bin/ld: cannot find -lpthreads
+clang: error: linker command failed with exit code 1 (use -v to see invocation)
+make[1]: *** [CMakeFiles/cmTC_3c5e4.dir/build.make:87: cmTC_3c5e4] Error 1
+make[1]: Leaving directory '/mnt/c/Users/Xboxe/Desktop/EPFL/papers/bolt/klee/examples/taint_rsa/openssl/build/CMakeFiles/CMakeTmp'
+make: *** [Makefile:121: cmTC_3c5e4/fast] Error 2
+
+
+

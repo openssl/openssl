@@ -14,6 +14,7 @@
 #include <openssl/proverr.h>
 #include "internal/constant_time.h"
 #include "ciphercommon_local.h"
+#include <stdio.h>
 
 /* Functions defined in ssl/tls_pad.c */
 int ssl3_cbc_remove_padding_and_mac(size_t *reclen,
@@ -109,29 +110,23 @@ int ossl_cipher_unpadblock(unsigned char *buf, size_t *buflen, size_t blocksize)
 {
     size_t pad, i;
     size_t len = *buflen;
+    int gp = 1;
 
-    if (len != blocksize) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
+    gp &= constant_time_eq_s(len, blocksize);
 
     /*
      * The following assumes that the ciphertext has been authenticated.
      * Otherwise it provides a padding oracle.
      */
     pad = buf[blocksize - 1];
-    if (pad == 0 || pad > blocksize) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_BAD_DECRYPT);
-        return 0;
-    }
+    gp &= ~(constant_time_is_zero_s(pad) | constant_time_lt_s(blocksize, pad));
+
     for (i = 0; i < pad; i++) {
-        if (buf[--len] != pad) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_BAD_DECRYPT);
-            return 0;
-        }
+        gp &= constant_time_eq_s(buf[--len], pad);
     }
     *buflen = len;
-    return 1;
+
+    return gp;
 }
 
 /*-
