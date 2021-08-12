@@ -494,6 +494,8 @@ void OSSL_ERR_STATE_save_to_mark(ERR_STATE *es);
 void OSSL_ERR_STATE_restore(const ERR_STATE *es);
 void OSSL_ERR_STATE_free(ERR_STATE *es);
 
+void ERR_clear_last_constant_time(int clear);
+
 #ifdef  __cplusplus
 }
 #endif

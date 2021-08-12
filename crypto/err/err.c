@@ -877,7 +877,11 @@ void ERR_add_error_vdata(int num, va_list args)
         OPENSSL_free(str);
 }
 
-void err_clear_last_constant_time(int clear)
+/*
+ * Expected usage pattern is to unconditionally set error and then
+ * wipe it if there was no actual error. |clear| is 1 or 0.
+ */
+void ERR_clear_last_constant_time(int clear)
 {
     ERR_STATE *es;
     int top;
