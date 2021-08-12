@@ -738,7 +738,8 @@ that has the flag B<EVP_CIPH_FLAG_CUSTOM_ASN1> set.
 =item "cts_mode" (B<OSSL_CIPHER_PARAM_CTS_MODE>) <UTF8 string>
 
 Gets or sets the cipher text stealing mode. For all modes the output size is the
-same as the input size.
+same as the input size. The input length must be greater than or equal to the
+block size. (The block size for AES and CAMELLIA is 16 bytes).
 
 Valid values for the mode are:
 
@@ -747,25 +748,28 @@ Valid values for the mode are:
 =item "CS1"
 
 The NIST variant of cipher text stealing.
-For message lengths that are multiples of the block size it is equivalent to
-using a "AES-CBC" cipher otherwise the second last cipher text block is a
-partial block.
+For input lengths that are multiples of the block size it is equivalent to
+using a "AES-XXX-CBC" or "CAMELLIA-XXX-CBC" cipher otherwise the second last
+cipher text block is a partial block.
 
 =item "CS2"
 
-For message lengths that are multiples of the block size it is equivalent to
-using a "AES-CBC" cipher, otherwise it is the same as "CS3".
+For input lengths that are multiples of the block size it is equivalent to
+using a "AES-XXX-CBC" or "CAMELLIA-XXX-CBC" cipher, otherwise it is the same as
+"CS3" mode.
 
 =item "CS3"
 
 The Kerberos5 variant of cipher text stealing which always swaps the last
 cipher text block with the previous block (which may be a partial or full block
-depending on the input length).
+depending on the input length). If the input length is exactly one full block
+then this is equivalent to using a "AES-XXX-CBC" or "CAMELLIA-XXX-CBC" cipher.
 
 =back
 
 The default is "CS1".
-This is only supported for "AES-128-CBC-CTS", "AES-192-CBC-CTS" and "AES-256-CBC-CTS".
+This is only supported for "AES-128-CBC-CTS", "AES-192-CBC-CTS", "AES-256-CBC-CTS",
+"CAMELLIA-128-CBC-CTS", "CAMELLIA-192-CBC-CTS" and "CAMELLIA-256-CBC-CTS".
 
 =item "tls1multi_interleave" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE>) <unsigned integer>
 

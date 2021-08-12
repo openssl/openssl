@@ -219,9 +219,10 @@ unwrapping. The algorithms are: "AES-128-WRAP-INV", "AES-192-WRAP-INV",
 
 =item *
 
-AES CTS cipher added to EVP layer.
+CTS ciphers added to EVP layer.
 
-The algorithms are "AES-128-CBC-CTS", "AES-192-CBC-CTS" and "AES-256-CBC-CTS".
+The algorithms are "AES-128-CBC-CTS", "AES-192-CBC-CTS", "AES-256-CBC-CTS",
+"CAMELLIA-128-CBC-CTS", "CAMELLIA-192-CBC-CTS" and "CAMELLIA-256-CBC-CTS".
 CS1, CS2 and CS3 variants are supported.
 
 =back
@@ -1217,6 +1218,19 @@ CRYPTO_set_mem_debug()
 
 Memory-leak checking has been deprecated in favor of more modern development
 tools, such as compiler memory and leak sanitizers or Valgrind.
+
+=item *
+
+CRYPTO_cts128_encrypt_block(), CRYPTO_cts128_encrypt(),
+CRYPTO_cts128_decrypt_block(), CRYPTO_cts128_decrypt(),
+CRYPTO_nistcts128_encrypt_block(), CRYPTO_nistcts128_encrypt(),
+CRYPTO_nistcts128_decrypt_block(), CRYPTO_nistcts128_decrypt()
+
+Use the higher level functions EVP_CipherInit_ex2(), EVP_CipherUpdate() and
+EVP_CipherFinal_ex() instead.
+See the "cts_mode" parameter in
+L<EVP_EncryptInit(3)/Gettable and Settable EVP_CIPHER_CTX parameters>.
+See L<EVP_EncryptInit(3)/EXAMPLES> for a AES-256-CBC-CTS example.
 
 =item *
 
