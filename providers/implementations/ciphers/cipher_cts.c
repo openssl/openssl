@@ -135,7 +135,7 @@ static void do_xor(const unsigned char *in1, const unsigned char *in2,
 static size_t cts128_cs1_decrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
                                  unsigned char *out, size_t len)
 {
-    aligned_16bytes mid_iv, ct_mid, pt_last;
+    aligned_16bytes mid_iv, ct_mid, cn, pt_last;
     size_t residue;
 
     residue = len % CTS_BLOCK_SIZE;
@@ -155,6 +155,8 @@ static size_t cts128_cs1_decrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
     }
     /* Save the iv that will be used by the second last block */
     memcpy(mid_iv.c, ctx->iv, CTS_BLOCK_SIZE);
+    /* Save the C(n) block */
+    memcpy(cn.c, in + residue, CTS_BLOCK_SIZE);
 
     /* Decrypt the last block first using an iv of zero */
     memset(ctx->iv, 0, CTS_BLOCK_SIZE);
@@ -179,6 +181,7 @@ static size_t cts128_cs1_decrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
 
     /* Restore the iv needed by the second last block */
     memcpy(ctx->iv, mid_iv.c, CTS_BLOCK_SIZE);
+
     /*
      * Decrypt the second last plaintext block now that we have rebuilt the
      * ciphertext.
@@ -186,6 +189,8 @@ static size_t cts128_cs1_decrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
     if (!ctx->hw->cipher(ctx, out, ct_mid.c, CTS_BLOCK_SIZE))
         return 0;
 
+    /* The returned iv is the C(n) block */
+    memcpy(ctx->iv, cn.c, CTS_BLOCK_SIZE);
     return len + CTS_BLOCK_SIZE + residue;
 }
 
@@ -232,7 +237,7 @@ static size_t cts128_cs3_encrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
 static size_t cts128_cs3_decrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
                                  unsigned char *out, size_t len)
 {
-    aligned_16bytes mid_iv, ct_mid, pt_last;
+    aligned_16bytes mid_iv, ct_mid, cn, pt_last;
     size_t residue;
 
     if (len < CTS_BLOCK_SIZE) /* CS3 requires at least one block */
@@ -256,8 +261,10 @@ static size_t cts128_cs3_decrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
     }
     /* Save the iv that will be used by the second last block */
     memcpy(mid_iv.c, ctx->iv, CTS_BLOCK_SIZE);
+    /* Save the C(n) block : For CS3 it is C(1)||...||C(n-2)||C(n)||C(n-1)* */
+    memcpy(cn.c, in, CTS_BLOCK_SIZE);
 
-    /* Decrypt the Cn block first using an iv of zero */
+    /* Decrypt the C(n) block first using an iv of zero */
     memset(ctx->iv, 0, CTS_BLOCK_SIZE);
     if (!ctx->hw->cipher(ctx, pt_last.c, in, CTS_BLOCK_SIZE))
         return 0;
@@ -288,6 +295,8 @@ static size_t cts128_cs3_decrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
     if (!ctx->hw->cipher(ctx, out, ct_mid.c, CTS_BLOCK_SIZE))
         return 0;
 
+    /* The returned iv is the C(n) block */
+    memcpy(ctx->iv, cn.c, CTS_BLOCK_SIZE);
     return len + CTS_BLOCK_SIZE + residue;
 }
 
