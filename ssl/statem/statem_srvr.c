@@ -3556,6 +3556,7 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
 
     sk_X509_pop_free(s->session->peer_chain, X509_free);
     s->session->peer_chain = sk;
+    sk = NULL;
 
     /*
      * Freeze the handshake buffer. For <TLS1.3 we do this after the CKE
@@ -3570,7 +3571,6 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
      * Inconsistency alert: cert_chain does *not* include the peer's own
      * certificate, while we do include it in statem_clnt.c
      */
-    sk = NULL;
 
     /* Save the current hash state for when we receive the CertificateVerify */
     if (SSL_IS_TLS13(s)) {
