@@ -61,29 +61,20 @@ static size_t ec_field_size(const EC_GROUP *group)
     return field_size;
 }
 
-int sm2_plaintext_size(const EC_KEY *key, const EVP_MD *digest, size_t msg_len,
-                       size_t *pt_size)
+int sm2_plaintext_size(const unsigned char *ct, size_t ct_size, size_t *pt_size)
 {
-    const size_t field_size = ec_field_size(EC_KEY_get0_group(key));
-    const int md_size = EVP_MD_size(digest);
-    size_t overhead;
+    struct SM2_Ciphertext_st *sm2_ctext = NULL;
 
-    if (md_size < 0) {
-        SM2err(SM2_F_SM2_PLAINTEXT_SIZE, SM2_R_INVALID_DIGEST);
-        return 0;
-    }
-    if (field_size == 0) {
-        SM2err(SM2_F_SM2_PLAINTEXT_SIZE, SM2_R_INVALID_FIELD);
-        return 0;
-    }
+    sm2_ctext = d2i_SM2_Ciphertext(NULL, &ct, ct_size);
 
-    overhead = 10 + 2 * field_size + (size_t)md_size;
-    if (msg_len <= overhead) {
+    if (sm2_ctext == NULL) {
         SM2err(SM2_F_SM2_PLAINTEXT_SIZE, SM2_R_INVALID_ENCODING);
         return 0;
     }
 
-    *pt_size = msg_len - overhead;
+    *pt_size = sm2_ctext->C2->length;
+    SM2_Ciphertext_free(sm2_ctext);
+
     return 1;
 }
 

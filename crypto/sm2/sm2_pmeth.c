@@ -151,7 +151,7 @@ static int pkey_sm2_decrypt(EVP_PKEY_CTX *ctx,
     const EVP_MD *md = (dctx->md == NULL) ? EVP_sm3() : dctx->md;
 
     if (out == NULL) {
-        if (!sm2_plaintext_size(ec, md, inlen, outlen))
+        if (!sm2_plaintext_size(in, inlen, outlen))
             return -1;
         else
             return 1;
