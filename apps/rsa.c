@@ -112,8 +112,8 @@ static int try_legacy_encoding(EVP_PKEY *pkey, int outformat, int pubout,
 # ifndef OPENSSL_NO_DSA
     } else if (outformat == FORMAT_MSBLOB || outformat == FORMAT_PVK) {
         ret = i2b_PublicKey_bio(out, pkey) > 0;
-    }
 # endif
+    }
 #endif
 
     return ret;
