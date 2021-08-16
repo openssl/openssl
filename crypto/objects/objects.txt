@@ -316,6 +316,10 @@ id-smime-aa 27		: id-smime-aa-ets-archiveTimeStamp
 id-smime-aa 28		: id-smime-aa-signatureType
 id-smime-aa 29		: id-smime-aa-dvcs-dvc
 id-smime-aa 47		: id-smime-aa-signingCertificateV2
+# CAdES
+id-smime-aa 44      : id-aa-ets-attrCertificateRefs
+id-smime-aa 45      : id-aa-ets-attrRevocationRefs
+id-smime-aa 48      : id-aa-ets-archiveTimestampV2
 
 # S/MIME Algorithm Identifiers
 # obsolete
@@ -1744,3 +1748,70 @@ dstu4145le 2 9 : uacurve9 : DSTU curve 9
                             : AES-128-SIV  : aes-128-siv
                             : AES-192-SIV  : aes-192-siv
                             : AES-256-SIV  : aes-256-siv
+
+# More CAdES
+itu-t 4 0 : etsi
+etsi 1733 : electronic-signature-standard
+electronic-signature-standard 1 4 1 : id-etsi-es-IDUP-Mechanism-v1
+electronic-signature-standard 2 : id-etsi-es-attributes
+electronic-signature-standard 2 1 : id-aa-ets-mimeType
+electronic-signature-standard 2 2 : id-aa-ets-longTermValidation
+electronic-signature-standard 2 4 : id-aa-ets-archiveTimestampV3
+electronic-signature-standard 2 5 : id-aa-ATSHashIndex
+
+# Used by Trusted Computing Group Platform Certificates
+2 23 133 : tcg
+tcg 1 : tcg-tcpaSpecVersion
+tcg 17 : tcg-address
+tcg 17 1 : tcg-address-ethernetmac
+tcg 17 2 : tcg-address-wlanmac
+tcg 17 3 : tcg-address-bluetoothmac
+tcg 18 : tcg-registry
+tcg 18 3 : tcg-registry-componentClass
+tcg 18 3 1 : tcg-registry-componentClass-tcg
+tcg 18 3 2 : tcg-registry-componentClass-ietf
+tcg 18 3 3 : tcg-registry-componentClass-dmtf
+tcg 2 : tcg-attribute
+tcg 2 1 : tcg-at-tpmManufacturer
+tcg 2 10 : tcg-at-securityQualities
+tcg 2 11 : tcg-at-tpmProtectionProfile
+tcg 2 12 : tcg-at-tpmSecurityTarget
+tcg 2 13 : tcg-at-tbbProtectionProfile
+tcg 2 14 : tcg-at-tbbSecurityTarget
+tcg 2 15 : tcg-at-tpmIdLabel
+tcg 2 16 : tcg-at-tpmSpecification
+tcg 2 17 : tcg-at-tcgPlatformSpecification
+tcg 2 18 : tcg-at-tpmSecurityAssertions
+tcg 2 19 : tcg-at-tbbSecurityAssertions
+tcg 2 2 : tcg-at-tpmModel
+tcg 2 23 : tcg-at-tcgCredentialSpecification
+tcg 2 25 : tcg-at-tcgCredentialType
+tcg 2 3 : tcg-at-tpmVersion
+tcg 3 : tcg-protocol
+tcg 3 1 : tcg-prt-tpmIdProtocol
+tcg 4 : tcg-algorithm
+tcg 4 1 : tcg-algorithm-null
+tcg 5 : tcg-platformClass
+tcg 5 1 : tcg-common
+tcg 5 1 1 : tcg-at-platformManufacturerStr
+tcg 5 1 2 : tcg-at-platformManufacturerId
+tcg 5 1 3 : tcg-at-platformConfigUri
+tcg 5 1 4 : tcg-at-platformModel
+tcg 5 1 5 : tcg-at-platformVersion
+tcg 5 1 6 : tcg-at-platformSerial
+tcg 5 1 7 : tcg-at-platformConfiguration
+tcg 5 1 7 1 : tcg-at-platformConfiguration-v1
+tcg 5 1 7 2 : tcg-at-platformConfiguration-v2
+tcg 6 : tcg-ce
+tcg 6 2 : tcg-ce-relevantCredentials
+tcg 6 3 : tcg-ce-relevantManifests
+tcg 6 4 : tcg-ce-virtualPlatformAttestationService
+tcg 6 5 : tcg-ce-migrationControllerAttestationService
+tcg 6 6 : tcg-ce-migrationControllerRegistrationService
+tcg 6 7 : tcg-ce-virtualPlatformBackupService
+tcg 8 : tcg-kp
+tcg 8 1 : tcg-kp-EKCertificate
+tcg 8 2 : tcg-kp-PlatformAttributeCertificate
+tcg 8 3 : tcg-kp-AIKCertificate
+tcg 8 4 : tcg-kp-PlatformKeyCertificate
+tcg 8 5 : tcg-kp-DeltaPlatformAttributeCertificate

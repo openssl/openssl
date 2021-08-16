@@ -1006,6 +1006,18 @@
 #define NID_id_smime_aa_signingCertificateV2            1086
 #define OBJ_id_smime_aa_signingCertificateV2            OBJ_id_smime_aa,47L
 
+#define SN_id_aa_ets_attrCertificateRefs                "id-aa-ets-attrCertificateRefs"
+#define NID_id_aa_ets_attrCertificateRefs               1248
+#define OBJ_id_aa_ets_attrCertificateRefs               OBJ_id_smime_aa,44L
+
+#define SN_id_aa_ets_attrRevocationRefs         "id-aa-ets-attrRevocationRefs"
+#define NID_id_aa_ets_attrRevocationRefs                1249
+#define OBJ_id_aa_ets_attrRevocationRefs                OBJ_id_smime_aa,45L
+
+#define SN_id_aa_ets_archiveTimestampV2         "id-aa-ets-archiveTimestampV2"
+#define NID_id_aa_ets_archiveTimestampV2                1250
+#define OBJ_id_aa_ets_archiveTimestampV2                OBJ_id_smime_aa,48L
+
 #define SN_id_smime_alg_ESDHwith3DES            "id-smime-alg-ESDHwith3DES"
 #define NID_id_smime_alg_ESDHwith3DES           241
 #define OBJ_id_smime_alg_ESDHwith3DES           OBJ_id_smime_alg,1L
@@ -5431,6 +5443,258 @@
 #define SN_aes_256_siv          "AES-256-SIV"
 #define LN_aes_256_siv          "aes-256-siv"
 #define NID_aes_256_siv         1200
+
+#define SN_etsi         "etsi"
+#define NID_etsi                1251
+#define OBJ_etsi                OBJ_itu_t,4L,0L
+
+#define SN_electronic_signature_standard                "electronic-signature-standard"
+#define NID_electronic_signature_standard               1252
+#define OBJ_electronic_signature_standard               OBJ_etsi,1733L
+
+#define SN_id_etsi_es_IDUP_Mechanism_v1         "id-etsi-es-IDUP-Mechanism-v1"
+#define NID_id_etsi_es_IDUP_Mechanism_v1                1253
+#define OBJ_id_etsi_es_IDUP_Mechanism_v1                OBJ_electronic_signature_standard,1L,4L,1L
+
+#define SN_id_etsi_es_attributes                "id-etsi-es-attributes"
+#define NID_id_etsi_es_attributes               1254
+#define OBJ_id_etsi_es_attributes               OBJ_electronic_signature_standard,2L
+
+#define SN_id_aa_ets_mimeType           "id-aa-ets-mimeType"
+#define NID_id_aa_ets_mimeType          1255
+#define OBJ_id_aa_ets_mimeType          OBJ_electronic_signature_standard,2L,1L
+
+#define SN_id_aa_ets_longTermValidation         "id-aa-ets-longTermValidation"
+#define NID_id_aa_ets_longTermValidation                1256
+#define OBJ_id_aa_ets_longTermValidation                OBJ_electronic_signature_standard,2L,2L
+
+#define SN_id_aa_ets_archiveTimestampV3         "id-aa-ets-archiveTimestampV3"
+#define NID_id_aa_ets_archiveTimestampV3                1257
+#define OBJ_id_aa_ets_archiveTimestampV3                OBJ_electronic_signature_standard,2L,4L
+
+#define SN_id_aa_ATSHashIndex           "id-aa-ATSHashIndex"
+#define NID_id_aa_ATSHashIndex          1258
+#define OBJ_id_aa_ATSHashIndex          OBJ_electronic_signature_standard,2L,5L
+
+#define SN_tcg          "tcg"
+#define NID_tcg         1259
+#define OBJ_tcg         2L,23L,133L
+
+#define SN_tcg_tcpaSpecVersion          "tcg-tcpaSpecVersion"
+#define NID_tcg_tcpaSpecVersion         1260
+#define OBJ_tcg_tcpaSpecVersion         OBJ_tcg,1L
+
+#define SN_tcg_address          "tcg-address"
+#define NID_tcg_address         1261
+#define OBJ_tcg_address         OBJ_tcg,17L
+
+#define SN_tcg_address_ethernetmac              "tcg-address-ethernetmac"
+#define NID_tcg_address_ethernetmac             1262
+#define OBJ_tcg_address_ethernetmac             OBJ_tcg,17L,1L
+
+#define SN_tcg_address_wlanmac          "tcg-address-wlanmac"
+#define NID_tcg_address_wlanmac         1263
+#define OBJ_tcg_address_wlanmac         OBJ_tcg,17L,2L
+
+#define SN_tcg_address_bluetoothmac             "tcg-address-bluetoothmac"
+#define NID_tcg_address_bluetoothmac            1264
+#define OBJ_tcg_address_bluetoothmac            OBJ_tcg,17L,3L
+
+#define SN_tcg_registry         "tcg-registry"
+#define NID_tcg_registry                1265
+#define OBJ_tcg_registry                OBJ_tcg,18L
+
+#define SN_tcg_registry_componentClass          "tcg-registry-componentClass"
+#define NID_tcg_registry_componentClass         1266
+#define OBJ_tcg_registry_componentClass         OBJ_tcg,18L,3L
+
+#define SN_tcg_registry_componentClass_tcg              "tcg-registry-componentClass-tcg"
+#define NID_tcg_registry_componentClass_tcg             1267
+#define OBJ_tcg_registry_componentClass_tcg             OBJ_tcg,18L,3L,1L
+
+#define SN_tcg_registry_componentClass_ietf             "tcg-registry-componentClass-ietf"
+#define NID_tcg_registry_componentClass_ietf            1268
+#define OBJ_tcg_registry_componentClass_ietf            OBJ_tcg,18L,3L,2L
+
+#define SN_tcg_registry_componentClass_dmtf             "tcg-registry-componentClass-dmtf"
+#define NID_tcg_registry_componentClass_dmtf            1269
+#define OBJ_tcg_registry_componentClass_dmtf            OBJ_tcg,18L,3L,3L
+
+#define SN_tcg_attribute                "tcg-attribute"
+#define NID_tcg_attribute               1270
+#define OBJ_tcg_attribute               OBJ_tcg,2L
+
+#define SN_tcg_at_tpmManufacturer               "tcg-at-tpmManufacturer"
+#define NID_tcg_at_tpmManufacturer              1271
+#define OBJ_tcg_at_tpmManufacturer              OBJ_tcg,2L,1L
+
+#define SN_tcg_at_securityQualities             "tcg-at-securityQualities"
+#define NID_tcg_at_securityQualities            1272
+#define OBJ_tcg_at_securityQualities            OBJ_tcg,2L,10L
+
+#define SN_tcg_at_tpmProtectionProfile          "tcg-at-tpmProtectionProfile"
+#define NID_tcg_at_tpmProtectionProfile         1273
+#define OBJ_tcg_at_tpmProtectionProfile         OBJ_tcg,2L,11L
+
+#define SN_tcg_at_tpmSecurityTarget             "tcg-at-tpmSecurityTarget"
+#define NID_tcg_at_tpmSecurityTarget            1274
+#define OBJ_tcg_at_tpmSecurityTarget            OBJ_tcg,2L,12L
+
+#define SN_tcg_at_tbbProtectionProfile          "tcg-at-tbbProtectionProfile"
+#define NID_tcg_at_tbbProtectionProfile         1275
+#define OBJ_tcg_at_tbbProtectionProfile         OBJ_tcg,2L,13L
+
+#define SN_tcg_at_tbbSecurityTarget             "tcg-at-tbbSecurityTarget"
+#define NID_tcg_at_tbbSecurityTarget            1276
+#define OBJ_tcg_at_tbbSecurityTarget            OBJ_tcg,2L,14L
+
+#define SN_tcg_at_tpmIdLabel            "tcg-at-tpmIdLabel"
+#define NID_tcg_at_tpmIdLabel           1277
+#define OBJ_tcg_at_tpmIdLabel           OBJ_tcg,2L,15L
+
+#define SN_tcg_at_tpmSpecification              "tcg-at-tpmSpecification"
+#define NID_tcg_at_tpmSpecification             1278
+#define OBJ_tcg_at_tpmSpecification             OBJ_tcg,2L,16L
+
+#define SN_tcg_at_tcgPlatformSpecification              "tcg-at-tcgPlatformSpecification"
+#define NID_tcg_at_tcgPlatformSpecification             1279
+#define OBJ_tcg_at_tcgPlatformSpecification             OBJ_tcg,2L,17L
+
+#define SN_tcg_at_tpmSecurityAssertions         "tcg-at-tpmSecurityAssertions"
+#define NID_tcg_at_tpmSecurityAssertions                1280
+#define OBJ_tcg_at_tpmSecurityAssertions                OBJ_tcg,2L,18L
+
+#define SN_tcg_at_tbbSecurityAssertions         "tcg-at-tbbSecurityAssertions"
+#define NID_tcg_at_tbbSecurityAssertions                1281
+#define OBJ_tcg_at_tbbSecurityAssertions                OBJ_tcg,2L,19L
+
+#define SN_tcg_at_tpmModel              "tcg-at-tpmModel"
+#define NID_tcg_at_tpmModel             1282
+#define OBJ_tcg_at_tpmModel             OBJ_tcg,2L,2L
+
+#define SN_tcg_at_tcgCredentialSpecification            "tcg-at-tcgCredentialSpecification"
+#define NID_tcg_at_tcgCredentialSpecification           1283
+#define OBJ_tcg_at_tcgCredentialSpecification           OBJ_tcg,2L,23L
+
+#define SN_tcg_at_tcgCredentialType             "tcg-at-tcgCredentialType"
+#define NID_tcg_at_tcgCredentialType            1284
+#define OBJ_tcg_at_tcgCredentialType            OBJ_tcg,2L,25L
+
+#define SN_tcg_at_tpmVersion            "tcg-at-tpmVersion"
+#define NID_tcg_at_tpmVersion           1285
+#define OBJ_tcg_at_tpmVersion           OBJ_tcg,2L,3L
+
+#define SN_tcg_protocol         "tcg-protocol"
+#define NID_tcg_protocol                1286
+#define OBJ_tcg_protocol                OBJ_tcg,3L
+
+#define SN_tcg_prt_tpmIdProtocol                "tcg-prt-tpmIdProtocol"
+#define NID_tcg_prt_tpmIdProtocol               1287
+#define OBJ_tcg_prt_tpmIdProtocol               OBJ_tcg,3L,1L
+
+#define SN_tcg_algorithm                "tcg-algorithm"
+#define NID_tcg_algorithm               1288
+#define OBJ_tcg_algorithm               OBJ_tcg,4L
+
+#define SN_tcg_algorithm_null           "tcg-algorithm-null"
+#define NID_tcg_algorithm_null          1289
+#define OBJ_tcg_algorithm_null          OBJ_tcg,4L,1L
+
+#define SN_tcg_platformClass            "tcg-platformClass"
+#define NID_tcg_platformClass           1290
+#define OBJ_tcg_platformClass           OBJ_tcg,5L
+
+#define SN_tcg_common           "tcg-common"
+#define NID_tcg_common          1291
+#define OBJ_tcg_common          OBJ_tcg,5L,1L
+
+#define SN_tcg_at_platformManufacturerStr               "tcg-at-platformManufacturerStr"
+#define NID_tcg_at_platformManufacturerStr              1292
+#define OBJ_tcg_at_platformManufacturerStr              OBJ_tcg,5L,1L,1L
+
+#define SN_tcg_at_platformManufacturerId                "tcg-at-platformManufacturerId"
+#define NID_tcg_at_platformManufacturerId               1293
+#define OBJ_tcg_at_platformManufacturerId               OBJ_tcg,5L,1L,2L
+
+#define SN_tcg_at_platformConfigUri             "tcg-at-platformConfigUri"
+#define NID_tcg_at_platformConfigUri            1294
+#define OBJ_tcg_at_platformConfigUri            OBJ_tcg,5L,1L,3L
+
+#define SN_tcg_at_platformModel         "tcg-at-platformModel"
+#define NID_tcg_at_platformModel                1295
+#define OBJ_tcg_at_platformModel                OBJ_tcg,5L,1L,4L
+
+#define SN_tcg_at_platformVersion               "tcg-at-platformVersion"
+#define NID_tcg_at_platformVersion              1296
+#define OBJ_tcg_at_platformVersion              OBJ_tcg,5L,1L,5L
+
+#define SN_tcg_at_platformSerial                "tcg-at-platformSerial"
+#define NID_tcg_at_platformSerial               1297
+#define OBJ_tcg_at_platformSerial               OBJ_tcg,5L,1L,6L
+
+#define SN_tcg_at_platformConfiguration         "tcg-at-platformConfiguration"
+#define NID_tcg_at_platformConfiguration                1298
+#define OBJ_tcg_at_platformConfiguration                OBJ_tcg,5L,1L,7L
+
+#define SN_tcg_at_platformConfiguration_v1              "tcg-at-platformConfiguration-v1"
+#define NID_tcg_at_platformConfiguration_v1             1299
+#define OBJ_tcg_at_platformConfiguration_v1             OBJ_tcg,5L,1L,7L,1L
+
+#define SN_tcg_at_platformConfiguration_v2              "tcg-at-platformConfiguration-v2"
+#define NID_tcg_at_platformConfiguration_v2             1300
+#define OBJ_tcg_at_platformConfiguration_v2             OBJ_tcg,5L,1L,7L,2L
+
+#define SN_tcg_ce               "tcg-ce"
+#define NID_tcg_ce              1301
+#define OBJ_tcg_ce              OBJ_tcg,6L
+
+#define SN_tcg_ce_relevantCredentials           "tcg-ce-relevantCredentials"
+#define NID_tcg_ce_relevantCredentials          1302
+#define OBJ_tcg_ce_relevantCredentials          OBJ_tcg,6L,2L
+
+#define SN_tcg_ce_relevantManifests             "tcg-ce-relevantManifests"
+#define NID_tcg_ce_relevantManifests            1303
+#define OBJ_tcg_ce_relevantManifests            OBJ_tcg,6L,3L
+
+#define SN_tcg_ce_virtualPlatformAttestationService             "tcg-ce-virtualPlatformAttestationService"
+#define NID_tcg_ce_virtualPlatformAttestationService            1304
+#define OBJ_tcg_ce_virtualPlatformAttestationService            OBJ_tcg,6L,4L
+
+#define SN_tcg_ce_migrationControllerAttestationService         "tcg-ce-migrationControllerAttestationService"
+#define NID_tcg_ce_migrationControllerAttestationService                1305
+#define OBJ_tcg_ce_migrationControllerAttestationService                OBJ_tcg,6L,5L
+
+#define SN_tcg_ce_migrationControllerRegistrationService                "tcg-ce-migrationControllerRegistrationService"
+#define NID_tcg_ce_migrationControllerRegistrationService               1306
+#define OBJ_tcg_ce_migrationControllerRegistrationService               OBJ_tcg,6L,6L
+
+#define SN_tcg_ce_virtualPlatformBackupService          "tcg-ce-virtualPlatformBackupService"
+#define NID_tcg_ce_virtualPlatformBackupService         1307
+#define OBJ_tcg_ce_virtualPlatformBackupService         OBJ_tcg,6L,7L
+
+#define SN_tcg_kp               "tcg-kp"
+#define NID_tcg_kp              1308
+#define OBJ_tcg_kp              OBJ_tcg,8L
+
+#define SN_tcg_kp_EKCertificate         "tcg-kp-EKCertificate"
+#define NID_tcg_kp_EKCertificate                1309
+#define OBJ_tcg_kp_EKCertificate                OBJ_tcg,8L,1L
+
+#define SN_tcg_kp_PlatformAttributeCertificate          "tcg-kp-PlatformAttributeCertificate"
+#define NID_tcg_kp_PlatformAttributeCertificate         1310
+#define OBJ_tcg_kp_PlatformAttributeCertificate         OBJ_tcg,8L,2L
+
+#define SN_tcg_kp_AIKCertificate                "tcg-kp-AIKCertificate"
+#define NID_tcg_kp_AIKCertificate               1311
+#define OBJ_tcg_kp_AIKCertificate               OBJ_tcg,8L,3L
+
+#define SN_tcg_kp_PlatformKeyCertificate                "tcg-kp-PlatformKeyCertificate"
+#define NID_tcg_kp_PlatformKeyCertificate               1312
+#define OBJ_tcg_kp_PlatformKeyCertificate               OBJ_tcg,8L,4L
+
+#define SN_tcg_kp_DeltaPlatformAttributeCertificate             "tcg-kp-DeltaPlatformAttributeCertificate"
+#define NID_tcg_kp_DeltaPlatformAttributeCertificate            1313
+#define OBJ_tcg_kp_DeltaPlatformAttributeCertificate            OBJ_tcg,8L,5L
 
 #endif /* OPENSSL_OBJ_MAC_H */
 
