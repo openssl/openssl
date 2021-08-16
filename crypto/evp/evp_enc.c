@@ -911,13 +911,14 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
     ret = ctx->cipher->cfinal(ctx->algctx, out, &soutl,
                               blocksize == 1 ? 0 : blocksize);
 
-    if (ret) {
-        if (soutl > INT_MAX) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
-            return 0;
-        }
-        *outl = soutl;
-    }
+    /*
+     * Check if errors occured while decrypting the final block.
+     * Note that ERR_raise is not called.
+     */
+    int ret_nz = ~constant_time_eq_int(ret, 0);
+    int soutl_gt = constant_time_lt(INT_MAX, soutl);
+    ret &= ~soutl_gt;
+    *outl = constant_time_select_int(ret_nz, soutl, *outl);
 
     return ret;
 

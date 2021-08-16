@@ -106,6 +106,11 @@ void ossl_cipher_padblock(unsigned char *buf, size_t *buflen, size_t blocksize)
         buf[i] = pad;
 }
 
+/*-
+ * ossl_cipher_unpadblock removes the padding from the final block in constant time.
+ * Note that if the padding is invalid, ERR_raise is not called in order to preserve
+ * constant-timedness.
+ */
 int ossl_cipher_unpadblock(unsigned char *buf, size_t *buflen, size_t blocksize)
 {
     size_t pad, i;

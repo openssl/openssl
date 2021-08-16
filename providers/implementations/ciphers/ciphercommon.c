@@ -386,6 +386,7 @@ int ossl_cipher_generic_block_final(void *vctx, unsigned char *out,
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     size_t blksz = ctx->blocksize;
+    int gp = 1;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -435,10 +436,8 @@ int ossl_cipher_generic_block_final(void *vctx, unsigned char *out,
         return 0;
     }
 
-    if (ctx->pad && !ossl_cipher_unpadblock(ctx->buf, &ctx->bufsz, blksz)) {
-        /* ERR_raise already called */
-        return 0;
-    }
+    /* ERR_raise not called */
+    gp &= ctx->pad & ossl_cipher_unpadblock(ctx->buf, &ctx->bufsz, blksz);
 
     if (outsize < ctx->bufsz) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
@@ -447,7 +446,7 @@ int ossl_cipher_generic_block_final(void *vctx, unsigned char *out,
     memcpy(out, ctx->buf, ctx->bufsz);
     *outl = ctx->bufsz;
     ctx->bufsz = 0;
-    return 1;
+    return gp;
 }
 
 int ossl_cipher_generic_stream_update(void *vctx, unsigned char *out,
