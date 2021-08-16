@@ -5,7 +5,6 @@
 TS_RESP_CTX_new_ex, TS_RESP_CTX_new,
 TS_RESP_CTX_free - Timestamp response context object creation
 
-
 =head1 SYNOPSIS
 
  #include <openssl/ts.h>
