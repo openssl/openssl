@@ -201,7 +201,7 @@ const char *SSL_state_string(const SSL *s)
     case TLS_ST_CR_CERT_VRFY:
         return "TRSCV";
     case TLS_ST_SW_CERT_VRFY:
-        return "TRSCV";
+        return "TWSCV";
     case TLS_ST_CR_HELLO_REQ:
         return "TRHR";
     case TLS_ST_SW_KEY_UPDATE:
