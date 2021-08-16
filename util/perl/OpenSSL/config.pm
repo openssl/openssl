@@ -473,7 +473,7 @@ EOF
             if ( $ISA64 == 1 && $KERNEL_BITS eq '' ) {
                 print <<EOF;
 WARNING! To build 64-bit package, do this:
-         KERNEL_BITS=64 $WHERE/Configure \[\[ options \]\]
+         KERNEL_BITS=64 $WHERE/Configure [options...]
 EOF
                 maybe_abort();
             }
@@ -489,7 +489,7 @@ EOF
 
             print <<EOF;
 WARNING! To build 32-bit package, do this:
-         KERNEL_BITS=32 $WHERE/Configure \[\[ options \]\]
+         KERNEL_BITS=32 $WHERE/Configure [options...]
 EOF
             maybe_abort();
             return { target => "darwin64-x86_64" };
