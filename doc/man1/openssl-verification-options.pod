@@ -130,7 +130,7 @@ each of its sub-fields equals the corresponding subject key identifier, serial
 number, and issuer field of the candidate issuer certificate,
 as far as the respective fields are present in both certificates.
 
-item *
+=item *
 
 The certificate signature algorithm used to sign the subject certificate
 is supported and
