@@ -916,10 +916,11 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
      * Note that ERR_raise is not called.
      */
     int ret_nz = ~constant_time_eq_int(ret, 0);
-    int soutl_gt = constant_time_lt(INT_MAX, soutl);
+    int soutl_gt = constant_time_lt_s(INT_MAX, soutl);
     ret &= ~soutl_gt;
+    /* soutl <= INT_MAX if soutl_gt is false */
     *outl = constant_time_select_int(ret_nz, soutl, *outl);
-
+ 
     return ret;
 
     /* Code below to be removed when legacy support is dropped. */

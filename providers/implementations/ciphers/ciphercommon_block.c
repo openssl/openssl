@@ -14,7 +14,7 @@
 #include <openssl/proverr.h>
 #include "internal/constant_time.h"
 #include "ciphercommon_local.h"
-#include <stdio.h>
+
 
 /* Functions defined in ssl/tls_pad.c */
 int ssl3_cbc_remove_padding_and_mac(size_t *reclen,
@@ -106,7 +106,7 @@ void ossl_cipher_padblock(unsigned char *buf, size_t *buflen, size_t blocksize)
         buf[i] = pad;
 }
 
-/*-
+/*
  * ossl_cipher_unpadblock removes the padding from the final block in constant time.
  * Note that if the padding is invalid, ERR_raise is not called in order to preserve
  * constant-timedness.
