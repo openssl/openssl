@@ -22,7 +22,7 @@ use Carp;
 # These control our behavior.
 my $DRYRUN;
 my $VERBOSE;
-my $WAIT = 1;
+my $WAIT = defined $ENV{'CONFIG_NOWAIT'} ? 0 : 1;
 my $WHERE = dirname($0);
 
 # Machine type, etc., used to determine the platform
@@ -452,7 +452,7 @@ EOF
       [ 'ppc-apple-rhapsody',     { target => "rhapsody-ppc" } ],
       [ 'ppc-apple-darwin.*',
         sub {
-            my $KERNEL_BITS = $ENV{KERNEL_BITS};
+            my $KERNEL_BITS = $ENV{KERNEL_BITS} // '';
             my $ISA64 = `sysctl -n hw.optional.64bitops 2>/dev/null`;
             if ( $ISA64 == 1 && $KERNEL_BITS eq '' ) {
                 print <<EOF;
@@ -468,7 +468,7 @@ EOF
       ],
       [ 'i.86-apple-darwin.*',
         sub {
-            my $KERNEL_BITS = $ENV{KERNEL_BITS};
+            my $KERNEL_BITS = $ENV{KERNEL_BITS} // '';
             my $ISA64 = `sysctl -n hw.optional.x86_64 2>/dev/null`;
             if ( $ISA64 == 1 && $KERNEL_BITS eq '' ) {
                 print <<EOF;
@@ -484,7 +484,7 @@ EOF
       ],
       [ 'x86_64-apple-darwin.*',
         sub {
-            my $KERNEL_BITS = $ENV{KERNEL_BITS};
+            my $KERNEL_BITS = $ENV{KERNEL_BITS} // '';
             return { target => "darwin-i386" } if $KERNEL_BITS eq '32';
 
             print <<EOF;
@@ -532,7 +532,7 @@ EOF
       ],
       [ 'ppc64-.*-linux2',
         sub {
-            my $KERNEL_BITS = $ENV{KERNEL_BITS};
+            my $KERNEL_BITS = $ENV{KERNEL_BITS} // '';
             if ( $KERNEL_BITS eq '' ) {
                 print <<EOF;
 WARNING! To build 64-bit package, do this:
