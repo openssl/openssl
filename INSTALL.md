@@ -1142,11 +1142,9 @@ Configure OpenSSL
 
 ### Automatic Configuration
 
-On some platform a `config` script is available which attempts to guess
-your operating system (and compiler, if necessary) and calls the `Configure`
-Perl script with appropriate target based on its guess.  Further options can
-be supplied to the `config` script, which will be passed on to the `Configure`
-script.
+In previous version, the `config` script determined the platform type and
+compiler and then called `Configure`. Starting with this release, they are
+the same.
 
 #### Unix / Linux / macOS
 
@@ -1406,10 +1404,28 @@ over the build process.  Typically these should be defined prior to running
                    using this variable. Set it to the compiler executable you wish
                    to use, e.g. gcc or clang.
 
+    CONFIG_NOWAIT
+                   On platforms where the choice of 32-bit or 64-bit architecture
+                   is not explicitly specified, `Configure` will print a warning
+                   message and wait for a few seconds to let you interrupt the
+                   configuration. Setting this variable will skip the wait.
+
     CROSS_COMPILE
                    This environment variable has the same meaning as for the
                    "--cross-compile-prefix" Configure flag described above. If both
                    are set then the Configure flag takes precedence.
+
+    HASHBANGPERL
+                   The command string for the Perl executable to insert in the
+                   #! line of perl scripts that will be publicly installed.
+                   Default: /usr/bin/env perl
+                   Note: the value of this variable is added to the same scripts
+                   on all platforms, but it's only relevant on Unix-like platforms.
+
+    KERNEL_BITS
+                   This can be the value `32` or `64` to specify the architecture
+                   when it is not "obvious" to the configuration. It should generally
+                   not be necessary to specify this environment variable.
 
     NM
                    The name of the nm executable to use.
@@ -1435,12 +1451,8 @@ over the build process.  Typically these should be defined prior to running
                    Only needed if builing should use a different Perl executable
                    than what is used to run the Configure script.
 
-    HASHBANGPERL
-                   The command string for the Perl executable to insert in the
-                   #! line of perl scripts that will be publicly installed.
-                   Default: /usr/bin/env perl
-                   Note: the value of this variable is added to the same scripts
-                   on all platforms, but it's only relevant on Unix-like platforms.
+    RANLIB
+                   The name of the ranlib executable to use.
 
     RC
                    The name of the rc executable to use. The default will be as
@@ -1448,9 +1460,6 @@ over the build process.  Typically these should be defined prior to running
                    defined then "windres" will be used. The WINDRES environment
                    variable is synonymous to this. If both are defined then RC
                    takes precedence.
-
-    RANLIB
-                   The name of the ranlib executable to use.
 
     WINDRES
                    See RC.
