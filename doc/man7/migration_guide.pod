@@ -1216,6 +1216,9 @@ CRYPTO_mem_debug_pop(), CRYPTO_mem_debug_push(), CRYPTO_mem_debug_realloc(),
 CRYPTO_mem_leaks(), CRYPTO_mem_leaks_cb(), CRYPTO_mem_leaks_fp(),
 CRYPTO_set_mem_debug()
 
+Memory-leak checking has been deprecated in favor of more modern development
+tools, such as compiler memory and leak sanitizers or Valgrind.
+
 =item *
 
 CRYPTO_cts128_encrypt_block(), CRYPTO_cts128_encrypt(),
