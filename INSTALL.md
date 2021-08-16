@@ -120,21 +120,11 @@ represents one of the four commands
 Arguments
 ---------
 
-**Mandatory arguments** are enclosed in double curly braces.
-A simple example would be
+**Optional Arguments** are enclosed in square brackets.
 
-    $ type {{ filename }}
+    [option...]
 
-which is to be understood to use the command `type` on some file name
-determined by the user.
-
-**Optional Arguments** are enclosed in double square brackets.
-
-    [[ options ]]
-
-Note that the notation assumes spaces around `{`, `}`, `[`, `]`, `{{`, `}}` and
-`[[`, `]]`.  This is to differentiate from OpenVMS directory
-specifications, which also use [ and ], but without spaces.
+A trailing ellipsis means that more than one could be specified.
 
 Quick Installation Guide
 ========================
@@ -1150,15 +1140,15 @@ script.
 
 #### Unix / Linux / macOS
 
-    $ ./Configure [[ options ]]
+    $ ./Configure [options...]
 
 #### OpenVMS
 
-    $ perl Configure [[ options ]]
+    $ perl Configure [options...]
 
 #### Windows
 
-    $ perl Configure [[ options ]]
+    $ perl Configure [options...]
 
 ### Manual Configuration
 
@@ -1180,12 +1170,13 @@ When you have identified your system (and if necessary compiler) use this
 name as the argument to `Configure`.  For example, a `linux-elf` user would
 run:
 
-    $ ./Configure linux-elf [[ options ]]
+    $ ./Configure linux-elf [options...]
 
 ### Creating your own Configuration
 
 If your system isn't listed, you will have to create a configuration
-file named `Configurations/{{ something }}.conf` and add the correct
+file named `Configurations/YOURFILENAME.conf` (replace `YOURFILENAME`
+with a filename of your choosing) and add the correct
 configuration for your system.  See the available configs as examples
 and read [Configurations/README.md](Configurations/README.md) and
 [Configurations/README-design.md](Configurations/README-design.md)
@@ -1209,21 +1200,21 @@ directory and invoking the configuration commands from there.
 
     $ mkdir /var/tmp/openssl-build
     $ cd /var/tmp/openssl-build
-    $ /PATH/TO/OPENSSL/SOURCE/Configure [[ options ]]
+    $ /PATH/TO/OPENSSL/SOURCE/Configure [options...]
 
 #### OpenVMS example
 
     $ set default sys$login:
     $ create/dir [.tmp.openssl-build]
     $ set default [.tmp.openssl-build]
-    $ perl D:[PATH.TO.OPENSSL.SOURCE]Configure [[ options ]]
+    $ perl D:[PATH.TO.OPENSSL.SOURCE]Configure [options...]
 
 #### Windows example
 
     $ C:
     $ mkdir \temp-openssl
     $ cd \temp-openssl
-    $ perl d:\PATH\TO\OPENSSL\SOURCE\Configure [[ options ]]
+    $ perl d:\PATH\TO\OPENSSL\SOURCE\Configure [options...]
 
 Paths can be relative just as well as absolute.  `Configure` will do its best
 to translate them to relative paths whenever possible.
