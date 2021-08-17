@@ -2,7 +2,7 @@
 name: Run-checker merge for 1.1.1
 # Jobs run per merge to 1.1.1
 
-on: [push]
+on: [pull_request, push]
 jobs:
   run-checker:
     strategy:
