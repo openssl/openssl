@@ -53,4 +53,4 @@ jobs:
     - name: make
       run: make -s -j4
     - name: make test
-      run: make TESTS='${{ matrix.recipes }}' test
+      run: make VERBOSE=1 TESTS='${{ matrix.recipes }}' test
