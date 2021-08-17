@@ -208,6 +208,7 @@ If B<always> is present but no value can be obtained, an error is returned.
 If B<issuer> is present, and in addition it has the option B<always> specified
 or B<keyid> is not present,
 then the issuer DN and serial number are copied from the issuer certificate.
+If this fails, an error is returned.
 
 Examples:
 
