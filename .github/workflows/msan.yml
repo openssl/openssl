@@ -47,7 +47,7 @@ jobs:
     - uses: actions/checkout@v2
     - name: config
       # Omit --debug and -O1 to produce a build that runs in a reasonable amount of time at the cost of diagnosing
-      run: CC=clang ./config -fsanitize=memory -DOSSL_SANITIZE_MEMORY -fno-optimize-sibling-calls enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 && perl configdata.pm --dump
+      run: CC=clang ./config -g -fsanitize=memory -DOSSL_SANITIZE_MEMORY -fno-optimize-sibling-calls enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 && perl configdata.pm --dump
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
