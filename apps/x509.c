@@ -810,6 +810,10 @@ int x509_main(int argc, char **argv)
             goto end;
         if (!x509toreq && !reqfile && !newcert && !self_signed(ctx, x))
             goto end;
+    } else {
+        if (privkey != NULL && !cert_matches_key(x, privkey))
+            BIO_printf(bio_err,
+                       "Warning: Signature key and public key of cert do not match\n");
     }
 
     if (sno != NULL && !X509_set_serialNumber(x, sno))

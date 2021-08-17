@@ -838,11 +838,9 @@ int req_main(int argc, char **argv)
             if (CAcert == NULL) {
                 if (!X509V3_set_issuer_pkey(&ext_ctx, issuer_key))
                     goto end;
-                ERR_set_mark();
-                if (!X509_check_private_key(new_x509, issuer_key))
+                if (!cert_matches_key(new_x509, issuer_key))
                     BIO_printf(bio_err,
                                "Warning: Signature key and public key of cert do not match\n");
-                ERR_pop_to_mark();
             }
             X509V3_set_nconf(&ext_ctx, req_conf);
 

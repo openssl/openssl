@@ -161,8 +161,13 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
          */
         i = X509_get_ext_by_NID(issuer_cert, NID_subject_key_identifier, -1);
         if (i >= 0 && (ext = X509_get_ext(issuer_cert, i)) != NULL
-            && !(same_issuer && !ss))
+            && !(same_issuer && !ss)) {
             ikeyid = X509V3_EXT_d2i(ext);
+            if (ASN1_STRING_length(ikeyid) == 0) /* indicating "none" */ {
+                ASN1_OCTET_STRING_free(ikeyid);
+                ikeyid = NULL;
+            }
+        }
         if (ikeyid == NULL && same_issuer && ctx->issuer_pkey != NULL) {
             /* generate fallback AKID, emulating s2i_skey_id(..., "hash") */
             X509_PUBKEY *pubkey = NULL;
@@ -171,15 +176,13 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
                 ikeyid = ossl_x509_pubkey_hash(pubkey);
             X509_PUBKEY_free(pubkey);
         }
-        if ((keyid == 2 || issuer == 0)
-            && (ikeyid == NULL
-                || ASN1_STRING_length(ikeyid) <= 2) /* indicating "none" */) {
+        if (keyid == 2 && ikeyid == NULL) {
             ERR_raise(ERR_LIB_X509V3, X509V3_R_UNABLE_TO_GET_ISSUER_KEYID);
             goto err;
         }
     }
 
-    if (issuer == 2 || (issuer == 1 && ikeyid == NULL)) {
+    if (issuer == 2 || (issuer == 1 && !ss && ikeyid == NULL)) {
         isname = X509_NAME_dup(X509_get_issuer_name(issuer_cert));
         serial = ASN1_INTEGER_dup(X509_get0_serialNumber(issuer_cert));
         if (isname == NULL || serial == NULL) {
