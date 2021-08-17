@@ -17,6 +17,8 @@
 static const ERR_STRING_DATA X509V3_str_reasons[] = {
     {ERR_PACK(ERR_LIB_X509V3, 0, X509V3_R_BAD_IP_ADDRESS), "bad ip address"},
     {ERR_PACK(ERR_LIB_X509V3, 0, X509V3_R_BAD_OBJECT), "bad object"},
+    {ERR_PACK(ERR_LIB_X509V3, 0, X509V3_R_BAD_OPTION), "bad option"},
+    {ERR_PACK(ERR_LIB_X509V3, 0, X509V3_R_BAD_VALUE), "bad value"},
     {ERR_PACK(ERR_LIB_X509V3, 0, X509V3_R_BN_DEC2BN_ERROR), "bn dec2bn error"},
     {ERR_PACK(ERR_LIB_X509V3, 0, X509V3_R_BN_TO_ASN1_INTEGER_ERROR),
     "bn to asn1 integer error"},
@@ -127,6 +129,7 @@ static const ERR_STRING_DATA X509V3_str_reasons[] = {
     {ERR_PACK(ERR_LIB_X509V3, 0, X509V3_R_UNKNOWN_EXTENSION_NAME),
     "unknown extension name"},
     {ERR_PACK(ERR_LIB_X509V3, 0, X509V3_R_UNKNOWN_OPTION), "unknown option"},
+    {ERR_PACK(ERR_LIB_X509V3, 0, X509V3_R_UNKNOWN_VALUE), "unknown value"},
     {ERR_PACK(ERR_LIB_X509V3, 0, X509V3_R_UNSUPPORTED_OPTION),
     "unsupported option"},
     {ERR_PACK(ERR_LIB_X509V3, 0, X509V3_R_UNSUPPORTED_TYPE),
