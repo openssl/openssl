@@ -137,16 +137,16 @@ jobs:
       run: make -s -j4
 
     - name: install qemu
-      if: github.event_name == 'push' && matrix.platform.tests != 'none'
+      if: matrix.platform.tests != 'none'
       run: sudo apt-get -yq --force-yes install qemu-user
 
     - name: make all tests
-      if: github.event_name == 'push' && matrix.platform.tests == ''
+      if: matrix.platform.tests == ''
       run: |
         make test \
                   QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
     - name: make some tests
-      if: github.event_name == 'push' && matrix.platform.tests != 'none' && matrix.platform.tests != ''
+      if: matrix.platform.tests != 'none' && matrix.platform.tests != ''
       run: |
         make test \
                   TESTS="${{ matrix.platform.tests }}" \
