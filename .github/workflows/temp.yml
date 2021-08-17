@@ -21,4 +21,4 @@ jobs:
     - name: make
       run: make -s -j4
     - name: make test
-      run: make VERBOSE=1 TEST=test_ssl_old test
+      run: make VERBOSE=1 TESTS='test_ssl_old' test
