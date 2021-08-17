@@ -47,14 +47,16 @@ EVP_PKEY_get_bn_param() retrieves a key I<pkey> BIGNUM value I<**bn>
 associated with a name of I<key_name>. If I<*bn> is NULL then the BIGNUM
 is allocated by the method.
 
-EVP_PKEY_get_utf8_string_param() get a key I<pkey> UTF8 string value int a buffer
-I<str> of maximum size I<max_buf_sz> associated with a name of I<key_name>.
-If I<out_sz> is not NULL the I<*out_sz> is set to the length of the string
+EVP_PKEY_get_utf8_string_param() get a key I<pkey> UTF8 string value into a
+buffer I<str> of maximum size I<max_buf_sz> associated with a name of
+I<key_name>.  The maximum size must be large enough to accomodate the string
+value including a terminating NUL byte, or this function will fail.
+If I<out_len> is not NULL, I<*out_len> is set to the length of the string
 not including the terminating NUL byte.
 
-EVP_PKEY_get_octet_string_param() copy a I<pkey>'s octet string value into a buffer
-I<buf> of maximum size I<max_buf_sz> associated with a name of I<key_name>.
-I<*out_sz> is the returned size of the buffer if it is not NULL.
+EVP_PKEY_get_octet_string_param() get a key I<pkey>'s octet string value into a
+buffer I<buf> of maximum size I<max_buf_sz> associated with a name of I<key_name>.
+If I<out_len> is not NULL, I<*out_len> is set to the length of the contents.
 
 =head1 NOTES
 
