@@ -200,14 +200,10 @@ unsigned long get_nameopt(void)
     return (nmflag_set) ? nmflag : XN_FLAG_ONELINE;
 }
 
-int dump_cert_text(BIO *out, X509 *x)
+void dump_cert_text(BIO *out, X509 *x)
 {
     print_name(out, "subject=", X509_get_subject_name(x));
-    BIO_puts(out, "\n");
     print_name(out, "issuer=", X509_get_issuer_name(x));
-    BIO_puts(out, "\n");
-
-    return 0;
 }
 
 int wrap_password_callback(char *buf, int bufsiz, int verify, void *userdata)
@@ -1289,6 +1285,8 @@ void print_name(BIO *out, const char *title, const X509_NAME *nm)
     int indent = 0;
     unsigned long lflags = get_nameopt();
 
+    if (out == NULL)
+        return;
     if (title != NULL)
         BIO_puts(out, title);
     if ((lflags & XN_FLAG_SEP_MASK) == XN_FLAG_SEP_MULTILINE) {
