@@ -311,13 +311,27 @@ int X509V3_EXT_add_nconf_sk(CONF *conf, X509V3_CTX *ctx, const char *section,
 {
     X509_EXTENSION *ext;
     STACK_OF(CONF_VALUE) *nval;
-    CONF_VALUE *val;
-    int i;
+    const CONF_VALUE *val;
+    int i, akid = -1, skid = -1;
 
     if ((nval = NCONF_get_section(conf, section)) == NULL)
         return 0;
     for (i = 0; i < sk_CONF_VALUE_num(nval); i++) {
         val = sk_CONF_VALUE_value(nval, i);
+        if (strcmp(val->name, "authorityKeyIdentifier") == 0)
+            akid = i;
+        else if (strcmp(val->name, "subjectKeyIdentifier") == 0)
+            skid = i;
+    }
+    for (i = 0; i < sk_CONF_VALUE_num(nval); i++) {
+        val = sk_CONF_VALUE_value(nval, i);
+        if (skid > akid && akid >= 0) {
+            /* make sure SKID is handled before AKID */
+            if (i == akid)
+                val = sk_CONF_VALUE_value(nval, skid);
+            else if (i == skid)
+                val = sk_CONF_VALUE_value(nval, akid);
+        }
         if ((ext = X509V3_EXT_nconf_int(conf, ctx, val->section,
                                         val->name, val->value)) == NULL)
             return 0;

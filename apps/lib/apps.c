@@ -2224,8 +2224,8 @@ static int adapt_keyid_ext(X509 *cert, X509V3_CTX *ext_ctx,
     idx = X509v3_get_ext_by_OBJ(exts, X509_EXTENSION_get_object(new_ext), -1);
     if (idx >= 0) {
         X509_EXTENSION *found_ext = X509v3_get_ext(exts, idx);
-        ASN1_OCTET_STRING *data = X509_EXTENSION_get_data(found_ext);
-        int disabled = ASN1_STRING_length(data) <= 2; /* config said "none" */
+        ASN1_OCTET_STRING *encoded = X509_EXTENSION_get_data(found_ext);
+        int disabled = ASN1_STRING_length(encoded) <= 2; /* indicating "none" */
 
         if (disabled) {
             X509_delete_ext(cert, idx);
@@ -2237,6 +2237,16 @@ static int adapt_keyid_ext(X509 *cert, X509V3_CTX *ext_ctx,
     }
     X509_EXTENSION_free(new_ext);
     return rv;
+}
+
+int cert_matches_key(const X509 *cert, const EVP_PKEY *pkey)
+{
+    int match;
+
+    ERR_set_mark();
+    match = X509_check_private_key(cert, pkey);
+    ERR_pop_to_mark();
+    return match;
 }
 
 /* Ensure RFC 5280 compliance, adapt keyIDs as needed, and sign the cert info */
@@ -2254,16 +2264,14 @@ int do_X509_sign(X509 *cert, EVP_PKEY *pkey, const char *md,
             goto end;
 
         /*
-         * Add default SKID before such that default AKID can make use of it
+         * Add default SKID before AKID such that AKID can make use of it
          * in case the certificate is self-signed
          */
         /* Prevent X509_V_ERR_MISSING_SUBJECT_KEY_IDENTIFIER */
         if (!adapt_keyid_ext(cert, ext_ctx, "subjectKeyIdentifier", "hash", 1))
             goto end;
         /* Prevent X509_V_ERR_MISSING_AUTHORITY_KEY_IDENTIFIER */
-        ERR_set_mark();
-        self_sign = X509_check_private_key(cert, pkey);
-        ERR_pop_to_mark();
+        self_sign = cert_matches_key(cert, pkey);
         if (!adapt_keyid_ext(cert, ext_ctx, "authorityKeyIdentifier",
                              "keyid, issuer", !self_sign))
             goto end;
