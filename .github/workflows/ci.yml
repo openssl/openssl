@@ -119,20 +119,17 @@ jobs:
     - name: make test
       run: make test OPENSSL_TEST_RAND_ORDER=0
 
-# The memory sanitizer build is temporarily disabled as in 1.1.1 we do
-# not support running tests in parallel and this build configuration
-# requires more than 3h to run all tests sequentially.
-#  memory_sanitizer:
-#    runs-on: ubuntu-latest
-#    steps:
-#    - uses: actions/checkout@v2
-#    - name: config
-#      # --debug -O1 is to produce a debug build that runs in a reasonable amount of time
-#      run: CC=clang ./config --debug -O1 -fsanitize=memory -DOSSL_SANITIZE_MEMORY -fno-optimize-sibling-calls enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 && perl configdata.pm --dump
-#    - name: make
-#      run: make -s -j4
-#    - name: make test
-#      run: make test
+  memory_sanitizer:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: config
+      # --debug -O1 is to produce a debug build that runs in a reasonable amount of time
+      run: CC=clang ./config --debug -O1 -fsanitize=memory -DOSSL_SANITIZE_MEMORY -fno-optimize-sibling-calls enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: make test
+      run: make test
 
   threads_sanitizer:
     runs-on: ubuntu-latest
