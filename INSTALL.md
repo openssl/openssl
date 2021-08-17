@@ -587,6 +587,13 @@ alternative, you can use the language specific variables, `CFLAGS` and `CXXFLAGS
 Use the specified text instead of the default banner at the end of
 configuration.
 
+### --w
+
+On platforms where the choice of 32-bit or 64-bit architecture
+is not explicitly specified, `Configure` will print a warning
+message and wait for a few seconds to let you interrupt the
+configuration. Using this flag skips the wait.
+
 ### no-bulk
 
 Build only some minimal set of features.
@@ -1403,12 +1410,6 @@ over the build process.  Typically these should be defined prior to running
                    compiler for your platform but this choice can be overridden
                    using this variable. Set it to the compiler executable you wish
                    to use, e.g. gcc or clang.
-
-    CONFIG_NOWAIT
-                   On platforms where the choice of 32-bit or 64-bit architecture
-                   is not explicitly specified, `Configure` will print a warning
-                   message and wait for a few seconds to let you interrupt the
-                   configuration. Setting this variable will skip the wait.
 
     CROSS_COMPILE
                    This environment variable has the same meaning as for the

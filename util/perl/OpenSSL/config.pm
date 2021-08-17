@@ -22,8 +22,8 @@ use Carp;
 # These control our behavior.
 my $DRYRUN;
 my $VERBOSE;
-my $WAIT = defined $ENV{'CONFIG_NOWAIT'} ? 0 : 1;
 my $WHERE = dirname($0);
+my $WAIT = 1;
 
 # Machine type, etc., used to determine the platform
 my $MACHINE;
