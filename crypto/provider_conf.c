@@ -12,6 +12,7 @@
 #include <openssl/err.h>
 #include <openssl/conf.h>
 #include <openssl/safestack.h>
+#include <openssl/provider.h>
 #include "internal/provider.h"
 #include "internal/cryptlib.h"
 #include "provider_local.h"
@@ -107,6 +108,26 @@ static int provider_conf_params(OSSL_PROVIDER *prov,
     return ok;
 }
 
+static int prov_already_activated(const char *name,
+                                  STACK_OF(OSSL_PROVIDER) *activated)
+{
+    int i, max;
+
+    if (activated == NULL)
+        return 0;
+
+    max = sk_OSSL_PROVIDER_num(activated);
+    for (i = 0; i < max; i++) {
+        OSSL_PROVIDER *tstprov = sk_OSSL_PROVIDER_value(activated, i);
+
+        if (strcmp(OSSL_PROVIDER_get0_name(tstprov), name) == 0) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
                               const char *value, const CONF *cnf)
 {
@@ -155,7 +176,7 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
             activate = 1;
     }
 
-    if (activate) {
+    if (activate && !prov_already_activated(name, pcgbl->activated_providers)) {
         /*
         * There is an attempt to activate a provider, so we should disable
         * loading of fallbacks. Otherwise a misconfiguration could mean the
@@ -196,7 +217,7 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
 
         if (!ok)
             ossl_provider_free(prov);
-    } else {
+    } else if (!activate) {
         OSSL_PROVIDER_INFO entry;
 
         memset(&entry, 0, sizeof(entry));
