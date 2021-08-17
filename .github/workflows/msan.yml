@@ -1,0 +1,56 @@
+---
+name: Memory sanitizer builds
+
+# Jobs run per pull request submission
+on: [pull_request, push]
+jobs:
+  memory_sanitizer:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: config
+      # --debug -O1 is to produce a debug build that runs in a reasonable amount of time
+      run: CC=clang ./config --debug -O1 -fsanitize=memory -DOSSL_SANITIZE_MEMORY -fno-optimize-sibling-calls enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: make test
+      run: make HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0 test
+
+  memory_sanitizer_faster:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: config
+      # Omit --debug and -O1 to produce a build that runs in a reasonable amount of time at the cost of diagnosing
+      run: CC=clang ./config -fsanitize=memory -DOSSL_SANITIZE_MEMORY -fno-optimize-sibling-calls enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: make test
+      run: make HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0 test
+
+  memory_sanitizer_timer:
+    strategy:
+      fail-fast: false
+      matrix:
+        recipes:
+        - "0?"
+        - "1?"
+        - "2?"
+        - "3?"
+        - "4?"
+        - "5?"
+        - "6?"
+        - "7?"
+        - "8?"
+        - "9? -95 -99"
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: config
+      run: CC=clang ./config --debug -fsanitize=memory -DOSSL_SANITIZE_MEMORY -fno-optimize-sibling-calls enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 && perl configdata.pm --dump
+    - name: config dump
+      run: ./configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: make test
+      run: make HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0 TESTS='${{ matrix.recipes }}' test
