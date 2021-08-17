@@ -526,6 +526,37 @@ static int test_fromdata_dh_named_group(void)
                                         fromdata_params)))
         goto err;
 
+    /*
+     * A few extra checks of EVP_PKEY_get_utf8_string_param() to see that
+     * it behaves as expected with regards to string length and terminating
+     * NUL byte.
+     */
+    if (!TEST_true(EVP_PKEY_get_utf8_string_param(pk,
+                                                  OSSL_PKEY_PARAM_GROUP_NAME,
+                                                  NULL, sizeof(name_out),
+                                                  &len))
+        || !TEST_size_t_eq(len, sizeof(group_name) - 1)
+        /* Just enough space to hold the group name and a terminating NUL */
+        || !TEST_true(EVP_PKEY_get_utf8_string_param(pk,
+                                                     OSSL_PKEY_PARAM_GROUP_NAME,
+                                                     name_out,
+                                                     sizeof(group_name),
+                                                     &len))
+        || !TEST_size_t_eq(len, sizeof(group_name) - 1)
+        /* Too small buffer to hold the terminating NUL byte */
+        || !TEST_false(EVP_PKEY_get_utf8_string_param(pk,
+                                                      OSSL_PKEY_PARAM_GROUP_NAME,
+                                                      name_out,
+                                                      sizeof(group_name) - 1,
+                                                      &len))
+        /* Too small buffer to hold the whole group name, even! */
+        || !TEST_false(EVP_PKEY_get_utf8_string_param(pk,
+                                                      OSSL_PKEY_PARAM_GROUP_NAME,
+                                                      name_out,
+                                                      sizeof(group_name) - 2,
+                                                      &len)))
+        goto err;
+
     while (dup_pk == NULL) {
         ret = 0;
         if (!TEST_int_eq(EVP_PKEY_get_bits(pk), 2048)
