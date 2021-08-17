@@ -1,0 +1,25 @@
+---
+name: Temporary verbose tests for 1.1.1
+
+# Jobs run per pull request submission
+on: [pull_request, push]
+jobs:
+  run-checker:
+    strategy:
+      fail-fast: false
+      matrix:
+        opt: [
+          enable-ubsan no-asm -DPEDANTIC -DOPENSSL_SMALL_FOOTPRINT -fno-sanitize=alignment,
+        ]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: config
+      run: CC=clang ./config --strict-warnings ${{ matrix.opt }}
+    - name: config dump
+      run: ./configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: make test
+      run: make VERBOSE=1 test
+#      run: make VERBOSE=1 TESTS='test_ssl_old' test
