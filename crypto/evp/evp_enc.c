@@ -21,6 +21,7 @@
 #endif
 #include <openssl/params.h>
 #include <openssl/core_names.h>
+#include "internal/constant_time.h"
 #include "internal/cryptlib.h"
 #include "internal/provider.h"
 #include "internal/core.h"
@@ -913,11 +914,11 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 
     /*
      * Check if errors occured while decrypting the final block.
-     * Note that ERR_raise is not called.
+     * Note that ERR_raise is not called if ret != 0 and soutl > INT_MAX.
      */
-    int ret_nz = ~constant_time_eq_int(ret, 0);
-    int soutl_gt = constant_time_lt_s(INT_MAX, soutl);
-    ret &= ~soutl_gt;
+    unsigned int ret_nz = ~constant_time_eq_int(ret, 0);
+    size_t int_max_soutl_lt = constant_time_lt_s(INT_MAX, soutl);
+    ret = constant_time_select_int(~int_max_soutl_lt, ret, 0);
     /* soutl <= INT_MAX if soutl_gt is false */
     *outl = constant_time_select_int(ret_nz, soutl, *outl);
  
