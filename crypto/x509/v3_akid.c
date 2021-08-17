@@ -85,14 +85,14 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
 }
 
 /*-
- * Currently two options:
- * keyid: use the issuers subject keyid, the value 'always' means its is
- * an error if the issuer certificate doesn't have a key id.
- * issuer: use the issuers cert issuer and serial number. The default is
- * to only use this if keyid is not present. With the option 'always'
+ * Three explicit tags may be given, where 'keyid' and 'issuer' may be combined:
+ * 'none': do not add any authority key identifier.
+ * 'keyid': use the issuer's subject keyid; the option 'always' means its is
+ * an error if the issuer certificate doesn't have a subject key id.
+ * 'issuer': use the issuer's cert issuer and serial number. The default is
+ * to only use this if 'keyid' is not present. With the option 'always'
  * this is always included.
  */
-
 static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
                                             X509V3_CTX *ctx,
                                             STACK_OF(CONF_VALUE) *values)
@@ -119,16 +119,27 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
 
     for (i = 0; i < n; i++) {
         cnf = sk_CONF_VALUE_value(values, i);
-        if (strcmp(cnf->name, "keyid") == 0) {
-            keyid = 1;
-            if (cnf->value && strcmp(cnf->value, "always") == 0)
-                keyid = 2;
-        } else if (strcmp(cnf->name, "issuer") == 0) {
-            issuer = 1;
-            if (cnf->value && strcmp(cnf->value, "always") == 0)
-                issuer = 2;
-        } else {
+        if (cnf->value != NULL && strcmp(cnf->value, "always") != 0) {
             ERR_raise_data(ERR_LIB_X509V3, X509V3_R_UNKNOWN_OPTION,
+                           "name=%s option=%s", cnf->name, cnf->value);
+            goto err;
+        }
+        if (strcmp(cnf->name, "keyid") == 0 && keyid == 0) {
+            keyid = 1;
+            if (cnf->value != NULL)
+                keyid = 2;
+        } else if (strcmp(cnf->name, "issuer") == 0 && issuer == 0) {
+            issuer = 1;
+            if (cnf->value != NULL)
+                issuer = 2;
+        } else if (strcmp(cnf->name, "none") == 0
+                   || strcmp(cnf->name, "keyid") == 0
+                   || strcmp(cnf->name, "issuer") == 0) {
+            ERR_raise_data(ERR_LIB_X509V3, X509V3_R_BAD_VALUE,
+                           "name=%s", cnf->name);
+            goto err;
+        } else {
+            ERR_raise_data(ERR_LIB_X509V3, X509V3_R_UNKNOWN_VALUE,
                            "name=%s", cnf->name);
             goto err;
         }
