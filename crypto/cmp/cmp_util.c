@@ -221,7 +221,7 @@ int ossl_cmp_X509_STORE_add1_certs(X509_STORE *store, STACK_OF(X509) *certs,
 }
 
 int ossl_cmp_sk_ASN1_UTF8STRING_push_str(STACK_OF(ASN1_UTF8STRING) *sk,
-                                         const char *text)
+                                         const char *text, int len)
 {
     ASN1_UTF8STRING *utf8string;
 
@@ -229,7 +229,7 @@ int ossl_cmp_sk_ASN1_UTF8STRING_push_str(STACK_OF(ASN1_UTF8STRING) *sk,
         return 0;
     if ((utf8string = ASN1_UTF8STRING_new()) == NULL)
         return 0;
-    if (!ASN1_STRING_set(utf8string, text, -1))
+    if (!ASN1_STRING_set(utf8string, text, len))
         goto err;
     if (!sk_ASN1_UTF8STRING_push(sk, utf8string))
         goto err;
