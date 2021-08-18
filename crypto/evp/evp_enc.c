@@ -918,6 +918,7 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
      */
     unsigned int ret_nz = ~constant_time_eq_int(ret, 0);
     size_t int_max_soutl_lt = constant_time_lt_s(INT_MAX, soutl);
+
     ret = constant_time_select_int(~int_max_soutl_lt, ret, 0);
     /* soutl <= INT_MAX if soutl_gt is false */
     *outl = constant_time_select_int(ret_nz, soutl, *outl);
