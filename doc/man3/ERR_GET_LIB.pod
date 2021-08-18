@@ -18,18 +18,17 @@ ERR_GET_LIB, ERR_GET_REASON, ERR_FATAL_ERROR
 =head1 DESCRIPTION
 
 The error code returned by ERR_get_error() consists of a library
-number, function code and reason code. ERR_GET_LIB()
+number and reason code. ERR_GET_LIB()
 and ERR_GET_REASON() can be used to extract these.
 
 ERR_FATAL_ERROR() indicates whether a given error code is a fatal error.
 
-The library number and function code describe where the error
+The library number describes where the error
 occurred, the reason code is the information about what went wrong.
 
-Each sub-library of OpenSSL has a unique library number; function and
-reason codes are unique within each sub-library.  Note that different
-libraries may use the same value to signal different functions and
-reasons.
+Each sub-library of OpenSSL has a unique library number; the
+reason code is unique within each sub-library.  Note that different
+libraries may use the same value to signal different reasons.
 
 B<ERR_R_...> reason codes such as B<ERR_R_MALLOC_FAILURE> are globally
 unique. However, when checking for sub-library specific reason codes,
@@ -39,7 +38,7 @@ ERR_GET_LIB(), ERR_GET_REASON(), and ERR_FATAL_ERROR() are macros.
 
 =head1 RETURN VALUES
 
-The library number, function code, reason code, and whether the error
+The library number, reason code, and whether the error
 is fatal, respectively.
 Starting with OpenSSL 3.0.0, the function code is always set to zero.
 
