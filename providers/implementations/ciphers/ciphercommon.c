@@ -387,7 +387,7 @@ int ossl_cipher_generic_block_final(void *vctx, unsigned char *out,
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     size_t blksz = ctx->blocksize;
-    unsigned int ret;
+    unsigned int bp, pad, ret;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -438,9 +438,8 @@ int ossl_cipher_generic_block_final(void *vctx, unsigned char *out,
     }
 
     /* Note that ERR_raise not called in case of bad padding */
-    unsigned int bp = constant_time_is_zero(ossl_cipher_unpadblock(ctx->buf, &ctx->bufsz, blksz));
-    unsigned int pad = ~constant_time_is_zero(ctx->pad);
-
+    bp = constant_time_is_zero(ossl_cipher_unpadblock(ctx->buf, &ctx->bufsz, blksz));
+    pad = ~constant_time_is_zero(ctx->pad);
     ret = constant_time_select(pad & bp, 0, 1);
 
     if (outsize < ctx->bufsz) {

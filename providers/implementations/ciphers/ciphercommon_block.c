@@ -116,6 +116,8 @@ int ossl_cipher_unpadblock(unsigned char *buf, size_t *buflen, size_t blocksize)
     size_t pad, i;
     size_t len = *buflen;
     size_t gp = 1;
+    size_t buf_pad_eq;
+    unsigned int i_pad_lt;
 
     /* len and blocksize are public so they can be tested in non-constant time */
     if (len != blocksize) {
@@ -136,9 +138,8 @@ int ossl_cipher_unpadblock(unsigned char *buf, size_t *buflen, size_t blocksize)
     }
 
     for (i = 0; i < blocksize; i++) {
-        size_t buf_pad_eq = constant_time_eq_s(buf[--len], pad);
-        unsigned int i_pad_lt = constant_time_lt(i, pad);
-
+        buf_pad_eq = constant_time_eq_s(buf[--len], pad);
+        i_pad_lt = constant_time_lt(i, pad);
         gp = constant_time_select_s(i_pad_lt, gp & buf_pad_eq, gp);
     }
     *buflen = len;
