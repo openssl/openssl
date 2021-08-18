@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "crypto/x509.h"
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 #include <openssl/bio.h>
@@ -87,36 +88,41 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
         switch (OBJ_obj2nid(gen->d.otherName->type_id)) {
         case NID_id_on_SmtpUTF8Mailbox:
             if (gen->d.otherName->value->type != V_ASN1_UTF8STRING
-                    || !X509V3_add_value_uchar("othername: SmtpUTF8Mailbox:",
+                    || !x509v3_add_len_value_uchar("othername: SmtpUTF8Mailbox:",
                             gen->d.otherName->value->value.utf8string->data,
+                            gen->d.otherName->value->value.utf8string->length,
                             &ret))
                 return NULL;
             break;
         case NID_XmppAddr:
             if (gen->d.otherName->value->type != V_ASN1_UTF8STRING
-                    || !X509V3_add_value_uchar("othername: XmppAddr:",
+                    || !x509v3_add_len_value_uchar("othername: XmppAddr:",
                             gen->d.otherName->value->value.utf8string->data,
+                            gen->d.otherName->value->value.utf8string->length,
                             &ret))
                 return NULL;
             break;
         case NID_SRVName:
             if (gen->d.otherName->value->type != V_ASN1_IA5STRING
-                    || !X509V3_add_value_uchar("othername: SRVName:",
+                    || !x509v3_add_len_value_uchar("othername: SRVName:",
                             gen->d.otherName->value->value.ia5string->data,
+                            gen->d.otherName->value->value.ia5string->length,
                             &ret))
                 return NULL;
             break;
         case NID_ms_upn:
             if (gen->d.otherName->value->type != V_ASN1_UTF8STRING
-                    || !X509V3_add_value_uchar("othername: UPN:",
+                    || !x509v3_add_len_value_uchar("othername: UPN:",
                             gen->d.otherName->value->value.utf8string->data,
+                            gen->d.otherName->value->value.utf8string->length,
                             &ret))
                 return NULL;
             break;
         case NID_NAIRealm:
             if (gen->d.otherName->value->type != V_ASN1_UTF8STRING
-                    || !X509V3_add_value_uchar("othername: NAIRealm:",
+                    || !x509v3_add_len_value_uchar("othername: NAIRealm:",
                             gen->d.otherName->value->value.utf8string->data,
+                            gen->d.otherName->value->value.utf8string->length,
                             &ret))
                 return NULL;
             break;
@@ -129,14 +135,16 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
 
             /* check if the value is something printable */
             if (gen->d.otherName->value->type == V_ASN1_IA5STRING) {
-                if (X509V3_add_value_uchar(othername,
+                if (x509v3_add_len_value_uchar(othername,
                              gen->d.otherName->value->value.ia5string->data,
+                             gen->d.otherName->value->value.ia5string->length,
                              &ret)) 
                     return ret;
             }
             if (gen->d.otherName->value->type == V_ASN1_UTF8STRING) {
-                if (X509V3_add_value_uchar(othername,
+                if (x509v3_add_len_value_uchar(othername,
                              gen->d.otherName->value->value.utf8string->data,
+                             gen->d.otherName->value->value.utf8string->length,
                              &ret)) 
                     return ret;
             }
@@ -157,17 +165,20 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
         break;
 
     case GEN_EMAIL:
-        if (!X509V3_add_value_uchar("email", gen->d.ia5->data, &ret))
+        if (!x509v3_add_len_value_uchar("email", gen->d.ia5->data,
+                                        gen->d.ia5->length, &ret))
             return NULL;
         break;
 
     case GEN_DNS:
-        if (!X509V3_add_value_uchar("DNS", gen->d.ia5->data, &ret))
+        if (!x509v3_add_len_value_uchar("DNS", gen->d.ia5->data,
+                                        gen->d.ia5->length, &ret))
             return NULL;
         break;
 
     case GEN_URI:
-        if (!X509V3_add_value_uchar("URI", gen->d.ia5->data, &ret))
+        if (!x509v3_add_len_value_uchar("URI", gen->d.ia5->data,
+                                        gen->d.ia5->length, &ret))
             return NULL;
         break;
 

@@ -361,3 +361,6 @@ int ossl_i2d_X448_PUBKEY(const ECX_KEY *a, unsigned char **pp);
 EVP_PKEY *ossl_d2i_PUBKEY_legacy(EVP_PKEY **a, const unsigned char **pp,
                                  long length);
 #endif
+
+int x509v3_add_len_value_uchar(const char *name, const unsigned char *value,
+                               size_t vallen, STACK_OF(CONF_VALUE) **extlist);
