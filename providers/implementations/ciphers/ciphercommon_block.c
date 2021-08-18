@@ -131,12 +131,6 @@ int ossl_cipher_unpadblock(unsigned char *buf, size_t *buflen, size_t blocksize)
      */
     pad = buf[blocksize - 1];
 
-    /* pad is only checked for bad values so can still be tested in non-constant time */
-    if (pad == 0 || pad > blocksize) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_BAD_DECRYPT);
-        return 0;
-    }
-
     for (i = 0; i < blocksize; i++) {
         buf_pad_eq = constant_time_eq_s(buf[--len], pad);
         i_pad_lt = constant_time_lt(i, pad);
