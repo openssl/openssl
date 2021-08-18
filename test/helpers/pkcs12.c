@@ -479,12 +479,15 @@ static int check_asn1_string(const ASN1_TYPE *av, const char *txt)
         break;
 
     case V_ASN1_UTF8STRING:
-        if (!TEST_str_eq(txt, (char *)av->value.utf8string->data))
+        if (!TEST_mem_eq(txt, strlen(txt), (char *)av->value.utf8string->data,
+                         av->value.utf8string->length))
             goto err;
         break;
 
     case V_ASN1_OCTET_STRING:
-        if (!TEST_str_eq(txt, (char *)av->value.octet_string->data))
+        if (!TEST_mem_eq(txt, strlen(txt),
+                         (char *)av->value.octet_string->data,
+                         av->value.octet_string->length))
             goto err;
         break;
 
