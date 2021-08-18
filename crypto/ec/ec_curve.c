@@ -3224,6 +3224,7 @@ static EC_GROUP *ec_group_new_from_data(OSSL_LIB_CTX *libctx,
         }
     }
 
+#ifndef FIPS_MODULE
     if (EC_GROUP_get_asn1_flag(group) == OPENSSL_EC_NAMED_CURVE) {
         /*
          * Some curves don't have an associated OID: for those we should not
@@ -3248,6 +3249,16 @@ static EC_GROUP *ec_group_new_from_data(OSSL_LIB_CTX *libctx,
 
         ASN1_OBJECT_free(asn1obj);
     }
+#else
+    /*
+     * Inside the FIPS module we do not support explicit curves anyway
+     * so the above check is not necessary.
+     *
+     * Skipping it is also necessary because `OBJ_length()` and
+     * `ASN1_OBJECT_free()` are not available within the FIPS module
+     * boundaries.
+     */
+#endif
 
     ok = 1;
  err:
