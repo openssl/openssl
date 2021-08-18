@@ -43,7 +43,7 @@ my %shared_info;
     'darwin-shared' => {
         module_ldflags        => '-bundle',
         shared_ldflag         => '-dynamiclib -current_version $(SHLIB_VERSION_NUMBER) -compatibility_version $(SHLIB_VERSION_NUMBER)',
-        shared_sonameflag     => '-install_name $(INSTALLTOP)/$(LIBDIR)/',
+        shared_sonameflag     => '-install_name $(libdir)/',
     },
     'cygwin-shared' => {
         shared_ldflag         => '-shared -Wl,--enable-auto-image-base',
