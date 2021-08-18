@@ -382,10 +382,12 @@ static int test_x509_time(int idx)
 
     /* if t is not NULL but expected_string is NULL, it is an 'OK' case too */
     if (t != NULL && x509_format_tests[idx].expected_string) {
-        if (!TEST_str_eq((const char *)t->data,
-                    x509_format_tests[idx].expected_string)) {
-            TEST_info("test_x509_time(%d) failed: expected_string %s, got %s\n",
-                    idx, x509_format_tests[idx].expected_string, t->data);
+        if (!TEST_mem_eq((const char *)t->data, t->length,
+                    x509_format_tests[idx].expected_string,
+                    strlen(x509_format_tests[idx].expected_string))) {
+            TEST_info("test_x509_time(%d) failed: expected_string %s, got %.*s\n",
+                    idx, x509_format_tests[idx].expected_string, t->length,
+                    t->data);
             goto out;
         }
     }
