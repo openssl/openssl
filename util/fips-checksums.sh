@@ -15,13 +15,13 @@ for f in "$@"; do
                 | openssl sha256 -r \
                 | sed -e "s| \\*stdin|  $f|"
             ;;
-        *.pl ) 
+        *.pl )
             cat "$f" \
                 | $HERE/lang-compress.pl 'perl' \
                 | openssl sha256 -r \
                 | sed -e "s| \\*stdin|  $f|"
             ;;
-        *.S ) 
+        *.S )
             cat "$f" \
                 | $HERE/lang-compress.pl 'S' \
                 | openssl sha256 -r \

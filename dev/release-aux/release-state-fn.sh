@@ -64,7 +64,7 @@ next_release_state () {
 
         case "$before+$next" in
             # MAKING ALPHA RELEASES ##################################
-            
+
             # Alpha releases can't be made from beta versions or real versions
             beta*+alpha | +alpha )
                 echo >&2 "Invalid state for an alpha release"
@@ -199,4 +199,3 @@ next_release_state () {
         $DEBUG >&2 "DEBUG[next_release_state]: END: \$RELEASE_DATE=$RELEASE_DATE"
     done
 }
-

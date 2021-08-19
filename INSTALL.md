@@ -296,7 +296,7 @@ API Level
 Build the OpenSSL libraries to support the API for the specified version.
 If [no-deprecated](#no-deprecated) is also given, don't build with support
 for deprecated APIs in or below the specified version number.  For example,
-addding
+adding
 
     --api=1.1.0 no-deprecated
 

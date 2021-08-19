@@ -1,4 +1,4 @@
-#! /usr/bin/perl
+#! /usr/bin/env perl
 #
 # Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
 # Copyright 2017 BaishanCloud. All rights reserved.
