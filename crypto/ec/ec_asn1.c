@@ -699,7 +699,8 @@ EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params)
 
     if (params->order == NULL
             || params->base == NULL
-            || params->base->data == NULL) {
+            || params->base->data == NULL
+            || params->base->length == 0) {
         ERR_raise(ERR_LIB_EC, EC_R_ASN1_ERROR);
         goto err;
     }
