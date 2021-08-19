@@ -15,6 +15,17 @@
 # include <string.h>
 # include <openssl/e_os2.h>              /* For 'ossl_inline' */
 
+#define CONSTTIME_TRUE (unsigned)(~0)
+#define CONSTTIME_FALSE 0
+#define CONSTTIME_TRUE_8 0xff
+#define CONSTTIME_FALSE_8 0
+#define CONSTTIME_TRUE_S ~((size_t)0)
+#define CONSTTIME_FALSE_S 0
+#define CONSTTIME_TRUE_32 (uint32_t)(~(uint32_t)0)
+#define CONSTTIME_FALSE_32 0
+#define CONSTTIME_TRUE_64 (uint64_t)(~(uint64_t)0)
+#define CONSTTIME_FALSE_64 0
+
 /*-
  * The boolean methods return a bitmask of all ones (0xff...f) for true
  * and 0 for false. This is useful for choosing a value based on the result

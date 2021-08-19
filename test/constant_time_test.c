@@ -15,17 +15,6 @@
 #include "testutil.h"
 #include "internal/numbers.h"
 
-static const unsigned int CONSTTIME_TRUE = (unsigned)(~0);
-static const unsigned int CONSTTIME_FALSE = 0;
-static const unsigned char CONSTTIME_TRUE_8 = 0xff;
-static const unsigned char CONSTTIME_FALSE_8 = 0;
-static const size_t CONSTTIME_TRUE_S = ~((size_t)0);
-static const size_t CONSTTIME_FALSE_S = 0;
-static uint32_t CONSTTIME_TRUE_32 = (uint32_t)(~(uint32_t)0);
-static uint32_t CONSTTIME_FALSE_32 = 0;
-static uint64_t CONSTTIME_TRUE_64 = (uint64_t)(~(uint64_t)0);
-static uint64_t CONSTTIME_FALSE_64 = 0;
-
 static unsigned int test_values[] = {
     0, 1, 1024, 12345, 32000, UINT_MAX / 2 - 1,
     UINT_MAX / 2, UINT_MAX / 2 + 1, UINT_MAX - 1,
