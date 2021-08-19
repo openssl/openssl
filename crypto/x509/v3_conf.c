@@ -454,16 +454,14 @@ void X509V3_set_nconf(X509V3_CTX *ctx, CONF *conf)
     ctx->db = conf;
 }
 
-void X509V3_set_ctx(X509V3_CTX *ctx, X509 *issuer, X509 *subj, X509_REQ *req,
+void X509V3_set_ctx(X509V3_CTX *ctx, X509 *issuer, X509 *subject, X509_REQ *req,
     X509_CRL *crl, int flags)
 {
-    if (ctx == NULL) {
-        ERR_raise(ERR_LIB_X509V3, ERR_R_PASSED_NULL_PARAMETER);
+    if (ctx == NULL)
         return;
-    }
     ctx->flags = flags;
     ctx->issuer_cert = issuer;
-    ctx->subject_cert = subj;
+    ctx->subject_cert = subject;
     ctx->subject_req = req;
     ctx->crl = crl;
     ctx->db_meth = NULL;
