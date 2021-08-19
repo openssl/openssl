@@ -471,7 +471,7 @@ for fixup in "$HERE/dev/release-aux"/fixup-*-postrelease.pl; do
         perl -pi $fixup $file
 done
 
-$VERBOSE "== Comitting updates"
+$VERBOSE "== Committing updates"
 git add -u
 git commit $git_quiet -m "Prepare for $release_text"
 if [ -n "$reviewers" ]; then
@@ -502,7 +502,7 @@ if $do_branch; then
             perl -pi $fixup $file
     done
 
-    $VERBOSE "== Comitting updates"
+    $VERBOSE "== Committing updates"
     git add -u
     git commit $git_quiet -m "Prepare for $release_text"
     if [ -n "$reviewers" ]; then

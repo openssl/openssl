@@ -44,7 +44,7 @@ A recipe that just runs a test executable
 
 A script that just runs a program looks like this:
 
-    #! /usr/bin/perl
+    #! /usr/bin/env perl
 
     use OpenSSL::Test::Simple;
 
@@ -67,7 +67,7 @@ documentation.  For OpenSSL::Test, do `perldoc util/perl/OpenSSL/Test.pm`.
 
 A script to start from could be this:
 
-    #! /usr/bin/perl
+    #! /usr/bin/env perl
 
     use strict;
     use warnings;
