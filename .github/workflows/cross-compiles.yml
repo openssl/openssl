@@ -17,8 +17,8 @@ jobs:
         #   fips:   set to "no" to disable building FIPS, leave unset to
         #           build the FIPS provider.
         #   tests: omit this to run all the tests using QEMU, set it to "none"
-        #          to never run the tests, otherwise it's value is passed to
-        #          the "make test" command to allow selectiving disabling of
+        #          to never run the tests, otherwise its value is passed to
+        #          the "make test" command to allow selective disabling of
         #          tests.
         platform: [
           {
