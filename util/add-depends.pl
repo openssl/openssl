@@ -23,6 +23,7 @@ ${^WIN32_SLOPPY_STAT} = 1;
 my $debug = $ENV{ADD_DEPENDS_DEBUG};
 my $buildfile = $config{build_file};
 my $build_mtime = (stat($buildfile))[9];
+my $configdata_mtime = (stat('configdata.pm'))[9];
 my $rebuild = 0;
 my $depext = $target{dep_extension} || ".d";
 my @depfiles =
@@ -30,9 +31,11 @@ my @depfiles =
     grep {
         # This grep has side effects.  Not only does if check the existence
         # of the dependency file given in $_, but it also checks if it's
-        # newer than the build file, and if it is, sets $rebuild.
+        # newer than the build file or older than configdata.pm, and if it
+        # is, sets $rebuild.
         my @st = stat($_);
-        $rebuild = 1 if @st && $st[9] > $build_mtime;
+        $rebuild = 1
+            if @st && ($st[9] > $build_mtime || $st[9] < $configdata_mtime);
         scalar @st > 0;         # Determines the grep result
     }
     map { (my $x = $_) =~ s|\.o$|$depext|; $x; }
