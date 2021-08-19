@@ -592,7 +592,7 @@ configuration.
 On platforms where the choice of 32-bit or 64-bit architecture
 is not explicitly specified, `Configure` will print a warning
 message and wait for a few seconds to let you interrupt the
-configuration. Using thie flag skips the wait.
+configuration. Using this flag skips the wait.
 
 ### no-bulk
 
