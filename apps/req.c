@@ -862,6 +862,7 @@ int req_main(int argc, char **argv)
             /* Set up V3 context struct */
             X509V3_set_ctx(&ext_ctx, CAcert != NULL ? CAcert : new_x509,
                 new_x509, NULL, NULL, X509V3_CTX_REPLACE);
+
             /* prepare fallback for AKID, but only if issuer cert == new_x509 */
             if (CAcert == NULL) {
                 if (!X509V3_set_issuer_pkey(&ext_ctx, issuer_key))
