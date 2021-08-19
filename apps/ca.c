@@ -1219,7 +1219,8 @@ end_of_options:
         if (crl_ext != NULL || crlnumberfile != NULL) {
             X509V3_CTX crlctx;
 
-            X509V3_set_ctx(&crlctx, x509, NULL, NULL, crl, 0);
+            if (!X509V3_set_ctx(&crlctx, x509, NULL, NULL, crl, 0))
+                goto end;
             X509V3_set_nconf(&crlctx, conf);
 
             if (crl_ext != NULL)
@@ -1687,9 +1688,10 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         goto end;
 
     /* Initialize the context structure */
-    X509V3_set_ctx(&ext_ctx, selfsign ? ret : x509,
-                   ret, NULL /* no need to give req, needed info is in ret */,
-                   NULL, X509V3_CTX_REPLACE);
+    if (!X509V3_set_ctx(&ext_ctx, selfsign ? ret : x509, ret,
+                        NULL /* no need to give req, needed info is in ret */,
+                        NULL, X509V3_CTX_REPLACE))
+        goto end;
     /* prepare fallback for AKID, but only if issuer cert equals subject cert */
     if (selfsign) {
         if (!X509V3_set_issuer_pkey(&ext_ctx, pkey))

@@ -844,8 +844,9 @@ int req_main(int argc, char **argv)
             }
 
             /* Set up V3 context struct */
-            X509V3_set_ctx(&ext_ctx, CAcert != NULL ? CAcert : new_x509,
-                           new_x509, NULL, NULL, X509V3_CTX_REPLACE);
+            if (!X509V3_set_ctx(&ext_ctx, CAcert != NULL ? CAcert : new_x509,
+                                new_x509, NULL, NULL, X509V3_CTX_REPLACE))
+                goto end;
             /* prepare fallback for AKID, but only if issuer cert == new_x509 */
             if (CAcert == NULL) {
                 if (!X509V3_set_issuer_pkey(&ext_ctx, issuer_key))
@@ -891,7 +892,8 @@ int req_main(int argc, char **argv)
                            "Warning: Ignoring -precert flag since no cert is produced\n");
             }
             /* Set up V3 context struct */
-            X509V3_set_ctx(&ext_ctx, NULL, NULL, req, NULL, X509V3_CTX_REPLACE);
+            if (!X509V3_set_ctx(&ext_ctx, NULL, NULL, req, NULL, X509V3_CTX_REPLACE))
+                goto end;
             X509V3_set_nconf(&ext_ctx, req_conf);
 
             /* Add extensions */

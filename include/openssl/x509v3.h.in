@@ -671,8 +671,8 @@ char *X509V3_get_string(X509V3_CTX *ctx, const char *name, const char *section);
 STACK_OF(CONF_VALUE) *X509V3_get_section(X509V3_CTX *ctx, const char *section);
 void X509V3_string_free(X509V3_CTX *ctx, char *str);
 void X509V3_section_free(X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *section);
-void X509V3_set_ctx(X509V3_CTX *ctx, X509 *issuer, X509 *subject,
-                    X509_REQ *req, X509_CRL *crl, int flags);
+int X509V3_set_ctx(X509V3_CTX *ctx, X509 *issuer, X509 *subject,
+                   X509_REQ *req, X509_CRL *crl, int flags);
 /* For API backward compatibility, this is separate from X509V3_set_ctx(): */
 int X509V3_set_issuer_pkey(X509V3_CTX *ctx, EVP_PKEY *pkey);
 
