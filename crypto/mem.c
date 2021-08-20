@@ -250,6 +250,7 @@ void CRYPTO_free(void *str, const char *file, int line)
     }
 
     free(str);
+    str = NULL;
 }
 
 void CRYPTO_clear_free(void *str, size_t num, const char *file, int line)
