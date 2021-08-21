@@ -12,6 +12,11 @@ ENDIF
 IF[{- $config{target} =~ /^vms-/ -}]
   $AUXLIBAPPSSRC=../apps/lib/vms_term_sock.c ../apps/lib/vms_decc_argv.c
 ENDIF
+# Program init source, that don't have direct linkage with the rest of the
+# source, and can therefore not be part of a library.
+IF[{- !$disabled{uplink} -}]
+  $INITSRC=../ms/applink.c
+ENDIF
 $LIBAPPSSRC=../apps/lib/opt.c $AUXLIBAPPSSRC
 
 IF[{- !$disabled{tests} -}]
@@ -708,7 +713,7 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[rc5test]=../include ../apps/include
     DEPEND[rc5test]=../libcrypto.a libtestutil.a
 
-    SOURCE[ec_internal_test]=ec_internal_test.c
+    SOURCE[ec_internal_test]=ec_internal_test.c $INITSRC
     INCLUDE[ec_internal_test]=../include ../crypto/ec ../apps/include
     DEPEND[ec_internal_test]=../libcrypto.a libtestutil.a
 
