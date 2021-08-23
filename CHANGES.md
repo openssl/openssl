@@ -40,6 +40,11 @@ breaking changes, and mappings for the large list of deprecated functions.
 
    *Jan Lána*
 
+ * The functions EVP_SignFinal() and EVP_DigestSignFinal(), can no longer be
+   called a second time to re-obtain the signature.
+
+   *Paul Dale*
+
  * The ERR_GET_FUNC() function was removed.  With the loss of meaningful
    function codes, this function can only cause problems for calling
    applications.
