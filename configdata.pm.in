@@ -111,7 +111,6 @@ unless (caller) {
         use lib '{- sourcedir('Configurations') -}';
         use gentemplate;
 
-        print 'Creating ',$buildfile_template,"\n";
         open my $buildfile_template_fh, ">$buildfile_template"
             or die "Trying to create $buildfile_template: $!";
         foreach (@{$config{build_file_templates}}) {
@@ -120,6 +119,7 @@ unless (caller) {
         }
         gentemplate(output => $buildfile_template_fh, %gendata);
         close $buildfile_template_fh;
+        print 'Created ',$buildfile_template,"\n";
 
         use OpenSSL::Template;
 
@@ -131,7 +131,6 @@ use lib '{- $config{builddir} -}';
 use platform;
 _____
 
-        print 'Creating ',$buildfile,"\n";
         open BUILDFILE, ">$buildfile.new"
             or die "Trying to create $buildfile.new: $!";
         my $tmpl = OpenSSL::Template->new(TYPE => 'FILE',
@@ -148,6 +147,7 @@ _____
         close BUILDFILE;
         rename("$buildfile.new", $buildfile)
             or die "Trying to rename $buildfile.new to $buildfile: $!";
+        print 'Created ',$buildfile,"\n";
 
         exit(0);
     }
