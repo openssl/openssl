@@ -2854,8 +2854,11 @@ if (-f $configdata_outname) {
         # like nothing happened
         unlink "$configdata_outname.new";
 
-        # We still run configdata.pm if the build file (Makefile) is missing
-        $run_configdata = !( -f $target{build_file} );
+        # We still run configdata.pm if one of the build file (Makefile) or
+        # the configuration header file are missing
+        $run_configdata =
+            !( -f $target{build_file} )
+            || !( -f catfile('include', 'openssl', 'configuration.h') );
     }
 } else {
     $update_configdata = 1;
