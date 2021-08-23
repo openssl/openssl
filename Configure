@@ -2212,9 +2212,10 @@ if ($builder eq "unified") {
                                 \$attributes{depends}, $+{ATTRIBS},
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
-            qr/^\s* GENERATE ${index_re} \s* = \s* ${value_re} \s* $/x
+            qr/^\s* GENERATE ${index_re} ${attribs_re} \s* = \s* ${value_re} \s* $/x
             => sub { $push_to->(\%generate, $expand_variables->($+{INDEX}),
-                                undef, undef, $expand_variables->($+{VALUE}))
+                                \$attributes{generate}, $+{ATTRIBS},
+                                $expand_variables->($+{VALUE}))
                          if !@skip || $skip[$#skip] > 0; },
             qr/^\s* (?:\#.*)? $/x => sub { },
             "OTHERWISE" => sub { die "Something wrong with this line:\n$_\nat $sourced/$f" },
@@ -2382,6 +2383,10 @@ EOF
             $check_generate{$ddest}->{$generator[0]}++;
 
             $unified_info{generate}->{$ddest} = [ @generator ];
+            # Fix up associated attributes
+            $unified_info{attributes}->{generate}->{$ddest} =
+                $attributes{generate}->{$dest}->{$gen}
+                if defined $attributes{generate}->{$dest}->{$gen};
         }
 
         foreach (keys %depends) {
