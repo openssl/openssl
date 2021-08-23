@@ -451,14 +451,15 @@ static X509V3_CONF_METHOD nconf_method = {
     NULL
 };
 
-void X509V3_set_nconf(X509V3_CTX *ctx, CONF *conf)
+int X509V3_set_nconf(X509V3_CTX *ctx, CONF *conf)
 {
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_X509V3, ERR_R_PASSED_NULL_PARAMETER);
-        return;
+        return 0;
     }
     ctx->db_meth = &nconf_method;
     ctx->db = conf;
+    return 1;
 }
 
 int X509V3_set_ctx(X509V3_CTX *ctx, X509 *issuer, X509 *subject, X509_REQ *req,

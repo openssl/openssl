@@ -1918,9 +1918,9 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
     if (opt_reqexts != NULL || opt_policies != NULL) {
         if ((exts = sk_X509_EXTENSION_new_null()) == NULL)
             goto oom;
-        if (!X509V3_set_ctx(&ext_ctx, NULL, NULL, csr, NULL, X509V3_CTX_REPLACE))
+        if (!X509V3_set_ctx(&ext_ctx, NULL, NULL, csr, NULL, X509V3_CTX_REPLACE)
+                || !X509V3_set_nconf(&ext_ctx, conf))
             goto exts_err;
-        X509V3_set_nconf(&ext_ctx, conf);
         if (opt_reqexts != NULL
             && !X509V3_EXT_add_nconf_sk(conf, &ext_ctx, opt_reqexts, &exts)) {
             CMP_err1("cannot load certificate request extension section '%s'",

@@ -583,24 +583,20 @@ int req_main(int argc, char **argv)
         X509V3_CTX ctx;
 
         X509V3_set_ctx_test(&ctx);
-        X509V3_set_nconf(&ctx, req_conf);
-        if (!X509V3_EXT_add_nconf(req_conf, &ctx, extsect, NULL)) {
-            BIO_printf(bio_err,
-                       "Error checking %s extension section %s\n",
-                       gen_x509 ? "x509" : "request", extsect);
+        if (!do_EXT_add_nconf(req_conf, req_conf, &ctx, extsect, NULL,
+                              !gen_x509
+                              ? "Error checking request extension section %s\n"
+                              : "Error checking x509 extension section %s\n"))
             goto end;
-        }
     }
     if (addext_conf != NULL) {
         /* Check syntax of command line extensions */
         X509V3_CTX ctx;
 
         X509V3_set_ctx_test(&ctx);
-        X509V3_set_nconf(&ctx, req_conf);
-        if (!X509V3_EXT_add_nconf(addext_conf, &ctx, "default", NULL)) {
-            BIO_printf(bio_err, "Error checking extensions defined using -addext\n");
+        if (!do_EXT_add_nconf(req_conf, addext_conf, &ctx, NULL, NULL,
+                              "Error checking x509 extensions defined via -addext\n"))
             goto end;
-        }
     }
 
     if (passin == NULL)
@@ -855,21 +851,16 @@ int req_main(int argc, char **argv)
                     BIO_printf(bio_err,
                                "Warning: Signature key and public key of cert do not match\n");
             }
-            X509V3_set_nconf(&ext_ctx, req_conf);
 
             /* Add extensions */
             if (extsect != NULL
-                && !X509V3_EXT_add_nconf(req_conf, &ext_ctx, extsect, new_x509)) {
-                BIO_printf(bio_err, "Error adding x509 extensions from section %s\n",
-                           extsect);
+                && !do_EXT_add_nconf(req_conf, req_conf, &ext_ctx, extsect, new_x509,
+                                     "Error adding x509 extensions from section %s\n"))
                 goto end;
-            }
             if (addext_conf != NULL
-                && !X509V3_EXT_add_nconf(addext_conf, &ext_ctx, "default",
-                                         new_x509)) {
-                BIO_printf(bio_err, "Error adding x509 extensions defined via -addext\n");
+                && !do_EXT_add_nconf(addext_conf, addext_conf, &ext_ctx, NULL, new_x509,
+                                     "Error adding x509 extensions defined via -addext\n"))
                 goto end;
-            }
 
             /* If a pre-cert was requested, we need to add a poison extension */
             if (precert) {
@@ -894,21 +885,16 @@ int req_main(int argc, char **argv)
             /* Set up V3 context struct */
             if (!X509V3_set_ctx(&ext_ctx, NULL, NULL, req, NULL, X509V3_CTX_REPLACE))
                 goto end;
-            X509V3_set_nconf(&ext_ctx, req_conf);
 
             /* Add extensions */
             if (extsect != NULL
-                && !X509V3_EXT_REQ_add_nconf(req_conf, &ext_ctx, extsect, req)) {
-                BIO_printf(bio_err, "Error adding request extensions from section %s\n",
-                           extsect);
+                && !do_EXT_REQ_add_nconf(req_conf, req_conf, &ext_ctx, extsect, req,
+                                         "Error adding request extensions from section %s\n"))
                 goto end;
-            }
             if (addext_conf != NULL
-                && !X509V3_EXT_REQ_add_nconf(addext_conf, &ext_ctx, "default",
-                                             req)) {
-                BIO_printf(bio_err, "Error adding request extensions defined via -addext\n");
+                && !do_EXT_REQ_add_nconf(req_conf, addext_conf, &ext_ctx, "default", req,
+                                         "Error adding request extensions defined via -addext\n"))
                 goto end;
-            }
             i = do_X509_REQ_sign(req, pkey, digest, sigopts);
             if (!i)
                 goto end;
