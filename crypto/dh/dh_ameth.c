@@ -635,6 +635,8 @@ static int dh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
         goto err;
     /* Get parameters from parent key */
     dhpeer = DHparams_dup(pk->pkey.dh);
+    if (!dhpeer)
+        goto err;
     /* We have parameters now set public key */
     plen = ASN1_STRING_length(pubkey);
     p = ASN1_STRING_get0_data(pubkey);
