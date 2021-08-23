@@ -183,6 +183,7 @@ int ciphers_main(int argc, char **argv)
     if (convert != NULL) {
         BIO_printf(bio_out, "OpenSSL cipher name: %s\n",
                    OPENSSL_cipher_name(convert));
+        ret = 0;
         goto end;
     }
 
