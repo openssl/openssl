@@ -298,6 +298,7 @@ OPENSSLDIR={- #
 LIBDIR={- our $libdir = $config{libdir};
           unless ($libdir) {
               $libdir = "lib$target{multilib}";
+              $libdir =~ s/\s+//g;
           }
           file_name_is_absolute($libdir) ? "" : $libdir -}
 # $(libdir) is chosen to be compatible with the GNU coding standards
