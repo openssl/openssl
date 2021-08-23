@@ -886,9 +886,10 @@ EOF
           my $title = basename($args{src}, ".html");
           my $pod = $gen0;
           my $mkpod2html = sourcefile('util', 'mkpod2html.pl');
+          my $srcdoc = sourcedir('doc');
           return <<"EOF";
 $args{src} : $pod
-	\$(PERL) $mkpod2html -i $pod -o \$\@ -t "$title" -r "\$(SRCDIR)/doc"
+	\$(PERL) $mkpod2html -i $pod -o \$\@ -t "$title" -r "$srcdoc"
 EOF
       } elsif ($args{src} =~ /\.(\d)$/) {
           #
