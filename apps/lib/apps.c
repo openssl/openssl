@@ -2386,6 +2386,26 @@ static int do_sign_init(EVP_MD_CTX *ctx, EVP_PKEY *pkey,
         && do_pkey_ctx_init(pkctx, sigopts);
 }
 
+int do_EXT_add_nconf(CONF *conf1, CONF *conf2, X509V3_CTX *ctx,
+    X509 *cert, const char *msg, const char *sect)
+{
+    X509V3_set_nconf(ctx, conf1);
+    if (X509V3_EXT_add_nconf(conf2, ctx, sect != NULL ? sect : "default", cert))
+        return 1;
+    BIO_printf(bio_err, msg, sect);
+    return 0;
+}
+
+int do_EXT_REQ_add_nconf(CONF *conf1, CONF *conf2, X509V3_CTX *ctx,
+    X509_REQ *req, const char *msg, const char *sect)
+{
+    X509V3_set_nconf(ctx, conf1);
+    if (X509V3_EXT_REQ_add_nconf(conf2, ctx, sect, req))
+        return 1;
+    BIO_printf(bio_err, msg, sect);
+    return 0;
+}
+
 static int adapt_keyid_ext(X509 *cert, X509V3_CTX *ext_ctx,
     const char *name, const char *value, int add_default)
 {

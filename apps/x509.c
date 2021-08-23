@@ -781,12 +781,9 @@ int x509_main(int argc, char **argv)
                 extsect = "default";
         }
         X509V3_set_ctx_test(&ctx2);
-        X509V3_set_nconf(&ctx2, extconf);
-        if (!X509V3_EXT_add_nconf(extconf, &ctx2, extsect, NULL)) {
-            BIO_printf(bio_err,
-                "Error checking extension section %s\n", extsect);
+        if (!do_EXT_add_nconf(extconf, extconf, &ctx2, NULL,
+                "Error checking extension section %s\n", extsect))
             goto err;
-        }
     }
 
     if (multi && (reqfile || newcert)) {
@@ -950,14 +947,10 @@ cert_loop:
         if (!X509V3_set_issuer_pkey(&ext_ctx, privkey))
             goto err;
     }
-    if (extconf != NULL && !x509toreq) {
-        X509V3_set_nconf(&ext_ctx, extconf);
-        if (!X509V3_EXT_add_nconf(extconf, &ext_ctx, extsect, x)) {
-            BIO_printf(bio_err,
-                "Error adding extensions from section %s\n", extsect);
-            goto err;
-        }
-    }
+    if (extconf != NULL && !x509toreq
+        && !do_EXT_add_nconf(extconf, extconf, &ext_ctx, x,
+            "Error adding extensions from section %s\n", extsect))
+        goto err;
 
     /* At this point the contents of the certificate x have been finished. */
 
@@ -978,14 +971,10 @@ cert_loop:
         }
         if ((rq = x509_to_req(x, ext_copy, ext_names)) == NULL)
             goto err;
-        if (extconf != NULL) {
-            X509V3_set_nconf(&ext_ctx, extconf);
-            if (!X509V3_EXT_REQ_add_nconf(extconf, &ext_ctx, extsect, rq)) {
-                BIO_printf(bio_err,
-                    "Error adding request extensions from section %s\n", extsect);
-                goto err;
-            }
-        }
+        if (extconf != NULL
+            && !do_EXT_REQ_add_nconf(extconf, extconf, &ext_ctx, rq,
+                "Error adding request extensions from section %s\n", extsect))
+            goto err;
         if (!do_X509_REQ_sign(rq, privkey, digest, sigopts))
             goto err;
         if (!noout) {
