@@ -172,6 +172,8 @@ int init_client(int *sock, const char *host, const char *port,
         break;
     }
 
+    BIO_printf(bio_out, "Connecting to %s\n", BIO_ADDR_hostname_string(BIO_ADDRINFO_address(ai), 1));
+
     if (*sock == INVALID_SOCKET) {
         if (bindaddr != NULL && !found) {
             BIO_printf(bio_err, "Can't bind %saddress for %s%s%s\n",
