@@ -56,8 +56,14 @@ options, and keeping your memory and float options consistent, for example:
 
  * For 1.1 `--prefix=/usr/local-ssl1.1 --openssldir=/usr/local-ssl1.1/ssl`
  * For 1.1 PUT `--prefix=/usr/local-ssl1.1_put --openssldir=/usr/local-ssl1.1_put/ssl`
+
+As of 3.0, the NonStop configurations use the multilib attribute to distinguish
+between different models:
+
  * For 3.0 `--prefix=/usr/local-ssl3.0 --openssldir=/usr/local-ssl3.0/ssl`
- * For 3.0 PUT `--prefix=/usr/local-ssl3.0_put --openssldir=/usr/local-ssl3.0_put/ssl`
+
+The PUT model is placed in `${prefix}/lib-put` for 32-bit models and
+`${prefix}/lib64-put` for 64-bit models.
 
 Use the `_RLD_LIB_PATH` environment variable in OSS to select the appropriate
 directory containing `libcrypto.so` and `libssl.so`. In GUARDIAN, use the
