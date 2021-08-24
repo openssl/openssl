@@ -680,7 +680,7 @@ int cms_main(int argc, char **argv)
                 goto end;
             break;
         case OPT_WRAP:
-            wrapname = opt_unknown();
+            wrapname = opt_arg();
             break;
         case OPT_AES128_WRAP:
         case OPT_AES192_WRAP:
