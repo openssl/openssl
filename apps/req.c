@@ -266,6 +266,7 @@ int req_main(int argc, char **argv)
     cipher = (EVP_CIPHER *)EVP_des_ede3_cbc();
 #endif
 
+    opt_set_unknown_name("digest");
     prog = opt_init(argc, argv, req_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {

@@ -74,7 +74,7 @@ int storeutl_main(int argc, char *argv[])
     BIO *out = NULL;
     ENGINE *e = NULL;
     OPTION_CHOICE o;
-    char *prog = opt_init(argc, argv, storeutl_options);
+    char *prog;
     PW_CB_DATA pw_cb_data;
     int expected = 0;
     int criterion = 0;
@@ -87,6 +87,8 @@ int storeutl_main(int argc, char *argv[])
     EVP_MD *digest = NULL;
     OSSL_LIB_CTX *libctx = app_get0_libctx();
 
+    opt_set_unknown_name("digest");
+    prog = opt_init(argc, argv, storeutl_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
         case OPT_EOF:

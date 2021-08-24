@@ -62,6 +62,7 @@ int gendsa_main(int argc, char **argv)
     OPTION_CHOICE o;
     int ret = 1, private = 0, verbose = 0, nbits;
 
+    opt_set_unknown_name("cipher");
     prog = opt_init(argc, argv, gendsa_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {

@@ -74,6 +74,7 @@ int genpkey_main(int argc, char **argv)
     OSSL_LIB_CTX *libctx = app_get0_libctx();
     STACK_OF(OPENSSL_STRING) *keyopt = NULL;
 
+    opt_set_unknown_name("cipher");
     prog = opt_init(argc, argv, genpkey_options);
     keyopt = sk_OPENSSL_STRING_new_null();
     if (keyopt == NULL)

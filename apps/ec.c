@@ -80,6 +80,7 @@ int ec_main(int argc, char **argv)
     char *point_format = NULL;
     int no_public = 0;
 
+    opt_set_unknown_name("cipher");
     prog = opt_init(argc, argv, ec_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {

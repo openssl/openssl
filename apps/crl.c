@@ -98,6 +98,7 @@ int crl_main(int argc, char **argv)
     int hash_old = 0;
 #endif
 
+    opt_set_unknown_name("digest");
     prog = opt_init(argc, argv, crl_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {

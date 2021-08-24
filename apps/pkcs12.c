@@ -182,6 +182,7 @@ int pkcs12_main(int argc, char **argv)
     EVP_CIPHER *enc = (EVP_CIPHER *)default_enc;
     OPTION_CHOICE o;
 
+    opt_set_unknown_name("cipher");
     prog = opt_init(argc, argv, pkcs12_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {

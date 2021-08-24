@@ -196,8 +196,10 @@ const OPTIONS ocsp_options[] = {
     {"VAfile", OPT_VAFILE, '<', "Validator certificates file"},
     {"verify_other", OPT_VERIFY_OTHER, '<',
      "Additional certificates to search for signer"},
-    {"cert", OPT_CERT, '<', "Certificate to check"},
-    {"serial", OPT_SERIAL, 's', "Serial number to check"},
+    {"cert", OPT_CERT, '<',
+     "Certificate to check; may be given multiple times"},
+    {"serial", OPT_SERIAL, 's',
+     "Serial number to check; may be given multiple times"},
     {"validity_period", OPT_VALIDITY_PERIOD, 'u',
      "Maximum validity discrepancy in seconds"},
     {"signkey", OPT_SIGNKEY, 's', "Private key to sign OCSP request with"},
@@ -261,6 +263,7 @@ int ocsp_main(int argc, char **argv)
             || (vpm = X509_VERIFY_PARAM_new()) == NULL)
         goto end;
 
+    opt_set_unknown_name("digest");
     prog = opt_init(argc, argv, ocsp_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
@@ -436,6 +439,7 @@ int ocsp_main(int argc, char **argv)
                 goto end;
             break;
         case OPT_CERT:
+            reset_unknown();
             X509_free(cert);
             cert = load_cert(opt_arg(), FORMAT_UNDEF, "certificate");
             if (cert == NULL)
@@ -449,6 +453,7 @@ int ocsp_main(int argc, char **argv)
             trailing_md = 0;
             break;
         case OPT_SERIAL:
+            reset_unknown();
             if (cert_id_md == NULL)
                 cert_id_md = (EVP_MD *)EVP_sha1();
             if (!add_ocsp_serial(&req, opt_arg(), cert_id_md, issuer, ids))
