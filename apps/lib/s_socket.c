@@ -133,7 +133,7 @@ int init_client(int *sock, const char *host, const char *port,
              */
             continue;
         }
-
+	
         if (bi != NULL) {
             if (!BIO_bind(*sock, BIO_ADDRINFO_address(bi),
                           BIO_SOCK_REUSEADDR)) {
@@ -171,6 +171,8 @@ int init_client(int *sock, const char *host, const char *port,
         /* Success, don't try any more addresses */
         break;
     }
+	
+    BIO_printf(bio_out, "Connecting to %s\n", BIO_ADDR_hostname_string(BIO_ADDRINFO_address(ai),1));
 
     if (*sock == INVALID_SOCKET) {
         if (bindaddr != NULL && !found) {
