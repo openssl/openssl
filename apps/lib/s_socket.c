@@ -133,7 +133,7 @@ int init_client(int *sock, const char *host, const char *port,
              */
             continue;
         }
-	
+
         if (bi != NULL) {
             if (!BIO_bind(*sock, BIO_ADDRINFO_address(bi),
                           BIO_SOCK_REUSEADDR)) {
