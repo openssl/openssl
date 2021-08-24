@@ -40,6 +40,11 @@ breaking changes, and mappings for the large list of deprecated functions.
 
    *Jan Lána*
 
+ * The triple DES key wrap functionality now conforms to RFC 3217 but is
+   no longer interoperable with OpenSSL 1.1.1.
+
+   *Paul Dale*
+
  * The ERR_GET_FUNC() function was removed.  With the loss of meaningful
    function codes, this function can only cause problems for calling
    applications.
