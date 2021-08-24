@@ -155,7 +155,7 @@ const OPTIONS pkcs12_options[] = {
 int pkcs12_main(int argc, char **argv)
 {
     char *infile = NULL, *outfile = NULL, *keyname = NULL, *certfile = NULL;
-    char *untrusted = NULL, *ciphername = NULL, *enc_flag = NULL;
+    char *untrusted = NULL, *ciphername = NULL, *enc_name = NULL;
     char *passcertsarg = NULL, *passcerts = NULL;
     char *name = NULL, *csp_name = NULL;
     char pass[PASSWD_BUF_SIZE] = "", macpass[PASSWD_BUF_SIZE] = "";
@@ -238,16 +238,15 @@ int pkcs12_main(int argc, char **argv)
         case OPT_NODES:
         case OPT_NOENC:
             /*
-             * |enc_flag| stores the name of the option used so it
+             * |enc_name| stores the name of the option used so it
              * can be printed if an error message is output.
              */
-            enc_flag = opt_flag() + 1;
+            enc_name = opt_flag() + 1;
             enc = NULL;
             ciphername = NULL;
             break;
         case OPT_CIPHER:
-            ciphername = opt_unknown();
-            enc_flag = opt_unknown();
+            enc_name = ciphername = opt_unknown();
             break;
         case OPT_ITER:
             maciter = iter = opt_int_arg();
@@ -375,7 +374,7 @@ int pkcs12_main(int argc, char **argv)
             WARN_EXPORT("cacerts");
         if (enc != default_enc)
             BIO_printf(bio_err,
-                       "Warning: output encryption option -%s ignored with -export\n", enc_flag);
+                       "Warning: output encryption option -%s ignored with -export\n", enc_name);
     } else {
         if (keyname != NULL)
             WARN_NO_EXPORT("inkey");
