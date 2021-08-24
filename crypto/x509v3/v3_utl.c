@@ -66,7 +66,7 @@ static int x509v3_add_len_value(const char *name, const char *value,
         goto err;
     return 1;
  err:
-    X509V3err(X509V3_F_X509V3_ADD_VALUE, ERR_R_MALLOC_FAILURE);
+    X509V3err(X509V3_F_X509V3_ADD_LEN_VALUE, ERR_R_MALLOC_FAILURE);
     if (sk_allocated) {
         sk_CONF_VALUE_free(*extlist);
         *extlist = NULL;
