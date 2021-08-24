@@ -951,6 +951,7 @@ static int cms_RecipientInfo_kekri_decrypt(CMS_ContentInfo *cms,
     }
     ukeylen += outlen;
 
+    OPENSSL_clear_free(ec->key, ec->keylen);
     ec->key = ukey;
     ec->keylen = ukeylen;
 
