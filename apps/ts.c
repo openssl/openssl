@@ -181,6 +181,7 @@ int ts_main(int argc, char **argv)
     if ((vpm = X509_VERIFY_PARAM_new()) == NULL)
         goto end;
 
+    opt_set_unknown_name("digest");
     prog = opt_init(argc, argv, ts_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {

@@ -160,6 +160,7 @@ int smime_main(int argc, char **argv)
     if ((vpm = X509_VERIFY_PARAM_new()) == NULL)
         return 1;
 
+    opt_set_unknown_name("cipher");
     prog = opt_init(argc, argv, smime_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {

@@ -302,6 +302,7 @@ int x509_main(int argc, char **argv)
         goto err;
     X509_STORE_set_verify_cb(ctx, callb);
 
+    opt_set_unknown_name("digest");
     prog = opt_init(argc, argv, x509_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
@@ -592,7 +593,6 @@ int x509_main(int argc, char **argv)
             break;
         }
     }
-
     /* No extra arguments. */
     if (!opt_check_rest_arg(NULL))
         goto opthelp;

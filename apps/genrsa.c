@@ -93,6 +93,7 @@ int genrsa_main(int argc, char **argv)
     if (bn == NULL || cb == NULL)
         goto end;
 
+    opt_set_unknown_name("cipher");
     prog = opt_init(argc, argv, genrsa_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {

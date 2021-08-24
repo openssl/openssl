@@ -314,6 +314,7 @@ int cms_main(int argc, char **argv)
     if (encerts == NULL || vpm == NULL)
         goto end;
 
+    opt_set_unknown_name("cipher");
     prog = opt_init(argc, argv, cms_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {

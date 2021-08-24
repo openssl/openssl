@@ -143,6 +143,7 @@ int enc_main(int argc, char **argv)
     else if (strcmp(argv[0], "enc") != 0)
         ciphername = argv[0];
 
+    opt_set_unknown_name("cipher");
     prog = opt_init(argc, argv, enc_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {

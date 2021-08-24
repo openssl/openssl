@@ -92,6 +92,7 @@ int dsa_main(int argc, char **argv)
     int selection = 0;
     OSSL_ENCODER_CTX *ectx = NULL;
 
+    opt_set_unknown_name("cipher");
     prog = opt_init(argc, argv, dsa_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {

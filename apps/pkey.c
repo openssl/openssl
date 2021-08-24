@@ -83,6 +83,7 @@ int pkey_main(int argc, char **argv)
     char *point_format = NULL;
 #endif
 
+    opt_set_unknown_name("cipher");
     prog = opt_init(argc, argv, pkey_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
