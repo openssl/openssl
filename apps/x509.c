@@ -190,9 +190,7 @@ static void warn_copying(ASN1_OBJECT *excluded, const char *names)
                    sn);
 }
 
-static X509_REQ *x509_to_req(X509 *cert, EVP_PKEY *pkey, const char *digest,
-                             STACK_OF(OPENSSL_STRING) *sigopts,
-                             int ext_copy, const char *names)
+static X509_REQ *x509_to_req(X509 *cert, int ext_copy, const char *names)
 {
     const STACK_OF(X509_EXTENSION) *cert_exts = X509_get0_extensions(cert);
     int i, n = sk_X509_EXTENSION_num(cert_exts /* may be NULL */);
@@ -228,8 +226,6 @@ static X509_REQ *x509_to_req(X509 *cert, EVP_PKEY *pkey, const char *digest,
             goto err;
         }
     }
-    if (!do_X509_REQ_sign(req, pkey, digest, sigopts))
-        goto err;
     sk_X509_EXTENSION_free(exts);
     return req;
 
@@ -804,7 +800,7 @@ int x509_main(int argc, char **argv)
     }
 
     X509V3_set_ctx(&ext_ctx, issuer_cert, x, req, NULL, X509V3_CTX_REPLACE);
-    if (extconf != NULL) {
+    if (extconf != NULL && !x509toreq) {
         X509V3_set_nconf(&ext_ctx, extconf);
         if (!X509V3_EXT_add_nconf(extconf, &ext_ctx, extsect, x)) {
             BIO_printf(bio_err,
@@ -830,8 +826,17 @@ int x509_main(int argc, char **argv)
             BIO_printf(bio_err, "Must not use -clrext together with -copy_extensions\n");
             goto end;
         }
-        if ((rq = x509_to_req(x, privkey, digest, sigopts,
-                              ext_copy, ext_names)) == NULL)
+        if ((rq = x509_to_req(x, ext_copy, ext_names)) == NULL)
+            goto end;
+        if (extconf != NULL) {
+            X509V3_set_nconf(&ext_ctx, extconf);
+            if (!X509V3_EXT_REQ_add_nconf(extconf, &ext_ctx, extsect, rq)) {
+                BIO_printf(bio_err,
+                           "Error adding request extensions from section %s\n", extsect);
+                goto end;
+            }
+        }
+        if (!do_X509_REQ_sign(rq, privkey, digest, sigopts))
             goto end;
         if (!noout) {
             if (outformat == FORMAT_ASN1) {
