@@ -440,6 +440,18 @@ If using a cipher from a provider the B<EVP_CIPH_FLAG_LENGTH_BITS> flag can only
 be set B<after> the cipher has been assigned to the cipher context.
 See L<EVP_EncryptInit(3)/FLAGS> for more information.
 
+=head4 Validation of operation context parameters
+
+Due to move of the implementation of cryptographic operations to the
+providers, validation of various operation parameters can be postponed until
+the actual operation is executed where previously it happened immediately
+when an operation parameter was set.
+
+For example when setting an unsupported curve with
+EVP_PKEY_CTX_set_ec_paramgen_curve_nid() this function call will not fail
+but later keygen operations with the EVP_PKEY_CTX will fail.
+
+
 =head2 Installation and Compilation
 
 Please refer to the INSTALL.md file in the top of the distribution for
