@@ -1362,66 +1362,72 @@ OpenSSL 1.1.1
 
  * Fixed an SM2 Decryption Buffer Overflow.
 
-   In order to decrypt SM2 encrypted data an application is expected to call the
-   API function EVP_PKEY_decrypt(). Typically an application will call this
-   function twice. The first time, on entry, the "out" parameter can be NULL and,
-   on exit, the "outlen" parameter is populated with the buffer size required to
-   hold the decrypted plaintext. The application can then allocate a sufficiently
-   sized buffer and call EVP_PKEY_decrypt() again, but this time passing a non-NULL
-   value for the "out" parameter.
+   In order to decrypt SM2 encrypted data an application is expected to
+   call the API function EVP_PKEY_decrypt(). Typically an application will
+   call this function twice. The first time, on entry, the "out" parameter
+   can be NULL and, on exit, the "outlen" parameter is populated with the
+   buffer size required to hold the decrypted plaintext. The application
+   can then allocate a sufficiently sized buffer and call EVP_PKEY_decrypt()
+   again, but this time passing a non-NULL value for the "out" parameter.
 
    A bug in the implementation of the SM2 decryption code means that the
-   calculation of the buffer size required to hold the plaintext returned by the
-   first call to EVP_PKEY_decrypt() can be smaller than the actual size required by
-   the second call. This can lead to a buffer overflow when EVP_PKEY_decrypt() is
-   called by the application a second time with a buffer that is too small.
+   calculation of the buffer size required to hold the plaintext returned
+   by the first call to EVP_PKEY_decrypt() can be smaller than the actual
+   size required by the second call. This can lead to a buffer overflow
+   when EVP_PKEY_decrypt() is called by the application a second time with
+   a buffer that is too small.
 
-   A malicious attacker who is able present SM2 content for decryption to an
-   application could cause attacker chosen data to overflow the buffer by up to a
-   maximum of 62 bytes altering the contents of other data held after the
-   buffer, possibly changing application behaviour or causing the application to
-   crash. The location of the buffer is application dependent but is typically
-   heap allocated.
+   A malicious attacker who is able present SM2 content for decryption to
+   an application could cause attacker chosen data to overflow the buffer
+   by up to a maximum of 62 bytes altering the contents of other data held
+   after the buffer, possibly changing application behaviour or causing
+   the application to crash. The location of the buffer is application
+   dependent but is typically heap allocated.
    ([CVE-2021-3711])
 
    *Matt Caswell*
 
-  * Fixed various read buffer overruns processing ASN.1 strings
+ * Fixed various read buffer overruns processing ASN.1 strings
 
-    ASN.1 strings are represented internally within OpenSSL as an ASN1_STRING
-    structure which contains a buffer holding the string data and a field holding
-    the buffer length. This contrasts with normal C strings which are repesented as
-    a buffer for the string data which is terminated with a NUL (0) byte.
+   ASN.1 strings are represented internally within OpenSSL as an ASN1_STRING
+   structure which contains a buffer holding the string data and a field
+   holding the buffer length. This contrasts with normal C strings which
+   are repesented as a buffer for the string data which is terminated
+   with a NUL (0) byte.
 
-    Although not a strict requirement, ASN.1 strings that are parsed using OpenSSL's
-    own "d2i" functions (and other similar parsing functions) as well as any string
-    whose value has been set with the ASN1_STRING_set() function will additionally
-    NUL terminate the byte array in the ASN1_STRING structure.
+   Although not a strict requirement, ASN.1 strings that are parsed using
+   OpenSSL's own "d2i" functions (and other similar parsing functions) as
+   well as any string whose value has been set with the ASN1_STRING_set()
+   function will additionally NUL terminate the byte array in the
+   ASN1_STRING structure.
 
-    However, it is possible for applications to directly construct valid ASN1_STRING
-    structures which do not NUL terminate the byte array by directly setting the
-    "data" and "length" fields in the ASN1_STRING array. This can also happen by
-    using the ASN1_STRING_set0() function.
+   However, it is possible for applications to directly construct valid
+   ASN1_STRING structures which do not NUL terminate the byte array by
+   directly setting the "data" and "length" fields in the ASN1_STRING
+   array. This can also happen by using the ASN1_STRING_set0() function.
 
-    Numerous OpenSSL functions that print ASN.1 data have been found to assume that
-    the ASN1_STRING byte array will be NUL terminated, even though this is not
-    guaranteed for strings that have been directly constructed. Where an application
-    requests an ASN.1 structure to be printed, and where that ASN.1 structure
-    contains ASN1_STRINGs that have been directly constructed by the application
-    without NUL terminating the "data" field, then a read buffer overrun can occur.
+   Numerous OpenSSL functions that print ASN.1 data have been found to
+   assume that the ASN1_STRING byte array will be NUL terminated, even
+   though this is not guaranteed for strings that have been directly
+   constructed. Where an application requests an ASN.1 structure to be
+   printed, and where that ASN.1 structure contains ASN1_STRINGs that have
+   been directly constructed by the application without NUL terminating
+   the "data" field, then a read buffer overrun can occur.
 
-    The same thing can also occur during name constraints processing of certificates
-    (for example if a certificate has been directly constructed by the application
-    instead of loading it via the OpenSSL parsing functions, and the certificate
-    contains non NUL terminated ASN1_STRING structures). It can also occur in the
-    X509_get1_email(), X509_REQ_get1_email() and X509_get1_ocsp() functions.
+   The same thing can also occur during name constraints processing
+   of certificates (for example if a certificate has been directly
+   constructed by the application instead of loading it via the OpenSSL
+   parsing functions, and the certificate contains non NUL terminated
+   ASN1_STRING structures). It can also occur in the X509_get1_email(),
+   X509_REQ_get1_email() and X509_get1_ocsp() functions.
 
-    If a malicious actor can cause an application to directly construct an
-    ASN1_STRING and then process it through one of the affected OpenSSL functions
-    then this issue could be hit. This might result in a crash (causing a Denial of
-    Service attack). It could also result in the disclosure of private memory
-    contents (such as private keys, or sensitive plaintext).
-    ([CVE-2021-3712])
+   If a malicious actor can cause an application to directly construct an
+   ASN1_STRING and then process it through one of the affected OpenSSL
+   functions then this issue could be hit. This might result in a crash
+   (causing a Denial of Service attack). It could also result in the
+   disclosure of private memory contents (such as private keys, or
+   sensitive plaintext).
+   ([CVE-2021-3712])
 
    *Matt Caswell*
 
