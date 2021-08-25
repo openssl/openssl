@@ -57,7 +57,7 @@ IF[{- !$disabled{tests} -}]
           context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
           keymgmt_internal_test hexstr_test provider_status_test defltfips_test \
           bio_readbuffer_test user_property_test pkcs7_test upcallstest \
-          provfetchtest
+          provfetchtest prov_config_test
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=enginetest
@@ -175,6 +175,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[provfetchtest]=provfetchtest.c
   INCLUDE[provfetchtest]=../include ../apps/include
   DEPEND[provfetchtest]=../libcrypto.a libtestutil.a
+
+  SOURCE[prov_config_test]=prov_config_test.c
+  INCLUDE[prov_config_test]=../include ../apps/include
+  DEPEND[prov_config_test]=../libcrypto.a libtestutil.a
 
   SOURCE[evp_pkey_provided_test]=evp_pkey_provided_test.c
   INCLUDE[evp_pkey_provided_test]=../include ../apps/include
