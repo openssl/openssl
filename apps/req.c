@@ -116,10 +116,10 @@ const OPTIONS req_options[] = {
     {"reqopt", OPT_REQOPT, 's', "Various request text options"},
     {"text", OPT_TEXT, '-', "Text form of request"},
     {"x509", OPT_X509, '-',
-     "Output an x509 structure instead of a cert request"},
-    {"CA", OPT_CA, '<', "Issuer certificate to use with -x509"},
+     "Output an X.509 certificate structure instead of a cert request"},
+    {"CA", OPT_CA, '<', "Issuer cert to use for signing a cert, implies -x509"},
     {"CAkey", OPT_CAKEY, 's',
-     "Issuer private key to use with -x509; default is -CA arg"},
+     "Issuer private key to use with -CA; default is -CA arg"},
     {OPT_MORE_STR, 1, 1, "(Required by some CA's)"},
     {"subj", OPT_SUBJ, 's', "Set or modify subject of request or cert"},
     {"subject", OPT_SUBJECT, '-',
@@ -139,7 +139,7 @@ const OPTIONS req_options[] = {
     {"precert", OPT_PRECERT, '-', "Add a poison extension (implies -new)"},
 
     OPT_SECTION("Keys and Signing"),
-    {"key", OPT_KEY, 's', "Private key to use"},
+    {"key", OPT_KEY, 's', "Key to include and to use for self-signature"},
     {"keyform", OPT_KEYFORM, 'f', "Key file format (ENGINE, other values ignored)"},
     {"pubkey", OPT_PUBKEY, '-', "Output public key"},
     {"keyout", OPT_KEYOUT, '>', "File to write private key to"},
@@ -406,6 +406,7 @@ int req_main(int argc, char **argv)
             break;
         case OPT_CA:
             CAfile = opt_arg();
+            gen_x509 = 1;
             break;
         case OPT_CAKEY:
             CAkeyfile = opt_arg();
@@ -630,7 +631,6 @@ int req_main(int argc, char **argv)
             goto end;
         app_RAND_load_conf(req_conf, section);
     }
-
     if (newreq && pkey == NULL) {
         app_RAND_load_conf(req_conf, section);
 
@@ -755,28 +755,21 @@ int req_main(int argc, char **argv)
                        "Ignoring -CAkey option since no -CA option is given\n");
         } else {
             if ((CAkey = load_key(CAkeyfile, FORMAT_UNDEF,
-                                  0, passin, e, "issuer private key")) == NULL)
+                                  0, passin, e,
+                                  CAkeyfile != CAfile
+                                  ? "issuer private key from -CAkey arg"
+                                  : "issuer private key from -CA arg")) == NULL)
                 goto end;
         }
     }
     if (CAfile != NULL) {
-        if (!gen_x509) {
+        if ((CAcert = load_cert_pass(CAfile, FORMAT_UNDEF, 1, passin,
+                                     "issuer cert from -CA arg")) == NULL)
+            goto end;
+        if (!X509_check_private_key(CAcert, CAkey)) {
             BIO_printf(bio_err,
-                       "Warning: Ignoring -CA option without -x509\n");
-        } else {
-            if (CAkeyfile == NULL) {
-                BIO_printf(bio_err,
-                           "Need to give the -CAkey option if using -CA\n");
-                goto end;
-            }
-            if ((CAcert = load_cert_pass(CAfile, FORMAT_UNDEF, 1, passin,
-                                         "issuer certificate")) == NULL)
-                goto end;
-            if (!X509_check_private_key(CAcert, CAkey)) {
-                BIO_printf(bio_err,
-                           "Issuer certificate and key do not match\n");
-                goto end;
-            }
+                       "Issuer CA certificate and key do not match\n");
+            goto end;
         }
     }
     if (newreq || gen_x509) {
@@ -828,7 +821,8 @@ int req_main(int argc, char **argv)
             if (!pub_key || !X509_set_pubkey(new_x509, pub_key))
                 goto end;
             if (ext_copy == EXT_COPY_UNSET) {
-                BIO_printf(bio_err, "Warning: No -copy_extensions given; ignoring any extensions in the request\n");
+                if (infile != NULL)
+                    BIO_printf(bio_err, "Warning: No -copy_extensions given; ignoring any extensions in the request\n");
             } else if (!copy_extensions(new_x509, req, ext_copy)) {
                 BIO_printf(bio_err, "Error copying extensions from request\n");
                 goto end;
