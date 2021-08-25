@@ -447,6 +447,11 @@ EVP_CipherFinal_ex() instead.
 Return an EVP_CIPHER structure when passed a cipher name, a NID or an
 ASN1_OBJECT structure.
 
+EVP_get_cipherbyname() will return NULL for algorithms such as "AES-128-SIV",
+"AES-128-CBC-CTS" and "CAMELLIA-128-CBC-CTS" which were previously only
+accessible via low level interfaces. Use EVP_CIPHER_fetch() instead to retrieve
+these algorithms from a provider.
+
 =item EVP_CIPHER_get_nid() and EVP_CIPHER_CTX_get_nid()
 
 Return the NID of a cipher when passed an B<EVP_CIPHER> or B<EVP_CIPHER_CTX>
