@@ -30,6 +30,17 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Due to move of the implementation of cryptographic operations
+   to the providers, validation of various operation parameters can
+   be postponed until the actual operation is executed where previously
+   it happened immediately when an operation parameter was set.
+
+   For example when setting an unsupported curve with
+   EVP_PKEY_CTX_set_ec_paramgen_curve_nid() this function call will not
+   fail but later keygen operations with the EVP_PKEY_CTX will fail.
+
+   *OpenSSL team members and many third party contributors*
+
  * On build targets where the multilib postfix is set in the build
    configuration the libdir directory was changing based on whether
    the lib directory with the multilib postfix exists on the system
