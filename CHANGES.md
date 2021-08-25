@@ -41,6 +41,13 @@ breaking changes, and mappings for the large list of deprecated functions.
 
    *OpenSSL team members and many third party contributors*
 
+ * The EVP_get_cipherbyname() function will return NULL for algorithms such as
+   "AES-128-SIV", "AES-128-CBC-CTS" and "CAMELLIA-128-CBC-CTS" which were
+   previously only accessible via low level interfaces. Use EVP_CIPHER_fetch()
+   instead to retrieve these algorithms from a provider.
+
+   *Shane Lontis*
+
  * On build targets where the multilib postfix is set in the build
    configuration the libdir directory was changing based on whether
    the lib directory with the multilib postfix exists on the system
