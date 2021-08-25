@@ -22,6 +22,16 @@
 # include <openssl/rand.h>
 # include "crypto/rand_pool.h"
 
+# if defined(__APPLE__) && !defined(OPENSSL_NO_APPLE_CRYPTO_RANDOM)
+#  include <Availability.h>
+#  if (defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 101000) || \
+     (defined(__IPHONE_OS_VERSION_MIN_REQUIRED) && __IPHONE_OS_VERSION_MIN_REQUIRED >= 80000)
+#   define OPENSSL_APPLE_CRYPTO_RANDOM 1
+#   include <CommonCrypto/CommonCryptoError.h>
+#   include <CommonCrypto/CommonRandom.h>
+#  endif
+# endif
+
 /*
  * Defines related to seed sources
  */
