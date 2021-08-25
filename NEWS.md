@@ -90,6 +90,7 @@ OpenSSL 1.1.1
 -------------
 
 ### Major changes between OpenSSL 1.1.1k and OpenSSL 1.1.1l [24 Aug 2021]
+
   * Fixed an SM2 Decryption Buffer Overflow ([CVE-2021-3711])
   * Fixed various read buffer overruns processing ASN.1 strings ([CVE-2021-3712])
 
