@@ -791,6 +791,7 @@ int req_main(int argc, char **argv)
         }
         if (gen_x509) {
             EVP_PKEY *pub_key = X509_REQ_get0_pubkey(req);
+            EVP_PKEY *issuer_key = CAcert != NULL ? CAkey : pkey;
             X509V3_CTX ext_ctx;
             X509_NAME *issuer = CAcert != NULL ? X509_get_subject_name(CAcert) :
                 X509_REQ_get_subject_name(req);
@@ -831,11 +832,12 @@ int req_main(int argc, char **argv)
             /* Set up V3 context struct */
             X509V3_set_ctx(&ext_ctx, CAcert != NULL ? CAcert : new_x509,
                            new_x509, NULL, NULL, X509V3_CTX_REPLACE);
-            if (CAcert == NULL) { /* self-issued, possibly self-signed */
-                if (!X509V3_set_issuer_pkey(&ext_ctx, pkey)) /* prepare right AKID */
+            /* prepare fallback for AKID, but only if issuer cert == new_x509 */
+            if (CAcert == NULL) {
+                if (!X509V3_set_issuer_pkey(&ext_ctx, issuer_key))
                     goto end;
                 ERR_set_mark();
-                if (!X509_check_private_key(new_x509, pkey))
+                if (!X509_check_private_key(new_x509, issuer_key))
                     BIO_printf(bio_err,
                                "Warning: Signature key and public key of cert do not match\n");
                 ERR_pop_to_mark();
@@ -866,8 +868,7 @@ int req_main(int argc, char **argv)
                 }
             }
 
-            i = do_X509_sign(new_x509, CAcert != NULL ? CAkey : pkey,
-                             digest, sigopts, &ext_ctx);
+            i = do_X509_sign(new_x509, issuer_key, digest, sigopts, &ext_ctx);
             if (!i)
                 goto end;
         } else {
