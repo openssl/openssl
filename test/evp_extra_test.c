@@ -1051,8 +1051,8 @@ static int test_EVP_DigestSignInit(int tst)
 {
     int ret = 0;
     EVP_PKEY *pkey = NULL;
-    unsigned char *sig = NULL;
-    size_t sig_len = 0;
+    unsigned char *sig = NULL, *sig2 = NULL;
+    size_t sig_len = 0, sig2_len = 0;
     EVP_MD_CTX *md_ctx = NULL, *md_ctx_verify = NULL;
     EVP_MD_CTX *a_md_ctx = NULL, *a_md_ctx_verify = NULL;
     BIO *mdbio = NULL, *membio = NULL;
@@ -1115,17 +1115,17 @@ static int test_EVP_DigestSignInit(int tst)
             || !TEST_true(EVP_DigestSignFinal(md_ctx, sig, &sig_len)))
         goto out;
 
-    if (tst >= 6) {
-        if (!TEST_int_gt(BIO_reset(mdbio), 0)
-                || !TEST_int_gt(BIO_get_md_ctx(mdbio, &md_ctx_verify), 0))
-            goto out;
-    }
-
     /*
      * Ensure that the signature round-trips (Verification isn't supported for
      * HMAC via EVP_DigestVerify*)
      */
     if (tst != 2 && tst != 5 && tst != 8) {
+        if (tst >= 6) {
+            if (!TEST_int_gt(BIO_reset(mdbio), 0)
+                || !TEST_int_gt(BIO_get_md_ctx(mdbio, &md_ctx_verify), 0))
+                goto out;
+        }
+
         if (!TEST_true(EVP_DigestVerifyInit(md_ctx_verify, NULL, md,
                                             NULL, pkey)))
             goto out;
@@ -1140,6 +1140,22 @@ static int test_EVP_DigestSignInit(int tst)
         }
         if (!TEST_true(EVP_DigestVerifyFinal(md_ctx_verify, sig, sig_len)))
             goto out;
+
+        /* Multiple calls to EVP_DigestVerifyFinal should work */
+        if (!TEST_true(EVP_DigestVerifyFinal(md_ctx_verify, sig, sig_len)))
+            goto out;
+    } else {
+        /*
+         * For HMAC a doubled call to DigestSignFinal should produce the same
+         * value as finalization should not happen.
+         */
+        if (!TEST_true(EVP_DigestSignFinal(md_ctx, NULL, &sig2_len))
+            || !TEST_ptr(sig2 = OPENSSL_malloc(sig2_len))
+            || !TEST_true(EVP_DigestSignFinal(md_ctx, sig2, &sig2_len)))
+            goto out;
+
+        if (!TEST_mem_eq(sig, sig_len, sig2, sig2_len))
+            goto out;
     }
 
     ret = 1;
@@ -1151,6 +1167,7 @@ static int test_EVP_DigestSignInit(int tst)
     EVP_MD_CTX_free(a_md_ctx_verify);
     EVP_PKEY_free(pkey);
     OPENSSL_free(sig);
+    OPENSSL_free(sig2);
     EVP_MD_free(mdexp);
 
     return ret;
