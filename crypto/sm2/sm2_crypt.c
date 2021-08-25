@@ -313,7 +313,7 @@ int ossl_sm2_decrypt(const EC_KEY *key,
     C3 = sm2_ctext->C3->data;
     msg_len = sm2_ctext->C2->length;
     if (*ptext_len < (size_t)msg_len) {
-        SM2err(SM2_F_SM2_DECRYPT, SM2_R_BUFFER_TOO_SMALL);
+        ERR_raise(ERR_LIB_SM2, SM2_R_BUFFER_TOO_SMALL);
         goto done;
     }
 
