@@ -400,7 +400,7 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
                         size_t *siglen)
 {
     int sctx = 0, r = 0;
-    EVP_PKEY_CTX *pctx = ctx->pctx;
+    EVP_PKEY_CTX *dctx, *pctx = ctx->pctx;
 
     if (pctx == NULL
             || pctx->operation != EVP_PKEY_OP_SIGNCTX
@@ -408,8 +408,19 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
             || pctx->op.sig.signature == NULL)
         goto legacy;
 
-    return pctx->op.sig.signature->digest_sign_final(pctx->op.sig.algctx,
-                                                     sigret, siglen, SIZE_MAX);
+    if (sigret == NULL || (ctx->flags & EVP_MD_CTX_FLAG_FINALISE) != 0)
+        return pctx->op.sig.signature->digest_sign_final(pctx->op.sig.algctx,
+                                                         sigret, siglen,
+                                                         SIZE_MAX);
+    dctx = EVP_PKEY_CTX_dup(pctx);
+    if (dctx == NULL)
+        return 0;
+
+    r = dctx->op.sig.signature->digest_sign_final(dctx->op.sig.algctx,
+                                                  sigret, siglen,
+                                                  SIZE_MAX);
+    EVP_PKEY_CTX_free(dctx);
+    return r;
 
  legacy:
     if (pctx == NULL || pctx->pmeth == NULL) {
@@ -429,8 +440,7 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
         if (ctx->flags & EVP_MD_CTX_FLAG_FINALISE)
             r = pctx->pmeth->signctx(pctx, sigret, siglen, ctx);
         else {
-            EVP_PKEY_CTX *dctx = EVP_PKEY_CTX_dup(pctx);
-
+            dctx = EVP_PKEY_CTX_dup(pctx);
             if (dctx == NULL)
                 return 0;
             r = dctx->pmeth->signctx(dctx, sigret, siglen, ctx);
@@ -516,7 +526,7 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
     int r = 0;
     unsigned int mdlen = 0;
     int vctx = 0;
-    EVP_PKEY_CTX *pctx = ctx->pctx;
+    EVP_PKEY_CTX *dctx, *pctx = ctx->pctx;
 
     if (pctx == NULL
             || pctx->operation != EVP_PKEY_OP_VERIFYCTX
@@ -524,8 +534,17 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
             || pctx->op.sig.signature == NULL)
         goto legacy;
 
-    return pctx->op.sig.signature->digest_verify_final(pctx->op.sig.algctx,
-                                                       sig, siglen);
+    if ((ctx->flags & EVP_MD_CTX_FLAG_FINALISE) != 0)
+        return pctx->op.sig.signature->digest_verify_final(pctx->op.sig.algctx,
+                                                           sig, siglen);
+    dctx = EVP_PKEY_CTX_dup(pctx);
+    if (dctx == NULL)
+        return 0;
+
+    r = dctx->op.sig.signature->digest_verify_final(dctx->op.sig.algctx,
+                                                    sig, siglen);
+    EVP_PKEY_CTX_free(dctx);
+    return r;
 
  legacy:
     if (pctx == NULL || pctx->pmeth == NULL) {
