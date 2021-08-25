@@ -1362,31 +1362,32 @@ OpenSSL 1.1.1
 
  * Fixed an SM2 Decryption Buffer Overflow.
 
-   In order to decrypt SM2 encrypted data an application is expected to call the
-   API function EVP_PKEY_decrypt(). Typically an application will call this
-   function twice. The first time, on entry, the "out" parameter can be NULL and,
-   on exit, the "outlen" parameter is populated with the buffer size required to
-   hold the decrypted plaintext. The application can then allocate a sufficiently
-   sized buffer and call EVP_PKEY_decrypt() again, but this time passing a non-NULL
-   value for the "out" parameter.
+   In order to decrypt SM2 encrypted data an application is expected to
+   call the API function EVP_PKEY_decrypt(). Typically an application will
+   call this function twice. The first time, on entry, the "out" parameter
+   can be NULL and, on exit, the "outlen" parameter is populated with the
+   buffer size required to hold the decrypted plaintext. The application
+   can then allocate a sufficiently sized buffer and call EVP_PKEY_decrypt()
+   again, but this time passing a non-NULL value for the "out" parameter.
 
    A bug in the implementation of the SM2 decryption code means that the
-   calculation of the buffer size required to hold the plaintext returned by the
-   first call to EVP_PKEY_decrypt() can be smaller than the actual size required by
-   the second call. This can lead to a buffer overflow when EVP_PKEY_decrypt() is
-   called by the application a second time with a buffer that is too small.
+   calculation of the buffer size required to hold the plaintext returned
+   by the first call to EVP_PKEY_decrypt() can be smaller than the actual
+   size required by the second call. This can lead to a buffer overflow
+   when EVP_PKEY_decrypt() is called by the application a second time with
+   a buffer that is too small.
 
-   A malicious attacker who is able present SM2 content for decryption to an
-   application could cause attacker chosen data to overflow the buffer by up to a
-   maximum of 62 bytes altering the contents of other data held after the
-   buffer, possibly changing application behaviour or causing the application to
-   crash. The location of the buffer is application dependent but is typically
-   heap allocated.
+   A malicious attacker who is able present SM2 content for decryption to
+   an application could cause attacker chosen data to overflow the buffer
+   by up to a maximum of 62 bytes altering the contents of other data held
+   after the buffer, possibly changing application behaviour or causing
+   the application to crash. The location of the buffer is application
+   dependent but is typically heap allocated.
    ([CVE-2021-3711])
 
    *Matt Caswell*
 
-  * Fixed various read buffer overruns processing ASN.1 strings
+ *  Fixed various read buffer overruns processing ASN.1 strings
 
     ASN.1 strings are represented internally within OpenSSL as an ASN1_STRING
     structure which contains a buffer holding the string data and a field
