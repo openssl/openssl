@@ -31,7 +31,7 @@ breaking changes, and mappings for the large list of deprecated functions.
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
  * Due to move of the implementation of cryptographic operations
-   to the providers validation of various operation parameters can
+   to the providers, validation of various operation parameters can
    be postponed until the actual operation is executed where previously
    it happened immediately when an operation parameter was set.
    For example when setting unsupported curve with
