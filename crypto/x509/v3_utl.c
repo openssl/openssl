@@ -901,12 +901,19 @@ static int do_x509_check(X509 *x, const char *chk, size_t chklen,
                 if (OBJ_obj2nid(gen->d.otherName->type_id) ==
                     NID_id_on_SmtpUTF8Mailbox) {
                     san_present = 1;
-                    cstr = gen->d.otherName->value->value.utf8string;
 
-                    /* Positive on success, negative on error! */
-                    if ((rv = do_check_string(cstr, 0, equal, flags,
-                                              chk, chklen, peername)) != 0)
-                        break;
+                    /*
+                     * If it is not a UTF8String then that is unexpected and we
+                     * treat it as no match
+                     */
+                    if (gen->d.otherName->value->type == V_ASN1_UTF8STRING) {
+                        cstr = gen->d.otherName->value->value.utf8string;
+
+                        /* Positive on success, negative on error! */
+                        if ((rv = do_check_string(cstr, 0, equal, flags,
+                                                chk, chklen, peername)) != 0)
+                            break;
+                    }
                 } else
                     continue;
             } else {
