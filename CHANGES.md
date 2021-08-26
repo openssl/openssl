@@ -34,7 +34,8 @@ breaking changes, and mappings for the large list of deprecated functions.
    to the providers, validation of various operation parameters can
    be postponed until the actual operation is executed where previously
    it happened immediately when an operation parameter was set.
-   For example when setting unsupported curve with
+
+   For example when setting an unsupported curve with
    EVP_PKEY_CTX_set_ec_paramgen_curve_nid() this function call will not
    fail but later keygen operations with the EVP_PKEY_CTX will fail.
 
