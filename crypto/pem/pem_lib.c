@@ -938,7 +938,7 @@ int PEM_read_bio_ex(BIO *bp, char **name_out, char **header,
     ctx = EVP_ENCODE_CTX_new();
     if (ctx == NULL) {
         PEMerr(PEM_F_PEM_READ_BIO_EX, ERR_R_MALLOC_FAILURE);
-        return 0;
+        goto end;
     }
 
     EVP_DecodeInit(ctx);
