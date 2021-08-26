@@ -12,7 +12,7 @@ use warnings;
 
 use File::Spec;
 use OpenSSL::Test::Utils;
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_file with/;
 
 setup("test_eai_data");
 
@@ -21,7 +21,7 @@ setup("test_eai_data");
 #./util/wrap.pl apps/openssl verify -nameopt utf8 -no_check_time -CAfile test/recipes/25-test_eai_data/utf8_chain.pem test/recipes/25-test_eai_data/ascii_leaf.pem
 #./util/wrap.pl apps/openssl verify -nameopt utf8 -no_check_time -CAfile test/recipes/25-test_eai_data/ascii_chain.pem test/recipes/25-test_eai_data/utf8_leaf.pem
 
-plan tests => 11;
+plan tests => 12;
 
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 my $folder = "test/recipes/25-test_eai_data";
@@ -59,4 +59,14 @@ ok(run(app(["openssl", "verify", "-nameopt", "utf8", "-no_check_time", "-CAfile"
 
 ok(!run(app(["openssl", "verify", "-nameopt", "utf8", "-no_check_time", "-CAfile", $ascii_chain_pem, $utf8_pem])));
 ok(!run(app(["openssl", "verify", "-nameopt", "utf8", "-no_check_time", "-CAfile", $utf8_chain_pem,  $ascii_pem])));
+
+#Check that we get the expected failure return code
+with({ exit_checker => sub { return shift == 2; } },
+     sub {
+        ok(run(app(["openssl", "verify", "-CAfile",
+                    srctop_file("test", "certs", "bad-othername-namec.pem"),
+                    "-partial_chain", "-no_check_time", "-verify_email",
+                    'foo@example.com',
+                    srctop_file("test", "certs", "bad-othername-namec.pem")])));
+     });
 
