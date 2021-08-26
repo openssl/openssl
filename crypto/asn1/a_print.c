@@ -23,7 +23,7 @@ int ASN1_PRINTABLE_type(const unsigned char *s, int len)
     if (s == NULL)
         return V_ASN1_PRINTABLESTRING;
 
-    while ((*s) && (len-- != 0)) {
+    while (len-- != 0 && *s != '\0') {
         c = *(s++);
         if (!ossl_isasn1print(c))
             ia5 = 1;
