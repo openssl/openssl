@@ -401,8 +401,7 @@ The options available are described in detail below.
 
 =over 4
 
-=item B<input_password>
-=item B<output_password>
+=item B<input_password>, B<output_password>
 
 The passwords for the input private key file (if present) and
 the output private key file (if one will be created). The
