@@ -3241,7 +3241,7 @@ static EC_GROUP *ec_group_new_from_data(OSSL_LIB_CTX *libctx,
         ASN1_OBJECT *asn1obj = OBJ_nid2obj(curve.nid);
 
         if (asn1obj == NULL) {
-            ECerr(EC_F_EC_GROUP_NEW_FROM_DATA, ERR_R_OBJ_LIB);
+            ERR_raise(ERR_LIB_EC, ERR_R_OBJ_LIB);
             goto err;
         }
         if (OBJ_length(asn1obj) == 0)
