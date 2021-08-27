@@ -8,11 +8,12 @@
 
 use strict;
 use warnings;
+use Time::Piece;
 
 my ($cflags, $platform) = @ARGV;
 $cflags = "compiler: $cflags";
 
-my $date = gmtime($ENV{'SOURCE_DATE_EPOCH'} || time()) . " UTC";
+my $date = gmtime($ENV{'SOURCE_DATE_EPOCH'} || time())->ymd() . " UTC";
 
 print <<"END_OUTPUT";
 /*
