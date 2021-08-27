@@ -95,6 +95,7 @@ struct app_verify_arg {
 static DH *get_dh512(void);
 static DH *get_dh1024(void);
 static DH *get_dh1024dsa(void);
+static DH *get_dh2048(void);
 #endif
 
 static char *psk_key = NULL;    /* by default PSK is not used */
@@ -641,6 +642,8 @@ static void sv_usage(void)
             " -dhe1024      - use 1024 bit key (safe prime) for DHE (default, no-op)\n");
     fprintf(stderr,
             " -dhe1024dsa   - use 1024 bit key (with 160-bit subprime) for DHE\n");
+    fprintf(stderr,
+            " -dhe2048      - use 2048 bit key (rfc3526 pime) for DHE\n");
     fprintf(stderr, " -no_dhe       - disable DHE\n");
 #endif
 #ifndef OPENSSL_NO_EC
@@ -895,6 +898,7 @@ int main(int argc, char *argv[])
 #ifndef OPENSSL_NO_DH
     DH *dh;
     int dhe512 = 0, dhe1024dsa = 0;
+    int dhe2048 = 0;
 #endif
     int no_dhe = 0;
     int no_psk = 0;
@@ -989,6 +993,13 @@ int main(int argc, char *argv[])
 #else
             fprintf(stderr,
                     "ignoring -dhe512, since I'm compiled without DH\n");
+#endif
+        } else if (strcmp(*argv, "-dhe2048") == 0) {
+#ifndef OPENSSL_NO_DH
+            dhe2048 = 1;
+#else
+            fprintf(stderr,
+                    "ignoring -dhe2048, since I'm compiled without DH\n");
 #endif
         } else if (strcmp(*argv, "-dhe1024dsa") == 0) {
 #ifndef OPENSSL_NO_DH
@@ -1482,6 +1493,8 @@ int main(int argc, char *argv[])
             dh = get_dh1024dsa();
         } else if (dhe512)
             dh = get_dh512();
+        else if (dhe2048)
+            dh = get_dh2048();
         else
             dh = get_dh1024();
         SSL_CTX_set_tmp_dh(s_ctx, dh);
@@ -3018,6 +3031,34 @@ static DH *get_dh1024dsa(void)
     }
     DH_set_length(dh, 160);
     return dh;
+}
+
+static DH *get_dh2048(void)
+{
+    BIGNUM *p = NULL, *g = NULL;
+    DH *dh = NULL;
+
+    if ((dh = DH_new()) == NULL)
+        return NULL;
+
+    g = BN_new();
+    if (g == NULL || !BN_set_word(g, 2))
+        goto err;
+
+    p = BN_get_rfc3526_prime_2048(NULL);
+    if (p == NULL)
+        goto err;
+
+    if (!DH_set0_pqg(dh, p, NULL, g))
+        goto err;
+
+    return dh;
+
+ err:
+    DH_free(dh);
+    BN_free(p);
+    BN_free(g);
+    return NULL;
 }
 #endif
 
