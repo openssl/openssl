@@ -161,14 +161,11 @@ int dsa_main(int argc, char **argv)
     }
 
     /* No extra args. */
-    argc = opt_num_rest();
-    if (argc != 0)
+    if (!opt_check_rest_arg(NULL))
         goto opthelp;
 
-    if (ciphername != NULL) {
-        if (!opt_cipher(ciphername, &enc))
-            goto end;
-    }
+    if (!opt_cipher(ciphername, &enc))
+        goto end;
     private = pubin || pubout ? 0 : 1;
     if (text && !pubin)
         private = 1;

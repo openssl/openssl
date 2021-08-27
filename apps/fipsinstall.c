@@ -382,9 +382,12 @@ opthelp:
     }
 
     /* No extra arguments. */
-    argc = opt_num_rest();
-    if (argc != 0 || (verify && in_fname == NULL))
+    if (!opt_check_rest_arg(NULL))
         goto opthelp;
+    if (verify && in_fname == NULL) {
+        BIO_printf(bio_err, "Missing -in option for -verify\n");
+        goto opthelp;
+    }
 
     if (parent_config != NULL) {
         /* Test that a parent config can load the module */

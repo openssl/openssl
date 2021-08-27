@@ -83,12 +83,12 @@ opthelp:
     }
 
     /* Optional arguments are numbers to check. */
+    if (generate && !opt_check_rest_arg(NULL))
+        goto opthelp;
     argc = opt_num_rest();
     argv = opt_rest();
-    if (generate) {
-        if (argc != 0)
-            goto opthelp;
-    } else if (argc == 0) {
+    if (!generate && argc == 0) {
+        BIO_printf(bio_err, "Missing number (s) to check\n");
         goto opthelp;
     }
 

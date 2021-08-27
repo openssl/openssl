@@ -399,8 +399,10 @@ int opt_cipher_any(const char *name, EVP_CIPHER **cipherp)
 {
     int ret;
 
+    if (name == NULL)
+         return 1;
     if ((ret = opt_cipher_silent(name, cipherp)) == 0)
-        opt_printf_stderr("%s: Unknown cipher: %s\n", prog, name);
+        opt_printf_stderr("%s: Unknown option or cipher: %s\n", prog, name);
     return ret;
 }
 
@@ -410,6 +412,8 @@ int opt_cipher(const char *name, EVP_CIPHER **cipherp)
      unsigned long int flags;
      EVP_CIPHER *c = NULL;
 
+    if (name == NULL)
+         return 1;
      if (opt_cipher_any(name, &c)) {
         mode = EVP_CIPHER_get_mode(c);
         flags = EVP_CIPHER_get_flags(c);
@@ -454,10 +458,20 @@ int opt_md(const char *name, EVP_MD **mdp)
 {
     int ret;
 
+    if (name == NULL)
+        return 1;
     if ((ret = opt_md_silent(name, mdp)) == 0)
-        opt_printf_stderr("%s: Unknown option or message digest: %s\n", prog,
-                          name != NULL ? name : "\"\"");
+        opt_printf_stderr("%s: Unknown option or message digest: %s\n",
+                          prog, name);
     return ret;
+}
+
+int opt_check_md(const char *name)
+{
+    if (opt_md(name, NULL))
+        return 1;
+    ERR_clear_error();
+    return 0;
 }
 
 /* Look through a list of name/value pairs. */
@@ -1011,6 +1025,26 @@ int opt_num_rest(void)
     for (pp = opt_rest(); *pp; pp++, i++)
         continue;
     return i;
+}
+
+int opt_check_rest_arg(const char *expected)
+{
+    char *opt = *opt_rest();
+
+    if (opt == NULL || *opt == '\0') {
+        if (expected == NULL)
+            return 1;
+        opt_printf_stderr("%s: Missing argument: %s\n", prog, expected);
+        return 0;
+    } else if (expected != NULL) {
+        return 1;
+    }
+    if (opt_unknown() == NULL)
+        opt_printf_stderr("%s: Extra option: \"%s\"\n", prog, opt);
+    else
+        opt_printf_stderr("%s: Extra (unknown) options: \"%s\" \"%s\"\n",
+                          prog, opt_unknown(), opt != NULL ? opt : "");
+    return 0;
 }
 
 /* Return a string describing the parameter type. */

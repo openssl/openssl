@@ -101,19 +101,16 @@ int gendsa_main(int argc, char **argv)
     }
 
     /* One argument, the params file. */
-    argc = opt_num_rest();
-    argv = opt_rest();
-    if (argc != 1)
+    if (!opt_check_rest_arg("params file"))
         goto opthelp;
+    argv = opt_rest();
     dsaparams = argv[0];
 
     if (!app_RAND_load())
         goto end;
 
-    if (ciphername != NULL) {
-        if (!opt_cipher(ciphername, &enc))
-            goto end;
-    }
+    if (!opt_cipher(ciphername, &enc))
+        goto end;
     private = 1;
 
     if (!app_passwd(NULL, passoutarg, NULL, &passout)) {
