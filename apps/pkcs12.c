@@ -356,17 +356,14 @@ int pkcs12_main(int argc, char **argv)
     }
 
     /* No extra arguments. */
-    argc = opt_num_rest();
-    if (argc != 0)
+    if (!opt_check_rest_arg(NULL))
         goto opthelp;
 
     if (!app_RAND_load())
         goto end;
 
-    if (ciphername != NULL) {
-        if (!opt_cipher_any(ciphername, &enc))
-            goto opthelp;
-    }
+    if (!opt_cipher_any(ciphername, &enc))
+        goto opthelp;
     if (export_pkcs12) {
         if ((options & INFO) != 0)
             WARN_EXPORT("info");

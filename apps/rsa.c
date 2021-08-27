@@ -217,14 +217,11 @@ int rsa_main(int argc, char **argv)
     }
 
     /* No extra arguments. */
-    argc = opt_num_rest();
-    if (argc != 0)
+    if (!opt_check_rest_arg(NULL))
         goto opthelp;
 
-    if (ciphername != NULL) {
-        if (!opt_cipher(ciphername, &enc))
-            goto opthelp;
-    }
+    if (!opt_cipher(ciphername, &enc))
+        goto opthelp;
     private = (text && !pubin) || (!pubout && !noout) ? 1 : 0;
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {

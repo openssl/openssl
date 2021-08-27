@@ -133,7 +133,7 @@ int dsaparam_main(int argc, char **argv)
     if (argc == 1) {
         if (!opt_int(argv[0], &num) || num < 0)
             goto opthelp;
-    } else if (argc != 0) {
+    } else if (!opt_check_rest_arg(NULL)) {
         goto opthelp;
     }
     if (!app_RAND_load())

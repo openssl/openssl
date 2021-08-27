@@ -137,10 +137,9 @@ opthelp:
     }
 
     /* One argument, the MAC name. */
-    argc = opt_num_rest();
-    argv = opt_rest();
-    if (argc != 1)
+    if (!opt_check_rest_arg("MAC name"))
         goto opthelp;
+    argv = opt_rest();
 
     mac = EVP_MAC_fetch(app_get0_libctx(), argv[0], app_get0_propq());
     if (mac == NULL) {

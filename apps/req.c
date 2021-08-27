@@ -242,7 +242,6 @@ int req_main(int argc, char **argv)
     X509 *new_x509 = NULL, *CAcert = NULL;
     X509_REQ *req = NULL;
     EVP_CIPHER *cipher = NULL;
-    EVP_MD *md = NULL;
     int ext_copy = EXT_COPY_UNSET;
     BIO *addext_bio = NULL;
     char *extensions = NULL;
@@ -476,8 +475,7 @@ int req_main(int argc, char **argv)
     }
 
     /* No extra arguments. */
-    argc = opt_num_rest();
-    if (argc != 0)
+    if (!opt_check_rest_arg(NULL))
         goto opthelp;
 
     if (!app_RAND_load())
@@ -531,11 +529,8 @@ int req_main(int argc, char **argv)
 
     /* Check that any specified digest is fetchable */
     if (digest != NULL) {
-        if (!opt_md(digest, &md)) {
-            ERR_clear_error();
+        if (!opt_check_md(digest))
             goto opthelp;
-        }
-        EVP_MD_free(md);
     } else {
         /* No digest specified, default to configuration */
         p = NCONF_get_string(req_conf, section, "default_md");
