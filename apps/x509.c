@@ -61,7 +61,7 @@ const OPTIONS x509_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
 
     {"in", OPT_IN, '<',
-     "Certificate input (default stdin), or CSR input file with -req"},
+     "Certificate input, or CSR input file with -req (default stdin)"},
     {"passin", OPT_PASSIN, 's', "Private key and cert file pass-phrase source"},
     {"new", OPT_NEW, '-', "Generate a certificate from scratch"},
     {"x509toreq", OPT_X509TOREQ, '-',
@@ -73,7 +73,7 @@ const OPTIONS x509_options[] = {
      "CSR input file format (DER or PEM) - default PEM"},
     {"vfyopt", OPT_VFYOPT, 's', "CSR verification parameter in n:v form"},
     {"key", OPT_KEY, 's',
-     "Key to be used in certificate or cert request"},
+     "Key for signing, and to include unless using -force_pubkey"},
     {"signkey", OPT_SIGNKEY, 's',
      "Same as -key"},
     {"keyform", OPT_KEYFORM, 'E',
@@ -630,7 +630,7 @@ int x509_main(int argc, char **argv)
         }
         if (privkeyfile == NULL && pubkeyfile == NULL) {
             BIO_printf(bio_err,
-                       "The -new option without -key requires using -force_pubkey\n");
+                       "The -new option requires using the -key or -force_pubkey option\n");
             goto end;
         }
     }
@@ -642,7 +642,7 @@ int x509_main(int argc, char **argv)
         CAkeyfile = CAfile;
     if (CAfile != NULL) {
         if (privkeyfile != NULL) {
-            BIO_printf(bio_err, "Cannot use both -key and -CA option\n");
+            BIO_printf(bio_err, "Cannot use both -key/-signkey and -CA option\n");
             goto end;
         }
     } else if (CAkeyfile != NULL) {
@@ -676,6 +676,9 @@ int x509_main(int argc, char **argv)
     }
 
     if (reqfile) {
+        if (infile == NULL)
+            BIO_printf(bio_err,
+                       "Warning: Reading cert request from stdin since no -in option is given\n");
         req = load_csr(infile, informat, "certificate request input");
         if (req == NULL)
             goto end;
@@ -725,6 +728,9 @@ int x509_main(int argc, char **argv)
             }
         }
     } else {
+        if (infile == NULL)
+            BIO_printf(bio_err,
+                       "Warning: Reading certificate from stdin since no -in option is given\n");
         x = load_cert_pass(infile, informat, 1, passin, "certificate");
         if (x == NULL)
             goto end;
@@ -819,7 +825,7 @@ int x509_main(int argc, char **argv)
 
     if (x509toreq) { /* also works in conjunction with -req */
         if (privkey == NULL) {
-            BIO_printf(bio_err, "Must specify request key using -key\n");
+            BIO_printf(bio_err, "Must specify request signing key using -key\n");
             goto end;
         }
         if (clrext && ext_copy != EXT_COPY_NONE) {
