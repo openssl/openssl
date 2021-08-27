@@ -295,26 +295,30 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len_in)
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
         /* No NUL terminator in fuzzing builds */
         str->data = OPENSSL_realloc(c, len);
+        if (str->data == NULL && len != 0) {
 #else
         str->data = OPENSSL_realloc(c, len + 1);
-#endif
         if (str->data == NULL) {
+#endif
             ASN1err(ASN1_F_ASN1_STRING_SET, ERR_R_MALLOC_FAILURE);
             str->data = c;
             return 0;
         }
     }
     str->length = len;
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    if (data != NULL && len != 0)
+        memcpy(str->data, data, len);
+#else
     if (data != NULL) {
         memcpy(str->data, data, len);
-#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
         /*
          * Add a NUL terminator. This should not be necessary - but we add it as
          * a safety precaution
          */
         str->data[len] = '\0';
-#endif
     }
+#endif
     return 1;
 }
 
@@ -375,7 +379,8 @@ int ASN1_STRING_cmp(const ASN1_STRING *a, const ASN1_STRING *b)
 
     i = (a->length - b->length);
     if (i == 0) {
-        i = memcmp(a->data, b->data, a->length);
+        if (a->length != 0)
+            i = memcmp(a->data, b->data, a->length);
         if (i == 0)
             return a->type - b->type;
         else
