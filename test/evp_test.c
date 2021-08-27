@@ -2664,7 +2664,7 @@ static int kdf_test_run(EVP_TEST *t)
         t->err = "KDF_CTRL_ERROR";
         return 1;
     }
-    if (!TEST_ptr(got = OPENSSL_malloc(got_len))) {
+    if (!TEST_ptr(got = OPENSSL_malloc(got_len == 0 ? 1 : got_len))) {
         t->err = "INTERNAL_ERROR";
         goto err;
     }
