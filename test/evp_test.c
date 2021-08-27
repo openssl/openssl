@@ -2760,7 +2760,7 @@ static int pkey_kdf_test_run(EVP_TEST *t)
     unsigned char *got = NULL;
     size_t got_len = expected->output_len;
 
-    if (!TEST_ptr(got = OPENSSL_malloc(got_len))) {
+    if (!TEST_ptr(got = OPENSSL_malloc(got_len == 0 ? 1 : got_len))) {
         t->err = "INTERNAL_ERROR";
         goto err;
     }
