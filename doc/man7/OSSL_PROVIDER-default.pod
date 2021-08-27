@@ -81,23 +81,11 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item CAMELLIA, see L<EVP_CIPHER-CAMELLIA(7)>
 
-=item DES, see L<EVP_CIPHER-DES(7)>
-
-=item BF, see L<EVP_CIPHER-BLOWFISH(7)>
-
-=item IDEA, see L<EVP_CIPHER-IDEA(7)>
-
-=item CAST5, see L<EVP_CIPHER-CAST(7)>
+=item 3DES, see L<EVP_CIPHER-DES(7)>
 
 =item SEED, see L<EVP_CIPHER-SEED(7)>
 
 =item SM4, see L<EVP_CIPHER-SM4(7)>
-
-=item RC2, see L<EVP_CIPHER-RC2(7)>
-
-=item RC4, see L<EVP_CIPHER-RC4(7)>
-
-=item RC5, see L<EVP_CIPHER-RC5(7)>
 
 =item ChaCha20, see L<EVP_CIPHER-CHACHA(7)>
 
