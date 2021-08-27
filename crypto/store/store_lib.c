@@ -114,13 +114,17 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
         scheme = schemes[i];
         OSSL_TRACE1(STORE, "Looking up scheme %s\n", scheme);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
+        ERR_set_mark();
         if ((loader = ossl_store_get0_loader_int(scheme)) != NULL) {
+            ERR_clear_last_mark();
             no_loader_found = 0;
             if (loader->open_ex != NULL)
                 loader_ctx = loader->open_ex(loader, uri, libctx, propq,
                                              ui_method, ui_data);
             else
                 loader_ctx = loader->open(loader, uri, ui_method, ui_data);
+        } else {
+            ERR_pop_to_mark();
         }
 #endif
         if (loader == NULL
