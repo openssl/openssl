@@ -194,13 +194,16 @@ Otherwise it may have the value B<keyid> or B<issuer>
 or both of them, separated by C<,>.
 Either or both can have the option B<always>,
 indicated by putting a colon C<:> between the value and this option.
+For self-signed certificates the AKID is suppressed unless B<always> is present.
 By default the B<x509>, B<req>, and B<ca> apps behave as if
 "none" was given for self-signed certificates and "keyid, issuer" otherwise.
 
-If B<keyid> is present, an attempt is made to compute the hash of the public key
-corresponding to the signing key in case the certificate is self-signed,
-or else to copy the subject key identifier (SKID) from the issuer certificate.
-If this fails and the option B<always> is present, an error is returned.
+If B<keyid> is present, an attempt is made to
+copy the subject key identifier (SKID) from the issuer certificate except if
+the issuer certificate is the same as the current one and it is not self-signed.
+The hash of the public key related to the signing key is taken as fallback
+if the issuer certificate is the same as the current certificate.
+If B<always> is present but no value can be obtained, an error is returned.
 
 If B<issuer> is present, and in addition it has the option B<always> specified
 or B<keyid> is not present,
