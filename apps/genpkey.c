@@ -139,8 +139,7 @@ int genpkey_main(int argc, char **argv)
     }
 
     /* No extra arguments. */
-    argc = opt_num_rest();
-    if (argc != 0)
+    if (!opt_check_rest_arg(NULL))
         goto opthelp;
 
     /* Fetch cipher, etc. */
@@ -163,9 +162,12 @@ int genpkey_main(int argc, char **argv)
             goto end;
         }
     }
-    if (ciphername != NULL)
-        if (!opt_cipher(ciphername, &cipher) || do_param == 1)
-            goto opthelp;
+    if (!opt_cipher(ciphername, &cipher))
+        goto opthelp;
+    if (ciphername != NULL && do_param == 1) {
+        BIO_printf(bio_err, "Cannot use cipher with -genparam option\n");
+        goto opthelp;
+    }
 
     private = do_param ? 0 : 1;
 

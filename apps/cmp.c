@@ -2552,9 +2552,7 @@ static int get_opts(int argc, char **argv)
     }
 
     /* No extra args. */
-    argc = opt_num_rest();
-    argv = opt_rest();
-    if (argc != 0)
+    if (!opt_check_rest_arg(NULL))
         goto opthelp;
     return 1;
 }

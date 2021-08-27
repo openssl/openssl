@@ -258,15 +258,12 @@ int storeutl_main(int argc, char *argv[])
     }
 
     /* One argument, the URI */
-    argc = opt_num_rest();
-    argv = opt_rest();
-    if (argc != 1)
+    if (!opt_check_rest_arg("URI"))
         goto opthelp;
+    argv = opt_rest();
 
-    if (digestname != NULL) {
-        if (!opt_md(digestname, &digest))
-            goto opthelp;
-    }
+    if (!opt_md(digestname, &digest))
+        goto opthelp;
 
     if (criterion != 0) {
         switch (criterion) {

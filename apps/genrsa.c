@@ -157,8 +157,7 @@ opthelp:
                        "Warning: It is not recommended to use more than %d bit for RSA keys.\n"
                        "         Your key size is %d! Larger key size may behave not as expected.\n",
                        OPENSSL_RSA_MAX_MODULUS_BITS, num);
-    } else if (argc > 0) {
-        BIO_printf(bio_err, "Extra arguments given.\n");
+    } else if (!opt_check_rest_arg(NULL)) {
         goto opthelp;
     }
 
@@ -166,10 +165,8 @@ opthelp:
         goto end;
 
     private = 1;
-    if (ciphername != NULL) {
-        if (!opt_cipher(ciphername, &enc))
-            goto end;
-    }
+    if (!opt_cipher(ciphername, &enc))
+        goto end;
     if (!app_passwd(NULL, passoutarg, NULL, &passout)) {
         BIO_printf(bio_err, "Error getting password\n");
         goto end;

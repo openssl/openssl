@@ -368,6 +368,7 @@ char *opt_unknown(void);
 int opt_cipher(const char *name, EVP_CIPHER **cipherp);
 int opt_cipher_any(const char *name, EVP_CIPHER **cipherp);
 int opt_cipher_silent(const char *name, EVP_CIPHER **cipherp);
+int opt_check_md(const char *name);
 int opt_md(const char *name, EVP_MD **mdp);
 int opt_md_silent(const char *name, EVP_MD **mdp);
 
@@ -392,6 +393,7 @@ int opt_provider_option_given(void);
 
 char **opt_rest(void);
 int opt_num_rest(void);
+int opt_check_rest_arg(const char *expected);
 
 /* Returns non-zero if legacy paths are still available */
 int opt_legacy_okay(void);

@@ -357,7 +357,7 @@ int help_main(int argc, char **argv)
         new_argv[2] = NULL;
         return do_cmd(prog_init(), 2, new_argv);
     }
-    if (opt_num_rest() != 0) {
+    if (!opt_check_rest_arg(NULL)) {
         BIO_printf(bio_err, "Usage: %s\n", prog);
         return 1;
     }

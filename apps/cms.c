@@ -697,10 +697,8 @@ int cms_main(int argc, char **argv)
         if (!opt_md(digestname, &sign_md))
             goto end;
     }
-    if (ciphername != NULL) {
-        if (!opt_cipher_any(ciphername, &cipher))
-            goto end;
-    }
+    if (!opt_cipher_any(ciphername, &cipher))
+        goto end;
     if (wrapname != NULL) {
         if (!opt_cipher_any(wrapname, &wrap_cipher))
             goto end;
