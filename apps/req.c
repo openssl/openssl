@@ -103,7 +103,7 @@ const OPTIONS req_options[] = {
     {"keygen_engine", OPT_KEYGEN_ENGINE, 's',
      "Specify engine to be used for key generation operations"},
 #endif
-    {"in", OPT_IN, '<', "X.509 request input file"},
+    {"in", OPT_IN, '<', "X.509 request input file (default stdin)"},
     {"inform", OPT_INFORM, 'F', "Input format - DER or PEM"},
     {"verify", OPT_VERIFY, '-', "Verify self-signature on the request"},
 
@@ -136,10 +136,10 @@ const OPTIONS req_options[] = {
      "Cert extension section (override value in config file)"},
     {"reqexts", OPT_REQEXTS, 's',
      "Request extension section (override value in config file)"},
-    {"precert", OPT_PRECERT, '-', "Add a poison extension (implies -new)"},
+    {"precert", OPT_PRECERT, '-', "Add a poison extension to generated cert (implies -new)"},
 
     OPT_SECTION("Keys and Signing"),
-    {"key", OPT_KEY, 's', "Key to include and to use for self-signature"},
+    {"key", OPT_KEY, 's', "Key for signing, and to include unless -in given"},
     {"keyform", OPT_KEYFORM, 'f', "Key file format (ENGINE, other values ignored)"},
     {"pubkey", OPT_PUBKEY, '-', "Output public key"},
     {"keyout", OPT_KEYOUT, '>', "File to write private key to"},
@@ -489,8 +489,13 @@ int req_main(int argc, char **argv)
         if (ext_copy == EXT_COPY_NONE)
             BIO_printf(bio_err, "Ignoring -copy_extensions 'none' when -x509 is not given\n");
     }
-    if (gen_x509 && infile == NULL)
-        newreq = 1;
+    if (infile == NULL) {
+        if (gen_x509)
+            newreq = 1;
+        else
+            BIO_printf(bio_err,
+                       "Warning: Will read cert request from stdin since no -in option is given\n");
+    }
 
     if (!app_passwd(passargin, passargout, &passin, &passout)) {
         BIO_printf(bio_err, "Error getting passwords\n");
@@ -631,6 +636,11 @@ int req_main(int argc, char **argv)
             goto end;
         app_RAND_load_conf(req_conf, section);
     }
+    if (keyalg != NULL && pkey != NULL) {
+        BIO_printf(bio_err,
+                   "Warning: Not generating key via given -newkey option since -key is given\n");
+        /* Better throw an error in this case */
+    }
     if (newreq && pkey == NULL) {
         app_RAND_load_conf(req_conf, section);
 
@@ -742,9 +752,17 @@ int req_main(int argc, char **argv)
         goto end;
 
     if (!newreq) {
-        req = load_csr(infile, informat, "X509 request");
+        if (keyfile != NULL)
+            BIO_printf(bio_err,
+                       "Warning: Not placing -key in cert or request since request is used\n");
+        req = load_csr(infile /* if NULL, reads from stdin */,
+                       informat, "X509 request");
         if (req == NULL)
             goto end;
+    } else if (infile != NULL) {
+        BIO_printf(bio_err,
+                   "Warning: Ignoring -in option since -new or -newkey or -precert is given\n");
+        /* Better throw an error in this case, as done in the x509 app */
     }
 
     if (CAkeyfile == NULL)
@@ -752,7 +770,7 @@ int req_main(int argc, char **argv)
     if (CAkeyfile != NULL) {
         if (CAfile == NULL) {
             BIO_printf(bio_err,
-                       "Ignoring -CAkey option since no -CA option is given\n");
+                       "Warning: Ignoring -CAkey option since no -CA option is given\n");
         } else {
             if ((CAkey = load_key(CAkeyfile, FORMAT_UNDEF,
                                   0, passin, e,
@@ -788,6 +806,7 @@ int req_main(int argc, char **argv)
                 BIO_printf(bio_err, "Error making certificate request\n");
                 goto end;
             }
+            /* Note that -x509 can take over -key and -subj option values. */
         }
         if (gen_x509) {
             EVP_PKEY *pub_key = X509_REQ_get0_pubkey(req);
@@ -797,6 +816,10 @@ int req_main(int argc, char **argv)
                 X509_REQ_get_subject_name(req);
             X509_NAME *n_subj = fsubj != NULL ? fsubj :
                 X509_REQ_get_subject_name(req);
+
+            if (CAcert != NULL && keyfile != NULL)
+                BIO_printf(bio_err,
+                           "Warning: Not using -key or -newkey for signing since -CA option is given\n");
 
             if ((new_x509 = X509_new_ex(app_get0_libctx(),
                                         app_get0_propq())) == NULL)
@@ -874,6 +897,10 @@ int req_main(int argc, char **argv)
         } else {
             X509V3_CTX ext_ctx;
 
+            if (precert) {
+                BIO_printf(bio_err,
+                           "Warning: Ignoring -precert flag since no cert is produced\n");
+            }
             /* Set up V3 context struct */
             X509V3_set_ctx(&ext_ctx, NULL, NULL, req, NULL, 0);
             X509V3_set_nconf(&ext_ctx, req_conf);
