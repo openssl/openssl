@@ -816,7 +816,12 @@ int x509_main(int argc, char **argv)
             goto end;
     }
 
-    X509V3_set_ctx(&ext_ctx, issuer_cert, x, req, NULL, X509V3_CTX_REPLACE);
+    X509V3_set_ctx(&ext_ctx, issuer_cert, x, NULL, NULL, X509V3_CTX_REPLACE);
+    /* prepare fallback for AKID, but only if issuer cert equals subject cert */
+    if (CAfile == NULL) {
+        if (!X509V3_set_issuer_pkey(&ext_ctx, privkey))
+            goto end;
+    }
     if (extconf != NULL && !x509toreq) {
         X509V3_set_nconf(&ext_ctx, extconf);
         if (!X509V3_EXT_add_nconf(extconf, &ext_ctx, extsect, x)) {
