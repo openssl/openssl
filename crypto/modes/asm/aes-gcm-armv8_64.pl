@@ -256,6 +256,7 @@ $code.=<<___;
 .type   aes_gcm_enc_128_kernel,%function
 .align  4
 aes_gcm_enc_128_kernel:
+	AARCH64_VALID_CALL_TARGET
 	cbz     x1, .L128_enc_ret
 	stp     x19, x20, [sp, #-112]!
 	mov     x16, x4
@@ -1089,6 +1090,7 @@ $code.=<<___;
 .type   aes_gcm_dec_128_kernel,%function
 .align  4
 aes_gcm_dec_128_kernel:
+	AARCH64_VALID_CALL_TARGET
 	cbz     x1, .L128_dec_ret
 	stp     x19, x20, [sp, #-112]!
 	mov     x16, x4
@@ -1973,6 +1975,7 @@ $code.=<<___;
 .type   aes_gcm_enc_192_kernel,%function
 .align  4
 aes_gcm_enc_192_kernel:
+	AARCH64_VALID_CALL_TARGET
 	cbz     x1, .L192_enc_ret
 	stp     x19, x20, [sp, #-112]!
 	mov     x16, x4
@@ -2858,6 +2861,7 @@ $code.=<<___;
 .type   aes_gcm_dec_192_kernel,%function
 .align  4
 aes_gcm_dec_192_kernel:
+	AARCH64_VALID_CALL_TARGET
 	cbz     x1, .L192_dec_ret
 	stp     x19, x20, [sp, #-112]!
 	mov     x16, x4
@@ -3797,6 +3801,7 @@ $code.=<<___;
 .type   aes_gcm_enc_256_kernel,%function
 .align  4
 aes_gcm_enc_256_kernel:
+	AARCH64_VALID_CALL_TARGET
 	cbz     x1, .L256_enc_ret
 	stp     x19, x20, [sp, #-112]!
 	mov     x16, x4
@@ -4729,6 +4734,7 @@ $code.=<<___;
 .type   aes_gcm_dec_256_kernel,%function
 .align  4
 aes_gcm_dec_256_kernel:
+	AARCH64_VALID_CALL_TARGET
 	cbz     x1, .L256_dec_ret
 	stp     x19, x20, [sp, #-112]!
 	mov     x16, x4

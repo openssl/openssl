@@ -116,6 +116,7 @@ INCLUDE[aes-mips.o]=..
 GENERATE[aesv8-armx.S]=asm/aesv8-armx.pl
 INCLUDE[aesv8-armx.o]=..
 GENERATE[vpaes-armv8.S]=asm/vpaes-armv8.pl
+INCLUDE[vpaes-armv8.o]=..
 
 GENERATE[aes-armv4.S]=asm/aes-armv4.pl
 INCLUDE[aes-armv4.o]=..
