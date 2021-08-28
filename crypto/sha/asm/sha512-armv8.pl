@@ -190,8 +190,8 @@ ___
 }
 
 $code.=<<___;
+#include "arm_arch.h"
 #ifndef	__KERNEL__
-# include "arm_arch.h"
 .extern	OPENSSL_armcap_P
 .hidden	OPENSSL_armcap_P
 #endif
@@ -202,6 +202,7 @@ $code.=<<___;
 .type	$func,%function
 .align	6
 $func:
+	AARCH64_VALID_CALL_TARGET
 #ifndef	__KERNEL__
 	adrp	x16,OPENSSL_armcap_P
 	ldr	w16,[x16,#:lo12:OPENSSL_armcap_P]
@@ -218,7 +219,7 @@ $code.=<<___	if ($SZ==8);
 ___
 $code.=<<___;
 #endif
-	.inst	0xd503233f				// paciasp
+	AARCH64_SIGN_LINK_REGISTER
 	stp	x29,x30,[sp,#-128]!
 	add	x29,sp,#0
 
@@ -280,7 +281,7 @@ $code.=<<___;
 	ldp	x25,x26,[x29,#64]
 	ldp	x27,x28,[x29,#80]
 	ldp	x29,x30,[sp],#128
-	.inst	0xd50323bf				// autiasp
+	AARCH64_VALIDATE_LINK_REGISTER
 	ret
 .size	$func,.-$func
 
@@ -370,6 +371,7 @@ $code.=<<___;
 .align	6
 sha256_block_armv8:
 .Lv8_entry:
+	// Armv8.3-A PAuth: even though x30 is pushed to stack it is not popped later.
 	stp		x29,x30,[sp,#-16]!
 	add		x29,sp,#0
 
@@ -632,7 +634,9 @@ $code.=<<___;
 .type	sha256_block_neon,%function
 .align	4
 sha256_block_neon:
+	AARCH64_VALID_CALL_TARGET
 .Lneon_entry:
+	// Armv8.3-A PAuth: even though x30 is pushed to stack it is not popped later
 	stp	x29, x30, [sp, #-16]!
 	mov	x29, sp
 	sub	sp,sp,#16*4
@@ -743,6 +747,7 @@ $code.=<<___;
 .align	6
 sha512_block_armv8:
 .Lv8_entry:
+	// Armv8.3-A PAuth: even though x30 is pushed to stack it is not popped later
 	stp		x29,x30,[sp,#-16]!
 	add		x29,sp,#0
 
