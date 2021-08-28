@@ -120,6 +120,8 @@ ${prefix}_set_encrypt_key:
 .Lenc_key:
 ___
 $code.=<<___	if ($flavour =~ /64/);
+	AARCH64_VALID_CALL_TARGET
+	// Armv8.3-A PAuth: even though x30 is pushed to stack it is not popped later.
 	stp	x29,x30,[sp,#-16]!
 	add	x29,sp,#0
 ___
@@ -295,7 +297,7 @@ $code.=<<___;
 ${prefix}_set_decrypt_key:
 ___
 $code.=<<___	if ($flavour =~ /64/);
-	.inst	0xd503233f		// paciasp
+	AARCH64_SIGN_LINK_REGISTER
 	stp	x29,x30,[sp,#-16]!
 	add	x29,sp,#0
 ___
@@ -339,7 +341,7 @@ $code.=<<___	if ($flavour !~ /64/);
 ___
 $code.=<<___	if ($flavour =~ /64/);
 	ldp	x29,x30,[sp],#16
-	.inst	0xd50323bf		// autiasp
+	AARCH64_VALIDATE_LINK_REGISTER
 	ret
 ___
 $code.=<<___;
@@ -359,6 +361,11 @@ $code.=<<___;
 .type	${prefix}_${dir}crypt,%function
 .align	5
 ${prefix}_${dir}crypt:
+___
+$code.=<<___	if ($flavour =~ /64/);
+	AARCH64_VALID_CALL_TARGET
+___
+$code.=<<___;
 	ldr	$rounds,[$key,#240]
 	vld1.32	{$rndkey0},[$key],#16
 	vld1.8	{$inout},[$inp]
@@ -442,6 +449,7 @@ $code.=<<___;
 ${prefix}_ecb_encrypt:
 ___
 $code.=<<___	if ($flavour =~ /64/);
+	AARCH64_VALID_CALL_TARGET
 	subs	$len,$len,#16
 	// Original input data size bigger than 16, jump to big size processing.
 	b.ne    .Lecb_big_size
@@ -1236,6 +1244,8 @@ $code.=<<___;
 ${prefix}_cbc_encrypt:
 ___
 $code.=<<___	if ($flavour =~ /64/);
+	AARCH64_VALID_CALL_TARGET
+	// Armv8.3-A PAuth: even though x30 is pushed to stack it is not popped later.
 	stp	x29,x30,[sp,#-16]!
 	add	x29,sp,#0
 ___
@@ -1764,6 +1774,8 @@ $code.=<<___;
 ${prefix}_ctr32_encrypt_blocks:
 ___
 $code.=<<___	if ($flavour =~ /64/);
+	AARCH64_VALID_CALL_TARGET
+	// Armv8.3-A PAuth: even though x30 is pushed to stack it is not popped later.
 	stp		x29,x30,[sp,#-16]!
 	add		x29,sp,#0
 ___
@@ -2256,6 +2268,7 @@ $code.=<<___	if ($flavour =~ /64/);
 ${prefix}_xts_encrypt:
 ___
 $code.=<<___	if ($flavour =~ /64/);
+	AARCH64_VALID_CALL_TARGET
 	cmp	$len,#16
 	// Original input data size bigger than 16, jump to big size processing.
 	b.ne	.Lxts_enc_big_size
@@ -2930,6 +2943,7 @@ $code.=<<___	if ($flavour =~ /64/);
 .type	${prefix}_xts_decrypt,%function
 .align	5
 ${prefix}_xts_decrypt:
+	AARCH64_VALID_CALL_TARGET
 ___
 $code.=<<___	if ($flavour =~ /64/);
 	cmp	$len,#16

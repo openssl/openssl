@@ -153,6 +153,7 @@ INCLUDE[sha256-armv8.o]=..
 GENERATE[sha512-armv8.S]=asm/sha512-armv8.pl
 INCLUDE[sha512-armv8.o]=..
 GENERATE[keccak1600-armv8.S]=asm/keccak1600-armv8.pl
+INCLUDE[keccak1600-armv8.o]=..
 
 GENERATE[sha1-s390x.S]=asm/sha1-s390x.pl
 INCLUDE[sha1-s390x.o]=..
