@@ -214,6 +214,10 @@ Known answer test for a digest.
 
 Known answer test for a signature.
 
+=item "PCT_Signature" (B<OSSL_SELF_TEST_TYPE_PCT_SIGNATURE>)      
+
+Pairwise Consistency check for a signature.
+
 =item "KAT_KDF" (B<OSSL_SELF_TEST_TYPE_KAT_KDF>)
 
 Known answer test for a key derivation function.
@@ -226,7 +230,7 @@ Known answer test for key agreement.
 
 Known answer test for a Deterministic Random Bit Generator.
 
-=item "Pairwise_Consistency_Test" (B<OSSL_SELF_TEST_TYPE_PCT>)
+=item "Conditional_PCT" (B<OSSL_SELF_TEST_TYPE_PCT>)
 
 Conditional test that is run during the generation of key pairs.
 
