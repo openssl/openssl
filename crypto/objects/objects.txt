@@ -858,6 +858,8 @@ id-ce 54		: inhibitAnyPolicy	: X509v3 Inhibit Any Policy
 id-ce 55		: targetInformation	: X509v3 AC Targeting
 !Cname no-rev-avail
 id-ce 56		: noRevAvail		: X509v3 No Revocation Available
+!Cname single-use
+id-ce 65		: singleUse			: Single Use
 
 # From RFC5280
 ext-key-usage 0		: anyExtendedKeyUsage	: Any Extended Key Usage

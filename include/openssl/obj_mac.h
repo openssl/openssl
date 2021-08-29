@@ -2669,6 +2669,11 @@
 #define NID_no_rev_avail                403
 #define OBJ_no_rev_avail                OBJ_id_ce,56L
 
+#define SN_single_use           "singleUse"
+#define LN_single_use           "Single Use"
+#define NID_single_use          1248
+#define OBJ_single_use          OBJ_id_ce,65L
+
 #define SN_anyExtendedKeyUsage          "anyExtendedKeyUsage"
 #define LN_anyExtendedKeyUsage          "Any Extended Key Usage"
 #define NID_anyExtendedKeyUsage         910
