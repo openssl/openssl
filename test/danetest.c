@@ -152,7 +152,7 @@ err:
 
 static char *read_to_eol(BIO *f)
 {
-    static char buf[1024];
+    static char buf[4096];
     int n;
 
     if (!BIO_gets(f, buf, sizeof(buf)))
