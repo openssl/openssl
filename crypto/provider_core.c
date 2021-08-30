@@ -1089,19 +1089,25 @@ static int provider_activate(OSSL_PROVIDER *prov, int lock, int upcalls)
             return -1;
     }
 
+#ifndef FIPS_MODULE
     if (prov->ischild && upcalls && !ossl_provider_up_ref_parent(prov, 1))
         return -1;
+#endif
 
     if (lock && !CRYPTO_THREAD_read_lock(store->lock)) {
+#ifndef FIPS_MODULE
         if (prov->ischild && upcalls)
             ossl_provider_free_parent(prov, 1);
+#endif
         return -1;
     }
 
     if (lock && !CRYPTO_THREAD_write_lock(prov->flag_lock)) {
         CRYPTO_THREAD_unlock(store->lock);
+#ifndef FIPS_MODULE
         if (prov->ischild && upcalls)
             ossl_provider_free_parent(prov, 1);
+#endif
         return -1;
     }
 
