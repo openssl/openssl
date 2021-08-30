@@ -765,10 +765,10 @@ static int aria_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                           | EVP_CIPH_CUSTOM_COPY | EVP_CIPH_FLAG_AEAD_CIPHER \
                           | EVP_CIPH_CUSTOM_IV_LENGTH)
 
-#define BLOCK_CIPHER_aead(nid,keylen,blocksize,ivlen,nmode,mode,MODE,flags) \
+#define BLOCK_CIPHER_aead(keylen,mode,MODE)        \
 static const EVP_CIPHER aria_##keylen##_##mode = { \
-        nid##_##keylen##_##nmode,                  \
-        blocksize, keylen/8, ivlen,                \
+        NID_aria_##keylen##_##mode,                \
+        1, keylen/8, 12,                           \
         ARIA_AUTH_FLAGS|EVP_CIPH_##MODE##_MODE,    \
         EVP_ORIG_GLOBAL,                           \
         aria_##mode##_init_key,                    \
@@ -779,12 +779,12 @@ static const EVP_CIPHER aria_##keylen##_##mode = { \
 const EVP_CIPHER *EVP_aria_##keylen##_##mode(void) \
 { return (EVP_CIPHER*)&aria_##keylen##_##mode; }
 
-BLOCK_CIPHER_aead(NID_aria, 128, 1, 12, gcm, gcm, GCM, 0)
-BLOCK_CIPHER_aead(NID_aria, 192, 1, 12, gcm, gcm, GCM, 0)
-BLOCK_CIPHER_aead(NID_aria, 256, 1, 12, gcm, gcm, GCM, 0)
+BLOCK_CIPHER_aead(128, gcm, GCM)
+BLOCK_CIPHER_aead(192, gcm, GCM)
+BLOCK_CIPHER_aead(256, gcm, GCM)
 
-BLOCK_CIPHER_aead(NID_aria, 128, 1, 12, ccm, ccm, CCM, 0)
-BLOCK_CIPHER_aead(NID_aria, 192, 1, 12, ccm, ccm, CCM, 0)
-BLOCK_CIPHER_aead(NID_aria, 256, 1, 12, ccm, ccm, CCM, 0)
+BLOCK_CIPHER_aead(128, ccm, CCM)
+BLOCK_CIPHER_aead(192, ccm, CCM)
+BLOCK_CIPHER_aead(256, ccm, CCM)
 
 #endif
