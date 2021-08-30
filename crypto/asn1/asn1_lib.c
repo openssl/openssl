@@ -303,31 +303,31 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len_in)
         c = str->data;
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
         /* No NUL terminator in fuzzing builds */
-        str->data = OPENSSL_realloc(c, len);
-        if (str->data == NULL && len != 0) {
+        str->data = OPENSSL_realloc(c, len != 0 ? len : 1);
 #else
         str->data = OPENSSL_realloc(c, len + 1);
-        if (str->data == NULL) {
 #endif
+        if (str->data == NULL) {
             ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
             str->data = c;
             return 0;
         }
     }
     str->length = len;
-#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-    if (data != NULL && len != 0)
-        memcpy(str->data, data, len);
-#else
     if (data != NULL) {
         memcpy(str->data, data, len);
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+        /* Set the unused byte to something non NUL and printable. */
+        if (len == 0)
+            str->data[len] = '~';
+#else
         /*
          * Add a NUL terminator. This should not be necessary - but we add it as
          * a safety precaution
          */
         str->data[len] = '\0';
-    }
 #endif
+    }
     return 1;
 }
 
