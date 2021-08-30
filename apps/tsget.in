@@ -53,8 +53,8 @@ sub create_curl {
     $curl->setopt(CURLOPT_UPLOAD, 1);
     $curl->setopt(CURLOPT_CUSTOMREQUEST, "POST");
     $curl->setopt(CURLOPT_HTTPHEADER,
-                ["Content-Type: application/timestamp-query",
-                "Accept: application/timestamp-reply,application/timestamp-response"]);
+        ["Content-Type: application/timestamp-query",
+        "Accept: application/timestamp-reply,application/timestamp-response"]);
     $curl->setopt(CURLOPT_READFUNCTION, \&read_body);
     $curl->setopt(CURLOPT_HEADERFUNCTION, sub { return length($_[0]); });
 
@@ -63,8 +63,8 @@ sub create_curl {
 
     # SSL related options.
     $curl->setopt(CURLOPT_SSLKEYTYPE, "PEM");
-    $curl->setopt(CURLOPT_SSL_VERIFYPEER, 1);        # Verify server's certificate.
-    $curl->setopt(CURLOPT_SSL_VERIFYHOST, 2);        # Check server's CN.
+    $curl->setopt(CURLOPT_SSL_VERIFYPEER, 1);    # Verify server's certificate.
+    $curl->setopt(CURLOPT_SSL_VERIFYHOST, 2);    # Check server's CN.
     $curl->setopt(CURLOPT_SSLKEY, $options{k}) if defined($options{k});
     $curl->setopt(CURLOPT_SSLKEYPASSWD, $options{p}) if defined($options{p});
     $curl->setopt(CURLOPT_SSLCERT, $options{c}) if defined($options{c});
