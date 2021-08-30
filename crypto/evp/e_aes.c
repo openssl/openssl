@@ -1675,7 +1675,7 @@ static int s390x_aes_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
      * communication to fail after 2^64 - 1 keys.  We do this on the encrypting
      * side only.
      */
-    if (ctx->encrypt && ++gctx->tls_enc_records == 0) {
+    if (enc && ++gctx->tls_enc_records == 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_TOO_MANY_RECORDS);
         goto err;
     }
@@ -2903,7 +2903,7 @@ static int aes_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
      * communication to fail after 2^64 - 1 keys.  We do this on the encrypting
      * side only.
      */
-    if (ctx->encrypt && ++gctx->tls_enc_records == 0) {
+    if (EVP_CIPHER_CTX_is_encrypting(ctx) && ++gctx->tls_enc_records == 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_TOO_MANY_RECORDS);
         goto err;
     }
@@ -2912,18 +2912,20 @@ static int aes_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
      * Set IV from start of buffer or generate IV and write to start of
      * buffer.
      */
-    if (EVP_CIPHER_CTX_ctrl(ctx, ctx->encrypt ? EVP_CTRL_GCM_IV_GEN
-                                              : EVP_CTRL_GCM_SET_IV_INV,
+    if (EVP_CIPHER_CTX_ctrl(ctx,
+                            EVP_CIPHER_CTX_is_encrypting(ctx) ?
+                                EVP_CTRL_GCM_IV_GEN : EVP_CTRL_GCM_SET_IV_INV,
                             EVP_GCM_TLS_EXPLICIT_IV_LEN, out) <= 0)
         goto err;
     /* Use saved AAD */
-    if (CRYPTO_gcm128_aad(&gctx->gcm, ctx->buf, gctx->tls_aad_len))
+    if (CRYPTO_gcm128_aad(&gctx->gcm, EVP_CIPHER_CTX_buf_noconst(ctx),
+                          gctx->tls_aad_len))
         goto err;
     /* Fix buffer and length to point to payload */
     in += EVP_GCM_TLS_EXPLICIT_IV_LEN;
     out += EVP_GCM_TLS_EXPLICIT_IV_LEN;
     len -= EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_TAG_LEN;
-    if (ctx->encrypt) {
+    if (EVP_CIPHER_CTX_is_encrypting(ctx)) {
         /* Encrypt payload */
         if (gctx->ctr) {
             size_t bulk = 0;
@@ -3002,9 +3004,11 @@ static int aes_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                 goto err;
         }
         /* Retrieve tag */
-        CRYPTO_gcm128_tag(&gctx->gcm, ctx->buf, EVP_GCM_TLS_TAG_LEN);
+        CRYPTO_gcm128_tag(&gctx->gcm, EVP_CIPHER_CTX_buf_noconst(ctx),
+                          EVP_GCM_TLS_TAG_LEN);
         /* If tag mismatch wipe buffer */
-        if (CRYPTO_memcmp(ctx->buf, in + len, EVP_GCM_TLS_TAG_LEN)) {
+        if (CRYPTO_memcmp(EVP_CIPHER_CTX_buf_noconst(ctx), in + len,
+                          EVP_GCM_TLS_TAG_LEN)) {
             OPENSSL_cleanse(out, len);
             goto err;
         }
@@ -3061,7 +3065,7 @@ static int aes_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
      * where setting the IV externally is the only option available.
      */
     if (!gctx->iv_set) {
-        if (!ctx->encrypt || !aes_gcm_iv_generate(gctx, 0))
+        if (!EVP_CIPHER_CTX_is_encrypting(ctx) || !aes_gcm_iv_generate(gctx, 0))
             return -1;
         CRYPTO_gcm128_setiv(&gctx->gcm, gctx->iv, gctx->ivlen);
         gctx->iv_set = 1;
@@ -3076,7 +3080,7 @@ static int aes_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         if (out == NULL) {
             if (CRYPTO_gcm128_aad(&gctx->gcm, in, len))
                 return -1;
-        } else if (ctx->encrypt) {
+        } else if (EVP_CIPHER_CTX_is_encrypting(ctx)) {
             if (gctx->ctr) {
                 size_t bulk = 0;
 #if defined(AES_GCM_ASM)
@@ -3167,15 +3171,17 @@ static int aes_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         }
         return len;
     } else {
-        if (!ctx->encrypt) {
+        if (!EVP_CIPHER_CTX_is_encrypting(ctx)) {
             if (gctx->taglen < 0)
                 return -1;
-            if (CRYPTO_gcm128_finish(&gctx->gcm, ctx->buf, gctx->taglen) != 0)
+            if (CRYPTO_gcm128_finish(&gctx->gcm,
+                                     EVP_CIPHER_CTX_buf_noconst(ctx),
+                                     gctx->taglen) != 0)
                 return -1;
             gctx->iv_set = 0;
             return 0;
         }
-        CRYPTO_gcm128_tag(&gctx->gcm, ctx->buf, 16);
+        CRYPTO_gcm128_tag(&gctx->gcm, EVP_CIPHER_CTX_buf_noconst(ctx), 16);
         gctx->taglen = 16;
         /* Don't reuse the IV */
         gctx->iv_set = 0;
