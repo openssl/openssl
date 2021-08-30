@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509");
 
-plan tests => 18;
+plan tests => 19;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -102,6 +102,10 @@ subtest 'x509 -- pathlen' => sub {
 cert_contains(srctop_file(@certs, "fake-gp.pem"),
               "2.16.528.1.1003.1.3.5.5.2-1-0000006666-Z-12345678-01.015-12345678",
               1, 'x500 -- subjectAltName');
+
+cert_contains(srctop_file(@certs, "ext-singleUse.pem"),
+              "Single Use",
+              1, 'X.509 Single Use Certification Extension');
 
 sub test_errors { # actually tests diagnostics of OSSL_STORE
     my ($expected, $cert, @opts) = @_;
