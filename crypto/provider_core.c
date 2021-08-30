@@ -1126,7 +1126,6 @@ static int provider_activate(OSSL_PROVIDER *prov, int lock, int upcalls)
     if (lock)
         CRYPTO_THREAD_unlock(store->lock);
 
-
     if (!ret)
         return -1;
 
