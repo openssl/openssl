@@ -215,32 +215,6 @@ static void collect_keymgmt(EVP_KEYMGMT *keymgmt, void *arg)
     }
 }
 
-/*
- * The input structure check is only done on the initial decoder
- * implementations.
- */
-static int decoder_check_input_structure(OSSL_DECODER_CTX *ctx,
-                                         OSSL_DECODER_INSTANCE *di)
-{
-    int di_is_was_set = 0;
-    const char *di_is =
-        OSSL_DECODER_INSTANCE_get_input_structure(di, &di_is_was_set);
-
-    /*
-     * If caller didn't give an input structure name, the decoder is accepted
-     * unconditionally with regards to the input structure.
-     */
-    if (ctx->input_structure == NULL)
-        return 1;
-    /*
-     * If the caller did give an input structure name, the decoder must have
-     * a matching input structure to be accepted.
-     */
-    if (di_is != NULL && strcasecmp(ctx->input_structure, di_is) == 0)
-        return 1;
-    return 0;
-}
-
 struct collect_decoder_data_st {
     STACK_OF(OPENSSL_CSTRING) *names;
     OSSL_DECODER_CTX *ctx;
@@ -310,15 +284,6 @@ static void collect_decoder(OSSL_DECODER *decoder, void *arg)
                            OSSL_DECODER_get0_properties(decoder));
             } OSSL_TRACE_END(DECODER);
 
-            if (!decoder_check_input_structure(data->ctx, di)) {
-                OSSL_TRACE_BEGIN(DECODER) {
-                    BIO_printf(trc_out,
-                               "    REJECTED: not the desired input structure\n");
-                } OSSL_TRACE_END(DECODER);
-                ossl_decoder_instance_free(di);
-                /* Not a fatal error. Just return */
-                return;
-            }
             if (!ossl_decoder_ctx_add_decoder_inst(data->ctx, di)) {
                 ossl_decoder_instance_free(di);
                 data->error_occurred = 1;

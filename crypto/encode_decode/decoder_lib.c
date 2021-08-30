@@ -38,6 +38,7 @@ struct decoder_process_data_st {
      */
     unsigned int flag_next_level_called : 1;
     unsigned int flag_construct_called : 1;
+    unsigned int flag_input_structure_checked : 1;
 };
 
 static int decoder_process(const OSSL_PARAM params[], void *arg);
@@ -905,6 +906,26 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
         }
 
         /*
+         * If the decoder we're currently considering specifies a structure,
+         * and this check hasn't already been done earlier in this chain of
+         * decoder_process() calls, check that it matches the user provided
+         * input structure, if one is given.
+         */
+        if (!data->flag_input_structure_checked
+            && ctx->input_structure != NULL
+            && new_input_structure != NULL) {
+            data->flag_input_structure_checked = 1;
+            if (strcasecmp(new_input_structure, ctx->input_structure) != 0) {
+                OSSL_TRACE_BEGIN(DECODER) {
+                    BIO_printf(trc_out,
+                               "(ctx %p) %s [%u] the previous decoder's data structure doesn't match the input structure given by the user, skipping...\n",
+                               (void *)new_data.ctx, LEVEL, (unsigned int)i);
+                } OSSL_TRACE_END(DECODER);
+                continue;
+            }
+        }
+
+        /*
          * Checking the return value of BIO_reset() or BIO_seek() is unsafe.
          * Furthermore, BIO_reset() is unsafe to use if the source BIO happens
          * to be a BIO_s_mem(), because the earlier BIO_tell() gives us zero
@@ -933,6 +954,8 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
         ERR_set_mark();
 
         new_data.current_decoder_inst_index = i;
+        new_data.flag_input_structure_checked
+            = data->flag_input_structure_checked;
         ok = new_decoder->decode(new_decoderctx, cbio,
                                  new_data.ctx->selection,
                                  decoder_process, &new_data,
