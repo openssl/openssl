@@ -311,6 +311,14 @@ MODULESDIR=$(libdir)/ossl-modules
 # libraries and applications
 LIBRPATH=$(libdir)
 
+BINDIR={- our $bindir = $config{bindir};
+          unless ($bindir) {
+              $bindir = "bin$target{multibin}";
+          }
+          file_name_is_absolute($bindir) ? "" : $bindir -}
+bindir={- file_name_is_absolute($bindir)
+          ? $bindir : '$(INSTALLTOP)/$(BINDIR)' -}
+
 MANDIR=$(INSTALLTOP)/share/man
 DOCDIR=$(INSTALLTOP)/share/doc/$(BASENAME)
 HTMLDIR=$(DOCDIR)/html
@@ -871,18 +879,18 @@ install_runtime_libs: build_libs
 	@ : {- output_off() if windowsdll(); "" -}
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(libdir)
 	@ : {- output_on() if windowsdll(); output_off() unless windowsdll(); "" -}
-	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(INSTALLTOP)/bin
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(bindir)/
 	@ : {- output_on() unless windowsdll(); "" -}
 	@$(ECHO) "*** Installing runtime libraries"
 	@set -e; for s in dummy $(INSTALL_SHLIBS); do \
 		if [ "$$s" = "dummy" ]; then continue; fi; \
 		fn=`basename $$s`; \
 		: {- output_off() unless windowsdll(); "" -}; \
-		$(ECHO) "install $$s -> $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
-		cp $$s $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new; \
-		chmod 755 $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new; \
-		mv -f $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new \
-		      $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
+		$(ECHO) "install $$s -> $(DESTDIR)$(bindir)/$$fn"; \
+		cp $$s $(DESTDIR)$(bindir)/$$fn.new; \
+		chmod 755 $(DESTDIR)$(bindir)/$$fn.new; \
+		mv -f $(DESTDIR)$(bindir)/$$fn.new \
+		      $(DESTDIR)$(bindir)/$$fn; \
 		: {- output_on() unless windowsdll(); "" -}{- output_off() if windowsdll(); "" -}; \
 		$(ECHO) "install $$s -> $(DESTDIR)$(libdir)/$$fn"; \
 		cp $$s $(DESTDIR)$(libdir)/$$fn.new; \
@@ -894,25 +902,25 @@ install_runtime_libs: build_libs
 
 install_programs: install_runtime_libs build_programs
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
-	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(INSTALLTOP)/bin
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(bindir)
 	@$(ECHO) "*** Installing runtime programs"
 	@set -e; for x in dummy $(INSTALL_PROGRAMS); do \
 		if [ "$$x" = "dummy" ]; then continue; fi; \
 		fn=`basename $$x`; \
-		$(ECHO) "install $$x -> $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
-		cp $$x $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new; \
-		chmod 755 $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new; \
-		mv -f $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new \
-		      $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
+		$(ECHO) "install $$x -> $(DESTDIR)$(bindir)/$$fn"; \
+		cp $$x $(DESTDIR)$(bindir)/$$fn.new; \
+		chmod 755 $(DESTDIR)$(bindir)/$$fn.new; \
+		mv -f $(DESTDIR)$(bindir)/$$fn.new \
+		      $(DESTDIR)$(bindir)/$$fn; \
 	done
 	@set -e; for x in dummy $(BIN_SCRIPTS); do \
 		if [ "$$x" = "dummy" ]; then continue; fi; \
 		fn=`basename $$x`; \
-		$(ECHO) "install $$x -> $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
-		cp $$x $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new; \
-		chmod 755 $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new; \
-		mv -f $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new \
-		      $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
+		$(ECHO) "install $$x -> $(DESTDIR)$(bindir)/$$fn"; \
+		cp $$x $(DESTDIR)$(bindir)/$$fn.new; \
+		chmod 755 $(DESTDIR)$(bindir)/$$fn.new; \
+		mv -f $(DESTDIR)$(bindir)/$$fn.new \
+		      $(DESTDIR)$(bindir)/$$fn; \
 	done
 
 uninstall_runtime: uninstall_programs uninstall_runtime_libs
@@ -923,17 +931,17 @@ uninstall_programs:
 	do  \
 		if [ "$$x" = "dummy" ]; then continue; fi; \
 		fn=`basename $$x`; \
-		$(ECHO) "$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
-		$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
+		$(ECHO) "$(RM) $(DESTDIR)$(bindir)/$$fn"; \
+		$(RM) $(DESTDIR)$(bindir)/$$fn; \
 	done;
 	@set -e; for x in dummy $(BIN_SCRIPTS); \
 	do  \
 		if [ "$$x" = "dummy" ]; then continue; fi; \
 		fn=`basename $$x`; \
-		$(ECHO) "$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
-		$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
+		$(ECHO) "$(RM) $(DESTDIR)$(bindir)/$$fn"; \
+		$(RM) $(DESTDIR)$(bindir)/$$fn; \
 	done
-	-$(RMDIR) $(DESTDIR)$(INSTALLTOP)/bin
+	-$(RMDIR) $(DESTDIR)$(bindir)
 
 uninstall_runtime_libs:
 	@$(ECHO) "*** Uninstalling runtime libraries"
@@ -941,8 +949,8 @@ uninstall_runtime_libs:
 	@set -e; for s in dummy $(INSTALL_SHLIBS); do \
 		if [ "$$s" = "dummy" ]; then continue; fi; \
 		fn=`basename $$s`; \
-		$(ECHO) "$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
-		$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
+		$(ECHO) "$(RM) $(DESTDIR)$(bindir)/$$fn"; \
+		$(RM) $(DESTDIR)$(bindir)/$$fn; \
 	done
 	@ : {- output_on() unless windowsdll(); "" -}
 
