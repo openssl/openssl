@@ -619,10 +619,12 @@ int ossl_provider_add_to_store(OSSL_PROVIDER *prov, OSSL_PROVIDER **actualprov,
         if (sk_OSSL_PROVIDER_push(store->providers, prov) == 0)
             goto err;
         prov->store = store;
+        if (!create_provider_children(prov)) {
+            sk_OSSL_PROVIDER_delete_ptr(store->providers, prov);
+            goto err;
+        }
         if (!retain_fallbacks)
             store->use_fallbacks = 0;
-        if (!create_provider_children(prov))
-            goto err;
     }
 
     CRYPTO_THREAD_unlock(store->lock);
