@@ -203,6 +203,13 @@ In each table entry, the following keys are significant:
                            to have the different variants in different
                            directories.
 
+        multibin        => On systems that support having multiple
+                           implementations of a library and binaries
+                           (typically a 32-bit and a 64-bit variant),
+                           this is used to have the different variants
+                           in different binary directories. This setting
+                           works in conjunction with multilib.
+
         bn_ops          => Building options (was just bignum options in
                            the earlier history of this option, hence the
                            name). This is a string of words that describe
