@@ -123,10 +123,10 @@ static int pem2der_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
          * though there is no provider interface to handle such objects, yet.
          * However, this is beneficial for the OSSL_STORE result handler.
          */
-        { PEM_STRING_X509, OSSL_OBJECT_CERT, NULL, NULL },
-        { PEM_STRING_X509_TRUSTED, OSSL_OBJECT_CERT, NULL, NULL },
-        { PEM_STRING_X509_OLD, OSSL_OBJECT_CERT, NULL, NULL },
-        { PEM_STRING_X509_CRL, OSSL_OBJECT_CRL, NULL, NULL }
+        { PEM_STRING_X509, OSSL_OBJECT_CERT, NULL, "Certificate" },
+        { PEM_STRING_X509_TRUSTED, OSSL_OBJECT_CERT, NULL, "Certificate" },
+        { PEM_STRING_X509_OLD, OSSL_OBJECT_CERT, NULL, "Certificate" },
+        { PEM_STRING_X509_CRL, OSSL_OBJECT_CRL, NULL, "CertificateList" }
     };
     struct pem2der_ctx_st *ctx = vctx;
     char *pem_name = NULL, *pem_header = NULL;
@@ -178,6 +178,7 @@ static int pem2der_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         char *data_type = (char *)pem_name_map[i].data_type;
         char *data_structure = (char *)pem_name_map[i].data_structure;
 
+        objtype = pem_name_map[i].object_type;
         if (data_type != NULL)
             *p++ =
                 OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_TYPE,
