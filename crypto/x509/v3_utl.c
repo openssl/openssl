@@ -903,7 +903,7 @@ static int do_x509_check(X509 *x, const char *chk, size_t chklen,
                     san_present = 1;
 
                     /*
-                     * If its not a UTF8String then that is unexpected and we
+                     * If it is not a UTF8String then that is unexpected and we
                      * treat it as no match
                      */
                     if (gen->d.otherName->value->type == V_ASN1_UTF8STRING) {
