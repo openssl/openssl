@@ -95,13 +95,13 @@
  * to in order to avoid that:
  *  - Holding multiple locks at the same time is only allowed for the
  *    provider store lock, the provider flag_lock and the provider refcnt_lock.
- *  - When holding multiple locks they must be aquired in the following order of
+ *  - When holding multiple locks they must be acquired in the following order of
  *    precedence:
  *        1) provider store lock
  *        2) provider flag_lock
  *        3) provider refcnt_lock
  *  - When releasing locks they must be released in the reverse order to which
- *    they were aquired
+ *    they were acquired
  *  - No locks may be held when making an upcall. NOTE: Some common functions
  *    can make upcalls as part of their normal operation. If you need to call
  *    some other function while holding a lock make sure you know whether it
