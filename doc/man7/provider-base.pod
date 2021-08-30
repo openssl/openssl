@@ -123,7 +123,7 @@ provider-base
 All "functions" mentioned here are passed as function pointers between
 F<libcrypto> and the provider in B<OSSL_DISPATCH> arrays, in the call
 of the provider initialization function.  See L<provider(7)/Provider>
-for a description of the initialization function.
+for a description of the initialization function. They are known as "upcalls".
 
 All these "functions" have a corresponding function type definition
 named B<OSSL_FUNC_{name}_fn>, and a helper function to retrieve the
@@ -328,7 +328,9 @@ provider_register_child_cb() registers callbacks for being informed about the
 loading and unloading of providers in the application's library context.
 I<handle> is this provider's handle and I<cbdata> is this provider's data
 that will be passed back to the callbacks. It returns 1 on success or 0
-otherwise.
+otherwise. These callbacks may be called while holding locks in libcrypto. In
+order to avoid deadlocks the callback implementation must not be long running
+and must not call other OpenSSL API functions or upcalls.
 
 I<create_cb> is a callback that will be called when a new provider is loaded
 into the application's library context. It is also called for any providers that
