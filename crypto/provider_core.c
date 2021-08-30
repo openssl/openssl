@@ -426,11 +426,11 @@ OSSL_PROVIDER *ossl_provider_find(OSSL_LIB_CTX *libctx, const char *name,
         tmpl.name = (char *)name;
         if (!CRYPTO_THREAD_read_lock(store->lock))
             return NULL;
-        if ((i = sk_OSSL_PROVIDER_find(store->providers, &tmpl)) == -1
-            || (prov = sk_OSSL_PROVIDER_value(store->providers, i)) == NULL
-            || !ossl_provider_up_ref(prov))
-            prov = NULL;
+        if ((i = sk_OSSL_PROVIDER_find(store->providers, &tmpl)) != -1)
+            prov = sk_OSSL_PROVIDER_value(store->providers, i);
         CRYPTO_THREAD_unlock(store->lock);
+        if (prov != NULL && !ossl_provider_up_ref(prov))
+            prov = NULL;
     }
 
     return prov;
@@ -615,6 +615,18 @@ int ossl_provider_add_to_store(OSSL_PROVIDER *prov, OSSL_PROVIDER **actualprov,
     else
         actualtmp = sk_OSSL_PROVIDER_value(store->providers, idx);
 
+    if (idx == -1) {
+        if (sk_OSSL_PROVIDER_push(store->providers, prov) == 0)
+            goto err;
+        prov->store = store;
+        if (!retain_fallbacks)
+            store->use_fallbacks = 0;
+        if (!create_provider_children(prov))
+            goto err;
+    }
+
+    CRYPTO_THREAD_unlock(store->lock);
+
     if (actualprov != NULL) {
         if (!ossl_provider_up_ref(actualtmp)) {
             ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
@@ -624,21 +636,7 @@ int ossl_provider_add_to_store(OSSL_PROVIDER *prov, OSSL_PROVIDER **actualprov,
         *actualprov = actualtmp;
     }
 
-    if (idx == -1) {
-        if (sk_OSSL_PROVIDER_push(store->providers, prov) == 0)
-            goto err;
-        prov->store = store;
-        if (!create_provider_children(prov)) {
-            sk_OSSL_PROVIDER_delete_ptr(store->providers, prov);
-            goto err;
-        }
-        if (!retain_fallbacks)
-            store->use_fallbacks = 0;
-    }
-
-    CRYPTO_THREAD_unlock(store->lock);
-
-    if (actualtmp != prov) {
+    if (idx >= 0) {
         /*
          * The provider is already in the store. Probably two threads
          * independently initialised their own provider objects with the same
@@ -1006,10 +1004,13 @@ static int provider_init(OSSL_PROVIDER *prov)
  * Deactivate a provider.
  * Return -1 on failure and the activation count on success
  */
-static int provider_deactivate(OSSL_PROVIDER *prov)
+static int provider_deactivate(OSSL_PROVIDER *prov, int upcalls)
 {
     int count;
     struct provider_store_st *store;
+#ifndef FIPS_MODULE
+    int freeparent = 0, removechildren = 0;
+#endif
 
     if (!ossl_assert(prov != NULL))
         return -1;
@@ -1020,38 +1021,46 @@ static int provider_deactivate(OSSL_PROVIDER *prov)
 
     if (!CRYPTO_THREAD_read_lock(store->lock))
         return -1;
-    if (!CRYPTO_THREAD_write_lock(prov->flag_lock)) {
-        CRYPTO_THREAD_unlock(store->lock);
+    if (!CRYPTO_THREAD_write_lock(prov->flag_lock))
         return -1;
-    }
 
 #ifndef FIPS_MODULE
-    if (prov->activatecnt == 2 && prov->ischild) {
+    if (prov->activatecnt >= 2 && prov->ischild && upcalls) {
         /*
          * We have had a direct activation in this child libctx so we need to
-         * now down the ref count in the parent provider.
+         * now down the ref count in the parent provider. We do the actual down
+         * ref outside of the flag_lock, since it could involve getting other
+         * locks.
          */
-        ossl_provider_free_parent(prov, 1);
+        freeparent = 1;
     }
 #endif
 
     if ((count = --prov->activatecnt) < 1) {
         prov->flag_activated = 0;
 #ifndef FIPS_MODULE
-        {
-            int i, max = sk_OSSL_PROVIDER_CHILD_CB_num(store->child_cbs);
-            OSSL_PROVIDER_CHILD_CB *child_cb;
-
-            for (i = 0; i < max; i++) {
-                child_cb = sk_OSSL_PROVIDER_CHILD_CB_value(store->child_cbs, i);
-                child_cb->remove_cb((OSSL_CORE_HANDLE *)prov, child_cb->cbdata);
-            }
-        }
+        removechildren = 1;
 #endif
     }
 
     CRYPTO_THREAD_unlock(prov->flag_lock);
+
+#ifndef FIPS_MODULE
+    if (removechildren) {
+        int i, max = sk_OSSL_PROVIDER_CHILD_CB_num(store->child_cbs);
+        OSSL_PROVIDER_CHILD_CB *child_cb;
+
+        for (i = 0; i < max; i++) {
+            child_cb = sk_OSSL_PROVIDER_CHILD_CB_value(store->child_cbs, i);
+            child_cb->remove_cb((OSSL_CORE_HANDLE *)prov, child_cb->cbdata);
+        }
+    }
+#endif
     CRYPTO_THREAD_unlock(store->lock);
+#ifndef FIPS_MODULE
+    if (freeparent)
+        ossl_provider_free_parent(prov, 1);
+#endif
 
     /* We don't deinit here, that's done in ossl_provider_free() */
     return count;
@@ -1065,7 +1074,7 @@ static int provider_activate(OSSL_PROVIDER *prov, int lock, int upcalls)
 {
     int count = -1;
     struct provider_store_st *store;
-    int ret = 1;
+    int ret = 1, createchildren = 0;
 
     store = prov->store;
     /*
@@ -1078,31 +1087,36 @@ static int provider_activate(OSSL_PROVIDER *prov, int lock, int upcalls)
             return -1;
     }
 
-    if (lock && !CRYPTO_THREAD_read_lock(store->lock))
+    if (prov->ischild && upcalls && !ossl_provider_up_ref_parent(prov, 1))
         return -1;
+
+    if (lock && !CRYPTO_THREAD_read_lock(store->lock)) {
+        if (prov->ischild && upcalls)
+            ossl_provider_free_parent(prov, 1);
+        return -1;
+    }
 
     if (lock && !CRYPTO_THREAD_write_lock(prov->flag_lock)) {
         CRYPTO_THREAD_unlock(store->lock);
+        if (prov->ischild && upcalls)
+            ossl_provider_free_parent(prov, 1);
         return -1;
     }
 
-#ifndef FIPS_MODULE
-    if (prov->ischild && upcalls)
-        ret = ossl_provider_up_ref_parent(prov, 1);
-#endif
+    count = ++prov->activatecnt;
+    prov->flag_activated = 1;
 
-    if (ret) {
-        count = ++prov->activatecnt;
-        prov->flag_activated = 1;
+    if (prov->activatecnt == 1 && store != NULL)
+        createchildren = 1;
 
-        if (prov->activatecnt == 1 && store != NULL)
-            ret = create_provider_children(prov);
-    }
-
-    if (lock) {
+    if (lock)
         CRYPTO_THREAD_unlock(prov->flag_lock);
+    if (createchildren)
+        ret = create_provider_children(prov);
+    if (lock)
         CRYPTO_THREAD_unlock(store->lock);
-    }
+
+
     if (!ret)
         return -1;
 
@@ -1151,7 +1165,7 @@ int ossl_provider_deactivate(OSSL_PROVIDER *prov)
 {
     int count;
 
-    if (prov == NULL || (count = provider_deactivate(prov)) < 0)
+    if (prov == NULL || (count = provider_deactivate(prov, 1)) < 0)
         return 0;
     return count == 0 ? provider_flush_store_cache(prov) : 1;
 }
@@ -1238,7 +1252,7 @@ int ossl_provider_doall_activated(OSSL_LIB_CTX *ctx,
                                             void *cbdata),
                                   void *cbdata)
 {
-    int ret = 0, curr, max;
+    int ret = 0, curr, max, ref = 0;
     struct provider_store_st *store = get_provider_store(ctx);
     STACK_OF(OSSL_PROVIDER) *provs = NULL;
 
@@ -1278,16 +1292,25 @@ int ossl_provider_doall_activated(OSSL_LIB_CTX *ctx,
         if (!CRYPTO_THREAD_write_lock(prov->flag_lock))
             goto err_unlock;
         if (prov->flag_activated) {
-            if (!ossl_provider_up_ref(prov)){
+            /*
+             * We call CRYPTO_UP_REF directly rather than ossl_provider_up_ref
+             * to avoid upping the ref count on the parent provider, which we
+             * must not do while holding locks.
+             */
+            if (CRYPTO_UP_REF(&prov->refcnt, &ref, prov->refcnt_lock) <= 0) {
                 CRYPTO_THREAD_unlock(prov->flag_lock);
                 goto err_unlock;
             }
             /*
              * It's already activated, but we up the activated count to ensure
              * it remains activated until after we've called the user callback.
+             * We do this with no locking (because we already hold the locks)
+             * and no upcalls (which must not be called when locks are held). In
+             * theory this could mean the parent provider goes inactive, whilst
+             * still activated in the child for a short period. That's ok.
              */
-            if (provider_activate(prov, 0, 1) < 0) {
-                ossl_provider_free(prov);
+            if (provider_activate(prov, 0, 0) < 0) {
+                CRYPTO_DOWN_REF(&prov->refcnt, &ref, prov->refcnt_lock);
                 CRYPTO_THREAD_unlock(prov->flag_lock);
                 goto err_unlock;
             }
@@ -1324,8 +1347,18 @@ int ossl_provider_doall_activated(OSSL_LIB_CTX *ctx,
     for (curr++; curr < max; curr++) {
         OSSL_PROVIDER *prov = sk_OSSL_PROVIDER_value(provs, curr);
 
-        provider_deactivate(prov);
-        ossl_provider_free(prov);
+        provider_deactivate(prov, 0);
+        /*
+         * As above where we did the up-ref, we don't call ossl_provider_free
+         * to avoid making upcalls. There should always be at least one ref
+         * to the provider in the store, so this should never drop to 0.
+         */
+        CRYPTO_DOWN_REF(&prov->refcnt, &ref, prov->refcnt_lock);
+        /*
+         * Not much we can do if this assert ever fails. So we don't use
+         * ossl_assert here.
+         */
+        assert(ref > 0);
     }
     sk_OSSL_PROVIDER_free(provs);
     return ret;
@@ -1645,19 +1678,25 @@ static int ossl_provider_register_child_cb(const OSSL_CORE_HANDLE *handle,
     }
     max = sk_OSSL_PROVIDER_num(store->providers);
     for (i = 0; i < max; i++) {
+        int activated;
+
         prov = sk_OSSL_PROVIDER_value(store->providers, i);
 
         if (!CRYPTO_THREAD_read_lock(prov->flag_lock))
             break;
-        /*
-         * We hold the lock while calling the user callback. This means that the
-         * user callback must be short and simple and not do anything likely to
-         * cause a deadlock.
-         */
-        if (prov->flag_activated
-                && !create_cb((OSSL_CORE_HANDLE *)prov, cbdata))
-            break;
+        activated = prov->flag_activated;
         CRYPTO_THREAD_unlock(prov->flag_lock);
+        /*
+         * We hold the store lock while calling the user callback. This means
+         * that the user callback must be short and simple and not do anything
+         * likely to cause a deadlock. We don't hold the flag_lock during this
+         * call. In theory this means that another thread could deactivate it
+         * while we are calling create. This is ok because the other thread
+         * will also call remove_cb, but won't be able to do so until we release
+         * the store lock.
+         */
+        if (activated && !create_cb((OSSL_CORE_HANDLE *)prov, cbdata))
+            break;
     }
     if (i == max) {
         /* Success */
