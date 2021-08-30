@@ -21,7 +21,7 @@ It is a complicated process consisting of a number of steps
 and depending on numerous options.
 The most important of them are detailed in the following sections.
 
-In a nutshell, a valid chain of certifciates needs to be built up and verified
+In a nutshell, a valid chain of certificates needs to be built up and verified
 starting from the I<target certificate> that is to be verified
 and ending in a certificate that due to some policy is trusted.
 Verification is done relative to the given I<purpose>, which is the intended use
