@@ -1,0 +1,53 @@
+name: Compiler Zoo CI
+
+on: [push]
+
+jobs:
+  compiler:
+    strategy:
+      fail-fast: false
+      matrix:
+        zoo: [
+          {
+            cc: gcc-7
+          }, {
+            cc: gcc-8
+          }, {
+            cc: gcc-9
+          }, {
+            cc: gcc-10
+          }, {
+            cc: clang-6.0
+          }, {
+            cc: clang-7
+          }, {
+            cc: clang-8
+          }, {
+            cc: clang-9
+          }, {
+            cc: clang-10
+          }, {
+            cc: clang-11
+          }, {
+            cc: clang-12
+          }
+        ]
+    runs-on: ubuntu-latest
+    steps:
+    - name: install packages
+      run: |
+        sudo apt-get update
+        sudo apt-get -yq --force-yes install ${{ matrix.zoo.cc }}
+    - uses: actions/checkout@v2
+
+    - name: config
+      run: |
+        CC=${{ matrix.zoo.cc }} ./config --banner=Configured no-shared \
+            -Wall -Werror enable-fips --strict-warnings
+
+    - name: config dump
+      run: ./configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: make test
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
