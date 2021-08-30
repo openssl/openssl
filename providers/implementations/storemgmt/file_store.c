@@ -437,6 +437,31 @@ static int file_setup_decoders(struct file_ctx_st *ctx)
             goto err;
         }
 
+        /*
+         * Where applicable, set the outermost structure name.
+         * The goal is to avoid the STORE object types that are
+         * potentially password protected but aren't interesting
+         * for this load.
+         */
+        switch (ctx->expected_type) {
+        case OSSL_STORE_INFO_CERT:
+            if (!OSSL_DECODER_CTX_set_input_structure(ctx->_.file.decoderctx,
+                                                      "Certificate")) {
+                ERR_raise(ERR_LIB_PROV, ERR_R_OSSL_DECODER_LIB);
+                goto err;
+            }
+            break;
+        case OSSL_STORE_INFO_CRL:
+            if (!OSSL_DECODER_CTX_set_input_structure(ctx->_.file.decoderctx,
+                                                      "CertificateList")) {
+                ERR_raise(ERR_LIB_PROV, ERR_R_OSSL_DECODER_LIB);
+                goto err;
+            }
+            break;
+        default:
+            break;
+        }
+
         for (to_algo = ossl_any_to_obj_algorithm;
              to_algo->algorithm_names != NULL;
              to_algo++) {
