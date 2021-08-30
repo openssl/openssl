@@ -28,6 +28,89 @@
 # include <openssl/self_test.h>
 #endif
 
+/*
+ * This file defines and uses a number of different structures:
+ *
+ * OSSL_PROVIDER (provider_st): Used to represent all information related to a
+ * single instance of a provider.
+ *
+ * provider_store_st: Holds information about the collection of providers that
+ * are available within the current library context (OSSL_LIB_CTX). It also
+ * holds configuration information about providers that could be loaded at some
+ * future point.
+ *
+ * OSSL_PROVIDER_CHILD_CB: An instance of this structure holds the callbacks
+ * that have been registered for a child library context and the associated
+ * provider that registered those callbacks.
+ *
+ * Where a child library context exists then it has its own instance of the
+ * provider store. Each provider that exists in the parent provider store, has
+ * an associated child provider in the child library context's provider store.
+ * As providers get activated or deactivated this needs to be mirrored in the
+ * associated child providers.
+ *
+ * LOCKING
+ * =======
+ *
+ * There are a number of different locks used in this file and it is important
+ * to understand how they should be used in order to avoid deadlocks.
+ *
+ * Fields within a structure can often be "write once" on creation, and then
+ * "read many". Creation of a structure is done by a single thread, and
+ * therefore no lock is required for the "write once/read many" fields. It is
+ * safe for multiple threads to read these fields without a lock, because they
+ * will never be changed.
+ *
+ * However some fields may be changed after a structure has been created and
+ * shared between multiple threads. Where this is the case a lock is required.
+ *
+ * The locks available are:
+ *
+ * The provider flag_lock: Used to control updates to the various provider
+ * "flags" (flag_initialized, flag_activated, flag_fallback) and associated
+ * "counts" (activatecnt).
+ *
+ * The provider refcnt_lock: Only ever used to control updates to the provider
+ * refcnt value.
+ *
+ * The provider optbits_lock: Used to control access to the provider's
+ * operation_bits and operation_bits_sz fields.
+ *
+ * The store default_path_lock: Used to control access to the provider store's
+ * default search path value (default_path)
+ *
+ * The store lock: Used to control the stack of provider's held within the
+ * provider store, as well as the stack of registered child provider callbacks.
+ *
+ * As a general rule-of-thumb it is best to:
+ *  - keep the scope of the code that is protected by a lock to the absolute
+ *    minimum possible;
+ *  - try to keep the scope of the lock to within a single function (i.e. avoid
+ *    making calls to other functions while holding a lock);
+ *  - try to only ever hold one lock at a time.
+ *
+ * Unfortunately, it is not always possible to stick to the above guidelines.
+ * Where they are not adhered to there is always a danger of inadvertently
+ * introducing the possibility of deadlock. The following rules MUST be adhered
+ * to in order to avoid that:
+ *  - Holding multiple locks at the same time is only allowed for the
+ *    provider store lock, the provider flag_lock and the provider refcnt_lock.
+ *  - When holding multiple locks they must be acquired in the following order of
+ *    precedence:
+ *        1) provider store lock
+ *        2) provider flag_lock
+ *        3) provider refcnt_lock
+ *  - When releasing locks they must be released in the reverse order to which
+ *    they were acquired
+ *  - No locks may be held when making an upcall. NOTE: Some common functions
+ *    can make upcalls as part of their normal operation. If you need to call
+ *    some other function while holding a lock make sure you know whether it
+ *    will make any upcalls or not. For example ossl_provider_up_ref() can call
+ *    ossl_provider_up_ref_parent() which can call the c_prov_up_ref() upcall.
+ *  - It is permissible to hold the store lock when calling child provider
+ *    callbacks. No other locks may be held during such callbacks.
+ */
+
 static OSSL_PROVIDER *provider_new(const char *name,
                                    OSSL_provider_init_fn *init_function,
                                    STACK_OF(INFOPAIR) *parameters);
