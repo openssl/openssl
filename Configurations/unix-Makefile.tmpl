@@ -96,8 +96,14 @@
      # to. You're welcome.
      sub dependmagic {
          my $target = shift;
-
-         return "$target: build_generated\n\t\$(MAKE) depend && \$(MAKE) _$target\n_$target";
+		  my $magic = <<"_____";
+$target: build_generated depend
+		 \$(MAKE) _$target
+_$target
+_____
+		 # Remove line ending
+		 $magic =~ s|\R$||;
+		 return $magic;
      }
      '';
 -}
