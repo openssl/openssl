@@ -2930,8 +2930,8 @@ static int augment_stack(STACK_OF(X509) *src, STACK_OF(X509) **dstPtr)
         STACK_OF(X509) *dst;
         int i;
 
-        if (*dstPtr == NULL && (*dstPtr = sk_X509_new_null()) == NULL)
-            return 0;
+        if (*dstPtr == NULL)
+            return ((*dstPtr = sk_X509_dup(src)) != NULL);
 
         for (dst = *dstPtr, i = 0; i < sk_X509_num(src); ++i) {
             if (!sk_X509_push(dst, sk_X509_value(src, i))) {
