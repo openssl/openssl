@@ -32,9 +32,9 @@ static const unsigned char label_prefix[] = "tls13 ";
  * |fatal| is set. Returns 1 on success  0 on failure.
  */
 int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
-                             const unsigned char *label, size_t labellen,
-                             const unsigned char *data, size_t datalen,
-                             unsigned char *out, size_t outlen, int fatal)
+                      const unsigned char *label, size_t labellen,
+                      const unsigned char *data, size_t datalen,
+                      unsigned char *out, size_t outlen, int fatal)
 {
     EVP_KDF *kdf = EVP_KDF_fetch(s->ctx->libctx, OSSL_KDF_NAME_TLS1_3_KDF,
                                  s->ctx->propq);
