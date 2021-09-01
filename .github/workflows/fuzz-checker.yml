@@ -19,7 +19,8 @@ jobs:
             libs: --with-fuzzer-lib=/usr/lib/llvm-12/lib/libFuzzer.a --with-fuzzer-include=/usr/lib/llvm-12/build/lib/clang/12.0.0/include/fuzzer,
             install: libfuzzer-12-dev,
             cc: clang-12,
-            linker: clang++-12
+            linker: clang++-12,
+            tests: -test_memleak
           }, {
             name: libFuzzer+,
             config: enable-fuzz-libfuzzer -DPEDANTIC enable-asan enable-ubsan -fsanitize-coverage=trace-cmp -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION,
@@ -27,7 +28,8 @@ jobs:
             extra: enable-fips enable-ec_nistp_64_gcc_128 -fno-sanitize=alignment enable-tls1_3 enable-weak-ssl-ciphers enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg,
             install: libfuzzer-12-dev,
             cc: clang-12,
-            linker: clang++-12
+            linker: clang++-12,
+            tests: -test_memleak
           }
         ]
     runs-on: ubuntu-latest
@@ -51,5 +53,9 @@ jobs:
     - name: make sans explicit linker
       if: matrix.fuzzy.linker == ''
       run: make -s -j4
-    - name: make test
+    - name: make test restricted
+      if: matrix.fuzzy.tests != ''
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} TESTS="${{ matrix.fuzzy.tests }}"
+    - name: make test all
+      if: matrix.fuzzy.tests == ''
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
