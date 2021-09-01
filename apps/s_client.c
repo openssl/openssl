@@ -2069,6 +2069,8 @@ int s_client_main(int argc, char **argv)
         BIO *test;
 
         test = BIO_new(BIO_f_nbio_test());
+        if (test == NULL)
+            goto end;
         sbio = BIO_push(test, sbio);
     }
 
@@ -2135,6 +2137,8 @@ int s_client_main(int argc, char **argv)
             int foundit = 0;
             BIO *fbio = BIO_new(BIO_f_buffer());
 
+            if (fbio == NULL)
+                goto end;
             BIO_push(fbio, sbio);
             /* Wait for multi-line response to end from LMTP or SMTP */
             do {
@@ -2183,6 +2187,8 @@ int s_client_main(int argc, char **argv)
             int foundit = 0;
             BIO *fbio = BIO_new(BIO_f_buffer());
 
+            if (fbio == NULL)
+                goto end;
             BIO_push(fbio, sbio);
             BIO_gets(fbio, mbuf, BUFSIZZ);
             /* STARTTLS command requires CAPABILITY... */
@@ -2210,6 +2216,8 @@ int s_client_main(int argc, char **argv)
         {
             BIO *fbio = BIO_new(BIO_f_buffer());
 
+            if (fbio == NULL)
+                goto end;
             BIO_push(fbio, sbio);
             /* wait for multi-line response to end from FTP */
             do {
@@ -2304,6 +2312,8 @@ int s_client_main(int argc, char **argv)
             int numeric;
             BIO *fbio = BIO_new(BIO_f_buffer());
 
+            if (fbio == NULL)
+                goto end;
             BIO_push(fbio, sbio);
             BIO_printf(fbio, "STARTTLS\r\n");
             (void)BIO_flush(fbio);
@@ -2464,6 +2474,8 @@ int s_client_main(int argc, char **argv)
             int foundit = 0;
             BIO *fbio = BIO_new(BIO_f_buffer());
 
+            if (fbio == NULL)
+                goto end;
             BIO_push(fbio, sbio);
             BIO_gets(fbio, mbuf, BUFSIZZ);
             /* STARTTLS command requires CAPABILITIES... */
@@ -2504,6 +2516,8 @@ int s_client_main(int argc, char **argv)
             int foundit = 0;
             BIO *fbio = BIO_new(BIO_f_buffer());
 
+            if (fbio == NULL)
+                goto end;
             BIO_push(fbio, sbio);
             /* wait for multi-line response to end from Sieve */
             do {

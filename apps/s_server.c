@@ -2393,6 +2393,8 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
         BIO *test;
 
         test = BIO_new(BIO_f_nbio_test());
+        if (test == NULL)
+            goto err;
         sbio = BIO_push(test, sbio);
     }
 
@@ -2972,6 +2974,9 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
     SSL *con;
     const SSL_CIPHER *c;
     BIO *io, *ssl_bio, *sbio;
+#ifdef CHARSET_EBCDIC
+    BIO *bio = NULL;
+#endif
 #ifdef RENEG
     int total_bytes = 0;
 #endif
@@ -3019,6 +3024,8 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
         BIO *test;
 
         test = BIO_new(BIO_f_nbio_test());
+        if (test == NULL)
+            goto err;
         sbio = BIO_push(test, sbio);
     }
     SSL_set_bio(con, sbio, sbio);
@@ -3029,7 +3036,10 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
     BIO_push(io, ssl_bio);
     ssl_bio = NULL;
 #ifdef CHARSET_EBCDIC
-    io = BIO_push(BIO_new(BIO_f_ebcdic_filter()), io);
+    bio = BIO_new(BIO_f_ebcdic_filter());
+    if (bio == NULL)
+        goto err;
+    io = BIO_push(bio, io);
 #endif
 
     if (s_debug) {
@@ -3400,6 +3410,7 @@ static int rev_body(int s, int stype, int prot, unsigned char *context)
     int ret = 1;
     SSL *con;
     BIO *io, *ssl_bio, *sbio;
+    BIO *bio = NULL;
 
     buf = app_malloc(bufsize, "server rev buffer");
     io = BIO_new(BIO_f_buffer());
@@ -3435,7 +3446,10 @@ static int rev_body(int s, int stype, int prot, unsigned char *context)
     BIO_push(io, ssl_bio);
     ssl_bio = NULL;
 #ifdef CHARSET_EBCDIC
-    io = BIO_push(BIO_new(BIO_f_ebcdic_filter()), io);
+    bio = BIO_new(BIO_f_ebcdic_filter())
+    if (bio == NULL)
+        goto err;
+    io = BIO_push(bio, io);
 #endif
 
     if (s_debug) {
