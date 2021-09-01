@@ -174,6 +174,8 @@ extern const OSSL_DISPATCH ossl_seed128ofb128_functions[];
 extern const OSSL_DISPATCH ossl_seed128cfb128_functions[];
 #endif /* OPENSSL_NO_SEED */
 #ifndef OPENSSL_NO_SM4
+extern const OSSL_DISPATCH ossl_sm4128gcm_functions[];
+extern const OSSL_DISPATCH ossl_sm4128ccm_functions[];
 extern const OSSL_DISPATCH ossl_sm4128ecb_functions[];
 extern const OSSL_DISPATCH ossl_sm4128cbc_functions[];
 extern const OSSL_DISPATCH ossl_sm4128ctr_functions[];
