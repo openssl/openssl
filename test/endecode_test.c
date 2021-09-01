@@ -703,7 +703,7 @@ static int test_protected_via_DER(const char *type, EVP_PKEY *key)
     return test_encode_decode(__FILE__, __LINE__, type, key,
                               OSSL_KEYMGMT_SELECT_KEYPAIR
                               | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
-                              "DER", "PrivateKeyInfo",
+                              "DER", "EncryptedPrivateKeyInfo",
                               pass, pass_cipher,
                               encode_EVP_PKEY_prov, decode_EVP_PKEY_prov,
                               test_mem, check_protected_PKCS8_DER,
@@ -726,7 +726,7 @@ static int test_protected_via_PEM(const char *type, EVP_PKEY *key)
     return test_encode_decode(__FILE__, __LINE__, type, key,
                               OSSL_KEYMGMT_SELECT_KEYPAIR
                               | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
-                              "PEM", "PrivateKeyInfo",
+                              "PEM", "EncryptedPrivateKeyInfo",
                               pass, pass_cipher,
                               encode_EVP_PKEY_prov, decode_EVP_PKEY_prov,
                               test_text, check_protected_PKCS8_PEM,
