@@ -15,6 +15,7 @@
 #define ENCODER_STRUCTURE_type_specific_params          "type-specific"
 #define ENCODER_STRUCTURE_type_specific                 "type-specific"
 #define ENCODER_STRUCTURE_type_specific_no_pub          "type-specific"
+#define ENCODER_STRUCTURE_EncryptedPrivateKeyInfo       "EncryptedPrivateKeyInfo"
 #define ENCODER_STRUCTURE_PrivateKeyInfo                "PrivateKeyInfo"
 #define ENCODER_STRUCTURE_SubjectPublicKeyInfo          "SubjectPublicKeyInfo"
 #define ENCODER_STRUCTURE_DH                            "dh"
@@ -127,28 +128,36 @@ ENCODER("DSA", dsa, yes, pvk),
 #endif
 
 /*
- * Entries for PKCS#8 (PrivateKeyInfo) and SubjectPublicKeyInfo.
- * The "der" ones are added convenience for any user that wants to use
- * OSSL_ENCODER directly.
+ * Entries for encrypted PKCS#8 (EncryptedPrivateKeyInfo), unencrypted PKCS#8
+ * (PrivateKeyInfo) and SubjectPublicKeyInfo.  The "der" ones are added
+ * convenience for any user that wants to use OSSL_ENCODER directly.
  * The "pem" ones also support PEM_write_bio_PrivateKey() and
  * PEM_write_bio_PUBKEY().
  */
+ENCODER_w_structure("RSA", rsa, yes, der, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("RSA", rsa, yes, pem, EncryptedPrivateKeyInfo),
 ENCODER_w_structure("RSA", rsa, yes, der, PrivateKeyInfo),
 ENCODER_w_structure("RSA", rsa, yes, pem, PrivateKeyInfo),
 ENCODER_w_structure("RSA", rsa, yes, der, SubjectPublicKeyInfo),
 ENCODER_w_structure("RSA", rsa, yes, pem, SubjectPublicKeyInfo),
 
+ENCODER_w_structure("RSA-PSS", rsapss, yes, der, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("RSA-PSS", rsapss, yes, pem, EncryptedPrivateKeyInfo),
 ENCODER_w_structure("RSA-PSS", rsapss, yes, der, PrivateKeyInfo),
 ENCODER_w_structure("RSA-PSS", rsapss, yes, pem, PrivateKeyInfo),
 ENCODER_w_structure("RSA-PSS", rsapss, yes, der, SubjectPublicKeyInfo),
 ENCODER_w_structure("RSA-PSS", rsapss, yes, pem, SubjectPublicKeyInfo),
 
 #ifndef OPENSSL_NO_DH
+ENCODER_w_structure("DH", dh, yes, der, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("DH", dh, yes, pem, EncryptedPrivateKeyInfo),
 ENCODER_w_structure("DH", dh, yes, der, PrivateKeyInfo),
 ENCODER_w_structure("DH", dh, yes, pem, PrivateKeyInfo),
 ENCODER_w_structure("DH", dh, yes, der, SubjectPublicKeyInfo),
 ENCODER_w_structure("DH", dh, yes, pem, SubjectPublicKeyInfo),
 
+ENCODER_w_structure("DHX", dhx, yes, der, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("DHX", dhx, yes, pem, EncryptedPrivateKeyInfo),
 ENCODER_w_structure("DHX", dhx, yes, der, PrivateKeyInfo),
 ENCODER_w_structure("DHX", dhx, yes, pem, PrivateKeyInfo),
 ENCODER_w_structure("DHX", dhx, yes, der, SubjectPublicKeyInfo),
@@ -156,6 +165,8 @@ ENCODER_w_structure("DHX", dhx, yes, pem, SubjectPublicKeyInfo),
 #endif
 
 #ifndef OPENSSL_NO_DSA
+ENCODER_w_structure("DSA", dsa, yes, der, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("DSA", dsa, yes, pem, EncryptedPrivateKeyInfo),
 ENCODER_w_structure("DSA", dsa, yes, der, PrivateKeyInfo),
 ENCODER_w_structure("DSA", dsa, yes, pem, PrivateKeyInfo),
 ENCODER_w_structure("DSA", dsa, yes, der, SubjectPublicKeyInfo),
@@ -163,32 +174,44 @@ ENCODER_w_structure("DSA", dsa, yes, pem, SubjectPublicKeyInfo),
 #endif
 
 #ifndef OPENSSL_NO_EC
+ENCODER_w_structure("EC", ec, yes, der, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("EC", ec, yes, pem, EncryptedPrivateKeyInfo),
 ENCODER_w_structure("EC", ec, yes, der, PrivateKeyInfo),
 ENCODER_w_structure("EC", ec, yes, pem, PrivateKeyInfo),
 ENCODER_w_structure("EC", ec, yes, der, SubjectPublicKeyInfo),
 ENCODER_w_structure("EC", ec, yes, pem, SubjectPublicKeyInfo),
 
+ENCODER_w_structure("X25519", x25519, yes, der, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("X25519", x25519, yes, pem, EncryptedPrivateKeyInfo),
 ENCODER_w_structure("X25519", x25519, yes, der, PrivateKeyInfo),
 ENCODER_w_structure("X25519", x25519, yes, pem, PrivateKeyInfo),
 ENCODER_w_structure("X25519", x25519, yes, der, SubjectPublicKeyInfo),
 ENCODER_w_structure("X25519", x25519, yes, pem, SubjectPublicKeyInfo),
 
+ENCODER_w_structure("X448", x448, yes, der, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("X448", x448, yes, pem, EncryptedPrivateKeyInfo),
 ENCODER_w_structure("X448", x448, yes, der, PrivateKeyInfo),
 ENCODER_w_structure("X448", x448, yes, pem, PrivateKeyInfo),
 ENCODER_w_structure("X448", x448, yes, der, SubjectPublicKeyInfo),
 ENCODER_w_structure("X448", x448, yes, pem, SubjectPublicKeyInfo),
 
+ENCODER_w_structure("ED25519", ed25519, yes, der, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("ED25519", ed25519, yes, pem, EncryptedPrivateKeyInfo),
 ENCODER_w_structure("ED25519", ed25519, yes, der, PrivateKeyInfo),
 ENCODER_w_structure("ED25519", ed25519, yes, pem, PrivateKeyInfo),
 ENCODER_w_structure("ED25519", ed25519, yes, der, SubjectPublicKeyInfo),
 ENCODER_w_structure("ED25519", ed25519, yes, pem, SubjectPublicKeyInfo),
 
+ENCODER_w_structure("ED448", ed448, yes, der, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("ED448", ed448, yes, pem, EncryptedPrivateKeyInfo),
 ENCODER_w_structure("ED448", ed448, yes, der, PrivateKeyInfo),
 ENCODER_w_structure("ED448", ed448, yes, pem, PrivateKeyInfo),
 ENCODER_w_structure("ED448", ed448, yes, der, SubjectPublicKeyInfo),
 ENCODER_w_structure("ED448", ed448, yes, pem, SubjectPublicKeyInfo),
 
 # ifndef OPENSSL_NO_SM2
+ENCODER_w_structure("SM2", sm2, no, der, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("SM2", sm2, no, pem, EncryptedPrivateKeyInfo),
 ENCODER_w_structure("SM2", sm2, no, der, PrivateKeyInfo),
 ENCODER_w_structure("SM2", sm2, no, pem, PrivateKeyInfo),
 ENCODER_w_structure("SM2", sm2, no, der, SubjectPublicKeyInfo),
