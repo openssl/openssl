@@ -1,6 +1,6 @@
 name: Fuzz-checker CI
 
-on: [pull_request, push]
+on: [push]
 
 jobs:
   fuzz-checker:
