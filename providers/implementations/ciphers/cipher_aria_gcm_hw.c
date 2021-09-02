@@ -31,6 +31,7 @@ static const PROV_GCM_HW aria_gcm = {
     ossl_gcm_cipher_final,
     ossl_gcm_one_shot
 };
+
 const PROV_GCM_HW *ossl_prov_aria_hw_gcm(size_t keybits)
 {
     return &aria_gcm;
