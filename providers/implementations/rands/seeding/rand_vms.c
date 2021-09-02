@@ -479,7 +479,7 @@ int ossl_pool_add_nonce_data(RAND_POOL *pool)
     struct {
         pid_t pid;
         CRYPTO_THREAD_ID tid;
-        uint64_t time;
+        unsigned __int64 time;
     } data;
 
     /* Erase the entire structure including any padding */
@@ -580,7 +580,7 @@ int ossl_rand_pool_add_additional_data(RAND_POOL *pool)
 {
     struct {
         CRYPTO_THREAD_ID tid;
-        uint64_t time;
+        unsigned __int64 time;
     } data;
 
     /* Erase the entire structure including any padding */
