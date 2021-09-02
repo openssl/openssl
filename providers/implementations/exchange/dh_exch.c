@@ -238,7 +238,6 @@ static int dh_derive(void *vpdhctx, unsigned char *secret,
     return 0;
 }
 
-
 static void dh_freectx(void *vpdhctx)
 {
     PROV_DH_CTX *pdhctx = (PROV_DH_CTX *)vpdhctx;
@@ -271,12 +270,12 @@ static void *dh_dupctx(void *vpdhctx)
     dstctx->kdf_ukm = NULL;
     dstctx->kdf_cekalg = NULL;
 
-    if (dstctx->dh != NULL && !DH_up_ref(srcctx->dh))
+    if (srcctx->dh != NULL && !DH_up_ref(srcctx->dh))
         goto err;
     else
         dstctx->dh = srcctx->dh;
 
-    if (dstctx->dhpeer != NULL && !DH_up_ref(srcctx->dhpeer))
+    if (srcctx->dhpeer != NULL && !DH_up_ref(srcctx->dhpeer))
         goto err;
     else
         dstctx->dhpeer = srcctx->dhpeer;
