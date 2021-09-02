@@ -500,6 +500,7 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
                 = pctx->op.kex.exchange->dupctx(pctx->op.kex.algctx);
             if (rctx->op.kex.algctx == NULL) {
                 EVP_KEYEXCH_free(rctx->op.kex.exchange);
+                rctx->op.kex.exchange = NULL;
                 goto err;
             }
             return rctx;
@@ -517,6 +518,7 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
                 = pctx->op.sig.signature->dupctx(pctx->op.sig.algctx);
             if (rctx->op.sig.algctx == NULL) {
                 EVP_SIGNATURE_free(rctx->op.sig.signature);
+                rctx->op.sig.signature = NULL;
                 goto err;
             }
             return rctx;
@@ -534,6 +536,7 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
                 = pctx->op.ciph.cipher->dupctx(pctx->op.ciph.algctx);
             if (rctx->op.ciph.algctx == NULL) {
                 EVP_ASYM_CIPHER_free(rctx->op.ciph.cipher);
+                rctx->op.ciph.cipher = NULL;
                 goto err;
             }
             return rctx;
@@ -551,6 +554,7 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
                 = pctx->op.encap.kem->dupctx(pctx->op.encap.algctx);
             if (rctx->op.encap.algctx == NULL) {
                 EVP_KEM_free(rctx->op.encap.kem);
+                rctx->op.encap.kem = NULL;
                 goto err;
             }
             return rctx;
