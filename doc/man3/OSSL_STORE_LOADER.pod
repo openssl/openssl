@@ -45,9 +45,9 @@ unregister STORE loaders for different URI schemes
  int OSSL_STORE_LOADER_is_a(const OSSL_STORE_LOADER *loader,
                             const char *scheme);
  void OSSL_STORE_LOADER_do_all_provided(OSSL_LIB_CTX *libctx,
-                                        void (*fn)(OSSL_STORE_LOADER *loader,
+                                        void (*user_fn)(OSSL_STORE_LOADER *loader,
                                                    void *arg),
-                                        void *arg);
+                                        void *user_arg);
  int OSSL_STORE_LOADER_names_do_all(const OSSL_STORE_LOADER *loader,
                                     void (*fn)(const char *name, void *data),
                                     void *data);
@@ -142,8 +142,8 @@ I<loader> implementation.
 
 OSSL_STORE_LOADER_do_all_provided() traverses all store implementations
 by all activated providers in the library context I<libctx>, and for each
-of the implementations, calls I<fn> with the implementation method and
-I<data> as arguments.
+of the implementations, calls I<user_fn> with the implementation method and
+I<user_arg> as arguments.
 
 OSSL_STORE_LOADER_names_do_all() traverses all names for the given
 I<loader>, and calls I<fn> with each name and I<data>.

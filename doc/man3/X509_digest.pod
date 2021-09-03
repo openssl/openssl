@@ -67,7 +67,7 @@ to a place where the digest size will be stored.
 
 =head1 RETURN VALUES
 
-X509_digest_sig() returns an ASN1_OCTET_STRING on success, else NULL.
+X509_digest_sig() returns an ASN1_OCTET_STRING pointer on success, else NULL.
 
 All other functions described here return 1 for success and 0 for failure.
 
