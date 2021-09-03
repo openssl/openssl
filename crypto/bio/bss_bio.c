@@ -267,14 +267,14 @@ static ossl_ssize_t bio_nread(BIO *bio, char **buf, size_t num_)
 
 static int bio_write(BIO *bio, const char *buf, int num_)
 {
-    if (!bio->init || buf == NULL || num_ <= 0)
-        return 0;
-
     size_t num = num_;
     size_t rest;
     struct bio_bio_st *b;
 
     BIO_clear_retry_flags(bio);
+
+    if (!bio->init || buf == NULL || num_ <= 0)
+        return 0;
 
     b = bio->ptr;
     assert(b != NULL);
