@@ -121,6 +121,26 @@ static int ia5ncasecmp(const char *s1, const char *s2, size_t n)
     return 0;
 }
 
+static int ia5ncmp(const char *s1, const char *s2, size_t n)
+{
+    for (; n > 0; n--, s1++, s2++) {
+        if (*s1 != *s2) {
+            unsigned char c1 = (unsigned char)*s1, c2 = (unsigned char)*s2;
+
+            if (c1 == c2)
+                continue;
+
+            if (c1 < c2)
+                return -1;
+
+            /* c1 > c2 */
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 static void *v2i_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method,
                                   X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval)
 {
@@ -715,7 +735,7 @@ static int nc_email(ASN1_IA5STRING *eml, ASN1_IA5STRING *base)
             if ((baseat - baseptr) != (emlat - emlptr))
                 return X509_V_ERR_PERMITTED_VIOLATION;
             /* Case sensitive match of local part */
-            if (strncmp(baseptr, emlptr, emlat - emlptr))
+            if (ia5ncmp(baseptr, emlptr, emlat - emlptr))
                 return X509_V_ERR_PERMITTED_VIOLATION;
         }
         /* Position base after '@' */
