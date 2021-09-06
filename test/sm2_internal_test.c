@@ -209,6 +209,7 @@ static int test_sm2_crypt(const EC_GROUP *group,
 static int sm2_crypt_test(void)
 {
     int testresult = 0;
+    EC_GROUP *gm_group = NULL;
     EC_GROUP *test_group =
         create_EC_group
         ("8542D69E4C044F18E8B92435BF6FF7DE457283915C45517D722EDB8B08F1DFC3",
@@ -251,9 +252,35 @@ static int sm2_crypt_test(void)
             "88E3C5AAFC0413229E6C9AEE2BB92CAD649FE2C035689785DA33"))
         goto done;
 
+    /* From GM/T0003.5-2012, Appendix A part.*/
+    gm_group = create_EC_group
+        ("fffffffeffffffffffffffffffffffffffffffff00000000ffffffffffffffff",
+         "fffffffeffffffffffffffffffffffffffffffff00000000fffffffffffffffc",
+         "28e9fa9e9d9f5e344d5a9e4bcf6509a7f39789f515ab8f92ddbcbd414d940e93",
+         "32c4ae2c1f1981195f9904466a39c9948fe30bbff2660be1715a4589334c74c7",
+         "bc3736a2f4f6779c59bdcee36b692153d0a9877cc62a474002df32e52139f0a0",
+         "fffffffeffffffffffffffffffffffff7203df6b21c6052b53bbf40939d54123",
+         "1");
+
+    if (!TEST_ptr(gm_group))
+        goto done;
+
+    if (!test_sm2_crypt(
+            gm_group,
+            EVP_sm3(),
+            "3945208F7B2144B13F36E38AC6D39F95889393692860B51A42FB81EF4DF7C5B8",
+            "encryption standard",
+            "59276E27D506861A16680F3AD9C02DCCEF3CC1FA3CDBE4CE6D54B80DEAC1BC21",
+            "307C022004EBFC718E8D1798620432268E77FEB6415E2EDE0E073C0F4F640ECD"
+            "2E149A73022100E858F9D81E5430A57B36DAAB8F950A3C64E6EE6A63094D9928"
+            "3AFF767E124DF0042059983C18F809E262923C53AEC295D30383B54E39D609D1"
+            "60AFCB1908D0BD8766041321886CA989CA9C7D58087307CA93092D651EFA"))
+        goto done;
+
     testresult = 1;
  done:
     EC_GROUP_free(test_group);
+    EC_GROUP_free(gm_group);
 
     return testresult;
 }
