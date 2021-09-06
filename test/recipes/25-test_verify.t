@@ -461,7 +461,8 @@ SKIP: {
     skip "Couldn't create certplusrsa.pem", 1
         unless ( open $certplusrsa, '>', $certplusrsa_file
                  and copy($cert_file, $certplusrsa)
-                 and copy($rsa_file, $certplusrsa) );
+                 and copy($rsa_file, $certplusrsa)
+                 and close $certplusrsa );
 
     ok(run(app([ qw(openssl verify -trusted), $certplusrsa_file, $cert_file ])),
        'Mixed cert + key file test');
@@ -474,7 +475,8 @@ SKIP: {
     skip "Couldn't create rsapluscert.pem", 1
         unless ( open $rsapluscert, '>', $rsapluscert_file
                  and copy($rsa_file, $rsapluscert)
-                 and copy($cert_file, $rsapluscert) );
+                 and copy($cert_file, $rsapluscert)
+                 and close $rsapluscert );
 
     ok(run(app([ qw(openssl verify -trusted), $rsapluscert_file, $cert_file ])),
        'Mixed key + cert file test');

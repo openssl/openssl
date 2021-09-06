@@ -36,7 +36,7 @@ unless ($no_fips) {
 
     #Configured to run FIPS but the module-mac is bad
     $ENV{OPENSSL_CONF} = abs_path(srctop_file("test", "fips.cnf"));
-    $ENV{OPENSSL_CONF_INCLUDE} = srctop_file("test", "recipes", "30-test_defltfips");
+    $ENV{OPENSSL_CONF_INCLUDE} = srctop_dir("test", "recipes", "30-test_defltfips");
     ok(run(test(["defltfips_test", "badfips"])), "running defltfips_test badfips");
 
     #Test an alternative way of configuring fips (but still with bad module-mac)
