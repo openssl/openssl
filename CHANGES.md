@@ -28,7 +28,7 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 [Migration guide]: https://github.com/openssl/openssl/tree/master/doc/man7/migration_guide.pod
 
-### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
+### Changes between 1.1.1 and 3.0.0 [7 sep 2021]
 
  * TLS_MAX_VERSION, DTLS_MAX_VERSION and DTLS_MIN_VERSION constants are now
    deprecated.
