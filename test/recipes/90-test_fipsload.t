@@ -6,7 +6,7 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-use OpenSSL::Test qw/:DEFAULT srctop_dir bldtop_dir/;
+use OpenSSL::Test qw/:DEFAULT srctop_dir bldtop_dir bldtop_file/;
 use OpenSSL::Test::Utils;
 
 BEGIN {
