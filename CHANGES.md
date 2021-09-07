@@ -1389,6 +1389,14 @@ breaking changes, and mappings for the large list of deprecated functions.
 
    *Raja Ashok*
 
+ * Added a new concept for OpenSSL plugability: providers.  This
+   functionality is designed to replace ENGINE, and to be much more
+   dynamic, allowing provider authors to introduce new algorithms
+   among other things, as long as there's an API that supports the
+   algorithm type.
+
+   *The OpenSSL team*
+
 OpenSSL 1.1.1
 -------------
 

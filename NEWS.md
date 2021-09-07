@@ -87,6 +87,7 @@ OpenSSL 3.0
   * All of the low-level DH, DSA, ECDH, ECDSA and RSA public key functions
     have been deprecated.
   * SSL 3, TLS 1.0, TLS 1.1, and DTLS 1.0 only work at security level 0.
+  * Added providers, a new pluggability concept that will replace ENGINE.
 
 OpenSSL 1.1.1
 -------------
