@@ -498,8 +498,6 @@ providers/implementations/ciphers/cipher_aes_ccm.c
 providers/implementations/ciphers/cipher_aes_ccm.h
 providers/implementations/ciphers/cipher_aes_ccm_hw.c
 providers/implementations/ciphers/cipher_aes_ccm_hw_aesni.inc
-providers/implementations/ciphers/cipher_aes_cts.c
-providers/implementations/ciphers/cipher_aes_cts.h
 providers/implementations/ciphers/cipher_aes_cts.inc
 providers/implementations/ciphers/cipher_aes_gcm.c
 providers/implementations/ciphers/cipher_aes_gcm.h
@@ -515,6 +513,8 @@ providers/implementations/ciphers/cipher_aes_xts.c
 providers/implementations/ciphers/cipher_aes_xts.h
 providers/implementations/ciphers/cipher_aes_xts_fips.c
 providers/implementations/ciphers/cipher_aes_xts_hw.c
+providers/implementations/ciphers/cipher_cts.c
+providers/implementations/ciphers/cipher_cts.h
 providers/implementations/ciphers/cipher_tdes.c
 providers/implementations/ciphers/cipher_tdes.h
 providers/implementations/ciphers/cipher_tdes_common.c
