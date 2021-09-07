@@ -1389,6 +1389,23 @@ breaking changes, and mappings for the large list of deprecated functions.
 
    *Raja Ashok*
 
+ * Added a new concept for OpenSSL plugability: providers.  This
+   functionality is designed to replace the ENGINE API and ENGINE
+   implementations, and to be much more dynamic, allowing provider
+   authors to introduce new algorithms among other things, as long as
+   there's an API that supports the algorithm type.
+
+   With this concept comes a new core API for interaction between
+   libcrypto and provider implementations.  Public libcrypto functions
+   that want to use providers do so through this core API.
+
+   The main documentation for this core API is found in
+   doc/man7/provider.pod, doc/man7/provider-base.pod, and they in turn
+   refer to other manuals describing the API specific for supported
+   algorithm types (also called operations).
+
+   *The OpenSSL team*
+
 OpenSSL 1.1.1
 -------------
 
