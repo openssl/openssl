@@ -21,9 +21,9 @@ OpenSSL 3.0
 ### Major changes between OpenSSL 1.1.1 and OpenSSL 3.0 [under development]
 
   * Enhanced 'openssl list' with many new options.
-  * Added migration guide to man7
-  * Implemented support for fully "pluggable" TLSv1.3 groups
-  * Added suport for Kernel TLS (KTLS)
+  * Added migration guide to man7.
+  * Implemented support for fully "pluggable" TLSv1.3 groups.
+  * Added suport for Kernel TLS (KTLS).
   * Changed the license to the Apache License v2.0.
   * Moved all variations of the EVP ciphers CAST5, BF, IDEA, SEED, RC2,
     RC4, RC5, and DES to the legacy provider.
@@ -39,6 +39,8 @@ OpenSSL 3.0
   * Remove the `RAND_DRBG` API.
   * Deprecated the `ENGINE` API.
   * Added `OSSL_LIB_CTX`, a libcrypto library context.
+  * Added various `_ex` functions to the OpenSSL API that support using
+    a non-default `OSSL_LIB_CTX`.
   * Interactive mode is removed from the 'openssl' program.
   * The X25519, X448, Ed25519, Ed448, SHAKE128 and SHAKE256 algorithms are
     included in the FIPS provider.

@@ -30,6 +30,37 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * TLS_MAX_VERSION, DTLS_MAX_VERSION and DTLS_MIN_VERSION constants are now
+   deprecated.
+
+   *Matt Caswell*
+
+ * The `OPENSSL_s390xcap` environment variable can be used to set bits in the
+   S390X capability vector to zero. This simplifies testing of different code
+   paths on S390X architecture.
+
+   *Patrick Steuer*
+
+ * Encrypting more than 2^64 TLS records with AES-GCM is disallowed
+   as per FIPS 140-2 IG A.5 "Key/IV Pair Uniqueness Requirements from
+   SP 800-38D". The communication will fail at this point.
+
+   *Paul Dale*
+
+ * The EC_GROUP_clear_free() function is deprecated as there is nothing
+   confidential in EC_GROUP data.
+
+   *Nicola Tuveri*
+
+ * The byte order mark (BOM) character is ignored if encountered at the
+   beginning of a PEM-formatted file.
+
+   *Dmitry Belyavskiy*
+
+ * Added CMS support for the Russian GOST algorithms.
+
+   *Dmitry Belyavskiy*
+
  * Due to move of the implementation of cryptographic operations
    to the providers, validation of various operation parameters can
    be postponed until the actual operation is executed where previously
@@ -512,6 +543,11 @@ breaking changes, and mappings for the large list of deprecated functions.
    libcrypto operations are performed.
 
    *Richard Levitte*
+
+ * Added various `_ex` functions to the OpenSSL API that support using
+   a non-default `OSSL_LIB_CTX`.
+
+   *OpenSSL team*
 
  * Handshake now fails if Extended Master Secret extension is dropped
    on renegotiation.
@@ -1226,11 +1262,19 @@ breaking changes, and mappings for the large list of deprecated functions.
 
    *Richard Levitte*
 
- * Add Single Step KDF (EVP_KDF_SS) to EVP_KDF.
+ * Added KB KDF (EVP_KDF_KB) to EVP_KDF.
+
+   *Robbie Harwood*
+
+ * Added SSH KDF (EVP_KDF_SSHKDF) and KRB5 KDF (EVP_KDF_KRB5KDF) to EVP_KDF.
+
+   *Simo Sorce*
+
+ * Added Single Step KDF (EVP_KDF_SS), X963 KDF, and X942 KDF to EVP_KDF.
 
    *Shane Lontis*
 
- * Add KMAC to EVP_MAC.
+ * Added KMAC to EVP_MAC.
 
    *Shane Lontis*
 
