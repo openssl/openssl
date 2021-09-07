@@ -18,6 +18,10 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
+### Major changes between OpenSSL 3.0.0 and OpenSSL 3.0.1 [under development]
+
+ * 
+
 ### Major changes between OpenSSL 1.1.1 and OpenSSL 3.0.0 [7 sep 2021]
 
   * Enhanced 'openssl list' with many new options.
