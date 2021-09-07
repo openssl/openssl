@@ -25,7 +25,7 @@ plan skip_all => 'Test is disabled in an address sanitizer build' unless disable
 
 plan tests => 1;
 
-my $fips = bldtop_dir('providers', platform->dso('fips'));
+my $fips = bldtop_file('providers', platform->dso('fips'));
 
 ok(run(test(['moduleloadtest', $fips, 'OSSL_provider_init'])),
    "trying to load $fips in its own");
