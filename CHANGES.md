@@ -813,8 +813,19 @@ breaking changes, and mappings for the large list of deprecated functions.
 
    *Rich Salz*
 
- * Introduced a new method type and API, OSSL_ENCODER, to
-   represent generic encoders.
+ * Introduced a new method type and API, OSSL_ENCODER, to represent
+   generic encoders.  These do the same sort of job that PEM writers
+   and d2i functions do, but with support for methods supplied by
+   providers, and the possibility for providers to support other
+   formats as well.
+
+   *Richard Levitte*
+
+ * Introduced a new method type and API, OSSL_DECODER, to represent
+   generic decoders.  These do the same sort of job that PEM readers
+   and i2d functions do, but with support for methods supplied by
+   providers, and the possibility for providers to support other
+   formats as well.
 
    *Richard Levitte*
 

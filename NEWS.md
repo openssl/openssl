@@ -65,6 +65,7 @@ OpenSSL 3.0
     BIOs (allowing implicit connections), and timeout checks.
   * Added util/check-format.pl for checking adherence to the coding guidelines.
   * Added OSSL_ENCODER, a generic encoder API.
+  * Added OSSL_DECODER, a generic decoder API.
   * Added OSSL_PARAM_BLD, an easier to use API to OSSL_PARAM.
   * Added error raising macros, ERR_raise() and ERR_raise_data().
   * Deprecated ERR_put_error(), ERR_get_error_line(), ERR_get_error_line_data(),
