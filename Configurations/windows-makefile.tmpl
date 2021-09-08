@@ -41,6 +41,7 @@ BLDDIR={- $config{builddir} -}
 FIPSKEY={- $config{FIPSKEY} -}
 
 VERSION={- "$config{full_version}" -}
+VERSION_NUMBER={- "$config{version}" -}
 MAJOR={- $config{major} -}
 MINOR={- $config{minor} -}
 
@@ -727,7 +728,7 @@ EOF
           my $mkdef = abs2rel(rel2abs(catfile($config{sourcedir},
                                               "util", "mkdef.pl")),
                               rel2abs($config{builddir}));
-          my $ord_ver = $args{intent} eq 'lib' ? ' --version $(VERSION)' : '';
+          my $ord_ver = $args{intent} eq 'lib' ? ' --version $(VERSION_NUMBER)' : '';
           my $ord_name =
               $args{generator}->[1] || platform->dsoname($args{product});
           return <<"EOF";
