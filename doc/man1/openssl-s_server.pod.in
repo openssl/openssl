@@ -139,6 +139,7 @@ B<openssl> B<s_server>
 [B<-anti_replay>]
 [B<-no_anti_replay>]
 [B<-num_tickets>]
+[B<-tfo>]
 {- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_version_synopsis -}
 {- $OpenSSL::safe::opt_v_synopsis -}
@@ -816,6 +817,11 @@ has been negotiated, and early data is enabled on the server. A full handshake
 is forced if a session ticket is used a second or subsequent time. Any early
 data that was sent will be rejected.
 
+=item B<-tfo>
+
+Enable acceptance of TCP Fast Open (RFC7413) connections.
+
+
 {- $OpenSSL::safe::opt_name_item -}
 
 {- $OpenSSL::safe::opt_version_item -}
@@ -941,6 +947,8 @@ The
 
 The B<-srpvfile>, B<-srpuserseed>, and B<-engine>
 option were deprecated in OpenSSL 3.0.
+
+The -tfo option was added in OpenSSL 3.1.
 
 =head1 COPYRIGHT
 

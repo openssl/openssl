@@ -11,6 +11,7 @@
 #include <errno.h>
 
 #include "bio_local.h"
+#include "internal/bio_tfo.h"
 #include "internal/ktls.h"
 
 #ifndef OPENSSL_NO_SOCK
@@ -24,6 +25,7 @@ typedef struct bio_connect_st {
 # ifndef OPENSSL_NO_KTLS
     unsigned char record_type;
 # endif
+    int tfo_first;
 
     BIO_ADDRINFO *addr_first;
     const BIO_ADDRINFO *addr_iter;
@@ -361,6 +363,15 @@ static int conn_write(BIO *b, const char *in, int inl)
         }
     } else
 # endif
+# if defined(OSSL_TFO_SENDTO)
+    if (data->tfo_first) {
+        int peerlen = BIO_ADDRINFO_sockaddr_size(data->addr_iter);
+
+        ret = sendto(b->num, in, inl, OSSL_TFO_SENDTO,
+                     BIO_ADDRINFO_sockaddr(data->addr_iter), peerlen);
+        data->tfo_first = 0;
+    } else
+# endif
         ret = writesocket(b->num, in, inl);
     BIO_clear_retry_flags(b);
     if (ret <= 0) {
@@ -425,6 +436,8 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
                     ret = -1;
                     break;
                 }
+            } else if (num == 4) {
+                ret = data->connect_mode;
             } else {
                 ret = 0;
             }
@@ -485,8 +498,23 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
         else
             data->connect_mode &= ~BIO_SOCK_NONBLOCK;
         break;
+#if defined(TCP_FASTOPEN) && !defined(OPENSSL_NO_TFO)
+    case BIO_C_SET_TFO:
+        if (num != 0) {
+            data->connect_mode |= BIO_SOCK_TFO;
+            data->tfo_first = 1;
+        } else {
+            data->connect_mode &= ~BIO_SOCK_TFO;
+            data->tfo_first = 0;
+        }
+        break;
+#endif
     case BIO_C_SET_CONNECT_MODE:
         data->connect_mode = (int)num;
+        if (num & BIO_SOCK_TFO)
+            data->tfo_first = 1;
+        else
+            data->tfo_first = 0;
         break;
     case BIO_C_GET_FD:
         if (b->init) {

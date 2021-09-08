@@ -452,10 +452,14 @@ static long acpt_ctrl(BIO *b, int cmd, long num, void *ptr)
                 data->bio_chain = (BIO *)ptr;
             } else if (num == 4) {
                 data->accept_family = *(int *)ptr;
+            } else if (num == 5) {
+                data->bind_mode |= BIO_SOCK_TFO;
             }
         } else {
             if (num == 2) {
                 data->bind_mode &= ~BIO_SOCK_NONBLOCK;
+            } else if (num == 5) {
+                data->bind_mode &= ~BIO_SOCK_TFO;
             }
         }
         break;

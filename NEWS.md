@@ -23,6 +23,8 @@ OpenSSL 3.1
 
   * Subject or issuer names in X.509 objects are now displayed as UTF-8 strings
     by default.
+  * TCP Fast Open (RFC7413) support is available on Linux, macOS, and FreeBSD
+    where enabled and supported.
 
 OpenSSL 3.0
 -----------

@@ -878,6 +878,10 @@ tests also use the command line applications, the tests will also be skipped.
 
 Don't build test programs or run any tests.
 
+### enable-tfo
+
+Build with support for TCP Fast Open (RFC7413). Supported on Linux, macOS and FreeBSD.
+
 ### no-threads
 
 Don't build with support for multi-threaded applications.
