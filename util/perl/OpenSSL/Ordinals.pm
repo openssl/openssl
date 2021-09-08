@@ -623,8 +623,6 @@ sub set_version {
     my $version = shift // '*';
     my $baseversion = shift // '*';
 
-    $version =~ s|-.*||g;
-
     if ($baseversion eq '*') {
         $baseversion = $version;
         if ($baseversion ne '*') {
