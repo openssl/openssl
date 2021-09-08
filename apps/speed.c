@@ -3092,10 +3092,9 @@ int speed_main(int argc, char **argv)
 #endif
     if (!mr) {
         printf("version: %s\n", OpenSSL_version(OPENSSL_FULL_VERSION_STRING));
-        printf("built on: %s\n", OpenSSL_version(OPENSSL_BUILT_ON));
-        printf("options:");
-        printf("%s ", BN_options());
-        printf("\n%s\n", OpenSSL_version(OPENSSL_CFLAGS));
+        printf("%s\n", OpenSSL_version(OPENSSL_BUILT_ON));
+        printf("options: %s\n", BN_options());
+        printf("%s\n", OpenSSL_version(OPENSSL_CFLAGS));
         printf("%s\n", OpenSSL_version(OPENSSL_CPU_INFO));
     }
 
