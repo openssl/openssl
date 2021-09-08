@@ -22,7 +22,7 @@ OSSL_PROVIDER *OSSL_PROVIDER_try_load(OSSL_LIB_CTX *libctx, const char *name,
     int isnew = 0;
 
     /* Find it or create it */
-    if ((prov = ossl_provider_find(libctx, name, 1)) == NULL) {
+    if ((prov = ossl_provider_find(libctx, name, 0)) == NULL) {
         if ((prov = ossl_provider_new(libctx, name, NULL, 0)) == NULL)
             return NULL;
         isnew = 1;
