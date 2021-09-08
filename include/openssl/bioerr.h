@@ -44,7 +44,8 @@
 # define BIO_R_NO_HOSTNAME_OR_SERVICE_SPECIFIED           144
 # define BIO_R_NO_PORT_DEFINED                            113
 # define BIO_R_NO_SUCH_FILE                               128
-# define BIO_R_NULL_PARAMETER                             115 /* unused */
+# define BIO_R_TFO_DISABLED                               106
+# define BIO_R_TFO_NO_KERNEL_SUPPORT                      108
 # define BIO_R_TRANSFER_ERROR                             104
 # define BIO_R_TRANSFER_TIMEOUT                           105
 # define BIO_R_UNABLE_TO_BIND_SOCKET                      117
@@ -53,6 +54,7 @@
 # define BIO_R_UNABLE_TO_LISTEN_SOCKET                    119
 # define BIO_R_UNABLE_TO_NODELAY                          138
 # define BIO_R_UNABLE_TO_REUSEADDR                        139
+# define BIO_R_UNABLE_TO_TFO                              109
 # define BIO_R_UNAVAILABLE_IP_FAMILY                      145
 # define BIO_R_UNINITIALIZED                              120
 # define BIO_R_UNKNOWN_INFO_TYPE                          140

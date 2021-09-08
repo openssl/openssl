@@ -67,6 +67,18 @@ void BIO_ADDR_free(BIO_ADDR *ap)
     OPENSSL_free(ap);
 }
 
+BIO_ADDR *BIO_ADDR_dup(const BIO_ADDR *ap)
+{
+    BIO_ADDR *ret = NULL;
+
+    if (ap != NULL) {
+        ret = BIO_ADDR_new();
+        if (ret != NULL)
+            memcpy(ret, ap, sizeof(BIO_ADDR));
+    }
+    return ret;
+}
+
 void BIO_ADDR_clear(BIO_ADDR *ap)
 {
     memset(ap, 0, sizeof(*ap));

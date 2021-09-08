@@ -405,10 +405,13 @@ struct bio_dgram_sctp_prinfo {
 
 # define BIO_C_SET_CONNECT_MODE                  155
 
+# define BIO_C_SET_TFO                           156 /* like BIO_C_SET_NBIO */
+
 # define BIO_set_app_data(s,arg)         BIO_set_ex_data(s,0,arg)
 # define BIO_get_app_data(s)             BIO_get_ex_data(s,0)
 
-# define BIO_set_nbio(b,n)             BIO_ctrl(b,BIO_C_SET_NBIO,(n),NULL)
+# define BIO_set_nbio(b,n)               BIO_ctrl(b,BIO_C_SET_NBIO,(n),NULL)
+# define BIO_set_tfo(b,n)                BIO_ctrl(b,BIO_C_SET_TFO,(n),NULL)
 
 # ifndef OPENSSL_NO_SOCK
 /* IP families we support, for BIO_s_connect() and BIO_s_accept() */
@@ -429,6 +432,7 @@ struct bio_dgram_sctp_prinfo {
 #  define BIO_get_conn_port(b)          ((const char *)BIO_ptr_ctrl(b,BIO_C_GET_CONNECT,1))
 #  define BIO_get_conn_address(b)       ((const BIO_ADDR *)BIO_ptr_ctrl(b,BIO_C_GET_CONNECT,2))
 #  define BIO_get_conn_ip_family(b)     BIO_ctrl(b,BIO_C_GET_CONNECT,3,NULL)
+#  define BIO_get_conn_mode(b)          BIO_ctrl(b,BIO_C_GET_CONNECT,4,NULL)
 #  define BIO_set_conn_mode(b,n)        BIO_ctrl(b,BIO_C_SET_CONNECT_MODE,(n),NULL)
 
 /* BIO_s_accept() */
@@ -446,6 +450,7 @@ struct bio_dgram_sctp_prinfo {
                                                  (char *)(bio))
 #  define BIO_set_accept_ip_family(b,f) BIO_int_ctrl(b,BIO_C_SET_ACCEPT,4,f)
 #  define BIO_get_accept_ip_family(b)   BIO_ctrl(b,BIO_C_GET_ACCEPT,4,NULL)
+#  define BIO_set_tfo_accept(b,n)       BIO_ctrl(b,BIO_C_SET_ACCEPT,5,(n)?(void *)"a":NULL)
 
 /* Aliases kept for backward compatibility */
 #  define BIO_BIND_NORMAL                 0
@@ -703,6 +708,7 @@ int BIO_hex_string(BIO *out, int indent, int width, const void *data,
 
 # ifndef OPENSSL_NO_SOCK
 BIO_ADDR *BIO_ADDR_new(void);
+BIO_ADDR *BIO_ADDR_dup(const BIO_ADDR *ap);
 int BIO_ADDR_rawmake(BIO_ADDR *ap, int family,
                      const void *where, size_t wherelen, unsigned short port);
 void BIO_ADDR_free(BIO_ADDR *);
@@ -765,6 +771,7 @@ int BIO_sock_info(int sock,
 #  define BIO_SOCK_KEEPALIVE    0x04
 #  define BIO_SOCK_NONBLOCK     0x08
 #  define BIO_SOCK_NODELAY      0x10
+#  define BIO_SOCK_TFO          0x20
 
 int BIO_socket(int domain, int socktype, int protocol, int options);
 int BIO_connect(int sock, const BIO_ADDR *addr, int options);

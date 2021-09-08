@@ -164,6 +164,7 @@ BIO_get_conn_address                    define
 BIO_get_conn_hostname                   define
 BIO_get_conn_port                       define
 BIO_get_conn_ip_family                  define
+BIO_get_conn_mode                       define
 BIO_get_fd                              define
 BIO_get_fp                              define
 BIO_get_indent                          define
@@ -197,6 +198,7 @@ BIO_set_conn_address                    define
 BIO_set_conn_hostname                   define
 BIO_set_conn_port                       define
 BIO_set_conn_ip_family                  define
+BIO_set_conn_mode                       define
 BIO_set_fd                              define
 BIO_set_fp                              define
 BIO_set_indent                          define
@@ -212,6 +214,8 @@ BIO_set_ssl                             define
 BIO_set_ssl_mode                        define
 BIO_set_ssl_renegotiate_bytes           define
 BIO_set_ssl_renegotiate_timeout         define
+BIO_set_tfo                             define
+BIO_set_tfo_accept                      define
 BIO_set_write_buf_size                  define
 BIO_set_write_buffer_size               define
 BIO_should_io_special                   define

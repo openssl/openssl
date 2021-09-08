@@ -119,6 +119,7 @@ B<openssl> B<s_client>
 [B<-srp_moregroups>]
 [B<-srp_strength> I<number>]
 [B<-ktls>]
+[B<-tfo>]
 {- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_version_synopsis -}
 {- $OpenSSL::safe::opt_x_synopsis -}
@@ -781,6 +782,10 @@ deprecated.
 Enable Kernel TLS for sending and receiving.
 This option was introduced in OpenSSL 3.1.0.
 Kernel TLS is off by default as of OpenSSL 3.1.0.
+
+=item B<-tfo>
+
+Enable creation of connections via TCP fast open (RFC7413).
 
 {- $OpenSSL::safe::opt_version_item -}
 

@@ -492,6 +492,7 @@ my @disablables = (
     "static-engine",
     "stdio",
     "tests",
+    "tfo",
     "threads",
     "tls",
     "trace",
@@ -551,6 +552,7 @@ our %disabled = ( # "what"         => "comment"
                   "sctp"                => "default",
                   "ssl3"                => "default",
                   "ssl3-method"         => "default",
+                  "tfo"                 => "default",
                   "trace"               => "default",
                   "ubsan"               => "default",
                   "unit-test"           => "default",
@@ -576,6 +578,7 @@ my @disable_cascades = (
                              "seed", "siphash", "siv",
                              "sm3", "sm4", "srp",
                              "srtp", "ssl3-method", "ssl-trace",
+                             "tfo",
                              "ts", "ui-console", "whirlpool",
                              "fips-securitychecks" ],
     sub { $config{processor} eq "386" }
@@ -586,7 +589,7 @@ my @disable_cascades = (
     "des"               => [ "mdc2" ],
     "ec"                => [ "ec2m", "ecdsa", "ecdh", "sm2", "gost" ],
     "dgram"             => [ "dtls", "sctp" ],
-    "sock"              => [ "dgram" ],
+    "sock"              => [ "dgram", "tfo" ],
     "dtls"              => [ @dtls ],
     sub { 0 == scalar grep { !$disabled{$_} } @dtls }
                         => [ "dtls" ],
