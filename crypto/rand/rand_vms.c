@@ -484,7 +484,7 @@ int rand_pool_add_nonce_data(RAND_POOL *pool)
     struct {
         pid_t pid;
         CRYPTO_THREAD_ID tid;
-        unsigned __int64_t time;
+        unsigned __int64 time;
     } data = { 0 };
 
     /*
@@ -582,7 +582,7 @@ int rand_pool_add_additional_data(RAND_POOL *pool)
 {
     struct {
         CRYPTO_THREAD_ID tid;
-        unsigned __int64_t time;
+        unsigned __int64 time;
     } data = { 0 };
 
     /*
