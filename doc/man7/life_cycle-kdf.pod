@@ -103,18 +103,18 @@ This is the canonical list.
     <td style="border:1px solid"></td></tr>
 <tr><th style="border:1px solid" align="left">EVP_KDF_derive</th>
     <td style="border:1px solid" align="center"></td>
-    <td style="border:1px solid" align="center">newed</td>
+    <td style="border:1px solid" align="center">deriving</td>
     <td style="border:1px solid" align="center">deriving</td>
     <td style="border:1px solid"></td></tr>
 <tr><th style="border:1px solid" align="left">EVP_KDF_CTX_free</th>
-    <td style="border:1px solid" align="center"></td>
-    <td style="border:1px solid" align="center">newed</td>
-    <td style="border:1px solid" align="center">deriving</td>
+    <td style="border:1px solid" align="center">freed</td>
+    <td style="border:1px solid" align="center">freed</td>
+    <td style="border:1px solid" align="center">freed</td>
     <td style="border:1px solid"></td></tr>
 <tr><th style="border:1px solid" align="left">EVP_KDF_CTX_reset</th>
-    <td style="border:1px solid" align="center">freed</td>
-    <td style="border:1px solid" align="center">freed</td>
-    <td style="border:1px solid" align="center">freed</td>
+    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center">newed</td>
+    <td style="border:1px solid" align="center">newed</td>
     <td style="border:1px solid"></td></tr>
 <tr><th style="border:1px solid" align="left">EVP_KDF_CTX_get_params</th>
     <td style="border:1px solid" align="center"></td>
