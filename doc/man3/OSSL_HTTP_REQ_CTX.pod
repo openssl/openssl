@@ -70,8 +70,7 @@ The allocated context structure is also populated with an internal allocated
 memory B<BIO>, which collects the HTTP request and additional headers as text.
 
 OSSL_HTTP_REQ_CTX_free() frees up the HTTP request context I<rctx>.
-The I<wbio> and I<rbio> are not free'd and it is up to the application
-to do so.
+The I<rbio> is not free'd, I<wbio> will be free'd if I<free_wbio> is set.
 
 OSSL_HTTP_REQ_CTX_set_request_line() adds the HTTP request line to the context.
 The HTTP method is determined by I<method_POST>,
