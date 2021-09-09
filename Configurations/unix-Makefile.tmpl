@@ -619,6 +619,7 @@ uninstall_docs: uninstall_man_docs uninstall_html_docs
 install_fips: build_sw $(INSTALL_FIPSMODULECONF)
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(MODULESDIR)
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(OPENSSLDIR)
 	@$(ECHO) "*** Installing FIPS module"
 	@$(ECHO) "install $(INSTALL_FIPSMODULE) -> $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME)"
 	@cp "$(INSTALL_FIPSMODULE)" $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME).new
