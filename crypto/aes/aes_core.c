@@ -688,6 +688,733 @@ void AES_decrypt(const unsigned char *in, unsigned char *out,
 
     InvCipher(in, out, rk, key->rounds);
 }
+
+# ifndef OPENSSL_SMALL_FOOTPRINT
+void AES_ctr32_encrypt(const unsigned char *in, unsigned char *out,
+                       size_t blocks, const AES_KEY *key,
+                       const unsigned char *ivec);
+
+void AES_cbc_decrypt(const unsigned char *in, unsigned char *out,
+                     size_t len, const AES_KEY *key,
+                     unsigned char *ivec);
+
+static void RawToBits(const u8 raw[64], u64 bits[8])
+{
+    int i, j;
+    u64 in, out;
+
+    memset(bits, 0, 64);
+    for (i = 0; i < 8; i++) {
+        in = 0;
+        for (j = 0; j < 8; j++)
+            in |= ((u64)raw[i * 8 + j]) << (8 * j);
+        out = in & 0xF0F0F0F00F0F0F0FuLL;
+        out |= (in & 0x0F0F0F0F00000000uLL) >> 28;
+        out |= (in & 0x00000000F0F0F0F0uLL) << 28;
+        in = out & 0xCCCC3333CCCC3333uLL;
+        in |= (out & 0x3333000033330000uLL) >> 14;
+        in |= (out & 0x0000CCCC0000CCCCuLL) << 14;
+        out = in & 0xAA55AA55AA55AA55uLL;
+        out |= (in & 0x5500550055005500uLL) >> 7;
+        out |= (in & 0x00AA00AA00AA00AAuLL) << 7;
+        for (j = 0; j < 8; j++) {
+            bits[j] |= (out & 0xFFuLL) << (8 * i);
+            out = out >> 8;
+        }
+    }
+}
+
+static void BitsToRaw(const u64 bits[8], u8 raw[64])
+{
+    int i, j;
+    u64 in, out;
+
+    for (i = 0; i < 8; i++) {
+        in = 0;
+        for (j = 0; j < 8; j++)
+            in |= ((bits[j] >> (8 * i)) & 0xFFuLL) << (8 * j);
+        out = in & 0xF0F0F0F00F0F0F0FuLL;
+        out |= (in & 0x0F0F0F0F00000000uLL) >> 28;
+        out |= (in & 0x00000000F0F0F0F0uLL) << 28;
+        in = out & 0xCCCC3333CCCC3333uLL;
+        in |= (out & 0x3333000033330000uLL) >> 14;
+        in |= (out & 0x0000CCCC0000CCCCuLL) << 14;
+        out = in & 0xAA55AA55AA55AA55uLL;
+        out |= (in & 0x5500550055005500uLL) >> 7;
+        out |= (in & 0x00AA00AA00AA00AAuLL) << 7;
+        for (j = 0; j < 8; j++) {
+            raw[i * 8 + j] = (u8)out;
+            out = out >> 8;
+        }
+    }
+}
+
+static void BitsXtime(u64 state[8])
+{
+    u64 b;
+
+    b = state[7];
+    state[7] = state[6];
+    state[6] = state[5];
+    state[5] = state[4];
+    state[4] = state[3] ^ b;
+    state[3] = state[2] ^ b;
+    state[2] = state[1];
+    state[1] = state[0] ^ b;
+    state[0] = b;
+}
+
+/*
+ * This is the Bit Slice Algorithm from David Canright
+ * as it was presented in this paper:
+ * "A very compact Rijndael S-box"
+ * https://calhoun.nps.edu/bitstream/handle/10945/791/NPS-MA-04-001.pdf?sequence=1&isAllowed=y
+ *
+ * Derived directly from the S-box Algorihm in C in appendix A.
+ * But using the optimized basis transformation formulas from
+ * Chapter 6 Implementation details in the same paper.
+ */
+static void BitsSub(u64 state[8])
+{
+    u64 x0, x1, x2, x3, x4, x5, x6, x7;
+    u64 t0, t1, t2, t3, t4, t5, t6, t7, t8, t9;
+    u64 t10, t11, t12, t13, t14, t15, t16, t17, t18, t19;
+    u64 t20, t21, t22, t23, t24, t25, t26, t27, t28, t29;
+    u64 t30, t31, t32, t33, t34, t35, t36, t37, t38, t39;
+    u64 t40, t41, t42, t43, t44, t45, t46, t47, t48, t49;
+    u64 t50, t51, t52, t53, t54, t55, t56, t57, t58, t59;
+    u64 t60, t61, t62, t63, t64, t65, t66, t67, t68, t69;
+    u64 t70, t71, t72, t73, t74, t75, t76, t77, t78, t79;
+    u64 t80, t81, t82, t83, t84, t85, t86, t87, t88, t89;
+    u64 t90, t91, t92, t93, t94, t95, t96, t97, t98, t99;
+    u64 t100, t101, t102, t103, t104, t105, t106, t107, t108, t109;
+    u64 t110, t111, t112, t113, t114, t115, t116, t117, t118, t119;
+    u64 t120, t121, t122, t123, t124, t125, t126, t127, t128, t129;
+    u64 t130, t131, t132, t133, t134, t135, t136, t137, t138, t139;
+    u64 t140, t141, t142, t143, t144, t145, t146, t147, t148, t149;
+    u64 t150, t151, t152, t153, t154, t155, t156;
+
+    x0 = state[0];
+    x1 = state[1];
+    x2 = state[2];
+    x3 = state[3];
+    x4 = state[4];
+    x5 = state[5];
+    x6 = state[6];
+    x7 = state[7];
+    t0 = x3 ^ x0;
+    t1 = x7 ^ x4;
+    t2 = x7 ^ x5;
+    t3 = x6 ^ x0;
+    t4 = x5 ^ t3;
+    t5 = x4 ^ t4;
+    t6 = x2 ^ t2;
+    t7 = x1 ^ t3;
+    t8 = t6 ^ t7;
+    t9 = x1 ^ t4;
+    t10 = t2 ^ t3;
+    t11 = x1 ^ t1;
+    t12 = t11 ^ t0;
+    t13 = x2 ^ x3;
+    t14 = t13 ^ t7;
+    t15 = t10 ^ t14;
+    t16 = t9 ^ t4;
+    t17 = t5 ^ x0;
+    t18 = t8 ^ t12;
+    t19 = t17 ^ t15;
+    t20 = t18 ^ t16;
+    t21 = t15 ^ t16;
+    t22 = x0 ^ t14;
+    t23 = t12 ^ t4;
+    t24 = t5 ^ t10;
+    t25 = t8 ^ t9;
+    t26 = t23 ^ t22;
+    t27 = t25 ^ t24;
+    t28 = t27 & t26;
+    t29 = t25 & t23;
+    t30 = t29 ^ t28;
+    t31 = t24 & t22;
+    t32 = t31 ^ t28;
+    t33 = t30 ^ t32;
+    t34 = t12 ^ x0;
+    t35 = t8 ^ t5;
+    t36 = t35 & t34;
+    t37 = t8 & t12;
+    t38 = t37 ^ t36;
+    t39 = t5 & x0;
+    t40 = t39 ^ t36;
+    t41 = t40 ^ t33;
+    t42 = t38 ^ t32;
+    t43 = t4 ^ t14;
+    t44 = t9 ^ t10;
+    t45 = t44 & t43;
+    t46 = t9 & t4;
+    t47 = t46 ^ t45;
+    t48 = t10 & t14;
+    t49 = t48 ^ t45;
+    t50 = t49 ^ t33;
+    t51 = t47 ^ t32;
+    t52 = t15 ^ t50;
+    t53 = t21 ^ t51;
+    t54 = t20 ^ t41;
+    t55 = t19 ^ t42;
+    t56 = t54 ^ t52;
+    t57 = t55 ^ t53;
+    t58 = t56 ^ t57;
+    t59 = t53 ^ t52;
+    t60 = t55 ^ t54;
+    t61 = t60 & t59;
+    t62 = t55 & t53;
+    t63 = t62 ^ t61;
+    t64 = t54 & t52;
+    t65 = t64 ^ t61;
+    t66 = t58 ^ t65;
+    t67 = t57 ^ t63;
+    t68 = t53 ^ t52;
+    t69 = t66 ^ t67;
+    t70 = t69 & t68;
+    t71 = t66 & t53;
+    t72 = t71 ^ t70;
+    t73 = t67 & t52;
+    t74 = t73 ^ t70;
+    t75 = t55 ^ t54;
+    t76 = t66 ^ t67;
+    t77 = t76 & t75;
+    t78 = t66 & t55;
+    t79 = t78 ^ t77;
+    t80 = t67 & t54;
+    t81 = t80 ^ t77;
+    t82 = x0 ^ t14;
+    t83 = t12 ^ t4;
+    t84 = t74 ^ t81;
+    t85 = t72 ^ t79;
+    t86 = t83 ^ t82;
+    t87 = t85 ^ t84;
+    t88 = t87 & t86;
+    t89 = t85 & t83;
+    t90 = t89 ^ t88;
+    t91 = t84 & t82;
+    t92 = t91 ^ t88;
+    t93 = t90 ^ t92;
+    t94 = t12 ^ x0;
+    t95 = t72 ^ t74;
+    t96 = t95 & t94;
+    t97 = t72 & t12;
+    t98 = t97 ^ t96;
+    t99 = t74 & x0;
+    t100 = t99 ^ t96;
+    t101 = t100 ^ t93;
+    t102 = t98 ^ t92;
+    t103 = t4 ^ t14;
+    t104 = t79 ^ t81;
+    t105 = t104 & t103;
+    t106 = t79 & t4;
+    t107 = t106 ^ t105;
+    t108 = t81 & t14;
+    t109 = t108 ^ t105;
+    t110 = t109 ^ t93;
+    t111 = t107 ^ t92;
+    t112 = t5 ^ t10;
+    t113 = t8 ^ t9;
+    t114 = t74 ^ t81;
+    t115 = t72 ^ t79;
+    t116 = t113 ^ t112;
+    t117 = t115 ^ t114;
+    t118 = t117 & t116;
+    t119 = t115 & t113;
+    t120 = t119 ^ t118;
+    t121 = t114 & t112;
+    t122 = t121 ^ t118;
+    t123 = t120 ^ t122;
+    t124 = t8 ^ t5;
+    t125 = t72 ^ t74;
+    t126 = t125 & t124;
+    t127 = t72 & t8;
+    t128 = t127 ^ t126;
+    t129 = t74 & t5;
+    t130 = t129 ^ t126;
+    t131 = t130 ^ t123;
+    t132 = t128 ^ t122;
+    t133 = t9 ^ t10;
+    t134 = t79 ^ t81;
+    t135 = t134 & t133;
+    t136 = t79 & t9;
+    t137 = t136 ^ t135;
+    t138 = t81 & t10;
+    t139 = t138 ^ t135;
+    t140 = t139 ^ t123;
+    t141 = t137 ^ t122;
+    t142 = t102 ^ t132;
+    t143 = t101 ^ t110;
+    t144 = t101 ^ t140;
+    t145 = t111 ^ t132;
+    t146 = t111 ^ t142;
+    t147 = t111 ^ t141;
+    t148 = t110 ^ t147;
+    t149 = t131 ^ t145;
+    t150 = t141 ^ t143;
+    t151 = t149 ^ t144;
+    t152 = t146 ^ t143;
+    t153 = ~ t150;
+    t154 = ~ t148;
+    t155 = ~ t144;
+    t156 = ~ t142;
+    state[0] = t153;
+    state[1] = t154;
+    state[2] = t151;
+    state[3] = t152;
+    state[4] = t146;
+    state[5] = t155;
+    state[6] = t156;
+    state[7] = t145;
+}
+
+static void BitsInvSub(u64 state[8])
+{
+    u64 x0, x1, x2, x3, x4, x5, x6, x7;
+    u64 t0, t1, t2, t3, t4, t5, t6, t7, t8, t9;
+    u64 t10, t11, t12, t13, t14, t15, t16, t17, t18, t19;
+    u64 t20, t21, t22, t23, t24, t25, t26, t27, t28, t29;
+    u64 t30, t31, t32, t33, t34, t35, t36, t37, t38, t39;
+    u64 t40, t41, t42, t43, t44, t45, t46, t47, t48, t49;
+    u64 t50, t51, t52, t53, t54, t55, t56, t57, t58, t59;
+    u64 t60, t61, t62, t63, t64, t65, t66, t67, t68, t69;
+    u64 t70, t71, t72, t73, t74, t75, t76, t77, t78, t79;
+    u64 t80, t81, t82, t83, t84, t85, t86, t87, t88, t89;
+    u64 t90, t91, t92, t93, t94, t95, t96, t97, t98, t99;
+    u64 t100, t101, t102, t103, t104, t105, t106, t107, t108, t109;
+    u64 t110, t111, t112, t113, t114, t115, t116, t117, t118, t119;
+    u64 t120, t121, t122, t123, t124, t125, t126, t127, t128, t129;
+    u64 t130, t131, t132, t133, t134, t135, t136, t137, t138, t139;
+    u64 t140, t141, t142, t143, t144, t145, t146, t147, t148, t149;
+    u64 t150, t151, t152, t153, t154, t155, t156, t157, t158, t159;
+    u64 t160;
+
+    x0 = state[0];
+    x1 = state[1];
+    x2 = state[2];
+    x3 = state[3];
+    x4 = state[4];
+    x5 = state[5];
+    x6 = state[6];
+    x7 = state[7];
+    t0 = ~ x0;
+    t1 = ~ x1;
+    t2 = ~ x5;
+    t3 = ~ x6;
+    t4 = x3 ^ t0;
+    t5 = x7 ^ x4;
+    t6 = x7 ^ t2;
+    t7 = t3 ^ t0;
+    t8 = t2 ^ t7;
+    t9 = x4 ^ t8;
+    t10 = x2 ^ t6;
+    t11 = t1 ^ t7;
+    t12 = x4 ^ t11;
+    t13 = t3 ^ x4;
+    t14 = x3 ^ t11;
+    t15 = t3 ^ t5;
+    t16 = x4 ^ t4;
+    t17 = t1 ^ t9;
+    t18 = t14 ^ t17;
+    t19 = t13 ^ t16;
+    t20 = t12 ^ t10;
+    t21 = t5 ^ t15;
+    t22 = t20 ^ t18;
+    t23 = t21 ^ t19;
+    t24 = t18 ^ t19;
+    t25 = t10 ^ t17;
+    t26 = t15 ^ t16;
+    t27 = t12 ^ t14;
+    t28 = t5 ^ t13;
+    t29 = t26 ^ t25;
+    t30 = t28 ^ t27;
+    t31 = t30 & t29;
+    t32 = t28 & t26;
+    t33 = t32 ^ t31;
+    t34 = t27 & t25;
+    t35 = t34 ^ t31;
+    t36 = t33 ^ t35;
+    t37 = t15 ^ t10;
+    t38 = t5 ^ t12;
+    t39 = t38 & t37;
+    t40 = t5 & t15;
+    t41 = t40 ^ t39;
+    t42 = t12 & t10;
+    t43 = t42 ^ t39;
+    t44 = t43 ^ t36;
+    t45 = t41 ^ t35;
+    t46 = t16 ^ t17;
+    t47 = t13 ^ t14;
+    t48 = t47 & t46;
+    t49 = t13 & t16;
+    t50 = t49 ^ t48;
+    t51 = t14 & t17;
+    t52 = t51 ^ t48;
+    t53 = t52 ^ t36;
+    t54 = t50 ^ t35;
+    t55 = t18 ^ t53;
+    t56 = t24 ^ t54;
+    t57 = t23 ^ t44;
+    t58 = t22 ^ t45;
+    t59 = t57 ^ t55;
+    t60 = t58 ^ t56;
+    t61 = t59 ^ t60;
+    t62 = t56 ^ t55;
+    t63 = t58 ^ t57;
+    t64 = t63 & t62;
+    t65 = t58 & t56;
+    t66 = t65 ^ t64;
+    t67 = t57 & t55;
+    t68 = t67 ^ t64;
+    t69 = t61 ^ t68;
+    t70 = t60 ^ t66;
+    t71 = t56 ^ t55;
+    t72 = t69 ^ t70;
+    t73 = t72 & t71;
+    t74 = t69 & t56;
+    t75 = t74 ^ t73;
+    t76 = t70 & t55;
+    t77 = t76 ^ t73;
+    t78 = t58 ^ t57;
+    t79 = t69 ^ t70;
+    t80 = t79 & t78;
+    t81 = t69 & t58;
+    t82 = t81 ^ t80;
+    t83 = t70 & t57;
+    t84 = t83 ^ t80;
+    t85 = t10 ^ t17;
+    t86 = t15 ^ t16;
+    t87 = t77 ^ t84;
+    t88 = t75 ^ t82;
+    t89 = t86 ^ t85;
+    t90 = t88 ^ t87;
+    t91 = t90 & t89;
+    t92 = t88 & t86;
+    t93 = t92 ^ t91;
+    t94 = t87 & t85;
+    t95 = t94 ^ t91;
+    t96 = t93 ^ t95;
+    t97 = t15 ^ t10;
+    t98 = t75 ^ t77;
+    t99 = t98 & t97;
+    t100 = t75 & t15;
+    t101 = t100 ^ t99;
+    t102 = t77 & t10;
+    t103 = t102 ^ t99;
+    t104 = t103 ^ t96;
+    t105 = t101 ^ t95;
+    t106 = t16 ^ t17;
+    t107 = t82 ^ t84;
+    t108 = t107 & t106;
+    t109 = t82 & t16;
+    t110 = t109 ^ t108;
+    t111 = t84 & t17;
+    t112 = t111 ^ t108;
+    t113 = t112 ^ t96;
+    t114 = t110 ^ t95;
+    t115 = t12 ^ t14;
+    t116 = t5 ^ t13;
+    t117 = t77 ^ t84;
+    t118 = t75 ^ t82;
+    t119 = t116 ^ t115;
+    t120 = t118 ^ t117;
+    t121 = t120 & t119;
+    t122 = t118 & t116;
+    t123 = t122 ^ t121;
+    t124 = t117 & t115;
+    t125 = t124 ^ t121;
+    t126 = t123 ^ t125;
+    t127 = t5 ^ t12;
+    t128 = t75 ^ t77;
+    t129 = t128 & t127;
+    t130 = t75 & t5;
+    t131 = t130 ^ t129;
+    t132 = t77 & t12;
+    t133 = t132 ^ t129;
+    t134 = t133 ^ t126;
+    t135 = t131 ^ t125;
+    t136 = t13 ^ t14;
+    t137 = t82 ^ t84;
+    t138 = t137 & t136;
+    t139 = t82 & t13;
+    t140 = t139 ^ t138;
+    t141 = t84 & t14;
+    t142 = t141 ^ t138;
+    t143 = t142 ^ t126;
+    t144 = t140 ^ t125;
+    t145 = t105 ^ t135;
+    t146 = t104 ^ t113;
+    t147 = t104 ^ t143;
+    t148 = t114 ^ t135;
+    t149 = t114 ^ t145;
+    t150 = t114 ^ t144;
+    t151 = t113 ^ t150;
+    t152 = t134 ^ t148;
+    t153 = t113 ^ t144;
+    t154 = t147 ^ t149;
+    t155 = t154 ^ t134;
+    t156 = t154 ^ t144;
+    t157 = t104 ^ t144;
+    t158 = t144 ^ t146;
+    t159 = t158 ^ t152;
+    t160 = t105 ^ t151;
+    state[0] = t134;
+    state[1] = t150;
+    state[2] = t160;
+    state[3] = t159;
+    state[4] = t157;
+    state[5] = t155;
+    state[6] = t156;
+    state[7] = t153;
+}
+
+static void BitsShiftRows(u64 state[8])
+{
+    u64 s, s0;
+    int i;
+
+    for (i = 0; i < 8; i++) {
+        s = state[i];
+        s0 = s & 0x1111111111111111uLL;
+        s0 |= ((s & 0x2220222022202220uLL) >> 4) | ((s & 0x0002000200020002uLL) << 12);
+        s0 |= ((s & 0x4400440044004400uLL) >> 8) | ((s & 0x0044004400440044uLL) << 8);
+        s0 |= ((s & 0x8000800080008000uLL) >> 12) | ((s & 0x0888088808880888uLL) << 4);
+        state[i] = s0;
+    }
+}
+
+static void BitsInvShiftRows(u64 state[8])
+{
+    u64 s, s0;
+    int i;
+
+    for (i = 0; i < 8; i++) {
+        s = state[i];
+        s0 = s & 0x1111111111111111uLL;
+        s0 |= ((s & 0x0222022202220222uLL) << 4) | ((s & 0x2000200020002000uLL) >> 12);
+        s0 |= ((s & 0x0044004400440044uLL) << 8) | ((s & 0x4400440044004400uLL) >> 8);
+        s0 |= ((s & 0x0008000800080008uLL) << 12) | ((s & 0x8880888088808880uLL) >> 4);
+        state[i] = s0;
+    }
+}
+
+static void BitsMixColumns(u64 state[8])
+{
+    u64 s1, s;
+    u64 s0[8];
+    int i;
+
+    for (i = 0; i < 8; i++) {
+        s1 = state[i];
+        s = s1;
+        s ^= ((s & 0xCCCCCCCCCCCCCCCCuLL) >> 2) | ((s & 0x3333333333333333uLL) << 2);
+        s ^= ((s & 0xAAAAAAAAAAAAAAAAuLL) >> 1) | ((s & 0x5555555555555555uLL) << 1);
+        s ^= s1;
+        s0[i] = s;
+    }
+    BitsXtime(state);
+    for (i = 0; i < 8; i++) {
+        s1 = state[i];
+        s = s0[i];
+        s ^= s1;
+        s ^= ((s1 & 0xEEEEEEEEEEEEEEEEuLL) >> 1) | ((s1 & 0x1111111111111111uLL) << 3);
+        state[i] = s;
+    }
+}
+
+static void BitsInvMixColumns(u64 state[8])
+{
+    u64 s1, s;
+    u64 s0[8];
+    int i;
+
+    for (i = 0; i < 8; i++) {
+        s1 = state[i];
+        s = s1;
+        s ^= ((s & 0xCCCCCCCCCCCCCCCCuLL) >> 2) | ((s & 0x3333333333333333uLL) << 2);
+        s ^= ((s & 0xAAAAAAAAAAAAAAAAuLL) >> 1) | ((s & 0x5555555555555555uLL) << 1);
+        s ^= s1;
+        s0[i] = s;
+    }
+    BitsXtime(state);
+    for (i = 0; i < 8; i++) {
+        s1 = state[i];
+        s = s0[i];
+        s ^= s1;
+        s ^= ((s1 & 0xEEEEEEEEEEEEEEEEuLL) >> 1) | ((s1 & 0x1111111111111111uLL) << 3);
+        s0[i] = s;
+    }
+    BitsXtime(state);
+    for (i = 0; i < 8; i++) {
+        s1 = state[i];
+        s = s0[i];
+        s1 ^= ((s1 & 0xCCCCCCCCCCCCCCCCuLL) >> 2) | ((s1 & 0x3333333333333333uLL) << 2);
+        s ^= s1;
+        state[i] = s1;
+        s0[i] = s;
+    }
+    BitsXtime(state);
+    for (i = 0; i < 8; i++) {
+        s1 = state[i];
+        s = s0[i];
+        s1 ^= ((s1 & 0xAAAAAAAAAAAAAAAAuLL) >> 1) | ((s1 & 0x5555555555555555uLL) << 1);
+        s ^= s1;
+        state[i] = s;
+    }
+}
+
+static void BitsAddRoundKey(u64 state[8], const u64 key[8])
+{
+    int i;
+
+    for (i = 0; i < 8; i++)
+        state[i] ^= key[i];
+}
+
+void AES_ctr32_encrypt(const unsigned char *in, unsigned char *out,
+                       size_t blocks, const AES_KEY *key,
+                       const unsigned char *ivec)
+{
+    struct {
+        u8 cipher[64];
+        u64 state[8];
+        u64 rd_key[AES_MAXNR + 1][8];
+    } *bs;
+    u32 ctr32;
+    int i;
+
+    ctr32 = GETU32(ivec + 12);
+    if (blocks >= 4
+            && (bs = OPENSSL_malloc(sizeof(*bs)))) {
+        for (i = 0; i < key->rounds + 1; i++) {
+            memcpy(bs->cipher + 0, &key->rd_key[4 * i], 16);
+            memcpy(bs->cipher + 16, bs->cipher, 16);
+            memcpy(bs->cipher + 32, bs->cipher, 32);
+            RawToBits(bs->cipher, bs->rd_key[i]);
+        }
+        while (blocks) {
+            memcpy(bs->cipher, ivec, 12);
+            PUTU32(bs->cipher + 12, ctr32);
+            ctr32++;
+            memcpy(bs->cipher + 16, ivec, 12);
+            PUTU32(bs->cipher + 28, ctr32);
+            ctr32++;
+            memcpy(bs->cipher + 32, ivec, 12);
+            PUTU32(bs->cipher + 44, ctr32);
+            ctr32++;
+            memcpy(bs->cipher + 48, ivec, 12);
+            PUTU32(bs->cipher + 60, ctr32);
+            ctr32++;
+            RawToBits(bs->cipher, bs->state);
+            BitsAddRoundKey(bs->state, bs->rd_key[0]);
+            for (i = 1; i < key->rounds; i++) {
+                BitsSub(bs->state);
+                BitsShiftRows(bs->state);
+                BitsMixColumns(bs->state);
+                BitsAddRoundKey(bs->state, bs->rd_key[i]);
+            }
+            BitsSub(bs->state);
+            BitsShiftRows(bs->state);
+            BitsAddRoundKey(bs->state, bs->rd_key[key->rounds]);
+            BitsToRaw(bs->state, bs->cipher);
+            for (i = 0; i < 64 && blocks; i++) {
+                out[i] = in[i] ^ bs->cipher[i];
+                if ((i & 15) == 15)
+                    blocks--;
+            }
+            in += i;
+            out += i;
+        }
+        OPENSSL_clear_free(bs, sizeof(*bs));
+    } else {
+        unsigned char cipher[16];
+
+        while (blocks) {
+            memcpy(cipher, ivec, 12);
+            PUTU32(cipher + 12, ctr32);
+            AES_encrypt(cipher, cipher, key);
+            for (i = 0; i < 16; i++)
+                out[i] = in[i] ^ cipher[i];
+            in += 16;
+            out += 16;
+            ctr32++;
+            blocks--;
+        }
+    }
+}
+
+void AES_cbc_decrypt(const unsigned char *in, unsigned char *out,
+                     size_t len, const AES_KEY *key,
+                     unsigned char *ivec)
+{
+    struct {
+        u8 cipher[64];
+        u64 state[8];
+        u64 rd_key[AES_MAXNR + 1][8];
+    } *bs;
+    unsigned char c;
+    size_t n;
+    int i;
+
+    if (len >= 64 && (bs = OPENSSL_malloc(sizeof(*bs)))) {
+        for (i = 0; i < key->rounds + 1; i++) {
+            memcpy(bs->cipher + 0, &key->rd_key[4 * i], 16);
+            memcpy(bs->cipher + 16, bs->cipher, 16);
+            memcpy(bs->cipher + 32, bs->cipher, 32);
+            RawToBits(bs->cipher, bs->rd_key[i]);
+        }
+        while (len > 0) {
+            memcpy(bs->cipher, in, len > 48 ? 64 : (len + 15) & ~15);
+            RawToBits(bs->cipher, bs->state);
+            BitsAddRoundKey(bs->state, bs->rd_key[key->rounds]);
+            for (i = key->rounds - 1; i > 0; i--) {
+                BitsInvShiftRows(bs->state);
+                BitsInvSub(bs->state);
+                BitsAddRoundKey(bs->state, bs->rd_key[i]);
+                BitsInvMixColumns(bs->state);
+            }
+            BitsInvShiftRows(bs->state);
+            BitsInvSub(bs->state);
+            BitsAddRoundKey(bs->state, bs->rd_key[0]);
+            BitsToRaw(bs->state, bs->cipher);
+            for (n = 0; n < 64 && n < len; n++) {
+                c = in[n];
+                out[n] = bs->cipher[n] ^ ivec[n & 15];
+                ivec[n & 15] = c;
+            }
+            if (len <= 64) {
+                for (; n & 15; n++)
+                    ivec[n & 15] = in[n];
+                break;
+            }
+            len -= 64;
+            in += 64;
+            out += 64;
+        }
+        OPENSSL_clear_free(bs, sizeof(*bs));
+    } else {
+        while (len) {
+            unsigned char tmp[16];
+
+            AES_decrypt(in, tmp, key);
+            for (n = 0; n < 16 && n < len; n++) {
+                c = in[n];
+                out[n] = tmp[n] ^ ivec[n];
+                ivec[n] = c;
+            }
+            if (len <= 16) {
+                for (; n < 16; n++)
+                    ivec[n] = in[n];
+                break;
+            }
+            len -= 16;
+            in += 16;
+            out += 16;
+        }
+    }
+}
+# endif
 #elif !defined(AES_ASM)
 /*-
 Te0[x] = S [x].[02, 01, 01, 03];

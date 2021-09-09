@@ -16,6 +16,12 @@ void aes_cbc_encrypt(const unsigned char *in, unsigned char *out,
                      unsigned char *ivec, const int enc);
 # define AES_cbc_encrypt aes_cbc_encrypt
 #endif
+#if defined(OPENSSL_AES_CONST_TIME) && !defined(AES_ASM) \
+    && !defined(OPENSSL_SMALL_FOOTPRINT)
+void AES_cbc_decrypt(const unsigned char *in, unsigned char *out,
+                     size_t len, const AES_KEY *key,
+                     unsigned char *ivec);
+#endif
 
 void AES_cbc_encrypt(const unsigned char *in, unsigned char *out,
                      size_t len, const AES_KEY *key,
@@ -26,6 +32,11 @@ void AES_cbc_encrypt(const unsigned char *in, unsigned char *out,
         CRYPTO_cbc128_encrypt(in, out, len, key, ivec,
                               (block128_f) AES_encrypt);
     else
+#if defined(OPENSSL_AES_CONST_TIME) && !defined(AES_ASM) \
+    && !defined(OPENSSL_SMALL_FOOTPRINT)
+        AES_cbc_decrypt(in, out, len, key, ivec);
+#else
         CRYPTO_cbc128_decrypt(in, out, len, key, ivec,
                               (block128_f) AES_decrypt);
+#endif
 }
