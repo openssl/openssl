@@ -569,6 +569,8 @@ uninstall_docs : uninstall_html_docs
 {- output_off() if $disabled{fips}; "" -}
 install_fips : build_sw $(INSTALL_FIPSMODULECONF)
 	@ WRITE SYS$OUTPUT "*** Installing FIPS module"
+        - CREATE/DIR ossl_installroot:[MODULES{- $sover_dirname.$target{pointer_size} -}.'arch']
+        - CREATE/DIR/PROT=(S:RWED,O:RWE,G:RE,W:RE) OSSL_DATAROOT:[000000]
 	COPY/PROT=W:RE $(INSTALL_FIPSMODULES) -
                 ossl_installroot:[MODULES{- $sover_dirname.$target{pointer_size} -}.'arch']$(FIPSMODULENAME)
 	@ WRITE SYS$OUTPUT "*** Installing FIPS module configuration"
