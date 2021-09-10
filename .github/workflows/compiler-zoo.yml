@@ -9,14 +9,6 @@ jobs:
       matrix:
         zoo: [
           {
-            cc: gcc-7
-          }, {
-            cc: gcc-8
-          }, {
-            cc: gcc-9
-          }, {
-            cc: gcc-10
-          }, {
             cc: clang-6.0
           }, {
             cc: clang-7
@@ -42,7 +34,7 @@ jobs:
 
     - name: config
       run: |
-        CC=${{ matrix.zoo.cc }} ./config --banner=Configured no-shared \
+        CC=${{ matrix.zoo.cc }} ./config --banner=Configured linux-x86-clang no-shared \
             -Wall -Werror enable-fips --strict-warnings
 
     - name: config dump
