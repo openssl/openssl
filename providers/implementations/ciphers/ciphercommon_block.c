@@ -109,14 +109,14 @@ void ossl_cipher_padblock(unsigned char *buf, size_t *buflen, size_t blocksize)
 /*
  * ossl_cipher_unpadblock removes the padding from the final block in constant time.
  * Note that if the padding is invalid, ERR_raise is not called in order to preserve
- * constant-timedness.
+ * constant-timedness. Since libcrypto manages the error stack, we cannot use the
+ * err_clear_last_constant_time trick, so we opt not to push errors on the stack.
  */
 int ossl_cipher_unpadblock(unsigned char *buf, size_t *buflen, size_t blocksize)
 {
     size_t pad, i;
     size_t len = *buflen;
     size_t gp;
-    size_t pad_ok;
     size_t buf_pad_eq;
     unsigned int i_pad_lt;
 
@@ -131,18 +131,14 @@ int ossl_cipher_unpadblock(unsigned char *buf, size_t *buflen, size_t blocksize)
      * Otherwise it provides a padding oracle.
      */
     pad = buf[blocksize - 1];
-    pad_ok = ~(value_barrier_s(constant_time_is_zero_s(pad)) |
-                value_barrier_s(constant_time_lt_s(blocksize, pad)));
-    gp = constant_time_select_s(pad_ok, CONSTTIME_TRUE, CONSTTIME_FALSE);
+    gp = ~(constant_time_is_zero_s(pad) | constant_time_lt_s(blocksize, pad));
 
     for (i = 0; i < blocksize; i++) {
         i_pad_lt = constant_time_lt(i, pad);
-        len = constant_time_select_s(i_pad_lt, len - 1, len);
-        buf_pad_eq = constant_time_eq_s(buf[len], pad);
+        buf_pad_eq = constant_time_eq_s(buf[len - i - 1], pad);
         gp = constant_time_select_s(i_pad_lt, gp & buf_pad_eq, gp);
+        *buflen = constant_time_select_s(gp & i_pad_lt, len - i - 1, *buflen);
     }
-    *buflen = constant_time_select_s(gp, len, *buflen);
-
     return constant_time_select_int_s(gp, 1, 0);
 }
 
