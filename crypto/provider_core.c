@@ -23,6 +23,7 @@
 #include "internal/refcount.h"
 #include "internal/bio.h"
 #include "internal/core.h"
+#include "internal/constant_time.h"
 #include "provider_local.h"
 #ifndef FIPS_MODULE
 # include <openssl/self_test.h>
@@ -1795,6 +1796,7 @@ static OSSL_FUNC_core_set_error_debug_fn core_set_error_debug;
 static OSSL_FUNC_core_vset_error_fn core_vset_error;
 static OSSL_FUNC_core_set_error_mark_fn core_set_error_mark;
 static OSSL_FUNC_core_clear_last_error_mark_fn core_clear_last_error_mark;
+static OSSL_FUNC_core_clear_last_constant_time_fn core_clear_last_constant_time;
 static OSSL_FUNC_core_pop_error_to_mark_fn core_pop_error_to_mark;
 static OSSL_FUNC_core_obj_add_sigid_fn core_obj_add_sigid;
 static OSSL_FUNC_core_obj_create_fn core_obj_create;
@@ -1924,6 +1926,11 @@ static int core_clear_last_error_mark(const OSSL_CORE_HANDLE *handle)
     return ERR_clear_last_mark();
 }
 
+static void core_clear_last_constant_time(const OSSL_CORE_HANDLE *handle, int clear)
+{
+    err_clear_last_constant_time(clear);
+}
+
 static int core_pop_error_to_mark(const OSSL_CORE_HANDLE *handle)
 {
     return ERR_pop_to_mark();
@@ -1981,6 +1988,7 @@ static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_CORE_SET_ERROR_MARK, (void (*)(void))core_set_error_mark },
     { OSSL_FUNC_CORE_CLEAR_LAST_ERROR_MARK,
       (void (*)(void))core_clear_last_error_mark },
+    { OSSL_FUNC_CORE_CLEAR_LAST_CONSTANT_TIME, (void (*)(void))core_clear_last_constant_time },
     { OSSL_FUNC_CORE_POP_ERROR_TO_MARK, (void (*)(void))core_pop_error_to_mark },
     { OSSL_FUNC_BIO_NEW_FILE, (void (*)(void))ossl_core_bio_new_file },
     { OSSL_FUNC_BIO_NEW_MEMBUF, (void (*)(void))ossl_core_bio_new_mem_buf },

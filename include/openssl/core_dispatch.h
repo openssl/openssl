@@ -176,6 +176,11 @@ OSSL_CORE_MAKE_FUNC(int, BIO_vsnprintf,
 OSSL_CORE_MAKE_FUNC(int, BIO_ctrl, (OSSL_CORE_BIO *bio,
                                     int cmd, long num, void *ptr))
 
+/* err_clear_last_constant_time */
+#define OSSL_FUNC_CORE_CLEAR_LAST_CONSTANT_TIME 51
+OSSL_CORE_MAKE_FUNC(void, core_clear_last_constant_time,
+                    (const OSSL_CORE_HANDLE *prov, int clear))
+
 #define OSSL_FUNC_SELF_TEST_CB               100
 OSSL_CORE_MAKE_FUNC(void, self_test_cb, (OPENSSL_CORE_CTX *ctx, OSSL_CALLBACK **cb,
                                          void **cbarg))

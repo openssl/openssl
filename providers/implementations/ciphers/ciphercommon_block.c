@@ -12,6 +12,7 @@
 #include <openssl/prov_ssl.h>
 #include <openssl/rand.h>
 #include <openssl/proverr.h>
+#include <openssl/core_dispatch.h>
 #include "internal/constant_time.h"
 #include "ciphercommon_local.h"
 
@@ -139,6 +140,10 @@ int ossl_cipher_unpadblock(unsigned char *buf, size_t *buflen, size_t blocksize)
         gp = constant_time_select_s(i_pad_lt, gp & buf_pad_eq, gp);
         *buflen = constant_time_select_s(gp & i_pad_lt, len - i - 1, *buflen);
     }
+
+    ERR_raise(ERR_LIB_PROV, PROV_R_BAD_DECRYPT);
+    err_clear_last_constant_time(1 & gp);
+
     return constant_time_select_int_s(gp, 1, 0);
 }
 

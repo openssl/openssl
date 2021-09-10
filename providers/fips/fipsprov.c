@@ -55,6 +55,7 @@ static OSSL_FUNC_core_set_error_debug_fn *c_set_error_debug;
 static OSSL_FUNC_core_vset_error_fn *c_vset_error;
 static OSSL_FUNC_core_set_error_mark_fn *c_set_error_mark;
 static OSSL_FUNC_core_clear_last_error_mark_fn *c_clear_last_error_mark;
+static OSSL_FUNC_core_clear_last_constant_time_fn *c_clear_last_constant_time;
 static OSSL_FUNC_core_pop_error_to_mark_fn *c_pop_error_to_mark;
 static OSSL_FUNC_CRYPTO_malloc_fn *c_CRYPTO_malloc;
 static OSSL_FUNC_CRYPTO_zalloc_fn *c_CRYPTO_zalloc;
@@ -585,6 +586,9 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
             set_func(c_clear_last_error_mark,
                      OSSL_FUNC_core_clear_last_error_mark(in));
             break;
+        case OSSL_FUNC_CORE_CLEAR_LAST_CONSTANT_TIME:
+            set_func(c_clear_last_constant_time, OSSL_FUNC_core_clear_last_constant_time(in));
+            break;
         case OSSL_FUNC_CORE_POP_ERROR_TO_MARK:
             set_func(c_pop_error_to_mark, OSSL_FUNC_core_pop_error_to_mark(in));
             break;
@@ -795,6 +799,11 @@ int ERR_set_mark(void)
 int ERR_clear_last_mark(void)
 {
     return c_clear_last_error_mark(NULL);
+}
+
+void err_clear_last_constant_time(int clear)
+{
+    return c_clear_last_constant_time(NULL, clear);
 }
 
 int ERR_pop_to_mark(void)
