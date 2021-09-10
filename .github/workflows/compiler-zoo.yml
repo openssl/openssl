@@ -30,6 +30,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get -yq --force-yes install ${{ matrix.zoo.cc }}
+        sudo apt-get -yq --force-yes install gcc-multilib
     - uses: actions/checkout@v2
 
     - name: config
