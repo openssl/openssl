@@ -36,7 +36,7 @@ jobs:
     - name: config
       run: |
         CC=${{ matrix.zoo.cc }} ./config --banner=Configured linux-x86-clang no-shared \
-            -Wall -Werror enable-fips --strict-warnings
+            -Wall enable-fips
 
     - name: config dump
       run: ./configdata.pm --dump
