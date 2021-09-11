@@ -34,7 +34,7 @@
 #include <openssl/trace.h>
 
 static int stopped = 0;
-static uint64_t optsdone = 0;
+static CRYPTO_ATOMIC_U64 optsdone = 0;
 
 typedef struct ossl_init_stop_st OPENSSL_INIT_STOP;
 struct ossl_init_stop_st {
@@ -457,7 +457,7 @@ void OPENSSL_cleanup(void)
  */
 int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 {
-    uint64_t tmp;
+    CRYPTO_ATOMIC_U64 tmp;
     int aloaddone = 0;
 
    /* Applications depend on 0 being returned when cleanup was already done */
