@@ -109,9 +109,6 @@ void ossl_cipher_padblock(unsigned char *buf, size_t *buflen, size_t blocksize)
 
 /*
  * ossl_cipher_unpadblock removes the padding from the final block in constant time.
- * Note that if the padding is invalid, ERR_raise is not called in order to preserve
- * constant-timedness. Since libcrypto manages the error stack, we cannot use the
- * err_clear_last_constant_time trick, so we opt not to push errors on the stack.
  */
 int ossl_cipher_unpadblock(unsigned char *buf, size_t *buflen, size_t blocksize)
 {

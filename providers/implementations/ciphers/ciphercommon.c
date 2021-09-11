@@ -438,7 +438,6 @@ int ossl_cipher_generic_block_final(void *vctx, unsigned char *out,
         return 0;
     }
 
-    /* Note that ERR_raise is not called in case of bad padding */
     pad = ~constant_time_is_zero(ctx->pad);
 
     if (pad) {
