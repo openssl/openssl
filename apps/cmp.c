@@ -2001,14 +2001,14 @@ static const char *prev_item(const char *opt, const char *end)
     while (beg != opt && beg[-1] != ',' && !isspace(beg[-1]))
         beg--;
     len = end - beg;
-    if (len > SECTION_NAME_MAX)
+    if (len > SECTION_NAME_MAX) {
+        CMP_warn2("using only first %d characters of section name starting with \"%s\"",
+                  SECTION_NAME_MAX, opt_item);
         len = SECTION_NAME_MAX;
+    }
     strncpy(opt_item, beg, len);
     opt_item[SECTION_NAME_MAX] = '\0'; /* avoid gcc v8 O3 stringop-truncation */
     opt_item[len] = '\0';
-    if (len > SECTION_NAME_MAX)
-        CMP_warn2("using only first %d characters of section name starting with \"%s\"",
-                  SECTION_NAME_MAX, opt_item);
     while (beg != opt && (beg[-1] == ',' || isspace(beg[-1])))
         beg--;
     return beg;
