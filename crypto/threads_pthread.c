@@ -216,7 +216,7 @@ int CRYPTO_atomic_or(uint64_t *val, uint64_t op, uint64_t *ret,
                      CRYPTO_RWLOCK *lock)
 {
 # if defined(__GNUC__) && defined(__ATOMIC_ACQ_REL)
-    if (__atomic_is_lock_free(sizeof(*val), val)) {
+    if (__atomic_is_lock_free(sizeof(*val), (CRYPTO_ATOMIC_U64 *)val)) {
         *ret = __atomic_or_fetch((CRYPTO_ATOMIC_U64 *)val, op, __ATOMIC_ACQ_REL);
         return 1;
     }
@@ -241,7 +241,7 @@ int CRYPTO_atomic_or(uint64_t *val, uint64_t op, uint64_t *ret,
 int CRYPTO_atomic_load(uint64_t *val, uint64_t *ret, CRYPTO_RWLOCK *lock)
 {
 # if defined(__GNUC__) && defined(__ATOMIC_ACQUIRE)
-    if (__atomic_is_lock_free(sizeof(*val), val)) {
+    if (__atomic_is_lock_free(sizeof(*val), (CRYPTO_ATOMIC_U64 *)val)) {
         __atomic_load((CRYPTO_ATOMIC_U64 *)val, (CRYPTO_ATOMIC_U64 *)ret,
                       __ATOMIC_ACQUIRE);
         return 1;
