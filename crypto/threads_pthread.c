@@ -212,12 +212,12 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
     return 1;
 }
 
-int CRYPTO_atomic_or(CRYPTO_ATOMIC_U64 *val, uint64_t op, CRYPTO_ATOMIC_U64 *ret,
+int CRYPTO_atomic_or(uint64_t *val, uint64_t op, uint64_t *ret,
                      CRYPTO_RWLOCK *lock)
 {
 # if defined(__GNUC__) && defined(__ATOMIC_ACQ_REL)
     if (__atomic_is_lock_free(sizeof(*val), val)) {
-        *ret = __atomic_or_fetch(val, op, __ATOMIC_ACQ_REL);
+        *ret = __atomic_or_fetch((CRYPTO_ATOMIC_U64 *)val, op, __ATOMIC_ACQ_REL);
         return 1;
     }
 # elif defined(__sun) && (defined(__SunOS_5_10) || defined(__SunOS_5_11))
@@ -238,12 +238,12 @@ int CRYPTO_atomic_or(CRYPTO_ATOMIC_U64 *val, uint64_t op, CRYPTO_ATOMIC_U64 *ret
     return 1;
 }
 
-int CRYPTO_atomic_load(CRYPTO_ATOMIC_U64 *val, CRYPTO_ATOMIC_U64 *ret,
-                       CRYPTO_RWLOCK *lock)
+int CRYPTO_atomic_load(uint64_t *val, uint64_t *ret, CRYPTO_RWLOCK *lock)
 {
 # if defined(__GNUC__) && defined(__ATOMIC_ACQUIRE)
     if (__atomic_is_lock_free(sizeof(*val), val)) {
-        __atomic_load(val, ret, __ATOMIC_ACQUIRE);
+        __atomic_load((CRYPTO_ATOMIC_U64 *)val, (CRYPTO_ATOMIC_U64 *)ret,
+                      __ATOMIC_ACQUIRE);
         return 1;
     }
 # elif defined(__sun) && (defined(__SunOS_5_10) || defined(__SunOS_5_11))
