@@ -85,10 +85,12 @@ __owur int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock);
 int CRYPTO_THREAD_unlock(CRYPTO_RWLOCK *lock);
 void CRYPTO_THREAD_lock_free(CRYPTO_RWLOCK *lock);
 
-# ifdef __GNUC__
+# if defined(__GNUC__) && !defined(OPENSSL_NO_STDINT_H)
 typedef __attribute__((__aligned__(8))) uint64_t CRYPTO_ATOMIC_U64;
+#  define CRYPTO_ATOMIC_IS_ALIGNED_U64(val) (((uintptr_t)(val) & (8 - 1)) == 0)
 # else
 typedef uint64_t CRYPTO_ATOMIC_U64;
+#  define CRYPTO_ATOMIC_IS_ALIGNED_U64(val) (1)
 # endif
 
 int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock);
