@@ -780,7 +780,7 @@ static void BitsSub(u64 state[8])
     u64 t0, t1, t2, t3, t4, t5, t6, t7, t8, t9;
     u64 t10, t11, t12, t13, t14, t15, t16, t17, t18, t19;
     u64 t20, t21, t22, t23, t25, t26, t27, t28, t29;
-    u64 t30, t31, t32, t33, t34, t35, t36, t37, t38, t39;
+    u64 t31, t32, t33, t34, t35, t36, t37, t38, t39;
     u64 t40, t41, t42, t43, t44, t45, t46, t47, t48, t49;
     u64 t50, t51, t52, t53, t54, t55, t56, t57, t58, t59;
     u64 t60, t61, t62, t63, t64, t65, t66, t67, t69;
@@ -831,10 +831,9 @@ static void BitsSub(u64 state[8])
     t27 = t25 ^ t1;
     t28 = t27 & t26;
     t29 = t25 & t23;
-    t30 = t29 ^ t28;
     t31 = t1 & t22;
     t32 = t31 ^ t28;
-    t33 = t30 ^ t32;
+    t33 = t29 ^ t31;
     t34 = t12 ^ x0;
     t35 = t8 ^ t5;
     t36 = t35 & t34;
@@ -956,7 +955,7 @@ static void BitsInvSub(u64 state[8])
     u64 t0, t1, t2, t3, t4, t5, t6, t7, t8, t9;
     u64 t10, t11, t12, t13, t14, t15, t16, t17, t18;
     u64 t20, t22, t25, t26, t27, t28, t29;
-    u64 t30, t31, t32, t33, t34, t35, t36, t37, t38, t39;
+    u64 t30, t31, t32, t34, t35, t36, t37, t38, t39;
     u64 t40, t41, t42, t43, t44, t45, t46, t47, t48, t49;
     u64 t50, t51, t52, t53, t54, t55, t56, t57, t58, t59;
     u64 t60, t61, t62, t63, t64, t65, t66, t67, t68, t69;
@@ -1008,10 +1007,9 @@ static void BitsInvSub(u64 state[8])
     t30 = t28 ^ t27;
     t31 = t30 & t29;
     t32 = t28 & t26;
-    t33 = t32 ^ t31;
     t34 = t27 & t25;
     t35 = t34 ^ t31;
-    t36 = t33 ^ t35;
+    t36 = t32 ^ t34;
     t37 = t15 ^ t10;
     t38 = t5 ^ t12;
     t39 = t38 & t37;
