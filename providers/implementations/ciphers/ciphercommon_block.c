@@ -12,7 +12,6 @@
 #include <openssl/prov_ssl.h>
 #include <openssl/rand.h>
 #include <openssl/proverr.h>
-#include <openssl/core_dispatch.h>
 #include "internal/constant_time.h"
 #include "ciphercommon_local.h"
 

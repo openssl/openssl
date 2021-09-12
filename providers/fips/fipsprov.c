@@ -15,6 +15,7 @@
 #include <openssl/rand.h> /* RAND_get0_public() */
 #include <openssl/proverr.h>
 #include "internal/cryptlib.h"
+#include "internal/constant_time.h"
 #include "prov/implementations.h"
 #include "prov/names.h"
 #include "prov/provider_ctx.h"
@@ -803,7 +804,7 @@ int ERR_clear_last_mark(void)
 
 void err_clear_last_constant_time(int clear)
 {
-    return c_clear_last_constant_time(NULL, clear);
+    c_clear_last_constant_time(NULL, clear);
 }
 
 int ERR_pop_to_mark(void)
