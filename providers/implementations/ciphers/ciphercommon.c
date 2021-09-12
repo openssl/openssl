@@ -387,8 +387,11 @@ int ossl_cipher_generic_block_final(void *vctx, unsigned char *out,
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     size_t blksz = ctx->blocksize;
+    size_t i;
     unsigned int gp = CONSTTIME_FALSE;
     unsigned int pad, ret;
+    unsigned int i_bufsz_lt;
+    size_t buf_value;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -450,7 +453,14 @@ int ossl_cipher_generic_block_final(void *vctx, unsigned char *out,
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;
     }
-    memcpy(out, ctx->buf, ctx->bufsz);
+
+    /* Copy ctx->buf to out in constant time */
+    for (i = 0; i < blksz; i++) {
+        i_bufsz_lt = constant_time_lt(i, ctx->bufsz);
+        buf_value = constant_time_select_s(i_bufsz_lt, ctx->buf[i], out[i]);
+        out[i] = 0xff & buf_value;
+    }
+
     *outl = ctx->bufsz;
     ctx->bufsz = 0;
     return constant_time_select_int(ret, 1, 0);
