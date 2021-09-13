@@ -114,6 +114,11 @@ static const OSSL_ALGORITHM deflt_digests[] = {
     { PROV_NAMES_SHA3_384, "provider=default", ossl_sha3_384_functions },
     { PROV_NAMES_SHA3_512, "provider=default", ossl_sha3_512_functions },
 
+    { PROV_NAMES_KECCAK_224, "provider=default", ossl_keccak_224_functions },
+    { PROV_NAMES_KECCAK_256, "provider=default", ossl_keccak_256_functions },
+    { PROV_NAMES_KECCAK_384, "provider=default", ossl_keccak_384_functions },
+    { PROV_NAMES_KECCAK_512, "provider=default", ossl_keccak_512_functions },
+
     /*
      * KECCAK-KMAC-128 and KECCAK-KMAC-256 as hashes are mostly useful for
      * the KMAC-128 and KMAC-256.
