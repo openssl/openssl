@@ -1006,9 +1006,21 @@
 #define NID_id_smime_aa_dvcs_dvc                240
 #define OBJ_id_smime_aa_dvcs_dvc                OBJ_id_smime_aa,29L
 
+#define SN_id_aa_ets_attrCertificateRefs                "id-aa-ets-attrCertificateRefs"
+#define NID_id_aa_ets_attrCertificateRefs               1261
+#define OBJ_id_aa_ets_attrCertificateRefs               OBJ_id_smime_aa,44L
+
+#define SN_id_aa_ets_attrRevocationRefs         "id-aa-ets-attrRevocationRefs"
+#define NID_id_aa_ets_attrRevocationRefs                1262
+#define OBJ_id_aa_ets_attrRevocationRefs                OBJ_id_smime_aa,45L
+
 #define SN_id_smime_aa_signingCertificateV2             "id-smime-aa-signingCertificateV2"
 #define NID_id_smime_aa_signingCertificateV2            1086
 #define OBJ_id_smime_aa_signingCertificateV2            OBJ_id_smime_aa,47L
+
+#define SN_id_aa_ets_archiveTimestampV2         "id-aa-ets-archiveTimestampV2"
+#define NID_id_aa_ets_archiveTimestampV2                1280
+#define OBJ_id_aa_ets_archiveTimestampV2                OBJ_id_smime_aa,48L
 
 #define SN_id_smime_alg_ESDHwith3DES            "id-smime-alg-ESDHwith3DES"
 #define NID_id_smime_alg_ESDHwith3DES           241
@@ -1111,6 +1123,10 @@
 #define LN_x509Crl              "x509Crl"
 #define NID_x509Crl             160
 #define OBJ_x509Crl             OBJ_crlTypes,1L
+
+#define SN_id_aa_CMSAlgorithmProtection         "id-aa-CMSAlgorithmProtection"
+#define NID_id_aa_CMSAlgorithmProtection                1263
+#define OBJ_id_aa_CMSAlgorithmProtection                OBJ_pkcs9,52L
 
 #define OBJ_pkcs12              OBJ_pkcs,12L
 
@@ -3263,6 +3279,70 @@
 #define LN_hold_instruction_reject              "Hold Instruction Reject"
 #define NID_hold_instruction_reject             433
 #define OBJ_hold_instruction_reject             OBJ_holdInstruction,3L
+
+#define SN_itu_t_identified_organization                "itu-t-identified-organization"
+#define NID_itu_t_identified_organization               1264
+#define OBJ_itu_t_identified_organization               OBJ_itu_t,4L
+
+#define SN_etsi         "etsi"
+#define NID_etsi                1265
+#define OBJ_etsi                OBJ_itu_t_identified_organization,0L
+
+#define SN_electronic_signature_standard                "electronic-signature-standard"
+#define NID_electronic_signature_standard               1266
+#define OBJ_electronic_signature_standard               OBJ_etsi,1733L
+
+#define SN_ess_attributes               "ess-attributes"
+#define NID_ess_attributes              1267
+#define OBJ_ess_attributes              OBJ_electronic_signature_standard,2L
+
+#define SN_id_aa_ets_mimeType           "id-aa-ets-mimeType"
+#define NID_id_aa_ets_mimeType          1268
+#define OBJ_id_aa_ets_mimeType          OBJ_ess_attributes,1L
+
+#define SN_id_aa_ets_longTermValidation         "id-aa-ets-longTermValidation"
+#define NID_id_aa_ets_longTermValidation                1269
+#define OBJ_id_aa_ets_longTermValidation                OBJ_ess_attributes,2L
+
+#define SN_id_aa_ets_SignaturePolicyDocument            "id-aa-ets-SignaturePolicyDocument"
+#define NID_id_aa_ets_SignaturePolicyDocument           1270
+#define OBJ_id_aa_ets_SignaturePolicyDocument           OBJ_ess_attributes,3L
+
+#define SN_id_aa_ets_archiveTimestampV3         "id-aa-ets-archiveTimestampV3"
+#define NID_id_aa_ets_archiveTimestampV3                1271
+#define OBJ_id_aa_ets_archiveTimestampV3                OBJ_ess_attributes,4L
+
+#define SN_id_aa_ATSHashIndex           "id-aa-ATSHashIndex"
+#define NID_id_aa_ATSHashIndex          1272
+#define OBJ_id_aa_ATSHashIndex          OBJ_ess_attributes,5L
+
+#define SN_cades                "cades"
+#define NID_cades               1273
+#define OBJ_cades               OBJ_etsi,19122L
+
+#define SN_cades_attributes             "cades-attributes"
+#define NID_cades_attributes            1274
+#define OBJ_cades_attributes            OBJ_cades,1L
+
+#define SN_id_aa_ets_signerAttrV2               "id-aa-ets-signerAttrV2"
+#define NID_id_aa_ets_signerAttrV2              1275
+#define OBJ_id_aa_ets_signerAttrV2              OBJ_cades_attributes,1L
+
+#define SN_id_aa_ets_sigPolicyStore             "id-aa-ets-sigPolicyStore"
+#define NID_id_aa_ets_sigPolicyStore            1276
+#define OBJ_id_aa_ets_sigPolicyStore            OBJ_cades_attributes,3L
+
+#define SN_id_aa_ATSHashIndex_v2                "id-aa-ATSHashIndex-v2"
+#define NID_id_aa_ATSHashIndex_v2               1277
+#define OBJ_id_aa_ATSHashIndex_v2               OBJ_cades_attributes,4L
+
+#define SN_id_aa_ATSHashIndex_v3                "id-aa-ATSHashIndex-v3"
+#define NID_id_aa_ATSHashIndex_v3               1278
+#define OBJ_id_aa_ATSHashIndex_v3               OBJ_cades_attributes,5L
+
+#define SN_signedAssertion              "signedAssertion"
+#define NID_signedAssertion             1279
+#define OBJ_signedAssertion             OBJ_cades_attributes,6L
 
 #define SN_data         "data"
 #define NID_data                434

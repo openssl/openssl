@@ -316,7 +316,10 @@ id-smime-aa 26		: id-smime-aa-ets-certCRLTimestamp
 id-smime-aa 27		: id-smime-aa-ets-archiveTimeStamp
 id-smime-aa 28		: id-smime-aa-signatureType
 id-smime-aa 29		: id-smime-aa-dvcs-dvc
+id-smime-aa 44		: id-aa-ets-attrCertificateRefs
+id-smime-aa 45		: id-aa-ets-attrRevocationRefs
 id-smime-aa 47		: id-smime-aa-signingCertificateV2
+id-smime-aa 48		: id-aa-ets-archiveTimestampV2
 
 # S/MIME Algorithm Identifiers
 # obsolete
@@ -357,6 +360,8 @@ certTypes 1		:			: x509Certificate
 certTypes 2		:			: sdsiCertificate
 !Alias crlTypes pkcs9 23
 crlTypes 1		:			: x509Crl
+
+pkcs9 52		: id-aa-CMSAlgorithmProtection
 
 !Alias pkcs12 pkcs 12
 !Alias pkcs12-pbeids pkcs12 1
@@ -1064,6 +1069,27 @@ holdInstruction 3	: holdInstructionReject	: Hold Instruction Reject
 
 # OID's from ITU-T.  Most of this is defined in RFC 1274.  A couple of
 # them are also mentioned in RFC 2247
+# OIDs specific to Electronic Signature Standard/CAdES are as specified in
+# ETSI EN 319 122-1 V1.2.1 (2021-10):
+# Electronic Signatures and Infrastructures (ESI); CAdES digital signatures; 
+# Part 1: Building blocks and CAdES baseline signatures
+itu-t 4			: itu-t-identified-organization
+itu-t-identified-organization 0: etsi
+etsi 1733		: electronic-signature-standard
+electronic-signature-standard 2: ess-attributes
+ess-attributes 1	: id-aa-ets-mimeType
+ess-attributes 2	: id-aa-ets-longTermValidation
+ess-attributes 3	: id-aa-ets-SignaturePolicyDocument
+ess-attributes 4	: id-aa-ets-archiveTimestampV3
+ess-attributes 5	: id-aa-ATSHashIndex
+etsi 19122		: cades
+cades 1			: cades-attributes
+cades-attributes 1	: id-aa-ets-signerAttrV2
+cades-attributes 3	: id-aa-ets-sigPolicyStore
+cades-attributes 4	: id-aa-ATSHashIndex-v2
+cades-attributes 5	: id-aa-ATSHashIndex-v3
+cades-attributes 6	: signedAssertion
+
 itu-t 9			: data
 data 2342		: pss
 pss 19200300		: ucl
