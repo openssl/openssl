@@ -143,7 +143,7 @@ my @pkcs12info = run(app(["openssl", "pkcs12", "-info", "-in", $outfile5,
                           "-passin", "pass:"]), capture => 1);
 
 # Test that with one input certificate, we get one output certificate
-ok(grep(/subject=CN = server.example/, @pkcs12info) == 1,
+ok(grep(/subject=CN\s*=\s*server.example/, @pkcs12info) == 1,
    "test one cert in output");
 # Test that the expected friendly name is present in the output
 ok(grep(/testname/, @pkcs12info) == 1, "test friendly name in output");
