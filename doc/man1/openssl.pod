@@ -387,6 +387,22 @@ SHA-3 384 Digest
 
 SHA-3 512 Digest
 
+=item B<keccak-224>
+
+KECCAK 224 Digest
+
+=item B<keccak-256>
+
+KECCAK 256 Digest
+
+=item B<keccak-384>
+
+KECCAK 384 Digest
+
+=item B<keccak-512>
+
+KECCAK 512 Digest
+
 =item B<shake128>
 
 SHA-3 SHAKE128 Digest
