@@ -1016,8 +1016,8 @@ static void BitsInvSub(u64 state[8])
     t43 = t42 ^ t39;
     t44 = t43 ^ t36;
     t45 = t41 ^ t35;
-    t46 = t16 ^ t17;
-    t47 = t13 ^ t14;
+    t46 = t29 ^ t37;
+    t47 = t30 ^ t38;
     t48 = t47 & t46;
     t49 = t13 & t16;
     t50 = t49 ^ t48;
