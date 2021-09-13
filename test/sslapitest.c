@@ -1832,7 +1832,8 @@ static SSL_SESSION *get_session_cb(SSL *ssl, const unsigned char *id, int len,
 }
 
 static int execute_test_session(int maxprot, int use_int_cache,
-                                int use_ext_cache, long s_options)
+                                int use_ext_cache, long s_options,
+                                long c_options)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl1 = NULL, *clientssl1 = NULL;
@@ -1878,6 +1879,9 @@ static int execute_test_session(int maxprot, int use_int_cache,
     if (s_options) {
         SSL_CTX_set_options(sctx, s_options);
     }
+    if (c_options) {
+        SSL_CTX_set_options(cctx, c_options);
+    }
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl1, &clientssl1,
                                       NULL, NULL))
@@ -1907,13 +1911,22 @@ static int execute_test_session(int maxprot, int use_int_cache,
     if (maxprot == TLS1_3_VERSION) {
         /*
          * In TLSv1.3 we should have created a new session even though we have
-         * resumed. Since we attempted a resume we should also have removed the
-         * old ticket from the cache so that we try to only use tickets once.
+         * resumed. On successful resumption we normally will remove the old
+         * ticket from the cache, so as to only use each ticket once, but
+         * if SSL_OP_NO_ANTI_REPLAY is set we will leave the session in the
+         * cache.
          */
-        if (use_ext_cache
-                && (!TEST_int_eq(new_called, 1)
-                    || !TEST_int_eq(remove_called, 1)))
-            goto end;
+        if (use_ext_cache) {
+            if (!TEST_int_eq(new_called, 1))
+                goto end;
+            if ((c_options & SSL_OP_NO_ANTI_REPLAY) != 0) {
+                if (!TEST_int_eq(remove_called, 0))
+                    goto end;
+            } else {
+                if (!TEST_int_eq(remove_called, 1))
+                    goto end;
+            }
+        }
     } else {
         /*
          * In TLSv1.2 we expect to have resumed so no sessions added or
@@ -2123,12 +2136,12 @@ static int execute_test_session(int maxprot, int use_int_cache,
 static int test_session_with_only_int_cache(void)
 {
 #ifndef OSSL_NO_USABLE_TLS1_3
-    if (!execute_test_session(TLS1_3_VERSION, 1, 0, 0))
+    if (!execute_test_session(TLS1_3_VERSION, 1, 0, 0, 0))
         return 0;
 #endif
 
 #ifndef OPENSSL_NO_TLS1_2
-    return execute_test_session(TLS1_2_VERSION, 1, 0, 0);
+    return execute_test_session(TLS1_2_VERSION, 1, 0, 0, 0);
 #else
     return 1;
 #endif
@@ -2137,12 +2150,12 @@ static int test_session_with_only_int_cache(void)
 static int test_session_with_only_ext_cache(void)
 {
 #ifndef OSSL_NO_USABLE_TLS1_3
-    if (!execute_test_session(TLS1_3_VERSION, 0, 1, 0))
+    if (!execute_test_session(TLS1_3_VERSION, 0, 1, 0, 0))
         return 0;
 #endif
 
 #ifndef OPENSSL_NO_TLS1_2
-    return execute_test_session(TLS1_2_VERSION, 0, 1, 0);
+    return execute_test_session(TLS1_2_VERSION, 0, 1, 0, 0);
 #else
     return 1;
 #endif
@@ -2151,12 +2164,12 @@ static int test_session_with_only_ext_cache(void)
 static int test_session_with_both_cache(void)
 {
 #ifndef OSSL_NO_USABLE_TLS1_3
-    if (!execute_test_session(TLS1_3_VERSION, 1, 1, 0))
+    if (!execute_test_session(TLS1_3_VERSION, 1, 1, 0, 0))
         return 0;
 #endif
 
 #ifndef OPENSSL_NO_TLS1_2
-    return execute_test_session(TLS1_2_VERSION, 1, 1, 0);
+    return execute_test_session(TLS1_2_VERSION, 1, 1, 0, 0);
 #else
     return 1;
 #endif
@@ -2165,12 +2178,29 @@ static int test_session_with_both_cache(void)
 static int test_session_wo_ca_names(void)
 {
 #ifndef OSSL_NO_USABLE_TLS1_3
-    if (!execute_test_session(TLS1_3_VERSION, 1, 0, SSL_OP_DISABLE_TLSEXT_CA_NAMES))
+    if (!execute_test_session(TLS1_3_VERSION, 1, 0, SSL_OP_DISABLE_TLSEXT_CA_NAMES, 0))
         return 0;
 #endif
 
 #ifndef OPENSSL_NO_TLS1_2
-    return execute_test_session(TLS1_2_VERSION, 1, 0, SSL_OP_DISABLE_TLSEXT_CA_NAMES);
+    return execute_test_session(TLS1_2_VERSION, 1, 0, SSL_OP_DISABLE_TLSEXT_CA_NAMES, 0);
+#else
+    return 1;
+#endif
+}
+
+static int test_session_client_no_anti_replay(void)
+{
+#ifndef OSSL_NO_USABLE_TLS1_3
+    if (!execute_test_session(TLS1_3_VERSION, 0, 1, 0, SSL_OP_NO_ANTI_REPLAY))
+        return 0;
+    /* Also using internal cache *shouldn't* matter, but just in case... */
+    if (!execute_test_session(TLS1_3_VERSION, 1, 1, 0, SSL_OP_NO_ANTI_REPLAY))
+        return 0;
+#endif
+#ifndef OPENSSL_NO_TLS1_2
+    /* Should be no-op on TLSv1.2 */
+    return execute_test_session(TLS1_2_VERSION, 0, 1, 0, SSL_OP_NO_ANTI_REPLAY);
 #else
     return 1;
 #endif
@@ -9583,6 +9613,7 @@ int setup_tests(void)
     ADD_TEST(test_session_with_only_ext_cache);
     ADD_TEST(test_session_with_both_cache);
     ADD_TEST(test_session_wo_ca_names);
+    ADD_TEST(test_session_client_no_anti_replay);
 #ifndef OSSL_NO_USABLE_TLS1_3
     ADD_ALL_TESTS(test_stateful_tickets, 3);
     ADD_ALL_TESTS(test_stateless_tickets, 3);
