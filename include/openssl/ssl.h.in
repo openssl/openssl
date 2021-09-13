@@ -388,8 +388,9 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
      */
 # define SSL_OP_TLS_ROLLBACK_BUG                         SSL_OP_BIT(23)
     /*
-     * Switches off automatic TLSv1.3 anti-replay protection for early data.
-     * This is a server-side option only (no effect on the client).
+     * For servers: switches off automatic TLSv1.3 anti-replay protection
+     * for early data.
+     * For clients: switches off single-use tickets from cache.
      */
 # define SSL_OP_NO_ANTI_REPLAY                           SSL_OP_BIT(24)
 # define SSL_OP_NO_SSLv3                                 SSL_OP_BIT(25)

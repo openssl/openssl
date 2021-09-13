@@ -1105,8 +1105,10 @@ WORK_STATE tls_finish_handshake(SSL *s, ossl_unused WORK_STATE wst,
                  * so we remove this one from the cache.
                  */
                 if ((s->session_ctx->session_cache_mode
-                     & SSL_SESS_CACHE_CLIENT) != 0)
+                     & SSL_SESS_CACHE_CLIENT) != 0
+                        && (s->options & SSL_OP_NO_ANTI_REPLAY) == 0) {
                     SSL_CTX_remove_session(s->session_ctx, s->session);
+                }
             } else {
                 /*
                  * In TLSv1.3 we update the cache as part of processing the

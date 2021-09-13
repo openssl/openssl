@@ -205,14 +205,28 @@ B<only>. See the B<SECURE RENEGOTIATION> section for more details.
 
 =item SSL_OP_NO_ANTI_REPLAY
 
+This option is interpreted differently by clients and servers.
+
 By default, when a server is configured for early data (i.e., max_early_data > 0),
 OpenSSL will switch on replay protection. See L<SSL_read_early_data(3)> for a
 description of the replay protection feature. Anti-replay measures are required
 to comply with the TLSv1.3 specification. Some applications may be able to
 mitigate the replay risks in other ways and in such cases the built in OpenSSL
 functionality is not required. Those applications can turn this feature off by
-setting this option. This is a server-side opton only. It is ignored by
-clients.
+setting this option.
+
+By default, when a client is using a session cache and performs TLSv1.3 session
+resumption, the cache entry that was used to perform resumption is removed from
+the cache at the end of the handshake, even for successful resumption.  This
+"single-use ticket" behavior is recommended by RFC 8446 (and is in effect
+required when the client sends early data) because it provides privacy benefit
+(unlinkability of resumed sessions); likewise, the specification recommends
+that servers send one or more new tickets on each successful TLSv1.3
+connection.  (OpenSSL servers send two tickets on successful full handshakes
+and one ticket on successful resumption handshakes, by default.)  Applications
+that want to use a session ticket multiple times from a client's session cache
+can set this option to have OpenSSL leave the session in the cache after
+successful resumption.
 
 =item SSL_OP_NO_COMPRESSION
 
