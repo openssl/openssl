@@ -423,10 +423,4 @@ static ossl_inline void constant_time_lookup(void *out,
     }
 }
 
-/*
- * Expected usage pattern is to unconditionally set error and then
- * wipe it if there was no actual error. |clear| is 1 or 0.
- */
-void err_clear_last_constant_time(int clear);
-
 #endif                          /* OSSL_INTERNAL_CONSTANT_TIME_H */

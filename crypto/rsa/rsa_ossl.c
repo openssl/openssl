@@ -496,7 +496,7 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
      * in case of padding failure in the FIPS provider.
      */
     ERR_raise(ERR_LIB_RSA, RSA_R_PADDING_CHECK_FAILED);
-    err_clear_last_constant_time(1 & ~constant_time_msb(r));
+    ERR_clear_last_constant_time(1 & ~constant_time_msb(r));
 #endif
 
  err:

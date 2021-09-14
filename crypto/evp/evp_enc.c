@@ -922,7 +922,7 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
     *outl = constant_time_select_int(ret_nz & ~int_max_soutl_lt, soutl, *outl);
 
     ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
-    err_clear_last_constant_time(1 & ~int_max_soutl_lt);
+    ERR_clear_last_constant_time(1 & ~int_max_soutl_lt);
 
     return ret;
 

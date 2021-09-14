@@ -267,7 +267,7 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
      * in case of padding failure in the FIPS provider.
      */
     ERR_raise(ERR_LIB_RSA, RSA_R_PKCS_DECODING_ERROR);
-    err_clear_last_constant_time(1 & good);
+    ERR_clear_last_constant_time(1 & good);
 #endif
 
     return constant_time_select_int(good, mlen, -1);

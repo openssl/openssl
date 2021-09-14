@@ -2,23 +2,23 @@
 
 =head1 NAME
 
-err_clear_last_constant_time
+ERR_clear_last_constant_time
 - clear last error in constant time
 
 =head1 SYNOPSIS
 
- #include "internal/constant_time.h"
+ #include <openssl/err.h>
 
- void err_clear_last_constant_time(int clear);
+ void ERR_clear_last_constant_time(int clear);
 
 =head1 DESCRIPTION
 
-err_clear_last_constant_time() removes the last error raised by L<ERR_raise(3)>
+ERR_clear_last_constant_time() removes the last error raised by L<ERR_raise(3)>
 from the error stack in constant time.
 
 =head1 RETURN VALUES
 
-err_clear_last_constant_time does not return any values.
+ERR_clear_last_constant_time does not return any values.
 
 =head1 COPYRIGHT
 

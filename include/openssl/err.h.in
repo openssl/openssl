@@ -474,6 +474,8 @@ int ERR_set_mark(void);
 int ERR_pop_to_mark(void);
 int ERR_clear_last_mark(void);
 
+void ERR_clear_last_constant_time(int clear);
+
 #ifdef  __cplusplus
 }
 #endif
