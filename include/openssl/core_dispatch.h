@@ -88,17 +88,18 @@ OSSL_CORE_MAKE_FUNC(int, core_set_error_mark, (const OSSL_CORE_HANDLE *prov))
 # define OSSL_FUNC_CORE_CLEAR_LAST_ERROR_MARK  9
 OSSL_CORE_MAKE_FUNC(int, core_clear_last_error_mark,
                     (const OSSL_CORE_HANDLE *prov))
-#define OSSL_FUNC_CORE_CLEAR_LAST_CONSTANT_TIME 10
-OSSL_CORE_MAKE_FUNC(void, core_clear_last_constant_time,
-                    (const OSSL_CORE_HANDLE *prov, int clear))
-# define OSSL_FUNC_CORE_POP_ERROR_TO_MARK     11
+# define OSSL_FUNC_CORE_POP_ERROR_TO_MARK     10
 OSSL_CORE_MAKE_FUNC(int, core_pop_error_to_mark, (const OSSL_CORE_HANDLE *prov))
 
 
 /* Functions to access the OBJ database */
 
-#define OSSL_FUNC_CORE_OBJ_ADD_SIGID          12
-#define OSSL_FUNC_CORE_OBJ_CREATE             13
+#define OSSL_FUNC_CORE_OBJ_ADD_SIGID          11
+#define OSSL_FUNC_CORE_OBJ_CREATE             12
+
+#define OSSL_FUNC_CORE_CLEAR_LAST_CONSTANT_TIME 13
+OSSL_CORE_MAKE_FUNC(void, core_clear_last_constant_time,
+                    (const OSSL_CORE_HANDLE *prov, int clear))
 
 OSSL_CORE_MAKE_FUNC(int, core_obj_add_sigid,
                     (const OSSL_CORE_HANDLE *prov, const char  *sign_name,
