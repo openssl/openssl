@@ -2,8 +2,7 @@
 
 =head1 NAME
 
-ERR_clear_last_constant_time
-- clear last error in constant time
+ERR_clear_last_constant_time - clear last error in constant time
 
 =head1 SYNOPSIS
 
