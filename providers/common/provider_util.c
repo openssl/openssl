@@ -16,6 +16,7 @@
 #include <openssl/proverr.h>
 #ifndef FIPS_MODULE
 # include <openssl/engine.h>
+# include "crypto/evp.h"
 #endif
 #include "prov/provider_util.h"
 #include "internal/nelem.h"
@@ -90,8 +91,14 @@ int ossl_prov_cipher_load_from_params(PROV_CIPHER *pc,
     ERR_set_mark();
     pc->cipher = pc->alloc_cipher = EVP_CIPHER_fetch(ctx, p->data, propquery);
 #ifndef FIPS_MODULE /* Inside the FIPS module, we don't support legacy ciphers */
-    if (pc->cipher == NULL)
-        pc->cipher = EVP_get_cipherbyname(p->data);
+    if (pc->cipher == NULL) {
+        const EVP_CIPHER *cipher;
+
+        cipher = EVP_get_cipherbyname(p->data);
+        /* Do not use global EVP_CIPHERs */
+        if (cipher != NULL && cipher->origin != EVP_ORIG_GLOBAL)
+            pc->cipher = cipher;
+    }
 #endif
     if (pc->cipher != NULL)
         ERR_pop_to_mark();
@@ -159,8 +166,14 @@ int ossl_prov_digest_load_from_params(PROV_DIGEST *pd,
     ERR_set_mark();
     ossl_prov_digest_fetch(pd, ctx, p->data, propquery);
 #ifndef FIPS_MODULE /* Inside the FIPS module, we don't support legacy digests */
-    if (pd->md == NULL)
-        pd->md = EVP_get_digestbyname(p->data);
+    if (pd->md == NULL) {
+        const EVP_MD *md;
+
+        md = EVP_get_digestbyname(p->data);
+        /* Do not use global EVP_MDs */
+        if (md != NULL && md->origin != EVP_ORIG_GLOBAL)
+            pd->md = md;
+    }
 #endif
     if (pd->md != NULL)
         ERR_pop_to_mark();
