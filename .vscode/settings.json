@@ -1,6 +1,0 @@
-{
-    "files.associations": {
-        "err.h": "c",
-        "*.in": "cpp"
-    }
-}
