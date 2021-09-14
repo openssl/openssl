@@ -1035,6 +1035,10 @@ DEPEND[html/man3/ERR_clear_error.html]=man3/ERR_clear_error.pod
 GENERATE[html/man3/ERR_clear_error.html]=man3/ERR_clear_error.pod
 DEPEND[man/man3/ERR_clear_error.3]=man3/ERR_clear_error.pod
 GENERATE[man/man3/ERR_clear_error.3]=man3/ERR_clear_error.pod
+DEPEND[html/man3/ERR_clear_last_constant_time.html]=man3/ERR_clear_last_constant_time.pod
+GENERATE[html/man3/ERR_clear_last_constant_time.html]=man3/ERR_clear_last_constant_time.pod
+DEPEND[man/man3/ERR_clear_last_constant_time.3]=man3/ERR_clear_last_constant_time.pod
+GENERATE[man/man3/ERR_clear_last_constant_time.3]=man3/ERR_clear_last_constant_time.pod
 DEPEND[html/man3/ERR_error_string.html]=man3/ERR_error_string.pod
 GENERATE[html/man3/ERR_error_string.html]=man3/ERR_error_string.pod
 DEPEND[man/man3/ERR_error_string.3]=man3/ERR_error_string.pod
@@ -2978,6 +2982,7 @@ html/man3/EC_POINT_new.html \
 html/man3/ENGINE_add.html \
 html/man3/ERR_GET_LIB.html \
 html/man3/ERR_clear_error.html \
+html/man3/ERR_clear_last_constant_time.html \
 html/man3/ERR_error_string.html \
 html/man3/ERR_get_error.html \
 html/man3/ERR_load_crypto_strings.html \
@@ -3570,6 +3575,7 @@ man/man3/EC_POINT_new.3 \
 man/man3/ENGINE_add.3 \
 man/man3/ERR_GET_LIB.3 \
 man/man3/ERR_clear_error.3 \
+man/man3/ERR_clear_last_constant_time.3 \
 man/man3/ERR_error_string.3 \
 man/man3/ERR_get_error.3 \
 man/man3/ERR_load_crypto_strings.3 \
