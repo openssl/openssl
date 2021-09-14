@@ -16,10 +16,10 @@
 #include <openssl/proverr.h>
 #ifndef FIPS_MODULE
 # include <openssl/engine.h>
+# include "crypto/evp.h"
 #endif
 #include "prov/provider_util.h"
 #include "internal/nelem.h"
-#include "crypto/evp.h"
 
 void ossl_prov_cipher_reset(PROV_CIPHER *pc)
 {
