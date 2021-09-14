@@ -96,7 +96,7 @@ int ossl_prov_cipher_load_from_params(PROV_CIPHER *pc,
 
         cipher = EVP_get_cipherbyname(p->data);
         /* Do not use global EVP_CIPHERs */
-        if (cipher->origin != EVP_ORIG_GLOBAL)
+        if (cipher != NULL && cipher->origin != EVP_ORIG_GLOBAL)
             pc->cipher = cipher;
     }
 #endif
@@ -171,7 +171,7 @@ int ossl_prov_digest_load_from_params(PROV_DIGEST *pd,
 
         md = EVP_get_digestbyname(p->data);
         /* Do not use global EVP_MDs */
-        if (md->origin != EVP_ORIG_GLOBAL)
+        if (md != NULL && md->origin != EVP_ORIG_GLOBAL)
             pd->md = md;
     }
 #endif
