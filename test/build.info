@@ -37,11 +37,10 @@ IF[{- !$disabled{tests} -}]
           sanitytest rsa_complex exdatatest bntest \
           ecstresstest gmdifftest pbelutest \
           destest mdc2test sha_test \
-          exptest pbetest \
+          exptest pbetest dispatch_test \
           evp_pkey_provided_test evp_test evp_extra_test evp_extra_test2 \
           evp_fetch_prov_test evp_libctx_test ossl_store_test \
           v3nametest v3ext \
-          evp_pkey_provided_test evp_test evp_extra_test evp_extra_test2 \
           evp_fetch_prov_test v3nametest v3ext \
           crltest danetest bad_dtls_test lhash_test sparse_array_test \
           conf_include_test params_api_test params_conversion_test \
@@ -184,6 +183,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[prov_config_test]=prov_config_test.c
   INCLUDE[prov_config_test]=../include ../apps/include
   DEPEND[prov_config_test]=../libcrypto.a libtestutil.a
+
+  SOURCE[dispatch_test]=dispatch_test.c
+  INCLUDE[dispatch_test]=../include ../apps/include
+  DEPEND[dispatch_test]=../libcrypto libtestutil.a
 
   SOURCE[evp_pkey_provided_test]=evp_pkey_provided_test.c
   INCLUDE[evp_pkey_provided_test]=../include ../apps/include
