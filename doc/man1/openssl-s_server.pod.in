@@ -128,6 +128,7 @@ B<openssl> B<s_server>
 [B<-no_dhe>]
 [B<-nextprotoneg> I<val>]
 [B<-alpn> I<val>]
+[B<-ktls>]
 [B<-sendfile>]
 [B<-keylogfile> I<outfile>]
 [B<-recv_max_early_data> I<int>]
@@ -762,11 +763,18 @@ Protocol names are printable ASCII strings, for example "http/1.1" or
 "spdy/3".
 The flag B<-nextprotoneg> cannot be specified if B<-tls1_3> is used.
 
+=item B<-ktls>
+
+Enable Kernel TLS for sending and receiving.
+This option was introduced in OpenSSL 3.1.0.
+Kernel TLS is off by default as of OpenSSL 3.1.0.
+
 =item B<-sendfile>
 
 If this option is set and KTLS is enabled, SSL_sendfile() will be used
 instead of BIO_write() to send the HTTP response requested by a client.
-This option is only valid if B<-WWW> or B<-HTTP> is specified.
+This option is only valid when B<-ktls> along with B<-WWW> or B<-HTTP>
+are specified.
 
 =item B<-keylogfile> I<outfile>
 
