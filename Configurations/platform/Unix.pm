@@ -76,7 +76,7 @@ sub sharedlib_simple {
     my $simpleext = $_[0]->shlibextsimple();
 
     return undef unless defined $simplename && defined $name;
-    return undef if ($name eq $simplename && $ext eq $extsimple);
+    return undef if ($name eq $simplename && $ext eq $simpleext);
     return platform::BASE::__concat($simplename, $simpleext);
 }
 
