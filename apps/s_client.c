@@ -467,6 +467,7 @@ typedef enum OPTION_choice {
     OPT_DANE_TLSA_RRDATA, OPT_DANE_EE_NO_NAME,
     OPT_ENABLE_PHA,
     OPT_SCTP_LABEL_BUG,
+    OPT_KTLS,
     OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
@@ -663,6 +664,9 @@ const OPTIONS s_client_options[] = {
      "(deprecated) Tolerate other than the known g N values."},
     {"srp_strength", OPT_SRP_STRENGTH, 'p',
      "(deprecated) Minimal length in bits for N"},
+#endif
+#ifndef OPENSSL_NO_KTLS
+    {"ktls", OPT_KTLS, '-', "Enable Kernel TLS for sending and receiving"},
 #endif
 
     OPT_R_OPTIONS,
@@ -888,6 +892,9 @@ int s_client_main(int argc, char **argv)
     int sctp_label_bug = 0;
 #endif
     int ignore_unexpected_eof = 0;
+#ifndef OPENSSL_NO_KTLS
+    int enable_ktls = 0;
+#endif
 
     FD_ZERO(&readfds);
     FD_ZERO(&writefds);
@@ -1457,6 +1464,11 @@ int s_client_main(int argc, char **argv)
         case OPT_ENABLE_PHA:
             enable_pha = 1;
             break;
+        case OPT_KTLS:
+#ifndef OPENSSL_NO_KTLS
+            enable_ktls = 1;
+#endif
+            break;
         }
     }
 
@@ -1700,6 +1712,10 @@ int s_client_main(int argc, char **argv)
 
     if (ignore_unexpected_eof)
         SSL_CTX_set_options(ctx, SSL_OP_IGNORE_UNEXPECTED_EOF);
+#ifndef OPENSSL_NO_KTLS
+    if (enable_ktls)
+        SSL_CTX_set_options(ctx, SSL_OP_ENABLE_KTLS);
+#endif
 
     if (vpmtouched && !SSL_CTX_set1_param(ctx, vpm)) {
         BIO_printf(bio_err, "Error setting verify params\n");
