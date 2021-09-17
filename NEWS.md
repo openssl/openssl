@@ -21,12 +21,13 @@ OpenSSL 3.1
 
 ### Major changes between OpenSSL 3.0 and OpenSSL 3.1 [under development]
 
- *
+ * Subject or issuer names in X.509 objects are now displayed as UTF-8 strings
+   by default.
 
 OpenSSL 3.0
 -----------
 
-### Major changes between OpenSSL 1.1.1 and OpenSSL 3.0 [under development]
+### Major changes between OpenSSL 1.1.1 and OpenSSL 3.0
 
   * Enhanced 'openssl list' with many new options.
   * Added migration guide to man7.
