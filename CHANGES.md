@@ -24,7 +24,10 @@ OpenSSL 3.1
 
 ### Changes between 3.0 and 3.1 [xx XXX xxxx]
 
- *
+ * Subject or issuer names in X.509 objects are now displayed as UTF-8 strings
+   by default.
+
+   *Dmitry Belyavskiy*
 
 OpenSSL 3.0
 -----------
