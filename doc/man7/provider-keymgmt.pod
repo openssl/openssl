@@ -254,9 +254,10 @@ provider knows how to interpret, but that may come from other operations.
 Outside the provider, this reference is simply an array of bytes.
 
 At least one of OSSL_FUNC_keymgmt_new(), OSSL_FUNC_keymgmt_gen() and
-OSSL_FUNC_keymgmt_load() are mandatory, as well as OSSL_FUNC_keymgmt_free().
-Additionally, if OSSL_FUNC_keymgmt_gen() is present, OSSL_FUNC_keymgmt_gen_init()
-and OSSL_FUNC_keymgmt_gen_cleanup() must be present as well.
+OSSL_FUNC_keymgmt_load() are mandatory, as well as OSSL_FUNC_keymgmt_free() and
+OSSL_FUNC_keymgmt_has(). Additionally, if OSSL_FUNC_keymgmt_gen() is present, 
+OSSL_FUNC_keymgmt_gen_init() and OSSL_FUNC_keymgmt_gen_cleanup() must be
+present as well.
 
 =head2 Key Object Information Functions
 
