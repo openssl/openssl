@@ -147,8 +147,10 @@ int key_to_params(const EC_KEY *eckey, OSSL_PARAM_BLD *tmpl,
 
         if (p != NULL || tmpl != NULL) {
             /* convert pub_point to a octet string according to the SECG standard */
+            point_conversion_form_t format = EC_KEY_get_conv_form(eckey);
+
             if ((pub_key_len = EC_POINT_point2buf(ecg, pub_point,
-                                                  POINT_CONVERSION_COMPRESSED,
+                                                  format,
                                                   pub_key, bnctx)) == 0
                 || !ossl_param_build_set_octet_string(tmpl, p,
                                                       OSSL_PKEY_PARAM_PUB_KEY,
