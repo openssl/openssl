@@ -633,6 +633,9 @@ int ASN1_GENERALIZEDTIME_set_string(ASN1_GENERALIZEDTIME *s, const char *str);
 int ASN1_TIME_diff(int *pday, int *psec,
                    const ASN1_TIME *from, const ASN1_TIME *to);
 
+{-
+    generate_stack_macros("ASN1_OCTET_STRING");
+-}
 DECLARE_ASN1_FUNCTIONS(ASN1_OCTET_STRING)
 DECLARE_ASN1_DUP_FUNCTION(ASN1_OCTET_STRING)
 int ASN1_OCTET_STRING_cmp(const ASN1_OCTET_STRING *a,
