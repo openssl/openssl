@@ -12,6 +12,7 @@ use warnings;
 use lib ".";
 use Getopt::Std;
 use Pod::Html;
+use Cwd qw(:DEFAULT realpath);
 
 # Options.
 our($opt_i);    # -i INFILE
@@ -24,6 +25,10 @@ die "-i flag missing" unless $opt_i;
 die "-o flag missing" unless $opt_o;
 die "-t flag missing" unless $opt_t;
 die "-r flag missing" unless $opt_r;
+
+$opt_i = realpath($opt_i);
+$opt_o = realpath($opt_o);
+$opt_r = realpath($opt_r);
 
 pod2html
     "--infile=$opt_i",
