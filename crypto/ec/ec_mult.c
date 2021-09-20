@@ -21,6 +21,7 @@
 #include "crypto/bn.h"
 #include "ec_local.h"
 #include "internal/refcount.h"
+#include "internal/constant_time.h"
 
 #include <openssl/rand.h>
 
@@ -308,6 +309,7 @@ int ossl_ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
         BN_consttime_randomized_swap(c, (a)->Y, (b)->Y, w, r, r); \
         BN_consttime_randomized_swap(c, (a)->Z, (b)->Z, w, r, r); \
         t = (((a)->Z_is_one ^ (b)->Z_is_one) & (c)) ^ (r);        \
+        t = value_barrier(t);                                     \
         (a)->Z_is_one = ((a)->Z_is_one ^ (t)) ^ (r);              \
         (b)->Z_is_one = ((b)->Z_is_one ^ (t)) ^ (r);              \
     } while (0)
