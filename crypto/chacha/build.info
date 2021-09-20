@@ -12,7 +12,7 @@ IF[{- !$disabled{asm} -}]
   $CHACHAASM_armv4=chacha-armv4.S
   $CHACHAASM_aarch64=chacha-armv8.S
 
-  $CHACHAASM_ppc32=chacha_ppc.c chacha-ppc.s
+  $CHACHAASM_ppc32=chacha_ppc.c chacha-ppc.s chachap10-ppc.s
   $CHACHAASM_ppc64=$CHACHAASM_ppc32
 
   $CHACHAASM_c64xplus=chacha-c64xplus.s
@@ -29,6 +29,7 @@ SOURCE[../../libcrypto]=$CHACHAASM
 GENERATE[chacha-x86.s]=asm/chacha-x86.pl
 GENERATE[chacha-x86_64.s]=asm/chacha-x86_64.pl
 GENERATE[chacha-ppc.s]=asm/chacha-ppc.pl
+GENERATE[chachap10-ppc.s]=asm/chachap10-ppc.pl
 GENERATE[chacha-armv4.S]=asm/chacha-armv4.pl
 INCLUDE[chacha-armv4.o]=..
 GENERATE[chacha-armv8.S]=asm/chacha-armv8.pl
