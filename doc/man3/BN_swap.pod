@@ -18,9 +18,9 @@ BN_swap, BN_consttime_swap, BN_consttime_randomized_swap
 
 BN_swap() exchanges the values of I<a> and I<b>.
 
-BN_consttime_swap() exchanges the values of I<a> amd I<b> if I<condition>
+BN_consttime_swap() exchanges the values of I<a> and I<b> if I<condition>
 is not zero.  I<nwords> specifies the number of words to swap, and
-each of I<a> and I<b> most have at least that many words allocated,
+each of I<a> and I<b> must have at least that many words allocated,
 and not use more than that many words.
 
 BN_consttime_randomized_swap() is the same as BN_consttime_swap()
