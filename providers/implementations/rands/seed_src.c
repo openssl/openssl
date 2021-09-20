@@ -206,6 +206,7 @@ static size_t seed_get_seed(void *vseed, unsigned char **pout,
                           adin, adin_len) != 0)
         return bytes_needed;
     OPENSSL_secure_clear_free(p, bytes_needed);
+    *pout = NULL;
     return 0;
 }
 
