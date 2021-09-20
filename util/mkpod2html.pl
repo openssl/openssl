@@ -26,9 +26,9 @@ die "-o flag missing" unless $opt_o;
 die "-t flag missing" unless $opt_t;
 die "-r flag missing" unless $opt_r;
 
-$opt_i = realpath($opt_i);
-$opt_o = realpath($opt_o);
-$opt_r = realpath($opt_r);
+$opt_i = realpath($opt_i) or die "Can't convert to real path: $!";
+$opt_o = realpath($opt_o) or die "Can't convert to real path: $!";
+$opt_r = realpath($opt_r) or die "Can't convert to real path: $!";
 
 pod2html
     "--infile=$opt_i",
