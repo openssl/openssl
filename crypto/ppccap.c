@@ -45,6 +45,7 @@ void OPENSSL_ppc64_probe(void);
 void OPENSSL_altivec_probe(void);
 void OPENSSL_crypto207_probe(void);
 void OPENSSL_madd300_probe(void);
+void OPENSSL_brd31_probe(void);
 
 long OPENSSL_rdtsc_mftb(void);
 long OPENSSL_rdtsc_mfspr268(void);
@@ -127,6 +128,7 @@ static unsigned long getauxval(unsigned long key)
 #define HWCAP2                  26      /* AT_HWCAP2 */
 #define HWCAP_VEC_CRYPTO        (1U << 25)
 #define HWCAP_ARCH_3_00         (1U << 23)
+#define HWCAP_ARCH_3_1          (1U << 18)
 
 # if defined(__GNUC__) && __GNUC__>=2
 __attribute__ ((constructor))
@@ -186,6 +188,9 @@ void OPENSSL_cpuid_setup(void)
 
     if (__power_set(0xffffffffU<<17))           /* POWER9 and later */
         OPENSSL_ppccap_P |= PPC_MADD300;
+   
+    if (__power_set(0xffffffffU<<18))           /* POWER10 and later */
+        OPENSSL_ppccap_P |= PPC_BRD31;
 
     return;
 # endif
@@ -241,6 +246,11 @@ void OPENSSL_cpuid_setup(void)
 
         if (hwcap2 & HWCAP_ARCH_3_00) {
             OPENSSL_ppccap_P |= PPC_MADD300;
+        }
+     
+        
+        if (hwcap2 & HWCAP_ARCH_3_1) {
+            OPENSSL_ppccap_P |= PPC_BRD31;
         }
     }
 #endif

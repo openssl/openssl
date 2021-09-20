@@ -81,6 +81,17 @@ $code=<<___;
 	.long	0
 	.byte	0,12,0x14,0,0,0,0,0
 
+.globl	.OPENSSL_brd31_probe
+.align	4
+.OPENSSL_brd31_probe:
+	xor	r0,r0,r0
+	brd	r3,r0
+	blr
+	.long	0
+	.byte	0,12,0x14,0,0,0,0,0
+.size	.OPENSSL_brd31_probe,.-.OPENSSL_brd31_probe
+
+
 .globl	.OPENSSL_wipe_cpu
 .align	4
 .OPENSSL_wipe_cpu:
