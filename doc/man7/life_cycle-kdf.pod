@@ -75,7 +75,7 @@ This is the canonical list.
 
  Function Call                   ------------- Current State -------------
                                  start       newed       deriving    freed
- EVP_KDF_CTX_new                 newed           
+ EVP_KDF_CTX_new                 newed
  EVP_KDF_derive                             deriving     deriving
  EVP_KDF_CTX_free                freed       freed        freed
  EVP_KDF_CTX_reset                           newed        newed

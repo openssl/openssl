@@ -371,7 +371,7 @@ Sets a flag to modify the sign operation to return an error if the initial
 calculated signature is invalid.
 In the normal mode of operation - new random values are chosen until the
 signature operation succeeds.
-By default it retries until a signature is calculated. 
+By default it retries until a signature is calculated.
 Setting the value to 0 causes the sign operation to retry,
 otherwise the sign operation is only tried once and returns whether or not it
 was successful.

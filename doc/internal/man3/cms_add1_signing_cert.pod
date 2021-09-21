@@ -31,7 +31,7 @@ For a fuller description see L<openssl-cms(1)>).
 
 =head1 RETURN VALUES
 
-cms_add1_signing_cert() and cms_add1_signing_cert_v2() return 1 if attribute 
+cms_add1_signing_cert() and cms_add1_signing_cert_v2() return 1 if attribute
 is added or 0 if an error occurred.
 
 =head1 COPYRIGHT

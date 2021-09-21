@@ -159,7 +159,7 @@ OSSL_DECODER_CTX_set_cleanup() respectively.
 
 OSSL_DECODER_export() is a fallback function for constructors that cannot
 use the data they get directly for diverse reasons.  It takes the same
-decode instance I<decoder_inst> that the constructor got and an object 
+decode instance I<decoder_inst> that the constructor got and an object
 I<reference>, unpacks the object which it refers to, and exports it by
 creating an L<OSSL_PARAM(3)> array that it then passes to I<export_cb>,
 along with I<export_arg>.

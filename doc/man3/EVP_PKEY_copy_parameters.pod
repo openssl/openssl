@@ -64,7 +64,7 @@ doesn't use parameters.
 These functions EVP_PKEY_copy_parameters() returns 1 for success and 0 for
 failure.
 
-The functions EVP_PKEY_cmp_parameters(), EVP_PKEY_parameters_eq(), 
+The functions EVP_PKEY_cmp_parameters(), EVP_PKEY_parameters_eq(),
 EVP_PKEY_cmp() and EVP_PKEY_eq() return 1 if their
 inputs match, 0 if they don't match, -1 if the key types are different and
 -2 if the operation is not supported.

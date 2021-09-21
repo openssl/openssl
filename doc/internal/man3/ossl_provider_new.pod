@@ -296,7 +296,7 @@ in a bitstring that's internal to I<provider>.
 
 ossl_provider_test_operation_bit() checks if the bit operation I<bitnum>
 is set (1) or not (0) in the internal I<provider> bitstring, and sets
-I<*result> to 1 or 0 accorddingly. 
+I<*result> to 1 or 0 accorddingly.
 
 ossl_provider_clear_all_operation_bits() clears all of the operation bits
 to (0) for all providers in the library context I<libctx>.
