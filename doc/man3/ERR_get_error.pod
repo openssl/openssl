@@ -78,14 +78,14 @@ is valid until the respective entry is overwritten in the error queue.
 ERR_peek_error_line() and ERR_peek_last_error_line() are the same as
 ERR_peek_error() and ERR_peek_last_error(), but on success they additionally
 store the filename and line number where the error occurred in *I<file> and
-*I<line>, as far as they are not NULL. 
+*I<line>, as far as they are not NULL.
 An unset filename is indicated as "", i.e., an empty string.
 An unset line number is indicated as 0.
 
 ERR_peek_error_func() and ERR_peek_last_error_func() are the same as
 ERR_peek_error() and ERR_peek_last_error(), but on success they additionally
 store the name of the function where the error occurred in *I<func>, unless
-it is NULL. 
+it is NULL.
 An unset function name is indicated as "".
 
 ERR_peek_error_data() and ERR_peek_last_error_data() are the same as
