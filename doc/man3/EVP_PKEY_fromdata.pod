@@ -80,7 +80,7 @@ public key and key parameters.
 These functions only work with key management methods coming from a provider.
 This is the mirror function to L<EVP_PKEY_todata(3)>.
 
-=for comment We may choose to make this available for legacy methods too... 
+=for comment We may choose to make this available for legacy methods too...
 
 =head1 RETURN VALUES
 

@@ -443,7 +443,7 @@ different for any third party provider.
 This returns 0 if the provider has entered an error state, otherwise it returns
 1.
 
-=back 
+=back
 
 provider_gettable_params() should return the above parameters.
 

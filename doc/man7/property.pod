@@ -144,7 +144,7 @@ setting.
 
 The lexical syntax in EBNF is given by:
 
- Definition     ::= PropertyName ( '=' Value )? 
+ Definition     ::= PropertyName ( '=' Value )?
                         ( ',' PropertyName ( '=' Value )? )*
  Query          ::= PropertyQuery ( ',' PropertyQuery )*
  PropertyQuery  ::= '-' PropertyName
