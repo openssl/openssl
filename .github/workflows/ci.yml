@@ -179,6 +179,19 @@ jobs:
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
+  fips_and_ktls:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: modprobe tls
+      run: sudo modprobe tls
+    - name: config
+      run: ./config --banner=Configured --strict-warnings enable-ktls enable-fips && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: make test
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+
   no-legacy:
     runs-on: ubuntu-latest
     steps:
