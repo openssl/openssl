@@ -151,7 +151,7 @@ SSL_SESSION_set_time                    151	3_0_0	EXIST::FUNCTION:
 i2d_SSL_SESSION                         152	3_0_0	EXIST::FUNCTION:
 SSL_SESSION_get_master_key              153	3_0_0	EXIST::FUNCTION:
 SSL_COMP_get_compression_methods        154	3_0_0	EXIST::FUNCTION:
-SSL_CTX_set_alpn_select_cb              155	3_0_0	EXIST::FUNCTION:
+SSL_CTX_set_alpn_select_cb              155	3_0_0	EXIST::FUNCTION:ALPN
 SSL_CTX_set_tmp_dh_callback             156	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 SSL_CTX_get_default_passwd_cb           157	3_0_0	EXIST::FUNCTION:
 TLSv1_server_method                     158	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,TLS1_METHOD
@@ -220,7 +220,7 @@ SSL_set_info_callback                   220	3_0_0	EXIST::FUNCTION:
 SSL_CTX_sess_set_new_cb                 221	3_0_0	EXIST::FUNCTION:
 SSL_CTX_get_security_level              222	3_0_0	EXIST::FUNCTION:
 SSL_CTX_ctrl                            223	3_0_0	EXIST::FUNCTION:
-SSL_set_alpn_protos                     224	3_0_0	EXIST::FUNCTION:
+SSL_set_alpn_protos                     224	3_0_0	EXIST::FUNCTION:ALPN
 SSL_set_ex_data                         225	3_0_0	EXIST::FUNCTION:
 SSL_rstate_string_long                  226	3_0_0	EXIST::FUNCTION:
 SSL_ctrl                                227	3_0_0	EXIST::FUNCTION:
@@ -287,7 +287,7 @@ SSL_CTX_get_quiet_shutdown              287	3_0_0	EXIST::FUNCTION:
 SSL_CTX_use_certificate_chain_file      288	3_0_0	EXIST::FUNCTION:
 SSL_CTX_dane_enable                     289	3_0_0	EXIST::FUNCTION:
 SSL_CONF_CTX_new                        290	3_0_0	EXIST::FUNCTION:
-SSL_get0_alpn_selected                  291	3_0_0	EXIST::FUNCTION:
+SSL_get0_alpn_selected                  291	3_0_0	EXIST::FUNCTION:ALPN
 SSL_get0_next_proto_negotiated          292	3_0_0	EXIST::FUNCTION:NEXTPROTONEG
 SSL_set0_security_ex_data               293	3_0_0	EXIST::FUNCTION:
 SSL_CTX_set_tlsext_use_srtp             294	3_0_0	EXIST::FUNCTION:SRTP
@@ -331,7 +331,7 @@ SSL_get_peer_finished                   331	3_0_0	EXIST::FUNCTION:
 SSL_set_tlsext_use_srtp                 332	3_0_0	EXIST::FUNCTION:SRTP
 TLSv1_method                            333	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,TLS1_METHOD
 SSL_set_psk_server_callback             334	3_0_0	EXIST::FUNCTION:PSK
-SSL_CTX_set_alpn_protos                 335	3_0_0	EXIST::FUNCTION:
+SSL_CTX_set_alpn_protos                 335	3_0_0	EXIST::FUNCTION:ALPN
 SSL_CTX_set_default_verify_paths        336	3_0_0	EXIST::FUNCTION:
 SSL_CTX_sess_set_get_cb                 337	3_0_0	EXIST::FUNCTION:
 SSL_add_file_cert_subjects_to_stack     338	3_0_0	EXIST::FUNCTION:
@@ -466,9 +466,9 @@ SSL_SESSION_dup                         466	3_0_0	EXIST::FUNCTION:
 SSL_get_pending_cipher                  467	3_0_0	EXIST::FUNCTION:
 SSL_CIPHER_get_protocol_id              468	3_0_0	EXIST::FUNCTION:
 SSL_SESSION_set_max_early_data          469	3_0_0	EXIST::FUNCTION:
-SSL_SESSION_set1_alpn_selected          470	3_0_0	EXIST::FUNCTION:
+SSL_SESSION_set1_alpn_selected          470	3_0_0	EXIST::FUNCTION:ALPN
 SSL_SESSION_set1_hostname               471	3_0_0	EXIST::FUNCTION:
-SSL_SESSION_get0_alpn_selected          472	3_0_0	EXIST::FUNCTION:
+SSL_SESSION_get0_alpn_selected          472	3_0_0	EXIST::FUNCTION:ALPN
 DTLS_set_timer_cb                       473	3_0_0	EXIST::FUNCTION:
 SSL_CTX_set_tlsext_max_fragment_length  474	3_0_0	EXIST::FUNCTION:
 SSL_set_tlsext_max_fragment_length      475	3_0_0	EXIST::FUNCTION:

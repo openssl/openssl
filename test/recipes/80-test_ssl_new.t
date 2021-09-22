@@ -91,7 +91,7 @@ my %skip = (
   "07-dtls-protocol-version.cnf" => $no_dtls,
   "08-npn.cnf" => (disabled("tls1") && disabled("tls1_1")
                     && disabled("tls1_2")) || $no_npn || $no_alpn,
-  "09-alpn.cnf" => $no_alpn,
+  "09-alpn.cnf" => $no_alpn || $no_tls,
   "10-resumption.cnf" => disabled("tls1_1") || disabled("tls1_2"),
   "11-dtls_resumption.cnf" => disabled("dtls1") || disabled("dtls1_2"),
   "12-ct.cnf" => $no_tls || $no_ct || $no_ec,
