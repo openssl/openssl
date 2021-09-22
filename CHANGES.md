@@ -24,6 +24,11 @@ OpenSSL 3.1
 
 ### Changes between 3.0 and 3.1 [xx XXX xxxx]
 
+ * CCM8 cipher suites in TLS have been downgraded to security level 1 because
+   they use a short tag which lowers their strength.
+
+   *Paul Dale*
+
  * Subject or issuer names in X.509 objects are now displayed as UTF-8 strings
    by default.
 
