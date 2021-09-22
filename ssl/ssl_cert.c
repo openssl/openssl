@@ -1021,9 +1021,6 @@ static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
             /* SHA1 HMAC is 160 bits of security */
             if (minbits > 160 && c->algorithm_mac & SSL_SHA1)
                 return 0;
-            /* Level 2: no RC4 */
-            if (level >= 2 && c->algorithm_enc == SSL_RC4)
-                return 0;
             /* Level 3: forward secure ciphersuites only */
             if (level >= 3 && c->min_tls != TLS1_3_VERSION &&
                                !(c->algorithm_mkey & (SSL_kEDH | SSL_kEECDH)))

@@ -2807,7 +2807,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0, 0,
      SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     128,
+     80,
      128,
      },
     {
@@ -2823,7 +2823,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0, 0,
      SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     128,
+     80,
      128,
      },
     {
@@ -2839,7 +2839,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0, 0,
      SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     128,
+     80,
      128,
      },
     {
@@ -2855,7 +2855,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0, 0,
      SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     128,
+     80,
      128,
      },
     {
@@ -2871,7 +2871,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0, 0,
      SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     128,
+     80,
      128,
      },
     {
@@ -2887,7 +2887,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0, 0,
      SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     128,
+     80,
      128,
      },
     {
@@ -2903,7 +2903,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0, 0,
      SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     128,
+     80,
      128,
      },
     {
@@ -2919,7 +2919,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0, 0,
      SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     128,
+     80,
      128,
      },
     {
@@ -2935,7 +2935,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0, 0,
      SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     128,
+     80,
      128,
      },
     {
@@ -2951,7 +2951,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0, 0,
      SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     128,
+     80,
      128,
      },
 #endif                          /* OPENSSL_NO_WEAK_SSL_CIPHERS */
