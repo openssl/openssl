@@ -40,7 +40,9 @@ typedef struct {
 #endif
     uint64_t flags;
     uint32_t max_early_data;
+#ifndef OPENSSL_NO_ALPN
     ASN1_OCTET_STRING *alpn_selected;
+#endif
     uint32_t tlsext_max_fragment_len_mode;
     ASN1_OCTET_STRING *ticket_appdata;
     uint32_t kex_group;
@@ -72,7 +74,9 @@ ASN1_SEQUENCE(SSL_SESSION_ASN1) = {
     ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, flags, ZUINT64, 13),
     ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, tlsext_tick_age_add, ZUINT32, 14),
     ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, max_early_data, ZUINT32, 15),
+#ifndef OPENSSL_NO_ALPN
     ASN1_EXP_OPT(SSL_SESSION_ASN1, alpn_selected, ASN1_OCTET_STRING, 16),
+#endif
     ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, tlsext_max_fragment_len_mode, ZUINT32, 17),
     ASN1_EXP_OPT(SSL_SESSION_ASN1, ticket_appdata, ASN1_OCTET_STRING, 18),
     ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, kex_group, UINT32, 19)
@@ -123,7 +127,9 @@ int i2d_SSL_SESSION(const SSL_SESSION *in, unsigned char **pp)
 #ifndef OPENSSL_NO_PSK
     ASN1_OCTET_STRING psk_identity, psk_identity_hint;
 #endif
+#ifndef OPENSSL_NO_ALPN
     ASN1_OCTET_STRING alpn_selected;
+#endif
     ASN1_OCTET_STRING ticket_appdata;
 
     long l;
@@ -189,12 +195,13 @@ int i2d_SSL_SESSION(const SSL_SESSION *in, unsigned char **pp)
 
     as.flags = in->flags;
     as.max_early_data = in->ext.max_early_data;
-
+#ifndef OPENSSL_NO_ALPN
     if (in->ext.alpn_selected == NULL)
         as.alpn_selected = NULL;
     else
         ssl_session_oinit(&as.alpn_selected, &alpn_selected,
                           in->ext.alpn_selected, in->ext.alpn_selected_len);
+#endif
 
     as.tlsext_max_fragment_len_mode = in->ext.max_fragment_len_mode;
 
@@ -363,6 +370,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
     ret->flags = (int32_t)as->flags;
     ret->ext.max_early_data = as->max_early_data;
 
+#ifndef OPENSSL_NO_ALPN
     OPENSSL_free(ret->ext.alpn_selected);
     if (as->alpn_selected != NULL) {
         ret->ext.alpn_selected = as->alpn_selected->data;
@@ -372,7 +380,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
         ret->ext.alpn_selected = NULL;
         ret->ext.alpn_selected_len = 0;
     }
-
+#endif
     ret->ext.max_fragment_len_mode = as->tlsext_max_fragment_len_mode;
 
     OPENSSL_free(ret->ticket_appdata);

@@ -2101,6 +2101,7 @@ static int tls_handle_status_request(SSL *s)
     return 1;
 }
 
+#ifndef OPENSSL_NO_ALPN
 /*
  * Call the alpn_select callback if needed. Upon success, returns 1.
  * Upon failure, returns 0.
@@ -2125,10 +2126,10 @@ int tls_handle_alpn(SSL *s)
                 return 0;
             }
             s->s3.alpn_selected_len = selected_len;
-#ifndef OPENSSL_NO_NEXTPROTONEG
+# ifndef OPENSSL_NO_NEXTPROTONEG
             /* ALPN takes precedence over NPN. */
             s->s3.npn_seen = 0;
-#endif
+# endif
 
             /* Check ALPN is consistent with session */
             if (s->session->ext.alpn_selected == NULL
@@ -2180,6 +2181,7 @@ int tls_handle_alpn(SSL *s)
 
     return 1;
 }
+#endif /* OPENSSL_NO_ALPN */
 
 WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
 {
@@ -2263,6 +2265,7 @@ WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
             /* SSLfatal() already called */
             goto err;
         }
+#ifndef OPENSSL_NO_ALPN
         /*
          * Call alpn_select callback if needed.  Has to be done after SNI and
          * cipher negotiation (HTTP/2 restricts permitted ciphers). In TLSv1.3
@@ -2273,6 +2276,7 @@ WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
             /* SSLfatal() already called */
             goto err;
         }
+#endif
 
         wst = WORK_MORE_C;
     }
@@ -3928,6 +3932,7 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
 
         s->session->time = time(NULL);
         ssl_session_calculate_timeout(s->session);
+#ifndef OPENSSL_NO_ALPN
         if (s->s3.alpn_selected != NULL) {
             OPENSSL_free(s->session->ext.alpn_selected);
             s->session->ext.alpn_selected =
@@ -3939,6 +3944,7 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
             }
             s->session->ext.alpn_selected_len = s->s3.alpn_selected_len;
         }
+#endif
         s->session->ext.max_early_data = s->max_early_data;
     }
 

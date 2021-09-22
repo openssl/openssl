@@ -407,6 +407,7 @@ static int server_npn_cb(SSL *s, const unsigned char **data,
 }
 #endif
 
+#ifndef OPENSSL_NO_ALPN
 /*
  * The server SHOULD select the most highly preferred protocol that it supports
  * and that is also advertised by the client.  In the event that the server
@@ -437,6 +438,7 @@ static int server_alpn_cb(SSL *s, const unsigned char **out,
     return ret == OPENSSL_NPN_NEGOTIATED ? SSL_TLSEXT_ERR_OK
         : SSL_TLSEXT_ERR_ALERT_FATAL;
 }
+#endif
 
 static int generate_session_ticket_cb(SSL *s, void *arg)
 {
@@ -600,6 +602,7 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
                                          client_ctx_data);
     }
 #endif
+#ifndef OPENSSL_NO_ALPN
     if (extra->server.alpn_protocols != NULL) {
         if (!TEST_true(parse_protos(extra->server.alpn_protocols,
                                     &server_ctx_data->alpn_protocols,
@@ -629,7 +632,7 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
             goto err;
         OPENSSL_free(alpn_protos);
     }
-
+#endif
     if (extra->server.session_ticket_app_data != NULL) {
         server_ctx_data->session_ticket_app_data =
             OPENSSL_strdup(extra->server.session_ticket_app_data);
@@ -1643,11 +1646,13 @@ static HANDSHAKE_RESULT *do_handshake_internal(
     ret->server_npn_negotiated = dup_str(proto, proto_len);
 #endif
 
+#ifndef OPENSSL_NO_ALPN
     SSL_get0_alpn_selected(client.ssl, &proto, &proto_len);
     ret->client_alpn_negotiated = dup_str(proto, proto_len);
 
     SSL_get0_alpn_selected(server.ssl, &proto, &proto_len);
     ret->server_alpn_negotiated = dup_str(proto, proto_len);
+#endif
 
     if ((sess = SSL_get0_session(server.ssl)) != NULL) {
         SSL_SESSION_get0_ticket_appdata(sess, (void**)&tick, &tick_len);

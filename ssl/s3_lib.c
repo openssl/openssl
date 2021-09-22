@@ -3362,9 +3362,10 @@ void ssl3_free(SSL *s)
     OPENSSL_free(s->s3.tmp.peer_sigalgs);
     OPENSSL_free(s->s3.tmp.peer_cert_sigalgs);
     ssl3_free_digest_list(s);
+#ifndef OPENSSL_NO_ALPN
     OPENSSL_free(s->s3.alpn_selected);
     OPENSSL_free(s->s3.alpn_proposed);
-
+#endif
 #ifndef OPENSSL_NO_SRP
     ssl_srp_ctx_free_intern(s);
 #endif
@@ -3386,8 +3387,10 @@ int ssl3_clear(SSL *s)
 
     ssl3_free_digest_list(s);
 
+#ifndef OPENSSL_NO_ALPN
     OPENSSL_free(s->s3.alpn_selected);
     OPENSSL_free(s->s3.alpn_proposed);
+#endif
 
     /* NULL/zero-out everything in the s3 struct */
     memset(&s->s3, 0, sizeof(s->s3));

@@ -30,8 +30,10 @@ static int init_status_request(SSL *s, unsigned int context);
 #ifndef OPENSSL_NO_NEXTPROTONEG
 static int init_npn(SSL *s, unsigned int context);
 #endif
+#ifndef OPENSSL_NO_ALPN
 static int init_alpn(SSL *s, unsigned int context);
 static int final_alpn(SSL *s, unsigned int context, int sent);
+#endif
 static int init_sig_algs_cert(SSL *s, unsigned int context);
 static int init_sig_algs(SSL *s, unsigned int context);
 static int init_certificate_authorities(SSL *s, unsigned int context);
@@ -226,6 +228,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
 #else
     INVALID_EXTENSION,
 #endif
+#ifndef OPENSSL_NO_ALPN
     {
         /*
          * Must appear in this list after server_name so that finalisation
@@ -237,6 +240,9 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         init_alpn, tls_parse_ctos_alpn, tls_parse_stoc_alpn,
         tls_construct_stoc_alpn, tls_construct_ctos_alpn, final_alpn
     },
+#else
+    INVALID_EXTENSION,
+#endif
 #ifndef OPENSSL_NO_SRTP
     {
         TLSEXT_TYPE_use_srtp,
@@ -1081,6 +1087,7 @@ static int init_npn(SSL *s, unsigned int context)
 }
 #endif
 
+#ifndef OPENSSL_NO_ALPN
 static int init_alpn(SSL *s, unsigned int context)
 {
     OPENSSL_free(s->s3.alpn_selected);
@@ -1113,6 +1120,7 @@ static int final_alpn(SSL *s, unsigned int context, int sent)
      */
     return tls_handle_alpn(s);
 }
+#endif
 
 static int init_sig_algs(SSL *s, unsigned int context)
 {

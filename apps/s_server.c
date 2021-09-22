@@ -641,6 +641,7 @@ static int next_proto_cb(SSL *s, const unsigned char **data,
 }
 #endif                         /* ndef OPENSSL_NO_NEXTPROTONEG */
 
+#ifndef OPENSSL_NO_ALPN
 /* This the context that we pass to alpn_cb */
 typedef struct tlsextalpnctx_st {
     unsigned char *data;
@@ -679,6 +680,7 @@ static int alpn_cb(SSL *s, const unsigned char **out, unsigned char *outlen,
 
     return SSL_TLSEXT_ERR_OK;
 }
+#endif /* OPENSSL_NO_ALPN */
 
 static int not_resumable_sess_cb(SSL *s, int is_forward_secure)
 {
@@ -955,8 +957,10 @@ const OPTIONS s_server_options[] = {
     {"nextprotoneg", OPT_NEXTPROTONEG, 's',
      "Set the advertised protocols for the NPN extension (comma-separated list)"},
 #endif
+#ifndef OPENSSL_NO_ALPN
     {"alpn", OPT_ALPN, 's',
      "Set the advertised protocols for the ALPN extension (comma-separated list)"},
+#endif
 #ifndef OPENSSL_NO_KTLS
     {"ktls", OPT_KTLS, '-', "Enable Kernel TLS for sending and receiving"},
     {"sendfile", OPT_SENDFILE, '-', "Use sendfile to response file with -WWW"},
@@ -1019,8 +1023,10 @@ int s_server_main(int argc, char *argv[])
     const char *next_proto_neg_in = NULL;
     tlsextnextprotoctx next_proto = { NULL, 0 };
 #endif
+#ifndef OPENSSL_NO_ALPN
     const char *alpn_in = NULL;
     tlsextalpnctx alpn_ctx = { NULL, 0 };
+#endif
 #ifndef OPENSSL_NO_PSK
     /* by default do not send a PSK identity hint */
     char *psk_identity_hint = NULL;
@@ -1570,12 +1576,14 @@ int s_server_main(int argc, char *argv[])
             s_key_file2 = opt_arg();
             break;
         case OPT_NEXTPROTONEG:
-# ifndef OPENSSL_NO_NEXTPROTONEG
+#ifndef OPENSSL_NO_NEXTPROTONEG
             next_proto_neg_in = opt_arg();
 #endif
             break;
         case OPT_ALPN:
+#ifndef OPENSSL_NO_ALPN
             alpn_in = opt_arg();
+#endif
             break;
         case OPT_SRTP_PROFILES:
 #ifndef OPENSSL_NO_SRTP
@@ -1765,12 +1773,14 @@ int s_server_main(int argc, char *argv[])
             goto end;
     }
 #endif
+#ifndef OPENSSL_NO_ALPN
     alpn_ctx.data = NULL;
     if (alpn_in) {
         alpn_ctx.data = next_protos_parse(&alpn_ctx.len, alpn_in);
         if (alpn_ctx.data == NULL)
             goto end;
     }
+#endif
 
     if (crl_file != NULL) {
         X509_CRL *crl;
@@ -2019,8 +2029,10 @@ int s_server_main(int argc, char *argv[])
         SSL_CTX_set_next_protos_advertised_cb(ctx, next_proto_cb,
                                               &next_proto);
 #endif
+#ifndef OPENSSL_NO_ALPN
     if (alpn_ctx.data)
         SSL_CTX_set_alpn_select_cb(ctx, alpn_cb, &alpn_ctx);
+#endif
 
     if (!no_dhe) {
         EVP_PKEY *dhpkey = NULL;
@@ -2258,7 +2270,9 @@ int s_server_main(int argc, char *argv[])
 #ifndef OPENSSL_NO_NEXTPROTONEG
     OPENSSL_free(next_proto.data);
 #endif
+#ifndef OPENSSL_NO_ALPN
     OPENSSL_free(alpn_ctx.data);
+#endif
     ssl_excert_free(exc);
     sk_OPENSSL_STRING_free(ssl_args);
     SSL_CONF_CTX_free(cctx);

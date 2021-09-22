@@ -226,8 +226,10 @@ int tls_parse_ctos_status_request(SSL *s, PACKET *pkt, unsigned int context,
 int tls_parse_ctos_npn(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                        size_t chainidx);
 #endif
+#ifndef OPENSSL_NO_ALPN
 int tls_parse_ctos_alpn(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                         size_t chainidx);
+#endif
 #ifndef OPENSSL_NO_SRTP
 int tls_parse_ctos_use_srtp(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                             size_t chainidx);
@@ -278,8 +280,10 @@ EXT_RETURN tls_construct_stoc_next_proto_neg(SSL *s, WPACKET *pkt,
                                              unsigned int context, X509 *x,
                                              size_t chainidx);
 #endif
+#ifndef OPENSSL_NO_ALPN
 EXT_RETURN tls_construct_stoc_alpn(SSL *s, WPACKET *pkt, unsigned int context,
                                    X509 *x, size_t chainidx);
+#endif
 #ifndef OPENSSL_NO_SRTP
 EXT_RETURN tls_construct_stoc_use_srtp(SSL *s, WPACKET *pkt, unsigned int context,
                                 X509 *x, size_t chainidx);
@@ -343,8 +347,10 @@ EXT_RETURN tls_construct_ctos_status_request(SSL *s, WPACKET *pkt,
 EXT_RETURN tls_construct_ctos_npn(SSL *s, WPACKET *pkt, unsigned int context,
                                   X509 *x, size_t chainidx);
 #endif
+#ifndef OPENSSL_NO_ALPN
 EXT_RETURN tls_construct_ctos_alpn(SSL *s, WPACKET *pkt, unsigned int context,
                                    X509 *x, size_t chainidx);
+#endif
 #ifndef OPENSSL_NO_SRTP
 EXT_RETURN tls_construct_ctos_use_srtp(SSL *s, WPACKET *pkt, unsigned int context,
                                        X509 *x, size_t chainidx);
@@ -418,8 +424,9 @@ int tls_parse_stoc_cookie(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                        size_t chainidx);
 int tls_parse_stoc_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                        size_t chainidx);
-
+#ifndef OPENSSL_NO_ALPN
 int tls_handle_alpn(SSL *s);
+#endif
 
 int tls13_save_handshake_digest_for_pha(SSL *s);
 int tls13_restore_handshake_digest_for_pha(SSL *s);

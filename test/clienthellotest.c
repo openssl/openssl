@@ -44,16 +44,19 @@
 #define F5_WORKAROUND_MAX_MSG_LEN   0x200
 
 static const char *sessionfile = NULL;
+
+#ifndef OPENSSL_NO_ALPN
 /* Dummy ALPN protocols used to pad out the size of the ClientHello */
 /* ASCII 'O' = 79 = 0x4F = EBCDIC '|'*/
-#ifdef CHARSET_EBCDIC
+# ifdef CHARSET_EBCDIC
 static const char alpn_prots[] =
     "|1234567890123456789012345678901234567890123456789012345678901234567890123456789"
     "|1234567890123456789012345678901234567890123456789012345678901234567890123456789";
-#else
+# else
 static const char alpn_prots[] =
     "O1234567890123456789012345678901234567890123456789012345678901234567890123456789"
     "O1234567890123456789012345678901234567890123456789012345678901234567890123456789";
+# endif
 #endif
 
 static int test_client_hello(int currtest)
@@ -125,10 +128,12 @@ static int test_client_hello(int currtest)
          * needed.
          */
         if (currtest == TEST_ADD_PADDING) {
+#ifndef OPENSSL_NO_ALPN
              if (!TEST_false(SSL_CTX_set_alpn_protos(ctx,
                                     (unsigned char *)alpn_prots,
                                     sizeof(alpn_prots) - 1)))
                 goto end;
+#endif
         /*
          * Otherwise we need to make sure we have a small enough message to
          * not need padding.

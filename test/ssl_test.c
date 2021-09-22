@@ -179,6 +179,7 @@ static int check_npn(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 }
 #endif
 
+#ifndef OPENSSL_NO_ALPN
 static int check_alpn(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 {
     int ret = 1;
@@ -190,6 +191,7 @@ static int check_alpn(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
         ret = 0;
     return ret;
 }
+#endif
 
 static int check_session_ticket_app_data(HANDSHAKE_RESULT *result,
                                          SSL_TEST_CTX *test_ctx)
@@ -375,7 +377,9 @@ static int check_test(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
         ret &= check_npn(result, test_ctx);
 #endif
         ret &= check_cipher(result, test_ctx);
+#ifndef OPENSSL_NO_ALPN
         ret &= check_alpn(result, test_ctx);
+#endif
         ret &= check_session_ticket_app_data(result, test_ctx);
         ret &= check_resumption(result, test_ctx);
         ret &= check_tmp_key(result, test_ctx);

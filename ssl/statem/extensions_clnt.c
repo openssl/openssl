@@ -404,6 +404,7 @@ EXT_RETURN tls_construct_ctos_npn(SSL *s, WPACKET *pkt, unsigned int context,
 }
 #endif
 
+#ifndef OPENSSL_NO_ALPN
 EXT_RETURN tls_construct_ctos_alpn(SSL *s, WPACKET *pkt, unsigned int context,
                                    X509 *x, size_t chainidx)
 {
@@ -425,7 +426,7 @@ EXT_RETURN tls_construct_ctos_alpn(SSL *s, WPACKET *pkt, unsigned int context,
 
     return EXT_RETURN_SENT;
 }
-
+#endif
 
 #ifndef OPENSSL_NO_SRTP
 EXT_RETURN tls_construct_ctos_use_srtp(SSL *s, WPACKET *pkt,
@@ -835,7 +836,7 @@ EXT_RETURN tls_construct_ctos_early_data(SSL *s, WPACKET *pkt,
             return EXT_RETURN_FAIL;
         }
     }
-
+#ifndef OPENSSL_NO_ALPN
     if ((s->ext.alpn == NULL && edsess->ext.alpn_selected != NULL)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_INCONSISTENT_EARLY_DATA_ALPN);
         return EXT_RETURN_FAIL;
@@ -866,7 +867,7 @@ EXT_RETURN tls_construct_ctos_early_data(SSL *s, WPACKET *pkt,
             return EXT_RETURN_FAIL;
         }
     }
-
+#endif /* OPENSSL_NO_ALPN */
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_early_data)
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_close(pkt)) {
@@ -1558,6 +1559,7 @@ int tls_parse_stoc_npn(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 }
 #endif
 
+#ifndef OPENSSL_NO_ALPN
 int tls_parse_stoc_alpn(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                         size_t chainidx)
 {
@@ -1621,6 +1623,7 @@ int tls_parse_stoc_alpn(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 
     return 1;
 }
+#endif /* OPENSSL_NO_ALPN */
 
 #ifndef OPENSSL_NO_SRTP
 int tls_parse_stoc_use_srtp(SSL *s, PACKET *pkt, unsigned int context, X509 *x,

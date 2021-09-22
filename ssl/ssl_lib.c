@@ -795,6 +795,7 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->ext.npn = NULL;
 #endif
 
+#ifndef OPENSSL_NO_ALPN
     if (s->ctx->ext.alpn) {
         s->ext.alpn = OPENSSL_malloc(s->ctx->ext.alpn_len);
         if (s->ext.alpn == NULL) {
@@ -804,6 +805,7 @@ SSL *SSL_new(SSL_CTX *ctx)
         memcpy(s->ext.alpn, s->ctx->ext.alpn, s->ctx->ext.alpn_len);
         s->ext.alpn_len = s->ctx->ext.alpn_len;
     }
+#endif
 
     s->verified_chain = NULL;
     s->verify_result = X509_V_OK;
@@ -1232,7 +1234,9 @@ void SSL_free(SSL *s)
     OPENSSL_free(s->ext.scts);
 #endif
     OPENSSL_free(s->ext.ocsp.resp);
+#ifndef OPENSSL_NO_ALPN
     OPENSSL_free(s->ext.alpn);
+#endif
     OPENSSL_free(s->ext.tls13_cookie);
     if (s->clienthello != NULL)
         OPENSSL_free(s->clienthello->pre_proc_exts);
@@ -2992,6 +2996,7 @@ void SSL_CTX_set_npn_select_cb(SSL_CTX *ctx,
 }
 #endif
 
+#ifndef OPENSSL_NO_ALPN
 static int alpn_value_ok(const unsigned char *protos, unsigned int protos_len)
 {
     unsigned int idx;
@@ -3097,6 +3102,7 @@ void SSL_get0_alpn_selected(const SSL *ssl, const unsigned char **data,
     else
         *len = (unsigned int)ssl->s3.alpn_selected_len;
 }
+#endif /* OPENSSL_NO_ALPN */
 
 int SSL_export_keying_material(SSL *s, unsigned char *out, size_t olen,
                                const char *label, size_t llen,
@@ -3443,7 +3449,9 @@ void SSL_CTX_free(SSL_CTX *a)
     OPENSSL_free(a->ext.ecpointformats);
     OPENSSL_free(a->ext.supportedgroups);
     OPENSSL_free(a->ext.supported_groups_default);
+#ifndef OPENSSL_NO_ALPN
     OPENSSL_free(a->ext.alpn);
+#endif
     OPENSSL_secure_free(a->ext.secure);
 
     ssl_evp_md_free(a->md5);

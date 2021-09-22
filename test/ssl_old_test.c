@@ -185,11 +185,14 @@ static int verify_npn(SSL *client, SSL *server)
 }
 #endif
 
+#ifndef OPENSSL_NO_ALPN
 static const char *alpn_client;
 static char *alpn_server;
 static char *alpn_server2;
 static const char *alpn_expected;
 static unsigned char *alpn_selected;
+#endif
+
 static const char *server_min_proto;
 static const char *server_max_proto;
 static const char *client_min_proto;
@@ -243,7 +246,7 @@ static int verify_servername(SSL *client, SSL *server)
     return -1;
 }
 
-
+#ifndef OPENSSL_NO_ALPN
 /*-
  * next_protos_parse parses a comma separated list of strings into a string
  * in a format suitable for passing to SSL_CTX_set_next_protos_advertised.
@@ -371,6 +374,7 @@ static int verify_alpn(SSL *client, SSL *server)
     }
     return -1;
 }
+#endif /* OPENSSL_NO_ALPN */
 
 /*
  * WARNING : below extension types are *NOT* IETF assigned, and could
@@ -684,12 +688,14 @@ static void sv_usage(void)
             " -serverinfo_tack - have client offer and expect TACK\n");
     fprintf(stderr,
             " -custom_ext - try various custom extension callbacks\n");
+#ifndef OPENSSL_NO_ALPN
     fprintf(stderr, " -alpn_client <string> - have client side offer ALPN\n");
     fprintf(stderr, " -alpn_server <string> - have server side offer ALPN\n");
     fprintf(stderr, " -alpn_server1 <string> - alias for -alpn_server\n");
     fprintf(stderr, " -alpn_server2 <string> - have server side context 2 offer ALPN\n");
     fprintf(stderr,
             " -alpn_expected <string> - the ALPN protocol that should be negotiated\n");
+#endif
     fprintf(stderr, " -server_min_proto <string> - Minimum version the server should support\n");
     fprintf(stderr, " -server_max_proto <string> - Maximum version the server should support\n");
     fprintf(stderr, " -client_min_proto <string> - Minimum version the client should support\n");
@@ -1090,7 +1096,9 @@ int main(int argc, char *argv[])
             serverinfo_file = *(++argv);
         } else if (strcmp(*argv, "-custom_ext") == 0) {
             custom_ext = 1;
-        } else if (strcmp(*argv, "-alpn_client") == 0) {
+        }
+#ifndef OPENSSL_NO_ALPN
+        else if (strcmp(*argv, "-alpn_client") == 0) {
             if (--argc < 1)
                 goto bad;
             alpn_client = *(++argv);
@@ -1107,7 +1115,9 @@ int main(int argc, char *argv[])
             if (--argc < 1)
                 goto bad;
             alpn_expected = *(++argv);
-        } else if (strcmp(*argv, "-server_min_proto") == 0) {
+        }
+#endif
+        else if (strcmp(*argv, "-server_min_proto") == 0) {
             if (--argc < 1)
                 goto bad;
             server_min_proto = *(++argv);
@@ -1670,6 +1680,7 @@ int main(int argc, char *argv[])
         }
     }
 
+#ifndef OPENSSL_NO_ALPN
     if (alpn_server)
         SSL_CTX_set_alpn_select_cb(s_ctx, cb_server_alpn, alpn_server);
     if (alpn_server2)
@@ -1691,6 +1702,7 @@ int main(int argc, char *argv[])
         }
         OPENSSL_free(alpn);
     }
+#endif
 
     if (server_sess_in != NULL) {
         server_sess = read_session(server_sess_in);
@@ -2119,8 +2131,11 @@ int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family, long count,
         fprintf(stderr, "Server info verify error\n");
         goto err;
     }
-    if (verify_alpn(c_ssl, s_ssl) < 0
-            || verify_servername(c_ssl, s_ssl) < 0)
+# ifndef OPENSSL_NO_ALPN
+    if (verify_alpn(c_ssl, s_ssl) < 0)
+        goto err;
+#endif
+    if (verify_servername(c_ssl, s_ssl) < 0)
         goto err;
 
     if (custom_ext_error) {
@@ -2493,8 +2508,11 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
         fprintf(stderr, "Server info verify error\n");
         goto err;
     }
-    if (verify_alpn(c_ssl, s_ssl) < 0
-            || verify_servername(c_ssl, s_ssl) < 0)
+#ifndef OPENSSL_NO_ALPN
+    if (verify_alpn(c_ssl, s_ssl) < 0)
+        goto err;
+#endif
+    if (verify_servername(c_ssl, s_ssl) < 0)
         goto err;
 
     if (custom_ext_error) {

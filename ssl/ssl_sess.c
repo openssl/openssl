@@ -181,7 +181,9 @@ SSL_SESSION *ssl_session_dup(const SSL_SESSION *src, int ticket)
 #endif
     dest->ext.hostname = NULL;
     dest->ext.tick = NULL;
+#ifndef OPENSSL_NO_ALPN
     dest->ext.alpn_selected = NULL;
+#endif
 #ifndef OPENSSL_NO_SRP
     dest->srp_username = NULL;
 #endif
@@ -251,12 +253,14 @@ SSL_SESSION *ssl_session_dup(const SSL_SESSION *src, int ticket)
         dest->ext.ticklen = 0;
     }
 
+#ifndef OPENSSL_NO_ALPN
     if (src->ext.alpn_selected != NULL) {
         dest->ext.alpn_selected = OPENSSL_memdup(src->ext.alpn_selected,
                                                  src->ext.alpn_selected_len);
         if (dest->ext.alpn_selected == NULL)
             goto err;
     }
+#endif
 
 #ifndef OPENSSL_NO_SRP
     if (src->srp_username) {
@@ -838,7 +842,9 @@ void SSL_SESSION_free(SSL_SESSION *ss)
 #ifndef OPENSSL_NO_SRP
     OPENSSL_free(ss->srp_username);
 #endif
+#ifndef OPENSSL_NO_ALPN
     OPENSSL_free(ss->ext.alpn_selected);
+#endif
     OPENSSL_free(ss->ticket_appdata);
     CRYPTO_THREAD_lock_free(ss->lock);
     OPENSSL_clear_free(ss, sizeof(*ss));
@@ -1010,6 +1016,7 @@ int SSL_SESSION_set_max_early_data(SSL_SESSION *s, uint32_t max_early_data)
     return 1;
 }
 
+#ifndef OPENSSL_NO_ALPN
 void SSL_SESSION_get0_alpn_selected(const SSL_SESSION *s,
                                     const unsigned char **alpn,
                                     size_t *len)
@@ -1036,6 +1043,7 @@ int SSL_SESSION_set1_alpn_selected(SSL_SESSION *s, const unsigned char *alpn,
 
     return 1;
 }
+#endif
 
 X509 *SSL_SESSION_get0_peer(SSL_SESSION *s)
 {

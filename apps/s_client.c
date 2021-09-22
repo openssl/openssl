@@ -608,8 +608,10 @@ const OPTIONS s_client_options[] = {
 #endif
     {"serverinfo", OPT_SERVERINFO, 's',
      "types  Send empty ClientHello extensions (comma-separated numbers)"},
+#ifndef OPENSSL_NO_ALPN
     {"alpn", OPT_ALPN, 's',
      "Enable ALPN extension, considering named protocols supported (comma-separated list)"},
+#endif
     {"async", OPT_ASYNC, '-', "Support asynchronous operation"},
     {"nbio", OPT_NBIO, '-', "Use non-blocking IO"},
 
@@ -848,7 +850,9 @@ int s_client_main(int argc, char **argv)
 #endif
     const char *servername = NULL;
     int noservername = 0;
+#ifndef OPENSSL_NO_ALPN
     const char *alpn_in = NULL;
+#endif
     tlsextctx tlsextcbp = { NULL, 0 };
     const char *ssl_config = NULL;
 #define MAX_SI_TYPES 100
@@ -1383,7 +1387,9 @@ int s_client_main(int argc, char **argv)
 #endif
             break;
         case OPT_ALPN:
+#ifndef OPENSSL_NO_ALPN
             alpn_in = opt_arg();
+#endif
             break;
         case OPT_SERVERINFO:
             p = opt_arg();
@@ -1835,6 +1841,7 @@ int s_client_main(int argc, char **argv)
     if (next_proto.data != NULL)
         SSL_CTX_set_next_proto_select_cb(ctx, next_proto_cb, &next_proto);
 #endif
+#ifndef OPENSSL_NO_ALPN
     if (alpn_in) {
         size_t alpn_len;
         unsigned char *alpn = next_protos_parse(&alpn_len, alpn_in);
@@ -1850,6 +1857,7 @@ int s_client_main(int argc, char **argv)
         }
         OPENSSL_free(alpn);
     }
+#endif
 
     for (i = 0; i < serverinfo_count; i++) {
         if (!SSL_CTX_add_client_custom_ext(ctx,
@@ -3235,6 +3243,8 @@ static void print_stuff(BIO *bio, SSL *s, int full)
         BIO_write(bio, "\n", 1);
     }
 #endif
+
+#ifndef OPENSSL_NO_ALPN
     {
         const unsigned char *proto;
         unsigned int proto_len;
@@ -3246,6 +3256,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
         } else
             BIO_printf(bio, "No ALPN negotiated\n");
     }
+#endif
 
 #ifndef OPENSSL_NO_SRTP
     {

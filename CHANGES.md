@@ -24,6 +24,11 @@ OpenSSL 3.1
 
 ### Changes between 3.0 and 3.1 [xx XXX xxxx]
 
+ * Add a compile time option to remove Application-Layer Protocol Negotiation.
+   This is enabled by including the no-alpn option at configuration time.
+
+   *Shane Lontis*
+
  * Subject or issuer names in X.509 objects are now displayed as UTF-8 strings
    by default.
 

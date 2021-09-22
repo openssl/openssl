@@ -789,6 +789,7 @@ __owur int SSL_select_next_proto(unsigned char **out, unsigned char *outlen,
 # define OPENSSL_NPN_NEGOTIATED  1
 # define OPENSSL_NPN_NO_OVERLAP  2
 
+# ifndef OPENSSL_NO_ALPN
 __owur int SSL_CTX_set_alpn_protos(SSL_CTX *ctx, const unsigned char *protos,
                                    unsigned int protos_len);
 __owur int SSL_set_alpn_protos(SSL *ssl, const unsigned char *protos,
@@ -804,6 +805,7 @@ void SSL_CTX_set_alpn_select_cb(SSL_CTX *ctx,
                                 void *arg);
 void SSL_get0_alpn_selected(const SSL *ssl, const unsigned char **data,
                             unsigned int *len);
+#endif /* OPENSSL_NO_ALPN */
 
 # ifndef OPENSSL_NO_PSK
 /*
@@ -1650,12 +1652,14 @@ __owur int SSL_SESSION_set_protocol_version(SSL_SESSION *s, int version);
 
 __owur const char *SSL_SESSION_get0_hostname(const SSL_SESSION *s);
 __owur int SSL_SESSION_set1_hostname(SSL_SESSION *s, const char *hostname);
+#ifndef OPENSSL_NO_ALPN
 void SSL_SESSION_get0_alpn_selected(const SSL_SESSION *s,
                                     const unsigned char **alpn,
                                     size_t *len);
 __owur int SSL_SESSION_set1_alpn_selected(SSL_SESSION *s,
                                           const unsigned char *alpn,
                                           size_t len);
+#endif
 __owur const SSL_CIPHER *SSL_SESSION_get0_cipher(const SSL_SESSION *s);
 __owur int SSL_SESSION_set_cipher(SSL_SESSION *s, const SSL_CIPHER *cipher);
 __owur int SSL_SESSION_has_ticket(const SSL_SESSION *s);

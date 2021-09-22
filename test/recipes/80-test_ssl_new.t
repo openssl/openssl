@@ -53,6 +53,7 @@ if (!$no_tls && $no_tls_below1_3 && disabled("ec") && disabled("dh")) {
 my $no_pre_tls1_3 = alldisabled(@all_pre_tls1_3);
 my $no_dtls = alldisabled(available_protocols("dtls"));
 my $no_npn = disabled("nextprotoneg");
+my $no_alpn = disabled("alpn");
 my $no_ct = disabled("ct");
 my $no_ec = disabled("ec");
 my $no_dh = disabled("dh");
@@ -89,7 +90,8 @@ my %skip = (
   "06-sni-ticket.cnf" => $no_tls_below1_3,
   "07-dtls-protocol-version.cnf" => $no_dtls,
   "08-npn.cnf" => (disabled("tls1") && disabled("tls1_1")
-                    && disabled("tls1_2")) || $no_npn,
+                    && disabled("tls1_2")) || $no_npn || $no_alpn,
+  "09-alpn.cnf" => $no_alpn,
   "10-resumption.cnf" => disabled("tls1_1") || disabled("tls1_2"),
   "11-dtls_resumption.cnf" => disabled("dtls1") || disabled("dtls1_2"),
   "12-ct.cnf" => $no_tls || $no_ct || $no_ec,

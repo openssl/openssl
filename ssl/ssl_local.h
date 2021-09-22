@@ -619,9 +619,11 @@ struct ssl_session_st {
         uint32_t tick_age_add;
         /* Max number of bytes that can be sent as early data */
         uint32_t max_early_data;
+# ifndef OPENSSL_NO_ALPN
         /* The ALPN protocol selected for this session */
         unsigned char *alpn_selected;
         size_t alpn_selected_len;
+# endif
         /*
          * Maximum Fragment Length as per RFC 4366.
          * If this value does not contain RFC 4366 allowed values (1-4) then
@@ -1063,6 +1065,7 @@ struct ssl_ctx_st {
 
         uint16_t *supported_groups_default;
         size_t supported_groups_default_len;
+# ifndef OPENSSL_NO_ALPN
         /*
          * ALPN information (we are in the process of transitioning from NPN to
          * ALPN.)
@@ -1091,6 +1094,7 @@ struct ssl_ctx_st {
          */
         unsigned char *alpn;
         size_t alpn_len;
+# endif /* OPENSSL_NO_ALPN */
 
 # ifndef OPENSSL_NO_NEXTPROTONEG
         /* Next protocol negotiation information */
@@ -1391,6 +1395,7 @@ struct ssl_st {
         int npn_seen;
 # endif
 
+# ifndef OPENSSL_NO_ALPN
         /*
          * ALPN information (we are in the process of transitioning from NPN to
          * ALPN.)
@@ -1408,7 +1413,7 @@ struct ssl_st {
         size_t alpn_proposed_len;
         /* used by the client to know if it actually sent alpn */
         int alpn_sent;
-
+# endif
         /*
          * This is set to true if we believe that this is a version of Safari
          * running on OS X 10.6 or newer. We wish to know this because Safari on
@@ -1624,12 +1629,14 @@ struct ssl_st {
         /* TLS pre-shared secret session resumption */
         tls_session_secret_cb_fn session_secret_cb;
         void *session_secret_cb_arg;
+#ifndef OPENSSL_NO_ALPN
         /*
          * For a client, this contains the list of supported protocols in wire
          * format.
          */
         unsigned char *alpn;
         size_t alpn_len;
+#endif
         /*
          * Next protocol negotiation. For the client, this is the protocol that
          * we sent in NextProtocol and is set when handling ServerHello

@@ -3862,6 +3862,7 @@ static int test_early_data_not_sent(int idx)
     return testresult;
 }
 
+#ifndef OPENSSL_NO_ALPN
 static const char *servalpn;
 
 static int alpn_select_cb(SSL *ssl, const unsigned char **out,
@@ -3886,6 +3887,7 @@ static int alpn_select_cb(SSL *ssl, const unsigned char **out,
 
     return SSL_TLSEXT_ERR_NOACK;
 }
+#endif
 
 /* Test that a PSK can be used to send early_data */
 static int test_early_data_psk(int idx)
@@ -3894,14 +3896,16 @@ static int test_early_data_psk(int idx)
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
     SSL_SESSION *sess = NULL;
+#ifndef OPENSSL_NO_ALPN
     unsigned char alpnlist[] = {
         0x08, 'g', 'o', 'o', 'd', 'a', 'l', 'p', 'n', 0x07, 'b', 'a', 'd', 'a',
         'l', 'p', 'n'
     };
-#define GOODALPNLEN     9
-#define BADALPNLEN      8
-#define GOODALPN        (alpnlist)
-#define BADALPN         (alpnlist + GOODALPNLEN)
+# define GOODALPNLEN     9
+# define BADALPNLEN      8
+# define GOODALPN        (alpnlist)
+# define BADALPN         (alpnlist + GOODALPNLEN)
+#endif
     int err = 0;
     unsigned char buf[20];
     size_t readbytes, written;
@@ -3913,7 +3917,9 @@ static int test_early_data_psk(int idx)
                                         &serverssl, &sess, 2)))
         goto end;
 
+#ifndef OPENSSL_NO_ALPN
     servalpn = "goodalpn";
+#endif
 
     /*
      * Note: There is no test for inconsistent SNI with late client detection.
@@ -3930,6 +3936,7 @@ static int test_early_data_psk(int idx)
             goto end;
         break;
 
+#ifndef OPENSSL_NO_ALPN
     case 1:
         /* Set inconsistent ALPN (early client detection) */
         err = SSL_R_INCONSISTENT_EARLY_DATA_ALPN;
@@ -3940,6 +3947,7 @@ static int test_early_data_psk(int idx)
                                                    BADALPNLEN)))
             goto end;
         break;
+#endif
 
     case 2:
         /*
@@ -3974,6 +3982,7 @@ static int test_early_data_psk(int idx)
             goto end;
         break;
 
+#ifndef OPENSSL_NO_ALPN
     case 5:
         /*
          * Set inconsistent ALPN (server detected). In this case the connection
@@ -4020,6 +4029,15 @@ static int test_early_data_psk(int idx)
         /* SSL_connect() call should fail */
         connectres = -1;
         break;
+#else
+    case 1:
+    case 5:
+    case 6:
+    case 7:
+        /* skip */
+        testresult = 1;
+        goto end;
+#endif
 
     default:
         TEST_error("Bad test index");
@@ -9330,6 +9348,8 @@ end:
     return testresult;
 }
 #endif
+
+#ifndef OPENSSL_NO_ALPN
 /*
  * Test that setting an ALPN does not violate RFC
  */
@@ -9401,6 +9421,7 @@ end:
     SSL_CTX_free(ctx);
     return testresult;
 }
+#endif /* OPENSSL_NO_ALPN */
 
 static int test_inherit_verify_param(void)
 {
@@ -9701,7 +9722,9 @@ int setup_tests(void)
     ADD_TEST(test_sni_tls13);
 #endif
     ADD_TEST(test_inherit_verify_param);
+#ifndef OPENSSL_NO_ALPN
     ADD_TEST(test_set_alpn);
+#endif
     ADD_ALL_TESTS(test_session_timeout, 1);
     return 1;
 

@@ -416,6 +416,7 @@ int tls_parse_ctos_npn(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 }
 #endif
 
+#ifndef OPENSSL_NO_ALPN
 /*
  * Save the ALPN extension in a ClientHello.|pkt| holds the contents of the ALPN
  * extension, not including type and length. Returns: 1 on success, 0 on error.
@@ -455,6 +456,7 @@ int tls_parse_ctos_alpn(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 
     return 1;
 }
+#endif /* OPENSSL_NO_ALPN */
 
 #ifndef OPENSSL_NO_SRTP
 int tls_parse_ctos_use_srtp(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
@@ -1467,6 +1469,7 @@ EXT_RETURN tls_construct_stoc_next_proto_neg(SSL *s, WPACKET *pkt,
 }
 #endif
 
+#ifndef OPENSSL_NO_ALPN
 EXT_RETURN tls_construct_stoc_alpn(SSL *s, WPACKET *pkt, unsigned int context,
                                    X509 *x, size_t chainidx)
 {
@@ -1487,6 +1490,7 @@ EXT_RETURN tls_construct_stoc_alpn(SSL *s, WPACKET *pkt, unsigned int context,
 
     return EXT_RETURN_SENT;
 }
+#endif
 
 #ifndef OPENSSL_NO_SRTP
 EXT_RETURN tls_construct_stoc_use_srtp(SSL *s, WPACKET *pkt,

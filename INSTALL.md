@@ -729,6 +729,10 @@ should never be used in production environments.
 
 See the file [fuzz/README.md](fuzz/README.md) for further details.
 
+### no-alpn
+
+Don't build support for the Application-Layer Protocol Negotiation (ALPN) TLS extension.
+
 ### no-gost
 
 Don't build support for GOST based ciphersuites.

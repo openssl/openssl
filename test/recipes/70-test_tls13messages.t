@@ -310,33 +310,38 @@ checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                | checkhandshake::SERVER_NAME_SRV_EXTENSION,
                "Server name handshake test");
 
-#Test 11: ALPN handshake (client request only)
-$proxy->clear();
-$proxy->clientflags("-alpn test");
-$proxy->start();
-checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
-               checkhandshake::DEFAULT_EXTENSIONS
-               | checkhandshake::ALPN_CLI_EXTENSION,
-               "ALPN handshake test (client)");
+SKIP: {
+    skip "No ALPN support in this OpenSSL build", 3
+        if disabled("alpn");
 
-#Test 12: ALPN handshake (server support only)
-$proxy->clear();
-$proxy->serverflags("-alpn test");
-$proxy->start();
-checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
-               checkhandshake::DEFAULT_EXTENSIONS,
-               "ALPN handshake test (server)");
+    #Test 11: ALPN handshake (client request only)
+    $proxy->clear();
+    $proxy->clientflags("-alpn test");
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
+                   checkhandshake::DEFAULT_EXTENSIONS
+                   | checkhandshake::ALPN_CLI_EXTENSION,
+                   "ALPN handshake test (client)");
 
-#Test 13: ALPN handshake (client and server)
-$proxy->clear();
-$proxy->clientflags("-alpn test");
-$proxy->serverflags("-alpn test");
-$proxy->start();
-checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
-               checkhandshake::DEFAULT_EXTENSIONS
-               | checkhandshake::ALPN_CLI_EXTENSION
-               | checkhandshake::ALPN_SRV_EXTENSION,
-               "ALPN handshake test");
+    #Test 12: ALPN handshake (server support only)
+    $proxy->clear();
+    $proxy->serverflags("-alpn test");
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
+                   checkhandshake::DEFAULT_EXTENSIONS,
+                   "ALPN handshake test (server)");
+
+    #Test 13: ALPN handshake (client and server)
+    $proxy->clear();
+    $proxy->clientflags("-alpn test");
+    $proxy->serverflags("-alpn test");
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
+                   checkhandshake::DEFAULT_EXTENSIONS
+                   | checkhandshake::ALPN_CLI_EXTENSION
+                   | checkhandshake::ALPN_SRV_EXTENSION,
+                   "ALPN handshake test");
+}
 
 SKIP: {
     skip "No CT, EC or OCSP support in this OpenSSL build", 1

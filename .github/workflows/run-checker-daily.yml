@@ -19,6 +19,7 @@ jobs:
         opt: [
           386,
           no-afalgeng,
+          no-alpn,
           no-aria,
           no-asan,
           no-asm,
