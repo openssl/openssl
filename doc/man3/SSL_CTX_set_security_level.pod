@@ -83,8 +83,9 @@ using MD5 for the MAC is also prohibited.
 
 Security level set to 112 bits of security. As a result RSA, DSA and DH keys
 shorter than 2048 bits and ECC keys shorter than 224 bits are prohibited.
-In addition to the level 1 exclusions any cipher suite using RC4 is also
-prohibited. SSL version 3 is also not allowed. Compression is disabled.
+In addition to the level 1 exclusions any cipher suite using RC4 and any
+cipher suite using CCM with a 64 bit authentication tag are also prohibited.
+SSL version 3 is also not allowed. Compression is disabled.
 
 =item B<Level 3>
 
