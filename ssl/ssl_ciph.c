@@ -1095,7 +1095,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
                     && (ca_list[j]->name[buflen] == '\0')) {
                     found = 1;
                     break;
-                } else if (ca_list[j]->stdname && strncmp(buf, ca_list[j]->stdname, buflen) == 0
+                } else if (ca_list[j]->stdname != NULL && strncmp(buf, ca_list[j]->stdname, buflen) == 0
                     && (ca_list[j]->stdname[buflen] == '\0')) {
                     found = 1;
                     break;
