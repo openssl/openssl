@@ -105,14 +105,16 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
             if (!ossl_x509_set0_libctx(ret, old->libctx, old->propq))
                 return 0;
             if (old->cert_info.key != NULL) {
-                EVP_PKEY *pkey = X509_PUBKEY_get0(old->cert_info.key);
+                EVP_PKEY *pkey_old = X509_PUBKEY_get(old->cert_info.key);
 
-                if (pkey != NULL) {
-                    pkey = EVP_PKEY_dup(pkey);
+                if (pkey_old != NULL) {
+                    EVP_PKEY *pkey = EVP_PKEY_dup(pkey_old);
                     if (pkey == NULL) {
-                        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
-                        return 0;
-                    }
+                        pkey = pkey_old; /* FIXME Duplicated cert contains reference to the old pkey -- not a copy */
+                    } else {
+		        EVP_PKEY_free(pkey_old);
+		    }
+
                     if (!X509_PUBKEY_set(&ret->cert_info.key, pkey)) {
                         EVP_PKEY_free(pkey);
                         ERR_raise(ERR_LIB_X509, ERR_R_INTERNAL_ERROR);
