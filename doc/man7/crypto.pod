@@ -259,7 +259,7 @@ algorithm identifier to the appropriate fetching function. Also see the provider
 specific manual pages linked below for further details about using the
 algorithms available in each of the providers.
 
-As well as the OpenSSL providers third parties can also implemment providers.
+As well as the OpenSSL providers third parties can also implement providers.
 For information on writing a provider see L<provider(7)>.
 
 =head2 Default provider
