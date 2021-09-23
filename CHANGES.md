@@ -24,8 +24,8 @@ OpenSSL 3.1
 
 ### Changes between 3.0 and 3.1 [xx XXX xxxx]
 
- * CCM8 cipher suites in TLS have been downgraded to security level 1 because
-   they use a short tag which lowers their strength.
+ * CCM8 cipher suites in TLS have been downgraded to security level zero
+   because they use a short authentication tag which lowers their strength.
 
    *Paul Dale*
 
