@@ -36,17 +36,17 @@ static const unsigned char msg[] =
 static EVP_PKEY *get_key(OSSL_LIB_CTX *libctx, const char *propq, int public)
 {
     OSSL_DECODER_CTX *dctx = NULL;
-    EVP_PKEY  *pkey = NULL;
+    EVP_PKEY *pkey = NULL;
     int selection;
     const unsigned char *data;
     size_t data_len;
 
     if (public) {
         selection = EVP_PKEY_PUBLIC_KEY;
-        data =  pub_key_der;
+        data = pub_key_der;
         data_len = sizeof(pub_key_der);
     } else {
-        selection =  EVP_PKEY_KEYPAIR;
+        selection = EVP_PKEY_KEYPAIR;
         data = priv_key_der;
         data_len = sizeof(priv_key_der);
     }
@@ -103,7 +103,7 @@ static int do_encrypt(OSSL_LIB_CTX *libctx,
     const char *propq = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY *pub_key = NULL;
-    OSSL_PARAM params[8];
+    OSSL_PARAM params[5];
 
     /* Get public key */
     pub_key = get_key(libctx, propq, public);
@@ -160,7 +160,7 @@ static int do_decrypt(OSSL_LIB_CTX *libctx, const char *in, size_t in_len,
     const char *propq = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY *priv_key = NULL;
-    OSSL_PARAM params[8];
+    OSSL_PARAM params[5];
 
     /* Get private key */
     priv_key = get_key(libctx, propq, public);
