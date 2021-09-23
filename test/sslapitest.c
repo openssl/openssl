@@ -4112,6 +4112,12 @@ static int test_early_data_psk_with_all_ciphers(int idx)
                                         &serverssl, &sess, 2)))
         goto end;
 
+    if (idx == 4) {
+        /* CCM8 ciphers are considered low security due to their short tag */
+        SSL_set_security_level(clientssl, 0);
+        SSL_set_security_level(serverssl, 0);
+    }
+
     if (!TEST_true(SSL_set_ciphersuites(clientssl, cipher_str[idx]))
             || !TEST_true(SSL_set_ciphersuites(serverssl, cipher_str[idx])))
         goto end;
@@ -4399,9 +4405,11 @@ static int test_ciphersuite_change(void)
                                                    "TLS_AES_256_GCM_SHA384:"
                                                    "TLS_AES_128_CCM_SHA256"))
             || !TEST_true(SSL_CTX_set_ciphersuites(cctx,
-                                                   "TLS_AES_128_GCM_SHA256"))
-            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
-                                          &clientssl, NULL, NULL))
+                                                   "TLS_AES_128_GCM_SHA256")))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                      NULL, NULL))
             || !TEST_true(create_ssl_connection(serverssl, clientssl,
                                                 SSL_ERROR_NONE)))
         goto end;
@@ -4928,16 +4936,19 @@ static int test_tls13_ciphersuite(int idx)
     static const struct {
         const char *ciphername;
         int fipscapable;
+        int low_security;
     } t13_ciphers[] = {
-        { TLS1_3_RFC_AES_128_GCM_SHA256, 1 },
-        { TLS1_3_RFC_AES_256_GCM_SHA384, 1 },
-        { TLS1_3_RFC_AES_128_CCM_SHA256, 1 },
+        { TLS1_3_RFC_AES_128_GCM_SHA256, 1, 0 },
+        { TLS1_3_RFC_AES_256_GCM_SHA384, 1, 0 },
+        { TLS1_3_RFC_AES_128_CCM_SHA256, 1, 0 },
 # if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
-        { TLS1_3_RFC_CHACHA20_POLY1305_SHA256, 0 },
+        { TLS1_3_RFC_CHACHA20_POLY1305_SHA256, 0, 0 },
         { TLS1_3_RFC_AES_256_GCM_SHA384
-          ":" TLS1_3_RFC_CHACHA20_POLY1305_SHA256, 0 },
+          ":" TLS1_3_RFC_CHACHA20_POLY1305_SHA256, 0, 0 },
 # endif
-        { TLS1_3_RFC_AES_128_CCM_8_SHA256 ":" TLS1_3_RFC_AES_128_CCM_SHA256, 1 }
+        /* CCM8 ciphers are considered low security due to their short tag */
+        { TLS1_3_RFC_AES_128_CCM_8_SHA256
+          ":" TLS1_3_RFC_AES_128_CCM_SHA256, 1, 1 }
     };
     const char *t13_cipher = NULL;
     const char *t12_cipher = NULL;
@@ -4980,6 +4991,11 @@ static int test_tls13_ciphersuite(int idx)
                                                TLS1_VERSION, max_ver,
                                                &sctx, &cctx, cert, privkey)))
                 goto end;
+
+            if (t13_ciphers[i].low_security) {
+                SSL_CTX_set_security_level(sctx, 0);
+                SSL_CTX_set_security_level(cctx, 0);
+            }
 
             if (set_at_ctx) {
                 if (!TEST_true(SSL_CTX_set_ciphersuites(sctx, t13_cipher))
