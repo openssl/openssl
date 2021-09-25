@@ -156,7 +156,7 @@ A B<DH> key can be generated with a named safe prime group by calling:
     EVP_PKEY_CTX_set_params(pctx, params);
     EVP_PKEY_generate(pctx, &pkey);
     ...
-    EVP_PKEY_free(key);
+    EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(pctx);
 
 B<DHX> domain parameters can be generated according to B<FIPS 186-4> by calling:
