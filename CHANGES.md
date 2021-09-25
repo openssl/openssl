@@ -24,6 +24,10 @@ OpenSSL 3.1
 
 ### Changes between 3.0 and 3.1 [xx XXX xxxx]
 
+ * The various OBJ_* functions have been made thread safe.
+
+   *Paul Dale*
+
  * CCM8 cipher suites in TLS have been downgraded to security level zero
    because they use a short authentication tag which lowers their strength.
 
