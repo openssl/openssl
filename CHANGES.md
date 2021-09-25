@@ -24,7 +24,9 @@ OpenSSL 3.1
 
 ### Changes between 3.0 and 3.1.0 [xx XXX xxxx]
 
- * none
+ * The various OBJ_* functions have been made thread safe.
+
+   *Paul Dale*
 
 OpenSSL 3.0
 -----------
