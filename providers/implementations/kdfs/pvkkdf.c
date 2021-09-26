@@ -132,6 +132,10 @@ static int kdf_pvk_derive(void *vctx, unsigned char *key, size_t keylen,
     }
 
     md = ossl_prov_digest_md(&ctx->digest);
+    if (md == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST);
+        return 0;
+    }
     res = EVP_MD_get_size(md);
     if (res <= 0) {
         ERR_raise(ERR_LIB_PROV, PROV_R_BAD_LENGTH);
