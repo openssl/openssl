@@ -140,7 +140,7 @@ int BIO_free(BIO *a)
     if (HAS_CALLBACK(a)) {
         ret = (int)bio_call_callback(a, BIO_CB_FREE, NULL, 0, 0, 0L, 1L, NULL);
         if (ret <= 0)
-            return ret;
+            return 0;
     }
 
     if ((a->method != NULL) && (a->method->destroy != NULL))
