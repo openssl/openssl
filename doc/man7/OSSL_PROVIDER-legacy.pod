@@ -87,7 +87,7 @@ Disabled by default. Use I<enable-rc5> config option to enable.
 
 =item PBKDF1
 
-=item PVK KDF
+=item PVKKDF
 
 =back
 
