@@ -1,0 +1,8 @@
+LIBS=../../libcrypto
+
+$THREADS=\
+        api.c internal.c arch.c \
+        arch/thread_win.c arch/thread_posix.c arch/thread_none.c
+
+SOURCE[../../libcrypto]=$THREADS
+SOURCE[../../providers/libfips.a]=$THREADS

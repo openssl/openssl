@@ -5466,3 +5466,6 @@ EVP_PKEY_auth_decapsulate_init          ?	3_2_0	EXIST::FUNCTION:
 PKCS12_SAFEBAG_set0_attrs               ?	3_2_0	EXIST::FUNCTION:
 PKCS12_create_ex2                       ?	3_2_0	EXIST::FUNCTION:
 OSSL_sleep                              ?	3_2_0	EXIST::FUNCTION:
+OSSL_get_thread_support_flags           ?	3_2_0	EXIST::FUNCTION:
+OSSL_set_max_threads                    ?	3_2_0	EXIST::FUNCTION:
+OSSL_get_max_threads                    ?	3_2_0	EXIST::FUNCTION:

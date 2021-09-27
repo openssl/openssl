@@ -340,8 +340,8 @@ IF[{- !$disabled{tests} -}]
   DEPEND[ct_test]=../libcrypto libtestutil.a
 
   SOURCE[threadstest]=threadstest.c
-  INCLUDE[threadstest]=../include ../apps/include
-  DEPEND[threadstest]=../libcrypto libtestutil.a
+  INCLUDE[threadstest]=.. ../include ../apps/include
+  DEPEND[threadstest]=../libcrypto.a libtestutil.a
 
   SOURCE[threadstest_fips]=threadstest_fips.c
   INCLUDE[threadstest_fips]=../include ../apps/include
