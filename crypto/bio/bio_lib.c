@@ -563,10 +563,8 @@ long BIO_ctrl(BIO *b, int cmd, long larg, void *parg)
 {
     long ret;
 
-    if (b == NULL) {
-        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
+    if (b == NULL)
         return -1;
-    }
     if (b->method == NULL || b->method->ctrl == NULL) {
         ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_METHOD);
         return -2;
@@ -591,10 +589,8 @@ long BIO_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
 {
     long ret;
 
-    if (b == NULL) {
-        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
+    if (b == NULL)
         return -2;
-    }
     if (b->method == NULL || b->method->callback_ctrl == NULL
             || cmd != BIO_CTRL_SET_CALLBACK) {
         ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_METHOD);
@@ -655,10 +651,8 @@ BIO *BIO_pop(BIO *b)
 {
     BIO *ret;
 
-    if (b == NULL) {
-        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
+    if (b == NULL)
         return NULL;
-    }
     ret = b->next_bio;
 
     BIO_ctrl(b, BIO_CTRL_POP, 0, b);
@@ -728,10 +722,8 @@ BIO *BIO_find_type(BIO *bio, int type)
 
 BIO *BIO_next(BIO *b)
 {
-    if (b == NULL) {
-        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
+    if (b == NULL)
         return NULL;
-    }
     return b->next_bio;
 }
 
