@@ -899,6 +899,27 @@ will usually require additional system-dependent options!
 
 See [Notes on multi-threading](#notes-on-multi-threading) below.
 
+### no-thread-pool
+
+Don't build with support for thread pool functionality.
+
+### thread-pool
+
+Build with thread pool functionality. If enabled, OpenSSL algorithms may
+use the thread pool to perform parallel computation. This option in itself
+does not enable OpenSSL to spawn new threads. Currently the only supported
+thread pool mechanism is the default thread pool.
+
+### no-default-thread-pool
+
+Don't build with support for default thread pool functionality.
+
+### default-thread-pool
+
+Build with default thread pool functionality. If enabled, OpenSSL may create
+and manage threads up to a maximum number of threads authorized by the
+application. Supported on POSIX compliant platforms and Windows.
+
 ### enable-trace
 
 Build with support for the integrated tracing api.

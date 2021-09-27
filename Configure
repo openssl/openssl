@@ -655,6 +655,9 @@ my @disable_cascades = (
 
     "fips"              => [ "fips-securitychecks", "acvp-tests" ],
 
+    "threads"           => [ "thread-pool" ],
+    "thread-pool"       => [ "default-thread-pool" ],
+
     "deprecated-3.0"    => [ "engine", "srp" ]
     );
 
@@ -812,8 +815,6 @@ while (@argvcopy)
         s /^-?-?shared$/enable-shared/;
         s /^sctp$/enable-sctp/;
         s /^threads$/enable-threads/;
-        s /^thread-pool$/enable-thread-pool/;
-        s /^default-thread-pool$/enable-default-thread-pool/;
         s /^zlib$/enable-zlib/;
         s /^zlib-dynamic$/enable-zlib-dynamic/;
         s /^fips$/enable-fips/;
@@ -1400,14 +1401,6 @@ if (grep { $_ =~ /(?:^|\s)-static(?:\s|$)/ } @{$config{LDFLAGS}}) {
     disable('static', 'pic', 'threads');
 }
 
-if ($disabled{threads}) {
-    disable('unavailable', 'thread-pool');
-}
-
-if ($disabled{"thread-pool"}) {
-    disable('unavailable', 'default-thread-pool');
-}
-
 # Allow overriding the build file name
 $config{build_file} = env('BUILDFILE') || $target{build_file} || "Makefile";
 
@@ -1505,12 +1498,6 @@ foreach (grep /^-fsanitize=/, @{$config{CFLAGS} || []}) {
 # code knows about it.  Any other flag is taken care of by the configs.
 unless($disabled{threads}) {
     push @{$config{openssl_feature_defines}}, "OPENSSL_THREADS";
-}
-unless($disabled{"thread-pool"}) {
-    push @{$config{openssl_feature_defines}}, "OPENSSL_THREAD_POOL";
-}
-unless($disabled{"default-thread-pool"}) {
-    push @{$config{openssl_feature_defines}}, "OPENSSL_DEFAULT_THREAD_POOL";
 }
 
 my $no_shared_warn=0;
