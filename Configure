@@ -408,6 +408,7 @@ my @dtls = qw(dtls1 dtls1_2);
 my @disablables = (
     "acvp-tests",
     "afalgeng",
+    "argon2",
     "aria",
     "asan",
     "asm",
@@ -668,6 +669,8 @@ my @disable_cascades = (
 
     "threads"           => [ "thread-pool" ],
     "thread-pool"       => [ "default-thread-pool" ],
+
+    "blake2"            => [ "argon2" ],
 
     "deprecated-3.0"    => [ "engine", "srp" ]
     );

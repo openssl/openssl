@@ -233,6 +233,12 @@ extern "C" {
 #define OSSL_KDF_PARAM_X942_USE_KEYBITS     "use-keybits"
 #define OSSL_KDF_PARAM_HMACDRBG_ENTROPY     "entropy"
 #define OSSL_KDF_PARAM_HMACDRBG_NONCE       "nonce"
+#define OSSL_KDF_PARAM_THREADS        "threads"     /* uint32_t */
+#define OSSL_KDF_PARAM_EARLY_CLEAN    "early_clean" /* uint32_t */
+#define OSSL_KDF_PARAM_ARGON2_AD      "ad"          /* octet string */
+#define OSSL_KDF_PARAM_ARGON2_LANES   "lanes"       /* uint32_t */
+#define OSSL_KDF_PARAM_ARGON2_MEMCOST "memcost"     /* uint32_t */
+#define OSSL_KDF_PARAM_ARGON2_VERSION "version"     /* uint32_t */
 
 /* Known KDF names */
 #define OSSL_KDF_NAME_HKDF           "HKDF"
