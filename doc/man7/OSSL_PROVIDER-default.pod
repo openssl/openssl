@@ -151,6 +151,8 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item HMAC-DRBG, see L<EVP_KDF-HMAC-DRBG(7)>
 
+=item ARGON2, see L<EVP_KDF-ARGON2(7)>
+
 =back
 
 =head2 Key Exchange

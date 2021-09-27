@@ -1043,7 +1043,7 @@ PROV_R_INVALID_KDF:232:invalid kdf
 PROV_R_INVALID_KEY:158:invalid key
 PROV_R_INVALID_KEY_LENGTH:105:invalid key length
 PROV_R_INVALID_MAC:151:invalid mac
-PROV_R_INVALID_MEMORY_SIZE:233:invalid memory size
+PROV_R_INVALID_MEMORY_SIZE:235:invalid memory size
 PROV_R_INVALID_MGF1_MD:167:invalid mgf1 md
 PROV_R_INVALID_MODE:125:invalid mode
 PROV_R_INVALID_OUTPUT_LENGTH:217:invalid output length

@@ -232,6 +232,11 @@ OpenSSL 3.2
 
    *Hubert Kario*
 
+ * Support for Argon2d, Argon2i, Argon2id KDFs has been added along with
+   basic thread pool implementation for select platforms.
+
+   *Čestmír Kalina*
+
 OpenSSL 3.1
 -----------
 

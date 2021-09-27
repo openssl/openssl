@@ -2785,6 +2785,48 @@ static int kdf_test_ctrl(EVP_TEST *t, EVP_KDF_CTX *kctx,
         goto end;
     }
 
+    if (strcmp(name, "lanes") == 0
+        && OSSL_PARAM_locate_const(defs, name) == NULL) {
+        TEST_info("skipping, setting 'lanes' is unsupported");
+        t->skip = 1;
+        goto end;
+    }
+
+    if (strcmp(name, "iter") == 0
+        && OSSL_PARAM_locate_const(defs, name) == NULL) {
+        TEST_info("skipping, setting 'iter' is unsupported");
+        t->skip = 1;
+        goto end;
+    }
+
+    if (strcmp(name, "memcost") == 0
+        && OSSL_PARAM_locate_const(defs, name) == NULL) {
+        TEST_info("skipping, setting 'memcost' is unsupported");
+        t->skip = 1;
+        goto end;
+    }
+
+    if (strcmp(name, "secret") == 0
+        && OSSL_PARAM_locate_const(defs, name) == NULL) {
+        TEST_info("skipping, setting 'secret' is unsupported");
+        t->skip = 1;
+        goto end;
+    }
+
+    if (strcmp(name, "pass") == 0
+        && OSSL_PARAM_locate_const(defs, name) == NULL) {
+        TEST_info("skipping, setting 'pass' is unsupported");
+        t->skip = 1;
+        goto end;
+    }
+
+    if (strcmp(name, "ad") == 0
+        && OSSL_PARAM_locate_const(defs, name) == NULL) {
+        TEST_info("skipping, setting 'ad' is unsupported");
+        t->skip = 1;
+        goto end;
+    }
+
     rv = OSSL_PARAM_allocate_from_text(kdata->p, defs, name, p,
                                        p != NULL ? strlen(p) : 0, NULL);
     *++kdata->p = OSSL_PARAM_construct_end();
@@ -4155,6 +4197,10 @@ static int is_kdf_disabled(const char *name)
 {
 #ifdef OPENSSL_NO_SCRYPT
     if (HAS_CASE_SUFFIX(name, "SCRYPT"))
+        return 1;
+#endif
+#ifdef OPENSSL_NO_ARGON2
+    if (HAS_CASE_SUFFIX(name, "ARGON2"))
         return 1;
 #endif
     return 0;
