@@ -30,6 +30,12 @@ IF[{- !$disabled{"engine"} -}]
       DEPEND[afalg]=../libcrypto
       INCLUDE[afalg]= ../include
     ENDIF
+	IF[{- !$disabled{kctleng} -}]
+	  ENGINES=kctl
+	  SOURCE[kctl]=e_kctl.c
+	  DEPEND[kctl]=../libcrypto
+      INCLUDE[kctl]= ../include
+	ENDIF
 
     ENGINES_NO_INST=ossltest dasync
     SOURCE[dasync]=e_dasync.c
