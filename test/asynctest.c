@@ -411,6 +411,7 @@ static int test_ASYNC_start_job_ex(void)
     ret = 1;
  err:
     ASYNC_WAIT_CTX_free(waitctx);
+    ASYNC_cleanup_thread();
     OSSL_LIB_CTX_free(libctx);
     return ret;
 }
