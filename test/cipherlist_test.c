@@ -248,8 +248,8 @@ end:
 static int test_stdname_cipherlist(void)
 {
     SETUP_CIPHERLIST_TEST_FIXTURE();
-    if (!TEST_true(SSL_CTX_set_cipher_list(fixture->server, TLS1_RFC_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384))
-            || !TEST_true(SSL_CTX_set_cipher_list(fixture->client, TLS1_RFC_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384))) {
+    if (!TEST_true(SSL_CTX_set_cipher_list(fixture->server, TLS1_RFC_RSA_WITH_AES_128_SHA))
+            || !TEST_true(SSL_CTX_set_cipher_list(fixture->client, TLS1_RFC_RSA_WITH_AES_128_SHA))) {
         goto end;
     }
     result = 1;
