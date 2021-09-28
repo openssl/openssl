@@ -9,16 +9,16 @@ SMIME_read_ASN1_ex, SMIME_read_ASN1
 
  #include <openssl/asn1.h>
 
- ASN1_VALUE *SMIME_read_ASN1_ex(BIO *in, int flags, BIO **bcont,
+ ASN1_VALUE *SMIME_read_ASN1_ex(BIO *bio, int flags, BIO **bcont,
                                 const ASN1_ITEM *it, ASN1_VALUE **x,
                                 OSSL_LIB_CTX *libctx, const char *propq);
- ASN1_VALUE *SMIME_read_ASN1(BIO *in, BIO **bcont, const ASN1_ITEM *it);
+ ASN1_VALUE *SMIME_read_ASN1(BIO *bio, BIO **bcont, const ASN1_ITEM *it);
 
 =head1 DESCRIPTION
 
 SMIME_read_ASN1_ex() parses a message in S/MIME format.
 
-I<in> is a BIO to read the message from.
+I<bio> is a BIO to read the message from.
 If the I<flags> argument contains B<CMS_BINARY> then the input is assumed to be
 in binary format and is not translated to canonical form.
 If in addition B<SMIME_ASCIICRLF> is set then the binary input is assumed

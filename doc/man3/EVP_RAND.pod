@@ -62,7 +62,7 @@ EVP_RAND_STATE_ERROR - EVP RAND routines
                      const unsigned char *ent, size_t ent_len,
                      const unsigned char *addin, size_t addin_len);
  int EVP_RAND_nonce(EVP_RAND_CTX *ctx, unsigned char *out, size_t outlen);
- int EVP_RAND_enable_locking(EVP_RAND_CTX *ctx);
+ int EVP_RAND_enable_locking(EVP_RAND_CTX *rand);
  int EVP_RAND_verify_zeroization(EVP_RAND_CTX *ctx);
  unsigned int EVP_RAND_get_strength(EVP_RAND_CTX *ctx);
  int EVP_RAND_get_state(EVP_RAND_CTX *ctx);
@@ -157,11 +157,11 @@ nonce. If I<out> is NULL, the length is still returned but no generation
 takes place. This allows a caller to dynamically allocate a buffer of the
 appropriate size.
 
-EVP_RAND_enable_locking() enables locking for the RAND I<ctx> and all of
-its parents.  After this I<ctx> will operate in a thread safe manner, albeit
+EVP_RAND_enable_locking() enables locking for the RAND I<rand> and all of
+its parents.  After this I<rand> will operate in a thread safe manner, albeit
 more slowly. This function is not itself thread safe if called with the same
-I<ctx> from multiple threads. Typically locking should be enabled before a
-I<ctx> is shared across multiple threads.
+I<rand> from multiple threads. Typically locking should be enabled before a
+I<rand> is shared across multiple threads.
 
 EVP_RAND_get_params() retrieves details about the implementation
 I<rand>.

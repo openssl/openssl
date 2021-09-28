@@ -24,7 +24,7 @@ L<openssl_user_macros(7)>:
 
  void DSA_meth_free(DSA_METHOD *dsam);
 
- DSA_METHOD *DSA_meth_dup(const DSA_METHOD *meth);
+ DSA_METHOD *DSA_meth_dup(const DSA_METHOD *dsam);
 
  const char *DSA_meth_get0_name(const DSA_METHOD *dsam);
  int DSA_meth_set1_name(DSA_METHOD *dsam, const char *name);

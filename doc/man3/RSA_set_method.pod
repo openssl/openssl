@@ -16,15 +16,15 @@ L<openssl_user_macros(7)>:
 
  void RSA_set_default_method(const RSA_METHOD *meth);
 
- RSA_METHOD *RSA_get_default_method(void);
+ const RSA_METHOD *RSA_get_default_method(void);
 
  int RSA_set_method(RSA *rsa, const RSA_METHOD *meth);
 
- RSA_METHOD *RSA_get_method(const RSA *rsa);
+ const RSA_METHOD *RSA_get_method(const RSA *rsa);
 
- RSA_METHOD *RSA_PKCS1_OpenSSL(void);
+ const RSA_METHOD *RSA_PKCS1_OpenSSL(void);
 
- int RSA_flags(const RSA *rsa);
+ int RSA_flags(const RSA *r);
 
  RSA *RSA_new_method(ENGINE *engine);
 
@@ -77,7 +77,7 @@ B<engine> will be used for the RSA operations. If B<engine> is NULL, the
 default ENGINE for RSA operations is used, and if no default ENGINE is set,
 the RSA_METHOD controlled by RSA_set_default_method() is used.
 
-RSA_flags() returns the B<flags> that are set for B<rsa>'s current method.
+RSA_flags() returns the B<flags> that are set for B<r>'s current method.
 
 RSA_new_method() allocates and initializes an B<RSA> structure so that
 B<method> will be used for the RSA operations. If B<method> is B<NULL>,

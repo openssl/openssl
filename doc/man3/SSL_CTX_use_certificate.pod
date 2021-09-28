@@ -20,27 +20,27 @@ SSL_CTX_use_cert_and_key, SSL_use_cert_and_key
  #include <openssl/ssl.h>
 
  int SSL_CTX_use_certificate(SSL_CTX *ctx, X509 *x);
- int SSL_CTX_use_certificate_ASN1(SSL_CTX *ctx, int len, unsigned char *d);
+ int SSL_CTX_use_certificate_ASN1(SSL_CTX *ctx, int len, const unsigned char *d);
  int SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type);
  int SSL_use_certificate(SSL *ssl, X509 *x);
- int SSL_use_certificate_ASN1(SSL *ssl, unsigned char *d, int len);
+ int SSL_use_certificate_ASN1(SSL *ssl, const unsigned char *d, int len);
  int SSL_use_certificate_file(SSL *ssl, const char *file, int type);
 
  int SSL_CTX_use_certificate_chain_file(SSL_CTX *ctx, const char *file);
  int SSL_use_certificate_chain_file(SSL *ssl, const char *file);
 
  int SSL_CTX_use_PrivateKey(SSL_CTX *ctx, EVP_PKEY *pkey);
- int SSL_CTX_use_PrivateKey_ASN1(int pk, SSL_CTX *ctx, unsigned char *d,
+ int SSL_CTX_use_PrivateKey_ASN1(int type, SSL_CTX *ctx, const unsigned char *d,
                                  long len);
  int SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type);
  int SSL_CTX_use_RSAPrivateKey(SSL_CTX *ctx, RSA *rsa);
- int SSL_CTX_use_RSAPrivateKey_ASN1(SSL_CTX *ctx, unsigned char *d, long len);
+ int SSL_CTX_use_RSAPrivateKey_ASN1(SSL_CTX *ctx, const unsigned char *d, long len);
  int SSL_CTX_use_RSAPrivateKey_file(SSL_CTX *ctx, const char *file, int type);
  int SSL_use_PrivateKey(SSL *ssl, EVP_PKEY *pkey);
- int SSL_use_PrivateKey_ASN1(int pk, SSL *ssl, unsigned char *d, long len);
+ int SSL_use_PrivateKey_ASN1(int type, SSL *ssl, const unsigned char *d, long len);
  int SSL_use_PrivateKey_file(SSL *ssl, const char *file, int type);
  int SSL_use_RSAPrivateKey(SSL *ssl, RSA *rsa);
- int SSL_use_RSAPrivateKey_ASN1(SSL *ssl, unsigned char *d, long len);
+ int SSL_use_RSAPrivateKey_ASN1(SSL *ssl, const unsigned char *d, long len);
  int SSL_use_RSAPrivateKey_file(SSL *ssl, const char *file, int type);
 
  int SSL_CTX_check_private_key(const SSL_CTX *ctx);
@@ -112,7 +112,7 @@ accessed by OpenSSL. The reference count of the public key is incremented
 allows all private key validations checks to succeed without an actual
 private key being assigned via SSL_CTX_use_PrivateKey(), etc.
 
-SSL_CTX_use_PrivateKey_ASN1() adds the private key of type B<pk>
+SSL_CTX_use_PrivateKey_ASN1() adds the private key of type B<type>
 stored at memory location B<d> (length B<len>) to B<ctx>.
 SSL_CTX_use_RSAPrivateKey_ASN1() adds the private key of type RSA
 stored at memory location B<d> (length B<len>) to B<ctx>.
