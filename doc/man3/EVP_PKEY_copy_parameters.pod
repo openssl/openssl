@@ -37,8 +37,8 @@ in B<from> and B<to> are both present and match this function has no effect.
 The function EVP_PKEY_parameters_eq() checks the parameters of keys
 B<a> and B<b> for equality.
 
-The function EVP_PKEY_eq() checks the public key components and parameters
-(if present) of keys B<a> and B<b> for equality.
+The function EVP_PKEY_eq() checks the keys B<a> and B<b> for equality,
+including their parameters if they are available.
 
 =head1 NOTES
 
@@ -47,13 +47,16 @@ EVP_PKEY_copy_parameters() is to handle public keys in certificates where the
 parameters are sometimes omitted from a public key if they are inherited from
 the CA that signed it.
 
-Since OpenSSL private keys contain public key components too the function
-EVP_PKEY_eq() can also be used to determine if a private key matches
-a public key.
-
 The deprecated functions EVP_PKEY_cmp() and EVP_PKEY_cmp_parameters() differ in
-their return values  compared to other _cmp() functions. They are aliases for
+their return values compared to other _cmp() functions. They are aliases for
 EVP_PKEY_eq() and EVP_PKEY_parameters_eq().
+
+The function EVP_PKEY_cmp() previously only checked the key parameters
+(if there are any) and the public key, assuming that there always was
+a public key and that private key equality could be derived from that.
+This is no longer necessarily true, as the public key may not be present.
+EVP_PKEY_eq(), and therefore also EVP_PKEY_cmp(), now compare all
+components that are or should be present in both keys.
 
 =head1 RETURN VALUES
 
