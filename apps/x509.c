@@ -676,9 +676,6 @@ int x509_main(int argc, char **argv)
     }
 
     if (reqfile) {
-        if (infile == NULL)
-            BIO_printf(bio_err,
-                       "Warning: Reading cert request from stdin since no -in option is given\n");
         req = load_csr(infile, informat, "certificate request input");
         if (req == NULL)
             goto end;
@@ -728,9 +725,6 @@ int x509_main(int argc, char **argv)
             }
         }
     } else {
-        if (infile == NULL)
-            BIO_printf(bio_err,
-                       "Warning: Reading certificate from stdin since no -in option is given\n");
         x = load_cert_pass(infile, informat, 1, passin, "certificate");
         if (x == NULL)
             goto end;
