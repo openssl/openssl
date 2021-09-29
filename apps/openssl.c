@@ -395,6 +395,7 @@ static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[])
 
     if (argc <= 0 || argv[0] == NULL)
         return 0;
+    memset(&f, 0, sizeof(f));
     f.name = argv[0];
     fp = lh_FUNCTION_retrieve(prog, &f);
     if (fp == NULL) {
