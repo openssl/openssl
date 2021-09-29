@@ -82,6 +82,7 @@ int init_client(int *sock, const char *host, const char *port,
     BIO_ADDRINFO *bindaddr = NULL;
     const BIO_ADDRINFO *ai = NULL;
     const BIO_ADDRINFO *bi = NULL;
+    char *hostname = NULL;
     int found = 0;
     int ret;
 
@@ -172,7 +173,9 @@ int init_client(int *sock, const char *host, const char *port,
         break;
     }
 
-    BIO_printf(bio_out, "Connecting to %s\n", BIO_ADDR_hostname_string(BIO_ADDRINFO_address(ai), 1));
+    hostname = BIO_ADDR_hostname_string(BIO_ADDRINFO_address(ai), 1);
+    BIO_printf(bio_out, "Connecting to %s\n", hostname);
+    OPENSSL_free(hostname);
 
     if (*sock == INVALID_SOCKET) {
         if (bindaddr != NULL && !found) {
