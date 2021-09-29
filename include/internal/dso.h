@@ -26,7 +26,7 @@
  * transform it into "libblah.so". This callback could even utilise the
  * DSO_METHOD's converter too if it only wants to override behaviour for
  * one or two possible DSO methods. However, the following flag can be
- * set in a DSO to prevent *any* native name-translation at all - eg. if
+ * set in a DSO to prevent *any* native name-translation at all - e.g. if
  * the caller has prompted the user for a path to a driver library so the
  * filename should be interpreted as-is.
  */

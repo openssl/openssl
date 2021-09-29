@@ -1515,7 +1515,7 @@ static HANDSHAKE_RESULT *do_handshake_internal(
     /*
      * Half-duplex handshake loop.
      * Client and server speak to each other synchronously in the same process.
-     * We use non-blocking BIOs, so whenever one peer blocks for read, it
+     * We use nonblocking BIOs, so whenever one peer blocks for read, it
      * returns PEER_RETRY to indicate that it's the other peer's turn to write.
      * The handshake succeeds once both peers have succeeded. If one peer
      * errors out, we also let the other peer retry (and presumably fail).

@@ -94,7 +94,7 @@ static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder, int nid,
     }
 
     /*
-     * NOTE: There is no attempt to do a EVP_CIPHER_fetch() using the nid,
+     * NOTE: There is no attempt to do an EVP_CIPHER_fetch() using the nid,
      * since the nid is a PBE algorithm which can't be fetched currently.
      * (e.g. NID_pbe_WithSHA1And2_Key_TripleDES_CBC). Just use the legacy
      * path if the NID is passed.

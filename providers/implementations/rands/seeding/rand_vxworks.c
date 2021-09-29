@@ -159,7 +159,7 @@ size_t ossl_pool_acquire_entropy(RAND_POOL *pool)
     return ossl_rand_pool_entropy_available(pool);
 #else
     /*
-     * SEED_NONE means none, without randlib we dont have entropy and
+     * SEED_NONE means none, without randlib we don't have entropy and
      * rely on it being added externally
      */
     return ossl_rand_pool_entropy_available(pool);

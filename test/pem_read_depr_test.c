@@ -8,7 +8,7 @@
  */
 
 /*
- * This file tests deprecated APIs. Therefore we need to suppress deprecation
+ * This file tests deprecated APIs. Therefore, we need to suppress deprecation
  * warnings.
  */
 #define OPENSSL_SUPPRESS_DEPRECATED

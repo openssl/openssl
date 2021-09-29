@@ -161,7 +161,7 @@ int dtls1_do_write(SSL *s, int type)
                     /*
                      * Each fragment that was already sent must at least have
                      * contained the message header plus one other byte.
-                     * Therefore |init_off| must have progressed by at least
+                     * Therefore, |init_off| must have progressed by at least
                      * |DTLS1_HM_HEADER_LENGTH + 1| bytes. If not something went
                      * wrong.
                      */
@@ -954,7 +954,7 @@ WORK_STATE dtls_wait_for_dry(SSL *s)
         /*
          * We're not expecting any more messages from the peer at this point -
          * but we could get an alert. If an alert is waiting then we will never
-         * return successfully. Therefore we attempt to read a message. This
+         * return successfully. Therefore, we attempt to read a message. This
          * should never succeed but will process any waiting alerts.
          */
         if (dtls_get_reassembled_message(s, &errtype, &len)) {

@@ -288,7 +288,7 @@ static int test_builtin(int n, int as)
      * - 30 LL 02 ..
      * - 30 81 LL 02 ..
      *
-     * - Sometimes this mucks with the high level DER sequence wrapper:
+     * - Sometimes this mucks with the high-level DER sequence wrapper:
      *   in that case, DER-parsing of the whole signature should fail.
      *
      * - Sometimes this mucks with the DER-encoding of ECDSA.r:

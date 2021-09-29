@@ -6,7 +6,7 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-# Sometimes calls to XXXerr() are split into two lines, because the define'd
+# Sometimes calls to XXXerr() are split into two lines, because the defined
 # names are very long.  This script looks for those lines and merges them.
 # It should be run before the "err-to-raise" script.
 

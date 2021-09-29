@@ -253,8 +253,8 @@ __owur static int ctr_df(PROV_DRBG_CTR *ctr,
 
 /*
  * NB the no-df Update in SP800-90A specifies a constant input length
- * of seedlen, however other uses of this algorithm pad the input with
- * zeroes if necessary and have up to two parameters XORed together,
+ * of seedlen, however, other uses of this algorithm pad the input with
+ * zeros if necessary and have up to two parameters XORed together,
  * so we handle both cases in this function instead.
  */
 __owur static int ctr_update(PROV_DRBG *drbg,

@@ -22,7 +22,7 @@ static int test_is_fips_enabled(void)
     /*
      * Check we're in an expected state. EVP_default_properties_is_fips_enabled
      * can return true even if the FIPS provider isn't loaded - it is only based
-     * on the default properties. However we only set those properties if also
+     * on the default properties. However, we only set those properties if also
      * loading the FIPS provider.
      */
     if (!TEST_int_eq(is_fips || bad_fips, is_fips_enabled)

@@ -69,7 +69,7 @@ static int execute_CTX_reinit_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
     STACK_OF(X509) *certs = NULL;
     int res = 0;
 
-    /* set non-default values in all relevant fields */
+    /* set nondefault values in all relevant fields */
     ctx->status = 1;
     ctx->failInfoCode = 1;
     if (!ossl_cmp_ctx_set0_statusString(ctx, sk_ASN1_UTF8STRING_new_null())

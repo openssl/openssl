@@ -73,7 +73,7 @@ int tls_parse_ctos_renegotiate(SSL *s, PACKET *pkt, unsigned int context,
  *
  * - Only the hostname type is supported with a maximum length of 255.
  * - The servername is rejected if too long or if it contains zeros,
- *   in which case an fatal alert is generated.
+ *   in which case a fatal alert is generated.
  * - The servername field is maintained together with the session cache.
  * - When a session is resumed, the servername call back invoked in order
  *   to allow the application to position itself to the right context.
@@ -597,7 +597,7 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     if (clnt_num_groups == 0) {
         /*
          * This can only happen if the supported_groups extension was not sent,
-         * because we verify that the length is non-zero when we process that
+         * because we verify that the length is nonzero when we process that
          * extension.
          */
         SSLfatal(s, SSL_AD_MISSING_EXTENSION,
@@ -1137,7 +1137,7 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
              * client does it in ms then it could appear that their ticket age
              * is longer than ours (our ticket age calculation should always be
              * slightly longer than the client's due to the network latency).
-             * Therefore we add 1000ms to our age calculation to adjust for
+             * Therefore, we add 1000ms to our age calculation to adjust for
              * rounding errors.
              */
             if (id == 0

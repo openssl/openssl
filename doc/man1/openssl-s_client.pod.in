@@ -274,7 +274,7 @@ See L<openssl-format-options(1)> for details.
 
 =item B<-pass> I<arg>
 
-the private key and certifiate file password source.
+the private key and certificate file password source.
 For more information about the format of I<arg>
 see L<openssl-passphrase-options(1)>.
 

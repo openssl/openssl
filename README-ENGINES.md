@@ -4,11 +4,11 @@ Engines
 Deprecation Note
 ----------------
 
-The ENGINE API was introduced in OpenSSL version 0.9.6 as a low level
+The ENGINE API was introduced in OpenSSL version 0.9.6 as a low-level
 interface for adding alternative implementations of cryptographic
 primitives, most notably for integrating hardware crypto devices.
 
-The ENGINE interface has its limitations and it has been superseeded
+The ENGINE interface has its limitations and it has been superseded
 by the [PROVIDER API](README-PROVIDERS.md), it is deprecated in OpenSSL
 version 3.0. The following documentation is retained as an aid for
 users who need to maintain or support existing ENGINE implementations.
@@ -53,7 +53,7 @@ user/admin the set of commands and parameter types a given ENGINE
 implementation supports, and for an application to directly feed string
 based input to those ENGINEs, in the form of name-value pairs. This is an
 extensible way for ENGINEs to define their own "configuration" mechanisms
-that are specific to a given ENGINE (eg. for a particular hardware
+that are specific to a given ENGINE (e.g. for a particular hardware
 device) but that should be consistent across *all* OpenSSL-based
 applications when they use that ENGINE. Work is in progress (or at least
 in planning) for supporting these control commands from the CONF (or
@@ -136,7 +136,7 @@ applications. This could be because existing compiled-in implementations
 have known problems and you wish to use a newer version with an existing
 application. It could equally be because the application (or OpenSSL
 library) you are using simply doesn't have support for the ENGINE you
-wish to use, and the ENGINE provider (eg. hardware vendor) is providing
+wish to use, and the ENGINE provider (e.g. hardware vendor) is providing
 you with a self-contained implementation in the form of a shared-library.
 The other use-case for "dynamic" is with applications that wish to
 maintain the smallest foot-print possible and so do not link in various
@@ -218,10 +218,10 @@ Applications that support the ENGINE API and more specifically, the
 such commands through to ENGINEs. As such, you would select "dynamic"
 as the ENGINE to use, and the parameters/commands you pass would
 control the *actual* ENGINE used. Each command is actually a name-value
-pair and the value can sometimes be omitted (eg. the "LOAD" command).
+pair and the value can sometimes be omitted (e.g. the "LOAD" command).
 Whilst the syntax demonstrated in "openssl engine" uses a colon to
 separate the command name from the value, applications may provide
-their own syntax for making that separation (eg. a win32 registry
+their own syntax for making that separation (e.g. a win32 registry
 key-value pair may be used by some applications). The reason for the
 "-pre" syntax in the "openssl engine" utility is that some commands
 might be issued to an ENGINE *after* it has been initialised for use.
@@ -284,7 +284,7 @@ ENGINE.
      "hw_atalla.c" file but with the following two changes;
       * add "-DENGINE_DYNAMIC_SUPPORT" to the command line switches,
       * change the output file from "hw_atalla.o" to something new,
-        eg. "tmp_atalla.o"
+        e.g. "tmp_atalla.o"
 
   4. Link "tmp_atalla.o" into a shared-library using the top-level
      OpenSSL libraries to resolve any dependencies. The syntax for doing

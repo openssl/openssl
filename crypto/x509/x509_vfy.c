@@ -149,7 +149,7 @@ static int lookup_cert_match(X509 **result, X509_STORE_CTX *ctx, X509 *x)
  * The error depth is |depth| if >= 0, else it defaults to |ctx->error_depth|.
  * The error cert is |x| if not NULL, else defaults to the chain cert at depth.
  *
- * Returns 0 to abort verification with an error, non-zero to continue.
+ * Returns 0 to abort verification with an error, nonzero to continue.
  */
 static int verify_cb_cert(X509_STORE_CTX *ctx, X509 *x, int depth, int err)
 {
@@ -172,7 +172,7 @@ static int verify_cb_cert(X509_STORE_CTX *ctx, X509 *x, int depth, int err)
  * error depth and certificate are already set, we just specify the error
  * number.
  *
- * Returns 0 to abort verification with an error, non-zero to continue.
+ * Returns 0 to abort verification with an error, nonzero to continue.
  */
 static int verify_cb_crl(X509_STORE_CTX *ctx, int err)
 {
@@ -539,10 +539,10 @@ static int check_extensions(X509_STORE_CTX *ctx)
                 CB_FAIL_IF((x->ex_kusage & KU_KEY_CERT_SIGN) != 0, ctx, x, i,
                            X509_V_ERR_KU_KEY_CERT_SIGN_INVALID_FOR_NON_CA);
             }
-            /* Check issuer is non-empty acc. to RFC 5280 section 4.1.2.4 */
+            /* Check issuer is nonempty acc. to RFC 5280 section 4.1.2.4 */
             CB_FAIL_IF(X509_NAME_entry_count(X509_get_issuer_name(x)) == 0,
                        ctx, x, i, X509_V_ERR_ISSUER_NAME_EMPTY);
-            /* Check subject is non-empty acc. to RFC 5280 section 4.1.2.6 */
+            /* Check subject is nonempty acc. to RFC 5280 section 4.1.2.6 */
             CB_FAIL_IF(((x->ex_flags & EXFLAG_CA) != 0
                         || (x->ex_kusage & KU_CRL_SIGN) != 0
                         || x->altname == NULL)
@@ -552,7 +552,7 @@ static int check_extensions(X509_STORE_CTX *ctx)
                            && x->altname != NULL
                            && (x->ex_flags & EXFLAG_SAN_CRITICAL) == 0,
                        ctx, x, i, X509_V_ERR_EMPTY_SUBJECT_SAN_NOT_CRITICAL);
-            /* Check SAN is non-empty according to RFC 5280 section 4.2.1.6 */
+            /* Check SAN is nonempty according to RFC 5280 section 4.2.1.6 */
             CB_FAIL_IF(x->altname != NULL
                            && sk_GENERAL_NAME_num(x->altname) <= 0,
                        ctx, x, i, X509_V_ERR_EMPTY_SUBJECT_ALT_NAME);
@@ -594,7 +594,7 @@ static int check_extensions(X509_STORE_CTX *ctx)
             plen++;
         /*
          * If this certificate is a proxy certificate, the next certificate
-         * must be another proxy certificate or a EE certificate.  If not,
+         * must be another proxy certificate or an EE certificate.  If not,
          * the next certificate must be a CA certificate.
          */
         if (x->ex_flags & EXFLAG_PROXY) {
@@ -830,7 +830,7 @@ static int check_trust(X509_STORE_CTX *ctx, int num_untrusted)
 
     /*
      * Check trusted certificates in chain at depth num_untrusted and up.
-     * Note, that depths 0..num_untrusted-1 may also contain trusted
+     * Note that depths 0..num_untrusted-1 may also contain trusted
      * certificates, but the caller is expected to have already checked those,
      * and wants to incrementally check just any added since.
      */

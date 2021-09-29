@@ -591,7 +591,7 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
         char tmp_buf[80]; /* "rounds=999999999" */
         sprintf(tmp_buf, "rounds=%u", rounds);
 #ifdef CHARSET_EBCDIC
-        /* In case we're really on a ASCII based platform and just pretend */
+        /* In case we're really on an ASCII based platform and just pretend */
         if (tmp_buf[0] != 0x72)  /* ASCII 'r' */
             ebcdic2ascii(tmp_buf, tmp_buf, strlen(tmp_buf));
 #endif

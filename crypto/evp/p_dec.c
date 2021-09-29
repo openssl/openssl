@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* We need to use the deprecated RSA low level calls */
+/* We need to use the deprecated RSA low-level calls */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <stdio.h>

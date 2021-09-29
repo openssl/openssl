@@ -630,7 +630,7 @@ static int cmd_RecordPadding(SSL_CONF_CTX *cctx, const char *value)
     int block_size = atoi(value);
 
     /*
-     * All we care about is a non-negative value,
+     * All we care about is a nonnegative value,
      * the setters check the range
      */
     if (block_size >= 0) {

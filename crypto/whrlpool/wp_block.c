@@ -37,7 +37,7 @@
  */
 
 /*
- * Whirlpool low level APIs are deprecated for public use, but still ok for
+ * Whirlpool low-level APIs are deprecated for public use, but still ok for
  * internal use.
  */
 #include "internal/deprecated.h"

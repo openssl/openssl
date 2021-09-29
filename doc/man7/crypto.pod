@@ -82,8 +82,8 @@ See also L</ALGORITHM FETCHING>.
 As long as OpenSSL has been built with support for threads (the default case
 on most platforms) then most OpenSSL I<functions> are thread-safe in the sense
 that it is safe to call the same function from multiple threads at the same
-time. However most OpenSSL I<data structures> are not thread-safe. For example
-the L<BIO_write(3)> and L<BIO_read(3)> functions are thread safe. However it
+time. However, most OpenSSL I<data structures> are not thread-safe. For example
+the L<BIO_write(3)> and L<BIO_read(3)> functions are thread safe. However, it
 would not be thread safe to call BIO_write() from one thread while calling
 BIO_read() in another where both functions are passed the same B<BIO> object
 since both of them may attempt to make changes to the same B<BIO> object.
@@ -423,7 +423,7 @@ For information on the OpenSSL configuration file format see L<config(5)>.
 =head1 ENCODING AND DECODING KEYS
 
 Many algorithms require the use of a key. Keys can be generated dynamically
-using the EVP APIs (for example see L<EVP_PKEY_Q_keygen(3)>). However it is often
+using the EVP APIs (for example see L<EVP_PKEY_Q_keygen(3)>). However, it is often
 necessary to save or load keys (or their associated parameters) to or from some
 external format such as PEM or DER (see L<openssl-glossary(7)>). OpenSSL uses
 encoders and decoders to perform this task.

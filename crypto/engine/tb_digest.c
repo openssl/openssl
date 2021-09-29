@@ -60,7 +60,7 @@ int ENGINE_set_default_digests(ENGINE *e)
 
 /*
  * Exposed API function to get a functional reference from the implementation
- * table (ie. try to get a functional reference from the tabled structural
+ * table (i.e. try to get a functional reference from the tabular structural
  * references) for a given digest 'nid'
  */
 ENGINE *ENGINE_get_digest_engine(int nid)

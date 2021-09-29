@@ -922,7 +922,7 @@ static int test_EC_priv_only_legacy(void)
     EVP_PKEY *pkey = NULL, *dup_pk = NULL;
     EVP_MD_CTX *ctx = NULL;
 
-    /* Create the low level EC_KEY */
+    /* Create the low-level EC_KEY */
     if (!TEST_ptr(priv = BN_bin2bn(ec_priv, sizeof(ec_priv), NULL)))
         goto err;
 
@@ -995,7 +995,7 @@ static int test_EVP_Enveloped(int n)
     EVP_CIPHER *type = NULL;
 
     if (nullprov != NULL)
-        return TEST_skip("Test does not support a non-default library context");
+        return TEST_skip("Test does not support a nondefault library context");
 
     if (n == 0)
         type = (EVP_CIPHER *)EVP_aes_256_cbc();
@@ -1061,7 +1061,7 @@ static int test_EVP_DigestSignInit(int tst)
     EVP_MD *mdexp = NULL;
 
     if (nullprov != NULL)
-        return TEST_skip("Test does not support a non-default library context");
+        return TEST_skip("Test does not support a nondefault library context");
 
     if (tst >= 6) {
         membio = BIO_new(BIO_s_mem());
@@ -1180,7 +1180,7 @@ static int test_EVP_DigestVerifyInit(void)
     EVP_MD_CTX *md_ctx = NULL;
 
     if (nullprov != NULL)
-        return TEST_skip("Test does not support a non-default library context");
+        return TEST_skip("Test does not support a nondefault library context");
 
     if (!TEST_ptr(md_ctx = EVP_MD_CTX_new())
             || !TEST_ptr(pkey = load_example_rsa_key()))
@@ -1371,7 +1371,7 @@ static int test_EVP_PKCS82PKEY_wrong_tag(void)
     int ok = 0;
 
     if (testctx != NULL)
-        /* test not supported with non-default context */
+        /* test not supported with nondefault context */
         return 1;
 
     if (!TEST_ptr(membio = BIO_new(BIO_s_mem()))
@@ -1992,7 +1992,7 @@ static int test_CMAC_keygen(void)
 # endif
 
     if (nullprov != NULL)
-        return TEST_skip("Test does not support a non-default library context");
+        return TEST_skip("Test does not support a nondefault library context");
 
     /*
      * This is a legacy method for CMACs, but should still work.
@@ -2576,7 +2576,7 @@ static int test_keygen_with_empty_template(int n)
     int ret = 0;
 
     if (nullprov != NULL)
-        return TEST_skip("Test does not support a non-default library context");
+        return TEST_skip("Test does not support a nondefault library context");
 
     switch (n) {
     case 0:
@@ -2631,9 +2631,9 @@ static int test_pkey_ctx_fail_without_provider(int tst)
 
     /*
      * We check for certain algos in the null provider.
-     * If an algo is expected to have a provider keymgmt, contructing an
+     * If an algo is expected to have a provider keymgmt, constructing an
      * EVP_PKEY_CTX is expected to fail (return NULL).
-     * Otherwise, if it's expected to have legacy support, contructing an
+     * Otherwise, if it's expected to have legacy support, constructing an
      * EVP_PKEY_CTX is expected to succeed (return non-NULL).
      */
     switch (tst) {
@@ -2743,7 +2743,7 @@ static int test_evp_iv_aes(int idx)
     int iv_reset = 0;
 
     if (nullprov != NULL && idx < 6)
-        return TEST_skip("Test does not support a non-default library context");
+        return TEST_skip("Test does not support a nondefault library context");
 
     switch(idx) {
     case 0:
@@ -2978,7 +2978,7 @@ static int test_ecpub(int idx)
 # endif
 
     if (nullprov != NULL)
-        return TEST_skip("Test does not support a non-default library context");
+        return TEST_skip("Test does not support a nondefault library context");
 
     nid = ecpub_nids[idx];
 
@@ -3867,7 +3867,7 @@ const OPTIONS *test_get_options(void)
 {
     static const OPTIONS options[] = {
         OPT_TEST_OPTIONS_DEFAULT_USAGE,
-        { "context", OPT_CONTEXT, '-', "Explicitly use a non-default library context" },
+        { "context", OPT_CONTEXT, '-', "Explicitly use a nondefault library context" },
         { NULL }
     };
     return options;
@@ -3884,7 +3884,7 @@ int setup_tests(void)
             testctx = OSSL_LIB_CTX_new();
             if (!TEST_ptr(testctx))
                 return 0;
-            /* Swap the libctx to test non-default context only */
+            /* Swap the libctx to test nondefault context only */
             nullprov = OSSL_PROVIDER_load(NULL, "null");
             deflprov = OSSL_PROVIDER_load(testctx, "default");
             lgcyprov = OSSL_PROVIDER_load(testctx, "legacy");

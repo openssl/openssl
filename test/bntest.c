@@ -1529,7 +1529,7 @@ static int file_quotient(STANZA *s)
                 || (BN_is_negative(nnmod)
                         && !TEST_true(BN_add(nnmod, nnmod, b)))
                 || !TEST_true(BN_nnmod(ret, a, b, ctx))
-                || !equalBN("A % B (non-negative)", nnmod, ret))
+                || !equalBN("A % B (nonnegative)", nnmod, ret))
             goto err;
     }
 

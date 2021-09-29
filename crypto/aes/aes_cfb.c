@@ -17,8 +17,8 @@
 #include <openssl/modes.h>
 
 /*
- * The input and output encrypted as though 128bit cfb mode is being used.
- * The extra state information to record how much of the 128bit block we have
+ * The input and output encrypted as though 128-bit cfb mode is being used.
+ * The extra state information to record how much of the 128-bit block we have
  * used is contained in *num;
  */
 

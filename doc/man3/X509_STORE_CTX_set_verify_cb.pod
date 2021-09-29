@@ -86,7 +86,7 @@ L<X509_STORE_set_verify(3)> for more information.
 
 =head1 WARNINGS
 
-In general a verification callback should B<NOT> unconditionally return 1 in
+In general, a verification callback should B<NOT> unconditionally return 1 in
 all circumstances because this will allow verification to succeed no matter
 what the error. This effectively removes all security from the application
 because B<any> certificate (including untrusted generated ones) will be

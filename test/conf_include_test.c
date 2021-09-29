@@ -220,7 +220,7 @@ int setup_tests(void)
 
     /*
      * For this test we need to chdir as we use relative
-     * path names in the config files.
+     * pathnames in the config files.
      */
     change_path(conf_file);
 

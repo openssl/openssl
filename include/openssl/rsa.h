@@ -342,7 +342,7 @@ OSSL_DEPRECATEDIN_3_0 int RSA_print_fp(FILE *fp, const RSA *r, int offset);
 OSSL_DEPRECATEDIN_3_0 int RSA_print(BIO *bp, const RSA *r, int offset);
 
 /*
- * The following 2 functions sign and verify a X509_SIG ASN1 object inside
+ * The following 2 functions sign and verify an X509_SIG ASN1 object inside
  * PKCS#1 padded RSA encryption
  */
 OSSL_DEPRECATEDIN_3_0 int RSA_sign(int type, const unsigned char *m,
@@ -354,7 +354,7 @@ OSSL_DEPRECATEDIN_3_0 int RSA_verify(int type, const unsigned char *m,
                                      unsigned int siglen, RSA *rsa);
 
 /*
- * The following 2 function sign and verify a ASN1_OCTET_STRING object inside
+ * The following 2 function sign and verify an ASN1_OCTET_STRING object inside
  * PKCS#1 padded RSA encryption
  */
 OSSL_DEPRECATEDIN_3_0

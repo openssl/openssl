@@ -147,7 +147,7 @@ unsigned long X509_subject_name_hash_old(X509 *x)
 /*
  * Compare two certificates: they must be identical for this to work. NB:
  * Although "cmp" operations are generally prototyped to take "const"
- * arguments (eg. for use in STACKs), the way X509 handling is - these
+ * arguments (e.g. for use in STACKs), the way X509 handling is - these
  * operations may involve ensuring the hashes are up-to-date and ensuring
  * certain cert information is cached. So this is the point where the
  * "depth-first" constification tree has to halt with an evil cast.

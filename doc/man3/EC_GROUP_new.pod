@@ -117,7 +117,7 @@ over Fp I<p> is the prime for the field. For a curve over F2^m I<p> represents
 the irreducible polynomial - each bit represents a term in the polynomial.
 Therefore, there will either be three or five bits set dependent on whether the
 polynomial is a trinomial or a pentanomial.
-In either case, I<a> and I<b> represents the coefficients a and b from the
+In either case, I<a> and I<b> represents the coefficients I<a> and I<b> from the
 relevant equation introduced above.
 
 EC_group_get_curve() obtains the previously set curve parameters.

@@ -1356,7 +1356,7 @@ void engine_load_devcrypto_int(void)
     ENGINE_free(e);          /* Loose our local reference */
     /*
      * If the "add" didn't work, it was probably a conflict because it was
-     * already added (eg. someone calling ENGINE_load_blah then calling
+     * already added (e.g. someone calling ENGINE_load_blah then calling
      * ENGINE_load_builtin_engines() perhaps).
      */
     ERR_pop_to_mark();

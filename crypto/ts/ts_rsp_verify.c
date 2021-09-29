@@ -278,7 +278,7 @@ int TS_RESP_verify_token(TS_VERIFY_CTX *ctx, PKCS7 *token)
 }
 
 /*-
- * Verifies whether the 'token' contains a valid time stamp token
+ * Verifies whether the 'token' contains a valid timestamp token
  * with regards to the settings of the context. Only those checks are
  * carried out that are specified in the context:
  *      - Verifies the signature of the TS_TST_INFO.
@@ -387,7 +387,7 @@ static int ts_check_status_info(TS_RESP *response)
     if (failure_text[0] == '\0')
         strcpy(failure_text, "unspecified");
 
-    ERR_raise_data(ERR_LIB_TS, TS_R_NO_TIME_STAMP_TOKEN,
+    ERR_raise_data(ERR_LIB_TS, TS_R_NO_TIMESTAMP_TOKEN,
                    "status code: %s, status text: %s, failure codes: %s",
                    status_text,
                    embedded_status_text ? embedded_status_text : "unspecified",

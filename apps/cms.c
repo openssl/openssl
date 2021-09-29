@@ -205,7 +205,7 @@ const OPTIONS cms_options[] = {
      "Don't search certificates in message for signer"},
     {"cades", OPT_DUP, '-', "Check signingCertificate (CAdES-BES)"},
     {"verify_retcode", OPT_VERIFY_RETCODE, '-',
-     "Exit non-zero on verification failure"},
+     "Exit nonzero on verification failure"},
     {"CAfile", OPT_CAFILE, '<', "Trusted certificates file"},
     {"CApath", OPT_CAPATH, '/', "Trusted certificates directory"},
     {"CAstore", OPT_CASTORE, ':', "Trusted certificates store URI"},

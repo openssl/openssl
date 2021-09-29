@@ -64,7 +64,7 @@ struct sct_st {
     size_t log_id_len;
     /*
     * Note, we cannot distinguish between an unset timestamp, and one
-    * that is set to 0.  However since CT didn't exist in 1970, no real
+    * that is set to 0.  However, since CT didn't exist in 1970, no real
     * SCT should ever be set as such.
     */
     uint64_t timestamp;

@@ -11,9 +11,9 @@
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 /*
- * SHA-1 low level APIs are deprecated for public use, but still ok for
- * internal use.  Note, that due to symbols not being exported, only the
- * #defines and strucures can be accessed, in this case SHA_CBLOCK and
+ * SHA-1 low-level APIs are deprecated for public use, but still ok for
+ * internal use.  Note that due to symbols not being exported, only the
+ * #defines and structures can be accessed, in this case SHA_CBLOCK and
  * sizeof(SHA_CTX).
  */
 #include "internal/deprecated.h"
@@ -357,7 +357,7 @@ void engine_load_dasync_int(void)
     ENGINE_free(toadd);
     /*
      * If the "add" didn't work, it was probably a conflict because it was
-     * already added (eg. someone calling ENGINE_load_blah then calling
+     * already added (e.g. someone calling ENGINE_load_blah then calling
      * ENGINE_load_builtin_engines() perhaps).
      */
     ERR_pop_to_mark();

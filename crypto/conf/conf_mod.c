@@ -539,7 +539,7 @@ void CONF_module_set_usr_data(CONF_MODULE *pmod, void *usr_data)
     pmod->usr_data = usr_data;
 }
 
-/* Return default config file name */
+/* Return default config filename */
 char *CONF_get1_default_config_file(void)
 {
     const char *t;

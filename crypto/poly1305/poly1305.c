@@ -442,7 +442,7 @@ void Poly1305_Init(POLY1305 *ctx, const unsigned char key[32])
 #else
     /*
      * Unlike reference poly1305_init assembly counterpart is expected
-     * to return a value: non-zero if it initializes ctx->func, and zero
+     * to return a value: nonzero if it initializes ctx->func, and zero
      * otherwise. Latter is to simplify assembly in cases when there no
      * multiple code paths to switch between.
      */

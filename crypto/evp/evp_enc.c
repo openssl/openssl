@@ -827,7 +827,7 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
             return 0;
         }
         /*
-         * final_used is only ever set if buf_len is 0. Therefore the maximum
+         * final_used is only ever set if buf_len is 0. Therefore, the maximum
          * length output we will ever see from evp_EncryptDecryptUpdate is
          * the maximum multiple of the block length that is <= inl, or just:
          * inl & ~(b - 1)
@@ -1104,7 +1104,7 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
                         OSSL_CIPHER_PARAM_AEAD_TLS1_SET_IV_INV, ptr, sz);
         break;
     case EVP_CTRL_GET_RC5_ROUNDS:
-        set_params = 0; /* Fall thru */
+        set_params = 0; /* Fall through */
     case EVP_CTRL_SET_RC5_ROUNDS:
         if (arg < 0)
             return 0;
@@ -1118,7 +1118,7 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
         params[0] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_SPEED, &i);
         break;
     case EVP_CTRL_AEAD_GET_TAG:
-        set_params = 0; /* Fall thru */
+        set_params = 0; /* Fall through */
     case EVP_CTRL_AEAD_SET_TAG:
         params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
                                                       ptr, sz);
@@ -1139,7 +1139,7 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
         return sz;
 #ifndef OPENSSL_NO_RC2
     case EVP_CTRL_GET_RC2_KEY_BITS:
-        set_params = 0; /* Fall thru */
+        set_params = 0; /* Fall through */
     case EVP_CTRL_SET_RC2_KEY_BITS:
         params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_RC2_KEYBITS, &sz);
         break;

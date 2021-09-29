@@ -95,7 +95,7 @@ static int blake2_setkey(struct blake2_mac_data_st *macctx,
         return 0;
     }
     memcpy(macctx->key, key, keylen);
-    /* Pad with zeroes at the end if required */
+    /* Pad with zeros at the end if required */
     if (keylen < BLAKE2_KEYBYTES)
         memset(macctx->key + keylen, 0, BLAKE2_KEYBYTES - keylen);
     BLAKE2_PARAM_SET_KEY_LENGTH(&macctx->params, (uint8_t)keylen);

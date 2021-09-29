@@ -611,7 +611,7 @@ const OPTIONS s_client_options[] = {
     {"alpn", OPT_ALPN, 's',
      "Enable ALPN extension, considering named protocols supported (comma-separated list)"},
     {"async", OPT_ASYNC, '-', "Support asynchronous operation"},
-    {"nbio", OPT_NBIO, '-', "Use non-blocking IO"},
+    {"nbio", OPT_NBIO, '-', "Use nonblocking IO"},
 
     OPT_SECTION("Protocol and version"),
 #ifndef OPENSSL_NO_SSL3
@@ -1925,7 +1925,7 @@ int s_client_main(int argc, char **argv)
 
     /*
      * In TLSv1.3 NewSessionTicket messages arrive after the handshake and can
-     * come at any time. Therefore we use a callback to write out the session
+     * come at any time. Therefore, we use a callback to write out the session
      * when we know about it. This approach works for < TLSv1.3 as well.
      */
     SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_CLIENT
@@ -3277,7 +3277,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
         /*
          * We also print the verify results when we dump session information,
          * but in TLSv1.3 we may not get that right away (or at all) depending
-         * on when we get a NewSessionTicket. Therefore we print it now as well.
+         * on when we get a NewSessionTicket. Therefore, we print it now as well.
          */
         verify_result = SSL_get_verify_result(s);
         BIO_printf(bio, "Verify return code: %ld (%s)\n", verify_result,

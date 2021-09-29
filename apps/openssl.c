@@ -62,7 +62,7 @@ static int apps_startup(void)
     signal(SIGPIPE, SIG_IGN);
 #endif
 
-    /* Set non-default library initialisation settings */
+    /* Set nondefault library initialisation settings */
     if (!OPENSSL_init_ssl(OPENSSL_INIT_ENGINE_ALL_BUILTIN
                           | OPENSSL_INIT_LOAD_CONFIG, NULL))
         return 0;

@@ -134,7 +134,7 @@ int PKCS5_v2_PBE_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
     }
 
     /*
-     * lets see if we recognise the encryption algorithm.
+     * let's see if we recognise the encryption algorithm.
      */
     if (OBJ_obj2txt(ciph_name, sizeof(ciph_name), pbe2->encryption->algorithm, 0) <= 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_CIPHER);

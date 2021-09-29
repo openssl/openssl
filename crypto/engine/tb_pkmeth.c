@@ -61,7 +61,7 @@ int ENGINE_set_default_pkey_meths(ENGINE *e)
 
 /*
  * Exposed API function to get a functional reference from the implementation
- * table (ie. try to get a functional reference from the tabled structural
+ * table (i.e. try to get a functional reference from the tabular structural
  * references) for a given pkey_meth 'nid'
  */
 ENGINE *ENGINE_get_pkey_meth_engine(int nid)

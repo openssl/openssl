@@ -944,7 +944,7 @@ PKCS7_R_WRONG_CONTENT_TYPE:113:wrong content type
 PKCS7_R_WRONG_PKCS7_TYPE:114:wrong pkcs7 type
 PROP_R_NAME_TOO_LONG:100:name too long
 PROP_R_NOT_AN_ASCII_CHARACTER:101:not an ascii character
-PROP_R_NOT_AN_HEXADECIMAL_DIGIT:102:not an hexadecimal digit
+PROP_R_NOT_AN_HEXADECIMAL_DIGIT:102:not a hexadecimal digit
 PROP_R_NOT_AN_IDENTIFIER:103:not an identifier
 PROP_R_NOT_AN_OCTAL_DIGIT:104:not an octal digit
 PROP_R_NOT_A_DECIMAL_DIGIT:105:not a decimal digit
@@ -1545,7 +1545,7 @@ TS_R_MESSAGE_IMPRINT_MISMATCH:103:message imprint mismatch
 TS_R_NONCE_MISMATCH:104:nonce mismatch
 TS_R_NONCE_NOT_RETURNED:105:nonce not returned
 TS_R_NO_CONTENT:106:no content
-TS_R_NO_TIME_STAMP_TOKEN:107:no time stamp token
+TS_R_NO_TIMESTAMP_TOKEN:107:no timestamp token
 TS_R_PKCS7_ADD_SIGNATURE_ERROR:118:pkcs7 add signature error
 TS_R_PKCS7_ADD_SIGNED_ATTR_ERROR:119:pkcs7 add signed attr error
 TS_R_PKCS7_TO_TS_TST_INFO_FAILED:129:pkcs7 to ts tst info failed
@@ -1581,7 +1581,7 @@ UI_R_SYSQIOW_ERROR:111:sys$qiow error
 UI_R_UNKNOWN_CONTROL_COMMAND:106:unknown control command
 UI_R_UNKNOWN_TTYGET_ERRNO_VALUE:108:unknown ttyget errno value
 UI_R_USER_DATA_DUPLICATION_UNSUPPORTED:112:user data duplication unsupported
-X509V3_R_BAD_IP_ADDRESS:118:bad ip address
+X509V3_R_BAD_IP_ADDRESS:118:bad IP address
 X509V3_R_BAD_OBJECT:119:bad object
 X509V3_R_BN_DEC2BN_ERROR:100:bn dec2bn error
 X509V3_R_BN_TO_ASN1_INTEGER_ERROR:101:bn to asn1 integer error

@@ -215,7 +215,7 @@ const OPTIONS srp_options[] = {
     {"list", OPT_LIST, '-', "List users"},
 
     OPT_SECTION("Configuration"),
-    {"srpvfile", OPT_SRPVFILE, '<', "The srp verifier file name"},
+    {"srpvfile", OPT_SRPVFILE, '<', "The srp verifier filename"},
     {"gn", OPT_GN, 's', "Set g and N values to be used for new verifier"},
     {"userinfo", OPT_USERINFO, 's', "Additional info to be set for user"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},

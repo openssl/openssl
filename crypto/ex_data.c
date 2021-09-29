@@ -206,7 +206,7 @@ int CRYPTO_get_ex_new_index(int class_index, long argl, void *argp,
  * calling new() callbacks for each index in the class used by this variable
  * Thread-safe by copying a class's array of "EX_CALLBACK" entries
  * in the lock, then using them outside the lock. Note this only applies
- * to the global "ex_data" state (ie. class definitions), not 'ad' itself.
+ * to the global "ex_data" state (i.e. class definitions), not 'ad' itself.
  */
 int ossl_crypto_new_ex_data_ex(OSSL_LIB_CTX *ctx, int class_index, void *obj,
                                CRYPTO_EX_DATA *ad)

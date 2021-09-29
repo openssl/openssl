@@ -10,7 +10,7 @@
 /* Dispatch functions for AES SIV mode */
 
 /*
- * This file uses the low level AES functions (which are deprecated for
+ * This file uses the low-level AES functions (which are deprecated for
  * non-internal use) in order to implement provider AES ciphers.
  */
 #include "internal/deprecated.h"

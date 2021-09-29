@@ -679,7 +679,7 @@ MSG_PROCESS_RETURN tls_process_key_update(SSL *s, PACKET *pkt)
 
     /*
      * If we get a request for us to update our sending keys too then, we need
-     * to additionally send a KeyUpdate message. However that message should
+     * to additionally send a KeyUpdate message. However, that message should
      * not also request an update (otherwise we get into an infinite loop).
      */
     if (updatetype == SSL_KEY_UPDATE_REQUESTED)
@@ -962,7 +962,7 @@ static int ssl_add_cert_chain(SSL *s, WPACKET *pkt, CERT_PKEY *cpk)
         }
         /*
          * It is valid for the chain not to be complete (because normally we
-         * don't include the root cert in the chain). Therefore we deliberately
+         * don't include the root cert in the chain). Therefore, we deliberately
          * ignore the error return from this call. We're not actually verifying
          * the cert - we're just building as much of the chain as we can
          */
@@ -1722,7 +1722,7 @@ static void check_for_downgrade(SSL *s, int vers, DOWNGRADE *dgrd)
                 * We need to ensure that a server that disables TLSv1.2
                 * (creating a hole between TLSv1.3 and TLSv1.1) can still
                 * complete handshakes with clients that support TLSv1.2 and
-                * below. Therefore we do not enable the sentinel if TLSv1.3 is
+                * below. Therefore, we do not enable the sentinel if TLSv1.3 is
                 * enabled and TLSv1.2 is not.
                 */
             && ssl_version_supported(s, TLS1_2_VERSION, NULL)) {
@@ -1780,7 +1780,7 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello, DOWNGRADE *dgrd)
          * Fall through if we are TLSv1.3 already (this means we must be after
          * a HelloRetryRequest
          */
-        /* fall thru */
+        /* fall through */
     case TLS_ANY_VERSION:
         table = tls_version_table;
         break;

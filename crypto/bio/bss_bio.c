@@ -489,7 +489,7 @@ static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
     case BIO_C_RESET_READ_REQUEST:
         /*
          * Reset request.  (Can be useful after read attempts at the other
-         * side that are meant to be non-blocking, e.g. when probing SSL_read
+         * side that are meant to be nonblocking, e.g. when probing SSL_read
          * to see if any data is available.)
          */
         b->request = 0;

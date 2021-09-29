@@ -22,7 +22,7 @@ struct st_engine_pile {
     /* The default ENGINE to perform this algorithm/mode. */
     ENGINE *funct;
     /*
-     * Zero if 'sk' is newer than the cached 'funct', non-zero otherwise
+     * Zero if 'sk' is newer than the cached 'funct', nonzero otherwise
      */
     int uptodate;
 };

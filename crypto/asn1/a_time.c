@@ -92,7 +92,7 @@ int ossl_asn1_time_to_tm(struct tm *tm, const ASN1_TIME *d)
      *
      * 1. "seconds" is a 'MUST'
      * 2. "Zulu" timezone is a 'MUST'
-     * 3. "+|-" is not allowed to indicate a time zone
+     * 3. "+|-" is not allowed to indicate a timezone
      */
     if (d->type == V_ASN1_UTCTIME) {
         if (d->flags & ASN1_STRING_FLAG_X509_TIME) {

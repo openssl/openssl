@@ -220,7 +220,7 @@ static int afalg_setup_async_event_notification(afalg_aio *aio)
                 close(aio->efd);
                 return 0;
             }
-            /* make fd non-blocking in async mode */
+            /* make fd nonblocking in async mode */
             if (fcntl(aio->efd, F_SETFL, O_NONBLOCK) != 0) {
                 ALG_WARN("%s(%d): Failed to set event fd as NONBLOCKING",
                          __FILE__, __LINE__);
@@ -899,7 +899,7 @@ void engine_load_afalg_int(void)
     ENGINE_free(toadd);
     /*
      * If the "add" didn't work, it was probably a conflict because it was
-     * already added (eg. someone calling ENGINE_load_blah then calling
+     * already added (e.g. someone calling ENGINE_load_blah then calling
      * ENGINE_load_builtin_engines() perhaps).
      */
     ERR_pop_to_mark();

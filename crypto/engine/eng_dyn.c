@@ -96,7 +96,7 @@ struct st_dynamic_data_ctx {
     /* If non-NULL, stipulates the 'id' of the ENGINE to be loaded */
     char *engine_id;
     /*
-     * If non-zero, a successfully loaded ENGINE should be added to the
+     * If nonzero, a successfully loaded ENGINE should be added to the
      * internal ENGINE list. If 2, the add must succeed or the entire load
      * should fail.
      */
@@ -270,7 +270,7 @@ void engine_load_dynamic_int(void)
     ENGINE_free(toadd);
     /*
      * If the "add" didn't work, it was probably a conflict because it was
-     * already added (eg. someone calling ENGINE_load_blah then calling
+     * already added (e.g. someone calling ENGINE_load_blah then calling
      * ENGINE_load_builtin_engines() perhaps).
      */
     ERR_pop_to_mark();

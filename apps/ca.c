@@ -1085,7 +1085,7 @@ end_of_options:
             char *n = new_cert + outdirlen;
 
             if (outdirlen + filen_len > PATH_MAX) {
-                BIO_printf(bio_err, "certificate file name too long\n");
+                BIO_printf(bio_err, "certificate filename too long\n");
                 goto end;
             }
 

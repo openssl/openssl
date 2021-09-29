@@ -114,7 +114,7 @@ EOF
 #               binaries (and in context it means executables linked with
 #               -static flag, and not just executables linked with static
 #               libcrypto.a) is to eliminate dependency on specific run-time,
-#               a.k.a. libc version. The mentioned config options are meant
+#               aka libc version. The mentioned config options are meant
 #               to achieve just that. Unfortunately on Linux it's impossible
 #               to eliminate the dependency completely for openssl executable
 #               because of getaddrinfo and gethostbyname calls, which can
@@ -305,7 +305,7 @@ if (grep /^reconf(igure)?$/, @argvcopy) {
 $config{perlargv} = [ @argvcopy ];
 
 # Historical: if known directories in crypto/ have been removed, it means
-# that those sub-systems are disabled.
+# that those subsystems are disabled.
 # (the other option would be to removed them from the SUBDIRS statement in
 # crypto/build.info)
 # We reverse the input list for cosmetic purely reasons, to compensate that
@@ -603,7 +603,7 @@ my @disable_cascades = (
     # Without shared libraries, dynamic engines aren't possible.
     # This is due to them having to link with libcrypto and register features
     # using the ENGINE functionality, and since that relies on global tables,
-    # those *have* to be exacty the same as the ones accessed from the app,
+    # those *have* to be exactly the same as the ones accessed from the app,
     # which cannot be guaranteed if shared libraries aren't present.
     # (note that even with shared libraries, both the app and dynamic engines
     # must be linked with the same library)
@@ -1384,7 +1384,7 @@ if (grep { $_ =~ /(?:^|\s)-static(?:\s|$)/ } @{$config{LDFLAGS}}) {
     disable('static', 'pic', 'threads');
 }
 
-# Allow overriding the build file name
+# Allow overriding the build filename
 $config{build_file} = env('BUILDFILE') || $target{build_file} || "Makefile";
 
 # Make sure build_scheme is consistent.
@@ -1800,7 +1800,7 @@ my %skipdir = ();
 my %disabled_info = ();         # For configdata.pm
 foreach my $what (sort keys %disabled) {
     # There are deprecated disablables that translate to themselves.
-    # They cause disabling cascades, but should otherwise not regiter.
+    # They cause disabling cascades, but should otherwise not register.
     next if $deprecated_disablables{$what};
     # The generated $disabled{"deprecated-x.y"} entries are special
     # and treated properly elsewhere
@@ -3457,7 +3457,7 @@ sub quotify {
 }
 
 # collect_from_file($filename, $line_concat_cond_re, $line_concat)
-# $filename is a file name to read from
+# $filename is a filename to read from
 # $line_concat_cond_re is a regexp detecting a line continuation ending
 # $line_concat is a CODEref that takes care of concatenating two lines
 sub collect_from_file {

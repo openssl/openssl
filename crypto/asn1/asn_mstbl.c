@@ -50,7 +50,7 @@ void ASN1_add_stable_module(void)
 }
 
 /*
- * Create an table entry based on a name value pair. format is oid_name =
+ * Create a table entry based on a name value pair. format is oid_name =
  * n1:v1, n2:v2,... where name is "min", "max", "mask" or "flags".
  */
 

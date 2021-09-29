@@ -40,8 +40,8 @@ I<a>, I<p>, I<m>, any of which have B<BN_FLG_CONSTTIME> flag.
 BN_mod_exp_mont_consttime_x2() computes two independent exponentiations I<a1> to
 the I<p1>-th power modulo I<m1> (C<rr1=a1^p1 % m1>) and I<a2> to the I<p2>-th
 power modulo I<m2> (C<rr2=a2^p2 % m2>) using Montgomery multiplication. For some
-fixed and equal modulus sizes I<m1> and I<m2> it uses optimizations that allow
-to speedup two exponentiations. In all other cases the function reduces to two
+fixed and equal modulus sizes I<m1> and I<m2> it uses optimizations that allow 
+one to speedup two exponentiations. In all other cases the function reduces to two
 calls of L<BN_mod_exp_mont_consttime(3)>.
 
 =head1 RETURN VALUES

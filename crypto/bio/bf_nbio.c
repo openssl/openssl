@@ -33,7 +33,7 @@ typedef struct nbio_test_st {
 
 static const BIO_METHOD methods_nbiof = {
     BIO_TYPE_NBIO_TEST,
-    "non-blocking IO test filter",
+    "nonblocking IO test filter",
     bwrite_conv,
     nbiof_write,
     bread_conv,

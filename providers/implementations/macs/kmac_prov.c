@@ -464,7 +464,7 @@ static unsigned int get_encode_size(size_t bits)
  * to the end of the buffer. Returns an array of bytes 'out' of size
  * *out_len.
  *
- * e.g if bits = 32, out[2] = { 0x20, 0x01 }
+ * e.g. if bits = 32, out[2] = { 0x20, 0x01 }
  */
 static int right_encode(unsigned char *out, size_t out_max_len, size_t *out_len,
                         size_t bits)

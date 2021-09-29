@@ -63,7 +63,7 @@ void OSSL_PARAM_set_all_unmodified(OSSL_PARAM *p)
             p++->return_size = OSSL_PARAM_UNMODIFIED;
 }
 
-/* Return non-zero if the signed number is negative */
+/* Return nonzero if the signed number is negative */
 static int is_negative(const void *number, size_t s)
 {
     const unsigned char *n = number;

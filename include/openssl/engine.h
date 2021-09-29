@@ -77,7 +77,7 @@ extern "C" {
 
 /*
  * This flag is for ENGINEs who return new duplicate structures when found
- * via "ENGINE_by_id()". When an ENGINE must store state (eg. if
+ * via "ENGINE_by_id()". When an ENGINE must store state (e.g. if
  * ENGINE_ctrl() commands are called in sequence as part of some stateful
  * process like key-generation setup and execution), it can set this flag -
  * then each attempt to obtain the ENGINE will result in it being copied into
@@ -129,10 +129,10 @@ extern "C" {
 /*
  * NB: These 3 control commands are deprecated and should not be used.
  * ENGINEs relying on these commands should compile conditional support for
- * compatibility (eg. if these symbols are defined) but should also migrate
+ * compatibility (e.g. if these symbols are defined) but should also migrate
  * the same functionality to their own ENGINE-specific control functions that
  * can be "discovered" by calling applications. The fact these control
- * commands wouldn't be "executable" (ie. usable by text-based config)
+ * commands wouldn't be "executable" (i.e. usable by text-based config)
  * doesn't change the fact that application code can find and use them
  * without requiring per-ENGINE hacking.
  */
@@ -155,7 +155,7 @@ extern "C" {
                                                    * interface */
 #  define ENGINE_CTRL_LOAD_CONFIGURATION          6/* Load a configuration,
                                                    * given a string that
-                                                   * represents a file name
+                                                   * represents a filename
                                                    * or so */
 #  define ENGINE_CTRL_LOAD_SECTION                7/* Load data from a given
                                                    * section in the already
@@ -176,7 +176,7 @@ extern "C" {
  */
 
 /*
- * Returns non-zero if the supplied ENGINE has a ctrl() handler. If "not",
+ * Returns nonzero if the supplied ENGINE has a ctrl() handler. If "not",
  * then all the remaining control commands will return failure, so it is
  * worth checking this first if the caller is trying to "discover" the
  * engine's capabilities and doesn't want errors generated unnecessarily.
@@ -219,7 +219,7 @@ extern "C" {
 
 /*
  * ENGINE implementations should start the numbering of their own control
- * commands from this value. (ie. ENGINE_CMD_BASE, ENGINE_CMD_BASE + 1, etc).
+ * commands from this value. (i.e. ENGINE_CMD_BASE, ENGINE_CMD_BASE + 1, etc).
  */
 #  define ENGINE_CMD_BASE                         200
 
@@ -249,7 +249,7 @@ extern "C" {
  * framework to handle the above 'ENGINE_CMD_***'-manipulation commands on
  * its behalf, it should supply a null-terminated array of ENGINE_CMD_DEFN
  * entries to ENGINE_set_cmd_defns(). It should also implement a ctrl()
- * handler that supports the stated commands (ie. the "cmd_num" entries as
+ * handler that supports the stated commands (i.e. the "cmd_num" entries as
  * described by the array). NB: The array must be ordered in increasing order
  * of cmd_num. "null-terminated" means that the last ENGINE_CMD_DEFN element
  * has cmd_num set to zero and/or cmd_name set to NULL.
@@ -458,7 +458,7 @@ OSSL_DEPRECATEDIN_3_0 int ENGINE_ctrl_cmd(ENGINE *e, const char *cmd_name,
  * called using 'arg' as an argument (unless the ENGINE doesn't support such
  * a command, in which case no control command is called). The command is
  * checked for input flags, and if necessary the argument will be converted
- * to a numeric value. If cmd_optional is non-zero, then if the ENGINE
+ * to a numeric value. If cmd_optional is nonzero, then if the ENGINE
  * doesn't support the given cmd_name the return value will be success
  * anyway. This function is intended for applications to use so that users
  * (or config files) can supply engine-specific config data to the ENGINE at
@@ -604,7 +604,7 @@ OSSL_DEPRECATEDIN_3_0 int ENGINE_get_flags(const ENGINE *e);
  * functions are useful for iterating the list of available engine types,
  * creating new engine types, and other "list" operations. These functions
  * actually deal with ENGINEs that are to be used. As such these functions
- * can fail (if applicable) when particular engines are unavailable - eg. if
+ * can fail (if applicable) when particular engines are unavailable - e.g. if
  * a hardware accelerator is not attached or not functioning correctly. Each
  * ENGINE has 2 reference counts; structural and functional. Every time a
  * functional reference is obtained or released, a corresponding structural
@@ -612,7 +612,7 @@ OSSL_DEPRECATEDIN_3_0 int ENGINE_get_flags(const ENGINE *e);
  */
 
 /*
- * Initialise a engine type for use (or up its reference count if it's
+ * Initialise an engine type for use (or up its reference count if it's
  * already in use). This will fail if the engine is not currently operational
  * and cannot initialise.
  */
@@ -620,7 +620,7 @@ OSSL_DEPRECATEDIN_3_0 int ENGINE_get_flags(const ENGINE *e);
 OSSL_DEPRECATEDIN_3_0 int ENGINE_init(ENGINE *e);
 #  endif
 /*
- * Free a functional reference to a engine type. This does not require a
+ * Free a functional reference to an engine type. This does not require a
  * corresponding call to ENGINE_free as it also releases a structural
  * reference.
  */
@@ -676,7 +676,7 @@ OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_get_pkey_asn1_meth_engine(int nid);
 
 /*
  * This sets a new default ENGINE structure for performing RSA operations. If
- * the result is non-zero (success) then the ENGINE structure will have had
+ * the result is nonzero (success) then the ENGINE structure will have had
  * its reference count up'd so the caller should still free their own
  * reference 'e'.
  */
@@ -807,7 +807,7 @@ typedef int (*dynamic_bind_engine) (ENGINE *e, const char *id,
 
 /*
  * If the loading application (or library) and the loaded ENGINE library
- * share the same static data (eg. they're both dynamically linked to the
+ * share the same static data (e.g. they're both dynamically linked to the
  * same libcrypto.so) we need a way to avoid trying to set system callbacks -
  * this would fail, and for the same reason that it's unnecessary to try. If
  * the loaded ENGINE has (or gets from through the loader) its own copy of

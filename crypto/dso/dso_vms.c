@@ -56,8 +56,8 @@ static DSO_METHOD dso_meth_vms = {
 };
 
 /*
- * On VMS, the only "handle" is the file name.  LIB$FIND_IMAGE_SYMBOL depends
- * on the reference to the file name being the same for all calls regarding
+ * On VMS, the only "handle" is the filename.  LIB$FIND_IMAGE_SYMBOL depends
+ * on the reference to the filename being the same for all calls regarding
  * one shared image, so we'll just store it in an instance of the following
  * structure and put a pointer to that instance in the meth_data stack.
  */
@@ -392,7 +392,7 @@ static char *vms_merger(DSO *dso, const char *filespec1,
     filespec2len = strlen(filespec2);
 
 # if __INITIAL_POINTER_SIZE == 64
-    /* Copy the file names to storage with a 32-bit pointer. */
+    /* Copy the filenames to storage with a 32-bit pointer. */
     filespec1_32p = filespec1_32;
     filespec2_32p = filespec2_32;
     strcpy(filespec1_32p, filespec1);

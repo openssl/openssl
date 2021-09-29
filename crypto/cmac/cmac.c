@@ -8,7 +8,7 @@
  */
 
 /*
- * CMAC low level APIs are deprecated for public use, but still ok for internal
+ * CMAC low-level APIs are deprecated for public use, but still ok for internal
  * use.
  */
 #include "internal/deprecated.h"
@@ -240,7 +240,7 @@ int CMAC_resume(CMAC_CTX *ctx)
         return 0;
     /*
      * The buffer "tbl" contains the last fully encrypted block which is the
-     * last IV (or all zeroes if no last encrypted block). The last block has
+     * last IV (or all zeros if no last encrypted block). The last block has
      * not been modified since CMAC_final(). So reinitialising using the last
      * decrypted block will allow CMAC to continue after calling
      * CMAC_Final().

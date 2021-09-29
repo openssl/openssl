@@ -46,7 +46,7 @@ static int test_print_error_format(void)
      * "library" name --------------------------++ || || || ||
      * function name ------------------------------++ || || ||
      * reason string (system error string) -----------++ || ||
-     * file name ----------------------------------------++ ||
+     * filename ----------------------------------------++ ||
      * line number -----------------------------------------++
      */
     char expected[512];
@@ -146,7 +146,7 @@ static int raised_error(void)
     unsigned long e;
 
     /*
-     * When OPENSSL_NO_ERR or OPENSSL_NO_FILENAMES, no file name or line
+     * When OPENSSL_NO_ERR or OPENSSL_NO_FILENAMES, no filename or line
      * number is saved, so no point checking them.
      */
 #if !defined(OPENSSL_NO_FILENAMES) && !defined(OPENSSL_NO_ERR)

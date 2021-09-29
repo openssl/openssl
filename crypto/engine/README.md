@@ -18,7 +18,7 @@ equally to EVP_MD for digests) is both a "method" and a algorithm/mode
 identifier that, in the current API, "lingers". These cipher description +
 implementation structures can be defined or obtained directly by applications,
 or can be loaded "en masse" into EVP storage so that they can be catalogued and
-searched in various ways, ie. two ways of encrypting with the "des_cbc"
+searched in various ways, i.e. two ways of encrypting with the "des_cbc"
 algorithm/mode pair are;
 
     (i) directly;
@@ -34,7 +34,7 @@ algorithm/mode pair are;
 
 The latter is more generally used because it also allows ciphers/digests to be
 looked up based on other identifiers which can be useful for automatic cipher
-selection, eg. in SSL/TLS, or by user-controllable configuration.
+selection, e.g. in SSL/TLS, or by user-controllable configuration.
 
 The important point about this is that EVP_CIPHER definitions and structures are
 passed around with impunity and there is no safe way, without requiring massive
@@ -42,7 +42,7 @@ rewrites of many applications, to assume that EVP_CIPHERs can be reference
 counted. One an EVP_CIPHER is exposed to the caller, neither it nor anything it
 comes from can "safely" be destroyed. Unless of course the way of getting to
 such ciphers is via entirely distinct API calls that didn't exist before.
-However existing API usage cannot be made to understand when an EVP_CIPHER
+However, existing API usage cannot be made to understand when an EVP_CIPHER
 pointer, that has been passed to the caller, is no longer being used.
 
 The other problem with the existing API w.r.t. to hooking EVP_CIPHER support
@@ -62,13 +62,13 @@ they are available *because* they're part of a giant ENGINE called "openssl".
 Ie. all implementations *have* to come from an ENGINE, but we get round that by
 having a giant ENGINE with all the software support encapsulated. This creates
 linker hassles if nothing else - linking a 1-line application that calls 2 basic
-RSA functions (eg. "RSA_free(RSA_new());") will result in large quantities of
+RSA functions (e.g. "RSA_free(RSA_new());") will result in large quantities of
 ENGINE code being linked in *and* because of that DSA, DH, and RAND also. If we
 continue with this approach for EVP_CIPHER support (even if it *was* possible)
 we would lose our ability to link selectively by selectively loading certain
 implementations of certain functionality. Touching any part of any kind of
 crypto would result in massive static linkage of everything else. So the
-solution is to change the way ENGINE feeds existing "classes", ie. how the
+solution is to change the way ENGINE feeds existing "classes", i.e. how the
 hooking to ENGINE works from RSA, DSA, DH, RAND, as well as adding new hooking
 for EVP_CIPHER, and EVP_MD.
 
@@ -137,7 +137,7 @@ to a potentially NULL "ENGINE_PILE". An ENGINE_PILE is essentially a list of
 pointers to ENGINEs that implement that particular 'nid'. Each "pile" uses some
 caching tricks such that requests on that 'nid' will be cached and all future
 requests will return immediately (well, at least with minimal operation) unless
-a change is made to the pile, eg. perhaps an ENGINE was unloaded. The reason is
+a change is made to the pile, e.g. perhaps an ENGINE was unloaded. The reason is
 that an application could have support for 10 ENGINEs statically linked
 in, and the machine in question may not have any of the hardware those 10
 ENGINEs support. If each of those ENGINEs has a "des_cbc" implementation, we
@@ -152,7 +152,7 @@ implementations of "des_cbc" are added or removed. This behaviour can be
 tweaked; the ENGINE_TABLE_FLAG_NOINIT value can be passed to
 ENGINE_set_table_flags(), in which case the only ENGINEs that tb_cipher.c will
 try to initialise from the "pile" will be those that are already initialised
-(ie. it's simply an increment of the functional reference count, and no real
+(i.e. it's simply an increment of the functional reference count, and no real
 "initialisation" will take place).
 
 RSA, DSA, DH, and RAND all have their own ENGINE_TABLE code as well, and the
@@ -165,7 +165,7 @@ or will have a single ENGINE_PILE hashed to by the 'nid' 1 and that pile
 represents ENGINEs that implement the single "type" of RSA there is.
 
 Cleanup - the registration and unregistration may pose questions about how
-cleanup works with the ENGINE_PILE doing all this caching nonsense (ie. when the
+cleanup works with the ENGINE_PILE doing all this caching nonsense (i.e. when the
 application or EVP_CIPHER code releases its last reference to an ENGINE, the
 ENGINE_PILE code may still have references and thus those ENGINEs will stay
 hooked in forever). The way this is handled is via "unregistration". With these
@@ -174,7 +174,7 @@ is an algorithm-agnostic process. Even if initialised, it will not have
 registered any of its implementations (to do so would link all class "table"
 code despite the fact the application may use only ciphers, for example). This
 is deliberately a distinct step. Moreover, registration and unregistration has
-nothing to do with whether an ENGINE is *functional* or not (ie. you can even
+nothing to do with whether an ENGINE is *functional* or not (i.e. you can even
 register an ENGINE and its implementations without it being operational, you may
 not even have the drivers to make it operate). What actually happens with
 respect to cleanup is managed inside eng_lib.c with the `engine_cleanup_***`
@@ -187,7 +187,7 @@ registered an implementation, the code will simply return NULL and the tb_rsa.c
 state will be unchanged. Thus, no cleanup is required unless registration takes
 place. ENGINE_cleanup() will simply iterate across a list of registered cleanup
 callbacks calling each in turn, and will then internally delete its own storage
-(a STACK). When a cleanup callback is next registered (eg. if the cleanup() is
+(a STACK). When a cleanup callback is next registered (e.g. if the cleanup() is
 part of a graceful restart and the application wants to cleanup all state then
 start again), the internal STACK storage will be freshly allocated. This is much
 the same as the situation in the ENGINE_TABLE instantiations ... NULL is the

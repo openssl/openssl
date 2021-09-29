@@ -91,7 +91,7 @@ OSSL_DEPRECATEDIN_3_0 int OSSL_STORE_vctrl(OSSL_STORE_CTX *ctx, int cmd,
 /*
  * Read one data item (a key, a cert, a CRL) that is supported by the OSSL_STORE
  * functionality, given a context.
- * Returns a OSSL_STORE_INFO pointer, from which OpenSSL typed data can be
+ * Returns an OSSL_STORE_INFO pointer, from which OpenSSL typed data can be
  * extracted with OSSL_STORE_INFO_get0_PKEY(), OSSL_STORE_INFO_get0_CERT(), ...
  * NULL is returned on error, which may include that the data found at the URI
  * can't be figured out for certain or is ambiguous.
@@ -142,7 +142,7 @@ OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bio, const char *scheme,
  */
 
 /*
- * Types of data that can be ossl_stored in a OSSL_STORE_INFO.
+ * Types of data that can be ossl_stored in an OSSL_STORE_INFO.
  * OSSL_STORE_INFO_NAME is typically found when getting a listing of
  * available "files" / "tokens" / what have you.
  */
@@ -170,7 +170,7 @@ OSSL_STORE_INFO *OSSL_STORE_INFO_new_CERT(X509 *x509);
 OSSL_STORE_INFO *OSSL_STORE_INFO_new_CRL(X509_CRL *crl);
 
 /*
- * Functions to try to extract data from a OSSL_STORE_INFO.
+ * Functions to try to extract data from an OSSL_STORE_INFO.
  */
 int OSSL_STORE_INFO_get_type(const OSSL_STORE_INFO *info);
 void *OSSL_STORE_INFO_get0_data(int type, const OSSL_STORE_INFO *info);

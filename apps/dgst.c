@@ -459,7 +459,7 @@ static void show_digests(const OBJ_NAME *name, void *arg)
     struct doall_dgst_digests *dec = (struct doall_dgst_digests *)arg;
     const EVP_MD *md = NULL;
 
-    /* Filter out signed digests (a.k.a signature algorithms) */
+    /* Filter out signed digests (aka signature algorithms) */
     if (strstr(name->name, "rsa") != NULL || strstr(name->name, "RSA") != NULL)
         return;
 

@@ -14,9 +14,9 @@
 
 /*
  * This file has no dependencies on the rest of libssl because it is shared
- * with the providers. It contains functions for low level CBC TLS padding
+ * with the providers. It contains functions for low-level CBC TLS padding
  * removal. Responsibility for this lies with the cipher implementations in the
- * providers. However there are legacy code paths in libssl which also need to
+ * providers. However, there are legacy code paths in libssl which also need to
  * do this. In time those legacy code paths can be removed and this file can be
  * moved out of libssl.
  */
@@ -149,7 +149,7 @@ int tls1_cbc_remove_padding_and_mac(size_t *reclen,
          * then that many bytes of padding, all with the same value as the
          * length byte. Thus, with the length byte included, there are i+1 bytes
          * of padding. We can't check just |padding_length+1| bytes because that
-         * leaks decrypted information. Therefore we always have to check the
+         * leaks decrypted information. Therefore, we always have to check the
          * maximum amount of padding possible. (Again, the length of the record
          * is public information so we can use it.)
          */
@@ -162,7 +162,7 @@ int tls1_cbc_remove_padding_and_mac(size_t *reclen,
             unsigned char b = recdata[*reclen - 1 - i];
             /*
              * The final |padding_length+1| bytes should all have the value
-             * |padding_length|. Therefore the XOR should be zero.
+             * |padding_length|. Therefore, the XOR should be zero.
              */
             good &= ~(mask & (padding_length ^ b));
         }

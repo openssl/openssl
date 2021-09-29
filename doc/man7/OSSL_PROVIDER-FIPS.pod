@@ -204,7 +204,7 @@ Known answer test for a symmetric cipher.
 
 =item "KAT_AsymmetricCipher" (B<OSSL_SELF_TEST_TYPE_KAT_ASYM_CIPHER>)
 
-Known answer test for a asymmetric cipher.
+Known answer test for an asymmetric cipher.
 
 =item "KAT_Digest" (B<OSSL_SELF_TEST_TYPE_KAT_DIGEST>)
 

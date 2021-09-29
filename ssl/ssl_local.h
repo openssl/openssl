@@ -682,7 +682,7 @@ typedef enum {
 
 /*
  * We check that the amount of unreadable early data doesn't exceed
- * max_early_data. max_early_data is given in plaintext bytes. However if it is
+ * max_early_data. max_early_data is given in plaintext bytes. However, if it is
  * unreadable then we only know the number of ciphertext bytes. We also don't
  * know how much the overhead should be because it depends on the ciphersuite.
  * We make a small allowance. We assume 5 records of actual data plus the end
@@ -868,7 +868,7 @@ struct ssl_ctx_st {
     /*
      * If this callback is not null, it will be called each time a session id
      * is added to the cache.  If this function returns 1, it means that the
-     * callback will do a SSL_SESSION_free() when it has finished using it.
+     * callback will do an SSL_SESSION_free() when it has finished using it.
      * Otherwise, on 0, it means the callback has finished with it. If
      * remove_session_cb is not null, it will be called when a session-id is
      * removed from the cache.  After the call, OpenSSL will
@@ -1223,7 +1223,7 @@ struct ssl_st {
     BIO *bbio;
     /*
      * This holds a variable that indicates what we were doing when a 0 or -1
-     * is returned.  This is needed for non-blocking IO so we know what
+     * is returned.  This is needed for nonblocking IO so we know what
      * request needs re-doing when in SSL_accept or SSL_connect
      */
     int rwstate;

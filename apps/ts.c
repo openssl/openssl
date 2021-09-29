@@ -560,7 +560,7 @@ static ASN1_INTEGER *create_nonce(int bits)
     if (RAND_bytes(buf, len) <= 0)
         goto err;
 
-    /* Find the first non-zero byte and creating ASN1_INTEGER object. */
+    /* Find the first nonzero byte and creating ASN1_INTEGER object. */
     for (i = 0; i < len && !buf[i]; ++i)
         continue;
     if ((nonce = ASN1_INTEGER_new()) == NULL)

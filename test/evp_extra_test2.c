@@ -12,7 +12,7 @@
 
 /*
  * Really these tests should be in evp_extra_test - but that doesn't
- * yet support testing with a non-default libctx. Once it does we should move
+ * yet support testing with a nondefault libctx. Once it does we should move
  * everything into one file. Consequently some things are duplicated between
  * the two files.
  */

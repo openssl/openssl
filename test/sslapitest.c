@@ -8,7 +8,7 @@
  */
 
 /*
- * We need access to the deprecated low level HMAC APIs for legacy purposes
+ * We need access to the deprecated low-level HMAC APIs for legacy purposes
  * when the deprecated calls are not hidden
  */
 #ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -844,7 +844,7 @@ static int test_ccs_change_cipher(void)
     size_t readbytes;
 
     /*
-     * Create a conection so we can resume and potentially (but not) use
+     * Create a connection so we can resume and potentially (but not) use
      * a different cipher in the second connection.
      */
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
@@ -3966,7 +3966,7 @@ static int test_early_data_psk(int idx)
         /*
          * Set inconsistent SNI (server side). In this case the connection
          * will succeed and accept early_data. In TLSv1.3 on the server side SNI
-         * is associated with each handshake - not the session. Therefore it
+         * is associated with each handshake - not the session. Therefore, it
          * should not matter that we used a different server name last time.
          */
         SSL_SESSION_free(serverpsk);
@@ -4321,15 +4321,15 @@ static int test_early_data_tls1_2(int idx)
  * Test configuring the TLSv1.3 ciphersuites
  *
  * Test 0: Set a default ciphersuite in the SSL_CTX (no explicit cipher_list)
- * Test 1: Set a non-default ciphersuite in the SSL_CTX (no explicit cipher_list)
+ * Test 1: Set a nondefault ciphersuite in the SSL_CTX (no explicit cipher_list)
  * Test 2: Set a default ciphersuite in the SSL (no explicit cipher_list)
- * Test 3: Set a non-default ciphersuite in the SSL (no explicit cipher_list)
+ * Test 3: Set a nondefault ciphersuite in the SSL (no explicit cipher_list)
  * Test 4: Set a default ciphersuite in the SSL_CTX (SSL_CTX cipher_list)
- * Test 5: Set a non-default ciphersuite in the SSL_CTX (SSL_CTX cipher_list)
+ * Test 5: Set a nondefault ciphersuite in the SSL_CTX (SSL_CTX cipher_list)
  * Test 6: Set a default ciphersuite in the SSL (SSL_CTX cipher_list)
- * Test 7: Set a non-default ciphersuite in the SSL (SSL_CTX cipher_list)
+ * Test 7: Set a nondefault ciphersuite in the SSL (SSL_CTX cipher_list)
  * Test 8: Set a default ciphersuite in the SSL (SSL cipher_list)
- * Test 9: Set a non-default ciphersuite in the SSL (SSL cipher_list)
+ * Test 9: Set a nondefault ciphersuite in the SSL (SSL cipher_list)
  */
 static int test_set_ciphersuite(int idx)
 {
@@ -5120,7 +5120,7 @@ static int test_tls13_psk(int idx)
             goto end;
     } else {
         /*
-         * As noted above the server should prefer SHA256 automatically. However
+         * As noted above the server should prefer SHA256 automatically. However,
          * we are careful not to offer TLS_CHACHA20_POLY1305_SHA256 so this same
          * code works even if we are testing with only the FIPS provider loaded.
          */
@@ -7359,7 +7359,7 @@ static int int_test_ssl_get_shared_ciphers(int tst, int clnt)
     /*
      * Regardless of whether we're testing with the FIPS provider loaded into
      * libctx, we want one peer to always use the full set of ciphersuites
-     * available. Therefore we use a separate libctx with the default provider
+     * available. Therefore, we use a separate libctx with the default provider
      * loaded into it. We run the same tests twice - once with the client side
      * having the full set of ciphersuites and once with the server side.
      */
@@ -9377,7 +9377,7 @@ static int test_set_alpn(void)
     if (!TEST_ptr(ctx))
         goto end;
 
-    /* the set_alpn functions return 0 (false) on success, non-zero (true) on failure */
+    /* the set_alpn functions return 0 (false) on success, nonzero (true) on failure */
     if (!TEST_false(SSL_CTX_set_alpn_protos(ctx, NULL, 2)))
         goto end;
     if (!TEST_false(SSL_CTX_set_alpn_protos(ctx, good, 0)))

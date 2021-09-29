@@ -64,7 +64,7 @@ specified, then both Ed25519 and Ed448 are benchmarked.
 
 =head1 EXAMPLES
 
-To sign a message using a ED25519 or ED448 key:
+To sign a message using an ED25519 or ED448 key:
 
     void do_sign(EVP_PKEY *ed_key, unsigned char *msg, size_t msg_len)
     {

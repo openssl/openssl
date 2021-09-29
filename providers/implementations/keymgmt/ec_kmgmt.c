@@ -8,7 +8,7 @@
  */
 
 /*
- * ECDH/ECDSA low level APIs are deprecated for public use, but still ok for
+ * ECDH/ECDSA low-level APIs are deprecated for public use, but still ok for
  * internal use.
  */
 #include "internal/deprecated.h"
@@ -147,7 +147,7 @@ int key_to_params(const EC_KEY *eckey, OSSL_PARAM_BLD *tmpl,
         }
 
         if (p != NULL || tmpl != NULL) {
-            /* convert pub_point to a octet string according to the SECG standard */
+            /* convert pub_point to an octet string according to the SECG standard */
             if ((pub_key_len = EC_POINT_point2buf(ecg, pub_point,
                                                   POINT_CONVERSION_COMPRESSED,
                                                   pub_key, bnctx)) == 0

@@ -797,7 +797,7 @@ const OPTIONS s_server_options[] = {
      "Servername for HostName TLS extension"},
     {"servername_fatal", OPT_SERVERNAME_FATAL, '-',
      "On servername mismatch send fatal alert (default warning alert)"},
-    {"nbio_test", OPT_NBIO_TEST, '-', "Test with the non-blocking test bio"},
+    {"nbio_test", OPT_NBIO_TEST, '-', "Test with the nonblocking test bio"},
     {"crlf", OPT_CRLF, '-', "Convert LF from terminal into CRLF"},
     {"quiet", OPT_QUIET, '-', "No server output"},
     {"no_resume_ephemeral", OPT_NO_RESUME_EPHEMERAL, '-',
@@ -880,7 +880,7 @@ const OPTIONS s_server_options[] = {
     {"keylogfile", OPT_KEYLOG_FILE, '>', "Write TLS secrets to file"},
 
     OPT_SECTION("Network"),
-    {"nbio", OPT_NBIO, '-', "Use non-blocking IO"},
+    {"nbio", OPT_NBIO, '-', "Use nonblocking IO"},
     {"timeout", OPT_TIMEOUT, '-', "Enable timeouts"},
     {"mtu", OPT_MTU, 'p', "Set link-layer MTU"},
     {"read_buf", OPT_READ_BUF, 'p',
@@ -3263,7 +3263,7 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
 
             if (*e == '\0') {
                 BIO_puts(io, text);
-                BIO_printf(io, "'%s' is an invalid file name\r\n", p);
+                BIO_printf(io, "'%s' is an invalid filename\r\n", p);
                 break;
             }
             *e = '\0';
@@ -3566,8 +3566,8 @@ static int generate_session_id(SSL *ssl, unsigned char *id,
             return 0;
         /*
          * Prefix the session_id with the required prefix. NB: If our prefix
-         * is too long, clip it - but there will be worse effects anyway, eg.
-         * the server could only possibly create 1 session ID (ie. the
+         * is too long, clip it - but there will be worse effects anyway, e.g.
+         * the server could only possibly create 1 session ID (i.e. the
          * prefix!) so all future session negotiations will fail due to
          * conflicts.
          */

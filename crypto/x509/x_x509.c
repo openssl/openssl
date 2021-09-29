@@ -55,7 +55,7 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 #endif
         ASN1_OCTET_STRING_free(ret->distinguishing_id);
 
-        /* fall thru */
+        /* fall through */
 
     case ASN1_OP_NEW_POST:
         ret->ex_cached = 0;

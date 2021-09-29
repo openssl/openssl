@@ -116,7 +116,7 @@ void CRYPTO_ccm128_aad(CCM128_CONTEXT *ctx,
 
 /*
  * counter part of nonce may not be larger than L*8 bits, L is not larger
- * than 8, therefore 64-bit counter...
+ * than 8, therefore, 64-bit counter...
  */
 static void ctr64_inc(unsigned char *counter)
 {

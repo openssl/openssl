@@ -14,7 +14,7 @@ first time that an algorithm is fetched from a provider or a function
 acting on providers is called and no other provider has been loaded yet.
 
 If an attempt to load a provider has already been made (whether successful
-or not) then the default provider won't be loaded automatically. Therefore
+or not) then the default provider won't be loaded automatically. Therefore,
 if the default provider is to be used in conjunction with other providers
 then it must be loaded explicitly. Automatic loading of the default
 provider only occurs a maximum of once; if the default provider is

@@ -197,7 +197,7 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt,
     }
 
     /*
-     * We only support EC groups in TLSv1.2 or below, and in DTLS. Therefore
+     * We only support EC groups in TLSv1.2 or below, and in DTLS. Therefore,
      * if we don't have EC support then we don't send this extension.
      */
     if (!use_ecc(s, min_version, max_version)
@@ -914,7 +914,7 @@ EXT_RETURN tls_construct_ctos_padding(SSL *s, WPACKET *pkt,
     /*
      * Add padding to workaround bugs in F5 terminators. See RFC7685.
      * This code calculates the length of all extensions added so far but
-     * excludes the PSK extension (because that MUST be written last). Therefore
+     * excludes the PSK extension (because that MUST be written last). Therefore,
      * this extension MUST always appear second to last.
      */
     if (!WPACKET_get_total_written(pkt, &hlen)) {

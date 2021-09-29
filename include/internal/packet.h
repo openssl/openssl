@@ -634,7 +634,7 @@ struct wpacket_st {
     /* Number of bytes written so far */
     size_t written;
 
-    /* Maximum number of bytes we will allow to be written to this WPACKET */
+    /* Maximum number of bytes allowed to be written to this WPACKET */
     size_t maxsize;
 
     /* Our sub-packets (always at least one if not finished) */
@@ -750,7 +750,7 @@ int WPACKET_start_sub_packet_len__(WPACKET *pkt, size_t lenbytes);
     WPACKET_start_sub_packet_len__((pkt), 4)
 
 /*
- * Same as WPACKET_start_sub_packet_len__() except no bytes are pre-allocated
+ * Same as WPACKET_start_sub_packet_len__() except no bytes are preallocated
  * for the sub-packet length.
  */
 int WPACKET_start_sub_packet(WPACKET *pkt);

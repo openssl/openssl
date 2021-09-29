@@ -32,7 +32,7 @@ OpenSSL 3.0
   * Enhanced 'openssl list' with many new options.
   * Added migration guide to man7.
   * Implemented support for fully "pluggable" TLSv1.3 groups.
-  * Added suport for Kernel TLS (KTLS).
+  * Added support for Kernel TLS (KTLS).
   * Changed the license to the Apache License v2.0.
   * Moved all variations of the EVP ciphers CAST5, BF, IDEA, SEED, RC2,
     RC4, RC5, and DES to the legacy provider.
@@ -49,7 +49,7 @@ OpenSSL 3.0
   * Deprecated the `ENGINE` API.
   * Added `OSSL_LIB_CTX`, a libcrypto library context.
   * Added various `_ex` functions to the OpenSSL API that support using
-    a non-default `OSSL_LIB_CTX`.
+    a nondefault `OSSL_LIB_CTX`.
   * Interactive mode is removed from the 'openssl' program.
   * The X25519, X448, Ed25519, Ed448, SHAKE128 and SHAKE256 algorithms are
     included in the FIPS provider.
@@ -75,7 +75,7 @@ OpenSSL 3.0
   * Deprecated ERR_put_error(), ERR_get_error_line(), ERR_get_error_line_data(),
     ERR_peek_error_line_data(), ERR_peek_last_error_line_data() and
     ERR_func_error_string().
-  * Added OSSL_PROVIDER_available(), to check provider availibility.
+  * Added OSSL_PROVIDER_available(), to check provider availability.
   * Added 'openssl mac' that uses the EVP_MAC API.
   * Added 'openssl kdf' that uses the EVP_KDF API.
   * Add OPENSSL_info() and 'openssl info' to get built-in data.
@@ -691,7 +691,7 @@ OpenSSL 1.0.1
   * PSS signatures in certificates, requests and CRLs.
   * Support for password based recipient info for CMS.
   * Support TLS v1.2 and TLS v1.1.
-  * Preliminary FIPS capability for unvalidated 2.0 FIPS module.
+  * Preliminary FIPS capability for not-validated 2.0 FIPS module.
   * SRP support.
 
 OpenSSL 1.0.0
@@ -844,7 +844,7 @@ OpenSSL 1.0.0
   * Multiple signer and signer add support for PKCS#7 and CMS.
   * ASN1 printing support.
   * Whirlpool hash algorithm added.
-  * RFC3161 time stamp support.
+  * RFC3161 timestamp support.
   * New generalised public key API supporting ENGINE based algorithms.
   * New generalised public key API utilities.
   * New ENGINE supporting GOST algorithms.
@@ -1372,7 +1372,7 @@ OpenSSL 0.9.x
   * Added BIO proxy and filtering functionality
   * Extended Big Number (BN) library
   * Added RIPE MD160 message digest
-  * Added support for RC2/64bit cipher
+  * Added support for RC2/64-bit cipher
   * Extended ASN.1 parser routines
   * Adjustments of the source tree for CVS
   * Support for various new platforms

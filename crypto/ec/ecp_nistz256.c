@@ -19,7 +19,7 @@
  */
 
 /*
- * ECDSA low level APIs are deprecated for public use, but still ok for
+ * ECDSA low-level APIs are deprecated for public use, but still ok for
  * internal use.
  */
 #include "internal/deprecated.h"
@@ -390,7 +390,7 @@ static void ecp_nistz256_point_add(P256_POINT *r,
      *
      * When both points are inverse of each other, we know that the affine
      * x-coordinates are equal, and the y-coordinates have different sign.
-     * Therefore since U1 = U2, we know H = 0, and therefore Z3 = H*Z1*Z2
+     * Therefore, since U1 = U2, we know H = 0, and therefore Z3 = H*Z1*Z2
      * will equal 0, thus the result is infinity, if we simply let this
      * function continue normally.
      *
@@ -687,7 +687,7 @@ __owur static int ecp_nistz256_windowed_mul(const EC_GROUP *group,
         }
 
         /*
-         * row[0] is implicitly (0,0,0) (the point at infinity), therefore it
+         * row[0] is implicitly (0,0,0) (the point at infinity), therefore, it
          * is not stored. All other values are actually stored with an offset
          * of -1 in table.
          */
@@ -1356,7 +1356,7 @@ static int ecp_nistz256_inv_mod_ord(const EC_GROUP *group, BIGNUM *r,
     }
 
     /*
-     * The top 128bit of the exponent are highly redudndant, so we
+     * The top 128-bit of the exponent are highly redudndant, so we
      * perform an optimized flow
      */
     ecp_nistz256_ord_sqr_mont(t, table[15-1], 4);   /* f0 */

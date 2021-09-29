@@ -8,7 +8,7 @@
  */
 
 /*
- * This file uses the low level AES and engine functions (which are deprecated
+ * This file uses the low-level AES and engine functions (which are deprecated
  * for non-internal use) in order to implement the padlock engine AES ciphers.
  */
 #define OPENSSL_SUPPRESS_DEPRECATED
@@ -58,7 +58,7 @@ void engine_load_padlock_int(void)
     ENGINE_free(toadd);
     /*
      * If the "add" didn't work, it was probably a conflict because it was
-     * already added (eg. someone calling ENGINE_load_blah then calling
+     * already added (e.g. someone calling ENGINE_load_blah then calling
      * ENGINE_load_builtin_engines() perhaps).
      */
     ERR_pop_to_mark();

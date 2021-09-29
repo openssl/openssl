@@ -54,15 +54,15 @@ int ASN1_INTEGER_cmp(const ASN1_INTEGER *x, const ASN1_INTEGER *y)
  * The DER representation of negative integers is in 2s complement form.
  * The internal form is converted by complementing each octet and finally
  * adding one to the result. This can be done less messily with a little trick.
- * If the internal form has trailing zeroes then they will become FF by the
+ * If the internal form has trailing zeros then they will become FF by the
  * complement and 0 by the add one (due to carry) so just copy as many trailing
  * zeros to the destination as there are in the source. The carry will add one
  * to the last none zero octet: so complement this octet and add one and finally
  * complement any left over until you get to the start of the string.
  *
  * Padding is a little trickier too. If the first bytes is > 0x80 then we pad
- * with 0xff. However if the first byte is 0x80 and one of the following bytes
- * is non-zero we pad with 0xff. The reason for this distinction is that 0x80
+ * with 0xff. However, if the first byte is 0x80 and one of the following bytes
+ * is nonzero we pad with 0xff. The reason for this distinction is that 0x80
  * followed by optional zeros isn't padded.
  */
 
@@ -133,7 +133,7 @@ static size_t i2c_ibuf(const unsigned char *b, size_t blen, int neg,
 
     /*
      * This magically handles all corner cases, such as '(b == NULL ||
-     * blen == 0)', non-negative value, "negative" zero, 0x80 followed
+     * blen == 0)', nonnegative value, "negative" zero, 0x80 followed
      * by any number of zeros...
      */
     *p = pb;

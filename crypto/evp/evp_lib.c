@@ -186,7 +186,7 @@ int evp_cipher_asn1_to_param_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
      *
      * Otherwise, for provided implementations, we get the AI parameter
      * in DER encoded form from the implementation by requesting the
-     * appropriate OSSL_PARAM and converting the result to a ASN1_TYPE.
+     * appropriate OSSL_PARAM and converting the result to an ASN1_TYPE.
      *
      * If none of the above applies, this operation is unsupported.
      */
@@ -1013,7 +1013,7 @@ EVP_PKEY_CTX *EVP_MD_CTX_get_pkey_ctx(const EVP_MD_CTX *ctx)
 void EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx)
 {
     /*
-     * it's reasonable to set NULL pctx (a.k.a clear the ctx->pctx), so
+     * it's reasonable to set NULL pctx (aka clear the ctx->pctx), so
      * we have to deal with the cleanup job here.
      */
     if (!EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX))

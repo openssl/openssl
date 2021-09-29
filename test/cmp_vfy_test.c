@@ -415,7 +415,7 @@ static int execute_msg_check_test(CMP_VFY_TEST_FIXTURE *fixture)
                                                fixture->additional_arg)))
         return 0;
 
-    if (fixture->expected == 0) /* error expected aready during above check */
+    if (fixture->expected == 0) /* error expected already during above check */
         return 1;
     return
         TEST_int_eq(0,
@@ -566,7 +566,7 @@ OPT_TEST_DECLARE_USAGE(USAGE)
 
 int setup_tests(void)
 {
-    /* Set test time stamps */
+    /* Set test timestamps */
     struct tm ts = { 0 };
 
     ts.tm_year = 2018 - 1900;      /* 2018 */

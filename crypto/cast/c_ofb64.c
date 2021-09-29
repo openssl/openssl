@@ -8,7 +8,7 @@
  */
 
 /*
- * CAST low level APIs are deprecated for public use, but still ok for
+ * CAST low-level APIs are deprecated for public use, but still ok for
  * internal use.
  */
 #include "internal/deprecated.h"
@@ -17,8 +17,8 @@
 #include "cast_local.h"
 
 /*
- * The input and output encrypted as though 64bit ofb mode is being used.
- * The extra state information to record how much of the 64bit block we have
+ * The input and output encrypted as though 64-bit ofb mode is being used.
+ * The extra state information to record how much of the 64-bit block we have
  * used is contained in *num;
  */
 void CAST_ofb64_encrypt(const unsigned char *in, unsigned char *out,

@@ -570,7 +570,7 @@ int tls13_change_cipher_state(SSL *s, int which)
              * write/client read handshake traffic secret. However, if we
              * processed early data then we delay changing the server
              * read/client write cipher state until later, and the handshake
-             * hashes have moved on. Therefore we use the value saved earlier
+             * hashes have moved on. Therefore, we use the value saved earlier
              * when we did the server write/client read change cipher state.
              */
             hash = s->handshake_traffic_hash;

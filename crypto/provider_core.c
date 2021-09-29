@@ -61,7 +61,7 @@
  * safe for multiple threads to read these fields without a lock, because they
  * will never be changed.
  *
- * However some fields may be changed after a structure has been created and
+ * However, some fields may be changed after a structure has been created and
  * shared between multiple threads. Where this is the case a lock is required.
  *
  * The locks available are:
@@ -1653,7 +1653,7 @@ static int ossl_provider_register_child_cb(const OSSL_CORE_HANDLE *handle,
 {
     /*
      * This is really an OSSL_PROVIDER that we created and cast to
-     * OSSL_CORE_HANDLE originally. Therefore it is safe to cast it back.
+     * OSSL_CORE_HANDLE originally. Therefore, it is safe to cast it back.
      */
     OSSL_PROVIDER *thisprov = (OSSL_PROVIDER *)handle;
     OSSL_PROVIDER *prov;
@@ -1729,7 +1729,7 @@ static void ossl_provider_deregister_child_cb(const OSSL_CORE_HANDLE *handle)
 {
     /*
      * This is really an OSSL_PROVIDER that we created and cast to
-     * OSSL_CORE_HANDLE originally. Therefore it is safe to cast it back.
+     * OSSL_CORE_HANDLE originally. Therefore, it is safe to cast it back.
      */
     OSSL_PROVIDER *thisprov = (OSSL_PROVIDER *)handle;
     OSSL_LIB_CTX *libctx = thisprov->libctx;
@@ -1902,7 +1902,7 @@ static void core_vset_error(const OSSL_CORE_HANDLE *handle,
     OSSL_PROVIDER *prov = (OSSL_PROVIDER *)handle;
 
     /*
-     * If the uppermost 8 bits are non-zero, it's an OpenSSL library
+     * If the uppermost 8 bits are nonzero, it's an OpenSSL library
      * error and will be treated as such.  Otherwise, it's a new style
      * provider error and will be treated as such.
      */

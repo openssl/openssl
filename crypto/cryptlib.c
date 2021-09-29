@@ -82,13 +82,13 @@ int OPENSSL_isservice(void)
 #   if 1
     /*
      * This doesn't cover "interactive" services [working with real
-     * WinSta0's] nor programs started non-interactively by Task Scheduler
+     * WinSta0's] nor programs started noninteractively by Task Scheduler
      * [those are working with SAWinSta].
      */
     if (wcsstr(name, L"Service-0x"))
         return 1;
 #   else
-    /* This covers all non-interactive programs such as services. */
+    /* This covers all noninteractive programs such as services. */
     if (!wcsstr(name, L"WinSta0"))
         return 1;
 #   endif

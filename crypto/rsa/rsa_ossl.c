@@ -8,7 +8,7 @@
  */
 
 /*
- * RSA low level APIs are deprecated for public use, but still ok for
+ * RSA low-level APIs are deprecated for public use, but still ok for
  * internal use.
  */
 #include "internal/deprecated.h"
@@ -679,7 +679,7 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 
     if (smooth) {
         /*
-         * Conversion from Montgomery domain, a.k.a. Montgomery reduction,
+         * Conversion from Montgomery domain, aka Montgomery reduction,
          * accepts values in [0-m*2^w) range. w is m's bit width rounded up
          * to limb width. So that at the very least if |I| is fully reduced,
          * i.e. less than p*q, we can count on from-to round to perform

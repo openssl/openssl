@@ -54,7 +54,7 @@ struct X509_extension_st {
 };
 
 /*
- * Method to handle CRL access. In general a CRL could be very large (several
+ * Method to handle CRL access. In general, a CRL could be very large (several
  * Mb) and can consume large amounts of resources if stored in memory by
  * multiple processes. This method allows general CRL operations to be
  * redirected to more efficient callbacks: for example a CRL entry database.

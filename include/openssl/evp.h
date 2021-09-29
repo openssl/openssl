@@ -407,7 +407,7 @@ OSSL_DEPRECATEDIN_3_0 int
 # define         EVP_CTRL_SET_SBOX                       0x1e
 /*
  * EVP_CTRL_SBOX_USED takes a 'size_t' and 'char *', pointing at a
- * pre-allocated buffer with specified size
+ * preallocated buffer with specified size
  */
 # define         EVP_CTRL_SBOX_USED                      0x1f
 /* EVP_CTRL_KEY_MESH takes 'size_t' number of bytes to mesh the key after,

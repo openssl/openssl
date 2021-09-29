@@ -16,12 +16,12 @@ Notes for UNIX-like platforms
  to read your compiler documentation to figure out what is acceptable,
  and `ld(1)` to figure out what linker options are available.
 
- Shared libraries and installation in non-default locations
- ----------------------------------------------------------
+ Shared libraries and installation in nondefault locations
+ ---------------------------------------------------------
 
  Every Unix system has its own set of default locations for shared
  libraries, such as `/lib`, `/usr/lib` or possibly `/usr/local/lib`.  If
- libraries are installed in non-default locations, dynamically linked
+ libraries are installed in nondefault locations, dynamically linked
  binaries will not find them and therefore fail to run, unless they get
  a bit of help from a defined runtime shared library search path.
 
@@ -98,7 +98,7 @@ Notes for UNIX-like platforms
  ------------------------
 
  Third-party applications dynamically linked with OpenSSL (or any other)
- shared library face exactly the same problem with non-default locations.
+ shared library face exactly the same problem with nondefault locations.
  The OpenSSL config options mentioned above might or might not have bearing
  on linking of the target application. "Might" means that under some
  circumstances it would be sufficient to link with OpenSSL shared library

@@ -48,7 +48,7 @@ int RAND_egd_bytes(const char *path, int bytes)
 # else
 struct sockaddr_un {
     short sun_family;           /* AF_UNIX */
-    char sun_path[108];         /* path name (gag) */
+    char sun_path[108];         /* pathname (gag) */
 };
 # endif                         /* NO_SYS_UN_H */
 # include <string.h>
@@ -58,7 +58,7 @@ struct sockaddr_un {
 /*
  * HPNS:
  *
- *  Our current MQ 5.3 EGD requies compatability-mode sockets
+ *  Our current MQ 5.3 EGD requires compatibility-mode sockets
  *  This code forces the mode to compatibility if required
  *  and then restores the mode.
  *

@@ -37,7 +37,7 @@
    compatible API */
 
 /*
- * AES low level APIs are deprecated for public use, but still ok for internal
+ * AES low-level APIs are deprecated for public use, but still ok for internal
  * use where we're using them to implement the higher level EVP interface, as is
  * the case here.
  */
@@ -68,7 +68,7 @@ typedef union {
 
 /*
  * Compute w := (w * x) mod (x^8 + x^4 + x^3 + x^1 + 1)
- * Therefore the name "xtime".
+ * Therefore, the name "xtime".
  */
 static void XtimeWord(u32 *w)
 {

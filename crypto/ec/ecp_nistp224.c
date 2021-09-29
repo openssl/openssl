@@ -24,7 +24,7 @@
  */
 
 /*
- * ECDSA low level APIs are deprecated for public use, but still ok for
+ * ECDSA low-level APIs are deprecated for public use, but still ok for
  * internal use.
  */
 #include "internal/deprecated.h"
@@ -623,7 +623,7 @@ static void felem_contract(felem out, const felem in)
     tmp[3] &= 0x00ffffffffffffff;
     /*
      * Case 2: a = 0 iff p <= in < 2^224, i.e., the high 128 bits are all 1
-     * and the lower part is non-zero
+     * and the lower part is nonzero
      */
     a = ((in[3] & in[2] & (in[1] | 0x000000ffffffffff)) + 1) |
         (((int64_t) (in[0] + (in[1] & 0x000000ffffffffff)) - 1) >> 63);
@@ -638,7 +638,7 @@ static void felem_contract(felem out, const felem in)
 
     /*
      * eliminate negative coefficients: if tmp[0] is negative, tmp[1] must be
-     * non-zero, so we only need one step
+     * nonzero, so we only need one step
      */
     a = tmp[0] >> 63;
     tmp[0] += two56 & a;

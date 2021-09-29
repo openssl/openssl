@@ -153,7 +153,7 @@ Native builds using MinGW
 
 MinGW offers an alternative way to build native OpenSSL, by cross compilation.
 
- * Usually the build is done on Windows in a GNU-like environment called MSYS2.
+ * Usually, the build is done on Windows in a GNU-like environment called MSYS2.
 
    MSYS2 provides GNU tools, a Unix-like command prompt,
    and a UNIX compatibility layer for applications.
@@ -205,7 +205,7 @@ This section applies to all native builds.
 If you link with static OpenSSL libraries then you're expected to
 additionally link your application with WS2_32.LIB, GDI32.LIB,
 ADVAPI32.LIB, CRYPT32.LIB and USER32.LIB. Those developing
-non-interactive service applications might feel concerned about
+noninteractive service applications might feel concerned about
 linking with GDI32.LIB and USER32.LIB, as they are justly associated
 with interactive desktop, which is not available to service
 processes. The toolkit is designed to detect in which context it's

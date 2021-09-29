@@ -8,7 +8,7 @@
  */
 
 /*
- * ECDH and ECDSA low level APIs are deprecated for public use, but still ok
+ * ECDH and ECDSA low-level APIs are deprecated for public use, but still ok
  * for internal use.
  */
 #include "internal/deprecated.h"
@@ -520,7 +520,7 @@ int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     pub_point = EC_KEY_get0_public_key(eckey);
 
     if (pub_point != NULL) {
-        /* convert pub_point to a octet string according to the SECG standard */
+        /* convert pub_point to an octet string according to the SECG standard */
         if ((pub_key_buflen = EC_POINT_point2buf(ecg, pub_point,
                                                  POINT_CONVERSION_COMPRESSED,
                                                  &pub_key_buf, bnctx)) == 0

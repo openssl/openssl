@@ -19,7 +19,7 @@ TS_VERIFY_CTX_set_certs, TS_VERIFY_CTS_set_certs
 The Time-Stamp Protocol (TSP) is defined by RFC 3161. TSP is a protocol used to
 provide long term proof of the existence of a certain datum before a particular
 time. TSP defines a Time Stamping Authority (TSA) and an entity who shall make
-requests to the TSA. Usually the TSA is denoted as the server side and the
+requests to the TSA. Usually, the TSA is denoted as the server side and the
 requesting entity is denoted as the client.
 
 In TSP, when a server is sending a response to a client, the server normally

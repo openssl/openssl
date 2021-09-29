@@ -74,7 +74,7 @@ static int process_glob(WCHAR *wstr, int wlen)
         if (wstr[i] == L'/' || wstr[i] == L'\\')
             slash = i + 1;
     /*
-     * ... then look for asterisk or question mark in the file name.
+     * ... then look for asterisk or question mark in the filename.
      */
     for (i = slash; i < wlen; i++)
         if (wstr[i] == L'*' || wstr[i] == L'?')

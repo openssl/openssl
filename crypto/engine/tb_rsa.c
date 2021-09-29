@@ -53,7 +53,7 @@ int ENGINE_set_default_RSA(ENGINE *e)
 
 /*
  * Exposed API function to get a functional reference from the implementation
- * table (ie. try to get a functional reference from the tabled structural
+ * table (i.e. try to get a functional reference from the tabular structural
  * references).
  */
 ENGINE *ENGINE_get_default_RSA(void)

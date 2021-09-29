@@ -736,7 +736,7 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
 
     /*
      * Due to limitations of the API this can only retrieve a single cert.
-     * However it will fill the cache with all matching certificates,
+     * However, it will fill the cache with all matching certificates,
      * so we can examine the cache for all matches.
      */
     if (store == NULL)

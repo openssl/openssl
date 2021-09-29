@@ -339,7 +339,7 @@ static ssize_t syscall_random(void *buf, size_t buflen)
      *
      *   2 * RAND_POOL_FACTOR * (RAND_DRBG_STRENGTH / 8) = 2^14
      *
-     * which is way below the OSSL_SSIZE_MAX limit. Therefore sign conversion
+     * which is way below the OSSL_SSIZE_MAX limit. Therefore, sign conversion
      * between size_t and ssize_t is safe even without a range check.
      */
 
@@ -802,7 +802,7 @@ int ossl_rand_pool_add_additional_data(RAND_POOL *pool)
 /*
  * Get the current time with the highest possible resolution
  *
- * The time stamp is added to the nonce, so it is optimized for not repeating.
+ * The timestamp is added to the nonce, so it is optimized for not repeating.
  * The current time is ideal for this purpose, provided the computer's clock
  * is synchronized.
  */

@@ -23,9 +23,9 @@ void bn_correct_top(BIGNUM *a);
  * Determine the modified width-(w+1) Non-Adjacent Form (wNAF) of 'scalar'.
  * This is an array r[] of values that are either zero or odd with an
  * absolute value less than 2^w satisfying scalar = \sum_j r[j]*2^j where at
- * most one of any w+1 consecutive digits is non-zero with the exception that
+ * most one of any w+1 consecutive digits is nonzero with the exception that
  * the most significant digit may be only w-1 zeros away from that next
- * non-zero digit.
+ * nonzero digit.
  */
 signed char *bn_compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len);
 
@@ -62,7 +62,7 @@ void bn_set_static_words(BIGNUM *a, const BN_ULONG *words, int size);
 int bn_set_words(BIGNUM *a, const BN_ULONG *words, int num_words);
 
 /*
- * Some BIGNUM functions assume most significant limb to be non-zero, which
+ * Some BIGNUM functions assume most significant limb to be nonzero, which
  * is customarily arranged by bn_correct_top. Output from below functions
  * is not processed with bn_correct_top, and for this reason it may not be
  * returned out of public API. It may only be passed internally into other

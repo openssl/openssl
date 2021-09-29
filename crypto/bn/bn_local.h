@@ -58,7 +58,7 @@
  * produces code that is 2 times faster than system compilers for the big
  * number stuff. For machines with only one compiler (or shared libraries),
  * this should be on.  Again this in only really a problem on machines using
- * "long long's", are 32bit, and are not using my assembler code.
+ * "long long's", are 32-bit, and are not using my assembler code.
  */
 # if defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_WINDOWS) || \
     defined(OPENSSL_SYS_WIN32) || defined(linux)
@@ -120,10 +120,10 @@
 
 /*-
  * Bignum consistency macros
- * There is one "API" macro, bn_fix_top(), for stripping leading zeroes from
+ * There is one "API" macro, bn_fix_top(), for stripping leading zeros from
  * bignum data after direct manipulations on the data. There is also an
  * "internal" macro, bn_check_top(), for verifying that there are no leading
- * zeroes. Unfortunately, some auditing is required due to the fact that
+ * zeros. Unfortunately, some auditing is required due to the fact that
  * bn_fix_top() has become an overabused duct-tape because bignum data is
  * occasionally passed around in an inconsistent state. So the following
  * changes have been made to sort this out;
@@ -136,7 +136,7 @@
  *   - bn_fix_top() maps to bn_check_top() rather than "fixing" anything.
  * The idea is to have debug builds flag up inconsistent bignums when they
  * occur. If that occurs in a bn_fix_top(), we examine the code in question; if
- * the use of bn_fix_top() was appropriate (ie. it follows directly after code
+ * the use of bn_fix_top() was appropriate (i.e. it follows directly after code
  * that manipulates the bignum) it is converted to bn_correct_top(), and if it
  * was not appropriate, we convert it permanently to bn_check_top() and track
  * down the cause of the bug. Eventually, no internal code should be using the

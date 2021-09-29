@@ -253,7 +253,7 @@ void aes_t4_decrypt(const unsigned char *in, unsigned char *out,
 /*
  * Key-length specific subroutines were chosen for following reason.
  * Each SPARC T4 core can execute up to 8 threads which share core's
- * resources. Loading as much key material to registers allows to
+ * resources. Loading as much key material to registers helps to
  * minimize references to shared memory interface, as well as amount
  * of instructions in inner loops [much needed on T4]. But then having
  * non-key-length specific routines would require conditional branches

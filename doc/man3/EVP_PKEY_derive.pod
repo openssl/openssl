@@ -32,7 +32,7 @@ EVP_PKEY_derive_set_peer_ex() sets the peer key: this will normally
 be a public key. The I<validate_peer> will validate the public key if this value
 is non zero.
 
-EVP_PKEY_derive_set_peer() is similiar to EVP_PKEY_derive_set_peer_ex() with
+EVP_PKEY_derive_set_peer() is similar to EVP_PKEY_derive_set_peer_ex() with
 I<validate_peer> set to 1.
 
 EVP_PKEY_derive() derives a shared secret using I<ctx>.

@@ -1436,7 +1436,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
             || mt != SSL2_MT_CLIENT_HELLO) {
             /*
              * Should never happen. We should have tested this in the record
-             * layer in order to have determined that this is a SSLv2 record
+             * layer in order to have determined that this is an SSLv2 record
              * in the first place
              */
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -2334,7 +2334,7 @@ int tls_construct_server_hello(SSL *s, WPACKET *pkt)
      *   we send back a 0-length session ID.
      * - In TLSv1.3 we echo back the session id sent to us by the client
      *   regardless
-     * s->hit is non-zero in either case of session reuse,
+     * s->hit is nonzero in either case of session reuse,
      * so the following won't overwrite an ID that we're supposed
      * to send back.
      */
@@ -2899,7 +2899,7 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt)
      * We must not leak whether a decryption failure occurs because of
      * Bleichenbacher's attack on PKCS #1 v1.5 RSA padding (see RFC 2246,
      * section 7.4.7.1). We use the special padding type
-     * RSA_PKCS1_WITH_TLS_PADDING to do that. It will automaticaly decrypt the
+     * RSA_PKCS1_WITH_TLS_PADDING to do that. It will automatically decrypt the
      * RSA, check the padding and check that the client version is as expected
      * in the premaster secret. If any of that fails then the function appears
      * to return successfully but with a random result. The call below could
@@ -3534,7 +3534,7 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
 
     /*
      * Sessions must be immutable once they go into the session cache. Otherwise
-     * we can get multi-thread problems. Therefore we don't "update" sessions,
+     * we can get multi-thread problems. Therefore, we don't "update" sessions,
      * we replace them with a duplicate. Here, we need to do this every time
      * a new certificate is received via post-handshake authentication, as the
      * session may have already gone into the session cache.

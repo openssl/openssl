@@ -117,7 +117,7 @@ descriptions below, `Text::Template` will serve as an example.
 
        $ cpan -f -i Text::Template
 
-   Note: on VMS, you must quote any argument that contains upper case
+   Note: on VMS, you must quote any argument that contains uppercase
    characters, so the lines above would be:
 
        $ cpan -i "Text::Template"

@@ -29,7 +29,7 @@ An object may be passed in the following manners:
 
 I<By value>
 
-This means that the I<object data> is passed as an octet string or an UTF8
+This means that the I<object data> is passed as an octet string or a UTF8
 string, which can be handled in diverse ways by other provided implementations.
 The encoding of the object depends on the context it's used in; for example,
 L<OSSL_DECODER(3)> allows multiple encodings, depending on existing decoders.

@@ -2135,7 +2135,7 @@ static const struct translation_st evp_pkey_ctx_translations[] = {
       OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST, OSSL_PARAM_UTF8_STRING, fix_md },
     /*
      * The "rsa_oaep_label" ctrl_str expects the value to always be hex.
-     * This is accomodated by default_fixup_args() above, which mimics that
+     * This is accommodated by default_fixup_args() above, which mimics that
      * expectation for any translation item where |ctrl_str| is NULL and
      * |ctrl_hexstr| is non-NULL.
      */
@@ -2453,7 +2453,7 @@ lookup_translation(struct translation_st *tmpl,
             tmpl->ctrl_hexstr = ctrl_hexstr;
         } else if (tmpl->param_key != NULL) {
             /*
-             * Search criteria that originates from a OSSL_PARAM setter or
+             * Search criteria that originates from an OSSL_PARAM setter or
              * getter.
              *
              * Ctrls were fundamentally bidirectional, with only the ctrl

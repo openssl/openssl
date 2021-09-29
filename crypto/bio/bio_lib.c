@@ -894,7 +894,7 @@ int BIO_wait(BIO *bio, time_t max_time, unsigned int nap_milliseconds)
 /*
  * Connect via given BIO using BIO_do_connect() until success/timeout/error.
  * Parameter timeout == 0 means no timeout, < 0 means exactly one try.
- * For non-blocking and potentially even non-socket BIOs perform polling with
+ * For nonblocking and potentially even non-socket BIOs perform polling with
  * the given density: between polls sleep nap_milliseconds using BIO_wait()
  * in order to avoid a tight busy loop.
  * Returns -1 on error, 0 on timeout, and 1 on success.

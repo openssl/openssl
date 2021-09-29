@@ -317,7 +317,7 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
 #endif
             BIO_set_callback_arg(bio, BIO_get_callback_arg(b));
             /*
-             * If the accept BIO has an bio_chain, we dup it and put the new
+             * If the accept BIO has a bio_chain, we dup it and put the new
              * socket at the end.
              */
             if (c->bio_chain != NULL) {

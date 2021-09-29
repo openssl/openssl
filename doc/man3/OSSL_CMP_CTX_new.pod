@@ -443,7 +443,7 @@ list of untrusted certs, which may be empty if unset.
 
 OSSL_CMP_CTX_set1_cert() sets the certificate related to the private key
 used for CMP message protection.
-Therefore the public key of this I<cert> must correspond to
+Therefore, the public key of this I<cert> must correspond to
 the private key set before or thereafter via OSSL_CMP_CTX_set1_pkey().
 When using signature-based protection of CMP request messages
 this CMP signer certificate will be included first in the extraCerts field.

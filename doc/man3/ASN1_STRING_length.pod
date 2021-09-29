@@ -68,7 +68,7 @@ These functions should B<not> be used to examine or modify B<ASN1_INTEGER>
 or B<ASN1_ENUMERATED> types: the relevant B<INTEGER> or B<ENUMERATED>
 utility functions should be used instead.
 
-In general it cannot be assumed that the data returned by ASN1_STRING_data()
+In general, it cannot be assumed that the data returned by ASN1_STRING_data()
 is null terminated or does not contain embedded nulls. The actual format
 of the data will depend on the actual string type itself: for example
 for an IA5String the data will be ASCII, for a BMPString two bytes per

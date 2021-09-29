@@ -820,7 +820,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
                 goto err;
 
             /*
-             * We now have the EVP_MD_CTX, lets do the signing.
+             * We now have the EVP_MD_CTX, let's do the signing.
              */
             if (!EVP_MD_CTX_copy_ex(ctx_tmp, mdc))
                 goto err;

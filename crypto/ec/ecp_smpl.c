@@ -9,7 +9,7 @@
  */
 
 /*
- * ECDSA low level APIs are deprecated for public use, but still ok for
+ * ECDSA low-level APIs are deprecated for public use, but still ok for
  * internal use.
  */
 #include "internal/deprecated.h"
@@ -1267,7 +1267,7 @@ int ossl_ec_GFp_simple_points_make_affine(const EC_GROUP *group, size_t num,
     }
 
     /*
-     * Now use a single explicit inversion to replace every non-zero
+     * Now use a single explicit inversion to replace every nonzero
      * points[i]->Z by its inverse.
      */
 
@@ -1376,7 +1376,7 @@ int ossl_ec_GFp_simple_field_sqr(const EC_GROUP *group, BIGNUM *r, const BIGNUM 
 
 /*-
  * Computes the multiplicative inverse of a in GF(p), storing the result in r.
- * If a is zero (or equivalent), you'll get a EC_R_CANNOT_INVERT error.
+ * If a is zero (or equivalent), you'll get an EC_R_CANNOT_INVERT error.
  * Since we don't have a Mont structure here, SCA hardening is with blinding.
  * NB: "a" must be in _decoded_ form. (i.e. field_decode must precede.)
  */
@@ -1488,7 +1488,7 @@ int ossl_ec_GFp_simple_blind_coordinates(const EC_GROUP *group, EC_POINT *p,
  * simplified for Z1=1.
  *
  * Blinding uses the equivalence relation (\lambda X, \lambda Y, \lambda Z)
- * for any non-zero \lambda that holds for projective (homogeneous) coords.
+ * for any nonzero \lambda that holds for projective (homogeneous) coords.
  */
 int ossl_ec_GFp_simple_ladder_pre(const EC_GROUP *group,
                                   EC_POINT *r, EC_POINT *s,

@@ -50,7 +50,7 @@ err:
 }
 
 /*
- * Helper function to setup a EVP_CipherInit
+ * Helper function to setup an EVP_CipherInit
  * Used to hide the complexity of Authenticated ciphers.
  */
 static int cipher_init(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
@@ -395,7 +395,7 @@ static int self_test_ka(const ST_KAT_KAS *t,
     if (params == NULL || params_peer == NULL)
         goto err;
 
-    /* Create a EVP_PKEY_CTX to load the DH keys into */
+    /* Create an EVP_PKEY_CTX to load the DH keys into */
     kactx = EVP_PKEY_CTX_new_from_name(libctx, t->algorithm, "");
     if (kactx == NULL)
         goto err;
@@ -406,7 +406,7 @@ static int self_test_ka(const ST_KAT_KAS *t,
         || EVP_PKEY_fromdata(kactx, &peerkey, EVP_PKEY_KEYPAIR, params_peer) <= 0)
         goto err;
 
-    /* Create a EVP_PKEY_CTX to perform key derivation */
+    /* Create an EVP_PKEY_CTX to perform key derivation */
     dctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, NULL);
     if (dctx == NULL)
         goto err;
@@ -471,7 +471,7 @@ static int self_test_sign(const ST_KAT_SIGN *t,
         goto err;
     params = OSSL_PARAM_BLD_to_param(bld);
 
-    /* Create a EVP_PKEY_CTX to load the DSA key into */
+    /* Create an EVP_PKEY_CTX to load the DSA key into */
     kctx = EVP_PKEY_CTX_new_from_name(libctx, t->algorithm, "");
     if (kctx == NULL || params == NULL)
         goto err;
@@ -479,7 +479,7 @@ static int self_test_sign(const ST_KAT_SIGN *t,
         || EVP_PKEY_fromdata(kctx, &pkey, EVP_PKEY_KEYPAIR, params) <= 0)
         goto err;
 
-    /* Create a EVP_PKEY_CTX to use for the signing operation */
+    /* Create an EVP_PKEY_CTX to use for the signing operation */
     sctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, NULL);
     if (sctx == NULL
         || EVP_PKEY_sign_init(sctx) <= 0)
@@ -561,7 +561,7 @@ static int self_test_asym_cipher(const ST_KAT_ASYM_CIPHER *t, OSSL_SELF_TEST *st
         || EVP_PKEY_fromdata(keyctx, &key, EVP_PKEY_KEYPAIR, keyparams) <= 0)
         goto err;
 
-    /* Create a EVP_PKEY_CTX to use for the encrypt or decrypt operation */
+    /* Create an EVP_PKEY_CTX to use for the encrypt or decrypt operation */
     encctx = EVP_PKEY_CTX_new_from_pkey(libctx, key, NULL);
     if (encctx == NULL
         || (t->encrypt && EVP_PKEY_encrypt_init(encctx) <= 0)

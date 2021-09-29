@@ -8,7 +8,7 @@
  */
 
 /*
- * RSA low level APIs are deprecated for public use, but still ok for
+ * RSA low-level APIs are deprecated for public use, but still ok for
  * internal use.
  */
 #include "internal/deprecated.h"
@@ -1103,7 +1103,7 @@ int EVP_PKEY_CTX_set0_rsa_oaep_label(EVP_PKEY_CTX *ctx, void *label, int llen)
     if (!evp_pkey_ctx_set_params_strict(ctx, rsa_params))
         return 0;
 
-    /* Ownership is supposed to be transfered to the callee. */
+    /* Ownership is supposed to be transferred to the callee. */
     OPENSSL_free(label);
     return 1;
 }

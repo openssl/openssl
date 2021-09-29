@@ -222,8 +222,8 @@ static int convert_bn_memory(const unsigned char *in, size_t bytes,
                 }
             if (*p == '\0') {
                 /*
-                 * in[bytes] is defined because we're converting a non-zero
-                 * number and we've not seen a non-zero yet.
+                 * in[bytes] is defined because we're converting a nonzero
+                 * number and we've not seen a nonzero yet.
                  */
                 if ((in[bytes] & 0xf0) != 0 && BN_is_negative(bn)) {
                     *lz = 0;

@@ -1046,7 +1046,7 @@ int SSL_dane_enable(SSL *s, const char *basedomain)
 
     /*
      * Default SNI name.  This rejects empty names, while set1_host below
-     * accepts them and disables host name checks.  To avoid side-effects with
+     * accepts them and disables hostname checks.  To avoid side-effects with
      * invalid input, set the SNI name first.
      */
     if (s->ext.hostname == NULL) {
@@ -3007,7 +3007,7 @@ static int alpn_value_ok(const unsigned char *protos, unsigned int protos_len)
 }
 /*
  * SSL_CTX_set_alpn_protos sets the ALPN protocol list on |ctx| to |protos|.
- * |protos| must be in wire-format (i.e. a series of non-empty, 8-bit
+ * |protos| must be in wire-format (i.e. a series of nonempty, 8-bit
  * length-prefixed strings). Returns 0 on success.
  */
 int SSL_CTX_set_alpn_protos(SSL_CTX *ctx, const unsigned char *protos,
@@ -3039,7 +3039,7 @@ int SSL_CTX_set_alpn_protos(SSL_CTX *ctx, const unsigned char *protos,
 
 /*
  * SSL_set_alpn_protos sets the ALPN protocol list on |ssl| to |protos|.
- * |protos| must be in wire-format (i.e. a series of non-empty, 8-bit
+ * |protos| must be in wire-format (i.e. a series of nonempty, 8-bit
  * length-prefixed strings). Returns 0 on success.
  */
 int SSL_set_alpn_protos(SSL *ssl, const unsigned char *protos,
@@ -3803,7 +3803,7 @@ int SSL_get_error(const SSL *s, int i)
              * This one doesn't make too much sense ... We never try to write
              * to the rbio, and an application program where rbio and wbio
              * are separate couldn't even know what it should wait for.
-             * However if we ever set s->rwstate incorrectly (so that we have
+             * However, if we ever set s->rwstate incorrectly (so that we have
              * SSL_want_read(s) instead of SSL_want_write(s)) and rbio and
              * wbio *are* the same, this test works around that bug; so it
              * might be safer to keep it.
@@ -5563,7 +5563,7 @@ int ssl_cache_cipherlist(SSL *s, PACKET *cipher_suites, int sslv2format)
         /*
          * We store the raw ciphers list in SSLv3+ format so we need to do some
          * preprocessing to convert the list first. If there are any SSLv2 only
-         * ciphersuites with a non-zero leading byte then we are going to
+         * ciphersuites with a nonzero leading byte then we are going to
          * slightly over allocate because we won't store those. But that isn't a
          * problem.
          */
@@ -5654,7 +5654,7 @@ int bytes_to_cipher_list(SSL *s, PACKET *cipher_suites,
     while (PACKET_copy_bytes(cipher_suites, cipher, n)) {
         /*
          * SSLv3 ciphers wrapped in an SSLv2-compatible ClientHello have the
-         * first byte set to zero, while true SSLv2 ciphers have a non-zero
+         * first byte set to zero, while true SSLv2 ciphers have a nonzero
          * first byte. We don't support any true SSLv2 ciphers, so skip them.
          */
         if (sslv2format && cipher[0] != '\0')

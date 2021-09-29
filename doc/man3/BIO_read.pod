@@ -33,7 +33,7 @@ BIO_read() attempts to read I<len> bytes from BIO I<b> and places
 the data in I<buf>.
 
 BIO_gets() performs the BIOs "gets" operation and places the data
-in I<buf>. Usually this operation will attempt to read a line of data
+in I<buf>. Usually, this operation will attempt to read a line of data
 from the BIO of maximum length I<size-1>. There are exceptions to this,
 however; for example, BIO_gets() on a digest BIO will calculate and
 return the digest and other BIOs may not support BIO_gets() at all.

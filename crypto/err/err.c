@@ -58,7 +58,7 @@ static ERR_STRING_DATA ERR_str_libraries[] = {
     {ERR_PACK(ERR_LIB_PKCS12, 0, 0), "PKCS12 routines"},
     {ERR_PACK(ERR_LIB_RAND, 0, 0), "random number generator"},
     {ERR_PACK(ERR_LIB_DSO, 0, 0), "DSO support routines"},
-    {ERR_PACK(ERR_LIB_TS, 0, 0), "time stamp routines"},
+    {ERR_PACK(ERR_LIB_TS, 0, 0), "timestamp routines"},
     {ERR_PACK(ERR_LIB_ENGINE, 0, 0), "engine routines"},
     {ERR_PACK(ERR_LIB_OCSP, 0, 0), "OCSP routines"},
     {ERR_PACK(ERR_LIB_UI, 0, 0), "UI routines"},

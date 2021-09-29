@@ -8,7 +8,7 @@
  */
 
 /*
- * RSA low level APIs are deprecated for public use, but still ok for
+ * RSA low-level APIs are deprecated for public use, but still ok for
  * internal use.
  */
 #define OPENSSL_SUPPRESS_DEPRECATED

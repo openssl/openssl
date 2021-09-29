@@ -8,7 +8,7 @@
  */
 
 /*
- * low level APIs are deprecated for public use, but still ok for
+ * low-level APIs are deprecated for public use, but still ok for
  * internal use.
  */
 #include "internal/deprecated.h"
@@ -51,7 +51,7 @@ struct keytype_desc_st {
 
     /*
      * The EVP_PKEY_xxx type macro.  Should be zero for type specific
-     * structures, non-zero when the outermost structure is PKCS#8 or
+     * structures, nonzero when the outermost structure is PKCS#8 or
      * SubjectPublicKeyInfo.  This determines which of the function
      * pointers below will be used.
      */

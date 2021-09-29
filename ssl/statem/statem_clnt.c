@@ -462,7 +462,7 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_CW_CERT:
-        /* If a non-empty Certificate we also send CertificateVerify */
+        /* If a nonempty Certificate we also send CertificateVerify */
         st->hand_state = (s->s3.tmp.cert_req == 1) ? TLS_ST_CW_CERT_VRFY
                                                     : TLS_ST_CW_FINISHED;
         return WRITE_TRAN_CONTINUE;
@@ -520,7 +520,7 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL *s)
             return WRITE_TRAN_FINISHED;
         }
         /* Renegotiation */
-        /* fall thru */
+        /* fall through */
     case TLS_ST_BEFORE:
         st->hand_state = TLS_ST_CW_CLNT_HELLO;
         return WRITE_TRAN_CONTINUE;
@@ -1747,7 +1747,7 @@ static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL *s,
 
     /*
      * Add this message to the Transcript Hash. Normally this is done
-     * automatically prior to the message processing stage. However due to the
+     * automatically prior to the message processing stage. However, due to the
      * need to create the synthetic message hash, we defer that step until now
      * for HRR messages.
      */
@@ -2475,7 +2475,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
 
     /*
      * Sessions must be immutable once they go into the session cache. Otherwise
-     * we can get multi-thread problems. Therefore we don't "update" sessions,
+     * we can get multi-thread problems. Therefore, we don't "update" sessions,
      * we replace them with a duplicate. In TLSv1.3 we need to do this every
      * time a NewSessionTicket arrives because those messages arrive
      * post-handshake and the session may have already gone into the session
@@ -3605,7 +3605,7 @@ MSG_PROCESS_RETURN tls_process_hello_req(SSL *s, PACKET *pkt)
     /*
      * This is a historical discrepancy (not in the RFC) maintained for
      * compatibility reasons. If a TLS client receives a HelloRequest it will
-     * attempt an abbreviated handshake. However if a DTLS client receives a
+     * attempt an abbreviated handshake. However, if a DTLS client receives a
      * HelloRequest it will do a full handshake. Either behaviour is reasonable
      * but doing one for TLS and another for DTLS is odd.
      */

@@ -13,7 +13,7 @@
 int BN_nnmod(BIGNUM *r, const BIGNUM *m, const BIGNUM *d, BN_CTX *ctx)
 {
     /*
-     * like BN_mod, but returns non-negative remainder (i.e., 0 <= r < |d|
+     * like BN_mod, but returns nonnegative remainder (i.e., 0 <= r < |d|
      * always holds)
      */
 
@@ -34,7 +34,7 @@ int BN_mod_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m,
 }
 
 /*
- * BN_mod_add variant that may be used if both a and b are non-negative and
+ * BN_mod_add variant that may be used if both a and b are nonnegative and
  * less than m. The original algorithm was
  *
  *    if (!BN_uadd(r, a, b))
@@ -116,7 +116,7 @@ int BN_mod_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m,
 }
 
 /*
- * BN_mod_sub variant that may be used if both a and b are non-negative,
+ * BN_mod_sub variant that may be used if both a and b are nonnegative,
  * a is less than m, while b is of same bit width as m. It's implemented
  * as subtraction followed by two conditional additions.
  *
@@ -180,7 +180,7 @@ int bn_mod_sub_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 }
 
 /*
- * BN_mod_sub variant that may be used if both a and b are non-negative and
+ * BN_mod_sub variant that may be used if both a and b are nonnegative and
  * less than m
  */
 int BN_mod_sub_quick(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
@@ -240,7 +240,7 @@ int BN_mod_lshift1(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx)
 }
 
 /*
- * BN_mod_lshift1 variant that may be used if a is non-negative and less than
+ * BN_mod_lshift1 variant that may be used if a is nonnegative and less than
  * m
  */
 int BN_mod_lshift1_quick(BIGNUM *r, const BIGNUM *a, const BIGNUM *m)
@@ -277,7 +277,7 @@ int BN_mod_lshift(BIGNUM *r, const BIGNUM *a, int n, const BIGNUM *m,
 }
 
 /*
- * BN_mod_lshift variant that may be used if a is non-negative and less than
+ * BN_mod_lshift variant that may be used if a is nonnegative and less than
  * m
  */
 int BN_mod_lshift_quick(BIGNUM *r, const BIGNUM *a, int n, const BIGNUM *m)

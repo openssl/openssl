@@ -9,7 +9,7 @@
  */
 
 /*
- * AES low level APIs are deprecated for public use, but still ok for internal
+ * AES low-level APIs are deprecated for public use, but still ok for internal
  * use where we're using them to implement the higher level EVP interface, as is
  * the case here.
  */

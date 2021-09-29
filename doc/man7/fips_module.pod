@@ -24,7 +24,7 @@ legacy APIs or features that avoid the FIPS module. Specifically this includes:
 
 =item *
 
-Low level cryptographic APIs (use the high level APIs, such as EVP, instead)
+Low level cryptographic APIs (use the high-level APIs, such as EVP, instead)
 
 =item *
 
@@ -92,7 +92,7 @@ Obviously the include file location above should match the path and name of the
 FIPS module config file that you installed earlier.
 See L<https://github.com/openssl/openssl/blob/master/README-FIPS.md>.
 
-For FIPS usage, it is recommened that the B<config_diagnostics> option is
+For FIPS usage, it is recommended that the B<config_diagnostics> option is
 enabled to prevent accidental use of non-FIPS validated algorithms via broken
 or mistaken configuration.  See L<config(5)>.
 
@@ -144,7 +144,7 @@ If any applications use those APIs then the FIPS module will not be used.
 
 A variation on the above approach is to do the same thing on an individual
 application basis. The default OpenSSL config file depends on the compiled in
-value for B<OPENSSLDIR> as described in the section above. However it is also
+value for B<OPENSSLDIR> as described in the section above. However, it is also
 possible to override the config file to be used via the B<OPENSSL_CONF>
 environment variable. For example the following, on Unix, will cause the
 application to be executed with a non-standard config file location:
@@ -367,7 +367,7 @@ base providers. The other library context will just use the default provider.
 Note that we have made use of the special "null" provider here which we load
 into the default library context. We could have chosen to use the default
 library context for FIPS usage, and just create one additional library context
-for other usages - or vice versa. However if code has not been converted to use
+for other usages - or vice versa. However, if code has not been converted to use
 library contexts then the default library context will be automatically used.
 This could be the case for your own existing applications as well as certain
 parts of OpenSSL itself. Not all parts of OpenSSL are library context aware. If
@@ -389,11 +389,11 @@ keys or parameters that then need to be written into PEM or DER format
 then it is likely that you will need to use an encoder to do this. Similarly
 you need a decoder to read previously saved keys and parameters. In most cases
 this will be invisible to you if you are using APIs that existed in
-OpenSSL 1.1.1 or earlier such as L<i2d_PrivateKey(3)>. However the appropriate
+OpenSSL 1.1.1 or earlier such as L<i2d_PrivateKey(3)>. However, the appropriate
 encoder/decoder will need to be available in the library context associated with
 the key or parameter object. The built-in OpenSSL encoders and decoders are
 implemented in both the default and base providers and are not in the FIPS
-module boundary. However since they are not cryptographic algorithms themselves
+module boundary. However, since they are not cryptographic algorithms themselves
 it is still possible to use them in conjunction with the FIPS module, and
 therefore these encoders/decoders have the C<fips=yes> property against them.
 You should ensure that either the default or base provider is loaded into the

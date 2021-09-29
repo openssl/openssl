@@ -60,7 +60,7 @@ int ENGINE_set_default_ciphers(ENGINE *e)
 
 /*
  * Exposed API function to get a functional reference from the implementation
- * table (ie. try to get a functional reference from the tabled structural
+ * table (i.e. try to get a functional reference from the tabular structural
  * references) for a given cipher 'nid'
  */
 ENGINE *ENGINE_get_cipher_engine(int nid)

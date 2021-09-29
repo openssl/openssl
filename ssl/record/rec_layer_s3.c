@@ -344,7 +344,7 @@ int ssl3_read_n(SSL *s, size_t n, size_t max, int extend, int clearold,
 
 /*
  * Call this to write data in records of type 'type' It will return <= 0 if
- * not all data has been sent or non-blocking IO.
+ * not all data has been sent or nonblocking IO.
  */
 int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
                      size_t *written)
@@ -364,7 +364,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
     /*
      * ensure that if we end up with a smaller value of data to write out
      * than the original len from a write which didn't complete for
-     * non-blocking I/O and also somehow ended up avoiding the check for
+     * nonblocking I/O and also somehow ended up avoiding the check for
      * this in ssl3_write_pending/SSL_R_BAD_WRITE_RETRY as it must never be
      * possible to end up with (len-tot) as a large number that will then
      * promptly send beyond the end of the users buffer ... so we trap and
@@ -410,7 +410,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
     }
 
     /*
-     * first check if there is a SSL3_BUFFER still being written out.  This
+     * first check if there is an SSL3_BUFFER still being written out.  This
      * will happen with non blocking IO
      */
     if (wb->left != 0) {
@@ -685,7 +685,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
     for (j = 0; j < numpipes; j++)
         totlen += pipelens[j];
     /*
-     * first check if there is a SSL3_BUFFER still being written out.  This
+     * first check if there is an SSL3_BUFFER still being written out.  This
      * will happen with non blocking IO
      */
     if (RECORD_LAYER_write_pending(&s->rlayer)) {
@@ -1206,7 +1206,7 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf, size_t len,
         /*
          * When an empty fragment is sent on a connection using KTLS,
          * it is sent as a write of zero bytes.  If this zero byte
-         * write succeeds, i will be 0 rather than a non-zero value.
+         * write succeeds, i will be 0 rather than a nonzero value.
          * Treat i == 0 as success rather than an error for zero byte
          * writes to permit this case.
          */
@@ -1241,7 +1241,7 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf, size_t len,
  *   -  SSL3_RT_APPLICATION_DATA (when ssl3_read calls us)
  *   -  0 (during a shutdown, no data has to be returned)
  *
- * If we don't have stored data to work from, read a SSL/TLS record first
+ * If we don't have stored data to work from, read an SSL/TLS record first
  * (possibly multiple records if we still don't have anything to return).
  *
  * This function must handle any surprises the peer may have for us, such as
@@ -1378,7 +1378,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     }
 
     /*
-     * Reset the count of consecutive warning alerts if we've got a non-empty
+     * Reset the count of consecutive warning alerts if we've got a nonempty
      * record that isn't an alert.
      */
     if (SSL3_RECORD_get_type(rr) != SSL3_RT_ALERT
@@ -1502,7 +1502,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
         /*
          * Should never happen. ssl3_get_record() should only give us an SSLv2
          * record back if this is the first packet and we are looking for an
-         * initial ClientHello. Therefore |type| should always be equal to
+         * initial ClientHello. Therefore, |type| should always be equal to
          * |rr->type|. If not then something has gone horribly wrong
          */
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);

@@ -78,7 +78,7 @@ static ossl_inline int ktls_start(int fd, ktls_crypto_info_t *tls_en, int is_tx)
 /*
  * Send a TLS record using the tls_en provided in ktls_start and use
  * record_type instead of the default SSL3_RT_APPLICATION_DATA.
- * When the socket is non-blocking, then this call either returns EAGAIN or
+ * When the socket is nonblocking, then this call either returns EAGAIN or
  * the entire record is pushed to TCP. It is impossible to send a partial
  * record using this control message.
  */
@@ -182,7 +182,7 @@ static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
 #   endif /* OPENSSL_NO_KTLS_RX */
 
 /*
- * KTLS enables the sendfile system call to send data from a file over
+ * KTLS enables the sendfile(2) system call to send data from a file over
  * TLS.
  */
 static ossl_inline ossl_ssize_t ktls_sendfile(int s, int fd, off_t off,
@@ -291,7 +291,7 @@ static ossl_inline int ktls_start(int fd, ktls_crypto_info_t *crypto_info,
 /*
  * Send a TLS record using the crypto_info provided in ktls_start and use
  * record_type instead of the default SSL3_RT_APPLICATION_DATA.
- * When the socket is non-blocking, then this call either returns EAGAIN or
+ * When the socket is nonblocking, then this call either returns EAGAIN or
  * the entire record is pushed to TCP. It is impossible to send a partial
  * record using this control message.
  */
@@ -326,7 +326,7 @@ static ossl_inline int ktls_send_ctrl_message(int fd, unsigned char record_type,
 }
 
 /*
- * KTLS enables the sendfile system call to send data from a file over TLS.
+ * KTLS enables the sendfile(2) system call to send data from a file over TLS.
  * @flags are ignored on Linux. (placeholder for FreeBSD sendfile)
  * */
 static ossl_inline ossl_ssize_t ktls_sendfile(int s, int fd, off_t off, size_t size, int flags)

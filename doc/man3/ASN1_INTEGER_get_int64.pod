@@ -79,7 +79,7 @@ instead.
 
 =head1 NOTES
 
-In general an B<ASN1_INTEGER> or B<ASN1_ENUMERATED> type can contain an
+In general, an B<ASN1_INTEGER> or B<ASN1_ENUMERATED> type can contain an
 integer of almost arbitrary size and so cannot always be represented by a C
 B<int64_t> type. However, in many cases (for example version numbers) they
 represent small integers which can be more easily manipulated if converted to

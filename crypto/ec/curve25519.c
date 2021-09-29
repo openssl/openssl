@@ -8,7 +8,7 @@
  */
 
 /*
- * ECDSA low level APIs are deprecated for public use, but still ok for
+ * ECDSA low-level APIs are deprecated for public use, but still ok for
  * internal use.
  */
 #include "internal/deprecated.h"
@@ -5494,7 +5494,7 @@ err:
     return res;
 }
 
-static const char allzeroes[15];
+static const char allzeros[15];
 
 int
 ossl_ed25519_verify(const uint8_t *message, size_t message_len,
@@ -5535,7 +5535,7 @@ ossl_ed25519_verify(const uint8_t *message, size_t message_len,
          * Most significant byte indicates a value close to 2^252 so check the
          * rest
          */
-        if (memcmp(s + 16, allzeroes, sizeof(allzeroes)) != 0)
+        if (memcmp(s + 16, allzeros, sizeof(allzeros)) != 0)
             return 0;
         for (i = 15; i >= 0; i--) {
             if (s[i] < l_low[i])

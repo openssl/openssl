@@ -129,7 +129,7 @@ static int ecx_has(const void *keydata, int selection)
     if (ossl_prov_is_running() && key != NULL) {
         /*
          * ECX keys always have all the parameters they need (i.e. none).
-         * Therefore we always return with 1, if asked about parameters.
+         * Therefore, we always return with 1, if asked about parameters.
          */
         ok = 1;
 

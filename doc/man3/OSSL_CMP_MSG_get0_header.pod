@@ -64,7 +64,7 @@ or NULL if the respective entry does not exist and on error.
 
 OSSL_CMP_MSG_get_bodytype() returns the body type or -1 on error.
 
-OSSL_CMP_CTX_setup_CRM() returns a pointer to a OSSL_CRMF_MSG on success,
+OSSL_CMP_CTX_setup_CRM() returns a pointer to an OSSL_CRMF_MSG on success,
 NULL on error.
 
 d2i_OSSL_CMP_MSG_bio() returns the parsed message or NULL on error.

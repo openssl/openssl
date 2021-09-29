@@ -289,7 +289,7 @@ static int b64_read(BIO *b, char *out, int outl)
             ctx->tmp_len = 0;
         }
         /*
-         * If eof or an error was signalled, then the condition
+         * If eof or an error was signaled, then the condition
          * 'ctx->cont <= 0' will prevent b64_read() from reading
          * more data on subsequent calls. This assignment was
          * deleted accidentally in commit 5562cfaca4f3.

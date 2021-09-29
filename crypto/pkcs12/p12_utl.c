@@ -93,7 +93,7 @@ unsigned char *OPENSSL_utf82uni(const char *asc, int asclen,
          * Following condition is somewhat opportunistic is sense that
          * decoding failure is used as *indirect* indication that input
          * string might in fact be extended ASCII/ANSI/ISO-8859-X. The
-         * fallback is taken in hope that it would allow to process
+         * fallback is taken in hope that it would allow one to process
          * files created with previous OpenSSL version, which used the
          * naive OPENSSL_asc2uni all along. It might be worth noting
          * that probability of false positive depends on language. In

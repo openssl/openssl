@@ -53,7 +53,7 @@ the ownership of the original string remains with the caller.
 
 =head1 RETURN VALUES
 
-B<i2s_ASN1_IA5STRING>() returns the pointer to a IA5 string
+B<i2s_ASN1_IA5STRING>() returns the pointer to an IA5 string
 or NULL if an error occurs.
 
 B<s2i_ASN1_IA5STRING>() return a valid

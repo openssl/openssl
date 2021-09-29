@@ -240,7 +240,7 @@ static OSSL_PROVIDER *multi_provider[MAXIMUM_PROVIDERS + 1];
 static size_t multi_num_threads;
 static thread_t multi_threads[MAXIMUM_THREADS];
 
-static void multi_intialise(void)
+static void multi_initialise(void)
 {
     multi_success = 1;
     multi_libctx = NULL;
@@ -256,7 +256,7 @@ static void thead_teardown_libctx(void)
     for (p = multi_provider; *p != NULL; p++)
         OSSL_PROVIDER_unload(*p);
     OSSL_LIB_CTX_free(multi_libctx);
-    multi_intialise();
+    multi_initialise();
 }
 
 static int thread_setup_libctx(int libctx, const char *providers[])
@@ -308,7 +308,7 @@ static int thread_run_test(void (*main_func)(void),
 {
     int testresult = 0;
 
-    multi_intialise();
+    multi_initialise();
     if (!thread_setup_libctx(libctx, providers)
             || !start_threads(num_threads, thread_func))
         goto err;
@@ -375,7 +375,7 @@ static void thread_general_worker(void)
 
     /*
      * We want the test to run quickly - not securely.
-     * Therefore we use an insecure bit length where we can (512).
+     * Therefore, we use an insecure bit length where we can (512).
      * In the FIPS module though we must use a longer length.
      */
     pkey = EVP_PKEY_Q_keygen(multi_libctx, NULL, "RSA", isfips ? 2048 : 512);
@@ -486,7 +486,7 @@ static int test_multi_shared_pkey_common(void (*worker)(void))
 {
     int testresult = 0;
 
-    multi_intialise();
+    multi_initialise();
     if (!thread_setup_libctx(1, do_fips ? fips_and_default_providers
                                         : default_provider)
             || !TEST_ptr(shared_evp_pkey = load_pkey_pem(privkey, multi_libctx))
@@ -534,7 +534,7 @@ static int test_multi_load_unload_provider(void)
     OSSL_PROVIDER *prov = NULL;
     int testresult = 0;
 
-    multi_intialise();
+    multi_initialise();
     if (!thread_setup_libctx(1, NULL)
             || !TEST_ptr(prov = OSSL_PROVIDER_load(multi_libctx, "default"))
             || !TEST_ptr(sha256 = EVP_MD_fetch(multi_libctx, "SHA2-256", NULL))

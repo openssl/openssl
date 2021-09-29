@@ -4199,7 +4199,7 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
          * If we allow "old" style PSK callbacks, and we have no certificate (so
          * we're not going to succeed without a PSK anyway), and we're in
          * TLSv1.3 then the default hash for a PSK is SHA-256 (as per the
-         * TLSv1.3 spec). Therefore we should prioritise ciphersuites using
+         * TLSv1.3 spec). Therefore, we should prioritise ciphersuites using
          * that.
          */
         if (s->psk_server_callback != NULL) {
@@ -4396,7 +4396,7 @@ int ssl3_shutdown(SSL *s)
         if (ret == -1) {
             /*
              * we only get to return -1 here the 2nd/Nth invocation, we must
-             * have already signalled return 0 upon a previous invocation,
+             * have already signaled return 0 upon a previous invocation,
              * return WANT_WRITE
              */
             return ret;
@@ -4586,7 +4586,7 @@ int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
 
         /* create PSK premaster_secret */
 
-        /* For plain PSK "other_secret" is psklen zeroes */
+        /* For plain PSK "other_secret" is psklen zeros */
         if (alg_k & SSL_kPSK)
             pmslen = psklen;
 

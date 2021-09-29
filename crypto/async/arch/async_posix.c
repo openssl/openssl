@@ -23,7 +23,7 @@ int ASYNC_is_capable(void)
 
     /*
      * Some platforms provide getcontext() but it does not work (notably
-     * MacOSX PPC64). Check for a working getcontext();
+     * macOS PPC64). Check for a working getcontext();
      */
     return getcontext(&ctx) == 0;
 }

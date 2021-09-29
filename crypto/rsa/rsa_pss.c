@@ -8,7 +8,7 @@
  */
 
 /*
- * RSA low level APIs are deprecated for public use, but still ok for
+ * RSA low-level APIs are deprecated for public use, but still ok for
  * internal use.
  */
 #include "internal/deprecated.h"
@@ -22,7 +22,7 @@
 #include <openssl/sha.h>
 #include "rsa_local.h"
 
-static const unsigned char zeroes[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+static const unsigned char zeros[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
 #if defined(_MSC_VER) && defined(_ARM_)
 # pragma optimize("g", off)
@@ -119,7 +119,7 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
         goto err;
     }
     if (!EVP_DigestInit_ex(ctx, Hash, NULL)
-        || !EVP_DigestUpdate(ctx, zeroes, sizeof(zeroes))
+        || !EVP_DigestUpdate(ctx, zeros, sizeof(zeros))
         || !EVP_DigestUpdate(ctx, mHash, hLen))
         goto err;
     if (maskedDBLen - i) {
@@ -214,7 +214,7 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
     if (ctx == NULL)
         goto err;
     if (!EVP_DigestInit_ex(ctx, Hash, NULL)
-        || !EVP_DigestUpdate(ctx, zeroes, sizeof(zeroes))
+        || !EVP_DigestUpdate(ctx, zeros, sizeof(zeros))
         || !EVP_DigestUpdate(ctx, mHash, hLen))
         goto err;
     if (sLen && !EVP_DigestUpdate(ctx, salt, sLen))
@@ -229,8 +229,8 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
     p = EM;
 
     /*
-     * Initial PS XORs with all zeroes which is a NOP so just update pointer.
-     * Note from a test above this value is guaranteed to be non-negative.
+     * Initial PS XORs with all zeros which is a NOP so just update pointer.
+     * Note from a test above this value is guaranteed to be nonnegative.
      */
     p += emLen - sLen - hLen - 2;
     *p++ ^= 0x1;

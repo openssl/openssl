@@ -86,7 +86,7 @@ int engine_free_util(ENGINE *e, int not_locked)
     engine_pkey_asn1_meths_free(e);
     /*
      * Give the ENGINE a chance to do any structural cleanup corresponding to
-     * allocation it did in its constructor (eg. unload error strings)
+     * allocation it did in its constructor (e.g. unload error strings)
      */
     if (e->destroy)
         e->destroy(e);

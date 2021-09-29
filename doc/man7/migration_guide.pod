@@ -26,7 +26,7 @@ OpenSSL 3.0 is a major release and consequently any application that currently
 uses an older version of OpenSSL will at the very least need to be recompiled in
 order to work with the new version. It is the intention that the large majority
 of applications will work unchanged with OpenSSL 3.0 if those applications
-previously worked with OpenSSL 1.1.1. However this is not guaranteed and some
+previously worked with OpenSSL 1.1.1. However, this is not guaranteed and some
 changes may be required in some cases. Changes may also be required if
 applications need to take advantage of some of the new features available in
 OpenSSL 3.0 such as the availability of the FIPS module.
@@ -47,7 +47,7 @@ config file, which providers you want to use for any given application.
 OpenSSL 3.0 comes with 5 different providers as standard. Over time third
 parties may distribute additional providers that can be plugged into OpenSSL.
 All algorithm implementations available via providers are accessed through the
-"high level" APIs (for example those functions prefixed with C<EVP>). They cannot
+"high-level" APIs (for example those functions prefixed with C<EVP>). They cannot
 be accessed using the L</Low Level APIs>.
 
 One of the standard providers available is the FIPS provider. This makes
@@ -74,22 +74,22 @@ L</Using the FIPS Module in applications>.
 =head3 Low Level APIs
 
 OpenSSL has historically provided two sets of APIs for invoking cryptographic
-algorithms: the "high level" APIs (such as the C<EVP> APIs) and the "low level"
-APIs. The high level APIs are typically designed to work across all algorithm
-types. The "low level" APIs are targeted at a specific algorithm implementation.
+algorithms: the "high-level" APIs (such as the C<EVP> APIs) and the "low-level"
+APIs. The high-level APIs are typically designed to work across all algorithm
+types. The "low-level" APIs are targeted at a specific algorithm implementation.
 For example, the EVP APIs provide the functions L<EVP_EncryptInit_ex(3)>,
 L<EVP_EncryptUpdate(3)> and L<EVP_EncryptFinal(3)> to perform symmetric
 encryption. Those functions can be used with the algorithms AES, CHACHA, 3DES etc.
-On the other hand, to do AES encryption using the low level APIs you would have
+On the other hand, to do AES encryption using the low-level APIs you would have
 to call AES specific functions such as L<AES_set_encrypt_key(3)>,
 L<AES_encrypt(3)>, and so on. The functions for 3DES are different.
-Use of the low level APIs has been informally discouraged by the OpenSSL
-development team for a long time. However in OpenSSL 3.0 this is made more
-formal. All such low level APIs have been deprecated. You may still use them in
+Use of the low-level APIs has been informally discouraged by the OpenSSL
+development team for a long time. However, in OpenSSL 3.0 this is made more
+formal. All such low-level APIs have been deprecated. You may still use them in
 your applications, but you may start to see deprecation warnings during
 compilation (dependent on compiler support for this). Deprecated APIs may be
 removed from future versions of OpenSSL so you are strongly encouraged to update
-your code to use the high level APIs instead.
+your code to use the high-level APIs instead.
 
 This is described in more detail in L</Deprecation of Low Level Functions>
 
@@ -403,7 +403,7 @@ to refactor the code to avoid the use of these deprecated functions. Failing
 this the code should be modified to use a const pointer instead.
 The L<EVP_PKEY_get1_RSA(3)>, L<EVP_PKEY_get1_DSA(3)>, L<EVP_PKEY_get1_EC_KEY(3)>
 and L<EVP_PKEY_get1_DH(3)> functions continue to return a non-const pointer to
-enable them to be "freed". However they should also be treated as read-only.
+enable them to be "freed". However, they should also be treated as read-only.
 
 =head4 The public key check has moved from EVP_PKEY_derive() to EVP_PKEY_derive_set_peer()
 
@@ -462,7 +462,7 @@ various platform specific NOTES files for your specific platform.
 
 Upgrading to OpenSSL 3.0 from OpenSSL 1.1.1 should be relatively straight
 forward in most cases. The most likely area where you will encounter problems
-is if you have used low level APIs in your code (as discussed above). In that
+is if you have used low-level APIs in your code (as discussed above). In that
 case you are likely to start seeing deprecation warnings when compiling your
 application. If this happens you have 3 options:
 
@@ -470,7 +470,7 @@ application. If this happens you have 3 options:
 
 =item 1.
 
-Ignore the warnings. They are just warnings. The deprecated functions are still present and you may still use them. However be aware that they may be removed from a future version of OpenSSL.
+Ignore the warnings. They are just warnings. The deprecated functions are still present and you may still use them. However, be aware that they may be removed from a future version of OpenSSL.
 
 =item 2.
 
@@ -478,7 +478,7 @@ Suppress the warnings. Refer to your compiler documentation on how to do this.
 
 =item 3.
 
-Remove your usage of the low level APIs. In this case you will need to rewrite your code to use the high level APIs instead
+Remove your usage of the low-level APIs. In this case you will need to rewrite your code to use the high-level APIs instead
 
 =back
 
@@ -571,7 +571,7 @@ L<README-FIPS|https://github.com/openssl/openssl/blob/master/README-FIPS.md> fil
 =head2 Programming
 
 Applications written to work with OpenSSL 1.1.1 will mostly just work with
-OpenSSL 3.0. However changes will be required if you want to take advantage of
+OpenSSL 3.0. However, changes will be required if you want to take advantage of
 some of the new features that OpenSSL 3.0 makes available. In order to do that
 you need to understand some new concepts introduced in OpenSSL 3.0.
 Read L<crypto(7)/Library contexts> for further information.
@@ -604,7 +604,7 @@ set up with the default library context. Use L<X509_new_ex(3)>,
 L<X509_CRL_new_ex(3)>, L<X509_REQ_new_ex(3)> and L<X509_PUBKEY_new_ex(3)> if a
 library context is required.
 
-All functions listed below with a I<NAME> have a replacment function I<NAME_ex>
+All functions listed below with a I<NAME> have a replacement function I<NAME_ex>
 that takes B<OSSL_LIB_CTX> as an additional argument. Functions that have other
 mappings are listed along with the respective name.
 
@@ -962,7 +962,7 @@ that refer to these categories.
 Any accessor that uses an ENGINE is deprecated (such as EVP_PKEY_set1_engine()).
 Applications using engines should instead use providers.
 
-Before providers were added algorithms were overriden by changing the methods
+Before providers were added algorithms were overridden by changing the methods
 used by algorithms. All these methods such as RSA_new_method() and RSA_meth_new()
 are now deprecated and can be replaced by using providers instead.
 
@@ -1021,7 +1021,7 @@ L</Deprecated low-level key parameter setters>.
 
 Low-level encryption functions such as L<AES_encrypt(3)> and L<AES_decrypt(3)>
 have been informally discouraged from use for a long time. Applications should
-instead use the high level EVP APIs L<EVP_EncryptInit_ex(3)>,
+instead use the high-level EVP APIs L<EVP_EncryptInit_ex(3)>,
 L<EVP_EncryptUpdate(3)>, and L<EVP_EncryptFinal_ex(3)> or
 L<EVP_DecryptInit_ex(3)>, L<EVP_DecryptUpdate(3)> and L<EVP_DecryptFinal_ex(3)>.
 
@@ -1029,7 +1029,7 @@ L<EVP_DecryptInit_ex(3)>, L<EVP_DecryptUpdate(3)> and L<EVP_DecryptFinal_ex(3)>.
 
 Use of low-level digest functions such as L<SHA1_Init(3)> have been
 informally discouraged from use for a long time.  Applications should instead
-use the the high level EVP APIs L<EVP_DigestInit_ex(3)>, L<EVP_DigestUpdate(3)>
+use the high-level EVP APIs L<EVP_DigestInit_ex(3)>, L<EVP_DigestUpdate(3)>
 and L<EVP_DigestFinal_ex(3)>, or the quick one-shot L<EVP_Q_digest(3)>.
 
 Note that the functions L<SHA1(3)>, L<SHA224(3)>, L<SHA256(3)>, L<SHA384(3)>
@@ -1054,7 +1054,7 @@ See L<EVP_MAC(3)>, L<EVP_MAC-HMAC(7)>, L<EVP_MAC-CMAC(7)>, L<EVP_MAC-GMAC(7)>,
 L<EVP_MAC-KMAC(7)>, L<EVP_MAC-BLAKE2(7)>, L<EVP_MAC-Poly1305(7)> and
 L<EVP_MAC-Siphash(7)> for additional information.
 
-Note that the one-shot method HMAC() is still available for compatability purposes.
+Note that the one-shot method HMAC() is still available for compatibility purposes.
 
 =head4 Deprecated low-level validation functions
 
@@ -1242,7 +1242,7 @@ Use the higher level functions EVP_CipherInit_ex2(), EVP_CipherUpdate() and
 EVP_CipherFinal_ex() instead.
 See the "cts_mode" parameter in
 L<EVP_EncryptInit(3)/Gettable and Settable EVP_CIPHER_CTX parameters>.
-See L<EVP_EncryptInit(3)/EXAMPLES> for a AES-256-CBC-CTS example.
+See L<EVP_EncryptInit(3)/EXAMPLES> for an AES-256-CBC-CTS example.
 
 =item *
 
@@ -1510,7 +1510,7 @@ See L</Deprecated low-level validation functions>
 
 EC_KEY_set_flags(), EC_KEY_get_flags(), EC_KEY_clear_flags()
 
-See L<EVP_PKEY-EC(7)/Common EC parameters> which handles flags as seperate
+See L<EVP_PKEY-EC(7)/Common EC parameters> which handles flags as separate
 parameters for B<OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT>,
 B<OSSL_PKEY_PARAM_EC_GROUP_CHECK_TYPE>, B<OSSL_PKEY_PARAM_EC_ENCODING>,
 B<OSSL_PKEY_PARAM_USE_COFACTOR_ECDH> and
@@ -1889,7 +1889,7 @@ Use L<OSSL_HTTP_parse_url(3)> instead.
 
 B<OCSP_REQ_CTX> type and B<OCSP_REQ_CTX_*()> functions
 
-These methods were used to collect all necessary data to form a HTTP request,
+These methods were used to collect all necessary data to form an HTTP request,
 and to perform the HTTP transfer with that request.  With OpenSSL 3.0, the
 type is B<OSSL_HTTP_REQ_CTX>, and the deprecated functions are replaced
 with B<OSSL_HTTP_REQ_CTX_*()>. See L<OSSL_HTTP_REQ_CTX(3)> for additional
@@ -2228,7 +2228,7 @@ For example, the DH parameters output from B<openssl dhparam> now lists 'P',
 
 The B<openssl> commands that read keys, certificates, and CRLs now
 automatically detect the PEM or DER format of the input files so it is not
-necessary to explicitly specify the input format anymore. However if the
+necessary to explicitly specify the input format anymore. However, if the
 input format option is used the specified format will be required.
 
 B<openssl speed> no longer uses low-level API calls.
@@ -2278,7 +2278,7 @@ SSL_CTX objects changed from "unsigned long" to "uint64_t" type.
 
 This may require source code changes. For example it is no longer possible
 to use the B<SSL_OP_> macro values in preprocessor C<#if> conditions.
-However it is still possible to test whether these macros are defined or not.
+However, it is still possible to test whether these macros are defined or not.
 
 See L<SSL_CTX_get_options(3)>, L<SSL_CTX_set_options(3)>,
 L<SSL_get_options(3)> and L<SSL_set_options(3)>.
@@ -2321,8 +2321,8 @@ is no longer set as part of SSL_OP_ALL.
 Combining the Configure options no-ec and no-dh no longer disables TLSv1.3
 
 Typically if OpenSSL has no EC or DH algorithms then it cannot support
-connections with TLSv1.3. However OpenSSL now supports "pluggable" groups
-through providers. Therefore third party providers may supply group
+connections with TLSv1.3. However, OpenSSL now supports "pluggable" groups
+through providers. Therefore, third party providers may supply group
 implementations even where there are no built-in ones. Attempting to create
 TLS connections in such a build without also disabling TLSv1.3 at run time or
 using third party provider groups may result in handshake failures. TLSv1.3
@@ -2341,10 +2341,10 @@ Security callback change.
 The security callback, which can be customised by application code, supports
 the security operation SSL_SECOP_TMP_DH. This is defined to take an EVP_PKEY
 in the "other" parameter. In most places this is what is passed. All these
-places occur server side. However there was one client side call of this
+places occur server side. However, there was one client side call of this
 security operation and it passed a DH object instead. This is incorrect
 according to the definition of SSL_SECOP_TMP_DH, and is inconsistent with all
-of the other locations. Therefore this client side call has been changed to
+of the other locations. Therefore, this client side call has been changed to
 pass an EVP_PKEY instead.
 
 =item *

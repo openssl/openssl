@@ -12,7 +12,7 @@
 # pragma once
 
 /*
- * IS_LITTLE_ENDIAN and IS_BIG_ENDIAN can be used to detect the endiannes
+ * IS_LITTLE_ENDIAN and IS_BIG_ENDIAN can be used to detect the endianness
  * at compile time. To use it, DECLARE_IS_ENDIAN must be used to declare
  * a variable.
  *

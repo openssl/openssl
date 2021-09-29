@@ -9,7 +9,7 @@
  */
 
 /*
- * EC_GROUP low level APIs are deprecated for public use, but still ok for
+ * EC_GROUP low-level APIs are deprecated for public use, but still ok for
  * internal use.
  */
 #include "internal/deprecated.h"
@@ -1255,7 +1255,7 @@ static int ec_field_inverse_mod_ord(const EC_GROUP *group, BIGNUM *r,
         goto err;
 
     /*-
-     * We want inverse in constant time, therefore we utilize the fact
+     * We want inverse in constant time, therefore, we utilize the fact
      * order must be prime and use Fermats Little Theorem instead.
      */
     if (!BN_set_word(e, 2))
@@ -1328,7 +1328,7 @@ int EC_GROUP_get_basis_type(const EC_GROUP *group)
         /* everything else is currently not supported */
         return 0;
 
-    /* Find the last non-zero element of group->poly[] */
+    /* Find the last nonzero element of group->poly[] */
     for (i = 0;
          i < (int)OSSL_NELEM(group->poly) && group->poly[i] != 0;
          i++)

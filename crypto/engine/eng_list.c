@@ -45,7 +45,7 @@ static void engine_list_cleanup(void)
 }
 
 /*
- * These static functions starting with a lower case "engine_" always take
+ * These static functions starting with a lowercase "engine_" always take
  * place when global_engine_lock has been locked up.
  */
 static int engine_list_add(ENGINE *e)
@@ -92,7 +92,7 @@ static int engine_list_add(ENGINE *e)
      */
     e->struct_ref++;
     ENGINE_REF_PRINT(e, 0, 1);
-    /* However it came to be, e is the last item in the list. */
+    /* However, it came to be, e is the last item in the list. */
     engine_list_tail = e;
     e->next = NULL;
     return 1;

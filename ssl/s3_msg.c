@@ -88,7 +88,7 @@ int ssl3_dispatch_alert(SSL *s)
     } else {
         /*
          * Alert sent to BIO - now flush. If the message does not get sent due
-         * to non-blocking IO, we will not worry too much.
+         * to nonblocking IO, we will not worry too much.
          */
         (void)BIO_flush(s->wbio);
 

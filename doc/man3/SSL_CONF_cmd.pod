@@ -463,7 +463,7 @@ B<SSL_OP_NO_TICKET>.
 B<Compression>: SSL/TLS compression support, enabled by default. Inverse
 of B<SSL_OP_NO_COMPRESSION>.
 
-B<EmptyFragments>: use empty fragments as a countermeasure against a
+B<EmptyFragments>: use empty fragments as a countermeasure against an
 SSL 3.0/TLS 1.0 protocol vulnerability affecting CBC ciphers. It
 is set by default. Inverse of B<SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS>.
 

@@ -1133,7 +1133,7 @@ int BN_GF2m_mod_solve_quad(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 
 /*
  * Convert the bit-string representation of a polynomial ( \sum_{i=0}^n a_i *
- * x^i) into an array of integers corresponding to the bits with non-zero
+ * x^i) into an array of integers corresponding to the bits with nonzero
  * coefficient.  Array is terminated with -1. Up to max elements of the array
  * will be filled.  Return value is total number of array elements that would
  * be filled if array was large enough.

@@ -72,7 +72,7 @@ names.
 The loaded providers and what key types they support will ultimately
 determine what I<name> is possible to use with EVP_PKEY_is_a().  We do know
 that the default provider supports RSA, DH, DSA and EC keys, so we can use
-this as an crude example:
+this as a crude example:
 
  #include <openssl/evp.h>
 

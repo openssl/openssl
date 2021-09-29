@@ -26,7 +26,7 @@ given by B<ctx>. This check will always succeed for key types that do not have
 parameters.
 
 EVP_PKEY_param_check_quick() validates the parameters component of the key
-given by B<ctx> like EVP_PKEY_param_check() does. However some algorithm
+given by B<ctx> like EVP_PKEY_param_check() does. However, some algorithm
 implementations may offer a quicker form of validation that omits some checks in
 order to perform a lightweight sanity check of the key. If a quicker form is not
 provided then this function call does the same thing as EVP_PKEY_param_check().
@@ -34,7 +34,7 @@ provided then this function call does the same thing as EVP_PKEY_param_check().
 EVP_PKEY_public_check() validates the public component of the key given by B<ctx>.
 
 EVP_PKEY_public_check_quick() validates the public component of the key
-given by B<ctx> like EVP_PKEY_public_check() does. However some algorithm
+given by B<ctx> like EVP_PKEY_public_check() does. However, some algorithm
 implementations may offer a quicker form of validation that omits some checks in
 order to perform a lightweight sanity check of the key. If a quicker form is not
 provided then this function call does the same thing as EVP_PKEY_public_check().

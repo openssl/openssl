@@ -62,7 +62,7 @@ const OPTIONS crl_options[] = {
 
     OPT_SECTION("Certificate"),
     {"CApath", OPT_CAPATH, '/', "Verify CRL using certificates in dir"},
-    {"CAfile", OPT_CAFILE, '<', "Verify CRL using certificates in file name"},
+    {"CAfile", OPT_CAFILE, '<', "Verify CRL using certificates in filename"},
     {"CAstore", OPT_CASTORE, ':', "Verify CRL using certificates in store URI"},
     {"no-CAfile", OPT_NOCAFILE, '-',
      "Do not load the default certificates file"},

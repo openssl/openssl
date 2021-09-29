@@ -213,7 +213,7 @@ int EVP_PKEY_generate(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
     /*
      * If we get here then we're using legacy paramgen/keygen. In that case
      * the pkey in ctx (if there is one) had better not be provided (because the
-     * legacy methods may not know how to handle it). However we can only get
+     * legacy methods may not know how to handle it). However, we can only get
      * here if ctx->op.keymgmt.genctx == NULL, but that should never be the case
      * if ctx->pkey is provided because we don't allow this when we initialise
      * the ctx.

@@ -47,11 +47,11 @@ decc_feat_t decc_feat_array[] = {
     /* Preserve command-line case with SET PROCESS/PARSE_STYLE=EXTENDED */
     {"DECC$ARGV_PARSE_STYLE", 1},
 
-    /* Preserve case for file names on ODS5 disks. */
+    /* Preserve case for filenames on ODS5 disks. */
     {"DECC$EFS_CASE_PRESERVE", 1},
 
     /*
-     * Enable multiple dots (and most characters) in ODS5 file names, while
+     * Enable multiple dots (and most characters) in ODS5 filenames, while
      * preserving VMS-ness of ";version".
      */
     {"DECC$EFS_CHARSET", 1},

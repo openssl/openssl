@@ -11,7 +11,7 @@
 /*
  * Following definition aliases fopen to fopen64 on above mentioned
  * platforms. This makes it possible to open and sequentially access files
- * larger than 2GB from 32-bit application. It does not allow to traverse
+ * larger than 2GB from 32-bit application. It does not allow one to traverse
  * them beyond 2GB with fseek/ftell, but on the other hand *no* 32-bit
  * platform permits that, not with fseek/ftell. Not to mention that breaking
  * 2GB limit for seeking would require surgery to *our* API. But sequential
@@ -83,7 +83,7 @@ FILE *openssl_fopen(const char *filename, const char *mode)
     {
         char *newname = NULL;
 
-        if (pathconf(filename, _PC_NAME_MAX) <= 12) {  /* 8.3 file system? */
+        if (pathconf(filename, _PC_NAME_MAX) <= 12) {  /* 8.3 filesystem? */
             char *iterator;
             char lastchar;
 

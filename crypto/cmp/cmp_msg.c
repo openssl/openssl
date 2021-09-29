@@ -779,7 +779,7 @@ OSSL_CMP_MSG *ossl_cmp_error_new(OSSL_CMP_CTX *ctx, const OSSL_CMP_PKISI *si,
 }
 
 /*
- * Set the certHash field of a OSSL_CMP_CERTSTATUS structure.
+ * Set the certHash field of an OSSL_CMP_CERTSTATUS structure.
  * This is used in the certConf message, for example,
  * to confirm that the certificate was received successfully.
  */

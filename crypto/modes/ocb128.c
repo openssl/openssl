@@ -101,7 +101,7 @@ static OCB_BLOCK *ocb_lookup_l(OCB128_CONTEXT *ctx, size_t idx)
     if (idx >= ctx->max_l_index) {
         void *tmp_ptr;
         /*
-         * Each additional entry allows to process almost double as
+         * Each additional entry allows one to process almost double as
          * much data, so that in linear world the table will need to
          * be expanded with smaller and smaller increments. Originally
          * it was doubling in size, which was a waste. Growing it

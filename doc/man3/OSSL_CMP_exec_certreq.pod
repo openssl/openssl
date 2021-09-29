@@ -41,7 +41,7 @@ This is the OpenSSL API for doing CMP (Certificate Management Protocol)
 client-server transactions, i.e., sequences of CMP requests and responses.
 
 All functions take a populated OSSL_CMP_CTX structure as their first argument.
-Usually the server name, port, and path ("CMP alias") need to be set, as well as
+Usually, the server name, port, and path ("CMP alias") need to be set, as well as
 credentials the client can use for authenticating itself to the client.
 In order to authenticate the server the client typically needs a trust store.
 The functions return their respective main results directly, while there are

@@ -1959,7 +1959,7 @@ int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family, long count,
          */
 
         /*
-         * We have non-blocking behaviour throughout this test program, but
+         * We have nonblocking behaviour throughout this test program, but
          * can be sure that there is *some* progress in each iteration; so we
          * don't have to worry about ..._SHOULD_READ or ..._SHOULD_WRITE --
          * we just try everything in each iteration
@@ -2036,7 +2036,7 @@ int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family, long count,
              * c_time and s_time increments will typically be very small
              * (depending on machine speed and clock tick intervals), but
              * sampling over a large number of connections should result in
-             * fairly accurate figures.  We cannot guarantee a lot, however
+             * fairly accurate figures.  We cannot guarantee a lot, however,
              * -- if each connection lasts for exactly one clock tick, it
              * will be counted only for the client or only for the server or
              * even not at all.
@@ -2203,7 +2203,7 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
          * The client and the server each employ a "BIO pair":
          * client + client_io, server + server_io.
          * BIO pairs are symmetric.  A BIO pair behaves similar
-         * to a non-blocking socketpair (but both endpoints must
+         * to a nonblocking socketpair (but both endpoints must
          * be handled by the same thread).
          * [Here we could connect client and server to the ends
          * of a single BIO pair, but then this code would be less
@@ -2221,7 +2221,7 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
          */
 
         /*
-         * We have non-blocking behaviour throughout this test program, but
+         * We have nonblocking behaviour throughout this test program, but
          * can be sure that there is *some* progress in each iteration; so we
          * don't have to worry about ..._SHOULD_READ or ..._SHOULD_WRITE --
          * we just try everything in each iteration
@@ -2298,7 +2298,7 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
              * c_time and s_time increments will typically be very small
              * (depending on machine speed and clock tick intervals), but
              * sampling over a large number of connections should result in
-             * fairly accurate figures.  We cannot guarantee a lot, however
+             * fairly accurate figures.  We cannot guarantee a lot, however,
              * -- if each connection lasts for exactly one clock tick, it
              * will be counted only for the client or only for the server or
              * even not at all.

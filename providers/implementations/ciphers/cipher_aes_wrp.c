@@ -8,7 +8,7 @@
  */
 
 /*
- * This file uses the low level AES functions (which are deprecated for
+ * This file uses the low-level AES functions (which are deprecated for
  * non-internal use) in order to implement provider AES ciphers.
  */
 #include "internal/deprecated.h"
@@ -151,7 +151,7 @@ static int aes_wrap_cipher_internal(void *vctx, unsigned char *out,
     if (in == NULL)
         return 0;
 
-    /* Input length must always be non-zero */
+    /* Input length must always be nonzero */
     if (inlen == 0) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_INPUT_LENGTH);
         return -1;

@@ -14,7 +14,7 @@
 #include "eng_local.h"
 
 /*
- * Initialise a engine type for use (or up its functional reference count if
+ * Initialise an engine type for use (or up its functional reference count if
  * it's already in use). This version is only used internally.
  */
 int engine_unlocked_init(ENGINE *e)
@@ -41,7 +41,7 @@ int engine_unlocked_init(ENGINE *e)
 }
 
 /*
- * Free a functional reference to a engine type. This version is only used
+ * Free a functional reference to an engine type. This version is only used
  * internally.
  */
 int engine_unlocked_finish(ENGINE *e, int unlock_for_handlers)

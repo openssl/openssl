@@ -13,7 +13,7 @@ Standard Providers
 ==================
 
 Providers are containers for algorithm implementations. Whenever a cryptographic
-algorithm is used via the high level APIs a provider is selected. It is that
+algorithm is used via the high-level APIs a provider is selected. It is that
 provider implementation that actually does the required work. There are five
 providers distributed with OpenSSL. In the future we expect third parties to
 distribute their own providers which can be added to OpenSSL dynamically.
@@ -31,7 +31,7 @@ explicitly (e.g. in the application or via config), then this is the provider
 that will be used. It is loaded automatically the first time that we try to
 get an algorithm from a provider if no other provider has been loaded yet.
 If another provider has already been loaded then it won't be loaded
-automatically. Therefore if you want to use it in conjunction with other
+automatically. Therefore, if you want to use it in conjunction with other
 providers then you must load it explicitly.
 
 This is a "built-in" provider which means that it is compiled and linked
@@ -78,7 +78,7 @@ The null provider is "built-in" to libcrypto and contains no algorithm
 implementations. In order to guarantee that the default provider is not
 automatically loaded, the null provider can be loaded instead.
 
-This can be useful if you are using non-default library contexts and want
+This can be useful if you are using nondefault library contexts and want
 to ensure that the default library context is never used unintentionally.
 
 Loading Providers
@@ -111,7 +111,7 @@ the legacy and the default provider in the default library context.
 It is also possible to load providers programmatically. For example you can
 load the legacy provider into the default library context as shown below.
 Note that once you have explicitly loaded a provider into the library context
-the default provider will no longer be automatically loaded. Therefore you will
+the default provider will no longer be automatically loaded. Therefore, you will
 often also want to explicitly load the default provider, as is done here:
 
     #include <stdio.h>

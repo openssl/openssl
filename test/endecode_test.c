@@ -629,7 +629,7 @@ static int check_unprotected_legacy_PEM(const char *file, const int line,
 static int test_unprotected_via_legacy_PEM(const char *type, EVP_PKEY *key)
 {
     if (!default_libctx || is_fips)
-        return TEST_skip("Test not available if using a non-default library context or FIPS provider");
+        return TEST_skip("Test not available if using a nondefault library context or FIPS provider");
 
     return test_encode_decode(__FILE__, __LINE__, type, key,
                               OSSL_KEYMGMT_SELECT_KEYPAIR
@@ -750,7 +750,7 @@ static int check_protected_legacy_PEM(const char *file, const int line,
 static int test_protected_via_legacy_PEM(const char *type, EVP_PKEY *key)
 {
     if (!default_libctx || is_fips)
-        return TEST_skip("Test not available if using a non-default library context or FIPS provider");
+        return TEST_skip("Test not available if using a nondefault library context or FIPS provider");
 
     return test_encode_decode(__FILE__, __LINE__, type, key,
                               OSSL_KEYMGMT_SELECT_KEYPAIR
@@ -1228,7 +1228,7 @@ const OPTIONS *test_get_options(void)
     static const OPTIONS options[] = {
         OPT_TEST_OPTIONS_DEFAULT_USAGE,
         { "context", OPT_CONTEXT, '-',
-          "Explicitly use a non-default library context" },
+          "Explicitly use a nondefault library context" },
         { "rsa", OPT_RSA_FILE, '<',
           "PEM format RSA key file to encode/decode" },
         { "pss", OPT_RSA_PSS_FILE, '<',

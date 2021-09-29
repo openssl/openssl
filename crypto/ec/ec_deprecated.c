@@ -8,7 +8,7 @@
  */
 
 /*
- * Suppress deprecation warnings for EC low level implementations that are
+ * Suppress deprecation warnings for EC low-level implementations that are
  * kept until removal.
  */
 #define OPENSSL_SUPPRESS_DEPRECATED

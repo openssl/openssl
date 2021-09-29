@@ -656,7 +656,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
             next = LISTEN_SEND_VERIFY_REQUEST;
         } else {
             /*
-             * We have a cookie, so lets check it.
+             * We have a cookie, so let's check it.
              */
             if (s->ctx->app_verify_cookie_cb == NULL) {
                 ERR_raise(ERR_LIB_SSL, SSL_R_NO_VERIFY_COOKIE_CALLBACK);

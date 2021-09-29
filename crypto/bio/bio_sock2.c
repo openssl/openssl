@@ -77,7 +77,7 @@ int BIO_socket(int domain, int socktype, int protocol, int options)
  *
  * Options can be a combination of the following:
  * - BIO_SOCK_KEEPALIVE: enable regularly sending keep-alive messages.
- * - BIO_SOCK_NONBLOCK: Make the socket non-blocking.
+ * - BIO_SOCK_NONBLOCK: Make the socket nonblocking.
  * - BIO_SOCK_NODELAY: don't delay small messages.
  *
  * options holds BIO socket options that can be used
@@ -195,7 +195,7 @@ int BIO_bind(int sock, const BIO_ADDR *addr, int options)
  *
  * Options can be a combination of the following:
  * - BIO_SOCK_KEEPALIVE: enable regularly sending keep-alive messages.
- * - BIO_SOCK_NONBLOCK: Make the socket non-blocking.
+ * - BIO_SOCK_NONBLOCK: Make the socket nonblocking.
  * - BIO_SOCK_NODELAY: don't delay small messages.
  * - BIO_SOCK_REUSEADDR: Try to reuse the address and port combination
  *   for a recently closed port.
@@ -204,7 +204,7 @@ int BIO_bind(int sock, const BIO_ADDR *addr, int options)
  *
  * It's recommended that you set up both an IPv6 and IPv4 listen socket, and
  * then check both for new clients that connect to it.  You want to set up
- * the socket as non-blocking in that case since else it could hang.
+ * the socket as nonblocking in that case since else it could hang.
  *
  * Not all operating systems support IPv4 addresses on an IPv6 socket, and for
  * others it's an option.  If you pass the BIO_LISTEN_V6_ONLY it will try to
@@ -264,12 +264,12 @@ int BIO_listen(int sock, const BIO_ADDR *addr, int options)
         }
     }
 
-  /* On OpenBSD it is always ipv6 only with ipv6 sockets thus read-only */
+  /* On OpenBSD it is always IPv6 only with IPv6 sockets thus read-only */
 # if defined(IPV6_V6ONLY) && !defined(__OpenBSD__)
     if (BIO_ADDR_family(addr) == AF_INET6) {
         /*
          * Note: Windows default of IPV6_V6ONLY is ON, and Linux is OFF.
-         * Therefore we always have to use setsockopt here.
+         * Therefore, we always have to use setsockopt here.
          */
         on = options & BIO_SOCK_V6_ONLY ? 1 : 0;
         if (setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY,

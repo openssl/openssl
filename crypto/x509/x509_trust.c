@@ -276,7 +276,7 @@ static int obj_trust(int id, X509 *x, int flags)
         /*
          * Reject when explicit trust EKU are set and none match.
          *
-         * Returning untrusted is enough for for full chains that end in
+         * Returning untrusted is enough for full chains that end in
          * self-signed roots, because when explicit trust is specified it
          * suppresses the default blanket trust of self-signed objects.
          *

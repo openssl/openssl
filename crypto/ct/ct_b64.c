@@ -19,7 +19,7 @@
 /*
  * Decodes the base64 string |in| into |out|.
  * A new string will be malloc'd and assigned to |out|. This will be owned by
- * the caller. Do not provide a pre-allocated string in |out|.
+ * the caller. Do not provide a preallocated string in |out|.
  */
 static int ct_base64_decode(const char *in, unsigned char **out)
 {

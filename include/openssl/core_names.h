@@ -267,7 +267,7 @@ extern "C" {
 #define OSSL_DRBG_PARAM_ENTROPY_REQUIRED        "entropy_required"
 #define OSSL_DRBG_PARAM_PREDICTION_RESISTANCE   "prediction_resistance"
 #define OSSL_DRBG_PARAM_MIN_LENGTH              "minium_length"
-#define OSSL_DRBG_PARAM_MAX_LENGTH              "maxium_length"
+#define OSSL_DRBG_PARAM_MAX_LENGTH              "maximum_length"
 #define OSSL_DRBG_PARAM_RANDOM_DATA             "random_data"
 #define OSSL_DRBG_PARAM_SIZE                    "size"
 

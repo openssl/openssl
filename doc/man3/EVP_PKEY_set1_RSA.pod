@@ -91,7 +91,7 @@ EVP_PKEY_get1_RSA(), EVP_PKEY_get1_DSA(), EVP_PKEY_get1_DH() and
 EVP_PKEY_get1_EC_KEY() return the referenced key in I<pkey> or NULL if the
 key is not of the correct type. The returned key must be freed after use.
 These functions are deprecated. Applications should instead use the EVP_PKEY
-directly where possible. If access to the low level key parameters is required
+directly where possible. If access to the low-level key parameters is required
 then applications should use L<EVP_PKEY_get_params(3)> and other similar
 functions. To write an EVP_PKEY out use the OSSL_ENCODER APIs (see
 L<OSSL_ENCODER_CTX_new_for_pkey(3)>).
@@ -102,7 +102,7 @@ EVP_PKEY_get0_EC_KEY() return the referenced key in I<pkey> or NULL if the
 key is not of the correct type. The reference count of the returned key is
 B<not> incremented and so the key must not be freed after use. These functions
 are deprecated. Applications should instead use the EVP_PKEY directly where
-possible. If access to the low level key parameters is required then
+possible. If access to the low-level key parameters is required then
 applications should use L<EVP_PKEY_get_params(3)> and other similar functions.
 To write an EVP_PKEY out use the OSSL_ENCODER APIs (see
 L<OSSL_ENCODER_CTX_new_for_pkey(3)>). EVP_PKEY_get0() returns a pointer to the
@@ -150,7 +150,7 @@ versions of OpenSSL, they should be considered read-only copies of the key.
 Updates to these keys will not be reflected back in the provider side key. The
 EVP_PKEY_get1_RSA(), EVP_PKEY_get1_DSA(), EVP_PKEY_get1_DH() and
 EVP_PKEY_get1_EC_KEY() functions were not changed to have a "const" return type
-in order that applications can "free" the return value. However applications
+in order that applications can "free" the return value. However, applications
 should still consider them as read-only copies.
 
 =head1 NOTES

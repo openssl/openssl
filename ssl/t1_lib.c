@@ -1159,7 +1159,7 @@ int ssl_setup_sig_algs(SSL_CTX *ctx)
         /*
          * Check hash is available.
          * This test is not perfect. A provider could have support
-         * for a signature scheme, but not a particular hash. However the hash
+         * for a signature scheme, but not a particular hash. However, the hash
          * could be available from some other loaded provider. In that case it
          * could be that the signature is available, and the hash is available
          * independently - but not as a combination. We ignore this for now.
@@ -1940,7 +1940,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL *s, const unsigned char *etick,
             goto end;
         }
         /*
-         * The session ID, if non-empty, is used by some clients to detect
+         * The session ID, if nonempty, is used by some clients to detect
          * that the ticket has been accepted. So we copy it to the session
          * structure. If it is empty set length to zero as required by
          * standard.
@@ -2951,7 +2951,7 @@ static int ssl_security_cert_key(SSL *s, SSL_CTX *ctx, X509 *x, int op)
     if (pkey) {
         /*
          * If no parameters this will return -1 and fail using the default
-         * security callback for any non-zero security level. This will
+         * security callback for any nonzero security level. This will
          * reject keys which omit parameters but this only affects DSA and
          * omission of parameters is never (?) done in practice.
          */

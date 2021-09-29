@@ -319,7 +319,7 @@ int dtls1_process_buffered_records(SSL *s)
  *   -  SSL3_RT_APPLICATION_DATA (when ssl3_read calls us)
  *   -  0 (during a shutdown, no data has to be returned)
  *
- * If we don't have stored data to work from, read a SSL/TLS record first
+ * If we don't have stored data to work from, read an SSL/TLS record first
  * (possibly multiple records if we still don't have anything to return).
  *
  * This function must handle any surprises the peer may have for us, such as
@@ -436,7 +436,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     }
 
     /*
-     * Reset the count of consecutive warning alerts if we've got a non-empty
+     * Reset the count of consecutive warning alerts if we've got a nonempty
      * record that isn't an alert.
      */
     if (SSL3_RECORD_get_type(rr) != SSL3_RT_ALERT
@@ -773,7 +773,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
 
 /*
  * Call this to write data in records of type 'type' It will return <= 0 if
- * not all data has been sent or non-blocking IO.
+ * not all data has been sent or nonblocking IO.
  */
 int dtls1_write_bytes(SSL *s, int type, const void *buf, size_t len,
                       size_t *written)

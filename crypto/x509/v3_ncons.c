@@ -101,7 +101,7 @@ static int ia5ncasecmp(const char *s1, const char *s2, size_t n)
         if (*s1 != *s2) {
             unsigned char c1 = (unsigned char)*s1, c2 = (unsigned char)*s2;
 
-            /* Convert to lower case */
+            /* Convert to lowercase */
             if (c1 >= 0x41 /* A */ && c1 <= 0x5A /* Z */)
                 c1 += 0x20;
             if (c2 >= 0x41 /* A */ && c2 <= 0x5A /* Z */)
@@ -431,7 +431,7 @@ int NAME_CONSTRAINTS_check_CN(X509 *x, NAME_CONSTRAINTS *nc)
         ne = X509_NAME_get_entry(nm, i);
         cn = X509_NAME_ENTRY_get_data(ne);
 
-        /* Only process attributes that look like host names */
+        /* Only process attributes that look like hostnames */
         if ((r = cn2dnsid(cn, &idval, &idlen)) != X509_V_OK)
             return r;
         if (idlen == 0)

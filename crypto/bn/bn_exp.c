@@ -1012,7 +1012,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
         if (ret) {
             if (!BN_copy(rr, &tmp))
                 ret = 0;
-            goto err;           /* non-zero ret means it's not error */
+            goto err;           /* nonzero ret means it's not error */
         }
     } else
 #endif

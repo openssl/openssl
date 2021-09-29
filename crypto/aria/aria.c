@@ -72,7 +72,7 @@ static const uint32_t Key_RC[5][4] = {
     { 0x6db14acc, 0x9e21c820, 0xff28b1d5, 0xef5de2b0 }
 };
 
-/* 32bit expanded s-box */
+/* 32-bit expanded s-box */
 static const uint32_t S1[256] = {
     0x00636363, 0x007c7c7c, 0x00777777, 0x007b7b7b,
     0x00f2f2f2, 0x006b6b6b, 0x006f6f6f, 0x00c5c5c5,

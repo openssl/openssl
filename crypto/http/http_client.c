@@ -36,7 +36,7 @@
 #define HTTP_STATUS_CODE_MOVED_PERMANENTLY 301
 #define HTTP_STATUS_CODE_FOUND             302
 
-/* Stateful HTTP request code, supporting blocking and non-blocking I/O */
+/* Stateful HTTP request code, supporting blocking and nonblocking I/O */
 
 /* Opaque HTTP request status structure */
 
@@ -51,7 +51,7 @@ struct ossl_http_req_ctx_st {
     void *upd_arg;              /* Optional arg for update callback function */
     int use_ssl;                /* Use HTTPS */
     char *proxy;                /* Optional proxy name or URI */
-    char *server;               /* Optional server host name */
+    char *server;               /* Optional server hostname */
     char *port;                 /* Optional server port */
     BIO *mem;                   /* Memory BIO holding request/response header */
     BIO *req;                   /* BIO holding the request provided by caller */
@@ -513,12 +513,12 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
         }
         rctx->state = OHS_WRITE_INIT;
 
-        /* fall thru */
+        /* fall through */
     case OHS_WRITE_INIT:
         rctx->len_to_send = BIO_get_mem_data(rctx->mem, &rctx->pos);
         rctx->state = OHS_WRITE_HDR;
 
-        /* fall thru */
+        /* fall through */
     case OHS_WRITE_HDR:
         /* Copy some chunk of data from rctx->mem to rctx->wbio */
     case OHS_WRITE_REQ:
@@ -554,7 +554,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
         }
         rctx->state = OHS_FLUSH;
 
-        /* fall thru */
+        /* fall through */
     case OHS_FLUSH:
 
         i = BIO_flush(rctx->wbio);
@@ -712,7 +712,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
 
         rctx->state = OHS_ASN1_HEADER;
 
-        /* Fall thru */
+        /* Fall through */
     case OHS_ASN1_HEADER:
         /*
          * Now reading ASN1 header: can read at least 2 bytes which is enough
@@ -758,7 +758,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
 
         rctx->state = OHS_ASN1_CONTENT;
 
-        /* Fall thru */
+        /* Fall through */
     case OHS_ASN1_CONTENT:
     default:
         n = BIO_get_mem_data(rctx->mem, NULL);
@@ -1272,7 +1272,7 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
     for (;;) {
         if (BIO_flush(fbio) != 0)
             break;
-        /* potentially needs to be retried if BIO is non-blocking */
+        /* potentially needs to be retried if BIO is nonblocking */
         if (!BIO_should_retry(fbio))
             break;
     }

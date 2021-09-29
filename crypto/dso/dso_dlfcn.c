@@ -382,7 +382,7 @@ static int dladdr(void *ptr, Dl_info *dl)
                 if (member_len > 0) {
                     /*
                      * Need to respect a possible member name and not just
-                     * returning the path name in this case. See docs:
+                     * returning the pathname in this case. See docs:
                      * sys/ldr.h, loadquery() and dlopen()/RTLD_MEMBER.
                      */
                     OPENSSL_strlcat(buffer, "(", buffer_sz);

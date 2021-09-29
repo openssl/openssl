@@ -13,7 +13,7 @@
  */
 
 /*
- * DH low level APIs are deprecated for public use, but still ok for
+ * DH low-level APIs are deprecated for public use, but still ok for
  * internal use.
  *
  * NOTE: When generating keys for key-agreement schemes - FIPS 140-2 IG 9.9

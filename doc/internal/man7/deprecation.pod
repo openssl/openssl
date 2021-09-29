@@ -96,7 +96,7 @@ any OpenSSL header file) in the translation unit that implements it and in
 any translation unit that uses it:
 
  /*
-  * Suppress deprecation warnings for RSA low level implementations that are
+  * Suppress deprecation warnings for RSA low-level implementations that are
   * kept until removal.
   */
  #define OPENSSL_SUPPRESS_DEPRECATED
@@ -119,7 +119,7 @@ other OpenSSL header file) in the translation unit that implements it and in
 any translation unit that uses it:
 
  /*
-  * RSA low level APIs are deprecated for public use, but are kept for
+  * RSA low-level APIs are deprecated for public use, but are kept for
   * internal use.
   */
  #include "internal/deprecated.h"

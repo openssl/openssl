@@ -19,7 +19,7 @@ of formats.
 Since OpenSSL 3.0 keys, single certificates, and CRLs can be read from
 files in any of the B<DER>, B<PEM> or B<P12> formats. Specifying their input
 format is no more needed and the openssl commands will automatically try all
-the possible formats. However if the B<DER> or B<PEM> input format is specified
+the possible formats. However, if the B<DER> or B<PEM> input format is specified
 it will be enforced.
 
 In order to access a key via an engine the input format B<ENGINE> may be used;

@@ -131,7 +131,7 @@ static int asn1_get_length(const unsigned char **pp, int *inf, long *rl,
         if (*p++ & 0x80) {
             if (max < i + 1)
                 return 0;
-            /* Skip leading zeroes */
+            /* Skip leading zeros */
             while (i > 0 && *p == 0) {
                 p++;
                 i--;

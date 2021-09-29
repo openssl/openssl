@@ -302,7 +302,7 @@ int OCSP_resp_find_status(OCSP_BASICRESP *bs, OCSP_CERTID *id, int *status,
 /*
  * Check validity of thisUpdate and nextUpdate fields. It is possible that
  * the request will take a few seconds to process and/or the time won't be
- * totally accurate. Therefore to avoid rejecting otherwise valid time we
+ * totally accurate. Therefore, to avoid rejecting otherwise valid time we
  * allow the times to be within 'nsec' of the current time. Also to avoid
  * accepting very old responses without a nextUpdate field an optional maxage
  * parameter specifies the maximum age the thisUpdate field can be.

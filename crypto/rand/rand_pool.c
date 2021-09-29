@@ -272,10 +272,10 @@ size_t ossl_rand_pool_bytes_needed(RAND_POOL *pool, unsigned int entropy_factor)
      * ossl_rand_pool_add_begin, ossl_rand_pool_add_end or ossl_rand_pool_add
      * are used to collect entropy data without any error handling
      * whatsoever, continue to be valid.
-     * Furthermore if the allocation here fails once, make sure that
+     * Furthermore, if the allocation here fails once, make sure that
      * we don't fall back to a less secure or even blocking random source,
      * as that could happen by the existing code patterns.
-     * This is not a concern for additional data, therefore that
+     * This is not a concern for additional data, therefore, that
      * is not needed if rand_pool_grow fails in other places.
      */
     if (!rand_pool_grow(pool, bytes_needed)) {

@@ -44,7 +44,7 @@
  * int global_init(void);
  *
  * This function should return zero if there is an unrecoverable error and
- * non-zero if the initialization was successful.
+ * nonzero if the initialization was successful.
  */
 
 /* Adds a simple test case. */
@@ -111,7 +111,7 @@
 
 /*
  * TEST_CASE_NAME is defined as the name of the test case function where
- * possible; otherwise we get by with the file name and line number.
+ * possible; otherwise we get by with the filename and line number.
  */
 # if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L
 #  if defined(_MSC_VER)
@@ -150,7 +150,7 @@
     { OPT_HELP_STR, 1, '-', "Usage: %s [options] " usage }, \
     OPT_TEST_OPTIONS
 
-/* The Default test OPTIONS common to all tests with an default usage string */
+/* The Default test OPTIONS common to all tests with a default usage string */
 # define OPT_TEST_OPTIONS_DEFAULT_USAGE \
     { OPT_HELP_STR, 1, '-', "Usage: %s [options]\n" }, \
     OPT_TEST_OPTIONS
@@ -168,8 +168,8 @@
     case OPT_TEST_SEED
 
 /*
- * Tests that use test_get_argument() that dont have any additional options
- * (i.e- dont use opt_next()) can use this to set the usage string.
+ * Tests that use test_get_argument() that don't have any additional options
+ * (i.e. don't use opt_next()) can use this to set the usage string.
  * It embeds test_get_options() which gives default command line options for
  * the test system.
  *
@@ -333,7 +333,7 @@ int test_mem_ne(const char *, int, const char *, const char *,
 
 /*
  * Check a boolean result for being true or false.
- * They return 1 if the condition is true (i.e. the value is non-zero).
+ * They return 1 if the condition is true (i.e. the value is nonzero).
  * Otherwise, they return 0 and pretty-prints diagnostics using |s|.
  * These should not be called directly, use the TEST_xxx macros below instead.
  */
@@ -526,7 +526,7 @@ typedef struct pair_st {
 } PAIR;
 
 typedef struct stanza_st {
-    const char *test_file;      /* Input file name */
+    const char *test_file;      /* Input filename */
     BIO *fp;                    /* Input file */
     int curr;                   /* Current line in file */
     int start;                  /* Line where test starts */

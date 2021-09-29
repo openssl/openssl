@@ -167,8 +167,8 @@ issue the following commands to build OpenSSL.
 As mentioned in the [Choices](#choices) section, you need to pick one
 of the four Configure targets in the first command.
 
-Most likely you will be using the `VC-WIN64A` target for 64bit Windows
-binaries (AMD64) or `VC-WIN32` for 32bit Windows binaries (X86).
+Most likely you will be using the `VC-WIN64A` target for 64-bit Windows
+binaries (AMD64) or `VC-WIN32` for 32-bit Windows binaries (X86).
 The other two options are `VC-WIN64I` (Intel IA64, Itanium) and
 `VC-CE` (Windows CE) are rather uncommon nowadays.
 
@@ -246,7 +246,7 @@ for native binaries, or
 
     C:\Program Files (x86)\OpenSSL
 
-for 32bit binaries on 64bit Windows (WOW64).
+for 32-bit binaries on 64-bit Windows (WOW64).
 
 #### Installing to a different location
 
@@ -317,7 +317,7 @@ another example `--cross-compile-prefix=mipsel-linux-gnu-` suffices in such
 case.
 
 For cross compilation, you must [configure manually](#manual-configuration).
-Also, note that `--openssldir` refers to target's file system, not one you are
+Also, note that `--openssldir` refers to target's filesystem, not one you are
 building on.
 
 Build Type
@@ -359,7 +359,7 @@ and key store.  Defaults are:
     Windows:        C:\Program Files\Common Files\SSL
     OpenVMS:        SYS$COMMON:[OPENSSL-COMMON]
 
-For 32bit Windows applications on Windows 64bit (WOW64), always replace
+For 32-bit Windows applications on Windows 64-bit (WOW64), always replace
 `C:\Program Files` by `C:\Program Files (x86)`.
 
 ### prefix
@@ -415,7 +415,7 @@ Seeding the Random Generator
     --with-rand-seed=seed1[,seed2,...]
 
 A comma separated list of seeding methods which will be tried by OpenSSL
-in order to obtain random input (a.k.a "entropy") for seeding its
+in order to obtain random input (aka "entropy") for seeding its
 cryptographically secure random number generator (CSPRNG).
 The current seeding methods are:
 
@@ -486,7 +486,7 @@ Feature options always come in pairs, an option to enable feature
     [ enable-xxxx | no-xxxx ]
 
 Whether a feature is enabled or disabled by default, depends on the feature.
-In the following list, always the non-default variant is documented: if
+In the following list, always the nondefault variant is documented: if
 feature `xxxx` is disabled by default then `enable-xxxx` is documented and
 if feature `xxxx` is enabled by default then `no-xxxx` is documented.
 
@@ -1389,7 +1389,7 @@ over the build process.  Typically these should be defined prior to running
                    The name of the ar executable to use.
 
     BUILDFILE
-                   Use a different build file name than the platform default
+                   Use a different build filename than the platform default
                    ("Makefile" on Unix-like platforms, "makefile" on native Windows,
                    "descrip.mms" on OpenVMS).  This requires that there is a
                    corresponding build file template.
@@ -1699,7 +1699,7 @@ option will be forced and only static libraries will be created.
 
 Shared libraries are named a little differently on different platforms.
 One way or another, they all have the major OpenSSL version number as
-part of the file name, i.e.  for OpenSSL 1.1.x, `1.1` is somehow part of
+part of the filename, i.e.  for OpenSSL 1.1.x, `1.1` is somehow part of
 the name.
 
 On most POSIX platforms, shared libraries are named `libcrypto.so.1.1`

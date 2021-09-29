@@ -376,7 +376,7 @@ int ossl_cmp_print_log(OSSL_CMP_severity level, const OSSL_CMP_CTX *ctx,
     if (func == NULL)
         func = "(unset function name)";
     if (file == NULL)
-        file = "(unset file name)";
+        file = "(unset filename)";
     if (level_str == NULL)
         level_str = "(unset level string)";
 
@@ -433,7 +433,7 @@ void OSSL_CMP_CTX_print_errors(const OSSL_CMP_CTX *ctx)
 
 /*
  * Set or clear the reference value to be used for identification
- * (i.e., the user name) when using PBMAC.
+ * (i.e., the username) when using PBMAC.
  */
 int OSSL_CMP_CTX_set1_referenceValue(OSSL_CMP_CTX *ctx,
                                      const unsigned char *ref, int len)
@@ -861,7 +861,7 @@ int OSSL_CMP_CTX_set1_senderNonce(OSSL_CMP_CTX *ctx,
 /* Set the proxy server to use for HTTP(S) connections */
 DEFINE_OSSL_CMP_CTX_set1(proxy, char)
 
-/* Set the (HTTP) host name of the CMP server */
+/* Set the (HTTP) hostname of the CMP server */
 DEFINE_OSSL_CMP_CTX_set1(server, char)
 
 /* Set the server exclusion list of the HTTP proxy server */
@@ -948,7 +948,7 @@ int OSSL_CMP_CTX_set_serverPort(OSSL_CMP_CTX *ctx, int port)
     return 1;
 }
 
-/* Set the HTTP path to be used on the server (e.g "pkix/") */
+/* Set the HTTP path to be used on the server (e.g. "pkix/") */
 DEFINE_OSSL_CMP_CTX_set1(serverPath, char)
 
 /* Set the failInfo error code as bit encoding in OSSL_CMP_CTX */

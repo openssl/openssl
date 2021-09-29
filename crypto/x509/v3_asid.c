@@ -377,7 +377,7 @@ static int ASIdentifierChoice_canonize(ASIdentifierChoice *choice)
     }
 
     /*
-     * We have a non-empty list.  Sort it.
+     * We have a nonempty list.  Sort it.
      */
     sk_ASIdOrRange_sort(choice->u.asIdsOrRanges);
 

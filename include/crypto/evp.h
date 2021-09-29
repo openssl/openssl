@@ -309,9 +309,9 @@ struct evp_cipher_st {
     int (*cleanup) (EVP_CIPHER_CTX *);
     /* how big ctx->cipher_data needs to be */
     int ctx_size;
-    /* Populate a ASN1_TYPE with parameters */
+    /* Populate an ASN1_TYPE with parameters */
     int (*set_asn1_parameters) (EVP_CIPHER_CTX *, ASN1_TYPE *);
-    /* Get parameters from a ASN1_TYPE */
+    /* Get parameters from an ASN1_TYPE */
     int (*get_asn1_parameters) (EVP_CIPHER_CTX *, ASN1_TYPE *);
     /* Miscellaneous operations */
     int (*ctrl) (EVP_CIPHER_CTX *, int type, int arg, void *ptr);
@@ -656,7 +656,7 @@ struct evp_pkey_st {
 # ifndef FIPS_MODULE
     /*
      * Legacy key "origin" is composed of a pointer to an EVP_PKEY_ASN1_METHOD,
-     * a pointer to a low level key and possibly a pointer to an engine.
+     * a pointer to a low-level key and possibly a pointer to an engine.
      */
     const EVP_PKEY_ASN1_METHOD *ameth;
     ENGINE *engine;
