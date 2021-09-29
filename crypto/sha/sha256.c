@@ -129,18 +129,63 @@ static const SHA_LONG K256[64] = {
     0x90befffaUL, 0xa4506cebUL, 0xbef9a3f7UL, 0xc67178f2UL
 };
 
+# ifndef PEDANTIC
+#  if defined(__GNUC__) && __GNUC__>=2 && \
+      !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
+#   if __riscv_zknh
+#    define Sigma0(x) ({ MD32_REG_T ret;            \
+                        asm ("sha256sum0 %0, %1"    \
+                        : "=r"(ret)                 \
+                        : "r"(x)); ret;             })
+#    define Sigma1(x) ({ MD32_REG_T ret;            \
+                        asm ("sha256sum1 %0, %1"    \
+                        : "=r"(ret)                 \
+                        : "r"(x)); ret;             })
+#    define sigma0(x) ({ MD32_REG_T ret;            \
+                        asm ("sha256sig0 %0, %1"    \
+                        : "=r"(ret)                 \
+                        : "r"(x)); ret;             })
+#    define sigma1(x) ({ MD32_REG_T ret;            \
+                        asm ("sha256sig1 %0, %1"    \
+                        : "=r"(ret)                 \
+                        : "r"(x)); ret;             })
+#   endif
+#   if __riscv_zbt || __riscv_zpn
+#    define Ch(x,y,z) ({  MD32_REG_T ret;                           \
+                        asm (".insn r4 0x33, 1, 0x3, %0, %2, %1, %3"\
+                        : "=r"(ret)                                 \
+                        : "r"(x), "r"(y), "r"(z)); ret;             })
+#    define Maj(x,y,z) ({ MD32_REG_T ret;                           \
+                        asm (".insn r4 0x33, 1, 0x3, %0, %2, %1, %3"\
+                        : "=r"(ret)                                 \
+                        : "r"(x^z), "r"(y), "r"(x)); ret;           })
+#   endif
+#  endif
+# endif
+
 /*
  * FIPS specification refers to right rotations, while our ROTATE macro
  * is left one. This is why you might notice that rotation coefficients
  * differ from those observed in FIPS document by 32-N...
  */
-# define Sigma0(x)       (ROTATE((x),30) ^ ROTATE((x),19) ^ ROTATE((x),10))
-# define Sigma1(x)       (ROTATE((x),26) ^ ROTATE((x),21) ^ ROTATE((x),7))
-# define sigma0(x)       (ROTATE((x),25) ^ ROTATE((x),14) ^ ((x)>>3))
-# define sigma1(x)       (ROTATE((x),15) ^ ROTATE((x),13) ^ ((x)>>10))
-
-# define Ch(x,y,z)       (((x) & (y)) ^ ((~(x)) & (z)))
-# define Maj(x,y,z)      (((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
+# ifndef Sigma0
+#  define Sigma0(x)       (ROTATE((x),30) ^ ROTATE((x),19) ^ ROTATE((x),10))
+# endif
+# ifndef Sigma1
+#  define Sigma1(x)       (ROTATE((x),26) ^ ROTATE((x),21) ^ ROTATE((x),7))
+# endif
+# ifndef sigma0
+#  define sigma0(x)       (ROTATE((x),25) ^ ROTATE((x),14) ^ ((x)>>3))
+# endif
+# ifndef sigma1
+#  define sigma1(x)       (ROTATE((x),15) ^ ROTATE((x),13) ^ ((x)>>10))
+# endif
+# ifndef Ch
+#  define Ch(x,y,z)       (((x) & (y)) ^ ((~(x)) & (z)))
+# endif
+# ifndef Maj
+#  define Maj(x,y,z)      (((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
+# endif
 
 # ifdef OPENSSL_SMALL_FOOTPRINT
 
