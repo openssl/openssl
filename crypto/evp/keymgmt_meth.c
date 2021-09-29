@@ -222,6 +222,17 @@ EVP_KEYMGMT *EVP_KEYMGMT_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                              (void (*)(void *))EVP_KEYMGMT_free);
 }
 
+EVP_KEYMGMT *evp_keymgmt_fetch_from_prov(OSSL_PROVIDER *prov,
+                                         const char *algorithm,
+                                         const char *properties)
+{
+    return evp_generic_fetch_from_prov(prov, OSSL_OP_KEYMGMT, algorithm,
+                                       properties,
+                                       keymgmt_from_algorithm,
+                                       (int (*)(void *))EVP_KEYMGMT_up_ref,
+                                       (void (*)(void *))EVP_KEYMGMT_free);
+}
+
 int EVP_KEYMGMT_up_ref(EVP_KEYMGMT *keymgmt)
 {
     int ref = 0;

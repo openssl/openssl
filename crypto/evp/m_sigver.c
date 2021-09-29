@@ -36,6 +36,78 @@ static const char *canon_mdname(const char *mdname)
     return mdname;
 }
 
+/*
+ * Handle the case where a key is not exportable from the original provider
+ * pctx: Our EVP_PKEY_CTX
+ * supported_sig: The name of the signature algorithm
+ * tmp_keymgmt: On entry, pointer to the EVP_KEYMGMT that we previously tried to
+ *              export to. On exit, updated to a pointer to the new EVP_KEYMGMT
+ *              (should be the same as the key's)
+ * signature: On exit the EVP_SIGNATURE implementation to use
+ * provkey: On exit updated to point to the provider's key data
+ * Returns:
+ *  1: On success
+ *  0: On soft fail - try legacy
+ * -1: On hard fail
+ */
+int evp_handle_unexportable_key_for_sig(EVP_PKEY_CTX *pctx,
+                                        const char *supported_sig,
+                                        EVP_KEYMGMT **tmp_keymgmt,
+                                        EVP_SIGNATURE **signature,
+                                        void **provkey)
+{
+    const OSSL_PROVIDER *prov;
+
+    /*
+     * Try to get the SIGNATURE operation from the same provider as the
+     * original key (while still respecting the propquery)
+     */
+    prov = EVP_KEYMGMT_get0_provider(pctx->pkey->keymgmt);
+    if (ossl_provider_libctx(prov) != pctx->libctx) {
+        /* We don't support this scenario */
+        return 0;
+    }
+    *signature = evp_signature_fetch_from_prov((OSSL_PROVIDER *)prov,
+                                               supported_sig,
+                                               pctx->propquery);
+    if (*signature == NULL)
+        return 0;
+
+    /*
+     * Now fetch the keymgmt for that provider. This *should* get us the
+     * same keymgmt as used for the key
+     */
+    *tmp_keymgmt = evp_keymgmt_fetch_from_prov((OSSL_PROVIDER *)prov,
+                                               EVP_KEYMGMT_get0_name(*tmp_keymgmt),
+                                               pctx->propquery);
+    if (*tmp_keymgmt != pctx->pkey->keymgmt) {
+        /* This is unexpected! We can't handle this */
+        EVP_KEYMGMT_free(*tmp_keymgmt);
+        EVP_SIGNATURE_free(*signature);
+        *tmp_keymgmt = NULL;
+        *signature = NULL;
+        return 0;
+    }
+    EVP_KEYMGMT_free(pctx->keymgmt);
+    pctx->keymgmt = *tmp_keymgmt;
+
+    /*
+     * Shouldn't actually need to export anything since it is already in the
+     * correct provider.
+     */
+    *provkey = evp_pkey_export_to_provider(pctx->pkey, pctx->libctx,
+                                           tmp_keymgmt, pctx->propquery);
+    if (*provkey == NULL) {
+        /* Shouldn't happen! */
+        EVP_SIGNATURE_free(*signature);
+        *signature = NULL;
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+        return -1;
+    }
+
+    return 1;
+}
+
 static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                           const EVP_MD *type, const char *mdname,
                           OSSL_LIB_CTX *libctx, const char *props,
@@ -81,29 +153,11 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     if (evp_pkey_ctx_is_legacy(locpctx))
         goto legacy;
 
-    /*
-     * Ensure that the key is provided, either natively, or as a cached export.
-     */
     tmp_keymgmt = locpctx->keymgmt;
-    provkey = evp_pkey_export_to_provider(locpctx->pkey, locpctx->libctx,
-                                          &tmp_keymgmt, locpctx->propquery);
-    if (provkey == NULL) {
-        ERR_clear_last_mark();
-        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-        goto err;
-    }
-    if (!EVP_KEYMGMT_up_ref(tmp_keymgmt)) {
-        ERR_clear_last_mark();
-        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-        goto err;
-    }
-    EVP_KEYMGMT_free(locpctx->keymgmt);
-    locpctx->keymgmt = tmp_keymgmt;
     keymgmt_prov = EVP_KEYMGMT_get0_provider(locpctx->keymgmt);
 
-    if (locpctx->keymgmt->query_operation_name != NULL)
-        supported_sig =
-            locpctx->keymgmt->query_operation_name(OSSL_OP_SIGNATURE);
+    if (tmp_keymgmt->query_operation_name != NULL)
+        supported_sig = tmp_keymgmt->query_operation_name(OSSL_OP_SIGNATURE);
 
     /*
      * If we didn't get a supported sig, assume there is one with the
@@ -125,6 +179,28 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
          * tied to this operation.  It will be freed by EVP_PKEY_CTX_free().
          */
         goto legacy;
+    }
+
+    /*
+     * Ensure that the key is provided, either natively, or as a cached export.
+     */
+    provkey = evp_pkey_export_to_provider(locpctx->pkey, locpctx->libctx,
+                                          &tmp_keymgmt, locpctx->propquery);
+    if (provkey == NULL) {
+        /*
+         * We assume that the pkey's key management does not support export.
+         * Now we need to see if we can fallback to using an operation from the
+         * same provider as the key.
+         */
+        EVP_SIGNATURE_free(signature);
+
+        ret = evp_handle_unexportable_key_for_sig(locpctx, supported_sig,
+                                                  &tmp_keymgmt, &signature,
+                                                  &provkey);
+        if (ret == 0)
+            goto legacy;
+        else if (ret < 0)
+            return 0;
     }
 
     /*

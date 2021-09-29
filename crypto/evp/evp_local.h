@@ -310,6 +310,9 @@ EVP_KEYEXCH *evp_keyexch_fetch_from_prov(OSSL_PROVIDER *prov,
 EVP_KEM *evp_kem_fetch_from_prov(OSSL_PROVIDER *prov,
                                        const char *name,
                                        const char *properties);
+EVP_KEYMGMT *evp_keymgmt_fetch_from_prov(OSSL_PROVIDER *prov,
+                                         const char *algorithm,
+                                         const char *properties);
 
 /* Internal structure constructors for fetched methods */
 EVP_MD *evp_md_new(void);
@@ -375,3 +378,9 @@ int evp_names_do_all(OSSL_PROVIDER *prov, int number,
                      void (*fn)(const char *name, void *data),
                      void *data);
 int evp_cipher_cache_constants(EVP_CIPHER *cipher);
+
+int evp_handle_unexportable_key_for_sig(EVP_PKEY_CTX *pctx,
+                                        const char *supported_sig,
+                                        EVP_KEYMGMT **tmp_keymgmt,
+                                        EVP_SIGNATURE **signature,
+                                        void **provkey);

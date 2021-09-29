@@ -413,26 +413,12 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation,
     if (evp_pkey_ctx_is_legacy(ctx))
         goto legacy;
 
-    /*
-     * Ensure that the key is provided, either natively, or as a cached export.
-     *  If not, go legacy
-     */
+
     tmp_keymgmt = ctx->keymgmt;
-    provkey = evp_pkey_export_to_provider(ctx->pkey, ctx->libctx,
-                                          &tmp_keymgmt, ctx->propquery);
-    if (tmp_keymgmt == NULL)
-        goto legacy;
-    if (!EVP_KEYMGMT_up_ref(tmp_keymgmt)) {
-        ERR_clear_last_mark();
-        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-        goto err;
-    }
-    EVP_KEYMGMT_free(ctx->keymgmt);
-    ctx->keymgmt = tmp_keymgmt;
     keymgmt_prov = EVP_KEYMGMT_get0_provider(ctx->keymgmt);
 
-    if (ctx->keymgmt->query_operation_name != NULL)
-        supported_sig = ctx->keymgmt->query_operation_name(OSSL_OP_SIGNATURE);
+    if (tmp_keymgmt->query_operation_name != NULL)
+        supported_sig = tmp_keymgmt->query_operation_name(OSSL_OP_SIGNATURE);
 
     /*
      * If we didn't get a supported sig, assume there is one with the
@@ -454,6 +440,29 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation,
          * tied to this operation.  It will be freed by EVP_PKEY_CTX_free().
          */
         goto legacy;
+    }
+
+    /*
+     * Ensure that the key is provided, either natively, or as a cached export.
+     * If not, go legacy
+     */
+    provkey = evp_pkey_export_to_provider(ctx->pkey, ctx->libctx,
+                                          &tmp_keymgmt, ctx->propquery);
+    if (provkey == NULL) {
+        /*
+         * We assume that the pkey's key management does not support export.
+         * Now we need to see if we can fallback to using an operation from the
+         * same provider as the key.
+         */
+        EVP_SIGNATURE_free(signature);
+
+        ret = evp_handle_unexportable_key_for_sig(ctx, supported_sig,
+                                                  &tmp_keymgmt, &signature,
+                                                  &provkey);
+        if (ret == 0)
+            goto legacy;
+        else if (ret < 0)
+            return 0;
     }
 
     /*
