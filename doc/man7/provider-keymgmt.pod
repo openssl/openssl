@@ -200,12 +200,11 @@ Indicating that everything in a key object should be considered.
 The exact interpretation of those bits or how they combine is left to
 each function where you can specify a selector.
 
-=for comment One might think that a combination of bits means that all
-the selected data subsets must be considered, but then you have to
-consider that when comparing key objects (future function), an
-implementation might opt to not compare the private key if it has
-compared the public key, since a match of one half implies a match of
-the other half.
+It's left to the provider implementation to decide what is reasonable
+to do with regards to received selector bits and how to do it.
+Among others, an implementation of OSSL_FUNC_keymgmt_match() might opt
+to not compare the private half if it has compared the public half,
+since a match of one half implies a match of the other half.
 
 =head2 Constructing and Destructing Functions
 
