@@ -343,7 +343,7 @@ int EVP_PKEY_eq(const EVP_PKEY *a, const EVP_PKEY *b)
 
     if (a->keymgmt != NULL || b->keymgmt != NULL)
         return evp_pkey_cmp_any(a, b, (SELECT_PARAMETERS
-                                       | OSSL_KEYMGMT_SELECT_PUBLIC_KEY));
+                                       | OSSL_KEYMGMT_SELECT_KEYPAIR));
 
     /* All legacy keys */
     if (a->type != b->type)
