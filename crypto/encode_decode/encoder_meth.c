@@ -390,7 +390,7 @@ inner_ossl_encoder_fetch(struct encoder_data_st *methdata, int id,
         methdata->propquery = properties;
         methdata->flag_construct_error_occurred = 0;
         if ((method = ossl_method_construct(methdata->libctx, OSSL_OP_ENCODER,
-                                            0 /* !force_cache */,
+                                            NULL, 0 /* !force_cache */,
                                             &mcm, methdata)) != NULL) {
             /*
              * If construction did create a method for us, we know that
