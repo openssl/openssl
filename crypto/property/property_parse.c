@@ -277,7 +277,7 @@ static void pd_free(OSSL_PROPERTY_DEFINITION *pd)
 /*
  * Convert a stack of property definitions and queries into a fixed array.
  * The items are sorted for efficient query.  The stack is not freed.
- * This function also checks for duplicated names and return an error if
+ * This function also checks for duplicated names and returns an error if
  * any exist.
  */
 static OSSL_PROPERTY_LIST *
