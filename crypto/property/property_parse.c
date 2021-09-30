@@ -277,12 +277,16 @@ static void pd_free(OSSL_PROPERTY_DEFINITION *pd)
 /*
  * Convert a stack of property definitions and queries into a fixed array.
  * The items are sorted for efficient query.  The stack is not freed.
+ * This function also checks for duplicated names and return an error if
+ * any exist.
  */
 static OSSL_PROPERTY_LIST *
-stack_to_property_list(STACK_OF(OSSL_PROPERTY_DEFINITION) *sk)
+stack_to_property_list(OSSL_LIB_CTX *ctx,
+                       STACK_OF(OSSL_PROPERTY_DEFINITION) *sk)
 {
     const int n = sk_OSSL_PROPERTY_DEFINITION_num(sk);
     OSSL_PROPERTY_LIST *r;
+    OSSL_PROPERTY_IDX prev_name = 0;
     int i;
 
     r = OPENSSL_malloc(sizeof(*r)
@@ -294,6 +298,16 @@ stack_to_property_list(STACK_OF(OSSL_PROPERTY_DEFINITION) *sk)
         for (i = 0; i < n; i++) {
             r->properties[i] = *sk_OSSL_PROPERTY_DEFINITION_value(sk, i);
             r->has_optional |= r->properties[i].optional;
+
+            /* Check for duplicated names */
+            if (i > 0 && r->properties[i].name_idx == prev_name) {
+                OPENSSL_free(r);
+                ERR_raise_data(ERR_LIB_PROP, PROP_R_PARSE_FAILED,
+                               "Duplicated name `%s'",
+                               ossl_property_name_str(ctx, prev_name));
+                return NULL;
+            }
+            prev_name = r->properties[i].name_idx;
         }
         r->num_properties = n;
     }
@@ -351,7 +365,7 @@ OSSL_PROPERTY_LIST *ossl_parse_property(OSSL_LIB_CTX *ctx, const char *defn)
                        "HERE-->%s", s);
         goto err;
     }
-    res = stack_to_property_list(sk);
+    res = stack_to_property_list(ctx, sk);
 
 err:
     OPENSSL_free(prop);
@@ -414,7 +428,7 @@ skip_value:
                        "HERE-->%s", s);
         goto err;
     }
-    res = stack_to_property_list(sk);
+    res = stack_to_property_list(ctx, sk);
 
 err:
     OPENSSL_free(prop);
