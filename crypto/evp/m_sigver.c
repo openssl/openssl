@@ -16,26 +16,6 @@
 #include "internal/numbers.h"   /* includes SIZE_MAX */
 #include "evp_local.h"
 
-#ifndef FIPS_MODULE
-
-static int update(EVP_MD_CTX *ctx, const void *data, size_t datalen)
-{
-    ERR_raise(ERR_LIB_EVP, EVP_R_ONLY_ONESHOT_SUPPORTED);
-    return 0;
-}
-
-/*
- * If we get the "NULL" md then the name comes back as "UNDEF". We want to use
- * NULL for this.
- */
-static const char *canon_mdname(const char *mdname)
-{
-    if (mdname != NULL && strcmp(mdname, "UNDEF") == 0)
-        return NULL;
-
-    return mdname;
-}
-
 /*
  * Handle the case where a key is not exportable from the original provider
  * pctx: Our EVP_PKEY_CTX
@@ -58,6 +38,10 @@ int evp_handle_unexportable_key_for_sig(EVP_PKEY_CTX *pctx,
 {
     const OSSL_PROVIDER *prov;
 
+    if (pctx->pkey->keymgmt == NULL) {
+        /* Legacy key */
+        return 0;
+    }
     /*
      * Try to get the SIGNATURE operation from the same provider as the
      * original key (while still respecting the propquery)
@@ -106,6 +90,26 @@ int evp_handle_unexportable_key_for_sig(EVP_PKEY_CTX *pctx,
     }
 
     return 1;
+}
+
+#ifndef FIPS_MODULE
+
+static int update(EVP_MD_CTX *ctx, const void *data, size_t datalen)
+{
+    ERR_raise(ERR_LIB_EVP, EVP_R_ONLY_ONESHOT_SUPPORTED);
+    return 0;
+}
+
+/*
+ * If we get the "NULL" md then the name comes back as "UNDEF". We want to use
+ * NULL for this.
+ */
+static const char *canon_mdname(const char *mdname)
+{
+    if (mdname != NULL && strcmp(mdname, "UNDEF") == 0)
+        return NULL;
+
+    return mdname;
 }
 
 static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
