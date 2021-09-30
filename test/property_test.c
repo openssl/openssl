@@ -101,7 +101,7 @@ static const struct {
     { "n=0", "n=00", 1 },
     { "n=0x0", "n=0", 1 },
     { "n=0, sky=blue", "?n=0, sky=blue", 2 },
-    { "n=1, sky=blue", "?n=0, sky=blue", 1 }
+    { "n=1, sky=blue", "?n=0, sky=blue", 1 },
 };
 
 static int test_property_parse(int n)
