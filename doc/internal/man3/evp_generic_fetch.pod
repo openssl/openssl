@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-evp_generic_fetch, evp_generic_fetch_by_number
+evp_generic_fetch, evp_generic_fetch_by_number, evp_generic_fetch_from_prov
 - generic algorithm fetchers and method creators for EVP
 
 =head1 SYNOPSIS
