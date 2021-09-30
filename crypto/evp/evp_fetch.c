@@ -401,6 +401,32 @@ void *evp_generic_fetch_by_number(OSSL_LIB_CTX *libctx, int operation_id,
     return method;
 }
 
+/*
+ * evp_generic_fetch_from_prov() is special, and only returns methods from
+ * the given provider.
+ * This is meant to be used when one method needs to fetch an associated
+ * other method.
+ */
+void *evp_generic_fetch_from_prov(OSSL_PROVIDER *prov, int operation_id,
+                                  const char *name, const char *properties,
+                                  void *(*new_method)(int name_id,
+                                                      const OSSL_ALGORITHM *algodef,
+                                                      OSSL_PROVIDER *prov),
+                                  int (*up_ref_method)(void *),
+                                  void (*free_method)(void *))
+{
+    struct evp_method_data_st methdata;
+    void *method;
+
+    methdata.libctx = ossl_provider_libctx(prov);
+    methdata.tmp_store = NULL;
+    method = inner_evp_generic_fetch(&methdata, prov, operation_id,
+                                     0, name, properties,
+                                     new_method, up_ref_method, free_method);
+    dealloc_tmp_evp_method_store(methdata.tmp_store);
+    return method;
+}
+
 int evp_method_store_flush(OSSL_LIB_CTX *libctx)
 {
     OSSL_METHOD_STORE *store = get_evp_method_store(libctx);
