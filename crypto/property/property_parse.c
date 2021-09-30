@@ -286,7 +286,7 @@ stack_to_property_list(OSSL_LIB_CTX *ctx,
 {
     const int n = sk_OSSL_PROPERTY_DEFINITION_num(sk);
     OSSL_PROPERTY_LIST *r;
-    OSSL_PROPERTY_IDX prev_name = 0;
+    OSSL_PROPERTY_IDX prev_name_idx = 0;
     int i;
 
     r = OPENSSL_malloc(sizeof(*r)
@@ -300,14 +300,14 @@ stack_to_property_list(OSSL_LIB_CTX *ctx,
             r->has_optional |= r->properties[i].optional;
 
             /* Check for duplicated names */
-            if (i > 0 && r->properties[i].name_idx == prev_name) {
+            if (i > 0 && r->properties[i].name_idx == prev_name_idx) {
                 OPENSSL_free(r);
                 ERR_raise_data(ERR_LIB_PROP, PROP_R_PARSE_FAILED,
                                "Duplicated name `%s'",
-                               ossl_property_name_str(ctx, prev_name));
+                               ossl_property_name_str(ctx, prev_name_idx));
                 return NULL;
             }
-            prev_name = r->properties[i].name_idx;
+            prev_name_idx = r->properties[i].name_idx;
         }
         r->num_properties = n;
     }
