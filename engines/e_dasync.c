@@ -182,8 +182,8 @@ static int dasync_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
                                    const int **nids, int nid);
 
 static int dasync_cipher_nids[] = {
-    NID_aes_128_cbc,
     NID_aes_128_cbc_hmac_sha1,
+    NID_aes_128_cbc,
     0
 };
 
@@ -264,6 +264,7 @@ static int bind_dasync(ENGINE *e)
                                                 16 /* block size */,
                                                 16 /* key len */);
     if (_hidden_aes_128_cbc_hmac_sha1 == NULL
+            || EVP_aes_128_cbc_hmac_sha1() == NULL
             || !EVP_CIPHER_meth_set_iv_length(_hidden_aes_128_cbc_hmac_sha1,16)
             || !EVP_CIPHER_meth_set_flags(_hidden_aes_128_cbc_hmac_sha1,
                                             EVP_CIPH_CBC_MODE
@@ -371,6 +372,10 @@ static int dasync_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
     int ok = 1;
     if (cipher == NULL) {
         /* We are returning a list of supported nids */
+        if (dasync_aes_128_cbc_hmac_sha1() == NULL) {
+            *nids = dasync_cipher_nids + 1;
+            return 1;
+        }
         *nids = dasync_cipher_nids;
         return (sizeof(dasync_cipher_nids) -
                 1) / sizeof(dasync_cipher_nids[0]);
