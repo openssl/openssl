@@ -151,14 +151,14 @@ static const struct {
 } parse_error_tests[] = {
     { 0, "n=1, n=1" },          /* duplicate name */
     { 0, "n=1, a=hi, n=1" },    /* duplicate name */
-    { 1, "n=1, a=bye, ?n=0" },  /* duiplicate name */
+    { 1, "n=1, a=bye, ?n=0" },  /* duplicate name */
     { 0, "a=abc,#@!, n=1" },    /* non-ASCII character located */
     { 1, "a='Hello" },          /* Unterminated string */
     { 0, "a=\"World" },         /* Unterminated string */
     { 1, "a=2, n=012345678" },  /* Bad octal digit */
     { 0, "n=0x28FG, a=3" },     /* Bad hex digit */
     { 0, "n=145d, a=2" },       /* Bad decimal digit */
-    { 1, "@='hello'" },         /* Invalied name */
+    { 1, "@='hello'" },         /* Invalid name */
     { 1, "n0123456789012345678901234567890123456789"
          "0123456789012345678901234567890123456789"
          "0123456789012345678901234567890123456789"
