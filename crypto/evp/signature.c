@@ -314,6 +314,17 @@ EVP_SIGNATURE *EVP_SIGNATURE_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                              (void (*)(void *))EVP_SIGNATURE_free);
 }
 
+EVP_SIGNATURE *evp_signature_fetch_from_prov(OSSL_PROVIDER *prov,
+                                             const char *algorithm,
+                                             const char *properties)
+{
+    return evp_generic_fetch_from_prov(prov, OSSL_OP_SIGNATURE,
+                                       algorithm, properties,
+                                       evp_signature_from_algorithm,
+                                       (int (*)(void *))EVP_SIGNATURE_up_ref,
+                                       (void (*)(void *))EVP_SIGNATURE_free);
+}
+
 int EVP_SIGNATURE_is_a(const EVP_SIGNATURE *signature, const char *name)
 {
     return evp_is_a(signature->prov, signature->name_id, NULL, name);
@@ -386,6 +397,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation,
     void *provkey = NULL;
     EVP_SIGNATURE *signature = NULL;
     EVP_KEYMGMT *tmp_keymgmt = NULL;
+    const OSSL_PROVIDER *keymgmt_prov = NULL;
     const char *supported_sig = NULL;
 
     if (ctx == NULL) {
@@ -417,6 +429,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation,
     }
     EVP_KEYMGMT_free(ctx->keymgmt);
     ctx->keymgmt = tmp_keymgmt;
+    keymgmt_prov = EVP_KEYMGMT_get0_provider(ctx->keymgmt);
 
     if (ctx->keymgmt->query_operation_name != NULL)
         supported_sig = ctx->keymgmt->query_operation_name(OSSL_OP_SIGNATURE);
@@ -432,17 +445,14 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation,
      * Because we cleared out old ops, we shouldn't need to worry about
      * checking if signature is already there.
      */
-    signature =
-        EVP_SIGNATURE_fetch(ctx->libctx, supported_sig, ctx->propquery);
+    signature = evp_signature_fetch_from_prov((OSSL_PROVIDER *)keymgmt_prov,
+                                              supported_sig, ctx->propquery);
 
-    if (signature == NULL
-        || (EVP_KEYMGMT_get0_provider(ctx->keymgmt)
-            != EVP_SIGNATURE_get0_provider(signature))) {
+    if (signature == NULL) {
         /*
          * We don't need to free ctx->keymgmt here, as it's not necessarily
          * tied to this operation.  It will be freed by EVP_PKEY_CTX_free().
          */
-        EVP_SIGNATURE_free(signature);
         goto legacy;
     }
 

@@ -23,6 +23,7 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
     int ret = 0;
     EVP_KEM *kem = NULL;
     EVP_KEYMGMT *tmp_keymgmt = NULL;
+    const OSSL_PROVIDER *keymgmt_prov = NULL;
     void *provkey = NULL;
     const char *supported_kem = NULL;
 
@@ -47,6 +48,7 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
     }
     EVP_KEYMGMT_free(ctx->keymgmt);
     ctx->keymgmt = tmp_keymgmt;
+    keymgmt_prov = EVP_KEYMGMT_get0_provider(ctx->keymgmt);
 
     if (ctx->keymgmt->query_operation_name != NULL)
         supported_kem = ctx->keymgmt->query_operation_name(OSSL_OP_KEM);
@@ -58,9 +60,9 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
     if (supported_kem == NULL)
         supported_kem = ctx->keytype;
 
-    kem = EVP_KEM_fetch(ctx->libctx, supported_kem, ctx->propquery);
-    if (kem == NULL
-        || (EVP_KEYMGMT_get0_provider(ctx->keymgmt) != EVP_KEM_get0_provider(kem))) {
+    kem = evp_kem_fetch_from_prov((OSSL_PROVIDER *)keymgmt_prov,
+                                  supported_kem, ctx->propquery);
+    if (kem == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         ret = -2;
         goto err;
@@ -336,6 +338,15 @@ EVP_KEM *EVP_KEM_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                              evp_kem_from_algorithm,
                              (int (*)(void *))EVP_KEM_up_ref,
                              (void (*)(void *))EVP_KEM_free);
+}
+
+EVP_KEM *evp_kem_fetch_from_prov(OSSL_PROVIDER *prov, const char *algorithm,
+                                 const char *properties)
+{
+    return evp_generic_fetch_from_prov(prov, OSSL_OP_KEM, algorithm, properties,
+                                       evp_kem_from_algorithm,
+                                       (int (*)(void *))EVP_KEM_up_ref,
+                                       (void (*)(void *))EVP_KEM_free);
 }
 
 int EVP_KEM_is_a(const EVP_KEM *kem, const char *name)

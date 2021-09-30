@@ -24,6 +24,7 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
     void *provkey = NULL;
     EVP_ASYM_CIPHER *cipher = NULL;
     EVP_KEYMGMT *tmp_keymgmt = NULL;
+    const OSSL_PROVIDER *keymgmt_prov = NULL;
     const char *supported_ciph = NULL;
 
     if (ctx == NULL) {
@@ -55,6 +56,7 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
     }
     EVP_KEYMGMT_free(ctx->keymgmt);
     ctx->keymgmt = tmp_keymgmt;
+    keymgmt_prov = EVP_KEYMGMT_get0_provider(ctx->keymgmt);
 
     if (ctx->keymgmt->query_operation_name != NULL)
         supported_ciph =
@@ -71,17 +73,14 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
      * Because we cleared out old ops, we shouldn't need to worry about
      * checking if cipher is already there.
      */
-    cipher =
-        EVP_ASYM_CIPHER_fetch(ctx->libctx, supported_ciph, ctx->propquery);
+    cipher = evp_asym_cipher_fetch_from_prov((OSSL_PROVIDER *)keymgmt_prov,
+                                             supported_ciph, ctx->propquery);
 
-    if (cipher == NULL
-        || (EVP_KEYMGMT_get0_provider(ctx->keymgmt)
-            != EVP_ASYM_CIPHER_get0_provider(cipher))) {
+    if (cipher == NULL) {
         /*
          * We don't need to free ctx->keymgmt here, as it's not necessarily
          * tied to this operation.  It will be freed by EVP_PKEY_CTX_free().
          */
-        EVP_ASYM_CIPHER_free(cipher);
         goto legacy;
     }
 
@@ -421,6 +420,17 @@ EVP_ASYM_CIPHER *EVP_ASYM_CIPHER_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                              evp_asym_cipher_from_algorithm,
                              (int (*)(void *))EVP_ASYM_CIPHER_up_ref,
                              (void (*)(void *))EVP_ASYM_CIPHER_free);
+}
+
+EVP_ASYM_CIPHER *evp_asym_cipher_fetch_from_prov(OSSL_PROVIDER *prov,
+                                                 const char *algorithm,
+                                                 const char *properties)
+{
+    return evp_generic_fetch_from_prov(prov, OSSL_OP_ASYM_CIPHER,
+                                       algorithm, properties,
+                                       evp_asym_cipher_from_algorithm,
+                                       (int (*)(void *))EVP_ASYM_CIPHER_up_ref,
+                                       (void (*)(void *))EVP_ASYM_CIPHER_free);
 }
 
 int EVP_ASYM_CIPHER_is_a(const EVP_ASYM_CIPHER *cipher, const char *name)

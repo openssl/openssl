@@ -180,6 +180,17 @@ EVP_KEYEXCH *EVP_KEYEXCH_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                              (void (*)(void *))EVP_KEYEXCH_free);
 }
 
+EVP_KEYEXCH *evp_keyexch_fetch_from_prov(OSSL_PROVIDER *prov,
+                                         const char *algorithm,
+                                         const char *properties)
+{
+    return evp_generic_fetch_from_prov(prov, OSSL_OP_KEYEXCH,
+                                       algorithm, properties,
+                                       evp_keyexch_from_algorithm,
+                                       (int (*)(void *))EVP_KEYEXCH_up_ref,
+                                       (void (*)(void *))EVP_KEYEXCH_free);
+}
+
 int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
 {
     return EVP_PKEY_derive_init_ex(ctx, NULL);
@@ -191,6 +202,7 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
     void *provkey = NULL;
     EVP_KEYEXCH *exchange = NULL;
     EVP_KEYMGMT *tmp_keymgmt = NULL;
+    const OSSL_PROVIDER *keymgmt_prov = NULL;
     const char *supported_exch = NULL;
 
     if (ctx == NULL) {
@@ -242,6 +254,7 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
     }
     EVP_KEYMGMT_free(ctx->keymgmt);
     ctx->keymgmt = tmp_keymgmt;
+    keymgmt_prov = EVP_KEYMGMT_get0_provider(ctx->keymgmt);
 
     if (ctx->keymgmt->query_operation_name != NULL)
         supported_exch = ctx->keymgmt->query_operation_name(OSSL_OP_KEYEXCH);
@@ -257,16 +270,14 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
      * Because we cleared out old ops, we shouldn't need to worry about
      * checking if exchange is already there.
      */
-    exchange = EVP_KEYEXCH_fetch(ctx->libctx, supported_exch, ctx->propquery);
+    exchange = evp_keyexch_fetch_from_prov((OSSL_PROVIDER *)keymgmt_prov,
+                                           supported_exch, ctx->propquery);
 
-    if (exchange == NULL
-        || (EVP_KEYMGMT_get0_provider(ctx->keymgmt)
-            != EVP_KEYEXCH_get0_provider(exchange))) {
+    if (exchange == NULL) {
         /*
          * We don't need to free ctx->keymgmt here, as it's not necessarily
          * tied to this operation.  It will be freed by EVP_PKEY_CTX_free().
          */
-        EVP_KEYEXCH_free(exchange);
         goto legacy;
     }
 

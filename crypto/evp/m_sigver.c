@@ -45,6 +45,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     EVP_PKEY_CTX *locpctx = NULL;
     EVP_SIGNATURE *signature = NULL;
     EVP_KEYMGMT *tmp_keymgmt = NULL;
+    const OSSL_PROVIDER *keymgmt_prov = NULL;
     const char *supported_sig = NULL;
     char locmdname[80] = "";     /* 80 chars should be enough */
     void *provkey = NULL;
@@ -98,6 +99,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     }
     EVP_KEYMGMT_free(locpctx->keymgmt);
     locpctx->keymgmt = tmp_keymgmt;
+    keymgmt_prov = EVP_KEYMGMT_get0_provider(locpctx->keymgmt);
 
     if (locpctx->keymgmt->query_operation_name != NULL)
         supported_sig =
@@ -114,17 +116,14 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
      * Because we cleared out old ops, we shouldn't need to worry about
      * checking if signature is already there.
      */
-    signature = EVP_SIGNATURE_fetch(locpctx->libctx, supported_sig,
-                                    locpctx->propquery);
+    signature = evp_signature_fetch_from_prov((OSSL_PROVIDER *)keymgmt_prov,
+                                              supported_sig, locpctx->propquery);
 
-    if (signature == NULL
-        || (EVP_KEYMGMT_get0_provider(locpctx->keymgmt)
-            != EVP_SIGNATURE_get0_provider(signature))) {
+    if (signature == NULL) {
         /*
          * We don't need to free ctx->keymgmt here, as it's not necessarily
          * tied to this operation.  It will be freed by EVP_PKEY_CTX_free().
          */
-        EVP_SIGNATURE_free(signature);
         goto legacy;
     }
 
