@@ -43,7 +43,7 @@ typedef struct ossl_method_construct_method_st {
 } OSSL_METHOD_CONSTRUCT_METHOD;
 
 void *ossl_method_construct(OSSL_LIB_CTX *ctx, int operation_id,
-                            int force_cache,
+                            OSSL_PROVIDER *prov, int force_cache,
                             OSSL_METHOD_CONSTRUCT_METHOD *mcm, void *mcm_data);
 
 void ossl_algorithm_do_all(OSSL_LIB_CTX *libctx, int operation_id,
