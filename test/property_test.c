@@ -170,7 +170,7 @@ static const struct {
 static int test_property_parse_error(int n)
 {
     OSSL_METHOD_STORE *store;
-    OSSL_PROPERTY_LIST *p;
+    OSSL_PROPERTY_LIST *p = NULL;
     int r = 0;
     const char *ps;
 
