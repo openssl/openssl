@@ -379,7 +379,7 @@ void *evp_generic_fetch(OSSL_LIB_CTX *libctx, int operation_id,
  * already known names, i.e. it refuses to work if no name_id can be found
  * (it's considered an internal programming error).
  * This is meant to be used when one method needs to fetch an associated
- * other method.
+ * method.
  */
 void *evp_generic_fetch_by_number(OSSL_LIB_CTX *libctx, int operation_id,
                                   int name_id, const char *properties,
@@ -405,7 +405,7 @@ void *evp_generic_fetch_by_number(OSSL_LIB_CTX *libctx, int operation_id,
  * evp_generic_fetch_from_prov() is special, and only returns methods from
  * the given provider.
  * This is meant to be used when one method needs to fetch an associated
- * other method.
+ * method.
  */
 void *evp_generic_fetch_from_prov(OSSL_PROVIDER *prov, int operation_id,
                                   const char *name, const char *properties,
