@@ -55,7 +55,7 @@ static int algorithm_do_this(OSSL_PROVIDER *provider, void *cbdata)
         /* If pre-condition not fulfilled, go to the next operation */
         if (!ret)
             continue;
-
+        /*WB map is the table from provider querry */
         map = ossl_provider_query_operation(provider, cur_operation,
                                             &no_store);
         if (map != NULL) {

@@ -291,6 +291,7 @@ OSSL_PROVIDER *ossl_provider_find(OSSL_LIB_CTX *libctx, const char *name,
         }
 #endif
 
+        tmpl.id = (char *)name;
         tmpl.libname = (char *)name;
         if (!CRYPTO_THREAD_read_lock(store->lock))
             return NULL;
@@ -770,7 +771,7 @@ static int provider_init(OSSL_PROVIDER *prov, int flag_lock)
          * Set the "library" name.
          */
         prov->error_strings[0].error = ERR_PACK(prov->error_lib, 0, 0);
-        prov->error_strings[0].string = prov->libname;
+        prov->error_strings[0].string = OSSL_PROVIDER_name(prov);
         /*
          * Copy reasonstrings item 0..cnt-1 to prov->error_trings positions
          * 1..cnt.
@@ -1614,7 +1615,7 @@ static int core_get_params(const OSSL_CORE_HANDLE *handle, OSSL_PARAM params[])
     if ((p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_CORE_VERSION)) != NULL)
         OSSL_PARAM_set_utf8_ptr(p, OPENSSL_VERSION_STR);
     if ((p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_CORE_PROV_NAME)) != NULL)
-        OSSL_PARAM_set_utf8_ptr(p, prov->libname);
+        OSSL_PARAM_set_utf8_ptr(p, OSSL_PROVIDER_name(prov));
 
 #ifndef FIPS_MODULE
     if ((p = OSSL_PARAM_locate(params,
