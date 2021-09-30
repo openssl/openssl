@@ -101,7 +101,7 @@ static const struct {
     { "n=0", "n=00", 1 },
     { "n=0x0", "n=0", 1 },
     { "n=0, sky=blue", "?n=0, sky=blue", 2 },
-    { "n=1, sky=blue", "?n=0, sky=blue", 1 },
+    { "n=1, sky=blue", "?n=0, sky=blue", 1 }
 };
 
 static int test_property_parse(int n)
@@ -141,6 +141,52 @@ static int test_property_query_value_create(void)
     ossl_property_free(o);
     ossl_property_free(p);
     ossl_property_free(q);
+    ossl_method_store_free(store);
+    return r;
+}
+
+static const struct {
+    int query;
+    const char *ps;
+} parse_error_tests[] = {
+    { 0, "n=1, n=1" },          /* duplicate name */
+    { 0, "n=1, a=hi, n=1" },    /* duplicate name */
+    { 1, "n=1, a=bye, ?n=0" },  /* duiplicate name */
+    { 0, "a=abc,#@!, n=1" },    /* non-ASCII character located */
+    { 1, "a='Hello" },          /* Unterminated string */
+    { 0, "a=\"World" },         /* Unterminated string */
+    { 1, "a=2, n=012345678" },  /* Bad octal digit */
+    { 0, "n=0x28FG, a=3" },     /* Bad hex digit */
+    { 0, "n=145d, a=2" },       /* Bad decimal digit */
+    { 1, "@='hello'" },         /* Invalied name */
+    { 0, "n=0123456789012345678901234567890123456789"
+           "0123456789012345678901234567890123456789"
+           "0123456789012345678901234567890123456789"
+           "0123456789012345678901234567890123456789" }, /* Name too long */
+    { 0, ".n=3" },              /* Invalid name */
+    { 1, "fnord.fnord.=3" }     /* Invalid name */
+};
+
+static int test_property_parse_error(int n)
+{
+    OSSL_METHOD_STORE *store;
+    OSSL_PROPERTY_LIST *p;
+    int r = 0;
+    const char *ps;
+
+    if (!TEST_ptr(store = ossl_method_store_new(NULL))
+        || !add_property_names("a", "n", NULL))
+        goto err;
+    ps = parse_error_tests[n].ps;
+    if (parse_error_tests[n].query) {
+        if (!TEST_ptr_null(p = ossl_parse_query(NULL, ps, 1)))
+            goto err;
+    } else if (!TEST_ptr_null(p = ossl_parse_property(NULL, ps))) {
+        goto err;
+    }
+    r = 1;
+ err:
+    ossl_property_free(p);
     ossl_method_store_free(store);
     return r;
 }
@@ -493,6 +539,7 @@ int setup_tests(void)
     ADD_TEST(test_property_string);
     ADD_TEST(test_property_query_value_create);
     ADD_ALL_TESTS(test_property_parse, OSSL_NELEM(parser_tests));
+    ADD_ALL_TESTS(test_property_parse_error, OSSL_NELEM(parse_error_tests));
     ADD_ALL_TESTS(test_property_merge, OSSL_NELEM(merge_tests));
     ADD_TEST(test_property_defn_cache);
     ADD_ALL_TESTS(test_definition_compares, OSSL_NELEM(definition_tests));
