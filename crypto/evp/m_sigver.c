@@ -45,7 +45,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     EVP_PKEY_CTX *locpctx = NULL;
     EVP_SIGNATURE *signature = NULL;
     EVP_KEYMGMT *tmp_keymgmt = NULL;
-    const OSSL_PROVIDER *tmp_prov;
+    const OSSL_PROVIDER *tmp_prov = NULL;
     const char *supported_sig = NULL;
     char locmdname[80] = "";     /* 80 chars should be enough */
     void *provkey = NULL;

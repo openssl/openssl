@@ -203,7 +203,7 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
     void *provkey = NULL;
     EVP_KEYEXCH *exchange = NULL;
     EVP_KEYMGMT *tmp_keymgmt = NULL;
-    const OSSL_PROVIDER *tmp_prov;
+    const OSSL_PROVIDER *tmp_prov = NULL;
     const char *supported_exch = NULL;
     int iter;
 

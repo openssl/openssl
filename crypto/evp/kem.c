@@ -23,7 +23,7 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
     int ret = 0;
     EVP_KEM *kem = NULL;
     EVP_KEYMGMT *tmp_keymgmt = NULL;
-    const OSSL_PROVIDER *tmp_prov;
+    const OSSL_PROVIDER *tmp_prov = NULL;
     void *provkey = NULL;
     const char *supported_kem = NULL;
     int iter;
