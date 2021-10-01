@@ -220,12 +220,6 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
     if (evp_pkey_ctx_is_legacy(ctx))
         goto legacy;
 
-    if (ctx->pkey == NULL) {
-        ERR_clear_last_mark();
-        ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEY_SET);
-        goto err;
-    }
-
     /*
      * Some algorithms (e.g. legacy KDFs) don't have a pkey - so we create
      * a blank one.
@@ -241,6 +235,12 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
             goto err;
         }
         ctx->pkey = pkey;
+    }
+
+    if (ctx->pkey == NULL) {
+        ERR_clear_last_mark();
+        ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEY_SET);
+        goto err;
     }
 
     /*
