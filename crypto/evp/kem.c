@@ -36,6 +36,11 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
     evp_pkey_ctx_free_old_ops(ctx);
     ctx->operation = operation;
 
+    if (ctx->pkey == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEY_SET);
+        goto err;
+    }
+
     /*
      * Try to derive the supported kem from |ctx->keymgmt|.
      */
