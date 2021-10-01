@@ -354,6 +354,15 @@ EVP_KEM *EVP_KEM_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                              (void (*)(void *))EVP_KEM_free);
 }
 
+EVP_KEM *evp_kem_fetch_from_prov(OSSL_PROVIDER *prov, const char *algorithm,
+                                 const char *properties)
+{
+    return evp_generic_fetch_from_prov(prov, OSSL_OP_KEM, algorithm, properties,
+                                       evp_kem_from_algorithm,
+                                       (int (*)(void *))EVP_KEM_up_ref,
+                                       (void (*)(void *))EVP_KEM_free);
+}
+
 int EVP_KEM_is_a(const EVP_KEM *kem, const char *name)
 {
     return evp_is_a(kem->prov, kem->name_id, NULL, name);
