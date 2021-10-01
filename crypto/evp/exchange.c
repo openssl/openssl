@@ -181,6 +181,17 @@ EVP_KEYEXCH *EVP_KEYEXCH_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                              (void (*)(void *))EVP_KEYEXCH_free);
 }
 
+EVP_KEYEXCH *evp_keyexch_fetch_from_prov(OSSL_PROVIDER *prov,
+                                         const char *algorithm,
+                                         const char *properties)
+{
+    return evp_generic_fetch_from_prov(prov, OSSL_OP_KEYEXCH,
+                                       algorithm, properties,
+                                       evp_keyexch_from_algorithm,
+                                       (int (*)(void *))EVP_KEYEXCH_up_ref,
+                                       (void (*)(void *))EVP_KEYEXCH_free);
+}
+
 int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
 {
     return EVP_PKEY_derive_init_ex(ctx, NULL);
