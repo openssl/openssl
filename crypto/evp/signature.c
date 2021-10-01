@@ -397,7 +397,9 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation,
     void *provkey = NULL;
     EVP_SIGNATURE *signature = NULL;
     EVP_KEYMGMT *tmp_keymgmt = NULL;
+    const OSSL_PROVIDER *tmp_prov;
     const char *supported_sig = NULL;
+    int iter;
 
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
@@ -430,32 +432,69 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation,
     }
 
     /*
-     * Because we cleared out old ops, we shouldn't need to worry about
-     * checking if signature is already there.
+     * We perform two iterations:
+     *
+     * 1.  Do the normal signature fetch, using the fetching data given by
+     *     the EVP_PKEY_CTX.
+     * 2.  Do the provider specific signature fetch, from the same provider
+     *     as |ctx->keymgmt|
+     *
+     * We then try to fetch the keymgmt from the same provider as the
+     * signature, and try to export |ctx->pkey| to that keymgmt (when
+     * this keymgmt happens to be the same as |ctx->keymgmt|, the export
+     * is a no-op, but we call it anyway to not complicate the code even
+     * more).
+     * If the export call succeeds (returns a non-NULL provider key pointer),
+     * we're done and can perform the operation itself.  If not, we perform
+     * the second iteration, or jump to legacy.
      */
-    signature =
-        EVP_SIGNATURE_fetch(ctx->libctx, supported_sig, ctx->propquery);
+    for (iter = 1; iter < 3 && provkey == NULL; iter++) {
+        /*
+         * If we're on the second iteration, free the results from the first.
+         * They are NULL on the first iteration, so no need to check what
+         * iteration we're on.
+         */
+        EVP_SIGNATURE_free(signature);
+        EVP_KEYMGMT_free(tmp_keymgmt);
 
-    if (signature == NULL)
-        goto legacy;
+        switch (iter) {
+        case 1:
+            signature =
+                EVP_SIGNATURE_fetch(ctx->libctx, supported_sig, ctx->propquery);
+            if (signature != NULL)
+                tmp_prov = EVP_SIGNATURE_get0_provider(signature);
+            break;
+        case 2:
+            tmp_prov = EVP_KEYMGMT_get0_provider(ctx->keymgmt);
+            signature =
+                evp_signature_fetch_from_prov((OSSL_PROVIDER *)tmp_prov,
+                                              supported_sig, ctx->propquery);
+            if (signature == NULL)
+                goto legacy;
+            break;
+        }
+        if (signature == NULL)
+            continue;
 
-    /*
-     * Ensure that the key is provided, either natively, or as a cached export.
-     * We start by fetching the keymgmt with the same name as |ctx->pkey|,
-     * but from the provider of the signature method, using the same property
-     * query as when fetching the signature method.
-     * With the keymgmt we found (if we did), we try to export |ctx->pkey|
-     * to it (evp_pkey_export_to_provider() is smart enough to only actually
+        /*
+         * Ensure that the key is provided, either natively, or as a cached
+         * export.  We start by fetching the keymgmt with the same name as
+         * |ctx->pkey|, but from the provider of the signature method, using
+         * the same property query as when fetching the signature method.
+         * With the keymgmt we found (if we did), we try to export |ctx->pkey|
+         * to it (evp_pkey_export_to_provider() is smart enough to only actually
 
-     * export it if |tmp_keymgmt| is different from |ctx->pkey|'s keymgmt)
-     */
-    tmp_keymgmt
-        = evp_keymgmt_fetch_from_prov(EVP_SIGNATURE_get0_provider(signature),
-                                      EVP_KEYMGMT_get0_name(ctx->keymgmt),
-                                      ctx->propquery);
-    if (tmp_keymgmt != NULL)
-        provkey = evp_pkey_export_to_provider(ctx->pkey, ctx->libctx,
-                                              &tmp_keymgmt, ctx->propquery);
+         * export it if |tmp_keymgmt| is different from |ctx->pkey|'s keymgmt)
+         */
+        tmp_keymgmt =
+            evp_keymgmt_fetch_from_prov((OSSL_PROVIDER *)tmp_prov,
+                                        EVP_KEYMGMT_get0_name(ctx->keymgmt),
+                                        ctx->propquery);
+        if (tmp_keymgmt != NULL)
+            provkey = evp_pkey_export_to_provider(ctx->pkey, ctx->libctx,
+                                                  &tmp_keymgmt, ctx->propquery);
+    }
+
     if (provkey == NULL)
         goto legacy;
 
