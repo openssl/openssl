@@ -397,7 +397,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation,
     void *provkey = NULL;
     EVP_SIGNATURE *signature = NULL;
     EVP_KEYMGMT *tmp_keymgmt = NULL;
-    const OSSL_PROVIDER *tmp_prov;
+    const OSSL_PROVIDER *tmp_prov = NULL;
     const char *supported_sig = NULL;
     int iter;
 
