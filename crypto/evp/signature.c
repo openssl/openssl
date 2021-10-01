@@ -314,6 +314,17 @@ EVP_SIGNATURE *EVP_SIGNATURE_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                              (void (*)(void *))EVP_SIGNATURE_free);
 }
 
+EVP_SIGNATURE *evp_signature_fetch_from_prov(OSSL_PROVIDER *prov,
+                                             const char *algorithm,
+                                             const char *properties)
+{
+    return evp_generic_fetch_from_prov(prov, OSSL_OP_SIGNATURE,
+                                       algorithm, properties,
+                                       evp_signature_from_algorithm,
+                                       (int (*)(void *))EVP_SIGNATURE_up_ref,
+                                       (void (*)(void *))EVP_SIGNATURE_free);
+}
+
 int EVP_SIGNATURE_is_a(const EVP_SIGNATURE *signature, const char *name)
 {
     return evp_is_a(signature->prov, signature->name_id, NULL, name);
