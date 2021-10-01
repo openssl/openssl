@@ -35,34 +35,46 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
     ctx->operation = operation;
 
     /*
-     * Ensure that the key is provided, either natively, or as a cached export.
+     * Try to derive the supported kem from |ctx->keymgmt|.
      */
-    tmp_keymgmt = ctx->keymgmt;
-    provkey = evp_pkey_export_to_provider(ctx->pkey, ctx->libctx,
-                                          &tmp_keymgmt, ctx->propquery);
-    if (provkey == NULL
-        || !EVP_KEYMGMT_up_ref(tmp_keymgmt)) {
+    if (!ossl_assert(ctx->pkey->keymgmt == NULL
+                     || ctx->pkey->keymgmt == ctx->keymgmt)) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    supported_kem = evp_keymgmt_util_query_operation_name(ctx->keymgmt,
+                                                          OSSL_OP_KEM);
+    if (supported_kem == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         goto err;
     }
-    EVP_KEYMGMT_free(ctx->keymgmt);
-    ctx->keymgmt = tmp_keymgmt;
-
-    if (ctx->keymgmt->query_operation_name != NULL)
-        supported_kem = ctx->keymgmt->query_operation_name(OSSL_OP_KEM);
-
-    /*
-     * If we didn't get a supported kem, assume there is one with the
-     * same name as the key type.
-     */
-    if (supported_kem == NULL)
-        supported_kem = ctx->keytype;
 
     kem = EVP_KEM_fetch(ctx->libctx, supported_kem, ctx->propquery);
-    if (kem == NULL
-        || (EVP_KEYMGMT_get0_provider(ctx->keymgmt) != EVP_KEM_get0_provider(kem))) {
+    if (kem == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         ret = -2;
+        goto err;
+    }
+
+    /*
+     * Ensure that the key is provided, either natively, or as a cached export.
+     * We start by fetching the keymgmt with the same name as |ctx->pkey|,
+     * but from the provider of the kem method, using the same property
+     * query as when fetching the kem method.
+     * With the keymgmt we found (if we did), we try to export |ctx->pkey|
+     * to it (evp_pkey_export_to_provider() is smart enough to only actually
+
+     * export it if |tmp_keymgmt| is different from |ctx->pkey|'s keymgmt)
+     */
+    tmp_keymgmt
+        = evp_keymgmt_fetch_from_prov(EVP_KEM_get0_provider(kem),
+                                      EVP_KEYMGMT_get0_name(ctx->keymgmt),
+                                      ctx->propquery);
+    if (tmp_keymgmt != NULL)
+        provkey = evp_pkey_export_to_provider(ctx->pkey, ctx->libctx,
+                                              &tmp_keymgmt, ctx->propquery);
+    if (provkey == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         goto err;
     }
 
@@ -96,6 +108,9 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
         goto err;
     }
 
+    EVP_KEYMGMT_free(tmp_keymgmt);
+    tmp_keymgmt = NULL;
+
     if (ret > 0)
         return 1;
  err:
@@ -103,6 +118,7 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
         evp_pkey_ctx_free_old_ops(ctx);
         ctx->operation = EVP_PKEY_OP_UNDEFINED;
     }
+    EVP_KEYMGMT_free(tmp_keymgmt);
     return ret;
 }
 
