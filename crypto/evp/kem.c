@@ -39,14 +39,12 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
      */
     if (!ossl_assert(ctx->pkey->keymgmt == NULL
                      || ctx->pkey->keymgmt == ctx->keymgmt)) {
-        ERR_clear_last_mark();
         ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
         goto err;
     }
     supported_kem = evp_keymgmt_util_query_operation_name(ctx->keymgmt,
                                                           OSSL_OP_KEM);
     if (supported_kem == NULL) {
-        ERR_clear_last_mark();
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         goto err;
     }
