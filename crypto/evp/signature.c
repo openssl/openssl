@@ -447,11 +447,6 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation,
                                               &tmp_keymgmt, ctx->propquery);
     if (tmp_keymgmt == NULL)
         goto legacy;
-    if (!EVP_KEYMGMT_up_ref(tmp_keymgmt)) {
-        ERR_clear_last_mark();
-        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-        goto err;
-    }
 
     ERR_pop_to_mark();
 
@@ -510,6 +505,8 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation,
      * let's go see if legacy does.
      */
     ERR_pop_to_mark();
+    EVP_KEYMGMT_free(tmp_keymgmt);
+    tmp_keymgmt = NULL;
 
     if (ctx->pmeth == NULL
             || (operation == EVP_PKEY_OP_SIGN && ctx->pmeth->sign == NULL)
@@ -548,10 +545,12 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation,
         ret = evp_pkey_ctx_use_cached_data(ctx);
 #endif
 
+    EVP_KEYMGMT_free(tmp_keymgmt);
     return ret;
  err:
     evp_pkey_ctx_free_old_ops(ctx);
     ctx->operation = EVP_PKEY_OP_UNDEFINED;
+    EVP_KEYMGMT_free(tmp_keymgmt);
     return ret;
 }
 

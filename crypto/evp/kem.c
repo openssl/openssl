@@ -75,8 +75,7 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
     if (tmp_keymgmt != NULL)
         provkey = evp_pkey_export_to_provider(ctx->pkey, ctx->libctx,
                                               &tmp_keymgmt, ctx->propquery);
-    if (provkey == NULL
-        || !EVP_KEYMGMT_up_ref(tmp_keymgmt)) {
+    if (provkey == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         goto err;
     }
@@ -112,6 +111,9 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
         goto err;
     }
 
+    EVP_KEYMGMT_free(tmp_keymgmt);
+    tmp_keymgmt = NULL;
+
     if (ret > 0)
         return 1;
  err:
@@ -119,6 +121,7 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
         evp_pkey_ctx_free_old_ops(ctx);
         ctx->operation = EVP_PKEY_OP_UNDEFINED;
     }
+    EVP_KEYMGMT_free(tmp_keymgmt);
     return ret;
 }
 

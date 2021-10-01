@@ -129,11 +129,6 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         goto err;
     }
-    if (!EVP_KEYMGMT_up_ref(tmp_keymgmt)) {
-        ERR_clear_last_mark();
-        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-        goto err;
-    }
 
     ERR_pop_to_mark();
 
@@ -224,6 +219,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
  err:
     evp_pkey_ctx_free_old_ops(locpctx);
     locpctx->operation = EVP_PKEY_OP_UNDEFINED;
+    EVP_KEYMGMT_free(tmp_keymgmt);
     return 0;
 
  legacy:
@@ -232,6 +228,8 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
      * let's go see if legacy does.
      */
     ERR_pop_to_mark();
+    EVP_KEYMGMT_free(tmp_keymgmt);
+    tmp_keymgmt = NULL;
 
     if (type == NULL && mdname != NULL)
         type = evp_get_digestbyname_ex(locpctx->libctx, mdname);
@@ -302,6 +300,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
         ret = evp_pkey_ctx_use_cached_data(locpctx);
 #endif
 
+    EVP_KEYMGMT_free(tmp_keymgmt);
     return ret > 0 ? 1 : 0;
 }
 

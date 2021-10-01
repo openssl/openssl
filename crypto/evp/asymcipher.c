@@ -86,11 +86,6 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
                                               &tmp_keymgmt, ctx->propquery);
     if (provkey == NULL)
         goto legacy;
-    if (!EVP_KEYMGMT_up_ref(tmp_keymgmt)) {
-        ERR_clear_last_mark();
-        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-        goto err;
-    }
 
     ERR_pop_to_mark();
 
@@ -128,6 +123,7 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
 
     if (ret <= 0)
         goto err;
+    EVP_KEYMGMT_free(tmp_keymgmt);
     return 1;
 
  legacy:
@@ -136,6 +132,8 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
      * let's go see if legacy does.
      */
     ERR_pop_to_mark();
+    EVP_KEYMGMT_free(tmp_keymgmt);
+    tmp_keymgmt = NULL;
 
     if (ctx->pmeth == NULL || ctx->pmeth->encrypt == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
@@ -162,6 +160,7 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
         evp_pkey_ctx_free_old_ops(ctx);
         ctx->operation = EVP_PKEY_OP_UNDEFINED;
     }
+    EVP_KEYMGMT_free(tmp_keymgmt);
     return ret;
 }
 

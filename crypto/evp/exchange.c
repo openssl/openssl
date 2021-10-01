@@ -273,11 +273,6 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
                                               &tmp_keymgmt, ctx->propquery);
     if (provkey == NULL)
         goto legacy;
-    if (!EVP_KEYMGMT_up_ref(tmp_keymgmt)) {
-        ERR_clear_last_mark();
-        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-        goto err;
-    }
 
     ERR_pop_to_mark();
 
@@ -292,10 +287,12 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
     }
     ret = exchange->init(ctx->op.kex.algctx, provkey, params);
 
+    EVP_KEYMGMT_free(tmp_keymgmt);
     return ret ? 1 : 0;
  err:
     evp_pkey_ctx_free_old_ops(ctx);
     ctx->operation = EVP_PKEY_OP_UNDEFINED;
+    EVP_KEYMGMT_free(tmp_keymgmt);
     return 0;
 
  legacy:
@@ -318,6 +315,7 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
     ret = ctx->pmeth->derive_init(ctx);
     if (ret <= 0)
         ctx->operation = EVP_PKEY_OP_UNDEFINED;
+    EVP_KEYMGMT_free(tmp_keymgmt);
     return ret;
 #endif
 }
