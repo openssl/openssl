@@ -81,7 +81,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     if (evp_pkey_ctx_is_legacy(locpctx))
         goto legacy;
 
-    if (ctx->pkey == NULL) {
+    if (locpctx->pkey == NULL) {
         ERR_clear_last_mark();
         ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEY_SET);
         goto err;
