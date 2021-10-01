@@ -445,7 +445,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation,
     if (tmp_keymgmt != NULL)
         provkey = evp_pkey_export_to_provider(ctx->pkey, ctx->libctx,
                                               &tmp_keymgmt, ctx->propquery);
-    if (tmp_keymgmt == NULL)
+    if (provkey == NULL)
         goto legacy;
 
     ERR_pop_to_mark();
