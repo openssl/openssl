@@ -163,6 +163,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     }
 
     if (provkey == NULL) {
+        EVP_SIGNATURE_free(signature);
         ERR_clear_last_mark();
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         goto err;

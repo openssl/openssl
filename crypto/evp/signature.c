@@ -495,8 +495,10 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation,
                                                   &tmp_keymgmt, ctx->propquery);
     }
 
-    if (provkey == NULL)
+    if (provkey == NULL) {
+        EVP_SIGNATURE_free(signature);
         goto legacy;
+    }
 
     ERR_pop_to_mark();
 

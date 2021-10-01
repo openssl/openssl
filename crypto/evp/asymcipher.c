@@ -122,8 +122,10 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
                                                   &tmp_keymgmt, ctx->propquery);
     }
 
-    if (provkey == NULL)
+    if (provkey == NULL) {
+        EVP_ASYM_CIPHER_free(cipher);
         goto legacy;
+    }
 
     ERR_pop_to_mark();
 

@@ -120,6 +120,7 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
     }
 
     if (provkey == NULL) {
+        EVP_KEM_free(kem);
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         goto err;
     }

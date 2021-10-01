@@ -318,8 +318,10 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
                                                   &tmp_keymgmt, ctx->propquery);
     }
 
-    if (provkey == NULL)
+    if (provkey == NULL) {
+        EVP_KEYEXCH_free(exchange);
         goto legacy;
+    }
 
     ERR_pop_to_mark();
 
