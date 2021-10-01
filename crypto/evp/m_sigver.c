@@ -81,34 +81,21 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
         goto legacy;
 
     /*
-     * Ensure that the key is provided, either natively, or as a cached export.
+     * Try to derive the supported signature from |locpctx->keymgmt|.
      */
-    tmp_keymgmt = locpctx->keymgmt;
-    provkey = evp_pkey_export_to_provider(locpctx->pkey, locpctx->libctx,
-                                          &tmp_keymgmt, locpctx->propquery);
-    if (provkey == NULL) {
+    if (!ossl_assert(locpctx->pkey->keymgmt == NULL
+                     || locpctx->pkey->keymgmt == locpctx->keymgmt)) {
+        ERR_clear_last_mark();
+        ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    supported_sig = evp_keymgmt_util_query_operation_name(locpctx->keymgmt,
+                                                          OSSL_OP_SIGNATURE);
+    if (supported_sig == NULL) {
         ERR_clear_last_mark();
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         goto err;
     }
-    if (!EVP_KEYMGMT_up_ref(tmp_keymgmt)) {
-        ERR_clear_last_mark();
-        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-        goto err;
-    }
-    EVP_KEYMGMT_free(locpctx->keymgmt);
-    locpctx->keymgmt = tmp_keymgmt;
-
-    if (locpctx->keymgmt->query_operation_name != NULL)
-        supported_sig =
-            locpctx->keymgmt->query_operation_name(OSSL_OP_SIGNATURE);
-
-    /*
-     * If we didn't get a supported sig, assume there is one with the
-     * same name as the key type.
-     */
-    if (supported_sig == NULL)
-        supported_sig = locpctx->keytype;
 
     /*
      * Because we cleared out old ops, we shouldn't need to worry about
@@ -117,21 +104,32 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     signature = EVP_SIGNATURE_fetch(locpctx->libctx, supported_sig,
                                     locpctx->propquery);
 
-    if (signature == NULL
-        || (EVP_KEYMGMT_get0_provider(locpctx->keymgmt)
-            != EVP_SIGNATURE_get0_provider(signature))) {
-        /*
-         * We don't need to free ctx->keymgmt here, as it's not necessarily
-         * tied to this operation.  It will be freed by EVP_PKEY_CTX_free().
-         */
-        EVP_SIGNATURE_free(signature);
+    if (signature == NULL)
         goto legacy;
-    }
 
     /*
-     * If we don't have the full support we need with provided methods,
-     * let's go see if legacy does.
+     * Ensure that the key is provided, either natively, or as a cached export.
+     * We start by fetching the keymgmt with the same name as |locpctx->pkey|,
+     * but from the provider of the signature method, using the same property
+     * query as when fetching the signature method.
+     * With the keymgmt we found (if we did), we try to export |locpctx->pkey|
+     * to it (evp_pkey_export_to_provider() is smart enough to only actually
+
+     * export it if |tmp_keymgmt| is different from |locpctx->pkey|'s keymgmt)
      */
+    tmp_keymgmt
+        = evp_keymgmt_fetch_from_prov(EVP_SIGNATURE_get0_provider(signature),
+                                      EVP_KEYMGMT_get0_name(locpctx->keymgmt),
+                                      locpctx->propquery);
+    if (tmp_keymgmt != NULL)
+        provkey = evp_pkey_export_to_provider(locpctx->pkey, locpctx->libctx,
+                                              &tmp_keymgmt, locpctx->propquery);
+    if (provkey == NULL) {
+        ERR_clear_last_mark();
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+        goto err;
+    }
+
     ERR_pop_to_mark();
 
     /* No more legacy from here down to legacy: */
@@ -221,6 +219,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
  err:
     evp_pkey_ctx_free_old_ops(locpctx);
     locpctx->operation = EVP_PKEY_OP_UNDEFINED;
+    EVP_KEYMGMT_free(tmp_keymgmt);
     return 0;
 
  legacy:
@@ -229,6 +228,8 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
      * let's go see if legacy does.
      */
     ERR_pop_to_mark();
+    EVP_KEYMGMT_free(tmp_keymgmt);
+    tmp_keymgmt = NULL;
 
     if (type == NULL && mdname != NULL)
         type = evp_get_digestbyname_ex(locpctx->libctx, mdname);
@@ -299,6 +300,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
         ret = evp_pkey_ctx_use_cached_data(locpctx);
 #endif
 
+    EVP_KEYMGMT_free(tmp_keymgmt);
     return ret > 0 ? 1 : 0;
 }
 
