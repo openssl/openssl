@@ -4952,6 +4952,16 @@
 #define NID_sm4_ctr             1139
 #define OBJ_sm4_ctr             OBJ_sm_scheme,104L,7L
 
+#define SN_sm4_gcm              "SM4-GCM"
+#define LN_sm4_gcm              "sm4-gcm"
+#define NID_sm4_gcm             1248
+#define OBJ_sm4_gcm             OBJ_sm_scheme,104L,8L
+
+#define SN_sm4_ccm              "SM4-CCM"
+#define LN_sm4_ccm              "sm4-ccm"
+#define NID_sm4_ccm             1249
+#define OBJ_sm4_ccm             OBJ_sm_scheme,104L,9L
+
 #define SN_hmac         "HMAC"
 #define LN_hmac         "hmac"
 #define NID_hmac                855
