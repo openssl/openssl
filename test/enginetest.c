@@ -46,7 +46,6 @@ static int test_engines(void)
     ENGINE *block[NUMTOADD];
     char buf[256];
     const char *id, *name;
-    ENGINE *ptr;
     int loop;
     int to_return = 0;
     ENGINE *new_h1 = NULL;
@@ -76,10 +75,8 @@ static int test_engines(void)
     TEST_info("Engines:");
     display_engine_list();
 
-    ptr = ENGINE_get_first();
-    if (!TEST_true(ENGINE_remove(ptr)))
+    if (!TEST_true(ENGINE_remove(new_h1)))
         goto end;
-    ENGINE_free(ptr);
     TEST_info("Engines:");
     display_engine_list();
 
@@ -119,22 +116,6 @@ static int test_engines(void)
     TEST_info("Engines:");
     display_engine_list();
 
-    /*
-     * At this point, we should have an empty list, unless some hardware
-     * support engine got added.  However, since we don't allow the config
-     * file to be loaded and don't otherwise load any built in engines,
-     * that is unlikely.  Still, we check, if for nothing else, then to
-     * notify that something is a little off (and might mean that |new_h1|
-     * wasn't unloaded when it should have)
-     */
-    if ((ptr = ENGINE_get_first()) != NULL) {
-        if (!ENGINE_remove(ptr))
-            TEST_info("Remove failed - probably no hardware support present");
-    }
-    ENGINE_free(ptr);
-    TEST_info("Engines:");
-    display_engine_list();
-
     if (!TEST_true(ENGINE_add(new_h1))
             || !TEST_true(ENGINE_remove(new_h1)))
         goto end;
@@ -158,18 +139,25 @@ static int test_engines(void)
             goto cleanup_loop;
         }
     }
+
+    TEST_info("Engines:");
+    display_engine_list();
+
  cleanup_loop:
-    TEST_info("About to empty the engine-type list");
-    while ((ptr = ENGINE_get_first()) != NULL) {
-        if (!TEST_true(ENGINE_remove(ptr)))
+    while (loop-- > 0) {
+        if (!TEST_true(ENGINE_remove(block[loop])))
             goto end;
-        ENGINE_free(ptr);
     }
     for (loop = 0; loop < NUMTOADD; loop++) {
         OPENSSL_free((void *)ENGINE_get_id(block[loop]));
         OPENSSL_free((void *)ENGINE_get_name(block[loop]));
+        ENGINE_set_id(block[loop], "deleted");
+        ENGINE_set_name(block[loop], "deleted");
     }
     to_return = 1;
+
+    TEST_info("Engines:");
+    display_engine_list();
 
  end:
     ENGINE_free(new_h1);

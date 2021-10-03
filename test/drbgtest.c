@@ -705,7 +705,7 @@ static int test_drbg_reseed_after_fork(RAND_DRBG *master,
     unhook_drbg(master);
     unhook_drbg(public);
     unhook_drbg(private);
-    exit(status);
+    _exit(status);
 }
 #endif
 

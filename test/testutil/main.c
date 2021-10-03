@@ -8,6 +8,7 @@
  */
 
 #include "../testutil.h"
+#include <openssl/engine.h>
 #include "internal/nelem.h"
 #include "output.h"
 #include "tu_local.h"
@@ -42,6 +43,34 @@ int main(int argc, char *argv[])
         return ret;
     }
 
+    OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_DYNAMIC
+                        | OPENSSL_INIT_ENGINE_AFALG
+                        | OPENSSL_INIT_ENGINE_PADLOCK, NULL);
+#ifndef OPENSSL_NO_ENGINE
+    ERR_set_mark();
+    {
+        ENGINE *e = ENGINE_by_id("afalg");
+        if (e && ENGINE_init(e)) {
+            ENGINE_set_default(e, ENGINE_METHOD_ALL);
+            ENGINE_finish(e);
+        }
+        ENGINE_free(e);
+        e = ENGINE_by_id("padlock");
+        if (e && ENGINE_init(e)) {
+            ENGINE_set_default(e, ENGINE_METHOD_ALL);
+            ENGINE_finish(e);
+        }
+        ENGINE_free(e);
+        e = ENGINE_by_id("dasync");
+        if (e && ENGINE_init(e)) {
+            ENGINE_register_complete(e);
+            ENGINE_finish(e);
+        }
+        ENGINE_free(e);
+    }
+    ERR_pop_to_mark();
+#endif
+
     arg_count = argc - 1;
     args = argv;
 
@@ -51,6 +80,55 @@ int main(int argc, char *argv[])
         ret = run_tests(argv[0]);
     cleanup_tests();
     check_arg_usage();
+
+#ifndef OPENSSL_NO_ENGINE
+    ERR_set_mark();
+    {
+        ENGINE *e = ENGINE_by_id("afalg");
+        if (e) {
+            ENGINE_unregister_RSA(e);
+            ENGINE_unregister_DSA(e);
+            ENGINE_unregister_EC(e);
+            ENGINE_unregister_DH(e);
+            ENGINE_unregister_RAND(e);
+            ENGINE_unregister_ciphers(e);
+            ENGINE_unregister_digests(e);
+            ENGINE_unregister_pkey_meths(e);
+            ENGINE_unregister_pkey_asn1_meths(e);
+            ENGINE_remove(e);
+        }
+        ENGINE_free(e);
+        e = ENGINE_by_id("padlock");
+        if (e) {
+            ENGINE_unregister_RSA(e);
+            ENGINE_unregister_DSA(e);
+            ENGINE_unregister_EC(e);
+            ENGINE_unregister_DH(e);
+            ENGINE_unregister_RAND(e);
+            ENGINE_unregister_ciphers(e);
+            ENGINE_unregister_digests(e);
+            ENGINE_unregister_pkey_meths(e);
+            ENGINE_unregister_pkey_asn1_meths(e);
+            ENGINE_remove(e);
+        }
+        ENGINE_free(e);
+        e = ENGINE_by_id("dasync");
+        if (e) {
+            ENGINE_unregister_RSA(e);
+            ENGINE_unregister_DSA(e);
+            ENGINE_unregister_EC(e);
+            ENGINE_unregister_DH(e);
+            ENGINE_unregister_RAND(e);
+            ENGINE_unregister_ciphers(e);
+            ENGINE_unregister_digests(e);
+            ENGINE_unregister_pkey_meths(e);
+            ENGINE_unregister_pkey_asn1_meths(e);
+            ENGINE_remove(e);
+        }
+        ENGINE_free(e);
+    }
+    ERR_pop_to_mark();
+#endif
 
     ret = pulldown_test_framework(ret);
     test_close_streams();
