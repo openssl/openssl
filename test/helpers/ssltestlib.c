@@ -1474,7 +1474,7 @@ ENGINE *load_dasync(void)
         return NULL;
     }
 
-    if (!TEST_true(ENGINE_register_ciphers(e))) {
+    if (!TEST_true(ENGINE_set_default_ciphers(e))) {
         ENGINE_free(e);
         return NULL;
     }
