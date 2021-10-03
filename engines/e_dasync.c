@@ -211,7 +211,8 @@ static int bind_dasync(ENGINE *e)
     /* Setup RSA */
     ;
     if ((dasync_rsa_orig = EVP_PKEY_meth_find(EVP_PKEY_RSA)) == NULL
-        || (dasync_rsa = EVP_PKEY_meth_new(EVP_PKEY_RSA, 0)) == NULL)
+        || (dasync_rsa = EVP_PKEY_meth_new(EVP_PKEY_RSA,
+                                           EVP_PKEY_FLAG_AUTOARGLEN)) == NULL)
         return 0;
     EVP_PKEY_meth_set_init(dasync_rsa, dasync_rsa_init);
     EVP_PKEY_meth_set_cleanup(dasync_rsa, dasync_rsa_cleanup);
@@ -312,7 +313,10 @@ static int bind_dasync(ENGINE *e)
 
 static void destroy_pkey(void)
 {
-    EVP_PKEY_meth_free(dasync_rsa);
+    /*
+     * We don't actually need to free the dasync_rsa method since this is
+     * automatically freed for us by libcrypto.
+     */
     dasync_rsa_orig = NULL;
     dasync_rsa = NULL;
 }
@@ -829,7 +833,7 @@ static int dasync_rsa_paramgen_init(EVP_PKEY_CTX *ctx)
 
     if (pparamgen_init == NULL)
         EVP_PKEY_meth_get_paramgen(dasync_rsa_orig, &pparamgen_init, NULL);
-    return pparamgen_init(ctx);
+    return pparamgen_init != NULL ? pparamgen_init(ctx) : 1;
 }
 
 static int dasync_rsa_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
@@ -838,7 +842,7 @@ static int dasync_rsa_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 
     if (pparamgen == NULL)
         EVP_PKEY_meth_get_paramgen(dasync_rsa_orig, NULL, &pparamgen);
-    return pparamgen(ctx, pkey);
+    return pparamgen != NULL ? pparamgen(ctx, pkey) : 1;
 }
 
 static int dasync_rsa_keygen_init(EVP_PKEY_CTX *ctx)
@@ -847,7 +851,7 @@ static int dasync_rsa_keygen_init(EVP_PKEY_CTX *ctx)
 
     if (pkeygen_init == NULL)
         EVP_PKEY_meth_get_keygen(dasync_rsa_orig, &pkeygen_init, NULL);
-    return pkeygen_init(ctx);
+    return pkeygen_init != NULL ? pkeygen_init(ctx) : 1;
 }
 
 static int dasync_rsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
@@ -865,7 +869,7 @@ static int dasync_rsa_encrypt_init(EVP_PKEY_CTX *ctx)
 
     if (pencrypt_init == NULL)
         EVP_PKEY_meth_get_encrypt(dasync_rsa_orig, &pencrypt_init, NULL);
-    return pencrypt_init(ctx);
+    return pencrypt_init != NULL ? pencrypt_init(ctx) : 1;
 }
 
 static int dasync_rsa_encrypt(EVP_PKEY_CTX *ctx, unsigned char *out,
@@ -887,7 +891,7 @@ static int dasync_rsa_decrypt_init(EVP_PKEY_CTX *ctx)
 
     if (pdecrypt_init == NULL)
         EVP_PKEY_meth_get_decrypt(dasync_rsa_orig, &pdecrypt_init, NULL);
-    return pdecrypt_init(ctx);
+    return pdecrypt_init != NULL ? pdecrypt_init(ctx) : 1;
 }
 
 static int dasync_rsa_decrypt(EVP_PKEY_CTX *ctx, unsigned char *out,
