@@ -304,10 +304,10 @@ static int test_property(void)
 {
     static int fake_provider1;
     static int fake_provider2;
-    static OSSL_PROVIDER * const prov1 = (OSSL_PROVIDER *)&fake_provider1;
-    static OSSL_PROVIDER * const prov2 = (OSSL_PROVIDER *)&fake_provider2;
+    static const OSSL_PROVIDER * const prov1 = (OSSL_PROVIDER *)&fake_provider1;
+    static const OSSL_PROVIDER * const prov2 = (OSSL_PROVIDER *)&fake_provider2;
     static const struct {
-        OSSL_PROVIDER *prov;
+        const OSSL_PROVIDER * const prov;
         int nid;
         const char *prop;
         char *impl;
