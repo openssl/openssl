@@ -82,7 +82,6 @@ int init_client(int *sock, const char *host, const char *port,
     BIO_ADDRINFO *bindaddr = NULL;
     const BIO_ADDRINFO *ai = NULL;
     const BIO_ADDRINFO *bi = NULL;
-    char *hostname = NULL;
     int found = 0;
     int ret;
 
@@ -173,10 +172,6 @@ int init_client(int *sock, const char *host, const char *port,
         break;
     }
 
-    hostname = BIO_ADDR_hostname_string(BIO_ADDRINFO_address(ai), 1);
-    BIO_printf(bio_out, "Connecting to %s\n", hostname);
-    OPENSSL_free(hostname);
-
     if (*sock == INVALID_SOCKET) {
         if (bindaddr != NULL && !found) {
             BIO_printf(bio_err, "Can't bind %saddress for %s%s%s\n",
@@ -193,6 +188,13 @@ int init_client(int *sock, const char *host, const char *port,
         }
         ERR_print_errors(bio_err);
     } else {
+        char *hostname = NULL;
+
+        hostname = BIO_ADDR_hostname_string(BIO_ADDRINFO_address(ai), 1);
+        if (hostname != NULL) {
+            BIO_printf(bio_out, "Connecting to %s\n", hostname);
+            OPENSSL_free(hostname);
+        }
         /* Remove any stale errors from previous connection attempts */
         ERR_clear_error();
         ret = 1;
