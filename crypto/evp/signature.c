@@ -455,7 +455,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation,
      * the second iteration, or jump to legacy.
      */
     for (iter = 1; iter < 3 && provkey == NULL; iter++) {
-        EVP_KEYMGMT *tmp_keymgmt_tofree;
+        EVP_KEYMGMT *tmp_keymgmt_tofree = NULL;
 
         /*
          * If we're on the second iteration, free the results from the first.
