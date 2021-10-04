@@ -45,6 +45,7 @@ typedef struct {
 DEFINE_STACK_OF(IMPLEMENTATION)
 
 typedef struct {
+    const OSSL_PROVIDER *provider;
     const char *query;
     METHOD method;
     char body[1];
@@ -172,7 +173,13 @@ static unsigned long query_hash(const QUERY *a)
 
 static int query_cmp(const QUERY *a, const QUERY *b)
 {
-    return strcmp(a->query, b->query);
+    int res = strcmp(a->query, b->query);
+
+    if (res == 0 && a->provider != NULL && b->provider != NULL)
+        res = b->provider > a->provider ? 1
+            : b->provider < a->provider ? -1
+            : 0;
+    return res;
 }
 
 static void impl_free(IMPLEMENTATION *impl)
@@ -393,9 +400,8 @@ void ossl_method_store_do_all(OSSL_METHOD_STORE *store,
         ossl_sa_ALGORITHM_doall_arg(store->algs, alg_do_each, &data);
 }
 
-int ossl_method_store_fetch(OSSL_METHOD_STORE *store, int nid,
-                            const char *prop_query,
-                            void **method)
+int ossl_method_store_fetch(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
+                            int nid, const char *prop_query, void **method)
 {
     OSSL_PROPERTY_LIST **plp;
     ALGORITHM *alg;
@@ -438,22 +444,27 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store, int nid,
     }
 
     if (pq == NULL) {
-        if ((impl = sk_IMPLEMENTATION_value(alg->impls, 0)) != NULL) {
-            best_method = &impl->method;
-            ret = 1;
+        for (j = 0; j < sk_IMPLEMENTATION_num(alg->impls); j++) {
+            if ((impl = sk_IMPLEMENTATION_value(alg->impls, j)) != NULL
+                && (prov == NULL || impl->provider == prov)) {
+                best_method = &impl->method;
+                ret = 1;
+            }
         }
         goto fin;
     }
     optional = ossl_property_has_optional(pq);
     for (j = 0; j < sk_IMPLEMENTATION_num(alg->impls); j++) {
-        impl = sk_IMPLEMENTATION_value(alg->impls, j);
-        score = ossl_property_match_count(pq, impl->properties);
-        if (score > best) {
-            best_method = &impl->method;
-            best = score;
-            ret = 1;
-            if (!optional)
-                goto fin;
+        if ((impl = sk_IMPLEMENTATION_value(alg->impls, j)) != NULL
+            && (prov == NULL || impl->provider == prov)) {
+            score = ossl_property_match_count(pq, impl->properties);
+            if (score > best) {
+                best_method = &impl->method;
+                best = score;
+                ret = 1;
+                if (!optional)
+                    goto fin;
+            }
         }
     }
 fin:
@@ -569,8 +580,8 @@ static void ossl_method_cache_flush_some(OSSL_METHOD_STORE *store)
     store->nelem = state.nelem;
 }
 
-int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, int nid,
-                                const char *prop_query, void **method)
+int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
+                                int nid, const char *prop_query, void **method)
 {
     ALGORITHM *alg;
     QUERY elem, *r;
@@ -586,6 +597,7 @@ int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, int nid,
         goto err;
 
     elem.query = prop_query != NULL ? prop_query : "";
+    elem.provider = prov;
     r = lh_QUERY_retrieve(alg->cache, &elem);
     if (r == NULL)
         goto err;
@@ -598,8 +610,8 @@ err:
     return res;
 }
 
-int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, int nid,
-                                const char *prop_query, void *method,
+int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
+                                int nid, const char *prop_query, void *method,
                                 int (*method_up_ref)(void *),
                                 void (*method_destruct)(void *))
 {
@@ -623,6 +635,7 @@ int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, int nid,
 
     if (method == NULL) {
         elem.query = prop_query;
+        elem.provider = prov;
         if ((old = lh_QUERY_delete(alg->cache, &elem)) != NULL) {
             impl_cache_free(old);
             store->nelem--;
