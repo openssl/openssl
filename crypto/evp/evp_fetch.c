@@ -115,7 +115,8 @@ static uint32_t evp_method_id(int name_id, unsigned int operation_id)
             | (operation_id & METHOD_ID_OPERATION_MASK));
 }
 
-static void *get_evp_method_from_store(void *store, void *data)
+static void *get_evp_method_from_store(void *store, const OSSL_PROVIDER **prov,
+                                       void *data)
 {
     struct evp_method_data_st *methdata = data;
     void *method = NULL;
@@ -146,7 +147,7 @@ static void *get_evp_method_from_store(void *store, void *data)
         && (store = get_evp_method_store(methdata->libctx)) == NULL)
         return NULL;
 
-    if (!ossl_method_store_fetch(store, meth_id, methdata->propquery,
+    if (!ossl_method_store_fetch(store, meth_id, methdata->propquery, prov,
                                  &method))
         return NULL;
     return method;
@@ -298,7 +299,8 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
         unsupported = 1;
 
     if (meth_id == 0
-        || !ossl_method_store_cache_get(store, meth_id, properties, &method)) {
+        || !ossl_method_store_cache_get(store, prov, meth_id, properties,
+                                        &method)) {
         OSSL_METHOD_CONSTRUCT_METHOD mcm = {
             get_tmp_evp_method_store,
             get_evp_method_from_store,
@@ -316,7 +318,7 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
         methdata->destruct_method = free_method;
         methdata->flag_construct_error_occurred = 0;
         if ((method = ossl_method_construct(methdata->libctx, operation_id,
-                                            prov, 0 /* !force_cache */,
+                                            &prov, 0 /* !force_cache */,
                                             &mcm, methdata)) != NULL) {
             /*
              * If construction did create a method for us, we know that
@@ -328,8 +330,8 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
                 name_id = ossl_namemap_name2num(namemap, name);
             meth_id = evp_method_id(name_id, operation_id);
             if (name_id != 0)
-                ossl_method_store_cache_set(store, meth_id, properties, method,
-                                            up_ref_method, free_method);
+                ossl_method_store_cache_set(store, prov, meth_id, properties,
+                                            method, up_ref_method, free_method);
         }
 
         /*

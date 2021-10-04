@@ -274,7 +274,7 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
      * the second iteration, or jump to legacy.
      */
     for (iter = 1, provkey = NULL; iter < 3 && provkey == NULL; iter++) {
-        EVP_KEYMGMT *tmp_keymgmt_tofree;
+        EVP_KEYMGMT *tmp_keymgmt_tofree = NULL;
 
         /*
          * If we're on the second iteration, free the results from the first.
