@@ -116,6 +116,8 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
      * the second iteration, or jump to legacy.
      */
     for (iter = 1, provkey = NULL; iter < 3 && provkey == NULL; iter++) {
+        EVP_KEYMGMT *tmp_keymgmt_tofree = NULL;
+
         /*
          * If we're on the second iteration, free the results from the first.
          * They are NULL on the first iteration, so no need to check what
@@ -153,13 +155,15 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 
          * export it if |tmp_keymgmt| is different from |locpctx->pkey|'s keymgmt)
          */
-        tmp_keymgmt
-            = evp_keymgmt_fetch_from_prov((OSSL_PROVIDER *)tmp_prov,
-                                          EVP_KEYMGMT_get0_name(locpctx->keymgmt),
-                                          locpctx->propquery);
+        tmp_keymgmt_tofree = tmp_keymgmt =
+            evp_keymgmt_fetch_from_prov((OSSL_PROVIDER *)tmp_prov,
+                                        EVP_KEYMGMT_get0_name(locpctx->keymgmt),
+                                        locpctx->propquery);
         if (tmp_keymgmt != NULL)
             provkey = evp_pkey_export_to_provider(locpctx->pkey, locpctx->libctx,
                                                   &tmp_keymgmt, locpctx->propquery);
+        if (tmp_keymgmt == NULL)
+            EVP_KEYMGMT_free(tmp_keymgmt_tofree);
     }
 
     if (provkey == NULL) {

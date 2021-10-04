@@ -71,6 +71,8 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
      * the second iteration, or jump to legacy.
      */
     for (iter = 1, provkey = NULL; iter < 3 && provkey == NULL; iter++) {
+        EVP_KEYMGMT *tmp_keymgmt_tofree;
+
         /*
          * If we're on the second iteration, free the results from the first.
          * They are NULL on the first iteration, so no need to check what
@@ -110,13 +112,15 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
 
          * export it if |tmp_keymgmt| is different from |ctx->pkey|'s keymgmt)
          */
-        tmp_keymgmt
-            = evp_keymgmt_fetch_from_prov((OSSL_PROVIDER *)tmp_prov,
-                                          EVP_KEYMGMT_get0_name(ctx->keymgmt),
-                                          ctx->propquery);
+        tmp_keymgmt_tofree = tmp_keymgmt =
+            evp_keymgmt_fetch_from_prov((OSSL_PROVIDER *)tmp_prov,
+                                        EVP_KEYMGMT_get0_name(ctx->keymgmt),
+                                        ctx->propquery);
         if (tmp_keymgmt != NULL)
             provkey = evp_pkey_export_to_provider(ctx->pkey, ctx->libctx,
                                                   &tmp_keymgmt, ctx->propquery);
+        if (tmp_keymgmt == NULL)
+            EVP_KEYMGMT_free(tmp_keymgmt_tofree);
     }
 
     if (provkey == NULL) {
