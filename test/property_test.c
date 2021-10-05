@@ -300,24 +300,32 @@ err:
     return ret;
 }
 
+/*
+ * We make our OSSL_PROVIDER for testing purposes.  All we really need is
+ * a pointer.  We know that as long as we don't try to use the method
+ * cache flush functions, the provider pointer is merely a pointer being
+ * passed around, and used as a tag of sorts.
+ */
+struct ossl_provider_st {
+    int x;
+};
+
 static int test_property(void)
 {
-    static int fake_provider1;
-    static int fake_provider2;
-    static const OSSL_PROVIDER * const prov1 = (OSSL_PROVIDER *)&fake_provider1;
-    static const OSSL_PROVIDER * const prov2 = (OSSL_PROVIDER *)&fake_provider2;
+    static OSSL_PROVIDER fake_provider1 = { 1 };
+    static OSSL_PROVIDER fake_provider2 = { 2 };
     static const struct {
         const OSSL_PROVIDER * const prov;
         int nid;
         const char *prop;
         char *impl;
     } impls[] = {
-        { prov1, 1, "fast=no, colour=green", "a" },
-        { prov1, 1, "fast, colour=blue", "b" },
-        { prov1, 1, "", "-" },
-        { prov2, 9, "sky=blue, furry", "c" },
-        { prov2, 3, NULL, "d" },
-        { prov2, 6, "sky.colour=blue, sky=green, old.data", "e" },
+        { &fake_provider1, 1, "fast=no, colour=green", "a" },
+        { &fake_provider1, 1, "fast, colour=blue", "b" },
+        { &fake_provider1, 1, "", "-" },
+        { &fake_provider2, 9, "sky=blue, furry", "c" },
+        { &fake_provider2, 3, NULL, "d" },
+        { &fake_provider2, 6, "sky.colour=blue, sky=green, old.data", "e" },
     };
     static struct {
         const OSSL_PROVIDER *prov;
@@ -325,17 +333,17 @@ static int test_property(void)
         const char *prop;
         char *expected;
     } queries[] = {
-        { prov1, 1, "fast", "b" },
-        { prov1, 1, "fast=yes", "b" },
-        { prov1, 1, "fast=no, colour=green", "a" },
-        { prov1, 1, "colour=blue, fast", "b" },
-        { prov1, 1, "colour=blue", "b" },
-        { prov2, 9, "furry", "c" },
-        { prov2, 6, "sky.colour=blue", "e" },
-        { prov2, 6, "old.data", "e" },
-        { prov2, 9, "furry=yes, sky=blue", "c" },
-        { prov1, 1, "", "a" },
-        { prov2, 3, "", "d" },
+        { &fake_provider1, 1, "fast", "b" },
+        { &fake_provider1, 1, "fast=yes", "b" },
+        { &fake_provider1, 1, "fast=no, colour=green", "a" },
+        { &fake_provider1, 1, "colour=blue, fast", "b" },
+        { &fake_provider1, 1, "colour=blue", "b" },
+        { &fake_provider2, 9, "furry", "c" },
+        { &fake_provider2, 6, "sky.colour=blue", "e" },
+        { &fake_provider2, 6, "old.data", "e" },
+        { &fake_provider2, 9, "furry=yes, sky=blue", "c" },
+        { &fake_provider1, 1, "", "a" },
+        { &fake_provider2, 3, "", "d" },
     };
     OSSL_METHOD_STORE *store;
     size_t i;
@@ -377,8 +385,9 @@ static int test_property(void)
         OSSL_PROPERTY_LIST *pq = NULL;
 
         result = NULL;
-        if (queries[i].prov == prov1) {
-            if (!TEST_true(ossl_method_store_fetch(store, prov1, queries[i].nid,
+        if (queries[i].prov == &fake_provider1) {
+            if (!TEST_true(ossl_method_store_fetch(store, &fake_provider1,
+                                                   queries[i].nid,
                                                    queries[i].prop, &result))
                 || !TEST_str_eq((char *)result, queries[i].expected)) {
                 TEST_note("iteration %zd", i + 1);
@@ -386,7 +395,8 @@ static int test_property(void)
                 goto err;
             }
         } else {
-            if (!TEST_false(ossl_method_store_fetch(store, prov1, queries[i].nid,
+            if (!TEST_false(ossl_method_store_fetch(store, &fake_provider1,
+                                                    queries[i].nid,
                                                     queries[i].prop, &result))
                 || !TEST_ptr_null(result)) {
                 TEST_note("iteration %zd", i + 1);
@@ -403,8 +413,9 @@ static int test_property(void)
         OSSL_PROPERTY_LIST *pq = NULL;
 
         result = NULL;
-        if (queries[i].prov == prov2) {
-            if (!TEST_true(ossl_method_store_fetch(store, prov2, queries[i].nid,
+        if (queries[i].prov == &fake_provider2) {
+            if (!TEST_true(ossl_method_store_fetch(store, &fake_provider2,
+                                                   queries[i].nid,
                                                    queries[i].prop, &result))
                 || !TEST_str_eq((char *)result, queries[i].expected)) {
                 TEST_note("iteration %zd", i + 1);
@@ -412,7 +423,8 @@ static int test_property(void)
                 goto err;
             }
         } else {
-            if (!TEST_false(ossl_method_store_fetch(store, prov2, queries[i].nid,
+            if (!TEST_false(ossl_method_store_fetch(store, &fake_provider2,
+                                                    queries[i].nid,
                                                     queries[i].prop, &result))
                 || !TEST_ptr_null(result)) {
                 TEST_note("iteration %zd", i + 1);
