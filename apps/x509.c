@@ -235,6 +235,21 @@ static X509_REQ *x509_to_req(X509 *cert, int ext_copy, const char *names)
     return NULL;
 }
 
+static int self_signed(X509_STORE *ctx, X509 *cert)
+{
+    X509_STORE_CTX *xsc = X509_STORE_CTX_new();
+    int ret = 0;
+
+    if (xsc == NULL || !X509_STORE_CTX_init(xsc, ctx, cert, NULL)) {
+        BIO_printf(bio_err, "Error initialising X509 store\n");
+    } else {
+        X509_STORE_CTX_set_flags(xsc, X509_V_FLAG_CHECK_SS_SIGNATURE);
+        ret = X509_verify_cert(xsc) > 0;
+    }
+    X509_STORE_CTX_free(xsc);
+    return ret;
+}
+
 int x509_main(int argc, char **argv)
 {
     ASN1_INTEGER *sno = NULL;
@@ -793,6 +808,8 @@ int x509_main(int argc, char **argv)
             sno = x509_load_serial(CAfile, CAserial, CA_createserial);
         if (sno == NULL)
             goto end;
+        if (!x509toreq && !reqfile && !newcert && !self_signed(ctx, x))
+            goto end;
     }
 
     if (sno != NULL && !X509_set_serialNumber(x, sno))
@@ -862,21 +879,6 @@ int x509_main(int argc, char **argv)
         if (!do_X509_sign(x, privkey, digest, sigopts, &ext_ctx))
             goto end;
     } else if (CAfile != NULL) {
-        if (!reqfile && !newcert) { /* certificate should be self-signed */
-            X509_STORE_CTX *xsc = X509_STORE_CTX_new();
-
-            if (xsc == NULL || !X509_STORE_CTX_init(xsc, ctx, x, NULL)) {
-                BIO_printf(bio_err, "Error initialising X509 store\n");
-                X509_STORE_CTX_free(xsc);
-                goto end;
-            }
-            X509_STORE_CTX_set_cert(xsc, x);
-            X509_STORE_CTX_set_flags(xsc, X509_V_FLAG_CHECK_SS_SIGNATURE);
-            i = X509_verify_cert(xsc);
-            X509_STORE_CTX_free(xsc);
-            if (i <= 0)
-                goto end;
-        }
         if ((CAkey = load_key(CAkeyfile, CAkeyformat,
                               0, passin, e, "CA private key")) == NULL)
             goto end;
