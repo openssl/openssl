@@ -68,13 +68,13 @@ client = 0-curve-prime256v1-client
 
 [0-curve-prime256v1-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = prime256v1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [0-curve-prime256v1-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = prime256v1
 MaxProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -97,13 +97,13 @@ client = 1-curve-secp384r1-client
 
 [1-curve-secp384r1-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = secp384r1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [1-curve-secp384r1-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = secp384r1
 MaxProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -126,13 +126,13 @@ client = 2-curve-secp521r1-client
 
 [2-curve-secp521r1-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = secp521r1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [2-curve-secp521r1-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = secp521r1
 MaxProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -155,13 +155,13 @@ client = 3-curve-X25519-client
 
 [3-curve-X25519-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = X25519
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [3-curve-X25519-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = X25519
 MaxProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -184,13 +184,13 @@ client = 4-curve-X448-client
 
 [4-curve-X448-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = X448
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [4-curve-X448-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = X448
 MaxProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -213,13 +213,13 @@ client = 5-curve-sect233k1-client
 
 [5-curve-sect233k1-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = sect233k1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [5-curve-sect233k1-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = sect233k1
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -242,13 +242,13 @@ client = 6-curve-sect233r1-client
 
 [6-curve-sect233r1-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = sect233r1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [6-curve-sect233r1-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = sect233r1
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -271,13 +271,13 @@ client = 7-curve-sect283k1-client
 
 [7-curve-sect283k1-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = sect283k1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [7-curve-sect283k1-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = sect283k1
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -300,13 +300,13 @@ client = 8-curve-sect283r1-client
 
 [8-curve-sect283r1-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = sect283r1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [8-curve-sect283r1-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = sect283r1
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -329,13 +329,13 @@ client = 9-curve-sect409k1-client
 
 [9-curve-sect409k1-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = sect409k1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [9-curve-sect409k1-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = sect409k1
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -358,13 +358,13 @@ client = 10-curve-sect409r1-client
 
 [10-curve-sect409r1-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = sect409r1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [10-curve-sect409r1-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = sect409r1
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -387,13 +387,13 @@ client = 11-curve-sect571k1-client
 
 [11-curve-sect571k1-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = sect571k1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [11-curve-sect571k1-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = sect571k1
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -416,13 +416,13 @@ client = 12-curve-sect571r1-client
 
 [12-curve-sect571r1-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = sect571r1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [12-curve-sect571r1-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = sect571r1
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -445,13 +445,13 @@ client = 13-curve-secp224r1-client
 
 [13-curve-secp224r1-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = secp224r1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [13-curve-secp224r1-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = secp224r1
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -474,13 +474,13 @@ client = 14-curve-sect163k1-client
 
 [14-curve-sect163k1-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = sect163k1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [14-curve-sect163k1-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = sect163k1
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -503,13 +503,13 @@ client = 15-curve-sect163r2-client
 
 [15-curve-sect163r2-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = sect163r2
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [15-curve-sect163r2-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = sect163r2
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -532,13 +532,13 @@ client = 16-curve-prime192v1-client
 
 [16-curve-prime192v1-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = prime192v1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [16-curve-prime192v1-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = prime192v1
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -561,13 +561,13 @@ client = 17-curve-sect163r1-client
 
 [17-curve-sect163r1-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = sect163r1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [17-curve-sect163r1-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = sect163r1
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -590,13 +590,13 @@ client = 18-curve-sect193r1-client
 
 [18-curve-sect193r1-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = sect193r1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [18-curve-sect193r1-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = sect193r1
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -619,13 +619,13 @@ client = 19-curve-sect193r2-client
 
 [19-curve-sect193r2-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = sect193r2
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [19-curve-sect193r2-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = sect193r2
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -648,13 +648,13 @@ client = 20-curve-sect239k1-client
 
 [20-curve-sect239k1-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = sect239k1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [20-curve-sect239k1-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = sect239k1
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -677,13 +677,13 @@ client = 21-curve-secp160k1-client
 
 [21-curve-secp160k1-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = secp160k1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [21-curve-secp160k1-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = secp160k1
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -706,13 +706,13 @@ client = 22-curve-secp160r1-client
 
 [22-curve-secp160r1-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = secp160r1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [22-curve-secp160r1-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = secp160r1
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -735,13 +735,13 @@ client = 23-curve-secp160r2-client
 
 [23-curve-secp160r2-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = secp160r2
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [23-curve-secp160r2-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = secp160r2
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -764,13 +764,13 @@ client = 24-curve-secp192k1-client
 
 [24-curve-secp192k1-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = secp192k1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [24-curve-secp192k1-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = secp192k1
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -793,13 +793,13 @@ client = 25-curve-secp224k1-client
 
 [25-curve-secp224k1-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = secp224k1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [25-curve-secp224k1-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = secp224k1
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -822,13 +822,13 @@ client = 26-curve-secp256k1-client
 
 [26-curve-secp256k1-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = secp256k1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [26-curve-secp256k1-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = secp256k1
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -851,13 +851,13 @@ client = 27-curve-brainpoolP256r1-client
 
 [27-curve-brainpoolP256r1-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = brainpoolP256r1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [27-curve-brainpoolP256r1-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = brainpoolP256r1
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -880,13 +880,13 @@ client = 28-curve-brainpoolP384r1-client
 
 [28-curve-brainpoolP384r1-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = brainpoolP384r1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [28-curve-brainpoolP384r1-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = brainpoolP384r1
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -909,13 +909,13 @@ client = 29-curve-brainpoolP512r1-client
 
 [29-curve-brainpoolP512r1-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = brainpoolP512r1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [29-curve-brainpoolP512r1-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = brainpoolP512r1
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -938,13 +938,13 @@ client = 30-curve-sect233k1-tls13-client
 
 [30-curve-sect233k1-tls13-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = sect233k1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [30-curve-sect233k1-tls13-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = sect233k1
 MinProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -965,13 +965,13 @@ client = 31-curve-sect233r1-tls13-client
 
 [31-curve-sect233r1-tls13-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = sect233r1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [31-curve-sect233r1-tls13-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = sect233r1
 MinProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -992,13 +992,13 @@ client = 32-curve-sect283k1-tls13-client
 
 [32-curve-sect283k1-tls13-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = sect283k1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [32-curve-sect283k1-tls13-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = sect283k1
 MinProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -1019,13 +1019,13 @@ client = 33-curve-sect283r1-tls13-client
 
 [33-curve-sect283r1-tls13-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = sect283r1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [33-curve-sect283r1-tls13-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = sect283r1
 MinProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -1046,13 +1046,13 @@ client = 34-curve-sect409k1-tls13-client
 
 [34-curve-sect409k1-tls13-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = sect409k1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [34-curve-sect409k1-tls13-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = sect409k1
 MinProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -1073,13 +1073,13 @@ client = 35-curve-sect409r1-tls13-client
 
 [35-curve-sect409r1-tls13-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = sect409r1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [35-curve-sect409r1-tls13-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = sect409r1
 MinProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -1100,13 +1100,13 @@ client = 36-curve-sect571k1-tls13-client
 
 [36-curve-sect571k1-tls13-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = sect571k1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [36-curve-sect571k1-tls13-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = sect571k1
 MinProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -1127,13 +1127,13 @@ client = 37-curve-sect571r1-tls13-client
 
 [37-curve-sect571r1-tls13-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = sect571r1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [37-curve-sect571r1-tls13-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = sect571r1
 MinProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -1154,13 +1154,13 @@ client = 38-curve-secp224r1-tls13-client
 
 [38-curve-secp224r1-tls13-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = secp224r1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [38-curve-secp224r1-tls13-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = secp224r1
 MinProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -1181,13 +1181,13 @@ client = 39-curve-sect163k1-tls13-client
 
 [39-curve-sect163k1-tls13-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = sect163k1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [39-curve-sect163k1-tls13-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = sect163k1
 MinProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -1208,13 +1208,13 @@ client = 40-curve-sect163r2-tls13-client
 
 [40-curve-sect163r2-tls13-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = sect163r2
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [40-curve-sect163r2-tls13-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = sect163r2
 MinProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -1235,13 +1235,13 @@ client = 41-curve-prime192v1-tls13-client
 
 [41-curve-prime192v1-tls13-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = prime192v1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [41-curve-prime192v1-tls13-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = prime192v1
 MinProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -1262,13 +1262,13 @@ client = 42-curve-sect163r1-tls13-client
 
 [42-curve-sect163r1-tls13-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = sect163r1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [42-curve-sect163r1-tls13-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = sect163r1
 MinProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -1289,13 +1289,13 @@ client = 43-curve-sect193r1-tls13-client
 
 [43-curve-sect193r1-tls13-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = sect193r1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [43-curve-sect193r1-tls13-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = sect193r1
 MinProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -1316,13 +1316,13 @@ client = 44-curve-sect193r2-tls13-client
 
 [44-curve-sect193r2-tls13-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = sect193r2
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [44-curve-sect193r2-tls13-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = sect193r2
 MinProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -1343,13 +1343,13 @@ client = 45-curve-sect239k1-tls13-client
 
 [45-curve-sect239k1-tls13-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = sect239k1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [45-curve-sect239k1-tls13-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = sect239k1
 MinProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -1370,13 +1370,13 @@ client = 46-curve-secp160k1-tls13-client
 
 [46-curve-secp160k1-tls13-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = secp160k1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [46-curve-secp160k1-tls13-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = secp160k1
 MinProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -1397,13 +1397,13 @@ client = 47-curve-secp160r1-tls13-client
 
 [47-curve-secp160r1-tls13-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = secp160r1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [47-curve-secp160r1-tls13-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = secp160r1
 MinProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -1424,13 +1424,13 @@ client = 48-curve-secp160r2-tls13-client
 
 [48-curve-secp160r2-tls13-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = secp160r2
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [48-curve-secp160r2-tls13-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = secp160r2
 MinProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -1451,13 +1451,13 @@ client = 49-curve-secp192k1-tls13-client
 
 [49-curve-secp192k1-tls13-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = secp192k1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [49-curve-secp192k1-tls13-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = secp192k1
 MinProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -1478,13 +1478,13 @@ client = 50-curve-secp224k1-tls13-client
 
 [50-curve-secp224k1-tls13-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = secp224k1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [50-curve-secp224k1-tls13-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = secp224k1
 MinProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -1505,13 +1505,13 @@ client = 51-curve-secp256k1-tls13-client
 
 [51-curve-secp256k1-tls13-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = secp256k1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [51-curve-secp256k1-tls13-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = secp256k1
 MinProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -1532,13 +1532,13 @@ client = 52-curve-brainpoolP256r1-tls13-client
 
 [52-curve-brainpoolP256r1-tls13-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = brainpoolP256r1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [52-curve-brainpoolP256r1-tls13-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = brainpoolP256r1
 MinProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -1559,13 +1559,13 @@ client = 53-curve-brainpoolP384r1-tls13-client
 
 [53-curve-brainpoolP384r1-tls13-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = brainpoolP384r1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [53-curve-brainpoolP384r1-tls13-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = brainpoolP384r1
 MinProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -1586,13 +1586,13 @@ client = 54-curve-brainpoolP512r1-tls13-client
 
 [54-curve-brainpoolP512r1-tls13-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 Curves = brainpoolP512r1
 MaxProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [54-curve-brainpoolP512r1-tls13-client]
-CipherString = ECDHE
+CipherString = ECDHE@SECLEVEL=1
 Curves = brainpoolP512r1
 MinProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem

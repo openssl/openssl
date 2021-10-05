@@ -19,11 +19,11 @@ client = 0-ct-permissive-without-scts-client
 
 [0-ct-permissive-without-scts-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [0-ct-permissive-without-scts-client]
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -46,11 +46,11 @@ client = 1-ct-permissive-with-scts-client
 
 [1-ct-permissive-with-scts-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/embeddedSCTs1.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/embeddedSCTs1-key.pem
 
 [1-ct-permissive-with-scts-client]
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/embeddedSCTs1_issuer.pem
 VerifyMode = Peer
 
@@ -73,11 +73,11 @@ client = 2-ct-strict-without-scts-client
 
 [2-ct-strict-without-scts-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [2-ct-strict-without-scts-client]
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -101,11 +101,11 @@ client = 3-ct-strict-with-scts-client
 
 [3-ct-strict-with-scts-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/embeddedSCTs1.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/embeddedSCTs1-key.pem
 
 [3-ct-strict-with-scts-client]
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/embeddedSCTs1_issuer.pem
 VerifyMode = Peer
 
@@ -130,11 +130,11 @@ resume-client = 4-ct-permissive-resumption-client
 
 [4-ct-permissive-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/embeddedSCTs1.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/embeddedSCTs1-key.pem
 
 [4-ct-permissive-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/embeddedSCTs1_issuer.pem
 VerifyMode = Peer
 
@@ -162,11 +162,11 @@ resume-client = 5-ct-strict-resumption-resume-client
 
 [5-ct-strict-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/embeddedSCTs1.pem
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/embeddedSCTs1-key.pem
 
 [5-ct-strict-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT@SECLEVEL=1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/embeddedSCTs1_issuer.pem
 VerifyMode = Peer
 
