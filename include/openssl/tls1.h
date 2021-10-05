@@ -28,7 +28,7 @@ extern "C" {
 
 /* Default security level if not overridden at config time */
 # ifndef OPENSSL_TLS_SECURITY_LEVEL
-#  define OPENSSL_TLS_SECURITY_LEVEL 1
+#  define OPENSSL_TLS_SECURITY_LEVEL 2
 # endif
 
 /* TLS*_VERSION constants are defined in prov_ssl.h */
