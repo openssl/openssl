@@ -244,7 +244,8 @@ static int bind_dasync(ENGINE *e)
             || !EVP_CIPHER_meth_set_flags(_hidden_aes_128_cbc,
                                           EVP_CIPH_FLAG_DEFAULT_ASN1
                                           | EVP_CIPH_CBC_MODE
-                                          | EVP_CIPH_FLAG_PIPELINE)
+                                          | EVP_CIPH_FLAG_PIPELINE
+                                          | EVP_CIPH_CUSTOM_COPY)
             || !EVP_CIPHER_meth_set_init(_hidden_aes_128_cbc,
                                          dasync_aes128_init_key)
             || !EVP_CIPHER_meth_set_do_cipher(_hidden_aes_128_cbc,
@@ -270,7 +271,8 @@ static int bind_dasync(ENGINE *e)
                                             EVP_CIPH_CBC_MODE
                                           | EVP_CIPH_FLAG_DEFAULT_ASN1
                                           | EVP_CIPH_FLAG_AEAD_CIPHER
-                                          | EVP_CIPH_FLAG_PIPELINE)
+                                          | EVP_CIPH_FLAG_PIPELINE
+                                          | EVP_CIPH_CUSTOM_COPY)
             || !EVP_CIPHER_meth_set_init(_hidden_aes_128_cbc_hmac_sha1,
                                          dasync_aes128_cbc_hmac_sha1_init_key)
             || !EVP_CIPHER_meth_set_do_cipher(_hidden_aes_128_cbc_hmac_sha1,
@@ -627,6 +629,21 @@ static int dasync_cipher_ctrl_helper(EVP_CIPHER_CTX *ctx, int type, int arg,
             } else {
                 return SHA_DIGEST_LENGTH;
             }
+        }
+
+        case EVP_CTRL_COPY:
+        {
+            const EVP_CIPHER *cipher = aeadcapable
+                                       ? EVP_aes_128_cbc_hmac_sha1()
+                                       : EVP_aes_128_cbc();
+            size_t data_size = EVP_CIPHER_impl_ctx_size(cipher);
+            void *cipher_data = OPENSSL_malloc(data_size);
+
+            if (cipher_data == NULL)
+                return 0;
+            memcpy(cipher_data, pipe_ctx->inner_cipher_data, data_size);
+            pipe_ctx->inner_cipher_data = cipher_data;
+            return 1;
         }
 
         default:
