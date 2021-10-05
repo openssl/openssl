@@ -9196,13 +9196,17 @@ static int test_set_tmp_dh(int idx)
  */
 static int test_dh_auto(int idx)
 {
-    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, TLS_client_method());
+    SSL_CTX *sctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method());
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
     EVP_PKEY *tmpkey = NULL;
     char *thiscert = NULL, *thiskey = NULL;
     size_t expdhsize = 0;
     const char *ciphersuite = "DHE-RSA-AES128-SHA";
+
+    if (!TEST_ptr(sctx) || !TEST_ptr(cctx))
+        goto end;
 
     switch (idx) {
     case 0:
@@ -9212,6 +9216,8 @@ static int test_dh_auto(int idx)
         thiscert = cert1024;
         thiskey = privkey1024;
         expdhsize = 1024;
+        SSL_CTX_set_security_level(sctx, 1);
+        SSL_CTX_set_security_level(cctx, 1);
         break;
     case 1:
         /* 2048 bit prime */
@@ -9251,8 +9257,8 @@ static int test_dh_auto(int idx)
         goto end;
     }
 
-    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                       TLS_client_method(),
+    if (!TEST_true(create_ssl_ctx_pair(libctx, NULL,
+                                       NULL,
                                        0,
                                        0,
                                        &sctx, &cctx, thiscert, thiskey)))
