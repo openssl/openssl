@@ -449,6 +449,7 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
                 && (prov == NULL || impl->provider == prov)) {
                 best_method = &impl->method;
                 ret = 1;
+                break;
             }
         }
         goto fin;
@@ -645,6 +646,7 @@ int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
     p = OPENSSL_malloc(sizeof(*p) + (len = strlen(prop_query)));
     if (p != NULL) {
         p->query = p->body;
+        p->provider = prov;
         p->method.method = method;
         p->method.up_ref = method_up_ref;
         p->method.free = method_destruct;
