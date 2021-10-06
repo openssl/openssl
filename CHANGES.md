@@ -24,6 +24,13 @@ OpenSSL 3.1
 
 ### Changes between 3.0 and 3.1 [xx XXX xxxx]
 
+ * The default SSL/TLS security level has been changed from 1 to 2. RSA,
+   DSA and DH keys of 1024 bits and above and less than 2048 bits and ECC keys
+   of 160 bits and above and less than 224 bits were previously accepted by
+   default but are now no longer be allowed.
+
+   *Matt Caswell*
+
  * The SSL_CTX_set_cipher_list family functions now accept ciphers using their
    IANA standard names.
 
