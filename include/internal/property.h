@@ -61,8 +61,9 @@ int ossl_method_store_remove(OSSL_METHOD_STORE *store, int nid,
 void ossl_method_store_do_all(OSSL_METHOD_STORE *store,
                               void (*fn)(int id, void *method, void *fnarg),
                               void *fnarg);
-int ossl_method_store_fetch(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
-                            int nid, const char *prop_query, void **method);
+int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
+                            int nid, const char *prop_query,
+                            const OSSL_PROVIDER **prov, void **method);
 
 /* Get the global properties associate with the specified library context */
 OSSL_PROPERTY_LIST **ossl_ctx_global_properties(OSSL_LIB_CTX *ctx,

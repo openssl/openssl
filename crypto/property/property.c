@@ -267,6 +267,9 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
     if (properties == NULL)
         properties = "";
 
+    if (!ossl_assert(prov != NULL))
+        return 0;
+
     /* Create new entry */
     impl = OPENSSL_malloc(sizeof(*impl));
     if (impl == NULL)
@@ -400,14 +403,15 @@ void ossl_method_store_do_all(OSSL_METHOD_STORE *store,
         ossl_sa_ALGORITHM_doall_arg(store->algs, alg_do_each, &data);
 }
 
-int ossl_method_store_fetch(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
-                            int nid, const char *prop_query, void **method)
+int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
+                            int nid, const char *prop_query,
+                            const OSSL_PROVIDER **prov_rw, void **method)
 {
     OSSL_PROPERTY_LIST **plp;
     ALGORITHM *alg;
-    IMPLEMENTATION *impl;
+    IMPLEMENTATION *impl, *best_impl = NULL;
     OSSL_PROPERTY_LIST *pq = NULL, *p2 = NULL;
-    METHOD *best_method = NULL;
+    const OSSL_PROVIDER *prov = prov_rw != NULL ? *prov_rw : NULL;
     int ret = 0;
     int j, best = -1, score, optional;
 
@@ -447,7 +451,7 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
         for (j = 0; j < sk_IMPLEMENTATION_num(alg->impls); j++) {
             if ((impl = sk_IMPLEMENTATION_value(alg->impls, j)) != NULL
                 && (prov == NULL || impl->provider == prov)) {
-                best_method = &impl->method;
+                best_impl = impl;
                 ret = 1;
                 break;
             }
@@ -460,7 +464,7 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
             && (prov == NULL || impl->provider == prov)) {
             score = ossl_property_match_count(pq, impl->properties);
             if (score > best) {
-                best_method = &impl->method;
+                best_impl = impl;
                 best = score;
                 ret = 1;
                 if (!optional)
@@ -469,10 +473,13 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
         }
     }
 fin:
-    if (ret && ossl_method_up_ref(best_method))
-        *method = best_method->method;
-    else
+    if (ret && ossl_method_up_ref(&best_impl->method)) {
+        *method = best_impl->method.method;
+        if (prov_rw != NULL)
+            *prov_rw = best_impl->provider;
+    } else {
         ret = 0;
+    }
     ossl_property_unlock(store);
     ossl_property_free(p2);
     return ret;
@@ -625,6 +632,9 @@ int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
         return 0;
     if (prop_query == NULL)
         return 1;
+
+    if (!ossl_assert(prov != NULL))
+        return 0;
 
     if (!ossl_property_write_lock(store))
         return 0;

@@ -115,7 +115,7 @@ static uint32_t evp_method_id(int name_id, unsigned int operation_id)
             | (operation_id & METHOD_ID_OPERATION_MASK));
 }
 
-static void *get_evp_method_from_store(void *store, const OSSL_PROVIDER *prov,
+static void *get_evp_method_from_store(void *store, const OSSL_PROVIDER **prov,
                                        void *data)
 {
     struct evp_method_data_st *methdata = data;
@@ -147,7 +147,7 @@ static void *get_evp_method_from_store(void *store, const OSSL_PROVIDER *prov,
         && (store = get_evp_method_store(methdata->libctx)) == NULL)
         return NULL;
 
-    if (!ossl_method_store_fetch(store, prov, meth_id, methdata->propquery,
+    if (!ossl_method_store_fetch(store, meth_id, methdata->propquery, prov,
                                  &method))
         return NULL;
     return method;
@@ -318,7 +318,7 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
         methdata->destruct_method = free_method;
         methdata->flag_construct_error_occurred = 0;
         if ((method = ossl_method_construct(methdata->libctx, operation_id,
-                                            prov, 0 /* !force_cache */,
+                                            &prov, 0 /* !force_cache */,
                                             &mcm, methdata)) != NULL) {
             /*
              * If construction did create a method for us, we know that
