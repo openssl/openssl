@@ -77,9 +77,9 @@ return a size_t type and are functions, BIO_pending() and BIO_wpending() are
 macros which call BIO_ctrl().
 
 BIO_get_ktls_send() returns 1 if the BIO is using the Kernel TLS data-path for
-sending. Otherwise, it returns zero.
+sending. Otherwise, it returns zero. It also returns negative values for failure.
 BIO_get_ktls_recv() returns 1 if the BIO is using the Kernel TLS data-path for
-receiving. Otherwise, it returns zero.
+receiving. Otherwise, it returns zero. It also returns negative values for failure.
 
 =head1 RETURN VALUES
 
