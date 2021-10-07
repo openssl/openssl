@@ -3056,6 +3056,8 @@ int s_client_main(int argc, char **argv)
 #endif
     OPENSSL_free(connectstr);
     OPENSSL_free(bindstr);
+    OPENSSL_free(bindhost);
+    OPENSSL_free(bindport);
     OPENSSL_free(host);
     OPENSSL_free(port);
     OPENSSL_free(thost);
