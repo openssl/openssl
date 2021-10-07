@@ -90,10 +90,9 @@ occurred.
 BIO_set_fp() and BIO_get_fp() return 1 for success or <=0 for failure
 (although the current implementation never return 0).
 
-BIO_seek() returns the same value as the underlying fseek() function:
-0 for success or -1 for failure.
+BIO_seek() returns 0 for success or negative values for failure.
 
-BIO_tell() returns the current file position.
+BIO_tell() returns the current file position or negative values for failure.
 
 BIO_read_filename(), BIO_write_filename(), BIO_append_filename() and
 BIO_rw_filename() return 1 for success or <=0 for failure.

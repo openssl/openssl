@@ -24,7 +24,7 @@ These functions allow an B<ASN1_TYPE> structure to be manipulated. The
 B<ASN1_TYPE> structure can contain any ASN.1 type or constructed type
 such as a SEQUENCE: it is effectively equivalent to the ASN.1 ANY type.
 
-ASN1_TYPE_get() returns the type of I<a>.
+ASN1_TYPE_get() returns the type of I<a> or 0 if it fails.
 
 ASN1_TYPE_set() sets the value of I<a> to I<type> and I<value>. This
 function uses the pointer I<value> internally so it must B<not> be freed
