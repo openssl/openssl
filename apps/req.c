@@ -492,7 +492,7 @@ int req_main(int argc, char **argv)
     if (infile == NULL) {
         if (gen_x509)
             newreq = 1;
-        else
+        else if (!newreq)
             BIO_printf(bio_err,
                        "Warning: Will read cert request from stdin since no -in option is given\n");
     }
