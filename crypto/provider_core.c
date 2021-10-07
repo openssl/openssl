@@ -1933,7 +1933,7 @@ static int core_obj_add_sigid(const OSSL_CORE_HANDLE *prov,
                               const char *pkey_name)
 {
     int sign_nid = OBJ_txt2nid(sign_name);
-    int digest_nid = OBJ_txt2nid(digest_name);
+    int digest_nid = digest_name?OBJ_txt2nid(digest_name):NID_undef;
     int pkey_nid = OBJ_txt2nid(pkey_name);
 
     if (sign_nid == NID_undef)
