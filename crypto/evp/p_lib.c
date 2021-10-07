@@ -529,12 +529,14 @@ static int get_raw_key_details(const OSSL_PARAM params[], void *arg)
         if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PRIV_KEY))
                 != NULL)
             return OSSL_PARAM_get_octet_string(p, (void **)raw_key->key,
-                                               SIZE_MAX, raw_key->len);
+                                               raw_key->key == NULL ? 0 : *raw_key->len,
+                                               raw_key->len);
     } else if (raw_key->selection == OSSL_KEYMGMT_SELECT_PUBLIC_KEY) {
         if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PUB_KEY))
                 != NULL)
             return OSSL_PARAM_get_octet_string(p, (void **)raw_key->key,
-                                               SIZE_MAX, raw_key->len);
+                                               raw_key->key == NULL ? 0 : *raw_key->len,
+                                               raw_key->len);
     }
 
     return 0;
