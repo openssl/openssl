@@ -582,7 +582,7 @@ int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
         goto legacy;
 
     ret = ctx->op.sig.signature->sign(ctx->op.sig.algctx, sig, siglen,
-                                      SIZE_MAX, tbs, tbslen);
+                                      (sig == NULL) ? 0 : *siglen, tbs, tbslen);
 
     return ret;
  legacy:
