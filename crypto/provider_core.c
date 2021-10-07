@@ -1946,8 +1946,7 @@ static int core_obj_add_sigid(const OSSL_CORE_HANDLE *prov,
     if (OBJ_find_sigid_algs(sign_nid, NULL, NULL))
         return 1;
 
-    if (digest_nid == NID_undef
-            || pkey_nid == NID_undef)
+    if (pkey_nid == NID_undef)
         return 0;
 
     return OBJ_add_sigid(sign_nid, digest_nid, pkey_nid);
