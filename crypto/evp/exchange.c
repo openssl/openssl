@@ -228,7 +228,8 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
         EVP_PKEY *pkey = EVP_PKEY_new();
 
         if (pkey == NULL
-            || !EVP_PKEY_set_type_by_keymgmt(pkey, ctx->keymgmt)) {
+            || !EVP_PKEY_set_type_by_keymgmt(pkey, ctx->keymgmt)
+            || (pkey->keydata = evp_keymgmt_newdata(ctx->keymgmt)) == NULL) {
             ERR_clear_last_mark();
             EVP_PKEY_free(pkey);
             ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
