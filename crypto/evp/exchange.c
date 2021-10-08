@@ -221,11 +221,7 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
             ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
             goto err;
         }
-        provkey = pkey->keydata = evp_keymgmt_newdata(tmp_keymgmt);
-        if (provkey == NULL)
-            EVP_PKEY_free(pkey);
-        else
-            ctx->pkey = pkey;
+        ctx->pkey = pkey;
     }
 
     /*
