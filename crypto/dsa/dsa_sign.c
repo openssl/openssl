@@ -126,7 +126,7 @@ int DSA_size(const DSA *dsa)
         ret = i2d_DSA_SIG(&sig, NULL);
 
         if (ret < 0)
-            ret = 0;
+            ret = -1;
     }
     return ret;
 }
