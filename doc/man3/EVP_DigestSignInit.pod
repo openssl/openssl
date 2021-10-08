@@ -130,7 +130,11 @@ written to I<siglen>.
 
 EVP_DigestSign() signs I<tbslen> bytes of data at I<tbs> and places the
 signature in I<sig> and its length in I<siglen> in a similar way to
-EVP_DigestSignFinal().
+EVP_DigestSignFinal(). In the event of a failure EVP_DigestSign() cannot be
+called again without reinitialising the EVP_MD_CTX. If I<sig> is NULL before the
+call then I<siglen> will be populated with the required size for the I<sig>
+buffer. If I<sig> is non-NULL before the call then I<siglen> should contain the
+length of the I<sig> buffer.
 
 =head1 RETURN VALUES
 
