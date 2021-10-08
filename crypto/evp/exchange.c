@@ -237,12 +237,6 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
         ctx->pkey = pkey;
     }
 
-    if (ctx->pkey == NULL) {
-        ERR_clear_last_mark();
-        ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEY_SET);
-        goto err;
-    }
-
     /*
      * Try to derive the supported exch from |ctx->keymgmt|.
      */
