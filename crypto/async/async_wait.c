@@ -90,6 +90,9 @@ int ASYNC_WAIT_CTX_get_all_fds(ASYNC_WAIT_CTX *ctx, OSSL_ASYNC_FD *fd,
 {
     struct fd_lookup_st *curr;
 
+    if (ctx == NULL) {
+        return 0;
+    }
     curr = ctx->fds;
     *numfds = 0;
     while (curr != NULL) {
@@ -114,6 +117,9 @@ int ASYNC_WAIT_CTX_get_changed_fds(ASYNC_WAIT_CTX *ctx, OSSL_ASYNC_FD *addfd,
 {
     struct fd_lookup_st *curr;
 
+    if (ctx == NULL) {
+        return 0;
+    }
     *numaddfds = ctx->numadd;
     *numdelfds = ctx->numdel;
     if (addfd == NULL && delfd == NULL)
@@ -208,6 +214,9 @@ int ASYNC_WAIT_CTX_get_callback(ASYNC_WAIT_CTX *ctx,
 
 int ASYNC_WAIT_CTX_set_status(ASYNC_WAIT_CTX *ctx, int status)
 {
+      if (ctx == NULL) {
+          return 0;
+      }
       ctx->status = status;
       return 1;
 }
