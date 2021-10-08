@@ -383,7 +383,7 @@ static EVP_PKEY *dsa_to_dh(EVP_PKEY *dh)
 
     ctx = EVP_PKEY_CTX_new_from_name(NULL, "DHX", NULL);
     if (ctx == NULL
-            || !EVP_PKEY_fromdata_init(ctx)
+            || EVP_PKEY_fromdata_init(ctx) <= 0
             || !EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_KEY_PARAMETERS, params)) {
         BIO_printf(bio_err, "Error, failed to set DH parameters\n");
         goto err;
