@@ -23,7 +23,7 @@ static EVP_PKEY *get_dh_from_pg_bn(OSSL_LIB_CTX *libctx, const char *type,
     OSSL_PARAM *params = NULL;
     EVP_PKEY *dhpkey = NULL;
 
-    if (pctx == NULL || !EVP_PKEY_fromdata_init(pctx))
+    if (pctx == NULL || EVP_PKEY_fromdata_init(pctx) <= 0)
         goto err;
 
     if ((tmpl = OSSL_PARAM_BLD_new()) == NULL
