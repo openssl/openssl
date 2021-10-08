@@ -78,7 +78,6 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
         goto err;
     }
 
-
     ctx->op.encap.kem = kem;
     ctx->op.encap.algctx = kem->newctx(ossl_provider_ctx(kem->prov));
     if (ctx->op.encap.algctx == NULL) {
