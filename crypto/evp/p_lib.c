@@ -649,7 +649,7 @@ static EVP_PKEY *new_cmac_key_int(const unsigned char *priv, size_t len,
 #  endif
     *p = OSSL_PARAM_construct_end();
 
-    if (!EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_KEYPAIR, params)) {
+    if (EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_KEYPAIR, params) <= 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_KEY_SETUP_FAILED);
         goto err;
     }
