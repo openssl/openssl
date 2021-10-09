@@ -604,8 +604,7 @@ B<ENGINE> implementations.
 
 All ENGINE_register_TYPE() functions return 1 on success or 0 on error.
 
-ENGINE_register_complete() and ENGINE_register_all_complete() return 1 on success
-or 0 on error.
+ENGINE_register_complete() and ENGINE_register_all_complete() always return 1.
 
 ENGINE_ctrl() returns a positive value on success or others on error.
 
@@ -616,7 +615,7 @@ ENGINE_ctrl_cmd() and ENGINE_ctrl_cmd_string() return 1 on success or 0 on error
 ENGINE_new() returns a valid B<ENGINE> structure on success or NULL if an error
 occurred.
 
-ENGINE_free() returns 1 on success or 0 on error.
+ENGINE_free() always returns 1.
 
 ENGINE_up_ref() returns 1 on success or 0 on error.
 
