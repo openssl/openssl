@@ -1406,7 +1406,7 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"id-mod-cmp2000", "id-mod-cmp2000", NID_id_mod_cmp2000, 8, &so[2075]},
     {"biometricInfo", "Biometric Info", NID_biometricInfo, 8, &so[2083]},
     {"qcStatements", "qcStatements", NID_qcStatements, 8, &so[2091]},
-    {"ac-auditEntity", "ac-auditEntity", NID_ac_auditEntity, 8, &so[2099]},
+    {"ac-auditEntity", "Audit Identity", NID_ac_auditEntity, 8, &so[2099]},
     {"ac-targeting", "ac-targeting", NID_ac_targeting, 8, &so[2107]},
     {"aaControls", "aaControls", NID_aaControls, 8, &so[2115]},
     {"sbgp-ipAddrBlock", "sbgp-ipAddrBlock", NID_sbgp_ipAddrBlock, 8, &so[2123]},
@@ -3619,6 +3619,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      368,    /* "Acceptable OCSP Responses" */
      910,    /* "Any Extended Key Usage" */
      664,    /* "Any language" */
+     287,    /* "Audit Identity" */
      177,    /* "Authority Information Access" */
     1220,    /* "BGPsec Router" */
      365,    /* "Basic OCSP Response" */
@@ -3841,7 +3842,6 @@ static const unsigned int ln_objs[NUM_LN] = {
     1209,    /* "XmppAddr" */
      478,    /* "aRecord" */
      289,    /* "aaControls" */
-     287,    /* "ac-auditEntity" */
      397,    /* "ac-proxying" */
      288,    /* "ac-targeting" */
      446,    /* "account" */

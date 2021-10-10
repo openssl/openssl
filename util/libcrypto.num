@@ -5423,3 +5423,9 @@ ASN1_item_d2i_fp_ex                     ?	3_0_0	EXIST::FUNCTION:STDIO
 ASN1_item_d2i_bio_ex                    ?	3_0_0	EXIST::FUNCTION:
 ASN1_item_d2i_ex                        ?	3_0_0	EXIST::FUNCTION:
 ASN1_TIME_print_ex                      ?	3_0_0	EXIST::FUNCTION:
+ISSUER_SERIAL_it                        ?	3_0_0	EXIST::FUNCTION:
+TARGET_it                               ?	3_0_0	EXIST::FUNCTION:
+TARGETS_it                              ?	3_0_0	EXIST::FUNCTION:
+TARGETING_INFORMATION_it                ?	3_0_0	EXIST::FUNCTION:
+OBJECT_DIGEST_INFO_it                   ?	3_0_0	EXIST::FUNCTION:
+TARGET_CERT_it                          ?	3_0_0	EXIST::FUNCTION:

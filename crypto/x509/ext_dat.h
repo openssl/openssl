@@ -25,3 +25,5 @@ extern const X509V3_EXT_METHOD ossl_v3_tls_feature;
 extern const X509V3_EXT_METHOD ossl_v3_ext_admission;
 extern const X509V3_EXT_METHOD ossl_v3_utf8_list[1];
 extern const X509V3_EXT_METHOD ossl_v3_issuer_sign_tool;
+extern const X509V3_EXT_METHOD ossl_v3_targeting_information;
+extern const X509V3_EXT_METHOD ossl_v3_audit_identity;

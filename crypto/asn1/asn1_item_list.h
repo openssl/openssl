@@ -8,7 +8,7 @@
  */
 
 static ASN1_ITEM_EXP *asn1_item_list[] = {
-
+    ASN1_ITEM_ref(TARGETING_INFORMATION),
     ASN1_ITEM_ref(ACCESS_DESCRIPTION),
 #ifndef OPENSSL_NO_RFC3779
     ASN1_ITEM_ref(ASIdOrRange),
