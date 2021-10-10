@@ -1221,7 +1221,7 @@ static int execute_test_ktls(int cis_ktls, int sis_ktls,
 #if defined(OPENSSL_NO_KTLS_RX)
     rx_supported = 0;
 #else
-    rx_supported = (tls_version != TLS1_3_VERSION);
+    rx_supported = 1;
 #endif
     if (!cis_ktls || !rx_supported) {
         if (!TEST_false(BIO_get_ktls_recv(clientssl->rbio)))
