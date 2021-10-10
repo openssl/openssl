@@ -361,7 +361,9 @@ int ssl3_get_record(SSL *s)
                     }
                 }
 
-                if (SSL_IS_TLS13(s) && s->enc_read_ctx != NULL) {
+                if (SSL_IS_TLS13(s)
+                        && s->enc_read_ctx != NULL
+                        && !BIO_get_ktls_recv(s->rbio)) {
                     if (thisrr->type != SSL3_RT_APPLICATION_DATA
                             && (thisrr->type != SSL3_RT_CHANGE_CIPHER_SPEC
                                 || !SSL_IS_FIRST_HANDSHAKE(s))
@@ -673,30 +675,39 @@ int ssl3_get_record(SSL *s)
         if (SSL_IS_TLS13(s)
                 && s->enc_read_ctx != NULL
                 && thisrr->type != SSL3_RT_ALERT) {
-            size_t end;
+            /*
+             * The following logic are irrelevant in KTLS: the kernel provides
+             * unprotected record and thus record type represent the actual
+             * content type, and padding is already removed and thisrr->type and
+             * thisrr->length should have the correct values.
+             */
+            if (!BIO_get_ktls_recv(s->rbio)) {
+                size_t end;
 
-            if (thisrr->length == 0
-                    || thisrr->type != SSL3_RT_APPLICATION_DATA) {
-                SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_BAD_RECORD_TYPE);
-                goto end;
-            }
+                if (thisrr->length == 0
+                        || thisrr->type != SSL3_RT_APPLICATION_DATA) {
+                    SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_BAD_RECORD_TYPE);
+                    goto end;
+                }
 
-            /* Strip trailing padding */
-            for (end = thisrr->length - 1; end > 0 && thisrr->data[end] == 0;
-                 end--)
-                continue;
+                /* Strip trailing padding */
+                for (end = thisrr->length - 1; end > 0 && thisrr->data[end] == 0;
+                     end--)
+                    continue;
 
-            thisrr->length = end;
-            thisrr->type = thisrr->data[end];
-            if (thisrr->type != SSL3_RT_APPLICATION_DATA
-                    && thisrr->type != SSL3_RT_ALERT
-                    && thisrr->type != SSL3_RT_HANDSHAKE) {
-                SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_BAD_RECORD_TYPE);
-                goto end;
+                thisrr->length = end;
+                thisrr->type = thisrr->data[end];
+                if (thisrr->type != SSL3_RT_APPLICATION_DATA
+                        && thisrr->type != SSL3_RT_ALERT
+                        && thisrr->type != SSL3_RT_HANDSHAKE) {
+                    SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_BAD_RECORD_TYPE);
+                    goto end;
+                }
             }
             if (s->msg_callback)
                 s->msg_callback(0, s->version, SSL3_RT_INNER_CONTENT_TYPE,
-                                &thisrr->data[end], 1, s, s->msg_callback_arg);
+                                &thisrr->data[thisrr->length], 1, s,
+                                s->msg_callback_arg);
         }
 
         /*
