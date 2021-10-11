@@ -2069,7 +2069,7 @@ static int get_cmac_val(EVP_PKEY *pkey, unsigned char *mac)
 {
     EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
     const char msg[] = "Hello World";
-    size_t maclen;
+    size_t maclen = AES_BLOCK_SIZE;
     int ret = 1;
 
     if (!TEST_ptr(mdctx)
