@@ -2919,11 +2919,11 @@ static int custom_params_test(int id)
     /* create two new provider-native `EVP_PKEY`s */
     EVP_PKEY_CTX_free(pctx2);
     if (!TEST_ptr(pctx2 = EVP_PKEY_CTX_new_from_name(NULL, "EC", NULL))
-            || !TEST_true(EVP_PKEY_fromdata_init(pctx2))
-            || !TEST_true(EVP_PKEY_fromdata(pctx2, &pkey1, EVP_PKEY_KEYPAIR,
-                                            params1))
-            || !TEST_true(EVP_PKEY_fromdata(pctx2, &pkey2, EVP_PKEY_PUBLIC_KEY,
-                                            params2)))
+            || !TEST_int_eq(EVP_PKEY_fromdata_init(pctx2), 1)
+            || !TEST_int_eq(EVP_PKEY_fromdata(pctx2, &pkey1, EVP_PKEY_KEYPAIR,
+                                              params1), 1)
+            || !TEST_int_eq(EVP_PKEY_fromdata(pctx2, &pkey2, EVP_PKEY_PUBLIC_KEY,
+                                              params2), 1))
         goto err;
 
     /* compute keyexchange once more using the provider keys */
