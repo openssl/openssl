@@ -38,7 +38,7 @@ to user libraries at run time.
 
 =head1 RETURN VALUES
 
-ERR_load_strings() returns 1 for success and 0 for failure. ERR_PACK() return the error code.
+ERR_load_strings() returns 1 for success and 0 for failure. ERR_PACK() returns the error code.
 ERR_get_next_error_library() returns zero on failure, otherwise a new
 library number.
 
