@@ -164,7 +164,7 @@ static int ecdsa_create_pkey(EVP_PKEY **pkey, const char *curve_name,
                                                        pub, pub_len) > 0)
         || !TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
         || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, "EC", NULL))
-        || !TEST_true(EVP_PKEY_fromdata_init(ctx))
+        || !TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1)
         || !TEST_int_eq(EVP_PKEY_fromdata(ctx, pkey, EVP_PKEY_PUBLIC_KEY,
                                           params), expected))
     goto err;
@@ -503,8 +503,9 @@ static int dsa_create_pkey(EVP_PKEY **pkey,
      }
      if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
          || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, "DSA", NULL))
-         || !TEST_true(EVP_PKEY_fromdata_init(ctx))
-         || !TEST_true(EVP_PKEY_fromdata(ctx, pkey, EVP_PKEY_PUBLIC_KEY, params)))
+         || !TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1)
+         || !TEST_int_eq(EVP_PKEY_fromdata(ctx, pkey, EVP_PKEY_PUBLIC_KEY,
+                                           params), 1))
          goto err;
 
     ret = 1;
@@ -924,7 +925,7 @@ static int dh_create_pkey(EVP_PKEY **pkey, const char *group_name,
 
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
         || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, "DH", NULL))
-        || !TEST_true(EVP_PKEY_fromdata_init(ctx))
+        || !TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1)
         || !TEST_int_eq(EVP_PKEY_fromdata(ctx, pkey, EVP_PKEY_KEYPAIR, params),
                         pass))
     goto err;
@@ -1033,8 +1034,9 @@ static int rsa_create_pkey(EVP_PKEY **pkey,
     }
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
         || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, "RSA", NULL))
-        || !TEST_true(EVP_PKEY_fromdata_init(ctx))
-        || !TEST_true(EVP_PKEY_fromdata(ctx, pkey, EVP_PKEY_KEYPAIR, params)))
+        || !TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1)
+        || !TEST_int_eq(EVP_PKEY_fromdata(ctx, pkey, EVP_PKEY_KEYPAIR, params),
+                        1))
         goto err;
 
     ret = 1;
