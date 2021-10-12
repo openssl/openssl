@@ -474,6 +474,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                 if (conf->flag_abspath
                         && !ossl_is_absolute_path(include_path)) {
                     ERR_raise(ERR_LIB_CONF, CONF_R_RELATIVE_PATH);
+                    OPENSSL_free(include_path);
                     goto err;
                 }
 
