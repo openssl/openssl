@@ -841,12 +841,14 @@ static SSL_SESSION *read_session(const char *filename)
 
 static int write_session(const char *filename, SSL_SESSION *sess)
 {
-    BIO *f = BIO_new_file(filename, "w");
+    BIO *f;
 
     if (sess == NULL) {
         BIO_printf(bio_err, "No session information\n");
         return 0;
     }
+
+    f = BIO_new_file(filename, "w");
     if (f == NULL) {
         BIO_printf(bio_err, "Can't open session file %s\n", filename);
         ERR_print_errors(bio_err);
