@@ -4,7 +4,7 @@ Notes for UNIX-like platforms
  For Unix/POSIX runtime systems on Windows,
  please see the [Notes for Windows platforms](NOTES-WINDOWS.md).
 
- OpenSSL uses the compiler to link programs and shared libraries
+OpenSSL uses the compiler to link programs and shared libraries
  ---------------------------------------------------------------
 
  OpenSSL's generated Makefile uses the C compiler command line to
@@ -16,7 +16,7 @@ Notes for UNIX-like platforms
  to read your compiler documentation to figure out what is acceptable,
  and `ld(1)` to figure out what linker options are available.
 
- Shared libraries and installation in non-default locations
+Shared libraries and installation in non-default locations
  ----------------------------------------------------------
 
  Every Unix system has its own set of default locations for shared
@@ -94,7 +94,7 @@ Notes for UNIX-like platforms
  executable, by interpreting `$ORIGIN` along with some other internal
  variables. Consult your system documentation.
 
- Linking your application
+Linking your application
  ------------------------
 
  Third-party applications dynamically linked with OpenSSL (or any other)

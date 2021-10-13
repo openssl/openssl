@@ -32,7 +32,7 @@ Notes for the DOS platform with DJGPP
  running in a DOS box under Windows. If so, just close the BASH
  shell, go back to Windows, and restart BASH. Then run `make` again.
 
- RUN-TIME CAVEAT LECTOR
+RUN-TIME CAVEAT LECTOR
  --------------
 
  Quoting FAQ:

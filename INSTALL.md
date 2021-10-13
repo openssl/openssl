@@ -8,64 +8,64 @@ and Windows).
 Table of Contents
 =================
 
- - [Prerequisites](#prerequisites)
- - [Notational Conventions](#notational-conventions)
- - [Quick Installation Guide](#quick-installation-guide)
-   - [Building OpenSSL](#building-openssl)
-   - [Installing OpenSSL](#installing-openssl)
- - [Configuration Options](#configuration-options)
-   - [API Level](#api-level)
-   - [Cross Compile Prefix](#cross-compile-prefix)
-   - [Build Type](#build-type)
-   - [Directories](#directories)
-   - [Compiler Warnings](#compiler-warnings)
-   - [ZLib Flags](#zlib-flags)
-   - [Seeding the Random Generator](#seeding-the-random-generator)
-   - [Setting the FIPS HMAC key](#setting-the-FIPS-HMAC-key)
-   - [Enable and Disable Features](#enable-and-disable-features)
-   - [Displaying configuration data](#displaying-configuration-data)
- - [Installation Steps in Detail](#installation-steps-in-detail)
-   - [Configure](#configure-openssl)
-   - [Build](#build-openssl)
-   - [Test](#test-openssl)
-   - [Install](#install-openssl)
- - [Advanced Build Options](#advanced-build-options)
-   - [Environment Variables](#environment-variables)
-   - [Makefile Targets](#makefile-targets)
-   - [Running Selected Tests](#running-selected-tests)
- - [Troubleshooting](#troubleshooting)
-   - [Configuration Problems](#configuration-problems)
-   - [Build Failures](#build-failures)
-   - [Test Failures](#test-failures)
- - [Notes](#notes)
-   - [Notes on multi-threading](#notes-on-multi-threading)
-   - [Notes on shared libraries](#notes-on-shared-libraries)
-   - [Notes on random number generation](#notes-on-random-number-generation)
-   - [Notes on assembler modules compilation](#notes-on-assembler-modules-compilation)
+- [Prerequisites](#prerequisites)
+- [Notational Conventions](#notational-conventions)
+- [Quick Installation Guide](#quick-installation-guide)
+  - [Building OpenSSL](#building-openssl)
+  - [Installing OpenSSL](#installing-openssl)
+- [Configuration Options](#configuration-options)
+  - [API Level](#api-level)
+  - [Cross Compile Prefix](#cross-compile-prefix)
+  - [Build Type](#build-type)
+  - [Directories](#directories)
+  - [Compiler Warnings](#compiler-warnings)
+  - [ZLib Flags](#zlib-flags)
+  - [Seeding the Random Generator](#seeding-the-random-generator)
+  - [Setting the FIPS HMAC key](#setting-the-FIPS-HMAC-key)
+  - [Enable and Disable Features](#enable-and-disable-features)
+  - [Displaying configuration data](#displaying-configuration-data)
+- [Installation Steps in Detail](#installation-steps-in-detail)
+  - [Configure](#configure-openssl)
+  - [Build](#build-openssl)
+  - [Test](#test-openssl)
+  - [Install](#install-openssl)
+- [Advanced Build Options](#advanced-build-options)
+  - [Environment Variables](#environment-variables)
+  - [Makefile Targets](#makefile-targets)
+  - [Running Selected Tests](#running-selected-tests)
+- [Troubleshooting](#troubleshooting)
+  - [Configuration Problems](#configuration-problems)
+  - [Build Failures](#build-failures)
+  - [Test Failures](#test-failures)
+- [Notes](#notes)
+  - [Notes on multi-threading](#notes-on-multi-threading)
+  - [Notes on shared libraries](#notes-on-shared-libraries)
+  - [Notes on random number generation](#notes-on-random-number-generation)
+  - [Notes on assembler modules compilation](#notes-on-assembler-modules-compilation)
 
 Prerequisites
 =============
 
 To install OpenSSL, you will need:
 
- * A "make" implementation
- * Perl 5 with core modules (please read [NOTES-PERL.md](NOTES-PERL.md))
- * The Perl module `Text::Template` (please read [NOTES-PERL.md](NOTES-PERL.md))
- * an ANSI C compiler
- * a development environment in the form of development libraries and C
+- A "make" implementation
+- Perl 5 with core modules (please read [NOTES-PERL.md](NOTES-PERL.md))
+- The Perl module `Text::Template` (please read [NOTES-PERL.md](NOTES-PERL.md))
+- an ANSI C compiler
+- a development environment in the form of development libraries and C
    header files
- * a supported operating system
+- a supported operating system
 
 For additional platform specific requirements, solutions to specific
 issues and other details, please read one of these:
 
- * [Notes for UNIX-like platforms](NOTES-UNIX.md)
- * [Notes for Android platforms](NOTES-ANDROID.md)
- * [Notes for Windows platforms](NOTES-WINDOWS.md)
- * [Notes for the DOS platform with DJGPP](NOTES-DJGPP.md)
- * [Notes for the OpenVMS platform](NOTES-VMS.md)
- * [Notes on Perl](NOTES-PERL.md)
- * [Notes on Valgrind](NOTES-VALGRIND.md)
+- [Notes for UNIX-like platforms](NOTES-UNIX.md)
+- [Notes for Android platforms](NOTES-ANDROID.md)
+- [Notes for Windows platforms](NOTES-WINDOWS.md)
+- [Notes for the DOS platform with DJGPP](NOTES-DJGPP.md)
+- [Notes for the OpenVMS platform](NOTES-VMS.md)
+- [Notes on Perl](NOTES-PERL.md)
+- [Notes on Valgrind](NOTES-VALGRIND.md)
 
 Notational conventions
 ======================
@@ -77,7 +77,7 @@ Commands
 
 Any line starting with a dollar sign is a command line.
 
-    $ command
+    command
 
 The dollar sign indicates the shell prompt and is not to be entered as
 part of the command.
@@ -89,7 +89,7 @@ Several words in curly braces separated by pipe characters indicate a
 **mandatory choice**, to be replaced with one of the given words.
 For example, the line
 
-    $ echo { WORD1 | WORD2 | WORD3 }
+    echo { WORD1 | WORD2 | WORD3 }
 
 represents one of the following three commands
 
@@ -105,7 +105,7 @@ but it can also be omitted entirely.
 
 So the line
 
-    $ echo [ WORD1 | WORD2 | WORD3 ]
+    echo [ WORD1 | WORD2 | WORD3 ]
 
 represents one of the four commands
 
@@ -143,26 +143,26 @@ OpenSSL for production use.
 
 ### Unix / Linux / macOS
 
-    $ ./Configure
-    $ make
-    $ make test
+    ./Configure
+    make
+    make test
 
 ### OpenVMS
 
 Use the following commands to build OpenSSL:
 
-    $ perl Configure
-    $ mms
-    $ mms test
+    perl Configure
+    mms
+    mms test
 
 ### Windows
 
 If you are using Visual Studio, open a Developer Command Prompt and
 issue the following commands to build OpenSSL.
 
-    $ perl Configure
-    $ nmake
-    $ nmake test
+    perl Configure
+    nmake
+    nmake test
 
 As mentioned in the [Choices](#choices) section, you need to pick one
 of the four Configure targets in the first command.
@@ -202,7 +202,7 @@ Finally, if you plan on using the FIPS module, you need to read the
 Depending on your distribution, you need to run the following command as
 root user or prepend `sudo` to the command:
 
-    $ make install
+    make install
 
 By default, OpenSSL will be installed to
 
@@ -221,7 +221,7 @@ depending on the file type, as it is custom on Unix-like operating systems.
 
 Use the following command to install OpenSSL.
 
-    $ mms install
+    mms install
 
 By default, OpenSSL will be installed to
 
@@ -232,7 +232,7 @@ By default, OpenSSL will be installed to
 If you are using Visual Studio, open the Developer Command Prompt _elevated_
 and issue the following command.
 
-    $ nmake install
+    nmake install
 
 The easiest way to elevate the Command Prompt is to press and hold down
 the both the `<CTRL>` and `<SHIFT>` key while clicking the menu item in the
@@ -259,11 +259,11 @@ The options `--prefix` and `--openssldir` are explained in further detail in
 
 On Unix:
 
-    $ ./Configure --prefix=/opt/openssl --openssldir=/usr/local/ssl
+    ./Configure --prefix=/opt/openssl --openssldir=/usr/local/ssl
 
 On OpenVMS:
 
-    $ perl Configure --prefix=PROGRAM:[INSTALLS] --openssldir=SYS$MANAGER:[OPENSSL]
+    perl Configure --prefix=PROGRAM:[INSTALLS] --openssldir=SYS$MANAGER:[OPENSSL]
 
 Note: if you do add options to the configuration command, please make sure
 you've read more than just this Quick Start, such as relevant `NOTES-*` files,
@@ -674,11 +674,11 @@ elliptic curves.
 
 This option is only supported on platforms:
 
- - with little-endian storage of non-byte types
- - that tolerate misaligned memory references
- - where the compiler:
-   - supports the non-standard type `__uint128_t`
-   - defines the built-in macro `__SIZEOF_INT128__`
+- with little-endian storage of non-byte types
+- that tolerate misaligned memory references
+- where the compiler:
+  - supports the non-standard type `__uint128_t`
+  - defines the built-in macro `__SIZEOF_INT128__`
 
 ### enable-egd
 
@@ -699,9 +699,9 @@ Enable building of integration with external test suites.
 This is a developer option and may not work on all platforms.  The following
 external test suites are currently supported:
 
- - GOST engine test suite
- - Python PYCA/Cryptography test suite
- - krb5 test suite
+- GOST engine test suite
+- Python PYCA/Cryptography test suite
+- krb5 test suite
 
 See the file [test/README-external.md](test/README-external.md)
 for further details.
@@ -1077,7 +1077,7 @@ configuration.  The following variables are supported:
 These cannot be mixed with compiling/linking flags given on the command line.
 In other words, something like this isn't permitted.
 
-    $ ./Configure -DFOO CPPFLAGS=-DBAR -DCOOKIE
+    ./Configure -DFOO CPPFLAGS=-DBAR -DCOOKIE
 
 Backward compatibility note:
 
@@ -1089,11 +1089,11 @@ for the following:
 
 For example, the following command will not see `-DBAR`:
 
-    $ CPPFLAGS=-DBAR ./Configure -DCOOKIE
+    CPPFLAGS=-DBAR ./Configure -DCOOKIE
 
 However, the following will see both set variables:
 
-    $ CC=gcc CROSS_COMPILE=x86_64-w64-mingw32- ./Configure -DCOOKIE
+    CC=gcc CROSS_COMPILE=x86_64-w64-mingw32- ./Configure -DCOOKIE
 
 If `CC` is set, it is advisable to also set `CXX` to ensure both the C and C++
 compiler are in the same "family".  This becomes relevant with
@@ -1125,11 +1125,11 @@ display all sorts of configuration data in a human readable form.
 
 For more information, please do:
 
-    $ ./configdata.pm --help                         # Unix
+    ./configdata.pm --help                         # Unix
 
 or
 
-    $ perl configdata.pm --help                      # Windows and VMS
+    perl configdata.pm --help                      # Windows and VMS
 
 Installation Steps in Detail
 ============================
@@ -1145,26 +1145,26 @@ the same.
 
 #### Unix / Linux / macOS
 
-    $ ./Configure [options...]
+    ./Configure [options...]
 
 #### OpenVMS
 
-    $ perl Configure [options...]
+    perl Configure [options...]
 
 #### Windows
 
-    $ perl Configure [options...]
+    perl Configure [options...]
 
 ### Manual Configuration
 
 OpenSSL knows about a range of different operating system, hardware and
 compiler combinations.  To see the ones it knows about, run
 
-    $ ./Configure LIST                               # Unix
+    ./Configure LIST                               # Unix
 
 or
 
-    $ perl Configure LIST                            # All other platforms
+    perl Configure LIST                            # All other platforms
 
 For the remainder of this text, the Unix form will be used in all examples.
 Please use the appropriate form for your platform.
@@ -1175,7 +1175,7 @@ When you have identified your system (and if necessary compiler) use this
 name as the argument to `Configure`.  For example, a `linux-elf` user would
 run:
 
-    $ ./Configure linux-elf [options...]
+    ./Configure linux-elf [options...]
 
 ### Creating your own Configuration
 
@@ -1203,23 +1203,23 @@ directory and invoking the configuration commands from there.
 
 #### Unix example
 
-    $ mkdir /var/tmp/openssl-build
-    $ cd /var/tmp/openssl-build
-    $ /PATH/TO/OPENSSL/SOURCE/Configure [options...]
+    mkdir /var/tmp/openssl-build
+    cd /var/tmp/openssl-build
+    /PATH/TO/OPENSSL/SOURCE/Configure [options...]
 
 #### OpenVMS example
 
-    $ set default sys$login:
-    $ create/dir [.tmp.openssl-build]
-    $ set default [.tmp.openssl-build]
-    $ perl D:[PATH.TO.OPENSSL.SOURCE]Configure [options...]
+    set default sys$login:
+    create/dir [.tmp.openssl-build]
+    set default [.tmp.openssl-build]
+    perl D:[PATH.TO.OPENSSL.SOURCE]Configure [options...]
 
 #### Windows example
 
-    $ C:
-    $ mkdir \temp-openssl
-    $ cd \temp-openssl
-    $ perl d:\PATH\TO\OPENSSL\SOURCE\Configure [options...]
+    C:
+    mkdir \temp-openssl
+    cd \temp-openssl
+    perl d:\PATH\TO\OPENSSL\SOURCE\Configure [options...]
 
 Paths can be relative just as well as absolute.  `Configure` will do its best
 to translate them to relative paths whenever possible.
@@ -1229,9 +1229,9 @@ Build OpenSSL
 
 Build OpenSSL by running:
 
-    $ make                                           # Unix
-    $ mms                                            ! (or mmk) OpenVMS
-    $ nmake                                          # Windows
+    make                                           # Unix
+    mms                                            ! (or mmk) OpenVMS
+    nmake                                          # Windows
 
 This will build the OpenSSL libraries (`libcrypto.a` and `libssl.a` on
 Unix, corresponding on other platforms) and the OpenSSL binary
@@ -1247,9 +1247,9 @@ Test OpenSSL
 After a successful build, and before installing, the libraries should
 be tested.  Run:
 
-    $ make test                                      # Unix
-    $ mms test                                       ! OpenVMS
-    $ nmake test                                     # Windows
+    make test                                      # Unix
+    mms test                                       ! OpenVMS
+    nmake test                                     # Windows
 
 **Warning:** you MUST run the tests from an unprivileged account (or disable
 your privileges temporarily if your platform allows it).
@@ -1263,9 +1263,9 @@ Install OpenSSL
 
 If everything tests ok, install OpenSSL with
 
-    $ make install                                   # Unix
-    $ mms install                                    ! OpenVMS
-    $ nmake install                                  # Windows
+    make install                                   # Unix
+    mms install                                    ! OpenVMS
+    nmake install                                  # Windows
 
 Note that in order to perform the install step above you need to have
 appropriate permissions to write to the installation directory.
@@ -1339,8 +1339,8 @@ Package builders who want to configure the library for standard locations,
 but have the package installed somewhere else so that it can easily be
 packaged, can use
 
-    $ make DESTDIR=/tmp/package-root install         # Unix
-    $ mms/macro="DESTDIR=TMP:[PACKAGE-ROOT]" install ! OpenVMS
+    make DESTDIR=/tmp/package-root install         # Unix
+    mms/macro="DESTDIR=TMP:[PACKAGE-ROOT]" install ! OpenVMS
 
 The specified destination directory will be prepended to all installation
 target paths.
@@ -1371,7 +1371,7 @@ With the default OpenSSL installation comes a FIPS provider module, which
 needs some post-installation attention, without which it will not be usable.
 This involves using the following command:
 
-    $ openssl fipsinstall
+    openssl fipsinstall
 
 See the openssl-fipsinstall(1) manual for details and examples.
 
@@ -1576,8 +1576,8 @@ known targets. Using `grep`, you can lookup the target definition in the
 The directory contains two README files, which explain the general syntax and
 design of the configuration files.
 
- - [Configurations/README.md](Configurations/README.md)
- - [Configurations/README-design.md](Configurations/README-design.md)
+- [Configurations/README.md](Configurations/README.md)
+- [Configurations/README-design.md](Configurations/README-design.md)
 
 If you need further help, try to search the [openssl-users] mailing list
 or the [GitHub Issues] for existing solutions. If you don't find anything,
@@ -1620,9 +1620,9 @@ If the build succeeded previously, but fails after a source or configuration
 change, it might be helpful to clean the build tree before attempting another
 build.  Use this command:
 
-    $ make clean                                     # Unix
-    $ mms clean                                      ! (or mmk) OpenVMS
-    $ nmake clean                                    # Windows
+    make clean                                     # Unix
+    mms clean                                      ! (or mmk) OpenVMS
+    nmake clean                                    # Windows
 
 Assembler error messages can sometimes be sidestepped by using the `no-asm`
 configuration option. See also [notes](#notes-on-assembler-modules-compilation).

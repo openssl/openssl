@@ -21,14 +21,14 @@ make, make test, make install) as described in the [INSTALL](INSTALL.md) file.
 
 For example, on Unix the final command
 
-    $ make install
+    make install
 
 effectively executes the following install targets
 
-    $ make install_sw
-    $ make install_ssldirs
-    $ make install_docs
-    $ make install_fips     # for `enable-fips` only
+    make install_sw
+    make install_ssldirs
+    make install_docs
+    make install_fips     # for `enable-fips` only
 
 The `install_fips` make target can also be invoked explicitly to install
 the FIPS provider independently, without installing the rest of OpenSSL.
@@ -52,7 +52,7 @@ the FIPS module config file output data from one machine to another.
 
 On Unix the `openssl fipsinstall` command will be invoked as follows by default:
 
-    $ openssl fipsinstall -out /usr/local/ssl/fipsmodule.cnf -module /usr/local/lib/ossl-modules/fips.so
+    openssl fipsinstall -out /usr/local/ssl/fipsmodule.cnf -module /usr/local/lib/ossl-modules/fips.so
 
 If you configured OpenSSL to be installed to a different location, the paths will
 vary accordingly. In the rare case that you need to install the fipsmodule.cnf

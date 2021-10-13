@@ -1,7 +1,7 @@
 Notes for Android platforms
 ===========================
 
- Requirement details
+Requirement details
  -------------------
 
  Beside basic tools like perl and make you'll need to download the Android
@@ -11,7 +11,7 @@ Notes for Android platforms
  suitable, MSYS2 might have best chances. NDK version should play lesser
  role, the goal is to support a range of most recent versions.
 
- Configuration
+Configuration
  -------------
 
  Android is a cross-compiled target and you can't rely on `./Configure`
@@ -71,7 +71,7 @@ Notes for Android platforms
  target name to Configure and shouldn't use `-D__ANDROID_API__=N`. `PATH`
  adjustment becomes simpler, `$ANDROID_NDK_ROOT/bin:$PATH` suffices.
 
- Running tests (on Linux)
+Running tests (on Linux)
  ------------------------
 
  This is not actually supported. Notes are meant rather as inspiration.

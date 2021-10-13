@@ -1,12 +1,15 @@
 Notes for the OpenVMS platform
 ==============================
 
- - [Requirement details](#requirement-details)
- - [About ANSI C compiler](#about-ansi-c-compiler)
- - [About ODS-5 directory names and Perl](#about-ods-5-directory-names-and-perl)
- - [About MMS and DCL](#about-mms-and-dcl)
- - [About debugging](#about-debugging)
- - [Checking the distribution](#checking-the-distribution)
+- [Notes for the OpenVMS platform](#notes-for-the-openvms-platform)
+  - [Requirement details](#requirement-details)
+  - [About ANSI C compiler](#about-ansi-c-compiler)
+  - [About ODS-5 directory names and Perl](#about-ods-5-directory-names-and-perl)
+  - [About MMS and DCL](#about-mms-and-dcl)
+  - [About debugging](#about-debugging)
+    - [The following is not available on Alpha](#the-following-is-not-available-on-alpha)
+  - [Checking the distribution](#checking-the-distribution)
+  - [How the value of 'arch' is determined](#how-the-value-of-arch-is-determined)
 
 Requirement details
 -------------------
@@ -14,7 +17,7 @@ Requirement details
 In addition to the requirements and instructions listed
 in [INSTALL.md](INSTALL.md), this are required as well:
 
-  * At least ODS-5 disk organization for source and build.
+- At least ODS-5 disk organization for source and build.
     Installation can be done on any existing disk organization.
 
 About ANSI C compiler
@@ -46,7 +49,7 @@ We have no replacement for Perl's canonpath(), so the best workaround
 for now is to rename the OpenSSL source directory, as follows (please
 adjust for the actual source directory name you have):
 
-    $ rename openssl-1^.1^.0.DIR openssl-1_1_0.DIR
+    rename openssl-1^.1^.0.DIR openssl-1_1_0.DIR
 
 About MMS and DCL
 -----------------
@@ -76,12 +79,12 @@ As a compromise, we're turning off the flag that makes the debugger
 start automatically.  If there is a program that you need to debug,
 you need to turn that flag back on first, for example:
 
-    $ set image /flag=call_debug [.test]evp_test.exe
+    set image /flag=call_debug [.test]evp_test.exe
 
 Then just run it and you will find yourself in a debugging session.
 When done, we recommend that you turn that flag back off:
 
-    $ set image /flag=nocall_debug [.test]evp_test.exe
+    set image /flag=nocall_debug [.test]evp_test.exe
 
 Checking the distribution
 -------------------------
@@ -96,7 +99,7 @@ check that this file exists:
     [.include.openssl]configuration^.h.in
 
 The best way to get a correct distribution is to download the gzipped
-tar file from ftp://ftp.openssl.org/source/, use `GZIP -d` to uncompress
+tar file from <ftp://ftp.openssl.org/source/>, use `GZIP -d` to uncompress
 it and `VMSTAR` to unpack the resulting tar file.
 
 Gzip and VMSTAR are available here:
@@ -107,7 +110,7 @@ Should you need it, you can find UnZip for VMS here:
 
    <http://www.info-zip.org/UnZip.html>
 
- How the value of 'arch' is determined
+How the value of 'arch' is determined
  -------------------------------------
 
  'arch' is mentioned in INSTALL.  It's value is determined like this:

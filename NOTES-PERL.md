@@ -1,12 +1,13 @@
 Notes on Perl
 =============
 
- - [General Notes](#general-notes)
- - [Perl on Windows](#perl-on-windows)
- - [Perl on VMS](#perl-on-vms)
- - [Perl on NonStop](#perl-on-nonstop)
- - [Required Perl modules](#required-perl-modules)
- - [Notes on installing a Perl module](#notes-on-installing-a-perl-module])
+- [Notes on Perl](#notes-on-perl)
+  - [General Notes](#general-notes)
+  - [Perl on Windows](#perl-on-windows)
+  - [Perl on VMS](#perl-on-vms)
+  - [Perl on NonStop](#perl-on-nonstop)
+  - [Required Perl modules](#required-perl-modules)
+  - [Notes on installing a Perl module](#notes-on-installing-a-perl-module)
 
 General Notes
 -------------
@@ -20,9 +21,9 @@ differ, and you may have to check that you do get the core modules
 installed properly.  We do not claim to know them all, but experience
 has told us the following:
 
- - on Linux distributions based on Debian, the package `perl` will
+- on Linux distributions based on Debian, the package `perl` will
    install the core Perl modules as well, so you will be fine.
- - on Linux distributions based on RPMs, you will need to install
+- on Linux distributions based on RPMs, you will need to install
    `perl-core` rather than just `perl`.
 
 You MUST have at least Perl version 5.10.0 installed.  This minimum
@@ -69,13 +70,13 @@ Required Perl modules
 We do our best to limit ourselves to core Perl modules to keep the
 requirements down. There are just a few exceptions.
 
- * Text::Template this is required *for building*
+- Text::Template this is required *for building*
 
    To avoid unnecessary initial hurdles, we include a copy of this module
    in the source. It will work as a fallback if the module isn't already
    installed.
 
- * `Test::More` this is required *for testing*
+- `Test::More` this is required *for testing*
 
    We require the minimum version to be 0.96, which appeared in Perl 5.13.4,
    because that version was the first to have all the features we're using.
@@ -106,7 +107,7 @@ descriptions below, `Text::Template` will serve as an example.
 2. Install using CPAN.  This is very easy, but usually requires root
    access:
 
-       $ cpan -i Text::Template
+       cpan -i Text::Template
 
    Note that this runs all the tests that the module to be installed
    comes with.  This is usually a smooth operation, but there are
@@ -115,13 +116,13 @@ descriptions below, `Text::Template` will serve as an example.
    installation regardless (that should be safe since you've already
    seen the tests succeed!):
 
-       $ cpan -f -i Text::Template
+       cpan -f -i Text::Template
 
    Note: on VMS, you must quote any argument that contains upper case
    characters, so the lines above would be:
 
-       $ cpan -i "Text::Template"
+       cpan -i "Text::Template"
 
    and:
 
-       $ cpan -f -i "Text::Template"
+       cpan -f -i "Text::Template"

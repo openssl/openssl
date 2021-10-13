@@ -22,9 +22,9 @@ Built-in ENGINE implementations
 There are currently built-in ENGINE implementations for the following
 crypto devices:
 
-  * Microsoft CryptoAPI
-  * VIA Padlock
-  * nCipher CHIL
+* Microsoft CryptoAPI
+* VIA Padlock
+* nCipher CHIL
 
 In addition, dynamic binding to external ENGINE implementations is now
 provided by a special ENGINE called "dynamic". See the "DYNAMIC ENGINE"
@@ -94,10 +94,10 @@ implementation) then you should mail complete details to the relevant
 OpenSSL mailing list. For a definition of "complete details", refer to
 the OpenSSL "README" file. As for which list to send it to:
 
-  * openssl-users: if you are *using* the ENGINE abstraction, either in an
+* openssl-users: if you are *using* the ENGINE abstraction, either in an
     pre-compiled application or in your own application code.
 
-  * openssl-dev: if you are discussing problems with OpenSSL source code.
+* openssl-dev: if you are discussing problems with OpenSSL source code.
 
 USAGE
 =====
@@ -314,4 +314,3 @@ It seems like the ENGINE part doesn't work too well with CryptoSwift on Win32.
 A quick test done right before the release showed that trying "openssl speed
 -engine cswift" generated errors. If the DSO gets enabled, an attempt is made
 to write at memory address 0x00000002.
-
