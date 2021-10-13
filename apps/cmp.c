@@ -1989,7 +1989,7 @@ static void print_itavs(STACK_OF(OSSL_CMP_ITAV) *itavs)
 }
 
 static char opt_item[SECTION_NAME_MAX + 1];
-/* get previous name from a comma-separated list of names */
+/* get previous name from a comma or space-separated list of names */
 static const char *prev_item(const char *opt, const char *end)
 {
     const char *beg;
@@ -1998,19 +1998,28 @@ static const char *prev_item(const char *opt, const char *end)
     if (end == opt)
         return NULL;
     beg = end;
-    while (beg != opt && beg[-1] != ',' && !isspace(beg[-1]))
-        beg--;
+    while (beg > opt) {
+        --beg;
+        if (beg[0] == ',' || isspace(beg[0])) {
+            ++beg;
+            break;
+        }
+    }
     len = end - beg;
     if (len > SECTION_NAME_MAX) {
-        CMP_warn2("using only first %d characters of section name starting with \"%s\"",
-                  SECTION_NAME_MAX, opt_item);
+        CMP_warn3("using only first %d characters of section name starting with \"%.*s\"",
+                  SECTION_NAME_MAX, SECTION_NAME_MAX, beg);
         len = SECTION_NAME_MAX;
     }
-    strncpy(opt_item, beg, len);
-    opt_item[SECTION_NAME_MAX] = '\0'; /* avoid gcc v8 O3 stringop-truncation */
+    memcpy(opt_item, beg, len);
     opt_item[len] = '\0';
-    while (beg != opt && (beg[-1] == ',' || isspace(beg[-1])))
-        beg--;
+    while (beg > opt) {
+        --beg;
+        if (beg[0] != ',' && !isspace(beg[0])) {
+            ++beg;
+            break;
+        }
+    }
     return beg;
 }
 
