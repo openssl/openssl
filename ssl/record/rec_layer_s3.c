@@ -1576,6 +1576,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             goto start;
         } else if (alert_descr == SSL_AD_CLOSE_NOTIFY
                 && (is_tls13 || alert_level == SSL3_AL_WARNING)) {
+            s->rwstate = SSL_NOTHING;
             s->shutdown |= SSL_RECEIVED_SHUTDOWN;
             return 0;
         } else if (alert_level == SSL3_AL_FATAL || is_tls13) {
