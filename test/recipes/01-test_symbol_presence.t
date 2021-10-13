@@ -37,12 +37,12 @@ foreach my $libname (@libnames) {
         *OSTDOUT = *STDOUT;
         open STDERR, ">", devnull();
         open STDOUT, ">", devnull();
-        my @nm_lines = map { s|\R$||; $_ } `nm -Pg $shlibpath 2> /dev/null`;
+        my @nm_lines = map { s|\R$||; $_ } `nm -DPg $shlibpath 2> /dev/null`;
         close STDERR;
         close STDOUT;
         *STDERR = *OSTDERR;
         *STDOUT = *OSTDOUT;
-        skip "Can't run 'nm -Pg $shlibpath' => $?...  ignoring", 2
+        skip "Can't run 'nm -DPg $shlibpath' => $?...  ignoring", 2
             unless $? == 0;
 
         my $bldtop = bldtop_dir();
