@@ -187,7 +187,8 @@ verified in the I<ctx>. Built-in available values for the I<purpose> argument
 are B<X509_PURPOSE_SSL_CLIENT>, B<X509_PURPOSE_SSL_SERVER>,
 B<X509_PURPOSE_NS_SSL_SERVER>, B<X509_PURPOSE_SMIME_SIGN>,
 B<X509_PURPOSE_SMIME_ENCRYPT>, B<X509_PURPOSE_CRL_SIGN>, B<X509_PURPOSE_ANY>,
-B<X509_PURPOSE_OCSP_HELPER> and B<X509_PURPOSE_TIMESTAMP_SIGN>. It is also
+B<X509_PURPOSE_OCSP_HELPER>, B<X509_PURPOSE_TIMESTAMP_SIGN> and
+B<X509_PURPOSE_CODE_SIGN>.  It is also
 possible to create a custom purpose value. Setting a purpose will ensure that
 the key usage declared within certificates in the chain being verified is
 consistent with that purpose as well as, potentially, other checks. Every

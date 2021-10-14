@@ -458,7 +458,7 @@ Set policy variable inhibit-policy-mapping (see RFC5280).
 The intended use for the certificate.
 Currently defined purposes are C<sslclient>, C<sslserver>, C<nssslserver>,
 C<smimesign>, C<smimeencrypt>, C<crlsign>, C<ocsphelper>, C<timestampsign>,
-and C<any>.
+C<codesign> and C<any>.
 If peer certificate verification is enabled, by default the TLS implementation
 as well as the commands B<s_client> and B<s_server> check for consistency
 with TLS server or TLS client use, respectively.

@@ -503,6 +503,18 @@ const char *X509_VERIFY_PARAM_get0_name(const X509_VERIFY_PARAM *param)
 
 static const X509_VERIFY_PARAM default_table[] = {
     {
+     "code_sign",               /* Code sign parameters */
+     0,                         /* check time to use */
+     0,                         /* inheritance flags */
+     0,                         /* flags */
+     X509_PURPOSE_CODE_SIGN,    /* purpose */
+     X509_TRUST_OBJECT_SIGN,    /* trust */
+     -1,                        /* depth */
+     -1,                        /* auth_level */
+     NULL,                      /* policies */
+     vpm_empty_id
+    },
+    {
      "default",                 /* X509 default parameters */
      0,                         /* check time to use */
      0,                         /* inheritance flags */

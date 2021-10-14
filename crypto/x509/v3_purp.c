@@ -32,6 +32,8 @@ static int check_purpose_crl_sign(const X509_PURPOSE *xp, const X509 *x,
                                   int require_ca);
 static int check_purpose_timestamp_sign(const X509_PURPOSE *xp, const X509 *x,
                                         int require_ca);
+static int check_purpose_code_sign(const X509_PURPOSE *xp, const X509 *x,
+                                        int require_ca);
 static int no_check_purpose(const X509_PURPOSE *xp, const X509 *x,
                             int require_ca);
 static int check_purpose_ocsp_helper(const X509_PURPOSE *xp, const X509 *x,
@@ -60,6 +62,9 @@ static X509_PURPOSE xstandard[] = {
      "OCSP helper", "ocsphelper", NULL},
     {X509_PURPOSE_TIMESTAMP_SIGN, X509_TRUST_TSA, 0,
      check_purpose_timestamp_sign, "Time Stamp signing", "timestampsign",
+     NULL},
+    {X509_PURPOSE_CODE_SIGN, X509_TRUST_OBJECT_SIGN, 0,
+     check_purpose_code_sign, "Code signing", "codesign",
      NULL},
 };
 
@@ -863,6 +868,57 @@ static int check_purpose_timestamp_sign(const X509_PURPOSE *xp, const X509 *x,
             && !X509_EXTENSION_get_critical(X509_get_ext((X509 *)x, i_ext)))
         return 0;
     return 1;
+}
+
+static int check_purpose_code_sign(const X509_PURPOSE *xp, const X509 *x,
+                                   int require_ca)
+{
+    int i_ext;
+
+    /* If ca is true we must return if this is a valid CA certificate. */
+    if (require_ca)
+        return check_ca(x);
+
+    /*
+     * Check the key usage and extended key usage fields:
+     *
+     * Reference: CA Browser Forum,
+     * Baseline Requirements for the Issuance and Management of 
+     * Publicly‐Trusted Code Signing Certificates, Version 3.0.0,
+     * Section 7.1.2.3: Code signing and Timestamp Certificate
+     *
+     * Checking covers Key Usage and Extended Key Usage attributes.
+     * Other properties like CRL Distribution Points and Authoriy
+     * Information Access (AIA) are not checked.
+     */
+    /* Key Usage */
+    if ((x->ex_flags & EXFLAG_KUSAGE) == 0)
+        return 0;
+    if ((x->ex_kusage & KU_DIGITAL_SIGNATURE) == 0)
+        return 0;
+    if ((x->ex_kusage & (KU_KEY_CERT_SIGN | KU_CRL_SIGN)) != 0)
+        return 0;
+
+    /* Key Usage MUST be critical */
+    i_ext = X509_get_ext_by_NID(x, NID_key_usage, -1);
+    if (i_ext < 0)
+        return 0;
+    if (i_ext >= 0) {
+        X509_EXTENSION *ext = X509_get_ext((X509 *)x, i_ext);
+        if (!X509_EXTENSION_get_critical(ext))
+            return 0;
+    }
+
+    /* Extended Key Usage */
+    if ((x->ex_flags & EXFLAG_XKUSAGE) == 0)
+        return 0;
+    if ((x->ex_xkusage & XKU_CODE_SIGN) == 0)
+        return 0;
+    if ((x->ex_xkusage & (XKU_ANYEKU | XKU_SSL_SERVER)) != 0)
+        return 0;
+
+    return 1;
+
 }
 
 static int no_check_purpose(const X509_PURPOSE *xp, const X509 *x,
