@@ -18,7 +18,7 @@ provider-signature - The signature library E<lt>-E<gt> provider functions
   */
 
  /* Context management */
- void *OSSL_FUNC_signature_newctx(void *provctx);
+ void *OSSL_FUNC_signature_newctx(void *provctx, const char *propq);
  void OSSL_FUNC_signature_freectx(void *ctx);
  void *OSSL_FUNC_signature_dupctx(void *ctx);
 
@@ -104,7 +104,7 @@ function pointer from an B<OSSL_DISPATCH> element named
 B<OSSL_FUNC_{name}>.
 For example, the "function" OSSL_FUNC_signature_newctx() has these:
 
- typedef void *(OSSL_FUNC_signature_newctx_fn)(void *provctx);
+ typedef void *(OSSL_FUNC_signature_newctx_fn)(void *provctx, const char *propq);
  static ossl_inline OSSL_FUNC_signature_newctx_fn
      OSSL_FUNC_signature_newctx(const OSSL_DISPATCH *opf);
 
@@ -183,7 +183,9 @@ structure for holding context information during a signature operation.
 A pointer to this context will be passed back in a number of the other signature
 operation function calls.
 The parameter I<provctx> is the provider context generated during provider
-initialisation (see L<provider(7)>).
+initialisation (see L<provider(7)>). The I<propq> parameter is a property query
+string that may be (optionally) used by the provider during any "fetches" that
+it may perform (if it performs any).
 
 OSSL_FUNC_signature_freectx() is passed a pointer to the provider side signature
 context in the I<ctx> parameter.
