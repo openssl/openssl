@@ -94,9 +94,13 @@ static int sm2sig_set_mdname(PROV_SM2_CTX *psm2ctx, const char *mdname)
     if (psm2ctx->md == NULL) /* We need an SM3 md to compare with */
         psm2ctx->md = EVP_MD_fetch(psm2ctx->libctx, psm2ctx->mdname,
                                    psm2ctx->propq);
-    if (psm2ctx->md == NULL
-        || strlen(mdname) >= sizeof(psm2ctx->mdname)
+    if (psm2ctx->md == NULL)
+        return 0;
+
+    if (strlen(mdname) >= sizeof(psm2ctx->mdname)
         || !EVP_MD_is_a(psm2ctx->md, mdname)) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST, "digest=%s",
+                       mdname);
         return 0;
     }
 
