@@ -32,6 +32,8 @@ static int check_purpose_crl_sign(const X509_PURPOSE *xp, const X509 *x,
                                   int require_ca);
 static int check_purpose_timestamp_sign(const X509_PURPOSE *xp, const X509 *x,
                                         int require_ca);
+static int check_purpose_code_sign(const X509_PURPOSE *xp, const X509 *x,
+                                        int require_ca);
 static int no_check_purpose(const X509_PURPOSE *xp, const X509 *x,
                             int require_ca);
 static int check_purpose_ocsp_helper(const X509_PURPOSE *xp, const X509 *x,
@@ -60,6 +62,9 @@ static X509_PURPOSE xstandard[] = {
      "OCSP helper", "ocsphelper", NULL},
     {X509_PURPOSE_TIMESTAMP_SIGN, X509_TRUST_TSA, 0,
      check_purpose_timestamp_sign, "Time Stamp signing", "timestampsign",
+     NULL},
+    {X509_PURPOSE_CODE_SIGN, X509_TRUST_OBJECT_SIGN, 0,
+     check_purpose_code_sign, "Code signing", "codesign",
      NULL},
 };
 
@@ -881,6 +886,75 @@ static int check_purpose_timestamp_sign(const X509_PURPOSE *xp, const X509 *x,
     }
 
     return 1;
+}
+
+static int check_purpose_code_sign(const X509_PURPOSE *xp, const X509 *x,
+                                   int require_ca)
+{
+    int i_ext;
+
+    /* If ca is true we must return if this is a valid CA certificate. */
+    if (require_ca)
+        return check_ca(x);
+
+    /*
+     * Check the key usage field:
+     * Key Usage must be present, marked as critical and have the
+     * digitalSignature bit set.
+     * keyCertSign and cRLSign must not be set.
+     *
+     * Reference: CA Browser Forum
+     * Baseline Requirements for the Issuance and Management of Code Signing version 2.8
+     * Appendix B: Certificate Extensions (Normative)
+     * (3) Code Signing Certificates
+     * keyUsage (required)
+     * This extension MUST be present and MUST be marked critical. The bit positions for 
+     * digitalSignature MUST be set. Bit positions for keyCertSign and cRLSign MUST NOT be set. 
+     * All other bit positions SHOULD NOT be set
+     */
+    if ((x->ex_flags & EXFLAG_KUSAGE) == 0)
+        return 0;
+    if ((x->ex_kusage & KU_DIGITAL_SIGNATURE) == 0)
+        return 0;
+    if ((x->ex_kusage & (KU_KEY_CERT_SIGN | KU_CRL_SIGN)) != 0)
+        return 0;
+
+    /* Key Usage MUST be critical */
+    i_ext = X509_get_ext_by_NID(x, NID_key_usage, -1);
+    if (i_ext < 0)
+        return 0;
+    if (i_ext >= 0) {
+        X509_EXTENSION *ext = X509_get_ext((X509 *)x, i_ext);
+        if (!X509_EXTENSION_get_critical(ext))
+            return 0;
+    }
+
+    /*
+     * From the same reference (CA Browser Forum):
+     *
+     * extKeyUsage (EKU) (required)
+     *
+     * The value id-kp-codeSigning [RFC5280] MUST be present.
+     *
+     * The following EKUs MAY be present: documentSigning, lifetimeSigning, and 
+     * emailProtection.
+     *
+     * The value anyExtendedKeyUsage (2.5.29.37.0) or serverAuth (1.3.6.1.5.5.7.3.1) MUST NOT 
+     * be present.
+     *
+     * Other values SHOULD NOT be present. If any other value is present, the CA MUST have a 
+     * business agreement with a Platform vendor requiring that EKU in order to issue a Platform
+     * specific code signing certificate with that EKU.
+     */
+    if ((x->ex_flags & EXFLAG_XKUSAGE) == 0)
+        return 0;
+    if ((x->ex_xkusage & XKU_CODE_SIGN) == 0)
+        return 0;
+    if ((x->ex_xkusage & (XKU_ANYEKU | XKU_SSL_SERVER)) != 0)
+        return 0;
+
+    return 1;
+
 }
 
 static int no_check_purpose(const X509_PURPOSE *xp, const X509 *x,
