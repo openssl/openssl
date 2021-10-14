@@ -57,7 +57,17 @@ foreach my $libname (@libnames) {
         note "Number of lines in \@def_lines before massaging: ", scalar @def_lines;
 
         # Massage the nm output to only contain defined symbols
-        @nm_lines = sort map { s| .*||; $_ } grep(m|.* [BCDST] .*|, @nm_lines);
+        @nm_lines =
+            sort
+            map {
+                # Drop the first space and everything following it
+                s| .*||;
+                # Drop OpenSSL dynamic version information if there is any
+                s|\@\@OPENSSL_[0-9._]+[a-z]?$||;
+                # Return the result
+                $_
+            }
+            grep(m|.* [BCDST] .*|, @nm_lines);
 
         # Massage the mkdef.pl output to only contain global symbols
         # The output we got is in Unix .map format, which has a global
