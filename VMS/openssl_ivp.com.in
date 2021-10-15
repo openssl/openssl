@@ -14,7 +14,7 @@ $	INSTALLTOP_ = F$PARSE("A.;",INSTALLTOP,,,"NO_CONCEAL") -
 $	OPENSSLDIR_ = F$PARSE("A.;",OPENSSLDIR,,,"NO_CONCEAL") -
 		     - ".][000000" - "[000000." - "][" - "]A.;" + "."
 $
-$	v    := {- sprintf "%02d%02d", split(/\./, $config{version}) -}
+$	v    := {- sprintf "%02d", split(/\./, $config{version}) -}
 $	pz   := {- $config{pointer_size} -}
 $	
 $	@'INSTALLTOP_'SYS$STARTUP]openssl_startup'v'
