@@ -4122,7 +4122,11 @@ int setup_tests(void)
 # ifndef OPENSSL_NO_ENGINE
     /* Tests only support the default libctx */
     if (testctx == NULL) {
+#  ifndef OPENSSL_NO_EC
         ADD_ALL_TESTS(test_signatures_with_engine, 3);
+#  else
+        ADD_ALL_TESTS(test_signatures_with_engine, 2);
+#  endif
         ADD_TEST(test_cipher_with_engine);
     }
 # endif
