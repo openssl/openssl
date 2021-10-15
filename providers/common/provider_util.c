@@ -26,7 +26,9 @@ void ossl_prov_cipher_reset(PROV_CIPHER *pc)
     EVP_CIPHER_free(pc->alloc_cipher);
     pc->alloc_cipher = NULL;
     pc->cipher = NULL;
+#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_ENGINE)
     ENGINE_finish(pc->engine);
+#endif
     pc->engine = NULL;
 }
 
@@ -34,10 +36,12 @@ int ossl_prov_cipher_copy(PROV_CIPHER *dst, const PROV_CIPHER *src)
 {
     if (src->alloc_cipher != NULL && !EVP_CIPHER_up_ref(src->alloc_cipher))
         return 0;
+#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_ENGINE)
     if (src->engine != NULL && !ENGINE_init(src->engine)) {
         EVP_CIPHER_free(src->alloc_cipher);
         return 0;
     }
+#endif
     dst->engine = src->engine;
     dst->cipher = src->cipher;
     dst->alloc_cipher = src->alloc_cipher;
@@ -57,7 +61,9 @@ static int load_common(const OSSL_PARAM params[], const char **propquery,
         *propquery = p->data;
     }
 
+#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_ENGINE)
     ENGINE_finish(*engine);
+#endif
     *engine = NULL;
     /* Inside the FIPS module, we don't support legacy ciphers */
 #if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_ENGINE)
@@ -136,7 +142,9 @@ void ossl_prov_digest_reset(PROV_DIGEST *pd)
     EVP_MD_free(pd->alloc_md);
     pd->alloc_md = NULL;
     pd->md = NULL;
+#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_ENGINE)
     ENGINE_finish(pd->engine);
+#endif
     pd->engine = NULL;
 }
 
@@ -144,10 +152,12 @@ int ossl_prov_digest_copy(PROV_DIGEST *dst, const PROV_DIGEST *src)
 {
     if (src->alloc_md != NULL && !EVP_MD_up_ref(src->alloc_md))
         return 0;
+#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_ENGINE)
     if (src->engine != NULL && !ENGINE_init(src->engine)) {
         EVP_MD_free(src->alloc_md);
         return 0;
     }
+#endif
     dst->engine = src->engine;
     dst->md = src->md;
     dst->alloc_md = src->alloc_md;
