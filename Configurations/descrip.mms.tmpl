@@ -356,7 +356,7 @@ OPENSSLDIR_C={- platform->osslprefix() -}DATAROOT:[000000]
 # Where installed ENGINE modules reside, for C
 ENGINESDIR_C={- platform->osslprefix() -}ENGINES{- $sover_dirname.$target{pointer_size} -}:
 # Where modules reside, for C
-MODULESDIR_C={- platform->osslprefix() -}MODULES{- $sover_dirname.$target{pointer_size} -}:
+MODULESDIR_C={- platform->osslprefix() -}MODULES{- $target{pointer_size} -}:
 
 ##### User defined commands and flags ################################
 
@@ -570,10 +570,10 @@ uninstall_docs : uninstall_html_docs
 {- output_off() if $disabled{fips}; "" -}
 install_fips : build_sw $(INSTALL_FIPSMODULECONF)
 	@ WRITE SYS$OUTPUT "*** Installing FIPS module"
-	- CREATE/DIR ossl_installroot:[MODULES{- $sover_dirname.$target{pointer_size} -}.'arch']
+	- CREATE/DIR ossl_installroot:[MODULES{- $target{pointer_size} -}.'arch']
 	- CREATE/DIR/PROT=(S:RWED,O:RWE,G:RE,W:RE) OSSL_DATAROOT:[000000]
 	COPY/PROT=W:RE $(INSTALL_FIPSMODULES) -
-                ossl_installroot:[MODULES{- $sover_dirname.$target{pointer_size} -}.'arch']$(FIPSMODULENAME)
+                ossl_installroot:[MODULES{- $target{pointer_size} -}.'arch']$(FIPSMODULENAME)
 	@ WRITE SYS$OUTPUT "*** Installing FIPS module configuration"
 	COPY/PROT=W:RE $(INSTALL_FIPSMODULECONF) OSSL_DATAROOT:[000000]
 
@@ -581,7 +581,7 @@ uninstall_fips :
 	@ WRITE SYS$OUTPUT "*** Uninstalling FIPS module configuration"
 	DELETE OSSL_DATAROOT:[000000]fipsmodule.cnf;*
 	@ WRITE SYS$OUTPUT "*** Uninstalling FIPS module"
-	DELETE ossl_installroot:[MODULES{- $sover_dirname.$target{pointer_size} -}.'arch']$(FIPSMODULENAME);*
+	DELETE ossl_installroot:[MODULES{- $target{pointer_size} -}.'arch']$(FIPSMODULENAME);*
 {- output_on() if $disabled{fips}; "" -}
 
 install_ssldirs : check_INSTALLTOP
@@ -629,9 +629,9 @@ install_engines : check_INSTALLTOP install_runtime_libs build_modules
 install_modules : check_INSTALLTOP install_runtime_libs build_modules
         @ {- output_off() unless scalar @install_modules; "" -} !
         @ WRITE SYS$OUTPUT "*** Installing modules"
-        - CREATE/DIR ossl_installroot:[MODULES{- $sover_dirname.$target{pointer_size} -}.'arch']
+        - CREATE/DIR ossl_installroot:[MODULES{- $target{pointer_size} -}.'arch']
         {- join("\n        ",
-                map { "COPY/PROT=W:RE $_.EXE ossl_installroot:[MODULES$sover_dirname$target{pointer_size}.'arch']" }
+                map { "COPY/PROT=W:RE $_.EXE ossl_installroot:[MODULES$target{pointer_size}.'arch']" }
                 @install_modules) -}
         @ {- output_on() unless scalar @install_modules; "" -} !
 
