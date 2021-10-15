@@ -212,10 +212,15 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
     }
     if (pkey) {
         pkey->ameth = ameth;
-        pkey->engine = e;
-
         pkey->type = pkey->ameth->pkey_id;
         pkey->save_type = type;
+# ifndef OPENSSL_NO_ENGINE
+        if (eptr == NULL && e != NULL && !ENGINE_init(e)) {
+            EVPerr(EVP_F_PKEY_SET_TYPE, EVP_R_INITIALIZATION_ERROR);
+            return 0;
+        }
+# endif
+        pkey->engine = e;
     }
     return 1;
 }
