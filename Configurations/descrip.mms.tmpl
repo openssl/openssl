@@ -9,7 +9,7 @@
   (our $osslprefix_q = platform->osslprefix()) =~ s/\$/\\\$/;
 
   our $sover_dirname = platform->shlib_version_as_filename();
-  our $osslver = sprintf "%02d%02d", split(/\./, $config{version});
+  our $osslver = sprintf "%02d", split(/\./, $config{version});
 
   our $sourcedir = $config{sourcedir};
   our $builddir = $config{builddir};
