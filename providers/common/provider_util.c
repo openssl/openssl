@@ -26,6 +26,7 @@ void ossl_prov_cipher_reset(PROV_CIPHER *pc)
     EVP_CIPHER_free(pc->alloc_cipher);
     pc->alloc_cipher = NULL;
     pc->cipher = NULL;
+    ENGINE_finish(pc->engine);
     pc->engine = NULL;
 }
 
@@ -33,6 +34,10 @@ int ossl_prov_cipher_copy(PROV_CIPHER *dst, const PROV_CIPHER *src)
 {
     if (src->alloc_cipher != NULL && !EVP_CIPHER_up_ref(src->alloc_cipher))
         return 0;
+    if (src->engine != NULL && !ENGINE_init(src->engine)) {
+        EVP_CIPHER_free(src->alloc_cipher);
+        return 0;
+    }
     dst->engine = src->engine;
     dst->cipher = src->cipher;
     dst->alloc_cipher = src->alloc_cipher;
@@ -52,6 +57,7 @@ static int load_common(const OSSL_PARAM params[], const char **propquery,
         *propquery = p->data;
     }
 
+    ENGINE_finish(*engine);
     *engine = NULL;
     /* Inside the FIPS module, we don't support legacy ciphers */
 #if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_ENGINE)
@@ -59,10 +65,18 @@ static int load_common(const OSSL_PARAM params[], const char **propquery,
     if (p != NULL) {
         if (p->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
-        ENGINE_finish(*engine);
+        /* Get a structural reference */
         *engine = ENGINE_by_id(p->data);
         if (*engine == NULL)
             return 0;
+        /* Get a functional reference */
+        if (!ENGINE_init(*engine)) {
+            ENGINE_free(*engine);
+            *engine = NULL;
+            return 0;
+        }
+        /* Free the structural reference */
+        ENGINE_free(*engine);
     }
 #endif
     return 1;
@@ -122,6 +136,7 @@ void ossl_prov_digest_reset(PROV_DIGEST *pd)
     EVP_MD_free(pd->alloc_md);
     pd->alloc_md = NULL;
     pd->md = NULL;
+    ENGINE_finish(pd->engine);
     pd->engine = NULL;
 }
 
@@ -129,6 +144,10 @@ int ossl_prov_digest_copy(PROV_DIGEST *dst, const PROV_DIGEST *src)
 {
     if (src->alloc_md != NULL && !EVP_MD_up_ref(src->alloc_md))
         return 0;
+    if (src->engine != NULL && !ENGINE_init(src->engine)) {
+        EVP_MD_free(src->alloc_md);
+        return 0;
+    }
     dst->engine = src->engine;
     dst->md = src->md;
     dst->alloc_md = src->alloc_md;
