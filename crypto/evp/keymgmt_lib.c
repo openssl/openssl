@@ -197,6 +197,7 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
 
     /* Add the new export to the operation cache */
     if (!evp_keymgmt_util_cache_keydata(pk, keymgmt, import_data.keydata)) {
+        CRYPTO_THREAD_unlock(pk->lock);
         evp_keymgmt_freedata(keymgmt, import_data.keydata);
         return NULL;
     }
