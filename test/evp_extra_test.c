@@ -3883,7 +3883,6 @@ static int test_signatures_with_engine(int tst)
     if (!TEST_ptr(e = ENGINE_by_id(engine_id)))
         return 0;
 
-
     if (!TEST_true(ENGINE_init(e))) {
         ENGINE_free(e);
         return 0;
@@ -3960,7 +3959,6 @@ static int test_cipher_with_engine(void)
 
     if (!TEST_ptr(e = ENGINE_by_id(engine_id)))
         return 0;
-
 
     if (!TEST_true(ENGINE_init(e))) {
         ENGINE_free(e);
