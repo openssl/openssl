@@ -3856,7 +3856,7 @@ static int test_evp_md_cipher_meth(void)
     return testresult;
 }
 
-# ifndef OPENSSL_NO_ENGINE
+# ifndef OPENSSL_NO_DYNAMIC_ENGINE
 /* Test we can create a signature keys with an associated ENGINE */
 static int test_signatures_with_engine(int tst)
 {
@@ -3991,7 +3991,7 @@ static int test_cipher_with_engine(void)
 
     return testresult;
 }
-# endif /* OPENSSL_NO_ENGINE */
+# endif /* OPENSSL_NO_DYNAMIC_ENGINE */
 #endif /* OPENSSL_NO_DEPRECATED_3_0 */
 
 typedef enum OPTION_choice {
@@ -4119,7 +4119,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_custom_pmeth, 12);
     ADD_TEST(test_evp_md_cipher_meth);
 
-# ifndef OPENSSL_NO_ENGINE
+# ifndef OPENSSL_NO_DYNAMIC_ENGINE
     /* Tests only support the default libctx */
     if (testctx == NULL) {
 #  ifndef OPENSSL_NO_EC
