@@ -12,9 +12,9 @@ Deprecated since OpenSSL 3.0, can be hidden entirely by defining
 B<OPENSSL_API_COMPAT> with a suitable version value, see
 L<openssl_user_macros(7)>:
 
- int RSA_check_key_ex(RSA *rsa, BN_GENCB *cb);
+ int RSA_check_key_ex(const RSA *rsa, BN_GENCB *cb);
 
- int RSA_check_key(RSA *rsa);
+ int RSA_check_key(const RSA *rsa);
 
 =head1 DESCRIPTION
 
