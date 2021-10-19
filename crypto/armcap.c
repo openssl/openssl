@@ -69,10 +69,10 @@ static size_t OPENSSL_rndr_wrapper(size_t (*func)(unsigned char *, size_t), unsi
     int i;
 
     for (i = 0; i < 8; i++) {
-	buffer_size = func(buf, len);
-	if (buffer_size == len)
-	    break;
-	usleep(5000);  /* 5000 microseconds (5 milliseconds) */
+        buffer_size = func(buf, len);
+        if (buffer_size == len)
+            break;
+        usleep(5000);  /* 5000 microseconds (5 milliseconds) */
     }
     return buffer_size;
 }
@@ -249,7 +249,7 @@ void OPENSSL_cpuid_setup(void)
     }
 #  ifdef __aarch64__
         if (getauxval(HWCAP2) & HWCAP2_RNG)
-	    OPENSSL_armcap_P |= ARMV8_RNG;
+            OPENSSL_armcap_P |= ARMV8_RNG;
 #  endif
 # endif
 
