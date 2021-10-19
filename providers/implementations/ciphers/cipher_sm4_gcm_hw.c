@@ -12,6 +12,7 @@
  */
 
 #include "cipher_sm4_gcm.h"
+#include "crypto/sm4_platform.h"
 
 static int sm4_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
                            size_t keylen)
@@ -20,9 +21,22 @@ static int sm4_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
     SM4_KEY *ks = &actx->ks.ks;
 
     ctx->ks = ks;
-    ossl_sm4_set_key(key, ks);
-    CRYPTO_gcm128_init(&ctx->gcm, ks, (block128_f)ossl_sm4_encrypt);
-    ctx->ctr = (ctr128_f)NULL;
+# ifdef HWSM4_CAPABLE
+    if (HWSM4_CAPABLE) {
+        HWSM4_set_encrypt_key(key, ks);
+        CRYPTO_gcm128_init(&ctx->gcm, ks, (block128_f) HWSM4_encrypt);
+#  ifdef HWSM4_ctr32_encrypt_blocks
+        ctx->ctr = (ctr128_f) HWSM4_ctr32_encrypt_blocks;
+#  else /* HWSM4_ctr32_encrypt_blocks */
+        ctx->ctr = (ctr128_f)NULL;
+#  endif
+    } else
+# endif /* HWSM4_CAPABLE */
+    {
+        ossl_sm4_set_key(key, ks);
+        CRYPTO_gcm128_init(&ctx->gcm, ks, (block128_f)ossl_sm4_encrypt);
+        ctx->ctr = (ctr128_f)NULL;
+    }
     ctx->key_set = 1;
 
     return 1;
