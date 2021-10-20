@@ -39,9 +39,9 @@ B<openssl> B<req>
 [B<-set_serial> I<n>]
 [B<-newhdr>]
 [B<-copy_extensions> I<arg>]
-[B<-addext> I<ext>]
 [B<-extensions> I<section>]
 [B<-reqexts> I<section>]
+[B<-addext> I<ext>]
 [B<-precert>]
 [B<-utf8>]
 [B<-reqopt>]
@@ -161,7 +161,7 @@ This option is used to generate a new private key unless B<-key> is given.
 It is subsequently used as if it was given using the B<-key> option.
 
 This option implies the B<-new> flag to create a new certificate request
-or a new certificate in case B<-x509> is given.
+or a new certificate in case B<-x509> is used.
 
 The argument takes one of several forms.
 
@@ -290,8 +290,9 @@ a large random number will be used for the serial number.
 Unless the B<-copy_extensions> option is used,
 X.509 extensions are not copied from any provided request input file.
 
-X.509 extensions to be added can be specified in the configuration file
-or using the B<-addext> option.
+X.509 extensions to be added can be specified in the configuration file,
+possibly using the B<-config> and B<-extensions> options,
+and/or using the B<-addext> option.
 
 =item B<-CA> I<filename>|I<uri>
 
@@ -330,6 +331,15 @@ all extensions in the request are copied to the certificate.
 The main use of this option is to allow a certificate request to supply
 values for certain extensions such as subjectAltName.
 
+=item B<-extensions> I<section>,
+B<-reqexts> I<section>
+
+Can be used to override the name of the configuration file section
+from which X.509 extensions are included
+in the certificate (when B<-x509> is in use) or certificate request.
+This allows several different sections to be used in the same configuration
+file to specify requests for a variety of purposes.
+
 =item B<-addext> I<ext>
 
 Add a specific extension to the certificate (if B<-x509> is in use)
@@ -337,16 +347,6 @@ or certificate request.  The argument must have the form of
 a key=value pair as it would appear in a config file.
 
 This option can be given multiple times.
-
-=item B<-extensions> I<section>
-
-=item B<-reqexts> I<section>
-
-These options specify alternative sections to include certificate
-extensions (if B<-x509> is in use) or certificate request extensions.
-This allows several different sections to
-be used in the same configuration file to specify requests for
-a variety of purposes.
 
 =item B<-precert>
 
@@ -762,6 +762,8 @@ has no effect.
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
 The <-nodes> option was deprecated in OpenSSL 3.0, too; use B<-noenc> instead.
+
+The B<-reqexts> option has been made an alias of B<-extensions> in OpenSSL 3.1.
 
 =head1 COPYRIGHT
 
