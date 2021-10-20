@@ -1762,7 +1762,7 @@ static int test_EVP_PKEY_set1_DH(void)
 }
 #endif /* OPENSSL_NO_DH */
 
-#ifndef OPENSSL_NO_DYNAMIC_ENGINE
+#if !defined(OPENSSL_NO_ENGINE) && !defined(OPENSSL_NO_DYNAMIC_ENGINE)
 /* Test we can create a signature keys with an associated ENGINE */
 static int test_signatures_with_engine(int tst)
 {
@@ -1913,11 +1913,13 @@ static int test_cipher_with_engine(void)
 
     return testresult;
 }
-#endif /* OPENSSL_NO_DYNAMIC_ENGINE */
+#endif /* !defined(OPENSSL_NO_ENGINE) && !defined(OPENSSL_NO_DYNAMIC_ENGINE) */
 
 int setup_tests(void)
 {
+#if !defined(OPENSSL_NO_ENGINE) && !defined(OPENSSL_NO_DYNAMIC_ENGINE)
     ENGINE_load_builtin_engines();
+#endif
     ADD_TEST(test_EVP_DigestSignInit);
     ADD_TEST(test_EVP_DigestVerifyInit);
     ADD_TEST(test_EVP_Enveloped);
@@ -1957,7 +1959,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_gcm_reinit, OSSL_NELEM(gcm_reinit_tests));
     ADD_ALL_TESTS(test_evp_updated_iv, OSSL_NELEM(evp_updated_iv_tests));
 
-#ifndef OPENSSL_NO_DYNAMIC_ENGINE
+#if !defined(OPENSSL_NO_ENGINE) && !defined(OPENSSL_NO_DYNAMIC_ENGINE)
 # ifndef OPENSSL_NO_EC
     ADD_ALL_TESTS(test_signatures_with_engine, 3);
 # else
