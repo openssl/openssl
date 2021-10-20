@@ -1081,7 +1081,7 @@ int EVP_PKEY_CTX_get_rsa_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
                              EVP_PKEY_CTRL_GET_RSA_MGF1_MD, 0, (void *)(md));
 }
 
-int EVP_PKEY_CTX_set0_rsa_oaep_label(EVP_PKEY_CTX *ctx, void *label, int llen)
+int EVP_PKEY_CTX_set0_rsa_oaep_label(EVP_PKEY_CTX *ctx, unsigned char *label, int llen)
 {
     OSSL_PARAM rsa_params[2], *p = rsa_params;
 
