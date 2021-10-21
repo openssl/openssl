@@ -62,7 +62,7 @@ be achieved by preceding the cipher BIO with a buffering BIO.
 
 BIO_f_cipher() returns the cipher BIO method.
 
-BIO_set_cipher() return 1 for success and 0 for failure.
+BIO_set_cipher() returns 1 for success and 0 for failure.
 
 BIO_get_cipher_status() returns 1 for a successful decrypt and <=0
 for failure.
