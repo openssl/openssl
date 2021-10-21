@@ -983,6 +983,7 @@ EOF
                 @{$args{objs}};
      my @deps = compute_lib_depends(@{$args{deps}});
      my $objs = join($target{ld_resp_delim}, @objs);
+     my $ress = join($target{ld_resp_delim}, @ress);
      my $linklibs = join("", map { "$_$target{ld_resp_delim}" } @deps);
      my $deps = join(" ", @objs, @ress, @deps);
      return <<"EOF";
