@@ -205,7 +205,8 @@ If anything in this step fails, the next step is used as a fallback.
 =item 2.
 
 As a fallback, try to fetch the operation type implementation from the same
-provider as the original B<EVP_PKEY>'s L<EVP_KEYMGMT(3)>.
+provider as the original B<EVP_PKEY>'s L<EVP_KEYMGMT(3)>, still using the
+propery string from the B<EVP_PKEY_CTX>.
 
 =back
 
