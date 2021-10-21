@@ -451,6 +451,11 @@ For example when setting an unsupported curve with
 EVP_PKEY_CTX_set_ec_paramgen_curve_nid() this function call will not fail
 but later keygen operations with the EVP_PKEY_CTX will fail.
 
+=head4 Removal of function code from the error codes
+
+The function code part of the error code is now always set to 0. For that
+reason the ERR_GET_FUNC() macro was removed. Applications must resolve
+the error codes only using the library number and the reason code.
 
 =head2 Installation and Compilation
 
