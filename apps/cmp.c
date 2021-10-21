@@ -1998,10 +1998,14 @@ static const char *prev_item(const char *opt, const char *end)
     if (end == opt)
         return NULL;
     beg = end;
-    while (--beg >= opt)
-        if (beg[0] == ',' || isspace(beg[0]))
+    while (beg > opt) {
+        --beg;
+        if (beg[0] == ',' || isspace(beg[0])) {
+            ++beg;
             break;
-    len = end - ++beg;
+        }
+    }
+    len = end - beg;
     if (len > SECTION_NAME_MAX) {
         CMP_warn3("using only first %d characters of section name starting with \"%.*s\"",
                   SECTION_NAME_MAX, SECTION_NAME_MAX, beg);
@@ -2009,10 +2013,14 @@ static const char *prev_item(const char *opt, const char *end)
     }
     memcpy(opt_item, beg, len);
     opt_item[len] = '\0';
-    while (--beg >= opt)
-        if (beg[0] != ',' && !isspace(beg[0]))
+    while (beg > opt) {
+        --beg;
+        if (beg[0] != ',' && !isspace(beg[0])) {
+            ++beg;
             break;
-    return beg + 1;
+        }
+    }
+    return beg;
 }
 
 /* get str value for name from a comma-separated hierarchy of config sections */
