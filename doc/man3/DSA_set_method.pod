@@ -21,7 +21,7 @@ L<openssl_user_macros(7)>:
 
  DSA *DSA_new_method(ENGINE *engine);
 
- DSA_METHOD *DSA_OpenSSL(void);
+ const DSA_METHOD *DSA_OpenSSL(void);
 
 =head1 DESCRIPTION
 
