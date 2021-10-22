@@ -50,7 +50,10 @@ The output lines are indented by B<offset> spaces.
 
 =head1 RETURN VALUES
 
-These functions return 1 on success, 0 on error.
+DSAparams_print(), DSAparams_print_fp(), DSA_print(), and DSA_print_fp()
+return 1 for success and 0 or a negative value for failure.
+
+DHparams_print() and DHparams_print_fp() return 1 on success, 0 on error.
 
 =head1 SEE ALSO
 
