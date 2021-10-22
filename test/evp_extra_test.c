@@ -2278,7 +2278,7 @@ static int test_X509_PUBKEY_dup(void)
 
     if (!TEST_ptr(X509_PUBKEY_get0(xq))
             || !TEST_ptr(X509_PUBKEY_get0(xp))
-            || !TEST_ptr_eq(X509_PUBKEY_get0(xq), X509_PUBKEY_get0(xp)))
+            || !TEST_ptr_ne(X509_PUBKEY_get0(xq), X509_PUBKEY_get0(xp)))
         goto done;
 
     X509_PUBKEY_free(xq);
