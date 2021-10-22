@@ -3988,6 +3988,12 @@ static int test_signatures_with_engine(int tst)
     size_t maclen = 0;
     int ret;
 
+#  ifdef OPENSSL_NO_CMAC
+    /* Skip CMAC tests in a no-cmac build */
+    if (tst <= 1)
+        return 1;
+#  endif
+
     if (!TEST_ptr(e = ENGINE_by_id(engine_id)))
         return 0;
 
