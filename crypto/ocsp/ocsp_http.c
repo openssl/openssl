@@ -58,12 +58,11 @@ OCSP_RESPONSE *OCSP_sendreq_bio(BIO *b, const char *path, OCSP_REQUEST *req)
     if (ctx == NULL)
         return NULL;
     mem = OSSL_HTTP_REQ_CTX_exchange(ctx);
-    if (mem != NULL)
-        resp = (OCSP_RESPONSE *)ASN1_item_d2i_bio(ASN1_ITEM_rptr(OCSP_RESPONSE),
-                                                  mem, NULL);
+    /* ASN1_item_d2i_bio handles NULL bio gracefully */
+    resp = (OCSP_RESPONSE *)ASN1_item_d2i_bio(ASN1_ITEM_rptr(OCSP_RESPONSE),
+                                              mem, NULL);
 
     OSSL_HTTP_REQ_CTX_free(ctx);
-
     return resp;
 }
 #endif /* !defined(OPENSSL_NO_OCSP) */
