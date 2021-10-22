@@ -436,7 +436,7 @@ the algorithm and an associated implementation from a provider.
 See L<crypto(7)/ALGORITHM FETCHING> for more information about fetching.
 
 The digest objects returned from these functions do not need to be freed with
-EVP_MD_free(3).
+EVP_MD_free().
 
 =item EVP_MD_CTX_get_pkey_ctx()
 

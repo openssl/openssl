@@ -467,7 +467,7 @@ the algorithm and an associated implementation from a provider.
 See L<crypto(7)/ALGORITHM FETCHING> for more information about fetching.
 
 The cipher objects returned from these functions do not need to be freed with
-EVP_CIPHER_free(3).
+EVP_CIPHER_free().
 
 =item EVP_CIPHER_get_nid() and EVP_CIPHER_CTX_get_nid()
 
