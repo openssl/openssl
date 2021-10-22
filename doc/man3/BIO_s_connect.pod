@@ -15,7 +15,7 @@ BIO_set_nbio, BIO_do_connect - connect BIO
 
  const BIO_METHOD *BIO_s_connect(void);
 
- BIO *BIO_new_connect(char *name);
+ BIO *BIO_new_connect(const char *name);
 
  long BIO_set_conn_hostname(BIO *b, char *name);
  long BIO_set_conn_port(BIO *b, char *port);
