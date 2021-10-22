@@ -23,6 +23,7 @@
 # include <openssl/engine.h>
 # include <openssl/rsa.h>
 # include <openssl/err.h>
+# include <openssl/x509.h>
 
 static void display_engine_list(void)
 {
@@ -357,6 +358,7 @@ static int test_x509_dup_w_engine(void)
 {
     ENGINE *e = NULL;
     X509 *cert = NULL, *dupcert = NULL;
+    X509_PUBKEY *pubkey, *duppubkey = NULL;
     int ret = 0;
     BIO *b = NULL;
     RSA_METHOD *rsameth = NULL;
@@ -370,6 +372,16 @@ static int test_x509_dup_w_engine(void)
         goto err;
     X509_free(dupcert);
     dupcert = NULL;
+
+    if (!TEST_ptr(pubkey = X509_get_X509_PUBKEY(cert))
+        || !TEST_ptr(duppubkey = X509_PUBKEY_dup(pubkey))
+        || !TEST_ptr_ne(duppubkey, pubkey)
+        || !TEST_ptr_ne(X509_PUBKEY_get0(duppubkey), X509_PUBKEY_get0(pubkey)))
+        goto err;
+
+    X509_PUBKEY_free(duppubkey);
+    duppubkey = NULL;
+
     X509_free(cert);
     cert = NULL;
 
@@ -395,11 +407,18 @@ static int test_x509_dup_w_engine(void)
     if (!TEST_ptr(dupcert = X509_dup(cert)))
         goto err;
 
+    if (!TEST_ptr(pubkey = X509_get_X509_PUBKEY(cert))
+        || !TEST_ptr(duppubkey = X509_PUBKEY_dup(pubkey))
+        || !TEST_ptr_ne(duppubkey, pubkey)
+        || !TEST_ptr_ne(X509_PUBKEY_get0(duppubkey), X509_PUBKEY_get0(pubkey)))
+        goto err;
+
     ret = 1;
 
  err:
     X509_free(cert);
     X509_free(dupcert);
+    X509_PUBKEY_free(duppubkey);
     if (e != NULL) {
         ENGINE_unregister_RSA(e);
         ENGINE_free(e);
