@@ -27,7 +27,7 @@ SSL_CIPHER_get_protocol_id
  const char *SSL_CIPHER_standard_name(const SSL_CIPHER *cipher);
  const char *OPENSSL_cipher_name(const char *stdname);
  int SSL_CIPHER_get_bits(const SSL_CIPHER *cipher, int *alg_bits);
- char *SSL_CIPHER_get_version(const SSL_CIPHER *cipher);
+ const char *SSL_CIPHER_get_version(const SSL_CIPHER *cipher);
  char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int size);
  int SSL_CIPHER_get_cipher_nid(const SSL_CIPHER *c);
  int SSL_CIPHER_get_digest_nid(const SSL_CIPHER *c);
