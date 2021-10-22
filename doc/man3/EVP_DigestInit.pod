@@ -420,6 +420,24 @@ EVP_get_digestbyobj()
 Returns an B<EVP_MD> structure when passed a digest name, a digest B<NID> or an
 B<ASN1_OBJECT> structure respectively.
 
+The EVP_get_digestbyname() function is present for backwards compatibility with
+OpenSSL prior to version 3 and is different to the EVP_MD_fetch() function
+since it does not attempt to "fetch" an implementation of the cipher.
+Additionally, it only knows about digests that are built-in to OpenSSL and have
+an associated NID. Similarly EVP_get_digestbynid() and EVP_get_digestbyobj()
+also return objects without an associated implementation.
+
+When the digest objects returned by these functions are used (such as in a call
+to EVP_DigestInit_ex()) an implementation of the digest will be implicitly
+fetched from the loaded providers. This fetch could fail if no suitable
+implementation is available. Use EVP_MD_fetch() instead to explicitly fetch
+the algorithm and an associated implementation from a provider.
+
+See L<crypto(7)/ALGORITHM FETCHING> for more information about fetching.
+
+The digest objects returned from these functions do not need to be freed with
+EVP_MD_free().
+
 =item EVP_MD_CTX_get_pkey_ctx()
 
 Returns the B<EVP_PKEY_CTX> assigned to I<ctx>. The returned pointer should not
