@@ -167,8 +167,8 @@ call to L<EVP_MD_fetch(3)>.
 =head2 Implicit fetch
 
 OpenSSL has a number of functions that return an algorithm object with no
-associated implementation, such as L<EVP_sha256(3)>,
-L<EVP_blake2b512(3)> or L<EVP_aes_128_cbc(3)>. These are present for
+associated implementation, such as L<EVP_sha256(3)>, L<EVP_aes_128_cbc(3)>,
+L<EVP_get_cipherbyname(3)> or L<EVP_get_digestbyname(3)>. These are present for
 compatibility with OpenSSL before version 3.0 where explicit fetching was not
 available.
 
