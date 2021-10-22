@@ -14,8 +14,8 @@ Deprecated since OpenSSL 3.0, can be hidden entirely by defining
 B<OPENSSL_API_COMPAT> with a suitable version value, see
 L<openssl_user_macros(7)>:
 
- int RSA_print(BIO *bp, RSA *x, int offset);
- int RSA_print_fp(FILE *fp, RSA *x, int offset);
+ int RSA_print(BIO *bp, const RSA *x, int offset);
+ int RSA_print_fp(FILE *fp, const RSA *x, int offset);
 
  #include <openssl/dsa.h>
 
