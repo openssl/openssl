@@ -302,7 +302,7 @@ static int test_PACKET_forward(void)
 
 static int test_PACKET_buf_init(void)
 {
-    unsigned char buf1[BUF_LEN];
+    unsigned char buf1[BUF_LEN] = { 0 };
     PACKET pkt;
 
     /* Also tests PACKET_remaining() */
