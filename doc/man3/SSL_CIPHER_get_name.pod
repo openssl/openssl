@@ -157,7 +157,7 @@ Some examples for the output of SSL_CIPHER_description():
 
 SSL_CIPHER_get_name(), SSL_CIPHER_standard_name(), OPENSSL_cipher_name(),
 SSL_CIPHER_get_version() and SSL_CIPHER_description() return the corresponding
-value in a null-terminated string for a specific cipher or "(NONE)"
+value in a NUL-terminated string for a specific cipher or "(NONE)"
 if the cipher is not found.
 
 SSL_CIPHER_get_bits() returns a positive integer representing the number of
