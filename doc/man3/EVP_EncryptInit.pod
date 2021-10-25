@@ -454,8 +454,8 @@ accessible via low level interfaces.
 The EVP_get_cipherbyname() function is present for backwards compatibility with
 OpenSSL prior to version 3 and is different to the EVP_CIPHER_fetch() function
 since it does not attempt to "fetch" an implementation of the cipher.
-Additionally it only knows about ciphers that are built-in to OpenSSL and have
-an associated nid. Similarly EVP_get_cipherbynid() and EVP_get_cipherbyobj()
+Additionally, it only knows about ciphers that are built-in to OpenSSL and have
+an associated NID. Similarly EVP_get_cipherbynid() and EVP_get_cipherbyobj()
 also return objects without an associated implementation.
 
 When the cipher objects returned by these functions are used (such as in a call
