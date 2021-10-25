@@ -838,6 +838,7 @@ static void *do_PVK_body_key(const unsigned char **in,
     EVP_CIPHER *rc4 = NULL;
 #endif
     EVP_CIPHER_CTX *cctx = EVP_CIPHER_CTX_new();
+
     if(cctx == NULL) {
         ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
         goto err;
