@@ -701,6 +701,10 @@ static int prepare_ec_params(const void *eckey, int nid, int save,
 
 static int ec_spki_pub_to_der(const void *eckey, unsigned char **pder)
 {
+    if (EC_KEY_get0_public_key(eckey) == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_NOT_A_PUBLIC_KEY);
+        return 0;
+    }
     return i2o_ECPublicKey(eckey, pder);
 }
 
