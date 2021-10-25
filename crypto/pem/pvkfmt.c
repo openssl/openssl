@@ -838,7 +838,9 @@ static void *do_PVK_body_key(const unsigned char **in,
     EVP_CIPHER *rc4 = NULL;
 #endif
     EVP_CIPHER_CTX *cctx = EVP_CIPHER_CTX_new();
-
+    if(cctx == NULL)
+        goto err;
+        
     if (saltlen) {
 #ifndef OPENSSL_NO_RC4
         unsigned int magic;
