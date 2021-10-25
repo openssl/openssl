@@ -5424,6 +5424,40 @@ int SSL_client_hello_get1_extensions_present(SSL *s, int **out, size_t *outlen)
     return 0;
 }
 
+int SSL_client_hello_get_extension_order(SSL *s, uint16_t *exts, size_t *num_exts)
+{
+    RAW_EXTENSION *ext;
+    size_t num = 0, i;
+
+    if (s->clienthello == NULL || num_exts == NULL)
+        return 0;
+    for (i = 0; i < s->clienthello->pre_proc_exts_len; i++) {
+        ext = s->clienthello->pre_proc_exts + i;
+        if (ext->present)
+            num++;
+    }
+    if (num == 0) {
+        *num_exts = 0;
+        return 1;
+    }
+    if (exts == NULL) {
+        *num_exts = num;
+        return 1;
+    }
+    if (*num_exts < num)
+        return 0;
+    for (i = 0; i < s->clienthello->pre_proc_exts_len; i++) {
+        ext = s->clienthello->pre_proc_exts + i;
+        if (ext->present) {
+            if (ext->received_order >= num)
+                return 0;
+            exts[ext->received_order] = ext->type;
+        }
+    }
+    *num_exts = num;
+    return 1;
+}
+
 int SSL_client_hello_get0_ext(SSL *s, unsigned int type, const unsigned char **out,
                        size_t *outlen)
 {

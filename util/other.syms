@@ -532,6 +532,7 @@ SSL_clear_chain_certs                   define
 SSL_clear_mode                          define
 SSL_disable_ct                          define
 SSL_get0_chain_certs                    define
+SSL_get0_iana_groups                    define
 SSL_get0_session                        define
 SSL_get1_curves                         define
 SSL_get1_groups                         define

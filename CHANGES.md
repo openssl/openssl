@@ -24,6 +24,15 @@ OpenSSL 3.1
 
 ### Changes between 3.0 and 3.1 [xx XXX xxxx]
 
+ * Add new SSL APIs to aid in efficiently implementing TLS/SSL fingerprinting.  The
+   SSL_CTRL_GET_IANA_GROUPS control code, exposed as the SSL_get0_iana_groups()
+   function-like macro, retrieves the list of supported groups sent by the peer,
+   and the function SSL_client_hello_get_extension_order() populates a caller-supplied
+   array with the list of extension types present in the ClientHello, in order of
+   appearance.
+
+   *Phus Lu*
+
  * Fixed PEM_write_bio_PKCS8PrivateKey() and PEM_write_bio_PKCS8PrivateKey_nid()
    to make it possible to use empty passphrase strings.
 
