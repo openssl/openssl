@@ -1541,9 +1541,7 @@ int speed_main(int argc, char **argv)
 #ifndef NO_FORK
             multi = atoi(opt_arg());
             if ((size_t)multi >= SIZE_MAX / sizeof(int)) {
-                BIO_printf(bio_err,
-                           "%s: multi argument too large [limit is %zu]\n",
-                           prog, SIZE_MAX / sizeof(int) - 1);
+                BIO_printf(bio_err, "%s: multi argument too large\n", prog);
                 return 0;
             }
 #endif
