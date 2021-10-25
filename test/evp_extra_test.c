@@ -679,11 +679,13 @@ err:
 }
 
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_EC)
-static int test_fromdata(char *keytype, OSSL_PARAM *params)
+static int test_fromdata(char *keytype, int selection, OSSL_PARAM *params)
 {
     EVP_PKEY_CTX *pctx = NULL;
     EVP_PKEY *pkey = NULL;
     int testresult = 0;
+    int ret;
+    BIO *bio = BIO_new(BIO_s_mem());
 
     if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_name(testctx, keytype, testpropq)))
         goto err;
@@ -695,10 +697,30 @@ static int test_fromdata(char *keytype, OSSL_PARAM *params)
     if (!TEST_ptr(pkey))
         goto err;
 
+    /* Check we can use the resulting key */
+    ret = PEM_write_bio_PUBKEY(bio, pkey);
+    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
+        if (!TEST_true(ret))
+            goto err;
+    } else {
+        if (!TEST_false(ret))
+            goto err;
+    }
+    ret = PEM_write_bio_PrivateKey_ex(bio, pkey, NULL, NULL, 0, NULL, NULL,
+                                      testctx, NULL);
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
+        if (!TEST_true(ret))
+            goto err;
+    } else {
+        if (!TEST_false(ret))
+            goto err;
+    }
+
     testresult = 1;
  err:
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(pctx);
+    BIO_free(bio);
 
     return testresult;
 }
@@ -736,7 +758,7 @@ static int test_EVP_PKEY_ffc_priv_pub(char *keytype)
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
         goto err;
 
-    if (!test_fromdata(keytype, params))
+    if (!test_fromdata(keytype, OSSL_KEYMGMT_SELECT_ALL_PARAMETERS, params))
         goto err;
     OSSL_PARAM_free(params);
     params = NULL;
@@ -753,7 +775,7 @@ static int test_EVP_PKEY_ffc_priv_pub(char *keytype)
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
         goto err;
 
-    if (!test_fromdata(keytype, params))
+    if (!test_fromdata(keytype, OSSL_KEYMGMT_SELECT_PRIVATE_KEY, params))
         goto err;
     OSSL_PARAM_free(params);
     params = NULL;
@@ -770,7 +792,7 @@ static int test_EVP_PKEY_ffc_priv_pub(char *keytype)
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
         goto err;
 
-    if (!test_fromdata(keytype, params))
+    if (!test_fromdata(keytype, OSSL_KEYMGMT_SELECT_PUBLIC_KEY, params))
         goto err;
     OSSL_PARAM_free(params);
     params = NULL;
@@ -789,7 +811,7 @@ static int test_EVP_PKEY_ffc_priv_pub(char *keytype)
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
         goto err;
 
-    if (!test_fromdata(keytype, params))
+    if (!test_fromdata(keytype, EVP_PKEY_KEYPAIR, params))
         goto err;
 
     ret = 1;
@@ -848,7 +870,7 @@ static int test_EC_priv_pub(void)
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
         goto err;
 
-    if (!test_fromdata("EC", params))
+    if (!test_fromdata("EC", OSSL_KEYMGMT_SELECT_ALL_PARAMETERS, params))
         goto err;
     OSSL_PARAM_free(params);
     params = NULL;
@@ -865,7 +887,13 @@ static int test_EC_priv_pub(void)
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
         goto err;
 
-    if (!test_fromdata("EC", params))
+    /*
+     * We indicate only parameters here. The "EVP_PKEY_fromdata" call will do
+     * the private key anyway, but the subsequent PEM_write_bio_PrivateKey_ex
+     * call is expected to fail because PEM_write_bio_PrivateKey_ex does not
+     * support exporting a private EC key without a corresponding public key
+     */
+    if (!test_fromdata("EC", OSSL_KEYMGMT_SELECT_ALL_PARAMETERS, params))
         goto err;
     OSSL_PARAM_free(params);
     params = NULL;
@@ -883,7 +911,7 @@ static int test_EC_priv_pub(void)
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
         goto err;
 
-    if (!test_fromdata("EC", params))
+    if (!test_fromdata("EC", OSSL_KEYMGMT_SELECT_PUBLIC_KEY, params))
         goto err;
     OSSL_PARAM_free(params);
     params = NULL;
@@ -903,7 +931,7 @@ static int test_EC_priv_pub(void)
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
         goto err;
 
-    if (!test_fromdata("EC", params))
+    if (!test_fromdata("EC", EVP_PKEY_KEYPAIR, params))
         goto err;
 
     ret = 1;
