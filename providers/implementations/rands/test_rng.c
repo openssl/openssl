@@ -52,9 +52,6 @@ static void *test_rng_new(void *provctx, void *parent,
 {
     PROV_TEST_RNG *t;
 
-    if (parent != NULL)
-        return NULL;
-
     t = OPENSSL_zalloc(sizeof(*t));
     if (t == NULL)
         return NULL;
@@ -107,16 +104,13 @@ static int test_rng_generate(void *vtest, unsigned char *out, size_t outlen,
                              const unsigned char *adin, size_t adin_len)
 {
     PROV_TEST_RNG *t = (PROV_TEST_RNG *)vtest;
-    size_t i;
 
     if (strength > t->strength)
         return 0;
-
-    for (i = 0; i < outlen; i++) {
-        out[i] = t->entropy[t->entropy_pos++];
-        if (t->entropy_pos >= t->entropy_len)
-            break;
-    }
+    if (t->entropy_pos + outlen > t->entropy_len)
+        return 0;
+    memcpy(out, t->entropy + t->entropy_pos, outlen);
+    t->entropy_pos += outlen;
     return 1;
 }
 
