@@ -11,8 +11,9 @@ use warnings;
 use OpenSSL::Test;
 use OpenSSL::Test::Utils;
 
-plan tests => 2;
+plan tests => 3;
 setup("test_rand");
 
+ok(run(test(["rand_test"])));
 ok(run(test(["drbgtest"])));
 ok(run(test(["rand_status_test"])));
