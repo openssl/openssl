@@ -3729,6 +3729,14 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             return (int)s->ext.peer_ecpointformats_len;
         }
 
+    case SSL_CTRL_GET_IANA_GROUPS:
+        {
+            if (parg != NULL) {
+                *(uint16_t **)parg = (uint16_t *)s->ext.peer_supportedgroups;
+            }
+            return (int)s->ext.peer_supportedgroups_len;
+        }
+
     default:
         break;
     }
