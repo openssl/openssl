@@ -640,7 +640,6 @@ my %preferred_words = (
     'non-empty'     => 'nonempty',
     'non-negative'  => 'nonnegative',
     'non-zero'      => 'nonzero',
-    'NULL-terminated' => 'NUL-terminated',
     'path name'     => 'pathname',
     'pre-allocated' => 'preallocated',
     'pseudo-terminal' => 'pseudoterminal',
