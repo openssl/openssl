@@ -105,9 +105,7 @@ static int test_rng_generate(void *vtest, unsigned char *out, size_t outlen,
 {
     PROV_TEST_RNG *t = (PROV_TEST_RNG *)vtest;
 
-    if (strength > t->strength)
-        return 0;
-    if (t->entropy_pos + outlen > t->entropy_len)
+    if (strength > t->strength || t->entropy_len - t->entropy_pos < outlen)
         return 0;
     memcpy(out, t->entropy + t->entropy_pos, outlen);
     t->entropy_pos += outlen;
