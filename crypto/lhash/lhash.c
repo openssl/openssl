@@ -276,7 +276,7 @@ static void contract(OPENSSL_LHASH *lh)
         n = OPENSSL_realloc(lh->b,
                             (unsigned int)(sizeof(OPENSSL_LH_NODE *) * lh->pmax));
         if (n == NULL) {
-            /* fputs("realloc error in lhash",stderr); */
+            /* fputs("realloc error in lhash", stderr); */
             lh->error++;
             return;
         }

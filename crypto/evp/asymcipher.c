@@ -189,7 +189,7 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
-    switch(ctx->operation) {
+    switch (ctx->operation) {
     case EVP_PKEY_OP_ENCRYPT:
         if (ctx->pmeth->encrypt_init == NULL)
             return 1;

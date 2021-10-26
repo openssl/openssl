@@ -112,7 +112,7 @@ static int bn_rsa_fips186_4_find_aux_prob_prime(const BIGNUM *Xp1,
     BN_set_flags(p1, BN_FLG_CONSTTIME);
 
     /* Find the first odd number >= Xp1 that is probably prime */
-    for(;;) {
+    for (;;) {
         i++;
         BN_GENCB_call(cb, 0, i);
         /* MR test with trial division */

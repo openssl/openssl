@@ -124,7 +124,7 @@ static int rsa_check_padding(const PROV_RSA_CTX *prsactx,
                              const char *mdname, const char *mgf1_mdname,
                              int mdnid)
 {
-    switch(prsactx->pad_mode) {
+    switch (prsactx->pad_mode) {
         case RSA_NO_PADDING:
             if (mdname != NULL || mdnid != NID_undef) {
                 ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_PADDING_MODE);
@@ -196,7 +196,7 @@ static void *rsa_newctx(void *provctx, const char *propq)
 static int rsa_pss_compute_saltlen(PROV_RSA_CTX *ctx)
 {
     int saltlen = ctx->saltlen;
- 
+
     if (saltlen == RSA_PSS_SALTLEN_DIGEST) {
         saltlen = EVP_MD_get_size(ctx->md);
     } else if (saltlen == RSA_PSS_SALTLEN_AUTO || saltlen == RSA_PSS_SALTLEN_MAX) {
@@ -232,7 +232,7 @@ static unsigned char *rsa_generate_signature_aid(PROV_RSA_CTX *ctx,
         return NULL;
     }
 
-    switch(ctx->pad_mode) {
+    switch (ctx->pad_mode) {
     case RSA_PKCS1_PADDING:
         ret = ossl_DER_w_algorithmIdentifier_MDWithRSAEncryption(&pkt, -1,
                                                                  ctx->mdnid);

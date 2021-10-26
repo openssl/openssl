@@ -787,7 +787,7 @@ static int bind_afalg(ENGINE *e)
      * now, as bind_aflag can only be called by one thread at a
      * time.
      */
-    for(i = 0; i < OSSL_NELEM(afalg_cipher_nids); i++) {
+    for (i = 0; i < OSSL_NELEM(afalg_cipher_nids); i++) {
         if (afalg_aes_cbc(afalg_cipher_nids[i]) == NULL) {
             AFALGerr(AFALG_F_BIND_AFALG, AFALG_R_INIT_FAILED);
             return 0;
@@ -916,7 +916,7 @@ static int afalg_finish(ENGINE *e)
 static int free_cbc(void)
 {
     short unsigned int i;
-    for(i = 0; i < OSSL_NELEM(afalg_cipher_nids); i++) {
+    for (i = 0; i < OSSL_NELEM(afalg_cipher_nids); i++) {
         EVP_CIPHER_meth_free(cbc_handle[i]._hidden);
         cbc_handle[i]._hidden = NULL;
     }

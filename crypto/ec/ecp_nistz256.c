@@ -1377,7 +1377,7 @@ static int ecp_nistz256_inv_mod_ord(const EC_GROUP *group, BIGNUM *r,
     /*
      * The bottom 128 bit of the exponent are processed with fixed 4-bit window
      */
-    for(i = 0; i < 32; i++) {
+    for (i = 0; i < 32; i++) {
         /* expLo - the low 128 bits of the exponent we use (ord(p256) - 2),
          * split into nibbles */
         static const unsigned char expLo[32]  = {

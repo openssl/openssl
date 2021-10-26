@@ -3939,7 +3939,7 @@ const SSL_METHOD *ssl_bad_method(int ver)
 
 const char *ssl_protocol_to_string(int version)
 {
-    switch(version)
+    switch (version)
     {
     case TLS1_3_VERSION:
         return "TLSv1.3";

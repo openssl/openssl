@@ -2149,7 +2149,7 @@ static int s390x_aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         if (!enc || !cctx->aes.ccm.tag_set)
             return 0;
 
-        if(arg < cctx->aes.ccm.m)
+        if (arg < cctx->aes.ccm.m)
             return 0;
 
         memcpy(ptr, cctx->aes.ccm.kmac_param.icv.b, cctx->aes.ccm.m);

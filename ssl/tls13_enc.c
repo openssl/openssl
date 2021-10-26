@@ -640,7 +640,7 @@ int tls13_change_cipher_state(SSL *s, int which)
     }
 
     /* check whether cipher is known */
-    if(!ossl_assert(cipher != NULL))
+    if (!ossl_assert(cipher != NULL))
         goto err;
 
     if (!derive_secret_key_and_iv(s, which & SSL3_CC_WRITE, md, cipher,

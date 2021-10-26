@@ -91,7 +91,7 @@ static int test_client_hello(int currtest)
     if (!TEST_true(SSL_CTX_set_max_proto_version(ctx, 0)))
         goto end;
 
-    switch(currtest) {
+    switch (currtest) {
     case TEST_SET_SESSION_TICK_DATA_VER_NEG:
 #if !defined(OPENSSL_NO_TLS1_3) && defined(OPENSSL_NO_TLS1_2)
         /* TLSv1.3 is enabled and TLSv1.2 is disabled so can't do this test */

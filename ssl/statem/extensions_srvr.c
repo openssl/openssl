@@ -1017,7 +1017,7 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         }
 
 #ifndef OPENSSL_NO_PSK
-        if(sess == NULL
+        if (sess == NULL
                 && s->psk_server_callback != NULL
                 && idlen <= PSK_MAX_IDENTITY_LEN) {
             char *pskid = NULL;

@@ -37,7 +37,7 @@ static int loadfiles(char *name)
     char *p;
     int last, ret = 1;
 
-    for ( ; ; ) {
+    for (;;) {
         last = 0;
         for (p = name; *p != '\0' && *p != LIST_SEPARATOR_CHAR; p++)
             continue;

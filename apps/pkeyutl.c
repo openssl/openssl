@@ -729,7 +729,7 @@ static int do_raw_keyop(int pkey_op, EVP_MD_CTX *mctx,
             goto end;
         }
         mbuf = app_malloc(filesize, "oneshot sign/verify buffer");
-        switch(pkey_op) {
+        switch (pkey_op) {
         case EVP_PKEY_OP_VERIFY:
             buf_len = BIO_read(in, mbuf, filesize);
             if (buf_len != filesize) {
@@ -754,7 +754,7 @@ static int do_raw_keyop(int pkey_op, EVP_MD_CTX *mctx,
         goto end;
     }
 
-    switch(pkey_op) {
+    switch (pkey_op) {
     case EVP_PKEY_OP_VERIFY:
         for (;;) {
             buf_len = BIO_read(in, tbuf, TBUF_MAXSIZE);

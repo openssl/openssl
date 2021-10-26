@@ -71,7 +71,7 @@ static uint64_t ossl_strtouint64(const variant_char *str)
             base = 16, str++;
     }
 
-    while((digit = todigit(*str++)) < base)
+    while ((digit = todigit(*str++)) < base)
         ret = ret * base + digit;
 
     return ret;
@@ -80,7 +80,7 @@ static uint64_t ossl_strtouint64(const variant_char *str)
 static variant_char *ossl_strchr(const variant_char *str, char srch)
 {   variant_char c;
 
-    while((c = *str)) {
+    while ((c = *str)) {
         if (c == srch)
             return (variant_char *)str;
         str++;

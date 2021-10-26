@@ -765,7 +765,7 @@ static int ossltest_aes128_gcm_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
     if (ret <= 0)
         return ret;
 
-    switch(type) {
+    switch (type) {
     case EVP_CTRL_AEAD_GET_TAG:
         /* Always give the same tag */
         memset(ptr, 0, EVP_GCM_TLS_TAG_LEN);

@@ -42,7 +42,7 @@ static const BIO_METHOD *bio_f_watchccs_filter(void)
     if (method_watchccs == NULL) {
         method_watchccs = BIO_meth_new(BIO_TYPE_WATCHCCS_FILTER,
                                        "Watch CCS filter");
-        if (   method_watchccs == NULL
+        if (method_watchccs == NULL
             || !BIO_meth_set_write(method_watchccs, watchccs_write)
             || !BIO_meth_set_read(method_watchccs, watchccs_read)
             || !BIO_meth_set_puts(method_watchccs, watchccs_puts)
@@ -193,7 +193,7 @@ static int watchccs_write(BIO *bio, const char *in, int inl)
             } else {
                 badccs = 1;
             }
-        } else if(rectype == SSL3_RT_APPLICATION_DATA) {
+        } else if (rectype == SSL3_RT_APPLICATION_DATA) {
             if (bio == s_to_c_fbio)
                 sappdataseen = 1;
             else

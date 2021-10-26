@@ -1021,7 +1021,7 @@ static int test_EVP_PKEY_sign(int tst)
         0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13
     };
 
-    if (tst == 0 ) {
+    if (tst == 0) {
         if (!TEST_ptr(pkey = load_example_rsa_key()))
                 goto out;
     } else if (tst == 1) {
@@ -2882,7 +2882,7 @@ static int test_evp_iv_aes(int idx)
     if (nullprov != NULL && idx < 6)
         return TEST_skip("Test does not support a non-default library context");
 
-    switch(idx) {
+    switch (idx) {
     case 0:
         type = EVP_aes_128_cbc();
         /* FALLTHROUGH */
@@ -3026,7 +3026,7 @@ static int test_evp_iv_des(int idx)
     if (lgcyprov == NULL && idx < 3)
         return TEST_skip("Test requires legacy provider to be loaded");
 
-    switch(idx) {
+    switch (idx) {
     case 0:
         type = EVP_CIPHER_fetch(testctx, "des-cbc", testpropq);
         ref_iv = cbc_state_des;
@@ -3300,7 +3300,7 @@ static const EVP_INIT_TEST_st evp_init_tests[] = {
 static int evp_init_seq_set_iv(EVP_CIPHER_CTX *ctx, const EVP_INIT_TEST_st *t)
 {
     int res = 0;
-    
+
     if (t->ivlen != 0) {
         if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, t->ivlen, NULL)))
             goto err;
@@ -3817,7 +3817,7 @@ static int test_custom_pmeth(int idx)
     if (testctx != NULL)
         return 1;
 
-    switch(idx) {
+    switch (idx) {
     case 0:
     case 6:
         id = EVP_PKEY_RSA;

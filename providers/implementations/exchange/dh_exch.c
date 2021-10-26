@@ -460,7 +460,7 @@ static int dh_get_ctx_params(void *vpdhctx, OSSL_PARAM params[])
     if (p != NULL
             && !OSSL_PARAM_set_utf8_string(p, pdhctx->kdf_md == NULL
                                            ? ""
-                                           : EVP_MD_get0_name(pdhctx->kdf_md))){
+                                           : EVP_MD_get0_name(pdhctx->kdf_md))) {
         return 0;
     }
 

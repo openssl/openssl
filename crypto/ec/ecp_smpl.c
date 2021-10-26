@@ -1423,8 +1423,8 @@ int ossl_ec_GFp_simple_field_inv(const EC_GROUP *group, BIGNUM *r,
 /*-
  * Apply randomization of EC point projective coordinates:
  *
- *   (X, Y ,Z ) = (lambda^2*X, lambda^3*Y, lambda*Z)
- *   lambda = [1,group->field)
+ *   (X, Y, Z) = (lambda^2*X, lambda^3*Y, lambda*Z)
+ *   lambda = [1, group->field)
  *
  */
 int ossl_ec_GFp_simple_blind_coordinates(const EC_GROUP *group, EC_POINT *p,

@@ -503,7 +503,7 @@ static const char *newline_escape_filename(const char *file, int * backslash)
     file_cpy = app_malloc(mem_len, file);
     i = 0;
 
-    while(e < length) {
+    while (e < length) {
         const char c = file[e];
         if (c == '\n') {
             file_cpy[i++] = '\\';

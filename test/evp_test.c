@@ -944,7 +944,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
             in += in_len - 1;
             in_len = 1;
         }
-        if (in_len > 0 ) {
+        if (in_len > 0) {
             if (!EVP_CipherUpdate(ctx, tmp + out_misalign + tmplen, &chunklen,
                                   in, 1))
                 goto err;
@@ -2879,12 +2879,12 @@ static int keypair_test_run(EVP_TEST *t)
         goto end;
     }
 
-    if ((rv = EVP_PKEY_eq(pair->privk, pair->pubk)) != 1 ) {
-        if ( 0 == rv ) {
+    if ((rv = EVP_PKEY_eq(pair->privk, pair->pubk)) != 1) {
+        if (0 == rv) {
             t->err = "KEYPAIR_MISMATCH";
-        } else if ( -1 == rv ) {
+        } else if (-1 == rv) {
             t->err = "KEYPAIR_TYPE_MISMATCH";
-        } else if ( -2 == rv ) {
+        } else if (-2 == rv) {
             t->err = "UNSUPPORTED_KEY_COMPARISON";
         } else {
             TEST_error("Unexpected error in key comparison");
@@ -3601,7 +3601,7 @@ start:
         }
         klist = &public_keys;
     } else if (strcmp(pp->key, "PrivateKeyRaw") == 0
-               || strcmp(pp->key, "PublicKeyRaw") == 0 ) {
+               || strcmp(pp->key, "PublicKeyRaw") == 0) {
         char *strnid = NULL, *keydata = NULL;
         unsigned char *keybin;
         size_t keylen;

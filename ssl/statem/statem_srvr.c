@@ -1707,7 +1707,7 @@ static int tls_early_post_process_client_hello(SSL *s)
     s->s3.send_connection_binding = 0;
     /* Check what signalling cipher-suite values were received. */
     if (scsvs != NULL) {
-        for(i = 0; i < sk_SSL_CIPHER_num(scsvs); i++) {
+        for (i = 0; i < sk_SSL_CIPHER_num(scsvs); i++) {
             c = sk_SSL_CIPHER_value(scsvs, i);
             if (SSL_CIPHER_get_id(c) == SSL3_CK_SCSV) {
                 if (s->renegotiate) {
