@@ -51,7 +51,7 @@ will be automatically created, as long as the total of B<ASYNC_JOB>s managed by
 the pool does not exceed I<max_size>. When the pool is first initialised
 I<init_size> B<ASYNC_JOB>s will be created immediately. If ASYNC_init_thread()
 is not called before the pool is first used then it will be called automatically
-with a I<max_size> of 0 (no upper limit) and a I<init_size> of 0 (no
+with an I<max_size> of 0 (no upper limit) and a I<init_size> of 0 (no
 B<ASYNC_JOB>s created up front).
 
 An asynchronous job is started by calling the ASYNC_start_job() function.

@@ -1947,7 +1947,7 @@ OpenSSL 1.1.1
    integrity guarantee of this cipher. Any application that relies on the
    integrity of these ignored leading bytes of a long nonce may be further
    affected. Any OpenSSL internal use of this cipher, including in SSL/TLS,
-   is safe because no such sets use such a long nonce value. However, user
+   is safe because no such use sets such a long nonce value. However, user
    applications that use this cipher directly and set a nondefault nonce
    length to be longer than 12 bytes may be vulnerable.
 
@@ -2111,10 +2111,10 @@ OpenSSL 1.1.1
 
  * AIX shared library support overhaul. Switch to AIX "natural" way of
    handling shared libraries, which means collecting shared objects of
-   different versions and bitnesses in one common archive. This allows us to
-   mitigate conflict between 1.0 and 1.1 side-by-side installations. It
+   different versions and bitnesses in one common archive. This
+   mitigates conflicts in 1.0 and 1.1 side-by-side installations. It
    doesn't affect the way 3rd party applications are linked, only how
-   multi-version installation is managed.
+   multi-version installations are managed.
 
    *Andy Polyakov*
 
@@ -10908,7 +10908,7 @@ OpenSSL 0.9.8.]
    (Note that only the 'mod' functions are actually for fields GF(2^m).
    BN_GF2m_add() is misnomer, but this is for the sake of consistency.)
 
-   For some functions, an irreducible polynomial defining a
+   For some functions, the irreducible polynomial defining a
    field can be given as an 'unsigned int[]' with strictly
    decreasing elements giving the indices of those bits that are set;
    i.e., p[] represents the polynomial
@@ -11975,7 +11975,7 @@ OpenSSL 0.9.7.]
    *Steve Henson*
 
  * Support for crypto accelerator cards from Accelerated Encryption
-   Processing, www.aep.i.e.  (Use engine 'aep')
+   Processing, www.aep.ie.  (Use engine 'aep')
    The support was copied from 0.9.6c [engine] and adapted/corrected
    to work with the new engine framework.
 
@@ -14167,7 +14167,7 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
  * [In 0.9.6c-engine release:]
    Add support for crypto accelerator cards from Accelerated
-   Encryption Processing, www.aep.i.e.  (Use engine 'aep')
+   Encryption Processing, www.aep.ie.  (Use engine 'aep')
 
    *AEP Inc. and Mark Cox*
 

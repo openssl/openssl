@@ -448,7 +448,7 @@ static int open_console(UI *ui)
 #  endif
 #  ifdef ENODEV
             /*
-             * macOS X returns ENODEV (Operation not supported by device),
+             * MacOS X returns ENODEV (Operation not supported by device),
              * which seems appropriate.
              */
         if (errno == ENODEV)
