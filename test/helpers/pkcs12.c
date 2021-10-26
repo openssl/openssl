@@ -517,7 +517,7 @@ static int check_attrs(const STACK_OF(X509_ATTRIBUTE) *bag_attrs, const PKCS12_A
         attr_obj = X509_ATTRIBUTE_get0_object(attr);
         OBJ_obj2txt(attr_txt, 100, attr_obj, 0);
 
-        while(p_attr->oid != NULL) {
+        while (p_attr->oid != NULL) {
             /* Find a matching attribute type */
             if (strcmp(p_attr->oid, attr_txt) == 0) {
                 if (!TEST_int_eq(X509_ATTRIBUTE_count(attr), 1))

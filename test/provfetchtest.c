@@ -246,7 +246,7 @@ static int fetch_test(int tst)
             || !TEST_ptr(dummyprov = OSSL_PROVIDER_load(libctx, "dummy-prov")))
         goto err;
 
-    switch(tst) {
+    switch (tst) {
     case 0:
         decoder = OSSL_DECODER_fetch(libctx, "DUMMY", NULL);
         if (!TEST_ptr(decoder))

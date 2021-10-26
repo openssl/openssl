@@ -137,7 +137,7 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
     if ((*ctx)->expect_file_generations) {
         char *p = (*ctx)->entry_name + strlen((*ctx)->entry_name);
 
-        while(p > (*ctx)->entry_name && isdigit(p[-1]))
+        while (p > (*ctx)->entry_name && isdigit(p[-1]))
             p--;
         if (p > (*ctx)->entry_name && p[-1] == ';')
             p[-1] = '\0';

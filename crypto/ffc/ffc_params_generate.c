@@ -324,7 +324,7 @@ static int generate_q_fips186_4(BN_CTX *ctx, BIGNUM *q, const EVP_MD *evpmd,
 
     /* find q */
     for (;;) {
-        if(!BN_GENCB_call(cb, 0, m++))
+        if (!BN_GENCB_call(cb, 0, m++))
             goto err;
 
         /* A.1.1.2 Step (5) : generate seed with size seed_len */
@@ -673,7 +673,7 @@ int ossl_ffc_params_FIPS186_4_gen_verify(OSSL_LIB_CTX *libctx,
      * A.1.1.3 Step (10)
      * n = floor(L / hash_outlen) - 1
      */
-    n = (L - 1 ) / (mdsize << 3);
+    n = (L - 1) / (mdsize << 3);
 
     /* Calculate 2^(L-1): Used in step A.1.1.2 Step (11.3) */
     if (!BN_lshift(test, BN_value_one(), L - 1))
@@ -688,9 +688,9 @@ int ossl_ffc_params_FIPS186_4_gen_verify(OSSL_LIB_CTX *libctx,
             *res = FFC_CHECK_Q_MISMATCH;
             goto err;
         }
-        if(!BN_GENCB_call(cb, 2, 0))
+        if (!BN_GENCB_call(cb, 2, 0))
             goto err;
-        if(!BN_GENCB_call(cb, 3, 0))
+        if (!BN_GENCB_call(cb, 3, 0))
             goto err;
 
         memcpy(seed_tmp, seed, seedlen);

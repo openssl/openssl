@@ -795,7 +795,7 @@ static EVP_CIPHER *cms_get_key_wrap_cipher(size_t keylen, const CMS_CTX *ctx)
 {
     const char *alg = NULL;
 
-    switch(keylen) {
+    switch (keylen) {
     case 16:
         alg = "AES-128-WRAP";
         break;

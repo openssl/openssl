@@ -37,7 +37,7 @@ static int test_old(void)
     int ok = 0;
 
     if (!TEST_ptr(ui_method =
-                  UI_UTIL_wrap_read_pem_callback( test_pem_password_cb, 0))
+                  UI_UTIL_wrap_read_pem_callback(test_pem_password_cb, 0))
             || !TEST_ptr(ui = UI_new_method(ui_method)))
         goto err;
 

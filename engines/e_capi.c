@@ -425,7 +425,7 @@ static int capi_init(ENGINE *e)
         /* Setup RSA_METHOD */
         rsa_capi_idx = RSA_get_ex_new_index(0, NULL, NULL, NULL, 0);
         ossl_rsa_meth = RSA_PKCS1_OpenSSL();
-        if (   !RSA_meth_set_pub_enc(capi_rsa_method,
+        if (!RSA_meth_set_pub_enc(capi_rsa_method,
                                      RSA_meth_get_pub_enc(ossl_rsa_meth))
             || !RSA_meth_set_pub_dec(capi_rsa_method,
                                      RSA_meth_get_pub_dec(ossl_rsa_meth))
@@ -444,7 +444,7 @@ static int capi_init(ENGINE *e)
         /* Setup DSA Method */
         dsa_capi_idx = DSA_get_ex_new_index(0, NULL, NULL, NULL, 0);
         ossl_dsa_meth = DSA_OpenSSL();
-        if (   !DSA_meth_set_sign(capi_dsa_method, capi_dsa_do_sign)
+        if (!DSA_meth_set_sign(capi_dsa_method, capi_dsa_do_sign)
             || !DSA_meth_set_verify(capi_dsa_method,
                                     DSA_meth_get_verify(ossl_dsa_meth))
             || !DSA_meth_set_finish(capi_dsa_method, capi_dsa_free)

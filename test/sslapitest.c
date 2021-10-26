@@ -6564,7 +6564,7 @@ static int get_MFL_from_client_hello(BIO *bio, int *mfl_codemfl_code)
     PACKET pkt, pkt2, pkt3;
     unsigned int MFL_code = 0, type = 0;
 
-    if (!TEST_uint_gt( len = BIO_get_mem_data( bio, (char **) &data ), 0 ) )
+    if (!TEST_uint_gt(len = BIO_get_mem_data(bio, (char **) &data), 0))
         goto end;
 
     memset(&pkt, 0, sizeof(pkt));
@@ -6572,7 +6572,7 @@ static int get_MFL_from_client_hello(BIO *bio, int *mfl_codemfl_code)
     memset(&pkt3, 0, sizeof(pkt3));
 
     if (!TEST_long_gt(len, 0)
-            || !TEST_true( PACKET_buf_init( &pkt, data, len ) )
+            || !TEST_true(PACKET_buf_init(&pkt, data, len))
                /* Skip the record header */
             || !PACKET_forward(&pkt, SSL3_RT_HEADER_LENGTH)
                /* Skip the handshake message header */

@@ -46,7 +46,7 @@ static int collect_numbers(STACK_OF(BIGNUM) *numbers,
     if (numbers == NULL)
         return 0;
 
-    for (i = 0; names[i] != NULL; i++){
+    for (i = 0; names[i] != NULL; i++) {
         p = OSSL_PARAM_locate_const(params, names[i]);
         if (p != NULL) {
             BIGNUM *tmp = NULL;

@@ -1908,7 +1908,7 @@ int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family, long count,
     {
         int st_connect = 0, st_accept = 0;
 
-        while(!st_connect || !st_accept) {
+        while (!st_connect || !st_accept) {
             if (!st_connect) {
                 if (BIO_do_connect(client) <= 0) {
                     if (!BIO_should_retry(client))

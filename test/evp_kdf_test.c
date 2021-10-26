@@ -1496,7 +1496,7 @@ static int test_kdf_sshkdf(void)
     return ret;
 }
 
-static int test_kdfs_same( EVP_KDF *kdf1, EVP_KDF *kdf2)
+static int test_kdfs_same(EVP_KDF *kdf1, EVP_KDF *kdf2)
 {
     /* Fast path in case the two are the same algorithm pointer */
     if (kdf1 == kdf2)

@@ -172,7 +172,7 @@ static int do_bio_cipher(const EVP_CIPHER* cipher, const unsigned char* key,
 
 static int do_test_bio_cipher(const EVP_CIPHER* cipher, int idx)
 {
-    switch(idx)
+    switch (idx)
     {
         case 0:
             return do_bio_cipher(cipher, KEY, NULL);

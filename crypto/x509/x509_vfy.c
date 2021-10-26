@@ -3286,7 +3286,7 @@ static int build_chain(X509_STORE_CTX *ctx)
         return 0;
     case X509_TRUST_UNTRUSTED:
     default:
-        switch(ctx->error) {
+        switch (ctx->error) {
         case X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:
         case X509_V_ERR_CERT_NOT_YET_VALID:
         case X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD:

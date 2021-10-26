@@ -601,7 +601,7 @@ int EVP_PKEY_meth_add0(const EVP_PKEY_METHOD *pmeth)
 {
     if (app_pkey_methods == NULL) {
         app_pkey_methods = sk_EVP_PKEY_METHOD_new(pmeth_cmp);
-        if (app_pkey_methods == NULL){
+        if (app_pkey_methods == NULL) {
             ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
             return 0;
         }
@@ -853,7 +853,7 @@ int evp_pkey_ctx_set_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
 
         for (p = params; p->key != NULL; p++) {
             /* Check the ctx actually understands this parameter */
-            if (OSSL_PARAM_locate_const(settable, p->key) == NULL )
+            if (OSSL_PARAM_locate_const(settable, p->key) == NULL)
                 return -2;
         }
     }
@@ -876,9 +876,9 @@ int evp_pkey_ctx_get_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
         const OSSL_PARAM *gettable = EVP_PKEY_CTX_gettable_params(ctx);
         const OSSL_PARAM *p;
 
-        for (p = params; p->key != NULL; p++ ) {
+        for (p = params; p->key != NULL; p++) {
             /* Check the ctx actually understands this parameter */
-            if (OSSL_PARAM_locate_const(gettable, p->key) == NULL )
+            if (OSSL_PARAM_locate_const(gettable, p->key) == NULL)
                 return -2;
         }
     }

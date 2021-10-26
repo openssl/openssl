@@ -1520,7 +1520,7 @@ static HANDSHAKE_RESULT *do_handshake_internal(
      * The handshake succeeds once both peers have succeeded. If one peer
      * errors out, we also let the other peer retry (and presumably fail).
      */
-    for(;;) {
+    for (;;) {
         if (client_turn) {
             do_connect_step(test_ctx, &client, phase);
             status = handshake_status(client.status, server.status,

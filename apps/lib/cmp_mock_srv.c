@@ -14,7 +14,7 @@
 #include <openssl/cmp.h>
 #include <openssl/err.h>
 #include <openssl/cmperr.h>
- 
+
 /* the context for the CMP mock server */
 typedef struct
 {

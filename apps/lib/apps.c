@@ -823,7 +823,7 @@ int load_crls(const char *uri, STACK_OF(X509_CRL) **crls,
 
 static const char *format2string(int format)
 {
-    switch(format) {
+    switch (format) {
     case FORMAT_PEM:
         return "PEM";
     case FORMAT_ASN1:

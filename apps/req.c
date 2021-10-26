@@ -781,7 +781,7 @@ int req_main(int argc, char **argv)
                 goto end;
             }
 
-            if (!make_REQ(req, pkey, fsubj, multirdn, !gen_x509, chtype)){
+            if (!make_REQ(req, pkey, fsubj, multirdn, !gen_x509, chtype)) {
                 BIO_printf(bio_err, "Error making certificate request\n");
                 goto end;
             }

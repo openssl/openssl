@@ -138,7 +138,7 @@ static int ecx_bits(const EVP_PKEY *pkey)
 {
     if (IS25519(pkey->ameth->pkey_id)) {
         return X25519_BITS;
-    } else if(ISX448(pkey->ameth->pkey_id)) {
+    } else if (ISX448(pkey->ameth->pkey_id)) {
         return X448_BITS;
     } else {
         return ED448_BITS;

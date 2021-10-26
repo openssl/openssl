@@ -574,7 +574,7 @@ int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
         if (ecbits <= 0)
             goto err;
 
-        sz = (ecbits + 7 ) / 8;
+        sz = (ecbits + 7) / 8;
         if (!OSSL_PARAM_BLD_push_BN_pad(tmpl,
                                         OSSL_PKEY_PARAM_PRIV_KEY,
                                         priv_key, sz))

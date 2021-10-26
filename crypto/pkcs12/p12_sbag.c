@@ -124,7 +124,7 @@ PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_secret(int type, int vtype, const unsigned
     }
     bag->type = OBJ_nid2obj(type);
 
-    switch(vtype) {
+    switch (vtype) {
     case V_ASN1_OCTET_STRING:
         {
             ASN1_OCTET_STRING *strtmp = ASN1_OCTET_STRING_new();
@@ -161,7 +161,7 @@ PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_secret(int type, int vtype, const unsigned
     safebag->value.bag = bag;
     safebag->type = OBJ_nid2obj(NID_secretBag);
     return safebag;
- 
+
  err:
     PKCS12_BAGS_free(bag);
     return NULL;

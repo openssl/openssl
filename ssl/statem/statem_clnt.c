@@ -3198,7 +3198,7 @@ static int tls_construct_cke_gost18(SSL *s, WPACKET *pkt)
         return 0;
     }
 
-    if (EVP_PKEY_encrypt_init(pkey_ctx) <= 0 ) {
+    if (EVP_PKEY_encrypt_init(pkey_ctx) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     };
