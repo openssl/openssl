@@ -141,7 +141,7 @@ static int test_print_key_using_pem(const char *alg, const EVP_PKEY *pk)
                                             (unsigned char *)"pass", 4,
                                             NULL, NULL))
         /* Private key in text form */
-        || !TEST_true(EVP_PKEY_print_private(membio, pk, 0, NULL) > 0)
+        || !TEST_int_gt(EVP_PKEY_print_private(membio, pk, 0, NULL), 0)
         || !TEST_true(compare_with_file(alg, PRIV_TEXT, membio))
         /* Public key in PEM form */
         || !TEST_true(PEM_write_bio_PUBKEY(membio, pk))
