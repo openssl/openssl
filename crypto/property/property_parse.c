@@ -576,7 +576,7 @@ static void put_char(char ch, char **buf, size_t *remain, size_t *needed)
         ++*needed;
         return;
     }
-    if(*remain == 1)
+    if (*remain == 1)
         **buf = '\0';
     else
         **buf = ch;
@@ -595,16 +595,16 @@ static void put_str(const char *str, char **buf, size_t *remain, size_t *needed)
     if (*remain == 0)
         return;
 
-    if(*remain < len + 1)
+    if (*remain < len + 1)
         len = *remain - 1;
 
-    if(len > 0) {
+    if (len > 0) {
         strncpy(*buf, str, len);
         *buf += len;
         *remain -= len;
     }
 
-    if(len < olen && *remain == 1) {
+    if (len < olen && *remain == 1) {
         **buf = '\0';
         ++*buf;
         --*remain;

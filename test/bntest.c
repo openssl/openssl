@@ -712,7 +712,7 @@ static int test_gf2m_add(void)
 
 static int test_gf2m_mod(void)
 {
-    BIGNUM *a = NULL, *b[2] = {NULL,NULL}, *c = NULL, *d = NULL, *e = NULL;
+    BIGNUM *a = NULL, *b[2] = {NULL, NULL}, *c = NULL, *d = NULL, *e = NULL;
     int i, j, st = 0;
 
     if (!TEST_ptr(a = BN_new())
@@ -805,7 +805,7 @@ static int test_gf2m_mul(void)
 
 static int test_gf2m_sqr(void)
 {
-    BIGNUM *a = NULL, *b[2] = {NULL,NULL}, *c = NULL, *d = NULL;
+    BIGNUM *a = NULL, *b[2] = {NULL, NULL}, *c = NULL, *d = NULL;
     int i, j, st = 0;
 
     if (!TEST_ptr(a = BN_new())
@@ -844,7 +844,7 @@ static int test_gf2m_sqr(void)
 
 static int test_gf2m_modinv(void)
 {
-    BIGNUM *a = NULL, *b[2] = {NULL,NULL}, *c = NULL, *d = NULL;
+    BIGNUM *a = NULL, *b[2] = {NULL, NULL}, *c = NULL, *d = NULL;
     int i, j, st = 0;
 
     if (!TEST_ptr(a = BN_new())
@@ -881,7 +881,7 @@ static int test_gf2m_modinv(void)
 
 static int test_gf2m_moddiv(void)
 {
-    BIGNUM *a = NULL, *b[2] = {NULL,NULL}, *c = NULL, *d = NULL;
+    BIGNUM *a = NULL, *b[2] = {NULL, NULL}, *c = NULL, *d = NULL;
     BIGNUM *e = NULL, *f = NULL;
     int i, j, st = 0;
 
@@ -925,7 +925,7 @@ static int test_gf2m_moddiv(void)
 
 static int test_gf2m_modexp(void)
 {
-    BIGNUM *a = NULL, *b[2] = {NULL,NULL}, *c = NULL, *d = NULL;
+    BIGNUM *a = NULL, *b[2] = {NULL, NULL}, *c = NULL, *d = NULL;
     BIGNUM *e = NULL, *f = NULL;
     int i, j, st = 0;
 
@@ -973,7 +973,7 @@ static int test_gf2m_modexp(void)
 
 static int test_gf2m_modsqrt(void)
 {
-    BIGNUM *a = NULL, *b[2] = {NULL,NULL}, *c = NULL, *d = NULL;
+    BIGNUM *a = NULL, *b[2] = {NULL, NULL}, *c = NULL, *d = NULL;
     BIGNUM *e = NULL, *f = NULL;
     int i, j, st = 0;
 
@@ -1018,7 +1018,7 @@ static int test_gf2m_modsqrt(void)
 
 static int test_gf2m_modsolvequad(void)
 {
-    BIGNUM *a = NULL, *b[2] = {NULL,NULL}, *c = NULL, *d = NULL;
+    BIGNUM *a = NULL, *b[2] = {NULL, NULL}, *c = NULL, *d = NULL;
     BIGNUM *e = NULL;
     int i, j, s = 0, t, st = 0;
 
@@ -1757,7 +1757,7 @@ static int test_bn2padded(void)
 # define BOTTOM_BIT_NOTOUCH 0
         if (!TEST_true(BN_rand(n, bytes * 8, TOP_BIT_ON, BOTTOM_BIT_NOTOUCH)))
             goto err;
-        if (!TEST_int_eq(BN_num_bytes(n),A) bytes
+        if (!TEST_int_eq(BN_num_bytes(n), A) bytes
                 || TEST_int_eq(BN_bn2bin(n, reference), bytes))
             goto err;
         /* Empty buffer should fail. */

@@ -505,7 +505,7 @@ static int test_param_construct(int tstid)
     params[n++] = OSSL_PARAM_construct_octet_ptr("octptr", &vp, 0);
     params[n] = OSSL_PARAM_construct_end();
 
-    switch(tstid) {
+    switch (tstid) {
     case 0:
         p = params;
         break;
@@ -620,7 +620,7 @@ static int test_param_construct(int tstid)
         goto err;
     /* Match the return size to avoid trailing garbage bytes */
     cp->data_size = cp->return_size;
-    if(!TEST_true(OSSL_PARAM_get_BN(cp, &bn2))
+    if (!TEST_true(OSSL_PARAM_get_BN(cp, &bn2))
         || !TEST_BN_eq(bn, bn2))
         goto err;
     ret = 1;

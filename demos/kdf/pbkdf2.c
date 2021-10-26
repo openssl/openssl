@@ -35,7 +35,7 @@ static unsigned char password[] = {
 static unsigned char pbkdf2_salt[] = {
     'N', 'a', 'C', 'l'
 };
-    
+
 /*
  * The iteration parameter can be variable or hard coded.  The disadvantage with
  * hard coding them is that they cannot easily be adjusted for future

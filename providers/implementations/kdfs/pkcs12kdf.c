@@ -236,7 +236,7 @@ static int kdf_pkcs12_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             return 0;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SALT)) != NULL)
-        if (!pkcs12kdf_set_membuf(&ctx->salt, &ctx->salt_len,p))
+        if (!pkcs12kdf_set_membuf(&ctx->salt, &ctx->salt_len, p))
             return 0;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PKCS12_ID)) != NULL)

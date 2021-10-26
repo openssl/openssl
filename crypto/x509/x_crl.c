@@ -20,9 +20,9 @@ static int X509_REVOKED_cmp(const X509_REVOKED *const *a,
 static int setup_idp(X509_CRL *crl, ISSUING_DIST_POINT *idp);
 
 ASN1_SEQUENCE(X509_REVOKED) = {
-        ASN1_EMBED(X509_REVOKED,serialNumber, ASN1_INTEGER),
-        ASN1_SIMPLE(X509_REVOKED,revocationDate, ASN1_TIME),
-        ASN1_SEQUENCE_OF_OPT(X509_REVOKED,extensions, X509_EXTENSION)
+        ASN1_EMBED(X509_REVOKED, serialNumber, ASN1_INTEGER),
+        ASN1_SIMPLE(X509_REVOKED, revocationDate, ASN1_TIME),
+        ASN1_SEQUENCE_OF_OPT(X509_REVOKED, extensions, X509_EXTENSION)
 } ASN1_SEQUENCE_END(X509_REVOKED)
 
 static int def_crl_verify(X509_CRL *crl, EVP_PKEY *r);

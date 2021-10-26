@@ -54,7 +54,7 @@ static int policy_cache_create(X509 *x,
                 goto bad_policy;
             }
             cache->anyPolicy = data;
-        } else if (sk_X509_POLICY_DATA_find(cache->data, data) >=0 ) {
+        } else if (sk_X509_POLICY_DATA_find(cache->data, data) >=0) {
             ret = -1;
             goto bad_policy;
         } else if (!sk_X509_POLICY_DATA_push(cache->data, data)) {

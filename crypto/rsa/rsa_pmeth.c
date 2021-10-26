@@ -394,7 +394,7 @@ static int check_padding_md(const EVP_MD *md, int padding)
             return 0;
         }
     } else {
-        switch(mdnid) {
+        switch (mdnid) {
         /* List of all supported RSA digests */
         case NID_sha1:
         case NID_sha224:

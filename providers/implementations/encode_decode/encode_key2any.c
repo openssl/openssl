@@ -67,7 +67,7 @@ typedef int write_bio_of_void_fn(BIO *bp, const void *x);
 /* Free the blob allocated during key_to_paramstring_fn */
 static void free_asn1_data(int type, void *data)
 {
-    switch(type) {
+    switch (type) {
     case V_ASN1_OBJECT:
         ASN1_OBJECT_free(data);
         break;

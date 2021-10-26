@@ -1132,7 +1132,7 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
     OCSP_copy_nonce(bs, req);
 
     mctx = EVP_MD_CTX_new();
-    if ( mctx == NULL || !EVP_DigestSignInit(mctx, &pkctx, rmd, NULL, rkey)) {
+    if (mctx == NULL || !EVP_DigestSignInit(mctx, &pkctx, rmd, NULL, rkey)) {
         *resp = OCSP_response_create(OCSP_RESPONSE_STATUS_INTERNALERROR, NULL);
         goto end;
     }

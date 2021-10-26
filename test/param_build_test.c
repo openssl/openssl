@@ -48,7 +48,7 @@ static int template_public_test(int tstid)
         || !TEST_ptr(params_blt = OSSL_PARAM_BLD_to_param(bld)))
         goto err;
 
-    switch(tstid) {
+    switch (tstid) {
     case 0:
         params = params_blt;
         break;
@@ -179,7 +179,7 @@ static int template_private_test(int tstid)
                                                     data2_size))
         || !TEST_ptr(params_blt = OSSL_PARAM_BLD_to_param(bld)))
         goto err;
-    switch(tstid) {
+    switch (tstid) {
     case 0:
         params = params_blt;
         break;
@@ -284,7 +284,7 @@ static int builder_limit_test(void)
 
     if (!TEST_ptr(bld))
         goto err;
-    
+
     for (i = 0; i < n; i++) {
         names[i][0] = 'A' + (i / 26) - 1;
         names[i][1] = 'a' + (i % 26) - 1;

@@ -812,7 +812,7 @@ static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
     const SSL_CIPHER *cp;
     int reverse = 0;
 
-    OSSL_TRACE_BEGIN(TLS_CIPHER){
+    OSSL_TRACE_BEGIN(TLS_CIPHER) {
         BIO_printf(trc_out,
                    "Applying rule %d with %08x/%08x/%08x/%08x/%08x %08x (%d)\n",
                    rule, alg_mkey, alg_auth, alg_enc, alg_mac, min_tls,
@@ -1001,7 +1001,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 
     retval = 1;
     l = rule_str;
-    for ( ; ; ) {
+    for (;;) {
         ch = *l;
 
         if (ch == '\0')

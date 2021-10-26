@@ -2861,11 +2861,11 @@ static int custom_params_test(int id)
         goto err;
 
     /* create two `EVP_PKEY`s from the `EC_KEY`s */
-    if(!TEST_ptr(pkey1 = EVP_PKEY_new())
+    if (!TEST_ptr(pkey1 = EVP_PKEY_new())
             || !TEST_int_eq(EVP_PKEY_assign_EC_KEY(pkey1, eckey1), 1))
         goto err;
     eckey1 = NULL; /* ownership passed to pkey1 */
-    if(!TEST_ptr(pkey2 = EVP_PKEY_new())
+    if (!TEST_ptr(pkey2 = EVP_PKEY_new())
             || !TEST_int_eq(EVP_PKEY_assign_EC_KEY(pkey2, eckey2), 1))
         goto err;
     eckey2 = NULL; /* ownership passed to pkey2 */

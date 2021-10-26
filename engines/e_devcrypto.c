@@ -633,7 +633,7 @@ static void dump_cipher_info(void)
         fprintf (stderr, "Cipher %s, NID=%d, /dev/crypto info: id=%d, ",
                  name ? name : "unknown", cipher_data[i].nid,
                  cipher_data[i].devcryptoid);
-        if (cipher_driver_info[i].status == DEVCRYPTO_STATUS_NO_CIOCGSESSION ) {
+        if (cipher_driver_info[i].status == DEVCRYPTO_STATUS_NO_CIOCGSESSION) {
             fprintf (stderr, "CIOCGSESSION (session open call) failed\n");
             continue;
         }

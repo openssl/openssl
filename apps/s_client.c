@@ -1971,7 +1971,7 @@ int s_client_main(int argc, char **argv)
 
     if (!noservername && (servername != NULL || dane_tlsa_domain == NULL)) {
         if (servername == NULL) {
-            if(host == NULL || is_dNS_name(host))
+            if (host == NULL || is_dNS_name(host))
                 servername = (host == NULL) ? "localhost" : host;
         }
         if (servername != NULL && !SSL_set_tlsext_host_name(con, servername)) {
@@ -2984,7 +2984,7 @@ int s_client_main(int argc, char **argv)
                 BIO_printf(bio_err, "RENEGOTIATING\n");
                 SSL_renegotiate(con);
                 cbuf_len = 0;
-            } else if (!c_ign_eof && (cbuf[0] == 'K' || cbuf[0] == 'k' )
+            } else if (!c_ign_eof && (cbuf[0] == 'K' || cbuf[0] == 'k')
                     && cmdletters) {
                 BIO_printf(bio_err, "KEYUPDATE\n");
                 SSL_key_update(con,
