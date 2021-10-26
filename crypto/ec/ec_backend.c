@@ -295,7 +295,7 @@ int ossl_ec_group_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
     point_conversion_form_t genform;
 
     if (group == NULL) {
-        ERR_raise(ERR_LIB_EC,EC_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_EC, EC_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 

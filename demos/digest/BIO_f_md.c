@@ -81,7 +81,7 @@ int main(int argc, char * argv[])
         goto cleanup;
     }
     /* set our bio_digest BIO to digest data */
-    if (BIO_set_md(bio_digest,md) != 1) {
+    if (BIO_set_md(bio_digest, md) != 1) {
            fprintf(stderr, "BIO_set_md failed.\n");
            goto cleanup;
     }

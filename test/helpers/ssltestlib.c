@@ -767,7 +767,7 @@ static int set_nb(int fd)
 {
     int flags;
 
-    flags = fcntl(fd,F_GETFL,0);
+    flags = fcntl(fd, F_GETFL, 0);
     if (flags == -1)
         return flags;
     flags = fcntl(fd, F_SETFL, flags | O_NONBLOCK);

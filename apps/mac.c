@@ -221,7 +221,7 @@ opthelp:
         for (i = 0; i < (int)len; ++i)
             BIO_printf(out, "%02X", buf[i]);
         if (outfile == NULL)
-            BIO_printf(out,"\n");
+            BIO_printf(out, "\n");
     }
 
     ret = 0;

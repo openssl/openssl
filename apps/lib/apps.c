@@ -1942,7 +1942,7 @@ X509_NAME *parse_name(const char *cp, int chtype, int canmulti,
             ERR_print_errors(bio_err);
             BIO_printf(bio_err,
                        "%s: Error adding %s name attribute \"/%s=%s\"\n",
-                       opt_getprog(), desc, typestr ,valstr);
+                       opt_getprog(), desc, typestr, valstr);
             goto err;
         }
     }
@@ -2845,9 +2845,9 @@ int raw_write_stdout(const void *buf, int siz)
 #   include <floss.h(floss_write)>
 #  endif
 # endif
-int raw_write_stdout(const void *buf,int siz)
+int raw_write_stdout(const void *buf, int siz)
 {
-	return write(fileno(stdout),(void*)buf,siz);
+	return write(fileno(stdout), (void*)buf, siz);
 }
 #else
 # if defined(__TANDEM)

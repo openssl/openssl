@@ -388,7 +388,7 @@ size_t data_collect_method(RAND_POOL *pool)
         uint32_t status;
         uint32_t efn;
         IOSB iosb;
-        $DESCRIPTOR(SYSDEVICE,"SYS$SYSDEVICE:");
+        $DESCRIPTOR(SYSDEVICE, "SYS$SYSDEVICE:");
 
         if ((status = sys$getdviw(EFN$C_ENF, 0, &SYSDEVICE, DVI_items,
                                   0, 0, 0, 0, 0)) != SS$_NORMAL) {

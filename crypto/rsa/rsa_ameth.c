@@ -216,7 +216,7 @@ static int rsa_pss_param_print(BIO *bp, int pss_key, RSA_PSS_PARAMS *pss,
                 return 0;
         }
     } else if (pss == NULL) {
-        if (BIO_puts(bp,"(INVALID PSS PARAMETERS)\n") <= 0)
+        if (BIO_puts(bp, "(INVALID PSS PARAMETERS)\n") <= 0)
             return 0;
         return 1;
     }

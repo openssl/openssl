@@ -1537,7 +1537,7 @@ void print_ca_names(BIO *bio, SSL *s)
         return;
     }
 
-    BIO_printf(bio, "---\nAcceptable %s certificate CA names\n",cs);
+    BIO_printf(bio, "---\nAcceptable %s certificate CA names\n", cs);
     for (i = 0; i < sk_X509_NAME_num(sk); i++) {
         X509_NAME_print_ex(bio, sk_X509_NAME_value(sk, i), 0, get_nameopt());
         BIO_write(bio, "\n", 1);
