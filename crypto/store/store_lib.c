@@ -136,7 +136,7 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
                 OSSL_STORE_LOADER_free(fetched_loader);
                 fetched_loader = NULL;
             } else if (!loader_set_params(fetched_loader, loader_ctx,
-                                         params, propq)) {
+                                          params, propq)) {
                 (void)fetched_loader->p_close(loader_ctx);
                 OSSL_STORE_LOADER_free(fetched_loader);
                 fetched_loader = NULL;

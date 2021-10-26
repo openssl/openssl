@@ -907,11 +907,11 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
             /* The easiest way to create a linked list from an
                array is to start from the back */
             for (addrlistp = he->h_addr_list; *addrlistp != NULL;
-                addrlistp++)
+                 addrlistp++)
                 ;
 
             for (addresses = addrlistp - he->h_addr_list;
-                addrlistp--, addresses-- > 0; ) {
+                 addrlistp--, addresses-- > 0; ) {
                 if (!addrinfo_wrap(he->h_addrtype, socktype,
                                    *addrlistp, he->h_length,
                                    se->s_port, &tmp_bai))
