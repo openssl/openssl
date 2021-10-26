@@ -1896,9 +1896,9 @@ int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family, long count,
     BIO_snprintf(addr_str, sizeof(addr_str), ":%s", BIO_get_accept_port(acpt));
 
     client = BIO_new_connect(addr_str);
-    BIO_set_conn_ip_family(client, family);
     if (!client)
         goto err;
+    BIO_set_conn_ip_family(client, family);
 
     if (BIO_set_nbio(client, 1) <= 0)
         goto err;
