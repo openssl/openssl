@@ -21,9 +21,6 @@ static int test_rand(void)
     unsigned char entropy2[] = { 0xff, 0xfe, 0xfd };
     unsigned char outbuf[3];
 
-    if (!TEST_ptr(privctx = RAND_get0_private(NULL)))
-        return 0;
-
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
                                              entropy1, sizeof(entropy1));
     *p = OSSL_PARAM_construct_end();
