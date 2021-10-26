@@ -263,14 +263,6 @@ extern "C" {
 #define OSSL_DRBG_PARAM_MAC                     OSSL_ALG_PARAM_MAC
 #define OSSL_DRBG_PARAM_USE_DF                  "use_derivation_function"
 
-/* DRBG call back parameters */
-#define OSSL_DRBG_PARAM_ENTROPY_REQUIRED        "entropy_required"
-#define OSSL_DRBG_PARAM_PREDICTION_RESISTANCE   "prediction_resistance"
-#define OSSL_DRBG_PARAM_MIN_LENGTH              "minium_length"
-#define OSSL_DRBG_PARAM_MAX_LENGTH              "maxium_length"
-#define OSSL_DRBG_PARAM_RANDOM_DATA             "random_data"
-#define OSSL_DRBG_PARAM_SIZE                    "size"
-
 /* PKEY parameters */
 /* Common PKEY parameters */
 #define OSSL_PKEY_PARAM_BITS                "bits" /* integer */
