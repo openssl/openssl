@@ -15937,7 +15937,7 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
    *Ulf Möller*
 
- * ./config recognizes macOS now.
+ * ./config recognizes MacOS X now.
 
    *Andy Polyakov*
 
@@ -16341,7 +16341,7 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
    *Steve Henson*
 
- * Initial support for macOS is now provided. Examine INSTALL.macOS
+ * Initial support for MacOS is now provided. Examine INSTALL.MacOS
    for details.
 
    *Andy Polyakov, Roy Woods <roy@centicsystems.ca>*
