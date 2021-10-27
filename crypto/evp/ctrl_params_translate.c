@@ -1026,10 +1026,23 @@ static int fix_dh_nid5114(enum state state,
     if (ctx->action_type != SET)
         return 0;
 
-    if (state == PRE_CTRL_STR_TO_PARAMS) {
+    switch (state) {
+    case PRE_CTRL_TO_PARAMS:
+        ctx->p2 = (char *)ossl_ffc_named_group_get_name
+            (ossl_ffc_uid_to_dh_named_group(ctx->p1));
+        ctx->p1 = 0;
+        break;
+
+    case PRE_CTRL_STR_TO_PARAMS:
+        if (ctx->p2 == NULL)
+            return 0;
         ctx->p2 = (char *)ossl_ffc_named_group_get_name
             (ossl_ffc_uid_to_dh_named_group(atoi(ctx->p2)));
         ctx->p1 = 0;
+        break;
+
+    default:
+        break;
     }
 
     return default_fixup_args(state, translation, ctx);
@@ -2741,4 +2754,3 @@ int evp_pkey_get_params_to_ctrl(const EVP_PKEY *pkey, OSSL_PARAM *params)
 {
     return evp_pkey_setget_params_to_ctrl(pkey, GET, params);
 }
-
