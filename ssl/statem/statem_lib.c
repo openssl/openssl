@@ -2410,6 +2410,8 @@ int tls13_save_handshake_digest_for_pha(SSL *s)
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_F_TLS13_SAVE_HANDSHAKE_DIGEST_FOR_PHA,
                      ERR_R_INTERNAL_ERROR);
+            EVP_MD_CTX_free(s->pha_dgst);
+            s->pha_dgst = NULL;
             return 0;
         }
     }
