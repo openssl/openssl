@@ -512,9 +512,11 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
   case 0x022F: return "ntrulpr653";
   case 0x0230: return "ntrulpr761";
   case 0x0231: return "ntrulpr857";
+  case 0x0241: return "ntrulpr1277";
   case 0x0232: return "sntrup653";
   case 0x0233: return "sntrup761";
   case 0x0234: return "sntrup857";
+  case 0x0242: return "sntrup1277";
   ///// OQS_TEMPLATE_FRAGMENT_OQS_CURVE_ID_NAME_STR_END
   ///// OQS_TEMPLATE_FRAGMENT_OQS_CURVE_ID_NAME_STR_HYBRID_START
    case 0x2F00: return "p256_frodo640aes hybrid";
@@ -550,11 +552,13 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
    case 0x2F2D: return "p384_hqc192 hybrid";
    case 0x2F2E: return "p521_hqc256 hybrid";
    case 0x2F2F: return "p256_ntrulpr653 hybrid";
-   case 0x2F30: return "p384_ntrulpr761 hybrid";
+   case 0x2F43: return "p256_ntrulpr761 hybrid";
    case 0x2F31: return "p384_ntrulpr857 hybrid";
+   case 0x2F41: return "p521_ntrulpr1277 hybrid";
    case 0x2F32: return "p256_sntrup653 hybrid";
-   case 0x2F33: return "p384_sntrup761 hybrid";
+   case 0x2F44: return "p256_sntrup761 hybrid";
    case 0x2F34: return "p384_sntrup857 hybrid";
+   case 0x2F42: return "p521_sntrup1277 hybrid";
   ///// OQS_TEMPLATE_FRAGMENT_OQS_CURVE_ID_NAME_STR_HYBRID_END
   default: return "";
   }

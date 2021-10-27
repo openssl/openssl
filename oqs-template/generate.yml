@@ -40,6 +40,7 @@ kems:
   -
     family: 'BIKE'
     name_group: 'bike1l1cpa'
+    bit_security: 128
     extra_nids:
       old:
         - implementation_version: NIST Round 2 submission
@@ -51,6 +52,7 @@ kems:
   -
     family: 'BIKE'
     name_group: 'bike1l3cpa'
+    bit_security: 192
     extra_nids:
       old:
         - implementation_version: NIST Round 2 submission
@@ -201,6 +203,7 @@ kems:
   -
     family: 'BIKE'
     name_group: 'bike1l1fo'
+    bit_security: 128
     extra_nids:
       old:
         - implementation_version: NIST Round 2 submission
@@ -215,6 +218,7 @@ kems:
   -
     family: 'BIKE'
     name_group: 'bike1l3fo'
+    bit_security: 192
     extra_nids:
       old:
         - implementation_version: NIST Round 2 submission
@@ -309,7 +313,11 @@ kems:
     family: 'NTRU-Prime'
     name_group: 'ntrulpr761'
     nid: '0x0230'
-    nid_hybrid: '0x2F30'
+    nid_hybrid: '0x2F43'
+    extra_nids:
+      old:
+        - implementation_version: Round 3 p384 hybrid
+          nid: '0x2F30'
     oqs_alg: 'OQS_KEM_alg_ntruprime_ntrulpr761'
   -
     family: 'NTRU-Prime'
@@ -317,6 +325,12 @@ kems:
     nid: '0x0231'
     nid_hybrid: '0x2F31'
     oqs_alg: 'OQS_KEM_alg_ntruprime_ntrulpr857'
+  -
+    family: 'NTRU-Prime'
+    name_group: 'ntrulpr1277'
+    nid: '0x0241'
+    nid_hybrid: '0x2F41'
+    oqs_alg: 'OQS_KEM_alg_ntruprime_ntrulpr1277'
   -
     family: 'NTRU-Prime'
     name_group: 'sntrup653'
@@ -327,7 +341,11 @@ kems:
     family: 'NTRU-Prime'
     name_group: 'sntrup761'
     nid: '0x0233'
-    nid_hybrid: '0x2F33'
+    nid_hybrid: '0x2F44'
+    extra_nids:
+      old:
+        - implementation_version: Round 3 p384 hybrid
+          nid: '0x2F33'
     oqs_alg: 'OQS_KEM_alg_ntruprime_sntrup761'
   -
     family: 'NTRU-Prime'
@@ -335,6 +353,12 @@ kems:
     nid: '0x0234'
     nid_hybrid: '0x2F34'
     oqs_alg: 'OQS_KEM_alg_ntruprime_sntrup857'
+  -
+    family: 'NTRU-Prime'
+    name_group: 'sntrup1277'
+    nid: '0x0242'
+    nid_hybrid: '0x2F42'
+    oqs_alg: 'OQS_KEM_alg_ntruprime_sntrup1277'
 
 kem_nid_end: '0x0250'
 kem_nid_hybrid_end: '0x2FFF'

@@ -1744,15 +1744,19 @@ dstu4145le 2 9 : uacurve9 : DSTU curve 9
  : ntrulpr653 : ntrulpr653
  : p256_ntrulpr653 : p256_ntrulpr653
  : ntrulpr761 : ntrulpr761
- : p384_ntrulpr761 : p384_ntrulpr761
+ : p256_ntrulpr761 : p256_ntrulpr761
  : ntrulpr857 : ntrulpr857
  : p384_ntrulpr857 : p384_ntrulpr857
+ : ntrulpr1277 : ntrulpr1277
+ : p521_ntrulpr1277 : p521_ntrulpr1277
  : sntrup653 : sntrup653
  : p256_sntrup653 : p256_sntrup653
  : sntrup761 : sntrup761
- : p384_sntrup761 : p384_sntrup761
+ : p256_sntrup761 : p256_sntrup761
  : sntrup857 : sntrup857
  : p384_sntrup857 : p384_sntrup857
+ : sntrup1277 : sntrup1277
+ : p521_sntrup1277 : p521_sntrup1277
 ##### OQS_TEMPLATE_FRAGMENT_LIST_KEMS_END
 
 ##### OQS_TEMPLATE_FRAGMENT_ASSIGN_SIG_OIDS_START

@@ -220,11 +220,13 @@ static const TLS_GROUP_INFO oqs_nid_list[] = {
     {NID_hqc192, 192, TLS_CURVE_CUSTOM}, /* hqc192 (0x022D) */
     {NID_hqc256, 256, TLS_CURVE_CUSTOM}, /* hqc256 (0x022E) */
     {NID_ntrulpr653, 128, TLS_CURVE_CUSTOM}, /* ntrulpr653 (0x022F) */
-    {NID_ntrulpr761, 192, TLS_CURVE_CUSTOM}, /* ntrulpr761 (0x0230) */
+    {NID_ntrulpr761, 128, TLS_CURVE_CUSTOM}, /* ntrulpr761 (0x0230) */
     {NID_ntrulpr857, 192, TLS_CURVE_CUSTOM}, /* ntrulpr857 (0x0231) */
+    {NID_ntrulpr1277, 256, TLS_CURVE_CUSTOM}, /* ntrulpr1277 (0x0241) */
     {NID_sntrup653, 128, TLS_CURVE_CUSTOM}, /* sntrup653 (0x0232) */
-    {NID_sntrup761, 192, TLS_CURVE_CUSTOM}, /* sntrup761 (0x0233) */
+    {NID_sntrup761, 128, TLS_CURVE_CUSTOM}, /* sntrup761 (0x0233) */
     {NID_sntrup857, 192, TLS_CURVE_CUSTOM}, /* sntrup857 (0x0234) */
+    {NID_sntrup1277, 256, TLS_CURVE_CUSTOM}, /* sntrup1277 (0x0242) */
 ///// OQS_TEMPLATE_FRAGMENT_OQS_NID_LIST_END
 };
     /* Hybrid OQS groups. Security level is classical. */
@@ -263,11 +265,13 @@ static const TLS_GROUP_INFO oqs_hybrid_nid_list[] = {
  {NID_p384_hqc192, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + hqc192 hybrid (0x022D) */
  {NID_p521_hqc256, 256, TLS_CURVE_CUSTOM}, /* p256/384/521 + hqc256 hybrid (0x022E) */
  {NID_p256_ntrulpr653, 128, TLS_CURVE_CUSTOM}, /* p256/384/521 + ntrulpr653 hybrid (0x022F) */
- {NID_p384_ntrulpr761, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + ntrulpr761 hybrid (0x0230) */
+ {NID_p256_ntrulpr761, 128, TLS_CURVE_CUSTOM}, /* p256/384/521 + ntrulpr761 hybrid (0x0230) */
  {NID_p384_ntrulpr857, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + ntrulpr857 hybrid (0x0231) */
+ {NID_p521_ntrulpr1277, 256, TLS_CURVE_CUSTOM}, /* p256/384/521 + ntrulpr1277 hybrid (0x0241) */
  {NID_p256_sntrup653, 128, TLS_CURVE_CUSTOM}, /* p256/384/521 + sntrup653 hybrid (0x0232) */
- {NID_p384_sntrup761, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + sntrup761 hybrid (0x0233) */
+ {NID_p256_sntrup761, 128, TLS_CURVE_CUSTOM}, /* p256/384/521 + sntrup761 hybrid (0x0233) */
  {NID_p384_sntrup857, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + sntrup857 hybrid (0x0234) */
+ {NID_p521_sntrup1277, 256, TLS_CURVE_CUSTOM}, /* p256/384/521 + sntrup1277 hybrid (0x0242) */
 ///// OQS_TEMPLATE_FRAGMENT_OQS_NID_LIST_HYBRID_END
 };
 
@@ -298,7 +302,9 @@ static const uint16_t eccurves_default[] = {
     0x2F3E, /* OQS kyber90s512 hybrid */
     0x2F2C, /* OQS hqc128 hybrid */
     0x2F2F, /* OQS ntrulpr653 hybrid */
+    0x2F43, /* OQS ntrulpr761 hybrid */
     0x2F32, /* OQS sntrup653 hybrid */
+    0x2F44, /* OQS sntrup761 hybrid */
 ///// OQS_TEMPLATE_FRAGMENT_ECCURVES_DEFAULT_HYBRID_END
 };
 
@@ -386,15 +392,19 @@ static const uint16_t oqs_all_tls13_server_groups[] = {
     0x022F, /* ntrulpr653 */
     0x2F2F, /* OQS ntrulpr653 hybrid */
     0x0230, /* ntrulpr761 */
-    0x2F30, /* OQS ntrulpr761 hybrid */
+    0x2F43, /* OQS ntrulpr761 hybrid */
     0x0231, /* ntrulpr857 */
     0x2F31, /* OQS ntrulpr857 hybrid */
+    0x0241, /* ntrulpr1277 */
+    0x2F41, /* OQS ntrulpr1277 hybrid */
     0x0232, /* sntrup653 */
     0x2F32, /* OQS sntrup653 hybrid */
     0x0233, /* sntrup761 */
-    0x2F33, /* OQS sntrup761 hybrid */
+    0x2F44, /* OQS sntrup761 hybrid */
     0x0234, /* sntrup857 */
     0x2F34, /* OQS sntrup857 hybrid */
+    0x0242, /* sntrup1277 */
+    0x2F42, /* OQS sntrup1277 hybrid */
 ///// OQS_TEMPLATE_FRAGMENT_ALL_OQS_CURVEIDS_END
 };
 
