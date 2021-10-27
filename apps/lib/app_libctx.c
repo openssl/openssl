@@ -12,9 +12,10 @@
 static OSSL_LIB_CTX *app_libctx = NULL;
 static const char *app_propq = NULL;
 
-int app_set_propq(const char *arg)
+int app_set_propq(OSSL_LIB_CTX *libctx, const char *arg)
 {
     app_propq = arg;
+    EVP_set_default_properties(libctx, app_propq);
     return 1;
 }
 
