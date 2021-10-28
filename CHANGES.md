@@ -24,6 +24,13 @@ OpenSSL 3.1
 
 ### Changes between 3.0 and 3.1.0 [xx XXX xxxx]
 
+ * s_client and s_server apps now explicitly say when the TLS version
+   does not include the renegotiation mechanism. This avoids confusion
+   between that scenario versus when the TLS version includes secure
+   renegotiation but the peer lacks support for it.
+
+   *Felipe Gasper*
+
  * The various OBJ_* functions have been made thread safe.
 
    *Paul Dale*

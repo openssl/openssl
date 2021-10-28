@@ -7,7 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* callback functions used by s_client, s_server, and s_time */
+/*
+ * callback functions used by s_client, s_server, and s_time,
+ * as well as other common logic for those apps
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h> /* for memcpy() and strcmp() */
@@ -1565,5 +1568,15 @@ void print_ca_names(BIO *bio, SSL *s)
     for (i = 0; i < sk_X509_NAME_num(sk); i++) {
         X509_NAME_print_ex(bio, sk_X509_NAME_value(sk, i), 0, get_nameopt());
         BIO_write(bio, "\n", 1);
+    }
+}
+
+void ssl_print_secure_renegotiation_notes(BIO *bio, SSL *s)
+{
+    if (SSL_VERSION_ALLOWS_RENEGOTIATION(s)) {
+        BIO_printf(bio, "Secure Renegotiation IS%s supported\n",
+                   SSL_get_secure_renegotiation_support(s) ? "" : " NOT");
+    } else {
+        BIO_printf(bio, "This TLS version forbids renegotiation.\n");
     }
 }
