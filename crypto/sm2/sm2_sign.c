@@ -239,6 +239,15 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
         goto done;
     }
 
+    /*
+     * A3: Generate a random number 𝑘∈[1,𝑛−1] using random number generators;
+     * A4: Compute (𝑥1,𝑦1)=[𝑘]𝐺, and convert the type of data 𝑥1 to be integer
+     *     as specified in Clause 4.2.8 of GM/T 0003.1‒2012;
+     * A5: Compute r=(𝑒+𝑥1) mod 𝑛. If 𝑟=0 or 𝑟+𝑘=𝑛, then go to A3;
+     * A6: Compute 𝑠=(1/(1+𝑑𝐴)⋅(𝑘−𝑟⋅𝑑𝐴)) mod 𝑛. If 𝑠=0, then go to A3;
+     * A7: Convert the type of data (𝑟,𝑠) to be bit strings according to the details
+     *     in Clause 4.2.2 of GM/T 0003.1‒2012. Then the signature of message 𝑀 is (𝑟,𝑠).
+     */
     for (;;) {
         if (!BN_priv_rand_range_ex(k, order, 0, ctx)) {
             ERR_raise(ERR_LIB_SM2, ERR_R_INTERNAL_ERROR);
@@ -273,6 +282,10 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
             ERR_raise(ERR_LIB_SM2, ERR_R_BN_LIB);
             goto done;
         }
+
+        /* try again if s == 0 */
+        if (BN_is_zero(s))
+            continue;
 
         sig = ECDSA_SIG_new();
         if (sig == NULL) {
