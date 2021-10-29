@@ -12,10 +12,10 @@
 #include "s_apps.h"
 
 void print_secure_renegotiation_notes(BIO* bio, SSL* s) {
-    if (TLS_VERSION_ALLOWS_RENEGOTIATION(SSL_version(s))) {
+    if (SSL_VERSION_ALLOWS_RENEGOTIATION(s)) {
         BIO_printf(bio, "Secure Renegotiation IS%s supported\n",
                    SSL_get_secure_renegotiation_support(s) ? "" : " NOT");
     } else {
-        BIO_printf(bio, "Renegotiation does not happen in this TLS version.\n");
+        BIO_printf(bio, "This TLS version forbids renegotiation.\n");
     }
 }

@@ -15,8 +15,8 @@
 #define PORT            "4433"
 #define PROTOCOL        "tcp"
 
-#define TLS_VERSION_ALLOWS_RENEGOTIATION(v) \
-    (v < TLS1_3_VERSION)
+#define SSL_VERSION_ALLOWS_RENEGOTIATION(s) \
+    (SSL_is_dtls(s) || (SSL_version(s) < TLS1_3_VERSION))
 
 typedef int (*do_server_cb)(int s, int stype, int prot, unsigned char *context);
 int report_server_accept(BIO *out, int asock, int with_address, int with_pid);
