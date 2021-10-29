@@ -1547,7 +1547,7 @@ void print_ca_names(BIO *bio, SSL *s)
     }
 }
 
-void ssl_print_secure_renegotiation_notes(BIO* bio, SSL* s)
+void ssl_print_secure_renegotiation_notes(BIO *bio, SSL *s)
 {
     if (SSL_VERSION_ALLOWS_RENEGOTIATION(s)) {
         BIO_printf(bio, "Secure Renegotiation IS%s supported\n",
