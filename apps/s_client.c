@@ -3197,7 +3197,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
                    EVP_PKEY_get_bits(pktmp));
     }
 
-    print_secure_renegotiation_notes(bio, s);
+    ssl_print_secure_renegotiation_notes(bio, s);
 
 #ifndef OPENSSL_NO_COMP
     comp = SSL_get_current_compression(s);

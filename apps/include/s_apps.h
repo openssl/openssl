@@ -82,7 +82,7 @@ int ssl_load_stores(SSL_CTX *ctx, const char *vfyCApath,
 void ssl_ctx_security_debug(SSL_CTX *ctx, int verbose);
 int set_keylog_file(SSL_CTX *ctx, const char *keylog_file);
 void print_ca_names(BIO *bio, SSL *s);
-void print_secure_renegotiation_notes(BIO *bio, SSL* s);
+void ssl_print_secure_renegotiation_notes(BIO *bio, SSL* s);
 
 #ifndef OPENSSL_NO_SRP
 /* The client side SRP context that we pass to all SRP related callbacks */

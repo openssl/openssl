@@ -2949,7 +2949,7 @@ static void print_connection_info(SSL *con)
     if (SSL_session_reused(con))
         BIO_printf(bio_s_out, "Reused session-id\n");
 
-    print_secure_renegotiation_notes(bio_s_out, con);
+    ssl_print_secure_renegotiation_notes(bio_s_out, con);
 
     if ((SSL_get_options(con) & SSL_OP_NO_RENEGOTIATION))
         BIO_printf(bio_s_out, "Renegotiation is DISABLED\n");
@@ -3161,7 +3161,7 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
             }
             BIO_puts(io, "\n");
 
-            print_secure_renegotiation_notes(io, con);
+            ssl_print_secure_renegotiation_notes(io, con);
 
             /*
              * The following is evil and should not really be done
