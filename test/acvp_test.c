@@ -71,7 +71,7 @@ static int pkey_get_bn_bytes(EVP_PKEY *pkey, const char *name,
     buf = OPENSSL_zalloc(sz);
     if (buf == NULL)
         goto err;
-    if (!BN_bn2binpad(bn, buf, sz))
+    if (BN_bn2binpad(bn, buf, sz) <= 0)
         goto err;
 
     *out_len = sz;
