@@ -29,6 +29,8 @@ OpenSSL 3.1
    between that scenario versus when the TLS version includes secure
    renegotiation but the peer lacks support for it.
 
+   *Felipe Gasper*
+
  * The default SSL/TLS security level has been changed from 1 to 2. RSA,
    DSA and DH keys of 1024 bits and above and less than 2048 bits and ECC keys
    of 160 bits and above and less than 224 bits were previously accepted by
