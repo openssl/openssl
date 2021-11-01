@@ -71,9 +71,7 @@ B<DSA_METHOD>s.
 
 DSA_set_default_method() returns no value.
 
-DSA_set_method() returns nonzero if the provided B<meth> was successfully set as
-the method for B<dsa> (including unloading the ENGINE handle if the previous
-method was supplied by an ENGINE).
+DSA_set_method() always returns 1.
 
 DSA_new_method() returns NULL and sets an error code that can be
 obtained by L<ERR_get_error(3)> if the allocation

@@ -92,7 +92,9 @@ duplicate.  The same applies to DSA_get0_pqg() and DSA_set0_pqg().
 
 =head1 RETURN VALUES
 
-DSA_set0_pqg() and DSA_set0_key() return 1 on success or 0 on failure.
+DSA_set0_pqg() returns 1 on success or 0 on failure.
+
+DSA_set0_key() always returns 1.
 
 DSA_test_flags() returns the current state of the flags in the DSA object.
 

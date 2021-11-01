@@ -115,7 +115,9 @@ duplicate.  The same applies to DH_get0_pqg() and DH_set0_pqg().
 
 =head1 RETURN VALUES
 
-DH_set0_pqg() and DH_set0_key() return 1 on success or 0 on failure.
+DH_set0_pqg() returns 1 on success or 0 on failure.
+
+DH_set0_key() always returns 1. 
 
 DH_get0_p(), DH_get0_q(), DH_get0_g(), DH_get0_priv_key(), and DH_get0_pub_key()
 return the respective value, or NULL if it is unset.

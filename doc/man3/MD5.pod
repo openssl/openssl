@@ -88,8 +88,7 @@ preferred.
 MD2(), MD4(), and MD5() return pointers to the hash value.
 
 MD2_Init(), MD2_Update(), MD2_Final(), MD4_Init(), MD4_Update(),
-MD4_Final(), MD5_Init(), MD5_Update(), and MD5_Final() return 1 for
-success, 0 otherwise.
+MD4_Final(), MD5_Init(), MD5_Update(), and MD5_Final() always return 1.
 
 =head1 CONFORMING TO
 
