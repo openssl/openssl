@@ -465,8 +465,8 @@ static int default_fixup_args(enum state state,
                         ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
                         return 0;
                     }
-                    if (!BN_bn2nativepad(ctx->p2,
-                                         ctx->allocated_buf, ctx->buflen)) {
+                    if (BN_bn2nativepad(ctx->p2,
+                                         ctx->allocated_buf, ctx->buflen) < 0) {
                         OPENSSL_free(ctx->allocated_buf);
                         ctx->allocated_buf = NULL;
                         return 0;
