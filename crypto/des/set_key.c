@@ -279,9 +279,17 @@ static const DES_LONG des_skb[8][64] = {
      }
 };
 
+/* Return values as DES_set_key_checked() but always set the key */
 int DES_set_key(const_DES_cblock *key, DES_key_schedule *schedule)
 {
-    return DES_set_key_checked(key, schedule);
+    int ret = 0;
+
+    if (!DES_check_key_parity(key))
+        ret = -1;
+    if (DES_is_weak_key(key))
+        ret = -2;
+    DES_set_key_unchecked(key, schedule);
+    return ret;
 }
 
 /*-
