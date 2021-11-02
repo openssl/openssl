@@ -180,21 +180,20 @@ static int evp_md_init_internal(EVP_MD_CTX *ctx, const EVP_MD *type,
      * previous handle, re-querying for an ENGINE, and having a
      * reinitialisation, when it may all be unnecessary.
      */
-    if (ctx->engine && ctx->digest &&
-        (type == NULL || (type->type == ctx->digest->type)))
+    if (ctx->engine != NULL
+            && ctx->digest != NULL
+            && type->type == ctx->digest->type)
         goto skip_to_init;
 
-    if (type != NULL) {
-        /*
-         * Ensure an ENGINE left lying around from last time is cleared (the
-         * previous check attempted to avoid this if the same ENGINE and
-         * EVP_MD could be used).
-         */
-        ENGINE_finish(ctx->engine);
-        ctx->engine = NULL;
-    }
+    /*
+     * Ensure an ENGINE left lying around from last time is cleared (the
+     * previous check attempted to avoid this if the same ENGINE and
+     * EVP_MD could be used).
+     */
+    ENGINE_finish(ctx->engine);
+    ctx->engine = NULL;
 
-    if (type != NULL && impl == NULL)
+    if (impl == NULL)
         tmpimpl = ENGINE_get_digest_engine(type->type);
 #endif
 
@@ -202,10 +201,12 @@ static int evp_md_init_internal(EVP_MD_CTX *ctx, const EVP_MD *type,
      * If there are engines involved or EVP_MD_CTX_FLAG_NO_INIT is set then we
      * should use legacy handling for now.
      */
-    if (ctx->engine != NULL
-            || impl != NULL
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
+    if (impl != NULL
+#if !defined(OPENSSL_NO_ENGINE)
+            || ctx->engine != NULL
+# if !defined(FIPS_MODULE)
             || tmpimpl != NULL
+# endif
 #endif
             || (ctx->flags & EVP_MD_CTX_FLAG_NO_INIT) != 0) {
         if (ctx->digest == ctx->fetched_digest)
