@@ -71,10 +71,15 @@ void DES_set_odd_parity(DES_cblock *key)
 int DES_check_key_parity(const_DES_cblock *key)
 {
     unsigned int i;
-    unsigned char res = 0377;
+    unsigned char res = 0377, b;
 
-    for (i = 0; i < DES_KEY_SZ; i++)
-        res &= constant_time_eq_8((*key)[i], odd_parity[(*key)[i]]);
+    for (i = 0; i < DES_KEY_SZ; i++) {
+        b = (*key)[i];
+        b ^= b >> 4;
+        b ^= b >> 2;
+        b ^= b >> 1;
+        res &= constant_time_eq_8(b & 1, 1);
+    }
     return (int)(res & 1);
 }
 
