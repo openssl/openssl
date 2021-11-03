@@ -1601,6 +1601,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
     for (i = 0; i < sk_SSL_CIPHER_num(tls13_ciphersuites); i++) {
         if (!sk_SSL_CIPHER_push(cipherstack,
                                 sk_SSL_CIPHER_value(tls13_ciphersuites, i))) {
+            OPENSSL_free(co_list);
             sk_SSL_CIPHER_free(cipherstack);
             return NULL;
         }
