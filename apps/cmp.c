@@ -836,11 +836,12 @@ static int set_gennames(OSSL_CMP_CTX *ctx, char *names, const char *desc)
             continue;
         }
 
-        /* try IP address first, then URI or domain name */
+        /* try IP address first, then email/URI/domain name */
         (void)ERR_set_mark();
         n = a2i_GENERAL_NAME(NULL, NULL, NULL, GEN_IPADD, names, 0);
         if (n == NULL)
             n = a2i_GENERAL_NAME(NULL, NULL, NULL,
+                                 strchr(names, '@') != NULL ? GEN_EMAIL :
                                  strchr(names, ':') != NULL ? GEN_URI : GEN_DNS,
                                  names, 0);
         (void)ERR_pop_to_mark();
