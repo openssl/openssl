@@ -312,7 +312,8 @@ contained the given PKCS#10 CSR, overriding any extensions with same OIDs.
 
 =item B<-sans> I<spec>
 
-One or more IP addresses, DNS names, or URIs separated by commas or whitespace
+One or more IP addresses, email addresses, DNS names, or URIs
+separated by commas or whitespace
 (where in the latter case the whole argument must be enclosed in "...")
 to add as Subject Alternative Name(s) (SAN) certificate request extension.
 If the special element "critical" is given the SANs are flagged as critical.
