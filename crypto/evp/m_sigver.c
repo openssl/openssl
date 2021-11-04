@@ -49,7 +49,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     const char *supported_sig = NULL;
     char locmdname[80] = "";     /* 80 chars should be enough */
     void *provkey = NULL;
-    int ret, iter;
+    int ret, iter, reinit = 1;
 
     if (ctx->algctx != NULL) {
         if (!ossl_assert(ctx->digest != NULL)) {
@@ -62,6 +62,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     }
 
     if (ctx->pctx == NULL) {
+        reinit = 0;
         if (e == NULL)
             ctx->pctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, props);
         else
@@ -71,20 +72,35 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
         return 0;
 
     locpctx = ctx->pctx;
-    evp_pkey_ctx_free_old_ops(locpctx);
-
-    if (props == NULL)
-        props = locpctx->propquery;
-
     ERR_set_mark();
 
     if (evp_pkey_ctx_is_legacy(locpctx))
         goto legacy;
 
+    /* do not reinitialize if pkey is set or operation is different */
+    if (reinit
+        && (pkey != NULL
+            || locpctx->operation != (ver ? EVP_PKEY_OP_VERIFYCTX
+                                          : EVP_PKEY_OP_SIGNCTX)
+            || (signature = locpctx->op.sig.signature) == NULL
+            || locpctx->op.sig.algctx == NULL))
+        reinit = 0;
+
+    if (props == NULL)
+        props = locpctx->propquery;
+
     if (locpctx->pkey == NULL) {
         ERR_clear_last_mark();
         ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEY_SET);
         goto err;
+    }
+
+    if (!reinit) {
+        evp_pkey_ctx_free_old_ops(locpctx);
+    } else {
+        if (mdname == NULL && type == NULL)
+            mdname = canon_mdname(EVP_MD_get0_name(ctx->reqdigest));
+        goto reinitialize;
     }
 
     /*
@@ -183,9 +199,6 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 
     /* No more legacy from here down to legacy: */
 
-    if (pctx != NULL)
-        *pctx = locpctx;
-
     locpctx->op.sig.signature = signature;
     locpctx->operation = ver ? EVP_PKEY_OP_VERIFYCTX
                              : EVP_PKEY_OP_SIGNCTX;
@@ -195,12 +208,17 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
         ERR_raise(ERR_LIB_EVP,  EVP_R_INITIALIZATION_ERROR);
         goto err;
     }
+
+ reinitialize:
+    if (pctx != NULL)
+        *pctx = locpctx;
+
     if (type != NULL) {
         ctx->reqdigest = type;
         if (mdname == NULL)
             mdname = canon_mdname(EVP_MD_get0_name(type));
     } else {
-        if (mdname == NULL) {
+        if (mdname == NULL && !reinit) {
             if (evp_keymgmt_util_get_deflt_digest_name(tmp_keymgmt, provkey,
                                                        locmdname,
                                                        sizeof(locmdname)) > 0) {
