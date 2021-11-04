@@ -1143,6 +1143,7 @@ err:
  * Test 12: Use EVP_DigestSign (Implicit fetch digest, RSA)
  * Test 13: Use EVP_DigestSign (Implicit fetch digest, DSA)
  * Test 14: Use EVP_DigestSign (Implicit fetch digest, HMAC)
+ * Test 15-29: Same as above with reinitialization
  */
 static int test_EVP_DigestSignInit(int tst)
 {
@@ -1156,9 +1157,15 @@ static int test_EVP_DigestSignInit(int tst)
     size_t written;
     const EVP_MD *md;
     EVP_MD *mdexp = NULL;
+    int reinit = 0;
 
     if (nullprov != NULL)
         return TEST_skip("Test does not support a non-default library context");
+
+    if (tst >= 15) {
+        reinit = 1;
+        tst -= 15;
+    }
 
     if (tst >= 6 && tst <= 8) {
         membio = BIO_new(BIO_s_mem());
@@ -1196,6 +1203,9 @@ static int test_EVP_DigestSignInit(int tst)
         md = EVP_sha256();
 
     if (!TEST_true(EVP_DigestSignInit(md_ctx, NULL, md, NULL, pkey)))
+        goto out;
+
+    if (reinit && !TEST_true(EVP_DigestSignInit(md_ctx, NULL, NULL, NULL, NULL)))
         goto out;
 
     if (tst >= 6 && tst <= 8) {
@@ -4182,7 +4192,7 @@ int setup_tests(void)
     }
 
     ADD_TEST(test_EVP_set_default_properties);
-    ADD_ALL_TESTS(test_EVP_DigestSignInit, 15);
+    ADD_ALL_TESTS(test_EVP_DigestSignInit, 30);
     ADD_TEST(test_EVP_DigestVerifyInit);
     ADD_TEST(test_EVP_Digest);
     ADD_ALL_TESTS(test_EVP_PKEY_sign, 3);
