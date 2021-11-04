@@ -101,13 +101,16 @@ static int mac_digest_sign_init(void *vpmacctx, const char *mdname, void *vkey,
     const char *ciphername = NULL, *engine = NULL;
 
     if (!ossl_prov_is_running()
-            || pmacctx == NULL
-            || vkey == NULL
-            || !ossl_mac_key_up_ref(vkey))
+        || pmacctx == NULL
+        || (pmacctx->key == NULL && vkey == NULL))
         return 0;
 
-    ossl_mac_key_free(pmacctx->key);
-    pmacctx->key = vkey;
+    if (vkey != NULL) {
+        if (!ossl_mac_key_up_ref(vkey))
+            return 0;
+        ossl_mac_key_free(pmacctx->key);
+        pmacctx->key = vkey;
+    }
 
     if (pmacctx->key->cipher.cipher != NULL)
         ciphername = (char *)EVP_CIPHER_get0_name(pmacctx->key->cipher.cipher);

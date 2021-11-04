@@ -1316,6 +1316,13 @@ static int test_EVP_DigestVerifyInit(void)
             || !TEST_true(EVP_DigestVerifyFinal(md_ctx, kSignature,
                                                  sizeof(kSignature))))
         goto out;
+
+    /* test with reinitialization */
+    if (!TEST_true(EVP_DigestVerifyInit(md_ctx, NULL, NULL, NULL, NULL))
+            || !TEST_true(EVP_DigestVerifyUpdate(md_ctx, kMsg, sizeof(kMsg)))
+            || !TEST_true(EVP_DigestVerifyFinal(md_ctx, kSignature,
+                                                 sizeof(kSignature))))
+        goto out;
     ret = 1;
 
  out:
