@@ -16,6 +16,7 @@
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 #ifndef FIPS_MODULE
 # include <openssl/engine.h>
 #endif
@@ -101,9 +102,13 @@ static int mac_digest_sign_init(void *vpmacctx, const char *mdname, void *vkey,
     const char *ciphername = NULL, *engine = NULL;
 
     if (!ossl_prov_is_running()
-        || pmacctx == NULL
-        || (pmacctx->key == NULL && vkey == NULL))
+        || pmacctx == NULL)
         return 0;
+
+    if (pmacctx->key == NULL && vkey == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
+        return 0;
+    }
 
     if (vkey != NULL) {
         if (!ossl_mac_key_up_ref(vkey))
