@@ -19,8 +19,6 @@
 #include "property_local.h"
 #include "e_os.h"
 
-OSSL_PROPERTY_IDX ossl_property_true, ossl_property_false;
-
 DEFINE_STACK_OF(OSSL_PROPERTY_DEFINITION)
 
 static const char *skip_space(const char *s)
@@ -352,7 +350,7 @@ OSSL_PROPERTY_LIST *ossl_parse_property(OSSL_LIB_CTX *ctx, const char *defn)
         } else {
             /* A name alone means a true Boolean */
             prop->type = OSSL_PROPERTY_TYPE_STRING;
-            prop->v.str_val = ossl_property_true;
+            prop->v.str_val = OSSL_PROPERTY_TRUE;
         }
 
         if (!sk_OSSL_PROPERTY_DEFINITION_push(sk, prop))
@@ -411,7 +409,7 @@ OSSL_PROPERTY_LIST *ossl_parse_query(OSSL_LIB_CTX *ctx, const char *s,
             /* A name alone is a Boolean comparison for true */
             prop->oper = OSSL_PROPERTY_OPER_EQ;
             prop->type = OSSL_PROPERTY_TYPE_STRING;
-            prop->v.str_val = ossl_property_true;
+            prop->v.str_val = OSSL_PROPERTY_TRUE;
             goto skip_value;
         }
         if (!parse_value(ctx, &s, prop, create_values))
@@ -485,9 +483,9 @@ int ossl_property_match_count(const OSSL_PROPERTY_LIST *query,
                 return -1;
         } else if (q[i].type != OSSL_PROPERTY_TYPE_STRING
                    || (oper == OSSL_PROPERTY_OPER_EQ
-                       && q[i].v.str_val != ossl_property_false)
+                       && q[i].v.str_val != OSSL_PROPERTY_FALSE)
                    || (oper == OSSL_PROPERTY_OPER_NE
-                       && q[i].v.str_val == ossl_property_false)) {
+                       && q[i].v.str_val == OSSL_PROPERTY_FALSE)) {
             if (!q[i].optional)
                 return -1;
         } else {
@@ -560,9 +558,13 @@ int ossl_property_parse_init(OSSL_LIB_CTX *ctx)
         if (ossl_property_name(ctx, predefined_names[i], 1) == 0)
             goto err;
 
-    /* Pre-populate the two Boolean values */
-    if ((ossl_property_true = ossl_property_value(ctx, "yes", 1)) == 0
-        || (ossl_property_false = ossl_property_value(ctx, "no", 1)) == 0)
+    /*
+     * Pre-populate the two Boolean values. We must do them before any other
+     * values and in this order so that we get the same index as the global
+     * OSSL_PROPERTY_TRUE and OSSL_PROPERTY_FALSE values
+     */
+    if ((ossl_property_value(ctx, "yes", 1) != OSSL_PROPERTY_TRUE)
+        || (ossl_property_value(ctx, "no", 1) != OSSL_PROPERTY_FALSE))
         goto err;
 
     return 1;
