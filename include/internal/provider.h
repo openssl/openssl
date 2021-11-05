@@ -56,7 +56,7 @@ int ossl_provider_disable_fallback_loading(OSSL_LIB_CTX *libctx);
  * If the Provider is a module, the module will be loaded
  */
 int ossl_provider_activate(OSSL_PROVIDER *prov, int upcalls, int aschild);
-int ossl_provider_deactivate(OSSL_PROVIDER *prov);
+int ossl_provider_deactivate(OSSL_PROVIDER *prov, int removechildren);
 int ossl_provider_add_to_store(OSSL_PROVIDER *prov, OSSL_PROVIDER **actualprov,
                                int retain_fallbacks);
 
