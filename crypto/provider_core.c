@@ -229,7 +229,7 @@ struct provider_store_st {
 static void provider_deactivate_free(OSSL_PROVIDER *prov)
 {
     if (prov->flag_activated)
-        ossl_provider_deactivate(prov);
+        ossl_provider_deactivate(prov, 1);
     ossl_provider_free(prov);
 }
 
@@ -498,7 +498,7 @@ static int provider_up_ref_intern(OSSL_PROVIDER *prov, int activate)
 static int provider_free_intern(OSSL_PROVIDER *prov, int deactivate)
 {
     if (deactivate)
-        return ossl_provider_deactivate(prov);
+        return ossl_provider_deactivate(prov, 1);
 
     ossl_provider_free(prov);
     return 1;
@@ -644,8 +644,11 @@ int ossl_provider_add_to_store(OSSL_PROVIDER *prov, OSSL_PROVIDER **actualprov,
          * name and raced to put them in the store. This thread lost. We
          * deactivate the one we just created and use the one that already
          * exists instead.
+         * If we get here then we know we did not create provider children
+         * above, so we inform ossl_provider_deactive not to attempt to remove
+         * any.
          */
-        ossl_provider_deactivate(prov);
+        ossl_provider_deactivate(prov, 0);
         ossl_provider_free(prov);
     }
 
@@ -1002,15 +1005,18 @@ static int provider_init(OSSL_PROVIDER *prov)
 }
 
 /*
- * Deactivate a provider.
+ * Deactivate a provider. If upcalls is 0 then we suppress any upcalls to a
+ * parent provider. If removechildren is 0 then we suppress any calls to remove
+ * child providers.
  * Return -1 on failure and the activation count on success
  */
-static int provider_deactivate(OSSL_PROVIDER *prov, int upcalls)
+static int provider_deactivate(OSSL_PROVIDER *prov, int upcalls,
+                               int removechildren)
 {
     int count;
     struct provider_store_st *store;
 #ifndef FIPS_MODULE
-    int freeparent = 0, removechildren = 0;
+    int freeparent = 0;
 #endif
 
     if (!ossl_assert(prov != NULL))
@@ -1039,12 +1045,12 @@ static int provider_deactivate(OSSL_PROVIDER *prov, int upcalls)
     }
 #endif
 
-    if ((count = --prov->activatecnt) < 1) {
+    if ((count = --prov->activatecnt) < 1)
         prov->flag_activated = 0;
 #ifndef FIPS_MODULE
-        removechildren = 1;
+    else
+        removechildren = 0;
 #endif
-    }
 
     CRYPTO_THREAD_unlock(prov->flag_lock);
 
@@ -1169,11 +1175,12 @@ int ossl_provider_activate(OSSL_PROVIDER *prov, int upcalls, int aschild)
     return 0;
 }
 
-int ossl_provider_deactivate(OSSL_PROVIDER *prov)
+int ossl_provider_deactivate(OSSL_PROVIDER *prov, int removechildren)
 {
     int count;
 
-    if (prov == NULL || (count = provider_deactivate(prov, 1)) < 0)
+    if (prov == NULL
+            || (count = provider_deactivate(prov, 1, removechildren)) < 0)
         return 0;
     return count == 0 ? provider_flush_store_cache(prov) : 1;
 }
@@ -1355,7 +1362,7 @@ int ossl_provider_doall_activated(OSSL_LIB_CTX *ctx,
     for (curr++; curr < max; curr++) {
         OSSL_PROVIDER *prov = sk_OSSL_PROVIDER_value(provs, curr);
 
-        provider_deactivate(prov, 0);
+        provider_deactivate(prov, 0, 1);
         /*
          * As above where we did the up-ref, we don't call ossl_provider_free
          * to avoid making upcalls. There should always be at least one ref
