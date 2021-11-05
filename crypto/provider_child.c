@@ -153,7 +153,7 @@ static int provider_create_child_cb(const OSSL_CORE_HANDLE *prov, void *cbdata)
 
         if (!ossl_provider_set_child(cprov, prov)
             || !ossl_provider_add_to_store(cprov, NULL, 0)) {
-            ossl_provider_deactivate(cprov);
+            ossl_provider_deactivate(cprov, 0);
             ossl_provider_free(cprov);
             goto err;
         }
@@ -188,7 +188,7 @@ static int provider_remove_child_cb(const OSSL_CORE_HANDLE *prov, void *cbdata)
      */
     ossl_provider_free(cprov);
     if (ossl_provider_is_child(cprov)
-            && !ossl_provider_deactivate(cprov))
+            && !ossl_provider_deactivate(cprov, 1))
         return 0;
 
     return 1;
