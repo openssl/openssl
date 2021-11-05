@@ -1341,6 +1341,57 @@ static int test_EVP_DigestVerifyInit(void)
     return ret;
 }
 
+#ifndef OPENSSL_NO_SIPHASH
+/* test SIPHASH MAC via EVP_PKEY with non-default parameters and reinit */
+static int test_siphash_digestsign(void)
+{
+    unsigned char key[16];
+    unsigned char buf[8], digest[8];
+    unsigned char expected[8] = {
+        0x6d, 0x3e, 0x54, 0xc2, 0x2f, 0xf1, 0xfe, 0xe2
+    };
+    EVP_PKEY *pkey = NULL;
+    EVP_MD_CTX *mdctx = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    int ret = 0;
+    size_t len = 8;
+
+    if (nullprov != NULL)
+        return TEST_skip("Test does not support a non-default library context");
+
+    memset (buf, 0, 8);
+    memset (key, 1, 16);
+    if (!TEST_ptr(pkey = EVP_PKEY_new_raw_private_key(EVP_PKEY_SIPHASH, NULL,
+                                                      key, 16)))
+        goto out;
+
+    if (!TEST_ptr(mdctx = EVP_MD_CTX_create()))
+        goto out;
+
+    if (!TEST_true(EVP_DigestSignInit(mdctx, &ctx, NULL, NULL, pkey)))
+        goto out;
+    if (!TEST_int_eq(EVP_PKEY_CTX_ctrl(ctx, -1, EVP_PKEY_OP_SIGNCTX,
+                                       EVP_PKEY_CTRL_SET_DIGEST_SIZE,
+                                       8, NULL), 1))
+        goto out;
+    /* reinitialize */
+    if (!TEST_true(EVP_DigestSignInit(mdctx, NULL, NULL, NULL, NULL)))
+        goto out;
+    if (!TEST_true(EVP_DigestSignUpdate(mdctx, buf, 8)))
+        goto out;
+    if (!TEST_true(EVP_DigestSignFinal(mdctx, digest, &len)))
+        goto out;
+    if (!TEST_mem_eq(digest, len, expected, sizeof(expected)))
+        goto out;
+
+    ret = 1;
+ out:
+    EVP_PKEY_free(pkey);
+    EVP_MD_CTX_free(mdctx);
+    return ret;
+}
+#endif
+
 /*
  * Test corner cases of EVP_DigestInit/Update/Final API call behavior.
  */
@@ -4194,6 +4245,9 @@ int setup_tests(void)
     ADD_TEST(test_EVP_set_default_properties);
     ADD_ALL_TESTS(test_EVP_DigestSignInit, 30);
     ADD_TEST(test_EVP_DigestVerifyInit);
+#ifndef OPENSSL_NO_SIPHASH
+    ADD_TEST(test_siphash_digestsign);
+#endif
     ADD_TEST(test_EVP_Digest);
     ADD_ALL_TESTS(test_EVP_PKEY_sign, 3);
     ADD_ALL_TESTS(test_EVP_Enveloped, 2);
