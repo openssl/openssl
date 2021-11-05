@@ -222,7 +222,7 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
                 if (!ossl_provider_activate(prov, 1, 0)) {
                     ok = 0;
                 } else if (!ossl_provider_add_to_store(prov, &actual, 0)) {
-                    ossl_provider_deactivate(prov);
+                    ossl_provider_deactivate(prov, 1);
                     ok = 0;
                 } else {
                     if (pcgbl->activated_providers == NULL)
