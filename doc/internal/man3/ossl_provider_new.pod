@@ -4,7 +4,7 @@
 
 ossl_provider_find, ossl_provider_new, ossl_provider_up_ref,
 ossl_provider_free,
-ossl_provider_set_fallback, ossl_provider_set_module_path,
+ossl_provider_set_module_path,
 ossl_provider_add_parameter, ossl_provider_set_child, ossl_provider_get_parent,
 ossl_provider_up_ref_parent, ossl_provider_free_parent,
 ossl_provider_default_props_update, ossl_provider_get0_dispatch,
@@ -35,7 +35,6 @@ ossl_provider_get_capabilities
  void ossl_provider_free(OSSL_PROVIDER *prov);
 
  /* Setters */
- int ossl_provider_set_fallback(OSSL_PROVIDER *prov);
  int ossl_provider_set_module_path(OSSL_PROVIDER *prov, const char *path);
  int ossl_provider_add_parameter(OSSL_PROVIDER *prov, const char *name,
                                  const char *value);
@@ -158,11 +157,6 @@ reference count; when it drops to zero, the provider object is assumed
 to have fallen out of use and will be deinitialized (its I<teardown>
 function is called), and the associated module will be unloaded if one
 was loaded, and I<prov> itself will be freed.
-
-ossl_provider_set_fallback() marks an available provider I<prov> as
-fallback.
-Note that after this call, the provider object pointer that was
-used can simply be dropped, but not freed.
 
 ossl_provider_set_module_path() sets the module path to load the
 provider module given the provider object I<prov>.
@@ -350,7 +344,7 @@ ossl_provider_doall_activated() returns 1 if the callback was called for all
 activated providers.  A return value of 0 means that the callback was not
 called for any activated providers.
 
-ossl_provider_set_module_path(), ossl_provider_set_fallback(),
+ossl_provider_set_module_path(),
 ossl_provider_activate(), ossl_provider_activate_leave_fallbacks() and
 ossl_provider_deactivate(), ossl_provider_add_to_store(),
 ossl_provider_default_props_update() return 1 on success, or 0 on error.
