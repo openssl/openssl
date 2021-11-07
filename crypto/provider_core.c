@@ -67,7 +67,7 @@
  * The locks available are:
  *
  * The provider flag_lock: Used to control updates to the various provider
- * "flags" (flag_initialized, flag_activated, flag_fallback) and associated
+ * "flags" (flag_initialized and flag_activated) and associated
  * "counts" (activatecnt).
  *
  * The provider refcnt_lock: Only ever used to control updates to the provider
@@ -137,7 +137,6 @@ struct ossl_provider_st {
     /* Flag bits */
     unsigned int flag_initialized:1;
     unsigned int flag_activated:1;
-    unsigned int flag_fallback:1; /* Can be used as fallback */
 
     /* Getting and setting the flags require synchronization */
     CRYPTO_RWLOCK *flag_lock;
@@ -1391,16 +1390,6 @@ int OSSL_PROVIDER_available(OSSL_LIB_CTX *libctx, const char *name)
         ossl_provider_free(prov);
     }
     return available;
-}
-
-/* Setters of Provider Object data */
-int ossl_provider_set_fallback(OSSL_PROVIDER *prov)
-{
-    if (prov == NULL)
-        return 0;
-
-    prov->flag_fallback = 1;
-    return 1;
 }
 
 /* Getters of Provider Object data */
