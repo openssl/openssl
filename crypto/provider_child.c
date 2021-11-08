@@ -22,7 +22,6 @@ DEFINE_STACK_OF(OSSL_PROVIDER)
 struct child_prov_globals {
     const OSSL_CORE_HANDLE *handle;
     const OSSL_CORE_HANDLE *curr_prov;
-    unsigned int isinited:1;
     CRYPTO_RWLOCK *lock;
     OSSL_FUNC_core_get_libctx_fn *c_get_libctx;
     OSSL_FUNC_provider_register_child_cb_fn *c_provider_register_child_cb;
@@ -110,11 +109,7 @@ static int provider_create_child_cb(const OSSL_CORE_HANDLE *prov, void *cbdata)
     if (gbl == NULL)
         return 0;
 
-    /*
-     * If !gbl->isinited, then we are still initing and we already hold the
-     * lock - so don't take it again.
-     */
-    if (gbl->isinited && !CRYPTO_THREAD_write_lock(gbl->lock))
+    if (!CRYPTO_THREAD_write_lock(gbl->lock))
         return 0;
 
     provname = gbl->c_prov_name(prov);
@@ -161,8 +156,7 @@ static int provider_create_child_cb(const OSSL_CORE_HANDLE *prov, void *cbdata)
 
     ret = 1;
  err:
-    if (gbl->isinited)
-        CRYPTO_THREAD_unlock(gbl->lock);
+    CRYPTO_THREAD_unlock(gbl->lock);
     return ret;
 }
 
@@ -271,8 +265,6 @@ int ossl_provider_init_as_child(OSSL_LIB_CTX *ctx,
                                            provider_global_props_cb,
                                            ctx))
         return 0;
-
-    gbl->isinited = 1;
 
     return 1;
 }
