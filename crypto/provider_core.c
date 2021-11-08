@@ -505,6 +505,11 @@ static int provider_free_intern(OSSL_PROVIDER *prov, int deactivate)
 }
 #endif
 
+/*
+ * We assume that the requested provider does not already exist in the store.
+ * The caller should check. If it does exist then adding it to the store later
+ * will fail.
+ */
 OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
                                  OSSL_provider_init_fn *init_function,
                                  int noconfig)
@@ -515,14 +520,6 @@ OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
 
     if ((store = get_provider_store(libctx)) == NULL)
         return NULL;
-
-    if ((prov = ossl_provider_find(libctx, name,
-                                   noconfig)) != NULL) { /* refcount +1 */
-        ossl_provider_free(prov); /* refcount -1 */
-        ERR_raise_data(ERR_LIB_CRYPTO, CRYPTO_R_PROVIDER_ALREADY_EXISTS,
-                       "name=%s", name);
-        return NULL;
-    }
 
     memset(&template, 0, sizeof(template));
     if (init_function == NULL) {
