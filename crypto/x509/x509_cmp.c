@@ -210,6 +210,7 @@ int X509_add_cert(STACK_OF(X509) *sk, X509 *cert, int flags)
     }
     if ((flags & X509_ADD_FLAG_NO_SS) != 0) {
         int ret = X509_self_signed(cert, 0);
+
         if (ret != 0)
             return ret > 0 ? 1 : 0;
     }
