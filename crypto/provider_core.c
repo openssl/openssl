@@ -424,7 +424,11 @@ OSSL_PROVIDER *ossl_provider_find(OSSL_LIB_CTX *libctx, const char *name,
 #endif
 
         tmpl.name = (char *)name;
-        if (!CRYPTO_THREAD_read_lock(store->lock))
+        /*
+         * A "find" operation can sort the stack, and therefore a write lock is
+         * required.
+         */
+        if (!CRYPTO_THREAD_write_lock(store->lock))
             return NULL;
         if ((i = sk_OSSL_PROVIDER_find(store->providers, &tmpl)) != -1)
             prov = sk_OSSL_PROVIDER_value(store->providers, i);
