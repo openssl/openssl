@@ -886,6 +886,10 @@
 #define NID_id_ct_signedChecklist               1247
 #define OBJ_id_ct_signedChecklist               OBJ_id_smime_ct,48L
 
+#define SN_id_ct_ASPA           "id-ct-ASPA"
+#define NID_id_ct_ASPA          1250
+#define OBJ_id_ct_ASPA          OBJ_id_smime_ct,49L
+
 #define SN_id_smime_aa_receiptRequest           "id-smime-aa-receiptRequest"
 #define NID_id_smime_aa_receiptRequest          212
 #define OBJ_id_smime_aa_receiptRequest          OBJ_id_smime_aa,1L

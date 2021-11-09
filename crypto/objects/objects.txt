@@ -282,6 +282,7 @@ id-smime-ct 35		: id-ct-rpkiGhostbusters
 id-smime-ct 36		: id-ct-resourceTaggedAttest
 id-smime-ct 47		: id-ct-geofeedCSVwithCRLF
 id-smime-ct 48		: id-ct-signedChecklist
+id-smime-ct 49		: id-ct-ASPA
 
 # S/MIME Attributes
 id-smime-aa 1		: id-smime-aa-receiptRequest
