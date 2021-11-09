@@ -1015,17 +1015,22 @@ static int provider_deactivate(OSSL_PROVIDER *prov, int upcalls,
 #ifndef FIPS_MODULE
     int freeparent = 0;
 #endif
+    int lock = 1;
 
     if (!ossl_assert(prov != NULL))
         return -1;
 
+    /*
+     * No need to lock if we've got no store because we've not been shared with
+     * other threads.
+     */
     store = get_provider_store(prov->libctx);
     if (store == NULL)
-        return -1;
+        lock = 0;
 
-    if (!CRYPTO_THREAD_read_lock(store->lock))
+    if (lock && !CRYPTO_THREAD_read_lock(store->lock))
         return -1;
-    if (!CRYPTO_THREAD_write_lock(prov->flag_lock)) {
+    if (lock && !CRYPTO_THREAD_write_lock(prov->flag_lock)) {
         CRYPTO_THREAD_unlock(store->lock);
         return -1;
     }
@@ -1049,10 +1054,11 @@ static int provider_deactivate(OSSL_PROVIDER *prov, int upcalls,
         removechildren = 0;
 #endif
 
-    CRYPTO_THREAD_unlock(prov->flag_lock);
+    if (lock)
+        CRYPTO_THREAD_unlock(prov->flag_lock);
 
 #ifndef FIPS_MODULE
-    if (removechildren) {
+    if (removechildren && store != NULL) {
         int i, max = sk_OSSL_PROVIDER_CHILD_CB_num(store->child_cbs);
         OSSL_PROVIDER_CHILD_CB *child_cb;
 
@@ -1062,7 +1068,8 @@ static int provider_deactivate(OSSL_PROVIDER *prov, int upcalls,
         }
     }
 #endif
-    CRYPTO_THREAD_unlock(store->lock);
+    if (lock)
+        CRYPTO_THREAD_unlock(store->lock);
 #ifndef FIPS_MODULE
     if (freeparent)
         ossl_provider_free_parent(prov, 1);
