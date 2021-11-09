@@ -107,8 +107,8 @@
  *    some other function while holding a lock make sure you know whether it
  *    will make any upcalls or not. For example ossl_provider_up_ref() can call
  *    ossl_provider_up_ref_parent() which can call the c_prov_up_ref() upcall.
- *  - It is permissible to hold the store lock when calling child provider
- *    callbacks. No other locks may be held during such callbacks.
+ *  - It is permissible to hold the store and flag locks when calling child
+ *    provider callbacks. No other locks may be held during such callbacks.
  */
 
 static OSSL_PROVIDER *provider_new(const char *name,
@@ -1058,9 +1058,6 @@ static int provider_deactivate(OSSL_PROVIDER *prov, int upcalls,
         removechildren = 0;
 #endif
 
-    if (lock)
-        CRYPTO_THREAD_unlock(prov->flag_lock);
-
 #ifndef FIPS_MODULE
     if (removechildren && store != NULL) {
         int i, max = sk_OSSL_PROVIDER_CHILD_CB_num(store->child_cbs);
@@ -1072,8 +1069,10 @@ static int provider_deactivate(OSSL_PROVIDER *prov, int upcalls,
         }
     }
 #endif
-    if (lock)
+    if (lock) {
+        CRYPTO_THREAD_unlock(prov->flag_lock);
         CRYPTO_THREAD_unlock(store->lock);
+    }
 #ifndef FIPS_MODULE
     if (freeparent)
         ossl_provider_free_parent(prov, 1);
@@ -1091,7 +1090,7 @@ static int provider_activate(OSSL_PROVIDER *prov, int lock, int upcalls)
 {
     int count = -1;
     struct provider_store_st *store;
-    int ret = 1, createchildren = 0;
+    int ret = 1;
 
     store = prov->store;
     /*
@@ -1129,15 +1128,13 @@ static int provider_activate(OSSL_PROVIDER *prov, int lock, int upcalls)
     count = ++prov->activatecnt;
     prov->flag_activated = 1;
 
-    if (prov->activatecnt == 1 && store != NULL)
-        createchildren = 1;
-
-    if (lock)
-        CRYPTO_THREAD_unlock(prov->flag_lock);
-    if (createchildren)
+    if (prov->activatecnt == 1 && store != NULL) {
         ret = create_provider_children(prov);
-    if (lock)
+    }
+    if (lock) {
+        CRYPTO_THREAD_unlock(prov->flag_lock);
         CRYPTO_THREAD_unlock(store->lock);
+    }
 
     if (!ret)
         return -1;
