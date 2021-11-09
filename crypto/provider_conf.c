@@ -224,11 +224,22 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
                 } else if (!ossl_provider_add_to_store(prov, &actual, 0)) {
                     ossl_provider_deactivate(prov, 1);
                     ok = 0;
+                } else if (actual != prov
+                           && !ossl_provider_activate(actual, 1, 0)) {
+                    ossl_provider_free(actual);
+                    ok = 0;
                 } else {
                     if (pcgbl->activated_providers == NULL)
                         pcgbl->activated_providers = sk_OSSL_PROVIDER_new_null();
-                    sk_OSSL_PROVIDER_push(pcgbl->activated_providers, actual);
-                    ok = 1;
+                    if (pcgbl->activated_providers == NULL
+                        || !sk_OSSL_PROVIDER_push(pcgbl->activated_providers,
+                                                  actual)) {
+                        ossl_provider_deactivate(actual, 1);
+                        ossl_provider_free(actual);
+                        ok = 0;
+                    } else {
+                        ok = 1;
+                    }
                 }
             }
             if (!ok)
