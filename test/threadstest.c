@@ -464,18 +464,20 @@ static int test_multi(int idx)
     return testresult;
 }
 
+static char *multi_load_provider = "legacy";
 /*
  * This test attempts to load several providers at the same time, and if
  * run with a thread sanitizer, should crash if the core provider code
  * doesn't synchronize well enough.
  */
-#define MULTI_LOAD_THREADS 3
+#define MULTI_LOAD_THREADS 10
 static void test_multi_load_worker(void)
 {
     OSSL_PROVIDER *prov;
 
-    (void)TEST_ptr(prov = OSSL_PROVIDER_load(NULL, "default"));
-    (void)TEST_true(OSSL_PROVIDER_unload(prov));
+    if (!TEST_ptr(prov = OSSL_PROVIDER_load(NULL, multi_load_provider))
+            || !TEST_true(OSSL_PROVIDER_unload(prov)))
+        multi_success = 0;
 }
 
 static int test_multi_default(void)
@@ -519,6 +521,7 @@ static int test_multi_load(void)
 {
     thread_t threads[MULTI_LOAD_THREADS];
     int i, res = 1;
+    OSSL_PROVIDER *prov;
 
     /* The multidefault test must run prior to this test */
     if (!multidefault_run) {
@@ -526,13 +529,27 @@ static int test_multi_load(void)
         res = test_multi_default();
     }
 
+    /*
+     * We use the legacy provider in test_multi_load_worker because it uses a
+     * child libctx that might hit more codepaths that might be sensitive to
+     * threading issues. But in a no-legacy build that won't be loadable so
+     * we use the default provider instead.
+     */
+    prov = OSSL_PROVIDER_load(NULL, "legacy");
+    if (prov == NULL) {
+        TEST_info("Cannot load legacy provider - assuming this is a no-legacy build");
+        multi_load_provider = "default";
+    }
+    OSSL_PROVIDER_unload(prov);
+
+    multi_success = 1;
     for (i = 0; i < MULTI_LOAD_THREADS; i++)
         (void)TEST_true(run_thread(&threads[i], test_multi_load_worker));
 
     for (i = 0; i < MULTI_LOAD_THREADS; i++)
         (void)TEST_true(wait_for_thread(threads[i]));
 
-    return res;
+    return res && multi_success;
 }
 
 typedef enum OPTION_choice {
