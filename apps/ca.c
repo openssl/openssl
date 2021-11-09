@@ -1440,14 +1440,9 @@ static int certify_cert(X509 **xret, const char *infile, int certformat,
         goto end;
     }
     i = do_X509_verify(template_cert, pktmp, vfyopts);
-    if (i < 0) {
+    if (!i) {
         ok = 0;
-        BIO_printf(bio_err, "Signature verification problems....\n");
-        goto end;
-    }
-    if (i == 0) {
-        ok = 0;
-        BIO_printf(bio_err, "Signature did not match the certificate\n");
+        BIO_printf(bio_err, "Signature verification problems or signature did not match the certificate\n");
         goto end;
     } else {
         BIO_printf(bio_err, "Signature ok\n");
