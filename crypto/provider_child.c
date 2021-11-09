@@ -42,7 +42,6 @@ static void child_prov_ossl_ctx_free(void *vgbl)
 {
     struct child_prov_globals *gbl = vgbl;
 
-    gbl->c_provider_deregister_child_cb(gbl->handle);
     CRYPTO_THREAD_lock_free(gbl->lock);
     OPENSSL_free(gbl);
 }
@@ -267,6 +266,17 @@ int ossl_provider_init_as_child(OSSL_LIB_CTX *ctx,
         return 0;
 
     return 1;
+}
+
+void ossl_provider_deinit_child(OSSL_LIB_CTX *ctx)
+{
+    struct child_prov_globals *gbl
+        = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_CHILD_PROVIDER_INDEX,
+                                &child_prov_ossl_ctx_method);
+    if (gbl == NULL)
+        return;
+
+    gbl->c_provider_deregister_child_cb(gbl->handle);
 }
 
 int ossl_provider_up_ref_parent(OSSL_PROVIDER *prov, int activate)
