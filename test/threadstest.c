@@ -30,7 +30,7 @@
 #include "threadstest.h"
 
 /* Limit the maximum number of threads */
-#define MAXIMUM_THREADS     3
+#define MAXIMUM_THREADS     10
 
 /* Limit the maximum number of providers loaded into a library context */
 #define MAXIMUM_PROVIDERS   4
@@ -567,7 +567,11 @@ static void test_multi_load_worker(void)
 {
     OSSL_PROVIDER *prov;
 
-    if (!TEST_ptr(prov = OSSL_PROVIDER_load(multi_libctx, "default"))
+    /*
+     * We use the legacy provider because it uses a child libctx that might hit
+     * more codepaths that might be sensitive to threading issues.
+     */
+    if (!TEST_ptr(prov = OSSL_PROVIDER_load(multi_libctx, "legacy"))
             || !TEST_true(OSSL_PROVIDER_unload(prov)))
         multi_success = 0;
 }
@@ -588,6 +592,7 @@ static int test_multi_default(void)
 static int test_multi_load(void)
 {
     int res = 1;
+    OSSL_PROVIDER *prov;
 
     /* The multidefault test must run prior to this test */
     if (!multidefault_run) {
@@ -595,7 +600,21 @@ static int test_multi_load(void)
         res = test_multi_default();
     }
 
-    return thread_run_test(NULL, 3, &test_multi_load_worker, 0, NULL) && res;
+    /*
+     * Check the legacy provider is loadable. If its not we assume it is
+     * disabled and skip this test
+     */
+    prov = OSSL_PROVIDER_load(NULL, "legacy");
+    if (prov == NULL) {
+        TEST_info("Cannot load legacy provider - assuming this is a no-legacy build");
+        goto end;
+    }
+    OSSL_PROVIDER_unload(prov);
+
+    res = thread_run_test(NULL, MAXIMUM_THREADS, &test_multi_load_worker, 0,
+                          NULL) && res;
+ end:
+    return res;
 }
 
 static void test_obj_create_one(void)
