@@ -107,6 +107,7 @@ void ossl_provider_add_conf_module(void);
 int ossl_provider_init_as_child(OSSL_LIB_CTX *ctx,
                                 const OSSL_CORE_HANDLE *handle,
                                 const OSSL_DISPATCH *in);
+void ossl_provider_deinit_child(OSSL_LIB_CTX *ctx);
 
 # ifdef __cplusplus
 }
