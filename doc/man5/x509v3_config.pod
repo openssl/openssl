@@ -229,9 +229,11 @@ B<dirName> (a distinguished name),
 and B<otherName>.
 The syntax of each is described in the following paragraphs.
 
-The B<email> option has a special C<copy> value, which will automatically
-include any email addresses contained in the certificate subject name in
-the extension.
+The B<email> option has two special values.
+C<copy> will automatically include any email addresses
+contained in the certificate subject name in the extension.
+C<move> will automatically move any email addresses
+from the certificate subject name to the extension.
 
 The IP address used in the B<IP> option can be in either IPv4 or IPv6 format.
 
