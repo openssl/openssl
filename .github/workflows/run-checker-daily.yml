@@ -127,6 +127,7 @@ jobs:
           no-zlib,
           enable-zlib-dynamic,
           no-zlib-dynamic,
+          -DOPENSSL_NO_BUILTIN_OVERFLOW_CHECKING
         ]
     runs-on: ubuntu-latest
     steps:
