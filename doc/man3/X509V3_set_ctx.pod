@@ -22,6 +22,8 @@ Any of I<subject>, I<req>, or I<crl> may be provided, pointing to a certificate,
 certification request, or certificate revocation list, respectively.
 When constructing the subject key identifier of a certificate by computing a
 hash value of its public key, the public key is taken from I<subject> or I<req>.
+Similarly, when constructing subject alternative names from any email addresses
+contained in a subject DN, the subject DN is taken from I<subject> or I<req>.
 If I<subject> or I<crl> is provided, I<issuer> should point to its issuer,
 for instance to help generating an authority key identifier extension.
 Note that if I<subject> is provided, I<issuer> may be the same as I<subject>,
