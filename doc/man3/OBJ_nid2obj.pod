@@ -155,6 +155,10 @@ a NID or B<NID_undef> on error.
 
 OBJ_add_sigid() returns 1 on success or 0 on error.
 
+OBJ_obj2txt() returns the number of bytes written to I<buf> if I<buf_len> is big enough. 
+Otherwise, the result is truncated and the total amount of space required is returned. 
+It also returns -1 on error.
+
 =head1 EXAMPLES
 
 Create an object for B<commonName>:
