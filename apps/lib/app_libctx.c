@@ -14,8 +14,11 @@ static const char *app_propq = NULL;
 
 int app_set_propq(OSSL_LIB_CTX *libctx, const char *arg)
 {
+    if (!EVP_set_default_properties(libctx, arg)) {
+        opt_printf_stderr("Failed to set property query: %s\n", arg);
+        return 0;
+    }
     app_propq = arg;
-    EVP_set_default_properties(libctx, app_propq);
     return 1;
 }
 
