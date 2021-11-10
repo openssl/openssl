@@ -1709,7 +1709,8 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
 
     /* Initialize the context structure */
     X509V3_set_ctx(&ext_ctx, selfsign ? ret : x509,
-                   ret, NULL, NULL, X509V3_CTX_REPLACE);
+                   ret, NULL /* no need to give req, needed info is in ret */,
+                   NULL, X509V3_CTX_REPLACE);
     /* prepare fallback for AKID, but only if issuer cert equals subject cert */
     if (selfsign) {
         if (!X509V3_set_issuer_pkey(&ext_ctx, pkey))
