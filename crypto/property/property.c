@@ -118,7 +118,7 @@ OSSL_PROPERTY_LIST **ossl_ctx_global_properties(OSSL_LIB_CTX *libctx,
     globp = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_GLOBAL_PROPERTIES,
                                   &ossl_ctx_global_properties_method);
 
-    return &globp->list;
+    return globp != NULL ? &globp->list : NULL;
 }
 
 #ifndef FIPS_MODULE
@@ -128,7 +128,7 @@ int ossl_global_properties_no_mirrored(OSSL_LIB_CTX *libctx)
         = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_GLOBAL_PROPERTIES,
                                 &ossl_ctx_global_properties_method);
 
-    return globp->no_mirrored ? 1 : 0;
+    return globp != NULL && globp->no_mirrored ? 1 : 0;
 }
 
 void ossl_global_properties_stop_mirroring(OSSL_LIB_CTX *libctx)
@@ -137,7 +137,8 @@ void ossl_global_properties_stop_mirroring(OSSL_LIB_CTX *libctx)
         = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_GLOBAL_PROPERTIES,
                                 &ossl_ctx_global_properties_method);
 
-    globp->no_mirrored = 1;
+    if (globp != NULL)
+        globp->no_mirrored = 1;
 }
 #endif
 
