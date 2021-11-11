@@ -558,6 +558,7 @@ static int test_multi_load_unload_provider(void)
     return testresult;
 }
 
+static char *multi_load_provider = "legacy";
 /*
  * This test attempts to load several providers at the same time, and if
  * run with a thread sanitizer, should crash if the core provider code
@@ -567,11 +568,7 @@ static void test_multi_load_worker(void)
 {
     OSSL_PROVIDER *prov;
 
-    /*
-     * We use the legacy provider because it uses a child libctx that might hit
-     * more codepaths that might be sensitive to threading issues.
-     */
-    if (!TEST_ptr(prov = OSSL_PROVIDER_load(multi_libctx, "legacy"))
+    if (!TEST_ptr(prov = OSSL_PROVIDER_load(multi_libctx, multi_load_provider))
             || !TEST_true(OSSL_PROVIDER_unload(prov)))
         multi_success = 0;
 }
@@ -601,20 +598,20 @@ static int test_multi_load(void)
     }
 
     /*
-     * Check the legacy provider is loadable. If its not we assume it is
-     * disabled and skip this test
+     * We use the legacy provider in test_multi_load_worker because it uses a
+     * child libctx that might hit more codepaths that might be sensitive to
+     * threading issues. But in a no-legacy build that won't be loadable so
+     * we use the default provider instead.
      */
     prov = OSSL_PROVIDER_load(NULL, "legacy");
     if (prov == NULL) {
         TEST_info("Cannot load legacy provider - assuming this is a no-legacy build");
-        goto end;
+        multi_load_provider = "default";
     }
     OSSL_PROVIDER_unload(prov);
 
-    res = thread_run_test(NULL, MAXIMUM_THREADS, &test_multi_load_worker, 0,
+    return thread_run_test(NULL, MAXIMUM_THREADS, &test_multi_load_worker, 0,
                           NULL) && res;
- end:
-    return res;
 }
 
 static void test_obj_create_one(void)
