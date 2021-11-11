@@ -646,7 +646,7 @@ int ossl_provider_add_to_store(OSSL_PROVIDER *prov, OSSL_PROVIDER **actualprov,
          * deactivate the one we just created and use the one that already
          * exists instead.
          * If we get here then we know we did not create provider children
-         * above, so we inform ossl_provider_deactive not to attempt to remove
+         * above, so we inform ossl_provider_deactivate not to attempt to remove
          * any.
          */
         ossl_provider_deactivate(prov, 0);
