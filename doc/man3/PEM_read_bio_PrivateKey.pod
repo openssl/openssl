@@ -456,7 +456,7 @@ where I<x> already contains a valid certificate, may not work, whereas:
  x = PEM_read_bio_X509(bp, NULL, 0, NULL);
 
 is guaranteed to work. It is always acceptable for I<x> to contain a newly
-allocacted, empty B<X509> object (for example allocated via L<X509_new_ex(3)>).
+allocated, empty B<X509> object (for example allocated via L<X509_new_ex(3)>).
 
 =head1 RETURN VALUES
 
