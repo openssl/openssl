@@ -9,6 +9,7 @@
 
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
+#include "internal/safe_math.h"
 #include <stdio.h>
 #include "crypto/asn1.h"
 #include <openssl/asn1t.h>
@@ -19,6 +20,8 @@
 #include "crypto/x509.h"
 #include "crypto/punycode.h"
 #include "ext_dat.h"
+
+OSSL_SAFE_MATH_SIGNED(int, int)
 
 static void *v2i_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method,
                                   X509V3_CTX *ctx,
@@ -222,16 +225,16 @@ static int print_nc_ipadd(BIO *bp, ASN1_OCTET_STRING *ip)
 
 static int add_lengths(int *out, int a, int b)
 {
+    int err = 0;
+
     /* sk_FOO_num(NULL) returns -1 but is effectively 0 when iterating. */
     if (a < 0)
         a = 0;
     if (b < 0)
         b = 0;
 
-    if (a > INT_MAX - b)
-        return 0;
-    *out = a + b;
-    return 1;
+    *out = safe_add_int(a, b, &err);
+    return !err;
 }
 
 /*-
