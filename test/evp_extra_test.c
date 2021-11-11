@@ -1359,8 +1359,8 @@ static int test_siphash_digestsign(void)
     if (nullprov != NULL)
         return TEST_skip("Test does not support a non-default library context");
 
-    memset (buf, 0, 8);
-    memset (key, 1, 16);
+    memset(buf, 0, 8);
+    memset(key, 1, 16);
     if (!TEST_ptr(pkey = EVP_PKEY_new_raw_private_key(EVP_PKEY_SIPHASH, NULL,
                                                       key, 16)))
         goto out;
