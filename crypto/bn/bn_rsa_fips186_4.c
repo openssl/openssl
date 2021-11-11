@@ -329,8 +329,12 @@ int ossl_bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
                     || !BN_sub_word(y1, 1)
                     || !BN_gcd(tmp, y1, e, ctx))
                 goto err;
-            if (BN_is_one(tmp) && BN_check_prime(Y, ctx, cb) > 0)
-                goto end;
+            if (BN_is_one(tmp)) {
+                if (BN_check_prime(Y, ctx, cb) > 0)
+                    goto end;
+                else
+                    goto err;
+            }
             /* (Step 8-10) */
             if (++i >= imax || !BN_add(Y, Y, r1r2x2))
                 goto err;
