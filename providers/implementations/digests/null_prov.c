@@ -30,6 +30,10 @@ static int null_final(unsigned char *md, NULLMD_CTX *ctx)
     return 1;
 }
 
+/*
+ * We must override the PROV_FUNC_DIGEST_FINAL as dgstsize == 0
+ * and that would cause compilation warnings with the default implementation.
+ */
 #undef PROV_FUNC_DIGEST_FINAL
 #define PROV_FUNC_DIGEST_FINAL(name, dgstsize, fin)                            \
 static OSSL_FUNC_digest_final_fn name##_internal_final;                        \
