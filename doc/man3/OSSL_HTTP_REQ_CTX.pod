@@ -15,7 +15,9 @@ OSSL_HTTP_REQ_CTX_exchange,
 OSSL_HTTP_REQ_CTX_get0_mem_bio,
 OSSL_HTTP_REQ_CTX_get_resp_len,
 OSSL_HTTP_REQ_CTX_set_max_response_length,
-OSSL_HTTP_is_alive
+OSSL_HTTP_get_status,
+OSSL_HTTP_is_alive,
+OSSL_HTTP_may_retry
 - HTTP client low-level functions
 
 =head1 SYNOPSIS
@@ -35,8 +37,9 @@ OSSL_HTTP_is_alive
 
  int OSSL_HTTP_REQ_CTX_set_expected(OSSL_HTTP_REQ_CTX *rctx,
                                     const char *content_type, int asn1,
-                                    int timeout, int keep_alive);
- int OSSL_HTTP_REQ_CTX_set1_req(OSSL_HTTP_REQ_CTX *rctx, const char *content_type,
+                                    int timeout, int flags);
+ int OSSL_HTTP_REQ_CTX_set1_req(OSSL_HTTP_REQ_CTX *rctx,
+                                const char *content_type,
                                 const ASN1_ITEM *it, const ASN1_VALUE *req);
  int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx);
  int OSSL_HTTP_REQ_CTX_nbio_d2i(OSSL_HTTP_REQ_CTX *rctx,
@@ -48,7 +51,9 @@ OSSL_HTTP_is_alive
  void OSSL_HTTP_REQ_CTX_set_max_response_length(OSSL_HTTP_REQ_CTX *rctx,
                                                 unsigned long len);
 
+ int OSSL_HTTP_get_status(const OSSL_HTTP_REQ_CTX *rctx);
  int OSSL_HTTP_is_alive(const OSSL_HTTP_REQ_CTX *rctx);
+ int OSSL_HTTP_may_retry(const OSSL_HTTP_REQ_CTX *rctx);
 
 =head1 DESCRIPTION
 
@@ -74,7 +79,7 @@ The I<rbio> is not free'd, I<wbio> will be free'd if I<free_wbio> is set.
 
 OSSL_HTTP_REQ_CTX_set_request_line() adds the HTTP request line to the context.
 The HTTP method is determined by I<method_POST>,
-which should be 1 to indicate C<POST> or 0 to indicate C<GET>.
+which should be 1 to indicate the HTTP POST method or 0 to indicate HTTP GET.
 I<server> and I<port> may be set to indicate a proxy server and port
 that the request should go through, otherwise they should be left NULL.
 I<path> is the HTTP request path; if left NULL, C</> is used.
@@ -87,12 +92,16 @@ For example, to add a C<Host> header for C<example.com> you would call:
 
 OSSL_HTTP_REQ_CTX_set_expected() optionally sets in I<rctx> some expectations
 of the HTTP client on the response.
-Due to the structure of an HTTP request, if the I<keep_alive> argument is
-nonzero the function must be used before calling OSSL_HTTP_REQ_CTX_set1_req().
+When requesting "keep-alive", i.e., the I<flags> parameter contains
+B<OSSL_HTTP_FLAG_ENABLE_KEEP_ALIVE> or B<OSSL_HTTP_FLAG_REQUIRE_KEEP_ALIVE>,
+due to the structure of an HTTP request,
+the function must be used before calling OSSL_HTTP_REQ_CTX_set1_req().
 If the I<content_type> parameter
 is not NULL then the client will check that the given content type string
 is included in the HTTP header of the response and return an error if not.
-If the I<asn1> parameter is nonzero a structure in ASN.1 encoding will be
+If the I<asn1> parameter is nonzero, which has the same effect as
+including B<OSSL_HTTP_FLAG_EXPECT_ASN1> in the I<flags> parameter,
+a structure in ASN.1 encoding will be
 expected as the response content and input streaming is disabled.  This means
 that an ASN.1 sequence header is required, its length field is checked, and
 OSSL_HTTP_REQ_CTX_get0_mem_bio() should be used to get the buffered response.
@@ -104,13 +113,23 @@ the subsequent HTTP transfer (sending the request and receiving a response)
 is allowed to take.
 I<timeout> == 0 enables waiting indefinitely, i.e., no timeout can occur.
 This is the default.
-I<timeout> < 0 takes over any value set via the I<overall_timeout> argument of
+I<timeout> < 0 takes over any value set via the I<timeout> argument of
 L<OSSL_HTTP_open(3)> with the default being 0, which means no timeout.
-If the I<keep_alive> parameter is 0, which is the default, the connection is not
-kept open after receiving a response. This is the default behavior for HTTP 1.0.
-If the value is 1 or 2 then a persistent connection is requested.
-If the value is 2 then a persistent connection is required,
-i.e., an error occurs in case the server does not grant it.
+If the I<flags> parameter contains B<OSSL_HTTP_FLAG_ENABLE_KEEP_ALIVE>,
+the client requests the server to keep alive the HTTP connection.
+If I<flags> contains B<OSSL_HTTP_FLAG_REQUIRE_KEEP_ALIVE>, this implies
+B<OSSL_HTTP_FLAG_ENABLE_KEEP_ALIVE> and the persistent connection is required
+by the client, i.e., an error occurs in case the server does not grant it.
+If I<flags> contains neither of these flags, the connection is not kept open
+after receiving a response, which is the default behavior for HTTP 1.0.
+Including B<OSSL_HTTP_FLAG_EXPECT_ASN1> in I<flags> has the same effect
+as a nonzero I<asn1> parameter.
+Including B<OSSL_HTTP_FLAG_ENABLE_RETRY> causes the high-level functions
+L<OSSL_HTTP_get(3)>, L<OSSL_HTTP_get_ex(3)>, and L<OSSL_HTTP_transfer_ex(3)>
+to retry the request on non-fatal server errors, namely HTTP status codes
+102 (Processing), 408 (Request Timeout), 424 (Failed Dependency),
+429 (Too Many Requests), 500 (Internal Server Error),
+502 (Bad Gateway), 503 (Service Unavailable), and 504 (Gateway Timeout).
 
 OSSL_HTTP_REQ_CTX_set1_req() finalizes the HTTP request context.
 It is needed if the I<method_POST> parameter in the
@@ -148,6 +167,8 @@ and this BIO has been read past the end of the response headers,
 such that the actual response body can be read via this BIO,
 which may support streaming.
 The returned BIO pointer must not be freed by the caller.
+It is available until I<rctx> is deallocated, using OSSL_HTTP_REQ_CTX_free()
+or L<OSSL_HTTP_close(3)>.
 
 OSSL_HTTP_REQ_CTX_get0_mem_bio() returns the internal memory B<BIO>.
 Before sending the request, this could used to modify the HTTP request text.
@@ -167,17 +188,23 @@ If the C<Content-Length> header is present and exceeds this value or
 the content is an ASN.1 encoded structure with a length exceeding this value
 or both length indications are present but disagree then an error occurs.
 
+OSSL_HTTP_get_status() returns the last HTTP response status code received.
+
 OSSL_HTTP_is_alive() can be used to query if the HTTP connection
-given by I<rctx> is still alive, i.e., has not been closed.
-It returns 0 if I<rctx> is NULL.
+given by I<rctx> is still alive, i.e., I<rctx> is not NULL,
+the client requested (or even required) a persistent connection,
+and the server did not disagree on keeping the connection open.
 
 If the client application requested or required a persistent connection
-and this was granted by the server, it can keep I<rctx> as long as it wants
+and this was granted by the server, it can use I<rctx> as long as it wants
 to send further requests and OSSL_HTTP_is_alive() returns nonzero,
 else it should call I<OSSL_HTTP_REQ_CTX_free(rctx)> or L<OSSL_HTTP_close(3)>.
-In case the client application keeps I<rctx> but the connection then dies
+In case the client application retains I<rctx> but the connection then dies
 for any reason at the server side, it will notice this obtaining an
 I/O error when trying to send the next request via I<rctx>.
+
+OSSL_HTTP_may_retry() can be used to query if the last request may be retried,
+i.e., this has been enabled for the client and no fatal error has occurred.
 
 =head1 WARNINGS
 
@@ -235,9 +262,8 @@ The returned BIO must not be freed by the caller.
 OSSL_HTTP_REQ_CTX_get_resp_len() returns the size of the response contents
 or 0 if not available or an error occurred.
 
-OSSL_HTTP_is_alive() returns 1 if its argument is non-NULL
-and the client requested a persistent connection
-and the server did not disagree on keeping the connection open, else 0.
+OSSL_HTTP_get_status(), OSSL_HTTP_is_alive(), and OSSL_HTTP_may_retry()
+return the value specified above if the I<rctx> argument is non-NULL, else 0.
 
 =head1 SEE ALSO
 
@@ -246,13 +272,23 @@ L<BIO_wait(3)>,
 L<ASN1_item_d2i_bio(3)>,
 L<ASN1_item_i2d_mem_bio(3)>,
 L<OSSL_HTTP_open(3)>,
+L<OSSL_HTTP_FLAG_ENABLE_KEEP_ALIVE(3)>,
+L<OSSL_HTTP_FLAG_REQUIRE_KEEP_ALIVE(3)>,
+L<OSSL_HTTP_FLAG_ENABLE_RETRY(3)>,
+L<OSSL_HTTP_FLAG_EXPECT_ASN1(3)>,
+L<OSSL_HTTP_set1_request(3)>,
 L<OSSL_HTTP_get(3)>,
+L<OSSL_HTTP_get_ex(3)>,
 L<OSSL_HTTP_transfer(3)>,
+L<OSSL_HTTP_transfer_ex(3)>,
 L<OSSL_HTTP_close(3)>
 
 =head1 HISTORY
 
-The functions described here were added in OpenSSL 3.0.
+The functions OSSL_HTTP_get_status() and OSSL_HTTP_may_retry()
+were added in OpenSSL 3.1.
+
+The remaining functions described here were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

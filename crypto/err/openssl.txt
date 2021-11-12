@@ -758,7 +758,7 @@ EVP_R_XTS_DUPLICATED_KEYS:192:xts duplicated keys
 HTTP_R_ASN1_LEN_EXCEEDS_MAX_RESP_LEN:108:asn1 len exceeds max resp len
 HTTP_R_CONNECT_FAILURE:100:connect failure
 HTTP_R_ERROR_PARSING_ASN1_LENGTH:109:error parsing asn1 length
-HTTP_R_ERROR_PARSING_CONTENT_LENGTH:119:error parsing content length
+HTTP_R_ERROR_PARSING_ULONG:119:error parsing ulong
 HTTP_R_ERROR_PARSING_URL:101:error parsing url
 HTTP_R_ERROR_RECEIVING:103:error receiving
 HTTP_R_ERROR_SENDING:102:error sending
@@ -776,8 +776,11 @@ HTTP_R_RECEIVED_ERROR:105:received error
 HTTP_R_RECEIVED_WRONG_HTTP_VERSION:106:received wrong http version
 HTTP_R_REDIRECTION_FROM_HTTPS_TO_HTTP:112:redirection from https to http
 HTTP_R_REDIRECTION_NOT_ENABLED:116:redirection not enabled
+HTTP_R_REDIRECT_TIMEOUT:129:redirect timeout
 HTTP_R_RESPONSE_LINE_TOO_LONG:113:response line too long
 HTTP_R_RESPONSE_PARSE_ERROR:104:response parse error
+HTTP_R_RETRY_AFTER_TOO_LARGE:131:retry after too large
+HTTP_R_RETRY_TIMEOUT:130:retry timeout
 HTTP_R_SERVER_CANCELED_CONNECTION:127:server canceled connection
 HTTP_R_SOCK_NOT_SUPPORTED:122:sock not supported
 HTTP_R_STATUS_CODE_UNSUPPORTED:114:status code unsupported

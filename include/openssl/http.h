@@ -18,7 +18,6 @@
 # include <openssl/asn1.h>
 # include <openssl/conf.h>
 
-
 # ifdef __cplusplus
 extern "C" {
 # endif
@@ -33,8 +32,14 @@ extern "C" {
 # define OPENSSL_HTTP_PROXY "HTTP_PROXY"
 # define OPENSSL_HTTPS_PROXY "HTTPS_PROXY"
 
-#define OSSL_HTTP_DEFAULT_MAX_LINE_LEN (4 * 1024)
-#define OSSL_HTTP_DEFAULT_MAX_RESP_LEN (100 * 1024)
+# define OSSL_HTTP_DEFAULT_MAX_LINE_LEN (4 * 1024)
+# define OSSL_HTTP_DEFAULT_MAX_RESP_LEN (100 * 1024)
+
+# define OSSL_HTTP_FLAG_ENABLE_KEEP_ALIVE  0x01 /* persistent connect active */
+# define OSSL_HTTP_FLAG_REQUIRE_KEEP_ALIVE 0x02 /* persistent conn. required */
+# define OSSL_HTTP_FLAG_ENABLE_RETRY       0x04 /* retry on non-fatal error */
+# define OSSL_HTTP_FLAG_ENABLE_REDIRECT    0x08 /* follow GET redirection */
+# define OSSL_HTTP_FLAG_EXPECT_ASN1        0x10 /* expect ASN.1 encoded resp. */
 
 /* Low-level HTTP API */
 OSSL_HTTP_REQ_CTX *OSSL_HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio, int buf_size);
@@ -46,7 +51,7 @@ int OSSL_HTTP_REQ_CTX_add1_header(OSSL_HTTP_REQ_CTX *rctx,
                                   const char *name, const char *value);
 int OSSL_HTTP_REQ_CTX_set_expected(OSSL_HTTP_REQ_CTX *rctx,
                                    const char *content_type, int asn1,
-                                   int timeout, int keep_alive);
+                                   int timeout, int flags);
 int OSSL_HTTP_REQ_CTX_set1_req(OSSL_HTTP_REQ_CTX *rctx, const char *content_type,
                                const ASN1_ITEM *it, const ASN1_VALUE *req);
 int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx);
@@ -57,7 +62,9 @@ BIO *OSSL_HTTP_REQ_CTX_get0_mem_bio(const OSSL_HTTP_REQ_CTX *rctx);
 size_t OSSL_HTTP_REQ_CTX_get_resp_len(const OSSL_HTTP_REQ_CTX *rctx);
 void OSSL_HTTP_REQ_CTX_set_max_response_length(OSSL_HTTP_REQ_CTX *rctx,
                                                unsigned long len);
+int OSSL_HTTP_get_status(const OSSL_HTTP_REQ_CTX *rctx);
 int OSSL_HTTP_is_alive(const OSSL_HTTP_REQ_CTX *rctx);
+int OSSL_HTTP_may_retry(const OSSL_HTTP_REQ_CTX *rctx);
 
 /* High-level HTTP API */
 typedef BIO *(*OSSL_HTTP_bio_cb_t)(BIO *bio, void *arg, int connect, int detail);
@@ -65,7 +72,8 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
                                   const char *proxy, const char *no_proxy,
                                   int use_ssl, BIO *bio, BIO *rbio,
                                   OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
-                                  int buf_size, int overall_timeout);
+                                  int buf_size, int timeout);
+int OSSL_HTTP_set_overall_timeout(OSSL_HTTP_REQ_CTX *rctx, long timeout);
 int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
                             const char *proxyuser, const char *proxypass,
                             int timeout, BIO *bio_err, const char *prog);
@@ -73,14 +81,20 @@ int OSSL_HTTP_set1_request(OSSL_HTTP_REQ_CTX *rctx, const char *path,
                            const STACK_OF(CONF_VALUE) *headers,
                            const char *content_type, BIO *req,
                            const char *expected_content_type, int expect_asn1,
-                           size_t max_resp_len, int timeout, int keep_alive);
+                           size_t max_resp_len, int timeout, int flags);
 BIO *OSSL_HTTP_exchange(OSSL_HTTP_REQ_CTX *rctx, char **redirection_url);
-BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
-                   BIO *bio, BIO *rbio,
-                   OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
-                   int buf_size, const STACK_OF(CONF_VALUE) *headers,
-                   const char *expected_content_type, int expect_asn1,
-                   size_t max_resp_len, int timeout);
+BIO *OSSL_HTTP_get_ex(const char *url, const char *proxy, const char *no_proxy,
+                      BIO *bio, BIO *rbio,
+                      OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
+                      int buf_size, const STACK_OF(CONF_VALUE) *headers,
+                      const char *expected_content_type, int flags,
+                      size_t max_resp_len, unsigned long default_retry_after,
+                      long timeout);
+# define OSSL_HTTP_get(url, proxy, no_proxy, bio, rbio, upd_fn, arg, buf_size, \
+                       hdrs, expectd_ct, asn1, max_resp, timeout)              \
+    OSSL_HTTP_get_ex(url, proxy, no_proxy, bio, rbio, upd_fn, arg, buf_size,   \
+                     hdrs, expectd_ct, (asn1 ? OSSL_HTTP_FLAG_EXPECT_ASN1 : 0) \
+                     | OSSL_HTTP_FLAG_ENABLE_REDIRECT, max_resp, 0, timeout)
 BIO *OSSL_HTTP_transfer(OSSL_HTTP_REQ_CTX **prctx,
                         const char *server, const char *port,
                         const char *path, int use_ssl,
@@ -90,7 +104,20 @@ BIO *OSSL_HTTP_transfer(OSSL_HTTP_REQ_CTX **prctx,
                         int buf_size, const STACK_OF(CONF_VALUE) *headers,
                         const char *content_type, BIO *req,
                         const char *expected_content_type, int expect_asn1,
-                        size_t max_resp_len, int timeout, int keep_alive);
+                        size_t max_resp_len, int timeout, int flags);
+BIO *OSSL_HTTP_transfer_ex(OSSL_HTTP_REQ_CTX **prctx,
+                           const char *server, const char *port,
+                           const char *path, int use_ssl,
+                           const char *proxy, const char *no_proxy,
+                           BIO *bio, BIO *rbio,
+                           OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
+                           int buf_size, const STACK_OF(CONF_VALUE) *headers,
+                           const char *content_type, BIO *req,
+                           const void *req_data, int req_len,
+                           const ASN1_VALUE *req_asn1, const ASN1_ITEM *it,
+                           const char *expected_ct, int flags,
+                           size_t max_resp_len,
+                           unsigned long default_retry_after, long timeout);
 int OSSL_HTTP_close(OSSL_HTTP_REQ_CTX *rctx, int ok);
 
 /* Auxiliary functions */

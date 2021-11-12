@@ -4891,7 +4891,7 @@ OSSL_HTTP_open                          5018	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_proxy_connect                 5019	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_set1_request                  5020	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_exchange                      5021	3_0_0	EXIST::FUNCTION:
-OSSL_HTTP_get                           5022	3_0_0	EXIST::FUNCTION:
+OSSL_HTTP_get_ex                        5022	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_transfer                      5023	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_close                         5024	3_0_0	EXIST::FUNCTION:
 ASN1_item_i2d_mem_bio                   5025	3_0_0	EXIST::FUNCTION:
@@ -5425,3 +5425,7 @@ ASN1_item_d2i_ex                        5552	3_0_0	EXIST::FUNCTION:
 ASN1_TIME_print_ex                      5553	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_get0_provider                  5554	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_get0_provider              5555	3_0_0	EXIST::FUNCTION:
+OSSL_HTTP_get_status                    ?	3_1_0	EXIST::FUNCTION:
+OSSL_HTTP_may_retry                     ?	3_1_0	EXIST::FUNCTION:
+OSSL_HTTP_set_overall_timeout           ?	3_1_0	EXIST::FUNCTION:
+OSSL_HTTP_transfer_ex                   ?	3_1_0	EXIST::FUNCTION:

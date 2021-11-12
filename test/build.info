@@ -57,7 +57,8 @@ IF[{- !$disabled{tests} -}]
           x509_time_test x509_dup_cert_test x509_check_cert_pkey_test \
           recordlentest drbgtest rand_status_test sslbuffertest \
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
-          http_test servername_test ocspapitest fatalerrtest tls13ccstest \
+          http_test http_wget_test \
+          servername_test ocspapitest fatalerrtest tls13ccstest \
           sysdefaulttest errtest ssl_ctx_test \
           context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
           keymgmt_internal_test hexstr_test provider_status_test defltfips_test \
@@ -395,8 +396,12 @@ IF[{- !$disabled{tests} -}]
   DEPEND[ocspapitest]=../libcrypto libtestutil.a
 
   IF[{- !$disabled{sock} -}]
-    PROGRAMS{noinst}=http_test
+    PROGRAMS{noinst}=http_wget_test
   ENDIF
+
+  SOURCE[http_wget_test]=http_wget_test.c
+  INCLUDE[http_wget_test]=../include ../apps/include
+  DEPEND[http_wget_test]=../libcrypto ../libssl libtestutil.a
 
   SOURCE[http_test]=http_test.c
   INCLUDE[http_test]=../include ../apps/include
