@@ -1445,6 +1445,35 @@ static int test_EVP_Digest(void)
     return ret;
 }
 
+static int test_EVP_md_null(void)
+{
+    int ret = 0;
+    EVP_MD_CTX *md_ctx = NULL;
+    const EVP_MD *md_null = EVP_md_null();
+    unsigned char md_value[EVP_MAX_MD_SIZE];
+    unsigned int md_len = sizeof(md_value);
+
+    if (nullprov != NULL)
+        return TEST_skip("Test does not support a non-default library context");
+
+    if (!TEST_ptr(md_null)
+        || !TEST_ptr(md_ctx = EVP_MD_CTX_new()))
+        goto out;
+
+    if (!TEST_true(EVP_DigestInit_ex(md_ctx, md_null, NULL))
+        || !TEST_true(EVP_DigestUpdate(md_ctx, "test", 4))
+        || !TEST_true(EVP_DigestFinal_ex(md_ctx, md_value, &md_len)))
+        goto out;
+
+    if (!TEST_uint_eq(md_len, 0))
+        goto out;
+
+    ret = 1;
+ out:
+    EVP_MD_CTX_free(md_ctx);
+    return ret;
+}
+
 static int test_d2i_AutoPrivateKey(int i)
 {
     int ret = 0;
@@ -4249,6 +4278,7 @@ int setup_tests(void)
     ADD_TEST(test_siphash_digestsign);
 #endif
     ADD_TEST(test_EVP_Digest);
+    ADD_TEST(test_EVP_md_null);
     ADD_ALL_TESTS(test_EVP_PKEY_sign, 3);
     ADD_ALL_TESTS(test_EVP_Enveloped, 2);
     ADD_ALL_TESTS(test_d2i_AutoPrivateKey, OSSL_NELEM(keydata));

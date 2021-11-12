@@ -229,7 +229,10 @@ static int evp_md_init_internal(EVP_MD_CTX *ctx, const EVP_MD *type,
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         return 0;
 #else
-        EVP_MD *provmd = EVP_MD_fetch(NULL, OBJ_nid2sn(type->type), "");
+        /* The NULL digest is a special case */
+        EVP_MD *provmd = EVP_MD_fetch(NULL,
+                                      type->type != NID_undef ? OBJ_nid2sn(type->type)
+                                                              : "NULL", "");
 
         if (provmd == NULL) {
             ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
