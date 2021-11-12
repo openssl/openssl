@@ -525,7 +525,7 @@ int EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, EC_KEY *key)
 
 EC_KEY *EVP_PKEY_get0_EC_KEY(EVP_PKEY *pkey)
 {
-    if (pkey->type != EVP_PKEY_EC) {
+    if (EVP_PKEY_base_id(pkey) != EVP_PKEY_EC) {
         EVPerr(EVP_F_EVP_PKEY_GET0_EC_KEY, EVP_R_EXPECTING_A_EC_KEY);
         return NULL;
     }
