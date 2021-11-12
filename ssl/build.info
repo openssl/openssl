@@ -42,6 +42,10 @@ IF[{- !$disabled{'deprecated-3.0'} -}]
   SOURCE[../libssl]=ssl_rsa_legacy.c
 ENDIF
 
+IF[{- !$disabled{quic} -}]
+  SOURCE[../libssl]=priority_queue.c
+ENDIF
+
 DEFINE[../libssl]=$AESDEF
 
 SOURCE[../providers/libcommon.a]=record/tls_pad.c
