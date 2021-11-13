@@ -47,7 +47,7 @@ static int int_engine_configure(const char *name, const char *value, const CONF 
     long do_init = -1;
     STACK_OF(CONF_VALUE) *ecmds;
     CONF_VALUE *ecmd = NULL;
-    const char *ctrlname, *ctrlvalue;
+    const char *ctrlname, *ctrlvalue, *dynamic_path = NULL;
     ENGINE *e = NULL;
     int soft = 0;
 
@@ -76,19 +76,34 @@ static int int_engine_configure(const char *name, const char *value, const CONF 
         else if (strcmp(ctrlname, "soft_load") == 0)
             soft = 1;
         /* Load a dynamic ENGINE */
-        else if (strcmp(ctrlname, "dynamic_path") == 0) {
-            e = ENGINE_by_id("dynamic");
-            if (!e)
-                goto err;
-            if (!ENGINE_ctrl_cmd_string(e, "SO_PATH", ctrlvalue, 0))
-                goto err;
-            if (!ENGINE_ctrl_cmd_string(e, "LIST_ADD", "2", 0))
-                goto err;
-            if (!ENGINE_ctrl_cmd_string(e, "LOAD", NULL, 0))
-                goto err;
-        }
+        else if (strcmp(ctrlname, "dynamic_path") == 0)
+            dynamic_path = ctrlvalue;
         /* ... add other pseudos here ... */
         else {
+            /* Load a dynamic ENGINE now that we are sure about it's engine_id */
+            if (dynamic_path) {
+                /*
+                 * Check if the engine exists before we try to load it.
+                 * This solves various errors caused by trying to load
+                 * the same engine more than once.
+                 */
+                e = ENGINE_by_id(name);
+                if (e)
+                    goto err;
+
+                e = ENGINE_by_id("dynamic");
+                if (!e)
+                    goto err;
+                if (!ENGINE_ctrl_cmd_string(e, "SO_PATH", dynamic_path, 0))
+                    goto err;
+                if (!ENGINE_ctrl_cmd_string(e, "ID", name, 0))
+                    goto err;
+                if (!ENGINE_ctrl_cmd_string(e, "LIST_ADD", "2", 0))
+                    goto err;
+                if (!ENGINE_ctrl_cmd_string(e, "LOAD", NULL, 0))
+                    goto err;
+            }
+
             /*
              * At this point we need an ENGINE structural reference if we
              * don't already have one.
