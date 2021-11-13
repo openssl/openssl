@@ -263,9 +263,9 @@ extern char *psk_key;
 
 unsigned char *next_protos_parse(size_t *outlen, const char *in);
 
-void print_cert_checks(BIO *bio, X509 *x,
+int X509_check_cert(BIO *bio, X509 *x,
                        const char *checkhost,
-                       const char *checkemail, const char *checkip);
+                       const char *checkemail, const char *checkip, int print);
 
 void store_setup_crl_download(X509_STORE *st);
 
