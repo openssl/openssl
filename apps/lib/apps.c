@@ -2116,24 +2116,24 @@ int X509_check_cert(BIO *bio, X509 *x,
         return 0;
 
     if (checkhost) {
-	    int valid_host = X509_check_host(x, checkhost, 0, 0, NULL);
-	    if (print)
-		BIO_printf(bio, "Hostname %s does%s match certificate\n", checkhost, valid_host == 1 ? "" : " NOT");
-	    ret = ret && valid_host;
+        int valid_host = X509_check_host(x, checkhost, 0, 0, NULL);
+        if (print)
+            BIO_printf(bio, "Hostname %s does%s match certificate\n", checkhost, valid_host == 1 ? "" : " NOT");
+        ret = ret && valid_host;
     }
 
     if (checkemail) {
-	    int valid_mail = X509_check_email(x, checkemail, 0, 0);
-	    if (print)
-		BIO_printf(bio, "Email %s does%s match certificate\n",   checkemail, valid_mail ? "" : " NOT");
-	    ret = ret && valid_mail;
+        int valid_mail = X509_check_email(x, checkemail, 0, 0);
+        if (print)
+            BIO_printf(bio, "Email %s does%s match certificate\n",   checkemail, valid_mail ? "" : " NOT");
+        ret = ret && valid_mail;
     }
 
     if (checkip) {
-	   int valid_ip   =  X509_check_ip_asc(x, checkip, 0);
-	   if (print)
-		BIO_printf(bio, "IP %s does%s match certificate\n",      checkip,  valid_ip ? "" : " NOT");
-	   ret = ret && valid_ip;
+        int valid_ip   =  X509_check_ip_asc(x, checkip, 0);
+        if (print)
+            BIO_printf(bio, "IP %s does%s match certificate\n",      checkip,  valid_ip ? "" : " NOT");
+        ret = ret && valid_ip;
     }
 
     return ret;

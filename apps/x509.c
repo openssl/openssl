@@ -1038,7 +1038,7 @@ int x509_main(int argc, char **argv)
     }
 
     if (! X509_check_cert(out, x, checkhost, checkemail, checkip, 1))
-	goto fail;
+        goto fail;
 
     if (noout || nocert) {
         goto end;
