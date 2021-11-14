@@ -69,6 +69,10 @@ IF[{- !$disabled{tests} -}]
     PROGRAMS{noinst}=enginetest
   ENDIF
 
+  IF[{- !$disabled{quic} -}]
+    PROGRAMS{noinst}=priority_queue_test
+  ENDIF
+
   SOURCE[confdump]=confdump.c
   INCLUDE[confdump]=../include ../apps/include
   DEPEND[confdump]=../libcrypto
@@ -702,6 +706,12 @@ IF[{- !$disabled{tests} -}]
     SOURCE[sparse_array_test]=sparse_array_test.c
     INCLUDE[sparse_array_test]=../include ../apps/include
     DEPEND[sparse_array_test]=../libcrypto.a libtestutil.a
+
+    IF[{- !$disabled{quic} -}]
+      SOURCE[priority_queue_test]=priority_queue_test.c
+      INCLUDE[priority_queue_test]=../include ../apps/include
+      DEPEND[priority_queue_test]=../libssl.a ../libcrypto.a libtestutil.a
+    ENDIF
 
     SOURCE[dhtest]=dhtest.c
     INCLUDE[dhtest]=../include ../apps/include
