@@ -340,7 +340,7 @@ static EVP_PKEY *dsa_paramgen(int L, int N)
     EVP_PKEY *param_key = NULL;
 
     if (!TEST_ptr(paramgen_ctx = EVP_PKEY_CTX_new_from_name(libctx, "DSA", NULL))
-        || !TEST_true(EVP_PKEY_paramgen_init(paramgen_ctx))
+        || !TEST_int_gt(EVP_PKEY_paramgen_init(paramgen_ctx), 0)
         || !TEST_true(EVP_PKEY_CTX_set_dsa_paramgen_bits(paramgen_ctx, L))
         || !TEST_true(EVP_PKEY_CTX_set_dsa_paramgen_q_bits(paramgen_ctx, N))
         || !TEST_true(EVP_PKEY_paramgen(paramgen_ctx, &param_key)))
@@ -416,7 +416,7 @@ static int dsa_paramgen_test(int id)
     const struct dsa_paramgen_st *tst = &dsa_paramgen_data[id];
 
     if (!TEST_ptr(paramgen_ctx = EVP_PKEY_CTX_new_from_name(libctx, "DSA", NULL))
-        || !TEST_true(EVP_PKEY_paramgen_init(paramgen_ctx))
+        || !TEST_int_gt(EVP_PKEY_paramgen_init(paramgen_ctx), 0)
         || !TEST_true(EVP_PKEY_CTX_set_dsa_paramgen_bits(paramgen_ctx, tst->L))
         || !TEST_true(EVP_PKEY_CTX_set_dsa_paramgen_q_bits(paramgen_ctx, tst->N))
         || !TEST_true(EVP_PKEY_paramgen(paramgen_ctx, &param_key))

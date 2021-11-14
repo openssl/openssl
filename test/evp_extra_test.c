@@ -1695,7 +1695,7 @@ static int test_EC_keygen_with_enc(int idx)
 
     /* Create key parameters */
     if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_name(testctx, "EC", NULL))
-        || !TEST_true(EVP_PKEY_paramgen_init(pctx))
+        || !TEST_int_gt(EVP_PKEY_paramgen_init(pctx), 0)
         || !TEST_true(EVP_PKEY_CTX_set_group_name(pctx, "P-256"))
         || !TEST_true(EVP_PKEY_CTX_set_ec_param_enc(pctx, enc))
         || !TEST_true(EVP_PKEY_paramgen(pctx, &params))
