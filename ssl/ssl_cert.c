@@ -625,7 +625,7 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file_ex(const char *file,
         ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         goto err;
     }
-    if (!BIO_read_filename(in, file))
+    if (BIO_read_filename(in, file) <= 0)
         goto err;
 
     /* Internally lh_X509_NAME_retrieve() needs the libctx to retrieve SHA1 */
@@ -696,7 +696,7 @@ int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
         goto err;
     }
 
-    if (!BIO_read_filename(in, file))
+    if (BIO_read_filename(in, file) <= 0)
         goto err;
 
     for (;;) {
