@@ -1337,7 +1337,7 @@ static int execute_test_ktls_sendfile(int tls_version, const char *cipher)
         goto end;
     }
 
-    if (!TEST_true(RAND_bytes_ex(libctx, buf, SENDFILE_SZ, 0)))
+    if (!TEST_int_gt(RAND_bytes_ex(libctx, buf, SENDFILE_SZ, 0), 0))
         goto end;
 
     out = BIO_new_file(tmpfilename, "wb");
