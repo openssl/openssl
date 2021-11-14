@@ -2959,11 +2959,11 @@ static void print_connection_info(SSL *con)
         BIO_printf(bio_s_out, "    Label: '%s'\n", keymatexportlabel);
         BIO_printf(bio_s_out, "    Length: %i bytes\n", keymatexportlen);
         exportedkeymat = app_malloc(keymatexportlen, "export key");
-        if (!SSL_export_keying_material(con, exportedkeymat,
+        if (SSL_export_keying_material(con, exportedkeymat,
                                         keymatexportlen,
                                         keymatexportlabel,
                                         strlen(keymatexportlabel),
-                                        NULL, 0, 0)) {
+                                        NULL, 0, 0) <= 0) {
             BIO_printf(bio_s_out, "    Error\n");
         } else {
             BIO_printf(bio_s_out, "    Keying material: ");
