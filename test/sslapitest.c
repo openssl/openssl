@@ -6802,7 +6802,7 @@ static int create_new_vfile(char *userid, char *password, const char *filename)
 
     row = NULL;
 
-    if (!TXT_DB_write(out, db))
+    if (TXT_DB_write(out, db) <= 0)
         goto end;
 
     ret = 1;
