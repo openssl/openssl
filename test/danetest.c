@@ -152,7 +152,7 @@ static char *read_to_eol(BIO *f)
     static char buf[4096];
     int n;
 
-    if (!BIO_gets(f, buf, sizeof(buf)))
+    if (BIO_gets(f, buf, sizeof(buf)) <= 0)
         return NULL;
 
     n = strlen(buf);
