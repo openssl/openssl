@@ -251,7 +251,7 @@ static int ssl3_cbc_copy_mac(size_t *reclen,
     }
 
     /* Create the random MAC we will emit if padding is bad */
-    if (!RAND_bytes_ex(libctx, randmac, mac_size, 0))
+    if (RAND_bytes_ex(libctx, randmac, mac_size, 0) <= 0)
         return 0;
 
     if (!ossl_assert(mac != NULL && alloced != NULL))
