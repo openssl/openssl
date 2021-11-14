@@ -194,7 +194,7 @@ int dhparam_main(int argc, char **argv)
                     "Generating %s parameters, %d bit long %sprime\n",
                     alg, num, dsaparam ? "" : "safe ");
 
-        if (!EVP_PKEY_paramgen_init(ctx)) {
+        if (EVP_PKEY_paramgen_init(ctx) <= 0) {
             BIO_printf(bio_err,
                         "Error, unable to initialise %s parameters\n",
                         alg);
