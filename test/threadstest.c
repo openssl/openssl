@@ -410,7 +410,7 @@ static void thread_shared_evp_pkey(void)
     char *msg = "Hello World";
     unsigned char ctbuf[256];
     unsigned char ptbuf[256];
-    size_t ptlen = sizeof(ptbuf), ctlen = sizeof(ctbuf);
+    size_t ptlen, ctlen = sizeof(ctbuf);
     EVP_PKEY_CTX *ctx = NULL;
     int success = 0;
     int i;
@@ -436,8 +436,9 @@ static void thread_shared_evp_pkey(void)
         if (!TEST_ptr(ctx))
             goto err;
 
+        ptlen = sizeof(ptbuf);
         if (!TEST_int_ge(EVP_PKEY_decrypt_init(ctx), 0)
-                || !TEST_int_ge(EVP_PKEY_decrypt(ctx, ptbuf, &ptlen, ctbuf, ctlen),
+                || !TEST_int_gt(EVP_PKEY_decrypt(ctx, ptbuf, &ptlen, ctbuf, ctlen),
                                                 0)
                 || !TEST_mem_eq(msg, strlen(msg), ptbuf, ptlen))
             goto err;

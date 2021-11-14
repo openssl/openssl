@@ -1261,7 +1261,7 @@ static int rsa_decryption_primitive_test(int id)
 
     test_output_memory("n", n, n_len);
     test_output_memory("e", e, e_len);
-    if (!EVP_PKEY_decrypt(ctx, pt, &pt_len, tst->ct, tst->ct_len))
+    if (EVP_PKEY_decrypt(ctx, pt, &pt_len, tst->ct, tst->ct_len) <= 0)
         TEST_note("Decryption Failed");
     else
         test_output_memory("pt", pt, pt_len);
