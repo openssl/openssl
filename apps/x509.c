@@ -1041,6 +1041,7 @@ int x509_main(int argc, char **argv)
         goto fail;
 
     if (noout || nocert) {
+        ret = 0;
         goto end;
     }
 
