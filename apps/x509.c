@@ -1037,7 +1037,7 @@ int x509_main(int argc, char **argv)
         goto end;
     }
 
-    if (! check_cert(out, x, checkhost, checkemail, checkip, 1))
+    if (!check_cert_attributes(out, x, checkhost, checkemail, checkip, 1))
         goto err;
 
     if (noout || nocert) {
@@ -1065,7 +1065,7 @@ int x509_main(int argc, char **argv)
     goto end;
 
  err:
-        ERR_print_errors(bio_err);
+    ERR_print_errors(bio_err);
 
  end:
     NCONF_free(extconf);
