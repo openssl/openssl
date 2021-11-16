@@ -2122,7 +2122,7 @@ int check_cert_attributes(BIO *bio, X509 *x,
         valid_host = X509_check_host(x, checkhost, 0, 0, NULL);
         if (print)
             BIO_printf(bio, "Hostname %s does%s match certificate\n",
-            checkhost, valid_host == 1 ? "" : " NOT");
+                       checkhost, valid_host == 1 ? "" : " NOT");
         ret = ret && valid_host;
     }
 
@@ -2130,7 +2130,7 @@ int check_cert_attributes(BIO *bio, X509 *x,
         valid_mail = X509_check_email(x, checkemail, 0, 0);
         if (print)
             BIO_printf(bio, "Email %s does%s match certificate\n",
-            checkemail, valid_mail ? "" : " NOT");
+                       checkemail, valid_mail ? "" : " NOT");
         ret = ret && valid_mail;
     }
 
@@ -2138,7 +2138,7 @@ int check_cert_attributes(BIO *bio, X509 *x,
         valid_ip   =  X509_check_ip_asc(x, checkip, 0);
         if (print)
             BIO_printf(bio, "IP %s does%s match certificate\n",
-            checkip,  valid_ip ? "" : " NOT");
+                       checkip,  valid_ip ? "" : " NOT");
         ret = ret && valid_ip;
     }
 
