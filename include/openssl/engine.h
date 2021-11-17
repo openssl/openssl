@@ -331,9 +331,13 @@ OSSL_DEPRECATEDIN_3_0 int ENGINE_add(ENGINE *e);
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
 OSSL_DEPRECATEDIN_3_0 int ENGINE_remove(ENGINE *e);
 #  endif
-/* Retrieve an engine from the list by its unique "id" value. */
+/* Retrieve an engine from the list by its unique "id", may load new engines. */
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
 OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_by_id(const char *id);
+#  endif
+/* Retrieve an engine from the list by its unique "id" value. */
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0 ENGINE *ENGINE_search(const char *id);
 #  endif
 
 #  ifndef OPENSSL_NO_DEPRECATED_1_1_0
