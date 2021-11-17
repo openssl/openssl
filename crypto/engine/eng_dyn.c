@@ -403,7 +403,7 @@ static int int_load(dynamic_data_ctx *ctx)
 
 static int dynamic_load(ENGINE *e, dynamic_data_ctx *ctx)
 {
-    ENGINE cpy;
+    ENGINE cpy, *prev;
     dynamic_fns fns;
 
     if (ctx->dynamic_dso == NULL)
@@ -417,6 +417,24 @@ static int dynamic_load(ENGINE *e, dynamic_data_ctx *ctx)
                  DSO_FLAG_NAME_TRANSLATION_EXT_ONLY, NULL);
         ctx->DYNAMIC_LIBNAME =
             DSO_convert_filename(ctx->dynamic_dso, ctx->engine_id);
+    }
+    if (ctx->engine_id && ctx->list_add_value > 0) {
+        /*
+         * Check if the engine exists before we try to load it.
+         * This solves various errors caused by trying to load
+         * the same engine more than once.
+         */
+        prev = ENGINE_search(ctx->engine_id);
+        if (prev) {
+            /* Decrement back the refcount of the engine */
+            ENGINE_free(prev);
+            /* Do we tolerate this or fail? */
+            if (ctx->list_add_value > 1) {
+                ERR_raise(ERR_LIB_ENGINE, ENGINE_R_CONFLICTING_ENGINE_ID);
+                return 0;
+            }
+            /* Tolerate */
+        }
     }
     if (!int_load(ctx)) {
         ERR_raise(ERR_LIB_ENGINE, ENGINE_R_DSO_NOT_FOUND);
