@@ -1632,8 +1632,10 @@ CA_DB *load_index(const char *dbfile, DB_ATTR *db_attr)
     }
 #endif
 
-    if ((tmpdb = TXT_DB_read(in, DB_NUMBER)) == NULL)
+    if ((tmpdb = TXT_DB_read(in, DB_NUMBER)) == NULL) {
+        BIO_printf(bio_err, "TXT_DB_read failed reading %s\n", dbfile);
         goto err;
+    }
 
 #ifndef OPENSSL_SYS_VMS
     BIO_snprintf(buf, sizeof(buf), "%s.attr", dbfile);
