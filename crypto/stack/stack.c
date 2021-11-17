@@ -168,7 +168,7 @@ static ossl_inline int compute_growth(int target, int current)
         current = safe_muldiv_int(current, 8, 5, &err);
         if (err)
             return 0;
-        if (current > max_nodes)
+        if (current >= max_nodes)
             current = max_nodes;
     }
     return current;

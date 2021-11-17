@@ -613,6 +613,12 @@ static int print_to_bio_out(const char *func, const char *file, int line,
     return OSSL_CMP_print_to_bio(bio_out, func, file, line, level, msg);
 }
 
+static int print_to_bio_err(const char *func, const char *file, int line,
+                            OSSL_CMP_severity level, const char *msg)
+{
+    return OSSL_CMP_print_to_bio(bio_err, func, file, line, level, msg);
+}
+
 static int set_verbosity(int level)
 {
     if (level < OSSL_CMP_LOG_EMERG || level > OSSL_CMP_LOG_MAX) {
@@ -1704,11 +1710,10 @@ static int handle_opt_geninfo(OSSL_CMP_CTX *ctx)
     valptr[0] = '\0';
     valptr++;
 
-    if (strncasecmp(valptr, "int:", 4) != 0) {
+    if (!CHECK_AND_SKIP_CASE_PREFIX(valptr, "int:")) {
         CMP_err("missing 'int:' in -geninfo option");
         return 0;
     }
-    valptr += 4;
 
     value = strtol(valptr, &endstr, 10);
     if (endstr == valptr || *endstr != '\0') {
@@ -2068,16 +2073,16 @@ static int read_config(void)
     long num = 0;
     char *txt = NULL;
     const OPTIONS *opt;
-    int start = OPT_VERBOSITY;
+    int start_opt = OPT_VERBOSITY - OPT_HELP;
+    int start_idx = OPT_VERBOSITY - 2;
     /*
      * starting with offset OPT_VERBOSITY because OPT_CONFIG and OPT_SECTION
      * would not make sense within the config file.
-     * Moreover, these two options and OPT_VERBOSITY have already been handled.
      */
     int n_options = OSSL_NELEM(cmp_options) - 1;
 
-    for (i = start - OPT_HELP, opt = &cmp_options[start];
-         opt->name; i++, opt++)
+    for (opt = &cmp_options[start_opt], i = start_idx;
+         opt->name != NULL; i++, opt++)
         if (!strcmp(opt->name, OPT_SECTION_STR)
                 || !strcmp(opt->name, OPT_MORE_STR))
             n_options--;
@@ -2085,8 +2090,8 @@ static int read_config(void)
                  + OPT_PROV__FIRST + 1 - OPT_PROV__LAST
                  + OPT_R__FIRST + 1 - OPT_R__LAST
                  + OPT_V__FIRST + 1 - OPT_V__LAST);
-    for (i = start - OPT_HELP, opt = &cmp_options[start];
-         opt->name; i++, opt++) {
+    for (opt = &cmp_options[start_opt], i = start_idx;
+         opt->name != NULL; i++, opt++) {
         int provider_option = (OPT_PROV__FIRST <= opt->retval
                                && opt->retval < OPT_PROV__LAST);
         int rand_state_option = (OPT_R__FIRST <= opt->retval
@@ -2116,7 +2121,7 @@ static int read_config(void)
                                   num, opt->name);
                 return -1;
             }
-            if (opt->valtype == 'N' && num <= 0) {
+            if (opt->valtype == 'N' && num < 0) {
                 opt_printf_stderr("Negative number \"%ld\" for config option -%s\n",
                                   num, opt->name);
                 return -1;
@@ -2226,7 +2231,10 @@ static int get_opts(int argc, char **argv)
             return -1;
         case OPT_CONFIG: /* has already been handled */
         case OPT_SECTION: /* has already been handled */
-        case OPT_VERBOSITY: /* has already been handled */
+            break;
+        case OPT_VERBOSITY:
+            if (!set_verbosity(opt_int_arg()))
+                goto opthelp;
             break;
         case OPT_SERVER:
             opt_server = opt_str();
@@ -2697,6 +2705,8 @@ int cmp_main(int argc, char **argv)
                 }
             }
             ret = read_config();
+            if (!set_verbosity(opt_verbosity)) /* just for checking range */
+                ret = -1;
             if (ret <= 0) {
                 if (ret == -1)
                     BIO_printf(bio_err, "Use -help for summary.\n");
@@ -2750,7 +2760,7 @@ int cmp_main(int argc, char **argv)
             goto err;
         srv_cmp_ctx = OSSL_CMP_SRV_CTX_get0_cmp_ctx(srv_ctx);
         OSSL_CMP_CTX_set_transfer_cb_arg(cmp_ctx, srv_ctx);
-        if (!OSSL_CMP_CTX_set_log_cb(srv_cmp_ctx, print_to_bio_out)) {
+        if (!OSSL_CMP_CTX_set_log_cb(srv_cmp_ctx, print_to_bio_err)) {
             CMP_err1("cannot set up error reporting and logging for %s", prog);
             goto err;
         }

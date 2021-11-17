@@ -260,21 +260,21 @@ static char *app_get_pass(const char *arg, int keepbio)
     int i;
 
     /* PASS_SOURCE_SIZE_MAX = max number of chars before ':' in below strings */
-    if (strncmp(arg, "pass:", 5) == 0)
-        return OPENSSL_strdup(arg + 5);
-    if (strncmp(arg, "env:", 4) == 0) {
-        tmp = getenv(arg + 4);
+    if (CHECK_AND_SKIP_PREFIX(arg, "pass:"))
+        return OPENSSL_strdup(arg);
+    if (CHECK_AND_SKIP_PREFIX(arg, "env:")) {
+        tmp = getenv(arg);
         if (tmp == NULL) {
-            BIO_printf(bio_err, "No environment variable %s\n", arg + 4);
+            BIO_printf(bio_err, "No environment variable %s\n", arg);
             return NULL;
         }
         return OPENSSL_strdup(tmp);
     }
     if (!keepbio || pwdbio == NULL) {
-        if (strncmp(arg, "file:", 5) == 0) {
-            pwdbio = BIO_new_file(arg + 5, "r");
+        if (CHECK_AND_SKIP_PREFIX(arg, "file:")) {
+            pwdbio = BIO_new_file(arg, "r");
             if (pwdbio == NULL) {
-                BIO_printf(bio_err, "Can't open file %s\n", arg + 5);
+                BIO_printf(bio_err, "Can't open file %s\n", arg);
                 return NULL;
             }
 #if !defined(_WIN32)
@@ -286,13 +286,13 @@ static char *app_get_pass(const char *arg, int keepbio)
              * on real Windows descriptors, such as those obtained
              * with CreateFile.
              */
-        } else if (strncmp(arg, "fd:", 3) == 0) {
+        } else if (CHECK_AND_SKIP_PREFIX(arg, "fd:")) {
             BIO *btmp;
-            i = atoi(arg + 3);
+            i = atoi(arg);
             if (i >= 0)
                 pwdbio = BIO_new_fd(i, BIO_NOCLOSE);
             if ((i < 0) || !pwdbio) {
-                BIO_printf(bio_err, "Can't access file descriptor %s\n", arg + 3);
+                BIO_printf(bio_err, "Can't access file descriptor %s\n", arg);
                 return NULL;
             }
             /*
@@ -450,10 +450,8 @@ CONF *app_load_config_modules(const char *configfile)
     return conf;
 }
 
-#define IS_HTTP(uri) ((uri) != NULL \
-        && strncmp(uri, OSSL_HTTP_PREFIX, strlen(OSSL_HTTP_PREFIX)) == 0)
-#define IS_HTTPS(uri) ((uri) != NULL \
-        && strncmp(uri, OSSL_HTTPS_PREFIX, strlen(OSSL_HTTPS_PREFIX)) == 0)
+#define IS_HTTP(uri) ((uri) != NULL  && HAS_PREFIX(uri, OSSL_HTTP_PREFIX))
+#define IS_HTTPS(uri) ((uri) != NULL && HAS_PREFIX(uri, OSSL_HTTPS_PREFIX))
 
 X509 *load_cert_pass(const char *uri, int format, int maybe_stdin,
                      const char *pass, const char *desc)
@@ -682,8 +680,8 @@ int load_cert_certs(const char *uri,
     int ret = 0;
     char *pass_string;
 
-    if (exclude_http && (strncasecmp(uri, "http://", 7) == 0
-                         || strncasecmp(uri, "https://", 8) == 0)) {
+    if (exclude_http && (HAS_CASE_PREFIX(uri, "http://")
+                         || HAS_CASE_PREFIX(uri, "https://"))) {
         BIO_printf(bio_err, "error: HTTP retrieval not allowed for %s\n", desc);
         return ret;
     }

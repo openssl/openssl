@@ -8,8 +8,8 @@
  */
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include "internal/common.h"
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
 #include <openssl/trace.h>
@@ -417,12 +417,12 @@ static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[])
             warn_deprecated(fp);
         return fp->func(argc, argv);
     }
-    if ((strncmp(argv[0], "no-", 3)) == 0) {
+    f.name = argv[0];
+    if (CHECK_AND_SKIP_PREFIX(f.name, "no-")) {
         /*
          * User is asking if foo is unsupported, by trying to "run" the
          * no-foo command.  Strange.
          */
-        f.name = argv[0] + 3;
         if (lh_FUNCTION_retrieve(prog, &f) == NULL) {
             BIO_printf(bio_out, "%s\n", argv[0]);
             return 0;

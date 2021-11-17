@@ -18,6 +18,9 @@ EVP_MD_demo.c          Compute a digest from multiple buffers
 EVP_MD_stdin.c         Compute a digest with data read from stdin
 EVP_f_md.c             Compute a digest using BIO and EVP_f_md
 
+encrypt:
+rsa_encrypt.c          Encrypt and decrypt data using an RSA keypair.
+
 kdf:
 hkdf.c                 Demonstration of HMAC based key derivation
 pbkdf2.c               Demonstration of PBKDF2 password based key derivation

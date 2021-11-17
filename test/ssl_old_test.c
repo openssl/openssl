@@ -1009,7 +1009,7 @@ int main(int argc, char *argv[])
             dtls12 = 1;
         } else if (strcmp(*argv, "-dtls") == 0) {
             dtls = 1;
-        } else if (strncmp(*argv, "-num", 4) == 0) {
+        } else if (HAS_PREFIX(*argv, "-num")) {
             if (--argc < 1)
                 goto bad;
             number = atoi(*(++argv));
