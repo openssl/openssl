@@ -105,7 +105,6 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
         *(p++) = '\0';
         if ((n != num) || (*f != '\0')) {
             OPENSSL_free(pp);
-            ret->error = DB_ERROR_WRONG_NUM_FIELDS;
             goto err;
         }
         pp[n] = p;
