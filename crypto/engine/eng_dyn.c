@@ -424,7 +424,7 @@ static int dynamic_load(ENGINE *e, dynamic_data_ctx *ctx)
          * This solves various errors caused by trying to load
          * the same engine more than once.
          */
-        prev = ENGINE_search(ctx->engine_id);
+        prev = engine_search(ctx->engine_id);
         if (prev) {
             /* Decrement back the refcount of the engine */
             ENGINE_free(prev);

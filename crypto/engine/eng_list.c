@@ -98,11 +98,17 @@ static int engine_list_add(ENGINE *e)
     return 1;
 }
 
-static ENGINE *engine_list_search(const char *id)
+ENGINE *engine_search(const char *id)
 {
     int match = 0;
-    ENGINE *iterator, *e;
+    ENGINE *iterator, *e = NULL;
 
+    if (id == NULL) {
+        ERR_raise(ERR_LIB_ENGINE, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+    if (!CRYPTO_THREAD_write_lock(global_engine_lock))
+        return NULL;
     iterator = engine_list_head;
     while (iterator && !match) {
         match = (strcmp(iterator->id, id) == 0);
@@ -110,7 +116,7 @@ static ENGINE *engine_list_search(const char *id)
     }
     if (!match) {
         ERR_raise(ERR_LIB_ENGINE, ENGINE_R_NO_SUCH_ENGINE);
-        return NULL;
+        goto cleanup;
     }
     if (iterator != NULL)
         e = iterator->prev;
@@ -119,6 +125,8 @@ static ENGINE *engine_list_search(const char *id)
     /* Return a valid structural reference to the found ENGINE */
     e->struct_ref++;
     ENGINE_REF_PRINT(e, 0, 1);
+cleanup:
+    CRYPTO_THREAD_unlock(global_engine_lock);
     return e;
 }
 
@@ -367,21 +375,6 @@ ENGINE *ENGINE_by_id(const char *id)
     ERR_raise_data(ERR_LIB_ENGINE, ENGINE_R_NO_SUCH_ENGINE, "id=%s", id);
     return NULL;
     /* EEK! Experimental code ends */
-}
-
-/* Search for a given "ENGINE" in the existing list. */
-ENGINE *ENGINE_search(const char *id)
-{
-    ENGINE *ret = NULL;
-
-    if (id == NULL) {
-        ERR_raise(ERR_LIB_ENGINE, ERR_R_PASSED_NULL_PARAMETER);
-        return NULL;
-    }
-    CRYPTO_THREAD_write_lock(global_engine_lock);
-    ret = engine_list_search(id);
-    CRYPTO_THREAD_unlock(global_engine_lock);
-    return ret;
 }
 
 int ENGINE_up_ref(ENGINE *e)

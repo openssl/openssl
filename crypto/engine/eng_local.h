@@ -78,6 +78,9 @@ int engine_unlocked_init(ENGINE *e);
 int engine_unlocked_finish(ENGINE *e, int unlock_for_handlers);
 int engine_free_util(ENGINE *e, int not_locked);
 
+/* Search for ENGINE by id *without* loading new engines */
+ENGINE *engine_search(const char *id);
+
 /*
  * This function will reset all "set"able values in an ENGINE to NULL. This
  * won't touch reference counts or ex_data, but is equivalent to calling all

@@ -5425,4 +5425,3 @@ ASN1_item_d2i_ex                        5552	3_0_0	EXIST::FUNCTION:
 ASN1_TIME_print_ex                      5553	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_get0_provider                  5554	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_get0_provider              5555	3_0_0	EXIST::FUNCTION:
-ENGINE_search                           ?	3_1_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,ENGINE
