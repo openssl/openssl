@@ -217,6 +217,7 @@ extern "C" {
 #define OSSL_KDF_PARAM_PKCS12_ID    "id"        /* int */
 #define OSSL_KDF_PARAM_KBKDF_USE_L  "use-l"             /* int */
 #define OSSL_KDF_PARAM_KBKDF_USE_SEPARATOR  "use-separator"     /* int */
+#define OSSL_KDF_PARAM_KBKDF_R      "r"         /* int */
 #define OSSL_KDF_PARAM_X942_ACVPINFO        "acvp-info"
 #define OSSL_KDF_PARAM_X942_PARTYUINFO      "partyu-info"
 #define OSSL_KDF_PARAM_X942_PARTYVINFO      "partyv-info"
