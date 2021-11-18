@@ -488,7 +488,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
     long n;
     size_t resp_len;
     const unsigned char *p;
-    char *key, *value, *line_end = NULL;
+    char *buf, *key, *value, *line_end = NULL;
 
     if (rctx == NULL) {
         ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
@@ -501,11 +501,20 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
 
     rctx->redirection_url = NULL;
  next_io:
+    buf = (char *)rctx->buf;
     if ((rctx->state & OHS_NOREAD) == 0) {
-        if (rctx->expect_asn1)
+        if (rctx->expect_asn1) {
             n = BIO_read(rctx->rbio, rctx->buf, rctx->buf_size);
-        else
-            n = BIO_gets(rctx->rbio, (char *)rctx->buf, rctx->buf_size);
+        } else {
+            (void)ERR_set_mark();
+            n = BIO_gets(rctx->rbio, buf, rctx->buf_size);
+            if (n == -2) { /* some BIOs, such as SSL, do not support "gets" */
+                (void)ERR_pop_to_mark();
+                n = BIO_get_line(rctx->rbio, buf, rctx->buf_size);
+            } else {
+                (void)ERR_clear_last_mark();
+            }
+        }
         if (n <= 0) {
             if (BIO_should_retry(rctx->rbio))
                 return -1;
@@ -606,7 +615,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
             }
             goto next_io;
         }
-        n = BIO_gets(rctx->mem, (char *)rctx->buf, rctx->buf_size);
+        n = BIO_gets(rctx->mem, buf, rctx->buf_size);
 
         if (n <= 0) {
             if (BIO_should_retry(rctx->mem))
@@ -624,7 +633,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
 
         /* First line */
         if (rctx->state == OHS_FIRSTLINE) {
-            switch (parse_http_line1((char *)rctx->buf, &found_keep_alive)) {
+            switch (parse_http_line1(buf, &found_keep_alive)) {
             case HTTP_STATUS_CODE_OK:
                 rctx->state = OHS_HEADERS;
                 goto next_line;
@@ -642,7 +651,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
                 goto next_line;
             }
         }
-        key = (char *)rctx->buf;
+        key = buf;
         value = strchr(key, ':');
         if (value != NULL) {
             *(value++) = '\0';
