@@ -58,6 +58,13 @@ Set to B<0> to disable use of the optional Fixed Input data 'zero separator'
 (see SP800-108) that is placed between the Label and Context.
 The default value of B<1> will be used if unspecified.
 
+=item "r" (B<OSSL_KDF_PARAM_KBKDF_R>) <integer>
+
+Set the fixed value 'r', indicating the length of the counter in bits.
+
+Supported values are B<8>, B<16>, B<24>, and B<32>.
+The default value of B<32> will be used if unspecified.
+
 =back
 
 Depending on whether mac is CMAC or HMAC, either digest or cipher is required

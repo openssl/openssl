@@ -2639,6 +2639,12 @@ static int kdf_test_ctrl(EVP_TEST *t, EVP_KDF_CTX *kctx,
         TEST_info("skipping, '%s' is disabled", p);
         t->skip = 1;
     }
+    if (p != NULL
+        && (strcmp(name, "mac") == 0)
+        && is_mac_disabled(p)) {
+        TEST_info("skipping, '%s' is disabled", p);
+        t->skip = 1;
+    }
     OPENSSL_free(name);
     return 1;
 }
