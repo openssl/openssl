@@ -489,10 +489,18 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
  next_io:
     buf = (char *)rctx->buf;
     if ((rctx->state & OHS_NOREAD) == 0) {
-        if (rctx->expect_asn1)
+        if (rctx->expect_asn1) {
             n = BIO_read(rctx->rbio, rctx->buf, rctx->buf_size);
-        else if ((n = BIO_gets(rctx->rbio, buf, rctx->buf_size)) == -2)
-            n = BIO_get_line(rctx->rbio, buf, rctx->buf_size);
+        } else {
+            (void)ERR_set_mark();
+            n = BIO_gets(rctx->rbio, buf, rctx->buf_size);
+            if (n == -2) { /* unsupported method */
+                (void)ERR_pop_to_mark();
+                n = BIO_get_line(rctx->rbio, buf, rctx->buf_size);
+            } else {
+                (void)ERR_clear_last_mark();
+            }
+        }
         if (n <= 0) {
             if (BIO_should_retry(rctx->rbio))
                 return -1;
