@@ -1068,9 +1068,9 @@ static int test_kdf_kbkdf_6803_256(void)
 #endif
 
 static OSSL_PARAM *construct_kbkdf_params(char *digest, char *mac, unsigned char *key,
-    size_t keylen, char *salt, char *info)
+    size_t keylen, char *salt, char *info, int *r)
 {
-    OSSL_PARAM *params = OPENSSL_malloc(sizeof(OSSL_PARAM) * 7);
+    OSSL_PARAM *params = OPENSSL_malloc(sizeof(OSSL_PARAM) * 8);
     OSSL_PARAM *p = params;
 
     if (params == NULL)
@@ -1088,6 +1088,8 @@ static OSSL_PARAM *construct_kbkdf_params(char *digest, char *mac, unsigned char
         OSSL_KDF_PARAM_SALT, salt, strlen(salt));
     *p++ = OSSL_PARAM_construct_octet_string(
         OSSL_KDF_PARAM_INFO, info, strlen(info));
+    *p++ = OSSL_PARAM_construct_int(
+        OSSL_KDF_PARAM_KBKDF_R, r);
     *p = OSSL_PARAM_construct_end();
 
     return params;
@@ -1100,8 +1102,9 @@ static int test_kdf_kbkdf_invalid_digest(void)
     OSSL_PARAM *params;
 
     static unsigned char key[] = {0x01};
+    int r = 32;
 
-    params = construct_kbkdf_params("blah", "HMAC", key, 1, "prf", "test");
+    params = construct_kbkdf_params("blah", "HMAC", key, 1, "prf", "test", &r);
     if (!TEST_ptr(params))
         return 0;
 
@@ -1122,8 +1125,9 @@ static int test_kdf_kbkdf_invalid_mac(void)
     OSSL_PARAM *params;
 
     static unsigned char key[] = {0x01};
+    int r = 32;
 
-    params = construct_kbkdf_params("sha256", "blah", key, 1, "prf", "test");
+    params = construct_kbkdf_params("sha256", "blah", key, 1, "prf", "test", &r);
     if (!TEST_ptr(params))
         return 0;
 
@@ -1137,6 +1141,30 @@ static int test_kdf_kbkdf_invalid_mac(void)
     return ret;
 }
 
+static int test_kdf_kbkdf_invalid_r(void)
+{
+    int ret;
+    EVP_KDF_CTX *kctx;
+    OSSL_PARAM *params;
+
+    static unsigned char key[] = {0x01};
+    int r = 31;
+
+    params = construct_kbkdf_params("sha256", "HMAC", key, 1, "prf", "test", &r);
+    if (!TEST_ptr(params))
+        return 0;
+
+    /* Negative test case - derive should fail */
+    kctx = get_kdfbyname("KBKDF");
+    ret = TEST_ptr(kctx)
+        && TEST_false(EVP_KDF_CTX_set_params(kctx, params));
+
+    EVP_KDF_CTX_free(kctx);
+    OPENSSL_free(params);
+    return ret;
+}
+
+
 static int test_kdf_kbkdf_empty_key(void)
 {
     int ret;
@@ -1145,8 +1173,9 @@ static int test_kdf_kbkdf_empty_key(void)
 
     static unsigned char key[] = {0x01};
     unsigned char result[32] = { 0 };
+    int r = 32;
 
-    params = construct_kbkdf_params("sha256", "HMAC", key, 0, "prf", "test");
+    params = construct_kbkdf_params("sha256", "HMAC", key, 0, "prf", "test", &r);
     if (!TEST_ptr(params))
         return 0;
 
@@ -1169,8 +1198,9 @@ static int test_kdf_kbkdf_1byte_key(void)
 
     static unsigned char key[] = {0x01};
     unsigned char result[32] = { 0 };
+    int r = 32;
 
-    params = construct_kbkdf_params("sha256", "HMAC", key, 1, "prf", "test");
+    params = construct_kbkdf_params("sha256", "HMAC", key, 1, "prf", "test", &r);
     if (!TEST_ptr(params))
         return 0;
 
@@ -1191,8 +1221,9 @@ static int test_kdf_kbkdf_zero_output_size(void)
 
     static unsigned char key[] = {0x01};
     unsigned char result[32] = { 0 };
+    int r = 32;
 
-    params = construct_kbkdf_params("sha256", "HMAC", key, 1, "prf", "test");
+    params = construct_kbkdf_params("sha256", "HMAC", key, 1, "prf", "test", &r);
     if (!TEST_ptr(params))
         return 0;
 
@@ -1298,7 +1329,6 @@ static int test_kdf_kbkdf_8009_prf2(void)
  * Test vector taken from
  * https://csrc.nist.gov/CSRC/media/Projects/
  *    Cryptographic-Algorithm-Validation-Program/documents/KBKDF800-108/CounterMode.zip
- *    Note: Only 32 bit counter is supported ([RLEN=32_BITS])
  */
 static int test_kdf_kbkdf_fixedinfo(void)
 {
@@ -1628,6 +1658,7 @@ int setup_tests(void)
 #endif
     ADD_TEST(test_kdf_kbkdf_invalid_digest);
     ADD_TEST(test_kdf_kbkdf_invalid_mac);
+    ADD_TEST(test_kdf_kbkdf_invalid_r);
     ADD_TEST(test_kdf_kbkdf_zero_output_size);
     ADD_TEST(test_kdf_kbkdf_empty_key);
     ADD_TEST(test_kdf_kbkdf_1byte_key);
