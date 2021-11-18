@@ -403,7 +403,7 @@ static int int_load(dynamic_data_ctx *ctx)
 
 static int dynamic_load(ENGINE *e, dynamic_data_ctx *ctx)
 {
-    ENGINE cpy, *prev;
+    ENGINE cpy;
     dynamic_fns fns;
 
     if (ctx->dynamic_dso == NULL)
@@ -424,10 +424,7 @@ static int dynamic_load(ENGINE *e, dynamic_data_ctx *ctx)
          * This solves various errors caused by trying to load
          * the same engine more than once.
          */
-        prev = engine_search(ctx->engine_id);
-        if (prev) {
-            /* Decrement back the refcount of the engine */
-            ENGINE_free(prev);
+        if (engine_search(ctx->engine_id)) {
             /* Do we tolerate this or fail? */
             if (ctx->list_add_value > 1) {
                 ERR_raise(ERR_LIB_ENGINE, ENGINE_R_CONFLICTING_ENGINE_ID);

@@ -98,36 +98,25 @@ static int engine_list_add(ENGINE *e)
     return 1;
 }
 
-ENGINE *engine_search(const char *id)
+int engine_search(const char *id)
 {
     int match = 0;
-    ENGINE *iterator, *e = NULL;
+    ENGINE *iterator;
 
     if (id == NULL) {
         ERR_raise(ERR_LIB_ENGINE, ERR_R_PASSED_NULL_PARAMETER);
-        return NULL;
+        goto end;
     }
     if (!CRYPTO_THREAD_write_lock(global_engine_lock))
-        return NULL;
+        goto end;
     iterator = engine_list_head;
     while (iterator && !match) {
         match = (strcmp(iterator->id, id) == 0);
         iterator = iterator->next;
     }
-    if (!match) {
-        ERR_raise(ERR_LIB_ENGINE, ENGINE_R_NO_SUCH_ENGINE);
-        goto cleanup;
-    }
-    if (iterator != NULL)
-        e = iterator->prev;
-    else
-        e = engine_list_tail;
-    /* Return a valid structural reference to the found ENGINE */
-    e->struct_ref++;
-    ENGINE_REF_PRINT(e, 0, 1);
-cleanup:
     CRYPTO_THREAD_unlock(global_engine_lock);
-    return e;
+end:
+    return match;
 }
 
 static int engine_list_remove(ENGINE *e)
