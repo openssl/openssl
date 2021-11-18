@@ -436,6 +436,7 @@ static void thread_shared_evp_pkey(void)
         if (!TEST_ptr(ctx))
             goto err;
 
+        ptlen = sizeof(ptbuf);
         if (!TEST_int_ge(EVP_PKEY_decrypt_init(ctx), 0)
                 || !TEST_int_gt(EVP_PKEY_decrypt(ctx, ptbuf, &ptlen, ctbuf, ctlen),
                                                 0)
