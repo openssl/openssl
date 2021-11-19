@@ -112,6 +112,7 @@ static ERR_STRING_DATA ERR_str_reasons[] = {
     {ERR_R_INTERNAL_ERROR, "internal error"},
     {ERR_R_DISABLED, "called a function that was disabled at compile-time"},
     {ERR_R_INIT_FAIL, "init fail"},
+    {ERR_R_PASSED_INVALID_ARGUMENT, "passed invalid argument"},
     {ERR_R_OPERATION_FAIL, "operation fail"},
     {ERR_R_INVALID_PROVIDER_FUNCTIONS, "invalid provider functions"},
     {ERR_R_INTERRUPTED_OR_CANCELLED, "interrupted or cancelled"},
