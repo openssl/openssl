@@ -118,7 +118,7 @@ SKIP: {
                                $testdata]), capture => 1);
         chomp(@macdata);
         my $expected = qr/SHA1\(\Q$testdata\E\)= 000102030405060708090a0b0c0d0e0f10111213/;
-        ok($macdata[0] =~ $expected, "HMAC: Check HMAC value is as expected ($macdata[0]) vs ($expected)");
+        ok($macdata[0] =~ $expected, "SHA1: Check HASH value is as expected ($macdata[0]) vs ($expected)");
     }
 }
 
