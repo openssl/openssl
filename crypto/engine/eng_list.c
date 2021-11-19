@@ -135,7 +135,8 @@ static int engine_list_remove(ENGINE *e)
 }
 
 /* Add engine to dynamic engine list. */
-int engine_add_dynamic_id(ENGINE *e, ENGINE_DYNAMIC_ID dynamic_id)
+int engine_add_dynamic_id(ENGINE *e, ENGINE_DYNAMIC_ID dynamic_id,
+                          int not_locked)
 {
     int result = 0;
     ENGINE *iterator = NULL;
@@ -146,7 +147,7 @@ int engine_add_dynamic_id(ENGINE *e, ENGINE_DYNAMIC_ID dynamic_id)
     if (e->dynamic_id == NULL && dynamic_id == NULL)
         return 0;
 
-    if (!CRYPTO_THREAD_write_lock(global_engine_lock))
+    if (not_locked && !CRYPTO_THREAD_write_lock(global_engine_lock))
         return 0;
 
     if (dynamic_id != NULL) {
@@ -180,7 +181,8 @@ int engine_add_dynamic_id(ENGINE *e, ENGINE_DYNAMIC_ID dynamic_id)
     result = 1;
 
  err:
-    CRYPTO_THREAD_unlock(global_engine_lock);
+    if (not_locked)
+        CRYPTO_THREAD_unlock(global_engine_lock);
     return result;
 }
 
@@ -361,7 +363,7 @@ static void engine_cpy(ENGINE *dest, const ENGINE *src)
     dest->cmd_defns = src->cmd_defns;
     dest->flags = src->flags;
     dest->dynamic_id = src->dynamic_id;
-    engine_add_dynamic_id(dest, NULL);
+    engine_add_dynamic_id(dest, NULL, 0);
 }
 
 ENGINE *ENGINE_by_id(const char *id)

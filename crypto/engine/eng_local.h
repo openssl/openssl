@@ -100,7 +100,8 @@ extern CRYPTO_ONCE engine_lock_init;
 DECLARE_RUN_ONCE(do_engine_lock_init)
 
 typedef void (*ENGINE_DYNAMIC_ID)(void);
-int engine_add_dynamic_id(ENGINE *e, ENGINE_DYNAMIC_ID dynamic_id);
+int engine_add_dynamic_id(ENGINE *e, ENGINE_DYNAMIC_ID dynamic_id,
+                          int not_locked);
 void engine_remove_dynamic_id(ENGINE *e, int not_locked);
 
 /*
