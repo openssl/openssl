@@ -165,7 +165,7 @@ int engine_add_dynamic_id(ENGINE *e, ENGINE_DYNAMIC_ID dynamic_id,
     if (engine_dyn_list_head == NULL) {
         /* We are adding to an empty list. */
         if (engine_dyn_list_tail != NULL)
-            return 0;
+            goto err;
         engine_dyn_list_head = e;
         e->prev_dyn = NULL;
     } else {
