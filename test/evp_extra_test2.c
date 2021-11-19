@@ -20,9 +20,7 @@
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/provider.h>
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-# include <openssl/rsa.h>
-#endif
+#include <openssl/rsa.h>
 #include <openssl/core_names.h>
 #include "testutil.h"
 #include "internal/nelem.h"
