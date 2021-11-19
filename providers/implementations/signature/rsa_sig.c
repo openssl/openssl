@@ -190,6 +190,9 @@ static void *rsa_newctx(void *provctx, const char *propq)
     prsactx->libctx = PROV_LIBCTX_OF(provctx);
     prsactx->flag_allow_md = 1;
     prsactx->propq = propq_copy;
+    /* Maximum for sign, auto for verify */
+    prsactx->saltlen = RSA_PSS_SALTLEN_AUTO;
+    prsactx->min_saltlen = -1;
     return prsactx;
 }
 
@@ -406,9 +409,6 @@ static int rsa_signverify_init(void *vprsactx, void *vrsa,
 
     prsactx->operation = operation;
 
-    if (!rsa_set_ctx_params(prsactx, params))
-        return 0;
-
     /* Maximum for sign, auto for verify */
     prsactx->saltlen = RSA_PSS_SALTLEN_AUTO;
     prsactx->min_saltlen = -1;
@@ -462,9 +462,10 @@ static int rsa_signverify_init(void *vprsactx, void *vrsa,
                 prsactx->saltlen = min_saltlen;
 
                 /* call rsa_setup_mgf1_md before rsa_setup_md to avoid duplication */
-                return rsa_setup_mgf1_md(prsactx, mgf1mdname, prsactx->propq)
-                    && rsa_setup_md(prsactx, mdname, prsactx->propq)
-                    && rsa_check_parameters(prsactx, min_saltlen);
+                if (!rsa_setup_mgf1_md(prsactx, mgf1mdname, prsactx->propq)
+                    || !rsa_setup_md(prsactx, mdname, prsactx->propq)
+                    || !rsa_check_parameters(prsactx, min_saltlen))
+                    return 0;
             }
         }
 
@@ -473,6 +474,9 @@ static int rsa_signverify_init(void *vprsactx, void *vrsa,
         ERR_raise(ERR_LIB_RSA, PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return 0;
     }
+
+    if (!rsa_set_ctx_params(prsactx, params))
+        return 0;
 
     return 1;
 }
