@@ -127,7 +127,7 @@ on error.
 =head1 NOTES
 
 OSSL_PARAM_BLD_push_BN() and OSSL_PARAM_BLD_push_BN_pad() currently only
-support non-negative B<BIGNUM>s.  They return an error on negative B<BIGNUM>s.
+support nonnegative B<BIGNUM>s.  They return an error on negative B<BIGNUM>s.
 
 =head1 EXAMPLES
 
