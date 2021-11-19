@@ -113,8 +113,12 @@ static unsigned long getauxval(unsigned long key)
  * AArch64 used AT_HWCAP.
  */
 # if defined(__arm__) || defined (__arm)
-#  define HWCAP                  16
+#  if defined(__FreeBSD__)
+#    define HWCAP                AT_HWCAP
+#  else
+#    define HWCAP                16
                                   /* AT_HWCAP */
+#  endif
 #  define HWCAP_NEON             (1 << 12)
 
 #  define HWCAP_CE               26
@@ -124,8 +128,12 @@ static unsigned long getauxval(unsigned long key)
 #  define HWCAP_CE_SHA1          (1 << 2)
 #  define HWCAP_CE_SHA256        (1 << 3)
 # elif defined(__aarch64__)
-#  define HWCAP                  16
+#  if defined(__FreeBSD__)
+#    define HWCAP                AT_HWCAP
+#  else
+#    define HWCAP                16
                                   /* AT_HWCAP */
+#  endif
 #  define HWCAP_NEON             (1 << 1)
 
 #  define HWCAP_CE               HWCAP
