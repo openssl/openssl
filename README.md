@@ -79,7 +79,7 @@ The following quantum-safe algorithms from liboqs are supported (assuming they h
 - **CRYSTALS-Kyber**: `kyber512`, `kyber768`, `kyber1024`, `kyber90s512`, `kyber90s768`, `kyber90s1024`
 - **FrodoKEM**: `frodo640aes`, `frodo640shake`, `frodo976aes`, `frodo976shake`, `frodo1344aes`, `frodo1344shake`
 - **HQC**: `hqc128`, `hqc192`, `hqc256`†
-- **NTRU**: `ntru_hps2048509`, `ntru_hps2048677`, `ntru_hps4096821`, `ntru_hrss701`
+- **NTRU**: `ntru_hps2048509`, `ntru_hps2048677`, `ntru_hps4096821`, `ntru_hps40961229`, `ntru_hrss701`, `ntru_hrss1373`
 - **NTRU-Prime**: `ntrulpr653`, `ntrulpr761`, `ntrulpr857`, `ntrulpr1277`, `sntrup653`, `sntrup761`, `sntrup857`, `sntrup1277`
 - **SABER**: `lightsaber`, `saber`, `firesaber`
 - **SIDH**: `sidhp434`, `sidhp503`, `sidhp610`, `sidhp751`

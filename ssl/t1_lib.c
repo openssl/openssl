@@ -199,7 +199,9 @@ static const TLS_GROUP_INFO oqs_nid_list[] = {
     {NID_ntru_hps2048509, 128, TLS_CURVE_CUSTOM}, /* ntru_hps2048509 (0x0214) */
     {NID_ntru_hps2048677, 192, TLS_CURVE_CUSTOM}, /* ntru_hps2048677 (0x0215) */
     {NID_ntru_hps4096821, 256, TLS_CURVE_CUSTOM}, /* ntru_hps4096821 (0x0216) */
+    {NID_ntru_hps40961229, 256, TLS_CURVE_CUSTOM}, /* ntru_hps40961229 (0x0245) */
     {NID_ntru_hrss701, 192, TLS_CURVE_CUSTOM}, /* ntru_hrss701 (0x0217) */
+    {NID_ntru_hrss1373, 256, TLS_CURVE_CUSTOM}, /* ntru_hrss1373 (0x0246) */
     {NID_lightsaber, 128, TLS_CURVE_CUSTOM}, /* lightsaber (0x0218) */
     {NID_saber, 192, TLS_CURVE_CUSTOM}, /* saber (0x0219) */
     {NID_firesaber, 256, TLS_CURVE_CUSTOM}, /* firesaber (0x021A) */
@@ -244,7 +246,9 @@ static const TLS_GROUP_INFO oqs_hybrid_nid_list[] = {
  {NID_p256_ntru_hps2048509, 128, TLS_CURVE_CUSTOM}, /* p256/384/521 + ntru_hps2048509 hybrid (0x0214) */
  {NID_p384_ntru_hps2048677, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + ntru_hps2048677 hybrid (0x0215) */
  {NID_p521_ntru_hps4096821, 256, TLS_CURVE_CUSTOM}, /* p256/384/521 + ntru_hps4096821 hybrid (0x0216) */
+ {NID_p521_ntru_hps40961229, 256, TLS_CURVE_CUSTOM}, /* p256/384/521 + ntru_hps40961229 hybrid (0x0245) */
  {NID_p384_ntru_hrss701, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + ntru_hrss701 hybrid (0x0217) */
+ {NID_p521_ntru_hrss1373, 256, TLS_CURVE_CUSTOM}, /* p256/384/521 + ntru_hrss1373 hybrid (0x0246) */
  {NID_p256_lightsaber, 128, TLS_CURVE_CUSTOM}, /* p256/384/521 + lightsaber hybrid (0x0218) */
  {NID_p384_saber, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + saber hybrid (0x0219) */
  {NID_p521_firesaber, 256, TLS_CURVE_CUSTOM}, /* p256/384/521 + firesaber hybrid (0x021A) */
@@ -349,8 +353,12 @@ static const uint16_t oqs_all_tls13_server_groups[] = {
     0x2F15, /* OQS ntru_hps2048677 hybrid */
     0x0216, /* ntru_hps4096821 */
     0x2F16, /* OQS ntru_hps4096821 hybrid */
+    0x0245, /* ntru_hps40961229 */
+    0x2F45, /* OQS ntru_hps40961229 hybrid */
     0x0217, /* ntru_hrss701 */
     0x2F17, /* OQS ntru_hrss701 hybrid */
+    0x0246, /* ntru_hrss1373 */
+    0x2F46, /* OQS ntru_hrss1373 hybrid */
     0x0218, /* lightsaber */
     0x2F18, /* OQS lightsaber hybrid */
     0x0219, /* saber */

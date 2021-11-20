@@ -489,7 +489,9 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
   case 0x0214: return "ntru_hps2048509";
   case 0x0215: return "ntru_hps2048677";
   case 0x0216: return "ntru_hps4096821";
+  case 0x0245: return "ntru_hps40961229";
   case 0x0217: return "ntru_hrss701";
+  case 0x0246: return "ntru_hrss1373";
   case 0x0218: return "lightsaber";
   case 0x0219: return "saber";
   case 0x021A: return "firesaber";
@@ -531,7 +533,9 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
    case 0x2F14: return "p256_ntru_hps2048509 hybrid";
    case 0x2F15: return "p384_ntru_hps2048677 hybrid";
    case 0x2F16: return "p521_ntru_hps4096821 hybrid";
+   case 0x2F45: return "p521_ntru_hps40961229 hybrid";
    case 0x2F17: return "p384_ntru_hrss701 hybrid";
+   case 0x2F46: return "p521_ntru_hrss1373 hybrid";
    case 0x2F18: return "p256_lightsaber hybrid";
    case 0x2F19: return "p384_saber hybrid";
    case 0x2F1A: return "p521_firesaber hybrid";

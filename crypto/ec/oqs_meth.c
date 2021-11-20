@@ -132,7 +132,9 @@ int oqssl_kem_nids_list[] = {
         NID_ntru_hps2048509,
         NID_ntru_hps2048677,
         NID_ntru_hps4096821,
+        NID_ntru_hps40961229,
         NID_ntru_hrss701,
+        NID_ntru_hrss1373,
         NID_lightsaber,
         NID_saber,
         NID_firesaber,
@@ -280,9 +282,15 @@ char* get_oqs_alg_name(int openssl_nid)
     case NID_ntru_hps4096821:
     case NID_p521_ntru_hps4096821:
       return OQS_KEM_alg_ntru_hps4096821;
+    case NID_ntru_hps40961229:
+    case NID_p521_ntru_hps40961229:
+      return OQS_KEM_alg_ntru_hps40961229;
     case NID_ntru_hrss701:
     case NID_p384_ntru_hrss701:
       return OQS_KEM_alg_ntru_hrss701;
+    case NID_ntru_hrss1373:
+    case NID_p521_ntru_hrss1373:
+      return OQS_KEM_alg_ntru_hrss1373;
     case NID_lightsaber:
     case NID_p256_lightsaber:
       return OQS_KEM_alg_saber_lightsaber;

@@ -1701,8 +1701,12 @@ dstu4145le 2 9 : uacurve9 : DSTU curve 9
  : p384_ntru_hps2048677 : p384_ntru_hps2048677
  : ntru_hps4096821 : ntru_hps4096821
  : p521_ntru_hps4096821 : p521_ntru_hps4096821
+ : ntru_hps40961229 : ntru_hps40961229
+ : p521_ntru_hps40961229 : p521_ntru_hps40961229
  : ntru_hrss701 : ntru_hrss701
  : p384_ntru_hrss701 : p384_ntru_hrss701
+ : ntru_hrss1373 : ntru_hrss1373
+ : p521_ntru_hrss1373 : p521_ntru_hrss1373
  : lightsaber : lightsaber
  : p256_lightsaber : p256_lightsaber
  : saber : saber

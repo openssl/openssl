@@ -126,10 +126,22 @@ kems:
     oqs_alg: 'OQS_KEM_alg_ntru_hps4096821'
   -
     family: 'NTRU'
+    name_group: 'ntru_hps40961229'
+    nid: '0x0245'
+    nid_hybrid: '0x2F45'
+    oqs_alg: 'OQS_KEM_alg_ntru_hps40961229'
+  -
+    family: 'NTRU'
     name_group: 'ntru_hrss701'
     nid: '0x0217'
     nid_hybrid: '0x2F17'
     oqs_alg: 'OQS_KEM_alg_ntru_hrss701'
+  -
+    family: 'NTRU'
+    name_group: 'ntru_hrss1373'
+    nid: '0x0246'
+    nid_hybrid: '0x2F46'
+    oqs_alg: 'OQS_KEM_alg_ntru_hrss1373'
   -
     family: 'SABER'
     name_group: 'lightsaber'

@@ -198,3 +198,5 @@ doc-nits
 /*.srl
 /*.pem
 /*.out
+
+/boringssl
