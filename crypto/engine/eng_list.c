@@ -170,7 +170,8 @@ int engine_add_dynamic_id(ENGINE *e, ENGINE_DYNAMIC_ID dynamic_id,
         e->prev_dyn = NULL;
     } else {
         /* We are adding to the tail of an existing list. */
-        if ((engine_dyn_list_tail == NULL) || (engine_dyn_list_tail->next_dyn != NULL))
+        if (engine_dyn_list_tail == NULL
+            || engine_dyn_list_tail->next_dyn != NULL)
             goto err;
         engine_dyn_list_tail->next_dyn = e;
         e->prev_dyn = engine_dyn_list_tail;
