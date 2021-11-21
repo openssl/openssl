@@ -434,7 +434,7 @@ typedef enum OPTION_choice {
     OPT_XMPPHOST, OPT_VERIFY, OPT_NAMEOPT,
     OPT_CERT, OPT_CRL, OPT_CRL_DOWNLOAD, OPT_SESS_OUT, OPT_SESS_IN,
     OPT_CERTFORM, OPT_CRLFORM, OPT_VERIFY_RET_ERROR, OPT_VERIFY_QUIET,
-    OPT_BRIEF, OPT_PREXIT, OPT_CRLF, OPT_QUIET, OPT_NBIO,
+    OPT_BRIEF, OPT_PREXIT, OPT_NO_INTERACTIVE, OPT_CRLF, OPT_QUIET, OPT_NBIO,
     OPT_SSL_CLIENT_ENGINE, OPT_IGN_EOF, OPT_NO_IGN_EOF,
     OPT_DEBUG, OPT_TLSEXTDEBUG, OPT_STATUS, OPT_WDEBUG,
     OPT_MSG, OPT_MSGFILE, OPT_ENGINE, OPT_TRACE, OPT_SECURITY_DEBUG,
@@ -569,6 +569,8 @@ const OPTIONS s_client_options[] = {
      "Restrict output to brief summary of connection parameters"},
     {"prexit", OPT_PREXIT, '-',
      "Print session information when the program exits"},
+    {"no-interactive", OPT_NO_INTERACTIVE, '-',
+     "Don't run the client in the interactive mode"},
 
     OPT_SECTION("Debug"),
     {"showcerts", OPT_SHOWCERTS, '-',
@@ -822,6 +824,7 @@ int s_client_main(int argc, char **argv)
     int build_chain = 0, cbuf_len, cbuf_off, cert_format = FORMAT_UNDEF;
     int key_format = FORMAT_UNDEF, crlf = 0, full_log = 1, mbuf_len = 0;
     int prexit = 0;
+    int nointeractive = 0;
     int sdebug = 0;
     int reconnect = 0, verify = SSL_VERIFY_NONE, vpmtouched = 0;
     int ret = 1, in_init = 1, i, nbio_test = 0, sock = -1, k, width, state = 0;
@@ -1078,6 +1081,9 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_PREXIT:
             prexit = 1;
+            break;
+        case OPT_NO_INTERACTIVE:
+            nointeractive = 1;
             break;
         case OPT_CRLF:
             crlf = 1;
@@ -2942,6 +2948,13 @@ int s_client_main(int argc, char **argv)
                 goto shut;
             }
         }
+
+        //don't wait for client input in the non-interactive mode
+        if (nointeractive) {
+            ret = 0;
+            goto shut;
+        }
+
 /* OPENSSL_SYS_MSDOS includes OPENSSL_SYS_WINDOWS */
 #if defined(OPENSSL_SYS_MSDOS)
         else if (has_stdin_waiting())
