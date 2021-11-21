@@ -1187,11 +1187,17 @@ BIO *OSSL_HTTP_transfer(OSSL_HTTP_REQ_CTX **prctx,
 
 int OSSL_HTTP_close(OSSL_HTTP_REQ_CTX *rctx, int ok)
 {
+    BIO *wbio;
     int ret = 1;
 
-    /* callback can be used to clean up TLS session on disconnect */
-    if (rctx != NULL && rctx->upd_fn != NULL)
-        ret = (*rctx->upd_fn)(rctx->wbio, rctx->upd_arg, 0, ok) != NULL;
+    /* callback can be used to finish TLS session and free its BIO */
+    if (rctx != NULL && rctx->upd_fn != NULL) {
+        wbio = (*rctx->upd_fn)(rctx->wbio, rctx->upd_arg,
+                               0 /* disconnect */, ok);
+        ret = wbio != NULL;
+        if (ret)
+            rctx->wbio = wbio;
+    }
     OSSL_HTTP_REQ_CTX_free(rctx);
     return ret;
 }
