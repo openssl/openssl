@@ -15,8 +15,8 @@
 # include "e_os.h"              /* struct timeval for DTLS */
 # include <stdlib.h>
 # include <time.h>
-# include <string.h>
 # include <errno.h>
+# include "internal/common.h" /* for HAS_PREFIX */
 
 # include <openssl/buffer.h>
 # include <openssl/comp.h>

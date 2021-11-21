@@ -11,9 +11,6 @@
 # define OSSL_INTERNAL_CRYPTLIB_H
 # pragma once
 
-# include <stdlib.h>
-# include <string.h>
-
 # ifdef OPENSSL_USE_APPLINK
 #  define BIO_FLAGS_UPLINK_INTERNAL 0x8000
 #  include "ms/uplink.h"
@@ -21,69 +18,19 @@
 #  define BIO_FLAGS_UPLINK_INTERNAL 0
 # endif
 
+# include "internal/common.h"
+
 # include <openssl/crypto.h>
 # include <openssl/buffer.h>
 # include <openssl/bio.h>
 # include <openssl/asn1.h>
 # include <openssl/err.h>
-# include "internal/nelem.h"
-
-#ifdef NDEBUG
-# define ossl_assert(x) ((x) != 0)
-#else
-__owur static ossl_inline int ossl_assert_int(int expr, const char *exprstr,
-                                              const char *file, int line)
-{
-    if (!expr)
-        OPENSSL_die(exprstr, file, line);
-
-    return expr;
-}
-
-# define ossl_assert(x) ossl_assert_int((x) != 0, "Assertion failed: "#x, \
-                                         __FILE__, __LINE__)
-
-#endif
-
-/*
- * Use this inside a union with the field that needs to be aligned to a
- * reasonable boundary for the platform.  The most pessimistic alignment
- * of the listed types will be used by the compiler.
- */
-# define OSSL_UNION_ALIGN       \
-    double align;               \
-    ossl_uintmax_t align_int;   \
-    void *align_ptr
 
 typedef struct ex_callback_st EX_CALLBACK;
 DEFINE_STACK_OF(EX_CALLBACK)
 
 typedef struct mem_st MEM;
 DEFINE_LHASH_OF(MEM);
-
-# define OPENSSL_CONF             "openssl.cnf"
-
-# ifndef OPENSSL_SYS_VMS
-#  define X509_CERT_AREA          OPENSSLDIR
-#  define X509_CERT_DIR           OPENSSLDIR "/certs"
-#  define X509_CERT_FILE          OPENSSLDIR "/cert.pem"
-#  define X509_PRIVATE_DIR        OPENSSLDIR "/private"
-#  define CTLOG_FILE              OPENSSLDIR "/ct_log_list.cnf"
-# else
-#  define X509_CERT_AREA          "OSSL$DATAROOT:[000000]"
-#  define X509_CERT_DIR           "OSSL$DATAROOT:[CERTS]"
-#  define X509_CERT_FILE          "OSSL$DATAROOT:[000000]cert.pem"
-#  define X509_PRIVATE_DIR        "OSSL$DATAROOT:[PRIVATE]"
-#  define CTLOG_FILE              "OSSL$DATAROOT:[000000]ct_log_list.cnf"
-# endif
-
-# define X509_CERT_DIR_EVP        "SSL_CERT_DIR"
-# define X509_CERT_FILE_EVP       "SSL_CERT_FILE"
-# define CTLOG_FILE_EVP           "CTLOG_FILE"
-
-/* size of string representations */
-# define DECIMAL_SIZE(type)      ((sizeof(type)*8+2)/3+1)
-# define HEX_SIZE(type)          (sizeof(type)*2)
 
 void OPENSSL_cpuid_setup(void);
 #if defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
@@ -227,35 +174,5 @@ char *ossl_ipaddr_to_asc(unsigned char *p, int len);
 char *ossl_buf2hexstr_sep(const unsigned char *buf, long buflen, char sep);
 unsigned char *ossl_hexstr2buf_sep(const char *str, long *buflen,
                                    const char sep);
-
-static ossl_inline int ossl_ends_with_dirsep(const char *path)
-{
-    if (*path != '\0')
-        path += strlen(path) - 1;
-# if defined __VMS
-    if (*path == ']' || *path == '>' || *path == ':')
-        return 1;
-# elif defined _WIN32
-    if (*path == '\\')
-        return 1;
-# endif
-    return *path == '/';
-}
-
-static ossl_inline int ossl_is_absolute_path(const char *path)
-{
-# if defined __VMS
-    if (strchr(path, ':') != NULL
-        || ((path[0] == '[' || path[0] == '<')
-            && path[1] != '.' && path[1] != '-'
-            && path[1] != ']' && path[1] != '>'))
-        return 1;
-# elif defined _WIN32
-    if (path[0] == '\\'
-        || (path[0] != '\0' && path[1] == ':'))
-        return 1;
-# endif
-    return path[0] == '/';
-}
 
 #endif
