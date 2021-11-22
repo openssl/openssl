@@ -220,6 +220,7 @@ The caller is responsible for freeing the BIO pointer obtained.
 OSSL_HTTP_close() closes the connection and releases I<rctx>.
 The I<ok> parameter is passed to any BIO update function
 given during setup as described above for OSSL_HTTP_open().
+It must be 1 if no error occurred during the HTTP transfer and 0 otherwise.
 
 =head1 NOTES
 
