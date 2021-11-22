@@ -54,6 +54,12 @@ static int prepare_from_text(const OSSL_PARAM *paramdefs, const char *key,
         if (r == 0 || *tmpbn == NULL)
             return 0;
 
+        if (p->data_type == OSSL_PARAM_UNSIGNED_INTEGER
+            && BN_is_negative(*tmpbn)) {
+            ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_INVALID_NEGATIVE_VALUE);
+            return 0;
+        }
+
         /*
          * 2s complement negate, part 1
          *
