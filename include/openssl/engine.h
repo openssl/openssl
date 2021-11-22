@@ -798,9 +798,17 @@ typedef int (*dynamic_bind_engine) (ENGINE *e, const char *id,
         OPENSSL_EXPORT \
         int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns) { \
             if (ENGINE_get_static_state() == fns->static_state) goto skip_cbs; \
+            if (getenv("OPENSSL_engine_libcrypto_override") == NULL) { \
+                fprintf(stderr, "ERROR: engine load aborted because a " \
+                        "different libcrypto was detected!\n" \
+                        "To override this check, please set " \
+                        "OPENSSL_engine_libcrypto_override=yes."); \
+                return 0; \
+            } \
             CRYPTO_set_mem_functions(fns->mem_fns.malloc_fn, \
                                      fns->mem_fns.realloc_fn, \
                                      fns->mem_fns.free_fn); \
+            OPENSSL_init_crypto(OPENSSL_INIT_NO_ATEXIT, NULL); \
         skip_cbs: \
             if (!fn(e, id)) return 0; \
             return 1; }
