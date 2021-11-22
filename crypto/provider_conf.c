@@ -136,13 +136,86 @@ static int prov_already_activated(const char *name,
     return 0;
 }
 
+static int provider_conf_activate(OSSL_LIB_CTX *libctx, const char *name,
+                                  const char *value, const char *path,
+                                  int soft, const CONF *cnf)
+{
+    PROVIDER_CONF_GLOBAL *pcgbl
+        = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_PROVIDER_CONF_INDEX,
+                                &provider_conf_ossl_ctx_method);
+    OSSL_PROVIDER *prov = NULL, *actual = NULL;
+    int ok = 0;
+
+    if (pcgbl == NULL || !CRYPTO_THREAD_write_lock(pcgbl->lock)) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    if (!prov_already_activated(name, pcgbl->activated_providers)) {
+        /*
+        * There is an attempt to activate a provider, so we should disable
+        * loading of fallbacks. Otherwise a misconfiguration could mean the
+        * intended provider does not get loaded. Subsequent fetches could
+        * then fallback to the default provider - which may be the wrong
+        * thing.
+        */
+        if (!ossl_provider_disable_fallback_loading(libctx)) {
+            CRYPTO_THREAD_unlock(pcgbl->lock);
+            ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        prov = ossl_provider_find(libctx, name, 1);
+        if (prov == NULL)
+            prov = ossl_provider_new(libctx, name, NULL, 1);
+        if (prov == NULL) {
+            CRYPTO_THREAD_unlock(pcgbl->lock);
+            if (soft)
+                ERR_clear_error();
+            return 0;
+        }
+
+        if (path != NULL)
+            ossl_provider_set_module_path(prov, path);
+
+        ok = provider_conf_params(prov, NULL, NULL, value, cnf);
+
+        if (ok) {
+            if (!ossl_provider_activate(prov, 1, 0)) {
+                ok = 0;
+            } else if (!ossl_provider_add_to_store(prov, &actual, 0)) {
+                ossl_provider_deactivate(prov, 1);
+                ok = 0;
+            } else if (actual != prov
+                       && !ossl_provider_activate(actual, 1, 0)) {
+                ossl_provider_free(actual);
+                ok = 0;
+            } else {
+                if (pcgbl->activated_providers == NULL)
+                    pcgbl->activated_providers = sk_OSSL_PROVIDER_new_null();
+                if (pcgbl->activated_providers == NULL
+                    || !sk_OSSL_PROVIDER_push(pcgbl->activated_providers,
+                                              actual)) {
+                    ossl_provider_deactivate(actual, 1);
+                    ossl_provider_free(actual);
+                    ok = 0;
+                } else {
+                    ok = 1;
+                }
+            }
+        }
+        if (!ok)
+            ossl_provider_free(prov);
+    }
+    CRYPTO_THREAD_unlock(pcgbl->lock);
+
+    return ok;
+}
+
 static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
                               const char *value, const CONF *cnf)
 {
     int i;
     STACK_OF(CONF_VALUE) *ecmds;
     int soft = 0;
-    OSSL_PROVIDER *prov = NULL, *actual = NULL;
     const char *path = NULL;
     long activate = 0;
     int ok = 0;
@@ -182,70 +255,7 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
     }
 
     if (activate) {
-        PROVIDER_CONF_GLOBAL *pcgbl
-            = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_PROVIDER_CONF_INDEX,
-                                    &provider_conf_ossl_ctx_method);
-
-        if (pcgbl == NULL || !CRYPTO_THREAD_write_lock(pcgbl->lock)) {
-            ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
-        if (!prov_already_activated(name, pcgbl->activated_providers)) {
-            /*
-            * There is an attempt to activate a provider, so we should disable
-            * loading of fallbacks. Otherwise a misconfiguration could mean the
-            * intended provider does not get loaded. Subsequent fetches could
-            * then fallback to the default provider - which may be the wrong
-            * thing.
-            */
-            if (!ossl_provider_disable_fallback_loading(libctx)) {
-                CRYPTO_THREAD_unlock(pcgbl->lock);
-                ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
-                return 0;
-            }
-            prov = ossl_provider_find(libctx, name, 1);
-            if (prov == NULL)
-                prov = ossl_provider_new(libctx, name, NULL, 1);
-            if (prov == NULL) {
-                CRYPTO_THREAD_unlock(pcgbl->lock);
-                if (soft)
-                    ERR_clear_error();
-                return 0;
-            }
-
-            if (path != NULL)
-                ossl_provider_set_module_path(prov, path);
-
-            ok = provider_conf_params(prov, NULL, NULL, value, cnf);
-
-            if (ok) {
-                if (!ossl_provider_activate(prov, 1, 0)) {
-                    ok = 0;
-                } else if (!ossl_provider_add_to_store(prov, &actual, 0)) {
-                    ossl_provider_deactivate(prov, 1);
-                    ok = 0;
-                } else if (actual != prov
-                           && !ossl_provider_activate(actual, 1, 0)) {
-                    ossl_provider_free(actual);
-                    ok = 0;
-                } else {
-                    if (pcgbl->activated_providers == NULL)
-                        pcgbl->activated_providers = sk_OSSL_PROVIDER_new_null();
-                    if (pcgbl->activated_providers == NULL
-                        || !sk_OSSL_PROVIDER_push(pcgbl->activated_providers,
-                                                  actual)) {
-                        ossl_provider_deactivate(actual, 1);
-                        ossl_provider_free(actual);
-                        ok = 0;
-                    } else {
-                        ok = 1;
-                    }
-                }
-            }
-            if (!ok)
-                ossl_provider_free(prov);
-        }
-        CRYPTO_THREAD_unlock(pcgbl->lock);
+        ok = provider_conf_activate(libctx, name, value, path, soft, cnf);
     } else {
         OSSL_PROVIDER_INFO entry;
 
