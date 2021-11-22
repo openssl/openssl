@@ -434,6 +434,7 @@ CRYPTO_R_ILLEGAL_HEX_DIGIT:102:illegal hex digit
 CRYPTO_R_INSUFFICIENT_DATA_SPACE:106:insufficient data space
 CRYPTO_R_INSUFFICIENT_PARAM_SIZE:107:insufficient param size
 CRYPTO_R_INSUFFICIENT_SECURE_DATA_SPACE:108:insufficient secure data space
+CRYPTO_R_INVALID_NEGATIVE_VALUE:122:invalid negative value
 CRYPTO_R_INVALID_NULL_ARGUMENT:109:invalid null argument
 CRYPTO_R_INVALID_OSSL_PARAM_TYPE:110:invalid ossl param type
 CRYPTO_R_ODD_NUMBER_OF_DIGITS:103:odd number of digits
