@@ -14,16 +14,18 @@ BIO_push, BIO_pop, BIO_set_next - add and remove BIOs from a chain
 
 =head1 DESCRIPTION
 
-BIO_push() function prepends the BIO I<b>, which may be a chain of BIOs,
-to I<next> and returns I<b>.  In other words, it pushes I<b> on I<next>.
-I<next> may be NULL, which means that nothing is appended to I<b>.
+BIO_push() pushes I<b> on I<next>.
 If I<b> is NULL the function does nothing and returns I<next>.
+Otherwise it prepends I<b>, which may be a single BIO or a chain of BIOs,
+to I<next> (unless I<next> is NULL).
+It than makes a control call on I<b> and returns I<b>.
 
-BIO_pop() removes the BIO I<b> from a chain and returns the next BIO
-in the chain, or NULL if there is no next BIO. The removed BIO then
-becomes a single BIO with no association with the original chain,
-it can thus be freed or attached to a different chain.
+BIO_pop() removes the BIO I<b> from any chain is is part of.
 If I<b> is NULL the function does nothing and returns NULL.
+Otherwise it makes a control call on I<b> and
+returns the next BIO in the chain, or NULL if there is no next BIO.
+The removed BIO becomes a single BIO with no association with
+the original chain, it can thus be freed or be made part of a different chain.
 
 BIO_set_next() replaces the existing next BIO in a chain with the BIO pointed to
 by I<next>. The new chain may include some of the same BIOs from the old chain
