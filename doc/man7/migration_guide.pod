@@ -121,6 +121,21 @@ FIPS module, as detailed below. Authors and maintainers of external engines are
 strongly encouraged to refactor their code transforming engines into providers
 using the new Provider API and avoiding deprecated methods.
 
+=head3 Support of legacy engines
+
+If openssl is not built without engine support or deprecated API support, engines
+will still work. However, their applicability will be limited.
+
+New algorithms provided via engines will still work.
+
+Engine-backed keys can be loaded via custom B<OSSL_STORE> implementation.
+In this case the B<EVP_PKEY> objects created via L<ENGINE_load_private_key(3)>
+will be concidered legacy and will continue to work.
+
+To ensure the future compatibility, the engines should be turned to providers.
+To prefer the provider-based hardware offload, you can specify the default
+properties to prefer your provider.
+
 =head3 Versioning Scheme
 
 The OpenSSL versioning scheme has changed with the OpenSSL 3.0 release. The new
