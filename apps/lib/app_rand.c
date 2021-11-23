@@ -110,6 +110,8 @@ int opt_rand(int opt)
     case OPT_R_WRITERAND:
         OPENSSL_free(save_rand_file);
         save_rand_file = OPENSSL_strdup(opt_arg());
+        if (save_rand_file == NULL)
+            return 0;
         break;
     }
     return 1;
