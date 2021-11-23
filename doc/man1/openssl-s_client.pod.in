@@ -48,6 +48,7 @@ B<openssl> B<s_client>
 [B<-reconnect>]
 [B<-showcerts>]
 [B<-prexit>]
+[B<-no-interactive>]
 [B<-debug>]
 [B<-trace>]
 [B<-nocommands>]
@@ -418,6 +419,10 @@ because a client certificate is required or is requested only after an
 attempt is made to access a certain URL. Note: the output produced by this
 option is not always accurate because a connection might never have been
 established.
+
+=item B<-no-interactive>
+
+This flag can be used to run the client in a non-interactive mode.
 
 =item B<-state>
 
