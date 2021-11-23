@@ -853,6 +853,22 @@ static int test_rsa_pss_sign(void)
     return ret;
 }
 
+static int test_evp_md_ctx_copy(void)
+{
+    EVP_MD_CTX *mdctx = NULL;
+    EVP_MD_CTX *copyctx = NULL;
+    int ret;
+
+    /* test copying freshly initialized context */
+    ret = TEST_ptr(mdctx = EVP_MD_CTX_new())
+          && TEST_ptr(copyctx = EVP_MD_CTX_new())
+          && TEST_true(EVP_MD_CTX_copy_ex(copyctx, mdctx));
+
+    EVP_MD_CTX_free(mdctx);
+    EVP_MD_CTX_free(copyctx);
+    return ret;
+}
+
 int setup_tests(void)
 {
     if (!test_get_libctx(&mainctx, &nullprov, NULL, NULL, NULL)) {
@@ -879,6 +895,7 @@ int setup_tests(void)
 #endif
     ADD_ALL_TESTS(test_PEM_read_bio_negative, OSSL_NELEM(keydata));
     ADD_TEST(test_rsa_pss_sign);
+    ADD_TEST(test_evp_md_ctx_copy);
     return 1;
 }
 
