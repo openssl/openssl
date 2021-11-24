@@ -112,6 +112,9 @@ populate('ssl/t1_trce.c', config, '/////')
 populate('oqs-test/common.py', config, '#####')
 populate('oqs-interop-test/common.py', config, '#####')
 
+# wireshark files
+populate('qsc.h', config, '/////')
+
 config = load_config(include_disabled_sigs=True)
 populate('README.md', config, '<!---')
 

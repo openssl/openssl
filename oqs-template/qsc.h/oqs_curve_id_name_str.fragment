@@ -1,0 +1,11 @@
+
+#define QSC_KEMS \
+{%- for kem in config['kems'] %}
+    { {{ kem['nid'] }}, "{{ kem['name_group'] }}" }, \
+    {% if kem['bit_security'] == 128 -%} { {{ kem['nid_hybrid'] }}, "p256_{{ kem['name_group'] }}" }, \ {%- endif -%} 
+    {% if kem['bit_security'] == 192 -%} { {{ kem['nid_hybrid'] }}, "p384_{{ kem['name_group'] }}" }, \ {%- endif -%}
+    {% if kem['bit_security'] == 256 -%} { {{ kem['nid_hybrid'] }}, "p521_{{ kem['name_group'] }}" }, \ {%- endif -%}
+{%- endfor %}
+  
+
+

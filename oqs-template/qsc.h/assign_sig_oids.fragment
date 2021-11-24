@@ -1,0 +1,13 @@
+
+#define QSC_SIGS \
+{%- for sig in config['sigs'] %}
+    {%- for variant in sig['variants'] %}
+	oid_add_from_string("{{ variant['name'] }}", "{{ variant['oid'] }}"); \
+        {%- for classical_alg in variant['mix_with'] %}
+	oid_add_from_string("{{ classical_alg['name'] }}_{{ variant['name'] }}", "{{ classical_alg['oid'] }}"); \
+        {%- endfor %}
+    {%- endfor %}
+{%- endfor %}
+
+
+
