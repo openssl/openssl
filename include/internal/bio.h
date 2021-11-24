@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#ifndef OSSL_INTERNAL_BIO_H
+#define OSSL_INTERNAL_BIO_H
+
 #include <openssl/bio.h>
 
 struct bio_method_st {
@@ -31,3 +34,5 @@ void bio_cleanup(void);
 /* Old style to new style BIO_METHOD conversion functions */
 int bwrite_conv(BIO *bio, const char *data, size_t datal, size_t *written);
 int bread_conv(BIO *bio, char *data, size_t datal, size_t *read);
+
+#endif /* OSSL_INTERNAL_BIO_H */
