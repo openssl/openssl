@@ -282,6 +282,11 @@ must fill all I<data_size> bytes and ensure correct padding for the
 native endianness, and set I<return_size> to the same value as
 I<data_size>.
 
+When dealing with B<BIGNUM>s, OpenSSL currently processes paramaters
+as the B<OSSL_PARAM_UNSIGNED_INTEGER> type.  The means that negative
+values are not permitted.  Third party providers need not be thus
+restricted.
+ 
 =back
 
 =begin comment RETURN VALUES doesn't make sense for a manual that only
