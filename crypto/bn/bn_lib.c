@@ -503,8 +503,10 @@ BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
 
 /* ignore negative */
 static
-int bn2binpad(const BIGNUM *a, unsigned char *to, int tolen, endianess_t endianess)
+int bn2binpad(const BIGNUM *a, unsigned char *to, int tolen,
+              endianess_t endianess)
 {
+    int inc;
     int n;
     size_t i, lasti, j, atop, mask;
     BN_ULONG l;
@@ -534,19 +536,28 @@ int bn2binpad(const BIGNUM *a, unsigned char *to, int tolen, endianess_t endiane
         return tolen;
     }
 
+    /*
+     * The loop that does the work iterates from least significant
+     * to most significant BIGNUM limb, so we adapt parameters to
+     * tranfer output bytes accordingly.
+     */
+    switch (endianess) {
+    case LITTLE:
+        inc = 1;
+        break;
+    case BIG:
+        inc = -1;
+        to += tolen - 1;         /* Move to the last byte, not beyond */
+        break;
+    }
+
     lasti = atop - 1;
     atop = a->top * BN_BYTES;
-    if (endianess == BIG)
-        to += tolen; /* start from the end of the buffer */
     for (i = 0, j = 0; j < (size_t)tolen; j++) {
-        unsigned char val;
         l = a->d[i / BN_BYTES];
         mask = 0 - ((j - atop) >> (8 * sizeof(i) - 1));
-        val = (unsigned char)(l >> (8 * (i % BN_BYTES)) & mask);
-        if (endianess == BIG)
-            *--to = val;
-        else
-            *to++ = val;
+        *to = (unsigned char)(l >> (8 * (i % BN_BYTES)) & mask);
+        to += inc;
         i += (i - lasti) >> (8 * sizeof(i) - 1); /* stay on last limb */
     }
 
