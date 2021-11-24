@@ -2949,7 +2949,7 @@ int s_client_main(int argc, char **argv)
             }
         }
 
-        /*don't wait for client input in the non-interactive mode*/
+        /* don't wait for client input in the non-interactive mode */
         if (nointeractive) {
             ret = 0;
             goto shut;
