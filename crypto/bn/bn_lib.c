@@ -436,9 +436,10 @@ static BIGNUM *bin2bn(const unsigned char *s, int len, BIGNUM *ret,
                       endianess_t endianess)
 {
     int inc;
-    unsigned int i, m;
+    const unsigned char *s2;
+    int inc2;
+    unsigned int i;
     unsigned int n;
-    BN_ULONG l;
     BIGNUM *bn = NULL;
 
     if (ret == NULL)
@@ -448,45 +449,52 @@ static BIGNUM *bin2bn(const unsigned char *s, int len, BIGNUM *ret,
     bn_check_top(ret);
 
     /*
-     * The loop that does the work iterates from most to least
+     * The loop that does the work iterates from least to most
      * significant BIGNUM chunk, so we adapt parameters to tranfer
      * input bytes accordingly.
      */
     switch (endianess) {
     case LITTLE:
+        s2 = s + len - 1;
+        inc2 = -1;
+        inc = 1;
+        break;
+    case BIG:
+        s2 = s;
+        inc2 = 1;
         inc = -1;
         s += len - 1;
         break;
-    case BIG:
-        inc = 1;
-        break;
     }
 
-    /* Skip leading zero's. */
-    for ( ; len > 0 && *s == 0; s += inc, len--)
+    /*
+     * Skip leading sign extensions (zero for unsigned numbers).
+     * This is the only spot where |s2| and |inc2| are used.
+     */
+    for ( ; len > 0 && *s2 == xor; s2 += inc2, len--)
         continue;
-    n = len;
-    if (n == 0) {
+
+    if (len == 0) {
         ret->top = 0;
         return ret;
     }
-    i = ((n - 1) / BN_BYTES) + 1;
-    m = ((n - 1) % (BN_BYTES));
-    if (bn_wexpand(ret, (int)i) == NULL) {
+    n = ((len - 1) / BN_BYTES) + 1; /* Number of resulting bignum chunks */
+    if (!ossl_assert(bn_wexpand(ret, (int)n) != NULL)) {
         BN_free(bn);
         return NULL;
     }
-    ret->top = i;
+    ret->top = n;
     ret->neg = 0;
-    l = 0;
-    while (n--) {
-        l = (l << 8L) | *s;
-        s += inc;
-        if (m-- == 0) {
-            ret->d[--i] = l;
-            l = 0;
-            m = BN_BYTES - 1;
+    for (i = 0; n-- > 0; i++) {
+        BN_ULONG l = 0;        /* Accumulator */
+        unsigned int m = 0;    /* Offset in a bignum chunk, in bits */
+
+        for (; len > 0 && m < BN_BYTES * 8; len--, s += inc, m += 8) {
+            BN_ULONG byte = *s;
+
+            l |= (byte << m);
         }
+        ret->d[i] = l;
     }
     /*
      * need to call this due to clear byte at top if avoiding having the top
