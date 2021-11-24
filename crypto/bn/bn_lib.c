@@ -430,8 +430,12 @@ int BN_set_word(BIGNUM *a, BN_ULONG w)
     return 1;
 }
 
-BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
+typedef enum {BIG, LITTLE} endianess_t;
+
+static BIGNUM *bin2bn(const unsigned char *s, int len, BIGNUM *ret,
+                      endianess_t endianess)
 {
+    int inc;
     unsigned int i, m;
     unsigned int n;
     BN_ULONG l;
@@ -442,8 +446,24 @@ BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
     if (ret == NULL)
         return NULL;
     bn_check_top(ret);
+
+    /*
+     * The loop that does the work iterates from most to least
+     * significant BIGNUM chunk, so we adapt parameters to tranfer
+     * input bytes accordingly.
+     */
+    switch (endianess) {
+    case LITTLE:
+        inc = -1;
+        s += len - 1;
+        break;
+    case BIG:
+        inc = 1;
+        break;
+    }
+
     /* Skip leading zero's. */
-    for ( ; len > 0 && *s == 0; s++, len--)
+    for ( ; len > 0 && *s == 0; s += inc, len--)
         continue;
     n = len;
     if (n == 0) {
@@ -460,7 +480,8 @@ BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
     ret->neg = 0;
     l = 0;
     while (n--) {
-        l = (l << 8L) | *(s++);
+        l = (l << 8L) | *s;
+        s += inc;
         if (m-- == 0) {
             ret->d[--i] = l;
             l = 0;
@@ -475,7 +496,10 @@ BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
     return ret;
 }
 
-typedef enum {big, little} endianess_t;
+BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
+{
+    return bin2bn(s, len, ret, BIG);
+}
 
 /* ignore negative */
 static
@@ -512,14 +536,14 @@ int bn2binpad(const BIGNUM *a, unsigned char *to, int tolen, endianess_t endiane
 
     lasti = atop - 1;
     atop = a->top * BN_BYTES;
-    if (endianess == big)
+    if (endianess == BIG)
         to += tolen; /* start from the end of the buffer */
     for (i = 0, j = 0; j < (size_t)tolen; j++) {
         unsigned char val;
         l = a->d[i / BN_BYTES];
         mask = 0 - ((j - atop) >> (8 * sizeof(i) - 1));
         val = (unsigned char)(l >> (8 * (i % BN_BYTES)) & mask);
-        if (endianess == big)
+        if (endianess == BIG)
             *--to = val;
         else
             *to++ = val;
@@ -533,66 +557,24 @@ int BN_bn2binpad(const BIGNUM *a, unsigned char *to, int tolen)
 {
     if (tolen < 0)
         return -1;
-    return bn2binpad(a, to, tolen, big);
+    return bn2binpad(a, to, tolen, BIG);
 }
 
 int BN_bn2bin(const BIGNUM *a, unsigned char *to)
 {
-    return bn2binpad(a, to, -1, big);
+    return bn2binpad(a, to, -1, BIG);
 }
 
 BIGNUM *BN_lebin2bn(const unsigned char *s, int len, BIGNUM *ret)
 {
-    unsigned int i, m;
-    unsigned int n;
-    BN_ULONG l;
-    BIGNUM *bn = NULL;
-
-    if (ret == NULL)
-        ret = bn = BN_new();
-    if (ret == NULL)
-        return NULL;
-    bn_check_top(ret);
-    s += len;
-    /* Skip trailing zeroes. */
-    for ( ; len > 0 && s[-1] == 0; s--, len--)
-        continue;
-    n = len;
-    if (n == 0) {
-        ret->top = 0;
-        return ret;
-    }
-    i = ((n - 1) / BN_BYTES) + 1;
-    m = ((n - 1) % (BN_BYTES));
-    if (bn_wexpand(ret, (int)i) == NULL) {
-        BN_free(bn);
-        return NULL;
-    }
-    ret->top = i;
-    ret->neg = 0;
-    l = 0;
-    while (n--) {
-        s--;
-        l = (l << 8L) | *s;
-        if (m-- == 0) {
-            ret->d[--i] = l;
-            l = 0;
-            m = BN_BYTES - 1;
-        }
-    }
-    /*
-     * need to call this due to clear byte at top if avoiding having the top
-     * bit set (-ve number)
-     */
-    bn_correct_top(ret);
-    return ret;
+    return bin2bn(s, len, ret, LITTLE);
 }
 
 int BN_bn2lebinpad(const BIGNUM *a, unsigned char *to, int tolen)
 {
     if (tolen < 0)
         return -1;
-    return bn2binpad(a, to, tolen, little);
+    return bn2binpad(a, to, tolen, LITTLE);
 }
 
 BIGNUM *BN_native2bn(const unsigned char *s, int len, BIGNUM *ret)
