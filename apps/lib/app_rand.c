@@ -28,8 +28,14 @@ void app_RAND_load_conf(CONF *c, const char *section)
         BIO_printf(bio_err, "Can't load %s into RNG\n", randfile);
         ERR_print_errors(bio_err);
     }
-    if (save_rand_file == NULL)
+    if (save_rand_file == NULL) {
         save_rand_file = OPENSSL_strdup(randfile);
+        /* If some internal memory errors have occurred */
+        if (save_rand_file == NULL) {
+            BIO_printf(bio_err, "Can't duplicate %s\n", randfile);
+            ERR_print_errors(bio_err);
+        }
+    }
 }
 
 static int loadfiles(char *name)
