@@ -1392,21 +1392,23 @@ static int fix_rsa_pss_saltlen(enum state state,
     if ((ctx->action_type == SET && state == PRE_PARAMS_TO_CTRL)
         || (ctx->action_type == GET && state == POST_CTRL_TO_PARAMS)) {
         size_t i;
+        int val;
 
         for (i = 0; i < OSSL_NELEM(str_value_map); i++) {
             if (strcmp(ctx->p2, str_value_map[i].ptr) == 0)
                 break;
         }
-        if (i == OSSL_NELEM(str_value_map)) {
-            ctx->p1 = atoi(ctx->p2);
-        } else if (state == POST_CTRL_TO_PARAMS) {
+
+        val = i == OSSL_NELEM(str_value_map) ? atoi(ctx->p2)
+                                             : (int)str_value_map[i].id;
+        if (state == POST_CTRL_TO_PARAMS) {
             /*
              * EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN weirdness explained further
              * up
              */
-            *(int *)ctx->orig_p2 = str_value_map[i].id;
+            *(int *)ctx->orig_p2 = val;
         } else {
-            ctx->p1 = (int)str_value_map[i].id;
+            ctx->p1 = val;
         }
         ctx->p2 = NULL;
     }

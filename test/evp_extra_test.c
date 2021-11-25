@@ -3283,6 +3283,32 @@ static int test_EVP_rsa_pss_with_keygen_bits(void)
     return ret;
 }
 
+static int test_EVP_rsa_pss_set_saltlen(void)
+{
+    int ret = 0;
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *pkey_ctx = NULL;
+    EVP_MD *sha256 = NULL;
+    EVP_MD_CTX *sha256_ctx = NULL;
+    int saltlen = 9999; /* buggy EVP_PKEY_CTX_get_rsa_pss_saltlen() didn't update this */
+    const int test_value = 32;
+
+    ret = TEST_ptr(pkey = load_example_rsa_key())
+        && TEST_ptr(sha256 = EVP_MD_fetch(testctx, "sha256", NULL))
+        && TEST_ptr(sha256_ctx = EVP_MD_CTX_new())
+        && TEST_true(EVP_DigestSignInit(sha256_ctx, &pkey_ctx, sha256, NULL, pkey))
+        && TEST_true(EVP_PKEY_CTX_set_rsa_padding(pkey_ctx, RSA_PKCS1_PSS_PADDING))
+        && TEST_true(EVP_PKEY_CTX_set_rsa_pss_saltlen(pkey_ctx, test_value))
+        && TEST_true(EVP_PKEY_CTX_get_rsa_pss_saltlen(pkey_ctx, &saltlen))
+        && TEST_int_eq(saltlen, test_value);
+
+    EVP_MD_CTX_free(sha256_ctx);
+    EVP_PKEY_free(pkey);
+    EVP_MD_free(sha256);
+
+    return ret;
+}
+
 static int success = 1;
 static void md_names(const char *name, void *vctx)
 {
@@ -4368,6 +4394,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_evp_iv_des, 6);
 #endif
     ADD_TEST(test_EVP_rsa_pss_with_keygen_bits);
+    ADD_TEST(test_EVP_rsa_pss_set_saltlen);
 #ifndef OPENSSL_NO_EC
     ADD_ALL_TESTS(test_ecpub, OSSL_NELEM(ecpub_nids));
 #endif
