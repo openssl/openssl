@@ -53,7 +53,7 @@ the number will be set to 1, so that the product of two such random
 numbers will always have 2*I<bits> length.
 If I<bottom> is B<BN_RAND_BOTTOM_ODD>, the number will be odd; if it
 is B<BN_RAND_BOTTOM_ANY> it can be odd or even.
-If I<bits> is 1 then I<top> cannot also be B<BN_RAND_FLG_TOPTWO>.
+If I<bits> is 1 then I<top> cannot also be B<BN_RAND_TOP_TWO>.
 
 BN_rand() is the same as BN_rand_ex() except that the default library context
 is always used.
