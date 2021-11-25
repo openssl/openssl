@@ -30,7 +30,6 @@
 /*
  * Things in boring, not in openssl.
  */
-#define HAVE_BN_PADDED 0
 #define HAVE_BN_SQRT 0
 
 typedef struct filetest_st {
@@ -1734,52 +1733,52 @@ static int file_gcd(STANZA *s)
 
 static int test_bn2padded(void)
 {
-#if HAVE_BN_PADDED
     uint8_t zeros[256], out[256], reference[128];
-    BIGNUM *n = BN_new();
+    size_t bytes;
+    BIGNUM *n;
     int st = 0;
 
     /* Test edge case at 0. */
-    if (n == NULL)
+    if (!TEST_ptr((n = BN_new())))
         goto err;
-    if (!TEST_true(BN_bn2bin_padded(NULL, 0, n)))
+    if (!TEST_int_eq(BN_bn2binpad(n, NULL, 0), 0))
         goto err;
     memset(out, -1, sizeof(out));
-    if (!TEST_true(BN_bn2bin_padded(out, sizeof(out)), n))
+    if (!TEST_int_eq(BN_bn2binpad(n, out, sizeof(out)), sizeof(out)))
         goto err;
     memset(zeros, 0, sizeof(zeros));
     if (!TEST_mem_eq(zeros, sizeof(zeros), out, sizeof(out)))
         goto err;
 
     /* Test a random numbers at various byte lengths. */
-    for (size_t bytes = 128 - 7; bytes <= 128; bytes++) {
+    for (bytes = 128 - 7; bytes <= 128; bytes++) {
 # define TOP_BIT_ON 0
 # define BOTTOM_BIT_NOTOUCH 0
         if (!TEST_true(BN_rand(n, bytes * 8, TOP_BIT_ON, BOTTOM_BIT_NOTOUCH)))
             goto err;
-        if (!TEST_int_eq(BN_num_bytes(n), A) bytes
-                || TEST_int_eq(BN_bn2bin(n, reference), bytes))
+        if (!TEST_int_eq(BN_num_bytes(n), bytes)
+                || !TEST_int_eq(BN_bn2bin(n, reference), bytes))
             goto err;
         /* Empty buffer should fail. */
-        if (!TEST_int_eq(BN_bn2bin_padded(NULL, 0, n)), 0)
+        if (!TEST_int_eq(BN_bn2binpad(n, NULL, 0), -1))
             goto err;
         /* One byte short should fail. */
-        if (BN_bn2bin_padded(out, bytes - 1, n))
+        if (!TEST_int_eq(BN_bn2binpad(n, out, bytes - 1), -1))
             goto err;
         /* Exactly right size should encode. */
-        if (!TEST_true(BN_bn2bin_padded(out, bytes, n))
-                || TEST_mem_eq(out, bytes, reference, bytes))
+        if (!TEST_int_eq(BN_bn2binpad(n, out, bytes), bytes)
+                || !TEST_mem_eq(out, bytes, reference, bytes))
             goto err;
         /* Pad up one byte extra. */
-        if (!TEST_true(BN_bn2bin_padded(out, bytes + 1, n))
+        if (!TEST_int_eq(BN_bn2binpad(n, out, bytes + 1), bytes + 1)
                 || !TEST_mem_eq(out + 1, bytes, reference, bytes)
                 || !TEST_mem_eq(out, 1, zeros, 1))
             goto err;
         /* Pad up to 256. */
-        if (!TEST_true(BN_bn2bin_padded(out, sizeof(out)), n)
+        if (!TEST_int_eq(BN_bn2binpad(n, out, sizeof(out)), sizeof(out))
                 || !TEST_mem_eq(out + sizeof(out) - bytes, bytes,
                                 reference, bytes)
-                || !TEST_mem_eq(out, sizseof(out) - bytes,
+                || !TEST_mem_eq(out, sizeof(out) - bytes,
                                 zeros, sizeof(out) - bytes))
             goto err;
     }
@@ -1788,9 +1787,6 @@ static int test_bn2padded(void)
  err:
     BN_free(n);
     return st;
-#else
-    return ctx != NULL;
-#endif
 }
 
 static int test_dec2bn(void)
