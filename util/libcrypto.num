@@ -5434,3 +5434,4 @@ BN_signed_lebin2bn                      ?	3_1_0	EXIST::FUNCTION:
 BN_signed_bn2lebin                      ?	3_1_0	EXIST::FUNCTION:
 BN_signed_native2bn                     ?	3_1_0	EXIST::FUNCTION:
 BN_signed_bn2native                     ?	3_1_0	EXIST::FUNCTION:
+OSSL_PARAM_BLD_push_signed_BN           ?	3_1_0	EXIST::FUNCTION:

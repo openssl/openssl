@@ -83,11 +83,39 @@ int ossl_param_build_set_bn_pad(OSSL_PARAM_BLD *bld, OSSL_PARAM *p,
     return 1;
 }
 
+int ossl_param_build_set_signed_bn_pad(OSSL_PARAM_BLD *bld, OSSL_PARAM *p,
+                                       const char *key, const BIGNUM *bn,
+                                       size_t sz)
+{
+    if (bld != NULL)
+        return OSSL_PARAM_BLD_push_signed_BN(bld, key, bn);
+    p = OSSL_PARAM_locate(p, key);
+    if (p != NULL) {
+        if (sz > p->data_size)
+            return 0;
+        p->data_size = sz;
+        return OSSL_PARAM_set_BN(p, bn);
+    }
+    return 1;
+}
+
 int ossl_param_build_set_bn(OSSL_PARAM_BLD *bld, OSSL_PARAM *p,
                             const char *key, const BIGNUM *bn)
 {
     if (bld != NULL)
         return OSSL_PARAM_BLD_push_BN(bld, key, bn);
+
+    p = OSSL_PARAM_locate(p, key);
+    if (p != NULL)
+        return OSSL_PARAM_set_BN(p, bn) > 0;
+    return 1;
+}
+
+int ossl_param_build_set_signed_bn(OSSL_PARAM_BLD *bld, OSSL_PARAM *p,
+                                   const char *key, const BIGNUM *bn)
+{
+    if (bld != NULL)
+        return OSSL_PARAM_BLD_push_signed_BN(bld, key, bn);
 
     p = OSSL_PARAM_locate(p, key);
     if (p != NULL)

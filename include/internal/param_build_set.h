@@ -39,6 +39,11 @@ int ossl_param_build_set_bn(OSSL_PARAM_BLD *bld, OSSL_PARAM *p,
                             const char *key, const BIGNUM *bn);
 int ossl_param_build_set_bn_pad(OSSL_PARAM_BLD *bld, OSSL_PARAM *p,
                                 const char *key, const BIGNUM *bn,  size_t sz);
+int ossl_param_build_set_signed_bn(OSSL_PARAM_BLD *bld, OSSL_PARAM *p,
+                                   const char *key, const BIGNUM *bn);
+int ossl_param_build_set_signed_bn_pad(OSSL_PARAM_BLD *bld, OSSL_PARAM *p,
+                                       const char *key, const BIGNUM *bn,
+                                       size_t sz);
 int ossl_param_build_set_multi_key_bn(OSSL_PARAM_BLD *bld, OSSL_PARAM *p,
                                       const char *names[],
                                       STACK_OF(BIGNUM_const) *stk);
