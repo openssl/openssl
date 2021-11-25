@@ -192,23 +192,20 @@ int OSSL_PARAM_BLD_push_double(OSSL_PARAM_BLD *bld, const char *key,
     return param_push_num(bld, key, &num, sizeof(num), OSSL_PARAM_REAL);
 }
 
-int OSSL_PARAM_BLD_push_BN(OSSL_PARAM_BLD *bld, const char *key,
-                           const BIGNUM *bn)
-{
-    return OSSL_PARAM_BLD_push_BN_pad(bld, key, bn,
-                                      bn == NULL ? 0 : BN_num_bytes(bn));
-}
-
-int OSSL_PARAM_BLD_push_BN_pad(OSSL_PARAM_BLD *bld, const char *key,
-                               const BIGNUM *bn, size_t sz)
+static int push_BN(OSSL_PARAM_BLD *bld, const char *key,
+                   const BIGNUM *bn, size_t sz, int type)
 {
     int n, secure = 0;
     OSSL_PARAM_BLD_DEF *pd;
 
+    if (!ossl_assert(type == OSSL_PARAM_UNSIGNED_INTEGER
+                     || type == OSSL_PARAM_INTEGER))
+        return 0;
+
     if (bn != NULL) {
-        if (BN_is_negative(bn)) {
+        if (type == OSSL_PARAM_UNSIGNED_INTEGER && BN_is_negative(bn)) {
             ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_UNSUPPORTED,
-                           "Negative big numbers are unsupported for OSSL_PARAM");
+                           "Negative big numbers are unsupported for OSSL_PARAM_UNSIGNED_INTEGER");
             return 0;
         }
 
@@ -224,11 +221,30 @@ int OSSL_PARAM_BLD_push_BN_pad(OSSL_PARAM_BLD *bld, const char *key,
         if (BN_get_flags(bn, BN_FLG_SECURE) == BN_FLG_SECURE)
             secure = 1;
     }
-    pd = param_push(bld, key, sz, sz, OSSL_PARAM_UNSIGNED_INTEGER, secure);
+    pd = param_push(bld, key, sz, sz, type, secure);
     if (pd == NULL)
         return 0;
     pd->bn = bn;
     return 1;
+}
+
+int OSSL_PARAM_BLD_push_BN(OSSL_PARAM_BLD *bld, const char *key,
+                           const BIGNUM *bn)
+{
+    if (BN_is_negative(bn))
+        return push_BN(bld, key, bn, bn == NULL ? 0 : BN_num_bytes(bn) + 1,
+                       OSSL_PARAM_INTEGER);
+    return push_BN(bld, key, bn, bn == NULL ? 0 : BN_num_bytes(bn),
+                   OSSL_PARAM_UNSIGNED_INTEGER);
+}
+
+int OSSL_PARAM_BLD_push_BN_pad(OSSL_PARAM_BLD *bld, const char *key,
+                               const BIGNUM *bn, size_t sz)
+{
+    if (BN_is_negative(bn))
+        return push_BN(bld, key, bn, bn == NULL ? 0 : BN_num_bytes(bn),
+                       OSSL_PARAM_INTEGER);
+    return push_BN(bld, key, bn, sz, OSSL_PARAM_UNSIGNED_INTEGER);
 }
 
 int OSSL_PARAM_BLD_push_utf8_string(OSSL_PARAM_BLD *bld, const char *key,
@@ -328,7 +344,10 @@ static OSSL_PARAM *param_bld_convert(OSSL_PARAM_BLD *bld, OSSL_PARAM *param,
         param[i].data = p;
         if (pd->bn != NULL) {
             /* BIGNUM */
-            BN_bn2nativepad(pd->bn, (unsigned char *)p, pd->size);
+            if (pd->type == OSSL_PARAM_UNSIGNED_INTEGER)
+                BN_bn2nativepad(pd->bn, (unsigned char *)p, pd->size);
+            else
+                BN_signed_bn2native(pd->bn, (unsigned char *)p, pd->size);
         } else if (pd->type == OSSL_PARAM_OCTET_PTR
                    || pd->type == OSSL_PARAM_UTF8_PTR) {
             /* PTR */
