@@ -1734,6 +1734,7 @@ static int file_gcd(STANZA *s)
 static int test_bn2padded(void)
 {
     uint8_t zeros[256], out[256], reference[128];
+    size_t bytes;
     BIGNUM *n;
     int st = 0;
 
@@ -1750,7 +1751,7 @@ static int test_bn2padded(void)
         goto err;
 
     /* Test a random numbers at various byte lengths. */
-    for (size_t bytes = 128 - 7; bytes <= 128; bytes++) {
+    for (bytes = 128 - 7; bytes <= 128; bytes++) {
 # define TOP_BIT_ON 0
 # define BOTTOM_BIT_NOTOUCH 0
         if (!TEST_true(BN_rand(n, bytes * 8, TOP_BIT_ON, BOTTOM_BIT_NOTOUCH)))
