@@ -1919,15 +1919,18 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
                 goto err;
             }
         }
+
         if ((info = OPENSSL_zalloc(sizeof(*info))) == NULL)
             goto err;
         (void)OSSL_CMP_CTX_set_http_cb_arg(ctx, info);
         /* info will be freed along with CMP ctx */
         info->server = opt_server;
         info->port = server_port;
-        info->use_proxy = opt_proxy != NULL;
+        /* workaround for callback design flaw, see #17088: */
+        info->use_proxy = proxy_host != NULL;
         info->timeout = OSSL_CMP_CTX_get_option(ctx, OSSL_CMP_OPT_MSG_TIMEOUT);
         info->ssl_ctx = setup_ssl_ctx(ctx, host, engine);
+
         if (info->ssl_ctx == NULL)
             goto err;
         (void)OSSL_CMP_CTX_set_http_cb(ctx, app_http_tls_cb);
