@@ -5718,6 +5718,7 @@ X509v3_delete_extension                 5715	4_0_0	EXIST::FUNCTION:
 CMS_SignerInfo_get0_signer_cert         ?	4_1_0	EXIST::FUNCTION:CMS
 CMS_SignerInfo_get_verification_result  ?	4_1_0	EXIST::FUNCTION:CMS
 CTLOG_STORE_add0_log                    ?	4_1_0	EXIST::FUNCTION:CT
+OSSL_HTTP_REQ_CTX_proxy_connect         ?	4_1_0	EXIST::FUNCTION:HTTP
 CRYPTO_atomic_load_ptr                  ?	4_1_0	EXIST::FUNCTION:
 CRYPTO_atomic_store_ptr                 ?	4_1_0	EXIST::FUNCTION:
 CRYPTO_atomic_cmp_exch_ptr              ?	4_1_0	EXIST::FUNCTION:
