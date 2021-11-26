@@ -295,16 +295,8 @@ int check_cert_attributes(BIO *bio, X509 *x,
 
 void store_setup_crl_download(X509_STORE *st);
 
-typedef struct app_http_tls_info_st {
-    const char *server;
-    const char *port;
-    int use_proxy;
-    long timeout;
-    SSL_CTX *ssl_ctx;
-} APP_HTTP_TLS_INFO;
-BIO *app_http_tls_cb(BIO *hbio, /* APP_HTTP_TLS_INFO */ void *arg,
-    int connect, int detail);
-void APP_HTTP_TLS_INFO_free(APP_HTTP_TLS_INFO *info);
+BIO *app_http_tls_cb(BIO *hbio, /* SSL_CTX */ void *arg, int connect,
+    int detail, OSSL_HTTP_REQ_CTX *rctx);
 #ifndef OPENSSL_NO_SOCK
 ASN1_VALUE *app_http_get_asn1(const char *url, const char *proxy,
     const char *no_proxy, SSL_CTX *ssl_ctx,

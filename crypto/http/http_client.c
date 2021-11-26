@@ -1065,6 +1065,7 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
     int buf_size, int overall_timeout)
 {
     BIO *cbio; /* == bio if supplied, used as connection BIO if rbio is NULL */
+    BIO *ubio;
     OSSL_HTTP_REQ_CTX *rctx = NULL;
 
     if (use_ssl && bio_update_fn == NULL) {
@@ -1117,22 +1118,25 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
     }
     /* now overall_timeout is guaranteed to be >= 0 */
 
-    /* adapt in order to fix callback design flaw, see #17088 */
-    /* callback can be used to wrap or prepend TLS session */
-    if (bio_update_fn != NULL) {
-        BIO *orig_bio = cbio;
-
-        cbio = (*bio_update_fn)(cbio, arg, 1 /* connect */, use_ssl != 0);
-        if (cbio == NULL) {
-            if (bio == NULL) /* cbio was not provided by caller */
-                BIO_free_all(orig_bio);
-            goto end;
-        }
-    }
-
     rctx = http_req_ctx_new(bio == NULL, cbio, rbio != NULL ? rbio : cbio,
         bio_update_fn, arg, use_ssl, proxy, server, port,
         buf_size, overall_timeout);
+    if (rctx != NULL && bio_update_fn != NULL) {
+        /* callback can be used, e.g., to prepend SSL BIO for TLS session */
+        /* try first with detail == 1 for any version 3.x applications */
+        ubio = (*bio_update_fn)(cbio, arg, 1 /* connect */, 1, NULL);
+        if (ubio == NULL) {
+            ubio = (*bio_update_fn)(cbio, arg, 1 /* connect */, 0, rctx);
+            if (ubio == NULL) {
+                OSSL_HTTP_REQ_CTX_free(rctx);
+                rctx = NULL;
+                goto end;
+            }
+        }
+        rctx->wbio = ubio;
+        if (rbio == NULL) /* rbio was not provided by caller */
+            rctx->rbio = ubio;
+    }
 
 end:
     if (rctx != NULL)
@@ -1383,10 +1387,9 @@ int OSSL_HTTP_close(OSSL_HTTP_REQ_CTX *rctx, int ok)
     BIO *wbio;
     int ret = 1;
 
-    /* callback can be used to finish TLS session and free its BIO */
+    /* callback can be used to clean up TLS session on disconnect */
     if (rctx != NULL && rctx->upd_fn != NULL) {
-        wbio = (*rctx->upd_fn)(rctx->wbio, rctx->upd_arg,
-            0 /* disconnect */, ok);
+        wbio = (*rctx->upd_fn)(rctx->wbio, rctx->upd_arg, 0 /* disconnect */, ok, rctx);
         ret = wbio != NULL;
         if (ret)
             rctx->wbio = wbio;
@@ -1571,4 +1574,27 @@ end:
     OPENSSL_free(mbuf);
     return ret;
 #undef BUF_SIZE
+}
+
+int OSSL_HTTP_REQ_CTX_proxy_connect(OSSL_HTTP_REQ_CTX *rctx,
+    const char *user, const char *pass,
+    BIO *bio_err, const char *prog)
+{
+    int timeout = 0;
+
+    if (rctx == NULL) {
+        ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (rctx->proxy == NULL)
+        return 1;
+
+    if (rctx->max_total_time != 0)
+        timeout = (int)(rctx->max_total_time - time(NULL)); /* can't overflow */
+    if (timeout < 0) {
+        ERR_raise(ERR_LIB_BIO, BIO_R_CONNECT_TIMEOUT);
+        return 0;
+    }
+    return OSSL_HTTP_proxy_connect(rctx->wbio, rctx->server, rctx->port,
+        user, pass, timeout, bio_err, prog);
 }
