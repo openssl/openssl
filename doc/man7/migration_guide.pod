@@ -132,13 +132,7 @@ Engine-backed keys can be loaded via custom B<OSSL_STORE> implementation.
 In this case the B<EVP_PKEY> objects created via L<ENGINE_load_private_key(3)>
 will be concidered legacy and will continue to work.
 
-Engine-based hardware acceleration for asymmetric algorithms will be available
-if you use the legacy API (e.g. B<RSA_METHOD>) and create the RSA object from
-parameters.  However, if you get the B<RSA> object with
-L<PEM_read_bio_PrivateKey(3)> and L<EVP_PKEY_get1_RSA(3)>, the hardware offload will
-not work.
-
-To ensure the future compatibility, the engines shouldbe turned to providers.
+To ensure the future compatibility, the engines should be turned to providers.
 To prefer the provider-based hardware offload, you can specify the default
 properties to prefer your provider.
 
