@@ -946,6 +946,7 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
     }
     /* now overall_timeout is guaranteed to be >= 0 */
 
+    /* adapt in order to fix callback design flaw, see #17088 */
     /* callback can be used to wrap or prepend TLS session */
     if (bio_update_fn != NULL) {
         BIO *orig_bio = cbio;
