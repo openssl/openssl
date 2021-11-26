@@ -295,17 +295,20 @@ int check_cert_attributes(BIO *bio, X509 *x,
 
 void store_setup_crl_download(X509_STORE *st);
 
-typedef struct app_http_tls_info_st {
-    const char *server;
-    const char *port;
-    int use_proxy;
-    long timeout;
-    SSL_CTX *ssl_ctx;
-} APP_HTTP_TLS_INFO;
-BIO *app_http_tls_cb(BIO *hbio, /* APP_HTTP_TLS_INFO */ void *arg,
-    int connect, int detail);
-void APP_HTTP_TLS_INFO_free(APP_HTTP_TLS_INFO *info);
-#ifndef OPENSSL_NO_SOCK
+#if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
+/*
+ * Note on function argument ownership and lifetime:
+ * - app_SSL_CTX_set_tls_server_ex_data() does NOT transfer ownership of
+ *   |host| to |ssl_ctx|. The caller must ensure that |host| remains valid
+ *   for as long as it may be accessed via |ssl_ctx| and is responsible for
+ *   freeing it when no longer needed.
+ * - app_SSL_CTX_get_tls_server_ex_data() returns a non-owning pointer.
+ *   Callers must not free the returned pointer unless they also own it via
+ *   other means and have ensured it is no longer used by |ssl_ctx|.
+ */
+int app_SSL_CTX_set_tls_server_ex_data(SSL_CTX *ssl_ctx, const char *host);
+char *app_SSL_CTX_get_tls_server_ex_data(SSL_CTX *ssl_ctx);
+BIO *app_http_tls_cb(BIO *hbio, /* SSL_CTX */ void *arg, int connect, int detail);
 ASN1_VALUE *app_http_get_asn1(const char *url, const char *proxy,
     const char *no_proxy, SSL_CTX *ssl_ctx,
     const STACK_OF(CONF_VALUE) *headers,

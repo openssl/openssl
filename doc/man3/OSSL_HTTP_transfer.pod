@@ -5,6 +5,7 @@
 OSSL_HTTP_open,
 OSSL_HTTP_bio_cb_t,
 OSSL_HTTP_proxy_connect,
+OSSL_HTTP_REQ_CTX_proxy_connect,
 OSSL_HTTP_set1_request,
 OSSL_HTTP_exchange,
 OSSL_HTTP_get,
@@ -26,6 +27,9 @@ OSSL_HTTP_close
  int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
                              const char *proxyuser, const char *proxypass,
                              int timeout, BIO *bio_err, const char *prog);
+ int OSSL_HTTP_REQ_CTX_proxy_connect(OSSL_HTTP_REQ_CTX *rctx,
+                                     const char *user, const char *pass,
+                                     BIO *bio_err, const char *prog);
  int OSSL_HTTP_set1_request(OSSL_HTTP_REQ_CTX *rctx, const char *path,
                             const STACK_OF(CONF_VALUE) *headers,
                             const char *content_type, BIO *req,
@@ -89,8 +93,8 @@ is found in the optional list I<no_proxy> of proxy hostnames or IP addresses
 separated by C<,> and/or whitespace (if not NULL;
 default is the environment variable C<no_proxy> if set, else C<NO_PROXY>).
 Proxying plain HTTP is supported directly,
-while using a proxy for HTTPS connections requires a suitable callback function
-such as OSSL_HTTP_proxy_connect(), described below.
+while using a proxy for HTTPS connections requires a suitable helper function
+such as OSSL_HTTP_REQ_CTX_proxy_connect(), described below.
 
 If I<use_ssl> is nonzero a TLS connection is requested
 and the I<bio_update_fn> parameter must be provided.
@@ -105,10 +109,12 @@ I<bio_update_fn> is a BIO connect/disconnect callback function with prototype
 The callback function may modify the BIO provided in the I<bio> argument,
 whereby it may use an optional custom defined argument I<arg>,
 which can for instance point to an B<SSL_CTX> structure.
-During connection establishment, just after calling BIO_do_connect_retry(), the
+During connection establishment, just after calling BIO_do_connect_retry()
+(and calling OSSL_HTTP_REQ_CTX_proxy_connect() in case I<use_ssl> is nonzero), the
 callback function is invoked with the I<connect> argument being 1 and
 I<detail> being 1 if I<use_ssl> is nonzero (i.e., HTTPS is requested), else 0.
 On disconnect I<connect> is 0 and I<detail> is 1 if no error occurred, else 0.
+
 For instance, on connect the callback may push an SSL BIO to implement HTTPS;
 after disconnect it may do some diagnostic output and pop and free the SSL BIO.
 
@@ -161,9 +167,14 @@ If the I<port> argument is NULL or the empty string it defaults to "443".
 If the I<timeout> parameter is > 0 this indicates the maximum number of
 seconds the connection setup is allowed to take.
 A value <= 0 enables waiting indefinitely, i.e., no timeout.
-Since this function is typically called by applications such as
+Since this function can be directly called by applications such as
 L<openssl-s_client(1)> it uses the I<bio_err> and I<prog> parameters (unless
-NULL) to print additional diagnostic information in a user-oriented way.
+NULL) to print diagnostic information in a user-oriented way.
+
+OSSL_HTTP_REQ_CTX_proxy_connect() improves OSSL_HTTP_proxy_connect() as follows.
+It does nothing if I<rctx> indicates that no proxy is used or SSL/TLS is not used.
+Otherwise it calls OSSL_HTTP_proxy_connect(),
+taking the needed BIO, server, port, and timeout information from I<rctx>.
 
 OSSL_HTTP_set1_request() sets up in I<rctx> the request header and content data
 and expectations on the response using the following parameters.
@@ -248,7 +259,8 @@ See also L<OSSL_trace_enabled(3)> and L<openssl-env(7)>.
 
 OSSL_HTTP_open() returns on success a B<OSSL_HTTP_REQ_CTX>, else NULL.
 
-OSSL_HTTP_proxy_connect() and OSSL_HTTP_set1_request()
+OSSL_HTTP_proxy_connect(), OSSL_HTTP_REQ_CTX_proxy_connect(),
+and OSSL_HTTP_set1_request()
 return 1 on success, 0 on error.
 
 On success, OSSL_HTTP_exchange(), OSSL_HTTP_get(), and OSSL_HTTP_transfer()
@@ -271,7 +283,9 @@ L<OSSL_trace_enabled(3)>, and L<openssl-env(7)>.
 
 =head1 HISTORY
 
-All the functions described here were added in OpenSSL 3.0.
+OSSL_HTTP_REQ_CTX_proxy_connect() was added in OpenSSL 4.0.
+
+All other functions described here were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

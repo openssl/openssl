@@ -239,6 +239,79 @@ err:
     return res;
 }
 
+/* test proxy user credentials as in the example in RFC 7617 section 2.1 */
+#define HTTP_TEST_PROXY_USER "test"
+#define HTTP_TEST_PROXY_PASS "123\xC2\xA3" /* last char is UTF8-encoded pound symbol */
+#define HTTP_TEST_PROXY_AUTH "Proxy-Authorization: Basic dGVzdDoxMjPCow=="
+
+/* Initiate a dummy HTTP session, basically following OSSL_HTTP_open(), with focus on initialization of proxy use */
+static BIO *dummy_HTTP_open(const char *server, const char *port,
+    const char *proxy, const char *no_proxy, int use_ssl,
+    OSSL_HTTP_bio_cb_t bio_update_fn, void *arg)
+{
+    BIO *cbio;
+    char *proxy_host = NULL, *proxy_port = NULL;
+
+    proxy = OSSL_HTTP_adapt_proxy(proxy, no_proxy, server, use_ssl);
+    if (proxy != NULL
+        && !OSSL_HTTP_parse_url(proxy, NULL /* use_ssl */, NULL /* user */,
+            &proxy_host, &proxy_port, NULL /* num */,
+            NULL /* path */, NULL, NULL))
+        return NULL;
+    cbio = BIO_new(BIO_s_mem());
+    OPENSSL_free(proxy_host);
+    OPENSSL_free(proxy_port);
+    if (cbio == NULL)
+        return NULL;
+    if (use_ssl) {
+        BIO_puts(cbio, "HTTP/1.0 200\r\n\r\n"); /* fake HTTPS proxy CONNECT response */
+
+        if (!OSSL_HTTP_proxy_connect(cbio, server, port, HTTP_TEST_PROXY_USER,
+                HTTP_TEST_PROXY_PASS, 0, NULL, NULL))
+            goto err;
+    }
+
+    if (bio_update_fn != NULL) {
+        BIO *orig_bio = cbio;
+
+        cbio = (*bio_update_fn)(cbio, arg, 1 /* connect */, use_ssl != 0);
+        if (cbio == NULL) {
+            cbio = orig_bio;
+            goto err;
+        }
+    }
+    return cbio;
+
+err:
+    BIO_free(cbio);
+    return NULL;
+}
+
+static int bio_update_fn_detail = -1; /* initial value indicates function not yet called */
+static BIO *bio_update_fn(BIO *bio, void *arg, int connect, int detail)
+{
+    void *my_ctx = arg;
+    int use_ssl = detail;
+
+    bio_update_fn_detail = use_ssl;
+    return connect == 1 && use_ssl == (my_ctx != NULL) ? bio : NULL;
+}
+
+static int test_http_open_requesting_proxy(int use_ssl)
+{
+    int dummy_ctx[1];
+    void *my_ctx = use_ssl ? dummy_ctx : NULL;
+    BIO *bio = dummy_HTTP_open("dummy-server.com", NULL /* port */,
+        HTTP_TEST_PROXY_USER ":" HTTP_TEST_PROXY_PASS "@dummy-proxy.org",
+        "dummy-no_proxy.com", use_ssl, bio_update_fn, my_ctx);
+
+    if (TEST_ptr(bio) == 0 || !TEST_int_eq(bio_update_fn_detail, use_ssl))
+        return 0;
+
+    BIO_free(bio);
+    return 1;
+}
+
 static int test_http_keep_alive(char version, int keep_alive, int kept_alive)
 {
     BIO *wbio = BIO_new(BIO_s_mem());
@@ -453,6 +526,16 @@ static int test_http_post_x509_error_status(void)
     return test_http_method(0 /* POST */, 0, HTTP_STATUS_CODES_NONFATAL_ERROR);
 }
 
+static int test_http_open_requesting_HTTP_proxy(void)
+{
+    return test_http_open_requesting_proxy(0);
+}
+
+static int test_http_open_requesting_HTTPS_proxy(void)
+{
+    return test_http_open_requesting_proxy(1);
+}
+
 static int test_http_keep_alive_0_no_no(void)
 {
     return test_http_keep_alive('0', 0, 0);
@@ -592,6 +675,9 @@ int setup_tests(void)
     ADD_TEST(test_http_post_x509);
     ADD_TEST(test_http_post_x509_fatal_status);
     ADD_TEST(test_http_post_x509_error_status);
+
+    ADD_TEST(test_http_open_requesting_HTTP_proxy);
+    ADD_TEST(test_http_open_requesting_HTTPS_proxy);
 
     ADD_TEST(test_http_keep_alive_0_no_no);
     ADD_TEST(test_http_keep_alive_1_no_no);
