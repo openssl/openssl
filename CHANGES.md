@@ -123,6 +123,14 @@ OpenSSL Releases
 
    *William McCormack*
 
+ * Streamlined the workaround for the connection callback function of type
+   `OSSL_HTTP_bio_cb_t` not having a `OSSL_HTTP_REQ_CTX *` parameter,
+   by adding `OSSL_HTTP_REQ_CTX_proxy_connect()` called on SSL/TLS connect.
+
+   This work was sponsored by Siemens AG.
+
+   *David von Oheimb*
+
  * Added IKEV2 KDF (EVP_KDF-IKEV2KDF) implementation.
 
    *Helen Zhang*
