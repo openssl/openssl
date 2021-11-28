@@ -13,7 +13,11 @@ ERR_clear_last_constant_time - clear last error in constant time
 =head1 DESCRIPTION
 
 ERR_clear_last_constant_time() removes the last error raised by L<ERR_raise(3)>
-from the error stack in constant time.
+from the error stack in constant time. It takes a parameter I<clear> that is either
+0 (error is not cleared) or 1 (error is cleared).
+
+Expected usage pattern for ERR_clear_last_constant_time() is to unconditionally set 
+error and then wipe it if there was no actual error.
 
 =head1 RETURN VALUES
 

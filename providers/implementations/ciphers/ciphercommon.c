@@ -388,10 +388,8 @@ int ossl_cipher_generic_block_final(void *vctx, unsigned char *out,
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     size_t blksz = ctx->blocksize;
     size_t i;
-    unsigned int gp = CONSTTIME_FALSE;
-    unsigned int pad, ret;
-    unsigned int i_bufsz_lt;
-    size_t buf_value;
+    size_t i_bufsz_lt;
+    int ret;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -441,13 +439,10 @@ int ossl_cipher_generic_block_final(void *vctx, unsigned char *out,
         return 0;
     }
 
-    pad = ~constant_time_is_zero(ctx->pad);
+    ret = 1;
 
-    if (pad) {
-        gp = ~constant_time_is_zero(ossl_cipher_unpadblock(ctx->buf, &ctx->bufsz, blksz));
-    }
-
-    ret = constant_time_select(pad, gp, CONSTTIME_TRUE);
+    if (ctx->pad)
+        ret = ossl_cipher_unpadblock(ctx->buf, &ctx->bufsz, blksz);
 
     if (outsize < ctx->bufsz) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
@@ -456,14 +451,14 @@ int ossl_cipher_generic_block_final(void *vctx, unsigned char *out,
 
     /* Copy ctx->buf to out in constant time */
     for (i = 0; i < blksz; i++) {
-        i_bufsz_lt = constant_time_lt(i, ctx->bufsz);
-        buf_value = constant_time_select_s(i_bufsz_lt, ctx->buf[i], out[i]);
-        out[i] = 0xff & buf_value;
+        i_bufsz_lt = constant_time_lt_s(i, ctx->bufsz);
+        out[i] = constant_time_select_8((unsigned char)(i_bufsz_lt & 0xff), ctx->buf[i], out[i]);
     }
 
     *outl = ctx->bufsz;
     ctx->bufsz = 0;
-    return constant_time_select_int(ret, 1, 0);
+
+    return ret;
 }
 
 int ossl_cipher_generic_stream_update(void *vctx, unsigned char *out,
