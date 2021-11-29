@@ -235,7 +235,7 @@ SKIP: {
                 '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
                 '-section_name', 'fips_sect',
                 '-corrupt_desc', 'DSA',
-                '-corrupt_type', 'KAT_Signature'])),
+                '-corrupt_type', 'PCT_Signature'])),
        "fipsinstall fails when the signature result is corrupted");
 }
 

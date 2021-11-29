@@ -64,7 +64,7 @@ static int pkcs12kdf_derive(const unsigned char *pass, size_t passlen,
     }
     vi = EVP_MD_get_block_size(md_type);
     ui = EVP_MD_get_size(md_type);
-    if (ui < 0 || vi <= 0) {
+    if (ui <= 0 || vi <= 0) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST_SIZE);
         goto end;
     }
@@ -236,7 +236,7 @@ static int kdf_pkcs12_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             return 0;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SALT)) != NULL)
-        if (!pkcs12kdf_set_membuf(&ctx->salt, &ctx->salt_len,p))
+        if (!pkcs12kdf_set_membuf(&ctx->salt, &ctx->salt_len, p))
             return 0;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PKCS12_ID)) != NULL)

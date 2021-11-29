@@ -444,8 +444,30 @@ EVP_CipherFinal_ex() instead.
 
 =item EVP_get_cipherbyname(), EVP_get_cipherbynid() and EVP_get_cipherbyobj()
 
-Return an EVP_CIPHER structure when passed a cipher name, a NID or an
-ASN1_OBJECT structure.
+Returns an B<EVP_CIPHER> structure when passed a cipher name, a cipher B<NID> or
+an B<ASN1_OBJECT> structure respectively.
+
+EVP_get_cipherbyname() will return NULL for algorithms such as "AES-128-SIV",
+"AES-128-CBC-CTS" and "CAMELLIA-128-CBC-CTS" which were previously only
+accessible via low level interfaces.
+
+The EVP_get_cipherbyname() function is present for backwards compatibility with
+OpenSSL prior to version 3 and is different to the EVP_CIPHER_fetch() function
+since it does not attempt to "fetch" an implementation of the cipher.
+Additionally, it only knows about ciphers that are built-in to OpenSSL and have
+an associated NID. Similarly EVP_get_cipherbynid() and EVP_get_cipherbyobj()
+also return objects without an associated implementation.
+
+When the cipher objects returned by these functions are used (such as in a call
+to EVP_EncryptInit_ex()) an implementation of the cipher will be implicitly
+fetched from the loaded providers. This fetch could fail if no suitable
+implementation is available. Use EVP_CIPHER_fetch() instead to explicitly fetch
+the algorithm and an associated implementation from a provider.
+
+See L<crypto(7)/ALGORITHM FETCHING> for more information about fetching.
+
+The cipher objects returned from these functions do not need to be freed with
+EVP_CIPHER_free().
 
 =item EVP_CIPHER_get_nid() and EVP_CIPHER_CTX_get_nid()
 
@@ -738,7 +760,8 @@ that has the flag B<EVP_CIPH_FLAG_CUSTOM_ASN1> set.
 =item "cts_mode" (B<OSSL_CIPHER_PARAM_CTS_MODE>) <UTF8 string>
 
 Gets or sets the cipher text stealing mode. For all modes the output size is the
-same as the input size.
+same as the input size. The input length must be greater than or equal to the
+block size. (The block size for AES and CAMELLIA is 16 bytes).
 
 Valid values for the mode are:
 
@@ -747,25 +770,28 @@ Valid values for the mode are:
 =item "CS1"
 
 The NIST variant of cipher text stealing.
-For message lengths that are multiples of the block size it is equivalent to
-using a "AES-CBC" cipher otherwise the second last cipher text block is a
-partial block.
+For input lengths that are multiples of the block size it is equivalent to
+using a "AES-XXX-CBC" or "CAMELLIA-XXX-CBC" cipher otherwise the second last
+cipher text block is a partial block.
 
 =item "CS2"
 
-For message lengths that are multiples of the block size it is equivalent to
-using a "AES-CBC" cipher, otherwise it is the same as "CS3".
+For input lengths that are multiples of the block size it is equivalent to
+using a "AES-XXX-CBC" or "CAMELLIA-XXX-CBC" cipher, otherwise it is the same as
+"CS3" mode.
 
 =item "CS3"
 
 The Kerberos5 variant of cipher text stealing which always swaps the last
 cipher text block with the previous block (which may be a partial or full block
-depending on the input length).
+depending on the input length). If the input length is exactly one full block
+then this is equivalent to using a "AES-XXX-CBC" or "CAMELLIA-XXX-CBC" cipher.
 
 =back
 
 The default is "CS1".
-This is only supported for "AES-128-CBC-CTS", "AES-192-CBC-CTS" and "AES-256-CBC-CTS".
+This is only supported for "AES-128-CBC-CTS", "AES-192-CBC-CTS", "AES-256-CBC-CTS",
+"CAMELLIA-128-CBC-CTS", "CAMELLIA-192-CBC-CTS" and "CAMELLIA-256-CBC-CTS".
 
 =item "tls1multi_interleave" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE>) <unsigned integer>
 
@@ -1274,18 +1300,20 @@ B<EVP_CTRL_AEAD_SET_TAG>.
 
 =item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen, tag)
 
-Sets the expected tag to C<taglen> bytes from C<tag>.
-The tag length can only be set before specifying an IV.
+When decrypting, this call sets the expected tag to C<taglen> bytes from C<tag>.
 C<taglen> must be between 1 and 16 inclusive.
+The tag must be set prior to any call to EVP_DecryptFinal() or
+EVP_DecryptFinal_ex().
 
 For GCM, this call is only valid when decrypting data.
 
 For OCB, this call is valid when decrypting data to set the expected tag,
-and before encryption to set the desired tag length.
+and when encrypting to set the desired tag length.
 
-In OCB mode, calling this before encryption with C<tag> set to C<NULL> sets the
-tag length.  If this is not called prior to encryption, a default tag length is
-used.
+In OCB mode, calling this when encrypting with C<tag> set to C<NULL> sets the
+tag length. The tag length can only be set before specifying an IV. If this is
+not called prior to setting the IV during encryption, then a default tag length
+is used.
 
 For OCB AES, the default tag length is 16 (i.e. 128 bits).  It is also the
 maximum tag length for OCB.
@@ -1321,7 +1349,7 @@ Sets the CCM B<L> value. If not set a default is used (8 for AES).
 
 =item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, ivlen, NULL)
 
-Sets the CCM nonce (IV) length. This call can only be made before specifying a 
+Sets the CCM nonce (IV) length. This call can only be made before specifying a
 nonce value. The nonce length is given by B<15 - L> so it is 7 by default for
 AES.
 

@@ -152,16 +152,22 @@ static int aes_wrap_cipher_internal(void *vctx, unsigned char *out,
         return 0;
 
     /* Input length must always be non-zero */
-    if (inlen == 0)
+    if (inlen == 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_INPUT_LENGTH);
         return -1;
+    }
 
     /* If decrypting need at least 16 bytes and multiple of 8 */
-    if (!ctx->enc && (inlen < 16 || inlen & 0x7))
+    if (!ctx->enc && (inlen < 16 || inlen & 0x7)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_INPUT_LENGTH);
         return -1;
+    }
 
     /* If not padding input must be multiple of 8 */
-    if (!pad && inlen & 0x7)
+    if (!pad && inlen & 0x7) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_INPUT_LENGTH);
         return -1;
+    }
 
     if (out == NULL) {
         if (ctx->enc) {
@@ -182,7 +188,15 @@ static int aes_wrap_cipher_internal(void *vctx, unsigned char *out,
 
     rv = wctx->wrapfn(&wctx->ks.ks, ctx->iv_set ? ctx->iv : NULL, out, in,
                       inlen, ctx->block);
-    return rv ? (int)rv : -1;
+    if (!rv) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
+        return -1;
+    }
+    if (rv > INT_MAX) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_OUTPUT_LENGTH);
+        return -1;
+    }
+    return (int)rv;
 }
 
 static int aes_wrap_final(void *vctx, unsigned char *out, size_t *outl,
@@ -212,12 +226,12 @@ static int aes_wrap_cipher(void *vctx,
 
     if (outsize < inl) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
-        return -1;
+        return 0;
     }
 
     len = aes_wrap_cipher_internal(ctx, out, in, inl);
-    if (len == 0)
-        return -1;
+    if (len <= 0)
+        return 0;
 
     *outl = len;
     return 1;

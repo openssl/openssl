@@ -498,13 +498,6 @@ int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
             || (ecg = EC_KEY_get0_group(eckey)) == NULL)
         return 0;
 
-    /*
-     * If the EC_KEY method is foreign, then we can't be sure of anything,
-     * and can therefore not export or pretend to export.
-     */
-    if (EC_KEY_get_method(eckey) != EC_KEY_OpenSSL())
-        return 0;
-
     tmpl = OSSL_PARAM_BLD_new();
     if (tmpl == NULL)
         return 0;
@@ -581,7 +574,7 @@ int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
         if (ecbits <= 0)
             goto err;
 
-        sz = (ecbits + 7 ) / 8;
+        sz = (ecbits + 7) / 8;
         if (!OSSL_PARAM_BLD_push_BN_pad(tmpl,
                                         OSSL_PKEY_PARAM_PRIV_KEY,
                                         priv_key, sz))

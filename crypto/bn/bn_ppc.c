@@ -40,12 +40,14 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
      * no opportunity to figure it out...
      */
 
+#if defined(_ARCH_PPC64)
     if (num == 6) {
         if (OPENSSL_ppccap_P & PPC_MADD300)
             return bn_mul_mont_300_fixed_n6(rp, ap, bp, np, n0, num);
         else
             return bn_mul_mont_fixed_n6(rp, ap, bp, np, n0, num);
     }
+#endif
 
     return bn_mul_mont_int(rp, ap, bp, np, n0, num);
 }

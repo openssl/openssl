@@ -25,11 +25,11 @@
 #include <openssl/dh.h>
 #include <openssl/ec.h>
 #include "crypto/evp.h"
-#include "crypto/asn1.h"
 #include "internal/provider.h"
 #include "evp_local.h"
 
 #if !defined(FIPS_MODULE)
+# include "crypto/asn1.h"
 
 int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 {
@@ -823,6 +823,7 @@ EVP_MD *EVP_MD_meth_dup(const EVP_MD *md)
 
         memcpy(to, md, sizeof(*to));
         to->lock = lock;
+        to->origin = EVP_ORIG_METH;
     }
     return to;
 }
@@ -998,7 +999,7 @@ EVP_MD *EVP_MD_CTX_get1_md(EVP_MD_CTX *ctx)
     if (ctx == NULL)
         return NULL;
     md = (EVP_MD *)ctx->reqdigest;
-    if (!EVP_MD_up_ref(md))
+    if (md == NULL || !EVP_MD_up_ref(md))
         return NULL;
     return md;
 }

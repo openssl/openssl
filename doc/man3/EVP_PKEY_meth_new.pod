@@ -220,13 +220,13 @@ L<openssl_user_macros(7)>:
                              int (**pctrl_str) (EVP_PKEY_CTX *ctx,
                                                 const char *type,
                                                 const char *value));
- void EVP_PKEY_meth_get_digestsign(EVP_PKEY_METHOD *pmeth,
+ void EVP_PKEY_meth_get_digestsign(const EVP_PKEY_METHOD *pmeth,
                                    int (**digestsign) (EVP_MD_CTX *ctx,
                                                        unsigned char *sig,
                                                        size_t *siglen,
                                                        const unsigned char *tbs,
                                                        size_t tbslen));
- void EVP_PKEY_meth_get_digestverify(EVP_PKEY_METHOD *pmeth,
+ void EVP_PKEY_meth_get_digestverify(const EVP_PKEY_METHOD *pmeth,
                                      int (**digestverify) (EVP_MD_CTX *ctx,
                                                            const unsigned char *sig,
                                                            size_t siglen,
@@ -238,7 +238,7 @@ L<openssl_user_macros(7)>:
                                      int (**pcheck) (EVP_PKEY *pkey));
  void EVP_PKEY_meth_get_param_check(const EVP_PKEY_METHOD *pmeth,
                                     int (**pcheck) (EVP_PKEY *pkey));
- void EVP_PKEY_meth_get_digest_custom(EVP_PKEY_METHOD *pmeth,
+ void EVP_PKEY_meth_get_digest_custom(const EVP_PKEY_METHOD *pmeth,
                                      int (**pdigest_custom) (EVP_PKEY_CTX *ctx,
                                                              EVP_MD_CTX *mctx));
 

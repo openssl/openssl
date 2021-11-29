@@ -282,6 +282,7 @@ id-smime-ct 35		: id-ct-rpkiGhostbusters
 id-smime-ct 36		: id-ct-resourceTaggedAttest
 id-smime-ct 47		: id-ct-geofeedCSVwithCRLF
 id-smime-ct 48		: id-ct-signedChecklist
+id-smime-ct 49		: id-ct-ASPA
 
 # S/MIME Attributes
 id-smime-aa 1		: id-smime-aa-receiptRequest
@@ -1565,6 +1566,8 @@ sm-scheme 104 4         : SM4-CFB             : sm4-cfb
 sm-scheme 104 5         : SM4-CFB1            : sm4-cfb1
 sm-scheme 104 6         : SM4-CFB8            : sm4-cfb8
 sm-scheme 104 7         : SM4-CTR             : sm4-ctr
+sm-scheme 104 8         : SM4-GCM             : sm4-gcm
+sm-scheme 104 9         : SM4-CCM             : sm4-ccm
 
 # There is no OID that just denotes "HMAC" oddly enough...
 

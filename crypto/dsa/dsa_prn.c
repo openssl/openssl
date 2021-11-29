@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -55,9 +55,11 @@ int DSA_print(BIO *bp, const DSA *x, int off)
     EVP_PKEY *pk;
     int ret;
     pk = EVP_PKEY_new();
-    if (pk == NULL || !EVP_PKEY_set1_DSA(pk, (DSA *)x))
+    if (pk == NULL)
         return 0;
-    ret = EVP_PKEY_print_private(bp, pk, off, NULL);
+    ret = EVP_PKEY_set1_DSA(pk, (DSA *)x);
+    if (ret)
+        ret = EVP_PKEY_print_private(bp, pk, off, NULL);
     EVP_PKEY_free(pk);
     return ret;
 }
@@ -67,9 +69,11 @@ int DSAparams_print(BIO *bp, const DSA *x)
     EVP_PKEY *pk;
     int ret;
     pk = EVP_PKEY_new();
-    if (pk == NULL || !EVP_PKEY_set1_DSA(pk, (DSA *)x))
+    if (pk == NULL)
         return 0;
-    ret = EVP_PKEY_print_params(bp, pk, 4, NULL);
+    ret = EVP_PKEY_set1_DSA(pk, (DSA *)x);
+    if (ret)
+        ret = EVP_PKEY_print_params(bp, pk, 4, NULL);
     EVP_PKEY_free(pk);
     return ret;
 }

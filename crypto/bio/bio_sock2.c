@@ -335,7 +335,7 @@ int BIO_accept_ex(int accept_sock, BIO_ADDR *addr_, int options)
  */
 int BIO_closesocket(int sock)
 {
-    if (closesocket(sock) < 0)
+    if (sock < 0 || closesocket(sock) < 0)
         return 0;
     return 1;
 }

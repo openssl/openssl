@@ -110,7 +110,7 @@ int ossl_cipher_unpadblock(unsigned char *buf, size_t *buflen, size_t blocksize)
     size_t pad, i;
     size_t len = *buflen;
 
-    if(len != blocksize) {
+    if (len != blocksize) {
         ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
         return 0;
     }

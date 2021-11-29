@@ -30,7 +30,6 @@
 /*
  * Things in boring, not in openssl.
  */
-#define HAVE_BN_PADDED 0
 #define HAVE_BN_SQRT 0
 
 typedef struct filetest_st {
@@ -308,6 +307,75 @@ static int test_div_recip(void)
     return st;
 }
 
+static struct {
+    int n, divisor, result, remainder;
+} signed_mod_tests[] = {
+    {  10,   3,   3,   1 },
+    { -10,   3,  -3,  -1 },
+    {  10,  -3,  -3,   1 },
+    { -10,  -3,   3,  -1 },
+};
+
+static BIGNUM *set_signed_bn(int value)
+{
+    BIGNUM *bn = BN_new();
+
+    if (bn == NULL)
+        return NULL;
+    if (!BN_set_word(bn, value < 0 ? -value : value)) {
+        BN_free(bn);
+        return NULL;
+    }
+    BN_set_negative(bn, value < 0);
+    return bn;
+}
+
+static int test_signed_mod_replace_ab(int n)
+{
+    BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL;
+    int st = 0;
+
+    if (!TEST_ptr(a = set_signed_bn(signed_mod_tests[n].n))
+            || !TEST_ptr(b = set_signed_bn(signed_mod_tests[n].divisor))
+            || !TEST_ptr(c = set_signed_bn(signed_mod_tests[n].result))
+            || !TEST_ptr(d = set_signed_bn(signed_mod_tests[n].remainder)))
+        goto err;
+
+    if (TEST_true(BN_div(a, b, a, b, ctx))
+            && TEST_BN_eq(a, c)
+            && TEST_BN_eq(b, d))
+        st = 1;
+ err:
+    BN_free(a);
+    BN_free(b);
+    BN_free(c);
+    BN_free(d);
+    return st;
+}
+
+static int test_signed_mod_replace_ba(int n)
+{
+    BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL;
+    int st = 0;
+
+    if (!TEST_ptr(a = set_signed_bn(signed_mod_tests[n].n))
+            || !TEST_ptr(b = set_signed_bn(signed_mod_tests[n].divisor))
+            || !TEST_ptr(c = set_signed_bn(signed_mod_tests[n].result))
+            || !TEST_ptr(d = set_signed_bn(signed_mod_tests[n].remainder)))
+        goto err;
+
+    if (TEST_true(BN_div(b, a, a, b, ctx))
+            && TEST_BN_eq(b, c)
+            && TEST_BN_eq(a, d))
+        st = 1;
+ err:
+    BN_free(a);
+    BN_free(b);
+    BN_free(c);
+    BN_free(d);
+    return st;
+}
+
 static int test_mod(void)
 {
     BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL, *e = NULL;
@@ -329,8 +397,10 @@ static int test_mod(void)
         BN_set_negative(b, rand_neg());
         if (!(TEST_true(BN_mod(c, a, b, ctx))
                 && TEST_true(BN_div(d, e, a, b, ctx))
-                && TEST_true(BN_sub(e, e, c))
-                && TEST_BN_eq_zero(e)))
+                && TEST_BN_eq(e, c)
+                && TEST_true(BN_mul(c, d, b, ctx))
+                && TEST_true(BN_add(d, c, e))
+                && TEST_BN_eq(d, a)))
             goto err;
     }
     st = 1;
@@ -641,7 +711,7 @@ static int test_gf2m_add(void)
 
 static int test_gf2m_mod(void)
 {
-    BIGNUM *a = NULL, *b[2] = {NULL,NULL}, *c = NULL, *d = NULL, *e = NULL;
+    BIGNUM *a = NULL, *b[2] = {NULL, NULL}, *c = NULL, *d = NULL, *e = NULL;
     int i, j, st = 0;
 
     if (!TEST_ptr(a = BN_new())
@@ -734,7 +804,7 @@ static int test_gf2m_mul(void)
 
 static int test_gf2m_sqr(void)
 {
-    BIGNUM *a = NULL, *b[2] = {NULL,NULL}, *c = NULL, *d = NULL;
+    BIGNUM *a = NULL, *b[2] = {NULL, NULL}, *c = NULL, *d = NULL;
     int i, j, st = 0;
 
     if (!TEST_ptr(a = BN_new())
@@ -773,7 +843,7 @@ static int test_gf2m_sqr(void)
 
 static int test_gf2m_modinv(void)
 {
-    BIGNUM *a = NULL, *b[2] = {NULL,NULL}, *c = NULL, *d = NULL;
+    BIGNUM *a = NULL, *b[2] = {NULL, NULL}, *c = NULL, *d = NULL;
     int i, j, st = 0;
 
     if (!TEST_ptr(a = BN_new())
@@ -810,7 +880,7 @@ static int test_gf2m_modinv(void)
 
 static int test_gf2m_moddiv(void)
 {
-    BIGNUM *a = NULL, *b[2] = {NULL,NULL}, *c = NULL, *d = NULL;
+    BIGNUM *a = NULL, *b[2] = {NULL, NULL}, *c = NULL, *d = NULL;
     BIGNUM *e = NULL, *f = NULL;
     int i, j, st = 0;
 
@@ -854,7 +924,7 @@ static int test_gf2m_moddiv(void)
 
 static int test_gf2m_modexp(void)
 {
-    BIGNUM *a = NULL, *b[2] = {NULL,NULL}, *c = NULL, *d = NULL;
+    BIGNUM *a = NULL, *b[2] = {NULL, NULL}, *c = NULL, *d = NULL;
     BIGNUM *e = NULL, *f = NULL;
     int i, j, st = 0;
 
@@ -902,7 +972,7 @@ static int test_gf2m_modexp(void)
 
 static int test_gf2m_modsqrt(void)
 {
-    BIGNUM *a = NULL, *b[2] = {NULL,NULL}, *c = NULL, *d = NULL;
+    BIGNUM *a = NULL, *b[2] = {NULL, NULL}, *c = NULL, *d = NULL;
     BIGNUM *e = NULL, *f = NULL;
     int i, j, st = 0;
 
@@ -947,7 +1017,7 @@ static int test_gf2m_modsqrt(void)
 
 static int test_gf2m_modsolvequad(void)
 {
-    BIGNUM *a = NULL, *b[2] = {NULL,NULL}, *c = NULL, *d = NULL;
+    BIGNUM *a = NULL, *b[2] = {NULL, NULL}, *c = NULL, *d = NULL;
     BIGNUM *e = NULL;
     int i, j, s = 0, t, st = 0;
 
@@ -1663,52 +1733,52 @@ static int file_gcd(STANZA *s)
 
 static int test_bn2padded(void)
 {
-#if HAVE_BN_PADDED
     uint8_t zeros[256], out[256], reference[128];
-    BIGNUM *n = BN_new();
+    size_t bytes;
+    BIGNUM *n;
     int st = 0;
 
     /* Test edge case at 0. */
-    if (n == NULL)
+    if (!TEST_ptr((n = BN_new())))
         goto err;
-    if (!TEST_true(BN_bn2bin_padded(NULL, 0, n)))
+    if (!TEST_int_eq(BN_bn2binpad(n, NULL, 0), 0))
         goto err;
     memset(out, -1, sizeof(out));
-    if (!TEST_true(BN_bn2bin_padded(out, sizeof(out)), n))
+    if (!TEST_int_eq(BN_bn2binpad(n, out, sizeof(out)), sizeof(out)))
         goto err;
     memset(zeros, 0, sizeof(zeros));
     if (!TEST_mem_eq(zeros, sizeof(zeros), out, sizeof(out)))
         goto err;
 
     /* Test a random numbers at various byte lengths. */
-    for (size_t bytes = 128 - 7; bytes <= 128; bytes++) {
+    for (bytes = 128 - 7; bytes <= 128; bytes++) {
 # define TOP_BIT_ON 0
 # define BOTTOM_BIT_NOTOUCH 0
         if (!TEST_true(BN_rand(n, bytes * 8, TOP_BIT_ON, BOTTOM_BIT_NOTOUCH)))
             goto err;
-        if (!TEST_int_eq(BN_num_bytes(n),A) bytes
-                || TEST_int_eq(BN_bn2bin(n, reference), bytes))
+        if (!TEST_int_eq(BN_num_bytes(n), bytes)
+                || !TEST_int_eq(BN_bn2bin(n, reference), bytes))
             goto err;
         /* Empty buffer should fail. */
-        if (!TEST_int_eq(BN_bn2bin_padded(NULL, 0, n)), 0)
+        if (!TEST_int_eq(BN_bn2binpad(n, NULL, 0), -1))
             goto err;
         /* One byte short should fail. */
-        if (BN_bn2bin_padded(out, bytes - 1, n))
+        if (!TEST_int_eq(BN_bn2binpad(n, out, bytes - 1), -1))
             goto err;
         /* Exactly right size should encode. */
-        if (!TEST_true(BN_bn2bin_padded(out, bytes, n))
-                || TEST_mem_eq(out, bytes, reference, bytes))
+        if (!TEST_int_eq(BN_bn2binpad(n, out, bytes), bytes)
+                || !TEST_mem_eq(out, bytes, reference, bytes))
             goto err;
         /* Pad up one byte extra. */
-        if (!TEST_true(BN_bn2bin_padded(out, bytes + 1, n))
+        if (!TEST_int_eq(BN_bn2binpad(n, out, bytes + 1), bytes + 1)
                 || !TEST_mem_eq(out + 1, bytes, reference, bytes)
                 || !TEST_mem_eq(out, 1, zeros, 1))
             goto err;
         /* Pad up to 256. */
-        if (!TEST_true(BN_bn2bin_padded(out, sizeof(out)), n)
+        if (!TEST_int_eq(BN_bn2binpad(n, out, sizeof(out)), sizeof(out))
                 || !TEST_mem_eq(out + sizeof(out) - bytes, bytes,
                                 reference, bytes)
-                || !TEST_mem_eq(out, sizseof(out) - bytes,
+                || !TEST_mem_eq(out, sizeof(out) - bytes,
                                 zeros, sizeof(out) - bytes))
             goto err;
     }
@@ -1717,9 +1787,6 @@ static int test_bn2padded(void)
  err:
     BN_free(n);
     return st;
-#else
-    return ctx != NULL;
-#endif
 }
 
 static int test_dec2bn(void)
@@ -2875,6 +2942,8 @@ int setup_tests(void)
     if (n == 0) {
         ADD_TEST(test_sub);
         ADD_TEST(test_div_recip);
+        ADD_ALL_TESTS(test_signed_mod_replace_ab, OSSL_NELEM(signed_mod_tests));
+        ADD_ALL_TESTS(test_signed_mod_replace_ba, OSSL_NELEM(signed_mod_tests));
         ADD_TEST(test_mod);
         ADD_TEST(test_modexp_mont5);
         ADD_TEST(test_kronecker);

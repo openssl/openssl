@@ -21,31 +21,32 @@ static X509 *x509 = NULL;
 
 typedef struct {
     BIO *out;
+    const char *content_type;
+    const char *txt;
     char version;
     int keep_alive;
 } server_args;
 
 /*-
  * Pretty trivial HTTP mock server:
- * For POST, copy request headers+body from mem BIO 'in' as response to 'out'.
- * For GET, redirect to RPATH, else respond with 'rsp' of ASN1 type 'it'.
- * Respond with HTTP version 1.'version' and 'keep_alive' (unless implicit).
+ * For POST, copy request headers+body from mem BIO |in| as response to |out|.
+ * For GET, redirect to RPATH unless already there, else use |content_type| and
+ * respond with |txt| if not NULL, else with |rsp| of ASN1 type |it|.
+ * Response hdr has HTTP version 1.|version| and |keep_alive| (unless implicit).
  */
 static int mock_http_server(BIO *in, BIO *out, char version, int keep_alive,
+                            const char *content_type, const char *txt,
                             ASN1_VALUE *rsp, const ASN1_ITEM *it)
 {
     const char *req, *path;
     long count = BIO_get_mem_data(in, (unsigned char **)&req);
     const char *hdr = (char *)req;
-    int is_get = count >= 4 && strncmp(hdr, "GET ", 4) == 0;
     int len;
+    int is_get = count >= 4 && CHECK_AND_SKIP_PREFIX(hdr, "GET ");
 
-    /* first line should contain "<GET or POST> <path> HTTP/1.x" */
-    if (is_get)
-        hdr += 4;
-    else if (TEST_true(count >= 5 && strncmp(hdr, "POST ", 5) == 0))
-        hdr += 5;
-    else
+    /* first line should contain "(GET|POST) <path> HTTP/1.x" */
+    if (!is_get
+            && !(TEST_true(count >= 5 && CHECK_AND_SKIP_PREFIX(hdr, "POST "))))
         return 0;
 
     path = hdr;
@@ -65,7 +66,7 @@ static int mock_http_server(BIO *in, BIO *out, char version, int keep_alive,
     if (count < 0 || out == NULL)
         return 0;
 
-    if (strncmp(path, RPATH, strlen(RPATH)) != 0) {
+    if (!HAS_PREFIX(path, RPATH)) {
         if (!is_get)
             return 0;
         return BIO_printf(out, "HTTP/1.%c 301 Moved Permanently\r\n"
@@ -79,17 +80,20 @@ static int mock_http_server(BIO *in, BIO *out, char version, int keep_alive,
                        version == '0' ? "keep-alive" : "close") <= 0)
             return 0;
     if (is_get) { /* construct new header and body */
-        if ((len = ASN1_item_i2d(rsp, NULL, it)) <= 0)
+        if (txt != NULL)
+            len = strlen(txt);
+        else if ((len = ASN1_item_i2d(rsp, NULL, it)) <= 0)
             return 0;
-        if (BIO_printf(out, "Content-Type: application/x-x509-ca-cert\r\n"
-                       "Content-Length: %d\r\n\r\n", len) <= 0)
+        if (BIO_printf(out, "Content-Type: %s\r\n"
+                       "Content-Length: %d\r\n\r\n", content_type, len) <= 0)
             return 0;
+        if (txt != NULL)
+            return BIO_puts(out, txt);
         return ASN1_item_i2d_bio(it, out, rsp);
     } else {
-        len = strlen("Connection: ");
-        if (strncmp(hdr, "Connection: ", len) == 0) {
+        if (CHECK_AND_SKIP_PREFIX(hdr, "Connection: ")) {
             /* skip req Connection header */
-            hdr = strstr(hdr + len, "\r\n");
+            hdr = strstr(hdr, "\r\n");
             if (hdr == NULL)
                 return 0;
             hdr += 2;
@@ -106,47 +110,91 @@ static long http_bio_cb_ex(BIO *bio, int oper, const char *argp, size_t len,
 
     if (oper == (BIO_CB_CTRL | BIO_CB_RETURN) && cmd == BIO_CTRL_FLUSH)
         ret = mock_http_server(bio, args->out, args->version, args->keep_alive,
+                               args->content_type, args->txt,
                                (ASN1_VALUE *)x509, x509_it);
     return ret;
 }
 
-static int test_http_x509(int do_get)
+#define text1 "test\n"
+#define text2 "more\n"
+#define REAL_SERVER_URL "http://httpbin.org/"
+#define DOCTYPE_HTML "<!DOCTYPE html>\n"
+
+static int test_http_method(int do_get, int do_txt)
 {
-    X509 *rcert = NULL;
     BIO *wbio = BIO_new(BIO_s_mem());
     BIO *rbio = BIO_new(BIO_s_mem());
-    server_args mock_args = { NULL, '0', 0 };
-    BIO *rsp, *req = ASN1_item_i2d_mem_bio(x509_it, (ASN1_VALUE *)x509);
+    server_args mock_args = { NULL, NULL, NULL, '0', 0 };
+    BIO *req, *rsp;
     STACK_OF(CONF_VALUE) *headers = NULL;
-    const char content_type[] = "application/x-x509-ca-cert";
+    const char *content_type;
     int res = 0;
+    int real_server = do_txt && 0; /* remove "&& 0" for using real server */
 
+    if (do_txt) {
+        content_type = "text/plain";
+        req = BIO_new(BIO_s_mem());
+        if (req == NULL
+                || BIO_puts(req, text1) != sizeof(text1) - 1
+                || BIO_puts(req, text2) != sizeof(text2) - 1) {
+            BIO_free(req);
+            req = NULL;
+        }
+        mock_args.txt = text1;
+    } else {
+        content_type = "application/x-x509-ca-cert";
+        req = ASN1_item_i2d_mem_bio(x509_it, (ASN1_VALUE *)x509);
+        mock_args.txt = NULL;
+    }
     if (wbio == NULL || rbio == NULL || req == NULL)
         goto err;
+
     mock_args.out = rbio;
+    mock_args.content_type = content_type;
     BIO_set_callback_ex(wbio, http_bio_cb_ex);
     BIO_set_callback_arg(wbio, (char *)&mock_args);
 
     rsp = do_get ?
-        OSSL_HTTP_get("/will-be-redirected",
+        OSSL_HTTP_get(real_server ? REAL_SERVER_URL :
+                      do_txt ? RPATH : "/will-be-redirected",
                       NULL /* proxy */, NULL /* no_proxy */,
-                      wbio, rbio, NULL /* bio_update_fn */, NULL /* arg */,
-                      0 /* buf_size */, headers, content_type,
-                      1 /* expect_asn1 */,
+                      real_server ? NULL : wbio,
+                      real_server ? NULL : rbio,
+                      NULL /* bio_update_fn */, NULL /* arg */,
+                      0 /* buf_size */, headers,
+                      real_server ? "text/html; charset=utf-8":  content_type,
+                      !do_txt /* expect_asn1 */,
                       OSSL_HTTP_DEFAULT_MAX_RESP_LEN, 0 /* timeout */)
         : OSSL_HTTP_transfer(NULL, NULL /* host */, NULL /* port */, RPATH,
                              0 /* use_ssl */,NULL /* proxy */, NULL /* no_pr */,
                              wbio, rbio, NULL /* bio_fn */, NULL /* arg */,
                              0 /* buf_size */, headers, content_type,
-                             req, content_type, 1 /* expect_asn1 */,
+                             req, content_type, !do_txt /* expect_asn1 */,
                              OSSL_HTTP_DEFAULT_MAX_RESP_LEN, 0 /* timeout */,
                              0 /* keep_alive */);
-    rcert = d2i_X509_bio(rsp, NULL);
-    BIO_free(rsp);
-    res = TEST_ptr(rcert) && TEST_int_eq(X509_cmp(x509, rcert), 0);
+    if (rsp != NULL) {
+        if (do_get && real_server) {
+            char rtext[sizeof(DOCTYPE_HTML)];
+
+            res = TEST_int_eq(BIO_gets(rsp, rtext, sizeof(rtext)),
+                              sizeof(DOCTYPE_HTML) - 1)
+                && TEST_str_eq(rtext, DOCTYPE_HTML);
+        } else if (do_txt) {
+            char rtext[sizeof(text1) + 1 /* more space than needed */];
+
+            res = TEST_int_eq(BIO_gets(rsp, rtext, sizeof(rtext)),
+                              sizeof(text1) - 1)
+                && TEST_str_eq(rtext, text1);
+        } else {
+            X509 *rcert = d2i_X509_bio(rsp, NULL);
+
+            res = TEST_ptr(rcert) && TEST_int_eq(X509_cmp(x509, rcert), 0);
+            X509_free(rcert);
+        }
+        BIO_free(rsp);
+    }
 
  err:
-    X509_free(rcert);
     BIO_free(req);
     BIO_free(wbio);
     BIO_free(rbio);
@@ -159,8 +207,8 @@ static int test_http_keep_alive(char version, int keep_alive, int kept_alive)
     BIO *wbio = BIO_new(BIO_s_mem());
     BIO *rbio = BIO_new(BIO_s_mem());
     BIO *rsp;
-    server_args mock_args = { NULL, '0', 0 };
     const char *const content_type = "application/x-x509-ca-cert";
+    server_args mock_args = { NULL, content_type, NULL, '0', 0 };
     OSSL_HTTP_REQ_CTX *rctx = NULL;
     int i, res = 0;
 
@@ -306,14 +354,24 @@ static int test_http_url_invalid_path(void)
     return test_http_url_invalid("https://[FF01::101]pkix");
 }
 
+static int test_http_get_txt(void)
+{
+    return test_http_method(1 /* GET */, 1);
+}
+
+static int test_http_post_txt(void)
+{
+    return test_http_method(0 /* POST */, 1);
+}
+
 static int test_http_get_x509(void)
 {
-    return test_http_x509(1);
+    return test_http_method(1 /* GET */, 0); /* includes redirection */
 }
 
 static int test_http_post_x509(void)
 {
-    return test_http_x509(0);
+    return test_http_method(0 /* POST */, 0);
 }
 
 static int test_http_keep_alive_0_no_no(void)
@@ -380,6 +438,8 @@ int setup_tests(void)
     ADD_TEST(test_http_url_invalid_prefix);
     ADD_TEST(test_http_url_invalid_port);
     ADD_TEST(test_http_url_invalid_path);
+    ADD_TEST(test_http_get_txt);
+    ADD_TEST(test_http_post_txt);
     ADD_TEST(test_http_get_x509);
     ADD_TEST(test_http_post_x509);
     ADD_TEST(test_http_keep_alive_0_no_no);

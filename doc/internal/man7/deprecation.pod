@@ -21,10 +21,10 @@ Removal of a symbol is not the same thing as deprecation, as it actually
 explicitly removes the symbol from public view.
 
 OpenSSL configuration supports deprecation as well as simulating removal of
-symbols from public view (with the configuration option `no-deprecated`, or
+symbols from public view (with the configuration option C<no-deprecated>, or
 if the user chooses to do so, with L<OPENSSL_NO_DEPRECATED(7)>), and also
 supports doing this in terms of a specified OpenSSL version (with the
-configuration option `--api`, or if the user chooses to do so, with
+configuration option C<--api>, or if the user chooses to do so, with
 L<OPENSSL_API_COMPAT(7)>).
 
 Deprecation is done using attribute macros named
@@ -130,7 +130,7 @@ L<openssl_user_macros(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -10,6 +10,7 @@ pick the appropriate release branch.
 OpenSSL Releases
 ----------------
 
+ - [OpenSSL 3.1](#openssl-31)
  - [OpenSSL 3.0](#openssl-30)
  - [OpenSSL 1.1.1](#openssl-111)
  - [OpenSSL 1.1.0](#openssl-110)
@@ -17,6 +18,57 @@ OpenSSL Releases
  - [OpenSSL 1.0.1](#openssl-101)
  - [OpenSSL 1.0.0](#openssl-100)
  - [OpenSSL 0.9.x](#openssl-09x)
+
+OpenSSL 3.1
+-----------
+
+### Changes between 3.0 and 3.1 [xx XXX xxxx]
+
+ * s_client and s_server apps now explicitly say when the TLS version
+   does not include the renegotiation mechanism. This avoids confusion
+   between that scenario versus when the TLS version includes secure
+   renegotiation but the peer lacks support for it.
+
+   *Felipe Gasper*
+
+ * The default SSL/TLS security level has been changed from 1 to 2. RSA,
+   DSA and DH keys of 1024 bits and above and less than 2048 bits and ECC keys
+   of 160 bits and above and less than 224 bits were previously accepted by
+   default but are now no longer allowed. By default TLS compression was
+   already disabled in previous OpenSSL versions. At security level 2 it cannot
+   be enabled.
+
+   *Matt Caswell*
+
+ * The SSL_CTX_set_cipher_list family functions now accept ciphers using their
+   IANA standard names.
+
+   *Erik Lax*
+
+ * The PVK key derivation function has been moved from b2i_PVK_bio_ex() into
+   the legacy crypto provider as an EVP_KDF. Applications requiring this KDF
+   will need to load the legacy crypto provider.
+
+   *Paul Dale*
+
+ * The various OBJ_* functions have been made thread safe.
+
+   *Paul Dale*
+
+ * CCM8 cipher suites in TLS have been downgraded to security level zero
+   because they use a short authentication tag which lowers their strength.
+
+   *Paul Dale*
+
+ * Subject or issuer names in X.509 objects are now displayed as UTF-8 strings
+   by default.
+
+   *Dmitry Belyavskiy*
+
+ * Parallel dual-prime 1536/2048-bit modular exponentiation for
+   AVX512_IFMA capable processors.
+
+   *Sergey Kirillov, Andrey Matyukov (Intel Corp)*
 
 OpenSSL 3.0
 -----------
@@ -29,6 +81,76 @@ breaking changes, and mappings for the large list of deprecated functions.
 [Migration guide]: https://github.com/openssl/openssl/tree/master/doc/man7/migration_guide.pod
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
+
+ * TLS_MAX_VERSION, DTLS_MAX_VERSION and DTLS_MIN_VERSION constants are now
+   deprecated.
+
+   *Matt Caswell*
+
+ * The `OPENSSL_s390xcap` environment variable can be used to set bits in the
+   S390X capability vector to zero. This simplifies testing of different code
+   paths on S390X architecture.
+
+   *Patrick Steuer*
+
+ * Encrypting more than 2^64 TLS records with AES-GCM is disallowed
+   as per FIPS 140-2 IG A.5 "Key/IV Pair Uniqueness Requirements from
+   SP 800-38D". The communication will fail at this point.
+
+   *Paul Dale*
+
+ * The EC_GROUP_clear_free() function is deprecated as there is nothing
+   confidential in EC_GROUP data.
+
+   *Nicola Tuveri*
+
+ * The byte order mark (BOM) character is ignored if encountered at the
+   beginning of a PEM-formatted file.
+
+   *Dmitry Belyavskiy*
+
+ * Added CMS support for the Russian GOST algorithms.
+
+   *Dmitry Belyavskiy*
+
+ * Due to move of the implementation of cryptographic operations
+   to the providers, validation of various operation parameters can
+   be postponed until the actual operation is executed where previously
+   it happened immediately when an operation parameter was set.
+
+   For example when setting an unsupported curve with
+   EVP_PKEY_CTX_set_ec_paramgen_curve_nid() this function call will not
+   fail but later keygen operations with the EVP_PKEY_CTX will fail.
+
+   *OpenSSL team members and many third party contributors*
+
+ * The EVP_get_cipherbyname() function will return NULL for algorithms such as
+   "AES-128-SIV", "AES-128-CBC-CTS" and "CAMELLIA-128-CBC-CTS" which were
+   previously only accessible via low level interfaces. Use EVP_CIPHER_fetch()
+   instead to retrieve these algorithms from a provider.
+
+   *Shane Lontis*
+
+ * On build targets where the multilib postfix is set in the build
+   configuration the libdir directory was changing based on whether
+   the lib directory with the multilib postfix exists on the system
+   or not. This unpredictable behavior was removed and eventual
+   multilib postfix is now always added to the default libdir. Use
+   `--libdir=lib` to override the libdir if adding the postfix is
+   undesirable.
+
+   *Jan Lána*
+
+ * The triple DES key wrap functionality now conforms to RFC 3217 but is
+   no longer interoperable with OpenSSL 1.1.1.
+
+   *Paul Dale*
+
+ * The ERR_GET_FUNC() function was removed.  With the loss of meaningful
+   function codes, this function can only cause problems for calling
+   applications.
+
+   *Paul Dale*
 
  * Add a configurable flag to output date formats as ISO 8601. Does not
    change the default date format.
@@ -286,6 +408,15 @@ breaking changes, and mappings for the large list of deprecated functions.
 
  * Deprecated the obsolete X9.31 RSA key generation related functions.
 
+ * While a callback function set via `SSL_CTX_set_cert_verify_callback()`
+   is not allowed to return a value > 1, this is no more taken as failure.
+
+   *Viktor Dukhovni and David von Oheimb*
+
+ * Deprecated the obsolete X9.31 RSA key generation related functions
+   BN_X931_generate_Xpq(), BN_X931_derive_prime_ex(), and
+   BN_X931_generate_prime_ex().
+
    *Tomáš Mráz*
 
  * The default key generation method for the regular 2-prime RSA keys was
@@ -464,6 +595,11 @@ breaking changes, and mappings for the large list of deprecated functions.
    libcrypto operations are performed.
 
    *Richard Levitte*
+
+ * Added various `_ex` functions to the OpenSSL API that support using
+   a non-default `OSSL_LIB_CTX`.
+
+   *OpenSSL team*
 
  * Handshake now fails if Extended Master Secret extension is dropped
    on renegotiation.
@@ -757,8 +893,19 @@ breaking changes, and mappings for the large list of deprecated functions.
 
    *Rich Salz*
 
- * Introduced a new method type and API, OSSL_ENCODER, to
-   represent generic encoders.
+ * Introduced a new method type and API, OSSL_ENCODER, to represent
+   generic encoders.  These do the same sort of job that PEM writers
+   and d2i functions do, but with support for methods supplied by
+   providers, and the possibility for providers to support other
+   formats as well.
+
+   *Richard Levitte*
+
+ * Introduced a new method type and API, OSSL_DECODER, to represent
+   generic decoders.  These do the same sort of job that PEM readers
+   and i2d functions do, but with support for methods supplied by
+   providers, and the possibility for providers to support other
+   formats as well.
 
    *Richard Levitte*
 
@@ -1061,6 +1208,8 @@ breaking changes, and mappings for the large list of deprecated functions.
  * Removed the function names from error messages and deprecated the
    xxx_F_xxx define's.
 
+   *Richard Levitte*
+
  * Removed NextStep support and the macro OPENSSL_UNISTD
 
    *Rich Salz*
@@ -1165,11 +1314,19 @@ breaking changes, and mappings for the large list of deprecated functions.
 
    *Richard Levitte*
 
- * Add Single Step KDF (EVP_KDF_SS) to EVP_KDF.
+ * Added KB KDF (EVP_KDF_KB) to EVP_KDF.
+
+   *Robbie Harwood*
+
+ * Added SSH KDF (EVP_KDF_SSHKDF) and KRB5 KDF (EVP_KDF_KRB5KDF) to EVP_KDF.
+
+   *Simo Sorce*
+
+ * Added Single Step KDF (EVP_KDF_SS), X963 KDF, and X942 KDF to EVP_KDF.
 
    *Shane Lontis*
 
- * Add KMAC to EVP_MAC.
+ * Added KMAC to EVP_MAC.
 
    *Shane Lontis*
 
@@ -1328,10 +1485,100 @@ breaking changes, and mappings for the large list of deprecated functions.
 
    *Raja Ashok*
 
+ * Added a new concept for OpenSSL plugability: providers.  This
+   functionality is designed to replace the ENGINE API and ENGINE
+   implementations, and to be much more dynamic, allowing provider
+   authors to introduce new algorithms among other things, as long as
+   there's an API that supports the algorithm type.
+
+   With this concept comes a new core API for interaction between
+   libcrypto and provider implementations.  Public libcrypto functions
+   that want to use providers do so through this core API.
+
+   The main documentation for this core API is found in
+   doc/man7/provider.pod, doc/man7/provider-base.pod, and they in turn
+   refer to other manuals describing the API specific for supported
+   algorithm types (also called operations).
+
+   *The OpenSSL team*
+
 OpenSSL 1.1.1
 -------------
 
-### Changes between 1.1.1j and 1.1.1k [xx XXX xxxx]
+### Changes between 1.1.1k and 1.1.1l [24 Aug 2021]
+
+ * Fixed an SM2 Decryption Buffer Overflow.
+
+   In order to decrypt SM2 encrypted data an application is expected to
+   call the API function EVP_PKEY_decrypt(). Typically an application will
+   call this function twice. The first time, on entry, the "out" parameter
+   can be NULL and, on exit, the "outlen" parameter is populated with the
+   buffer size required to hold the decrypted plaintext. The application
+   can then allocate a sufficiently sized buffer and call EVP_PKEY_decrypt()
+   again, but this time passing a non-NULL value for the "out" parameter.
+
+   A bug in the implementation of the SM2 decryption code means that the
+   calculation of the buffer size required to hold the plaintext returned
+   by the first call to EVP_PKEY_decrypt() can be smaller than the actual
+   size required by the second call. This can lead to a buffer overflow
+   when EVP_PKEY_decrypt() is called by the application a second time with
+   a buffer that is too small.
+
+   A malicious attacker who is able present SM2 content for decryption to
+   an application could cause attacker chosen data to overflow the buffer
+   by up to a maximum of 62 bytes altering the contents of other data held
+   after the buffer, possibly changing application behaviour or causing
+   the application to crash. The location of the buffer is application
+   dependent but is typically heap allocated.
+   ([CVE-2021-3711])
+
+   *Matt Caswell*
+
+ * Fixed various read buffer overruns processing ASN.1 strings
+
+   ASN.1 strings are represented internally within OpenSSL as an ASN1_STRING
+   structure which contains a buffer holding the string data and a field
+   holding the buffer length. This contrasts with normal C strings which
+   are repesented as a buffer for the string data which is terminated
+   with a NUL (0) byte.
+
+   Although not a strict requirement, ASN.1 strings that are parsed using
+   OpenSSL's own "d2i" functions (and other similar parsing functions) as
+   well as any string whose value has been set with the ASN1_STRING_set()
+   function will additionally NUL terminate the byte array in the
+   ASN1_STRING structure.
+
+   However, it is possible for applications to directly construct valid
+   ASN1_STRING structures which do not NUL terminate the byte array by
+   directly setting the "data" and "length" fields in the ASN1_STRING
+   array. This can also happen by using the ASN1_STRING_set0() function.
+
+   Numerous OpenSSL functions that print ASN.1 data have been found to
+   assume that the ASN1_STRING byte array will be NUL terminated, even
+   though this is not guaranteed for strings that have been directly
+   constructed. Where an application requests an ASN.1 structure to be
+   printed, and where that ASN.1 structure contains ASN1_STRINGs that have
+   been directly constructed by the application without NUL terminating
+   the "data" field, then a read buffer overrun can occur.
+
+   The same thing can also occur during name constraints processing
+   of certificates (for example if a certificate has been directly
+   constructed by the application instead of loading it via the OpenSSL
+   parsing functions, and the certificate contains non NUL terminated
+   ASN1_STRING structures). It can also occur in the X509_get1_email(),
+   X509_REQ_get1_email() and X509_get1_ocsp() functions.
+
+   If a malicious actor can cause an application to directly construct an
+   ASN1_STRING and then process it through one of the affected OpenSSL
+   functions then this issue could be hit. This might result in a crash
+   (causing a Denial of Service attack). It could also result in the
+   disclosure of private memory contents (such as private keys, or
+   sensitive plaintext).
+   ([CVE-2021-3712])
+
+   *Matt Caswell*
+
+### Changes between 1.1.1j and 1.1.1k [25 Mar 2021]
 
  * Fixed a problem with verifying a certificate chain when using the
    X509_V_FLAG_X509_STRICT flag. This flag enables additional security checks of
@@ -1548,12 +1795,6 @@ OpenSSL 1.1.1
    The presence of this system service is determined at run-time.
 
    *Richard Levitte*
-
- * Added newline escaping functionality to a filename when using openssl dgst.
-   This output format is to replicate the output format found in the `*sum`
-   checksum programs. This aims to preserve backward compatibility.
-
-   *Matt Eaton, Richard Levitte, and Paul Dale*
 
  * Print all values for a PKCS#12 attribute with 'openssl pkcs12', not just
    the first value.

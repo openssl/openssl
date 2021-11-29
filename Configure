@@ -63,6 +63,8 @@ EOF
 #               (Default: PREFIX/ssl)
 # --banner=".." Output specified text instead of default completion banner
 #
+# -w            Don't wait after showing a Configure warning
+#
 # --cross-compile-prefix Add specified prefix to binutils components.
 #
 # --api         One of 0.9.8, 1.0.0, 1.0.1, 1.0.2, 1.1.0, 1.1.1, or 3.0
@@ -532,7 +534,6 @@ my %deprecated_disablables = (
 
 our %disabled = ( # "what"         => "comment"
                   "fips"                => "default",
-                  "acvp-tests"          => "default",
                   "asan"                => "default",
                   "buildtest-c++"       => "default",
                   "crypto-mdebug"       => "default",
@@ -638,7 +639,7 @@ my @disable_cascades = (
 
     "cmp"               => [ "crmf" ],
 
-    "fips"              => [ "fips-securitychecks" ],
+    "fips"              => [ "fips-securitychecks", "acvp-tests" ],
 
     "deprecated-3.0"    => [ "engine", "srp" ]
     );
@@ -899,7 +900,7 @@ while (@argvcopy)
                 {
                 $guess_opts{verbose} = 1;
                 }
-        elsif (/^-w$/)          # From older 'config'
+        elsif (/^-w$/)
                 {
                 $guess_opts{nowait} = 1;
                 }

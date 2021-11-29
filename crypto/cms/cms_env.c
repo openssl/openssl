@@ -795,7 +795,7 @@ static EVP_CIPHER *cms_get_key_wrap_cipher(size_t keylen, const CMS_CTX *ctx)
 {
     const char *alg = NULL;
 
-    switch(keylen) {
+    switch (keylen) {
     case 16:
         alg = "AES-128-WRAP";
         break;
@@ -951,6 +951,7 @@ static int cms_RecipientInfo_kekri_decrypt(CMS_ContentInfo *cms,
     }
     ukeylen += outlen;
 
+    OPENSSL_clear_free(ec->key, ec->keylen);
     ec->key = ukey;
     ec->keylen = ukeylen;
 

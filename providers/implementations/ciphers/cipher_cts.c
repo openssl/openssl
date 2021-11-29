@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,10 +8,10 @@
  */
 
 /*
- * Helper functions for AES CBC CTS ciphers.
+ * Helper functions for 128 bit CBC CTS ciphers (Currently AES and Camellia).
  *
  * The function dispatch tables are embedded into cipher_aes.c
- * using cipher_aes_cts.inc
+ * and cipher_camellia.c using cipher_aes_cts.inc and cipher_camellia_cts.inc
  */
 
 /*
@@ -48,19 +48,20 @@
 
 #include "e_os.h" /* strcasecmp */
 #include <openssl/core_names.h>
-#include <openssl/aes.h>
 #include "prov/ciphercommon.h"
 #include "internal/nelem.h"
-#include "cipher_aes_cts.h"
+#include "cipher_cts.h"
 
 /* The value assigned to 0 is the default */
 #define CTS_CS1 0
 #define CTS_CS2 1
 #define CTS_CS3 2
 
+#define CTS_BLOCK_SIZE 16
+
 typedef union {
     size_t align;
-    unsigned char c[AES_BLOCK_SIZE];
+    unsigned char c[CTS_BLOCK_SIZE];
 } aligned_16bytes;
 
 typedef struct cts_mode_name2id_st {
@@ -75,7 +76,7 @@ static CTS_MODE_NAME2ID cts_modes[] =
     { CTS_CS3, OSSL_CIPHER_CTS_MODE_CS3 },
 };
 
-const char *ossl_aes_cbc_cts_mode_id2name(unsigned int id)
+const char *ossl_cipher_cbc_cts_mode_id2name(unsigned int id)
 {
     size_t i;
 
@@ -86,7 +87,7 @@ const char *ossl_aes_cbc_cts_mode_id2name(unsigned int id)
     return NULL;
 }
 
-int ossl_aes_cbc_cts_mode_name2id(const char *name)
+int ossl_cipher_cbc_cts_mode_name2id(const char *name)
 {
     size_t i;
 
@@ -103,7 +104,7 @@ static size_t cts128_cs1_encrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
     aligned_16bytes tmp_in;
     size_t residue;
 
-    residue = len % AES_BLOCK_SIZE;
+    residue = len % CTS_BLOCK_SIZE;
     len -= residue;
     if (!ctx->hw->cipher(ctx, out, in, len))
         return 0;
@@ -116,8 +117,8 @@ static size_t cts128_cs1_encrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
 
     memset(tmp_in.c, 0, sizeof(tmp_in));
     memcpy(tmp_in.c, in, residue);
-    if (!ctx->hw->cipher(ctx, out - AES_BLOCK_SIZE + residue, tmp_in.c,
-                         AES_BLOCK_SIZE))
+    if (!ctx->hw->cipher(ctx, out - CTS_BLOCK_SIZE + residue, tmp_in.c,
+                         CTS_BLOCK_SIZE))
         return 0;
     return len + residue;
 }
@@ -134,10 +135,10 @@ static void do_xor(const unsigned char *in1, const unsigned char *in2,
 static size_t cts128_cs1_decrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
                                  unsigned char *out, size_t len)
 {
-    aligned_16bytes mid_iv, ct_mid, pt_last;
+    aligned_16bytes mid_iv, ct_mid, cn, pt_last;
     size_t residue;
 
-    residue = len % AES_BLOCK_SIZE;
+    residue = len % CTS_BLOCK_SIZE;
     if (residue == 0) {
         /* If there are no partial blocks then it is the same as CBC mode */
         if (!ctx->hw->cipher(ctx, out, in, len))
@@ -145,7 +146,7 @@ static size_t cts128_cs1_decrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
         return len;
     }
     /* Process blocks at the start - but leave the last 2 blocks */
-    len -= AES_BLOCK_SIZE + residue;
+    len -= CTS_BLOCK_SIZE + residue;
     if (len > 0) {
         if (!ctx->hw->cipher(ctx, out, in, len))
             return 0;
@@ -153,11 +154,13 @@ static size_t cts128_cs1_decrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
         out += len;
     }
     /* Save the iv that will be used by the second last block */
-    memcpy(mid_iv.c, ctx->iv, AES_BLOCK_SIZE);
+    memcpy(mid_iv.c, ctx->iv, CTS_BLOCK_SIZE);
+    /* Save the C(n) block */
+    memcpy(cn.c, in + residue, CTS_BLOCK_SIZE);
 
     /* Decrypt the last block first using an iv of zero */
-    memset(ctx->iv, 0, AES_BLOCK_SIZE);
-    if (!ctx->hw->cipher(ctx, pt_last.c, in + residue, AES_BLOCK_SIZE))
+    memset(ctx->iv, 0, CTS_BLOCK_SIZE);
+    if (!ctx->hw->cipher(ctx, pt_last.c, in + residue, CTS_BLOCK_SIZE))
         return 0;
 
     /*
@@ -166,26 +169,29 @@ static size_t cts128_cs1_decrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
      * of the partial second last block.
      */
     memcpy(ct_mid.c, in, residue);
-    memcpy(ct_mid.c + residue, pt_last.c + residue, AES_BLOCK_SIZE - residue);
+    memcpy(ct_mid.c + residue, pt_last.c + residue, CTS_BLOCK_SIZE - residue);
     /*
      * Restore the last partial ciphertext block.
      * Now that we have the cipher text of the second last block, apply
      * that to the partial plaintext end block. We have already decrypted the
      * block using an IV of zero. For decryption the IV is just XORed after
-     * doing an AES block - so just XOR in the cipher text.
+     * doing an Cipher CBC block - so just XOR in the cipher text.
      */
-    do_xor(ct_mid.c, pt_last.c, residue, out + AES_BLOCK_SIZE);
+    do_xor(ct_mid.c, pt_last.c, residue, out + CTS_BLOCK_SIZE);
 
     /* Restore the iv needed by the second last block */
-    memcpy(ctx->iv, mid_iv.c, AES_BLOCK_SIZE);
+    memcpy(ctx->iv, mid_iv.c, CTS_BLOCK_SIZE);
+
     /*
      * Decrypt the second last plaintext block now that we have rebuilt the
      * ciphertext.
      */
-    if (!ctx->hw->cipher(ctx, out, ct_mid.c, AES_BLOCK_SIZE))
+    if (!ctx->hw->cipher(ctx, out, ct_mid.c, CTS_BLOCK_SIZE))
         return 0;
 
-    return len + AES_BLOCK_SIZE + residue;
+    /* The returned iv is the C(n) block */
+    memcpy(ctx->iv, cn.c, CTS_BLOCK_SIZE);
+    return len + CTS_BLOCK_SIZE + residue;
 }
 
 static size_t cts128_cs3_encrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
@@ -194,12 +200,16 @@ static size_t cts128_cs3_encrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
     aligned_16bytes tmp_in;
     size_t residue;
 
-    if (len <= AES_BLOCK_SIZE)  /* CS3 requires 2 blocks */
+    if (len < CTS_BLOCK_SIZE)  /* CS3 requires at least one block */
         return 0;
 
-    residue = len % AES_BLOCK_SIZE;
+    /* If we only have one block then just process the aligned block */
+    if (len == CTS_BLOCK_SIZE)
+        return ctx->hw->cipher(ctx, out, in, len) ? len : 0;
+
+    residue = len % CTS_BLOCK_SIZE;
     if (residue == 0)
-        residue = AES_BLOCK_SIZE;
+        residue = CTS_BLOCK_SIZE;
     len -= residue;
 
     if (!ctx->hw->cipher(ctx, out, in, len))
@@ -210,8 +220,8 @@ static size_t cts128_cs3_encrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
 
     memset(tmp_in.c, 0, sizeof(tmp_in));
     memcpy(tmp_in.c, in, residue);
-    memcpy(out, out - AES_BLOCK_SIZE, residue);
-    if (!ctx->hw->cipher(ctx, out - AES_BLOCK_SIZE, tmp_in.c, AES_BLOCK_SIZE))
+    memcpy(out, out - CTS_BLOCK_SIZE, residue);
+    if (!ctx->hw->cipher(ctx, out - CTS_BLOCK_SIZE, tmp_in.c, CTS_BLOCK_SIZE))
         return 0;
     return len + residue;
 }
@@ -227,17 +237,21 @@ static size_t cts128_cs3_encrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
 static size_t cts128_cs3_decrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
                                  unsigned char *out, size_t len)
 {
-    aligned_16bytes mid_iv, ct_mid, pt_last;
+    aligned_16bytes mid_iv, ct_mid, cn, pt_last;
     size_t residue;
 
-    if (len <= AES_BLOCK_SIZE) /* CS3 requires 2 blocks */
+    if (len < CTS_BLOCK_SIZE) /* CS3 requires at least one block */
         return 0;
 
+    /* If we only have one block then just process the aligned block */
+    if (len == CTS_BLOCK_SIZE)
+        return ctx->hw->cipher(ctx, out, in, len) ? len : 0;
+
     /* Process blocks at the start - but leave the last 2 blocks */
-    residue = len % AES_BLOCK_SIZE;
+    residue = len % CTS_BLOCK_SIZE;
     if (residue == 0)
-        residue = AES_BLOCK_SIZE;
-    len -= AES_BLOCK_SIZE + residue;
+        residue = CTS_BLOCK_SIZE;
+    len -= CTS_BLOCK_SIZE + residue;
 
     if (len > 0) {
         if (!ctx->hw->cipher(ctx, out, in, len))
@@ -246,11 +260,13 @@ static size_t cts128_cs3_decrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
         out += len;
     }
     /* Save the iv that will be used by the second last block */
-    memcpy(mid_iv.c, ctx->iv, AES_BLOCK_SIZE);
+    memcpy(mid_iv.c, ctx->iv, CTS_BLOCK_SIZE);
+    /* Save the C(n) block : For CS3 it is C(1)||...||C(n-2)||C(n)||C(n-1)* */
+    memcpy(cn.c, in, CTS_BLOCK_SIZE);
 
-    /* Decrypt the Cn block first using an iv of zero */
-    memset(ctx->iv, 0, AES_BLOCK_SIZE);
-    if (!ctx->hw->cipher(ctx, pt_last.c, in, AES_BLOCK_SIZE))
+    /* Decrypt the C(n) block first using an iv of zero */
+    memset(ctx->iv, 0, CTS_BLOCK_SIZE);
+    if (!ctx->hw->cipher(ctx, pt_last.c, in, CTS_BLOCK_SIZE))
         return 0;
 
     /*
@@ -258,9 +274,9 @@ static size_t cts128_cs3_decrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
      * the decrypted C(n) block + replace the start with the ciphertext bytes
      * of the partial last block.
      */
-    memcpy(ct_mid.c, in + AES_BLOCK_SIZE, residue);
-    if (residue != AES_BLOCK_SIZE)
-        memcpy(ct_mid.c + residue, pt_last.c + residue, AES_BLOCK_SIZE - residue);
+    memcpy(ct_mid.c, in + CTS_BLOCK_SIZE, residue);
+    if (residue != CTS_BLOCK_SIZE)
+        memcpy(ct_mid.c + residue, pt_last.c + residue, CTS_BLOCK_SIZE - residue);
     /*
      * Restore the last partial ciphertext block.
      * Now that we have the cipher text of the second last block, apply
@@ -268,24 +284,26 @@ static size_t cts128_cs3_decrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
      * block using an IV of zero. For decryption the IV is just XORed after
      * doing an AES block - so just XOR in the ciphertext.
      */
-    do_xor(ct_mid.c, pt_last.c, residue, out + AES_BLOCK_SIZE);
+    do_xor(ct_mid.c, pt_last.c, residue, out + CTS_BLOCK_SIZE);
 
     /* Restore the iv needed by the second last block */
-    memcpy(ctx->iv, mid_iv.c, AES_BLOCK_SIZE);
+    memcpy(ctx->iv, mid_iv.c, CTS_BLOCK_SIZE);
     /*
      * Decrypt the second last plaintext block now that we have rebuilt the
      * ciphertext.
      */
-    if (!ctx->hw->cipher(ctx, out, ct_mid.c, AES_BLOCK_SIZE))
+    if (!ctx->hw->cipher(ctx, out, ct_mid.c, CTS_BLOCK_SIZE))
         return 0;
 
-    return len + AES_BLOCK_SIZE + residue;
+    /* The returned iv is the C(n) block */
+    memcpy(ctx->iv, cn.c, CTS_BLOCK_SIZE);
+    return len + CTS_BLOCK_SIZE + residue;
 }
 
 static size_t cts128_cs2_encrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
                                  unsigned char *out, size_t len)
 {
-    if (len % AES_BLOCK_SIZE == 0) {
+    if (len % CTS_BLOCK_SIZE == 0) {
         /* If there are no partial blocks then it is the same as CBC mode */
         if (!ctx->hw->cipher(ctx, out, in, len))
             return 0;
@@ -298,7 +316,7 @@ static size_t cts128_cs2_encrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
 static size_t cts128_cs2_decrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
                                  unsigned char *out, size_t len)
 {
-    if (len % AES_BLOCK_SIZE == 0) {
+    if (len % CTS_BLOCK_SIZE == 0) {
         /* If there are no partial blocks then it is the same as CBC mode */
         if (!ctx->hw->cipher(ctx, out, in, len))
             return 0;
@@ -308,14 +326,14 @@ static size_t cts128_cs2_decrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
     return cts128_cs3_decrypt(ctx, in, out, len);
 }
 
-int ossl_aes_cbc_cts_block_update(void *vctx, unsigned char *out, size_t *outl,
-                                  size_t outsize, const unsigned char *in,
-                                  size_t inl)
+int ossl_cipher_cbc_cts_block_update(void *vctx, unsigned char *out, size_t *outl,
+                                     size_t outsize, const unsigned char *in,
+                                     size_t inl)
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     size_t sz = 0;
 
-    if (inl < AES_BLOCK_SIZE) /* There must be at least one block for CTS mode */
+    if (inl < CTS_BLOCK_SIZE) /* There must be at least one block for CTS mode */
         return 0;
     if (outsize < inl)
         return 0;
@@ -353,8 +371,8 @@ int ossl_aes_cbc_cts_block_update(void *vctx, unsigned char *out, size_t *outl,
     return 1;
 }
 
-int ossl_aes_cbc_cts_block_final(void *vctx, unsigned char *out, size_t *outl,
-                                 size_t outsize)
+int ossl_cipher_cbc_cts_block_final(void *vctx, unsigned char *out, size_t *outl,
+                                    size_t outsize)
 {
     *outl = 0;
     return 1;

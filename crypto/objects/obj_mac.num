@@ -1245,3 +1245,6 @@ signedObject		1244
 rpkiNotify		1245
 id_ct_geofeedCSVwithCRLF		1246
 id_ct_signedChecklist		1247
+sm4_gcm		1248
+sm4_ccm		1249
+id_ct_ASPA		1250

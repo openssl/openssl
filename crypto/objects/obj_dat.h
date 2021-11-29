@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[8076] = {
+static const unsigned char so[8103] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1115,9 +1115,12 @@ static const unsigned char so[8076] = {
     0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x0D,       /* [ 8045] OBJ_rpkiNotify */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x01,0x2F,  /* [ 8053] OBJ_id_ct_geofeedCSVwithCRLF */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x01,0x30,  /* [ 8064] OBJ_id_ct_signedChecklist */
+    0x2A,0x81,0x1C,0xCF,0x55,0x01,0x68,0x08,       /* [ 8075] OBJ_sm4_gcm */
+    0x2A,0x81,0x1C,0xCF,0x55,0x01,0x68,0x09,       /* [ 8083] OBJ_sm4_ccm */
+    0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x01,0x31,  /* [ 8091] OBJ_id_ct_ASPA */
 };
 
-#define NUM_NID 1248
+#define NUM_NID 1251
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2367,9 +2370,12 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"rpkiNotify", "RPKI Notify", NID_rpkiNotify, 8, &so[8045]},
     {"id-ct-geofeedCSVwithCRLF", "id-ct-geofeedCSVwithCRLF", NID_id_ct_geofeedCSVwithCRLF, 11, &so[8053]},
     {"id-ct-signedChecklist", "id-ct-signedChecklist", NID_id_ct_signedChecklist, 11, &so[8064]},
+    {"SM4-GCM", "sm4-gcm", NID_sm4_gcm, 8, &so[8075]},
+    {"SM4-CCM", "sm4-ccm", NID_sm4_ccm, 8, &so[8083]},
+    {"id-ct-ASPA", "id-ct-ASPA", NID_id_ct_ASPA, 11, &so[8091]},
 };
 
-#define NUM_SN 1239
+#define NUM_SN 1242
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -2648,11 +2654,13 @@ static const unsigned int sn_objs[NUM_SN] = {
     1204,    /* "SM2-SM3" */
     1143,    /* "SM3" */
     1134,    /* "SM4-CBC" */
+    1249,    /* "SM4-CCM" */
     1137,    /* "SM4-CFB" */
     1136,    /* "SM4-CFB1" */
     1138,    /* "SM4-CFB8" */
     1139,    /* "SM4-CTR" */
     1133,    /* "SM4-ECB" */
+    1248,    /* "SM4-GCM" */
     1135,    /* "SM4-OFB" */
      188,    /* "SMIME" */
      167,    /* "SMIME-CAPS" */
@@ -2980,6 +2988,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      327,    /* "id-cmc-statusInfo" */
      331,    /* "id-cmc-transactionId" */
     1238,    /* "id-cp" */
+    1250,    /* "id-ct-ASPA" */
      787,    /* "id-ct-asciiTextWithCRLF" */
     1246,    /* "id-ct-geofeedCSVwithCRLF" */
     1237,    /* "id-ct-resourceTaggedAttest" */
@@ -3612,7 +3621,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1093,    /* "x509ExtAdmission" */
 };
 
-#define NUM_LN 1239
+#define NUM_LN 1242
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -4241,6 +4250,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      327,    /* "id-cmc-statusInfo" */
      331,    /* "id-cmc-transactionId" */
     1238,    /* "id-cp" */
+    1250,    /* "id-ct-ASPA" */
      787,    /* "id-ct-asciiTextWithCRLF" */
     1246,    /* "id-ct-geofeedCSVwithCRLF" */
     1237,    /* "id-ct-resourceTaggedAttest" */
@@ -4797,11 +4807,13 @@ static const unsigned int ln_objs[NUM_LN] = {
     1143,    /* "sm3" */
     1144,    /* "sm3WithRSAEncryption" */
     1134,    /* "sm4-cbc" */
+    1249,    /* "sm4-ccm" */
     1137,    /* "sm4-cfb" */
     1136,    /* "sm4-cfb1" */
     1138,    /* "sm4-cfb8" */
     1139,    /* "sm4-ctr" */
     1133,    /* "sm4-ecb" */
+    1248,    /* "sm4-gcm" */
     1135,    /* "sm4-ofb" */
     1203,    /* "sshkdf" */
     1205,    /* "sskdf" */
@@ -4855,7 +4867,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1110
+#define NUM_OBJ 1113
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -5332,6 +5344,8 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1136,    /* OBJ_sm4_cfb1                     1 2 156 10197 1 104 5 */
     1138,    /* OBJ_sm4_cfb8                     1 2 156 10197 1 104 6 */
     1139,    /* OBJ_sm4_ctr                      1 2 156 10197 1 104 7 */
+    1248,    /* OBJ_sm4_gcm                      1 2 156 10197 1 104 8 */
+    1249,    /* OBJ_sm4_ccm                      1 2 156 10197 1 104 9 */
     1172,    /* OBJ_sm2                          1 2 156 10197 1 301 */
     1143,    /* OBJ_sm3                          1 2 156 10197 1 401 */
     1204,    /* OBJ_SM2_with_SM3                 1 2 156 10197 1 501 */
@@ -5896,6 +5910,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1237,    /* OBJ_id_ct_resourceTaggedAttest   1 2 840 113549 1 9 16 1 36 */
     1246,    /* OBJ_id_ct_geofeedCSVwithCRLF     1 2 840 113549 1 9 16 1 47 */
     1247,    /* OBJ_id_ct_signedChecklist        1 2 840 113549 1 9 16 1 48 */
+    1250,    /* OBJ_id_ct_ASPA                   1 2 840 113549 1 9 16 1 49 */
      212,    /* OBJ_id_smime_aa_receiptRequest   1 2 840 113549 1 9 16 2 1 */
      213,    /* OBJ_id_smime_aa_securityLabel    1 2 840 113549 1 9 16 2 2 */
      214,    /* OBJ_id_smime_aa_mlExpandHistory  1 2 840 113549 1 9 16 2 3 */

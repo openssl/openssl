@@ -28,3 +28,29 @@ void *app_malloc(size_t sz, const char *what)
     }
     return vp;
 }
+
+/* shim to prevent sucking in too much from apps */
+
+int opt_legacy_okay(void)
+{
+    return 1;
+}
+
+/*
+ * These three functions are defined here so that they don't need to come from
+ * the apps source code and pull in a lot of additional things.
+ */
+int opt_provider_option_given(void)
+{
+    return 0;
+}
+
+const char *app_get0_propq(void)
+{
+    return NULL;
+}
+
+OSSL_LIB_CTX *app_get0_libctx(void)
+{
+    return NULL;
+}

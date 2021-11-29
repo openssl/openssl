@@ -388,8 +388,13 @@ int opt_pair(const char *arg, const OPT_PAIR * pairs, int *result);
 int opt_verify(int i, X509_VERIFY_PARAM *vpm);
 int opt_rand(int i);
 int opt_provider(int i);
+int opt_provider_option_given(void);
 
 char **opt_rest(void);
 int opt_num_rest(void);
+
+/* Returns non-zero if legacy paths are still available */
+int opt_legacy_okay(void);
+
 
 #endif /* OSSL_APPS_OPT_H */

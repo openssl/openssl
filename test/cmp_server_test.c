@@ -94,7 +94,7 @@ static int execute_test_handle_request(CMP_SRV_TEST_FIXTURE *fixture)
         goto end;
 
     if (!TEST_ptr(rsp = OSSL_CMP_CTX_server_perform(client_ctx, fixture->req))
-            || !TEST_int_eq(ossl_cmp_msg_get_bodytype(rsp),
+            || !TEST_int_eq(OSSL_CMP_MSG_get_bodytype(rsp),
                             OSSL_CMP_PKIBODY_ERROR)
             || !TEST_ptr(errorContent = rsp->body->value.error)
             || !TEST_int_eq(ASN1_INTEGER_get(errorContent->errorCode),

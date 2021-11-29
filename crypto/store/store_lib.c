@@ -94,7 +94,7 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
     if ((p = strchr(scheme_copy, ':')) != NULL) {
         *p++ = '\0';
         if (strcasecmp(scheme_copy, "file") != 0) {
-            if (strncmp(p, "//", 2) == 0)
+            if (HAS_PREFIX(p, "//"))
                 schemes_n--;         /* Invalidate the file scheme */
             schemes[schemes_n++] = scheme_copy;
         }
@@ -135,8 +135,8 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
             if (loader_ctx == NULL) {
                 OSSL_STORE_LOADER_free(fetched_loader);
                 fetched_loader = NULL;
-            } else if(!loader_set_params(fetched_loader, loader_ctx,
-                                         params, propq)) {
+            } else if (!loader_set_params(fetched_loader, loader_ctx,
+                                          params, propq)) {
                 (void)fetched_loader->p_close(loader_ctx);
                 OSSL_STORE_LOADER_free(fetched_loader);
                 fetched_loader = NULL;
@@ -514,7 +514,7 @@ static int ossl_store_close_it(OSSL_STORE_CTX *ctx)
         ret = ctx->loader->p_close(ctx->loader_ctx);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     if (ctx->fetched_loader == NULL)
-        ret = ctx->loader->close(ctx->loader_ctx);
+        ret = ctx->loader->closefn(ctx->loader_ctx);
 #endif
 
     sk_OSSL_STORE_INFO_pop_free(ctx->cached_info, OSSL_STORE_INFO_free);

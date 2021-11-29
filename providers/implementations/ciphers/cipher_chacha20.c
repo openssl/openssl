@@ -193,7 +193,7 @@ const OSSL_DISPATCH ossl_chacha20_functions[] = {
     { OSSL_FUNC_CIPHER_FINAL, (void (*)(void))chacha20_final },
     { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))chacha20_cipher},
     { OSSL_FUNC_CIPHER_GET_PARAMS, (void (*)(void))chacha20_get_params },
-    { OSSL_FUNC_CIPHER_GETTABLE_PARAMS,(void (*)(void))chacha20_gettable_params },
+    { OSSL_FUNC_CIPHER_GETTABLE_PARAMS, (void (*)(void))chacha20_gettable_params },
     { OSSL_FUNC_CIPHER_GET_CTX_PARAMS, (void (*)(void))chacha20_get_ctx_params },
     { OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS,
         (void (*)(void))chacha20_gettable_ctx_params },

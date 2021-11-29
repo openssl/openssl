@@ -190,6 +190,9 @@ extern "C" {
 #define OSSL_KDF_PARAM_KEY          "key"       /* octet string */
 #define OSSL_KDF_PARAM_SALT         "salt"      /* octet string */
 #define OSSL_KDF_PARAM_PASSWORD     "pass"      /* octet string */
+#define OSSL_KDF_PARAM_PREFIX       "prefix"    /* octet string */
+#define OSSL_KDF_PARAM_LABEL        "label"     /* octet string */
+#define OSSL_KDF_PARAM_DATA         "data"      /* octet string */
 #define OSSL_KDF_PARAM_DIGEST       OSSL_ALG_PARAM_DIGEST     /* utf8 string */
 #define OSSL_KDF_PARAM_CIPHER       OSSL_ALG_PARAM_CIPHER     /* utf8 string */
 #define OSSL_KDF_PARAM_MAC          OSSL_ALG_PARAM_MAC        /* utf8 string */
@@ -214,6 +217,7 @@ extern "C" {
 #define OSSL_KDF_PARAM_PKCS12_ID    "id"        /* int */
 #define OSSL_KDF_PARAM_KBKDF_USE_L  "use-l"             /* int */
 #define OSSL_KDF_PARAM_KBKDF_USE_SEPARATOR  "use-separator"     /* int */
+#define OSSL_KDF_PARAM_KBKDF_R      "r"         /* int */
 #define OSSL_KDF_PARAM_X942_ACVPINFO        "acvp-info"
 #define OSSL_KDF_PARAM_X942_PARTYUINFO      "partyu-info"
 #define OSSL_KDF_PARAM_X942_PARTYVINFO      "partyv-info"
@@ -223,6 +227,7 @@ extern "C" {
 
 /* Known KDF names */
 #define OSSL_KDF_NAME_HKDF           "HKDF"
+#define OSSL_KDF_NAME_TLS1_3_KDF     "TLS13-KDF"
 #define OSSL_KDF_NAME_PBKDF1         "PBKDF1"
 #define OSSL_KDF_NAME_PBKDF2         "PBKDF2"
 #define OSSL_KDF_NAME_SCRYPT         "SCRYPT"

@@ -22,11 +22,28 @@ use lib bldtop_dir('.');
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
-plan skip_all => "provider_status is not supported by this test"
-    if $no_fips;
+plan tests => 5;
 
-plan tests => 1;
+ok(run(test(["provider_status_test", "-provider_name", "null"])),
+   "null provider test");
 
-ok(run(test(["provider_status_test", "-config", srctop_file("test","fips.cnf"),
-             "-provider_name", "fips"])),
-   "running provider_status_test");
+ok(run(test(["provider_status_test", "-provider_name", "base"])),
+   "base provider test");
+
+ok(run(test(["provider_status_test", "-provider_name", "default"])),
+   "default provider test");
+
+SKIP: {
+    skip "Skipping legacy test", 1
+        if disabled("legacy");
+    ok(run(test(["provider_status_test", "-provider_name", "legacy"])),
+       "legacy provider test");
+}
+
+SKIP: {
+    skip "Skipping fips test", 1
+        if $no_fips;
+    ok(run(test(["provider_status_test", "-config", srctop_file("test","fips.cnf"),
+                 "-provider_name", "fips"])),
+       "fips provider test");
+}

@@ -32,7 +32,7 @@ plan skip_all => "These tests are not supported in a no-sock build"
     if disabled("sock");
 
 plan skip_all => "Tests involving local HTTP server not available on Windows or VMS"
-    if $^O =~ /^(VMS|MSWin32)$/;
+    if $^O =~ /^(VMS|MSWin32|msys)$/;
 plan skip_all => "Tests involving local HTTP server not available in cross-compile builds"
     if defined $ENV{EXE_SHELL};
 
@@ -42,8 +42,8 @@ sub chop_dblquot { # chop any leading and trailing '"' (needed for Windows)
     return $str;
 }
 
-my $proxy = "<EMPTY>";
-$proxy = chop_dblquot($ENV{http_proxy} // $ENV{HTTP_PROXY} // $proxy);
+my $proxy = chop_dblquot($ENV{http_proxy} // $ENV{HTTP_PROXY} // "");
+$proxy = "<EMPTY>" if $proxy eq "";
 $proxy =~ s{^https?://}{}i;
 my $no_proxy = $ENV{no_proxy} // $ENV{NO_PROXY};
 
@@ -242,7 +242,8 @@ sub load_tests {
         } else {
             $line =~ s{-section,,}{-section,,-proxy,$proxy,};
         }
-        $line =~ s{-section,,}{-section,,-certout,$result_dir/test.cert.pem,};
+        $line =~ s{-section,,}{-section,,-certout,$result_dir/test.cert.pem,}
+            if $aspect ne "commands" || $line =~ m/,\s*-cmd\s*,\s*(ir|cr|p10cr|kur)\s*,/;
         $line =~ s{-section,,}{-config,../$test_config,-section,$server_name $aspect,};
 
         my @fields = grep /\S/, split ",", $line;

@@ -312,7 +312,8 @@ contained the given PKCS#10 CSR, overriding any extensions with same OIDs.
 
 =item B<-sans> I<spec>
 
-One or more IP addresses, DNS names, or URIs separated by commas or whitespace
+One or more IP addresses, email addresses, DNS names, or URIs
+separated by commas or whitespace
 (where in the latter case the whole argument must be enclosed in "...")
 to add as Subject Alternative Name(s) (SAN) certificate request extension.
 If the special element "critical" is given the SANs are flagged as critical.
@@ -835,7 +836,7 @@ have no effect on the certificate verification enabled via this option.
 
 =item B<-tls_host> I<name>
 
-Address to be checked during hostname validation. 
+Address to be checked during hostname validation.
 This may be a DNS name or an IP address.
 If not given it defaults to the B<-server> address.
 

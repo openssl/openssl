@@ -194,7 +194,7 @@ static int kdf_pbkdf2_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_SALT_LENGTH);
             return 0;
         }
-        if (!pbkdf2_set_membuf(&ctx->salt, &ctx->salt_len,p))
+        if (!pbkdf2_set_membuf(&ctx->salt, &ctx->salt_len, p))
             return 0;
     }
 

@@ -18,9 +18,12 @@
 #include <openssl/params.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#ifndef FIPS_MODULE
+# include <openssl/x509.h>
+# include "crypto/asn1.h"
+#endif
 #include "internal/sizes.h"
 #include "internal/param_build_set.h"
-#include "crypto/asn1.h"
 #include "crypto/rsa.h"
 #include "rsa_local.h"
 
@@ -43,7 +46,7 @@ static int collect_numbers(STACK_OF(BIGNUM) *numbers,
     if (numbers == NULL)
         return 0;
 
-    for (i = 0; names[i] != NULL; i++){
+    for (i = 0; names[i] != NULL; i++) {
         p = OSSL_PARAM_locate_const(params, names[i]);
         if (p != NULL) {
             BIGNUM *tmp = NULL;
@@ -389,6 +392,8 @@ RSA *ossl_rsa_dup(const RSA *rsa, int selection)
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0
         && (pnum = sk_RSA_PRIME_INFO_num(rsa->prime_infos)) > 0) {
         dupkey->prime_infos = sk_RSA_PRIME_INFO_new_reserve(NULL, pnum);
+        if (dupkey->prime_infos == NULL)
+            goto err;
         for (i = 0; i < pnum; i++) {
             const RSA_PRIME_INFO *pinfo = NULL;
             RSA_PRIME_INFO *duppinfo = NULL;

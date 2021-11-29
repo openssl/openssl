@@ -22,13 +22,14 @@
 #include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
-#include <openssl/x509.h>
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
 #include <openssl/dh.h>
 #include <openssl/ec.h>
 #include <openssl/cmac.h>
-#include <openssl/engine.h>
+#ifndef FIPS_MODULE
+# include <openssl/engine.h>
+#endif
 #include <openssl/params.h>
 #include <openssl/param_build.h>
 #include <openssl/encoder.h>
@@ -36,14 +37,16 @@
 
 #include "internal/numbers.h"   /* includes SIZE_MAX */
 #include "internal/ffc.h"
-#include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "crypto/dh.h"
 #include "crypto/dsa.h"
 #include "crypto/ec.h"
 #include "crypto/ecx.h"
 #include "crypto/rsa.h"
-#include "crypto/x509.h"
+#ifndef FIPS_MODULE
+# include "crypto/asn1.h"
+# include "crypto/x509.h"
+#endif
 #include "internal/provider.h"
 #include "evp_local.h"
 
@@ -526,12 +529,14 @@ static int get_raw_key_details(const OSSL_PARAM params[], void *arg)
         if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PRIV_KEY))
                 != NULL)
             return OSSL_PARAM_get_octet_string(p, (void **)raw_key->key,
-                                               SIZE_MAX, raw_key->len);
+                                               raw_key->key == NULL ? 0 : *raw_key->len,
+                                               raw_key->len);
     } else if (raw_key->selection == OSSL_KEYMGMT_SELECT_PUBLIC_KEY) {
         if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PUB_KEY))
                 != NULL)
             return OSSL_PARAM_get_octet_string(p, (void **)raw_key->key,
-                                               SIZE_MAX, raw_key->len);
+                                               raw_key->key == NULL ? 0 : *raw_key->len,
+                                               raw_key->len);
     }
 
     return 0;
@@ -627,7 +632,7 @@ static EVP_PKEY *new_cmac_key_int(const unsigned char *priv, size_t len,
     if (ctx == NULL)
         goto err;
 
-    if (!EVP_PKEY_fromdata_init(ctx)) {
+    if (EVP_PKEY_fromdata_init(ctx) <= 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_KEY_SETUP_FAILED);
         goto err;
     }
@@ -646,7 +651,7 @@ static EVP_PKEY *new_cmac_key_int(const unsigned char *priv, size_t len,
 #  endif
     *p = OSSL_PARAM_construct_end();
 
-    if (!EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_KEYPAIR, params)) {
+    if (EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_KEYPAIR, params) <= 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_KEY_SETUP_FAILED);
         goto err;
     }
@@ -1551,7 +1556,6 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
          */
         if (keymgmt == NULL)
             pkey->ameth = ameth;
-        pkey->engine = e;
 
         /*
          * The EVP_PKEY_ASN1_METHOD |pkey_id| retains its legacy key purpose
@@ -1567,6 +1571,13 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
         } else {
             pkey->type = EVP_PKEY_KEYMGMT;
         }
+# ifndef OPENSSL_NO_ENGINE
+        if (eptr == NULL && e != NULL && !ENGINE_init(e)) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+            return 0;
+        }
+# endif
+        pkey->engine = e;
 #endif
     }
     return 1;
@@ -1839,6 +1850,8 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
     if (tmp_keymgmt == NULL) {
         EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pk, propquery);
 
+        if (ctx == NULL)
+            goto end;
         tmp_keymgmt = ctx->keymgmt;
         ctx->keymgmt = NULL;
         EVP_PKEY_CTX_free(ctx);
@@ -2142,7 +2155,7 @@ err:
 
 int EVP_PKEY_get_octet_string_param(const EVP_PKEY *pkey, const char *key_name,
                                     unsigned char *buf, size_t max_buf_sz,
-                                    size_t *out_sz)
+                                    size_t *out_len)
 {
     OSSL_PARAM params[2];
     int ret1 = 0, ret2 = 0;
@@ -2154,14 +2167,14 @@ int EVP_PKEY_get_octet_string_param(const EVP_PKEY *pkey, const char *key_name,
     params[1] = OSSL_PARAM_construct_end();
     if ((ret1 = EVP_PKEY_get_params(pkey, params)))
         ret2 = OSSL_PARAM_modified(params);
-    if (ret2 && out_sz != NULL)
-        *out_sz = params[0].return_size;
+    if (ret2 && out_len != NULL)
+        *out_len = params[0].return_size;
     return ret1 && ret2;
 }
 
 int EVP_PKEY_get_utf8_string_param(const EVP_PKEY *pkey, const char *key_name,
                                     char *str, size_t max_buf_sz,
-                                    size_t *out_sz)
+                                    size_t *out_len)
 {
     OSSL_PARAM params[2];
     int ret1 = 0, ret2 = 0;
@@ -2173,8 +2186,16 @@ int EVP_PKEY_get_utf8_string_param(const EVP_PKEY *pkey, const char *key_name,
     params[1] = OSSL_PARAM_construct_end();
     if ((ret1 = EVP_PKEY_get_params(pkey, params)))
         ret2 = OSSL_PARAM_modified(params);
-    if (ret2 && out_sz != NULL)
-        *out_sz = params[0].return_size;
+    if (ret2 && out_len != NULL)
+        *out_len = params[0].return_size;
+
+    if (ret2 && params[0].return_size == max_buf_sz)
+        /* There was no space for a NUL byte */
+        return 0;
+    /* Add a terminating NUL byte for good measure */
+    if (ret2 && str != NULL)
+        str[params[0].return_size] = '\0';
+
     return ret1 && ret2;
 }
 

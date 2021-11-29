@@ -40,9 +40,6 @@
 # include <sys/param.h>
 # include <sys/random.h>
 #endif
-#if defined(__APPLE__)
-# include <CommonCrypto/CommonRandom.h>
-#endif
 
 #if (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS)) \
      || defined(__DJGPP__)
@@ -179,7 +176,7 @@ size_t ossl_pool_acquire_entropy(RAND_POOL *pool)
         /* Get wall clock time, take 8 bits. */
         clock_gettime(CLOCK_REALTIME, &ts);
         v = (unsigned char)(ts.tv_nsec & 0xFF);
-        ossl_rand_pool_add(pool, arg, &v, sizeof(v) , 2);
+        ossl_rand_pool_add(pool, arg, &v, sizeof(v), 2);
     }
     return ossl_rand_pool_entropy_available(pool);
 }
@@ -369,7 +366,7 @@ static ssize_t syscall_random(void *buf, size_t buflen)
         if (errno != ENOSYS)
             return -1;
     }
-#    elif defined(__APPLE__)
+#    elif defined(OPENSSL_APPLE_CRYPTO_RANDOM)
 
     if (CCRandomGenerateBytes(buf, buflen) == kCCSuccess)
 	    return (ssize_t)buflen;

@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -35,14 +35,6 @@ my @sha_tests =
        key => 'a very much longer text to encrypt.  This one even stretches over morethan one line.',
        expected => '$5$rounds=1400$anotherlongsalts$Rx.j8H.h8HjEDGomFU8bDkXm3XIUnzyxf12oP84Bnq1' },
      { type => '5',
-       salt => 'rounds=77777$short',
-       key => 'we have a short salt string but not a short password',
-       expected => '$5$rounds=77777$short$JiO1O3ZpDAxGJeaDIuqCoEFysAe1mZNJRs3pw0KQRd/' },
-     { type => '5',
-       salt => 'rounds=123456$asaltof16chars..',
-       key => 'a short string',
-       expected => '$5$rounds=123456$asaltof16chars..$gP3VQ/6X7UUEW3HkBn2w1/Ptq2jxPyzV/cZKmF/wJvD' },
-     { type => '5',
        salt => 'rounds=10$roundstoolow',
        key => 'the minimum number is still observed',
        expected => '$5$rounds=1000$roundstoolow$yfvwcWrQ8l/K0DAWyuPMDNHpIVlTQebY9l/gL972bIC' },
@@ -63,6 +55,22 @@ my @sha_tests =
        key => 'a very much longer text to encrypt.  This one even stretches over morethan one line.',
        expected => '$6$rounds=1400$anotherlongsalts$POfYwTEok97VWcjxIiSOjiykti.o/pQs.wPvMxQ6Fm7I6IoYN3CmLs66x9t0oSwbtEW7o7UmJEiDwGqd8p4ur1' },
      { type => '6',
+       salt => 'rounds=10$roundstoolow',
+       key => 'the minimum number is still observed',
+       expected => '$6$rounds=1000$roundstoolow$kUMsbe306n21p9R.FRkW3IGn.S9NPN0x50YhH1xhLsPuWGsUSklZt58jaTfF4ZEQpyUNGc0dqbpBYYBaHHrsX.' }
+    );
+# From the same source as above, these tests use a number of rounds > 10000.  They are separated because this can
+# cause out of memory problems in the address sanitizer in the no-cache-fetch build.
+my @sha_high_rounds_tests =
+    ({ type => '5',
+       salt => 'rounds=77777$short',
+       key => 'we have a short salt string but not a short password',
+       expected => '$5$rounds=77777$short$JiO1O3ZpDAxGJeaDIuqCoEFysAe1mZNJRs3pw0KQRd/' },
+     { type => '5',
+       salt => 'rounds=123456$asaltof16chars..',
+       key => 'a short string',
+       expected => '$5$rounds=123456$asaltof16chars..$gP3VQ/6X7UUEW3HkBn2w1/Ptq2jxPyzV/cZKmF/wJvD' },
+     { type => '6',
        salt => 'rounds=77777$short',
        key => 'we have a short salt string but not a short password',
        expected => '$6$rounds=77777$short$WuQyW2YR.hBNpjjRhpYD/ifIw05xdfeEyQoMxIXbkvr0gge1a1x3yRULJ5CCaUeOxFmtlcGZelFl5CxtgfiAc0' },
@@ -70,13 +78,9 @@ my @sha_tests =
        salt => 'rounds=123456$asaltof16chars..',
        key => 'a short string',
        expected => '$6$rounds=123456$asaltof16chars..$BtCwjqMJGx5hrJhZywWvt0RLE8uZ4oPwcelCjmw2kSYu.Ec6ycULevoBK25fs2xXgMNrCzIMVcgEJAstJeonj1' },
-     { type => '6',
-       salt => 'rounds=10$roundstoolow',
-       key => 'the minimum number is still observed',
-       expected => '$6$rounds=1000$roundstoolow$kUMsbe306n21p9R.FRkW3IGn.S9NPN0x50YhH1xhLsPuWGsUSklZt58jaTfF4ZEQpyUNGc0dqbpBYYBaHHrsX.' }
     );
 
-plan tests => 9 + scalar @sha_tests;
+plan tests => 9 + scalar @sha_tests + scalar @sha_high_rounds_tests;
 
 
 ok(compare1stline_re([qw{openssl passwd -1 password}], '^\$1\$.{8}\$.{22}\R$'),
@@ -105,6 +109,16 @@ foreach (@sha_tests) {
        { 5 => 'SHA256', 6 => 'SHA512' }->{$_->{type}} . ' password with salt ' . $_->{salt});
 }
 
+SKIP: {
+    skip "Skipping high rounds tests in non caching builds", scalar @sha_high_rounds_tests
+        if disabled("cached-fetch");
+
+    foreach (@sha_high_rounds_tests) {
+        ok(compare1stline([qw{openssl passwd}, '-'.$_->{type}, '-salt', $_->{salt},
+                           $_->{key}], $_->{expected}),
+           { 5 => 'SHA256', 6 => 'SHA512' }->{$_->{type}} . ' password with salt ' . $_->{salt});
+    }
+}
 
 sub compare1stline_re {
     my ($cmdarray, $regexp) = @_;

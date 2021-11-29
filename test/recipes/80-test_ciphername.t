@@ -1,6 +1,6 @@
-#! /usr/bin/perl
+#! /usr/bin/env perl
 #
-# Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
 # Copyright 2017 BaishanCloud. All rights reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use

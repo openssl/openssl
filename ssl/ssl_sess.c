@@ -437,6 +437,7 @@ int ssl_get_new_session(SSL *s, int session)
         ss->timeout = SSL_get_default_timeout(s);
     else
         ss->timeout = s->session_ctx->session_timeout;
+    ssl_session_calculate_timeout(ss);
 
     SSL_SESSION_free(s->session);
     s->session = NULL;

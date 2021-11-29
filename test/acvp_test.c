@@ -71,7 +71,7 @@ static int pkey_get_bn_bytes(EVP_PKEY *pkey, const char *name,
     buf = OPENSSL_zalloc(sz);
     if (buf == NULL)
         goto err;
-    if (!BN_bn2binpad(bn, buf, sz))
+    if (BN_bn2binpad(bn, buf, sz) <= 0)
         goto err;
 
     *out_len = sz;
@@ -94,6 +94,7 @@ static int sig_gen(EVP_PKEY *pkey, OSSL_PARAM *params, const char *digest_name,
     size_t sig_len;
     size_t sz = EVP_PKEY_get_size(pkey);
 
+    sig_len = sz;
     if (!TEST_ptr(sig = OPENSSL_malloc(sz))
         || !TEST_ptr(md_ctx = EVP_MD_CTX_new())
         || !TEST_int_eq(EVP_DigestSignInit_ex(md_ctx, NULL, digest_name, libctx,
@@ -164,7 +165,7 @@ static int ecdsa_create_pkey(EVP_PKEY **pkey, const char *curve_name,
                                                        pub, pub_len) > 0)
         || !TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
         || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, "EC", NULL))
-        || !TEST_true(EVP_PKEY_fromdata_init(ctx))
+        || !TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1)
         || !TEST_int_eq(EVP_PKEY_fromdata(ctx, pkey, EVP_PKEY_PUBLIC_KEY,
                                           params), expected))
     goto err;
@@ -339,7 +340,7 @@ static EVP_PKEY *dsa_paramgen(int L, int N)
     EVP_PKEY *param_key = NULL;
 
     if (!TEST_ptr(paramgen_ctx = EVP_PKEY_CTX_new_from_name(libctx, "DSA", NULL))
-        || !TEST_true(EVP_PKEY_paramgen_init(paramgen_ctx))
+        || !TEST_int_gt(EVP_PKEY_paramgen_init(paramgen_ctx), 0)
         || !TEST_true(EVP_PKEY_CTX_set_dsa_paramgen_bits(paramgen_ctx, L))
         || !TEST_true(EVP_PKEY_CTX_set_dsa_paramgen_q_bits(paramgen_ctx, N))
         || !TEST_true(EVP_PKEY_paramgen(paramgen_ctx, &param_key)))
@@ -415,7 +416,7 @@ static int dsa_paramgen_test(int id)
     const struct dsa_paramgen_st *tst = &dsa_paramgen_data[id];
 
     if (!TEST_ptr(paramgen_ctx = EVP_PKEY_CTX_new_from_name(libctx, "DSA", NULL))
-        || !TEST_true(EVP_PKEY_paramgen_init(paramgen_ctx))
+        || !TEST_int_gt(EVP_PKEY_paramgen_init(paramgen_ctx), 0)
         || !TEST_true(EVP_PKEY_CTX_set_dsa_paramgen_bits(paramgen_ctx, tst->L))
         || !TEST_true(EVP_PKEY_CTX_set_dsa_paramgen_q_bits(paramgen_ctx, tst->N))
         || !TEST_true(EVP_PKEY_paramgen(paramgen_ctx, &param_key))
@@ -503,8 +504,9 @@ static int dsa_create_pkey(EVP_PKEY **pkey,
      }
      if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
          || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, "DSA", NULL))
-         || !TEST_true(EVP_PKEY_fromdata_init(ctx))
-         || !TEST_true(EVP_PKEY_fromdata(ctx, pkey, EVP_PKEY_PUBLIC_KEY, params)))
+         || !TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1)
+         || !TEST_int_eq(EVP_PKEY_fromdata(ctx, pkey, EVP_PKEY_PUBLIC_KEY,
+                                           params), 1))
          goto err;
 
     ret = 1;
@@ -924,7 +926,7 @@ static int dh_create_pkey(EVP_PKEY **pkey, const char *group_name,
 
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
         || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, "DH", NULL))
-        || !TEST_true(EVP_PKEY_fromdata_init(ctx))
+        || !TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1)
         || !TEST_int_eq(EVP_PKEY_fromdata(ctx, pkey, EVP_PKEY_KEYPAIR, params),
                         pass))
     goto err;
@@ -1033,8 +1035,9 @@ static int rsa_create_pkey(EVP_PKEY **pkey,
     }
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
         || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, "RSA", NULL))
-        || !TEST_true(EVP_PKEY_fromdata_init(ctx))
-        || !TEST_true(EVP_PKEY_fromdata(ctx, pkey, EVP_PKEY_KEYPAIR, params)))
+        || !TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1)
+        || !TEST_int_eq(EVP_PKEY_fromdata(ctx, pkey, EVP_PKEY_KEYPAIR, params),
+                        1))
         goto err;
 
     ret = 1;
@@ -1160,6 +1163,7 @@ static int rsa_siggen_test(int id)
     size_t sig_len = 0, n_len = 0, e_len = 0;
     OSSL_PARAM params[4], *p;
     const struct rsa_siggen_st *tst = &rsa_siggen_data[id];
+    int salt_len = tst->pss_salt_len;
 
     TEST_note("RSA %s signature generation", tst->sig_pad_mode);
 
@@ -1168,12 +1172,9 @@ static int rsa_siggen_test(int id)
                                             (char *)tst->sig_pad_mode, 0);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST,
                                             (char *)tst->digest_alg, 0);
-    if (tst->pss_salt_len >= 0) {
-        int salt_len = tst->pss_salt_len;
-
+    if (salt_len >= 0)
         *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_PSS_SALTLEN,
                                         &salt_len);
-    }
     *p++ = OSSL_PARAM_construct_end();
 
     if (!TEST_ptr(pkey = EVP_PKEY_Q_keygen(libctx, NULL, "RSA", tst->mod))
@@ -1204,6 +1205,7 @@ static int rsa_sigver_test(int id)
     BN_CTX *bn_ctx = NULL;
     OSSL_PARAM params[4], *p;
     const struct rsa_sigver_st *tst  = &rsa_sigver_data[id];
+    int salt_len = tst->pss_salt_len;
 
     TEST_note("RSA %s Signature Verify : expected to %s ", tst->sig_pad_mode,
                tst->pass == PASS ? "pass" : "fail");
@@ -1213,12 +1215,9 @@ static int rsa_sigver_test(int id)
                                             (char *)tst->sig_pad_mode, 0);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST,
                                             (char *)tst->digest_alg, 0);
-    if (tst->pss_salt_len >= 0) {
-        int salt_len = tst->pss_salt_len;
-
+    if (salt_len >= 0)
         *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_PSS_SALTLEN,
                                         &salt_len);
-    }
     *p++ = OSSL_PARAM_construct_end();
 
     if (!TEST_ptr(bn_ctx = BN_CTX_new())
@@ -1227,10 +1226,10 @@ static int rsa_sigver_test(int id)
         || !TEST_ptr(md_ctx = EVP_MD_CTX_new())
         || !TEST_true(EVP_DigestVerifyInit_ex(md_ctx, &pkey_ctx,
                                               tst->digest_alg, libctx, NULL,
-                                              pkey, NULL)
+                                              pkey, NULL))
         || !TEST_true(EVP_PKEY_CTX_set_params(pkey_ctx, params))
         || !TEST_int_eq(EVP_DigestVerify(md_ctx, tst->sig, tst->sig_len,
-                                         tst->msg, tst->msg_len), tst->pass)))
+                                         tst->msg, tst->msg_len), tst->pass))
         goto err;
     ret = 1;
 err:
@@ -1262,7 +1261,7 @@ static int rsa_decryption_primitive_test(int id)
 
     test_output_memory("n", n, n_len);
     test_output_memory("e", e, e_len);
-    if (!EVP_PKEY_decrypt(ctx, pt, &pt_len, tst->ct, tst->ct_len))
+    if (EVP_PKEY_decrypt(ctx, pt, &pt_len, tst->ct, tst->ct_len) <= 0)
         TEST_note("Decryption Failed");
     else
         test_output_memory("pt", pt, pt_len);

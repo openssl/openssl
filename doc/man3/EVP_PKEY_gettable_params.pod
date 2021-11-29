@@ -22,10 +22,10 @@ EVP_PKEY_get_octet_string_param
                            BIGNUM **bn);
  int EVP_PKEY_get_utf8_string_param(const EVP_PKEY *pkey, const char *key_name,
                                     char *str, size_t max_buf_sz,
-                                    size_t *out_sz);
+                                    size_t *out_len);
  int EVP_PKEY_get_octet_string_param(const EVP_PKEY *pkey, const char *key_name,
                                      unsigned char *buf, size_t max_buf_sz,
-                                     size_t *out_sz);
+                                     size_t *out_len);
 
 =head1 DESCRIPTION
 
@@ -47,13 +47,20 @@ EVP_PKEY_get_bn_param() retrieves a key I<pkey> BIGNUM value I<**bn>
 associated with a name of I<key_name>. If I<*bn> is NULL then the BIGNUM
 is allocated by the method.
 
-EVP_PKEY_get_utf8_string_param() get a key I<pkey> UTF8 string value int a buffer
-I<str> of maximum size I<max_buf_sz> associated with a name of I<key_name>.
-I<*out_sz> is the returned size of the string if it is not NULL.
+EVP_PKEY_get_utf8_string_param() get a key I<pkey> UTF8 string value into a
+buffer I<str> of maximum size I<max_buf_sz> associated with a name of
+I<key_name>.  The maximum size must be large enough to accomodate the string
+value including a terminating NUL byte, or this function will fail.
+If I<out_len> is not NULL, I<*out_len> is set to the length of the string
+not including the terminating NUL byte. The required buffer size not including
+the terminating NUL byte can be obtained from I<*out_len> by calling the
+function with I<str> set to NULL.
 
-EVP_PKEY_get_octet_string_param() copy a I<pkey>'s octet string value into a buffer
-I<buf> of maximum size I<max_buf_sz> associated with a name of I<key_name>.
-I<*out_sz> is the returned size of the buffer if it is not NULL.
+EVP_PKEY_get_octet_string_param() get a key I<pkey>'s octet string value into a
+buffer I<buf> of maximum size I<max_buf_sz> associated with a name of I<key_name>.
+If I<out_len> is not NULL, I<*out_len> is set to the length of the contents.
+The required buffer size can be obtained from I<*out_len> by calling the
+function with I<buf> set to NULL.
 
 =head1 NOTES
 
@@ -67,7 +74,7 @@ All other methods return 1 if a value associated with the key's I<key_name> was
 successfully returned, or 0 if there was an error.
 An error may be returned by methods EVP_PKEY_get_utf8_string_param() and
 EVP_PKEY_get_octet_string_param() if I<max_buf_sz> is not big enough to hold the
-value.  If I<out_sz> is not NULL, I<*out_sz> will be assigned the required
+value.  If I<out_len> is not NULL, I<*out_len> will be assigned the required
 buffer size to hold the value.
 
 =head1 EXAMPLES

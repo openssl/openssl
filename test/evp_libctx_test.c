@@ -525,7 +525,7 @@ static int kem_rsa_gen_recover(void)
     int ret = 0;
     EVP_PKEY *pub = NULL;
     EVP_PKEY *priv = NULL;
-    EVP_PKEY_CTX *sctx = NULL, *rctx = NULL;
+    EVP_PKEY_CTX *sctx = NULL, *rctx = NULL, *dctx = NULL;
     unsigned char secret[256] = { 0, };
     unsigned char ct[256] = { 0, };
     unsigned char unwrap[256] = { 0, };
@@ -536,11 +536,12 @@ static int kem_rsa_gen_recover(void)
           && TEST_ptr(sctx = EVP_PKEY_CTX_new_from_pkey(libctx, pub, NULL))
           && TEST_int_eq(EVP_PKEY_encapsulate_init(sctx, NULL), 1)
           && TEST_int_eq(EVP_PKEY_CTX_set_kem_op(sctx, "RSASVE"), 1)
-          && TEST_int_eq(EVP_PKEY_encapsulate(sctx, NULL, &ctlen, NULL,
+          && TEST_ptr(dctx = EVP_PKEY_CTX_dup(sctx))
+          && TEST_int_eq(EVP_PKEY_encapsulate(dctx, NULL, &ctlen, NULL,
                                               &secretlen), 1)
           && TEST_int_eq(ctlen, secretlen)
           && TEST_int_eq(ctlen, bits / 8)
-          && TEST_int_eq(EVP_PKEY_encapsulate(sctx, ct, &ctlen, secret,
+          && TEST_int_eq(EVP_PKEY_encapsulate(dctx, ct, &ctlen, secret,
                                               &secretlen), 1)
           && TEST_ptr(rctx = EVP_PKEY_CTX_new_from_pkey(libctx, priv, NULL))
           && TEST_int_eq(EVP_PKEY_decapsulate_init(rctx, NULL), 1)
@@ -553,6 +554,7 @@ static int kem_rsa_gen_recover(void)
     EVP_PKEY_free(pub);
     EVP_PKEY_free(priv);
     EVP_PKEY_CTX_free(rctx);
+    EVP_PKEY_CTX_free(dctx);
     EVP_PKEY_CTX_free(sctx);
     return ret;
 }
@@ -667,7 +669,7 @@ static EVP_PKEY *gen_dh_key(void)
     params[1] = OSSL_PARAM_construct_end();
 
     if (!TEST_ptr(gctx = EVP_PKEY_CTX_new_from_name(libctx, "DH", NULL))
-        || !TEST_true(EVP_PKEY_keygen_init(gctx))
+        || !TEST_int_gt(EVP_PKEY_keygen_init(gctx), 0)
         || !TEST_true(EVP_PKEY_CTX_set_params(gctx, params))
         || !TEST_true(EVP_PKEY_keygen(gctx, &pkey)))
         goto err;

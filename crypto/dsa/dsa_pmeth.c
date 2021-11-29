@@ -81,7 +81,12 @@ static int pkey_dsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig,
     int ret;
     unsigned int sltmp;
     DSA_PKEY_CTX *dctx = ctx->data;
-    DSA *dsa = ctx->pkey->pkey.dsa;
+    /*
+     * Discard const. Its marked as const because this may be a cached copy of
+     * the "real" key. These calls don't make any modifications that need to
+     * be reflected back in the "original" key.
+     */
+    DSA *dsa = (DSA *)EVP_PKEY_get0_DSA(ctx->pkey);
 
     if (dctx->md != NULL && tbslen != (size_t)EVP_MD_get_size(dctx->md))
         return 0;
@@ -100,7 +105,12 @@ static int pkey_dsa_verify(EVP_PKEY_CTX *ctx,
 {
     int ret;
     DSA_PKEY_CTX *dctx = ctx->data;
-    DSA *dsa = ctx->pkey->pkey.dsa;
+    /*
+     * Discard const. Its marked as const because this may be a cached copy of
+     * the "real" key. These calls don't make any modifications that need to
+     * be reflected back in the "original" key.
+     */
+    DSA *dsa = (DSA *)EVP_PKEY_get0_DSA(ctx->pkey);
 
     if (dctx->md != NULL && tbslen != (size_t)EVP_MD_get_size(dctx->md))
         return 0;
@@ -245,7 +255,7 @@ static int pkey_dsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
     /* Note: if error return, pkey is freed by parent routine */
     if (!EVP_PKEY_copy_parameters(pkey, ctx->pkey))
         return 0;
-    return DSA_generate_key(pkey->pkey.dsa);
+    return DSA_generate_key((DSA *)EVP_PKEY_get0_DSA(pkey));
 }
 
 static const EVP_PKEY_METHOD dsa_pkey_meth = {

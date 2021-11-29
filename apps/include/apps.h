@@ -11,6 +11,7 @@
 # define OSSL_APPS_H
 
 # include "e_os.h" /* struct timeval for DTLS */
+# include "internal/common.h" /* for HAS_PREFIX */
 # include "internal/nelem.h"
 # include "internal/sockets.h" /* for openssl_fdset() */
 # include <assert.h>
@@ -94,7 +95,7 @@ typedef struct args_st {
 int wrap_password_callback(char *buf, int bufsiz, int verify, void *cb_data);
 
 int chopup_args(ARGS *arg, char *buf);
-int dump_cert_text(BIO *out, X509 *x);
+void dump_cert_text(BIO *out, X509 *x);
 void print_name(BIO *out, const char *title, const X509_NAME *nm);
 void print_bignum_var(BIO *, const BIGNUM *, const char*,
                       int, unsigned char *);
@@ -247,6 +248,7 @@ int x509_req_ctrl_string(X509_REQ *x, const char *value);
 int init_gen_str(EVP_PKEY_CTX **pctx,
                  const char *algname, ENGINE *e, int do_param,
                  OSSL_LIB_CTX *libctx, const char *propq);
+int cert_matches_key(const X509 *cert, const EVP_PKEY *pkey);
 int do_X509_sign(X509 *x, EVP_PKEY *pkey, const char *md,
                  STACK_OF(OPENSSL_STRING) *sigopts, X509V3_CTX *ext_ctx);
 int do_X509_verify(X509 *x, EVP_PKEY *pkey, STACK_OF(OPENSSL_STRING) *vfyopts);
@@ -262,9 +264,9 @@ extern char *psk_key;
 
 unsigned char *next_protos_parse(size_t *outlen, const char *in);
 
-void print_cert_checks(BIO *bio, X509 *x,
+int check_cert_attributes(BIO *bio, X509 *x,
                        const char *checkhost,
-                       const char *checkemail, const char *checkip);
+                       const char *checkemail, const char *checkip, int print);
 
 void store_setup_crl_download(X509_STORE *st);
 

@@ -625,7 +625,7 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file_ex(const char *file,
         ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         goto err;
     }
-    if (!BIO_read_filename(in, file))
+    if (BIO_read_filename(in, file) <= 0)
         goto err;
 
     /* Internally lh_X509_NAME_retrieve() needs the libctx to retrieve SHA1 */
@@ -696,7 +696,7 @@ int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
         goto err;
     }
 
-    if (!BIO_read_filename(in, file))
+    if (BIO_read_filename(in, file) <= 0)
         goto err;
 
     for (;;) {
@@ -1020,9 +1020,6 @@ static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
                 return 0;
             /* SHA1 HMAC is 160 bits of security */
             if (minbits > 160 && c->algorithm_mac & SSL_SHA1)
-                return 0;
-            /* Level 2: no RC4 */
-            if (level >= 2 && c->algorithm_enc == SSL_RC4)
                 return 0;
             /* Level 3: forward secure ciphersuites only */
             if (level >= 3 && c->min_tls != TLS1_3_VERSION &&

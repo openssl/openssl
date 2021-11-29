@@ -185,10 +185,11 @@ If the response header contains one or more "Content-Length" header lines and/or
 an ASN.1-encoded response is expected, which should include a total length,
 the length indications received are checked for consistency
 and for not exceeding any given maximum response length.
-On receiving a response, the function returns the contents as a memory BIO,
-which does not support streaming, in case an ASN.1-encoded response is expected.
-Else it returns directly the read BIO that holds the response contents,
+If an ASN.1-encoded response is expected, the function returns on success
+the contents as a memory BIO, which does not support streaming.
+Otherwise it returns directly the read BIO that holds the response contents,
 which allows a response of indefinite length and may support streaming.
+The caller is responsible for freeing the BIO pointer obtained.
 
 OSSL_HTTP_get() uses HTTP GET to obtain data from I<bio> if non-NULL,
 else from the server contained in the I<url>, and returns it as a BIO.
@@ -202,6 +203,7 @@ If the scheme component of the I<url> is C<https> a TLS connection is requested
 and the I<bio_update_fn>, as described for OSSL_HTTP_open(), must be provided.
 Also the remaining parameters are interpreted as described for OSSL_HTTP_open()
 and OSSL_HTTP_set1_request(), respectively.
+The caller is responsible for freeing the BIO pointer obtained.
 
 OSSL_HTTP_transfer() exchanges an HTTP request and response
 over a connection managed via I<prctx> without supporting redirection.
@@ -213,6 +215,7 @@ or required and this was granted by the server, else it closes the connection
 and assigns NULL to I<*prctx>.
 The remaining parameters are interpreted as described for OSSL_HTTP_open()
 and OSSL_HTTP_set1_request(), respectively.
+The caller is responsible for freeing the BIO pointer obtained.
 
 OSSL_HTTP_close() closes the connection and releases I<rctx>.
 The I<ok> parameter is passed to any BIO update function
@@ -238,6 +241,7 @@ is expected, else a BIO that may support streaming.
 The BIO must be freed by the caller.
 On failure, they return NULL.
 Failure conditions include connection/transfer timeout, parse errors, etc.
+The caller is responsible for freeing the BIO pointer obtained.
 
 OSSL_HTTP_close() returns 0 if anything went wrong while disconnecting, else 1.
 

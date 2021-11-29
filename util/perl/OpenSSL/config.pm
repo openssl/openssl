@@ -22,8 +22,8 @@ use Carp;
 # These control our behavior.
 my $DRYRUN;
 my $VERBOSE;
-my $WAIT = 1;
 my $WHERE = dirname($0);
+my $WAIT = 1;
 
 # Machine type, etc., used to determine the platform
 my $MACHINE;
@@ -452,7 +452,7 @@ EOF
       [ 'ppc-apple-rhapsody',     { target => "rhapsody-ppc" } ],
       [ 'ppc-apple-darwin.*',
         sub {
-            my $KERNEL_BITS = $ENV{KERNEL_BITS};
+            my $KERNEL_BITS = $ENV{KERNEL_BITS} // '';
             my $ISA64 = `sysctl -n hw.optional.64bitops 2>/dev/null`;
             if ( $ISA64 == 1 && $KERNEL_BITS eq '' ) {
                 print <<EOF;
@@ -468,12 +468,12 @@ EOF
       ],
       [ 'i.86-apple-darwin.*',
         sub {
-            my $KERNEL_BITS = $ENV{KERNEL_BITS};
+            my $KERNEL_BITS = $ENV{KERNEL_BITS} // '';
             my $ISA64 = `sysctl -n hw.optional.x86_64 2>/dev/null`;
             if ( $ISA64 == 1 && $KERNEL_BITS eq '' ) {
                 print <<EOF;
 WARNING! To build 64-bit package, do this:
-         KERNEL_BITS=64 $WHERE/Configure \[\[ options \]\]
+         KERNEL_BITS=64 $WHERE/Configure [options...]
 EOF
                 maybe_abort();
             }
@@ -484,12 +484,12 @@ EOF
       ],
       [ 'x86_64-apple-darwin.*',
         sub {
-            my $KERNEL_BITS = $ENV{KERNEL_BITS};
+            my $KERNEL_BITS = $ENV{KERNEL_BITS} // '';
             return { target => "darwin-i386" } if $KERNEL_BITS eq '32';
 
             print <<EOF;
 WARNING! To build 32-bit package, do this:
-         KERNEL_BITS=32 $WHERE/Configure \[\[ options \]\]
+         KERNEL_BITS=32 $WHERE/Configure [options...]
 EOF
             maybe_abort();
             return { target => "darwin64-x86_64" };
@@ -532,7 +532,7 @@ EOF
       ],
       [ 'ppc64-.*-linux2',
         sub {
-            my $KERNEL_BITS = $ENV{KERNEL_BITS};
+            my $KERNEL_BITS = $ENV{KERNEL_BITS} // '';
             if ( $KERNEL_BITS eq '' ) {
                 print <<EOF;
 WARNING! To build 64-bit package, do this:
@@ -745,6 +745,7 @@ EOF
       [ 'ia64-.*-.*bsd.*',        { target => "BSD-ia64" } ],
       [ 'x86_64-.*-dragonfly.*',  { target => "BSD-x86_64" } ],
       [ 'amd64-.*-.*bsd.*',       { target => "BSD-x86_64" } ],
+      [ 'arm64-.*-.*bsd.*',       { target => "BSD-aarch64" } ],
       [ '.*86.*-.*-.*bsd.*',
         sub {
             # mimic ld behaviour when it's looking for libc...

@@ -552,12 +552,13 @@ static EVP_RAND_CTX *rand_new_seed(OSSL_LIB_CTX *libctx)
 
 static EVP_RAND_CTX *rand_new_drbg(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent,
                                    unsigned int reseed_interval,
-                                   time_t reseed_time_interval)
+                                   time_t reseed_time_interval, int use_df)
 {
     EVP_RAND *rand;
     RAND_GLOBAL *dgbl = rand_get_global(libctx);
     EVP_RAND_CTX *ctx;
-    OSSL_PARAM params[7], *p = params;
+    OSSL_PARAM params[8], *p = params;
+    const OSSL_PARAM *settables;
     char *name, *cipher;
 
     name = dgbl->rng_name != NULL ? dgbl->rng_name : "CTR-DRBG";
@@ -573,20 +574,23 @@ static EVP_RAND_CTX *rand_new_drbg(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent,
         return NULL;
     }
 
-    /*
-     * Rather than trying to decode the DRBG settings, just pass them through
-     * and rely on the other end to ignore those it doesn't care about.
-     */
-    cipher = dgbl->rng_cipher != NULL ? dgbl->rng_cipher : "AES-256-CTR";
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_CIPHER,
-                                            cipher, 0);
-    if (dgbl->rng_digest != NULL)
+    settables = EVP_RAND_CTX_settable_params(ctx);
+    if (OSSL_PARAM_locate_const(settables, OSSL_DRBG_PARAM_CIPHER)) {
+        cipher = dgbl->rng_cipher != NULL ? dgbl->rng_cipher : "AES-256-CTR";
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_CIPHER,
+                                                cipher, 0);
+    }
+    if (dgbl->rng_digest != NULL
+            && OSSL_PARAM_locate_const(settables, OSSL_DRBG_PARAM_DIGEST))
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_DIGEST,
                                                 dgbl->rng_digest, 0);
     if (dgbl->rng_propq != NULL)
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_PROPERTIES,
                                                 dgbl->rng_propq, 0);
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_MAC, "HMAC", 0);
+    if (OSSL_PARAM_locate_const(settables, OSSL_ALG_PARAM_MAC))
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_MAC, "HMAC", 0);
+    if (OSSL_PARAM_locate_const(settables, OSSL_DRBG_PARAM_USE_DF))
+        *p++ = OSSL_PARAM_construct_int(OSSL_DRBG_PARAM_USE_DF, &use_df);
     *p++ = OSSL_PARAM_construct_uint(OSSL_DRBG_PARAM_RESEED_REQUESTS,
                                      &reseed_interval);
     *p++ = OSSL_PARAM_construct_time_t(OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL,
@@ -641,7 +645,7 @@ EVP_RAND_CTX *RAND_get0_primary(OSSL_LIB_CTX *ctx)
 
     ret = dgbl->primary = rand_new_drbg(ctx, dgbl->seed,
                                         PRIMARY_RESEED_INTERVAL,
-                                        PRIMARY_RESEED_TIME_INTERVAL);
+                                        PRIMARY_RESEED_TIME_INTERVAL, 1);
     /*
     * The primary DRBG may be shared between multiple threads so we must
     * enable locking.
@@ -683,7 +687,7 @@ EVP_RAND_CTX *RAND_get0_public(OSSL_LIB_CTX *ctx)
                 && !ossl_init_thread_start(NULL, ctx, rand_delete_thread_state))
             return NULL;
         rand = rand_new_drbg(ctx, primary, SECONDARY_RESEED_INTERVAL,
-                             SECONDARY_RESEED_TIME_INTERVAL);
+                             SECONDARY_RESEED_TIME_INTERVAL, 0);
         CRYPTO_THREAD_set_local(&dgbl->public, rand);
     }
     return rand;
@@ -716,7 +720,7 @@ EVP_RAND_CTX *RAND_get0_private(OSSL_LIB_CTX *ctx)
                 && !ossl_init_thread_start(NULL, ctx, rand_delete_thread_state))
             return NULL;
         rand = rand_new_drbg(ctx, primary, SECONDARY_RESEED_INTERVAL,
-                             SECONDARY_RESEED_TIME_INTERVAL);
+                             SECONDARY_RESEED_TIME_INTERVAL, 0);
         CRYPTO_THREAD_set_local(&dgbl->private, rand);
     }
     return rand;

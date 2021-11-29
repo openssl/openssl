@@ -93,7 +93,7 @@ int ossl_cmp_msg_set_bodytype(OSSL_CMP_MSG *msg, int type)
     return 1;
 }
 
-int ossl_cmp_msg_get_bodytype(const OSSL_CMP_MSG *msg)
+int OSSL_CMP_MSG_get_bodytype(const OSSL_CMP_MSG *msg)
 {
     if (!ossl_assert(msg != NULL && msg->body != NULL))
         return -1;
@@ -651,7 +651,7 @@ int ossl_cmp_msg_gen_push0_ITAV(OSSL_CMP_MSG *msg, OSSL_CMP_ITAV *itav)
     if (!ossl_assert(msg != NULL && itav != NULL))
         return 0;
 
-    bodytype = ossl_cmp_msg_get_bodytype(msg);
+    bodytype = OSSL_CMP_MSG_get_bodytype(msg);
     if (bodytype != OSSL_CMP_PKIBODY_GENM
             && bodytype != OSSL_CMP_PKIBODY_GENP) {
         ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ARGS);
@@ -758,13 +758,13 @@ OSSL_CMP_MSG *ossl_cmp_error_new(OSSL_CMP_CTX *ctx, const OSSL_CMP_PKISI *si,
             goto err;
         msg->body->value.error->errorDetails = ft;
         if (lib != NULL && *lib != '\0'
-                && !ossl_cmp_sk_ASN1_UTF8STRING_push_str(ft, lib))
+                && !ossl_cmp_sk_ASN1_UTF8STRING_push_str(ft, lib, -1))
             goto err;
         if (reason != NULL && *reason != '\0'
-                && !ossl_cmp_sk_ASN1_UTF8STRING_push_str(ft, reason))
+                && !ossl_cmp_sk_ASN1_UTF8STRING_push_str(ft, reason, -1))
             goto err;
         if (details != NULL
-                && !ossl_cmp_sk_ASN1_UTF8STRING_push_str(ft, details))
+                && !ossl_cmp_sk_ASN1_UTF8STRING_push_str(ft, details, -1))
             goto err;
     }
 
@@ -1095,7 +1095,7 @@ OSSL_CMP_MSG *OSSL_CMP_MSG_read(const char *file, OSSL_LIB_CTX *libctx,
     }
 
     msg = OSSL_CMP_MSG_new(libctx, propq);
-    if (msg == NULL){
+    if (msg == NULL) {
         ERR_raise(ERR_LIB_CMP, ERR_R_MALLOC_FAILURE);
         return NULL;
     }

@@ -142,7 +142,7 @@ The signature of the certificate is invalid.
 
 =item B<X509_V_ERR_CRL_SIGNATURE_FAILURE: CRL signature failure>
 
-The signature of the certificate is invalid.
+The signature of the CRL is invalid.
 
 =item B<X509_V_ERR_CERT_NOT_YET_VALID: certificate is not yet valid>
 
@@ -250,7 +250,6 @@ authority and subject key identifier mismatch>
 The current candidate issuer certificate was rejected because its subject key
 identifier was present and did not match the authority key identifier current
 certificate.
-Not used as of OpenSSL 1.1.0.
 
 =item B<X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH:
 authority and issuer serial number mismatch>
@@ -258,14 +257,12 @@ authority and issuer serial number mismatch>
 The current candidate issuer certificate was rejected because its issuer name
 and serial number was present and did not match the authority key identifier of
 the current certificate.
-Not used as of OpenSSL 1.1.0.
 
 =item B<X509_V_ERR_KEYUSAGE_NO_CERTSIGN:
 key usage does not include certificate signing>
 
 The current candidate issuer certificate was rejected because its C<keyUsage>
 extension does not permit certificate signing.
-Not used as of OpenSSL 1.1.0.
 
 =item B<X509_V_ERR_INVALID_EXTENSION:
 invalid or inconsistent certificate extension>
@@ -435,11 +432,11 @@ Returned by the verify callback to indicate OCSP verification failed.
 Returned by the verify callback to indicate that the certificate is not
 recognized by the OCSP responder.
 
-=item B<509_V_ERROR_NO_ISSUER_PUBLI_KEY, issuer certificate doesn't have a public key>
+=item B<X509_V_ERR_NO_ISSUER_PUBLIC_KEY: issuer certificate doesn't have a public key>
 
 The issuer certificate does not have a public key.
 
-=item B<X509_V_ERROR_SIGNATURE_ALGORITHM_MISMATCH, Subject signature algorithm and issuer public key algorithm mismatch>
+=item B<X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH: subject signature algorithm and issuer public key algorithm mismatch>
 
 The issuer's public key is not of the type required by the signature in
 the subject's certificate.

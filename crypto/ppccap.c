@@ -263,7 +263,7 @@ void OPENSSL_cpuid_setup(void)
     sigaction(SIGILL, &ill_act, &ill_oact);
 
 #ifndef OSSL_IMPLEMENT_GETAUXVAL
-    if (sigsetjmp(ill_jmp,1) == 0) {
+    if (sigsetjmp(ill_jmp, 1) == 0) {
         OPENSSL_fpu_probe();
         OPENSSL_ppccap_P |= PPC_FPU;
 

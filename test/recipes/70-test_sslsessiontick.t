@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -26,8 +26,6 @@ plan skip_all => "$test_name needs the sock feature enabled"
 
 plan skip_all => "$test_name needs SSLv3, TLSv1, TLSv1.1 or TLSv1.2 enabled"
     if alldisabled(("ssl3", "tls1", "tls1_1", "tls1_2"));
-
-$ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 
 sub checkmessages($$$$$$);
 sub clearclient();

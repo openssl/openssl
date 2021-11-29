@@ -49,7 +49,7 @@ There are three modes that are currently defined:
 
 =over 4
 
-=item B<EVP_KDF_HKDF_MODE_EXTRACT_AND_EXPAND> "EXTRACT_AND_EXPAND"
+=item "EXTRACT_AND_EXPAND" or B<EVP_KDF_HKDF_MODE_EXTRACT_AND_EXPAND>
 
 This is the default mode.  Calling L<EVP_KDF_derive(3)> on an EVP_KDF_CTX set
 up for HKDF will perform an extract followed by an expand operation in one go.
@@ -59,7 +59,7 @@ intermediate fixed-length pseudorandom key K is not returned.
 In this mode the digest, key, salt and info values must be set before a key is
 derived otherwise an error will occur.
 
-=item B<EVP_KDF_HKDF_MODE_EXTRACT_ONLY> "EXTRACT_ONLY"
+=item "EXTRACT_ONLY" or B<EVP_KDF_HKDF_MODE_EXTRACT_ONLY>
 
 In this mode calling L<EVP_KDF_derive(3)> will just perform the extract
 operation. The value returned will be the intermediate fixed-length pseudorandom
@@ -69,7 +69,7 @@ up by calling EVP_KDF_CTX_get_kdf_size() after setting the mode and digest.
 The digest, key and salt values must be set before a key is derived otherwise
 an error will occur.
 
-=item B<EVP_KDF_HKDF_MODE_EXPAND_ONLY> "EXPAND_ONLY"
+=item "EXPAND_ONLY" or B<EVP_KDF_HKDF_MODE_EXPAND_ONLY>
 
 In this mode calling L<EVP_KDF_derive(3)> will just perform the expand
 operation. The input key should be set to the intermediate fixed-length
@@ -137,7 +137,8 @@ L<EVP_KDF_CTX_free(3)>,
 L<EVP_KDF_CTX_get_kdf_size(3)>,
 L<EVP_KDF_CTX_set_params(3)>,
 L<EVP_KDF_derive(3)>,
-L<EVP_KDF(3)/PARAMETERS>
+L<EVP_KDF(3)/PARAMETERS>,
+L<EVP_KDF-TLS13_KDF(7)>
 
 =head1 COPYRIGHT
 
