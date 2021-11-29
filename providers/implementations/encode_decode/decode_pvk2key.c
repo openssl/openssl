@@ -88,6 +88,9 @@ static int pvk2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     void *key = NULL;
     int ok = 0;
 
+    if (in == NULL)
+        goto end;
+
     ctx->selection = selection;
 
     if ((selection == 0
