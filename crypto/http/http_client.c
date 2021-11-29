@@ -464,6 +464,21 @@ static int check_set_resp_len(OSSL_HTTP_REQ_CTX *rctx, size_t len)
     return 1;
 }
 
+static int may_still_retry(time_t max_time, int *ptimeout)
+{
+    time_t time_diff, now = time(NULL);
+
+    if (max_time != 0) {
+        if (max_time < now) {
+            ERR_raise(ERR_LIB_HTTP, HTTP_R_RETRY_TIMEOUT);
+            return 0;
+        }
+        time_diff = max_time - now;
+        *ptimeout = time_diff > INT_MAX ? INT_MAX : (int)time_diff;
+    }
+    return 1;
+}
+
 /*
  * Try exchanging request and response via HTTP on (non-)blocking BIO in rctx.
  * Returns 1 on success, 0 on error or redirection, -1 on BIO_should_retry.
@@ -1081,6 +1096,7 @@ BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
     int use_ssl;
     OSSL_HTTP_REQ_CTX *rctx;
     BIO *resp = NULL;
+    time_t max_time = timeout > 0 ? time(NULL) + timeout : 0;
 
     if (url == NULL) {
         ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
@@ -1111,7 +1127,8 @@ BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
         }
         OPENSSL_free(path);
         if (resp == NULL && redirection_url != NULL) {
-            if (redirection_ok(++n_redirs, current_url, redirection_url)) {
+            if (redirection_ok(++n_redirs, current_url, redirection_url)
+                    && may_still_retry(max_time, &timeout)) {
                 (void)BIO_reset(bio);
                 OPENSSL_free(current_url);
                 current_url = redirection_url;
