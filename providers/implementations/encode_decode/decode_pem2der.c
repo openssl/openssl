@@ -33,7 +33,11 @@ static int read_pem(PROV_CTX *provctx, OSSL_CORE_BIO *cin,
                     unsigned char **data, long *len)
 {
     BIO *in = ossl_bio_new_from_core_bio(provctx, cin);
-    int ok = (PEM_read_bio(in, pem_name, pem_header, data, len) > 0);
+    int ok;
+
+    if (in == NULL)
+        return 0;
+    ok = (PEM_read_bio(in, pem_name, pem_header, data, len) > 0);
 
     BIO_free(in);
     return ok;
