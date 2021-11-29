@@ -642,6 +642,7 @@ static int ts_RESP_sign(TS_RESP_CTX *ctx)
     ASN1_OBJECT *oid;
     BIO *p7bio = NULL;
     int i;
+    long sec, usec;
 
     if (!X509_check_private_key(ctx->signer_cert, ctx->signer_key)) {
         TSerr(TS_F_TS_RESP_SIGN, TS_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE);
@@ -677,6 +678,11 @@ static int ts_RESP_sign(TS_RESP_CTX *ctx)
     if (!PKCS7_add_signed_attribute(si, NID_pkcs9_contentType,
                                     V_ASN1_OBJECT, oid)) {
         TSerr(TS_F_TS_RESP_SIGN, TS_R_PKCS7_ADD_SIGNED_ATTR_ERROR);
+        goto err;
+    }
+
+    if (!ctx->time_cb(ctx, ctx->time_cb_data, &sec, &usec)
+        || !PKCS7_add0_attrib_signing_time(si, ASN1_TIME_set(NULL, sec))) {
         goto err;
     }
 
