@@ -68,8 +68,12 @@ static int epki2pki_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     PKCS8_PRIV_KEY_INFO *p8inf = NULL;
     const X509_ALGOR *alg = NULL;
     BIO *in = ossl_bio_new_from_core_bio(ctx->provctx, cin);
-    int ok = (asn1_d2i_read_bio(in, &mem) >= 0);
+    int ok = 0;
 
+    if (in == NULL)
+        return 0;
+
+    ok = (asn1_d2i_read_bio(in, &mem) >= 0);
     BIO_free(in);
 
     /* We return "empty handed".  This is not an error. */

@@ -93,6 +93,9 @@ static int msblob2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     void *key = NULL;
     int ok = 0;
 
+    if (in == NULL)
+        return 0;
+
     if (BIO_read(in, hdr_buf, 16) != 16) {
         ERR_raise(ERR_LIB_PEM, PEM_R_KEYBLOB_TOO_SHORT);
         goto next;
