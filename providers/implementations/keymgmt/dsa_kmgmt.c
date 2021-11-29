@@ -199,6 +199,9 @@ static int dsa_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
     if (!ossl_prov_is_running() || dsa == NULL)
         goto err;
 
+    if (tmpl == NULL)
+        return ok;
+
     if ((selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0)
         ok = ok && ossl_ffc_params_todata(ossl_dsa_get0_params(dsa), tmpl, NULL);
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
