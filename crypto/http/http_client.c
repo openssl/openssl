@@ -369,12 +369,13 @@ static OSSL_HTTP_REQ_CTX *http_req_ctx_new(int free_wbio, BIO *wbio, BIO *rbio,
 
 /*
  * Parse first HTTP response line. This should be like this: "HTTP/1.0 200 OK".
- * We need to obtain the numeric code and (optional) informational message.
+ * We need to obtain the status code and (optional) informational message.
+ * Return any received HTTP response status code, or 0 on fatal error.
  */
 
 static int parse_http_line1(char *line, int *found_keep_alive)
 {
-    int i, retcode;
+    int i, retcode, err;
     char *code, *reason, *end;
 
     if (!HAS_PREFIX(line, HTTP_PREFIX_VERSION))
@@ -430,22 +431,21 @@ static int parse_http_line1(char *line, int *found_keep_alive)
     case HTTP_STATUS_CODE_FOUND:
         return retcode;
     default:
+        err = HTTP_R_RECEIVED_ERROR;
         if (retcode < 400)
-            retcode = HTTP_R_STATUS_CODE_UNSUPPORTED;
-        else
-            retcode = HTTP_R_RECEIVED_ERROR;
+            err = HTTP_R_STATUS_CODE_UNSUPPORTED;
         if (*reason == '\0')
-            ERR_raise_data(ERR_LIB_HTTP, retcode, "code=%s", code);
+            ERR_raise_data(ERR_LIB_HTTP, err, "code=%s", code);
         else
-            ERR_raise_data(ERR_LIB_HTTP, retcode,
-                           "code=%s, reason=%s", code, reason);
-        return 0;
+            ERR_raise_data(ERR_LIB_HTTP, err, "code=%s, reason=%s", code,
+                           reason);
+        return retcode;
     }
 
  err:
-    i = 0;
-    while (i < 60 && ossl_isprint(line[i]))
-        i++;
+    for (i = 0; i < 60 && line[i] != '\0'; i++)
+        if (!ossl_isprint(line[i]))
+            line[i] = ' ';
     line[i] = '\0';
     ERR_raise_data(ERR_LIB_HTTP, HTTP_R_HEADER_PARSE_ERROR, "content=%s", line);
     return 0;
