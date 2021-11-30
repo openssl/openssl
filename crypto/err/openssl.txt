@@ -428,7 +428,9 @@ CRMF_R_UNSUPPORTED_METHOD_FOR_CREATING_POPO:115:\
 	unsupported method for creating popo
 CRMF_R_UNSUPPORTED_POPO_METHOD:116:unsupported popo method
 CRYPTO_R_BAD_ALGORITHM_NAME:117:bad algorithm name
+CRYPTO_R_BAD_CHARACTER:123:bad character
 CRYPTO_R_CONFLICTING_NAMES:118:conflicting names
+CRYPTO_R_DUPLICATE_PARAMETER:124:duplicate parameter
 CRYPTO_R_HEX_STRING_TOO_SHORT:121:hex string too short
 CRYPTO_R_ILLEGAL_HEX_DIGIT:102:illegal hex digit
 CRYPTO_R_INSUFFICIENT_DATA_SPACE:106:insufficient data space

@@ -22,7 +22,9 @@
  * CRYPTO reason codes.
  */
 # define CRYPTO_R_BAD_ALGORITHM_NAME                      117
+# define CRYPTO_R_BAD_CHARACTER                           123
 # define CRYPTO_R_CONFLICTING_NAMES                       118
+# define CRYPTO_R_DUPLICATE_PARAMETER                     124
 # define CRYPTO_R_HEX_STRING_TOO_SHORT                    121
 # define CRYPTO_R_ILLEGAL_HEX_DIGIT                       102
 # define CRYPTO_R_INSUFFICIENT_DATA_SPACE                 106
