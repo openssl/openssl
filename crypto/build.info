@@ -83,6 +83,8 @@ ENDIF
 DEFINE[../providers/libcommon.a]=$CPUIDDEF
 DEFINE[../providers/libdefault.a]=$CPUIDDEF
 
+SOURCE[../providers/libcommon.a]=param_trie.c
+
 # The Core
 $CORE_COMMON=provider_core.c provider_predefined.c \
         core_fetch.c core_algorithm.c core_namemap.c self_test_core.c
@@ -95,7 +97,8 @@ $UTIL_COMMON=\
         cryptlib.c params.c params_from_text.c bsearch.c ex_data.c o_str.c \
         threads_pthread.c threads_win.c threads_none.c initthread.c \
         context.c sparse_array.c asn1_dsa.c packet.c param_build.c \
-        param_build_set.c der_writer.c threads_lib.c params_dup.c
+        param_build_set.c der_writer.c threads_lib.c params_dup.c \
+        param_trie.c
 
 SOURCE[../libcrypto]=$UTIL_COMMON \
         mem.c mem_sec.c \
