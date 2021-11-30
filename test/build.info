@@ -62,7 +62,8 @@ IF[{- !$disabled{tests} -}]
           context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
           keymgmt_internal_test hexstr_test provider_status_test defltfips_test \
           bio_readbuffer_test user_property_test pkcs7_test upcallstest \
-          provfetchtest prov_config_test rand_test
+          provfetchtest prov_config_test rand_test \
+          param_trie_test
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=enginetest
@@ -857,6 +858,11 @@ IF[{- !$disabled{tests} -}]
   SOURCE[params_test]=params_test.c
   INCLUDE[params_test]=.. ../include ../apps/include
   DEPEND[params_test]=../libcrypto.a libtestutil.a
+
+  PROGRAMS{noinst}=param_trie_test
+  SOURCE[param_trie_test]=param_trie_test.c
+  INCLUDE[param_trie_test]=.. ../include ../apps/include
+  DEPEND[param_trie_test]=../libcrypto.a libtestutil.a
 
   PROGRAMS{noinst}=hexstr_test
   SOURCE[hexstr_test]=hexstr_test.c
