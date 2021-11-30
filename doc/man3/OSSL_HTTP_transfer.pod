@@ -58,7 +58,7 @@ NULL, else by connecting to a given I<server> optionally via a I<proxy>.
 Typically the OpenSSL build supports sockets and the I<bio> parameter is NULL.
 In this case I<rbio> must be NULL as well, and the
 library creates a network BIO internally for connecting to the given I<server>
-at the specified I<port> if any, defaulting to 80 for HTTP or 443 for HTTPS.
+and the optionally given I<port>, defaulting to 80 for HTTP or 443 for HTTPS.
 Then this internal BIO is used for setting up a connection
 and for exchanging one or more request and response.
 If I<bio> is given and I<rbio> is NULL then this I<bio> is used instead.
@@ -150,6 +150,8 @@ NULL) to print additional diagnostic information in a user-oriented way.
 
 OSSL_HTTP_set1_request() sets up in I<rctx> the request header and content data
 and expectations on the response using the following parameters.
+If <rctx> indicates using a proxy for HTTP (but not HTTPS), the server hostname
+(and optionally port) needs to be placed in the header and thus must be present.
 If I<path> is NULL it defaults to "/".
 If I<req> is NULL the HTTP GET method will be used to send the request
 else HTTP POST with the contents of I<req> and optional I<content_type>, where
