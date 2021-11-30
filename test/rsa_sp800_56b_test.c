@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -104,26 +104,29 @@ static BIGNUM *bn_load_new(const unsigned char *data, int sz)
     return ret;
 }
 
+/* Check that small rsa exponents are allowed in non FIPS mode */
 static int test_check_public_exponent(void)
 {
     int ret = 0;
     BIGNUM *e = NULL;
 
     ret = TEST_ptr(e = BN_new())
-          /* e is too small */
-          && TEST_true(BN_set_word(e, 65535))
+          /* e is too small will fail */
+          && TEST_true(BN_set_word(e, 1))
           && TEST_false(ossl_rsa_check_public_exponent(e))
           /* e is even will fail */
           && TEST_true(BN_set_word(e, 65536))
           && TEST_false(ossl_rsa_check_public_exponent(e))
           /* e is ok */
+          && TEST_true(BN_set_word(e, 3))
+          && TEST_true(ossl_rsa_check_public_exponent(e))
+          && TEST_true(BN_set_word(e, 17))
+          && TEST_true(ossl_rsa_check_public_exponent(e))
           && TEST_true(BN_set_word(e, 65537))
           && TEST_true(ossl_rsa_check_public_exponent(e))
-          /* e = 2^256 is too big */
+          /* e = 2^256 + 1 is ok */
           && TEST_true(BN_lshift(e, BN_value_one(), 256))
-          && TEST_false(ossl_rsa_check_public_exponent(e))
-          /* e = 2^256-1 is odd and in range */
-          && TEST_true(BN_sub(e, e, BN_value_one()))
+          && TEST_true(BN_add(e, e, BN_value_one()))
           && TEST_true(ossl_rsa_check_public_exponent(e));
     BN_free(e);
     return ret;

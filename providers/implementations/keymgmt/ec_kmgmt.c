@@ -215,7 +215,7 @@ int key_to_params(const EC_KEY *eckey, OSSL_PARAM_BLD *tmpl,
         ecbits = EC_GROUP_order_bits(ecg);
         if (ecbits <= 0)
             goto err;
-        sz = (ecbits + 7 ) / 8;
+        sz = (ecbits + 7) / 8;
 
         if (!ossl_param_build_set_bn_pad(tmpl, params,
                                          OSSL_PKEY_PARAM_PRIV_KEY,

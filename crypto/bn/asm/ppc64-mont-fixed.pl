@@ -267,7 +267,7 @@ ___
 	addze		$tp[$n],$tp[$n+1]
 
 	addi		$i,$i,$SIZE_T
-	bc		25,0,$label->{"outer"}
+	bdnz		$label->{"outer"}
 
 	and.		$tp[$n],$tp[$n],$tp[$n]
 	bne		$label->{"sub"}
@@ -322,7 +322,7 @@ ___
 	$self->add_code(<<___);
 	li		r3,1
 	blr
-.size ${fname},.-${fname}
+.size .${fname},.-.${fname}
 ___
 
 }

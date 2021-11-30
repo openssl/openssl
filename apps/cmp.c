@@ -613,6 +613,12 @@ static int print_to_bio_out(const char *func, const char *file, int line,
     return OSSL_CMP_print_to_bio(bio_out, func, file, line, level, msg);
 }
 
+static int print_to_bio_err(const char *func, const char *file, int line,
+                            OSSL_CMP_severity level, const char *msg)
+{
+    return OSSL_CMP_print_to_bio(bio_err, func, file, line, level, msg);
+}
+
 static int set_verbosity(int level)
 {
     if (level < OSSL_CMP_LOG_EMERG || level > OSSL_CMP_LOG_MAX) {
@@ -836,11 +842,12 @@ static int set_gennames(OSSL_CMP_CTX *ctx, char *names, const char *desc)
             continue;
         }
 
-        /* try IP address first, then URI or domain name */
+        /* try IP address first, then email/URI/domain name */
         (void)ERR_set_mark();
         n = a2i_GENERAL_NAME(NULL, NULL, NULL, GEN_IPADD, names, 0);
         if (n == NULL)
             n = a2i_GENERAL_NAME(NULL, NULL, NULL,
+                                 strchr(names, '@') != NULL ? GEN_EMAIL :
                                  strchr(names, ':') != NULL ? GEN_URI : GEN_DNS,
                                  names, 0);
         (void)ERR_pop_to_mark();
@@ -871,7 +878,7 @@ static X509_STORE *load_trusted(char *input, int for_new_cert, const char *desc)
     if (X509_STORE_set1_param(ts, vpm /* may be NULL */)
             && (for_new_cert || truststore_set_host_etc(ts, NULL)))
         return ts;
-    BIO_printf(bio_err, "error setting verification parameters\n");
+    BIO_printf(bio_err, "error setting verification parameters for %s\n", desc);
     OSSL_CMP_CTX_print_errors(cmp_ctx);
     X509_STORE_free(ts);
     return NULL;
@@ -1193,13 +1200,10 @@ static SSL_CTX *setup_ssl_ctx(OSSL_CMP_CTX *ctx, const char *host,
         return NULL;
 
     if (opt_tls_trusted != NULL) {
-        trust_store = load_certstore(opt_tls_trusted, opt_otherpass,
-                                     "trusted TLS certificates", vpm);
+        trust_store = load_trusted(opt_tls_trusted, 0, "trusted TLS certs");
         if (trust_store == NULL)
             goto err;
         SSL_CTX_set_cert_store(ssl_ctx, trust_store);
-        /* for improved diagnostics on SSL_CTX_build_cert_chain() errors: */
-        X509_STORE_set_verify_cb(trust_store, X509_STORE_CTX_print_verify_cb);
     }
 
     if (opt_tls_cert != NULL && opt_tls_key != NULL) {
@@ -1706,11 +1710,10 @@ static int handle_opt_geninfo(OSSL_CMP_CTX *ctx)
     valptr[0] = '\0';
     valptr++;
 
-    if (strncasecmp(valptr, "int:", 4) != 0) {
+    if (!CHECK_AND_SKIP_CASE_PREFIX(valptr, "int:")) {
         CMP_err("missing 'int:' in -geninfo option");
         return 0;
     }
-    valptr += 4;
 
     value = strtol(valptr, &endstr, 10);
     if (endstr == valptr || *endstr != '\0') {
@@ -1992,7 +1995,7 @@ static void print_itavs(STACK_OF(OSSL_CMP_ITAV) *itavs)
 }
 
 static char opt_item[SECTION_NAME_MAX + 1];
-/* get previous name from a comma-separated list of names */
+/* get previous name from a comma or space-separated list of names */
 static const char *prev_item(const char *opt, const char *end)
 {
     const char *beg;
@@ -2001,19 +2004,28 @@ static const char *prev_item(const char *opt, const char *end)
     if (end == opt)
         return NULL;
     beg = end;
-    while (beg != opt && beg[-1] != ',' && !isspace(beg[-1]))
-        beg--;
+    while (beg > opt) {
+        --beg;
+        if (beg[0] == ',' || isspace(beg[0])) {
+            ++beg;
+            break;
+        }
+    }
     len = end - beg;
-    if (len > SECTION_NAME_MAX)
+    if (len > SECTION_NAME_MAX) {
+        CMP_warn3("using only first %d characters of section name starting with \"%.*s\"",
+                  SECTION_NAME_MAX, SECTION_NAME_MAX, beg);
         len = SECTION_NAME_MAX;
-    strncpy(opt_item, beg, len);
-    opt_item[SECTION_NAME_MAX] = '\0'; /* avoid gcc v8 O3 stringop-truncation */
+    }
+    memcpy(opt_item, beg, len);
     opt_item[len] = '\0';
-    if (len > SECTION_NAME_MAX)
-        CMP_warn2("using only first %d characters of section name starting with \"%s\"",
-                  SECTION_NAME_MAX, opt_item);
-    while (beg != opt && (beg[-1] == ',' || isspace(beg[-1])))
-        beg--;
+    while (beg > opt) {
+        --beg;
+        if (beg[0] != ',' && !isspace(beg[0])) {
+            ++beg;
+            break;
+        }
+    }
     return beg;
 }
 
@@ -2061,16 +2073,16 @@ static int read_config(void)
     long num = 0;
     char *txt = NULL;
     const OPTIONS *opt;
-    int start = OPT_VERBOSITY;
+    int start_opt = OPT_VERBOSITY - OPT_HELP;
+    int start_idx = OPT_VERBOSITY - 2;
     /*
      * starting with offset OPT_VERBOSITY because OPT_CONFIG and OPT_SECTION
      * would not make sense within the config file.
-     * Moreover, these two options and OPT_VERBOSITY have already been handled.
      */
     int n_options = OSSL_NELEM(cmp_options) - 1;
 
-    for (i = start - OPT_HELP, opt = &cmp_options[start];
-         opt->name; i++, opt++)
+    for (opt = &cmp_options[start_opt], i = start_idx;
+         opt->name != NULL; i++, opt++)
         if (!strcmp(opt->name, OPT_SECTION_STR)
                 || !strcmp(opt->name, OPT_MORE_STR))
             n_options--;
@@ -2078,8 +2090,8 @@ static int read_config(void)
                  + OPT_PROV__FIRST + 1 - OPT_PROV__LAST
                  + OPT_R__FIRST + 1 - OPT_R__LAST
                  + OPT_V__FIRST + 1 - OPT_V__LAST);
-    for (i = start - OPT_HELP, opt = &cmp_options[start];
-         opt->name; i++, opt++) {
+    for (opt = &cmp_options[start_opt], i = start_idx;
+         opt->name != NULL; i++, opt++) {
         int provider_option = (OPT_PROV__FIRST <= opt->retval
                                && opt->retval < OPT_PROV__LAST);
         int rand_state_option = (OPT_R__FIRST <= opt->retval
@@ -2109,7 +2121,7 @@ static int read_config(void)
                                   num, opt->name);
                 return -1;
             }
-            if (opt->valtype == 'N' && num <= 0) {
+            if (opt->valtype == 'N' && num < 0) {
                 opt_printf_stderr("Negative number \"%ld\" for config option -%s\n",
                                   num, opt->name);
                 return -1;
@@ -2219,7 +2231,10 @@ static int get_opts(int argc, char **argv)
             return -1;
         case OPT_CONFIG: /* has already been handled */
         case OPT_SECTION: /* has already been handled */
-        case OPT_VERBOSITY: /* has already been handled */
+            break;
+        case OPT_VERBOSITY:
+            if (!set_verbosity(opt_int_arg()))
+                goto opthelp;
             break;
         case OPT_SERVER:
             opt_server = opt_str();
@@ -2553,7 +2568,7 @@ static int cmp_server(OSSL_CMP_CTX *srv_cmp_ctx) {
     int retry = 1;
     int ret = 1;
 
-    if ((acbio = http_server_init_bio(prog, opt_port)) == NULL)
+    if ((acbio = http_server_init(prog, opt_port, opt_verbosity)) == NULL)
         return 0;
     while (opt_max_msgs <= 0 || msgs < opt_max_msgs) {
         char *path = NULL;
@@ -2563,7 +2578,7 @@ static int cmp_server(OSSL_CMP_CTX *srv_cmp_ctx) {
         ret = http_server_get_asn1_req(ASN1_ITEM_rptr(OSSL_CMP_MSG),
                                        (ASN1_VALUE **)&req, &path,
                                        &cbio, acbio, &keep_alive,
-                                       prog, opt_port, 0, 0);
+                                       prog, 0, 0);
         if (ret == 0) { /* no request yet */
             if (retry) {
                 ossl_sleep(1000);
@@ -2690,6 +2705,8 @@ int cmp_main(int argc, char **argv)
                 }
             }
             ret = read_config();
+            if (!set_verbosity(opt_verbosity)) /* just for checking range */
+                ret = -1;
             if (ret <= 0) {
                 if (ret == -1)
                     BIO_printf(bio_err, "Use -help for summary.\n");
@@ -2743,7 +2760,7 @@ int cmp_main(int argc, char **argv)
             goto err;
         srv_cmp_ctx = OSSL_CMP_SRV_CTX_get0_cmp_ctx(srv_ctx);
         OSSL_CMP_CTX_set_transfer_cb_arg(cmp_ctx, srv_ctx);
-        if (!OSSL_CMP_CTX_set_log_cb(srv_cmp_ctx, print_to_bio_out)) {
+        if (!OSSL_CMP_CTX_set_log_cb(srv_cmp_ctx, print_to_bio_err)) {
             CMP_err1("cannot set up error reporting and logging for %s", prog);
             goto err;
         }

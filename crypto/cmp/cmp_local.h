@@ -744,7 +744,7 @@ int ossl_cmp_X509_STORE_add1_certs(X509_STORE *store, STACK_OF(X509) *certs,
                                    int only_self_issued);
 STACK_OF(X509) *ossl_cmp_X509_STORE_get1_certs(X509_STORE *store);
 int ossl_cmp_sk_ASN1_UTF8STRING_push_str(STACK_OF(ASN1_UTF8STRING) *sk,
-                                         const char *text);
+                                         const char *text, int len);
 int ossl_cmp_asn1_octet_string_set1(ASN1_OCTET_STRING **tgt,
                                     const ASN1_OCTET_STRING *src);
 int ossl_cmp_asn1_octet_string_set1_bytes(ASN1_OCTET_STRING **tgt,
@@ -859,7 +859,6 @@ int ossl_cmp_msg_set0_libctx(OSSL_CMP_MSG *msg, OSSL_LIB_CTX *libctx,
                              const char *propq);
 const char *ossl_cmp_bodytype_to_string(int type);
 int ossl_cmp_msg_set_bodytype(OSSL_CMP_MSG *msg, int type);
-int ossl_cmp_msg_get_bodytype(const OSSL_CMP_MSG *msg);
 OSSL_CMP_MSG *ossl_cmp_msg_create(OSSL_CMP_CTX *ctx, int bodytype);
 OSSL_CMP_MSG *ossl_cmp_certreq_new(OSSL_CMP_CTX *ctx, int bodytype,
                                    const OSSL_CRMF_MSG *crm);

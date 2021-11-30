@@ -8,6 +8,9 @@ HOME			= .
 CN			= "Not Defined"
 default_ca		= ca
 
+# Comment out the next line to ignore configuration errors
+config_diagnostics = 1
+
 ####################################################################
 [ req ]
 default_bits		= 1024

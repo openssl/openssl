@@ -37,7 +37,6 @@ int ossl_provider_up_ref(OSSL_PROVIDER *prov);
 void ossl_provider_free(OSSL_PROVIDER *prov);
 
 /* Setters */
-int ossl_provider_set_fallback(OSSL_PROVIDER *prov);
 int ossl_provider_set_module_path(OSSL_PROVIDER *prov, const char *module_path);
 int ossl_provider_add_parameter(OSSL_PROVIDER *prov, const char *name,
                                 const char *value);
@@ -57,7 +56,7 @@ int ossl_provider_disable_fallback_loading(OSSL_LIB_CTX *libctx);
  * If the Provider is a module, the module will be loaded
  */
 int ossl_provider_activate(OSSL_PROVIDER *prov, int upcalls, int aschild);
-int ossl_provider_deactivate(OSSL_PROVIDER *prov);
+int ossl_provider_deactivate(OSSL_PROVIDER *prov, int removechildren);
 int ossl_provider_add_to_store(OSSL_PROVIDER *prov, OSSL_PROVIDER **actualprov,
                                int retain_fallbacks);
 
@@ -108,6 +107,7 @@ void ossl_provider_add_conf_module(void);
 int ossl_provider_init_as_child(OSSL_LIB_CTX *ctx,
                                 const OSSL_CORE_HANDLE *handle,
                                 const OSSL_DISPATCH *in);
+void ossl_provider_deinit_child(OSSL_LIB_CTX *ctx);
 
 # ifdef __cplusplus
 }

@@ -1,5 +1,5 @@
 #
-# Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2001-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -57,7 +57,7 @@ Output = 7023bdcb3afd7348461c06cd81fd38ebfda8fbba904f8e3ea9b543f6545da1f2d543295
 PKEYKDF = scrypt
 Ctrl.pass = pass:pleaseletmein
 Ctrl.salt = salt:SodiumChloride
-Ctrl.N = N:1048576
+Ctrl.N = n:2097152
 Ctrl.r = r:8
 Ctrl.p = p:1
-Result = INTERNAL_ERROR
+Result = KDF_DERIVE_ERROR

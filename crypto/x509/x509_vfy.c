@@ -3023,20 +3023,24 @@ static int build_chain(X509_STORE_CTX *ctx)
         may_trusted = 1;
     }
 
-    /*
-     * Shallow-copy the stack of untrusted certificates (with TLS, this is
-     * typically the content of the peer's certificate message) so can make
-     * multiple passes over it, while free to remove elements as we go.
-     */
-    if ((sk_untrusted = sk_X509_dup(ctx->untrusted)) == NULL)
+    /* Initialize empty untrusted stack. */
+    if ((sk_untrusted = sk_X509_new_null()) == NULL)
         goto memerr;
 
     /*
-     * If we got any "DANE-TA(2) Cert(0) Full(0)" trust anchors from DNS, add
-     * them to our working copy of the untrusted certificate stack.
+     * If we got any "Cert(0) Full(0)" trust anchors from DNS, *prepend* them
+     * to our working copy of the untrusted certificate stack.
      */
     if (DANETLS_ENABLED(dane) && dane->certs != NULL
         && !X509_add_certs(sk_untrusted, dane->certs, X509_ADD_FLAG_DEFAULT))
+        goto memerr;
+
+    /*
+     * Shallow-copy the stack of untrusted certificates (with TLS, this is
+     * typically the content of the peer's certificate message) so we can make
+     * multiple passes over it, while free to remove elements as we go.
+     */
+    if (!X509_add_certs(sk_untrusted, ctx->untrusted, X509_ADD_FLAG_DEFAULT))
         goto memerr;
 
     /*
@@ -3227,7 +3231,7 @@ static int build_chain(X509_STORE_CTX *ctx)
             if (!ossl_assert(num == ctx->num_untrusted))
                 goto int_err;
             curr = sk_X509_value(ctx->chain, num - 1);
-            issuer = (X509_self_signed(curr, 0) || num > max_depth) ?
+            issuer = (X509_self_signed(curr, 0) > 0 || num > max_depth) ?
                 NULL : find_issuer(ctx, sk_untrusted, curr);
             if (issuer == NULL) {
                 /*
@@ -3282,7 +3286,7 @@ static int build_chain(X509_STORE_CTX *ctx)
         return 0;
     case X509_TRUST_UNTRUSTED:
     default:
-        switch(ctx->error) {
+        switch (ctx->error) {
         case X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:
         case X509_V_ERR_CERT_NOT_YET_VALID:
         case X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD:
@@ -3298,7 +3302,7 @@ static int build_chain(X509_STORE_CTX *ctx)
         CB_FAIL_IF(DANETLS_ENABLED(dane)
                        && (!DANETLS_HAS_PKIX(dane) || dane->pdpth >= 0),
                    ctx, NULL, num - 1, X509_V_ERR_DANE_NO_MATCH);
-        if (X509_self_signed(sk_X509_value(ctx->chain, num - 1), 0))
+        if (X509_self_signed(sk_X509_value(ctx->chain, num - 1), 0) > 0)
             return verify_cb_cert(ctx, NULL, num - 1,
                                   num == 1
                                   ? X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT

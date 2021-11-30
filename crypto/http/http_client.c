@@ -21,9 +21,8 @@
 #include <openssl/buffer.h>
 #include <openssl/http.h>
 #include "internal/sockets.h"
-#include "internal/cryptlib.h" /* for ossl_assert() */
+#include "internal/common.h" /* for ossl_assert() */
 
-#define HAS_PREFIX(str, prefix) (strncmp(str, prefix, sizeof(prefix) - 1) == 0)
 #define HTTP_PREFIX "HTTP/"
 #define HTTP_VERSION_PATT "1." /* allow 1.x */
 #define HTTP_VERSION_STR_LEN sizeof(HTTP_VERSION_PATT) /* == strlen("1.0") */
@@ -257,7 +256,7 @@ int OSSL_HTTP_REQ_CTX_set_expected(OSSL_HTTP_REQ_CTX *rctx,
     rctx->expect_asn1 = asn1;
     if (timeout >= 0)
         rctx->max_time = timeout > 0 ? time(NULL) + timeout : 0;
-    else
+    else /* take over any |overall_timeout| arg of OSSL_HTTP_open(), else 0 */
         rctx->max_time = rctx->max_total_time;
     rctx->keep_alive = keep_alive;
     return 1;
@@ -377,10 +376,10 @@ static int parse_http_line1(char *line, int *found_keep_alive)
     int i, retcode;
     char *code, *reason, *end;
 
-    if (!HAS_PREFIX(line, HTTP_PREFIX_VERSION))
+    if (!CHECK_AND_SKIP_PREFIX(line, HTTP_PREFIX_VERSION))
         goto err;
     /* above HTTP 1.0, connection persistence is the default */
-    *found_keep_alive = line[strlen(HTTP_PREFIX_VERSION)] > '0';
+    *found_keep_alive = *line > '0';
 
     /* Skip to first whitespace (past protocol info) */
     for (code = line; *code != '\0' && !ossl_isspace(*code); code++)
@@ -926,7 +925,8 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
 
         cbio = (*bio_update_fn)(cbio, arg, 1 /* connect */, use_ssl);
         if (cbio == NULL) {
-            cbio = orig_bio;
+            if (bio == NULL) /* cbio was not provided by caller */
+                BIO_free_all(orig_bio);
             goto end;
         }
     }
@@ -1296,15 +1296,15 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
             continue;
 
         /* Check for HTTP/1.x */
-        if (!HAS_PREFIX(mbuf, HTTP_PREFIX) != 0) {
+        mbufp = mbuf;
+        if (!HAS_PREFIX(mbufp, HTTP_PREFIX)) {
             ERR_raise(ERR_LIB_HTTP, HTTP_R_HEADER_PARSE_ERROR);
             BIO_printf(bio_err, "%s: HTTP CONNECT failed, non-HTTP response\n",
                        prog);
             /* Wrong protocol, not even HTTP, so stop reading headers */
             goto end;
         }
-        mbufp = mbuf + strlen(HTTP_PREFIX);
-        if (!HAS_PREFIX(mbufp, HTTP_VERSION_PATT) != 0) {
+        if (!HAS_PREFIX(mbufp, HTTP_VERSION_PATT)) {
             ERR_raise(ERR_LIB_HTTP, HTTP_R_RECEIVED_WRONG_HTTP_VERSION);
             BIO_printf(bio_err,
                        "%s: HTTP CONNECT failed, bad HTTP version %.*s\n",

@@ -462,6 +462,7 @@ typedef struct loopargs_st {
     unsigned char *buf_malloc;
     unsigned char *buf2_malloc;
     unsigned char *key;
+    size_t buflen;
     size_t sigsize;
     EVP_PKEY_CTX *rsa_sign_ctx[RSA_NUM];
     EVP_PKEY_CTX *rsa_verify_ctx[RSA_NUM];
@@ -764,24 +765,25 @@ static int EVP_Update_loop_ccm(void *args)
 
     if (decrypt) {
         for (count = 0; COND(c[D_EVP][testnum]); count++) {
-            EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, sizeof(tag), tag);
+            (void)EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, sizeof(tag),
+                                      tag);
             /* reset iv */
-            EVP_DecryptInit_ex(ctx, NULL, NULL, NULL, iv);
+            (void)EVP_DecryptInit_ex(ctx, NULL, NULL, NULL, iv);
             /* counter is reset on every update */
-            EVP_DecryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
+            (void)EVP_DecryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
         }
     } else {
         for (count = 0; COND(c[D_EVP][testnum]); count++) {
             /* restore iv length field */
-            EVP_EncryptUpdate(ctx, NULL, &outl, NULL, lengths[testnum]);
+            (void)EVP_EncryptUpdate(ctx, NULL, &outl, NULL, lengths[testnum]);
             /* counter is reset on every update */
-            EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
+            (void)EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
         }
     }
     if (decrypt)
-        EVP_DecryptFinal_ex(ctx, buf, &outl);
+        (void)EVP_DecryptFinal_ex(ctx, buf, &outl);
     else
-        EVP_EncryptFinal_ex(ctx, buf, &outl);
+        (void)EVP_EncryptFinal_ex(ctx, buf, &outl);
     return count;
 }
 
@@ -831,6 +833,7 @@ static int RSA_sign_loop(void *args)
     int ret, count;
 
     for (count = 0; COND(rsa_c[testnum][0]); count++) {
+        *rsa_num = tempargs->buflen;
         ret = EVP_PKEY_sign(rsa_sign_ctx[testnum], buf2, rsa_num, buf, 36);
         if (ret <= 0) {
             BIO_printf(bio_err, "RSA sign failure\n");
@@ -891,6 +894,7 @@ static int DSA_sign_loop(void *args)
     int ret, count;
 
     for (count = 0; COND(dsa_c[testnum][0]); count++) {
+        *dsa_num = tempargs->buflen;
         ret = EVP_PKEY_sign(dsa_sign_ctx[testnum], buf2, dsa_num, buf, 20);
         if (ret <= 0) {
             BIO_printf(bio_err, "DSA sign failure\n");
@@ -934,6 +938,7 @@ static int ECDSA_sign_loop(void *args)
     int ret, count;
 
     for (count = 0; COND(ecdsa_c[testnum][0]); count++) {
+        *ecdsa_num = tempargs->buflen;
         ret = EVP_PKEY_sign(ecdsa_sign_ctx[testnum], buf2, ecdsa_num, buf, 20);
         if (ret <= 0) {
             BIO_printf(bio_err, "ECDSA sign failure\n");
@@ -1539,6 +1544,10 @@ int speed_main(int argc, char **argv)
         case OPT_MULTI:
 #ifndef NO_FORK
             multi = atoi(opt_arg());
+            if ((size_t)multi >= SIZE_MAX / sizeof(int)) {
+                BIO_printf(bio_err, "%s: multi argument too large\n", prog);
+                return 0;
+            }
 #endif
             break;
         case OPT_ASYNCJOBS:
@@ -1629,8 +1638,8 @@ int speed_main(int argc, char **argv)
         if (strcmp(algo, "openssl") == 0) /* just for compatibility */
             continue;
 #endif
-        if (strncmp(algo, "rsa", 3) == 0) {
-            if (algo[3] == '\0') {
+        if (HAS_PREFIX(algo, "rsa")) {
+            if (algo[sizeof("rsa") - 1] == '\0') {
                 memset(rsa_doit, 1, sizeof(rsa_doit));
                 continue;
             }
@@ -1640,8 +1649,8 @@ int speed_main(int argc, char **argv)
             }
         }
 #ifndef OPENSSL_NO_DH
-        if (strncmp(algo, "ffdh", 4) == 0) {
-            if (algo[4] == '\0') {
+        if (HAS_PREFIX(algo, "ffdh")) {
+            if (algo[sizeof("ffdh") - 1] == '\0') {
                 memset(ffdh_doit, 1, sizeof(ffdh_doit));
                 continue;
             }
@@ -1651,8 +1660,8 @@ int speed_main(int argc, char **argv)
             }
         }
 #endif
-        if (strncmp(algo, "dsa", 3) == 0) {
-            if (algo[3] == '\0') {
+        if (HAS_PREFIX(algo, "dsa")) {
+            if (algo[sizeof("dsa") - 1] == '\0') {
                 memset(dsa_doit, 1, sizeof(dsa_doit));
                 continue;
             }
@@ -1669,8 +1678,8 @@ int speed_main(int argc, char **argv)
             doit[D_CBC_128_CML] = doit[D_CBC_192_CML] = doit[D_CBC_256_CML] = 1;
             continue;
         }
-        if (strncmp(algo, "ecdsa", 5) == 0) {
-            if (algo[5] == '\0') {
+        if (HAS_PREFIX(algo, "ecdsa")) {
+            if (algo[sizeof("ecdsa") - 1] == '\0') {
                 memset(ecdsa_doit, 1, sizeof(ecdsa_doit));
                 continue;
             }
@@ -1679,8 +1688,8 @@ int speed_main(int argc, char **argv)
                 continue;
             }
         }
-        if (strncmp(algo, "ecdh", 4) == 0) {
-            if (algo[4] == '\0') {
+        if (HAS_PREFIX(algo, "ecdh")) {
+            if (algo[sizeof("ecdh") - 1] == '\0') {
                 memset(ecdh_doit, 1, sizeof(ecdh_doit));
                 continue;
             }
@@ -1774,6 +1783,8 @@ int speed_main(int argc, char **argv)
         /* Align the start of buffers on a 64 byte boundary */
         loopargs[i].buf = loopargs[i].buf_malloc + misalign;
         loopargs[i].buf2 = loopargs[i].buf2_malloc + misalign;
+        loopargs[i].buflen = buflen - misalign;
+        loopargs[i].sigsize = buflen - misalign;
         loopargs[i].secret_a = app_malloc(MAX_ECDH_SIZE, "ECDH secret a");
         loopargs[i].secret_b = app_malloc(MAX_ECDH_SIZE, "ECDH secret b");
 #ifndef OPENSSL_NO_DH
@@ -2231,8 +2242,8 @@ int speed_main(int argc, char **argv)
 
                     /* SIV mode only allows for a single Update operation */
                     if (EVP_CIPHER_get_mode(evp_cipher) == EVP_CIPH_SIV_MODE)
-                        EVP_CIPHER_CTX_ctrl(loopargs[k].ctx, EVP_CTRL_SET_SPEED,
-                                            1, NULL);
+                        (void)EVP_CIPHER_CTX_ctrl(loopargs[k].ctx,
+                                                  EVP_CTRL_SET_SPEED, 1, NULL);
                 }
 
                 Time_F(START);
@@ -2344,6 +2355,7 @@ int speed_main(int argc, char **argv)
 
         for (i = 0; st && i < loopargs_len; i++) {
             loopargs[i].rsa_sign_ctx[testnum] = EVP_PKEY_CTX_new(rsa_key, NULL);
+            loopargs[i].sigsize = loopargs[i].buflen;
             if (loopargs[i].rsa_sign_ctx[testnum] == NULL
                 || EVP_PKEY_sign_init(loopargs[i].rsa_sign_ctx[testnum]) <= 0
                 || EVP_PKEY_sign(loopargs[i].rsa_sign_ctx[testnum],
@@ -2422,6 +2434,7 @@ int speed_main(int argc, char **argv)
         for (i = 0; st && i < loopargs_len; i++) {
             loopargs[i].dsa_sign_ctx[testnum] = EVP_PKEY_CTX_new(dsa_key,
                                                                  NULL);
+            loopargs[i].sigsize = loopargs[i].buflen;
             if (loopargs[i].dsa_sign_ctx[testnum] == NULL
                 || EVP_PKEY_sign_init(loopargs[i].dsa_sign_ctx[testnum]) <= 0
 
@@ -2500,6 +2513,7 @@ int speed_main(int argc, char **argv)
         for (i = 0; st && i < loopargs_len; i++) {
             loopargs[i].ecdsa_sign_ctx[testnum] = EVP_PKEY_CTX_new(ecdsa_key,
                                                                    NULL);
+            loopargs[i].sigsize = loopargs[i].buflen;
             if (loopargs[i].ecdsa_sign_ctx[testnum] == NULL
                 || EVP_PKEY_sign_init(loopargs[i].ecdsa_sign_ctx[testnum]) <= 0
 
@@ -3091,10 +3105,9 @@ int speed_main(int argc, char **argv)
 #endif
     if (!mr) {
         printf("version: %s\n", OpenSSL_version(OPENSSL_FULL_VERSION_STRING));
-        printf("built on: %s\n", OpenSSL_version(OPENSSL_BUILT_ON));
-        printf("options:");
-        printf("%s ", BN_options());
-        printf("\n%s\n", OpenSSL_version(OPENSSL_CFLAGS));
+        printf("%s\n", OpenSSL_version(OPENSSL_BUILT_ON));
+        printf("options: %s\n", BN_options());
+        printf("%s\n", OpenSSL_version(OPENSSL_CFLAGS));
         printf("%s\n", OpenSSL_version(OPENSSL_CPU_INFO));
     }
 
@@ -3445,20 +3458,19 @@ static int do_multi(int multi, int size_num)
                 continue;
             }
             printf("Got: %s from %d\n", buf, n);
-            if (strncmp(buf, "+F:", 3) == 0) {
+            p = buf;
+            if (CHECK_AND_SKIP_PREFIX(p, "+F:")) {
                 int alg;
                 int j;
 
-                p = buf + 3;
                 alg = atoi(sstrsep(&p, sep));
                 sstrsep(&p, sep);
                 for (j = 0; j < size_num; ++j)
                     results[alg][j] += atof(sstrsep(&p, sep));
-            } else if (strncmp(buf, "+F2:", 4) == 0) {
+            } else if (CHECK_AND_SKIP_PREFIX(p, "+F2:")) {
                 int k;
                 double d;
 
-                p = buf + 4;
                 k = atoi(sstrsep(&p, sep));
                 sstrsep(&p, sep);
 
@@ -3467,11 +3479,10 @@ static int do_multi(int multi, int size_num)
 
                 d = atof(sstrsep(&p, sep));
                 rsa_results[k][1] += d;
-            } else if (strncmp(buf, "+F3:", 4) == 0) {
+            } else if (CHECK_AND_SKIP_PREFIX(p, "+F3:")) {
                 int k;
                 double d;
 
-                p = buf + 4;
                 k = atoi(sstrsep(&p, sep));
                 sstrsep(&p, sep);
 
@@ -3480,11 +3491,10 @@ static int do_multi(int multi, int size_num)
 
                 d = atof(sstrsep(&p, sep));
                 dsa_results[k][1] += d;
-            } else if (strncmp(buf, "+F4:", 4) == 0) {
+            } else if (CHECK_AND_SKIP_PREFIX(p, "+F4:")) {
                 int k;
                 double d;
 
-                p = buf + 4;
                 k = atoi(sstrsep(&p, sep));
                 sstrsep(&p, sep);
 
@@ -3493,21 +3503,19 @@ static int do_multi(int multi, int size_num)
 
                 d = atof(sstrsep(&p, sep));
                 ecdsa_results[k][1] += d;
-            } else if (strncmp(buf, "+F5:", 4) == 0) {
+            } else if (CHECK_AND_SKIP_PREFIX(p, "+F5:")) {
                 int k;
                 double d;
 
-                p = buf + 4;
                 k = atoi(sstrsep(&p, sep));
                 sstrsep(&p, sep);
 
                 d = atof(sstrsep(&p, sep));
                 ecdh_results[k][0] += d;
-            } else if (strncmp(buf, "+F6:", 4) == 0) {
+            } else if (CHECK_AND_SKIP_PREFIX(p, "+F6:")) {
                 int k;
                 double d;
 
-                p = buf + 4;
                 k = atoi(sstrsep(&p, sep));
                 sstrsep(&p, sep);
                 sstrsep(&p, sep);
@@ -3518,11 +3526,10 @@ static int do_multi(int multi, int size_num)
                 d = atof(sstrsep(&p, sep));
                 eddsa_results[k][1] += d;
 # ifndef OPENSSL_NO_SM2
-            } else if (strncmp(buf, "+F7:", 4) == 0) {
+            } else if (CHECK_AND_SKIP_PREFIX(p, "+F7:")) {
                 int k;
                 double d;
 
-                p = buf + 4;
                 k = atoi(sstrsep(&p, sep));
                 sstrsep(&p, sep);
                 sstrsep(&p, sep);
@@ -3534,18 +3541,17 @@ static int do_multi(int multi, int size_num)
                 sm2_results[k][1] += d;
 # endif /* OPENSSL_NO_SM2 */
 # ifndef OPENSSL_NO_DH
-            } else if (strncmp(buf, "+F8:", 4) == 0) {
+            } else if (CHECK_AND_SKIP_PREFIX(p, "+F8:")) {
                 int k;
                 double d;
 
-                p = buf + 4;
                 k = atoi(sstrsep(&p, sep));
                 sstrsep(&p, sep);
 
                 d = atof(sstrsep(&p, sep));
                 ffdh_results[k][0] += d;
 # endif /* OPENSSL_NO_DH */
-            } else if (strncmp(buf, "+H:", 3) == 0) {
+            } else if (HAS_PREFIX(buf, "+H:")) {
                 ;
             } else {
                 BIO_printf(bio_err, "Unknown type '%s' from child %d\n", buf,
@@ -3628,8 +3634,9 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
                 mb_param.out = out;
                 mb_param.inp = inp;
                 mb_param.len = len;
-                EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_TLS1_1_MULTIBLOCK_ENCRYPT,
-                                    sizeof(mb_param), &mb_param);
+                (void)EVP_CIPHER_CTX_ctrl(ctx,
+                                          EVP_CTRL_TLS1_1_MULTIBLOCK_ENCRYPT,
+                                          sizeof(mb_param), &mb_param);
             } else {
                 int pad;
 

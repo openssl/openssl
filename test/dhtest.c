@@ -558,6 +558,7 @@ static int rfc5114_test(void)
     DH *dhB = NULL;
     unsigned char *Z1 = NULL;
     unsigned char *Z2 = NULL;
+    int szA, szB;
     const rfc5114_td *td = NULL;
     BIGNUM *priv_key = NULL, *pub_key = NULL;
     const BIGNUM *pub_key_tmp;
@@ -576,16 +577,18 @@ static int rfc5114_test(void)
 
         if (!TEST_ptr(priv_key = BN_bin2bn(td->xB, td->xB_len, NULL))
                 || !TEST_ptr(pub_key = BN_bin2bn(td->yB, td->yB_len, NULL))
-                || !TEST_true( DH_set0_key(dhB, pub_key, priv_key)))
+                || !TEST_true(DH_set0_key(dhB, pub_key, priv_key)))
             goto bad_err;
         priv_key = pub_key = NULL;
 
-        if (!TEST_uint_eq(td->Z_len, (size_t)DH_size(dhA))
-            || !TEST_uint_eq(td->Z_len, (size_t)DH_size(dhB)))
+        if (!TEST_int_gt(szA = DH_size(dhA), 0)
+                || !TEST_int_gt(szB = DH_size(dhB), 0)
+                || !TEST_size_t_eq(td->Z_len, (size_t)szA)
+                || !TEST_size_t_eq(td->Z_len, (size_t)szB))
             goto err;
 
-        if (!TEST_ptr(Z1 = OPENSSL_malloc(DH_size(dhA)))
-                || !TEST_ptr(Z2 = OPENSSL_malloc(DH_size(dhB))))
+        if (!TEST_ptr(Z1 = OPENSSL_malloc((size_t)szA))
+                || !TEST_ptr(Z2 = OPENSSL_malloc((size_t)szB)))
             goto bad_err;
         /*
          * Work out shared secrets using both sides and compare with expected
@@ -724,6 +727,27 @@ static int dh_test_prime_groups(int index)
     ok = 1;
 err:
     DH_free(dh);
+    return ok;
+}
+
+static int dh_rfc5114_fix_nid_test(void)
+{
+    int ok = 0;
+    EVP_PKEY_CTX *paramgen_ctx;
+
+    /* Run the test. Success is any time the test does not cause a SIGSEGV interrupt */
+    paramgen_ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_DHX, 0);
+    if (!TEST_ptr(paramgen_ctx))
+        goto err;
+    if (!TEST_int_eq(EVP_PKEY_paramgen_init(paramgen_ctx), 1))
+        goto err;
+    /* Tested function is called here */
+    if (!TEST_int_eq(EVP_PKEY_CTX_set_dhx_rfc5114(paramgen_ctx, 3), 1))
+        goto err;
+    /* If we're still running then the test passed. */
+    ok = 1;
+err:
+    EVP_PKEY_CTX_free(paramgen_ctx);
     return ok;
 }
 
@@ -873,6 +897,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(dh_test_prime_groups, OSSL_NELEM(prime_groups));
     ADD_TEST(dh_get_nid);
     ADD_TEST(dh_load_pkcs3_namedgroup_privlen_test);
+    ADD_TEST(dh_rfc5114_fix_nid_test);
 #endif
     return 1;
 }

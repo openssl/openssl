@@ -11,6 +11,7 @@ use strict;
 use warnings;
 
 use File::Spec::Functions qw/canonpath/;
+use File::Copy;
 use OpenSSL::Test qw/:DEFAULT srctop_file ok_nofips with/;
 use OpenSSL::Test::Utils;
 
@@ -28,7 +29,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 157;
+plan tests => 159;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -447,4 +448,36 @@ SKIP: {
        "SM2 ID test");
    ok_nofips(verify("sm2", "", ["sm2-ca-cert"], [], "-vfyopt", "hexdistid:31323334353637383132333435363738"),
        "SM2 hex ID test");
+}
+
+# Mixed content tests
+my $cert_file = srctop_file('test', 'certs', 'root-cert.pem');
+my $rsa_file = srctop_file('test', 'certs', 'key-pass-12345.pem');
+
+SKIP: {
+    my $certplusrsa_file = 'certplusrsa.pem';
+    my $certplusrsa;
+
+    skip "Couldn't create certplusrsa.pem", 1
+        unless ( open $certplusrsa, '>', $certplusrsa_file
+                 and copy($cert_file, $certplusrsa)
+                 and copy($rsa_file, $certplusrsa)
+                 and close $certplusrsa );
+
+    ok(run(app([ qw(openssl verify -trusted), $certplusrsa_file, $cert_file ])),
+       'Mixed cert + key file test');
+}
+
+SKIP: {
+    my $rsapluscert_file = 'rsapluscert.pem';
+    my $rsapluscert;
+
+    skip "Couldn't create rsapluscert.pem", 1
+        unless ( open $rsapluscert, '>', $rsapluscert_file
+                 and copy($rsa_file, $rsapluscert)
+                 and copy($cert_file, $rsapluscert)
+                 and close $rsapluscert );
+
+    ok(run(app([ qw(openssl verify -trusted), $rsapluscert_file, $cert_file ])),
+       'Mixed key + cert file test');
 }

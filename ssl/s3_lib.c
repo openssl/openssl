@@ -108,9 +108,9 @@ static SSL_CIPHER tls13_ciphers[] = {
         SSL_AEAD,
         TLS1_3_VERSION, TLS1_3_VERSION,
         0, 0,
-        SSL_NOT_DEFAULT | SSL_HIGH,
+        SSL_NOT_DEFAULT | SSL_MEDIUM,
         SSL_HANDSHAKE_MAC_SHA256,
-        128,
+        64, /* CCM8 uses a short tag, so we have a low security strength */
         128,
     }
 };
@@ -699,9 +699,9 @@ static SSL_CIPHER ssl3_ciphers[] = {
      SSL_AEAD,
      TLS1_2_VERSION, TLS1_2_VERSION,
      DTLS1_2_VERSION, DTLS1_2_VERSION,
-     SSL_NOT_DEFAULT | SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
-     128,
+     64, /* CCM8 uses a short tag, so we have a low security strength */
      128,
      },
     {
@@ -715,9 +715,9 @@ static SSL_CIPHER ssl3_ciphers[] = {
      SSL_AEAD,
      TLS1_2_VERSION, TLS1_2_VERSION,
      DTLS1_2_VERSION, DTLS1_2_VERSION,
-     SSL_NOT_DEFAULT | SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
-     256,
+     64, /* CCM8 uses a short tag, so we have a low security strength */
      256,
      },
     {
@@ -731,9 +731,9 @@ static SSL_CIPHER ssl3_ciphers[] = {
      SSL_AEAD,
      TLS1_2_VERSION, TLS1_2_VERSION,
      DTLS1_2_VERSION, DTLS1_2_VERSION,
-     SSL_NOT_DEFAULT | SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
-     128,
+     64, /* CCM8 uses a short tag, so we have a low security strength */
      128,
      },
     {
@@ -747,9 +747,9 @@ static SSL_CIPHER ssl3_ciphers[] = {
      SSL_AEAD,
      TLS1_2_VERSION, TLS1_2_VERSION,
      DTLS1_2_VERSION, DTLS1_2_VERSION,
-     SSL_NOT_DEFAULT | SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
-     256,
+     64, /* CCM8 uses a short tag, so we have a low security strength */
      256,
      },
     {
@@ -827,9 +827,9 @@ static SSL_CIPHER ssl3_ciphers[] = {
      SSL_AEAD,
      TLS1_2_VERSION, TLS1_2_VERSION,
      DTLS1_2_VERSION, DTLS1_2_VERSION,
-     SSL_NOT_DEFAULT | SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
-     128,
+     64, /* CCM8 uses a short tag, so we have a low security strength */
      128,
      },
     {
@@ -843,9 +843,9 @@ static SSL_CIPHER ssl3_ciphers[] = {
      SSL_AEAD,
      TLS1_2_VERSION, TLS1_2_VERSION,
      DTLS1_2_VERSION, DTLS1_2_VERSION,
-     SSL_NOT_DEFAULT | SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
-     256,
+     64, /* CCM8 uses a short tag, so we have a low security strength */
      256,
      },
     {
@@ -859,9 +859,9 @@ static SSL_CIPHER ssl3_ciphers[] = {
      SSL_AEAD,
      TLS1_2_VERSION, TLS1_2_VERSION,
      DTLS1_2_VERSION, DTLS1_2_VERSION,
-     SSL_NOT_DEFAULT | SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
-     128,
+     64, /* CCM8 uses a short tag, so we have a low security strength */
      128,
      },
     {
@@ -875,9 +875,9 @@ static SSL_CIPHER ssl3_ciphers[] = {
      SSL_AEAD,
      TLS1_2_VERSION, TLS1_2_VERSION,
      DTLS1_2_VERSION, DTLS1_2_VERSION,
-     SSL_NOT_DEFAULT | SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
-     256,
+     64, /* CCM8 uses a short tag, so we have a low security strength */
      256,
      },
     {
@@ -923,9 +923,9 @@ static SSL_CIPHER ssl3_ciphers[] = {
      SSL_AEAD,
      TLS1_2_VERSION, TLS1_2_VERSION,
      DTLS1_2_VERSION, DTLS1_2_VERSION,
-     SSL_NOT_DEFAULT | SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
-     128,
+     64, /* CCM8 uses a short tag, so we have a low security strength */
      128,
      },
     {
@@ -939,9 +939,9 @@ static SSL_CIPHER ssl3_ciphers[] = {
      SSL_AEAD,
      TLS1_2_VERSION, TLS1_2_VERSION,
      DTLS1_2_VERSION, DTLS1_2_VERSION,
-     SSL_NOT_DEFAULT | SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
-     256,
+     64, /* CCM8 uses a short tag, so we have a low security strength */
      256,
      },
     {
@@ -2807,7 +2807,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0, 0,
      SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     128,
+     80,
      128,
      },
     {
@@ -2823,7 +2823,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0, 0,
      SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     128,
+     80,
      128,
      },
     {
@@ -2839,7 +2839,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0, 0,
      SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     128,
+     80,
      128,
      },
     {
@@ -2855,7 +2855,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0, 0,
      SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     128,
+     80,
      128,
      },
     {
@@ -2871,7 +2871,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0, 0,
      SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     128,
+     80,
      128,
      },
     {
@@ -2887,7 +2887,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0, 0,
      SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     128,
+     80,
      128,
      },
     {
@@ -2903,7 +2903,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0, 0,
      SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     128,
+     80,
      128,
      },
     {
@@ -2919,7 +2919,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0, 0,
      SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     128,
+     80,
      128,
      },
     {
@@ -2935,7 +2935,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0, 0,
      SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     128,
+     80,
      128,
      },
     {
@@ -2951,7 +2951,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0, 0,
      SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     128,
+     80,
      128,
      },
 #endif                          /* OPENSSL_NO_WEAK_SSL_CIPHERS */
@@ -3607,8 +3607,11 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
                 int *cptr = parg;
 
                 for (i = 0; i < clistlen; i++) {
+                    uint16_t cid = SSL_IS_TLS13(s)
+                                   ? ssl_group_id_tls13_to_internal(clist[i])
+                                   : clist[i];
                     const TLS_GROUP_INFO *cinf
-                        = tls1_group_id_lookup(s->ctx, clist[i]);
+                        = tls1_group_id_lookup(s->ctx, cid);
 
                     if (cinf != NULL)
                         cptr[i] = tls1_group_id2nid(cinf->group_id, 1);

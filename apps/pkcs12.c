@@ -555,7 +555,7 @@ int pkcs12_main(int argc, char **argv)
                 /* Look for matching private key */
                 for (i = 0; i < sk_X509_num(certs); i++) {
                     x = sk_X509_value(certs, i);
-                    if (X509_check_private_key(x, key)) {
+                    if (cert_matches_key(x, key)) {
                         ee_cert = x;
                         /* Zero keyid and alias */
                         X509_keyid_set1(ee_cert, NULL, 0);
@@ -571,8 +571,6 @@ int pkcs12_main(int argc, char **argv)
                                infile);
                     goto export_end;
                 }
-            } else {
-                ee_cert = X509_dup(sk_X509_value(certs, 0)); /* take 1st cert */
             }
         }
 
@@ -588,8 +586,13 @@ int pkcs12_main(int argc, char **argv)
             int vret;
             STACK_OF(X509) *chain2;
             X509_STORE *store;
+            X509 *ee_cert_tmp = ee_cert;
 
-            if (ee_cert == NULL) {
+            /* Assume the first cert if we haven't got anything else */
+            if (ee_cert_tmp == NULL && certs != NULL)
+                ee_cert_tmp = sk_X509_value(certs, 0);
+
+            if (ee_cert_tmp == NULL) {
                 BIO_printf(bio_err,
                            "No end entity certificate to check with -chain\n");
                 goto export_end;
@@ -600,7 +603,7 @@ int pkcs12_main(int argc, char **argv)
                     == NULL)
                 goto export_end;
 
-            vret = get_cert_chain(ee_cert, store, untrusted_certs, &chain2);
+            vret = get_cert_chain(ee_cert_tmp, store, untrusted_certs, &chain2);
             X509_STORE_free(store);
 
             if (vret == X509_V_OK) {
@@ -1139,7 +1142,8 @@ void print_attribute(BIO *out, const ASN1_TYPE *av)
         break;
 
     case V_ASN1_UTF8STRING:
-        BIO_printf(out, "%s\n", av->value.utf8string->data);
+        BIO_printf(out, "%.*s\n", av->value.utf8string->length,
+                   av->value.utf8string->data);
         break;
 
     case V_ASN1_OCTET_STRING:

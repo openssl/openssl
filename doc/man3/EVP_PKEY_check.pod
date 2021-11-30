@@ -44,7 +44,7 @@ EVP_PKEY_private_check() validates the private component of the key given by B<c
 EVP_PKEY_pairwise_check() validates that the public and private components have
 the correct mathematical relationship to each other for the key given by B<ctx>.
 
-EVP_PKEY_check() validates all components of a key given by B<ctx>.
+EVP_PKEY_check() is an alias for the EVP_PKEY_pairwise_check() function.
 
 =head1 NOTES
 

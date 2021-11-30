@@ -67,8 +67,8 @@ int ossl_sm2_internal_verify(const unsigned char *dgst, int dgstlen,
 int ossl_sm2_ciphertext_size(const EC_KEY *key, const EVP_MD *digest,
                              size_t msg_len, size_t *ct_size);
 
-int ossl_sm2_plaintext_size(const EC_KEY *key, const EVP_MD *digest,
-                            size_t msg_len, size_t *pt_size);
+int ossl_sm2_plaintext_size(const unsigned char *ct, size_t ct_size,
+                            size_t *pt_size);
 
 int ossl_sm2_encrypt(const EC_KEY *key,
                      const EVP_MD *digest,

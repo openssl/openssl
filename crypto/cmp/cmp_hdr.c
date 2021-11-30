@@ -181,7 +181,8 @@ int ossl_cmp_hdr_push1_freeText(OSSL_CMP_PKIHEADER *hdr, ASN1_UTF8STRING *text)
         return 0;
 
     return
-        ossl_cmp_sk_ASN1_UTF8STRING_push_str(hdr->freeText, (char *)text->data);
+        ossl_cmp_sk_ASN1_UTF8STRING_push_str(hdr->freeText, (char *)text->data,
+                                             text->length);
 }
 
 int ossl_cmp_hdr_generalInfo_push0_item(OSSL_CMP_PKIHEADER *hdr,

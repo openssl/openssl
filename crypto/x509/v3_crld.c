@@ -70,7 +70,7 @@ static int set_dist_point_name(DIST_POINT_NAME **pdp, X509V3_CTX *ctx,
     STACK_OF(GENERAL_NAME) *fnm = NULL;
     STACK_OF(X509_NAME_ENTRY) *rnm = NULL;
 
-    if (strncmp(cnf->name, "fullname", 9) == 0) {
+    if (HAS_PREFIX(cnf->name, "fullname")) {
         fnm = gnames_from_sectname(ctx, cnf->value);
         if (!fnm)
             goto err;

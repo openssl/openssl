@@ -7,7 +7,8 @@
 # https://www.openssl.org/source/license.html
 #
 #
-# Originally written by Ilya Albrekht, Sergey Kirillov and Andrey Matyukov
+# Originally written by Sergey Kirillov and Andrey Matyukov.
+# Special thanks to Ilya Albrekht for his valuable hints.
 # Intel Corporation
 #
 # December 2020
@@ -77,26 +78,29 @@ ___
 ###############################################################################
 # Almost Montgomery Multiplication (AMM) for 20-digit number in radix 2^52.
 #
-# AMM is defined as presented in the paper
-# "Efficient Software Implementations of Modular Exponentiation" by Shay Gueron.
+# AMM is defined as presented in the paper [1].
 #
 # The input and output are presented in 2^52 radix domain, i.e.
 #   |res|, |a|, |b|, |m| are arrays of 20 64-bit qwords with 12 high bits zeroed.
 #   |k0| is a Montgomery coefficient, which is here k0 = -1/m mod 2^64
-#        (note, the implementation counts only 52 bits from it).
 #
-# NB: the AMM implementation does not perform "conditional" subtraction step as
-# specified in the original algorithm as according to the paper "Enhanced Montgomery
-# Multiplication" by Shay Gueron (see Lemma 1), the result will be always < 2*2^1024
-# and can be used as a direct input to the next AMM iteration.
-# This post-condition is true, provided the correct parameter |s| is choosen, i.e.
-# s >= n + 2 * k, which matches our case: 1040 > 1024 + 2 * 1.
+# NB: the AMM implementation does not perform "conditional" subtraction step
+# specified in the original algorithm as according to the Lemma 1 from the paper
+# [2], the result will be always < 2*m and can be used as a direct input to
+# the next AMM iteration.  This post-condition is true, provided the correct
+# parameter |s| (notion of the Lemma 1 from [2]) is choosen, i.e.  s >= n + 2 * k,
+# which matches our case: 1040 > 1024 + 2 * 1.
 #
-# void ossl_rsaz_amm52x20_x1_256(BN_ULONG *res,
-#                           const BN_ULONG *a,
-#                           const BN_ULONG *b,
-#                           const BN_ULONG *m,
-#                           BN_ULONG k0);
+# [1] Gueron, S. Efficient software implementations of modular exponentiation.
+#     DOI: 10.1007/s13389-012-0031-5
+# [2] Gueron, S. Enhanced Montgomery Multiplication.
+#     DOI: 10.1007/3-540-36400-5_5
+#
+# void ossl_rsaz_amm52x20_x1_ifma256(BN_ULONG *res,
+#                                    const BN_ULONG *a,
+#                                    const BN_ULONG *b,
+#                                    const BN_ULONG *m,
+#                                    BN_ULONG k0);
 ###############################################################################
 {
 # input parameters ("%rdi","%rsi","%rdx","%rcx","%r8")
@@ -112,16 +116,13 @@ my $b_ptr      = "%r11";
 my $iter = "%ebx";
 
 my $zero = "%ymm0";
-my ($R0_0,$R0_0h,$R1_0,$R1_0h,$R2_0) = ("%ymm1", map("%ymm$_",(16..19)));
-my ($R0_1,$R0_1h,$R1_1,$R1_1h,$R2_1) = ("%ymm2", map("%ymm$_",(20..23)));
-my $Bi = "%ymm3";
-my $Yi = "%ymm4";
+my $Bi   = "%ymm1";
+my $Yi   = "%ymm2";
+my ($R0_0,$R0_0h,$R1_0,$R1_0h,$R2_0) = ("%ymm3",map("%ymm$_",(16..19)));
+my ($R0_1,$R0_1h,$R1_1,$R1_1h,$R2_1) = ("%ymm4",map("%ymm$_",(20..23)));
 
 # Registers mapping for normalization.
-# We can reuse Bi, Yi registers here.
-my $TMP = $Bi;
-my $mask52x4 = $Yi;
-my ($T0,$T0h,$T1,$T1h,$T2) = map("%ymm$_", (24..28));
+my ($T0,$T0h,$T1,$T1h,$T2) = ("$zero", "$Bi", "$Yi", map("%ymm$_", (25..26)));
 
 sub amm52x20_x1() {
 # _data_offset - offset in the |a| or |m| arrays pointing to the beginning
@@ -190,16 +191,16 @@ $code.=<<___;
 ___
 }
 
-# Normalization routine: handles carry bits in R0..R2 QWs and
-# gets R0..R2 back to normalized 2^52 representation.
+# Normalization routine: handles carry bits and gets bignum qwords to normalized
+# 2^52 representation.
 #
 # Uses %r8-14,%e[bcd]x
 sub amm52x20_x1_norm {
 my ($_acc,$_R0,$_R0h,$_R1,$_R1h,$_R2) = @_;
 $code.=<<___;
     # Put accumulator to low qword in R0
-    vpbroadcastq    $_acc, $TMP
-    vpblendd \$3, $TMP, $_R0, $_R0
+    vpbroadcastq    $_acc, $T0
+    vpblendd \$3, $T0, $_R0, $_R0
 
     # Extract "carries" (12 high bits) from each QW of R0..R2
     # Save them to LSB of QWs in T0..T2
@@ -214,14 +215,14 @@ $code.=<<___;
     valignq \$3, $T1,   $T1h, $T1h
     valignq \$3, $T0h,  $T1,  $T1
     valignq \$3, $T0,   $T0h, $T0h
-    valignq \$3, $zero, $T0,  $T0
+    valignq \$3, .Lzeros(%rip), $T0,  $T0
 
     # Drop "carries" from R0..R2 QWs
-    vpandq    $mask52x4, $_R0,  $_R0
-    vpandq    $mask52x4, $_R0h, $_R0h
-    vpandq    $mask52x4, $_R1,  $_R1
-    vpandq    $mask52x4, $_R1h, $_R1h
-    vpandq    $mask52x4, $_R2,  $_R2
+    vpandq    .Lmask52x4(%rip), $_R0,  $_R0
+    vpandq    .Lmask52x4(%rip), $_R0h, $_R0h
+    vpandq    .Lmask52x4(%rip), $_R1,  $_R1
+    vpandq    .Lmask52x4(%rip), $_R1h, $_R1h
+    vpandq    .Lmask52x4(%rip), $_R2,  $_R2
 
     # Sum R0..R2 with corresponding adjusted carries
     vpaddq  $T0,  $_R0,  $_R0
@@ -232,11 +233,11 @@ $code.=<<___;
 
     # Now handle carry bits from this addition
     # Get mask of QWs which 52-bit parts overflow...
-    vpcmpuq   \$1, $_R0,  $mask52x4, %k1 # OP=lt
-    vpcmpuq   \$1, $_R0h, $mask52x4, %k2
-    vpcmpuq   \$1, $_R1,  $mask52x4, %k3
-    vpcmpuq   \$1, $_R1h, $mask52x4, %k4
-    vpcmpuq   \$1, $_R2,  $mask52x4, %k5
+    vpcmpuq   \$6, .Lmask52x4(%rip), $_R0,  %k1 # OP=nle (i.e. gt)
+    vpcmpuq   \$6, .Lmask52x4(%rip), $_R0h, %k2
+    vpcmpuq   \$6, .Lmask52x4(%rip), $_R1,  %k3
+    vpcmpuq   \$6, .Lmask52x4(%rip), $_R1h, %k4
+    vpcmpuq   \$6, .Lmask52x4(%rip), $_R2,  %k5
     kmovb   %k1, %r14d                   # k1
     kmovb   %k2, %r13d                   # k1h
     kmovb   %k3, %r12d                   # k2
@@ -244,11 +245,11 @@ $code.=<<___;
     kmovb   %k5, %r10d                   # k3
 
     # ...or saturated
-    vpcmpuq   \$0, $_R0,  $mask52x4, %k1 # OP=eq
-    vpcmpuq   \$0, $_R0h, $mask52x4, %k2
-    vpcmpuq   \$0, $_R1,  $mask52x4, %k3
-    vpcmpuq   \$0, $_R1h, $mask52x4, %k4
-    vpcmpuq   \$0, $_R2,  $mask52x4, %k5
+    vpcmpuq   \$0, .Lmask52x4(%rip), $_R0,  %k1 # OP=eq
+    vpcmpuq   \$0, .Lmask52x4(%rip), $_R0h, %k2
+    vpcmpuq   \$0, .Lmask52x4(%rip), $_R1,  %k3
+    vpcmpuq   \$0, .Lmask52x4(%rip), $_R1h, %k4
+    vpcmpuq   \$0, .Lmask52x4(%rip), $_R2,  %k5
     kmovb   %k1, %r9d                    # k4
     kmovb   %k2, %r8d                    # k4h
     kmovb   %k3, %ebx                    # k5
@@ -288,27 +289,27 @@ $code.=<<___;
     kmovb   %r10d, %k5
 
     # Add carries according to the obtained mask
-    vpsubq  $mask52x4, $_R0,  ${_R0}{%k1}
-    vpsubq  $mask52x4, $_R0h, ${_R0h}{%k2}
-    vpsubq  $mask52x4, $_R1,  ${_R1}{%k3}
-    vpsubq  $mask52x4, $_R1h, ${_R1h}{%k4}
-    vpsubq  $mask52x4, $_R2,  ${_R2}{%k5}
+    vpsubq  .Lmask52x4(%rip), $_R0,  ${_R0}{%k1}
+    vpsubq  .Lmask52x4(%rip), $_R0h, ${_R0h}{%k2}
+    vpsubq  .Lmask52x4(%rip), $_R1,  ${_R1}{%k3}
+    vpsubq  .Lmask52x4(%rip), $_R1h, ${_R1h}{%k4}
+    vpsubq  .Lmask52x4(%rip), $_R2,  ${_R2}{%k5}
 
-    vpandq   $mask52x4, $_R0,  $_R0
-    vpandq   $mask52x4, $_R0h, $_R0h
-    vpandq   $mask52x4, $_R1,  $_R1
-    vpandq   $mask52x4, $_R1h, $_R1h
-    vpandq   $mask52x4, $_R2,  $_R2
+    vpandq   .Lmask52x4(%rip), $_R0,  $_R0
+    vpandq   .Lmask52x4(%rip), $_R0h, $_R0h
+    vpandq   .Lmask52x4(%rip), $_R1,  $_R1
+    vpandq   .Lmask52x4(%rip), $_R1h, $_R1h
+    vpandq   .Lmask52x4(%rip), $_R2,  $_R2
 ___
 }
 
 $code.=<<___;
 .text
 
-.globl  ossl_rsaz_amm52x20_x1_256
-.type   ossl_rsaz_amm52x20_x1_256,\@function,5
+.globl  ossl_rsaz_amm52x20_x1_ifma256
+.type   ossl_rsaz_amm52x20_x1_ifma256,\@function,5
 .align 32
-ossl_rsaz_amm52x20_x1_256:
+ossl_rsaz_amm52x20_x1_ifma256:
 .cfi_startproc
     endbranch
     push    %rbx
@@ -323,7 +324,7 @@ ossl_rsaz_amm52x20_x1_256:
 .cfi_push   %r14
     push    %r15
 .cfi_push   %r15
-.Lrsaz_amm52x20_x1_256_body:
+.Lossl_rsaz_amm52x20_x1_ifma256_body:
 
     # Zeroing accumulators
     vpxord   $zero, $zero, $zero
@@ -351,17 +352,15 @@ $code.=<<___;
     lea    `4*8`($b_ptr), $b_ptr
     dec    $iter
     jne    .Lloop5
-
-    vmovdqa64   .Lmask52x4(%rip), $mask52x4
 ___
     &amm52x20_x1_norm($acc0_0,$R0_0,$R0_0h,$R1_0,$R1_0h,$R2_0);
 $code.=<<___;
 
-    vmovdqu64   $R0_0, ($res)
-    vmovdqu64   $R0_0h, 32($res)
-    vmovdqu64   $R1_0, 64($res)
-    vmovdqu64   $R1_0h, 96($res)
-    vmovdqu64   $R2_0, 128($res)
+    vmovdqu64   $R0_0,  `0*32`($res)
+    vmovdqu64   $R0_0h, `1*32`($res)
+    vmovdqu64   $R1_0,  `2*32`($res)
+    vmovdqu64   $R1_0h, `3*32`($res)
+    vmovdqu64   $R2_0,  `4*32`($res)
 
     vzeroupper
     mov  0(%rsp),%r15
@@ -378,10 +377,10 @@ $code.=<<___;
 .cfi_restore    %rbx
     lea  48(%rsp),%rsp
 .cfi_adjust_cfa_offset  -48
-.Lrsaz_amm52x20_x1_256_epilogue:
+.Lossl_rsaz_amm52x20_x1_ifma256_epilogue:
     ret
 .cfi_endproc
-.size   ossl_rsaz_amm52x20_x1_256, .-ossl_rsaz_amm52x20_x1_256
+.size   ossl_rsaz_amm52x20_x1_ifma256, .-ossl_rsaz_amm52x20_x1_ifma256
 ___
 
 $code.=<<___;
@@ -397,25 +396,25 @@ ___
 ###############################################################################
 # Dual Almost Montgomery Multiplication for 20-digit number in radix 2^52
 #
-# See description of ossl_rsaz_amm52x20_x1_256() above for details about Almost
+# See description of ossl_rsaz_amm52x20_x1_ifma256() above for details about Almost
 # Montgomery Multiplication algorithm and function input parameters description.
 #
 # This function does two AMMs for two independent inputs, hence dual.
 #
-# void ossl_rsaz_amm52x20_x2_256(BN_ULONG out[2][20],
-#                           const BN_ULONG a[2][20],
-#                           const BN_ULONG b[2][20],
-#                           const BN_ULONG m[2][20],
-#                           const BN_ULONG k0[2]);
+# void ossl_rsaz_amm52x20_x2_ifma256(BN_ULONG out[2][20],
+#                                    const BN_ULONG a[2][20],
+#                                    const BN_ULONG b[2][20],
+#                                    const BN_ULONG m[2][20],
+#                                    const BN_ULONG k0[2]);
 ###############################################################################
 
 $code.=<<___;
 .text
 
-.globl  ossl_rsaz_amm52x20_x2_256
-.type   ossl_rsaz_amm52x20_x2_256,\@function,5
+.globl  ossl_rsaz_amm52x20_x2_ifma256
+.type   ossl_rsaz_amm52x20_x2_ifma256,\@function,5
 .align 32
-ossl_rsaz_amm52x20_x2_256:
+ossl_rsaz_amm52x20_x2_ifma256:
 .cfi_startproc
     endbranch
     push    %rbx
@@ -430,7 +429,7 @@ ossl_rsaz_amm52x20_x2_256:
 .cfi_push   %r14
     push    %r15
 .cfi_push   %r15
-.Lrsaz_amm52x20_x2_256_body:
+.Lossl_rsaz_amm52x20_x2_ifma256_body:
 
     # Zeroing accumulators
     vpxord   $zero, $zero, $zero
@@ -463,24 +462,22 @@ $code.=<<___;
     lea    8($b_ptr), $b_ptr
     dec    $iter
     jne    .Lloop20
-
-    vmovdqa64   .Lmask52x4(%rip), $mask52x4
 ___
     &amm52x20_x1_norm($acc0_0,$R0_0,$R0_0h,$R1_0,$R1_0h,$R2_0);
     &amm52x20_x1_norm($acc0_1,$R0_1,$R0_1h,$R1_1,$R1_1h,$R2_1);
 $code.=<<___;
 
-    vmovdqu64   $R0_0, ($res)
-    vmovdqu64   $R0_0h, 32($res)
-    vmovdqu64   $R1_0, 64($res)
-    vmovdqu64   $R1_0h, 96($res)
-    vmovdqu64   $R2_0, 128($res)
+    vmovdqu64   $R0_0,  `0*32`($res)
+    vmovdqu64   $R0_0h, `1*32`($res)
+    vmovdqu64   $R1_0,  `2*32`($res)
+    vmovdqu64   $R1_0h, `3*32`($res)
+    vmovdqu64   $R2_0,  `4*32`($res)
 
-    vmovdqu64   $R0_1, 160($res)
-    vmovdqu64   $R0_1h, 192($res)
-    vmovdqu64   $R1_1, 224($res)
-    vmovdqu64   $R1_1h, 256($res)
-    vmovdqu64   $R2_1, 288($res)
+    vmovdqu64   $R0_1,  `5*32`($res)
+    vmovdqu64   $R0_1h, `6*32`($res)
+    vmovdqu64   $R1_1,  `7*32`($res)
+    vmovdqu64   $R1_1h, `8*32`($res)
+    vmovdqu64   $R2_1,  `9*32`($res)
 
     vzeroupper
     mov  0(%rsp),%r15
@@ -497,10 +494,10 @@ $code.=<<___;
 .cfi_restore    %rbx
     lea  48(%rsp),%rsp
 .cfi_adjust_cfa_offset  -48
-.Lrsaz_amm52x20_x2_256_epilogue:
+.Lossl_rsaz_amm52x20_x2_ifma256_epilogue:
     ret
 .cfi_endproc
-.size   ossl_rsaz_amm52x20_x2_256, .-ossl_rsaz_amm52x20_x2_256
+.size   ossl_rsaz_amm52x20_x2_ifma256, .-ossl_rsaz_amm52x20_x2_ifma256
 ___
 }
 
@@ -508,77 +505,76 @@ ___
 # Constant time extraction from the precomputed table of powers base^i, where
 #    i = 0..2^EXP_WIN_SIZE-1
 #
-# The input |red_table| contains precomputations for two independent base values,
-# so the |tbl_idx| indicates for which base shall we extract the value.
-# |red_table_idx| is a power index.
+# The input |red_table| contains precomputations for two independent base values.
+# |red_table_idx1| and |red_table_idx2| are corresponding power indexes.
 #
-# Extracted value (output) is 20 digit number in 2^52 radix.
+# Extracted value (output) is 2 20 digit numbers in 2^52 radix.
 #
 # void ossl_extract_multiplier_2x20_win5(BN_ULONG *red_Y,
 #                                        const BN_ULONG red_table[1 << EXP_WIN_SIZE][2][20],
-#                                        int red_table_idx,
-#                                        int tbl_idx);           # 0 or 1
+#                                        int red_table_idx1, int red_table_idx2);
 #
 # EXP_WIN_SIZE = 5
 ###############################################################################
 {
 # input parameters
-my ($out,$red_tbl,$red_tbl_idx,$tbl_idx) = @_6_args_universal_ABI;
+my ($out,$red_tbl,$red_tbl_idx1,$red_tbl_idx2)=$win64 ? ("%rcx","%rdx","%r8", "%r9") :  # Win64 order
+                                                        ("%rdi","%rsi","%rdx","%rcx");  # Unix order
 
-my ($t0,$t1,$t2,$t3,$t4) = map("%ymm$_", (0..4));
-my $t4xmm = $t4;
-$t4xmm =~ s/%y/%x/;
-my ($tmp0,$tmp1,$tmp2,$tmp3,$tmp4) = map("%ymm$_", (16..20));
-my ($cur_idx,$idx,$ones) = map("%ymm$_", (21..23));
+my ($t0,$t1,$t2,$t3,$t4,$t5) = map("%ymm$_", (0..5));
+my ($t6,$t7,$t8,$t9) = map("%ymm$_", (16..19));
+my ($tmp,$cur_idx,$idx1,$idx2,$ones) = map("%ymm$_", (20..24));
+
+my @t = ($t0,$t1,$t2,$t3,$t4,$t5,$t6,$t7,$t8,$t9);
+my $t0xmm = $t0;
+$t0xmm =~ s/%y/%x/;
 
 $code.=<<___;
 .text
 
 .align 32
 .globl  ossl_extract_multiplier_2x20_win5
-.type   ossl_extract_multiplier_2x20_win5,\@function,4
+.type   ossl_extract_multiplier_2x20_win5,\@abi-omnipotent
 ossl_extract_multiplier_2x20_win5:
 .cfi_startproc
     endbranch
-    leaq    ($tbl_idx,$tbl_idx,4), %rax
-    salq    \$5, %rax
-    addq    %rax, $red_tbl
-
     vmovdqa64   .Lones(%rip), $ones         # broadcast ones
-    vpbroadcastq    $red_tbl_idx, $idx
+    vpbroadcastq    $red_tbl_idx1, $idx1
+    vpbroadcastq    $red_tbl_idx2, $idx2
     leaq   `(1<<5)*2*20*8`($red_tbl), %rax  # holds end of the tbl
 
-    vpxor   $t4xmm, $t4xmm, $t4xmm
-    vmovdqa64   $t4, $t3                    # zeroing t0..4, cur_idx
-    vmovdqa64   $t4, $t2
-    vmovdqa64   $t4, $t1
-    vmovdqa64   $t4, $t0
-    vmovdqa64   $t4, $cur_idx
+    # zeroing t0..n, cur_idx
+    vpxor   $t0xmm, $t0xmm, $t0xmm
+    vmovdqa64   $t0, $cur_idx
+___
+foreach (1..9) {
+    $code.="vmovdqa64   $t0, $t[$_] \n";
+}
+$code.=<<___;
 
 .align 32
 .Lloop:
-    vpcmpq  \$0, $cur_idx, $idx, %k1        # mask of (idx == cur_idx)
-    addq    \$320, $red_tbl                 # 320 = 2 * 20 digits * 8 bytes
-    vpaddq  $ones, $cur_idx, $cur_idx       # increment cur_idx
-    vmovdqu64  -320($red_tbl), $tmp0        # load data from red_tbl
-    vmovdqu64  -288($red_tbl), $tmp1
-    vmovdqu64  -256($red_tbl), $tmp2
-    vmovdqu64  -224($red_tbl), $tmp3
-    vmovdqu64  -192($red_tbl), $tmp4
-    vpblendmq  $tmp0, $t0, ${t0}{%k1}       # extract data when mask is not zero
-    vpblendmq  $tmp1, $t1, ${t1}{%k1}
-    vpblendmq  $tmp2, $t2, ${t2}{%k1}
-    vpblendmq  $tmp3, $t3, ${t3}{%k1}
-    vpblendmq  $tmp4, $t4, ${t4}{%k1}
+    vpcmpq  \$0, $cur_idx, $idx1, %k1      # mask of (idx1 == cur_idx)
+    vpcmpq  \$0, $cur_idx, $idx2, %k2      # mask of (idx2 == cur_idx)
+___
+foreach (0..9) {
+    my $mask = $_<5?"%k1":"%k2";
+$code.=<<___;
+    vmovdqu64  `${_}*32`($red_tbl), $tmp     # load data from red_tbl
+    vpblendmq  $tmp, $t[$_], ${t[$_]}{$mask} # extract data when mask is not zero
+___
+}
+$code.=<<___;
+    vpaddq  $ones, $cur_idx, $cur_idx      # increment cur_idx
+    addq    \$`2*20*8`, $red_tbl
     cmpq    $red_tbl, %rax
     jne .Lloop
-
-    vmovdqu64   $t0, ($out)                 # store t0..4
-    vmovdqu64   $t1, 32($out)
-    vmovdqu64   $t2, 64($out)
-    vmovdqu64   $t3, 96($out)
-    vmovdqu64   $t4, 128($out)
-
+___
+# store t0..n
+foreach (0..9) {
+    $code.="vmovdqu64   $t[$_], `${_}*32`($out) \n";
+}
+$code.=<<___;
     ret
 .cfi_endproc
 .size   ossl_extract_multiplier_2x20_win5, .-ossl_extract_multiplier_2x20_win5
@@ -588,6 +584,8 @@ $code.=<<___;
 .align 32
 .Lones:
     .quad   1,1,1,1
+.Lzeros:
+    .quad   0,0,0,0
 ___
 }
 
@@ -597,7 +595,7 @@ $frame="%rdx";
 $context="%r8";
 $disp="%r9";
 
-$code.=<<___
+$code.=<<___;
 .extern     __imp_RtlVirtualUnwind
 .type   rsaz_def_handler,\@abi-omnipotent
 .align  16
@@ -688,32 +686,24 @@ rsaz_def_handler:
 
 .section    .pdata
 .align  4
-    .rva    .LSEH_begin_ossl_rsaz_amm52x20_x1_256
-    .rva    .LSEH_end_ossl_rsaz_amm52x20_x1_256
-    .rva    .LSEH_info_ossl_rsaz_amm52x20_x1_256
+    .rva    .LSEH_begin_ossl_rsaz_amm52x20_x1_ifma256
+    .rva    .LSEH_end_ossl_rsaz_amm52x20_x1_ifma256
+    .rva    .LSEH_info_ossl_rsaz_amm52x20_x1_ifma256
 
-    .rva    .LSEH_begin_ossl_rsaz_amm52x20_x2_256
-    .rva    .LSEH_end_ossl_rsaz_amm52x20_x2_256
-    .rva    .LSEH_info_ossl_rsaz_amm52x20_x2_256
-
-    .rva    .LSEH_begin_ossl_extract_multiplier_2x20_win5
-    .rva    .LSEH_end_ossl_extract_multiplier_2x20_win5
-    .rva    .LSEH_info_ossl_extract_multiplier_2x20_win5
+    .rva    .LSEH_begin_ossl_rsaz_amm52x20_x2_ifma256
+    .rva    .LSEH_end_ossl_rsaz_amm52x20_x2_ifma256
+    .rva    .LSEH_info_ossl_rsaz_amm52x20_x2_ifma256
 
 .section    .xdata
 .align  8
-.LSEH_info_ossl_rsaz_amm52x20_x1_256:
+.LSEH_info_ossl_rsaz_amm52x20_x1_ifma256:
     .byte   9,0,0,0
     .rva    rsaz_def_handler
-    .rva    .Lrsaz_amm52x20_x1_256_body,.Lrsaz_amm52x20_x1_256_epilogue
-.LSEH_info_ossl_rsaz_amm52x20_x2_256:
+    .rva    .Lossl_rsaz_amm52x20_x1_ifma256_body,.Lossl_rsaz_amm52x20_x1_ifma256_epilogue
+.LSEH_info_ossl_rsaz_amm52x20_x2_ifma256:
     .byte   9,0,0,0
     .rva    rsaz_def_handler
-    .rva    .Lrsaz_amm52x20_x2_256_body,.Lrsaz_amm52x20_x2_256_epilogue
-.LSEH_info_ossl_extract_multiplier_2x20_win5:
-    .byte   9,0,0,0
-    .rva    rsaz_def_handler
-    .rva    .LSEH_begin_ossl_extract_multiplier_2x20_win5,.LSEH_begin_ossl_extract_multiplier_2x20_win5
+    .rva    .Lossl_rsaz_amm52x20_x2_ifma256_body,.Lossl_rsaz_amm52x20_x2_ifma256_epilogue
 ___
 }
 }}} else {{{                # fallback for old assembler
@@ -727,16 +717,16 @@ ossl_rsaz_avx512ifma_eligible:
     ret
 .size   ossl_rsaz_avx512ifma_eligible, .-ossl_rsaz_avx512ifma_eligible
 
-.globl  ossl_rsaz_amm52x20_x1_256
-.globl  ossl_rsaz_amm52x20_x2_256
+.globl  ossl_rsaz_amm52x20_x1_ifma256
+.globl  ossl_rsaz_amm52x20_x2_ifma256
 .globl  ossl_extract_multiplier_2x20_win5
-.type   ossl_rsaz_amm52x20_x1_256,\@abi-omnipotent
-ossl_rsaz_amm52x20_x1_256:
-ossl_rsaz_amm52x20_x2_256:
+.type   ossl_rsaz_amm52x20_x1_ifma256,\@abi-omnipotent
+ossl_rsaz_amm52x20_x1_ifma256:
+ossl_rsaz_amm52x20_x2_ifma256:
 ossl_extract_multiplier_2x20_win5:
     .byte   0x0f,0x0b    # ud2
     ret
-.size   ossl_rsaz_amm52x20_x1_256, .-ossl_rsaz_amm52x20_x1_256
+.size   ossl_rsaz_amm52x20_x1_ifma256, .-ossl_rsaz_amm52x20_x1_ifma256
 ___
 }}}
 

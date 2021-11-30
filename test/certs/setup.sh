@@ -7,6 +7,9 @@
 ./mkcert.sh genroot "Root CA" root-key2 root-cert2
 ./mkcert.sh genroot "Root Cert 2" root-key root-name2
 DAYS=-1 ./mkcert.sh genroot "Root CA" root-key root-expired
+# cross root and root cross cert
+./mkcert.sh genroot "Cross Root" cross-key cross-root
+./mkcert.sh genca "Root CA" root-key root-cross-cert cross-key cross-root
 # trust variants: +serverAuth -serverAuth +clientAuth -clientAuth,
 openssl x509 -in root-cert.pem -trustout \
     -addtrust serverAuth -out root+serverAuth.pem

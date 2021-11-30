@@ -338,13 +338,13 @@ int ssl3_get_record(SSL *s)
                         /* Go back to start of packet, look at the five bytes
                          * that we have. */
                         p = RECORD_LAYER_get_packet(&s->rlayer);
-                        if (strncmp((char *)p, "GET ", 4) == 0 ||
-                            strncmp((char *)p, "POST ", 5) == 0 ||
-                            strncmp((char *)p, "HEAD ", 5) == 0 ||
-                            strncmp((char *)p, "PUT ", 4) == 0) {
+                        if (HAS_PREFIX((char *)p, "GET ") ||
+                            HAS_PREFIX((char *)p, "POST ") ||
+                            HAS_PREFIX((char *)p, "HEAD ") ||
+                            HAS_PREFIX((char *)p, "PUT ")) {
                             SSLfatal(s, SSL_AD_NO_ALERT, SSL_R_HTTP_REQUEST);
                             return -1;
-                        } else if (strncmp((char *)p, "CONNE", 5) == 0) {
+                        } else if (HAS_PREFIX((char *)p, "CONNE")) {
                             SSLfatal(s, SSL_AD_NO_ALERT,
                                      SSL_R_HTTPS_PROXY_REQUEST);
                             return -1;
@@ -428,7 +428,7 @@ int ssl3_get_record(SSL *s)
         }
 
         if (more > 0) {
-            /* now s->packet_length == SSL3_RT_HEADER_LENGTH */
+            /* now s->rlayer.packet_length == SSL3_RT_HEADER_LENGTH */
 
             rret = ssl3_read_n(s, more, more, 1, 0, &n);
             if (rret <= 0)
@@ -439,9 +439,9 @@ int ssl3_get_record(SSL *s)
         RECORD_LAYER_set_rstate(&s->rlayer, SSL_ST_READ_HEADER);
 
         /*
-         * At this point, s->packet_length == SSL3_RT_HEADER_LENGTH
-         * + thisrr->length, or s->packet_length == SSL2_RT_HEADER_LENGTH
-         * + thisrr->length and we have that many bytes in s->packet
+         * At this point, s->rlayer.packet_length == SSL3_RT_HEADER_LENGTH
+         * + thisrr->length, or s->rlayer.packet_length == SSL2_RT_HEADER_LENGTH
+         * + thisrr->length and we have that many bytes in s->rlayer.packet
          */
         if (thisrr->rec_version == SSL2_VERSION) {
             thisrr->input =
@@ -452,11 +452,11 @@ int ssl3_get_record(SSL *s)
         }
 
         /*
-         * ok, we can now read from 's->packet' data into 'thisrr' thisrr->input
-         * points at thisrr->length bytes, which need to be copied into
-         * thisrr->data by either the decryption or by the decompression When
-         * the data is 'copied' into the thisrr->data buffer, thisrr->input will
-         * be pointed at the new buffer
+         * ok, we can now read from 's->rlayer.packet' data into 'thisrr'.
+         * thisrr->input points at thisrr->length bytes, which need to be copied
+         * into thisrr->data by either the decryption or by the decompression.
+         * When the data is 'copied' into the thisrr->data buffer,
+         * thisrr->input will be updated to point at the new buffer
          */
 
         /*
@@ -1047,7 +1047,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
 
                 if (SSL_IS_DTLS(s)) {
                     /* DTLS does not support pipelining */
-                    unsigned char dtlsseq[9], *p = dtlsseq;
+                    unsigned char dtlsseq[8], *p = dtlsseq;
 
                     s2n(sending ? DTLS_RECORD_LAYER_get_w_epoch(&s->rlayer) :
                         DTLS_RECORD_LAYER_get_r_epoch(&s->rlayer), p);
@@ -1218,23 +1218,17 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
             }
 
             if (!sending) {
-                /* Adjust the record to remove the explicit IV/MAC/Tag */
-                if (EVP_CIPHER_get_mode(enc) == EVP_CIPH_GCM_MODE) {
-                    for (ctr = 0; ctr < n_recs; ctr++) {
+                for (ctr = 0; ctr < n_recs; ctr++) {
+                    /* Adjust the record to remove the explicit IV/MAC/Tag */
+                    if (EVP_CIPHER_get_mode(enc) == EVP_CIPH_GCM_MODE) {
                         recs[ctr].data += EVP_GCM_TLS_EXPLICIT_IV_LEN;
                         recs[ctr].input += EVP_GCM_TLS_EXPLICIT_IV_LEN;
                         recs[ctr].length -= EVP_GCM_TLS_EXPLICIT_IV_LEN;
-                    }
-                } else if (EVP_CIPHER_get_mode(enc) == EVP_CIPH_CCM_MODE) {
-                    for (ctr = 0; ctr < n_recs; ctr++) {
+                    } else if (EVP_CIPHER_get_mode(enc) == EVP_CIPH_CCM_MODE) {
                         recs[ctr].data += EVP_CCM_TLS_EXPLICIT_IV_LEN;
                         recs[ctr].input += EVP_CCM_TLS_EXPLICIT_IV_LEN;
                         recs[ctr].length -= EVP_CCM_TLS_EXPLICIT_IV_LEN;
-                    }
-                }
-
-                for (ctr = 0; ctr < n_recs; ctr++) {
-                    if (bs != 1 && SSL_USE_EXPLICIT_IV(s)) {
+                    } else if (bs != 1 && SSL_USE_EXPLICIT_IV(s)) {
                         if (recs[ctr].length < bs)
                             return 0;
                         recs[ctr].data += bs;
@@ -1254,16 +1248,11 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
                                          (macs != NULL) ? &macs[ctr].alloced
                                                         : NULL,
                                          bs,
-                                         macsize,
+                                         pad ? (size_t)pad : macsize,
                                          (EVP_CIPHER_get_flags(enc)
                                          & EVP_CIPH_FLAG_AEAD_CIPHER) != 0,
                                          s->ctx->libctx))
                         return 0;
-                }
-                if (pad) {
-                    for (ctr = 0; ctr < n_recs; ctr++) {
-                        recs[ctr].length -= pad;
-                    }
                 }
             }
         }
@@ -1512,16 +1501,16 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
     sess = s->session;
 
     /*
-     * At this point, s->packet_length == SSL3_RT_HEADER_LNGTH + rr->length,
-     * and we have that many bytes in s->packet
+     * At this point, s->rlayer.packet_length == SSL3_RT_HEADER_LNGTH + rr->length,
+     * and we have that many bytes in s->rlayer.packet
      */
     rr->input = &(RECORD_LAYER_get_packet(&s->rlayer)[DTLS1_RT_HEADER_LENGTH]);
 
     /*
-     * ok, we can now read from 's->packet' data into 'rr' rr->input points
-     * at rr->length bytes, which need to be copied into rr->data by either
-     * the decryption or by the decompression When the data is 'copied' into
-     * the rr->data buffer, rr->input will be pointed at the new buffer
+     * ok, we can now read from 's->rlayer.packet' data into 'rr'. rr->input
+     * points at rr->length bytes, which need to be copied into rr->data by
+     * either the decryption or by the decompression. When the data is 'copied'
+     * into the rr->data buffer, rr->input will be pointed at the new buffer
      */
 
     /*
@@ -1807,7 +1796,7 @@ int dtls1_get_record(SSL *s)
 
     if (rr->length >
         RECORD_LAYER_get_packet_length(&s->rlayer) - DTLS1_RT_HEADER_LENGTH) {
-        /* now s->packet_length == DTLS1_RT_HEADER_LENGTH */
+        /* now s->rlayer.packet_length == DTLS1_RT_HEADER_LENGTH */
         more = rr->length;
         rret = ssl3_read_n(s, more, more, 1, 1, &n);
         /* this packet contained a partial record, dump it */
@@ -1823,7 +1812,7 @@ int dtls1_get_record(SSL *s)
         }
 
         /*
-         * now n == rr->length, and s->packet_length ==
+         * now n == rr->length, and s->rlayer.packet_length ==
          * DTLS1_RT_HEADER_LENGTH + rr->length
          */
     }

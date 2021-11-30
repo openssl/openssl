@@ -110,9 +110,9 @@
                 @cnf_defines,
                 'OPENSSLDIR="""$(OPENSSLDIR_C)"""',
                 'ENGINESDIR="""$(ENGINESDIR_C)"""',
-                'MODULESDIR="""$(MODULESDIR_C)"""',
-                #'$(DEFINES)'
+                'MODULESDIR="""$(MODULESDIR_C)"""'
                 )
+      . '$(DEFINES)'
       . "'extradefines'";
   our $lib_asflags =
       join(' ', $target{lib_asflags} || (), @{$config{lib_asflags}},
@@ -144,8 +144,8 @@
       join(',', @{$target{dso_defines}}, @{$target{module_defines}},
                 @{$config{dso_defines}}, @{$config{module_defines}},
                 @cnf_defines,
-                #'$(DEFINES)'
                 )
+      . '$(DEFINES)'
       . "'extradefines'";
   our $dso_asflags =
       join(' ', $target{dso_asflags} || (), $target{module_asflags} || (),
@@ -180,8 +180,8 @@
       join(',', @{$target{bin_defines}},
                 @{$config{bin_defines}},
                 @cnf_defines,
-                #'$(DEFINES)'
                 )
+      . '$(DEFINES)'
       . "'extradefines'";
   our $bin_asflags =
       join(' ', $target{bin_asflags} || (),
@@ -267,6 +267,7 @@ VERBOSE=$(V)
 VERBOSE_FAILURE=$(VF)
 
 VERSION={- "$config{full_version}" -}
+VERSION_NUMBER={- "$config{version}" -}
 MAJOR={- $config{major} -}
 MINOR={- $config{minor} -}
 SHLIB_VERSION_NUMBER={- $config{shlib_version} -}
@@ -391,6 +392,8 @@ CPPFLAGS_Q={- (my $c = $lib_cppflags.$cppflags) =~ s|"|""|g;
 # .FIRST and .LAST are special targets with MMS and MMK.
 NODEBUG=@
 .FIRST :
+        {- join( "\n        \$(NODEBUG) ", @{ $target{setup_commands} // [] },
+                                           '!' ) -}
         $(NODEBUG) sourcetop = F$PARSE("$(SRCDIR)","[]A.;",,,"SYNTAX_ONLY,NO_CONCEAL") - ".][000000" - "[000000." - "][" - "]A.;" + ".]"
         $(NODEBUG) DEFINE ossl_sourceroot 'sourcetop'
         $(NODEBUG) !
@@ -500,7 +503,7 @@ list-tests :
         @ WRITE SYS$OUTPUT "Tests are not supported with your chosen Configure options"
         @ ! {- output_on() if !$disabled{tests}; "" -}
 
-install : install_sw install_ssldirs install_docs install_msg
+install : install_sw install_ssldirs install_docs {- $disabled{fips} ? "" : "install_fips" -} install_msg
 
 install_msg :
         @ WRITE SYS$OUTPUT ""
@@ -516,7 +519,7 @@ install_msg :
 check_install :
         spawn/nolog @ossl_installroot:[SYSTEST]openssl_ivp{- $osslver -}.com
 
-uninstall : uninstall_docs uninstall_sw
+uninstall : uninstall_docs uninstall_sw {- $disabled{fips} ? "" : "uninstall_fips" -}
 
 # Because VMS wants the generation number (or *) to delete files, we can't
 # use $(LIBS), $(PROGRAMS), $(GENERATED) and $(MODULES) directly.
@@ -565,14 +568,16 @@ install_docs : install_html_docs
 uninstall_docs : uninstall_html_docs
 
 {- output_off() if $disabled{fips}; "" -}
-install_fips : install_sw $(INSTALL_FIPSMODULECONF)
+install_fips : build_sw $(INSTALL_FIPSMODULECONF)
 	@ WRITE SYS$OUTPUT "*** Installing FIPS module"
+	- CREATE/DIR ossl_installroot:[MODULES{- $sover_dirname.$target{pointer_size} -}.'arch']
+	- CREATE/DIR/PROT=(S:RWED,O:RWE,G:RE,W:RE) OSSL_DATAROOT:[000000]
 	COPY/PROT=W:RE $(INSTALL_FIPSMODULES) -
                 ossl_installroot:[MODULES{- $sover_dirname.$target{pointer_size} -}.'arch']$(FIPSMODULENAME)
 	@ WRITE SYS$OUTPUT "*** Installing FIPS module configuration"
-	COPY/PROT=W:RE $(INSTALL_FIPSMODULESCONF) OSSL_DATAROOT:[000000]
+	COPY/PROT=W:RE $(INSTALL_FIPSMODULECONF) OSSL_DATAROOT:[000000]
 
-uninstall_fips : uninstall_sw
+uninstall_fips :
 	@ WRITE SYS$OUTPUT "*** Uninstalling FIPS module configuration"
 	DELETE OSSL_DATAROOT:[000000]fipsmodule.cnf;*
 	@ WRITE SYS$OUTPUT "*** Uninstalling FIPS module"
@@ -886,9 +891,10 @@ EOF
           my $title = basename($args{src}, ".html");
           my $pod = $gen0;
           my $mkpod2html = sourcefile('util', 'mkpod2html.pl');
+          my $srcdoc = sourcedir('doc');
           return <<"EOF";
 $args{src} : $pod
-	\$(PERL) $mkpod2html -i $pod -o \$\@ -t "$title" -r "\$(SRCDIR)/doc"
+	\$(PERL) $mkpod2html -i $pod -o \$\@ -t "$title" -r "$srcdoc"
 EOF
       } elsif ($args{src} =~ /\.(\d)$/) {
           #
@@ -901,7 +907,7 @@ EOF
           #
           my $target = platform->def($args{src});
           my $mkdef = sourcefile('util', 'mkdef.pl');
-          my $ord_ver = $args{intent} eq 'lib' ? ' --version $(VERSION)' : '';
+          my $ord_ver = $args{intent} eq 'lib' ? ' --version $(VERSION_NUMBER)' : '';
           my $ord_name =
               $args{generator}->[1] || basename($args{product}, '.EXE');
           my $case_insensitive =

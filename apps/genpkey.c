@@ -37,7 +37,7 @@ const OPTIONS genpkey_options[] = {
 #endif
     {"paramfile", OPT_PARAMFILE, '<', "Parameters file"},
     {"algorithm", OPT_ALGORITHM, 's', "The public key algorithm"},
-    {"quiet", OPT_QUIET, 's', "Do not output status while generating keys"},
+    {"quiet", OPT_QUIET, '-', "Do not output status while generating keys"},
     {"pkeyopt", OPT_PKEYOPT, 's',
      "Set the public key algorithm option as opt:value"},
      OPT_CONFIG_OPTION,

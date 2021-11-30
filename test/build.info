@@ -12,6 +12,11 @@ ENDIF
 IF[{- $config{target} =~ /^vms-/ -}]
   $AUXLIBAPPSSRC=../apps/lib/vms_term_sock.c ../apps/lib/vms_decc_argv.c
 ENDIF
+# Program init source, that don't have direct linkage with the rest of the
+# source, and can therefore not be part of a library.
+IF[{- !$disabled{uplink} -}]
+  $INITSRC=../ms/applink.c
+ENDIF
 $LIBAPPSSRC=../apps/lib/opt.c $AUXLIBAPPSSRC
 
 IF[{- !$disabled{tests} -}]
@@ -21,7 +26,7 @@ IF[{- !$disabled{tests} -}]
           testutil/format_output.c testutil/load.c testutil/fake_random.c \
           testutil/test_cleanup.c testutil/main.c testutil/testutil_init.c \
           testutil/options.c testutil/test_options.c testutil/provider.c \
-          testutil/apps_mem.c testutil/random.c $LIBAPPSSRC
+          testutil/apps_shims.c testutil/random.c $LIBAPPSSRC
   INCLUDE[libtestutil.a]=../include ../apps/include ..
   DEPEND[libtestutil.a]=../libcrypto
 
@@ -40,7 +45,7 @@ IF[{- !$disabled{tests} -}]
           evp_fetch_prov_test v3nametest v3ext \
           crltest danetest bad_dtls_test lhash_test sparse_array_test \
           conf_include_test params_api_test params_conversion_test \
-          constant_time_test verify_extra_test clienthellotest \
+          constant_time_test safe_math_test verify_extra_test clienthellotest \
           packettest asynctest secmemtest srptest memleaktest stack_test \
           dtlsv1listentest ct_test threadstest afalgtest d2i_test \
           ssl_test_ctx_test ssl_test x509aux cipherlist_test asynciotest \
@@ -57,7 +62,7 @@ IF[{- !$disabled{tests} -}]
           context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
           keymgmt_internal_test hexstr_test provider_status_test defltfips_test \
           bio_readbuffer_test user_property_test pkcs7_test upcallstest \
-          provfetchtest
+          provfetchtest prov_config_test rand_test
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=enginetest
@@ -78,6 +83,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[sanitytest]=sanitytest.c
   INCLUDE[sanitytest]=../include ../apps/include
   DEPEND[sanitytest]=../libcrypto libtestutil.a
+
+  SOURCE[rand_test]=rand_test.c
+  INCLUDE[rand_test]=../include ../apps/include
+  DEPEND[rand_test]=../libcrypto libtestutil.a
 
   SOURCE[rsa_complex]=rsa_complex.c
   INCLUDE[rsa_complex]=../include ../apps/include
@@ -176,6 +185,10 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[provfetchtest]=../include ../apps/include
   DEPEND[provfetchtest]=../libcrypto.a libtestutil.a
 
+  SOURCE[prov_config_test]=prov_config_test.c
+  INCLUDE[prov_config_test]=../include ../apps/include
+  DEPEND[prov_config_test]=../libcrypto.a libtestutil.a
+
   SOURCE[evp_pkey_provided_test]=evp_pkey_provided_test.c
   INCLUDE[evp_pkey_provided_test]=../include ../apps/include
   DEPEND[evp_pkey_provided_test]=../libcrypto.a libtestutil.a
@@ -231,6 +244,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[constant_time_test]=constant_time_test.c
   INCLUDE[constant_time_test]=../include ../apps/include
   DEPEND[constant_time_test]=../libcrypto libtestutil.a
+
+  SOURCE[safe_math_test]=safe_math_test.c
+  INCLUDE[safe_math_test]=../include ../apps/include
+  DEPEND[safe_math_test]=../libcrypto libtestutil.a
 
   SOURCE[verify_extra_test]=verify_extra_test.c
   INCLUDE[verify_extra_test]=../include ../apps/include
@@ -708,7 +725,7 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[rc5test]=../include ../apps/include
     DEPEND[rc5test]=../libcrypto.a libtestutil.a
 
-    SOURCE[ec_internal_test]=ec_internal_test.c
+    SOURCE[ec_internal_test]=ec_internal_test.c $INITSRC
     INCLUDE[ec_internal_test]=../include ../crypto/ec ../apps/include
     DEPEND[ec_internal_test]=../libcrypto.a libtestutil.a
 
@@ -831,6 +848,11 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[provider_fallback_test]=../include ../apps/include
   DEPEND[provider_fallback_test]=../libcrypto libtestutil.a
 
+  PROGRAMS{noinst}=provider_pkey_test
+  SOURCE[provider_pkey_test]=provider_pkey_test.c fake_rsaprov.c
+  INCLUDE[provider_pkey_test]=../include ../apps/include
+  DEPEND[provider_pkey_test]=../libcrypto libtestutil.a
+
   PROGRAMS{noinst}=params_test
   SOURCE[params_test]=params_test.c
   INCLUDE[params_test]=.. ../include ../apps/include
@@ -859,9 +881,9 @@ IF[{- !$disabled{tests} -}]
   DEPEND[namemap_internal_test]=../libcrypto.a libtestutil.a
 
   PROGRAMS{noinst}=bio_prefix_text
-  SOURCE[bio_prefix_text]=bio_prefix_text.c $LIBAPPSSRC
+  SOURCE[bio_prefix_text]=bio_prefix_text.c
   INCLUDE[bio_prefix_text]=.. ../include ../apps/include
-  DEPEND[bio_prefix_text]=../libcrypto
+  DEPEND[bio_prefix_text]=../libcrypto libtestutil.a
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=pem_read_depr_test

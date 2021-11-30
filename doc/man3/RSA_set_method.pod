@@ -16,13 +16,13 @@ L<openssl_user_macros(7)>:
 
  void RSA_set_default_method(const RSA_METHOD *meth);
 
- RSA_METHOD *RSA_get_default_method(void);
+ const RSA_METHOD *RSA_get_default_method(void);
 
  int RSA_set_method(RSA *rsa, const RSA_METHOD *meth);
 
- RSA_METHOD *RSA_get_method(const RSA *rsa);
+ const RSA_METHOD *RSA_get_method(const RSA *rsa);
 
- RSA_METHOD *RSA_PKCS1_OpenSSL(void);
+ const RSA_METHOD *RSA_PKCS1_OpenSSL(void);
 
  int RSA_flags(const RSA *rsa);
 

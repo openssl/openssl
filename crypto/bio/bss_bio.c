@@ -273,7 +273,7 @@ static int bio_write(BIO *bio, const char *buf, int num_)
 
     BIO_clear_retry_flags(bio);
 
-    if (!bio->init || buf == NULL || num == 0)
+    if (!bio->init || buf == NULL || num_ <= 0)
         return 0;
 
     b = bio->ptr;

@@ -601,7 +601,7 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
     OPENSSL_strlcat(out_buf, ascii_salt, sizeof(out_buf));
 
     /* assert "$5$rounds=999999999$......salt......" */
-    if (strlen(out_buf) > 3 + 17 * rounds_custom + salt_len )
+    if (strlen(out_buf) > 3 + 17 * rounds_custom + salt_len)
         goto err;
 
     md = EVP_MD_CTX_new();

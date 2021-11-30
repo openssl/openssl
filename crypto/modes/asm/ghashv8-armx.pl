@@ -107,6 +107,11 @@ $code.=<<___;
 .type	gcm_init_v8,%function
 .align	4
 gcm_init_v8:
+___
+$code.=<<___	if ($flavour =~ /64/);
+	AARCH64_VALID_CALL_TARGET
+___
+$code.=<<___;
 	vld1.64		{$t1},[x1]		@ load input H
 	vmov.i8		$xC2,#0xe1
 	vshl.i64	$xC2,$xC2,#57		@ 0xc2.0
@@ -214,6 +219,11 @@ $code.=<<___;
 .type	gcm_gmult_v8,%function
 .align	4
 gcm_gmult_v8:
+___
+$code.=<<___	if ($flavour =~ /64/);
+	AARCH64_VALID_CALL_TARGET
+___
+$code.=<<___;
 	vld1.64		{$t1},[$Xi]		@ load Xi
 	vmov.i8		$xC2,#0xe1
 	vld1.64		{$H-$Hhl},[$Htbl]	@ load twisted H, ...
@@ -268,6 +278,7 @@ $code.=<<___;
 gcm_ghash_v8:
 ___
 $code.=<<___	if ($flavour =~ /64/);
+	AARCH64_VALID_CALL_TARGET
 	cmp		$len,#64
 	b.hs		.Lgcm_ghash_v8_4x
 ___

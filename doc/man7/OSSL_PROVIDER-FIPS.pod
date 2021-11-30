@@ -6,7 +6,7 @@ OSSL_PROVIDER-FIPS - OpenSSL FIPS provider
 
 =head1 DESCRIPTION
 
-The OpenSSL FIPS provider is a special provider that conforms to the Federal 
+The OpenSSL FIPS provider is a special provider that conforms to the Federal
 Information Processing Standards (FIPS) specified in FIPS 140-2. This 'module'
 contains an approved set of cryptographic algorithms that is validated by an
 accredited testing laboratory.
@@ -86,13 +86,15 @@ The OpenSSL FIPS provider supports these operations and algorithms:
 
 =item HKDF, see L<EVP_KDF-HKDF(7)>
 
+=item TLS13-KDF, see L<EVP_KDF-TLS13_KDF(7)>
+
 =item SSKDF, see L<EVP_KDF-SSKDF(7)>
 
 =item PBKDF2, see L<EVP_KDF-PBKDF2(7)>
 
 =item SSHKDF, see L<EVP_KDF-SSHKDF(7)>
 
-=item TLS1-PRF, see L<EVP_KDF-TLS1-PRF(7)>
+=item TLS1-PRF, see L<EVP_KDF-TLS1_PRF(7)>
 
 =item KBKDF, see L<EVP_KDF-KBKDF(7)>
 
@@ -114,11 +116,7 @@ The OpenSSL FIPS provider supports these operations and algorithms:
 
 =item X25519, see L<EVP_KEYEXCH-X25519(7)>
 
-This has the property "provider=fips,fips=no"
-
 =item X448, see L<EVP_KEYEXCH-X448(7)>
-
-This has the property "provider=fips,fips=no"
 
 =back
 
@@ -129,6 +127,10 @@ This has the property "provider=fips,fips=no"
 =item DSA, see L<EVP_KEYEXCH-DSA(7)>
 
 =item RSA, see L<EVP_SIGNATURE-RSA(7)>
+
+=item X25519, see L<EVP_SIGNATURE-ED25519(7)>
+
+=item X448, see L<EVP_SIGNATURE-ED448(7)>
 
 =item HMAC, see L<EVP_SIGNATURE-HMAC(7)>
 
@@ -212,6 +214,10 @@ Known answer test for a digest.
 
 Known answer test for a signature.
 
+=item "PCT_Signature" (B<OSSL_SELF_TEST_TYPE_PCT_SIGNATURE>)
+
+Pairwise Consistency check for a signature.
+
 =item "KAT_KDF" (B<OSSL_SELF_TEST_TYPE_KAT_KDF>)
 
 Known answer test for a key derivation function.
@@ -224,7 +230,7 @@ Known answer test for key agreement.
 
 Known answer test for a Deterministic Random Bit Generator.
 
-=item "Pairwise_Consistency_Test" (B<OSSL_SELF_TEST_TYPE_PCT>)
+=item "Conditional_PCT" (B<OSSL_SELF_TEST_TYPE_PCT>)
 
 Conditional test that is run during the generation of key pairs.
 
@@ -298,6 +304,10 @@ Signature tests used with the "KAT_Signature" type.
 Key agreement tests used with the "KAT_KA" type.
 
 =item "HKDF" (B<OSSL_SELF_TEST_DESC_KDF_HKDF>)
+
+=item "TLS13_KDF_EXTRACT" (B<OSSL_SELF_TEST_DESC_KDF_TLS13_EXTRACT>)
+
+=item "TLS13_KDF_EXPAND" (B<OSSL_SELF_TEST_DESC_KDF_TLS13_EXPAND>)
 
 =item "SSKDF" (B<OSSL_SELF_TEST_DESC_KDF_SSKDF>)
 

@@ -81,7 +81,7 @@ As a reminder, the AlgorithmIdentifier is specified like this:
     -- From RFC 3280, section 4.1.1.2
     AlgorithmIdentifier  ::=  SEQUENCE  {
          algorithm               OBJECT IDENTIFIER,
-         parameters              ANY DEFINED BY algorithm OPTIONAL  }    
+         parameters              ANY DEFINED BY algorithm OPTIONAL  }
 
 And the RSASSA-PSS OID and parameters are specified like this:
 

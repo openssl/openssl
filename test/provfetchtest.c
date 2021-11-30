@@ -213,7 +213,7 @@ static int dummy_provider_init(const OSSL_CORE_HANDLE *handle,
      * Do some work using the child libctx, to make sure this is possible from
      * inside the init function.
      */
-    if (!RAND_bytes_ex(libctx, buf, sizeof(buf), 0))
+    if (RAND_bytes_ex(libctx, buf, sizeof(buf), 0) <= 0)
         return 0;
 
     return 1;
@@ -246,7 +246,7 @@ static int fetch_test(int tst)
             || !TEST_ptr(dummyprov = OSSL_PROVIDER_load(libctx, "dummy-prov")))
         goto err;
 
-    switch(tst) {
+    switch (tst) {
     case 0:
         decoder = OSSL_DECODER_fetch(libctx, "DUMMY", NULL);
         if (!TEST_ptr(decoder))

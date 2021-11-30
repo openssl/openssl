@@ -324,6 +324,15 @@ static int afalg_fin_cipher_aio(afalg_aio *aio, int sfd, unsigned char *buf,
         }
         if (eval > 0) {
 
+#ifdef OSSL_SANITIZE_MEMORY
+            /*
+             * In a memory sanitiser build, the changes to memory made by the
+             * system call aren't reliably detected.  By initialising the
+             * memory here, the sanitiser is told that they are okay.
+             */
+            memset(events, 0, sizeof(events));
+#endif
+
             /* Get results of AIO read */
             r = io_getevents(aio->aio_ctx, 1, MAX_INFLIGHTS,
                              events, &timeout);
@@ -674,11 +683,8 @@ static int afalg_cipher_cleanup(EVP_CIPHER_CTX *ctx)
     }
 
     actx = (afalg_ctx *) EVP_CIPHER_CTX_get_cipher_data(ctx);
-    if (actx == NULL || actx->init_done != MAGIC_INIT_NUM) {
-        ALG_WARN("%s afalg ctx passed\n",
-                 ctx == NULL ? "NULL" : "Uninitialised");
-        return 0;
-    }
+    if (actx == NULL || actx->init_done != MAGIC_INIT_NUM)
+        return 1;
 
     close(actx->sfd);
     close(actx->bfd);
@@ -781,7 +787,7 @@ static int bind_afalg(ENGINE *e)
      * now, as bind_aflag can only be called by one thread at a
      * time.
      */
-    for(i = 0; i < OSSL_NELEM(afalg_cipher_nids); i++) {
+    for (i = 0; i < OSSL_NELEM(afalg_cipher_nids); i++) {
         if (afalg_aes_cbc(afalg_cipher_nids[i]) == NULL) {
             AFALGerr(AFALG_F_BIND_AFALG, AFALG_R_INIT_FAILED);
             return 0;
@@ -910,7 +916,7 @@ static int afalg_finish(ENGINE *e)
 static int free_cbc(void)
 {
     short unsigned int i;
-    for(i = 0; i < OSSL_NELEM(afalg_cipher_nids); i++) {
+    for (i = 0; i < OSSL_NELEM(afalg_cipher_nids); i++) {
         EVP_CIPHER_meth_free(cbc_handle[i]._hidden);
         cbc_handle[i]._hidden = NULL;
     }

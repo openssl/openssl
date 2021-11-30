@@ -116,6 +116,7 @@ static int x509_pubkey_ex_new_ex(ASN1_VALUE **pval, const ASN1_ITEM *it,
         || !x509_pubkey_ex_populate((ASN1_VALUE **)&ret, NULL)
         || !x509_pubkey_set0_libctx(ret, libctx, propq)) {
         x509_pubkey_ex_free((ASN1_VALUE **)&ret, NULL);
+        ret = NULL;
         ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
     } else {
         *pval = (ASN1_VALUE *)ret;
@@ -288,14 +289,28 @@ X509_PUBKEY *X509_PUBKEY_dup(const X509_PUBKEY *a)
             || (pubkey->algor = X509_ALGOR_dup(a->algor)) == NULL
             || (pubkey->public_key = ASN1_BIT_STRING_new()) == NULL
             || !ASN1_BIT_STRING_set(pubkey->public_key,
-                                    a->public_key->data, a->public_key->length)
-            || (a->pkey != NULL && !EVP_PKEY_up_ref(a->pkey))) {
+                                    a->public_key->data,
+                                    a->public_key->length)) {
         x509_pubkey_ex_free((ASN1_VALUE **)&pubkey,
                             ASN1_ITEM_rptr(X509_PUBKEY_INTERNAL));
         ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    pubkey->pkey = a->pkey;
+
+    if (a->pkey != NULL) {
+        ERR_set_mark();
+        pubkey->pkey = EVP_PKEY_dup(a->pkey);
+        if (pubkey->pkey == NULL) {
+            pubkey->flag_force_legacy = 1;
+            if (x509_pubkey_decode(&pubkey->pkey, pubkey) <= 0) {
+                x509_pubkey_ex_free((ASN1_VALUE **)&pubkey,
+                                    ASN1_ITEM_rptr(X509_PUBKEY_INTERNAL));
+                ERR_clear_last_mark();
+                return NULL;
+            }
+        }
+        ERR_pop_to_mark();
+    }
     return pubkey;
 }
 

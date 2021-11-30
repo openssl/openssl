@@ -388,7 +388,7 @@ size_t data_collect_method(RAND_POOL *pool)
         uint32_t status;
         uint32_t efn;
         IOSB iosb;
-        $DESCRIPTOR(SYSDEVICE,"SYS$SYSDEVICE:");
+        $DESCRIPTOR(SYSDEVICE, "SYS$SYSDEVICE:");
 
         if ((status = sys$getdviw(EFN$C_ENF, 0, &SYSDEVICE, DVI_items,
                                   0, 0, 0, 0, 0)) != SS$_NORMAL) {
@@ -479,7 +479,7 @@ int ossl_pool_add_nonce_data(RAND_POOL *pool)
     struct {
         pid_t pid;
         CRYPTO_THREAD_ID tid;
-        uint64_t time;
+        unsigned __int64 time;
     } data;
 
     /* Erase the entire structure including any padding */
@@ -580,7 +580,7 @@ int ossl_rand_pool_add_additional_data(RAND_POOL *pool)
 {
     struct {
         CRYPTO_THREAD_ID tid;
-        uint64_t time;
+        unsigned __int64 time;
     } data;
 
     /* Erase the entire structure including any padding */

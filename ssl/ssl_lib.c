@@ -1770,6 +1770,8 @@ static int ssl_start_async_job(SSL *s, struct ssl_async_args *args,
                  (s->waitctx, ssl_async_wait_ctx_cb, s))
             return -1;
     }
+
+    s->rwstate = SSL_NOTHING;
     switch (ASYNC_start_job(&s->job, s->waitctx, &ret, func, args,
                             sizeof(struct ssl_async_args))) {
     case ASYNC_ERR:
@@ -2262,6 +2264,11 @@ int SSL_key_update(SSL *s, int updatetype)
         return 0;
     }
 
+    if (RECORD_LAYER_write_pending(&s->rlayer)) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_BAD_WRITE_RETRY);
+        return 0;
+    }
+
     ossl_statem_set_in_init(s, 1);
     s->key_update = updatetype;
     return 1;
@@ -2328,7 +2335,7 @@ int SSL_new_session_ticket(SSL *s)
             || !SSL_IS_TLS13(s))
         return 0;
     s->ext.extra_tickets_expected++;
-    if (s->rlayer.wbuf[0].left == 0 && !SSL_in_init(s))
+    if (!RECORD_LAYER_write_pending(&s->rlayer) && !SSL_in_init(s))
         ossl_statem_set_in_init(s, 1);
     return 1;
 }
@@ -3934,7 +3941,7 @@ const SSL_METHOD *ssl_bad_method(int ver)
 
 const char *ssl_protocol_to_string(int version)
 {
-    switch(version)
+    switch (version)
     {
     case TLS1_3_VERSION:
         return "TLSv1.3";

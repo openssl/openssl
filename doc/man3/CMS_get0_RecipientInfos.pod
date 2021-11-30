@@ -140,7 +140,7 @@ L<ERR_get_error(3)>, L<CMS_decrypt(3)>
 
 =head1 HISTORY
 
-B<CMS_RecipientInfo_kari_set0_pkey_and_peer> and B<CMS_RecipientInfo_kari_set0_pkey> 
+B<CMS_RecipientInfo_kari_set0_pkey_and_peer> and B<CMS_RecipientInfo_kari_set0_pkey>
 were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT

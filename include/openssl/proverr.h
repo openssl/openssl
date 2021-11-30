@@ -59,6 +59,7 @@
 # define PROV_R_INVALID_DIGEST                            122
 # define PROV_R_INVALID_DIGEST_LENGTH                     166
 # define PROV_R_INVALID_DIGEST_SIZE                       218
+# define PROV_R_INVALID_INPUT_LENGTH                      230
 # define PROV_R_INVALID_ITERATION_COUNT                   123
 # define PROV_R_INVALID_IV_LENGTH                         109
 # define PROV_R_INVALID_KEY                               158

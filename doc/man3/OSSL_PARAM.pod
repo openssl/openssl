@@ -306,11 +306,11 @@ This example is for setting parameters on some object:
     #include <openssl/core.h>
 
     const char *foo = "some string";
-    size_t foo_l = strlen(foo) + 1;
+    size_t foo_l = strlen(foo);
     const char bar[] = "some other string";
     OSSL_PARAM set[] = {
         { "foo", OSSL_PARAM_UTF8_STRING_PTR, &foo, foo_l, 0 },
-        { "bar", OSSL_PARAM_UTF8_STRING, &bar, sizeof(bar), 0 },
+        { "bar", OSSL_PARAM_UTF8_STRING, &bar, sizeof(bar) - 1, 0 },
         { NULL, 0, NULL, 0, 0 }
     };
 
@@ -338,10 +338,10 @@ could fill in the parameters like this:
     for (i = 0; params[i].key != NULL; i++) {
         if (strcmp(params[i].key, "foo") == 0) {
             *(char **)params[i].data = "foo value";
-            params[i].return_size = 10; /* size of "foo value" */
+            params[i].return_size = 9; /* length of "foo value" string */
         } else if (strcmp(params[i].key, "bar") == 0) {
             memcpy(params[i].data, "bar value", 10);
-            params[i].return_size = 10; /* size of "bar value" */
+            params[i].return_size = 9; /* length of "bar value" string */
         }
         /* Ignore stuff we don't know */
     }

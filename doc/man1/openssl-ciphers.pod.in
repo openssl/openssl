@@ -115,6 +115,10 @@ used. The format is described below.
 The cipher list consists of one or more I<cipher strings> separated by colons.
 Commas or spaces are also acceptable separators but colons are normally used.
 
+The cipher string may reference a cipher using its standard name from
+the IANA TLS Cipher Suites Registry
+(L<https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-4>).
+
 The actual cipher string can take several different forms.
 
 It can consist of a single cipher suite such as B<RC4-SHA>.

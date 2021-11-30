@@ -108,7 +108,7 @@ OSSL_STORE_INFO_new_CERT() and OSSL_STORE_INFO_new_CRL()
 create a B<OSSL_STORE_INFO> object to hold the given input object.
 On success the input object is consumed.
 
-Additionally, for B<OSSL_STORE_INFO_NAME>` objects,
+Additionally, for B<OSSL_STORE_INFO_NAME> objects,
 OSSL_STORE_INFO_set0_NAME_description() can be used to add an extra
 description.
 This description is meant to be human readable and should be used for

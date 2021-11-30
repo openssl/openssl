@@ -183,7 +183,7 @@ static int test_sm2_crypt(const EC_GROUP *group,
     if (!TEST_mem_eq(ctext, ctext_len, expected, ctext_len))
         goto done;
 
-    if (!TEST_true(ossl_sm2_plaintext_size(key, digest, ctext_len, &ptext_len))
+    if (!TEST_true(ossl_sm2_plaintext_size(ctext, ctext_len, &ptext_len))
             || !TEST_int_eq(ptext_len, msg_len))
         goto done;
 
@@ -209,6 +209,7 @@ static int test_sm2_crypt(const EC_GROUP *group,
 static int sm2_crypt_test(void)
 {
     int testresult = 0;
+    EC_GROUP *gm_group = NULL;
     EC_GROUP *test_group =
         create_EC_group
         ("8542D69E4C044F18E8B92435BF6FF7DE457283915C45517D722EDB8B08F1DFC3",
@@ -251,9 +252,49 @@ static int sm2_crypt_test(void)
             "88E3C5AAFC0413229E6C9AEE2BB92CAD649FE2C035689785DA33"))
         goto done;
 
+    /* From Annex C in both GM/T0003.5-2012 and GB/T 32918.5-2016.*/
+    gm_group = create_EC_group(
+         "fffffffeffffffffffffffffffffffffffffffff00000000ffffffffffffffff",
+         "fffffffeffffffffffffffffffffffffffffffff00000000fffffffffffffffc",
+         "28e9fa9e9d9f5e344d5a9e4bcf6509a7f39789f515ab8f92ddbcbd414d940e93",
+         "32c4ae2c1f1981195f9904466a39c9948fe30bbff2660be1715a4589334c74c7",
+         "bc3736a2f4f6779c59bdcee36b692153d0a9877cc62a474002df32e52139f0a0",
+         "fffffffeffffffffffffffffffffffff7203df6b21c6052b53bbf40939d54123",
+         "1");
+
+    if (!TEST_ptr(gm_group))
+        goto done;
+
+    if (!test_sm2_crypt(
+            gm_group,
+            EVP_sm3(),
+            /* privkey (from which the encrypting public key is derived) */
+            "3945208F7B2144B13F36E38AC6D39F95889393692860B51A42FB81EF4DF7C5B8",
+            /* plaintext message */
+            "encryption standard",
+            /* ephemeral nonce k */
+            "59276E27D506861A16680F3AD9C02DCCEF3CC1FA3CDBE4CE6D54B80DEAC1BC21",
+            /*
+             * expected ciphertext, the field values are from GM/T 0003.5-2012
+             * (Annex C), but serialized following the ASN.1 format specified
+             * in GM/T 0009-2012 (Sec. 7.2).
+             */
+            "307C" /* SEQUENCE, 0x7c bytes */
+              "0220" /* INTEGER, 0x20 bytes */
+                "04EBFC718E8D1798620432268E77FEB6415E2EDE0E073C0F4F640ECD2E149A73"
+              "0221" /* INTEGER, 0x21 bytes */
+                "00" /* leading 00 due to DER for pos. int with topmost bit set */
+                "E858F9D81E5430A57B36DAAB8F950A3C64E6EE6A63094D99283AFF767E124DF0"
+              "0420" /* OCTET STRING, 0x20 bytes */
+                "59983C18F809E262923C53AEC295D30383B54E39D609D160AFCB1908D0BD8766"
+              "0413" /* OCTET STRING, 0x13 bytes */
+                "21886CA989CA9C7D58087307CA93092D651EFA"))
+        goto done;
+
     testresult = 1;
  done:
     EC_GROUP_free(test_group);
+    EC_GROUP_free(gm_group);
 
     return testresult;
 }
@@ -329,6 +370,7 @@ static int test_sm2_sign(const EC_GROUP *group,
 static int sm2_sig_test(void)
 {
     int testresult = 0;
+    EC_GROUP *gm_group = NULL;
     /* From draft-shen-sm2-ecdsa-02 */
     EC_GROUP *test_group =
         create_EC_group
@@ -354,10 +396,42 @@ static int sm2_sig_test(void)
                         "6FC6DAC32C5D5CF10C77DFB20F7C2EB667A457872FB09EC56327A67EC7DEEBE7")))
         goto done;
 
+    /* From Annex A in both GM/T0003.5-2012 and GB/T 32918.5-2016.*/
+    gm_group = create_EC_group(
+        "fffffffeffffffffffffffffffffffffffffffff00000000ffffffffffffffff",
+        "fffffffeffffffffffffffffffffffffffffffff00000000fffffffffffffffc",
+        "28e9fa9e9d9f5e344d5a9e4bcf6509a7f39789f515ab8f92ddbcbd414d940e93",
+        "32c4ae2c1f1981195f9904466a39c9948fe30bbff2660be1715a4589334c74c7",
+        "bc3736a2f4f6779c59bdcee36b692153d0a9877cc62a474002df32e52139f0a0",
+        "fffffffeffffffffffffffffffffffff7203df6b21c6052b53bbf40939d54123",
+        "1");
+
+    if (!TEST_ptr(gm_group))
+        goto done;
+
+    if (!TEST_true(test_sm2_sign(
+                    gm_group,
+                    /* the default ID specified in GM/T 0009-2012 (Sec. 10).*/
+                    SM2_DEFAULT_USERID,
+                    /* privkey */
+                    "3945208F7B2144B13F36E38AC6D39F95889393692860B51A42FB81EF4DF7C5B8",
+                    /* plaintext message */
+                    "message digest",
+                    /* ephemeral nonce k */
+                    "59276E27D506861A16680F3AD9C02DCCEF3CC1FA3CDBE4CE6D54B80DEAC1BC21",
+                    /* expected signature, the field values are from GM/T 0003.5-2012,
+                       Annex A. */
+                    /* signature R, 0x20 bytes */
+                    "F5A03B0648D2C4630EEAC513E1BB81A15944DA3827D5B74143AC7EACEEE720B3",
+                    /* signature S, 0x20 bytes */
+                    "B1B6AA29DF212FD8763182BC0D421CA1BB9038FD1F7F42D4840B69C485BBC1AA")))
+        goto done;
+
     testresult = 1;
 
  done:
     EC_GROUP_free(test_group);
+    EC_GROUP_free(gm_group);
 
     return testresult;
 }

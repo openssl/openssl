@@ -239,6 +239,21 @@ Sets the scrypt work factor parameter p in the associated KDF ctx.
 
 Sets the scrypt work factor parameter maxmem in the associated KDF ctx.
 
+=item "prefix" (B<OSSL_KDF_PARAM_PREFIX>) <octet string>
+
+Sets the prefix string using by the TLS 1.3 version of HKDF in the
+associated KDF ctx.
+
+=item "label" (B<OSSL_KDF_PARAM_LABEL>) <octet string>
+
+Sets the label string using by the TLS 1.3 version of HKDF in the
+associated KDF ctx.
+
+=item "data" (B<OSSL_KDF_PARAM_DATA>) <octet string>
+
+Sets the context string using by the TLS 1.3 version of HKDF in the
+associated KDF ctx.
+
 =item "info" (B<OSSL_KDF_PARAM_INFO>) <octet string>
 
 Sets the optional shared info in the associated KDF ctx.

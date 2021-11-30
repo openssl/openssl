@@ -45,11 +45,13 @@ my @files = qw(
                 evpciph_aes_stitched.txt
                 evpciph_des3_common.txt
                 evpkdf_hkdf.txt
+                evpkdf_kbkdf_counter.txt
                 evpkdf_pbkdf1.txt
                 evpkdf_pbkdf2.txt
                 evpkdf_ss.txt
                 evpkdf_ssh.txt
                 evpkdf_tls12_prf.txt
+                evpkdf_tls13_kdf.txt
                 evpkdf_x942.txt
                 evpkdf_x963.txt
                 evpmac_common.txt
@@ -85,6 +87,7 @@ my @defltfiles = qw(
                      evpciph_aria.txt 
                      evpciph_bf.txt
                      evpciph_camellia.txt
+                     evpciph_camellia_cts.txt
                      evpciph_cast5.txt
                      evpciph_chacha.txt
                      evpciph_des.txt

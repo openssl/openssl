@@ -439,11 +439,12 @@ char *test_mk_file_path(const char *dir, const char *file)
     char *dir_end;
     char dir_end_sep;
 # endif
-    size_t len = strlen(dir) + strlen(sep) + strlen(file) + 1;
+    size_t dirlen = dir != NULL ? strlen(dir) : 0;
+    size_t len = dirlen + strlen(sep) + strlen(file) + 1;
     char *full_file = OPENSSL_zalloc(len);
 
     if (full_file != NULL) {
-        if (dir != NULL && dir[0] != '\0') {
+        if (dir != NULL && dirlen > 0) {
             OPENSSL_strlcpy(full_file, dir, len);
 # ifdef OPENSSL_SYS_VMS
             /*

@@ -41,7 +41,7 @@ OpenSSL_version_num, OPENSSL_info
 Deprecated:
 
  /* from openssl/opensslv.h */
- #define OPENSSL_VERSION_NUMBER 0xnnnnnnnnnL
+ #define OPENSSL_VERSION_NUMBER 0xnnnnnnnnL
 
  /* from openssl/crypto.h */
  unsigned long OpenSSL_version_num();

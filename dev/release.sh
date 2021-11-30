@@ -20,7 +20,7 @@ Usage: release.sh [ options ... ]
 --final         Get out of "alpha" or "beta" and make a final release.
                 Implies --branch.
 
---branch        Create a release branch 'openssl-{major}.{minor}.x',
+--branch        Create a release branch 'openssl-{major}.{minor}',
                 where '{major}' and '{minor}' are the major and minor
                 version numbers.
 
@@ -218,7 +218,7 @@ if (echo "$orig_branch" \
         | grep -E -q \
                -e '^master$' \
                -e '^OpenSSL_[0-9]+_[0-9]+_[0-9]+[a-z]*-stable$' \
-               -e '^openssl-[0-9]+\.[0-9]+\.x$'); then
+               -e '^openssl-[0-9]+\.[0-9]+$'); then
     :
 elif $force; then
     :
@@ -253,7 +253,7 @@ get_version
 # changes for the release, the update branch is where we make the post-
 # release changes
 update_branch="$orig_branch"
-release_branch="openssl-$SERIES.x"
+release_branch="openssl-$SERIES"
 
 # among others, we only create a release branch if the patch number is zero
 if [ "$update_branch" = "$release_branch" ] || [ $PATCH -ne 0 ]; then
@@ -471,7 +471,7 @@ for fixup in "$HERE/dev/release-aux"/fixup-*-postrelease.pl; do
         perl -pi $fixup $file
 done
 
-$VERBOSE "== Comitting updates"
+$VERBOSE "== Committing updates"
 git add -u
 git commit $git_quiet -m "Prepare for $release_text"
 if [ -n "$reviewers" ]; then
@@ -502,7 +502,7 @@ if $do_branch; then
             perl -pi $fixup $file
     done
 
-    $VERBOSE "== Comitting updates"
+    $VERBOSE "== Committing updates"
     git add -u
     git commit $git_quiet -m "Prepare for $release_text"
     if [ -n "$reviewers" ]; then
@@ -694,9 +694,9 @@ This implies B<--branch>.
 
 =item B<--branch>
 
-Create a branch specific for the I<SERIES>.x release series, if it doesn't
+Create a branch specific for the I<SERIES> release series, if it doesn't
 already exist, and switch to it.  The exact branch name will be
-C<< openssl-I<SERIES>.x >>.
+C<< openssl-I<SERIES> >>.
 
 =item B<--no-upload>
 
@@ -751,7 +751,7 @@ C<< OpenSSL_I<VERSION> >> for regular releases, or
 C<< OpenSSL_I<VERSION>-preI<n> >> for pre-releases.
 
 From OpenSSL 3.0 ongoing, the release branches are named
-C<< openssl-I<SERIES>.x >>, and the release tags are named
+C<< openssl-I<SERIES> >>, and the release tags are named
 C<< openssl-I<VERSION> >> for regular releases, or
 C<< openssl-I<VERSION>-alphaI<n> >> for alpha releases
 and C<< openssl-I<VERSION>-betaI<n> >> for beta releases.

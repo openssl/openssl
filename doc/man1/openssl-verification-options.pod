@@ -21,7 +21,7 @@ It is a complicated process consisting of a number of steps
 and depending on numerous options.
 The most important of them are detailed in the following sections.
 
-In a nutshell, a valid chain of certifciates needs to be built up and verified
+In a nutshell, a valid chain of certificates needs to be built up and verified
 starting from the I<target certificate> that is to be verified
 and ending in a certificate that due to some policy is trusted.
 Verification is done relative to the given I<purpose>, which is the intended use
@@ -130,7 +130,7 @@ each of its sub-fields equals the corresponding subject key identifier, serial
 number, and issuer field of the candidate issuer certificate,
 as far as the respective fields are present in both certificates.
 
-item *
+=item *
 
 The certificate signature algorithm used to sign the subject certificate
 is supported and
@@ -274,50 +274,50 @@ among others, the following certificate well-formedness conditions are checked:
 
 =over 4
 
-=item -
+=item *
 
 The basicConstraints of CA certificates must be marked critical.
 
-=item -
+=item *
 
 CA certificates must explicitly include the keyUsage extension.
 
-=item -
+=item *
 
 If a pathlenConstraint is given the key usage keyCertSign must be allowed.
 
-=item -
+=item *
 
 The pathlenConstraint must not be given for non-CA certificates.
 
-=item -
+=item *
 
 The issuer name of any certificate must not be empty.
 
-=item -
+=item *
 
 The subject name of CA certs, certs with keyUsage crlSign, and certs
 without subjectAlternativeName must not be empty.
 
-=item -
+=item *
 
 If a subjectAlternativeName extension is given it must not be empty.
 
-=item -
+=item *
 
 The signatureAlgorithm field and the cert signature must be consistent.
 
-=item -
+=item *
 
 Any given authorityKeyIdentifier and any given subjectKeyIdentifier
 must not be marked critical.
 
-=item -
+=item *
 
 The authorityKeyIdentifier must be given for X.509v3 certs unless they
 are self-signed.
 
-=item -
+=item *
 
 The subjectKeyIdentifier must be given for all X.509v3 CA certs.
 

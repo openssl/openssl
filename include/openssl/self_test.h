@@ -29,11 +29,12 @@ extern "C" {
 # define OSSL_SELF_TEST_TYPE_MODULE_INTEGRITY   "Module_Integrity"
 # define OSSL_SELF_TEST_TYPE_INSTALL_INTEGRITY  "Install_Integrity"
 # define OSSL_SELF_TEST_TYPE_CRNG               "Continuous_RNG_Test"
-# define OSSL_SELF_TEST_TYPE_PCT                "Pairwise_Consistency_Test"
+# define OSSL_SELF_TEST_TYPE_PCT                "Conditional_PCT"
 # define OSSL_SELF_TEST_TYPE_KAT_CIPHER         "KAT_Cipher"
 # define OSSL_SELF_TEST_TYPE_KAT_ASYM_CIPHER    "KAT_AsymmetricCipher"
 # define OSSL_SELF_TEST_TYPE_KAT_DIGEST         "KAT_Digest"
 # define OSSL_SELF_TEST_TYPE_KAT_SIGNATURE      "KAT_Signature"
+# define OSSL_SELF_TEST_TYPE_PCT_SIGNATURE      "PCT_Signature"
 # define OSSL_SELF_TEST_TYPE_KAT_KDF            "KAT_KDF"
 # define OSSL_SELF_TEST_TYPE_KAT_KA             "KAT_KA"
 # define OSSL_SELF_TEST_TYPE_DRBG               "DRBG"
@@ -68,6 +69,8 @@ extern "C" {
 # define OSSL_SELF_TEST_DESC_KDF_SSHKDF     "SSHKDF"
 # define OSSL_SELF_TEST_DESC_KDF_TLS12_PRF  "TLS12_PRF"
 # define OSSL_SELF_TEST_DESC_KDF_KBKDF      "KBKDF"
+# define OSSL_SELF_TEST_DESC_KDF_TLS13_EXTRACT  "TLS13_KDF_EXTRACT"
+# define OSSL_SELF_TEST_DESC_KDF_TLS13_EXPAND   "TLS13_KDF_EXPAND"
 # define OSSL_SELF_TEST_DESC_RNG            "RNG"
 
 # ifdef __cplusplus

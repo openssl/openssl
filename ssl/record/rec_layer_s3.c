@@ -172,9 +172,9 @@ int ssl3_read_n(SSL *s, size_t n, size_t max, int extend, int clearold,
     /*
      * If extend == 0, obtain new n-byte packet; if extend == 1, increase
      * packet by another n bytes. The packet will be in the sub-array of
-     * s->s3.rbuf.buf specified by s->packet and s->packet_length. (If
-     * s->rlayer.read_ahead is set, 'max' bytes may be stored in rbuf [plus
-     * s->packet_length bytes if extend == 1].)
+     * s->rlayer.rbuf.buf specified by s->rlayer.packet and
+     * s->rlayer.packet_length. (If s->rlayer.read_ahead is set, 'max' bytes may
+     * be stored in rbuf [plus s->rlayer.packet_length bytes if extend == 1].)
      * if clearold == 1, move the packet to the start of the buffer; if
      * clearold == 0 then leave any old packets where they were
      */
@@ -1246,7 +1246,7 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf, size_t len,
  *
  * This function must handle any surprises the peer may have for us, such as
  * Alert records (e.g. close_notify) or renegotiation requests. ChangeCipherSpec
- * messages are treated as if they were handshake messages *if* the |recd_type|
+ * messages are treated as if they were handshake messages *if* the |recvd_type|
  * argument is non NULL.
  * Also if record payloads contain fragments too small to process, we store
  * them until there is enough for the respective protocol (the record protocol

@@ -1307,10 +1307,10 @@ DEPEND[html/man3/EVP_RAND.html]=man3/EVP_RAND.pod
 GENERATE[html/man3/EVP_RAND.html]=man3/EVP_RAND.pod
 DEPEND[man/man3/EVP_RAND.3]=man3/EVP_RAND.pod
 GENERATE[man/man3/EVP_RAND.3]=man3/EVP_RAND.pod
-DEPEND[html/man3/EVP_SIGNATURE_free.html]=man3/EVP_SIGNATURE_free.pod
-GENERATE[html/man3/EVP_SIGNATURE_free.html]=man3/EVP_SIGNATURE_free.pod
-DEPEND[man/man3/EVP_SIGNATURE_free.3]=man3/EVP_SIGNATURE_free.pod
-GENERATE[man/man3/EVP_SIGNATURE_free.3]=man3/EVP_SIGNATURE_free.pod
+DEPEND[html/man3/EVP_SIGNATURE.html]=man3/EVP_SIGNATURE.pod
+GENERATE[html/man3/EVP_SIGNATURE.html]=man3/EVP_SIGNATURE.pod
+DEPEND[man/man3/EVP_SIGNATURE.3]=man3/EVP_SIGNATURE.pod
+GENERATE[man/man3/EVP_SIGNATURE.3]=man3/EVP_SIGNATURE.pod
 DEPEND[html/man3/EVP_SealInit.html]=man3/EVP_SealInit.pod
 GENERATE[html/man3/EVP_SealInit.html]=man3/EVP_SealInit.pod
 DEPEND[man/man3/EVP_SealInit.3]=man3/EVP_SealInit.pod
@@ -3046,7 +3046,7 @@ html/man3/EVP_PKEY_todata.html \
 html/man3/EVP_PKEY_verify.html \
 html/man3/EVP_PKEY_verify_recover.html \
 html/man3/EVP_RAND.html \
-html/man3/EVP_SIGNATURE_free.html \
+html/man3/EVP_SIGNATURE.html \
 html/man3/EVP_SealInit.html \
 html/man3/EVP_SignInit.html \
 html/man3/EVP_VerifyInit.html \
@@ -3638,7 +3638,7 @@ man/man3/EVP_PKEY_todata.3 \
 man/man3/EVP_PKEY_verify.3 \
 man/man3/EVP_PKEY_verify_recover.3 \
 man/man3/EVP_RAND.3 \
-man/man3/EVP_SIGNATURE_free.3 \
+man/man3/EVP_SIGNATURE.3 \
 man/man3/EVP_SealInit.3 \
 man/man3/EVP_SignInit.3 \
 man/man3/EVP_VerifyInit.3 \
@@ -4107,6 +4107,10 @@ DEPEND[html/man7/EVP_KDF-KRB5KDF.html]=man7/EVP_KDF-KRB5KDF.pod
 GENERATE[html/man7/EVP_KDF-KRB5KDF.html]=man7/EVP_KDF-KRB5KDF.pod
 DEPEND[man/man7/EVP_KDF-KRB5KDF.7]=man7/EVP_KDF-KRB5KDF.pod
 GENERATE[man/man7/EVP_KDF-KRB5KDF.7]=man7/EVP_KDF-KRB5KDF.pod
+DEPEND[html/man7/EVP_KDF-PBKDF1.html]=man7/EVP_KDF-PBKDF1.pod
+GENERATE[html/man7/EVP_KDF-PBKDF1.html]=man7/EVP_KDF-PBKDF1.pod
+DEPEND[man/man7/EVP_KDF-PBKDF1.7]=man7/EVP_KDF-PBKDF1.pod
+GENERATE[man/man7/EVP_KDF-PBKDF1.7]=man7/EVP_KDF-PBKDF1.pod
 DEPEND[html/man7/EVP_KDF-PBKDF2.html]=man7/EVP_KDF-PBKDF2.pod
 GENERATE[html/man7/EVP_KDF-PBKDF2.html]=man7/EVP_KDF-PBKDF2.pod
 DEPEND[man/man7/EVP_KDF-PBKDF2.7]=man7/EVP_KDF-PBKDF2.pod
@@ -4115,6 +4119,10 @@ DEPEND[html/man7/EVP_KDF-PKCS12KDF.html]=man7/EVP_KDF-PKCS12KDF.pod
 GENERATE[html/man7/EVP_KDF-PKCS12KDF.html]=man7/EVP_KDF-PKCS12KDF.pod
 DEPEND[man/man7/EVP_KDF-PKCS12KDF.7]=man7/EVP_KDF-PKCS12KDF.pod
 GENERATE[man/man7/EVP_KDF-PKCS12KDF.7]=man7/EVP_KDF-PKCS12KDF.pod
+DEPEND[html/man7/EVP_KDF-PVKKDF.html]=man7/EVP_KDF-PVKKDF.pod
+GENERATE[html/man7/EVP_KDF-PVKKDF.html]=man7/EVP_KDF-PVKKDF.pod
+DEPEND[man/man7/EVP_KDF-PVKKDF.7]=man7/EVP_KDF-PVKKDF.pod
+GENERATE[man/man7/EVP_KDF-PVKKDF.7]=man7/EVP_KDF-PVKKDF.pod
 DEPEND[html/man7/EVP_KDF-SCRYPT.html]=man7/EVP_KDF-SCRYPT.pod
 GENERATE[html/man7/EVP_KDF-SCRYPT.html]=man7/EVP_KDF-SCRYPT.pod
 DEPEND[man/man7/EVP_KDF-SCRYPT.7]=man7/EVP_KDF-SCRYPT.pod
@@ -4127,6 +4135,10 @@ DEPEND[html/man7/EVP_KDF-SSHKDF.html]=man7/EVP_KDF-SSHKDF.pod
 GENERATE[html/man7/EVP_KDF-SSHKDF.html]=man7/EVP_KDF-SSHKDF.pod
 DEPEND[man/man7/EVP_KDF-SSHKDF.7]=man7/EVP_KDF-SSHKDF.pod
 GENERATE[man/man7/EVP_KDF-SSHKDF.7]=man7/EVP_KDF-SSHKDF.pod
+DEPEND[html/man7/EVP_KDF-TLS13_KDF.html]=man7/EVP_KDF-TLS13_KDF.pod
+GENERATE[html/man7/EVP_KDF-TLS13_KDF.html]=man7/EVP_KDF-TLS13_KDF.pod
+DEPEND[man/man7/EVP_KDF-TLS13_KDF.7]=man7/EVP_KDF-TLS13_KDF.pod
+GENERATE[man/man7/EVP_KDF-TLS13_KDF.7]=man7/EVP_KDF-TLS13_KDF.pod
 DEPEND[html/man7/EVP_KDF-TLS1_PRF.html]=man7/EVP_KDF-TLS1_PRF.pod
 GENERATE[html/man7/EVP_KDF-TLS1_PRF.html]=man7/EVP_KDF-TLS1_PRF.pod
 DEPEND[man/man7/EVP_KDF-TLS1_PRF.7]=man7/EVP_KDF-TLS1_PRF.pod
@@ -4191,6 +4203,10 @@ DEPEND[html/man7/EVP_MD-BLAKE2.html]=man7/EVP_MD-BLAKE2.pod
 GENERATE[html/man7/EVP_MD-BLAKE2.html]=man7/EVP_MD-BLAKE2.pod
 DEPEND[man/man7/EVP_MD-BLAKE2.7]=man7/EVP_MD-BLAKE2.pod
 GENERATE[man/man7/EVP_MD-BLAKE2.7]=man7/EVP_MD-BLAKE2.pod
+DEPEND[html/man7/EVP_MD-KECCAK.html]=man7/EVP_MD-KECCAK.pod
+GENERATE[html/man7/EVP_MD-KECCAK.html]=man7/EVP_MD-KECCAK.pod
+DEPEND[man/man7/EVP_MD-KECCAK.7]=man7/EVP_MD-KECCAK.pod
+GENERATE[man/man7/EVP_MD-KECCAK.7]=man7/EVP_MD-KECCAK.pod
 DEPEND[html/man7/EVP_MD-MD2.html]=man7/EVP_MD-MD2.pod
 GENERATE[html/man7/EVP_MD-MD2.html]=man7/EVP_MD-MD2.pod
 DEPEND[man/man7/EVP_MD-MD2.7]=man7/EVP_MD-MD2.pod
@@ -4548,11 +4564,14 @@ html/man7/EVP_CIPHER-SM4.html \
 html/man7/EVP_KDF-HKDF.html \
 html/man7/EVP_KDF-KB.html \
 html/man7/EVP_KDF-KRB5KDF.html \
+html/man7/EVP_KDF-PBKDF1.html \
 html/man7/EVP_KDF-PBKDF2.html \
 html/man7/EVP_KDF-PKCS12KDF.html \
+html/man7/EVP_KDF-PVKKDF.html \
 html/man7/EVP_KDF-SCRYPT.html \
 html/man7/EVP_KDF-SS.html \
 html/man7/EVP_KDF-SSHKDF.html \
+html/man7/EVP_KDF-TLS13_KDF.html \
 html/man7/EVP_KDF-TLS1_PRF.html \
 html/man7/EVP_KDF-X942-ASN1.html \
 html/man7/EVP_KDF-X942-CONCAT.html \
@@ -4569,6 +4588,7 @@ html/man7/EVP_MAC-KMAC.html \
 html/man7/EVP_MAC-Poly1305.html \
 html/man7/EVP_MAC-Siphash.html \
 html/man7/EVP_MD-BLAKE2.html \
+html/man7/EVP_MD-KECCAK.html \
 html/man7/EVP_MD-MD2.html \
 html/man7/EVP_MD-MD4.html \
 html/man7/EVP_MD-MD5-SHA1.html \
@@ -4669,11 +4689,14 @@ man/man7/EVP_CIPHER-SM4.7 \
 man/man7/EVP_KDF-HKDF.7 \
 man/man7/EVP_KDF-KB.7 \
 man/man7/EVP_KDF-KRB5KDF.7 \
+man/man7/EVP_KDF-PBKDF1.7 \
 man/man7/EVP_KDF-PBKDF2.7 \
 man/man7/EVP_KDF-PKCS12KDF.7 \
+man/man7/EVP_KDF-PVKKDF.7 \
 man/man7/EVP_KDF-SCRYPT.7 \
 man/man7/EVP_KDF-SS.7 \
 man/man7/EVP_KDF-SSHKDF.7 \
+man/man7/EVP_KDF-TLS13_KDF.7 \
 man/man7/EVP_KDF-TLS1_PRF.7 \
 man/man7/EVP_KDF-X942-ASN1.7 \
 man/man7/EVP_KDF-X942-CONCAT.7 \
@@ -4690,6 +4713,7 @@ man/man7/EVP_MAC-KMAC.7 \
 man/man7/EVP_MAC-Poly1305.7 \
 man/man7/EVP_MAC-Siphash.7 \
 man/man7/EVP_MD-BLAKE2.7 \
+man/man7/EVP_MD-KECCAK.7 \
 man/man7/EVP_MD-MD2.7 \
 man/man7/EVP_MD-MD4.7 \
 man/man7/EVP_MD-MD5-SHA1.7 \

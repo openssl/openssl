@@ -17,7 +17,10 @@
 #include <openssl/objects.h>
 #include <openssl/params.h>
 #include <openssl/err.h>
-#include <openssl/engine.h>
+#ifndef FIPS_MODULE
+# include <openssl/engine.h>
+# include <openssl/x509.h>
+#endif
 #include "crypto/bn.h"
 #include "crypto/ec.h"
 #include "ec_local.h"
@@ -292,7 +295,7 @@ int ossl_ec_group_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
     point_conversion_form_t genform;
 
     if (group == NULL) {
-        ERR_raise(ERR_LIB_EC,EC_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_EC, EC_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 

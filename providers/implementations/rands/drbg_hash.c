@@ -113,7 +113,7 @@ static int hash_df(PROV_DRBG *drbg, unsigned char *out,
             memcpy(out, vtmp, outlen);
             OPENSSL_cleanse(vtmp, hash->blocklen);
             break;
-        } else if(!EVP_DigestFinal(ctx, out, NULL)) {
+        } else if (!EVP_DigestFinal(ctx, out, NULL)) {
             return 0;
         }
 
@@ -212,7 +212,7 @@ static int hash_gen(PROV_DRBG *drbg, unsigned char *out, size_t outlen)
     if (outlen == 0)
         return 1;
     memcpy(hash->vtmp, hash->V, drbg->seedlen);
-    for(;;) {
+    for (;;) {
         if (!EVP_DigestInit_ex(hash->ctx, ossl_prov_digest_md(&hash->digest),
                                NULL)
                 || !EVP_DigestUpdate(hash->ctx, hash->vtmp, drbg->seedlen))
