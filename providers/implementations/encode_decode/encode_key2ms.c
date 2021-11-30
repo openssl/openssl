@@ -42,7 +42,7 @@ static int write_msblob(struct key2ms_ctx_st *ctx, OSSL_CORE_BIO *cout,
     int ret;
 
     if (out == NULL)
-        return -1;
+        return 0;
     ret = ispub ? i2b_PublicKey_bio(out, pkey) : i2b_PrivateKey_bio(out, pkey);
 
     BIO_free(out);
@@ -58,7 +58,7 @@ static int write_pvk(struct key2ms_ctx_st *ctx, OSSL_CORE_BIO *cout,
 
     out = ossl_bio_new_from_core_bio(ctx->provctx, cout);
     if (out == NULL)
-        return -1;
+        return 0;
     ret = i2b_PVK_bio_ex(out, pkey, ctx->pvk_encr_level,
                          ossl_pw_pvk_password, &ctx->pwdata, libctx, NULL);
     BIO_free(out);

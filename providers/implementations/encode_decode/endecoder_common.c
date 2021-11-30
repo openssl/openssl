@@ -92,7 +92,7 @@ int ossl_read_der(PROV_CTX *provctx, OSSL_CORE_BIO *cin,  unsigned char **data,
     int ok;
 
     if (in == NULL)
-        return -1;
+        return 0;
     ok = (asn1_d2i_read_bio(in, &mem) >= 0);
     if (ok) {
         *data = (unsigned char *)mem->data;
