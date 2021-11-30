@@ -1840,6 +1840,10 @@ int ssl_read_internal(SSL *s, void *buf, size_t num, size_t *readbytes)
      */
     ossl_statem_check_finish_init(s, 0);
 
+    /* Clear the prior error */
+    ERR_clear_error();
+    clear_sys_error();
+
     if ((s->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
         struct ssl_async_args args;
         int ret;
@@ -2029,6 +2033,10 @@ int ssl_write_internal(SSL *s, const void *buf, size_t num, size_t *written)
     }
     /* If we are a client and haven't sent the Finished we better do that */
     ossl_statem_check_finish_init(s, 1);
+
+    /* Clear the prior error */
+    ERR_clear_error();
+    clear_sys_error();
 
     if ((s->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
         int ret;
@@ -2227,6 +2235,10 @@ int SSL_shutdown(SSL *s)
         ERR_raise(ERR_LIB_SSL, SSL_R_UNINITIALIZED);
         return -1;
     }
+
+    /* Clear the prior error */
+    ERR_clear_error();
+    clear_sys_error();
 
     if (!SSL_in_init(s)) {
         if ((s->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
@@ -3785,17 +3797,6 @@ int SSL_get_error(const SSL *s, int i)
     if (i > 0)
         return SSL_ERROR_NONE;
 
-    /*
-     * Make things return SSL_ERROR_SYSCALL when doing SSL_do_handshake etc,
-     * where we do encode the error
-     */
-    if ((l = ERR_peek_error()) != 0) {
-        if (ERR_GET_LIB(l) == ERR_LIB_SYS)
-            return SSL_ERROR_SYSCALL;
-        else
-            return SSL_ERROR_SSL;
-    }
-
     if (SSL_want_read(s)) {
         bio = SSL_get_rbio(s);
         if (BIO_should_read(bio))
@@ -3857,6 +3858,17 @@ int SSL_get_error(const SSL *s, int i)
         (s->s3.warn_alert == SSL_AD_CLOSE_NOTIFY))
         return SSL_ERROR_ZERO_RETURN;
 
+    /*
+     * Make things return SSL_ERROR_SYSCALL when doing SSL_do_handshake etc,
+     * where we do encode the error
+     */
+    if ((l = ERR_peek_error()) != 0) {
+        if (ERR_GET_LIB(l) == ERR_LIB_SYS)
+            return SSL_ERROR_SYSCALL;
+        else
+            return SSL_ERROR_SSL;
+    }
+
     return SSL_ERROR_SYSCALL;
 }
 
@@ -3881,6 +3893,10 @@ int SSL_do_handshake(SSL *s)
     }
 
     ossl_statem_check_finish_init(s, -1);
+
+    /* Clear the prior error */
+    ERR_clear_error();
+    clear_sys_error();
 
     s->method->ssl_renegotiate_check(s, 0);
 
