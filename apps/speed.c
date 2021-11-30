@@ -60,6 +60,7 @@
 #include <openssl/dsa.h>
 #include "./testdsa.h"
 #include <openssl/modes.h>
+#include "crypto/param_trie.h"
 
 #ifndef HAVE_FORK
 # if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_VXWORKS)
@@ -451,6 +452,21 @@ static const OPT_PAIR sm2_choices[SM2_NUM] = {
 static double sm2_results[SM2_NUM][2];    /* 2 ops: sign then verify */
 #endif /* OPENSSL_NO_SM2 */
 
+enum { R_PARAM_PARAM, R_PARAM_TRIE, PARAM_NUM };
+static const OPT_PAIR param_choices[PARAM_NUM] = {
+    {"param", R_PARAM_PARAM},
+    {"trie", R_PARAM_TRIE}
+};
+static const char *params_to_find[] = {
+    OSSL_CIPHER_PARAM_IVLEN, 
+    OSSL_CIPHER_PARAM_MODE, OSSL_CIPHER_PARAM_AEAD,
+    OSSL_CIPHER_PARAM_CUSTOM_IV, OSSL_CIPHER_PARAM_CTS,
+    OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK, OSSL_CIPHER_PARAM_HAS_RAND_KEY,
+    OSSL_CIPHER_PARAM_KEYLEN, OSSL_CIPHER_PARAM_BLOCK_SIZE,
+};
+#define NUM_PARAMS_TO_FIND  OSSL_NELEM(params_to_find)
+static double param_results[PARAM_NUM][NUM_PARAMS_TO_FIND];
+
 #define COND(unused_cond) (run && count < 0x7fffffff)
 #define COUNT(d) (count)
 
@@ -488,6 +504,7 @@ typedef struct loopargs_st {
 #endif
     EVP_CIPHER_CTX *ctx;
     EVP_MAC_CTX *mctx;
+    int num_params;
 } loopargs_t;
 static int run_benchmark(int async_jobs, int (*loop_function) (void *),
                          loopargs_t * loopargs);
@@ -1332,6 +1349,80 @@ static EVP_PKEY *get_ecdsa(const EC_CURVE *curve)
     return key;
 }
 
+static void params_build_list(OSSL_PARAM *p, int n, int *var)
+{
+    int i;
+
+    for (i = 0; i < n; i++)
+        *p++ = OSSL_PARAM_construct_int(params_to_find[i], var);
+    *p = OSSL_PARAM_construct_end();
+}
+
+static int PARAM_PARAM_loop(void *args)
+{
+    loopargs_t *tempargs = *(loopargs_t **) args;
+    OSSL_PARAM params[NUM_PARAMS_TO_FIND + 1];
+    int count, dummy = 0, n = tempargs->num_params;
+    size_t i;
+
+    params_build_list(params, n, &dummy);
+    for (count = 0; COND(c[R_PARAM_PARAM][testnum]); count++)
+        for (i = 0; i < NUM_PARAMS_TO_FIND; i++)
+            if (OSSL_PARAM_locate(params, params_to_find[i])
+                != (i < (size_t)n ? params : NULL)) {
+                ERR_print_errors_fp(stdout);
+                return -1;
+            }
+    return count;
+}
+
+static int PARAM_PTRIE_loop(void *args)
+{
+    loopargs_t *tempargs = *(loopargs_t **) args;
+    OSSL_PARAM params[NUM_PARAMS_TO_FIND + 1];
+    OSSL_PTRIE *pt;
+    int count, dummy = 0, n = tempargs->num_params;
+    OSSL_PTRIE_PARAM_IDX indicies[NUM_PARAMS_TO_FIND];
+    size_t i;
+
+    params_build_list(params, n, &dummy);
+    if ((pt = ossl_ptrie_new(params)) == NULL)
+        return -1;
+    for (count = 0; COND(c[R_PARAM_TRIE][testnum]); count++) {
+        if (!ossl_ptrie_scan(pt, params, NUM_PARAMS_TO_FIND, indicies))
+            return -1;
+        for (i = 0; i < NUM_PARAMS_TO_FIND; i++)
+            if (ossl_ptrie_locate((int)i, params, indicies,
+                                  params_to_find[i]) == NULL)
+                return -1;
+    }
+    return count;
+}
+
+static void print_param_message(const char *name, int tm, int params)
+{
+    BIO_printf(bio_err, mr ? "+DT:%s:%d:%d:-\n"
+                           : "Doing %s with %d params for %d: ",
+               name, params,tm);
+    (void)BIO_flush(bio_err);
+    run = 1;
+    alarm(tm);
+}
+
+static void print_param_result(int params, int alg, int count, double time_used)
+{
+    if (count == -1) {
+        BIO_printf(bio_err, "%s error!\n", param_choices[alg].name);
+        ERR_print_errors(bio_err);
+        return;
+    }
+    BIO_printf(bio_err,
+               mr ? "+R:%d:%d:%s:%f\n" : "%d params %d %s's in %.2fs\n",
+               params, count,
+               param_choices[alg].name, time_used);
+    param_results[alg][params] = ((double)count) / time_used;
+}
+
 #define stop_it(do_it, test_num)\
     memset(do_it + test_num, 0, OSSL_NELEM(do_it) - test_num);
 
@@ -1461,6 +1552,7 @@ int speed_main(int argc, char **argv)
     uint8_t ecdsa_doit[ECDSA_NUM] = { 0 };
     uint8_t ecdh_doit[EC_NUM] = { 0 };
     uint8_t eddsa_doit[EdDSA_NUM] = { 0 };
+    uint8_t param_doit[PARAM_NUM] = { 0 };
 
     /* checks declarated curves against choices list. */
     OPENSSL_assert(ed_curves[EdDSA_NUM - 1].nid == NID_ED448);
@@ -1716,6 +1808,11 @@ int speed_main(int argc, char **argv)
             continue;
         }
 #endif
+        if (strcmp(algo, "param") == 0) {
+            memset(param_doit, 1, sizeof(param_doit));
+            continue;
+        }
+
         BIO_printf(bio_err, "%s: Unknown algorithm %s\n", prog, algo);
         goto end;
     }
@@ -3100,6 +3197,22 @@ int speed_main(int argc, char **argv)
         }
     }
 #endif  /* OPENSSL_NO_DH */
+
+    for (testnum = 0; testnum < PARAM_NUM; testnum++) {
+        if (!param_doit[testnum])
+            continue;
+        for (i = 1; i < NUM_PARAMS_TO_FIND; i++) {
+            print_param_message(param_choices[testnum].name, seconds.sym, i);
+            loopargs[i].num_params = i;
+            Time_F(START);
+            if (testnum == R_PARAM_PARAM)
+                count = run_benchmark(async_jobs, PARAM_PARAM_loop, loopargs);
+            else
+                count = run_benchmark(async_jobs, PARAM_PTRIE_loop, loopargs);
+            d = Time_F(STOP);
+            print_param_result(i, testnum, count, d);
+        }
+    }
 #ifndef NO_FORK
  show_res:
 #endif
@@ -3270,6 +3383,21 @@ int speed_main(int argc, char **argv)
                    1.0 / ffdh_results[k][0], ffdh_results[k][0]);
     }
 #endif /* OPENSSL_NO_DH */
+
+    for (i = 1; i < NUM_PARAMS_TO_FIND; i++)
+        for (k = 0; k < PARAM_NUM; k++) {
+            if (!param_doit[k])
+                continue;
+            if (mr)
+                printf("+F8:%u:%s:%d:%f:%f\n",
+                       k, param_choices[k].name, i,
+                       param_results[k][i], 1.0 / param_results[k][i]);
+
+            else
+                printf("%-5s %d %12.8fs %8.1f\n", param_choices[k].name, i,
+                       1.0 / param_results[k][i], param_results[k][i]);
+        }
+ 
 
     ret = 0;
 
