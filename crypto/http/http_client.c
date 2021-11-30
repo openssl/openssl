@@ -634,7 +634,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
                 /* fall through */
             default:
                 rctx->state = OHS_ERROR;
-                return 0;
+                goto next_line;
             }
         }
         key = buf;
@@ -693,11 +693,6 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
         if (*p != '\0') /* not end of headers */
             goto next_line;
 
-        if (rctx->expected_ct != NULL && !found_expected_ct) {
-            ERR_raise_data(ERR_LIB_HTTP, HTTP_R_MISSING_CONTENT_TYPE,
-                           "expected=%s", rctx->expected_ct);
-            return 0;
-        }
         if (rctx->keep_alive != 0 /* do not let server initiate keep_alive */
                 && !found_keep_alive /* otherwise there is no change */) {
             if (rctx->keep_alive == 2) {
@@ -708,6 +703,14 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
             rctx->keep_alive = 0;
         }
 
+        if (rctx->state == OHS_ERROR)
+            return 0;
+
+        if (rctx->expected_ct != NULL && !found_expected_ct) {
+            ERR_raise_data(ERR_LIB_HTTP, HTTP_R_MISSING_CONTENT_TYPE,
+                           "expected=%s", rctx->expected_ct);
+            return 0;
+        }
         if (rctx->state == OHS_REDIRECT) {
             /* http status code indicated redirect but there was no Location */
             ERR_raise(ERR_LIB_HTTP, HTTP_R_MISSING_REDIRECT_LOCATION);
