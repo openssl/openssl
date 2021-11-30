@@ -162,9 +162,14 @@ on **Ubuntu**, run:
 	./Configure no-shared linux-x86_64 -lm
 	make -j
 
-on **macOS**, run:
+on **macOS** (x86_64), run:
 
 	./Configure no-shared darwin64-x86_64-cc
+	make -j
+
+on **macOS** (M1 / arm64), run:
+
+	./Configure no-shared darwin64-arm64-cc
 	make -j
 
 #### Windows
