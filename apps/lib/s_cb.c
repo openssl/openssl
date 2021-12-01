@@ -149,6 +149,7 @@ int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key,
                        STACK_OF(X509) *chain, int build_chain)
 {
     int chflags = chain ? SSL_BUILD_CHAIN_FLAG_CHECK : 0;
+
     if (cert == NULL)
         return 1;
     if (SSL_CTX_use_certificate(ctx, cert) <= 0) {
@@ -202,6 +203,7 @@ static void ssl_print_client_cert_types(BIO *bio, SSL *s)
     const unsigned char *p;
     int i;
     int cert_type_num = SSL_get0_certificate_types(s, &p);
+
     if (!cert_type_num)
         return;
     BIO_puts(bio, "Client Certificate Types: ");
@@ -231,22 +233,22 @@ static const char *get_sigtype(int nid)
     case EVP_PKEY_DSA:
         return "DSA";
 
-     case EVP_PKEY_EC:
+    case EVP_PKEY_EC:
         return "ECDSA";
 
-     case NID_ED25519:
+    case NID_ED25519:
         return "Ed25519";
 
-     case NID_ED448:
+    case NID_ED448:
         return "Ed448";
 
-     case NID_id_GostR3410_2001:
+    case NID_id_GostR3410_2001:
         return "gost2001";
 
-     case NID_id_GostR3410_2012_256:
+    case NID_id_GostR3410_2012_256:
         return "gost2012_256";
 
-     case NID_id_GostR3410_2012_512:
+    case NID_id_GostR3410_2012_512:
         return "gost2012_512";
 
     default:
@@ -257,6 +259,7 @@ static const char *get_sigtype(int nid)
 static int do_print_sigalgs(BIO *out, SSL *s, int shared)
 {
     int i, nsig, client;
+
     client = SSL_is_server(s) ? 0 : 1;
     if (shared)
         nsig = SSL_get_shared_sigalgs(s, 0, NULL, NULL, NULL, NULL, NULL);
@@ -299,6 +302,7 @@ static int do_print_sigalgs(BIO *out, SSL *s, int shared)
 int ssl_print_sigalgs(BIO *out, SSL *s)
 {
     int nid;
+
     if (!SSL_is_server(s))
         ssl_print_client_cert_types(out, s);
     do_print_sigalgs(out, s, 0);
@@ -315,6 +319,7 @@ int ssl_print_point_formats(BIO *out, SSL *s)
 {
     int i, nformats;
     const char *pformats;
+
     nformats = SSL_get0_ec_point_formats(s, &pformats);
     if (nformats <= 0)
         return 1;
@@ -898,6 +903,7 @@ static int set_cert_cb(SSL *ssl, void *arg)
     SSL_EXCERT *exc = arg;
 #ifdef CERT_CB_TEST_RETRY
     static int retry_cnt;
+
     if (retry_cnt < 5) {
         retry_cnt++;
         BIO_printf(bio_err,
@@ -996,6 +1002,7 @@ void ssl_excert_free(SSL_EXCERT *exc)
 int load_excert(SSL_EXCERT **pexc)
 {
     SSL_EXCERT *exc = *pexc;
+
     if (exc == NULL)
         return 1;
     /* If nothing in list, free and set to NULL */
@@ -1101,6 +1108,7 @@ static void print_raw_cipherlist(SSL *s)
     const unsigned char *rlist;
     static const unsigned char scsv_id[] = { 0, 0xFF };
     size_t i, rlistlen, num;
+
     if (!SSL_is_server(s))
         return;
     num = SSL_get0_raw_cipherlist(s, NULL);
@@ -1278,6 +1286,7 @@ static int add_crls_store(X509_STORE *st, STACK_OF(X509_CRL) *crls)
 int ssl_ctx_add_crls(SSL_CTX *ctx, STACK_OF(X509_CRL) *crls, int crl_download)
 {
     X509_STORE *st;
+
     st = SSL_CTX_get_cert_store(ctx);
     add_crls_store(st, crls);
     if (crl_download)
@@ -1294,6 +1303,7 @@ int ssl_load_stores(SSL_CTX *ctx,
 {
     X509_STORE *vfy = NULL, *ch = NULL;
     int rv = 0;
+
     if (vfyCApath != NULL || vfyCAfile != NULL || vfyCAstore != NULL) {
         vfy = X509_STORE_new();
         if (vfy == NULL)
@@ -1370,6 +1380,7 @@ static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
     int rv, show_bits = 1, cert_md = 0;
     const char *nm;
     int show_nm;
+
     rv = sdb->old_cb(s, ctx, op, bits, nid, other, ex);
     if (rv == 1 && sdb->verbose < 2)
         return 1;
@@ -1423,14 +1434,21 @@ static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
         {
             if (cert_md) {
                 int sig_nid = X509_get_signature_nid(other);
+
                 BIO_puts(sdb->out, OBJ_nid2sn(sig_nid));
             } else {
                 EVP_PKEY *pkey = X509_get0_pubkey(other);
-                const char *algname = "";
-                EVP_PKEY_asn1_get0_info(NULL, NULL, NULL, NULL,
-                                        &algname, EVP_PKEY_get0_asn1(pkey));
-                BIO_printf(sdb->out, "%s, bits=%d",
-                           algname, EVP_PKEY_get_bits(pkey));
+
+                if (pkey == NULL) {
+                    BIO_printf(sdb->out, "Public key missing");
+                } else {
+                    const char *algname = "";
+
+                    EVP_PKEY_asn1_get0_info(NULL, NULL, NULL, NULL,
+                                            &algname, EVP_PKEY_get0_asn1(pkey));
+                    BIO_printf(sdb->out, "%s, bits=%d",
+                            algname, EVP_PKEY_get_bits(pkey));
+                }
             }
             break;
         }
