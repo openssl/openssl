@@ -34,10 +34,8 @@ static int verify_signature(const OSSL_CMP_CTX *cmp_ctx,
         return 0;
 
     bio = BIO_new(BIO_s_mem()); /* may be NULL */
-    if (bio == NULL) {
-        ERR_raise(ERR_LIB_CMP, ERR_R_MALLOC_FAILURE);
+    if (bio == NULL)
         return 0;
-    }
     /* verify that keyUsage, if present, contains digitalSignature */
     if (!cmp_ctx->ignore_keyusage
             && (X509_get_key_usage(cert) & X509v3_KU_DIGITAL_SIGNATURE) == 0) {
