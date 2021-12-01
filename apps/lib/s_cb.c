@@ -1436,9 +1436,9 @@ static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
             } else {
                 EVP_PKEY *pkey = X509_get0_pubkey(other);
 
-                if (pkey == NULL)
+                if (pkey == NULL) {
                     BIO_printf(sdb->out, "Public key missing");
-                else {
+                } else {
                     const char *algname = "";
 
                     EVP_PKEY_asn1_get0_info(NULL, NULL, NULL, NULL,
