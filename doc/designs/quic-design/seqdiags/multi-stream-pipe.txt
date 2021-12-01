@@ -1,0 +1,49 @@
+title Option 7 Multi Stream via pipe
+
+autoactivation on
+par main thread
+activate Application
+loop until finished
+note over Application:Main loop shown here using Option 1\nThis could equally work using other\noptions
+Application->OpenSSL:OSSL_get_next_timeout()
+Application<--OpenSSL:t
+note over Application:Using option 1 means that the select\ncall can pass in the fds associated with\nstream pipes if the main thread is also\ngoing to be used for processing stream\ndata
+Application->Libc:select(...,t)
+Application<--Libc:fds
+Application->OpenSSL:OSSL_process_packets(fds)
+OpenSSL->Libc:readmsg()
+space
+deactivate Libc
+OpenSSL->OSSL_Stream:queue data
+OSSL_Stream->pipe:write()
+autoactivation off
+pipe->>(39)pipe:
+space -41
+autoactivation on
+space
+deactivate pipe
+deactivate OSSL_Stream
+space
+deactivate OpenSSL
+space
+Application<--OpenSSL:events[]
+Application->Application:handle_events(events)
+Application->*OSSL_Connection:<<create>>
+space
+deactivate OSSL_Connection
+deactivate Application
+end
+space
+deactivate Application
+thread stream thread
+activate Application
+note over Application:This model could support blocking\nor non-blocking streams
+Application->OSSL_Stream:read
+OSSL_Stream->pipe:read()
+space
+deactivate pipe
+space
+deactivate OSSL_Stream
+space
+deactivate Application
+end

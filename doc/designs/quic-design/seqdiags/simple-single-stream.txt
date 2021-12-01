@@ -1,0 +1,32 @@
+title Option 5 Simple Single Stream Blocking
+
+autoactivation on
+activate Application
+Application->OSSL_Stream:read()
+loop until data available
+OSSL_Stream->OSSL_Connection:read_packets()
+OSSL_Connection->OSSL_Connection:t = get_next_timeout()
+space
+deactivate OSSL_Connection
+OSSL_Connection->Libc:select(...,t)
+OSSL_Connection<--Libc:fds
+OSSL_Connection->OSSL_Connection:process_packets(fds)
+OSSL_Connection->Libc:readmsg()
+space
+deactivate Libc
+OSSL_Connection->OSSL_Stream:queue data
+space
+deactivate OSSL_Stream
+space
+deactivate OSSL_Connection
+OSSL_Connection->OSSL_Connection:handle_events(events)
+
+space
+deactivate OSSL_Connection
+space
+deactivate OSSL_Connection
+end
+space
+deactivate OSSL_Stream
+space
+deactivate Application

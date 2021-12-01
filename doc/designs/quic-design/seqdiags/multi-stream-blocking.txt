@@ -1,0 +1,49 @@
+title Option 6 Multi Stream Blocking
+
+autoactivation on
+par main thread
+activate Application
+loop until finished
+note over Application:Main loop shown here using Option 2\nThis could equally work using other\noptions
+Application->OpenSSL:OSSL_select()
+OpenSSL->OpenSSL:t = get_next_timeout()
+space
+deactivate OpenSSL
+OpenSSL->Libc:select(...,t)
+OpenSSL<--Libc:fds
+OpenSSL->OpenSSL:process_packets(fds)
+OpenSSL->Libc:readmsg()
+space
+deactivate Libc
+OpenSSL->OSSL_Stream:queue data
+OSSL_Stream->Pthreads:pthread_cond_signal()
+autoactivation off
+Pthreads->>(34)Pthreads:
+space -36
+autoactivation on
+space
+deactivate Pthreads
+deactivate OSSL_Stream
+space
+deactivate OpenSSL
+space
+Application<--OpenSSL:events[]
+Application->Application:handle_events(events)
+Application->*OSSL_Connection:<<create>>
+space
+deactivate OSSL_Connection
+deactivate Application
+end
+space
+deactivate Application
+thread blocking stream thread
+activate Application
+Application->OSSL_Stream:read
+OSSL_Stream->Pthreads:pthread_cond_wait()
+space
+deactivate Pthreads
+space
+deactivate OSSL_Stream
+space
+deactivate Application
+end

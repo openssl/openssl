@@ -1,0 +1,29 @@
+title Option 4: OSSL_select() simplified
+
+autoactivation on
+activate Application
+loop until finished
+Application->OpenSSL:OSSL_select()
+OpenSSL->OpenSSL:t = get_next_timeout()
+space
+deactivate OpenSSL
+OpenSSL->Libc:select(...,t);
+OpenSSL<--Libc:fds
+Application<--OpenSSL:fds
+Application->OpenSSL:OSSL_process_packets(fds)
+OpenSSL->Libc:readmsg()
+space
+deactivate Libc
+OpenSSL->OSSL_Stream:queue data
+space 
+deactivate OSSL_Stream
+Application<--OpenSSL:events[]
+Application->Application:handle_events(events)
+Application->OSSL_Stream:read()
+space
+deactivate OSSL_Stream
+Application->*OSSL_Connection:<<create>>
+space
+deactivate OSSL_Connection
+deactivate Application
+end
