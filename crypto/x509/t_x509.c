@@ -470,6 +470,10 @@ int X509_STORE_CTX_print_verify_cb(int ok, X509_STORE_CTX *ctx)
         int cert_error = X509_STORE_CTX_get_error(ctx);
         BIO *bio = BIO_new(BIO_s_mem()); /* may be NULL */
 
+        if (bio == NULL) {
+            ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
         BIO_printf(bio, "%s at depth = %d error = %d (%s)\n",
                    X509_STORE_CTX_get0_parent_ctx(ctx) != NULL
                    ? "CRL path validation"
