@@ -68,6 +68,8 @@ I<bio> is used for writing requests and I<rbio> for reading responses.
 As soon as the client has flushed I<bio> the server must be ready to provide
 a response or indicate a waiting condition via I<rbio>.
 
+If I<bio> is given, it is an error to provide I<proxy> or I<no_proxy> arguments,
+while I<server> and I<port> arguments may be given to support diagnostic output.
 If I<bio> is NULL the optional I<proxy> parameter can be used to set an
 HTTP(S) proxy to use (unless overridden by "no_proxy" settings).
 If TLS is not used this defaults to the environment variable C<http_proxy>
