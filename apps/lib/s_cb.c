@@ -1424,8 +1424,10 @@ static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
             } else {
                 EVP_PKEY *pkey = X509_get0_pubkey(other);
                 const char *algname = "";
-                EVP_PKEY_asn1_get0_info(NULL, NULL, NULL, NULL,
-                                        &algname, EVP_PKEY_get0_asn1(pkey));
+                if (pkey != NULL) {
+                    EVP_PKEY_asn1_get0_info(NULL, NULL, NULL, NULL,
+                                            &algname, EVP_PKEY_get0_asn1(pkey));
+                }
                 BIO_printf(sdb->out, "%s, bits=%d",
                            algname, EVP_PKEY_get_bits(pkey));
             }
