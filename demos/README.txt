@@ -31,6 +31,7 @@ gmac.c                 Demonstration of GMAC message authentication
 
 pkey:
 EVP_PKEY_EC_keygen.c   Generate an EC key.
+EVP_PKEY_RSA_keygen.c  Generate RSA keypair, save to PEM, and output key params.
 
 smime:
 
