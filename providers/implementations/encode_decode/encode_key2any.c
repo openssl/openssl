@@ -401,7 +401,7 @@ static int key_to_type_specific_pem_bio_cb(BIO *out, const void *key,
 {
     return
         PEM_ASN1_write_bio(k2d, pemname, out, key, ctx->cipher,
-                           NULL, 0, ossl_pw_pem_password, &ctx->pwdata) > 0;
+                           NULL, 0, cb, cbarg) > 0;
 }
 
 static int key_to_type_specific_pem_priv_bio(BIO *out, const void *key,
