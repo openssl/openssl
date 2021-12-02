@@ -16,9 +16,9 @@ EVP_PKEY_cmp - public key parameter and comparison functions
  int EVP_PKEY_parameters_eq(const EVP_PKEY *a, const EVP_PKEY *b);
  int EVP_PKEY_eq(const EVP_PKEY *a, const EVP_PKEY *b);
 
-Deprecated since OpenSSL 3.0, can be hidden entirely by defining
-B<OPENSSL_API_COMPAT> with a suitable version value, see
-L<openssl_user_macros(7)>:
+The following functions have been deprecated since OpenSSL 3.0, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
+see L<openssl_user_macros(7)>:
 
  int EVP_PKEY_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b);
  int EVP_PKEY_cmp(const EVP_PKEY *a, const EVP_PKEY *b);
