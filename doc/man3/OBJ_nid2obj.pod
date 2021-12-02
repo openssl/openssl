@@ -37,9 +37,9 @@ OBJ_dup, OBJ_txt2obj, OBJ_obj2txt, OBJ_create, OBJ_cleanup, OBJ_add_sigid
 
  int OBJ_add_sigid(int signid, int dig_id, int pkey_id);
 
-Deprecated since OpenSSL 1.1.0, can be hidden entirely by defining
-B<OPENSSL_API_COMPAT> with a suitable version value, see
-L<openssl_user_macros(7)>:
+The following function has been deprecated since OpenSSL 1.1.0, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
+see L<openssl_user_macros(7)>:
 
  void OBJ_cleanup(void);
 
