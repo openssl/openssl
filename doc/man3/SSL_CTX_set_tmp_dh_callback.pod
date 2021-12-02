@@ -16,9 +16,9 @@ SSL_set_tmp_dh_callback, SSL_set_tmp_dh
  int SSL_CTX_set0_tmp_dh_pkey(SSL_CTX *ctx, EVP_PKEY *dhpkey);
  int SSL_set0_tmp_dh_pkey(SSL *s, EVP_PKEY *dhpkey);
 
-Deprecated since OpenSSL 3.0, can be hidden entirely by defining
-B<OPENSSL_API_COMPAT> with a suitable version value, see
-L<openssl_user_macros(7)>:
+The following functions have been deprecated since OpenSSL 3.0, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
+see L<openssl_user_macros(7)>:
 
  void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,
                                   DH *(*tmp_dh_callback)(SSL *ssl, int is_export,
