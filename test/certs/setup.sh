@@ -282,6 +282,12 @@ NC=$NC ./mkcert.sh genca "Test NC sub CA" ncca3-key ncca3-cert \
     ./mkcert.sh geneealt goodcn1-key goodcn1-cert ncca1-key ncca1-cert \
     "IP = 127.0.0.1" "IP = 192.168.0.1"
 
+# all DNS-like CNs allowed by CA1, no SANs
+
+./mkcert.sh req goodcn2-key "O = Good NC Test Certificate 1" \
+    "CN=www.good.org" | \
+    ./mkcert.sh geneeconfig goodcn2-key goodcn2-cert ncca1-key ncca1-cert
+
 # Some DNS-like CNs not permitted by CA1, no DNS SANs.
 
 ./mkcert.sh req badcn1-key "O = Good NC Test Certificate 1" \
