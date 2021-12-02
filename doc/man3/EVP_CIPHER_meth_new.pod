@@ -17,9 +17,9 @@ EVP_CIPHER_meth_get_ctrl
 
  #include <openssl/evp.h>
 
-Deprecated since OpenSSL 3.0, can be hidden entirely by defining
-B<OPENSSL_API_COMPAT> with a suitable version value, see
-L<openssl_user_macros(7)>:
+The following functions have been deprecated since OpenSSL 3.0, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
+see L<openssl_user_macros(7)>:
 
  EVP_CIPHER *EVP_CIPHER_meth_new(int cipher_type, int block_size, int key_len);
  EVP_CIPHER *EVP_CIPHER_meth_dup(const EVP_CIPHER *cipher);
