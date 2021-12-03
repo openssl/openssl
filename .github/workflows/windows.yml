@@ -16,7 +16,7 @@ jobs:
       matrix:
         os:
           - windows-latest
-          - windows-2016
+          - windows-2022
         platform:
           - arch: win64
             config: VC-WIN64A enable-fips
@@ -31,6 +31,7 @@ jobs:
     - uses: ilammy/setup-nasm@v1
       with:
         platform: ${{ matrix.platform.arch }}
+    - uses: shogo82148/actions-setup-perl@v1
     - name: prepare the build directory
       run: mkdir _build
     - name: config
@@ -56,11 +57,12 @@ jobs:
       matrix:
         os:
           - windows-latest
-          - windows-2016
+          - windows-2022
     runs-on: ${{matrix.os}}
     steps:
     - uses: actions/checkout@v2
     - uses: ilammy/msvc-dev-cmd@v1
+    - uses: shogo82148/actions-setup-perl@v1
     - name: prepare the build directory
       run: mkdir _build
     - name: config
@@ -79,11 +81,12 @@ jobs:
       matrix:
         os:
           - windows-latest
-          - windows-2016
+          - windows-2022
     runs-on: ${{matrix.os}}
     steps:
     - uses: actions/checkout@v2
     - uses: ilammy/msvc-dev-cmd@v1
+    - uses: shogo82148/actions-setup-perl@v1
     - name: prepare the build directory
       run: mkdir _build
     - name: config
