@@ -2047,28 +2047,35 @@ static int save_free_certs(OSSL_CMP_CTX *ctx,
     return n;
 }
 
-static void print_itavs(STACK_OF(OSSL_CMP_ITAV) *itavs)
+static int print_itavs(const STACK_OF(OSSL_CMP_ITAV) *itavs)
 {
-    OSSL_CMP_ITAV *itav = NULL;
-    char buf[128];
-    int i, r;
-    int n = sk_OSSL_CMP_ITAV_num(itavs); /* itavs == NULL leads to 0 */
+    int i, ret = 1;
+    int n = sk_OSSL_CMP_ITAV_num(itavs);
 
-    if (n == 0) {
-        CMP_info("genp contains no ITAV");
-        return;
+    if (n <= 0) { /* also in case itavs == NULL */
+        CMP_info("genp does not contain any ITAV");
+        return ret;
     }
 
-    for (i = 0; i < n; i++) {
-        itav = sk_OSSL_CMP_ITAV_value(itavs, i);
-        r = OBJ_obj2txt(buf, 128, OSSL_CMP_ITAV_get0_type(itav), 0);
-        if (r < 0)
-            CMP_err("could not get ITAV details");
-        else if (r == 0)
-            CMP_info("genp contains empty ITAV");
-        else
-            CMP_info1("genp contains ITAV of type: %s", buf);
+    for (i = 1; i <= n; i++) {
+        OSSL_CMP_ITAV *itav = sk_OSSL_CMP_ITAV_value(itavs, i - 1);
+        ASN1_OBJECT *type = OSSL_CMP_ITAV_get0_type(itav);
+        char name[80];
+
+        if (itav == NULL) {
+            CMP_err1("could not get ITAV #%d from genp", i);
+            ret = 0;
+            continue;
+        }
+        if (i2t_ASN1_OBJECT(name, sizeof(name), type) <= 0) {
+            CMP_err1("error parsing type of ITAV #%d from genp", i);
+            ret = 0;
+        }
+        else {
+            CMP_info2("ITAV #%d from genp type=%s", i, name);
+        }
     }
+    return ret;
 }
 
 static char opt_item[SECTION_NAME_MAX + 1];
@@ -2942,9 +2949,10 @@ int cmp_main(int argc, char **argv)
                 }
 
                 if ((itavs = OSSL_CMP_exec_GENM_ses(cmp_ctx)) != NULL) {
-                    print_itavs(itavs);
+                    ret = print_itavs(itavs);
                     sk_OSSL_CMP_ITAV_pop_free(itavs, OSSL_CMP_ITAV_free);
-                    ret = 1;
+                } else {
+                    CMP_err("could not obtain ITAVs from genp");
                 }
                 break;
             }
