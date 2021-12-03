@@ -16,7 +16,7 @@ jobs:
       matrix:
         os:
           - windows-latest
-          - windows-2016
+          - windows-2022
         platform:
           - arch: win64
             config: VC-WIN64A enable-fips
@@ -56,7 +56,7 @@ jobs:
       matrix:
         os:
           - windows-latest
-          - windows-2016
+          - windows-2022
     runs-on: ${{matrix.os}}
     steps:
     - uses: actions/checkout@v2
@@ -79,7 +79,7 @@ jobs:
       matrix:
         os:
           - windows-latest
-          - windows-2016
+          - windows-2022
     runs-on: ${{matrix.os}}
     steps:
     - uses: actions/checkout@v2
