@@ -247,6 +247,8 @@ struct ossl_cmp_itav_st {
         OSSL_CMP_MSGS *origPKIMessage;
         /* NID_id_it_suppLangTags - Supported Language Tags */
         STACK_OF(ASN1_UTF8STRING) *suppLangTagsValue;
+        /* NID_id_it_caCerts - CA Certificates */
+        STACK_OF(X509) *caCerts;
         /* this is to be used for so far undeclared objects */
         ASN1_TYPE *other;
     } infoValue;

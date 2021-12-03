@@ -672,7 +672,7 @@ int ossl_cmp_msg_gen_push1_ITAVs(OSSL_CMP_MSG *msg,
 }
 
 /*
- * Creates a new General Message/Response with an empty itav stack
+ * Creates a new General Message/Response with a copy of the given itav stack
  * returns a pointer to the PKIMessage on success, NULL on error
  */
 static OSSL_CMP_MSG *gen_new(OSSL_CMP_CTX *ctx,

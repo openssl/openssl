@@ -21,7 +21,7 @@ typedef struct
     X509 *refCert;             /* cert to expect for oldCertID in kur/rr msg */
     X509 *certOut;             /* certificate to be returned in cp/ip/kup msg */
     STACK_OF(X509) *chainOut;  /* chain of certOut to add to extraCerts field */
-    STACK_OF(X509) *caPubsOut; /* certs to return in caPubs field of ip msg */
+    STACK_OF(X509) *caPubsOut; /* used in caPubs of ip and in caCerts of genp */
     OSSL_CMP_PKISI *statusOut; /* status for ip/cp/kup/rp msg unless polling */
     int sendError;             /* send error response on given request type */
     OSSL_CMP_MSG *certReq;     /* ir/cr/p10cr/kur remembered while polling */
@@ -29,7 +29,6 @@ typedef struct
     int curr_pollCount;        /* number of polls so far for current request */
     int checkAfterTime;        /* time the client should wait between polling */
 } mock_srv_ctx;
-
 
 static void mock_srv_ctx_free(mock_srv_ctx *ctx)
 {
@@ -331,6 +330,21 @@ static int process_genm(OSSL_CMP_SRV_CTX *srv_ctx,
             || sk_OSSL_CMP_ITAV_num(in) > 1) {
         ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROCESSING_MESSAGE);
         return 0;
+    }
+    if (sk_OSSL_CMP_ITAV_num(in) == 1) {
+        OSSL_CMP_ITAV *req = sk_OSSL_CMP_ITAV_value(in, 0), *rsp;
+        ASN1_OBJECT *obj = OSSL_CMP_ITAV_get0_type(req);
+
+        if (OBJ_obj2nid(obj) == NID_id_it_caCerts) {
+            if ((*out = sk_OSSL_CMP_ITAV_new_reserve(NULL, 1)) == NULL)
+                return 0;
+            if ((rsp = OSSL_CMP_ITAV_new_caCerts(ctx->caPubsOut)) == NULL) {
+                sk_OSSL_CMP_ITAV_free(*out);
+                return 0;
+            }
+            (void)sk_OSSL_CMP_ITAV_push(*out, rsp);
+            return 1;
+        }
     }
 
     *out = sk_OSSL_CMP_ITAV_deep_copy(in, OSSL_CMP_ITAV_dup,

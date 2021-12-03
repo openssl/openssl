@@ -277,7 +277,7 @@ const OPTIONS cmp_options[] = {
     OPT_SECTION("Generic message"),
     {"cmd", OPT_CMD, 's', "CMP request to send: ir/cr/kur/p10cr/rr/genm"},
     {"infotype", OPT_INFOTYPE, 's',
-     "InfoType name for requesting specific info in genm, e.g. 'signKeyPairTypes'"},
+     "InfoType name for requesting specific info in genm, e.g. 'caCerts'"},
     {"geninfo", OPT_GENINFO, 's',
      "generalInfo integer values to place in request PKIHeader with given OID"},
     {OPT_MORE_STR, 0, 0,
@@ -395,7 +395,7 @@ const OPTIONS cmp_options[] = {
     {"extracertsout", OPT_EXTRACERTSOUT, 's',
      "File to save extra certificates received in the extraCerts field"},
     {"cacertsout", OPT_CACERTSOUT, 's',
-     "File to save CA certificates received in the caPubs field of 'ip' messages"},
+     "File to save CA certs received in caPubs field or genp with id-it-caCerts"},
 
     OPT_SECTION("Client authentication"),
     {"ref", OPT_REF, 's',
@@ -1615,6 +1615,8 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
             CMP_warn1("-days %s", msg);
         if (opt_popo != OSSL_CRMF_POPO_NONE - 1)
             CMP_warn1("-popo %s", msg);
+        if (opt_out_trusted != NULL)
+            CMP_warn1("-out_trusted %s", msg);
     } else if (opt_newkey != NULL) {
         const char *file = opt_newkey;
         const int format = opt_keyform;
@@ -1873,8 +1875,9 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         }
         goto set_path;
     }
-    if (!OSSL_HTTP_parse_url(opt_server, &use_ssl, NULL /* user */, &host, &port,
-                             &portnum, &path, NULL /* q */, NULL /* frag */)) {
+    if (!OSSL_HTTP_parse_url(opt_server, &use_ssl, NULL /* user */,
+                             &host, &port, &portnum,
+                             &path, NULL /* q */, NULL /* frag */)) {
         CMP_err1("cannot parse -server URL: %s", opt_server);
         goto err;
     }
@@ -1909,7 +1912,12 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
     if (!transform_opts())
         goto err;
 
-    if (opt_infotype_s != NULL) {
+    if (opt_infotype_s == NULL) {
+        if (opt_cmd == CMP_GENM)
+            CMP_warn("no -infotype option given for genm");
+    } else if (opt_cmd != CMP_GENM) {
+        CMP_warn("-infotype option is ignored for commands other than 'genm'");
+    } else {
         char id_buf[100] = "id-it-";
 
         strncat(id_buf, opt_infotype_s, sizeof(id_buf) - strlen(id_buf) - 1);
@@ -2136,9 +2144,8 @@ static int print_itavs(const STACK_OF(OSSL_CMP_ITAV) *itavs)
         if (i2t_ASN1_OBJECT(name, sizeof(name), type) <= 0) {
             CMP_err1("error parsing type of ITAV #%d from genp", i);
             ret = 0;
-        }
-        else {
-            CMP_info2("ITAV #%d from genp type=%s", i, name);
+        } else {
+            CMP_info2("ITAV #%d from genp infoType=%s", i, name);
         }
     }
     return ret;
@@ -2829,6 +2836,58 @@ static void print_status(void)
     OPENSSL_free(buf);
 }
 
+static int do_genm(OSSL_CMP_CTX *ctx)
+{
+    if (opt_infotype == NID_id_it_caCerts) {
+        STACK_OF(X509) *cacerts = NULL;
+
+        if (opt_cacertsout == NULL) {
+            CMP_err("Missing -cacertsout option for -infotype caCerts");
+            return 0;
+        }
+
+        if (!OSSL_CMP_get_caCerts(ctx, &cacerts))
+            return 0;
+
+        /* TODO possibly check authorization of sender/origin */
+        if (cacerts == NULL) {
+            CMP_warn("no CA certificate available");
+        } else if (save_free_certs(cacerts, opt_cacertsout, "CA") < 0) {
+            CMP_err1("Failed to store caCerts from genp in %s", opt_cacertsout);
+            return 0;
+        }
+        return 1;
+    } else {
+        OSSL_CMP_ITAV *req;
+        STACK_OF(OSSL_CMP_ITAV) *itavs;
+
+        if (opt_infotype != NID_undef) {
+            req = OSSL_CMP_ITAV_create(OBJ_nid2obj(opt_infotype), NULL);
+
+            CMP_warn1("No specific support for -infotype %s avaiable",
+                      opt_infotype_s);
+            if (req == NULL || !OSSL_CMP_CTX_push0_genm_ITAV(ctx, req)) {
+                CMP_err("Failed to create ITAV for genm");
+                return 0;
+            }
+        }
+
+        if ((itavs = OSSL_CMP_exec_GENM_ses(ctx)) != NULL) {
+            int res = print_itavs(itavs);
+
+            sk_OSSL_CMP_ITAV_pop_free(itavs, OSSL_CMP_ITAV_free);
+            return res;
+        }
+        if (1 /*
+               * TOOD when PR #19205 is merged: replace '1' by
+               * OSSL_CMP_CTX_get_status(ctx) != OSSL_CMP_PKISTATUS_request
+               */
+            )
+            CMP_err("Could not obtain valid response message on genm");
+        return 0;
+    }
+}
+
 int cmp_main(int argc, char **argv)
 {
     char *configfile = NULL;
@@ -3041,26 +3100,7 @@ int cmp_main(int argc, char **argv)
             ret = OSSL_CMP_exec_RR_ses(cmp_ctx);
             break;
         case CMP_GENM:
-            {
-                STACK_OF(OSSL_CMP_ITAV) *itavs;
-
-                if (opt_infotype != NID_undef) {
-                    OSSL_CMP_ITAV *itav =
-                        OSSL_CMP_ITAV_create(OBJ_nid2obj(opt_infotype), NULL);
-
-                    if (itav == NULL)
-                        goto err;
-                    OSSL_CMP_CTX_push0_genm_ITAV(cmp_ctx, itav);
-                }
-
-                if ((itavs = OSSL_CMP_exec_GENM_ses(cmp_ctx)) != NULL) {
-                    ret = print_itavs(itavs);
-                    sk_OSSL_CMP_ITAV_pop_free(itavs, OSSL_CMP_ITAV_free);
-                } else {
-                    CMP_err("could not obtain ITAVs from genp");
-                }
-                break;
-            }
+            ret = do_genm(cmp_ctx);
         default:
             break;
         }
