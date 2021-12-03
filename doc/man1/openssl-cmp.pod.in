@@ -236,6 +236,7 @@ ITAV B<infoType>s is printed to stdout.
 
 Set InfoType name to use for requesting specific info in B<genm>,
 e.g., C<signKeyPairTypes>.
+So far, there is specific support for C<caCerts>.
 
 =item B<-geninfo> I<OID:int:N>
 
@@ -655,7 +656,8 @@ field of the last received response message that is not a pollRep nor PKIConf.
 =item B<-cacertsout> I<filename>
 
 The file where to save the list of CA certificates contained in the caPubs field
-if a positive certificate response (i.e., IP, CP, or KUP) message was received.
+if a positive certificate response (i.e., IP, CP, or KUP) message was received
+or contained in a general response (genp) message with infoType C<caCerts>.
 
 =back
 

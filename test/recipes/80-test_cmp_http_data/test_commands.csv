@@ -44,8 +44,12 @@ expected,description, -section,val, -cmd,val,val2, -cacertsout,val,val2, -infoty
 0,revreason out of integer range, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,_RESULT_DIR/test.cert.pem, -revreason,010000000000000000000
 ,,,,,,,,,,,,,,,,,
 1,ir + infotype, -section,, -cmd,ir,,BLANK,,, -infotype,signKeyPairTypes,,BLANK,,BLANK,
+1,genm without -infotype, -section,, -cmd,genm,,BLANK,,, BLANK,,,BLANK,,BLANK,
 0,genm with missing infotype value, -section,, -cmd,genm,,BLANK,,, -infotype,,,BLANK,,BLANK,
 0,genm with invalid infotype value, -section,, -cmd,genm,,BLANK,,, -infotype,asdf,,BLANK,,BLANK,
+1,genm with infotype signKeyPairTypes, -section,, -cmd,genm,,BLANK,,, -infotype,signKeyPairTypes,,BLANK,,BLANK,
+0,genm with infotype caCerts but missing -cacertsout, -section,, -cmd,genm,,BLANK,,, -infotype,caCerts,,BLANK,,BLANK,
+1,genm with infotype caCerts, -section,, -cmd,genm,, -cacertsout,_RESULT_DIR/test.cacerts.pem,, -infotype,caCerts,,BLANK,,BLANK,
 ,,,,,,,,,,,,,,,,,,,,,,
 1,geninfo, -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -geninfo,1.2.3:int:987,BLANK,,BLANK,
 0,geninfo missing argument, -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -geninfo,,,,,
