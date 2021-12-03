@@ -314,7 +314,7 @@ ASN1_OBJECT *OBJ_nid2obj(int n)
     if (n == NID_undef)
         return NULL;
     if (n >= 0 && n < NUM_NID && nid_objs[n].nid != NID_undef)
-            return (ASN1_OBJECT *)&(nid_objs[n]);
+        return (ASN1_OBJECT *)&(nid_objs[n]);
 
     ad.type = ADDED_NID;
     ad.obj = &ob;
@@ -410,8 +410,8 @@ ASN1_OBJECT *OBJ_txt2obj(const char *s, int no_name)
     int i, j;
 
     if (!no_name) {
-        if ((nid = OBJ_sn2nid(s)) != NID_undef ||
-                (nid = OBJ_ln2nid(s)) != NID_undef) {
+        if ((nid = OBJ_sn2nid(s)) != NID_undef
+            || (nid = OBJ_ln2nid(s)) != NID_undef) {
             return OBJ_nid2obj(nid);
         }
         if (!ossl_isdigit(*s)) {
@@ -485,17 +485,19 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
         use_bn = 0;
         for (;;) {
             unsigned char c = *p++;
+
             len--;
-            if ((len == 0) && (c & 0x80))
+            if (len == 0 && (c & 0x80) != 0)
                 goto err;
             if (use_bn) {
-                if (!BN_add_word(bl, c & 0x7f))
+                if (!BN_add_word(bl, (c & 0x7f) != 0))
                     goto err;
-            } else
+            } else {
                 l |= c & 0x7f;
-            if (!(c & 0x80))
+            }
+            if ((c & 0x80) == 0)
                 break;
-            if (!use_bn && (l > (ULONG_MAX >> 7L))) {
+            if (!use_bn && l > (ULONG_MAX >> 7L)) {
                 if (bl == NULL && (bl = BN_new()) == NULL)
                     goto err;
                 if (!BN_set_word(bl, l))
@@ -505,8 +507,9 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
             if (use_bn) {
                 if (!BN_lshift(bl, bl, 7))
                     goto err;
-            } else
+            } else {
                 l <<= 7L;
+            }
         }
 
         if (first) {
@@ -516,13 +519,14 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
                 if (use_bn) {
                     if (!BN_sub_word(bl, 80))
                         goto err;
-                } else
+                } else {
                     l -= 80;
+                }
             } else {
                 i = (int)(l / 40);
                 l -= (long)(i * 40);
             }
-            if (buf && (buf_len > 1)) {
+            if (buf != NULL && buf_len > 1) {
                 *buf++ = i + '0';
                 *buf = '\0';
                 buf_len--;
@@ -536,7 +540,7 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
             if (!bndec)
                 goto err;
             i = strlen(bndec);
-            if (buf) {
+            if (buf != NULL) {
                 if (buf_len > 1) {
                     *buf++ = '.';
                     *buf = '\0';
@@ -557,7 +561,7 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
         } else {
             BIO_snprintf(tbuf, sizeof(tbuf), ".%lu", l);
             i = strlen(tbuf);
-            if (buf && (buf_len > 0)) {
+            if (buf && buf_len > 0) {
                 OPENSSL_strlcpy(buf, tbuf, buf_len);
                 if (i > buf_len) {
                     buf += buf_len;
