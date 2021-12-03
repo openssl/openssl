@@ -490,7 +490,7 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
             if (len == 0 && (c & 0x80) != 0)
                 goto err;
             if (use_bn) {
-                if (!BN_add_word(bl, (c & 0x7f) != 0))
+                if (!BN_add_word(bl, c & 0x7f))
                     goto err;
             } else {
                 l |= c & 0x7f;
