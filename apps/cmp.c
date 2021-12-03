@@ -1583,11 +1583,11 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
             && opt_oldcert == NULL && opt_cert == NULL)
         CMP_warn("missing -recipient, -srvcert, -issuer, -oldcert or -cert; recipient will be set to \"NULL-DN\"");
 
-    if (opt_cmd == CMP_P10CR || opt_cmd == CMP_RR) {
-        const char *msg = "option is ignored for 'p10cr' and 'rr' commands";
+    if (opt_cmd == CMP_P10CR || opt_cmd == CMP_RR || opt_cmd == CMP_GENM) {
+        const char *msg = "option is ignored for 'p10cr', 'rr', and 'genm' commands";
 
         if (opt_newkeypass != NULL)
-            CMP_warn1("-newkeytype %s", msg);
+            CMP_warn1("-newkeypass %s", msg);
         if (opt_newkey != NULL)
             CMP_warn1("-newkey %s", msg);
         if (opt_days != 0)
