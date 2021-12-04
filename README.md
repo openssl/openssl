@@ -1,5 +1,6 @@
-Creating a new branch is quick & simple
-=============================
+Creating a new branch is quick And simple
+============================
+>>>>>>> feature
 The new line add in the Dev branch 
 Welcome to the OpenSSL Project
 ==============================
