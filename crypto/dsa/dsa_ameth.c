@@ -485,7 +485,7 @@ static int dsa_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
     }
 
     if (!ossl_dsa_ffc_params_fromdata(dsa, params)
-        || !ossl_dsa_key_fromdata(dsa, params)
+        || !ossl_dsa_key_fromdata(dsa, params, 1)
         || !EVP_PKEY_assign_DSA(pkey, dsa)) {
         DSA_free(dsa);
         return 0;
