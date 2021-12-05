@@ -170,8 +170,12 @@ static int rsa_import(void *keydata, int selection, const OSSL_PARAM params[])
                                        &pss_defaults_set,
                                        params, rsa_type,
                                        ossl_rsa_get0_libctx(rsa));
-    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
-        ok = ok && ossl_rsa_fromdata(rsa, params);
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
+        int include_private =
+            selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
+
+        ok = ok && ossl_rsa_fromdata(rsa, params, include_private);
+    }
 
     return ok;
 }
@@ -198,8 +202,12 @@ static int rsa_export(void *keydata, int selection,
     if ((selection & OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS) != 0)
         ok = ok && (ossl_rsa_pss_params_30_is_unrestricted(pss_params)
                     || ossl_rsa_pss_params_30_todata(pss_params, tmpl, NULL));
-    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
-        ok = ok && ossl_rsa_todata(rsa, tmpl, NULL);
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
+        int include_private =
+            selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
+
+        ok = ok && ossl_rsa_todata(rsa, tmpl, NULL, include_private);
+    }
 
     if (!ok
         || (params = OSSL_PARAM_BLD_to_param(tmpl)) == NULL)
@@ -343,7 +351,7 @@ static int rsa_get_params(void *key, OSSL_PARAM params[])
     }
     return (rsa_type != RSA_FLAG_TYPE_RSASSAPSS
             || ossl_rsa_pss_params_30_todata(pss_params, NULL, params))
-        && ossl_rsa_todata(rsa, NULL, params);
+        && ossl_rsa_todata(rsa, NULL, params, 1);
 }
 
 static const OSSL_PARAM rsa_params[] = {

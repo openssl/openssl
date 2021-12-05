@@ -742,7 +742,7 @@ static int rsa_int_export_to(const EVP_PKEY *from, int rsa_type,
     if (RSA_get0_n(rsa) == NULL || RSA_get0_e(rsa) == NULL)
         goto err;
 
-    if (!ossl_rsa_todata(rsa, tmpl, NULL))
+    if (!ossl_rsa_todata(rsa, tmpl, NULL, 1))
         goto err;
 
     selection |= OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
@@ -835,7 +835,7 @@ static int rsa_int_import_from(const OSSL_PARAM params[], void *vpctx,
         goto err;
     }
 
-    if (!ossl_rsa_fromdata(rsa, params))
+    if (!ossl_rsa_fromdata(rsa, params, 1))
         goto err;
 
     switch (rsa_type) {

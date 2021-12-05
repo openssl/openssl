@@ -96,7 +96,8 @@ static int dsa_gen_type_name2id(const char *name)
     return -1;
 }
 
-static int dsa_key_todata(DSA *dsa, OSSL_PARAM_BLD *bld, OSSL_PARAM params[])
+static int dsa_key_todata(DSA *dsa, OSSL_PARAM_BLD *bld, OSSL_PARAM params[],
+                          int include_private)
 {
     const BIGNUM *priv = NULL, *pub = NULL;
 
@@ -104,7 +105,8 @@ static int dsa_key_todata(DSA *dsa, OSSL_PARAM_BLD *bld, OSSL_PARAM params[])
         return 0;
 
     DSA_get0_key(dsa, &pub, &priv);
-    if (priv != NULL
+    if (include_private
+        && priv != NULL
         && !ossl_param_build_set_bn(bld, params, OSSL_PKEY_PARAM_PRIV_KEY, priv))
         return 0;
     if (pub != NULL
@@ -182,8 +184,12 @@ static int dsa_import(void *keydata, int selection, const OSSL_PARAM params[])
 
     if ((selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0)
         ok = ok && ossl_dsa_ffc_params_fromdata(dsa, params);
-    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
-        ok = ok && ossl_dsa_key_fromdata(dsa, params);
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
+        int include_private =
+            selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
+
+        ok = ok && ossl_dsa_key_fromdata(dsa, params, include_private);
+    }
 
     return ok;
 }
@@ -201,8 +207,12 @@ static int dsa_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
 
     if ((selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0)
         ok = ok && ossl_ffc_params_todata(ossl_dsa_get0_params(dsa), tmpl, NULL);
-    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
-        ok = ok && dsa_key_todata(dsa, tmpl, NULL);
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
+        int include_private =
+            selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
+
+        ok = ok && dsa_key_todata(dsa, tmpl, NULL, include_private);
+    }
 
     if (!ok
         || (params = OSSL_PARAM_BLD_to_param(tmpl)) == NULL)
@@ -291,7 +301,7 @@ static ossl_inline int dsa_get_params(void *key, OSSL_PARAM params[])
         && !OSSL_PARAM_set_utf8_string(p, DSA_DEFAULT_MD))
         return 0;
     return ossl_ffc_params_todata(ossl_dsa_get0_params(dsa), NULL, params)
-           && dsa_key_todata(dsa, NULL, params);
+           && dsa_key_todata(dsa, NULL, params, 1);
 }
 
 static const OSSL_PARAM dsa_params[] = {
