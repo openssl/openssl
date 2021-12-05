@@ -201,8 +201,12 @@ static int dh_import(void *keydata, int selection, const OSSL_PARAM params[])
     if ((selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0)
         ok = ok && ossl_dh_params_fromdata(dh, params);
 
-    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
-        ok = ok && ossl_dh_key_fromdata(dh, params);
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
+        int include_private =
+            selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
+
+        ok = ok && ossl_dh_key_fromdata(dh, params, include_private);
+    }
 
     return ok;
 }
@@ -224,8 +228,13 @@ static int dh_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
 
     if ((selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0)
         ok = ok && ossl_dh_params_todata(dh, tmpl, NULL);
-    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
-        ok = ok && ossl_dh_key_todata(dh, tmpl, NULL);
+
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
+        int include_private =
+            selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
+
+        ok = ok && ossl_dh_key_todata(dh, tmpl, NULL, include_private);
+    }
 
     if (!ok
         || (params = OSSL_PARAM_BLD_to_param(tmpl)) == NULL) {
@@ -323,7 +332,7 @@ static ossl_inline int dh_get_params(void *key, OSSL_PARAM params[])
     }
 
     return ossl_dh_params_todata(dh, NULL, params)
-        && ossl_dh_key_todata(dh, NULL, params);
+        && ossl_dh_key_todata(dh, NULL, params, 1);
 }
 
 static const OSSL_PARAM dh_params[] = {
