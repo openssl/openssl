@@ -147,8 +147,7 @@ static int ktls_int_check_supported_cipher(OSSL_RECORD_LAYER *rl,
      */
 # ifdef OPENSSL_KTLS_AES_CCM_128
     if (EVP_CIPHER_is_a(c, "AES-128-CCM")) {
-        if (rl->version == TLS_1_3_VERSION /* broken on 5.x kernels */
-            || taglen != EVP_CCM_TLS_TAG_LEN)
+        if (taglen != EVP_CCM_TLS_TAG_LEN)
             return 0;
         return 1;
     } else
