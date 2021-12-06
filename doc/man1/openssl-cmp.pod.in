@@ -445,7 +445,7 @@ The DNS hostname or IP address and optionally port
 of the CMP server to connect to using HTTP(S).
 This excludes I<-port> and I<-use_mock_srv> and is ignored with I<-rspin>.
 
-The scheme C<https> may be given only if the B<-tls_used> option is used.
+The scheme C<https> may be given only if the B<-tls_used> option is provided.
 In this case the default port is 443, else 80.
 The optional userinfo and fragment components are ignored.
 Any given query component is handled as part of the path component.
@@ -457,7 +457,7 @@ The HTTP(S) proxy server to use for reaching the CMP server unless B<-no_proxy>
 applies, see below.
 The proxy port defaults to 80 or 443 if the scheme is C<https>; apart from that
 the optional C<http://> or C<https://> prefix is ignored (note that TLS may be
-selected by B<-tls_used>), as well as any path, userinfo, and query, and fragment
+enabled by B<-tls_used>), as well as any path, userinfo, and query, and fragment
 components.
 Defaults to the environment variable C<http_proxy> if set, else C<HTTP_PROXY>
 in case no TLS is used, otherwise C<https_proxy> if set, else C<HTTPS_PROXY>.
@@ -799,15 +799,17 @@ B<-tls_key>.
 
 =item B<-tls_used>
 
-Enable using TLS (even when other TLS_related options are not set)
-when connecting to CMP server via HTTP.
+Enable using TLS (even when other TLS-related options are not set)
+for message exchange with CMP server via HTTP.
 This option is not supported with the I<-port> option
 and is ignored with the I<-use_mock_srv> and I<-rspin> options
 or if the I<-server> option is not given.
 
+The following TLS-related options are ignored if B<-tls_used> is not given.
+
 =item B<-tls_cert> I<filename>|I<uri>
 
-Client's TLS certificate.
+Client's TLS certificate to use for authenticating to the TLS server.
 If the source includes further certs they are used (along with B<-untrusted>
 certs) for constructing the client cert chain provided to the TLS server.
 
@@ -826,7 +828,7 @@ L<openssl-passphrase-options(1)>.
 
 =item B<-tls_extra> I<filenames>|I<uris>
 
-Extra certificates to provide to TLS server during TLS handshake
+Extra certificates to provide to the TLS server during handshake.
 
 =item B<-tls_trusted> I<filenames>|I<uris>
 
