@@ -452,9 +452,9 @@ const OPTIONS cmp_options[] = {
      "Extra certificates to provide to TLS server during TLS handshake"},
     {"tls_trusted", OPT_TLS_TRUSTED, 's',
      "Trusted certificates to use for verifying the TLS server certificate;"},
-    {OPT_MORE_STR, 0, 0, "this implies host name validation"},
+    {OPT_MORE_STR, 0, 0, "this implies hostname validation"},
     {"tls_host", OPT_TLS_HOST, 's',
-     "Address to be checked (rather than -server) during TLS host name validation"},
+     "Address to be checked (rather than -server) during TLS hostname validation"},
 #endif
 
     OPT_SECTION("Client-side debugging"),
@@ -713,12 +713,12 @@ static X509_REQ *load_csr_autofmt(const char *infile, const char *desc)
     return csr;
 }
 
-/* set expected host name/IP addr and clears the email addr in the given ts */
+/* set expected hostname/IP addr and clears the email addr in the given ts */
 static int truststore_set_host_etc(X509_STORE *ts, const char *host)
 {
     X509_VERIFY_PARAM *ts_vpm = X509_STORE_get0_param(ts);
 
-    /* first clear any host names, IP, and email addresses */
+    /* first clear any hostnames, IP, and email addresses */
     if (!X509_VERIFY_PARAM_set1_host(ts_vpm, NULL, 0)
             || !X509_VERIFY_PARAM_set1_ip(ts_vpm, NULL, 0)
             || !X509_VERIFY_PARAM_set1_email(ts_vpm, NULL, 0))
@@ -1239,6 +1239,9 @@ static SSL_CTX *setup_ssl_ctx(OSSL_CMP_CTX *ctx, const char *host,
         if (trust_store == NULL)
             goto err;
         SSL_CTX_set_cert_store(ssl_ctx, trust_store);
+        SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, NULL);
+    } else {
+        CMP_warn("-tls_used given without -tls_trusted; will not authenticate the TLS server");
     }
 
     if (opt_tls_cert != NULL && opt_tls_key != NULL) {
@@ -1347,13 +1350,18 @@ static SSL_CTX *setup_ssl_ctx(OSSL_CMP_CTX *ctx, const char *host,
             goto err;
         }
         EVP_PKEY_free(pkey); /* we do not need the handle any more */
+    } else {
+        CMP_warn("-tls_used given without -tls_key; cannot authenticate to the TLS server");
     }
-    if (opt_tls_trusted != NULL) {
-        /* enable and parameterize server hostname/IP address check */
+    if (trust_store != NULL) {
+        /*
+         * Enable and parameterize server hostname/IP address check.
+         * If we did this before checking our own TLS cert
+         * the expected hostname would mislead the check.
+         */
         if (!truststore_set_host_etc(trust_store,
                                      opt_tls_host != NULL ? opt_tls_host : host))
             goto err;
-        SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, NULL);
     }
     return ssl_ctx;
  err:
@@ -1801,7 +1809,7 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
     int ret = 0;
     char *host = NULL, *port = NULL, *path = NULL, *used_path = opt_path;
 #ifndef OPENSSL_NO_SOCK
-    int portnum, ssl;
+    int portnum, use_ssl;
     static char server_port[32] = { '\0' };
     const char *proxy_host = NULL;
 #endif
@@ -1831,13 +1839,13 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         }
         goto set_path;
     }
-    if (!OSSL_HTTP_parse_url(opt_server, &ssl, NULL /* user */, &host, &port,
+    if (!OSSL_HTTP_parse_url(opt_server, &use_ssl, NULL /* user */, &host, &port,
                              &portnum, &path, NULL /* q */, NULL /* frag */)) {
         CMP_err1("cannot parse -server URL: %s", opt_server);
         goto err;
     }
-    if (ssl && !opt_tls_used) {
-        CMP_err("missing -tls_used option since -server URL indicates https");
+    if (use_ssl && !opt_tls_used) {
+        CMP_err("missing -tls_used option since -server URL indicates HTTPS");
         goto err;
     }
 
@@ -1855,7 +1863,7 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
                        opt_tls_used ? "s" : "", host, port,
                        *used_path == '/' ? used_path + 1 : used_path);
 
-    proxy_host = OSSL_HTTP_adapt_proxy(opt_proxy, opt_no_proxy, host, ssl);
+    proxy_host = OSSL_HTTP_adapt_proxy(opt_proxy, opt_no_proxy, host, use_ssl);
     if (proxy_host != NULL)
         (void)BIO_snprintf(proxy_buf, sizeof(proxy_buf), " via %s", proxy_host);
 
@@ -2803,11 +2811,13 @@ int cmp_main(int argc, char **argv)
     }
 
 #ifndef OPENSSL_NO_SOCK
-    if ((opt_tls_cert != NULL || opt_tls_key != NULL
-         || opt_tls_keypass != NULL || opt_tls_extra != NULL
-         || opt_tls_trusted != NULL || opt_tls_host != NULL)
-            && !opt_tls_used)
-        CMP_warn("Ingnoring TLS options(s) since -tls_used is not given");
+    if (opt_tls_cert == NULL && opt_tls_key == NULL && opt_tls_keypass == NULL
+            && opt_tls_extra == NULL && opt_tls_trusted == NULL
+            && opt_tls_host == NULL) {
+        if (opt_tls_used)
+            CMP_warn("-tls_used given without any other TLS options");
+    } else if (!opt_tls_used)
+        CMP_warn("ignoring TLS options(s) since -tls_used is not given");
     if (opt_port != NULL) {
         if (opt_tls_used) {
             CMP_err("-tls_used option not supported with -port option");
