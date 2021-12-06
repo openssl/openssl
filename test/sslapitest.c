@@ -1203,18 +1203,18 @@ static int execute_test_ktls(int cis_ktls, int sis_ktls,
      * isn't enabled.
      */
     if (!cis_ktls) {
-        if (!TEST_false(BIO_get_ktls_send(clientssl->wbio)))
+        if (!TEST_int_gt(BIO_get_ktls_send(clientssl->wbio), 0))
             goto end;
     } else {
-        if (BIO_get_ktls_send(clientssl->wbio))
+        if (BIO_get_ktls_send(clientssl->wbio) > 0)
             ktls_used = 1;
     }
 
     if (!sis_ktls) {
-        if (!TEST_false(BIO_get_ktls_send(serverssl->wbio)))
+        if (!TEST_int_gt(BIO_get_ktls_send(serverssl->wbio), 0))
             goto end;
     } else {
-        if (BIO_get_ktls_send(serverssl->wbio))
+        if (BIO_get_ktls_send(serverssl->wbio) > 0)
             ktls_used = 1;
     }
 
@@ -1227,7 +1227,7 @@ static int execute_test_ktls(int cis_ktls, int sis_ktls,
         if (!TEST_false(BIO_get_ktls_recv(clientssl->rbio)))
             goto end;
     } else {
-        if (BIO_get_ktls_send(clientssl->rbio))
+        if (BIO_get_ktls_send(clientssl->rbio) > 0)
             ktls_used = 1;
     }
 
@@ -1235,7 +1235,7 @@ static int execute_test_ktls(int cis_ktls, int sis_ktls,
         if (!TEST_false(BIO_get_ktls_recv(serverssl->rbio)))
             goto end;
     } else {
-        if (BIO_get_ktls_send(serverssl->rbio))
+        if (BIO_get_ktls_send(serverssl->rbio) > 0)
             ktls_used = 1;
     }
 

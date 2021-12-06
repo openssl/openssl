@@ -2063,7 +2063,7 @@ ossl_ssize_t SSL_sendfile(SSL *s, int fd, off_t offset, size_t size, int flags)
         return -1;
     }
 
-    if (!BIO_get_ktls_send(s->wbio)) {
+    if (BIO_get_ktls_send(s->wbio) <= 0) {
         ERR_raise(ERR_LIB_SSL, SSL_R_UNINITIALIZED);
         return -1;
     }
@@ -2372,7 +2372,7 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
         if (larg < 512 || larg > SSL3_RT_MAX_PLAIN_LENGTH)
             return 0;
 #ifndef OPENSSL_NO_KTLS
-        if (s->wbio != NULL && BIO_get_ktls_send(s->wbio))
+        if (s->wbio != NULL && BIO_get_ktls_send(s->wbio) > 0)
             return 0;
 #endif /* OPENSSL_NO_KTLS */
         s->max_send_fragment = larg;

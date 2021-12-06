@@ -764,7 +764,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         s->s3.empty_fragment_done = 1;
     }
 
-    if (BIO_get_ktls_send(s->wbio)) {
+    if (BIO_get_ktls_send(s->wbio) > 0) {
         /*
          * ktls doesn't modify the buffer, but to avoid a warning we need to
          * discard the const qualifier.
@@ -921,7 +921,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
                 goto err;
             }
         } else {
-            if (BIO_get_ktls_send(s->wbio)) {
+            if (BIO_get_ktls_send(s->wbio) > 0) {
                 SSL3_RECORD_reset_data(&wr[j]);
             } else {
                 if (!WPACKET_memcpy(thispkt, thiswr->input, thiswr->length)) {
@@ -1053,7 +1053,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         thispkt = &pkt[j];
         thiswr = &wr[j];
 
-        if (BIO_get_ktls_send(s->wbio))
+        if (BIO_get_ktls_send(s->wbio) > 0)
             goto mac_done;
 
         /* Allocate bytes for the encryption overhead */
@@ -1186,7 +1186,7 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf, size_t len,
              * To prevent coalescing of control and data messages,
              * such as in buffer_write, we flush the BIO
              */
-            if (BIO_get_ktls_send(s->wbio) && type != SSL3_RT_APPLICATION_DATA) {
+            if (BIO_get_ktls_send(s->wbio) > 0 && type != SSL3_RT_APPLICATION_DATA) {
                 i = BIO_flush(s->wbio);
                 if (i <= 0)
                     return i;
