@@ -5975,7 +5975,6 @@ int SSL_set0_tmp_dh_pkey(SSL *s, EVP_PKEY *dhpkey)
     if (!ssl_security(s, SSL_SECOP_TMP_DH,
                       EVP_PKEY_get_security_bits(dhpkey), 0, dhpkey)) {
         ERR_raise(ERR_LIB_SSL, SSL_R_DH_KEY_TOO_SMALL);
-        EVP_PKEY_free(dhpkey);
         return 0;
     }
     EVP_PKEY_free(s->cert->dh_tmp);
@@ -5988,7 +5987,6 @@ int SSL_CTX_set0_tmp_dh_pkey(SSL_CTX *ctx, EVP_PKEY *dhpkey)
     if (!ssl_ctx_security(ctx, SSL_SECOP_TMP_DH,
                           EVP_PKEY_get_security_bits(dhpkey), 0, dhpkey)) {
         ERR_raise(ERR_LIB_SSL, SSL_R_DH_KEY_TOO_SMALL);
-        EVP_PKEY_free(dhpkey);
         return 0;
     }
     EVP_PKEY_free(ctx->cert->dh_tmp);
