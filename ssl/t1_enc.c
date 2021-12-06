@@ -463,7 +463,7 @@ int tls1_change_cipher_state(SSL *s, int which)
 
     /* ktls doesn't support renegotiation */
     if ((BIO_get_ktls_send(s->wbio) && (which & SSL3_CC_WRITE)) ||
-        (BIO_get_ktls_recv(s->rbio) && (which & SSL3_CC_READ))) {
+        (BIO_get_ktls_recv(s->rbio) > 0 && (which & SSL3_CC_READ))) {
         SSLfatal(s, SSL_AD_NO_RENEGOTIATION, ERR_R_INTERNAL_ERROR);
         goto err;
     }

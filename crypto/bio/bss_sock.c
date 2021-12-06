@@ -107,7 +107,7 @@ static int sock_read(BIO *b, char *out, int outl)
     if (out != NULL) {
         clear_socket_error();
 # ifndef OPENSSL_NO_KTLS
-        if (BIO_get_ktls_recv(b))
+        if (BIO_get_ktls_recv(b) > 0)
             ret = ktls_read_record(b->num, out, outl);
         else
 # endif

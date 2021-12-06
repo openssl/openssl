@@ -518,7 +518,7 @@ int ssl3_get_record(SSL *s)
      * KTLS reads full records. If there is any data left,
      * then it is from before enabling ktls
      */
-    if (BIO_get_ktls_recv(s->rbio) && !is_ktls_left)
+    if (BIO_get_ktls_recv(s->rbio) > 0 && !is_ktls_left)
         goto skip_decryption;
 
     if (s->read_hash != NULL) {

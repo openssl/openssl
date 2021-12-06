@@ -1224,7 +1224,7 @@ static int execute_test_ktls(int cis_ktls, int sis_ktls,
     rx_supported = (tls_version != TLS1_3_VERSION);
 #endif
     if (!cis_ktls || !rx_supported) {
-        if (!TEST_false(BIO_get_ktls_recv(clientssl->rbio)))
+        if (!TEST_int_gt(BIO_get_ktls_recv(clientssl->rbio), 0))
             goto end;
     } else {
         if (BIO_get_ktls_send(clientssl->rbio))
@@ -1232,7 +1232,7 @@ static int execute_test_ktls(int cis_ktls, int sis_ktls,
     }
 
     if (!sis_ktls || !rx_supported) {
-        if (!TEST_false(BIO_get_ktls_recv(serverssl->rbio)))
+        if (!TEST_int_gt(BIO_get_ktls_recv(serverssl->rbio), 0))
             goto end;
     } else {
         if (BIO_get_ktls_send(serverssl->rbio))

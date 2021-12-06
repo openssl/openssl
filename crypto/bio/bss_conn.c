@@ -323,7 +323,7 @@ static int conn_read(BIO *b, char *out, int outl)
     if (out != NULL) {
         clear_socket_error();
 # ifndef OPENSSL_NO_KTLS
-        if (BIO_get_ktls_recv(b))
+        if (BIO_get_ktls_recv(b) > 0)
             ret = ktls_read_record(b->num, out, outl);
         else
 # endif
@@ -626,7 +626,7 @@ int conn_gets(BIO *bio, char *buf, int size)
     clear_socket_error();
     while (size-- > 1) {
 # ifndef OPENSSL_NO_KTLS
-        if (BIO_get_ktls_recv(bio))
+        if (BIO_get_ktls_recv(bio) > 0)
             ret = ktls_read_record(bio->num, ptr, 1);
         else
 # endif
