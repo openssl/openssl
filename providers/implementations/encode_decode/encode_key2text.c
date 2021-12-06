@@ -486,6 +486,7 @@ static int ec_to_text(BIO *out, const void *key, int selection)
     unsigned char *priv = NULL, *pub = NULL;
     size_t priv_len = 0, pub_len = 0;
     const EC_GROUP *group;
+    int curve_nid = NID_undef;
     int ret = 0;
 
     if (out == NULL || ec == NULL) {
@@ -529,9 +530,17 @@ static int ec_to_text(BIO *out, const void *key, int selection)
             goto err;
     }
 
-    if (BIO_printf(out, "%s: (%d bit)\n", type_label,
-                   EC_GROUP_order_bits(group)) <= 0)
-        goto err;
+    if((curve_nid = EC_GROUP_get_curve_name(group)) == NID_sm2
+            && (selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) == 0
+            && (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
+        if (BIO_printf(out, "%s: (%d bit)\n", type_label,
+                    EC_GROUP_order_bits(group)*2) <= 0)
+            goto err;
+    } else {
+        if (BIO_printf(out, "%s: (%d bit)\n", type_label,
+                    EC_GROUP_order_bits(group)) <= 0)
+            goto err;
+    }
     if (priv != NULL
         && !print_labeled_buf(out, "priv:", priv, priv_len))
         goto err;
