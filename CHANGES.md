@@ -223,6 +223,14 @@ OpenSSL 3.2
 
    *Hugo Landau*
 
+ * Enable KTLS with the TLS 1.3 CCM mode ciphersuites. Note that some linux
+   kernel versions that support KTLS have a known bug in CCM processing. That
+   has been fixed in stable releases starting from 5.4.164, 5.10.84, 5.15.7,
+   and all releases since 5.16. KTLS with CCM ciphersuites should be only used
+   on these releases.
+
+   *Tianjia Zhang*
+
 OpenSSL 3.0
 -----------
 
