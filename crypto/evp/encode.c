@@ -413,7 +413,7 @@ end:
 static int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
                                const unsigned char *f, int n)
 {
-    int i, ret = 0, a, b, c, d;
+    int i, ret = 0, a, b, c, d, be, ec = 0;
     unsigned long l;
     const unsigned char *table;
 
@@ -438,27 +438,71 @@ static int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
     if (n % 4 != 0)
         return -1;
 
-    for (i = 0; i < n; i += 4) {
-        a = conv_ascii2bin(*(f++), table);
-        b = conv_ascii2bin(*(f++), table);
-        c = conv_ascii2bin(*(f++), table);
-        d = conv_ascii2bin(*(f++), table);
-        if ((a & 0x80) || (b & 0x80) || (c & 0x80) || (d & 0x80))
-            return -1;
-        l = ((((unsigned long)a) << 18L) |
-             (((unsigned long)b) << 12L) |
-             (((unsigned long)c) << 6L) | (((unsigned long)d)));
-        *(t++) = (unsigned char)(l >> 16L) & 0xff;
-        *(t++) = (unsigned char)(l >> 8L) & 0xff;
-        *(t++) = (unsigned char)(l) & 0xff;
-        ret += 3;
+    if (ctx != NULL && (ctx->flags & EVP_ENCODE_CTX_DECODE_NO_SEGMENT) != 0) {
+        be = n - 4;
+        for (i = 0; i < be; i += 4) {
+            a = conv_ascii2bin(*(f++), table);
+            b = conv_ascii2bin(*(f++), table);
+            c = conv_ascii2bin(*(f++), table);
+            d = conv_ascii2bin(*(f++), table);
+            if ((a & 0x80) || (b & 0x80) || (c & 0x80) || (d & 0x80))
+                return -1;
+            l = ((((unsigned long)a) << 18L) |
+                 (((unsigned long)b) << 12L) |
+                 (((unsigned long)c) << 6L) | (((unsigned long)d)));
+            *(t++) = (unsigned char)(l >> 16L) & 0xff;
+            *(t++) = (unsigned char)(l >> 8L) & 0xff;
+            *(t++) = (unsigned char)(l) & 0xff;
+            ret += 3;
+        }
+
+        if (i < n) {
+            if ((*f == '=') ||
+                (*(f + 1) == '=') ||
+                ((*(f + 2) == '=') && (*(f + 3) != '=')))
+                return -1;
+
+            ec = (*(f + 2) == '=') ? 2 : (*(f + 3) == '=') ? 1 : 0;
+            a = conv_ascii2bin(*(f++), table);
+            b = conv_ascii2bin(*(f++), table);
+            c = conv_ascii2bin(*(f++), table);
+            d = conv_ascii2bin(*(f++), table);
+            if ((a & 0x80) || (b & 0x80) || (c & 0x80) || (d & 0x80))
+                return -1;
+            l = ((((unsigned long)a) << 18L) |
+                 (((unsigned long)b) << 12L) |
+                 (((unsigned long)c) << 6L) | (((unsigned long)d)));
+            *(t++) = (unsigned char)(l >> 16L) & 0xff;
+            if (ec < 2)
+                *(t++) = (unsigned char)(l >> 8L) & 0xff;
+            if (ec < 1)
+                *(t++) = (unsigned char)(l) & 0xff;
+            ret += 3 - ec;
+        }
+        return ret;
+    } else {
+        for (i = 0; i < n; i += 4) {
+            a = conv_ascii2bin(*(f++), table);
+            b = conv_ascii2bin(*(f++), table);
+            c = conv_ascii2bin(*(f++), table);
+            d = conv_ascii2bin(*(f++), table);
+            if ((a & 0x80) || (b & 0x80) || (c & 0x80) || (d & 0x80))
+                return -1;
+            l = ((((unsigned long)a) << 18L) |
+                 (((unsigned long)b) << 12L) |
+                 (((unsigned long)c) << 6L) | (((unsigned long)d)));
+            *(t++) = (unsigned char)(l >> 16L) & 0xff;
+            *(t++) = (unsigned char)(l >> 8L) & 0xff;
+            *(t++) = (unsigned char)(l) & 0xff;
+            ret += 3;
+        }
+        return ret;
     }
-    return ret;
 }
 
-int EVP_DecodeBlock(unsigned char *t, const unsigned char *f, int n)
+int EVP_DecodeBlock(EVP_ENCODE_CTX *ctx, unsigned char *t, const unsigned char *f, int n)
 {
-    return evp_decodeblock_int(NULL, t, f, n);
+    return evp_decodeblock_int(ctx, t, f, n);
 }
 
 int EVP_DecodeFinal(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl)

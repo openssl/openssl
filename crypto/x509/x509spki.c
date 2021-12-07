@@ -39,7 +39,7 @@ NETSCAPE_SPKI *NETSCAPE_SPKI_b64_decode(const char *str, int len)
         ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    spki_len = EVP_DecodeBlock(spki_der, (const unsigned char *)str, len);
+    spki_len = EVP_DecodeBlock(NULL, spki_der, (const unsigned char *)str, len);
     if (spki_len < 0) {
         ERR_raise(ERR_LIB_X509, X509_R_BASE64_DECODE_ERROR);
         OPENSSL_free(spki_der);

@@ -261,7 +261,7 @@ static int b64_read(BIO *b, char *out, int outl)
             int z, jj;
 
             jj = i & ~3;        /* process per 4 */
-            z = EVP_DecodeBlock((unsigned char *)ctx->buf,
+            z = EVP_DecodeBlock(NULL, (unsigned char *)ctx->buf,
                                 (unsigned char *)ctx->tmp, jj);
             if (jj > 2) {
                 if (ctx->tmp[jj - 1] == '=') {
