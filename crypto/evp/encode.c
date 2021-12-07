@@ -413,7 +413,7 @@ end:
 static int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
                                const unsigned char *f, int n)
 {
-    int i, ret = 0, a, b, c, d, be, ec = 0;
+    int i, ret = 0, a, b, c, d, bp, pc = 0;
     unsigned long l;
     const unsigned char *table;
 
@@ -438,9 +438,9 @@ static int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
     if (n % 4 != 0)
         return -1;
 
-    if (ctx != NULL && (ctx->flags & EVP_ENCODE_CTX_DECODE_NO_SEGMENT) != 0) {
-        be = n - 4;
-        for (i = 0; i < be; i += 4) {
+    if (ctx != NULL && (ctx->flags & EVP_ENCODE_CTX_DECODE_NO_PADDING) != 0) {
+        bp = n - 4;
+        for (i = 0; i < bp; i += 4) {
             a = conv_ascii2bin(*(f++), table);
             b = conv_ascii2bin(*(f++), table);
             c = conv_ascii2bin(*(f++), table);
@@ -462,7 +462,7 @@ static int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
                 ((*(f + 2) == '=') && (*(f + 3) != '=')))
                 return -1;
 
-            ec = (*(f + 2) == '=') ? 2 : (*(f + 3) == '=') ? 1 : 0;
+            pc = (*(f + 2) == '=') ? 2 : (*(f + 3) == '=') ? 1 : 0;
             a = conv_ascii2bin(*(f++), table);
             b = conv_ascii2bin(*(f++), table);
             c = conv_ascii2bin(*(f++), table);
@@ -473,11 +473,11 @@ static int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
                  (((unsigned long)b) << 12L) |
                  (((unsigned long)c) << 6L) | (((unsigned long)d)));
             *(t++) = (unsigned char)(l >> 16L) & 0xff;
-            if (ec < 2)
+            if (pc < 2)
                 *(t++) = (unsigned char)(l >> 8L) & 0xff;
-            if (ec < 1)
+            if (pc < 1)
                 *(t++) = (unsigned char)(l) & 0xff;
-            ret += 3 - ec;
+            ret += 3 - pc;
         }
         return ret;
     } else {
