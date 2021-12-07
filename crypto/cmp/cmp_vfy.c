@@ -186,7 +186,7 @@ static int check_kid(const OSSL_CMP_CTX *ctx,
         ossl_cmp_warn(ctx, "missing Subject Key Identifier in certificate");
         return 0;
     }
-    str = OPENSSL_buf2hexstr(ckid->data, ckid->length);
+    str = i2s_ASN1_OCTET_STRING(NULL, ckid);
     if (ASN1_OCTET_STRING_cmp(ckid, skid) == 0) {
         if (str != NULL)
             ossl_cmp_log1(INFO, ctx, " subjectKID matches senderKID: %s", str);
@@ -197,7 +197,7 @@ static int check_kid(const OSSL_CMP_CTX *ctx,
     if (str != NULL)
         ossl_cmp_log1(INFO, ctx, " cert Subject Key Identifier = %s", str);
     OPENSSL_free(str);
-    if ((str = OPENSSL_buf2hexstr(skid->data, skid->length)) != NULL)
+    if ((str = i2s_ASN1_OCTET_STRING(NULL, skid)) != NULL)
         ossl_cmp_log1(INFO, ctx, " does not match senderKID    = %s", str);
     OPENSSL_free(str);
     return 0;
@@ -500,8 +500,7 @@ static int check_msg_find_cert(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
     (void)ERR_clear_last_mark();
 
     sname = X509_NAME_oneline(sender->d.directoryName, NULL, 0);
-    skid_str = skid == NULL ? NULL
-                            : OPENSSL_buf2hexstr(skid->data, skid->length);
+    skid_str = skid == NULL ? NULL : i2s_ASN1_OCTET_STRING(NULL, skid);
     if (ctx->log_cb != NULL) {
         ossl_cmp_info(ctx, "trying to verify msg signature with a valid cert that..");
         if (sname != NULL)
@@ -747,7 +746,17 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
                 || ASN1_OCTET_STRING_cmp(ctx->transactionID,
                                          hdr->transactionID) != 0)) {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-        ERR_raise(ERR_LIB_CMP, CMP_R_TRANSACTIONID_UNMATCHED);
+        char *ctx_str, *hdr_str;
+
+        ctx_str = i2s_ASN1_OCTET_STRING(NULL, ctx->transactionID);
+        hdr_str = hdr->transactionID == NULL ? "(none)"
+            : i2s_ASN1_OCTET_STRING(NULL, hdr->transactionID);
+        ERR_raise_data(ERR_LIB_CMP, CMP_R_TRANSACTIONID_UNMATCHED,
+                       "expected = %s, actual = %s",
+                       ctx_str == NULL ? "?" : ctx_str,
+                       hdr_str == NULL ? "?" : hdr_str);
+        OPENSSL_free(ctx_str);
+        OPENSSL_free(hdr_str);
         return 0;
 #endif
     }

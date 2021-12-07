@@ -276,8 +276,7 @@ int ossl_cmp_hdr_set_transactionID(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
         if (!set_random(&ctx->transactionID, ctx,
                         OSSL_CMP_TRANSACTIONID_LENGTH))
             return 0;
-        tid = OPENSSL_buf2hexstr(ctx->transactionID->data,
-                                 ctx->transactionID->length);
+        tid = i2s_ASN1_OCTET_STRING(NULL, ctx->transactionID);
         if (tid != NULL)
             ossl_cmp_log1(DEBUG, ctx,
                           "Starting new transaction with ID=%s", tid);

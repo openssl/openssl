@@ -481,10 +481,8 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
     case OSSL_CMP_PKIBODY_GENM:
     case OSSL_CMP_PKIBODY_ERROR:
         if (ctx->transactionID != NULL) {
-            char *tid;
+            char *tid = i2s_ASN1_OCTET_STRING(NULL, ctx->transactionID);
 
-            tid = OPENSSL_buf2hexstr(ctx->transactionID->data,
-                                     ctx->transactionID->length);
             if (tid != NULL)
                 ossl_cmp_log1(WARN, ctx,
                               "Assuming that last transaction with ID=%s got aborted",
