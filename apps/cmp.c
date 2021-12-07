@@ -753,6 +753,7 @@ static OSSL_CMP_MSG *read_write_req_resp(OSSL_CMP_CTX *ctx,
     OSSL_CMP_MSG *req_new = NULL;
     OSSL_CMP_MSG *res = NULL;
     OSSL_CMP_PKIHEADER *hdr;
+    const char *prev_opt_rspin = opt_rspin;
 
     if (req != NULL && opt_reqout != NULL
             && !write_PKIMESSAGE(req, &opt_reqout))
@@ -782,7 +783,7 @@ static OSSL_CMP_MSG *read_write_req_resp(OSSL_CMP_CTX *ctx,
     if (res == NULL)
         goto err;
 
-    if (opt_reqin != NULL || opt_rspin != NULL) {
+    if (opt_reqin != NULL || prev_opt_rspin != NULL) {
         /* need to satisfy nonce and transactionID checks */
         ASN1_OCTET_STRING *nonce;
         ASN1_OCTET_STRING *tid;
