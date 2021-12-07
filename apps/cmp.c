@@ -789,8 +789,7 @@ static OSSL_CMP_MSG *read_write_req_resp(OSSL_CMP_CTX *ctx,
     OSSL_CMP_PKIHEADER *hdr;
     const char *prev_opt_rspin = opt_rspin;
 
-    if (req != NULL && opt_reqout != NULL
-            && !write_PKIMESSAGE(req, &opt_reqout))
+    if (opt_reqout != NULL && !write_PKIMESSAGE(req, &opt_reqout))
         goto err;
     if (opt_reqin != NULL && opt_rspin == NULL) {
         if ((req_new = read_PKIMESSAGE(&opt_reqin)) == NULL)
