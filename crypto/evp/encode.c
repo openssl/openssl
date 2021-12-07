@@ -506,7 +506,11 @@ int EVP_DecodeBlock(unsigned char *t, const unsigned char *f, int n)
 
 int EVP_DecodeBlock_ex(EVP_ENCODE_CTX *ctx, unsigned char *t, const unsigned char *f, int n)
 {
-    return evp_decodeblock_int(ctx, t, f, n);
+    if (ctx != NULL) {
+        evp_encode_ctx_set_flags(ctx, EVP_ENCODE_CTX_DECODE_NO_PADDING);
+        return evp_decodeblock_int(ctx, t, f, n);
+    } else
+        return -1;
 }
 
 int EVP_DecodeFinal(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl)
