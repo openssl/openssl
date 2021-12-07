@@ -25,8 +25,9 @@ EVP_DecodeBlock - EVP base 64 encode/decode routines
  int EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
                       const unsigned char *in, int inl);
  int EVP_DecodeFinal(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl);
- int EVP_DecodeBlock(EVP_ENCODE_CTX *ctx, unsigned char *t,
-                     const unsigned char *f, int n);
+ int EVP_DecodeBlock(unsigned char *t, const unsigned char *f, int n);
+ int EVP_DecodeBlock_ex(EVP_ENCODE_CTX *ctx, unsigned char *t,
+                        const unsigned char *f, int n);
 
 =head1 DESCRIPTION
 
@@ -126,6 +127,11 @@ output will be padded with 0 bits if necessary to ensure that the output is
 always 3 bytes for every 4 input bytes. This function will return the length of
 the data decoded or -1 on error.
 
+EVP_DecodeBlock_ex() is an extension of EVP_DecodeBlock(), which won't count in
+the padding bytes so that the return value is exactly the bytes decoded. No need
+to consider the 3 bytes alignment. This function will return the length of the
+data decoded or -1 on error.
+
 =head1 RETURN VALUES
 
 EVP_ENCODE_CTX_new() returns a pointer to the newly allocated EVP_ENCODE_CTX
@@ -144,7 +150,9 @@ then no more non-padding base 64 characters are expected.
 
 EVP_DecodeFinal() returns -1 on error or 1 on success.
 
-EVP_DecodeBlock() returns the length of the data decoded or -1 on error.
+EVP_DecodeBlock() returns the length (aligned by 3) of the data decoded or -1 on error.
+
+EVP_DecodeBlock_ex() returns the length of the data decoded or -1 on error.
 
 =head1 SEE ALSO
 

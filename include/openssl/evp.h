@@ -864,8 +864,9 @@ int EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
                      const unsigned char *in, int inl);
 int EVP_DecodeFinal(EVP_ENCODE_CTX *ctx, unsigned
                     char *out, int *outl);
-int EVP_DecodeBlock(EVP_ENCODE_CTX *ctx, unsigned char *t,
-                    const unsigned char *f, int n);
+int EVP_DecodeBlock(unsigned char *t, const unsigned char *f, int n);
+int EVP_DecodeBlock_ex(EVP_ENCODE_CTX *ctx, unsigned char *t,
+                       const unsigned char *f, int n);
 
 # ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define EVP_CIPHER_CTX_init(c)      EVP_CIPHER_CTX_reset(c)

@@ -39,7 +39,7 @@ static int ct_base64_decode(const char *in, unsigned char **out)
         goto err;
     }
 
-    outlen = EVP_DecodeBlock(NULL, outbuf, (unsigned char *)in, inlen);
+    outlen = EVP_DecodeBlock(outbuf, (unsigned char *)in, inlen);
     if (outlen < 0) {
         ERR_raise(ERR_LIB_CT, CT_R_BASE64_DECODE_ERROR);
         goto err;

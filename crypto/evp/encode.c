@@ -457,8 +457,7 @@ static int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
         }
 
         if (i < n) {
-            if ((*f == '=') ||
-                (*(f + 1) == '=') ||
+            if ((*f == '=') || (*(f + 1) == '=') ||
                 ((*(f + 2) == '=') && (*(f + 3) != '=')))
                 return -1;
 
@@ -500,7 +499,12 @@ static int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
     }
 }
 
-int EVP_DecodeBlock(EVP_ENCODE_CTX *ctx, unsigned char *t, const unsigned char *f, int n)
+int EVP_DecodeBlock(unsigned char *t, const unsigned char *f, int n)
+{
+    return evp_decodeblock_int(NULL, t, f, n);
+}
+
+int EVP_DecodeBlock_ex(EVP_ENCODE_CTX *ctx, unsigned char *t, const unsigned char *f, int n)
 {
     return evp_decodeblock_int(ctx, t, f, n);
 }
