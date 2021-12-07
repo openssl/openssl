@@ -161,7 +161,7 @@ static char *opt_rspin = NULL;
 static char *opt_rspout = NULL;
 static int opt_use_mock_srv = 0;
 
-/* server-side debugging */
+/* mock server */
 #ifndef OPENSSL_NO_SOCK
 static char *opt_port = NULL;
 static int opt_max_msgs = 0;
@@ -287,7 +287,7 @@ const OPTIONS cmp_options[] = {
     {"subject", OPT_SUBJECT, 's',
      "Distinguished Name (DN) of subject to use in the requested cert template"},
     {OPT_MORE_STR, 0, 0,
-     "For kur, default is subject of -csr arg or else of reference cert (see -oldcert)"},
+     "For kur, default is subject of -csr arg or of reference cert (see -oldcert)"},
     {OPT_MORE_STR, 0, 0,
      "this default is used for ir and cr only if no Subject Alt Names are set"},
     {"issuer", OPT_ISSUER, 's',
@@ -336,7 +336,7 @@ const OPTIONS cmp_options[] = {
     {OPT_MORE_STR, 0, 0,
      "also used as reference (defaulting to -cert) for subject DN and SANs."},
     {OPT_MORE_STR, 0, 0,
-     "Its issuer is used as recipient unless -recipient, -srvcert, or -issuer given"},
+     "Its issuer used as recipient unless -recipient, -srvcert, or -issuer given"},
     {"revreason", OPT_REVREASON, 'n',
      "Reason code to include in revocation request (rr); possible values:"},
     {OPT_MORE_STR, 0, 0,
@@ -470,14 +470,16 @@ const OPTIONS cmp_options[] = {
      "Process sequence of CMP responses provided in file(s), skipping server"},
     {"rspout", OPT_RSPOUT, 's', "Save sequence of CMP responses to file(s)"},
 
-    {"use_mock_srv", OPT_USE_MOCK_SRV, '-', "Use mock server at API level, bypassing HTTP"},
+    {"use_mock_srv", OPT_USE_MOCK_SRV, '-',
+     "Use internal mock server at API level, bypassing HTTP"},
 
     OPT_SECTION("Mock server"),
 #ifdef OPENSSL_NO_SOCK
     {OPT_MORE_STR, 0, 0,
      "NOTE: -port and -max_msgs not supported due to no-sock build"},
 #else
-    {"port", OPT_PORT, 's', "Act as HTTP mock server listening on given port"},
+    {"port", OPT_PORT, 's',
+     "Act as HTTP-based mock server listening on given port"},
     {"max_msgs", OPT_MAX_MSGS, 'N',
      "max number of messages handled by HTTP mock server. Default: 0 = unlimited"},
 #endif
@@ -1804,13 +1806,31 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
     static char server_port[32] = { '\0' };
     const char *proxy_host = NULL;
 #endif
-    char server_buf[200] = { '\0' };
+    char server_buf[200] = "mock server";
     char proxy_buf[200] = { '\0' };
 
+    if (!opt_use_mock_srv && opt_rspin == NULL) {
+#ifndef OPENSSL_NO_SOCK
+        if (opt_server == NULL) {
+            CMP_err("missing -server or -use_mock_srv or -rspin option");
+            goto err;
+        }
+#else
+        CMP_err("missing -use_mock_srv or -rspin option; -server option is not supported due to no-sock build");
+        goto err;
+#endif
+    }
 #ifndef OPENSSL_NO_SOCK
     if (opt_server == NULL) {
-        CMP_err("missing -server option");
-        goto err;
+        if (opt_proxy != NULL)
+            CMP_warn("ignoring -proxy option since -server is not given");
+        if (opt_no_proxy != NULL)
+            CMP_warn("ignoring -no_proxy option since -server is not given");
+        if (opt_tls_used) {
+            CMP_warn("ignoring -tls_used option since -server is not given");
+            opt_tls_used = 0;
+        }
+        goto set_path;
     }
     if (!OSSL_HTTP_parse_url(opt_server, &ssl, NULL /* user */, &host, &port,
                              &portnum, &path, NULL /* q */, NULL /* frag */)) {
@@ -1840,6 +1860,7 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
     if (proxy_host != NULL)
         (void)BIO_snprintf(proxy_buf, sizeof(proxy_buf), " via %s", proxy_host);
 
+ set_path:
 #endif
 
     if (!OSSL_CMP_CTX_set1_serverPath(ctx, used_path))
@@ -1903,10 +1924,6 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
                 goto err;
             }
         }
-        if (opt_use_mock_srv) {
-            CMP_err("cannot use TLS options together with -use_mock_srv");
-            goto err;
-        }
         if ((info = OPENSSL_zalloc(sizeof(*info))) == NULL)
             goto err;
         (void)OSSL_CMP_CTX_set_http_cb_arg(ctx, info);
@@ -1937,7 +1954,10 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         goto err;
 
     /* not printing earlier, to minimize confusion in case setup fails before */
-    CMP_info2("will contact %s%s", server_buf, proxy_buf);
+    if (opt_rspin != NULL)
+        CMP_info("will not contact any server since -rspin is given");
+    else
+        CMP_info2("will contact %s%s", server_buf, proxy_buf);
 
     ret = 1;
 
@@ -2689,9 +2709,6 @@ int cmp_main(int argc, char **argv)
     int i;
     X509 *newcert = NULL;
     ENGINE *engine = NULL;
-#ifndef OPENSSL_NO_SOCK
-    char mock_server[] = "mock server:1";
-#endif
     OSSL_CMP_CTX *srv_cmp_ctx = NULL;
     int ret = 0; /* default: failure */
 
@@ -2782,19 +2799,6 @@ int cmp_main(int argc, char **argv)
         }
     }
 
-#ifndef OPENSSL_NO_SOCK
-    if (opt_port != NULL) {
-        if (opt_use_mock_srv) {
-            CMP_err("cannot use both -port and -use_mock_srv options");
-            goto err;
-        }
-        if (opt_server != NULL) {
-            CMP_err("cannot use both -port and -server options");
-            goto err;
-        }
-    }
-#endif
-
     cmp_ctx = OSSL_CMP_CTX_new(app_get0_libctx(), app_get0_propq());
     if (cmp_ctx == NULL)
         goto err;
@@ -2824,25 +2828,38 @@ int cmp_main(int argc, char **argv)
 
 #ifndef OPENSSL_NO_SOCK
     if (opt_port != NULL) { /* act as very basic CMP HTTP server */
+        if (opt_use_mock_srv) {
+            CMP_err("cannot use both -port and -use_mock_srv options");
+            goto err;
+        }
+        if (opt_server != NULL) {
+            CMP_err("cannot use both -port and -server options");
+            goto err;
+        }
+        if (opt_rspin != NULL) {
+            CMP_err("cannot use both -port and -rspin options");
+            goto err;
+        }
         ret = cmp_server(srv_cmp_ctx);
         goto err;
     }
-#endif
-    /* else act as CMP client */
 
-    if (opt_use_mock_srv) {
-#ifndef OPENSSL_NO_SOCK
-        if (opt_server != NULL) {
+    /* act as CMP client, possibly using internal mock server */
+
+    if (opt_server != NULL) {
+        if (opt_use_mock_srv) {
             CMP_err("cannot use both -use_mock_srv and -server options");
             goto err;
         }
-        if (opt_proxy != NULL) {
-            CMP_err("cannot use both -use_mock_srv and -proxy options");
-            goto err;
+        if (opt_rspin != NULL) {
+            CMP_warn("ignoring -server option since -rspin is given");
+            opt_server = NULL;
         }
-        opt_server = mock_server;
-        opt_proxy = "API";
+    }
 #endif
+    if (opt_rspin != NULL && opt_use_mock_srv) {
+        CMP_err("cannot use both -rspin and -use_mock_srv options");
+        goto err;
     }
 
     if (!setup_client_ctx(cmp_ctx, engine)) {

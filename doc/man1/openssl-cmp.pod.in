@@ -443,6 +443,8 @@ Reason numbers defined in RFC 5280 are:
 
 The IP address or DNS hostname and optionally port
 of the CMP server to connect to using HTTP(S) transport.
+This excludes I<-port>, I<-use_mock_srv>, and I<-rspin>.
+
 The scheme C<https> may be given only if the B<-tls_used> option is used.
 In this case the default port is 443, else 80.
 The optional userinfo and fragment components are ignored.
@@ -881,6 +883,7 @@ As many files are written as needed to store the complete transaction.
 =item B<-rspin> I<filenames>
 
 Process sequence of CMP responses provided in file(s), skipping server.
+This excludes I<-server>, I<-port>, and I<-use_mock_srv>.
 
 Multiple filenames may be given, separated by commas and/or whitespace.
 As many files are read as needed for the complete transaction.
@@ -894,8 +897,9 @@ As many files are written as needed to store the complete transaction.
 
 =item B<-use_mock_srv>
 
-Use the internal mock server for testing the client.
-This works at API level, bypassing HTTP transport.
+Test the client using the internal CMP server mock-up at API level,
+bypassing HTTP transfer.
+This excludes I<-server>, I<-port>, and I<-rspin>.
 
 =back
 
@@ -905,7 +909,8 @@ This works at API level, bypassing HTTP transport.
 
 =item B<-port> I<number>
 
-Act as CMP HTTP server mock-up listening on the given port.
+Act as HTTP-based CMP server mock-up listening on the given port.
+This excludes I<-server>, I<-rspin>, and I<-use_mock_srv>.
 
 =item B<-max_msgs> I<number>
 
