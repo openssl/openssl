@@ -465,14 +465,14 @@ static int check_set_resp_len(OSSL_HTTP_REQ_CTX *rctx, size_t len)
 
 static int may_still_retry(time_t max_time, int *ptimeout)
 {
-    time_t time_diff;
+    time_t time_diff, now = time(NULL);
 
     if (max_time != 0) {
-        if (max_time < time(NULL)) {
+        if (max_time < now) {
             ERR_raise(ERR_LIB_HTTP, HTTP_R_RETRY_TIMEOUT);
             return 0;
         }
-        time_diff = max_time - time(NULL);
+        time_diff = max_time - now;
         *ptimeout = time_diff > INT_MAX ? INT_MAX : (int)time_diff;
     }
     return 1;
