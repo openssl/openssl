@@ -9,6 +9,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* This app is disabled when OPENSSL_NO_CMP is defined. */
+
 #include <string.h>
 #include <ctype.h>
 
@@ -66,12 +68,13 @@ typedef enum {
 } cmp_cmd_t;
 
 /* message transfer */
+#ifndef OPENSSL_NO_SOCK
 static char *opt_server = NULL;
-static char server_port[32] = { '\0' };
-static char *opt_path = NULL;
 static char *opt_proxy = NULL;
 static char *opt_no_proxy = NULL;
+#endif
 static char *opt_recipient = NULL;
+static char *opt_path = NULL;
 static int opt_keep_alive = 1;
 static int opt_msg_timeout = -1;
 static int opt_total_timeout = -1;
@@ -137,6 +140,7 @@ static int opt_keyform = FORMAT_UNDEF;
 static char *opt_otherpass = NULL;
 static char *opt_engine = NULL;
 
+#ifndef OPENSSL_NO_SOCK
 /* TLS connection */
 static int opt_tls_used = 0;
 static char *opt_tls_cert = NULL;
@@ -145,6 +149,7 @@ static char *opt_tls_keypass = NULL;
 static char *opt_tls_extra = NULL;
 static char *opt_tls_trusted = NULL;
 static char *opt_tls_host = NULL;
+#endif
 
 /* client-side debugging */
 static int opt_batch = 0;
@@ -157,9 +162,10 @@ static char *opt_rspout = NULL;
 static int opt_use_mock_srv = 0;
 
 /* server-side debugging */
+#ifndef OPENSSL_NO_SOCK
 static char *opt_port = NULL;
 static int opt_max_msgs = 0;
-
+#endif
 static char *opt_srv_ref = NULL;
 static char *opt_srv_secret = NULL;
 static char *opt_srv_cert = NULL;
@@ -204,8 +210,10 @@ typedef enum OPTION_choice {
 
     OPT_OLDCERT, OPT_REVREASON,
 
-    OPT_SERVER, OPT_PATH, OPT_PROXY, OPT_NO_PROXY,
-    OPT_RECIPIENT,
+#ifndef OPENSSL_NO_SOCK
+    OPT_SERVER, OPT_PROXY, OPT_NO_PROXY,
+#endif
+    OPT_RECIPIENT, OPT_PATH,
     OPT_KEEP_ALIVE, OPT_MSG_TIMEOUT, OPT_TOTAL_TIMEOUT,
 
     OPT_TRUSTED, OPT_UNTRUSTED, OPT_SRVCERT,
@@ -225,15 +233,19 @@ typedef enum OPTION_choice {
     OPT_PROV_ENUM,
     OPT_R_ENUM,
 
+#ifndef OPENSSL_NO_SOCK
     OPT_TLS_USED, OPT_TLS_CERT, OPT_TLS_KEY,
     OPT_TLS_KEYPASS,
     OPT_TLS_EXTRA, OPT_TLS_TRUSTED, OPT_TLS_HOST,
+#endif
 
     OPT_BATCH, OPT_REPEAT,
     OPT_REQIN, OPT_REQIN_NEW_TID, OPT_REQOUT, OPT_RSPIN, OPT_RSPOUT,
     OPT_USE_MOCK_SRV,
 
+#ifndef OPENSSL_NO_SOCK
     OPT_PORT, OPT_MAX_MSGS,
+#endif
     OPT_SRV_REF, OPT_SRV_SECRET,
     OPT_SRV_CERT, OPT_SRV_KEY, OPT_SRV_KEYPASS,
     OPT_SRV_TRUSTED, OPT_SRV_UNTRUSTED,
@@ -331,20 +343,25 @@ const OPTIONS cmp_options[] = {
      "0..6, 8..10 (see RFC5280, 5.3.1) or -1. Default -1 = none included"},
 
     OPT_SECTION("Message transfer"),
+#ifdef OPENSSL_NO_SOCK
+    {OPT_MORE_STR, 0, 0,
+     "NOTE: -server, -proxy, and -no_proxy not supported due to no-sock build"},
+#else
     {"server", OPT_SERVER, 's',
      "[http[s]://]address[:port][/path] of CMP server. Default port 80 or 443."},
     {OPT_MORE_STR, 0, 0,
      "address may be a DNS name or an IP address; path can be overridden by -path"},
-    {"path", OPT_PATH, 's',
-     "HTTP path (aka CMP alias) at the CMP server. Default from -server, else \"/\""},
     {"proxy", OPT_PROXY, 's',
      "[http[s]://]address[:port][/path] of HTTP(S) proxy to use; path is ignored"},
     {"no_proxy", OPT_NO_PROXY, 's',
      "List of addresses of servers not to use HTTP(S) proxy for"},
     {OPT_MORE_STR, 0, 0,
      "Default from environment variable 'no_proxy', else 'NO_PROXY', else none"},
+#endif
     {"recipient", OPT_RECIPIENT, 's',
      "DN of CA. Default: subject of -srvcert, -issuer, issuer of -oldcert or -cert"},
+    {"path", OPT_PATH, 's',
+     "HTTP path (aka CMP alias) at the CMP server. Default from -server, else \"/\""},
     {"keep_alive", OPT_KEEP_ALIVE, 'N',
      "Persistent HTTP connections. 0: no, 1 (the default): request, 2: require"},
     {"msg_timeout", OPT_MSG_TIMEOUT, 'N',
@@ -419,6 +436,10 @@ const OPTIONS cmp_options[] = {
     OPT_R_OPTIONS,
 
     OPT_SECTION("TLS connection"),
+#ifdef OPENSSL_NO_SOCK
+    {OPT_MORE_STR, 0, 0,
+     "NOTE: -tls_used and all other TLS options not supported due to no-sock build"},
+#else
     {"tls_used", OPT_TLS_USED, '-',
      "Enable using TLS (also when other TLS options are not set)"},
     {"tls_cert", OPT_TLS_CERT, 's',
@@ -434,6 +455,7 @@ const OPTIONS cmp_options[] = {
     {OPT_MORE_STR, 0, 0, "this implies host name validation"},
     {"tls_host", OPT_TLS_HOST, 's',
      "Address to be checked (rather than -server) during TLS host name validation"},
+#endif
 
     OPT_SECTION("Client-side debugging"),
     {"batch", OPT_BATCH, '-',
@@ -451,9 +473,14 @@ const OPTIONS cmp_options[] = {
     {"use_mock_srv", OPT_USE_MOCK_SRV, '-', "Use mock server at API level, bypassing HTTP"},
 
     OPT_SECTION("Mock server"),
+#ifdef OPENSSL_NO_SOCK
+    {OPT_MORE_STR, 0, 0,
+     "NOTE: -port and -max_msgs not supported due to no-sock build"},
+#else
     {"port", OPT_PORT, 's', "Act as HTTP mock server listening on given port"},
     {"max_msgs", OPT_MAX_MSGS, 'N',
      "max number of messages handled by HTTP mock server. Default: 0 = unlimited"},
+#endif
 
     {"srv_ref", OPT_SRV_REF, 's',
      "Reference value to use as senderKID of server in case no -srv_cert is given"},
@@ -532,8 +559,10 @@ static varref cmp_vars[] = { /* must be in same order as enumerated above! */
 
     {&opt_oldcert}, {(char **)&opt_revreason},
 
-    {&opt_server}, {&opt_path}, {&opt_proxy}, {&opt_no_proxy},
-    {&opt_recipient}, {(char **)&opt_keep_alive},
+#ifndef OPENSSL_NO_SOCK
+    {&opt_server}, {&opt_proxy}, {&opt_no_proxy},
+#endif
+    {&opt_recipient}, {&opt_path}, {(char **)&opt_keep_alive},
     {(char **)&opt_msg_timeout}, {(char **)&opt_total_timeout},
 
     {&opt_trusted}, {&opt_untrusted}, {&opt_srvcert},
@@ -552,15 +581,20 @@ static varref cmp_vars[] = { /* must be in same order as enumerated above! */
     {&opt_engine},
 #endif
 
+#ifndef OPENSSL_NO_SOCK
     {(char **)&opt_tls_used}, {&opt_tls_cert}, {&opt_tls_key},
     {&opt_tls_keypass},
     {&opt_tls_extra}, {&opt_tls_trusted}, {&opt_tls_host},
+#endif
 
     {(char **)&opt_batch}, {(char **)&opt_repeat},
     {&opt_reqin}, {(char **)&opt_reqin_new_tid},
     {&opt_reqout}, {&opt_rspin}, {&opt_rspout},
 
-    {(char **)&opt_use_mock_srv}, {&opt_port}, {(char **)&opt_max_msgs},
+    {(char **)&opt_use_mock_srv},
+#ifndef OPENSSL_NO_SOCK
+    {&opt_port}, {(char **)&opt_max_msgs},
+#endif
     {&opt_srv_ref}, {&opt_srv_secret},
     {&opt_srv_cert}, {&opt_srv_key}, {&opt_srv_keypass},
     {&opt_srv_trusted}, {&opt_srv_untrusted},
@@ -1325,7 +1359,7 @@ static SSL_CTX *setup_ssl_ctx(OSSL_CMP_CTX *ctx, const char *host,
     SSL_CTX_free(ssl_ctx);
     return NULL;
 }
-#endif
+#endif /* OPENSSL_NO_SOCK */
 
 /*
  * set up protection aspects of OSSL_CMP_CTX based on options from config
@@ -1765,12 +1799,16 @@ static int handle_opt_geninfo(OSSL_CMP_CTX *ctx)
 static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
 {
     int ret = 0;
-    char *host = NULL, *port = NULL, *path = NULL, *used_path;
+    char *host = NULL, *port = NULL, *path = NULL, *used_path = opt_path;
+#ifndef OPENSSL_NO_SOCK
     int portnum, ssl;
+    static char server_port[32] = { '\0' };
+    const char *proxy_host = NULL;
+#endif
     char server_buf[200] = { '\0' };
     char proxy_buf[200] = { '\0' };
-    const char *proxy_host = NULL;
 
+#ifndef OPENSSL_NO_SOCK
     if (opt_server == NULL) {
         CMP_err("missing -server option");
         goto err;
@@ -1784,11 +1822,12 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         CMP_err("missing -tls_used option since -server URL indicates https");
         goto err;
     }
+
     BIO_snprintf(server_port, sizeof(server_port), "%s", port);
-    used_path = opt_path != NULL ? opt_path : path;
+    if (opt_path == NULL)
+        used_path = path;
     if (!OSSL_CMP_CTX_set1_server(ctx, host)
-            || !OSSL_CMP_CTX_set_serverPort(ctx, portnum)
-            || !OSSL_CMP_CTX_set1_serverPath(ctx, used_path))
+            || !OSSL_CMP_CTX_set_serverPort(ctx, portnum))
         goto oom;
     if (opt_proxy != NULL && !OSSL_CMP_CTX_set1_proxy(ctx, opt_proxy))
         goto oom;
@@ -1802,6 +1841,10 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
     if (proxy_host != NULL)
         (void)BIO_snprintf(proxy_buf, sizeof(proxy_buf), " via %s", proxy_host);
 
+#endif
+
+    if (!OSSL_CMP_CTX_set1_serverPath(ctx, used_path))
+        goto oom;
     if (!transform_opts())
         goto err;
 
@@ -1842,16 +1885,13 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
             || opt_rspin != NULL || opt_rspout != NULL || opt_use_mock_srv)
         (void)OSSL_CMP_CTX_set_transfer_cb(ctx, read_write_req_resp);
 
+#ifndef OPENSSL_NO_SOCK
     if ((opt_tls_cert != NULL || opt_tls_key != NULL
          || opt_tls_keypass != NULL || opt_tls_extra != NULL
          || opt_tls_trusted != NULL || opt_tls_host != NULL)
             && !opt_tls_used)
         CMP_warn("TLS options(s) given but not -tls_used");
     if (opt_tls_used) {
-#ifdef OPENSSL_NO_SOCK
-        BIO_printf(bio_err, "Cannot use TLS - sockets not supported\n");
-        goto err;
-#else
         APP_HTTP_TLS_INFO *info;
 
         if (opt_tls_cert != NULL
@@ -1880,8 +1920,8 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         if (info->ssl_ctx == NULL)
             goto err;
         (void)OSSL_CMP_CTX_set_http_cb(ctx, app_http_tls_cb);
-#endif
     }
+#endif
 
     if (!setup_protection_ctx(ctx, engine))
         goto err;
@@ -2237,6 +2277,7 @@ static int get_opts(int argc, char **argv)
             if (!set_verbosity(opt_int_arg()))
                 goto opthelp;
             break;
+#ifndef OPENSSL_NO_SOCK
         case OPT_SERVER:
             opt_server = opt_str();
             break;
@@ -2246,11 +2287,12 @@ static int get_opts(int argc, char **argv)
         case OPT_NO_PROXY:
             opt_no_proxy = opt_str();
             break;
-        case OPT_PATH:
-            opt_path = opt_str();
-            break;
+#endif
         case OPT_RECIPIENT:
             opt_recipient = opt_str();
+            break;
+        case OPT_PATH:
+            opt_path = opt_str();
             break;
         case OPT_KEEP_ALIVE:
             opt_keep_alive = opt_int_arg();
@@ -2265,6 +2307,7 @@ static int get_opts(int argc, char **argv)
         case OPT_TOTAL_TIMEOUT:
             opt_total_timeout = opt_int_arg();
             break;
+#ifndef OPENSSL_NO_SOCK
         case OPT_TLS_USED:
             opt_tls_used = 1;
             break;
@@ -2286,6 +2329,8 @@ static int get_opts(int argc, char **argv)
         case OPT_TLS_HOST:
             opt_tls_host = opt_str();
             break;
+#endif
+
         case OPT_REF:
             opt_ref = opt_str();
             break;
@@ -2474,12 +2519,15 @@ static int get_opts(int argc, char **argv)
         case OPT_USE_MOCK_SRV:
             opt_use_mock_srv = 1;
             break;
+
+#ifndef OPENSSL_NO_SOCK
         case OPT_PORT:
             opt_port = opt_str();
             break;
         case OPT_MAX_MSGS:
             opt_max_msgs = opt_int_arg();
             break;
+#endif
         case OPT_SRV_REF:
             opt_srv_ref = opt_str();
             break;
@@ -2644,7 +2692,9 @@ int cmp_main(int argc, char **argv)
     int i;
     X509 *newcert = NULL;
     ENGINE *engine = NULL;
+#ifndef OPENSSL_NO_SOCK
     char mock_server[] = "mock server:1";
+#endif
     OSSL_CMP_CTX *srv_cmp_ctx = NULL;
     int ret = 0; /* default: failure */
 
@@ -2735,6 +2785,7 @@ int cmp_main(int argc, char **argv)
         }
     }
 
+#ifndef OPENSSL_NO_SOCK
     if (opt_port != NULL) {
         if (opt_use_mock_srv) {
             CMP_err("cannot use both -port and -use_mock_srv options");
@@ -2745,6 +2796,7 @@ int cmp_main(int argc, char **argv)
             goto err;
         }
     }
+#endif
 
     cmp_ctx = OSSL_CMP_CTX_new(app_get0_libctx(), app_get0_propq());
     if (cmp_ctx == NULL)
@@ -2754,7 +2806,11 @@ int cmp_main(int argc, char **argv)
         CMP_err1("cannot set up error reporting and logging for %s", prog);
         goto err;
     }
-    if ((opt_use_mock_srv || opt_port != NULL)) {
+    if (opt_use_mock_srv
+#ifndef OPENSSL_NO_SOCK
+        || opt_port != NULL
+#endif
+        ) {
         OSSL_CMP_SRV_CTX *srv_ctx;
 
         if ((srv_ctx = setup_srv_ctx(engine)) == NULL)
@@ -2769,17 +2825,16 @@ int cmp_main(int argc, char **argv)
     }
 
 
+#ifndef OPENSSL_NO_SOCK
     if (opt_port != NULL) { /* act as very basic CMP HTTP server */
-#ifdef OPENSSL_NO_SOCK
-        BIO_printf(bio_err, "Cannot act as server - sockets not supported\n");
-#else
         ret = cmp_server(srv_cmp_ctx);
-#endif
         goto err;
     }
+#endif
     /* else act as CMP client */
 
     if (opt_use_mock_srv) {
+#ifndef OPENSSL_NO_SOCK
         if (opt_server != NULL) {
             CMP_err("cannot use both -use_mock_srv and -server options");
             goto err;
@@ -2790,6 +2845,7 @@ int cmp_main(int argc, char **argv)
         }
         opt_server = mock_server;
         opt_proxy = "API";
+#endif
     }
 
     if (!setup_client_ctx(cmp_ctx, engine)) {
@@ -2854,7 +2910,14 @@ int cmp_main(int argc, char **argv)
             const char *string =
                 OSSL_CMP_CTX_snprint_PKIStatus(cmp_ctx, buf,
                                                OSSL_CMP_PKISI_BUFLEN);
+            const char *from = "", *server = "";
 
+#ifndef OPENSSL_NO_SOCK
+            if (opt_server != NULL) {
+                from = " from ";
+                server = opt_server;
+            }
+#endif
             CMP_print(bio_err,
                       status == OSSL_CMP_PKISTATUS_accepted
                       ? OSSL_CMP_LOG_INFO :
@@ -2865,8 +2928,8 @@ int cmp_main(int argc, char **argv)
                       status == OSSL_CMP_PKISTATUS_rejection ? "server error" :
                       status == OSSL_CMP_PKISTATUS_waiting ? "internal error"
                                                            : "warning",
-                      "received from %s %s %s", opt_server,
-                      string != NULL ? string : "<unknown PKIStatus>", "");
+                      "received%s%s %s", from, server,
+                      string != NULL ? string : "<unknown PKIStatus>");
             OPENSSL_free(buf);
         }
 
@@ -2903,7 +2966,9 @@ int cmp_main(int argc, char **argv)
     cleanse(opt_keypass);
     cleanse(opt_newkeypass);
     cleanse(opt_otherpass);
+#ifndef OPENSSL_NO_SOCK
     cleanse(opt_tls_keypass);
+#endif
     cleanse(opt_secret);
     cleanse(opt_srv_keypass);
     cleanse(opt_srv_secret);
