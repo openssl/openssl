@@ -42,7 +42,7 @@ static const ERR_STRING_DATA TS_str_reasons[] = {
     {ERR_PACK(ERR_LIB_TS, 0, TS_R_NONCE_MISMATCH), "nonce mismatch"},
     {ERR_PACK(ERR_LIB_TS, 0, TS_R_NONCE_NOT_RETURNED), "nonce not returned"},
     {ERR_PACK(ERR_LIB_TS, 0, TS_R_NO_CONTENT), "no content"},
-    {ERR_PACK(ERR_LIB_TS, 0, TS_R_NO_TIMESTAMP_TOKEN), "no timestamp token"},
+    {ERR_PACK(ERR_LIB_TS, 0, TS_R_NO_TIME_STAMP_TOKEN), "no time stamp token"},
     {ERR_PACK(ERR_LIB_TS, 0, TS_R_PKCS7_ADD_SIGNATURE_ERROR),
     "pkcs7 add signature error"},
     {ERR_PACK(ERR_LIB_TS, 0, TS_R_PKCS7_ADD_SIGNED_ATTR_ERROR),

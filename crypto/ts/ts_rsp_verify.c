@@ -387,7 +387,7 @@ static int ts_check_status_info(TS_RESP *response)
     if (failure_text[0] == '\0')
         strcpy(failure_text, "unspecified");
 
-    ERR_raise_data(ERR_LIB_TS, TS_R_NO_TIMESTAMP_TOKEN,
+    ERR_raise_data(ERR_LIB_TS, TS_R_NO_TIME_STAMP_TOKEN,
                    "status code: %s, status text: %s, failure codes: %s",
                    status_text,
                    embedded_status_text ? embedded_status_text : "unspecified",

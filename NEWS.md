@@ -691,7 +691,7 @@ OpenSSL 1.0.1
   * PSS signatures in certificates, requests and CRLs.
   * Support for password based recipient info for CMS.
   * Support TLS v1.2 and TLS v1.1.
-  * Preliminary FIPS capability for not-validated 2.0 FIPS module.
+  * Preliminary FIPS capability for unvalidated 2.0 FIPS module.
   * SRP support.
 
 OpenSSL 1.0.0

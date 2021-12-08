@@ -1545,7 +1545,7 @@ TS_R_MESSAGE_IMPRINT_MISMATCH:103:message imprint mismatch
 TS_R_NONCE_MISMATCH:104:nonce mismatch
 TS_R_NONCE_NOT_RETURNED:105:nonce not returned
 TS_R_NO_CONTENT:106:no content
-TS_R_NO_TIMESTAMP_TOKEN:107:no timestamp token
+TS_R_NO_TIME_STAMP_TOKEN:107:no time stamp token
 TS_R_PKCS7_ADD_SIGNATURE_ERROR:118:pkcs7 add signature error
 TS_R_PKCS7_ADD_SIGNED_ATTR_ERROR:119:pkcs7 add signed attr error
 TS_R_PKCS7_TO_TS_TST_INFO_FAILED:129:pkcs7 to ts tst info failed

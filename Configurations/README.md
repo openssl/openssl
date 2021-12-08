@@ -128,13 +128,13 @@ In each table entry, the following keys are significant:
                            implemented yet)
         shlib_variant   => A "variant" identifier inserted between the base
                            shared library name and the extension.  On "unixy"
-                           platforms (BSD, Linux, Solaris, macOS, ...) this
+                           platforms (BSD, Linux, Solaris, MacOS/X, ...) this
                            supports installation of custom OpenSSL libraries
                            that don't conflict with other builds of OpenSSL
                            installed on the system.  The variant identifier
                            becomes part of the SONAME of the library and also
                            any symbol versions (symbol versions are not used or
-                           needed with macOS).  For example, on a system
+                           needed with MacOS/X).  For example, on a system
                            where a default build would normally create the SSL
                            shared library as 'libssl.so -> libssl.so.1.1' with
                            the value of the symlink as the SONAME, a target

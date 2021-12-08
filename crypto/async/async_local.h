@@ -8,7 +8,7 @@
  */
 
 /*
- * Must do this before including any header files, because on macOS <stlib.h>
+ * Must do this before including any header files, because on MacOS/X <stlib.h>
  * includes <signal.h> which includes <ucontext.h>
  */
 #if defined(__APPLE__) && defined(__MACH__) && !defined(_XOPEN_SOURCE)
