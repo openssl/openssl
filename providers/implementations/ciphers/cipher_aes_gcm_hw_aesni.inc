@@ -36,13 +36,12 @@ static const PROV_GCM_HW aesni_gcm = {
 const PROV_GCM_HW *ossl_prov_aes_hw_gcm(size_t keybits)
 {
 #ifdef VAES_GCM_ENABLED
-    if (ossl_vaes_vpclmulqdq_capable()) {
+    if (ossl_vaes_vpclmulqdq_capable())
         return &vaes_gcm;
-    } else
+    else
 #endif
-    if (AESNI_CAPABLE) {
+    if (AESNI_CAPABLE)
         return &aesni_gcm;
-    } else {
+    else
         return &aes_gcm;
-    }
 }

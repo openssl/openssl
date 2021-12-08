@@ -18,17 +18,16 @@
      defined(_M_AMD64) || defined(_M_X64))
 # define VAES_GCM_ENABLED
 
-
 /* Returns non-zero when AVX512F + VAES + VPCLMULDQD combination is available */
 int ossl_vaes_vpclmulqdq_capable(void);
 
-# define OSSL_AES_GCM_UPDATE(direction)                                  \
-    void ossl_aes_gcm_ ## direction ## _avx512 (const void *ks,          \
-                                                void *gcm128ctx,         \
-                                                unsigned int *pblocklen, \
-                                                const unsigned char *in, \
-                                                size_t len,              \
-                                                unsigned char *out);
+# define OSSL_AES_GCM_UPDATE(direction)                                 \
+    void ossl_aes_gcm_ ## direction ## _avx512(const void *ks,          \
+                                               void *gcm128ctx,         \
+                                               unsigned int *pblocklen, \
+                                               const unsigned char *in, \
+                                               size_t len,              \
+                                               unsigned char *out);
 
 OSSL_AES_GCM_UPDATE(encrypt)
 OSSL_AES_GCM_UPDATE(decrypt)
@@ -40,15 +39,14 @@ void ossl_aes_gcm_update_aad_avx512(void *gcm128ctx, const unsigned char *aad,
                                     size_t aadlen);
 void ossl_aes_gcm_finalize_avx512(void *gcm128ctx, unsigned int pblocklen);
 
-void ossl_gcm_gmult_avx512(u64 Xi[2], const void* gcm128ctx);
-
+void ossl_gcm_gmult_avx512(u64 Xi[2], const void *gcm128ctx);
 
 static int vaes_gcm_setkey(PROV_GCM_CTX *ctx, const unsigned char *key,
                            size_t keylen)
 {
     GCM128_CONTEXT *gcmctx = &ctx->gcm;
     PROV_AES_GCM_CTX *actx = (PROV_AES_GCM_CTX *)ctx;
-    AES_KEY *ks            = &actx->ks.ks;
+    AES_KEY *ks = &actx->ks.ks;
 
     ctx->ks = ks;
     aesni_set_encrypt_key(key, keylen * 8, ks);
@@ -89,30 +87,30 @@ static int vaes_gcm_aadupdate(PROV_GCM_CTX *ctx,
                               size_t aad_len)
 {
     GCM128_CONTEXT *gcmctx = &ctx->gcm;
-    u64 alen   = gcmctx->len.u[0];
-    unsigned int ares, lenBlks;
-    int i;
+    u64 alen = gcmctx->len.u[0];
+    unsigned int ares;
+    size_t i, lenBlks;
 
     /* Bad sequence: call of AAD update after message processing */
-    if (gcmctx->len.u[1])
+    if (gcmctx->len.u[1] > 0)
         return 0;
 
     alen += aad_len;
     /* AAD is limited by 2^64 bits, thus 2^61 bytes */
-    if ((alen > (U64(1) << 61)) || (sizeof(aad_len) == 8 && alen < aad_len))
+    if ((alen > (U64(1) << 61)) || (alen < aad_len))
         return 0;
 
     gcmctx->len.u[0] = alen;
 
     ares = gcmctx->ares;
     /* Partial AAD block left from previous AAD update calls */
-    if (ares) {
+    if (ares > 0) {
         /*
          * Fill partial block buffer till full block
          * (note, the hash is stored reflected)
          */
-        while (ares && aad_len) {
-            gcmctx->Xi.c[15-ares] ^= *(aad++);
+        while (ares > 0 && aad_len > 0) {
+            gcmctx->Xi.c[15 - ares] ^= *(aad++);
             --aad_len;
             ares = (ares + 1) % AES_BLOCK_SIZE;
         }
@@ -127,18 +125,17 @@ static int vaes_gcm_aadupdate(PROV_GCM_CTX *ctx,
 
     /* Bulk AAD processing */
     lenBlks = aad_len & ((size_t)(-AES_BLOCK_SIZE));
-    if (lenBlks) {
+    if (lenBlks > 0) {
         ossl_aes_gcm_update_aad_avx512(gcmctx, aad, lenBlks);
         aad += lenBlks;
         aad_len -= lenBlks;
     }
 
     /* Add remaining AAD to the hash (note, the hash is stored reflected) */
-    if (aad_len) {
+    if (aad_len > 0) {
         ares = aad_len;
-        for (i = 0; i < (int)aad_len; i++) {
-            gcmctx->Xi.c[15-i] ^= aad[i];
-        }
+        for (i = 0; i < aad_len; i++)
+            gcmctx->Xi.c[15 - i] ^= aad[i];
     }
 
     gcmctx->ares = ares;
@@ -150,25 +147,24 @@ static int vaes_gcm_cipherupdate(PROV_GCM_CTX *ctx, const unsigned char *in,
                                  size_t len, unsigned char *out)
 {
     GCM128_CONTEXT *gcmctx = &ctx->gcm;
-    u64 mlen               = gcmctx->len.u[1];
+    u64 mlen = gcmctx->len.u[1];
 
     mlen += len;
-    if (mlen > ((U64(1) << 36) - 32) || (sizeof(len) == 8 && mlen < len))
+    if (mlen > ((U64(1) << 36) - 32) || (mlen < len))
         return 0;
 
     gcmctx->len.u[1] = mlen;
 
     /* Finalize GHASH(AAD) if AAD partial blocks left unprocessed */
-    if (gcmctx->ares) {
+    if (gcmctx->ares > 0) {
         ossl_gcm_gmult_avx512(gcmctx->Xi.u, gcmctx);
         gcmctx->ares = 0;
     }
 
-    if (ctx->enc) {
+    if (ctx->enc)
         ossl_aes_gcm_encrypt_avx512(ctx->ks, gcmctx, &gcmctx->mres, in, len, out);
-    } else {
+    else
         ossl_aes_gcm_decrypt_avx512(ctx->ks, gcmctx, &gcmctx->mres, in, len, out);
-    }
 
     return 1;
 }
@@ -176,20 +172,19 @@ static int vaes_gcm_cipherupdate(PROV_GCM_CTX *ctx, const unsigned char *in,
 static int vaes_gcm_cipherfinal(PROV_GCM_CTX *ctx, unsigned char *tag)
 {
     GCM128_CONTEXT *gcmctx = &ctx->gcm;
-    unsigned int *res      = &gcmctx->mres;
+    unsigned int *res = &gcmctx->mres;
 
     /* Finalize AAD processing */
-    if (gcmctx->ares) {
+    if (gcmctx->ares > 0)
         res = &gcmctx->ares;
-    }
 
     ossl_aes_gcm_finalize_avx512(gcmctx, *res);
 
     if (ctx->enc) {
         ctx->taglen = GCM_TAG_MAX_SIZE;
         memcpy(tag, gcmctx->Xi.c,
-                ctx->taglen <= sizeof(gcmctx->Xi.c) ? ctx->taglen :
-                sizeof(gcmctx->Xi.c));
+               ctx->taglen <= sizeof(gcmctx->Xi.c) ? ctx->taglen :
+               sizeof(gcmctx->Xi.c));
         *res = 0;
     } else {
         return !CRYPTO_memcmp(gcmctx->Xi.c, tag, ctx->taglen);
