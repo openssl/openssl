@@ -505,7 +505,8 @@ int bn2binpad(const BIGNUM *a, unsigned char *to, int tolen, endianess_t endiane
     /* Swipe through whole available data and don't give away padded zero. */
     atop = a->dmax * BN_BYTES;
     if (atop == 0) {
-        OPENSSL_cleanse(to, tolen);
+        if (to != NULL)
+            memset(to, '\0', tolen);
         return tolen;
     }
 
