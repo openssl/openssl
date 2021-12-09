@@ -843,6 +843,7 @@ int s_client_main(int argc, char **argv)
     struct timeval tv;
 #endif
     const char *servername = NULL;
+    char *sname_alloc = NULL;
     int noservername = 0;
     const char *alpn_in = NULL;
     tlsextctx tlsextcbp = { NULL, 0 };
@@ -1528,6 +1529,14 @@ int s_client_main(int argc, char **argv)
         if (host == NULL || port == NULL) {
             BIO_printf(bio_err, "%s: -proxy requires use of -connect or target parameter\n", prog);
             goto opthelp;
+        }
+
+        if (servername == NULL && !noservername) {
+            servername = sname_alloc = OPENSSL_strdup(host);
+            if (sname_alloc == NULL) {
+                BIO_printf(bio_err, "%s: out of memory\n", prog);
+                goto end;
+            }
         }
 
         /* Retain the original target host:port for use in the HTTP proxy connect string */
@@ -3038,6 +3047,7 @@ int s_client_main(int argc, char **argv)
 #ifndef OPENSSL_NO_SRP
     OPENSSL_free(srp_arg.srppassin);
 #endif
+    OPENSSL_free(sname_alloc);
     OPENSSL_free(connectstr);
     OPENSSL_free(bindstr);
     OPENSSL_free(bindhost);
