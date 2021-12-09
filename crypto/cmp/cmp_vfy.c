@@ -640,6 +640,28 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
     return 0;
 }
 
+static int check_transactionID_or_nonce(ASN1_OCTET_STRING *expected,
+                                        ASN1_OCTET_STRING *actual, int reason)
+{
+    if (expected != NULL
+        && (actual == NULL || ASN1_OCTET_STRING_cmp(expected, actual) != 0)) {
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+        char *expected_str, *actual_str;
+
+        expected_str = i2s_ASN1_OCTET_STRING(NULL, expected);
+        actual_str = actual == NULL ? "(none)"
+            : i2s_ASN1_OCTET_STRING(NULL, actual);
+        ERR_raise_data(ERR_LIB_CMP, CMP_R_TRANSACTIONID_UNMATCHED,
+                       "expected = %s, actual = %s",
+                       expected_str == NULL ? "?" : expected_str,
+                       actual_str == NULL ? "?" : actual_str);
+        OPENSSL_free(expected_str);
+        OPENSSL_free(actual_str);
+        return 0;
+#endif
+    }
+    return 1;
+}
 
 /*-
  * Check received message (i.e., response by server or request from client)
@@ -742,36 +764,14 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
     }
 
     /* compare received transactionID with the expected one in previous msg */
-    if (ctx->transactionID != NULL
-            && (hdr->transactionID == NULL
-                || ASN1_OCTET_STRING_cmp(ctx->transactionID,
-                                         hdr->transactionID) != 0)) {
-#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-        char *ctx_str, *hdr_str;
-
-        ctx_str = i2s_ASN1_OCTET_STRING(NULL, ctx->transactionID);
-        hdr_str = hdr->transactionID == NULL ? "(none)"
-            : i2s_ASN1_OCTET_STRING(NULL, hdr->transactionID);
-        ERR_raise_data(ERR_LIB_CMP, CMP_R_TRANSACTIONID_UNMATCHED,
-                       "expected = %s, actual = %s",
-                       ctx_str == NULL ? "?" : ctx_str,
-                       hdr_str == NULL ? "?" : hdr_str);
-        OPENSSL_free(ctx_str);
-        OPENSSL_free(hdr_str);
+    if (!check_transactionID_or_nonce(ctx->transactionID, hdr->transactionID,
+                                      CMP_R_TRANSACTIONID_UNMATCHED))
         return 0;
-#endif
-    }
 
     /* compare received nonce with the one we sent */
-    if (ctx->senderNonce != NULL
-            && (msg->header->recipNonce == NULL
-                || ASN1_OCTET_STRING_cmp(ctx->senderNonce,
-                                         hdr->recipNonce) != 0)) {
-#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-        ERR_raise(ERR_LIB_CMP, CMP_R_RECIPNONCE_UNMATCHED);
+    if (!check_transactionID_or_nonce(ctx->senderNonce, hdr->recipNonce,
+                                      CMP_R_RECIPNONCE_UNMATCHED))
         return 0;
-#endif
-    }
 
     /*
      * RFC 4210 section 5.1.1 states: the recipNonce is copied from
