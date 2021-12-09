@@ -17,10 +17,20 @@
 #include "ciphercommon_local.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
+#include "crypto/param_trie.h"
+#include "internal/thread_once.h"
 
 /*-
  * Generic cipher functions for OSSL_PARAM gettables and settables
+ * The enums *must* be in the same order at the param arrays.
  */
+enum {
+    CIPHER_GETTABLE_MODE, CIPHER_GETTABLE_KEYLEN, CIPHER_GETTABLE_IVLEN,
+    CIPHER_GETTABLE_BLOCK_SIZE, CIPHER_GETTABLE_AEAD, CIPHER_GETTABLE_CUSTOM_IV,
+    CIPHER_GETTABLE_CTS, CIPHER_GETTABLE_TLS1_MULTIBLOCK,
+    CIPHER_GETTABLE_HAS_RAND_KEY
+};
+
 static const OSSL_PARAM cipher_known_gettable_params[] = {
     OSSL_PARAM_uint(OSSL_CIPHER_PARAM_MODE, NULL),
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
@@ -33,6 +43,60 @@ static const OSSL_PARAM cipher_known_gettable_params[] = {
     OSSL_PARAM_int(OSSL_CIPHER_PARAM_HAS_RAND_KEY, NULL),
     OSSL_PARAM_END
 };
+/*-
+ * AEAD cipher functions for OSSL_PARAM gettables
+ * The enums *must* be in the same order at the param arrays.
+ */
+enum {
+    CIPHER_CTX_GETTABLE_KEYLEN, CIPHER_CTX_GETTABLE_IVLEN,
+    CIPHER_CTX_GETTABLE_AEAD_TAGLEN, CIPHER_CTX_GETTABLE_IV,
+    CIPHER_CTX_GETTABLE_UPDATED_IV, CIPHER_CTX_GETTABLE_AEAD_TAG,
+    CIPHER_CTX_GETTABLE_AEAD_TLS1_AAD_PAD,
+    CIPHER_CTX_GETTABLE_AEAD_TLS1_GET_IV_GEN,
+    CIPHER_CTX_GETTABLE_PADDING, CIPHER_CTX_GETTABLE_NUM,
+    CIPHER_CTX_GETTABLE_TLS_MAC
+};
+static const OSSL_PARAM cipher_aead_known_gettable_ctx_params[] = {
+    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
+    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
+    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TAGLEN, NULL),
+    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_IV, NULL, 0),
+    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_UPDATED_IV, NULL, 0),
+    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, NULL, 0),
+    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD, NULL),
+    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_GET_IV_GEN, NULL, 0),
+    OSSL_PARAM_uint(OSSL_CIPHER_PARAM_PADDING, NULL),
+    OSSL_PARAM_uint(OSSL_CIPHER_PARAM_NUM, NULL),
+    OSSL_PARAM_octet_ptr(OSSL_CIPHER_PARAM_TLS_MAC, NULL, 0),
+    OSSL_PARAM_END
+};
+
+static OSSL_PTRIE *generic_cipher_get_ptrie;
+static OSSL_PTRIE *generic_cipher_ctx_get_ptrie;
+
+#if !defined(OPENSSL_SMALL_FOOTPRINT) && !defined(FIPS_MODULE)
+static void cipher_free_trie_memory(void)
+{
+    ossl_ptrie_free(generic_cipher_get_ptrie);
+    ossl_ptrie_free(generic_cipher_ctx_get_ptrie);
+}
+
+static CRYPTO_ONCE cipher_common_init = CRYPTO_ONCE_STATIC_INIT;
+DEFINE_RUN_ONCE_STATIC(do_cipher_common_init)
+{
+    /*
+     * If any of this fails, it's not a problem because the code will
+     * fallback to a slower but equivalent path
+     */
+    if (OPENSSL_atexit(&cipher_free_trie_memory)) {
+        generic_cipher_get_ptrie = ossl_ptrie_new(cipher_known_gettable_params);
+        generic_cipher_ctx_get_ptrie =
+                ossl_ptrie_new(cipher_aead_known_gettable_ctx_params);
+    }
+    return 1;
+}
+#endif
+
 const OSSL_PARAM *ossl_cipher_generic_gettable_params(ossl_unused void *provctx)
 {
     return cipher_known_gettable_params;
@@ -43,53 +107,73 @@ int ossl_cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
                                    size_t kbits, size_t blkbits, size_t ivbits)
 {
     OSSL_PARAM *p;
+    OSSL_PTRIE *pt;
+    OSSL_PTRIE_PARAM_IDX indicies[OSSL_NELEM(cipher_known_gettable_params) - 1];
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_MODE);
+#if !defined(FIPS_MODULE)
+    if (!RUN_ONCE(&cipher_common_init, do_cipher_common_init))
+        return 0;
+#endif
+
+    if (!ossl_ptrie_scan(generic_cipher_get_ptrie, params, OSSL_NELEM(indicies),
+                         indicies))
+        return 0;
+
+    p = ossl_ptrie_locate(CIPHER_GETTABLE_MODE, params, indicies,
+                          OSSL_CIPHER_PARAM_MODE);
     if (p != NULL && !OSSL_PARAM_set_uint(p, md)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_AEAD);
+    p = ossl_ptrie_locate(CIPHER_GETTABLE_AEAD, params, indicies,
+                          OSSL_CIPHER_PARAM_AEAD);
     if (p != NULL
         && !OSSL_PARAM_set_int(p, (flags & PROV_CIPHER_FLAG_AEAD) != 0)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_CUSTOM_IV);
+    p = ossl_ptrie_locate(CIPHER_GETTABLE_CUSTOM_IV, params, indicies,
+                          OSSL_CIPHER_PARAM_CUSTOM_IV);
     if (p != NULL
         && !OSSL_PARAM_set_int(p, (flags & PROV_CIPHER_FLAG_CUSTOM_IV) != 0)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_CTS);
+    p = ossl_ptrie_locate(CIPHER_GETTABLE_CTS, params, indicies,
+                          OSSL_CIPHER_PARAM_CTS);
     if (p != NULL
         && !OSSL_PARAM_set_int(p, (flags & PROV_CIPHER_FLAG_CTS) != 0)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK);
+    p = ossl_ptrie_locate(CIPHER_GETTABLE_TLS1_MULTIBLOCK, params, indicies,
+                          OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK);
     if (p != NULL
         && !OSSL_PARAM_set_int(p, (flags & PROV_CIPHER_FLAG_TLS1_MULTIBLOCK) != 0)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_HAS_RAND_KEY);
+    p = ossl_ptrie_locate(CIPHER_GETTABLE_HAS_RAND_KEY, params, indicies,
+                          OSSL_CIPHER_PARAM_HAS_RAND_KEY);
     if (p != NULL
         && !OSSL_PARAM_set_int(p, (flags & PROV_CIPHER_FLAG_RAND_KEY) != 0)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_KEYLEN);
+    p = ossl_ptrie_locate(CIPHER_GETTABLE_KEYLEN, params, indicies,
+                          OSSL_CIPHER_PARAM_KEYLEN);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, kbits / 8)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_BLOCK_SIZE);
+    p = ossl_ptrie_locate(CIPHER_GETTABLE_BLOCK_SIZE, params, indicies,
+                          OSSL_CIPHER_PARAM_BLOCK_SIZE);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, blkbits / 8)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IVLEN);
+    p = ossl_ptrie_locate(CIPHER_GETTABLE_IVLEN, params, indicies,
+                          OSSL_CIPHER_PARAM_IVLEN);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, ivbits / 8)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
@@ -137,20 +221,6 @@ CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_START(ossl_cipher_var_keylen)
 OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
 CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_END(ossl_cipher_var_keylen)
 
-/*-
- * AEAD cipher functions for OSSL_PARAM gettables and settables
- */
-static const OSSL_PARAM cipher_aead_known_gettable_ctx_params[] = {
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TAGLEN, NULL),
-    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_IV, NULL, 0),
-    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_UPDATED_IV, NULL, 0),
-    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, NULL, 0),
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD, NULL),
-    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_GET_IV_GEN, NULL, 0),
-    OSSL_PARAM_END
-};
 const OSSL_PARAM *ossl_cipher_aead_gettable_ctx_params(
         ossl_unused void *cctx, ossl_unused void *provctx
     )
@@ -544,42 +614,60 @@ int ossl_cipher_generic_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     OSSL_PARAM *p;
+    OSSL_PTRIE *pt;
+    OSSL_PTRIE_PARAM_IDX indicies[OSSL_NELEM(cipher_aead_known_gettable_ctx_params) - 1];
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IVLEN);
+#if !defined(OPENSSL_SMALL_FOOTPRINT) && !defined(FIPS_MODULE)
+    if (!RUN_ONCE(&cipher_common_init, do_cipher_common_init))
+        return 0;
+#endif
+    pt = generic_cipher_ctx_get_ptrie;
+
+    if (!ossl_ptrie_scan(pt, params, OSSL_NELEM(indicies), indicies))
+        return 0;
+
+    p = ossl_ptrie_locate(CIPHER_CTX_GETTABLE_IVLEN, params, indicies,
+                          OSSL_CIPHER_PARAM_IVLEN);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->ivlen)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_PADDING);
+    p = ossl_ptrie_locate(CIPHER_CTX_GETTABLE_PADDING, params, indicies,
+                          OSSL_CIPHER_PARAM_PADDING);
     if (p != NULL && !OSSL_PARAM_set_uint(p, ctx->pad)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IV);
+    p = ossl_ptrie_locate(CIPHER_CTX_GETTABLE_IV, params, indicies,
+                          OSSL_CIPHER_PARAM_IV);
     if (p != NULL
         && !OSSL_PARAM_set_octet_ptr(p, &ctx->oiv, ctx->ivlen)
         && !OSSL_PARAM_set_octet_string(p, &ctx->oiv, ctx->ivlen)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_UPDATED_IV);
+    p = ossl_ptrie_locate(CIPHER_CTX_GETTABLE_UPDATED_IV, params, indicies,
+                          OSSL_CIPHER_PARAM_UPDATED_IV);
     if (p != NULL
         && !OSSL_PARAM_set_octet_ptr(p, &ctx->iv, ctx->ivlen)
         && !OSSL_PARAM_set_octet_string(p, &ctx->iv, ctx->ivlen)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_NUM);
+    p = ossl_ptrie_locate(CIPHER_CTX_GETTABLE_NUM, params, indicies,
+                          OSSL_CIPHER_PARAM_NUM);
     if (p != NULL && !OSSL_PARAM_set_uint(p, ctx->num)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_KEYLEN);
+    p = ossl_ptrie_locate(CIPHER_CTX_GETTABLE_KEYLEN, params, indicies,
+                          OSSL_CIPHER_PARAM_KEYLEN);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->keylen)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_TLS_MAC);
+    p = ossl_ptrie_locate(CIPHER_CTX_GETTABLE_TLS_MAC, params, indicies,
+                          OSSL_CIPHER_PARAM_TLS_MAC);
     if (p != NULL
         && !OSSL_PARAM_set_octet_ptr(p, ctx->tlsmac, ctx->tlsmacsize)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
