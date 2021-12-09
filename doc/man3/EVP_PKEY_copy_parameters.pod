@@ -54,9 +54,32 @@ EVP_PKEY_eq() and EVP_PKEY_parameters_eq().
 The function EVP_PKEY_cmp() previously only checked the key parameters
 (if there are any) and the public key, assuming that there always was
 a public key and that private key equality could be derived from that.
-This is no longer necessarily true, as the public key may not be present.
-EVP_PKEY_eq(), and therefore also EVP_PKEY_cmp(), now compare all
-components that are or should be present in both keys.
+Because it's no longer assumed that the private key in an L<EVP_PKEY(3)> is
+always accompanied by a public key, the comparison can not rely on public
+key comparison alone.
+
+Instead, EVP_PKEY_eq() (and therefore also EVP_PKEY_cmp()) now compares:
+
+=over 4
+
+=item 1.
+
+the key parameters (if there are any)
+
+=item 2.
+
+the public keys or the private keys of the two B<EVP_PKEY>s, depending on
+what they both contain.
+
+=back
+
+=begin comment
+
+Exactly what is compared is ultimately at the discretion of the provider
+that holds the key, as they will compare what makes sense to them that fits
+the selector bits they are passed.
+
+=end comment
 
 =head1 RETURN VALUES
 
