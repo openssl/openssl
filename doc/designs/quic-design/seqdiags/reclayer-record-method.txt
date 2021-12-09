@@ -1,0 +1,29 @@
+title Option 2: RECORD_METHOD
+
+autoactivation
+participant packetizer
+participant packet protector
+participant BIO sink
+participant BIO source
+
+activate packetizer
+packetizer->packet protector:set_keys(level, keys)
+packetizer<--packet protector:
+loop while having any data to write
+packetizer->packet protector:protect(level, packet, buffer)\npacket data can be a list of buffers\nto allow for zero-copy
+packetizer<--packet protector:encrypted data in the buffer and length
+packetizer->BIO sink:write encrypted data message
+packetizer<--BIO sink:
+end
+space 
+deactivate packetizer
+space 
+activate packetizer
+packetizer->packet protector:set_keys(level, keys)
+packetizer<--packet protector:
+loop while BIO source indicates having data to read
+packetizer->BIO source:read encrypted data message
+packetizer<--BIO source:encrypted data and length
+packetizer->packet protector:unprotect(protected, length, &packets)
+packetizer<--packet protector:list of unprotected packets\n(there can be multiple coalesced\npackets in single message)
+end

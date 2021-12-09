@@ -1,0 +1,26 @@
+title Option 1: BIO filter
+
+autoactivation
+activate packetizer
+packetizer->BIO filter:ctrl to set keys for level
+packetizer<--BIO filter:
+packetizer->BIO filter:ctrl to set current level
+packetizer<--BIO filter:
+loop while having any data to write
+packetizer->BIO filter:BIO_write(data, length)
+BIO filter->BIO sink:write encrypted data
+BIO filter<--BIO sink:
+packetizer<--BIO filter:
+end
+space 
+deactivate packetizer
+space 
+activate packetizer
+packetizer->BIO filter:ctrl to set keys for level
+packetizer<--BIO filter:
+loop while BIO source indicates having data to read
+packetizer->BIO filter:BIO_read(buffer, buflen)
+BIO filter->BIO source:read encrypted data
+BIO filter<--BIO source:encrypted data and length
+packetizer<--BIO filter:data and length
+end
