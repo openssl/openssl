@@ -22,6 +22,8 @@
 #include "cipher_aes_cbc_hmac_sha.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
+#include "crypto/param_trie.h"
+#include "internal/thread_once.h"
 
 #ifndef AES_CBC_HMAC_SHA_CAPABLE
 # define IMPLEMENT_CIPHER(nm, sub, kbits, blkbits, ivbits, flags)              \
@@ -46,6 +48,8 @@ static OSSL_FUNC_cipher_settable_ctx_params_fn aes_settable_ctx_params;
 # define aes_final ossl_cipher_generic_stream_final
 # define aes_cipher ossl_cipher_generic_cipher
 
+static OSSL_PTRIE *aes_ctx_set_ptrie, *aes_ctx_get_ptrie;
+
 static int aes_einit(void *ctx, const unsigned char *key, size_t keylen,
                           const unsigned char *iv, size_t ivlen,
                           const OSSL_PARAM params[])
@@ -64,6 +68,20 @@ static int aes_dinit(void *ctx, const unsigned char *key, size_t keylen,
     return aes_set_ctx_params(ctx, params);
 }
 
+/* The enum *must* be in the same order at the param array */
+enum {
+    AES_SETTABLE_AEAD_MAC_KEY,
+    AES_SETTABLE_AEAD_TLS1_AAD,
+# if !defined(OPENSSL_NO_MULTIBLOCK)
+    AES_SETTABLE_TLS1_MULTIBLOCK_MAX_SEND_FRAGMENT,
+    AES_SETTABLE_TLS1_MULTIBLOCK_AAD,
+    AES_SETTABLE_TLS1_MULTIBLOCK_INTERLEAVE,
+    AES_SETTABLE_TLS1_MULTIBLOCK_ENC,
+    AES_SETTABLE_TLS1_MULTIBLOCK_ENC_IN,
+# endif /* !defined(OPENSSL_NO_MULTIBLOCK) */
+    AES_SETTABLE_KEYLEN,
+    AES_SETTABLE_TLS_VERSION
+};
 static const OSSL_PARAM cipher_aes_known_settable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_MAC_KEY, NULL, 0),
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD, NULL, 0),
@@ -75,6 +93,7 @@ static const OSSL_PARAM cipher_aes_known_settable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_IN, NULL, 0),
 # endif /* !defined(OPENSSL_NO_MULTIBLOCK) */
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
+    OSSL_PARAM_uint(OSSL_CIPHER_PARAM_TLS_VERSION, NULL),
     OSSL_PARAM_END
 };
 const OSSL_PARAM *aes_settable_ctx_params(ossl_unused void *cctx,
@@ -82,6 +101,62 @@ const OSSL_PARAM *aes_settable_ctx_params(ossl_unused void *cctx,
 {
     return cipher_aes_known_settable_ctx_params;
 }
+
+/* The enum *must* be in the same order at the param array */
+enum {
+# if !defined(OPENSSL_NO_MULTIBLOCK)
+    AES_GETTABLE_TLS1_MULTIBLOCK_MAX_BUFSIZE,
+    AES_GETTABLE_TLS1_MULTIBLOCK_INTERLEAVE,
+    AES_GETTABLE_TLS1_MULTIBLOCK_AAD_PACKLEN,
+    AES_GETTABLE_TLS1_MULTIBLOCK_ENC_LEN,
+# endif /* !defined(OPENSSL_NO_MULTIBLOCK) */
+    AES_GETTABLE_AEAD_TLS1_AAD_PAD,
+    AES_GETTABLE_KEYLEN,
+    AES_GETTABLE_IVLEN,
+    AES_GETTABLE_PARAM_IV,
+    AES_GETTABLE_PARAM_UPDATED_IV
+};
+static const OSSL_PARAM cipher_aes_known_gettable_ctx_params[] = {
+# if !defined(OPENSSL_NO_MULTIBLOCK)
+    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_BUFSIZE, NULL),
+    OSSL_PARAM_uint(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE, NULL),
+    OSSL_PARAM_uint(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD_PACKLEN, NULL),
+    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_LEN, NULL),
+# endif /* !defined(OPENSSL_NO_MULTIBLOCK) */
+    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD, NULL),
+    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
+    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
+    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_IV, NULL, 0),
+    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_UPDATED_IV, NULL, 0),
+    OSSL_PARAM_END
+};
+const OSSL_PARAM *aes_gettable_ctx_params(ossl_unused void *cctx,
+                                          ossl_unused void *provctx)
+{
+    return cipher_aes_known_gettable_ctx_params;
+}
+
+#if !defined(FIPS_MODULE)
+static void aes_free_trie_memory(void)
+{
+    ossl_ptrie_free(aes_ctx_set_ptrie);
+    ossl_ptrie_free(aes_ctx_get_ptrie);
+}
+
+static CRYPTO_ONCE aes_common_init = CRYPTO_ONCE_STATIC_INIT;
+DEFINE_RUN_ONCE_STATIC(do_aes_common_init)
+{
+    /*
+     * If any of this fails, it's not a problem because the code will
+     * fallback to a slower but equivalent path
+     */
+    if (OPENSSL_atexit(&aes_free_trie_memory)) {
+        aes_ctx_set_ptrie = ossl_ptrie_new(cipher_aes_known_settable_ctx_params);
+        aes_ctx_get_ptrie = ossl_ptrie_new(cipher_aes_known_gettable_ctx_params);
+    }
+    return 1;
+}
+#endif
 
 static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
@@ -93,11 +168,23 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 # if !defined(OPENSSL_NO_MULTIBLOCK)
     EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM mb_param;
 # endif
+    OSSL_PTRIE_PARAM_IDX indicies[
+            OSSL_NELEM(cipher_aes_known_settable_ctx_params) - 1];
 
     if (params == NULL)
         return 1;
 
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_MAC_KEY);
+#if !defined(FIPS_MODULE)
+    if (!RUN_ONCE(&aes_common_init, do_aes_common_init))
+        return 0;
+#endif
+
+    if (!ossl_ptrie_scan(aes_ctx_set_ptrie, params, OSSL_NELEM(indicies),
+                         indicies))
+        return 0;
+
+    p = ossl_ptrie_locate_const(AES_SETTABLE_AEAD_MAC_KEY, params, indicies,
+                                OSSL_CIPHER_PARAM_AEAD_MAC_KEY);
     if (p != NULL) {
         if (p->data_type != OSSL_PARAM_OCTET_STRING) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
@@ -107,7 +194,8 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     }
 
 # if !defined(OPENSSL_NO_MULTIBLOCK)
-    p = OSSL_PARAM_locate_const(params,
+    p = ossl_ptrie_locate_const(AES_SETTABLE_TLS1_MULTIBLOCK_MAX_SEND_FRAGMENT,
+            params, indicies,
             OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_SEND_FRAGMENT);
     if (p != NULL
             && !OSSL_PARAM_get_size_t(p, &ctx->multiblock_max_send_fragment)) {
@@ -123,9 +211,11 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
      *   ctx->multiblock_interleave
      *   ctx->multiblock_aad_packlen
      */
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD);
+    p = ossl_ptrie_locate_const(AES_SETTABLE_TLS1_MULTIBLOCK_AAD, params,
+                                indicies, OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD);
     if (p != NULL) {
-        const OSSL_PARAM *p1 = OSSL_PARAM_locate_const(params,
+        const OSSL_PARAM *p1 = ossl_ptrie_locate_const(AES_SETTABLE_TLS1_MULTIBLOCK_INTERLEAVE,
+                                   params, indicies,
                                    OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE);
         if (p->data_type != OSSL_PARAM_OCTET_STRING
             || p1 == NULL
@@ -148,11 +238,15 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
      * The outputs of tls1_multiblock_encrypt are:
      *   ctx->multiblock_encrypt_len
      */
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC);
+    p = ossl_ptrie_locate_const(AES_SETTABLE_TLS1_MULTIBLOCK_ENC, params,
+                                indicies, OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC);
     if (p != NULL) {
-        const OSSL_PARAM *p1 = OSSL_PARAM_locate_const(params,
+        const OSSL_PARAM *p1 = ossl_ptrie_locate_const(
+                                   AES_SETTABLE_TLS1_MULTIBLOCK_INTERLEAVE,
+                                   params, indicies,
                                    OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE);
-        const OSSL_PARAM *pin = OSSL_PARAM_locate_const(params,
+        const OSSL_PARAM *pin = ossl_ptrie_locate_const(
+                                    AES_SETTABLE_TLS1_MULTIBLOCK_ENC_IN, params, indicies,
                                     OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_IN);
 
         if (p->data_type != OSSL_PARAM_OCTET_STRING
@@ -171,7 +265,8 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     }
 # endif /* !defined(OPENSSL_NO_MULTIBLOCK) */
 
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_TLS1_AAD);
+    p = ossl_ptrie_locate_const(AES_SETTABLE_AEAD_TLS1_AAD, params, indicies,
+                                OSSL_CIPHER_PARAM_AEAD_TLS1_AAD);
     if (p != NULL) {
         if (p->data_type != OSSL_PARAM_OCTET_STRING) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
@@ -181,7 +276,8 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             return 0;
     }
 
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);
+    p = ossl_ptrie_locate_const(AES_SETTABLE_KEYLEN, params, indicies,
+                                OSSL_CIPHER_PARAM_KEYLEN);
     if (p != NULL) {
         size_t keylen;
 
@@ -195,7 +291,8 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         }
     }
 
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_TLS_VERSION);
+    p = ossl_ptrie_locate_const(AES_SETTABLE_TLS_VERSION, params, indicies,
+                                OSSL_CIPHER_PARAM_TLS_VERSION);
     if (p != NULL) {
         if (!OSSL_PARAM_get_uint(p, &ctx->base.tlsversion)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
@@ -221,9 +318,25 @@ static int aes_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     PROV_AES_HMAC_SHA_CTX *ctx = (PROV_AES_HMAC_SHA_CTX *)vctx;
     OSSL_PARAM *p;
+    OSSL_PTRIE_PARAM_IDX indicies[
+            OSSL_NELEM(cipher_aes_known_gettable_ctx_params) - 1];
+
+    if (params == NULL)
+        return 1;
+
+#if !defined(FIPS_MODULE)
+    if (!RUN_ONCE(&aes_common_init, do_aes_common_init))
+        return 0;
+#endif
+
+    if (!ossl_ptrie_scan(aes_ctx_get_ptrie, params, OSSL_NELEM(indicies),
+                         indicies))
+        return 0;
 
 # if !defined(OPENSSL_NO_MULTIBLOCK)
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_BUFSIZE);
+    p = ossl_ptrie_locate(AES_GETTABLE_TLS1_MULTIBLOCK_MAX_BUFSIZE,
+                          params, indicies,
+                          OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_BUFSIZE);
     if (p != NULL) {
         PROV_CIPHER_HW_AES_HMAC_SHA *hw =
            (PROV_CIPHER_HW_AES_HMAC_SHA *)ctx->hw;
@@ -235,48 +348,59 @@ static int aes_get_ctx_params(void *vctx, OSSL_PARAM params[])
         }
     }
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE);
+    p = ossl_ptrie_locate(AES_GETTABLE_TLS1_MULTIBLOCK_INTERLEAVE,
+                          params, indicies,
+                          OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE);
     if (p != NULL && !OSSL_PARAM_set_uint(p, ctx->multiblock_interleave)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD_PACKLEN);
+    p = ossl_ptrie_locate(AES_GETTABLE_TLS1_MULTIBLOCK_AAD_PACKLEN,
+                          params, indicies,
+                          OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD_PACKLEN);
     if (p != NULL && !OSSL_PARAM_set_uint(p, ctx->multiblock_aad_packlen)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_LEN);
+    p = ossl_ptrie_locate(AES_GETTABLE_TLS1_MULTIBLOCK_ENC_LEN,
+                          params, indicies,
+                          OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_LEN);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->multiblock_encrypt_len)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
 # endif /* !defined(OPENSSL_NO_MULTIBLOCK) */
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD);
+    p = ossl_ptrie_locate(AES_GETTABLE_AEAD_TLS1_AAD_PAD, params, indicies,
+                          OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->tls_aad_pad)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_KEYLEN);
+    p = ossl_ptrie_locate(AES_GETTABLE_KEYLEN, params, indicies,
+                          OSSL_CIPHER_PARAM_KEYLEN);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->base.keylen)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IVLEN);
+    p = ossl_ptrie_locate(AES_GETTABLE_IVLEN, params, indicies,
+                          OSSL_CIPHER_PARAM_IVLEN);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->base.ivlen)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IV);
+    p = ossl_ptrie_locate(AES_GETTABLE_PARAM_IV, params, indicies,
+                          OSSL_CIPHER_PARAM_IV);
     if (p != NULL
         && !OSSL_PARAM_set_octet_string(p, ctx->base.oiv, ctx->base.ivlen)
         && !OSSL_PARAM_set_octet_ptr(p, &ctx->base.oiv, ctx->base.ivlen)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_UPDATED_IV);
+    p = ossl_ptrie_locate(AES_GETTABLE_PARAM_UPDATED_IV, params, indicies,
+                          OSSL_CIPHER_PARAM_UPDATED_IV);
     if (p != NULL
         && !OSSL_PARAM_set_octet_string(p, ctx->base.iv, ctx->base.ivlen)
         && !OSSL_PARAM_set_octet_ptr(p, &ctx->base.iv, ctx->base.ivlen)) {
@@ -284,26 +408,6 @@ static int aes_get_ctx_params(void *vctx, OSSL_PARAM params[])
         return 0;
     }
     return 1;
-}
-
-static const OSSL_PARAM cipher_aes_known_gettable_ctx_params[] = {
-# if !defined(OPENSSL_NO_MULTIBLOCK)
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_BUFSIZE, NULL),
-    OSSL_PARAM_uint(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE, NULL),
-    OSSL_PARAM_uint(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD_PACKLEN, NULL),
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_LEN, NULL),
-# endif /* !defined(OPENSSL_NO_MULTIBLOCK) */
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD, NULL),
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
-    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_IV, NULL, 0),
-    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_UPDATED_IV, NULL, 0),
-    OSSL_PARAM_END
-};
-const OSSL_PARAM *aes_gettable_ctx_params(ossl_unused void *cctx,
-                                          ossl_unused void *provctx)
-{
-    return cipher_aes_known_gettable_ctx_params;
 }
 
 static void base_init(void *provctx, PROV_AES_HMAC_SHA_CTX *ctx,
