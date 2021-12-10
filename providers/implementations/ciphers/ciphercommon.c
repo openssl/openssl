@@ -74,7 +74,7 @@ static const OSSL_PARAM cipher_aead_known_gettable_ctx_params[] = {
 static OSSL_PTRIE *generic_cipher_get_ptrie;
 static OSSL_PTRIE *generic_cipher_ctx_get_ptrie;
 
-#if !defined(OPENSSL_SMALL_FOOTPRINT) && !defined(FIPS_MODULE)
+#if !defined(FIPS_MODULE)
 static void cipher_free_trie_memory(void)
 {
     ossl_ptrie_free(generic_cipher_get_ptrie);
@@ -107,7 +107,6 @@ int ossl_cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
                                    size_t kbits, size_t blkbits, size_t ivbits)
 {
     OSSL_PARAM *p;
-    OSSL_PTRIE *pt;
     OSSL_PTRIE_PARAM_IDX indicies[OSSL_NELEM(cipher_known_gettable_params) - 1];
 
 #if !defined(FIPS_MODULE)
@@ -614,16 +613,15 @@ int ossl_cipher_generic_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     OSSL_PARAM *p;
-    OSSL_PTRIE *pt;
     OSSL_PTRIE_PARAM_IDX indicies[OSSL_NELEM(cipher_aead_known_gettable_ctx_params) - 1];
 
-#if !defined(OPENSSL_SMALL_FOOTPRINT) && !defined(FIPS_MODULE)
+#if !defined(FIPS_MODULE)
     if (!RUN_ONCE(&cipher_common_init, do_cipher_common_init))
         return 0;
 #endif
-    pt = generic_cipher_ctx_get_ptrie;
 
-    if (!ossl_ptrie_scan(pt, params, OSSL_NELEM(indicies), indicies))
+    if (!ossl_ptrie_scan(generic_cipher_ctx_get_ptrie, params,
+                         OSSL_NELEM(indicies), indicies))
         return 0;
 
     p = ossl_ptrie_locate(CIPHER_CTX_GETTABLE_IVLEN, params, indicies,
