@@ -980,6 +980,20 @@ static int test_EC_priv_pub(void)
     if (!test_selection(params_and_keypair, EVP_PKEY_KEYPAIR))
         goto err;
 
+    /* Try key equality */
+    if (!TEST_int_gt(EVP_PKEY_parameters_eq(just_params, just_params), 0)
+        || !TEST_int_gt(EVP_PKEY_parameters_eq(just_params, params_and_pub),
+                        0)
+        || !TEST_int_gt(EVP_PKEY_parameters_eq(just_params, params_and_priv),
+                        0)
+        || !TEST_int_gt(EVP_PKEY_parameters_eq(just_params, params_and_keypair),
+                        0)
+        || !TEST_int_gt(EVP_PKEY_eq(params_and_pub, params_and_pub), 0)
+        || !TEST_int_gt(EVP_PKEY_eq(params_and_priv, params_and_priv), 0)
+        || !TEST_int_gt(EVP_PKEY_eq(params_and_keypair, params_and_pub), 0)
+        || !TEST_int_gt(EVP_PKEY_eq(params_and_keypair, params_and_priv), 0))
+        goto err;
+
     ret = 1;
  err:
     OSSL_PARAM_free(params);
