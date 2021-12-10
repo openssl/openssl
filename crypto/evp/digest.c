@@ -25,6 +25,19 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
+static void cleanup_old_md_data(EVP_MD_CTX *ctx, int force)
+{
+    if (ctx->digest != NULL) {
+        if (ctx->digest->cleanup != NULL
+                && !EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_CLEANED))
+            ctx->digest->cleanup(ctx);
+        if (ctx->md_data != NULL && ctx->digest->ctx_size > 0
+                && (!EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_REUSE)
+                    || force))
+            OPENSSL_clear_free(ctx->md_data, ctx->digest->ctx_size);
+        ctx->md_data = NULL;
+    }
+}
 
 void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force)
 {
@@ -41,12 +54,7 @@ void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force)
      * Don't assume ctx->md_data was cleaned in EVP_Digest_Final, because
      * sometimes only copies of the context are ever finalised.
      */
-    if (ctx->digest && ctx->digest->cleanup
-        && !EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_CLEANED))
-        ctx->digest->cleanup(ctx);
-    if (ctx->digest && ctx->digest->ctx_size && ctx->md_data
-            && (!EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_REUSE) || force))
-        OPENSSL_clear_free(ctx->md_data, ctx->digest->ctx_size);
+    cleanup_old_md_data(ctx, force);
     if (force)
         ctx->digest = NULL;
 
@@ -217,10 +225,7 @@ static int evp_md_init_internal(EVP_MD_CTX *ctx, const EVP_MD *type,
         goto legacy;
     }
 
-    if (ctx->digest != NULL && ctx->digest->ctx_size > 0) {
-        OPENSSL_clear_free(ctx->md_data, ctx->digest->ctx_size);
-        ctx->md_data = NULL;
-    }
+    cleanup_old_md_data(ctx, 1);
 
     /* Start of non-legacy code below */
 
@@ -309,10 +314,8 @@ static int evp_md_init_internal(EVP_MD_CTX *ctx, const EVP_MD *type,
     }
 #endif
     if (ctx->digest != type) {
-        if (ctx->digest && ctx->digest->ctx_size) {
-            OPENSSL_clear_free(ctx->md_data, ctx->digest->ctx_size);
-            ctx->md_data = NULL;
-        }
+        cleanup_old_md_data(ctx, 1);
+
         ctx->digest = type;
         if (!(ctx->flags & EVP_MD_CTX_FLAG_NO_INIT) && type->ctx_size) {
             ctx->update = type->update;
