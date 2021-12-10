@@ -19,6 +19,8 @@
 #include "prov/providercommon.h"
 #include "prov/ciphercommon_aead.h"
 #include "prov/implementations.h"
+#include "crypto/param_trie.h"
+#include "internal/thread_once.h"
 
 #define AES_OCB_FLAGS AEAD_FLAGS
 
@@ -42,6 +44,8 @@ static OSSL_FUNC_cipher_get_ctx_params_fn aes_ocb_get_ctx_params;
 static OSSL_FUNC_cipher_set_ctx_params_fn aes_ocb_set_ctx_params;
 static OSSL_FUNC_cipher_gettable_ctx_params_fn cipher_ocb_gettable_ctx_params;
 static OSSL_FUNC_cipher_settable_ctx_params_fn cipher_ocb_settable_ctx_params;
+
+static OSSL_PTRIE *aes_ocb_ctx_set_ptrie, *aes_ocb_ctx_get_ptrie;
 
 /*
  * The following methods could be moved into PROV_AES_OCB_HW if
@@ -352,16 +356,94 @@ static void *aes_ocb_dupctx(void *vctx)
     return ret;
 }
 
+/* The enum *must* be in the same order at the param array */
+enum {
+    AES_OCB_GETTABLE_KEYLEN,
+    AES_OCB_GETTABLE_IVLEN,
+    AES_OCB_GETTABLE_AEAD_TAGLEN,
+    AES_OCB_GETTABLE_IV,
+    AES_OCB_GETTABLE_UPDATED_IV,
+    AES_OCB_GETTABLE_AEAD_TAG
+};
+static const OSSL_PARAM cipher_ocb_known_gettable_ctx_params[] = {
+    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
+    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
+    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TAGLEN, NULL),
+    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_IV, NULL, 0),
+    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_UPDATED_IV, NULL, 0),
+    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, NULL, 0),
+    OSSL_PARAM_END
+};
+
+static const OSSL_PARAM *cipher_ocb_gettable_ctx_params(ossl_unused void *cctx,
+                                                        ossl_unused void *p_ctx)
+{
+    return cipher_ocb_known_gettable_ctx_params;
+}
+
+/* The enum *must* be in the same order at the param array */
+enum {
+    AES_OCB_SETTABLE_KEYLEN,
+    AES_OCB_SETTABLE_IVLEN,
+    AES_OCB_SETTABLE_AEAD_TAG
+};
+static const OSSL_PARAM cipher_ocb_known_settable_ctx_params[] = {
+    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
+    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_IVLEN, NULL),
+    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, NULL, 0),
+    OSSL_PARAM_END
+};
+    
+static const OSSL_PARAM *cipher_ocb_settable_ctx_params(ossl_unused void *cctx,
+                                                        ossl_unused void *p_ctx)
+{
+    return cipher_ocb_known_settable_ctx_params;
+}
+
+#if !defined(FIPS_MODULE)
+static void aes_ocb_free_trie_memory(void)
+{
+    ossl_ptrie_free(aes_ocb_ctx_set_ptrie);
+    ossl_ptrie_free(aes_ocb_ctx_get_ptrie);
+}
+
+static CRYPTO_ONCE aes_ocb_common_init = CRYPTO_ONCE_STATIC_INIT;
+DEFINE_RUN_ONCE_STATIC(do_ocb_aes_common_init)
+{
+    /*
+     * If any of this fails, it's not a problem because the code will
+     * fallback to a slower but equivalent path
+     */
+    if (OPENSSL_atexit(&aes_ocb_free_trie_memory)) {
+        aes_ocb_ctx_set_ptrie = ossl_ptrie_new(cipher_ocb_known_settable_ctx_params);
+        aes_ocb_ctx_get_ptrie = ossl_ptrie_new(cipher_ocb_known_gettable_ctx_params);
+    }
+    return 1;
+}
+#endif
+
 static int aes_ocb_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     PROV_AES_OCB_CTX *ctx = (PROV_AES_OCB_CTX *)vctx;
     const OSSL_PARAM *p;
     size_t sz;
+    OSSL_PTRIE_PARAM_IDX indicies[
+            OSSL_NELEM(cipher_ocb_known_settable_ctx_params) - 1];
 
     if (params == NULL)
         return 1;
 
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_TAG);
+#if !defined(FIPS_MODULE)
+    if (!RUN_ONCE(&aes_ocb_common_init, do_ocb_aes_common_init))
+        return 0;
+#endif
+
+    if (!ossl_ptrie_scan(aes_ocb_ctx_set_ptrie, params, OSSL_NELEM(indicies),
+                         indicies))
+        return 0;
+
+    p = ossl_ptrie_locate_const(AES_OCB_SETTABLE_AEAD_TAG, params, indicies,
+                                OSSL_CIPHER_PARAM_AEAD_TAG);
     if (p != NULL) {
         if (p->data_type != OSSL_PARAM_OCTET_STRING) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
@@ -378,7 +460,8 @@ static int aes_ocb_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             memcpy(ctx->tag, p->data, p->data_size);
         }
      }
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_IVLEN);
+    p = ossl_ptrie_locate_const(AES_OCB_SETTABLE_IVLEN, params, indicies,
+                                OSSL_CIPHER_PARAM_AEAD_IVLEN);
     if (p != NULL) {
         if (!OSSL_PARAM_get_size_t(p, &sz)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
@@ -389,7 +472,8 @@ static int aes_ocb_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             return 0;
         ctx->base.ivlen = sz;
     }
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);
+    p = ossl_ptrie_locate_const(AES_OCB_SETTABLE_KEYLEN, params, indicies,
+                                OSSL_CIPHER_PARAM_KEYLEN);
     if (p != NULL) {
         size_t keylen;
 
@@ -410,17 +494,32 @@ static int aes_ocb_get_ctx_params(void *vctx, OSSL_PARAM params[])
     PROV_AES_OCB_CTX *ctx = (PROV_AES_OCB_CTX *)vctx;
     OSSL_PARAM *p;
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IVLEN);
+    OSSL_PTRIE_PARAM_IDX indicies[
+            OSSL_NELEM(cipher_ocb_known_gettable_ctx_params) - 1];
+
+#if !defined(FIPS_MODULE)
+    if (!RUN_ONCE(&aes_ocb_common_init, do_ocb_aes_common_init))
+        return 0;
+#endif
+
+    if (!ossl_ptrie_scan(aes_ocb_ctx_get_ptrie, params, OSSL_NELEM(indicies),
+                         indicies))
+        return 0;
+
+    p = ossl_ptrie_locate(AES_OCB_GETTABLE_IVLEN, params, indicies,
+                          OSSL_CIPHER_PARAM_IVLEN);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->base.ivlen)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_KEYLEN);
+    p = ossl_ptrie_locate(AES_OCB_GETTABLE_KEYLEN, params, indicies,
+                          OSSL_CIPHER_PARAM_KEYLEN);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->base.keylen)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_AEAD_TAGLEN);
+    p = ossl_ptrie_locate(AES_OCB_GETTABLE_AEAD_TAGLEN, params, indicies,
+                          OSSL_CIPHER_PARAM_AEAD_TAGLEN);
     if (p != NULL) {
         if (!OSSL_PARAM_set_size_t(p, ctx->taglen)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
@@ -428,7 +527,8 @@ static int aes_ocb_get_ctx_params(void *vctx, OSSL_PARAM params[])
         }
     }
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IV);
+    p = ossl_ptrie_locate(AES_OCB_GETTABLE_IV, params, indicies,
+                          OSSL_CIPHER_PARAM_IV);
     if (p != NULL) {
         if (ctx->base.ivlen > p->data_size) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
@@ -440,7 +540,8 @@ static int aes_ocb_get_ctx_params(void *vctx, OSSL_PARAM params[])
             return 0;
         }
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_UPDATED_IV);
+    p = ossl_ptrie_locate(AES_OCB_GETTABLE_UPDATED_IV, params, indicies,
+                          OSSL_CIPHER_PARAM_UPDATED_IV);
     if (p != NULL) {
         if (ctx->base.ivlen > p->data_size) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
@@ -452,7 +553,8 @@ static int aes_ocb_get_ctx_params(void *vctx, OSSL_PARAM params[])
             return 0;
         }
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_AEAD_TAG);
+    p = ossl_ptrie_locate(AES_OCB_GETTABLE_AEAD_TAG, params, indicies,
+                          OSSL_CIPHER_PARAM_AEAD_TAG);
     if (p != NULL) {
         if (p->data_type != OSSL_PARAM_OCTET_STRING) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
@@ -465,33 +567,6 @@ static int aes_ocb_get_ctx_params(void *vctx, OSSL_PARAM params[])
         memcpy(p->data, ctx->tag, ctx->taglen);
     }
     return 1;
-}
-
-static const OSSL_PARAM cipher_ocb_known_gettable_ctx_params[] = {
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TAGLEN, NULL),
-    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_IV, NULL, 0),
-    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_UPDATED_IV, NULL, 0),
-    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, NULL, 0),
-    OSSL_PARAM_END
-};
-static const OSSL_PARAM *cipher_ocb_gettable_ctx_params(ossl_unused void *cctx,
-                                                        ossl_unused void *p_ctx)
-{
-    return cipher_ocb_known_gettable_ctx_params;
-}
-
-static const OSSL_PARAM cipher_ocb_known_settable_ctx_params[] = {
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_IVLEN, NULL),
-    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, NULL, 0),
-    OSSL_PARAM_END
-};
-static const OSSL_PARAM *cipher_ocb_settable_ctx_params(ossl_unused void *cctx,
-                                                        ossl_unused void *p_ctx)
-{
-    return cipher_ocb_known_settable_ctx_params;
 }
 
 static int aes_ocb_cipher(void *vctx, unsigned char *out, size_t *outl,
