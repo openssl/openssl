@@ -429,7 +429,9 @@ NODEBUG=@
         $(NODEBUG) ! them, so we create it instead.  This is an unfortunate
         $(NODEBUG) ! necessity.
         $(NODEBUG) !
-        $(NODEBUG) DEFINE openssl "{- sourcedir('include/openssl') -}
+        $(NODEBUG) openssl_inc1 = F$PARSE("[.include.openssl]","A.;",,,"syntax_only") - "A.;"
+        $(NODEBUG) openssl_inc2 = F$PARSE("sourcetop:[include.openssl]","A.;",,,"SYNTAX_ONLY") - "A.;"
+        $(NODEBUG) DEFINE openssl 'openssl_inc1','openssl_inc2'
         $(NODEBUG) !
         $(NODEBUG) ! Figure out the architecture
         $(NODEBUG) !
@@ -442,9 +444,10 @@ NODEBUG=@
 
 .LAST :
         $(NODEBUG) {- join("\n\t\$(NODEBUG) ", map { "DEASSIGN ".uc($_) } @shlibs) || "!" -}
+        $(NODEBUG) DEASSIGN openssl
         $(NODEBUG) DEASSIGN ossl_dataroot
         $(NODEBUG) DEASSIGN ossl_installroot
-        $(NODEBUG) DEASSIGN openssl
+        $(NODEBUG) DEASSIGN ossl_sourceroot
 .DEFAULT :
         @ ! MMS cannot handle no actions...
 
@@ -610,7 +613,9 @@ install_dev : check_INSTALLTOP install_runtime_libs
         @ WRITE SYS$OUTPUT "*** Installing development files"
         @ ! Install header files
         - CREATE/DIR ossl_installroot:[include.openssl]
-        COPY/PROT=W:R openssl:*.h ossl_installroot:[include.openssl]
+        COPY/PROT=W:R ossl_sourceroot:[include.openssl]*.h -
+                ossl_installroot:[include.openssl]
+        COPY/PROT=W:R [.include.openssl]*.h ossl_installroot:[include.openssl]
         @ ! Install static (development) libraries
         - CREATE/DIR ossl_installroot:[LIB.'arch']
         {- join("\n        ",
