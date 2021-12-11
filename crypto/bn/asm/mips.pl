@@ -1984,6 +1984,8 @@ $code.=<<___;
 	sltu	$at,$c_2,$t_1
 	$ADDU	$c_3,$t_2,$at
 	$ST	$c_2,$BNSZ($a0)
+	sltu	$at,$c_3,$t_2
+	$ADDU	$c_1,$at
 	mflo	($t_1,$a_2,$a_0)
 	mfhi	($t_2,$a_2,$a_0)
 ___
@@ -2194,6 +2196,8 @@ $code.=<<___;
 	sltu	$at,$c_2,$t_1
 	$ADDU	$c_3,$t_2,$at
 	$ST	$c_2,$BNSZ($a0)
+	sltu	$at,$c_3,$t_2
+	$ADDU	$c_1,$at
 	mflo	($t_1,$a_2,$a_0)
 	mfhi	($t_2,$a_2,$a_0)
 ___
