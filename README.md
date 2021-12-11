@@ -234,19 +234,15 @@ If you want an ECDSA certificate (`<SIG>` = `ecdsa`), you instead need to run:
 
 The root CA certificate can be used directly to start the server (see below), or can be used to issue a server certificate, using the usual OpenSSL process (note that for simplicity, we use the same algorithm for the server and CA certificates; in practice the CA is likely to use a stronger one):
 
-1. The server generates its key pair:
-
-		apps/openssl genpkey -algorithm <SIG> -out <SIG>_srv.key
-
-2. The server generates a certificate request and sends it the to CA:
+1. The server generates its key pair, a certificate request and sends the latter to the CA:
 
 		apps/openssl req -new -newkey <SIG> -keyout <SIG>_srv.key -out <SIG>_srv.csr -nodes -subj "/CN=oqstest server" -config apps/openssl.cnf
 
-3. The CA generates the signed server certificate:
+2. The CA generates the signed server certificate:
 
 		apps/openssl x509 -req -in <SIG>_srv.csr -out <SIG>_srv.crt -CA <SIG>_CA.crt -CAkey <SIG>_CA.key -CAcreateserial -days 365
 
-To run a basic TLS server with all possible key-exchange algorithms enabled, run the following command, replacing `<SERVER>` with either `<SIG>_CA` or `<SIG>_srv`:
+Using the key and certificate thus created, running a basic TLS server with all possible key-exchange algorithms enabled, can be achieved using the following command, replacing `<SERVER>` with either `<SIG>_CA` or `<SIG>_srv`:
 
 	apps/openssl s_server -cert <SERVER>.crt -key <SERVER>.key -www -tls1_3
 
