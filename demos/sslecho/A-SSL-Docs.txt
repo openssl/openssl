@@ -1,0 +1,19 @@
+10-Dec-2021		RCW
+
+OpenSSL Wiki: https://wiki.openssl.org/index.php/Main_Page
+
+OpenSSL API Documentation: https://www.openssl.org/docs/man1.1.1/man3/
+
+Simple Server: https://wiki.openssl.org/index.php/Simple_TLS_Server
+
+Github: https://github.com/openssl/openssl
+
+---------------------------------------------------------------
+
+Generate self signed cert and key 'pem' files (good for 10 years):
+
+openssl req -newkey rsa:4096 -x509 -sha256 -days 3650 -nodes -out cert.pem -keyout key.pem
+	
+You can just hit carriage returns to accept the default values.
+
+The same keys can be used for both communicating instances; same or different machines.
