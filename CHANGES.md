@@ -30,7 +30,11 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 3.0.0 and 3.0.1 [xx XXX xxxx]
 
- *
+ * Corrected a few file name and file reference bugs in the build,
+   installation and setup scripts, which lead to installation verification
+   failures.  Slightly enhanced the installation verification script.
+
+   *Richard Levitte*
 
 ### Changes between 1.1.1 and 3.0.0 [7 sep 2021]
 
