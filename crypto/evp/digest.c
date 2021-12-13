@@ -521,7 +521,7 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
         if (out->fetched_digest != NULL)
             EVP_MD_free(out->fetched_digest);
         *out = *in;
-        return 1;
+        goto clone_pkey;
     }
 
     if (in->digest->prov == NULL
@@ -552,6 +552,7 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
         }
     }
 
+ clone_pkey:
     /* copied EVP_MD_CTX should free the copied EVP_PKEY_CTX */
     EVP_MD_CTX_clear_flags(out, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
 #ifndef FIPS_MODULE
