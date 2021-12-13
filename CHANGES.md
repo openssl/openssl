@@ -30,7 +30,50 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 3.0.0 and 3.0.1 [xx XXX xxxx]
 
- *
+ * Fixed EVP_PKEY_eq() to make it possible to use it with strictly private
+   keys.
+
+   *Richard Levitte*
+
+ * Fixed PVK encoder to properly query for the passphrase.
+
+   *Tomáš Mráz*
+
+ * Multiple fixes in the OSSL_HTTP API functions.
+
+   *David von Oheimb*
+
+ * Allow sign extension in OSSL_PARAM_allocate_from_text() for the
+   OSSL_PARAM_INTEGER data type and return error on negative numbers
+   used with the OSSL_PARAM_UNSIGNED_INTEGER data type. Make
+   OSSL_PARAM_BLD_push_BN{,_pad}() return an error on negative numbers.
+
+   *Richard Levitte*
+
+ * Allow copying uninitialized digest contexts with EVP_MD_CTX_copy_ex.
+
+   *Tomáš Mráz*
+
+ * Fixed detection of ARMv7 and ARM64 CPU features on FreeBSD.
+
+   *Allan Jude*
+
+ * Avoid loading of a dynamic engine twice.
+
+   *Bernd Edlinger*
+
+ * Multiple threading fixes.
+
+   *Matt Caswell*
+
+ * Added NULL digest implementation to keep compatibility with 1.1.1 version.
+
+   *Tomáš Mráz*
+
+ * Allow fetching an operation from the provider that owns an unexportable key
+   as a fallback if that is still allowed by the property query.
+
+   *Richard Levitte*
 
 ### Changes between 1.1.1 and 3.0.0 [7 sep 2021]
 
