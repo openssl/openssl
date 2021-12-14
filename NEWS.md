@@ -28,6 +28,7 @@ OpenSSL 3.0
 -----------
 
 ### Major changes between OpenSSL 3.0.0 and OpenSSL 3.0.1
+
   * Fixed invalid handling of X509_verify_cert() internal errors in libssl
     ([CVE-2021-4044])
   * Allow fetching an operation from the provider that owns an unexportable key
