@@ -81,6 +81,20 @@ breaking changes, and mappings for the large list of deprecated functions.
 
    *Richard Levitte*
 
+ * Fixed building on Debian with kfreebsd kernels
+
+   *Mattias Ellert*
+
+ * Prioritise DANE TLSA issuer certs over peer certs
+
+   *Viktor Dukhovni*
+
+ * Fixed random API for MacOS prior to 10.12
+
+   These MacOS versions don't support the CommonCrypto APIs
+
+   *Lenny Primak*
+
 ### Changes between 1.1.1 and 3.0.0 [7 sep 2021]
 
  * TLS_MAX_VERSION, DTLS_MAX_VERSION and DTLS_MIN_VERSION constants are now
