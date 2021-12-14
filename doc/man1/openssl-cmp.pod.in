@@ -64,6 +64,7 @@ Server authentication options:
 [B<-expect_sender> I<name>]
 [B<-ignore_keyusage>]
 [B<-unprotected_errors>]
+[B<-srvcertout> I<filename>]
 [B<-extracertsout> I<filename>]
 [B<-cacertsout> I<filename>]
 
@@ -622,6 +623,11 @@ with a signature key."
 =item * appendix D.4 shows PKIConf message having protection
 
 =back
+
+=item B<-srvcertout> I<filename>
+
+The file where to save the successfully validated certificate, if any,
+that the CMP server used for signature-based response message protection.
 
 =item B<-extracertsout> I<filename>
 
