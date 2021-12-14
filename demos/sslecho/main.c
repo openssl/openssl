@@ -9,16 +9,19 @@
 
 #include <stdio.h>
 #include <unistd.h>
-#include <stdbool.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-static const char*      revision = "1.0.2";
+static const char		*revision = "1.0.3";
 
 static const int        server_port = 4433;
+
+typedef unsigned char	bool;
+#define	true			1
+#define	false			0
 
 /*
  * This flag won't be useful until both accept/read (TCP & SSL) methods
@@ -107,21 +110,21 @@ int main(int argc, char **argv) {
     bool        isServer;
     int         result;
 
-    SSL_CTX*    ssl_ctx = NULL;
-    SSL*        ssl = NULL;
+    SSL_CTX		*ssl_ctx = NULL;
+    SSL			*ssl = NULL;
 
     int         server_skt = -1;
     int         client_skt = -1;
 
-    char*       txbuf = (char*)malloc(128);
+    char		*txbuf = (char*)malloc(128);
     size_t      txcap = 128;
     int         txlen;
 
-    char*       rxbuf = (char*)malloc(128);
+    char		*rxbuf = (char*)malloc(128);
     int         rxcap = 128;
     int         rxlen;
 
-    char*       rem_server_ip = NULL;
+    char		*rem_server_ip = NULL;
 
     struct sockaddr_in      addr;
     unsigned int            addr_len = sizeof(addr);
