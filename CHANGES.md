@@ -64,10 +64,6 @@ breaking changes, and mappings for the large list of deprecated functions.
 
    *Allan Jude*
 
- * Avoid loading of a dynamic engine twice.
-
-   *Bernd Edlinger*
-
  * Multiple threading fixes.
 
    *Matt Caswell*
@@ -80,20 +76,6 @@ breaking changes, and mappings for the large list of deprecated functions.
    as a fallback if that is still allowed by the property query.
 
    *Richard Levitte*
-
- * Fixed building on Debian with kfreebsd kernels
-
-   *Mattias Ellert*
-
- * Prioritise DANE TLSA issuer certs over peer certs
-
-   *Viktor Dukhovni*
-
- * Fixed random API for MacOS prior to 10.12
-
-   These MacOS versions don't support the CommonCrypto APIs
-
-   *Lenny Primak*
 
 ### Changes between 1.1.1 and 3.0.0 [7 sep 2021]
 
@@ -1519,6 +1501,22 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 OpenSSL 1.1.1
 -------------
+
+### Changes between 1.1.1l and 1.1.1m [xx XXX xxxx]
+
+ * Avoid loading of a dynamic engine twice.
+
+   *Bernd Edlinger*
+
+ * Prioritise DANE TLSA issuer certs over peer certs
+
+   *Viktor Dukhovni*
+
+ * Fixed random API for MacOS prior to 10.12
+
+   These MacOS versions don't support the CommonCrypto APIs
+
+   *Lenny Primak*
 
 ### Changes between 1.1.1k and 1.1.1l [24 Aug 2021]
 
