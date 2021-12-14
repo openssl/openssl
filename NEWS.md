@@ -18,6 +18,10 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
+### Major changes between OpenSSL 3.0.1 and OpenSSL 3.0.2 [under development]
+
+ * 
+
 ### Major changes between OpenSSL 3.0.0 and OpenSSL 3.0.1 [14 Dec 2021]
 
   * Fixed invalid handling of X509_verify_cert() internal errors in libssl
