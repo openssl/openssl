@@ -507,6 +507,7 @@ static X509_STORE *X509_STORE_new_1(void)
         return ret; \
     }
 
+/* cannot use PREFIX instead of OSSL_CMP and CTX due to #define OSSL_CMP_CTX */
 #define DEFINE_SET_GET_TEST(OSSL_CMP, CTX, N, M, DUP, FIELD, TYPE) \
     DEFINE_SET_GET_BASE_TEST(OSSL_CMP##_##CTX, set##N, get##M, DUP, FIELD, \
                              TYPE *, NULL, IS_0, TYPE##_new(), TYPE##_free)
@@ -741,7 +742,7 @@ DEFINE_SET_GET_P_VOID_TEST(transfer_cb_arg)
 DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 0, srvCert, X509)
 DEFINE_SET_TEST(ossl_cmp, ctx, 0, 0, validatedSrvCert, X509)
 DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, expected_sender, X509_NAME)
-DEFINE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set0, get0, 0, trustedStore,
+DEFINE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set0, get0, 0, trusted,
                          X509_STORE *, NULL,
                          DEFAULT_STORE, X509_STORE_new_1(), X509_STORE_free)
 DEFINE_SET_GET_SK_X509_TEST(OSSL_CMP, CTX, 1, 0, untrusted)
@@ -838,7 +839,7 @@ int setup_tests(void)
     ADD_TEST(test_CTX_set1_get0_srvCert);
     ADD_TEST(test_CTX_set0_get0_validatedSrvCert);
     ADD_TEST(test_CTX_set1_get0_expected_sender);
-    ADD_TEST(test_CTX_set0_get0_trustedStore);
+    ADD_TEST(test_CTX_set0_get0_trusted);
     ADD_TEST(test_CTX_set1_get0_untrusted);
     /* client authentication: */
     ADD_TEST(test_CTX_set1_get0_cert);

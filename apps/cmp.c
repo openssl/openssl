@@ -1062,7 +1062,7 @@ static OSSL_CMP_SRV_CTX *setup_srv_ctx(ENGINE *engine)
         X509_STORE *ts =
             load_trusted(opt_srv_trusted, 0, "certs trusted by mock server");
 
-        if (ts == NULL || !OSSL_CMP_CTX_set0_trustedStore(ctx, ts)) {
+        if (ts == NULL || !OSSL_CMP_CTX_set0_trusted(ctx, ts)) {
             X509_STORE_free(ts);
             goto err;
         }
@@ -1179,7 +1179,7 @@ static int setup_verification_ctx(OSSL_CMP_CTX *ctx)
              */
             ts = load_trusted(opt_trusted, 0, "certs trusted by client");
 
-            if (ts == NULL || !OSSL_CMP_CTX_set0_trustedStore(ctx, ts)) {
+            if (ts == NULL || !OSSL_CMP_CTX_set0_trusted(ctx, ts)) {
                 X509_STORE_free(ts);
                 return 0;
             }
