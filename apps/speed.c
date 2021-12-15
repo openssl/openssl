@@ -267,7 +267,7 @@ enum {
     D_CBC_RC2, D_CBC_RC5, D_CBC_BF, D_CBC_CAST,
     D_CBC_128_AES, D_CBC_192_AES, D_CBC_256_AES,
     D_CBC_128_CML, D_CBC_192_CML, D_CBC_256_CML,
-    D_EVP, D_GHASH, D_RAND, D_EVP_CMAC, ALGOR_NUM
+    D_EVP, D_EVP_INFO, D_GHASH, D_RAND, D_EVP_CMAC, ALGOR_NUM
 };
 /* name of algorithms to test. MUST BE KEEP IN SYNC with above enum ! */
 static const char *names[ALGOR_NUM] = {
@@ -277,7 +277,7 @@ static const char *names[ALGOR_NUM] = {
     "rc2-cbc", "rc5-cbc", "blowfish", "cast-cbc",
     "aes-128-cbc", "aes-192-cbc", "aes-256-cbc",
     "camellia-128-cbc", "camellia-192-cbc", "camellia-256-cbc",
-    "evp", "ghash", "rand", "cmac"
+    "evp", "evp-info", "ghash", "rand", "cmac"
 };
 
 /* list of configured algorithm (remaining), with some few alias */
@@ -747,6 +747,24 @@ static int EVP_Update_loop(void *args)
         EVP_DecryptFinal_ex(ctx, buf, &outl);
     else
         EVP_EncryptFinal_ex(ctx, buf, &outl);
+    return count;
+}
+
+static int EVP_Ciph_get_info_loop(void *args)
+{
+    loopargs_t *tempargs = *(loopargs_t **) args;
+    EVP_CIPHER_CTX *ctx = tempargs->ctx;
+    int count, rc;
+
+    for (count = 0; COND(c[D_EVP_INFO][testnum]); count++) {
+        rc = EVP_CIPHER_CTX_get_iv_length(ctx);
+        if (rc < 0)
+            return -1;
+        rc = EVP_CIPHER_CTX_get_key_length(ctx);
+        if (rc < 0)
+            return -1;
+    }
+
     return count;
 }
 
@@ -1511,6 +1529,7 @@ int speed_main(int argc, char **argv)
             }
             ERR_pop_to_mark();
             doit[D_EVP] = 1;
+            doit[D_EVP_INFO] = 1;
             break;
         case OPT_HMAC:
             if (!have_md(opt_arg())) {
@@ -2266,6 +2285,51 @@ int speed_main(int argc, char **argv)
                 if (count < 0)
                     break;
             }
+        }
+    }
+
+    if (doit[D_EVP_INFO]) {
+        if (evp_cipher != NULL) {
+            int (*loopfunc) (void *) = EVP_Ciph_get_info_loop;
+
+            names[D_EVP_INFO] = "get-info";
+
+            print_message(names[D_EVP_INFO], c[D_EVP_INFO][0], lengths[0],
+                          seconds.sym);
+
+            for (k = 0; k < loopargs_len; k++) {
+                loopargs[k].ctx = EVP_CIPHER_CTX_new();
+                if (loopargs[k].ctx == NULL) {
+                    BIO_printf(bio_err, "\nEVP_CIPHER_CTX_new failure\n");
+                    exit(1);
+                }
+                if (!EVP_CipherInit_ex(loopargs[k].ctx, evp_cipher, NULL,
+                                       NULL, iv, decrypt ? 0 : 1)) {
+                    BIO_printf(bio_err, "\nEVP_CipherInit_ex failure\n");
+                    ERR_print_errors(bio_err);
+                    exit(1);
+                }
+
+                EVP_CIPHER_CTX_set_padding(loopargs[k].ctx, 0);
+
+                keylen = EVP_CIPHER_CTX_get_key_length(loopargs[k].ctx);
+                loopargs[k].key = app_malloc(keylen, "evp_cipher key");
+                EVP_CIPHER_CTX_rand_key(loopargs[k].ctx, loopargs[k].key);
+                if (!EVP_CipherInit_ex(loopargs[k].ctx, NULL, NULL,
+                                       loopargs[k].key, NULL, -1)) {
+                    BIO_printf(bio_err, "\nEVP_CipherInit_ex failure\n");
+                    ERR_print_errors(bio_err);
+                    exit(1);
+                }
+                OPENSSL_clear_free(loopargs[k].key, keylen);
+            }
+
+            Time_F(START);
+            count = run_benchmark(async_jobs, loopfunc, loopargs);
+            d = Time_F(STOP);
+            for (k = 0; k < loopargs_len; k++)
+                EVP_CIPHER_CTX_free(loopargs[k].ctx);
+            print_result(D_EVP_INFO, 0, count, d);
         }
     }
 
