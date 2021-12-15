@@ -561,8 +561,10 @@ static int get_dsa_sig_rs_bytes(const unsigned char *sig, size_t sig_len,
     if (sign == NULL)
         return 0;
     DSA_SIG_get0(sign, &r1, &s1);
-    if (r1 == NULL || s1 == NULL)
+    if (r1 == NULL || s1 == NULL) {
+        DSA_SIG_free(sign);
         return 0;
+    }
 
     r1_len = BN_num_bytes(r1);
     s1_len = BN_num_bytes(s1);
