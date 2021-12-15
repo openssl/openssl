@@ -1529,3 +1529,12 @@ int OSSL_PARAM_get_octet_string_ptr(const OSSL_PARAM *p, const void **val,
     return rv || get_string_ptr_internal(p, val, used_len,
                                          OSSL_PARAM_OCTET_STRING);
 }
+
+int OSSL_PARAM_count(const OSSL_PARAM *p)
+{
+    int count = 0;
+
+    if (p != NULL)
+        for (; p[count].key != NULL; ++count);
+    return count;
+}

@@ -5517,3 +5517,4 @@ EC_GROUP_to_params                      ?	3_2_0	EXIST::FUNCTION:EC
 X509_STORE_CTX_init_rpk                 ?	3_2_0	EXIST::FUNCTION:
 X509_STORE_CTX_get0_rpk                 ?	3_2_0	EXIST::FUNCTION:
 X509_STORE_CTX_set0_rpk                 ?	3_2_0	EXIST::FUNCTION:
+OSSL_PARAM_count                        ?	3_1_1	EXIST::FUNCTION:
