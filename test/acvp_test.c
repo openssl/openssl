@@ -217,8 +217,10 @@ static int get_ecdsa_sig_rs_bytes(const unsigned char *sig, size_t sig_len,
         return 0;
     r1 = ECDSA_SIG_get0_r(sign);
     s1 = ECDSA_SIG_get0_s(sign);
-    if (r1 == NULL || s1 == NULL)
+    if (r1 == NULL || s1 == NULL) {
+        ECDSA_SIG_free(sign);
         return 0;
+    }
 
     r1_len = BN_num_bytes(r1);
     s1_len = BN_num_bytes(s1);
