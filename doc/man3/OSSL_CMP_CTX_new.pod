@@ -756,7 +756,8 @@ The OpenSSL CMP support was added in OpenSSL 3.0.
 
 OSSL_CMP_CTX_get0_trustedStore() was renamed to OSSL_CMP_CTX_get0_trusted() and
 OSSL_CMP_CTX_set0_trustedStore() was renamed to OSSL_CMP_CTX_set0_trusted(),
-adding name macros for backward compatibility, in OpenSSL 4.0.
+using macros, while keeping the old names for backward compatibility,
+in OpenSSL 3.1.
 
 =head1 COPYRIGHT
 
