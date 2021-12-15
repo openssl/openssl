@@ -27,6 +27,8 @@ int main(int argc, char **argv)
     /* Set up trusted CA certificate store */
 
     st = X509_STORE_new();
+    if (!st)
+        goto err;
 
     /* Read in CA certificate */
     tbio = BIO_new_file("cacert.pem", "r");
