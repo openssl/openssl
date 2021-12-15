@@ -4733,8 +4733,8 @@ OSSL_CMP_CTX_set_transfer_cb_arg        4860	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_get_transfer_cb_arg        4861	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_set1_srvCert               4862	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_set1_expected_sender       4863	3_0_0	EXIST::FUNCTION:CMP
-OSSL_CMP_CTX_set0_trustedStore          4864	3_0_0	EXIST::FUNCTION:CMP
-OSSL_CMP_CTX_get0_trustedStore          4865	3_0_0	EXIST::FUNCTION:CMP
+OSSL_CMP_CTX_set0_trusted               4864	3_0_0	EXIST::FUNCTION:CMP
+OSSL_CMP_CTX_get0_trusted               4865	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_set1_untrusted             4866	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_get0_untrusted             4867	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_set1_cert                  4868	3_0_0	EXIST::FUNCTION:CMP

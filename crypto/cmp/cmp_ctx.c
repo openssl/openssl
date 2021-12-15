@@ -35,7 +35,7 @@ TYPE *OSSL_CMP_CTX_get0_##NAME(const OSSL_CMP_CTX *ctx) \
 /*
  * Get current certificate store containing trusted root CA certs
  */
-DEFINE_OSSL_CMP_CTX_get0_NAME(trustedStore, trusted, X509_STORE)
+DEFINE_OSSL_CMP_CTX_get0_NAME(trusted, trusted, X509_STORE)
 
 #define DEFINE_OSSL_set0(PREFIX, FIELD, TYPE) \
     DEFINE_OSSL_set0_NAME(PREFIX, FIELD, FIELD, TYPE)
@@ -56,7 +56,7 @@ int PREFIX##_set0##_##NAME(OSSL_CMP_CTX *ctx, TYPE *val) \
  * and a cert verification callback function used for CMP server authentication.
  * Any already existing store entry is freed. Given NULL, the entry is reset.
  */
-DEFINE_OSSL_set0_NAME(OSSL_CMP_CTX, trustedStore, trusted, X509_STORE)
+DEFINE_OSSL_set0_NAME(OSSL_CMP_CTX, trusted, trusted, X509_STORE)
 
 /* Get current list of non-trusted intermediate certs */
 DEFINE_OSSL_CMP_CTX_get0(untrusted, STACK_OF(X509))
