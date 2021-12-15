@@ -74,6 +74,8 @@ int main(int argc, char **argv)
         fprintf(stderr, "Error Verifying Data\n");
         ERR_print_errors_fp(stderr);
     }
+    
+    X509_STORE_free(st);
     PKCS7_free(p7);
     X509_free(cacert);
     BIO_free(in);

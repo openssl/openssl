@@ -76,6 +76,7 @@ int main(int argc, char **argv)
         ERR_print_errors_fp(stderr);
     }
 
+    X509_STORE_free(st);
     CMS_ContentInfo_free(cms);
     X509_free(cacert);
     BIO_free(in);
