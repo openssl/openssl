@@ -150,6 +150,8 @@ int OSSL_PARAM_get_octet_string_ptr(const OSSL_PARAM *p, const void **val,
 int OSSL_PARAM_modified(const OSSL_PARAM *p);
 void OSSL_PARAM_set_all_unmodified(OSSL_PARAM *p);
 
+int OSSL_PARAM_count(const OSSL_PARAM *p);
+
 OSSL_PARAM *OSSL_PARAM_dup(const OSSL_PARAM *p);
 OSSL_PARAM *OSSL_PARAM_merge(const OSSL_PARAM *p1, const OSSL_PARAM *p2);
 void OSSL_PARAM_free(OSSL_PARAM *p);
