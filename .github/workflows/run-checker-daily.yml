@@ -50,8 +50,7 @@ jobs:
           no-egd,
           no-engine,
           no-external-tests,
-# no-tls1_3 temporarily disabled due to failures to be investigated separately
-#          no-tls1_3,
+          no-tls1_3,
           no-fuzz-afl,
           no-fuzz-libfuzzer,
           no-gost,

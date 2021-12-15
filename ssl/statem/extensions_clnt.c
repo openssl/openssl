@@ -1806,7 +1806,9 @@ int tls_parse_stoc_etm(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     /* Ignore if inappropriate ciphersuite */
     if (!(s->options & SSL_OP_NO_ENCRYPT_THEN_MAC)
             && s->s3->tmp.new_cipher->algorithm_mac != SSL_AEAD
-            && s->s3->tmp.new_cipher->algorithm_enc != SSL_RC4)
+            && s->s3->tmp.new_cipher->algorithm_enc != SSL_RC4
+            && s->s3->tmp.new_cipher->algorithm_enc != SSL_eGOST2814789CNT
+            && s->s3->tmp.new_cipher->algorithm_enc != SSL_eGOST2814789CNT12)
         s->ext.use_etm = 1;
 
     return 1;

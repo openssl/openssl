@@ -381,7 +381,7 @@ static ssize_t syscall_random(void *buf, size_t buflen)
         if (errno != ENOSYS)
             return -1;
     }
-#  elif defined(__APPLE__)
+#  elif defined(OPENSSL_APPLE_CRYPTO_RANDOM)
     if (CCRandomGenerateBytes(buf, buflen) == kCCSuccess)
 	    return (ssize_t)buflen;
 

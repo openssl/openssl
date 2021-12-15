@@ -238,24 +238,6 @@ static unsigned long getauxval(unsigned long key)
 # endif
 #endif
 
-#if defined(__FreeBSD__)
-# include <sys/param.h>
-# if __FreeBSD_version >= 1200000
-#  include <sys/auxv.h>
-#  define OSSL_IMPLEMENT_GETAUXVAL
-
-static unsigned long getauxval(unsigned long key)
-{
-  unsigned long val = 0ul;
-
-  if (elf_aux_info((int)key, &val, sizeof(val)) != 0)
-    return 0ul;
-
-  return val;
-}
-# endif
-#endif
-
 /* I wish <sys/auxv.h> was universally available */
 #define HWCAP                   16      /* AT_HWCAP */
 #define HWCAP_PPC64             (1U << 30)
