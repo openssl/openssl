@@ -544,46 +544,72 @@ int ossl_cipher_generic_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     OSSL_PARAM *p;
+    int count = OSSL_PARAM_count(params);
 
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IVLEN);
-    if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->ivlen)) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
-        return 0;
-    }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_PADDING);
-    if (p != NULL && !OSSL_PARAM_set_uint(p, ctx->pad)) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
-        return 0;
+    if (p != NULL) {
+        if (!OSSL_PARAM_set_size_t(p, ctx->ivlen)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+            return 0;
+        }
+        if (--count == 0)
+            return 1;    /* short-cut for speedup */
     }
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IV);
-    if (p != NULL
-        && !OSSL_PARAM_set_octet_ptr(p, &ctx->oiv, ctx->ivlen)
-        && !OSSL_PARAM_set_octet_string(p, &ctx->oiv, ctx->ivlen)) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
-        return 0;
+    if (p != NULL) {
+        if (!OSSL_PARAM_set_octet_ptr(p, &ctx->oiv, ctx->ivlen)
+            && !OSSL_PARAM_set_octet_string(p, &ctx->oiv, ctx->ivlen)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+            return 0;
+        }
+        if (--count == 0)
+            return 1;    /* short-cut for speedup */
     }
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_UPDATED_IV);
-    if (p != NULL
-        && !OSSL_PARAM_set_octet_ptr(p, &ctx->iv, ctx->ivlen)
-        && !OSSL_PARAM_set_octet_string(p, &ctx->iv, ctx->ivlen)) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
-        return 0;
-    }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_NUM);
-    if (p != NULL && !OSSL_PARAM_set_uint(p, ctx->num)) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
-        return 0;
+    if (p != NULL) {
+        if (!OSSL_PARAM_set_octet_ptr(p, &ctx->iv, ctx->ivlen)
+            && !OSSL_PARAM_set_octet_string(p, &ctx->iv, ctx->ivlen)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+            return 0;
+        }
+        if (--count == 0)
+            return 1;    /* short-cut for speedup */
     }
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_KEYLEN);
-    if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->keylen)) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
-        return 0;
+    if (p != NULL) {
+        if (!OSSL_PARAM_set_size_t(p, ctx->keylen)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+            return 0;
+        }
+        if (--count == 0)
+            return 1;    /* short-cut for speedup */
     }
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_TLS_MAC);
-    if (p != NULL
-        && !OSSL_PARAM_set_octet_ptr(p, ctx->tlsmac, ctx->tlsmacsize)) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
-        return 0;
+    if (p != NULL) {
+        if (!OSSL_PARAM_set_octet_ptr(p, ctx->tlsmac, ctx->tlsmacsize)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+            return 0;
+        }
+        if (--count == 0)
+            return 1;    /* short-cut for speedup */
+    }
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_PADDING);
+    if (p != NULL) {
+        if (!OSSL_PARAM_set_uint(p, ctx->pad)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+            return 0;
+        }
+        if (--count == 0)
+            return 1;    /* short-cut for speedup */
+    }
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_NUM);
+    if (p != NULL) {
+        if (!OSSL_PARAM_set_uint(p, ctx->num)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+            return 0;
+        }
+        if (--count == 0)
+            return 1;    /* short-cut for speedup */
     }
     return 1;
 }
