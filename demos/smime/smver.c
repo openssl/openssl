@@ -27,18 +27,18 @@ int main(int argc, char **argv)
     /* Set up trusted CA certificate store */
 
     st = X509_STORE_new();
-    if (!st)
+    if (st == NULL)
         goto err;
 
     /* Read in signer certificate and private key */
     tbio = BIO_new_file("cacert.pem", "r");
 
-    if (!tbio)
+    if (tbio == NULL)
         goto err;
 
     cacert = PEM_read_bio_X509(tbio, NULL, 0, NULL);
 
-    if (!cacert)
+    if (cacert == NULL)
         goto err;
 
     if (!X509_STORE_add_cert(st, cacert))
@@ -48,18 +48,18 @@ int main(int argc, char **argv)
 
     in = BIO_new_file("smout.txt", "r");
 
-    if (!in)
+    if (in == NULL)
         goto err;
 
     /* Sign content */
     p7 = SMIME_read_PKCS7(in, &cont);
 
-    if (!p7)
+    if (p7 == NULL)
         goto err;
 
     /* File to output verified content to */
     out = BIO_new_file("smver.txt", "w");
-    if (!out)
+    if (out == NULL)
         goto err;
 
     if (!PKCS7_verify(p7, NULL, st, cont, out, 0)) {
