@@ -190,9 +190,7 @@ static void *file_open_dir(const char *path, const char *uri, void *provctx)
     }
     return ctx;
  err:
-    if (ctx != NULL)
-        file_close(ctx);
-    
+    free_file_ctx(ctx);
     return NULL;
 }
 
@@ -764,9 +762,6 @@ static int file_close_stream(struct file_ctx_st *ctx)
 
 static int file_close(void *loaderctx)
 {
-    if (loaderctx == NULL)
-        assert(0);
-    
     struct file_ctx_st *ctx = loaderctx;
 
     switch (ctx->type) {
