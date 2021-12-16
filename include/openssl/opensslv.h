@@ -40,7 +40,7 @@ extern "C" {
  *  major minor fix final patch/beta)
  */
 # define OPENSSL_VERSION_NUMBER  0x101010dfL
-# define OPENSSL_VERSION_TEXT    "OpenSSL 1.1.1m  14 Dec 2021, Open Quantum Safe 2021-12-dev snapshot"
+# define OPENSSL_VERSION_TEXT    "OpenSSL 1.1.1m  14 Dec 2021, Open Quantum Safe 2021-12 snapshot rc1"
 
 /*-
  * The macros below are to be used for shared library (.so, .dll, ...)

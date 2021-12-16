@@ -1,4 +1,4 @@
-OQS-OpenSSL_1\_1\_1-stable snapshot 2021-xx-dev
+OQS-OpenSSL_1\_1\_1-stable snapshot 2021-12-rc1
 ===============================================
 
 About
@@ -13,14 +13,15 @@ The **Open Quantum Safe (OQS) project** has the goal of developing and prototypi
 Release notes
 =============
 
-This is development branch for the 2021-xx snapshot release of OQS-OpenSSL. This release is intended to be used with liboqs version 0.7.0.
+This is release candidate 1 for the 2021-12 snapshot release of OQS-OpenSSL. The release candidate was released on December 16, 2021.  This release is intended to be used with liboqs version 0.7.1.
 
 What's New
 ----------
 
-This is the seventh snapshot release of OQS-OpenSSL_1\_1\_1-stable.  It is based on OpenSSL 1.1.1l.
+This is the eighth snapshot release of OQS-OpenSSL_1\_1\_1-stable.  It is based on OpenSSL 1.1.1m.
 
-- Update OpenSSL to version 1.1.1l.
+- Update OpenSSL to version 1.1.1m.
+- Add support for NTRU and NTRU Prime level 5 KEMs.
 
 Previous release notes
 ----------------------
@@ -31,3 +32,18 @@ Previous release notes
 - [OQS-OpenSSL 1.1.1 snapshot 2020-07](https://github.com/open-quantum-safe/openssl/releases/tag/OQS-OpenSSL_1_1_1-stable-snapshot-2020-07), based on OpenSSL 1.1.1g, aligned with liboqs 0.3.0 (July 10, 2020)
 - [OQS-OpenSSL 1.1.1 snapshot 2019-10](https://github.com/open-quantum-safe/openssl/releases/tag/OQS-OpenSSL_1_1_1-stable-snapshot-2019-10), based on OpenSSL 1.1.1d, aligned with liboqs 0.2.0 (October 8, 2019)
 - [OQS-OpenSSL 1.1.1 snapshot 2018-11](https://github.com/open-quantum-safe/openssl/releases/tag/OQS-OpenSSL_1_1_1-stable-snapshot-2018-11), based on OpenSSL 1.1.1, aligned with liboqs 0.1.0 (November 13, 2018)
+
+---
+
+Detailed changelog
+------------------
+
+* Update to OpenSSL 1.1.1l by @dstebila in https://github.com/open-quantum-safe/openssl/pull/330
+* adding ntrup1277 by @baentsch in https://github.com/open-quantum-safe/openssl/pull/334
+* ntru1229 by @baentsch in https://github.com/open-quantum-safe/openssl/pull/336
+* OSSL ID registry by @baentsch in https://github.com/open-quantum-safe/openssl/pull/340
+* adding M1 build instruction [skip ci] by @baentsch in https://github.com/open-quantum-safe/openssl/pull/342
+* simplify documentation [skip ci] by @baentsch in https://github.com/open-quantum-safe/openssl/pull/345
+* Merging OpenSSL 1.1.1m by @baentsch in https://github.com/open-quantum-safe/openssl/pull/346
+
+**Full Changelog**: https://github.com/open-quantum-safe/openssl/compare/OQS-OpenSSL_1_1_1-stable-snapshot-2021-08...OQS-OpenSSL_1_1_1-stable-snapshot-2021-12-rc1
