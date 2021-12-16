@@ -139,12 +139,13 @@ int ossl_ptrie_scan(const OSSL_PTRIE *pt, const OSSL_PARAM *params,
 
     if (params == NULL)
         return 0;
-    if (pt == NULL || n == 0 || indicies == NULL)
+    if (n == 0 || indicies == NULL)
         return 1;
     memset(indicies, NO_IDX, n * sizeof(unsigned char));
-    for (i = 0; params[i].key != NULL && (size_t)i < n; i++)
-        if ((idx = ptrie_search(pt, params[i].key)) != NO_IDX)
-            indicies[pt->trie[idx].paramidx] = i;
+    if (pt != NULL)
+        for (i = 0; params[i].key != NULL && (size_t)i < n; i++)
+            if ((idx = ptrie_search(pt, params[i].key)) != NO_IDX)
+                indicies[pt->trie[idx].paramidx] = i;
     return 1;
 #endif
 }
@@ -155,9 +156,8 @@ OSSL_PARAM *ossl_ptrie_locate(int idx, OSSL_PARAM *params,
 #ifndef OPENSSL_SMALL_FOOTPRINT
     if (params == NULL)
         return NULL;
-    
-    if (indicies != NULL && idx >= 0)
-        return indicies[idx] != NO_IDX ? params + indicies[idx] : NULL;
+    if (indicies != NULL && idx >= 0 && indicies[idx] != NO_IDX)
+        return params + indicies[idx];
 #endif /* OPENSSL_SMALL_FOOTPRINT */
     return OSSL_PARAM_locate(params, key);
 }
