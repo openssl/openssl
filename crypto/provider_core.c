@@ -603,6 +603,9 @@ int ossl_provider_add_to_store(OSSL_PROVIDER *prov, OSSL_PROVIDER **actualprov,
     OSSL_PROVIDER tmpl = { 0, };
     OSSL_PROVIDER *actualtmp = NULL;
 
+    if (actualprov != NULL)
+        *actualprov = NULL;
+
     if ((store = get_provider_store(prov->libctx)) == NULL)
         return 0;
 
@@ -659,7 +662,7 @@ int ossl_provider_add_to_store(OSSL_PROVIDER *prov, OSSL_PROVIDER **actualprov,
  err:
     CRYPTO_THREAD_unlock(store->lock);
     if (actualprov != NULL)
-        ossl_provider_free(actualtmp);
+        ossl_provider_free(*actualprov);
     return 0;
 }
 
