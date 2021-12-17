@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OSSL_CRYPTO_DSAERR_H
-# define OSSL_CRYPTO_DSAERR_H
+#ifndef OSSL_CRYPTO_DSA_H
+# define OSSL_CRYPTO_DSA_H
 # pragma once
 
 # include <openssl/core.h>
