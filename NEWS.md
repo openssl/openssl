@@ -20,7 +20,7 @@ OpenSSL 3.0
 
 ### Major changes between OpenSSL 3.0.1 and OpenSSL 3.0.2 [under development]
 
- * 
+  * none
 
 ### Major changes between OpenSSL 3.0.0 and OpenSSL 3.0.1 [14 Dec 2021]
 
