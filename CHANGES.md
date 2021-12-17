@@ -30,7 +30,7 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 3.0.1 and 3.0.2 [xx XXX xxxx]
 
- * 
+ * none yet
 
 ### Changes between 3.0.0 and 3.0.1 [14 Dec 2021]
 
