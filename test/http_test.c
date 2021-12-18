@@ -208,13 +208,14 @@ static int test_http_keep_alive(char version, int keep_alive, int kept_alive)
     BIO *rbio = BIO_new(BIO_s_mem());
     BIO *rsp;
     const char *const content_type = "application/x-x509-ca-cert";
-    server_args mock_args = { NULL, content_type, NULL, '0', 0 };
+    server_args mock_args = { NULL, NULL, NULL, '0', 0 };
     OSSL_HTTP_REQ_CTX *rctx = NULL;
     int i, res = 0;
 
     if (wbio == NULL || rbio == NULL)
         goto err;
     mock_args.out = rbio;
+    mock_args.content_type = content_type;
     mock_args.version = version;
     mock_args.keep_alive = kept_alive;
     BIO_set_callback_ex(wbio, http_bio_cb_ex);
