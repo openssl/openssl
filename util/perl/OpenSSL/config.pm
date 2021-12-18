@@ -742,6 +742,7 @@ EOF
       [ 'powerpc-.*-.*bsd.*',     { target => "BSD-ppc" } ],
       [ 'powerpc64-.*-.*bsd.*',   { target => "BSD-ppc64" } ],
       [ 'powerpc64le-.*-.*bsd.*', { target => "BSD-ppc64le" } ],
+      [ 'riscv64-.*-.*bsd.*',     { target => "BSD-riscv64" } ],
       [ 'sparc64-.*-.*bsd.*',     { target => "BSD-sparc64" } ],
       [ 'ia64-.*-.*bsd.*',        { target => "BSD-ia64" } ],
       [ 'x86_64-.*-dragonfly.*',  { target => "BSD-x86_64" } ],
