@@ -116,7 +116,7 @@ static int execute_exec_certrequest_ses_test(CMP_SES_TEST_FIXTURE *fixture)
         STACK_OF(X509) *caPubs = OSSL_CMP_CTX_get1_caPubs(fixture->cmp_ctx);
         int ret = TEST_int_eq(STACK_OF_X509_cmp(fixture->caPubs, caPubs), 0);
 
-        sk_X509_pop_free(caPubs, X509_free);
+        OSSL_STACK_OF_X509_free(caPubs);
         return ret;
     }
     return 1;

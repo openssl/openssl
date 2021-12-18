@@ -855,9 +855,9 @@ redo_accept:
     EVP_MD_free(rsign_md);
     EVP_MD_free(resp_certid_md);
     X509_free(cert);
-    sk_X509_pop_free(issuers, X509_free);
+    OSSL_STACK_OF_X509_free(issuers);
     X509_free(rsigner);
-    sk_X509_pop_free(rca_cert, X509_free);
+    OSSL_STACK_OF_X509_free(rca_cert);
     free_index(rdb);
     BIO_free_all(cbio);
     BIO_free_all(acbio);
@@ -867,8 +867,8 @@ redo_accept:
     OCSP_BASICRESP_free(bs);
     sk_OPENSSL_STRING_free(reqnames);
     sk_OCSP_CERTID_free(ids);
-    sk_X509_pop_free(sign_other, X509_free);
-    sk_X509_pop_free(verify_other, X509_free);
+    OSSL_STACK_OF_X509_free(sign_other);
+    OSSL_STACK_OF_X509_free(verify_other);
     sk_CONF_VALUE_pop_free(headers, X509V3_conf_free);
     OPENSSL_free(thost);
     OPENSSL_free(tport);

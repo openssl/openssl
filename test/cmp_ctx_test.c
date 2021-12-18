@@ -59,7 +59,7 @@ static STACK_OF(X509) *sk_X509_new_1(void)
 
 static void sk_X509_pop_X509_free(STACK_OF(X509) *sk)
 {
-    sk_X509_pop_free(sk, X509_free);
+    OSSL_STACK_OF_X509_free(sk);
 }
 
 static int execute_CTX_reinit_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)

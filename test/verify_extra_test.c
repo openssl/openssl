@@ -94,7 +94,7 @@ static int test_alt_chains_cert_forgery(void)
  err:
     X509_STORE_CTX_free(sctx);
     X509_free(x);
-    sk_X509_pop_free(untrusted, X509_free);
+    OSSL_STACK_OF_X509_free(untrusted);
     X509_STORE_free(store);
     return ret;
 }

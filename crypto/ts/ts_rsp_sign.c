@@ -147,7 +147,7 @@ void TS_RESP_CTX_free(TS_RESP_CTX *ctx)
     OPENSSL_free(ctx->propq);
     X509_free(ctx->signer_cert);
     EVP_PKEY_free(ctx->signer_key);
-    sk_X509_pop_free(ctx->certs, X509_free);
+    OSSL_STACK_OF_X509_free(ctx->certs);
     sk_ASN1_OBJECT_pop_free(ctx->policies, ASN1_OBJECT_free);
     ASN1_OBJECT_free(ctx->default_policy);
     sk_EVP_MD_free(ctx->mds);   /* No EVP_MD_free method exists. */
@@ -197,7 +197,7 @@ int TS_RESP_CTX_set_def_policy(TS_RESP_CTX *ctx, const ASN1_OBJECT *def_policy)
 
 int TS_RESP_CTX_set_certs(TS_RESP_CTX *ctx, STACK_OF(X509) *certs)
 {
-    sk_X509_pop_free(ctx->certs, X509_free);
+    OSSL_STACK_OF_X509_free(ctx->certs);
     ctx->certs = NULL;
 
     return certs == NULL || (ctx->certs = X509_chain_up_ref(certs)) != NULL;

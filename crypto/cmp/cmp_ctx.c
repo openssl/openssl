@@ -61,9 +61,6 @@ DEFINE_OSSL_set0_NAME(OSSL_CMP_CTX, trustedStore, trusted, X509_STORE)
 /* Get current list of non-trusted intermediate certs */
 DEFINE_OSSL_CMP_CTX_get0(untrusted, STACK_OF(X509))
 
-#define X509_STACK_free(certs) \
-    sk_X509_pop_free(certs, X509_free)
-
 /*
  * Set untrusted certificates for path construction in authentication of
  * the CMP server and potentially others (TLS server, newly enrolled cert).
@@ -79,11 +76,11 @@ int OSSL_CMP_CTX_set1_untrusted(OSSL_CMP_CTX *ctx, STACK_OF(X509) *certs)
     if (!ossl_x509_add_certs_new(&untrusted, certs,
                                  X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP))
         goto err;
-    X509_STACK_free(ctx->untrusted);
+    OSSL_STACK_OF_X509_free(ctx->untrusted);
     ctx->untrusted = untrusted;
     return 1;
  err:
-    X509_STACK_free(untrusted);
+    OSSL_STACK_OF_X509_free(untrusted);
     return 0;
 }
 
@@ -202,10 +199,10 @@ void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx)
     X509_free(ctx->validatedSrvCert);
     X509_NAME_free(ctx->expected_sender);
     X509_STORE_free(ctx->trusted);
-    X509_STACK_free(ctx->untrusted);
+    OSSL_STACK_OF_X509_free(ctx->untrusted);
 
     X509_free(ctx->cert);
-    X509_STACK_free(ctx->chain);
+    OSSL_STACK_OF_X509_free(ctx->chain);
     EVP_PKEY_free(ctx->pkey);
     ASN1_OCTET_STRING_free(ctx->referenceValue);
     if (ctx->secretValue != NULL)
@@ -219,7 +216,7 @@ void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx)
     ASN1_OCTET_STRING_free(ctx->senderNonce);
     ASN1_OCTET_STRING_free(ctx->recipNonce);
     OSSL_CMP_ITAVs_free(ctx->geninfo_ITAVs);
-    X509_STACK_free(ctx->extraCertsOut);
+    OSSL_STACK_OF_X509_free(ctx->extraCertsOut);
 
     EVP_PKEY_free(ctx->newPkey);
     X509_NAME_free(ctx->issuer);
@@ -234,9 +231,9 @@ void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx)
 
     OSSL_CMP_PKIFREETEXT_free(ctx->statusString);
     X509_free(ctx->newCert);
-    X509_STACK_free(ctx->newChain);
-    X509_STACK_free(ctx->caPubs);
-    X509_STACK_free(ctx->extraCertsIn);
+    OSSL_STACK_OF_X509_free(ctx->newChain);
+    OSSL_STACK_OF_X509_free(ctx->caPubs);
+    OSSL_STACK_OF_X509_free(ctx->extraCertsIn);
 
     OPENSSL_free(ctx);
 }
@@ -469,7 +466,7 @@ int PREFIX##_set1_##FIELD(OSSL_CMP_CTX *ctx, STACK_OF(X509) *certs) \
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT); \
         return 0; \
     } \
-    X509_STACK_free(ctx->FIELD); \
+    OSSL_STACK_OF_X509_free(ctx->FIELD); \
     ctx->FIELD = NULL; \
     return certs == NULL || (ctx->FIELD = X509_chain_up_ref(certs)) != NULL; \
 }

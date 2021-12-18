@@ -172,7 +172,7 @@ static void dane_final(SSL_DANE *dane)
     sk_danetls_record_pop_free(dane->trecs, tlsa_free);
     dane->trecs = NULL;
 
-    sk_X509_pop_free(dane->certs, X509_free);
+    OSSL_STACK_OF_X509_free(dane->certs);
     dane->certs = NULL;
 
     X509_free(dane->mcert);
@@ -1243,7 +1243,7 @@ void SSL_free(SSL *s)
     sk_X509_NAME_pop_free(s->ca_names, X509_NAME_free);
     sk_X509_NAME_pop_free(s->client_ca_names, X509_NAME_free);
 
-    sk_X509_pop_free(s->verified_chain, X509_free);
+    OSSL_STACK_OF_X509_free(s->verified_chain);
 
     if (s->method != NULL)
         s->method->ssl_free(s);
@@ -3430,7 +3430,7 @@ void SSL_CTX_free(SSL_CTX *a)
     ssl_cert_free(a->cert);
     sk_X509_NAME_pop_free(a->ca_names, X509_NAME_free);
     sk_X509_NAME_pop_free(a->client_ca_names, X509_NAME_free);
-    sk_X509_pop_free(a->extra_certs, X509_free);
+    OSSL_STACK_OF_X509_free(a->extra_certs);
     a->comp_methods = NULL;
 #ifndef OPENSSL_NO_SRTP
     sk_SRTP_PROTECTION_PROFILE_free(a->srtp_profiles);

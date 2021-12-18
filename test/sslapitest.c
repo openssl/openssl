@@ -8038,7 +8038,7 @@ static int cert_cb(SSL *s, void *arg)
     EVP_PKEY_free(pkey);
     X509_free(x509);
     X509_free(rootx);
-    sk_X509_pop_free(chain, X509_free);
+    OSSL_STACK_OF_X509_free(chain);
     return ret;
 }
 
