@@ -741,6 +741,7 @@ EOF
                                     defines => [ 'L_ENDIAN' ] } ],
       [ 'powerpc64-.*-.*bsd.*',   { target => "BSD-generic64",
                                     defines => [ 'B_ENDIAN' ] } ],
+      [ 'riscv64-.*-.*bsd.*',     { target => "BSD-riscv64" } ],
       [ 'sparc64-.*-.*bsd.*',     { target => "BSD-sparc64" } ],
       [ 'ia64-.*-.*bsd.*',        { target => "BSD-ia64" } ],
       [ 'x86_64-.*-dragonfly.*',  { target => "BSD-x86_64" } ],
