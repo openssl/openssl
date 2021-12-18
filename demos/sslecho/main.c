@@ -15,7 +15,23 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-static const char       *revision = "1.0.3";
+/*
+ * The version of OpenSSL supplied with Linux Mint 20.2 has
+ * libssl.so.1.1 and NOT libssl.so.3. Should be the same for Ubuntu.
+ *
+ * libssl.so.3 (and it's associated header files) are needed to compile
+ * configure_client_context(). As of this writing (18-Dec-2021) you must
+ * build the OpenSSL tree to get the v3 libs.
+ *
+ * So, if someone wants to play with this program without cloning and
+ * building all of OpenSSL, we must work with the v1.1.1 libraries.
+ *
+ * #define OPENSSL_V3 to '1' to enable the v3 libs.
+ * You must also set OPENSSL_V3 to '1' in the makefile.
+ */
+#define     OPENSSL_V3  0
+
+static const char       *revision = "1.0.4";
 
 static const int        server_port = 4433;
 
@@ -85,7 +101,7 @@ SSL_CTX* create_context(bool isServer) {
     return ctx;
 }
 
-void configure_context(SSL_CTX *ctx) {
+void configure_server_context(SSL_CTX *ctx) {
     /* Set the key and cert */
     if (SSL_CTX_use_certificate_file(ctx, "cert.pem", SSL_FILETYPE_PEM) <= 0) {
         ERR_print_errors_fp(stderr);
@@ -97,6 +113,20 @@ void configure_context(SSL_CTX *ctx) {
         exit(EXIT_FAILURE);
     }
 }
+
+#if OPENSSL_V3
+void configure_client_context(SSL_CTX *ctx) {
+    /*
+     * Configure the client to abort the handshake if certificate verification
+     * fails
+     */
+    SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
+    if (!SSL_CTX_load_verify_file(ctx, "cert.pem")) {
+        ERR_print_errors_fp(stderr);
+        exit(EXIT_FAILURE);
+    }
+}
+#endif
 
 void usage() {
     printf("Usage: sslecho s\n");
@@ -157,7 +187,7 @@ int main(int argc, char **argv) {
         printf("We are the server on port: %d\n\n", server_port);
 
         /* Configure server context with appropriate key files */
-        configure_context(ssl_ctx);
+        configure_server_context(ssl_ctx);
 
         /* Create server socket; will bind with server port and listen */
         server_skt = create_socket(true);
@@ -229,6 +259,11 @@ int main(int argc, char **argv) {
     else {
 
         printf("We are the client\n\n");
+
+#if OPENSSL_V3
+        /* Configure client context so we verify the server correctly */
+        configure_client_context(ssl_ctx);
+#endif
 
         /* Create "bare" socket */
         client_skt = create_socket(false);
