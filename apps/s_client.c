@@ -3048,7 +3048,7 @@ int s_client_main(int argc, char **argv)
     X509_free(cert);
     sk_X509_CRL_pop_free(crls, X509_CRL_free);
     EVP_PKEY_free(key);
-    sk_X509_pop_free(chain, X509_free);
+    OSSL_STACK_OF_X509_free(chain);
     OPENSSL_free(pass);
 #ifndef OPENSSL_NO_SRP
     OPENSSL_free(srp_arg.srppassin);

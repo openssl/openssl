@@ -933,7 +933,7 @@ static int setup_certs(char *files, const char *desc, void *ctx,
     if ((certs = load_certs_multifile(files, opt_otherpass, desc, vpm)) == NULL)
         return 0;
     ok = (*set1_fn)(ctx, certs);
-    sk_X509_pop_free(certs, X509_free);
+    OSSL_STACK_OF_X509_free(certs);
     return ok;
 }
 
@@ -1262,7 +1262,7 @@ static SSL_CTX *setup_ssl_ctx(OSSL_CMP_CTX *ctx, const char *host,
         if (!ok || !SSL_CTX_set0_chain(ssl_ctx, certs)) {
             CMP_err1("unable to use client TLS certificate file '%s'",
                      opt_tls_cert);
-            sk_X509_pop_free(certs, X509_free);
+            OSSL_STACK_OF_X509_free(certs);
             goto err;
         }
         for (i = 0; i < sk_X509_num(untrusted); i++) {
@@ -1441,7 +1441,7 @@ static int setup_protection_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
             ok = ok && OSSL_CMP_CTX_build_cert_chain(ctx, own_trusted, certs);
         }
         X509_STORE_free(own_trusted);
-        sk_X509_pop_free(certs, X509_free);
+        OSSL_STACK_OF_X509_free(certs);
         if (!ok)
             return 0;
     } else if (opt_own_trusted != NULL) {
@@ -2020,7 +2020,7 @@ static int save_free_certs(OSSL_CMP_CTX *ctx,
 
  end:
     BIO_free(bio);
-    sk_X509_pop_free(certs, X509_free);
+    OSSL_STACK_OF_X509_free(certs);
     return n;
 }
 

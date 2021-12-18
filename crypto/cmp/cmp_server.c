@@ -234,8 +234,8 @@ static OSSL_CMP_MSG *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
  err:
     OSSL_CMP_PKISI_free(si);
     X509_free(certOut);
-    sk_X509_pop_free(chainOut, X509_free);
-    sk_X509_pop_free(caPubs, X509_free);
+    OSSL_STACK_OF_X509_free(chainOut);
+    OSSL_STACK_OF_X509_free(caPubs);
     return msg;
 }
 

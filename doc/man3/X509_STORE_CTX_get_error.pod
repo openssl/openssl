@@ -72,7 +72,7 @@ verification is successful. Otherwise the returned chain may be incomplete or
 invalid.  The returned chain persists after the I<ctx> structure is freed.
 When it is no longer needed it should be free up using:
 
- sk_X509_pop_free(chain, X509_free);
+ OSSL_STACK_OF_X509_free(chain);
 
 X509_verify_cert_error_string() returns a human readable error string for
 verification error I<n>.

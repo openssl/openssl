@@ -82,7 +82,7 @@ void TS_VERIFY_CTX_cleanup(TS_VERIFY_CTX *ctx)
         return;
 
     X509_STORE_free(ctx->store);
-    sk_X509_pop_free(ctx->certs, X509_free);
+    OSSL_STACK_OF_X509_free(ctx->certs);
 
     ASN1_OBJECT_free(ctx->policy);
 

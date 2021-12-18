@@ -138,7 +138,7 @@ static int lookup_cert_match(X509 **result, X509_STORE_CTX *ctx, X509 *x)
         else
             *result = xtmp;
     }
-    sk_X509_pop_free(certs, X509_free);
+    OSSL_STACK_OF_X509_free(certs);
     return ret;
 }
 
@@ -385,7 +385,7 @@ static STACK_OF(X509) *lookup_certs_sk(X509_STORE_CTX *ctx,
         x = sk_X509_value(ctx->other_ctx, i);
         if (X509_NAME_cmp(nm, X509_get_subject_name(x)) == 0) {
             if (!X509_add_cert(sk, x, X509_ADD_FLAG_UP_REF)) {
-                sk_X509_pop_free(sk, X509_free);
+                OSSL_STACK_OF_X509_free(sk);
                 ctx->error = X509_V_ERR_OUT_OF_MEM;
                 return NULL;
             }
@@ -2484,7 +2484,7 @@ void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx)
     }
     X509_policy_tree_free(ctx->tree);
     ctx->tree = NULL;
-    sk_X509_pop_free(ctx->chain, X509_free);
+    OSSL_STACK_OF_X509_free(ctx->chain);
     ctx->chain = NULL;
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_X509_STORE_CTX, ctx, &(ctx->ex_data));
     memset(&ctx->ex_data, 0, sizeof(ctx->ex_data));
@@ -2523,7 +2523,7 @@ void X509_STORE_CTX_set0_untrusted(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
 
 void X509_STORE_CTX_set0_verified_chain(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
 {
-    sk_X509_pop_free(ctx->chain, X509_free);
+    OSSL_STACK_OF_X509_free(ctx->chain);
     ctx->chain = sk;
 }
 

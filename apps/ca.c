@@ -1325,7 +1325,7 @@ end_of_options:
     BIO_free_all(Sout);
     BIO_free_all(out);
     BIO_free_all(in);
-    sk_X509_pop_free(cert_sk, X509_free);
+    OSSL_STACK_OF_X509_free(cert_sk);
 
     cleanse(passin);
     if (free_passin)

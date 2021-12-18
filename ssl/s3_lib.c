@@ -3956,7 +3956,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         break;
 
     case SSL_CTRL_CLEAR_EXTRA_CHAIN_CERTS:
-        sk_X509_pop_free(ctx->extra_certs, X509_free);
+        OSSL_STACK_OF_X509_free(ctx->extra_certs);
         ctx->extra_certs = NULL;
         break;
 

@@ -125,7 +125,7 @@ int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
         *cert = NULL;
     }
     X509_free(x);
-    sk_X509_pop_free(ocerts, X509_free);
+    OSSL_STACK_OF_X509_free(ocerts);
     return 0;
 
 }

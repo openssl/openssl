@@ -432,7 +432,7 @@ static int check_msg_all_certs(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
                                              : "certs in trusted store",
                                    msg->extraCerts, ctx->untrusted,
                                    msg, mode_3gpp);
-        sk_X509_pop_free(trusted, X509_free);
+        OSSL_STACK_OF_X509_free(trusted);
     }
     return ret;
 }

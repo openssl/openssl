@@ -992,7 +992,7 @@ void ssl_excert_free(SSL_EXCERT *exc)
     while (exc) {
         X509_free(exc->cert);
         EVP_PKEY_free(exc->key);
-        sk_X509_pop_free(exc->chain, X509_free);
+        OSSL_STACK_OF_X509_free(exc->chain);
         curr = exc;
         exc = exc->next;
         OPENSSL_free(curr);

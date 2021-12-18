@@ -3554,7 +3554,7 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
     s->session->peer = sk_X509_shift(sk);
     s->session->verify_result = s->verify_result;
 
-    sk_X509_pop_free(s->session->peer_chain, X509_free);
+    OSSL_STACK_OF_X509_free(s->session->peer_chain);
     s->session->peer_chain = sk;
     sk = NULL;
 
@@ -3589,7 +3589,7 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
 
  err:
     X509_free(x);
-    sk_X509_pop_free(sk, X509_free);
+    OSSL_STACK_OF_X509_free(sk);
     return ret;
 }
 

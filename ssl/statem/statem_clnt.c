@@ -1841,7 +1841,7 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
 
  err:
     X509_free(x);
-    sk_X509_pop_free(s->session->peer_chain, X509_free);
+    OSSL_STACK_OF_X509_free(s->session->peer_chain);
     s->session->peer_chain = NULL;
     return MSG_PROCESS_ERROR;
 }

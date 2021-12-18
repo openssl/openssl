@@ -603,7 +603,7 @@ static int try_pkcs12(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
                 }
                 EVP_PKEY_free(pkey);
                 X509_free(cert);
-                sk_X509_pop_free(chain, X509_free);
+                OSSL_STACK_OF_X509_free(chain);
                 OSSL_STORE_INFO_free(osi_pkey);
                 OSSL_STORE_INFO_free(osi_cert);
                 OSSL_STORE_INFO_free(osi_ca);

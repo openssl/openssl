@@ -264,7 +264,7 @@ static int verify(X509 *leaf, X509 *root, STACK_OF(X509_CRL) *crls,
     status = X509_verify_cert(ctx) == 1 ? X509_V_OK
                                         : X509_STORE_CTX_get_error(ctx);
 err:
-    sk_X509_pop_free(roots, X509_free);
+    OSSL_STACK_OF_X509_free(roots);
     sk_X509_CRL_pop_free(crls, X509_CRL_free);
     X509_VERIFY_PARAM_free(param);
     X509_STORE_CTX_free(ctx);

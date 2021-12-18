@@ -634,7 +634,7 @@ STACK_OF(X509) *CMS_get1_certs(CMS_ContentInfo *cms)
         if (cch->type == 0) {
             if (!ossl_x509_add_cert_new(&certs, cch->d.certificate,
                                         X509_ADD_FLAG_UP_REF)) {
-                sk_X509_pop_free(certs, X509_free);
+                OSSL_STACK_OF_X509_free(certs);
                 return NULL;
             }
         }

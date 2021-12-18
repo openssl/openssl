@@ -478,10 +478,10 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
  err2:
     if (si_chains != NULL) {
         for (i = 0; i < scount; ++i)
-            sk_X509_pop_free(si_chains[i], X509_free);
+            OSSL_STACK_OF_X509_free(si_chains[i]);
         OPENSSL_free(si_chains);
     }
-    sk_X509_pop_free(cms_certs, X509_free);
+    OSSL_STACK_OF_X509_free(cms_certs);
     sk_X509_CRL_pop_free(crls, X509_CRL_free);
 
     return ret;

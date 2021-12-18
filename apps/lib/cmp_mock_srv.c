@@ -38,8 +38,8 @@ static void mock_srv_ctx_free(mock_srv_ctx *ctx)
 
     OSSL_CMP_PKISI_free(ctx->statusOut);
     X509_free(ctx->certOut);
-    sk_X509_pop_free(ctx->chainOut, X509_free);
-    sk_X509_pop_free(ctx->caPubsOut, X509_free);
+    OSSL_STACK_OF_X509_free(ctx->chainOut);
+    OSSL_STACK_OF_X509_free(ctx->caPubsOut);
     OSSL_CMP_MSG_free(ctx->certReq);
     OPENSSL_free(ctx);
 }
@@ -91,7 +91,7 @@ int ossl_cmp_mock_srv_set1_chainOut(OSSL_CMP_SRV_CTX *srv_ctx,
     }
     if (chain != NULL && (chain_copy = X509_chain_up_ref(chain)) == NULL)
         return 0;
-    sk_X509_pop_free(ctx->chainOut, X509_free);
+    OSSL_STACK_OF_X509_free(ctx->chainOut);
     ctx->chainOut = chain_copy;
     return 1;
 }
@@ -108,7 +108,7 @@ int ossl_cmp_mock_srv_set1_caPubsOut(OSSL_CMP_SRV_CTX *srv_ctx,
     }
     if (caPubs != NULL && (caPubs_copy = X509_chain_up_ref(caPubs)) == NULL)
         return 0;
-    sk_X509_pop_free(ctx->caPubsOut, X509_free);
+    OSSL_STACK_OF_X509_free(ctx->caPubsOut);
     ctx->caPubsOut = caPubs_copy;
     return 1;
 }
@@ -252,9 +252,9 @@ static OSSL_CMP_PKISI *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
  err:
     X509_free(*certOut);
     *certOut = NULL;
-    sk_X509_pop_free(*chainOut, X509_free);
+    OSSL_STACK_OF_X509_free(*chainOut);
     *chainOut = NULL;
-    sk_X509_pop_free(*caPubs, X509_free);
+    OSSL_STACK_OF_X509_free(*caPubs);
     *caPubs = NULL;
     return NULL;
 }

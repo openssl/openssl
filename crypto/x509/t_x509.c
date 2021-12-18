@@ -17,6 +17,11 @@
 #include "crypto/asn1.h"
 #include "crypto/x509.h"
 
+void OSSL_STACK_OF_X509_free(STACK_OF(X509) *certs)
+{
+    sk_X509_pop_free(certs, X509_free);
+}
+
 #ifndef OPENSSL_NO_STDIO
 int X509_print_fp(FILE *fp, X509 *x)
 {
@@ -456,7 +461,7 @@ static int print_store_certs(BIO *bio, X509_STORE *store)
         STACK_OF(X509) *certs = X509_STORE_get1_all_certs(store);
         int ret = print_certs(bio, certs);
 
-        sk_X509_pop_free(certs, X509_free);
+        OSSL_STACK_OF_X509_free(certs);
         return ret;
     } else {
         return BIO_printf(bio, "    (no trusted store)\n") >= 0;
