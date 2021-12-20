@@ -71,10 +71,11 @@ static int obj_provider_init(const OSSL_CORE_HANDLE *handle,
     /* additional tests checking empty digest algs are accepted, too */
     if (!c_obj_add_sigid(handle, SIGALG_OID, "", SIG_LN))
         return 0;
-    if (!c_obj_add_sigid(handle, SIGALG_OID, NULL, SIG_LN))
-        return 0;
     /* checking wrong digest alg name is rejected: */
     if (c_obj_add_sigid(handle, SIGALG_OID, "NonsenseAlg", SIG_LN))
+        return 0;
+    /* Testing actual triplet addition under separate sig alg */
+    if (!c_obj_add_sigid(handle, SIG_OID, NULL, SIG_LN))
         return 0;
 
     return 1;
@@ -103,6 +104,14 @@ static int obj_create_test(void)
             || !TEST_int_ne(signid, NID_undef)
             || !TEST_int_eq(digestnid, OBJ_sn2nid(DIGEST_SN))
             || !TEST_int_eq(signid, OBJ_ln2nid(SIG_LN)))
+        goto err;
+
+    /* Check empty digest alg storage capability */
+    sigalgnid = OBJ_txt2nid(SIG_OID);
+    if (!TEST_int_ne(sigalgnid, NID_undef)
+            || !TEST_true(OBJ_find_sigid_algs(sigalgnid, &digestnid, &signid))
+            || !TEST_int_eq(digestnid, NID_undef)
+            || !TEST_int_ne(signid, NID_undef))
         goto err;
 
     testresult = 1;
