@@ -397,9 +397,7 @@ OSSL_CMP_exec_CR_ses                    define
 OSSL_CMP_exec_P10CR_ses                 define
 OSSL_CMP_exec_KUR_ses                   define
 OSSL_CMP_CTX_get0_trusted               define
-OSSL_CMP_CTX_set0_trustedStore          define
 OSSL_CMP_CTX_set0_trusted               define
-OSSL_CMP_CTX_get0_trustedStore          define
 OSSL_CMP_CTX_set_log_verbosity          define
 OSSL_CMP_CR                             define
 OSSL_CMP_IR                             define
