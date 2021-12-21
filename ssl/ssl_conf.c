@@ -597,10 +597,13 @@ static int cmd_DHParameters(SSL_CONF_CTX *cctx, const char *value)
             = OSSL_DECODER_CTX_new_for_pkey(&dhpkey, "PEM", NULL, "DH",
                                             OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
                                             sslctx->libctx, sslctx->propq);
-        if (decoderctx == NULL
-                || !OSSL_DECODER_from_bio(decoderctx, in)) {
-            OSSL_DECODER_CTX_free(decoderctx);
+        if (decoderctx == NULL)
             goto end;
+
+        while (!OSSL_DECODER_from_bio(decoderctx, in)) {
+            if (BIO_eof(in)) {
+                OSSL_DECODER_CTX_free(decoderctx);
+                goto end;
         }
         OSSL_DECODER_CTX_free(decoderctx);
 
