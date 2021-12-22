@@ -17,6 +17,7 @@ B<openssl dhparam>
 [B<-check>]
 [B<-noout>]
 [B<-text>]
+[B<-quiet>]
 [B<-2>]
 [B<-3>]
 [B<-5>]
@@ -103,6 +104,11 @@ This option prints out the DH parameters in human readable form.
 {- $OpenSSL::safe::opt_r_item -}
 
 {- $OpenSSL::safe::opt_provider_item -}
+
+=item B<-quiet>
+
+This option stops the output of progress messages, which might be useful
+in batch scripts.
 
 =back
 
