@@ -27,7 +27,7 @@ static int verbose = 0;
 typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_TEXT,
-    OPT_NOOUT, OPT_GENKEY, OPT_ENGINE, OPT_VERBOSE,
+    OPT_NOOUT, OPT_GENKEY, OPT_ENGINE, OPT_VERBOSE, OPT_QUIET,
     OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
@@ -50,6 +50,7 @@ const OPTIONS dsaparam_options[] = {
     {"text", OPT_TEXT, '-', "Print as text"},
     {"noout", OPT_NOOUT, '-', "No output"},
     {"verbose", OPT_VERBOSE, '-', "Verbose output"},
+    {"quiet", OPT_QUIET, '-', "Terse output"},
     {"genkey", OPT_GENKEY, '-', "Generate a DSA key"},
 
     OPT_R_OPTIONS,
@@ -120,6 +121,9 @@ int dsaparam_main(int argc, char **argv)
             break;
         case OPT_VERBOSE:
             verbose = 1;
+            break;
+        case OPT_QUIET:
+            verbose = 0;
             break;
         }
     }

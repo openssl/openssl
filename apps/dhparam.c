@@ -32,11 +32,13 @@
 
 static EVP_PKEY *dsa_to_dh(EVP_PKEY *dh);
 
+static int verbose = 1;
+
 typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT,
     OPT_ENGINE, OPT_CHECK, OPT_TEXT, OPT_NOOUT,
-    OPT_DSAPARAM, OPT_2, OPT_3, OPT_5,
+    OPT_DSAPARAM, OPT_2, OPT_3, OPT_5, OPT_VERBOSE, OPT_QUIET,
     OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
@@ -66,6 +68,8 @@ const OPTIONS dhparam_options[] = {
     {"2", OPT_2, '-', "Generate parameters using 2 as the generator value"},
     {"3", OPT_3, '-', "Generate parameters using 3 as the generator value"},
     {"5", OPT_5, '-', "Generate parameters using 5 as the generator value"},
+    {"verbose", OPT_VERBOSE, '-', "Verbose output"},
+    {"quiet", OPT_QUIET, '-', "Terse output"},
 
     OPT_R_OPTIONS,
     OPT_PROV_OPTIONS,
@@ -137,6 +141,12 @@ int dhparam_main(int argc, char **argv)
         case OPT_NOOUT:
             noout = 1;
             break;
+        case OPT_VERBOSE:
+            verbose = 1;
+            break;
+        case OPT_QUIET:
+            verbose = 0;
+            break;
         case OPT_R_CASES:
             if (!opt_rand(o))
                 goto end;
@@ -187,11 +197,13 @@ int dhparam_main(int argc, char **argv)
                         alg);
             goto end;
         }
-        EVP_PKEY_CTX_set_cb(ctx, progress_cb);
         EVP_PKEY_CTX_set_app_data(ctx, bio_err);
-        BIO_printf(bio_err,
-                    "Generating %s parameters, %d bit long %sprime\n",
-                    alg, num, dsaparam ? "" : "safe ");
+        if (verbose) {
+            EVP_PKEY_CTX_set_cb(ctx, progress_cb);
+            BIO_printf(bio_err,
+                        "Generating %s parameters, %d bit long %sprime\n",
+                        alg, num, dsaparam ? "" : "safe ");
+        }
 
         if (EVP_PKEY_paramgen_init(ctx) <= 0) {
             BIO_printf(bio_err,

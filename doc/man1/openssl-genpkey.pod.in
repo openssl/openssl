@@ -15,6 +15,7 @@ B<openssl> B<genpkey>
 [B<-help>]
 [B<-out> I<filename>]
 [B<-outform> B<DER>|B<PEM>]
+[B<-verbose>]
 [B<-quiet>]
 [B<-pass> I<arg>]
 [B<-I<cipher>>]
@@ -49,6 +50,10 @@ The output format, except when B<-genparam> is given; the default is B<PEM>.
 See L<openssl-format-options(1)> for details.
 
 When B<-genparam> is given, B<-outform> is ignored.
+
+=item B<-verbose>
+
+Output "status dots" while generating keys.
 
 =item B<-quiet>
 

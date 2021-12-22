@@ -17,6 +17,7 @@ B<openssl dsaparam>
 [B<-text>]
 [B<-genkey>]
 [B<-verbose>]
+[B<-quiet>]
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<numbits>]
@@ -78,6 +79,11 @@ parameters.
 =item B<-verbose>
 
 Print extra details about the operations being performed.
+
+=item B<-quiet>
+
+Print fewer details about the operations being performed, which may
+be handy during batch scripts and pipelines.
 
 {- $OpenSSL::safe::opt_r_item -}
 
