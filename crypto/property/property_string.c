@@ -175,12 +175,12 @@ static OSSL_PROPERTY_IDX ossl_property_string(OSSL_LIB_CTX *ctx, int name,
             lh_PROPERTY_STRING_insert(t, ps_new);
             if (lh_PROPERTY_STRING_error(t)) {
                 /*-
-                 * Deleting this entry will break the lock step between the
-                 * index and the stack.  Instead we zap the pointer and
-                 * refer to something that doesn't need to be freed.
+                 * Undo the previous push which means also decrementing the
+                 * index and freeing the allocated storage.
                  */
-                sk_OPENSSL_CSTRING_set(slist, ps->idx - 1, "-invalid-");
+                sk_OPENSSL_CSTRING_pop(slist);
                 property_free(ps_new);
+                --*pidx;
                 CRYPTO_THREAD_unlock(propdata->lock);
                 return 0;
             }
