@@ -24,7 +24,7 @@
 
 typedef enum OPTION_choice {
     OPT_COMMON,
-    OPT_OUT, OPT_PASSOUT, OPT_ENGINE, OPT_CIPHER, OPT_VERBOSE,
+    OPT_OUT, OPT_PASSOUT, OPT_ENGINE, OPT_CIPHER, OPT_VERBOSE, OPT_QUIET,
     OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
@@ -44,6 +44,7 @@ const OPTIONS gendsa_options[] = {
     OPT_PROV_OPTIONS,
     {"", OPT_CIPHER, '-', "Encrypt the output with any supported cipher"},
     {"verbose", OPT_VERBOSE, '-', "Verbose output"},
+    {"quiet", OPT_QUIET, '-', "Terse output"},
 
     OPT_PARAMETERS(),
     {"dsaparam-file", 0, 0, "File containing DSA parameters"},
@@ -97,6 +98,9 @@ int gendsa_main(int argc, char **argv)
             break;
         case OPT_VERBOSE:
             verbose = 1;
+            break;
+        case OPT_QUIET:
+            verbose = 0;
             break;
         }
     }

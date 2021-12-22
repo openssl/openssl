@@ -154,7 +154,7 @@ typedef enum OPTION_choice {
     OPT_CRLDAYS, OPT_CRLHOURS, OPT_CRLSEC,
     OPT_INFILES, OPT_SS_CERT, OPT_SPKAC, OPT_REVOKE, OPT_VALID,
     OPT_EXTENSIONS, OPT_EXTFILE, OPT_STATUS, OPT_UPDATEDB, OPT_CRLEXTS,
-    OPT_RAND_SERIAL,
+    OPT_RAND_SERIAL, OPT_QUIET,
     OPT_R_ENUM, OPT_PROV_ENUM,
     /* Do not change the order here; see related case statements below */
     OPT_CRL_REASON, OPT_CRL_HOLD, OPT_CRL_COMPROMISE, OPT_CRL_CA_COMPROMISE
@@ -166,6 +166,7 @@ const OPTIONS ca_options[] = {
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
     {"verbose", OPT_VERBOSE, '-', "Verbose output during processing"},
+    {"quiet", OPT_QUIET, '-', "Terse output during processing"},
     {"outdir", OPT_OUTDIR, '/', "Where to put output cert"},
     {"in", OPT_IN, '<', "The input cert request(s)"},
     {"inform", OPT_INFORM, 'F', "CSR input format (DER or PEM); default PEM"},
@@ -331,6 +332,9 @@ opthelp:
             break;
         case OPT_VERBOSE:
             verbose = 1;
+            break;
+        case OPT_QUIET:
+            verbose = 0;
             break;
         case OPT_CONFIG:
             configfile = opt_arg();

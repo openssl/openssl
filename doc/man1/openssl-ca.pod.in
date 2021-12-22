@@ -10,6 +10,7 @@ openssl-ca - sample minimal CA application
 B<openssl> B<ca>
 [B<-help>]
 [B<-verbose>]
+[B<-quiet>]
 [B<-config> I<filename>]
 [B<-name> I<section>]
 [B<-section> I<section>]
@@ -94,6 +95,11 @@ Print out a usage message.
 =item B<-verbose>
 
 This prints extra details about the operations being performed.
+
+=item B<-quiet>
+
+This prints fewer details about the operations being performed, which may
+be handy during batch scripts or pipelines.
 
 =item B<-config> I<filename>
 

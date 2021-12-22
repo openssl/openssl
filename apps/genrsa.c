@@ -35,7 +35,7 @@ typedef enum OPTION_choice {
     OPT_3,
 #endif
     OPT_F4, OPT_ENGINE,
-    OPT_OUT, OPT_PASSOUT, OPT_CIPHER, OPT_PRIMES, OPT_VERBOSE,
+    OPT_OUT, OPT_PASSOUT, OPT_CIPHER, OPT_PRIMES, OPT_VERBOSE, OPT_QUIET,
     OPT_R_ENUM, OPT_PROV_ENUM, OPT_TRADITIONAL
 } OPTION_CHOICE;
 
@@ -60,6 +60,7 @@ const OPTIONS genrsa_options[] = {
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
     {"primes", OPT_PRIMES, 'p', "Specify number of primes"},
     {"verbose", OPT_VERBOSE, '-', "Verbose output"},
+    {"quiet", OPT_QUIET, '-', "Terse output"},
     {"traditional", OPT_TRADITIONAL, '-',
      "Use traditional format for private keys"},
     {"", OPT_CIPHER, '-', "Encrypt the output with any supported cipher"},
@@ -138,6 +139,9 @@ opthelp:
         case OPT_VERBOSE:
             verbose = 1;
             break;
+        case OPT_QUIET:
+            verbose = 0;
+            break;
         case OPT_TRADITIONAL:
             traditional = 1;
             break;
@@ -178,7 +182,8 @@ opthelp:
     if (!init_gen_str(&ctx, "RSA", eng, 0, NULL, NULL))
         goto end;
 
-    EVP_PKEY_CTX_set_cb(ctx, progress_cb);
+    if (verbose)
+        EVP_PKEY_CTX_set_cb(ctx, progress_cb);
     EVP_PKEY_CTX_set_app_data(ctx, bio_err);
 
     if (EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, num) <= 0) {
