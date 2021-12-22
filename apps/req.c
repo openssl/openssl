@@ -62,7 +62,6 @@ static int add_attribute_object(X509_REQ *req, char *text, const char *def,
 static int add_DN_object(X509_NAME *n, char *text, const char *def,
                          char *value, int nid, int n_min, int n_max,
                          unsigned long chtype, int mval);
-static int genpkey_cb(EVP_PKEY_CTX *ctx);
 static int build_data(char *text, const char *def, char *value,
                       int n_min, int n_max, char *buf, const int buf_size,
                       const char *desc1, const char *desc2);
@@ -663,7 +662,7 @@ int req_main(int argc, char **argv)
             }
         }
 
-        EVP_PKEY_CTX_set_cb(genctx, genpkey_cb);
+        EVP_PKEY_CTX_set_cb(genctx, progress_cb);
         EVP_PKEY_CTX_set_app_data(genctx, bio_err);
 
         pkey = app_keygen(genctx, keyalgstr, newkey_len, verbose);
@@ -1649,21 +1648,3 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
     return gctx;
 }
 
-static int genpkey_cb(EVP_PKEY_CTX *ctx)
-{
-    char c = '*';
-    BIO *b = EVP_PKEY_CTX_get_app_data(ctx);
-    int p;
-    p = EVP_PKEY_CTX_get_keygen_info(ctx, 0);
-    if (p == 0)
-        c = '.';
-    if (p == 1)
-        c = '+';
-    if (p == 2)
-        c = '*';
-    if (p == 3)
-        c = '\n';
-    BIO_write(b, &c, 1);
-    (void)BIO_flush(b);
-    return 1;
-}
