@@ -11,7 +11,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "apps.h"
 #include <time.h>
 #include <string.h>
 #include "apps.h"
@@ -24,8 +23,6 @@
 #include <openssl/pem.h>
 
 static int verbose = 0;
-
-static int gendsa_cb(EVP_PKEY_CTX *ctx);
 
 typedef enum OPTION_choice {
     OPT_COMMON,
@@ -160,9 +157,9 @@ int dsaparam_main(int argc, char **argv)
                        "         Your key size is %d! Larger key size may behave not as expected.\n",
                        OPENSSL_DSA_MAX_MODULUS_BITS, numbits);
 
-        EVP_PKEY_CTX_set_cb(ctx, gendsa_cb);
         EVP_PKEY_CTX_set_app_data(ctx, bio_err);
         if (verbose) {
+            EVP_PKEY_CTX_set_cb(ctx, progress_cb);
             BIO_printf(bio_err, "Generating DSA parameters, %d bit long prime\n",
                        num);
             BIO_printf(bio_err, "This could take some time\n");
@@ -235,21 +232,3 @@ int dsaparam_main(int argc, char **argv)
     return ret;
 }
 
-static int gendsa_cb(EVP_PKEY_CTX *ctx)
-{
-    static const char symbols[] = ".+*\n";
-    int p;
-    char c;
-    BIO *b;
-
-    if (!verbose)
-        return 1;
-
-    b = EVP_PKEY_CTX_get_app_data(ctx);
-    p = EVP_PKEY_CTX_get_keygen_info(ctx, 0);
-    c = (p >= 0 && (size_t)p < sizeof(symbols) - 1) ? symbols[p] : '?';
-
-    BIO_write(b, &c, 1);
-    (void)BIO_flush(b);
-    return 1;
-}

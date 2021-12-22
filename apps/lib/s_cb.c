@@ -1574,3 +1574,16 @@ void ssl_print_secure_renegotiation_notes(BIO *bio, SSL *s)
         BIO_printf(bio, "This TLS version forbids renegotiation.\n");
     }
 }
+
+int progress_cb(EVP_PKEY_CTX *ctx)
+{
+    BIO *b = EVP_PKEY_CTX_get_app_data(ctx);
+    int p = EVP_PKEY_CTX_get_keygen_info(ctx, 0);
+    static const char symbols[] = ".+*\n";
+    char c = (p >= 0 && (size_t)p <= sizeof(symbols) - 1) ? symbols[p] : '?';
+
+    BIO_write(b, &c, 1);
+    (void)BIO_flush(b);
+    return 1;
+}
+
