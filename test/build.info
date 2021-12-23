@@ -864,9 +864,14 @@ IF[{- !$disabled{tests} -}]
   DEPEND[hexstr_test]=../libcrypto.a libtestutil.a
 
   PROGRAMS{noinst}=endecode_test
-  SOURCE[endecode_test]=endecode_test.c helpers/predefined_dhparams.c
-  INCLUDE[endecode_test]=.. ../include ../apps/include
-  DEPEND[endecode_test]=../libcrypto.a libtestutil.a
+  DEFINE[endecode_test]=STATIC_LEGACY
+  SOURCE[endecode_test]=endecode_test.c helpers/predefined_dhparams.c \
+                        ../providers/legacyprov.c
+  INCLUDE[endecode_test]=.. ../include ../apps/include \
+                         ../providers/common/include \
+                         ../providers/implementations/include
+  DEPEND[endecode_test]=../libcrypto.a libtestutil.a ../providers/liblegacy.a \
+                        ../providers/libcommon.a
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=endecoder_legacy_test
