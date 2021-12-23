@@ -340,7 +340,7 @@ int cms_DigestAlgorithm_find_ctx(EVP_MD_CTX *mctx, BIO *chain,
 static STACK_OF(CMS_CertificateChoices)
 **cms_get0_certificate_choices(CMS_ContentInfo *cms)
 {
-    switch (OBJ_obj2nid(cms->contentType)) {
+    switch (cms == NULL ? OBJ_undef : OBJ_obj2nid(cms->contentType)) {
 
     case NID_pkcs7_signed:
         return &cms->d.signedData->certificates;
