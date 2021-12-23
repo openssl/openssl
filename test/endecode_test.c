@@ -26,6 +26,10 @@
 #include "helpers/predefined_dhparams.h"
 #include "testutil.h"
 
+#ifdef STATIC_LEGACY
+OSSL_provider_init_fn ossl_legacy_provider_init;
+#endif
+
 /* Extended test macros to allow passing file & line number */
 #define TEST_FL_ptr(a)               test_ptr(file, line, #a, a)
 #define TEST_FL_mem_eq(a, m, b, n)   test_mem_eq(file, line, #a, #b, a, m, b, n)
@@ -1304,6 +1308,16 @@ int setup_tests(void)
         if (!test_get_libctx(&testctx, &nullprov, config_file, &deflprov, prov_name))
             return 0;
     }
+
+#ifdef STATIC_LEGACY
+    /*
+     * This test is always statically linked against libcrypto. We must not
+     * attempt to load legacy.so that might be dynamically linked against
+     * libcrypto. Instead we use a built-in version of the legacy provider.
+     */
+    if (!OSSL_PROVIDER_add_builtin(testctx, "legacy", ossl_legacy_provider_init))
+        return 0;
+#endif
 
     /* Separate provider/ctx for generating the test data */
     if (!TEST_ptr(keyctx = OSSL_LIB_CTX_new()))
