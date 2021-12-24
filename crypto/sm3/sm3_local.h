@@ -32,7 +32,21 @@
         ll=(c)->G; (void)HOST_l2c(ll, (s)); \
         ll=(c)->H; (void)HOST_l2c(ll, (s)); \
       } while (0)
-#define HASH_BLOCK_DATA_ORDER   ossl_sm3_block_data_order
+
+#if defined(OPENSSL_SM3_ASM)
+# if defined(__aarch64__)
+#  include "crypto/arm_arch.h"
+#  define HWSM3_CAPABLE (OPENSSL_armcap_P & ARMV8_SM3)
+void ossl_hwsm3_block_data_order(SM3_CTX *c, const void *p, size_t num);
+# endif
+#endif
+
+#if defined(HWSM3_CAPABLE)
+# define HASH_BLOCK_DATA_ORDER (HWSM3_CAPABLE ? ossl_hwsm3_block_data_order \
+                                              : ossl_sm3_block_data_order)
+#else
+# define HASH_BLOCK_DATA_ORDER   ossl_sm3_block_data_order
+#endif
 
 void ossl_sm3_block_data_order(SM3_CTX *c, const void *p, size_t num);
 void ossl_sm3_transform(SM3_CTX *c, const unsigned char *data);

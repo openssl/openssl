@@ -96,6 +96,14 @@ _armv8_cpuid_probe:
 	ret
 .size	_armv8_cpuid_probe,.-_armv8_cpuid_probe
 
+.globl	_armv8_sm3_probe
+.type	_armv8_sm3_probe,%function
+_armv8_sm3_probe:
+	AARCH64_VALID_CALL_TARGET
+	.long	0xce63c004	// sm3partw1 v4.4s, v0.4s, v3.4s
+	ret
+.size	_armv8_sm3_probe,.-_armv8_sm3_probe
+
 .globl	OPENSSL_cleanse
 .type	OPENSSL_cleanse,%function
 .align	5

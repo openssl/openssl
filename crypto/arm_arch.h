@@ -79,6 +79,7 @@ extern unsigned int OPENSSL_armv8_rsa_neonized;
 # define ARMV8_SHA512    (1<<6)
 # define ARMV8_CPUID     (1<<7)
 # define ARMV8_RNG       (1<<8)
+# define ARMV8_SM3       (1<<9)
 
 /*
  * MIDR_EL1 system register
