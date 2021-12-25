@@ -298,6 +298,24 @@ int EVP_PKEY_decrypt(EVP_PKEY_CTX *ctx,
         return ctx->pmeth->decrypt(ctx, out, outlen, in, inlen);
 }
 
+/* decrypt to new buffer of dynamic size, checking any pre-determined size */
+int evp_pkey_decrypt_alloc(EVP_PKEY_CTX *ctx, unsigned char **outp,
+                           size_t *outlenp, size_t expected_outlen,
+                           const unsigned char *in, size_t inlen)
+{
+    if (EVP_PKEY_decrypt(ctx, NULL, outlenp, in, inlen) <= 0
+            || (*outp = OPENSSL_malloc(*outlenp)) == NULL)
+        return -1;
+    if (EVP_PKEY_decrypt(ctx, *outp, outlenp, in, inlen) <= 0
+            || *outlenp == 0
+            || (expected_outlen != 0 && *outlenp != expected_outlen)) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
+        OPENSSL_clear_free(*outp, *outlenp);
+        *outp = NULL;
+        return 0;
+    }
+    return 1;
+}
 
 static EVP_ASYM_CIPHER *evp_asym_cipher_new(OSSL_PROVIDER *prov)
 {

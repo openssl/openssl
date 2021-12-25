@@ -29,8 +29,8 @@
 #include <openssl/asn1t.h>
 
 #include "crmf_local.h"
-#include "internal/constant_time.h"
 #include "internal/sizes.h"
+#include "crypto/evp.h"
 #include "crypto/x509.h"
 
 /* explicit #includes not strictly needed since implied by the above: */
@@ -661,28 +661,12 @@ X509
     cikeysize = EVP_CIPHER_get_key_length(cipher);
     /* first the symmetric key needs to be decrypted */
     pkctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq);
-    if (pkctx != NULL && EVP_PKEY_decrypt_init(pkctx) > 0) {
-        ASN1_BIT_STRING *encKey = ecert->encSymmKey;
-        size_t failure;
-        int retval;
-
-        if (EVP_PKEY_decrypt(pkctx, NULL, &eksize,
-                             encKey->data, encKey->length) <= 0
-                || (ek = OPENSSL_malloc(eksize)) == NULL)
-            goto end;
-        retval = EVP_PKEY_decrypt(pkctx, ek, &eksize,
-                                  encKey->data, encKey->length);
-        ERR_clear_error(); /* error state may have sensitive information */
-        failure = ~constant_time_is_zero_s(constant_time_msb(retval)
-                                           | constant_time_is_zero(retval));
-        failure |= ~constant_time_eq_s(eksize, (size_t)cikeysize);
-        if (failure) {
-            ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_DECRYPTING_SYMMETRIC_KEY);
-            goto end;
-        }
-    } else {
+    if (pkctx == NULL || EVP_PKEY_decrypt_init(pkctx) <= 0
+        || evp_pkey_decrypt_alloc(pkctx, &ek, &eksize, (size_t)cikeysize,
+                                  ecert->encSymmKey->data,
+                                  ecert->encSymmKey->length) <= 0)
         goto end;
-    }
+
     if ((iv = OPENSSL_malloc(EVP_CIPHER_get_iv_length(cipher))) == NULL)
         goto end;
     if (ASN1_TYPE_get_octetstring(ecert->symmAlg->parameter, iv,
