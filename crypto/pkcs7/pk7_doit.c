@@ -15,6 +15,7 @@
 #include <openssl/err.h>
 #include "internal/cryptlib.h"
 #include "internal/sizes.h"
+#include "crypto/evp.h"
 #include "pk7_local.h"
 
 static int add_attribute(STACK_OF(X509_ATTRIBUTE) **sk, int nid, int atrtype,
@@ -174,22 +175,10 @@ static int pkcs7_decrypt_rinfo(unsigned char **pek, int *peklen,
          * disable implicit rejection for RSA keys */
         EVP_PKEY_CTX_ctrl_str(pctx, "rsa_pkcs1_implicit_rejection", "0");
 
-    if (EVP_PKEY_decrypt(pctx, NULL, &eklen,
-                         ri->enc_key->data, ri->enc_key->length) <= 0)
+    ret = evp_pkey_decrypt_alloc(pctx, &ek, &eklen, fixlen,
+                                 ri->enc_key->data, ri->enc_key->length);
+    if (ret <= 0)
         goto err;
-
-    ek = OPENSSL_malloc(eklen);
-    if (ek == NULL)
-        goto err;
-
-    if (EVP_PKEY_decrypt(pctx, ek, &eklen,
-                         ri->enc_key->data, ri->enc_key->length) <= 0
-            || eklen == 0
-            || (fixlen != 0 && eklen != fixlen)) {
-        ret = 0;
-        ERR_raise(ERR_LIB_PKCS7, ERR_R_EVP_LIB);
-        goto err;
-    }
 
     ret = 1;
 

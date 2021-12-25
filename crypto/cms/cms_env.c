@@ -615,23 +615,10 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
          * disable implicit rejection for RSA keys */
         EVP_PKEY_CTX_ctrl_str(ktri->pctx, "rsa_pkcs1_implicit_rejection", "0");
 
-    if (EVP_PKEY_decrypt(ktri->pctx, NULL, &eklen,
-                         ktri->encryptedKey->data,
-                         ktri->encryptedKey->length) <= 0)
+    if (evp_pkey_decrypt_alloc(ktri->pctx, &ek, &eklen, fixlen,
+                               ktri->encryptedKey->data,
+                               ktri->encryptedKey->length) <= 0)
         goto err;
-
-    ek = OPENSSL_malloc(eklen);
-    if (ek == NULL)
-        goto err;
-
-    if (EVP_PKEY_decrypt(ktri->pctx, ek, &eklen,
-                         ktri->encryptedKey->data,
-                         ktri->encryptedKey->length) <= 0
-            || eklen == 0
-            || (fixlen != 0 && eklen != fixlen)) {
-        ERR_raise(ERR_LIB_CMS, CMS_R_CMS_LIB);
-        goto err;
-    }
 
     ret = 1;
 
