@@ -193,15 +193,13 @@ static int do_ui_passphrase(char *pass, size_t pass_size, size_t *pass_len,
         }
         *pass_len = (size_t)res;
         memcpy(pass, ipass, *pass_len);
-        if (*pass_len < pass_size) /* NUL terminator fits, add it */
-            pass[*pass_len] = '\0';
         ret = 1;
         break;
     }
 
  end:
-    OPENSSL_free(vpass);
-    OPENSSL_free(ipass);
+    OPENSSL_clear_free(vpass, pass_size + 1);
+    OPENSSL_clear_free(ipass, pass_size + 1);
     OPENSSL_free(prompt);
     UI_free(ui);
     return ret;
