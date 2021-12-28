@@ -572,6 +572,8 @@ static int echo_console(UI *ui)
 
 static int close_console(UI *ui)
 {
+    int ret = 1;
+
     if (tty_in != stdin)
         fclose(tty_in);
     if (tty_out != stderr)
@@ -584,12 +586,12 @@ static int close_console(UI *ui)
         BIO_snprintf(tmp_num, sizeof(tmp_num) - 1, "%%X%08X", status);
         UIerr(UI_F_CLOSE_CONSOLE, UI_R_SYSDASSGN_ERROR);
         ERR_add_error_data(2, "status=", tmp_num);
-        return 0;
+        ret = 0;
     }
 # endif
     CRYPTO_THREAD_unlock(ui->lock);
 
-    return 1;
+    return ret;
 }
 
 # if !defined(OPENSSL_SYS_WINCE)
