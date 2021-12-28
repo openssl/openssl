@@ -115,7 +115,7 @@ OSSL_CMP_CTX_set1_senderNonce
  int OSSL_CMP_CTX_set1_referenceValue(OSSL_CMP_CTX *ctx,
                                       const unsigned char *ref, int len);
  int OSSL_CMP_CTX_set1_secretValue(OSSL_CMP_CTX *ctx, const unsigned char *sec,
-                                   int len);
+                                   const int len);
 
  /* CMP message header and extra certificates: */
  int OSSL_CMP_CTX_set1_recipient(OSSL_CMP_CTX *ctx, const X509_NAME *name);
@@ -426,14 +426,18 @@ Note that this gives slightly more freedom than OSSL_CMP_CTX_set1_srvCert(),
 which pins the server to the holder of a particular certificate, while the
 expected sender name will continue to match after updates of the server cert.
 
-OSSL_CMP_CTX_set0_trusted() sets the certificate store of type X509_STORE
+OSSL_CMP_CTX_set0_trusted() is an alias of the original
+OSSL_CMP_CTX_set0_trustedStore().
+It sets in the CMP context I<ctx> the certificate store of type X509_STORE
 containing trusted (root) CA certificates.
 The store may also hold CRLs and
 a certificate verification callback function used for CMP server authentication.
 Any store entry already set before is freed.
 When given a NULL parameter the entry is cleared.
 
-OSSL_CMP_CTX_get0_trusted() returns a pointer to the currently set
+OSSL_CMP_CTX_get0_trusted() is an alias of the original
+OSSL_CMP_CTX_get0_trustedStore().
+It extracts from the CMP context I<ctx> the pointer to the currently set
 certificate store containing trusted cert etc., or an empty store if unset.
 
 OSSL_CMP_CTX_set1_untrusted() sets up a list of non-trusted certificates
