@@ -355,8 +355,8 @@ value as the I<u> parameter passed to the PEM routine. It allows
 arbitrary data to be passed to the callback by the application
 (for example a window handle in a GUI application). The callback
 I<must> return the number of characters in the passphrase or -1 if
-an error occurred. The passphrase can be arbitrary data, in case it is
-a string, it is not NUL terminated. See the L</EXAMPLES> section below.
+an error occurred. The passphrase can be arbitrary data; in the case where it
+is a string, it is not NUL terminated. See the L</EXAMPLES> section below.
 
 Some implementations may need to use cryptographic algorithms during their
 operation. If this is the case and I<libctx> and I<propq> parameters have been
