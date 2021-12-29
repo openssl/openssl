@@ -619,9 +619,10 @@ static int try_pkcs12(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
                 }
                 ctx->cached_info = infos;
             }
+         p12_end:
+            OPENSSL_cleanse(tpass, sizeof(tpass));
+            PKCS12_free(p12);
         }
-     p12_end:
-        PKCS12_free(p12);
         *v = sk_OSSL_STORE_INFO_shift(ctx->cached_info);
     }
 
