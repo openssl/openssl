@@ -496,6 +496,8 @@ void OSSL_trace_end(int category, BIO * channel)
     char *suffix = NULL;
 
     category = ossl_trace_get_category(category);
+    if (category < 0)
+        return;
     suffix = trace_channels[category].suffix;
     if (channel != NULL
         && ossl_assert(channel == current_channel)) {
