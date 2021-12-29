@@ -23,7 +23,7 @@ size_t OPENSSL_ia32_rdseed_bytes(unsigned char *buf, size_t len);
 # define IS_X_86 0
 #endif
 
-#if defined(__aarch64__)
+#if defined(__aarch64__) && defined(OPENSSL_CPUID_OBJ)
 # define IS_AARCH_64 1
 # include "arm_arch.h"
 
