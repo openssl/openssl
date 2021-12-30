@@ -20,6 +20,8 @@
 # include <openssl/opensslconf.h>
 # include <openssl/types.h>
 
+# include <string.h>
+
 # ifdef  __cplusplus
 extern "C" {
 # endif
@@ -1548,6 +1550,7 @@ OSSL_DEPRECATEDIN_3_0 void EC_KEY_METHOD_get_verify
 
 #  define EVP_EC_gen(curve) \
     EVP_PKEY_Q_keygen(NULL, NULL, "EC", (char *)(strstr(curve, "")))
+    /* strstr is used to enable type checking for the variadic string arg */
 #  define ECParameters_dup(x) ASN1_dup_of(EC_KEY, i2d_ECParameters, \
                                           d2i_ECParameters, x)
 
