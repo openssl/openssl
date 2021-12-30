@@ -4180,7 +4180,7 @@ static int test_evp_md_cipher_meth(void)
 }
 
 typedef struct {
-        void *pdata;
+        int data;
 } custom_dgst_ctx;
 
 static int custom_md_init_called = 0;
@@ -4192,9 +4192,7 @@ static int custom_md_init(EVP_MD_CTX *ctx)
 
     if (p == NULL)
         return 0;
-    p->pdata = OPENSSL_malloc(32);
-    if (p->pdata == NULL)
-        return 0;
+
     custom_md_init_called++;
     return 1;
 }
@@ -4207,8 +4205,6 @@ static int custom_md_cleanup(EVP_MD_CTX *ctx)
         /* Nothing to do */
         return 1;
 
-    OPENSSL_free(p->pdata);
-    p->pdata = NULL;
     custom_md_cleanup_called++;
     return 1;
 }
@@ -4217,8 +4213,7 @@ static int test_custom_md_meth(void)
 {
     EVP_MD_CTX *mdctx = NULL;
     EVP_MD *tmp = NULL;
-    char mess1[] = "Test Message\n";
-    char mess2[] = "Hello World\n";
+    char mess[] = "Test Message\n";
     unsigned char md_value[EVP_MAX_MD_SIZE];
     unsigned int md_len;
     int testresult = 0;
@@ -4255,8 +4250,7 @@ static int test_custom_md_meth(void)
                 */
             || !TEST_true(EVP_DigestInit_ex(mdctx, tmp, NULL))
             || !TEST_true(EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL))
-            || !TEST_true(EVP_DigestUpdate(mdctx, mess1, strlen(mess1)))
-            || !TEST_true(EVP_DigestUpdate(mdctx, mess2, strlen(mess2)))
+            || !TEST_true(EVP_DigestUpdate(mdctx, mess, strlen(mess)))
             || !TEST_true(EVP_DigestFinal_ex(mdctx, md_value, &md_len))
             || !TEST_int_eq(custom_md_init_called, 1)
             || !TEST_int_eq(custom_md_cleanup_called, 1))
