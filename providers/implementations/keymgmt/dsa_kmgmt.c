@@ -192,7 +192,7 @@ static int dsa_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
                       void *cbarg)
 {
     DSA *dsa = keydata;
-    OSSL_PARAM_BLD *tmpl = NULL;
+    OSSL_PARAM_BLD *tmpl;
     OSSL_PARAM *params = NULL;
     int ok = 1;
 
