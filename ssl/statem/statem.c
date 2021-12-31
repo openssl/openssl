@@ -768,7 +768,7 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
     WRITE_TRAN(*transition) (SSL *s);
     WORK_STATE(*pre_work) (SSL *s, WORK_STATE wst);
     WORK_STATE(*post_work) (SSL *s, WORK_STATE wst);
-    int (*get_construct_message_f) (SSL *s, WPACKET *pkt,
+    int (*get_construct_message_f) (SSL *s,
                                     int (**confunc) (SSL *s, WPACKET *pkt),
                                     int *mt);
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
@@ -833,7 +833,7 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
             case WORK_FINISHED_STOP:
                 return SUB_STATE_END_HANDSHAKE;
             }
-            if (!get_construct_message_f(s, &pkt, &confunc, &mt)) {
+            if (!get_construct_message_f(s, &confunc, &mt)) {
                 /* SSLfatal() already called */
                 return SUB_STATE_ERROR;
             }

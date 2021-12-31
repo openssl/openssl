@@ -75,7 +75,7 @@ int ossl_statem_client_read_transition(SSL *s, int mt);
 WRITE_TRAN ossl_statem_client_write_transition(SSL *s);
 WORK_STATE ossl_statem_client_pre_work(SSL *s, WORK_STATE wst);
 WORK_STATE ossl_statem_client_post_work(SSL *s, WORK_STATE wst);
-int ossl_statem_client_construct_message(SSL *s, WPACKET *pkt,
+int ossl_statem_client_construct_message(SSL *s,
                                          confunc_f *confunc, int *mt);
 size_t ossl_statem_client_max_message_size(SSL *s);
 MSG_PROCESS_RETURN ossl_statem_client_process_message(SSL *s, PACKET *pkt);
@@ -88,7 +88,7 @@ int ossl_statem_server_read_transition(SSL *s, int mt);
 WRITE_TRAN ossl_statem_server_write_transition(SSL *s);
 WORK_STATE ossl_statem_server_pre_work(SSL *s, WORK_STATE wst);
 WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst);
-int ossl_statem_server_construct_message(SSL *s, WPACKET *pkt,
+int ossl_statem_server_construct_message(SSL *s,
                                          confunc_f *confunc,int *mt);
 size_t ossl_statem_server_max_message_size(SSL *s);
 MSG_PROCESS_RETURN ossl_statem_server_process_message(SSL *s, PACKET *pkt);
