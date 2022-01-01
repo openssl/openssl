@@ -54,7 +54,7 @@ EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, const unsigned char **pp,
         goto err;
     }
 
-    switch (EVP_PKEY_get_id(ret)) {
+    switch (EVP_PKEY_get_base_id(ret)) {
     case EVP_PKEY_RSA:
         if ((ret->pkey.rsa = d2i_RSAPublicKey(NULL, pp, length)) == NULL) {
             ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
