@@ -94,7 +94,7 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
  * Send an ASN.1-formatted HTTP response
  * cbio: destination BIO (typically as returned by http_server_get_asn1_req())
  *       note: cbio should not do an encoding that changes the output length
- * keep_alive: grant persistent connnection
+ * keep_alive: grant persistent connection
  * content_type: string identifying the type of the response
  * it: the response ASN.1 type
  * resp: the response to send

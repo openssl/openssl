@@ -22,7 +22,7 @@ This state represents the PKEY after it has been allocated.
 =item decapsulate
 
 This state represents the PKEY when it is ready to perform a private key decapsulation
-opeartion.
+operation.
 
 =item decrypt
 
@@ -40,7 +40,7 @@ operation.
 =item encapsulate
 
 This state represents the PKEY when it is ready to perform a public key encapsulation
-opeartion.
+operation.
 
 =item encrypt
 

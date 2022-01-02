@@ -41,7 +41,7 @@ them up, so all the caller has to do next is call functions like
 L<OSSL_DECODER_from_bio(3)>.  The caller may use the optional I<input_type>,
 I<input_struct>, I<keytype> and I<selection> to specify what the input is
 expected to contain.  The I<pkey> must reference an B<EVP_PKEY *> variable
-that will be set to the newly created B<EVP_PKEY> on succesfull decoding.
+that will be set to the newly created B<EVP_PKEY> on successful decoding.
 The referenced variable must be initialized to NULL before calling the
 function.
 
@@ -78,7 +78,7 @@ callback may be specified with the following functions.
 OSSL_DECODER_CTX_set_pem_password_cb(), OSSL_DECODER_CTX_set_passphrase_ui()
 and OSSL_DECODER_CTX_set_passphrase_cb() set up a callback method that the
 implementation can use to prompt for a pass phrase, giving the caller the
-choice of prefered pass phrase callback form.  These are called indirectly,
+choice of preferred pass phrase callback form.  These are called indirectly,
 through an internal B<OSSL_PASSPHRASE_CALLBACK> function.
 
 The internal B<OSSL_PASSPHRASE_CALLBACK> function caches the pass phrase, to

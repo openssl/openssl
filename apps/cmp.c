@@ -1101,7 +1101,7 @@ static OSSL_CMP_SRV_CTX *setup_srv_ctx(ENGINE *engine)
     if (opt_grant_implicitconf)
         (void)OSSL_CMP_SRV_CTX_set_grant_implicit_confirm(srv_ctx, 1);
 
-    if (opt_failure != INT_MIN) { /* option has been set explicity */
+    if (opt_failure != INT_MIN) { /* option has been set explicitly */
         if (opt_failure < 0 || OSSL_CMP_PKIFAILUREINFO_MAX < opt_failure) {
             CMP_err1("-failure out of range, should be >= 0 and <= %d",
                      OSSL_CMP_PKIFAILUREINFO_MAX);

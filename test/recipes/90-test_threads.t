@@ -34,7 +34,7 @@ if ($no_fips) {
 }
 
 # Merge the configuration files into one filtering the contents so the failure
-# condition is reproducable.  A working FIPS configuration without the install
+# condition is reproducible.  A working FIPS configuration without the install
 # status is required.
 
 open CFGBASE, '<', $config_path;

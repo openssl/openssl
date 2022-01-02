@@ -87,7 +87,7 @@ use constant {
 };
 
 # The TLSv1.2 in SSLv2 ClientHello need to run at security level 0
-# because in a SSLv2 ClientHello we can't send extentions to indicate
+# because in a SSLv2 ClientHello we can't send extensions to indicate
 # which signature algorithm we want to use, and the default is SHA1.
 
 #Test 5: Inject an SSLv2 style record format for a TLSv1.2 ClientHello

@@ -168,7 +168,7 @@ static X509_PUBKEY *key_to_pubkey(const void *key, int key_nid,
  * EncryptedPrivateKeyInfo structure (defined by PKCS#8).  They require
  * that there's an intent to encrypt, anything else is an error.
  *
- * key_to_pki_* primarly produce encoded output with the private key data
+ * key_to_pki_* primarily produce encoded output with the private key data
  * in a PrivateKeyInfo structure (also defined by PKCS#8).  However, if
  * there is an intent to encrypt the data, the corresponding key_to_epki_*
  * function is used instead.

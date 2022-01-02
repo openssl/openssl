@@ -62,7 +62,7 @@
 #   except within if ... else constructs where some branch contains more than one
 #   statement. Since the exception is hard to recognize when such branches occur
 #   after the current position (such that false positives would be reported)
-#   the tool by checks for this rule by defaul only for do/while/for bodies.
+#   the tool by checks for this rule by default only for do/while/for bodies.
 #   Yet with the --1-stmt option false positives are preferred over negatives.
 #   False negatives occur if the braces are more than two non-empty lines apart.
 #
@@ -316,7 +316,7 @@ sub check_indent { # used for lines outside multi-line string literals
             $contents_before) if !$sloppy_cmt && $count_before != $count;
     }
     # ... but allow normal indentation for the current line, else above check will be done for the line before
-    if (($in_comment == 0 || $in_comment < 0) # (no commment,) intra-line comment or end of multi-line comment
+    if (($in_comment == 0 || $in_comment < 0) # (no comment,) intra-line comment or end of multi-line comment
         && m/^(\s*)@[\s@]*$/) { # line begins with '@', no code follows (except '\')
         if ($count == $ref_indent) { # indentation is like for (normal) code in this line
             s/^(\s*)@/$1*/; # blind first '@' as '*' to prevent above delayed check for the line before
@@ -511,7 +511,7 @@ while (<>) { # loop over all lines of all input files
 
     # do/prepare checks within multi-line comments
     my $self_test_exception = $self_test ? "@" : "";
-    if ($in_comment > 0) { # this still includes the last line of multi-line commment
+    if ($in_comment > 0) { # this still includes the last line of multi-line comment
         my ($head, $any_symbol, $cmt_text) = m/^(\s*)(.?)(.*)$/;
         if ($any_symbol eq "*") {
             report("no space after leading '*' in multi-line comment") if $cmt_text =~ m|^[^/\s$self_test_exception]|;
@@ -851,7 +851,7 @@ while (<>) { # loop over all lines of all input files
              $line_opening_brace == $line_before)
             && $contents_before =~ m/;/) { # there is at least one terminator ';', so there is some stmt
             # TODO do not report cases where a further else branch
-            # follows with a block containg more than one line/statement
+            # follows with a block containing more than one line/statement
             report_flexibly($line_before, "'$keyword_opening_brace' { 1 stmt }", $contents_before);
         }
     }

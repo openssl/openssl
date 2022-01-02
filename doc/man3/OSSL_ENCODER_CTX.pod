@@ -80,7 +80,7 @@ as DER to PEM, as well as more specialized encoders like RSA to DER.
 The final output type must be given, and a chain of encoders must end with
 an implementation that produces that output type.
 
-At the beginning of the encoding process, a contructor provided by the
+At the beginning of the encoding process, a constructor provided by the
 caller is called to ensure that there is an appropriate provider-side object
 to start with.
 The constructor is set with OSSL_ENCODER_CTX_set_construct().
@@ -148,7 +148,7 @@ The pointer that was set with OSSL_ENCODE_CTX_set_construct_data().
 
 The constructor is expected to return a valid (non-NULL) pointer to a
 provider-native object that can be used as first input of an encoding chain,
-or NULL to indicate that an error has occured.
+or NULL to indicate that an error has occurred.
 
 These utility functions may be used by a constructor:
 
