@@ -88,7 +88,7 @@ ___
 # specified in the original algorithm as according to the Lemma 1 from the paper
 # [2], the result will be always < 2*m and can be used as a direct input to
 # the next AMM iteration.  This post-condition is true, provided the correct
-# parameter |s| (notion of the Lemma 1 from [2]) is choosen, i.e.  s >= n + 2 * k,
+# parameter |s| (notion of the Lemma 1 from [2]) is chosen, i.e.  s >= n + 2 * k,
 # which matches our case: 1040 > 1024 + 2 * 1.
 #
 # [1] Gueron, S. Efficient software implementations of modular exponentiation.

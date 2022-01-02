@@ -58,7 +58,7 @@ struct sockaddr_un {
 /*
  * HPNS:
  *
- *  Our current MQ 5.3 EGD requies compatability-mode sockets
+ *  Our current MQ 5.3 EGD requires compatability-mode sockets
  *  This code forces the mode to compatibility if required
  *  and then restores the mode.
  *

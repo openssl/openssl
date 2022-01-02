@@ -224,7 +224,7 @@ elif $force; then
     :
 else
     echo >&2 "Not in master or any recognised release branch"
-    echo >&2 "Please 'git checkout' an approprite branch"
+    echo >&2 "Please 'git checkout' an appropriate branch"
     exit 1
 fi
 orig_HEAD=$(git rev-parse HEAD)
@@ -369,7 +369,7 @@ for fixup in "$HERE/dev/release-aux"/fixup-*-release.pl; do
         perl -pi $fixup $file
 done
 
-$VERBOSE "== Comitting updates and tagging"
+$VERBOSE "== Committing updates and tagging"
 git add -u
 git commit $git_quiet -m "Prepare for release of $release_text"
 if [ -n "$reviewers" ]; then

@@ -92,7 +92,7 @@ It does not have a negative trust attribute rejecting the given use.
 =item *
 
 It has a positive trust attribute accepting the given use
-or (by default) one of the following compatibilty conditions apply:
+or (by default) one of the following compatibility conditions apply:
 It is self-signed or the B<-partial_chain> option is given
 (which corresponds to the B<X509_V_FLAG_PARTIAL_CHAIN> flag being set).
 

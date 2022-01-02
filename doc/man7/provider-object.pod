@@ -164,7 +164,7 @@ A human readable text that describes extra details on the object.
 
 =back
 
-When a provider-native object abtraction is used, it I<must> contain object
+When a provider-native object abstraction is used, it I<must> contain object
 data in at least one form (object data I<passed by value>, i.e. the "data"
 item, or object data I<passed by reference>, i.e. the "reference" item).
 Both may be present at once, in which case the OpenSSL library code that
