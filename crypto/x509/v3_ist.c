@@ -17,7 +17,7 @@
 
 /*
  * Issuer Sign Tool (1.2.643.100.112) The name of the tool used to signs the subject (ASN1_SEQUENCE)
- * This extention is required to obtain the status of a qualified certificate at Russian Federation.
+ * This extension is required to obtain the status of a qualified certificate at Russian Federation.
  * RFC-style description is available here: https://tools.ietf.org/html/draft-deremin-rfc4491-bis-04#section-5
  * Russian Federal Law 63 "Digital Sign" is available here:  http://www.consultant.ru/document/cons_doc_LAW_112701/
  */

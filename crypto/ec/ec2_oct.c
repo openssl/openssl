@@ -272,7 +272,7 @@ int ossl_ec_GF2m_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
     }
 
     /*
-     * The first octet is the point converison octet PC, see X9.62, page 4
+     * The first octet is the point conversion octet PC, see X9.62, page 4
      * and section 4.4.2.  It must be:
      *     0x00          for the point at infinity
      *     0x02 or 0x03  for compressed form

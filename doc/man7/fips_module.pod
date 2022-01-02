@@ -92,7 +92,7 @@ Obviously the include file location above should match the path and name of the
 FIPS module config file that you installed earlier.
 See L<https://github.com/openssl/openssl/blob/master/README-FIPS.md>.
 
-For FIPS usage, it is recommened that the B<config_diagnostics> option is
+For FIPS usage, it is recommended that the B<config_diagnostics> option is
 enabled to prevent accidental use of non-FIPS validated algorithms via broken
 or mistaken configuration.  See L<config(5)>.
 

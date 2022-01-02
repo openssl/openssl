@@ -21,7 +21,7 @@ EVP_PKEY2PKCS8() converts a private key I<pkey> into a returned PKCS8 object.
 EVP_PKCS82PKEY_ex() converts a PKCS8 object I<p8> into a returned private key.
 It uses I<libctx> and I<propq> when fetching algorithms.
 
-EVP_PKCS82PKEY() is similiar to EVP_PKCS82PKEY_ex() but uses default values of
+EVP_PKCS82PKEY() is similar to EVP_PKCS82PKEY_ex() but uses default values of
 NULL for the I<libctx> and I<propq>.
 
 =head1 RETURN VALUES
