@@ -31,7 +31,7 @@ The value B<X509_ADD_FLAG_DEFAULT>, which equals 0, means no special semantics.
 If B<X509_ADD_FLAG_UP_REF> is set then
 the reference counts of those certificates added successfully are increased.
 
-If B<X509_ADD_FLAG_PREPEND> is set then the certifcates are prepended to I<sk>.
+If B<X509_ADD_FLAG_PREPEND> is set then the certificates are prepended to I<sk>.
 By default they are appended to I<sk>.
 In both cases the original order of the added certificates is preserved.
 

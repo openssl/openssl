@@ -214,7 +214,7 @@ my %procedures = (
             #
             #   Hinweis: Einlesen der Datei:   {whatever header file}
             #
-            # To accomodate, we need to use a very general regular expression
+            # To accommodate, we need to use a very general regular expression
             # to parse those lines.
             #
             # Since there's no object file name at all in that information,

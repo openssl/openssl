@@ -8,7 +8,7 @@
  */
 
 /*
- * Crypto extention support for AES GCM.
+ * Crypto extension support for AES GCM.
  * This file is included by cipher_aes_gcm_hw.c
  */
 

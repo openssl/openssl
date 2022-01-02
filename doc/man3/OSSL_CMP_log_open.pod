@@ -89,7 +89,7 @@ As long as neither if the two is used any logging output is ignored.
 
 OSSL_CMP_log_close() may be called when all activities are finished to flush
 any pending CMP-specific log output and deallocate related resources.
-It may be called multiple times. It does get called at OpenSSL stutdown.
+It may be called multiple times. It does get called at OpenSSL shutdown.
 
 OSSL_CMP_print_to_bio() prints the given component info, filename, line number,
 severity level, and log message or error queue message to the given I<bio>.

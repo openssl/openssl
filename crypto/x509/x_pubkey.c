@@ -170,7 +170,7 @@ static int x509_pubkey_ex_d2i_ex(ASN1_VALUE **pval,
 
     /*
      * Try to decode with legacy method first.  This ensures that engines
-     * aren't overriden by providers.
+     * aren't overridden by providers.
      */
     if ((ret = x509_pubkey_decode(&pubkey->pkey, pubkey)) == -1) {
         /* -1 indicates a fatal error, like malloc failure */

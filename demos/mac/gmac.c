@@ -85,7 +85,7 @@ int main(int argc, char **argv)
         goto end;
     }
 
-    /* GMAC requries a GCM mode cipher to be specified */
+    /* GMAC requires a GCM mode cipher to be specified */
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
                                             "AES-128-GCM", 0);
 

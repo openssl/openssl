@@ -1105,7 +1105,7 @@ int EVP_PKEY_CTX_set0_rsa_oaep_label(EVP_PKEY_CTX *ctx, void *label, int llen)
     if (ret <= 0)
         return ret;
 
-    /* Ownership is supposed to be transfered to the callee. */
+    /* Ownership is supposed to be transferred to the callee. */
     OPENSSL_free(label);
     return 1;
 }
