@@ -2464,9 +2464,10 @@ static const char *tls_error_hint(void)
 /* HTTP callback function that supports TLS connection also via HTTPS proxy */
 BIO *app_http_tls_cb(BIO *bio, void *arg, int connect, int detail)
 {
+    APP_HTTP_TLS_INFO *info = (APP_HTTP_TLS_INFO *)arg;
+    SSL_CTX *ssl_ctx = info->ssl_ctx;
+
     if (connect && detail) { /* connecting with TLS */
-        APP_HTTP_TLS_INFO *info = (APP_HTTP_TLS_INFO *)arg;
-        SSL_CTX *ssl_ctx = info->ssl_ctx;
         SSL *ssl;
         BIO *sbio = NULL;
 
@@ -2498,12 +2499,14 @@ BIO *app_http_tls_cb(BIO *bio, void *arg, int connect, int detail)
             if (hint != NULL)
                 ERR_add_error_data(2, " : ", hint);
         }
-        (void)ERR_set_mark();
-        BIO_ssl_shutdown(bio);
-        cbio = BIO_pop(bio); /* connect+HTTP BIO */
-        BIO_free(bio); /* SSL BIO */
-        (void)ERR_pop_to_mark(); /* hide SSL_R_READ_BIO_NOT_SET etc. */
-        bio = cbio;
+        if (ssl_ctx != NULL) {
+            (void)ERR_set_mark();
+            BIO_ssl_shutdown(bio);
+            cbio = BIO_pop(bio); /* connect+HTTP BIO */
+            BIO_free(bio); /* SSL BIO */
+            (void)ERR_pop_to_mark(); /* hide SSL_R_READ_BIO_NOT_SET etc. */
+            bio = cbio;
+        }
     }
     return bio;
 }
