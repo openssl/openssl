@@ -51,7 +51,7 @@ a fresh certificate but just returns the same pre-existing certificate.
 
 OSSL_CMP_SRV_CTX_set1_chainOut() sets the certificate chain to be added to
 the extraCerts in a cp/ip/kup.
-It should to useful to validate the certificate given via
+It should be useful for the validation of the certificate given via
 OSSL_CMP_SRV_CTX_set1_certOut().
 
 OSSL_CMP_SRV_CTX_set1_caPubsOut() sets the caPubs to be returned in an ip.
