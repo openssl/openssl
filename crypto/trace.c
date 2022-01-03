@@ -136,6 +136,7 @@ static const struct trace_category_st trace_categories[] = {
     TRACE_CATEGORY_(PKCS12_DECRYPT),
     TRACE_CATEGORY_(X509V3_POLICY),
     TRACE_CATEGORY_(BN_CTX),
+    TRACE_CATEGORY_(CMP),
     TRACE_CATEGORY_(STORE),
     TRACE_CATEGORY_(DECODER),
     TRACE_CATEGORY_(ENCODER),
