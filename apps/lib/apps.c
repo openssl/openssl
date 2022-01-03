@@ -2470,7 +2470,7 @@ BIO *app_http_tls_cb(BIO *bio, void *arg, int connect, int detail)
         SSL *ssl;
         BIO *sbio = NULL;
 
-        /* TODO adapt after fixing callback design flaw, see #17088 */
+        /* adapt after fixing callback design flaw, see #17088 */
         if ((info->use_proxy
              && !OSSL_HTTP_proxy_connect(bio, info->server, info->port,
                                          NULL, NULL, /* no proxy credentials */
@@ -2483,7 +2483,7 @@ BIO *app_http_tls_cb(BIO *bio, void *arg, int connect, int detail)
             return NULL;
         }
 
-        /* TODO adapt after fixing callback design flaw, see #17088 */
+        /* adapt after fixing callback design flaw, see #17088 */
         SSL_set_tlsext_host_name(ssl, info->server); /* not critical to do */
 
         SSL_set_connect_state(ssl);
