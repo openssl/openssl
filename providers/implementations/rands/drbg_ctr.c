@@ -573,6 +573,8 @@ static int drbg_ctr_init(PROV_DRBG *drbg)
         if (!EVP_CipherInit_ex(ctr->ctx_df,
                                ctr->cipher_ecb, NULL, df_key, NULL, 1)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_DERIVATION_FUNCTION_INIT_FAILED);
+            EVP_CIPHER_CTX_free(ctr->ctx_df);
+            ctr->ctx_df = NULL;
             goto err;
         }
     }
