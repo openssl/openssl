@@ -410,11 +410,17 @@ int common_import(void *keydata, int selection, const OSSL_PARAM params[],
     if (!common_check_sm2(ec, sm2_wanted))
         return 0;
 
-    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
+    if (ok && (selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
         int include_private =
             selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
 
         ok = ok && ossl_ec_key_fromdata(ec, params, include_private);
+        /* check that we actually imported a key */
+        if (EC_KEY_get0_public_key(ec) == NULL
+            && EC_KEY_get0_private_key(ec) == NULL) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
+            ok = 0;
+        }
     }
     if ((selection & OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS) != 0)
         ok = ok && ossl_ec_key_otherparams_fromdata(ec, params);

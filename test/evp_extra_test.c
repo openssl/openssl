@@ -679,7 +679,8 @@ err:
 }
 
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_EC)
-static EVP_PKEY *make_key_fromdata(char *keytype, OSSL_PARAM *params)
+static EVP_PKEY *make_key_fromdata(char *keytype, OSSL_PARAM *params,
+                                   int params_only)
 {
     EVP_PKEY_CTX *pctx = NULL;
     EVP_PKEY *tmp_pkey = NULL, *pkey = NULL;
@@ -687,7 +688,9 @@ static EVP_PKEY *make_key_fromdata(char *keytype, OSSL_PARAM *params)
     if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_name(testctx, keytype, testpropq)))
         goto err;
     if (!TEST_int_gt(EVP_PKEY_fromdata_init(pctx), 0)
-        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &tmp_pkey, EVP_PKEY_KEYPAIR,
+        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &tmp_pkey,
+                                          params_only ? EVP_PKEY_KEY_PARAMETERS
+                                                      : EVP_PKEY_KEYPAIR,
                                           params), 0))
         goto err;
 
@@ -768,7 +771,7 @@ static int test_EVP_PKEY_ffc_priv_pub(char *keytype)
         || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_G, g)))
         goto err;
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
-        || !TEST_ptr(just_params = make_key_fromdata(keytype, params)))
+        || !TEST_ptr(just_params = make_key_fromdata(keytype, params, 1)))
         goto err;
 
     OSSL_PARAM_free(params);
@@ -789,7 +792,7 @@ static int test_EVP_PKEY_ffc_priv_pub(char *keytype)
                                              priv)))
         goto err;
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
-        || !TEST_ptr(params_and_priv = make_key_fromdata(keytype, params)))
+        || !TEST_ptr(params_and_priv = make_key_fromdata(keytype, params, 0)))
         goto err;
 
     OSSL_PARAM_free(params);
@@ -810,7 +813,7 @@ static int test_EVP_PKEY_ffc_priv_pub(char *keytype)
                                              pub)))
         goto err;
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
-        || !TEST_ptr(params_and_pub = make_key_fromdata(keytype, params)))
+        || !TEST_ptr(params_and_pub = make_key_fromdata(keytype, params, 0)))
         goto err;
 
     OSSL_PARAM_free(params);
@@ -833,7 +836,7 @@ static int test_EVP_PKEY_ffc_priv_pub(char *keytype)
                                              priv)))
         goto err;
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
-        || !TEST_ptr(params_and_keypair = make_key_fromdata(keytype, params)))
+        || !TEST_ptr(params_and_keypair = make_key_fromdata(keytype, params, 0)))
         goto err;
 
     if (!test_selection(params_and_keypair, EVP_PKEY_KEYPAIR))
@@ -901,7 +904,7 @@ static int test_EC_priv_pub(void)
                                                       "P-256", 0)))
         goto err;
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
-        || !TEST_ptr(just_params = make_key_fromdata("EC", params)))
+        || !TEST_ptr(just_params = make_key_fromdata("EC", params, 1)))
         goto err;
 
     OSSL_PARAM_free(params);
@@ -922,7 +925,7 @@ static int test_EC_priv_pub(void)
                                              priv)))
         goto err;
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
-        || !TEST_ptr(params_and_priv = make_key_fromdata("EC", params)))
+        || !TEST_ptr(params_and_priv = make_key_fromdata("EC", params, 0)))
         goto err;
 
     OSSL_PARAM_free(params);
@@ -950,7 +953,7 @@ static int test_EC_priv_pub(void)
                                                        ec_pub, sizeof(ec_pub))))
         goto err;
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
-        || !TEST_ptr(params_and_pub = make_key_fromdata("EC", params)))
+        || !TEST_ptr(params_and_pub = make_key_fromdata("EC", params, 0)))
         goto err;
 
     OSSL_PARAM_free(params);
@@ -974,7 +977,7 @@ static int test_EC_priv_pub(void)
                                              priv)))
         goto err;
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
-        || !TEST_ptr(params_and_keypair = make_key_fromdata("EC", params)))
+        || !TEST_ptr(params_and_keypair = make_key_fromdata("EC", params, 0)))
         goto err;
 
     if (!test_selection(params_and_keypair, EVP_PKEY_KEYPAIR))
