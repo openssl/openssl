@@ -3187,7 +3187,7 @@ static int tls_construct_cke_gost18(SSL *s, WPACKET *pkt)
     if (peer_cert == NULL) {
         SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
                  SSL_R_NO_GOST_CERTIFICATE_SENT_BY_PEER);
-        return 0;
+        goto err;
     }
 
     pkey_ctx = EVP_PKEY_CTX_new_from_pkey(s->ctx->libctx,
@@ -3195,7 +3195,7 @@ static int tls_construct_cke_gost18(SSL *s, WPACKET *pkt)
                                           s->ctx->propq);
     if (pkey_ctx == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
-        return 0;
+        goto err;
     }
 
     if (EVP_PKEY_encrypt_init(pkey_ctx) <= 0) {

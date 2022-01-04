@@ -56,6 +56,7 @@ X509_REQ *X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
     }
     return ret;
  err:
+    OPENSSL_free(ri->version->data);
     X509_REQ_free(ret);
     return NULL;
 }
