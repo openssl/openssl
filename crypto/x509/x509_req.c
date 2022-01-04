@@ -29,7 +29,7 @@ X509_REQ *X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
     ret = X509_REQ_new_ex(x->libctx, x->propq);
     if (ret == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
-        goto err;
+        return NULL;
     }
 
     ri = &ret->req_info;
