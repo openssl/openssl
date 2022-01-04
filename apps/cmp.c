@@ -937,7 +937,6 @@ static int setup_certs(char *files, const char *desc, void *ctx,
     return ok;
 }
 
-
 /*
  * parse and transform some options, checking their syntax.
  * Returns 1 on success, 0 on error
@@ -1522,7 +1521,7 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
 
         if (opt_subject != NULL) {
             if (opt_ref == NULL && opt_cert == NULL) {
-                /* use subject as default sender unless oldcert subject is used */
+                /* will use subject as sender unless oldcert subject is used */
                 if (!set_name(opt_subject, OSSL_CMP_CTX_set1_subjectName, ctx, "subject"))
                     return 0;
             } else {
@@ -1596,8 +1595,8 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         if (pkey == NULL) {
             ERR_clear_error();
             desc = opt_csr == NULL
-            ? "fallback public key for cert to be enrolled"
-            : "public key for checking cert resulting from p10cr";
+                ? "fallback public key for cert to be enrolled"
+                : "public key for checking cert resulting from p10cr";
             pkey = load_pubkey(file, format, 0, pass, engine, desc);
             priv = 0;
         }
@@ -1796,7 +1795,6 @@ static int handle_opt_geninfo(OSSL_CMP_CTX *ctx)
     CMP_err("out of memory");
     return 0;
 }
-
 
 /*
  * set up the client-side OSSL_CMP_CTX based on options from config file/CLI
@@ -2149,9 +2147,9 @@ static int read_config(void)
                 || !strcmp(opt->name, OPT_MORE_STR))
             n_options--;
     OPENSSL_assert(OSSL_NELEM(cmp_vars) == n_options
-                 + OPT_PROV__FIRST + 1 - OPT_PROV__LAST
-                 + OPT_R__FIRST + 1 - OPT_R__LAST
-                 + OPT_V__FIRST + 1 - OPT_V__LAST);
+                   + OPT_PROV__FIRST + 1 - OPT_PROV__LAST
+                   + OPT_R__FIRST + 1 - OPT_R__LAST
+                   + OPT_V__FIRST + 1 - OPT_V__LAST);
     for (opt = &cmp_options[start_opt], i = start_idx;
          opt->name != NULL; i++, opt++) {
         int provider_option = (OPT_PROV__FIRST <= opt->retval
@@ -2486,7 +2484,7 @@ static int get_opts(int argc, char **argv)
             break;
         case OPT_REVREASON:
             opt_revreason = opt_int_arg();
-                if (opt_revreason < CRL_REASON_NONE
+            if (opt_revreason < CRL_REASON_NONE
                     || opt_revreason > CRL_REASON_AA_COMPROMISE
                     || opt_revreason == 7) {
                 CMP_err("invalid revreason. Valid values are -1 .. 6, 8 .. 10");
@@ -2628,7 +2626,8 @@ static int get_opts(int argc, char **argv)
 }
 
 #ifndef OPENSSL_NO_SOCK
-static int cmp_server(OSSL_CMP_CTX *srv_cmp_ctx) {
+static int cmp_server(OSSL_CMP_CTX *srv_cmp_ctx)
+{
     BIO *acbio;
     BIO *cbio = NULL;
     int keep_alive = 0;
@@ -2693,7 +2692,7 @@ static int cmp_server(OSSL_CMP_CTX *srv_cmp_ctx) {
         }
         if (!ret || !keep_alive
             || OSSL_CMP_CTX_get_status(srv_cmp_ctx) == -1
-             /* transaction closed by OSSL_CMP_CTX_server_perform() */) {
+            /* transaction closed by OSSL_CMP_CTX_server_perform() */) {
             BIO_free_all(cbio);
             cbio = NULL;
         }
@@ -2749,7 +2748,8 @@ int cmp_main(int argc, char **argv)
     /* read default values for options from config file */
     configfile = opt_config != NULL ? opt_config : default_config_file;
     if (configfile != NULL && configfile[0] != '\0' /* non-empty string */
-            && (configfile != default_config_file || access(configfile, F_OK) != -1)) {
+            && (configfile != default_config_file
+                || access(configfile, F_OK) != -1)) {
         CMP_info2("using section(s) '%s' of OpenSSL configuration file '%s'",
                   opt_section, configfile);
         conf = app_load_config(configfile);
@@ -2794,7 +2794,8 @@ int cmp_main(int argc, char **argv)
         set_base_ui_method(UI_null());
 
     if (opt_engine != NULL) {
-        engine = setup_engine_methods(opt_engine, 0 /* not: ENGINE_METHOD_ALL */, 0);
+        engine = setup_engine_methods(opt_engine,
+                                      0 /* not: ENGINE_METHOD_ALL */, 0);
         if (engine == NULL) {
             CMP_err1("cannot load engine %s", opt_engine);
             goto err;
@@ -2816,8 +2817,9 @@ int cmp_main(int argc, char **argv)
             && opt_tls_host == NULL) {
         if (opt_tls_used)
             CMP_warn("-tls_used given without any other TLS options");
-    } else if (!opt_tls_used)
+    } else if (!opt_tls_used) {
         CMP_warn("ignoring TLS options(s) since -tls_used is not given");
+    }
     if (opt_port != NULL) {
         if (opt_tls_used) {
             CMP_err("-tls_used option not supported with -port option");
