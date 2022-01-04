@@ -16,9 +16,10 @@ orbs:
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
-  jobs: 1.7
+  jobs: 
   example-job:
-    docker:
+    docker:orbs:
+  docker: circleci/docker@1.7.0
       # replace with your preferred image
       - image: cimg/base:stable
     steps:
