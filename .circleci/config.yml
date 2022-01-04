@@ -32,7 +32,7 @@ jobs:
           image: image to build 
           lint-dockerfile: true 
           no_output_timeout: '10m' 
-          path: .pamobazan12/.github-workflows-/.circlci/config.yml 
+          path: .pamobazan12/.github-workflows-/.circlci
           registry: docker.io 
           step-name: Docker build 
 
