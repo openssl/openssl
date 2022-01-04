@@ -102,15 +102,16 @@ specify output filename, default is standard output.
 
 =item B<-issuer> I<filename>
 
-This specifies the current issuer certificate. This option can be used
-multiple times.
+This specifies the current issuer certificate.
+This option can be used multiple times.
 This option B<MUST> come before any B<-cert> options.
 
 =item B<-cert> I<filename>
 
-Add the certificate I<filename> to the request. The issuer certificate
-is taken from the previous B<-issuer> option, or an error occurs if no
-issuer certificate is specified.
+Add the certificate I<filename> to the request.
+This option can be used multiple times.
+The issuer certificate is taken from the previous B<-issuer> option,
+or an error occurs if no issuer certificate is specified.
 
 =item B<-no_certs>
 
