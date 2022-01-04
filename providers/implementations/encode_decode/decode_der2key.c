@@ -204,7 +204,7 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     if (!ok)
         goto next;
 
-    ok = 0;                      /* Assume that we fail */
+    ok = 0; /* Assume that we fail */
 
     ERR_set_mark();
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
@@ -224,8 +224,6 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         }
     }
     if (key == NULL && (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
-        ERR_pop_to_mark();
-        ERR_set_mark();
         derp = der;
         if (ctx->desc->d2i_PUBKEY != NULL)
             key = ctx->desc->d2i_PUBKEY(NULL, &derp, der_len);
@@ -237,8 +235,6 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         }
     }
     if (key == NULL && (selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0) {
-        ERR_pop_to_mark();
-        ERR_set_mark();
         derp = der;
         if (ctx->desc->d2i_key_params != NULL)
             key = ctx->desc->d2i_key_params(NULL, &derp, der_len);
