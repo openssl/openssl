@@ -1113,8 +1113,6 @@ err:
     return ret;
 }
 
-#define CURVE_NAME 2
-
 static int test_fromdata_ec(void)
 {
     int ret = 0;
@@ -1126,6 +1124,11 @@ static int test_fromdata_ec(void)
     OSSL_PARAM *fromdata_params = NULL;
     const char *alg = "EC";
     const char *curve = "prime256v1";
+    const char bad_curve[] = "nonexistent-curve";
+    OSSL_PARAM nokey_params[2] = {
+       OSSL_PARAM_END,
+       OSSL_PARAM_END
+    };
     /* UNCOMPRESSED FORMAT */
     static const unsigned char ec_pub_keydata[] = {
        POINT_CONVERSION_UNCOMPRESSED,
@@ -1177,6 +1180,16 @@ static int test_fromdata_ec(void)
         goto err;
     ctx = EVP_PKEY_CTX_new_from_name(NULL, alg, NULL);
     if (!TEST_ptr(ctx))
+        goto err;
+
+    /* try importing parameters with bad curve first */
+    nokey_params[0] =
+        OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
+                                         (char *)bad_curve, sizeof(bad_curve));
+    if (!TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1)
+        || !TEST_int_eq(EVP_PKEY_fromdata(ctx, &pk, EVP_PKEY_KEY_PARAMETERS,
+                                          nokey_params), 0)
+        || !TEST_ptr_null(pk))
         goto err;
 
     if (!TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1)
