@@ -771,6 +771,7 @@ static int test_EVP_PKEY_ffc_priv_pub(char *keytype)
         || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_G, g)))
         goto err;
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
+        || !TEST_ptr_null(make_key_fromdata(keytype, params, 0))
         || !TEST_ptr(just_params = make_key_fromdata(keytype, params, 1)))
         goto err;
 

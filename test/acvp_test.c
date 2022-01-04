@@ -505,7 +505,8 @@ static int dsa_create_pkey(EVP_PKEY **pkey,
      if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
          || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, "DSA", NULL))
          || !TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1)
-         || !TEST_int_eq(EVP_PKEY_fromdata(ctx, pkey, EVP_PKEY_PUBLIC_KEY,
+         || !TEST_int_eq(EVP_PKEY_fromdata(ctx, pkey, pub != NULL ? EVP_PKEY_PUBLIC_KEY
+                                                                  : EVP_PKEY_KEY_PARAMETERS,
                                            params), 1))
          goto err;
 
@@ -927,7 +928,10 @@ static int dh_create_pkey(EVP_PKEY **pkey, const char *group_name,
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
         || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, "DH", NULL))
         || !TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1)
-        || !TEST_int_eq(EVP_PKEY_fromdata(ctx, pkey, EVP_PKEY_KEYPAIR, params),
+        || !TEST_int_eq(EVP_PKEY_fromdata(ctx, pkey,
+                                          pub != NULL || priv != NULL ? EVP_PKEY_KEYPAIR
+                                                                      : EVP_PKEY_KEY_PARAMETERS,
+                                          params),
                         pass))
     goto err;
 

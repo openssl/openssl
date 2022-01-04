@@ -18,6 +18,7 @@
 #include <openssl/core_names.h>
 #include <openssl/bn.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
@@ -201,8 +202,15 @@ static int dh_import(void *keydata, int selection, const OSSL_PARAM params[])
     if ((selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0)
         ok = ok && ossl_dh_params_fromdata(dh, params);
 
-    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
-        ok = ok && ossl_dh_key_fromdata(dh, params);
+    if (ok && (selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
+        ok = ossl_dh_key_fromdata(dh, params);
+        /* check that we have a key */
+        if (DH_get0_pub_key(dh) == NULL
+            && DH_get0_priv_key(dh) == NULL) {
+            ok = 0;
+            ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
+        }
+    }
 
     return ok;
 }
