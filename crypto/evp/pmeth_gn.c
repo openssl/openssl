@@ -365,6 +365,7 @@ int EVP_PKEY_fromdata(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey, int selection,
                       OSSL_PARAM params[])
 {
     void *keydata = NULL;
+    EVP_PKEY *allocated_pkey = NULL;
 
     if (ctx == NULL || (ctx->operation & EVP_PKEY_OP_FROMDATA) == 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
@@ -375,7 +376,7 @@ int EVP_PKEY_fromdata(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey, int selection,
         return -1;
 
     if (*ppkey == NULL)
-        *ppkey = EVP_PKEY_new();
+        allocated_pkey = *ppkey = EVP_PKEY_new();
 
     if (*ppkey == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
@@ -383,8 +384,13 @@ int EVP_PKEY_fromdata(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey, int selection,
     }
 
     keydata = evp_keymgmt_util_fromdata(*ppkey, ctx->keymgmt, selection, params);
-    if (keydata == NULL)
+    if (keydata == NULL) {
+        if (allocated_pkey != NULL) {
+            *ppkey = NULL;
+            EVP_PKEY_free(allocated_pkey);
+        }
         return 0;
+    }
     /* keydata is cached in *ppkey, so we need not bother with it further */
     return 1;
 }
