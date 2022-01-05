@@ -1814,10 +1814,20 @@ int s_server_main(int argc, char *argv[])
     if (bio_s_out == NULL) {
         if (s_quiet && !s_debug) {
             bio_s_out = BIO_new(BIO_s_null());
-            if (s_msg && bio_s_msg == NULL)
+            if (s_msg && bio_s_msg == NULL) {
                 bio_s_msg = dup_bio_out(FORMAT_TEXT);
+                if (bio_s_msg == NULL) {
+                    BIO_printf(bio_err, "Can't open BIO for stdout\n");
+                    goto end;
+                }
+            }
         } else {
             bio_s_out = dup_bio_out(FORMAT_TEXT);
+        }
+
+        if (bio_s_out == NULL) {
+            BIO_printf(bio_err, "Unable to create BIO\n");
+            goto end;
         }
     }
 
@@ -2425,7 +2435,6 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
             BIO_free(sbio);
             goto err;
         }
-
         sbio = BIO_push(test, sbio);
     }
 
