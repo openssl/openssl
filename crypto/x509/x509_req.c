@@ -29,7 +29,7 @@ X509_REQ *X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
     ret = X509_REQ_new_ex(x->libctx, x->propq);
     if (ret == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
-        return NULL;
+        goto err;
     }
 
     ri = &ret->req_info;
@@ -56,7 +56,6 @@ X509_REQ *X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
     }
     return ret;
  err:
-    OPENSSL_free(ri->version->data);
     X509_REQ_free(ret);
     return NULL;
 }
