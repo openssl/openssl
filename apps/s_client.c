@@ -2059,6 +2059,7 @@ int s_client_main(int argc, char **argv)
 
         if (sbio == NULL || (peer_info.addr = BIO_ADDR_new()) == NULL) {
             BIO_printf(bio_err, "memory allocation failure\n");
+            BIO_ADDR_free(peer_info.addr);
             BIO_closesocket(sock);
             goto end;
         }
