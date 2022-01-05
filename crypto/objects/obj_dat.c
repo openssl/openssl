@@ -757,6 +757,7 @@ int OBJ_create(const char *oid, const char *sn, const char *ln)
 
     if (!ossl_obj_write_lock(1)) {
         ERR_raise(ERR_LIB_OBJ, ERR_R_UNABLE_TO_GET_WRITE_LOCK);
+        ASN1_OBJECT_free(tmpoid);
         return 0;
     }
 
