@@ -1450,8 +1450,10 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
         *p++ = OSSL_PARAM_construct_end();
 
         if (!EVP_PKEY_CTX_set_params(EVP_MD_CTX_get_pkey_ctx(mac_ctx),
-                                     tls_hmac_params))
+                                     tls_hmac_params)) {
+            EVP_MD_CTX_free(hmac);
             return 0;
+        }
     }
 
     if (EVP_DigestSignUpdate(mac_ctx, header, sizeof(header)) <= 0
