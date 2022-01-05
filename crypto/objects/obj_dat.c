@@ -742,16 +742,17 @@ int OBJ_create(const char *oid, const char *sn, const char *ln)
     if ((sn != NULL && OBJ_sn2nid(sn) != NID_undef)
             || (ln != NULL && OBJ_ln2nid(ln) != NID_undef)) {
         ERR_raise(ERR_LIB_OBJ, OBJ_R_OID_EXISTS);
-        goto err;
+        return 0;
     }
 
     /* Convert numerical OID string to an ASN1_OBJECT structure */
     tmpoid = OBJ_txt2obj(oid, 1);
     if (tmpoid == NULL)
-        goto err;
+        return 0;
 
     if (!ossl_obj_write_lock(1)) {
         ERR_raise(ERR_LIB_OBJ, ERR_R_UNABLE_TO_GET_WRITE_LOCK);
+        ASN1_OBJECT_free(tmpoid);
         return 0;
     }
 
