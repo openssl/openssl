@@ -8,18 +8,17 @@
 
 
 use strict;
+use FindBin;
+use lib "$FindBin::Bin/../../util/perl";
+use OpenSSL::copyright;
 
 my %xref_tbl;
 my %oid_tbl;
 
 my ($mac_file, $xref_file) = @ARGV;
 
-# Output year depends on the year of the script and the input file.
-my $YEAR = [localtime([stat($0)]->[9])]->[5] + 1900;
-my $iYEAR = [localtime([stat($mac_file)]->[9])]->[5] + 1900;
-$YEAR = $iYEAR if $iYEAR > $YEAR;
-$iYEAR = [localtime([stat($xref_file)]->[9])]->[5] + 1900;
-$YEAR = $iYEAR if $iYEAR > $YEAR;
+# The year the output file is generated.
+my $YEAR = OpenSSL::copyright::latest(($0, $mac_file, $xref_file));
 
 open(IN, $mac_file) || die "Can't open $mac_file, $!\n";
 
