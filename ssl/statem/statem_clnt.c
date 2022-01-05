@@ -2926,7 +2926,7 @@ static int tls_construct_cke_dhe(SSL *s, WPACKET *pkt)
     encoded_pub_len = EVP_PKEY_get1_encoded_public_key(ckey, &encoded_pub);
     if (encoded_pub_len == 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        EVP_PKEY_free(skey);
+        EVP_PKEY_free(ckey);
         return EXT_RETURN_FAIL;
     }
 
