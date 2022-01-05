@@ -463,6 +463,7 @@ static void *gen_init(void *provctx, int selection, int rsa_type,
         gctx->rsa_type = rsa_type;
     }
     if (!rsa_gen_set_params(gctx, params)) {
+        BN_free(gctx->pub_exp);
         OPENSSL_free(gctx);
         return NULL;
     }
