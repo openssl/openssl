@@ -23,11 +23,11 @@ sub year_of {
 
     # See if git's available
     open my $FH,
-       "git log -1 --date=format:%Y --format=format:%ad $file 2>/dev/null|"
+       "git log -1 --date=short --format=format:%cd $file 2>/dev/null|"
            or return $YEAR;
     my $LINE = <$FH>;
     close $FH;
-    chomp($LINE);
+    $LINE =~ s/^([0-9]*)-.*/$1/;
     $YEAR = $LINE if $LINE;
     return $YEAR;
 }
