@@ -1680,12 +1680,13 @@ int s_client_main(int argc, char **argv)
             if (c_msg && bio_c_msg == NULL) {
                 bio_c_msg = dup_bio_out(FORMAT_TEXT);
                 if (bio_c_msg == NULL) {
-                    BIO_printf(bio_err, "Can't open BIO for stdout\n");
+                    BIO_printf(bio_err, "Out of memory\n");
                     goto end;
                 }
             }
-        } else
+        } else {
             bio_c_out = dup_bio_out(FORMAT_TEXT);
+        }
 
         if (bio_c_out == NULL) {
             BIO_printf(bio_err, "Unable to create BIO\n");
@@ -2059,7 +2060,6 @@ int s_client_main(int argc, char **argv)
 
         if (sbio == NULL || (peer_info.addr = BIO_ADDR_new()) == NULL) {
             BIO_printf(bio_err, "memory allocation failure\n");
-            BIO_ADDR_free(peer_info.addr);
             BIO_closesocket(sock);
             goto end;
         }
@@ -2188,7 +2188,7 @@ int s_client_main(int argc, char **argv)
 
             if (fbio == NULL) {
                 BIO_printf(bio_err, "Unable to create BIO\n");
-                goto end;
+                goto shut;
             }
             BIO_push(fbio, sbio);
             /* Wait for multi-line response to end from LMTP or SMTP */
@@ -2240,7 +2240,7 @@ int s_client_main(int argc, char **argv)
 
             if (fbio == NULL) {
                 BIO_printf(bio_err, "Unable to create BIO\n");
-                goto end;
+                goto shut;
             }
             BIO_push(fbio, sbio);
             BIO_gets(fbio, mbuf, BUFSIZZ);
@@ -2271,7 +2271,7 @@ int s_client_main(int argc, char **argv)
 
             if (fbio == NULL) {
                 BIO_printf(bio_err, "Unable to create BIO\n");
-                goto end;
+                goto shut;
             }
             BIO_push(fbio, sbio);
             /* wait for multi-line response to end from FTP */
@@ -2369,7 +2369,7 @@ int s_client_main(int argc, char **argv)
 
             if (fbio == NULL) {
                 BIO_printf(bio_err, "Unable to create BIO\n");
-                goto end;
+                goto shut;
             }
             BIO_push(fbio, sbio);
             BIO_printf(fbio, "STARTTLS\r\n");
@@ -2533,7 +2533,7 @@ int s_client_main(int argc, char **argv)
 
             if (fbio == NULL) {
                 BIO_printf(bio_err, "Unable to create BIO\n");
-                goto end;
+                goto shut;
             }
             BIO_push(fbio, sbio);
             BIO_gets(fbio, mbuf, BUFSIZZ);
@@ -2577,7 +2577,7 @@ int s_client_main(int argc, char **argv)
 
             if (fbio == NULL) {
                 BIO_printf(bio_err, "Unable to create BIO\n");
-                goto end;
+                goto shut;
             }
             BIO_push(fbio, sbio);
             /* wait for multi-line response to end from Sieve */
@@ -2640,6 +2640,7 @@ int s_client_main(int argc, char **argv)
 
             if (ldapbio == NULL || cnf == NULL) {
                 BIO_free(ldapbio);
+                NCONF_free(cnf);
                 goto end;
             }
             BIO_puts(ldapbio, ldap_tls_genconf);

@@ -1817,7 +1817,7 @@ int s_server_main(int argc, char *argv[])
             if (s_msg && bio_s_msg == NULL) {
                 bio_s_msg = dup_bio_out(FORMAT_TEXT);
                 if (bio_s_msg == NULL) {
-                    BIO_printf(bio_err, "Can't open BIO for stdout\n");
+                    BIO_printf(bio_err, "Out of memory\n");
                     goto end;
                 }
             }
