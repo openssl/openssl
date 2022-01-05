@@ -1480,8 +1480,7 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
     } OSSL_TRACE_END(TLS);
     ret = 1;
  end:
-    if (!stream_mac)
-        EVP_MD_CTX_free(hmac);
+    EVP_MD_CTX_free(hmac);
     return ret;
 }
 
