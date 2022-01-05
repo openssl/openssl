@@ -2516,7 +2516,7 @@ static int rand_test_run(EVP_TEST *t)
                             item->pr_entropyB_len);
             params[1] = OSSL_PARAM_construct_end();
             if (!TEST_true(EVP_RAND_CTX_set_params(expected->parent, params)))
-                return 0;
+                goto err;
         }
         if (!TEST_true(EVP_RAND_generate
                            (expected->ctx, got, got_len,
