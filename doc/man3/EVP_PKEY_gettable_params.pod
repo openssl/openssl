@@ -47,10 +47,12 @@ value that is negative or does not fit into a native C B<size_t> type using
 EVP_PKEY_get_size_t_param() will also fail.
 
 EVP_PKEY_get_int_param() retrieves a key I<pkey> integer value I<*out>
-associated with a name of I<key_name>.
+associated with a name of I<key_name> if it fits into C<int> type. For
+parameters that do not fit into C<int> use EVP_PKEY_get_bn_param().
 
 EVP_PKEY_get_size_t_param() retrieves a key I<pkey> size_t value I<*out>
-associated with a name of I<key_name>.
+associated with a name of I<key_name> if it fits into C<size_t> type. For
+parameters that do not fit into C<size_t> use EVP_PKEY_get_bn_param().
 
 EVP_PKEY_get_bn_param() retrieves a key I<pkey> BIGNUM value I<**bn>
 associated with a name of I<key_name>. If I<*bn> is NULL then the BIGNUM
