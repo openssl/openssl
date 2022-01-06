@@ -1,5 +1,5 @@
-OQS-OpenSSL_1\_1\_1-stable snapshot 2021-12-rc1
-===============================================
+OQS-OpenSSL_1\_1\_1-stable snapshot 2022-01
+===========================================
 
 About
 -----
@@ -13,7 +13,7 @@ The **Open Quantum Safe (OQS) project** has the goal of developing and prototypi
 Release notes
 =============
 
-This is release candidate 1 for the 2021-12 snapshot release of OQS-OpenSSL. The release candidate was released on December 16, 2021.  This release is intended to be used with liboqs version 0.7.1.
+This is the 2022-01 snapshot release of OQS-OpenSSL. The release candidate was released on January 6, 2022.  This release is intended to be used with liboqs version 0.7.1.
 
 What's New
 ----------
@@ -46,4 +46,4 @@ Detailed changelog
 * simplify documentation [skip ci] by @baentsch in https://github.com/open-quantum-safe/openssl/pull/345
 * Merging OpenSSL 1.1.1m by @baentsch in https://github.com/open-quantum-safe/openssl/pull/346
 
-**Full Changelog**: https://github.com/open-quantum-safe/openssl/compare/OQS-OpenSSL_1_1_1-stable-snapshot-2021-08...OQS-OpenSSL_1_1_1-stable-snapshot-2021-12-rc1
+**Full Changelog**: https://github.com/open-quantum-safe/openssl/compare/OQS-OpenSSL_1_1_1-stable-snapshot-2021-08...OQS-OpenSSL-1_1_1-stable-snapshot-2022-01
