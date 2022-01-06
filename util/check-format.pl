@@ -684,7 +684,7 @@ while (<>) { # loop over all lines of all input files
         report("space before '$1'") if $intra_line =~ m/\s(\.|->)/;            # '.' or '->' with preceding space
         report("space after '$1'")  if $intra_line =~ m/(\.|->)\s/;            # '.' or '->' with following space
         $intra_line =~ s/\-\>|\+\+|\-\-/@/g;         # blind '->,', '++', and '--'
-        report("space before '$2'")     if $intra_line =~ m/[^:]\s+(;)/;       # space before ';' but not after ':'
+        report("space before '$1'")     if $intra_line =~ m/[^:)]\s+(;)/;      # space before ';' but not after ':' or ')'
         report("space before '$1'")     if $intra_line =~ m/\s([,)\]])/;       # space before ,)]
         report("space after '$1'")      if $intra_line =~ m/([(\[~!])\s/;      # space after ([~!
         report("space after '$1'")      if $intra_line =~ m/(defined)\s/;      # space after 'defined'
