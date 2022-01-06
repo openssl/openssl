@@ -459,18 +459,17 @@ static void *gen_init(void *provctx, int selection, int rsa_type,
         gctx->nbits = 2048;
         gctx->primes = RSA_DEFAULT_PRIME_NUM;
         gctx->rsa_type = rsa_type;
-    } else
-        goto err;
-
-    if (!rsa_gen_set_params(gctx, params)) {
+    } else {
         goto err;
     }
+
+    if (!rsa_gen_set_params(gctx, params))
+        goto err;
     return gctx;
 
 err:
-    if (gctx != NULL) {
+    if (gctx != NULL)
         BN_free(gctx->pub_exp);
-    }
     OPENSSL_free(gctx);
     return NULL;
 }
