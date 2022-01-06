@@ -70,6 +70,8 @@ int f(void) /*
         ;
     for (i = 0; i < 1;)
         ;
+    for (;;) ; /* should not trigger: space before ';' */
+ lab: ;  /* should not trigger: space before ';' */
 
 #if X
     if (1) /* bad style: just part of control structure depends on #if */
