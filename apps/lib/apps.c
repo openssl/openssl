@@ -804,6 +804,7 @@ int load_crls(const char *uri, STACK_OF(X509_CRL) **crls,
               const char *pass, const char *desc)
 {
     int ret, was_NULL = *crls == NULL;
+
     if (desc == NULL)
         desc = "CRLs";
     ret = load_key_certs_crls(uri, FORMAT_UNDEF, 0, pass, desc,
