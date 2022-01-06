@@ -188,6 +188,7 @@ int f(void) /*
 /* should not trigger: constant on LHS of comparison or assignment operator */
 X509 *x509 = NULL;
 int y = a + 1 < b;
+int ret, was_NULL = *certs == NULL;
 
 const OPTIONS passwd_options[] = {
     {"aixmd5", OPT_AIXMD5, '-', "AIX MD5-based password algorithm"},
