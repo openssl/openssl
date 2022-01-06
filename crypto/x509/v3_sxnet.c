@@ -171,9 +171,8 @@ int SXNET_add_id_INTEGER(SXNET **psx, ASN1_INTEGER *zone, const char *user,
         sx = *psx;
     if (SXNET_get_id_INTEGER(sx, zone)) {
         ERR_raise(ERR_LIB_X509V3, X509V3_R_DUPLICATE_ZONE_ID);
-        if (*psx == NULL) {
+        if (*psx == NULL)
             SXNET_free(sx);
-        }
         return 0;
     }
 
@@ -191,9 +190,8 @@ int SXNET_add_id_INTEGER(SXNET **psx, ASN1_INTEGER *zone, const char *user,
  err:
     ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
     SXNETID_free(id);
-    if (*psx == NULL) {
+    if (*psx == NULL)
         SXNET_free(sx);
-    }
     return 0;
 }
 
