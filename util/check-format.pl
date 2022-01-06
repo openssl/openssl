@@ -691,8 +691,8 @@ while (<>) { # loop over all lines of all input files
         report("no space before '=' or '<op>='") if $intra_line =~ m/\S(=)/;   # '=' etc. without preceding space
         report("no space before '$1'")  if $intra_line =~ m/\S([|\/%<>^\?])/;  # |/%<>^? without preceding space
         # TODO ternary ':' without preceding SPC, while allowing no SPC before ':' after 'case'
-        report("no space before binary '$1'")  if $intra_line =~ m/[^\s{()\[]([+\-])/;# +/- without preceding space or {()[
-                                                                             # or ')' (which is used f type casts)
+        report("no space before binary '$2'")  if $intra_line =~ m/([^\s{()\[e])([+\-])/; # '+'/'-' without preceding space or {()[e
+        # ')' may be used for type casts or before "->", 'e' may be used for numerical literals such as "1e-6"
         report("no space before binary '$1'")  if $intra_line =~ m/[^\s{()\[*!]([*])/; # '*' without preceding space or {()[*!
         report("no space before binary '$1'")  if $intra_line =~ m/[^\s{()\[]([&])/;  # '&' without preceding space or {()[
         report("no space after ternary '$1'") if $intra_line =~ m/(:)[^\s\d]/; # ':' without following space or digit
