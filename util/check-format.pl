@@ -886,7 +886,8 @@ while (<>) { # loop over all lines of all input files
     report("single-letter name '$2'") if (m/(^|.*\W)([IO])(\W.*|$)/); # single-letter name 'I' or 'O' # maybe re-add 'l'?
     # constant on LHS of comparison or assignment, e.g., NULL != x or 'a' < c, but not a + 1 == b
     report("constant on LHS of '$3'")
-        if (m/(['"]|([\+\-\*\/\/%\&\|\^<>]\s*)?\W[0-9]+L?|NULL)\s*([\!<>=]=|[<=>][^<>])/ && $2 eq "");
+        if (m/(['"]|([\+\-\*\/\/%\&\|\^<>]\s*)?\W[0-9]+L?|\WNULL)\s*([\!<>=]=|[<=>])([<>]?)/ &&
+            $2 eq "" && (($3 ne "<" && $3 ne "='" && $3 ne ">") || $4 eq ""));
 
     # TODO report #if 0 and #if 1
 
