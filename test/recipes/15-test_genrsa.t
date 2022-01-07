@@ -16,7 +16,7 @@ use OpenSSL::Test::Utils;
 
 setup("test_genrsa");
 
-plan tests => 5;
+plan tests => 7;
 
 # We want to know that an absurdly small number of bits isn't support
 is(run(app([ 'openssl', 'genrsa', '-3', '-out', 'genrsatest.pem', '8'])), 0, "genrsa -3 8");
@@ -52,3 +52,8 @@ ok(run(app([ 'openssl', 'genrsa', '-f4', '-out', 'genrsatest.pem', $good ])),
    "genrsa -f4 $good");
 ok(run(app([ 'openssl', 'rsa', '-check', '-in', 'genrsatest.pem', '-noout' ])),
    "rsa -check");
+ok(run(app([ 'openssl', 'rsa', '-in', 'genrsatest.pem', '-out', 'genrsatest-enc.pem',
+   '-aes256', '-passout', 'pass:x' ])),
+   "rsa encrypt");
+ok(run(app([ 'openssl', 'rsa', '-in', 'genrsatest-enc.pem', '-passin', 'pass:x' ])),
+   "rsa decrypt");
