@@ -8,6 +8,8 @@ EVP_CIPHER_free,
 EVP_CIPHER_CTX_new,
 EVP_CIPHER_CTX_reset,
 EVP_CIPHER_CTX_free,
+EVP_CIPHER_CTX_dup,
+EVP_CIPHER_CTX_copy,
 EVP_EncryptInit_ex,
 EVP_EncryptInit_ex2,
 EVP_EncryptUpdate,
@@ -109,6 +111,8 @@ EVP_CIPHER_CTX_mode
  EVP_CIPHER_CTX *EVP_CIPHER_CTX_new(void);
  int EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *ctx);
  void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx);
+ EVP_CIPHER_CTX *EVP_CIPHER_CTX_dup(const EVP_CIPHER_CTX *in);
+ int EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in);
 
  int EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
                         ENGINE *impl, const unsigned char *key, const unsigned char *iv);
@@ -279,6 +283,16 @@ Clears all information from a cipher context and frees any allocated memory
 associated with it, including I<ctx> itself. This function should be called after
 all operations using a cipher are complete so sensitive information does not
 remain in memory.
+
+=item EVP_CIPHER_CTX_dup()
+
+Can be used to duplicate the cipher state from I<in>.  This is useful
+to avoid multiple EVP_MD_fetch() calls or if large amounts of data are to be
+hashed which only differ in the last few bytes.
+
+=item EVP_CIPHER_CTX_copy()
+
+Can be used to copy the cipher state from I<in> to I<out>.
 
 =item EVP_CIPHER_CTX_ctrl()
 
@@ -1186,6 +1200,10 @@ EVP_CIPHER_up_ref() returns 1 for success or 0 otherwise.
 EVP_CIPHER_CTX_new() returns a pointer to a newly created
 B<EVP_CIPHER_CTX> for success and B<NULL> for failure.
 
+EVP_CIPHER_CTX_dup() returns a new EVP_MD_CTX if successful or NULL on failure.
+
+EVP_CIPHER_CTX_copy() returns 1 if successful or 0 for failure.
+
 EVP_EncryptInit_ex2(), EVP_EncryptUpdate() and EVP_EncryptFinal_ex()
 return 1 for success and 0 for failure.
 
@@ -1698,6 +1716,8 @@ EVP_CIPHER_CTX_is_encrypting() in OpenSSL 3.0. The old name is kept as
 non-deprecated alias macro.
 
 The EVP_CIPHER_CTX_flags() macro was deprecated in OpenSSL 1.1.0.
+
+EVP_CIPHER_CTX_dup() was added in OpenSSL 3.1.
 
 =head1 COPYRIGHT
 
