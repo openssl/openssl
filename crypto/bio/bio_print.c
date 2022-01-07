@@ -13,6 +13,7 @@
 #include "crypto/ctype.h"
 #include "internal/numbers.h"
 #include <openssl/bio.h>
+#include <openssl/configuration.h>
 
 /*
  * Copyright Patrick Powell 1995
@@ -512,7 +513,11 @@ fmtint(char **sbuffer,
     return 1;
 }
 
+#ifdef OPENSSL_SYS_UEFI
+static LDOUBLE EFIAPI abs_val(LDOUBLE value)
+#else
 static LDOUBLE abs_val(LDOUBLE value)
+#endif
 {
     LDOUBLE result = value;
     if (value < 0)
@@ -520,7 +525,11 @@ static LDOUBLE abs_val(LDOUBLE value)
     return result;
 }
 
+#ifdef OPENSSL_SYS_UEFI
+static LDOUBLE EFIAPI pow_10(int in_exp)
+#else
 static LDOUBLE pow_10(int in_exp)
+#endif
 {
     LDOUBLE result = 1;
     while (in_exp) {
