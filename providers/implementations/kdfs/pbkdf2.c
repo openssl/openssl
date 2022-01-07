@@ -45,10 +45,10 @@ static OSSL_FUNC_kdf_set_ctx_params_fn kdf_pbkdf2_set_ctx_params;
 static OSSL_FUNC_kdf_gettable_ctx_params_fn kdf_pbkdf2_gettable_ctx_params;
 static OSSL_FUNC_kdf_get_ctx_params_fn kdf_pbkdf2_get_ctx_params;
 
-static int  pbkdf2_derive(const char *pass, size_t passlen,
-                          const unsigned char *salt, int saltlen, uint64_t iter,
-                          const EVP_MD *digest, unsigned char *key,
-                          size_t keylen, int extra_checks);
+static int pbkdf2_derive(const char *pass, size_t passlen,
+                         const unsigned char *salt, int saltlen, uint64_t iter,
+                         const EVP_MD *digest, unsigned char *key,
+                         size_t keylen, int extra_checks);
 
 typedef struct {
     void *provctx;

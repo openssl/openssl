@@ -268,7 +268,7 @@ static void *keccak_dupctx(void *ctx)
 {
     KECCAK1600_CTX *in = (KECCAK1600_CTX *)ctx;
     KECCAK1600_CTX *ret = ossl_prov_is_running() ? OPENSSL_malloc(sizeof(*ret))
-                                                : NULL;
+                                                 : NULL;
 
     if (ret != NULL)
         *ret = *in;
