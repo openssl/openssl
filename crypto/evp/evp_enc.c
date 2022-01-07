@@ -1346,6 +1346,17 @@ int EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key)
 #endif /* FIPS_MODULE */
 }
 
+EVP_CIPHER_CTX *EVP_CIPHER_CTX_dup(const EVP_CIPHER_CTX *in)
+{
+    EVP_CIPHER_CTX *out = EVP_CIPHER_CTX_new();
+
+    if (out != NULL && !EVP_CIPHER_CTX_copy(out, in)) {
+        EVP_CIPHER_CTX_free(out);
+        out = NULL;
+    }
+    return out;
+}
+
 int EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
 {
     if ((in == NULL) || (in->cipher == NULL)) {

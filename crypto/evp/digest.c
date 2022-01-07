@@ -505,6 +505,17 @@ legacy:
     return ret;
 }
 
+EVP_MD_CTX *EVP_MD_CTX_dup(const EVP_MD_CTX *in)
+{
+    EVP_MD_CTX *out = EVP_MD_CTX_new();
+
+    if (out != NULL && !EVP_MD_CTX_copy_ex(out, in)) {
+        EVP_MD_CTX_free(out);
+        out = NULL;
+    }
+    return out;
+}
+
 int EVP_MD_CTX_copy(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 {
     EVP_MD_CTX_reset(out);
