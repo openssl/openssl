@@ -5430,3 +5430,5 @@ OPENSSL_strncasecmp                     5557	3_0_3	EXIST::FUNCTION:
 EVP_RAND_CTX_up_ref                     ?	3_1_0	EXIST::FUNCTION:
 RAND_set0_public                        ?	3_1_0	EXIST::FUNCTION:
 RAND_set0_private                       ?	3_1_0	EXIST::FUNCTION:
+EVP_MD_CTX_dup                          ?	3_1_0	EXIST::FUNCTION:
+EVP_CIPHER_CTX_dup                      ?	3_1_0	EXIST::FUNCTION:
