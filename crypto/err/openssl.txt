@@ -1,4 +1,4 @@
-# Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1999-2022 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -434,10 +434,23 @@ CRYPTO_R_ILLEGAL_HEX_DIGIT:102:illegal hex digit
 CRYPTO_R_INSUFFICIENT_DATA_SPACE:106:insufficient data space
 CRYPTO_R_INSUFFICIENT_PARAM_SIZE:107:insufficient param size
 CRYPTO_R_INSUFFICIENT_SECURE_DATA_SPACE:108:insufficient secure data space
+CRYPTO_R_INTEGER_OVERFLOW:127:integer overflow
 CRYPTO_R_INVALID_NEGATIVE_VALUE:122:invalid negative value
 CRYPTO_R_INVALID_NULL_ARGUMENT:109:invalid null argument
 CRYPTO_R_INVALID_OSSL_PARAM_TYPE:110:invalid ossl param type
+CRYPTO_R_NO_PARAMS_TO_MERGE:131:no params to merge
+CRYPTO_R_NO_SPACE_FOR_TERMINATING_NULL:128:no space for terminating null
 CRYPTO_R_ODD_NUMBER_OF_DIGITS:103:odd number of digits
+CRYPTO_R_PARAM_CANNOT_BE_REPRESENTED_EXACTLY:123:\
+	param cannot be represented exactly
+CRYPTO_R_PARAM_NOT_INTEGER_TYPE:124:param not integer type
+CRYPTO_R_PARAM_OF_INCOMPATIBLE_TYPE:129:param of incompatible type
+CRYPTO_R_PARAM_UNSIGNED_INTEGER_NEGATIVE_VALUE_UNSUPPORTED:125:\
+	param unsigned integer negative value unsupported
+CRYPTO_R_PARAM_UNSUPPORTED_FLOATING_POINT_FORMAT:130:\
+	param unsupported floating point format
+CRYPTO_R_PARAM_VALUE_TOO_LARGE_FOR_DESTINATION:126:\
+	param value too large for destination
 CRYPTO_R_PROVIDER_ALREADY_EXISTS:104:provider already exists
 CRYPTO_R_PROVIDER_SECTION_ERROR:105:provider section error
 CRYPTO_R_RANDOM_SECTION_ERROR:119:random section error
