@@ -832,8 +832,18 @@ static const char *format2string(int format)
 }
 
 /* Set type expectation, but clear it if objects of different types expected. */
-#define SET_EXPECT(expect, val) \
-    ((expect) = (expect) < 0 ? (val) : ((expect) == (val) ? (val) : 0))
+#define SET_EXPECT(val) \
+    (expect = expect < 0 ? (val) : (expect == (val) ? (val) : 0))
+#define SET_EXPECT1(pvar, val) \
+    if ((pvar) != NULL) { \
+        *(pvar) = NULL; \
+        SET_EXPECT(val); \
+    }
+#define FAIL_NAME \
+    (ppkey != NULL ? "key etc." : ppubkey != NULL ? "public key etc." : \
+     pparams != NULL ? "params etc." :                                  \
+     pcert != NULL ? "cert etc." : pcerts != NULL ? "certs etc." :      \
+     pcrl != NULL ? "CRL etc." : pcrls != NULL ? "CRLs etc." : NULL)
 /*
  * Load those types of credentials for which the result pointer is not NULL.
  * Reads from stdio if uri is NULL and maybe_stdin is nonzero.
@@ -848,9 +858,8 @@ static const char *format2string(int format)
  * of *pcerts and *pcrls (as far as they are not NULL).
  */
 int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
-                        const char *pass, const char *desc,
-                        EVP_PKEY **ppkey, EVP_PKEY **ppubkey,
-                        EVP_PKEY **pparams,
+                        const char *pass, const char *desc, EVP_PKEY **ppkey,
+                        EVP_PKEY **ppubkey, EVP_PKEY **pparams,
                         X509 **pcert, STACK_OF(X509) **pcerts,
                         X509_CRL **pcrl, STACK_OF(X509_CRL) **pcrls)
 {
@@ -858,65 +867,37 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
     OSSL_STORE_CTX *ctx = NULL;
     OSSL_LIB_CTX *libctx = app_get0_libctx();
     const char *propq = app_get0_propq();
-    int ncerts = 0;
-    int ncrls = 0;
-    const char *failed =
-        ppkey != NULL ? "key" : ppubkey != NULL ? "public key" :
-        pparams != NULL ? "params" : pcert != NULL ? "cert" :
-        pcrl != NULL ? "CRL" : pcerts != NULL ? "certs" :
-        pcrls != NULL ? "CRLs" : NULL;
-    int cnt_expectations = 0;
-    int expect = -1;
+    int ncerts = 0, ncrls = 0, expect = -1;
+    const char *failed = FAIL_NAME;
     const char *input_type;
     OSSL_PARAM itp[2];
     const OSSL_PARAM *params = NULL;
 
+    if (failed == NULL) {
+        BIO_printf(bio_err, "Internal error: nothing to load from %s\n",
+                   uri != NULL ? uri : "<stdin>");
+        return 0;
+    }
     ERR_set_mark();
-    if (ppkey != NULL) {
-        *ppkey = NULL;
-        cnt_expectations++;
-        SET_EXPECT(expect, OSSL_STORE_INFO_PKEY);
-    }
-    if (ppubkey != NULL) {
-        *ppubkey = NULL;
-        cnt_expectations++;
-        SET_EXPECT(expect, OSSL_STORE_INFO_PUBKEY);
-    }
-    if (pparams != NULL) {
-        *pparams = NULL;
-        cnt_expectations++;
-        SET_EXPECT(expect, OSSL_STORE_INFO_PARAMS);
-    }
-    if (pcert != NULL) {
-        *pcert = NULL;
-        cnt_expectations++;
-        SET_EXPECT(expect, OSSL_STORE_INFO_CERT);
-    }
+
+    SET_EXPECT1(ppkey, OSSL_STORE_INFO_PKEY);
+    SET_EXPECT1(ppubkey, OSSL_STORE_INFO_PUBKEY);
+    SET_EXPECT1(pparams, OSSL_STORE_INFO_PARAMS);
+    SET_EXPECT1(pcert, OSSL_STORE_INFO_CERT);
     if (pcerts != NULL) {
         if (*pcerts == NULL && (*pcerts = sk_X509_new_null()) == NULL) {
             BIO_printf(bio_err, "Out of memory loading");
             goto end;
         }
-        cnt_expectations++;
-        SET_EXPECT(expect, OSSL_STORE_INFO_CERT);
+        SET_EXPECT(OSSL_STORE_INFO_CERT);
     }
-    if (pcrl != NULL) {
-        *pcrl = NULL;
-        cnt_expectations++;
-        SET_EXPECT(expect, OSSL_STORE_INFO_CRL);
-    }
+    SET_EXPECT1(pcrl, OSSL_STORE_INFO_CRL);
     if (pcrls != NULL) {
         if (*pcrls == NULL && (*pcrls = sk_X509_CRL_new_null()) == NULL) {
             BIO_printf(bio_err, "Out of memory loading");
             goto end;
         }
-        cnt_expectations++;
-        SET_EXPECT(expect, OSSL_STORE_INFO_CRL);
-    }
-    if (cnt_expectations == 0) {
-        BIO_printf(bio_err, "Internal error: no expectation to load");
-        failed = "anything";
-        goto end;
+        SET_EXPECT(OSSL_STORE_INFO_CRL);
     }
 
     uidata.password = pass;
@@ -957,7 +938,9 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
         goto end;
 
     failed = NULL;
-    while (cnt_expectations > 0 && !OSSL_STORE_eof(ctx)) {
+    while ((ppkey != NULL || ppubkey != NULL || pparams != NULL
+            || pcert != NULL || pcerts != NULL || pcrl != NULL || pcrls != NULL)
+           && !OSSL_STORE_eof(ctx)) {
         OSSL_STORE_INFO *info = OSSL_STORE_load(ctx);
         int type, ok = 1;
 
@@ -975,36 +958,37 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
         type = OSSL_STORE_INFO_get_type(info);
         switch (type) {
         case OSSL_STORE_INFO_PKEY:
-            if (ppkey != NULL && *ppkey == NULL) {
+            if (ppkey != NULL) {
                 ok = (*ppkey = OSSL_STORE_INFO_get1_PKEY(info)) != NULL;
-                cnt_expectations -= ok;
+                if (ok)
+                    ppkey = NULL;
+                break;
             }
             /*
              * An EVP_PKEY with private parts also holds the public parts,
              * so if the caller asked for a public key, and we got a private
              * key, we can still pass it back.
              */
-            if (ok && ppubkey != NULL && *ppubkey == NULL) {
-                ok = ((*ppubkey = OSSL_STORE_INFO_get1_PKEY(info)) != NULL);
-                cnt_expectations -= ok;
-            }
-            break;
+            /* fall thru */
         case OSSL_STORE_INFO_PUBKEY:
-            if (ppubkey != NULL && *ppubkey == NULL) {
-                ok = ((*ppubkey = OSSL_STORE_INFO_get1_PUBKEY(info)) != NULL);
-                cnt_expectations -= ok;
+            if (ppubkey != NULL) {
+                ok = (*ppubkey = OSSL_STORE_INFO_get1_PUBKEY(info)) != NULL;
+                if (ok)
+                    ppubkey = NULL;
             }
             break;
         case OSSL_STORE_INFO_PARAMS:
-            if (pparams != NULL && *pparams == NULL) {
-                ok = ((*pparams = OSSL_STORE_INFO_get1_PARAMS(info)) != NULL);
-                cnt_expectations -= ok;
+            if (pparams != NULL) {
+                ok = (*pparams = OSSL_STORE_INFO_get1_PARAMS(info)) != NULL;
+                if (ok)
+                    pparams = NULL;
             }
             break;
         case OSSL_STORE_INFO_CERT:
-            if (pcert != NULL && *pcert == NULL) {
+            if (pcert != NULL) {
                 ok = (*pcert = OSSL_STORE_INFO_get1_CERT(info)) != NULL;
-                cnt_expectations -= ok;
+                if (ok)
+                    pcert = NULL;
             } else if (pcerts != NULL) {
                 ok = X509_add_cert(*pcerts,
                                    OSSL_STORE_INFO_get1_CERT(info),
@@ -1013,9 +997,10 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
             ncerts += ok;
             break;
         case OSSL_STORE_INFO_CRL:
-            if (pcrl != NULL && *pcrl == NULL) {
+            if (pcrl != NULL) {
                 ok = (*pcrl = OSSL_STORE_INFO_get1_CRL(info)) != NULL;
-                cnt_expectations -= ok;
+                if (ok)
+                    pcrl = NULL;
             } else if (pcrls != NULL) {
                 ok = sk_X509_CRL_push(*pcrls, OSSL_STORE_INFO_get1_CRL(info));
             }
@@ -1027,7 +1012,7 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
         }
         OSSL_STORE_INFO_free(info);
         if (!ok) {
-            failed = info == NULL ? NULL : OSSL_STORE_INFO_type_string(type);
+            failed = OSSL_STORE_INFO_type_string(type);
             BIO_printf(bio_err, "Error reading");
             break;
         }
@@ -1035,27 +1020,14 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
 
  end:
     OSSL_STORE_close(ctx);
+    if (ncerts > 0)
+        pcerts = NULL;
+    if (ncrls > 0)
+        pcrls = NULL;
     if (failed == NULL) {
-        int any = 0;
-
-        if ((ppkey != NULL && *ppkey == NULL)
-            || (ppubkey != NULL && *ppubkey == NULL)) {
-            failed = "key";
-        } else if (pparams != NULL && *pparams == NULL) {
-            failed = "params";
-        } else if ((pcert != NULL || pcerts != NULL) && ncerts == 0) {
-            if (pcert == NULL)
-                any = 1;
-            failed = "cert";
-        } else if ((pcrl != NULL || pcrls != NULL) && ncrls == 0) {
-            if (pcrl == NULL)
-                any = 1;
-            failed = "CRL";
-        }
+        failed = FAIL_NAME;
         if (failed != NULL)
             BIO_printf(bio_err, "Could not read");
-        if (any)
-            BIO_printf(bio_err, " any");
     }
     if (failed != NULL) {
         unsigned long err = ERR_peek_last_error();
@@ -2678,6 +2650,7 @@ double app_tminterval(int stop, int usertime)
     double ret = 0;
     static ULARGE_INTEGER tmstart;
     static int warning = 1;
+    int use_GetSystemTime = 1;
 # ifdef _WIN32_WINNT
     static HANDLE proc = NULL;
 
@@ -2693,9 +2666,10 @@ double app_tminterval(int stop, int usertime)
         FILETIME junk;
 
         GetProcessTimes(proc, &junk, &junk, &junk, &now);
-    } else
+        use_GetSystemTime = 0;
+    }
 # endif
-    {
+    if (use_GetSystemTime) {
         SYSTEMTIME systime;
 
         if (usertime && warning) {
@@ -2892,7 +2866,8 @@ int raw_write_stdout(const void *buf, int siz)
     else
         return -1;
 }
-#elif defined(OPENSSL_SYS_TANDEM) && defined(OPENSSL_THREADS) && defined(_SPT_MODEL_)
+#elif defined(OPENSSL_SYS_TANDEM) && defined(OPENSSL_THREADS) \
+    && defined(_SPT_MODEL_)
 # if defined(__TANDEM)
 #  if defined(OPENSSL_TANDEM_FLOSS)
 #   include <floss.h(floss_write)>
