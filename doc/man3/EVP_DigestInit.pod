@@ -4,8 +4,8 @@
 
 EVP_MD_fetch, EVP_MD_up_ref, EVP_MD_free,
 EVP_MD_get_params, EVP_MD_gettable_params,
-EVP_MD_CTX_new, EVP_MD_CTX_reset, EVP_MD_CTX_free, EVP_MD_CTX_copy,
-EVP_MD_CTX_copy_ex, EVP_MD_CTX_ctrl,
+EVP_MD_CTX_new, EVP_MD_CTX_reset, EVP_MD_CTX_free, EVP_MD_CTX_dup,
+EVP_MD_CTX_copy, EVP_MD_CTX_copy_ex, EVP_MD_CTX_ctrl,
 EVP_MD_CTX_set_params, EVP_MD_CTX_get_params,
 EVP_MD_settable_ctx_params, EVP_MD_gettable_ctx_params,
 EVP_MD_CTX_settable_params, EVP_MD_CTX_gettable_params,
@@ -63,6 +63,7 @@ EVP_MD_CTX_type, EVP_MD_CTX_pkey_ctx, EVP_MD_CTX_md_data
  int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *s);
  int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md, size_t len);
 
+ EVP_MD_CTX *EVP_MD_CTX_dup(const EVP_MD_CTX *in);
  int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in);
 
  int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type);
@@ -294,6 +295,12 @@ Interfaces to extendable-output functions, XOFs, such as SHAKE128 and SHAKE256.
 It retrieves the digest value from I<ctx> and places it in I<len>-sized I<md>.
 After calling this function no additional calls to EVP_DigestUpdate() can be
 made, but EVP_DigestInit_ex2() can be called to initialize a new operation.
+
+=item EVP_MD_CTX_dup()
+
+Can be used to duplicate the message digest state from I<in>.  This is useful
+to avoid multiple EVP_MD_fetch() calls or if large amounts of data are to be
+hashed which only differ in the last few bytes.
 
 =item EVP_MD_CTX_copy_ex()
 
@@ -592,6 +599,10 @@ EVP_MD_CTX_gettable_params()
 Return an array of constant B<OSSL_PARAM>s, or NULL if there is none
 to get.
 
+=item EVP_MD_CTX_dup()
+
+Returns a new EVP_MD_CTX if successful or NULL on failure.
+
 =item EVP_MD_CTX_copy_ex()
 
 Returns 1 if successful or 0 for failure.
@@ -760,6 +771,8 @@ The EVP_MD_CTX_md() function was deprecated in OpenSSL 3.0; use
 EVP_MD_CTX_get0_md() instead.
 EVP_MD_CTX_update_fn() and EVP_MD_CTX_set_update_fn() were deprecated
 in OpenSSL 3.0.
+
+EVP_MD_CTX_dup() was added in OpenSSL 3.1.
 
 =head1 COPYRIGHT
 
