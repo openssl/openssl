@@ -18,8 +18,8 @@ plan skip_all => "No external tests in this configuration"
     if disabled("external-tests");
 plan skip_all => "TLSFuzzer tests not available on Windows or VMS"
     if $^O =~ /^(VMS|MSWin32)$/;
-plan skip_all => "TLSFuzzer tests not supported in out of tree builds"
-    if bldtop_dir() ne srctop_dir();
+plan skip_all => "TLSFuzzer is not properly checked out"
+    unless (-d srctop_dir()."/tlsfuzzer" && -d srctop_dir()."/tlsfuzzer/tests");
 
 $ENV{TESTDATADIR} = abs_path(data_dir());
 plan tests => 1;
