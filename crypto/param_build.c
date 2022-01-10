@@ -78,8 +78,10 @@ static int param_push_num(OSSL_PARAM_BLD *bld, const char *key,
 {
     OSSL_PARAM_BLD_DEF *pd = param_push(bld, key, size, size, type, 0);
 
-    if (pd == NULL)
+    if (pd == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
+    }
     if (size > sizeof(pd->num)) {
         ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_TOO_MANY_BYTES);
         return 0;
