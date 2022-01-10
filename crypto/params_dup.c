@@ -105,8 +105,10 @@ OSSL_PARAM *OSSL_PARAM_dup(const OSSL_PARAM *src)
     OSSL_PARAM *last, *dst;
     int param_count = 1; /* Include terminator in the count */
 
-    if (src == NULL)
+    if (src == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
+    }
 
     memset(buf, 0, sizeof(buf));
 
@@ -154,8 +156,10 @@ OSSL_PARAM *OSSL_PARAM_merge(const OSSL_PARAM *p1, const OSSL_PARAM *p2)
     size_t  list1_sz = 0, list2_sz = 0;
     int diff;
 
-    if (p1 == NULL && p2 == NULL)
+    if (p1 == NULL && p2 == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
+    }
 
     /* Copy p1 to list1 */
     if (p1 != NULL) {
@@ -170,8 +174,10 @@ OSSL_PARAM *OSSL_PARAM_merge(const OSSL_PARAM *p1, const OSSL_PARAM *p2)
             list2[list2_sz++] = p;
     }
     list2[list2_sz] = NULL;
-    if (list1_sz == 0 && list2_sz == 0)
+    if (list1_sz == 0 && list2_sz == 0) {
+        ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_NO_PARAMS_TO_MERGE);
         return NULL;
+    }
 
     /* Sort the 2 lists */
     qsort(list1, list1_sz, sizeof(OSSL_PARAM *), compare_params);
