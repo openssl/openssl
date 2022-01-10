@@ -317,13 +317,14 @@ inner_loader_fetch(struct loader_data_st *methdata, int id,
             construct_loader,
             destruct_loader
         };
+        OSSL_PROVIDER *prov = NULL;
 
         methdata->scheme_id = id;
         methdata->scheme = scheme;
         methdata->propquery = properties;
         methdata->flag_construct_error_occurred = 0;
         if ((method = ossl_method_construct(methdata->libctx, OSSL_OP_STORE,
-                                            NULL, 0 /* !force_cache */,
+                                            &prov, 0 /* !force_cache */,
                                             &mcm, methdata)) != NULL) {
             /*
              * If construction did create a method for us, we know that there
@@ -332,7 +333,7 @@ inner_loader_fetch(struct loader_data_st *methdata, int id,
              */
             if (id == 0)
                 id = ossl_namemap_name2num(namemap, scheme);
-            ossl_method_store_cache_set(store, NULL, id, properties, method,
+            ossl_method_store_cache_set(store, prov, id, properties, method,
                                         up_ref_loader, free_loader);
         }
 

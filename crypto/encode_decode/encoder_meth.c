@@ -385,13 +385,14 @@ inner_ossl_encoder_fetch(struct encoder_data_st *methdata, int id,
             construct_encoder,
             destruct_encoder
         };
+        OSSL_PROVIDER *prov = NULL;
 
         methdata->id = id;
         methdata->names = name;
         methdata->propquery = properties;
         methdata->flag_construct_error_occurred = 0;
         if ((method = ossl_method_construct(methdata->libctx, OSSL_OP_ENCODER,
-                                            NULL, 0 /* !force_cache */,
+                                            &prov, 0 /* !force_cache */,
                                             &mcm, methdata)) != NULL) {
             /*
              * If construction did create a method for us, we know that
@@ -401,7 +402,7 @@ inner_ossl_encoder_fetch(struct encoder_data_st *methdata, int id,
              */
             if (id == 0)
                 id = ossl_namemap_name2num(namemap, name);
-            ossl_method_store_cache_set(store, NULL, id, properties, method,
+            ossl_method_store_cache_set(store, prov, id, properties, method,
                                         up_ref_encoder, free_encoder);
         }
 
