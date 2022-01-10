@@ -480,14 +480,14 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
     if (sigret == NULL || (ctx->flags & EVP_MD_CTX_FLAG_FINALISE) != 0)
         return pctx->op.sig.signature->digest_sign_final(pctx->op.sig.algctx,
                                                          sigret, siglen,
-                                                         (siglen == NULL) ? 0 : *siglen);
+                                                         sigret == NULL ? 0 : *siglen);
     dctx = EVP_PKEY_CTX_dup(pctx);
     if (dctx == NULL)
         return 0;
 
     r = dctx->op.sig.signature->digest_sign_final(dctx->op.sig.algctx,
                                                   sigret, siglen,
-                                                  (siglen == NULL) ? 0 : *siglen);
+                                                  *siglen);
     EVP_PKEY_CTX_free(dctx);
     return r;
 
