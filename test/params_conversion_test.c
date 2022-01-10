@@ -194,7 +194,8 @@ static int param_conversion_test(const PARAM_CONVERSION *pc, int line)
     double d;
 
     if (!pc->valid_i32) {
-        if (!TEST_false(OSSL_PARAM_get_int32(pc->param, &i32))) {
+        if (!TEST_false(OSSL_PARAM_get_int32(pc->param, &i32))
+                || !TEST_ulong_ne(ERR_get_error(), 0)) {
             TEST_note("unexpected valid conversion to int32 on line %d", line);
             return 0;
         }
@@ -214,7 +215,8 @@ static int param_conversion_test(const PARAM_CONVERSION *pc, int line)
     }
 
     if (!pc->valid_i64) {
-        if (!TEST_false(OSSL_PARAM_get_int64(pc->param, &i64))) {
+        if (!TEST_false(OSSL_PARAM_get_int64(pc->param, &i64))
+                || !TEST_ulong_ne(ERR_get_error(), 0)) {
             TEST_note("unexpected valid conversion to int64 on line %d", line);
             return 0;
         }
@@ -234,7 +236,8 @@ static int param_conversion_test(const PARAM_CONVERSION *pc, int line)
     }
 
     if (!pc->valid_u32) {
-        if (!TEST_false(OSSL_PARAM_get_uint32(pc->param, &u32))) {
+        if (!TEST_false(OSSL_PARAM_get_uint32(pc->param, &u32))
+                || !TEST_ulong_ne(ERR_get_error(), 0)) {
             TEST_note("unexpected valid conversion to uint32 on line %d", line);
             return 0;
         }
@@ -254,7 +257,8 @@ static int param_conversion_test(const PARAM_CONVERSION *pc, int line)
     }
 
     if (!pc->valid_u64) {
-        if (!TEST_false(OSSL_PARAM_get_uint64(pc->param, &u64))) {
+        if (!TEST_false(OSSL_PARAM_get_uint64(pc->param, &u64))
+                || !TEST_ulong_ne(ERR_get_error(), 0)) {
             TEST_note("unexpected valid conversion to uint64 on line %d", line);
             return 0;
         }
@@ -274,7 +278,8 @@ static int param_conversion_test(const PARAM_CONVERSION *pc, int line)
     }
 
     if (!pc->valid_d) {
-        if (!TEST_false(OSSL_PARAM_get_double(pc->param, &d))) {
+        if (!TEST_false(OSSL_PARAM_get_double(pc->param, &d))
+                || !TEST_ulong_ne(ERR_get_error(), 0)) {
             TEST_note("unexpected valid conversion to double on line %d", line);
             return 0;
         }
