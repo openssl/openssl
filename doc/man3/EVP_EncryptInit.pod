@@ -1213,7 +1213,7 @@ block size.
 EVP_CIPHER_get_key_length() and EVP_CIPHER_CTX_get_key_length() return the key
 length.
 
-EVP_CIPHER_CTX_set_padding() always returns 1.
+EVP_CIPHER_CTX_set_padding() returns 1 for success and 0 for failure.
 
 EVP_CIPHER_get_iv_length() and EVP_CIPHER_CTX_get_iv_length() return the IV
 length or zero if the cipher does not use an IV.
