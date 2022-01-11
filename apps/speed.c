@@ -262,7 +262,7 @@ const OPTIONS speed_options[] = {
 
 enum {
     D_MD2, D_MDC2, D_MD4, D_MD5, D_SHA1, D_RMD160,
-    D_SHA256, D_SHA512, D_WHIRLPOOL, D_HMAC,
+    D_SHA256, D_SHA512, D_WHIRLPOOL, D_SM3, D_HMAC,
     D_CBC_DES, D_EDE3_DES, D_RC4, D_CBC_IDEA, D_CBC_SEED,
     D_CBC_RC2, D_CBC_RC5, D_CBC_BF, D_CBC_CAST,
     D_CBC_128_AES, D_CBC_192_AES, D_CBC_256_AES,
@@ -272,7 +272,7 @@ enum {
 /* name of algorithms to test. MUST BE KEEP IN SYNC with above enum ! */
 static const char *names[ALGOR_NUM] = {
     "md2", "mdc2", "md4", "md5", "sha1", "rmd160",
-    "sha256", "sha512", "whirlpool", "hmac(md5)",
+    "sha256", "sha512", "whirlpool", "sm3", "hmac(md5)",
     "des-cbc", "des-ede3", "rc4", "idea-cbc", "seed-cbc",
     "rc2-cbc", "rc5-cbc", "blowfish", "cast-cbc",
     "aes-128-cbc", "aes-192-cbc", "aes-256-cbc",
@@ -294,6 +294,7 @@ static const OPT_PAIR doit_choices[] = {
     {"ripemd", D_RMD160},
     {"rmd160", D_RMD160},
     {"ripemd160", D_RMD160},
+    {"sm3", D_SM3},
     {"rc4", D_RC4},
     {"des-cbc", D_CBC_DES},
     {"des-ede3", D_EDE3_DES},
@@ -634,6 +635,11 @@ static int WHIRLPOOL_loop(void *args)
 static int EVP_Digest_RMD160_loop(void *args)
 {
     return EVP_Digest_loop("ripemd160", D_RMD160, args);
+}
+
+static int SM3_loop(void *args)
+{
+    return EVP_Digest_loop("sm3", D_SM3, args);
 }
 
 static int algindex;
@@ -1966,6 +1972,19 @@ int speed_main(int argc, char **argv)
             count = run_benchmark(async_jobs, EVP_Digest_RMD160_loop, loopargs);
             d = Time_F(STOP);
             print_result(D_RMD160, testnum, count, d);
+            if (count < 0)
+                break;
+        }
+    }
+
+    if (doit[D_SM3]) {
+        for (testnum = 0; testnum < size_num; testnum++) {
+            print_message(names[D_SM3], c[D_SM3][testnum],
+                          lengths[testnum], seconds.sym);
+            Time_F(START);
+            count = run_benchmark(async_jobs, SM3_loop, loopargs);
+            d = Time_F(STOP);
+            print_result(D_SM3, testnum, count, d);
             if (count < 0)
                 break;
         }
