@@ -33,9 +33,10 @@ static void cleanup_old_md_data(EVP_MD_CTX *ctx, int force)
             ctx->digest->cleanup(ctx);
         if (ctx->md_data != NULL && ctx->digest->ctx_size > 0
                 && (!EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_REUSE)
-                    || force))
+                    || force)) {
             OPENSSL_clear_free(ctx->md_data, ctx->digest->ctx_size);
-        ctx->md_data = NULL;
+            ctx->md_data = NULL;
+        }
     }
 }
 
