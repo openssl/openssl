@@ -847,61 +847,6 @@ void ERR_add_error_vdata(int num, va_list args)
         OPENSSL_free(str);
 }
 
-int ERR_set_mark(void)
-{
-    ERR_STATE *es;
-
-    es = ossl_err_get_state_int();
-    if (es == NULL)
-        return 0;
-
-    if (es->bottom == es->top)
-        return 0;
-    es->err_marks[es->top]++;
-    return 1;
-}
-
-int ERR_pop_to_mark(void)
-{
-    ERR_STATE *es;
-
-    es = ossl_err_get_state_int();
-    if (es == NULL)
-        return 0;
-
-    while (es->bottom != es->top
-           && es->err_marks[es->top] == 0) {
-        err_clear(es, es->top, 0);
-        es->top = es->top > 0 ? es->top - 1 : ERR_NUM_ERRORS - 1;
-    }
-
-    if (es->bottom == es->top)
-        return 0;
-    es->err_marks[es->top]--;
-    return 1;
-}
-
-int ERR_clear_last_mark(void)
-{
-    ERR_STATE *es;
-    int top;
-
-    es = ossl_err_get_state_int();
-    if (es == NULL)
-        return 0;
-
-    top = es->top;
-    while (es->bottom != top
-           && es->err_marks[top] == 0) {
-        top = top > 0 ? top - 1 : ERR_NUM_ERRORS - 1;
-    }
-
-    if (es->bottom == top)
-        return 0;
-    es->err_marks[top]--;
-    return 1;
-}
-
 void err_clear_last_constant_time(int clear)
 {
     ERR_STATE *es;
