@@ -1003,14 +1003,6 @@ IF[{- !$disabled{tests} -}]
   SOURCE[endecode_test]=endecode_test.c helpers/predefined_dhparams.c
   INCLUDE[endecode_test]=.. ../include ../apps/include
   DEPEND[endecode_test]=../libcrypto.a libtestutil.a
-  IF[{- !$disabled{module} && !$disabled{legacy} -}]
-    DEFINE[endecode_test]=STATIC_LEGACY
-    SOURCE[endecode_test]=../providers/legacyprov.c
-    INCLUDE[endecode_test]=../providers/common/include \
-                           ../providers/implementations/include
-    DEPEND[endecode_test]=../providers/liblegacy.a \
-                          ../providers/libcommon.a
-  ENDIF
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=endecoder_legacy_test
