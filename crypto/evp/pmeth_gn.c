@@ -128,7 +128,6 @@ static int ossl_callback_to_pkey_gencb(const OSSL_PARAM params[], void *arg)
 int EVP_PKEY_generate(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
 {
     int ret = 0;
-    OSSL_CALLBACK cb;
     EVP_PKEY *allocated_pkey = NULL;
     /* Legacy compatible keygen callback info, only used with provider impls */
     int gentmp[2];
