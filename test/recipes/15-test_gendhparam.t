@@ -140,9 +140,17 @@ foreach my $test (@testdata) {
         push(@pkeyopts, '-pkeyopt');
         push(@pkeyopts, $_);
     }
-    my @lines = run(app(['openssl', 'genpkey', '-genparam',
+    my @lines;
+    if ($expected[0] eq 'ERROR') {
+        @lines = run(app(['openssl', 'genpkey', '-genparam',
+                          '-algorithm', $alg, '-text', @pkeyopts],
+                         stderr => undef),
+                     capture => 1);
+    } else {
+        @lines = run(app(['openssl', 'genpkey', '-genparam',
                           '-algorithm', $alg, '-text', @pkeyopts]),
-                    capture => 1);
+                     capture => 1);
+    }
     ok(compareline(\@lines, \@expected), $msg);
 }
 
