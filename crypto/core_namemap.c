@@ -37,11 +37,7 @@ struct ossl_namemap_st {
     CRYPTO_RWLOCK *lock;
     LHASH_OF(NAMENUM_ENTRY) *namenum;  /* Name->number mapping */
 
-#ifdef tsan_ld_acq
-    TSAN_QUALIFIER int max_number;     /* Current max number TSAN version */
-#else
-    int max_number;                    /* Current max number plain version */
-#endif
+    TSAN_QUALIFIER int max_number;     /* Current max number */
 };
 
 /* LHASH callbacks */
@@ -99,10 +95,7 @@ static const OSSL_LIB_CTX_METHOD stored_namemap_method = {
 
 int ossl_namemap_empty(OSSL_NAMEMAP *namemap)
 {
-#ifdef tsan_ld_acq
-    /* Have TSAN support */
-    return namemap == NULL || tsan_load(&namemap->max_number) == 0;
-#else
+#ifdef TSAN_REQUIRES_LOCKING
     /* No TSAN support */
     int rv;
 
@@ -114,6 +107,9 @@ int ossl_namemap_empty(OSSL_NAMEMAP *namemap)
     rv = namemap->max_number == 0;
     CRYPTO_THREAD_unlock(namemap->lock);
     return rv;
+#else
+    /* Have TSAN support */
+    return namemap == NULL || tsan_load(&namemap->max_number) == 0;
 #endif
 }
 
@@ -260,6 +256,7 @@ static int namemap_add_name_n(OSSL_NAMEMAP *namemap, int number,
         || (namenum->name = OPENSSL_strndup(name, name_len)) == NULL)
         goto err;
 
+    /* The tsan_counter use here is safe since we're under lock */
     namenum->number =
         number != 0 ? number : 1 + tsan_counter(&namemap->max_number);
     (void)lh_NAMENUM_ENTRY_insert(namemap->namenum, namenum);
