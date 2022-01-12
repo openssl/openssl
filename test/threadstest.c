@@ -62,6 +62,8 @@ static int test_lock(void)
     int res;
 
     res = TEST_true(CRYPTO_THREAD_read_lock(lock))
+          && TEST_true(CRYPTO_THREAD_unlock(lock))
+          && TEST_true(CRYPTO_THREAD_write_lock(lock))
           && TEST_true(CRYPTO_THREAD_unlock(lock));
 
     CRYPTO_THREAD_lock_free(lock);
