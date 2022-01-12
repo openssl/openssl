@@ -44,7 +44,11 @@ static const char *default_provider[] = { "default", NULL };
 static const char *fips_provider[] = { "fips", NULL };
 static const char *fips_and_default_providers[] = { "default", "fips", NULL };
 
-/* Grab a globally unique integer value */
+#ifdef TSAN_REQUIRES_LOCKING
+static CRYPTO_RWLOCK *tsan_lock;
+#endif
+
+/* Grab a globally unique integer value, return 0 on failure */
 static int get_new_uid(void)
 {
     /*
@@ -52,8 +56,19 @@ static int get_new_uid(void)
      * we generate a new OID.
      */
     static TSAN_QUALIFIER int current_uid = 1 << (sizeof(int) * 8 - 2);
+#ifdef TSAN_REQUIRES_LOCKING
+    int r;
 
+    if (!TEST_true(CRYPTO_THREAD_write_lock(tsan_lock)))
+        return 0;
+    r = ++current_uid;
+    if (!TEST_true(CRYPTO_THREAD_unlock(tsan_lock)))
+        return 0;
+    return r;
+
+#else
     return tsan_counter(&current_uid);
+#endif
 }
 
 static int test_lock(void)
@@ -626,7 +641,8 @@ static void test_obj_create_one(void)
     BIO_snprintf(oid, sizeof(oid), "1.3.6.1.4.1.16604.%s", tids);
     BIO_snprintf(sn, sizeof(sn), "short-name-%s", tids);
     BIO_snprintf(ln, sizeof(ln), "long-name-%s", tids);
-    if (!TEST_true(id = OBJ_create(oid, sn, ln))
+    if (!TEST_int_ne(id, 0)
+            || !TEST_true(id = OBJ_create(oid, sn, ln))
             || !TEST_true(OBJ_add_sigid(id, NID_sha3_256, NID_rsa)))
         multi_success = 0;
 }
@@ -684,6 +700,11 @@ int setup_tests(void)
     if (!TEST_ptr(privkey))
         return 0;
 
+#ifdef TSAN_REQUIRES_LOCKING
+    if (!TEST_ptr(tsan_lock = CRYPTO_THREAD_lock_new()))
+        return 0;
+#endif
+
     /* Keep first to validate auto creation of default library context */
     ADD_TEST(test_multi_default);
 
@@ -707,4 +728,7 @@ int setup_tests(void)
 void cleanup_tests(void)
 {
     OPENSSL_free(privkey);
+#ifdef TSAN_REQUIRES_LOCKING
+    CRYPTO_THREAD_lock_free(tsan_lock);
+#endif
 }
