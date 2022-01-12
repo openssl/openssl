@@ -47,6 +47,9 @@ const OSSL_CORE_HANDLE *ossl_provider_get_parent(OSSL_PROVIDER *prov);
 int ossl_provider_up_ref_parent(OSSL_PROVIDER *prov, int activate);
 int ossl_provider_free_parent(OSSL_PROVIDER *prov, int deactivate);
 int ossl_provider_default_props_update(OSSL_LIB_CTX *libctx, const char *props);
+int ossl_provider_set_cleanup_hook(OSSL_PROVIDER *prov,
+                                   void (*function)(const OSSL_CORE_HANDLE
+                                                    *handle));
 
 /* Disable fallback loading */
 int ossl_provider_disable_fallback_loading(OSSL_LIB_CTX *libctx);

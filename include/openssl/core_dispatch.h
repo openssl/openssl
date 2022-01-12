@@ -104,6 +104,11 @@ OSSL_CORE_MAKE_FUNC(int, core_obj_create,
                     (const OSSL_CORE_HANDLE *prov, const char *oid,
                      const char *sn, const char *ln))
 
+#define OSSL_FUNC_CORE_HOOK_CLEANUP           13
+OSSL_CORE_MAKE_FUNC(int, core_hook_cleanup,
+                    (const OSSL_CORE_HANDLE *prov,
+                     void (*function)(const OSSL_CORE_HANDLE *handle)))
+
 /* Memory allocation, freeing, clearing. */
 #define OSSL_FUNC_CRYPTO_MALLOC               20
 OSSL_CORE_MAKE_FUNC(void *,

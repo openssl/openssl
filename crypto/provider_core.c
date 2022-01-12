@@ -195,6 +195,9 @@ struct ossl_provider_st {
     /* Provider side data */
     void *provctx;
     const OSSL_DISPATCH *dispatch;
+
+    /* Provider cleanup hook */
+    void (*cleanup_function)(const OSSL_CORE_HANDLE *handle);
 };
 DEFINE_STACK_OF(OSSL_PROVIDER)
 
@@ -685,6 +688,8 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
         if (ref == 0) {
             if (prov->flag_initialized) {
                 ossl_provider_teardown(prov);
+                if (prov->cleanup_function != NULL)
+                    prov->cleanup_function((OSSL_CORE_HANDLE *)prov);
 #ifndef OPENSSL_NO_ERR
 # ifndef FIPS_MODULE
                 if (prov->error_strings != NULL) {
@@ -778,6 +783,14 @@ int ossl_provider_info_add_parameter(OSSL_PROVIDER_INFO *provinfo,
                                      const char *value)
 {
     return infopair_add(&provinfo->parameters, name, value);
+}
+
+int ossl_provider_set_cleanup_hook(OSSL_PROVIDER *prov,
+                                   void (*function)(const OSSL_CORE_HANDLE
+                                                    *handle))
+{
+    prov->cleanup_function = function;
+    return 1;
 }
 
 /*
@@ -2058,6 +2071,19 @@ static int core_provider_free_intern(const OSSL_CORE_HANDLE *prov,
     return provider_free_intern((OSSL_PROVIDER *)prov, deactivate);
 }
 
+static int core_hook_cleanup(const OSSL_CORE_HANDLE *handle,
+                             void (*cleanup_function)(const OSSL_CORE_HANDLE
+                                                      *handle))
+{
+    /*
+     * We created this object originally and we know it is actually an
+     * OSSL_PROVIDER *, so the cast is safe
+     */
+    OSSL_PROVIDER *prov = (OSSL_PROVIDER *)handle;
+
+    return ossl_provider_set_cleanup_hook(prov, cleanup_function);
+}
+
 static int core_obj_add_sigid(const OSSL_CORE_HANDLE *prov,
                               const char *sign_name, const char *digest_name,
                               const char *pkey_name)
@@ -2111,6 +2137,7 @@ static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_CORE_CLEAR_LAST_ERROR_MARK,
       (void (*)(void))core_clear_last_error_mark },
     { OSSL_FUNC_CORE_POP_ERROR_TO_MARK, (void (*)(void))core_pop_error_to_mark },
+    { OSSL_FUNC_CORE_HOOK_CLEANUP, (void (*)(void))core_hook_cleanup },
     { OSSL_FUNC_BIO_NEW_FILE, (void (*)(void))ossl_core_bio_new_file },
     { OSSL_FUNC_BIO_NEW_MEMBUF, (void (*)(void))ossl_core_bio_new_mem_buf },
     { OSSL_FUNC_BIO_READ_EX, (void (*)(void))ossl_core_bio_read_ex },
