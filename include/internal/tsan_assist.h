@@ -125,7 +125,13 @@
 
 #ifndef TSAN_QUALIFIER
 
-# define TSAN_QUALIFIER volatile
+# ifdef OPENSSL_THREADS
+#  define TSAN_QUALIFIER volatile
+#  define TSAN_REQUIRES_LOCKING
+# else  /* OPENSSL_THREADS */
+#  define TSAN_QUALIFIER
+# endif /* OPENSSL_THREADS */
+
 # define tsan_load(ptr) (*(ptr))
 # define tsan_store(ptr, val) (*(ptr) = (val))
 # define tsan_add(ptr, n) (*(ptr) += (n))
