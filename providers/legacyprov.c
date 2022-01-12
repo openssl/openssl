@@ -205,6 +205,16 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
 #ifndef STATIC_LEGACY
     const OSSL_DISPATCH *tmp;
 #endif
+    OPENSSL_INIT_SETTINGS *settings = NULL;
+
+    if ((settings = OPENSSL_INIT_new()) == NULL
+        || !OPENSSL_INIT_set_upcalls(settings, handle, in)
+        || !OPENSSL_init_crypto(OPENSSL_INIT_PROVIDER, settings)) {
+        OPENSSL_INIT_free(settings);
+        return 0;
+    }
+    OPENSSL_INIT_free(settings);
+
 
 #ifndef STATIC_LEGACY
     for (tmp = in; tmp->function_id != 0; tmp++) {
