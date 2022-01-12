@@ -837,6 +837,10 @@ PROV_DRBG *ossl_rand_drbg_new
             goto err;
         }
     }
+#ifdef TSAN_REQUIRES_LOCKING
+    if (!ossl_drbg_enable_locking(drbg))
+        goto err;
+#endif
     return drbg;
 
  err:
