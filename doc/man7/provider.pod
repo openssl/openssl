@@ -72,6 +72,39 @@ the provider.
 Note that the provider will not be made available for applications to use until
 the initialization function has completed and returned successfully.
 
+I<< If the provider is a shared module and uses F<libcrypto> functions,
+it is B<strongly> recommended that the initialization function initialises
+F<libcrypto> appropriately, by including the following lines as early as
+possible: >>
+
+ if ((settings = OPENSSL_INIT_new()) == NULL
+     || !OPENSSL_INIT_set_upcalls(settings, handle, in)
+     || !OPENSSL_init_crypto(OPENSSL_INIT_PROVIDER, settings)) {
+     OPENSSL_INIT_free(settings);
+     return 0;
+ }
+ OPENSSL_INIT_free(settings);
+
+Those lines can be in providers that are statically linked into the application
+as well.  They are not necessary in that case, but are harmless, so they can be
+used unconditionally in source code that is used equally for providers that are
+made into dynamically loadable modules and for providers that are built into the
+application.
+
+=begin comment
+
+Those lines are harmless in providers that are built into libcrypto as well,
+such as the base and default providers.  However, since those are never built
+as dynamically loadable modules, we simply don't include those lines on those
+providers.
+
+Those lines aren't used in the FIPS provider module either.  That provider is
+rather special, as it uses select libcrypto source files rather than linking
+with, and doesn't include the OPENSSL_init_crypto source at all, so it's assumed
+that it has every in control in a different manner.
+
+=end comment
+
 One of the functions the provider offers to the OpenSSL libraries is
 the central mechanism for the OpenSSL libraries to get access to
 operation implementations for diverse algorithms.

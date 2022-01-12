@@ -19,9 +19,20 @@
      CONF_MFLAGS_IGNORE_RETURN_CODES)
 
 struct ossl_init_settings_st {
+    /*
+     * config(5) elements, only used when  OPENSSL_init_crypto() is called
+     * with the option OPENSSL_INIT_LOAD_CONFIG
+     */
     char *filename;
     char *appname;
     unsigned long flags;
+
+    /*
+     * Provider elements, only used when OPENSSL_init_crypto() is called
+     * with the option OPENSSL_INIT_PROVIDER.
+     */
+    const OSSL_DISPATCH *upcalls;
+    const OSSL_CORE_HANDLE *handle;
 };
 
 int ossl_config_int(const OPENSSL_INIT_SETTINGS *);

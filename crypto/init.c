@@ -86,12 +86,141 @@ err:
     return 0;
 }
 
+/*
+ * Store of provider handles for which there OPENSSL_cleanup() is set up as
+ * and exit function.  The handle NULL represents the application.
+ *
+ * This allows several components (application and providers alike) to share
+ * the same instance of libcrypto, and to ensure that OPENSSL_cleanup() isn't
+ * called too early.
+ */
+static const OSSL_CORE_HANDLE **handles = NULL;
+static size_t handles_num = 0;
+
+static int ossl_init_register_cleanup(const OSSL_CORE_HANDLE *handle)
+{
+    size_t i;
+    int ret;
+
+    if (!CRYPTO_THREAD_write_lock(init_lock))
+        return -1;
+
+#ifdef OPENSSL_INIT_DEBUG
+    fprintf(stderr,
+            "OPENSSL_INIT: ossl_init_register_cleanup(handle = %p)\n",
+            (void *)handle);
+#endif
+
+    /*
+     * Check if this handle is already registered, as we only allow
+     * one entry each...  Finding one is success.
+     */
+    ret = (int)handles_num;
+    for (i = 0; i < handles_num; i++)
+        if (handles[i] == handle)
+            break;
+
+    if (i < handles_num)
+        goto end;
+
+    /*
+     * Allocate the handles array in chunks of 10 elements.
+     * Trust that the memory allocator doesn't actually reallocate
+     * when the size is unchanged.
+     */
+    handles = OPENSSL_realloc(handles, (handles_num / 10 + 1) * 10);
+    ret = 0;
+    if (handles != NULL) {
+        handles[handles_num++] = handle;
+        ret = (int)handles_num;
+    }
+
+ end:
+    CRYPTO_THREAD_unlock(init_lock);
+    return ret;
+}
+
+static int ossl_init_unregister_cleanup(const OSSL_CORE_HANDLE *handle)
+{
+    size_t i;
+    int ret;
+
+    if (!CRYPTO_THREAD_write_lock(init_lock))
+        return -1;
+
+#ifdef OPENSSL_INIT_DEBUG
+    fprintf(stderr,
+            "OPENSSL_INIT: ossl_init_unregister_cleanup(handle = %p)\n",
+            (void *)handle);
+#endif
+
+    for (i = 0; i < handles_num; i++)
+        if (handles[i] == handle)
+            break;
+
+    if (i < handles_num) {
+        for (; i + 1 < handles_num; i++)
+            handles[i] = handles[i + 1];
+        handles_num--;
+    }
+    ret = (int)handles_num;
+
+    if (handles_num == NULL) {
+        OPENSSL_free(handles);
+        handles = NULL;
+    }
+
+    CRYPTO_THREAD_unlock(init_lock);
+    return ret;
+}
+
+/*
+ * Standard cleanup gateway function, which is passed a handle to
+ * unregister.
+ * When there are no more registered handles, OPENSSL_cleanup() is called.
+ */
+static void ossl_init_do_cleanup(const OSSL_CORE_HANDLE *handle)
+{
+    int n;
+
+#ifdef OPENSSL_INIT_DEBUG
+    fprintf(stderr, "OPENSSL_INIT: ossl_init_do_cleanup(handle = %p)\n",
+            (void *)handle);
+#endif
+
+    n = ossl_init_unregister_cleanup(handle);
+
+    /* If this was the last handle, we run the cleanup function */
+    if (n == 0) {
+#ifdef OPENSSL_INIT_DEBUG
+        fprintf(stderr,
+                "OPENSSL_INIT: ossl_init_do_cleanup(handle = %p)"
+                ": running OPENSSL_cleanup()\n",
+                (void *)handle);
+#endif
+        OPENSSL_cleanup();
+    }
+}
+
 static CRYPTO_ONCE register_atexit = CRYPTO_ONCE_STATIC_INIT;
 #if !defined(OPENSSL_SYS_UEFI) && defined(_WIN32)
 static int win32atexit(void)
 {
+# ifdef OPENSSL_INIT_DEBUG
+    fprintf(stderr,
+            "OPENSSL_INIT: win32atexit(): running OPENSSL_cleanup()\n");
+# endif
     OPENSSL_cleanup();
     return 0;
+}
+#else
+static void stdatexit(void)
+{
+# ifdef OPENSSL_INIT_DEBUG
+    fprintf(stderr,
+            "OPENSSL_INIT: stdatexit(): running OPENSSL_cleanup()\n");
+# endif
+    OPENSSL_cleanup();
 }
 #endif
 
@@ -106,11 +235,25 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_register_atexit)
     if (_onexit(win32atexit) == NULL)
         return 0;
 # else
-    if (atexit(OPENSSL_cleanup) != 0)
+    if (atexit(stdatexit) != 0)
         return 0;
 # endif
 #endif
 
+    return 1;
+}
+
+/*
+ * This is essentially the same as ossl_init_no_register_atexit(),
+ * the only difference being the debug message.
+ */
+DEFINE_RUN_ONCE_STATIC_ALT(ossl_init_register_provider_atexit,
+                           ossl_init_register_atexit)
+{
+#ifdef OPENSSL_INIT_DEBUG
+    fprintf(stderr, "OPENSSL_INIT: ossl_init_register_provider_atexit()\n");
+#endif
+    /* Do nothing in this case */
     return 1;
 }
 
@@ -121,6 +264,17 @@ DEFINE_RUN_ONCE_STATIC_ALT(ossl_init_no_register_atexit,
     fprintf(stderr, "OPENSSL_INIT: ossl_init_no_register_atexit ok!\n");
 #endif
     /* Do nothing in this case */
+    return 1;
+}
+
+int OPENSSL_INIT_set_upcalls(OPENSSL_INIT_SETTINGS *settings,
+                             const OSSL_CORE_HANDLE *handle,
+                             const OSSL_DISPATCH *upcalls)
+{
+    if (settings == NULL)
+        return 0;
+    settings->upcalls = upcalls;
+    settings->handle = handle;
     return 1;
 }
 
@@ -343,6 +497,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_engine_afalg)
 
 void OPENSSL_cleanup(void)
 {
+    int n;
     OPENSSL_INIT_STOP *currhandler, *lasthandler;
 
     /*
@@ -376,8 +531,6 @@ void OPENSSL_cleanup(void)
 
     CRYPTO_THREAD_lock_free(optsdone_lock);
     optsdone_lock = NULL;
-    CRYPTO_THREAD_lock_free(init_lock);
-    init_lock = NULL;
 
     CRYPTO_THREAD_cleanup_local(&in_init_config_local);
 
@@ -455,6 +608,18 @@ void OPENSSL_cleanup(void)
     OSSL_TRACE(INIT, "OPENSSL_cleanup: ossl_trace_cleanup()\n");
     ossl_trace_cleanup();
 
+    /*
+     * Ensure that the provider handle register is empty.  All other
+     * handles should have been removed by now, but the one representing
+     * the application is not, so it gets removed now to avoid causing a
+     * small memory leak.
+     */
+    n = ossl_init_unregister_cleanup(NULL);
+    /* What to do if n != 0 ? */
+
+    CRYPTO_THREAD_lock_free(init_lock);
+    init_lock = NULL;
+
     base_inited = 0;
 }
 
@@ -529,15 +694,66 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
     /*
      * Now we don't always set up exit handlers, the INIT_BASE_ONLY calls
      * should not have the side-effect of setting up exit handlers, and
-     * therefore, this code block is below the INIT_BASE_ONLY-conditioned early
-     * return above.
+     * therefore, this code block is below the INIT_BASE_ONLY-conditioned
+     * early return above.
+     *
+     * The OPENSSL_INIT_PROVIDER option is used by providers that are
+     * linked with libcrypto, to enable a functionality similar to doing
+     * atexit(OPENSSL_cleanup), but without actually doing it with atexit().
+     * We do this by using the upcall OSSL_FUNC_core_hook_cleanup(), which
+     * will cause the OPENSSL_cleanup() to be called when the provider is
+     * torn down.
+     * Care is taken to handle the case where libcrypto is shared by multiple
+     * providers, by registering the provider handle.  When the cleanup
+     * function is called, that same handle is unregistered, when when the
+     * register is empty, OPENSSL_cleanup() is called.
+     * Care is also taken to handle the case where the libcrypto that the
+     * provider is linked with is shared with the calling application, by
+     * registering a "provider handle" for it, namely NULL, which ensures
+     * that provider tear down will not cause an OPENSSL_cleanup() call,
+     * and leave it to the OPENSSL_cleanup() call which has been registered
+     * through atexit(), or that the application does explicitly.
      */
     if ((opts & OPENSSL_INIT_NO_ATEXIT) != 0) {
         if (!RUN_ONCE_ALT(&register_atexit, ossl_init_no_register_atexit,
                           ossl_init_register_atexit))
             return 0;
-    } else if (!RUN_ONCE(&register_atexit, ossl_init_register_atexit)) {
-        return 0;
+    } else if ((opts & OPENSSL_INIT_PROVIDER) != 0) {
+        int ret;
+        int (*c_hook_cleanup)(const OSSL_CORE_HANDLE *handle,
+                              void (*cleanup_function)(const OSSL_CORE_HANDLE
+                                                       *handle))
+            = NULL;
+        const OSSL_DISPATCH *upcalls = settings->upcalls;
+
+        /* Settings MUST be given, and the upcalls field MUST be set */
+        if (settings == NULL
+            || settings->upcalls == NULL
+            || settings->handle == NULL)
+            return 0;
+        ret = RUN_ONCE_ALT(&register_atexit,
+                           ossl_init_register_provider_atexit,
+                           ossl_init_register_atexit);
+
+        if (ret <= 0)
+            return 0;
+
+        for (upcalls = settings->upcalls; upcalls->function_id != 0; upcalls++) {
+            switch (upcalls->function_id) {
+            case OSSL_FUNC_CORE_HOOK_CLEANUP:
+                c_hook_cleanup = OSSL_FUNC_core_hook_cleanup(upcalls);
+                break;
+            }
+        }
+
+        if (c_hook_cleanup == NULL
+            || !c_hook_cleanup(settings->handle, ossl_init_do_cleanup))
+            return 0;
+        ossl_init_register_cleanup(settings->handle);
+    } else {
+        if (!RUN_ONCE(&register_atexit, ossl_init_register_atexit))
+            return 0;
+        ossl_init_register_cleanup(NULL);
     }
 
     if (!RUN_ONCE(&load_crypto_nodelete, ossl_init_load_crypto_nodelete))

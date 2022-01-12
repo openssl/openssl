@@ -5506,3 +5506,4 @@ OSSL_HPKE_CTX_get_seq                   ?	3_2_0	EXIST::FUNCTION:
 OSSL_HPKE_CTX_set_seq                   ?	3_2_0	EXIST::FUNCTION:
 OSSL_HPKE_get_recommended_ikmelen       ?	3_2_0	EXIST::FUNCTION:
 OSSL_PROVIDER_get0_default_search_path  ?	3_2_0	EXIST::FUNCTION:
+OPENSSL_INIT_set_upcalls                ?	3_1_0	EXIST::FUNCTION:

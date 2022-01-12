@@ -438,7 +438,7 @@ int CRYPTO_memcmp(const void * in_a, const void * in_b, size_t len);
 # define OPENSSL_INIT_ENGINE_CAPI            0x00002000L
 # define OPENSSL_INIT_ENGINE_PADLOCK         0x00004000L
 # define OPENSSL_INIT_ENGINE_AFALG           0x00008000L
-/* FREE:                                     0x00010000L */
+# define OPENSSL_INIT_PROVIDER               0x00010000L
 # define OPENSSL_INIT_ATFORK                 0x00020000L
 /* OPENSSL_INIT_BASE_ONLY                    0x00040000L */
 # define OPENSSL_INIT_NO_ATEXIT              0x00080000L
@@ -474,6 +474,9 @@ void OPENSSL_INIT_set_config_file_flags(OPENSSL_INIT_SETTINGS *settings,
 int OPENSSL_INIT_set_config_appname(OPENSSL_INIT_SETTINGS *settings,
                                     const char *config_appname);
 # endif
+int OPENSSL_INIT_set_upcalls(OPENSSL_INIT_SETTINGS *settings,
+                             const OSSL_CORE_HANDLE *handle,
+                             const OSSL_DISPATCH *upcalls);
 void OPENSSL_INIT_free(OPENSSL_INIT_SETTINGS *settings);
 
 # if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)

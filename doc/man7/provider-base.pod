@@ -31,6 +31,9 @@ provider-base
  void core_vset_error(const OSSL_CORE_HANDLE *handle,
                       uint32_t reason, const char *fmt, va_list args);
 
+ int core_hook_cleanup(const OSSL_CORE_HANDLE *prov,
+                       void (*function)(const OSSL_CORE_HANDLE *handle));
+
  int core_obj_add_sigid(const OSSL_CORE_HANDLE *prov, const char  *sign_name,
                         const char *digest_name, const char *pkey_name);
  int core_obj_create(const OSSL_CORE_HANDLE *handle, const char *oid,
@@ -144,6 +147,7 @@ provider):
  core_new_error                 OSSL_FUNC_CORE_NEW_ERROR
  core_set_error_debug           OSSL_FUNC_CORE_SET_ERROR_DEBUG
  core_vset_error                OSSL_FUNC_CORE_VSET_ERROR
+ core_hook_cleanup              OSSL_FUNC_CORE_HOOK_CLEANUP
  core_obj_add_sigid             OSSL_FUNC_CORE_OBJ_ADD_SIGID
  core_obj_create                OSSL_FUNC_CORE_OBJ_CREATE
  CRYPTO_malloc                  OSSL_FUNC_CRYPTO_MALLOC
@@ -257,6 +261,11 @@ error occurred or was reported.
 This corresponds to the OpenSSL function L<ERR_vset_error(3)>.
 
 =back
+
+core_hook_cleanup() is used to hook libcrypto cleanup functionality to the
+provider tear down.
+The is used by the call C<OPENSSL_init_crypto(OPENSSL_INIT_PROVIDER, ...)>,
+see the documentation of B<OPENSSL_INIT_PROVIDER> in L<OPENSSL_init_crypto(3)>.
 
 The core_obj_create() function registers a new OID and associated short name
 I<sn> and long name I<ln> for the given I<handle>. It is similar to the OpenSSL

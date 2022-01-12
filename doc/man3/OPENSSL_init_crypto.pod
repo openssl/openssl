@@ -4,7 +4,8 @@
 
 OPENSSL_INIT_new, OPENSSL_INIT_set_config_filename,
 OPENSSL_INIT_set_config_appname, OPENSSL_INIT_set_config_file_flags,
-OPENSSL_INIT_free, OPENSSL_init_crypto, OPENSSL_cleanup, OPENSSL_atexit,
+OPENSSL_INIT_set_upcalls, OPENSSL_INIT_free,
+OPENSSL_init_crypto, OPENSSL_cleanup, OPENSSL_atexit,
 OPENSSL_thread_stop_ex, OPENSSL_thread_stop - OpenSSL initialisation
 and deinitialisation functions
 
@@ -25,6 +26,9 @@ and deinitialisation functions
                                         unsigned long flags);
  int OPENSSL_INIT_set_config_appname(OPENSSL_INIT_SETTINGS *init,
                                      const char* name);
+ int OPENSSL_INIT_set_upcalls(OPENSSL_INIT_SETTINGS *settings,
+                              const OSSL_CORE_HANDLE *handle,
+                              const OSSL_DISPATCH *upcalls)
  void OPENSSL_INIT_free(OPENSSL_INIT_SETTINGS *init);
 
 =head1 DESCRIPTION
@@ -180,6 +184,25 @@ By default OpenSSL will attempt to clean itself up when the process exits via an
 the application will have to clean up OpenSSL explicitly using
 OPENSSL_cleanup().
 
+=item OPENSSL_INIT_PROVIDER
+
+For providers that are linked with libcrypto, using this option ensures that
+proper libcrypto cleanup is done when the provider is torn down.
+
+This option requires an B<OPENSSL_INIT_SETTINGS> object that has been populated
+using OPENSSL_INIT_set_upcalls(), given the provider's B<OSSL_CORE_HANDLE> and
+input B<OSSL_DISPATCH>.  A typical call would look like this:
+
+ OPENSSL_INIT_SETTINGS *settings = NULL;
+
+ if ((settings = OPENSSL_INIT_new()) == NULL
+     || !OPENSSL_INIT_set_upcalls(settings, handle, in)
+     || !OPENSSL_init_crypto(OPENSSL_INIT_PROVIDER, settings)) {
+     OPENSSL_INIT_free(settings);
+     return 0;
+ }
+ OPENSSL_INIT_free(settings);
+
 =back
 
 Multiple options may be combined together in a single call to
@@ -244,7 +267,7 @@ The B<OPENSSL_INIT_set_config_filename()> function can be used to specify a
 nondefault filename, which is copied and need not refer to persistent storage.
 Similarly, OPENSSL_INIT_set_config_appname() can be used to specify a
 nondefault application name.
-Finally, OPENSSL_INIT_set_file_flags can be used to specify nondefault flags.
+Finally, OPENSSL_INIT_set_file_flags() can be used to specify nondefault flags.
 If the B<CONF_MFLAGS_IGNORE_RETURN_CODES> flag is not included, any errors in
 the configuration file will cause an error return from B<OPENSSL_init_crypto>
 or indirectly L<OPENSSL_init_ssl(3)>.
