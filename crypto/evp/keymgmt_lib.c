@@ -370,7 +370,7 @@ int evp_keymgmt_util_match(EVP_PKEY *pk1, EVP_PKEY *pk2, int selection)
          * but also to determine if we should attempt a cross export
          * the other way.  There's no point doing it both ways.
          */
-        int ok = 1;
+        int ok = 0;
 
         /* Complex case, where the keymgmt differ */
         if (keymgmt1 != NULL
