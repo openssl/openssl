@@ -546,7 +546,7 @@ const unsigned char *EVP_CIPHER_CTX_original_iv(const EVP_CIPHER_CTX *ctx)
                                        (void **)&v, sizeof(ctx->oiv));
     ok = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->algctx, params);
 
-    return ok != 0 ? v : NULL;
+    return ok > 0 ? v : NULL;
 }
 
 /*
@@ -563,7 +563,7 @@ const unsigned char *EVP_CIPHER_CTX_iv(const EVP_CIPHER_CTX *ctx)
                                        (void **)&v, sizeof(ctx->iv));
     ok = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->algctx, params);
 
-    return ok != 0 ? v : NULL;
+    return ok > 0 ? v : NULL;
 }
 
 unsigned char *EVP_CIPHER_CTX_iv_noconst(EVP_CIPHER_CTX *ctx)
@@ -577,7 +577,7 @@ unsigned char *EVP_CIPHER_CTX_iv_noconst(EVP_CIPHER_CTX *ctx)
                                        (void **)&v, sizeof(ctx->iv));
     ok = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->algctx, params);
 
-    return ok != 0 ? v : NULL;
+    return ok > 0 ? v : NULL;
 }
 #endif /* OPENSSL_NO_DEPRECATED_3_0_0 */
 
@@ -613,7 +613,7 @@ int EVP_CIPHER_CTX_get_num(const EVP_CIPHER_CTX *ctx)
     params[0] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_NUM, &v);
     ok = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->algctx, params);
 
-    return ok != 0 ? (int)v : EVP_CTRL_RET_UNSUPPORTED;
+    return ok > 0 ? (int)v : EVP_CTRL_RET_UNSUPPORTED;
 }
 
 int EVP_CIPHER_CTX_set_num(EVP_CIPHER_CTX *ctx, int num)
@@ -625,9 +625,9 @@ int EVP_CIPHER_CTX_set_num(EVP_CIPHER_CTX *ctx, int num)
     params[0] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_NUM, &n);
     ok = evp_do_ciph_ctx_setparams(ctx->cipher, ctx->algctx, params);
 
-    if (ok != 0)
+    if (ok > 0)
         ctx->num = (int)n;
-    return ok != 0;
+    return ok > 0;
 }
 
 int EVP_CIPHER_get_key_length(const EVP_CIPHER *cipher)
@@ -644,7 +644,7 @@ int EVP_CIPHER_CTX_get_key_length(const EVP_CIPHER_CTX *ctx)
     params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_KEYLEN, &v);
     ok = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->algctx, params);
 
-    return ok != 0 ? (int)v : EVP_CTRL_RET_UNSUPPORTED;
+    return ok > 0 ? (int)v : EVP_CTRL_RET_UNSUPPORTED;
 }
 
 int EVP_CIPHER_get_nid(const EVP_CIPHER *cipher)
