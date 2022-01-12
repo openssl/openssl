@@ -41,4 +41,7 @@ struct lhash_st {
     TSAN_QUALIFIER unsigned long num_retrieve_miss;
     TSAN_QUALIFIER unsigned long num_hash_comps;
     int error;
+#ifdef TSAN_REQUIRES_LOCKING
+    CRYPTO_RWLOCK *tsan_lock;
+#endif
 };
