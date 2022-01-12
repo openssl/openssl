@@ -122,7 +122,7 @@ static int count_unprocessed_records(SSL *s)
             return -1;
 
         /* Read until next record */
-        if (PACKET_get_length_prefixed_2(&pkt, &subpkt))
+        if (!PACKET_get_length_prefixed_2(&pkt, &subpkt))
             return -1;
 
         count += 1;
