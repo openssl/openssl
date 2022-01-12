@@ -213,14 +213,7 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
          * multiple versions of libcrypto (e.g. one static and one dynamic),
          * but sharing a single legacy.so. We do a simple sanity check here.
          */
-#define set_func(c, f)                          \
-        if (c == NULL)                          \
-            c = f;                              \
-        else                                    \
-            if (c != f) {                       \
-                fprintf(stderr, "FOO" #f);      \
-                return 0;                       \
-            }
+#define set_func(c, f) if (c == NULL) c = f; else if (c != f) return 0;
         switch (tmp->function_id) {
         case OSSL_FUNC_CORE_NEW_ERROR:
             set_func(c_new_error, OSSL_FUNC_core_new_error(tmp));
