@@ -696,10 +696,13 @@ int load_cert_certs(const char *uri,
     if (ret) {
         if (pcert != NULL)
             warn_cert(uri, *pcert, 0, vpm);
-        warn_certs(uri, *pcerts, 1, vpm);
+        if (pcerts != NULL)
+            warn_certs(uri, *pcerts, 1, vpm);
     } else {
-        sk_X509_pop_free(*pcerts, X509_free);
-        *pcerts = NULL;
+        if (pcerts != NULL) {
+            sk_X509_pop_free(*pcerts, X509_free);
+            *pcerts = NULL;
+        }
     }
     return ret;
 }
