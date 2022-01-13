@@ -119,6 +119,10 @@ OpenSSL 4.0
 
    *David von Oheimb*
 
+* `X509_ALGOR_set_md()` now returns a value indicating success or failure.
+
+   *David von Oheimb*
+
  * Drop darwin-i386{,-cc} and darwin-ppc{,64}{,-cc} targets from Configurations.
 
    *Daniel Kubec and Eugene Syromiatnikov*
