@@ -175,18 +175,19 @@ int tls_setup_handshake(SSL *s)
         }
         if (SSL_IS_FIRST_HANDSHAKE(s)) {
             /* N.B. s->session_ctx == s->ctx here */
-            tsan_counter(&s->session_ctx->stats.sess_accept);
+            ssl_tsan_counter(s->session_ctx, &s->session_ctx->stats.sess_accept);
         } else {
             /* N.B. s->ctx may not equal s->session_ctx */
-            tsan_counter(&s->ctx->stats.sess_accept_renegotiate);
+            ssl_tsan_counter(s->ctx, &s->ctx->stats.sess_accept_renegotiate);
 
             s->s3.tmp.cert_request = 0;
         }
     } else {
         if (SSL_IS_FIRST_HANDSHAKE(s))
-            tsan_counter(&s->session_ctx->stats.sess_connect);
+            ssl_tsan_counter(s->session_ctx, &s->session_ctx->stats.sess_connect);
         else
-            tsan_counter(&s->session_ctx->stats.sess_connect_renegotiate);
+            ssl_tsan_counter(s->session_ctx,
+                         &s->session_ctx->stats.sess_connect_renegotiate);
 
         /* mark client_random uninitialized */
         memset(s->s3.client_random, 0, sizeof(s->s3.client_random));
@@ -1096,7 +1097,7 @@ WORK_STATE tls_finish_handshake(SSL *s, ossl_unused WORK_STATE wst,
                 ssl_update_cache(s, SSL_SESS_CACHE_SERVER);
 
             /* N.B. s->ctx may not equal s->session_ctx */
-            tsan_counter(&s->ctx->stats.sess_accept_good);
+            ssl_tsan_counter(s->ctx, &s->ctx->stats.sess_accept_good);
             s->handshake_func = ossl_statem_accept;
         } else {
             if (SSL_IS_TLS13(s)) {
@@ -1115,10 +1116,12 @@ WORK_STATE tls_finish_handshake(SSL *s, ossl_unused WORK_STATE wst,
                 ssl_update_cache(s, SSL_SESS_CACHE_CLIENT);
             }
             if (s->hit)
-                tsan_counter(&s->session_ctx->stats.sess_hit);
+                ssl_tsan_counter(s->session_ctx,
+                                 &s->session_ctx->stats.sess_hit);
 
             s->handshake_func = ossl_statem_connect;
-            tsan_counter(&s->session_ctx->stats.sess_connect_good);
+            ssl_tsan_counter(s->session_ctx,
+                             &s->session_ctx->stats.sess_connect_good);
         }
 
         if (SSL_IS_DTLS(s)) {
