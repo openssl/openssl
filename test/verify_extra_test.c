@@ -239,27 +239,33 @@ static int test_purpose(int purpose, int expected)
         goto err;
 
 
-    if (!TEST_true(sk_X509_push(trusted, trcert))
-            || !TEST_true(sk_X509_push(untrusted, untrcert)))
+    if (!TEST_true(sk_X509_push(trusted, trcert)))
         goto err;
+    trcert = NULL;
+    if (!TEST_true(sk_X509_push(untrusted, untrcert)))
+        goto err;
+    untrcert = NULL;
 
     if (!TEST_true(X509_STORE_CTX_init(ctx, NULL, eecert, untrusted)))
         goto err;
-    untrusted = NULL;
 
     if (!TEST_true(X509_STORE_CTX_set_purpose(ctx, purpose)))
         goto err;
 
+    /*
+     * X509_STORE_CTX_set0_trusted_stack() is bady named. Despite the set0 name
+     * we are still responsible for freeing trusted after we have finished with
+     * it.
+     */
     X509_STORE_CTX_set0_trusted_stack(ctx, trusted);
-    trusted = NULL;
 
     if (!TEST_int_eq(X509_verify_cert(ctx), expected))
         goto err;
 
     testresult = 1;
  err:
-    sk_X509_pop_free(trusted, X509_free);
-    sk_X509_pop_free(untrusted, X509_free);
+    OSSL_STACK_OF_X509_free(trusted);
+    OSSL_STACK_OF_X509_free(untrusted);
     X509_STORE_CTX_free(ctx);
     X509_free(eecert);
     X509_free(untrcert);
