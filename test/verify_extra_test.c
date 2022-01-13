@@ -12,6 +12,7 @@
 #include <openssl/crypto.h>
 #include <openssl/bio.h>
 #include <openssl/x509.h>
+#include <openssl/x509v3.h>
 #include <openssl/pem.h>
 #include <openssl/err.h>
 #include "testutil.h"
@@ -280,7 +281,6 @@ static int test_purpose_any(void)
 {
     return test_purpose(X509_PURPOSE_ANY, 1);
 }
-
 
 OPT_TEST_DECLARE_USAGE("certs-dir\n")
 
