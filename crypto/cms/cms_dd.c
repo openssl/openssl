@@ -39,7 +39,8 @@ CMS_ContentInfo *ossl_cms_DigestedData_create(const EVP_MD *md,
     dd->version = 0;
     dd->encapContentInfo->eContentType = OBJ_nid2obj(NID_pkcs7_data);
 
-    X509_ALGOR_set_md(dd->digestAlgorithm, md);
+    if (!X509_ALGOR_set_md(dd->digestAlgorithm, md))
+        goto err;
 
     return cms;
 
