@@ -898,6 +898,9 @@ struct ssl_ctx_st {
                                                 * other processes - spooky
                                                 * :-) */
     } stats;
+#ifdef TSAN_REQUIRES_LOCKING
+    CRYPTO_RWLOCK *tsan_lock;
+#endif
 
     CRYPTO_REF_COUNT references;
 
@@ -2852,4 +2855,31 @@ void ssl_session_calculate_timeout(SSL_SESSION* ss);
 #  define ssl3_setup_buffers SSL_test_functions()->p_ssl3_setup_buffers
 
 # endif
+
+/* Some helper routines to support TSAN operations safely */
+static ossl_unused ossl_inline int ssl_tsan_lock(const SSL_CTX *ctx)
+{
+#ifdef TSAN_REQUIRES_LOCKING
+    if (!CRYPTO_THREAD_write_lock(ctx->tsan_lock))
+        return 0;
+#endif
+    return 1;
+}
+
+static ossl_unused ossl_inline void ssl_tsan_unlock(const SSL_CTX *ctx)
+{
+#ifdef TSAN_REQUIRES_LOCKING
+    CRYPTO_THREAD_unlock(ctx->tsan_lock);
+#endif
+}
+
+static ossl_unused ossl_inline void ssl_tsan_counter(const SSL_CTX *ctx,
+                                                     TSAN_QUALIFIER int *stat)
+{
+    if (ssl_tsan_lock(ctx)) {
+        tsan_counter(stat);
+        ssl_tsan_unlock(ctx);
+    }
+}
+
 #endif
