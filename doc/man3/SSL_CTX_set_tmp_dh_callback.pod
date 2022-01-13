@@ -11,7 +11,7 @@ SSL_set_tmp_dh_callback, SSL_set_tmp_dh
 
  #include <openssl/ssl.h>
 
- long SSL_CTX_set_dh_auto(SSL *s, int onoff);
+ long SSL_CTX_set_dh_auto(SSL_CTX *ctx, int onoff);
  long SSL_set_dh_auto(SSL *s, int onoff);
  int SSL_CTX_set0_tmp_dh_pkey(SSL_CTX *ctx, EVP_PKEY *dhpkey);
  int SSL_set0_tmp_dh_pkey(SSL *s, EVP_PKEY *dhpkey);
