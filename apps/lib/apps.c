@@ -691,10 +691,13 @@ int load_cert_certs(const char *uri,
     if (ret) {
         if (pcert != NULL)
             warn_cert(uri, *pcert, 0, vpm);
-        warn_certs(uri, *pcerts, 1, vpm);
+        if (pcerts != NULL)
+            warn_certs(uri, *pcerts, 1, vpm);
     } else {
-        OSSL_STACK_OF_X509_free(*pcerts);
-        *pcerts = NULL;
+        if (pcerts != NULL) {
+            OSSL_STACK_OF_X509_free(*pcerts);
+            *pcerts = NULL;
+        }
     }
     return ret;
 }
