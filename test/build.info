@@ -164,7 +164,11 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[evp_extra_test]=evp_extra_test.c
   INCLUDE[evp_extra_test]=../include ../apps/include
-  DEPEND[evp_extra_test]=../libcrypto.a libtestutil.a
+  IF[{- defined $target{shared_defflag} -}]
+    DEPEND[evp_extra_test]=-Wl,-E ../libcrypto.a libtestutil.a
+  ELSE
+    DEPEND[evp_extra_test]=../libcrypto.a libtestutil.a
+  ENDIF
 
   SOURCE[evp_extra_test2]=evp_extra_test2.c
   INCLUDE[evp_extra_test2]=../include ../apps/include
@@ -208,6 +212,11 @@ IF[{- !$disabled{tests} -}]
   SOURCE[provider_status_test]=provider_status_test.c
   INCLUDE[provider_status_test]=../include ../apps/include
   DEPEND[provider_status_test]=../libcrypto.a libtestutil.a
+  IF[{- defined $target{shared_defflag} -}]
+    DEPEND[provider_status_test]=-Wl,-E ../libcrypto.a libtestutil.a
+  ELSE
+    DEPEND[provider_status_test]=../libcrypto.a libtestutil.a
+  ENDIF
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=igetest bftest casttest
@@ -771,7 +780,11 @@ IF[{- !$disabled{tests} -}]
 
     SOURCE[ssl_old_test]=ssl_old_test.c helpers/predefined_dhparams.c
     INCLUDE[ssl_old_test]=.. ../include ../apps/include
-    DEPEND[ssl_old_test]=../libcrypto.a ../libssl.a libtestutil.a
+    IF[{- defined $target{shared_defflag} -}]
+      DEPEND[ssl_old_test]=-Wl,-E ../libcrypto.a ../libssl.a libtestutil.a
+    ELSE
+      DEPEND[ssl_old_test]=../libcrypto.a ../libssl.a libtestutil.a
+    ENDIF
 
     PROGRAMS{noinst}=algorithmid_test
     SOURCE[algorithmid_test]=algorithmid_test.c

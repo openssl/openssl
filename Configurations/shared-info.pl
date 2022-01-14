@@ -31,12 +31,7 @@ my %shared_info;
     'linux-shared' => sub {
         return {
             %{$shared_info{'gnu-shared'}},
-            shared_defflag    => '-Wl,--version-script=',
-            dso_ldflags       =>
-                (grep /(?:^|\s)-fsanitize/,
-                 @{$config{CFLAGS}}, @{$config{cflags}})
-                ? ''
-                : '-Wl,-z,defs',
+            shared_defflag    => '-Wl,--version-script='
         };
     },
     'bsd-gcc-shared' => sub { return $shared_info{'linux-shared'}; },
