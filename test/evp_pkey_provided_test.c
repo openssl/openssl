@@ -128,6 +128,16 @@ static int compare_with_file(const char *alg, int type, BIO *membio)
     return ret;
 }
 
+static int pass_cb(char *buf, int size, int rwflag, void *u)
+{
+    return 0;
+}
+
+static int pass_cb_error(char *buf, int size, int rwflag, void *u)
+{
+    return -1;
+}
+
 static int test_print_key_using_pem(const char *alg, const EVP_PKEY *pk)
 {
     BIO *membio = BIO_new(BIO_s_mem());
@@ -140,6 +150,21 @@ static int test_print_key_using_pem(const char *alg, const EVP_PKEY *pk)
         !TEST_true(PEM_write_bio_PrivateKey(bio_out, pk, EVP_aes_256_cbc(),
                                             (unsigned char *)"pass", 4,
                                             NULL, NULL))
+        /* Output zero-length passphrase encrypted private key in PEM form */
+        || !TEST_true(PEM_write_bio_PKCS8PrivateKey(bio_out, pk,
+                                                    EVP_aes_256_cbc(),
+                                                    (const char *)~0, 0,
+                                                    NULL, NULL))
+        || !TEST_true(PEM_write_bio_PKCS8PrivateKey(bio_out, pk,
+                                                    EVP_aes_256_cbc(),
+                                                    NULL, 0, NULL, ""))
+        || !TEST_true(PEM_write_bio_PKCS8PrivateKey(bio_out, pk,
+                                                    EVP_aes_256_cbc(),
+                                                    NULL, 0, pass_cb, NULL))
+        || !TEST_false(PEM_write_bio_PKCS8PrivateKey(bio_out, pk,
+                                                     EVP_aes_256_cbc(),
+                                                     NULL, 0, pass_cb_error,
+                                                     NULL))
         /* Private key in text form */
         || !TEST_int_gt(EVP_PKEY_print_private(membio, pk, 0, NULL), 0)
         || !TEST_true(compare_with_file(alg, PRIV_TEXT, membio))
