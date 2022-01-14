@@ -28,7 +28,7 @@ and deinitialisation functions
                                      const char* name);
  int OPENSSL_INIT_set_upcalls(OPENSSL_INIT_SETTINGS *settings,
                               const OSSL_CORE_HANDLE *handle,
-                              const OSSL_DISPATCH *upcalls)
+                              const OSSL_DISPATCH *upcalls);
  void OPENSSL_INIT_free(OPENSSL_INIT_SETTINGS *init);
 
 =head1 DESCRIPTION
