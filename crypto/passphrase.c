@@ -41,7 +41,8 @@ int ossl_pw_set_passphrase(struct ossl_passphrase_data_st *data,
     ossl_pw_clear_passphrase_data(data);
     data->type = is_expl_passphrase;
     data->_.expl_passphrase.passphrase_copy =
-        OPENSSL_memdup(passphrase, passphrase_len);
+        passphrase_len != 0 ? OPENSSL_memdup(passphrase, passphrase_len)
+                            : OPENSSL_malloc(1);
     if (data->_.expl_passphrase.passphrase_copy == NULL) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
         return 0;
