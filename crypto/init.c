@@ -165,7 +165,7 @@ static int ossl_init_unregister_cleanup(const OSSL_CORE_HANDLE *handle)
     }
     ret = (int)handles_num;
 
-    if (handles_num == NULL) {
+    if (handles_num == 0) {
         OPENSSL_free(handles);
         handles = NULL;
     }
@@ -497,7 +497,6 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_engine_afalg)
 
 void OPENSSL_cleanup(void)
 {
-    int n;
     OPENSSL_INIT_STOP *currhandler, *lasthandler;
 
     /*
@@ -614,8 +613,8 @@ void OPENSSL_cleanup(void)
      * the application is not, so it gets removed now to avoid causing a
      * small memory leak.
      */
-    n = ossl_init_unregister_cleanup(NULL);
-    /* What to do if n != 0 ? */
+    ossl_init_unregister_cleanup(NULL);
+    /* What to do if ossl_init_unregister_cleanup(NULL) != 0 ? */
 
     CRYPTO_THREAD_lock_free(init_lock);
     init_lock = NULL;
