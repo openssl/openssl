@@ -191,7 +191,7 @@ int ssl3_get_record(SSL *s)
 
     rr = RECORD_LAYER_get_rrec(&s->rlayer);
     rbuf = RECORD_LAYER_get_rbuf(&s->rlayer);
-    is_ktls_left = (rbuf->left > 0);
+    is_ktls_left = (SSL3_BUFFER_get_left(rbuf) > 0);
     max_recs = s->max_pipelines;
     if (max_recs == 0)
         max_recs = 1;
@@ -408,7 +408,11 @@ int ssl3_get_record(SSL *s)
                 len -= SSL3_RT_MAX_COMPRESSED_OVERHEAD;
 #endif
 
-            if (thisrr->length > len && !BIO_get_ktls_recv(s->rbio)) {
+            /* KTLS may use all of the buffer */
+            if (BIO_get_ktls_recv(s->rbio) && !is_ktls_left)
+                len = SSL3_BUFFER_get_left(rbuf);
+
+            if (thisrr->length > len) {
                 SSLfatal(s, SSL_AD_RECORD_OVERFLOW,
                          SSL_R_ENCRYPTED_LENGTH_TOO_LONG);
                 return -1;
@@ -711,16 +715,27 @@ int ssl3_get_record(SSL *s)
             goto end;
         }
 
+        /*
+         * Usually thisrr->length is the length of a single record, but when
+         * KTLS handles the decryption, thisrr->length may be larger than
+         * SSL3_RT_MAX_PLAIN_LENGTH because the kernel may have coalesced
+         * multiple records.
+         * Therefore we have to rely on KTLS to check the plaintext length
+         * limit in the kernel.
+         */
         if (thisrr->length > SSL3_RT_MAX_PLAIN_LENGTH
-            && !BIO_get_ktls_recv(s->rbio)) {
+                && (!BIO_get_ktls_recv(s->rbio) || is_ktls_left)) {
             SSLfatal(s, SSL_AD_RECORD_OVERFLOW, SSL_R_DATA_LENGTH_TOO_LONG);
             goto end;
         }
 
-        /* If received packet overflows current Max Fragment Length setting */
+        /*
+         * Check if the received packet overflows the current
+         * Max Fragment Length setting.
+         * Note: USE_MAX_FRAGMENT_LENGTH_EXT and KTLS are mutually exclusive.
+         */
         if (s->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(s->session)
-                && thisrr->length > GET_MAX_FRAGMENT_LENGTH(s->session)
-                && !BIO_get_ktls_recv(s->rbio)) {
+                && thisrr->length > GET_MAX_FRAGMENT_LENGTH(s->session)) {
             SSLfatal(s, SSL_AD_RECORD_OVERFLOW, SSL_R_DATA_LENGTH_TOO_LONG);
             goto end;
         }

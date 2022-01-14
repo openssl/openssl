@@ -711,6 +711,8 @@ static void sv_usage(void)
     fprintf(stderr, " -client_sess_in <file>     - Read the client session from a file\n");
     fprintf(stderr, " -should_reuse <number>     - The expected state of reusing the session\n");
     fprintf(stderr, " -no_ticket    - do not issue TLS session ticket\n");
+    fprintf(stderr, " -client_ktls  - try to enable client KTLS\n");
+    fprintf(stderr, " -server_ktls  - try to enable server KTLS\n");
     fprintf(stderr, " -provider <name>    - Load the given provider into the library context\n");
     fprintf(stderr, " -config <cnf>    - Load the given config file into the library context\n");
 }
@@ -883,6 +885,7 @@ int main(int argc, char *argv[])
     int number = 1, reuse = 0;
     int should_reuse = -1;
     int no_ticket = 0;
+    int client_ktls = 0, server_ktls = 0;
     long bytes = 256L;
 #ifndef OPENSSL_NO_DH
     EVP_PKEY *dhpkey;
@@ -1167,6 +1170,10 @@ int main(int argc, char *argv[])
             should_reuse = !!atoi(*(++argv));
         } else if (strcmp(*argv, "-no_ticket") == 0) {
             no_ticket = 1;
+        } else if (strcmp(*argv, "-client_ktls") == 0) {
+            client_ktls = 1;
+        } else if (strcmp(*argv, "-server_ktls") == 0) {
+            server_ktls = 1;
         } else if (strcmp(*argv, "-provider") == 0) {
             if (--argc < 1)
                 goto bad;
@@ -1724,6 +1731,10 @@ int main(int argc, char *argv[])
 
     if (sn_client)
         SSL_set_tlsext_host_name(c_ssl, sn_client);
+    if (client_ktls)
+        SSL_set_options(c_ssl, SSL_OP_ENABLE_KTLS);
+    if (server_ktls)
+        SSL_set_options(s_ssl, SSL_OP_ENABLE_KTLS);
 
     if (!set_protocol_version(server_min_proto, s_ssl, SSL_CTRL_SET_MIN_PROTO_VERSION))
         goto end;

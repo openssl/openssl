@@ -346,11 +346,9 @@ sub testssl {
     }
 
 
-    # plan tests => 11;
-
     subtest 'standard SSL tests' => sub {
         ######################################################################
-        plan tests => 13;
+        plan tests => 19;
 
       SKIP: {
           skip "SSLv3 is not supported by this OpenSSL build", 4
@@ -378,7 +376,7 @@ sub testssl {
         }
 
       SKIP: {
-          skip "Neither SSLv3 nor any TLS version are supported by this OpenSSL build", 8
+          skip "Neither SSLv3 nor any TLS version are supported by this OpenSSL build", 14
               if $no_anytls;
 
         SKIP: {
@@ -406,17 +404,29 @@ sub testssl {
              'test sslv2/sslv3 with both client and server authentication via BIO pair and app verify');
 
         SKIP: {
-            skip "No IPv4 available on this machine", 1
+            skip "No IPv4 available on this machine", 4
                 unless !disabled("sock") && have_IPv4();
             ok(run(test([@ssltest, "-ipv4"])),
                'test TLS via IPv4');
+            ok(run(test([@ssltest, "-ipv4", "-client_ktls"])),
+               'test TLS via IPv4 + ktls(client)');
+            ok(run(test([@ssltest, "-ipv4", "-server_ktls"])),
+               'test TLS via IPv4 + ktls(server)');
+            ok(run(test([@ssltest, "-ipv4", "-client_ktls", "-server_ktls"])),
+               'test TLS via IPv4 + ktls');
           }
 
         SKIP: {
-            skip "No IPv6 available on this machine", 1
+            skip "No IPv6 available on this machine", 4
                 unless !disabled("sock") && have_IPv6();
             ok(run(test([@ssltest, "-ipv6"])),
                'test TLS via IPv6');
+            ok(run(test([@ssltest, "-ipv6", "-client_ktls"])),
+               'test TLS via IPv6 + ktls(client)');
+            ok(run(test([@ssltest, "-ipv6", "-server_ktls"])),
+               'test TLS via IPv6 + ktls(client)');
+            ok(run(test([@ssltest, "-ipv6", "-client_ktls", "-server_ktls"])),
+               'test TLS via IPv6 + ktls');
           }
         }
     };
