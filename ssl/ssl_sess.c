@@ -412,10 +412,12 @@ int ssl_generate_session_id(SSL *s, SSL_SESSION *ss)
     }
     ss->session_id_length = tmp;
     /* Finally, check for a conflict */
-    if (SSL_has_matching_session_id(s, ss->session_id,
-                                    (unsigned int)ss->session_id_length)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_SSL_SESSION_ID_CONFLICT);
-        return 0;
+    if (cb != def_generate_session_id) {
+        if (SSL_has_matching_session_id(s, ss->session_id,
+                                        (unsigned int)ss->session_id_length)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_SSL_SESSION_ID_CONFLICT);
+            return 0;
+        }
     }
 
     return 1;
