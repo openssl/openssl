@@ -128,7 +128,9 @@ static int ossl_init_register_cleanup(const OSSL_CORE_HANDLE *handle)
      * Trust that the memory allocator doesn't actually reallocate
      * when the size is unchanged.
      */
-    handles = OPENSSL_realloc(handles, (handles_num / 10 + 1) * 10);
+    handles
+        = OPENSSL_realloc(handles,
+                          (handles_num / 10 + 1) * 10 * sizeof(handles[0]));
     ret = 0;
     if (handles != NULL) {
         handles[handles_num++] = handle;
