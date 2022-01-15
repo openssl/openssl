@@ -4562,6 +4562,11 @@ int setup_tests(void)
 # ifndef OPENSSL_NO_DYNAMIC_ENGINE
     /* Tests only support the default libctx */
     if (testctx == NULL) {
+#  ifdef _WIN32
+        _putenv("OPENSSL_engine_libcrypto_override=yes");
+#  else
+        setenv("OPENSSL_engine_libcrypto_override", "yes", 1);
+#  endif
 #  ifndef OPENSSL_NO_EC
         ADD_ALL_TESTS(test_signatures_with_engine, 3);
 #  else
