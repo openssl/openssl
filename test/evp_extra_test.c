@@ -4564,6 +4564,8 @@ int setup_tests(void)
     if (testctx == NULL) {
 #  ifdef _WIN32
         _putenv("OPENSSL_engine_libcrypto_override=yes");
+#  elif defined(__TANDEM)
+        putenv("OPENSSL_engine_libcrypto_override=yes");
 #  else
         setenv("OPENSSL_engine_libcrypto_override", "yes", 1);
 #  endif
