@@ -53,6 +53,7 @@ sub isobj       { return $_[1] =~ m|\.o$|;    }
 sub isres       { return $_[1] =~ m|\.res$|;  }
 sub isasm       { return $_[1] =~ m|\.[Ss]$|; }
 sub isstaticlib { return $_[1] =~ m|\.a$|;    }
+sub isflag      { return $_[1] =~ m|^-|;      }
 sub convertext {
     if ($_[0]->isdef($_[1]))        { return $_[0]->def($_[1]); }
     if ($_[0]->isobj($_[1]))        { return $_[0]->obj($_[1]); }

@@ -84,4 +84,9 @@ sub sharedlib_import {
     return undef;
 }
 
+sub hide_ldflag {
+    return undef unless $_[0]->isflag($_[1]);
+    return "";
+}
+
 1;
