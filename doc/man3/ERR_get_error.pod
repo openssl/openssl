@@ -31,7 +31,7 @@ ERR_get_error_line_data, ERR_peek_error_line_data, ERR_peek_last_error_line_data
                                  const char **func,
                                  const char **data, int *flags);
  unsigned long ERR_peek_error_all(const char **file, int *line,
-                                  const char *func,
+                                  const char **func,
                                   const char **data, int *flags);
  unsigned long ERR_peek_last_error_all(const char **file, int *line,
                                        const char *func,
