@@ -166,7 +166,7 @@ int X509_TRUST_add(int id, int flags, int (*ck) (X509_TRUST *, X509 *, int),
         if (trtable == NULL
             && (trtable = sk_X509_TRUST_new(tr_cmp)) == NULL) {
             ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
-            goto err;;
+            goto err;
         }
         if (!sk_X509_TRUST_push(trtable, trtmp)) {
             ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
