@@ -523,7 +523,7 @@ int ossl_rsa_pss_get_param_unverified(const RSA_PSS_PARAMS *pss,
     if (pss->trailerField)
         *ptrailerField = ASN1_INTEGER_get(pss->trailerField);
     else
-        *ptrailerField = ossl_rsa_pss_params_30_trailerfield(&pss_params);;
+        *ptrailerField = ossl_rsa_pss_params_30_trailerfield(&pss_params);
 
     return 1;
 }
