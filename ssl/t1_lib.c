@@ -982,7 +982,7 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int check_ee_md)
             return 0;           /* Should never happen */
         for (i = 0; i < s->shared_sigalgslen; i++) {
             if (check_md == s->shared_sigalgs[i]->sigandhash)
-                return 1;;
+                return 1;
         }
         return 0;
     }

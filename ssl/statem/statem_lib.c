@@ -2299,7 +2299,7 @@ int parse_ca_names(SSL *s, PACKET *pkt)
 
 const STACK_OF(X509_NAME) *get_ca_names(SSL *s)
 {
-    const STACK_OF(X509_NAME) *ca_sk = NULL;;
+    const STACK_OF(X509_NAME) *ca_sk = NULL;
 
     if (s->server) {
         ca_sk = SSL_get_client_CA_list(s);

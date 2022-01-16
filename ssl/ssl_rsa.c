@@ -573,7 +573,7 @@ static int serverinfo_find_extension(const unsigned char *serverinfo,
 
         if (type == extension_type) {
             *extension_data = PACKET_data(&data);
-            *extension_length = PACKET_remaining(&data);;
+            *extension_length = PACKET_remaining(&data);
             return 1;           /* Success */
         }
     }
