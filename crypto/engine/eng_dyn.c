@@ -452,7 +452,9 @@ static int dynamic_load(ENGINE *e, dynamic_data_ctx *ctx)
          * deferring to us (by returning its version) and we think it is too
          * old.
          */
-        if (vcheck_res < OSSL_DYNAMIC_OLDEST) {
+        if (vcheck_res < OSSL_DYNAMIC_OLDEST
+                || DSO_bind_func(ctx->dynamic_dso,
+                                 "EVP_PKEY_base_id") != NULL) {
             /* Fail */
             ctx->bind_engine = NULL;
             ctx->v_check = NULL;
