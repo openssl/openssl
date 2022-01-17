@@ -3551,9 +3551,7 @@ static int do_multi(int multi, int size_num)
                 d = atof(sstrsep(&p, sep));
                 ffdh_results[k][0] += d;
 # endif /* OPENSSL_NO_DH */
-            } else if (HAS_PREFIX(buf, "+H:")) {
-                ;
-            } else {
+            } else if (!HAS_PREFIX(buf, "+H:")) {
                 BIO_printf(bio_err, "Unknown type '%s' from child %d\n", buf,
                            n);
             }
