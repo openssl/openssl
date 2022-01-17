@@ -3000,7 +3000,9 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
     /* Set width for a select call if needed */
     width = s + 1;
 
-    p = buf = app_malloc(bufsize, "server www buffer");
+    /* as we use BIO_gets(), and it always null terminates data, we need
+     * to allocate 1 byte longer buffer to fit the full 2^14 byte record */
+    p = buf = app_malloc(bufsize + 1, "server www buffer");
     io = BIO_new(BIO_f_buffer());
     ssl_bio = BIO_new(BIO_f_ssl());
     if ((io == NULL) || (ssl_bio == NULL))
@@ -3065,7 +3067,7 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
     }
 
     for (;;) {
-        i = BIO_gets(io, buf, bufsize - 1);
+        i = BIO_gets(io, buf, bufsize + 1);
         if (i < 0) {            /* error */
             if (!BIO_should_retry(io) && !SSL_waiting_for_async(con)) {
                 if (!s_quiet)
@@ -3129,7 +3131,7 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
                  * we're expecting to come from the client. If they haven't
                  * sent one there's not much we can do.
                  */
-                BIO_gets(io, buf, bufsize - 1);
+                BIO_gets(io, buf, bufsize + 1);
             }
 
             BIO_puts(io,
@@ -3412,7 +3414,9 @@ static int rev_body(int s, int stype, int prot, unsigned char *context)
     SSL *con;
     BIO *io, *ssl_bio, *sbio;
 
-    buf = app_malloc(bufsize, "server rev buffer");
+    /* as we use BIO_gets(), and it always null terminates data, we need
+     * to allocate 1 byte longer buffer to fit the full 2^14 byte record */
+    buf = app_malloc(bufsize + 1, "server rev buffer");
     io = BIO_new(BIO_f_buffer());
     ssl_bio = BIO_new(BIO_f_ssl());
     if ((io == NULL) || (ssl_bio == NULL))
@@ -3487,7 +3491,7 @@ static int rev_body(int s, int stype, int prot, unsigned char *context)
     print_ssl_summary(con);
 
     for (;;) {
-        i = BIO_gets(io, buf, bufsize - 1);
+        i = BIO_gets(io, buf, bufsize + 1);
         if (i < 0) {            /* error */
             if (!BIO_should_retry(io)) {
                 if (!s_quiet)
