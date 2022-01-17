@@ -209,7 +209,6 @@ static int dasync_cipher_nids[] = {
 static int bind_dasync(ENGINE *e)
 {
     /* Setup RSA */
-    ;
     if ((dasync_rsa_orig = EVP_PKEY_meth_find(EVP_PKEY_RSA)) == NULL
         || (dasync_rsa = EVP_PKEY_meth_new(EVP_PKEY_RSA,
                                            EVP_PKEY_FLAG_AUTOARGLEN)) == NULL)
