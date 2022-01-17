@@ -62,7 +62,7 @@ const char * hamlet_2 =
     "And lose the name of Action. Soft you now,\n"
     "The fair Ophelia? Nymph in thy Orisons\n"
     "Be all my sins remember'd.\n"
-; 
+;
 
 /* The known value of the SHA3-512 digest of the above soliloqy */
 const unsigned char known_answer[] = {
