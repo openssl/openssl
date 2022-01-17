@@ -427,6 +427,7 @@ static int digest_test_run(EVP_TEST *t)
     int xof = 0;
     OSSL_PARAM params[2];
 
+    printf("test %s (%d %d)\n", t->name, t->s.start, t->s.curr);
     t->err = "TEST_FAILURE";
     if (!TEST_ptr(mctx = EVP_MD_CTX_new()))
         goto err;
@@ -707,7 +708,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
     size_t in_len, out_len, donelen = 0;
     int ok = 0, tmplen, chunklen, tmpflen, i;
     EVP_CIPHER_CTX *ctx_base = NULL;
-    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER_CTX *ctx = NULL, *duped;
 
     t->err = "TEST_FAILURE";
     if (!TEST_ptr(ctx_base = EVP_CIPHER_CTX_new()))
@@ -838,12 +839,18 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
 
     /* Test that the cipher dup functions correctly if it is supported */
     ERR_set_mark();
-    if (EVP_CIPHER_CTX_copy(ctx, ctx_base) != NULL) {
+    if (EVP_CIPHER_CTX_copy(ctx, ctx_base)) {
         EVP_CIPHER_CTX_free(ctx_base);
         ctx_base = NULL;
     } else {
         EVP_CIPHER_CTX_free(ctx);
         ctx = ctx_base;
+    }
+    /* Likewise for dup */
+    duped = EVP_CIPHER_CTX_dup(ctx);
+    if (duped != NULL) {
+        EVP_CIPHER_CTX_free(ctx);
+        ctx = duped;
     }
     ERR_pop_to_mark();
 
