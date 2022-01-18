@@ -91,20 +91,6 @@ used unconditionally in source code that is used equally for providers that are
 made into dynamically loadable modules and for providers that are built into the
 application.
 
-=begin comment
-
-Those lines are harmless in providers that are built into libcrypto as well,
-such as the base and default providers.  However, since those are never built
-as dynamically loadable modules, we simply don't include those lines on those
-providers.
-
-Those lines aren't used in the FIPS provider module either.  That provider is
-rather special, as it uses select libcrypto source files rather than linking
-with, and doesn't include the OPENSSL_init_crypto source at all, so it's assumed
-that it has every in control in a different manner.
-
-=end comment
-
 One of the functions the provider offers to the OpenSSL libraries is
 the central mechanism for the OpenSSL libraries to get access to
 operation implementations for diverse algorithms.
