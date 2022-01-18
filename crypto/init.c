@@ -123,11 +123,7 @@ static int ossl_init_register_cleanup(const OSSL_CORE_HANDLE *handle)
     if (i < handles_num)
         goto end;
 
-    /*
-     * Allocate the handles array in chunks of 10 elements.
-     * Trust that the memory allocator doesn't actually reallocate
-     * when the size is unchanged.
-     */
+    /* Allocate the handles array in chunks of 10 elements */
     handles
         = OPENSSL_realloc(handles,
                           (handles_num / 10 + 1) * 10 * sizeof(handles[0]));
