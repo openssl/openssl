@@ -15,9 +15,9 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-static const char       *revision = "1.0.5";
+static const char *revision = "1.0.6";
 
-static const int        server_port = 4433;
+static const int server_port = 4433;
 
 typedef unsigned char   bool;
 #define true            1
