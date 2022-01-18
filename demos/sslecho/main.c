@@ -1,5 +1,5 @@
 /*
- *  Copyright 20xx-20yy The OpenSSL Project Authors. All Rights Reserved.
+ *  Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  *  Licensed under the Apache License 2.0 (the "License").  You may not use
  *  this file except in compliance with the License.  You can obtain a copy
@@ -15,23 +15,7 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-/*
- * The version of OpenSSL supplied with Linux Mint 20.2 has
- * libssl.so.1.1 and NOT libssl.so.3. Should be the same for Ubuntu.
- *
- * libssl.so.3 (and it's associated header files) are needed to compile
- * configure_client_context(). As of this writing (18-Dec-2021) you must
- * build the OpenSSL tree to get the v3 libs.
- *
- * So, if someone wants to play with this program without cloning and
- * building all of OpenSSL, we must work with the v1.1.1 libraries.
- *
- * #define OPENSSL_V3 to '1' to enable the v3 libs.
- * You must also set OPENSSL_V3 to '1' in the makefile.
- */
-#define     OPENSSL_V3  0
-
-static const char       *revision = "1.0.4";
+static const char       *revision = "1.0.5";
 
 static const int        server_port = 4433;
 
@@ -92,7 +76,7 @@ SSL_CTX* create_context(bool isServer) {
         method = TLS_client_method();
 
     ctx = SSL_CTX_new(method);
-    if (!ctx) {
+    if (ctx == NULL) {
         perror("Unable to create SSL context");
         ERR_print_errors_fp(stderr);
         exit(EXIT_FAILURE);
@@ -114,7 +98,6 @@ void configure_server_context(SSL_CTX *ctx) {
     }
 }
 
-#if OPENSSL_V3
 void configure_client_context(SSL_CTX *ctx) {
     /*
      * Configure the client to abort the handshake if certificate verification
@@ -126,7 +109,6 @@ void configure_client_context(SSL_CTX *ctx) {
         exit(EXIT_FAILURE);
     }
 }
-#endif
 
 void usage() {
     printf("Usage: sslecho s\n");
@@ -146,11 +128,11 @@ int main(int argc, char **argv) {
     int server_skt = -1;
     int client_skt = -1;
 
-    char *txbuf = (char*) malloc(128);
+    char *txbuf = (char*) OPENSSL_malloc(128);
     size_t txcap = 128;
     int txlen;
 
-    char *rxbuf = (char*) malloc(128);
+    char *rxbuf = (char*) OPENSSL_malloc(128);
     int rxcap = 128;
     int rxlen;
 
@@ -274,7 +256,7 @@ int main(int argc, char **argv) {
         /* Do TCP connect with server */
         if (connect(client_skt, (struct sockaddr*) &addr, sizeof(addr)) != 0) {
             perror("Unable to TCP connect to server");
-            goto Exit;
+            goto exit;
         } else {
             printf("TCP connection to server successful\n");
         }
@@ -283,9 +265,9 @@ int main(int argc, char **argv) {
         ssl = SSL_new(ssl_ctx);
         SSL_set_fd(ssl, client_skt);
         /* Set host name for SNI */
-        SSL_set_tlsext_host_name(ssl , rem_server_ip);
+        SSL_set_tlsext_host_name(ssl, rem_server_ip);
         /* Configure server hostname check */
-        SSL_set1_host(ssl , rem_server_ip);
+        SSL_set1_host(ssl, rem_server_ip);
 
         /* Now do SSL connect with server */
         if (SSL_connect(ssl) == 1) {
@@ -321,10 +303,11 @@ int main(int argc, char **argv) {
                 }
             }
             printf("Client exiting...\n");
-        } else
+        } else {
             ERR_print_errors_fp(stderr);
+        }
     }
-    Exit:
+    exit:
     /* Close up */
     if (ssl != NULL) {
         SSL_shutdown(ssl);
@@ -337,8 +320,10 @@ int main(int argc, char **argv) {
     if (server_skt != -1)
         close(server_skt);
 
-    free(txbuf);
-    free(rxbuf);
+    OPENSSL_free(txbuf);
+    OPENSSL_free(rxbuf);
 
     printf("sslecho exiting\n");
+
+    return 0;
 }
