@@ -565,6 +565,15 @@ int ossl_default_provider_init(const OSSL_CORE_HANDLE *handle,
     OSSL_FUNC_core_get_libctx_fn *c_get_libctx = NULL;
     BIO_METHOD *corebiometh;
 
+    /*
+     * The OPENSSL_init_crypto(OPENSSL_INIT_PROVIDER, ...) call that's
+     * indicated in provider(7) isn't necessary here, since this provider
+     * is built into libcrypto and never built into a loadable module.
+     *
+     * It would be perfectly harmless to have that call here, possibly for
+     * demonstration purposes, but that seems like unnecessary churn.
+     */
+
     if (!ossl_prov_bio_from_dispatch(in)
             || !ossl_prov_seeding_from_dispatch(in))
         return 0;

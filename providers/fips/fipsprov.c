@@ -548,6 +548,14 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
     OSSL_LIB_CTX *libctx = NULL;
     SELF_TEST_POST_PARAMS selftest_params;
 
+    /*
+     * The OPENSSL_init_crypto(OPENSSL_INIT_PROVIDER, ...) call that's
+     * indicated in provider(7) isn't necessary here, since The FIPS module
+     * uses select libcrypto sources and doesn't include crypto/init.c among
+     * those (i.e. doesn't even have access to OPENSSL_init_crypto() or
+     * OPENSSL_cleanup()).
+     */
+
     memset(&selftest_params, 0, sizeof(selftest_params));
 
     if (!ossl_prov_seeding_from_dispatch(in))
