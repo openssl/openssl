@@ -48,9 +48,9 @@ int bread_conv(BIO *bio, char *data, size_t datal, size_t *read);
  * BIO_FLAGS_KTLS_TX_CTRL_MSG means we are about to send a ctrl message next.
  * BIO_FLAGS_KTLS_RX means we are using ktls with this BIO for receiving.
  */
-# define BIO_FLAGS_KTLS_TX          0x800
 # define BIO_FLAGS_KTLS_TX_CTRL_MSG 0x1000
 # define BIO_FLAGS_KTLS_RX          0x2000
+# define BIO_FLAGS_KTLS_TX          0x4000
 
 /* KTLS related controls and flags */
 # define BIO_set_ktls_flag(b, is_tx) \
