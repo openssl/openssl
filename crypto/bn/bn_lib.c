@@ -473,7 +473,7 @@ static BIGNUM *bin2bn(const unsigned char *s, int len, BIGNUM *ret,
     if (signedness == SIGNED) {
         neg = !!(*s2 & 0x80);
         xor = neg ? 0xff : 0x00;
-        carry = neg ? 1 : 0;
+        carry = neg;
     }
 
     /*
@@ -555,7 +555,7 @@ static int bn2binpad(const BIGNUM *a, unsigned char *to, int tolen,
     /* Take note of the signedness of the bignum */
     if (signedness == SIGNED) {
         xor = a->neg ? 0xff : 0x00;
-        carry = a->neg ? 1 : 0;
+        carry = a->neg;
 
         /*
          * if |n * 8 == n|, then the MSbit is set, otherwise unset.
