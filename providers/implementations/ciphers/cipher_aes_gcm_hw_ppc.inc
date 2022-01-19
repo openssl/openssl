@@ -16,6 +16,7 @@ static int aes_ppc_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
                              size_t keylen)
 {
     PROV_AES_GCM_CTX *actx = (PROV_AES_GCM_CTX *)ctx;
+
     AES_KEY *ks = &actx->ks.ks;
     GCM_HW_SET_KEY_CTR_FN(ks, aes_p8_set_encrypt_key, aes_p8_encrypt,
                           aes_p8_ctr32_encrypt_blocks);
