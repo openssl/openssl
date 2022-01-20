@@ -17,7 +17,7 @@ BIO_get_ktls_recv
 
  long BIO_ctrl(BIO *bp, int cmd, long larg, void *parg);
  long BIO_callback_ctrl(BIO *b, int cmd, BIO_info_cb *cb);
- char *BIO_ptr_ctrl(BIO *bp, int cmd, long larg);
+ void *BIO_ptr_ctrl(BIO *bp, int cmd, long larg);
  long BIO_int_ctrl(BIO *bp, int cmd, long larg, int iarg);
 
  int BIO_reset(BIO *b);
