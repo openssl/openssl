@@ -838,6 +838,9 @@ const OSSL_PARAM *evp_keymgmt_export_types(const EVP_KEYMGMT *keymgmt,
                                            int selection);
 void *evp_keymgmt_dup(const EVP_KEYMGMT *keymgmt,
                       const void *keydata_from, int selection);
+EVP_KEYMGMT *evp_keymgmt_fetch_from_prov(OSSL_PROVIDER *prov,
+                                         const char *name,
+                                         const char *properties);
 
 /* Pulling defines out of C source files */
 
