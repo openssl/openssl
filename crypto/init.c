@@ -93,8 +93,14 @@ err:
  * This allows several components (application and providers alike) to share
  * the same instance of libcrypto, and to ensure that OPENSSL_cleanup() isn't
  * called too early.
+ *
+ * This array has a fixed size for safety reasons.
+ * OPENSSL_realloc() could have been used for a more dynamic array, but that
+ * also comes with a risk of sudden and surprising failure.
+ * Our stack implementation shouldn't be used either, since it calls
+ * ERR_raise(), which might recurse back into OPENSSL_init_crypto().
  */
-static const OSSL_CORE_HANDLE **handles = NULL;
+static const OSSL_CORE_HANDLE *handles[100] = { NULL, };
 static size_t handles_num = 0;
 
 static int ossl_init_register_cleanup(const OSSL_CORE_HANDLE *handle)
@@ -115,22 +121,18 @@ static int ossl_init_register_cleanup(const OSSL_CORE_HANDLE *handle)
      * Check if this handle is already registered, as we only allow
      * one entry each...  Finding one is success.
      */
-    ret = (int)handles_num;
     for (i = 0; i < handles_num; i++)
         if (handles[i] == handle)
             break;
 
+    ret = i;
     if (i < handles_num)
         goto end;
 
-    /* Allocate the handles array in chunks of 10 elements */
-    handles
-        = OPENSSL_realloc(handles,
-                          (handles_num / 10 + 1) * 10 * sizeof(handles[0]));
-    ret = 0;
-    if (handles != NULL) {
-        handles[handles_num++] = handle;
+    ret = -1;
+    if (handles_num < OSSL_NELEM(handles)) {
         ret = (int)handles_num;
+        handles[handles_num++] = handle;
     }
 
  end:
@@ -162,11 +164,6 @@ static int ossl_init_unregister_cleanup(const OSSL_CORE_HANDLE *handle)
         handles_num--;
     }
     ret = (int)handles_num;
-
-    if (handles_num == 0) {
-        OPENSSL_free(handles);
-        handles = NULL;
-    }
 
     CRYPTO_THREAD_unlock(init_lock);
     return ret;
