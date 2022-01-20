@@ -89,12 +89,12 @@ size_t OPENSSL_rndrrs_bytes(unsigned char *buf, size_t len)
     return OPENSSL_rndr_wrapper(OPENSSL_rndrrs_asm, buf, len);
 }
 # endif
-uint32_t _armv7_tick(void);
+uint64_t _armv7_tick(void);
 
 uint32_t OPENSSL_rdtsc(void)
 {
     if (OPENSSL_armcap_P & ARMV7_TICK)
-        return _armv7_tick();
+        return (uint32_t)(_armv7_tick() & 0xffffffff);
     else
         return 0;
 }
