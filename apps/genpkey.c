@@ -180,7 +180,7 @@ int genpkey_main(int argc, char **argv)
 
     if (!quiet)
         EVP_PKEY_CTX_set_cb(ctx, progress_cb);
-    EVP_PKEY_CTX_set_app_data(ctx, bio_err);
+    EVP_PKEY_CTX_set_app_data(ctx, bio_out);
 
     pkey = do_param ? app_paramgen(ctx, algname)
                     : app_keygen(ctx, algname, 0, 0 /* not verbose */);

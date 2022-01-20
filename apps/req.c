@@ -662,7 +662,7 @@ int req_main(int argc, char **argv)
         }
 
         EVP_PKEY_CTX_set_cb(genctx, progress_cb);
-        EVP_PKEY_CTX_set_app_data(genctx, bio_err);
+        EVP_PKEY_CTX_set_app_data(genctx, bio_out);
 
         pkey = app_keygen(genctx, keyalgstr, newkey_len, verbose);
 

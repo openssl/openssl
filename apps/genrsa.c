@@ -180,7 +180,7 @@ opthelp:
         goto end;
 
     EVP_PKEY_CTX_set_cb(ctx, genrsa_cb);
-    EVP_PKEY_CTX_set_app_data(ctx, bio_err);
+    EVP_PKEY_CTX_set_app_data(ctx, bio_out);
 
     if (EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, num) <= 0) {
         BIO_printf(bio_err, "Error setting RSA length\n");

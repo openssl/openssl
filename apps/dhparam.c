@@ -188,7 +188,7 @@ int dhparam_main(int argc, char **argv)
             goto end;
         }
         EVP_PKEY_CTX_set_cb(ctx, progress_cb);
-        EVP_PKEY_CTX_set_app_data(ctx, bio_err);
+        EVP_PKEY_CTX_set_app_data(ctx, bio_out);
         BIO_printf(bio_err,
                     "Generating %s parameters, %d bit long %sprime\n",
                     alg, num, dsaparam ? "" : "safe ");
