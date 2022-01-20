@@ -582,7 +582,7 @@ clean: libclean
 	$(RM) $(MANDOCS3)
 	$(RM) $(MANDOCS5)
 	$(RM) $(MANDOCS7)
-	$(RM) $(PROGRAMS) $(TESTPROGS) $(MODULES) $(SCRIPTS)
+	$(RM) $(PROGRAMS) $(TESTPROGS) $(MODULES) $(FIPSMODULE) $(SCRIPTS)
 	$(RM) $(GENERATED_MANDATORY) $(GENERATED)
 	-find . -name '*{- platform->depext() -}' \! -name '.*' \! -type d -exec $(RM) {} \;
 	-find . -name '*{- platform->objext() -}' \! -name '.*' \! -type d -exec $(RM) {} \;
