@@ -130,7 +130,7 @@ static int ossl_init_register_cleanup(const OSSL_CORE_HANDLE *handle)
         goto end;
 
     ret = -1;
-    if (handles_num < OSSL_NELEM(handles)) {
+    if (ossl_assert(handles_num < OSSL_NELEM(handles))) {
         ret = (int)handles_num;
         handles[handles_num++] = handle;
     }
