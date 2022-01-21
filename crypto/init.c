@@ -699,7 +699,7 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
      * torn down.
      * Care is taken to handle the case where libcrypto is shared by multiple
      * providers, by registering the provider handle.  When the cleanup
-     * function is called, that same handle is unregistered, when when the
+     * function is called, that same handle is unregistered, when the
      * register is empty, OPENSSL_cleanup() is called.
      * Care is also taken to handle the case where the libcrypto that the
      * provider is linked with is shared with the calling application, by
