@@ -48,10 +48,6 @@ int OSSL_PARAM_BLD_push_BN(OSSL_PARAM_BLD *bld, const char *key,
                            const BIGNUM *bn);
 int OSSL_PARAM_BLD_push_BN_pad(OSSL_PARAM_BLD *bld, const char *key,
                                const BIGNUM *bn, size_t sz);
-int OSSL_PARAM_BLD_push_signed_BN(OSSL_PARAM_BLD *bld, const char *key,
-                                  const BIGNUM *bn);
-int OSSL_PARAM_BLD_push_signed_BN_pad(OSSL_PARAM_BLD *bld, const char *key,
-                                      const BIGNUM *bn, size_t sz);
 int OSSL_PARAM_BLD_push_utf8_string(OSSL_PARAM_BLD *bld, const char *key,
                                     const char *buf, size_t bsize);
 int OSSL_PARAM_BLD_push_utf8_ptr(OSSL_PARAM_BLD *bld, const char *key,
