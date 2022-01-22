@@ -20,8 +20,8 @@ static int template_public_test(int tstid)
 {
     OSSL_PARAM_BLD *bld = OSSL_PARAM_BLD_new();
     OSSL_PARAM *params = NULL, *params_blt = NULL, *p1 = NULL, *p;
-    BIGNUM *ubn1 = NULL, *ubn2 = NULL, *ubn_res = NULL;
-    BIGNUM *sbn = NULL, *sbn_res = NULL;
+    BIGNUM *pbn = NULL, *pbn_res = NULL;
+    BIGNUM *nbn = NULL, *nbn_res = NULL;
     int i;
     long int l;
     int32_t i32;
@@ -38,16 +38,13 @@ static int template_public_test(int tstid)
         || !TEST_true(OSSL_PARAM_BLD_push_int64(bld, "i64", -9999999))
         || !TEST_true(OSSL_PARAM_BLD_push_time_t(bld, "t", 11224))
         || !TEST_true(OSSL_PARAM_BLD_push_double(bld, "d", 1.61803398875))
-        || !TEST_ptr(ubn1 = BN_new())
-        || !TEST_true(BN_set_word(ubn1, 1729))
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, "bignumber", ubn1))
-        || !TEST_ptr(ubn2 = BN_secure_new())
-        || !TEST_true(BN_set_word(ubn2, 1731))
-        || !TEST_true(OSSL_PARAM_BLD_push_signed_BN(bld, "unsignedbignumber", ubn2))
-        || !TEST_ptr(sbn = BN_secure_new())
-        || !TEST_true(BN_set_word(sbn, 1733))
-        || !TEST_true((BN_set_negative(sbn, 1), 1))
-        || !TEST_true(OSSL_PARAM_BLD_push_signed_BN(bld, "signedbignumber", sbn))
+        || !TEST_ptr(pbn = BN_new())
+        || !TEST_true(BN_set_word(pbn, 1729))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, "bignumber", pbn))
+        || !TEST_ptr(nbn = BN_secure_new())
+        || !TEST_true(BN_set_word(nbn, 1733))
+        || !TEST_true((BN_set_negative(nbn, 1), 1))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, "negativebignumber", nbn))
         || !TEST_true(OSSL_PARAM_BLD_push_utf8_string(bld, "utf8_s", "foo",
                                                       sizeof("foo")))
         || !TEST_true(OSSL_PARAM_BLD_push_utf8_ptr(bld, "utf8_p", "bar-boom",
@@ -126,24 +123,18 @@ static int template_public_test(int tstid)
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "utf8_p"))
         || !TEST_true(OSSL_PARAM_get_utf8_ptr(p, &cutf))
         || !TEST_str_eq(cutf, "bar-boom")
-        /* Check BN (unsigned integer getting positive BN) */
+        /* Check BN (positive BN becomes unsigned integer) */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "bignumber"))
         || !TEST_str_eq(p->key, "bignumber")
         || !TEST_uint_eq(p->data_type, OSSL_PARAM_UNSIGNED_INTEGER)
-        || !TEST_true(OSSL_PARAM_get_BN(p, &ubn_res))
-        || !TEST_int_eq(BN_cmp(ubn_res, ubn1), 0)
-        /* Check BN (signed integer getting positive BN) */
-        || !TEST_ptr(p = OSSL_PARAM_locate(params, "unsignedbignumber"))
-        || !TEST_str_eq(p->key, "unsignedbignumber")
+        || !TEST_true(OSSL_PARAM_get_BN(p, &pbn_res))
+        || !TEST_BN_eq(pbn_res, pbn)
+        /* Check BN (negative BN becomes signed integer) */
+        || !TEST_ptr(p = OSSL_PARAM_locate(params, "negativebignumber"))
+        || !TEST_str_eq(p->key, "negativebignumber")
         || !TEST_uint_eq(p->data_type, OSSL_PARAM_INTEGER)
-        || !TEST_true(OSSL_PARAM_get_BN(p, &ubn_res))
-        || !TEST_int_eq(BN_cmp(ubn_res, ubn2), 0)
-        /* Check BN (signed integer getting negative BN) */
-        || !TEST_ptr(p = OSSL_PARAM_locate(params, "signedbignumber"))
-        || !TEST_str_eq(p->key, "signedbignumber")
-        || !TEST_uint_eq(p->data_type, OSSL_PARAM_INTEGER)
-        || !TEST_true(OSSL_PARAM_get_BN(p, &sbn_res))
-        || !TEST_int_eq(BN_cmp(sbn_res, sbn), 0))
+        || !TEST_true(OSSL_PARAM_get_BN(p, &nbn_res))
+        || !TEST_BN_eq(nbn_res, nbn))
         goto err;
     res = 1;
 err:
@@ -153,11 +144,10 @@ err:
     OSSL_PARAM_free(params_blt);
     OSSL_PARAM_BLD_free(bld);
     OPENSSL_free(utf);
-    BN_free(ubn1);
-    BN_free(ubn2);
-    BN_free(ubn_res);
-    BN_free(sbn);
-    BN_free(sbn_res);
+    BN_free(pbn);
+    BN_free(pbn_res);
+    BN_free(nbn);
+    BN_free(nbn_res);
     return res;
 }
 
@@ -175,8 +165,8 @@ static int template_private_test(int tstid)
     uint32_t i32;
     uint64_t i64;
     size_t st;
-    BIGNUM *ubn1 = NULL, *ubn2 = NULL, *ubn_res = NULL;
-    BIGNUM *sbn = NULL, *sbn_res = NULL;
+    BIGNUM *pbn = NULL, *pbn_res = NULL;
+    BIGNUM *nbn = NULL, *nbn_res = NULL;
     int res = 0;
 
     if (!TEST_ptr(data1 = OPENSSL_secure_malloc(data1_size))
@@ -194,16 +184,13 @@ static int template_private_test(int tstid)
         || !TEST_true(OSSL_PARAM_BLD_push_uint32(bld, "i32", 1532))
         || !TEST_true(OSSL_PARAM_BLD_push_uint64(bld, "i64", 9999999))
         || !TEST_true(OSSL_PARAM_BLD_push_size_t(bld, "st", 65537))
-        || !TEST_ptr(ubn1 = BN_secure_new())
-        || !TEST_true(BN_set_word(ubn1, 1729))
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, "bignumber", ubn1))
-        || !TEST_ptr(ubn2 = BN_secure_new())
-        || !TEST_true(BN_set_word(ubn2, 1731))
-        || !TEST_true(OSSL_PARAM_BLD_push_signed_BN(bld, "unsignedbignumber", ubn2))
-        || !TEST_ptr(sbn = BN_secure_new())
-        || !TEST_true(BN_set_word(sbn, 1733))
-        || !TEST_true((BN_set_negative(sbn, 1), 1))
-        || !TEST_true(OSSL_PARAM_BLD_push_signed_BN(bld, "signedbignumber", sbn))
+        || !TEST_ptr(pbn = BN_secure_new())
+        || !TEST_true(BN_set_word(pbn, 1729))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, "bignumber", pbn))
+        || !TEST_ptr(nbn = BN_secure_new())
+        || !TEST_true(BN_set_word(nbn, 1733))
+        || !TEST_true((BN_set_negative(nbn, 1), 1))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, "negativebignumber", nbn))
         || !TEST_true(OSSL_PARAM_BLD_push_octet_string(bld, "oct_s", data1,
                                                        data1_size))
         || !TEST_true(OSSL_PARAM_BLD_push_octet_ptr(bld, "oct_p", data2,
@@ -282,30 +269,22 @@ static int template_private_test(int tstid)
         || !TEST_str_eq(p->key, "oct_p")
         || !TEST_uint_eq(p->data_type, OSSL_PARAM_OCTET_PTR)
         || !TEST_mem_eq(*(void **)p->data, p->data_size, data2, data2_size)
-        /* Check BN (unsigned integer getting positive BN) */
+        /* Check BN (positive BN becomes unsigned integer) */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "bignumber"))
         || !TEST_true(CRYPTO_secure_allocated(p->data))
         || !TEST_str_eq(p->key, "bignumber")
         || !TEST_uint_eq(p->data_type, OSSL_PARAM_UNSIGNED_INTEGER)
-        || !TEST_true(OSSL_PARAM_get_BN(p, &ubn_res))
-        || !TEST_int_eq(BN_get_flags(ubn1, BN_FLG_SECURE), BN_FLG_SECURE)
-        || !TEST_int_eq(BN_cmp(ubn_res, ubn1), 0)
-        /* Check BN (signed integer getting positive BN) */
-        || !TEST_ptr(p = OSSL_PARAM_locate(params, "unsignedbignumber"))
+        || !TEST_true(OSSL_PARAM_get_BN(p, &pbn_res))
+        || !TEST_int_eq(BN_get_flags(pbn, BN_FLG_SECURE), BN_FLG_SECURE)
+        || !TEST_BN_eq(pbn_res, pbn)
+        /* Check BN (negative BN becomes signed integer) */
+        || !TEST_ptr(p = OSSL_PARAM_locate(params, "negativebignumber"))
         || !TEST_true(CRYPTO_secure_allocated(p->data))
-        || !TEST_str_eq(p->key, "unsignedbignumber")
+        || !TEST_str_eq(p->key, "negativebignumber")
         || !TEST_uint_eq(p->data_type, OSSL_PARAM_INTEGER)
-        || !TEST_true(OSSL_PARAM_get_BN(p, &ubn_res))
-        || !TEST_int_eq(BN_get_flags(ubn2, BN_FLG_SECURE), BN_FLG_SECURE)
-        || !TEST_int_eq(BN_cmp(ubn_res, ubn2), 0)
-        /* Check BN (signed integer getting negative BN) */
-        || !TEST_ptr(p = OSSL_PARAM_locate(params, "signedbignumber"))
-        || !TEST_true(CRYPTO_secure_allocated(p->data))
-        || !TEST_str_eq(p->key, "signedbignumber")
-        || !TEST_uint_eq(p->data_type, OSSL_PARAM_INTEGER)
-        || !TEST_true(OSSL_PARAM_get_BN(p, &sbn_res))
-        || !TEST_int_eq(BN_get_flags(sbn, BN_FLG_SECURE), BN_FLG_SECURE)
-        || !TEST_int_eq(BN_cmp(sbn_res, sbn), 0))
+        || !TEST_true(OSSL_PARAM_get_BN(p, &nbn_res))
+        || !TEST_int_eq(BN_get_flags(nbn, BN_FLG_SECURE), BN_FLG_SECURE)
+        || !TEST_BN_eq(nbn_res, nbn))
         goto err;
     res = 1;
 err:
@@ -316,11 +295,10 @@ err:
     OSSL_PARAM_BLD_free(bld);
     OPENSSL_secure_free(data1);
     OPENSSL_secure_free(data2);
-    BN_free(ubn1);
-    BN_free(ubn2);
-    BN_free(ubn_res);
-    BN_free(sbn);
-    BN_free(sbn_res);
+    BN_free(pbn);
+    BN_free(pbn_res);
+    BN_free(nbn);
+    BN_free(nbn_res);
     return res;
 }
 
