@@ -437,7 +437,7 @@ static BIGNUM *bin2bn(const unsigned char *s, int len, BIGNUM *ret,
                       endianess_t endianess, signedness_t signedness)
 {
     int inc;
-    const unsigned char *s2;
+    const unsigned char *s2 = NULL;
     int inc2;
     int neg = 0, xor = 0, carry = 0;
     unsigned int i;
