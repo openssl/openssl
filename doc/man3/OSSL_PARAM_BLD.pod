@@ -10,7 +10,6 @@ OSSL_PARAM_BLD_push_uint32, OSSL_PARAM_BLD_push_int64,
 OSSL_PARAM_BLD_push_uint64, OSSL_PARAM_BLD_push_size_t,
 OSSL_PARAM_BLD_push_time_t, OSSL_PARAM_BLD_push_double,
 OSSL_PARAM_BLD_push_BN, OSSL_PARAM_BLD_push_BN_pad,
-OSSL_PARAM_BLD_push_signed_BN, OSSL_PARAM_BLD_push_signed_BN_pad,
 OSSL_PARAM_BLD_push_utf8_string, OSSL_PARAM_BLD_push_utf8_ptr,
 OSSL_PARAM_BLD_push_octet_string, OSSL_PARAM_BLD_push_octet_ptr
 - functions to assist in the creation of OSSL_PARAM arrays
@@ -33,10 +32,6 @@ OSSL_PARAM_BLD_push_octet_string, OSSL_PARAM_BLD_push_octet_ptr
                             const BIGNUM *bn);
  int OSSL_PARAM_BLD_push_BN_pad(OSSL_PARAM_BLD *bld, const char *key,
                                 const BIGNUM *bn, size_t sz);
- int OSSL_PARAM_BLD_push_signed_BN(OSSL_PARAM_BLD *bld, const char *key,
-                                   const BIGNUM *bn);
- int OSSL_PARAM_BLD_push_signed_BN_pad(OSSL_PARAM_BLD *bld, const char *key,
-                                       const BIGNUM *bn, size_t sz);
 
  int OSSL_PARAM_BLD_push_utf8_string(OSSL_PARAM_BLD *bld, const char *key,
                                      const char *buf, size_t bsize);
@@ -78,8 +73,15 @@ OSSL_PARAM objects of the specified size and correct type for the I<val>
 argument.
 I<val> is stored by value and an expression or auto variable can be used.
 
+When B<I<TYPE>> denotes an integer type, signed integer types will normally
+get the OSSL_PARAM type B<OSSL_PARAM_INTEGER> params, while unsigned integer
+types will normally get the OSSL_PARAM type B<OSSL_PARAM_UNSIGNED_INTEGER>.
+
 OSSL_PARAM_BLD_push_BN() is a function that will create an OSSL_PARAM object
 that holds the specified BIGNUM I<bn>.
+When the I<bn> is zero or positive, its OSSL_PARAM type becomes
+B<OSSL_PARAM_UNSIGNED_INTEGER>.
+When the I<bn> is negative, its OSSL_PARAM type becomes B<OSSL_PARAM_INTEGER>.
 If I<bn> is marked as being securely allocated, its OSSL_PARAM representation
 will also be securely allocated.
 The I<bn> argument is stored by reference and the underlying BIGNUM object
@@ -89,22 +91,9 @@ OSSL_PARAM_BLD_push_BN_pad() is a function that will create an OSSL_PARAM object
 that holds the specified BIGNUM I<bn>.
 The object will be padded to occupy exactly I<sz> bytes, if insufficient space
 is specified an error results.
-If I<bn> is marked as being securely allocated, its OSSL_PARAM representation
-will also be securely allocated.
-The I<bn> argument is stored by reference and the underlying BIGNUM object
-must exist until after OSSL_PARAM_BLD_to_param() has been called.
-
-OSSL_PARAM_BLD_push_signed_BN() is a function that will create an OSSL_PARAM
-object that holds the specified BIGNUM I<bn>.
-If I<bn> is marked as being securely allocated, its OSSL_PARAM representation
-will also be securely allocated.
-The I<bn> argument is stored by reference and the underlying BIGNUM object
-must exist until after OSSL_PARAM_BLD_to_param() has been called.
-
-OSSL_PARAM_BLD_push_signed_BN_pad() is a function that will create an OSSL_PARAM
-object that holds the specified BIGNUM I<bn>.
-The object will be padded to occupy exactly I<sz> bytes, if insufficient space
-is specified an error results.
+When the I<bn> is zero or positive, its OSSL_PARAM type becomes
+B<OSSL_PARAM_UNSIGNED_INTEGER>.
+When the I<bn> is negative, its OSSL_PARAM type becomes B<OSSL_PARAM_INTEGER>.
 If I<bn> is marked as being securely allocated, its OSSL_PARAM representation
 will also be securely allocated.
 The I<bn> argument is stored by reference and the underlying BIGNUM object
