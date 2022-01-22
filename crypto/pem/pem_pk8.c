@@ -136,7 +136,7 @@ static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder, int nid,
         if (enc || (nid != -1)) {
             if (kstr == NULL) {
                 klen = cb(buf, PEM_BUFSIZE, 1, u);
-                if (klen <= 0) {
+                if (klen < 0) {
                     ERR_raise(ERR_LIB_PEM, PEM_R_READ_KEY);
                     goto legacy_end;
                 }
