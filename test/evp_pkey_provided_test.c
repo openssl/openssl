@@ -165,6 +165,20 @@ static int test_print_key_using_pem(const char *alg, const EVP_PKEY *pk)
                                                      EVP_aes_256_cbc(),
                                                      NULL, 0, pass_cb_error,
                                                      NULL))
+#ifndef OPENSSL_NO_DES
+        || !TEST_true(PEM_write_bio_PKCS8PrivateKey_nid(
+            bio_out, pk, NID_pbe_WithSHA1And3_Key_TripleDES_CBC,
+            (const char *)~0, 0, NULL, NULL))
+        || !TEST_true(PEM_write_bio_PKCS8PrivateKey_nid(
+            bio_out, pk, NID_pbe_WithSHA1And3_Key_TripleDES_CBC, NULL, 0,
+            NULL, ""))
+        || !TEST_true(PEM_write_bio_PKCS8PrivateKey_nid(
+            bio_out, pk, NID_pbe_WithSHA1And3_Key_TripleDES_CBC, NULL, 0,
+            pass_cb, NULL))
+        || !TEST_false(PEM_write_bio_PKCS8PrivateKey_nid(
+            bio_out, pk, NID_pbe_WithSHA1And3_Key_TripleDES_CBC, NULL, 0,
+            pass_cb_error, NULL))
+#endif
         /* Private key in text form */
         || !TEST_int_gt(EVP_PKEY_print_private(membio, pk, 0, NULL), 0)
         || !TEST_true(compare_with_file(alg, PRIV_TEXT, membio))
