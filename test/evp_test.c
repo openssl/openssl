@@ -588,7 +588,9 @@ static int cipher_test_init(EVP_TEST *t, const char *alg)
     }
     ERR_clear_last_mark();
 
-    cdat = OPENSSL_zalloc(sizeof(*cdat));
+    if (!TEST_ptr(cdat = OPENSSL_zalloc(sizeof(*cdat))))
+        return 0;
+
     cdat->cipher = cipher;
     cdat->fetched_cipher = fetched_cipher;
     cdat->enc = -1;
@@ -1195,7 +1197,9 @@ static int mac_test_init(EVP_TEST *t, const char *alg)
             return 0;
     }
 
-    mdat = OPENSSL_zalloc(sizeof(*mdat));
+    if (!TEST_ptr(mdat = OPENSSL_zalloc(sizeof(*mdat))))
+        return 0;
+
     mdat->type = type;
     mdat->mac_name = OPENSSL_strdup(alg);
     mdat->mac = mac;
