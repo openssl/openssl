@@ -2690,6 +2690,7 @@ static int kdf_test_run(EVP_TEST *t)
     KDF_DATA *expected = t->data;
     unsigned char *got = NULL;
     size_t got_len = expected->output_len;
+    EVP_KDF_CTX *ctx;
 
     if (!EVP_KDF_CTX_set_params(expected->ctx, expected->params)) {
         t->err = "KDF_CTRL_ERROR";
@@ -2698,6 +2699,10 @@ static int kdf_test_run(EVP_TEST *t)
     if (!TEST_ptr(got = OPENSSL_malloc(got_len == 0 ? 1 : got_len))) {
         t->err = "INTERNAL_ERROR";
         goto err;
+    }
+    if ((ctx = EVP_KDF_CTX_dup(expected->ctx)) != NULL) {
+        EVP_KDF_CTX_free(expected->ctx);
+        expected->ctx = ctx;
     }
     if (EVP_KDF_derive(expected->ctx, got, got_len, NULL) <= 0) {
         t->err = "KDF_DERIVE_ERROR";
