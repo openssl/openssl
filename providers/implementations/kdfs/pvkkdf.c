@@ -17,6 +17,7 @@
 #include "prov/provider_util.h"
 
 static OSSL_FUNC_kdf_newctx_fn kdf_pvk_new;
+static OSSL_FUNC_kdf_dupctx_fn kdf_pvk_dup;
 static OSSL_FUNC_kdf_freectx_fn kdf_pvk_free;
 static OSSL_FUNC_kdf_reset_fn kdf_pvk_reset;
 static OSSL_FUNC_kdf_derive_fn kdf_pvk_derive;
@@ -69,6 +70,26 @@ static void kdf_pvk_free(void *vctx)
         kdf_pvk_cleanup(ctx);
         OPENSSL_free(ctx);
     }
+}
+
+static void *kdf_pvk_dup(void *vctx)
+{
+    const KDF_PVK *src = (const KDF_PVK *)vctx;
+    KDF_PVK *dest;
+
+    dest = kdf_pvk_new(src->provctx);
+    if (dest != NULL)
+        if (!ossl_prov_memdup(src->salt, src->salt_len,
+                              &dest->salt, &dest->salt_len)
+                || !ossl_prov_memdup(src->pass, src->pass_len,
+                                     &dest->pass , &dest->pass_len)
+                || !ossl_prov_digest_copy(&dest->digest, &src->digest))
+            goto err;
+    return dest;
+
+ err:
+    kdf_pvk_free(dest);
+    return NULL;
 }
 
 static void kdf_pvk_reset(void *vctx)
@@ -216,6 +237,7 @@ static const OSSL_PARAM *kdf_pvk_gettable_ctx_params(ossl_unused void *ctx,
 
 const OSSL_DISPATCH ossl_kdf_pvk_functions[] = {
     { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))kdf_pvk_new },
+    { OSSL_FUNC_KDF_DUPCTX, (void(*)(void))kdf_pvk_dup },
     { OSSL_FUNC_KDF_FREECTX, (void(*)(void))kdf_pvk_free },
     { OSSL_FUNC_KDF_RESET, (void(*)(void))kdf_pvk_reset },
     { OSSL_FUNC_KDF_DERIVE, (void(*)(void))kdf_pvk_derive },
