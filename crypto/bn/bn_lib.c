@@ -437,7 +437,7 @@ static BIGNUM *bin2bn(const unsigned char *s, int len, BIGNUM *ret,
                       endianess_t endianess, signedness_t signedness)
 {
     int inc;
-    const unsigned char *s2 = NULL;
+    const unsigned char *s2;
     int inc2;
     int neg = 0, xor = 0, carry = 0;
     unsigned int i;
@@ -455,18 +455,15 @@ static BIGNUM *bin2bn(const unsigned char *s, int len, BIGNUM *ret,
      * significant BIGNUM chunk, so we adapt parameters to transfer
      * input bytes accordingly.
      */
-    switch (endianess) {
-    case LITTLE:
+    if (endianess == LITTLE) {
         s2 = s + len - 1;
         inc2 = -1;
         inc = 1;
-        break;
-    case BIG:
+    } else {
         s2 = s;
         inc2 = 1;
         inc = -1;
         s += len - 1;
-        break;
     }
 
     /* Take note of the signedness of the input bytes*/
@@ -593,14 +590,11 @@ static int bn2binpad(const BIGNUM *a, unsigned char *to, int tolen,
      * to most significant BIGNUM limb, so we adapt parameters to
      * transfer output bytes accordingly.
      */
-    switch (endianess) {
-    case LITTLE:
+    if (endianess == LITTLE) {
         inc = 1;
-        break;
-    case BIG:
+    } else {
         inc = -1;
         to += tolen - 1;         /* Move to the last byte, not beyond */
-        break;
     }
 
     lasti = atop - 1;
