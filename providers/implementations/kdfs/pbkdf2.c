@@ -37,6 +37,7 @@
 #define KDF_PBKDF2_MIN_SALT_LEN   (128 / 8)
 
 static OSSL_FUNC_kdf_newctx_fn kdf_pbkdf2_new;
+static OSSL_FUNC_kdf_dupctx_fn kdf_pbkdf2_dup;
 static OSSL_FUNC_kdf_freectx_fn kdf_pbkdf2_free;
 static OSSL_FUNC_kdf_reset_fn kdf_pbkdf2_reset;
 static OSSL_FUNC_kdf_derive_fn kdf_pbkdf2_derive;
@@ -63,7 +64,7 @@ typedef struct {
 
 static void kdf_pbkdf2_init(KDF_PBKDF2 *ctx);
 
-static void *kdf_pbkdf2_new(void *provctx)
+static void *kdf_pbkdf2_new_no_init(void *provctx)
 {
     KDF_PBKDF2 *ctx;
 
@@ -76,7 +77,15 @@ static void *kdf_pbkdf2_new(void *provctx)
         return NULL;
     }
     ctx->provctx = provctx;
-    kdf_pbkdf2_init(ctx);
+    return ctx;
+}
+
+static void *kdf_pbkdf2_new(void *provctx)
+{
+    KDF_PBKDF2 *ctx = kdf_pbkdf2_new_no_init(provctx);
+
+    if (ctx != NULL)
+        kdf_pbkdf2_init(ctx);
     return ctx;
 }
 
@@ -106,6 +115,30 @@ static void kdf_pbkdf2_reset(void *vctx)
     kdf_pbkdf2_cleanup(ctx);
     ctx->provctx = provctx;
     kdf_pbkdf2_init(ctx);
+}
+
+static void *kdf_pbkdf2_dup(void *vctx)
+{
+    const KDF_PBKDF2 *src = (const KDF_PBKDF2 *)vctx;
+    KDF_PBKDF2 *dest;
+
+    /* We need a new PBKDF2 object but uninitialised since we're filling it */
+    dest = kdf_pbkdf2_new_no_init(src->provctx);
+    if (dest != NULL) {
+        if (!ossl_prov_memdup(src->salt, src->salt_len,
+                              &dest->salt, &dest->salt_len)
+                || !ossl_prov_memdup(src->pass, src->pass_len,
+                                     &dest->pass , &dest->pass_len)
+                || !ossl_prov_digest_copy(&dest->digest, &src->digest))
+            goto err;
+        dest->iter = src->iter;
+        dest->lower_bound_checks = src->lower_bound_checks;
+    }
+    return dest;
+
+ err:
+    kdf_pbkdf2_free(dest);
+    return NULL;
 }
 
 static void kdf_pbkdf2_init(KDF_PBKDF2 *ctx)
@@ -249,6 +282,7 @@ static const OSSL_PARAM *kdf_pbkdf2_gettable_ctx_params(ossl_unused void *ctx,
 
 const OSSL_DISPATCH ossl_kdf_pbkdf2_functions[] = {
     { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))kdf_pbkdf2_new },
+    { OSSL_FUNC_KDF_DUPCTX, (void(*)(void))kdf_pbkdf2_dup },
     { OSSL_FUNC_KDF_FREECTX, (void(*)(void))kdf_pbkdf2_free },
     { OSSL_FUNC_KDF_RESET, (void(*)(void))kdf_pbkdf2_reset },
     { OSSL_FUNC_KDF_DERIVE, (void(*)(void))kdf_pbkdf2_derive },
