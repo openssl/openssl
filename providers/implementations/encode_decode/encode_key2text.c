@@ -80,6 +80,9 @@ static int print_labeled_bignum(BIO *out, const char *label, const BIGNUM *bn)
     }
 
     hex_str = BN_bn2hex(bn);
+    if (hex_str == NULL)
+        return 0;
+
     p = hex_str;
     if (*p == '-') {
         ++p;
