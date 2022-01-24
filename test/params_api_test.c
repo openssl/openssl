@@ -452,9 +452,6 @@ err:
 static int test_param_signed_bignum(int n)
 {
     unsigned char buf1[MAX_LEN], buf2[MAX_LEN], bnbuf[MAX_LEN];
-#if 0
-    unsigned char *bufp = NULL, *bnbufp = NULL;
-#endif
     const size_t len = raw_values[n].len;
     BIGNUM *b = NULL, *c = NULL;
     OSSL_PARAM param = OSSL_PARAM_DEFN("bn", OSSL_PARAM_INTEGER, NULL, 0);
