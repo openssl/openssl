@@ -88,13 +88,13 @@ The following quantum-safe algorithms from liboqs are supported (assuming they h
 
 If ``<KEX>`` is any of the algorithms listed above, the following hybrid algorithms are supported:
 
-- if `<KEX>` has L1 security, the fork provides the method `p256_<KEX>`, which combine `<KEX>` with ECDH using the P256 curve.
-- if `<KEX>` has L3 security, the fork provides the method `p384_<KEX>`, which combines `<KEX>` with ECDH using the P384 curve.
-- if `<KEX>` has L5 security, the fork provides the method `p521_<KEX>`, which combines `<KEX>` with ECDH using the P521 curve.
+- if `<KEX>` claims NIST L1 or L2 security, the fork provides the method `p256_<KEX>`, which combine `<KEX>` with ECDH using the P256 curve.
+- if `<KEX>` claims NIST L3 or L4 security, the fork provides the method `p384_<KEX>`, which combines `<KEX>` with ECDH using the P384 curve.
+- if `<KEX>` claims NIST L5 security, the fork provides the method `p521_<KEX>`, which combines `<KEX>` with ECDH using the P521 curve.
 
-For example, since `kyber768` claims L3 security, the hybrid `p384_kyber768` is available.
+For example, since `kyber768` [claims NIST L3 security](https://github.com/open-quantum-safe/liboqs/blob/main/docs/algorithms/kem/kyber.md), the hybrid `p384_kyber768` is available.
 
-Note that algorithms marked with a dagger (†) have large stack usage and may cause failures when run on threads or in constrained environments.
+Note that algorithms marked with a dagger (†) have large stack usage and may cause failures when run on threads or in constrained environments. For further information about each algorithm's strengths and limitations, see the [documentation markdown files at liboqs](https://github.com/open-quantum-safe/liboqs/tree/main/docs/algorithms/kem).
 
 #### Authentication
 
@@ -112,11 +112,13 @@ The following digital signature algorithms from liboqs are supported by the fork
 
 The following hybrid algorithms are supported; they combine a quantum-safe algorithm listed above with a traditional digital signature algorithm (`<SIG>` is any one of the algorithms listed above):
 
-- if `<SIG>` has L1 security, then the fork provides the methods `rsa3072_<SIG>` and `p256_<SIG>`, which combine `<SIG>` with RSA3072 and with ECDSA using NIST's P256 curve respectively.
-- if `<SIG>` has L3 security, the fork provides the method `p384_<SIG>`, which combines `<SIG>` with ECDSA using NIST's P384 curve.
-- if `<SIG>` has L5 security, the fork provides the method `p521_<SIG>`, which combines `<SIG>` with ECDSA using NIST's P521 curve.
+- if `<SIG>` claims NIST L1 or L2 security, then the fork provides the methods `rsa3072_<SIG>` and `p256_<SIG>`, which combine `<SIG>` with RSA3072 and with ECDSA using NIST's P256 curve respectively.
+- if `<SIG>` claims NIST L3 or L4 security, the fork provides the method `p384_<SIG>`, which combines `<SIG>` with ECDSA using NIST's P384 curve.
+- if `<SIG>` claims NIST L5 security, the fork provides the method `p521_<SIG>`, which combines `<SIG>` with ECDSA using NIST's P521 curve.
 
-For example, since `dilithium2` claims L1 security, the hybrids `rsa3072_dilithium2` and `p256_dilithium2` are available.
+For example, since `dilithium2` [claims NIST L2 security](https://github.com/open-quantum-safe/liboqs/blob/main/docs/algorithms/sig/dilithium.md), the hybrids `rsa3072_dilithium2` and `p256_dilithium2` are available.
+
+For further information about each algorithm's strengths and limitations, see the [documentation markdown files at liboqs](https://github.com/open-quantum-safe/liboqs/tree/main/docs/algorithms/sig).
 
 ## Quickstart
 
