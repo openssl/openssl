@@ -26,6 +26,7 @@
 #define X942KDF_MAX_INLEN (1 << 30)
 
 static OSSL_FUNC_kdf_newctx_fn x942kdf_new;
+static OSSL_FUNC_kdf_dupctx_fn x942kdf_dup;
 static OSSL_FUNC_kdf_freectx_fn x942kdf_free;
 static OSSL_FUNC_kdf_reset_fn x942kdf_reset;
 static OSSL_FUNC_kdf_derive_fn x942kdf_derive;
@@ -368,6 +369,41 @@ static void x942kdf_free(void *vctx)
     }
 }
 
+static void *x942kdf_dup(void *vctx)
+{
+    const KDF_X942 *src = (const KDF_X942 *)vctx;
+    KDF_X942 *dest;
+
+    dest = x942kdf_new(src->provctx);
+    if (dest != NULL) {
+        if (!ossl_prov_memdup(src->secret, src->secret_len,
+                              &dest->secret , &dest->secret_len)
+                || !ossl_prov_memdup(src->acvpinfo, src->acvpinfo_len,
+                                     &dest->acvpinfo , &dest->acvpinfo_len)
+                || !ossl_prov_memdup(src->partyuinfo, src->partyuinfo_len,
+                                     &dest->partyuinfo , &dest->partyuinfo_len)
+                || !ossl_prov_memdup(src->partyvinfo, src->partyvinfo_len,
+                                     &dest->partyvinfo , &dest->partyvinfo_len)
+                || !ossl_prov_memdup(src->supp_pubinfo, src->supp_pubinfo_len,
+                                     &dest->supp_pubinfo,
+                                     &dest->supp_pubinfo_len)
+                || !ossl_prov_memdup(src->supp_privinfo, src->supp_privinfo_len,
+                                     &dest->supp_privinfo,
+                                     &dest->supp_privinfo_len)
+                || !ossl_prov_digest_copy(&dest->digest, &src->digest))
+            goto err;
+        dest->cek_oid = src->cek_oid;
+        dest->cek_oid_len = src->cek_oid_len;
+        dest->dkm_len = src->dkm_len;
+        dest->use_keybits = src->use_keybits;
+    }
+    return dest;
+
+ err:
+    x942kdf_free(dest);
+    return NULL;
+}
+
 static int x942kdf_set_buffer(unsigned char **out, size_t *out_len,
                               const OSSL_PARAM *p)
 {
@@ -579,6 +615,7 @@ static const OSSL_PARAM *x942kdf_gettable_ctx_params(ossl_unused void *ctx,
 
 const OSSL_DISPATCH ossl_kdf_x942_kdf_functions[] = {
     { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))x942kdf_new },
+    { OSSL_FUNC_KDF_DUPCTX, (void(*)(void))x942kdf_dup },
     { OSSL_FUNC_KDF_FREECTX, (void(*)(void))x942kdf_free },
     { OSSL_FUNC_KDF_RESET, (void(*)(void))x942kdf_reset },
     { OSSL_FUNC_KDF_DERIVE, (void(*)(void))x942kdf_derive },
