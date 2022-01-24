@@ -72,6 +72,7 @@ typedef struct {
 static const unsigned char kmac_custom_str[] = { 0x4B, 0x44, 0x46 };
 
 static OSSL_FUNC_kdf_newctx_fn sskdf_new;
+static OSSL_FUNC_kdf_dupctx_fn sskdf_dup;
 static OSSL_FUNC_kdf_freectx_fn sskdf_free;
 static OSSL_FUNC_kdf_reset_fn sskdf_reset;
 static OSSL_FUNC_kdf_derive_fn sskdf_derive;
@@ -319,6 +320,35 @@ static void sskdf_free(void *vctx)
     }
 }
 
+static void *sskdf_dup(void *vctx)
+{
+    const KDF_SSKDF *src = (const KDF_SSKDF *)vctx;
+    KDF_SSKDF *dest;
+
+    dest = sskdf_new(src->provctx);
+    if (dest != NULL) {
+        if (src->macctx != NULL) {
+            dest->macctx = EVP_MAC_CTX_dup(src->macctx);
+            if (dest->macctx == NULL)
+                goto err;
+        }
+        if (!ossl_prov_memdup(src->info, src->info_len,
+                              &dest->info, &dest->info_len)
+                || !ossl_prov_memdup(src->salt, src->salt_len,
+                                     &dest->salt , &dest->salt_len)
+                || !ossl_prov_memdup(src->secret, src->secret_len,
+                                     &dest->secret, &dest->secret_len)
+                || !ossl_prov_digest_copy(&dest->digest, &src->digest))
+            goto err;
+        dest->out_len = src->out_len;
+    }
+    return dest;
+
+ err:
+    sskdf_free(dest);
+    return NULL;
+}
+
 static int sskdf_set_buffer(unsigned char **out, size_t *out_len,
                             const OSSL_PARAM *p)
 {
@@ -520,6 +550,7 @@ static const OSSL_PARAM *sskdf_gettable_ctx_params(ossl_unused void *ctx,
 
 const OSSL_DISPATCH ossl_kdf_sskdf_functions[] = {
     { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))sskdf_new },
+    { OSSL_FUNC_KDF_DUPCTX, (void(*)(void))sskdf_dup },
     { OSSL_FUNC_KDF_FREECTX, (void(*)(void))sskdf_free },
     { OSSL_FUNC_KDF_RESET, (void(*)(void))sskdf_reset },
     { OSSL_FUNC_KDF_DERIVE, (void(*)(void))sskdf_derive },
@@ -534,6 +565,7 @@ const OSSL_DISPATCH ossl_kdf_sskdf_functions[] = {
 
 const OSSL_DISPATCH ossl_kdf_x963_kdf_functions[] = {
     { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))sskdf_new },
+    { OSSL_FUNC_KDF_DUPCTX, (void(*)(void))sskdf_dup },
     { OSSL_FUNC_KDF_FREECTX, (void(*)(void))sskdf_free },
     { OSSL_FUNC_KDF_RESET, (void(*)(void))sskdf_reset },
     { OSSL_FUNC_KDF_DERIVE, (void(*)(void))x963kdf_derive },
