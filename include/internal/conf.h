@@ -22,6 +22,9 @@ struct ossl_init_settings_st {
     char *filename;
     char *appname;
     unsigned long flags;
+
+    /* For use with OPENSSL_INIT_RUN_ONCE */
+    void (*run_once_fn)(void);
 };
 
 int ossl_config_int(const OPENSSL_INIT_SETTINGS *);
