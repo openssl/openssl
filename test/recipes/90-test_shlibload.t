@@ -33,19 +33,22 @@ $atexit_outfile = 'atexit-cryptofirst.txt';
 1 while unlink $atexit_outfile;
 ok(run(test(["shlibloadtest", "-crypto_first", $libcrypto, $libssl, $atexit_outfile])),
    "running shlibloadtest -crypto_first $atexit_outfile");
-ok(check_atexit($atexit_outfile));
+ok(-f $atexit_outfile, "checking that $atexit_outfile exits");
+ok(check_atexit($atexit_outfile), "checking that $atexit_outfile has content");
 
 $atexit_outfile = 'atexit-sslfirst.txt';
 1 while unlink $atexit_outfile;
 ok(run(test(["shlibloadtest", "-ssl_first", $libcrypto, $libssl, $atexit_outfile])),
    "running shlibloadtest -ssl_first $atexit_outfile");
-ok(check_atexit($atexit_outfile));
+ok(-f $atexit_outfile, "checking that $atexit_outfile exits");
+ok(check_atexit($atexit_outfile), "checking that $atexit_outfile has content");
 
 $atexit_outfile = 'atexit-justcrypto.txt';
 1 while unlink $atexit_outfile;
 ok(run(test(["shlibloadtest", "-just_crypto", $libcrypto, $libssl, $atexit_outfile])),
    "running shlibloadtest -just_crypto $atexit_outfile");
-ok(check_atexit($atexit_outfile));
+ok(-f $atexit_outfile, "checking that $atexit_outfile exits");
+ok(check_atexit($atexit_outfile), "checking that $atexit_outfile has content");
 
 sub check_atexit {
     my $filename = shift;
