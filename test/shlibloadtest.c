@@ -15,8 +15,6 @@
 #include <openssl/types.h>
 #include "simpledynamic.h"
 
-typedef void DSO;
-
 typedef const SSL_METHOD * (*TLS_method_t)(void);
 typedef SSL_CTX * (*SSL_CTX_new_t)(const SSL_METHOD *meth);
 typedef void (*SSL_CTX_free_t)(SSL_CTX *);
@@ -27,14 +25,11 @@ typedef unsigned long (*ERR_get_error_t)(void);
 typedef unsigned long (*OPENSSL_version_major_t)(void);
 typedef unsigned long (*OPENSSL_version_minor_t)(void);
 typedef unsigned long (*OPENSSL_version_patch_t)(void);
-typedef DSO * (*DSO_dsobyaddr_t)(void (*addr)(void), int flags);
-typedef int (*DSO_free_t)(DSO *dso);
 
 typedef enum test_types_en {
     CRYPTO_FIRST,
     SSL_FIRST,
     JUST_CRYPTO,
-    DSO_REFTEST,
 } TEST_TYPE;
 
 static TEST_TYPE test_type;
@@ -80,7 +75,6 @@ static int test_lib(void)
 
     switch (test_type) {
     case JUST_CRYPTO:
-    case DSO_REFTEST:
     case CRYPTO_FIRST:
         if (!sd_load(path_crypto, &cryptolib, SD_SHLIB)) {
             fprintf(stderr, "Failed to load libcrypto\n");
@@ -104,8 +98,7 @@ static int test_lib(void)
         break;
     }
 
-    if (test_type != JUST_CRYPTO
-            && test_type != DSO_REFTEST) {
+    if (test_type != JUST_CRYPTO) {
         if (!sd_sym(ssllib, "TLS_method", &symbols[0].sym)
                 || !sd_sym(ssllib, "SSL_CTX_new", &symbols[1].sym)
                 || !sd_sym(ssllib, "SSL_CTX_free", &symbols[2].sym)) {
@@ -206,8 +199,6 @@ int main(int argc, char *argv[])
         test_type = SSL_FIRST;
     } else if (strcmp(p, "-just_crypto") == 0) {
         test_type = JUST_CRYPTO;
-    } else if (strcmp(p, "-dso_ref") == 0) {
-        test_type = DSO_REFTEST;
     } else {
         fprintf(stderr, "Unrecognised argument\n");
         return 1;

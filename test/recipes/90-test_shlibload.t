@@ -21,10 +21,9 @@ use platform;
 plan skip_all => "Test only supported in a shared build" if disabled("shared");
 plan skip_all => "Test is disabled on AIX" if config('target') =~ m|^aix|;
 plan skip_all => "Test is disabled on NonStop" if config('target') =~ m|^nonstop|;
-plan skip_all => "Test only supported in a dso build" if disabled("dso");
 plan skip_all => "Test is disabled in an address sanitizer build" unless disabled("asan");
 
-plan tests => 8;
+plan tests => 6;
 
 my $libcrypto = platform->sharedlib('libcrypto');
 my $libssl = platform->sharedlib('libssl');
@@ -46,12 +45,6 @@ $atexit_outfile = 'atexit-justcrypto.txt';
 1 while unlink $atexit_outfile;
 ok(run(test(["shlibloadtest", "-just_crypto", $libcrypto, $libssl, $atexit_outfile])),
    "running shlibloadtest -just_crypto $atexit_outfile");
-ok(check_atexit($atexit_outfile));
-
-$atexit_outfile = 'atexit-dsoref.txt';
-1 while unlink $atexit_outfile;
-ok(run(test(["shlibloadtest", "-dso_ref", $libcrypto, $libssl, $atexit_outfile])),
-   "running shlibloadtest -dso_ref $atexit_outfile");
 ok(check_atexit($atexit_outfile));
 
 sub check_atexit {
