@@ -163,7 +163,7 @@ static int test_lib(void)
         }
     }
 
-    if (test_type != JUST_CRYPTO) {
+    if (test_type != JUST_CRYPTO && test_type != RUN_ONCE) {
         ctx = mySSL_CTX_new(myTLS_method());
         if (ctx == NULL) {
             fprintf(stderr, "Failed to create SSL_CTX\n");
