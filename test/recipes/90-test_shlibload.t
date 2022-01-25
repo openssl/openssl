@@ -23,7 +23,7 @@ plan skip_all => "Test is disabled on AIX" if config('target') =~ m|^aix|;
 plan skip_all => "Test is disabled on NonStop" if config('target') =~ m|^nonstop|;
 plan skip_all => "Test is disabled in an address sanitizer build" unless disabled("asan");
 
-plan tests => 6;
+plan tests => 9;
 
 my $libcrypto = platform->sharedlib('libcrypto');
 my $libssl = platform->sharedlib('libssl');
