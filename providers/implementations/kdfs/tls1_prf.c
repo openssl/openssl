@@ -63,6 +63,7 @@
 #include "e_os.h"
 
 static OSSL_FUNC_kdf_newctx_fn kdf_tls1_prf_new;
+static OSSL_FUNC_kdf_dupctx_fn kdf_tls1_prf_dup;
 static OSSL_FUNC_kdf_freectx_fn kdf_tls1_prf_free;
 static OSSL_FUNC_kdf_reset_fn kdf_tls1_prf_reset;
 static OSSL_FUNC_kdf_derive_fn kdf_tls1_prf_derive;
@@ -129,6 +130,31 @@ static void kdf_tls1_prf_reset(void *vctx)
     OPENSSL_cleanse(ctx->seed, ctx->seedlen);
     memset(ctx, 0, sizeof(*ctx));
     ctx->provctx = provctx;
+}
+
+static void *kdf_tls1_prf_dup(void *vctx)
+{
+    const TLS1_PRF *src = (const TLS1_PRF *)vctx;
+    TLS1_PRF *dest;
+
+    dest = kdf_tls1_prf_new(src->provctx);
+    if (dest != NULL) {
+        if (src->P_hash != NULL
+                    && (dest->P_hash = EVP_MAC_CTX_dup(src->P_hash)) == NULL)
+            goto err;
+        if (src->P_sha1 != NULL
+                    && (dest->P_sha1 = EVP_MAC_CTX_dup(src->P_sha1)) == NULL)
+            goto err;
+        if (!ossl_prov_memdup(src->sec, src->seclen, &dest->sec, &dest->seclen))
+            goto err;
+        memcpy(dest->seed, src->seed, src->seedlen);
+        dest->seedlen = src->seedlen;
+    }
+    return dest;
+
+ err:
+    kdf_tls1_prf_free(dest);
+    return NULL;
 }
 
 static int kdf_tls1_prf_derive(void *vctx, unsigned char *key, size_t keylen,
@@ -248,6 +274,7 @@ static const OSSL_PARAM *kdf_tls1_prf_gettable_ctx_params(
 
 const OSSL_DISPATCH ossl_kdf_tls1_prf_functions[] = {
     { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))kdf_tls1_prf_new },
+    { OSSL_FUNC_KDF_DUPCTX, (void(*)(void))kdf_tls1_prf_dup },
     { OSSL_FUNC_KDF_FREECTX, (void(*)(void))kdf_tls1_prf_free },
     { OSSL_FUNC_KDF_RESET, (void(*)(void))kdf_tls1_prf_reset },
     { OSSL_FUNC_KDF_DERIVE, (void(*)(void))kdf_tls1_prf_derive },
