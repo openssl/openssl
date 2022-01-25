@@ -86,58 +86,6 @@ err:
     return 0;
 }
 
-static CRYPTO_ONCE load_crypto_nodelete = CRYPTO_ONCE_STATIC_INIT;
-DEFINE_RUN_ONCE_STATIC(ossl_init_load_crypto_nodelete)
-{
-    OSSL_TRACE(INIT, "ossl_init_load_crypto_nodelete()\n");
-
-#if !defined(OPENSSL_USE_NODELETE) \
-    && !defined(OPENSSL_NO_PINSHARED)
-# if defined(DSO_WIN32) && !defined(_WIN32_WCE)
-    {
-        HMODULE handle = NULL;
-        BOOL ret;
-
-        /* We don't use the DSO route for WIN32 because there is a better way */
-        ret = GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS
-                                | GET_MODULE_HANDLE_EX_FLAG_PIN,
-                                (void *)&base_inited, &handle);
-
-        OSSL_TRACE1(INIT,
-                    "ossl_init_load_crypto_nodelete: "
-                    "obtained DSO reference? %s\n",
-                    (ret == TRUE ? "No!" : "Yes."));
-        return (ret == TRUE) ? 1 : 0;
-    }
-# elif !defined(DSO_NONE)
-    /*
-     * Deliberately leak a reference to ourselves. This will force the library
-     * to remain loaded until the atexit() handler is run at process exit.
-     */
-    {
-        DSO *dso;
-        void *err;
-
-        if (!err_shelve_state(&err))
-            return 0;
-
-        dso = DSO_dsobyaddr(&base_inited, DSO_FLAG_NO_UNLOAD_ON_FREE);
-        /*
-         * In case of No!, it is uncertain our exit()-handlers can still be
-         * called. After dlclose() the whole library might have been unloaded
-         * already.
-         */
-        OSSL_TRACE1(INIT, "obtained DSO reference? %s\n",
-                    (dso == NULL ? "No!" : "Yes."));
-        DSO_free(dso);
-        err_unshelve_state(err);
-    }
-# endif
-#endif
-
-    return 1;
-}
-
 static CRYPTO_ONCE load_crypto_strings = CRYPTO_ONCE_STATIC_INIT;
 
 DEFINE_RUN_ONCE_STATIC(ossl_init_load_crypto_strings)
@@ -488,9 +436,6 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
             return 1;
     }
 
-    if (!RUN_ONCE(&load_crypto_nodelete, ossl_init_load_crypto_nodelete))
-        return 0;
-
     if ((opts & OPENSSL_INIT_NO_LOAD_CRYPTO_STRINGS)
             && !RUN_ONCE_ALT(&load_crypto_strings,
                              ossl_init_no_load_crypto_strings,
@@ -607,56 +552,6 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 int OPENSSL_atexit(void (*handler)(void))
 {
     OPENSSL_INIT_STOP *newhand;
-
-#if !defined(OPENSSL_USE_NODELETE)\
-    && !defined(OPENSSL_NO_PINSHARED)
-    {
-# if defined(DSO_WIN32) && !defined(_WIN32_WCE)
-        HMODULE handle = NULL;
-        BOOL ret;
-        union {
-            void *sym;
-            void (*func)(void);
-        } handlersym;
-
-        handlersym.func = handler;
-
-        /*
-         * We don't use the DSO route for WIN32 because there is a better
-         * way
-         */
-        ret = GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS
-                                | GET_MODULE_HANDLE_EX_FLAG_PIN,
-                                handlersym.sym, &handle);
-
-        if (!ret)
-            return 0;
-# elif !defined(DSO_NONE)
-        /*
-         * Deliberately leak a reference to the handler. This will force the
-         * library/code containing the handler to remain loaded until we run the
-         * atexit handler. If -znodelete has been used then this is
-         * unnecessary.
-         */
-        DSO *dso = NULL;
-        union {
-            void *sym;
-            void (*func)(void);
-        } handlersym;
-
-        handlersym.func = handler;
-
-        ERR_set_mark();
-        dso = DSO_dsobyaddr(handlersym.sym, DSO_FLAG_NO_UNLOAD_ON_FREE);
-        /* See same code above in ossl_init_base() for an explanation. */
-        OSSL_TRACE1(INIT,
-                   "atexit: obtained DSO reference? %s\n",
-                   (dso == NULL ? "No!" : "Yes."));
-        DSO_free(dso);
-        ERR_pop_to_mark();
-# endif
-    }
-#endif
 
     if ((newhand = OPENSSL_malloc(sizeof(*newhand))) == NULL)
         return 0;
