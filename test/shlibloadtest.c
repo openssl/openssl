@@ -13,6 +13,9 @@
 #include <openssl/opensslv.h>
 #include <openssl/ssl.h>
 #include <openssl/types.h>
+
+#include "internal/conf.h"
+#include "crypto/cryptlib.h"
 #include "simpledynamic.h"
 
 typedef const SSL_METHOD * (*TLS_method_t)(void);
@@ -29,7 +32,8 @@ typedef unsigned long (*OPENSSL_version_patch_t)(void);
 typedef enum test_types_en {
     CRYPTO_FIRST,
     SSL_FIRST,
-    JUST_CRYPTO
+    JUST_CRYPTO,
+    RUN_ONCE
 } TEST_TYPE;
 
 static TEST_TYPE test_type;
@@ -51,6 +55,13 @@ static void atexit_handler(void)
     fprintf(atexit_file, "atexit() run\n");
     fclose(atexit_file);
     atexit_handler_done++;
+}
+
+static int reload_count = 0;
+static int run_once_count = 0;
+static void count_run_once(void)
+{
+    run_once_count++;
 }
 
 static int test_lib(void)
@@ -87,6 +98,10 @@ static int test_lib(void)
     } while(0)
 
     switch (test_type) {
+    case RUN_ONCE:
+        reload_count++;
+        /* Fall through */
+
     case JUST_CRYPTO:
     case CRYPTO_FIRST:
         if (!sd_load(path_crypto, &cryptolib, SD_SHLIB)) {
@@ -121,8 +136,32 @@ static int test_lib(void)
     get_symbol(OPENSSL_version_major_t, myOPENSSL_version_major, cryptolib, OPENSSL_version_major);
     get_symbol(OPENSSL_version_minor_t, myOPENSSL_version_minor, cryptolib, OPENSSL_version_minor);
     get_symbol(OPENSSL_version_patch_t, myOPENSSL_version_patch, cryptolib, OPENSSL_version_patch);
+    get_symbol(OPENSSL_init_crypto_t, myOPENSSL_init_crypto, cryptolib, OPENSSL_init_crypto);
     get_symbol(OPENSSL_atexit_t, myOPENSSL_atexit, cryptolib, OPENSSL_atexit);
     get_symbol(OPENSSL_cleanup_t, myOPENSSL_cleanup, cryptolib, OPENSSL_cleanup);
+
+    if (test_type == RUN_ONCE) {
+        struct ossl_init_settings_st settings = { NULL, };
+
+        settings.run_once_fn = count_run_once;
+        if (!myOPENSSL_init_crypto(OPENSSL_INIT_TEST_RUN_ONCE, &settings)) {
+            fprintf(stderr, "Failed to initialise libcrypto\n");
+            goto end;
+        }
+
+        /*
+         * reload_count is incremented each time we run this function.
+         * run_once_count is incremented each time count_run_once() is
+         * called.
+         * This is used to demonstrate if an unload and reload of libcrypto
+         * resets the internal run_once flags or not.  The expectation is
+         * that this is the case.
+         */
+        if (reload_count != run_once_count) {
+            fprintf(stderr, "RUN_ONCE flags not cleared when reloading libcrypto\n");
+            goto end;
+        }
+    }
 
     if (test_type != JUST_CRYPTO) {
         ctx = mySSL_CTX_new(myTLS_method());
@@ -202,6 +241,8 @@ int main(int argc, char *argv[])
         test_type = SSL_FIRST;
     } else if (strcmp(p, "-just_crypto") == 0) {
         test_type = JUST_CRYPTO;
+    } else if (strcmp(p, "-run-once") == 0) {
+        test_type = RUN_ONCE;
     } else {
         fprintf(stderr, "Unrecognised argument\n");
         return 1;
@@ -216,6 +257,8 @@ int main(int argc, char *argv[])
 
 #ifdef SD_INIT
     if (!test_lib())
+        return 1;
+    if (test_type == RUN_ONCE && !test_lib())
         return 1;
 #endif
     return 0;

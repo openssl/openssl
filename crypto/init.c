@@ -78,6 +78,24 @@ err:
     return 0;
 }
 
+/*
+ * This is for testing that run_once variables work as expected visavi
+ * libcrypto.so loading, unloading and reloading.
+ */
+static CRYPTO_ONCE register_run_once = CRYPTO_ONCE_STATIC_INIT;
+static void (*run_once_function)(void) = NULL;
+DEFINE_RUN_ONCE_STATIC(ossl_init_register_run_once)
+{
+#ifdef OPENSSL_INIT_DEBUG
+    fprintf(stderr, "OPENSSL_INIT: ossl_init_register_run_once()\n");
+#endif
+
+    if (run_once_function != NULL)
+        run_once_function();
+
+    return 1;
+}
+
 static CRYPTO_ONCE load_crypto_strings = CRYPTO_ONCE_STATIC_INIT;
 static int load_crypto_strings_inited = 0;
 DEFINE_RUN_ONCE_STATIC(ossl_init_load_crypto_strings)
@@ -375,6 +393,18 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
         if (!(opts & OPENSSL_INIT_BASE_ONLY))
             ERR_raise(ERR_LIB_CRYPTO, ERR_R_INIT_FAIL);
         return 0;
+    }
+
+    /*
+     * This is for test/shlibloadtest.c, to see if run_once flags are reset
+     * in a libcrypto load, unload, reload.
+     */
+    if (opts & OPENSSL_INIT_TEST_RUN_ONCE) {
+        if (settings == NULL || settings->run_once_fn == NULL)
+            return 0;
+        run_once_function = settings->run_once_fn;
+        if (!RUN_ONCE(&register_run_once, ossl_init_register_run_once))
+            return 0;
     }
 
     /*

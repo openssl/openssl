@@ -50,6 +50,12 @@ ok(run(test(["shlibloadtest", "-just_crypto", $libcrypto, $libssl, $atexit_outfi
 ok(-f $atexit_outfile, "checking that $atexit_outfile exits");
 ok(check_atexit($atexit_outfile), "checking that $atexit_outfile has content");
 
+$atexit_outfile = 'atexit-run-once.txt';
+1 while unlink $atexit_outfile;
+ok(run(test(["shlibloadtest", "-run-once", $libcrypto, $libssl, $atexit_outfile])),
+   "running shlibloadtest -run-once $atexit_outfile");
+ok(!check_atexit($atexit_outfile));
+
 sub check_atexit {
     my $filename = shift;
 

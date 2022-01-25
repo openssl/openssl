@@ -29,6 +29,7 @@ void ossl_ctx_thread_stop(OSSL_LIB_CTX *ctx);
  * use".
  */
 # define OPENSSL_INIT_BASE_ONLY              0x00040000L
+# define OPENSSL_INIT_TEST_RUN_ONCE          0x80000000L
 
 void ossl_trace_cleanup(void);
 void ossl_malloc_setup_failures(void);
