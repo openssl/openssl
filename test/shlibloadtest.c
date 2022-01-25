@@ -62,15 +62,15 @@ static int test_lib(void)
         void (*func)(void);
         SD_SYM sym;
     } symbols[6];
-    TLS_method_t myTLS_method;
-    SSL_CTX_new_t mySSL_CTX_new;
-    SSL_CTX_free_t mySSL_CTX_free;
-    ERR_get_error_t myERR_get_error;
-    OPENSSL_version_major_t myOPENSSL_version_major;
-    OPENSSL_version_minor_t myOPENSSL_version_minor;
-    OPENSSL_version_patch_t myOPENSSL_version_patch;
-    OPENSSL_atexit_t myOPENSSL_atexit;
-    OPENSSL_cleanup_t myOPENSSL_cleanup;
+    TLS_method_t myTLS_method = NULL;
+    SSL_CTX_new_t mySSL_CTX_new = NULL;
+    SSL_CTX_free_t mySSL_CTX_free = NULL;
+    ERR_get_error_t myERR_get_error = NULL;
+    OPENSSL_version_major_t myOPENSSL_version_major = NULL;
+    OPENSSL_version_minor_t myOPENSSL_version_minor = NULL;
+    OPENSSL_version_patch_t myOPENSSL_version_patch = NULL;
+    OPENSSL_atexit_t myOPENSSL_atexit = NULL;
+    OPENSSL_cleanup_t myOPENSSL_cleanup = NULL;
     int result = 0;
 
     switch (test_type) {
@@ -98,7 +98,7 @@ static int test_lib(void)
         break;
     }
 
-    if (test_type != JUST_CRYPTO) {
+    if (ssllib != SD_INIT) {
         if (!sd_sym(ssllib, "TLS_method", &symbols[0].sym)
                 || !sd_sym(ssllib, "SSL_CTX_new", &symbols[1].sym)
                 || !sd_sym(ssllib, "SSL_CTX_free", &symbols[2].sym)) {
@@ -108,12 +108,6 @@ static int test_lib(void)
         myTLS_method = (TLS_method_t)symbols[0].func;
         mySSL_CTX_new = (SSL_CTX_new_t)symbols[1].func;
         mySSL_CTX_free = (SSL_CTX_free_t)symbols[2].func;
-        ctx = mySSL_CTX_new(myTLS_method());
-        if (ctx == NULL) {
-            fprintf(stderr, "Failed to create SSL_CTX\n");
-            goto end;
-        }
-        mySSL_CTX_free(ctx);
     }
 
     if (!sd_sym(cryptolib, "ERR_get_error", &symbols[0].sym)
@@ -126,15 +120,27 @@ static int test_lib(void)
         goto end;
     }
     myERR_get_error = (ERR_get_error_t)symbols[0].func;
+    myOPENSSL_version_major = (OPENSSL_version_major_t)symbols[1].func;
+    myOPENSSL_version_minor = (OPENSSL_version_minor_t)symbols[2].func;
+    myOPENSSL_version_patch = (OPENSSL_version_patch_t)symbols[3].func;
+    myOPENSSL_atexit = (OPENSSL_atexit_t)symbols[4].func;
+    myOPENSSL_cleanup = (OPENSSL_cleanup_t)symbols[5].func;
+
+    if (test_type != JUST_CRYPTO) {
+        ctx = mySSL_CTX_new(myTLS_method());
+        if (ctx == NULL) {
+            fprintf(stderr, "Failed to create SSL_CTX\n");
+            goto end;
+        }
+        mySSL_CTX_free(ctx);
+    }
+
     if (myERR_get_error() != 0) {
         fprintf(stderr, "Unexpected ERR_get_error() response\n");
         goto end;
     }
 
     /* Library and header version should be identical in this test */
-    myOPENSSL_version_major = (OPENSSL_version_major_t)symbols[1].func;
-    myOPENSSL_version_minor = (OPENSSL_version_minor_t)symbols[2].func;
-    myOPENSSL_version_patch = (OPENSSL_version_patch_t)symbols[3].func;
     if (myOPENSSL_version_major() != OPENSSL_VERSION_MAJOR
             || myOPENSSL_version_minor() != OPENSSL_VERSION_MINOR
             || myOPENSSL_version_patch() != OPENSSL_VERSION_PATCH) {
@@ -142,13 +148,11 @@ static int test_lib(void)
         goto end;
     }
 
-    myOPENSSL_atexit = (OPENSSL_atexit_t)symbols[4].func;
     if (!myOPENSSL_atexit(atexit_handler)) {
         fprintf(stderr, "Failed to register atexit handler\n");
         goto end;
     }
 
-    myOPENSSL_cleanup = (OPENSSL_cleanup_t)symbols[5].func;
     myOPENSSL_cleanup();
     if (!sd_close(cryptolib)) {
         fprintf(stderr, "Failed to close libcrypto\n");
@@ -166,7 +170,7 @@ static int test_lib(void)
 
     result = 1;
 end:
-    if (cryptolib != SD_INIT)
+    if (cryptolib != SD_INIT && myOPENSSL_cleanup != NULL)
         myOPENSSL_cleanup();
     if (cryptolib != SD_INIT)
         sd_close(cryptolib);
