@@ -24,6 +24,7 @@
 #include "prov/provider_util.h"
 
 static OSSL_FUNC_kdf_newctx_fn kdf_pkcs12_new;
+static OSSL_FUNC_kdf_dupctx_fn kdf_pkcs12_dup;
 static OSSL_FUNC_kdf_freectx_fn kdf_pkcs12_free;
 static OSSL_FUNC_kdf_reset_fn kdf_pkcs12_reset;
 static OSSL_FUNC_kdf_derive_fn kdf_pkcs12_derive;
@@ -178,6 +179,29 @@ static void kdf_pkcs12_reset(void *vctx)
     ctx->provctx = provctx;
 }
 
+static void *kdf_pkcs12_dup(void *vctx)
+{
+    const KDF_PKCS12 *src = (const KDF_PKCS12 *)vctx;
+    KDF_PKCS12 *dest;
+
+    dest = kdf_pkcs12_new(src->provctx);
+    if (dest != NULL) {
+        if (!ossl_prov_memdup(src->salt, src->salt_len,
+                              &dest->salt, &dest->salt_len)
+                || !ossl_prov_memdup(src->pass, src->pass_len,
+                                     &dest->pass , &dest->pass_len)
+                || !ossl_prov_digest_copy(&dest->digest, &src->digest))
+            goto err;
+        dest->iter = src->iter;
+        dest->id = src->id;
+    }
+    return dest;
+
+ err:
+    kdf_pkcs12_free(dest);
+    return NULL;
+}
+
 static int pkcs12kdf_set_membuf(unsigned char **buffer, size_t *buflen,
                              const OSSL_PARAM *p)
 {
@@ -287,6 +311,7 @@ static const OSSL_PARAM *kdf_pkcs12_gettable_ctx_params(
 
 const OSSL_DISPATCH ossl_kdf_pkcs12_functions[] = {
     { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))kdf_pkcs12_new },
+    { OSSL_FUNC_KDF_DUPCTX, (void(*)(void))kdf_pkcs12_dup },
     { OSSL_FUNC_KDF_FREECTX, (void(*)(void))kdf_pkcs12_free },
     { OSSL_FUNC_KDF_RESET, (void(*)(void))kdf_pkcs12_reset },
     { OSSL_FUNC_KDF_DERIVE, (void(*)(void))kdf_pkcs12_derive },
