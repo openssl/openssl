@@ -24,6 +24,12 @@ OpenSSL 3.1
 
 ### Changes between 3.0 and 3.1 [xx XXX xxxx]
 
+ * libcrypto doesn't call atexit() any more.  Applications are now expected
+   to call `OPENSSL_cleanup()`, or register that function with `atexit()` or
+   variants thereof.
+
+   *Richard Levitte*
+
  * RNDR and RNDRRS support in provider functions to provide
    random number generation for Arm CPUs (aarch64).
 
