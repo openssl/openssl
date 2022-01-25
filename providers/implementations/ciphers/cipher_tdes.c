@@ -19,11 +19,7 @@
 #include "cipher_tdes.h"
 #include "prov/implementations.h"
 
-/*
- * NOTE: ECB mode does not use an IV - but existing test code is setting
- * an IV. Fixing this could potentially make applications break.
- */
 /* ossl_tdes_ede3_ecb_functions */
-IMPLEMENT_tdes_cipher(ede3, EDE3, ecb, ECB, TDES_FLAGS, 64*3, 64, 64, block);
+IMPLEMENT_tdes_cipher(ede3, EDE3, ecb, ECB, TDES_FLAGS, 64*3, 64, 0, block);
 /* ossl_tdes_ede3_cbc_functions */
 IMPLEMENT_tdes_cipher(ede3, EDE3, cbc, CBC, TDES_FLAGS, 64*3, 64, 64, block);
