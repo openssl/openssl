@@ -61,7 +61,7 @@ static int test_lib(void)
     union {
         void (*func)(void);
         SD_SYM sym;
-    } symbols[6];
+    } symbol;
     TLS_method_t myTLS_method = NULL;
     SSL_CTX_new_t mySSL_CTX_new = NULL;
     SSL_CTX_free_t mySSL_CTX_free = NULL;
@@ -69,9 +69,22 @@ static int test_lib(void)
     OPENSSL_version_major_t myOPENSSL_version_major = NULL;
     OPENSSL_version_minor_t myOPENSSL_version_minor = NULL;
     OPENSSL_version_patch_t myOPENSSL_version_patch = NULL;
+    OPENSSL_init_crypto_t myOPENSSL_init_crypto = NULL;
     OPENSSL_atexit_t myOPENSSL_atexit = NULL;
     OPENSSL_cleanup_t myOPENSSL_cleanup = NULL;
     int result = 0;
+
+#define get_symbol(T, V, LIB, NAME)                                     \
+    do {                                                                \
+        if (LIB != SD_INIT) {                                           \
+            if (!sd_sym(LIB, #NAME, &symbol.sym)) {                     \
+                fprintf(stderr, "Failed to load " #NAME " symbol\n");   \
+                goto end;                                               \
+            } else {                                                    \
+                V = (T)symbol.func;                                     \
+            }                                                           \
+        }                                                               \
+    } while(0)
 
     switch (test_type) {
     case JUST_CRYPTO:
@@ -99,32 +112,17 @@ static int test_lib(void)
     }
 
     if (ssllib != SD_INIT) {
-        if (!sd_sym(ssllib, "TLS_method", &symbols[0].sym)
-                || !sd_sym(ssllib, "SSL_CTX_new", &symbols[1].sym)
-                || !sd_sym(ssllib, "SSL_CTX_free", &symbols[2].sym)) {
-            fprintf(stderr, "Failed to load libssl symbols\n");
-            goto end;
-        }
-        myTLS_method = (TLS_method_t)symbols[0].func;
-        mySSL_CTX_new = (SSL_CTX_new_t)symbols[1].func;
-        mySSL_CTX_free = (SSL_CTX_free_t)symbols[2].func;
+        get_symbol(TLS_method_t, myTLS_method, ssllib, TLS_method);
+        get_symbol(SSL_CTX_new_t, mySSL_CTX_new, ssllib, SSL_CTX_new);
+        get_symbol(SSL_CTX_free_t, mySSL_CTX_free, ssllib, SSL_CTX_free);
     }
 
-    if (!sd_sym(cryptolib, "ERR_get_error", &symbols[0].sym)
-           || !sd_sym(cryptolib, "OPENSSL_version_major", &symbols[1].sym)
-           || !sd_sym(cryptolib, "OPENSSL_version_minor", &symbols[2].sym)
-           || !sd_sym(cryptolib, "OPENSSL_version_patch", &symbols[3].sym)
-           || !sd_sym(cryptolib, "OPENSSL_atexit", &symbols[4].sym)
-           || !sd_sym(cryptolib, "OPENSSL_cleanup", &symbols[5].sym)) {
-        fprintf(stderr, "Failed to load libcrypto symbols\n");
-        goto end;
-    }
-    myERR_get_error = (ERR_get_error_t)symbols[0].func;
-    myOPENSSL_version_major = (OPENSSL_version_major_t)symbols[1].func;
-    myOPENSSL_version_minor = (OPENSSL_version_minor_t)symbols[2].func;
-    myOPENSSL_version_patch = (OPENSSL_version_patch_t)symbols[3].func;
-    myOPENSSL_atexit = (OPENSSL_atexit_t)symbols[4].func;
-    myOPENSSL_cleanup = (OPENSSL_cleanup_t)symbols[5].func;
+    get_symbol(ERR_get_error_t, myERR_get_error, cryptolib, ERR_get_error);
+    get_symbol(OPENSSL_version_major_t, myOPENSSL_version_major, cryptolib, OPENSSL_version_major);
+    get_symbol(OPENSSL_version_minor_t, myOPENSSL_version_minor, cryptolib, OPENSSL_version_minor);
+    get_symbol(OPENSSL_version_patch_t, myOPENSSL_version_patch, cryptolib, OPENSSL_version_patch);
+    get_symbol(OPENSSL_atexit_t, myOPENSSL_atexit, cryptolib, OPENSSL_atexit);
+    get_symbol(OPENSSL_cleanup_t, myOPENSSL_cleanup, cryptolib, OPENSSL_cleanup);
 
     if (test_type != JUST_CRYPTO) {
         ctx = mySSL_CTX_new(myTLS_method());
@@ -135,6 +133,7 @@ static int test_lib(void)
         mySSL_CTX_free(ctx);
     }
 
+    /* We know that this auto-inits libcrypto */
     if (myERR_get_error() != 0) {
         fprintf(stderr, "Unexpected ERR_get_error() response\n");
         goto end;
