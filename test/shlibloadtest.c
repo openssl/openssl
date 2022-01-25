@@ -29,7 +29,7 @@ typedef unsigned long (*OPENSSL_version_patch_t)(void);
 typedef enum test_types_en {
     CRYPTO_FIRST,
     SSL_FIRST,
-    JUST_CRYPTO,
+    JUST_CRYPTO
 } TEST_TYPE;
 
 static TEST_TYPE test_type;
