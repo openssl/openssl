@@ -25,6 +25,12 @@ OpenSSL 3.2
 
 ### Changes between 3.1 and 3.2 [xx XXX xxxx]
 
+ * libcrypto doesn't call atexit() any more.  Applications are now expected
+   to call `OPENSSL_cleanup()`, or register that function with `atexit()` or
+   variants thereof.
+
+   *Richard Levitte*
+
  * Added support for Hybrid Public Key Encryption (HPKE) as defined
    in RFC9180. HPKE is required for TLS Encrypted ClientHello (ECH),
    Message Layer Security (MLS) and other IETF specifications.

@@ -86,44 +86,6 @@ err:
     return 0;
 }
 
-static CRYPTO_ONCE register_atexit = CRYPTO_ONCE_STATIC_INIT;
-#if !defined(OPENSSL_SYS_UEFI) && defined(_WIN32)
-static int win32atexit(void)
-{
-    OPENSSL_cleanup();
-    return 0;
-}
-#endif
-
-DEFINE_RUN_ONCE_STATIC(ossl_init_register_atexit)
-{
-#ifdef OPENSSL_INIT_DEBUG
-    fprintf(stderr, "OPENSSL_INIT: ossl_init_register_atexit()\n");
-#endif
-#ifndef OPENSSL_SYS_UEFI
-# if defined(_WIN32) && !defined(__BORLANDC__)
-    /* We use _onexit() in preference because it gets called on DLL unload */
-    if (_onexit(win32atexit) == NULL)
-        return 0;
-# else
-    if (atexit(OPENSSL_cleanup) != 0)
-        return 0;
-# endif
-#endif
-
-    return 1;
-}
-
-DEFINE_RUN_ONCE_STATIC_ALT(ossl_init_no_register_atexit,
-                           ossl_init_register_atexit)
-{
-#ifdef OPENSSL_INIT_DEBUG
-    fprintf(stderr, "OPENSSL_INIT: ossl_init_no_register_atexit ok!\n");
-#endif
-    /* Do nothing in this case */
-    return 1;
-}
-
 static CRYPTO_ONCE load_crypto_nodelete = CRYPTO_ONCE_STATIC_INIT;
 DEFINE_RUN_ONCE_STATIC(ossl_init_load_crypto_nodelete)
 {
@@ -354,7 +316,7 @@ void OPENSSL_cleanup(void)
     if (!base_inited)
         return;
 
-    /* Might be explicitly called and also by atexit */
+    /* Don't try to perform cleanup more than once */
     if (stopped)
         return;
     stopped = 1;
@@ -524,20 +486,6 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
             return 0;
         if ((tmp & opts) == opts)
             return 1;
-    }
-
-    /*
-     * Now we don't always set up exit handlers, the INIT_BASE_ONLY calls
-     * should not have the side-effect of setting up exit handlers, and
-     * therefore, this code block is below the INIT_BASE_ONLY-conditioned early
-     * return above.
-     */
-    if ((opts & OPENSSL_INIT_NO_ATEXIT) != 0) {
-        if (!RUN_ONCE_ALT(&register_atexit, ossl_init_no_register_atexit,
-                          ossl_init_register_atexit))
-            return 0;
-    } else if (!RUN_ONCE(&register_atexit, ossl_init_register_atexit)) {
-        return 0;
     }
 
     if (!RUN_ONCE(&load_crypto_nodelete, ossl_init_load_crypto_nodelete))
