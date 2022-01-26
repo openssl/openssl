@@ -57,6 +57,7 @@ B<openssl> B<s_client>
 [B<-timeout>]
 [B<-mtu> I<size>]
 [B<-no_etm>]
+[B<-no_ems>]
 [B<-keymatexport> I<label>]
 [B<-keymatexportlen> I<len>]
 [B<-msgfile> I<filename>]
@@ -453,6 +454,10 @@ Set MTU of the link layer to the specified size.
 =item B<-no_etm>
 
 Disable Encrypt-then-MAC negotiation.
+
+=item B<-no_ems>
+
+Disable Extended master secret negotiation.
 
 =item B<-keymatexport> I<label>
 

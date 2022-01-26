@@ -703,6 +703,7 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
     SSL_CONF_CMD_SWITCH("anti_replay", SSL_CONF_FLAG_SERVER),
     SSL_CONF_CMD_SWITCH("no_anti_replay", SSL_CONF_FLAG_SERVER),
     SSL_CONF_CMD_SWITCH("no_etm", 0),
+    SSL_CONF_CMD_SWITCH("no_ems", 0),
     SSL_CONF_CMD_STRING(SignatureAlgorithms, "sigalgs", 0),
     SSL_CONF_CMD_STRING(ClientSignatureAlgorithms, "client_sigalgs", 0),
     SSL_CONF_CMD_STRING(Curves, "curves", 0),
@@ -794,6 +795,8 @@ static const ssl_switch_tbl ssl_cmd_switches[] = {
     {SSL_OP_NO_ANTI_REPLAY, 0},
     /* no Encrypt-then-Mac */
     {SSL_OP_NO_ENCRYPT_THEN_MAC, 0},
+    /* no Extended master secret */
+    {SSL_OP_NO_EXTENDED_MASTER_SECRET, 0},
 };
 
 static int ssl_conf_cmd_skip_prefix(SSL_CONF_CTX *cctx, const char **pcmd)
