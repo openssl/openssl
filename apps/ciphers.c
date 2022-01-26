@@ -186,7 +186,7 @@ int ciphers_main(int argc, char **argv)
         goto end;
     }
 
-    ctx = SSL_CTX_new(meth);
+    ctx = SSL_CTX_new_ex(app_get0_libctx(), app_get0_propq(), meth);
     if (ctx == NULL)
         goto err;
     if (SSL_CTX_set_min_proto_version(ctx, min_version) == 0)
