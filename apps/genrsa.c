@@ -29,8 +29,6 @@
 
 static int verbose = 0;
 
-static int genrsa_cb(EVP_PKEY_CTX *ctx);
-
 typedef enum OPTION_choice {
     OPT_COMMON,
 #ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -180,7 +178,7 @@ opthelp:
     if (!init_gen_str(&ctx, "RSA", eng, 0, NULL, NULL))
         goto end;
 
-    EVP_PKEY_CTX_set_cb(ctx, genrsa_cb);
+    EVP_PKEY_CTX_set_cb(ctx, progress_cb);
     EVP_PKEY_CTX_set_app_data(ctx, bio_err);
 
     if (EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, num) <= 0) {
@@ -243,24 +241,3 @@ opthelp:
     return ret;
 }
 
-static int genrsa_cb(EVP_PKEY_CTX *ctx)
-{
-    char c = '*';
-    BIO *b = EVP_PKEY_CTX_get_app_data(ctx);
-    int p = EVP_PKEY_CTX_get_keygen_info(ctx, 0);
-
-    if (!verbose)
-        return 1;
-
-    if (p == 0)
-        c = '.';
-    if (p == 1)
-        c = '+';
-    if (p == 2)
-        c = '*';
-    if (p == 3)
-        c = '\n';
-    BIO_write(b, &c, 1);
-    (void)BIO_flush(b);
-    return 1;
-}
