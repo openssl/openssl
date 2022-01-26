@@ -670,6 +670,12 @@ static int parse_env(struct OPENSSL_s390xcap_st *cap)
                        0ULL},
     };
 
+    /*-
+     * z16 (2022) - z/Architecture POP
+     * Implements MSA and MSA1-9 (same as z15).
+     */
+    static const struct OPENSSL_s390xcap_st z16 = z15;
+
     char *tok_begin, *tok_end, *buff, tok[S390X_STFLE_MAX][LEN + 1];
     int rc, off, i, n;
 
@@ -724,6 +730,7 @@ static int parse_env(struct OPENSSL_s390xcap_st *cap)
         else if TOK_CPU(z13)
         else if TOK_CPU(z14)
         else if TOK_CPU(z15)
+        else if TOK_CPU(z16)
 
         /* whitespace(ignored) or invalid tokens */
         else {
