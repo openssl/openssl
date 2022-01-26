@@ -102,7 +102,7 @@ static int bio_core_free(BIO *bio)
     BIO_CORE_GLOBALS *bcgbl = get_globals(bio->libctx);
 
     if (bcgbl == NULL)
-        return -1;
+        return 0;
 
     BIO_set_init(bio, 0);
     bcgbl->c_bio_free(BIO_get_data(bio));
