@@ -136,3 +136,7 @@ typedef struct ag_capable_st {
  */
 void ossl_prov_cache_exported_algorithms(const OSSL_ALGORITHM_CAPABLE *in,
                                          OSSL_ALGORITHM *out);
+
+/* Duplicate a lump of memory safely */
+int ossl_prov_memdup(const void *src, size_t src_len,
+                     unsigned char **dest, size_t *dest_len);
