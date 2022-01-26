@@ -222,7 +222,7 @@ static int test_store_ctx(void)
     return test_self_signed(bad_f, 0, 0);
 }
 
-static int test_purpose(int purpose, int expected)
+static int do_test_purpose(int purpose, int expected)
 {
     X509 *eecert = load_cert_from_file(ee_cert); /* may result in NULL */
     X509 *untrcert = load_cert_from_file(ca_cert);
@@ -233,6 +233,8 @@ static int test_purpose(int purpose, int expected)
     int testresult = 0;
 
     if (!TEST_ptr(eecert)
+            || !TEST_ptr(untrcert)
+            || !TEST_ptr(trcert)
             || !TEST_ptr(trusted)
             || !TEST_ptr(untrusted)
             || !TEST_ptr(ctx))
@@ -275,17 +277,17 @@ static int test_purpose(int purpose, int expected)
 
 static int test_purpose_ssl_client(void)
 {
-    return test_purpose(X509_PURPOSE_SSL_CLIENT, 0);
+    return do_test_purpose(X509_PURPOSE_SSL_CLIENT, 0);
 }
 
 static int test_purpose_ssl_server(void)
 {
-    return test_purpose(X509_PURPOSE_SSL_SERVER, 1);
+    return do_test_purpose(X509_PURPOSE_SSL_SERVER, 1);
 }
 
 static int test_purpose_any(void)
 {
-    return test_purpose(X509_PURPOSE_ANY, 1);
+    return do_test_purpose(X509_PURPOSE_ANY, 1);
 }
 
 OPT_TEST_DECLARE_USAGE("certs-dir\n")
