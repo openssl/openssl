@@ -50,7 +50,7 @@
 #include <openssl/aes.h>
 #include "aes_local.h"
 
-#if !defined(OPENSSL_NO_AES_CONST_TIME) && !defined(AES_ASM)
+#if defined(OPENSSL_AES_CONST_TIME) && !defined(AES_ASM)
 
 # if (defined(_WIN32) || defined(_WIN64)) && !defined(__MINGW32__)
 #  define U64(C) C##UI64

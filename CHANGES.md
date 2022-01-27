@@ -30,6 +30,13 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 3.0.1 and 3.0.2 [xx XXX xxxx]
 
+ * Made the AES constant time code for no-asm configurations
+   optional due to the resulting 95% performance degradation.
+   The AES constant time code can be enabled, for no assembly
+   builds, with: ./config no-asm -DOPENSSL_AES_CONST_TIME
+
+   *Paul Dale*
+
  * Fixed PEM_write_bio_PKCS8PrivateKey() to make it possible to use empty
    passphrase strings.
 
