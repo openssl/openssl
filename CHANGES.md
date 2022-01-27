@@ -90,6 +90,15 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 [Migration guide]: https://github.com/openssl/openssl/tree/master/doc/man7/migration_guide.pod
 
+### Changes between 3.0.1 and 3.0.2 [xx XXX xxxx]
+
+ * Made the AES constant time code for no-asm configurations
+   optional due to the resulting 95% performance degradation.
+   The AES constant time code can be enabled, for no assembly
+   builds, with: ./config no-asm -DOPENSSL_AES_CONST_TIME
+
+   *Paul Dale*
+
 ### Changes between 3.0.0 and 3.0.1 [14 dec 2021]
 
  * Fixed invalid handling of X509_verify_cert() internal errors in libssl
