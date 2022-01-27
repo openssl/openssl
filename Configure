@@ -1683,20 +1683,7 @@ $config{CFLAGS} = [ map { $_ eq '--ossl-strict-warnings'
 unless ($disabled{afalgeng}) {
     $config{afalgeng}="";
     if (grep { $_ eq 'afalgeng' } @{$target{enable}}) {
-        my $minver = 4*10000 + 1*100 + 0;
-        if ($config{CROSS_COMPILE} eq "") {
-            my $verstr = `uname -r`;
-            my ($ma, $mi1, $mi2) = split("\\.", $verstr);
-            ($mi2) = $mi2 =~ /(\d+)/;
-            my $ver = $ma*10000 + $mi1*100 + $mi2;
-            if ($ver < $minver) {
-                disable('too-old-kernel', 'afalgeng');
-            } else {
-                push @{$config{engdirs}}, "afalg";
-            }
-        } else {
-            disable('cross-compiling', 'afalgeng');
-        }
+        push @{$config{engdirs}}, "afalg";
     } else {
         disable('not-linux', 'afalgeng');
     }
