@@ -647,14 +647,29 @@ int EVP_CIPHER_get_key_length(const EVP_CIPHER *cipher)
 
 int EVP_CIPHER_CTX_get_key_length(const EVP_CIPHER_CTX *ctx)
 {
-    int ok;
-    size_t v = ctx->key_len;
-    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    if (ctx->key_len <= 0 && ctx->cipher->prov != NULL) {
+        int ok;
+        OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+        size_t len;
 
-    params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_KEYLEN, &v);
-    ok = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->algctx, params);
+        params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_KEYLEN, &len);
+        ok = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->algctx, params);
+        if (ok <= 0)
+            return EVP_CTRL_RET_UNSUPPORTED;
 
-    return ok != 0 ? (int)v : EVP_CTRL_RET_UNSUPPORTED;
+        /* Should never happen since EVP_MAX_KEY_LENGTH is less than INT_MAX */
+        if (len > INT_MAX) {
+            ERR_raise(ERR_LIB_EVP,
+                      CRYPTO_R_PARAM_VALUE_TOO_LARGE_FOR_DESTINATION);
+            return -1;
+        }
+        /*-
+         * Casting away the const is annoying but required here.  We need to
+         * cache the result for performance reasons.
+         */
+        ((EVP_CIPHER_CTX *)ctx)->key_len = (int)len;
+    }
+    return ctx->key_len;
 }
 
 int EVP_CIPHER_get_nid(const EVP_CIPHER *cipher)
