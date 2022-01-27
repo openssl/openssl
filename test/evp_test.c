@@ -1201,9 +1201,13 @@ static int mac_test_init(EVP_TEST *t, const char *alg)
         return 0;
 
     mdat->type = type;
-    mdat->mac_name = OPENSSL_strdup(alg);
+    if (!TEST_ptr(mdat->mac_name = OPENSSL_strdup(alg)))
+        return 0;
+
     mdat->mac = mac;
-    mdat->controls = sk_OPENSSL_STRING_new_null();
+    if (!TEST_ptr(mdat->controls = sk_OPENSSL_STRING_new_null()))
+        return 0;
+
     mdat->output_size = mdat->block_size = -1;
     t->data = mdat;
     return 1;
