@@ -424,14 +424,15 @@ static int test_param_bignum(int n)
     int ret = 0;
 
     param.data = bnbuf;
-    param.data_size = len;
+    param.data_size = sizeof(bnbuf);
 
-    le_copy(buf, raw_values[n].value, len);
     if (!TEST_ptr(b = BN_lebin2bn(raw_values[n].value, (int)len, NULL)))
         goto err;
 
-    if (!TEST_true(OSSL_PARAM_set_BN(&param, b))
-        || !TEST_mem_eq(bnbuf, param.return_size, buf, param.return_size))
+    if (!TEST_true(OSSL_PARAM_set_BN(&param, b)))
+        goto err;
+    le_copy(buf, bnbuf, len);
+    if (!TEST_mem_eq(raw_values[n].value, len, buf, len))
         goto err;
     param.data_size = param.return_size;
     if (!TEST_true(OSSL_PARAM_get_BN(&param, &c))
