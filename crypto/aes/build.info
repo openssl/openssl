@@ -47,6 +47,9 @@ IF[{- !$disabled{asm} -}]
   # aes-c64xplus.s implements AES_ctr32_encrypt
   $AESDEF_c64xplus=AES_ASM AES_CTR_ASM
 
+  $AESASM_riscv64=aes_cbc.c aes-riscv64.s
+  $AESDEF_riscv64=AES_ASM
+
   # Now that we have defined all the arch specific variables, use the
   # appropriate one, and define the appropriate macros
   IF[$AESASM_{- $target{asm_arch} -}]
@@ -113,6 +116,8 @@ GENERATE[aes-parisc.s]=asm/aes-parisc.pl
 
 GENERATE[aes-mips.S]=asm/aes-mips.pl
 INCLUDE[aes-mips.o]=..
+
+GENERATE[aes-riscv64.s]=asm/aes-riscv64.pl
 
 GENERATE[aesv8-armx.S]=asm/aesv8-armx.pl
 INCLUDE[aesv8-armx.o]=..
