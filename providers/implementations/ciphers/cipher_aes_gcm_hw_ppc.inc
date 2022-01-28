@@ -29,15 +29,14 @@ extern size_t ppc_aes_gcm_encrypt(const unsigned char *in, unsigned char *out, s
 extern size_t ppc_aes_gcm_decrypt(const unsigned char *in, unsigned char *out, size_t len,
                          const void *key, unsigned char ivec[16], u64 *Xi);
 
-static inline int IsBigEndian()
+static inline int IsBigEndian(int i)
 {
-    int i = 1;
     return ! *((char *)&i);
 }
 
 static inline u32 UTO32(unsigned char *buf)
 {
-    if (IsBigEndian())
+    if (IsBigEndian(1))
         return ((u32) buf[0]) | ((u32) buf[1] << 8) | ((u32) buf[2] << 16) | ((u32) buf[3] << 24);
     else
         return ((u32) buf[0] << 24) | ((u32) buf[1] << 16) | ((u32) buf[2] << 8) | ((u32) buf[3]);
@@ -49,7 +48,7 @@ static inline u32 add32TOU(unsigned char buf[4], u32 n)
 
     r = UTO32(buf);
     r += n;
-    if (IsBigEndian()) {
+    if (IsBigEndian(1)) {
         buf[0] = (unsigned char) r & 0xFF;
         buf[1] = (unsigned char) (r >> 8) & 0xFF;
         buf[2] = (unsigned char) (r >> 16) & 0xFF;
