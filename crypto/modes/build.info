@@ -40,6 +40,9 @@ IF[{- !$disabled{asm} -}]
   $MODESASM_c64xplus=ghash-c64xplus.s
   $MODESDEF_c64xplus=GHASH_ASM
 
+  $MODESASM_riscv64=ghash-riscv64.s
+  $MODESDEF_riscv64=GHASH_ASM
+
   # Now that we have defined all the arch specific variables, use the
   # appropriate one, and define the appropriate macros
   IF[$MODESASM_{- $target{asm_arch} -}]
@@ -84,3 +87,4 @@ INCLUDE[aes-gcm-armv8-unroll8_64.o]=..
 GENERATE[ghash-s390x.S]=asm/ghash-s390x.pl
 INCLUDE[ghash-s390x.o]=..
 GENERATE[ghash-c64xplus.S]=asm/ghash-c64xplus.pl
+GENERATE[ghash-riscv64.s]=asm/ghash-riscv64.pl
