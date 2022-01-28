@@ -51,6 +51,8 @@ IF[{- !$disabled{asm} && $config{processor} ne '386' -}]
 
   $CPUIDASM_c64xplus=c64xpluscpuid.s
 
+  $CPUIDASM_riscv64=riscvcap.c riscv64cpuid.s
+
   # Now that we have defined all the arch specific variables, use the
   # appropriate one, and define the appropriate macros
   IF[$CPUIDASM_{- $target{asm_arch} -}]
@@ -130,6 +132,7 @@ GENERATE[armv4cpuid.S]=armv4cpuid.pl
 INCLUDE[armv4cpuid.o]=.
 GENERATE[s390xcpuid.S]=s390xcpuid.pl
 INCLUDE[s390xcpuid.o]=.
+GENERATE[riscv64cpuid.s]=riscv64cpuid.pl
 
 IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-|BC-)/ -}]
   SHARED_SOURCE[../libcrypto]=dllmain.c
