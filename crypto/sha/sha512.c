@@ -432,7 +432,7 @@ static const SHA_LONG64 K512[80] = {
                                 : "=r"(ret)                     \
                                 : "r"(*((const SHA_LONG64 *)(&(x))))); ret; })
 #    endif
-#   elif (__riscv_zbkb || __riscv_zbb) && __riscv_xlen == 32
+#   elif (defined(__riscv_zbkb) || defined(__riscv_zbb)) && __riscv_xlen == 32
 #    define PULL64(x) ({ SHA_LONG64 ret;                                        \
                         unsigned int *r = (unsigned int *)(&(ret));             \
                         const unsigned int *p = (const unsigned int *)(&(x));   \
@@ -442,13 +442,13 @@ static const SHA_LONG64 K512[80] = {
                         asm ("rev8 %0, %1"                                      \
                         : "=r"(r[1])                                            \
                         : "r" (p[0])); ret;                                     })
-#   elif (__riscv_zbkb || __riscv_zbb) && __riscv_xlen == 64
+#   elif (defined(__riscv_zbkb) || defined(__riscv_zbb)) && __riscv_xlen == 64
 #    define PULL64(x) ({ SHA_LONG64 ret;    \
                         asm ("rev8 %0, %1"  \
                         : "=r"(ret)         \
                         : "r"(x)); ret;     })
 #   endif
-#   if __riscv_zknh && __riscv_xlen == 32
+#   if defined(__riscv_zknh) && __riscv_xlen == 32
 #    define Sigma0(x) ({ SHA_LONG64 ret; unsigned int *r = (unsigned int *)(&(ret));    \
                         const unsigned int *p = (const unsigned int *)(&(x));           \
                         asm ("sha512sum0r %0, %1, %2"                                   \
@@ -481,7 +481,7 @@ static const SHA_LONG64 K512[80] = {
                         asm ("sha512sig1h %0, %2, %1"                                   \
                         : "=r"(r[1])                                                    \
                         : "r" (p[0]), "r" (p[1])); ret;                                 })
-#   elif __riscv_zknh && __riscv_xlen == 64
+#   elif defined(__riscv_zknh) && __riscv_xlen == 64
 #    define Sigma0(x) ({ SHA_LONG64 ret;            \
                         asm ("sha512sum0 %0, %1"    \
                         : "=r"(ret)                 \
@@ -499,7 +499,7 @@ static const SHA_LONG64 K512[80] = {
                         : "=r"(ret)                 \
                         : "r"(x)); ret;             })
 #   endif
-#   if (__riscv_zbt || __riscv_zpn) && __riscv_xlen == 32
+#   if (defined(__riscv_zbt) || defined(__riscv_zpn)) && __riscv_xlen == 32
 #    define Ch(x,y,z) ({  SHA_LONG64 ret; unsigned int *r = (unsigned int *)(&(ret));   \
                         const unsigned int *xp = (const unsigned int *)(&(x));          \
                         const unsigned int *yp = (const unsigned int *)(&(y));          \
@@ -520,7 +520,7 @@ static const SHA_LONG64 K512[80] = {
                         asm (".insn r4 0x33, 1, 0x3, %0, %2, %1, %3\n\t"                \
                         : "=r"(r[1])                                                    \
                         : "r"(xp[1]^zp[1]), "r"(yp[1]), "r"(zp[1])); ret;               })
-#   elif (__riscv_zbt || __riscv_zpn) && __riscv_xlen == 64
+#   elif (defined(__riscv_zbt) || defined(__riscv_zpn)) && __riscv_xlen == 64
 #    define Ch(x,y,z) ({  SHA_LONG64 ret;                           \
                         asm (".insn r4 0x33, 1, 0x3, %0, %2, %1, %3"\
                         : "=r"(ret)                                 \
