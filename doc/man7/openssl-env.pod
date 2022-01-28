@@ -74,7 +74,7 @@ See L<SSL_CTX_load_verify_locations(3)>.
 
 Additional arguments for the L<tsget(1)> command.
 
-=item B<OPENSSL_ia32cap>, B<OPENSSL_sparcv9cap>, B<OPENSSL_ppccap>, B<OPENSSL_armcap>, B<OPENSSL_s390xcap>
+=item B<OPENSSL_ia32cap>, B<OPENSSL_sparcv9cap>, B<OPENSSL_ppccap>, B<OPENSSL_armcap>, B<OPENSSL_s390xcap>, B<OPENSSL_riscvcap>
 
 OpenSSL supports a number of different algorithm implementations for
 various machines and, by default, it determines which to use based on the
@@ -91,7 +91,7 @@ See L<OSSL_HTTP_parse_url(3)>.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
