@@ -58,6 +58,7 @@ To convert the received peer's public key from DER format on the host:
 
 To derive a shared secret on the host using the host's key and the peer's public
 key:
+
     /* It is assumed that the host_key and peer_pub_key are set up */
     void derive_secret(EVP_KEY *host_key, EVP_PKEY *peer_pub_key)
     {
