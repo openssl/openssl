@@ -1,6 +1,5 @@
 /*
  * Copyright 2001-2021 The OpenSSL Project Authors. All Rights Reserved.
- * Copyright 2021- IBM Inc. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -30,9 +29,18 @@ extern size_t ppc_aes_gcm_encrypt(const unsigned char *in, unsigned char *out, s
 extern size_t ppc_aes_gcm_decrypt(const unsigned char *in, unsigned char *out, size_t len,
                          const void *key, unsigned char ivec[16], u64 *Xi);
 
+static inline int IsBigEndian()
+{
+    int i = 1;
+    return ! *((char *)&i);
+}
+
 static inline u32 UTO32(unsigned char *buf)
 {
-    return (((u32) buf[0] << 24) | ((u32) buf[1] << 16) | ((u32) buf[2] << 8) | ((u32) buf[3]));
+    if (IsBigEndian())
+        return ((u32) buf[0]) | ((u32) buf[1] << 8) | ((u32) buf[2] << 16) | ((u32) buf[3] << 24);
+    else
+        return ((u32) buf[0] << 24) | ((u32) buf[1] << 16) | ((u32) buf[2] << 8) | ((u32) buf[3]);
 }
 
 static inline u32 add32TOU(unsigned char buf[4], u32 n)
@@ -41,14 +49,21 @@ static inline u32 add32TOU(unsigned char buf[4], u32 n)
 
     r = UTO32(buf);
     r += n;
-    buf[0] = (unsigned char) (r >> 24) & 0xFF;
-    buf[1] = (unsigned char) (r >> 16) & 0xFF;
-    buf[2] = (unsigned char) (r >> 8) & 0xFF;
-    buf[3] = (unsigned char) r & 0xFF;
+    if (IsBigEndian()) {
+        buf[0] = (unsigned char) r & 0xFF;
+        buf[1] = (unsigned char) (r >> 8) & 0xFF;
+        buf[2] = (unsigned char) (r >> 16) & 0xFF;
+        buf[3] = (unsigned char) (r >> 24) & 0xFF;
+    } else {
+        buf[0] = (unsigned char) (r >> 24) & 0xFF;
+        buf[1] = (unsigned char) (r >> 16) & 0xFF;
+        buf[2] = (unsigned char) (r >> 8) & 0xFF;
+        buf[3] = (unsigned char) r & 0xFF;
+    }
     return r;
 }
 
-static size_t aes_p10le_gcm_crypt(const unsigned char *in, unsigned char *out, size_t len,
+static size_t aes_p10_gcm_crypt(const unsigned char *in, unsigned char *out, size_t len,
                          const void *key, unsigned char ivec[16], u64 *Xi, int encrypt)
 {
     int s = 0;
@@ -59,7 +74,7 @@ static size_t aes_p10le_gcm_crypt(const unsigned char *in, unsigned char *out, s
     u64 next_ctr = 0;
     unsigned char ctr_saved[12];
 
-    bcopy (ivec, ctr_saved, 12);
+    memcpy(ctr_saved, ivec, 12);
 
     while (nb) {
         blocks_unused = (u64) 0xffffffffU + 1 - (u64) UTO32 (ivec + 12);
@@ -80,18 +95,18 @@ static size_t aes_p10le_gcm_crypt(const unsigned char *in, unsigned char *out, s
             s = ppc_aes_gcm_decrypt(in, out, len, key, ivec, Xi);
         }
 
-	/* add counter to ivec */
-	add32TOU(ivec + 12, (u32) next_ctr);
+        /* add counter to ivec */
+        add32TOU(ivec + 12, (u32) next_ctr);
         if (ctr_reset) {
             ctr_reset = 0;
             in += len;
             out += len;
         }
-        bcopy (ctr_saved, ivec, 12);
+        memcpy(ivec, ctr_saved, 12);
         ndone += s;
     }
 
-    return ( ndone );
+    return ndone;
 }
 
 size_t ppc_aes_gcm_encrypt_wrap(const unsigned char *in, unsigned char *out, size_t len,
@@ -101,8 +116,8 @@ size_t ppc_aes_gcm_encrypt_wrap(const unsigned char *in, unsigned char *out, siz
     int encrypt;
 
     encrypt = 1;
-    n = aes_p10le_gcm_crypt(in, out, len, key, ivec, Xi, encrypt);
-    return (n);
+    n = aes_p10_gcm_crypt(in, out, len, key, ivec, Xi, encrypt);
+    return n;
 }
 
 size_t ppc_aes_gcm_decrypt_wrap(const unsigned char *in, unsigned char *out, size_t len,
@@ -112,8 +127,8 @@ size_t ppc_aes_gcm_decrypt_wrap(const unsigned char *in, unsigned char *out, siz
     int encrypt;
 
     encrypt = 0;
-    n = aes_p10le_gcm_crypt(in, out, len, key, ivec, Xi, encrypt);
-    return (n);
+    n = aes_p10_gcm_crypt(in, out, len, key, ivec, Xi, encrypt);
+    return n;
 }
 
 
