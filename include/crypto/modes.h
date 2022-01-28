@@ -74,6 +74,13 @@ typedef unsigned char u8;
                         asm ("rev %0,%1"                \
                         : "=r"(ret_) : "r"((u32)(x)));  \
                         ret_;                           })
+#  elif defined(__riscv_zbb) && __riscv_xlen == 64
+#   define BSWAP8(x) ({ u64 ret_=(x);                   \
+                        asm ("rev8 %0,%0"               \
+                        : "+r"(ret_));   ret_;          })
+#   define BSWAP4(x) ({ u32 ret_=(x);                   \
+                        asm ("rev8 %0,%0; srli %0,%0,32"\
+                        : "+r"(ret_));   ret_;          })
 #  endif
 # elif defined(_MSC_VER)
 #  if _MSC_VER>=1300
