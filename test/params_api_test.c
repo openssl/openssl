@@ -428,14 +428,15 @@ static int test_param_bignum(int n)
     int ret = 0;
 
     param.data = bnbuf;
-    param.data_size = len;
+    param.data_size = sizeof(bnbuf);
 
-    le_copy(buf, len, raw_values[n].value, len);
     if (!TEST_ptr(b = BN_lebin2bn(raw_values[n].value, (int)len, NULL)))
         goto err;
 
-    if (!TEST_true(OSSL_PARAM_set_BN(&param, b))
-        || !TEST_mem_eq(bnbuf, param.return_size, buf, param.return_size))
+    if (!TEST_true(OSSL_PARAM_set_BN(&param, b)))
+        goto err;
+    le_copy(buf, len, bnbuf, sizeof(bnbuf));
+    if (!TEST_mem_eq(raw_values[n].value, len, buf, len))
         goto err;
     param.data_size = param.return_size;
     if (!TEST_true(OSSL_PARAM_get_BN(&param, &c))
@@ -451,7 +452,7 @@ err:
 
 static int test_param_signed_bignum(int n)
 {
-    unsigned char buf1[MAX_LEN], buf2[MAX_LEN], bnbuf[MAX_LEN];
+    unsigned char buf[MAX_LEN], bnbuf[MAX_LEN];
     const size_t len = raw_values[n].len;
     BIGNUM *b = NULL, *c = NULL;
     OSSL_PARAM param = OSSL_PARAM_DEFN("bn", OSSL_PARAM_INTEGER, NULL, 0);
@@ -460,7 +461,6 @@ static int test_param_signed_bignum(int n)
     param.data = bnbuf;
     param.data_size = sizeof(bnbuf);
 
-    le_copy(buf1, len, raw_values[n].value, len);
     if (!TEST_ptr(b = BN_signed_lebin2bn(raw_values[n].value, (int)len, NULL)))
         goto err;
 
@@ -469,8 +469,8 @@ static int test_param_signed_bignum(int n)
         goto err;
     if (!TEST_true(OSSL_PARAM_set_BN(&param, b)))
         goto err;
-    le_copy(buf2, len, bnbuf, sizeof(bnbuf));
-    if (!TEST_mem_eq(buf1, len, buf2, len))
+    le_copy(buf, len, bnbuf, sizeof(bnbuf));
+    if (!TEST_mem_eq(raw_values[n].value, len, buf, len))
         goto err;
     param.data_size = param.return_size;
     if (!TEST_true(OSSL_PARAM_get_BN(&param, &c))
