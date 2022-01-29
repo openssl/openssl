@@ -1105,7 +1105,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         }
 
         /* header is added by the kernel when using offload */
-        SSL3_RECORD_add_length(&wr[j], SSL3_RT_HEADER_LENGTH);
+        SSL3_RECORD_add_length(thiswr, SSL3_RT_HEADER_LENGTH);
 
         if (create_empty_fragment) {
             /*
