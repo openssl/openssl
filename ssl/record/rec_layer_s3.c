@@ -1151,7 +1151,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
     return -1;
 }
 
-/* if s->s3.wbuf.left != 0, we need to call this
+/* if SSL3_BUFFER_get_left() != 0, we need to call this
  *
  * Return values are as per SSL_write()
  */
