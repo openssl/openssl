@@ -11,11 +11,11 @@
 
 #include "testutil.h"
 
-const char* file1 = "file1";
-int line1 = 1;
-int result1 = 1;
+static const char* file1 = "file1";
+static int line1 = 1;
+static int result1 = 1;
 
-void logging_callback1(const char* file, int line, int severity, const char* buf)
+static void logging_callback1(const char* file, int line, int severity, const char* buf)
 {
     if (!TEST_str_eq(file, file1) ||
         !TEST_int_eq(line, line1) ||
@@ -41,15 +41,15 @@ static int debug_log_print2(void)
 {
     CRYPTO_set_logging_callback(logging_callback1);
 
-    if ( TEST_ptr_eq(CRYPTO_get_logging_callback(), logging_callback1)) {
+    if ( TEST_ptr_eq((void*)CRYPTO_get_logging_callback(), (void*)logging_callback1)) {
         return 1;
     }
 
     return 0;
 }
 
-int result2 = 1;
-void logging_callback2(const char* file, int line, int severity, const char* buf)
+static int result2 = 1;
+static void logging_callback2(const char* file, int line, int severity, const char* buf)
 {
     result2 = 0;
 }
