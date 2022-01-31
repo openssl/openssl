@@ -93,19 +93,13 @@ static size_t aes_p10_gcm_crypt(const unsigned char *in, unsigned char *out, siz
 size_t ppc_aes_gcm_encrypt_wrap(const unsigned char *in, unsigned char *out, size_t len,
                                 const void *key, unsigned char ivec[16], u64 *Xi)
 {
-    int encrypt;
-
-    encrypt = 1;
-    return aes_p10_gcm_crypt(in, out, len, key, ivec, Xi, encrypt);
+    return aes_p10_gcm_crypt(in, out, len, key, ivec, Xi, 1);
 }
 
 size_t ppc_aes_gcm_decrypt_wrap(const unsigned char *in, unsigned char *out, size_t len,
                                 const void *key, unsigned char ivec[16], u64 *Xi)
 {
-    int encrypt;
-
-    encrypt = 0;
-    return aes_p10_gcm_crypt(in, out, len, key, ivec, Xi, encrypt);
+    return aes_p10_gcm_crypt(in, out, len, key, ivec, Xi, 0);
 }
 
 
