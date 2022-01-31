@@ -128,7 +128,7 @@ static void *kdf_pbkdf2_dup(void *vctx)
         if (!ossl_prov_memdup(src->salt, src->salt_len,
                               &dest->salt, &dest->salt_len)
                 || !ossl_prov_memdup(src->pass, src->pass_len,
-                                     &dest->pass , &dest->pass_len)
+                                     &dest->pass, &dest->pass_len)
                 || !ossl_prov_digest_copy(&dest->digest, &src->digest))
             goto err;
         dest->iter = src->iter;
