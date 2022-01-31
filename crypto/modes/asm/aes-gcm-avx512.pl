@@ -12,6 +12,15 @@
 # (https://github.com/intel/intel-ipsec-mb).
 # Original author is Tomasz Kantecki <tomasz.kantecki@intel.com>.
 #
+# References:
+#  [1] Vinodh Gopal et. al. Optimized Galois-Counter-Mode Implementation on
+#      Intel Architecture Processors. August, 2010.
+#  [2] Erdinc Ozturk et. al. Enabling High-Performance Galois-Counter-Mode on
+#      Intel Architecture Processors. October, 2012.
+#  [3] Shay Gueron et. al. Intel Carry-Less Multiplication Instruction and its
+#      Usage for Computing the GCM Mode. May, 2010.
+#
+#
 # December 2021
 #
 # Initial release.
@@ -68,7 +77,8 @@ $code .= <<___;
 .align 32
 ossl_vaes_vpclmulqdq_capable:
     mov OPENSSL_ia32cap_P+8(%rip), %rcx
-    mov \$`1<<42|1<<41|1<<16`, %rdx     # avx512vpclmulqdq + avx512vaes + avx512f
+    # avx512vpclmulqdq + avx512vaes + avx512vl + avx512bw + avx512dq + avx512f
+    mov \$`1<<42|1<<41|1<<31|1<<30|1<<17|1<<16`,%rdx
     xor %eax,%eax
     and %rdx,%rcx
     cmp %rdx,%rcx
@@ -99,6 +109,18 @@ my $CLEAR_HKEYS_STORAGE_ON_EXIT = 1;
 my $CHECK_FUNCTION_ARGUMENTS = 0;
 
 # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+# ;;; Global constants
+# ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+# AES block size in bytes
+my $AES_BLOCK_SIZE = 16;
+
+# Storage capacity in elements
+my $HKEYS_STORAGE_CAPACITY = 48;
+my $LOCAL_STORAGE_CAPACITY = 48;
+my $HKEYS_CONTEXT_CAPACITY = 16;
+
+# ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 # ;;; Stack frame definition
 # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -113,8 +135,8 @@ my $CHECK_FUNCTION_ARGUMENTS = 0;
 
 my $GP_STORAGE  = $win64 ? 8 * 8     : 8 * 6;    # ; space for saved non-volatile GP registers (pushed on stack)
 my $XMM_STORAGE = $win64 ? (10 * 16) : 0;        # ; space for saved XMM registers
-my $HKEYS_STORAGE = (48 * 16);                   # ; space for HKeys^i, i=1..48
-my $LOCAL_STORAGE = (48 * 16);                   # ; space for up to 48 AES blocks
+my $HKEYS_STORAGE = ($HKEYS_STORAGE_CAPACITY * $AES_BLOCK_SIZE);    # ; space for HKeys^i, i=1..48
+my $LOCAL_STORAGE = ($LOCAL_STORAGE_CAPACITY * $AES_BLOCK_SIZE);    # ; space for up to 48 AES blocks
 
 my $STACK_HKEYS_OFFSET = 0;
 my $STACK_LOCAL_OFFSET = ($STACK_HKEYS_OFFSET + $HKEYS_STORAGE);
@@ -277,13 +299,13 @@ sub HashKeyOffsetByIdx {
   my $offset_base;
   my $offset_idx;
   if ($base eq "frame") {    # frame storage
-    die "HashKeyOffsetByIdx: idx out of bounds (1..48)! idx = $idx\n" if ($idx > 48 || $idx < 1);
+    die "HashKeyOffsetByIdx: idx out of bounds (1..48)! idx = $idx\n" if ($idx > $HKEYS_STORAGE_CAPACITY || $idx < 1);
     $offset_base = $STACK_HKEYS_OFFSET;
-    $offset_idx  = (16 * (48 - $idx));
+    $offset_idx  = ($AES_BLOCK_SIZE * ($HKEYS_STORAGE_CAPACITY - $idx));
   } else {                   # context storage
-    die "HashKeyOffsetByIdx: idx out of bounds (1..16)! idx = $idx\n" if ($idx > 16 || $idx < 1);
+    die "HashKeyOffsetByIdx: idx out of bounds (1..16)! idx = $idx\n" if ($idx > $HKEYS_CONTEXT_CAPACITY || $idx < 1);
     $offset_base = $CTX_OFFSET_HTable;
-    $offset_idx  = (16 * (16 - $idx));
+    $offset_idx  = ($AES_BLOCK_SIZE * ($HKEYS_CONTEXT_CAPACITY - $idx));
   }
   return $offset_base + $offset_idx;
 }
@@ -497,8 +519,7 @@ sub precompute_hkeys_on_stack {
   my $ZTMP4       = $_[6];
   my $ZTMP5       = $_[7];
   my $ZTMP6       = $_[8];
-  my $ZTMP7       = $_[9];
-  my $HKEYS_RANGE = $_[10];    # ; "first16", "mid16", "last16", "all", "first32", "last32"
+  my $HKEYS_RANGE = $_[9];    # ; "first16", "mid16", "last16", "all", "first32", "last32"
 
   die "precompute_hkeys_on_stack: Unexpected value of HKEYS_RANGE: $HKEYS_RANGE"
     if ($HKEYS_RANGE ne "first16"
@@ -511,8 +532,8 @@ sub precompute_hkeys_on_stack {
   my $rndsuffix = &random_string();
 
   $code .= <<___;
-      test              $HKEYS_READY,$HKEYS_READY
-      jnz              .L_skip_hkeys_precomputation_${rndsuffix}
+        test              $HKEYS_READY,$HKEYS_READY
+        jnz               .L_skip_hkeys_precomputation_${rndsuffix}
 ___
 
   if ($HKEYS_RANGE eq "first16" || $HKEYS_RANGE eq "first32" || $HKEYS_RANGE eq "all") {
@@ -557,12 +578,12 @@ ___
     foreach (1 .. int((32 - 16) / 8)) {
 
       # ;; compute HashKey^(4 + n), HashKey^(3 + n), ... HashKey^(1 + n)
-      &GHASH_MUL($ZTMP2, $ZTMP1, $ZTMP4, $ZTMP5, $ZTMP6, $ZTMP7, $ZTMP0);
+      &GHASH_MUL($ZTMP2, $ZTMP1, $ZTMP4, $ZTMP5, $ZTMP6);
       $code .= "vmovdqu64         $ZTMP2,@{[HashKeyByIdx($i,\"%rsp\")]}\n";
       $i += 4;
 
       # ;; compute HashKey^(8 + n), HashKey^(7 + n), ... HashKey^(5 + n)
-      &GHASH_MUL($ZTMP3, $ZTMP1, $ZTMP4, $ZTMP5, $ZTMP6, $ZTMP7, $ZTMP0);
+      &GHASH_MUL($ZTMP3, $ZTMP1, $ZTMP4, $ZTMP5, $ZTMP6);
       $code .= "vmovdqu64         $ZTMP3,@{[HashKeyByIdx($i,\"%rsp\")]}\n";
       $i += 4;
     }
@@ -582,17 +603,17 @@ ___
 
   if ($HKEYS_RANGE eq "last16" || $HKEYS_RANGE eq "last32" || $HKEYS_RANGE eq "all") {
 
-    # ; Precompute hkeys^i, i=33..48
+    # ; Precompute hkeys^i, i=33..48 (HKEYS_STORAGE_CAPACITY = 48)
     my $i = 36;
     foreach (1 .. int((48 - 32) / 8)) {
 
       # ;; compute HashKey^(4 + n), HashKey^(3 + n), ... HashKey^(1 + n)
-      &GHASH_MUL($ZTMP2, $ZTMP1, $ZTMP4, $ZTMP5, $ZTMP6, $ZTMP7, $ZTMP0);
+      &GHASH_MUL($ZTMP2, $ZTMP1, $ZTMP4, $ZTMP5, $ZTMP6);
       $code .= "vmovdqu64         $ZTMP2,@{[HashKeyByIdx($i,\"%rsp\")]}\n";
       $i += 4;
 
       # ;; compute HashKey^(8 + n), HashKey^(7 + n), ... HashKey^(5 + n)
-      &GHASH_MUL($ZTMP3, $ZTMP1, $ZTMP4, $ZTMP5, $ZTMP6, $ZTMP7, $ZTMP0);
+      &GHASH_MUL($ZTMP3, $ZTMP1, $ZTMP4, $ZTMP5, $ZTMP6);
       $code .= "vmovdqu64         $ZTMP3,@{[HashKeyByIdx($i,\"%rsp\")]}\n";
       $i += 4;
     }
@@ -833,11 +854,11 @@ ___
 }
 
 # ;; ===========================================================================
-# ;; schoolbook multiply of 16 blocks (8 x 16 bytes)
+# ;; schoolbook multiply of 16 blocks (16 x 16 bytes)
 # ;; - it is assumed that data read from $INPTR is already shuffled and
 # ;;   $INPTR address is 64 byte aligned
 # ;; - there is an option to pass ready blocks through ZMM registers too.
-# ;;   4 extra parameters need to passed in such case and 21st argument can be empty
+# ;;   4 extra parameters need to be passed in such case and 21st ($ZTMP9) argument can be empty
 sub GHASH_16 {
   my $TYPE  = $_[0];     # [in] ghash type: start (xor hash), mid, end (same as mid; no reduction),
                          # end_reduce (end with reduction), start_reduce
@@ -860,7 +881,7 @@ sub GHASH_16 {
   my $ZTMP6 = $_[17];    # [clobbered] temporary ZMM
   my $ZTMP7 = $_[18];    # [clobbered] temporary ZMM
   my $ZTMP8 = $_[19];    # [clobbered] temporary ZMM
-  my $ZTMP9 = $_[20];    # [clobbered] temporary ZMM
+  my $ZTMP9 = $_[20];    # [clobbered] temporary ZMM, can be empty if 4 extra parameters below are provided
   my $DAT0  = $_[21];    # [in] ZMM with 4 blocks of input data (INPTR, INOFF, INDIS unused)
   my $DAT1  = $_[22];    # [in] ZMM with 4 blocks of input data (INPTR, INOFF, INDIS unused)
   my $DAT2  = $_[23];    # [in] ZMM with 4 blocks of input data (INPTR, INOFF, INDIS unused)
@@ -984,9 +1005,7 @@ ___
 # ;; ===========================================================================
 # ;; GHASH 1 to 16 blocks of cipher text
 # ;; - performs reduction at the end
-# ;; - it doesn't load the data and it assumed it is already loaded and
-# ;;   shuffled
-# ;; - single_call scenario only
+# ;; - it doesn't load the data and it assumed it is already loaded and shuffled
 sub GHASH_1_TO_16 {
   my $GCM128_CTX  = $_[0];     # [in] pointer to expanded keys
   my $GHASH       = $_[1];     # [out] ghash output
@@ -1213,11 +1232,13 @@ ___
 }
 
 # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-# ;; GHASH_MUL MACRO to implement: Data*HashKey mod (128,127,126,121,0)
+# ;; GHASH_MUL MACRO to implement: Data*HashKey mod (x^128 + x^127 + x^126 +x^121 + 1)
 # ;; Input: A and B (128-bits each, bit-reflected)
 # ;; Output: C = A*B*x mod poly, (i.e. >>1 )
 # ;; To compute GH = GH*HashKey mod poly, give HK = HashKey<<1 mod poly as input
 # ;; GH = GH * HK * x mod poly which is equivalent to GH*HashKey mod poly.
+# ;;
+# ;; Refer to [3] for more detals.
 # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 sub GHASH_MUL {
   my $GH = $_[0];    #; [in/out] xmm/ymm/zmm with multiply operand(s) (128-bits)
@@ -1225,8 +1246,6 @@ sub GHASH_MUL {
   my $T1 = $_[2];    #; [clobbered] xmm/ymm/zmm
   my $T2 = $_[3];    #; [clobbered] xmm/ymm/zmm
   my $T3 = $_[4];    #; [clobbered] xmm/ymm/zmm
-  my $T4 = $_[5];    #; [clobbered] xmm/ymm/zmm
-  my $T5 = $_[6];    #; [clobbered] xmm/ymm/zmm
 
   $code .= <<___;
         # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1272,8 +1291,6 @@ sub PRECOMPUTE {
   my $T4         = $_[5];    #; [clobbered] xmm
   my $T5         = $_[6];    #; [clobbered] xmm
   my $T6         = $_[7];    #; [clobbered] xmm
-  my $T7         = $_[8];    #; [clobbered] xmm
-  my $T8         = $_[9];    #; [clobbered] xmm
 
   my $ZT1 = &ZWORD($T1);
   my $ZT2 = &ZWORD($T2);
@@ -1281,55 +1298,59 @@ sub PRECOMPUTE {
   my $ZT4 = &ZWORD($T4);
   my $ZT5 = &ZWORD($T5);
   my $ZT6 = &ZWORD($T6);
-  my $ZT7 = &ZWORD($T7);
-  my $ZT8 = &ZWORD($T8);
+
+  my $YT1 = &YWORD($T1);
+  my $YT2 = &YWORD($T2);
+  my $YT3 = &YWORD($T3);
+  my $YT4 = &YWORD($T4);
+  my $YT5 = &YWORD($T5);
+  my $YT6 = &YWORD($T6);
 
   $code .= <<___;
-        vmovdqa64         $HK,$T5
-        vinserti64x2      \$3,$HK,$ZT7,$ZT7
-
-        # ;; calculate HashKey^2<<1 mod poly
+        vshufi32x4   \$0x00,@{[YWORD($HK)]},@{[YWORD($HK)]},$YT5
+        vmovdqa      $YT5,$YT4
 ___
-  &GHASH_MUL($T5, $HK, $T1, $T3, $T4, $T6, $T2);
-  $code .= <<___;
-        vmovdqu64         $T5,@{[HashKeyByIdx(2,$GCM128_CTX)]}
-        vinserti64x2      \$2,$T5,$ZT7,$ZT7
 
-        # ;; calculate HashKey^3<<1 mod poly
-___
-  &GHASH_MUL($T5, $HK, $T1, $T3, $T4, $T6, $T2);
-  $code .= <<___;
-        vmovdqu64         $T5,@{[HashKeyByIdx(3,$GCM128_CTX)]}
-        vinserti64x2      \$1,$T5,$ZT7,$ZT7
+  # ;; calculate HashKey^2<<1 mod poly
+  &GHASH_MUL($YT4, $YT5, $YT1, $YT2, $YT3);
 
-        # ;; calculate HashKey^4<<1 mod poly
-___
-  &GHASH_MUL($T5, $HK, $T1, $T3, $T4, $T6, $T2);
   $code .= <<___;
-        vmovdqu64         $T5,@{[HashKeyByIdx(4,$GCM128_CTX)]}
-        vinserti64x2      \$0,$T5,$ZT7,$ZT7
+        vmovdqu64         $T4,@{[HashKeyByIdx(2,$GCM128_CTX)]}
+        vinserti64x2      \$1,$HK,$YT4,$YT5
+        vmovdqa64         $YT5,$YT6                             # ;; YT6 = HashKey | HashKey^2
+___
+
+  # ;; use 2x128-bit computation
+  # ;; calculate HashKey^4<<1 mod poly, HashKey^3<<1 mod poly
+  &GHASH_MUL($YT5, $YT4, $YT1, $YT2, $YT3);    # ;; YT5 = HashKey^3 | HashKey^4
+
+  $code .= <<___;
+        vmovdqu64         $YT5,@{[HashKeyByIdx(4,$GCM128_CTX)]}
+
+        vinserti64x4      \$1,$YT6,$ZT5,$ZT5                    # ;; ZT5 = YT6 | YT5
 
         # ;; switch to 4x128-bit computations now
-        vshufi64x2        \$0x00,$ZT5,$ZT5,$ZT5                 # ;; broadcast HashKey^4 across all ZT5
-        vmovdqa64         $ZT7,$ZT8                             # ;; save HashKey^4 to HashKey^1 in ZT8
-        # ;; calculate HashKey^5<<1 mod poly, HashKey^6<<1 mod poly, ... HashKey^8<<1 mod poly
-___
-  &GHASH_MUL($ZT7, $ZT5, $ZT1, $ZT3, $ZT4, $ZT6, $ZT2);
-  $code .= <<___;
-        vmovdqu64         $ZT7,@{[HashKeyByIdx(8,$GCM128_CTX)]} # ;; HashKey^8 to HashKey^5 in ZT7 now
-        vshufi64x2        \$0x00,$ZT7,$ZT7,$ZT5                 # ;; broadcast HashKey^8 across all ZT5
+        vshufi64x2        \$0x00,$ZT5,$ZT5,$ZT4                 # ;; broadcast HashKey^4 across all ZT4
+        vmovdqa64         $ZT5,$ZT6                             # ;; save HashKey^4 to HashKey^1 in ZT6
 ___
 
-  # ;; calculate HashKey^9<<1 mod poly, HashKey^10<<1 mod poly, ... HashKey^48<<1 mod poly
-  # ;; use HashKey^8 as multiplier against ZT8 and ZT7 - this allows deeper ooo execution
+  # ;; calculate HashKey^5<<1 mod poly, HashKey^6<<1 mod poly, ... HashKey^8<<1 mod poly
+  &GHASH_MUL($ZT5, $ZT4, $ZT1, $ZT2, $ZT3);
+  $code .= <<___;
+        vmovdqu64         $ZT5,@{[HashKeyByIdx(8,$GCM128_CTX)]} # ;; HashKey^8 to HashKey^5 in ZT5 now
+        vshufi64x2        \$0x00,$ZT5,$ZT5,$ZT4                 # ;; broadcast HashKey^8 across all ZT4
+___
+
+  # ;; calculate HashKey^9<<1 mod poly, HashKey^10<<1 mod poly, ... HashKey^16<<1 mod poly
+  # ;; use HashKey^8 as multiplier against ZT6 and ZT5 - this allows deeper ooo execution
 
   # ;; compute HashKey^(12), HashKey^(11), ... HashKey^(9)
-  &GHASH_MUL($ZT8, $ZT5, $ZT1, $ZT3, $ZT4, $ZT6, $ZT2);
-  $code .= "vmovdqu64         $ZT8,@{[HashKeyByIdx(12,$GCM128_CTX)]}\n";
+  &GHASH_MUL($ZT6, $ZT4, $ZT1, $ZT2, $ZT3);
+  $code .= "vmovdqu64         $ZT6,@{[HashKeyByIdx(12,$GCM128_CTX)]}\n";
 
   # ;; compute HashKey^(16), HashKey^(15), ... HashKey^(13)
-  &GHASH_MUL($ZT7, $ZT5, $ZT1, $ZT3, $ZT4, $ZT6, $ZT2);
-  $code .= "vmovdqu64         $ZT7,@{[HashKeyByIdx(16,$GCM128_CTX)]}\n";
+  &GHASH_MUL($ZT5, $ZT4, $ZT1, $ZT2, $ZT3);
+  $code .= "vmovdqu64         $ZT5,@{[HashKeyByIdx(16,$GCM128_CTX)]}\n";
 
   # ; Hkeys 17..48 will be precomputed somewhere else as context can hold only 16 hkeys
 }
@@ -1392,11 +1413,10 @@ sub CALC_AAD_HASH {
   my $ZT14       = $_[18];    # [clobbered] ZMM register
   my $ZT15       = $_[19];    # [clobbered] ZMM register
   my $ZT16       = $_[20];    # [clobbered] ZMM register
-  my $ZT17       = $_[21];    # [clobbered] ZMM register
-  my $T1         = $_[22];    # [clobbered] GP register
-  my $T2         = $_[23];    # [clobbered] GP register
-  my $T3         = $_[24];    # [clobbered] GP register
-  my $MASKREG    = $_[25];    # [clobbered] mask register
+  my $T1         = $_[21];    # [clobbered] GP register
+  my $T2         = $_[22];    # [clobbered] GP register
+  my $T3         = $_[23];    # [clobbered] GP register
+  my $MASKREG    = $_[24];    # [clobbered] mask register
 
   my $HKEYS_READY = "%rbx";
 
@@ -1415,7 +1435,7 @@ sub CALC_AAD_HASH {
 
 .L_get_AAD_loop48x16_${rndsuffix}:
         cmp               \$`(48*16)`,$T2
-jl            .L_exit_AAD_loop48x16_${rndsuffix}
+        jl                .L_exit_AAD_loop48x16_${rndsuffix}
 ___
 
   $code .= <<___;
@@ -1429,7 +1449,7 @@ ___
         vpshufb           $SHFMSK,$ZT4,$ZT4
 ___
 
-  &precompute_hkeys_on_stack($GCM128_CTX, $HKEYS_READY, $ZT0, $ZT8, $ZT9, $ZT10, $ZT11, $ZT12, $ZT14, $ZT15, "all");
+  &precompute_hkeys_on_stack($GCM128_CTX, $HKEYS_READY, $ZT0, $ZT8, $ZT9, $ZT10, $ZT11, $ZT12, $ZT14, "all");
   $code .= "mov     \$1,$HKEYS_READY\n";
 
   &GHASH_16(
@@ -1483,15 +1503,15 @@ ___
 
   $code .= <<___;
         sub               \$`(48*16)`,$T2
-je            .L_CALC_AAD_done_${rndsuffix}
+        je                .L_CALC_AAD_done_${rndsuffix}
 
-        add              \$`(48*16)`,$T1
-jmp           .L_get_AAD_loop48x16_${rndsuffix}
+        add               \$`(48*16)`,$T1
+        jmp               .L_get_AAD_loop48x16_${rndsuffix}
 
 .L_exit_AAD_loop48x16_${rndsuffix}:
         # ; Less than 48x16 bytes remaining
         cmp               \$`(32*16)`,$T2
-jl            .L_less_than_32x16_${rndsuffix}
+        jl                .L_less_than_32x16_${rndsuffix}
 ___
 
   $code .= <<___;
@@ -1506,7 +1526,7 @@ ___
         vpshufb           $SHFMSK,$ZT4,$ZT4
 ___
 
-  &precompute_hkeys_on_stack($GCM128_CTX, $HKEYS_READY, $ZT0, $ZT8, $ZT9, $ZT10, $ZT11, $ZT12, $ZT14, $ZT15, "first32");
+  &precompute_hkeys_on_stack($GCM128_CTX, $HKEYS_READY, $ZT0, $ZT8, $ZT9, $ZT10, $ZT11, $ZT12, $ZT14, "first32");
   $code .= "mov     \$1,$HKEYS_READY\n";
 
   &GHASH_16(
@@ -1540,14 +1560,14 @@ ___
 
   $code .= <<___;
         sub               \$`(32*16)`,$T2
-je            .L_CALC_AAD_done_${rndsuffix}
+        je                .L_CALC_AAD_done_${rndsuffix}
 
         add               \$`(32*16)`,$T1
-jmp           .L_less_than_16x16_${rndsuffix}
+        jmp               .L_less_than_16x16_${rndsuffix}
 
 .L_less_than_32x16_${rndsuffix}:
         cmp               \$`(16*16)`,$T2
-jl            .L_less_than_16x16_${rndsuffix}
+        jl                .L_less_than_16x16_${rndsuffix}
         # ; Get next 16 blocks
         vmovdqu64         `64*0`($T1),$ZT1
         vmovdqu64         `64*1`($T1),$ZT2
@@ -1572,7 +1592,7 @@ ___
 
   $code .= <<___;
         sub               \$`(16*16)`,$T2
-je            .L_CALC_AAD_done_${rndsuffix}
+        je                .L_CALC_AAD_done_${rndsuffix}
 
         add               \$`(16*16)`,$T1
         # ; Less than 16x16 bytes remaining
@@ -1585,28 +1605,28 @@ je            .L_CALC_AAD_done_${rndsuffix}
         add               \$15,@{[DWORD($T2)]}
         shr               \$4,@{[DWORD($T2)]}
         cmp               \$2,@{[DWORD($T2)]}
-jb            .L_AAD_blocks_1_${rndsuffix}
-        je            .L_AAD_blocks_2_${rndsuffix}
+        jb                .L_AAD_blocks_1_${rndsuffix}
+        je                .L_AAD_blocks_2_${rndsuffix}
         cmp               \$4,@{[DWORD($T2)]}
-jb            .L_AAD_blocks_3_${rndsuffix}
-        je            .L_AAD_blocks_4_${rndsuffix}
+        jb                .L_AAD_blocks_3_${rndsuffix}
+        je                .L_AAD_blocks_4_${rndsuffix}
         cmp               \$6,@{[DWORD($T2)]}
-jb            .L_AAD_blocks_5_${rndsuffix}
-        je            .L_AAD_blocks_6_${rndsuffix}
+        jb                .L_AAD_blocks_5_${rndsuffix}
+        je                .L_AAD_blocks_6_${rndsuffix}
         cmp               \$8,@{[DWORD($T2)]}
-jb            .L_AAD_blocks_7_${rndsuffix}
-        je            .L_AAD_blocks_8_${rndsuffix}
+        jb                .L_AAD_blocks_7_${rndsuffix}
+        je                .L_AAD_blocks_8_${rndsuffix}
         cmp               \$10,@{[DWORD($T2)]}
-jb            .L_AAD_blocks_9_${rndsuffix}
-        je            .L_AAD_blocks_10_${rndsuffix}
+        jb                .L_AAD_blocks_9_${rndsuffix}
+        je                .L_AAD_blocks_10_${rndsuffix}
         cmp               \$12,@{[DWORD($T2)]}
-jb            .L_AAD_blocks_11_${rndsuffix}
-        je            .L_AAD_blocks_12_${rndsuffix}
+        jb                .L_AAD_blocks_11_${rndsuffix}
+        je                .L_AAD_blocks_12_${rndsuffix}
         cmp               \$14,@{[DWORD($T2)]}
-jb            .L_AAD_blocks_13_${rndsuffix}
-        je            .L_AAD_blocks_14_${rndsuffix}
+        jb                .L_AAD_blocks_13_${rndsuffix}
+        je                .L_AAD_blocks_14_${rndsuffix}
         cmp               \$15,@{[DWORD($T2)]}
-je            .L_AAD_blocks_15_${rndsuffix}
+        je                .L_AAD_blocks_15_${rndsuffix}
 ___
 
   # ;; fall through for 16 blocks
@@ -1678,9 +1698,7 @@ sub PARTIAL_BLOCK {
   my $ZTMP5          = $_[16];    # [clobbered] ZMM temporary register
   my $ZTMP6          = $_[17];    # [clobbered] ZMM temporary register
   my $ZTMP7          = $_[18];    # [clobbered] ZMM temporary register
-  my $ZTMP8          = $_[19];    # [clobbered] ZMM temporary register
-  my $ZTMP9          = $_[20];    # [clobbered] ZMM temporary register
-  my $MASKREG        = $_[21];    # [clobbered] mask temporary register
+  my $MASKREG        = $_[19];    # [clobbered] mask temporary register
 
   my $XTMP0 = &XWORD($ZTMP0);
   my $XTMP1 = &XWORD($ZTMP1);
@@ -1690,8 +1708,6 @@ sub PARTIAL_BLOCK {
   my $XTMP5 = &XWORD($ZTMP5);
   my $XTMP6 = &XWORD($ZTMP6);
   my $XTMP7 = &XWORD($ZTMP7);
-  my $XTMP8 = &XWORD($ZTMP8);
-  my $XTMP9 = &XWORD($ZTMP9);
 
   my $LENGTH = $DATA_OFFSET;
   my $IA0    = $GPTMP1;
@@ -1704,7 +1720,7 @@ sub PARTIAL_BLOCK {
         # ;; if no partial block present then LENGTH/DATA_OFFSET will be set to zero
         mov             ($PBLOCK_LEN),$LENGTH
         or              $LENGTH,$LENGTH
-        je             .L_partial_block_done_${rndsuffix}         #  ;Leave Macro if no partial blocks
+        je              .L_partial_block_done_${rndsuffix}         #  ;Leave Macro if no partial blocks
 ___
 
   &READ_SMALL_DATA_INPUT($XTMP0, $PLAIN_CIPH_IN, $PLAIN_CIPH_LEN, $IA0, $IA2, $MASKREG);
@@ -1743,7 +1759,7 @@ ___
   }
   $code .= <<___;
         sub               \$16,$IA1
-        jge           .L_no_extra_mask_${rndsuffix}
+        jge               .L_no_extra_mask_${rndsuffix}
         sub               $IA1,$IA0
 .L_no_extra_mask_${rndsuffix}:
         # ;; get the appropriate mask to mask out bottom $LENGTH bytes of $XTMP1
@@ -1769,11 +1785,11 @@ ___
   }
   $code .= <<___;
         cmp               \$0,$IA1
-        jl            .L_partial_incomplete_${rndsuffix}
+        jl                .L_partial_incomplete_${rndsuffix}
 ___
 
   # ;; GHASH computation for the last <16 Byte block
-  &GHASH_MUL($AAD_HASH, $XTMP2, $XTMP5, $XTMP6, $XTMP7, $XTMP8, $XTMP9);
+  &GHASH_MUL($AAD_HASH, $XTMP2, $XTMP5, $XTMP6, $XTMP7);
 
   $code .= <<___;
         movq              \$0, ($PBLOCK_LEN)
@@ -1781,7 +1797,7 @@ ___
         mov               $LENGTH,$IA0
         mov               \$16,$LENGTH
         sub               $IA0,$LENGTH
-        jmp           .L_enc_dec_done_${rndsuffix}
+        jmp               .L_enc_dec_done_${rndsuffix}
 
 .L_partial_incomplete_${rndsuffix}:
 ___
@@ -1830,22 +1846,21 @@ sub INITIAL_BLOCKS_PARTIAL_CIPHER {
   my $NUM_BLOCKS      = $_[6];     # [in] can only be 1, 2, 3, 4, 5, ..., 15 or 16 (not 0)
   my $CTR             = $_[7];     # [in/out] current counter value
   my $ENC_DEC         = $_[8];     # [in] cipher direction (ENC/DEC)
-  my $INSTANCE_TYPE   = $_[9];     # [in] multi_call or single_call
-  my $DAT0            = $_[10];    # [out] ZMM with cipher text shuffled for GHASH
-  my $DAT1            = $_[11];    # [out] ZMM with cipher text shuffled for GHASH
-  my $DAT2            = $_[12];    # [out] ZMM with cipher text shuffled for GHASH
-  my $DAT3            = $_[13];    # [out] ZMM with cipher text shuffled for GHASH
-  my $LAST_CIPHER_BLK = $_[14];    # [out] XMM to put ciphered counter block partially xor'ed with text
-  my $LAST_GHASH_BLK  = $_[15];    # [out] XMM to put last cipher text block shuffled for GHASH
-  my $CTR0            = $_[16];    # [clobbered] ZMM temporary
-  my $CTR1            = $_[17];    # [clobbered] ZMM temporary
-  my $CTR2            = $_[18];    # [clobbered] ZMM temporary
-  my $CTR3            = $_[19];    # [clobbered] ZMM temporary
-  my $ZT1             = $_[20];    # [clobbered] ZMM temporary
-  my $IA0             = $_[21];    # [clobbered] GP temporary
-  my $IA1             = $_[22];    # [clobbered] GP temporary
-  my $MASKREG         = $_[23];    # [clobbered] mask register
-  my $SHUFMASK        = $_[24];    # [out] ZMM loaded with BE/LE shuffle mask
+  my $DAT0            = $_[9];     # [out] ZMM with cipher text shuffled for GHASH
+  my $DAT1            = $_[10];    # [out] ZMM with cipher text shuffled for GHASH
+  my $DAT2            = $_[11];    # [out] ZMM with cipher text shuffled for GHASH
+  my $DAT3            = $_[12];    # [out] ZMM with cipher text shuffled for GHASH
+  my $LAST_CIPHER_BLK = $_[13];    # [out] XMM to put ciphered counter block partially xor'ed with text
+  my $LAST_GHASH_BLK  = $_[14];    # [out] XMM to put last cipher text block shuffled for GHASH
+  my $CTR0            = $_[15];    # [clobbered] ZMM temporary
+  my $CTR1            = $_[16];    # [clobbered] ZMM temporary
+  my $CTR2            = $_[17];    # [clobbered] ZMM temporary
+  my $CTR3            = $_[18];    # [clobbered] ZMM temporary
+  my $ZT1             = $_[19];    # [clobbered] ZMM temporary
+  my $IA0             = $_[20];    # [clobbered] GP temporary
+  my $IA1             = $_[21];    # [clobbered] GP temporary
+  my $MASKREG         = $_[22];    # [clobbered] mask register
+  my $SHUFMASK        = $_[23];    # [out] ZMM loaded with BE/LE shuffle mask
 
   if ($NUM_BLOCKS == 1) {
     $code .= "vmovdqa64         SHUF_MASK(%rip),@{[XWORD($SHUFMASK)]}\n";
@@ -1895,16 +1910,14 @@ ___
 
   # ;; extract new counter value
   # ;; shuffle the counters for AES rounds
-  if ($INSTANCE_TYPE eq "multi_call") {
-    if ($NUM_BLOCKS <= 4) {
-      $code .= "vextracti32x4     \$`($NUM_BLOCKS - 1)`,$CTR0,$CTR\n";
-    } elsif ($NUM_BLOCKS <= 8) {
-      $code .= "vextracti32x4     \$`($NUM_BLOCKS - 5)`,$CTR1,$CTR\n";
-    } elsif ($NUM_BLOCKS <= 12) {
-      $code .= "vextracti32x4     \$`($NUM_BLOCKS - 9)`,$CTR2,$CTR\n";
-    } else {
-      $code .= "vextracti32x4     \$`($NUM_BLOCKS - 13)`,$CTR3,$CTR\n";
-    }
+  if ($NUM_BLOCKS <= 4) {
+    $code .= "vextracti32x4     \$`($NUM_BLOCKS - 1)`,$CTR0,$CTR\n";
+  } elsif ($NUM_BLOCKS <= 8) {
+    $code .= "vextracti32x4     \$`($NUM_BLOCKS - 5)`,$CTR1,$CTR\n";
+  } elsif ($NUM_BLOCKS <= 12) {
+    $code .= "vextracti32x4     \$`($NUM_BLOCKS - 9)`,$CTR2,$CTR\n";
+  } else {
+    $code .= "vextracti32x4     \$`($NUM_BLOCKS - 13)`,$CTR3,$CTR\n";
   }
   &ZMM_OPCODE3_DSTR_SRC1R_SRC2R_BLOCKS_0_16(
     $NUM_BLOCKS, "vpshufb", $CTR0, $CTR1,     $CTR2,     $CTR3,     $CTR0,
@@ -1920,19 +1933,16 @@ ___
       $DAT0, $DAT1, $DAT2, $DAT3, $NUM_BLOCKS, $NROUNDS);
   }
 
-  if ($INSTANCE_TYPE eq "multi_call") {
-
-    # ;; retrieve the last cipher counter block (partially XOR'ed with text)
-    # ;; - this is needed for partial block cases
-    if ($NUM_BLOCKS <= 4) {
-      $code .= "vextracti32x4     \$`($NUM_BLOCKS - 1)`,$CTR0,$LAST_CIPHER_BLK\n";
-    } elsif ($NUM_BLOCKS <= 8) {
-      $code .= "vextracti32x4     \$`($NUM_BLOCKS - 5)`,$CTR1,$LAST_CIPHER_BLK\n";
-    } elsif ($NUM_BLOCKS <= 12) {
-      $code .= "vextracti32x4     \$`($NUM_BLOCKS - 9)`,$CTR2,$LAST_CIPHER_BLK\n";
-    } else {
-      $code .= "vextracti32x4     \$`($NUM_BLOCKS - 13)`,$CTR3,$LAST_CIPHER_BLK\n";
-    }
+  # ;; retrieve the last cipher counter block (partially XOR'ed with text)
+  # ;; - this is needed for partial block cases
+  if ($NUM_BLOCKS <= 4) {
+    $code .= "vextracti32x4     \$`($NUM_BLOCKS - 1)`,$CTR0,$LAST_CIPHER_BLK\n";
+  } elsif ($NUM_BLOCKS <= 8) {
+    $code .= "vextracti32x4     \$`($NUM_BLOCKS - 5)`,$CTR1,$LAST_CIPHER_BLK\n";
+  } elsif ($NUM_BLOCKS <= 12) {
+    $code .= "vextracti32x4     \$`($NUM_BLOCKS - 9)`,$CTR2,$LAST_CIPHER_BLK\n";
+  } else {
+    $code .= "vextracti32x4     \$`($NUM_BLOCKS - 13)`,$CTR3,$LAST_CIPHER_BLK\n";
   }
 
   # ;; write cipher/plain text back to output and
@@ -1968,18 +1978,15 @@ ___
       $CTR1,       $CTR2,     $CTR3, $SHUFMASK, $SHUFMASK, $SHUFMASK, $SHUFMASK);
   }
 
-  if ($INSTANCE_TYPE eq "multi_call") {
-
-    # ;; Extract the last block for partials and multi_call cases
-    if ($NUM_BLOCKS <= 4) {
-      $code .= "vextracti32x4     \$`($NUM_BLOCKS-1)`,$DAT0,$LAST_GHASH_BLK\n";
-    } elsif ($NUM_BLOCKS <= 8) {
-      $code .= "vextracti32x4     \$`($NUM_BLOCKS-5)`,$DAT1,$LAST_GHASH_BLK\n";
-    } elsif ($NUM_BLOCKS <= 12) {
-      $code .= "vextracti32x4     \$`($NUM_BLOCKS-9)`,$DAT2,$LAST_GHASH_BLK\n";
-    } else {
-      $code .= "vextracti32x4     \$`($NUM_BLOCKS-13)`,$DAT3,$LAST_GHASH_BLK\n";
-    }
+  # ;; Extract the last block for partials and multi_call cases
+  if ($NUM_BLOCKS <= 4) {
+    $code .= "vextracti32x4     \$`($NUM_BLOCKS-1)`,$DAT0,$LAST_GHASH_BLK\n";
+  } elsif ($NUM_BLOCKS <= 8) {
+    $code .= "vextracti32x4     \$`($NUM_BLOCKS-5)`,$DAT1,$LAST_GHASH_BLK\n";
+  } elsif ($NUM_BLOCKS <= 12) {
+    $code .= "vextracti32x4     \$`($NUM_BLOCKS-9)`,$DAT2,$LAST_GHASH_BLK\n";
+  } else {
+    $code .= "vextracti32x4     \$`($NUM_BLOCKS-13)`,$DAT3,$LAST_GHASH_BLK\n";
   }
 
 }
@@ -1993,68 +2000,45 @@ sub INITIAL_BLOCKS_PARTIAL_GHASH {
   my $NUM_BLOCKS      = $_[3];     # [in] can only be 1, 2, 3, 4, 5, ..., 15 or 16 (not 0)
   my $HASH_IN_OUT     = $_[4];     # [in/out] XMM ghash in/out value
   my $ENC_DEC         = $_[5];     # [in] cipher direction (ENC/DEC)
-  my $INSTANCE_TYPE   = $_[6];     # [in] multi_call or single_call
-  my $DAT0            = $_[7];     # [in] ZMM with cipher text shuffled for GHASH
-  my $DAT1            = $_[8];     # [in] ZMM with cipher text shuffled for GHASH
-  my $DAT2            = $_[9];     # [in] ZMM with cipher text shuffled for GHASH
-  my $DAT3            = $_[10];    # [in] ZMM with cipher text shuffled for GHASH
-  my $LAST_CIPHER_BLK = $_[11];    # [in] XMM with ciphered counter block partially xor'ed with text
-  my $LAST_GHASH_BLK  = $_[12];    # [in] XMM with last cipher text block shuffled for GHASH
-  my $ZT0             = $_[13];    # [clobbered] ZMM temporary
-  my $ZT1             = $_[14];    # [clobbered] ZMM temporary
-  my $ZT2             = $_[15];    # [clobbered] ZMM temporary
-  my $ZT3             = $_[16];    # [clobbered] ZMM temporary
-  my $ZT4             = $_[17];    # [clobbered] ZMM temporary
-  my $ZT5             = $_[18];    # [clobbered] ZMM temporary
-  my $ZT6             = $_[19];    # [clobbered] ZMM temporary
-  my $ZT7             = $_[20];    # [clobbered] ZMM temporary
-  my $ZT8             = $_[21];    # [clobbered] ZMM temporary
-  my $PBLOCK_LEN      = $_[22];    # [in] partial block length
-  my $GH              = $_[23];    # [in] ZMM with hi product part
-  my $GM              = $_[24];    # [in] ZMM with mid prodcut part
-  my $GL              = $_[25];    # [in] ZMM with lo product part
+  my $DAT0            = $_[6];     # [in] ZMM with cipher text shuffled for GHASH
+  my $DAT1            = $_[7];     # [in] ZMM with cipher text shuffled for GHASH
+  my $DAT2            = $_[8];     # [in] ZMM with cipher text shuffled for GHASH
+  my $DAT3            = $_[9];     # [in] ZMM with cipher text shuffled for GHASH
+  my $LAST_CIPHER_BLK = $_[10];    # [in] XMM with ciphered counter block partially xor'ed with text
+  my $LAST_GHASH_BLK  = $_[11];    # [in] XMM with last cipher text block shuffled for GHASH
+  my $ZT0             = $_[12];    # [clobbered] ZMM temporary
+  my $ZT1             = $_[13];    # [clobbered] ZMM temporary
+  my $ZT2             = $_[14];    # [clobbered] ZMM temporary
+  my $ZT3             = $_[15];    # [clobbered] ZMM temporary
+  my $ZT4             = $_[16];    # [clobbered] ZMM temporary
+  my $ZT5             = $_[17];    # [clobbered] ZMM temporary
+  my $ZT6             = $_[18];    # [clobbered] ZMM temporary
+  my $ZT7             = $_[19];    # [clobbered] ZMM temporary
+  my $ZT8             = $_[20];    # [clobbered] ZMM temporary
+  my $PBLOCK_LEN      = $_[21];    # [in] partial block length
+  my $GH              = $_[22];    # [in] ZMM with hi product part
+  my $GM              = $_[23];    # [in] ZMM with mid prodcut part
+  my $GL              = $_[24];    # [in] ZMM with lo product part
 
   my $rndsuffix = &random_string();
 
-  if ($INSTANCE_TYPE eq "single_call") {
+  # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  # ;;; - Hash all but the last partial block of data
+  # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-    # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    # ;;; SINGLE CALL case
-    # ;;; - hash all data including partial block
-    # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  # ;; update data offset
+  if ($NUM_BLOCKS > 1) {
 
-    if (scalar(@_) == 23) {
+    # ;; The final block of data may be <16B
+    $code .= "sub               \$16 * ($NUM_BLOCKS - 1),$LENGTH\n";
+  }
 
-      # ;; start GHASH compute
-      &GHASH_1_TO_16($GCM128_CTX, $HASH_IN_OUT, $ZT0, $ZT1, $ZT2, $ZT3,
-        $ZT4, $ZT5, $ZT6, $ZT7, $ZT8, &ZWORD($HASH_IN_OUT), $DAT0, $DAT1, $DAT2, $DAT3, $NUM_BLOCKS);
-    } elsif (scalar(@_) == 26) {
-
-      # ;; continue GHASH compute
-      &GHASH_1_TO_16($GCM128_CTX, $HASH_IN_OUT, $ZT0, $ZT1, $ZT2, $ZT3, $ZT4, $ZT5,
-        $ZT6, $ZT7, $ZT8, &ZWORD($HASH_IN_OUT), $DAT0, $DAT1, $DAT2, $DAT3, $NUM_BLOCKS, $GH, $GM, $GL);
-    }
-
-  } else {
-
-    # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    # ;;; MULTI CALL (SGL) case
-    # ;;; - hash all but the last partial block of data
-    # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    # ;; update data offset
-    if ($NUM_BLOCKS > 1) {
-
-      # ;; The final block of data may be <16B
-      $code .= "sub               \$16 * ($NUM_BLOCKS - 1),$LENGTH\n";
-    }
-
-    if ($NUM_BLOCKS < 16) {
-      $code .= <<___;
+  if ($NUM_BLOCKS < 16) {
+    $code .= <<___;
         # ;; NOTE: the 'jl' is always taken for num_initial_blocks = 16.
         # ;;      This is run in the context of GCM_ENC_DEC_SMALL for length < 256.
         cmp               \$16,$LENGTH
-        jl            .L_small_initial_partial_block_${rndsuffix}
+        jl                .L_small_initial_partial_block_${rndsuffix}
 
         # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         # ;;; Handle a full length final block - encrypt and hash all blocks
@@ -2064,59 +2048,57 @@ sub INITIAL_BLOCKS_PARTIAL_GHASH {
         movq              \$0,($PBLOCK_LEN)
 ___
 
-      # ;; Hash all of the data
-      if (scalar(@_) == 23) {
+    # ;; Hash all of the data
+    if (scalar(@_) == 22) {
 
-        # ;; start GHASH compute
-        &GHASH_1_TO_16($GCM128_CTX, $HASH_IN_OUT, $ZT0, $ZT1, $ZT2, $ZT3, $ZT4,
-          $ZT5, $ZT6, $ZT7, $ZT8, &ZWORD($HASH_IN_OUT), $DAT0, $DAT1, $DAT2, $DAT3, $NUM_BLOCKS);
-      } elsif (scalar(@_) == 26) {
+      # ;; start GHASH compute
+      &GHASH_1_TO_16($GCM128_CTX, $HASH_IN_OUT, $ZT0, $ZT1, $ZT2, $ZT3, $ZT4,
+        $ZT5, $ZT6, $ZT7, $ZT8, &ZWORD($HASH_IN_OUT), $DAT0, $DAT1, $DAT2, $DAT3, $NUM_BLOCKS);
+    } elsif (scalar(@_) == 25) {
 
-        # ;; continue GHASH compute
-        &GHASH_1_TO_16($GCM128_CTX, $HASH_IN_OUT, $ZT0, $ZT1, $ZT2, $ZT3, $ZT4,
-          $ZT5, $ZT6, $ZT7, $ZT8, &ZWORD($HASH_IN_OUT), $DAT0, $DAT1, $DAT2, $DAT3, $NUM_BLOCKS, $GH, $GM, $GL);
-      }
-      $code .= "jmp           .L_small_initial_compute_done_${rndsuffix}\n";
+      # ;; continue GHASH compute
+      &GHASH_1_TO_16($GCM128_CTX, $HASH_IN_OUT, $ZT0, $ZT1, $ZT2, $ZT3, $ZT4,
+        $ZT5, $ZT6, $ZT7, $ZT8, &ZWORD($HASH_IN_OUT), $DAT0, $DAT1, $DAT2, $DAT3, $NUM_BLOCKS, $GH, $GM, $GL);
     }
+    $code .= "jmp           .L_small_initial_compute_done_${rndsuffix}\n";
+  }
 
-    $code .= <<___;
+  $code .= <<___;
 .L_small_initial_partial_block_${rndsuffix}:
 
         # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         # ;;; Handle ghash for a <16B final block
         # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-        # ;; In this case if it's a single call to encrypt we can
-        # ;; hash all of the data but if it's an init / update / finalize
-        # ;; series of call we need to leave the last block if it's
-        # ;; less than a full block of data.
+        # ;; As it's an init / update / finalize series we need to leave the
+        # ;; last block if it's less than a full block of data.
 
         mov               $LENGTH,($PBLOCK_LEN)
         vmovdqu64         $LAST_CIPHER_BLK,$CTX_OFFSET_PEncBlock($GCM128_CTX)
 ___
 
-    my $k                  = ($NUM_BLOCKS - 1);
-    my $last_block_to_hash = 1;
-    if (($NUM_BLOCKS > $last_block_to_hash)) {
+  my $k                  = ($NUM_BLOCKS - 1);
+  my $last_block_to_hash = 1;
+  if (($NUM_BLOCKS > $last_block_to_hash)) {
 
-      # ;; ZT12-ZT20 - temporary registers
-      if (scalar(@_) == 23) {
+    # ;; ZT12-ZT20 - temporary registers
+    if (scalar(@_) == 22) {
 
-        # ;; start GHASH compute
-        &GHASH_1_TO_16($GCM128_CTX, $HASH_IN_OUT, $ZT0, $ZT1, $ZT2, $ZT3, $ZT4,
-          $ZT5, $ZT6, $ZT7, $ZT8, &ZWORD($HASH_IN_OUT), $DAT0, $DAT1, $DAT2, $DAT3, $k);
-      } elsif (scalar(@_) == 26) {
+      # ;; start GHASH compute
+      &GHASH_1_TO_16($GCM128_CTX, $HASH_IN_OUT, $ZT0, $ZT1, $ZT2, $ZT3, $ZT4,
+        $ZT5, $ZT6, $ZT7, $ZT8, &ZWORD($HASH_IN_OUT), $DAT0, $DAT1, $DAT2, $DAT3, $k);
+    } elsif (scalar(@_) == 25) {
 
-        # ;; continue GHASH compute
-        &GHASH_1_TO_16($GCM128_CTX, $HASH_IN_OUT, $ZT0, $ZT1, $ZT2, $ZT3, $ZT4,
-          $ZT5, $ZT6, $ZT7, $ZT8, &ZWORD($HASH_IN_OUT), $DAT0, $DAT1, $DAT2, $DAT3, $k, $GH, $GM, $GL);
-      }
+      # ;; continue GHASH compute
+      &GHASH_1_TO_16($GCM128_CTX, $HASH_IN_OUT, $ZT0, $ZT1, $ZT2, $ZT3, $ZT4,
+        $ZT5, $ZT6, $ZT7, $ZT8, &ZWORD($HASH_IN_OUT), $DAT0, $DAT1, $DAT2, $DAT3, $k, $GH, $GM, $GL);
+    }
 
-      # ;; just fall through no jmp needed
-    } else {
+    # ;; just fall through no jmp needed
+  } else {
 
-      if (scalar(@_) == 26) {
-        $code .= <<___;
+    if (scalar(@_) == 25) {
+      $code .= <<___;
         # ;; Reduction is required in this case.
         # ;; Integrate GM into GH and GL.
         vpsrldq           \$8,$GM,$ZT0
@@ -2125,15 +2107,15 @@ ___
         vpxorq            $ZT1,$GL,$GL
 ___
 
-        # ;; Add GH and GL 128-bit words horizontally
-        &VHPXORI4x128($GH, $ZT0);
-        &VHPXORI4x128($GL, $ZT1);
+      # ;; Add GH and GL 128-bit words horizontally
+      &VHPXORI4x128($GH, $ZT0);
+      &VHPXORI4x128($GL, $ZT1);
 
-        # ;; 256-bit to 128-bit reduction
-        $code .= "vmovdqa64         POLY2(%rip),@{[XWORD($ZT0)]}\n";
-        &VCLMUL_REDUCE(&XWORD($HASH_IN_OUT), &XWORD($ZT0), &XWORD($GH), &XWORD($GL), &XWORD($ZT1), &XWORD($ZT2));
-      }
-      $code .= <<___;
+      # ;; 256-bit to 128-bit reduction
+      $code .= "vmovdqa64         POLY2(%rip),@{[XWORD($ZT0)]}\n";
+      &VCLMUL_REDUCE(&XWORD($HASH_IN_OUT), &XWORD($ZT0), &XWORD($GH), &XWORD($GL), &XWORD($ZT1), &XWORD($ZT2));
+    }
+    $code .= <<___;
         # ;; Record that a reduction is not needed -
         # ;; In this case no hashes are computed because there
         # ;; is only one initial block and it is < 16B in length.
@@ -2147,33 +2129,32 @@ ___
         # ;; a partial block of data, so xor that into the hash.
         vpxorq            $LAST_GHASH_BLK,$HASH_IN_OUT,$HASH_IN_OUT
         # ;; The result is in $HASH_IN_OUT
-        jmp           .L_after_reduction_${rndsuffix}
+        jmp               .L_after_reduction_${rndsuffix}
 ___
-    }
+  }
 
-    # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    # ;;; After GHASH reduction
-    # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  # ;;; After GHASH reduction
+  # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-    $code .= ".L_small_initial_compute_done_${rndsuffix}:\n";
+  $code .= ".L_small_initial_compute_done_${rndsuffix}:\n";
 
-    # ;; If using init/update/finalize, we need to xor any partial block data
-    # ;; into the hash.
-    if ($NUM_BLOCKS > 1) {
+  # ;; If using init/update/finalize, we need to xor any partial block data
+  # ;; into the hash.
+  if ($NUM_BLOCKS > 1) {
 
-      # ;; NOTE: for $NUM_BLOCKS = 0 the xor never takes place
-      if ($NUM_BLOCKS != 16) {
-        $code .= <<___;
+    # ;; NOTE: for $NUM_BLOCKS = 0 the xor never takes place
+    if ($NUM_BLOCKS != 16) {
+      $code .= <<___;
         # ;; NOTE: for $NUM_BLOCKS = 16, $LENGTH, stored in [PBlockLen] is never zero
         or                $LENGTH,$LENGTH
-        je            .L_after_reduction_${rndsuffix}
+        je                .L_after_reduction_${rndsuffix}
 ___
-      }
-      $code .= "vpxorq            $LAST_GHASH_BLK,$HASH_IN_OUT,$HASH_IN_OUT\n";
     }
-
-    $code .= ".L_after_reduction_${rndsuffix}:\n";
+    $code .= "vpxorq            $LAST_GHASH_BLK,$HASH_IN_OUT,$HASH_IN_OUT\n";
   }
+
+  $code .= ".L_after_reduction_${rndsuffix}:\n";
 
   # ;; Final hash is now in HASH_IN_OUT
 }
@@ -2184,7 +2165,6 @@ ___
 # ;; - first encrypts/decrypts required number of blocks and then
 # ;;   ghashes these blocks
 # ;; - Small packets or left over data chunks (<256 bytes)
-# ;;     - single or multi call
 # ;; - Remaining data chunks below 256 bytes (multi buffer code)
 # ;;
 # ;; num_initial_blocks is expected to include the partial final block
@@ -2200,44 +2180,38 @@ sub INITIAL_BLOCKS_PARTIAL {
   my $CTR             = $_[7];     # [in/out] current counter value
   my $HASH_IN_OUT     = $_[8];     # [in/out] XMM ghash in/out value
   my $ENC_DEC         = $_[9];     # [in] cipher direction (ENC/DEC)
-  my $INSTANCE_TYPE   = $_[10];    # [in] multi_call or single_call
-  my $CTR0            = $_[11];    # [clobbered] ZMM temporary
-  my $CTR1            = $_[12];    # [clobbered] ZMM temporary
-  my $CTR2            = $_[13];    # [clobbered] ZMM temporary
-  my $CTR3            = $_[14];    # [clobbered] ZMM temporary
-  my $DAT0            = $_[15];    # [clobbered] ZMM temporary
-  my $DAT1            = $_[16];    # [clobbered] ZMM temporary
-  my $DAT2            = $_[17];    # [clobbered] ZMM temporary
-  my $DAT3            = $_[18];    # [clobbered] ZMM temporary
-  my $LAST_CIPHER_BLK = $_[19];    # [clobbered] ZMM temporary
-  my $LAST_GHASH_BLK  = $_[20];    # [clobbered] ZMM temporary
-  my $ZT0             = $_[21];    # [clobbered] ZMM temporary
-  my $ZT1             = $_[22];    # [clobbered] ZMM temporary
-  my $ZT2             = $_[23];    # [clobbered] ZMM temporary
-  my $ZT3             = $_[24];    # [clobbered] ZMM temporary
-  my $ZT4             = $_[25];    # [clobbered] ZMM temporary
-  my $IA0             = $_[26];    # [clobbered] GP temporary
-  my $IA1             = $_[27];    # [clobbered] GP temporary
-  my $MASKREG         = $_[28];    # [clobbered] mask register
-  my $SHUFMASK        = $_[29];    # [clobbered] ZMM for BE/LE shuffle mask
-  my $PBLOCK_LEN      = $_[30];    # [in] partial block length
+  my $CTR0            = $_[10];    # [clobbered] ZMM temporary
+  my $CTR1            = $_[11];    # [clobbered] ZMM temporary
+  my $CTR2            = $_[12];    # [clobbered] ZMM temporary
+  my $CTR3            = $_[13];    # [clobbered] ZMM temporary
+  my $DAT0            = $_[14];    # [clobbered] ZMM temporary
+  my $DAT1            = $_[15];    # [clobbered] ZMM temporary
+  my $DAT2            = $_[16];    # [clobbered] ZMM temporary
+  my $DAT3            = $_[17];    # [clobbered] ZMM temporary
+  my $LAST_CIPHER_BLK = $_[18];    # [clobbered] ZMM temporary
+  my $LAST_GHASH_BLK  = $_[19];    # [clobbered] ZMM temporary
+  my $ZT0             = $_[20];    # [clobbered] ZMM temporary
+  my $ZT1             = $_[21];    # [clobbered] ZMM temporary
+  my $ZT2             = $_[22];    # [clobbered] ZMM temporary
+  my $ZT3             = $_[23];    # [clobbered] ZMM temporary
+  my $ZT4             = $_[24];    # [clobbered] ZMM temporary
+  my $IA0             = $_[25];    # [clobbered] GP temporary
+  my $IA1             = $_[26];    # [clobbered] GP temporary
+  my $MASKREG         = $_[27];    # [clobbered] mask register
+  my $SHUFMASK        = $_[28];    # [clobbered] ZMM for BE/LE shuffle mask
+  my $PBLOCK_LEN      = $_[29];    # [in] partial block length
 
   &INITIAL_BLOCKS_PARTIAL_CIPHER(
-    $AES_KEYS, $GCM128_CTX,    $CIPH_PLAIN_OUT,          $PLAIN_CIPH_IN,
-    $LENGTH,   $DATA_OFFSET,   $NUM_BLOCKS,              $CTR,
-    $ENC_DEC,  $INSTANCE_TYPE, $DAT0,                    $DAT1,
-    $DAT2,     $DAT3,          &XWORD($LAST_CIPHER_BLK), &XWORD($LAST_GHASH_BLK),
-    $CTR0,     $CTR1,          $CTR2,                    $CTR3,
-    $ZT0,      $IA0,           $IA1,                     $MASKREG,
-    $SHUFMASK);
+    $AES_KEYS, $GCM128_CTX,              $CIPH_PLAIN_OUT,         $PLAIN_CIPH_IN,
+    $LENGTH,   $DATA_OFFSET,             $NUM_BLOCKS,             $CTR,
+    $ENC_DEC,  $DAT0,                    $DAT1,                   $DAT2,
+    $DAT3,     &XWORD($LAST_CIPHER_BLK), &XWORD($LAST_GHASH_BLK), $CTR0,
+    $CTR1,     $CTR2,                    $CTR3,                   $ZT0,
+    $IA0,      $IA1,                     $MASKREG,                $SHUFMASK);
 
-  &INITIAL_BLOCKS_PARTIAL_GHASH(
-    $AES_KEYS,               $GCM128_CTX, $LENGTH,        $NUM_BLOCKS,
-    $HASH_IN_OUT,            $ENC_DEC,    $INSTANCE_TYPE, $DAT0,
-    $DAT1,                   $DAT2,       $DAT3,          &XWORD($LAST_CIPHER_BLK),
-    &XWORD($LAST_GHASH_BLK), $CTR0,       $CTR1,          $CTR2,
-    $CTR3,                   $ZT0,        $ZT1,           $ZT2,
-    $ZT3,                    $ZT4,        $PBLOCK_LEN);
+  &INITIAL_BLOCKS_PARTIAL_GHASH($AES_KEYS, $GCM128_CTX, $LENGTH, $NUM_BLOCKS, $HASH_IN_OUT, $ENC_DEC, $DAT0,
+    $DAT1, $DAT2, $DAT3, &XWORD($LAST_CIPHER_BLK),
+    &XWORD($LAST_GHASH_BLK), $CTR0, $CTR1, $CTR2, $CTR3, $ZT0, $ZT1, $ZT2, $ZT3, $ZT4, $PBLOCK_LEN);
 }
 
 # ;; ===========================================================================
@@ -2291,8 +2265,7 @@ sub GHASH_16_ENCRYPT_N_GHASH_N {
   my $IA1                = $_[43];    # [clobbered] GP temporary
   my $MASKREG            = $_[44];    # [clobbered] mask register
   my $NUM_BLOCKS         = $_[45];    # [in] numerical value with number of blocks to be encrypted/ghashed (1 to 16)
-  my $INSTANCE_TYPE      = $_[46];    # [in] multi_call or single_call
-  my $PBLOCK_LEN         = $_[47];    # [in] partial block length
+  my $PBLOCK_LEN         = $_[46];    # [in] partial block length
 
   die "GHASH_16_ENCRYPT_N_GHASH_N: num_blocks is out of bounds = $NUM_BLOCKS\n"
     if ($NUM_BLOCKS > 16 || $NUM_BLOCKS < 0);
@@ -2357,14 +2330,14 @@ ___
 
   $code .= <<___;
         cmp               \$`(256 - $NUM_BLOCKS)`,@{[DWORD($CTR_CHECK)]}
-jae           .L_16_blocks_overflow_${rndsuffix}
+        jae               .L_16_blocks_overflow_${rndsuffix}
 ___
 
   &ZMM_OPCODE3_DSTR_SRC1R_SRC2R_BLOCKS_0_16(
     $NUM_BLOCKS, "vpaddd", $B00_03, $B04_07,     $B08_11,    $B12_15,    $CTR_BE,
     $B00_03,     $B04_07,  $B08_11, $ADDBE_1234, $ADDBE_4x4, $ADDBE_4x4, $ADDBE_4x4);
   $code .= <<___;
-        jmp           .L_16_blocks_ok_${rndsuffix}
+        jmp               .L_16_blocks_ok_${rndsuffix}
 
 .L_16_blocks_overflow_${rndsuffix}:
         vpshufb           $SHFMSK,$CTR_BE,$CTR_BE
@@ -2404,18 +2377,16 @@ ___
   # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   # ;; save counter for the next round
   # ;; increment counter overflow check register
-  if ($INSTANCE_TYPE eq "multi_call") {
-    if ($NUM_BLOCKS <= 4) {
-      $code .= "vextracti32x4     \$`($NUM_BLOCKS - 1)`,$B00_03,@{[XWORD($CTR_BE)]}\n";
-    } elsif ($NUM_BLOCKS <= 8) {
-      $code .= "vextracti32x4     \$`($NUM_BLOCKS - 5)`,$B04_07,@{[XWORD($CTR_BE)]}\n";
-    } elsif ($NUM_BLOCKS <= 12) {
-      $code .= "vextracti32x4     \$`($NUM_BLOCKS - 9)`,$B08_11,@{[XWORD($CTR_BE)]}\n";
-    } else {
-      $code .= "vextracti32x4     \$`($NUM_BLOCKS - 13)`,$B12_15,@{[XWORD($CTR_BE)]}\n";
-    }
-    $code .= "vshufi64x2        \$0b00000000,$CTR_BE,$CTR_BE,$CTR_BE\n";
+  if ($NUM_BLOCKS <= 4) {
+    $code .= "vextracti32x4     \$`($NUM_BLOCKS - 1)`,$B00_03,@{[XWORD($CTR_BE)]}\n";
+  } elsif ($NUM_BLOCKS <= 8) {
+    $code .= "vextracti32x4     \$`($NUM_BLOCKS - 5)`,$B04_07,@{[XWORD($CTR_BE)]}\n";
+  } elsif ($NUM_BLOCKS <= 12) {
+    $code .= "vextracti32x4     \$`($NUM_BLOCKS - 9)`,$B08_11,@{[XWORD($CTR_BE)]}\n";
+  } else {
+    $code .= "vextracti32x4     \$`($NUM_BLOCKS - 13)`,$B12_15,@{[XWORD($CTR_BE)]}\n";
   }
+  $code .= "vshufi64x2        \$0b00000000,$CTR_BE,$CTR_BE,$CTR_BE\n";
 
   $code .= <<___;
         # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2689,23 +2660,20 @@ ___
   # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   # ;; retrieve the last cipher counter block (partially XOR'ed with text)
   # ;; - this is needed for partial block cases
-  if ($INSTANCE_TYPE eq "multi_call") {
-    if ($NUM_BLOCKS <= 4) {
-      $code .= "vextracti32x4     \$`($NUM_BLOCKS - 1)`,$B00_03,@{[XWORD($LAST_CIPHER_BLK)]}\n";
-    } elsif ($NUM_BLOCKS <= 8) {
-      $code .= "vextracti32x4     \$`($NUM_BLOCKS - 5)`,$B04_07,@{[XWORD($LAST_CIPHER_BLK)]}\n";
-    } elsif ($NUM_BLOCKS <= 12) {
-      $code .= "vextracti32x4     \$`($NUM_BLOCKS - 9)`,$B08_11,@{[XWORD($LAST_CIPHER_BLK)]}\n";
-    } else {
-      $code .= "vextracti32x4     \$`($NUM_BLOCKS - 13)`,$B12_15,@{[XWORD($LAST_CIPHER_BLK)]}\n";
-    }
+  if ($NUM_BLOCKS <= 4) {
+    $code .= "vextracti32x4     \$`($NUM_BLOCKS - 1)`,$B00_03,@{[XWORD($LAST_CIPHER_BLK)]}\n";
+  } elsif ($NUM_BLOCKS <= 8) {
+    $code .= "vextracti32x4     \$`($NUM_BLOCKS - 5)`,$B04_07,@{[XWORD($LAST_CIPHER_BLK)]}\n";
+  } elsif ($NUM_BLOCKS <= 12) {
+    $code .= "vextracti32x4     \$`($NUM_BLOCKS - 9)`,$B08_11,@{[XWORD($LAST_CIPHER_BLK)]}\n";
+  } else {
+    $code .= "vextracti32x4     \$`($NUM_BLOCKS - 13)`,$B12_15,@{[XWORD($LAST_CIPHER_BLK)]}\n";
   }
 
   # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   # ;; store cipher/plain text
   $code .= "mov       $CIPH_PLAIN_OUT,$IA0\n";
-  &ZMM_STORE_MASKED_BLOCKS_0_16($NUM_BLOCKS, $IA0, $DATA_OFFSET,
-    $B00_03, $B04_07, $B08_11, $B12_15, $MASKREG);
+  &ZMM_STORE_MASKED_BLOCKS_0_16($NUM_BLOCKS, $IA0, $DATA_OFFSET, $B00_03, $B04_07, $B08_11, $B12_15, $MASKREG);
 
   # ;; =================================================
   # ;; shuffle cipher text blocks for GHASH computation
@@ -2745,22 +2713,20 @@ ___
 
   # ;; =================================================
   # ;; Extract the last block for partial / multi_call cases
-  if ($INSTANCE_TYPE eq "multi_call") {
-    if ($NUM_BLOCKS <= 4) {
-      $code .= "vextracti32x4     \$`($NUM_BLOCKS-1)`,$DATA1,@{[XWORD($LAST_GHASH_BLK)]}\n";
-    } elsif ($NUM_BLOCKS <= 8) {
-      $code .= "vextracti32x4     \$`($NUM_BLOCKS-5)`,$DATA2,@{[XWORD($LAST_GHASH_BLK)]}\n";
-    } elsif ($NUM_BLOCKS <= 12) {
-      $code .= "vextracti32x4     \$`($NUM_BLOCKS-9)`,$DATA3,@{[XWORD($LAST_GHASH_BLK)]}\n";
-    } else {
-      $code .= "vextracti32x4     \$`($NUM_BLOCKS-13)`,$DATA4,@{[XWORD($LAST_GHASH_BLK)]}\n";
-    }
+  if ($NUM_BLOCKS <= 4) {
+    $code .= "vextracti32x4     \$`($NUM_BLOCKS-1)`,$DATA1,@{[XWORD($LAST_GHASH_BLK)]}\n";
+  } elsif ($NUM_BLOCKS <= 8) {
+    $code .= "vextracti32x4     \$`($NUM_BLOCKS-5)`,$DATA2,@{[XWORD($LAST_GHASH_BLK)]}\n";
+  } elsif ($NUM_BLOCKS <= 12) {
+    $code .= "vextracti32x4     \$`($NUM_BLOCKS-9)`,$DATA3,@{[XWORD($LAST_GHASH_BLK)]}\n";
+  } else {
+    $code .= "vextracti32x4     \$`($NUM_BLOCKS-13)`,$DATA4,@{[XWORD($LAST_GHASH_BLK)]}\n";
   }
 
   if ($do_reduction != 0) {
 
     # ;; GH1H holds reduced hash value
-    # ;; - normally do "vmovdqa64 XWORD($HASH_IN_OUT), XWORD($GH1H)"
+    # ;; - normally do "vmovdqa64 &XWORD($GH1H), &XWORD($HASH_IN_OUT)"
     # ;; - register rename trick obsoletes the above move
   }
 
@@ -2772,21 +2738,21 @@ ___
 
   if ($do_reduction == 0) {
     &INITIAL_BLOCKS_PARTIAL_GHASH(
-      $AES_KEYS,               $GCM128_CTX, $LENGTH,        $NUM_BLOCKS,
-      &XWORD($HASH_IN_OUT),    $ENC_DEC,    $INSTANCE_TYPE, $DATA1,
-      $DATA2,                  $DATA3,      $DATA4,         &XWORD($LAST_CIPHER_BLK),
-      &XWORD($LAST_GHASH_BLK), $B00_03,     $B04_07,        $B08_11,
-      $B12_15,                 $GHDAT1,     $GHDAT2,        $AESKEY1,
-      $AESKEY2,                $GHKEY1,     $PBLOCK_LEN,    $TO_REDUCE_H,
-      $TO_REDUCE_M,            $TO_REDUCE_L);
+      $AES_KEYS,            $GCM128_CTX, $LENGTH,                  $NUM_BLOCKS,
+      &XWORD($HASH_IN_OUT), $ENC_DEC,    $DATA1,                   $DATA2,
+      $DATA3,               $DATA4,      &XWORD($LAST_CIPHER_BLK), &XWORD($LAST_GHASH_BLK),
+      $B00_03,              $B04_07,     $B08_11,                  $B12_15,
+      $GHDAT1,              $GHDAT2,     $AESKEY1,                 $AESKEY2,
+      $GHKEY1,              $PBLOCK_LEN, $TO_REDUCE_H,             $TO_REDUCE_M,
+      $TO_REDUCE_L);
   } else {
     &INITIAL_BLOCKS_PARTIAL_GHASH(
-      $AES_KEYS,               $GCM128_CTX, $LENGTH,        $NUM_BLOCKS,
-      &XWORD($HASH_IN_OUT),    $ENC_DEC,    $INSTANCE_TYPE, $DATA1,
-      $DATA2,                  $DATA3,      $DATA4,         &XWORD($LAST_CIPHER_BLK),
-      &XWORD($LAST_GHASH_BLK), $B00_03,     $B04_07,        $B08_11,
-      $B12_15,                 $GHDAT1,     $GHDAT2,        $AESKEY1,
-      $AESKEY2,                $GHKEY1,     $PBLOCK_LEN);
+      $AES_KEYS,            $GCM128_CTX, $LENGTH,                  $NUM_BLOCKS,
+      &XWORD($HASH_IN_OUT), $ENC_DEC,    $DATA1,                   $DATA2,
+      $DATA3,               $DATA4,      &XWORD($LAST_CIPHER_BLK), &XWORD($LAST_GHASH_BLK),
+      $B00_03,              $B04_07,     $B08_11,                  $B12_15,
+      $GHDAT1,              $GHDAT2,     $AESKEY1,                 $AESKEY2,
+      $GHKEY1,              $PBLOCK_LEN);
   }
 }
 
@@ -2841,8 +2807,7 @@ sub GCM_ENC_DEC_LAST {
   my $IA0                = $_[42];    # [clobbered] GP temporary
   my $IA1                = $_[43];    # [clobbered] GP temporary
   my $MASKREG            = $_[44];    # [clobbered] mask register
-  my $INSTANCE_TYPE      = $_[45];    # [in] multi_call or single_call
-  my $PBLOCK_LEN         = $_[46];    # [in] partial block length
+  my $PBLOCK_LEN         = $_[45];    # [in] partial block length
 
   my $rndsuffix = &random_string();
 
@@ -2850,47 +2815,47 @@ sub GCM_ENC_DEC_LAST {
         mov               @{[DWORD($LENGTH)]},@{[DWORD($IA0)]}
         add               \$15,@{[DWORD($IA0)]}
         shr               \$4,@{[DWORD($IA0)]}
-        je            .L_last_num_blocks_is_0_${rndsuffix}
+        je                .L_last_num_blocks_is_0_${rndsuffix}
 
         cmp               \$8,@{[DWORD($IA0)]}
-        je            .L_last_num_blocks_is_8_${rndsuffix}
-        jb            .L_last_num_blocks_is_7_1_${rndsuffix}
+        je                .L_last_num_blocks_is_8_${rndsuffix}
+        jb                .L_last_num_blocks_is_7_1_${rndsuffix}
 
 
         cmp               \$12,@{[DWORD($IA0)]}
-        je            .L_last_num_blocks_is_12_${rndsuffix}
-        jb            .L_last_num_blocks_is_11_9_${rndsuffix}
+        je                .L_last_num_blocks_is_12_${rndsuffix}
+        jb                .L_last_num_blocks_is_11_9_${rndsuffix}
 
         # ;; 16, 15, 14 or 13
         cmp               \$15,@{[DWORD($IA0)]}
-        je            .L_last_num_blocks_is_15_${rndsuffix}
-        ja            .L_last_num_blocks_is_16_${rndsuffix}
+        je                .L_last_num_blocks_is_15_${rndsuffix}
+        ja                .L_last_num_blocks_is_16_${rndsuffix}
         cmp               \$14,@{[DWORD($IA0)]}
-        je            .L_last_num_blocks_is_14_${rndsuffix}
-        jmp           .L_last_num_blocks_is_13_${rndsuffix}
+        je                .L_last_num_blocks_is_14_${rndsuffix}
+        jmp               .L_last_num_blocks_is_13_${rndsuffix}
 
 .L_last_num_blocks_is_11_9_${rndsuffix}:
         # ;; 11, 10 or 9
         cmp               \$10,@{[DWORD($IA0)]}
-        je            .L_last_num_blocks_is_10_${rndsuffix}
-        ja            .L_last_num_blocks_is_11_${rndsuffix}
-        jmp           .L_last_num_blocks_is_9_${rndsuffix}
+        je                .L_last_num_blocks_is_10_${rndsuffix}
+        ja                .L_last_num_blocks_is_11_${rndsuffix}
+        jmp               .L_last_num_blocks_is_9_${rndsuffix}
 
 .L_last_num_blocks_is_7_1_${rndsuffix}:
         cmp               \$4,@{[DWORD($IA0)]}
-        je            .L_last_num_blocks_is_4_${rndsuffix}
-        jb            .L_last_num_blocks_is_3_1_${rndsuffix}
+        je                .L_last_num_blocks_is_4_${rndsuffix}
+        jb                .L_last_num_blocks_is_3_1_${rndsuffix}
         # ;; 7, 6 or 5
         cmp               \$6,@{[DWORD($IA0)]}
-        ja            .L_last_num_blocks_is_7_${rndsuffix}
-        je            .L_last_num_blocks_is_6_${rndsuffix}
-        jmp           .L_last_num_blocks_is_5_${rndsuffix}
+        ja                .L_last_num_blocks_is_7_${rndsuffix}
+        je                .L_last_num_blocks_is_6_${rndsuffix}
+        jmp               .L_last_num_blocks_is_5_${rndsuffix}
 
 .L_last_num_blocks_is_3_1_${rndsuffix}:
         # ;; 3, 2 or 1
         cmp               \$2,@{[DWORD($IA0)]}
-        ja            .L_last_num_blocks_is_3_${rndsuffix}
-        je            .L_last_num_blocks_is_2_${rndsuffix}
+        ja                .L_last_num_blocks_is_3_${rndsuffix}
+        je                .L_last_num_blocks_is_2_${rndsuffix}
 ___
 
   # ;; fall through for `jmp .L_last_num_blocks_is_1`
@@ -2900,16 +2865,16 @@ ___
   for my $num_blocks (1 .. 16) {
     $code .= ".L_last_num_blocks_is_${num_blocks}_${rndsuffix}:\n";
     &GHASH_16_ENCRYPT_N_GHASH_N(
-      $AES_KEYS,   $GCM128_CTX,    $CIPH_PLAIN_OUT, $PLAIN_CIPH_IN,  $DATA_OFFSET,
-      $LENGTH,     $CTR_BE,        $CTR_CHECK,      $HASHKEY_OFFSET, $GHASHIN_BLK_OFFSET,
-      $SHFMSK,     $ZT00,          $ZT01,           $ZT02,           $ZT03,
-      $ZT04,       $ZT05,          $ZT06,           $ZT07,           $ZT08,
-      $ZT09,       $ZT10,          $ZT11,           $ZT12,           $ZT13,
-      $ZT14,       $ZT15,          $ZT16,           $ZT17,           $ZT18,
-      $ZT19,       $ZT20,          $ZT21,           $ZT22,           $ADDBE_4x4,
-      $ADDBE_1234, $GHASH_TYPE,    $TO_REDUCE_L,    $TO_REDUCE_H,    $TO_REDUCE_M,
-      $ENC_DEC,    $HASH_IN_OUT,   $IA0,            $IA1,            $MASKREG,
-      $num_blocks, $INSTANCE_TYPE, $PBLOCK_LEN);
+      $AES_KEYS,   $GCM128_CTX,  $CIPH_PLAIN_OUT, $PLAIN_CIPH_IN,  $DATA_OFFSET,
+      $LENGTH,     $CTR_BE,      $CTR_CHECK,      $HASHKEY_OFFSET, $GHASHIN_BLK_OFFSET,
+      $SHFMSK,     $ZT00,        $ZT01,           $ZT02,           $ZT03,
+      $ZT04,       $ZT05,        $ZT06,           $ZT07,           $ZT08,
+      $ZT09,       $ZT10,        $ZT11,           $ZT12,           $ZT13,
+      $ZT14,       $ZT15,        $ZT16,           $ZT17,           $ZT18,
+      $ZT19,       $ZT20,        $ZT21,           $ZT22,           $ADDBE_4x4,
+      $ADDBE_1234, $GHASH_TYPE,  $TO_REDUCE_L,    $TO_REDUCE_H,    $TO_REDUCE_M,
+      $ENC_DEC,    $HASH_IN_OUT, $IA0,            $IA1,            $MASKREG,
+      $num_blocks, $PBLOCK_LEN);
 
     $code .= "jmp           .L_last_blocks_done_${rndsuffix}\n";
   }
@@ -3031,12 +2996,12 @@ sub GHASH_16_ENCRYPT_16_PARALLEL {
 
   $code .= <<___;
         cmpb              \$`(256 - 16)`,@{[BYTE($CTR_CHECK)]}
-        jae             .L_16_blocks_overflow_${rndsuffix}
+        jae               .L_16_blocks_overflow_${rndsuffix}
         vpaddd            $ADDBE_1234,$CTR_BE,$B00_03
         vpaddd            $ADDBE_4x4,$B00_03,$B04_07
         vpaddd            $ADDBE_4x4,$B04_07,$B08_11
         vpaddd            $ADDBE_4x4,$B08_11,$B12_15
-        jmp           .L_16_blocks_ok_${rndsuffix}
+        jmp               .L_16_blocks_ok_${rndsuffix}
 .L_16_blocks_overflow_${rndsuffix}:
         vpshufb           $SHFMSK,$CTR_BE,$CTR_BE
         vmovdqa64         ddq_add_4444(%rip),$B12_15
@@ -3368,12 +3333,6 @@ ___
         vmovdqa64         $B08_11,`$AESOUT_BLK_OFFSET + (2*64)`(%rsp)
         vmovdqa64         $B12_15,`$AESOUT_BLK_OFFSET + (3*64)`(%rsp)
 ___
-
-  if ($DO_REDUCTION eq "final_reduction") {
-
-    # ;; =================================================
-    # ;; Return GHASH value  through $GH1H
-  }
 }
 
 # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3437,21 +3396,18 @@ sub CALC_J0 {
   my $ZT14       = $_[18];    #; [clobbered] ZMM register
   my $ZT15       = $_[19];    #; [clobbered] ZMM register
   my $ZT16       = $_[20];    #; [clobbered] ZMM register
-  my $ZT17       = $_[21];    #; [clobbered] ZMM register
-  my $T1         = $_[22];    #; [clobbered] GP register
-  my $T2         = $_[23];    #; [clobbered] GP register
-  my $T3         = $_[24];    #; [clobbered] GP register
-  my $MASKREG    = $_[25];    #; [clobbered] mask register
+  my $T1         = $_[21];    #; [clobbered] GP register
+  my $T2         = $_[22];    #; [clobbered] GP register
+  my $T3         = $_[23];    #; [clobbered] GP register
+  my $MASKREG    = $_[24];    #; [clobbered] mask register
 
   # ;; J0 = GHASH(IV || 0s+64 || len(IV)64)
   # ;; s = 16 * RoundUp(len(IV)/16) -  len(IV) */
 
   # ;; Calculate GHASH of (IV || 0s)
   $code .= "vpxor             $J0,$J0,$J0\n";
-  &CALC_AAD_HASH(
-    $IV,   $IV_LEN, $J0,   $GCM128_CTX, $ZT0, $ZT1,  $ZT2,  $ZT3,  $ZT4,
-    $ZT5,  $ZT6,    $ZT7,  $ZT8,        $ZT9, $ZT10, $ZT11, $ZT12, $ZT13,
-    $ZT14, $ZT15,   $ZT16, $ZT17,       $T1,  $T2,   $T3,   $MASKREG);
+  &CALC_AAD_HASH($IV, $IV_LEN, $J0, $GCM128_CTX, $ZT0, $ZT1, $ZT2, $ZT3, $ZT4,
+    $ZT5, $ZT6, $ZT7, $ZT8, $ZT9, $ZT10, $ZT11, $ZT12, $ZT13, $ZT14, $ZT15, $ZT16, $T1, $T2, $T3, $MASKREG);
 
   # ;; Calculate GHASH of last 16-byte block (0 || len(IV)64)
   $code .= <<___;
@@ -3464,14 +3420,7 @@ sub CALC_J0 {
 
         vmovdqu64         @{[HashKeyByIdx(1,$GCM128_CTX)]},@{[XWORD($ZT0)]}
 ___
-  &GHASH_MUL(
-    $J0,
-    @{[XWORD($ZT0)]},
-    @{[XWORD($ZT1)]},
-    @{[XWORD($ZT2)]},
-    @{[XWORD($ZT3)]},
-    @{[XWORD($ZT4)]},
-    @{[XWORD($ZT5)]});
+  &GHASH_MUL($J0, @{[XWORD($ZT0)]}, @{[XWORD($ZT1)]}, @{[XWORD($ZT2)]}, @{[XWORD($ZT3)]});
 
   $code .= "vpshufb           SHUF_MASK(%rip),$J0,$J0      # ; perform a 16Byte swap\n";
 }
@@ -3489,7 +3438,7 @@ sub GCM_INIT_IV {
   my $GPR2       = $_[5];     # [clobbered] GP register
   my $GPR3       = $_[6];     # [clobbered] GP register
   my $MASKREG    = $_[7];     # [clobbered] mask register
-  my $CUR_COUNT  = $_[8];     # [out] XMM with current counter (xmm2)
+  my $CUR_COUNT  = $_[8];     # [out] XMM with current counter
   my $ZT0        = $_[9];     # [clobbered] ZMM register
   my $ZT1        = $_[10];    # [clobbered] ZMM register
   my $ZT2        = $_[11];    # [clobbered] ZMM register
@@ -3507,7 +3456,6 @@ sub GCM_INIT_IV {
   my $ZT14       = $_[23];    # [clobbered] ZMM register
   my $ZT15       = $_[24];    # [clobbered] ZMM register
   my $ZT16       = $_[25];    # [clobbered] ZMM register
-  my $ZT17       = $_[26];    # [clobbered] ZMM register
 
   my $ZT0x = $ZT0;
   $ZT0x =~ s/zmm/xmm/;
@@ -3519,7 +3467,7 @@ ___
 
   # ;; IV is different than 12 bytes
   &CALC_J0($GCM128_CTX, $IV, $IV_LEN, $CUR_COUNT, $ZT0, $ZT1, $ZT2, $ZT3, $ZT4, $ZT5, $ZT6, $ZT7,
-    $ZT8, $ZT9, $ZT10, $ZT11, $ZT12, $ZT13, $ZT14, $ZT15, $ZT16, $ZT17, $GPR1, $GPR2, $GPR3, $MASKREG);
+    $ZT8, $ZT9, $ZT10, $ZT11, $ZT12, $ZT13, $ZT14, $ZT15, $ZT16, $GPR1, $GPR2, $GPR3, $MASKREG);
   $code .= <<___;
        jmp      skip_iv_len_12_init_IV
 iv_len_12_init_IV:   # ;; IV is 12 bytes
@@ -3543,39 +3491,38 @@ ___
 }
 
 sub GCM_UPDATE_AAD {
-  my $GCM128_CTX = $_[0];     # [in] GCM context pointer
-  my $A_IN       = $_[1];     # [in] AAD pointer
-  my $A_LEN      = $_[2];     # [in] AAD length in bytes
-  my $GPR1       = $_[3];     # [clobbered] GP register
-  my $GPR2       = $_[4];     # [clobbered] GP register
-  my $GPR3       = $_[5];     # [clobbered] GP register
-  my $MASKREG    = $_[6];     # [clobbered] mask register
-  my $AAD_HASH   = $_[7];     # [out] XMM for AAD_HASH value (xmm14)
-  my $ZT0        = $_[8];     # [clobbered] ZMM register
-  my $ZT1        = $_[9];     # [clobbered] ZMM register
-  my $ZT2        = $_[10];    # [clobbered] ZMM register
-  my $ZT3        = $_[11];    # [clobbered] ZMM register
-  my $ZT4        = $_[12];    # [clobbered] ZMM register
-  my $ZT5        = $_[13];    # [clobbered] ZMM register
-  my $ZT6        = $_[14];    # [clobbered] ZMM register
-  my $ZT7        = $_[15];    # [clobbered] ZMM register
-  my $ZT8        = $_[16];    # [clobbered] ZMM register
-  my $ZT9        = $_[17];    # [clobbered] ZMM register
-  my $ZT10       = $_[18];    # [clobbered] ZMM register
-  my $ZT11       = $_[19];    # [clobbered] ZMM register
-  my $ZT12       = $_[20];    # [clobbered] ZMM register
-  my $ZT13       = $_[21];    # [clobbered] ZMM register
-  my $ZT14       = $_[22];    # [clobbered] ZMM register
-  my $ZT15       = $_[23];    # [clobbered] ZMM register
-  my $ZT16       = $_[24];    # [clobbered] ZMM register
-  my $ZT17       = $_[25];    # [clobbered] ZMM register
+  my $GCM128_CTX = $_[0];  # [in] GCM context pointer
+  my $A_IN       = $_[1];  # [in] AAD pointer
+  my $A_LEN      = $_[2];  # [in] AAD length in bytes
+  my $GPR1       = $_[3];  # [clobbered] GP register
+  my $GPR2       = $_[4];  # [clobbered] GP register
+  my $GPR3       = $_[5];  # [clobbered] GP register
+  my $MASKREG    = $_[6];  # [clobbered] mask register
+  my $AAD_HASH   = $_[7];  # [out] XMM for AAD_HASH value
+  my $ZT0        = $_[8];  # [clobbered] ZMM register
+  my $ZT1        = $_[9];  # [clobbered] ZMM register
+  my $ZT2        = $_[10]; # [clobbered] ZMM register
+  my $ZT3        = $_[11]; # [clobbered] ZMM register
+  my $ZT4        = $_[12]; # [clobbered] ZMM register
+  my $ZT5        = $_[13]; # [clobbered] ZMM register
+  my $ZT6        = $_[14]; # [clobbered] ZMM register
+  my $ZT7        = $_[15]; # [clobbered] ZMM register
+  my $ZT8        = $_[16]; # [clobbered] ZMM register
+  my $ZT9        = $_[17]; # [clobbered] ZMM register
+  my $ZT10       = $_[18]; # [clobbered] ZMM register
+  my $ZT11       = $_[19]; # [clobbered] ZMM register
+  my $ZT12       = $_[20]; # [clobbered] ZMM register
+  my $ZT13       = $_[21]; # [clobbered] ZMM register
+  my $ZT14       = $_[22]; # [clobbered] ZMM register
+  my $ZT15       = $_[23]; # [clobbered] ZMM register
+  my $ZT16       = $_[24]; # [clobbered] ZMM register
 
   # ; load current hash
   $code .= "vmovdqu64         $CTX_OFFSET_AadHash($GCM128_CTX),$AAD_HASH\n";
 
   &CALC_AAD_HASH($A_IN, $A_LEN, $AAD_HASH, $GCM128_CTX, $ZT0, $ZT1, $ZT2,
     $ZT3, $ZT4, $ZT5, $ZT6, $ZT7, $ZT8, $ZT9, $ZT10, $ZT11, $ZT12, $ZT13,
-    $ZT14, $ZT15, $ZT16, $ZT17, $GPR1, $GPR2, $GPR3, $MASKREG);
+    $ZT14, $ZT15, $ZT16, $GPR1, $GPR2, $GPR3, $MASKREG);
 
   # ; load current hash
   $code .= "vmovdqu64         $AAD_HASH,$CTX_OFFSET_AadHash($GCM128_CTX)\n";
@@ -3598,82 +3545,73 @@ sub GCM_ENC_DEC_SMALL {
   my $NUM_BLOCKS     = $_[8];     # [in] number of blocks to process 1 to 16
   my $CTR            = $_[9];     # [in/out] XMM counter block
   my $HASH_IN_OUT    = $_[10];    # [in/out] XMM GHASH value
-  my $INSTANCE_TYPE  = $_[11];    # [in] single or multi call
-  my $ZTMP0          = $_[12];    # [clobbered] ZMM register
-  my $ZTMP1          = $_[13];    # [clobbered] ZMM register
-  my $ZTMP2          = $_[14];    # [clobbered] ZMM register
-  my $ZTMP3          = $_[15];    # [clobbered] ZMM register
-  my $ZTMP4          = $_[16];    # [clobbered] ZMM register
-  my $ZTMP5          = $_[17];    # [clobbered] ZMM register
-  my $ZTMP6          = $_[18];    # [clobbered] ZMM register
-  my $ZTMP7          = $_[19];    # [clobbered] ZMM register
-  my $ZTMP8          = $_[20];    # [clobbered] ZMM register
-  my $ZTMP9          = $_[21];    # [clobbered] ZMM register
-  my $ZTMP10         = $_[22];    # [clobbered] ZMM register
-  my $ZTMP11         = $_[23];    # [clobbered] ZMM register
-  my $ZTMP12         = $_[24];    # [clobbered] ZMM register
-  my $ZTMP13         = $_[25];    # [clobbered] ZMM register
-  my $ZTMP14         = $_[26];    # [clobbered] ZMM register
-  my $ZTMP15         = $_[27];    # [clobbered] ZMM register
-  my $ZTMP16         = $_[28];    # [clobbered] ZMM register
-  my $ZTMP17         = $_[29];    # [clobbered] ZMM register
-  my $ZTMP18         = $_[30];    # [clobbered] ZMM register
-  my $ZTMP19         = $_[31];    # [clobbered] ZMM register
-  my $ZTMP20         = $_[32];    # [clobbered] ZMM register
-  my $ZTMP21         = $_[33];    # [clobbered] ZMM register
-  my $ZTMP22         = $_[34];    # [clobbered] ZMM register
-  my $IA0            = $_[35];    # [clobbered] GP register
-  my $IA1            = $_[36];    # [clobbered] GP register
-  my $MASKREG        = $_[37];    # [clobbered] mask register
-  my $SHUFMASK       = $_[38];    # [in] ZMM with BE/LE shuffle mask
-  my $PBLOCK_LEN     = $_[39];    # [in] partial block length
+  my $ZTMP0          = $_[11];    # [clobbered] ZMM register
+  my $ZTMP1          = $_[12];    # [clobbered] ZMM register
+  my $ZTMP2          = $_[13];    # [clobbered] ZMM register
+  my $ZTMP3          = $_[14];    # [clobbered] ZMM register
+  my $ZTMP4          = $_[15];    # [clobbered] ZMM register
+  my $ZTMP5          = $_[16];    # [clobbered] ZMM register
+  my $ZTMP6          = $_[17];    # [clobbered] ZMM register
+  my $ZTMP7          = $_[18];    # [clobbered] ZMM register
+  my $ZTMP8          = $_[19];    # [clobbered] ZMM register
+  my $ZTMP9          = $_[20];    # [clobbered] ZMM register
+  my $ZTMP10         = $_[21];    # [clobbered] ZMM register
+  my $ZTMP11         = $_[22];    # [clobbered] ZMM register
+  my $ZTMP12         = $_[23];    # [clobbered] ZMM register
+  my $ZTMP13         = $_[24];    # [clobbered] ZMM register
+  my $ZTMP14         = $_[25];    # [clobbered] ZMM register
+  my $IA0            = $_[26];    # [clobbered] GP register
+  my $IA1            = $_[27];    # [clobbered] GP register
+  my $MASKREG        = $_[28];    # [clobbered] mask register
+  my $SHUFMASK       = $_[29];    # [in] ZMM with BE/LE shuffle mask
+  my $PBLOCK_LEN     = $_[30];    # [in] partial block length
 
   my $rndsuffix = &random_string();
 
   $code .= <<___;
         cmp               \$8,$NUM_BLOCKS
-        je            .L_small_initial_num_blocks_is_8_${rndsuffix}
-        jl            .L_small_initial_num_blocks_is_7_1_${rndsuffix}
+        je                .L_small_initial_num_blocks_is_8_${rndsuffix}
+        jl                .L_small_initial_num_blocks_is_7_1_${rndsuffix}
 
 
         cmp               \$12,$NUM_BLOCKS
-        je            .L_small_initial_num_blocks_is_12_${rndsuffix}
-        jl            .L_small_initial_num_blocks_is_11_9_${rndsuffix}
+        je                .L_small_initial_num_blocks_is_12_${rndsuffix}
+        jl                .L_small_initial_num_blocks_is_11_9_${rndsuffix}
 
         # ;; 16, 15, 14 or 13
         cmp               \$16,$NUM_BLOCKS
-        je            .L_small_initial_num_blocks_is_16_${rndsuffix}
+        je                .L_small_initial_num_blocks_is_16_${rndsuffix}
         cmp               \$15,$NUM_BLOCKS
-        je            .L_small_initial_num_blocks_is_15_${rndsuffix}
+        je                .L_small_initial_num_blocks_is_15_${rndsuffix}
         cmp               \$14,$NUM_BLOCKS
-        je            .L_small_initial_num_blocks_is_14_${rndsuffix}
-        jmp           .L_small_initial_num_blocks_is_13_${rndsuffix}
+        je                .L_small_initial_num_blocks_is_14_${rndsuffix}
+        jmp               .L_small_initial_num_blocks_is_13_${rndsuffix}
 
 .L_small_initial_num_blocks_is_11_9_${rndsuffix}:
         # ;; 11, 10 or 9
         cmp               \$11,$NUM_BLOCKS
-        je            .L_small_initial_num_blocks_is_11_${rndsuffix}
+        je                .L_small_initial_num_blocks_is_11_${rndsuffix}
         cmp               \$10,$NUM_BLOCKS
-        je            .L_small_initial_num_blocks_is_10_${rndsuffix}
-        jmp           .L_small_initial_num_blocks_is_9_${rndsuffix}
+        je                .L_small_initial_num_blocks_is_10_${rndsuffix}
+        jmp               .L_small_initial_num_blocks_is_9_${rndsuffix}
 
 .L_small_initial_num_blocks_is_7_1_${rndsuffix}:
         cmp               \$4,$NUM_BLOCKS
-        je            .L_small_initial_num_blocks_is_4_${rndsuffix}
-        jl            .L_small_initial_num_blocks_is_3_1_${rndsuffix}
+        je                .L_small_initial_num_blocks_is_4_${rndsuffix}
+        jl                .L_small_initial_num_blocks_is_3_1_${rndsuffix}
         # ;; 7, 6 or 5
         cmp               \$7,$NUM_BLOCKS
-        je            .L_small_initial_num_blocks_is_7_${rndsuffix}
+        je                .L_small_initial_num_blocks_is_7_${rndsuffix}
         cmp               \$6,$NUM_BLOCKS
-        je            .L_small_initial_num_blocks_is_6_${rndsuffix}
-        jmp           .L_small_initial_num_blocks_is_5_${rndsuffix}
+        je                .L_small_initial_num_blocks_is_6_${rndsuffix}
+        jmp               .L_small_initial_num_blocks_is_5_${rndsuffix}
 
 .L_small_initial_num_blocks_is_3_1_${rndsuffix}:
         # ;; 3, 2 or 1
         cmp               \$3,$NUM_BLOCKS
-        je            .L_small_initial_num_blocks_is_3_${rndsuffix}
+        je                .L_small_initial_num_blocks_is_3_${rndsuffix}
         cmp               \$2,$NUM_BLOCKS
-        je            .L_small_initial_num_blocks_is_2_${rndsuffix}
+        je                .L_small_initial_num_blocks_is_2_${rndsuffix}
 
         # ;; for $NUM_BLOCKS == 1, just fall through and no 'jmp' needed
 
@@ -3684,12 +3622,11 @@ ___
   for (my $num_blocks = 1; $num_blocks <= 16; $num_blocks++) {
     $code .= ".L_small_initial_num_blocks_is_${num_blocks}_${rndsuffix}:\n";
     &INITIAL_BLOCKS_PARTIAL(
-      $AES_KEYS,   $GCM128_CTX, $CIPH_PLAIN_OUT, $PLAIN_CIPH_IN, $LENGTH,        $DATA_OFFSET,
-      $num_blocks, $CTR,        $HASH_IN_OUT,    $ENC_DEC,       $INSTANCE_TYPE, $ZTMP0,
-      $ZTMP1,      $ZTMP2,      $ZTMP3,          $ZTMP4,         $ZTMP5,         $ZTMP6,
-      $ZTMP7,      $ZTMP8,      $ZTMP9,          $ZTMP10,        $ZTMP11,        $ZTMP12,
-      $ZTMP13,     $ZTMP14,     $IA0,            $IA1,           $MASKREG,       $SHUFMASK,
-      $PBLOCK_LEN);
+      $AES_KEYS,   $GCM128_CTX, $CIPH_PLAIN_OUT, $PLAIN_CIPH_IN, $LENGTH,   $DATA_OFFSET,
+      $num_blocks, $CTR,        $HASH_IN_OUT,    $ENC_DEC,       $ZTMP0,    $ZTMP1,
+      $ZTMP2,      $ZTMP3,      $ZTMP4,          $ZTMP5,         $ZTMP6,    $ZTMP7,
+      $ZTMP8,      $ZTMP9,      $ZTMP10,         $ZTMP11,        $ZTMP12,   $ZTMP13,
+      $ZTMP14,     $IA0,        $IA1,            $MASKREG,       $SHUFMASK, $PBLOCK_LEN);
 
     if ($num_blocks != 16) {
       $code .= "jmp           .L_small_initial_blocks_encrypted_${rndsuffix}\n";
@@ -3700,7 +3637,7 @@ ___
 }
 
 # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-# ; GCM_ENC_DEC Encodes/Decodes given data. Assumes that the passed gcm128_context
+# ; GCM_ENC_DEC Encrypts/Decrypts given data. Assumes that the passed gcm128_context
 # ; struct has been initialized by GCM_INIT_IV
 # ; Requires the input data be at least 1 byte long because of READ_SMALL_INPUT_DATA.
 # ; Clobbers rax, r10-r15, and zmm0-zmm31, k1
@@ -3713,7 +3650,6 @@ sub GCM_ENC_DEC {
   my $PLAIN_CIPH_LEN = $_[4];    # [in] buffer length
   my $CIPH_PLAIN_OUT = $_[5];    # [in] output buffer pointer
   my $ENC_DEC        = $_[6];    # [in] cipher direction
-  my $INSTANCE_TYPE  = $_[7];    # [in] 'single_call' or 'multi_call' selection
 
   my $IA0 = "%r10";
   my $IA1 = "%r12";
@@ -3821,66 +3757,37 @@ sub GCM_ENC_DEC {
   }
   $code .= "je            .L_enc_dec_done_${rndsuffix}\n";
 
-  # Length is updated in 'providers/implementations/ciphers/cipher_aes_gcm_hw_vaes_avx512.inc'
-  #   # ;; Update length of data processed
-  #   if ($win64) {
-  #     $code .= <<___;
-  #         mov               $PLAIN_CIPH_LEN,$IA0
-  #         add               $IA0,`$CTX_OFFSET_InLen`($GCM128_CTX)
-  # ___
-  #   } else {
-  #     $code .= <<___;
-  #         add               $PLAIN_CIPH_LEN,`$CTX_OFFSET_InLen`($GCM128_CTX)
-  # ___
-  #   }
+  # Length value from context $CTX_OFFSET_InLen`($GCM128_CTX) is updated in
+  # 'providers/implementations/ciphers/cipher_aes_gcm_hw_vaes_avx512.inc'
+
   $code .= "xor                $HKEYS_READY, $HKEYS_READY\n";
   $code .= "vmovdqu64         `$CTX_OFFSET_AadHash`($GCM128_CTX),$AAD_HASHx\n";
 
-  if ($INSTANCE_TYPE eq "multi_call") {
+  # ;; Used for the update flow - if there was a previous partial
+  # ;; block fill the remaining bytes here.
+  &PARTIAL_BLOCK(
+    $GCM128_CTX,  $PBLOCK_LEN, $CIPH_PLAIN_OUT, $PLAIN_CIPH_IN, $PLAIN_CIPH_LEN,
+    $DATA_OFFSET, $AAD_HASHx,  $ENC_DEC,        $IA0,           $IA1,
+    $IA2,         $ZTMP0,      $ZTMP1,          $ZTMP2,         $ZTMP3,
+    $ZTMP4,       $ZTMP5,      $ZTMP6,          $ZTMP7,         $MASKREG);
 
-    # ;; NOTE: partial block processing makes only sense for multi_call here.
-    # ;; Used for the update flow - if there was a previous partial
-    # ;; block fill the remaining bytes here.
-    &PARTIAL_BLOCK(
-      $GCM128_CTX, $PBLOCK_LEN, $CIPH_PLAIN_OUT, $PLAIN_CIPH_IN, $PLAIN_CIPH_LEN, $DATA_OFFSET,
-      $AAD_HASHx,  $ENC_DEC,    $IA0,            $IA1,           $IA2,            $ZTMP0,
-      $ZTMP1,      $ZTMP2,      $ZTMP3,          $ZTMP4,         $ZTMP5,          $ZTMP6,
-      $ZTMP7,      $ZTMP8,      $ZTMP9,          $MASKREG);
-  } else {
-    $code .= "xor             $DATA_OFFSET, $DATA_OFFSET\n";
-  }
-
-  if ($INSTANCE_TYPE eq "single_call") {
-
-    # ;;  use counter block from GCM_INIT
-  } else {
-    $code .= "vmovdqu64         `$CTX_OFFSET_CurCount`($GCM128_CTX),$CTR_BLOCKx\n";
-  }
+  $code .= "vmovdqu64         `$CTX_OFFSET_CurCount`($GCM128_CTX),$CTR_BLOCKx\n";
 
   # ;; Save the amount of data left to process in $LENGTH
+  # ;; NOTE: PLAIN_CIPH_LEN is a register on linux;
   if ($win64) {
     $code .= "mov               $PLAIN_CIPH_LEN,$LENGTH\n";
-  } else {
-
-    # $LENGTH = $PLAIN_CIPH_LEN;
-    # ; PLAIN_CIPH_LEN is a register on linux;
   }
 
-  if ($INSTANCE_TYPE eq "multi_call") {
-
-    # ;; NOTE: $DATA_OFFSET is zero in single_call case.
-    # ;;      Consequently PLAIN_CIPH_LEN will never be zero after
-    # ;;      $DATA_OFFSET subtraction below.
-    # ;; There may be no more data if it was consumed in the partial block.
-    $code .= <<___;
+  # ;; There may be no more data if it was consumed in the partial block.
+  $code .= <<___;
         sub               $DATA_OFFSET,$LENGTH
-        je            .L_enc_dec_done_${rndsuffix}
+        je                .L_enc_dec_done_${rndsuffix}
 ___
-  }
 
   $code .= <<___;
         cmp               \$`(16 * 16)`,$LENGTH
-jbe           .L_message_below_equal_16_blocks_${rndsuffix}
+        jbe              .L_message_below_equal_16_blocks_${rndsuffix}
 
         vmovdqa64         SHUF_MASK(%rip),$SHUF_MASK
         vmovdqa64         ddq_addbe_4444(%rip),$ADDBE_4x4
@@ -3907,12 +3814,12 @@ ___
     $ZTMP3,         $ZTMP4,          $ZTMP5,         $ZTMP6,              $ZTMP7,     $ZTMP8,
     $SHUF_MASK,     $ENC_DEC,        $aesout_offset, $data_in_out_offset, $IA0);
 
-  &precompute_hkeys_on_stack($GCM128_CTX, $HKEYS_READY, $ZTMP0, $ZTMP1, $ZTMP2, $ZTMP3, $ZTMP4, $ZTMP5, $ZTMP6, $ZTMP7,
+  &precompute_hkeys_on_stack($GCM128_CTX, $HKEYS_READY, $ZTMP0, $ZTMP1, $ZTMP2, $ZTMP3, $ZTMP4, $ZTMP5, $ZTMP6,
     "first16");
 
   $code .= <<___;
         cmp               \$`(32 * 16)`,$LENGTH
-jb            .L_message_below_32_blocks_${rndsuffix}
+        jb                .L_message_below_32_blocks_${rndsuffix}
 ___
 
   # ;; ==== AES-CTR - next 16 blocks
@@ -3924,7 +3831,7 @@ ___
     $ZTMP3,         $ZTMP4,          $ZTMP5,         $ZTMP6,              $ZTMP7,     $ZTMP8,
     $SHUF_MASK,     $ENC_DEC,        $aesout_offset, $data_in_out_offset, $IA0);
 
-  &precompute_hkeys_on_stack($GCM128_CTX, $HKEYS_READY, $ZTMP0, $ZTMP1, $ZTMP2, $ZTMP3, $ZTMP4, $ZTMP5, $ZTMP6, $ZTMP7,
+  &precompute_hkeys_on_stack($GCM128_CTX, $HKEYS_READY, $ZTMP0, $ZTMP1, $ZTMP2, $ZTMP3, $ZTMP4, $ZTMP5, $ZTMP6,
     "last32");
   $code .= "mov     \$1,$HKEYS_READY\n";
 
@@ -3933,7 +3840,7 @@ ___
         sub               \$`(32 * 16)`,$LENGTH
 
         cmp               \$`($big_loop_nblocks * 16)`,$LENGTH
-jb            .L_no_more_big_nblocks_${rndsuffix}
+        jb                .L_no_more_big_nblocks_${rndsuffix}
 ___
 
   # ;; ====
@@ -3990,15 +3897,15 @@ ___
         add               \$`($big_loop_nblocks * 16)`,$DATA_OFFSET
         sub               \$`($big_loop_nblocks * 16)`,$LENGTH
         cmp               \$`($big_loop_nblocks * 16)`,$LENGTH
-jae           .L_encrypt_big_nblocks_${rndsuffix}
+        jae               .L_encrypt_big_nblocks_${rndsuffix}
 
 .L_no_more_big_nblocks_${rndsuffix}:
 
         cmp               \$`(32 * 16)`,$LENGTH
-jae           .L_encrypt_32_blocks_${rndsuffix}
+        jae               .L_encrypt_32_blocks_${rndsuffix}
 
         cmp               \$`(16 * 16)`,$LENGTH
-jae           .L_encrypt_16_blocks_${rndsuffix}
+        jae               .L_encrypt_16_blocks_${rndsuffix}
 ___
 
   # ;; =====================================================
@@ -4009,12 +3916,8 @@ ___
   $code .= ".L_encrypt_0_blocks_ghash_32_${rndsuffix}:\n";
 
   # ;; calculate offset to the right hash key
-  if ($INSTANCE_TYPE eq "multi_call") {
-    $code .= "mov               @{[DWORD($LENGTH)]},@{[DWORD($IA0)]}\n";
-  } else {
-    $code .= "lea               15(@{[DWORD($LENGTH)]}),@{[DWORD($IA0)]}\n";
-  }
   $code .= <<___;
+mov               @{[DWORD($LENGTH)]},@{[DWORD($IA0)]}
 and               \$~15,@{[DWORD($IA0)]}
 mov               \$`@{[HashKeyOffsetByIdx(32,"frame")]}`,@{[DWORD($HASHK_PTR)]}
 sub               @{[DWORD($IA0)]},@{[DWORD($HASHK_PTR)]}
@@ -4035,11 +3938,9 @@ ___
     $ZTMP13,     $ZTMP14,     $ZTMP15,         $ZTMP16,         $ZTMP17,      $ZTMP18,
     $ZTMP19,     $ZTMP20,     $ZTMP21,         $ZTMP22,         $ADDBE_4x4,   $ADDBE_1234,
     "mid",       $GL,         $GH,             $GM,             $ENC_DEC,     $AAD_HASHz,
-    $IA0,        $IA5,        $MASKREG,        $INSTANCE_TYPE,  $PBLOCK_LEN);
+    $IA0,        $IA5,        $MASKREG,        $PBLOCK_LEN);
 
-  if ($INSTANCE_TYPE eq "multi_call") {
-    $code .= "vpshufb           @{[XWORD($SHUF_MASK)]},$CTR_BLOCKx,$CTR_BLOCKx\n";
-  }
+  $code .= "vpshufb           @{[XWORD($SHUF_MASK)]},$CTR_BLOCKx,$CTR_BLOCKx\n";
   $code .= "jmp           .L_ghash_done_${rndsuffix}\n";
 
   # ;; =====================================================
@@ -4093,11 +3994,7 @@ ___
 ___
 
   # ;; calculate offset to the right hash key
-  if ($INSTANCE_TYPE eq "multi_call") {
-    $code .= "mov               @{[DWORD($LENGTH)]},@{[DWORD($IA0)]}\n";
-  } else {
-    $code .= "lea               15(@{[DWORD($LENGTH)]}),@{[DWORD($IA0)]}\n";
-  }
+  $code .= "mov               @{[DWORD($LENGTH)]},@{[DWORD($IA0)]}\n";
   $code .= <<___;
         and               \$~15,@{[DWORD($IA0)]}
         mov               \$`@{[HashKeyOffsetByIdx(16,"frame")]}`,@{[DWORD($HASHK_PTR)]}
@@ -4111,11 +4008,9 @@ ___
     $ZTMP13,     $ZTMP14,     $ZTMP15,         $ZTMP16,         $ZTMP17,      $ZTMP18,
     $ZTMP19,     $ZTMP20,     $ZTMP21,         $ZTMP22,         $ADDBE_4x4,   $ADDBE_1234,
     "start",     $GL,         $GH,             $GM,             $ENC_DEC,     $AAD_HASHz,
-    $IA0,        $IA5,        $MASKREG,        $INSTANCE_TYPE,  $PBLOCK_LEN);
+    $IA0,        $IA5,        $MASKREG,        $PBLOCK_LEN);
 
-  if ($INSTANCE_TYPE eq "multi_call") {
-    $code .= "vpshufb           @{[XWORD($SHUF_MASK)]},$CTR_BLOCKx,$CTR_BLOCKx\n";
-  }
+  $code .= "vpshufb           @{[XWORD($SHUF_MASK)]},$CTR_BLOCKx,$CTR_BLOCKx\n";
   $code .= "jmp           .L_ghash_done_${rndsuffix}\n";
 
   # ;; =====================================================
@@ -4156,21 +4051,19 @@ ___
     $AES_KEYS,    $GCM128_CTX, $CIPH_PLAIN_OUT, $PLAIN_CIPH_IN,
     $DATA_OFFSET, $LENGTH,     $CTR_BLOCKz,     $CTR_CHECK,
     &HashKeyOffsetByIdx(16, "frame"), $ghashin_offset, $SHUF_MASK, $ZTMP0,
-    $ZTMP1,       $ZTMP2,         $ZTMP3,     $ZTMP4,
-    $ZTMP5,       $ZTMP6,         $ZTMP7,     $ZTMP8,
-    $ZTMP9,       $ZTMP10,        $ZTMP11,    $ZTMP12,
-    $ZTMP13,      $ZTMP14,        $ZTMP15,    $ZTMP16,
-    $ZTMP17,      $ZTMP18,        $ZTMP19,    $ZTMP20,
-    $ZTMP21,      $ZTMP22,        $ADDBE_4x4, $ADDBE_1234,
-    "end_reduce", $GL,            $GH,        $GM,
-    $ENC_DEC,     $AAD_HASHz,     $IA0,       $IA5,
-    $MASKREG,     $INSTANCE_TYPE, $PBLOCK_LEN);
+    $ZTMP1,       $ZTMP2,     $ZTMP3,     $ZTMP4,
+    $ZTMP5,       $ZTMP6,     $ZTMP7,     $ZTMP8,
+    $ZTMP9,       $ZTMP10,    $ZTMP11,    $ZTMP12,
+    $ZTMP13,      $ZTMP14,    $ZTMP15,    $ZTMP16,
+    $ZTMP17,      $ZTMP18,    $ZTMP19,    $ZTMP20,
+    $ZTMP21,      $ZTMP22,    $ADDBE_4x4, $ADDBE_1234,
+    "end_reduce", $GL,        $GH,        $GM,
+    $ENC_DEC,     $AAD_HASHz, $IA0,       $IA5,
+    $MASKREG,     $PBLOCK_LEN);
 
-  if ($INSTANCE_TYPE eq "multi_call") {
-    $code .= "vpshufb           @{[XWORD($SHUF_MASK)]},$CTR_BLOCKx,$CTR_BLOCKx\n";
-  }
+  $code .= "vpshufb           @{[XWORD($SHUF_MASK)]},$CTR_BLOCKx,$CTR_BLOCKx\n";
   $code .= <<___;
-        jmp           .L_ghash_done_${rndsuffix}
+        jmp               .L_ghash_done_${rndsuffix}
 
 .L_message_below_32_blocks_${rndsuffix}:
         # ;; 32 > number of blocks > 16
@@ -4181,13 +4074,9 @@ ___
   $ghashin_offset = ($STACK_LOCAL_OFFSET + (0 * 16));
 
   # ;; calculate offset to the right hash key
-  if ($INSTANCE_TYPE eq "multi_call") {
-    $code .= "mov               @{[DWORD($LENGTH)]},@{[DWORD($IA0)]}\n";
-  } else {
-    $code .= "lea               \$15(@{[DWORD($LENGTH)]}),@{[DWORD($IA0)]}\n";
-  }
+  $code .= "mov               @{[DWORD($LENGTH)]},@{[DWORD($IA0)]}\n";
 
-  &precompute_hkeys_on_stack($GCM128_CTX, $HKEYS_READY, $ZTMP0, $ZTMP1, $ZTMP2, $ZTMP3, $ZTMP4, $ZTMP5, $ZTMP6, $ZTMP7,
+  &precompute_hkeys_on_stack($GCM128_CTX, $HKEYS_READY, $ZTMP0, $ZTMP1, $ZTMP2, $ZTMP3, $ZTMP4, $ZTMP5, $ZTMP6,
     "mid16");
   $code .= "mov     \$1,$HKEYS_READY\n";
 
@@ -4205,11 +4094,9 @@ ___
     $ZTMP13,     $ZTMP14,     $ZTMP15,         $ZTMP16,         $ZTMP17,      $ZTMP18,
     $ZTMP19,     $ZTMP20,     $ZTMP21,         $ZTMP22,         $ADDBE_4x4,   $ADDBE_1234,
     "start",     $GL,         $GH,             $GM,             $ENC_DEC,     $AAD_HASHz,
-    $IA0,        $IA5,        $MASKREG,        $INSTANCE_TYPE,  $PBLOCK_LEN);
+    $IA0,        $IA5,        $MASKREG,        $PBLOCK_LEN);
 
-  if ($INSTANCE_TYPE eq "multi_call") {
-    $code .= "vpshufb           @{[XWORD($SHUF_MASK)]},$CTR_BLOCKx,$CTR_BLOCKx\n";
-  }
+  $code .= "vpshufb           @{[XWORD($SHUF_MASK)]},$CTR_BLOCKx,$CTR_BLOCKx\n";
   $code .= <<___;
         jmp           .L_ghash_done_${rndsuffix}
 
@@ -4222,21 +4109,18 @@ ___
 ___
   &GCM_ENC_DEC_SMALL(
     $AES_KEYS,    $GCM128_CTX, $CIPH_PLAIN_OUT, $PLAIN_CIPH_IN, $PLAIN_CIPH_LEN, $ENC_DEC,
-    $DATA_OFFSET, $LENGTH,     $IA1,            $CTR_BLOCKx,    $AAD_HASHx,      $INSTANCE_TYPE,
-    $ZTMP0,       $ZTMP1,      $ZTMP2,          $ZTMP3,         $ZTMP4,          $ZTMP5,
-    $ZTMP6,       $ZTMP7,      $ZTMP8,          $ZTMP9,         $ZTMP10,         $ZTMP11,
-    $ZTMP12,      $ZTMP13,     $ZTMP14,         $ZTMP15,        $ZTMP16,         $ZTMP17,
-    $ZTMP18,      $ZTMP19,     $ZTMP20,         $ZTMP21,        $ZTMP22,         $IA0,
-    $IA3,         $MASKREG,    $SHUF_MASK,      $PBLOCK_LEN);
+    $DATA_OFFSET, $LENGTH,     $IA1,            $CTR_BLOCKx,    $AAD_HASHx,      $ZTMP0,
+    $ZTMP1,       $ZTMP2,      $ZTMP3,          $ZTMP4,         $ZTMP5,          $ZTMP6,
+    $ZTMP7,       $ZTMP8,      $ZTMP9,          $ZTMP10,        $ZTMP11,         $ZTMP12,
+    $ZTMP13,      $ZTMP14,     $IA0,            $IA3,           $MASKREG,        $SHUF_MASK,
+    $PBLOCK_LEN);
 
   # ;; fall through to exit
 
   $code .= ".L_ghash_done_${rndsuffix}:\n";
-  if ($INSTANCE_TYPE eq "multi_call") {
 
-    # ;; save the last counter block
-    $code .= "vmovdqu64         $CTR_BLOCKx,`$CTX_OFFSET_CurCount`($GCM128_CTX)\n";
-  }
+  # ;; save the last counter block
+  $code .= "vmovdqu64         $CTR_BLOCKx,`$CTX_OFFSET_CurCount`($GCM128_CTX)\n";
   $code .= <<___;
         vmovdqu64         $AAD_HASHx,`$CTX_OFFSET_AadHash`($GCM128_CTX)
 .L_enc_dec_done_${rndsuffix}:
@@ -4283,12 +4167,12 @@ sub INITIAL_BLOCKS_16 {
         # ;; prepare counter blocks
 
         cmpb              \$`(256 - 16)`,@{[BYTE($CTR_CHECK)]}
-        jae           .L_next_16_overflow_${rndsuffix}
+        jae               .L_next_16_overflow_${rndsuffix}
         vpaddd            $ADDBE_1234,$CTR,$B00_03
         vpaddd            $ADDBE_4x4,$B00_03,$B04_07
         vpaddd            $ADDBE_4x4,$B04_07,$B08_11
         vpaddd            $ADDBE_4x4,$B08_11,$B12_15
-        jmp           .L_next_16_ok_${rndsuffix}
+        jmp               .L_next_16_ok_${rndsuffix}
 .L_next_16_overflow_${rndsuffix}:
         vpshufb           $SHUF_MASK,$CTR,$CTR
         vmovdqa64         ddq_add_4444(%rip),$B12_15
@@ -4381,9 +4265,8 @@ ___
 # ; GCM_COMPLETE Finishes ghash calculation
 # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 sub GCM_COMPLETE {
-  my $GCM128_CTX    = $_[0];
-  my $PBLOCK_LEN    = $_[1];
-  my $INSTANCE_TYPE = $_[2];
+  my $GCM128_CTX = $_[0];
+  my $PBLOCK_LEN = $_[1];
 
   my $rndsuffix = &random_string();
 
@@ -4392,26 +4275,19 @@ sub GCM_COMPLETE {
         vmovdqu           $CTX_OFFSET_EK0($GCM128_CTX),%xmm3      # ; xmm3 = E(K,Y0)
 ___
 
-  if ($INSTANCE_TYPE eq "multi_call") {
-
-    # ;; If the GCM function is called as a single function call rather
-    # ;; than invoking the individual parts (init, update, finalize) we
-    # ;; can remove a write to read dependency on AadHash.
-    $code .= <<___;
+  $code .= <<___;
         vmovdqu           `$CTX_OFFSET_AadHash`($GCM128_CTX),%xmm4
 
-        # ;; Process the final partial block. If we did this as a single call then
-        # ;; the partial block was handled in the main GCM_ENC_DEC macro.
+        # ;; Process the final partial block.
         cmp               \$0,$PBLOCK_LEN
-        je            .L_partial_done_${rndsuffix}
+        je                .L_partial_done_${rndsuffix}
 ___
 
-    #  ;GHASH computation for the last <16 Byte block
-    &GHASH_MUL("%xmm4", "%xmm2", "%xmm0", "%xmm16", "%xmm17", "%xmm18", "%xmm19");
+  #  ;GHASH computation for the last <16 Byte block
+  &GHASH_MUL("%xmm4", "%xmm2", "%xmm0", "%xmm16", "%xmm17");
 
-    $code .= ".L_partial_done_${rndsuffix}:";
-  }
   $code .= <<___;
+.L_partial_done_${rndsuffix}:
         vmovq           `$CTX_OFFSET_InLen`($GCM128_CTX), %xmm5
         vpinsrq         \$1, `$CTX_OFFSET_AadLen`($GCM128_CTX), %xmm5, %xmm5    #  ; xmm5 = len(A)||len(C)
         vpsllq          \$3, %xmm5, %xmm5                                       #  ; convert bytes into bits
@@ -4419,7 +4295,7 @@ ___
         vpxor           %xmm5,%xmm4,%xmm4
 ___
 
-  &GHASH_MUL("%xmm4", "%xmm2", "%xmm0", "%xmm16", "%xmm17", "%xmm18", "%xmm19");
+  &GHASH_MUL("%xmm4", "%xmm2", "%xmm0", "%xmm16", "%xmm17");
 
   $code .= <<___;
         vpshufb         SHUF_MASK(%rip),%xmm4,%xmm4      # ; perform a 16Byte swap
@@ -4456,11 +4332,11 @@ ___
     $code .= <<___;
         # ;; Check aes_keys != NULL
         test               $arg1,$arg1
-jz      .Labort_init
+        jz                .Labort_init
 
         # ;; Check gcm128ctx != NULL
         test               $arg2,$arg2
-jz      .Labort_init
+        jz                .Labort_init
 ___
   }
   $code .= "vpxorq            %xmm16,%xmm16,%xmm16\n";
@@ -4483,7 +4359,7 @@ ___
         # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         vmovdqu64         %xmm16,@{[HashKeyByIdx(1,$arg2)]} # ; store HashKey<<1 mod poly
 ___
-  &PRECOMPUTE("$arg2", "%xmm16", "%xmm0", "%xmm1", "%xmm2", "%xmm3", "%xmm4", "%xmm5", "%xmm17", "%xmm18");
+  &PRECOMPUTE("$arg2", "%xmm16", "%xmm0", "%xmm1", "%xmm2", "%xmm3", "%xmm4", "%xmm5");
   if ($CLEAR_SCRATCH_REGISTERS) {
     &clear_scratch_gps_asm();
     &clear_scratch_zmms_asm();
@@ -4520,19 +4396,19 @@ if ($CHECK_FUNCTION_ARGUMENTS) {
   $code .= <<___;
         # ;; Check aes_keys != NULL
         test               $arg1,$arg1
-jz      .Labort_setiv
+        jz                 .Labort_setiv
 
         # ;; Check gcm128ctx != NULL
         test               $arg2,$arg2
-jz      .Labort_setiv
+        jz                 .Labort_setiv
 
         # ;; Check iv != NULL
         test               $arg3,$arg3
-jz      .Labort_setiv
+        jz                 .Labort_setiv
 
         # ;; Check ivlen != 0
         test               $arg4,$arg4
-jz      .Labort_setiv
+        jz                 .Labort_setiv
 ___
 }
 
@@ -4542,9 +4418,9 @@ ___
   0,    # do not allocate stack space for AES blocks
   "setiv");
 &GCM_INIT_IV(
-  "$arg1",  "$arg2",  "$arg3",  "$arg4",  "%r10",   "%r11",   "%r12",  "%k1",   "%xmm2",  "%zmm1",
-  "%zmm11", "%zmm3",  "%zmm4",  "%zmm5",  "%zmm6",  "%zmm7",  "%zmm8", "%zmm9", "%zmm10", "%zmm12",
-  "%zmm13", "%zmm15", "%zmm16", "%zmm17", "%zmm18", "%zmm19", "%zmm20");
+  "$arg1",  "$arg2",  "$arg3",  "$arg4",  "%r10",   "%r11",  "%r12",  "%k1",   "%xmm2",  "%zmm1",
+  "%zmm11", "%zmm3",  "%zmm4",  "%zmm5",  "%zmm6",  "%zmm7", "%zmm8", "%zmm9", "%zmm10", "%zmm12",
+  "%zmm13", "%zmm15", "%zmm16", "%zmm17", "%zmm18", "%zmm19");
 &EPILOG(
   1,    # hkeys were allocated
   $arg4);
@@ -4577,15 +4453,15 @@ if ($CHECK_FUNCTION_ARGUMENTS) {
   $code .= <<___;
         # ;; Check gcm128ctx != NULL
         test               $arg1,$arg1
-jz      .Lexit_update_aad
+        jz                 .Lexit_update_aad
 
         # ;; Check aad != NULL
         test               $arg2,$arg2
-jz      .Lexit_update_aad
+        jz                 .Lexit_update_aad
 
         # ;; Check aadlen != 0
         test               $arg3,$arg3
-jz      .Lexit_update_aad
+        jz                 .Lexit_update_aad
 ___
 }
 
@@ -4595,9 +4471,9 @@ ___
   0,    # do not allocate stack space for AES blocks
   "ghash");
 &GCM_UPDATE_AAD(
-  "$arg1",  "$arg2",  "$arg3",  "%r10",   "%r11",   "%r12",  "%k1",   "%xmm14", "%zmm1",  "%zmm11",
-  "%zmm3",  "%zmm4",  "%zmm5",  "%zmm6",  "%zmm7",  "%zmm8", "%zmm9", "%zmm10", "%zmm12", "%zmm13",
-  "%zmm15", "%zmm16", "%zmm17", "%zmm18", "%zmm19", "%zmm20");
+  "$arg1",  "$arg2",  "$arg3",  "%r10",   "%r11",  "%r12",  "%k1",   "%xmm14", "%zmm1",  "%zmm11",
+  "%zmm3",  "%zmm4",  "%zmm5",  "%zmm6",  "%zmm7", "%zmm8", "%zmm9", "%zmm10", "%zmm12", "%zmm13",
+  "%zmm15", "%zmm16", "%zmm17", "%zmm18", "%zmm19");
 &EPILOG(
   1,    # hkeys were allocated
   $arg3);
@@ -4640,27 +4516,27 @@ if ($CHECK_FUNCTION_ARGUMENTS) {
   $code .= <<___;
         # ;; Check aes_keys != NULL
         test               $arg1,$arg1
-jz      .Lexit_gcm_encrypt
+        jz                 .Lexit_gcm_encrypt
 
         # ;; Check gcm128ctx != NULL
         test               $arg2,$arg2
-jz      .Lexit_gcm_encrypt
+        jz                 .Lexit_gcm_encrypt
 
         # ;; Check pblocklen != NULL
         test               $arg3,$arg3
-jz      .Lexit_gcm_encrypt
+        jz                 .Lexit_gcm_encrypt
 
         # ;; Check in != NULL
         test               $arg4,$arg4
-jz      .Lexit_gcm_encrypt
+        jz                 .Lexit_gcm_encrypt
 
         # ;; Check if len != 0
         cmp                \$0,$arg5
-jz      .Lexit_gcm_encrypt
+        jz                 .Lexit_gcm_encrypt
 
         # ;; Check out != NULL
         cmp                \$0,$arg6
-jz      .Lexit_gcm_encrypt
+        jz                 .Lexit_gcm_encrypt
 ___
 }
 $code .= <<___;
@@ -4682,7 +4558,7 @@ for my $keylen (sort keys %aes_rounds) {
 .align 32
 .Laes_gcm_encrypt_${keylen}_avx512:
 ___
-  &GCM_ENC_DEC("$arg1", "$arg2", "$arg3", "$arg4", "$arg5", "$arg6", "ENC", "multi_call");
+  &GCM_ENC_DEC("$arg1", "$arg2", "$arg3", "$arg4", "$arg5", "$arg6", "ENC");
   $code .= "jmp .Lexit_gcm_encrypt\n";
 }
 $code .= ".Lexit_gcm_encrypt:\n";
@@ -4725,27 +4601,27 @@ if ($CHECK_FUNCTION_ARGUMENTS) {
   $code .= <<___;
         # ;; Check keys != NULL
         test               $arg1,$arg1
-jz      .Lexit_gcm_decrypt
+        jz                 .Lexit_gcm_decrypt
 
         # ;; Check gcm128ctx != NULL
         test               $arg2,$arg2
-jz      .Lexit_gcm_decrypt
+        jz                 .Lexit_gcm_decrypt
 
         # ;; Check pblocklen != NULL
         test               $arg3,$arg3
-jz      .Lexit_gcm_decrypt
+        jz                 .Lexit_gcm_decrypt
 
         # ;; Check in != NULL
         test               $arg4,$arg4
-jz      .Lexit_gcm_decrypt
+        jz                 .Lexit_gcm_decrypt
 
         # ;; Check if len != 0
         cmp                \$0,$arg5
-jz      .Lexit_gcm_decrypt
+        jz                 .Lexit_gcm_decrypt
 
         # ;; Check out != NULL
         cmp                \$0,$arg6
-jz      .Lexit_gcm_decrypt
+        jz                 .Lexit_gcm_decrypt
 ___
 }
 $code .= <<___;
@@ -4767,7 +4643,7 @@ for my $keylen (sort keys %aes_rounds) {
 .align 32
 .Laes_gcm_decrypt_${keylen}_avx512:
 ___
-  &GCM_ENC_DEC("$arg1", "$arg2", "$arg3", "$arg4", "$arg5", "$arg6", "DEC", "multi_call");
+  &GCM_ENC_DEC("$arg1", "$arg2", "$arg3", "$arg4", "$arg5", "$arg6", "DEC");
   $code .= "jmp .Lexit_gcm_decrypt\n";
 }
 $code .= ".Lexit_gcm_decrypt:\n";
@@ -4799,11 +4675,11 @@ if ($CHECK_FUNCTION_ARGUMENTS) {
   $code .= <<___;
         # ;; Check gcm128ctx != NULL
         test               $arg1,$arg1
-jz      .Labort_finalize
+        jz                 .Labort_finalize
 ___
 }
 
-&GCM_COMPLETE("$arg1", "$arg2", "multi_call");
+&GCM_COMPLETE("$arg1", "$arg2");
 
 $code .= <<___;
 .Labort_finalize:
@@ -4831,17 +4707,17 @@ if ($CHECK_FUNCTION_ARGUMENTS) {
   $code .= <<___;
         # ;; Check Xi != NULL
         test               $arg1,$arg1
-jz      .Labort_gmult
+        jz                 .Labort_gmult
 
         # ;; Check gcm128ctx != NULL
         test               $arg2,$arg2
-jz      .Labort_gmult
+        jz                 .Labort_gmult
 ___
 }
 $code .= "vmovdqu64         ($arg1),%xmm1\n";
 $code .= "vmovdqu64         @{[HashKeyByIdx(1,$arg2)]},%xmm2\n";
 
-&GHASH_MUL("%xmm1", "%xmm2", "%xmm3", "%xmm4", "%xmm5", "%xmm16", "%xmm17");
+&GHASH_MUL("%xmm1", "%xmm2", "%xmm3", "%xmm4", "%xmm5");
 
 $code .= "vmovdqu64         %xmm1,($arg1)\n";
 if ($CLEAR_SCRATCH_REGISTERS) {
@@ -4984,16 +4860,8 @@ ONE:
         .quad     0x0000000000000001, 0x0000000000000000
 
 .align 16
-TWO:
-        .quad     0x0000000000000002, 0x0000000000000000
-
-.align 16
 ONEf:
         .quad     0x0000000000000000, 0x0100000000000000
-
-.align 16
-TWOf:
-        .quad     0x0000000000000000, 0x0200000000000000
 
 .align 64
 ddq_add_1234:
@@ -5031,25 +4899,11 @@ ddq_addbe_1234:
         .quad  0x0000000000000000, 0x0400000000000000
 
 .align 64
-ddq_addbe_5678:
-        .quad  0x0000000000000000, 0x0500000000000000
-        .quad  0x0000000000000000, 0x0600000000000000
-        .quad  0x0000000000000000, 0x0700000000000000
-        .quad  0x0000000000000000, 0x0800000000000000
-
-.align 64
 ddq_addbe_4444:
         .quad  0x0000000000000000, 0x0400000000000000
         .quad  0x0000000000000000, 0x0400000000000000
         .quad  0x0000000000000000, 0x0400000000000000
         .quad  0x0000000000000000, 0x0400000000000000
-
-.align 64
-ddq_addbe_8888:
-        .quad  0x0000000000000000, 0x0800000000000000
-        .quad  0x0000000000000000, 0x0800000000000000
-        .quad  0x0000000000000000, 0x0800000000000000
-        .quad  0x0000000000000000, 0x0800000000000000
 
 .align 64
 byte_len_to_mask_table:
@@ -5094,13 +4948,6 @@ byte64_len_to_mask_table:
         .quad      0x0fffffffffffffff, 0x1fffffffffffffff
         .quad      0x3fffffffffffffff, 0x7fffffffffffffff
         .quad      0xffffffffffffffff
-
-.align 64
-mask_out_top_block:
-        .quad      0xffffffffffffffff, 0xffffffffffffffff
-        .quad      0xffffffffffffffff, 0xffffffffffffffff
-        .quad      0xffffffffffffffff, 0xffffffffffffffff
-        .quad      0x0000000000000000, 0x0000000000000000
 ___
 
 } else {
