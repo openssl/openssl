@@ -1693,7 +1693,6 @@ static OSSL_PARAM *do_construct_hkdf_params(char *digest, char *key,
     return params;
 }
 
-/* Test that EVP_PKEY_CTX_dup() fails gracefully for a KDF */
 static int test_evp_pkey_ctx_dup_kdf(void)
 {
     int ret = 0;
