@@ -41,11 +41,12 @@ static int debug_log_print2(void)
 {
     CRYPTO_set_logging_callback(logging_callback1);
 
-    if ( TEST_ptr_eq((void*)CRYPTO_get_logging_callback(), (void*)logging_callback1)) {
-        return 1;
+    if ( CRYPTO_get_logging_callback() != logging_callback1) {
+        TEST_error("Logging callback obtained from get function is not equal to the setted");
+        return 0;
     }
 
-    return 0;
+    return 1;
 }
 
 static int result2 = 1;
