@@ -471,3 +471,29 @@ size_t OPENSSL_instrument_bus2(unsigned int *out, size_t cnt, size_t max)
     return 0;
 }
 #endif
+
+static void (*logging_callback) (const char *file, int line, int severity, const char* buf) = 0; 
+
+#define DBG_MAX_LOG_BUF 2048
+
+void debug_log(const char *file, int line, int severity, const char* format, ...)
+{
+    if ( !logging_callback || !format )
+        return;
+
+    va_list start;
+    va_start(start, format);
+    char buf[DBG_MAX_LOG_BUF];
+    vsnprintf(buf, DBG_MAX_LOG_BUF, format, start);
+    logging_callback(file, line, severity, buf);
+}
+
+void CRYPTO_set_logging_callback(void (*func) (const char *file, int line, int severity, const char* buf))
+{
+    logging_callback = func;
+}
+
+void (*CRYPTO_get_logging_callback(void)) (const char *file, int line, int severity, const char* buf)
+{
+    return logging_callback;
+}

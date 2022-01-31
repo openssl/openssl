@@ -438,6 +438,15 @@ int CRYPTO_THREAD_cleanup_local(CRYPTO_THREAD_LOCAL *key);
 CRYPTO_THREAD_ID CRYPTO_THREAD_get_current_id(void);
 int CRYPTO_THREAD_compare_id(CRYPTO_THREAD_ID a, CRYPTO_THREAD_ID b);
 
+void CRYPTO_set_logging_callback(void (*func) (const char *file, int line, int severity, const char* bug));
+void (*CRYPTO_get_logging_callback(void)) (const char *file, int line, int severity, const char* buf);
+void debug_log(const char *file, int line, int severity, const char* format, ...);
+
+/* Debug log severity */
+#define DBG_ERROR   0
+#define DBG_WARN    1
+#define DBG_INFO    2
+#define DBG_VERBOSE 3
 
 # ifdef  __cplusplus
 }
