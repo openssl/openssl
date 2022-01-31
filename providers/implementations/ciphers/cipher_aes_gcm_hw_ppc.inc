@@ -13,7 +13,7 @@
  */
 
 static int aes_ppc_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
-                             size_t keylen)
+                               size_t keylen)
 {
     PROV_AES_GCM_CTX *actx = (PROV_AES_GCM_CTX *)ctx;
     AES_KEY *ks = &actx->ks.ks;
@@ -25,21 +25,13 @@ static int aes_ppc_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
 
 
 extern size_t ppc_aes_gcm_encrypt(const unsigned char *in, unsigned char *out, size_t len,
-                         const void *key, unsigned char ivec[16], u64 *Xi);
+                                  const void *key, unsigned char ivec[16], u64 *Xi);
 extern size_t ppc_aes_gcm_decrypt(const unsigned char *in, unsigned char *out, size_t len,
-                         const void *key, unsigned char ivec[16], u64 *Xi);
-
-static inline int IsBigEndian(int i)
-{
-    return ! *((char *)&i);
-}
+                                  const void *key, unsigned char ivec[16], u64 *Xi);
 
 static inline u32 UTO32(unsigned char *buf)
 {
-    if (IsBigEndian(1))
-        return ((u32) buf[0]) | ((u32) buf[1] << 8) | ((u32) buf[2] << 16) | ((u32) buf[3] << 24);
-    else
-        return ((u32) buf[0] << 24) | ((u32) buf[1] << 16) | ((u32) buf[2] << 8) | ((u32) buf[3]);
+    return ((u32) buf[0] << 24) | ((u32) buf[1] << 16) | ((u32) buf[2] << 8) | ((u32) buf[3]);
 }
 
 static inline u32 add32TOU(unsigned char buf[4], u32 n)
@@ -48,22 +40,15 @@ static inline u32 add32TOU(unsigned char buf[4], u32 n)
 
     r = UTO32(buf);
     r += n;
-    if (IsBigEndian(1)) {
-        buf[0] = (unsigned char) r & 0xFF;
-        buf[1] = (unsigned char) (r >> 8) & 0xFF;
-        buf[2] = (unsigned char) (r >> 16) & 0xFF;
-        buf[3] = (unsigned char) (r >> 24) & 0xFF;
-    } else {
-        buf[0] = (unsigned char) (r >> 24) & 0xFF;
-        buf[1] = (unsigned char) (r >> 16) & 0xFF;
-        buf[2] = (unsigned char) (r >> 8) & 0xFF;
-        buf[3] = (unsigned char) r & 0xFF;
-    }
+    buf[0] = (unsigned char) (r >> 24) & 0xFF;
+    buf[1] = (unsigned char) (r >> 16) & 0xFF;
+    buf[2] = (unsigned char) (r >> 8) & 0xFF;
+    buf[3] = (unsigned char) r & 0xFF;
     return r;
 }
 
 static size_t aes_p10_gcm_crypt(const unsigned char *in, unsigned char *out, size_t len,
-                         const void *key, unsigned char ivec[16], u64 *Xi, int encrypt)
+                                const void *key, unsigned char ivec[16], u64 *Xi, int encrypt)
 {
     int s = 0;
     int ndone = 0;
@@ -88,11 +73,8 @@ static size_t aes_p10_gcm_crypt(const unsigned char *in, unsigned char *out, siz
             nb = 0;
         }
 
-        if (encrypt) {
-            s = ppc_aes_gcm_encrypt(in, out, len, key, ivec, Xi);
-        } else {
-            s = ppc_aes_gcm_decrypt(in, out, len, key, ivec, Xi);
-        }
+        s = encrypt ? ppc_aes_gcm_encrypt(in, out, len, key, ivec, Xi)
+                    : ppc_aes_gcm_decrypt(in, out, len, key, ivec, Xi);
 
         /* add counter to ivec */
         add32TOU(ivec + 12, (u32) next_ctr);
@@ -109,25 +91,21 @@ static size_t aes_p10_gcm_crypt(const unsigned char *in, unsigned char *out, siz
 }
 
 size_t ppc_aes_gcm_encrypt_wrap(const unsigned char *in, unsigned char *out, size_t len,
-                         const void *key, unsigned char ivec[16], u64 *Xi)
+                                const void *key, unsigned char ivec[16], u64 *Xi)
 {
-    size_t n;
     int encrypt;
 
     encrypt = 1;
-    n = aes_p10_gcm_crypt(in, out, len, key, ivec, Xi, encrypt);
-    return n;
+    return aes_p10_gcm_crypt(in, out, len, key, ivec, Xi, encrypt);
 }
 
 size_t ppc_aes_gcm_decrypt_wrap(const unsigned char *in, unsigned char *out, size_t len,
-                         const void *key, unsigned char ivec[16], u64 *Xi)
+                                const void *key, unsigned char ivec[16], u64 *Xi)
 {
-    size_t n;
     int encrypt;
 
     encrypt = 0;
-    n = aes_p10_gcm_crypt(in, out, len, key, ivec, Xi, encrypt);
-    return n;
+    return aes_p10_gcm_crypt(in, out, len, key, ivec, Xi, encrypt);
 }
 
 
