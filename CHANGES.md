@@ -90,7 +90,7 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 [Migration guide]: https://github.com/openssl/openssl/tree/master/doc/man7/migration_guide.pod
 
-### Changes between 3.0.1 and 3.0.2 [?? ??? 2022]
+### Changes between 3.0.1 and 3.0.2 [xx XXX xxxx]
 
  * Made the AES constant time code for no-asm configurations
    optional due to the resulting 95% performance degradation.
