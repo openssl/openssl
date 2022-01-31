@@ -102,38 +102,26 @@ my ($x00,$x10,$x20,$x30) = (0, map("r$_",(8..10)));
 my $FRAME=$LOCALS+64+7*16;	# 7*16 is for v26-v31 offload
 
 sub VSX_lane_ROUND_1x {
-
 my $a=@_[0];
 my $b=@_[1];
 my $c=@_[2];
 my $d=@_[3];
 my $odd=@_[4];
-     
-     	vadduwm		($a,$a,$b); 
+	vadduwm		($a,$a,$b);
 	vxor		($d,$d,$a);
-	vrlw		($d,$d,$sixteen);  
-
-
+	vrlw		($d,$d,$sixteen);
 	vadduwm		($c,$c,$d);
 	vxor		($b,$b,$c);
-	vrlw		($b,$b,$twelve)  ;
-
-
+	vrlw		($b,$b,$twelve);
 	vadduwm		($a,$a,$b);
 	vxor		($d,$d,$a);
 	vrlw		($d,$d,$eight);
-
-
 	vadduwm		($c,$c,$d);
 	vxor		($b,$b,$c);
 	vrlw		($b,$b,$seven);
-
-
-	
-        xxsldwi		($c,$c,$c,2)        ;
-	xxsldwi		($b,$b,$b,$odd?3:1) ;
-	xxsldwi		($d,$d,$d,$odd?1:3) ;
-
+	xxsldwi		($c,$c,$c,2);
+	xxsldwi		($b,$b,$b,$odd?3:1);
+	xxsldwi		($d,$d,$d,$odd?1:3);
 }
 
 
@@ -204,7 +192,7 @@ $code.=<<___;
 .globl	.ChaCha20_ctr32_vsx_p10
 .align	5
 .ChaCha20_ctr32_vsx_p10:
-        ${UCMP}i $len,256
+	${UCMP}i $len,256
 	bgt 	ChaCha20_ctr32_vsx_8x
 	$STU	$sp,-$FRAME($sp)
 	mflr	r0
@@ -279,15 +267,14 @@ Loop_outer_vsx:
 	vspltisw $twelve,12
 	vspltisw $eight,8
 	vspltisw $seven,7
-       
-        #b       Loop_vsx_4x 
-        ${UCMP}i $len,64
+
+	${UCMP}i $len,64
 	bgt 	Loop_vsx_4x
 
 	vmr	$xa0,@K[0]
-        vmr	$xb0,@K[1]
-        vmr	$xc0,@K[2]
-        vmr 	$xd0,@K[3]
+	vmr	$xb0,@K[1]
+	vmr	$xc0,@K[2]
+	vmr 	$xd0,@K[3]
 
 Loop_vsx_1x:
 ___
@@ -298,31 +285,31 @@ $code.=<<___;
 
 	bdnz	Loop_vsx_1x
 
-        vadduwm $xa0, $xa0, @K[0]
-        vadduwm $xb0, $xb0, @K[1] 
-        vadduwm $xc0, $xc0, @K[2] 
-        vadduwm $xd0, $xd0, @K[3]      
-        ${UCMP}i $len,0x40
+	vadduwm $xa0, $xa0, @K[0]
+	vadduwm $xb0, $xb0, @K[1]
+	vadduwm $xc0, $xc0, @K[2]
+	vadduwm $xd0, $xd0, @K[3]
+	${UCMP}i $len,0x40
 	blt	Ltail_vsx
-       
-        lvx_4w  $xt0,$x00, $inp
-        lvx_4w  $xt1,$x10, $inp
-        lvx_4w  $xt2,$x20, $inp
-        lvx_4w  $xt3,$x30, $inp
 
-        vxor	$xa0,$xa0,$xt0
-     	vxor	$xb0,$xb0,$xt1
-    	vxor	$xc0,$xc0,$xt2
+	lvx_4w  $xt0,$x00, $inp
+	lvx_4w  $xt1,$x10, $inp
+	lvx_4w  $xt2,$x20, $inp
+	lvx_4w  $xt3,$x30, $inp
+
+	vxor	$xa0,$xa0,$xt0
+	vxor	$xb0,$xb0,$xt1
+	vxor	$xc0,$xc0,$xt2
 	vxor	$xd0,$xd0,$xt3
 
-        stvx_4w	$xa0,$x00,$out
-        stvx_4w	$xb0,$x10,$out
-        addi	$inp,$inp,0x40
-        stvx_4w	$xc0,$x20,$out
-        subi	$len,$len,0x40
-        stvx_4w	$xd0,$x30,$out
-        addi	$out,$out,0x40
-        beq	Ldone_vsx
+	stvx_4w	$xa0,$x00,$out
+	stvx_4w	$xb0,$x10,$out
+	addi	$inp,$inp,0x40
+	stvx_4w	$xc0,$x20,$out
+	subi	$len,$len,0x40
+	stvx_4w	$xd0,$x30,$out
+	addi	$out,$out,0x40
+	beq	Ldone_vsx
 
 Loop_vsx_4x:
 ___
@@ -338,8 +325,8 @@ $code.=<<___;
 	vmrgew	$xt1,$xa2,$xa3
 	vmrgow	$xa0,$xa0,$xa1
 	vmrgow	$xa2,$xa2,$xa3
-	 vmrgew	$xt2,$xb0,$xb1
-	 vmrgew	$xt3,$xb2,$xb3
+	vmrgew	$xt2,$xb0,$xb1
+	vmrgew	$xt3,$xb2,$xb3
 	vpermdi	$xa1,$xa0,$xa2,0b00
 	vpermdi	$xa3,$xa0,$xa2,0b11
 	vpermdi	$xa0,$xt0,$xt1,0b00
@@ -347,8 +334,8 @@ $code.=<<___;
 
 	vmrgow	$xb0,$xb0,$xb1
 	vmrgow	$xb2,$xb2,$xb3
-	 vmrgew	$xt0,$xc0,$xc1
-	 vmrgew	$xt1,$xc2,$xc3
+	vmrgew	$xt0,$xc0,$xc1
+	vmrgew	$xt1,$xc2,$xc3
 	vpermdi	$xb1,$xb0,$xb2,0b00
 	vpermdi	$xb3,$xb0,$xb2,0b11
 	vpermdi	$xb0,$xt2,$xt3,0b00
@@ -356,8 +343,8 @@ $code.=<<___;
 
 	vmrgow	$xc0,$xc0,$xc1
 	vmrgow	$xc2,$xc2,$xc3
-	 vmrgew	$xt2,$xd0,$xd1
-	 vmrgew	$xt3,$xd2,$xd3
+	vmrgew	$xt2,$xd0,$xd1
+	vmrgew	$xt3,$xd2,$xd3
 	vpermdi	$xc1,$xc0,$xc2,0b00
 	vpermdi	$xc3,$xc0,$xc2,0b11
 	vpermdi	$xc0,$xt0,$xt1,0b00
@@ -365,8 +352,8 @@ $code.=<<___;
 
 	vmrgow	$xd0,$xd0,$xd1
 	vmrgow	$xd2,$xd2,$xd3
-	 vspltisw $xt0,4
-	 vadduwm  $CTR,$CTR,$xt0		# next counter value
+	vspltisw $xt0,4
+	vadduwm  $CTR,$CTR,$xt0		# next counter value
 	vpermdi	$xd1,$xd0,$xd2,0b00
 	vpermdi	$xd3,$xd0,$xd2,0b11
 	vpermdi	$xd0,$xt2,$xt3,0b00
@@ -592,8 +579,8 @@ my ($xv8,$xv9,$xv10,$xv11,$xv12,$xv13,$xv14,$xv15,$xv16,$xv17) = map("\"v$_\"",(
 my @x=map("\"v$_\"",(0..31));
 
 	(
-	"&vxxlor        ($xv15 ,@x[$c7],@x[$c7])",                 #copy v30 to v13
-        "&vxxlorc       (@x[$c7], $xv9,$xv9)",
+	"&vxxlor        ($xv15 ,@x[$c7],@x[$c7])",      #copy v30 to v13
+	"&vxxlorc       (@x[$c7], $xv9,$xv9)",
 
 	"&vadduwm	(@x[$a0],@x[$a0],@x[$b0])",	# Q1
 	 "&vadduwm	(@x[$a1],@x[$a1],@x[$b1])",	# Q2
@@ -621,10 +608,10 @@ my @x=map("\"v$_\"",(0..31));
 	 "&vrlw		(@x[$d5],@x[$d5],@x[$c7])",
 	  "&vrlw	(@x[$d6],@x[$d6],@x[$c7])",
 	   "&vrlw	(@x[$d7],@x[$d7],@x[$c7])",
-#---------
-        "&vxxlor        ($xv13 ,@x[$a7],@x[$a7])",                 
-        "&vxxlorc       (@x[$c7], $xv15,$xv15)",
-        "&vxxlorc       (@x[$a7], $xv10,$xv10)",
+
+	"&vxxlor        ($xv13 ,@x[$a7],@x[$a7])",
+	"&vxxlorc       (@x[$c7], $xv15,$xv15)",
+	"&vxxlorc       (@x[$a7], $xv10,$xv10)",
 
 	"&vadduwm	(@x[$c0],@x[$c0],@x[$d0])",
 	 "&vadduwm	(@x[$c1],@x[$c1],@x[$d1])",
@@ -652,10 +639,10 @@ my @x=map("\"v$_\"",(0..31));
 	 "&vrlw		(@x[$b5],@x[$b5],@x[$a7])",
 	  "&vrlw	(@x[$b6],@x[$b6],@x[$a7])",
 	   "&vrlw	(@x[$b7],@x[$b7],@x[$a7])",
-#---------
-        "&vxxlorc       (@x[$a7], $xv13,$xv13)",
+
+	"&vxxlorc       (@x[$a7], $xv13,$xv13)",
 	"&vxxlor	($xv15 ,@x[$c7],@x[$c7])",                 
-        "&vxxlorc       (@x[$c7], $xv11,$xv11)",
+	"&vxxlorc       (@x[$c7], $xv11,$xv11)",
 
 
 	"&vadduwm	(@x[$a0],@x[$a0],@x[$b0])",
@@ -684,10 +671,10 @@ my @x=map("\"v$_\"",(0..31));
 	 "&vrlw		(@x[$d5],@x[$d5],@x[$c7])",
 	  "&vrlw	(@x[$d6],@x[$d6],@x[$c7])",
 	   "&vrlw	(@x[$d7],@x[$d7],@x[$c7])",
-#---------
-        "&vxxlorc       (@x[$c7], $xv15,$xv15)",
+
+	"&vxxlorc       (@x[$c7], $xv15,$xv15)",
 	"&vxxlor        ($xv13 ,@x[$a7],@x[$a7])",               
-        "&vxxlorc       (@x[$a7], $xv12,$xv12)",
+	"&vxxlorc       (@x[$a7], $xv12,$xv12)",
 
 	"&vadduwm	(@x[$c0],@x[$c0],@x[$d0])",
 	 "&vadduwm	(@x[$c1],@x[$c1],@x[$d1])",
@@ -714,9 +701,7 @@ my @x=map("\"v$_\"",(0..31));
 	  "&vrlw	(@x[$b6],@x[$b6],@x[$a7])",
 	   "&vrlw	(@x[$b7],@x[$b7],@x[$a7])",
 
-#---------
-        "&vxxlorc       (@x[$a7], $xv13,$xv13)",
-	#"&vxxlor        ($xv15 ,@x[$c7],@x[$c7])"                 #copy v30 to v13
+	"&vxxlorc       (@x[$a7], $xv13,$xv13)",
 	);
 }
 
@@ -750,10 +735,10 @@ $code.=<<___;
 	mtspr	256,r12				# preserve 29 AltiVec registers
 
 	bl	Lconsts				# returns pointer Lsigma in r12
-	
-        lvx_4w	@K[0],0,r12			# load sigma
+
+	lvx_4w	@K[0],0,r12			# load sigma
 	addi	r12,r12,0x70
-        li	$x10,16
+	li	$x10,16
 	li	$x20,32
 	li	$x30,48
 	li	r11,64
@@ -777,8 +762,8 @@ $code.=<<___;
 	vxxlor	$xv24  ,$xa2,$xa2
 	vxxlor	$xv25  ,$xa3,$xa3
 
-        lvx_4w	@K[1],0,$key			# load key
-        lvx_4w	@K[2],$x10,$key
+	lvx_4w	@K[1],0,$key			# load key
+	lvx_4w	@K[2],$x10,$key
 	lvx_4w	@K[3],0,$ctr			# load counter
 	vspltisw $xt3,4
 
@@ -791,19 +776,19 @@ $code.=<<___;
 	vadduwm	$xt1,$xa2,$xt1
 	vadduwm $xt3,$xt1,$xt3     		# next counter value
 	vspltw	$xa0,@K[2],2                    # save the K[2] spltw 2 and save v8.
-        
-        be?lvsl	  $beperm,0,$x10			# 0x00..0f
+
+	be?lvsl	  $beperm,0,$x10			# 0x00..0f
 	be?vspltisb $xt0,3			# 0x03..03
 	be?vxor   $beperm,$beperm,$xt0		# swap bytes within words
-        be?vxxlor $xv26 ,$beperm,$beperm
-        
-        vxxlor	$xv0 ,@K[0],@K[0]               # K0,k1,k2 to vr0,1,2
-        vxxlor	$xv1 ,@K[1],@K[1]
-        vxxlor	$xv2 ,@K[2],@K[2]
-        vxxlor	$xv3 ,@K[3],@K[3]
-        vxxlor	$xv4 ,$xt1,$xt1                #CTR ->4, CTR+4-> 5
-        vxxlor	$xv5 ,$xt3,$xt3
-        vxxlor	$xv8 ,$xa0,$xa0
+	be?vxxlor $xv26 ,$beperm,$beperm
+
+	vxxlor	$xv0 ,@K[0],@K[0]               # K0,k1,k2 to vr0,1,2
+	vxxlor	$xv1 ,@K[1],@K[1]
+	vxxlor	$xv2 ,@K[2],@K[2]
+	vxxlor	$xv3 ,@K[3],@K[3]
+	vxxlor	$xv4 ,$xt1,$xt1                #CTR ->4, CTR+4-> 5
+	vxxlor	$xv5 ,$xt3,$xt3
+	vxxlor	$xv8 ,$xa0,$xa0
 
 	li	r0,10				# inner loop counter
 	mtctr	r0
@@ -845,7 +830,7 @@ Loop_outer_vsx_8x:
 	vspltw	$xd5,@K[3],1
 	vspltw	$xd6,@K[3],2
 	vspltw	$xd7,@K[3],3
-        vxxlorc	$xc6,$xv8,$xv8                  #copy of vlspt k[2],2 is in v8.v26 ->k[3] so need to wait until k3 is done
+	vxxlorc	$xc6,$xv8,$xv8                  #copy of vlspt k[2],2 is in v8.v26 ->k[3] so need to wait until k3 is done
 
 Loop_vsx_8x:
 ___
@@ -853,7 +838,7 @@ ___
 	foreach (&VSX_lane_ROUND_8x(0,5,10,15,16,21,26,31)) { eval; }
 $code.=<<___;
 
-        bdnz	        Loop_vsx_8x
+	bdnz	        Loop_vsx_8x
 	vxxlor	        $xv13 ,$xd4,$xd4                # save the register vr24-31
 	vxxlor	        $xv14 ,$xd5,$xd5                #
 	vxxlor	        $xv15 ,$xd6,$xd6                #
@@ -866,19 +851,14 @@ $code.=<<___;
 
 	vxxlor	        $xv6  ,$xb6,$xb6                # save vr23, so we get 8 regs
 	vxxlor	        $xv7  ,$xb7,$xb7                # save vr23, so we get 8 regs
-        be?vxxlorc      $beperm,$xv26,$xv26             # copy back the the beperm.
+	be?vxxlorc      $beperm,$xv26,$xv26             # copy back the the beperm.
 
-#       lvx_4w	   @K[0],0,r12                     #we used vr24,25,26,27 for constant loading vrlw
-#       lvx_4w	   @K[1],0,$key			   # load key
-#       lvx_4w	   @K[2],$x10,$key
-
-        vxxlorc	   @K[0],$xv0,$xv0                #27
-        vxxlorc	   @K[1],$xv1,$xv1 		  #24
-        vxxlorc	   @K[2],$xv2,$xv2		  #25
-        vxxlorc	   @K[3],$xv3,$xv3		  #26
+	vxxlorc	   @K[0],$xv0,$xv0                #27
+	vxxlorc	   @K[1],$xv1,$xv1 		  #24
+	vxxlorc	   @K[2],$xv2,$xv2		  #25
+	vxxlorc	   @K[3],$xv3,$xv3		  #26
 	vxxlorc	   $CTR0,$xv4,$xv4
 ###changing to vertical
-
 
 	vmrgew	$xt0,$xa0,$xa1			# transpose data
 	vmrgew	$xt1,$xa2,$xa3
@@ -921,9 +901,8 @@ $code.=<<___;
 
 	vspltisw $xt0,8
 	vadduwm  $CTR0,$CTR0,$xt0		# next counter value
-        vxxlor	 $xv4 ,$CTR0,$CTR0	        #CTR+4-> 5	
+	vxxlor	 $xv4 ,$CTR0,$CTR0	        #CTR+4-> 5
 
-#-----------------
 	vadduwm	$xa0,$xa0,@K[0]
 	vadduwm	$xb0,$xb0,@K[1]
 	vadduwm	$xc0,$xc0,@K[2]
@@ -1055,22 +1034,21 @@ $code.=<<___;
 #blk4-7: 24:31 remain the same as we can use the same logic above . Reg a4-b7 remain same.Load c4,d7--> position 8-15.we can reuse vr24-31.
 #VR0-3 : are used to load temp value, vr4 --> as xr0 instead of xt0.
 
-
 	vxxlorc	   $CTR1 ,$xv5,$xv5
 
 	vxxlorc	   $xcn4 ,$xv18,$xv18
-        vxxlorc	   $xcn5 ,$xv19,$xv19
-        vxxlorc	   $xcn6 ,$xv20,$xv20
-        vxxlorc	   $xcn7 ,$xv21,$xv21
+	vxxlorc	   $xcn5 ,$xv19,$xv19
+	vxxlorc	   $xcn6 ,$xv20,$xv20
+	vxxlorc	   $xcn7 ,$xv21,$xv21
 
 	vxxlorc	   $xdn4 ,$xv13,$xv13
-        vxxlorc	   $xdn5 ,$xv14,$xv14
-        vxxlorc	   $xdn6 ,$xv15,$xv15
-        vxxlorc	   $xdn7 ,$xv16,$xv16
+	vxxlorc	   $xdn5 ,$xv14,$xv14
+	vxxlorc	   $xdn6 ,$xv15,$xv15
+	vxxlorc	   $xdn7 ,$xv16,$xv16
 	vadduwm	   $xdn4,$xdn4,$CTR1
 
-        vxxlorc	   $xb6 ,$xv6,$xv6
-        vxxlorc	   $xb7 ,$xv7,$xv7
+	vxxlorc	   $xb6 ,$xv6,$xv6
+	vxxlorc	   $xb7 ,$xv7,$xv7
 #use xa1->xr0, as xt0...in the block 4-7
 
 	vmrgew	$xr0,$xa4,$xa5			# transpose data
@@ -1111,10 +1089,7 @@ $code.=<<___;
 
 	vspltisw $xr0,8
 	vadduwm  $CTR1,$CTR1,$xr0		# next counter value
-        vxxlor	 $xv5 ,$CTR1,$CTR1	        #CTR+4-> 5	
-
-#-----------------
-
+	vxxlor	 $xv5 ,$CTR1,$CTR1	        #CTR+4-> 5
 
 	vadduwm	$xan0,$xa4,@K[0]
 	vadduwm	$xbn0,$xb4,@K[1]
@@ -1243,8 +1218,8 @@ $code.=<<___;
 	stvx_4w	$xt3,$x30,$out
 	addi	$out,$out,0x40
 	beq	Ldone_vsx_8x
-	
-        mtctr	r0
+
+	mtctr	r0
 	bne	Loop_outer_vsx_8x
 
 Ldone_vsx_8x:
@@ -1282,7 +1257,7 @@ Ltail_vsx_8x:
 	subi	r12,r11,1			# prepare for *++ptr
 	subi	$inp,$inp,1
 	subi	$out,$out,1
-        bl      Loop_tail_vsx_8x
+	bl      Loop_tail_vsx_8x
 Ltail_vsx_8x_1:
 	addi	r11,$sp,$LOCALS
 	mtctr	$len
