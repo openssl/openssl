@@ -65,32 +65,9 @@ end:
     return -1;
 }
 
-const char *pkcs11_mechanism2name_digest(int mechanism)
-{
-    switch (mechanism) {
-        case CKM_MD5:
-            return SN_md5;
-        case CKM_SHA_1:
-            return SN_sha1;
-        case CKM_SHA224:
-            return SN_sha224;
-        case CKM_SHA256:
-            return SN_sha256;
-        case CKM_SHA384:
-            return SN_sha384;
-        case CKM_SHA512:
-            return SN_sha512;
-        case CKM_SHA512_224:
-            return SN_sha512_224;
-        case CKM_SHA512_256:
-            return SN_sha512_256;
-    }
-    return NULL;
-}
-
 int pkcs11_nid2mechanism_digest(int nid)
 {
-    switch (nid) { 
+    switch (nid) {
         case NID_md5:
             return CKM_MD5;
         case NID_sha1:
@@ -108,5 +85,5 @@ int pkcs11_nid2mechanism_digest(int nid)
         case NID_sha512_256:
             return CKM_SHA512_256;
     }
-    return NID_undef;
+    return CKM_NULL;
 }

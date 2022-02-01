@@ -21,7 +21,6 @@ void pkcs11_set_error(PKCS11_CTX *ctx, int reason, const char *file, int line,
 #define SET_PKCS11_PROV_ERR(ctx, reasonidx) \
     pkcs11_set_error(ctx, reasonidx, OPENSSL_FILE, OPENSSL_LINE, OPENSSL_FUNC, NULL)
 
-const char *pkcs11_mechanism2name_digest(int mechanism);
 int pkcs11_nid2mechanism_digest(int nid);
 
 #endif /* PKSC11_UTILS_H */
