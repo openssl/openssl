@@ -752,7 +752,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
 # pragma pointer_size 32
 #endif
         /* Windows doesn't seem to have in_addr_t */
-#ifdef OPENSSL_SYS_WINDOWS
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
         static uint32_t he_fallback_address;
         static const char *he_fallback_addresses[] =
             { (char *)&he_fallback_address, NULL };
