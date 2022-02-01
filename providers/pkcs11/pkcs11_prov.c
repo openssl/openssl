@@ -12,6 +12,7 @@
 #include "pkcs11_ctx.h"
 #include "pkcs11_kmgmt.h"
 #include "pkcs11_sign.h"
+#include "pkcs11_digest.h"
 #include <dlfcn.h>
 
 #include <openssl/err.h>
@@ -290,7 +291,9 @@ static const OSSL_ALGORITHM *pkcs11_query(void *provctx,
     if (slot != NULL) {
         switch (operation_id) {
         case OSSL_OP_DIGEST:
-            return NULL;
+            fprintf(stdout, "@@ %s, %p\n", __FUNCTION__, slot->digest.algolist);
+            fflush(stdout);
+            return slot->digest.algolist;
         case OSSL_OP_CIPHER:
             return NULL;
         case OSSL_OP_KEYMGMT:
@@ -583,6 +586,11 @@ int pkcs11_generate_mechanism_tables(PKCS11_CTX *ctx)
             SET_PKCS11_PROV_ERR(ctx, ERR_PKCS11_MEM_ALLOC_FAILED);
             goto end;
         }
+        pkcs11_slot->digest.items = OPENSSL_sk_new_null();
+        if (pkcs11_slot->digest.items == NULL) {
+            SET_PKCS11_PROV_ERR(ctx, ERR_PKCS11_MEM_ALLOC_FAILED);
+            goto end;
+        }
 
         /* Cache the slot's mechanism info structure for each mechanism. */
         for (i = 0; i < mechcount; i++) {
@@ -607,6 +615,14 @@ int pkcs11_generate_mechanism_tables(PKCS11_CTX *ctx)
                     item->info = mechinfo[i];
                     item->type = mechlist[i];
                     OPENSSL_sk_push(pkcs11_slot->signature.items, item);
+                }
+            }
+            if (mechinfo[i].flags & CKF_DIGEST) {
+                PKCS11_TYPE_DATA_ITEM *item = OPENSSL_zalloc(sizeof(*item));
+                if (item) {
+                    item->info = mechinfo[i];
+                    item->type = mechlist[i];
+                    OPENSSL_sk_push(pkcs11_slot->digest.items, item);
                 }
             }
         }
@@ -655,6 +671,14 @@ void pkcs11_free_slots(PKCS11_CTX *ctx)
                     OPENSSL_sk_free(slot->signature.items);
                 }
                 OPENSSL_free(slot->signature.algolist);
+                if (slot->digest.items != NULL) {
+                    for (ii = 0; ii < OPENSSL_sk_num(slot->digest.items); ii++) {
+                        item = (PKCS11_TYPE_DATA_ITEM *)OPENSSL_sk_value(slot->digest.items, ii);
+                        OPENSSL_free(item);
+                    }
+                    OPENSSL_sk_free(slot->digest.items);
+                }
+                OPENSSL_free(slot->digest.algolist);
                 OPENSSL_free(slot);
             }
         }
@@ -700,6 +724,8 @@ int pkcs11_generate_dispatch_tables(PKCS11_CTX *ctx)
             slot->keymgmt.algolist = pkcs11_keymgmt_get_algo_tbl(slot->keymgmt.items, id);
         if (slot->signature.algolist == NULL)
             slot->signature.algolist = pkcs11_sign_get_algo_tbl(slot->signature.items, id);
+        if (slot->digest.algolist == NULL)
+            slot->digest.algolist = pkcs11_digest_get_algo_tbl(slot->digest.items, id);
     }
     return 1;
 }
