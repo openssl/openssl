@@ -32,6 +32,8 @@
 #   include <sys/un.h>
 #   include <tcp.h>
 #   include <netdb.h>
+#   include <arpa/inet.h>
+#   include <netinet/tcp.h>
 #  elif defined(_WIN32_WCE) && _WIN32_WCE<410
 #   define getservbyname _masked_declaration_getservbyname
 #  endif
