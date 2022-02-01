@@ -156,6 +156,7 @@ DEFINE_RUN_ONCE_STATIC(default_context_do_init)
 void ossl_lib_ctx_default_deinit(void)
 {
     context_deinit(&default_context_int);
+    CRYPTO_THREAD_cleanup_local(&default_context_thread_local);
 }
 
 static OSSL_LIB_CTX *get_thread_default_context(void)
