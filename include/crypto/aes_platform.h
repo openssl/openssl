@@ -75,6 +75,7 @@ void AES_xts_decrypt(const unsigned char *inp, unsigned char *out, size_t len,
 #   define HWAES_xts_encrypt aes_p8_xts_encrypt
 #   define HWAES_xts_decrypt aes_p8_xts_decrypt
 #   define PPC_AES_GCM_CAPABLE (OPENSSL_ppccap_P & PPC_MADD300)
+#  ifdef PPC_AES_GCM_CAPABLE
 #   define AES_GCM_ENC_BYTES 128
 #   define AES_GCM_DEC_BYTES 128
 size_t ppc_aes_gcm_encrypt(const unsigned char *in, unsigned char *out, size_t len,
@@ -85,11 +86,12 @@ size_t ppc_aes_gcm_encrypt_wrap(const unsigned char *in, unsigned char *out, siz
                          const void *key, unsigned char ivec[16], u64 *Xi);
 size_t ppc_aes_gcm_decrypt_wrap(const unsigned char *in, unsigned char *out, size_t len,
                          const void *key, unsigned char ivec[16], u64 *Xi);
-void gcm_ghash_p8(u64 Xi[2],const u128 Htable[16],const u8 *inp, size_t len);
 #   define AES_gcm_encrypt ppc_aes_gcm_encrypt_wrap
 #   define AES_gcm_decrypt ppc_aes_gcm_decrypt_wrap
 #   define AES_GCM_ASM(gctx) ((gctx)->ctr==aes_p8_ctr32_encrypt_blocks && \
                               (gctx)->gcm.ghash==gcm_ghash_p8)
+# endif
+void gcm_ghash_p8(u64 Xi[2],const u128 Htable[16],const u8 *inp, size_t len);
 #  endif /* PPC */
 
 #  if (defined(__arm__) || defined(__arm) || defined(__aarch64__))
