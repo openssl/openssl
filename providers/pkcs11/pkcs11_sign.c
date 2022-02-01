@@ -42,7 +42,7 @@ static OSSL_FUNC_signature_gettable_ctx_md_params_fn    pkcs11_signature_gettabl
 static OSSL_FUNC_signature_set_ctx_md_params_fn         pkcs11_signature_set_ctx_md_params;
 static OSSL_FUNC_signature_settable_ctx_md_params_fn    pkcs11_signature_settable_ctx_md_params;
 
-const OSSL_DISPATCH rsa_sign_dp_tbl[] = {
+const OSSL_DISPATCH pkcs11_rsa_sign_dp_tbl[] = {
     { OSSL_FUNC_SIGNATURE_NEWCTX,                   (void (*)(void))pkcs11_rsa_signature_newctx },
     { OSSL_FUNC_SIGNATURE_SIGN_INIT,                (void (*)(void))pkcs11_signature_sign_init },
     { OSSL_FUNC_SIGNATURE_SIGN,                     (void (*)(void))pkcs11_signature_sign },
@@ -84,13 +84,11 @@ static void *pkcs11_rsa_signature_newctx(void *provctx, const char *propq)
     return ctx;
 }
 
+
 static int pkcs11_signature_sign_init(void *sigctx, void *vrsa, const OSSL_PARAM params[])
 {
     PKCS11_KEY *pkey = (PKCS11_KEY *)vrsa;
     PKCS11_SIGN_CTX *ctx = (PKCS11_SIGN_CTX *)sigctx;
-    
-    if (ctx == NULL || pkey == NULL)
-        return 0;
 
     ctx->pkey = pkey;
     ctx->type = CKM_RSA_PKCS;
@@ -100,10 +98,25 @@ static int pkcs11_signature_sign_init(void *sigctx, void *vrsa, const OSSL_PARAM
     return 1;
 }
 
-static int pkcs11_signature_sign(void *vprsactx, unsigned char *sig, size_t *siglen,
+
+
+static int pkcs11_signature_sign(void *sigctx, unsigned char *sig, size_t *siglen,
                     size_t sigsize, const unsigned char *tbs, size_t tbslen)
 {
-    return 1;
+    /* todo call pkcs hw to do signing */
+    PKCS11_SIGN_CTX *ctx = (PKCS11_SIGN_CTX *)sigctx;
+    int ret = 0;
+    int digesttype = 0;
+    int mechanictype = 0;
+
+    if (!ctx)
+        goto end;
+    digesttype = pkcs11_nid2mechanism_digest(ctx->digest);
+    if (digesttype != NID_undef) {
+    }
+    ret = 0;
+end:
+    return ret;
 }
 
 static int pkcs11_signature_verify_init(void *vprsactx, void *vrsa,
@@ -189,7 +202,8 @@ static int pkcs11_signature_set_ctx_params(void *sigctx, const OSSL_PARAM params
         goto end;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_DIGEST)) != NULL) {
-        if (OSSL_PARAM_get_utf8_string(p, (char **)&digestname, sizeof(digestname)) != 1)
+        char *pdigestname = digestname;
+        if (OSSL_PARAM_get_utf8_string(p, (char **)&pdigestname, sizeof(digestname)) != 1)
             goto end;
         /* Convert digest name into nid */
         if (strlen(digestname) <= 0 || strcmp(digestname, "UNDEF") == 0 || strcmp(digestname, "undefined") == 0)
@@ -217,6 +231,7 @@ static int pkcs11_signature_set_ctx_params(void *sigctx, const OSSL_PARAM params
         break;
     }
 
+    ret = 1;
     /* work here */
 end:
 
@@ -299,7 +314,7 @@ OSSL_ALGORITHM *pkcs11_sign_get_algo_tbl(OPENSSL_STACK *sk, const char *id)
             switch(item->type)
             {
             case CKM_RSA_PKCS:
-                pkcs11_add_algorithm(algo_sk, PROV_NAMES_RSA, id, rsa_sign_dp_tbl, pkcs11_signature_algo_description);
+                pkcs11_add_algorithm(algo_sk, PROV_NAMES_RSA, id, pkcs11_rsa_sign_dp_tbl, pkcs11_signature_algo_description);
                 break;
             }
         }
