@@ -93,7 +93,7 @@ static int pkcs11_signature_sign_init(void *sigctx, void *vrsa, const OSSL_PARAM
     ctx->pkey = pkey;
     ctx->type = CKM_RSA_PKCS;
     ctx->pad_type = RSA_PKCS1_PADDING;
-    ctx->digest = NID_undef;
+    ctx->digest_nid = NID_undef;
 
     return 1;
 }
@@ -111,8 +111,9 @@ static int pkcs11_signature_sign(void *sigctx, unsigned char *sig, size_t *sigle
 
     if (!ctx)
         goto end;
-    digesttype = pkcs11_nid2mechanism_digest(ctx->digest);
-    if (digesttype != NID_undef) {
+    
+    digesttype = pkcs11_nid2mechanism_digest(ctx->digest_nid);
+    if (digesttype != CKM_NULL) {
     }
     ret = 0;
 end:
@@ -207,13 +208,13 @@ static int pkcs11_signature_set_ctx_params(void *sigctx, const OSSL_PARAM params
             goto end;
         /* Convert digest name into nid */
         if (strlen(digestname) <= 0 || strcmp(digestname, "UNDEF") == 0 || strcmp(digestname, "undefined") == 0)
-            ctx->digest = NID_undef;
+            ctx->digest_nid = NID_undef;
         else {
             /* Try short name first, then long name */
-            ctx->digest = OBJ_sn2nid(digestname);
-            if (ctx->digest == NID_undef)
-                ctx->digest = OBJ_ln2nid(digestname);
-            if (ctx->digest == NID_undef)
+            ctx->digest_nid = OBJ_sn2nid(digestname);
+            if (ctx->digest_nid == NID_undef)
+                ctx->digest_nid = OBJ_ln2nid(digestname);
+            if (ctx->digest_nid == NID_undef)
                 goto end;
         }
     }
