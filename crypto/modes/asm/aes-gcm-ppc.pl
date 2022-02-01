@@ -81,7 +81,6 @@ open STDOUT,"| $^X $xlate $flavour \"$output\""
 
 $code=<<___;
 .machine        "any"
-.abiversion     2
 .text
 
 # 4x loops
