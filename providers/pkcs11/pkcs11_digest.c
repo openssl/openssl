@@ -16,32 +16,19 @@
 #define PKCS11_DEFAULT_DIGEST_NAME OSSL_DIGEST_NAME_SHA1
 #define PKCS11_DIGEST_ALGO_DESCRIPTION     "PKSC11 digest algo"
 
-PKCS11_TYPE_DATA_ITEM *pkcs11_digest_get_mech_data(PKCS11_CTX *provctx, CK_MECHANISM_TYPE type);
+PKCS11_TYPE_DATA_ITEM *pkcs11_digest_get_mech_data(PKCS11_CTX *provctx,
+                                                   CK_MECHANISM_TYPE type);
 
 static char* pkcs11_digest_algo_description = PKCS11_DIGEST_ALGO_DESCRIPTION;
 
 /* required functions */
 static OSSL_FUNC_digest_newctx_fn               pkcs11_digest_newctx;
-static OSSL_FUNC_digest_init_fn                 pkcs11_digest_md5_init;
-static OSSL_FUNC_digest_init_fn                 pkcs11_digest_sha1_init;
-static OSSL_FUNC_digest_init_fn                 pkcs11_digest_sha224_init;
-static OSSL_FUNC_digest_init_fn                 pkcs11_digest_sha256_init;
-static OSSL_FUNC_digest_init_fn                 pkcs11_digest_sha384_init;
-static OSSL_FUNC_digest_init_fn                 pkcs11_digest_sha512_init;
-static OSSL_FUNC_digest_init_fn                 pkcs11_digest_sha512_224_init;
-static OSSL_FUNC_digest_init_fn                 pkcs11_digest_sha512_256_init;
+/* pkcs11_digest_init is defined for each digest further down */
 static OSSL_FUNC_digest_update_fn               pkcs11_digest_update;
-
 static OSSL_FUNC_digest_final_fn                pkcs11_digest_final;
-static OSSL_FUNC_digest_digest_fn               pkcs11_digest_digest;
 static OSSL_FUNC_digest_freectx_fn              pkcs11_digest_freectx;
-static OSSL_FUNC_digest_dupctx_fn               pkcs11_digest_dupctx;
-static OSSL_FUNC_digest_get_params_fn           pkcs11_digest_get_params;
-static OSSL_FUNC_digest_set_ctx_params_fn       pkcs11_digest_set_ctx_params;
-static OSSL_FUNC_digest_get_ctx_params_fn       pkcs11_digest_get_ctx_params;
+/* pkcs11_digest_get_param is defined for each digest further down */
 static OSSL_FUNC_digest_gettable_params_fn      pkcs11_digest_gettable_params;
-static OSSL_FUNC_digest_settable_ctx_params_fn  pkcs11_digest_settable_ctx_params;
-static OSSL_FUNC_digest_gettable_ctx_params_fn  pkcs11_digest_gettable_ctx_params;
 
 struct pkcs11_digest_map_st{
     int mechanics;
@@ -56,187 +43,62 @@ static int pkcs11_digest_default_get_params(OSSL_PARAM params[], size_t blksz,
 static int pkcs11_digest_default_init(void *dctx, const OSSL_PARAM params[],
                                       unsigned long type, int nid);
 
-#define PKCS11_PROV_FUNC_DIGEST_GET_PARAM(name, ckmid, nid, blksize, dgstsize)             \
-static OSSL_FUNC_digest_get_params_fn pkcs11_digest_##name##_get_params;                       \
-static int pkcs11_digest_##name##_get_params(OSSL_PARAM params[])              \
-{                                                                              \
-    return pkcs11_digest_default_get_params(params, blksize, dgstsize);   \
-} \
-static int pkcs11_digest_##name##_init(void *dctx, const OSSL_PARAM params[])   \
-{                                                                                                   \
-    return pkcs11_digest_default_init(dctx, params, ckmid, nid);    \
-}
+#define PKCS11_DIGEST_INIT_FCT(name)        pkcs11_digest_##name##_init
+#define PKCS11_DIGEST_GET_PARAM_FCT(name)   pkcs11_digest_##name##_get_params
+#define PKCS11_DIGEST_DB_TBL(name)          pkcs11_digest_##name##_dp_tbl
 
-PKCS11_PROV_FUNC_DIGEST_GET_PARAM(md5, CKM_MD5, NID_md5, 64, 16)
-PKCS11_PROV_FUNC_DIGEST_GET_PARAM(sha1, CKM_SHA_1, NID_sha1, 64, 20)
-PKCS11_PROV_FUNC_DIGEST_GET_PARAM(sha224, CKM_SHA224, NID_sha224, 64, 28)
-PKCS11_PROV_FUNC_DIGEST_GET_PARAM(sha256, CKM_SHA256, NID_sha256, 64, 32)
-PKCS11_PROV_FUNC_DIGEST_GET_PARAM(sha384, CKM_SHA384, NID_sha384, 128, 48)
-PKCS11_PROV_FUNC_DIGEST_GET_PARAM(sha512, CKM_SHA512, NID_sha512, 128, 64)
-PKCS11_PROV_FUNC_DIGEST_GET_PARAM(sha512_224, CKM_SHA512_224, NID_sha512_224, 128, 28)
-PKCS11_PROV_FUNC_DIGEST_GET_PARAM(sha512_256, CKM_SHA512_256, NID_sha512_256, 128, 32)
-#define pkcs11_digest_get_param_fct(name) pkcs11_digest_##name##_get_params
-#define pkcs11_digest_init_fct(name) pkcs11_digest_##name##_init
-
-/* static int pkcs11_digest_md5_init(void *dctx, const OSSL_PARAM params[])
-    return pkcs11_digest_init(dctx, CKM_MD5, NID_md5, 64, 16);
-    return pkcs11_digest_init(dctx, CKM_SHA_1, NID_sha1, 64, 20);
-    return pkcs11_digest_init(dctx, CKM_SHA224, NID_sha224, 64, 28);
-    return pkcs11_digest_init(dctx, CKM_SHA256, NID_sha256, 64, 32);
-    return pkcs11_digest_init(dctx, CKM_SHA384, NID_sha384, 128, 48);
-    return pkcs11_digest_init(dctx, CKM_SHA512, NID_sha512, 128, 64);
-    return pkcs11_digest_init(dctx, CKM_SHA512_224, NID_sha512_224, 128, 28);
-    return pkcs11_digest_init(dctx, CKM_SHA512_256, NID_sha512_256, 128, 32);
-}
-*/
-
-
-const OSSL_DISPATCH pkcs11_digest_md5_dp_tbl[] = {
-    { OSSL_FUNC_DIGEST_NEWCTX,               (void (*)(void))pkcs11_digest_newctx },
-    { OSSL_FUNC_DIGEST_INIT,                 (void (*)(void))pkcs11_digest_md5_init },
-    { OSSL_FUNC_DIGEST_UPDATE,               (void (*)(void))pkcs11_digest_update },
-    { OSSL_FUNC_DIGEST_FINAL,                (void (*)(void))pkcs11_digest_final },
-    { OSSL_FUNC_DIGEST_DIGEST,               (void (*)(void))pkcs11_digest_digest },
-    { OSSL_FUNC_DIGEST_FREECTX,              (void (*)(void))pkcs11_digest_freectx },
-    { OSSL_FUNC_DIGEST_DUPCTX,               (void (*)(void))pkcs11_digest_dupctx },
-    { OSSL_FUNC_DIGEST_GET_PARAMS,           (void (*)(void))pkcs11_digest_get_param_fct(md5) },
-    { OSSL_FUNC_DIGEST_SET_CTX_PARAMS,       (void (*)(void))pkcs11_digest_set_ctx_params },
-    { OSSL_FUNC_DIGEST_GET_CTX_PARAMS,       (void (*)(void))pkcs11_digest_get_ctx_params },
-    { OSSL_FUNC_DIGEST_GETTABLE_PARAMS,      (void (*)(void))pkcs11_digest_gettable_params },
-    { OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS,  (void (*)(void))pkcs11_digest_settable_ctx_params },
-    { OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS,  (void (*)(void))pkcs11_digest_gettable_ctx_params },
-    {0, NULL}
+#define PKCS11_PROV_FUNC_DIGEST(name, ckmid, nid, blksize, dgstsize)                    \
+/* define the init function for the specific digest */                                  \
+static int PKCS11_DIGEST_INIT_FCT(name)(void *dctx, const OSSL_PARAM params[])          \
+{                                                                                       \
+    return pkcs11_digest_default_init(dctx, params, ckmid, nid);                        \
+}                                                                                       \
+static OSSL_FUNC_digest_init_fn                 PKCS11_DIGEST_INIT_FCT(name);           \
+/* define the get param function for the specific digest */                             \
+static OSSL_FUNC_digest_get_params_fn PKCS11_DIGEST_GET_PARAM_FCT(name);                \
+static int PKCS11_DIGEST_GET_PARAM_FCT(name)(OSSL_PARAM params[])                       \
+{                                                                                       \
+    return pkcs11_digest_default_get_params(params, blksize, dgstsize);                 \
+}                                                                                       \
+/* define the dispatch table for the specific digest */                                 \
+const OSSL_DISPATCH PKCS11_DIGEST_DB_TBL(name)[] = {                                                \
+    { OSSL_FUNC_DIGEST_NEWCTX,               (void (*)(void))pkcs11_digest_newctx },                \
+    { OSSL_FUNC_DIGEST_INIT,                 (void (*)(void))PKCS11_DIGEST_INIT_FCT(name) },        \
+    { OSSL_FUNC_DIGEST_UPDATE,               (void (*)(void))pkcs11_digest_update },                \
+    { OSSL_FUNC_DIGEST_FINAL,                (void (*)(void))pkcs11_digest_final },                 \
+    { OSSL_FUNC_DIGEST_FREECTX,              (void (*)(void))pkcs11_digest_freectx },               \
+    { OSSL_FUNC_DIGEST_GET_PARAMS,           (void (*)(void))PKCS11_DIGEST_GET_PARAM_FCT(name) },   \
+    { OSSL_FUNC_DIGEST_GETTABLE_PARAMS,      (void (*)(void))pkcs11_digest_gettable_params },       \
+    {0, NULL}                                                                                       \
 };
 
-const OSSL_DISPATCH pkcs11_digest_sha1_dp_tbl[] = {
-    { OSSL_FUNC_DIGEST_NEWCTX,               (void (*)(void))pkcs11_digest_newctx },
-    { OSSL_FUNC_DIGEST_INIT,                 (void (*)(void))pkcs11_digest_sha1_init },
-    { OSSL_FUNC_DIGEST_UPDATE,               (void (*)(void))pkcs11_digest_update },
-    { OSSL_FUNC_DIGEST_FINAL,                (void (*)(void))pkcs11_digest_final },
-    { OSSL_FUNC_DIGEST_DIGEST,               (void (*)(void))pkcs11_digest_digest },
-    { OSSL_FUNC_DIGEST_FREECTX,              (void (*)(void))pkcs11_digest_freectx },
-    { OSSL_FUNC_DIGEST_DUPCTX,               (void (*)(void))pkcs11_digest_dupctx },
-    { OSSL_FUNC_DIGEST_GET_PARAMS,           (void (*)(void))pkcs11_digest_get_param_fct(sha1) },
-    { OSSL_FUNC_DIGEST_SET_CTX_PARAMS,       (void (*)(void))pkcs11_digest_set_ctx_params },
-    { OSSL_FUNC_DIGEST_GET_CTX_PARAMS,       (void (*)(void))pkcs11_digest_get_ctx_params },
-    { OSSL_FUNC_DIGEST_GETTABLE_PARAMS,      (void (*)(void))pkcs11_digest_gettable_params },
-    { OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS,  (void (*)(void))pkcs11_digest_settable_ctx_params },
-    { OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS,  (void (*)(void))pkcs11_digest_gettable_ctx_params },
-    {0, NULL}
-};
-
-const OSSL_DISPATCH pkcs11_digest_sha224_dp_tbl[] = {
-    { OSSL_FUNC_DIGEST_NEWCTX,               (void (*)(void))pkcs11_digest_newctx },
-    { OSSL_FUNC_DIGEST_INIT,                 (void (*)(void))pkcs11_digest_sha224_init },
-    { OSSL_FUNC_DIGEST_UPDATE,               (void (*)(void))pkcs11_digest_update },
-    { OSSL_FUNC_DIGEST_FINAL,                (void (*)(void))pkcs11_digest_final },
-    { OSSL_FUNC_DIGEST_DIGEST,               (void (*)(void))pkcs11_digest_digest },
-    { OSSL_FUNC_DIGEST_FREECTX,              (void (*)(void))pkcs11_digest_freectx },
-    { OSSL_FUNC_DIGEST_DUPCTX,               (void (*)(void))pkcs11_digest_dupctx },
-    { OSSL_FUNC_DIGEST_GET_PARAMS,           (void (*)(void))pkcs11_digest_get_param_fct(sha224) },
-    { OSSL_FUNC_DIGEST_SET_CTX_PARAMS,       (void (*)(void))pkcs11_digest_set_ctx_params },
-    { OSSL_FUNC_DIGEST_GET_CTX_PARAMS,       (void (*)(void))pkcs11_digest_get_ctx_params },
-    { OSSL_FUNC_DIGEST_GETTABLE_PARAMS,      (void (*)(void))pkcs11_digest_gettable_params },
-    { OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS,  (void (*)(void))pkcs11_digest_settable_ctx_params },
-    { OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS,  (void (*)(void))pkcs11_digest_gettable_ctx_params },
-    {0, NULL}
-};
-
-const OSSL_DISPATCH pkcs11_digest_sha256_dp_tbl[] = {
-    { OSSL_FUNC_DIGEST_NEWCTX,               (void (*)(void))pkcs11_digest_newctx },
-    { OSSL_FUNC_DIGEST_INIT,                 (void (*)(void))pkcs11_digest_sha256_init },
-    { OSSL_FUNC_DIGEST_UPDATE,               (void (*)(void))pkcs11_digest_update },
-    { OSSL_FUNC_DIGEST_FINAL,                (void (*)(void))pkcs11_digest_final },
-    { OSSL_FUNC_DIGEST_DIGEST,               (void (*)(void))pkcs11_digest_digest },
-    { OSSL_FUNC_DIGEST_FREECTX,              (void (*)(void))pkcs11_digest_freectx },
-    { OSSL_FUNC_DIGEST_DUPCTX,               (void (*)(void))pkcs11_digest_dupctx },
-    { OSSL_FUNC_DIGEST_GET_PARAMS,           (void (*)(void))pkcs11_digest_get_param_fct(sha256) },
-    { OSSL_FUNC_DIGEST_SET_CTX_PARAMS,       (void (*)(void))pkcs11_digest_set_ctx_params },
-    { OSSL_FUNC_DIGEST_GET_CTX_PARAMS,       (void (*)(void))pkcs11_digest_get_ctx_params },
-    { OSSL_FUNC_DIGEST_GETTABLE_PARAMS,      (void (*)(void))pkcs11_digest_gettable_params },
-    { OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS,  (void (*)(void))pkcs11_digest_settable_ctx_params },
-    { OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS,  (void (*)(void))pkcs11_digest_gettable_ctx_params },
-    {0, NULL}
-};
-
-const OSSL_DISPATCH pkcs11_digest_sha384_dp_tbl[] = {
-    { OSSL_FUNC_DIGEST_NEWCTX,               (void (*)(void))pkcs11_digest_newctx },
-    { OSSL_FUNC_DIGEST_INIT,                 (void (*)(void))pkcs11_digest_sha384_init },
-    { OSSL_FUNC_DIGEST_UPDATE,               (void (*)(void))pkcs11_digest_update },
-    { OSSL_FUNC_DIGEST_FINAL,                (void (*)(void))pkcs11_digest_final },
-    { OSSL_FUNC_DIGEST_DIGEST,               (void (*)(void))pkcs11_digest_digest },
-    { OSSL_FUNC_DIGEST_FREECTX,              (void (*)(void))pkcs11_digest_freectx },
-    { OSSL_FUNC_DIGEST_DUPCTX,               (void (*)(void))pkcs11_digest_dupctx },
-    { OSSL_FUNC_DIGEST_GET_PARAMS,           (void (*)(void))pkcs11_digest_get_param_fct(sha384) },
-    { OSSL_FUNC_DIGEST_SET_CTX_PARAMS,       (void (*)(void))pkcs11_digest_set_ctx_params },
-    { OSSL_FUNC_DIGEST_GET_CTX_PARAMS,       (void (*)(void))pkcs11_digest_get_ctx_params },
-    { OSSL_FUNC_DIGEST_GETTABLE_PARAMS,      (void (*)(void))pkcs11_digest_gettable_params },
-    { OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS,  (void (*)(void))pkcs11_digest_settable_ctx_params },
-    { OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS,  (void (*)(void))pkcs11_digest_gettable_ctx_params },
-    {0, NULL}
-};
-
-const OSSL_DISPATCH pkcs11_digest_sha512_dp_tbl[] = {
-    { OSSL_FUNC_DIGEST_NEWCTX,               (void (*)(void))pkcs11_digest_newctx },
-    { OSSL_FUNC_DIGEST_INIT,                 (void (*)(void))pkcs11_digest_sha512_init },
-    { OSSL_FUNC_DIGEST_UPDATE,               (void (*)(void))pkcs11_digest_update },
-    { OSSL_FUNC_DIGEST_FINAL,                (void (*)(void))pkcs11_digest_final },
-    { OSSL_FUNC_DIGEST_DIGEST,               (void (*)(void))pkcs11_digest_digest },
-    { OSSL_FUNC_DIGEST_FREECTX,              (void (*)(void))pkcs11_digest_freectx },
-    { OSSL_FUNC_DIGEST_DUPCTX,               (void (*)(void))pkcs11_digest_dupctx },
-    { OSSL_FUNC_DIGEST_GET_PARAMS,           (void (*)(void))pkcs11_digest_get_param_fct(sha512) },
-    { OSSL_FUNC_DIGEST_SET_CTX_PARAMS,       (void (*)(void))pkcs11_digest_set_ctx_params },
-    { OSSL_FUNC_DIGEST_GET_CTX_PARAMS,       (void (*)(void))pkcs11_digest_get_ctx_params },
-    { OSSL_FUNC_DIGEST_GETTABLE_PARAMS,      (void (*)(void))pkcs11_digest_gettable_params },
-    { OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS,  (void (*)(void))pkcs11_digest_settable_ctx_params },
-    { OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS,  (void (*)(void))pkcs11_digest_gettable_ctx_params },
-    {0, NULL}
-};
-
-const OSSL_DISPATCH pkcs11_digest_sha512_224_dp_tbl[] = {
-    { OSSL_FUNC_DIGEST_NEWCTX,               (void (*)(void))pkcs11_digest_newctx },
-    { OSSL_FUNC_DIGEST_INIT,                 (void (*)(void))pkcs11_digest_sha512_224_init },
-    { OSSL_FUNC_DIGEST_UPDATE,               (void (*)(void))pkcs11_digest_update },
-    { OSSL_FUNC_DIGEST_FINAL,                (void (*)(void))pkcs11_digest_final },
-    { OSSL_FUNC_DIGEST_DIGEST,               (void (*)(void))pkcs11_digest_digest },
-    { OSSL_FUNC_DIGEST_FREECTX,              (void (*)(void))pkcs11_digest_freectx },
-    { OSSL_FUNC_DIGEST_DUPCTX,               (void (*)(void))pkcs11_digest_dupctx },
-    { OSSL_FUNC_DIGEST_GET_PARAMS,           (void (*)(void))pkcs11_digest_get_param_fct(sha512_224) },
-    { OSSL_FUNC_DIGEST_SET_CTX_PARAMS,       (void (*)(void))pkcs11_digest_set_ctx_params },
-    { OSSL_FUNC_DIGEST_GET_CTX_PARAMS,       (void (*)(void))pkcs11_digest_get_ctx_params },
-    { OSSL_FUNC_DIGEST_GETTABLE_PARAMS,      (void (*)(void))pkcs11_digest_gettable_params },
-    { OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS,  (void (*)(void))pkcs11_digest_settable_ctx_params },
-    { OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS,  (void (*)(void))pkcs11_digest_gettable_ctx_params },
-    {0, NULL}
-};
-
-const OSSL_DISPATCH pkcs11_digest_sha512_256_dp_tbl[] = {
-    { OSSL_FUNC_DIGEST_NEWCTX,               (void (*)(void))pkcs11_digest_newctx },
-    { OSSL_FUNC_DIGEST_INIT,                 (void (*)(void))pkcs11_digest_sha512_256_init },
-    { OSSL_FUNC_DIGEST_UPDATE,               (void (*)(void))pkcs11_digest_update },
-    { OSSL_FUNC_DIGEST_FINAL,                (void (*)(void))pkcs11_digest_final },
-    { OSSL_FUNC_DIGEST_DIGEST,               (void (*)(void))pkcs11_digest_digest },
-    { OSSL_FUNC_DIGEST_FREECTX,              (void (*)(void))pkcs11_digest_freectx },
-    { OSSL_FUNC_DIGEST_DUPCTX,               (void (*)(void))pkcs11_digest_dupctx },
-    { OSSL_FUNC_DIGEST_GET_PARAMS,           (void (*)(void))pkcs11_digest_get_param_fct(sha512_256) },
-    { OSSL_FUNC_DIGEST_SET_CTX_PARAMS,       (void (*)(void))pkcs11_digest_set_ctx_params },
-    { OSSL_FUNC_DIGEST_GET_CTX_PARAMS,       (void (*)(void))pkcs11_digest_get_ctx_params },
-    { OSSL_FUNC_DIGEST_GETTABLE_PARAMS,      (void (*)(void))pkcs11_digest_gettable_params },
-    { OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS,  (void (*)(void))pkcs11_digest_settable_ctx_params },
-    { OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS,  (void (*)(void))pkcs11_digest_gettable_ctx_params },
-    {0, NULL}
-};
+PKCS11_PROV_FUNC_DIGEST(md5, CKM_MD5, NID_md5, 64, 16)
+PKCS11_PROV_FUNC_DIGEST(sha1, CKM_SHA_1, NID_sha1, 64, 20)
+PKCS11_PROV_FUNC_DIGEST(sha224, CKM_SHA224, NID_sha224, 64, 28)
+PKCS11_PROV_FUNC_DIGEST(sha256, CKM_SHA256, NID_sha256, 64, 32)
+PKCS11_PROV_FUNC_DIGEST(sha384, CKM_SHA384, NID_sha384, 128, 48)
+PKCS11_PROV_FUNC_DIGEST(sha512, CKM_SHA512, NID_sha512, 128, 64)
+PKCS11_PROV_FUNC_DIGEST(sha512_224, CKM_SHA512_224, NID_sha512_224, 128, 28)
+PKCS11_PROV_FUNC_DIGEST(sha512_256, CKM_SHA512_256, NID_sha512_256, 128, 32)
 
 const PKCS11_DIGEST_MAP pkcs11_digest_map[] = {
-    {CKM_MD5,        SN_md5,        NID_md5,        pkcs11_digest_md5_dp_tbl},
-    {CKM_SHA_1,      SN_sha1,       NID_sha1,       pkcs11_digest_sha1_dp_tbl},
-    {CKM_SHA224,     SN_sha224,     NID_sha224,     pkcs11_digest_sha224_dp_tbl},
-    {CKM_SHA256,     SN_sha256,     NID_sha256,     pkcs11_digest_sha256_dp_tbl},
-    {CKM_SHA384,     SN_sha384,     NID_sha384,     pkcs11_digest_sha384_dp_tbl},
-    {CKM_SHA512,     SN_sha512,     NID_sha512,     pkcs11_digest_sha512_dp_tbl},
-    {CKM_SHA512_224, SN_sha512_224, NID_sha512_224, pkcs11_digest_sha512_224_dp_tbl},
-    {CKM_SHA512_256, SN_sha512_256, NID_sha512_256, pkcs11_digest_sha512_256_dp_tbl},
+    {CKM_MD5,        SN_md5,        NID_md5,        PKCS11_DIGEST_DB_TBL(md5)},
+    {CKM_SHA_1,      SN_sha1,       NID_sha1,       PKCS11_DIGEST_DB_TBL(sha1)},
+    {CKM_SHA224,     SN_sha224,     NID_sha224,     PKCS11_DIGEST_DB_TBL(sha224)},
+    {CKM_SHA256,     SN_sha256,     NID_sha256,     PKCS11_DIGEST_DB_TBL(sha256)},
+    {CKM_SHA384,     SN_sha384,     NID_sha384,     PKCS11_DIGEST_DB_TBL(sha384)},
+    {CKM_SHA512,     SN_sha512,     NID_sha512,     PKCS11_DIGEST_DB_TBL(sha512)},
+    {CKM_SHA512_224, SN_sha512_224, NID_sha512_224, PKCS11_DIGEST_DB_TBL(sha512_224)},
+    {CKM_SHA512_256, SN_sha512_256, NID_sha512_256, PKCS11_DIGEST_DB_TBL(sha512_256)},
     {0, NULL, 0, NULL}
+};
+
+static const OSSL_PARAM pkcs11_digest_gettable_params_tbl[] = {
+    OSSL_PARAM_size_t(OSSL_DIGEST_PARAM_BLOCK_SIZE, NULL),
+    OSSL_PARAM_size_t(OSSL_DIGEST_PARAM_SIZE, NULL),
+    OSSL_PARAM_int(OSSL_DIGEST_PARAM_XOF, NULL),
+    OSSL_PARAM_int(OSSL_DIGEST_PARAM_ALGID_ABSENT, NULL),
+    OSSL_PARAM_END
 };
 
 static void *pkcs11_digest_newctx(void *provctx)
@@ -254,7 +116,8 @@ static void *pkcs11_digest_newctx(void *provctx)
     return ctx;
 }
 
-static int pkcs11_digest_default_init(void *dctx, const OSSL_PARAM params[], unsigned long type, int nid)
+static int pkcs11_digest_default_init(void *dctx, const OSSL_PARAM params[],
+                                      unsigned long type, int nid)
 {
     PKCS11_DIGEST_CTX *ctx = (PKCS11_DIGEST_CTX *)dctx;
     PKCS11_CTX *provctx = NULL;
@@ -273,7 +136,8 @@ static int pkcs11_digest_default_init(void *dctx, const OSSL_PARAM params[], uns
     ctx->hdigest = 0;
     ctx->mechdata = pkcs11_digest_get_mech_data((PKCS11_CTX *)provctx, type);
     mech.mechanism = ctx->mechdata->type;
-    rv = ctx->pkcs11_ctx->lib_functions->C_DigestInit(ctx->pkcs11_ctx->session, &mech);
+    rv = ctx->pkcs11_ctx->lib_functions->C_DigestInit(ctx->pkcs11_ctx->session,
+                                                      &mech);
     if (rv != CKR_OK) {
         SET_PKCS11_PROV_ERR(ctx->pkcs11_ctx, rv);
         goto end;
@@ -287,12 +151,13 @@ static int pkcs11_digest_update(void *dctx, const unsigned char *in, size_t inl)
 {
     PKCS11_DIGEST_CTX *ctx = (PKCS11_DIGEST_CTX *)dctx;
     CK_RV rv = CKR_OK;
+    CK_ULONG ckinl = inl;
     int ret = 0;
     if (ctx == NULL)
         return 0;
 
     rv = ctx->pkcs11_ctx->lib_functions->C_DigestUpdate(ctx->pkcs11_ctx->session,
-                                                        (CK_BYTE *)in, inl);
+                                                        (CK_BYTE *)in, ckinl);
     if (rv != CKR_OK) {
         SET_PKCS11_PROV_ERR(ctx->pkcs11_ctx, rv);
         goto end;
@@ -302,11 +167,12 @@ end:
     return ret;
 }
 
-static int pkcs11_digest_final(void *dctx, unsigned char *out, size_t *outl, size_t outsz)
+static int pkcs11_digest_final(void *dctx, unsigned char *out, size_t *outl,
+                               size_t outsz)
 {
     PKCS11_DIGEST_CTX *ctx = (PKCS11_DIGEST_CTX *)dctx;
     CK_RV rv = CKR_OK;
-    CK_ULONG ul = outsz;
+    CK_ULONG ckoutl = outsz;
     int ret = 0;
     if (ctx == NULL)
         goto end;
@@ -314,21 +180,15 @@ static int pkcs11_digest_final(void *dctx, unsigned char *out, size_t *outl, siz
         goto end;
 
     rv = ctx->pkcs11_ctx->lib_functions->C_DigestFinal(ctx->pkcs11_ctx->session,
-                                                        (CK_BYTE *)out, &ul);
+                                                       (CK_BYTE *)out, &ckoutl);
     if (rv != CKR_OK) {
         SET_PKCS11_PROV_ERR(ctx->pkcs11_ctx, rv);
         goto end;
     }
-    *outl = ul;
+    *outl = ckoutl;
     ret = 1;
 end:
     return ret;
-}
-
-static int pkcs11_digest_digest(void *provctx, const unsigned char *in, size_t inl,
-                     unsigned char *out, size_t *outl, size_t outsz)
-{
-    return 1;
 }
 
 static void pkcs11_digest_freectx(void *dctx)
@@ -344,7 +204,8 @@ static void pkcs11_digest_freectx(void *dctx)
             if (digestctx->hdigest) {
                 fprintf(stdout, "@@@ - Free Digest = %lu\n", digestctx->hdigest);
                 fflush(stdout);
-                (void)ctx->lib_functions->C_DestroyObject(ctx->session, digestctx->hdigest);
+                (void)ctx->lib_functions->C_DestroyObject(ctx->session,
+                                                          digestctx->hdigest);
             }
             digestctx->hdigest = 0;
         }
@@ -352,12 +213,8 @@ static void pkcs11_digest_freectx(void *dctx)
     }
 }
 
-static void *pkcs11_digest_dupctx(void *dctx)
-{
-    return NULL;
-}
-
-int pkcs11_digest_default_get_params(OSSL_PARAM params[], size_t blksz, size_t paramsz)
+int pkcs11_digest_default_get_params(OSSL_PARAM params[], size_t blksz,
+                                     size_t paramsz)
 {
     OSSL_PARAM *p = NULL;
     int ret = 0;
@@ -373,39 +230,10 @@ end:
     return ret;
 }
 
-static int pkcs11_digest_set_ctx_params(void *vctx, const OSSL_PARAM params[])
-{
-    return 1;
-}
-
-static int pkcs11_digest_get_ctx_params(void *vctx, OSSL_PARAM params[])
-{
-    return 1;
-}
-
-static const OSSL_PARAM pkcs11_digest_gettable_params_tbl[] = {
-    OSSL_PARAM_size_t(OSSL_DIGEST_PARAM_BLOCK_SIZE, NULL),
-    OSSL_PARAM_size_t(OSSL_DIGEST_PARAM_SIZE, NULL),
-    OSSL_PARAM_int(OSSL_DIGEST_PARAM_XOF, NULL),
-    OSSL_PARAM_int(OSSL_DIGEST_PARAM_ALGID_ABSENT, NULL),
-    OSSL_PARAM_END
-};
-
 static const OSSL_PARAM *pkcs11_digest_gettable_params(void *provctx)
 {
     return pkcs11_digest_gettable_params_tbl;
 }
-
-static const OSSL_PARAM *pkcs11_digest_settable_ctx_params(void *dctx, void *provctx)
-{
-    return pkcs11_digest_gettable_params_tbl;
-}
-
-static const OSSL_PARAM *pkcs11_digest_gettable_ctx_params(void *dctx, void *provctx)
-{
-    return pkcs11_digest_gettable_params_tbl;
-}
-
 
 OSSL_ALGORITHM *pkcs11_digest_get_algo_tbl(OPENSSL_STACK *sk, const char *id)
 {
@@ -422,7 +250,8 @@ OSSL_ALGORITHM *pkcs11_digest_get_algo_tbl(OPENSSL_STACK *sk, const char *id)
                 const PKCS11_DIGEST_MAP* pdm = pkcs11_digest_map;
                 for(;pdm->mechanics != 0;pdm++){
                     if (item->type == pdm->mechanics) {
-                        pkcs11_add_algorithm(algo_sk, pdm->SN, id, pdm->table, pkcs11_digest_algo_description);
+                        pkcs11_add_algorithm(algo_sk, pdm->SN, id, pdm->table,
+                                             pkcs11_digest_algo_description);
                      }
                 }
             }
@@ -442,7 +271,8 @@ OSSL_ALGORITHM *pkcs11_digest_get_algo_tbl(OPENSSL_STACK *sk, const char *id)
     return tblalgo;
 }
 
-PKCS11_TYPE_DATA_ITEM *pkcs11_digest_get_mech_data(PKCS11_CTX *provctx, CK_MECHANISM_TYPE type)
+PKCS11_TYPE_DATA_ITEM *pkcs11_digest_get_mech_data(PKCS11_CTX *provctx,
+                                                   CK_MECHANISM_TYPE type)
 {
     int i = 0;
     int ii = 0;
