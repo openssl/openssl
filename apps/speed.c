@@ -84,6 +84,10 @@
 # define RSA_DEFAULT_PRIME_NUM 2
 #endif
 
+#ifndef SIZE_MAX
+#include <internal/numbers.h>
+#endif
+
 typedef struct openssl_speed_sec_st {
     int sym;
     int rsa;
