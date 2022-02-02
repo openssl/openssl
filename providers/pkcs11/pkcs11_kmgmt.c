@@ -19,7 +19,7 @@
 static char* pkcs11_keymgmt_algo_description = PKCS11_KEYMGMT_ALGO_DESCRIPTION;
 static char* pkcs11_keymgmt_rsa_algo_description = "PKSC11 keymgmt rsa algo";
 /* Private functions */
-PKCS11_TYPE_DATA_ITEM *pkcs11_get_mech_data(PKCS11_CTX *provctx, CK_MECHANISM_TYPE type,
+PKCS11_TYPE_DATA_ITEM *pkcs11_keymgmt_get_mech_data(PKCS11_CTX *provctx, CK_MECHANISM_TYPE type,
                                             CK_ULONG bits);
 static int pkcs11_set_ec_oid_name(CK_BYTE_PTR *pp, const char *name);
 
@@ -129,7 +129,7 @@ static void *pkcs11_rsa_keymgmt_gen_init(void *provctx, int selection, const OSS
         goto end;
 
     genctx->keyparam.rsa.modulus_bits = PKCS11_DEFAULT_RSA_MODULUS_BITS;
-    genctx->keyparam.rsa.mechdata = pkcs11_get_mech_data((PKCS11_CTX *)provctx, genctx->type, PKCS11_DEFAULT_RSA_MODULUS_BITS);
+    genctx->keyparam.rsa.mechdata = pkcs11_keymgmt_get_mech_data((PKCS11_CTX *)provctx, genctx->type, PKCS11_DEFAULT_RSA_MODULUS_BITS);
     if (!genctx->keyparam.rsa.mechdata)
         goto end;
 
@@ -176,7 +176,7 @@ static void *pkcs11_dsa_keymgmt_gen_init(void *provctx, int selection, const OSS
     if (genctx->keyparam.dsa.g == NULL)
         goto end;
 
-    genctx->keyparam.dsa.mechdata = pkcs11_get_mech_data((PKCS11_CTX *)provctx, genctx->type, 0);
+    genctx->keyparam.dsa.mechdata = pkcs11_keymgmt_get_mech_data((PKCS11_CTX *)provctx, genctx->type, 0);
     if (!genctx->keyparam.rsa.mechdata)
         goto end;
 
@@ -216,7 +216,7 @@ static void *pkcs11_ecdsa_keymgmt_gen_init(void *provctx, int selection, const O
     if (genctx->keyparam.ecdsa.oid_name == NULL)
         goto end;
 
-    genctx->keyparam.ecdsa.mechdata = pkcs11_get_mech_data((PKCS11_CTX *)provctx, genctx->type, 0);
+    genctx->keyparam.ecdsa.mechdata = pkcs11_keymgmt_get_mech_data((PKCS11_CTX *)provctx, genctx->type, 0);
     if (!genctx->keyparam.ecdsa.mechdata)
         goto end;
 
@@ -233,7 +233,7 @@ end:
     return ret;
 }
 
-PKCS11_TYPE_DATA_ITEM *pkcs11_get_mech_data(PKCS11_CTX *provctx, CK_MECHANISM_TYPE type,
+PKCS11_TYPE_DATA_ITEM *pkcs11_keymgmt_get_mech_data(PKCS11_CTX *provctx, CK_MECHANISM_TYPE type,
                                             CK_ULONG bits)
 {
     int i = 0;
@@ -579,7 +579,7 @@ static int pkcs11_keymgmt_gen_set_params(void *genctx, const OSSL_PARAM params[]
                 goto end;
 
             /* Find a fitting key manager mechanism */
-            found = pkcs11_get_mech_data(provctx, CKM_RSA_PKCS_KEY_PAIR_GEN, bits);
+            found = pkcs11_keymgmt_get_mech_data(provctx, CKM_RSA_PKCS_KEY_PAIR_GEN, bits);
             if (!found)
                 goto end;
 
