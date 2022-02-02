@@ -657,16 +657,15 @@ int EVP_CIPHER_CTX_get_key_length(const EVP_CIPHER_CTX *ctx)
         if (ok <= 0)
             return EVP_CTRL_RET_UNSUPPORTED;
 
-        /* Should never happen since EVP_MAX_KEY_LENGTH is less than INT_MAX */
-        if (len > INT_MAX) {
-            ERR_raise(ERR_LIB_EVP,
-                      CRYPTO_R_PARAM_VALUE_TOO_LARGE_FOR_DESTINATION);
-            return -1;
-        }
         /*-
+         * The if branch should never be taken since EVP_MAX_KEY_LENGTH is
+         * less than INT_MAX but best to be safe.
+         *
          * Casting away the const is annoying but required here.  We need to
          * cache the result for performance reasons.
          */
+        if (!OSSL_PARAM_get_int(params, &((EVP_CIPHER_CTX *)ctx)->key_len))
+            return -1;
         ((EVP_CIPHER_CTX *)ctx)->key_len = (int)len;
     }
     return ctx->key_len;

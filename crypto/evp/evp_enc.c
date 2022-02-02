@@ -996,12 +996,9 @@ int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
             return 0;
         }
 
-        if (keylen < 0) {
-            ERR_raise(ERR_LIB_EVP, CRYPTO_R_INVALID_NEGATIVE_VALUE);
-            return 0;
-        }
-        len = keylen;
         params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_KEYLEN, &len);
+        if (!OSSL_PARAM_set_int(params, keylen))
+            return 0;
         ok = evp_do_ciph_ctx_setparams(c->cipher, c->algctx, params);
         if (ok <= 0)
             return 0;
