@@ -175,10 +175,11 @@ typedef struct pkcs11_sign_st {
 } PKCS11_SIGN_CTX;
 
 typedef struct pkcs11_digest_st {
-    CK_OBJECT_HANDLE digest;
+    CK_OBJECT_HANDLE hdigest;
     CK_MECHANISM_TYPE type;
     PKCS11_CTX *pkcs11_ctx;
     int nid;
+    PKCS11_TYPE_DATA_ITEM *mechdata;
 } PKCS11_DIGEST_CTX;
 
 struct pkcs11_st {
