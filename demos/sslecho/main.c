@@ -15,7 +15,7 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-static const char *revision = "1.0.6";
+static const char *revision = "1.0.7";
 
 static const int server_port = 4433;
 
@@ -242,10 +242,8 @@ int main(int argc, char **argv) {
 
         printf("We are the client\n\n");
 
-#if OPENSSL_V3
         /* Configure client context so we verify the server correctly */
         configure_client_context(ssl_ctx);
-#endif
 
         /* Create "bare" socket */
         client_skt = create_socket(false);
@@ -304,6 +302,9 @@ int main(int argc, char **argv) {
             }
             printf("Client exiting...\n");
         } else {
+
+            printf("SSL connection to server failed\n\n");
+
             ERR_print_errors_fp(stderr);
         }
     }

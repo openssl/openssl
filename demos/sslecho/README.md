@@ -19,3 +19,13 @@ The new client code illustrates that:
 - When the SSL connection completes, data is sent and received using
   SSL_write() and SSL_read().
 - Pretty simple.
+
+The cert.pem and key.pem files included are self signed certificates with the
+"Common Name" of 'localhost'.
+
+The client must be invoked as: ./sslecho c localhost
+
+You can create a self-signed certificate with a dotted ip address by
+setting the "Common Name" to 'https://dotted.ip.address'.
+
+The client must then be invoked as: ./sslecho c https://dotted.ip.address
