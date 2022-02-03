@@ -64,26 +64,3 @@ int pkcs11_get_byte_array(BIGNUM *num, CK_BYTE_PTR *out)
 end:
     return -1;
 }
-
-int pkcs11_nid2mechanism_digest(int nid)
-{
-    switch (nid) {
-        case NID_md5:
-            return CKM_MD5;
-        case NID_sha1:
-            return CKM_SHA_1;
-        case NID_sha224:
-            return CKM_SHA224;
-        case NID_sha256:
-            return CKM_SHA256;
-        case NID_sha384:
-            return CKM_SHA384;
-        case NID_sha512:
-            return CKM_SHA512;
-        case NID_sha512_224:
-            return CKM_SHA512_224;
-        case NID_sha512_256:
-            return CKM_SHA512_256;
-    }
-    return CKM_NULL;
-}
