@@ -1209,8 +1209,8 @@ static int mac_test_init(EVP_TEST *t, const char *alg)
     mdat->mac = mac;
     if (!TEST_ptr(mdat->controls = sk_OPENSSL_STRING_new_null())) {
         OPENSSL_free(mdat->mac_name);
-	OPENSSL_free(mdat);
-	return 0;
+        OPENSSL_free(mdat);
+        return 0;
     }
 
     mdat->output_size = mdat->block_size = -1;
