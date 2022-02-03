@@ -452,7 +452,7 @@ static BIGNUM *bin2bn(const unsigned char *s, int len, BIGNUM *ret,
 
     /*
      * The loop that does the work iterates from least to most
-     * significant BIGNUM chunk, so we adapt parameters to tranfer
+     * significant BIGNUM chunk, so we adapt parameters to transfer
      * input bytes accordingly.
      */
     switch (endianess) {
@@ -591,7 +591,7 @@ static int bn2binpad(const BIGNUM *a, unsigned char *to, int tolen,
     /*
      * The loop that does the work iterates from least significant
      * to most significant BIGNUM limb, so we adapt parameters to
-     * tranfer output bytes accordingly.
+     * transfer output bytes accordingly.
      */
     switch (endianess) {
     case LITTLE:

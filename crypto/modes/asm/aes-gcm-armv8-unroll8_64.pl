@@ -1098,7 +1098,7 @@ unroll8_eor3_aes_gcm_enc_128_kernel:
 	ins	$acc_m.d[0], $h78k.d[1]					@ GHASH final-7 block - mid
 
 	eor	$rk4v.8b, $rk4v.8b, $res0.8b				@ GHASH final-7 block - mid
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 
 	eor3	$res1b, $ctr_t1b, $ctr1b, $t1.16b			@ AES final-6 block - result
 
@@ -1119,7 +1119,7 @@ unroll8_eor3_aes_gcm_enc_128_kernel:
 	pmull	$rk3q1, $res0.1d, $h7.1d				@ GHASH final-6 block - low
 
 	eor	$rk4v.8b, $rk4v.8b, $res0.8b				@ GHASH final-6 block - mid
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 
 	pmull	$rk4v.1q, $rk4v.1d, $h78k.1d				@ GHASH final-6 block - mid
 	pmull2  $rk2q1, $res0.2d, $h7.2d				@ GHASH final-6 block - high
@@ -1148,7 +1148,7 @@ unroll8_eor3_aes_gcm_enc_128_kernel:
 
 	eor3	$res1b, $ctr_t1b, $ctr3b, $t1.16b			@ AES final-4 block - result
 	pmull	$rk3q1, $res0.1d, $h6.1d				@ GHASH final-5 block - low
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 
 	pmull2  $rk4v.1q, $rk4v.2d, $h56k.2d				@ GHASH final-5 block - mid
 	eor	$acc_lb, $acc_lb, $rk3					@ GHASH final-5 block - low
@@ -1165,7 +1165,7 @@ unroll8_eor3_aes_gcm_enc_128_kernel:
 	eor	$res0b, $res0b, $t0.16b					@ feed in partial tag
 
 	ins	$rk4v.d[0], $res0.d[1]					@ GHASH final-4 block - mid
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 	pmull2  $rk2q1, $res0.2d, $h5.2d				@ GHASH final-4 block - high
 
 	eor	$rk4v.8b, $rk4v.8b, $res0.8b				@ GHASH final-4 block - mid
@@ -1189,7 +1189,7 @@ unroll8_eor3_aes_gcm_enc_128_kernel:
 	rev64	$res0b, $res1b						@ GHASH final-3 block
 
 	eor	$res0b, $res0b, $t0.16b					@ feed in partial tag
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 
 	ins	$rk4v.d[0], $res0.d[1]					@ GHASH final-3 block - mid
 	ldr	$h34kq, [$current_tag, #96]					@ load h4k | h3k
@@ -1222,7 +1222,7 @@ unroll8_eor3_aes_gcm_enc_128_kernel:
 	ins	$rk4v.d[0], $res0.d[1]					@ GHASH final-2 block - mid
 	ldr	$h3q, [$current_tag, #80]					@ load h3l | h3h
 	ext     $h3.16b, $h3.16b, $h3.16b, #8
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 
 	eor	$rk4v.8b, $rk4v.8b, $res0.8b				@ GHASH final-2 block - mid
 	eor3	$res1b, $ctr_t1b, $ctr6b, $t1.16b			@ AES final-1 block - result
@@ -1247,7 +1247,7 @@ unroll8_eor3_aes_gcm_enc_128_kernel:
 
 	eor	$res0b, $res0b, $t0.16b					@ feed in partial tag
 
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 	ins	$rk4v.d[0], $res0.d[1]					@ GHASH final-1 block - mid
 	eor3	$res1b, $ctr_t1b, $ctr7b, $t1.16b			@ AES final block - result
 
@@ -2184,7 +2184,7 @@ unroll8_eor3_aes_gcm_dec_128_kernel:
 	pmull	$acc_l.1q, $res0.1d, $h8.1d				@ GHASH final-7 block - low
 	ins	$rk4v.d[0], $res0.d[1]					@ GHASH final-7 block - mid
 
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 	ldr	$res1q, [$input_ptr], #16				@ AES final-6 block - load ciphertext
 
 	eor	$rk4v.8b, $rk4v.8b, $res0.8b				@ GHASH final-7 block - mid
@@ -2206,7 +2206,7 @@ unroll8_eor3_aes_gcm_dec_128_kernel:
 
 	pmull	$rk3q1, $res0.1d, $h7.1d				@ GHASH final-6 block - low
 	ldr	$res1q, [$input_ptr], #16				@ AES final-5 block - load ciphertext
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 
 	pmull	$rk4v.1q, $rk4v.1d, $h78k.1d				@ GHASH final-6 block - mid
 	st1	{ $res4b}, [$output_ptr], #16			 	@ AES final-6 block - store result
@@ -2234,7 +2234,7 @@ unroll8_eor3_aes_gcm_dec_128_kernel:
 
 	ins	$rk4v.d[1], $rk4v.d[0]					@ GHASH final-5 block - mid
 	pmull	$rk3q1, $res0.1d, $h6.1d				@ GHASH final-5 block - low
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 
 	pmull2  $rk4v.1q, $rk4v.2d, $h56k.2d				@ GHASH final-5 block - mid
 	pmull2  $rk2q1, $res0.2d, $h6.2d				@ GHASH final-5 block - high
@@ -2250,7 +2250,7 @@ unroll8_eor3_aes_gcm_dec_128_kernel:
 	ldr	$res1q, [$input_ptr], #16				@ AES final-3 block - load ciphertext
 
 	ins	$rk4v.d[0], $res0.d[1]					@ GHASH final-4 block - mid
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 	pmull2  $rk2q1, $res0.2d, $h5.2d				@ GHASH final-4 block - high
 
 	pmull	$rk3q1, $res0.1d, $h5.1d				@ GHASH final-4 block - low
@@ -2287,7 +2287,7 @@ unroll8_eor3_aes_gcm_dec_128_kernel:
 	pmull	$rk3q1, $res0.1d, $h4.1d				@ GHASH final-3 block - low
 	pmull2  $rk2q1, $res0.2d, $h4.2d				@ GHASH final-3 block - high
 
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 	eor3	$res4b, $res1b, $ctr5b, $t1.16b				@ AES final-2 block - result
 	eor	$acc_lb, $acc_lb, $rk3					@ GHASH final-3 block - low
 
@@ -2304,7 +2304,7 @@ unroll8_eor3_aes_gcm_dec_128_kernel:
 	eor	$res0b, $res0b, $t0.16b					@ feed in partial tag
 	ldr	$h3q, [$current_tag, #80]				@ load h3l | h3h
 	ext     $h3.16b, $h3.16b, $h3.16b, #8
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 
 	ins	$rk4v.d[0], $res0.d[1]					@ GHASH final-2 block - mid
 
@@ -2332,7 +2332,7 @@ unroll8_eor3_aes_gcm_dec_128_kernel:
 
 	eor	$res0b, $res0b, $t0.16b					@ feed in partial tag
 
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 
 	ins	$rk4v.d[0], $res0.d[1]					@ GHASH final-1 block - mid
 
@@ -3412,7 +3412,7 @@ unroll8_eor3_aes_gcm_enc_192_kernel:
 	ldr	$ctr_t1q, [$input_ptr], #16				@ AES final-6 block - load plaintext
 
 	eor	$rk4v.8b, $rk4v.8b, $res0.8b				@ GHASH final-7 block - mid
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 	pmull	$acc_l.1q, $res0.1d, $h8.1d				@ GHASH final-7 block - low
 
 	pmull2  $acc_h.1q, $res0.2d, $h8.2d				@ GHASH final-7 block - high
@@ -3434,7 +3434,7 @@ unroll8_eor3_aes_gcm_enc_192_kernel:
 	pmull	$rk3q1, $res0.1d, $h7.1d				@ GHASH final-6 block - low
 	eor3	$res1b, $ctr_t1b, $ctr2b, $t1.16b			@ AES final-5 block - result
 
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 	pmull2  $rk2q1, $res0.2d, $h7.2d				@ GHASH final-6 block - high
 	eor	$rk4v.8b, $rk4v.8b, $res0.8b				@ GHASH final-6 block - mid
 
@@ -3467,7 +3467,7 @@ unroll8_eor3_aes_gcm_enc_192_kernel:
 	pmull2  $rk4v.1q, $rk4v.2d, $h56k.2d				@ GHASH final-5 block - mid
 
 	eor3	$res1b, $ctr_t1b, $ctr3b, $t1.16b			@ AES final-4 block - result
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 
 	eor	$acc_mb, $acc_mb, $rk4v.16b				@ GHASH final-5 block - mid
 .L192_enc_blocks_more_than_4:						@ blocks left >  4
@@ -3487,7 +3487,7 @@ unroll8_eor3_aes_gcm_enc_192_kernel:
 
 	eor	$rk4v.8b, $rk4v.8b, $res0.8b				@ GHASH final-4 block - mid
 
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 	eor	$acc_lb, $acc_lb, $rk3					@ GHASH final-4 block - low
 
 	pmull	$rk4v.1q, $rk4v.1d, $h56k.1d				@ GHASH final-4 block - mid
@@ -3502,7 +3502,7 @@ unroll8_eor3_aes_gcm_enc_192_kernel:
 	rev64	$res0b, $res1b						@ GHASH final-3 block
 
 	eor	$res0b, $res0b, $t0.16b					@ feed in partial tag
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 
 	ldr	$ctr_t1q, [$input_ptr], #16				@ AES final-2 block - load plaintext
 	ldr	$h4q, [$current_tag, #112]				@ load h4l | h4h
@@ -3540,7 +3540,7 @@ unroll8_eor3_aes_gcm_enc_192_kernel:
 
 	pmull	$rk3q1, $res0.1d, $h3.1d				@ GHASH final-2 block - low
 	pmull2  $rk2q1, $res0.2d, $h3.2d				@ GHASH final-2 block - high
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 
 	pmull	$rk4v.1q, $rk4v.1d, $h34k.1d				@ GHASH final-2 block - mid
 
@@ -3574,7 +3574,7 @@ unroll8_eor3_aes_gcm_enc_192_kernel:
 	eor3	$res1b, $ctr_t1b, $ctr7b, $t1.16b			@ AES final block - result
 	pmull2  $rk4v.1q, $rk4v.2d, $h12k.2d				@ GHASH final-1 block - mid
 
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 
 	eor	$acc_mb, $acc_mb, $rk4v.16b				@ GHASH final-1 block - mid
 	eor	$acc_hb, $acc_hb, $rk2					@ GHASH final-1 block - high
@@ -4576,7 +4576,7 @@ unroll8_eor3_aes_gcm_dec_192_kernel:
 	eor3	$res4b, $res1b, $ctr1b, $t1.16b				@ AES final-6 block - result
 
 	pmull	$acc_m.1q, $rk4v.1d, $acc_m.1d			 	@ GHASH final-7 block - mid
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 .L192_dec_blocks_more_than_6:						@ blocks left >  6
 
 	rev64	$res0b, $res1b						@ GHASH final-6 block
@@ -4587,7 +4587,7 @@ unroll8_eor3_aes_gcm_dec_192_kernel:
 	ins	$rk4v.d[0], $res0.d[1]					@ GHASH final-6 block - mid
 
 	eor	$rk4v.8b, $rk4v.8b, $res0.8b				@ GHASH final-6 block - mid
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 	pmull2  $rk2q1, $res0.2d, $h7.2d				@ GHASH final-6 block - high
 
 	st1	{ $res4b}, [$output_ptr], #16			 	@ AES final-6 block - store result
@@ -4620,7 +4620,7 @@ unroll8_eor3_aes_gcm_dec_192_kernel:
 	pmull2  $rk4v.1q, $rk4v.2d, $h56k.2d				@ GHASH final-5 block - mid
 
 	eor	$acc_lb, $acc_lb, $rk3					@ GHASH final-5 block - low
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 	st1	{ $res4b}, [$output_ptr], #16			 	@ AES final-5 block - store result
 
 	eor	$acc_mb, $acc_mb, $rk4v.16b				@ GHASH final-5 block - mid
@@ -4630,7 +4630,7 @@ unroll8_eor3_aes_gcm_dec_192_kernel:
 	rev64	$res0b, $res1b						@ GHASH final-4 block
 
 	eor	$res0b, $res0b, $t0.16b					@ feed in partial tag
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 
 	ldr	$res1q, [$input_ptr], #16				@ AES final-3 block - load ciphertext
 	ins	$rk4v.d[0], $res0.d[1]					@ GHASH final-4 block - mid
@@ -4661,7 +4661,7 @@ unroll8_eor3_aes_gcm_dec_192_kernel:
 	pmull2  $rk2q1, $res0.2d, $h4.2d				@ GHASH final-3 block - high
 
 	eor	$acc_hb, $acc_hb, $rk2					@ GHASH final-3 block - high
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 	pmull	$rk3q1, $res0.1d, $h4.1d				@ GHASH final-3 block - low
 
 	st1	{ $res4b}, [$output_ptr], #16			 	@ AES final-3 block - store result
@@ -4695,7 +4695,7 @@ unroll8_eor3_aes_gcm_dec_192_kernel:
 	pmull	$rk3q1, $res0.1d, $h3.1d				@ GHASH final-2 block - low
 
 	pmull	$rk4v.1q, $rk4v.1d, $h34k.1d				@ GHASH final-2 block - mid
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 
 	eor	$acc_lb, $acc_lb, $rk3					@ GHASH final-2 block - low
 	st1	{ $res4b}, [$output_ptr], #16			 	@ AES final-2 block - store result
@@ -4710,7 +4710,7 @@ unroll8_eor3_aes_gcm_dec_192_kernel:
 	ext     $h2.16b, $h2.16b, $h2.16b, #8
 
 	eor	$res0b, $res0b, $t0.16b					@ feed in partial tag
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 	ldr	$h12kq, [$current_tag, #48]				@ load h2k | h1k
 
 	pmull	$rk3q1, $res0.1d, $h2.1d				@ GHASH final-1 block - low
@@ -5854,7 +5854,7 @@ unroll8_eor3_aes_gcm_enc_256_kernel:
 	ins	$rk4v.d[0], $res0.d[1]					@ GHASH final-7 block - mid
 	ins	$acc_m.d[0], $h78k.d[1]					@ GHASH final-7 block - mid
 
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 
 	eor	$rk4v.8b, $rk4v.8b, $res0.8b				@ GHASH final-7 block - mid
 	eor3	$res1b, $ctr_t1b, $ctr1b, $t1.16b			@ AES final-6 block - result
@@ -5882,7 +5882,7 @@ unroll8_eor3_aes_gcm_enc_256_kernel:
 	pmull	$rk4v.1q, $rk4v.1d, $h78k.1d				@ GHASH final-6 block - mid
 	eor3	$res1b, $ctr_t1b, $ctr2b, $t1.16b			@ AES final-5 block - result
 
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 
 	eor	$acc_mb, $acc_mb, $rk4v.16b				@ GHASH final-6 block - mid
 	eor	$acc_hb, $acc_hb, $rk2					@ GHASH final-6 block - high
@@ -5907,7 +5907,7 @@ unroll8_eor3_aes_gcm_enc_256_kernel:
 	pmull	$rk3q1, $res0.1d, $h6.1d				  @ GHASH final-5 block - low
 
 	pmull2  $rk4v.1q, $rk4v.2d, $h56k.2d				@ GHASH final-5 block - mid
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 	eor	$acc_lb, $acc_lb, $rk3					@ GHASH final-5 block - low
 
 	eor	$acc_mb, $acc_mb, $rk4v.16b				@ GHASH final-5 block - mid
@@ -5933,7 +5933,7 @@ unroll8_eor3_aes_gcm_enc_256_kernel:
 
 	pmull	$rk4v.1q, $rk4v.1d, $h56k.1d				@ GHASH final-4 block - mid
 
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 
 	eor	$acc_mb, $acc_mb, $rk4v.16b				@ GHASH final-4 block - mid
 	eor	$acc_hb, $acc_hb, $rk2					@ GHASH final-4 block - high
@@ -5961,7 +5961,7 @@ unroll8_eor3_aes_gcm_enc_256_kernel:
 	pmull	$rk3q1, $res0.1d, $h4.1d				@ GHASH final-3 block - low
 
 	eor3	$res1b, $ctr_t1b, $ctr5b, $t1.16b			@ AES final-2 block - result
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 
 	eor	$acc_mb, $acc_mb, $rk4v.16b				@ GHASH final-3 block - mid
 	eor	$acc_lb, $acc_lb, $rk3					@ GHASH final-3 block - low
@@ -5979,7 +5979,7 @@ unroll8_eor3_aes_gcm_enc_256_kernel:
 
 	ins	$rk4v.d[0], $res0.d[1]					@ GHASH final-2 block - mid
 
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 
 	pmull2  $rk2q1, $res0.2d, $h3.2d				@ GHASH final-2 block - high
 	eor3	$res1b, $ctr_t1b, $ctr6b, $t1.16b			@ AES final-1 block - result
@@ -6003,7 +6003,7 @@ unroll8_eor3_aes_gcm_enc_256_kernel:
 	ldr	$ctr_t1q, [$input_ptr], #16				@ AES final block - load plaintext
 
 	eor	$res0b, $res0b, $t0.16b					@ feed in partial tag
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 
 	ins	$rk4v.d[0], $res0.d[1]					@ GHASH final-1 block - mid
 	pmull2  $rk2q1, $res0.2d, $h2.2d				@ GHASH final-1 block - high
@@ -7086,7 +7086,7 @@ unroll8_eor3_aes_gcm_dec_256_kernel:
 	pmull2  $acc_h.1q, $res0.2d, $h8.2d				@ GHASH final-7 block - high
 
 	eor	$rk4v.8b, $rk4v.8b, $res0.8b				@ GHASH final-7 block - mid
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 
 	pmull	$acc_l.1q, $res0.1d, $h8.1d				@ GHASH final-7 block - low
 	pmull	$acc_m.1q, $rk4v.1d, $acc_m.1d			 	@ GHASH final-7 block - mid
@@ -7096,7 +7096,7 @@ unroll8_eor3_aes_gcm_dec_256_kernel:
 
 	eor	$res0b, $res0b, $t0.16b					@ feed in partial tag
 	ldr	$res1q, [$input_ptr], #16				@ AES final-5 block - load ciphertext
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 
 	ins	$rk4v.d[0], $res0.d[1]					@ GHASH final-6 block - mid
 	st1	{ $res4b}, [$output_ptr], #16				@ AES final-6 block - store result
@@ -7136,7 +7136,7 @@ unroll8_eor3_aes_gcm_dec_256_kernel:
 	eor	$acc_lb, $acc_lb, $rk3					@ GHASH final-5 block - low
 
 	eor	$acc_mb, $acc_mb, $rk4v.16b				@ GHASH final-5 block - mid
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 .L256_dec_blocks_more_than_4:						@ blocks left >  4
 
 	rev64	$res0b, $res1b						@ GHASH final-4 block
@@ -7146,7 +7146,7 @@ unroll8_eor3_aes_gcm_dec_256_kernel:
 	ins	$rk4v.d[0], $res0.d[1]					@ GHASH final-4 block - mid
 	ldr	$res1q, [$input_ptr], #16				@ AES final-3 block - load ciphertext
 
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 
 	pmull	$rk3q1, $res0.1d, $h5.1d				@ GHASH final-4 block - low
 	pmull2  $rk2q1, $res0.2d, $h5.2d				@ GHASH final-4 block - high
@@ -7183,7 +7183,7 @@ unroll8_eor3_aes_gcm_dec_256_kernel:
 	pmull	$rk3q1, $res0.1d, $h4.1d				@ GHASH final-3 block - low
 	pmull2  $rk2q1, $res0.2d, $h4.2d				@ GHASH final-3 block - high
 
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 	pmull2  $rk4v.1q, $rk4v.2d, $h34k.2d				@ GHASH final-3 block - mid
 	eor	$acc_lb, $acc_lb, $rk3					@ GHASH final-3 block - low
 
@@ -7208,7 +7208,7 @@ unroll8_eor3_aes_gcm_dec_256_kernel:
 
 	eor	$rk4v.8b, $rk4v.8b, $res0.8b				@ GHASH final-2 block - mid
 	eor	$acc_lb, $acc_lb, $rk3					@ GHASH final-2 block - low
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 
 	pmull	$rk4v.1q, $rk4v.1d, $h34k.1d				@ GHASH final-2 block - mid
 	pmull2  $rk2q1, $res0.2d, $h3.2d				@ GHASH final-2 block - high
@@ -7241,7 +7241,7 @@ unroll8_eor3_aes_gcm_dec_256_kernel:
 
 	pmull2  $rk4v.1q, $rk4v.2d, $h12k.2d				@ GHASH final-1 block - mid
 
-	movi	$t0.8b, #0						@ surpress further partial tag feed in
+	movi	$t0.8b, #0						@ supress further partial tag feed in
 	eor	$acc_hb, $acc_hb, $rk2					@ GHASH final-1 block - high
 
 	eor	$acc_mb, $acc_mb, $rk4v.16b				@ GHASH final-1 block - mid
