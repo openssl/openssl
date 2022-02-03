@@ -549,11 +549,11 @@ long BIO_int_ctrl(BIO *b, int cmd, long larg, int iarg)
     return BIO_ctrl(b, cmd, larg, (char *)&i);
 }
 
-void *BIO_ptr_ctrl(BIO *b, int cmd, long larg)
+char *BIO_ptr_ctrl(BIO *b, int cmd, long larg)
 {
-    void *p = NULL;
+    char *p = NULL;
 
-    if (BIO_ctrl(b, cmd, larg, (char *)&p) <= 0)
+    if (BIO_ctrl(b, cmd, larg, &p) <= 0)
         return NULL;
     else
         return p;
