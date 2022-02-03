@@ -28,12 +28,14 @@
 #  define sock_puts  SockPuts
 # endif
 
-struct bio_tfo_st {
-    BIO_ADDR peer;
-    int first;
+struct bio_sock_st {
+    BIO_ADDR tfo_peer;
+    int tfo_first;
+    unsigned char ktls_record_type;
 };
-# define BIO_TFO_PEER(b)  (((struct bio_tfo_st*)(b)->ptr)->peer)
-# define BIO_TFO_FIRST(b) (((struct bio_tfo_st*)(b)->ptr)->first)
+# define BIO_TFO_PEER(b)    (((struct bio_sock_st*)(b)->ptr)->tfo_peer)
+# define BIO_TFO_FIRST(b)   (((struct bio_sock_st*)(b)->ptr)->tfo_first)
+# define BIO_KTLS_RECORD(b) (((struct bio_sock_st*)(b)->ptr)->ktls_record_type)
 
 static int sock_write(BIO *h, const char *buf, int num);
 static int sock_read(BIO *h, char *buf, int size);
@@ -90,7 +92,7 @@ static int sock_new(BIO *bi)
     bi->init = 0;
     bi->num = 0;
     bi->flags = 0;
-    bi->ptr = OPENSSL_zalloc(sizeof(struct bio_tfo_st));
+    bi->ptr = OPENSSL_zalloc(sizeof(struct bio_sock_st));
     if (bi->ptr == NULL)
         return 0;
     return 1;
@@ -142,7 +144,7 @@ static int sock_write(BIO *b, const char *in, int inl)
     clear_socket_error();
 # ifndef OPENSSL_NO_KTLS
     if (BIO_should_ktls_ctrl_msg_flag(b)) {
-        unsigned char record_type = (intptr_t)b->ptr;
+        unsigned char record_type = BIO_KTLS_RECORD(b);
         ret = ktls_send_ctrl_message(b->num, record_type, in, inl);
         if (ret >= 0) {
             ret = inl;
@@ -222,7 +224,7 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
         return BIO_should_ktls_flag(b, 0) != 0;
     case BIO_CTRL_SET_KTLS_TX_SEND_CTRL_MSG:
         BIO_set_ktls_ctrl_msg_flag(b);
-        b->ptr = (void *)num;
+        BIO_KTLS_RECORD(b) = (unsigned char)num;
         ret = 0;
         break;
     case BIO_CTRL_CLEAR_KTLS_TX_CTRL_MSG:
