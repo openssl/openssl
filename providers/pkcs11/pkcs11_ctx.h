@@ -170,8 +170,8 @@ typedef struct pkcs11_sign_st {
     PKCS11_KEY *pkey;
     CK_MECHANISM_TYPE type;
     PKCS11_CTX *pkcs11_ctx;
-    int pad_type;
     int digest_nid;
+    int isinit;
 } PKCS11_SIGN_CTX;
 
 typedef struct pkcs11_digest_st {
