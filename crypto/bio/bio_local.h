@@ -141,14 +141,6 @@ struct bio_st {
 typedef unsigned int socklen_t;
 # endif
 
-/* Used by various socket BIOs */
-struct bio_tfo_st {
-    BIO_ADDR peer;
-    int first;
-};
-#define BIO_TFO_PEER(b)  (((struct bio_tfo_st*)(b)->ptr)->peer)
-#define BIO_TFO_FIRST(b) (((struct bio_tfo_st*)(b)->ptr)->first)
-
 extern CRYPTO_RWLOCK *bio_lookup_lock;
 
 int BIO_ADDR_make(BIO_ADDR *ap, const struct sockaddr *sa);

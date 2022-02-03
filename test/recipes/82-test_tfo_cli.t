@@ -41,7 +41,7 @@ sub run_test {
 
     my $spid = open2(my $sout, my $sin, $shlib_wrap, $apps_openssl, @s_cmd);
 
-    # Read until we get the port, TFO is output before the aCCEPT line
+    # Read until we get the port, TFO is output before the ACCEPT line
     while (<$sout>) {
         chomp;
         $server_good = $tfo if /^Listening for TFO$/;

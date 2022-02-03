@@ -28,6 +28,13 @@
 #  define sock_puts  SockPuts
 # endif
 
+struct bio_tfo_st {
+    BIO_ADDR peer;
+    int first;
+};
+# define BIO_TFO_PEER(b)  (((struct bio_tfo_st*)(b)->ptr)->peer)
+# define BIO_TFO_FIRST(b) (((struct bio_tfo_st*)(b)->ptr)->first)
+
 static int sock_write(BIO *h, const char *buf, int num);
 static int sock_read(BIO *h, char *buf, int size);
 static int sock_puts(BIO *h, const char *str);
@@ -97,11 +104,11 @@ static int sock_free(BIO *a)
         if (a->init) {
             BIO_closesocket(a->num);
         }
-        OPENSSL_free(a->ptr);
-        a->ptr = NULL;
         a->init = 0;
         a->flags = 0;
     }
+    OPENSSL_free(a->ptr);
+    a->ptr = NULL;
     return 1;
 }
 
