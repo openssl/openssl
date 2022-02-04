@@ -36,7 +36,7 @@ static int test_do_updatedb(void)
 
     /* if the test will only work with 64bit time_t and
        the build only supports 32, assume the test as sucess */
-    need64bit = test_get_argument(3);
+    need64bit = (int)strtol(test_get_argument(3), NULL, 0);
     have64bit = sizeof(time_t) > sizeof(uint32_t);
     if (need64bit && !have64bit) {
         return 1;
