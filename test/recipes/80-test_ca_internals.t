@@ -67,6 +67,38 @@ my @updatedb_tests = (
                         '1001',
                         '1002',
                         '1003' ]
+    },
+    { 
+        description => 'updatedb called just before Y2K36',
+        filename => 'index.txt',
+        copydb => 1,
+        testdate => '360207062515Z',
+        expirelist => [ '1000',
+		                '1001' ]
+    },
+    { 
+        description => 'updatedb called just after Y2K36',
+        filename => 'index.txt',
+        copydb => 1,
+        testdate => '360207062517Z',
+        expirelist => [ '1000',
+		                '1001' ]
+    },
+     { 
+        description => 'updatedb called just before Y2K38',
+        filename => 'index.txt',
+        copydb => 1,
+        testdate => '380119031406Z',
+        expirelist => [ '1000',
+		                '1001' ]
+    },
+    { 
+        description => 'updatedb called just after Y2K38',
+        filename => 'index.txt',
+        copydb => 1,
+        testdate => '380119031408Z',
+        expirelist => [ '1000',
+		                '1001' ]
     }
 );
 
