@@ -2300,7 +2300,7 @@ int do_updatedb(CA_DB *db, time_t *now)
         return -1;
 
     /* get actual time */
-	if (X509_time_adj(a_tm, 0, now) == NULL) {
+    if (X509_time_adj(a_tm, 0, now) == NULL) {
         ASN1_TIME_free(a_tm);
         return -1;
     }
