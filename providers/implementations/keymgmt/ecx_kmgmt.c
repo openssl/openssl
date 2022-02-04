@@ -10,7 +10,7 @@
 #include <assert.h>
 #include <string.h>
 /* For strcasecmp on Windows */
-#include "e_os.h"
+#include "internal/e_os.h"
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>

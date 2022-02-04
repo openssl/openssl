@@ -46,7 +46,7 @@
  *      Otherwise it is the same as CS2.
  */
 
-#include "e_os.h" /* strcasecmp */
+#include "internal/e_os.h" /* strcasecmp */
 #include <openssl/core_names.h>
 #include "prov/ciphercommon.h"
 #include "internal/nelem.h"

@@ -9,7 +9,7 @@
 
 /* This file has quite some overlap with engines/e_loader_attic.c */
 
-#include "e_os.h"                /* To get strncasecmp() on Windows */
+#include "internal/e_os.h"                /* To get strncasecmp() on Windows */
 
 #include <string.h>
 #include <sys/stat.h>

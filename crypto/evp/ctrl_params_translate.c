@@ -37,7 +37,7 @@
 #include "crypto/dh.h"
 #include "crypto/ec.h"
 
-#include "e_os.h"                /* strcasecmp() for Windows */
+#include "internal/e_os.h"                /* strcasecmp() for Windows */
 
 struct translation_ctx_st;       /* Forwarding */
 struct translation_st;           /* Forwarding */

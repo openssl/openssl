@@ -22,7 +22,7 @@
 #include "crypto/ec.h"
 #include "internal/nelem.h"
 #include "ec_local.h"
-#include "e_os.h" /* strcasecmp */
+#include "internal/e_os.h" /* strcasecmp */
 
 /* functions for EC_GROUP objects */
 

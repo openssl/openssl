@@ -35,7 +35,7 @@
 #include "internal/nelem.h"
 #include "internal/sizes.h"
 #include "crypto/evp.h"
-#include "../e_os.h" /* strcasecmp */
+#include "internal/e_os.h" /* strcasecmp */
 
 static OSSL_LIB_CTX *testctx = NULL;
 static char *testpropq = NULL;
