@@ -44,7 +44,7 @@
 #include "prov/provider_util.h"
 #include "prov/providercommon.h"
 
-#include "e_os.h"
+#include "internal/e_os.h"
 
 #define ossl_min(a, b) ((a) < (b)) ? (a) : (b)
 

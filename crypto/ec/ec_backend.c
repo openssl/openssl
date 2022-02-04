@@ -24,7 +24,7 @@
 #include "crypto/bn.h"
 #include "crypto/ec.h"
 #include "ec_local.h"
-#include "e_os.h"
+#include "internal/e_os.h"
 #include "internal/param_build_set.h"
 
 /* Mapping between a flag and a name */

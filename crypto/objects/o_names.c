@@ -19,7 +19,7 @@
 #include "internal/thread_once.h"
 #include "crypto/lhash.h"
 #include "obj_local.h"
-#include "e_os.h"
+#include "internal/e_os.h"
 
 /*
  * I use the ex_data stuff to manage the identifiers for the obj_name_types

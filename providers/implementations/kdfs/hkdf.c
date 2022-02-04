@@ -29,7 +29,7 @@
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
-#include "e_os.h"
+#include "internal/e_os.h"
 
 #define HKDF_MAXBUF 2048
 

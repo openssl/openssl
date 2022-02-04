@@ -17,7 +17,7 @@
 #endif
 
 #include "dso_local.h"
-#include "e_os.h"
+#include "internal/e_os.h"
 
 #ifdef DSO_DLFCN
 

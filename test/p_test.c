@@ -26,7 +26,7 @@
 # define OSSL_provider_init PROVIDER_INIT_FUNCTION_NAME
 #endif
 
-#include "e_os.h"
+#include "internal/e_os.h"
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/err.h>

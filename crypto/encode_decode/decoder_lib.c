@@ -20,7 +20,7 @@
 #include "internal/provider.h"
 #include "crypto/decoder.h"
 #include "encoder_local.h"
-#include "e_os.h"
+#include "internal/e_os.h"
 
 struct decoder_process_data_st {
     OSSL_DECODER_CTX *ctx;

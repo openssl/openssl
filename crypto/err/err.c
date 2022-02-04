@@ -23,7 +23,7 @@
 #include "internal/thread_once.h"
 #include "crypto/ctype.h"
 #include "internal/constant_time.h"
-#include "e_os.h"
+#include "internal/e_os.h"
 #include "err_local.h"
 
 /* Forward declaration in case it's not published because of configuration */

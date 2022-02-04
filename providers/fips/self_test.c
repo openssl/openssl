@@ -16,7 +16,7 @@
 #include <openssl/err.h>
 #include <openssl/proverr.h>
 #include <openssl/rand.h>
-#include "e_os.h"
+#include "internal/e_os.h"
 #include "prov/providercommon.h"
 
 /*
