@@ -9,7 +9,7 @@
 
 /* Part of the code in here was originally in conf.c, which is now removed */
 
-#include "e_os.h"
+#include "internal/e_os.h"
 #include "internal/cryptlib.h"
 #include <stdlib.h>
 #include <string.h>

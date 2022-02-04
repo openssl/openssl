@@ -13,7 +13,7 @@
 
 #include <stdlib.h>
 #include "internal/cryptlib.h"
-#include "e_os.h"
+#include "internal/e_os.h"
 
 char *ossl_safe_getenv(const char *name)
 {

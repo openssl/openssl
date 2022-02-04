@@ -10,7 +10,7 @@
 /* We need to use some deprecated APIs */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
-#include "../e_os.h"
+#include "internal/e_os.h"
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>

@@ -60,7 +60,7 @@
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
-#include "e_os.h"
+#include "internal/e_os.h"
 
 static OSSL_FUNC_kdf_newctx_fn kdf_tls1_prf_new;
 static OSSL_FUNC_kdf_dupctx_fn kdf_tls1_prf_dup;
