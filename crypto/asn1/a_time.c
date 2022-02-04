@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -588,4 +588,42 @@ int ASN1_TIME_compare(const ASN1_TIME *a, const ASN1_TIME *b)
     if (day < 0 || sec < 0)
         return -1;
     return 0;
+}
+
+/*
+ * tweak for Windows
+ */
+#ifdef WIN32
+# define timezone _timezone
+#endif
+
+time_t asn1_string_to_time_t(const char *asn1_string)
+{
+    ASN1_TIME *timestamp_asn1 = NULL;
+    struct tm *timestamp_tm = NULL;
+    time_t timestamp_local;
+    time_t timestamp_utc;
+
+    timestamp_asn1 = ASN1_TIME_new();
+    if (!ASN1_TIME_set_string(timestamp_asn1, asn1_string))
+    {
+        ASN1_TIME_free(timestamp_asn1);
+        return -1;
+    }
+
+    timestamp_tm = OPENSSL_malloc(sizeof(*timestamp_tm));
+
+    if (!(ASN1_TIME_to_tm(timestamp_asn1, timestamp_tm))) {
+        OPENSSL_free(timestamp_tm);
+        ASN1_TIME_free(timestamp_asn1);
+        return -1;
+    }
+
+    timestamp_local = mktime(timestamp_tm);
+    OPENSSL_free(timestamp_tm);
+
+    timestamp_utc = timestamp_local - timezone;
+
+    ASN1_TIME_free(timestamp_asn1);
+    return timestamp_utc;
 }
