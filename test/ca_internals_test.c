@@ -35,7 +35,7 @@ static int test_do_updatedb(void)
     testdate = test_get_argument(2);
     testdateutc = asn1_string_to_time_t(testdate);
     if (testdateutc < 0) {
-        fprintf(stderr, "Error: testdate '%s' is invalid\n", testdate);
+        fprintf(stderr, "Error: testdate '%s' is invalid (%i)\n", testdate, testdateutc);
         return 0;
     }
 
