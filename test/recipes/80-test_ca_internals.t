@@ -21,6 +21,7 @@ my @updatedb_tests = (
         filename => 'index.txt',
         copydb => 1,
         testdate => '990101000000Z',
+		need64bit => 0,
         expirelist => [ ]
     },
     { 
@@ -28,6 +29,7 @@ my @updatedb_tests = (
         filename => 'index.txt',
         copydb => 0,
         testdate => '991201000000Z',
+		need64bit => 0,
         expirelist => [ '1000' ]
     },
     { 
@@ -35,6 +37,7 @@ my @updatedb_tests = (
         filename => 'index.txt',
         copydb => 0,
         testdate => '211201000000Z',
+		need64bit => 0,
         expirelist => [ '1001' ]
     },
     { 
@@ -42,6 +45,7 @@ my @updatedb_tests = (
         filename => 'index.txt',
         copydb => 0,
         testdate => '491201000000Z',
+		need64bit => 1,
         expirelist => [ '1002' ]
     },
     { 
@@ -49,6 +53,7 @@ my @updatedb_tests = (
         filename => 'index.txt',
         copydb => 0,
         testdate => '20500101000000Z',
+		need64bit => 1,
         expirelist => [ ]
     },
     { 
@@ -56,6 +61,7 @@ my @updatedb_tests = (
         filename => 'index.txt',
         copydb => 0,
         testdate => '20501201000000Z',
+		need64bit => 1,
         expirelist => [ '1003' ]
     },
     { 
@@ -63,6 +69,7 @@ my @updatedb_tests = (
         filename => 'index.txt',
         copydb => 1,
         testdate => '20501201000000Z',
+		need64bit => 1,
         expirelist => [ '1000', 
                         '1001',
                         '1002',
@@ -73,6 +80,7 @@ my @updatedb_tests = (
         filename => 'index.txt',
         copydb => 1,
         testdate => '360207062515Z',
+		need64bit => 0,
         expirelist => [ '1000',
 		                '1001' ]
     },
@@ -81,6 +89,7 @@ my @updatedb_tests = (
         filename => 'index.txt',
         copydb => 1,
         testdate => '360207062517Z',
+		need64bit => 0,
         expirelist => [ '1000',
 		                '1001' ]
     },
@@ -89,6 +98,7 @@ my @updatedb_tests = (
         filename => 'index.txt',
         copydb => 1,
         testdate => '380119031406Z',
+		need64bit => 0,
         expirelist => [ '1000',
 		                '1001' ]
     },
@@ -97,6 +107,7 @@ my @updatedb_tests = (
         filename => 'index.txt',
         copydb => 1,
         testdate => '380119031408Z',
+		need64bit => 1,
         expirelist => [ '1000',
 		                '1001' ]
     }
@@ -153,7 +164,8 @@ sub test_updatedb {
         test(['ca_internals_test',
             "do_updatedb",
             $opts->{filename},
-            $opts->{testdate}
+            $opts->{testdate},
+            $opts->{need64bit}
         ]),
         capture => 1,
         statusvar => \my $exit

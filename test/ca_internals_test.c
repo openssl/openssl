@@ -25,11 +25,21 @@ static int test_do_updatedb(void)
     BIO *bio_tmp;
     char *testdate;
     char *indexfile;
+	int need64bit;
+    int have64bit;
 
-    if (argc != 3) {
-        TEST_error("Usage: %s: do_updatedb dbfile testdate\n", binname);
+    if (argc != 4) {
+        TEST_error("Usage: %s: do_updatedb dbfile testdate need64bit\n", binname);
         TEST_error("       testdate format: ASN1-String\n");
         return 0;
+    }
+
+    /* if the test will only work with 64bit time_t and
+       the build only supports 32, assume the test as sucess */
+    need64bit = test_get_argument(3);
+    have64bit = sizeof(time_t) > sizeof(uint32_t);
+    if (need64bit && !have64bit) {
+        return 1;
     }
 
     testdate = test_get_argument(2);
