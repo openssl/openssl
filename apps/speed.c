@@ -29,6 +29,7 @@
 #include <math.h>
 #include "apps.h"
 #include "progs.h"
+#include <internal/numbers.h>
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
@@ -82,10 +83,6 @@
 
 #ifndef RSA_DEFAULT_PRIME_NUM
 # define RSA_DEFAULT_PRIME_NUM 2
-#endif
-
-#ifndef SIZE_MAX
-#include <internal/numbers.h>
 #endif
 
 typedef struct openssl_speed_sec_st {
