@@ -13,7 +13,6 @@
 
 # include <stdlib.h>
 # include <string.h>
-# include "../../e_os.h" /* To get strncasecmp() on Windows */
 
 # include "internal/nelem.h"
 
