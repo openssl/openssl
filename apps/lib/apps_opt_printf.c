@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "opt.h"
 #include <openssl/ui.h>
 #include "apps_ui.h"
 
