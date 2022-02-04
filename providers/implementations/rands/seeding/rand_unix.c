@@ -10,7 +10,7 @@
 #ifndef _GNU_SOURCE
 # define _GNU_SOURCE
 #endif
-#include "../e_os.h"
+#include "internal/e_os.h"
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/rand.h>

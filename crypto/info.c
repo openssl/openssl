@@ -12,7 +12,7 @@
 #include "crypto/dso_conf.h"
 #include "internal/thread_once.h"
 #include "internal/cryptlib.h"
-#include "e_os.h"
+#include "internal/e_os.h"
 #include "buildinf.h"
 
 #if defined(__arm__) || defined(__arm) || defined(__aarch64__)

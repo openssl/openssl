@@ -50,7 +50,7 @@
 #include "internal/provider.h"
 #include "evp_local.h"
 
-#include "e_os.h"                /* strcasecmp on Windows */
+#include "internal/e_os.h"                /* strcasecmp on Windows */
 
 static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
                          int len, EVP_KEYMGMT *keymgmt);

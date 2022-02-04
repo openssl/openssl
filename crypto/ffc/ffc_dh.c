@@ -10,7 +10,7 @@
 #include "internal/ffc.h"
 #include "internal/nelem.h"
 #include "crypto/bn_dh.h"
-#include "e_os.h" /* strcasecmp */
+#include "internal/e_os.h" /* strcasecmp */
 
 #ifndef OPENSSL_NO_DH
 

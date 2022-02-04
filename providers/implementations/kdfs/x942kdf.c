@@ -8,7 +8,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "e_os.h"
+#include "internal/e_os.h"
 #include <openssl/core_names.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/err.h>

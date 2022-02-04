@@ -19,7 +19,7 @@
 #include "internal/refcount.h"
 #include "crypto/cryptlib.h"
 
-#include "e_os.h"                /* strcasecmp for Windows */
+#include "internal/e_os.h"                /* strcasecmp for Windows */
 
 #ifndef OPENSSL_NO_TRACE
 

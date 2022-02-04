@@ -15,7 +15,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "e_os.h" /* strcasecmp */
+#include "internal/e_os.h" /* strcasecmp */
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/objects.h>

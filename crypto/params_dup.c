@@ -11,7 +11,7 @@
 #include <openssl/params.h>
 #include <openssl/param_build.h>
 #include "internal/param_build_set.h"
-#include "e_os.h" /* strcasecmp */
+#include "internal/e_os.h" /* strcasecmp */
 
 #define OSSL_PARAM_ALLOCATED_END    127
 #define OSSL_PARAM_MERGE_LIST_MAX   128

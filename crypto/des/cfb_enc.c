@@ -13,7 +13,7 @@
  */
 #include "internal/deprecated.h"
 
-#include "e_os.h"
+#include "internal/e_os.h"
 #include "des_local.h"
 #include <assert.h>
 

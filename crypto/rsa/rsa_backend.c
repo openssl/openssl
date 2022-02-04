@@ -27,7 +27,7 @@
 #include "crypto/rsa.h"
 #include "rsa_local.h"
 
-#include "e_os.h"                /* strcasecmp for Windows() */
+#include "internal/e_os.h"                /* strcasecmp for Windows() */
 
 /*
  * The intention with the "backend" source file is to offer backend support

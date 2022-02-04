@@ -13,7 +13,7 @@
  */
 #include "internal/deprecated.h"
 
-#include "e_os.h"  /* strcasecmp */
+#include "internal/e_os.h"  /* strcasecmp */
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/core_dispatch.h>

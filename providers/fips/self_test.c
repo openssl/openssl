@@ -15,7 +15,7 @@
 #include <openssl/fipskey.h>
 #include <openssl/err.h>
 #include <openssl/proverr.h>
-#include "e_os.h"
+#include "internal/e_os.h"
 #include "prov/providercommon.h"
 
 /*
