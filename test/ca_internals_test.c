@@ -39,13 +39,15 @@ static int test_do_updatedb(void)
     need64bit = (int)strtol(test_get_argument(3), NULL, 0);
     have64bit = sizeof(time_t) > sizeof(uint32_t);
     if (need64bit && !have64bit) {
+        BIO_printf(bio_err, "skipping test (need64bit: %i, have64bit: %i)",
+            need64bit, have64bit);
         return 1;
     }
 
     testdate = test_get_argument(2);
     testdateutc = asn1_string_to_time_t(testdate);
     if (testdateutc < 0) {
-        fprintf(stderr, "Error: testdate '%s' is invalid (%ld)\n", testdate, (long)testdateutc);
+        fprintf(stderr, "Error: testdate '%s' is invalid\n", testdate);
         return 0;
     }
 
