@@ -1778,7 +1778,12 @@ int speed_main(int argc, char **argv)
         buflen = lengths[size_num - 1];
         if (buflen < 36)    /* size of random vector in RSA benchmark */
             buflen = 36;
-        buflen += MAX_MISALIGNMENT + 1;
+        if (0x7fffffff - (MAX_MISALIGNMENT + 1) < buflen)
+        {
+            BIO_printf(bio_err, "Warning: ignoring -misalign option.\n");
+        } else {
+            buflen += MAX_MISALIGNMENT + 1;
+        }
         loopargs[i].buf_malloc = app_malloc(buflen, "input buffer");
         loopargs[i].buf2_malloc = app_malloc(buflen, "input buffer");
         memset(loopargs[i].buf_malloc, 0, buflen);
