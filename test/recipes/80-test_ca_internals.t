@@ -137,8 +137,8 @@ sub test_updatedb {
     );
 
     foreach my $tmp (@output) {
-        ($cert)=$tmp=~/^[\x20\x23]*[^0-9A-Fa-f]*([0-9A-Fa-f]+)=Expired/;
-        if ($tmp=~/skipping test/) {
+        ($cert) = $tmp =~ /^[\x20\x23]*[^0-9A-Fa-f]*([0-9A-Fa-f]+)=Expired/;
+        if ($tmp =~ /^[\x20\x23]*skipping test/) {
             $skipped = 1;
         }
         if (defined($cert) && (length($cert) > 0)) {
@@ -155,14 +155,12 @@ sub test_updatedb {
         }
     }
 
-    is($exit, 1, "ca_internals_test: returned EXIT_FAILURE (".$opts->{description}.")");
     if ($skipped) {
-        is(1,1);
-        is(1,1);
+        $amtexpired = $amtexpectedexpired;
+        $expirelistcorrect = 1;
     }
-    else {
-        is($amtexpired, $amtexpectedexpired, "ca_internals_test: amount of expired certificated differs from expected amount (".$opts->{description}.")");
-        is($expirelistcorrect, 1, "ca_internals_test: list of expired certificated differs from expected list (".$opts->{description}.")");
-    }
+    is($exit, 1, "ca_internals_test: returned EXIT_FAILURE (".$opts->{description}.")");
+    is($amtexpired, $amtexpectedexpired, "ca_internals_test: amount of expired certificated differs from expected amount (".$opts->{description}.")");
+    is($expirelistcorrect, 1, "ca_internals_test: list of expired certificated differs from expected list (".$opts->{description}.")");
 }
 
