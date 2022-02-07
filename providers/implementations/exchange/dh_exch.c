@@ -293,6 +293,8 @@ static void *dh_dupctx(void *vpdhctx)
             goto err;
     }
     dstctx->kdf_cekalg = OPENSSL_strdup(srcctx->kdf_cekalg);
+    if (dstctx->kdf_cekalg == NULL)
+        goto err;
 
     return dstctx;
 err:
@@ -393,6 +395,8 @@ static int dh_set_ctx_params(void *vpdhctx, const OSSL_PARAM params[])
         if (!OSSL_PARAM_get_utf8_string(p, &str, sizeof(name)))
             return 0;
         pdhctx->kdf_cekalg = OPENSSL_strdup(name);
+        if (pdhctx->kdf_cekalg == NULL)
+            return 0;
     }
     return 1;
 }
