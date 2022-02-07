@@ -1681,6 +1681,11 @@ int s_server_main(int argc, char *argv[])
     }
 #endif
 
+    if (tfo && socket_type != SOCK_STREAM) {
+        BIO_printf(bio_err, "Can only use -tfo with TLS\n");
+        goto end;
+    }
+
     if (stateless && socket_type != SOCK_STREAM) {
         BIO_printf(bio_err, "Can only use --stateless with TLS\n");
         goto end;
