@@ -10,7 +10,7 @@ IF[{- !$disabled{asm} -}]
   $CHACHAASM_s390x=chacha-s390x.S
 
   $CHACHAASM_armv4=chacha-armv4.S
-  $CHACHAASM_aarch64=chacha-armv8.S
+  $CHACHAASM_aarch64=chacha-armv8.S chacha-armv8-sve.S
 
   $CHACHAASM_ppc32=chacha_ppc.c chacha-ppc.s chachap10-ppc.s
   $CHACHAASM_ppc64=$CHACHAASM_ppc32
@@ -33,7 +33,9 @@ GENERATE[chachap10-ppc.s]=asm/chachap10-ppc.pl
 GENERATE[chacha-armv4.S]=asm/chacha-armv4.pl
 INCLUDE[chacha-armv4.o]=..
 GENERATE[chacha-armv8.S]=asm/chacha-armv8.pl
+GENERATE[chacha-armv8-sve.S]=asm/chacha-armv8-sve.pl
 INCLUDE[chacha-armv8.o]=..
+INCLUDE[chacha-armv8-sve.o]=..
 INCLUDE[chacha-s390x.o]=..
 GENERATE[chacha-c64xplus.S]=asm/chacha-c64xplus.pl
 GENERATE[chacha-s390x.S]=asm/chacha-s390x.pl

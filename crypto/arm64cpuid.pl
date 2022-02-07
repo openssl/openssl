@@ -104,6 +104,22 @@ _armv8_eor3_probe:
 	ret
 .size	_armv8_eor3_probe,.-_armv8_eor3_probe
 
+.globl	_armv8_sve_probe
+.type	_armv8_sve_probe,%function
+_armv8_sve_probe:
+	AARCH64_VALID_CALL_TARGET
+	.inst	0x04a03000	// eor z0.d,z0.d,z0.d
+	ret
+.size	_armv8_sve_probe,.-_armv8_sve_probe
+
+.globl	_armv8_sve2_probe
+.type	_armv8_sve2_probe,%function
+_armv8_sve2_probe:
+	AARCH64_VALID_CALL_TARGET
+	.inst	0x04e03400	// xar z0.d,z0.d,z0.d
+	ret
+.size	_armv8_sve2_probe,.-_armv8_sve2_probe
+
 .globl	_armv8_cpuid_probe
 .type	_armv8_cpuid_probe,%function
 _armv8_cpuid_probe:
