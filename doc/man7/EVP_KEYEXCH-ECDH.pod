@@ -88,7 +88,7 @@ key but also using X963KDF with a user key material:
         size_t secret_len = out_len;
         unsigned int pad = 1;
         OSSL_PARAM params[6];
-        EVP_PKET_CTX *dctx = EVP_PKEY_CTX_new_from_pkey(NULL, host_key, NULL);
+        EVP_PKEY_CTX *dctx = EVP_PKEY_CTX_new_from_pkey(NULL, host_key, NULL);
 
         EVP_PKEY_derive_init(dctx);
 
