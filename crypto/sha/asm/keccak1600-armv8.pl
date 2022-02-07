@@ -126,8 +126,8 @@ $code.=<<___;
 .type	KeccakF1600_int,%function
 .align	5
 KeccakF1600_int:
-	adr	$C[2],iotas
 	AARCH64_SIGN_LINK_REGISTER
+	adr	$C[2],iotas
 	stp	$C[2],x30,[sp,#16]		// 32 bytes on top are mine
 	b	.Loop
 .align	4
