@@ -252,7 +252,8 @@ const OPTIONS speed_options[] = {
     {"seconds", OPT_SECONDS, 'p',
      "Run benchmarks for specified amount of seconds"},
     {"bytes", OPT_BYTES, 'p',
-     "Run [non-PKI] benchmarks on custom-sized buffer"},
+     "Run [non-PKI] benchmarks on custom-sized buffer." 
+     " Max size is 2147483583 bytes."},
     {"misalign", OPT_MISALIGN, 'p',
      "Use specified offset to mis-align buffers"},
 
@@ -455,7 +456,7 @@ static const OPT_PAIR sm2_choices[SM2_NUM] = {
 static double sm2_results[SM2_NUM][2];    /* 2 ops: sign then verify */
 #endif /* OPENSSL_NO_SM2 */
 
-#define COND(unused_cond) (run && count < 0x7fffffff)
+#define COND(unused_cond) (run && count < INT_MAX)
 #define COUNT(d) (count)
 
 typedef struct loopargs_st {
@@ -1778,9 +1779,10 @@ int speed_main(int argc, char **argv)
         buflen = lengths[size_num - 1];
         if (buflen < 36)    /* size of random vector in RSA benchmark */
             buflen = 36;
-        if (0x7fffffff - (MAX_MISALIGNMENT + 1) < buflen)
+        if (INT_MAX - (MAX_MISALIGNMENT + 1) < buflen)
         {
-            BIO_printf(bio_err, "Warning: ignoring -misalign option.\n");
+            BIO_printf(bio_err, "Error: buffer size too large\n");
+            goto end;
         } else {
             buflen += MAX_MISALIGNMENT + 1;
         }
@@ -3617,7 +3619,7 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
     for (j = 0; j < num; j++) {
         print_message(alg_name, 0, mblengths[j], seconds->sym);
         Time_F(START);
-        for (count = 0; run && count < 0x7fffffff; count++) {
+        for (count = 0; run && count < INT_MAX; count++) {
             unsigned char aad[EVP_AEAD_TLS1_AAD_LEN];
             EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM mb_param;
             size_t len = mblengths[j];
