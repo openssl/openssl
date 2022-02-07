@@ -519,12 +519,11 @@ sub precompute_hkeys_on_stack {
   my $ZTMP4       = $_[6];
   my $ZTMP5       = $_[7];
   my $ZTMP6       = $_[8];
-  my $HKEYS_RANGE = $_[9];    # ; "first16", "mid16", "last16", "all", "first32", "last32"
+  my $HKEYS_RANGE = $_[9];    # ; "first16", "mid16", "all", "first32", "last32"
 
   die "precompute_hkeys_on_stack: Unexpected value of HKEYS_RANGE: $HKEYS_RANGE"
     if ($HKEYS_RANGE ne "first16"
     && $HKEYS_RANGE ne "mid16"
-    && $HKEYS_RANGE ne "last16"
     && $HKEYS_RANGE ne "all"
     && $HKEYS_RANGE ne "first32"
     && $HKEYS_RANGE ne "last32");
@@ -589,19 +588,7 @@ ___
     }
   }
 
-  if ($HKEYS_RANGE eq "last16") {
-    $code .= <<___;
-        vmovdqu64         @{[HashKeyByIdx(8,"%rsp")]},$ZTMP1
-
-        # ; broadcast HashKey^8
-        vshufi64x2        \$0x00,$ZTMP1,$ZTMP1,$ZTMP1
-
-        vmovdqu64         @{[HashKeyByIdx(28,"%rsp")]},$ZTMP2
-        vmovdqu64         @{[HashKeyByIdx(32,"%rsp")]},$ZTMP3
-___
-  }
-
-  if ($HKEYS_RANGE eq "last16" || $HKEYS_RANGE eq "last32" || $HKEYS_RANGE eq "all") {
+  if ($HKEYS_RANGE eq "last32" || $HKEYS_RANGE eq "all") {
 
     # ; Precompute hkeys^i, i=33..48 (HKEYS_STORAGE_CAPACITY = 48)
     my $i = 36;
