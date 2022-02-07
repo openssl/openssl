@@ -52,6 +52,8 @@ int configure_handshake_ctx_for_srp(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
         if (server_ctx_data->srp_user == NULL || server_ctx_data->srp_password == NULL) {
             OPENSSL_free(server_ctx_data->srp_user);
             OPENSSL_free(server_ctx_data->srp_password);
+            server_ctx_data->srp_user = NULL;
+            server_ctx_data->srp_password = NULL;
             return 0;
         }
         SSL_CTX_set_srp_cb_arg(server_ctx, server_ctx_data);
@@ -65,6 +67,8 @@ int configure_handshake_ctx_for_srp(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
         if (server2_ctx_data->srp_user == NULL || server2_ctx_data->srp_password == NULL) {
             OPENSSL_free(server2_ctx_data->srp_user);
             OPENSSL_free(server2_ctx_data->srp_password);
+            server2_ctx_data->srp_user = NULL;
+            server2_ctx_data->srp_password = NULL;
             return 0;
         }
         SSL_CTX_set_srp_cb_arg(server2_ctx, server2_ctx_data);
