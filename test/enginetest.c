@@ -24,6 +24,7 @@
 # include <openssl/rsa.h>
 # include <openssl/err.h>
 # include <openssl/x509.h>
+# include <openssl/pem.h>
 
 static void display_engine_list(void)
 {
