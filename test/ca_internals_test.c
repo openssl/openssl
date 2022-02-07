@@ -34,8 +34,10 @@ static int test_do_updatedb(void)
         return 0;
     }
 
-    /* if the test will only work with 64bit time_t and
-       the build only supports 32, assume the test as sucess */
+    /*
+     * if the test will only work with 64bit time_t and
+     * the build only supports 32, assume the test as sucess 
+     */
     need64bit = (int)strtol(test_get_argument(3), NULL, 0);
     have64bit = sizeof(time_t) > sizeof(uint32_t);
     if (need64bit && !have64bit) {
@@ -46,15 +48,13 @@ static int test_do_updatedb(void)
 
     testdate = test_get_argument(2);
     testdateutc = asn1_string_to_time_t(testdate);
-    if (testdateutc < 0) {
-        fprintf(stderr, "Error: testdate '%s' is invalid\n", testdate);
+    if (TEST_time_t_lt(testdateutc, 0)) {
         return 0;
     }
 
     indexfile = test_get_argument(1);
     db = load_index(indexfile, NULL);
-    if (db == NULL) {
-        fprintf(stderr, "Error: dbfile '%s' is not readable\n", indexfile);
+    if (TEST_ptr_null(db)) {
         free(indexfile);
         return 0;
     }
@@ -65,10 +65,10 @@ static int test_do_updatedb(void)
     bio_err = bio_tmp;
 
     if (rv > 0) {
-        if (!save_index(indexfile, "new", db))
+        if (!TEST_true(save_index(indexfile, "new", db)))
             goto end;
 
-        if (!rotate_index(indexfile, "new", "old"))
+        if (!TEST_true(rotate_index(indexfile, "new", "old")))
             goto end;
     }
 end:
@@ -80,7 +80,7 @@ int setup_tests(void)
 {
     char *command = test_get_argument(0);
 
-    if (test_get_argument_count()<1) {
+    if (test_get_argument_count() < 1) {
         TEST_error("%s: no command specified for testing\n", binname);
         return 0;
     }

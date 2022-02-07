@@ -21,7 +21,7 @@ my @updatedb_tests = (
         filename => 'index.txt',
         copydb => 1,
         testdate => '990101000000Z',
-		need64bit => 0,
+        need64bit => 0,
         expirelist => [ ]
     },
     { 
@@ -29,7 +29,7 @@ my @updatedb_tests = (
         filename => 'index.txt',
         copydb => 0,
         testdate => '991201000000Z',
-		need64bit => 0,
+        need64bit => 0,
         expirelist => [ '1000' ]
     },
     { 
@@ -37,7 +37,7 @@ my @updatedb_tests = (
         filename => 'index.txt',
         copydb => 0,
         testdate => '211201000000Z',
-		need64bit => 0,
+        need64bit => 0,
         expirelist => [ '1001' ]
     },
     { 
@@ -45,7 +45,7 @@ my @updatedb_tests = (
         filename => 'index.txt',
         copydb => 0,
         testdate => '491201000000Z',
-		need64bit => 1,
+        need64bit => 1,
         expirelist => [ '1002' ]
     },
     { 
@@ -53,7 +53,7 @@ my @updatedb_tests = (
         filename => 'index.txt',
         copydb => 0,
         testdate => '20500101000000Z',
-		need64bit => 1,
+        need64bit => 1,
         expirelist => [ ]
     },
     { 
@@ -61,7 +61,7 @@ my @updatedb_tests = (
         filename => 'index.txt',
         copydb => 0,
         testdate => '20501201000000Z',
-		need64bit => 1,
+        need64bit => 1,
         expirelist => [ '1003' ]
     },
     { 
@@ -69,7 +69,7 @@ my @updatedb_tests = (
         filename => 'index.txt',
         copydb => 1,
         testdate => '20501201000000Z',
-		need64bit => 1,
+        need64bit => 1,
         expirelist => [ '1000', 
                         '1001',
                         '1002',
@@ -160,7 +160,7 @@ sub test_updatedb {
         $expirelistcorrect = 1;
     }
     is($exit, 1, "ca_internals_test: returned EXIT_FAILURE (".$opts->{description}.")");
-    is($amtexpired, $amtexpectedexpired, "ca_internals_test: amount of expired certificated differs from expected amount (".$opts->{description}.")");
-    is($expirelistcorrect, 1, "ca_internals_test: list of expired certificated differs from expected list (".$opts->{description}.")");
+    is($amtexpired, $amtexpectedexpired, "ca_internals_test: amount of expired certificates differs from expected amount (".$opts->{description}.")");
+    is($expirelistcorrect, 1, "ca_internals_test: list of expired certificates differs from expected list (".$opts->{description}.")");
 }
 

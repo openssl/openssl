@@ -611,16 +611,16 @@ time_t asn1_string_to_time_t(char *asn1_string)
         return -1;
     }
 
-    timestamp_tm = malloc(sizeof(*timestamp_tm));
+    timestamp_tm = OPENSSL_malloc(sizeof(*timestamp_tm));
 
     if (!(ASN1_TIME_to_tm(timestamp_asn1, timestamp_tm))) {
-        free(timestamp_tm);
+        OPENSSL_free(timestamp_tm);
         ASN1_TIME_free(timestamp_asn1);
         return -1;
     }
 
     timestamp_local = mktime(timestamp_tm);
-    free(timestamp_tm);
+    OPENSSL_free(timestamp_tm);
 
     timestamp_utc = timestamp_local - timezone;
 
