@@ -8,7 +8,7 @@
  */
 
 #include <openssl/bio.h>
-#include "e_os.h"
+#include "internal/e_os.h"
 #include "internal/sockets.h"
 #include "testutil.h"
 
