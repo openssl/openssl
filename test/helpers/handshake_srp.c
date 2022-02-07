@@ -49,8 +49,11 @@ int configure_handshake_ctx_for_srp(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
         SSL_CTX_set_srp_username_callback(server_ctx, server_srp_cb);
         server_ctx_data->srp_user = OPENSSL_strdup(extra->server.srp_user);
         server_ctx_data->srp_password = OPENSSL_strdup(extra->server.srp_password);
-        if (server_ctx_data->srp_user == NULL || server_ctx_data->srp_password == NULL)
+        if (server_ctx_data->srp_user == NULL || server_ctx_data->srp_password == NULL) {
+            OPENSSL_free(server_ctx_data->srp_user);
+            OPENSSL_free(server_ctx_data->srp_password);
             return 0;
+        }
         SSL_CTX_set_srp_cb_arg(server_ctx, server_ctx_data);
     }
     if (extra->server2.srp_user != NULL) {
@@ -59,8 +62,11 @@ int configure_handshake_ctx_for_srp(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
         SSL_CTX_set_srp_username_callback(server2_ctx, server_srp_cb);
         server2_ctx_data->srp_user = OPENSSL_strdup(extra->server2.srp_user);
         server2_ctx_data->srp_password = OPENSSL_strdup(extra->server2.srp_password);
-        if (server2_ctx_data->srp_user == NULL || server2_ctx_data->srp_password == NULL)
+        if (server2_ctx_data->srp_user == NULL || server2_ctx_data->srp_password == NULL) {
+            OPENSSL_free(server2_ctx_data->srp_user);
+            OPENSSL_free(server2_ctx_data->srp_password);
             return 0;
+        }
         SSL_CTX_set_srp_cb_arg(server2_ctx, server2_ctx_data);
     }
     if (extra->client.srp_user != NULL) {
