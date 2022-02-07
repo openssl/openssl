@@ -25,9 +25,9 @@
 # define UNALIGNED_MEMOPS_ARE_FAST 0
 #endif
 
-#define N_WORDS (AES_BLOCK_SIZE / sizeof(unsigned long))
+#define NUM_WORDS (AES_BLOCK_SIZE / sizeof(unsigned long))
 typedef struct {
-    unsigned long data[N_WORDS];
+    unsigned long data[NUM_WORDS];
 #if defined(__GNUC__) && UNALIGNED_MEMOPS_ARE_FAST
 } aes_block_t __attribute((__aligned__(1)));
 #else
@@ -71,11 +71,11 @@ void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
                 aes_block_t *inp = (aes_block_t *) in;
                 aes_block_t *outp = (aes_block_t *) out;
 
-                for (n = 0; n < N_WORDS; ++n)
+                for (n = 0; n < NUM_WORDS; ++n)
                     outp->data[n] = inp->data[n] ^ ivp->data[n];
                 AES_encrypt((unsigned char *)outp->data,
                             (unsigned char *)outp->data, key);
-                for (n = 0; n < N_WORDS; ++n)
+                for (n = 0; n < NUM_WORDS; ++n)
                     outp->data[n] ^= iv2p->data[n];
                 ivp = outp;
                 iv2p = inp;
@@ -95,11 +95,11 @@ void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
 
             while (len) {
                 load_block(tmp, in);
-                for (n = 0; n < N_WORDS; ++n)
+                for (n = 0; n < NUM_WORDS; ++n)
                     tmp2.data[n] = tmp.data[n] ^ iv.data[n];
                 AES_encrypt((unsigned char *)tmp2.data,
                             (unsigned char *)tmp2.data, key);
-                for (n = 0; n < N_WORDS; ++n)
+                for (n = 0; n < NUM_WORDS; ++n)
                     tmp2.data[n] ^= iv2.data[n];
                 store_block(out, tmp2);
                 iv = tmp2;
@@ -124,11 +124,11 @@ void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
                 aes_block_t *inp = (aes_block_t *) in;
                 aes_block_t *outp = (aes_block_t *) out;
 
-                for (n = 0; n < N_WORDS; ++n)
+                for (n = 0; n < NUM_WORDS; ++n)
                     tmp.data[n] = inp->data[n] ^ iv2p->data[n];
                 AES_decrypt((unsigned char *)tmp.data,
                             (unsigned char *)outp->data, key);
-                for (n = 0; n < N_WORDS; ++n)
+                for (n = 0; n < NUM_WORDS; ++n)
                     outp->data[n] ^= ivp->data[n];
                 ivp = inp;
                 iv2p = outp;
@@ -149,11 +149,11 @@ void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
             while (len) {
                 load_block(tmp, in);
                 tmp2 = tmp;
-                for (n = 0; n < N_WORDS; ++n)
+                for (n = 0; n < NUM_WORDS; ++n)
                     tmp.data[n] ^= iv2.data[n];
                 AES_decrypt((unsigned char *)tmp.data,
                             (unsigned char *)tmp.data, key);
-                for (n = 0; n < N_WORDS; ++n)
+                for (n = 0; n < NUM_WORDS; ++n)
                     tmp.data[n] ^= iv.data[n];
                 store_block(out, tmp);
                 iv = tmp2;
