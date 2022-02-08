@@ -65,7 +65,7 @@ BIO_ADDR *ourpeer = NULL;
  * @type: socket type, must be SOCK_STREAM or SOCK_DGRAM
  * @protocol: socket protocol, e.g. IPPROTO_TCP or IPPROTO_UDP (or 0 for any)
  * @tfo: flag to enable TCP Fast Open
- * @ba_ret: BIO_ADDR that was connected to
+ * @ba_ret: BIO_ADDR that was connected to for TFO, to be freed by caller
  *
  * This will create a socket and use it to connect to a host:port, or if
  * family == AF_UNIX, to the path found in host.

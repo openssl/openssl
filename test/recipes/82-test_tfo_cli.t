@@ -36,7 +36,7 @@ sub run_test {
     my $port = "0";
 
     # Not using TLSv1.3 allows the test to work with "no-ec"
-    my @s_cmd = ("s_server", "-4", "-accept", ":0", "-cert", $cert, "-www", "-no_tls1_3");
+    my @s_cmd = ("s_server", "-accept", ":0", "-cert", $cert, "-www", "-no_tls1_3", "-naccept", "1");
     push @s_cmd, "-tfo" if ($tfo);
 
     my $spid = open2(my $sout, my $sin, $shlib_wrap, $apps_openssl, @s_cmd);
@@ -53,7 +53,7 @@ sub run_test {
     print STDERR "Port: $port\n";
 
     # Start up the client
-    my @c_cmd = ("s_client", "-4", "-connect", ":$port", "-no_tls1_3");
+    my @c_cmd = ("s_client", "-connect", ":$port", "-no_tls1_3");
     push @c_cmd, "-tfo" if ($tfo);
 
     my $cpid = open2(my $cout, my $cin, $shlib_wrap, $apps_openssl, @c_cmd);
@@ -62,7 +62,7 @@ sub run_test {
     print $cin "GET /\r\n";
 
     waitpid($cpid, 0);
-    kill 'KILL', $spid;
+    waitpid($spid, 0);
 
     # Check the client output
     while (<$cout>) {

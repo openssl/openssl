@@ -90,6 +90,8 @@ BIO_set_nbio_accept() sets the accept socket to blocking mode
 
 BIO_set_tfo_accept() enables TCP Fast Open on the accept socket
 if B<n> is 1 or disables TCP Fast Open if B<n> is 0 (the default).
+Setting the value to 1 is equivalent to setting B<BIO_SOCK_TFO>
+in BIO_set_bind_mode().
 
 BIO_set_accept_bios() can be used to set a chain of BIOs which
 will be duplicated and prepended to the chain when an incoming

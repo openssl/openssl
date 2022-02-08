@@ -13,7 +13,7 @@
 
 #include "bio_local.h"
 #include "internal/ktls.h"
-#include "bio_tfo.h"
+#include "internal/bio_tfo.h"
 
 #include <openssl/err.h>
 
@@ -121,6 +121,37 @@ int BIO_connect(int sock, const BIO_ADDR *addr, int options)
         }
     }
     if (options & BIO_SOCK_TFO) {
+# if defined(OSSL_TFO_CLIENT_FLAG)
+#  if defined(OSSL_TFO_SYSCTL_CLIENT)
+        int enabled = 0;
+        size_t enabledlen = sizeof(enabled);
+
+        /* Later FreeBSD */
+        if (sysctlbyname(OSSL_TFO_SYSCTL_CLIENT, &enabled, &enabledlen, NULL, 0) < 0) {
+            ERR_raise(ERR_LIB_BIO, BIO_R_TFO_NO_KERNEL_SUPPORT);
+            return 0;
+        }
+        /* Need to check for client flag */
+        if (!(enabled & OSSL_TFO_CLIENT_FLAG)) {
+            ERR_raise(ERR_LIB_BIO, BIO_R_TFO_DISABLED);
+            return 0;
+        }
+#  elif defined(OSSL_TFO_SYSCTL)
+        int enabled = 0;
+        size_t enabledlen = sizeof(enabled);
+
+        /* macOS */
+        if (sysctlbyname(OSSL_TFO_SYSCTL, &enabled, &enabledlen, NULL, 0) < 0) {
+            ERR_raise(ERR_LIB_BIO, BIO_R_TFO_NO_KERNEL_SUPPORT);
+            return 0;
+        }
+        /* Need to check for client flag */
+        if (!(enabled & OSSL_TFO_CLIENT_FLAG)) {
+            ERR_raise(ERR_LIB_BIO, BIO_R_TFO_DISABLED);
+            return 0;
+        }
+#  endif
+# endif
 # if defined(OSSL_TFO_CONNECTX)
         sa_endpoints_t sae;
 
@@ -333,17 +364,36 @@ int BIO_listen(int sock, const BIO_ADDR *addr, int options)
      */
     if ((options & BIO_SOCK_TFO) && socktype != SOCK_DGRAM) {
         int q = OSSL_TFO_SERVER_SOCKOPT_VALUE;
-#  if defined(OSSL_TFO_SYSCTL)
-        int enabled;
+#  if defined(OSSL_TFO_CLIENT_FLAG)
+#   if defined(OSSL_TFO_SYSCTL_SERVER)
+        int enabled = 0;
         size_t enabledlen = sizeof(enabled);
 
-        if (sysctlbyname(OSSL_TFO_SYSCTL, &enabled, &enabledlen, NULL, 0) < 0) {
+        /* Later FreeBSD */
+        if (sysctlbyname(OSSL_TFO_SYSCTL_SERVER, &enabled, &enabledlen, NULL, 0) < 0) {
             ERR_raise(ERR_LIB_BIO, BIO_R_TFO_NO_KERNEL_SUPPORT);
             return 0;
-        } else if (!(enabled & OSSL_TFO_SERVER_FLAG)) {
+        }
+        /* Need to check for server flag */
+        if (!(enabled & OSSL_TFO_SERVER_FLAG)) {
             ERR_raise(ERR_LIB_BIO, BIO_R_TFO_DISABLED);
             return 0;
         }
+#   elif defined(OSSL_TFO_SYSCTL)
+        int enabled = 0;
+        size_t enabledlen = sizeof(enabled);
+
+        /* Early FreeBSD, macOS */
+        if (sysctlbyname(OSSL_TFO_SYSCTL, &enabled, &enabledlen, NULL, 0) < 0) {
+            ERR_raise(ERR_LIB_BIO, BIO_R_TFO_NO_KERNEL_SUPPORT);
+            return 0;
+        }
+        /* Need to check for server flag */
+        if (!(enabled & OSSL_TFO_SERVER_FLAG)) {
+            ERR_raise(ERR_LIB_BIO, BIO_R_TFO_DISABLED);
+            return 0;
+        }
+#   endif
 #  endif
         if (setsockopt(sock, IPPROTO_TCP, OSSL_TFO_SERVER_SOCKOPT,
                        (void*)&q, sizeof(q)) < 0) {

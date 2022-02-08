@@ -880,7 +880,7 @@ Don't build test programs or run any tests.
 
 ### enable-tfo
 
-Build with support for TCP Fast Open. Supported on Linux, macOS and FreeBSD.
+Build with support for TCP Fast Open (RFC7413). Supported on Linux, macOS and FreeBSD.
 
 ### no-threads
 

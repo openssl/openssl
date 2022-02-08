@@ -90,7 +90,8 @@ BIO_get_conn_mode() returns the BIO connection mode. BIO_set_conn_mode() sets
 the BIO connection mode.
 
 BIO_set_tfo() disables TCP Fast Open when B<onoff> is 0, and enables TCP Fast
-Open when B<onoff> is nonzero.
+Open when B<onoff> is nonzero. Setting the value to 1 is equivalent to setting
+B<BIO_SOCK_TFO> in BIO_set_conn_mode().
 
 =head1 RETURN VALUES
 
@@ -168,7 +169,8 @@ the case of BIO_seek() on a file BIO for a successful operation.
 The BIO_get_ktls_send() and BIO_get_ktls_recv() functions were added in
 OpenSSL 3.0.
 
-The BIO_get_conn_mode() function was added in OpenSSL 3.1.
+The BIO_get_conn_mode(), BIO_set_conn_mode() and BIO_set_tfo() functions
+were added in OpenSSL 3.1.
 
 =head1 COPYRIGHT
 

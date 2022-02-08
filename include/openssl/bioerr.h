@@ -44,6 +44,7 @@
 # define BIO_R_NO_HOSTNAME_OR_SERVICE_SPECIFIED           144
 # define BIO_R_NO_PORT_DEFINED                            113
 # define BIO_R_NO_SUCH_FILE                               128
+# define BIO_R_NULL_PARAMETER                             115 /* unused */
 # define BIO_R_TFO_DISABLED                               106
 # define BIO_R_TFO_NO_KERNEL_SUPPORT                      108
 # define BIO_R_TRANSFER_ERROR                             104

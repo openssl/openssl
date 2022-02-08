@@ -9,7 +9,7 @@
 
 /*
  * Contains definitions for simplifying the use of TCP Fast Open
- * in OpenSSL socket BIOs.
+ * (RFC7413) in OpenSSL socket BIOs.
  */
 
 /* If a supported OS is added here, update test/bio_tfo_test.c */
@@ -22,23 +22,35 @@
 /*
  * OSSL_TFO_SYSCTL is used to determine if TFO is supported by
  * this kernel, and if supported, if it is enabled. This is more of
- * a problem on FreeBSD 10.3 ~ 12.0, where TCP_FASTOPEN was defined,
- * but not enabled by default in the kernel.
+ * a problem on FreeBSD 10.3 ~ 11.4, where TCP_FASTOPEN was defined,
+ * but not enabled by default in the kernel, and only for the server.
  * Linux does not have sysctlbyname(), and the closest equivalent
  * is to go into the /proc filesystem, but I'm not sure it's
  * worthwhile.
  *
- * The OSSL_TFO_xxxxxx_FLAGs can be OR'd together:
+ * On MacOS and Linux:
+ * These operating systems use a single parameter to control TFO.
+ * The OSSL_TFO_SERVER_FLAG and OSSL_TFO_CLIENT_FLAGS are used to
+ * determine if TFO is enabled for the server and client respectively.
+ *
+ * OSSL_TFO_SERVER_FLAG = 1 = client TFO enabled
+ * OSSL_TFO_CLIENT_FLAG = 2 = server TFO enabled
+ *
+ * Such that:
  * 0 = TFO disabled
- * 1 = client TFO enabled
- * 2 = server TFO enabled
  * 3 = server and client TFO enabled
- */
-
-# define OSSL_TFO_CLIENT_FLAG 1
-# define OSSL_TFO_SERVER_FLAG 2
-
-/*
+ *
+ * macOS 10.14 and later support TFO.
+ * Linux kernel 3.6 added support for client TFO.
+ * Linux kernel 3.7 added support for server TFO.
+ * Linux kernel 3.13 enabled TFO by default.
+ * Linux kernel 4.11 added the TCP_FASTOPEN_CONNECT option.
+ *
+ * On FreeBSD:
+ * FreeBSD 10.3 ~ 11.4 uses a single sysctl for server enable.
+ * FreeBSD 12.0 and later uses separate sysctls for server and
+ * client enable.
+ *
  * Some options are purposely NOT defined per-platform
  *
  * OSSL_TFO_SYSCTL
@@ -95,15 +107,30 @@
 #  define OSSL_TFO_SERVER_SOCKOPT_VALUE 1
 #  define OSSL_TFO_CONNECTX             1
 #  define OSSL_TFO_DO_NOT_CONNECT       1
+#  define OSSL_TFO_CLIENT_FLAG          1
+#  define OSSL_TFO_SERVER_FLAG          2
 # endif
 
 # if defined(__FreeBSD__)
-#  define OSSL_TFO_SYSCTL               "net.inet.tcp.fastopen.enabled"
-#  define OSSL_TFO_SERVER_SOCKOPT       TCP_FASTOPEN
-#  define OSSL_TFO_SERVER_SOCKOPT_VALUE MAX_LISTEN
-#  define OSSL_TFO_CLIENT_SOCKOPT       TCP_FASTOPEN
-#  define OSSL_TFO_DO_NOT_CONNECT       1
-#  define OSSL_TFO_SENDTO               0
+#  if defined(TCP_FASTOPEN_PSK_LEN)
+/* As of 12.0 these are the SYSCTLs */
+#   define OSSL_TFO_SYSCTL_SERVER        "net.inet.tcp.fastopen.server_enable"
+#   define OSSL_TFO_SYSCTL_CLIENT        "net.inet.tcp.fastopen.client_enable"
+#   define OSSL_TFO_SERVER_SOCKOPT       TCP_FASTOPEN
+#   define OSSL_TFO_SERVER_SOCKOPT_VALUE MAX_LISTEN
+#   define OSSL_TFO_CLIENT_SOCKOPT       TCP_FASTOPEN
+#   define OSSL_TFO_DO_NOT_CONNECT       1
+#   define OSSL_TFO_SENDTO               0
+/* These are the same because the sysctl are client/server-specific */
+#   define OSSL_TFO_CLIENT_FLAG          1
+#   define OSSL_TFO_SERVER_FLAG          1
+#  else
+/* 10.3 through 11.4 SYSCTL - ONLY SERVER SUPPORT */
+#   define OSSL_TFO_SYSCTL               "net.inet.tcp.fastopen.enabled"
+#   define OSSL_TFO_SERVER_SOCKOPT       TCP_FASTOPEN
+#   define OSSL_TFO_SERVER_SOCKOPT_VALUE MAX_LISTEN
+#   define OSSL_TFO_SERVER_FLAG          1
+#  endif
 # endif
 
 # if defined(OPENSSL_SYS_LINUX)
@@ -117,6 +144,8 @@
 #   define OSSL_TFO_SENDTO              MSG_FASTOPEN
 #   define OSSL_TFO_DO_NOT_CONNECT      1
 #  endif
+#  define OSSL_TFO_CLIENT_FLAG          1
+#  define OSSL_TFO_SERVER_FLAG          2
 # endif
 
 #endif

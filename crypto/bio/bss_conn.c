@@ -11,6 +11,7 @@
 #include <errno.h>
 
 #include "bio_local.h"
+#include "internal/bio_tfo.h"
 #include "internal/ktls.h"
 
 #ifndef OPENSSL_NO_SOCK

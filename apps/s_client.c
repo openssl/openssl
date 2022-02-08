@@ -2133,8 +2133,11 @@ int s_client_main(int argc, char **argv)
         goto end;
     }
 
+    /* Now that we're using a BIO... */
     if (tfo_addr != NULL)
         (void)BIO_set_conn_address(sbio, tfo_addr);
+    if (tfo)
+        (void)BIO_set_tfo(sbio, 1);
 
     if (nbio_test) {
         BIO *test;
@@ -2925,9 +2928,12 @@ int s_client_main(int argc, char **argv)
 
             case SSL_ERROR_SYSCALL:
                 if ((k != 0) || (cbuf_len != 0)) {
-                    BIO_printf(bio_err, "write:errno=%d\n",
-                               get_last_socket_error());
-                    goto shut;
+                    int sockerr = get_last_socket_error();
+
+                    if (!tfo || sockerr != EISCONN) {
+                        BIO_printf(bio_err, "write:errno=%d\n", sockerr);
+                        goto shut;
+                    }
                 } else {
                     read_tty = 1;
                     write_ssl = 0;

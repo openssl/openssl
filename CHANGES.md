@@ -24,8 +24,8 @@ OpenSSL 3.1
 
 ### Changes between 3.0 and 3.1 [xx XXX xxxx]
 
- * Add support for TCP Fast Open to macOS, Linux, FreeBSD where supported
-   and enabled. Use BIO_set_tfo() to enable on a socket.
+ * Add support for TCP Fast Open (RFC7413) to macOS, Linux, and FreeBSD where
+   supported and enabled.
 
    *Todd Short*
 

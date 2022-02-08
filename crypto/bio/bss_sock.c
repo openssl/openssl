@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include "bio_local.h"
-#include "bio_tfo.h"
+#include "internal/bio_tfo.h"
 #include "internal/cryptlib.h"
 #include "internal/ktls.h"
 
@@ -28,14 +28,13 @@
 #  define sock_puts  SockPuts
 # endif
 
-struct bio_sock_st {
+struct bss_sock_st {
     BIO_ADDR tfo_peer;
     int tfo_first;
+#ifndef OPENSSL_NO_KTLS
     unsigned char ktls_record_type;
+#endif
 };
-# define BIO_TFO_PEER(b)    (((struct bio_sock_st*)(b)->ptr)->tfo_peer)
-# define BIO_TFO_FIRST(b)   (((struct bio_sock_st*)(b)->ptr)->tfo_first)
-# define BIO_KTLS_RECORD(b) (((struct bio_sock_st*)(b)->ptr)->ktls_record_type)
 
 static int sock_write(BIO *h, const char *buf, int num);
 static int sock_read(BIO *h, char *buf, int size);
@@ -92,7 +91,7 @@ static int sock_new(BIO *bi)
     bi->init = 0;
     bi->num = 0;
     bi->flags = 0;
-    bi->ptr = OPENSSL_zalloc(sizeof(struct bio_sock_st));
+    bi->ptr = OPENSSL_zalloc(sizeof(struct bss_sock_st));
     if (bi->ptr == NULL)
         return 0;
     return 1;
@@ -140,11 +139,14 @@ static int sock_read(BIO *b, char *out, int outl)
 static int sock_write(BIO *b, const char *in, int inl)
 {
     int ret = 0;
+# if !defined(OPENSSL_NO_KTLS) || defined(OSSL_TFO_SENDTO)
+    struct bss_sock_st *data = (struct bss_sock_st*)b->ptr;
+# endif
 
     clear_socket_error();
 # ifndef OPENSSL_NO_KTLS
     if (BIO_should_ktls_ctrl_msg_flag(b)) {
-        unsigned char record_type = BIO_KTLS_RECORD(b);
+        unsigned char record_type = data->ktls_record_type;
         ret = ktls_send_ctrl_message(b->num, record_type, in, inl);
         if (ret >= 0) {
             ret = inl;
@@ -153,12 +155,13 @@ static int sock_write(BIO *b, const char *in, int inl)
     } else
 # endif
 # if defined(OSSL_TFO_SENDTO)
-    if (BIO_TFO_FIRST(b)) {
-        socklen_t peerlen = BIO_ADDR_sockaddr_size(&BIO_TFO_PEER(b));
+    if (data->tfo_first) {
+        struct bss_sock_st *data = (struct bss_sock_st*)b->ptr;
+        socklen_t peerlen = BIO_ADDR_sockaddr_size(&data->tfo_peer);
 
         ret = sendto(b->num, in, inl, OSSL_TFO_SENDTO,
-                     BIO_ADDR_sockaddr(&BIO_TFO_PEER(b)) peerlen);
-        BIO_TFO_FIRST(b) = 0;
+                     BIO_ADDR_sockaddr(&data->tfo_peer), peerlen);
+        data->tfo_first = 0;
     } else
 # endif
         ret = writesocket(b->num, in, inl);
@@ -174,6 +177,7 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
 {
     long ret = 1;
     int *ip;
+    struct bss_sock_st *data = (struct bss_sock_st*)b->ptr;
 # ifndef OPENSSL_NO_KTLS
     ktls_crypto_info_t *crypto_info;
 # endif
@@ -189,8 +193,8 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
         b->num = *((int *)ptr);
         b->shutdown = (int)num;
         b->init = 1;
-        BIO_TFO_FIRST(b) = 0;
-        memset(&BIO_TFO_PEER(b), 0, sizeof(BIO_TFO_PEER(b)));
+        data->tfo_first = 0;
+        memset(&data->tfo_peer, 0, sizeof(data->tfo_peer));
         break;
     case BIO_C_GET_FD:
         if (b->init) {
@@ -224,7 +228,7 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
         return BIO_should_ktls_flag(b, 0) != 0;
     case BIO_CTRL_SET_KTLS_TX_SEND_CTRL_MSG:
         BIO_set_ktls_ctrl_msg_flag(b);
-        BIO_KTLS_RECORD(b) = (unsigned char)num;
+        data->ktls_record_type = (unsigned char)num;
         ret = 0;
         break;
     case BIO_CTRL_CLEAR_KTLS_TX_CTRL_MSG:
@@ -239,17 +243,17 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
         if (ptr != NULL && num == 2) {
             const char **pptr = (const char **)ptr;
 
-            *pptr = (const char *)&BIO_TFO_PEER(b);
+            *pptr = (const char *)&data->tfo_peer;
         } else {
             ret = 0;
         }
         break;
     case BIO_C_SET_CONNECT:
         if (ptr != NULL && num == 2) {
-            ret = BIO_ADDR_make(&BIO_TFO_PEER(b),
+            ret = BIO_ADDR_make(&data->tfo_peer,
                                 BIO_ADDR_sockaddr((const BIO_ADDR*)ptr));
             if (ret)
-                BIO_TFO_FIRST(b) = 1;
+                data->tfo_first = 1;
         } else {
             ret = 0;
         }

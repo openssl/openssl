@@ -10,6 +10,7 @@
 #include <openssl/bio.h>
 #include "internal/e_os.h"
 #include "internal/sockets.h"
+#include "internal/bio_tfo.h"
 #include "testutil.h"
 
 /* If OS support is added in crypto/bio/bio_tfo.h, add it here */
@@ -17,7 +18,7 @@
 # define GOOD_OS 1
 #elif defined(__FreeBSD__)
 # define GOOD_OS 1
-#elif defined(OPENSSL_SYS_MACOS)
+#elif defined(OPENSSL_SYS_MACOSX)
 # define GOOD_OS 1
 #else
 # ifdef GOOD_OS
@@ -54,7 +55,6 @@ static int test_bio_tfo(int idx)
     BIO *abio = NULL;
     BIO *sbio = NULL;
     int ret = 0;
-    int tmp;
     int sockerr = 0;
     const char *port;
     int server_tfo = 0;
@@ -84,8 +84,10 @@ static int test_bio_tfo(int idx)
             || !TEST_true(BIO_set_nbio_accept(abio, 1))
             || !TEST_true(BIO_set_tfo_accept(abio, server_tfo))
             || !TEST_int_gt(BIO_do_accept(abio), 0)
-            || !TEST_ptr(port = BIO_get_accept_port(abio)))
+            || !TEST_ptr(port = BIO_get_accept_port(abio))) {
+        sockerr = get_last_socket_error();
         goto err;
+    }
 
     /* Note: first BIO_do_accept will basically do the bind/listen */
 
@@ -93,8 +95,10 @@ static int test_bio_tfo(int idx)
     if (!TEST_ptr(cbio = BIO_new_connect("localhost"))
             || !TEST_long_gt(BIO_set_conn_port(cbio, port), 0)
             || !TEST_long_gt(BIO_set_nbio(cbio, 1), 0)
-            || !TEST_long_gt(BIO_set_tfo(cbio, client_tfo), 0))
+            || !TEST_long_gt(BIO_set_tfo(cbio, client_tfo), 0)) {
+        sockerr = get_last_socket_error();
         goto err;
+    }
 
     /* FIRST ACCEPT: no connection should be established */
     if (BIO_do_accept(abio) <= 0) {
@@ -122,9 +126,8 @@ static int test_bio_tfo(int idx)
     }
 
     /* macOS needs some time for this to happen, so put in a select */
-    tmp = BIO_wait(abio, time(NULL)+2, 0);
-    sockerr = get_last_socket_error();
-    if (!TEST_int_ge(tmp, 0)) {
+    if (!TEST_int_ge(BIO_wait(abio, time(NULL)+2, 0), 0)) {
+        sockerr = get_last_socket_error();
         BIO_printf(bio_err, "Error: socket wait failed\n");
         goto err;
     }
@@ -141,26 +144,30 @@ static int test_bio_tfo(int idx)
             BIO_printf(bio_err, "Success: non-TFO connection accepted without data\n");
         else if (idx == 1)
             BIO_printf(bio_err, "Ignore: connection accepted before data, possibly no TFO cookie, or TFO may not be enabled\n");
+        else if (idx == 4)
+            BIO_printf(bio_err, "Success: connection accepted before data, client TFO is disabled\n");
         else
-            BIO_printf(bio_err, "Warning: connection accepted before data, TFP may not be enabled\n");
+            BIO_printf(bio_err, "Warning: connection accepted before data, TFO may not be enabled\n");
         sbio = BIO_pop(abio);
         goto success;
     }
 
     /* SEND DATA: this should establish the actual TFO connection */
-    if (!TEST_true(BIO_write_ex(cbio, SOCKET_DATA, SOCKET_DATA_LEN, &bytes)))
+    if (!TEST_true(BIO_write_ex(cbio, SOCKET_DATA, SOCKET_DATA_LEN, &bytes))) {
+        sockerr = get_last_socket_error();
         goto err;
+    }
 
     /* macOS needs some time for this to happen, so put in a select */
-    tmp = BIO_wait(abio, time(NULL)+2, 0);
-    sockerr = get_last_socket_error();
-    if (!TEST_int_ge(tmp, 0)) {
+    if (!TEST_int_ge(BIO_wait(abio, time(NULL)+2, 0), 0)) {
+        sockerr = get_last_socket_error();
         BIO_printf(bio_err, "Error: socket wait failed\n");
         goto err;
     }
 
     /* FINAL ACCEPT: if TFO is enabled, socket should be accepted at *this* point */
     if (BIO_do_accept(abio) <= 0) {
+        sockerr = get_last_socket_error();
         BIO_printf(bio_err, "Error: socket not accepted\n");
         goto err;
     }
@@ -168,8 +175,10 @@ static int test_bio_tfo(int idx)
     if (!TEST_ptr(sbio = BIO_pop(abio))
             || !TEST_true(BIO_read_ex(sbio, read_buffer, sizeof(read_buffer), &bytes))
             || !TEST_size_t_eq(bytes, SOCKET_DATA_LEN)
-            || !TEST_strn_eq(read_buffer, SOCKET_DATA, SOCKET_DATA_LEN))
+            || !TEST_strn_eq(read_buffer, SOCKET_DATA, SOCKET_DATA_LEN)) {
+        sockerr = get_last_socket_error();
         goto err;
+    }
 
 success:
     sockerr = 0;
@@ -204,7 +213,6 @@ static int test_fd_tfo(int idx)
     int server_flags = BIO_SOCK_NONBLOCK;
     int client_flags = BIO_SOCK_NONBLOCK;
     int sockerr = 0;
-    int waitret;
     unsigned short port;
     void *addr;
     size_t addrlen;
@@ -290,8 +298,8 @@ static int test_fd_tfo(int idx)
 
     /* FIRST ACCEPT: no connection should be established */
     sfd = BIO_accept_ex(afd, NULL, 0);
-    sockerr = get_last_socket_error();
     if (sfd == -1) {
+        sockerr = get_last_socket_error();
         /* Note: Windows would hit WSAEWOULDBLOCK */
         if (sockerr != EAGAIN) {
             BIO_printf(bio_err, "Error: failed without EAGAIN\n");
@@ -318,17 +326,16 @@ static int test_fd_tfo(int idx)
     }
 
     /* macOS needs some time for this to happen, so put in a select */
-    waitret = BIO_socket_wait(afd, 1, time(NULL)+2);
-    sockerr = get_last_socket_error();
-    if (!TEST_int_ge(waitret, 0)) {
+    if (!TEST_int_ge(BIO_socket_wait(afd, 1, time(NULL)+2), 0)) {
+        sockerr = get_last_socket_error();
         BIO_printf(bio_err, "Error: socket wait failed\n");
         goto err;
     }
 
     /* SECOND ACCEPT: if TFO is supported, this will still fail until data is sent */
     sfd = BIO_accept_ex(afd, NULL, 0);
-    sockerr = get_last_socket_error();
     if (sfd == -1) {
+        sockerr = get_last_socket_error();
         /* Note: Windows would hit WSAEWOULDBLOCK */
         if (sockerr != EAGAIN) {
             BIO_printf(bio_err, "Error: failed without EAGAIN\n");
@@ -339,35 +346,48 @@ static int test_fd_tfo(int idx)
             BIO_printf(bio_err, "Success: non-TFO connection accepted without data\n");
         else if (idx == 1)
             BIO_printf(bio_err, "Ignore: connection accepted before data, possibly no TFO cookie, or TFO may not be enabled\n");
+        else if (idx == 4)
+            BIO_printf(bio_err, "Success: connection accepted before data, client TFO is disabled\n");
         else
             BIO_printf(bio_err, "Warning: connection accepted before data, TFO may not be enabled\n");
         goto success;
     }
 
     /* SEND DATA: this should establish the actual TFO connection */
-    if (!TEST_int_ge(writesocket(cfd, SOCKET_DATA, SOCKET_DATA_LEN), 0))
+#ifdef OSSL_TFO_SENDTO
+    if (!TEST_int_ge(sendto(cfd, SOCKET_DATA, SOCKET_DATA_LEN, OSSL_TFO_SENDTO,
+                            (struct sockaddr*)&sstorage, slen), 0)) {
+        sockerr = get_last_socket_error();
         goto err;
+    }
+#else
+    if (!TEST_int_ge(writesocket(cfd, SOCKET_DATA, SOCKET_DATA_LEN), 0)) {
+        sockerr = get_last_socket_error();
+        goto err;
+    }
+#endif
 
     /* macOS needs some time for this to happen, so put in a select */
-    waitret = BIO_socket_wait(afd, 1, time(NULL)+2);
-    sockerr = get_last_socket_error();
-    if (!TEST_int_ge(waitret, 0)) {
+    if (!TEST_int_ge(BIO_socket_wait(afd, 1, time(NULL)+2), 0)) {
+        sockerr = get_last_socket_error();
         BIO_printf(bio_err, "Error: socket wait failed\n");
         goto err;
     }
 
     /* FINAL ACCEPT: if TFO is enabled, socket should be accepted at *this* point */
     sfd = BIO_accept_ex(afd, NULL, 0);
-    sockerr = get_last_socket_error();
     if (sfd == -1) {
+        sockerr = get_last_socket_error();
         BIO_printf(bio_err, "Error: socket not accepted\n");
         goto err;
     }
     BIO_printf(bio_err, "Success: Server accepted socket after write\n");
     bytes_read = readsocket(sfd, read_buffer, sizeof(read_buffer));
     if (!TEST_int_eq(bytes_read, SOCKET_DATA_LEN)
-            || !TEST_strn_eq(read_buffer, SOCKET_DATA, SOCKET_DATA_LEN))
+            || !TEST_strn_eq(read_buffer, SOCKET_DATA, SOCKET_DATA_LEN)) {
+        sockerr = get_last_socket_error();
         goto err;
+    }
 
 success:
     sockerr = 0;
