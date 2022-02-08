@@ -252,8 +252,7 @@ const OPTIONS speed_options[] = {
     {"seconds", OPT_SECONDS, 'p',
      "Run benchmarks for specified amount of seconds"},
     {"bytes", OPT_BYTES, 'p',
-     "Run [non-PKI] benchmarks on custom-sized buffer." 
-     " Max size is 2147483583 bytes."},
+     "Run [non-PKI] benchmarks on custom-sized buffer"},
     {"misalign", OPT_MISALIGN, 'p',
      "Use specified offset to mis-align buffers"},
 
