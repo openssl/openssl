@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -3761,7 +3761,7 @@ void ssl_update_cache(SSL *s, int mode)
         else
             stat = &s->session_ctx->stats.sess_accept_good;
         if ((ssl_tsan_load(s->session_ctx, stat) & 0xff) == 0xff)
-            SSL_CTX_flush_sessions(s->session_ctx, (unsigned long)time(NULL));
+            SSL_CTX_flush_sessions(s->session_ctx, time(NULL));
     }
 }
 

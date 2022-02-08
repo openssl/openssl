@@ -24,6 +24,11 @@ OpenSSL 3.1
 
 ### Changes between 3.0 and 3.1 [xx XXX xxxx]
 
+ * Update the SSL APIs SSL_SESSION_get_time(), SSL_SESSION_set_time() and
+   SSL_CTX_flush_sessions() for adapt to "time_t" structure.
+
+   *Yan Li*
+
  * Add new SSL APIs to aid in efficiently implementing TLS/SSL fingerprinting.  The
    SSL_CTRL_GET_IANA_GROUPS control code, exposed as the SSL_get0_iana_groups()
    function-like macro, retrieves the list of supported groups sent by the peer,

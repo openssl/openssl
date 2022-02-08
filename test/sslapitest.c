@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -3675,7 +3675,7 @@ static int early_data_skip_helper(int testtype, int idx)
          * time. It could be any value as long as it is not within tolerance.
          * This should mean the ticket is rejected.
          */
-        if (!TEST_true(SSL_SESSION_set_time(sess, (long)(time(NULL) - 20))))
+        if (!TEST_true(SSL_SESSION_set_time(sess, (time(NULL) - 20))))
             goto end;
     }
 
@@ -8509,9 +8509,9 @@ static int test_session_timeout(int test)
         || !TEST_ptr(late->prev))
         goto end;
 
-    if (!TEST_int_ne(SSL_SESSION_set_time(early, now - 10), 0)
-        || !TEST_int_ne(SSL_SESSION_set_time(middle, now), 0)
-        || !TEST_int_ne(SSL_SESSION_set_time(late, now + 10), 0))
+    if (!TEST_int_ne((int)SSL_SESSION_set_time(early, now - 10), 0)
+        || !TEST_int_ne((int)SSL_SESSION_set_time(middle, now), 0)
+        || !TEST_int_ne((int)SSL_SESSION_set_time(late, now + 10), 0))
         goto end;
 
     if (!TEST_int_ne(SSL_SESSION_set_timeout(early, TIMEOUT), 0)
@@ -8577,9 +8577,9 @@ static int test_session_timeout(int test)
 
     /* make sure |now| is NOT  equal to the current time */
     now -= 10;
-    if (!TEST_int_ne(SSL_SESSION_set_time(early, now), 0)
+    if (!TEST_int_ne((int)SSL_SESSION_set_time(early, now), 0)
         || !TEST_int_eq(SSL_CTX_add_session(ctx, early), 1)
-        || !TEST_long_ne(SSL_SESSION_get_time(early), now))
+        || !TEST_long_ne((long)SSL_SESSION_get_time(early), now))
         goto end;
 
     testresult = 1;
