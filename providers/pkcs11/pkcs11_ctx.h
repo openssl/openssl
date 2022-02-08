@@ -135,6 +135,7 @@ typedef struct pkcs11_slot_st {
     PKCS11_TYPE_DATA keymgmt;
     PKCS11_TYPE_DATA signature;
     PKCS11_TYPE_DATA digest;
+    PKCS11_TYPE_DATA store;
 } PKCS11_SLOT;
 
 typedef struct pkcs11_keymgmt_st {
@@ -181,6 +182,13 @@ typedef struct pkcs11_digest_st {
     int nid;
     PKCS11_TYPE_DATA_ITEM *mechdata;
 } PKCS11_DIGEST_CTX;
+
+typedef struct pkcs11_store_st {
+    PKCS11_CTX *pkcs11_ctx;
+    int expected_type;
+    char search_name[9];
+    char search_issuer[9];
+} PKCS11_STORE_CTX;
 
 struct pkcs11_st {
     PROV_CTX ctx;
