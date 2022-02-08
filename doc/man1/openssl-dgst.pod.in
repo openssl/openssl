@@ -229,7 +229,7 @@ The digest mechanisms that are available will depend on the options
 used when building OpenSSL.
 The C<openssl list -digest-algorithms> command can be used to list them.
 
-New or agile applications should use probably use SHA-256. Other digests,
+New or agile applications should probably use SHA-256. Other digests,
 particularly SHA-1 and MD5, are still widely used for interoperating
 with existing formats and protocols.
 
