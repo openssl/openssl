@@ -10,6 +10,8 @@ certs:                 Demonstration of creating certs, using OCSP
 cipher:
 aesgcm.c               Demonstration of symmetric cipher GCM mode encrypt/decrypt
 aesccm.c               Demonstration of symmetric cipher CCM mode encrypt/decrypt
+sm4gcm.c               Demonstration of SM4 GCM mode encrypt/decrypt
+sm4ccm.c               Demonstration of SM4 CCM mode encrypt/decrypt
 
 cms:
 
