@@ -81,7 +81,6 @@ open STDOUT,"| $^X $xlate $flavour \"$output\""
 
 $code=<<___;
 .machine        "any"
-.abiversion     2
 .text
 
 # 4x loops
@@ -586,7 +585,7 @@ Loop_aes_gcm_8x:
 	mr	14, 3
 	mr	9, 4
 
-	# n blcoks
+	# n blocks
 	li	10, 128
 	divdu	10, 5, 10	# n 128 bytes-blocks
 	cmpdi	10, 0
@@ -1112,7 +1111,7 @@ Loop_aes_gcm_8x_dec:
 	mr	14, 3
 	mr	9, 4
 
-	# n blcoks
+	# n blocks
 	li	10, 128
 	divdu	10, 5, 10	# n 128 bytes-blocks
 	cmpdi	10, 0

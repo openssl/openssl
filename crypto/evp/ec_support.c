@@ -10,7 +10,7 @@
 #include <string.h>
 #include <openssl/ec.h>
 #include "crypto/ec.h"
-#include "e_os.h" /* strcasecmp required by windows */
+#include "internal/e_os.h" /* strcasecmp required by windows */
 
 typedef struct ec_name2nid_st {
     const char *name;

@@ -14,7 +14,7 @@
 /* We need to use some engine deprecated APIs */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
-#include "../e_os.h" /* for stat and strncasecmp */
+#include "internal/e_os.h" /* for stat and strncasecmp */
 #include <string.h>
 #include <sys/stat.h>
 #include <ctype.h>

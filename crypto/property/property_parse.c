@@ -17,7 +17,7 @@
 #include "crypto/ctype.h"
 #include "internal/nelem.h"
 #include "property_local.h"
-#include "e_os.h"
+#include "internal/e_os.h"
 
 DEFINE_STACK_OF(OSSL_PROPERTY_DEFINITION)
 

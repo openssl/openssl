@@ -15,7 +15,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "e_os.h" /* strcasecmp */
+#include "internal/e_os.h" /* strcasecmp */
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/objects.h>
@@ -504,23 +504,33 @@ int EVP_CIPHER_get_iv_length(const EVP_CIPHER *cipher)
 
 int EVP_CIPHER_CTX_get_iv_length(const EVP_CIPHER_CTX *ctx)
 {
-    int rv, len = EVP_CIPHER_get_iv_length(ctx->cipher);
-    size_t v = len;
-    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    if (ctx->iv_len < 0) {
+        int rv, len = EVP_CIPHER_get_iv_length(ctx->cipher);
+        size_t v = len;
+        OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
-    params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_IVLEN, &v);
-    rv = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->algctx, params);
-    if (rv == EVP_CTRL_RET_UNSUPPORTED)
-        goto legacy;
-    return rv != 0 ? (int)v : -1;
-    /* Code below to be removed when legacy support is dropped. */
-legacy:
-    if ((EVP_CIPHER_get_flags(ctx->cipher) & EVP_CIPH_CUSTOM_IV_LENGTH) != 0) {
-        rv = EVP_CIPHER_CTX_ctrl((EVP_CIPHER_CTX *)ctx, EVP_CTRL_GET_IVLEN,
-                                 0, &len);
-        return (rv == 1) ? len : -1;
+        params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_IVLEN, &v);
+        rv = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->algctx, params);
+        if (rv != EVP_CTRL_RET_UNSUPPORTED) {
+            if (rv <= 0)
+                return -1;
+            len = (int)v;
+        }
+        /* Code below to be removed when legacy support is dropped. */
+        else if ((EVP_CIPHER_get_flags(ctx->cipher)
+                  & EVP_CIPH_CUSTOM_IV_LENGTH) != 0) {
+            rv = EVP_CIPHER_CTX_ctrl((EVP_CIPHER_CTX *)ctx, EVP_CTRL_GET_IVLEN,
+                                     0, &len);
+            if (rv <= 0)
+                return -1;
+        }
+        /*-
+         * Casting away the const is annoying but required here.  We need to
+         * cache the result for performance reasons.
+         */
+        ((EVP_CIPHER_CTX *)ctx)->iv_len = len;
     }
-    return len;
+    return ctx->iv_len;
 }
 
 int EVP_CIPHER_CTX_get_tag_length(const EVP_CIPHER_CTX *ctx)
@@ -637,14 +647,28 @@ int EVP_CIPHER_get_key_length(const EVP_CIPHER *cipher)
 
 int EVP_CIPHER_CTX_get_key_length(const EVP_CIPHER_CTX *ctx)
 {
-    int ok;
-    size_t v = ctx->key_len;
-    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    if (ctx->key_len <= 0 && ctx->cipher->prov != NULL) {
+        int ok;
+        OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+        size_t len;
 
-    params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_KEYLEN, &v);
-    ok = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->algctx, params);
+        params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_KEYLEN, &len);
+        ok = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->algctx, params);
+        if (ok <= 0)
+            return EVP_CTRL_RET_UNSUPPORTED;
 
-    return ok != 0 ? (int)v : EVP_CTRL_RET_UNSUPPORTED;
+        /*-
+         * The if branch should never be taken since EVP_MAX_KEY_LENGTH is
+         * less than INT_MAX but best to be safe.
+         *
+         * Casting away the const is annoying but required here.  We need to
+         * cache the result for performance reasons.
+         */
+        if (!OSSL_PARAM_get_int(params, &((EVP_CIPHER_CTX *)ctx)->key_len))
+            return -1;
+        ((EVP_CIPHER_CTX *)ctx)->key_len = (int)len;
+    }
+    return ctx->key_len;
 }
 
 int EVP_CIPHER_get_nid(const EVP_CIPHER *cipher)

@@ -19,7 +19,7 @@
 #include "internal/thread_once.h"
 #include "crypto/lhash.h"
 #include "obj_local.h"
-#include "e_os.h"
+#include "internal/e_os.h"
 
 /*
  * We define this wrapper for two reasons. Firstly, later versions of
