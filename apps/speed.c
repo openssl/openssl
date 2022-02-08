@@ -1778,13 +1778,11 @@ int speed_main(int argc, char **argv)
         buflen = lengths[size_num - 1];
         if (buflen < 36)    /* size of random vector in RSA benchmark */
             buflen = 36;
-        if (INT_MAX - (MAX_MISALIGNMENT + 1) < buflen)
-        {
+        if (INT_MAX - (MAX_MISALIGNMENT + 1) < buflen) {
             BIO_printf(bio_err, "Error: buffer size too large\n");
             goto end;
-        } else {
-            buflen += MAX_MISALIGNMENT + 1;
         }
+        buflen += MAX_MISALIGNMENT + 1;
         loopargs[i].buf_malloc = app_malloc(buflen, "input buffer");
         loopargs[i].buf2_malloc = app_malloc(buflen, "input buffer");
         memset(loopargs[i].buf_malloc, 0, buflen);
