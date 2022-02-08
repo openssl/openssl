@@ -22,25 +22,14 @@ static char* pkcs11_signature_algo_description = PKCS11_SIGNATURE_ALGO_DESCRIPTI
 static OSSL_FUNC_signature_newctx_fn                    pkcs11_signature_newctx;
 static OSSL_FUNC_signature_sign_init_fn                 pkcs11_signature_rsa_sign_init;
 static OSSL_FUNC_signature_sign_fn                      pkcs11_signature_sign;
-
 static OSSL_FUNC_signature_verify_init_fn               pkcs11_signature_verify_init;
 static OSSL_FUNC_signature_verify_fn                    pkcs11_signature_verify;
-static OSSL_FUNC_signature_digest_sign_init_fn          pkcs11_signature_digest_sign_init;
-static OSSL_FUNC_signature_digest_sign_update_fn        pkcs11_signature_digest_signverify_update;
-static OSSL_FUNC_signature_digest_sign_final_fn         pkcs11_signature_digest_sign_final;
-static OSSL_FUNC_signature_digest_verify_init_fn        pkcs11_signature_digest_verify_init;
-static OSSL_FUNC_signature_digest_verify_update_fn      pkcs11_signature_digest_signverify_update;
-static OSSL_FUNC_signature_digest_verify_final_fn       pkcs11_signature_digest_verify_final;
 static OSSL_FUNC_signature_freectx_fn                   pkcs11_signature_freectx;
 static OSSL_FUNC_signature_dupctx_fn                    pkcs11_signature_dupctx;
 static OSSL_FUNC_signature_get_ctx_params_fn            pkcs11_signature_get_ctx_params;
 static OSSL_FUNC_signature_gettable_ctx_params_fn       pkcs11_signature_gettable_ctx_params;
 static OSSL_FUNC_signature_set_ctx_params_fn            pkcs11_signature_set_ctx_params;
 static OSSL_FUNC_signature_settable_ctx_params_fn       pkcs11_signature_settable_ctx_params;
-static OSSL_FUNC_signature_get_ctx_md_params_fn         pkcs11_signature_get_ctx_md_params;
-static OSSL_FUNC_signature_gettable_ctx_md_params_fn    pkcs11_signature_gettable_ctx_md_params;
-static OSSL_FUNC_signature_set_ctx_md_params_fn         pkcs11_signature_set_ctx_md_params;
-static OSSL_FUNC_signature_settable_ctx_md_params_fn    pkcs11_signature_settable_ctx_md_params;
 
 const OSSL_DISPATCH pkcs11_rsa_sign_dp_tbl[] = {
     { OSSL_FUNC_SIGNATURE_NEWCTX,                   (void (*)(void))pkcs11_signature_newctx },
@@ -48,23 +37,26 @@ const OSSL_DISPATCH pkcs11_rsa_sign_dp_tbl[] = {
     { OSSL_FUNC_SIGNATURE_SIGN,                     (void (*)(void))pkcs11_signature_sign },
     { OSSL_FUNC_SIGNATURE_VERIFY_INIT,              (void (*)(void))pkcs11_signature_verify_init },
     { OSSL_FUNC_SIGNATURE_VERIFY,                   (void (*)(void))pkcs11_signature_verify },
-    { OSSL_FUNC_SIGNATURE_DIGEST_SIGN_INIT,         (void (*)(void))pkcs11_signature_digest_sign_init },
-    { OSSL_FUNC_SIGNATURE_DIGEST_SIGN_UPDATE,       (void (*)(void))pkcs11_signature_digest_signverify_update },
-    { OSSL_FUNC_SIGNATURE_DIGEST_SIGN_FINAL,        (void (*)(void))pkcs11_signature_digest_sign_final },
-    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_INIT,       (void (*)(void))pkcs11_signature_digest_verify_init },
-    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_UPDATE,     (void (*)(void))pkcs11_signature_digest_signverify_update },
-    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_FINAL,      (void (*)(void))pkcs11_signature_digest_verify_final },
     { OSSL_FUNC_SIGNATURE_FREECTX,                  (void (*)(void))pkcs11_signature_freectx },
     { OSSL_FUNC_SIGNATURE_DUPCTX,                   (void (*)(void))pkcs11_signature_dupctx },
     { OSSL_FUNC_SIGNATURE_GET_CTX_PARAMS,           (void (*)(void))pkcs11_signature_get_ctx_params },
     { OSSL_FUNC_SIGNATURE_GETTABLE_CTX_PARAMS,      (void (*)(void))pkcs11_signature_gettable_ctx_params },
     { OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS,           (void (*)(void))pkcs11_signature_set_ctx_params },
     { OSSL_FUNC_SIGNATURE_SETTABLE_CTX_PARAMS,      (void (*)(void))pkcs11_signature_settable_ctx_params },
-    { OSSL_FUNC_SIGNATURE_GET_CTX_MD_PARAMS,        (void (*)(void))pkcs11_signature_get_ctx_md_params },
-    { OSSL_FUNC_SIGNATURE_GETTABLE_CTX_MD_PARAMS,   (void (*)(void))pkcs11_signature_gettable_ctx_md_params },
-    { OSSL_FUNC_SIGNATURE_SET_CTX_MD_PARAMS,        (void (*)(void))pkcs11_signature_set_ctx_md_params },
-    { OSSL_FUNC_SIGNATURE_SETTABLE_CTX_MD_PARAMS,   (void (*)(void))pkcs11_signature_settable_ctx_md_params }
 };
+
+static const OSSL_PARAM pkcs11_sign_gettable_ctx_params_tbl[] = {
+    OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_PAD_MODE, NULL, 0),
+    OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST, NULL, 0),
+    OSSL_PARAM_END
+};
+
+static const OSSL_PARAM pkcs11_sign_settable_ctx_params_tbl[] = {
+    OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST, NULL, 0),
+    OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_PAD_MODE, NULL, 0),
+    OSSL_PARAM_END
+};
+
 
 static void *pkcs11_signature_newctx(void *provctx, const char *propq)
 {
@@ -245,64 +237,105 @@ end:
     return ret;
 }
 
-static int pkcs11_signature_digest_sign_init(void *vprsactx, const char *mdname,
-                                void *vrsa, const OSSL_PARAM params[])
+static void pkcs11_signature_freectx(void *sigctx)
 {
-    return 1;
+    PKCS11_SIGN_CTX *ctx = (PKCS11_SIGN_CTX *)sigctx;
+    if (ctx != NULL)
+        OPENSSL_free(ctx);
 }
 
-static int pkcs11_signature_digest_signverify_update(void *vprsactx,
-                                        const unsigned char *data,
-                                        size_t datalen)
+static void *pkcs11_signature_dupctx(void *sigctx)
 {
-    return 1;
+    PKCS11_SIGN_CTX *source_ctx = (PKCS11_SIGN_CTX *)sigctx;
+    PKCS11_SIGN_CTX *dest_ctx = NULL;
+
+    if (source_ctx == NULL)
+        goto end;
+    if ((dest_ctx = OPENSSL_zalloc(sizeof(*dest_ctx))) == NULL) {
+        OPENSSL_free(dest_ctx);
+        return NULL;
+    }
+    dest_ctx->pkey = source_ctx->pkey;
+    dest_ctx->type = source_ctx->type;
+    dest_ctx->digest_nid = source_ctx->digest_nid;
+    dest_ctx->pkcs11_ctx = source_ctx->pkcs11_ctx;
+
+end:
+    return dest_ctx;
 }
 
-static int pkcs11_signature_digest_sign_final(void *vprsactx, unsigned char *sig,
-                                 size_t *siglen, size_t sigsize)
+static int pkcs11_signature_get_ctx_params(void *sigctx, OSSL_PARAM *params)
 {
-    return 1;
-}
+    PKCS11_SIGN_CTX *ctx = (PKCS11_SIGN_CTX *)sigctx;
+    OSSL_PARAM *p;
+    int ret = 0;
 
-static int pkcs11_signature_digest_verify_init(void *vprsactx, const char *mdname,
-                                  void *vrsa, const OSSL_PARAM params[])
-{
-    return 1;
-}
+    if (ctx == NULL)
+        goto end;
 
-int pkcs11_signature_digest_verify_final(void *vprsactx, const unsigned char *sig,
-                            size_t siglen)
-{
-    return 1;
+    p = OSSL_PARAM_locate(params, OSSL_SIGNATURE_PARAM_PAD_MODE);
+    if (p != NULL) {
+        switch (p->data_type) {
+        case OSSL_PARAM_INTEGER:
+            switch (ctx->type) {
+            case CKM_RSA_PKCS:
+                if (!OSSL_PARAM_set_int(p, RSA_PKCS1_PADDING))
+                    goto end;
+                break;
+            case  CKM_RSA_PKCS_PSS:
+                if (!OSSL_PARAM_set_int(p, RSA_PKCS1_PSS_PADDING))
+                    goto end;
+                break;
+            default:
+                goto end;
+            }
+            break;
+        case OSSL_PARAM_UTF8_STRING:
+            switch (ctx->type) {
+            case CKM_RSA_PKCS:
+                if (!OSSL_PARAM_set_utf8_string(p, OSSL_PKEY_RSA_PAD_MODE_PKCSV15))
+                    goto end;
+                break;
+            case  CKM_RSA_PKCS_PSS:
+                if (!OSSL_PARAM_set_utf8_string(p, OSSL_PKEY_RSA_PAD_MODE_PSS))
+                    goto end;
+                break;
+            default:
+                goto end;
+            }
+            break;
+        default:
+            goto end;
+        }
+    }
+    p = OSSL_PARAM_locate(params, OSSL_SIGNATURE_PARAM_DIGEST);
+    if (p != NULL) {
+        switch(p->data_type) {
+        case OSSL_PARAM_UTF8_STRING: {
+            const char *name = OBJ_nid2sn(ctx->digest_nid);
+            if (name == NULL)
+                goto end;
+            if (!OSSL_PARAM_set_utf8_string(p, name))
+                goto end;
+        }
+        break;
+        case OSSL_PARAM_INTEGER:
+            if (!OSSL_PARAM_set_int(p, ctx->digest_nid))
+                goto end;
+        break;
+        default:
+            goto end;
+        }
+    }
+    ret = 1;
+end:
+    return ret;
 }
-
-static void pkcs11_signature_freectx(void *vprsactx)
-{
-}
-
-static void *pkcs11_signature_dupctx(void *vprsactx)
-{
-    return NULL;
-}
-
-static int pkcs11_signature_get_ctx_params(void *vprsactx, OSSL_PARAM *params)
-{
-    return 1;
-}
-
-static const OSSL_PARAM known_gettable_ctx_params[] = {
-    OSSL_PARAM_octet_string(OSSL_SIGNATURE_PARAM_ALGORITHM_ID, NULL, 0),
-    OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_PAD_MODE, NULL, 0),
-    OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST, NULL, 0),
-    OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_MGF1_DIGEST, NULL, 0),
-    OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_PSS_SALTLEN, NULL, 0),
-    OSSL_PARAM_END
-};
 
 static const OSSL_PARAM *pkcs11_signature_gettable_ctx_params(ossl_unused void *vprsactx,
                                                  ossl_unused void *provctx)
 {
-    return known_gettable_ctx_params;
+    return pkcs11_sign_gettable_ctx_params_tbl;
 }
 
 static int pkcs11_signature_set_ctx_params(void *sigctx, const OSSL_PARAM params[])
@@ -316,19 +349,33 @@ static int pkcs11_signature_set_ctx_params(void *sigctx, const OSSL_PARAM params
         goto end;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_DIGEST)) != NULL) {
-        char *pdigestname = digestname;
-        if (OSSL_PARAM_get_utf8_string(p, (char **)&pdigestname, sizeof(digestname)) != 1)
-            goto end;
-        /* Convert digest name into nid */
-        if (strlen(digestname) <= 0 || strcmp(digestname, "UNDEF") == 0 || strcmp(digestname, "undefined") == 0)
-            ctx->digest_nid = NID_undef;
-        else {
-            /* Try short name first, then long name */
-            ctx->digest_nid = OBJ_sn2nid(digestname);
-            if (ctx->digest_nid == NID_undef)
-                ctx->digest_nid = OBJ_ln2nid(digestname);
-            if (ctx->digest_nid == NID_undef)
+        switch (p->data_type) {
+        case OSSL_PARAM_UTF8_STRING: {
+            char *pdigestname = digestname;
+            if (OSSL_PARAM_get_utf8_string(p, (char **)&pdigestname, sizeof(digestname))
+                    != 1)
                 goto end;
+            /* Convert digest name into nid */
+            if (strlen(digestname) <= 0 || strcmp(digestname, "UNDEF") == 0 ||
+                    strcmp(digestname, "undefined") == 0)
+                ctx->digest_nid = NID_undef;
+            else {
+                /* Try short name first, then long name */
+                ctx->digest_nid = OBJ_sn2nid(digestname);
+                if (ctx->digest_nid == NID_undef)
+                    ctx->digest_nid = OBJ_ln2nid(digestname);
+                if (ctx->digest_nid == NID_undef)
+                    goto end;
+            }
+        }
+            break;
+        case OSSL_PARAM_INTEGER: {
+            int niddigest = -1;
+            if (OSSL_PARAM_get_int(p, &niddigest) != 1)
+                goto end;
+            ctx->digest_nid = niddigest;
+        }
+            break;
         }
     }
     
@@ -338,16 +385,35 @@ static int pkcs11_signature_set_ctx_params(void *sigctx, const OSSL_PARAM params
         {
             int val = 0;
             if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PAD_MODE)) != NULL) {
-                if (OSSL_PARAM_get_int(p, &val) != 1)
-                    goto end;
-                switch (val) {
-                    case RSA_PKCS1_PADDING:
+                switch(p->data_type) {
+                case OSSL_PARAM_INTEGER:
+                    if (OSSL_PARAM_get_int(p, &val) != 1)
+                        goto end;
+                    switch (val) {
+                        case RSA_PKCS1_PADDING:
+                            ctx->type = CKM_RSA_PKCS;
+                        break;
+                        case RSA_PKCS1_PSS_PADDING:
+                            ctx->type = CKM_RSA_PKCS_PSS;
+                        break;
+                        default:
+                            goto end;
+                    }
+                    break;
+                case OSSL_PARAM_UTF8_STRING:
+                {
+                    char name[100];
+                    char *pname = name;
+                    if (OSSL_PARAM_get_utf8_string(p, &pname, sizeof(name)) != 1)
+                        goto end;
+                    if (strcmp(name, OSSL_PKEY_RSA_PAD_MODE_PKCSV15) == 0)
                         ctx->type = CKM_RSA_PKCS;
-                    break;
-                    case RSA_PKCS1_PSS_PADDING:
+                    else if (strcmp(name, OSSL_PKEY_RSA_PAD_MODE_PSS) == 0)
                         ctx->type = CKM_RSA_PKCS_PSS;
+                    else
+                        goto end;
                     break;
-                }
+                }}
             }
         }
         break;
@@ -359,40 +425,10 @@ end:
     return ret;
 }
 
-static const OSSL_PARAM settable_ctx_params[] = {
-    OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST, NULL, 0),
-    OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_PROPERTIES, NULL, 0),
-    OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_PAD_MODE, NULL, 0),
-    OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_MGF1_DIGEST, NULL, 0),
-    OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_MGF1_PROPERTIES, NULL, 0),
-    OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_PSS_SALTLEN, NULL, 0),
-    OSSL_PARAM_END
-};
-
 static const OSSL_PARAM *pkcs11_signature_settable_ctx_params(void *vprsactx,
                                                  ossl_unused void *provctx)
 {
-    return settable_ctx_params;
-}
-
-static int pkcs11_signature_get_ctx_md_params(void *vprsactx, OSSL_PARAM *params)
-{
-    return 1;
-}
-
-static const OSSL_PARAM *pkcs11_signature_gettable_ctx_md_params(void *vprsactx)
-{
-    return NULL;
-}
-
-static int pkcs11_signature_set_ctx_md_params(void *vprsactx, const OSSL_PARAM params[])
-{
-    return 1;
-}
-
-static const OSSL_PARAM *pkcs11_signature_settable_ctx_md_params(void *vprsactx)
-{
-    return NULL;
+    return pkcs11_sign_settable_ctx_params_tbl;
 }
 
 OSSL_ALGORITHM *pkcs11_sign_get_algo_tbl(OPENSSL_STACK *sk, const char *id)
@@ -409,7 +445,9 @@ OSSL_ALGORITHM *pkcs11_sign_get_algo_tbl(OPENSSL_STACK *sk, const char *id)
             switch(item->type)
             {
             case CKM_RSA_PKCS:
-                pkcs11_add_algorithm(algo_sk, PROV_NAMES_RSA, id, pkcs11_rsa_sign_dp_tbl, pkcs11_signature_algo_description);
+                pkcs11_add_algorithm(algo_sk, PROV_NAMES_RSA, id,
+                                     pkcs11_rsa_sign_dp_tbl,
+                                     pkcs11_signature_algo_description);
                 break;
             }
         }

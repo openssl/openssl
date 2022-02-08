@@ -13,6 +13,7 @@
 #include "pkcs11_kmgmt.h"
 #include "pkcs11_sign.h"
 #include "pkcs11_digest.h"
+#include "pkcs11_store.h"
 #include <dlfcn.h>
 
 #include <openssl/err.h>
@@ -24,6 +25,8 @@
 #include "pkcs11_utils.h"
 #include <prov/implementations.h>
 
+extern const OSSL_DISPATCH pkcs11_store_functions[];
+extern const OSSL_ALGORITHM defltp11_store[];
 
 /* provider entry point (fixed name, exported) */
 OSSL_provider_init_fn OSSL_provider_init;
@@ -304,6 +307,10 @@ static const OSSL_ALGORITHM *pkcs11_query(void *provctx,
             fprintf(stdout, "@@ %s, %p\n", __FUNCTION__, slot->signature.algolist);
             fflush(stdout);
             return slot->signature.algolist;
+        case OSSL_OP_STORE:
+            fprintf(stdout, "@@ %s, %p\n", __FUNCTION__, slot->store.algolist);
+            fflush(stdout);
+            return slot->store.algolist;
         }
     }
     return NULL;
@@ -591,6 +598,11 @@ int pkcs11_generate_mechanism_tables(PKCS11_CTX *ctx)
             SET_PKCS11_PROV_ERR(ctx, ERR_PKCS11_MEM_ALLOC_FAILED);
             goto end;
         }
+        pkcs11_slot->store.items = OPENSSL_sk_new_null();
+        if (pkcs11_slot->store.items == NULL) {
+            SET_PKCS11_PROV_ERR(ctx, ERR_PKCS11_MEM_ALLOC_FAILED);
+            goto end;
+        }
 
         /* Cache the slot's mechanism info structure for each mechanism. */
         for (i = 0; i < mechcount; i++) {
@@ -625,6 +637,11 @@ int pkcs11_generate_mechanism_tables(PKCS11_CTX *ctx)
                     OPENSSL_sk_push(pkcs11_slot->digest.items, item);
                 }
             }
+        }
+        PKCS11_TYPE_DATA_ITEM *item = OPENSSL_zalloc(sizeof(*item));
+        if (item) {
+            item->type = CKF_STORE;
+            OPENSSL_sk_push(pkcs11_slot->store.items, item);
         }
         OPENSSL_sk_push(ctx->slots, pkcs11_slot);
         OPENSSL_free(mechlist);
@@ -663,6 +680,7 @@ void pkcs11_free_slots(PKCS11_CTX *ctx)
                     OPENSSL_sk_free(slot->keymgmt.items);
                 }
                 OPENSSL_free(slot->keymgmt.algolist);
+
                 if (slot->signature.items != NULL) {
                     for (ii = 0; ii < OPENSSL_sk_num(slot->signature.items); ii++) {
                         item = (PKCS11_TYPE_DATA_ITEM *)OPENSSL_sk_value(slot->signature.items, ii);
@@ -671,6 +689,7 @@ void pkcs11_free_slots(PKCS11_CTX *ctx)
                     OPENSSL_sk_free(slot->signature.items);
                 }
                 OPENSSL_free(slot->signature.algolist);
+
                 if (slot->digest.items != NULL) {
                     for (ii = 0; ii < OPENSSL_sk_num(slot->digest.items); ii++) {
                         item = (PKCS11_TYPE_DATA_ITEM *)OPENSSL_sk_value(slot->digest.items, ii);
@@ -679,6 +698,16 @@ void pkcs11_free_slots(PKCS11_CTX *ctx)
                     OPENSSL_sk_free(slot->digest.items);
                 }
                 OPENSSL_free(slot->digest.algolist);
+
+                if (slot->store.items != NULL) {
+                    for (ii = 0; ii < OPENSSL_sk_num(slot->store.items); ii++) {
+                        item = (PKCS11_TYPE_DATA_ITEM *)OPENSSL_sk_value(slot->store.items, ii);
+                        OPENSSL_free(item);
+                    }
+                    OPENSSL_sk_free(slot->store.items);
+                }
+                OPENSSL_free(slot->store.algolist);
+
                 OPENSSL_free(slot);
             }
         }
@@ -726,6 +755,8 @@ int pkcs11_generate_dispatch_tables(PKCS11_CTX *ctx)
             slot->signature.algolist = pkcs11_sign_get_algo_tbl(slot->signature.items, id);
         if (slot->digest.algolist == NULL)
             slot->digest.algolist = pkcs11_digest_get_algo_tbl(slot->digest.items, id);
+        if (slot->store.algolist == NULL)
+            slot->store.algolist = pkcs11_store_get_algo_tbl(slot->store.items, id);
     }
     return 1;
 }
