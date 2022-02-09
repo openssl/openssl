@@ -35,6 +35,8 @@
 # These functions depend on |SOURCEDIR|, which must have the intended
 # OpenSSL source directory as value.
 
+export LC_ALL=C
+
 get_version () {
     eval $(git cat-file blob HEAD:VERSION.dat)
     VERSION="$MAJOR.$MINOR.$PATCH"

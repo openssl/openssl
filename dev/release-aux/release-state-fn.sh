@@ -42,6 +42,8 @@
 # counter or the PATCH number accordingly, but only when the current
 # state is "in development".
 
+export LC_ALL=C
+
 next_release_state () {
     local next="$1"
     local today="$(date '+%-d %b %Y')"
