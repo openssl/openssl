@@ -25,7 +25,7 @@
  *   on [aligned] data in host byte order and one - on data in input
  *   stream byte order;
  * - share common byte-order neutral collector and padding function
- *   implementations, ../md32_common.h;
+ *   implementations, crypto/md32_common.h;
  *
  * Neither of the above applies to this SHA-512 implementations. Reasons
  * [in reverse order] are:
