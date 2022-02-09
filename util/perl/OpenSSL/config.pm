@@ -485,6 +485,14 @@ EOF
       [ 'x86_64-apple-darwin.*',
         sub {
             my $KERNEL_BITS = $ENV{KERNEL_BITS} // '';
+            # macOS >= 10.15 is 64-bit only
+            my $SW_VERS = `sw_vers -productVersion 2>/dev/null`;
+            if ($SW_VERS =~ /^(\d+)\.(\d+)\.(\d+)$/) {
+                if ($1 > 10 || ($1 == 10 && $2 >= 15)) {
+                    die "32-bit applications not supported on macOS 10.15 or later\n" if $KERNEL_BITS eq '32';
+                    return { target => "darwin64-x86_64" };
+                }
+            }
             return { target => "darwin-i386" } if $KERNEL_BITS eq '32';
 
             print <<EOF;
