@@ -20,7 +20,7 @@
 #include <openssl/evp.h>
 #include <openssl/sha.h>
 
-/* The implementation is in ../md32_common.h */
+/* The implementation is in crypto/md32_common.h */
 
 #include "sha_local.h"
 #include "crypto/sha.h"
