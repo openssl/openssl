@@ -292,9 +292,12 @@ static void *dh_dupctx(void *vpdhctx)
         if (dstctx->kdf_ukm == NULL)
             goto err;
     }
-    dstctx->kdf_cekalg = OPENSSL_strdup(srcctx->kdf_cekalg);
-    if (dstctx->kdf_cekalg == NULL)
-        goto err;
+
+    if (srcctx->kdf_cekalg != NULL) {
+        dstctx->kdf_cekalg = OPENSSL_strdup(srcctx->kdf_cekalg);
+        if (dstctx->kdf_cekalg == NULL)
+            goto err;
+    }
 
     return dstctx;
 err:
