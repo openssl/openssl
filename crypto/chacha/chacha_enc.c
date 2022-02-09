@@ -11,12 +11,13 @@
 
 #include <string.h>
 
+#include <openssl/e_os2.h>
 #include "internal/endian.h"
 #include "crypto/chacha.h"
 #include "crypto/ctype.h"
 
-typedef unsigned int u32;
-typedef unsigned char u8;
+typedef uint32_t u32;
+typedef uint8_t u8;
 typedef union {
     u32 u[16];
     u8 c[64];

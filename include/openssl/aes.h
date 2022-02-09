@@ -11,6 +11,7 @@
 # define OPENSSL_AES_H
 # pragma once
 
+# include <openssl/e_os2.h>
 # include <openssl/macros.h>
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_AES_H
@@ -35,11 +36,7 @@ extern "C" {
 
 /* This should be a hidden type, but EVP requires that the size be known */
 struct aes_key_st {
-#  ifdef AES_LONG
-    unsigned long rd_key[4 * (AES_MAXNR + 1)];
-#  else
-    unsigned int rd_key[4 * (AES_MAXNR + 1)];
-#  endif
+    uint32_t rd_key[4 * (AES_MAXNR + 1)];
     int rounds;
 };
 typedef struct aes_key_st AES_KEY;

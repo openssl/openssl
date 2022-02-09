@@ -25,8 +25,10 @@
 #ifndef OSSL_CRYPTO_CAMELLIA_CMLL_LOCAL_H
 # define OSSL_CRYPTO_CAMELLIA_CMLL_LOCAL_H
 
-typedef unsigned int u32;
-typedef unsigned char u8;
+#include <openssl/e_os2.h>
+
+typedef uint32_t u32;
+typedef uint8_t u8;
 
 int Camellia_Ekeygen(int keyBitLength, const u8 *rawKey,
                      KEY_TABLE_TYPE keyTable);

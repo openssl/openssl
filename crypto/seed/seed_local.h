@@ -38,11 +38,7 @@
 # include <openssl/e_os2.h>
 # include <openssl/seed.h>
 
-# ifdef SEED_LONG               /* need 32-bit type */
-typedef unsigned long seed_word;
-# else
-typedef unsigned int seed_word;
-# endif
+typedef uint32_t seed_word;
 
 
 # define char2word(c, i)  \

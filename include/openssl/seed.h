@@ -56,20 +56,9 @@ extern "C" {
 #  define SEED_KEY_LENGTH 16
 
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
-/* look whether we need 'long' to get 32 bits */
-#   ifdef AES_LONG
-#    ifndef SEED_LONG
-#     define SEED_LONG 1
-#    endif
-#   endif
-
 
 typedef struct seed_key_st {
-#   ifdef SEED_LONG
-    unsigned long data[32];
-#   else
-    unsigned int data[32];
-#   endif
+    uint32_t data[32];
 } SEED_KEY_SCHEDULE;
 #  endif /* OPENSSL_NO_DEPRECATED_3_0 */
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
