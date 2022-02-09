@@ -6,7 +6,7 @@
 # https://www.openssl.org/source/license.html
 
 name: Provider compat
-on: [push, pull_request]
+on: [push]
 
 jobs:
   fips-provider-30:
@@ -71,7 +71,7 @@ jobs:
       - name: config 3.0 dump
         run: ./configdata.pm --dump
         working-directory: ./build-3.0
-      - name: make fips provider
+      - name: make 3.0
         run: make -s -j4
         working-directory: ./build-3.0
       - uses: actions/checkout@v2
@@ -83,7 +83,7 @@ jobs:
       - name: config dump
         run: ./configdata.pm --dump
         working-directory: ./build
-      - name: make
+      - name: make fips provider
         run: make -s -j4 build_modules
         working-directory: ./build
       - name: copy the provider
