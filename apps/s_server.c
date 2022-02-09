@@ -1007,7 +1007,7 @@ int s_server_main(int argc, char *argv[])
     int socket_family = AF_UNSPEC, socket_type = SOCK_STREAM, protocol = 0;
     int state = 0, crl_format = FORMAT_UNDEF, crl_download = 0;
     char *host = NULL;
-    char *port = OPENSSL_strdup(PORT);
+    char *port = NULL;
     unsigned char *context = NULL;
     OPTION_CHOICE o;
     EVP_PKEY *s_key2 = NULL;
@@ -1073,9 +1073,10 @@ int s_server_main(int argc, char *argv[])
     async = 0;
     use_sendfile = 0;
 
+    port = OPENSSL_strdup(PORT);
     cctx = SSL_CONF_CTX_new();
     vpm = X509_VERIFY_PARAM_new();
-    if (cctx == NULL || vpm == NULL)
+    if (port == NULL || cctx == NULL || vpm == NULL)
         goto end;
     SSL_CONF_CTX_set_flags(cctx,
                            SSL_CONF_FLAG_SERVER | SSL_CONF_FLAG_CMDLINE);
