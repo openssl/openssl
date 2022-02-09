@@ -50,3 +50,45 @@ jobs:
       - name: make test
         run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
         working-directory: ./build
+
+  fips-provider-master:
+    runs-on: ubuntu-latest
+    steps:
+      - name: create build dirs
+        run: |
+          mkdir ./build
+          mkdir ./build-3.0
+          mkdir ./source
+          mkdir ./source-3.0
+      - uses: actions/checkout@v2
+        with:
+          repository: openssl/openssl
+          ref: openssl-3.0
+          path: source-3.0
+      - name: config 3.0
+        run: ../source-3.0/config enable-shared enable-fips
+        working-directory: ./build-3.0
+      - name: config 3.0 dump
+        run: ./configdata.pm --dump
+        working-directory: ./build-3.0
+      - name: make fips provider
+        run: make -s -j4
+        working-directory: ./build-3.0
+      - uses: actions/checkout@v2
+        with:
+          path: source
+      - name: config current
+        run: ../source/config enable-shared enable-fips
+        working-directory: ./build
+      - name: config dump
+        run: ./configdata.pm --dump
+        working-directory: ./build
+      - name: make
+        run: make -s -j4 build_modules
+        working-directory: ./build
+      - name: copy the provider
+        run: |
+          cp -a build/providers/fips.so build-3.0/providers/fips.so
+      - name: make test 3.0
+        run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+        working-directory: ./build-3.0
