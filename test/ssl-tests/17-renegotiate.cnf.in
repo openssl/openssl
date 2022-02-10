@@ -211,7 +211,7 @@ our @tests_tls1_2 = (
             "Method" => "TLS",
             "HandshakeMode" => "RenegotiateServer",
             "ResumptionExpected" => "No",
-            "ExpectedResult" => "ServerFail"
+            "ExpectedResult" => "InternalError"
         }
     },
     {
@@ -241,7 +241,7 @@ our @tests_tls1_2 = (
             "Method" => "TLS",
             "HandshakeMode" => "RenegotiateClient",
             "ResumptionExpected" => "No",
-            "ExpectedResult" => "ClientFail"
+            "ExpectedResult" => "InternalError"
         }
     },
     {

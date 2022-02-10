@@ -371,7 +371,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-11]
-ExpectedResult = ServerFail
+ExpectedResult = InternalError
 HandshakeMode = RenegotiateServer
 Method = TLS
 ResumptionExpected = No
@@ -427,7 +427,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-13]
-ExpectedResult = ClientFail
+ExpectedResult = InternalError
 HandshakeMode = RenegotiateClient
 Method = TLS
 ResumptionExpected = No
