@@ -1180,10 +1180,12 @@ static char **lookup_serial(CA_DB *db, ASN1_INTEGER *ser)
     bn = ASN1_INTEGER_to_BN(ser, NULL);
     OPENSSL_assert(bn);         /* FIXME: should report an error at this
                                  * point and abort */
-    if (BN_is_zero(bn))
+    if (BN_is_zero(bn)) {
         itmp = OPENSSL_strdup("00");
-    else
+        OPENSSL_assert(itmp);
+    } else {
         itmp = BN_bn2hex(bn);
+    }
     row[DB_serial] = itmp;
     BN_free(bn);
     rrow = TXT_DB_get_by_index(db->db, DB_serial, row);
