@@ -55,7 +55,6 @@ static int test_do_updatedb(void)
     indexfile = test_get_argument(1);
     db = load_index(indexfile, NULL);
     if (TEST_ptr_null(db)) {
-        free(indexfile);
         return 0;
     }
 
