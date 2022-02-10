@@ -168,6 +168,11 @@ static int add_entry(enum Type type, unsigned int hash, const char *filename,
         *ep = nilhentry;
         ep->old_id = ~0;
         ep->filename = OPENSSL_strdup(filename);
+        if (ep->filename == NULL) {
+            OPENSSL_free(ep);
+            ep = NULL;
+            return 1;
+        }
         if (bp->last_entry)
             bp->last_entry->next = ep;
         if (bp->first_entry == NULL)
