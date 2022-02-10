@@ -665,9 +665,9 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
             return 0;
         }
 
-        if (EVP_PKEY_set1_encoded_public_key(s->s3.peer_tmp,
-                PACKET_data(&encoded_pt),
-                PACKET_remaining(&encoded_pt)) <= 0) {
+        if (tls13_set_encoded_pub_key(s->s3.peer_tmp,
+                                      PACKET_data(&encoded_pt),
+                                      PACKET_remaining(&encoded_pt)) <= 0) {
             SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_ECPOINT);
             return 0;
         }
