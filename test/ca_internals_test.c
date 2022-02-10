@@ -25,7 +25,7 @@ static int test_do_updatedb(void)
     BIO *bio_tmp;
     char *testdate;
     char *indexfile;
-	int need64bit;
+    int need64bit;
     int have64bit;
 
     if (argc != 4) {
