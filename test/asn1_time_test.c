@@ -34,7 +34,7 @@ struct TESTDATA_asn1_to_utc {
     time_t expected;
 };
 
-static struct TESTDATA_asn1_to_utc asn1_to_utc[] = {
+static const struct TESTDATA_asn1_to_utc asn1_to_utc[] = {
     {
         /*
          * last second of standard time in central Europe in 2021
