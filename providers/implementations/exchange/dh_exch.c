@@ -395,11 +395,16 @@ static int dh_set_ctx_params(void *vpdhctx, const OSSL_PARAM params[])
     p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_CEK_ALG);
     if (p != NULL) {
         str = name;
-        if (!OSSL_PARAM_get_utf8_string(p, &str, sizeof(name)))
-            return 0;
-        pdhctx->kdf_cekalg = OPENSSL_strdup(name);
-        if (pdhctx->kdf_cekalg == NULL)
-            return 0;
+
+        OPENSSL_free(pdhctx->kdf_cekalg);
+        pdhctx->kdf_cekalg = NULL;
+        if (p->data != NULL && p->data_size != 0) {
+            if (!OSSL_PARAM_get_utf8_string(p, &str, sizeof(name)))
+                return 0;
+            pdhctx->kdf_cekalg = OPENSSL_strdup(name);
+            if (pdhctx->kdf_cekalg == NULL)
+                return 0;
+        }
     }
     return 1;
 }
