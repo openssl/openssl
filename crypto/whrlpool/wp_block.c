@@ -42,18 +42,13 @@
  */
 #include "internal/deprecated.h"
 
+#include <openssl/e_os2.h>
 #include "internal/cryptlib.h"
 #include "wp_local.h"
 #include <string.h>
 
-typedef unsigned char u8;
-#if (defined(_WIN32) || defined(_WIN64)) && !defined(__MINGW32)
-typedef unsigned __int64 u64;
-#elif defined(__arch64__)
-typedef unsigned long u64;
-#else
-typedef unsigned long long u64;
-#endif
+typedef uint8_t u8;
+typedef uint64_t u64;
 
 #define ROUNDS  10
 

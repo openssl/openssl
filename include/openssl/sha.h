@@ -98,13 +98,7 @@ unsigned char *SHA256(const unsigned char *d, size_t n, unsigned char *md);
  * wide big-endian values.
  */
 #  define SHA512_CBLOCK   (SHA_LBLOCK*8)
-#  if (defined(_WIN32) || defined(_WIN64)) && !defined(__MINGW32__)
-#   define SHA_LONG64 unsigned __int64
-#  elif defined(__arch64__)
-#   define SHA_LONG64 unsigned long
-#  else
-#   define SHA_LONG64 unsigned long long
-#  endif
+#  define SHA_LONG64 uint64_t
 
 typedef struct SHA512state_st {
     SHA_LONG64 h[8];

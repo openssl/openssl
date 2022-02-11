@@ -246,13 +246,7 @@ static void poly1305_emit(void *ctx, unsigned char mac[16],
 
 # else
 
-#  if defined(_WIN32) && !defined(__MINGW32__)
-typedef unsigned __int64 u64;
-#  elif defined(__arch64__)
-typedef unsigned long u64;
-#  else
-typedef unsigned long long u64;
-#  endif
+typedef uint64_t u64;
 
 typedef struct {
     u32 h[5];

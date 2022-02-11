@@ -51,10 +51,11 @@
 #endif
 
 #include <stdlib.h>
+#include <openssl/e_os2.h>
 
-typedef unsigned char u8;
-typedef unsigned int u32;
-typedef unsigned long long u64;
+typedef uint8_t u8;
+typedef uint32_t u32;
+typedef uint64_t u64;
 typedef union { double d; u64 u; } elem64;
 
 #define TWO(p)          ((double)(1ULL<<(p)))

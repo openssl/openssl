@@ -9,23 +9,20 @@
 
 /* This header can move into provider when legacy support is removed */
 #include <openssl/modes.h>
+#include <openssl/e_os2.h>
 
 #if (defined(_WIN32) || defined(_WIN64)) && !defined(__MINGW32__)
-typedef __int64 i64;
-typedef unsigned __int64 u64;
 # define U64(C) C##UI64
 #elif defined(__arch64__)
-typedef long i64;
-typedef unsigned long u64;
 # define U64(C) C##UL
 #else
-typedef long long i64;
-typedef unsigned long long u64;
 # define U64(C) C##ULL
 #endif
 
-typedef unsigned int u32;
-typedef unsigned char u8;
+typedef int64_t i64;
+typedef uint64_t u64;
+typedef uint32_t u32;
+typedef uint8_t u8;
 
 #define STRICT_ALIGNMENT 1
 #ifndef PEDANTIC

@@ -30,26 +30,8 @@
 extern "C" {
 #endif
 
-/*
- * 64-bit processor with LP64 ABI
- */
-# ifdef SIXTY_FOUR_BIT_LONG
-#  define BN_ULONG        unsigned long
-#  define BN_BYTES        8
-# endif
-
-/*
- * 64-bit processor other than LP64 ABI
- */
-# ifdef SIXTY_FOUR_BIT
-#  define BN_ULONG        unsigned long long
-#  define BN_BYTES        8
-# endif
-
-# ifdef THIRTY_TWO_BIT
-#  define BN_ULONG        unsigned int
-#  define BN_BYTES        4
-# endif
+#define BN_ULONG        uint64_t
+#define BN_BYTES        8
 
 # define BN_BITS2       (BN_BYTES * 8)
 # define BN_BITS        (BN_BITS2 * 2)
