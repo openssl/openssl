@@ -31,23 +31,16 @@ extern "C" {
 #endif
 
 /*
- * 64-bit processor with LP64 ABI
+ * 64-bit processors regardless of ABI will use the 64-bit integer type as defined in openssl/e_os2.h. 
+ * Therefore the configuration switch SIXTY_FOUR_BIT_LONG is superfluous but kept here for compatability. 
  */
-# ifdef SIXTY_FOUR_BIT_LONG
-#  define BN_ULONG        unsigned long
-#  define BN_BYTES        8
-# endif
-
-/*
- * 64-bit processor other than LP64 ABI
- */
-# ifdef SIXTY_FOUR_BIT
-#  define BN_ULONG        unsigned long long
+# if defined(SIXTY_FOUR_BIT) || defined(SIXTY_FOUR_BIT_LONG) 
+#  define BN_ULONG        uint64_t
 #  define BN_BYTES        8
 # endif
 
 # ifdef THIRTY_TWO_BIT
-#  define BN_ULONG        unsigned int
+#  define BN_ULONG        uint32_t
 #  define BN_BYTES        4
 # endif
 
