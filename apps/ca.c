@@ -1063,7 +1063,7 @@ end_of_options:
             BIO_printf(bio_err, "Write out database with %d new entries\n",
                        sk_X509_num(cert_sk));
 
-            if (serialfile != NULL
+            if (serialfile != NULL && !rand_ser
                     && !save_serial(serialfile, "new", serial, NULL))
                 goto end;
 
@@ -1131,7 +1131,7 @@ end_of_options:
 
         if (sk_X509_num(cert_sk)) {
             /* Rename the database and the serial file */
-            if (serialfile != NULL
+            if (serialfile != NULL && !rand_ser
                     && !rotate_serial(serialfile, "new", "old"))
                 goto end;
 
