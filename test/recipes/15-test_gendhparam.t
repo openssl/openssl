@@ -118,12 +118,12 @@ my @testdata = (
 #        expect => [ 'BEGIN DH PARAMETERS', 'G:    5' ],
 #        message   => 'DH safe prime generator using an alias',
 #    },
-     {
+    {
         algorithm => 'DHX',
         pkeyopts => [ 'type:generator', 'safeprime-generator:5'],
         expect => [ 'ERROR' ],
         message   => 'safe prime generator should fail for DHX',
-    },
+    }
 );
 
 plan skip_all => "DH isn't supported in this build" if disabled("dh");
@@ -165,7 +165,7 @@ sub compareline {
     }
     print "-----------------\n";
     foreach (@lines) {
-        print $_;
+        print "# ".$_;
     }
     print "-----------------\n";
     foreach my $ex (@expected) {
