@@ -1183,9 +1183,9 @@ static char **lookup_serial(CA_DB *db, ASN1_INTEGER *ser)
     if (BN_is_zero(bn)) {
         itmp = OPENSSL_strdup("00");
         OPENSSL_assert(itmp);
-    }
-    else
+    } else {
         itmp = BN_bn2hex(bn);
+    }
     row[DB_serial] = itmp;
     BN_free(bn);
     rrow = TXT_DB_get_by_index(db->db, DB_serial, row);
