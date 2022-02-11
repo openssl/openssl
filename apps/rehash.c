@@ -171,6 +171,7 @@ static int add_entry(enum Type type, unsigned int hash, const char *filename,
         if (ep->filename == NULL) {
             OPENSSL_free(ep);
             ep = NULL;
+            BIO_printf(bio_err, "out of memory\n");
             return 1;
         }
         if (bp->last_entry)
