@@ -213,7 +213,9 @@ static int rsa_blinding_convert(BN_BLINDING *b, BIGNUM *f, BIGNUM *unblind,
          */
         int ret;
 
-        BN_BLINDING_lock(b);
+        if (!BN_BLINDING_lock(b))
+            return 0;
+
         ret = BN_BLINDING_convert_ex(f, unblind, b, ctx);
         BN_BLINDING_unlock(b);
 

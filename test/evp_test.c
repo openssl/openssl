@@ -2651,6 +2651,13 @@ static int kdf_test_ctrl(EVP_TEST *t, EVP_KDF_CTX *kctx,
     if (p != NULL)
         *p++ = '\0';
 
+    if (strcmp(name, "r") == 0
+        && OSSL_PARAM_locate_const(defs, name) == NULL) {
+        TEST_info("skipping, setting 'r' is unsupported");
+        t->skip = 1;
+        goto end;
+    }
+
     rv = OSSL_PARAM_allocate_from_text(kdata->p, defs, name, p,
                                        p != NULL ? strlen(p) : 0, NULL);
     *++kdata->p = OSSL_PARAM_construct_end();
@@ -2664,6 +2671,7 @@ static int kdf_test_ctrl(EVP_TEST *t, EVP_KDF_CTX *kctx,
             TEST_info("skipping, '%s' is disabled", p);
             t->skip = 1;
         }
+        goto end;
     }
     if (p != NULL
         && (strcmp(name, "cipher") == 0
@@ -2671,6 +2679,7 @@ static int kdf_test_ctrl(EVP_TEST *t, EVP_KDF_CTX *kctx,
         && is_cipher_disabled(p)) {
         TEST_info("skipping, '%s' is disabled", p);
         t->skip = 1;
+        goto end;
     }
     if (p != NULL
         && (strcmp(name, "mac") == 0)
@@ -2678,6 +2687,7 @@ static int kdf_test_ctrl(EVP_TEST *t, EVP_KDF_CTX *kctx,
         TEST_info("skipping, '%s' is disabled", p);
         t->skip = 1;
     }
+ end:
     OPENSSL_free(name);
     return 1;
 }

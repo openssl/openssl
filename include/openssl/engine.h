@@ -801,6 +801,7 @@ typedef int (*dynamic_bind_engine) (ENGINE *e, const char *id,
             CRYPTO_set_mem_functions(fns->mem_fns.malloc_fn, \
                                      fns->mem_fns.realloc_fn, \
                                      fns->mem_fns.free_fn); \
+            OPENSSL_init_crypto(OPENSSL_INIT_NO_ATEXIT, NULL); \
         skip_cbs: \
             if (!fn(e, id)) return 0; \
             return 1; }

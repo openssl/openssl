@@ -711,9 +711,9 @@ int x509_main(int argc, char **argv)
                        : "Certificate request self-signature did not match the contents\n");
             goto err;
         }
-        BIO_printf(out, "Certificate request self-signature ok\n");
+        BIO_printf(bio_err, "Certificate request self-signature ok\n");
 
-        print_name(out, "subject=", X509_REQ_get_subject_name(req));
+        print_name(bio_err, "subject=", X509_REQ_get_subject_name(req));
     } else if (!x509toreq && ext_copy != EXT_COPY_UNSET) {
         BIO_printf(bio_err, "Warning: ignoring -copy_extensions since neither -x509toreq nor -req is given\n");
     }

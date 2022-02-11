@@ -1,0 +1,94 @@
+# Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+name: Provider compat
+on: [push]
+
+jobs:
+  fips-provider-30:
+    runs-on: ubuntu-latest
+    steps:
+      - name: create build dirs
+        run: |
+          mkdir ./build
+          mkdir ./build-3.0
+          mkdir ./source
+          mkdir ./source-3.0
+      - uses: actions/checkout@v2
+        with:
+          path: source
+      - name: config current
+        run: ../source/config enable-shared enable-fips
+        working-directory: ./build
+      - name: config dump
+        run: ./configdata.pm --dump
+        working-directory: ./build
+      - name: make
+        run: make -s -j4
+        working-directory: ./build
+      - uses: actions/checkout@v2
+        with:
+          repository: openssl/openssl
+          ref: openssl-3.0
+          path: source-3.0
+      - name: config 3.0
+        run: ../source-3.0/config enable-shared enable-fips
+        working-directory: ./build-3.0
+      - name: config 3.0 dump
+        run: ./configdata.pm --dump
+        working-directory: ./build-3.0
+      - name: make fips provider
+        run: make -s -j4 build_modules
+        working-directory: ./build-3.0
+      - name: copy the provider
+        run: |
+          cp -a build-3.0/providers/fips.so build/providers/fips.so
+      - name: make test
+        run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+        working-directory: ./build
+
+  fips-provider-master:
+    runs-on: ubuntu-latest
+    steps:
+      - name: create build dirs
+        run: |
+          mkdir ./build
+          mkdir ./build-3.0
+          mkdir ./source
+          mkdir ./source-3.0
+      - uses: actions/checkout@v2
+        with:
+          repository: openssl/openssl
+          ref: openssl-3.0
+          path: source-3.0
+      - name: config 3.0
+        run: ../source-3.0/config enable-shared enable-fips
+        working-directory: ./build-3.0
+      - name: config 3.0 dump
+        run: ./configdata.pm --dump
+        working-directory: ./build-3.0
+      - name: make 3.0
+        run: make -s -j4
+        working-directory: ./build-3.0
+      - uses: actions/checkout@v2
+        with:
+          path: source
+      - name: config current
+        run: ../source/config enable-shared enable-fips
+        working-directory: ./build
+      - name: config dump
+        run: ./configdata.pm --dump
+        working-directory: ./build
+      - name: make fips provider
+        run: make -s -j4 build_modules
+        working-directory: ./build
+      - name: copy the provider
+        run: |
+          cp -a build/providers/fips.so build-3.0/providers/fips.so
+      - name: make test 3.0
+        run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+        working-directory: ./build-3.0
