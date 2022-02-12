@@ -165,7 +165,9 @@ sub compareline {
     }
     print "-----------------\n";
     foreach (@lines) {
-        print $_;
+        my $line = $_;
+        $line =~ s/^ok/??/;
+        print $line;
     }
     print "-----------------\n";
     foreach my $ex (@expected) {
