@@ -120,7 +120,7 @@ static int ssl_read(BIO *b, char *buf, size_t size, size_t *readbytes)
             unsigned long tm;
 
             tm = (unsigned long)time(NULL);
-            if (tm > sb->last_time + sb->renegotiate_timeout) {
+            if (tm - sb->last_time > sb->renegotiate_timeout) {
                 sb->last_time = tm;
                 sb->num_renegotiates++;
                 SSL_renegotiate(ssl);
@@ -189,7 +189,7 @@ static int ssl_write(BIO *b, const char *buf, size_t size, size_t *written)
             unsigned long tm;
 
             tm = (unsigned long)time(NULL);
-            if (tm > bs->last_time + bs->renegotiate_timeout) {
+            if (tm - bs->last_time > bs->renegotiate_timeout) {
                 bs->last_time = tm;
                 bs->num_renegotiates++;
                 SSL_renegotiate(ssl);

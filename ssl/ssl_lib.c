@@ -3575,8 +3575,10 @@ void ssl_update_cache(SSL *s, int mode)
             stat = &s->session_ctx->stats.sess_connect_good;
         else
             stat = &s->session_ctx->stats.sess_accept_good;
-        if ((tsan_load(stat) & 0xff) == 0xff)
-            SSL_CTX_flush_sessions(s->session_ctx, (unsigned long)time(NULL));
+        if ((tsan_load(stat) & 0xff) == 0xff) {
+            long tm = (long)time(NULL);
+            SSL_CTX_flush_sessions(s->session_ctx, tm == 0 ? 1 : tm);
+        }
     }
 }
 

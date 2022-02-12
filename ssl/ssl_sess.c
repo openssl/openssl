@@ -583,7 +583,8 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
         goto err;
     }
 
-    if (ret->timeout < (long)(time(NULL) - ret->time)) { /* timeout */
+    if ((unsigned long)ret->timeout
+        < (unsigned long)time(NULL) - ret->time) { /* timeout */
         tsan_counter(&s->session_ctx->stats.sess_timeout);
         if (try_session_cache) {
             /* session was from the cache, so remove it */
@@ -1053,7 +1054,9 @@ typedef struct timeout_param_st {
 
 static void timeout_cb(SSL_SESSION *s, TIMEOUT_PARAM *p)
 {
-    if ((p->time == 0) || (p->time > (s->time + s->timeout))) { /* timeout */
+    if ((p->time == 0)
+            || (unsigned long)s->timeout
+               < (unsigned long)p->time - s->time) { /* timeout */
         /*
          * The reason we don't call SSL_CTX_remove_session() is to save on
          * locking overhead
