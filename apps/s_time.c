@@ -270,10 +270,10 @@ int s_time_main(int argc, char **argv)
     /* Loop and time how long it takes to make connections */
 
     bytes_read = 0;
-    finishtime = (long)time(NULL) + maxtime;
+    finishtime = (long)((unsigned long)time(NULL) + maxtime);
     tm_Time_F(START);
     for (;;) {
-        if (finishtime < (long)time(NULL))
+        if ((long)((unsigned long)time(NULL) - finishtime) > 0)
             break;
 
         if ((scon = doConnection(NULL, host, ctx)) == NULL)
@@ -310,13 +310,12 @@ int s_time_main(int argc, char **argv)
     }
     totalTime += tm_Time_F(STOP); /* Add the time for this iteration */
 
-    i = (int)((long)time(NULL) - finishtime + maxtime);
     printf
         ("\n\n%d connections in %.2fs; %.2f connections/user sec, bytes read %ld\n",
          nConn, totalTime, ((double)nConn / totalTime), bytes_read);
     printf
         ("%d connections in %ld real seconds, %ld bytes read per connection\n",
-         nConn, (long)time(NULL) - finishtime + maxtime,
+         nConn, (long)((unsigned long)time(NULL) - finishtime + maxtime),
          nConn > 0 ? bytes_read / nConn : 0l);
 
     /*
@@ -348,14 +347,14 @@ int s_time_main(int argc, char **argv)
     nConn = 0;
     totalTime = 0.0;
 
-    finishtime = (long)time(NULL) + maxtime;
+    finishtime = (long)((unsigned long)time(NULL) + maxtime);
 
     printf("starting\n");
     bytes_read = 0;
     tm_Time_F(START);
 
     for (;;) {
-        if (finishtime < (long)time(NULL))
+        if ((long)((unsigned long)time(NULL) - finishtime) > 0)
             break;
 
         if ((doConnection(scon, host, ctx)) == NULL)
@@ -396,10 +395,11 @@ int s_time_main(int argc, char **argv)
     if (nConn > 0)
         printf
             ("%d connections in %ld real seconds, %ld bytes read per connection\n",
-             nConn, (long)time(NULL) - finishtime + maxtime, bytes_read / nConn);
+             nConn, (long)((unsigned long)time(NULL) - finishtime + maxtime),
+             bytes_read / nConn);
     else
         printf("0 connections in %ld real seconds\n",
-               (long)time(NULL) - finishtime + maxtime);
+               (long)((unsigned long)time(NULL) - finishtime + maxtime));
     ret = 0;
 
  end:
