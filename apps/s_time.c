@@ -100,7 +100,8 @@ int s_time_main(int argc, char **argv)
     double totalTime = 0.0;
     int noCApath = 0, noCAfile = 0;
     int maxtime = SECONDS, nConn = 0, perform = 3, ret = 1, i, st_bugs = 0;
-    long bytes_read = 0, finishtime = 0;
+    long bytes_read = 0;
+    time_t starttime;
     OPTION_CHOICE o;
     int max_version = 0, ver, buf_len;
     size_t buf_size;
@@ -217,10 +218,10 @@ int s_time_main(int argc, char **argv)
     /* Loop and time how long it takes to make connections */
 
     bytes_read = 0;
-    finishtime = (long)time(NULL) + maxtime;
+    starttime = time(NULL);
     tm_Time_F(START);
     for (;;) {
-        if (finishtime < (long)time(NULL))
+        if (time(NULL) - starttime > maxtime)
             break;
 
         if ((scon = doConnection(NULL, host, ctx)) == NULL)
@@ -257,13 +258,12 @@ int s_time_main(int argc, char **argv)
     }
     totalTime += tm_Time_F(STOP); /* Add the time for this iteration */
 
-    i = (int)((long)time(NULL) - finishtime + maxtime);
     printf
         ("\n\n%d connections in %.2fs; %.2f connections/user sec, bytes read %ld\n",
          nConn, totalTime, ((double)nConn / totalTime), bytes_read);
     printf
         ("%d connections in %ld real seconds, %ld bytes read per connection\n",
-         nConn, (long)time(NULL) - finishtime + maxtime,
+         nConn, (long)(time(NULL) - starttime),
          nConn > 0 ? bytes_read / nConn : 0l);
 
     /*
@@ -294,14 +294,14 @@ int s_time_main(int argc, char **argv)
     nConn = 0;
     totalTime = 0.0;
 
-    finishtime = (long)time(NULL) + maxtime;
+    starttime = time(NULL);
 
     printf("starting\n");
     bytes_read = 0;
     tm_Time_F(START);
 
     for (;;) {
-        if (finishtime < (long)time(NULL))
+        if (time(NULL) - starttime > maxtime)
             break;
 
         if ((doConnection(scon, host, ctx)) == NULL)
@@ -340,7 +340,8 @@ int s_time_main(int argc, char **argv)
          nConn, totalTime, ((double)nConn / totalTime), bytes_read);
     printf
         ("%d connections in %ld real seconds, %ld bytes read per connection\n",
-         nConn, (long)time(NULL) - finishtime + maxtime, bytes_read / nConn);
+         nConn, (long)(time(NULL) - starttime),
+         nConn > 0 ? bytes_read / nConn : 0l);
 
     ret = 0;
 
