@@ -165,7 +165,7 @@ sub compareline {
     }
     print "-----------------\n";
     foreach (@lines) {
-        print $_;
+        print ": ".$_;
     }
     print "-----------------\n";
     foreach my $ex (@expected) {
