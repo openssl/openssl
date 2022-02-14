@@ -32,6 +32,13 @@ static int sm4_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
 #  endif
     } else
 # endif /* HWSM4_CAPABLE */
+# ifdef VPSM4_CAPABLE
+    if (VPSM4_CAPABLE) {
+        vpsm4_set_encrypt_key(key, ks);
+        CRYPTO_gcm128_init(&ctx->gcm, ks, (block128_f) vpsm4_encrypt);
+        ctx->ctr = (ctr128_f) vpsm4_ctr32_encrypt_blocks;
+    } else
+# endif /* VPSM4_CAPABLE */
     {
         ossl_sm4_set_key(key, ks);
         CRYPTO_gcm128_init(&ctx->gcm, ks, (block128_f)ossl_sm4_encrypt);
