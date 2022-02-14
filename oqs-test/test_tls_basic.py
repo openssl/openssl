@@ -59,6 +59,18 @@ def test_sig(parametrized_sig_server, ossl, test_artifacts_dir, worker_id):
         print(client_output)
         assert False, "Server temp key missing."
 
+def test_env_groups(ossl, sig_default_server_port, test_artifacts_dir, worker_id):
+    env = os.environ
+    env["TLS_DEFAULT_GROUPS"]="frodo640aes"
+    client_output = common.run_subprocess([ossl, 's_client',
+                                                  '-CAfile', os.path.join(test_artifacts_dir, '{}_dilithium2_CA.crt'.format(worker_id)),
+                                                  '-verify_return_error',
+                                                  '-connect', 'localhost:{}'.format(sig_default_server_port)],
+                                            input='Q'.encode(), env=env)
+    if not "Server Temp Key: {}".format("frodo640aes") in client_output:
+        print(client_output)
+        assert False, "Server temp key missing. Failure acceptable if default groups fixed via OQS_DEFAULT_GROUPS."
+
 if __name__ == "__main__":
     import sys
     pytest.main(sys.argv)
