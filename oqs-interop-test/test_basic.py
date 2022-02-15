@@ -41,7 +41,7 @@ def test_kex(kex_name, bssl_alg_to_id, test_artifacts_dir, sig_default_server_po
 
     elif client_type == "bssl":
         common.run_subprocess([common.BSSL_SHIM, '-port', str(sig_default_server_port),
-                                                 '-expect-version', 'TLSv1.3',
+                                                 '-expect-version', str(common.TLS1_3_VERSION),
                                                  '-curves', bssl_alg_to_id[kex_name],
                                                  '-expect-curve-id', bssl_alg_to_id[kex_name],
                                                  '-expect-peer-signature-algorithm', bssl_alg_to_id['dilithium2'],
@@ -64,7 +64,7 @@ def test_sig(parametrized_sig_server, bssl_alg_to_id, client_type, test_artifact
 
     elif client_type == "bssl":
         common.run_subprocess([common.BSSL_SHIM, '-port', str(server_port),
-                                                 '-expect-version', 'TLSv1.3',
+                                                 '-expect-version', str(common.TLS1_3_VERSION),
                                                  '-curves', bssl_alg_to_id['frodo640aes'],
                                                  '-expect-curve-id', bssl_alg_to_id['frodo640aes'],
                                                  '-expect-peer-signature-algorithm', bssl_alg_to_id[server_sig],

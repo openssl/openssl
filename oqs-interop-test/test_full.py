@@ -35,7 +35,7 @@ def test_kex_sig_pair(kex_name, parametrized_sig_server, bssl_alg_to_id, client_
 
     elif client_type == "bssl":
         common.run_subprocess([common.BSSL_SHIM, '-port', str(server_port),
-                                                 '-expect-version', 'TLSv1.3',
+                                                 '-expect-version', str(common.TLS1_3_VERSION),
                                                  '-curves', bssl_alg_to_id[kex_name],
                                                  '-expect-curve-id', bssl_alg_to_id[kex_name],
                                                  '-expect-peer-signature-algorithm', bssl_alg_to_id[server_sig],

@@ -20,14 +20,14 @@ def bssl_alg_to_id():
 
     # Map all the kems first
     for kex in bssl_generate_yml['kems']:
-        mapping[kex['name']] = kex['nid']
+        mapping[kex['name']] = str(int(kex['nid'], 16))
         for hybrid in kex['mix_with']:
             kex_name = "{}_{}".format(hybrid['name'], kex['name'])
-            mapping[kex_name] = hybrid['mix_nid']
+            mapping[kex_name] = str(int(hybrid['mix_nid'], 16))
 
     # Then add all the signatures
     for sig in bssl_generate_yml['sigs']:
-        mapping[sig['name']] = sig['code_point']
+        mapping[sig['name']] = str(int(sig['code_point'], 16))
     return mapping
 
 @pytest.fixture
