@@ -23,7 +23,7 @@
 typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_NOOUT,
-    OPT_TEXT, OPT_PRINT, OPT_PRINT_CERTS, OPT_PRINT_QUIET,
+    OPT_TEXT, OPT_PRINT, OPT_PRINT_CERTS, OPT_QUIET,
     OPT_ENGINE, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
@@ -46,7 +46,7 @@ const OPTIONS pkcs7_options[] = {
     {"print", OPT_PRINT, '-', "Print out all fields of the PKCS7 structure"},
     {"print_certs", OPT_PRINT_CERTS, '-',
      "Print_certs  print any certs or crl in the input"},
-    {"quiet", OPT_PRINT_QUIET, '-', 
+    {"quiet", OPT_QUIET, '-', 
      "When used with -print_certs, it produces a clean output"},
 
     OPT_PROV_OPTIONS,
@@ -102,7 +102,7 @@ int pkcs7_main(int argc, char **argv)
         case OPT_PRINT_CERTS:
             print_certs = 1;
             break;
-        case OPT_PRINT_QUIET:
+        case OPT_QUIET:
             quiet = 1;
             break;
         case OPT_ENGINE:

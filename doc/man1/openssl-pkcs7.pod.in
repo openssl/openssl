@@ -66,7 +66,8 @@ preceded by their subject and issuer names in one line format.
 
 =item B<-quiet>
 
-When used with -print_certs, prints out a clean version.
+When used with -print_certs, prints out just the PEM-encoded 
+certificates without any other output. 
 
 =item B<-text>
 
