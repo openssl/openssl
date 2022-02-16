@@ -217,11 +217,11 @@ static ASN1_PCTX *pctx;
     if (type != NULL) { \
         int len2; \
         BIO *bio = BIO_new(BIO_s_null()); \
+        \
         if (bio != NULL) { \
             PRINT(bio, type); \
             BIO_free(bio); \
         } \
-        \
         len2 = I2D(type, &der); \
         if (len2 != 0) {} \
         OPENSSL_free(der); \
@@ -236,11 +236,11 @@ static ASN1_PCTX *pctx;
     \
     if (type != NULL) { \
         BIO *bio = BIO_new(BIO_s_null()); \
+        \
         if (bio != NULL) { \
             PRINT(bio, type, 0); \
             BIO_free(bio); \
         } \
-        \
         I2D(type, &der); \
         OPENSSL_free(der); \
         TYPE ## _free(type); \
@@ -254,11 +254,11 @@ static ASN1_PCTX *pctx;
     \
     if (type != NULL) { \
         BIO *bio = BIO_new(BIO_s_null()); \
+        \
         if (bio != NULL) { \
             PRINT(bio, type, 0, pctx); \
             BIO_free(bio); \
         } \
-        \
         I2D(type, &der); \
         OPENSSL_free(der); \
         TYPE ## _free(type); \
@@ -273,6 +273,7 @@ static ASN1_PCTX *pctx;
     \
     if (type != NULL) { \
         BIO *bio = BIO_new(BIO_s_null()); \
+        \
         BIO_free(bio); \
         I2D(type, &der); \
         OPENSSL_free(der); \
