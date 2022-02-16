@@ -633,6 +633,8 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
     if (extra->server.session_ticket_app_data != NULL) {
         server_ctx_data->session_ticket_app_data =
             OPENSSL_strdup(extra->server.session_ticket_app_data);
+        if (!TEST_ptr(server_ctx_data->session_ticket_app_data))
+            goto err;
         SSL_CTX_set_session_ticket_cb(server_ctx, generate_session_ticket_cb,
                                       decrypt_session_ticket_cb, server_ctx_data);
     }
@@ -641,6 +643,8 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
             goto err;
         server2_ctx_data->session_ticket_app_data =
             OPENSSL_strdup(extra->server2.session_ticket_app_data);
+        if (!TEST_ptr(server2_ctx_data->session_ticket_app_data))
+            goto err;
         SSL_CTX_set_session_ticket_cb(server2_ctx, NULL,
                                       decrypt_session_ticket_cb, server2_ctx_data);
     }

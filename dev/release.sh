@@ -9,6 +9,10 @@
 # This is the most shell agnostic way to specify that POSIX rules.
 POSIXLY_CORRECT=1
 
+# Force C locale because some commands (like date +%b) relies
+# on the current locale.
+export LC_ALL=C
+
 usage () {
     cat <<EOF
 Usage: release.sh [ options ... ]
