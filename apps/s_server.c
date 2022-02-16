@@ -1816,10 +1816,13 @@ int s_server_main(int argc, char *argv[])
             if (s_msg && bio_s_msg == NULL)
                 bio_s_msg = dup_bio_out(FORMAT_TEXT);
         } else {
-            if (bio_s_out == NULL)
-                bio_s_out = dup_bio_out(FORMAT_TEXT);
+            bio_s_out = dup_bio_out(FORMAT_TEXT);
         }
     }
+
+    if (bio_s_out == NULL)
+        goto end;
+
     if (nocert) {
         s_cert_file = NULL;
         s_key_file = NULL;
@@ -2361,6 +2364,11 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
         else
 # endif
             sbio = BIO_new_dgram(s, BIO_NOCLOSE);
+        if (sbio == NULL) {
+            BIO_printf(bio_err, "Unable to create BIO\n");
+            ERR_print_errors(bio_err);
+            goto err;
+        }
 
         if (enable_timeouts) {
             timeout.tv_sec = 0;
@@ -2410,6 +2418,13 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
         BIO *test;
 
         test = BIO_new(BIO_f_nbio_test());
+        if (test == NULL) {
+            BIO_printf(bio_err, "Unable to create BIO\n");
+            ret = -1;
+            BIO_free(sbio);
+            goto err;
+        }
+
         sbio = BIO_push(test, sbio);
     }
 
@@ -3035,10 +3050,21 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
     }
 
     sbio = BIO_new_socket(s, BIO_NOCLOSE);
+    if (sbio == NULL) {
+        SSL_free(con);
+        goto err;
+    }
+
     if (s_nbio_test) {
         BIO *test;
 
         test = BIO_new(BIO_f_nbio_test());
+        if (test == NULL) {
+            SSL_free(con);
+            BIO_free(sbio);
+            goto err;
+        }
+
         sbio = BIO_push(test, sbio);
     }
     SSL_set_bio(con, sbio, sbio);
@@ -3049,7 +3075,12 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
     BIO_push(io, ssl_bio);
     ssl_bio = NULL;
 #ifdef CHARSET_EBCDIC
-    io = BIO_push(BIO_new(BIO_f_ebcdic_filter()), io);
+    BIO *filter;
+    filter = BIO_new(BIO_f_ebcdic_filter());
+    if (filter == NULL)
+        goto err;
+
+    io = BIO_push(filter, io);
 #endif
 
     if (s_debug) {
@@ -3442,6 +3473,12 @@ static int rev_body(int s, int stype, int prot, unsigned char *context)
     }
 
     sbio = BIO_new_socket(s, BIO_NOCLOSE);
+    if (sbio == NULL) {
+        SSL_free(con);
+        ERR_print_errors(bio_err);
+        goto err;
+    }
+
     SSL_set_bio(con, sbio, sbio);
     SSL_set_accept_state(con);
 
@@ -3450,7 +3487,12 @@ static int rev_body(int s, int stype, int prot, unsigned char *context)
     BIO_push(io, ssl_bio);
     ssl_bio = NULL;
 #ifdef CHARSET_EBCDIC
-    io = BIO_push(BIO_new(BIO_f_ebcdic_filter()), io);
+    BIO *filter;
+    filter = BIO_new(BIO_f_ebcdic_filter();
+    if (filter == NULL)
+        goto err;
+
+    io = BIO_push(filter), io);
 #endif
 
     if (s_debug) {
