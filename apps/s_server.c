@@ -3011,6 +3011,9 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
     int width;
     fd_set readfds;
     const char *opmode;
+#ifdef CHARSET_EBCDIC
+    BIO *filter;
+#endif
 
     /* Set width for a select call if needed */
     width = s + 1;
@@ -3075,7 +3078,6 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
     BIO_push(io, ssl_bio);
     ssl_bio = NULL;
 #ifdef CHARSET_EBCDIC
-    BIO *filter;
     filter = BIO_new(BIO_f_ebcdic_filter());
     if (filter == NULL)
         goto err;
@@ -3444,6 +3446,9 @@ static int rev_body(int s, int stype, int prot, unsigned char *context)
     int ret = 1;
     SSL *con;
     BIO *io, *ssl_bio, *sbio;
+#ifdef CHARSET_EBCDIC
+    BIO *filter;
+#endif
 
     /* as we use BIO_gets(), and it always null terminates data, we need
      * to allocate 1 byte longer buffer to fit the full 2^14 byte record */
@@ -3488,11 +3493,11 @@ static int rev_body(int s, int stype, int prot, unsigned char *context)
     ssl_bio = NULL;
 #ifdef CHARSET_EBCDIC
     BIO *filter;
-    filter = BIO_new(BIO_f_ebcdic_filter();
+    filter = BIO_new(BIO_f_ebcdic_filter());
     if (filter == NULL)
         goto err;
 
-    io = BIO_push(filter), io);
+    io = BIO_push((filter), io);
 #endif
 
     if (s_debug) {
