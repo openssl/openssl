@@ -3492,12 +3492,11 @@ static int rev_body(int s, int stype, int prot, unsigned char *context)
     BIO_push(io, ssl_bio);
     ssl_bio = NULL;
 #ifdef CHARSET_EBCDIC
-    BIO *filter;
     filter = BIO_new(BIO_f_ebcdic_filter());
     if (filter == NULL)
         goto err;
 
-    io = BIO_push((filter), io);
+    io = BIO_push(filter, io);
 #endif
 
     if (s_debug) {
