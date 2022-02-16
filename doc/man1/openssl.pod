@@ -25,8 +25,8 @@ B<openssl> B<no->I<XXX> [ I<options> ]
 
 =head1 DESCRIPTION
 
-OpenSSL is a cryptography toolkit implementing the Secure Sockets Layer (SSL
-v2/v3) and Transport Layer Security (TLS v1) network protocols and related
+OpenSSL is a cryptography toolkit implementing the Secure Sockets Layer (SSL)
+and Transport Layer Security (TLS) network protocols and related
 cryptography standards required by them.
 
 The B<openssl> program is a command line program for using the various
