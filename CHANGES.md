@@ -1611,6 +1611,8 @@ breaking changes, and mappings for the large list of deprecated functions.
 OpenSSL 1.1.1
 -------------
 
+### Changes between 1.1.1m and 1.1.1n [xx XXX xxxx]
+
 ### Changes between 1.1.1l and 1.1.1m [14 Dec 2021]
 
  * Avoid loading of a dynamic engine twice.
