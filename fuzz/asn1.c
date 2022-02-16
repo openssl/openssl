@@ -220,11 +220,12 @@ static ASN1_PCTX *pctx;
         if (bio != NULL) { \
             PRINT(bio, type); \
             BIO_free(bio); \
-            len2 = I2D(type, &der); \
-            if (len2 != 0) {} \
-            OPENSSL_free(der); \
-            TYPE ## _free(type); \
         } \
+        \
+        len2 = I2D(type, &der); \
+        if (len2 != 0) {} \
+        OPENSSL_free(der); \
+        TYPE ## _free(type); \
     } \
 }
 
@@ -238,10 +239,11 @@ static ASN1_PCTX *pctx;
         if (bio != NULL) { \
             PRINT(bio, type, 0); \
             BIO_free(bio); \
-            I2D(type, &der); \
-            OPENSSL_free(der); \
-            TYPE ## _free(type); \
         } \
+        \
+        I2D(type, &der); \
+        OPENSSL_free(der); \
+        TYPE ## _free(type); \
     } \
 }
 
@@ -255,10 +257,11 @@ static ASN1_PCTX *pctx;
         if (bio != NULL) { \
             PRINT(bio, type, 0, pctx); \
             BIO_free(bio); \
-            I2D(type, &der); \
-            OPENSSL_free(der); \
-            TYPE ## _free(type); \
         } \
+        \
+        I2D(type, &der); \
+        OPENSSL_free(der); \
+        TYPE ## _free(type); \
     } \
 }
 
@@ -270,12 +273,10 @@ static ASN1_PCTX *pctx;
     \
     if (type != NULL) { \
         BIO *bio = BIO_new(BIO_s_null()); \
-        if (bio != NULL) { \
-            BIO_free(bio); \
-            I2D(type, &der); \
-            OPENSSL_free(der); \
-            TYPE ## _free(type); \
-        } \
+        BIO_free(bio); \
+        I2D(type, &der); \
+        OPENSSL_free(der); \
+        TYPE ## _free(type); \
     } \
 }
 
@@ -314,10 +315,10 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
             if (bio != NULL) {
                 ASN1_item_print(bio, o, 4, i, pctx);
                 BIO_free(bio);
-                ASN1_item_i2d(o, &der, i);
-                OPENSSL_free(der);
-                ASN1_item_free(o, i);
             }
+            ASN1_item_i2d(o, &der, i);
+            OPENSSL_free(der);
+            ASN1_item_free(o, i);
         }
     }
 
