@@ -457,7 +457,8 @@ When using signature-based protection of CMP request messages
 this CMP signer certificate will be included first in the extraCerts field.
 It serves as fallback reference certificate, see OSSL_CMP_CTX_set1_oldCert().
 The subject of this I<cert> will be used as the sender field of outgoing
-messages, while the subject of any cert set via OSSL_CMP_CTX_set1_oldCert()
+messages, while the subject of any cert set via OSSL_CMP_CTX_set1_oldCert(),
+the subject of any PKCS#10 CSR set via OSSL_CMP_CTX_set1_p10CSR(),
 and any value set via OSSL_CMP_CTX_set1_subjectName() are used as fallback.
 
 The I<cert> argument may be NULL to clear the entry.
