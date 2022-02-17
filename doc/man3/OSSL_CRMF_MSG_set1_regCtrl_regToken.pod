@@ -89,8 +89,8 @@ section 6.3.
 OSSL_CRMF_MSG_set1_regCtrl_protocolEncrKey() sets the protocolEncrKey control in
 the given I<msg> copying the given I<pubkey> as value. See RFC 4211 section 6.6.
 
-OSSL_CRMF_MSG_set1_regCtrl_oldCertID() sets the oldCertID control in the given
-I<msg> copying the given I<cid> as value. See RFC 4211, section 6.5.
+OSSL_CRMF_MSG_set1_regCtrl_oldCertID() sets the B<oldCertID> regToken control in
+the given I<msg> copying the given I<cid> as value. See RFC 4211, section 6.5.
 
 OSSL_CRMF_CERTID_gen produces an OSSL_CRMF_CERTID_gen structure copying the
 given I<issuer> name and I<serial> number.

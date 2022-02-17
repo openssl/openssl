@@ -252,8 +252,8 @@ e.g., C<1.2.3.4:int:56789>.
 The source of the private or public key for the certificate requested
 in Initialization Request (IR), Certification Request(CR), or
 Key Update Request (KUR).
-Default is the public key in the PKCS#10 CSR given with the B<-csr> option,
-if any, or else the current client key, if given.
+Defaults to the public key in the PKCS#10 CSR given with the B<-csr> option,
+the public key of the reference certificate, or the current client key.
 
 =item B<-newkeypass> I<arg>
 
