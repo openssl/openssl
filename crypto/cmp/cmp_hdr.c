@@ -301,11 +301,12 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
         return 0;
 
     /*
-     * If neither protection cert nor oldCert nor subject are given,
+     * If no protection cert nor oldCert nor CSR nor subject is given,
      * sender name is not known to the client and thus set to NULL-DN
      */
     sender = ctx->cert != NULL ? X509_get_subject_name(ctx->cert) :
         ctx->oldCert != NULL ? X509_get_subject_name(ctx->oldCert) :
+        ctx->p10CSR != NULL ? X509_REQ_get_subject_name(ctx->p10CSR) :
         ctx->subjectName;
     if (!ossl_cmp_hdr_set1_sender(hdr, sender))
         return 0;
