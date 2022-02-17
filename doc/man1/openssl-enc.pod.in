@@ -432,7 +432,7 @@ Base64 decode a file then decrypt it using a password supplied in a file:
 AES key wrapping:
 
  openssl enc -e -a -id-aes128-wrap-pad -K 000102030405060708090A0B0C0D0E0F -in file.bin
-  or
+or
  openssl aes128-wrap-pad -e -a -K 000102030405060708090A0B0C0D0E0F -in file.bin
 
 =head1 BUGS
