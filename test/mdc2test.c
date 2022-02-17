@@ -51,14 +51,12 @@ static int test_mdc2(void)
     EVP_MD_CTX *c;
     static char text[] = "Now is the time for all ";
     size_t tlen = strlen(text), i = 0;
-    OSSL_PROVIDER *prov = NULL;
     OSSL_PARAM params[2];
 
     params[i++] = OSSL_PARAM_construct_uint(OSSL_DIGEST_PARAM_PAD_TYPE,
                                             &pad_type),
     params[i++] = OSSL_PARAM_construct_end();
 
-    prov = OSSL_PROVIDER_load(NULL, "legacy");
 # ifdef CHARSET_EBCDIC
     ebcdic2ascii(text, text, tlen);
 # endif
@@ -81,7 +79,6 @@ static int test_mdc2(void)
     testresult = 1;
  end:
     EVP_MD_CTX_free(c);
-    OSSL_PROVIDER_unload(prov);
     return testresult;
 }
 #endif
