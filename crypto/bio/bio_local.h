@@ -126,6 +126,7 @@ struct bio_st {
     int flags;                  /* extra storage */
     int retry_reason;
     int num;
+    int send_flags;             /* flags for send()/sendto() */
     void *ptr;
     struct bio_st *next_bio;    /* used by filter BIOs */
     struct bio_st *prev_bio;    /* used by filter BIOs */
@@ -190,4 +191,3 @@ void bio_sock_cleanup_int(void);
 # endif
 
 #endif
-
