@@ -63,7 +63,7 @@ B<BIO_CTRL_CLEAR_KTLS_TX_CTRL_MSG>
 
 B<BIO_CTRL_EOF>
 
-B<BIO_CTRL_DGRAM_SET_SEND_FLAGS> the I<larg> argument is used for the I<flags>
+B<BIO_CTRL_SET_SEND_FLAGS> the I<larg> argument is used for the I<flags>
 argument to send() and/or sendto(), the main use case is for the caller to set
 the B<MSG_NOSIGNAL> flag but all send()/sendto() flags are supported. 
 
