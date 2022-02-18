@@ -479,7 +479,6 @@ int ossl_cms_check_signing_certs(const CMS_SignerInfo *si,
 int ossl_cms_dh_envelope(CMS_RecipientInfo *ri, int decrypt);
 int ossl_cms_ecdh_envelope(CMS_RecipientInfo *ri, int decrypt);
 int ossl_cms_rsa_envelope(CMS_RecipientInfo *ri, int decrypt);
-int ossl_cms_ecdsa_dsa_sign(CMS_SignerInfo *si, int verify);
 int ossl_cms_rsa_sign(CMS_SignerInfo *si, int verify);
 
 DECLARE_ASN1_ITEM(CMS_CertificateChoices)

@@ -36,7 +36,14 @@ static int sigx_cmp(const nid_triple *const *a, const nid_triple *const *b)
     int ret;
 
     ret = (*a)->hash_id - (*b)->hash_id;
-    if (ret != 0)
+    /* The "b" side of the comparison carries the algorithms already
+     * registered. A NID_undef for 'hash_id' there means that the
+     * signature algorithm doesn't need a digest to operate OK. In
+     * such case, any hash_id/digest algorithm on the test side (a),
+     * incl. NID_undef, is acceptable. signature algorithm NID
+     * (pkey_id) must match in any case.
+     */
+    if ((ret != 0) && ((*b)->hash_id != NID_undef))
         return ret;
     return (*a)->pkey_id - (*b)->pkey_id;
 }
