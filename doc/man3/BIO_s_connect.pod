@@ -136,6 +136,56 @@ BIO_set_conn_address(), BIO_get_conn_port(), BIO_get_conn_address(),
 BIO_set_conn_ip_family(), BIO_get_conn_ip_family(),
 BIO_set_nbio(), and BIO_do_connect() are macros.
 
+=head1 CTRLs
+
+The connect BIO supports the following ctrls via the L<BIO_ctrl(3)> function:
+
+B<BIO_CTRL_RESET>
+
+B<BIO_C_DO_STATE_MACHINE>
+
+B<BIO_C_GET_CONNECT>
+
+B<BIO_C_SET_CONNECT>
+
+B<BIO_C_SET_NBIO>
+
+B<BIO_C_SET_CONNECT_MODE>
+
+B<BIO_C_GET_FD>
+
+B<BIO_CTRL_GET_CLOSE>
+
+B<BIO_CTRL_SET_CLOSE>
+
+B<BIO_CTRL_PENDING>
+
+B<BIO_CTRL_WPENDING>
+
+B<BIO_CTRL_FLUSH>
+
+B<BIO_CTRL_DUP>
+
+B<BIO_CTRL_SET_CALLBACK>
+
+B<BIO_CTRL_GET_CALLBACK>
+
+B<BIO_CTRL_EOF>
+
+B<BIO_CTRL_SET_KTLS>
+
+B<BIO_CTRL_GET_KTLS_SEND>
+
+B<BIO_CTRL_GET_KTLS_RECV>
+
+B<BIO_CTRL_SET_KTLS_TX_SEND_CTRL_MSG>
+
+B<BIO_CTRL_CLEAR_KTLS_TX_CTRL_MSG>
+
+B<BIO_CTRL_SET_SEND_FLAGS> the I<larg> argument is used for the I<flags>
+argument to send() and/or sendto(), the main use case is for the caller to set
+the B<MSG_NOSIGNAL> flag but all send()/sendto() flags are supported. 
+
 =head1 RETURN VALUES
 
 BIO_s_connect() returns the connect BIO method.
