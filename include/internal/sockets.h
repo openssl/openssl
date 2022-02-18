@@ -132,31 +132,31 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #  define get_last_socket_error() WSAGetLastError()
 #  define clear_socket_error()    WSASetLastError(0)
 #  define readsocket(s,b,n)       recv((s),(b),(n),0)
-#  define writesocket(s,b,n)      send((s),(b),(n),0)
+#  define writesocket(s,b,n,f)    send((s),(b),(n),(f))
 # elif defined(__DJGPP__)
 #  define WATT32
 #  define WATT32_NO_OLDIES
 #  define closesocket(s)          close_s(s)
 #  define readsocket(s,b,n)       read_s(s,b,n)
-#  define writesocket(s,b,n)      send(s,b,n,0)
+#  define writesocket(s,b,n,f)    send(s,b,n,f)
 # elif defined(OPENSSL_SYS_VMS)
 #  define ioctlsocket(a,b,c)      ioctl(a,b,c)
 #  define closesocket(s)          close(s)
 #  define readsocket(s,b,n)       recv((s),(b),(n),0)
-#  define writesocket(s,b,n)      send((s),(b),(n),0)
+#  define writesocket(s,b,n,f)    send((s),(b),(n),(f))
 # elif defined(OPENSSL_SYS_VXWORKS)
 #  define ioctlsocket(a,b,c)          ioctl((a),(b),(int)(c))
 #  define closesocket(s)              close(s)
 #  define readsocket(s,b,n)           read((s),(b),(n))
-#  define writesocket(s,b,n)          write((s),(char *)(b),(n))
+#  define writesocket(s,b,n,f)        write((s),(char *)(b),(n))
 # elif defined(OPENSSL_SYS_TANDEM)
 #  if defined(OPENSSL_TANDEM_FLOSS)
 #   include <floss.h(floss_read, floss_write)>
 #   define readsocket(s,b,n)       floss_read((s),(b),(n))
-#   define writesocket(s,b,n)      floss_write((s),(b),(n))
+#   define writesocket(s,b,n,f)    floss_write((s),(b),(n))
 #  else
 #   define readsocket(s,b,n)       read((s),(b),(n))
-#   define writesocket(s,b,n)      write((s),(b),(n))
+#   define writesocket(s,b,n,f)    write((s),(b),(n))
 #  endif
 #  define ioctlsocket(a,b,c)      ioctl(a,b,c)
 #  define closesocket(s)          close(s)
@@ -164,7 +164,7 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #  define ioctlsocket(a,b,c)      ioctl(a,b,c)
 #  define closesocket(s)          close(s)
 #  define readsocket(s,b,n)       read((s),(b),(n))
-#  define writesocket(s,b,n)      write((s),(b),(n))
+#  define writesocket(s,b,n,f)    send((s),(b),(n),(f))
 # endif
 
 /* also in apps/include/apps.h */
