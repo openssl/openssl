@@ -29,6 +29,23 @@ BIO_s_datagram() returns the datagram BIO method.
 The datagram BIO is a BIO object which can be laterly used for a DTLS session
 or a generic UDP application
 
+BIO_s_datagram_sctp() returns the sctp datagram BIO method.
+
+BIO_new_dgram() creates a new datagram BIO.
+
+BIO_new_dgram_sctp() creates a new sctp datagram BIO.
+
+BIO_dgram_is_sctp() tests if the datagram BIO is a sctp datagram BIO.
+
+BIO_dgram_sctp_wait_for_dry() waits until the peer confirms all
+packets have been received.
+
+BIO_dgram_sctp_msg_waiting() checks if there are any messages
+waiting to be read.
+
+BIO_dgram_non_fatal_error() checks if the error code was a fatal
+one or not.
+
 =head1 NOTES
 
 
@@ -105,6 +122,26 @@ the B<MSG_NOSIGNAL> flag but all send()/sendto() flags are supported.
 
 =head1 RETURN VALUES
 
+BIO_s_datagram() returns the datagram BIO method.
+
+BIO_s_datagram_sctp() returns the sctp datagram BIO method.
+
+BIO_new_dgram() returns the newly allocated datagram BIO or NULL
+if an error occurred.
+
+BIO_new_dgram_sctp() returns the newly allocated sctp datagram BIO or NULL
+if an error occurred.
+
+BIO_dgram_is_sctp() returns 1 if the BIO is of type sctp datagram or 0
+if not.
+
+BIO_dgram_sctp_wait_for_dry() returns 1 if dry, 0 if not and -1 on error.
+
+BIO_dgram_sctp_msg_waiting() returns 1 if there is a message to be read or
+0 if there isn't.
+
+BIO_dgram_non_fatal_error() returns 1 if the error wasn't fatal, or 0
+if it was.
 
 =head1 COPYRIGHT
 
