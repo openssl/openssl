@@ -54,10 +54,10 @@ static int do_bio_cipher(const EVP_CIPHER* cipher, const unsigned char* key,
     if (!TEST_ptr(b))
         return 0;
     if (!TEST_true(BIO_set_cipher(b, cipher, key, iv, ENCRYPT)))
-        return 0;
+        goto err;
     mem = BIO_new_mem_buf(inp, DATA_SIZE);
     if (!TEST_ptr(mem))
-        return 0;
+        goto err;
     BIO_push(b, mem);
     lref = BIO_read(b, ref, sizeof(ref));
     BIO_free_all(b);
@@ -69,11 +69,11 @@ static int do_bio_cipher(const EVP_CIPHER* cipher, const unsigned char* key,
             return 0;
         if (!TEST_true(BIO_set_cipher(b, cipher, key, iv, ENCRYPT))) {
             TEST_info("Split encrypt failed @ operation %d", i);
-            return 0;
+            goto err;
         }
         mem = BIO_new_mem_buf(inp, DATA_SIZE);
         if (!TEST_ptr(mem))
-            return 0;
+            goto err;
         BIO_push(b, mem);
         memset(out, 0, sizeof(out));
         out[i] = ~ref[i];
@@ -81,7 +81,7 @@ static int do_bio_cipher(const EVP_CIPHER* cipher, const unsigned char* key,
         /* check for overstep */
         if (!TEST_uchar_eq(out[i], (unsigned char)~ref[i])) {
             TEST_info("Encrypt overstep check failed @ operation %d", i);
-            return 0;
+            goto err;
         }
         len += BIO_read(b, out + len, sizeof(out) - len);
         BIO_free_all(b);
@@ -101,11 +101,11 @@ static int do_bio_cipher(const EVP_CIPHER* cipher, const unsigned char* key,
             return 0;
         if (!TEST_true(BIO_set_cipher(b, cipher, key, iv, ENCRYPT))) {
             TEST_info("Small chunk encrypt failed @ operation %d", i);
-            return 0;
+            goto err;
         }
         mem = BIO_new_mem_buf(inp, DATA_SIZE);
         if (!TEST_ptr(mem))
-            return 0;
+            goto err;
         BIO_push(b, mem);
         memset(out, 0, sizeof(out));
         for (len = 0; (delta = BIO_read(b, out + len, i)); ) {
@@ -126,11 +126,11 @@ static int do_bio_cipher(const EVP_CIPHER* cipher, const unsigned char* key,
     if (!TEST_ptr(b))
         return 0;
     if (!TEST_true(BIO_set_cipher(b, cipher, key, iv, DECRYPT)))
-        return 0;
+        goto err;
     /* Use original reference output as input */
     mem = BIO_new_mem_buf(ref, lref);
     if (!TEST_ptr(mem))
-        return 0;
+        goto err;
     BIO_push(b, mem);
     (void)BIO_flush(b);
     memset(out, 0, sizeof(out));
@@ -147,11 +147,11 @@ static int do_bio_cipher(const EVP_CIPHER* cipher, const unsigned char* key,
             return 0;
         if (!TEST_true(BIO_set_cipher(b, cipher, key, iv, DECRYPT))) {
             TEST_info("Split decrypt failed @ operation %d", i);
-            return 0;
+            goto err;
         }
         mem = BIO_new_mem_buf(ref, lref);
         if (!TEST_ptr(mem))
-            return 0;
+            goto err;
         BIO_push(b, mem);
         memset(out, 0, sizeof(out));
         out[i] = ~ref[i];
@@ -159,7 +159,7 @@ static int do_bio_cipher(const EVP_CIPHER* cipher, const unsigned char* key,
         /* check for overstep */
         if (!TEST_uchar_eq(out[i], (unsigned char)~ref[i])) {
             TEST_info("Decrypt overstep check failed @ operation %d", i);
-            return 0;
+            goto err;
         }
         len += BIO_read(b, out + len, sizeof(out) - len);
         BIO_free_all(b);
@@ -179,11 +179,11 @@ static int do_bio_cipher(const EVP_CIPHER* cipher, const unsigned char* key,
             return 0;
         if (!TEST_true(BIO_set_cipher(b, cipher, key, iv, DECRYPT))) {
             TEST_info("Small chunk decrypt failed @ operation %d", i);
-            return 0;
+            goto err;
         }
         mem = BIO_new_mem_buf(ref, lref);
         if (!TEST_ptr(mem))
-            return 0;
+            goto err;
         BIO_push(b, mem);
         memset(out, 0, sizeof(out));
         for (len = 0; (delta = BIO_read(b, out + len, i)); ) {
@@ -198,6 +198,10 @@ static int do_bio_cipher(const EVP_CIPHER* cipher, const unsigned char* key,
     }
 
     return 1;
+
+err:
+    BIO_free_all(b);
+    return 0;
 }
 
 static int do_test_bio_cipher(const EVP_CIPHER* cipher, int idx)
