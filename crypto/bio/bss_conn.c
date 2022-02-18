@@ -559,7 +559,7 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
         BIO_clear_ktls_ctrl_msg_flag(b);
         ret = 0;
         break;
-    case BIO_CTRL_DGRAM_SET_SEND_FLAGS:
+    case BIO_CTRL_SET_SEND_FLAGS:
         b->send_flags = num;
         break;
 # endif
