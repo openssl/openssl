@@ -227,19 +227,50 @@ int ossl_cms_SignerIdentifier_cert_cmp(CMS_SignerIdentifier *sid, X509 *cert)
         return -1;
 }
 
+/* Method to map any, incl. provider-implemented PKEY types to OIDs */
+/* ECDSA and DSA and all provider-delivered signatures implementation is the same */
+static int cms_generic_sign(CMS_SignerInfo *si, int verify)
+{
+    if (!ossl_assert(verify == 0 || verify == 1))
+        return -1;
+
+    if (!verify) {
+        int snid, hnid, pknid;
+        X509_ALGOR *alg1, *alg2;
+        EVP_PKEY *pkey = si->pkey;
+        pknid = EVP_PKEY_get_id(pkey);
+
+        CMS_SignerInfo_get0_algs(si, NULL, NULL, &alg1, &alg2);
+        if (alg1 == NULL || alg1->algorithm == NULL)
+            return -1;
+        hnid = OBJ_obj2nid(alg1->algorithm);
+        if (hnid == NID_undef)
+            return -1;
+        if (pknid <= 0) { /* check whether a provider registered a NID */
+            const char *typename = EVP_PKEY_get0_type_name(pkey);
+            if (typename != NULL)
+                pknid = OBJ_txt2nid(typename);
+        }
+        if (!OBJ_find_sigid_by_algs(&snid, hnid, pknid))
+            return -1;
+        return X509_ALGOR_set0(alg2, OBJ_nid2obj(snid), V_ASN1_UNDEF, NULL);
+    }
+    return 1;
+}
+
 static int cms_sd_asn1_ctrl(CMS_SignerInfo *si, int cmd)
 {
     EVP_PKEY *pkey = si->pkey;
     int i;
 
     if (EVP_PKEY_is_a(pkey, "DSA") || EVP_PKEY_is_a(pkey, "EC"))
-        return ossl_cms_ecdsa_dsa_sign(si, cmd);
+        return cms_generic_sign(si, cmd);
     else if (EVP_PKEY_is_a(pkey, "RSA") || EVP_PKEY_is_a(pkey, "RSA-PSS"))
         return ossl_cms_rsa_sign(si, cmd);
 
-    /* Something else? We'll give engines etc a chance to handle this */
+    /* Now give engines, providers, etc a chance to handle this */
     if (pkey->ameth == NULL || pkey->ameth->pkey_ctrl == NULL)
-        return 1;
+        return cms_generic_sign(si, cmd);
     i = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_CMS_SIGN, cmd, si);
     if (i == -2) {
         ERR_raise(ERR_LIB_CMS, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
