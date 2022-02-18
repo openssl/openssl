@@ -249,8 +249,8 @@ certificate. An error occurs if a suitable CRL cannot be found.
 B<X509_V_FLAG_CRL_CHECK_ALL> enables CRL checking for the entire certificate
 chain.
 
-B<X509_V_FLAG_IGNORE_CRITICAL> disabled critical extension checking. By default
-any unhandled critical extensions in certificates or (if checked) CRLs results
+B<X509_V_FLAG_IGNORE_CRITICAL> disables critical extension checking. By default
+any unhandled critical extensions in certificates or (if checked) CRLs result
 in a fatal error. If this flag is set unhandled critical extensions are
 ignored. B<WARNING> setting this option for anything other than debugging
 purposes can be a security risk. Finer control over which extensions are
