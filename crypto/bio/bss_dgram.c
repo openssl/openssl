@@ -337,11 +337,11 @@ static int dgram_write(BIO *b, const char *in, int inl)
     clear_socket_error();
 
     if (data->connected)
-        ret = writesocket(b->num, in, inl);
+        ret = writesocket(b->num, in, inl, b->send_flags);
     else {
         int peerlen = BIO_ADDR_sockaddr_size(&data->peer);
 
-        ret = sendto(b->num, in, inl, 0,
+        ret = sendto(b->num, in, inl, b->send_flags,
                      BIO_ADDR_sockaddr(&data->peer), peerlen);
     }
 
@@ -791,6 +791,9 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_DGRAM_SCTP_SET_IN_HANDSHAKE:
     case BIO_CTRL_DGRAM_SET_PEEK_MODE:
         data->peekmode = (unsigned int)num;
+        break;
+    case BIO_CTRL_DGRAM_SET_SEND_FLAGS:
+        b->send_flags = num;
         break;
     default:
         ret = 0;
