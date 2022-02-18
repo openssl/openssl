@@ -1,0 +1,118 @@
+=pod
+
+=head1 NAME
+
+BIO_s_datagram, BIO_s_datagram_sctp
+BIO_new_dgram, BIO_new_dgram_sctp
+BIO_dgram_is_sctp, BIO_dgram_sctp_wait_for_dry
+BIO_dgram_sctp_msg_waiting, BIO_dgram_non_fatal_error - datagram BIO
+
+=head1 SYNOPSIS
+
+ #include <openssl/bio.h>
+
+ const BIO_METHOD *BIO_s_datagram(void);
+ const BIO_METHOD *BIO_s_datagram_sctp(void);
+
+ BIO *BIO_new_dgram(int fd, int close_flag);
+ BIO *BIO_new_dgram_sctp(int fd, int close_flag);
+
+ int BIO_dgram_is_sctp(BIO *bio);
+ int BIO_dgram_sctp_wait_for_dry(BIO *b);
+ int BIO_dgram_sctp_msg_waiting(BIO *b);
+ int BIO_dgram_non_fatal_error(int err);
+
+=head1 DESCRIPTION
+
+BIO_s_datagram() returns the datagram BIO method.
+
+The datagram BIO is a BIO object which can be laterly used for a DTLS session
+or a generic UDP application
+
+=head1 NOTES
+
+
+=head1 CTRLs
+
+The datagram BIO supports the following ctrls via the L<BIO_ctrl(3)> function:
+
+B<BIO_CTRL_RESET>
+
+B<BIO_CTRL_INFO>
+
+B<BIO_C_SET_FD>
+
+B<BIO_C_GET_FD>
+
+B<BIO_CTRL_GET_CLOSE>
+
+B<BIO_CTRL_SET_CLOSE>
+
+B<BIO_CTRL_PENDING>
+
+B<BIO_CTRL_WPENDING>
+
+B<BIO_CTRL_DUP>
+
+B<BIO_CTRL_FLUSH>
+
+B<BIO_CTRL_DGRAM_CONNECT>
+
+B<BIO_CTRL_DGRAM_MTU_DISCOVER>
+
+B<BIO_CTRL_DGRAM_QUERY_MTU>
+
+B<BIO_CTRL_DGRAM_GET_FALLBACK_MTU>
+
+B<BIO_CTRL_DGRAM_GET_MTU>
+
+B<BIO_CTRL_DGRAM_SET_MTU>
+
+B<BIO_CTRL_DGRAM_SET_CONNECTED>
+
+B<BIO_CTRL_DGRAM_GET_PEER>
+
+B<BIO_CTRL_DGRAM_SET_PEER>
+
+B<BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT>
+
+B<BIO_CTRL_DGRAM_SET_RECV_TIMEOUT>
+
+B<BIO_CTRL_DGRAM_GET_RECV_TIMEOUT>
+
+B<BIO_CTRL_DGRAM_SET_SEND_TIMEOUT>
+
+B<BIO_CTRL_DGRAM_GET_SEND_TIMEOUT>
+
+B<BIO_CTRL_DGRAM_GET_SEND_TIMER_EXP>
+
+B<BIO_CTRL_DGRAM_GET_RECV_TIMER_EXP>
+
+B<BIO_CTRL_DGRAM_MTU_EXCEEDED>
+
+B<BIO_CTRL_DGRAM_SET_DONT_FRAG>
+
+B<BIO_CTRL_DGRAM_GET_MTU_OVERHEAD>
+
+B<BIO_CTRL_DGRAM_SCTP_SET_IN_HANDSHAKE>
+
+B<BIO_CTRL_DGRAM_SET_PEEK_MODE>
+
+B<BIO_CTRL_SET_SEND_FLAGS> the I<larg> argument is used for the I<flags>
+argument to send() and/or sendto(), the main use case is for the caller to set
+the B<MSG_NOSIGNAL> flag but all send()/sendto() flags are supported. 
+
+
+=head1 RETURN VALUES
+
+
+=head1 COPYRIGHT
+
+Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
