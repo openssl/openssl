@@ -228,15 +228,15 @@ int ossl_cms_SignerIdentifier_cert_cmp(CMS_SignerIdentifier *sid, X509 *cert)
 }
 
 /* Method to map any, incl. provider-implemented PKEY types to OIDs */
-static int ossl_cms_generic_sign(CMS_SignerInfo *si, int verify)
+static int cms_generic_sign(CMS_SignerInfo *si, int verify)
 {
     if (!verify) {
         int hnid;
         X509_ALGOR *alg1, *alg2;
         EVP_PKEY *pkey = si->pkey;
+        const char *typename = EVP_PKEY_get0_type_name(pkey);
 
         CMS_SignerInfo_get0_algs(si, NULL, NULL, &alg1, &alg2);
-        /* Digest presence check really necessary? */
         if (alg1 == NULL || alg1->algorithm == NULL)
             return -1;
         hnid = OBJ_obj2nid(alg1->algorithm);
@@ -244,8 +244,7 @@ static int ossl_cms_generic_sign(CMS_SignerInfo *si, int verify)
             return -1;
 
         /* Generic PKEY->name->NID->OID mapping check */
-        const char* typename = EVP_PKEY_get0_type_name(pkey);
-        if (!typename)
+        if (typename == NULL)
             return -1;
         return X509_ALGOR_set0(alg2, OBJ_nid2obj(OBJ_sn2nid(typename)), V_ASN1_UNDEF, NULL);
     }
@@ -264,7 +263,7 @@ static int cms_sd_asn1_ctrl(CMS_SignerInfo *si, int cmd)
 
     /* Something else? We'll give engines etc a chance to handle this */
     if (pkey->ameth == NULL || pkey->ameth->pkey_ctrl == NULL)
-        return ossl_cms_generic_sign(si, cmd);
+        return cms_generic_sign(si, cmd);
     i = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_CMS_SIGN, cmd, si);
     if (i == -2) {
         ERR_raise(ERR_LIB_CMS, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
