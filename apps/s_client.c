@@ -2121,7 +2121,7 @@ int s_client_main(int argc, char **argv)
         if (test == NULL) {
             BIO_printf(bio_err, "Unable to create BIO\n");
             BIO_free(sbio);
-            goto end;
+            goto shut;
         }
         sbio = BIO_push(test, sbio);
     }
