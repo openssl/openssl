@@ -246,7 +246,7 @@ static int cms_generic_sign(CMS_SignerInfo *si, int verify)
         /* Generic PKEY->name->NID->OID mapping check */
         if (typename == NULL)
             return -1;
-        return X509_ALGOR_set0(alg2, OBJ_nid2obj(OBJ_sn2nid(typename)), V_ASN1_UNDEF, NULL);
+        return X509_ALGOR_set0(alg2, OBJ_txt2obj(typename, 0), V_ASN1_UNDEF, NULL);
     }
     return 1;
 }
