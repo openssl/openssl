@@ -2066,6 +2066,7 @@ int s_client_main(int argc, char **argv)
         if (!BIO_sock_info(sock, BIO_SOCK_INFO_ADDRESS, &peer_info)) {
             BIO_printf(bio_err, "getsockname:errno=%d\n",
                        get_last_socket_error());
+            BIO_free(sbio);
             BIO_ADDR_free(peer_info.addr);
             BIO_closesocket(sock);
             goto end;
@@ -2109,7 +2110,8 @@ int s_client_main(int argc, char **argv)
     if (sbio == NULL) {
         BIO_printf(bio_err, "Unable to create BIO\n");
         ERR_print_errors(bio_err);
-        goto shut;
+        BIO_closesocket(sock);
+        goto end;
     }
 
     if (nbio_test) {
@@ -2118,6 +2120,7 @@ int s_client_main(int argc, char **argv)
         test = BIO_new(BIO_f_nbio_test());
         if (test == NULL) {
             BIO_printf(bio_err, "Unable to create BIO\n");
+            BIO_free(sbio);
             goto end;
         }
         sbio = BIO_push(test, sbio);
