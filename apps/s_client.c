@@ -2109,7 +2109,7 @@ int s_client_main(int argc, char **argv)
     if (sbio == NULL) {
         BIO_printf(bio_err, "Unable to create BIO\n");
         ERR_print_errors(bio_err);
-        goto end;
+        goto shut;
     }
 
     if (nbio_test) {
