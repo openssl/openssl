@@ -811,7 +811,7 @@ int s_client_main(int argc, char **argv)
     char *cert_file = NULL, *key_file = NULL, *chain_file = NULL;
     char *chCApath = NULL, *chCAfile = NULL, *chCAstore = NULL, *host = NULL;
     char *thost = NULL, *tport = NULL;
-    char *port = OPENSSL_strdup(PORT);
+    char *port = NULL;
     char *bindhost = NULL, *bindport = NULL;
     char *passarg = NULL, *pass = NULL;
     char *vfyCApath = NULL, *vfyCAfile = NULL, *vfyCAstore = NULL;
@@ -914,10 +914,11 @@ int s_client_main(int argc, char **argv)
     c_debug = 0;
     c_showcerts = 0;
     c_nbio = 0;
+    port = OPENSSL_strdup(PORT);
     vpm = X509_VERIFY_PARAM_new();
     cctx = SSL_CONF_CTX_new();
 
-    if (vpm == NULL || cctx == NULL) {
+    if (port == NULL || vpm == NULL || cctx == NULL) {
         BIO_printf(bio_err, "%s: out of memory\n", opt_getprog());
         goto end;
     }

@@ -1588,6 +1588,13 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
         *pkeytype = OPENSSL_strndup(keytype, keytypelen);
     else
         *pkeytype = OPENSSL_strdup(keytype);
+
+    if (*pkeytype == NULL) {
+        BIO_printf(bio_err, "Out of memory\n");
+        EVP_PKEY_free(param);
+        return NULL;
+    }
+
     if (keylen >= 0)
         *pkeylen = keylen;
 
