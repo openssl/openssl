@@ -840,6 +840,9 @@ int tls_provider_init(const OSSL_CORE_HANDLE *handle,
 {
     OSSL_LIB_CTX *libctx = OSSL_LIB_CTX_new();
 
+    if (libctx == NULL)
+        return 0;
+
     *provctx = libctx;
 
     /*
