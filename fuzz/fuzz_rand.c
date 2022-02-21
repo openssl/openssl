@@ -146,6 +146,8 @@ static int fuzz_rand_provider_init(const OSSL_CORE_HANDLE *handle,
                                    const OSSL_DISPATCH **out, void **provctx)
 {
     *provctx = OSSL_LIB_CTX_new();
+    if (*provctx == NULL)
+        return 0;
     *out = fuzz_rand_method;
     return 1;
 }
