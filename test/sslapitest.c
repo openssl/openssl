@@ -8090,8 +8090,12 @@ static int test_cert_cb_int(int prot, int tst)
     else
         cert_cb_cnt = 0;
 
-    if (tst == 2)
+    if (tst == 2) {
         snictx = SSL_CTX_new(TLS_server_method());
+        if (!TEST_ptr(snictx))
+            goto end;
+    }
+
     SSL_CTX_set_cert_cb(sctx, cert_cb, snictx);
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
