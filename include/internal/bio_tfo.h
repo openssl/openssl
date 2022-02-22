@@ -30,11 +30,11 @@
  *
  * On MacOS and Linux:
  * These operating systems use a single parameter to control TFO.
- * The OSSL_TFO_SERVER_FLAG and OSSL_TFO_CLIENT_FLAGS are used to
- * determine if TFO is enabled for the server and client respectively.
+ * The OSSL_TFO_CLIENT_FLAG and OSSL_TFO_SERVER_FLAGS are used to
+ * determine if TFO is enabled for the client and server respectively.
  *
- * OSSL_TFO_SERVER_FLAG = 1 = client TFO enabled
- * OSSL_TFO_CLIENT_FLAG = 2 = server TFO enabled
+ * OSSL_TFO_CLIENT_FLAG = 1 = client TFO enabled
+ * OSSL_TFO_SERVER_FLAG = 2 = server TFO enabled
  *
  * Such that:
  * 0 = TFO disabled
