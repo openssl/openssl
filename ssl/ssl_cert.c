@@ -937,7 +937,7 @@ static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
                 return 0;
             /* Level 3: forward secure ciphersuites only */
             if (level >= 3 && c->min_tls != TLS1_3_VERSION &&
-                               !(c->algorithm_mkey & (SSL_kEDH | SSL_kEECDH)))
+                               !(c->algorithm_mkey & (SSL_kDHE | SSL_kECDHE)))
                 return 0;
             break;
         }
