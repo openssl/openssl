@@ -496,7 +496,6 @@ Equivalent to B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION>.
 
 B<UnsafeLegacyServerConnect>: permits the use of unsafe legacy renegotiation
 for OpenSSL clients only. Equivalent to B<SSL_OP_LEGACY_SERVER_CONNECT>.
-Set by default.
 
 B<EncryptThenMac>: use encrypt-then-mac extension, enabled by
 default. Inverse of B<SSL_OP_NO_ENCRYPT_THEN_MAC>: that is,
@@ -730,6 +729,9 @@ B<SSL_CONF_TYPE_UNKNOWN>.
 B<MinProtocol> and B<MaxProtocol> where added in OpenSSL 1.1.0.
 
 B<AllowNoDHEKEX> and B<PrioritizeChaCha> were added in OpenSSL 1.1.1.
+
+The B<UnsafeLegacyServerConnect> option is no longer set by default from
+OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
