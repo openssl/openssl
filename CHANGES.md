@@ -30,6 +30,12 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 3.0.1 and 3.0.2 [xx XXX xxxx]
 
+ * Add ciphersuites based on DHE_PSK (RFC 4279) and ECDHE_PSK (RFC 5489)
+   to the list of ciphersuites providing Perfect Forward Secrecy as
+   required by SECLEVEL >= 3.
+
+   *Dmitry Belyavskiy, Nicola Tuveri*
+
  * Made the AES constant time code for no-asm configurations
    optional due to the resulting 95% performance degradation.
    The AES constant time code can be enabled, for no assembly
