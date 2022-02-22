@@ -24,6 +24,12 @@ OpenSSL 3.1
 
 ### Changes between 3.0 and 3.1 [xx XXX xxxx]
 
+ * Add ciphersuites based on DHE_PSK (RFC 4279) and ECDHE_PSK (RFC 5489)
+   to the list of ciphersuites providing Perfect Forward Secrecy as
+   required by SECLEVEL >= 3.
+
+   *Dmitry Belyavskiy, Nicola Tuveri*
+
  * Add new SSL APIs to aid in efficiently implementing TLS/SSL fingerprinting.  The
    SSL_CTRL_GET_IANA_GROUPS control code, exposed as the SSL_get0_iana_groups()
    function-like macro, retrieves the list of supported groups sent by the peer,
