@@ -650,10 +650,10 @@ static void sv_usage(void)
     fprintf(stderr, " -tls1         - use TLSv1\n");
 #endif
 #ifndef OPENSSL_NO_TLS1_1
-    fprintf(stderr, " -tls1_1         - use TLSv1.1\n");
+    fprintf(stderr, " -tls1_1       - use TLSv1.1\n");
 #endif
 #ifndef OPENSSL_NO_TLS1_2
-    fprintf(stderr, " -tls1_2         - use TLSv1.2\n");
+    fprintf(stderr, " -tls1_2       - use TLSv1.2\n");
 #endif
 #ifndef OPENSSL_NO_DTLS
     fprintf(stderr, " -dtls         - use DTLS\n");
