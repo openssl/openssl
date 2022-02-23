@@ -576,6 +576,22 @@ sub testssl {
             ok(run(test(['ssl_old_test', '-psk', '0102030405', '-cipher', '@SECLEVEL=2:DHE-PSK-AES128-CCM'])),
                'test auto DH meets security strength');
           }
+
+        SKIP: {
+            skip "skipping auto ECDH PSK tests", 1
+                if ($no_ec || $no_psk);
+
+            ok(run(test(['ssl_old_test', '-psk', '0102030405', '-cipher', '@SECLEVEL=3:ECDHE-PSK-AES256-CBC-SHA384'])),
+               'test auto DH meets security strength');
+          }
+
+        SKIP: {
+            skip "skipping auto DH PSK tests", 1
+                if ($no_dh || $no_psk);
+
+            ok(run(test(['ssl_old_test', '-psk', '0102030405', '-cipher', '@SECLEVEL=3:DHE-PSK-AES128-CCM'])),
+               'test auto DH meets security strength');
+          }
 	}
 
     };
