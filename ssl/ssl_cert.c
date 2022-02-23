@@ -1020,6 +1020,8 @@ static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
     case SSL_SECOP_CIPHER_CHECK:
         {
             const SSL_CIPHER *c = other;
+            int pfs_mask = SSL_kEDH | SSL_kEECDH | SSL_kECDHEPSK | SSL_kDHEPSK;
+
             /* No ciphers below security level */
             if (bits < minbits)
                 return 0;
@@ -1034,7 +1036,7 @@ static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
                 return 0;
             /* Level 3: forward secure ciphersuites only */
             if (level >= 3 && c->min_tls != TLS1_3_VERSION &&
-                               !(c->algorithm_mkey & (SSL_kEDH | SSL_kEECDH)))
+                               !(c->algorithm_mkey & (pfs_mask)))
                 return 0;
             break;
         }
