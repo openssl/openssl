@@ -898,7 +898,7 @@ EOF
 
       if ($includefile_cache{$outprologue}) {
           push @filenames, $outprologue;
-      elif (-f $inprologue) {
+      } elsif (-f $inprologue) {
           my $local_scripture .= <<"EOF";
 $outprologue : $inprologue
 	COPY $inprologue $outprologue
@@ -910,7 +910,7 @@ EOF
       }
       if ($includefile_cache{$outepilogue}) {
           push @filenames, $outepilogue;
-      elif (-f $inepilogue) {
+      } elsif (-f $inepilogue) {
           my $local_scripture .= <<"EOF";
 $outepilogue : $inepilogue
 	COPY $inepilogue $outepilogue
