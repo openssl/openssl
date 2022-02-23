@@ -14,4 +14,5 @@ EVP_PKEY *get_dh512(OSSL_LIB_CTX *libctx);
 EVP_PKEY *get_dhx512(OSSL_LIB_CTX *libctx);
 EVP_PKEY *get_dh1024dsa(OSSL_LIB_CTX *libct);
 EVP_PKEY *get_dh2048(OSSL_LIB_CTX *libctx);
+EVP_PKEY *get_dh4096(OSSL_LIB_CTX *libctx);
 #endif
