@@ -170,4 +170,25 @@ EVP_PKEY *get_dh2048(OSSL_LIB_CTX *libctx)
     return dhpkey;
 }
 
+EVP_PKEY *get_dh4096(OSSL_LIB_CTX *libctx)
+{
+    BIGNUM *p = NULL, *g = NULL;
+    EVP_PKEY *dhpkey = NULL;
+
+    g = BN_new();
+    if (g == NULL || !BN_set_word(g, 2))
+        goto err;
+
+    p = BN_get_rfc3526_prime_4096(NULL);
+    if (p == NULL)
+        goto err;
+
+    dhpkey = get_dh_from_pg_bn(libctx, "DH", p, g, NULL);
+
+ err:
+    BN_free(p);
+    BN_free(g);
+    return dhpkey;
+}
+
 #endif

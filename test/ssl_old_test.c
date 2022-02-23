@@ -630,9 +630,11 @@ static void sv_usage(void)
     fprintf(stderr,
             " -dhe512       - use 512 bit key for DHE (to test failure)\n");
     fprintf(stderr,
-            " -dhe1024      - use 1024 bit key (safe prime) for DHE (default, no-op)\n");
-    fprintf(stderr,
             " -dhe1024dsa   - use 1024 bit key (with 160-bit subprime) for DHE\n");
+    fprintf(stderr,
+            " -dhe2048      - use 2048 bit key (safe prime) for DHE (default, no-op)\n");
+    fprintf(stderr,
+            " -dhe4096      - use 4096 bit key (safe prime) for DHE\n");
 #endif
     fprintf(stderr, " -no_dhe       - disable DHE\n");
 #ifndef OPENSSL_NO_EC
@@ -646,6 +648,12 @@ static void sv_usage(void)
 #endif
 #ifndef OPENSSL_NO_TLS1
     fprintf(stderr, " -tls1         - use TLSv1\n");
+#endif
+#ifndef OPENSSL_NO_TLS1_1
+    fprintf(stderr, " -tls1_1       - use TLSv1.1\n");
+#endif
+#ifndef OPENSSL_NO_TLS1_2
+    fprintf(stderr, " -tls1_2       - use TLSv1.2\n");
 #endif
 #ifndef OPENSSL_NO_DTLS
     fprintf(stderr, " -dtls         - use DTLS\n");
@@ -873,7 +881,7 @@ int main(int argc, char *argv[])
     int badop = 0;
     enum { BIO_MEM, BIO_PAIR, BIO_IPV4, BIO_IPV6 } bio_type = BIO_MEM;
     int force = 0;
-    int dtls1 = 0, dtls12 = 0, dtls = 0, tls1 = 0, tls1_2 = 0, ssl3 = 0;
+    int dtls1 = 0, dtls12 = 0, dtls = 0, tls1 = 0, tls1_1 = 0, tls1_2 = 0, ssl3 = 0;
     int ret = EXIT_FAILURE;
     int client_auth = 0;
     int server_auth = 0, i;
@@ -889,7 +897,7 @@ int main(int argc, char *argv[])
     long bytes = 256L;
 #ifndef OPENSSL_NO_DH
     EVP_PKEY *dhpkey;
-    int dhe512 = 0, dhe1024dsa = 0;
+    int dhe512 = 0, dhe1024dsa = 0, dhe4096 = 0;
     int no_dhe = 0;
 #endif
     int no_psk = 0;
@@ -984,6 +992,8 @@ int main(int argc, char *argv[])
             dhe512 = 1;
         else if (strcmp(*argv, "-dhe1024dsa") == 0)
             dhe1024dsa = 1;
+        else if (strcmp(*argv, "-dhe4096") == 0)
+            dhe4096 = 1;
 #endif
         else if (strcmp(*argv, "-no_ecdhe") == 0)
             /* obsolete */;
@@ -1002,6 +1012,8 @@ int main(int argc, char *argv[])
         }
         else if (strcmp(*argv, "-tls1_2") == 0) {
             tls1_2 = 1;
+        } else if (strcmp(*argv, "-tls1_1") == 0) {
+            tls1_1 = 1;
         } else if (strcmp(*argv, "-tls1") == 0) {
             tls1 = 1;
         } else if (strcmp(*argv, "-ssl3") == 0) {
@@ -1224,8 +1236,8 @@ int main(int argc, char *argv[])
         goto end;
     }
 
-    if (ssl3 + tls1 + tls1_2 + dtls + dtls1 + dtls12 > 1) {
-        fprintf(stderr, "At most one of -ssl3, -tls1, -tls1_2, -dtls, -dtls1 or -dtls12 should "
+    if (ssl3 + tls1 + tls1_1 + tls1_2 + dtls + dtls1 + dtls12 > 1) {
+        fprintf(stderr, "At most one of -ssl3, -tls1, -tls1_1, -tls1_2, -dtls, -dtls1 or -dtls12 should "
                 "be requested.\n");
         EXIT(1);
     }
@@ -1237,6 +1249,11 @@ int main(int argc, char *argv[])
 #endif
 #ifdef OPENSSL_NO_TLS1
     if (tls1)
+        no_protocol = 1;
+    else
+#endif
+#ifdef OPENSSL_NO_TLS1_1
+    if (tls1_1)
         no_protocol = 1;
     else
 #endif
@@ -1269,11 +1286,11 @@ int main(int argc, char *argv[])
         goto end;
     }
 
-    if (!ssl3 && !tls1 && !tls1_2 && !dtls && !dtls1 && !dtls12 && number > 1
+    if (!ssl3 && !tls1 && !tls1_1 && !tls1_2 && !dtls && !dtls1 && !dtls12 && number > 1
             && !reuse && !force) {
         fprintf(stderr, "This case cannot work.  Use -f to perform "
                 "the test anyway (and\n-d to see what happens), "
-                "or add one of -ssl3, -tls1, -tls1_2, -dtls, -dtls1, -dtls12, -reuse\n"
+                "or add one of -ssl3, -tls1, -tls1_1, -tls1_2, -dtls, -dtls1, -dtls12, -reuse\n"
                 "to avoid protocol mismatch.\n");
         EXIT(1);
     }
@@ -1325,6 +1342,9 @@ int main(int argc, char *argv[])
     } else if (tls1) {
         min_version = TLS1_VERSION;
         max_version = TLS1_VERSION;
+    } else if (tls1_1) {
+        min_version = TLS1_1_VERSION;
+        max_version = TLS1_1_VERSION;
     } else if (tls1_2) {
         min_version = TLS1_2_VERSION;
         max_version = TLS1_2_VERSION;
@@ -1489,6 +1509,8 @@ int main(int argc, char *argv[])
             dhpkey = get_dh1024dsa(libctx);
         else if (dhe512)
             dhpkey = get_dh512(libctx);
+        else if (dhe4096)
+            dhpkey = get_dh4096(libctx);
         else
             dhpkey = get_dh2048(libctx);
 
