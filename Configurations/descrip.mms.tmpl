@@ -553,7 +553,6 @@ distclean : clean
         - DELETE descrip.mms;*
 
 depend : descrip.mms
-descrip.mms : FORCE
 	@ ! {- output_off() if $disabled{makedepend}; "" -}
 	@ $(PERL) {- sourcefile("util", "add-depends.pl") -} "{- $config{makedep_scheme} -}"
 	@ ! {- output_on() if $disabled{makedepend}; "" -}
@@ -755,7 +754,16 @@ debug_logicals :
 
 # Building targets ###################################################
 
-configdata.pm : $(SRCDIR)Configure $(SRCDIR)config.com {- join(" ", @{$config{build_file_templates}}, @{$config{build_infos}}, @{$config{conf_files}}) -}
+descrip.mms : configdata.pm {- join(" ", @{$config{build_file_templates}}) -}
+	perl configdata.pm
+        @ WRITE SYS$OUTPUT "*************************************************"
+        @ WRITE SYS$OUTPUT "***                                           ***"
+        @ WRITE SYS$OUTPUT "***   Please run the same mms command again   ***"
+        @ WRITE SYS$OUTPUT "***                                           ***"
+        @ WRITE SYS$OUTPUT "*************************************************"
+        @ PIPE ( EXIT %X10000000 )
+
+configdata.pm : $(SRCDIR)Configure $(SRCDIR)config.com {- join(" ", @{$config{build_infos}}, @{$config{conf_files}}) -}
         perl configdata.pm -r
         @ WRITE SYS$OUTPUT "*************************************************"
         @ WRITE SYS$OUTPUT "***                                           ***"
