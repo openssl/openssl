@@ -8091,7 +8091,7 @@ static int test_cert_cb_int(int prot, int tst)
         cert_cb_cnt = 0;
 
     if (tst == 2) {
-        snictx = SSL_CTX_new(TLS_server_method());
+        snictx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method());
         if (!TEST_ptr(snictx))
             goto end;
     }
