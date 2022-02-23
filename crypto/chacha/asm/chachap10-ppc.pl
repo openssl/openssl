@@ -101,29 +101,6 @@ my ($x00,$x10,$x20,$x30) = (0, map("r$_",(8..10)));
 
 my $FRAME=$LOCALS+64+7*16;	# 7*16 is for v26-v31 offload
 
-sub VSX_lane_ROUND_1x {
-my $a=@_[0];
-my $b=@_[1];
-my $c=@_[2];
-my $d=@_[3];
-my $odd=@_[4];
-	vadduwm		($a,$a,$b);
-	vxor		($d,$d,$a);
-	vrlw		($d,$d,$sixteen);
-	vadduwm		($c,$c,$d);
-	vxor		($b,$b,$c);
-	vrlw		($b,$b,$twelve);
-	vadduwm		($a,$a,$b);
-	vxor		($d,$d,$a);
-	vrlw		($d,$d,$eight);
-	vadduwm		($c,$c,$d);
-	vxor		($b,$b,$c);
-	vrlw		($b,$b,$seven);
-	xxsldwi		($c,$c,$c,2);
-	xxsldwi		($b,$b,$b,$odd?3:1);
-	xxsldwi		($d,$d,$d,$odd?1:3);
-}
-
 
 sub VSX_lane_ROUND_4x {
 my ($a0,$b0,$c0,$d0)=@_;
@@ -192,7 +169,7 @@ $code.=<<___;
 .globl	.ChaCha20_ctr32_vsx_p10
 .align	5
 .ChaCha20_ctr32_vsx_p10:
-	${UCMP}i $len,256
+	${UCMP}i $len,255
 	bgt 	ChaCha20_ctr32_vsx_8x
 	$STU	$sp,-$FRAME($sp)
 	mflr	r0
@@ -267,49 +244,6 @@ Loop_outer_vsx:
 	vspltisw $twelve,12
 	vspltisw $eight,8
 	vspltisw $seven,7
-
-	${UCMP}i $len,64
-	bgt 	Loop_vsx_4x
-
-	vmr	$xa0,@K[0]
-	vmr	$xb0,@K[1]
-	vmr	$xc0,@K[2]
-	vmr 	$xd0,@K[3]
-
-Loop_vsx_1x:
-___
-	VSX_lane_ROUND_1x($xa0, $xb0, $xc0,$xd0,0);
-	VSX_lane_ROUND_1x($xa0, $xb0, $xc0,$xd0,1);
-
-$code.=<<___;
-
-	bdnz	Loop_vsx_1x
-
-	vadduwm $xa0, $xa0, @K[0]
-	vadduwm $xb0, $xb0, @K[1]
-	vadduwm $xc0, $xc0, @K[2]
-	vadduwm $xd0, $xd0, @K[3]
-	${UCMP}i $len,0x40
-	blt	Ltail_vsx
-
-	lvx_4w  $xt0,$x00, $inp
-	lvx_4w  $xt1,$x10, $inp
-	lvx_4w  $xt2,$x20, $inp
-	lvx_4w  $xt3,$x30, $inp
-
-	vxor	$xa0,$xa0,$xt0
-	vxor	$xb0,$xb0,$xt1
-	vxor	$xc0,$xc0,$xt2
-	vxor	$xd0,$xd0,$xt3
-
-	stvx_4w	$xa0,$x00,$out
-	stvx_4w	$xb0,$x10,$out
-	addi	$inp,$inp,0x40
-	stvx_4w	$xc0,$x20,$out
-	subi	$len,$len,0x40
-	stvx_4w	$xd0,$x30,$out
-	addi	$out,$out,0x40
-	beq	Ldone_vsx
 
 Loop_vsx_4x:
 ___
