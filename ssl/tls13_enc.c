@@ -719,7 +719,8 @@ int tls13_change_cipher_state(SSL *s, int which)
     /* configure kernel crypto structure */
     if (!ktls_configure_crypto(s, cipher, ciph_ctx,
                                RECORD_LAYER_get_write_sequence(&s->rlayer),
-                               &crypto_info, NULL, iv, key, NULL, 0))
+                               &crypto_info, which & SSL3_CC_WRITE, iv, key,
+                               NULL, 0))
         goto skip_ktls;
 
     /* ktls works with user provided buffers directly */

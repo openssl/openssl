@@ -2764,9 +2764,9 @@ __owur int ssl_log_secret(SSL *ssl, const char *label,
 /* ktls.c */
 int ktls_check_supported_cipher(const SSL *s, const EVP_CIPHER *c,
                                 const EVP_CIPHER_CTX *dd);
-int ktls_configure_crypto(const SSL *s, const EVP_CIPHER *c, EVP_CIPHER_CTX *dd,
+int ktls_configure_crypto(SSL *s, const EVP_CIPHER *c, EVP_CIPHER_CTX *dd,
                           void *rl_sequence, ktls_crypto_info_t *crypto_info,
-                          unsigned char **rec_seq, unsigned char *iv,
+                          int is_tx, unsigned char *iv,
                           unsigned char *key, unsigned char *mac_key,
                           size_t mac_secret_size);
 #  endif

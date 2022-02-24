@@ -98,42 +98,6 @@ static int tls1_generate_key_block(SSL *s, unsigned char *km, size_t num)
     return ret;
 }
 
-#ifndef OPENSSL_NO_KTLS
- /*
-  * Count the number of records that were not processed yet from record boundary.
-  *
-  * This function assumes that there are only fully formed records read in the
-  * record layer. If read_ahead is enabled, then this might be false and this
-  * function will fail.
-  */
-# ifndef OPENSSL_NO_KTLS_RX
-static int count_unprocessed_records(SSL *s)
-{
-    SSL3_BUFFER *rbuf = RECORD_LAYER_get_rbuf(&s->rlayer);
-    PACKET pkt, subpkt;
-    int count = 0;
-
-    if (!PACKET_buf_init(&pkt, rbuf->buf + rbuf->offset, rbuf->left))
-        return -1;
-
-    while (PACKET_remaining(&pkt) > 0) {
-        /* Skip record type and version */
-        if (!PACKET_forward(&pkt, 3))
-            return -1;
-
-        /* Read until next record */
-        if (!PACKET_get_length_prefixed_2(&pkt, &subpkt))
-            return -1;
-
-        count += 1;
-    }
-
-    return count;
-}
-# endif
-#endif
-
-
 int tls_provider_set_tls_params(SSL *s, EVP_CIPHER_CTX *ctx,
                                 const EVP_CIPHER *ciph,
                                 const EVP_MD *md)
@@ -201,12 +165,7 @@ int tls1_change_cipher_state(SSL *s, int which)
     int reuse_dd = 0;
 #ifndef OPENSSL_NO_KTLS
     ktls_crypto_info_t crypto_info;
-    unsigned char *rec_seq;
     void *rl_sequence;
-# ifndef OPENSSL_NO_KTLS_RX
-    int count_unprocessed;
-    int bit;
-# endif
     BIO *bio;
 #endif
 
@@ -473,29 +432,10 @@ int tls1_change_cipher_state(SSL *s, int which)
     else
         rl_sequence = RECORD_LAYER_get_read_sequence(&s->rlayer);
 
-    if (!ktls_configure_crypto(s, c, dd, rl_sequence, &crypto_info, &rec_seq,
-                               iv, key, ms, *mac_secret_size))
+    if (!ktls_configure_crypto(s, c, dd, rl_sequence, &crypto_info,
+                               which & SSL3_CC_WRITE, iv, key, ms,
+                               *mac_secret_size))
         goto skip_ktls;
-
-    if (which & SSL3_CC_READ) {
-# ifndef OPENSSL_NO_KTLS_RX
-        count_unprocessed = count_unprocessed_records(s);
-        if (count_unprocessed < 0)
-            goto skip_ktls;
-
-        /* increment the crypto_info record sequence */
-        while (count_unprocessed) {
-            for (bit = 7; bit >= 0; bit--) { /* increment */
-                ++rec_seq[bit];
-                if (rec_seq[bit] != 0)
-                    break;
-            }
-            count_unprocessed--;
-        }
-# else
-        goto skip_ktls;
-# endif
-    }
 
     /* ktls works with user provided buffers directly */
     if (BIO_set_ktls(bio, &crypto_info, which & SSL3_CC_WRITE)) {
