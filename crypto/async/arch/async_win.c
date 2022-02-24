@@ -20,6 +20,21 @@ int ASYNC_is_capable(void)
     return 1;
 }
 
+int ASYNC_set_mem_functions(ASYNC_stack_alloc_fn alloc_fn,
+                            ASYNC_stack_free_fn free_fn)
+{
+    return 0;
+}
+
+void ASYNC_get_mem_functions(ASYNC_stack_alloc_fn *alloc_fn,
+                             ASYNC_stack_free_fn *free_fn)
+{
+    if (alloc_fn != NULL)
+        *alloc_fn = NULL;
+    if (free_fn != NULL)
+        *free_fn = NULL;
+}
+
 void async_local_cleanup(void)
 {
     async_ctx *ctx = async_get_ctx();

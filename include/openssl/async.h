@@ -80,6 +80,14 @@ int ASYNC_WAIT_CTX_clear_fd(ASYNC_WAIT_CTX *ctx, const void *key);
 
 int ASYNC_is_capable(void);
 
+typedef void *(*ASYNC_stack_alloc_fn)(size_t *num);
+typedef void (*ASYNC_stack_free_fn)(void *addr);
+
+int ASYNC_set_mem_functions(ASYNC_stack_alloc_fn alloc_fn,
+                            ASYNC_stack_free_fn free_fn);
+void ASYNC_get_mem_functions(ASYNC_stack_alloc_fn *alloc_fn,
+                             ASYNC_stack_free_fn *free_fn);
+
 int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *ctx, int *ret,
                     int (*func)(void *), void *args, size_t size);
 int ASYNC_pause_job(void);

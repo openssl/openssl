@@ -18,6 +18,13 @@
 
 #define STACKSIZE       32768
 
+static void *async_stack_alloc(size_t *num);
+static void async_stack_free(void *addr);
+
+static int allow_customize = 1;
+static ASYNC_stack_alloc_fn stack_alloc_impl = async_stack_alloc;
+static ASYNC_stack_free_fn stack_free_impl = async_stack_free;
+
 int ASYNC_is_capable(void)
 {
     ucontext_t ctx;
@@ -27,6 +34,37 @@ int ASYNC_is_capable(void)
      * MacOSX PPC64). Check for a working getcontext();
      */
     return getcontext(&ctx) == 0;
+}
+
+int ASYNC_set_mem_functions(ASYNC_stack_alloc_fn alloc_fn,
+                            ASYNC_stack_free_fn free_fn)
+{
+    if (!allow_customize)
+        return 0;
+    if (alloc_fn != NULL)
+        stack_alloc_impl = alloc_fn;
+    if (free_fn != NULL)
+        stack_free_impl = free_fn;
+    return 1;
+}
+
+void ASYNC_get_mem_functions(ASYNC_stack_alloc_fn *alloc_fn,
+                             ASYNC_stack_free_fn *free_fn)
+{
+    if (alloc_fn != NULL)
+        *alloc_fn = stack_alloc_impl;
+    if (free_fn != NULL)
+        *free_fn = stack_free_impl;
+}
+
+static void *async_stack_alloc(size_t *num)
+{
+    return OPENSSL_malloc(*num);
+}
+
+static void async_stack_free(void *addr)
+{
+    OPENSSL_free(addr);
 }
 
 void async_local_cleanup(void)
@@ -39,9 +77,18 @@ int async_fibre_makecontext(async_fibre *fibre)
     fibre->env_init = 0;
 #endif
     if (getcontext(&fibre->fibre) == 0) {
-        fibre->fibre.uc_stack.ss_sp = OPENSSL_malloc(STACKSIZE);
+        size_t num = STACKSIZE;
+
+        /*
+         *  Disallow customisation after the first
+         *  stack is allocated.
+         */
+        if (allow_customize)
+            allow_customize = 0;
+
+        fibre->fibre.uc_stack.ss_sp = stack_alloc_impl(&num);
         if (fibre->fibre.uc_stack.ss_sp != NULL) {
-            fibre->fibre.uc_stack.ss_size = STACKSIZE;
+            fibre->fibre.uc_stack.ss_size = num;
             fibre->fibre.uc_link = NULL;
             makecontext(&fibre->fibre, async_start_func, 0);
             return 1;
@@ -55,7 +102,7 @@ int async_fibre_makecontext(async_fibre *fibre)
 
 void async_fibre_free(async_fibre *fibre)
 {
-    OPENSSL_free(fibre->fibre.uc_stack.ss_sp);
+    stack_free_impl(fibre->fibre.uc_stack.ss_sp);
     fibre->fibre.uc_stack.ss_sp = NULL;
 }
 
