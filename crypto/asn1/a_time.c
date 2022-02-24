@@ -597,11 +597,17 @@ int ASN1_TIME_compare(const ASN1_TIME *a, const ASN1_TIME *b)
 # define timezone _timezone
 #endif
 
+#ifdef __FreeBSD__
+# define USE_TIMEGM
+#endif
+
 time_t asn1_string_to_time_t(const char *asn1_string)
 {
     ASN1_TIME *timestamp_asn1 = NULL;
     struct tm *timestamp_tm = NULL;
+#ifndef USE_TIMEGM
     time_t timestamp_local;
+#endif
     time_t timestamp_utc;
 
     timestamp_asn1 = ASN1_TIME_new();
@@ -619,10 +625,15 @@ time_t asn1_string_to_time_t(const char *asn1_string)
         return -1;
     }
 
+#ifdef USE_TIMEGM
+    timestamp_utc = timegm(timestamp_tm);
+    OPENSSL_free(timestamp_tm);
+#else
     timestamp_local = mktime(timestamp_tm);
     OPENSSL_free(timestamp_tm);
 
     timestamp_utc = timestamp_local - timezone;
+#endif
 
     ASN1_TIME_free(timestamp_asn1);
     return timestamp_utc;
