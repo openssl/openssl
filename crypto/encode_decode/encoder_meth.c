@@ -349,6 +349,7 @@ inner_ossl_encoder_fetch(struct encoder_data_st *methdata, int id,
 {
     OSSL_METHOD_STORE *store = get_encoder_store(methdata->libctx);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(methdata->libctx);
+    const char *const propq = properties != NULL ? properties : "";
     void *method = NULL;
     int unsupported = 0;
 
@@ -377,7 +378,7 @@ inner_ossl_encoder_fetch(struct encoder_data_st *methdata, int id,
         unsupported = 1;
 
     if (id == 0
-        || !ossl_method_store_cache_get(store, NULL, id, properties, &method)) {
+        || !ossl_method_store_cache_get(store, NULL, id, propq, &method)) {
         OSSL_METHOD_CONSTRUCT_METHOD mcm = {
             get_tmp_encoder_store,
             get_encoder_from_store,
@@ -389,7 +390,7 @@ inner_ossl_encoder_fetch(struct encoder_data_st *methdata, int id,
 
         methdata->id = id;
         methdata->names = name;
-        methdata->propquery = properties;
+        methdata->propquery = propq;
         methdata->flag_construct_error_occurred = 0;
         if ((method = ossl_method_construct(methdata->libctx, OSSL_OP_ENCODER,
                                             &prov, 0 /* !force_cache */,
@@ -402,7 +403,7 @@ inner_ossl_encoder_fetch(struct encoder_data_st *methdata, int id,
              */
             if (id == 0)
                 id = ossl_namemap_name2num(namemap, name);
-            ossl_method_store_cache_set(store, prov, id, properties, method,
+            ossl_method_store_cache_set(store, prov, id, propq, method,
                                         up_ref_encoder, free_encoder);
         }
 
