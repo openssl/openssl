@@ -388,26 +388,3 @@ int ossl_cms_ecdh_envelope(CMS_RecipientInfo *ri, int decrypt)
     ERR_raise(ERR_LIB_CMS, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
     return 0;
 }
-
-/* ECDSA and DSA implementation is the same */
-int ossl_cms_ecdsa_dsa_sign(CMS_SignerInfo *si, int verify)
-{
-    assert(verify == 0 || verify == 1);
-
-    if (!verify) {
-        int snid, hnid;
-        X509_ALGOR *alg1, *alg2;
-        EVP_PKEY *pkey = si->pkey;
-
-        CMS_SignerInfo_get0_algs(si, NULL, NULL, &alg1, &alg2);
-        if (alg1 == NULL || alg1->algorithm == NULL)
-            return -1;
-        hnid = OBJ_obj2nid(alg1->algorithm);
-        if (hnid == NID_undef)
-            return -1;
-        if (!OBJ_find_sigid_by_algs(&snid, hnid, EVP_PKEY_get_id(pkey)))
-            return -1;
-        return X509_ALGOR_set0(alg2, OBJ_nid2obj(snid), V_ASN1_UNDEF, NULL);
-    }
-    return 1;
-}

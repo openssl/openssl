@@ -36,7 +36,12 @@ static int sigx_cmp(const nid_triple *const *a, const nid_triple *const *b)
     int ret;
 
     ret = (*a)->hash_id - (*b)->hash_id;
-    if (ret != 0)
+    /* consider a good algorithm match either one with identical digests
+     * or one with a signature algorithm indicating use of any, incl. no
+     * digest for proper operation (i.e., setting NID_undef for hash alg).
+     * SIG NID (pkey_id) must match in any case.
+     */
+    if ((ret != 0) && ((*b)->hash_id != NID_undef))
         return ret;
     return (*a)->pkey_id - (*b)->pkey_id;
 }
