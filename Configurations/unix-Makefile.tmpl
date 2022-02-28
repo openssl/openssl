@@ -118,6 +118,7 @@ SHLIB_TARGET={- $target{shared_target} -}
 SHLIB_EXT={- $shlibext -}
 SHLIB_EXT_SIMPLE={- $shlibextsimple -}
 SHLIB_EXT_IMPORT={- $shlibextimport -}
+OQSLIBDIR:=$(wildcard oqs/lib*)
 
 LIBS={- join(" ", map { lib($_) } @{$unified_info{libraries}}) -}
 SHLIBS={- join(" ", map { shlib($_) } @{$unified_info{libraries}}) -}
@@ -345,7 +346,7 @@ CNF_CFLAGS={- join(' ', $target{cflags} || (),
 CNF_CXXFLAGS={- join(' ', $target{cxxflags} || (),
                           @{$config{cxxflags}}) -}
 CNF_LDFLAGS={- join(' ', $target{lflags} || (),
-                         "-Loqs/lib",
+                         "-Loqs/lib -Loqs/lib64",
                          @{$config{lflags}}) -}
 CNF_EX_LIBS={- join(' ', $target{ex_libs} || (),
                          "-loqs",
@@ -778,15 +779,20 @@ install_runtime_libs: build_libs
 		      "$(DESTDIR)$(libdir)/$$fn"; \
 		: {- output_on() if windowsdll(); "" -}; \
 	done
-ifneq (,$(wildcard oqs/lib/liboqs.a))
-	@install oqs/lib/liboqs.a $(DESTDIR)$(libdir)
+ifeq (,$(OQSLIBDIR))
+	@$(ECHO) "No OQS library directory found to install. Exiting install with failure."
+	exit 1
 endif
-ifneq (,$(wildcard oqs/lib/liboqs.so.0*))
-	@set -e; for i in oqs/lib/liboqs.so.0.*; do \
+ifneq (,$(wildcard $(OQSLIBDIR)/liboqs.a))
+	$(ECHO) "install $(OQSLIBDIR)/liboqs.a $(DESTDIR)$(libdir)"; \
+	install $(OQSLIBDIR)/liboqs.a $(DESTDIR)$(libdir)
+endif
+ifneq (,$(wildcard $(OQSLIBDIR)/liboqs.so.0*))
+	@set -e; for i in $(OQSLIBDIR)/liboqs.so.0.*; do \
 		fn=`basename $$i`; \
-		$(ECHO) "install oqs/lib/$$fn $(DESTDIR)$(libdir)"; \
+		$(ECHO) "install $(OQSLIBDIR)/$$fn $(DESTDIR)$(libdir)"; \
 		$(ECHO) "cd $(DESTDIR)$(libdir) && ln -sf $$fn liboqs.so && ln -sf $$fn liboqs.so.0 && cd -"; \
-		install oqs/lib/$$fn $(DESTDIR)$(libdir); \
+		install $(OQSLIBDIR)/$$fn $(DESTDIR)$(libdir); \
 		cd $(DESTDIR)$(libdir) && ln -sf $$fn liboqs.so && ln -sf $$fn liboqs.so.0 && cd -; \
 	done
 endif
