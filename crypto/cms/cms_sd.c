@@ -21,7 +21,6 @@
 #include "crypto/ess.h"
 #include "crypto/x509.h" /* for ossl_x509_add_cert_new() */
 #include "cms_local.h"
-#include "assert.h"
 
 /* CMS SignedData Utilities */
 
@@ -232,7 +231,8 @@ int ossl_cms_SignerIdentifier_cert_cmp(CMS_SignerIdentifier *sid, X509 *cert)
 /* ECDSA and DSA and all provider-delivered signatures implementation is the same */
 static int cms_generic_sign(CMS_SignerInfo *si, int verify)
 {
-    assert(verify == 0 || verify == 1);
+    if (!ossl_assert(verify == 0 || verify == 1))
+        return -1;
 
     if (!verify) {
         int snid, hnid, pknid;
@@ -247,7 +247,7 @@ static int cms_generic_sign(CMS_SignerInfo *si, int verify)
         if (hnid == NID_undef)
             return -1;
         if (pknid <= 0) { /* check whether a provider registered a NID */
-            const char* typename = EVP_PKEY_get0_type_name(pkey);
+            const char *typename = EVP_PKEY_get0_type_name(pkey);
             if (typename != NULL)
                 pknid = OBJ_txt2nid(typename);
         }
