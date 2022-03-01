@@ -3340,7 +3340,7 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
             }
             /* send the file */
 #ifndef OPENSSL_NO_KTLS
-            if (use_sendfile) {
+            if (use_sendfile && BIO_get_ktls_send(SSL_get_wbio(con))) {
                 FILE *fp = NULL;
                 int fd;
                 struct stat st;
