@@ -3012,13 +3012,16 @@ static int test_mod_exp_consttime(int i)
     return res;
 }
 
-/* Regression test to ensure BN_mod_exp2_mont fails safely if argument m is
- * zero. */
+/*
+ * Regression test to ensure BN_mod_exp2_mont fails safely if argument m is
+ * zero.
+ */
 static int test_mod_exp2_mont(void)
 {
     int res = 0;
     BIGNUM *exp_result = NULL;
-    BIGNUM *exp_a1 = NULL, *exp_p1 = NULL, *exp_a2 = NULL, *exp_p2 = NULL, *exp_m = NULL;
+    BIGNUM *exp_a1 = NULL, *exp_p1 = NULL, *exp_a2 = NULL, *exp_p2 = NULL,
+           *exp_m = NULL;
 
     if (!TEST_ptr(exp_result = BN_new())
             || !TEST_ptr(exp_a1 = BN_new())
@@ -3037,7 +3040,8 @@ static int test_mod_exp2_mont(void)
     BN_zero(exp_m);
 
     /* input of 0 is even, so must fail */
-    if (!TEST_int_eq(BN_mod_exp2_mont(exp_result, exp_a1, exp_p1, exp_a2, exp_p2, exp_m, ctx, NULL), 0))
+    if (!TEST_int_eq(BN_mod_exp2_mont(exp_result, exp_a1, exp_p1, exp_a2,
+                exp_p2, exp_m, ctx, NULL), 0))
         goto err;
 
     res = 1;
