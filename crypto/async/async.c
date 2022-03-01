@@ -340,13 +340,14 @@ int async_init(void)
         return 0;
     }
 
-    return 1;
+    return async_local_init();
 }
 
 void async_deinit(void)
 {
     CRYPTO_THREAD_cleanup_local(&ctxkey);
     CRYPTO_THREAD_cleanup_local(&poolkey);
+    async_local_deinit();
 }
 
 int ASYNC_init_thread(size_t max_size, size_t init_size)
