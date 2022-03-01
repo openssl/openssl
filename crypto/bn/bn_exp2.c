@@ -32,7 +32,7 @@ int BN_mod_exp2_mont(BIGNUM *rr, const BIGNUM *a1, const BIGNUM *p1,
     bn_check_top(p2);
     bn_check_top(m);
 
-    if (!(m->d[0] & 1)) {
+    if (!BN_is_odd(m)) {
         ERR_raise(ERR_LIB_BN, BN_R_CALLED_WITH_EVEN_MODULUS);
         return 0;
     }
