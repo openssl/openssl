@@ -3012,6 +3012,50 @@ static int test_mod_exp_consttime(int i)
     return res;
 }
 
+/*
+ * Regression test to ensure BN_mod_exp2_mont fails safely if argument m is
+ * zero.
+ */
+static int test_mod_exp2_mont(void)
+{
+    int res = 0;
+    BIGNUM *exp_result = NULL;
+    BIGNUM *exp_a1 = NULL, *exp_p1 = NULL, *exp_a2 = NULL, *exp_p2 = NULL,
+           *exp_m = NULL;
+
+    if (!TEST_ptr(exp_result = BN_new())
+            || !TEST_ptr(exp_a1 = BN_new())
+            || !TEST_ptr(exp_p1 = BN_new())
+            || !TEST_ptr(exp_a2 = BN_new())
+            || !TEST_ptr(exp_p2 = BN_new())
+            || !TEST_ptr(exp_m = BN_new()))
+        goto err;
+
+    if (!TEST_true(BN_one(exp_a1))
+            || !TEST_true(BN_one(exp_p1))
+            || !TEST_true(BN_one(exp_a2))
+            || !TEST_true(BN_one(exp_p2)))
+        goto err;
+
+    BN_zero(exp_m);
+
+    /* input of 0 is even, so must fail */
+    if (!TEST_int_eq(BN_mod_exp2_mont(exp_result, exp_a1, exp_p1, exp_a2,
+                exp_p2, exp_m, ctx, NULL), 0))
+        goto err;
+
+    res = 1;
+
+err:
+    BN_free(exp_result);
+    BN_free(exp_a1);
+    BN_free(exp_p1);
+    BN_free(exp_a2);
+    BN_free(exp_p2);
+    BN_free(exp_m);
+    return res;
+}
+
 static int file_test_run(STANZA *s)
 {
     static const FILETEST filetests[] = {
@@ -3154,6 +3198,7 @@ int setup_tests(void)
         ADD_TEST(test_gcd_prime);
         ADD_ALL_TESTS(test_mod_exp, (int)OSSL_NELEM(ModExpTests));
         ADD_ALL_TESTS(test_mod_exp_consttime, (int)OSSL_NELEM(ModExpTests));
+        ADD_TEST(test_mod_exp2_mont);
         if (stochastic)
             ADD_TEST(test_rand_range);
     } else {
