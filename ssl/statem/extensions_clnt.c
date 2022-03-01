@@ -1062,7 +1062,8 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
          * this in multiple places in the code, so portability shouldn't be an
          * issue.
          */
-        agesec = (uint32_t)(time(NULL) - s->session->time);
+        agesec = (int32_t)ossl_time_to_sec(ossl_time_subtract(ossl_time_now(),
+                                                              s->session->time));
         /*
          * We calculate the age in seconds but the server may work in ms. Due to
          * rounding errors we could overestimate the age by up to 1s. It is

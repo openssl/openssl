@@ -3656,7 +3656,7 @@ int tls_construct_server_certificate(SSL_CONNECTION *s, WPACKET *pkt)
 static int create_ticket_prequel(SSL_CONNECTION *s, WPACKET *pkt,
                                  uint32_t age_add, unsigned char *tick_nonce)
 {
-    uint32_t timeout = (uint32_t)s->session->timeout;
+    uint32_t timeout = (uint32_t)ossl_time_to_sec(s->session->timeout);
 
     /*
      * Ticket lifetime hint:
@@ -3668,7 +3668,8 @@ static int create_ticket_prequel(SSL_CONNECTION *s, WPACKET *pkt,
 #define ONE_WEEK_SEC (7 * 24 * 60 * 60)
 
     if (SSL_CONNECTION_IS_TLS13(s)) {
-        if (s->session->timeout > ONE_WEEK_SEC)
+        if (ossl_time_compare(s->session->timeout,
+                              ossl_time_from_sec(ONE_WEEK_SEC)) > 0)
             timeout = ONE_WEEK_SEC;
     } else if (s->hit)
         timeout = 0;
@@ -3978,7 +3979,7 @@ int tls_construct_new_session_ticket(SSL_CONNECTION *s, WPACKET *pkt)
         }
         s->session->master_key_length = hashlen;
 
-        s->session->time = time(NULL);
+        s->session->time = ossl_time_now();
         ssl_session_calculate_timeout(s->session);
         if (s->s3.alpn_selected != NULL) {
             OPENSSL_free(s->session->ext.alpn_selected);

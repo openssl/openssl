@@ -699,7 +699,8 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     unsigned char hmac[SHA256_DIGEST_LENGTH];
     unsigned char hrr[MAX_HRR_SIZE];
     size_t rawlen, hmaclen, hrrlen, ciphlen;
-    uint64_t tm, now;
+    OSSL_TIME now, tm2;
+    uint64_t tm;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
@@ -811,8 +812,11 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     }
 
     /* We tolerate a cookie age of up to 10 minutes (= 60 * 10 seconds) */
-    now = time(NULL);
-    if (tm > now || (now - tm) > 600) {
+    now = ossl_time_now();
+    tm2 = ossl_time_from_sec(tm);
+    if (ossl_time_compare(tm2, now) > 0
+        || ossl_time_compare(ossl_time_subtract(now, tm2),
+                             ossl_time_from_time_t(600)) > 0) {
         /* Cookie is stale. Ignore it */
         return 1;
     }
@@ -1142,7 +1146,8 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
             }
 
             ticket_age = (uint32_t)ticket_agel;
-            agesec = (uint32_t)(time(NULL) - sess->time);
+            agesec = (int32_t)ossl_time_to_sec(ossl_time_subtract(ossl_time_now(),
+                                                                  sess->time));
             agems = agesec * (uint32_t)1000;
             ticket_age -= sess->ext.tick_age_add;
 
@@ -1155,7 +1160,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
              * rounding errors.
              */
             if (id == 0
-                    && sess->timeout >= (long)agesec
+                    && ossl_time_to_sec(sess->timeout) >= (int64_t)agesec
                     && agems / (uint32_t)1000 == agesec
                     && ticket_age <= agems + 1000
                     && ticket_age + TICKET_AGE_ALLOWANCE >= agems + 1000) {

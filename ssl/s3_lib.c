@@ -3286,13 +3286,13 @@ const SSL3_ENC_METHOD SSLv3_enc_data = {
     ssl3_handshake_write
 };
 
-long ssl3_default_timeout(void)
+OSSL_TIME ssl3_default_timeout(void)
 {
     /*
      * 2 hours, the 24 hours mentioned in the SSLv3 spec is way too long for
      * http, the cache would over fill
      */
-    return (60 * 60 * 2);
+    return ossl_time_from_sec(60 * 60 * 2);
 }
 
 int ssl3_num_ciphers(void)
@@ -4631,9 +4631,10 @@ int ssl_fill_hello_random(SSL_CONNECTION *s, int server,
     else
         send_time = (s->mode & SSL_MODE_SEND_CLIENTHELLO_TIME) != 0;
     if (send_time) {
-        unsigned long Time = (unsigned long)time(NULL);
+        uint32_t Time = (uint32_t)time(NULL);
         unsigned char *p = result;
 
+        /* l2n works on 32-bit values */
         l2n(Time, p);
         ret = RAND_bytes_ex(SSL_CONNECTION_GET_CTX(s)->libctx, p, len - 4, 0);
     } else {

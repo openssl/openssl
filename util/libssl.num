@@ -524,3 +524,11 @@ SSL_client_hello_get_extension_order    ?	3_1_0	EXIST::FUNCTION:
 OSSL_QUIC_client_method                 ?	3_1_0	EXIST::FUNCTION:QUIC
 OSSL_QUIC_client_thread_method          ?	3_1_0	EXIST::FUNCTION:QUIC
 OSSL_QUIC_server_method                 ?	3_1_0	EXIST::FUNCTION:QUIC
+SSL_CTX_set_timeout_ex                  ?	3_1_0	EXIST::FUNCTION:
+SSL_CTX_get_timeout_ex                  ?	3_1_0	EXIST::FUNCTION:
+SSL_CTX_flush_sessions_ex               ?	3_1_0	EXIST::FUNCTION:
+SSL_SESSION_get_time_ex                 ?	3_1_0	EXIST::FUNCTION:
+SSL_SESSION_set_time_ex                 ?	3_1_0	EXIST::FUNCTION:
+SSL_SESSION_get_timeout_ex              ?	3_1_0	EXIST::FUNCTION:
+SSL_SESSION_set_timeout_ex              ?	3_1_0	EXIST::FUNCTION:
+SSL_get_default_timeout_ex              ?	3_1_0	EXIST::FUNCTION:

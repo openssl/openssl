@@ -87,6 +87,31 @@ static ossl_inline OSSL_TIME ossl_time_from_time_t(time_t t)
     return ot;
 }
 
+/* Convert OSSL_TIME to time_t */
+static ossl_inline time_t ossl_time_to_time_t(OSSL_TIME t)
+{
+    return (time_t)(t.t / OSSL_TIME_SECOND);
+}
+
+/*-
+ * Convert seconds to OSSL_TIME
+ * handles large second values that might exceed time_t
+ */
+static ossl_inline OSSL_TIME ossl_time_from_sec(int64_t t)
+{
+    OSSL_TIME ot;
+
+    ot.t = t;
+    ot.t *= OSSL_TIME_SECOND;
+    return ot;
+}
+
+/* Converrt OSSL_TIME to seconds */
+static ossl_inline int64_t ossl_time_to_sec(OSSL_TIME t)
+{
+    return (int64_t)(t.t / OSSL_TIME_SECOND);
+}
+
 /* Compare two time values, return -1 if less, 1 if greater and 0 if equal */
 static ossl_unused ossl_inline
 int ossl_time_compare(OSSL_TIME a, OSSL_TIME b)

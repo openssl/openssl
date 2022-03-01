@@ -26,9 +26,9 @@ static int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck);
 
 DEFINE_STACK_OF(SSL_SESSION)
 
-__owur static ossl_inline int sess_timedout(time_t t, SSL_SESSION *ss)
+__owur static ossl_inline int sess_timedout(OSSL_TIME t, SSL_SESSION *ss)
 {
-    return ossl_time_compare(ossl_time_from_time_t(t), ss->calc_timeout) > 0;
+    return ossl_time_compare(t, ss->calc_timeout) > 0;
 }
 
 /*
@@ -47,11 +47,10 @@ __owur static ossl_inline int timeoutcmp(SSL_SESSION *a, SSL_SESSION *b)
 void ssl_session_calculate_timeout(SSL_SESSION *ss)
 {
     /* Force positive timeout */
-    if (ss->timeout < 0)
-        ss->timeout = 0;
+    if (ossl_time_to_sec(ss->timeout) < 0)
+        ss->timeout = ossl_time_from_sec(0);
 
-    ss->calc_timeout = ossl_time_add(ossl_time_from_time_t(ss->time),
-                                     ossl_time_from_time_t(ss->timeout));
+    ss->calc_timeout = ossl_time_add(ss->time, ss->timeout);
 }
 
 /*
@@ -118,8 +117,8 @@ SSL_SESSION *SSL_SESSION_new(void)
 
     ss->verify_result = 1;      /* avoid 0 (= X509_V_OK) just in case */
     ss->references = 1;
-    ss->timeout = 60 * 5 + 4;   /* 5 minute timeout by default */
-    ss->time = time(NULL);
+    ss->timeout = ossl_time_from_sec(60 * 5 + 4); /* 5 minute timeout by default */
+    ss->time = ossl_time_now();
     ssl_session_calculate_timeout(ss);
     ss->lock = CRYPTO_THREAD_lock_new();
     if (ss->lock == NULL) {
@@ -418,8 +417,8 @@ int ssl_get_new_session(SSL_CONNECTION *s, int session)
     }
 
     /* If the context has a default timeout, use it */
-    if (s->session_ctx->session_timeout == 0)
-        ss->timeout = SSL_get_default_timeout(SSL_CONNECTION_GET_SSL(s));
+    if (ossl_time_to_sec(s->session_ctx->session_timeout) == 0)
+        ss->timeout = SSL_CONNECTION_GET_SSL(s)->method->get_timeout();
     else
         ss->timeout = s->session_ctx->session_timeout;
     ssl_session_calculate_timeout(ss);
@@ -629,7 +628,7 @@ int ssl_get_prev_session(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello)
         goto err;
     }
 
-    if (sess_timedout(time(NULL), ret)) {
+    if (sess_timedout(ossl_time_now(), ret)) {
         ssl_tsan_counter(s->session_ctx, &s->session_ctx->stats.sess_timeout);
         if (try_session_cache) {
             /* session was from the cache, so remove it */
@@ -732,7 +731,7 @@ int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c)
 
     /* Adjust last used time, and add back into the cache at the appropriate spot */
     if (ctx->session_cache_mode & SSL_SESS_CACHE_UPDATE_TIME) {
-        c->time = time(NULL);
+        c->time = ossl_time_now();
         ssl_session_calculate_timeout(c);
     }
 
@@ -886,19 +885,22 @@ int SSL_SESSION_set1_id(SSL_SESSION *s, const unsigned char *sid,
 
 long SSL_SESSION_set_timeout(SSL_SESSION *s, long t)
 {
-    time_t new_timeout = (time_t)t;
+    return (long)SSL_SESSION_set_timeout_ex(s, (time_t)t);
+}
 
+int SSL_SESSION_set_timeout_ex(SSL_SESSION *s, time_t t)
+{
     if (s == NULL || t < 0)
         return 0;
     if (s->owner != NULL) {
         if (!CRYPTO_THREAD_write_lock(s->owner->lock))
             return 0;
-        s->timeout = new_timeout;
+        s->timeout = ossl_time_from_sec(t);
         ssl_session_calculate_timeout(s);
         SSL_SESSION_list_add(s->owner, s);
         CRYPTO_THREAD_unlock(s->owner->lock);
     } else {
-        s->timeout = new_timeout;
+        s->timeout = ossl_time_from_sec(t);
         ssl_session_calculate_timeout(s);
     }
     return 1;
@@ -906,33 +908,46 @@ long SSL_SESSION_set_timeout(SSL_SESSION *s, long t)
 
 long SSL_SESSION_get_timeout(const SSL_SESSION *s)
 {
+    return (long)SSL_SESSION_get_timeout_ex(s);
+}
+
+time_t SSL_SESSION_get_timeout_ex(const SSL_SESSION *s)
+{
     if (s == NULL)
         return 0;
-    return (long)s->timeout;
+    return ossl_time_to_time_t(s->timeout);
 }
 
 long SSL_SESSION_get_time(const SSL_SESSION *s)
 {
+    return (long)SSL_SESSION_get_time_ex(s);
+}
+
+time_t SSL_SESSION_get_time_ex(const SSL_SESSION *s)
+{
     if (s == NULL)
         return 0;
-    return (long)s->time;
+    return ossl_time_to_time_t(s->time);
 }
 
 long SSL_SESSION_set_time(SSL_SESSION *s, long t)
 {
-    time_t new_time = (time_t)t;
+    return (long)SSL_SESSION_set_time_ex(s, (time_t)t);
+}
 
+time_t SSL_SESSION_set_time_ex(SSL_SESSION *s, time_t t)
+{
     if (s == NULL)
         return 0;
     if (s->owner != NULL) {
         if (!CRYPTO_THREAD_write_lock(s->owner->lock))
             return 0;
-        s->time = new_time;
+        s->time = ossl_time_from_time_t(t);
         ssl_session_calculate_timeout(s);
         SSL_SESSION_list_add(s->owner, s);
         CRYPTO_THREAD_unlock(s->owner->lock);
     } else {
-        s->time = new_time;
+        s->time = ossl_time_from_time_t(t);
         ssl_session_calculate_timeout(s);
     }
     return t;
@@ -1065,19 +1080,30 @@ int SSL_SESSION_is_resumable(const SSL_SESSION *s)
 
 long SSL_CTX_set_timeout(SSL_CTX *s, long t)
 {
-    long l;
+    return (long)SSL_CTX_set_timeout_ex(s, (time_t)t);
+}
+
+time_t SSL_CTX_set_timeout_ex(SSL_CTX *s, time_t t)
+{
+    time_t l;
+
     if (s == NULL)
         return 0;
-    l = s->session_timeout;
-    s->session_timeout = t;
+    l = ossl_time_to_time_t(s->session_timeout);
+    s->session_timeout = ossl_time_from_time_t(t);
     return l;
 }
 
 long SSL_CTX_get_timeout(const SSL_CTX *s)
 {
+    return (long)SSL_CTX_get_timeout_ex(s);
+}
+
+time_t SSL_CTX_get_timeout_ex(const SSL_CTX *s)
+{
     if (s == NULL)
         return 0;
-    return s->session_timeout;
+    return ossl_time_to_time_t(s->session_timeout);
 }
 
 int SSL_set_session_secret_cb(SSL *s,
@@ -1141,6 +1167,11 @@ int SSL_set_session_ticket_ext(SSL *s, void *ext_data, int ext_len)
 
 void SSL_CTX_flush_sessions(SSL_CTX *s, long t)
 {
+    SSL_CTX_flush_sessions_ex(s, (time_t)t);
+}
+
+void SSL_CTX_flush_sessions_ex(SSL_CTX *s, time_t t)
+{
     STACK_OF(SSL_SESSION) *sk;
     SSL_SESSION *current;
     unsigned long i;
@@ -1161,7 +1192,8 @@ void SSL_CTX_flush_sessions(SSL_CTX *s, long t)
      */
     while (s->session_cache_tail != NULL) {
         current = s->session_cache_tail;
-        if (t == 0 || sess_timedout((time_t)t, current)) {
+        /* 0 means now, not Jan 1, 1970 */
+        if (t == 0 || sess_timedout(ossl_time_from_time_t(t), current)) {
             lh_SSL_SESSION_delete(s->sessions, current);
             SSL_SESSION_list_remove(s, current);
             current->not_resumable = 1;

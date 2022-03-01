@@ -2047,7 +2047,12 @@ int SSL_connect(SSL *s)
 
 long SSL_get_default_timeout(const SSL *s)
 {
-    return s->method->get_timeout();
+    return (long)SSL_get_default_timeout_ex(s);
+}
+
+time_t SSL_get_default_timeout_ex(const SSL *s)
+{
+    return ossl_time_to_time_t(s->method->get_timeout());
 }
 
 static int ssl_async_wait_ctx_cb(void *arg)
@@ -3902,7 +3907,7 @@ void SSL_CTX_free(SSL_CTX *a)
      * (See ticket [openssl.org #212].)
      */
     if (a->sessions != NULL)
-        SSL_CTX_flush_sessions(a, 0);
+        SSL_CTX_flush_sessions_ex(a, 0);
 
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL_CTX, a, &a->ex_data);
     lh_SSL_SESSION_free(a->sessions);
@@ -4255,7 +4260,7 @@ void ssl_update_cache(SSL_CONNECTION *s, int mode)
         else
             stat = &s->session_ctx->stats.sess_accept_good;
         if ((ssl_tsan_load(s->session_ctx, stat) & 0xff) == 0xff)
-            SSL_CTX_flush_sessions(s->session_ctx, (unsigned long)time(NULL));
+            SSL_CTX_flush_sessions_ex(s->session_ctx, time(NULL));
     }
 }
 

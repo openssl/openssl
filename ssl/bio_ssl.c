@@ -13,6 +13,7 @@
 #include <errno.h>
 #include <openssl/crypto.h>
 #include "internal/bio.h"
+#include "internal/time.h"
 #include <openssl/err.h>
 #include "ssl_local.h"
 
@@ -29,8 +30,8 @@ typedef struct bio_ssl_st {
     int num_renegotiates;
     unsigned long renegotiate_count;
     size_t byte_count;
-    unsigned long renegotiate_timeout;
-    unsigned long last_time;
+    OSSL_TIME renegotiate_timeout;
+    OSSL_TIME last_time;
 } BIO_SSL;
 
 static const BIO_METHOD methods_sslp = {
@@ -88,13 +89,36 @@ static int ssl_free(BIO *a)
     return 1;
 }
 
+static void check_for_renegotiation(BIO_SSL *bs, size_t len)
+{
+    if (bs->renegotiate_count > 0) {
+        bs->byte_count += len;
+        if (bs->byte_count > bs->renegotiate_count) {
+            bs->byte_count = 0;
+            bs->num_renegotiates++;
+            SSL_renegotiate(bs->ssl);
+            return;
+        }
+    }
+    if (ossl_time_to_sec(bs->renegotiate_timeout) > 0) {
+        OSSL_TIME now = ossl_time_now();
+
+        if (ossl_time_compare(now,
+                              ossl_time_add(bs->last_time,
+                                            bs->renegotiate_timeout)) > 0) {
+            bs->last_time = now;
+            bs->num_renegotiates++;
+            SSL_renegotiate(bs->ssl);
+        }
+    }
+}
+
 static int ssl_read(BIO *b, char *buf, size_t size, size_t *readbytes)
 {
     int ret = 1;
     BIO_SSL *sb;
     SSL *ssl;
     int retry_reason = 0;
-    int r = 0;
 
     if (buf == NULL)
         return 0;
@@ -107,26 +131,7 @@ static int ssl_read(BIO *b, char *buf, size_t size, size_t *readbytes)
 
     switch (SSL_get_error(ssl, ret)) {
     case SSL_ERROR_NONE:
-        if (sb->renegotiate_count > 0) {
-            sb->byte_count += *readbytes;
-            if (sb->byte_count > sb->renegotiate_count) {
-                sb->byte_count = 0;
-                sb->num_renegotiates++;
-                SSL_renegotiate(ssl);
-                r = 1;
-            }
-        }
-        if ((sb->renegotiate_timeout > 0) && (!r)) {
-            unsigned long tm;
-
-            tm = (unsigned long)time(NULL);
-            if (tm > sb->last_time + sb->renegotiate_timeout) {
-                sb->last_time = tm;
-                sb->num_renegotiates++;
-                SSL_renegotiate(ssl);
-            }
-        }
-
+        check_for_renegotiation(sb, *readbytes);
         break;
     case SSL_ERROR_WANT_READ:
         BIO_set_retry_read(b);
@@ -160,7 +165,7 @@ static int ssl_read(BIO *b, char *buf, size_t size, size_t *readbytes)
 
 static int ssl_write(BIO *b, const char *buf, size_t size, size_t *written)
 {
-    int ret, r = 0;
+    int ret;
     int retry_reason = 0;
     SSL *ssl;
     BIO_SSL *bs;
@@ -176,25 +181,7 @@ static int ssl_write(BIO *b, const char *buf, size_t size, size_t *written)
 
     switch (SSL_get_error(ssl, ret)) {
     case SSL_ERROR_NONE:
-        if (bs->renegotiate_count > 0) {
-            bs->byte_count += *written;
-            if (bs->byte_count > bs->renegotiate_count) {
-                bs->byte_count = 0;
-                bs->num_renegotiates++;
-                SSL_renegotiate(ssl);
-                r = 1;
-            }
-        }
-        if ((bs->renegotiate_timeout > 0) && (!r)) {
-            unsigned long tm;
-
-            tm = (unsigned long)time(NULL);
-            if (tm > bs->last_time + bs->renegotiate_timeout) {
-                bs->last_time = tm;
-                bs->num_renegotiates++;
-                SSL_renegotiate(ssl);
-            }
-        }
+        check_for_renegotiation(bs, *written);
         break;
     case SSL_ERROR_WANT_WRITE:
         BIO_set_retry_write(b);
@@ -268,11 +255,11 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
             SSL_set_accept_state(ssl);
         break;
     case BIO_C_SET_SSL_RENEGOTIATE_TIMEOUT:
-        ret = bs->renegotiate_timeout;
+        ret = (long)ossl_time_to_sec(bs->renegotiate_timeout);
         if (num < 60)
             num = 5;
-        bs->renegotiate_timeout = (unsigned long)num;
-        bs->last_time = (unsigned long)time(NULL);
+        bs->renegotiate_timeout = ossl_time_from_sec(num);
+        bs->last_time = ossl_time_now();
         break;
     case BIO_C_SET_SSL_RENEGOTIATE_BYTES:
         ret = bs->renegotiate_count;

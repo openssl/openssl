@@ -3716,7 +3716,7 @@ static int early_data_skip_helper(int testtype, int idx)
          * time. It could be any value as long as it is not within tolerance.
          * This should mean the ticket is rejected.
          */
-        if (!TEST_true(SSL_SESSION_set_time(sess, (long)(time(NULL) - 20))))
+        if (!TEST_time_t_ne(SSL_SESSION_set_time_ex(sess, time(NULL) - 20), 0))
             goto end;
     }
 
@@ -8602,7 +8602,7 @@ static int test_session_timeout(int test)
     SSL_SESSION *late = NULL;
     SSL_CTX *ctx;
     int testresult = 0;
-    long now = (long)time(NULL);
+    time_t now = time(NULL);
 #define TIMEOUT 10
 
     if (!TEST_ptr(ctx = SSL_CTX_new_ex(libctx, NULL, TLS_method()))
@@ -8630,14 +8630,14 @@ static int test_session_timeout(int test)
         || !TEST_ptr(late->prev))
         goto end;
 
-    if (!TEST_int_ne(SSL_SESSION_set_time(early, now - 10), 0)
-        || !TEST_int_ne(SSL_SESSION_set_time(middle, now), 0)
-        || !TEST_int_ne(SSL_SESSION_set_time(late, now + 10), 0))
+    if (!TEST_time_t_ne(SSL_SESSION_set_time_ex(early, now - 10), 0)
+        || !TEST_time_t_ne(SSL_SESSION_set_time_ex(middle, now), 0)
+        || !TEST_time_t_ne(SSL_SESSION_set_time_ex(late, now + 10), 0))
         goto end;
 
-    if (!TEST_int_ne(SSL_SESSION_set_timeout(early, TIMEOUT), 0)
-        || !TEST_int_ne(SSL_SESSION_set_timeout(middle, TIMEOUT), 0)
-        || !TEST_int_ne(SSL_SESSION_set_timeout(late, TIMEOUT), 0))
+    if (!TEST_int_ne(SSL_SESSION_set_timeout_ex(early, TIMEOUT), 0)
+        || !TEST_int_ne(SSL_SESSION_set_timeout_ex(middle, TIMEOUT), 0)
+        || !TEST_int_ne(SSL_SESSION_set_timeout_ex(late, TIMEOUT), 0))
         goto end;
 
     /* Make sure they are all still there */
@@ -8654,21 +8654,21 @@ static int test_session_timeout(int test)
         goto end;
 
     /* This should remove "early" */
-    SSL_CTX_flush_sessions(ctx, now + TIMEOUT - 1);
+    SSL_CTX_flush_sessions_ex(ctx, now + TIMEOUT - 1);
     if (!TEST_ptr_null(early->prev)
         || !TEST_ptr(middle->prev)
         || !TEST_ptr(late->prev))
         goto end;
 
     /* This should remove "middle" */
-    SSL_CTX_flush_sessions(ctx, now + TIMEOUT + 1);
+    SSL_CTX_flush_sessions_ex(ctx, now + TIMEOUT + 1);
     if (!TEST_ptr_null(early->prev)
         || !TEST_ptr_null(middle->prev)
         || !TEST_ptr(late->prev))
         goto end;
 
     /* This should remove "late" */
-    SSL_CTX_flush_sessions(ctx, now + TIMEOUT + 11);
+    SSL_CTX_flush_sessions_ex(ctx, now + TIMEOUT + 11);
     if (!TEST_ptr_null(early->prev)
         || !TEST_ptr_null(middle->prev)
         || !TEST_ptr_null(late->prev))
@@ -8687,7 +8687,7 @@ static int test_session_timeout(int test)
         goto end;
 
     /* This should remove all of them */
-    SSL_CTX_flush_sessions(ctx, 0);
+    SSL_CTX_flush_sessions_ex(ctx, 0);
     if (!TEST_ptr_null(early->prev)
         || !TEST_ptr_null(middle->prev)
         || !TEST_ptr_null(late->prev))
@@ -8696,11 +8696,11 @@ static int test_session_timeout(int test)
     (void)SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_UPDATE_TIME
                                          | SSL_CTX_get_session_cache_mode(ctx));
 
-    /* make sure |now| is NOT  equal to the current time */
+    /* make sure |now| is NOT equal to the current time */
     now -= 10;
-    if (!TEST_int_ne(SSL_SESSION_set_time(early, now), 0)
+    if (!TEST_time_t_ne(SSL_SESSION_set_time_ex(early, now), 0)
         || !TEST_int_eq(SSL_CTX_add_session(ctx, early), 1)
-        || !TEST_long_ne(SSL_SESSION_get_time(early), now))
+        || !TEST_time_t_ne(SSL_SESSION_get_time_ex(early), now))
         goto end;
 
     testresult = 1;

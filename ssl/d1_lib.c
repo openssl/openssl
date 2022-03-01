@@ -56,13 +56,13 @@ const SSL3_ENC_METHOD DTLSv1_2_enc_data = {
     dtls1_handshake_write
 };
 
-long dtls1_default_timeout(void)
+OSSL_TIME dtls1_default_timeout(void)
 {
     /*
      * 2 hours, the 24 hours mentioned in the DTLSv1 spec is way too long for
      * http, the cache would over fill
      */
-    return (60 * 60 * 2);
+    return ossl_time_from_sec(60 * 60 * 2);
 }
 
 int dtls1_new(SSL *ssl)
