@@ -775,8 +775,9 @@ int req_main(int argc, char **argv)
         }
     }
     if (newreq || gen_x509) {
-        if (pkey == NULL /* can happen only if !newreq */) {
-            BIO_printf(bio_err, "Must provide a signature key using -key\n");
+        if (CAcert == NULL && pkey == NULL) {
+            BIO_printf(bio_err, "Must provide a signature key using -key or"
+                " provide -CA / -CAkey\n");
             goto end;
         }
 
