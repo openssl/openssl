@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -164,7 +164,7 @@ static int test_client_hello(int currtest)
          * We reset the creation time so that we don't discard the session as
          * too old.
          */
-        if (!TEST_true(SSL_SESSION_set_time(sess, (long)time(NULL)))
+        if (!TEST_true(SSL_SESSION_set_time(sess, time(NULL)))
                 || !TEST_true(SSL_set_session(con, sess)))
             goto end;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2005 Nokia. All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -915,14 +915,14 @@ long SSL_SESSION_get_timeout(const SSL_SESSION *s)
     return (long)s->timeout;
 }
 
-long SSL_SESSION_get_time(const SSL_SESSION *s)
+time_t SSL_SESSION_get_time(const SSL_SESSION *s)
 {
     if (s == NULL)
         return 0;
-    return (long)s->time;
+    return s->time;
 }
 
-long SSL_SESSION_set_time(SSL_SESSION *s, long t)
+time_t SSL_SESSION_set_time(SSL_SESSION *s, time_t t)
 {
     time_t new_time = (time_t)t;
 
@@ -1132,7 +1132,7 @@ int SSL_set_session_ticket_ext(SSL *s, void *ext_data, int ext_len)
     return 0;
 }
 
-void SSL_CTX_flush_sessions(SSL_CTX *s, long t)
+void SSL_CTX_flush_sessions(SSL_CTX *s, time_t t)
 {
     STACK_OF(SSL_SESSION) *sk;
     SSL_SESSION *current;

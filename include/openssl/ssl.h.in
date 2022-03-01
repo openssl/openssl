@@ -1,7 +1,7 @@
 /*
  * {- join("\n * ", @autowarntext) -}
  *
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -1532,7 +1532,7 @@ void SSL_CTX_set1_cert_store(SSL_CTX *, X509_STORE *);
 __owur int SSL_want(const SSL *s);
 __owur int SSL_clear(SSL *s);
 
-void SSL_CTX_flush_sessions(SSL_CTX *ctx, long tm);
+void SSL_CTX_flush_sessions(SSL_CTX *ctx, time_t tm);
 
 __owur const SSL_CIPHER *SSL_get_current_cipher(const SSL *s);
 __owur const SSL_CIPHER *SSL_get_pending_cipher(const SSL *s);
@@ -1644,8 +1644,8 @@ __owur const char *SSL_state_string(const SSL *s);
 __owur const char *SSL_rstate_string(const SSL *s);
 __owur const char *SSL_state_string_long(const SSL *s);
 __owur const char *SSL_rstate_string_long(const SSL *s);
-__owur long SSL_SESSION_get_time(const SSL_SESSION *s);
-__owur long SSL_SESSION_set_time(SSL_SESSION *s, long t);
+__owur time_t SSL_SESSION_get_time(const SSL_SESSION *s);
+__owur time_t SSL_SESSION_set_time(SSL_SESSION *s, time_t t);
 __owur long SSL_SESSION_get_timeout(const SSL_SESSION *s);
 __owur long SSL_SESSION_set_timeout(SSL_SESSION *s, long t);
 __owur int SSL_SESSION_get_protocol_version(const SSL_SESSION *s);
