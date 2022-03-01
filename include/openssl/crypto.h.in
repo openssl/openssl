@@ -405,6 +405,8 @@ OSSL_DEPRECATEDIN_3_0 void OPENSSL_fork_child(void);
 #  endif
 # endif
 
+int OPENSSL_time_t_compare(time_t a, time_t a_offset,
+                           time_t b, time_t b_offset);
 struct tm *OPENSSL_gmtime(const time_t *timer, struct tm *result);
 int OPENSSL_gmtime_adj(struct tm *tm, int offset_day, long offset_sec);
 int OPENSSL_gmtime_diff(int *pday, int *psec,

@@ -124,8 +124,9 @@ int s_time_main(int argc, char **argv)
     char *host = SSL_CONNECT_NAME, *certfile = NULL, *keyfile = NULL, *prog;
     double totalTime = 0.0;
     int noCApath = 0, noCAfile = 0, noCAstore = 0;
-    int maxtime = SECONDS, nConn = 0, perform = 3, ret = 1, i, st_bugs = 0;
-    long bytes_read = 0, finishtime = 0;
+    time_t maxtime = SECONDS, starttime = 0;
+    int nConn = 0, perform = 3, ret = 1, i, st_bugs = 0;
+    long bytes_read = 0;
     OPTION_CHOICE o;
     int min_version = 0, max_version = 0, ver, buf_len, fd;
     size_t buf_size;
@@ -265,15 +266,15 @@ int s_time_main(int argc, char **argv)
     }
     if (!(perform & 1))
         goto next;
-    printf("Collecting connection statistics for %d seconds\n", maxtime);
+    printf("Collecting connection statistics for %lld seconds\n", (long long)maxtime);
 
     /* Loop and time how long it takes to make connections */
 
     bytes_read = 0;
-    finishtime = (long)time(NULL) + maxtime;
+    starttime = time(NULL);
     tm_Time_F(START);
     for (;;) {
-        if (finishtime < (long)time(NULL))
+        if (OPENSSL_time_t_compare(starttime, maxtime, time(NULL), 0) < 0)
             break;
 
         if ((scon = doConnection(NULL, host, ctx)) == NULL)
@@ -310,13 +311,13 @@ int s_time_main(int argc, char **argv)
     }
     totalTime += tm_Time_F(STOP); /* Add the time for this iteration */
 
-    i = (int)((long)time(NULL) - finishtime + maxtime);
+    /* if time(NULL) has wrapped, everything is messed up */
     printf
         ("\n\n%d connections in %.2fs; %.2f connections/user sec, bytes read %ld\n",
          nConn, totalTime, ((double)nConn / totalTime), bytes_read);
     printf
-        ("%d connections in %ld real seconds, %ld bytes read per connection\n",
-         nConn, (long)time(NULL) - finishtime + maxtime,
+        ("%d connections in %lld real seconds, %ld bytes read per connection\n",
+         nConn, (long long)(time(NULL) - starttime),
          nConn > 0 ? bytes_read / nConn : 0l);
 
     /*
@@ -348,14 +349,14 @@ int s_time_main(int argc, char **argv)
     nConn = 0;
     totalTime = 0.0;
 
-    finishtime = (long)time(NULL) + maxtime;
+    starttime = time(NULL);
 
     printf("starting\n");
     bytes_read = 0;
     tm_Time_F(START);
 
     for (;;) {
-        if (finishtime < (long)time(NULL))
+        if (OPENSSL_time_t_compare(starttime, maxtime, time(NULL), 0) < 0)
             break;
 
         if ((doConnection(scon, host, ctx)) == NULL)
@@ -393,13 +394,14 @@ int s_time_main(int argc, char **argv)
     printf
         ("\n\n%d connections in %.2fs; %.2f connections/user sec, bytes read %ld\n",
          nConn, totalTime, ((double)nConn / totalTime), bytes_read);
+    /* if time(NULL) has wrapped, everything is messed up */
     if (nConn > 0)
         printf
-            ("%d connections in %ld real seconds, %ld bytes read per connection\n",
-             nConn, (long)time(NULL) - finishtime + maxtime, bytes_read / nConn);
+            ("%d connections in %lld real seconds, %ld bytes read per connection\n",
+             nConn, (long long)(time(NULL) - starttime), bytes_read / nConn);
     else
-        printf("0 connections in %ld real seconds\n",
-               (long)time(NULL) - finishtime + maxtime);
+        printf("0 connections in %lld real seconds\n",
+               (long long)(time(NULL) - starttime));
     ret = 0;
 
  end:

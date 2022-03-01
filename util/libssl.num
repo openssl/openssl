@@ -521,3 +521,11 @@ SSL_set0_tmp_dh_pkey                    521	3_0_0	EXIST::FUNCTION:
 SSL_CTX_set0_tmp_dh_pkey                522	3_0_0	EXIST::FUNCTION:
 SSL_group_to_name                       523	3_0_0	EXIST::FUNCTION:
 SSL_client_hello_get_extension_order    ?	3_1_0	EXIST::FUNCTION:
+SSL_CTX_set_timeout_t                   ?	3_1_0	EXIST::FUNCTION:
+SSL_CTX_get_timeout_t                   ?	3_1_0	EXIST::FUNCTION:
+SSL_CTX_flush_sessions_t                ?	3_1_0	EXIST::FUNCTION:
+SSL_SESSION_get_time_t                  ?	3_1_0	EXIST::FUNCTION:
+SSL_SESSION_set_time_t                  ?	3_1_0	EXIST::FUNCTION:
+SSL_SESSION_get_timeout_t               ?	3_1_0	EXIST::FUNCTION:
+SSL_SESSION_set_timeout_t               ?	3_1_0	EXIST::FUNCTION:
+SSL_get_default_timeout_t               ?	3_1_0	EXIST::FUNCTION:

@@ -99,6 +99,38 @@ int OPENSSL_gmtime_adj(struct tm *tm, int off_day, long offset_sec)
 
 }
 
+/*
+ * No need to check for 64-bit time_t limit. By the time
+ * 282,277,926,596-12-04 15:30:08 occurs, Terra will have been
+ * incinerated by Sol. According to the Doctor, this will occur in the
+ * year 5.5/apple/26 (year 5 billion, or 5,000,000,000, in the Gregorian
+ * calendar, assuming, of course, the Doctor is referring to 'billion'
+ * in the short scale, which was adopted by official UK statistics in
+ * 1974, and not the long scale, which would be 5,000,000,000,000, and
+ * subsequently break 64-bit time_t. Hopefully, by then, 128-bit time_t
+ * and IPv6 addresses would have been adopted.
+ * Going the other way, the universe is considered to be only
+ * 1.37 x 10^10 (13.7 billion) years old, so any value before
+ * ~ -13,700,000,000 would be invalid, unless you subscribe to the Big
+ * Bounce Theory. However, one could presume that the Epoch would have
+ * been reset.
+ * Besides, a 32-bit int tm_year value is limited to range of
+ * -2,147,483,648..2,147,483,648, which means that Terran computer
+ * scientists will need to update struct tm before then.
+ */
+int OPENSSL_time_t_compare(time_t a, time_t a_offset, time_t b, time_t b_offset)
+{
+    /* Convert to a 64-bit signed value; for 64-bit time_t this is a no-op */
+    int64_t a64 = (int64_t)a + (int64_t)a_offset;
+    int64_t b64 = (int64_t)b + (int64_t)b_offset;
+
+    if (a64 < b64)
+        return -1;
+    if (a64 == b64)
+        return 0;
+    return 1;
+}
+
 int OPENSSL_gmtime_diff(int *pday, int *psec,
                         const struct tm *from, const struct tm *to)
 {

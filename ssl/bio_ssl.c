@@ -29,8 +29,8 @@ typedef struct bio_ssl_st {
     int num_renegotiates;
     unsigned long renegotiate_count;
     size_t byte_count;
-    unsigned long renegotiate_timeout;
-    unsigned long last_time;
+    time_t renegotiate_timeout;
+    time_t last_time;
 } BIO_SSL;
 
 static const BIO_METHOD methods_sslp = {
@@ -117,11 +117,10 @@ static int ssl_read(BIO *b, char *buf, size_t size, size_t *readbytes)
             }
         }
         if ((sb->renegotiate_timeout > 0) && (!r)) {
-            unsigned long tm;
+            time_t now = time(NULL);
 
-            tm = (unsigned long)time(NULL);
-            if (tm > sb->last_time + sb->renegotiate_timeout) {
-                sb->last_time = tm;
+            if (OPENSSL_time_t_compare(sb->last_time, sb->renegotiate_timeout, now, 0) < 0) {
+                sb->last_time = now;
                 sb->num_renegotiates++;
                 SSL_renegotiate(ssl);
             }
@@ -186,11 +185,10 @@ static int ssl_write(BIO *b, const char *buf, size_t size, size_t *written)
             }
         }
         if ((bs->renegotiate_timeout > 0) && (!r)) {
-            unsigned long tm;
+            time_t now = time(NULL);
 
-            tm = (unsigned long)time(NULL);
-            if (tm > bs->last_time + bs->renegotiate_timeout) {
-                bs->last_time = tm;
+            if (OPENSSL_time_t_compare(bs->last_time, bs->renegotiate_timeout, now, 0) < 0) {
+                bs->last_time = now;
                 bs->num_renegotiates++;
                 SSL_renegotiate(ssl);
             }
@@ -267,8 +265,8 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = bs->renegotiate_timeout;
         if (num < 60)
             num = 5;
-        bs->renegotiate_timeout = (unsigned long)num;
-        bs->last_time = (unsigned long)time(NULL);
+        bs->renegotiate_timeout = (time_t)num;
+        bs->last_time = time(NULL);
         break;
     case BIO_C_SET_SSL_RENEGOTIATE_BYTES:
         ret = bs->renegotiate_count;

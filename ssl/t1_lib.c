@@ -98,7 +98,7 @@ SSL3_ENC_METHOD const TLSv1_3_enc_data = {
     ssl3_handshake_write
 };
 
-long tls1_default_timeout(void)
+time_t tls1_default_timeout(void)
 {
     /*
      * 2 hours, the 24 hours mentioned in the TLSv1 spec is way too long for

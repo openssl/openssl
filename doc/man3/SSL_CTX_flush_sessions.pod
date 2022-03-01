@@ -2,18 +2,20 @@
 
 =head1 NAME
 
-SSL_CTX_flush_sessions - remove expired sessions
+SSL_CTX_flush_sessions,
+SSL_CTX_flush_sessions_t - remove expired sessions
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
 
  void SSL_CTX_flush_sessions(SSL_CTX *ctx, long tm);
+ void SSL_CTX_flush_sessions_t(SSL_CTX *ctx, time_t tm);
 
 =head1 DESCRIPTION
 
-SSL_CTX_flush_sessions() causes a run through the session cache of
-B<ctx> to remove sessions expired at time B<tm>.
+SSL_CTX_flush_sessions() and SSL_CTX_flush_sessions_t() cause a run
+through the session cache of B<ctx> to remove sessions expired at time B<tm>.
 
 =head1 NOTES
 
@@ -34,20 +36,27 @@ cache. When a session is found and removed, the remove_session_cb is however
 called to synchronize with the external cache (see
 L<SSL_CTX_sess_set_get_cb(3)>).
 
+SSL_CTX_flush_sessions() uses a B<long> to represent time.
+SSL_CTX_flush_sessions_t() uses a B<time_t> to represent time.
+Otherwise, their behavior is identical.
+
 =head1 RETURN VALUES
 
-SSL_CTX_flush_sessions() does not return a value.
+SSL_CTX_flush_sessions() and SSL_CTX_flush_sessions_t() do not return a value.
 
 =head1 SEE ALSO
 
 L<ssl(7)>,
 L<SSL_CTX_set_session_cache_mode(3)>,
-L<SSL_CTX_set_timeout(3)>,
+L<SSL_CTX_set_timeout_t(3)>,
 L<SSL_CTX_sess_set_get_cb(3)>
 
+=head1 HISTORY
+
+SSL_CTX_flush_sessions_t() was added in OpenSSL 3.1.
 =head1 COPYRIGHT
 
-Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2001-2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

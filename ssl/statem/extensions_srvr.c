@@ -692,7 +692,8 @@ int tls_parse_ctos_cookie(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     unsigned char hmac[SHA256_DIGEST_LENGTH];
     unsigned char hrr[MAX_HRR_SIZE];
     size_t rawlen, hmaclen, hrrlen, ciphlen;
-    unsigned long tm, now;
+    time_t now;
+    unsigned long tm;
 
     /* Ignore any cookie if we're not set up to verify it */
     if (s->ctx->verify_stateless_cookie_cb == NULL
@@ -802,8 +803,9 @@ int tls_parse_ctos_cookie(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     }
 
     /* We tolerate a cookie age of up to 10 minutes (= 60 * 10 seconds) */
-    now = (unsigned long)time(NULL);
-    if (tm > now || (now - tm) > 600) {
+    now = time(NULL);
+    if (OPENSSL_time_t_compare(now, 0, (time_t)tm, 0) < 0
+            || OPENSSL_time_t_compare(now, 0, (time_t)tm, 600) > 0) {
         /* Cookie is stale. Ignore it */
         return 1;
     }

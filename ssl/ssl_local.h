@@ -512,7 +512,7 @@ struct ssl_method_st {
     size_t (*ssl_pending) (const SSL *s);
     int (*num_ciphers) (void);
     const SSL_CIPHER *(*get_cipher) (unsigned ncipher);
-    long (*get_timeout) (void);
+    time_t (*get_timeout) (void);
     const struct ssl3_enc_method *ssl3_enc; /* Extra SSLv3/TLS stuff */
     int (*ssl_version) (void);
     long (*ssl_callback_ctrl) (SSL *s, int cb_id, void (*fp) (void));
@@ -867,7 +867,7 @@ struct ssl_ctx_st {
      * SSL_new() is called.  This has been put in to make life easier to set
      * things up
      */
-    long session_timeout;
+    time_t session_timeout;
     /*
      * If this callback is not null, it will be called each time a session id
      * is added to the cache.  If this function returns 1, it means that the
@@ -2522,7 +2522,7 @@ __owur long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp) (void));
 __owur long ssl3_ctx_callback_ctrl(SSL_CTX *s, int cmd, void (*fp) (void));
 
 __owur int ssl3_do_change_cipher_spec(SSL *ssl);
-__owur long ssl3_default_timeout(void);
+__owur time_t ssl3_default_timeout(void);
 
 __owur int ssl3_set_handshake_header(SSL *s, WPACKET *pkt, int htype);
 __owur int tls_close_construct_packet(SSL *s, WPACKET *pkt, int htype);
@@ -2546,7 +2546,7 @@ __owur int ssl_choose_client_version(SSL *s, int version,
 __owur int ssl_get_min_max_version(const SSL *s, int *min_version,
                                    int *max_version, int *real_max);
 
-__owur long tls1_default_timeout(void);
+__owur time_t tls1_default_timeout(void);
 __owur int dtls1_do_write(SSL *s, int type);
 void dtls1_set_message_header(SSL *s,
                               unsigned char mt,
@@ -2565,7 +2565,7 @@ void dtls1_clear_received_buffer(SSL *s);
 void dtls1_clear_sent_buffer(SSL *s);
 void dtls1_get_message_header(unsigned char *data,
                               struct hm_header_st *msg_hdr);
-__owur long dtls1_default_timeout(void);
+__owur time_t dtls1_default_timeout(void);
 __owur struct timeval *dtls1_get_timeout(SSL *s, struct timeval *timeleft);
 __owur int dtls1_check_timeout_num(SSL *s);
 __owur int dtls1_handle_timeout(SSL *s);

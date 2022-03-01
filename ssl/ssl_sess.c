@@ -890,19 +890,22 @@ int SSL_SESSION_set1_id(SSL_SESSION *s, const unsigned char *sid,
 
 long SSL_SESSION_set_timeout(SSL_SESSION *s, long t)
 {
-    time_t new_timeout = (time_t)t;
+    return (long)SSL_SESSION_set_timeout_t(s, (time_t)t);
+}
 
+int SSL_SESSION_set_timeout_t(SSL_SESSION *s, time_t t)
+{
     if (s == NULL || t < 0)
         return 0;
     if (s->owner != NULL) {
         if (!CRYPTO_THREAD_write_lock(s->owner->lock))
             return 0;
-        s->timeout = new_timeout;
+        s->timeout = t;
         ssl_session_calculate_timeout(s);
         SSL_SESSION_list_add(s->owner, s);
         CRYPTO_THREAD_unlock(s->owner->lock);
     } else {
-        s->timeout = new_timeout;
+        s->timeout = t;
         ssl_session_calculate_timeout(s);
     }
     return 1;
@@ -910,33 +913,46 @@ long SSL_SESSION_set_timeout(SSL_SESSION *s, long t)
 
 long SSL_SESSION_get_timeout(const SSL_SESSION *s)
 {
+    return (long)SSL_SESSION_get_timeout_t(s);
+}
+
+time_t SSL_SESSION_get_timeout_t(const SSL_SESSION *s)
+{
     if (s == NULL)
         return 0;
-    return (long)s->timeout;
+    return s->timeout;
 }
 
 long SSL_SESSION_get_time(const SSL_SESSION *s)
 {
+    return (long)SSL_SESSION_get_time_t(s);
+}
+
+time_t SSL_SESSION_get_time_t(const SSL_SESSION *s)
+{
     if (s == NULL)
         return 0;
-    return (long)s->time;
+    return s->time;
 }
 
 long SSL_SESSION_set_time(SSL_SESSION *s, long t)
 {
-    time_t new_time = (time_t)t;
+    return (long)SSL_SESSION_set_time_t(s, (time_t)t);
+}
 
+time_t SSL_SESSION_set_time_t(SSL_SESSION *s, time_t t)
+{
     if (s == NULL)
         return 0;
     if (s->owner != NULL) {
         if (!CRYPTO_THREAD_write_lock(s->owner->lock))
             return 0;
-        s->time = new_time;
+        s->time = t;
         ssl_session_calculate_timeout(s);
         SSL_SESSION_list_add(s->owner, s);
         CRYPTO_THREAD_unlock(s->owner->lock);
     } else {
-        s->time = new_time;
+        s->time = t;
         ssl_session_calculate_timeout(s);
     }
     return t;
@@ -1069,7 +1085,13 @@ int SSL_SESSION_is_resumable(const SSL_SESSION *s)
 
 long SSL_CTX_set_timeout(SSL_CTX *s, long t)
 {
-    long l;
+    return (long)SSL_CTX_set_timeout_t(s, (time_t)t);
+}
+
+long SSL_CTX_set_timeout_t(SSL_CTX *s, time_t t)
+{
+    time_t l;
+
     if (s == NULL)
         return 0;
     l = s->session_timeout;
@@ -1078,6 +1100,11 @@ long SSL_CTX_set_timeout(SSL_CTX *s, long t)
 }
 
 long SSL_CTX_get_timeout(const SSL_CTX *s)
+{
+    return (long)SSL_CTX_get_timeout_t(s);
+}
+
+time_t SSL_CTX_get_timeout_t(const SSL_CTX *s)
 {
     if (s == NULL)
         return 0;
@@ -1134,6 +1161,11 @@ int SSL_set_session_ticket_ext(SSL *s, void *ext_data, int ext_len)
 
 void SSL_CTX_flush_sessions(SSL_CTX *s, long t)
 {
+    SSL_CTX_flush_sessions_t(s, (time_t)t);
+}
+
+void SSL_CTX_flush_sessions_t(SSL_CTX *s, time_t t)
+{
     STACK_OF(SSL_SESSION) *sk;
     SSL_SESSION *current;
     unsigned long i;
@@ -1154,7 +1186,8 @@ void SSL_CTX_flush_sessions(SSL_CTX *s, long t)
      */
     while (s->session_cache_tail != NULL) {
         current = s->session_cache_tail;
-        if (t == 0 || sess_timedout((time_t)t, current)) {
+        /* 0 means now, not Jan 1, 1970 */
+        if (t == 0 || sess_timedout(t, current)) {
             lh_SSL_SESSION_delete(s->sessions, current);
             SSL_SESSION_list_remove(s, current);
             current->not_resumable = 1;
