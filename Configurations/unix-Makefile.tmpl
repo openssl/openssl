@@ -118,7 +118,7 @@ SHLIB_TARGET={- $target{shared_target} -}
 SHLIB_EXT={- $shlibext -}
 SHLIB_EXT_SIMPLE={- $shlibextsimple -}
 SHLIB_EXT_IMPORT={- $shlibextimport -}
-OQSLIBDIR:=$(wildcard oqs/lib*)
+OQSLIBDIR:=$(wildcard $(SRCDIR)/oqs/lib*)
 
 LIBS={- join(" ", map { lib($_) } @{$unified_info{libraries}}) -}
 SHLIBS={- join(" ", map { shlib($_) } @{$unified_info{libraries}}) -}
