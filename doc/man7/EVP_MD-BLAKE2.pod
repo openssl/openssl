@@ -6,7 +6,7 @@ EVP_MD-BLAKE2 - The BLAKE2 EVP_MD implementation
 
 =head1 DESCRIPTION
 
-Support for computing SHA2 digests through the B<EVP_MD> API.
+Support for computing BLAKE2 digests through the B<EVP_MD> API.
 
 =head2 Identities
 
