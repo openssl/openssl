@@ -26,5 +26,7 @@ typedef struct async_fibre_st {
 # define async_fibre_makecontext(c)             0
 # define async_fibre_free(f)
 # define async_fibre_init_dispatcher(f)
+# define async_local_init()                     1
+# define async_local_deinit()
 
 #endif

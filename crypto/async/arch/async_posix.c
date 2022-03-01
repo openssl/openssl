@@ -15,11 +15,25 @@
 # include <stddef.h>
 # include <unistd.h>
 # include <openssl/err.h>
+# include <openssl/crypto.h>
 
 #define STACKSIZE       32768
 
+static CRYPTO_RWLOCK *async_mem_lock;
+
 static void *async_stack_alloc(size_t *num);
 static void async_stack_free(void *addr);
+
+int async_local_init(void)
+{
+    async_mem_lock = CRYPTO_THREAD_lock_new();
+    return async_mem_lock != NULL;
+}
+
+void async_local_deinit(void)
+{
+    CRYPTO_THREAD_lock_free(async_mem_lock);
+}
 
 static int allow_customize = 1;
 static ASYNC_stack_alloc_fn stack_alloc_impl = async_stack_alloc;
@@ -39,8 +53,16 @@ int ASYNC_is_capable(void)
 int ASYNC_set_mem_functions(ASYNC_stack_alloc_fn alloc_fn,
                             ASYNC_stack_free_fn free_fn)
 {
-    if (!allow_customize)
+    OPENSSL_init_crypto(OPENSSL_INIT_ASYNC, NULL);
+
+    if (!CRYPTO_THREAD_write_lock(async_mem_lock))
         return 0;
+    if (!allow_customize) {
+        CRYPTO_THREAD_unlock(async_mem_lock);
+        return 0;
+    }
+    CRYPTO_THREAD_unlock(async_mem_lock);
+
     if (alloc_fn != NULL)
         stack_alloc_impl = alloc_fn;
     if (free_fn != NULL)
@@ -83,8 +105,12 @@ int async_fibre_makecontext(async_fibre *fibre)
          *  Disallow customisation after the first
          *  stack is allocated.
          */
-        if (allow_customize)
+        if (allow_customize) {
+            if (!CRYPTO_THREAD_write_lock(async_mem_lock))
+                return 0;
             allow_customize = 0;
+            CRYPTO_THREAD_unlock(async_mem_lock);
+        }
 
         fibre->fibre.uc_stack.ss_sp = stack_alloc_impl(&num);
         if (fibre->fibre.uc_stack.ss_sp != NULL) {
