@@ -112,7 +112,8 @@ int OBJ_find_sigid_by_algs(int *psignid, int dig_nid, int pkey_nid)
     const nid_triple **rv;
     int idx;
 
-    if (dig_nid == NID_undef || pkey_nid == NID_undef)
+    /* permitting searches for sig algs without digest: */
+    if (pkey_nid == NID_undef)
         return 0;
 
     tmp.hash_id = dig_nid;
