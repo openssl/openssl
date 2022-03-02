@@ -41,10 +41,10 @@ static const unsigned char peer2_privk_data[32] = {
 };
 
 static const unsigned char expected_result[32] = {
-  0x19, 0x71, 0x26, 0x12, 0x74, 0xb5, 0xb1, 0xce,
-  0x77, 0xd0, 0x79, 0x24, 0xb6, 0x0a, 0x5c, 0x72,
-  0x0c, 0xa6, 0x56, 0xc0, 0x11, 0xeb, 0x43, 0x11,
-  0x94, 0x3b, 0x01, 0x45, 0xca, 0x19, 0xfe, 0x09
+    0x19, 0x71, 0x26, 0x12, 0x74, 0xb5, 0xb1, 0xce,
+    0x77, 0xd0, 0x79, 0x24, 0xb6, 0x0a, 0x5c, 0x72,
+    0x0c, 0xa6, 0x56, 0xc0, 0x11, 0xeb, 0x43, 0x11,
+    0x94, 0x3b, 0x01, 0x45, 0xca, 0x19, 0xfe, 0x09
 };
 
 typedef struct peer_data_st {
@@ -212,11 +212,11 @@ static int keyexch_x25519(int use_kat)
      * later use.
      */
     if (keyexch_x25519_before(libctx, use_kat ? peer1_privk_data : NULL,
-            &peer1) == 0)
+                              &peer1) == 0)
         return 0;
 
     if (keyexch_x25519_before(libctx, use_kat ? peer2_privk_data : NULL,
-            &peer2) == 0)
+                              &peer2) == 0)
         return 0;
 
     /*
@@ -245,7 +245,7 @@ static int keyexch_x25519(int use_kat)
 
     /* If we are doing the KAT, the secret should equal our reference result. */
     if (use_kat && CRYPTO_memcmp(peer1.secret, expected_result,
-            peer1.secret_len) != 0) {
+                                 peer1.secret_len) != 0) {
         fprintf(stderr, "Did not get expected result\n");
         goto end;
     }
