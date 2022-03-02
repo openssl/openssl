@@ -69,9 +69,11 @@ static int keyexch_x25519_before(
     size_t pubk_data_len = 0;
 
     /* Generate or load X25519 key for the peer */
-    if (kat_privk_data)
-        local_peer->privk = EVP_PKEY_new_raw_private_key_ex(libctx, "X25519", propq,
-            kat_privk_data, sizeof(peer1_privk_data));
+    if (kat_privk_data != NULL)
+        local_peer->privk =
+            EVP_PKEY_new_raw_private_key_ex(libctx, "X25519", propq,
+                                            kat_privk_data,
+                                            sizeof(peer1_privk_data));
     else
         local_peer->privk = EVP_PKEY_Q_keygen(libctx, propq, "X25519");
 
@@ -82,9 +84,10 @@ static int keyexch_x25519_before(
 
     /* Get public key corresponding to the private key */
     if (EVP_PKEY_get_octet_string_param(local_peer->privk,
-            OSSL_PKEY_PARAM_PUB_KEY,
-            local_peer->pubk_data,
-            sizeof(local_peer->pubk_data), &pubk_data_len) == 0) {
+                                        OSSL_PKEY_PARAM_PUB_KEY,
+                                        local_peer->pubk_data,
+                                        sizeof(local_peer->pubk_data),
+                                        &pubk_data_len) == 0) {
         fprintf(stderr, "EVP_PKEY_get_octet_string_param() failed\n");
         goto end;
     }
@@ -92,7 +95,7 @@ static int keyexch_x25519_before(
     /* X25519 public keys are always 32 bytes */
     if (pubk_data_len != 32) {
         fprintf(stderr, "EVP_PKEY_get_octet_string_param() "
-            "yielded wrong length\n");
+                "yielded wrong length\n");
         goto end;
     }
 
@@ -124,8 +127,9 @@ static int keyexch_x25519_after(
     local_peer->secret = NULL;
 
     /* Load public key for remote peer. */
-    remote_peer_pubk = EVP_PKEY_new_raw_public_key_ex(libctx, "X25519", propq,
-        remote_peer_pubk_data, 32);
+    remote_peer_pubk =
+        EVP_PKEY_new_raw_public_key_ex(libctx, "X25519", propq,
+                                       remote_peer_pubk_data, 32);
     if (remote_peer_pubk == NULL) {
         fprintf(stderr, "EVP_PKEY_new_raw_public_key_ex() failed\n");
         goto end;
