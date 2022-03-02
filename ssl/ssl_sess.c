@@ -1088,7 +1088,7 @@ long SSL_CTX_set_timeout(SSL_CTX *s, long t)
     return (long)SSL_CTX_set_timeout_t(s, (time_t)t);
 }
 
-long SSL_CTX_set_timeout_t(SSL_CTX *s, time_t t)
+time_t SSL_CTX_set_timeout_t(SSL_CTX *s, time_t t)
 {
     time_t l;
 
