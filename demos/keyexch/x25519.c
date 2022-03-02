@@ -167,7 +167,7 @@ static int keyexch_x25519_after(
     }
 
     /* Allocate memory for shared secrets. */
-    local_peer->secret = OPENSSL_zalloc(local_peer->secret_len);
+    local_peer->secret = OPENSSL_malloc(local_peer->secret_len);
     if (local_peer->secret == NULL) {
         fprintf(stderr, "Could not allocate memory for secret\n");
         goto end;
@@ -175,7 +175,7 @@ static int keyexch_x25519_after(
 
     /* Derive the shared secret. */
     if (EVP_PKEY_derive(ctx, local_peer->secret,
-            &local_peer->secret_len) == 0) {
+                        &local_peer->secret_len) == 0) {
         fprintf(stderr, "EVP_PKEY_derive() failed\n");
         goto end;
     }
