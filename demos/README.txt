@@ -27,6 +27,7 @@ scrypt.c               Demonstration of SCRYPT password based key derivation
 
 mac:
 gmac.c                 Demonstration of GMAC message authentication
+poly1305.c             Demonstration of Poly1305-AES message authentication
 
 pkey:
 EVP_PKEY_EC_keygen.c   Generate an EC key.
