@@ -110,7 +110,7 @@ int ossl_sm2_encrypt(const EC_KEY *key,
                      const uint8_t *msg, size_t msg_len,
                      uint8_t *ciphertext_buf, size_t *ciphertext_len)
 {
-    int rc = 0, ciphertext_leni;
+    int rc = 0, use_ctx = 0, ciphertext_leni;
     size_t i;
     BN_CTX *ctx = NULL;
     BIGNUM *k = NULL;
@@ -158,6 +158,7 @@ int ossl_sm2_encrypt(const EC_KEY *key,
     }
 
     BN_CTX_start(ctx);
+    use_ctx = 1;
     k = BN_CTX_get(ctx);
     x1 = BN_CTX_get(ctx);
     x2 = BN_CTX_get(ctx);
@@ -261,6 +262,8 @@ int ossl_sm2_encrypt(const EC_KEY *key,
     OPENSSL_free(x2y2);
     OPENSSL_free(C3);
     EVP_MD_CTX_free(hash);
+    if (use_ctx)
+        BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     EC_POINT_free(kG);
     EC_POINT_free(kP);
@@ -272,7 +275,7 @@ int ossl_sm2_decrypt(const EC_KEY *key,
                      const uint8_t *ciphertext, size_t ciphertext_len,
                      uint8_t *ptext_buf, size_t *ptext_len)
 {
-    int rc = 0;
+    int rc = 0, use_ctx = 0;
     int i;
     BN_CTX *ctx = NULL;
     const EC_GROUP *group = EC_KEY_get0_group(key);
@@ -324,6 +327,7 @@ int ossl_sm2_decrypt(const EC_KEY *key,
     }
 
     BN_CTX_start(ctx);
+    use_ctx = 1;
     x2 = BN_CTX_get(ctx);
     y2 = BN_CTX_get(ctx);
 
@@ -398,6 +402,8 @@ int ossl_sm2_decrypt(const EC_KEY *key,
     OPENSSL_free(x2y2);
     OPENSSL_free(computed_C3);
     EC_POINT_free(C1);
+    if (use_ctx)
+        BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     SM2_Ciphertext_free(sm2_ctext);
     EVP_MD_CTX_free(hash);

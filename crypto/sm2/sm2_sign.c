@@ -209,6 +209,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
     BIGNUM *x1 = NULL;
     BIGNUM *tmp = NULL;
     OSSL_LIB_CTX *libctx = ossl_ec_key_get_libctx(key);
+    int use_ctx = 0;
 
     kG = EC_POINT_new(group);
     ctx = BN_CTX_new_ex(libctx);
@@ -218,6 +219,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
     }
 
     BN_CTX_start(ctx);
+    use_ctx = 1;
     k = BN_CTX_get(ctx);
     rk = BN_CTX_get(ctx);
     x1 = BN_CTX_get(ctx);
@@ -304,6 +306,8 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
         BN_free(s);
     }
 
+    if (use_ctx)
+        BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     EC_POINT_free(kG);
     return sig;
@@ -312,7 +316,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
 static int sm2_sig_verify(const EC_KEY *key, const ECDSA_SIG *sig,
                           const BIGNUM *e)
 {
-    int ret = 0;
+    int ret = 0, use_ctx = 0;
     const EC_GROUP *group = EC_KEY_get0_group(key);
     const BIGNUM *order = EC_GROUP_get0_order(group);
     BN_CTX *ctx = NULL;
@@ -331,6 +335,7 @@ static int sm2_sig_verify(const EC_KEY *key, const ECDSA_SIG *sig,
     }
 
     BN_CTX_start(ctx);
+    use_ctx = 1;
     t = BN_CTX_get(ctx);
     x1 = BN_CTX_get(ctx);
     if (x1 == NULL) {
@@ -384,6 +389,8 @@ static int sm2_sig_verify(const EC_KEY *key, const ECDSA_SIG *sig,
 
  done:
     EC_POINT_free(pt);
+    if (use_ctx)
+        BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     return ret;
 }
