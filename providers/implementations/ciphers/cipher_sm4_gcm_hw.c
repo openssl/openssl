@@ -42,11 +42,34 @@ static int sm4_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
     return 1;
 }
 
+static int hw_gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
+                                size_t len, unsigned char *out)
+{
+    if (ctx->enc) {
+        if (ctx->ctr != NULL) {
+            if (CRYPTO_gcm128_encrypt_ctr32(&ctx->gcm, in, out, len, ctx->ctr))
+                return 0;
+        } else {
+            if (CRYPTO_gcm128_encrypt(&ctx->gcm, in, out, len))
+                return 0;
+        }
+    } else {
+        if (ctx->ctr != NULL) {
+            if (CRYPTO_gcm128_decrypt_ctr32(&ctx->gcm, in, out, len, ctx->ctr))
+                return 0;
+        } else {
+            if (CRYPTO_gcm128_decrypt(&ctx->gcm, in, out, len))
+                return 0;
+        }
+    }
+    return 1;
+}
+
 static const PROV_GCM_HW sm4_gcm = {
     sm4_gcm_initkey,
     ossl_gcm_setiv,
     ossl_gcm_aad_update,
-    ossl_gcm_cipher_update,
+    hw_gcm_cipher_update,
     ossl_gcm_cipher_final,
     ossl_gcm_one_shot
 };
