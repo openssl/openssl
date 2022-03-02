@@ -28,6 +28,7 @@ scrypt.c               Demonstration of SCRYPT password based key derivation
 
 mac:
 gmac.c                 Demonstration of GMAC message authentication
+siphash.c              Demonstration of SIPHASH message authentication
 
 pkey:
 EVP_PKEY_EC_keygen.c   Generate an EC key.
