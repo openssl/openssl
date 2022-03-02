@@ -3010,6 +3010,7 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
     int total_bytes = 0;
 #endif
     int width;
+    int use_sendfile_for_req = use_sendfile;
     fd_set readfds;
     const char *opmode;
 #ifdef CHARSET_EBCDIC
@@ -3340,7 +3341,11 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
             }
             /* send the file */
 #ifndef OPENSSL_NO_KTLS
-            if (use_sendfile && BIO_get_ktls_send(SSL_get_wbio(con))) {
+            if (use_sendfile_for_req && !BIO_get_ktls_send(SSL_get_wbio(con))) {
+                BIO_printf(bio_err, "Warning: sendfile requested but KTLS is not available\n");
+                use_sendfile_for_req = 0;
+            }
+            if (use_sendfile) {
                 FILE *fp = NULL;
                 int fd;
                 struct stat st;
