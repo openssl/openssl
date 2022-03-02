@@ -1750,7 +1750,7 @@ long SSL_get_default_timeout(const SSL *s)
     return (long)SSL_get_default_timeout_t(s);
 }
 
-long SSL_get_default_timeout_t(const SSL *s)
+time_t SSL_get_default_timeout_t(const SSL *s)
 {
     return s->method->get_timeout();
 }

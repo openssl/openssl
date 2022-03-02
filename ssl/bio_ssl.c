@@ -262,7 +262,7 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
             SSL_set_accept_state(ssl);
         break;
     case BIO_C_SET_SSL_RENEGOTIATE_TIMEOUT:
-        ret = bs->renegotiate_timeout;
+        ret = (long)bs->renegotiate_timeout;
         if (num < 60)
             num = 5;
         bs->renegotiate_timeout = (time_t)num;
