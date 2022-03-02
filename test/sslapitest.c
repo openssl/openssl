@@ -8537,21 +8537,21 @@ static int test_session_timeout(int test)
         goto end;
 
     /* This should remove "early" */
-    SSL_CTX_flush_sessions(ctx, now + TIMEOUT - 1);
+    SSL_CTX_flush_sessions_t(ctx, now + TIMEOUT - 1);
     if (!TEST_ptr_null(early->prev)
         || !TEST_ptr(middle->prev)
         || !TEST_ptr(late->prev))
         goto end;
 
     /* This should remove "middle" */
-    SSL_CTX_flush_sessions(ctx, now + TIMEOUT + 1);
+    SSL_CTX_flush_sessions_t(ctx, now + TIMEOUT + 1);
     if (!TEST_ptr_null(early->prev)
         || !TEST_ptr_null(middle->prev)
         || !TEST_ptr(late->prev))
         goto end;
 
     /* This should remove "late" */
-    SSL_CTX_flush_sessions(ctx, now + TIMEOUT + 11);
+    SSL_CTX_flush_sessions_t(ctx, now + TIMEOUT + 11);
     if (!TEST_ptr_null(early->prev)
         || !TEST_ptr_null(middle->prev)
         || !TEST_ptr_null(late->prev))
