@@ -47,130 +47,111 @@ static const unsigned char expected_result[32] = {
   0x94, 0x3b, 0x01, 0x45, 0xca, 0x19, 0xfe, 0x09
 };
 
-static int keyexch_x25519(int use_kat)
+typedef struct peer_data_st {
+    const char *name;               /* name of peer */
+    EVP_PKEY *privk;                /* privk generated for peer */
+    unsigned char pubk_data[32];    /* generated pubk to send to other peer */
+
+    unsigned char *secret;          /* allocated shared secret buffer */
+    size_t secret_len;
+} PEER_DATA;
+
+/*
+ * Prepare for X25519 key exchange. The public key to be sent to the remote peer
+ * is put in pubk_data, which should be a 32-byte buffer. Returns 1 on success.
+ */
+static int keyexch_x25519_before(
+    OSSL_LIB_CTX *libctx,
+    const unsigned char *kat_privk_data,
+    PEER_DATA *local_peer)
 {
-    int rv = 1;
-    OSSL_LIB_CTX *libctx = NULL;
-    EVP_PKEY *peer1_privk = NULL, *peer2_privk = NULL,
-             *peer1_pubk = NULL, *peer2_pubk = NULL;
-    EVP_PKEY_CTX *peer1_ctx = NULL, *peer2_ctx = NULL;
-    size_t peer1_secret_len = 0,
-           peer2_secret_len = 0,
-           peer1_pubk_data_len = 0,
-           peer2_pubk_data_len = 0;
-    unsigned char *peer1_secret = NULL, *peer2_secret = NULL;
-    unsigned char peer1_pubk_data[32], peer2_pubk_data[32];
+    int rv = 0;
+    size_t pubk_data_len = 0;
 
-    /* Generate X25519 key for peer 1 */
-    if (use_kat)
-        peer1_privk = EVP_PKEY_new_raw_private_key_ex(libctx, "X25519", propq,
-            peer1_privk_data, sizeof(peer1_privk_data));
+    /* Generate or load X25519 key for the peer */
+    if (kat_privk_data)
+        local_peer->privk = EVP_PKEY_new_raw_private_key_ex(libctx, "X25519", propq,
+            kat_privk_data, sizeof(peer1_privk_data));
     else
-        peer1_privk = EVP_PKEY_Q_keygen(libctx, propq, "X25519");
-    if (peer1_privk == NULL) {
-        fprintf(stderr, "EVP_PKEY_Q_keygen() returned NULL\n");
+        local_peer->privk = EVP_PKEY_Q_keygen(libctx, propq, "X25519");
+
+    if (local_peer->privk == NULL) {
+        fprintf(stderr, "Could not load or generate private key\n");
         goto end;
     }
 
-    /* Generate X25519 key for peer 2 */
-    if (use_kat)
-        peer2_privk = EVP_PKEY_new_raw_private_key_ex(libctx, "X25519", propq,
-            peer2_privk_data, sizeof(peer2_privk_data));
-    else
-        peer2_privk = EVP_PKEY_Q_keygen(libctx, propq, "X25519");
-    if (peer2_privk == NULL) {
-        fprintf(stderr, "EVP_PKEY_Q_keygen() returned NULL\n");
-        goto end;
-    }
-
-    /* Get public key corresponding to peer 1's private key */
-    if (EVP_PKEY_get_octet_string_param(peer1_privk, OSSL_PKEY_PARAM_PUB_KEY,
-                                    peer1_pubk_data, sizeof(peer1_pubk_data),
-                                    &peer1_pubk_data_len) == 0) {
+    /* Get public key corresponding to the private key */
+    if (EVP_PKEY_get_octet_string_param(local_peer->privk,
+            OSSL_PKEY_PARAM_PUB_KEY,
+            local_peer->pubk_data,
+            sizeof(local_peer->pubk_data), &pubk_data_len) == 0) {
         fprintf(stderr, "EVP_PKEY_get_octet_string_param() failed\n");
         goto end;
     }
 
-    if (peer1_pubk_data_len != 32) {
+    /* X25519 public keys are always 32 bytes */
+    if (pubk_data_len != 32) {
         fprintf(stderr, "EVP_PKEY_get_octet_string_param() "
             "yielded wrong length\n");
         goto end;
     }
 
-    /* Get public key corresponding to peer 2's private key */
-    if (EVP_PKEY_get_octet_string_param(peer2_privk, OSSL_PKEY_PARAM_PUB_KEY,
-                                    peer2_pubk_data, sizeof(peer1_pubk_data),
-                                    &peer2_pubk_data_len) == 0) {
-        fprintf(stderr, "EVP_PKEY_get_octet_string_param() failed\n");
-        goto end;
+    rv = 1;
+end:
+    if (rv == 0) {
+        EVP_PKEY_free(local_peer->privk);
+        local_peer->privk = NULL;
     }
 
-    if (peer2_pubk_data_len != 32) {
-        fprintf(stderr, "EVP_PKEY_get_octet_string_param() "
-            "yielded wrong length\n");
-        goto end;
-    }
+    return rv;
+}
 
-    /*
-     * At this point peer 1 and peer 2 would typically exchange
-     * their pubk_data values.
-     */
+/*
+ * Complete X25519 key exchange. remote_peer_pubk_data should be the 32 byte
+ * public key value received from the remote peer. On success, returns 1 and the
+ * secret is pointed to by *secret. The caller must free it.
+ */
+static int keyexch_x25519_after(
+    OSSL_LIB_CTX *libctx,
+    int use_kat,
+    PEER_DATA *local_peer,
+    const unsigned char *remote_peer_pubk_data)
+{
+    int rv = 0;
+    EVP_PKEY *remote_peer_pubk = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
 
-    /* Load public key for peer 1 (used by peer 2). */
-    peer1_pubk = EVP_PKEY_new_raw_public_key_ex(libctx, "X25519", propq,
-        peer1_pubk_data, peer1_pubk_data_len);
-    if (peer1_pubk == NULL) {
+    local_peer->secret = NULL;
+
+    /* Load public key for remote peer. */
+    remote_peer_pubk = EVP_PKEY_new_raw_public_key_ex(libctx, "X25519", propq,
+        remote_peer_pubk_data, 32);
+    if (remote_peer_pubk == NULL) {
         fprintf(stderr, "EVP_PKEY_new_raw_public_key_ex() failed\n");
         goto end;
     }
 
-    /* Load public key for peer 2 (used by peer 1). */
-    peer2_pubk = EVP_PKEY_new_raw_public_key_ex(libctx, "X25519", propq,
-        peer2_pubk_data, peer2_pubk_data_len);
-    if (peer2_pubk == NULL) {
-        fprintf(stderr, "EVP_PKEY_new_raw_public_key_ex() failed\n");
-        goto end;
-    }
-
-    /* Create key exchange context for each peer. */
-    peer1_ctx = EVP_PKEY_CTX_new_from_pkey(libctx, peer1_privk, propq);
-    if (peer1_ctx == NULL) {
-        fprintf(stderr, "EVP_PKEY_CTX_new_from_pkey() failed\n");
-        goto end;
-    }
-
-    peer2_ctx = EVP_PKEY_CTX_new_from_pkey(libctx, peer2_privk, propq);
-    if (peer2_ctx == NULL) {
+    /* Create key exchange context. */
+    ctx = EVP_PKEY_CTX_new_from_pkey(libctx, local_peer->privk, propq);
+    if (ctx == NULL) {
         fprintf(stderr, "EVP_PKEY_CTX_new_from_pkey() failed\n");
         goto end;
     }
 
     /* Initialize derivation process. */
-    if (EVP_PKEY_derive_init(peer1_ctx) == 0) {
-        fprintf(stderr, "EVP_PKEY_derive_init() failed\n");
-        goto end;
-    }
-    if (EVP_PKEY_derive_init(peer2_ctx) == 0) {
+    if (EVP_PKEY_derive_init(ctx) == 0) {
         fprintf(stderr, "EVP_PKEY_derive_init() failed\n");
         goto end;
     }
 
     /* Configure each peer with the other peer's public key. */
-    if (EVP_PKEY_derive_set_peer(peer1_ctx, peer2_pubk) == 0) {
-        fprintf(stderr, "EVP_PKEY_derive_set_peer() failed\n");
-        goto end;
-    }
-    if (EVP_PKEY_derive_set_peer(peer2_ctx, peer1_pubk) == 0) {
+    if (EVP_PKEY_derive_set_peer(ctx, remote_peer_pubk) == 0) {
         fprintf(stderr, "EVP_PKEY_derive_set_peer() failed\n");
         goto end;
     }
 
     /* Determine the secret length. */
-    if (EVP_PKEY_derive(peer1_ctx, NULL, &peer1_secret_len) == 0) {
-        fprintf(stderr, "EVP_PKEY_derive() failed\n");
-        goto end;
-    }
-    if (EVP_PKEY_derive(peer2_ctx, NULL, &peer2_secret_len) == 0) {
+    if (EVP_PKEY_derive(ctx, NULL, &local_peer->secret_len) == 0) {
         fprintf(stderr, "EVP_PKEY_derive() failed\n");
         goto end;
     }
@@ -180,41 +161,70 @@ static int keyexch_x25519(int use_kat)
      * However for exposition, the code below demonstrates a generic
      * implementation for arbitrary lengths.
      */
-    if (peer1_secret_len != 32 || peer2_secret_len != 32) { /* unreachable */
+    if (local_peer->secret_len != 32) { /* unreachable */
         fprintf(stderr, "Secret is always 32 bytes for X25519\n");
         goto end;
     }
 
     /* Allocate memory for shared secrets. */
-    peer1_secret = OPENSSL_zalloc(peer1_secret_len);
-    if (peer1_secret == NULL) {
-        fprintf(stderr, "Could not allocate memory for secret\n");
-        goto end;
-    }
-
-    peer2_secret = OPENSSL_zalloc(peer2_secret_len);
-    if (peer2_secret == NULL) {
+    local_peer->secret = OPENSSL_zalloc(local_peer->secret_len);
+    if (local_peer->secret == NULL) {
         fprintf(stderr, "Could not allocate memory for secret\n");
         goto end;
     }
 
     /* Derive the shared secret. */
-    if (EVP_PKEY_derive(peer1_ctx, peer1_secret, &peer1_secret_len) == 0) {
-        fprintf(stderr, "EVP_PKEY_derive() failed\n");
-        goto end;
-    }
-    if (EVP_PKEY_derive(peer2_ctx, peer2_secret, &peer2_secret_len) == 0) {
+    if (EVP_PKEY_derive(ctx, local_peer->secret,
+            &local_peer->secret_len) == 0) {
         fprintf(stderr, "EVP_PKEY_derive() failed\n");
         goto end;
     }
 
-    printf("Shared secret (peer 1):\n");
-    BIO_dump_indent_fp(stdout, peer1_secret, peer1_secret_len, 2);
+    printf("Shared secret (%s):\n", local_peer->name);
+    BIO_dump_indent_fp(stdout, local_peer->secret, local_peer->secret_len, 2);
     putchar('\n');
 
-    printf("Shared secret (peer 2):\n");
-    BIO_dump_indent_fp(stdout, peer2_secret, peer2_secret_len, 2);
-    putchar('\n');
+    rv = 1;
+end:
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(remote_peer_pubk);
+    if (rv == 0) {
+        OPENSSL_clear_free(local_peer->secret, local_peer->secret_len);
+        local_peer->secret = NULL;
+    }
+
+    return rv;
+}
+
+static int keyexch_x25519(int use_kat)
+{
+    int rv = 0;
+    OSSL_LIB_CTX *libctx = NULL;
+    PEER_DATA peer1 = {"peer 1"}, peer2 = {"peer 2"};
+
+    /*
+     * Each peer generates its private key and sends its public key
+     * to the other peer. The private key is stored locally for
+     * later use.
+     */
+    if (keyexch_x25519_before(libctx, use_kat ? peer1_privk_data : NULL,
+            &peer1) == 0)
+        return 0;
+
+    if (keyexch_x25519_before(libctx, use_kat ? peer2_privk_data : NULL,
+            &peer2) == 0)
+        return 0;
+
+    /*
+     * Each peer uses the other peer's public key to perform key exchange.
+     * After this succeeds, each peer has the same secret in its
+     * PEER_DATA.
+     */
+    if (keyexch_x25519_after(libctx, use_kat, &peer1, peer2.pubk_data) == 0)
+        return 0;
+
+    if (keyexch_x25519_after(libctx, use_kat, &peer2, peer1.pubk_data) == 0)
+        return 0;
 
     /*
      * Here we demonstrate the secrets are equal for exposition purposes.
@@ -224,30 +234,26 @@ static int keyexch_x25519(int use_kat)
      * always do so using a constant-time function such as CRYPTO_memcmp, never
      * using memcmp(3).
      */
-    if (CRYPTO_memcmp(peer1_secret, peer2_secret, peer1_secret_len) != 0) {
+    if (CRYPTO_memcmp(peer1.secret, peer2.secret, peer1.secret_len) != 0) {
         fprintf(stderr, "Negotiated secrets do not match\n");
         goto end;
     }
 
     /* If we are doing the KAT, the secret should equal our reference result. */
-    if (use_kat && CRYPTO_memcmp(peer1_secret,
-                        expected_result, peer1_secret_len) != 0) {
+    if (use_kat && CRYPTO_memcmp(peer1.secret, expected_result,
+            peer1.secret_len) != 0) {
         fprintf(stderr, "Did not get expected result\n");
         goto end;
     }
 
-    rv = 0;
+    rv = 1;
 end:
     /* The secrets are sensitive, so ensure they are erased before freeing. */
-    OPENSSL_clear_free(peer1_secret, peer1_secret_len);
-    OPENSSL_clear_free(peer2_secret, peer2_secret_len);
+    OPENSSL_clear_free(peer1.secret, peer1.secret_len);
+    OPENSSL_clear_free(peer2.secret, peer2.secret_len);
 
-    EVP_PKEY_CTX_free(peer1_ctx);
-    EVP_PKEY_CTX_free(peer2_ctx);
-    EVP_PKEY_free(peer1_pubk);
-    EVP_PKEY_free(peer2_pubk);
-    EVP_PKEY_free(peer1_privk);
-    EVP_PKEY_free(peer2_privk);
+    EVP_PKEY_free(peer1.privk);
+    EVP_PKEY_free(peer2.privk);
     OSSL_LIB_CTX_free(libctx);
     return rv;
 }
@@ -256,12 +262,12 @@ int main(int argc, char **argv)
 {
     /* Test X25519 key exchange with known result. */
     printf("Key exchange using known answer (deterministic):\n");
-    if (keyexch_x25519(1) != 0)
+    if (keyexch_x25519(1) == 0)
         return 1;
 
     /* Test X25519 key exchange with random keys. */
     printf("Key exchange using random keys:\n");
-    if (keyexch_x25519(0) != 0)
+    if (keyexch_x25519(0) == 0)
         return 1;
 
     return 0;
