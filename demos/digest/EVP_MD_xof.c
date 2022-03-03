@@ -47,7 +47,6 @@ int main(int argc, char **argv)
     OSSL_LIB_CTX *libctx = NULL;
     EVP_MD *md = NULL;
     EVP_MD_CTX *ctx = NULL;
-    OSSL_PARAM params[2], *p = params;
     unsigned int digest_len = 20;
     int digest_len_i;
     unsigned char *digest = NULL;
@@ -87,18 +86,6 @@ int main(int argc, char **argv)
     }
 
     /*
-     * Set the length of the output we desire.
-     * Note that the output length is specified in bytes.
-     */
-    *p++ = OSSL_PARAM_construct_uint(OSSL_DIGEST_PARAM_XOFLEN, &digest_len);
-    *p++ = OSSL_PARAM_construct_end();
-
-    if (EVP_MD_CTX_set_params(ctx, params) == 0) {
-        fprintf(stderr, "Failed to set XOF length\n");
-        goto end;
-    }
-
-    /*
      * Feed our message into the digest function.
      * This may be called multiple times.
      */
@@ -114,8 +101,8 @@ int main(int argc, char **argv)
         goto end;
     }
 
-    /* Get computed digest. */
-    if (EVP_DigestFinal(ctx, digest, &digest_len) == 0) {
+    /* Get computed digest. The digest will be of whatever length we specify. */
+    if (EVP_DigestFinalXOF(ctx, digest, digest_len) == 0) {
         fprintf(stderr, "Failed to finalize hash\n");
         goto end;
     }

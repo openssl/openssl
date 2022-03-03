@@ -3,7 +3,7 @@
 #
 #    LD_LIBRARY_PATH=../.. ./EVP_MD_demo
 
-CFLAGS = -I../../include -g
+CFLAGS = -I../../include -g -Wall
 LDFLAGS = -L../..
 LDLIBS = -lcrypto
 
