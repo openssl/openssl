@@ -35,16 +35,13 @@ static const char *propq = NULL;
  * For more information, see RFC 8017 section 9.1. The digest passed in
  * (test_digest above) corresponds to the 'mHash' value.
  */
-static int sign(unsigned char **sig, size_t *sig_len)
+static int sign(OSSL_LIB_CTX *libctx, unsigned char **sig, size_t *sig_len)
 {
     int rv = 0;
-    OSSL_LIB_CTX *libctx = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     EVP_MD *md = NULL;
-    OSSL_PARAM params[3], *p = params;
     const unsigned char *ppriv_key = NULL;
-    unsigned bits = 4096, primes = 2;
 
     *sig = NULL;
 
@@ -117,7 +114,6 @@ end:
     if (rv == 0)
         OPENSSL_free(*sig);
 
-    OSSL_LIB_CTX_free(libctx);
     return rv;
 }
 
@@ -125,10 +121,9 @@ end:
  * This function demonstrates verification of an RSA signature over a SHA-256
  * digest using the PSS signature scheme.
  */
-static int verify(const unsigned char *sig, size_t sig_len)
+static int verify(OSSL_LIB_CTX *libctx, const unsigned char *sig, size_t sig_len)
 {
     int rv = 0;
-    OSSL_LIB_CTX *libctx = NULL;
     const unsigned char *ppub_key = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
@@ -185,20 +180,25 @@ end:
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(pkey);
     EVP_MD_free(md);
-    OSSL_LIB_CTX_free(libctx);
     return rv;
 }
 
 int main(int argc, char **argv)
 {
+    int rv = 1;
+    OSSL_LIB_CTX *libctx = NULL;
     unsigned char *sig = NULL;
     size_t sig_len = 0;
 
-    if (sign(&sig, &sig_len) == 0)
-        return 1;
+    if (sign(libctx, &sig, &sig_len) == 0)
+        goto end;
 
-    if (verify(sig, sig_len) == 0)
-        return 1;
+    if (verify(libctx, sig, sig_len) == 0)
+        goto end;
 
-    return 0;
+    rv = 0;
+end:
+    OPENSSL_free(sig);
+    OSSL_LIB_CTX_free(libctx);
+    return rv;
 }

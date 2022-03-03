@@ -30,16 +30,13 @@ static const char *propq = NULL;
  * have already hashed your message and simply want to sign the hash directly,
  * see rsa_pss_direct.c.
  */
-static int sign(unsigned char **sig, size_t *sig_len)
+static int sign(OSSL_LIB_CTX *libctx, unsigned char **sig, size_t *sig_len)
 {
     int rv = 0;
-    OSSL_LIB_CTX *libctx = NULL;
     EVP_PKEY *pkey = NULL;
-    EVP_PKEY_CTX *pctx = NULL;
     EVP_MD_CTX *mctx = NULL;
     OSSL_PARAM params[2], *p = params;
     const unsigned char *ppriv_key = NULL;
-    unsigned bits = 4096, primes = 2;
 
     *sig = NULL;
 
@@ -64,7 +61,7 @@ static int sign(unsigned char **sig, size_t *sig_len)
                                             OSSL_PKEY_RSA_PAD_MODE_PSS, 0);
     *p = OSSL_PARAM_construct_end();
 
-    if (EVP_DigestSignInit_ex(mctx, &pctx, "SHA256", libctx, propq,
+    if (EVP_DigestSignInit_ex(mctx, NULL, "SHA256", libctx, propq,
                               pkey, params) == 0) {
         fprintf(stderr, "Failed to initialize signing context\n");
         goto end;
@@ -100,17 +97,12 @@ static int sign(unsigned char **sig, size_t *sig_len)
 
     rv = 1;
 end:
-    /*
-     * pctx is owned by mctx so it must not be explicitly freed here;
-     * the below call will free it.
-     */
     EVP_MD_CTX_free(mctx);
     EVP_PKEY_free(pkey);
 
     if (rv == 0)
         OPENSSL_free(*sig);
 
-    OSSL_LIB_CTX_free(libctx);
     return rv;
 }
 
@@ -119,16 +111,13 @@ end:
  * arbitrary-length message using the PSS signature scheme. Hashing is performed
  * automatically.
  */
-static int verify(const unsigned char *sig, size_t sig_len)
+static int verify(OSSL_LIB_CTX *libctx, const unsigned char *sig, size_t sig_len)
 {
     int rv = 0;
-    OSSL_LIB_CTX *libctx = NULL;
     EVP_PKEY *pkey = NULL;
-    EVP_PKEY_CTX *pctx = NULL;
     EVP_MD_CTX *mctx = NULL;
     OSSL_PARAM params[2], *p = params;
     const unsigned char *ppub_key = NULL;
-    unsigned bits = 4096, primes = 2;
 
     /* Load DER-encoded RSA public key. */
     ppub_key = rsa_pub_key;
@@ -150,7 +139,7 @@ static int verify(const unsigned char *sig, size_t sig_len)
                                             OSSL_PKEY_RSA_PAD_MODE_PSS, 0);
     *p = OSSL_PARAM_construct_end();
 
-    if (EVP_DigestVerifyInit_ex(mctx, &pctx, "SHA256", libctx, propq,
+    if (EVP_DigestVerifyInit_ex(mctx, NULL, "SHA256", libctx, propq,
                                 pkey, params) == 0) {
         fprintf(stderr, "Failed to initialize signing context\n");
         goto end;
@@ -174,26 +163,27 @@ static int verify(const unsigned char *sig, size_t sig_len)
 
     rv = 1;
 end:
-    /*
-     * pctx is owned by mctx so it must not be explicitly freed here;
-     * the below call will free it.
-     */
     EVP_MD_CTX_free(mctx);
     EVP_PKEY_free(pkey);
-    OSSL_LIB_CTX_free(libctx);
     return rv;
 }
 
 int main(int argc, char **argv)
 {
+    int rv = 1;
+    OSSL_LIB_CTX *libctx = NULL;
     unsigned char *sig = NULL;
     size_t sig_len = 0;
 
-    if (sign(&sig, &sig_len) == 0)
-        return 1;
+    if (sign(libctx, &sig, &sig_len) == 0)
+        goto end;
 
-    if (verify(sig, sig_len) == 0)
-        return 1;
+    if (verify(libctx, sig, sig_len) == 0)
+        goto end;
 
-    return 0;
+    rv = 0;
+end:
+    OPENSSL_free(sig);
+    OSSL_LIB_CTX_free(libctx);
+    return rv;
 }
