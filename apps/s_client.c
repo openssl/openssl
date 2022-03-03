@@ -2060,6 +2060,7 @@ int s_client_main(int argc, char **argv)
 
         if (sbio == NULL || (peer_info.addr = BIO_ADDR_new()) == NULL) {
             BIO_printf(bio_err, "memory allocation failure\n");
+            BIO_free(sbio);
             BIO_closesocket(sock);
             goto end;
         }
@@ -2372,7 +2373,7 @@ int s_client_main(int argc, char **argv)
 
             if (fbio == NULL) {
                 BIO_printf(bio_err, "Unable to create BIO\n");
-                goto shut;
+                goto end;
             }
             BIO_push(fbio, sbio);
             BIO_printf(fbio, "STARTTLS\r\n");
@@ -2536,7 +2537,7 @@ int s_client_main(int argc, char **argv)
 
             if (fbio == NULL) {
                 BIO_printf(bio_err, "Unable to create BIO\n");
-                goto shut;
+                goto end;
             }
             BIO_push(fbio, sbio);
             BIO_gets(fbio, mbuf, BUFSIZZ);
@@ -2580,7 +2581,7 @@ int s_client_main(int argc, char **argv)
 
             if (fbio == NULL) {
                 BIO_printf(bio_err, "Unable to create BIO\n");
-                goto shut;
+                goto end;
             }
             BIO_push(fbio, sbio);
             /* wait for multi-line response to end from Sieve */

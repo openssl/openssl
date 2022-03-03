@@ -1824,11 +1824,6 @@ int s_server_main(int argc, char *argv[])
         } else {
             bio_s_out = dup_bio_out(FORMAT_TEXT);
         }
-
-        if (bio_s_out == NULL) {
-            BIO_printf(bio_err, "Unable to create BIO\n");
-            goto end;
-        }
     }
 
     if (bio_s_out == NULL)
