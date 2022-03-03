@@ -16,6 +16,7 @@ cms:
 digest:
 EVP_MD_demo.c          Compute a digest from multiple buffers
 EVP_MD_stdin.c         Compute a digest with data read from stdin
+EVP_MD_xof.c           Compute a digest using the SHAKE256 XOF
 EVP_f_md.c             Compute a digest using BIO and EVP_f_md
 
 encrypt:
