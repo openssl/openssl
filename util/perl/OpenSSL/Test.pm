@@ -17,8 +17,9 @@ use Exporter;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 $VERSION = "1.0";
 @ISA = qw(Exporter);
-@EXPORT = (@Test::More::EXPORT, qw(setup run indir cmd app fuzz test
-                                   perlapp perltest subtest));
+@EXPORT = (@Test::More::EXPORT, qw(setup run run_background kill_background
+                                   indir cmd app fuzz test perlapp perltest
+                                   subtest));
 @EXPORT_OK = (@Test::More::EXPORT_OK, qw(bldtop_dir bldtop_file
                                          srctop_dir srctop_file
                                          data_file data_dir
@@ -105,6 +106,9 @@ my %hooks = (
     exit_checker => sub { return shift == 0 ? 1 : 0 },
 
     );
+
+# Processes we are currently running in the background.
+my %background_processes;
 
 # Debug flag, to be set manually when needed
 my $debug = 0;
@@ -527,6 +531,57 @@ END {
     if ($failure && $end_with_bailout) {
 	BAIL_OUT("Stoptest!");
     }
+}
+
+=item B<run_background CODEREF>
+
+CODEREF is expected to be the value return by C<cmd> or any of its
+derivatives, anything else will most likely cause an error unless you
+know what you're doing.
+
+C<run_background> spawns the the command returned by CODEREF and returns its
+PID. Unlike C<run>, it currently supports no options. Any output the command
+writes to stdout or stderr is piped to /dev/null.
+
+You should pass the returned PID to C<kill_background> once you are done with
+the spawned process.
+
+=back
+
+=cut
+
+sub run_background {
+    my ($cmd, $display_cmd) = shift->(0);
+    my %opts = @_;
+
+    return () if !$cmd;
+
+    $ENV{HARNESS_OSSL_LEVEL} = $level + 1;
+
+    my $pipe;
+    my $pid = open($pipe, '-|', "exec setsid $cmd >/dev/null 2>/dev/null")
+        or die "Can't start command: $!";
+
+    $background_processes{$pid} = $pipe;
+    return $pid;
+}
+
+=item B<kill_background PID>
+
+PID is the PID value returned previously by C<run_background>.
+
+C<kill_background> kills a command previously spawned by C<run_background>.
+
+=back
+
+=cut
+
+sub kill_background {
+    my $pid = shift;
+
+    kill HUP => -$pid;
+    close $background_processes{$pid};
+    delete $background_processes{$pid};
 }
 
 =head2 Utility functions
