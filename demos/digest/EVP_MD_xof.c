@@ -48,7 +48,7 @@ int main(int argc, char **argv)
     EVP_MD *md = NULL;
     EVP_MD_CTX *ctx = NULL;
     OSSL_PARAM params[2], *p = params;
-    unsigned digest_len = 20;
+    unsigned int digest_len = 20;
     int digest_len_i;
     unsigned char *digest = NULL;
 
@@ -60,7 +60,7 @@ int main(int argc, char **argv)
             goto end;
         }
 
-        digest_len = (unsigned)digest_len_i;
+        digest_len = (unsigned int)digest_len_i;
     }
 
     /*
