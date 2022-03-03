@@ -238,6 +238,10 @@ down each and finally closes both down.
  BIO_free(cbio);
  BIO_free(cbio2);
 
+=head1 HISTORY
+
+BIO_set_tfo_accept() was added in OpenSSL 3.1.
+
 =head1 COPYRIGHT
 
 Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.

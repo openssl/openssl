@@ -130,7 +130,7 @@ following flags:
  BIO_SOCK_NODELAY
  BIO_SOCK_TFO
 
-BIO_set_tfo() return 1 for success, and 0 for failure.
+BIO_set_tfo() returns 1 for success, and 0 for failure.
 
 =head1 NOTES
 

@@ -929,6 +929,8 @@ The B<-certform> option has become obsolete in OpenSSL 3.0.0 and has no effect.
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
 
+The -tfo option was added in OpenSSL 3.1.
+
 =head1 COPYRIGHT
 
 Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.

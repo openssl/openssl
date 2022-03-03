@@ -126,7 +126,7 @@ static int test_bio_tfo(int idx)
     }
 
     /* macOS needs some time for this to happen, so put in a select */
-    if (!TEST_int_ge(BIO_wait(abio, time(NULL)+2, 0), 0)) {
+    if (!TEST_int_ge(BIO_wait(abio, time(NULL) + 2, 0), 0)) {
         sockerr = get_last_socket_error();
         BIO_printf(bio_err, "Error: socket wait failed\n");
         goto err;
@@ -159,7 +159,7 @@ static int test_bio_tfo(int idx)
     }
 
     /* macOS needs some time for this to happen, so put in a select */
-    if (!TEST_int_ge(BIO_wait(abio, time(NULL)+2, 0), 0)) {
+    if (!TEST_int_ge(BIO_wait(abio, time(NULL) + 2, 0), 0)) {
         sockerr = get_last_socket_error();
         BIO_printf(bio_err, "Error: socket wait failed\n");
         goto err;
@@ -243,15 +243,15 @@ static int test_fd_tfo(int idx)
 
     switch (ai->ai_family) {
         case AF_INET:
-            port = ((struct sockaddr_in*)ai->ai_addr)->sin_port;
-            addr = &((struct sockaddr_in*)ai->ai_addr)->sin_addr;
-            addrlen = sizeof(((struct sockaddr_in*)ai->ai_addr)->sin_addr);
+            port = ((struct sockaddr_in *)ai->ai_addr)->sin_port;
+            addr = &((struct sockaddr_in *)ai->ai_addr)->sin_addr;
+            addrlen = sizeof(((struct sockaddr_in *)ai->ai_addr)->sin_addr);
             BIO_printf(bio_err, "Using IPv4\n");
             break;
         case AF_INET6:
-            port = ((struct sockaddr_in6*)ai->ai_addr)->sin6_port;
-            addr = &((struct sockaddr_in6*)ai->ai_addr)->sin6_addr;
-            addrlen = sizeof(((struct sockaddr_in6*)ai->ai_addr)->sin6_addr);
+            port = ((struct sockaddr_in6 *)ai->ai_addr)->sin6_port;
+            addr = &((struct sockaddr_in6 *)ai->ai_addr)->sin6_addr;
+            addrlen = sizeof(((struct sockaddr_in6 *)ai->ai_addr)->sin6_addr);
             BIO_printf(bio_err, "Using IPv6\n");
             break;
         default:
@@ -271,19 +271,19 @@ static int test_fd_tfo(int idx)
 
     /* UPDATE ADDRESS WITH PORT */
     slen = sizeof(sstorage);
-    if (!TEST_int_ge(getsockname(afd, (struct sockaddr*)&sstorage, &slen), 0))
+    if (!TEST_int_ge(getsockname(afd, (struct sockaddr *)&sstorage, &slen), 0))
         goto err;
 
     switch (sstorage.ss_family) {
         case AF_INET:
-            port = ((struct sockaddr_in*)&sstorage)->sin_port;
-            addr = &((struct sockaddr_in*)&sstorage)->sin_addr;
-            addrlen = sizeof(((struct sockaddr_in*)&sstorage)->sin_addr);
+            port = ((struct sockaddr_in *)&sstorage)->sin_port;
+            addr = &((struct sockaddr_in *)&sstorage)->sin_addr;
+            addrlen = sizeof(((struct sockaddr_in *)&sstorage)->sin_addr);
             break;
         case AF_INET6:
-            port = ((struct sockaddr_in6*)&sstorage)->sin6_port;
-            addr = &((struct sockaddr_in6*)&sstorage)->sin6_addr;
-            addrlen = sizeof(((struct sockaddr_in6*)&sstorage)->sin6_addr);
+            port = ((struct sockaddr_in6 *)&sstorage)->sin6_port;
+            addr = &((struct sockaddr_in6 *)&sstorage)->sin6_addr;
+            addrlen = sizeof(((struct sockaddr_in6 *)&sstorage)->sin6_addr);
             break;
         default:
             goto err;
@@ -326,7 +326,7 @@ static int test_fd_tfo(int idx)
     }
 
     /* macOS needs some time for this to happen, so put in a select */
-    if (!TEST_int_ge(BIO_socket_wait(afd, 1, time(NULL)+2), 0)) {
+    if (!TEST_int_ge(BIO_socket_wait(afd, 1, time(NULL) + 2), 0)) {
         sockerr = get_last_socket_error();
         BIO_printf(bio_err, "Error: socket wait failed\n");
         goto err;
@@ -356,7 +356,7 @@ static int test_fd_tfo(int idx)
     /* SEND DATA: this should establish the actual TFO connection */
 #ifdef OSSL_TFO_SENDTO
     if (!TEST_int_ge(sendto(cfd, SOCKET_DATA, SOCKET_DATA_LEN, OSSL_TFO_SENDTO,
-                            (struct sockaddr*)&sstorage, slen), 0)) {
+                            (struct sockaddr *)&sstorage, slen), 0)) {
         sockerr = get_last_socket_error();
         goto err;
     }
@@ -368,7 +368,7 @@ static int test_fd_tfo(int idx)
 #endif
 
     /* macOS needs some time for this to happen, so put in a select */
-    if (!TEST_int_ge(BIO_socket_wait(afd, 1, time(NULL)+2), 0)) {
+    if (!TEST_int_ge(BIO_socket_wait(afd, 1, time(NULL) + 2), 0)) {
         sockerr = get_last_socket_error();
         BIO_printf(bio_err, "Error: socket wait failed\n");
         goto err;

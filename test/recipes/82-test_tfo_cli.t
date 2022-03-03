@@ -21,7 +21,7 @@ plan skip_all => "test_tfo_cli needs tls < 1.3 enabled"
 plan skip_all => "test_tfo_cli does not run on Windows nor VMS"
     if $^O =~ /^(VMS|MSWin32|msys)$/;
 
-plan tests => 6;
+plan tests => 8;
 
 my $shlib_wrap = bldtop_file("util", "shlib_wrap.sh");
 my $apps_openssl = bldtop_file("apps", "openssl");
@@ -51,6 +51,7 @@ sub run_test {
         }
     }
     print STDERR "Port: $port\n";
+    print STDERR "Invalid port\n" if ! ok($port);
 
     # Start up the client
     my @c_cmd = ("s_client", "-connect", ":$port", "-no_tls1_3");

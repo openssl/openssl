@@ -396,7 +396,7 @@ int BIO_listen(int sock, const BIO_ADDR *addr, int options)
 #   endif
 #  endif
         if (setsockopt(sock, IPPROTO_TCP, OSSL_TFO_SERVER_SOCKOPT,
-                       (void*)&q, sizeof(q)) < 0) {
+                       (void *)&q, sizeof(q)) < 0) {
             ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                            "calling setsockopt()");
             ERR_raise(ERR_LIB_BIO, BIO_R_UNABLE_TO_TFO);

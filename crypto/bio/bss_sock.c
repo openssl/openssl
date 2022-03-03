@@ -140,7 +140,7 @@ static int sock_write(BIO *b, const char *in, int inl)
 {
     int ret = 0;
 # if !defined(OPENSSL_NO_KTLS) || defined(OSSL_TFO_SENDTO)
-    struct bss_sock_st *data = (struct bss_sock_st*)b->ptr;
+    struct bss_sock_st *data = (struct bss_sock_st *)b->ptr;
 # endif
 
     clear_socket_error();
@@ -156,7 +156,7 @@ static int sock_write(BIO *b, const char *in, int inl)
 # endif
 # if defined(OSSL_TFO_SENDTO)
     if (data->tfo_first) {
-        struct bss_sock_st *data = (struct bss_sock_st*)b->ptr;
+        struct bss_sock_st *data = (struct bss_sock_st *)b->ptr;
         socklen_t peerlen = BIO_ADDR_sockaddr_size(&data->tfo_peer);
 
         ret = sendto(b->num, in, inl, OSSL_TFO_SENDTO,
@@ -177,7 +177,7 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
 {
     long ret = 1;
     int *ip;
-    struct bss_sock_st *data = (struct bss_sock_st*)b->ptr;
+    struct bss_sock_st *data = (struct bss_sock_st *)b->ptr;
 # ifndef OPENSSL_NO_KTLS
     ktls_crypto_info_t *crypto_info;
 # endif
@@ -251,7 +251,7 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_C_SET_CONNECT:
         if (ptr != NULL && num == 2) {
             ret = BIO_ADDR_make(&data->tfo_peer,
-                                BIO_ADDR_sockaddr((const BIO_ADDR*)ptr));
+                                BIO_ADDR_sockaddr((const BIO_ADDR *)ptr));
             if (ret)
                 data->tfo_first = 1;
         } else {
