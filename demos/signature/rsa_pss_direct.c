@@ -41,6 +41,7 @@ static int sign(unsigned char **sig, size_t *sig_len)
     OSSL_LIB_CTX *libctx = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
+    EVP_MD *md = NULL;
     OSSL_PARAM params[3], *p = params;
     const unsigned char *ppriv_key = NULL;
     unsigned bits = 4096, primes = 2;
@@ -53,6 +54,13 @@ static int sign(unsigned char **sig, size_t *sig_len)
                              sizeof(rsa_priv_key), libctx, propq);
     if (pkey == NULL) {
         fprintf(stderr, "Failed to load private key\n");
+        goto end;
+    }
+
+    /* Fetch hash algorithm we want to use. */
+    md = EVP_MD_fetch(libctx, "SHA256", propq);
+    if (md == NULL) {
+        fprintf(stderr, "Failed to fetch hash algorithm\n");
         goto end;
     }
 
@@ -74,7 +82,7 @@ static int sign(unsigned char **sig, size_t *sig_len)
         goto end;
     }
 
-    if (EVP_PKEY_CTX_set_signature_md(ctx, EVP_sha256()) == 0) {
+    if (EVP_PKEY_CTX_set_signature_md(ctx, md) == 0) {
         fprintf(stderr, "Failed to configure digest type\n");
         goto end;
     }
@@ -104,6 +112,7 @@ static int sign(unsigned char **sig, size_t *sig_len)
 end:
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(pkey);
+    EVP_MD_free(md);
 
     if (rv == 0)
         OPENSSL_free(*sig);
@@ -123,12 +132,20 @@ static int verify(const unsigned char *sig, size_t sig_len)
     const unsigned char *ppub_key = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
+    EVP_MD *md = NULL;
 
     /* Load DER-encoded RSA public key. */
     ppub_key = rsa_pub_key;
     pkey = d2i_PublicKey(EVP_PKEY_RSA, NULL, &ppub_key, sizeof(rsa_pub_key));
     if (pkey == NULL) {
         fprintf(stderr, "Failed to load public key\n");
+        goto end;
+    }
+
+    /* Fetch hash algorithm we want to use. */
+    md = EVP_MD_fetch(libctx, "SHA256", propq);
+    if (md == NULL) {
+        fprintf(stderr, "Failed to fetch hash algorithm\n");
         goto end;
     }
 
@@ -150,7 +167,7 @@ static int verify(const unsigned char *sig, size_t sig_len)
         goto end;
     }
 
-    if (EVP_PKEY_CTX_set_signature_md(ctx, EVP_sha256()) == 0) {
+    if (EVP_PKEY_CTX_set_signature_md(ctx, md) == 0) {
         fprintf(stderr, "Failed to configure digest type\n");
         goto end;
     }
@@ -167,6 +184,7 @@ static int verify(const unsigned char *sig, size_t sig_len)
 end:
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(pkey);
+    EVP_MD_free(md);
     OSSL_LIB_CTX_free(libctx);
     return rv;
 }
