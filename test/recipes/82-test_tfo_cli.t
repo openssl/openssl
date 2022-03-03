@@ -80,7 +80,7 @@ sub run_test {
 for my $tfo (0..1) {
     SKIP:
     {
-        skip "TFO not enabled", 3 if disabled("tfo") && $tfo;
+        skip "TFO not enabled", 4 if disabled("tfo") && $tfo;
 
         run_test($tfo);
     }
