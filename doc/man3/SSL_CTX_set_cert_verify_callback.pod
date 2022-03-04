@@ -38,16 +38,6 @@ All values, including 0, are ignored
 if the verification mode is B<SSL_VERIFY_NONE>.
 Otherwise, when the return value is 0, the handshake will fail.
 
-In client mode I<callback> may also return -1,
-typically on failure verifying the server certificate.
-This makes the handshake suspend and return control to the calling application
-with B<SSL_ERROR_WANT_RETRY_VERIFY>.
-The app can for instance fetch further certificates or cert status information
-needed for the verification.
-Calling L<SSL_connect(3)> again resumes the connection attempt
-by retrying the server certificate verification step.
-This process may even be repeated if need be.
-
 In any case a viable verification result value must be reflected
 in the B<error> member of I<x509_store_ctx>,
 which can be done using L<X509_STORE_CTX_set_error(3)>.

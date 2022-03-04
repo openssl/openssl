@@ -25,7 +25,6 @@ typedef enum {
 typedef enum {
     SSL_TEST_VERIFY_NONE = 0, /* Default */
     SSL_TEST_VERIFY_ACCEPT_ALL,
-    SSL_TEST_VERIFY_RETRY_ONCE,
     SSL_TEST_VERIFY_REJECT_ALL
 } ssl_verify_callback_t;
 

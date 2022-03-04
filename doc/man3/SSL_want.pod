@@ -2,9 +2,9 @@
 
 =head1 NAME
 
-SSL_want, SSL_want_nothing, SSL_want_read, SSL_want_write,
-SSL_want_x509_lookup, SSL_want_retry_verify, SSL_want_async, SSL_want_async_job,
-SSL_want_client_hello_cb - obtain state information TLS/SSL I/O operation
+SSL_want, SSL_want_nothing, SSL_want_read, SSL_want_write, SSL_want_x509_lookup,
+SSL_want_async, SSL_want_async_job, SSL_want_client_hello_cb - obtain state
+information TLS/SSL I/O operation
 
 =head1 SYNOPSIS
 
@@ -15,7 +15,6 @@ SSL_want_client_hello_cb - obtain state information TLS/SSL I/O operation
  int SSL_want_read(const SSL *ssl);
  int SSL_want_write(const SSL *ssl);
  int SSL_want_x509_lookup(const SSL *ssl);
- int SSL_want_retry_verify(const SSL *ssl);
  int SSL_want_async(const SSL *ssl);
  int SSL_want_async_job(const SSL *ssl);
  int SSL_want_client_hello_cb(const SSL *ssl);
@@ -68,12 +67,6 @@ The operation did not complete because an application callback set by
 SSL_CTX_set_client_cert_cb() has asked to be called again.
 A call to L<SSL_get_error(3)> should return B<SSL_ERROR_WANT_X509_LOOKUP>.
 
-=item SSL_RETRY_VERIFY
-
-The operation did not complete because an application callback set by
-SSL_CTX_set_cert_verify_callback() has asked to be called again.
-A call to L<SSL_get_error(3)> should return B<SSL_ERROR_WANT_RETRY_VERIFY>.
-
 =item SSL_ASYNC_PAUSED
 
 An asynchronous operation partially completed and was then paused. See
@@ -94,10 +87,9 @@ A call to L<SSL_get_error(3)> should return B<SSL_ERROR_WANT_CLIENT_HELLO_CB>.
 
 =back
 
-SSL_want_nothing(), SSL_want_read(), SSL_want_write(),
-SSL_want_x509_lookup(), SSL_want_retry_verify(),
-SSL_want_async(), SSL_want_async_job(), and SSL_want_client_hello_cb()
-return 1 when the corresponding condition is true or 0 otherwise.
+SSL_want_nothing(), SSL_want_read(), SSL_want_write(), SSL_want_x509_lookup(),
+SSL_want_async(), SSL_want_async_job(), and SSL_want_client_hello_cb() return
+1, when the corresponding condition is true or 0 otherwise.
 
 =head1 SEE ALSO
 
