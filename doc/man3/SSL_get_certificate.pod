@@ -31,8 +31,10 @@ to the certificate returned by SSL_get_certificate().
 =head1 RETURN VALUES
 
 These functions return pointers to their respective objects, or NULL if no such
-object is available, for example on a client where no client certificate is
-being used, or on a server where a specific certificate has not yet been chosen.
+object is available. Before the handshake has completed, the certificate
+returned is the one most recently added to the SSL object, or NULL if no
+certificate has yet been added. After the handshake has completed, the
+certificate returned is the one which was selected during the handshake.
 
 =head1 SEE ALSO
 
