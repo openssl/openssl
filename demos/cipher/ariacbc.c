@@ -93,6 +93,11 @@ int aria_cbc_encrypt(void)
     printf("Ciphertext (outlen:%d):\n", outlen);
     BIO_dump_fp(stdout, outbuf, outlen);
 
+    if (sizeof(cbc_ct) == outlen && !memcmp(outbuf, cbc_ct, outlen))
+        printf("Final ciphertext matches expected ciphertext\n");
+    else
+        printf("Final ciphertext differs from expected ciphertext\n");
+
     ret = 1;
 err:
     if (!ret)
