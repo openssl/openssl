@@ -60,9 +60,8 @@ int aria_cbc_encrypt(void)
     size_t cbc_ivlen = sizeof(cbc_iv);
     unsigned char outbuf[1024];
     unsigned char outtag[16];
-    OSSL_PARAM params[2] = {
-        OSSL_PARAM_END, OSSL_PARAM_END
-    };
+    /* We are not setting any custom params so let params be just NULL */
+    OSSL_PARAM *params = NULL;
 
     printf("ARIA CBC Encrypt:\n");
     printf("Plaintext:\n");
@@ -77,11 +76,7 @@ int aria_cbc_encrypt(void)
         goto err;
 
     /*
-     * Initialise an encrypt operation with the cipher/mode, key, IV and
-     * IV length parameter.
-     * For demonstration purposes the IV is being set here. In a compliant
-     * application the IV would be generated internally so the iv passed in
-     * would be NULL. 
+     * Initialise an encrypt operation with the cipher/mode, key and IV.
      */
     if (!(ret = EVP_EncryptInit_ex2(ctx, cipher, cbc_key, cbc_iv, params)))
         goto err;
@@ -91,12 +86,12 @@ int aria_cbc_encrypt(void)
         goto err;
 
     /* Finalise: there can be some additional output from padding */
-    if (!(ret = EVP_EncryptFinal_ex(ctx, outbuf + outlen, &tmplen)))
+    if (!EVP_EncryptFinal_ex(ctx, outbuf + outlen, &tmplen))
         goto err;
     outlen += tmplen;
 
     /* Output encrypted block */
-    printf("Ciphertext (outlen:%d; tmplen:%d):\n", outlen, tmplen);
+    printf("Ciphertext (outlen:%d):\n", outlen);
     BIO_dump_fp(stdout, outbuf, outlen);
 
     ret = 1;
@@ -122,7 +117,7 @@ int aria_cbc_decrypt(void)
         OSSL_PARAM_END, OSSL_PARAM_END
     };
 
-    printf("ARIA cbc Decrypt:\n");
+    printf("ARIA CBC Decrypt:\n");
     printf("Ciphertext:\n");
     BIO_dump_fp(stdout, cbc_ct, sizeof(cbc_ct));
 
@@ -134,8 +129,7 @@ int aria_cbc_decrypt(void)
         goto err;
 
     /*
-     * Initialise an encrypt operation with the cipher/mode, key, IV and
-     * IV length parameter.
+     * Initialise an encrypt operation with the cipher/mode, key and IV.
      */
     if (!EVP_DecryptInit_ex2(ctx, cipher, cbc_key, cbc_iv, params))
         goto err;
@@ -150,8 +144,13 @@ int aria_cbc_decrypt(void)
     outlen += tmplen;
 
     /* Output decrypted block */
-    printf("Plaintext (outlen:%d; tmplen:%d):\n", outlen, tmplen);
+    printf("Plaintext (outlen:%d):\n", outlen);
     BIO_dump_fp(stdout, outbuf, outlen);
+
+    if (sizeof(cbc_pt) == outlen && !memcmp(outbuf, cbc_pt, outlen))
+        printf("Final plaintext matches original plaintext\n");
+    else
+        printf("Final plaintext differs from original plaintext\n");
 
     ret = 1;
 err:
