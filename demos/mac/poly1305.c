@@ -150,7 +150,8 @@ int main(int argc, char **argv)
      * Computes the value AES_k(n) which we need for our Poly1305-AES
      * computation below.
      */
-    if (!EVP_EncryptUpdate(aesctx, composite_key+16, &aes_len, test_n, sizeof(test_n))) {
+    if (!EVP_EncryptUpdate(aesctx, composite_key + 16, &aes_len,
+                           test_n, sizeof(test_n))) {
         fprintf(stderr, "EVP_EncryptUpdate() failed\n");
         goto end;
     }
