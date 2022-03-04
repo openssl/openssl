@@ -60,8 +60,6 @@ int aria_cbc_encrypt(void)
     size_t cbc_ivlen = sizeof(cbc_iv);
     unsigned char outbuf[1024];
     unsigned char outtag[16];
-    /* We are not setting any custom params so let params be just NULL */
-    OSSL_PARAM *params = NULL;
 
     printf("ARIA CBC Encrypt:\n");
     printf("Plaintext:\n");
@@ -77,8 +75,9 @@ int aria_cbc_encrypt(void)
 
     /*
      * Initialise an encrypt operation with the cipher/mode, key and IV.
+     * We are not setting any custom params so let params be just NULL.
      */
-    if (!(ret = EVP_EncryptInit_ex2(ctx, cipher, cbc_key, cbc_iv, params)))
+    if (!EVP_EncryptInit_ex2(ctx, cipher, cbc_key, cbc_iv, /* params */ NULL))
         goto err;
 
     /* Encrypt plaintext */
@@ -113,9 +112,6 @@ int aria_cbc_decrypt(void)
     int outlen, tmplen, rv;
     size_t cbc_ivlen = sizeof(cbc_iv);
     unsigned char outbuf[1024];
-    OSSL_PARAM params[2] = {
-        OSSL_PARAM_END, OSSL_PARAM_END
-    };
 
     printf("ARIA CBC Decrypt:\n");
     printf("Ciphertext:\n");
@@ -130,8 +126,9 @@ int aria_cbc_decrypt(void)
 
     /*
      * Initialise an encrypt operation with the cipher/mode, key and IV.
+     * We are not setting any custom params so let params be just NULL.
      */
-    if (!EVP_DecryptInit_ex2(ctx, cipher, cbc_key, cbc_iv, params))
+    if (!EVP_DecryptInit_ex2(ctx, cipher, cbc_key, cbc_iv, /* params */ NULL))
         goto err;
 
     /* Decrypt plaintext */
