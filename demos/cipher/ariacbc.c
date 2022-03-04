@@ -15,6 +15,7 @@
 #include <openssl/err.h>
 #include <openssl/bio.h>
 #include <openssl/evp.h>
+#include <openssl/crypto.h>
 #include <openssl/core_names.h>
 
 /* ARIA key */
@@ -93,7 +94,7 @@ int aria_cbc_encrypt(void)
     printf("Ciphertext (outlen:%d):\n", outlen);
     BIO_dump_fp(stdout, outbuf, outlen);
 
-    if (sizeof(cbc_ct) == outlen && !memcmp(outbuf, cbc_ct, outlen))
+    if (sizeof(cbc_ct) == outlen && !CRYPTO_memcmp(outbuf, cbc_ct, outlen))
         printf("Final ciphertext matches expected ciphertext\n");
     else
         printf("Final ciphertext differs from expected ciphertext\n");
@@ -149,7 +150,7 @@ int aria_cbc_decrypt(void)
     printf("Plaintext (outlen:%d):\n", outlen);
     BIO_dump_fp(stdout, outbuf, outlen);
 
-    if (sizeof(cbc_pt) == outlen && !memcmp(outbuf, cbc_pt, outlen))
+    if (sizeof(cbc_pt) == outlen && !CRYPTO_memcmp(outbuf, cbc_pt, outlen))
         printf("Final plaintext matches original plaintext\n");
     else
         printf("Final plaintext differs from original plaintext\n");
