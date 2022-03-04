@@ -14,11 +14,25 @@ private key
 
 =head1 DESCRIPTION
 
-SSL_get_certificate() returns a pointer to the B<X509> object representing the
-certificate which represents the local peer's identity. For servers, it returns
-the server's certificate. If a server has multiple certificates (for different
-algorithms, for example RSA and ECDSA), the certificate in actual use is
-returned. For clients, it returns the client certificate being used, if any.
+SSL_get_certificate() returns a pointer to a B<X509> object representing a
+certificate used as the local peer's identity.
+
+Multiple certificates can be configured; for example, a server might have both
+RSA and ECDSA certificates. The certificate which is returned by
+SSL_get_certificate() is determined as follows:
+
+=item
+
+If it is called before the handshake has completed, it returns the most recently
+added certificate, or NULL if no certificate has been added.
+
+=item
+
+After the handshake has completed, it returns the certificate which was selected
+during the handshake, or NULL if no certificate was selected (for example, on a
+client where no client certificate is in use).
+
+=back
 
 A specific use for SSL_get_certificate() is inside a callback set via a call to
 L<SSL_CTX_set_tlsext_status_cb(3)>, where it can be used to examine a server's
@@ -26,15 +40,12 @@ certificate, for example for the purpose of identifying a certificate's OCSP
 responder URL so that an OCSP response can be obtained.
 
 SSL_get_privatekey() returns a pointer to the B<EVP_PKEY> object corresponding
-to the certificate returned by SSL_get_certificate().
+to the certificate returned by SSL_get_certificate(), if any.
 
 =head1 RETURN VALUES
 
 These functions return pointers to their respective objects, or NULL if no such
-object is available. Before the handshake has completed, the certificate
-returned is the one most recently added to the SSL object, or NULL if no
-certificate has yet been added. After the handshake has completed, the
-certificate returned is the one which was selected during the handshake.
+object is available.
 
 =head1 SEE ALSO
 
