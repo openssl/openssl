@@ -305,10 +305,18 @@ static int verify_reject_cb(X509_STORE_CTX *ctx, void *arg) {
 
 static int n_retries = 0;
 static int verify_retry_cb(X509_STORE_CTX *ctx, void *arg) {
+    int idx = SSL_get_ex_data_X509_STORE_CTX_idx();
+    SSL *ssl;
+
+    /* this should not happen but check anyway */
+    if (idx < 0
+        || (ssl = X509_STORE_CTX_get_ex_data(ctx, idx)) == NULL)
+        return 0;
+
     if (--n_retries < 0)
         return 1;
-    X509_STORE_CTX_set_error(ctx, X509_V_ERR_APPLICATION_VERIFICATION);
-    return -1;
+
+    return SSL_set_retry_verify(ssl);
 }
 
 static int verify_accept_cb(X509_STORE_CTX *ctx, void *arg) {

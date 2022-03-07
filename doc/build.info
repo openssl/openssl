@@ -2547,6 +2547,10 @@ DEPEND[html/man3/SSL_set_fd.html]=man3/SSL_set_fd.pod
 GENERATE[html/man3/SSL_set_fd.html]=man3/SSL_set_fd.pod
 DEPEND[man/man3/SSL_set_fd.3]=man3/SSL_set_fd.pod
 GENERATE[man/man3/SSL_set_fd.3]=man3/SSL_set_fd.pod
+DEPEND[html/man3/SSL_set_retry_verify.html]=man3/SSL_set_retry_verify.pod
+GENERATE[html/man3/SSL_set_retry_verify.html]=man3/SSL_set_retry_verify.pod
+DEPEND[man/man3/SSL_set_retry_verify.3]=man3/SSL_set_retry_verify.pod
+GENERATE[man/man3/SSL_set_retry_verify.3]=man3/SSL_set_retry_verify.pod
 DEPEND[html/man3/SSL_set_session.html]=man3/SSL_set_session.pod
 GENERATE[html/man3/SSL_set_session.html]=man3/SSL_set_session.pod
 DEPEND[man/man3/SSL_set_session.3]=man3/SSL_set_session.pod
@@ -3356,6 +3360,7 @@ html/man3/SSL_set_async_callback.html \
 html/man3/SSL_set_bio.html \
 html/man3/SSL_set_connect_state.html \
 html/man3/SSL_set_fd.html \
+html/man3/SSL_set_retry_verify.html \
 html/man3/SSL_set_session.html \
 html/man3/SSL_set_shutdown.html \
 html/man3/SSL_set_verify_result.html \
@@ -3948,6 +3953,7 @@ man/man3/SSL_set_async_callback.3 \
 man/man3/SSL_set_bio.3 \
 man/man3/SSL_set_connect_state.3 \
 man/man3/SSL_set_fd.3 \
+man/man3/SSL_set_retry_verify.3 \
 man/man3/SSL_set_session.3 \
 man/man3/SSL_set_shutdown.3 \
 man/man3/SSL_set_verify_result.3 \

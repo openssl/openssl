@@ -1859,9 +1859,10 @@ WORK_STATE tls_post_process_server_certificate(SSL *s, WORK_STATE wst)
     size_t certidx;
     int i;
 
+    if (s->rwstate == SSL_RETRY_VERIFY)
+        s->rwstate = SSL_NOTHING;
     i = ssl_verify_cert_chain(s, s->session->peer_chain);
-    if (i == -1) {
-        s->rwstate = SSL_RETRY_VERIFY;
+    if (i > 0 && s->rwstate == SSL_RETRY_VERIFY) {
         return WORK_MORE_A;
     }
     /*
@@ -1878,7 +1879,7 @@ WORK_STATE tls_post_process_server_certificate(SSL *s, WORK_STATE wst)
      * (less clean) historic behaviour of performing validation if any flag is
      * set. The *documented* interface remains the same.
      */
-    if (s->verify_mode != SSL_VERIFY_NONE && i == 0) {
+    if (s->verify_mode != SSL_VERIFY_NONE && i <= 0) {
         SSLfatal(s, ssl_x509err2alert(s->verify_result),
                  SSL_R_CERTIFICATE_VERIFY_FAILED);
         return WORK_ERROR;

@@ -677,3 +677,4 @@ EVP_PKEY_security_bits                  define
 EVP_PKEY_size                           define
 EVP_PKEY_id                             define
 EVP_PKEY_base_id                        define
+SSL_set_retry_verify                    define

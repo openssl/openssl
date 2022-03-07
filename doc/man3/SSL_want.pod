@@ -70,8 +70,8 @@ A call to L<SSL_get_error(3)> should return B<SSL_ERROR_WANT_X509_LOOKUP>.
 
 =item SSL_RETRY_VERIFY
 
-The operation did not complete because an application callback set by
-SSL_CTX_set_cert_verify_callback() has asked to be called again.
+The operation did not complete because a certificate verification callback
+has asked to be called again via L<SSL_set_retry_verify(3)>.
 A call to L<SSL_get_error(3)> should return B<SSL_ERROR_WANT_RETRY_VERIFY>.
 
 =item SSL_ASYNC_PAUSED

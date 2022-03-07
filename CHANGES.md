@@ -123,6 +123,12 @@ breaking changes, and mappings for the large list of deprecated functions.
 
    *Paul Dale*
 
+ * The negative return value handling of the certificate verification callback
+   was reverted. The replacement is to set the verification retry state with
+   the SSL_set_retry_verify() function.
+
+   *Tomáš Mráz*
+
 ### Changes between 3.0.0 and 3.0.1 [14 dec 2021]
 
  * Fixed invalid handling of X509_verify_cert() internal errors in libssl
