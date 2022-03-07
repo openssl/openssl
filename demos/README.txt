@@ -23,6 +23,9 @@ EVP_f_md.c             Compute a digest using BIO and EVP_f_md
 encrypt:
 rsa_encrypt.c          Encrypt and decrypt data using an RSA keypair.
 
+encode:
+rsa_encode.c           Encode and decode PEM-encoded RSA keys
+
 kdf:
 hkdf.c                 Demonstration of HMAC based key derivation
 pbkdf2.c               Demonstration of PBKDF2 password based key derivation
