@@ -299,6 +299,12 @@ static char *app_get_pass(const char *arg, int keepbio)
              * Can't do BIO_gets on an fd BIO so add a buffering BIO
              */
             btmp = BIO_new(BIO_f_buffer());
+            if (btmp == NULL) {
+                BIO_free_all(pwdbio);
+                pwdbio = NULL;
+                BIO_printf(bio_err, "Out of memory\n");
+                return NULL;
+            }
             pwdbio = BIO_push(btmp, pwdbio);
 #endif
         } else if (strcmp(arg, "stdin") == 0) {
