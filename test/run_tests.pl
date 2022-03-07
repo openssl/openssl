@@ -314,7 +314,12 @@ my $harness = $package->new(\%tapargs);
 my $ret =
     $harness->runtests(map { [ abs2rel($_, rel2abs(curdir())), basename($_) ] }
                        @preps);
-die if $ret->has_errors;
+
+# If using the pre-TAP test harness the above call will simply die if any
+# test fails. For TAP::Parser::Aggregator we have to check ourselves,
+# but $ret->has_errors is only available for TAP::Parser::Aggregator.
+die if ref($ret) eq "TAP::Parser::Aggregator" && $ret->has_errors;
+
 $ret =
     $harness->runtests(map { [ abs2rel($_, rel2abs(curdir())), basename($_) ] }
                        sort { reorder($a) cmp reorder($b) } keys %tests);
