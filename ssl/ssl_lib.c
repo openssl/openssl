@@ -2393,6 +2393,9 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
         return 1;
     case SSL_CTRL_GET_RI_SUPPORT:
         return s->s3.send_connection_binding;
+    case SSL_CTRL_SET_RETRY_VERIFY:
+        s->rwstate = SSL_RETRY_VERIFY;
+        return 1;
     case SSL_CTRL_CERT_FLAGS:
         return (s->cert->cert_flags |= larg);
     case SSL_CTRL_CLEAR_CERT_FLAGS:
