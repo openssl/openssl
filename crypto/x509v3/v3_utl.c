@@ -538,8 +538,11 @@ static int append_ia5(STACK_OF(OPENSSL_STRING) **sk, const ASN1_IA5STRING *email
         return 0;
 
     emtmp = OPENSSL_strndup((char *)email->data, email->length);
-    if (emtmp == NULL)
+    if (emtmp == NULL) {
+        X509_email_free(*sk);
+        *sk = NULL;
         return 0;
+    }
 
     /* Don't add duplicates */
     if (sk_OPENSSL_STRING_find(*sk, emtmp) != -1) {
