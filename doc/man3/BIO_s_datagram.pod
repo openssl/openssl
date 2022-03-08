@@ -43,9 +43,6 @@ waiting to be read.
 BIO_dgram_non_fatal_error() checks if the error code was a fatal
 one or not.
 
-=head1 NOTES
-
-
 =head1 CTRLs
 
 The datagram BIO supports the following ctrls via the L<BIO_ctrl(3)> function:
