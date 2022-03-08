@@ -62,7 +62,7 @@ static EVP_PKEY *load_key(OSSL_LIB_CTX *libctx, FILE *f, const char *passphrase)
      */
     if (passphrase != NULL) {
         if (OSSL_DECODER_CTX_set_passphrase(dctx,
-                                            (const unsigned char*)passphrase,
+                                            (const unsigned char *)passphrase,
                                             strlen(passphrase)) == 0) {
             fprintf(stderr, "OSSL_DECODER_CTX_set_passphrase() failed\n");
             goto cleanup;
@@ -149,7 +149,7 @@ static int store_key(EVP_PKEY *pkey, FILE *f, const char *passphrase)
 
         /* Set passphrase. */
         if (OSSL_ENCODER_CTX_set_passphrase(ectx,
-                                            (const unsigned char*)passphrase,
+                                            (const unsigned char *)passphrase,
                                             strlen(passphrase)) == 0) {
             fprintf(stderr, "OSSL_ENCODER_CTX_set_passphrase() failed\n");
             goto cleanup;
