@@ -26,16 +26,13 @@ BIO_dgram_sctp_msg_waiting, BIO_dgram_non_fatal_error - datagram BIO
 
 BIO_s_datagram() returns the datagram BIO method.
 
-The datagram BIO is a BIO object which can be laterly used for a DTLS session
-or a generic UDP application
-
-BIO_s_datagram_sctp() returns the sctp datagram BIO method.
+BIO_s_datagram_sctp() returns the SCTP datagram BIO method.
 
 BIO_new_dgram() creates a new datagram BIO.
 
-BIO_new_dgram_sctp() creates a new sctp datagram BIO.
+BIO_new_dgram_sctp() creates a new SCTP datagram BIO.
 
-BIO_dgram_is_sctp() tests if the datagram BIO is a sctp datagram BIO.
+BIO_dgram_is_sctp() tests if the datagram BIO is a SCTP datagram BIO.
 
 BIO_dgram_sctp_wait_for_dry() waits until the peer confirms all
 packets have been received.
@@ -53,86 +50,89 @@ one or not.
 
 The datagram BIO supports the following ctrls via the L<BIO_ctrl(3)> function:
 
-B<BIO_CTRL_RESET>
+=over 4
 
-B<BIO_CTRL_INFO>
+=item <BIO_CTRL_RESET>
 
-B<BIO_C_SET_FD>
+=item <BIO_CTRL_INFO>
 
-B<BIO_C_GET_FD>
+=item <BIO_C_SET_FD>
 
-B<BIO_CTRL_GET_CLOSE>
+=item <BIO_C_GET_FD>
 
-B<BIO_CTRL_SET_CLOSE>
+=item <BIO_CTRL_GET_CLOSE>
 
-B<BIO_CTRL_PENDING>
+=item <BIO_CTRL_SET_CLOSE>
 
-B<BIO_CTRL_WPENDING>
+=item <BIO_CTRL_PENDING>
 
-B<BIO_CTRL_DUP>
+=item <BIO_CTRL_WPENDING>
 
-B<BIO_CTRL_FLUSH>
+=item <BIO_CTRL_DUP>
 
-B<BIO_CTRL_DGRAM_CONNECT>
+=item <BIO_CTRL_FLUSH>
 
-B<BIO_CTRL_DGRAM_MTU_DISCOVER>
+=item <BIO_CTRL_DGRAM_CONNECT>
 
-B<BIO_CTRL_DGRAM_QUERY_MTU>
+=item <BIO_CTRL_DGRAM_MTU_DISCOVER>
 
-B<BIO_CTRL_DGRAM_GET_FALLBACK_MTU>
+=item <BIO_CTRL_DGRAM_QUERY_MTU>
 
-B<BIO_CTRL_DGRAM_GET_MTU>
+=item <BIO_CTRL_DGRAM_GET_FALLBACK_MTU>
 
-B<BIO_CTRL_DGRAM_SET_MTU>
+=item <BIO_CTRL_DGRAM_GET_MTU>
 
-B<BIO_CTRL_DGRAM_SET_CONNECTED>
+=item <BIO_CTRL_DGRAM_SET_MTU>
 
-B<BIO_CTRL_DGRAM_GET_PEER>
+=item <BIO_CTRL_DGRAM_SET_CONNECTED>
 
-B<BIO_CTRL_DGRAM_SET_PEER>
+=item <BIO_CTRL_DGRAM_GET_PEER>
 
-B<BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT>
+=item <BIO_CTRL_DGRAM_SET_PEER>
 
-B<BIO_CTRL_DGRAM_SET_RECV_TIMEOUT>
+=item <BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT>
 
-B<BIO_CTRL_DGRAM_GET_RECV_TIMEOUT>
+=item <BIO_CTRL_DGRAM_SET_RECV_TIMEOUT>
 
-B<BIO_CTRL_DGRAM_SET_SEND_TIMEOUT>
+=item <BIO_CTRL_DGRAM_GET_RECV_TIMEOUT>
 
-B<BIO_CTRL_DGRAM_GET_SEND_TIMEOUT>
+=item <BIO_CTRL_DGRAM_SET_SEND_TIMEOUT>
 
-B<BIO_CTRL_DGRAM_GET_SEND_TIMER_EXP>
+=item <BIO_CTRL_DGRAM_GET_SEND_TIMEOUT>
 
-B<BIO_CTRL_DGRAM_GET_RECV_TIMER_EXP>
+=item <BIO_CTRL_DGRAM_GET_SEND_TIMER_EXP>
 
-B<BIO_CTRL_DGRAM_MTU_EXCEEDED>
+=item <BIO_CTRL_DGRAM_GET_RECV_TIMER_EXP>
 
-B<BIO_CTRL_DGRAM_SET_DONT_FRAG>
+=item <BIO_CTRL_DGRAM_MTU_EXCEEDED>
 
-B<BIO_CTRL_DGRAM_GET_MTU_OVERHEAD>
+=item <BIO_CTRL_DGRAM_SET_DONT_FRAG>
 
-B<BIO_CTRL_DGRAM_SCTP_SET_IN_HANDSHAKE>
+=item <BIO_CTRL_DGRAM_GET_MTU_OVERHEAD>
 
-B<BIO_CTRL_DGRAM_SET_PEEK_MODE>
+=item <BIO_CTRL_DGRAM_SCTP_SET_IN_HANDSHAKE>
 
-B<BIO_CTRL_SET_SEND_FLAGS> the I<larg> argument is used for the I<flags>
+=item <BIO_CTRL_DGRAM_SET_PEEK_MODE>
+
+=item <BIO_CTRL_SET_SEND_FLAGS> the I<larg> argument is used for the I<flags>
 argument to send() and/or sendto(), the main use case is for the caller to set
 the B<MSG_NOSIGNAL> flag but all send()/sendto() flags are supported. 
 
+=back
 
 =head1 RETURN VALUES
 
 BIO_s_datagram() returns the datagram BIO method.
 
-BIO_s_datagram_sctp() returns the sctp datagram BIO method.
-
 BIO_new_dgram() returns the newly allocated datagram BIO or NULL
 if an error occurred.
 
-BIO_new_dgram_sctp() returns the newly allocated sctp datagram BIO or NULL
+BIO_new_dgram_sctp() returns the newly allocated SCTP datagram BIO or NULL
 if an error occurred.
 
-BIO_dgram_is_sctp() returns 1 if the BIO is of type sctp datagram or 0
+BIO_s_datagram_sctp() returns the SCTP datagram BIO method.
+
+BIO_dgram_is_sctp() returns 1 if the BIO is of type SCTP datagram or 0
 if not.
 
 BIO_dgram_sctp_wait_for_dry() returns 1 if dry, 0 if not and -1 on error.
