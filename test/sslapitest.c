@@ -568,7 +568,7 @@ static int verify_retry_cb(X509_STORE_CTX *ctx, void *arg)
     if (res == 0 && X509_STORE_CTX_get_error(ctx) ==
         X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY)
         /* indicate SSL_ERROR_WANT_RETRY_VERIFY */
-        return SSL_set_retry_verify(ssl) > 0;
+        return SSL_set_retry_verify(ssl);
 
     return res;
 }

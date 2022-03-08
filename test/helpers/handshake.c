@@ -316,7 +316,7 @@ static int verify_retry_cb(X509_STORE_CTX *ctx, void *arg) {
     if (--n_retries < 0)
         return 1;
 
-    return SSL_set_retry_verify(ssl) > 0;
+    return SSL_set_retry_verify(ssl);
 }
 
 static int verify_accept_cb(X509_STORE_CTX *ctx, void *arg) {

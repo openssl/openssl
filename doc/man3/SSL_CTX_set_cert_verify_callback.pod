@@ -40,7 +40,7 @@ Otherwise, when the return value is 0, the handshake will fail.
 
 In client mode I<callback> may also call the L<SSL_set_retry_verify(3)>
 function on the B<SSL> object set in the I<x509_store_ctx> ex data (see
-L<SSL_get_ex_data_X509_STORE_CTX_idx(3)> and return 1. This would be
+L<SSL_get_ex_data_X509_STORE_CTX_idx(3)>) and return 1. This would be
 typically done in case the application is unable to verify the certificate
 immediately in the callback. This makes the handshake suspend and
 return control to the calling application with

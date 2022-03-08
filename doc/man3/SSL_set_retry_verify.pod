@@ -42,7 +42,7 @@ the B<X509_STORE_CTX> to call the SSL_set_retry_verify() function:
         return -1;
 
     if (/* we need to retry verification callback */)
-        return SSL_set_retry_verify(ssl) > 0;
+        return SSL_set_retry_verify(ssl);
 
     /* do normal processing of the verification callback */
 

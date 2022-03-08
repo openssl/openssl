@@ -2137,7 +2137,7 @@ __owur int SSL_get_ex_data_X509_STORE_CTX_idx(void);
 # define SSL_set_max_pipelines(ssl,m) \
         SSL_ctrl(ssl,SSL_CTRL_SET_MAX_PIPELINES,m,NULL)
 # define SSL_set_retry_verify(ssl) \
-        SSL_ctrl(ssl,SSL_CTRL_SET_RETRY_VERIFY,0,NULL)
+        (SSL_ctrl(ssl,SSL_CTRL_SET_RETRY_VERIFY,0,NULL) > 0)
 
 void SSL_CTX_set_default_read_buffer_len(SSL_CTX *ctx, size_t len);
 void SSL_set_default_read_buffer_len(SSL *s, size_t len);
