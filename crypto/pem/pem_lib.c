@@ -973,7 +973,7 @@ int PEM_read_bio_ex(BIO *bp, char **name_out, char **header,
     *data = pem_malloc(len, flags);
     if (*header == NULL || *data == NULL)
         goto out_free;
-    if (headerlen == 0 || BIO_read(headerB, *header, headerlen) != headerlen)
+    if (headerlen != 0 && BIO_read(headerB, *header, headerlen) != headerlen)
         goto out_free;
     (*header)[headerlen] = '\0';
     if (BIO_read(dataB, *data, len) != len)
