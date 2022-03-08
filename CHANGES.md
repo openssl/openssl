@@ -119,8 +119,8 @@ breaking changes, and mappings for the large list of deprecated functions.
    *Paul Dale*
 
  * The negative return value handling of the certificate verification callback
-   was reverted. The replacement is to set the the verification retry
-   state with SSL_set_retry_verify() function.
+   was reverted. The replacement is to set the verification retry state with
+   the SSL_set_retry_verify() function.
 
    *Tomáš Mráz*
 

@@ -13,15 +13,16 @@ SSL_set_retry_verify - indicate that certificate verification should be retried
 =head1 DESCRIPTION
 
 SSL_set_retry_verify() should be called from the certificate verification
-callback when the application wants to indicate that the handshake should be
-suspended and the control should be returned to the application. The application
-should then call SSL_connect() again to retry the verification callback and
-to resume the handshake.
+callback on a client when the application wants to indicate that the handshake
+should be suspended and the control should be returned to the application.
+L<SSL_want_retry_verify(3)> will return 1 as a consequence.
+
+Please refer to L<SSL_CTX_set_cert_verify_callback(3)> for further details.
 
 =head1 NOTES
 
 The effect of calling SSL_set_retry_verify() outside of the certificate
-verification callback is undefined.
+verification callback on the client side is undefined.
 
 =head1 RETURN VALUES
 
@@ -47,7 +48,8 @@ the B<X509_STORE_CTX> to call the SSL_set_retry_verify() function:
 
 =head1 SEE ALSO
 
-L<ssl(7)>, L<SSL_connect(3)>, L<SSL_CTX_set_cert_verify_callback(3)>
+L<ssl(7)>, L<SSL_connect(3)>, L<SSL_CTX_set_cert_verify_callback(3)>,
+L<SSL_want_retry_verify(3)>
 
 =head1 HISTORY
 

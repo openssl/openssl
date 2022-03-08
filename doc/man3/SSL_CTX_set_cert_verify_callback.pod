@@ -38,13 +38,14 @@ All values, including 0, are ignored
 if the verification mode is B<SSL_VERIFY_NONE>.
 Otherwise, when the return value is 0, the handshake will fail.
 
-In client mode I<callback> may also call SSL_set_retry_verify() function
-on the B<SSL> object set in the I<x509_store_ctx> ex data (see
-L<SSL_get_ex_data_X509_STORE_CTX_idx(3)>.
-This makes the handshake suspend and return control to the calling application
-with B<SSL_ERROR_WANT_RETRY_VERIFY>.
-The app can for instance fetch further certificates or cert status information
-needed for the verification.
+In client mode I<callback> may also call the L<SSL_set_retry_verify(3)>
+function on the B<SSL> object set in the I<x509_store_ctx> ex data (see
+L<SSL_get_ex_data_X509_STORE_CTX_idx(3)> and return 1. This would be
+typically done in case the application is unable to verify the certificate
+immediately in the callback. This makes the handshake suspend and
+return control to the calling application with
+B<SSL_ERROR_WANT_RETRY_VERIFY>. The app can for instance fetch further
+certificates or cert status information needed for the verification.
 Calling L<SSL_connect(3)> again resumes the connection attempt
 by retrying the server certificate verification step.
 This process may even be repeated if need be.
