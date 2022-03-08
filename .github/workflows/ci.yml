@@ -282,6 +282,8 @@ jobs:
       run: make test TESTS="test_external_krb5"
     - name: test external_tlsfuzzer
       run: make test TESTS="test_external_tlsfuzzer"
+    - name: test external oqs-provider
+      run: make test TESTS="test_external_oqsprovider"
 
   external-test-pyca:
     runs-on: ubuntu-latest
