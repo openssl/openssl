@@ -162,7 +162,7 @@ int init_client(int *sock, const char *host, const char *port,
 #endif
 
         if (!BIO_connect(*sock, BIO_ADDRINFO_address(ai),
-                         protocol == IPPROTO_TCP ? BIO_SOCK_NODELAY : 0)) {
+                         BIO_ADDRINFO_protocol(ai) == IPPROTO_TCP ? BIO_SOCK_NODELAY : 0)) {
             BIO_closesocket(*sock);
             *sock = INVALID_SOCKET;
             continue;
