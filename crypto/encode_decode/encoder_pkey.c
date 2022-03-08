@@ -254,6 +254,11 @@ static int ossl_encoder_ctx_setup_for_pkey(OSSL_ENCODER_CTX *ctx,
          * First, collect the keymgmt names, then the encoders that match.
          */
         keymgmt_data.names = sk_OPENSSL_CSTRING_new_null();
+        if (keymgmt_data.names == NULL) {
+            ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+
         keymgmt_data.error_occurred = 0;
         EVP_KEYMGMT_names_do_all(pkey->keymgmt, collect_name, &keymgmt_data);
         if (keymgmt_data.error_occurred) {
