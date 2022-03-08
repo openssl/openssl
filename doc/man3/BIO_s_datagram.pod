@@ -24,9 +24,9 @@ BIO_dgram_sctp_msg_waiting, BIO_dgram_non_fatal_error - datagram BIO
 
 =head1 DESCRIPTION
 
-BIO_s_datagram() returns the datagram BIO method.
+BIO_s_datagram() returns the datagram BIO_METHOD.
 
-BIO_s_datagram_sctp() returns the SCTP datagram BIO method.
+BIO_s_datagram_sctp() returns the SCTP datagram BIO_METHOD.
 
 BIO_new_dgram() creates a new datagram BIO.
 
@@ -122,7 +122,7 @@ the B<MSG_NOSIGNAL> flag but all send()/sendto() flags are supported.
 
 =head1 RETURN VALUES
 
-BIO_s_datagram() returns the datagram BIO method.
+BIO_s_datagram() returns the datagram BIO_METHOD.
 
 BIO_new_dgram() returns the newly allocated datagram BIO or NULL
 if an error occurred.
@@ -130,7 +130,7 @@ if an error occurred.
 BIO_new_dgram_sctp() returns the newly allocated SCTP datagram BIO or NULL
 if an error occurred.
 
-BIO_s_datagram_sctp() returns the SCTP datagram BIO method.
+BIO_s_datagram_sctp() returns the SCTP datagram BIO_METHOD.
 
 BIO_dgram_is_sctp() returns 1 if the BIO is of type SCTP datagram or 0
 if not.
