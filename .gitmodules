@@ -22,3 +22,6 @@
 [submodule "tlslite-ng"]
 	path = tlslite-ng
 	url = https://github.com/tlsfuzzer/tlslite-ng
+[submodule "oqs-provider"]
+	path = oqs-provider
+	url = https://github.com/open-quantum-safe/oqs-provider.git
