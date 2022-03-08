@@ -1859,7 +1859,7 @@ WORK_STATE tls_post_process_server_certificate(SSL *s, WORK_STATE wst)
     size_t certidx;
     int i;
 
-    if (s->rwstate == SSL_RETRY_VERIFY) /* reset the SSL_RETRY_VERIFY state */
+    if (s->rwstate == SSL_RETRY_VERIFY)
         s->rwstate = SSL_NOTHING;
     i = ssl_verify_cert_chain(s, s->session->peer_chain);
     if (i > 0 && s->rwstate == SSL_RETRY_VERIFY) {
