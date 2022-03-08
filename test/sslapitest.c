@@ -563,7 +563,7 @@ static int verify_retry_cb(X509_STORE_CTX *ctx, void *arg)
     /* this should not happen but check anyway */
     if (idx < 0
         || (ssl = X509_STORE_CTX_get_ex_data(ctx, idx)) == NULL)
-        return -1;
+        return 0;
 
     if (res == 0 && X509_STORE_CTX_get_error(ctx) ==
         X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY)

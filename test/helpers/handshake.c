@@ -311,7 +311,7 @@ static int verify_retry_cb(X509_STORE_CTX *ctx, void *arg) {
     /* this should not happen but check anyway */
     if (idx < 0
         || (ssl = X509_STORE_CTX_get_ex_data(ctx, idx)) == NULL)
-        return -1;
+        return 0;
 
     if (--n_retries < 0)
         return 1;
