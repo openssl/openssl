@@ -117,9 +117,8 @@ example to exclude the "mceliece" and "kyber" algorithms execute
 
     OQS_SKIP_TESTS=mceliece,kyber make test TESTS=test_external_oqsprovider
 
-The names of all supported quantum-safe algorithms are available at 
-https://github.com/open-quantum-safe/openssl#supported-algorithms
-
+The names of all supported quantum-safe algorithms are available at
+<https://github.com/open-quantum-safe/openssl#supported-algorithms>
 
 Updating test suites
 ====================
