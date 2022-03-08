@@ -48,11 +48,20 @@ echo "------------------------------------------------------------------"
 if [ ! -d $SRCTOP/oqs-provider/oqs ]; then
 # disable rainbow family by default; all further config options listed at
 # https://github.com/open-quantum-safe/liboqs/wiki/Customizing-liboqs
-   cd $SRCTOP/oqs-provider && git clone --depth 1 --branch main https://github.com/open-quantum-safe/liboqs.git && cd liboqs && mkdir build && cd build && cmake -DOQS_ENABLE_SIG_RAINBOW=OFF -DCMAKE_INSTALL_PREFIX=$SRCTOP/oqs-provider/oqs .. && make && make install
+(
+       cd $SRCTOP/oqs-provider \
+           && git clone --depth 1 --branch main https://github.com/open-quantum-safe/liboqs.git \
+           && cd liboqs \
+           && mkdir build \
+           && cd build \
+           && cmake -DOQS_ENABLE_SIG_RAINBOW=OFF -DCMAKE_INSTALL_PREFIX=$SRCTOP/oqs-provider/oqs .. \
+           && make \
+           && make install
+   )
 fi
 
 if [ ! -f $SRCTOP/oqs-provider/test/ssltestlib.c ]; then
-   cd $SRCTOP/oqs-provider && OPENSSL_BLDTOP=$BLDTOP ./scripts/preptests.sh
+   ( cd $SRCTOP/oqs-provider && OPENSSL_BLDTOP=$BLDTOP ./scripts/preptests.sh )
 fi
 
 echo "   CWD:                $PWD"
