@@ -39,34 +39,36 @@ all platforms.
 
 The socket BIO supports the following ctrls via the L<BIO_ctrl(3)> function:
 
-B<BIO_C_SET_FD>
+=over 4
+=item <BIO_C_SET_FD>
 
-B<BIO_C_GET_FD>
+=item <BIO_C_GET_FD>
 
-B<BIO_CTRL_GET_CLOSE>
+=item <BIO_CTRL_GET_CLOSE>
 
-B<BIO_CTRL_SET_CLOSE>
+=item <BIO_CTRL_SET_CLOSE>
 
-B<BIO_CTRL_DUP>
+=item <BIO_CTRL_DUP>
 
-B<BIO_CTRL_FLUSH>
+=item <BIO_CTRL_FLUSH>
 
-B<BIO_CTRL_SET_KTLS>
+=item <BIO_CTRL_SET_KTLS>
 
-B<BIO_CTRL_GET_KTLS_SEND>
+=item <BIO_CTRL_GET_KTLS_SEND>
 
-B<BIO_CTRL_GET_KTLS_RECV>
+=item <BIO_CTRL_GET_KTLS_RECV>
 
-B<BIO_CTRL_SET_KTLS_TX_SEND_CTRL_MSG>
+=item <BIO_CTRL_SET_KTLS_TX_SEND_CTRL_MSG>
 
-B<BIO_CTRL_CLEAR_KTLS_TX_CTRL_MSG>
+=item <BIO_CTRL_CLEAR_KTLS_TX_CTRL_MSG>
 
-B<BIO_CTRL_EOF>
+=item <BIO_CTRL_EOF>
 
-B<BIO_CTRL_SET_SEND_FLAGS> the I<larg> argument is used for the I<flags>
+=item <BIO_CTRL_SET_SEND_FLAGS> the I<larg> argument is used for the I<flags>
 argument to send() and/or sendto(), the main use case is for the caller to set
 the B<MSG_NOSIGNAL> flag but all send()/sendto() flags are supported. 
 
+=back
 
 =head1 RETURN VALUES
 
