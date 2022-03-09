@@ -460,7 +460,7 @@ B<SessionTicket>: session ticket support, enabled by default. Inverse of
 B<SSL_OP_NO_TICKET>: that is B<-SessionTicket> is the same as setting
 B<SSL_OP_NO_TICKET>.
 
-B<Compression>: SSL/TLS compression support, enabled by default. Inverse
+B<Compression>: SSL/TLS compression support, disabled by default. Inverse
 of B<SSL_OP_NO_COMPRESSION>.
 
 B<EmptyFragments>: use empty fragments as a countermeasure against a
