@@ -136,7 +136,7 @@ BIO_set_conn_address(), BIO_get_conn_port(), BIO_get_conn_address(),
 BIO_set_conn_ip_family(), BIO_get_conn_ip_family(),
 BIO_set_nbio(), and BIO_do_connect() are macros.
 
-=head1 CTRLs
+=head1 CTRLS
 
 The connect BIO supports the following ctrls via the L<BIO_ctrl(3)> function:
 
