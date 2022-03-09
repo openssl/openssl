@@ -126,6 +126,7 @@ The manual pages for the master branch and all current stable releases are
 available online.
 
 - [OpenSSL master](https://www.openssl.org/docs/manmaster)
+- [OpenSSL 3.0](https://www.openssl.org/docs/man3.0)
 - [OpenSSL 1.1.1](https://www.openssl.org/docs/man1.1.1)
 
 Wiki
