@@ -35,6 +35,42 @@ platforms sockets are not file descriptors and use distinct I/O routines,
 Windows is one such platform. Any code mixing the two will not work on
 all platforms.
 
+=head1 CTRLS
+
+The socket BIO supports the following ctrls via the L<BIO_ctrl(3)> function:
+
+=over 4
+
+=item <BIO_C_SET_FD>
+
+=item <BIO_C_GET_FD>
+
+=item <BIO_CTRL_GET_CLOSE>
+
+=item <BIO_CTRL_SET_CLOSE>
+
+=item <BIO_CTRL_DUP>
+
+=item <BIO_CTRL_FLUSH>
+
+=item <BIO_CTRL_SET_KTLS>
+
+=item <BIO_CTRL_GET_KTLS_SEND>
+
+=item <BIO_CTRL_GET_KTLS_RECV>
+
+=item <BIO_CTRL_SET_KTLS_TX_SEND_CTRL_MSG>
+
+=item <BIO_CTRL_CLEAR_KTLS_TX_CTRL_MSG>
+
+=item <BIO_CTRL_EOF>
+
+=item <BIO_CTRL_SET_SEND_FLAGS> the I<larg> argument is used for the I<flags>
+argument to send() and/or sendto(), the main use case is for the caller to set
+the B<MSG_NOSIGNAL> flag but all send()/sendto() flags are supported. 
+
+=back
+
 =head1 RETURN VALUES
 
 BIO_s_socket() returns the socket BIO method.

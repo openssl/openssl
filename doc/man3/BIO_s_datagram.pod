@@ -1,0 +1,152 @@
+=pod
+
+=head1 NAME
+
+BIO_s_datagram, BIO_s_datagram_sctp,
+BIO_new_dgram, BIO_new_dgram_sctp,
+BIO_dgram_is_sctp, BIO_dgram_sctp_wait_for_dry,
+BIO_dgram_sctp_msg_waiting, BIO_dgram_non_fatal_error - datagram BIO
+
+=head1 SYNOPSIS
+
+ #include <openssl/bio.h>
+
+ const BIO_METHOD *BIO_s_datagram(void);
+ const BIO_METHOD *BIO_s_datagram_sctp(void);
+
+ BIO *BIO_new_dgram(int fd, int close_flag);
+ BIO *BIO_new_dgram_sctp(int fd, int close_flag);
+
+ int BIO_dgram_is_sctp(BIO *bio);
+ int BIO_dgram_sctp_wait_for_dry(BIO *b);
+ int BIO_dgram_sctp_msg_waiting(BIO *b);
+ int BIO_dgram_non_fatal_error(int err);
+
+=head1 DESCRIPTION
+
+BIO_s_datagram() returns the datagram BIO_METHOD.
+
+BIO_s_datagram_sctp() returns the SCTP datagram BIO_METHOD.
+
+BIO_new_dgram() creates a new datagram BIO.
+
+BIO_new_dgram_sctp() creates a new SCTP datagram BIO.
+
+BIO_dgram_is_sctp() tests if the datagram BIO is a SCTP datagram BIO.
+
+BIO_dgram_sctp_wait_for_dry() waits until the peer confirms all
+packets have been received.
+
+BIO_dgram_sctp_msg_waiting() checks if there are any messages
+waiting to be read.
+
+BIO_dgram_non_fatal_error() checks if the error code was a fatal
+one or not.
+
+=head1 CTRLS
+
+The datagram BIO supports the following ctrls via the L<BIO_ctrl(3)> function:
+
+=over 4
+
+=item <BIO_CTRL_RESET>
+
+=item <BIO_CTRL_INFO>
+
+=item <BIO_C_SET_FD>
+
+=item <BIO_C_GET_FD>
+
+=item <BIO_CTRL_GET_CLOSE>
+
+=item <BIO_CTRL_SET_CLOSE>
+
+=item <BIO_CTRL_PENDING>
+
+=item <BIO_CTRL_WPENDING>
+
+=item <BIO_CTRL_DUP>
+
+=item <BIO_CTRL_FLUSH>
+
+=item <BIO_CTRL_DGRAM_CONNECT>
+
+=item <BIO_CTRL_DGRAM_MTU_DISCOVER>
+
+=item <BIO_CTRL_DGRAM_QUERY_MTU>
+
+=item <BIO_CTRL_DGRAM_GET_FALLBACK_MTU>
+
+=item <BIO_CTRL_DGRAM_GET_MTU>
+
+=item <BIO_CTRL_DGRAM_SET_MTU>
+
+=item <BIO_CTRL_DGRAM_SET_CONNECTED>
+
+=item <BIO_CTRL_DGRAM_GET_PEER>
+
+=item <BIO_CTRL_DGRAM_SET_PEER>
+
+=item <BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT>
+
+=item <BIO_CTRL_DGRAM_SET_RECV_TIMEOUT>
+
+=item <BIO_CTRL_DGRAM_GET_RECV_TIMEOUT>
+
+=item <BIO_CTRL_DGRAM_SET_SEND_TIMEOUT>
+
+=item <BIO_CTRL_DGRAM_GET_SEND_TIMEOUT>
+
+=item <BIO_CTRL_DGRAM_GET_SEND_TIMER_EXP>
+
+=item <BIO_CTRL_DGRAM_GET_RECV_TIMER_EXP>
+
+=item <BIO_CTRL_DGRAM_MTU_EXCEEDED>
+
+=item <BIO_CTRL_DGRAM_SET_DONT_FRAG>
+
+=item <BIO_CTRL_DGRAM_GET_MTU_OVERHEAD>
+
+=item <BIO_CTRL_DGRAM_SCTP_SET_IN_HANDSHAKE>
+
+=item <BIO_CTRL_DGRAM_SET_PEEK_MODE>
+
+=item <BIO_CTRL_SET_SEND_FLAGS> the I<larg> argument is used for the I<flags>
+argument to send() and/or sendto(), the main use case is for the caller to set
+the B<MSG_NOSIGNAL> flag but all send()/sendto() flags are supported. 
+
+=back
+
+=head1 RETURN VALUES
+
+BIO_s_datagram() returns the datagram BIO_METHOD.
+
+BIO_new_dgram() returns the newly allocated datagram BIO or NULL
+if an error occurred.
+
+BIO_new_dgram_sctp() returns the newly allocated SCTP datagram BIO or NULL
+if an error occurred.
+
+BIO_s_datagram_sctp() returns the SCTP datagram BIO_METHOD.
+
+BIO_dgram_is_sctp() returns 1 if the BIO is of type SCTP datagram or 0
+if not.
+
+BIO_dgram_sctp_wait_for_dry() returns 1 if dry, 0 if not and -1 on error.
+
+BIO_dgram_sctp_msg_waiting() returns 1 if there is a message to be read or
+0 if there isn't.
+
+BIO_dgram_non_fatal_error() returns 1 if the error wasn't fatal, or 0
+if it was.
+
+=head1 COPYRIGHT
+
+Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

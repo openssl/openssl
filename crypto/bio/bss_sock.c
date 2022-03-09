@@ -138,7 +138,7 @@ static int sock_write(BIO *b, const char *in, int inl)
         }
     } else
 # endif
-        ret = writesocket(b->num, in, inl);
+        ret = writesocket(b->num, in, inl, b->send_flags);
     BIO_clear_retry_flags(b);
     if (ret <= 0) {
         if (BIO_sock_should_retry(ret))
@@ -204,6 +204,9 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
 # endif
     case BIO_CTRL_EOF:
         ret = (b->flags & BIO_FLAGS_IN_EOF) != 0;
+        break;
+    case BIO_CTRL_SET_SEND_FLAGS:
+        b->send_flags = num;
         break;
     default:
         ret = 0;

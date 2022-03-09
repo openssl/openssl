@@ -361,7 +361,7 @@ static int conn_write(BIO *b, const char *in, int inl)
         }
     } else
 # endif
-        ret = writesocket(b->num, in, inl);
+        ret = writesocket(b->num, in, inl, b->send_flags);
     BIO_clear_retry_flags(b);
     if (ret <= 0) {
         if (BIO_sock_should_retry(ret))
@@ -558,6 +558,9 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_CLEAR_KTLS_TX_CTRL_MSG:
         BIO_clear_ktls_ctrl_msg_flag(b);
         ret = 0;
+        break;
+    case BIO_CTRL_SET_SEND_FLAGS:
+        b->send_flags = num;
         break;
 # endif
     default:
