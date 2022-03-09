@@ -35,11 +35,12 @@ platforms sockets are not file descriptors and use distinct I/O routines,
 Windows is one such platform. Any code mixing the two will not work on
 all platforms.
 
-=head1 CTRLs
+=head1 CTRLS
 
 The socket BIO supports the following ctrls via the L<BIO_ctrl(3)> function:
 
 =over 4
+
 =item <BIO_C_SET_FD>
 
 =item <BIO_C_GET_FD>
