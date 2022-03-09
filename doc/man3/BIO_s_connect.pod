@@ -141,6 +141,7 @@ BIO_set_nbio(), and BIO_do_connect() are macros.
 The connect BIO supports the following ctrls via the L<BIO_ctrl(3)> function:
 
 =over 4
+
 =item <BIO_CTRL_RESET>
 
 =item <BIO_C_DO_STATE_MACHINE>
