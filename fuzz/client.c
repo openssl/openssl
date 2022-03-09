@@ -55,23 +55,30 @@ int FuzzerInitialize(int *argc, char ***argv)
 
 int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
-    SSL *client;
-    BIO *in;
-    BIO *out;
-    SSL_CTX *ctx;
+    SSL *client = NULL;
+    BIO *in = NULL;
+    BIO *out = NULL;
+    SSL_CTX *ctx = NULL;
 
     if (len == 0)
         return 0;
 
     /* This only fuzzes the initial flow from the client so far. */
     ctx = SSL_CTX_new(SSLv23_method());
+    if (ctx == NULL)
+        goto end;
 
     client = SSL_new(ctx);
+    if (client == NULL)
+        goto end;
     OPENSSL_assert(SSL_set_min_proto_version(client, 0) == 1);
     OPENSSL_assert(SSL_set_cipher_list(client, "ALL:eNULL:@SECLEVEL=0") == 1);
     SSL_set_tlsext_host_name(client, "localhost");
     in = BIO_new(BIO_s_mem());
     out = BIO_new(BIO_s_mem());
+    if (in == NULL || out == NULL) {
+	goto end;
+    }
     SSL_set_bio(client, in, out);
     SSL_set_connect_state(client);
     OPENSSL_assert((size_t)BIO_write(in, buf, len) == len);
@@ -84,6 +91,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
             }
         }
     }
+ end:
     SSL_free(client);
     ERR_clear_error();
     SSL_CTX_free(ctx);
