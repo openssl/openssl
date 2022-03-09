@@ -2,9 +2,9 @@
 
 =head1 NAME
 
-BIO_s_datagram, BIO_s_datagram_sctp
-BIO_new_dgram, BIO_new_dgram_sctp
-BIO_dgram_is_sctp, BIO_dgram_sctp_wait_for_dry
+BIO_s_datagram, BIO_s_datagram_sctp,
+BIO_new_dgram, BIO_new_dgram_sctp,
+BIO_dgram_is_sctp, BIO_dgram_sctp_wait_for_dry,
 BIO_dgram_sctp_msg_waiting, BIO_dgram_non_fatal_error - datagram BIO
 
 =head1 SYNOPSIS
