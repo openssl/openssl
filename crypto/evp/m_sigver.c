@@ -231,7 +231,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
              * We're about to get a new digest so clear anything associated with
              * an old digest.
              */
-            evp_md_ctx_clear_digest(ctx, 1);
+            evp_md_ctx_clear_digest(ctx, 1, 0);
 
             /* legacy code support for engines */
             ERR_set_mark();
