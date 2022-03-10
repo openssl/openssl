@@ -62,13 +62,15 @@ int EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *ctx)
     ENGINE_finish(ctx->engine);
 #endif
     memset(ctx, 0, sizeof(*ctx));
-    ctx->iv_len = 0;
+    ctx->iv_len = -1;
     return 1;
 }
 
 EVP_CIPHER_CTX *EVP_CIPHER_CTX_new(void)
 {
-    return OPENSSL_zalloc(sizeof(EVP_CIPHER_CTX));
+    EVP_CIPHER_CTX *ctx = OPENSSL_zalloc(sizeof(EVP_CIPHER_CTX));
+    ctx->iv_len = -1;
+    return ctx;
 }
 
 void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx)
@@ -89,8 +91,6 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
     ENGINE *tmpimpl = NULL;
 #endif
-
-    ctx->iv_len = -1;
 
     /*
      * enc == 1 means we are encrypting.
