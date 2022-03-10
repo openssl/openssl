@@ -141,7 +141,7 @@ static int dh_set_peer(void *vpdhctx, void *vdh)
 
 static int dh_plain_derive(void *vpdhctx,
                            unsigned char *secret, size_t *secretlen,
-                           size_t outlen)
+                           size_t outlen, unsigned int pad)
 {
     PROV_DH_CTX *pdhctx = (PROV_DH_CTX *)vpdhctx;
     int ret;
@@ -164,7 +164,7 @@ static int dh_plain_derive(void *vpdhctx,
     }
 
     DH_get0_key(pdhctx->dhpeer, &pub_key, NULL);
-    if (pdhctx->pad)
+    if (pad)
         ret = DH_compute_key_padded(secret, pub_key, pdhctx->dh);
     else
         ret = DH_compute_key(secret, pub_key, pdhctx->dh);
@@ -192,13 +192,13 @@ static int dh_X9_42_kdf_derive(void *vpdhctx, unsigned char *secret,
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;
     }
-    if (!dh_plain_derive(pdhctx, NULL, &stmplen, 0))
+    if (!dh_plain_derive(pdhctx, NULL, &stmplen, 0, 1))
         return 0;
     if ((stmp = OPENSSL_secure_malloc(stmplen)) == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    if (!dh_plain_derive(pdhctx, stmp, &stmplen, stmplen))
+    if (!dh_plain_derive(pdhctx, stmp, &stmplen, stmplen, 1))
         goto err;
 
     /* Do KDF stuff */
@@ -229,7 +229,8 @@ static int dh_derive(void *vpdhctx, unsigned char *secret,
 
     switch (pdhctx->kdf_type) {
         case PROV_DH_KDF_NONE:
-            return dh_plain_derive(pdhctx, secret, psecretlen, outlen);
+            return dh_plain_derive(pdhctx, secret, psecretlen, outlen,
+                                   pdhctx->pad);
         case PROV_DH_KDF_X9_42_ASN1:
             return dh_X9_42_kdf_derive(pdhctx, secret, psecretlen, outlen);
         default:
