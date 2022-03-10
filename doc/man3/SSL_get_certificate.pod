@@ -51,7 +51,8 @@ to the certificate returned by SSL_get_certificate(), if any.
 =head1 RETURN VALUES
 
 These functions return pointers to their respective objects, or NULL if no such
-object is available.
+object is available. Returned objects are owned by the SSL object and should not
+be freed by users of these functions.
 
 =head1 SEE ALSO
 
