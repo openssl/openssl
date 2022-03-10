@@ -811,7 +811,7 @@ my %globals;
 				    }
 				    last;
 				  };
-		/\.rva|\.long|\.quad/
+		/\.rva|\.long|\.quad|\.byte/
 			    && do { $$line =~ s/([_a-z][_a-z0-9]*)/$globals{$1} or $1/gei;
 				    $$line =~ s/\.L/$decor/g;
 				    last;
