@@ -1876,6 +1876,51 @@ static int pderive_test_parse(EVP_TEST *t,
         return parse_bin(value, &kdata->output, &kdata->output_len);
     if (strcmp(keyword, "Ctrl") == 0)
         return pkey_test_ctrl(t, kdata->ctx, value);
+    if (strcmp(keyword, "KDFType") == 0) {
+        OSSL_PARAM params[2];
+
+        params[0] = OSSL_PARAM_construct_utf8_string(OSSL_EXCHANGE_PARAM_KDF_TYPE,
+                                                     (char *)value, 0);
+        params[1] = OSSL_PARAM_construct_end();
+        if (EVP_PKEY_CTX_set_params(kdata->ctx, params) == 0)
+            return -1;
+        return 1;
+    }
+    if (strcmp(keyword, "KDFDigest") == 0) {
+        OSSL_PARAM params[2];
+
+        params[0] = OSSL_PARAM_construct_utf8_string(OSSL_EXCHANGE_PARAM_KDF_DIGEST,
+                                                     (char *)value, 0);
+        params[1] = OSSL_PARAM_construct_end();
+        if (EVP_PKEY_CTX_set_params(kdata->ctx, params) == 0)
+            return -1;
+        return 1;
+    }
+    if (strcmp(keyword, "CEKAlg") == 0) {
+        OSSL_PARAM params[2];
+
+        params[0] = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CEK_ALG,
+                                                     (char *)value, 0);
+        params[1] = OSSL_PARAM_construct_end();
+        if (EVP_PKEY_CTX_set_params(kdata->ctx, params) == 0)
+            return -1;
+        return 1;
+    }
+    if (strcmp(keyword, "KDFOutlen") == 0) {
+        OSSL_PARAM params[2];
+        char *endptr;
+        size_t outlen = (size_t)strtoul(value, &endptr, 0);
+
+        if (endptr[0] != '\0')
+            return -1;
+
+        params[0] = OSSL_PARAM_construct_size_t(OSSL_EXCHANGE_PARAM_KDF_OUTLEN,
+                                                &outlen);
+        params[1] = OSSL_PARAM_construct_end();
+        if (EVP_PKEY_CTX_set_params(kdata->ctx, params) == 0)
+            return -1;
+        return 1;
+    }
     return 0;
 }
 
@@ -1891,7 +1936,8 @@ static int pderive_test_run(EVP_TEST *t)
         goto err;
     }
 
-    if (EVP_PKEY_derive(dctx, NULL, &got_len) <= 0) {
+    if (EVP_PKEY_derive(dctx, NULL, &got_len) <= 0
+        || !TEST_size_t_ne(got_len, 0)) {
         t->err = "DERIVE_ERROR";
         goto err;
     }
