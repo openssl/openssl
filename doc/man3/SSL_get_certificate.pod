@@ -14,7 +14,7 @@ private key
 
 =head1 DESCRIPTION
 
-SSL_get_certificate() returns a pointer to a B<X509> object representing a
+SSL_get_certificate() returns a pointer to an B<X509> object representing a
 certificate used as the local peer's identity.
 
 Multiple certificates can be configured; for example, a server might have both
