@@ -36,7 +36,8 @@ In server mode, a return value of 0 leads to handshake failure.
 In client mode, the behaviour is as follows.
 All values, including 0, are ignored
 if the verification mode is B<SSL_VERIFY_NONE>.
-Otherwise, when the return value is 0, the handshake will fail.
+Otherwise, when the return value is less than or equal to 0, the handshake will
+fail.
 
 In client mode I<callback> may also call the L<SSL_set_retry_verify(3)>
 function on the B<SSL> object set in the I<x509_store_ctx> ex data (see
