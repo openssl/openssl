@@ -110,11 +110,13 @@ SKIP: {
     subtest "SHA1 generation by engine with `dgst` CLI" => sub {
         plan tests => 1;
 
+        local $ENV{OPENSSL_ENGINES} = bldtop_dir("engines");
+
         my $testdata = srctop_file('test', 'data.bin');
         # intentionally using -engine twice, please do not remove the duplicate line
         my @macdata = run(app(['openssl', 'dgst', '-sha1',
-                               '-engine', $^O eq 'linux' ? bldtop_file("engines", "ossltest.so") : "ossltest",
-                               '-engine', $^O eq 'linux' ? bldtop_file("engines", "ossltest.so") : "ossltest",
+                               '-engine', "ossltest",
+                               '-engine', "ossltest",
                                $testdata]), capture => 1);
         chomp(@macdata);
         my $expected = qr/SHA1\(\Q$testdata\E\)= 000102030405060708090a0b0c0d0e0f10111213/;
