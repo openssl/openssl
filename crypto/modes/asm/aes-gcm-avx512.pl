@@ -4767,7 +4767,7 @@ ___
 .align  8
 .L${func_name}_seh_info:
     .byte   1   # version 1, no flags
-    .byte   \$L\$${func_name}_seh_prolog_end-\$L\$${func_name}_seh_begin
+    .byte   .L${func_name}_seh_prolog_end-.L${func_name}_seh_begin
     .byte   31 # num_slots = 1*8 + 2 + 1 + 2*10
     # FR = rbp; Offset from RSP = $XMM_STORAGE scaled on 16
     .byte   @{[$UWOP_REG_NUMBER{rbp} | (($XMM_STORAGE / 16 ) << 4)]}
@@ -4780,7 +4780,7 @@ ___
       # Scaled-by-16 stack offset
       my $xmm_reg_offset = ($reg_idx - 6);
       $code .= <<___;
-    .byte   \$L\$${func_name}_seh_save_xmm${reg_idx}-\$L\$${func_name}_seh_begin
+    .byte   .L${func_name}_seh_save_xmm${reg_idx}-.L${func_name}_seh_begin
     .byte   @{[$UWOP_SAVE_XMM128 | (${reg_idx} << 4)]}
     .value  $xmm_reg_offset
 ___
@@ -4788,11 +4788,11 @@ ___
 
     $code .= <<___;
     # Frame pointer (occupy 1 slot)
-    .byte   \$L\$${func_name}_seh_setfp-\$L\$${func_name}_seh_begin
+    .byte   .L${func_name}_seh_setfp-.L${func_name}_seh_begin
     .byte   $UWOP_SET_FPREG
 
     # Occupy 2 slots, as stack allocation < 512K, but > 128 bytes
-    .byte   \$L\$${func_name}_seh_allocstack_xmm-\$L\$${func_name}_seh_begin
+    .byte   .L${func_name}_seh_allocstack_xmm-.L${func_name}_seh_begin
     .byte   $UWOP_ALLOC_LARGE
     .value  `($XMM_STORAGE + 8) / 8`
 ___
@@ -4801,7 +4801,7 @@ ___
     # Occupy 1 slot each
     foreach my $reg ("rsi", "rdi", "r15", "r14", "r13", "r12", "rbp", "rbx") {
       $code .= <<___;
-    .byte   \$L\$${func_name}_seh_push_${reg}-\$L\$${func_name}_seh_begin
+    .byte   .L${func_name}_seh_push_${reg}-.L${func_name}_seh_begin
     .byte   @{[$UWOP_PUSH_NONVOL | ($UWOP_REG_NUMBER{$reg} << 4)]}
 ___
     }
