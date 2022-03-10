@@ -101,10 +101,10 @@ cleanup:
  * The number of bits is specified by the bits argument.
  *
  * This uses a more concise way of generating an RSA key, which is suitable for
- * simple cases. It is shown for demonstration but is not used by the code
- * below.
+ * simple cases. It is used if -s is passed on the command line, otherwise the
+ * long method above is used. The ability to choose between these two methods is
+ * shown here only for demonstration; the results are equivalent.
  */
-#if 0
 static EVP_PKEY *generate_rsa_key_short(OSSL_LIB_CTX *libctx, unsigned int bits)
 {
     EVP_PKEY *pkey = NULL;
@@ -117,7 +117,6 @@ static EVP_PKEY *generate_rsa_key_short(OSSL_LIB_CTX *libctx, unsigned int bits)
 
     return pkey;
 }
-#endif
 
 /*
  * Prints information on an EVP_PKEY object representing an RSA key pair.
@@ -244,7 +243,14 @@ int main(int argc, char **argv)
     OSSL_LIB_CTX *libctx = NULL;
     EVP_PKEY *pkey = NULL;
     unsigned int bits = 4096;
-    int bits_i;
+    int bits_i, use_short = 0;
+
+    /* usage: [-s] [<bits>] */
+    if (argc > 1 && strcmp(argv[1], "-s") == 0) {
+        --argc;
+        ++argv;
+        use_short = 1;
+    }
 
     if (argc > 1) {
         bits_i = atoi(argv[1]);
@@ -261,7 +267,11 @@ int main(int argc, char **argv)
         fprintf(stderr, "Warning: very weak key size\n\n");
 
     /* Generate RSA key. */
-    pkey = generate_rsa_key_long(libctx, bits);
+    if (use_short)
+        pkey = generate_rsa_key_short(libctx, bits);
+    else
+        pkey = generate_rsa_key_long(libctx, bits);
+
     if (pkey == NULL)
         goto cleanup;
 
