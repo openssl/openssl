@@ -62,13 +62,20 @@ int EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *ctx)
     ENGINE_finish(ctx->engine);
 #endif
     memset(ctx, 0, sizeof(*ctx));
-    ctx->iv_len = 0;
+    ctx->iv_len = -1;
     return 1;
 }
 
 EVP_CIPHER_CTX *EVP_CIPHER_CTX_new(void)
 {
-    return OPENSSL_zalloc(sizeof(EVP_CIPHER_CTX));
+    EVP_CIPHER_CTX *ctx;
+
+    ctx = OPENSSL_zalloc(sizeof(EVP_CIPHER_CTX));
+    if (ctx == NULL)
+        return NULL;
+
+    ctx->iv_len = -1;
+    return ctx;
 }
 
 void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx)
@@ -89,8 +96,6 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
     ENGINE *tmpimpl = NULL;
 #endif
-
-    ctx->iv_len = -1;
 
     /*
      * enc == 1 means we are encrypting.
@@ -1277,13 +1282,17 @@ int EVP_CIPHER_CTX_set_params(EVP_CIPHER_CTX *ctx, const OSSL_PARAM params[])
         r = ctx->cipher->set_ctx_params(ctx->algctx, params);
         if (r > 0) {
             p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);
-            if (p != NULL && !OSSL_PARAM_get_int(p, &ctx->key_len))
+            if (p != NULL && !OSSL_PARAM_get_int(p, &ctx->key_len)) {
                 r = 0;
+                ctx->key_len = -1;
+            }
         }
         if (r > 0) {
             p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_IVLEN);
-            if (p != NULL && !OSSL_PARAM_get_int(p, &ctx->iv_len))
+            if (p != NULL && !OSSL_PARAM_get_int(p, &ctx->iv_len)) {
                 r = 0;
+                ctx->iv_len = -1;
+            }
         }
     }
     return r;
