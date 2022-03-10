@@ -40,7 +40,7 @@ static void cleanup_old_md_data(EVP_MD_CTX *ctx, int force)
     }
 }
 
-void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force)
+void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force, int keep_fetched)
 {
     if (ctx->algctx != NULL) {
         if (ctx->digest != NULL && ctx->digest->freectx != NULL)
@@ -65,13 +65,14 @@ void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force)
 #endif
 
     /* Non legacy code, this has to be later than the ctx->digest cleaning */
-    EVP_MD_free(ctx->fetched_digest);
-    ctx->fetched_digest = NULL;
-    ctx->reqdigest = NULL;
+    if (!keep_fetched) {
+        EVP_MD_free(ctx->fetched_digest);
+        ctx->fetched_digest = NULL;
+        ctx->reqdigest = NULL;
+    }
 }
 
-/* This call frees resources associated with the context */
-int EVP_MD_CTX_reset(EVP_MD_CTX *ctx)
+static int evp_md_ctx_reset_ex(EVP_MD_CTX *ctx, int keep_fetched)
 {
     if (ctx == NULL)
         return 1;
@@ -87,10 +88,17 @@ int EVP_MD_CTX_reset(EVP_MD_CTX *ctx)
     }
 #endif
 
-    evp_md_ctx_clear_digest(ctx, 0);
-    OPENSSL_cleanse(ctx, sizeof(*ctx));
+    evp_md_ctx_clear_digest(ctx, 0, keep_fetched);
+    if (!keep_fetched)
+        OPENSSL_cleanse(ctx, sizeof(*ctx));
 
     return 1;
+}
+
+/* This call frees resources associated with the context */
+int EVP_MD_CTX_reset(EVP_MD_CTX *ctx)
+{
+    return evp_md_ctx_reset_ex(ctx, 0);
 }
 
 #ifndef FIPS_MODULE
@@ -524,6 +532,7 @@ int EVP_MD_CTX_copy(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 
 int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 {
+    int digest_change = 0;
     unsigned char *tmp_buf;
 
     if (in == NULL) {
@@ -549,15 +558,16 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
         return 0;
     }
 
-    EVP_MD_CTX_reset(out);
-    if (out->fetched_digest != NULL)
+    evp_md_ctx_reset_ex(out, 1);
+    digest_change = (out->fetched_digest != in->fetched_digest);
+    if (digest_change && out->fetched_digest != NULL)
         EVP_MD_free(out->fetched_digest);
     *out = *in;
     /* NULL out pointers in case of error */
     out->pctx = NULL;
     out->algctx = NULL;
 
-    if (in->fetched_digest != NULL)
+    if (digest_change && in->fetched_digest != NULL)
         EVP_MD_up_ref(in->fetched_digest);
 
     if (in->algctx != NULL) {
