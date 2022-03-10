@@ -12,7 +12,7 @@ use warnings;
 
 use File::Spec;
 use File::Basename;
-use OpenSSL::Test qw/:DEFAULT with srctop_file bldtop_file/;
+use OpenSSL::Test qw/:DEFAULT with srctop_file bldtop_dir/;
 use OpenSSL::Test::Utils;
 
 setup("test_dgst");
@@ -113,8 +113,8 @@ SKIP: {
         my $testdata = srctop_file('test', 'data.bin');
         # intentionally using -engine twice, please do not remove the duplicate line
         my @macdata = run(app(['openssl', 'dgst', '-sha1',
-                               '-engine', $^O eq 'linux' ? bldtop_file("engines", "ossltest.so") : "ossltest",
-                               '-engine', $^O eq 'linux' ? bldtop_file("engines", "ossltest.so") : "ossltest",
+                               '-engine', "ossltest",
+                               '-engine', "ossltest",
                                $testdata]), capture => 1);
         chomp(@macdata);
         my $expected = qr/SHA1\(\Q$testdata\E\)= 000102030405060708090a0b0c0d0e0f10111213/;
