@@ -18,13 +18,13 @@ Key exchange support for the B<DH> key type.
 Sets the padding mode for the associated key exchange ctx.
 Setting a value of 1 will turn padding on.
 Setting a value of 0 will turn padding off.
-If padding is off then the derived shared secret may be smaller than the largest
-possible secret size.
-If padding is on then the derived shared secret will have its first bytes filled
-with 0s where necessary to make the shared secret the same size as the largest
-possible secret size. The padding mode parameter is ignored (and padding
-implicitly enabled) in case the KDF type is set to "X942KDF-ASN1"
-(B<OSSL_KDF_NAME_X942KDF_ASN1>).
+If padding is off then the derived shared secret may be smaller than the
+largest possible secret size.
+If padding is on then the derived shared secret will have its first bytes
+filled with zeros where necessary to make the shared secret the same size as
+the largest possible secret size.
+The padding mode parameter is ignored (and padding implicitly enabled) when
+the KDF type is set to "X942KDF-ASN1" (B<OSSL_KDF_NAME_X942KDF_ASN1>).
 
 =item "kdf-type" (B<OSSL_EXCHANGE_PARAM_KDF_TYPE>) <UTF8 string>
 
