@@ -21,6 +21,8 @@ Multiple certificates can be configured; for example, a server might have both
 RSA and ECDSA certificates. The certificate which is returned by
 SSL_get_certificate() is determined as follows:
 
+=over 4
+
 =item
 
 If it is called before certificate selection has occurred, it returns the most
