@@ -600,7 +600,8 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
                       const unsigned char *in, int inl)
 {
     int ret;
-    size_t soutl, blocksize, inl_ = (size_t)inl;
+    size_t soutl, inl_ = (size_t)inl;
+    int blocksize;
 
     if (outl != NULL) {
         *outl = 0;
@@ -629,8 +630,9 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
         ERR_raise(ERR_LIB_EVP, EVP_R_UPDATE_ERROR);
         return 0;
     }
+
     ret = ctx->cipher->cupdate(ctx->algctx, out, &soutl,
-                               inl_ + (blocksize == 1 ? 0 : blocksize),
+                               inl_ + (size_t)(blocksize == 1 ? 0 : blocksize),
                                in, inl_);
 
     if (ret) {
@@ -747,7 +749,8 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 {
     int fix_len, cmpl = inl, ret;
     unsigned int b;
-    size_t soutl, blocksize, inl_ = inl;
+    size_t soutl, inl_ = (size_t)inl;
+    int blocksize;
 
     if (outl != NULL) {
         *outl = 0;
@@ -776,7 +779,7 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
         return 0;
     }
     ret = ctx->cipher->cupdate(ctx->algctx, out, &soutl,
-                               inl_ + (blocksize == 1 ? 0 : blocksize),
+                               inl_ + (size_t)(blocksize == 1 ? 0 : blocksize),
                                in, inl_);
 
     if (ret) {
