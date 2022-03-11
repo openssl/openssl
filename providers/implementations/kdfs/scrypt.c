@@ -56,7 +56,7 @@ typedef struct {
 
 static void kdf_scrypt_init(KDF_SCRYPT *ctx);
 
-static void *kdf_scrypt_new(void *provctx)
+static void *kdf_scrypt_new_inner(OSSL_LIB_CTX *libctx)
 {
     KDF_SCRYPT *ctx;
 
@@ -68,9 +68,14 @@ static void *kdf_scrypt_new(void *provctx)
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    ctx->libctx = PROV_LIBCTX_OF(provctx);
+    ctx->libctx = libctx;
     kdf_scrypt_init(ctx);
     return ctx;
+}
+
+static void *kdf_scrypt_new(void *provctx)
+{
+    return kdf_scrypt_new_inner(PROV_LIBCTX_OF(provctx));
 }
 
 static void kdf_scrypt_free(void *vctx)
@@ -99,7 +104,7 @@ static void *kdf_scrypt_dup(void *vctx)
     const KDF_SCRYPT *src = (const KDF_SCRYPT *)vctx;
     KDF_SCRYPT *dest;
 
-    dest = kdf_scrypt_new(src->libctx);
+    dest = kdf_scrypt_new_inner(src->libctx);
     if (dest != NULL) {
         if (src->sha256 != NULL && !EVP_MD_up_ref(src->sha256))
             goto err;
