@@ -349,7 +349,7 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
         ERR_raise_data(ERR_LIB_EVP, code,
                        "%s, Algorithm (%s : %d), Properties (%s)",
                        ossl_lib_ctx_get_descriptor(methdata->libctx),
-                       name = NULL ? "<null>" : name, name_id,
+                       name == NULL ? "<null>" : name, name_id,
                        properties == NULL ? "<null>" : properties);
     }
 
