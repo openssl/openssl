@@ -33,7 +33,7 @@ IF[{- !$disabled{tests} -}]
   PROGRAMS{noinst}= \
           confdump \
           versions \
-          aborttest test_test pkcs12_format_test \
+          aborttest test_test pkcs12_format_test pkcs12_api_test \
           sanitytest rsa_complex exdatatest bntest \
           ecstresstest gmdifftest pbelutest \
           destest mdc2test sha_test \
@@ -288,6 +288,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[pkcs12_format_test]=pkcs12_format_test.c helpers/pkcs12.c
   INCLUDE[pkcs12_format_test]=../include ../apps/include
   DEPEND[pkcs12_format_test]=../libcrypto libtestutil.a
+
+  SOURCE[pkcs12_api_test]=pkcs12_api_test.c helpers/pkcs12.c
+  INCLUDE[pkcs12_api_test]=../include ../apps/include
+  DEPEND[pkcs12_api_test]=../libcrypto libtestutil.a
 
   SOURCE[pkcs7_test]=pkcs7_test.c
   INCLUDE[pkcs7_test]=../include ../apps/include
