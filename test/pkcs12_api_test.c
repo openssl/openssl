@@ -24,7 +24,6 @@
 static OSSL_LIB_CTX *testctx = NULL;
 static OSSL_PROVIDER *nullprov = NULL;
 static OSSL_PROVIDER *deflprov = NULL;
-static OSSL_PROVIDER *lgcyprov = NULL;
 
 static int test_null_args(void)
 {
@@ -92,6 +91,7 @@ err:
     PKCS12_free(p12);
     EVP_PKEY_free(key);
     X509_free(cert);
+    OSSL_STACK_OF_X509_free(ca);
     return TEST_true(ret);
 }
 
@@ -155,9 +155,6 @@ int setup_tests(void)
     deflprov = OSSL_PROVIDER_load(testctx, "default");
     if (!TEST_ptr(deflprov))
         return 0;
-    lgcyprov = OSSL_PROVIDER_load(testctx, "legacy");
-    if (!TEST_ptr(lgcyprov))
-        return 0;
 
     ADD_TEST(test_null_args);
     ADD_TEST(pkcs12_parse_test);
@@ -169,6 +166,5 @@ void cleanup_tests(void)
 {
     OSSL_PROVIDER_unload(nullprov);
     OSSL_PROVIDER_unload(deflprov);
-    OSSL_PROVIDER_unload(lgcyprov);
     OSSL_LIB_CTX_free(testctx);
 }
