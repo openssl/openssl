@@ -21,6 +21,7 @@
 #include "crypto/rand_pool.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
+#include "crypto/context_local.h"
 
 /*
  * Support framework for NIST SP 800-90A DRBG

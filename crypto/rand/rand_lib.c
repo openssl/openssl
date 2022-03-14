@@ -18,6 +18,7 @@
 #include "crypto/rand.h"
 #include "crypto/cryptlib.h"
 #include "rand_local.h"
+#include "crypto/context_local.h"
 
 #ifndef FIPS_MODULE
 # include <stdio.h>

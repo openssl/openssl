@@ -14,6 +14,7 @@
 #include "internal/property.h"
 #include "internal/provider.h"
 #include "store_local.h"
+#include "crypto/context_local.h"
 
 int OSSL_STORE_LOADER_up_ref(OSSL_STORE_LOADER *loader)
 {

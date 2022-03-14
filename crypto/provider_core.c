@@ -24,6 +24,7 @@
 #include "internal/bio.h"
 #include "internal/core.h"
 #include "provider_local.h"
+#include "context_local.h"
 #ifndef FIPS_MODULE
 # include <openssl/self_test.h>
 #endif

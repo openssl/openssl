@@ -23,6 +23,7 @@
 #include "crypto/rand_pool.h"
 #include "drbg_local.h"
 #include "prov/seeding.h"
+#include "crypto/context_local.h"
 
 typedef struct crng_test_global_st {
     unsigned char crngt_prev[EVP_MAX_MD_SIZE];

@@ -15,6 +15,7 @@
 #include "internal/property.h"
 #include "internal/core.h"
 #include "property_local.h"
+#include "crypto/context_local.h"
 
 /*
  * Implement a property definition cache.

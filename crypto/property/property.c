@@ -22,6 +22,7 @@
 #include "crypto/lhash.h"
 #include "crypto/sparse_array.h"
 #include "property_local.h"
+#include "crypto/context_local.h"
 
 /*
  * The number of elements in the query cache before we initiate a flush.

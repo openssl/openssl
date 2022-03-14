@@ -13,6 +13,7 @@
 #include <openssl/lhash.h>
 #include "crypto/lhash.h"
 #include "property_local.h"
+#include "crypto/context_local.h"
 
 /*
  * Property strings are a consolidation of all strings seen by the property

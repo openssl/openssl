@@ -17,6 +17,7 @@
 #include "internal/provider.h"
 #include "crypto/decoder.h"
 #include "encoder_local.h"
+#include "crypto/context_local.h"
 
 /*
  * Decoder can have multiple names, separated with colons in a name string

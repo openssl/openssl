@@ -13,6 +13,7 @@
 #include "crypto/lhash.h"      /* ossl_lh_strcasehash */
 #include "internal/tsan_assist.h"
 #include "internal/sizes.h"
+#include "context_local.h"
 
 /*-
  * The namenum entry

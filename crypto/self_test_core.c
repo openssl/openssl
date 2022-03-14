@@ -11,6 +11,7 @@
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include "internal/cryptlib.h"
+#include "context_local.h"
 
 typedef struct self_test_cb_st
 {
