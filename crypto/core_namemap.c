@@ -13,6 +13,7 @@
 #include "crypto/lhash.h"      /* ossl_lh_strcasehash */
 #include "internal/tsan_assist.h"
 #include "internal/sizes.h"
+#include "crypto/context.h"
 
 /*-
  * The namenum entry
@@ -61,7 +62,7 @@ static void namenum_free(NAMENUM_ENTRY *n)
 
 /* OSSL_LIB_CTX_METHOD functions for a namemap stored in a library context */
 
-static void *stored_namemap_new(OSSL_LIB_CTX *libctx)
+void *ossl_stored_namemap_new(OSSL_LIB_CTX *libctx)
 {
     OSSL_NAMEMAP *namemap = ossl_namemap_new();
 
@@ -71,7 +72,7 @@ static void *stored_namemap_new(OSSL_LIB_CTX *libctx)
     return namemap;
 }
 
-static void stored_namemap_free(void *vnamemap)
+void ossl_stored_namemap_free(void *vnamemap)
 {
     OSSL_NAMEMAP *namemap = vnamemap;
 
@@ -81,12 +82,6 @@ static void stored_namemap_free(void *vnamemap)
         ossl_namemap_free(namemap);
     }
 }
-
-static const OSSL_LIB_CTX_METHOD stored_namemap_method = {
-    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
-    stored_namemap_new,
-    stored_namemap_free,
-};
 
 /*-
  * API functions
@@ -469,8 +464,7 @@ OSSL_NAMEMAP *ossl_namemap_stored(OSSL_LIB_CTX *libctx)
     int nms;
 #endif
     OSSL_NAMEMAP *namemap =
-        ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_NAMEMAP_INDEX,
-                              &stored_namemap_method);
+        ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_NAMEMAP_INDEX);
 
     if (namemap == NULL)
         return NULL;

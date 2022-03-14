@@ -11,6 +11,7 @@
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include "internal/cryptlib.h"
+#include "crypto/context.h"
 
 typedef struct self_test_cb_st
 {
@@ -32,7 +33,7 @@ struct ossl_self_test_st
 };
 
 #ifndef FIPS_MODULE
-static void *self_test_set_callback_new(OSSL_LIB_CTX *ctx)
+void *ossl_self_test_set_callback_new(OSSL_LIB_CTX *ctx)
 {
     SELF_TEST_CB *stcb;
 
@@ -40,21 +41,14 @@ static void *self_test_set_callback_new(OSSL_LIB_CTX *ctx)
     return stcb;
 }
 
-static void self_test_set_callback_free(void *stcb)
+void ossl_self_test_set_callback_free(void *stcb)
 {
     OPENSSL_free(stcb);
 }
 
-static const OSSL_LIB_CTX_METHOD self_test_set_callback_method = {
-    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
-    self_test_set_callback_new,
-    self_test_set_callback_free,
-};
-
 static SELF_TEST_CB *get_self_test_callback(OSSL_LIB_CTX *libctx)
 {
-    return ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_SELF_TEST_CB_INDEX,
-                                 &self_test_set_callback_method);
+    return ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_SELF_TEST_CB_INDEX);
 }
 
 void OSSL_SELF_TEST_set_callback(OSSL_LIB_CTX *libctx, OSSL_CALLBACK *cb,
