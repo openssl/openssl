@@ -87,7 +87,6 @@ static int pkcs12_parse_test(void)
 
     ret = 1;
 err:
-    ERR_clear_error();
     PKCS12_free(p12);
     EVP_PKEY_free(key);
     X509_free(cert);

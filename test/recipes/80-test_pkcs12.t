@@ -92,7 +92,7 @@ ok(run(app(["openssl", "pkcs12", "-export", "-chain",
 
 # Test the -passcerts option
 SKIP: {
-    skip "Skipping PKCS#12 parse test because DES is disabled in this build", 1
+    skip "Skipping PKCS#12 test because DES is disabled in this build", 1
         if disabled("des");
     ok(run(app(["openssl", "pkcs12", "-export",
             "-in", srctop_file(@path, "ee-cert.pem"),
@@ -104,7 +104,7 @@ SKIP: {
 }
 
 SKIP: {
-    skip "Skipping PKCS#12 parse test because the required algorithms are disabled", 1
+    skip "Skipping legacy PKCS#12 test because the required algorithms are disabled", 1
         if disabled("des") || disabled("rc2") || disabled("legacy");
     # Test reading legacy PKCS#12 file
     ok(run(app(["openssl", "pkcs12", "-export",
@@ -171,7 +171,7 @@ ok(run(test(["pkcs12_api_test",
              ])), "Test pkcs12_parse()");
 
 SKIP: {
-    skip "Skipping PKCS#12 test because DES is disabled in this build", 1
+    skip "Skipping PKCS#12 parse test because DES is disabled in this build", 1
         if disabled("des");
     ok(run(test(["pkcs12_api_test",
                  "-in", $outfile2,
@@ -181,7 +181,7 @@ SKIP: {
 }
 
 SKIP: {
-    skip "Skipping legacy PKCS#12 test because the required algorithms are disabled", 1
+    skip "Skipping PKCS#12 parse test because the required algorithms are disabled", 1
         if disabled("des") || disabled("rc2") || disabled("legacy");
     ok(run(test(["pkcs12_api_test",
                  "-in", $outfile3,
