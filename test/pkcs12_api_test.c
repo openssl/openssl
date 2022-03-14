@@ -33,12 +33,15 @@ static int test_null_args(void)
 
 static PKCS12 *PKCS12_load(const char *fpath)
 {
-    PKCS12 *p12 = PKCS12_init(NID_pkcs7_data);
-    if (!TEST_ptr(p12))
+    BIO *bio = NULL;
+    PKCS12 *p12 = NULL;
+
+    bio = BIO_new_file(fpath, "r");
+    if (!TEST_ptr(bio))
         goto err;
 
-    BIO *bio = BIO_new_file(fpath, "r");
-    if (!TEST_ptr(bio))
+    p12 = PKCS12_init(NID_pkcs7_data);
+    if (!TEST_ptr(p12))
         goto err;
 
     if (!TEST_true(p12 == d2i_PKCS12_bio(bio, &p12)))
@@ -54,8 +57,8 @@ err:
     return NULL;
 }
 
-const char *in_file = NULL;
-const char *in_pass = "";
+static const char *in_file = NULL;
+static const char *in_pass = "";
 static int has_key = 0;
 static int has_cert = 0;
 static int has_ca = 0;
