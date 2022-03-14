@@ -21,6 +21,7 @@
 #include "crypto/rand_pool.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
+#include "crypto/context.h"
 
 /*
  * Support framework for NIST SP 800-90A DRBG
@@ -274,7 +275,7 @@ typedef struct prov_drbg_nonce_global_st {
  * to be in a different global data object. Otherwise we will go into an
  * infinite recursion loop.
  */
-static void *prov_drbg_nonce_ossl_ctx_new(OSSL_LIB_CTX *libctx)
+void *ossl_prov_drbg_nonce_ctx_new(OSSL_LIB_CTX *libctx)
 {
     PROV_DRBG_NONCE_GLOBAL *dngbl = OPENSSL_zalloc(sizeof(*dngbl));
 
@@ -290,7 +291,7 @@ static void *prov_drbg_nonce_ossl_ctx_new(OSSL_LIB_CTX *libctx)
     return dngbl;
 }
 
-static void prov_drbg_nonce_ossl_ctx_free(void *vdngbl)
+void ossl_prov_drbg_nonce_ctx_free(void *vdngbl)
 {
     PROV_DRBG_NONCE_GLOBAL *dngbl = vdngbl;
 
@@ -302,12 +303,6 @@ static void prov_drbg_nonce_ossl_ctx_free(void *vdngbl)
     OPENSSL_free(dngbl);
 }
 
-static const OSSL_LIB_CTX_METHOD drbg_nonce_ossl_ctx_method = {
-    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
-    prov_drbg_nonce_ossl_ctx_new,
-    prov_drbg_nonce_ossl_ctx_free,
-};
-
 /* Get a nonce from the operating system */
 static size_t prov_drbg_get_nonce(PROV_DRBG *drbg, unsigned char **pout,
                                   size_t min_len, size_t max_len)
@@ -316,8 +311,7 @@ static size_t prov_drbg_get_nonce(PROV_DRBG *drbg, unsigned char **pout,
     unsigned char *buf = NULL;
     OSSL_LIB_CTX *libctx = ossl_prov_ctx_get0_libctx(drbg->provctx);
     PROV_DRBG_NONCE_GLOBAL *dngbl
-        = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_DRBG_NONCE_INDEX,
-                                &drbg_nonce_ossl_ctx_method);
+        = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_DRBG_NONCE_INDEX);
     struct {
         void *drbg;
         int count;

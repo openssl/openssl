@@ -170,24 +170,12 @@ typedef struct ossl_ex_data_global_st {
 # define OSSL_LIB_CTX_CHILD_PROVIDER_INDEX          18
 # define OSSL_LIB_CTX_MAX_INDEXES                   19
 
-# define OSSL_LIB_CTX_METHOD_LOW_PRIORITY          -1
-# define OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY       0
-# define OSSL_LIB_CTX_METHOD_PRIORITY_1             1
-# define OSSL_LIB_CTX_METHOD_PRIORITY_2             2
-
-typedef struct ossl_lib_ctx_method {
-    int priority;
-    void *(*new_func)(OSSL_LIB_CTX *ctx);
-    void (*free_func)(void *);
-} OSSL_LIB_CTX_METHOD;
-
 OSSL_LIB_CTX *ossl_lib_ctx_get_concrete(OSSL_LIB_CTX *ctx);
 int ossl_lib_ctx_is_default(OSSL_LIB_CTX *ctx);
 int ossl_lib_ctx_is_global_default(OSSL_LIB_CTX *ctx);
 
 /* Functions to retrieve pointers to data by index */
-void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *, int /* index */,
-                            const OSSL_LIB_CTX_METHOD * ctx);
+void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *, int /* index */);
 
 void ossl_lib_ctx_default_deinit(void);
 OSSL_EX_DATA_GLOBAL *ossl_lib_ctx_get_ex_data_global(OSSL_LIB_CTX *ctx);
