@@ -59,7 +59,7 @@ IF[{- !$disabled{tests} -}]
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
           http_test servername_test ocspapitest fatalerrtest tls13ccstest \
           sysdefaulttest errtest ssl_ctx_test \
-          aesgcmtest params_test evp_pkey_dparams_test \
+          context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
           keymgmt_internal_test hexstr_test provider_status_test defltfips_test \
           bio_readbuffer_test user_property_test pkcs7_test upcallstest \
           provfetchtest prov_config_test rand_test ca_internals_test \
@@ -824,6 +824,11 @@ IF[{- !$disabled{tests} -}]
   SOURCE[aesgcmtest]=aesgcmtest.c
   INCLUDE[aesgcmtest]=../include ../apps/include ..
   DEPEND[aesgcmtest]=../libcrypto libtestutil.a
+
+  PROGRAMS{noinst}=context_internal_test
+  SOURCE[context_internal_test]=context_internal_test.c
+  INCLUDE[context_internal_test]=.. ../include ../apps/include
+  DEPEND[context_internal_test]=../libcrypto.a libtestutil.a
 
   PROGRAMS{noinst}=provider_internal_test
   DEFINE[provider_internal_test]=PROVIDER_INIT_FUNCTION_NAME=p_test_init
