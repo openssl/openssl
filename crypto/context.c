@@ -22,7 +22,7 @@ struct ossl_lib_ctx_onfree_list_st {
 };
 
 struct ossl_lib_ctx_st {
-    CRYPTO_RWLOCK *lock;
+    CRYPTO_RWLOCK *lock, *rand_crngt_lock;
 
     /*
      * For most data in the OSSL_LIB_CTX we just use ex_data to store it. But
@@ -53,7 +53,6 @@ struct ossl_lib_ctx_st {
 #endif
     void *fips_prov;
     void (*fips_prov_free)(void *);
-
 
     CRYPTO_RWLOCK *oncelock;
     int run_once_done[OSSL_LIB_CTX_MAX_RUN_ONCE];
@@ -98,6 +97,10 @@ static int context_init(OSSL_LIB_CTX *ctx)
 
     ctx->oncelock = CRYPTO_THREAD_lock_new();
     if (ctx->oncelock == NULL)
+        goto err;
+
+    ctx->rand_crngt_lock = CRYPTO_THREAD_lock_new();
+    if (ctx->rand_crngt_lock == NULL)
         goto err;
 
     /* OSSL_LIB_CTX is built on top of ex_data so we initialise that directly */
@@ -202,6 +205,7 @@ static int context_init(OSSL_LIB_CTX *ctx)
     if (exdata_done)
         ossl_crypto_cleanup_all_ex_data_int(ctx);
 
+    CRYPTO_THREAD_lock_free(ctx->rand_crngt_lock);
     CRYPTO_THREAD_lock_free(ctx->oncelock);
     CRYPTO_THREAD_lock_free(ctx->lock);
     memset(ctx, '\0', sizeof(*ctx));
@@ -342,8 +346,10 @@ static int context_deinit(OSSL_LIB_CTX *ctx)
 
     ossl_crypto_cleanup_all_ex_data_int(ctx);
 
+    CRYPTO_THREAD_lock_free(ctx->rand_crngt_lock);
     CRYPTO_THREAD_lock_free(ctx->oncelock);
     CRYPTO_THREAD_lock_free(ctx->lock);
+    ctx->rand_crngt_lock = NULL;
     ctx->oncelock = NULL;
     ctx->lock = NULL;
     return 1;
@@ -557,22 +563,27 @@ void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index,
              * rand_crngt must be lazily initialized because it calls into
              * libctx, so must not be called from context_init, else a deadlock
              * will occur.
+             *
+             * We use a separate lock because code called by the instantiation
+             * of rand_crngt is liable to try and take the libctx lock.
              */
-            if (CRYPTO_THREAD_read_lock(ctx->lock) != 1)
+            if (CRYPTO_THREAD_read_lock(ctx->rand_crngt_lock) != 1)
                 return NULL;
 
             if (ctx->rand_crngt == NULL) {
-                CRYPTO_THREAD_unlock(ctx->lock);
+                CRYPTO_THREAD_unlock(ctx->rand_crngt_lock);
 
-                if (CRYPTO_THREAD_write_lock(ctx->lock) != 1)
+                if (CRYPTO_THREAD_write_lock(ctx->rand_crngt_lock) != 1)
                     return NULL;
 
-                ctx->rand_crngt = rand_crng_ossl_ctx_new(ctx);
+                if (ctx->rand_crngt == NULL)
+                    ctx->rand_crngt = rand_crng_ossl_ctx_new(ctx);
             }
 
             p = ctx->rand_crngt;
 
             CRYPTO_THREAD_unlock(ctx->lock);
+
             return p;
         }
 
@@ -595,9 +606,11 @@ void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index,
                 if (CRYPTO_THREAD_write_lock(ctx->lock) != 1)
                     return NULL;
 
-                ctx->fips_prov = meth->new_func(ctx);
-                if (ctx->fips_prov != NULL)
-                    ctx->fips_prov_free = meth->free_func;
+                if (ctx->fips_prov == NULL) {
+                    ctx->fips_prov = meth->new_func(ctx);
+                    if (ctx->fips_prov != NULL)
+                        ctx->fips_prov_free = meth->free_func;
+                }
             }
 
             p = ctx->fips_prov;
