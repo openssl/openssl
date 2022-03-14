@@ -14,6 +14,7 @@
 #include "internal/property.h"
 #include "internal/provider.h"
 #include "store_local.h"
+#include "crypto/context.h"
 
 int OSSL_STORE_LOADER_up_ref(OSSL_STORE_LOADER *loader)
 {
@@ -68,25 +69,6 @@ static void free_loader(void *method)
     OSSL_STORE_LOADER_free(method);
 }
 
-/* Permanent loader method store, constructor and destructor */
-static void loader_store_free(void *vstore)
-{
-    ossl_method_store_free(vstore);
-}
-
-static void *loader_store_new(OSSL_LIB_CTX *ctx)
-{
-    return ossl_method_store_new(ctx);
-}
-
-
-static const OSSL_LIB_CTX_METHOD loader_store_method = {
-    /* We want loader_store to be cleaned up before the provider store */
-    OSSL_LIB_CTX_METHOD_PRIORITY_2,
-    loader_store_new,
-    loader_store_free,
-};
-
 /* Data to be passed through ossl_method_construct() */
 struct loader_data_st {
     OSSL_LIB_CTX *libctx;
@@ -123,8 +105,7 @@ static void *get_tmp_loader_store(void *data)
 /* Get the permanent loader store */
 static OSSL_METHOD_STORE *get_loader_store(OSSL_LIB_CTX *libctx)
 {
-    return ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_STORE_LOADER_STORE_INDEX,
-                                &loader_store_method);
+    return ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_STORE_LOADER_STORE_INDEX);
 }
 
 static int reserve_loader_store(void *store, void *data)
