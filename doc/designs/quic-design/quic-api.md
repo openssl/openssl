@@ -179,7 +179,7 @@ associated with an individual `SSL` object in order for the standard `SSL_read()
 To solve this problem this design introduces a new `SSL_EVENT_CTX` object. An
 individual `SSL` object represents an individual stream. A set of `SSL` objects
 together represent all of the streams available for a given connection. The
-first `SSL` object created for a connection represents the connection itelf as
+first `SSL` object created for a connection represents the connection itself as
 well as the first stream if there is one. All the `SSL` objects from all
 connections associated with a shared set of sockets are all grouped together by
 a single `SSL_EVENT_CTX`.
@@ -267,7 +267,9 @@ receiving multiple messages at the same time. Operating systems provide various
 mechanisms for optimising sending/receiving data if this can be achieved. Note
 that OpenSSL does not need to implement support for this in its own `BIO`s in its
 initial releases - but adding support for it in the API enables others to do so,
-and enables it to be added easily to OpenSSL's own `BIO`s at any point.
+and enables it to be added easily to OpenSSL's own `BIO`s at any point. Initially
+OpenSSL's own dgram BIO can simply convert requests to send multiple messages to
+sequentially sending/receiving single messages.
 
 The existing API also provides no support for setting/obtaining the local
 address for a message to be sent/received. This may be useful in the case where
@@ -514,12 +516,12 @@ Proposed additions to the bio.h header file are as follows:
  * is NULL or an individual message local address is NULL then the default local
  * address for the socket is used. Setting an explicit local address can be
  * useful if the socket is bound with INADDR_ANY or IN6ADDR_ANY (i.e. multiple
- * IP addresses are bound to the same socket). peer is an arry of *mummsg peer
+ * IP addresses are bound to the same socket). peer is an arry of *nummsg peer
  * addresses to specify the peer address each of the messages should be sent to.
  * If peer is NULL or an indivual message peer address is NULL then the BIO must
  * be in a "connected" state. data is an array of *nummsg pointers. Each pointer
  * is for the data for each individual message. Similarly dlen is array of
- * *numsg lengths corresponding to each of the individual messages. After a
+ * *nummsg lengths corresponding to each of the individual messages. After a
  * successful call to this function *nummsg is updated with the number of
  * messages that were successfully sent (which may be less than the total
  * requested). It is thread-safe to call this function, or BIO_recvmmsg at the
@@ -533,7 +535,7 @@ int BIO_sendmmsg(BIO *b, const void **data, const size_t *dlen, size_t *nummsg,
  * Receive up to *nummsg messages from the BIO b. *nummsg will be updated after
  * a sucessful call with the number of messages actually received. data is an
  * array of *nummsg pointers to buffers for the data to be received from each
- * individual message. Similarly dlen is an array *nummsg lengths of those
+ * individual message. Similarly dlen is an array of *nummsg lengths of those
  * buffers. After a successful call the dlen array is updated with the actual
  * lengths of the received messages. If peer is non-NULL then it is an array
  * of *nummsg BIO_ADDR objects that will be updated after a successful call with
