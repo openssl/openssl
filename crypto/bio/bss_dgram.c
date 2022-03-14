@@ -14,7 +14,10 @@
 #include <stdio.h>
 #include <errno.h>
 
+/* this is needed on Linux to get in6_pktinfo to be defined */
+#ifndef __USE_GNU
 #define __USE_GNU
+#endif
 
 /* this is needed on OSX to get IPV6_PKTINFO defined */
 #ifdef __APPLE__
