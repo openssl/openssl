@@ -316,6 +316,12 @@ typedef struct ssl_event_ctx_st SSL_EVENT_CTX;
 int SSL_CTX_set1_SSL_EVENT_CTX(SSL_CTX *ctx, SSL_EVENT_CTX *ectx);
 
 /*
+ * Set default parameters to be inherited by SSL objects created from this
+ * SSL_CTX. Returns 1 on success or 0 on failure
+ */
+int SSL_CTX_set_params(SSL_CTX *ctx, OSSL_PARAM *params);
+
+/*
  * Override the SSL_EVENT_CTX to use for an inidivudal SSL object. Calling
  * SSL_set_bio(), SSL_set0_rbio() or SSL_set0_wbio() on an SSL object will
  * replace any existing SSL_EVENT_CTX with a new one containing those BIOs.
@@ -323,6 +329,12 @@ int SSL_CTX_set1_SSL_EVENT_CTX(SSL_CTX *ctx, SSL_EVENT_CTX *ectx);
  * the same SSL_METHOD.
  */
 int SSL_set1_SSL_EVENT_CTX(SSL *ssl, SSL_EVENT_CTX *ectx);
+
+/*
+ * Set SSL object specific parameters. Parameters might include (for example)
+ * the ability to set flow control values.
+ */
+int SSL_set_params(SSL *ssl, OSSL_PARAM *params);
 
 /*
  * With this option set a single SSL_EVENT_CTX object can be safely shared and
