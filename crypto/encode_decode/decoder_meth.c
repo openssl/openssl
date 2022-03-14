@@ -66,12 +66,12 @@ void OSSL_DECODER_free(OSSL_DECODER *decoder)
 }
 
 /* Permanent decoder method store, constructor and destructor */
-static void decoder_store_free(void *vstore)
+void decoder_store_free(void *vstore)
 {
     ossl_method_store_free(vstore);
 }
 
-static void *decoder_store_new(OSSL_LIB_CTX *ctx)
+void *decoder_store_new(OSSL_LIB_CTX *ctx)
 {
     return ossl_method_store_new(ctx);
 }

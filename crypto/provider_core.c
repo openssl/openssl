@@ -277,7 +277,7 @@ void ossl_provider_info_clear(OSSL_PROVIDER_INFO *info)
     sk_INFOPAIR_pop_free(info->parameters, infopair_free);
 }
 
-static void provider_store_free(void *vstore)
+void provider_store_free(void *vstore)
 {
     struct provider_store_st *store = vstore;
     size_t i;
@@ -299,7 +299,7 @@ static void provider_store_free(void *vstore)
     OPENSSL_free(store);
 }
 
-static void *provider_store_new(OSSL_LIB_CTX *ctx)
+void *provider_store_new(OSSL_LIB_CTX *ctx)
 {
     struct provider_store_st *store = OPENSSL_zalloc(sizeof(*store));
 

@@ -26,7 +26,7 @@ typedef struct {
     STACK_OF(OSSL_PROVIDER) *activated_providers;
 } PROVIDER_CONF_GLOBAL;
 
-static void *prov_conf_ossl_ctx_new(OSSL_LIB_CTX *libctx)
+void *prov_conf_ossl_ctx_new(OSSL_LIB_CTX *libctx)
 {
     PROVIDER_CONF_GLOBAL *pcgbl = OPENSSL_zalloc(sizeof(*pcgbl));
 
@@ -42,7 +42,7 @@ static void *prov_conf_ossl_ctx_new(OSSL_LIB_CTX *libctx)
     return pcgbl;
 }
 
-static void prov_conf_ossl_ctx_free(void *vpcgbl)
+void prov_conf_ossl_ctx_free(void *vpcgbl)
 {
     PROVIDER_CONF_GLOBAL *pcgbl = vpcgbl;
 

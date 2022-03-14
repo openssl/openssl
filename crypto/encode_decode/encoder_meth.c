@@ -66,12 +66,12 @@ void OSSL_ENCODER_free(OSSL_ENCODER *encoder)
 }
 
 /* Permanent encoder method store, constructor and destructor */
-static void encoder_store_free(void *vstore)
+void encoder_store_free(void *vstore)
 {
     ossl_method_store_free(vstore);
 }
 
-static void *encoder_store_new(OSSL_LIB_CTX *ctx)
+void *encoder_store_new(OSSL_LIB_CTX *ctx)
 {
     return ossl_method_store_new(ctx);
 }

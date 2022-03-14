@@ -32,7 +32,7 @@ struct ossl_self_test_st
 };
 
 #ifndef FIPS_MODULE
-static void *self_test_set_callback_new(OSSL_LIB_CTX *ctx)
+void *self_test_set_callback_new(OSSL_LIB_CTX *ctx)
 {
     SELF_TEST_CB *stcb;
 
@@ -40,7 +40,7 @@ static void *self_test_set_callback_new(OSSL_LIB_CTX *ctx)
     return stcb;
 }
 
-static void self_test_set_callback_free(void *stcb)
+void self_test_set_callback_free(void *stcb)
 {
     OPENSSL_free(stcb);
 }

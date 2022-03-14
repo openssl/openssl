@@ -85,7 +85,7 @@ typedef struct ossl_global_properties_st {
 static void ossl_method_cache_flush(OSSL_METHOD_STORE *store, int nid);
 
 /* Global properties are stored per library context */
-static void ossl_ctx_global_properties_free(void *vglobp)
+void ossl_ctx_global_properties_free(void *vglobp)
 {
     OSSL_GLOBAL_PROPERTIES *globp = vglobp;
 
@@ -95,7 +95,7 @@ static void ossl_ctx_global_properties_free(void *vglobp)
     }
 }
 
-static void *ossl_ctx_global_properties_new(OSSL_LIB_CTX *ctx)
+void *ossl_ctx_global_properties_new(OSSL_LIB_CTX *ctx)
 {
     return OPENSSL_zalloc(sizeof(OSSL_GLOBAL_PROPERTIES));
 }

@@ -72,7 +72,7 @@ static void property_table_free(PROP_TABLE **pt)
     }
 }
 
-static void property_string_data_free(void *vpropdata)
+void property_string_data_free(void *vpropdata)
 {
     PROPERTY_STRING_DATA *propdata = vpropdata;
 
@@ -92,7 +92,7 @@ static void property_string_data_free(void *vpropdata)
     OPENSSL_free(propdata);
 }
 
-static void *property_string_data_new(OSSL_LIB_CTX *ctx) {
+void *property_string_data_new(OSSL_LIB_CTX *ctx) {
     PROPERTY_STRING_DATA *propdata = OPENSSL_zalloc(sizeof(*propdata));
 
     if (propdata == NULL)

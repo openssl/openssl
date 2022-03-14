@@ -47,7 +47,7 @@ static void property_defn_free(PROPERTY_DEFN_ELEM *elem)
     OPENSSL_free(elem);
 }
 
-static void property_defns_free(void *vproperty_defns)
+void property_defns_free(void *vproperty_defns)
 {
     LHASH_OF(PROPERTY_DEFN_ELEM) *property_defns = vproperty_defns;
 
@@ -58,7 +58,7 @@ static void property_defns_free(void *vproperty_defns)
     }
 }
 
-static void *property_defns_new(OSSL_LIB_CTX *ctx) {
+void *property_defns_new(OSSL_LIB_CTX *ctx) {
     return lh_PROPERTY_DEFN_ELEM_new(&property_defn_hash, &property_defn_cmp);
 }
 

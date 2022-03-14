@@ -33,12 +33,12 @@ struct child_prov_globals {
     OSSL_FUNC_provider_free_fn *c_prov_free;
 };
 
-static void *child_prov_ossl_ctx_new(OSSL_LIB_CTX *libctx)
+void *child_prov_ossl_ctx_new(OSSL_LIB_CTX *libctx)
 {
     return OPENSSL_zalloc(sizeof(struct child_prov_globals));
 }
 
-static void child_prov_ossl_ctx_free(void *vgbl)
+void child_prov_ossl_ctx_free(void *vgbl)
 {
     struct child_prov_globals *gbl = vgbl;
 

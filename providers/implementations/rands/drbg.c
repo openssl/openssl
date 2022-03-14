@@ -274,7 +274,7 @@ typedef struct prov_drbg_nonce_global_st {
  * to be in a different global data object. Otherwise we will go into an
  * infinite recursion loop.
  */
-static void *prov_drbg_nonce_ossl_ctx_new(OSSL_LIB_CTX *libctx)
+void *prov_drbg_nonce_ossl_ctx_new(OSSL_LIB_CTX *libctx)
 {
     PROV_DRBG_NONCE_GLOBAL *dngbl = OPENSSL_zalloc(sizeof(*dngbl));
 
@@ -290,7 +290,7 @@ static void *prov_drbg_nonce_ossl_ctx_new(OSSL_LIB_CTX *libctx)
     return dngbl;
 }
 
-static void prov_drbg_nonce_ossl_ctx_free(void *vdngbl)
+void prov_drbg_nonce_ossl_ctx_free(void *vdngbl)
 {
     PROV_DRBG_NONCE_GLOBAL *dngbl = vdngbl;
 

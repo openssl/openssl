@@ -248,7 +248,7 @@ void ossl_ctx_thread_stop(OSSL_LIB_CTX *ctx)
 
 #else
 
-static void *thread_event_ossl_ctx_new(OSSL_LIB_CTX *libctx)
+void *thread_event_ossl_ctx_new(OSSL_LIB_CTX *libctx)
 {
     THREAD_EVENT_HANDLER **hands = NULL;
     CRYPTO_THREAD_LOCAL *tlocal = OPENSSL_zalloc(sizeof(*tlocal));
@@ -274,7 +274,7 @@ static void *thread_event_ossl_ctx_new(OSSL_LIB_CTX *libctx)
     return NULL;
 }
 
-static void thread_event_ossl_ctx_free(void *tlocal)
+void thread_event_ossl_ctx_free(void *tlocal)
 {
     OPENSSL_free(tlocal);
 }

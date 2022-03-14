@@ -69,12 +69,12 @@ static void free_loader(void *method)
 }
 
 /* Permanent loader method store, constructor and destructor */
-static void loader_store_free(void *vstore)
+void loader_store_free(void *vstore)
 {
     ossl_method_store_free(vstore);
 }
 
-static void *loader_store_new(OSSL_LIB_CTX *ctx)
+void *loader_store_new(OSSL_LIB_CTX *ctx)
 {
     return ossl_method_store_new(ctx);
 }

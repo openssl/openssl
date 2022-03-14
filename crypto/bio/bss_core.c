@@ -21,12 +21,12 @@ typedef struct {
     OSSL_FUNC_BIO_free_fn *c_bio_free;
 } BIO_CORE_GLOBALS;
 
-static void bio_core_globals_free(void *vbcg)
+void bio_core_globals_free(void *vbcg)
 {
     OPENSSL_free(vbcg);
 }
 
-static void *bio_core_globals_new(OSSL_LIB_CTX *ctx)
+void *bio_core_globals_new(OSSL_LIB_CTX *ctx)
 {
     return OPENSSL_zalloc(sizeof(BIO_CORE_GLOBALS));
 }

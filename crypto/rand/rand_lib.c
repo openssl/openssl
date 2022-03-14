@@ -434,7 +434,7 @@ typedef struct rand_global_st {
  * Initialize the OSSL_LIB_CTX global DRBGs on first use.
  * Returns the allocated global data on success or NULL on failure.
  */
-static void *rand_ossl_ctx_new(OSSL_LIB_CTX *libctx)
+void *rand_ossl_ctx_new(OSSL_LIB_CTX *libctx)
 {
     RAND_GLOBAL *dgbl = OPENSSL_zalloc(sizeof(*dgbl));
 
@@ -469,7 +469,7 @@ static void *rand_ossl_ctx_new(OSSL_LIB_CTX *libctx)
     return NULL;
 }
 
-static void rand_ossl_ctx_free(void *vdgbl)
+void rand_ossl_ctx_free(void *vdgbl)
 {
     RAND_GLOBAL *dgbl = vdgbl;
 
