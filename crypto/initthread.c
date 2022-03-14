@@ -12,6 +12,7 @@
 #include "crypto/cryptlib.h"
 #include "prov/providercommon.h"
 #include "internal/thread_once.h"
+#include "crypto/context_local.h"
 
 #ifdef FIPS_MODULE
 #include "prov/provider_ctx.h"
