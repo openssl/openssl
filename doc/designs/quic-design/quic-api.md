@@ -178,10 +178,11 @@ associated with an individual `SSL` object in order for the standard `SSL_read()
 
 To solve this problem this design introduces a new `SSL_EVENT_CTX` object. An
 individual `SSL` object represents an individual stream. A set of `SSL` objects
-together represent all of the streams available for a given connection. A single
-`SSL` object within a connection is designated as the "default stream". All the
-`SSL` objects from all connections associated with a shared set of sockets are all
-grouped together by a single `SSL_EVENT_CTX`.
+together represent all of the streams available for a given connection. The
+first `SSL` object created for a connection represents the connection itelf as
+well as the first stream if there is one. All the `SSL` objects from all
+connections associated with a shared set of sockets are all grouped together by
+a single `SSL_EVENT_CTX`.
 
 While the principal motivation for introducing `SSL_EVENT_CTX` is to support QUIC,
 it may also be useful for supporting (D)TLS applications. Using an `SSL_EVENT_CTX`
@@ -200,10 +201,10 @@ These shared `BIO`s can be set on the `SSL_EVENT_CTX`.
 
 Applications can call `SSL_EVENT_CTX_get_next_event()` to get the next event from
 the event queue. Examples of events might be "new connection", "new stream",
-"stream readable", "stream close", etc. Optionally events can be filtered for
-only a given `SSL` object. If the event queue is empty then a new packet will be
-read from the underlying `BIO`s (if possible) and any resulting events are added
-to the event queue.
+"stream readable", "stream close", etc. Time based events can also be delivered.
+Optionally events can be filtered for only a given `SSL` object. If the event
+queue is empty then a new packet will be read from the underlying `BIO`s (if
+possible) and any resulting events are added to the event queue.
 
 Also associated with the `SSL_EVENT_CTX` is a new connection queue and a new
 stream queue. In the case that a "new connection" event is received then the
@@ -220,6 +221,11 @@ queue. However it might be useful for (D)TLS applications where only the
 application knows when a new connection has arrived, i.e. OpenSSL cannot detect
 this automatically.
 
+New connections are initiated via the `SSL_connect()` function call. For QUIC it
+is preferred to use the new `SSL_connect_ex()` function instead which can
+additionally specify the destination hostname and its address. The address is
+required if the underlying socket is "unconnected".
+
 New streams can be initiated by calling `SSL_new_stream()` and passing an
 existing `SSL` object for some other stream from the same connection. Subsequently,
 `SSL_connect()` will need to be called on the new `SSL` object. This could be made
@@ -234,15 +240,16 @@ The application would "accept" the incoming stream by calling
 `SSL_accept_stream()`. This would only occur for QUIC applications - never for
 (D)TLS applications.
 
-A QUIC based application will need to handle various time based events. An
+A QUIC based application will need to handle various time based events. These
+can be delivered as "tick" events from the `SSL_EVENT_CTX`. Alternatively, an
 application can call `SSL_get_next_tick()` to get the next timeout event for a
 given `SSL` object. For a DTLS application this is exactly equivalent to calling
 `DTLSv1_get_timeout()`. Calling `SSL_tick()` on an `SSL` object will enable it
 to process any outstanding time based events. For a DTLS application this is
 exactly equivalent to calling `DTLSv1_handle_timeout()`. In a QUIC application
-only the `SSL` object for a default stream would have time based events. For a TLS
-application there would never be time based events (so calling `SSL_tick()` will
-have no effect).
+only the `SSL` object for the connection would ever have time based events. For
+a TLS application there would never be time based events (so calling
+`SSL_tick()` will have no effect).
 
 ## Changes to the BIO API
 
@@ -287,9 +294,10 @@ __owur const SSL_METHOD *QUIC_server_method(void);
 __owur const SSL_METHOD *QUIC_client_method(void);
 
 /*
- * An SSL object represents a single stream. In QUIC multiple SSL objects can be
- * associated with the same connection id. In (D)TLS this would just generate
- * a unique number for each SSL object.
+ * An SSL object represents a single stream. The "first" SSL object for a
+ * connection additionally represents that connection. In QUIC multiple SSL
+ * objects (streams) can be associated with the same connection id. In (D)TLS
+ * this would just generate a unique number for each SSL object.
  */
 uint64_t SSL_get_conn_id(SSL *ssl);
 
@@ -328,6 +336,7 @@ int SSL_set1_SSL_EVENT_CTX(SSL *ssl, SSL_EVENT_CTX *ectx);
 # define SSL_EVENT_TYPE_STREAM_CLOSE     0x10
 # define SSL_EVENT_TYPE_STREAM_READABLE  0x20
 # define SSL_EVENT_TYPE_STREAM_WRITEABLE 0x40
+/* Indicates that a time based event has occurred */
 # define SSL_EVENT_TYPE_TICK             0x80
 
 # define SSL_EVENT_TYPE_ALL_EVENTS      (SSL_EVENT_TYPE_NEW_CONNECTION \
@@ -361,28 +370,31 @@ int SSL_EVENT_CTX_add0_wbio(SSL_EVENT_CTX *ectx, BIO *wbio);
 /*
  * Process any time based actions that need to occur for the SSL object. For
  * DTLS this is equivalent to calling DTLSv1_handle_timeout(). For TLS this does
- * nothing (there are no time-based events for TLS). For QUIC this only has an
- * effect on the default stream.
+ * nothing (there are no time-based events for TLS). For QUIC only the inital
+ * connection ojbect ever has time based events.
  */
 int SSL_tick(SSL *s);
 
 /*
- * Populates nexttick with the time until the soonest time based action that
+ * Populates nexttick with the time until the next time based action that
  * requires a call to SSL_tick(). For DTLS, this is equivalent to calling
  * DTLSv1_get_timeout(). For TLS this will always return 0 (no next timeout).
- * For QUIC this will only return 1 (timeout available) for the default stream.
+ * For QUIC this will only return 1 (timeout available) for the connection
+ * object.
  */
 int SSL_get_next_tick(SSL *s, struct timeval *nexttick);
 
 /*
- * Returns 1 if the SSL object is the default stream for the connection or 0
- * otherwise. For (D)TLS all SSL objects are default. For QUIC only the first
- * stream created for a connection is the default.
+ * Returns 1 if the SSL object represents the connection or 0 otherwise. For
+ * (D)TLS all SSL objects represent a connection and so this always returns 1.
+ * For QUIC only the first SSL object created for a connection represents the
+ * connection (it may also represent the first stream). Subsequent SSL objects
+ * created for that connection only represent streams.
  */
-int SSL_is_default_stream(SSL *s);
+int SSL_is_connection(SSL *s);
 
 /*
- * If the event queue is not empty then this returns immediately and filss in
+ * If the event queue is not empty then this returns immediately and fills in
  * ev with details of the next event. If the event queue is empty then it will
  * attempt to read a packet from the BIO associated with the given SSL object,
  * or if there is no associated BIO, or if the SSL object is NULL, then it will
@@ -429,26 +441,50 @@ uint64_t SSL_EVENT_get_event_type(SSL_EVENT *event);
 /*
  * Gets the stream associated with a given event. In the case of "new connection"
  * this will be NULL. In case the of "new stream" or "connection close" it will
- * be the "default" stream (i.e. first stream) for the connection
+ * be the "connection" object (i.e. first SSL object for the connection)
  */
-SSL *SSL_EVENT_get_stream(SSL_EVENT *event);
+SSL *SSL_EVENT_get_SSL(SSL_EVENT *event);
+
+/*
+ * Returns the error code associated with the event - for events that have an
+ * associated error code.
+ */
+uint64_t SSL_EVENT_get_error_code(SSL_EVENT *event);
+
+/*
+ * Returns the reason phrase associated with an event if there is one or NULL
+ * otherwise. Only relevant for SSL_EVENT_TYPE_CONNECTION_CLOSE.
+ */
+char *SSL_EVENT_get_reason(SSL_EVENT *event);
 
 /*
  * Works as normal if the SSL object has already had its BIOs configured.
  * Otherwise it will check the new connection queue in the SSL_EVENT_CTX. If it
  * finds a pending new connection then it will "accept" it, adding the BIOs and
  * running the handshake. In the case of QUIC this will set up the SSL object as
- * the "default" stream. Will return SSL_ERROR_WANT_READ in the event that no
- * new conneciton is pending.
+ * the connection object (with an associated stream if applicable). Will return
+ * SSL_ERROR_WANT_READ in the event that no new conneciton is pending.
  */
 __owur int SSL_accept(SSL *ssl);
 
 /*
- * Works as normal for (D)TLS. For QUIC it is essentially the same but (as for
- * SSL_accpet()) it will typically use the BIOs as set on the SSL_EVENT_CTX
- * rather than having its own BIOs.
+ * Works as normal for (D)TLS. For QUIC it may be used for connecting new
+ * streams created via `SSL_new_stream()`. For initial connections it may be
+ * used but it is preferrable to use SSL_connect_ex() instead.
  */
 __owur int SSL_connect(SSL *ssl);
+
+/*
+ * Works as for SSL_connect() except additionally specifying a hostname and
+ * destination address. The (D)TLS and QUIC the hostname sets the hostname that
+ * will be sent in the SNI extension, as well as the hostname used for server
+ * certificate verification. The addr argument specifies for the destination
+ * address to connect to. This will be ignored for (D)TLS. For QUIC it is
+ * mandatory.
+ * For QUIC an SSL object will typically use the BIOs as set on the
+ * SSL_EVENT_CTX rather than having its own BIOs.
+ */
+__owur int SSL_connect_ex(SSL *ssl, const char *hostname, const BIO_ADDR *addr);
 
 /*
  * In the case of a (D)TLS client attempts a resumption handshake. Will always
@@ -490,7 +526,7 @@ Proposed additions to the bio.h header file are as follows:
  * same time in multiple threads for the same BIO. It is not thread-safe to call
  * this function at the same time as any other BIO function for the same BIO.
  */
-int BIO_sendmmsg(BIO *b, void **data, size_t *dlen, size_t *nummsg,
+int BIO_sendmmsg(BIO *b, const void **data, const size_t *dlen, size_t *nummsg,
                  BIO_ADDR **peer, BIO_ADDR **local);
 
 /*
@@ -537,6 +573,7 @@ but cannot be tested since there is no implementation of the APIs yet.
 #include <pthread.h>
 #include <sys/select.h>
 #include <openssl/ssl.h>
+#include <openssl/bio.h>
 
 int still_running = 1;
 int handshaking = 1;
@@ -545,23 +582,26 @@ int fd;
 struct thread_data {
     SSL *stream;
     SSL_EVENT_CTX *ectx;
+    char *hostname;
+    BIO_ADDR *addr;
 };
 
-static void start_stream_thread(SSL *stream, SSL_EVENT_CTX *ectx);
+static void start_stream_thread(SSL *stream, SSL_EVENT_CTX *ectx,
+                                char *hostname, BIO_ADDR *addr);
 
 static void *do_stream_work(void *vdata)
 {
     SSL_EVENT *ev = SSL_EVENT_new();
     SSL_EVENT_CTX *ectx;
     SSL *stream1, *stream2;
-    int process_stream_events = 1;
+    int process_events = 1;
     size_t readbytes, written;
     unsigned char buf[1024];
     int width = fd + 1;
     fd_set readfds;
     struct timeval timeout;
     int do_timeout;
-    int is_default = SSL_is_default_stream(stream1);
+    int is_conn = SSL_is_connection(stream1);
     const char *msg = "Hello World!";
     struct thread_data *data = vdata;
 
@@ -569,16 +609,16 @@ static void *do_stream_work(void *vdata)
     ectx = data->ectx;
     OPENSSL_free(data);
 
-    while (still_running && process_stream_events) {
+    while (still_running && process_events) {
         /*
-         * If we're the default stream we'll get a event immediately (if there
+         * If we're the connection object we'll get an event immediately (if there
          * is one) without blocking. Otherwise we'll block until there is an
          * event to process.
          */
-        if (!SSL_EVENT_CTX_get_next_event(ectx, stream1, !is_default, NULL, ev)) {
+        if (!SSL_EVENT_CTX_get_next_event(ectx, stream1, !is_conn, NULL, ev)) {
             /* No event occurred */
-            if (is_default) {
-                /* Only the default stream needs to worry about the underlying
+            if (is_conn) {
+                /* Only the connection object needs to worry about the underlying
                  * fd. Wait for fd to become readable, or a timer event */
 
                 FD_ZERO(&readfds);
@@ -592,7 +632,7 @@ static void *do_stream_work(void *vdata)
                     int connret;
 
                     /* No events occur until handshaking is complete */
-                    connret = SSL_connect(stream1);
+                    connret = SSL_connect_ex(stream1, data->hostname, data->addr);
                     if (connret <= 0) {
                         switch (SSL_get_error(stream1, connret)) {
                         case SSL_ERROR_WANT_READ:
@@ -635,7 +675,7 @@ static void *do_stream_work(void *vdata)
                 printf("New stream event - but no new stream was available!\n");
                 goto err;
             }
-            start_stream_thread(stream2, ectx);
+            start_stream_thread(stream2, ectx, NULL, NULL);
             break;
 
         case SSL_EVENT_TYPE_CONNECTION_CLOSE:
@@ -644,11 +684,11 @@ static void *do_stream_work(void *vdata)
 
         case SSL_EVENT_TYPE_STREAM_CLOSE:
             /*
-             * The default stream may continue to receive events even after it
-             * is closed
+             * The connection object may continue to receive events even after
+             * any stream associated with it is closed
              */
-            if (!is_default)
-                process_stream_events = 0;
+            if (!is_conn)
+                process_events = 0;
             break;
 
         case SSL_EVENT_TYPE_STREAM_READABLE:
@@ -681,7 +721,8 @@ static void *do_stream_work(void *vdata)
     return NULL;
 }
 
-void start_stream_thread(SSL *stream, SSL_EVENT_CTX *ectx)
+void start_stream_thread(SSL *stream, SSL_EVENT_CTX *ectx, char *hostname,
+                         BIO_ADDR *addr)
 {
     pthread_t thread;
     struct thread_data *data;
@@ -695,6 +736,8 @@ void start_stream_thread(SSL *stream, SSL_EVENT_CTX *ectx)
     SSL_EVENT_CTX_up_ref(ectx);
     data->stream = stream;
     data->ectx = ectx;
+    data->hostname = hostname;
+    data->addr = addr;
 
     if (pthread_create(&thread, NULL, do_stream_work, data)) {
         printf("Failed to create stream\n");
@@ -704,7 +747,7 @@ void start_stream_thread(SSL *stream, SSL_EVENT_CTX *ectx)
     }
 }
 
-static int create_sockets(SSL_EVENT_CTX *ectx)
+static int create_sockets(SSL_EVENT_CTX *ectx, BIO_ADDR **addr)
 {
     /* Create the sockets here and set them in the SSL_EVENT_CTX object */
 
@@ -717,6 +760,7 @@ int main(void)
     SSL *ssl;
     SSL_EVENT_CTX *ectx;
     int ret = 1;
+    BIO_ADDR *addr = NULL;
 
     if (ctx == NULL) {
         printf("Failed to create ctx\n");
@@ -736,11 +780,11 @@ int main(void)
         goto err;
     }
 
-    if (!create_sockets(ectx)) {
-        printf("Failed to set up SSL_EVENT_CTX\n");
+    if (!create_sockets(ectx, &addr)) {
+        printf("Failed to set up sockets\n");
         goto err;
     }
-    start_stream_thread(ssl, ectx);
+    start_stream_thread(ssl, ectx, "example.com", addr);
 
     ret = 0;
  err:
