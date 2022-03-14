@@ -582,7 +582,7 @@ void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index,
 
             p = ctx->rand_crngt;
 
-            CRYPTO_THREAD_unlock(ctx->lock);
+            CRYPTO_THREAD_unlock(ctx->rand_crngt_lock);
 
             return p;
         }
