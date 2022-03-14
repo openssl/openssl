@@ -75,13 +75,12 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     OPENSSL_assert(SSL_set_cipher_list(client, "ALL:eNULL:@SECLEVEL=0") == 1);
     SSL_set_tlsext_host_name(client, "localhost");
     in = BIO_new(BIO_s_mem());
-    if (in == NULL) {
+    if (in == NULL)
         goto end;
-    }
     out = BIO_new(BIO_s_mem());
     if (out == NULL) {
         BIO_free(in);
-	goto end;
+        goto end;
     }
     SSL_set_bio(client, in, out);
     SSL_set_connect_state(client);
