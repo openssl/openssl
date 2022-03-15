@@ -67,12 +67,12 @@ void OSSL_DECODER_free(OSSL_DECODER *decoder)
 }
 
 /* Permanent decoder method store, constructor and destructor */
-void decoder_store_free(void *vstore)
+void ossl_decoder_store_free(void *vstore)
 {
     ossl_method_store_free(vstore);
 }
 
-void *decoder_store_new(OSSL_LIB_CTX *ctx)
+void *ossl_decoder_store_new(OSSL_LIB_CTX *ctx)
 {
     return ossl_method_store_new(ctx);
 }
@@ -81,8 +81,8 @@ void *decoder_store_new(OSSL_LIB_CTX *ctx)
 static const OSSL_LIB_CTX_METHOD decoder_store_method = {
     /* We want decoder_store to be cleaned up before the provider store */
     OSSL_LIB_CTX_METHOD_PRIORITY_2,
-    decoder_store_new,
-    decoder_store_free,
+    ossl_decoder_store_new,
+    ossl_decoder_store_free,
 };
 
 /* Data to be passed through ossl_method_construct() */

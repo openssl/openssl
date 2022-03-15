@@ -48,7 +48,7 @@ static void property_defn_free(PROPERTY_DEFN_ELEM *elem)
     OPENSSL_free(elem);
 }
 
-void property_defns_free(void *vproperty_defns)
+void ossl_property_defns_free(void *vproperty_defns)
 {
     LHASH_OF(PROPERTY_DEFN_ELEM) *property_defns = vproperty_defns;
 
@@ -59,14 +59,14 @@ void property_defns_free(void *vproperty_defns)
     }
 }
 
-void *property_defns_new(OSSL_LIB_CTX *ctx) {
+void *ossl_property_defns_new(OSSL_LIB_CTX *ctx) {
     return lh_PROPERTY_DEFN_ELEM_new(&property_defn_hash, &property_defn_cmp);
 }
 
 static const OSSL_LIB_CTX_METHOD property_defns_method = {
     OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
-    property_defns_new,
-    property_defns_free,
+    ossl_property_defns_new,
+    ossl_property_defns_free,
 };
 
 OSSL_PROPERTY_LIST *ossl_prop_defn_get(OSSL_LIB_CTX *ctx, const char *prop)

@@ -53,7 +53,7 @@ static int crngt_get_entropy(PROV_CTX *provctx, const EVP_MD *digest,
     return 0;
 }
 
-void rand_crng_ossl_ctx_free(void *vcrngt_glob)
+void ossl_rand_crng_ctx_free(void *vcrngt_glob)
 {
     CRNG_TEST_GLOBAL *crngt_glob = vcrngt_glob;
 
@@ -62,7 +62,7 @@ void rand_crng_ossl_ctx_free(void *vcrngt_glob)
     OPENSSL_free(crngt_glob);
 }
 
-void *rand_crng_ossl_ctx_new(OSSL_LIB_CTX *ctx)
+void *ossl_rand_crng_ctx_new(OSSL_LIB_CTX *ctx)
 {
     CRNG_TEST_GLOBAL *crngt_glob = OPENSSL_zalloc(sizeof(*crngt_glob));
 
@@ -85,8 +85,8 @@ void *rand_crng_ossl_ctx_new(OSSL_LIB_CTX *ctx)
 
 static const OSSL_LIB_CTX_METHOD rand_crng_ossl_ctx_method = {
     OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
-    rand_crng_ossl_ctx_new,
-    rand_crng_ossl_ctx_free,
+    ossl_rand_crng_ctx_new,
+    ossl_rand_crng_ctx_free,
 };
 
 static int prov_crngt_compare_previous(const unsigned char *prev,

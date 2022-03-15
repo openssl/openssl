@@ -62,7 +62,7 @@ static void namenum_free(NAMENUM_ENTRY *n)
 
 /* OSSL_LIB_CTX_METHOD functions for a namemap stored in a library context */
 
-void *stored_namemap_new(OSSL_LIB_CTX *libctx)
+void *ossl_stored_namemap_new(OSSL_LIB_CTX *libctx)
 {
     OSSL_NAMEMAP *namemap = ossl_namemap_new();
 
@@ -72,7 +72,7 @@ void *stored_namemap_new(OSSL_LIB_CTX *libctx)
     return namemap;
 }
 
-void stored_namemap_free(void *vnamemap)
+void ossl_stored_namemap_free(void *vnamemap)
 {
     OSSL_NAMEMAP *namemap = vnamemap;
 
@@ -85,8 +85,8 @@ void stored_namemap_free(void *vnamemap)
 
 static const OSSL_LIB_CTX_METHOD stored_namemap_method = {
     OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
-    stored_namemap_new,
-    stored_namemap_free,
+    ossl_stored_namemap_new,
+    ossl_stored_namemap_free,
 };
 
 /*-

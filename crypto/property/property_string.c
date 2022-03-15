@@ -73,7 +73,7 @@ static void property_table_free(PROP_TABLE **pt)
     }
 }
 
-void property_string_data_free(void *vpropdata)
+void ossl_property_string_data_free(void *vpropdata)
 {
     PROPERTY_STRING_DATA *propdata = vpropdata;
 
@@ -93,7 +93,7 @@ void property_string_data_free(void *vpropdata)
     OPENSSL_free(propdata);
 }
 
-void *property_string_data_new(OSSL_LIB_CTX *ctx) {
+void *ossl_property_string_data_new(OSSL_LIB_CTX *ctx) {
     PROPERTY_STRING_DATA *propdata = OPENSSL_zalloc(sizeof(*propdata));
 
     if (propdata == NULL)
@@ -115,7 +115,7 @@ void *property_string_data_new(OSSL_LIB_CTX *ctx) {
 #endif
             || propdata->prop_names == NULL
             || propdata->prop_values == NULL) {
-        property_string_data_free(propdata);
+        ossl_property_string_data_free(propdata);
         return NULL;
     }
     return propdata;
@@ -123,8 +123,8 @@ void *property_string_data_new(OSSL_LIB_CTX *ctx) {
 
 static const OSSL_LIB_CTX_METHOD property_string_data_method = {
     OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
-    property_string_data_new,
-    property_string_data_free,
+    ossl_property_string_data_new,
+    ossl_property_string_data_free,
 };
 
 static PROPERTY_STRING *new_property_string(const char *s,

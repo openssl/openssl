@@ -275,7 +275,7 @@ typedef struct prov_drbg_nonce_global_st {
  * to be in a different global data object. Otherwise we will go into an
  * infinite recursion loop.
  */
-void *prov_drbg_nonce_ossl_ctx_new(OSSL_LIB_CTX *libctx)
+void *ossl_prov_drbg_nonce_ctx_new(OSSL_LIB_CTX *libctx)
 {
     PROV_DRBG_NONCE_GLOBAL *dngbl = OPENSSL_zalloc(sizeof(*dngbl));
 
@@ -291,7 +291,7 @@ void *prov_drbg_nonce_ossl_ctx_new(OSSL_LIB_CTX *libctx)
     return dngbl;
 }
 
-void prov_drbg_nonce_ossl_ctx_free(void *vdngbl)
+void ossl_prov_drbg_nonce_ctx_free(void *vdngbl)
 {
     PROV_DRBG_NONCE_GLOBAL *dngbl = vdngbl;
 
@@ -305,8 +305,8 @@ void prov_drbg_nonce_ossl_ctx_free(void *vdngbl)
 
 static const OSSL_LIB_CTX_METHOD drbg_nonce_ossl_ctx_method = {
     OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
-    prov_drbg_nonce_ossl_ctx_new,
-    prov_drbg_nonce_ossl_ctx_free,
+    ossl_prov_drbg_nonce_ctx_new,
+    ossl_prov_drbg_nonce_ctx_free,
 };
 
 /* Get a nonce from the operating system */

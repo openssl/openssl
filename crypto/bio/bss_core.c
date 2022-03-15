@@ -22,20 +22,20 @@ typedef struct {
     OSSL_FUNC_BIO_free_fn *c_bio_free;
 } BIO_CORE_GLOBALS;
 
-void bio_core_globals_free(void *vbcg)
+void ossl_bio_core_globals_free(void *vbcg)
 {
     OPENSSL_free(vbcg);
 }
 
-void *bio_core_globals_new(OSSL_LIB_CTX *ctx)
+void *ossl_bio_core_globals_new(OSSL_LIB_CTX *ctx)
 {
     return OPENSSL_zalloc(sizeof(BIO_CORE_GLOBALS));
 }
 
 static const OSSL_LIB_CTX_METHOD bio_core_globals_method = {
     OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
-    bio_core_globals_new,
-    bio_core_globals_free,
+    ossl_bio_core_globals_new,
+    ossl_bio_core_globals_free,
 };
 
 static ossl_inline BIO_CORE_GLOBALS *get_globals(OSSL_LIB_CTX *libctx)

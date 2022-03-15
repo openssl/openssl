@@ -27,7 +27,7 @@ typedef struct {
     STACK_OF(OSSL_PROVIDER) *activated_providers;
 } PROVIDER_CONF_GLOBAL;
 
-void *prov_conf_ossl_ctx_new(OSSL_LIB_CTX *libctx)
+void *ossl_prov_conf_ctx_new(OSSL_LIB_CTX *libctx)
 {
     PROVIDER_CONF_GLOBAL *pcgbl = OPENSSL_zalloc(sizeof(*pcgbl));
 
@@ -43,7 +43,7 @@ void *prov_conf_ossl_ctx_new(OSSL_LIB_CTX *libctx)
     return pcgbl;
 }
 
-void prov_conf_ossl_ctx_free(void *vpcgbl)
+void ossl_prov_conf_ctx_free(void *vpcgbl)
 {
     PROVIDER_CONF_GLOBAL *pcgbl = vpcgbl;
 
@@ -58,8 +58,8 @@ void prov_conf_ossl_ctx_free(void *vpcgbl)
 static const OSSL_LIB_CTX_METHOD provider_conf_ossl_ctx_method = {
     /* Must be freed before the provider store is freed */
     OSSL_LIB_CTX_METHOD_PRIORITY_2,
-    prov_conf_ossl_ctx_new,
-    prov_conf_ossl_ctx_free,
+    ossl_prov_conf_ctx_new,
+    ossl_prov_conf_ctx_free,
 };
 
 static const char *skip_dot(const char *name)

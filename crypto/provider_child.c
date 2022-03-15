@@ -34,12 +34,12 @@ struct child_prov_globals {
     OSSL_FUNC_provider_free_fn *c_prov_free;
 };
 
-void *child_prov_ossl_ctx_new(OSSL_LIB_CTX *libctx)
+void *ossl_child_prov_ctx_new(OSSL_LIB_CTX *libctx)
 {
     return OPENSSL_zalloc(sizeof(struct child_prov_globals));
 }
 
-void child_prov_ossl_ctx_free(void *vgbl)
+void ossl_child_prov_ctx_free(void *vgbl)
 {
     struct child_prov_globals *gbl = vgbl;
 
@@ -49,8 +49,8 @@ void child_prov_ossl_ctx_free(void *vgbl)
 
 static const OSSL_LIB_CTX_METHOD child_prov_ossl_ctx_method = {
     OSSL_LIB_CTX_METHOD_LOW_PRIORITY,
-    child_prov_ossl_ctx_new,
-    child_prov_ossl_ctx_free,
+    ossl_child_prov_ctx_new,
+    ossl_child_prov_ctx_free,
 };
 
 static OSSL_provider_init_fn ossl_child_provider_init;

@@ -115,48 +115,48 @@ static int context_init(OSSL_LIB_CTX *ctx)
 
 #ifndef FIPS_MODULE
     /* P2. Must be freed before the provider store is freed */
-    ctx->provider_conf = prov_conf_ossl_ctx_new(ctx);
+    ctx->provider_conf = ossl_prov_conf_ctx_new(ctx);
     if (ctx->provider_conf == NULL)
         goto err;
 #endif
 
     /* P2. */
-    ctx->drbg = rand_ossl_ctx_new(ctx);
+    ctx->drbg = ossl_rand_ctx_new(ctx);
     if (ctx->drbg == NULL)
         goto err;
 
 #ifndef FIPS_MODULE
     /* P2. We want decoder_store to be cleaned up before the provider store */
-    ctx->decoder_store = decoder_store_new(ctx);
+    ctx->decoder_store = ossl_decoder_store_new(ctx);
     if (ctx->decoder_store == NULL)
         goto err;
 
     /* P2. We want encoder_store to be cleaned up before the provider store */
-    ctx->encoder_store = encoder_store_new(ctx);
+    ctx->encoder_store = ossl_encoder_store_new(ctx);
     if (ctx->encoder_store == NULL)
         goto err;
 
     /* P2. We want loader_store to be cleaned up before the provider store */
-    ctx->store_loader_store = loader_store_new(ctx);
+    ctx->store_loader_store = ossl_loader_store_new(ctx);
     if (ctx->store_loader_store == NULL)
         goto err;
 #endif
 
     /* P1. Needs to be freed before the child provider data is freed */
-    ctx->provider_store = provider_store_new(ctx);
+    ctx->provider_store = ossl_provider_store_new(ctx);
     if (ctx->provider_store == NULL)
         goto err;
 
     /* Default priority. */
-    ctx->property_string_data = property_string_data_new(ctx);
+    ctx->property_string_data = ossl_property_string_data_new(ctx);
     if (ctx->property_string_data == NULL)
         goto err;
 
-    ctx->namemap = stored_namemap_new(ctx);
+    ctx->namemap = ossl_stored_namemap_new(ctx);
     if (ctx->namemap == NULL)
         goto err;
 
-    ctx->property_defns = property_defns_new(ctx);
+    ctx->property_defns = ossl_property_defns_new(ctx);
     if (ctx->property_defns == NULL)
         goto err;
 
@@ -165,30 +165,30 @@ static int context_init(OSSL_LIB_CTX *ctx)
         goto err;
 
 #ifndef FIPS_MODULE
-    ctx->bio_core = bio_core_globals_new(ctx);
+    ctx->bio_core = ossl_bio_core_globals_new(ctx);
     if (ctx->bio_core == NULL)
         goto err;
 #endif
 
-    ctx->drbg_nonce = prov_drbg_nonce_ossl_ctx_new(ctx);
+    ctx->drbg_nonce = ossl_prov_drbg_nonce_ctx_new(ctx);
     if (ctx->drbg_nonce == NULL)
         goto err;
 
 #ifndef FIPS_MODULE
-    ctx->self_test_cb = self_test_set_callback_new(ctx);
+    ctx->self_test_cb = ossl_self_test_set_callback_new(ctx);
     if (ctx->self_test_cb == NULL)
         goto err;
 #endif
 
 #ifdef FIPS_MODULE
-    ctx->thread_event_handler = thread_event_ossl_ctx_new(ctx);
+    ctx->thread_event_handler = ossl_thread_event_ctx_new(ctx);
     if (ctx->thread_event_handler == NULL)
         goto err;
 #endif
 
     /* Low priority. */
 #ifndef FIPS_MODULE
-    ctx->child_provider = child_prov_ossl_ctx_new(ctx);
+    ctx->child_provider = ossl_child_prov_ctx_new(ctx);
     if (ctx->child_provider == NULL)
         goto err;
 #endif
@@ -222,55 +222,55 @@ static void context_deinit_objs(OSSL_LIB_CTX *ctx)
 
     /* P2. */
     if (ctx->drbg != NULL) {
-        rand_ossl_ctx_free(ctx->drbg);
+        ossl_rand_ctx_free(ctx->drbg);
         ctx->drbg = NULL;
     }
 
 #ifndef FIPS_MODULE
     /* P2. */
     if (ctx->provider_conf != NULL) {
-        prov_conf_ossl_ctx_free(ctx->provider_conf);
+        ossl_prov_conf_ctx_free(ctx->provider_conf);
         ctx->provider_conf = NULL;
     }
 
     /* P2. We want decoder_store to be cleaned up before the provider store */
     if (ctx->decoder_store != NULL) {
-        decoder_store_free(ctx->decoder_store);
+        ossl_decoder_store_free(ctx->decoder_store);
         ctx->decoder_store = NULL;
     }
 
     /* P2. We want encoder_store to be cleaned up before the provider store */
     if (ctx->encoder_store != NULL) {
-        encoder_store_free(ctx->encoder_store);
+        ossl_encoder_store_free(ctx->encoder_store);
         ctx->encoder_store = NULL;
     }
 
     /* P2. We want loader_store to be cleaned up before the provider store */
     if (ctx->store_loader_store != NULL) {
-        loader_store_free(ctx->store_loader_store);
+        ossl_loader_store_free(ctx->store_loader_store);
         ctx->store_loader_store = NULL;
     }
 #endif
 
     /* P1. Needs to be freed before the child provider data is freed */
     if (ctx->provider_store != NULL) {
-        provider_store_free(ctx->provider_store);
+        ossl_provider_store_free(ctx->provider_store);
         ctx->provider_store = NULL;
     }
 
     /* Default priority. */
     if (ctx->property_string_data != NULL) {
-        property_string_data_free(ctx->property_string_data);
+        ossl_property_string_data_free(ctx->property_string_data);
         ctx->property_string_data = NULL;
     }
 
     if (ctx->namemap != NULL) {
-        stored_namemap_free(ctx->namemap);
+        ossl_stored_namemap_free(ctx->namemap);
         ctx->namemap = NULL;
     }
 
     if (ctx->property_defns != NULL) {
-        property_defns_free(ctx->property_defns);
+        ossl_property_defns_free(ctx->property_defns);
         ctx->property_defns = NULL;
     }
 
@@ -281,31 +281,31 @@ static void context_deinit_objs(OSSL_LIB_CTX *ctx)
 
 #ifndef FIPS_MODULE
     if (ctx->bio_core != NULL) {
-        bio_core_globals_free(ctx->bio_core);
+        ossl_bio_core_globals_free(ctx->bio_core);
         ctx->bio_core = NULL;
     }
 #endif
 
     if (ctx->drbg_nonce != NULL) {
-        prov_drbg_nonce_ossl_ctx_free(ctx->drbg_nonce);
+        ossl_prov_drbg_nonce_ctx_free(ctx->drbg_nonce);
         ctx->drbg_nonce = NULL;
     }
 
 #ifndef FIPS_MODULE
     if (ctx->self_test_cb != NULL) {
-        self_test_set_callback_free(ctx->self_test_cb);
+        ossl_self_test_set_callback_free(ctx->self_test_cb);
         ctx->self_test_cb = NULL;
     }
 #endif
 
     if (ctx->rand_crngt != NULL) {
-        rand_crng_ossl_ctx_free(ctx->rand_crngt);
+        ossl_rand_crng_ctx_free(ctx->rand_crngt);
         ctx->rand_crngt = NULL;
     }
 
 #ifdef FIPS_MODULE
     if (ctx->thread_event_handler != NULL) {
-        thread_event_ossl_ctx_free(ctx->thread_event_handler);
+        ossl_thread_event_ctx_free(ctx->thread_event_handler);
         ctx->thread_event_handler = NULL;
     }
 #endif
@@ -319,7 +319,7 @@ static void context_deinit_objs(OSSL_LIB_CTX *ctx)
     /* Low priority. */
 #ifndef FIPS_MODULE
     if (ctx->child_provider != NULL) {
-        child_prov_ossl_ctx_free(ctx->child_provider);
+        ossl_child_prov_ctx_free(ctx->child_provider);
         ctx->child_provider = NULL;
     }
 #endif
@@ -577,7 +577,7 @@ void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index,
                     return NULL;
 
                 if (ctx->rand_crngt == NULL)
-                    ctx->rand_crngt = rand_crng_ossl_ctx_new(ctx);
+                    ctx->rand_crngt = ossl_rand_crng_ctx_new(ctx);
             }
 
             p = ctx->rand_crngt;
