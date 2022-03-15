@@ -24,8 +24,11 @@
 #include "internal/cryptlib.h"
 #include "internal/provider.h"
 #include "internal/core.h"
+#include "internal/safe_math.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
+
+OSSL_SAFE_MATH_SIGNED(int, int)
 
 int EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *ctx)
 {
@@ -512,7 +515,7 @@ static int evp_EncryptDecryptUpdate(EVP_CIPHER_CTX *ctx,
     int i, j, bl, cmpl = inl;
 
     if (EVP_CIPHER_CTX_test_flags(ctx, EVP_CIPH_FLAG_LENGTH_BITS))
-        cmpl = (cmpl + 7) / 8;
+        cmpl = safe_div_round_up_int(cmpl, 8, NULL);
 
     bl = ctx->cipher->block_size;
 
@@ -797,7 +800,7 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     b = ctx->cipher->block_size;
 
     if (EVP_CIPHER_CTX_test_flags(ctx, EVP_CIPH_FLAG_LENGTH_BITS))
-        cmpl = (cmpl + 7) / 8;
+        cmpl = safe_div_round_up_int(cmpl, 8, NULL);
 
     if (ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) {
         if (b == 1 && ossl_is_partially_overlapping(out, in, cmpl)) {
