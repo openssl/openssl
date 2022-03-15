@@ -4,7 +4,7 @@
 
 OSSL_SAFE_MATH_SIGNED, OSSL_SAFE_MATH_UNSIGNED,
 safe_add_TYPE, safe_sub_TYPE, safe_mul_TYPE, safe_div_TYPE, safe_mod_TYPE,
-safe_neg_TYPE
+safe_div_round_up_TYPE, safe_neg_TYPE
 - create helper functions to safely perform non-overflowing integer operations
 
 =head1 SYNOPSIS
@@ -21,6 +21,7 @@ safe_neg_TYPE
  TYPE safe_mul_TYPE(TYPE a, TYPE b, int *err);
  TYPE safe_div_TYPE(TYPE a, TYPE b, int *err);
  TYPE safe_mod_TYPE(TYPE a, TYPE b, int *err);
+ TYPE safe_div_round_up_TYPE(TYPE a, TYPE b, int *err);
  TYPE safe_muldiv_TYPE(TYPE a, TYPE b, TYPE c, int *err);
  TYPE safe_neg_TYPE(TYPE a, int *err);
  TYPE safe_abs_TYPE(TYPE a, int *err);
@@ -48,6 +49,10 @@ safe_mul_TYPE() multiplies the two arguments I<a> and I<b> together.
 safe_div_TYPE() divides I<a> by I<b>.
 
 safe_mod_TYPE() calculates the remainder when I<a> is divided by I<b>.
+
+safe_div_round_up_TYPE() calculates I<a> / I<b> + (I<a> % I<b> != 0).
+I.e. it computes the quotient of I<a> and I<b> rounding any remainder towards
+positive infinity.
 
 safe_muldiv_TYPE() multiplies I<a> and I<b> together and divides the
 result by I<c>.
