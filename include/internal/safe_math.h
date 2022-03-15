@@ -369,6 +369,40 @@
         return safe_add_ ## type_name(y, x / c, err);                        \
     }
 
+/*
+ * Calculate a / b rounding up:
+ *     i.e. a / b + (a % b != 0)
+ * Which is usually (less safely) converted to (a + b - 1) / b
+ * If you *know* that b != 0, then it's safe to ignore err.
+ */
+#define OSSL_SAFE_MATH_DIV_ROUND_UP(type_name, type, max) \
+    static ossl_inline ossl_unused type safe_div_round_up_ ## type_name      \
+        (type a, type b, int *errp)                                          \
+    {                                                                        \
+        type x;                                                              \
+        int *err, err_local = 0;                                             \
+                                                                             \
+        /* Allow errors to be ignored by callers */                          \
+        err = errp != NULL ? errp : &err_local;                              \
+        /* Fast path, both positive */                                       \
+        if (b > 0 && a > 0) {                                                \
+            /* Faster path: no overflow concerns */                          \
+            if (a < max - b)                                                 \
+                return (a + b - 1) / b;                                      \
+            return a / b + (a % b != 0);                                     \
+        }                                                                    \
+        if (b == 0) {                                                        \
+            *err |= 1;                                                       \
+            return a == 0 ? 0 : max;                                         \
+        }                                                                    \
+        if (a == 0)                                                          \
+            return 0;                                                        \
+        /* Rather slow path because there are negatives involved */          \
+        x = safe_mod_ ## type_name(a, b, err);                               \
+        return safe_add_ ## type_name(safe_div_ ## type_name(a, b, err),     \
+                                      x != 0, err);                          \
+    }
+
 /* Calculate ranges of types */
 # define OSSL_SAFE_MATH_MINS(type) ((type)1 << (sizeof(type) * 8 - 1))
 # define OSSL_SAFE_MATH_MAXS(type) (~OSSL_SAFE_MATH_MINS(type))
@@ -388,6 +422,8 @@
                         OSSL_SAFE_MATH_MAXS(type))                      \
     OSSL_SAFE_MATH_MODS(type_name, type, OSSL_SAFE_MATH_MINS(type),     \
                         OSSL_SAFE_MATH_MAXS(type))                      \
+    OSSL_SAFE_MATH_DIV_ROUND_UP(type_name, type,                        \
+                                OSSL_SAFE_MATH_MAXS(type))              \
     OSSL_SAFE_MATH_MULDIVS(type_name, type, OSSL_SAFE_MATH_MAXS(type))  \
     OSSL_SAFE_MATH_NEGS(type_name, type, OSSL_SAFE_MATH_MINS(type))     \
     OSSL_SAFE_MATH_ABSS(type_name, type, OSSL_SAFE_MATH_MINS(type))
@@ -398,6 +434,8 @@
     OSSL_SAFE_MATH_MULU(type_name, type, OSSL_SAFE_MATH_MAXU(type))     \
     OSSL_SAFE_MATH_DIVU(type_name, type, OSSL_SAFE_MATH_MAXU(type))     \
     OSSL_SAFE_MATH_MODU(type_name, type)                                \
+    OSSL_SAFE_MATH_DIV_ROUND_UP(type_name, type,                        \
+                                OSSL_SAFE_MATH_MAXU(type))              \
     OSSL_SAFE_MATH_MULDIVU(type_name, type, OSSL_SAFE_MATH_MAXU(type))  \
     OSSL_SAFE_MATH_NEGU(type_name, type)                                \
     OSSL_SAFE_MATH_ABSU(type_name, type)

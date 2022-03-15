@@ -27,28 +27,34 @@ OSSL_SAFE_MATH_UNSIGNED(size_t, size_t)
 
 static const struct {
     int a, b;
-    int sum_err, sub_err, mul_err, div_err, mod_err, neg_a_err, neg_b_err;
-    int abs_a_err, abs_b_err;
-} test_ints[] = {
-    { 1, 3,                 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-    { -1, 3,                0, 0, 0, 0, 0, 0, 0, 0, 0 },
-    { 1, -3,                0, 0, 0, 0, 0, 0, 0, 0, 0 },
-    { -1, -3,               0, 0, 0, 0, 0, 0, 0, 0, 0 },
-    { INT_MAX, 1,           1, 0, 0, 0, 0, 0, 0, 0, 0 },
-    { INT_MAX, 2,           1, 0, 1, 0, 0, 0, 0, 0, 0 },
-    { INT_MIN, 1,           0, 1, 0, 0, 0, 1, 0, 1, 0 },
-    { 1, INT_MIN,           0, 1, 0, 0, 0, 0, 1, 0, 1 },
-    { INT_MIN, 2,           0, 1, 1, 0, 0, 1, 0, 1, 0 },
-    { 2, INT_MIN,           0, 1, 1, 0, 0, 0, 1, 0, 1 },
-    { INT_MIN, -1,          1, 0, 1, 1, 1, 1, 0, 1, 0 },
-    { INT_MAX, INT_MIN,     0, 1, 1, 0, 0, 0, 1, 0, 1 },
-    { INT_MIN, INT_MAX,     0, 1, 1, 0, 0, 1, 0, 1, 0 },
-    { 3, 0,                 0, 0, 0, 1, 1, 0, 0, 0, 0 },
+    int sum_err, sub_err, mul_err, div_err, mod_err, div_round_up_err;
+    int neg_a_err, neg_b_err, abs_a_err, abs_b_err;
+} test_ints[] = {       /*  +  -  *  /  %  /r -a -b |a||b|  */
+    { 1, 3,                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { -1, 3,                0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 1, -3,                0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { -1, -3,               0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 3, 2,                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { -3, 2,                0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 2, -3,                0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { -2, -3,               0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { INT_MAX, 1,           1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { INT_MAX, 2,           1, 0, 1, 0, 0, 0, 0, 0, 0, 0 },
+    { INT_MAX, 4,           1, 0, 1, 0, 0, 0, 0, 0, 0, 0 },
+    { INT_MAX - 3 , 4,      1, 0, 1, 0, 0, 0, 0, 0, 0, 0 },
+    { INT_MIN, 1,           0, 1, 0, 0, 0, 0, 1, 0, 1, 0 },
+    { 1, INT_MIN,           0, 1, 0, 0, 0, 0, 0, 1, 0, 1 },
+    { INT_MIN, 2,           0, 1, 1, 0, 0, 0, 1, 0, 1, 0 },
+    { 2, INT_MIN,           0, 1, 1, 0, 0, 0, 0, 1, 0, 1 },
+    { INT_MIN, -1,          1, 0, 1, 1, 1, 1, 1, 0, 1, 0 },
+    { INT_MAX, INT_MIN,     0, 1, 1, 0, 0, 0, 0, 1, 0, 1 },
+    { INT_MIN, INT_MAX,     0, 1, 1, 0, 0, 0, 1, 0, 1, 0 },
+    { 3, 0,                 0, 0, 0, 1, 1, 1, 0, 0, 0, 0 },
 };
 
 static int test_int_ops(int n)
 {
-    int err, r;
+    int err, r, s;
     const int a = test_ints[n].a, b = test_ints[n].b;
 
     err = 0;
@@ -82,6 +88,15 @@ static int test_int_ops(int n)
         goto err;
 
     err = 0;
+    r = safe_div_round_up_int(a, b, &err);
+    if (!TEST_int_eq(err, test_ints[n].div_round_up_err))
+        goto err;
+    s = safe_mod_int(a, b, &err);
+    s = safe_add_int(safe_div_int(a, b, &err), s != 0, &err);
+    if (!err && !TEST_int_eq(r, s))
+        goto err;
+
+    err = 0;
     r = safe_neg_int(a, &err);
     if (!TEST_int_eq(err, test_ints[n].neg_a_err)
             || (!err && !TEST_int_eq(r, -a)))
@@ -112,15 +127,17 @@ static int test_int_ops(int n)
 
 static const struct {
     unsigned int a, b;
-    int sum_err, sub_err, mul_err, div_err, mod_err;
-} test_uints[] = {
-    { 3, 1,                 0, 0, 0, 0, 0 },
-    { 1, 3,                 0, 1, 0, 0, 0 },
-    { UINT_MAX, 1,          1, 0, 0, 0, 0 },
-    { UINT_MAX, 2,          1, 0, 1, 0, 0 },
-    { 1, UINT_MAX,          1, 1, 0, 0, 0 },
-    { 2, UINT_MAX,          1, 1, 1, 0, 0 },
-    { UINT_MAX, 0,          0, 0, 0, 1, 1 },
+    int sum_err, sub_err, mul_err, div_err, mod_err, div_round_up_err;
+} test_uints[] = {      /*  +  -  *  /  %  /r   */
+    { 3, 1,                 0, 0, 0, 0, 0, 0 },
+    { 1, 3,                 0, 1, 0, 0, 0, 0 },
+    { UINT_MAX, 1,          1, 0, 0, 0, 0, 0 },
+    { UINT_MAX, 2,          1, 0, 1, 0, 0, 0 },
+    { UINT_MAX, 16,         1, 0, 1, 0, 0, 0 },
+    { UINT_MAX - 13, 16,    1, 0, 1, 0, 0, 0 },
+    { 1, UINT_MAX,          1, 1, 0, 0, 0, 0 },
+    { 2, UINT_MAX,          1, 1, 1, 0, 0, 0 },
+    { UINT_MAX, 0,          0, 0, 0, 1, 1, 1 },
 };
 
 static int test_uint_ops(int n)
@@ -160,6 +177,12 @@ static int test_uint_ops(int n)
         goto err;
 
     err = 0;
+    r = safe_div_round_up_uint(a, b, &err);
+    if (!TEST_int_eq(err, test_uints[n].div_round_up_err)
+            || (!err && !TEST_uint_eq(r, a / b + (a % b != 0))))
+        goto err;
+
+    err = 0;
     r = safe_neg_uint(a, &err);
     if (!TEST_int_eq(err, a != 0) || (!err && !TEST_uint_eq(r, 0)))
         goto err;
@@ -186,15 +209,18 @@ static int test_uint_ops(int n)
 
 static const struct {
     size_t a, b;
-    int sum_err, sub_err, mul_err, div_err, mod_err;
+    int sum_err, sub_err, mul_err, div_err, mod_err, div_round_up_err;
 } test_size_ts[] = {
-    { 3, 1,                 0, 0, 0, 0, 0 },
-    { 1, 3,                 0, 1, 0, 0, 0 },
-    { SIZE_MAX, 1,          1, 0, 0, 0, 0 },
-    { SIZE_MAX, 2,          1, 0, 1, 0, 0 },
-    { 1, SIZE_MAX,          1, 1, 0, 0, 0 },
-    { 2, SIZE_MAX,          1, 1, 1, 0, 0 },
-    { 11, 0,                0, 0, 0, 1, 1 },
+    { 3, 1,                 0, 0, 0, 0, 0, 0 },
+    { 1, 3,                 0, 1, 0, 0, 0, 0 },
+    { 36, 8,                0, 0, 0, 0, 0, 0 },
+    { SIZE_MAX, 1,          1, 0, 0, 0, 0, 0 },
+    { SIZE_MAX, 2,          1, 0, 1, 0, 0, 0 },
+    { SIZE_MAX, 8,          1, 0, 1, 0, 0, 0 },
+    { SIZE_MAX - 3, 8,      1, 0, 1, 0, 0, 0 },
+    { 1, SIZE_MAX,          1, 1, 0, 0, 0, 0 },
+    { 2, SIZE_MAX,          1, 1, 1, 0, 0, 0 },
+    { 11, 0,                0, 0, 0, 1, 1, 1 },
 };
 
 static int test_size_t_ops(int n)
@@ -223,7 +249,7 @@ static int test_size_t_ops(int n)
 
     err = 0;
     r = safe_div_size_t(a, b, &err);
-    if (!TEST_int_eq(err, test_uints[n].div_err)
+    if (!TEST_int_eq(err, test_size_ts[n].div_err)
             || (!err && !TEST_size_t_eq(r, a / b)))
         goto err;
 
@@ -231,6 +257,12 @@ static int test_size_t_ops(int n)
     r = safe_mod_size_t(a, b, &err);
     if (!TEST_int_eq(err, test_size_ts[n].mod_err)
             || (!err && !TEST_size_t_eq(r, a % b)))
+        goto err;
+
+    err = 0;
+    r = safe_div_round_up_size_t(a, b, &err);
+    if (!TEST_int_eq(err, test_size_ts[n].div_round_up_err)
+            || (!err && !TEST_size_t_eq(r, a / b + (a % b != 0))))
         goto err;
 
     err = 0;
