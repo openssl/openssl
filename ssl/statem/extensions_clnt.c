@@ -1969,6 +1969,7 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_STOC_KEY_SHARE,
                  ERR_R_MALLOC_FAILURE);
         has_error = 1;
+        EVP_PKEY_free(skey);
         goto oqs_cleanup;
       }
       if (!EVP_PKEY_set1_tls_encodedpoint(skey, classical_encoded_pt, classical_encodedlen)) {
