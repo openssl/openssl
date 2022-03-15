@@ -116,7 +116,7 @@ static int test_sanity_range(void)
     }
 
     /* SIZE_MAX is always greater than 2*INT_MAX */
-    if (SIZE_MAX-INT_MAX <= INT_MAX) {
+    if (SIZE_MAX - INT_MAX <= INT_MAX) {
         TEST_error("SIZE_MAX must exceed 2*INT_MAX");
         return 0;
     }
