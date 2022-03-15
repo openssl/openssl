@@ -18,7 +18,7 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
-### Major changes between OpenSSL 3.0.1 and OpenSSL 3.0.2 [under development]
+### Major changes between OpenSSL 3.0.1 and OpenSSL 3.0.2 [15 Mar 2022]
 
   * Fixed a bug in the BN_mod_sqrt() function that can cause it to loop forever
     for non-prime moduli ([CVE-2022-0778])
