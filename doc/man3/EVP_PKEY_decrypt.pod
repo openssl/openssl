@@ -51,6 +51,18 @@ return 1 for success and 0 or a negative value for failure. In particular a
 return value of -2 indicates the operation is not supported by the public key
 algorithm.
 
+=head1 WARNINGS
+
+In OpenSSL versions before 3.1.0, when used in PKCS#1 v1.5 padding,
+both the return value from the EVP_PKEY_decrypt() and the B<outlen> provided
+information useful in mounting a Bleichenbacher attack against the
+used private key. They had to processed in a side-channel free way.
+
+Since version 3.1.0, the EVP_PKEY_decrypt() method when used with PKCS#1
+v1.5 padding doesn't return an error in case it detects an error in padding,
+instead it returns a pseudo-randomly generated message, removing the need
+of side-channel secure code from applications using OpenSSL.
+
 =head1 EXAMPLES
 
 Decrypt data using OAEP (for RSA keys):
