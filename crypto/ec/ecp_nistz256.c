@@ -978,6 +978,7 @@ __owur static int ecp_nistz256_points_mul(const EC_GROUP *group,
         return 0;
     }
 
+    memset(&p, 0, sizeof(p));
     BN_CTX_start(ctx);
 
     if (scalar) {
