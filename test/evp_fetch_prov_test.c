@@ -212,7 +212,7 @@ static int test_explicit_EVP_MD_fetch_by_X509_ALGOR(int idx)
     int ret = 0;
     X509_ALGOR *algor = make_algor(NID_sha256);
     const ASN1_OBJECT *obj;
-    char id[OSSL_MAX_NAME_SIZE];
+    char id[OSSL_MAX_NAME_SIZE] = { 0 };
 
     if (algor == NULL)
         return 0;
@@ -328,7 +328,7 @@ static int test_explicit_EVP_CIPHER_fetch_by_X509_ALGOR(int idx)
     int ret = 0;
     X509_ALGOR *algor = make_algor(NID_aes_128_cbc);
     const ASN1_OBJECT *obj;
-    char id[OSSL_MAX_NAME_SIZE];
+    char id[OSSL_MAX_NAME_SIZE] = { 0 };
 
     if (algor == NULL)
         return 0;
