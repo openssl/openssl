@@ -165,7 +165,8 @@ static int des_ede3_cfb1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                 const unsigned char *in, size_t inl)
 {
     size_t n;
-    unsigned char c[1], d[1];
+    unsigned char c[1];
+    unsigned char d[1] = { 0 }; /* Appease Coverity */
 
     if (!EVP_CIPHER_CTX_test_flags(ctx, EVP_CIPH_FLAG_LENGTH_BITS))
             inl *= 8;
