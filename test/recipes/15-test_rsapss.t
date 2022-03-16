@@ -16,7 +16,7 @@ use OpenSSL::Test::Utils;
 
 setup("test_rsapss");
 
-plan tests => 7;
+plan tests => 9;
 
 #using test/testrsa.pem which happens to be a 512 bit RSA
 ok(run(app(['openssl', 'dgst', '-sign', srctop_file('test', 'testrsa.pem'), '-sha1',
@@ -64,3 +64,11 @@ ok(run(app(['openssl', 'dgst', '-prverify', srctop_file('test', 'testrsa.pem'),
             '-signature', 'testrsapss-unrestricted.sig',
             srctop_file('test', 'testrsa.pem')])),
    "openssl dgst -prverify [plain RSA key, PSS padding mode, no PSS restrictions]");
+
+
+# Test for issue #17167
+{
+   my $rsapss = "rsapss.key";
+   ok(run(app(['openssl', 'genpkey', '-algorithm', 'RSA-PSS', '-pkeyopt', 'rsa_keygen_bits:1024', '--out', $rsapss])));
+   ok(run(app(['openssl', 'rsa', '-check', '-in', $rsapss, '-check'])));
+}
