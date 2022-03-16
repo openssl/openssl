@@ -499,9 +499,9 @@ void Camellia_DecryptBlock_Rounds(int grandRounds, const u8 ciphertext[],
     PUTU32(plaintext + 12, s1);
 }
 
-void Camellia_DecryptBlock(int keyBitLength, const u8 plaintext[],
-                           const KEY_TABLE_TYPE keyTable, u8 ciphertext[])
+void Camellia_DecryptBlock(int keyBitLength, const u8 ciphertext[],
+                           const KEY_TABLE_TYPE keyTable, u8 plaintext[])
 {
     Camellia_DecryptBlock_Rounds(keyBitLength == 128 ? 3 : 4,
-                                 plaintext, keyTable, ciphertext);
+                                 ciphertext, keyTable, plaintext);
 }
