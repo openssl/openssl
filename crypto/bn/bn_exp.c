@@ -187,13 +187,14 @@ int BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
         return ret;
     }
 
+    BN_RECP_CTX_init(&recp);
+
     BN_CTX_start(ctx);
     aa = BN_CTX_get(ctx);
     val[0] = BN_CTX_get(ctx);
     if (val[0] == NULL)
         goto err;
 
-    BN_RECP_CTX_init(&recp);
     if (m->neg) {
         /* ignore sign of 'm' */
         if (!BN_copy(aa, m))
