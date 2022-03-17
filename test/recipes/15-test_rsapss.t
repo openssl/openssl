@@ -65,10 +65,12 @@ ok(run(app(['openssl', 'dgst', '-prverify', srctop_file('test', 'testrsa.pem'),
             srctop_file('test', 'testrsa.pem')])),
    "openssl dgst -prverify [plain RSA key, PSS padding mode, no PSS restrictions]");
 
-
-# Test for issue #17167
+# Test that RSA-PSS keys are supported by genpkey and rsa commands.
 {
    my $rsapss = "rsapss.key";
-   ok(run(app(['openssl', 'genpkey', '-algorithm', 'RSA-PSS', '-pkeyopt', 'rsa_keygen_bits:1024', '--out', $rsapss])));
-   ok(run(app(['openssl', 'rsa', '-check', '-in', $rsapss, '-check'])));
+   ok(run(app(['openssl', 'genpkey', '-algorithm', 'RSA-PSS',
+               '-pkeyopt', 'rsa_keygen_bits:1024',
+               '--out', $rsapss])));
+   ok(run(app(['openssl', 'rsa', '-check',
+               '-in', $rsapss])));
 }
