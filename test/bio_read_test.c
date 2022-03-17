@@ -13,7 +13,10 @@
 #include <openssl/rand.h>
 #include <openssl/bio.h>
 
-#if defined(_WIN32)
+#include "testutil/output.h"
+#include "testutil.h"
+
+#if defined(_WIN32) || defined(OPENSSL_NO_DGRAM)
 int setup_tests(void)
 {
     return 1;
@@ -22,9 +25,6 @@ int setup_tests(void)
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
-
-#include "testutil/output.h"
-#include "testutil.h"
 
 #define PACKET_COUNT 10
 
