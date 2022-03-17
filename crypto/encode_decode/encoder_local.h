@@ -108,6 +108,7 @@ struct ossl_decoder_instance_st {
     void *decoderctx;            /* Never NULL */
     const char *input_type;      /* Never NULL */
     const char *input_structure; /* May be NULL */
+    int input_type_id;
 
     unsigned int flag_input_structure_was_set : 1;
 };
@@ -162,3 +163,6 @@ const OSSL_PROPERTY_LIST *
 ossl_decoder_parsed_properties(const OSSL_DECODER *decoder);
 const OSSL_PROPERTY_LIST *
 ossl_encoder_parsed_properties(const OSSL_ENCODER *encoder);
+
+int ossl_decoder_fast_is_a(OSSL_DECODER *decoder,
+                           const char *name, int *id_cache);
