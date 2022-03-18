@@ -207,15 +207,7 @@ but could also be -1 on failure.
 X509_LOOKUP_get_store() returns a B<X509_STORE> pointer if there is
 one, otherwise NULL.
 
-X509_LOOKUP_by_subject_ex()
-returns -1 if there is no B<X509_LOOKUP_METHOD> or that
-method doesn't implement the corresponding function.
-Otherwise, it returns what the corresponding function in the
-B<X509_LOOKUP_METHOD> returns,
-which is usually 1 on success, 0 if not found,
-and -1 on fatal (internal) error such as malloc failure.
-
-X509_LOOKUP_by_subject(),
+X509_LOOKUP_by_subject_ex(), X509_LOOKUP_by_subject(),
 X509_LOOKUP_by_issuer_serial(), X509_LOOKUP_by_fingerprint(), and
 X509_LOOKUP_by_alias() all return 0 if there is no B<X509_LOOKUP_METHOD> or that
 method doesn't implement the corresponding function.

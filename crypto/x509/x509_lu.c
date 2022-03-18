@@ -95,7 +95,7 @@ int X509_LOOKUP_by_subject_ex(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
 {
     if (ctx->skip || ctx->method == NULL
            || ctx->method->get_by_subject_ex == NULL)
-        return -1;
+        return 0;
     return ctx->method->get_by_subject_ex(ctx, type, name, ret, libctx, propq);
 }
 
@@ -329,21 +329,20 @@ static int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *vs,
     if (tmp == NULL || type == X509_LU_CRL) {
         for (i = 0; i < sk_X509_LOOKUP_num(store->get_cert_methods); i++) {
             lu = sk_X509_LOOKUP_value(store->get_cert_methods, i);
-            if (lu->method != NULL && lu->method->get_by_subject_ex != NULL) {
-                j = X509_LOOKUP_by_subject_ex(lu, type, name, &stmp, vs->libctx,
-                                              vs->propq);
-                if (j < 0)
-                    return j;
-                if (j > 0) {
-                    tmp = &stmp;
-                    break;
-                }
-            } else {
+            if (lu->skip)
+                continue;
+            if (lu->method == NULL)
+                return -1;
+            if (lu->method->get_by_subject_ex != NULL)
+                j = X509_LOOKUP_by_subject_ex(lu, type, name, &stmp,
+                                              vs->libctx, vs->propq);
+            else if (lu->method->get_by_subject != NULL)
                 j = X509_LOOKUP_by_subject(lu, type, name, &stmp);
-                if (j != 0) { /* non-zero value is considered success here */
-                    tmp = &stmp;
-                    break;
-                }
+            else
+                continue;
+            if (j != 0) { /* non-zero value is considered success here */
+                tmp = &stmp;
+                break;
             }
         }
         if (tmp == NULL)
