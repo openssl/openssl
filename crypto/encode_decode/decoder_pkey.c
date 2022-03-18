@@ -201,10 +201,13 @@ static void decoder_clean_pkey_construct_arg(void *construct_data)
 struct collect_data_st {
     OSSL_LIB_CTX *libctx;
     OSSL_DECODER_CTX *ctx;
-    int keytype_id; /* if keytype was specified, keymgmt name_id; else 0 */
-    int sm2_id;     /* if keytype was specified and EC, SM2 name_id; else 0 */
+
+    const char *keytype; /* the keytype requested, if any */
+    int keytype_id; /* if keytype_resolved is set, keymgmt name_id; else 0 */
+    int sm2_id;     /* if keytype_resolved is set and EC, SM2 name_id; else 0 */
     int total;      /* number of matching results */
     char error_occurred;
+    char keytype_resolved;
 
     STACK_OF(EVP_KEYMGMT) *keymgmts;
 };
@@ -287,7 +290,7 @@ static void collect_decoder(OSSL_DECODER *decoder, void *arg)
     } OSSL_TRACE_END(DECODER);
 
     end_i = sk_EVP_KEYMGMT_num(keymgmts);
-    for (i=0; i<end_i; ++i) {
+    for (i = 0; i < end_i; ++i) {
         keymgmt = sk_EVP_KEYMGMT_value(keymgmts, i);
 
         collect_decoder_keymgmt(keymgmt, decoder, provctx, data);
@@ -302,9 +305,38 @@ static void collect_decoder(OSSL_DECODER *decoder, void *arg)
  */
 static int check_keymgmt(EVP_KEYMGMT *keymgmt, struct collect_data_st *data)
 {
-    if (data->keytype_id != 0
-            && keymgmt->name_id != data->keytype_id
-            && keymgmt->name_id != data->sm2_id)
+    /* If no keytype was specified, everything matches. */
+    if (data->keytype == NULL)
+        return 1;
+
+    if (!data->keytype_resolved) {
+        /* We haven't cached the IDs from the keytype string yet. */
+        OSSL_NAMEMAP *namemap = ossl_namemap_stored(data->libctx);
+        data->keytype_id = ossl_namemap_name2num(namemap, data->keytype);
+
+        /*
+         * If keytype is a value ambiguously used for both EC and SM2,
+         * collect the ID for SM2 as well.
+         */
+        if (data->keytype_id != 0
+            && (strcmp(data->keytype, "id-ecPublicKey") == 0
+                || strcmp(data->keytype, "1.2.840.10045.2.1") == 0))
+            data->sm2_id = ossl_namemap_name2num(namemap, "SM2");
+
+        /*
+         * If keytype_id is zero the name was not found, but we still
+         * set keytype_resolved to avoid trying all this again.
+         */
+        data->keytype_resolved = 1;
+    }
+
+    /* Specified keytype could not be resolved, so nothing matches. */
+    if (data->keytype_id == 0)
+        return 0;
+
+    /* Does not match the keytype specified, so skip. */
+    if (keymgmt->name_id != data->keytype_id
+        && keymgmt->name_id != data->sm2_id)
         return 0;
 
     return 1;
@@ -346,7 +378,6 @@ int ossl_decoder_ctx_setup_for_pkey(OSSL_DECODER_CTX *ctx,
     int ok = 0;
     struct decoder_pkey_data_st *process_data = NULL;
     struct collect_data_st collect_data = { NULL };
-    OSSL_NAMEMAP *namemap = NULL;
     STACK_OF(EVP_KEYMGMT) *keymgmts = NULL;
 
     OSSL_TRACE_BEGIN(DECODER) {
@@ -372,29 +403,6 @@ int ossl_decoder_ctx_setup_for_pkey(OSSL_DECODER_CTX *ctx,
         goto err;
     }
 
-    /*
-     * Resolve keytype to name ID up front so we don't have to resolve it
-     * multiple times.
-     */
-    if (keytype != NULL) {
-        namemap = ossl_namemap_stored(libctx);
-        collect_data.keytype_id = ossl_namemap_name2num(namemap, keytype);
-
-        if (collect_data.keytype_id == 0) {
-            /* This is not considered an error but it is a no-op. */
-            ok = 1;
-            goto err;
-        }
-
-        /*
-         * If keytype is a value ambiguously used for both EC and SM2,
-         * collect the ID for SM2 as well.
-         */
-        if (strcmp(keytype, "id-ecPublicKey") == 0
-                || strcmp(keytype, "1.2.840.10045.2.1") == 0)
-            collect_data.sm2_id = ossl_namemap_name2num(namemap, "SM2");
-    }
-
     /* Allocate our list of EVP_KEYMGMTs. */
     keymgmts = sk_EVP_KEYMGMT_new_null();
     if (keymgmts == NULL) {
@@ -414,11 +422,19 @@ int ossl_decoder_ctx_setup_for_pkey(OSSL_DECODER_CTX *ctx,
      * OSSL_DECODER_do_all_provided or vice versa but these functions become
      * bottlenecks if called repeatedly, which is why we collect the
      * EVP_KEYMGMTs into a stack here and call both functions only once.
+     *
+     * We resolve the keytype string to a name ID so we don't have to resolve it
+     * multiple times, avoiding repeated calls to EVP_KEYMGMT_is_a, which is a
+     * performance bottleneck. However, we do this lazily on the first call to
+     * collect_keymgmt made by EVP_KEYMGMT_do_all_provided, rather than do it
+     * upfront, as this ensures that the names for all loaded providers have
+     * been registered by the time we try to resolve the keytype string.
      */
     collect_data.ctx        = ctx;
     collect_data.libctx     = libctx;
     collect_data.keymgmts   = keymgmts;
-        EVP_KEYMGMT_do_all_provided(libctx, collect_keymgmt, &collect_data);
+    collect_data.keytype    = keytype;
+    EVP_KEYMGMT_do_all_provided(libctx, collect_keymgmt, &collect_data);
 
     if (collect_data.error_occurred)
         goto err;
