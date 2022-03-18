@@ -1,0 +1,53 @@
+=pod
+
+=head1 NAME
+
+BIO_set_dgram_origin, BIO_set_dgram_dest, BIO_get_dgram_origin, BIO_get_dgram_dest
+- BIO datagram control operations
+
+=head1 SYNOPSIS
+
+ #include <openssl/bio.h>
+
+ int BIO_set_dgram_origin(BIO *b, BIO_ADDR *local);
+ int BIO_get_dgram_origin(BIO *b, BIO_ADDR *local);
+
+ int BIO_set_dgram_dest(BIO *b, BIO_ADDR *peer);
+ int BIO_get_dgram_dest(BIO *b, BIO_ADDR *peer);
+
+
+=head1 DESCRIPTION
+
+These BIO get and set functions deal with the underlying connections for datagram sockets as used by DTLS sessions.
+
+Unconnected datagram sockets can receive packets from any address, and not being bound to a particular IP address, may receive packets to any valid local address.
+
+When packets are received on these sockets, if the underlying operating system supports, they
+are sent using functions that collect the originating and destination addresses on each packet.
+After each call to BIO_dgram_read(), the origin and destination information is saved.
+The BIO_get_dgram_origin() and BIO_get_dgram_dest() may be called to retrieve the saved information.
+
+Unconnected datagram sockets can send packets from any valid local address, and can send traffic any desired destination.
+Use the BIO_set_dgram_origin() and BIO_set_dgram_dest() calls to store the desired origin and destination for the next call to BIO_dgram_write().
+
+Use of unconnected datagram sockets is critical for DTLS Hello Challenge.
+Once a Hello Challenge has passed, creation of a connected datagram socket allows the kernel to do the demultiplexing of different streams.
+
+=head1 RETURN VALUES
+
+All functions normally returns 0 for for failure, and otherwise return the size of the returned sockaddress structure.
+
+=head1 HISTORY
+
+These functions were added in OpenSSL 3.1.
+
+=head1 COPYRIGHT
+
+Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

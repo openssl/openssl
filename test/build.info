@@ -51,7 +51,6 @@ IF[{- !$disabled{tests} -}]
           ssl_test_ctx_test ssl_test x509aux cipherlist_test asynciotest \
           bio_callback_test bio_memleak_test bio_core_test param_build_test \
           bioprinttest sslapitest dtlstest sslcorrupttest \
-          bio_write_test bio_read_test \
           bio_enc_test pkey_meth_test pkey_meth_kdf_test evp_kdf_test uitest \
           cipherbytes_test threadstest_fips \
           asn1_encode_test asn1_decode_test asn1_string_table_test \
@@ -419,14 +418,11 @@ IF[{- !$disabled{tests} -}]
   IF[{- !$disabled{sock} -}]
     PROGRAMS{noinst}=bio_write_test bio_read_test
   ENDIF
-  IF[{- !$disabled{dgram} -}]
-    PROGRAMS{noinst}=bio_write_test bio_read_test
-  ENDIF
-  SOURCE[bio_write_test]=bio_write_test.c
+  SOURCE[bio_write_test]=bio_write_test.c bio_dgram_test_helpers.c
   INCLUDE[bio_write_test]=../include ../apps/include
   DEPEND[bio_write_test]=../libcrypto libtestutil.a
 
-  SOURCE[bio_read_test]=bio_read_test.c
+  SOURCE[bio_read_test]=bio_read_test.c   bio_dgram_test_helpers.c
   INCLUDE[bio_read_test]=../include ../apps/include
   DEPEND[bio_read_test]=../libcrypto libtestutil.a
 
