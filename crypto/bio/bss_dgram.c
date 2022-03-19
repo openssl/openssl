@@ -372,8 +372,7 @@ static int dgram_read_unconnected_v4(BIO *b, char *in, int inl,
       mhdr.msg_controllen = sizeof(chdr);
     }
 
-    if((len = recvmsg(b->num, &mhdr, 0)) >= 0) {
-      if(dstaddr != NULL) {
+    if((len = recvmsg(b->num, &mhdr, 0)) >= 0 && dstaddr != NULL) {
         for (cmsg = CMSG_FIRSTHDR(&mhdr);
              cmsg != NULL;
              cmsg = CMSG_NXTHDR(&mhdr, cmsg)) {
@@ -442,25 +441,25 @@ static int dgram_read_unconnected_v4(BIO *b, const char *in, int inl,
       mhdr.msg_controllen = sizeof(chdr);
     }
 
-    if((len = recvmsg(b->num, &mhdr, 0)) >= 0) {
-        for (cmsg = CMSG_FIRSTHDR(&mhdr);
-             cmsg != NULL;
-             cmsg = CMSG_NXTHDR(&mhdr, cmsg)) {
-            if (cmsg->cmsg_level != IPPROTO_IP)
-          	continue;
+    if((len = recvmsg(b->num, &mhdr, 0)) >= 0 && dstaddr != NULL) {
+      for (cmsg = CMSG_FIRSTHDR(&mhdr);
+           cmsg != NULL;
+           cmsg = CMSG_NXTHDR(&mhdr, cmsg)) {
+        if (cmsg->cmsg_level != IPPROTO_IP)
+          continue;
 
-            if(cmsg->cmsg_type != IP_RECVDSTADDR)
-                continue;
+        if(cmsg->cmsg_type != IP_RECVDSTADDR)
+          continue;
 
-            dstrecv = (struct in_addr *)CMSG_DATA(cmsg);
-            break;
-	}
+        dstrecv = (struct in_addr *)CMSG_DATA(cmsg);
+        break;
+      }
 
-        /* see if we found something */
-        if(dstrecv != NULL && dstaddr != NULL) {
-          dstaddr->s_in.sin_family = AF_INET;
-          dstaddr->s_in.sin_addr =*dstrecv;
-        }
+      /* see if we found something */
+      if(dstrecv != NULL) {
+        dstaddr->s_in.sin_family = AF_INET;
+        dstaddr->s_in.sin_addr =*dstrecv;
+      }
     }
 
     /* NOTE: peer was filled in by kernel */
