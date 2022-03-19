@@ -88,7 +88,8 @@ static int test_bio_read_v4(int idx)
   dsthost2 = BIO_ADDR_new();
 
   portnum = bind_v4_socket(infd1, dsthost1);
-  bind_v4_socket(infd2, dsthost2);
+  if(portnum == -1 ||
+     bind_v4_socket(infd2, dsthost2) == -1) return 0;
 
   ret = fork_and_read_write_packets(infd1, outfd, portnum, dsthost1, dsthost2);
   BIO_ADDR_free(dsthost1);
@@ -106,21 +107,17 @@ static int test_bio_read_v6(int idx)
     int ret = 0;
     unsigned int portnum;
 
-    if(getenv("TRAVISCI_NO_IPV6")==NULL) {
-      dsthost1 = BIO_ADDR_new();
-      dsthost2 = BIO_ADDR_new();
+    dsthost1 = BIO_ADDR_new();
+    dsthost2 = BIO_ADDR_new();
 
-      portnum = bind_v6_socket(infd1, dsthost1, 0);
-      bind_v6_socket(infd2, dsthost2, 0);
+    portnum = bind_v6_socket(infd1, dsthost1, 0);
+    if(portnum == -1 ||
+       bind_v6_socket(infd2, dsthost2, 0) == -1) return 0;
 
-      ret =
-        fork_and_read_write_packets(infd1, outfd, portnum, dsthost1, dsthost2);
-      BIO_ADDR_free(dsthost1);
-      BIO_ADDR_free(dsthost2);
-    } else {
-      test_printf_stdout("not running IPv6 tests due to travis-ci environment\n");
-      ret = 1;
-    }
+    ret = fork_and_read_write_packets(infd1, outfd,
+                                      portnum, dsthost1, dsthost2);
+    BIO_ADDR_free(dsthost1);
+    BIO_ADDR_free(dsthost2);
 
     return ret;
 }

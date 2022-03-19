@@ -17,11 +17,11 @@ extern int write_packets(BIO *bio, int count, BIO_ADDR *dst1, BIO_ADDR *dst2);
 extern int fork_and_read_write_packets(int infd, int outfd,
                                        unsigned portnum,
                                        BIO_ADDR *dsthost1, BIO_ADDR *dsthost2);
-extern unsigned int bind_v4_socket(int infd,
-                                   BIO_ADDR *dsthost);
-extern unsigned int bind_v6_socket(int infd,
-                                   BIO_ADDR *dsthost,
-                                   unsigned short portnum);
+extern int bind_v4_socket(int infd,
+                          BIO_ADDR *dsthost);
+extern int bind_v6_socket(int infd,
+                          BIO_ADDR *dsthost,
+                          unsigned short portnum);
 
 /* this function is *provided* by the test case, and is difference between read/write */
 extern int read_socket_and_discard(int fd, int count, unsigned short portnum);

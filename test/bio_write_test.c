@@ -86,7 +86,8 @@ static int test_bio_write_v6(int idx)
   dsthost2 = BIO_ADDR_new();
 
   portnum1 = bind_v6_socket(infd1, dsthost1, 0);
-  bind_v6_socket(infd2, dsthost2, portnum1);
+  if(portnum1 == -1 ||
+     bind_v6_socket(infd2, dsthost2, portnum1) == -1) return 0;
 
   ret = fork_and_read_write_packets(infd1, outfd, portnum1, dsthost1, dsthost2);
   BIO_ADDR_free(dsthost1);
