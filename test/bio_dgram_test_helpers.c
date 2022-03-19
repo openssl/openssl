@@ -16,12 +16,6 @@
 #include "testutil/output.h"
 #include "testutil.h"
 
-#if defined(_WIN32)
-int setup_tests(void)
-{
-    return 1;
-}
-#else
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>

@@ -42,7 +42,7 @@ int setup_tests(void)
 #include "bio_dgram_test_helpers.h"
 
 /* this runs in the parent process */
-int read_socket_and_discard(int fd, int count, unsigned portnum)
+int read_socket_and_discard(int fd, int count, unsigned short portnum)
 {
   char buf[512];
   BIO  *in;
@@ -110,8 +110,8 @@ static int test_bio_read_v6(int idx)
       dsthost1 = BIO_ADDR_new();
       dsthost2 = BIO_ADDR_new();
 
-      portnum = bind_v6_socket(infd1, dsthost1);
-      bind_v6_socket(infd2, dsthost2);
+      portnum = bind_v6_socket(infd1, dsthost1, 0);
+      bind_v6_socket(infd2, dsthost2, 0);
 
       ret =
         fork_and_read_write_packets(infd1, outfd, portnum, dsthost1, dsthost2);

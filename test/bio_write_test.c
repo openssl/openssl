@@ -25,6 +25,8 @@ int setup_tests(void)
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+#include "bio_dgram_test_helpers.h"
+
 /*
  * this test case opens a pair of v4 or v6 sockets, bound to localhost.
  * A process is forked to do the *writing*, which is where the BIO code
@@ -38,7 +40,7 @@ int setup_tests(void)
  */
 
 /* this is done with non BIO code because it is not the side that is being tested */
-int read_socket_and_discard(int fd, int count, int portnum)
+int read_socket_and_discard(int fd, int count, unsigned short portnum)
 {
   char buf[512];
 
@@ -56,14 +58,15 @@ static int test_bio_write_v4(int idx)
   int infd2 = BIO_socket(AF_INET, SOCK_DGRAM, 0, 0);
   BIO_ADDR          *dsthost1, *dsthost2;
   int ret = 0;
+  unsigned short portnum1;
 
   dsthost1 = BIO_ADDR_new();
   dsthost2 = BIO_ADDR_new();
 
-  bind_v4_socket(infd1, dsthost1);
+  portnum1 = bind_v4_socket(infd1, dsthost1);
   bind_v4_socket(infd2, dsthost2);
 
-  ret = fork_and_read_write_packets(infd1, outfd, dsthost1, dsthost2);
+  ret = fork_and_read_write_packets(infd1, outfd, portnum1, dsthost1, dsthost2);
   BIO_ADDR_free(dsthost1);
   BIO_ADDR_free(dsthost2);
   return ret;
@@ -77,13 +80,13 @@ static int test_bio_write_v6(int idx)
   BIO_ADDR   *dsthost1;
   BIO_ADDR   *dsthost2;
   int ret = 0;
-  unsigned short portnum1, portnum2;
+  unsigned short portnum1;
 
   dsthost1 = BIO_ADDR_new();
   dsthost2 = BIO_ADDR_new();
 
   portnum1 = bind_v6_socket(infd1, dsthost1, 0);
-  portnum2 = bind_v6_socket(infd2, dsthost2, portnum1);
+  bind_v6_socket(infd2, dsthost2, portnum1);
 
   ret = fork_and_read_write_packets(infd1, outfd, portnum1, dsthost1, dsthost2);
   BIO_ADDR_free(dsthost1);
