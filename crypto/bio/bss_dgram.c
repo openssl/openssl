@@ -16,22 +16,22 @@
 
 /* this is needed on Linux to get in6_pktinfo to be defined */
 #ifndef __USE_GNU
-#define __USE_GNU
+# define __USE_GNU
 #endif
 
 /* this is needed on OSX to get IPV6_PKTINFO defined */
 #ifdef __APPLE__
-#define __APPLE_USE_RFC_3542
+# define __APPLE_USE_RFC_3542
 #endif
 
 #include <sys/types.h>
 #if defined(_WIN32)
-#include <winsock2.h>
-#include <ws2tcpip.h>
+# include <winsock2.h>
+# include <ws2tcpip.h>
 #else
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netinet/ip6.h>
+# include <sys/socket.h>
+# include <netinet/in.h>
+# include <netinet/ip6.h>
 #endif
 #include <errno.h>
 #include <signal.h>
@@ -66,15 +66,17 @@
 # endif
 
 /* this is needed on OSX to get IPV6_PKTINFO */
-#ifdef __APPLE__
+#if defined(HAVE_IP_PKTINFO) || defined(HAVE_IP_RECVDSTADDR)
+# ifdef __APPLE__
 /* should be big enough */
-#define BIO_CMSG_ADDR_SIZE 256
-#define BIO_CMSG_PKT_SIZE  256
-#define BIO_CMSG_PKT6_SIZE 256
-#else
-#define BIO_CMSG_ADDR_SIZE CMSG_SPACE(sizeof(struct in_addr))
-#define BIO_CMSG_PKT_SIZE  CMSG_SPACE(sizeof(struct in_pktinfo))
-#define BIO_CMSG_PKT6_SIZE CMSG_SPACE(sizeof(struct in6_pktinfo))
+#  define BIO_CMSG_ADDR_SIZE 256
+#  define BIO_CMSG_PKT_SIZE  256
+#  define BIO_CMSG_PKT6_SIZE 256
+# else
+#  define BIO_CMSG_ADDR_SIZE CMSG_SPACE(sizeof(struct in_addr))
+#  define BIO_CMSG_PKT_SIZE  CMSG_SPACE(sizeof(struct in_pktinfo))
+#  define BIO_CMSG_PKT6_SIZE CMSG_SPACE(sizeof(struct in6_pktinfo))
+# endif
 #endif
 
 
@@ -371,24 +373,26 @@ static int dgram_read_unconnected_v4(BIO *b, char *in, int inl,
     }
 
     if((len = recvmsg(b->num, &mhdr, 0)) >= 0) {
+      if(dstaddr != NULL) {
         for (cmsg = CMSG_FIRSTHDR(&mhdr);
              cmsg != NULL;
              cmsg = CMSG_NXTHDR(&mhdr, cmsg)) {
-            if(cmsg->cmsg_level != IPPROTO_IP)
-          	continue;
+          if(cmsg->cmsg_level != IPPROTO_IP)
+            continue;
 
-            if(cmsg->cmsg_type != IP_PKTINFO)
-                continue;
+          if(cmsg->cmsg_type != IP_PKTINFO)
+            continue;
 
-            pkt_info = (struct in_pktinfo *)CMSG_DATA(cmsg);
-            break;
+          pkt_info = (struct in_pktinfo *)CMSG_DATA(cmsg);
+          break;
 	}
 
         /* see if we found something */
-        if(pkt_info != NULL && dstaddr != NULL) {
+        if(pkt_info != NULL) {
           dstaddr->s_in.sin_family = AF_INET;
           dstaddr->s_in.sin_addr = pkt_info->ipi_addr;
         }
+      }
     }
 
     /* NOTE: peer was filled in by kernel */
@@ -525,23 +529,25 @@ static int dgram_read_unconnected_v6(BIO *b, char *in, int inl,
     }
 
     if((len = recvmsg(b->num, &mhdr, 0)) >= 0) {
+      if(dstaddr != NULL) {
         for (cmsg = CMSG_FIRSTHDR(&mhdr);
              cmsg != NULL;
              cmsg = CMSG_NXTHDR(&mhdr, cmsg)) {
-            if(cmsg->cmsg_level != IPPROTO_IPV6)
-          	continue;
+          if(cmsg->cmsg_level != IPPROTO_IPV6)
+            continue;
 
-            if(cmsg->cmsg_type != IPV6_PKTINFO)
-                continue;
-            pkt_info = (struct in6_pktinfo *)CMSG_DATA(cmsg);
+          if(cmsg->cmsg_type != IPV6_PKTINFO)
+            continue;
+          pkt_info = (struct in6_pktinfo *)CMSG_DATA(cmsg);
 	}
 
         /* see if we found something */
-        if(pkt_info != NULL && dstaddr != NULL) {
+        if(pkt_info != NULL) {
           unsigned int dst_len = BIO_ADDR_sockaddr_size(dstaddr);
           if(dst_len > sizeof(pkt_info->ipi6_addr)) dst_len = sizeof(pkt_info->ipi6_addr);
           memcpy(BIO_ADDR_sockaddr_noconst(dstaddr), &pkt_info->ipi6_addr, dst_len);
         }
+      }
     }
 
     /* NOTE: peer was filled in by kernel */
@@ -582,9 +588,8 @@ static int dgram_read(BIO *b, char *out, int outl)
         struct sockaddr *sa;
 
         /* make sure we know something about the socket */
-	if(data->addr.sa.sa_family == 0) {
-		dgram_get_sockname(b);
-	}
+	if(data->addr.sa.sa_family == 0)
+          dgram_get_sockname(b);
 
         sa = (struct sockaddr *)BIO_ADDR_sockaddr(&data->addr);
 
@@ -654,7 +659,7 @@ static int dgram_write_unconnected_v4(BIO *b, const char *out, int outl)
     mhdr.msg_iovlen = 1;
 
     srcaddr = (struct sockaddr_in *)BIO_ADDR_sockaddr(&data->addr);
-    if(srcaddr && srcaddr->sin_addr.s_addr != 0) {
+    if(srcaddr != NULL && srcaddr->sin_addr.s_addr != 0) {
       struct in_pktinfo *pkt_info;
 
       memset(chdr, 0, sizeof(chdr));

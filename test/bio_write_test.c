@@ -45,7 +45,7 @@ int read_socket_and_discard(int fd, int count, int portnum)
   /* do not wait forever! */
   alarm(60);
 
-  while(--count > 0 && read(fd, buf, 512)>0);
+  while(--count > 0 && read(fd, buf, 512) > 0);
   return count;
 }
 
@@ -79,19 +79,15 @@ static int test_bio_write_v6(int idx)
   int ret = 0;
   unsigned short portnum1, portnum2;
 
-  if(getenv("TRAVISCI_NO_IPV6")==NULL) {
-    dsthost1 = BIO_ADDR_new();
-    dsthost2 = BIO_ADDR_new();
+  dsthost1 = BIO_ADDR_new();
+  dsthost2 = BIO_ADDR_new();
 
-    portnum1 = bind_v6_socket(infd1, dsthost1, 0);
-    portnum2 = bind_v6_socket(infd2, dsthost2, portnum1);
+  portnum1 = bind_v6_socket(infd1, dsthost1, 0);
+  portnum2 = bind_v6_socket(infd2, dsthost2, portnum1);
 
-    ret = fork_and_read_write_packets(infd1, outfd, portnum1, dsthost1, dsthost2);
-    BIO_ADDR_free(dsthost1);
-    BIO_ADDR_free(dsthost2);
-  } else {
-    ret = 1;
-  }
+  ret = fork_and_read_write_packets(infd1, outfd, portnum1, dsthost1, dsthost2);
+  BIO_ADDR_free(dsthost1);
+  BIO_ADDR_free(dsthost2);
   return ret;
 }
 

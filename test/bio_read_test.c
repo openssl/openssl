@@ -36,11 +36,12 @@ int setup_tests(void)
  * The foreground process reads 5 packets from the socket and discards
  * them.
  *
- * The packets being send to the other destination are just ignored for now.
+ * The packets being sent to the other destination are just ignored for now.
  */
 
 #include "bio_dgram_test_helpers.h"
 
+/* this runs in the parent process */
 int read_socket_and_discard(int fd, int count, unsigned portnum)
 {
   char buf[512];
@@ -61,7 +62,8 @@ int read_socket_and_discard(int fd, int count, unsigned portnum)
     /* now check out the bio structure for the origin of the packet */
     BIO_get_dgram_origin(in, ba);
     port = ntohs(BIO_ADDR_rawport(ba));
-    if(port != 0 && port != portnum) { exit(5); }
+    if(port != 0 && port != portnum)
+      TEST_error("packet from wrong port. Got %u, expected %u\n", port, portnum);
   }
 
   if(ret <= 0) {

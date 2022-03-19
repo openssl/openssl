@@ -44,9 +44,8 @@ int write_packets(BIO *bio, int count, BIO_ADDR *dst1, BIO_ADDR *dst2)
     }
 
     ret = BIO_write(bio, hello, sizeofhello);
-    if(ret != sizeofhello) {
-      exit(3);
-    }
+    if(ret != sizeofhello)
+      TEST_error("did not write entire hello packet, tried %u, processed: %d\n", sizeofhello, ret);
 
     toggle = !toggle;
   }
@@ -71,7 +70,7 @@ int fork_and_read_write_packets(int infd, int outfd,
     exit(0);
 
   case -1:  /* failure */
-    exit(10);
+    TEST_error("fork failed, %s\n", strerror(errno));
 
   default:  /* parent */
     if(dsthost2 != NULL) {
@@ -79,7 +78,7 @@ int fork_and_read_write_packets(int infd, int outfd,
     }
     count = read_socket_and_discard(infd, expected_count, portnum);
     if(count != 0) {
-      test_printf_stderr("failed receive all packets: %d\n", count);
+      test_printf_stderr("failed to receive all packets: %d\n", count);
       exit(2);
     }
   }
@@ -99,17 +98,14 @@ unsigned int bind_v4_socket(int infd,
   localhost.sin_port = 0;
 
   /* do not set port, let kernel pick. */
-  if(bind(infd, (struct sockaddr *)&localhost, sizeof(localhost)) != 0) {
-    perror("bind infd");
-    exit(4);
-  }
+  if(bind(infd, (struct sockaddr *)&localhost, sizeof(localhost)) != 0)
+    TEST_error("failed to v4 bind socket: %s\n", strerror(errno));
 
   /* extract port number, stuff it into dsthost1 */
   sin_len = sizeof(localhost);
-  if(getsockname(infd, (struct sockaddr *)&localhost, &sin_len) != 0) {
-    perror("getsockname");
-    exit(5);
-  }
+  if(getsockname(infd, (struct sockaddr *)&localhost, &sin_len) != 0)
+    TEST_error("failed to call getsockname on socket: %s\n", strerror(errno));
+
   BIO_ADDR_rawmake(dsthost, AF_INET,
                    &localhost.sin_addr, sizeof(localhost.sin_addr),
                    localhost.sin_port);
@@ -130,17 +126,13 @@ unsigned int bind_v6_socket(int infd,
   localhost.sin6_port   = portnum;
 
   /* portnum may be 0, which lets kernel pick. */
-  if(bind(infd, (struct sockaddr *)&localhost, sizeof(localhost)) != 0) {
-    perror("bind in6fd");
-    exit(4);
-  }
+  if(bind(infd, (struct sockaddr *)&localhost, sizeof(localhost)) != 0)
+    TEST_error("failed to v4 bind socket: %s\n", strerror(errno));
 
   /* extract port number */
   sin_len = sizeof(localhost);
-  if(getsockname(infd, (struct sockaddr *)&localhost, &sin_len) != 0) {
-    perror("getsockname6");
-    exit(5);
-  }
+  if(getsockname(infd, (struct sockaddr *)&localhost, &sin_len) != 0)
+    TEST_error("failed to call getsockname6 on socket: %s\n", strerror(errno));
 
   BIO_ADDR_rawmake(dsthost, AF_INET6,
                    &localhost.sin6_addr, sizeof(localhost.sin6_addr),
