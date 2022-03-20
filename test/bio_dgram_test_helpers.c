@@ -77,8 +77,29 @@ int fork_and_read_write_packets(int infd, int outfd,
   return 1;
 }
 
+static int reusesock(int infd) {
+  int val;
+
+#ifdef SO_REUSEADDR
+  val = 1;
+  if (setsockopt(infd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val)) == -1) {
+    TEST_error("failed to set SO_REUSEADDR on v6 socket: %s\n", strerror(errno));
+    return -1;
+  }
+#endif
+#ifdef SO_REUSEPORT
+  val = 1;
+  if (setsockopt(infd, SOL_SOCKET, SO_REUSEPORT, &val, sizeof(val)) == -1) {
+    TEST_error("failed to set SO_REUSEPORT on v6 socket: %s\n", strerror(errno));
+    return -1;
+  }
+#endif
+
+  return 0;
+}
+
 int bind_v4_socket(int infd,
-                            BIO_ADDR *dsthost)
+                   BIO_ADDR *dsthost)
 {
   struct sockaddr_in localhost;
   socklen_t          sin_len;
@@ -87,6 +108,8 @@ int bind_v4_socket(int infd,
   localhost.sin_family = AF_INET;
   localhost.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
   localhost.sin_port = 0;
+
+  if(reusesock(infd) == -1) return(-1);
 
   /* do not set port, let kernel pick. */
   if(bind(infd, (struct sockaddr *)&localhost, sizeof(localhost)) != 0) {
@@ -109,20 +132,22 @@ int bind_v4_socket(int infd,
 }
 
 int bind_v6_socket(int infd,
-                            BIO_ADDR *dsthost,
-                            unsigned short portnum)
+                   BIO_ADDR *dsthost,
+                   unsigned short portnum)
 {
   struct sockaddr_in6 localhost;
-  socklen_t          sin_len;
+  socklen_t           sin_len;
 
   memset(&localhost, 0, sizeof(localhost));
   localhost.sin6_family = AF_INET6;
   localhost.sin6_addr   = in6addr_loopback;
   localhost.sin6_port   = portnum;
 
+  if(reusesock(infd) == -1) return(-1);
+
   /* portnum may be 0, which lets kernel pick. */
   if(bind(infd, (struct sockaddr *)&localhost, sizeof(localhost)) != 0) {
-    TEST_error("failed to v4 bind socket: %s\n", strerror(errno));
+    TEST_error("failed to v6 bind socket: %s\n", strerror(errno));
     return -1;
   }
 
