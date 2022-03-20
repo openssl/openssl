@@ -415,7 +415,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[dtlstest]=../include ../apps/include
   DEPEND[dtlstest]=../libcrypto ../libssl libtestutil.a
 
-  IF[{- !$disabled{sock} -}]
+  IF[{- !$disabled{dgram} -}]
     PROGRAMS{noinst}=bio_write_test bio_read_test
   ENDIF
   SOURCE[bio_write_test]=bio_write_test.c bio_dgram_test_helpers.c
