@@ -82,7 +82,7 @@ static int test_bio_read_v4(int idx)
   int infd2 = BIO_socket(AF_INET, SOCK_DGRAM, 0, 0);
   BIO_ADDR          *dsthost1, *dsthost2;
   int ret = 0;
-  unsigned int portnum;
+  int portnum;
 
   dsthost1 = BIO_ADDR_new();
   dsthost2 = BIO_ADDR_new();
@@ -105,7 +105,7 @@ static int test_bio_read_v6(int idx)
     BIO_ADDR *dsthost1;
     BIO_ADDR *dsthost2;
     int ret = 0;
-    unsigned int portnum;
+    int portnum;
 
     dsthost1 = BIO_ADDR_new();
     dsthost2 = BIO_ADDR_new();
