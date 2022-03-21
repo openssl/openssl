@@ -15,8 +15,6 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-static const char *revision = "1.0.7";
-
 static const int server_port = 4433;
 
 typedef unsigned char   bool;
@@ -29,7 +27,8 @@ typedef unsigned char   bool;
  */
 static volatile bool    server_running = true;
 
-int create_socket(bool isServer) {
+int create_socket(bool isServer)
+{
     int s;
     int optval = 1;
     struct sockaddr_in addr;
@@ -66,7 +65,8 @@ int create_socket(bool isServer) {
     return s;
 }
 
-SSL_CTX* create_context(bool isServer) {
+SSL_CTX* create_context(bool isServer)
+{
     const SSL_METHOD *method;
     SSL_CTX *ctx;
 
@@ -85,9 +85,10 @@ SSL_CTX* create_context(bool isServer) {
     return ctx;
 }
 
-void configure_server_context(SSL_CTX *ctx) {
+void configure_server_context(SSL_CTX *ctx)
+{
     /* Set the key and cert */
-    if (SSL_CTX_use_certificate_file(ctx, "cert.pem", SSL_FILETYPE_PEM) <= 0) {
+    if (SSL_CTX_use_certificate_chain_file(ctx, "cert.pem") <= 0) {
         ERR_print_errors_fp(stderr);
         exit(EXIT_FAILURE);
     }
@@ -98,19 +99,26 @@ void configure_server_context(SSL_CTX *ctx) {
     }
 }
 
-void configure_client_context(SSL_CTX *ctx) {
+void configure_client_context(SSL_CTX *ctx)
+{
     /*
      * Configure the client to abort the handshake if certificate verification
      * fails
      */
     SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
-    if (!SSL_CTX_load_verify_file(ctx, "cert.pem")) {
+    /*
+     * In a real application you would probably just use the default system certificate trust store and call:
+     *     SSL_CTX_set_default_verify_paths(ctx);
+     * In this demo though we are using a self-signed certificate, so the client must trust it directly.
+     */
+    if (!SSL_CTX_load_verify_locations(ctx, "cert.pem", NULL)) {
         ERR_print_errors_fp(stderr);
         exit(EXIT_FAILURE);
     }
 }
 
-void usage() {
+void usage()
+{
     printf("Usage: sslecho s\n");
     printf("       --or--\n");
     printf("       sslecho c ip\n");
@@ -118,7 +126,8 @@ void usage() {
     exit(1);
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
     bool isServer;
     int result;
 
@@ -142,7 +151,7 @@ int main(int argc, char **argv) {
     unsigned int addr_len = sizeof(addr);
 
     /* Splash */
-    printf("\nsslecho : Revision %s : %s : %s\n\n", revision, __DATE__,
+    printf("\nsslecho : Simple Echo Client/Server (OpenSSL 3.0.1-dev) : %s : %s\n\n", __DATE__,
     __TIME__);
 
     /* Need to know if client or server */
@@ -197,6 +206,7 @@ int main(int argc, char **argv) {
             /* Wait for SSL connection from the client */
             if (SSL_accept(ssl) <= 0) {
                 ERR_print_errors_fp(stderr);
+                server_running = false;
             } else {
 
                 printf("Client SSL connection accepted\n\n");

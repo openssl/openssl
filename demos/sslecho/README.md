@@ -23,9 +23,4 @@ The new client code illustrates that:
 The cert.pem and key.pem files included are self signed certificates with the
 "Common Name" of 'localhost'.
 
-The client must be invoked as: ./sslecho c localhost
-
-You can create a self-signed certificate with a dotted ip address by
-setting the "Common Name" to 'https://dotted.ip.address'.
-
-The client must then be invoked as: ./sslecho c https://dotted.ip.address
+Best to create the 'pem' files using an actual hostname.
