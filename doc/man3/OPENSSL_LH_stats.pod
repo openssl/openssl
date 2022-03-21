@@ -42,6 +42,12 @@ record a miss.
 OPENSSL_LH_stats_bio(), OPENSSL_LH_node_stats_bio() and OPENSSL_LH_node_usage_stats_bio()
 are the same as the above, except that the output goes to a B<BIO>.
 
+The information output by these functions may vary depending on how OpenSSL is
+built. If the library is built with statistics enabled, statistical counters are
+kept for each B<LHASH> and are output by these functions. Otherwise, these
+values are not recorded or output. Building the library with statistics enabled
+may reduce performance.
+
 =head1 RETURN VALUES
 
 These functions do not return values.

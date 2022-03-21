@@ -874,6 +874,11 @@ type.  Only libcrypto and libssl can be built in this way.  Using this option wi
 suppress building the command line applications.  Additionally, since the OpenSSL
 tests also use the command line applications, the tests will also be skipped.
 
+### enable-stats
+
+Enable performance statistics for some data structures used internally by
+OpenSSL, such as `OPENSSL_LHASH`. See `OPENSSL_LH_stats(3)`.
+
 ### no-tests
 
 Don't build test programs or run any tests.

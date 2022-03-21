@@ -104,6 +104,14 @@ OpenSSL 3.1
 
    *Sergey Kirillov, Andrey Matyukov (Intel Corp)*
 
+ * A `stats` build-time configuration option has been added, which controls
+   whether the library is built with internal performance counters for some
+   data structures. This option is disabled by default since these are likely
+   to be useful only for development and may reduce performance. Previously,
+   this functionality was always enabled.
+
+   *Hugo Landau*
+
 OpenSSL 3.0
 -----------
 

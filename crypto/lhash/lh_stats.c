@@ -92,9 +92,9 @@ void OPENSSL_LH_stats_bio(const OPENSSL_LHASH *lh, BIO *out)
         BIO_printf(out, "num_retrieve          = %lu\n", lh->num_retrieve);
         BIO_printf(out, "num_retrieve_miss     = %lu\n", lh->num_retrieve_miss);
         BIO_printf(out, "num_hash_comps        = %lu\n", lh->num_hash_comps);
-#ifdef TSAN_REQUIRES_LOCKING
+# ifdef TSAN_REQUIRES_LOCKING
         CRYPTO_THREAD_unlock(lh->tsan_lock);
-#endif
+# endif
     }
 #endif
 }
