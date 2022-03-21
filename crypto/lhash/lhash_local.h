@@ -27,6 +27,7 @@ struct lhash_st {
     unsigned long up_load;      /* load times 256 */
     unsigned long down_load;    /* load times 256 */
     unsigned long num_items;
+#ifndef OPENSSL_NO_TRACE
     unsigned long num_expands;
     unsigned long num_expand_reallocs;
     unsigned long num_contracts;
@@ -40,6 +41,7 @@ struct lhash_st {
     TSAN_QUALIFIER unsigned long num_retrieve;
     TSAN_QUALIFIER unsigned long num_retrieve_miss;
     TSAN_QUALIFIER unsigned long num_hash_comps;
+#endif
     int error;
 #ifdef TSAN_REQUIRES_LOCKING
     CRYPTO_RWLOCK *tsan_lock;

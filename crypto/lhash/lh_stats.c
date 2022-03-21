@@ -61,6 +61,7 @@ void OPENSSL_LH_node_usage_stats(const OPENSSL_LHASH *lh, FILE *fp)
 
 void OPENSSL_LH_stats_bio(const OPENSSL_LHASH *lh, BIO *out)
 {
+#ifndef OPENSSL_NO_TRACE
     int omit_tsan = 0;
 
 #ifdef TSAN_REQUIRES_LOCKING
@@ -69,9 +70,12 @@ void OPENSSL_LH_stats_bio(const OPENSSL_LHASH *lh, BIO *out)
         omit_tsan = 1;
     }
 #endif
+#endif
+
     BIO_printf(out, "num_items             = %lu\n", lh->num_items);
     BIO_printf(out, "num_nodes             = %u\n",  lh->num_nodes);
     BIO_printf(out, "num_alloc_nodes       = %u\n",  lh->num_alloc_nodes);
+#ifndef OPENSSL_NO_TRACE
     BIO_printf(out, "num_expands           = %lu\n", lh->num_expands);
     BIO_printf(out, "num_expand_reallocs   = %lu\n", lh->num_expand_reallocs);
     BIO_printf(out, "num_contracts         = %lu\n", lh->num_contracts);
@@ -92,6 +96,7 @@ void OPENSSL_LH_stats_bio(const OPENSSL_LHASH *lh, BIO *out)
         CRYPTO_THREAD_unlock(lh->tsan_lock);
 #endif
     }
+#endif
 }
 
 void OPENSSL_LH_node_stats_bio(const OPENSSL_LHASH *lh, BIO *out)

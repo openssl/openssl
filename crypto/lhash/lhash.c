@@ -147,12 +147,16 @@ void *OPENSSL_LH_insert(OPENSSL_LHASH *lh, void *data)
         nn->hash = hash;
         *rn = nn;
         ret = NULL;
+#ifndef OPENSSL_NO_TRACE
         lh->num_insert++;
+#endif
         lh->num_items++;
     } else {                    /* replace same key */
         ret = (*rn)->data;
         (*rn)->data = data;
+#ifndef OPENSSL_NO_TRACE
         lh->num_replace++;
+#endif
     }
     return ret;
 }
@@ -167,14 +171,18 @@ void *OPENSSL_LH_delete(OPENSSL_LHASH *lh, const void *data)
     rn = getrn(lh, data, &hash);
 
     if (*rn == NULL) {
+#ifndef OPENSSL_NO_TRACE
         lh->num_no_delete++;
+#endif
         return NULL;
     } else {
         nn = *rn;
         *rn = nn->next;
         ret = nn->data;
         OPENSSL_free(nn);
+#ifndef OPENSSL_NO_TRACE
         lh->num_delete++;
+#endif
     }
 
     lh->num_items--;
@@ -198,10 +206,13 @@ void *OPENSSL_LH_retrieve(OPENSSL_LHASH *lh, const void *data)
 
     rn = getrn(lh, data, &hash);
 
+#ifndef OPENSSL_NO_TRACE
     if (tsan_lock(lh)) {
         tsan_counter(*rn == NULL ? &lh->num_retrieve_miss : &lh->num_retrieve);
         tsan_unlock(lh);
     }
+#endif
+
     return *rn == NULL ? NULL : (*rn)->data;
 }
 
@@ -262,14 +273,18 @@ static int expand(OPENSSL_LHASH *lh)
         memset(n + nni, 0, sizeof(*n) * (j - nni));
         lh->pmax = nni;
         lh->num_alloc_nodes = j;
+#ifndef OPENSSL_NO_TRACE
         lh->num_expand_reallocs++;
+#endif
         lh->p = 0;
     } else {
         lh->p++;
     }
 
     lh->num_nodes++;
+#ifndef OPENSSL_NO_TRACE
     lh->num_expands++;
+#endif
     n1 = &(lh->b[p]);
     n2 = &(lh->b[p + pmax]);
     *n2 = NULL;
@@ -302,7 +317,9 @@ static void contract(OPENSSL_LHASH *lh)
             lh->error++;
             return;
         }
+#ifndef OPENSSL_NO_TRACE
         lh->num_contract_reallocs++;
+#endif
         lh->num_alloc_nodes /= 2;
         lh->pmax /= 2;
         lh->p = lh->pmax - 1;
@@ -311,7 +328,9 @@ static void contract(OPENSSL_LHASH *lh)
         lh->p--;
 
     lh->num_nodes--;
+#ifndef OPENSSL_NO_TRACE
     lh->num_contracts++;
+#endif
 
     n1 = lh->b[(int)lh->p];
     if (n1 == NULL)
@@ -329,14 +348,18 @@ static OPENSSL_LH_NODE **getrn(OPENSSL_LHASH *lh,
     OPENSSL_LH_NODE **ret, *n1;
     unsigned long hash, nn;
     OPENSSL_LH_COMPFUNC cf;
+#ifndef OPENSSL_NO_TRACE
     int do_tsan = 1;
 
 #ifdef TSAN_REQUIRES_LOCKING
     do_tsan = tsan_lock(lh);
 #endif
+#endif
     hash = (*(lh->hash)) (data);
+#ifndef OPENSSL_NO_TRACE
     if (do_tsan)
         tsan_counter(&lh->num_hash_calls);
+#endif
     *rhash = hash;
 
     nn = hash % lh->pmax;
@@ -346,20 +369,26 @@ static OPENSSL_LH_NODE **getrn(OPENSSL_LHASH *lh,
     cf = lh->comp;
     ret = &(lh->b[(int)nn]);
     for (n1 = *ret; n1 != NULL; n1 = n1->next) {
+#ifndef OPENSSL_NO_TRACE
         if (do_tsan)
             tsan_counter(&lh->num_hash_comps);
+#endif
         if (n1->hash != hash) {
             ret = &(n1->next);
             continue;
         }
+#ifndef OPENSSL_NO_TRACE
         if (do_tsan)
             tsan_counter(&lh->num_comp_calls);
+#endif
         if (cf(n1->data, data) == 0)
             break;
         ret = &(n1->next);
     }
+#ifndef OPENSSL_NO_TRACE
     if (do_tsan)
         tsan_unlock(lh);
+#endif
     return ret;
 }
 
