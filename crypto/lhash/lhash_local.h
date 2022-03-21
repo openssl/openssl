@@ -43,7 +43,7 @@ struct lhash_st {
     TSAN_QUALIFIER unsigned long num_hash_comps;
 #endif
     int error;
-#ifdef TSAN_REQUIRES_LOCKING
+#if !defined(OPENSSL_NO_STATS) && defined(TSAN_REQUIRES_LOCKING)
     CRYPTO_RWLOCK *tsan_lock;
 #endif
 };

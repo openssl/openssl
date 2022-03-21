@@ -76,7 +76,7 @@ OPENSSL_LHASH *OPENSSL_LH_new(OPENSSL_LH_HASHFUNC h, OPENSSL_LH_COMPFUNC c)
     }
     if ((ret->b = OPENSSL_zalloc(sizeof(*ret->b) * MIN_NODES)) == NULL)
         goto err;
-#ifdef TSAN_REQUIRES_LOCKING
+#if !defined(OPENSSL_NO_STATS) && defined(TSAN_REQUIRES_LOCKING)
     if ((ret->tsan_lock = CRYPTO_THREAD_lock_new()) == NULL)
         goto err;
 #endif
@@ -101,7 +101,7 @@ void OPENSSL_LH_free(OPENSSL_LHASH *lh)
         return;
 
     OPENSSL_LH_flush(lh);
-#ifdef TSAN_REQUIRES_LOCKING
+#if !defined(OPENSSL_NO_STATS) && defined(TSAN_REQUIRES_LOCKING)
     CRYPTO_THREAD_lock_free(lh->tsan_lock);
 #endif
     OPENSSL_free(lh->b);

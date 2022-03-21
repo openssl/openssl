@@ -64,12 +64,12 @@ void OPENSSL_LH_stats_bio(const OPENSSL_LHASH *lh, BIO *out)
 #ifndef OPENSSL_NO_STATS
     int omit_tsan = 0;
 
-#ifdef TSAN_REQUIRES_LOCKING
+# ifdef TSAN_REQUIRES_LOCKING
     if (!CRYPTO_THREAD_read_lock(lh->tsan_lock)) {
         BIO_printf(out, "unable to lock table, omitting TSAN counters\n");
         omit_tsan = 1;
     }
-#endif
+# endif
 #endif
 
     BIO_printf(out, "num_items             = %lu\n", lh->num_items);
