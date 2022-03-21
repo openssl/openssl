@@ -44,6 +44,7 @@ static int expand(OPENSSL_LHASH *lh);
 static void contract(OPENSSL_LHASH *lh);
 static OPENSSL_LH_NODE **getrn(OPENSSL_LHASH *lh, const void *data, unsigned long *rhash);
 
+#ifndef OPENSSL_NO_TRACE
 static ossl_inline int tsan_lock(const OPENSSL_LHASH *lh)
 {
 #ifdef TSAN_REQUIRES_LOCKING
@@ -59,6 +60,7 @@ static ossl_inline void tsan_unlock(const OPENSSL_LHASH *lh)
     CRYPTO_THREAD_unlock(lh->tsan_lock);
 #endif
 }
+#endif
 
 OPENSSL_LHASH *OPENSSL_LH_new(OPENSSL_LH_HASHFUNC h, OPENSSL_LH_COMPFUNC c)
 {
