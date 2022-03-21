@@ -467,7 +467,7 @@ int ossl_decoder_ctx_setup_for_pkey(OSSL_DECODER_CTX *ctx,
     }
 
     ok = 1;
-err:
+ err:
     decoder_clean_pkey_construct_arg(process_data);
     return ok;
 }

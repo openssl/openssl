@@ -527,7 +527,7 @@ int ossl_decoder_fast_is_a(OSSL_DECODER *decoder, const char *name, int *id_cach
     if (id <= 0)
         *id_cache = id = resolve_name(decoder, name);
 
-    return ossl_decoder_get_number(decoder) == id;
+    return id > 0 && ossl_decoder_get_number(decoder) == id;
 }
 
 struct do_one_data_st {
