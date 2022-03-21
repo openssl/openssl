@@ -18,7 +18,9 @@ fully functional QUIC implementation over a series of releases (2-3).
 will introduce another variant and there may be more over time. The OMC requires
 a pluggable record layer interface to be implemented to enable this to be less
 intrusive, more maintainable, and to harmonize the existing record layer
-interactions between TLS, DTLS, KTLS and the planned QUIC protocols.
+interactions between TLS, DTLS, KTLS and the planned QUIC protocols. The pluggable
+record layer interface will be internal only for MVP and be public in a future
+release.
 
 * The application must have the ability to be in control of the event loop without
 requiring callbacks to process the various events. An application must also have
@@ -58,6 +60,17 @@ this stage.
 1.  Cloudfare - https://cloudflare-quic.com/
 
 * Testing against other implementations is not a release requirement for the MVP.
+
+### Non-QUIC OpenSSL Requirements
+
+In addition to the QUIC requirements, the OMC also required that:
+
+* The objective is to have shorter release timeframes, with releases occurring
+every six months.
+
+* The platform policy, covering the primary and secondary platforms, should be
+followed. (Note that this includes testing of primary and secondary platforms
+on project CI)
 
 ## OMC Blog post requirements
 
@@ -138,25 +151,28 @@ or QUIC.
 
 * Application authors will need good documentation, demos, examples etc.
 
-* QUIC performance should be comparable with other major implementations and
-measured by a) handshakes per second b) application data throughput (bytes per
-second) for a single stream/connection
+* QUIC performance should be comparable (in some future release - not MVP) with
+other major implementations and measured by a) handshakes per second
+b) application data throughput (bytes per second) for a single stream/connection
 
-* "Single copy" must be possible to achieve for application data being sent or
-received via QUIC. The "single" copy allowed is to allow for the implicit copy
-in an encrypt or decrypt operation.
+* The internal architecture should allow for the fact that we may want to
+support "single copy" APIs in the future:
 
-* Single copy for sending data occurs when the application supplies a buffer of
+   A single copy API would make it possible for application data being sent or
+received via QUIC to only be copied from one buffer to another once. The
+"single" copy allowed is to allow for the implicit copy in an encrypt or decrypt
+operation.
+
+   Single copy for sending data occurs when the application supplies a buffer of
 data to be sent. No copies of that data are made until it is encrypted. Once
 encrypted no further copies of the encrypted data are made until it is provided
 to the kernel for sending via a system call.
 
-* Single copy for receiving data occurs when a library supplied buffer is filled
+   Single copy for receiving data occurs when a library supplied buffer is filled
 by the kernel via a system call from the socket. No further copies of that data
 are made until it is decrypted. It is decrypted directly into a buffer made
 available to (or supplied by) the application with no further internal copies
 made.
-
 
 # MVP Requirements (3.1)
 
@@ -174,6 +190,6 @@ the MVP.
 
 * Testing against other implementations is not a release requirement for the MVP.
 
-* Simple clients that just do basic SSL_read/SSL_write or BIO_read/BIO_write
+* Support simple clients that just do basic SSL_read/SSL_write or BIO_read/BIO_write
 interactions. We want to be able to enable them to transfer to using single
 stream QUIC easily. (MVP)
