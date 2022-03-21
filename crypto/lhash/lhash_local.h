@@ -27,7 +27,7 @@ struct lhash_st {
     unsigned long up_load;      /* load times 256 */
     unsigned long down_load;    /* load times 256 */
     unsigned long num_items;
-#ifndef OPENSSL_NO_TRACE
+#ifndef OPENSSL_NO_STATS
     unsigned long num_expands;
     unsigned long num_expand_reallocs;
     unsigned long num_contracts;
