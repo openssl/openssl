@@ -162,10 +162,11 @@ jobs:
       if: github.event_name == 'push' && matrix.platform.tests == ''
       run: |
         make test HARNESS_JOBS=${HARNESS_JOBS:-4} \
+                  TESTS="-test_afalg" \
                   QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
     - name: make some tests
       if: github.event_name == 'push' && matrix.platform.tests != 'none' && matrix.platform.tests != ''
       run: |
         make test HARNESS_JOBS=${HARNESS_JOBS:-4} \
-                  TESTS="${{ matrix.platform.tests }}" \
+                  TESTS="${{ matrix.platform.tests }} -test_afalg" \
                   QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
