@@ -27,7 +27,7 @@
 #pragma clang diagnostic ignored "-Wunused-function"
 #endif
 
-DEFINE_LHASH_OF(int);
+DEFINE_LHASH_OF_EX(int);
 
 static int int_tests[] = { 65537, 13, 1, 3, -5, 6, 7, 4, -10, -12, -14, 22, 9,
                            -17, 16, 17, -23, 35, 37, 173, 11 };
@@ -210,11 +210,6 @@ static int test_stress(void)
     if (!TEST_int_eq(lh_int_num_items(h), n))
             goto end;
 
-    TEST_info("hash full statistics:");
-    OPENSSL_LH_stats_bio((OPENSSL_LHASH *)h, bio_err);
-    TEST_note("hash full node usage:");
-    OPENSSL_LH_node_usage_stats_bio((OPENSSL_LHASH *)h, bio_err);
-
     /* delete in a different order */
     for (i = 0; i < n; i++) {
         const int j = (7 * i + 4) % n * 3 + 1;
@@ -229,11 +224,6 @@ static int test_stress(void)
         }
         OPENSSL_free(p);
     }
-
-    TEST_info("hash empty statistics:");
-    OPENSSL_LH_stats_bio((OPENSSL_LHASH *)h, bio_err);
-    TEST_note("hash empty node usage:");
-    OPENSSL_LH_node_usage_stats_bio((OPENSSL_LHASH *)h, bio_err);
 
     testresult = 1;
 end:
