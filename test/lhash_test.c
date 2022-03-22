@@ -210,8 +210,6 @@ static int test_stress(void)
     if (!TEST_int_eq(lh_int_num_items(h), n))
             goto end;
 
-    TEST_info("hash full statistics:");
-    OPENSSL_LH_stats_bio((OPENSSL_LHASH *)h, bio_err);
     TEST_note("hash full node usage:");
     OPENSSL_LH_node_usage_stats_bio((OPENSSL_LHASH *)h, bio_err);
 
@@ -230,8 +228,6 @@ static int test_stress(void)
         OPENSSL_free(p);
     }
 
-    TEST_info("hash empty statistics:");
-    OPENSSL_LH_stats_bio((OPENSSL_LHASH *)h, bio_err);
     TEST_note("hash empty node usage:");
     OPENSSL_LH_node_usage_stats_bio((OPENSSL_LHASH *)h, bio_err);
 

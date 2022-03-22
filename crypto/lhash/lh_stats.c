@@ -20,7 +20,12 @@
 #include <openssl/lhash.h>
 #include "lhash_local.h"
 
+# ifndef OPENSSL_NO_DEPRECATED_3_1
+static void lh_stats_bio_actual(const OPENSSL_LHASH *lh, BIO *out);
+# endif
+
 # ifndef OPENSSL_NO_STDIO
+#  ifndef OPENSSL_NO_DEPRECATED_3_1
 void OPENSSL_LH_stats(const OPENSSL_LHASH *lh, FILE *fp)
 {
     BIO *bp;
@@ -29,9 +34,10 @@ void OPENSSL_LH_stats(const OPENSSL_LHASH *lh, FILE *fp)
     if (bp == NULL)
         return;
     BIO_set_fp(bp, fp, BIO_NOCLOSE);
-    OPENSSL_LH_stats_bio(lh, bp);
+    lh_stats_bio_actual(lh, bp);
     BIO_free(bp);
 }
+#  endif
 
 void OPENSSL_LH_node_stats(const OPENSSL_LHASH *lh, FILE *fp)
 {
@@ -59,7 +65,17 @@ void OPENSSL_LH_node_usage_stats(const OPENSSL_LHASH *lh, FILE *fp)
 
 # endif
 
+# ifndef OPENSSL_NO_DEPRECATED_3_1
 void OPENSSL_LH_stats_bio(const OPENSSL_LHASH *lh, BIO *out)
+{
+    lh_stats_bio_actual(lh, out);
+}
+
+/*
+ * The call from our function OPENSSL_LH_stats needs this as calling deprecated
+ * functions will generate a warning.
+ */
+static void lh_stats_bio_actual(const OPENSSL_LHASH *lh, BIO *out)
 {
     BIO_printf(out, "num_items             = %lu\n", lh->num_items);
     BIO_printf(out, "num_nodes             = %u\n",  lh->num_nodes);
@@ -78,6 +94,7 @@ void OPENSSL_LH_stats_bio(const OPENSSL_LHASH *lh, BIO *out)
     BIO_printf(out, "num_retrieve_miss     = 0\n");
     BIO_printf(out, "num_hash_comps        = 0\n");
 }
+# endif
 
 void OPENSSL_LH_node_stats_bio(const OPENSSL_LHASH *lh, BIO *out)
 {
