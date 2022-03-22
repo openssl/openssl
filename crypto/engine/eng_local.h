@@ -156,6 +156,6 @@ struct engine_st {
 
 typedef struct st_engine_pile ENGINE_PILE;
 
-DEFINE_LHASH_OF(ENGINE_PILE);
+DEFINE_LHASH_OF_EX(ENGINE_PILE);
 
 #endif                          /* OSSL_CRYPTO_ENGINE_ENG_LOCAL_H */

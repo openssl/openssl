@@ -53,7 +53,7 @@ typedef struct {
     char body[1];
 } QUERY;
 
-DEFINE_LHASH_OF(QUERY);
+DEFINE_LHASH_OF_EX(QUERY);
 
 typedef struct {
     int nid;

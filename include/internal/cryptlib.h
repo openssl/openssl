@@ -59,7 +59,7 @@ typedef struct ex_callback_st EX_CALLBACK;
 DEFINE_STACK_OF(EX_CALLBACK)
 
 typedef struct mem_st MEM;
-DEFINE_LHASH_OF(MEM);
+DEFINE_LHASH_OF_EX(MEM);
 
 # define OPENSSL_CONF             "openssl.cnf"
 

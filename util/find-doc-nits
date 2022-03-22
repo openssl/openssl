@@ -105,7 +105,7 @@ my $ignored = qr/(?| ^i2d_
                  |   ^sk_
                  |   ^SKM_DEFINE_STACK_OF_INTERNAL
                  |   ^lh_
-                 |   ^DEFINE_LHASH_OF_INTERNAL
+                 |   ^DEFINE_LHASH_OF_(INTERNAL|DEPRECATED)
                  )/x;
 
 # A common regexp for C symbol names

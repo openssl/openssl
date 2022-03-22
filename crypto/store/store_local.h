@@ -114,7 +114,7 @@ struct ossl_store_loader_st {
     OSSL_FUNC_store_close_fn *p_close;
     OSSL_FUNC_store_export_object_fn *p_export_object;
 };
-DEFINE_LHASH_OF(OSSL_STORE_LOADER);
+DEFINE_LHASH_OF_EX(OSSL_STORE_LOADER);
 
 const OSSL_STORE_LOADER *ossl_store_get0_loader_int(const char *scheme);
 void ossl_store_destroy_loaders_int(void);

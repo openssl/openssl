@@ -329,7 +329,7 @@ This code is now always set to zero. Related functions are deprecated.
 =head4 STACK and HASH macros have been cleaned up
 
 The type-safe wrappers are declared everywhere and implemented once.
-See L<DEFINE_STACK_OF(3)> and L<DECLARE_LHASH_OF(3)>.
+See L<DEFINE_STACK_OF(3)> and L<DEFINE_LHASH_OF_EX(3)>.
 
 =head4 The RAND_DRBG subsystem has been removed
 
