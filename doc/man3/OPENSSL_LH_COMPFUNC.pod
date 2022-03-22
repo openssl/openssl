@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-LHASH, DECLARE_LHASH_OF,
+LHASH, LHASH_OF, DEFINE_LHASH_OF_EX, DEFINE_LHASH_OF,
 OPENSSL_LH_COMPFUNC, OPENSSL_LH_HASHFUNC, OPENSSL_LH_DOALL_FUNC,
 LHASH_DOALL_ARG_FN_TYPE,
 IMPLEMENT_LHASH_HASH_FN, IMPLEMENT_LHASH_COMP_FN,
@@ -20,7 +20,9 @@ OPENSSL_LH_doall, OPENSSL_LH_doall_arg, OPENSSL_LH_error
 
  #include <openssl/lhash.h>
 
- DECLARE_LHASH_OF(TYPE);
+ LHASH_OF(TYPE)
+
+ DEFINE_LHASH_OF_EX(TYPE);
 
  LHASH_OF(TYPE) *lh_TYPE_new(OPENSSL_LH_HASHFUNC hash, OPENSSL_LH_COMPFUNC compare);
  void lh_TYPE_free(LHASH_OF(TYPE) *table);
@@ -54,12 +56,22 @@ OPENSSL_LH_doall, OPENSSL_LH_doall_arg, OPENSSL_LH_error
 
  int OPENSSL_LH_error(OPENSSL_LHASH *lh);
 
+The following macro is deprecated:
+
+ DEFINE_LHASH_OF(TYPE);
+
 =head1 DESCRIPTION
 
 This library implements type-checked dynamic hash tables. The hash
 table entries can be arbitrary structures. Usually they consist of key
 and value fields.  In the description here, B<I<TYPE>> is used a placeholder
 for any of the OpenSSL datatypes, such as I<SSL_SESSION>.
+
+To define a new type-checked dynamic hash table, use B<DEFINE_LHASH_OF_EX>().
+B<DEFINE_LHASH_OF>() was previously used for this purpose, but is now
+deprecated. The B<DEFINE_LHASH_OF_EX>() macro provides all functionality of
+B<DEFINE_LHASH_OF>() except for certain deprecated statistics functions (see
+OPENSSL_LH_stats(3)).
 
 B<lh_I<TYPE>_new>() creates a new B<LHASH_OF>(B<I<TYPE>>) structure to store
 arbitrary data entries, and specifies the 'hash' and 'compare'
@@ -267,6 +279,9 @@ L<OPENSSL_LH_stats(3)>
 
 In OpenSSL 1.0.0, the lhash interface was revamped for better
 type checking.
+
+In OpenSSL 3.1, B<DEFINE_LHASH_OF_EX>() was introduced and B<DEFINE_LHASH_OF>()
+was deprecated.
 
 =head1 COPYRIGHT
 
