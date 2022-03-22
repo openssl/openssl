@@ -104,6 +104,13 @@ OpenSSL 3.1
 
    *Sergey Kirillov, Andrey Matyukov (Intel Corp)*
 
+ * The functions `OPENSSL_LH_stats` and `OPENSSL_LH_stats_bio` now only report
+   the `num_items`, `num_nodes` and `num_alloc_nodes` statistics. All other
+   statistics are no longer supported. For compatibility, these statistics are
+   still listed in the output but are now always reported as zero.
+
+   *Hugo Landau*
+
 OpenSSL 3.0
 -----------
 
