@@ -71,9 +71,10 @@ Quick start
     <https://docs.microsoft.com/cpp/build/building-on-the-command-line>
 
  5. From the root of the OpenSSL source directory enter
-    perl Configure VC-WIN32    if you want 32-bit OpenSSL or
-    perl Configure VC-WIN64A   if you want 64-bit OpenSSL or
-    perl Configure             to let Configure figure out the platform
+    perl Configure VC-WIN32     if you want 32-bit OpenSSL or
+    perl Configure VC-WIN64A    if you want 64-bit OpenSSL or
+    perl Configure              to let Configure figure out the x86/x64 platform or
+    perl Configure VC-WIN64-ARM if you want Windows on Arm (win-arm64) OpenSSL
 
  6. nmake
 
