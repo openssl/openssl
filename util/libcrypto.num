@@ -1790,7 +1790,7 @@ X509V3_EXT_REQ_add_conf                 1832	3_0_0	EXIST::FUNCTION:
 ASN1_STRING_to_UTF8                     1833	3_0_0	EXIST::FUNCTION:
 EVP_MD_meth_set_update                  1835	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 EVP_camellia_192_cbc                    1836	3_0_0	EXIST::FUNCTION:CAMELLIA
-OPENSSL_LH_stats_bio                    1837	3_0_0	EXIST::FUNCTION:
+OPENSSL_LH_stats_bio                    1837	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_1
 PKCS7_set_signed_attributes             1838	3_0_0	EXIST::FUNCTION:
 EC_KEY_priv2buf                         1839	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC
 BN_BLINDING_free                        1840	3_0_0	EXIST::FUNCTION:
@@ -3073,7 +3073,7 @@ TXT_DB_free                             3139	3_0_0	EXIST::FUNCTION:
 ASN1_STRING_set                         3140	3_0_0	EXIST::FUNCTION:
 d2i_ESS_CERT_ID                         3141	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_meth_set_derive                3142	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
-OPENSSL_LH_stats                        3143	3_0_0	EXIST::FUNCTION:STDIO
+OPENSSL_LH_stats                        3143	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_1,STDIO
 NCONF_dump_fp                           3144	3_0_0	EXIST::FUNCTION:STDIO
 TS_STATUS_INFO_print_bio                3145	3_0_0	EXIST::FUNCTION:TS
 OPENSSL_sk_dup                          3146	3_0_0	EXIST::FUNCTION:
