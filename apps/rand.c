@@ -54,7 +54,7 @@ int rand_main(int argc, char **argv)
     char *outfile = NULL, *prog;
     OPTION_CHOICE o;
     int format = FORMAT_BINARY, r, i, ret = 1, buflen = 4096;
-    long num;
+    long num = -1;
     uint8_t *buf = NULL;
 
     prog = opt_init(argc, argv, rand_options);
