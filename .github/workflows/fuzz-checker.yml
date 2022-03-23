@@ -9,6 +9,9 @@ name: Fuzz-checker CI
 
 on: [push]
 
+permissions:
+  contents: read
+
 jobs:
   fuzz-checker:
     strategy:
@@ -45,7 +48,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get -yq --force-yes install ${{ matrix.fuzzy.install }}
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
 
     - name: config
       run: |

@@ -11,6 +11,9 @@ name: Run-checker daily
 on:
   schedule:
     - cron: '0 6 * * *'
+permissions:
+  contents: read
+
 jobs:
   run-checker:
     strategy:
@@ -133,7 +136,7 @@ jobs:
         ]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
     - name: config
       run: CC=clang ./config --banner=Configured --strict-warnings ${{ matrix.opt }}
     - name: config dump

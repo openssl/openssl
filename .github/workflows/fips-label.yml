@@ -19,7 +19,7 @@ jobs:
     steps:
       - name: 'Download artifact'
         if: ${{ github.event.workflow_run.conclusion == 'success' }}
-        uses: actions/github-script@v4
+        uses: actions/github-script@ee99cebd8f95dcfa18a106963011c76500a16521 # v4
         with:
           script: |
             var artifacts = await github.actions.listWorkflowRunArtifacts({
@@ -42,7 +42,7 @@ jobs:
         if: ${{ github.event.workflow_run.conclusion == 'success' }}
       - name: 'Check artifact and apply'
         if: ${{ github.event.workflow_run.conclusion == 'success' }}
-        uses: actions/github-script@v4
+        uses: actions/github-script@ee99cebd8f95dcfa18a106963011c76500a16521 # v4
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |

@@ -24,14 +24,14 @@ jobs:
             config: VC-WIN32 --strict-warnings no-fips
     runs-on: ${{matrix.os}}
     steps:
-    - uses: actions/checkout@v2
-    - uses: ilammy/msvc-dev-cmd@v1
+    - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
+    - uses: ilammy/msvc-dev-cmd@d8610e2b41c6d0f0c3b4c46dad8df0fd826c68e1 # v1
       with:
         arch: ${{ matrix.platform.arch }}
-    - uses: ilammy/setup-nasm@v1
+    - uses: ilammy/setup-nasm@e2335e5fc95548c09cd2deea2768793e0e8f0941 # v1
       with:
         platform: ${{ matrix.platform.arch }}
-    - uses: shogo82148/actions-setup-perl@v1
+    - uses: shogo82148/actions-setup-perl@6416baf582122cf9273f04c4facf3ba130883754 # v1
     - name: prepare the build directory
       run: mkdir _build
     - name: config
@@ -60,9 +60,9 @@ jobs:
           - windows-2022
     runs-on: ${{matrix.os}}
     steps:
-    - uses: actions/checkout@v2
-    - uses: ilammy/msvc-dev-cmd@v1
-    - uses: shogo82148/actions-setup-perl@v1
+    - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
+    - uses: ilammy/msvc-dev-cmd@d8610e2b41c6d0f0c3b4c46dad8df0fd826c68e1 # v1
+    - uses: shogo82148/actions-setup-perl@6416baf582122cf9273f04c4facf3ba130883754 # v1
     - name: prepare the build directory
       run: mkdir _build
     - name: config
@@ -84,9 +84,9 @@ jobs:
           - windows-2022
     runs-on: ${{matrix.os}}
     steps:
-    - uses: actions/checkout@v2
-    - uses: ilammy/msvc-dev-cmd@v1
-    - uses: shogo82148/actions-setup-perl@v1
+    - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
+    - uses: ilammy/msvc-dev-cmd@d8610e2b41c6d0f0c3b4c46dad8df0fd826c68e1 # v1
+    - uses: shogo82148/actions-setup-perl@6416baf582122cf9273f04c4facf3ba130883754 # v1
     - name: prepare the build directory
       run: mkdir _build
     - name: config

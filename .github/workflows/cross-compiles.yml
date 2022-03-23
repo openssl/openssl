@@ -9,6 +9,9 @@ name: Cross Compile
 
 on: [pull_request, push]
 
+permissions:
+  contents: read
+
 jobs:
   cross-compilation:
     strategy:
@@ -134,7 +137,7 @@ jobs:
         sudo apt-get -yq --force-yes install \
             gcc-${{ matrix.platform.arch }} \
             ${{ matrix.platform.libs }}
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
 
     - name: config with FIPS
       if: matrix.platform.fips != 'no'

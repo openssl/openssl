@@ -12,11 +12,17 @@ on:
   schedule:
     - cron:  '49 0 * * *'
 
+permissions:
+  contents: read
+
 jobs:
   coverage:
+    permissions:
+      checks: write  # for coverallsapp/github-action to create new checks
+      contents: read  # for actions/checkout to fetch code
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
     - name: package installs
       run: |
         sudo apt-get -yq install lcov
@@ -31,7 +37,7 @@ jobs:
     - name: generate coverage info
       run: lcov -d . -c -o ./lcov.info
     - name: Coveralls upload
-      uses: coverallsapp/github-action@v1.1.2
+      uses: coverallsapp/github-action@8cbef1dea373ebce56de0a14c68d6267baa10b44 # v1.1.2
       with:
         github-token: ${{ secrets.github_token }}
         path-to-lcov: ./lcov.info

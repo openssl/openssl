@@ -8,6 +8,9 @@
 name: FIPS Checksums
 on: [pull_request]
 
+permissions:
+  contents: read
+
 jobs:
   compute-checksums:
     runs-on: ubuntu-latest
@@ -23,7 +26,7 @@ jobs:
           mkdir ./build
           mkdir ./source
           mkdir ./artifact
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
         with:
           repository: ${{ github.event.pull_request.base.repo.full_name }}
           ref: ${{ github.event.pull_request.base.ref }}
@@ -40,7 +43,7 @@ jobs:
       - name: make fips-checksums pristine
         run: make fips-checksums
         working-directory: ./build-pristine
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
         with:
           path: source
       - name: config
@@ -66,7 +69,7 @@ jobs:
       - name: save PR number
         run: echo ${{ github.event.number }} > ./artifact/pr_num
       - name: save artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@82c141cc518b40d92cc801eee768e7aafc9c2fa2 # v2
         with:
           name: fips_checksum
           path: artifact/
