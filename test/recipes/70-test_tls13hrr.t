@@ -102,7 +102,7 @@ sub hrr_filter
     if ($testtype == DUPLICATE_HRR) {
         # We're only interested in the HRR
         # and the unexpected_message alert from client
-        if ($proxy->flight == 2) {
+        if ($proxy->flight == 2 || $proxy->flight == 4) {
             $fatal_alert = 1
                 if @{$proxy->record_list}[-1]->is_fatal_alert(0) == 10;
             return;
