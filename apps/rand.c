@@ -20,7 +20,7 @@
 
 typedef enum OPTION_choice {
     OPT_COMMON,
-    OPT_OUT, OPT_ENGINE, OPT_BASE64, OPT_HEX,
+    OPT_OUT, OPT_ENGINE, OPT_BASE64, OPT_HEX, OPT_BUFLEN,
     OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
@@ -35,6 +35,7 @@ const OPTIONS rand_options[] = {
 
     OPT_SECTION("Output"),
     {"out", OPT_OUT, '>', "Output file"},
+    {"buflen", OPT_BUFLEN, 'p', "Length of chunks used for writing output"},
     {"base64", OPT_BASE64, '-', "Base64 encode output"},
     {"hex", OPT_HEX, '-', "Hex encode output"},
 
@@ -52,7 +53,9 @@ int rand_main(int argc, char **argv)
     BIO *out = NULL;
     char *outfile = NULL, *prog;
     OPTION_CHOICE o;
-    int format = FORMAT_BINARY, i, num = -1, r, ret = 1;
+    int format = FORMAT_BINARY, r, i, ret = 1, buflen = 4096;
+    long num;
+    uint8_t *buf = NULL;
 
     prog = opt_init(argc, argv, rand_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -68,6 +71,9 @@ int rand_main(int argc, char **argv)
             goto end;
         case OPT_OUT:
             outfile = opt_arg();
+            break;
+        case OPT_BUFLEN:
+            opt_int(opt_arg(), &buflen);
             break;
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 0);
@@ -93,7 +99,7 @@ int rand_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
     if (argc == 1) {
-        if (!opt_int(argv[0], &num) || num <= 0)
+        if (!opt_long(argv[0], &num) || num <= 0)
             goto opthelp;
     } else if (!opt_check_rest_arg(NULL)) {
         goto opthelp;
@@ -113,13 +119,11 @@ int rand_main(int argc, char **argv)
         out = BIO_push(b64, out);
     }
 
+    buf = app_malloc(buflen, "buffer for output file");
     while (num > 0) {
-        unsigned char buf[4096];
-        int chunk;
+        long chunk;
 
-        chunk = num;
-        if (chunk > (int)sizeof(buf))
-            chunk = sizeof(buf);
+        chunk = (num > buflen) ? buflen : num;
         r = RAND_bytes(buf, chunk);
         if (r <= 0)
             goto end;
@@ -143,6 +147,7 @@ int rand_main(int argc, char **argv)
  end:
     if (ret != 0)
         ERR_print_errors(bio_err);
+    OPENSSL_free(buf);
     release_engine(e);
     BIO_free_all(out);
     return ret;
