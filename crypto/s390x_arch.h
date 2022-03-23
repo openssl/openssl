@@ -72,6 +72,9 @@ struct OPENSSL_s390xcap_st {
     unsigned long long kdsa[2];
 };
 
+#if defined(__GNUC__) && defined(__linux)
+__attribute__ ((visibility("hidden")))
+#endif
 extern struct OPENSSL_s390xcap_st OPENSSL_s390xcap_P;
 
 /* Max number of 64-bit words currently returned by STFLE */

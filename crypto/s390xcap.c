@@ -74,6 +74,9 @@ void OPENSSL_s390x_functions(void);
 
 struct OPENSSL_s390xcap_st OPENSSL_s390xcap_P;
 
+#if defined(__GNUC__) && defined(__linux)
+__attribute__ ((visibility("hidden")))
+#endif
 void OPENSSL_cpuid_setup(void)
 {
     struct OPENSSL_s390xcap_st cap;
