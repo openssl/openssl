@@ -47,6 +47,9 @@ struct OPENSSL_s390xcap_st {
     unsigned long long kma[2];
 };
 
+#if defined(__GNUC__) && defined(__linux)
+__attribute__ ((visibility("hidden")))
+#endif
 extern struct OPENSSL_s390xcap_st OPENSSL_s390xcap_P;
 
 /* convert facility bit number or function code to bit mask */
