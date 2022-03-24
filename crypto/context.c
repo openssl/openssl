@@ -524,103 +524,103 @@ void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index,
         return NULL;
 
     switch (index) {
-        case OSSL_LIB_CTX_PROPERTY_STRING_INDEX:
-            return ctx->property_string_data;
-        case OSSL_LIB_CTX_EVP_METHOD_STORE_INDEX:
-            return ctx->evp_method_store;
-        case OSSL_LIB_CTX_PROVIDER_STORE_INDEX:
-            return ctx->provider_store;
-        case OSSL_LIB_CTX_NAMEMAP_INDEX:
-            return ctx->namemap;
-        case OSSL_LIB_CTX_PROPERTY_DEFN_INDEX:
-            return ctx->property_defns;
-        case OSSL_LIB_CTX_GLOBAL_PROPERTIES:
-            return ctx->global_properties;
-        case OSSL_LIB_CTX_DRBG_INDEX:
-            return ctx->drbg;
-        case OSSL_LIB_CTX_DRBG_NONCE_INDEX:
-            return ctx->drbg_nonce;
+    case OSSL_LIB_CTX_PROPERTY_STRING_INDEX:
+        return ctx->property_string_data;
+    case OSSL_LIB_CTX_EVP_METHOD_STORE_INDEX:
+        return ctx->evp_method_store;
+    case OSSL_LIB_CTX_PROVIDER_STORE_INDEX:
+        return ctx->provider_store;
+    case OSSL_LIB_CTX_NAMEMAP_INDEX:
+        return ctx->namemap;
+    case OSSL_LIB_CTX_PROPERTY_DEFN_INDEX:
+        return ctx->property_defns;
+    case OSSL_LIB_CTX_GLOBAL_PROPERTIES:
+        return ctx->global_properties;
+    case OSSL_LIB_CTX_DRBG_INDEX:
+        return ctx->drbg;
+    case OSSL_LIB_CTX_DRBG_NONCE_INDEX:
+        return ctx->drbg_nonce;
 #ifndef FIPS_MODULE
-        case OSSL_LIB_CTX_PROVIDER_CONF_INDEX:
-            return ctx->provider_conf;
-        case OSSL_LIB_CTX_BIO_CORE_INDEX:
-            return ctx->bio_core;
-        case OSSL_LIB_CTX_CHILD_PROVIDER_INDEX:
-            return ctx->child_provider;
-        case OSSL_LIB_CTX_DECODER_STORE_INDEX:
-            return ctx->decoder_store;
-        case OSSL_LIB_CTX_ENCODER_STORE_INDEX:
-            return ctx->encoder_store;
-        case OSSL_LIB_CTX_STORE_LOADER_STORE_INDEX:
-            return ctx->store_loader_store;
-        case OSSL_LIB_CTX_SELF_TEST_CB_INDEX:
-            return ctx->self_test_cb;
+    case OSSL_LIB_CTX_PROVIDER_CONF_INDEX:
+        return ctx->provider_conf;
+    case OSSL_LIB_CTX_BIO_CORE_INDEX:
+        return ctx->bio_core;
+    case OSSL_LIB_CTX_CHILD_PROVIDER_INDEX:
+        return ctx->child_provider;
+    case OSSL_LIB_CTX_DECODER_STORE_INDEX:
+        return ctx->decoder_store;
+    case OSSL_LIB_CTX_ENCODER_STORE_INDEX:
+        return ctx->encoder_store;
+    case OSSL_LIB_CTX_STORE_LOADER_STORE_INDEX:
+        return ctx->store_loader_store;
+    case OSSL_LIB_CTX_SELF_TEST_CB_INDEX:
+        return ctx->self_test_cb;
 #endif
 
-        case OSSL_LIB_CTX_RAND_CRNGT_INDEX: {
+    case OSSL_LIB_CTX_RAND_CRNGT_INDEX: {
 
-            /*
-             * rand_crngt must be lazily initialized because it calls into
-             * libctx, so must not be called from context_init, else a deadlock
-             * will occur.
-             *
-             * We use a separate lock because code called by the instantiation
-             * of rand_crngt is liable to try and take the libctx lock.
-             */
-            if (CRYPTO_THREAD_read_lock(ctx->rand_crngt_lock) != 1)
-                return NULL;
+        /*
+         * rand_crngt must be lazily initialized because it calls into
+         * libctx, so must not be called from context_init, else a deadlock
+         * will occur.
+         *
+         * We use a separate lock because code called by the instantiation
+         * of rand_crngt is liable to try and take the libctx lock.
+         */
+        if (CRYPTO_THREAD_read_lock(ctx->rand_crngt_lock) != 1)
+            return NULL;
 
-            if (ctx->rand_crngt == NULL) {
-                CRYPTO_THREAD_unlock(ctx->rand_crngt_lock);
-
-                if (CRYPTO_THREAD_write_lock(ctx->rand_crngt_lock) != 1)
-                    return NULL;
-
-                if (ctx->rand_crngt == NULL)
-                    ctx->rand_crngt = ossl_rand_crng_ctx_new(ctx);
-            }
-
-            p = ctx->rand_crngt;
-
+        if (ctx->rand_crngt == NULL) {
             CRYPTO_THREAD_unlock(ctx->rand_crngt_lock);
 
-            return p;
+            if (CRYPTO_THREAD_write_lock(ctx->rand_crngt_lock) != 1)
+                return NULL;
+
+            if (ctx->rand_crngt == NULL)
+                ctx->rand_crngt = ossl_rand_crng_ctx_new(ctx);
         }
 
+        p = ctx->rand_crngt;
+
+        CRYPTO_THREAD_unlock(ctx->rand_crngt_lock);
+
+        return p;
+    }
+
 #ifdef FIPS_MODULE
-        case OSSL_LIB_CTX_THREAD_EVENT_HANDLER_INDEX:
-            return ctx->thread_event_handler;
+    case OSSL_LIB_CTX_THREAD_EVENT_HANDLER_INDEX:
+        return ctx->thread_event_handler;
 #endif
 
-        case OSSL_LIB_CTX_FIPS_PROV_INDEX: {
-            /*
-             * fips is a separate module which may or may not be loaded,
-             * so we have to do this lazily.
-             */
-            if (CRYPTO_THREAD_read_lock(ctx->lock) != 1)
+    case OSSL_LIB_CTX_FIPS_PROV_INDEX: {
+        /*
+         * fips is a separate module which may or may not be loaded,
+         * so we have to do this lazily.
+         */
+        if (CRYPTO_THREAD_read_lock(ctx->lock) != 1)
+            return NULL;
+
+        if (ctx->fips_prov == NULL) {
+            CRYPTO_THREAD_unlock(ctx->lock);
+
+            if (CRYPTO_THREAD_write_lock(ctx->lock) != 1)
                 return NULL;
 
             if (ctx->fips_prov == NULL) {
-                CRYPTO_THREAD_unlock(ctx->lock);
-
-                if (CRYPTO_THREAD_write_lock(ctx->lock) != 1)
-                    return NULL;
-
-                if (ctx->fips_prov == NULL) {
-                    ctx->fips_prov = meth->new_func(ctx);
-                    if (ctx->fips_prov != NULL)
-                        ctx->fips_prov_free = meth->free_func;
-                }
+                ctx->fips_prov = meth->new_func(ctx);
+                if (ctx->fips_prov != NULL)
+                    ctx->fips_prov_free = meth->free_func;
             }
-
-            p = ctx->fips_prov;
-
-            CRYPTO_THREAD_unlock(ctx->lock);
-            return p;
         }
 
-        default:
-            return NULL;
+        p = ctx->fips_prov;
+
+        CRYPTO_THREAD_unlock(ctx->lock);
+        return p;
+    }
+
+    default:
+        return NULL;
     }
 }
 
