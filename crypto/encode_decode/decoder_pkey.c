@@ -259,7 +259,7 @@ static void collect_decoder(OSSL_DECODER *decoder, void *arg)
 {
     struct collect_data_st *data = arg;
     STACK_OF(EVP_KEYMGMT) *keymgmts = data->keymgmts;
-    size_t i, end_i;
+    int i, end_i;
     EVP_KEYMGMT *keymgmt;
     const OSSL_PROVIDER *prov;
     void *provctx;
