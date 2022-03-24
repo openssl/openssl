@@ -163,8 +163,7 @@ void *OPENSSL_LH_retrieve(OPENSSL_LHASH *lh, const void *data)
     unsigned long hash;
     OPENSSL_LH_NODE **rn;
 
-    /* This should be atomic without tsan. */
-    tsan_store((TSAN_QUALIFIER int *)&lh->error, 0);
+    lh->error = 0;
 
     rn = getrn(lh, data, &hash);
 
