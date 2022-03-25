@@ -393,14 +393,21 @@ int DHparams_print(BIO *bp, const DH *x)
 
 static int dh_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 {
+    DH *dh;
     switch (op) {
     case ASN1_PKEY_CTRL_SET1_TLS_ENCPT:
         /* We should only be here if we have a legacy key */
         if (!ossl_assert(evp_pkey_is_legacy(pkey)))
             return 0;
-        return ossl_dh_buf2key(evp_pkey_get0_DH_int(pkey), arg2, arg1);
+        dh = (DH *) evp_pkey_get0_DH_int(pkey);
+        if (dh == NULL)
+            return 0;
+        return ossl_dh_buf2key(dh, arg2, arg1);
     case ASN1_PKEY_CTRL_GET1_TLS_ENCPT:
-        return ossl_dh_key2buf(EVP_PKEY_get0_DH(pkey), arg2, 0, 1);
+        dh = (DH *) EVP_PKEY_get0_DH(pkey);
+        if (dh == NULL)
+            return 0;
+        return ossl_dh_key2buf(dh, arg2, 0, 1);
     default:
         return -2;
     }
