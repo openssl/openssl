@@ -6754,7 +6754,7 @@ static int test_ticket_lifetime(int idx)
         version = TLS1_2_VERSION;
     }
 
-    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
                                        TLS_client_method(), version, version,
                                        &sctx, &cctx, cert, privkey)))
         goto end;
