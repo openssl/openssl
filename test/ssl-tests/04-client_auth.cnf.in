@@ -155,6 +155,65 @@ sub generate_tests() {
                 };
                 $tests[-1]{"test"}{"UseSCTP"} = "Yes" if $sctp;
 
+                # Successful handshake with client RSA-PSS cert, StrictCertCheck
+                push @tests, {
+                    name => "client-auth-${protocol_name}-rsa-pss"
+                             .($sctp ? "-sctp" : ""),
+                    server => {
+                        "CipherString" => "DEFAULT:\@SECLEVEL=0",
+                        "MinProtocol" => $protocol,
+                        "MaxProtocol" => $protocol,
+                        "ClientCAFile" => test_pem("rootcert.pem"),
+                        "VerifyCAFile" => test_pem("rootcert.pem"),
+                        "VerifyMode" => "Require",
+                    },
+                    client => {
+                        "CipherString" => "DEFAULT:\@SECLEVEL=0",
+                        "MinProtocol" => $protocol,
+                        "MaxProtocol" => $protocol,
+                        "Certificate" => test_pem("client-pss-restrict-cert.pem"),
+                        "PrivateKey"  => test_pem("client-pss-restrict-key.pem"),
+                        "Options" => "StrictCertCheck",
+                    },
+                    test   => {
+                        "ExpectedResult" => "Success",
+                        "ExpectedClientCertType" => "RSA-PSS",
+                        "ExpectedClientCANames" => test_pem("rootcert.pem"),
+                        "Method" => $method,
+                    },
+                } if $protocol_name eq "TLSv1.2" || $protocol_name eq "flex";
+
+                # Failed handshake with client RSA-PSS cert, StrictCertCheck, bad CA
+                push @tests, {
+                    name => "client-auth-${protocol_name}-rsa-pss-bad"
+                             .($sctp ? "-sctp" : ""),
+                    server => {
+                        "CipherString" => "DEFAULT:\@SECLEVEL=0",
+                        "MinProtocol" => $protocol,
+                        "MaxProtocol" => $protocol,
+                        "ClientCAFile" => test_pem("rootCA.pem"),
+                        "VerifyCAFile" => test_pem("rootCA.pem"),
+                        "VerifyMode" => "Require",
+                    },
+                    client => {
+                        "CipherString" => "DEFAULT:\@SECLEVEL=0",
+                        "MinProtocol" => $protocol,
+                        "MaxProtocol" => $protocol,
+                        "Certificate" => test_pem("client-pss-restrict-cert.pem"),
+                        "PrivateKey"  => test_pem("client-pss-restrict-key.pem"),
+                        "Options" => "StrictCertCheck",
+                    },
+                    test   => {
+                        "ExpectedResult" => "ServerFail",
+                        "ExpectedServerAlert" =>
+                        ($protocol_name eq "flex"
+                            && !disabled("tls1_3")
+                            && (!disabled("ec") || !disabled("dh")))
+                        ? "CertificateRequired" : "HandshakeFailure",
+                        "Method" => $method,
+                    },
+                } if $protocol_name eq "TLSv1.2" || $protocol_name eq "flex";
+
                 # Successful handshake with client authentication non-empty names
                 push @tests, {
                     name => "client-auth-${protocol_name}-require-non-empty-names"

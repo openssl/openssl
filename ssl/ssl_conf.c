@@ -396,7 +396,8 @@ static int cmd_Options(SSL_CONF_CTX *cctx, const char *value)
         SSL_FLAG_TBL_INV("AntiReplay", SSL_OP_NO_ANTI_REPLAY),
         SSL_FLAG_TBL_INV("ExtendedMasterSecret", SSL_OP_NO_EXTENDED_MASTER_SECRET),
         SSL_FLAG_TBL_INV("CANames", SSL_OP_DISABLE_TLSEXT_CA_NAMES),
-        SSL_FLAG_TBL("KTLS", SSL_OP_ENABLE_KTLS)
+        SSL_FLAG_TBL("KTLS", SSL_OP_ENABLE_KTLS),
+        SSL_FLAG_TBL_CERT("StrictCertCheck", SSL_CERT_FLAG_TLS_STRICT)
     };
     if (value == NULL)
         return -3;

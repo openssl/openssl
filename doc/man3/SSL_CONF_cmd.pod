@@ -532,6 +532,9 @@ B<KTLS>: Enables kernel TLS if support has been compiled in, and it is supported
 by the negotiated ciphersuites and extensions. Equivalent to
 B<SSL_OP_ENABLE_KTLS>.
 
+B<StrictCertCheck>: Enable strict certificate checking. Equivalent to
+setting B<SSL_CERT_FLAG_TLS_STRICT> with SSL_CTX_set_cert_flags().
+
 =item B<VerifyMode>
 
 The B<value> argument is a comma separated list of flags to set.
