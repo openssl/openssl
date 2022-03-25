@@ -20,7 +20,7 @@
 
 typedef enum OPTION_choice {
     OPT_COMMON,
-    OPT_OUT, OPT_ENGINE, OPT_BASE64, OPT_HEX, OPT_BUFLEN,
+    OPT_OUT, OPT_ENGINE, OPT_BASE64, OPT_HEX,
     OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
@@ -35,7 +35,6 @@ const OPTIONS rand_options[] = {
 
     OPT_SECTION("Output"),
     {"out", OPT_OUT, '>', "Output file"},
-    {"buflen", OPT_BUFLEN, 'p', "Length of chunks used for writing output"},
     {"base64", OPT_BASE64, '-', "Base64 encode output"},
     {"hex", OPT_HEX, '-', "Hex encode output"},
 
@@ -53,7 +52,7 @@ int rand_main(int argc, char **argv)
     BIO *out = NULL;
     char *outfile = NULL, *prog;
     OPTION_CHOICE o;
-    int format = FORMAT_BINARY, r, i, ret = 1, buflen = 4096;
+    int format = FORMAT_BINARY, r, i, ret = 1, buflen = 131072;
     long num = -1;
     uint8_t *buf = NULL;
 
@@ -71,9 +70,6 @@ int rand_main(int argc, char **argv)
             goto end;
         case OPT_OUT:
             outfile = opt_arg();
-            break;
-        case OPT_BUFLEN:
-            opt_int(opt_arg(), &buflen);
             break;
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 0);
