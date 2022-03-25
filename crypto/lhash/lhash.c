@@ -163,7 +163,8 @@ void *OPENSSL_LH_retrieve(OPENSSL_LHASH *lh, const void *data)
     unsigned long hash;
     OPENSSL_LH_NODE **rn;
 
-    lh->error = 0;
+    if (lh->error != 0)
+        lh->error = 0;
 
     rn = getrn(lh, data, &hash);
 
