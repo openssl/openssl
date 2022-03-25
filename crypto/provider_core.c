@@ -24,7 +24,7 @@
 #include "internal/bio.h"
 #include "internal/core.h"
 #include "provider_local.h"
-#include "context_local.h"
+#include "crypto/context.h"
 #ifndef FIPS_MODULE
 # include <openssl/self_test.h>
 #endif
@@ -320,19 +320,11 @@ void *ossl_provider_store_new(OSSL_LIB_CTX *ctx)
     return store;
 }
 
-static const OSSL_LIB_CTX_METHOD provider_store_method = {
-    /* Needs to be freed before the child provider data is freed */
-    OSSL_LIB_CTX_METHOD_PRIORITY_1,
-    ossl_provider_store_new,
-    ossl_provider_store_free,
-};
-
 static struct provider_store_st *get_provider_store(OSSL_LIB_CTX *libctx)
 {
     struct provider_store_st *store = NULL;
 
-    store = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_PROVIDER_STORE_INDEX,
-                                  &provider_store_method);
+    store = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_PROVIDER_STORE_INDEX);
     if (store == NULL)
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
     return store;

@@ -14,7 +14,7 @@
 #include "internal/core.h"
 #include "internal/bio.h"
 #include "internal/provider.h"
-#include "context_local.h"
+#include "crypto/context.h"
 
 struct ossl_lib_ctx_onfree_list_st {
     ossl_lib_ctx_onfree_fn *fn;
@@ -23,11 +23,6 @@ struct ossl_lib_ctx_onfree_list_st {
 
 struct ossl_lib_ctx_st {
     CRYPTO_RWLOCK *lock, *rand_crngt_lock;
-
-    /*
-     * For most data in the OSSL_LIB_CTX we just use ex_data to store it. But
-     * that doesn't work for ex_data itself - so we store that directly.
-     */
     OSSL_EX_DATA_GLOBAL global;
 
     void *property_string_data;
@@ -50,9 +45,8 @@ struct ossl_lib_ctx_st {
     void *rand_crngt;
 #ifdef FIPS_MODULE
     void *thread_event_handler;
-#endif
     void *fips_prov;
-    void (*fips_prov_free)(void *);
+#endif
 
     CRYPTO_RWLOCK *oncelock;
     int run_once_done[OSSL_LIB_CTX_MAX_RUN_ONCE];
@@ -103,7 +97,7 @@ static int context_init(OSSL_LIB_CTX *ctx)
     if (ctx->rand_crngt_lock == NULL)
         goto err;
 
-    /* OSSL_LIB_CTX is built on top of ex_data so we initialise that directly */
+    /* Initialize ex_data. */
     if (!ossl_do_ex_data_init(ctx))
         goto err;
     exdata_done = 1;
@@ -183,6 +177,10 @@ static int context_init(OSSL_LIB_CTX *ctx)
 #ifdef FIPS_MODULE
     ctx->thread_event_handler = ossl_thread_event_ctx_new(ctx);
     if (ctx->thread_event_handler == NULL)
+        goto err;
+
+    ctx->fips_prov = ossl_fips_prov_ossl_ctx_new(ctx);
+    if (ctx->fips_prov == NULL)
         goto err;
 #endif
 
@@ -308,13 +306,12 @@ static void context_deinit_objs(OSSL_LIB_CTX *ctx)
         ossl_thread_event_ctx_free(ctx->thread_event_handler);
         ctx->thread_event_handler = NULL;
     }
-#endif
 
     if (ctx->fips_prov != NULL) {
-        ctx->fips_prov_free(ctx->fips_prov);
+        ossl_fips_prov_ossl_ctx_free(ctx->fips_prov);
         ctx->fips_prov = NULL;
-        ctx->fips_prov_free = NULL;
     }
+#endif
 
     /* Low priority. */
 #ifndef FIPS_MODULE
@@ -514,8 +511,7 @@ int ossl_lib_ctx_is_global_default(OSSL_LIB_CTX *ctx)
     return 0;
 }
 
-void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index,
-                            const OSSL_LIB_CTX_METHOD *meth)
+void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index)
 {
     void *p;
 
@@ -590,34 +586,10 @@ void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index,
 #ifdef FIPS_MODULE
     case OSSL_LIB_CTX_THREAD_EVENT_HANDLER_INDEX:
         return ctx->thread_event_handler;
+
+    case OSSL_LIB_CTX_FIPS_PROV_INDEX:
+        return ctx->fips_prov;
 #endif
-
-    case OSSL_LIB_CTX_FIPS_PROV_INDEX: {
-        /*
-         * fips is a separate module which may or may not be loaded,
-         * so we have to do this lazily.
-         */
-        if (CRYPTO_THREAD_read_lock(ctx->lock) != 1)
-            return NULL;
-
-        if (ctx->fips_prov == NULL) {
-            CRYPTO_THREAD_unlock(ctx->lock);
-
-            if (CRYPTO_THREAD_write_lock(ctx->lock) != 1)
-                return NULL;
-
-            if (ctx->fips_prov == NULL) {
-                ctx->fips_prov = meth->new_func(ctx);
-                if (ctx->fips_prov != NULL)
-                    ctx->fips_prov_free = meth->free_func;
-            }
-        }
-
-        p = ctx->fips_prov;
-
-        CRYPTO_THREAD_unlock(ctx->lock);
-        return p;
-    }
 
     default:
         return NULL;

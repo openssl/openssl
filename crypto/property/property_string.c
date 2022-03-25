@@ -13,7 +13,7 @@
 #include <openssl/lhash.h>
 #include "crypto/lhash.h"
 #include "property_local.h"
-#include "crypto/context_local.h"
+#include "crypto/context.h"
 
 /*
  * Property strings are a consolidation of all strings seen by the property
@@ -121,12 +121,6 @@ void *ossl_property_string_data_new(OSSL_LIB_CTX *ctx) {
     return propdata;
 }
 
-static const OSSL_LIB_CTX_METHOD property_string_data_method = {
-    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
-    ossl_property_string_data_new,
-    ossl_property_string_data_free,
-};
-
 static PROPERTY_STRING *new_property_string(const char *s,
                                             OSSL_PROPERTY_IDX *pidx)
 {
@@ -152,8 +146,7 @@ static OSSL_PROPERTY_IDX ossl_property_string(OSSL_LIB_CTX *ctx, int name,
     PROP_TABLE *t;
     OSSL_PROPERTY_IDX *pidx;
     PROPERTY_STRING_DATA *propdata
-        = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_PROPERTY_STRING_INDEX,
-                                &property_string_data_method);
+        = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_PROPERTY_STRING_INDEX);
 
     if (propdata == NULL)
         return 0;
@@ -225,8 +218,7 @@ static const char *ossl_property_str(int name, OSSL_LIB_CTX *ctx,
 {
     const char *r;
     PROPERTY_STRING_DATA *propdata
-        = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_PROPERTY_STRING_INDEX,
-                                &property_string_data_method);
+        = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_PROPERTY_STRING_INDEX);
 
     if (propdata == NULL)
         return NULL;

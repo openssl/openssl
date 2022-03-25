@@ -18,7 +18,7 @@
 #include "crypto/rand.h"
 #include "crypto/cryptlib.h"
 #include "rand_local.h"
-#include "crypto/context_local.h"
+#include "crypto/context.h"
 
 #ifndef FIPS_MODULE
 # include <stdio.h>
@@ -492,16 +492,9 @@ void ossl_rand_ctx_free(void *vdgbl)
     OPENSSL_free(dgbl);
 }
 
-static const OSSL_LIB_CTX_METHOD rand_drbg_ossl_ctx_method = {
-    OSSL_LIB_CTX_METHOD_PRIORITY_2,
-    ossl_rand_ctx_new,
-    ossl_rand_ctx_free,
-};
-
 static RAND_GLOBAL *rand_get_global(OSSL_LIB_CTX *libctx)
 {
-    return ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_DRBG_INDEX,
-                                 &rand_drbg_ossl_ctx_method);
+    return ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_DRBG_INDEX);
 }
 
 static void rand_delete_thread_state(void *arg)

@@ -15,7 +15,7 @@
 #include "internal/property.h"
 #include "internal/core.h"
 #include "property_local.h"
-#include "crypto/context_local.h"
+#include "crypto/context.h"
 
 /*
  * Implement a property definition cache.
@@ -63,20 +63,13 @@ void *ossl_property_defns_new(OSSL_LIB_CTX *ctx) {
     return lh_PROPERTY_DEFN_ELEM_new(&property_defn_hash, &property_defn_cmp);
 }
 
-static const OSSL_LIB_CTX_METHOD property_defns_method = {
-    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
-    ossl_property_defns_new,
-    ossl_property_defns_free,
-};
-
 OSSL_PROPERTY_LIST *ossl_prop_defn_get(OSSL_LIB_CTX *ctx, const char *prop)
 {
     PROPERTY_DEFN_ELEM elem, *r;
     LHASH_OF(PROPERTY_DEFN_ELEM) *property_defns;
 
     property_defns = ossl_lib_ctx_get_data(ctx,
-                                           OSSL_LIB_CTX_PROPERTY_DEFN_INDEX,
-                                           &property_defns_method);
+                                           OSSL_LIB_CTX_PROPERTY_DEFN_INDEX);
     if (property_defns == NULL || !ossl_lib_ctx_read_lock(ctx))
         return NULL;
 
@@ -95,8 +88,7 @@ int ossl_prop_defn_set(OSSL_LIB_CTX *ctx, const char *prop,
     int res = 1;
 
     property_defns = ossl_lib_ctx_get_data(ctx,
-                                           OSSL_LIB_CTX_PROPERTY_DEFN_INDEX,
-                                           &property_defns_method);
+                                           OSSL_LIB_CTX_PROPERTY_DEFN_INDEX);
     if (property_defns == NULL)
         return 0;
 

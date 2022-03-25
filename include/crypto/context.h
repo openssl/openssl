@@ -25,6 +25,7 @@ void *ossl_prov_drbg_nonce_ctx_new(OSSL_LIB_CTX *);
 void *ossl_self_test_set_callback_new(OSSL_LIB_CTX *);
 void *ossl_rand_crng_ctx_new(OSSL_LIB_CTX *);
 void *ossl_thread_event_ctx_new(OSSL_LIB_CTX *);
+void *ossl_fips_prov_ossl_ctx_new(OSSL_LIB_CTX *);
 
 void ossl_provider_store_free(void *);
 void ossl_property_string_data_free(void *);
@@ -42,3 +43,4 @@ void ossl_prov_drbg_nonce_ctx_free(void *);
 void ossl_self_test_set_callback_free(void *);
 void ossl_rand_crng_ctx_free(void *);
 void ossl_thread_event_ctx_free(void *);
+void ossl_fips_prov_ossl_ctx_free(void *);

@@ -17,7 +17,7 @@
 #include "internal/provider.h"
 #include "crypto/decoder.h"
 #include "encoder_local.h"
-#include "crypto/context_local.h"
+#include "crypto/context.h"
 
 /*
  * Decoder can have multiple names, separated with colons in a name string
@@ -78,13 +78,6 @@ void *ossl_decoder_store_new(OSSL_LIB_CTX *ctx)
 }
 
 
-static const OSSL_LIB_CTX_METHOD decoder_store_method = {
-    /* We want decoder_store to be cleaned up before the provider store */
-    OSSL_LIB_CTX_METHOD_PRIORITY_2,
-    ossl_decoder_store_new,
-    ossl_decoder_store_free,
-};
-
 /* Data to be passed through ossl_method_construct() */
 struct decoder_data_st {
     OSSL_LIB_CTX *libctx;
@@ -121,8 +114,7 @@ static void dealloc_tmp_decoder_store(void *store)
 /* Get the permanent decoder store */
 static OSSL_METHOD_STORE *get_decoder_store(OSSL_LIB_CTX *libctx)
 {
-    return ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_DECODER_STORE_INDEX,
-                                 &decoder_store_method);
+    return ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_DECODER_STORE_INDEX);
 }
 
 /* Get decoder methods from a store, or put one in */

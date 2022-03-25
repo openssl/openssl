@@ -16,7 +16,7 @@
 #include "internal/provider.h"
 #include "internal/cryptlib.h"
 #include "provider_local.h"
-#include "context_local.h"
+#include "crypto/context.h"
 
 DEFINE_STACK_OF(OSSL_PROVIDER)
 
@@ -54,13 +54,6 @@ void ossl_prov_conf_ctx_free(void *vpcgbl)
     CRYPTO_THREAD_lock_free(pcgbl->lock);
     OPENSSL_free(pcgbl);
 }
-
-static const OSSL_LIB_CTX_METHOD provider_conf_ossl_ctx_method = {
-    /* Must be freed before the provider store is freed */
-    OSSL_LIB_CTX_METHOD_PRIORITY_2,
-    ossl_prov_conf_ctx_new,
-    ossl_prov_conf_ctx_free,
-};
 
 static const char *skip_dot(const char *name)
 {
@@ -142,8 +135,7 @@ static int provider_conf_activate(OSSL_LIB_CTX *libctx, const char *name,
                                   int soft, const CONF *cnf)
 {
     PROVIDER_CONF_GLOBAL *pcgbl
-        = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_PROVIDER_CONF_INDEX,
-                                &provider_conf_ossl_ctx_method);
+        = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_PROVIDER_CONF_INDEX);
     OSSL_PROVIDER *prov = NULL, *actual = NULL;
     int ok = 0;
 
