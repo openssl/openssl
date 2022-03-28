@@ -322,7 +322,8 @@ static int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *vs,
     stmp.type = X509_LU_NONE;
     stmp.data.ptr = NULL;
 
-    X509_STORE_lock(store);
+    if (!X509_STORE_lock(store))
+        return 0;
     tmp = X509_OBJECT_retrieve_by_subject(store->objs, type, name);
     X509_STORE_unlock(store);
 
@@ -681,7 +682,10 @@ STACK_OF(X509_CRL) *X509_STORE_CTX_get1_crls(const X509_STORE_CTX *ctx,
     X509_OBJECT_free(xobj);
     if (i == 0)
         return sk;
-    X509_STORE_lock(store);
+    if (!X509_STORE_lock(store)) {
+        sk_X509_CRL_free(sk);
+        return NULL;
+    }
     idx = x509_object_idx_cnt(store->objs, X509_LU_CRL, nm, &cnt);
     if (idx < 0) {
         X509_STORE_unlock(store);
