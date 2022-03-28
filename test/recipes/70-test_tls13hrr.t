@@ -102,12 +102,12 @@ sub hrr_filter
     if ($testtype == DUPLICATE_HRR) {
         # We're only interested in the HRR
         # and the unexpected_message alert from client
-        if ($proxy->flight == 2 || $proxy->flight == 4) {
+        if ($proxy->flight == 4) {
             $fatal_alert = 1
                 if @{$proxy->record_list}[-1]->is_fatal_alert(0) == 10;
             return;
         }
-        if ($proxy->flight != 1) {
+        if ($proxy->flight != 3) {
             return;
         }
 
@@ -117,7 +117,7 @@ sub hrr_filter
             next;
         }
         my $hrr_record = ${$proxy->record_list}[$i];
-        my $dup_hrr = TLSProxy::Record->new(1,
+        my $dup_hrr = TLSProxy::Record->new(3,
             $hrr_record->content_type(),
             $hrr_record->version(),
             $hrr_record->len(),
