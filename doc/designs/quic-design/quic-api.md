@@ -228,10 +228,9 @@ required if the underlying socket is "unconnected".
 
 New streams can be initiated by calling `SSL_new_stream()` and passing an
 existing `SSL` object for some other stream from the same connection. Subsequently,
-`SSL_connect()` will need to be called on the new `SSL` object. This could be made
-to work for (D)TLS client applications which could automatically configure the
-SSL object to try a resumption handshake. On the server side this would always
-fail for (D)TLS applications.
+`SSL_connect()` will need to be called on the new `SSL` object. For (D)TLS this
+will actually create a new connection via a resumption handshake. On the server
+side this would always fail for (D)TLS applications.
 
 New streams can also be initiated by the peer in which case a "new stream"
 event would be issued by the `SSL_EVENT_CTX`. In that case details of the
