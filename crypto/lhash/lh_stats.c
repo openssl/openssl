@@ -22,6 +22,8 @@
 
 # ifndef OPENSSL_NO_DEPRECATED_3_1
 static void lh_stats_bio_actual(const OPENSSL_LHASH *lh, BIO *out);
+static void lh_node_stats_bio_actual(const OPENSSL_LHASH *lh, BIO *out);
+static void lh_node_usage_stats_bio_actual(const OPENSSL_LHASH *lh, BIO *out);
 # endif
 
 # ifndef OPENSSL_NO_STDIO
@@ -37,7 +39,6 @@ void OPENSSL_LH_stats(const OPENSSL_LHASH *lh, FILE *fp)
     lh_stats_bio_actual(lh, bp);
     BIO_free(bp);
 }
-#  endif
 
 void OPENSSL_LH_node_stats(const OPENSSL_LHASH *lh, FILE *fp)
 {
@@ -47,7 +48,7 @@ void OPENSSL_LH_node_stats(const OPENSSL_LHASH *lh, FILE *fp)
     if (bp == NULL)
         return;
     BIO_set_fp(bp, fp, BIO_NOCLOSE);
-    OPENSSL_LH_node_stats_bio(lh, bp);
+    lh_node_stats_bio_actual(lh, bp);
     BIO_free(bp);
 }
 
@@ -59,22 +60,23 @@ void OPENSSL_LH_node_usage_stats(const OPENSSL_LHASH *lh, FILE *fp)
     if (bp == NULL)
         return;
     BIO_set_fp(bp, fp, BIO_NOCLOSE);
-    OPENSSL_LH_node_usage_stats_bio(lh, bp);
+    lh_node_usage_stats_bio_actual(lh, bp);
     BIO_free(bp);
 }
-
+#  endif
 # endif
 
 # ifndef OPENSSL_NO_DEPRECATED_3_1
+/*
+ * These functions are implemented as separate static functions as they are
+ * called from the stdio functions above and calling deprecated functions will
+ * generate a warning.
+ */
 void OPENSSL_LH_stats_bio(const OPENSSL_LHASH *lh, BIO *out)
 {
     lh_stats_bio_actual(lh, out);
 }
 
-/*
- * The call from our function OPENSSL_LH_stats needs this as calling deprecated
- * functions will generate a warning.
- */
 static void lh_stats_bio_actual(const OPENSSL_LHASH *lh, BIO *out)
 {
     BIO_printf(out, "num_items             = %lu\n", lh->num_items);
@@ -94,9 +96,13 @@ static void lh_stats_bio_actual(const OPENSSL_LHASH *lh, BIO *out)
     BIO_printf(out, "num_retrieve_miss     = 0\n");
     BIO_printf(out, "num_hash_comps        = 0\n");
 }
-# endif
 
 void OPENSSL_LH_node_stats_bio(const OPENSSL_LHASH *lh, BIO *out)
+{
+    lh_node_stats_bio_actual(lh, out);
+}
+
+static void lh_node_stats_bio_actual(const OPENSSL_LHASH *lh, BIO *out)
 {
     OPENSSL_LH_NODE *n;
     unsigned int i, num;
@@ -109,6 +115,11 @@ void OPENSSL_LH_node_stats_bio(const OPENSSL_LHASH *lh, BIO *out)
 }
 
 void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out)
+{
+    lh_node_usage_stats_bio_actual(lh, out);
+}
+
+static void lh_node_usage_stats_bio_actual(const OPENSSL_LHASH *lh, BIO *out)
 {
     OPENSSL_LH_NODE *n;
     unsigned long num;
@@ -132,3 +143,4 @@ void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out)
                (int)((total % lh->num_nodes) * 100 / lh->num_nodes),
                (int)(total / n_used), (int)((total % n_used) * 100 / n_used));
 }
+# endif

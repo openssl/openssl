@@ -210,9 +210,6 @@ static int test_stress(void)
     if (!TEST_int_eq(lh_int_num_items(h), n))
             goto end;
 
-    TEST_note("hash full node usage:");
-    OPENSSL_LH_node_usage_stats_bio((OPENSSL_LHASH *)h, bio_err);
-
     /* delete in a different order */
     for (i = 0; i < n; i++) {
         const int j = (7 * i + 4) % n * 3 + 1;
@@ -227,9 +224,6 @@ static int test_stress(void)
         }
         OPENSSL_free(p);
     }
-
-    TEST_note("hash empty node usage:");
-    OPENSSL_LH_node_usage_stats_bio((OPENSSL_LHASH *)h, bio_err);
 
     testresult = 1;
 end:
