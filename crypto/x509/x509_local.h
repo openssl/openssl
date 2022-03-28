@@ -9,6 +9,16 @@
 
 #include "internal/refcount.h"
 
+# define KU_DIGITAL_SIGNATURE    0x0080
+# define KU_NON_REPUDIATION      0x0040
+# define KU_KEY_ENCIPHERMENT     0x0020
+# define KU_DATA_ENCIPHERMENT    0x0010
+# define KU_KEY_AGREEMENT        0x0008
+# define KU_KEY_CERT_SIGN        0x0004
+# define KU_CRL_SIGN             0x0002
+# define KU_ENCIPHER_ONLY        0x0001
+# define KU_DECIPHER_ONLY        0x8000
+
 #define X509V3_conf_add_error_name_value(val) \
     ERR_add_error_data(4, "name=", (val)->name, ", value=", (val)->value)
 
