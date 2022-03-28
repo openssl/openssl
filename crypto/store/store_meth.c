@@ -69,17 +69,6 @@ static void free_loader(void *method)
     OSSL_STORE_LOADER_free(method);
 }
 
-/* Permanent loader method store, constructor and destructor */
-void ossl_loader_store_free(void *vstore)
-{
-    ossl_method_store_free(vstore);
-}
-
-void *ossl_loader_store_new(OSSL_LIB_CTX *ctx)
-{
-    return ossl_method_store_new(ctx);
-}
-
 /* Data to be passed through ossl_method_construct() */
 struct loader_data_st {
     OSSL_LIB_CTX *libctx;

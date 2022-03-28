@@ -66,18 +66,6 @@ void OSSL_DECODER_free(OSSL_DECODER *decoder)
     OPENSSL_free(decoder);
 }
 
-/* Permanent decoder method store, constructor and destructor */
-void ossl_decoder_store_free(void *vstore)
-{
-    ossl_method_store_free(vstore);
-}
-
-void *ossl_decoder_store_new(OSSL_LIB_CTX *ctx)
-{
-    return ossl_method_store_new(ctx);
-}
-
-
 /* Data to be passed through ossl_method_construct() */
 struct decoder_data_st {
     OSSL_LIB_CTX *libctx;

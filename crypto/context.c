@@ -37,9 +37,9 @@ struct ossl_lib_ctx_st {
     void *provider_conf;
     void *bio_core;
     void *child_provider;
-    void *decoder_store;
-    void *encoder_store;
-    void *store_loader_store;
+    OSSL_METHOD_STORE *decoder_store;
+    OSSL_METHOD_STORE *encoder_store;
+    OSSL_METHOD_STORE *store_loader_store;
     void *self_test_cb;
 #endif
     void *rand_crngt;
@@ -121,17 +121,17 @@ static int context_init(OSSL_LIB_CTX *ctx)
 
 #ifndef FIPS_MODULE
     /* P2. We want decoder_store to be cleaned up before the provider store */
-    ctx->decoder_store = ossl_decoder_store_new(ctx);
+    ctx->decoder_store = ossl_method_store_new(ctx);
     if (ctx->decoder_store == NULL)
         goto err;
 
     /* P2. We want encoder_store to be cleaned up before the provider store */
-    ctx->encoder_store = ossl_encoder_store_new(ctx);
+    ctx->encoder_store = ossl_method_store_new(ctx);
     if (ctx->encoder_store == NULL)
         goto err;
 
     /* P2. We want loader_store to be cleaned up before the provider store */
-    ctx->store_loader_store = ossl_loader_store_new(ctx);
+    ctx->store_loader_store = ossl_method_store_new(ctx);
     if (ctx->store_loader_store == NULL)
         goto err;
 #endif
@@ -233,19 +233,19 @@ static void context_deinit_objs(OSSL_LIB_CTX *ctx)
 
     /* P2. We want decoder_store to be cleaned up before the provider store */
     if (ctx->decoder_store != NULL) {
-        ossl_decoder_store_free(ctx->decoder_store);
+        ossl_method_store_free(ctx->decoder_store);
         ctx->decoder_store = NULL;
     }
 
     /* P2. We want encoder_store to be cleaned up before the provider store */
     if (ctx->encoder_store != NULL) {
-        ossl_encoder_store_free(ctx->encoder_store);
+        ossl_method_store_free(ctx->encoder_store);
         ctx->encoder_store = NULL;
     }
 
     /* P2. We want loader_store to be cleaned up before the provider store */
     if (ctx->store_loader_store != NULL) {
-        ossl_loader_store_free(ctx->store_loader_store);
+        ossl_method_store_free(ctx->store_loader_store);
         ctx->store_loader_store = NULL;
     }
 #endif

@@ -11,14 +11,7 @@ ossl_lib_ctx_is_child
  #include <openssl/types.h>
  #include "internal/cryptlib.h"
 
- typedef struct ossl_lib_ctx_method {
-     int priority;
-     void *(*new_func)(OSSL_LIB_CTX *ctx);
-     void (*free_func)(void *);
- } OSSL_LIB_CTX_METHOD;
-
- void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index,
-                             const OSSL_LIB_CTX_METHOD *meth);
+ void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index);
 
  int ossl_lib_ctx_run_once(OSSL_LIB_CTX *ctx, unsigned int idx,
                            ossl_lib_ctx_run_once_fn run_once_fn);
@@ -44,13 +37,7 @@ ossl_lib_ctx_get_data() allows different parts of the library to retrieve
 pointers to structures used in diverse parts of the library. The lifetime of
 these structures is managed by B<OSSL_LIB_CTX>. The different objects which can
 be retrieved are specified with the given argument I<index>. The valid values of
-I<index> are specified in cryptlib.h. The I<meth> parameter is ignored for most
-objects and can be set to NULL; historically it was used to allow objects to be
-lazily constructed. The I<meth> argument is still required on first retrieval of
-object types which are implemented in separate loadable modules, such as the
-FIPS module; currently the only such I<index> value for which this applies is
-OSSL_LIB_CTX_FIPS_PROV_INDEX. In this case, the function pointers in the
-structure pointed to by I<meth> are used to create and free the object.
+I<index> are specified in cryptlib.h.
 
 =head1 RETURN VALUES
 
@@ -67,7 +54,7 @@ this:
  /*
   * ctx is received from a caller,
   */
- FOO *data = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_FOO_INDEX, NULL);
+ FOO *data = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_FOO_INDEX);
 
 =head2 Run Once
 
