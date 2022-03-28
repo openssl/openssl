@@ -39,8 +39,6 @@ use constant {
     DUPLICATE_HRR => 2
 };
 
-plan tests => 3;
-
 #Test 1: A client should fail if the server changes the ciphersuite between the
 #        HRR and the SH
 $proxy->filter(\&hrr_filter);
@@ -51,6 +49,7 @@ if (disabled("ec")) {
 }
 my $testtype = CHANGE_HRR_CIPHERSUITE;
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
+plan tests => 3;
 ok(TLSProxy::Message->fail(), "Server ciphersuite changes");
 
 #Test 2: It is an error if the client changes the offered ciphersuites so that
