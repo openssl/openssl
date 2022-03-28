@@ -1822,7 +1822,7 @@ $code.=<<___;
 	vorr		$dat2,$ivec,$ivec
 ___
 $code.=<<___	if ($flavour =~ /64/);
-	cmp		$len,#2
+	cmp		$len,#32
 	b.lo		.Loop3x_ctr32
 
 	add		w13,$ctr,#1
