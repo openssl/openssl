@@ -118,7 +118,10 @@ for creating a new instance of the BIO respectively. This function will be
 called in response to the application calling BIO_new() and passing
 in a pointer to the current BIO_METHOD. The BIO_new() function will allocate the
 memory for the new BIO, and a pointer to this newly allocated structure will
-be passed as a parameter to the function.
+be passed as a parameter to the function. If a create function is set,
+BIO_new() will not mark the BIO as initialised on allocation.
+L<BIO_set_init(3)> must then be called either by the create function, or later,
+by a BIO ctrl function, once BIO initialisation is complete.
 
 BIO_meth_get_destroy() and BIO_meth_set_destroy() get and set the function used
 for destroying an instance of a BIO respectively. This function will be
