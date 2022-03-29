@@ -32,7 +32,8 @@ API changes.
 For further background information on the premise of this approach, see [API
 long-term evolution](https://github.com/openssl/openssl/issues/17939).
 
-## Scope
+Scope
+-----
 
 The current emphasis is on client demos. Server support for QUIC is deferred to
 subsequent OpenSSL releases, and therefore is (currently) out of scope for this
@@ -49,14 +50,15 @@ certificates or other TLS functionality, the use of QUIC is unlikely to have
 implications for these APIs and demos demonstrating such functionality are
 therefore out of scope.
 
-## Background
+Background
+----------
 
 These demos were developed after analysis of the following open source
 applications to determine libssl API usage patterns. The modally occuring usage
 patterns were determined and used to determine categories into which to classify
 the applications:
 
-|                  | Blk? | FD | 
+|                  | Blk? | FD |
 |------------------|------|----|
 | mutt             | S |      AOSF  |
 | vsftpd           | S |      AOSF  |
@@ -86,12 +88,17 @@ the applications:
 * FD: Whether the application creates and owns its own FD.
   * AOSF: Application owns, calls SSL_set_fd.
   * AOSFx: Application owns, calls SSL_set_[rw]fd, different FDs for read/write.
-  * BIOs: Application creates a socket/FD BIO and calls SSL_set_bio. Application created the connection.
+  * BIOs: Application creates a socket/FD BIO and calls SSL_set_bio.
+    Application created the connection.
   * BIOx: Application creates a BIO with a custom BIO method and calls SSL_set_bio.
-  * BIOm: Application creates a memory BIO and does its own pumping to/from actual socket, treating libssl as a pure state machine which does no I/O itself.
-  * BIOc: Application uses BIO_s_connect-based methods such as BIO_new_ssl_connect and leaves connection establishment to OpenSSL.
+  * BIOm: Application creates a memory BIO and does its own
+    pumping to/from actual socket, treating libssl as a pure state machine which
+    does no I/O itself.
+  * BIOc: Application uses BIO_s_connect-based methods such as BIO_new_ssl_connect
+    and leaves connection establishment to OpenSSL.
 
-## Demos
+Demos
+-----
 
 The demos found in this directory are:
 
