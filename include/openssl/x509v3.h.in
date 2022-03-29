@@ -419,6 +419,16 @@ struct ISSUING_DIST_POINT_st {
 # define EXFLAG_SAN_CRITICAL     0x80000
 # define EXFLAG_NO_FINGERPRINT   0x100000
 
+# define KU_DIGITAL_SIGNATURE    0x0080
+# define KU_NON_REPUDIATION      0x0040
+# define KU_KEY_ENCIPHERMENT     0x0020
+# define KU_DATA_ENCIPHERMENT    0x0010
+# define KU_KEY_AGREEMENT        0x0008
+# define KU_KEY_CERT_SIGN        0x0004
+# define KU_CRL_SIGN             0x0002
+# define KU_ENCIPHER_ONLY        0x0001
+# define KU_DECIPHER_ONLY        0x8000
+
 # define NS_SSL_CLIENT           0x80
 # define NS_SSL_SERVER           0x40
 # define NS_SMIME                0x20
