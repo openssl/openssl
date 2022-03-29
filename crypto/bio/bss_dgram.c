@@ -31,7 +31,13 @@
 #else
 # include <sys/socket.h>
 # include <netinet/in.h>
-# include <netinet/ip6.h>
+# if defined OPENSSL_USE_IPV6
+#  if defined OPENSSL_SYS_WINDOWS
+#   include <shared/netiodef.h>
+#  else
+#   include <netinet/ip6.h>
+#  endif
+# endif
 #endif
 #include <errno.h>
 #include <signal.h>
@@ -51,7 +57,7 @@
 #  define IP_MTU      14        /* linux is lame */
 # endif
 
-# if OPENSSL_USE_IPV6 && !defined(IPPROTO_IPV6)
+# if defined OPENSSL_USE_IPV6 && !defined(IPPROTO_IPV6)
 #  define IPPROTO_IPV6 41       /* windows is lame */
 # endif
 
@@ -466,7 +472,8 @@ static int dgram_read_unconnected_v4(BIO *b, char *in, int inl,
  *   so the stock recvfrom() code is used, thus !defined(_WIN32)
  *
  */
-#if defined(AF_INET6) && !defined(_WIN32)
+#if defined OPENSSL_USE_IPV6
+# if !defined(_WIN32)
 static int dgram_read_unconnected_v6(BIO *b, char *in, int inl,
                                      int flags,
                                      BIO_ADDR *dstaddr, BIO_ADDR *peer)
@@ -527,7 +534,7 @@ static int dgram_read_unconnected_v6(BIO *b, char *in, int inl,
     /* NOTE: peer was filled in by kernel */
     return len;
 }
-#else
+# else
 
 /* generic version for windows */
 static int dgram_read_unconnected_v6(BIO *b, char *in, int inl,
@@ -547,7 +554,8 @@ static int dgram_read_unconnected_v6(BIO *b, char *in, int inl,
     }
     return ret;
 }
-#endif
+# endif  /* WIN32 */
+#endif /* OPENSSL_USE_IPV6 */
 
 static int dgram_read(BIO *b, char *out, int outl)
 {
@@ -579,7 +587,7 @@ static int dgram_read(BIO *b, char *out, int outl)
           ret = dgram_read_unconnected_v4(b, out, outl, flags, &addr, &peer);
           break;
 
-#ifdef AF_INET6
+#if defined OPENSSL_USE_IPV6
         case AF_INET6:
           ret = dgram_read_unconnected_v6(b, out, outl, flags, &addr, &peer);
           break;
@@ -717,7 +725,8 @@ static int dgram_write_unconnected_v4(BIO *b, const char *out, int outl)
 }
 #endif
 
-#if defined(AF_INET6) && !defined(_WIN32)
+#if defined OPENSSL_USE_IPV6
+# if !defined(_WIN32)
 static int dgram_write_unconnected_v6(BIO *b, const char *out, int outl)
 {
     struct sockaddr_in6 addr;
@@ -758,7 +767,7 @@ static int dgram_write_unconnected_v6(BIO *b, const char *out, int outl)
 
     return sendmsg(b->num, &mhdr, 0);
 }
-#else
+# else /* _WIN32 */
 static int dgram_write_unconnected_v6(BIO *b, const char *out, int outl)
 {
     struct sockaddr_in6 addr;
@@ -770,7 +779,8 @@ static int dgram_write_unconnected_v6(BIO *b, const char *out, int outl)
     return sendto(b->num, out, outl, 0 /* flags */,
                   (struct sockaddr *)&addr, sizeof(addr));
 }
-#endif /* AF_INET6 */
+# endif /* AF_INET6 */
+#endif  /* OPENSSL_USE_IPV6 */
 
 static int dgram_write(BIO *b, const char *in, int inl)
 {
@@ -791,7 +801,7 @@ static int dgram_write(BIO *b, const char *in, int inl)
           ret = dgram_write_unconnected_v4(b, in, inl);
           break;
 
-#ifdef AF_INET6
+#if defined OPENSSL_USE_IPV6
         case AF_INET6:
           ret = dgram_write_unconnected_v6(b, in, inl);
           break;
@@ -824,7 +834,7 @@ static long dgram_get_mtu_overhead(bio_dgram_data *data)
          */
         ret = 28;
         break;
-# if OPENSSL_USE_IPV6
+# if defined OPENSSL_USE_IPV6
     case AF_INET6:
         {
 #  ifdef IN6_IS_ADDR_V4MAPPED
@@ -935,7 +945,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
                                   &sockopt_val, sizeof(sockopt_val))) < 0)
                 perror("setsockopt");
             break;
-#  if OPENSSL_USE_IPV6 && defined(IPV6_MTU_DISCOVER) && defined(IPV6_PMTUDISC_DO)
+#  if defined OPENSSL_USE_IPV6 && defined(IPV6_MTU_DISCOVER) && defined(IPV6_PMTUDISC_DO)
         case AF_INET6:
             sockopt_val = IPV6_PMTUDISC_DO;
             if ((ret = setsockopt(b->num, IPPROTO_IPV6, IPV6_MTU_DISCOVER,
@@ -975,7 +985,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
                 ret = data->mtu;
             }
             break;
-#  if OPENSSL_USE_IPV6 && defined(IPV6_MTU)
+#  if defined OPENSSL_USE_IPV6 && defined(IPV6_MTU)
         case AF_INET6:
             if ((ret =
                  getsockopt(b->num, IPPROTO_IPV6, IPV6_MTU,
@@ -1006,7 +1016,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         case AF_INET:
             ret += 576;
             break;
-# if OPENSSL_USE_IPV6
+# if defined OPENSSL_USE_IPV6
         case AF_INET6:
             {
 #  ifdef IN6_IS_ADDR_V4MAPPED
@@ -1237,7 +1247,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
             ret = -1;
 # endif
             break;
-# if OPENSSL_USE_IPV6
+# if defined OPENSSL_USE_IPV6
         case AF_INET6:
 #  if defined(IPV6_DONTFRAG)
             if ((ret = setsockopt(b->num, IPPROTO_IPV6, IPV6_DONTFRAG,

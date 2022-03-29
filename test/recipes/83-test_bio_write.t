@@ -9,4 +9,7 @@
 
 use OpenSSL::Test::Simple;
 
+plan skip_all => "datagram support is disabled in this build"
+    if disabled('dgram');
+
 simple_test("test_bio_write", "bio_write_test", "bio_write");
