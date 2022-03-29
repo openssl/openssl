@@ -47,7 +47,7 @@ SSL_CTX *create_ssl_ctx(void)
  * The application wants to create a new outgoing connection using a given
  * SSL_CTX.
  *
- * hostname is a string like "example.com" used for certificate validation.
+ * hostname is a string like "openssl.org" used for certificate validation.
  */
 APP_CONN *new_conn(SSL_CTX *ctx, int fd, const char *bare_hostname)
 {
@@ -223,10 +223,10 @@ void teardown_ctx(SSL_CTX *ctx)
 int main(int argc, char **argv)
 {
     int rc, fd = -1, res = 1;
-    const char tx_msg[] = "GET / HTTP/1.0\r\nHost: www.example.com\r\n\r\n";
+    const char tx_msg[] = "GET / HTTP/1.0\r\nHost: www.openssl.org\r\n\r\n";
     const char *tx_p = tx_msg;
-    char rx_msg[2048], *rx_p = rx_msg;
-    int l, tx_len = sizeof(tx_msg)-1, rx_len = sizeof(rx_msg);
+    char rx_buf[2048];
+    int l, tx_len = sizeof(tx_msg)-1;
     int timeout = 2000 /* ms */;
     APP_CONN *conn = NULL;
     struct addrinfo hints = {0}, *result = NULL;
@@ -241,7 +241,7 @@ int main(int argc, char **argv)
     hints.ai_family     = AF_INET;
     hints.ai_socktype   = SOCK_STREAM;
     hints.ai_flags      = AI_PASSIVE;
-    rc = getaddrinfo("www.example.com", "443", &hints, &result);
+    rc = getaddrinfo("www.openssl.org", "443", &hints, &result);
     if (rc < 0) {
         fprintf(stderr, "cannot resolve\n");
         goto fail;
@@ -267,7 +267,7 @@ int main(int argc, char **argv)
         goto fail;
     }
 
-    conn = new_conn(ctx, fd, "www.example.com");
+    conn = new_conn(ctx, fd, "www.openssl.org");
     if (conn == NULL) {
         fprintf(stderr, "cannot establish connection\n");
         goto fail;
@@ -294,11 +294,10 @@ int main(int argc, char **argv)
     }
 
     /* RX */
-    while (rx_len != 0) {
-        l = rx(conn, rx_p, rx_len);
+    for (;;) {
+        l = rx(conn, rx_buf, sizeof(rx_buf));
         if (l > 0) {
-            rx_p += l;
-            rx_len -= l;
+            fwrite(rx_buf, 1, l, stdout);
         } else if (l == -1) {
             break;
         } else if (l == -2) {
@@ -311,8 +310,6 @@ int main(int argc, char **argv)
             }
         }
     }
-
-    fwrite(rx_msg, 1, rx_p - rx_msg, stdout);
 
     res = 0;
 fail:

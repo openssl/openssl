@@ -52,7 +52,7 @@ SSL_CTX *create_ssl_ctx(void)
  * The application wants to create a new outgoing connection using a given
  * SSL_CTX.
  *
- * hostname is a string like "example.com:443" or "[::1]:443".
+ * hostname is a string like "openssl.org:443" or "[::1]:443".
  */
 APP_CONN *new_conn(SSL_CTX *ctx, const char *hostname)
 {
@@ -112,7 +112,7 @@ APP_CONN *new_conn(SSL_CTX *ctx, const char *hostname)
  */
 int tx(APP_CONN *conn, const void *buf, int buf_len)
 {
-    int rc, l;
+    int l;
 
     conn->tx_need_rx = 0;
 
@@ -137,7 +137,7 @@ int tx(APP_CONN *conn, const void *buf, int buf_len)
  */
 int rx(APP_CONN *conn, void *buf, int buf_len)
 {
-    int rc, l;
+    int l;
 
     conn->rx_need_tx = 0;
 
@@ -212,10 +212,10 @@ void teardown_ctx(SSL_CTX *ctx)
  */
 int main(int argc, char **argv)
 {
-    const char tx_msg[] = "GET / HTTP/1.0\r\nHost: www.example.com\r\n\r\n";
+    const char tx_msg[] = "GET / HTTP/1.0\r\nHost: www.openssl.org\r\n\r\n";
     const char *tx_p = tx_msg;
-    char rx_msg[2048], *rx_p = rx_msg;
-    int res = 1, l, tx_len = sizeof(tx_msg)-1, rx_len = sizeof(rx_msg);
+    char rx_buf[2048];
+    int res = 1, l, tx_len = sizeof(tx_msg)-1;
     int timeout = 2000 /* ms */;
     APP_CONN *conn = NULL;
     SSL_CTX *ctx;
@@ -226,7 +226,7 @@ int main(int argc, char **argv)
         goto fail;
     }
 
-    conn = new_conn(ctx, "www.example.com:443");
+    conn = new_conn(ctx, "www.openssl.org:443");
     if (conn == NULL) {
         fprintf(stderr, "cannot establish connection\n");
         goto fail;
@@ -252,11 +252,10 @@ int main(int argc, char **argv)
     }
 
     /* RX */
-    while (rx_len != 0) {
-        l = rx(conn, rx_p, rx_len);
+    for (;;) {
+        l = rx(conn, rx_buf, sizeof(rx_buf));
         if (l > 0) {
-            rx_p += l;
-            rx_len -= l;
+            fwrite(rx_buf, 1, l, stdout);
         } else if (l == -1) {
             break;
         } else if (l == -2) {
@@ -269,8 +268,6 @@ int main(int argc, char **argv)
             }
         }
     }
-
-    fwrite(rx_msg, 1, rx_p - rx_msg, stdout);
 
     res = 0;
 fail:

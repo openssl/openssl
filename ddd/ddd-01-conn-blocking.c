@@ -40,7 +40,7 @@ SSL_CTX *create_ssl_ctx(void)
  * The application wants to create a new outgoing connection using a given
  * SSL_CTX.
  *
- * hostname is a string like "example.com:443" or "[::1]:443".
+ * hostname is a string like "openssl.org:443" or "[::1]:443".
  */
 BIO *new_conn(SSL_CTX *ctx, const char *hostname)
 {
@@ -121,7 +121,7 @@ void teardown_ctx(SSL_CTX *ctx)
  */
 int main(int argc, char **argv)
 {
-    const char msg[] = "GET / HTTP/1.0\r\nHost: www.example.com\r\n\r\n";
+    const char msg[] = "GET / HTTP/1.0\r\nHost: www.openssl.org\r\n\r\n";
     SSL_CTX *ctx = NULL;
     BIO *b = NULL;
     char buf[2048];
@@ -133,7 +133,7 @@ int main(int argc, char **argv)
         goto fail;
     }
 
-    b = new_conn(ctx, "www.example.com:443");
+    b = new_conn(ctx, "www.openssl.org:443");
     if (b == NULL) {
         fprintf(stderr, "could not create conn\n");
         goto fail;

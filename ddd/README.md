@@ -32,6 +32,23 @@ API changes.
 For further background information on the premise of this approach, see [API
 long-term evolution](https://github.com/openssl/openssl/issues/17939).
 
+## Scope
+
+The current emphasis is on client demos. Server support for QUIC is deferred to
+subsequent OpenSSL releases, and therefore is (currently) out of scope for this
+design exercise.
+
+The demos also deliberately focus on aspects of libssl usage which are likely to
+be relevant to QUIC and require changes; for example, how varied applications
+have libssl perform network I/O, and how varied applications create sockets and
+connections for use with libssl. The libssl API as a whole has a much larger
+scope and includes innumerate functions and myriad features; the intention is
+not to demonstrate all of these, because most of them will not be touched by
+QUIC. For example, while many users of OpenSSL may make use of APIs for client
+certificates or other TLS functionality, the use of QUIC is unlikely to have
+implications for these APIs and demos demonstrating such functionality are
+therefore out of scope.
+
 ## Background
 
 These demos were developed after analysis of the following open source
@@ -85,3 +102,6 @@ The demos found in this directory are:
 | [ddd-03-fd-blocking](ddd-03-fd-blocking.c) | S-AOSF | A `SSL_set_fd`-based blocking example demonstrating real-world OpenSSL API usage (corresponding to S-AOSF applications above) |
 | [ddd-04-fd-nonblocking](ddd-04-fd-nonblocking.c) | A-AOSF | A `SSL_set_fd`-based non-blocking example demonstrating real-world OpenSSL API usage (corresponding to A-AOSF applications above) |
 | [ddd-05-mem-nonblocking](ddd-05-mem-nonblocking.c) | A-BIOm | A non-blocking example based on use of a memory buffer to feed OpenSSL encrypted data (corresponding to A-BIOm applications above) |
+
+Availability of a default certificate store is assumed. `SSL_CERT_DIR` may be
+set when running the demos if necessary.

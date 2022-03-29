@@ -41,7 +41,7 @@ SSL_CTX *create_ssl_ctx(void)
  * The application wants to create a new outgoing connection using a given
  * SSL_CTX.
  *
- * hostname is a string like "example.com" used for certificate validation.
+ * hostname is a string like "openssl.org" used for certificate validation.
  */
 SSL *new_conn(SSL_CTX *ctx, int fd, const char *bare_hostname)
 {
@@ -121,7 +121,7 @@ void teardown_ctx(SSL_CTX *ctx)
 int main(int argc, char **argv)
 {
     int rc, fd = -1, l, res = 1;
-    const char msg[] = "GET / HTTP/1.0\r\nHost: www.example.com\r\n\r\n";
+    const char msg[] = "GET / HTTP/1.0\r\nHost: www.openssl.org\r\n\r\n";
     struct addrinfo hints = {0}, *result = NULL;
     SSL *ssl = NULL;
     SSL_CTX *ctx;
@@ -136,7 +136,7 @@ int main(int argc, char **argv)
     hints.ai_family     = AF_INET;
     hints.ai_socktype   = SOCK_STREAM;
     hints.ai_flags      = AI_PASSIVE;
-    rc = getaddrinfo("www.example.com", "443", &hints, &result);
+    rc = getaddrinfo("www.openssl.org", "443", &hints, &result);
     if (rc < 0) {
         fprintf(stderr, "cannot resolve\n");
         goto fail;
@@ -156,7 +156,7 @@ int main(int argc, char **argv)
         goto fail;
     }
 
-    ssl = new_conn(ctx, fd, "www.example.com");
+    ssl = new_conn(ctx, fd, "www.openssl.org");
     if (ssl == NULL) {
         fprintf(stderr, "cannot create connection\n");
         goto fail;
