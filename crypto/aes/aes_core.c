@@ -689,7 +689,54 @@ void AES_decrypt(const unsigned char *in, unsigned char *out,
 
     InvCipher(in, out, rk, key->rounds);
 }
-#elif !defined(AES_ASM)
+
+#endif
+
+#if !defined(AES_ASM) && (!defined(OPENSSL_AES_CONST_TIME) || defined(BSAES_ASM))
+
+/* If OPENSSL_AES_CONST_TIME is defined, then:
+ *   if BSAES is selected, use the functions below with the ossl_bsaes_ prefix
+ *   else use the functions above with the AES_ prefix
+ * If OPENSSL_AES_CONST_TIME is NOT defined, then the functions below are used
+ * irrespective. At the ABI level, the functions have the AES_ prefix, and in
+ * crypto/aes_platform.h we #define the ossl_bsaes_ prefixed functions to
+ * their AES_ prefixed equivalent.
+ */
+
+#ifdef OPENSSL_AES_CONST_TIME
+
+# define VARIABLE_TIME_FN(f) ossl_bsaes_##f
+
+#else
+
+# define VARIABLE_TIME_FN(f) AES_##f
+
+/* Assembly callers can't take advantage of the #define in
+ * crypto/aes_platform.h, so implement simple veneers they can use which
+ * tail-call to the main function */
+
+#undef ossl_bsaes_encrypt
+#undef ossl_bsaes_decrypt
+
+void ossl_bsaes_encrypt(const unsigned char *in, unsigned char *out,
+                        const AES_KEY *key);
+void ossl_bsaes_decrypt(const unsigned char *in, unsigned char *out,
+                        const AES_KEY *key);
+
+void ossl_bsaes_encrypt(const unsigned char *in, unsigned char *out,
+                        const AES_KEY *key)
+{
+    AES_encrypt(in, out, key);
+}
+
+void ossl_bsaes_decrypt(const unsigned char *in, unsigned char *out,
+                        const AES_KEY *key)
+{
+    AES_decrypt(in, out, key);
+}
+
+#endif
+
 /*-
 Te0[x] = S [x].[02, 01, 01, 03];
 Te1[x] = S [x].[03, 02, 01, 01];
@@ -1275,8 +1322,8 @@ static const u32 rcon[] = {
 /**
  * Expand the cipher key into the encryption key schedule.
  */
-int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
-                        AES_KEY *key)
+int VARIABLE_TIME_FN(set_encrypt_key)(const unsigned char *userKey, const int bits,
+                                      AES_KEY *key)
 {
 
     u32 *rk;
@@ -1377,8 +1424,8 @@ int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
 /**
  * Expand the cipher key into the decryption key schedule.
  */
-int AES_set_decrypt_key(const unsigned char *userKey, const int bits,
-                        AES_KEY *key)
+int VARIABLE_TIME_FN(set_decrypt_key)(const unsigned char *userKey, const int bits,
+                                      AES_KEY *key)
 {
 
     u32 *rk;
@@ -1430,8 +1477,8 @@ int AES_set_decrypt_key(const unsigned char *userKey, const int bits,
  * Encrypt a single block
  * in and out can overlap
  */
-void AES_encrypt(const unsigned char *in, unsigned char *out,
-                 const AES_KEY *key) {
+void VARIABLE_TIME_FN(encrypt)(const unsigned char *in, unsigned char *out,
+                               const AES_KEY *key) {
 
     const u32 *rk;
     u32 s0, s1, s2, s3, t0, t1, t2, t3;
@@ -1621,8 +1668,8 @@ void AES_encrypt(const unsigned char *in, unsigned char *out,
  * Decrypt a single block
  * in and out can overlap
  */
-void AES_decrypt(const unsigned char *in, unsigned char *out,
-                 const AES_KEY *key)
+void VARIABLE_TIME_FN(decrypt)(const unsigned char *in, unsigned char *out,
+                               const AES_KEY *key)
 {
 
     const u32 *rk;
@@ -1809,7 +1856,9 @@ void AES_decrypt(const unsigned char *in, unsigned char *out,
     PUTU32(out + 12, s3);
 }
 
-#else /* AES_ASM */
+#endif
+
+#ifdef AES_ASM
 
 static const u8 Te4[256] = {
     0x63U, 0x7cU, 0x77U, 0x7bU, 0xf2U, 0x6bU, 0x6fU, 0xc5U,
