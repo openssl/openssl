@@ -951,7 +951,7 @@ _bsaes_encrypt8_alt:
 //   v15 = last round key (converted to native endianness)
 //   other SIMD registers corrupted
 _bsaes_key_convert:
-#ifdef __ARMEL__
+#ifdef __AARCH64EL__
         adr     x11, .LM0_littleendian
 #else
         adr     x11, .LM0_bigendian
@@ -970,7 +970,7 @@ _bsaes_key_convert:
         movi    v22.16b, #0x40
         movi    v23.16b, #0x80
 
-#ifdef __ARMEL__
+#ifdef __AARCH64EL__
         rev32   v0.16b, v0.16b
 #endif
         sub     x10, x10, #1
@@ -996,7 +996,7 @@ _bsaes_key_convert:
         cbnz    x10, .Lkey_loop
 
         // don't save last round key
-#ifdef __ARMEL__
+#ifdef __AARCH64EL__
         rev32   v15.16b, v15.16b
         adr     x11, .LM0_bigendian
 #endif
@@ -1429,7 +1429,7 @@ ossl_bsaes_ctr32_encrypt_blocks:
         mov     x22, x3
         ldr     w23, [x4, #12]              // load counter .LSW
         ldr     q1, [x4]                    // load whole counter value
-#ifdef __ARMEL__
+#ifdef __AARCH64EL__
         rev     w23, w23
 #endif
         str     q1, [sp, #80]               // copy counter value
@@ -1444,7 +1444,7 @@ ossl_bsaes_ctr32_encrypt_blocks:
         ldr     q0, [x19], #16              // load input
         ldr     q1, [sp, #64]               // load encrypted counter
         add     x23, x23, #1
-#ifdef __ARMEL__
+#ifdef __AARCH64EL__
         rev     w0, w23
         str     w0, [sp, #80+12]            // next counter value
 #else
