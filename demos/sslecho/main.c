@@ -137,12 +137,12 @@ int main(int argc, char **argv)
     int server_skt = -1;
     int client_skt = -1;
 
-    char *txbuf = (char*) OPENSSL_malloc(128);
-    size_t txcap = 128;
+    char txbuf[128];
+    size_t txcap = sizeof(txbuf);
     int txlen;
 
-    char *rxbuf = (char*) OPENSSL_malloc(128);
-    int rxcap = 128;
+    char rxbuf[128];
+    size_t rxcap = sizeof(rxbuf);
     int rxlen;
 
     char *rem_server_ip = NULL;
