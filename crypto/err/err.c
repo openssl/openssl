@@ -415,8 +415,7 @@ int ERR_unload_strings(int lib, ERR_STRING_DATA *str)
 
 void err_free_strings_int(void)
 {
-    if (!RUN_ONCE(&err_string_init, do_err_strings_init))
-        return;
+    /* obsolete */
 }
 
 /********************************************************/
