@@ -170,7 +170,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_load_crypto_nodelete)
 }
 
 static CRYPTO_ONCE load_crypto_strings = CRYPTO_ONCE_STATIC_INIT;
-static int load_crypto_strings_inited = 0;
+
 DEFINE_RUN_ONCE_STATIC(ossl_init_load_crypto_strings)
 {
     int ret = 1;
@@ -181,7 +181,6 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_load_crypto_strings)
 #if !defined(OPENSSL_NO_ERR) && !defined(OPENSSL_NO_AUTOERRINIT)
     OSSL_TRACE(INIT, "ossl_err_load_crypto_strings()\n");
     ret = ossl_err_load_crypto_strings();
-    load_crypto_strings_inited = 1;
 #endif
     return ret;
 }
@@ -395,11 +394,6 @@ void OPENSSL_cleanup(void)
     if (async_inited) {
         OSSL_TRACE(INIT, "OPENSSL_cleanup: async_deinit()\n");
         async_deinit();
-    }
-
-    if (load_crypto_strings_inited) {
-        OSSL_TRACE(INIT, "OPENSSL_cleanup: err_free_strings_int()\n");
-        err_free_strings_int();
     }
 
     /*
