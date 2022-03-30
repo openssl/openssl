@@ -563,6 +563,9 @@ EOF
       ],
       [ 'ppc64le-.*-linux2',      { target => "linux-ppc64le" } ],
       [ 'ppc-.*-linux2',          { target => "linux-ppc" } ],
+ 
+      [ 'loongarch64.*-*-linux2',          { target => "linux64-loongarch64" } ],
+
       [ 'mips64.*-*-linux2',
         sub {
             print <<EOF;
@@ -573,6 +576,7 @@ EOF
             return { target => "linux-mips64" };
         }
       ],
+ 
       [ 'mips.*-.*-linux2',       { target => "linux-mips32" } ],
       [ 'ppc60x-.*-vxworks.*',    { target => "vxworks-ppc60x" } ],
       [ 'ppcgen-.*-vxworks.*',    { target => "vxworks-ppcgen" } ],
