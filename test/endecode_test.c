@@ -183,9 +183,7 @@ static int test_encode_decode(const char *file, const int line,
         goto end;
     }
 
-    if (!TEST_true(encode_cb(file, line, &encoded, &encoded_len, pkey, selection,
-                             output_type, output_structure, pass, pcipher))
-        || !TEST_true(check_cb(file, line, type, encoded, encoded_len))
+    if (!TEST_true(check_cb(file, line, type, encoded, encoded_len))
         || !TEST_true(decode_cb(file, line, (void **)&pkey2, encoded, encoded_len,
                                 output_type, output_structure,
                                 (flags & FLAG_DECODE_WITH_TYPE ? type : NULL),
