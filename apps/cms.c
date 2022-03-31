@@ -892,26 +892,24 @@ int cms_main(int argc, char **argv)
             goto end;
     }
 
+    if (operation != SMIME_SIGN && digesthex != NULL) {
+        BIO_printf(bio_err,
+                   "Warning: -digest is ignored for non-signing operation\n");
+        digesthex = NULL;
+    }
     if (digesthex != NULL) {
         if (infile != NULL || !(flags & CMS_DETACHED)) {
             BIO_printf(bio_err,
                        "Cannot use -digest when -in or -nodetach is given\n");
             goto end;
         }
-        if (operation != SMIME_SIGN) {
+        digestbin = OPENSSL_hexstr2buf(digesthex, &digestlen);
+        if (digestbin == NULL) {
             BIO_printf(bio_err,
-                       "Warning: -digest is ignored for non-signing operation\n");
-        } else {
-            digestbin = OPENSSL_hexstr2buf(digesthex, &digestlen);
-            if (digestbin == NULL) {
-                BIO_printf(bio_err,
-                           "Invalid hex value after -digest\n");
-                goto end;
-            }
+                       "Invalid hex value after -digest\n");
+            goto end;
         }
-    }
-
-    if (digestbin == NULL) {
+    } else {
         in = bio_open_default(infile, 'r',
                               binary_files ? FORMAT_BINARY : informat);
         if (in == NULL)
