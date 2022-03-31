@@ -586,9 +586,15 @@ static int recode_wnaf(struct smvt_control *control,
             int32_t delta = odd & mask;
 
             assert(position >= 0);
-            assert(pos < 32);       /* can't fail since current & 0xFFFF != 0 */
             if (odd & (1 << (table_bits + 1)))
                 delta -= (1 << (table_bits + 1));
+            /*
+             * Coverity gets confused by the value of pos, thinking it might be
+             * 32.  This would require current & 0xFFFF to be zero which isn't
+             * possible.  Suppress this false positive, since adding a check
+             * isn't desirable.
+             */
+            /* coverity[overflow_before_widen] */
             current -= delta * (1 << pos);
             control[position].power = pos + 16 * (w - 1);
             control[position].addend = delta;
