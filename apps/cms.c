@@ -909,7 +909,9 @@ int cms_main(int argc, char **argv)
                 goto end;
             }
         }
-    } else {
+    }
+
+    if (digestbin == NULL) {
         in = bio_open_default(infile, 'r',
                               binary_files ? FORMAT_BINARY : informat);
         if (in == NULL)
