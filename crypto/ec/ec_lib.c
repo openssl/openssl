@@ -1567,6 +1567,7 @@ EC_GROUP *EC_GROUP_new_from_params(const OSSL_PARAM params[],
         return group;
     }
 #ifdef FIPS_MODULE
+    ERR_raise(ERR_LIB_EC, EC_R_EXPLICIT_PARAMS_NOT_SUPPORTED);
     return NULL;
 #else
     /* If it gets here then we are trying explicit parameters */
