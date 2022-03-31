@@ -893,12 +893,9 @@ int cms_main(int argc, char **argv)
     }
 
     if (digesthex != NULL) {
-        if (infile != NULL) {
-            BIO_printf(bio_err, "Cannot use -digest without -in\n");
-            goto end;
-        }
-        if ((flags & CMS_DETACHED) == 0) {
-            BIO_printf(bio_err, "Cannot use -digest when -nodetach is given\n");
+        if (infile != NULL || !(flags & CMS_DETACHED)) {
+            BIO_printf(bio_err,
+                       "Cannot use -digest when -in or -nodetach is given\n");
             goto end;
         }
         if (operation != SMIME_SIGN) {
