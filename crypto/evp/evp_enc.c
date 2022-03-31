@@ -354,7 +354,7 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
 
         case EVP_CIPH_CBC_MODE:
             n = EVP_CIPHER_CTX_get_iv_length(ctx);
-            if (n <= 0 || n > (int)sizeof(ctx->iv)) {
+            if (n < 0 || n > (int)sizeof(ctx->iv)) {
                 ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_IV_LENGTH);
                 return 0;
             }
