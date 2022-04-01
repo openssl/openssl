@@ -590,7 +590,7 @@ static int recode_wnaf(struct smvt_control *control,
                 delta -= (1 << (table_bits + 1));
             /*
              * Coverity gets confused by the value of pos, thinking it might be
-             * 32. This would require current & 0xFFFF to be zero which isn't
+             * 32.  This would require current & 0xFFFF to be zero which isn't
              * possible.  Suppress this false positive, since adding a check
              * isn't desirable.
              */
