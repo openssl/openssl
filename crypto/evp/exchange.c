@@ -332,7 +332,11 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
 
     /* No more legacy from here down to legacy: */
 
+    /* A Coverity false positive with up_ref/down_ref and free */
+    /* coverity[use_after_free] */
     ctx->op.kex.exchange = exchange;
+    /* A Coverity false positive with up_ref/down_ref and free */
+    /* coverity[deref_arg] */
     ctx->op.kex.algctx = exchange->newctx(ossl_provider_ctx(exchange->prov));
     if (ctx->op.kex.algctx == NULL) {
         /* The provider key can stay in the cache */
@@ -420,6 +424,8 @@ int EVP_PKEY_derive_set_peer_ex(EVP_PKEY_CTX *ctx, EVP_PKEY *peer,
                                     EVP_KEYMGMT_get0_name(ctx->keymgmt),
                                     ctx->propquery);
     if (tmp_keymgmt != NULL)
+        /* A Coverity issue with up_ref/down_ref and free */
+        /* coverity[pass_freed_arg] */
         provkey = evp_pkey_export_to_provider(peer, ctx->libctx,
                                               &tmp_keymgmt, ctx->propquery);
     EVP_KEYMGMT_free(tmp_keymgmt_tofree);
