@@ -28,6 +28,7 @@ jobs:
           no-tests,
           no-threads,
           no-tls,
+          no-tls1_2,
           no-tls1_3,
           enable-trace enable-fips,
           no-ts,
