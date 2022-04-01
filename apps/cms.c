@@ -1068,7 +1068,7 @@ int cms_main(int argc, char **argv)
          */
         if (operation == SMIME_SIGN) {
 
-            if (flags & CMS_DETACHED && digestbin == NULL) {
+            if ((flags & CMS_DETACHED) != 0 && digestbin == NULL) {
                 if (outformat == FORMAT_SMIME)
                     flags |= CMS_STREAM;
             }
