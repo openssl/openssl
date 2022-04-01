@@ -215,6 +215,8 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
          */
         (void)ossl_store_close_it(&tmpctx);
     }
+    /* Coverity false positive, the reference counting is confusing it */
+    /* coverity[pass_freed_arg] */
     OSSL_STORE_LOADER_free(fetched_loader);
     OPENSSL_free(propq_copy);
     OPENSSL_free(ctx);
