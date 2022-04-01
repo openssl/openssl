@@ -1063,12 +1063,12 @@ int cms_main(int argc, char **argv)
     } else if (operation & SMIME_SIGNERS) {
         int i;
         /*
-         * If detached data content we enable streaming if S/MIME output
-         * format.
+         * If detached data content and not signing pre-computed digest, we
+         * enable streaming if S/MIME output format.
          */
         if (operation == SMIME_SIGN) {
 
-            if (flags & CMS_DETACHED) {
+            if (flags & CMS_DETACHED && digestbin == NULL) {
                 if (outformat == FORMAT_SMIME)
                     flags |= CMS_STREAM;
             }

@@ -50,7 +50,7 @@ my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
 
 $no_rc2 = 1 if disabled("legacy");
 
-plan tests => 13;
+plan tests => 14;
 
 ok(run(test(["pkcs7_test"])), "test pkcs7");
 
@@ -847,7 +847,7 @@ subtest "CMS binary input tests\n" => sub {
        "verify binary input with -binary missing -crlfeol");
 };
 
-subtest "CMS signed digest" => sub {
+subtest "CMS signed digest, DER format" => sub {
     plan tests => 2;
 
     # Pre-computed SHA256 digest of $smcont in hexadecimal form
@@ -859,13 +859,34 @@ subtest "CMS signed digest" => sub {
                     "-certfile", catfile($smdir, "smroot.pem"),
                     "-signer", catfile($smdir, "smrsa1.pem"),
                     "-out", $sig_file])),
-        "CMS sign pre-computed digest");
+        "CMS sign pre-computed digest, DER format");
 
     ok(run(app(["openssl", "cms", @prov, "-verify", "-in", $sig_file,
                     "-inform", "DER",
                     "-CAfile", catfile($smdir, "smroot.pem"),
                     "-content", $smcont])),
-       "Verify CMS signed digest");
+       "Verify CMS signed digest, DER format");
+};
+
+subtest "CMS signed digest, S/MIME format" => sub {
+    plan tests => 2;
+
+    # Pre-computed SHA256 digest of $smcont in hexadecimal form
+    my $digest = "ff236ef61b396355f75a4cc6e1c306d4c309084ae271a9e2ad6888f10a101b32";
+
+    my $sig_file = "signature.smime";
+    ok(run(app(["openssl", "cms", @prov, "-sign", "-digest", $digest,
+                    "-outform", "SMIME",
+                    "-certfile", catfile($smdir, "smroot.pem"),
+                    "-signer", catfile($smdir, "smrsa1.pem"),
+                    "-out", $sig_file])),
+        "CMS sign pre-computed digest, S/MIME format");
+
+    ok(run(app(["openssl", "cms", @prov, "-verify", "-in", $sig_file,
+                    "-inform", "SMIME",
+                    "-CAfile", catfile($smdir, "smroot.pem"),
+                    "-content", $smcont])),
+       "Verify CMS signed digest, S/MIME format");
 };
 
 sub check_availability {
