@@ -9427,7 +9427,11 @@ static int test_ticket_lifetime(int idx)
 #define TWO_WEEK_SEC (2 * ONE_WEEK_SEC)
 
     if (idx == 0) {
+#ifdef OPENSSL_NO_TLS1_2
+        return TEST_skip("TLS 1.2 is disabled.");
+#else
         version = TLS1_2_VERSION;
+#endif
     }
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
