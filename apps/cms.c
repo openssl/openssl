@@ -898,9 +898,9 @@ int cms_main(int argc, char **argv)
         digesthex = NULL;
     }
     if (digesthex != NULL) {
-        if (infile != NULL || !(flags & CMS_DETACHED)) {
+        if (infile != NULL || !(flags & CMS_DETACHED) || (flags & CMS_STREAM)) {
             BIO_printf(bio_err,
-                       "Cannot use -digest when -in or -nodetach is given\n");
+                       "Cannot use -digest when -in, -nodetach or streaming is used\n");
             goto end;
         }
         digestbin = OPENSSL_hexstr2buf(digesthex, &digestlen);
