@@ -892,13 +892,15 @@ int cms_main(int argc, char **argv)
             goto end;
     }
 
-    if (operation != SMIME_SIGN && digesthex != NULL) {
-        BIO_printf(bio_err,
-                   "Warning: -digest is ignored for non-signing operation\n");
-        digesthex = NULL;
-    }
     if (digesthex != NULL) {
-        if (infile != NULL || !(flags & CMS_DETACHED) || (flags & CMS_STREAM)) {
+        if (operation != SMIME_SIGN) {
+            BIO_printf(bio_err,
+                       "Cannot use -digest for non-signing operation\n");
+            goto end;
+        }
+        if (infile != NULL
+            || (flags & CMS_DETACHED) == 0
+            || (flags & CMS_STREAM) != 0) {
             BIO_printf(bio_err,
                        "Cannot use -digest when -in, -nodetach or streaming is used\n");
             goto end;
