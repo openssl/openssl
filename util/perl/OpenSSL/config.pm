@@ -573,6 +573,7 @@ EOF
             return { target => "linux-mips64" };
         }
       ],
+      [ 'loongarch64.*-linux2',   {target => "linux64-loongarch64"} ],
       [ 'mips.*-.*-linux2',       { target => "linux-mips32" } ],
       [ 'ppc60x-.*-vxworks.*',    { target => "vxworks-ppc60x" } ],
       [ 'ppcgen-.*-vxworks.*',    { target => "vxworks-ppcgen" } ],

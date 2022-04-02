@@ -50,6 +50,9 @@ IF[{- !$disabled{asm} -}]
   $BNASM_alpha=bn_asm.c alpha-mont.S
   $BNDEF_alpha=OPENSSL_BN_ASM_MONT
 
+  $BNASM_loongarch64=bn_asm.c loongarch-mont.S
+  $BNDEF_loongarch64=OPENSSL_BN_ASM_MONT
+
   $BNASM_mips32=bn-mips.S mips-mont.S
   $BNDEF_mips32=OPENSSL_BN_ASM_MONT
   $BNASM_mips64=$BNASM_mips32
@@ -146,6 +149,10 @@ GENERATE[sparct4-mont.S]=asm/sparct4-mont.pl
 INCLUDE[sparct4-mont.o]=..
 GENERATE[sparcv9-gf2m.S]=asm/sparcv9-gf2m.pl
 INCLUDE[sparcv9-gf2m.o]=..
+
+GENERATE[loongarch-mont.S]=asm/loongarch-mont.pl
+INCLUDE[loongarch-mont.o]=..
+
 
 GENERATE[bn-mips.S]=asm/mips.pl
 INCLUDE[bn-mips.o]=..
