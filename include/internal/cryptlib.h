@@ -179,12 +179,7 @@ void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *, int /* index */);
 
 void ossl_lib_ctx_default_deinit(void);
 OSSL_EX_DATA_GLOBAL *ossl_lib_ctx_get_ex_data_global(OSSL_LIB_CTX *ctx);
-typedef int (ossl_lib_ctx_run_once_fn)(OSSL_LIB_CTX *ctx);
-typedef void (ossl_lib_ctx_onfree_fn)(OSSL_LIB_CTX *ctx);
 
-int ossl_lib_ctx_run_once(OSSL_LIB_CTX *ctx, unsigned int idx,
-                          ossl_lib_ctx_run_once_fn run_once_fn);
-int ossl_lib_ctx_onfree(OSSL_LIB_CTX *ctx, ossl_lib_ctx_onfree_fn onfreefn);
 const char *ossl_lib_ctx_get_descriptor(OSSL_LIB_CTX *libctx);
 
 OSSL_LIB_CTX *ossl_crypto_ex_data_get_ossl_lib_ctx(const CRYPTO_EX_DATA *ad);
