@@ -94,6 +94,7 @@ static char *cert8192 = NULL;
 static char *privkey8192 = NULL;
 static char *srpvfile = NULL;
 static char *tmpfilename = NULL;
+static char *dhfile = NULL;
 
 static int is_fips = 0;
 
@@ -9560,7 +9561,42 @@ static int test_inherit_verify_param(void)
     return testresult;
 }
 
-OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile provider config\n")
+static int test_load_dhfile(void)
+{
+#ifndef OPENSSL_NO_DH
+    int testresult = 0;
+
+    SSL_CTX *ctx = NULL;
+    SSL_CONF_CTX *cctx = NULL;
+
+    if (dhfile == NULL)
+        return 1;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new_ex(libctx, NULL, TLS_client_method()))
+        || !TEST_ptr(cctx = SSL_CONF_CTX_new()))
+        goto end;
+
+    SSL_CONF_CTX_set_ssl_ctx(cctx, ctx);
+    SSL_CONF_CTX_set_flags(cctx,
+                           SSL_CONF_FLAG_CERTIFICATE
+                           | SSL_CONF_FLAG_SERVER
+                           | SSL_CONF_FLAG_FILE);
+
+    if (!TEST_int_eq(SSL_CONF_cmd(cctx, "DHParameters", dhfile), 2))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_CONF_CTX_free(cctx);
+    SSL_CTX_free(ctx);
+
+    return testresult;
+#else
+    return TEST_skip("DH not supported by this build");
+#endif
+}
+
+OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile provider config dhfile\n")
 
 int setup_tests(void)
 {
@@ -9590,7 +9626,8 @@ int setup_tests(void)
             || !TEST_ptr(srpvfile = test_get_argument(1))
             || !TEST_ptr(tmpfilename = test_get_argument(2))
             || !TEST_ptr(modulename = test_get_argument(3))
-            || !TEST_ptr(configfile = test_get_argument(4)))
+            || !TEST_ptr(configfile = test_get_argument(4))
+            || !TEST_ptr(dhfile = test_get_argument(5)))
         return 0;
 
     if (!TEST_true(OSSL_LIB_CTX_load_config(libctx, configfile)))
@@ -9821,6 +9858,7 @@ int setup_tests(void)
     ADD_TEST(test_inherit_verify_param);
     ADD_TEST(test_set_alpn);
     ADD_ALL_TESTS(test_session_timeout, 1);
+    ADD_TEST(test_load_dhfile);
     return 1;
 
  err:
