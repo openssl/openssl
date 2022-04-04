@@ -307,9 +307,9 @@ OSSL_DEPRECATEDIN_3_0 int RSA_set_method(RSA *rsa, const RSA_METHOD *meth);
 /* these are the actual RSA functions */
 OSSL_DEPRECATEDIN_3_0 const RSA_METHOD *RSA_PKCS1_OpenSSL(void);
 
-DECLARE_ASN1_ENCODE_FUNCTIONS_name_attr(OSSL_DEPRECATEDIN_3_0,
+DECLARE_ASN1_ENCODE_FUNCTIONS_name_attr(extern OSSL_DEPRECATEDIN_3_0,
                                         RSA, RSAPublicKey)
-DECLARE_ASN1_ENCODE_FUNCTIONS_name_attr(OSSL_DEPRECATEDIN_3_0,
+DECLARE_ASN1_ENCODE_FUNCTIONS_name_attr(extern OSSL_DEPRECATEDIN_3_0,
                                         RSA, RSAPrivateKey)
 # endif  /* !OPENSSL_NO_DEPRECATED_3_0 */
 
@@ -448,8 +448,8 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
 OSSL_DEPRECATEDIN_3_0 int RSA_set_ex_data(RSA *r, int idx, void *arg);
 OSSL_DEPRECATEDIN_3_0 void *RSA_get_ex_data(const RSA *r, int idx);
 
-DECLARE_ASN1_DUP_FUNCTION_name_attr(OSSL_DEPRECATEDIN_3_0, RSA, RSAPublicKey)
-DECLARE_ASN1_DUP_FUNCTION_name_attr(OSSL_DEPRECATEDIN_3_0, RSA, RSAPrivateKey)
+DECLARE_ASN1_DUP_FUNCTION_name_attr(extern OSSL_DEPRECATEDIN_3_0, RSA, RSAPublicKey)
+DECLARE_ASN1_DUP_FUNCTION_name_attr(extern OSSL_DEPRECATEDIN_3_0, RSA, RSAPrivateKey)
 
 /*
  * If this flag is set the RSA method is FIPS compliant and can be used in
