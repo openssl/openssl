@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -20,12 +22,6 @@
 #include <openssl/lhash.h>
 #include "lhash_local.h"
 
-# ifndef OPENSSL_NO_DEPRECATED_3_1
-static void lh_stats_bio_actual(const OPENSSL_LHASH *lh, BIO *out);
-static void lh_node_stats_bio_actual(const OPENSSL_LHASH *lh, BIO *out);
-static void lh_node_usage_stats_bio_actual(const OPENSSL_LHASH *lh, BIO *out);
-# endif
-
 # ifndef OPENSSL_NO_STDIO
 #  ifndef OPENSSL_NO_DEPRECATED_3_1
 void OPENSSL_LH_stats(const OPENSSL_LHASH *lh, FILE *fp)
@@ -36,7 +32,7 @@ void OPENSSL_LH_stats(const OPENSSL_LHASH *lh, FILE *fp)
     if (bp == NULL)
         return;
     BIO_set_fp(bp, fp, BIO_NOCLOSE);
-    lh_stats_bio_actual(lh, bp);
+    OPENSSL_LH_stats_bio(lh, bp);
     BIO_free(bp);
 }
 
@@ -48,7 +44,7 @@ void OPENSSL_LH_node_stats(const OPENSSL_LHASH *lh, FILE *fp)
     if (bp == NULL)
         return;
     BIO_set_fp(bp, fp, BIO_NOCLOSE);
-    lh_node_stats_bio_actual(lh, bp);
+    OPENSSL_LH_node_stats_bio(lh, bp);
     BIO_free(bp);
 }
 
@@ -60,7 +56,7 @@ void OPENSSL_LH_node_usage_stats(const OPENSSL_LHASH *lh, FILE *fp)
     if (bp == NULL)
         return;
     BIO_set_fp(bp, fp, BIO_NOCLOSE);
-    lh_node_usage_stats_bio_actual(lh, bp);
+    OPENSSL_LH_node_usage_stats_bio(lh, bp);
     BIO_free(bp);
 }
 #  endif
@@ -73,11 +69,6 @@ void OPENSSL_LH_node_usage_stats(const OPENSSL_LHASH *lh, FILE *fp)
  * generate a warning.
  */
 void OPENSSL_LH_stats_bio(const OPENSSL_LHASH *lh, BIO *out)
-{
-    lh_stats_bio_actual(lh, out);
-}
-
-static void lh_stats_bio_actual(const OPENSSL_LHASH *lh, BIO *out)
 {
     BIO_printf(out, "num_items             = %lu\n", lh->num_items);
     BIO_printf(out, "num_nodes             = %u\n",  lh->num_nodes);
@@ -99,11 +90,6 @@ static void lh_stats_bio_actual(const OPENSSL_LHASH *lh, BIO *out)
 
 void OPENSSL_LH_node_stats_bio(const OPENSSL_LHASH *lh, BIO *out)
 {
-    lh_node_stats_bio_actual(lh, out);
-}
-
-static void lh_node_stats_bio_actual(const OPENSSL_LHASH *lh, BIO *out)
-{
     OPENSSL_LH_NODE *n;
     unsigned int i, num;
 
@@ -115,11 +101,6 @@ static void lh_node_stats_bio_actual(const OPENSSL_LHASH *lh, BIO *out)
 }
 
 void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out)
-{
-    lh_node_usage_stats_bio_actual(lh, out);
-}
-
-static void lh_node_usage_stats_bio_actual(const OPENSSL_LHASH *lh, BIO *out)
 {
     OPENSSL_LH_NODE *n;
     unsigned long num;
