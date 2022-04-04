@@ -16,11 +16,6 @@
 #include "internal/provider.h"
 #include "crypto/context.h"
 
-struct ossl_lib_ctx_onfree_list_st {
-    ossl_lib_ctx_onfree_fn *fn;
-    struct ossl_lib_ctx_onfree_list_st *next;
-};
-
 struct ossl_lib_ctx_st {
     CRYPTO_RWLOCK *lock, *rand_crngt_lock;
     OSSL_EX_DATA_GLOBAL global;
@@ -48,10 +43,6 @@ struct ossl_lib_ctx_st {
     void *fips_prov;
 #endif
 
-    CRYPTO_RWLOCK *oncelock;
-    int run_once_done[OSSL_LIB_CTX_MAX_RUN_ONCE];
-    int run_once_ret[OSSL_LIB_CTX_MAX_RUN_ONCE];
-    struct ossl_lib_ctx_onfree_list_st *onfreelist;
     unsigned int ischild:1;
 };
 
@@ -88,10 +79,6 @@ static int context_init(OSSL_LIB_CTX *ctx)
     ctx->lock = CRYPTO_THREAD_lock_new();
     if (ctx->lock == NULL)
         return 0;
-
-    ctx->oncelock = CRYPTO_THREAD_lock_new();
-    if (ctx->oncelock == NULL)
-        goto err;
 
     ctx->rand_crngt_lock = CRYPTO_THREAD_lock_new();
     if (ctx->rand_crngt_lock == NULL)
@@ -204,7 +191,6 @@ static int context_init(OSSL_LIB_CTX *ctx)
         ossl_crypto_cleanup_all_ex_data_int(ctx);
 
     CRYPTO_THREAD_lock_free(ctx->rand_crngt_lock);
-    CRYPTO_THREAD_lock_free(ctx->oncelock);
     CRYPTO_THREAD_lock_free(ctx->lock);
     memset(ctx, '\0', sizeof(*ctx));
     return 0;
@@ -324,8 +310,6 @@ static void context_deinit_objs(OSSL_LIB_CTX *ctx)
 
 static int context_deinit(OSSL_LIB_CTX *ctx)
 {
-    struct ossl_lib_ctx_onfree_list_st *tmp, *onfree;
-
     if (ctx == NULL)
         return 1;
 
@@ -333,21 +317,11 @@ static int context_deinit(OSSL_LIB_CTX *ctx)
 
     context_deinit_objs(ctx);
 
-    onfree = ctx->onfreelist;
-    while (onfree != NULL) {
-        onfree->fn(ctx);
-        tmp = onfree;
-        onfree = onfree->next;
-        OPENSSL_free(tmp);
-    }
-
     ossl_crypto_cleanup_all_ex_data_int(ctx);
 
     CRYPTO_THREAD_lock_free(ctx->rand_crngt_lock);
-    CRYPTO_THREAD_lock_free(ctx->oncelock);
     CRYPTO_THREAD_lock_free(ctx->lock);
     ctx->rand_crngt_lock = NULL;
-    ctx->oncelock = NULL;
     ctx->lock = NULL;
     return 1;
 }
@@ -602,56 +576,6 @@ OSSL_EX_DATA_GLOBAL *ossl_lib_ctx_get_ex_data_global(OSSL_LIB_CTX *ctx)
     if (ctx == NULL)
         return NULL;
     return &ctx->global;
-}
-
-int ossl_lib_ctx_run_once(OSSL_LIB_CTX *ctx, unsigned int idx,
-                          ossl_lib_ctx_run_once_fn run_once_fn)
-{
-    int done = 0, ret = 0;
-
-    ctx = ossl_lib_ctx_get_concrete(ctx);
-    if (ctx == NULL)
-        return 0;
-
-    if (!CRYPTO_THREAD_read_lock(ctx->oncelock))
-        return 0;
-    done = ctx->run_once_done[idx];
-    if (done)
-        ret = ctx->run_once_ret[idx];
-    CRYPTO_THREAD_unlock(ctx->oncelock);
-
-    if (done)
-        return ret;
-
-    if (!CRYPTO_THREAD_write_lock(ctx->oncelock))
-        return 0;
-    if (ctx->run_once_done[idx]) {
-        ret = ctx->run_once_ret[idx];
-        CRYPTO_THREAD_unlock(ctx->oncelock);
-        return ret;
-    }
-
-    ret = run_once_fn(ctx);
-    ctx->run_once_done[idx] = 1;
-    ctx->run_once_ret[idx] = ret;
-    CRYPTO_THREAD_unlock(ctx->oncelock);
-
-    return ret;
-}
-
-int ossl_lib_ctx_onfree(OSSL_LIB_CTX *ctx, ossl_lib_ctx_onfree_fn onfreefn)
-{
-    struct ossl_lib_ctx_onfree_list_st *newonfree
-        = OPENSSL_malloc(sizeof(*newonfree));
-
-    if (newonfree == NULL)
-        return 0;
-
-    newonfree->fn = onfreefn;
-    newonfree->next = ctx->onfreelist;
-    ctx->onfreelist = newonfree;
-
-    return 1;
 }
 
 const char *ossl_lib_ctx_get_descriptor(OSSL_LIB_CTX *libctx)
