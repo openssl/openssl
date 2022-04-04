@@ -19,6 +19,7 @@ use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
+my $no_dh = disabled('dh');
 
 plan skip_all => "No TLS/SSL protocols are supported by this OpenSSL build"
     if alldisabled(grep { $_ ne "ssl3" } available_protocols("tls"));
@@ -33,14 +34,32 @@ ok(run(test(["sslapitest", srctop_dir("test", "certs"),
              srctop_file("test", "recipes", "90-test_sslapi_data",
                          "passwd.txt"), $tmpfilename, "default",
              srctop_file("test", "default.cnf")])),
-             "running sslapitest");
+             "running sslapitest")
+    if $no_dh;
+
+ok(run(test(["sslapitest", srctop_dir("test", "certs"),
+             srctop_file("test", "recipes", "90-test_sslapi_data",
+                         "passwd.txt"), $tmpfilename, "default",
+             srctop_file("test", "default.cnf"),
+             srctop_file("test", "recipes", "90-test_sslapi_data", "dhparams.pem")])),
+             "running sslapitest")
+    unless $no_dh;
 
 unless ($no_fips) {
     ok(run(test(["sslapitest", srctop_dir("test", "certs"),
                  srctop_file("test", "recipes", "90-test_sslapi_data",
                              "passwd.txt"), $tmpfilename, "fips",
                  srctop_file("test", "fips-and-base.cnf")])),
-                 "running sslapitest");
+                 "running sslapitest")
+        if $no_dh;
+
+    ok(run(test(["sslapitest", srctop_dir("test", "certs"),
+                 srctop_file("test", "recipes", "90-test_sslapi_data",
+                             "passwd.txt"), $tmpfilename, "fips",
+                 srctop_file("test", "fips-and-base.cnf"),
+                 srctop_file("test", "recipes", "90-test_sslapi_data", "dhparams.pem")])),
+                 "running sslapitest")
+        unless $no_dh;
 }
 
 unlink $tmpfilename;
