@@ -1,0 +1,88 @@
+=pod
+
+=head1 NAME
+
+X509_PURPOSE_add - adds new or modifies existing purpose entry for certificate purpose check
+
+=head1 SYNOPSIS
+
+ #include <openssl/x509v3.h>
+
+ int X509_PURPOSE_add(int id, int trust, int flags, 
+                     int (*ck) (const X509_PURPOSE *, const X509 *, int),
+                     const char *name, const char *sname, void *arg);
+
+=head1 DESCRIPTION
+
+function adds of modifies the purpose table. The table is being used in the purpose check. 
+
+B<id> - id of the purpose table. If existing id is used then the table is updated. Otherwise new entry is added. Index greater than X509_PURPOSE_MAX is guaranteed to not modify builtin purpose table. (accessible via X509_PURPOSE_get_id(xp) )
+B<trust> - trust table id (accessible via X509_PURPOSE_get_trust(xp) )
+flags - not
+B<ck> - purpose checking function. MUST return 0 on failed check, 1 on success. First call parameter is current purpose table, second is cert structure, third is CA flag
+B<name> - human readable name of purpose (accessible via X509_PURPOSE_get0_name(xp) )
+B<sname> - short name of purpose (accessible via X509_PURPOSE_get0_sname(xp) )
+B<arg> - user data pointer (can be accessed via first ck parameter). Calling X509_PURPOSE_add does not change arg ownership and has to be valid during certificate check (i.e. during X509_check_purpose call). 
+
+=head1 RETURN VALUES
+
+1 on successful entry modification, 0 on error. X509V3err set to ERR_R_MALLOC_FAILURE
+
+=head1 EXAMPLE
+
+
+ /* defining new purpose id*/
+ #define MY_X509_PURPOSE_SSL_RELAXED_CLIENT (X509_PURPOSE_MAX + 1)
+
+
+ /*custom purpose checking function. user data can be fetched from X509_PURPOSE *xp. Current cert extensions can be fetched from X509 *x */
+ #define my_xku_relaxed_reject(x, usage) \
+	        (((x)->ex_flags & EXFLAG_XKUSAGE) && !((x)->ex_xkusage & (usage)) && !((x)->ex_xkusage & XKU_ANYEKU) )
+
+ static int my_check_purpose_ssl_relaxed_client(const X509_PURPOSE *xp, const X509 *x,
+		                                    int ca)
+ {
+ 	if (my_xku_relaxed_reject(x, XKU_SSL_CLIENT))
+ 		return 0;
+ 	if (ca)
+ 		return check_ssl_ca(x);
+ 	/* We need to do digital signatures or key agreement */
+ 	if (ku_reject(x, KU_DIGITAL_SIGNATURE | KU_KEY_AGREEMENT))
+ 		return 0;
+ 	/* nsCertType if present should allow SSL client use */
+ 	if (ns_reject(x, NS_SSL_CLIENT))
+ 		return 0;
+ 	return 1;
+ }
+ 
+
+ /*enabling the purpose for the ssl context */
+ SSL_CTX *ssl_ctx;
+ X509_VERIFY_PARAM *vpm = NULL; 
+ /* ... */
+ vpm = X509_VERIFY_PARAM_new();
+ X509_PURPOSE_add(MY_X509_PURPOSE_SSL_RELAXED_CLIENT, X509_TRUST_SSL_CLIENT, 0,
+           my_check_purpose_ssl_relaxed_client, "SSL Relaxed client", "sslrclient", NULL);
+ X509_VERIFY_PARAM_set_purpose(vpm, MY_X509_PURPOSE_SSL_RELAXED_CLIENT);
+ SSL_CTX_set1_param(ssl_ctx, vpm);
+ X509_VERIFY_PARAM_free(vpm);
+
+=head1 SEE ALSO
+
+X509_TRUST_add(3), L<X509_VERIFY_PARAM_set_purpose(3)>, L<X509_VERIFY_PARAM_new(3)> 
+
+=head1 BUGS
+
+X509 (aka x509_st) is not exported in include files on normal openssl installation. The following files has to be copied to application directory to properly compile the B<ck> function:
+
+ include/internal/refcount.h
+ include/crypto/x509.h
+
+additionaly, to fully benefit from purpose checking, the following function and macros has to be copied from v3_purp.c file. Note that this is not mandatory if very custom checks are needed.
+
+ ku_reject (macro)
+ xku_reject (macro)
+ ns_reject (macro)
+ int check_ca(const X509 *x)
+ int check_ssl_ca(const X509 *x);
+ 
