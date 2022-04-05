@@ -109,6 +109,7 @@ The demos found in this directory are:
 | [ddd-03-fd-blocking](ddd-03-fd-blocking.c) | S-AOSF | A `SSL_set_fd`-based blocking example demonstrating real-world OpenSSL API usage (corresponding to S-AOSF applications above) |
 | [ddd-04-fd-nonblocking](ddd-04-fd-nonblocking.c) | A-AOSF | A `SSL_set_fd`-based non-blocking example demonstrating real-world OpenSSL API usage (corresponding to A-AOSF applications above) |
 | [ddd-05-mem-nonblocking](ddd-05-mem-nonblocking.c) | A-BIOm | A non-blocking example based on use of a memory buffer to feed OpenSSL encrypted data (corresponding to A-BIOm applications above) |
+| [ddd-06-mem-uv](ddd-06-mem-uv.c) | A-BIOm | A non-blocking example based on use of a memory buffer to feed OpenSSL encrypted data; uses libuv, a real-world async I/O library |
 
 Availability of a default certificate store is assumed. `SSL_CERT_DIR` may be
 set when running the demos if necessary.
