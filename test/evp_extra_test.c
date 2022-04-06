@@ -1963,6 +1963,24 @@ static int test_EVP_SM2(void)
     if (!TEST_int_gt(EVP_DigestVerifyFinal(md_ctx_verify, sig, sig_len), 0))
         goto done;
 
+    /*
+     * Try verify again with non-matching 0 length id but ensure that it can
+     * be set on the context and overrides the previous value.
+     */
+
+    if (!TEST_true(EVP_DigestVerifyInit(md_ctx_verify, NULL, check_md, NULL,
+                                        pkey)))
+        goto done;
+
+    if (!TEST_int_gt(EVP_PKEY_CTX_set1_id(sctx, NULL, 0), 0))
+        goto done;
+
+    if (!TEST_true(EVP_DigestVerifyUpdate(md_ctx_verify, kMsg, sizeof(kMsg))))
+        goto done;
+
+    if (!TEST_int_eq(EVP_DigestVerifyFinal(md_ctx_verify, sig, sig_len), 0))
+        goto done;
+
     /* now check encryption/decryption */
 
     gparams[0] = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_DIGEST,
