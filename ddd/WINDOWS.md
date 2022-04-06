@@ -64,7 +64,7 @@ Evaluation of the existing demos and their applicability to Windows IOCP:
 - ddd-05-mem-nonblocking: Since the application is in full control of passing
   data from the memory BIO to the network, or vice versa, the application
   can use IOCP if it wishes.
-  
+
   This is demonstrated in the following demo:
 
 - ddd-06-mem-uv: This demo uses a memory BIO and libuv. Since libuv supports
