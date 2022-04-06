@@ -105,7 +105,7 @@ The demos found in this directory are:
 |                 | Type  | Description |
 |-----------------|-------|-------------|
 | [ddd-01-conn-blocking](ddd-01-conn-blocking.c) | S-BIOc | A `BIO_s_connect`-based blocking example demonstrating exemplary OpenSSL API usage |
-| [ddd-02-conn-nonblocking](ddd-02-conn-nonblocking.c) | A-BIOc | A `BIO_s_connect`-based nonblocking example demonstrating exemplary OpenSSL API usage |
+| [ddd-02-conn-nonblocking](ddd-02-conn-nonblocking.c) | A-BIOc | A `BIO_s_connect`-based nonblocking example demonstrating exemplary OpenSSL API usage, with use of a buffering BIO |
 | [ddd-03-fd-blocking](ddd-03-fd-blocking.c) | S-AOSF | A `SSL_set_fd`-based blocking example demonstrating real-world OpenSSL API usage (corresponding to S-AOSF applications above) |
 | [ddd-04-fd-nonblocking](ddd-04-fd-nonblocking.c) | A-AOSF | A `SSL_set_fd`-based non-blocking example demonstrating real-world OpenSSL API usage (corresponding to A-AOSF applications above) |
 | [ddd-05-mem-nonblocking](ddd-05-mem-nonblocking.c) | A-BIOm | A non-blocking example based on use of a memory buffer to feed OpenSSL encrypted data (corresponding to A-BIOm applications above) |

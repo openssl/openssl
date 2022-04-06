@@ -57,7 +57,7 @@ SSL_CTX *create_ssl_ctx(void)
 APP_CONN *new_conn(SSL_CTX *ctx, const char *hostname)
 {
     APP_CONN *conn;
-    BIO *out;
+    BIO *out, *buf;
     SSL *ssl = NULL;
     const char *bare_hostname;
 
@@ -75,6 +75,14 @@ APP_CONN *new_conn(SSL_CTX *ctx, const char *hostname)
         BIO_free_all(out);
         return NULL;
     }
+
+    buf = BIO_new(BIO_f_buffer());
+    if (buf == NULL) {
+        BIO_free_all(out);
+        return NULL;
+    }
+
+    BIO_push(out, buf);
 
     if (BIO_set_conn_hostname(out, hostname) == 0) {
         BIO_free_all(out);
