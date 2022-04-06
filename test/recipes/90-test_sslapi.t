@@ -41,10 +41,10 @@ unless ($no_fips) {
                  srctop_file("test", "recipes", "90-test_sslapi_data",
                              "passwd.txt"), $tmpfilename, "fips",
                  srctop_file("test", "fips-and-base.cnf"),
-                 srctop_file("test"
-                             , "recipes"
-                             , "90-test_sslapi_data"
-                             , "dhparams.pem")])),
+                 srctop_file("test",
+                             "recipes",
+                             "90-test_sslapi_data",
+                             "dhparams.pem")])),
                  "running sslapitest");
 }
 
