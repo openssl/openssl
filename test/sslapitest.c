@@ -9599,7 +9599,10 @@ static int test_load_dhfile(void)
         goto end;
 
     SSL_CONF_CTX_set_ssl_ctx(cctx, ctx);
-    SSL_CONF_CTX_set_flags(cctx, SSL_CONF_FLAG_CERTIFICATE | SSL_CONF_FLAG_SERVER | SSL_CONF_FLAG_FILE);
+    SSL_CONF_CTX_set_flags(cctx,
+                           SSL_CONF_FLAG_CERTIFICATE
+                           | SSL_CONF_FLAG_SERVER
+                           | SSL_CONF_FLAG_FILE);
 
     if (!TEST_int_eq(SSL_CONF_cmd(cctx, "DHParameters", dhfile), 2))
         goto end;
