@@ -59,8 +59,8 @@ function pointer from an B<OSSL_DISPATCH> element named
 B<OSSL_FUNC_{name}>.
 For example, the "function" OSSL_FUNC_mac_newctx() has these:
 
- typedef void *(OSSL_OSSL_FUNC_mac_newctx_fn)(void *provctx);
- static ossl_inline OSSL_OSSL_FUNC_mac_newctx_fn
+ typedef void *(OSSL_FUNC_mac_newctx_fn)(void *provctx);
+ static ossl_inline OSSL_FUNC_mac_newctx_fn
      OSSL_FUNC_mac_newctx(const OSSL_DISPATCH *opf);
 
 B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
