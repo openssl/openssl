@@ -600,7 +600,7 @@ static int cmd_DHParameters(SSL_CONF_CTX *cctx, const char *value)
         if (decoderctx == NULL)
             goto end;
         ERR_set_mark();
-        while (!OSSL_DECODER_from_bio(decoderctx, in) && !BIO_eof(in));
+        while (!OSSL_DECODER_from_bio(decoderctx, in) && dhpkey == NULL && !BIO_eof(in));
         OSSL_DECODER_CTX_free(decoderctx);
 
         if (dhpkey == NULL) {
