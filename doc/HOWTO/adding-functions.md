@@ -11,7 +11,7 @@ This document describes the way to add custom modifications to OpenSSL sources.
 
  After that perform the following steps:
 
-    ./Configure -Werror --strict-warnings [your-options]
+    ./Configure --strict-warnings [your-options]
     make update
     make
     make test
