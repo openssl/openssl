@@ -33,7 +33,10 @@ ok(run(test(["sslapitest", srctop_dir("test", "certs"),
              srctop_file("test", "recipes", "90-test_sslapi_data",
                          "passwd.txt"), $tmpfilename, "default",
              srctop_file("test", "default.cnf"),
-             srctop_file("test", "recipes", "90-test_sslapi_data", "dhparams.pem")])),
+             srctop_file("test",
+                         "recipes",
+                         "90-test_sslapi_data",
+                         "dhparams.pem")])),
              "running sslapitest");
 
 unless ($no_fips) {
