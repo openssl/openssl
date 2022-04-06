@@ -52,12 +52,12 @@ provider_query_operation() function
 All these "functions" have a corresponding function type definition named
 B<OSSL_FUNC_{name}_fn>, and a helper function to retrieve the function pointer
 from a B<OSSL_DISPATCH> element named B<OSSL_get_{name}>.
-For example, the "function" OSSL_FUNC_store_load() has these:
+For example, the "function" OSSL_FUNC_store_attach() has these:
 
- typedef void *(OSSL_OSSL_FUNC_store_load_fn)(void *provctx,
-                                              const OSSL_PARAM params[]);
- static ossl_inline OSSL_OSSL_FUNC_store_load_fn
-     OSSL_OSSL_FUNC_store_load(const OSSL_DISPATCH *opf);
+ typedef void *(OSSL_FUNC_store_attach_fn)(void *provctx,
+                                           OSSL_CORE_BIO * bio);
+ static ossl_inline OSSL_FUNC_store_attach_fn
+     OSSL_FUNC_store_attach(const OSSL_DISPATCH *opf);
 
 B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as macros
 in L<openssl-core_dispatch.h(7)>, as follows:
