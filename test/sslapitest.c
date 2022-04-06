@@ -9585,6 +9585,7 @@ static int test_inherit_verify_param(void)
 
 static int test_load_dhfile(void)
 {
+#ifndef OPENSSL_NO_DH
     int testresult = 0;
 
     SSL_CTX *ctx = NULL;
@@ -9609,9 +9610,12 @@ end:
     SSL_CTX_free(ctx);
 
     return testresult;
+#else
+    return TEST_skip("DH not supported by this build");
+#endif
 }
 
-OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile provider config [dhfile]\n")
+OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile provider config dhfile\n")
 
 int setup_tests(void)
 {
@@ -9641,11 +9645,9 @@ int setup_tests(void)
             || !TEST_ptr(srpvfile = test_get_argument(1))
             || !TEST_ptr(tmpfilename = test_get_argument(2))
             || !TEST_ptr(modulename = test_get_argument(3))
-            || !TEST_ptr(configfile = test_get_argument(4)))
+            || !TEST_ptr(configfile = test_get_argument(4))
+            || !TEST_ptr(dhfile = test_get_argument(5)))
         return 0;
-
-    /* If parameter is not set then skip dh test */
-    dhfile = test_get_argument(5);
 
     if (!TEST_true(OSSL_LIB_CTX_load_config(libctx, configfile)))
         return 0;
