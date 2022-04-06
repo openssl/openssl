@@ -599,13 +599,15 @@ static int cmd_DHParameters(SSL_CONF_CTX *cctx, const char *value)
                                             sslctx->libctx, sslctx->propq);
         if (decoderctx == NULL)
             goto end;
-        while (!OSSL_DECODER_from_bio(decoderctx, in) && !BIO_eof(in)) {
-            ERR_clear_error();
-        }
+        ERR_set_mark();
+        while (!OSSL_DECODER_from_bio(decoderctx, in) && !BIO_eof(in));
         OSSL_DECODER_CTX_free(decoderctx);
 
-        if (dhpkey == NULL)
+        if (dhpkey == NULL) {
+            ERR_clear_last_mark();
             goto end;
+        }
+        ERR_pop_to_mark();
     } else {
         return 1;
     }
