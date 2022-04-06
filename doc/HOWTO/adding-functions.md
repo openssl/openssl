@@ -5,9 +5,7 @@ This document describes the way to add custom modifications to OpenSSL sources.
 
  If you are adding new public functions to the custom library build, you need to
  either add a prototype in one of the existing OpenSSL header files;
- or provide a new header file and edit
- [Configurations/unix-Makefile.tmpl](Configurations/unix-Makefile.tmpl)
- to pick up that file.
+ or provide a new header file.
 
  After that perform the following steps:
 
