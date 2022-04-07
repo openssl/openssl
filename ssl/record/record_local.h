@@ -36,9 +36,6 @@
 #define RECORD_LAYER_clear_first_record(rl)     ((rl)->is_first_record = 0)
 #define DTLS_RECORD_LAYER_get_r_epoch(rl)       ((rl)->d->r_epoch)
 
-__owur int ssl3_read_n(SSL_CONNECTION *s, size_t n, size_t max, int extend,
-                       int clearold, size_t *readbytes);
-
 DTLS1_BITMAP *dtls1_get_bitmap(SSL_CONNECTION *s, SSL3_RECORD *rr,
                                unsigned int *is_next_epoch);
 int dtls1_process_buffered_records(SSL_CONNECTION *s);

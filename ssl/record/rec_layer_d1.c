@@ -130,11 +130,10 @@ static int dtls1_copy_record(SSL_CONNECTION *s, pitem *item)
 
     rdata = (DTLS1_RECORD_DATA *)item->data;
 
-    SSL3_BUFFER_release(&s->rlayer.rbuf);
+    SSL3_BUFFER_release(s->rrlmethod->get0_rbuf(s->rrl));
 
-    s->rlayer.packet = rdata->packet;
-    s->rlayer.packet_length = rdata->packet_length;
-    memcpy(&s->rlayer.rbuf, &(rdata->rbuf), sizeof(SSL3_BUFFER));
+    s->rrlmethod->set0_packet(s->rrl, rdata->packet, rdata->packet_length);
+    memcpy(s->rrlmethod->get0_rbuf(s->rrl), &(rdata->rbuf), sizeof(SSL3_BUFFER));
     memcpy(&s->rlayer.rrec, &(rdata->rrec), sizeof(SSL3_RECORD));
 
     /* Set proper sequence number for mac calculation */
@@ -165,9 +164,9 @@ int dtls1_buffer_record(SSL_CONNECTION *s, record_pqueue *queue,
         return -1;
     }
 
-    rdata->packet = s->rlayer.packet;
-    rdata->packet_length = s->rlayer.packet_length;
-    memcpy(&(rdata->rbuf), &s->rlayer.rbuf, sizeof(SSL3_BUFFER));
+    rdata->packet = s->rrlmethod->get0_packet(s->rrl);
+    rdata->packet_length = s->rrlmethod->get_packet_length(s->rrl);
+    memcpy(&(rdata->rbuf), s->rrlmethod->get0_rbuf(s->rrl), sizeof(SSL3_BUFFER));
     memcpy(&(rdata->rrec), &s->rlayer.rrec, sizeof(SSL3_RECORD));
 
     item->data = rdata;
@@ -182,9 +181,8 @@ int dtls1_buffer_record(SSL_CONNECTION *s, record_pqueue *queue,
     }
 #endif
 
-    s->rlayer.packet = NULL;
-    s->rlayer.packet_length = 0;
-    memset(&s->rlayer.rbuf, 0, sizeof(s->rlayer.rbuf));
+    s->rrlmethod->set0_packet(s->rrl, NULL, 0);
+    memset(s->rrlmethod->get0_rbuf(s->rrl), 0, sizeof(SSL3_BUFFER));
     memset(&s->rlayer.rrec, 0, sizeof(s->rlayer.rrec));
 
     if (!ssl3_setup_buffers(s)) {
@@ -247,7 +245,7 @@ int dtls1_process_buffered_records(SSL_CONNECTION *s)
 
         rr = RECORD_LAYER_get_rrec(&s->rlayer);
 
-        rb = RECORD_LAYER_get_rbuf(&s->rlayer);
+        rb = s->rrlmethod->get0_rbuf(s->rrl);
 
         if (SSL3_BUFFER_get_left(rb) > 0) {
             /*
@@ -293,7 +291,7 @@ int dtls1_process_buffered_records(SSL_CONNECTION *s)
                 }
                 /* dump this record */
                 rr->length = 0;
-                RECORD_LAYER_reset_packet_length(&s->rlayer);
+                s->rrlmethod->reset_packet_length(s->rrl);
                 continue;
             }
 
@@ -356,7 +354,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     if (sc == NULL)
         return -1;
 
-    if (!SSL3_BUFFER_is_initialised(&sc->rlayer.rbuf)) {
+    if (!SSL3_BUFFER_is_initialised(sc->rrlmethod->get0_rbuf(sc->rrl))) {
         /* Not initialized yet */
         if (!ssl3_setup_buffers(sc)) {
             /* SSLfatal() already called */
@@ -689,7 +687,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             SSL3_RECORD_set_length(rr, 0);
             SSL3_RECORD_set_read(rr);
             if (!(sc->mode & SSL_MODE_AUTO_RETRY)) {
-                if (SSL3_BUFFER_get_left(&sc->rlayer.rbuf) == 0) {
+                if (SSL3_BUFFER_get_left(sc->rrlmethod->get0_rbuf(sc->rrl)) == 0) {
                     /* no read-ahead left? */
                     BIO *bio;
 
@@ -725,7 +723,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             return -1;
 
         if (!(sc->mode & SSL_MODE_AUTO_RETRY)) {
-            if (SSL3_BUFFER_get_left(&sc->rlayer.rbuf) == 0) {
+            if (SSL3_BUFFER_get_left(sc->rrlmethod->get0_rbuf(sc->rrl)) == 0) {
                 /* no read-ahead left? */
                 BIO *bio;
                 /*

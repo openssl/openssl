@@ -20,7 +20,7 @@
   */
 static int count_unprocessed_records(SSL_CONNECTION *s)
 {
-    SSL3_BUFFER *rbuf = RECORD_LAYER_get_rbuf(&s->rlayer);
+    SSL3_BUFFER *rbuf = s->rrlmethod->get0_rbuf(s->rrl);
     PACKET pkt, subpkt;
     int count = 0;
 

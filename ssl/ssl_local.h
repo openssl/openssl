@@ -28,6 +28,7 @@
 # include <openssl/symhacks.h>
 # include <openssl/ct.h>
 # include "record/record.h"
+# include "record/recordmethod.h"
 # include "statem/statem.h"
 # include "internal/packet.h"
 # include "internal/dane.h"
@@ -1762,7 +1763,16 @@ struct ssl_connection_st {
      * basis, depending on the chosen cipher.
      */
     int (*not_resumable_session_cb) (SSL *ssl, int is_forward_secure);
+
+    /* Old RECORD_LAYER structure  - to be removed eventually */
     RECORD_LAYER rlayer;
+
+    /* New read direciton OSSL_RECORD_LAYER - to replace rlayer above */
+    const OSSL_RECORD_METHOD *rrlmethod;
+    /* The read direction record layer */
+    OSSL_RECORD_LAYER *rrl;
+
+
     /* Default password callback. */
     pem_password_cb *default_passwd_callback;
     /* Default password callback user data. */
