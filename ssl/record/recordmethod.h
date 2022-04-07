@@ -125,30 +125,31 @@ struct ossl_record_method_st {
      * TODO: Will have to be something other than SSL_CIPHER if we make this
      * fetchable
      */
-    OSSL_RECORD_LAYER *new(int vers, int role, int direction, int level,
-                           unsigned char *secret, size_t secretlen,
-                           SSL_CIPHER *c, BIO *transport, BIO_ADDR *local,
-                           BIO_ADDR *peer, OSSL_PARAM *settings,
-                           OSSL_PARAM *options);
-    void free(OSSL_RECORD_LAYER *rl);
+    OSSL_RECORD_LAYER *(*new_record_layer)(int vers, int role, int direction,
+                                          int level, unsigned char *secret,
+                                          size_t secretlen, SSL_CIPHER *c,
+                                          BIO *transport, BIO_ADDR *local,
+                                          BIO_ADDR *peer, OSSL_PARAM *settings,
+                                          OSSL_PARAM *options);
+    void (*free)(OSSL_RECORD_LAYER *rl);
 
-    int reset(OSSL_RECORD_LAYER *rl); /* Is this needed? */
+    int (*reset)(OSSL_RECORD_LAYER *rl); /* Is this needed? */
 
     /* Returns 1 if we have unprocessed data buffered or 0 otherwise */
-    int unprocessed_read_pending(OSSL_RECORD_LAYER *rl);
+    int (*unprocessed_read_pending)(OSSL_RECORD_LAYER *rl);
     /*
      * Returns 1 if we have processed data buffered that can be read or 0 otherwise
      * - not necessarily app data
      */
-    int processed_read_pending(OSSL_RECORD_LAYER *rl);
+    int (*processed_read_pending)(OSSL_RECORD_LAYER *rl);
 
     /*
      * The amount of processed app data that is internally bufferred and
      * available to read
      */
-    size_t app_data_pending(OSSL_RECORD_LAYER *rl);
+    size_t (*app_data_pending)(OSSL_RECORD_LAYER *rl);
 
-    int write_pending(OSSL_RECORD_LAYER *rl);
+    int (*write_pending)(OSSL_RECORD_LAYER *rl);
 
 
     /*
@@ -157,7 +158,7 @@ struct ossl_record_method_st {
      * the caller's responsibility to ensure that no record template exceeds
      * this maximum when calling write_records.
      */
-    size_t get_max_record_len(OSSL_RECORD_LAYER *rl);
+    size_t (*get_max_record_len)(OSSL_RECORD_LAYER *rl);
 
     /*
      * Find out the maximum number of records that the record layer is prepared
@@ -165,7 +166,7 @@ struct ossl_record_method_st {
      * responsibility to ensure that no call to write_records exceeds this
      * number of records.
      */
-    size_t get_max_records(OSSL_RECORD_LAYER *rl);
+    size_t (*get_max_records)(OSSL_RECORD_LAYER *rl);
 
     /*
      * Write |numtempl| records from the array of record templates pointed to
@@ -192,8 +193,8 @@ struct ossl_record_method_st {
      *  0 on retry
      * -1 on failure
      */
-    int write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE **templates,
-                      size_t numtempl, size_t allowance, size_t *sent);
+    int (*write_records)(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE **templates,
+                         size_t numtempl, size_t allowance, size_t *sent);
 
     /*
      * Retry a previous call to write_records. The caller should continue to
@@ -208,8 +209,8 @@ struct ossl_record_method_st {
      *  0 on retry
      * -1 on failure
      */
-    int retry_write_records(OSSL_RECORD_LAYER *rl, size_t allowance,
-                            size_t *sent);
+    int (*retry_write_records)(OSSL_RECORD_LAYER *rl, size_t allowance,
+                               size_t *sent);
 
     /*
      * Read a record and return the record layer version and record type in
@@ -225,14 +226,14 @@ struct ossl_record_method_st {
      * Internally the the OSSL_RECORD_METHOD the implementation may read/process
      * multiple records in one go and buffer them.
      */
-    int read_record(OSSL_RECORD_LAYER *rl, void **rechandle, int *rversion,
-                    int *type, unsigned char **data, size_t *datalen,
-                    uint16_t *epoch, unsigned char *seq_num);
+    int (*read_record)(OSSL_RECORD_LAYER *rl, void **rechandle, int *rversion,
+                      int *type, unsigned char **data, size_t *datalen,
+                      uint16_t *epoch, unsigned char *seq_num);
     /*
      * Release a buffer associated with a record previously read with
      * read_record. Records are guaranteed to be released in the order that they
      * are read.
      */
-    void release_record(OSSL_RECORD_LAYER *rl, void *rechandle);
+    void (*release_record)(OSSL_RECORD_LAYER *rl, void *rechandle);
 
 };
