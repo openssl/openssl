@@ -129,8 +129,9 @@ struct ossl_record_method_st {
                                           int level, unsigned char *secret,
                                           size_t secretlen, SSL_CIPHER *c,
                                           BIO *transport, BIO_ADDR *local,
-                                          BIO_ADDR *peer, OSSL_PARAM *settings,
-                                          OSSL_PARAM *options);
+                                          BIO_ADDR *peer,
+                                          const OSSL_PARAM *settings,
+                                          const OSSL_PARAM *options);
     void (*free)(OSSL_RECORD_LAYER *rl);
 
     int (*reset)(OSSL_RECORD_LAYER *rl); /* Is this needed? */
