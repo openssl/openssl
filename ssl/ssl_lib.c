@@ -885,6 +885,22 @@ SSL *ossl_ssl_connection_new(SSL_CTX *ctx)
         goto err;
 #endif
 
+    /*
+     * TODO(RECLAYER): This assignment should probably initialy come from the
+     * SSL_METHOD, and potentially be updated later. For now though we just
+     * assign it.
+     */
+    if (SSL_CONNECTION_IS_DTLS(s))
+        s->rrlmethod = &ossl_dtls_record_method;
+    else
+        s->rrlmethod = &ossl_tls_record_method;
+
+    /* BIO is NULL initially. It will get updated later */
+    s->rrl = s->rrlmethod->new_record_layer(s->version, s->server,
+                                            OSSL_RECORD_DIRECTION_READ,
+                                            0, 0, 0, NULL, NULL, NULL,
+                                            NULL, NULL, NULL);
+
     return ssl;
  err:
     SSL_free(ssl);
@@ -1422,6 +1438,7 @@ void SSL_set0_rbio(SSL *s, BIO *rbio)
 
     BIO_free_all(sc->rbio);
     sc->rbio = rbio;
+    sc->rrlmethod->set1_bio(sc->rrl, sc->rbio);
 }
 
 void SSL_set0_wbio(SSL *s, BIO *wbio)

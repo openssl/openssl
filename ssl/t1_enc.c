@@ -172,6 +172,27 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
     BIO *bio;
 #endif
 
+#if 0
+    if ((which & SSL3_CC_READ) != 0) {
+        /*
+        * TODO(RECLAYER): This is probably not the right place to free this. The
+        * OSSL_RECORD_METHOD might have changed since we created the rl object.
+        * We should free it at the point that we update the OSSL_RECORD_METHOD.
+        * But for now this will do.
+        */
+        s->rrlmethod->free(s->rrl);
+        s->rrl = s->rrlmethod->new_record_layer(s->version, s->server,
+                                                OSSL_RECORD_DIRECTION_READ,
+                                                0, 0, 0, NULL, s->rbio, NULL,
+                                                NULL, NULL, NULL);
+    }
+#endif
+
+    if (s->rrl == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
     c = s->s3.tmp.new_sym_enc;
     m = s->s3.tmp.new_hash;
     mac_type = s->s3.tmp.new_mac_pkey_type;

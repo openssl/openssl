@@ -490,13 +490,13 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
         /* ERR_raise() already called */
         return -1;
     }
-    buf = RECORD_LAYER_get_rbuf(&s->rlayer)->buf;
+    buf = s->rrlmethod->get0_rbuf(s->rrl)->buf;
     wbuf = RECORD_LAYER_get_wbuf(&s->rlayer)[0].buf;
 #if defined(SSL3_ALIGN_PAYLOAD)
 # if SSL3_ALIGN_PAYLOAD != 0
     /*
      * Using SSL3_RT_HEADER_LENGTH here instead of DTLS1_RT_HEADER_LENGTH for
-     * consistency with ssl3_read_n. In practice it should make no difference
+     * consistency with read_n. In practice it should make no difference
      * for sensible values of SSL3_ALIGN_PAYLOAD because the difference between
      * SSL3_RT_HEADER_LENGTH and DTLS1_RT_HEADER_LENGTH is exactly 8
      */

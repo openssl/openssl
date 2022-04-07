@@ -40,7 +40,7 @@ int ssl3_setup_read_buffer(SSL_CONNECTION *s)
     size_t len, align = 0, headerlen;
     SSL3_BUFFER *b;
 
-    b = RECORD_LAYER_get_rbuf(&s->rlayer);
+    b = s->rrlmethod->get0_rbuf(s->rrl);
 
     if (SSL_CONNECTION_IS_DTLS(s))
         headerlen = DTLS1_RT_HEADER_LENGTH;
@@ -177,7 +177,7 @@ int ssl3_release_read_buffer(SSL_CONNECTION *s)
 {
     SSL3_BUFFER *b;
 
-    b = RECORD_LAYER_get_rbuf(&s->rlayer);
+    b = s->rrlmethod->get0_rbuf(s->rrl);
     if (s->options & SSL_OP_CLEANSE_PLAINTEXT)
         OPENSSL_cleanse(b->buf, b->len);
     OPENSSL_free(b->buf);

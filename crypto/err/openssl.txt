@@ -1351,6 +1351,7 @@ SSL_R_EXCESSIVE_MESSAGE_SIZE:152:excessive message size
 SSL_R_EXTENSION_NOT_RECEIVED:279:extension not received
 SSL_R_EXTRA_DATA_IN_MESSAGE:153:extra data in message
 SSL_R_EXT_LENGTH_MISMATCH:163:ext length mismatch
+SSL_R_FAILED_TO_GET_PARAMETER:316:failed to get parameter
 SSL_R_FAILED_TO_INIT_ASYNC:405:failed to init async
 SSL_R_FRAGMENTED_CLIENT_HELLO:401:fragmented client hello
 SSL_R_GOT_A_FIN_BEFORE_A_CCS:154:got a fin before a ccs
@@ -1457,6 +1458,7 @@ SSL_R_PSK_NO_CLIENT_CB:224:psk no client cb
 SSL_R_PSK_NO_SERVER_CB:225:psk no server cb
 SSL_R_READ_BIO_NOT_SET:211:read bio not set
 SSL_R_READ_TIMEOUT_EXPIRED:312:read timeout expired
+SSL_R_RECORD_LAYER_FAILURE:313:record layer failure
 SSL_R_RECORD_LENGTH_MISMATCH:213:record length mismatch
 SSL_R_RECORD_TOO_SMALL:298:record too small
 SSL_R_RENEGOTIATE_EXT_TOO_LONG:335:renegotiate ext too long

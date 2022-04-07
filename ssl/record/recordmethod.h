@@ -69,6 +69,12 @@ typedef struct ossl_record_layer_st OSSL_RECORD_LAYER;
 #define OSSL_RECORD_PROTECTION_LEVEL_APPLICATION 3
 
 
+#define OSSL_RECORD_RETURN_SUCCESS           1
+#define OSSL_RECORD_RETURN_RETRY             0
+#define OSSL_RECORD_RETURN_NON_FATAL_ERR    -1
+#define OSSL_RECORD_RETURN_FATAL            -2
+#define OSSL_RECORD_RETURN_EOF              -3
+
 /*
  * Template for creating a record. A record consists of the |type| of data it
  * will contain (e.g. alert, handshake, application data, etc) along with an
@@ -237,4 +243,35 @@ struct ossl_record_method_st {
      */
     void (*release_record)(OSSL_RECORD_LAYER *rl, void *rechandle);
 
+    /*
+     * In the event that a fatal error is returned from the functions above then
+     * get_alert_code() can be called to obtain a more details identifier for
+     * the error. In (D)TLS this is the alert description code.
+     */
+    int (*get_alert_code)(OSSL_RECORD_LAYER *rl);
+
+    /*
+     * Update the transport BIO from the one originally set in the
+     * new_record_layer call
+     */
+    int (*set1_bio)(OSSL_RECORD_LAYER *rl, BIO *bio);
+
+    /*
+     * TODO(RECLAYER): Remove these. These function pointers are temporary hacks
+     * during the record layer refactoring. They need to be removed before the
+     * refactor is complete.
+     */
+    int (*read_n)(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
+                  int clearold, size_t *readbytes);
+    SSL3_BUFFER *(*get0_rbuf)(OSSL_RECORD_LAYER *rl);
+    unsigned char *(*get0_packet)(OSSL_RECORD_LAYER *rl);
+    void (*set0_packet)(OSSL_RECORD_LAYER *rl, unsigned char *packet,
+                        size_t packetlen);
+    size_t (*get_packet_length)(OSSL_RECORD_LAYER *rl);
+    void (*reset_packet_length)(OSSL_RECORD_LAYER *rl);
 };
+
+
+/* Standard built-in record methods */
+extern const OSSL_RECORD_METHOD ossl_tls_record_method;
+extern const OSSL_RECORD_METHOD ossl_dtls_record_method;

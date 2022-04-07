@@ -152,8 +152,7 @@ void SSL_set_default_read_buffer_len(SSL *s, size_t len)
 
     if (sc == NULL)
         return;
-
-    SSL3_BUFFER_set_default_len(RECORD_LAYER_get_rbuf(&sc->rlayer), len);
+    SSL3_BUFFER_set_default_len(sc->rrlmethod->get0_rbuf(sc->rrl), len);
 }
 
 const char *SSL_rstate_string_long(const SSL *s)
@@ -194,186 +193,6 @@ const char *SSL_rstate_string(const SSL *s)
     }
 }
 
-/*
- * Return values are as per SSL_read()
- */
-int ssl3_read_n(SSL_CONNECTION *s, size_t n, size_t max, int extend,
-                int clearold, size_t *readbytes)
-{
-    /*
-     * If extend == 0, obtain new n-byte packet; if extend == 1, increase
-     * packet by another n bytes. The packet will be in the sub-array of
-     * s->rlayer.rbuf.buf specified by s->rlayer.packet and
-     * s->rlayer.packet_length. (If s->rlayer.read_ahead is set, 'max' bytes may
-     * be stored in rbuf [plus s->rlayer.packet_length bytes if extend == 1].)
-     * if clearold == 1, move the packet to the start of the buffer; if
-     * clearold == 0 then leave any old packets where they were
-     */
-    size_t len, left, align = 0;
-    unsigned char *pkt;
-    SSL3_BUFFER *rb;
-
-    if (n == 0)
-        return 0;
-
-    rb = &s->rlayer.rbuf;
-    if (rb->buf == NULL)
-        if (!ssl3_setup_read_buffer(s)) {
-            /* SSLfatal() already called */
-            return -1;
-        }
-
-    left = rb->left;
-#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
-    align = (size_t)rb->buf + SSL3_RT_HEADER_LENGTH;
-    align = SSL3_ALIGN_PAYLOAD - 1 - ((align - 1) % SSL3_ALIGN_PAYLOAD);
-#endif
-
-    if (!extend) {
-        /* start with empty packet ... */
-        if (left == 0)
-            rb->offset = align;
-        else if (align != 0 && left >= SSL3_RT_HEADER_LENGTH) {
-            /*
-             * check if next packet length is large enough to justify payload
-             * alignment...
-             */
-            pkt = rb->buf + rb->offset;
-            if (pkt[0] == SSL3_RT_APPLICATION_DATA
-                && (pkt[3] << 8 | pkt[4]) >= 128) {
-                /*
-                 * Note that even if packet is corrupted and its length field
-                 * is insane, we can only be led to wrong decision about
-                 * whether memmove will occur or not. Header values has no
-                 * effect on memmove arguments and therefore no buffer
-                 * overrun can be triggered.
-                 */
-                memmove(rb->buf + align, pkt, left);
-                rb->offset = align;
-            }
-        }
-        s->rlayer.packet = rb->buf + rb->offset;
-        s->rlayer.packet_length = 0;
-        /* ... now we can act as if 'extend' was set */
-    }
-
-    len = s->rlayer.packet_length;
-    pkt = rb->buf + align;
-    /*
-     * Move any available bytes to front of buffer: 'len' bytes already
-     * pointed to by 'packet', 'left' extra ones at the end
-     */
-    if (s->rlayer.packet != pkt && clearold == 1) {
-        memmove(pkt, s->rlayer.packet, len + left);
-        s->rlayer.packet = pkt;
-        rb->offset = len + align;
-    }
-
-    /*
-     * For DTLS/UDP reads should not span multiple packets because the read
-     * operation returns the whole packet at once (as long as it fits into
-     * the buffer).
-     */
-    if (SSL_CONNECTION_IS_DTLS(s)) {
-        if (left == 0 && extend)
-            return 0;
-        if (left > 0 && n > left)
-            n = left;
-    }
-
-    /* if there is enough in the buffer from a previous read, take some */
-    if (left >= n) {
-        s->rlayer.packet_length += n;
-        rb->left = left - n;
-        rb->offset += n;
-        *readbytes = n;
-        return 1;
-    }
-
-    /* else we need to read more data */
-
-    if (n > rb->len - rb->offset) {
-        /* does not happen */
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return -1;
-    }
-
-    /*
-     * Ktls always reads full records.
-     * Also, we always act like read_ahead is set for DTLS.
-     */
-    if (!BIO_get_ktls_recv(s->rbio) && !s->rlayer.read_ahead
-        && !SSL_CONNECTION_IS_DTLS(s)) {
-        /* ignore max parameter */
-        max = n;
-    } else {
-        if (max < n)
-            max = n;
-        if (max > rb->len - rb->offset)
-            max = rb->len - rb->offset;
-    }
-
-    while (left < n) {
-        size_t bioread = 0;
-        int ret;
-
-        /*
-         * Now we have len+left bytes at the front of s->s3.rbuf.buf and
-         * need to read in more until we have len+n (up to len+max if
-         * possible)
-         */
-
-        clear_sys_error();
-        if (s->rbio != NULL) {
-            s->rwstate = SSL_READING;
-            ret = BIO_read(s->rbio, pkt + len + left, max - left);
-            if (ret >= 0)
-                bioread = ret;
-            if (ret <= 0
-                    && !BIO_should_retry(s->rbio)
-                    && BIO_eof(s->rbio)) {
-                if (s->options & SSL_OP_IGNORE_UNEXPECTED_EOF) {
-                    SSL_set_shutdown(SSL_CONNECTION_GET_SSL(s),
-                                     SSL_RECEIVED_SHUTDOWN);
-                    s->s3.warn_alert = SSL_AD_CLOSE_NOTIFY;
-                } else {
-                    SSLfatal(s, SSL_AD_DECODE_ERROR,
-                             SSL_R_UNEXPECTED_EOF_WHILE_READING);
-                }
-            }
-        } else {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_READ_BIO_NOT_SET);
-            ret = -1;
-        }
-
-        if (ret <= 0) {
-            rb->left = left;
-            if ((s->mode & SSL_MODE_RELEASE_BUFFERS) != 0
-                && !SSL_CONNECTION_IS_DTLS(s))
-                if (len + left == 0)
-                    ssl3_release_read_buffer(s);
-            return ret;
-        }
-        left += bioread;
-        /*
-         * reads should *never* span multiple packets for DTLS because the
-         * underlying transport protocol is message oriented as opposed to
-         * byte oriented as in the TLS case.
-         */
-        if (SSL_CONNECTION_IS_DTLS(s)) {
-            if (n > left)
-                n = left;       /* makes the while condition false */
-        }
-    }
-
-    /* done reading, now the book-keeping */
-    rb->offset += n;
-    rb->left = left - n;
-    s->rlayer.packet_length += n;
-    s->rwstate = SSL_NOTHING;
-    *readbytes = n;
-    return 1;
-}
 
 /*
  * Call this to write data in records of type 'type' It will return <= 0 if
@@ -1321,7 +1140,7 @@ int ssl3_read_bytes(SSL *ssl, int type, int *recvd_type, unsigned char *buf,
 
     is_tls13 = SSL_CONNECTION_IS_TLS13(s);
 
-    rbuf = &s->rlayer.rbuf;
+    rbuf = s->rrlmethod->get0_rbuf(s->rrl);
 
     if (!SSL3_BUFFER_is_initialised(rbuf)) {
         /* Not initialized yet */
