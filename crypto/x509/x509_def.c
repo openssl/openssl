@@ -42,6 +42,11 @@ const char *X509_get_default_cert_uri_env(void)
     return X509_CERT_URI_EVP;
 }
 
+const char *X509_get_default_cert_path_env(void)
+{
+    return X509_CERT_PATH_EVP;
+}
+
 const char *X509_get_default_cert_dir_env(void)
 {
     return X509_CERT_DIR_EVP;

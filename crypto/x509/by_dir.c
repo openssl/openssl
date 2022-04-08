@@ -88,15 +88,14 @@ static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
     switch (cmd) {
     case X509_L_ADD_DIR:
         if (argl == X509_FILETYPE_DEFAULT) {
-            const char *dir = ossl_safe_getenv(X509_get_default_cert_dir_env());
+            /* If SSL_CERT_PATH is provided and non-empty, use that. */
+            const char *dir = ossl_safe_getenv(X509_get_default_cert_path_env());
 
-            /*
-             * If SSL_CERT_DIR seems to specify a URI, don't process it as a
-             * directory.
-             */
-            if (dir != NULL && ossl_is_uri(dir))
-                return 0;
+            /* Fallback to SSL_CERT_DIR. */
+            if (dir == NULL)
+                dir = ossl_safe_getenv(X509_get_default_cert_dir_env());
 
+            /* Fallback to built-in default. */
             if (dir == NULL)
                 dir = X509_get_default_cert_dir();
 

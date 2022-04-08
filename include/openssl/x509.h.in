@@ -495,6 +495,7 @@ const char *X509_get_default_cert_uri(void);
 const char *X509_get_default_cert_dir(void);
 const char *X509_get_default_cert_file(void);
 const char *X509_get_default_cert_uri_env(void);
+const char *X509_get_default_cert_path_env(void);
 const char *X509_get_default_cert_dir_env(void);
 const char *X509_get_default_cert_file_env(void);
 const char *X509_get_default_private_dir(void);
