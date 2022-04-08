@@ -188,6 +188,13 @@ OpenSSL 3.1
 
    *Hugo Landau*
 
+ * Support for loading root certificates from the Windows certificate store
+   has been added. The support is in the form of a store which recognises
+   the URI string of `capi://`. This store is enabled by default and can
+   be disabled using the new compile-time option `no-capistore`.
+
+   *Hugo Landau*
+
 OpenSSL 3.0
 -----------
 

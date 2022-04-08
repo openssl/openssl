@@ -12,3 +12,6 @@
 #endif
 
 STORE("file", "yes", ossl_file_store_functions)
+#ifndef OPENSSL_NO_CAPISTORE
+STORE("capi", "no", ossl_capi_store_functions)
+#endif

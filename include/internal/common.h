@@ -14,6 +14,9 @@
 # include <stdlib.h>
 # include <string.h>
 # include "internal/e_os.h" /* To get strncasecmp() on Windows */
+# include "crypto/ctype.h" /* ossl_isalnum */
+# include "openssl/configuration.h"
+
 # include "internal/nelem.h"
 
 #ifdef NDEBUG
@@ -73,7 +76,11 @@ __owur static ossl_inline int ossl_assert_int(int expr, const char *exprstr,
 #  define CTLOG_FILE              "OSSL$DATAROOT:[000000]ct_log_list.cnf"
 # endif
 
-#define X509_CERT_URI            ""
+#ifndef OPENSSL_NO_CAPISTORE
+# define X509_CERT_URI            "capi://"
+#else
+# define X509_CERT_URI            ""
+#endif
 
 # define X509_CERT_URI_EVP        "SSL_CERT_URI"
 # define X509_CERT_DIR_EVP        "SSL_CERT_DIR"
