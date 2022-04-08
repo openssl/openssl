@@ -73,12 +73,14 @@ APP_CONN *new_conn(SSL_CTX *ctx, const char *hostname)
 
     if (BIO_get_ssl(out, &ssl) == 0) {
         BIO_free_all(out);
+        free(conn);
         return NULL;
     }
 
     buf = BIO_new(BIO_f_buffer());
     if (buf == NULL) {
         BIO_free_all(out);
+        free(conn);
         return NULL;
     }
 
