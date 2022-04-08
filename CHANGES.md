@@ -179,6 +179,15 @@ OpenSSL 3.1
 
    *Hugo Landau*
 
+ * The `SSL_CERT_URI` environment variable has been added, which can be used
+   to specify a default URI for certificate stores. Previously, the
+   `SSL_CERT_DIR` environment variable was used for this purpose, and could
+   accept either a URI or a delimiter-separated list of paths. This usage is now
+   deprecated; to specify a delimiter-separated list of paths, use
+   `SSL_CERT_DIR`, and to specify a URI, use `SSL_CERT_URI`.
+
+   *Hugo Landau*
+
 OpenSSL 3.0
 -----------
 

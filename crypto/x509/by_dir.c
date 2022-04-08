@@ -90,11 +90,17 @@ static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
         if (argl == X509_FILETYPE_DEFAULT) {
             const char *dir = ossl_safe_getenv(X509_get_default_cert_dir_env());
 
-            if (dir)
-                ret = add_cert_dir(ld, dir, X509_FILETYPE_PEM);
-            else
-                ret = add_cert_dir(ld, X509_get_default_cert_dir(),
-                                   X509_FILETYPE_PEM);
+            /*
+             * If SSL_CERT_DIR seems to specify a URI, don't process it as a
+             * directory.
+             */
+            if (dir != NULL && ossl_is_uri(dir))
+                return 0;
+
+            if (dir == NULL)
+                dir = X509_get_default_cert_dir();
+
+            ret = add_cert_dir(ld, dir, X509_FILETYPE_PEM);
             if (!ret) {
                 ERR_raise(ERR_LIB_X509, X509_R_LOADING_CERT_DIR);
             }

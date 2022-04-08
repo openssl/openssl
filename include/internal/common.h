@@ -13,8 +13,7 @@
 
 # include <stdlib.h>
 # include <string.h>
-
-# include "internal/e_os.h" /* ossl_inline in many files */
+# include "internal/e_os.h" /* To get strncasecmp() on Windows */
 # include "internal/nelem.h"
 
 #ifdef NDEBUG
@@ -74,6 +73,9 @@ __owur static ossl_inline int ossl_assert_int(int expr, const char *exprstr,
 #  define CTLOG_FILE              "OSSL$DATAROOT:[000000]ct_log_list.cnf"
 # endif
 
+#define X509_CERT_URI            ""
+
+# define X509_CERT_URI_EVP        "SSL_CERT_URI"
 # define X509_CERT_DIR_EVP        "SSL_CERT_DIR"
 # define X509_CERT_FILE_EVP       "SSL_CERT_FILE"
 # define CTLOG_FILE_EVP           "CTLOG_FILE"
@@ -110,6 +112,17 @@ static ossl_inline int ossl_is_absolute_path(const char *path)
         return 1;
 # endif
     return path[0] == '/';
+}
+
+static ossl_inline int ossl_is_uri(const char *s)
+{
+    const char *x;
+    for (x=s; ossl_isalnum(*x); ++x);
+#ifdef _WIN32
+    if (x-s <= 1)
+        return 0;
+#endif
+    return x > s && HAS_PREFIX(x, "://");
 }
 
 #endif
