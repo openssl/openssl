@@ -2775,6 +2775,10 @@ DEPEND[html/man3/X509_get0_uids.html]=man3/X509_get0_uids.pod
 GENERATE[html/man3/X509_get0_uids.html]=man3/X509_get0_uids.pod
 DEPEND[man/man3/X509_get0_uids.3]=man3/X509_get0_uids.pod
 GENERATE[man/man3/X509_get0_uids.3]=man3/X509_get0_uids.pod
+DEPEND[html/man3/X509_get_default_cert_file.html]=man3/X509_get_default_cert_file.pod
+GENERATE[html/man3/X509_get_default_cert_file.html]=man3/X509_get_default_cert_file.pod
+DEPEND[man/man3/X509_get_default_cert_file.3]=man3/X509_get_default_cert_file.pod
+GENERATE[man/man3/X509_get_default_cert_file.3]=man3/X509_get_default_cert_file.pod
 DEPEND[html/man3/X509_get_extension_flags.html]=man3/X509_get_extension_flags.pod
 GENERATE[html/man3/X509_get_extension_flags.html]=man3/X509_get_extension_flags.pod
 DEPEND[man/man3/X509_get_extension_flags.3]=man3/X509_get_extension_flags.pod
@@ -3441,6 +3445,7 @@ html/man3/X509_get0_distinguishing_id.html \
 html/man3/X509_get0_notBefore.html \
 html/man3/X509_get0_signature.html \
 html/man3/X509_get0_uids.html \
+html/man3/X509_get_default_cert_file.html \
 html/man3/X509_get_extension_flags.html \
 html/man3/X509_get_pubkey.html \
 html/man3/X509_get_serialNumber.html \
@@ -4040,6 +4045,7 @@ man/man3/X509_get0_distinguishing_id.3 \
 man/man3/X509_get0_notBefore.3 \
 man/man3/X509_get0_signature.3 \
 man/man3/X509_get0_uids.3 \
+man/man3/X509_get_default_cert_file.3 \
 man/man3/X509_get_extension_flags.3 \
 man/man3/X509_get_pubkey.3 \
 man/man3/X509_get_serialNumber.3 \
