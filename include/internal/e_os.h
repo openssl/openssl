@@ -113,7 +113,7 @@
         * definitions at link-time.  This header defines WspiapiLoad() as an
         * __inline function.  https://quality.embarcadero.com/browse/RSP-33806
         */
-#    if !defined(__BORLANDC__) || !defined(__clang__)
+#    if (!defined(__BORLANDC__) || !defined(__clang__)) && !defined(_WIN32_WCE)
 #     include <wspiapi.h>
 #    endif
        /* yes, they have to be #included prior to <windows.h> */
