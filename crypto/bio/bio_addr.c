@@ -238,7 +238,7 @@ static int addr_strings(const BIO_ADDR *ap, int numeric,
             } else
 # endif
             {
-                ERR_raise_data(ERR_LIB_BIO, ERR_R_SYS_LIB, gai_strerror(ret));
+                ERR_raise_data(ERR_LIB_BIO, ERR_R_SYS_LIB, gai_strerrorW(ret));
             }
             return 0;
         }
@@ -748,7 +748,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
             }
 # endif
             ERR_raise_data(ERR_LIB_BIO, ERR_R_SYS_LIB,
-                           gai_strerror(old_ret ? old_ret : gai_ret));
+                           gai_strerrorW(old_ret ? old_ret : gai_ret));
             break;
         }
     } else {
