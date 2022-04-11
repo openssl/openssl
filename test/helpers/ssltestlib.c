@@ -1055,11 +1055,29 @@ int create_ssl_objects(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
  * attempt could be restarted by a subsequent call to this function.
  */
 int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
-                               int read)
+                               int read, int listen)
 {
-    int retc = -1, rets = -1, err, abortctr = 0;
+    int retc = -1, rets = -1, err, abortctr = 0, ret = 0;
     int clienterr = 0, servererr = 0;
     int isdtls = SSL_is_dtls(serverssl);
+#ifndef OPENSSL_NO_SOCK
+    BIO_ADDR *peer = NULL;
+
+    if (listen) {
+        if (!isdtls) {
+            TEST_error("DTLSv1_listen requested for non-DTLS object\n");
+            return 0;
+        }
+        peer = BIO_ADDR_new();
+        if (!TEST_ptr(peer))
+            return 0;
+    }
+#else
+    if (listen) {
+        TEST_error("DTLSv1_listen requested in a no-sock build\n");
+        return 0;
+    }
+#endif
 
     do {
         err = SSL_ERROR_WANT_WRITE;
@@ -1076,13 +1094,29 @@ int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
             clienterr = 1;
         }
         if (want != SSL_ERROR_NONE && err == want)
-            return 0;
+            goto err;
 
         err = SSL_ERROR_WANT_WRITE;
         while (!servererr && rets <= 0 && err == SSL_ERROR_WANT_WRITE) {
-            rets = SSL_accept(serverssl);
-            if (rets <= 0)
-                err = SSL_get_error(serverssl, rets);
+#ifndef OPENSSL_NO_SOCK
+            if (listen) {
+                rets = DTLSv1_listen(serverssl, peer);
+                if (rets < 0) {
+                    err = SSL_ERROR_SSL;
+                } else if (rets == 0) {
+                    err = SSL_ERROR_WANT_READ;
+                } else {
+                    /* Success - stop listening and call SSL_accept from now on */
+                    listen = 0;
+                    rets = 0;
+                }
+            } else
+#endif
+            {
+                rets = SSL_accept(serverssl);
+                if (rets <= 0)
+                    err = SSL_get_error(serverssl, rets);
+            }
         }
 
         if (!servererr && rets <= 0
@@ -1094,9 +1128,9 @@ int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
             servererr = 1;
         }
         if (want != SSL_ERROR_NONE && err == want)
-            return 0;
+            goto err;
         if (clienterr && servererr)
-            return 0;
+            goto err;
         if (isdtls && read) {
             unsigned char buf[20];
 
@@ -1105,20 +1139,20 @@ int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
                 if (SSL_read(serverssl, buf, sizeof(buf)) > 0) {
                     /* We don't expect this to succeed! */
                     TEST_info("Unexpected SSL_read() success!");
-                    return 0;
+                    goto err;
                 }
             }
             if (retc > 0 && rets <= 0) {
                 if (SSL_read(clientssl, buf, sizeof(buf)) > 0) {
                     /* We don't expect this to succeed! */
                     TEST_info("Unexpected SSL_read() success!");
-                    return 0;
+                    goto err;
                 }
             }
         }
         if (++abortctr == MAXLOOPS) {
             TEST_info("No progress made");
-            return 0;
+            goto err;
         }
         if (isdtls && abortctr <= 50 && (abortctr % 10) == 0) {
             /*
@@ -1130,7 +1164,12 @@ int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
         }
     } while (retc <=0 || rets <= 0);
 
-    return 1;
+    ret = 1;
+ err:
+#ifndef OPENSSL_NO_SOCK
+    BIO_ADDR_free(peer);
+#endif
+    return ret;
 }
 
 /*
@@ -1143,7 +1182,7 @@ int create_ssl_connection(SSL *serverssl, SSL *clientssl, int want)
     unsigned char buf;
     size_t readbytes;
 
-    if (!create_bare_ssl_connection(serverssl, clientssl, want, 1))
+    if (!create_bare_ssl_connection(serverssl, clientssl, want, 1, 0))
         return 0;
 
     /*
