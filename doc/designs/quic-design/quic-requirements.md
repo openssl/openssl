@@ -80,7 +80,7 @@ OMC Blog post requirements
 
 The OMC additionally published a
 [blog post](https://www.openssl.org/blog/blog/2021/11/25/openssl-update/) which
-also contained somerequirements regarding QUIC. Statements from that blog post
+also contained some requirements regarding QUIC. Statements from that blog post
 have been extracted, paraphrased and summarised here as requirements:
 
 * The objective is to have APIs that allow applications to support any of our
