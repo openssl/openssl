@@ -19,6 +19,23 @@ typedef enum OPTION_choice {
     OPT_PROV_ENUM
 } OPTION_CHOICE;
 
+static int check_num(const char *s, const int is_hex)
+{
+    int i;
+    /*
+     * It would make sense to use ossl_isxdigit and ossl_isdigit here,
+     * but ossl_ctype_check is a local symbol in libcrypto.so.
+     */
+    if (is_hex) {
+        for (i = 0; ('0' <= s[i] && s[i] <= '9')
+                    || ('A' <= s[i] && s[i] <= 'F')
+                    || ('a' <= s[i] && s[i] <= 'f'); i++);
+    } else {
+        for (i = 0;  '0' <= s[i] && s[i] <= '9'; i++);
+    }
+    return s[i] == 0;
+}
+
 const OPTIONS prime_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] [number...]\n"},
 
@@ -117,12 +134,10 @@ opthelp:
         OPENSSL_free(s);
     } else {
         for ( ; *argv; argv++) {
-            int r;
+            int r = check_num(argv[0], hex);
 
-            if (hex)
-                r = BN_hex2bn(&bn, argv[0]);
-            else
-                r = BN_dec2bn(&bn, argv[0]);
+            if (r)
+                r = hex ? BN_hex2bn(&bn, argv[0]) : BN_dec2bn(&bn, argv[0]);
 
             if (!r) {
                 BIO_printf(bio_err, "Failed to process value (%s)\n", argv[0]);
