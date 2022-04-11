@@ -563,6 +563,10 @@ DEPEND[html/man3/BIO_ctrl.html]=man3/BIO_ctrl.pod
 GENERATE[html/man3/BIO_ctrl.html]=man3/BIO_ctrl.pod
 DEPEND[man/man3/BIO_ctrl.3]=man3/BIO_ctrl.pod
 GENERATE[man/man3/BIO_ctrl.3]=man3/BIO_ctrl.pod
+DEPEND[html/man3/BIO_dgram.html]=man3/BIO_dgram.pod
+GENERATE[html/man3/BIO_dgram.html]=man3/BIO_dgram.pod
+DEPEND[man/man3/BIO_dgram.3]=man3/BIO_dgram.pod
+GENERATE[man/man3/BIO_dgram.3]=man3/BIO_dgram.pod
 DEPEND[html/man3/BIO_f_base64.html]=man3/BIO_f_base64.pod
 GENERATE[html/man3/BIO_f_base64.html]=man3/BIO_f_base64.pod
 DEPEND[man/man3/BIO_f_base64.3]=man3/BIO_f_base64.pod
@@ -2872,6 +2876,7 @@ html/man3/BIO_ADDR.html \
 html/man3/BIO_ADDRINFO.html \
 html/man3/BIO_connect.html \
 html/man3/BIO_ctrl.html \
+html/man3/BIO_dgram.html \
 html/man3/BIO_f_base64.html \
 html/man3/BIO_f_buffer.html \
 html/man3/BIO_f_cipher.html \
@@ -3467,6 +3472,7 @@ man/man3/BIO_ADDR.3 \
 man/man3/BIO_ADDRINFO.3 \
 man/man3/BIO_connect.3 \
 man/man3/BIO_ctrl.3 \
+man/man3/BIO_dgram.3 \
 man/man3/BIO_f_base64.3 \
 man/man3/BIO_f_buffer.3 \
 man/man3/BIO_f_cipher.3 \
