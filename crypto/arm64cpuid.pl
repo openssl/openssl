@@ -84,7 +84,7 @@ _armv8_pmull_probe:
 .type	_armv8_sm4_probe,%function
 _armv8_sm4_probe:
 	AARCH64_VALID_CALL_TARGET
-	.long	0xcec08400	// sm4e	v0.4s, v0.4s
+	.inst	0xcec08400	// sm4e	v0.4s, v0.4s
 	ret
 .size	_armv8_sm4_probe,.-_armv8_sm4_probe
 
@@ -92,7 +92,7 @@ _armv8_sm4_probe:
 .type	_armv8_sha512_probe,%function
 _armv8_sha512_probe:
 	AARCH64_VALID_CALL_TARGET
-	.long	0xcec08000	// sha512su0	v0.2d,v0.2d
+	.inst	0xcec08000	// sha512su0	v0.2d,v0.2d
 	ret
 .size	_armv8_sha512_probe,.-_armv8_sha512_probe
 
@@ -100,7 +100,7 @@ _armv8_sha512_probe:
 .type	_armv8_eor3_probe,%function
 _armv8_eor3_probe:
 	AARCH64_VALID_CALL_TARGET
-	.long	0xce010800	// eor3	v0.16b, v0.16b, v1.16b, v2.16b
+	.inst	0xce010800	// eor3	v0.16b, v0.16b, v1.16b, v2.16b
 	ret
 .size	_armv8_eor3_probe,.-_armv8_eor3_probe
 
@@ -116,7 +116,7 @@ _armv8_cpuid_probe:
 .type	_armv8_sm3_probe,%function
 _armv8_sm3_probe:
 	AARCH64_VALID_CALL_TARGET
-	.long	0xce63c004	// sm3partw1 v4.4s, v0.4s, v3.4s
+	.inst	0xce63c004	// sm3partw1 v4.4s, v0.4s, v3.4s
 	ret
 .size	_armv8_sm3_probe,.-_armv8_sm3_probe
 
