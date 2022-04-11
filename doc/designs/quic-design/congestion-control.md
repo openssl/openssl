@@ -61,8 +61,22 @@ Exemptions
 ----------
 To facilitate probing and to avoid having to always special-case
 probing packets when considering congestion on sending, the
-`set_exemption()` function allows setting number of packets that
-are allowed to be sent overriding the eventual congestion state.
+`set_exemption()` function allows setting a number of packets that are
+allowed to be sent even when forbidden by the eventual congestion state.
+
+The exemptions must be used if and only if a packet (or multiple packets)
+has to be sent as required by the protocol regardless of the congestion state.
+
+Paths
+-----
+
+Initially the design expects that only a single path per-connection is
+actively sending data. In future when multiple active paths sending data
+shall be supported the instances of `OSSL_CC_DATA` would be per-path.
+
+There might need to be further adjustments needed in that case. However
+at least initially this API is intended to be internal to the
+OpenSSL library allowing any necessary changes of the API.
 
 Appendix A
 ----------
@@ -150,12 +164,13 @@ struct ossl_cc_method_st {
      * Returns number of bytes allowed to be sent.
      * |time_since_last_send| is time since last send operation
      * in microseconds.
-     * |time_valid| is 1 if the |time_since_last_send| is
-     * valid, 0 otherwise.
+     * |time_valid| is 1 if the |time_since_last_send| holds
+     * a meaningful value, 0 otherwise.
      */
     size_t (*get_send_allowance)(OSSL_CC_DATA *ccdata,
                                  uint64_t time_since_last_send,
                                  int time_valid);
+
     /*
      * Returns the maximum number of bytes allowed to be in flight.
      */
@@ -177,7 +192,8 @@ struct ossl_cc_method_st {
      * 0RTT data was rejected.
      * |num_retransmittable_bytes| is the number of bytes
      * of the invalidated data.
-     * Returns 1 if sending is unblocked, 0 otherwise.
+     * Returns 1 if sending is unblocked (can_send returns 1), 0
+     * otherwise.
      */
     int (*on_data_invalidated)(OSSL_CC_DATA *ccdata,
                                size_t num_retransmittable_bytes);
@@ -188,40 +204,37 @@ struct ossl_cc_method_st {
      * |largest_pn_acked| is the largest packet number of the acked
      * packets.
      * |num_retransmittable_bytes| is the number of retransmittable
-     * packet bytes that were acked.
-     * |smoothed_rtt| is the smoothed round trip time of the
-     * connection in microseconds.
-     * Returns 1 if sending is unblocked, 0 otherwise.
+     * packet bytes that were newly acked.
+     * Returns 1 if sending is unblocked (can_send returns 1), 0
+     * otherwise.
      */
     int (*on_data_acked)(OSSL_CC_DATA *ccdata,
                          uint64_t time_now,
                          uint64_t last_pn_acked,
-                         size_t num_retransmittable_bytes,
-                         uint64_t smoothed_rtt);
+                         size_t num_retransmittable_bytes);
 
     /*
      * To be called when sent data is considered lost.
      * |largest_pn_lost| is the largest packet number of the lost
      * packets.
-     * |largest_pn_sent| is the largest packet number of the sent
-     * packets.
+     * |largest_pn_sent| is the largest packet number sent on this
+     * connection.
      * |num_retransmittable_bytes| is the number of retransmittable
-     * packet bytes that are considered lost.
+     * packet bytes that are newly considered lost.
      * |persistent_congestion| is 1 if the congestion is considered
-     * persistent (i.e., the number of probes exceeded the persistent
-     * congestion threshold), 0 otherwise.
-     * Returns 1 if this is considered a new congestion event,
-     * 0 otherwise.
+     * persistent (see RFC 9002 Section 7.6), 0 otherwise.
      */
-    int (*on_data_lost)(OSSL_CC_DATA *ccdata,
-                        uint64_t largest_pn_lost,
-                        uint64_t largest_pn_sent,
-                        size_t num_retransmittable_bytes,
-                        int persistent_congestion);
+    void (*on_data_lost)(OSSL_CC_DATA *ccdata,
+                         uint64_t largest_pn_lost,
+                         uint64_t largest_pn_sent,
+                         size_t num_retransmittable_bytes,
+                         int persistent_congestion);
 
     /*
-     * To be called when all recently considered lost data was actually
-     * acknowledged.
+     * To be called when all lost data from the previous call to
+     * on_data_lost() was actually acknowledged.
+     * This reverts the size of the congestion window to the state
+     * before the on_data_lost() call.
      * Returns 1 if sending is unblocked, 0 otherwise.
      */
     int (*on_spurious_congestion_event)(OSSL_CC_DATA *ccdata);
