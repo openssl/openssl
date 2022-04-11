@@ -15,7 +15,7 @@ clean:
 	rm -f $(TESTS) *.o
 
 test: all
-	for x in $(TESTS); do echo "$$x"; ./$$x | grep -q '</html>' || { echo >&2 'Error'; exit 1; }; done
+	for x in $(TESTS); do echo "$$x"; LD_LIBRARY_PATH="$$(pwd)/.." ./$$x | grep -q '</html>' || { echo >&2 'Error'; exit 1; }; done
 
 ddd-06-mem-uv: ddd-06-mem-uv.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o "$@" "$<" $(LDLIBS) -luv
