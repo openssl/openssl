@@ -1,0 +1,34 @@
+Field Type: characteristic-two-field
+Basis Type: ppBasis
+Polynomial:
+    01:00:00:00:00:00:00:00:00:00:00:00:00:00:00:
+    00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:
+    00:00:00:00:00:00:00:08:07
+A:   
+    00:fd:0d:69:31:49:a1:18:f6:51:e6:dc:e6:80:20:
+    85:37:7e:5f:88:2d:1b:51:0b:44:16:00:74:c1:28:
+    80:78:36:5a:03:96:c8:e6:81
+B:   
+    00:bd:db:97:e5:55:a5:0a:90:8e:43:b0:1c:79:8e:
+    a5:da:a6:78:8f:1e:a2:79:4e:fc:f5:71:66:b8:c1:
+    40:39:60:1e:55:82:73:40:be
+Generator (uncompressed):
+    04:19:7b:07:84:5e:9b:e2:d9:6a:db:0f:5f:3c:7f:
+    2c:ff:bd:7a:3e:b8:b6:fe:c3:5c:7f:d6:7f:26:dd:
+    f6:28:5a:64:4f:74:0a:26:14:e1:9f:be:b7:6e:0d:
+    a1:71:51:7e:cf:40:1b:50:28:9b:f0:14:10:32:88:
+    52:7a:9b:41:6a:10:5e:80:26:0b:54:9f:dc:1b:92:
+    c0:3b
+Order: 
+    01:01:d5:56:57:2a:ab:ac:80:01:01:d5:56:57:2a:
+    ab:ac:80:01:02:2d:5c:91:dd:17:3f:8f:b5:61:da:
+    68:99:16:44:43:05:1d
+Cofactor:  65070 (0xfe2e)
+-----BEGIN EC PARAMETERS-----
+MIH3AgEBMCUGByqGSM49AQIwGgICATAGCSqGSM49AQIDAzAJAgEBAgECAgELMFAE
+Jv0NaTFJoRj2Uebc5oAghTd+X4gtG1ELRBYAdMEogHg2WgOWyOaBBCa925flVaUK
+kI5DsBx5jqXapniPHqJ5Tvz1cWa4wUA5YB5VgnNAvgRNBBl7B4Rem+LZatsPXzx/
+LP+9ej64tv7DXH/Wfybd9ihaZE90CiYU4Z++t24NoXFRfs9AG1Aom/AUEDKIUnqb
+QWoQXoAmC1Sf3BuSwDsCJQEB1VZXKqusgAEB1VZXKqusgAECLVyR3Rc/j7Vh2miZ
+FkRDBR0CAwD+Lg==
+-----END EC PARAMETERS-----

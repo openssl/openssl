@@ -28,7 +28,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
           versions \
           aborttest test_test \
           sanitytest rsa_complex exdatatest bntest \
-          ectest ecstresstest ecdsatest gmdifftest pbelutest ideatest \
+          ectest ec_comp_test ecstresstest ecdsatest gmdifftest pbelutest ideatest \
           md2test \
           hmactest \
           rc2test rc4test rc5test \
@@ -83,6 +83,10 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   SOURCE[ectest]=ectest.c
   INCLUDE[ectest]=../include
   DEPEND[ectest]=../libcrypto libtestutil.a
+
+  SOURCE[ec_comp_test]=ec_comp_test.c
+  INCLUDE[ec_comp_test]=../include
+  DEPEND[ec_comp_test]=../libcrypto libtestutil.a
 
   SOURCE[ecstresstest]=ecstresstest.c
   INCLUDE[ecstresstest]=../include

@@ -1,0 +1,5 @@
+ASN1 OID: prime256v1
+NIST CURVE: P-256
+-----BEGIN EC PARAMETERS-----
+BggqhkjOPQMBBw==
+-----END EC PARAMETERS-----
