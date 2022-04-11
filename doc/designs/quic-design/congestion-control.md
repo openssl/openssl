@@ -59,6 +59,7 @@ The congestion control does not produce any timer events by itself.
 
 Exemptions
 ----------
+
 To facilitate probing and to avoid having to always special-case
 probing packets when considering congestion on sending, the
 `set_exemption()` function allows setting a number of packets that are
