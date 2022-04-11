@@ -43,7 +43,7 @@ static int test_quic_write_read(void)
             || !TEST_true(create_ssl_objects(sctx, cctx, &serverquic, &clientquic,
                                              NULL, NULL))
             || !TEST_true(create_bare_ssl_connection(serverquic, clientquic,
-                                                     SSL_ERROR_NONE, 0)))
+                                                     SSL_ERROR_NONE, 0, 0)))
         goto end;
 
     for (j = 0; j < 2; j++) {
