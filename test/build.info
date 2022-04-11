@@ -58,7 +58,7 @@ IF[{- !$disabled{tests} -}]
           recordlentest drbgtest rand_status_test sslbuffertest \
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
           http_test servername_test ocspapitest fatalerrtest tls13ccstest \
-          sysdefaulttest errtest ssl_ctx_test \
+          sysdefaulttest errtest ssl_ctx_test build_wincrypt_test \
           context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
           keymgmt_internal_test hexstr_test provider_status_test defltfips_test \
           bio_readbuffer_test user_property_test pkcs7_test upcallstest \
@@ -918,6 +918,10 @@ ENDIF
   SOURCE[ssl_ctx_test]=ssl_ctx_test.c
   INCLUDE[ssl_ctx_test]=../include ../apps/include
   DEPEND[ssl_ctx_test]=../libcrypto ../libssl libtestutil.a
+
+  SOURCE[build_wincrypt_test]=build_wincrypt_test.c
+  INCLUDE[build_wincrypt_test]=../include
+  DEPEND[build_wincrypt_test]=../libssl ../libcrypto
 
 {-
    use File::Spec::Functions;
