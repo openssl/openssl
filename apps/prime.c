@@ -22,8 +22,10 @@ typedef enum OPTION_choice {
 static int check_num(const char *s, const int is_hex)
 {
     int i;
-    // It would make sense to use ossl_isxdigit and ossl_isdigit here,
-    // but ossl_ctype_check is a local symbol in libcrypto.so
+    /* 
+     * It would make sense to use ossl_isxdigit and ossl_isdigit here,
+     * but ossl_ctype_check is a local symbol in libcrypto.so.
+     */
     if (is_hex) {
         for (i = 0; ('0' <= s[i] && s[i] <= '9')
                     || ('A' <= s[i] && s[i] <= 'F')
