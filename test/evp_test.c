@@ -1428,6 +1428,7 @@ static int mac_test_run_mac(EVP_TEST *t)
     const OSSL_PARAM *defined_params =
         EVP_MAC_settable_ctx_params(expected->mac);
     int xof;
+    int reinit = 1;
 
     if (expected->alg == NULL)
         TEST_info("Trying the EVP_MAC %s test", expected->mac_name);
@@ -1538,6 +1539,7 @@ static int mac_test_run_mac(EVP_TEST *t)
             goto err;
         }
     }
+ retry:
     if (!EVP_MAC_update(ctx, expected->input, expected->input_len)) {
         t->err = "MAC_UPDATE_ERROR";
         goto err;
@@ -1571,6 +1573,25 @@ static int mac_test_run_mac(EVP_TEST *t)
             t->err = "TEST_MAC_ERR";
             goto err;
         }
+    }
+    if (reinit--) {
+        OSSL_PARAM ivparams[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+
+        /* If the MAC uses IV, we have to set it again */
+        if (expected->iv != NULL) {
+            ivparams[0] =
+                OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_IV,
+                                                  expected->iv,
+                                                  expected->iv_len);
+            ivparams[1] = OSSL_PARAM_construct_end();
+        }
+        ERR_set_mark();
+        if (EVP_MAC_init(ctx, NULL, 0, ivparams)) {
+            ERR_clear_last_mark();
+            goto retry;
+        }
+        /* If reinitialization fails, it is unsupported by the algorithm */
+        ERR_pop_to_mark();
     }
     t->err = NULL;
 
