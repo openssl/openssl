@@ -33,7 +33,6 @@
 #include "testutil.h"
 #include "internal/nelem.h"
 #include "crypto/bn_dh.h"   /* _bignum_ffdhe2048_p */
-#include "../e_os.h"        /* strcasecmp */
 
 static OSSL_LIB_CTX *libctx = NULL;
 static OSSL_PROVIDER *nullprov = NULL;
@@ -478,7 +477,7 @@ err:
 
 static int name_cmp(const char * const *a, const char * const *b)
 {
-    return strcasecmp(*a, *b);
+    return OPENSSL_strcasecmp(*a, *b);
 }
 
 static void collect_cipher_names(EVP_CIPHER *cipher, void *cipher_names_list)

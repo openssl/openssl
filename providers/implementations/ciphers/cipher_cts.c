@@ -46,7 +46,6 @@
  *      Otherwise it is the same as CS2.
  */
 
-#include "e_os.h" /* strcasecmp */
 #include <openssl/core_names.h>
 #include "prov/ciphercommon.h"
 #include "internal/nelem.h"
@@ -92,7 +91,7 @@ int ossl_cipher_cbc_cts_mode_name2id(const char *name)
     size_t i;
 
     for (i = 0; i < OSSL_NELEM(cts_modes); ++i) {
-        if (strcasecmp(name, cts_modes[i].name) == 0)
+        if (OPENSSL_strcasecmp(name, cts_modes[i].name) == 0)
             return (int)cts_modes[i].id;
     }
     return -1;
