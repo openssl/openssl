@@ -14,7 +14,7 @@
 /* We need to use some engine deprecated APIs */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
-#include "internal/e_os.h" /* for stat and strncasecmp */
+#include "internal/e_os.h" /* for stat */
 #include <string.h>
 #include <sys/stat.h>
 #include <ctype.h>
@@ -1459,7 +1459,8 @@ static int file_name_check(OSSL_STORE_LOADER_CTX *ctx, const char *name)
     /*
      * First, check the basename
      */
-    if (strncasecmp(name, ctx->_.dir.search_name, len) != 0 || name[len] != '.')
+    if (OPENSSL_strncasecmp(name, ctx->_.dir.search_name, len) != 0
+        || name[len] != '.')
         return 0;
     p = &name[len + 1];
 

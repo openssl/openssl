@@ -148,7 +148,8 @@ static int ssl_match_option(SSL_CONF_CTX *cctx, const ssl_flag_tbl *tbl,
     if (namelen == -1) {
         if (strcmp(tbl->name, name))
             return 0;
-    } else if (tbl->namelen != namelen || strncasecmp(tbl->name, name, namelen))
+    } else if (tbl->namelen != namelen
+               || OPENSSL_strncasecmp(tbl->name, name, namelen))
         return 0;
     ssl_set_option(cctx, tbl->name_flags, tbl->option_value, onoff);
     return 1;
@@ -232,8 +233,8 @@ static int cmd_ECDHParameters(SSL_CONF_CTX *cctx, const char *value)
 
     /* Ignore values supported by 1.0.2 for the automatic selection */
     if ((cctx->flags & SSL_CONF_FLAG_FILE)
-            && (strcasecmp(value, "+automatic") == 0
-                || strcasecmp(value, "automatic") == 0))
+            && (OPENSSL_strcasecmp(value, "+automatic") == 0
+                || OPENSSL_strcasecmp(value, "automatic") == 0))
         return 1;
     if ((cctx->flags & SSL_CONF_FLAG_CMDLINE) &&
         strcmp(value, "auto") == 0)
@@ -815,7 +816,7 @@ static int ssl_conf_cmd_skip_prefix(SSL_CONF_CTX *cctx, const char **pcmd)
             strncmp(*pcmd, cctx->prefix, cctx->prefixlen))
             return 0;
         if (cctx->flags & SSL_CONF_FLAG_FILE &&
-            strncasecmp(*pcmd, cctx->prefix, cctx->prefixlen))
+            OPENSSL_strncasecmp(*pcmd, cctx->prefix, cctx->prefixlen))
             return 0;
         *pcmd += cctx->prefixlen;
     } else if (cctx->flags & SSL_CONF_FLAG_CMDLINE) {
@@ -857,7 +858,7 @@ static const ssl_conf_cmd_tbl *ssl_conf_cmd_lookup(SSL_CONF_CTX *cctx,
                     return t;
             }
             if (cctx->flags & SSL_CONF_FLAG_FILE) {
-                if (t->str_file && strcasecmp(t->str_file, cmd) == 0)
+                if (t->str_file && OPENSSL_strcasecmp(t->str_file, cmd) == 0)
                     return t;
             }
         }

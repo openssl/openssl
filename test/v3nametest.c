@@ -15,10 +15,6 @@
 #include "internal/nelem.h"
 #include "testutil.h"
 
-#ifdef OPENSSL_SYS_WINDOWS
-# define strcasecmp _stricmp
-#endif
-
 static const char *const names[] = {
     "a", "b", ".", "*", "@",
     ".a", "a.", ".b", "b.", ".*", "*.", "*@", "@*", "a@", "@a", "b@", "..",
@@ -287,7 +283,7 @@ static int run_cert(X509 *crt, const char *nameincert,
     int failed = 0;
 
     for (; *pname != NULL; ++pname) {
-        int samename = strcasecmp(nameincert, *pname) == 0;
+        int samename = OPENSSL_strcasecmp(nameincert, *pname) == 0;
         size_t namelen = strlen(*pname);
         char *name = OPENSSL_malloc(namelen + 1);
         int match, ret;
