@@ -98,7 +98,8 @@ static int poly1305_init(void *vmacctx, const unsigned char *key,
         return 0;
     if (key != NULL)
         return poly1305_setkey(ctx, key, keylen);
-    return 1;
+    /* no reinitialization of context with the same key is allowed */
+    return 0;
 }
 
 static int poly1305_update(void *vmacctx, const unsigned char *data,

@@ -122,7 +122,8 @@ static int cmac_init(void *vmacctx, const unsigned char *key,
         return 0;
     if (key != NULL)
         return cmac_setkey(macctx, key, keylen);
-    return 1;
+    /* Reinitialize the CMAC context */
+    return CMAC_Init(macctx->ctx, NULL, 0, NULL, NULL);
 }
 
 static int cmac_update(void *vmacctx, const unsigned char *data,
