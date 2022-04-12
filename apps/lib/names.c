@@ -11,14 +11,11 @@
 #include <openssl/bio.h>
 #include <openssl/safestack.h>
 #include "names.h"
-
-#ifdef _WIN32
-# define strcasecmp _stricmp
-#endif
+#include "internal/e_os.h"
 
 int name_cmp(const char * const *a, const char * const *b)
 {
-    return strcasecmp(*a, *b);
+    return OPENSSL_strcasecmp(*a, *b);
 }
 
 void collect_names(const char *name, void *vdata)

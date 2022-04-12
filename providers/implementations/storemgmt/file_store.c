@@ -9,8 +9,6 @@
 
 /* This file has quite some overlap with engines/e_loader_attic.c */
 
-#include "internal/e_os.h"                /* To get strncasecmp() on Windows */
-
 #include <string.h>
 #include <sys/stat.h>
 #include <ctype.h>  /* isdigit */
@@ -590,7 +588,8 @@ static int file_name_check(struct file_ctx_st *ctx, const char *name)
     /*
      * First, check the basename
      */
-    if (strncasecmp(name, ctx->_.dir.search_name, len) != 0 || name[len] != '.')
+    if (OPENSSL_strncasecmp(name, ctx->_.dir.search_name, len) != 0
+        || name[len] != '.')
         return 0;
     p = &name[len + 1];
 

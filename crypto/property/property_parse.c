@@ -45,7 +45,7 @@ static int match(const char *t[], const char m[], size_t m_len)
 {
     const char *s = *t;
 
-    if (strncasecmp(s, m, m_len) == 0) {
+    if (OPENSSL_strncasecmp(s, m, m_len) == 0) {
         *t = skip_space(s + m_len);
         return 1;
     }

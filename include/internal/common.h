@@ -13,8 +13,8 @@
 
 # include <stdlib.h>
 # include <string.h>
-# include "internal/e_os.h" /* To get strncasecmp() on Windows */
 
+# include "internal/e_os.h" /* ossl_inline in many files */
 # include "internal/nelem.h"
 
 #ifdef NDEBUG
@@ -40,13 +40,13 @@ __owur static ossl_inline int ossl_assert_int(int expr, const char *exprstr,
 #define CHECK_AND_SKIP_PREFIX(str, pre) \
     (HAS_PREFIX(str, pre) ? ((str) += sizeof(pre) - 1, 1) : 0)
 /* Check if the string literal |p| is a case-insensitive prefix of |s| */
-#define HAS_CASE_PREFIX(s, p) (strncasecmp(s, p "", sizeof(p) - 1) == 0)
+#define HAS_CASE_PREFIX(s, p) (OPENSSL_strncasecmp(s, p "", sizeof(p) - 1) == 0)
 /* As before, and if check succeeds, advance |str| past the prefix |pre| */
 #define CHECK_AND_SKIP_CASE_PREFIX(str, pre) \
     (HAS_CASE_PREFIX(str, pre) ? ((str) += sizeof(pre) - 1, 1) : 0)
 /* Check if the string literal |suffix| is a case-insensitive suffix of |str| */
 #define HAS_CASE_SUFFIX(str, suffix) (strlen(str) < sizeof(suffix) - 1 ? 0 : \
-    strcasecmp(str + strlen(str) - sizeof(suffix) + 1, suffix "") == 0)
+    OPENSSL_strcasecmp(str + strlen(str) - sizeof(suffix) + 1, suffix "") == 0)
 
 /*
  * Use this inside a union with the field that needs to be aligned to a
