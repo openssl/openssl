@@ -103,7 +103,6 @@ int ssl3_release_write_buffer(SSL_CONNECTION *s);
 void SSL3_RECORD_clear(SSL3_RECORD *r, size_t);
 void SSL3_RECORD_release(SSL3_RECORD *r, size_t num_recs);
 void SSL3_RECORD_set_seq_num(SSL3_RECORD *r, const unsigned char *seq_num);
-int ssl3_get_record(SSL_CONNECTION *s);
 __owur int ssl3_do_compress(SSL_CONNECTION *ssl, SSL3_RECORD *wr);
 __owur int ssl3_do_uncompress(SSL_CONNECTION *ssl, SSL3_RECORD *rr);
 __owur int ssl3_cbc_remove_padding_and_mac(size_t *reclen,

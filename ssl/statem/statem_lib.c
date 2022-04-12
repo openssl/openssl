@@ -1263,8 +1263,7 @@ int tls_get_message_header(SSL_CONNECTION *s, int *mt)
          * Total message size is the remaining record bytes to read
          * plus the SSL3_HM_HEADER_LENGTH bytes that we already read
          */
-        l = RECORD_LAYER_get_rrec_length(&s->rlayer)
-            + SSL3_HM_HEADER_LENGTH;
+        l = s->rlayer.tlsrecs[0].length + SSL3_HM_HEADER_LENGTH;
         s->s3.tmp.message_size = l;
 
         s->init_msg = s->init_buf->data;

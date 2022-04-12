@@ -72,6 +72,18 @@ typedef struct ssl3_record_st {
     unsigned char seq_num[SEQ_NUM_SIZE];
 } SSL3_RECORD;
 
+typedef struct tls_record_st {
+    void *rechandle;
+    int version;
+    int type;
+    /* The data buffer containing bytes from the record */
+    unsigned char *data;
+    /* Number of remaining to be read in the data buffer */
+    size_t length;
+    /* Offset into the data buffer where to start reading */
+    size_t off;
+} TLS_RECORD;
+
 typedef struct dtls1_bitmap_st {
     /* Track 32 packets on 32-bit systems and 64 - on 64-bit systems */
     unsigned long map;
@@ -171,6 +183,16 @@ typedef struct record_layer_st {
     /* Count of the number of consecutive warning alerts received */
     unsigned int alert_count;
     DTLS_RECORD_LAYER *d;
+
+    /* TODO(RECLAYER): Tidy me up. New fields for record management */
+
+    /* How many records we have read from the record layer */
+    size_t num_recs;
+    /* The next record from the record layer that we need to process */
+    size_t curr_rec;
+    /* Record layer data to be processed */
+    TLS_RECORD tlsrecs[SSL_MAX_PIPELINES];
+
 } RECORD_LAYER;
 
 /*****************************************************************************
@@ -250,3 +272,10 @@ int do_dtls1_write(SSL_CONNECTION *s, int type, const unsigned char *buf,
 void dtls1_reset_seq_numbers(SSL_CONNECTION *s, int rw);
 int dtls_buffer_listen_record(SSL_CONNECTION *s, size_t len, unsigned char *seq,
                               size_t off);
+
+
+# define HANDLE_RLAYER_RETURN(s, ret) \
+    ossl_tls_handle_rlayer_return(s, ret, OPENSSL_FILE, OPENSSL_LINE)
+
+int ossl_tls_handle_rlayer_return(SSL_CONNECTION *s, int ret, char *file,
+                                  int line);
