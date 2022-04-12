@@ -298,10 +298,11 @@ static int kbkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     }
 
     p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_MODE);
-    if (p != NULL && strncasecmp("counter", p->data, p->data_size) == 0) {
+    if (p != NULL
+        && OPENSSL_strncasecmp("counter", p->data, p->data_size) == 0) {
         ctx->mode = COUNTER;
     } else if (p != NULL
-               && strncasecmp("feedback", p->data, p->data_size) == 0) {
+               && OPENSSL_strncasecmp("feedback", p->data, p->data_size) == 0) {
         ctx->mode = FEEDBACK;
     } else if (p != NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_MODE);

@@ -42,10 +42,6 @@
 
 #include "e_ossltest_err.c"
 
-#ifdef _WIN32
-# define strncasecmp _strnicmp
-#endif
-
 /* Engine Id and Name */
 static const char *engine_ossltest_id = "ossltest";
 static const char *engine_ossltest_name = "OpenSSL Test engine support";
@@ -383,7 +379,7 @@ static EVP_PKEY *load_key(ENGINE *eng, const char *key_id, int pub,
     BIO *in;
     EVP_PKEY *key;
 
-    if (strncasecmp(key_id, "ot:", 3) != 0)
+    if (OPENSSL_strncasecmp(key_id, "ot:", 3) != 0)
         return NULL;
     key_id += 3;
 

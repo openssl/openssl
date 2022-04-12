@@ -12,7 +12,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include "../e_os.h" /* strcasecmp */
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/err.h>
@@ -3886,9 +3885,9 @@ void cleanup_tests(void)
     OSSL_LIB_CTX_free(libctx);
 }
 
-#define STR_STARTS_WITH(str, pre) strncasecmp(pre, str, strlen(pre)) == 0
+#define STR_STARTS_WITH(str, pre) OPENSSL_strncasecmp(pre, str, strlen(pre)) == 0
 #define STR_ENDS_WITH(str, pre)                                                \
-strlen(str) < strlen(pre) ? 0 : (strcasecmp(pre, str + strlen(str) - strlen(pre)) == 0)
+strlen(str) < strlen(pre) ? 0 : (OPENSSL_strcasecmp(pre, str + strlen(str) - strlen(pre)) == 0)
 
 static int is_digest_disabled(const char *name)
 {
@@ -3897,31 +3896,31 @@ static int is_digest_disabled(const char *name)
         return 1;
 #endif
 #ifdef OPENSSL_NO_MD2
-    if (strcasecmp(name, "MD2") == 0)
+    if (OPENSSL_strcasecmp(name, "MD2") == 0)
         return 1;
 #endif
 #ifdef OPENSSL_NO_MDC2
-    if (strcasecmp(name, "MDC2") == 0)
+    if (OPENSSL_strcasecmp(name, "MDC2") == 0)
         return 1;
 #endif
 #ifdef OPENSSL_NO_MD4
-    if (strcasecmp(name, "MD4") == 0)
+    if (OPENSSL_strcasecmp(name, "MD4") == 0)
         return 1;
 #endif
 #ifdef OPENSSL_NO_MD5
-    if (strcasecmp(name, "MD5") == 0)
+    if (OPENSSL_strcasecmp(name, "MD5") == 0)
         return 1;
 #endif
 #ifdef OPENSSL_NO_RMD160
-    if (strcasecmp(name, "RIPEMD160") == 0)
+    if (OPENSSL_strcasecmp(name, "RIPEMD160") == 0)
         return 1;
 #endif
 #ifdef OPENSSL_NO_SM3
-    if (strcasecmp(name, "SM3") == 0)
+    if (OPENSSL_strcasecmp(name, "SM3") == 0)
         return 1;
 #endif
 #ifdef OPENSSL_NO_WHIRLPOOL
-    if (strcasecmp(name, "WHIRLPOOL") == 0)
+    if (OPENSSL_strcasecmp(name, "WHIRLPOOL") == 0)
         return 1;
 #endif
     return 0;

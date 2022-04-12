@@ -141,7 +141,8 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
             p--;
         if (p > (*ctx)->entry_name && p[-1] == ';')
             p[-1] = '\0';
-        if (strcasecmp((*ctx)->entry_name, (*ctx)->previous_entry_name) == 0)
+        if (OPENSSL_strcasecmp((*ctx)->entry_name,
+                               (*ctx)->previous_entry_name) == 0)
             goto again;
     }
 #endif

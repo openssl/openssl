@@ -22,7 +22,6 @@
 #include "crypto/ec.h"
 #include "internal/nelem.h"
 #include "ec_local.h"
-#include "e_os.h" /* strcasecmp */
 
 /* functions for EC_GROUP objects */
 
@@ -1581,9 +1580,10 @@ EC_GROUP *EC_GROUP_new_from_params(const OSSL_PARAM params[],
         ERR_raise(ERR_LIB_EC, EC_R_INVALID_FIELD);
         goto err;
     }
-    if (strcasecmp(ptmp->data, SN_X9_62_prime_field) == 0) {
+    if (OPENSSL_strcasecmp(ptmp->data, SN_X9_62_prime_field) == 0) {
         is_prime_field = 1;
-    } else if (strcasecmp(ptmp->data, SN_X9_62_characteristic_two_field) == 0) {
+    } else if (OPENSSL_strcasecmp(ptmp->data,
+                                  SN_X9_62_characteristic_two_field) == 0) {
         is_prime_field = 0;
     } else {
         /* Invalid field */

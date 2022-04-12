@@ -132,7 +132,7 @@ int main (int argc, char *argv[], char *envp[])
         len;
 
     LogMessage ("Enter 'q' or 'Q' to quit ...");
-    while (strcasecmp (TermBuff, "Q")) {
+    while (OPENSSL_strcasecmp (TermBuff, "Q")) {
         /*
         ** Create the terminal socket
         */
