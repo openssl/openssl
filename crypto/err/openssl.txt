@@ -1377,6 +1377,7 @@ SSL_R_INVALID_CT_VALIDATION_TYPE:212:invalid ct validation type
 SSL_R_INVALID_KEY_UPDATE_TYPE:120:invalid key update type
 SSL_R_INVALID_MAX_EARLY_DATA:174:invalid max early data
 SSL_R_INVALID_NULL_CMD_NAME:385:invalid null cmd name
+SSL_R_INVALID_RECORD:317:invalid record
 SSL_R_INVALID_SEQUENCE_NUMBER:402:invalid sequence number
 SSL_R_INVALID_SERVERINFO_DATA:388:invalid serverinfo data
 SSL_R_INVALID_SESSION_ID:999:invalid session id
@@ -1458,6 +1459,7 @@ SSL_R_PSK_NO_CLIENT_CB:224:psk no client cb
 SSL_R_PSK_NO_SERVER_CB:225:psk no server cb
 SSL_R_READ_BIO_NOT_SET:211:read bio not set
 SSL_R_READ_TIMEOUT_EXPIRED:312:read timeout expired
+SSL_R_RECORDS_NOT_RELEASED:321:records not released
 SSL_R_RECORD_LAYER_FAILURE:313:record layer failure
 SSL_R_RECORD_LENGTH_MISMATCH:213:record length mismatch
 SSL_R_RECORD_TOO_SMALL:298:record too small

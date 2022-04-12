@@ -235,13 +235,14 @@ struct ossl_record_method_st {
      */
     int (*read_record)(OSSL_RECORD_LAYER *rl, void **rechandle, int *rversion,
                       int *type, unsigned char **data, size_t *datalen,
-                      uint16_t *epoch, unsigned char *seq_num);
+                      uint16_t *epoch, unsigned char *seq_num,
+                      /* TODO(RECLAYER): Remove me */ SSL_CONNECTION *s);
     /*
      * Release a buffer associated with a record previously read with
      * read_record. Records are guaranteed to be released in the order that they
      * are read.
      */
-    void (*release_record)(OSSL_RECORD_LAYER *rl, void *rechandle);
+    int (*release_record)(OSSL_RECORD_LAYER *rl, void *rechandle);
 
     /*
      * In the event that a fatal error is returned from the functions above then
