@@ -226,7 +226,6 @@ static int test_server_mtu_larger_than_max_fragment_length(void)
     SSL_free(clnt_ssl);
     SSL_free(srvr_ssl);
     SSL_CTX_free(ctx);
-    bio_s_mempacket_test_free();
     return rv;
 }
 
@@ -235,4 +234,9 @@ int setup_tests(void)
     ADD_TEST(run_mtu_tests);
     ADD_TEST(test_server_mtu_larger_than_max_fragment_length);
     return 1;
+}
+
+void cleanup_tests(void)
+{
+    bio_s_mempacket_test_free();
 }
