@@ -39,6 +39,7 @@ static OSSL_FUNC_mac_final_fn siphash_final;
 struct siphash_data_st {
     void *provctx;
     SIPHASH siphash;             /* Siphash data */
+    SIPHASH sipcopy;             /* Siphash data copy for reinitialization */
     unsigned int crounds, drounds;
 };
 
@@ -94,9 +95,14 @@ static size_t siphash_size(void *vmacctx)
 static int siphash_setkey(struct siphash_data_st *ctx,
                           const unsigned char *key, size_t keylen)
 {
+    int ret;
+
     if (keylen != SIPHASH_KEY_SIZE)
         return 0;
-    return SipHash_Init(&ctx->siphash, key, crounds(ctx), drounds(ctx));
+    ret = SipHash_Init(&ctx->siphash, key, crounds(ctx), drounds(ctx));
+    if (ret)
+        ctx->sipcopy = ctx->siphash;
+    return ret;
 }
 
 static int siphash_init(void *vmacctx, const unsigned char *key, size_t keylen,
@@ -109,8 +115,10 @@ static int siphash_init(void *vmacctx, const unsigned char *key, size_t keylen,
     /* Without a key, there is not much to do here,
      * The actual initialization happens through controls.
      */
-    if (key == NULL)
+    if (key == NULL) {
+        ctx->siphash = ctx->sipcopy;
         return 1;
+    }
     return siphash_setkey(ctx, key, keylen);
 }
 

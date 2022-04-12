@@ -37,6 +37,7 @@ static OSSL_FUNC_mac_final_fn poly1305_final;
 
 struct poly1305_data_st {
     void *provctx;
+    int updated;
     POLY1305 poly1305;           /* Poly1305 data */
 };
 
@@ -98,7 +99,8 @@ static int poly1305_init(void *vmacctx, const unsigned char *key,
         return 0;
     if (key != NULL)
         return poly1305_setkey(ctx, key, keylen);
-    return 1;
+    /* no reinitialization of context with the same key is allowed */
+    return ctx->updated == 0;
 }
 
 static int poly1305_update(void *vmacctx, const unsigned char *data,
@@ -106,6 +108,7 @@ static int poly1305_update(void *vmacctx, const unsigned char *data,
 {
     struct poly1305_data_st *ctx = vmacctx;
 
+    ctx->updated = 1;
     if (datalen == 0)
         return 1;
 
@@ -121,6 +124,7 @@ static int poly1305_final(void *vmacctx, unsigned char *out, size_t *outl,
 
     if (!ossl_prov_is_running())
         return 0;
+    ctx->updated = 1;
     Poly1305_Final(&ctx->poly1305, out);
     *outl = poly1305_size();
     return 1;
