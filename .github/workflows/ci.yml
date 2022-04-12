@@ -69,6 +69,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+    - name: localegen
+      run: sudo locale-gen tr_TR.UTF-8
     - name: config
       run: CC=gcc ./config --banner=Configured enable-fips --strict-warnings && perl configdata.pm --dump
     - name: make
