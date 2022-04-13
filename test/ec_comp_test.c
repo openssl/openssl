@@ -17,6 +17,7 @@ static EC_builtin_curve *known_curves;
 static const char **known_curve_names;
 static int nid_Oakley_EC2N_3;
 static int nid_Oakley_EC2N_4;
+static const char *data_path = ".";
 
 static const char *const comp_formats[] = {
     "uncompressed",
@@ -157,11 +158,13 @@ static EC_KEY *get_existing_key(size_t curve_i, size_t param_format_i,
     OPENSSL_assert(comp_formats_i[comp_format_i] >= 0);
 
     if (obj_type == OBJ_TYPE_PARAMS)
-        snprintf(filename, sizeof(filename), "../recipes/15-test_ec_comp_data/%s-%s.param",
+        snprintf(filename, sizeof(filename), "%s/%s-%s.param",
+                 data_path,
                  known_curve_names[curve_i],
                  param_formats[param_format_i]);
     else
-        snprintf(filename, sizeof(filename), "../recipes/15-test_ec_comp_data/%s-%s-%s.priv",
+        snprintf(filename, sizeof(filename), "%s/%s-%s-%s.priv",
+                 data_path,
                  known_curve_names[curve_i],
                  param_formats[param_format_i],
                  comp_formats[comp_format_i]);
@@ -171,8 +174,10 @@ static EC_KEY *get_existing_key(size_t curve_i, size_t param_format_i,
         goto fail;
 
     f = fopen(filename, "rb");
-    if (f == NULL)
+    if (f == NULL) {
+        printf("# cannot open '%s'\n", filename);
         return NULL;
+    }
 
     BIO_set_fp(b, f, BIO_NOCLOSE);
 
@@ -442,6 +447,9 @@ static int from_generated_key_test(int curve_i)
 int setup_tests(void)
 {
 #ifndef OPENSSL_NO_EC
+    if (test_get_argument_count() > 0)
+        data_path = test_get_argument(0);
+
     if (init_curves() == 0)
         return 0;
 

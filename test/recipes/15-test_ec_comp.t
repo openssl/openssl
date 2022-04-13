@@ -10,11 +10,11 @@ use strict;
 use warnings;
 
 use File::Spec;
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test qw/:DEFAULT data_file/;
 use OpenSSL::Test::Utils;
 
 setup("test_ec_comp");
 
 plan tests => 1;
 
-ok(run(test(["ec_comp_test"])), "running ec_comp_test");
+ok(run(test(["ec_comp_test", data_file("")])), "running ec_comp_test");
