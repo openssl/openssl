@@ -12,11 +12,11 @@
 
 #ifndef OPENSSL_NO_EC
 
-size_t num_known_curves;
-EC_builtin_curve *known_curves;
-const char **known_curve_names;
-int nid_Oakley_EC2N_3;
-int nid_Oakley_EC2N_4;
+static size_t num_known_curves;
+static EC_builtin_curve *known_curves;
+static const char **known_curve_names;
+static int nid_Oakley_EC2N_3;
+static int nid_Oakley_EC2N_4;
 
 static const char *const comp_formats[] = {
     "uncompressed",
@@ -157,11 +157,11 @@ static EC_KEY *get_existing_key(size_t curve_i, size_t param_format_i,
     OPENSSL_assert(comp_formats_i[comp_format_i] >= 0);
 
     if (obj_type == OBJ_TYPE_PARAMS)
-        snprintf(filename, sizeof(filename), "test/recipes/15-test_ec_comp_data/%s-%s.param",
+        snprintf(filename, sizeof(filename), "../recipes/15-test_ec_comp_data/%s-%s.param",
                  known_curve_names[curve_i],
                  param_formats[param_format_i]);
     else
-        snprintf(filename, sizeof(filename), "test/recipes/15-test_ec_comp_data/%s-%s-%s.priv",
+        snprintf(filename, sizeof(filename), "../recipes/15-test_ec_comp_data/%s-%s-%s.priv",
                  known_curve_names[curve_i],
                  param_formats[param_format_i],
                  comp_formats[comp_format_i]);
