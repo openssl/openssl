@@ -63,4 +63,6 @@ __owur int ossl_lib_ctx_read_lock(OSSL_LIB_CTX *ctx);
 int ossl_lib_ctx_unlock(OSSL_LIB_CTX *ctx);
 int ossl_lib_ctx_is_child(OSSL_LIB_CTX *ctx);
 
+void *ossl_c_locale(void);
+
 #endif
