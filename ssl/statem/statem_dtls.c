@@ -241,7 +241,7 @@ int dtls1_do_write(SSL *s, int type)
 
         ret = dtls1_write_bytes(s, type, &s->init_buf->data[s->init_off], len,
                                 &written);
-        if (ret < 0) {
+        if (ret <= 0) {
             /*
              * might need to update MTU here, but we don't know which
              * previous packet caused the failure -- so can't really
