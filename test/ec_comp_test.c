@@ -87,7 +87,7 @@ fail:
     return 0;
 }
 
-static int should_skip(size_t curve_i, size_t param_format_i, size_t comp_format_i, size_t key_src)
+static int should_skip(size_t curve_i, size_t param_format_i, size_t comp_format_i, int key_src)
 {
     /*
      * If we are loading an existing key it does not make sense to test
@@ -107,7 +107,7 @@ static int should_skip(size_t curve_i, size_t param_format_i, size_t comp_format
 }
 
 static EC_KEY *generate_new_key(size_t curve_i, size_t param_format_i,
-                                size_t comp_format_i, size_t obj_type)
+                                size_t comp_format_i, int obj_type)
 {
     EC_KEY *k = NULL;
     EC_GROUP *g = NULL;
@@ -116,8 +116,10 @@ static EC_KEY *generate_new_key(size_t curve_i, size_t param_format_i,
     int point_form = comp_formats_i[comp_format_i];
 
     g = EC_GROUP_new_by_curve_name(known_curves[curve_i].nid);
-    if (g == NULL)
+    if (g == NULL) {
+        printf("# cannot create EC_GROUP\n");
         goto fail;
+    }
 
     if (asn1_flag >= 0)
         EC_GROUP_set_asn1_flag(g, asn1_flag);
@@ -125,17 +127,23 @@ static EC_KEY *generate_new_key(size_t curve_i, size_t param_format_i,
         EC_GROUP_set_point_conversion_form(g, point_form);
 
     k = EC_KEY_new();
-    if (k == NULL)
+    if (k == NULL) {
+        printf("# cannot create EC_KEY\n");
         goto fail;
+    }
 
-    if (EC_KEY_set_group(k, g) == 0)
+    if (EC_KEY_set_group(k, g) == 0) {
+        printf("# cannot set group\n");
         goto fail;
+    }
 
     EC_GROUP_free(g);
     g = NULL;
 
-    if (EC_KEY_generate_key(k) == 0)
+    if (EC_KEY_generate_key(k) == 0) {
+        printf("# cannot generate key\n");
         goto fail;
+    }
 
     return k;
 
@@ -146,7 +154,7 @@ fail:
 }
 
 static EC_KEY *get_existing_key(size_t curve_i, size_t param_format_i,
-                                size_t comp_format_i, size_t obj_type)
+                                size_t comp_format_i, int obj_type)
 {
     EC_KEY *k = NULL, *res = NULL;
     EC_GROUP *g = NULL;
@@ -170,8 +178,10 @@ static EC_KEY *get_existing_key(size_t curve_i, size_t param_format_i,
                  comp_formats[comp_format_i]);
 
     b = BIO_new(BIO_s_file());
-    if (b == NULL)
+    if (b == NULL) {
+        printf("# cannot create file BIO\n");
         goto fail;
+    }
 
     f = fopen(filename, "rb");
     if (f == NULL) {
@@ -182,21 +192,29 @@ static EC_KEY *get_existing_key(size_t curve_i, size_t param_format_i,
     BIO_set_fp(b, f, BIO_NOCLOSE);
 
     if (obj_type == OBJ_TYPE_PARAMS) {
-        if (PEM_read_bio_ECPKParameters(b, &g, NULL, NULL) == 0)
+        if (PEM_read_bio_ECPKParameters(b, &g, NULL, NULL) == 0) {
+            printf("# cannot read params PEM\n");
             goto fail;
+        }
 
         k = EC_KEY_new();
-        if (k == NULL)
+        if (k == NULL) {
+            printf("# cannot create EC_KEY\n");
             goto fail;
+        }
 
-        if (EC_KEY_set_group(k, g) == 0)
+        if (EC_KEY_set_group(k, g) == 0) {
+            printf("# cannot set group\n");
             goto fail;
+        }
 
         EC_GROUP_free(g);
         g = NULL;
     } else {
-        if (PEM_read_bio_ECPrivateKey(b, &k, NULL, NULL) == 0)
+        if (PEM_read_bio_ECPrivateKey(b, &k, NULL, NULL) == 0) {
+            printf("# cannot read key PEM\n");
             goto fail;
+        }
     }
 
     res = k;
@@ -249,8 +267,8 @@ static int test_reserialize(EC_KEY *k,
                             int comp_format,
                             int new_param_format,
                             int new_comp_format,
-                            size_t key_src,
-                            size_t obj_type)
+                            int key_src,
+                            int obj_type)
 {
     int rv = 0, res_asn1_flag, res_point_form, buf_len;
     unsigned char *buf = NULL, *bufi;
@@ -263,8 +281,10 @@ static int test_reserialize(EC_KEY *k,
      * affect other tests
      */
     k = EC_KEY_dup(k);
-    if (k == NULL)
+    if (k == NULL) {
+        printf("# Cannot dup key\n");
         goto fail;
+    }
 
     if (new_param_format >= 0)
         EC_KEY_set_asn1_flag(k, new_param_format);
@@ -285,17 +305,27 @@ static int test_reserialize(EC_KEY *k,
 
     if (obj_type == OBJ_TYPE_KEY) {
         /* If we are checking a private key: */
-        if (!EC_KEY_check_key(k))
+        if (!EC_KEY_check_key(k)) {
+            printf("# Key did not pass check\n");
             goto fail;
+        }
 
         buf_len = i2d_ECPrivateKey(k, &buf);
-        if (buf_len <= 0 || buf == NULL)
+        if (buf_len <= 0 || buf == NULL) {
+            printf("# Cannot serialize during key reserialization test\n");
+            printf("#   pf=%d cf=%d npf=%d ncf=%d ks=%d\n", param_format, comp_format,
+                   new_param_format, new_comp_format, key_src);
             goto fail;
+        }
 
         bufi = buf;
         k2 = d2i_ECPrivateKey(NULL, (const unsigned char **)&bufi, buf_len);
-        if (k2 == NULL)
+        if (k2 == NULL) {
+            printf("# Cannot deserialize during key reserialization test\n");
+            printf("#   pf=%d cf=%d npf=%d ncf=%d ks=%d\n", param_format, comp_format,
+                   new_param_format, new_comp_format, key_src);
             goto fail;
+        }
 
         /*
          * When we put keys through serialization and then deserialization, they
@@ -306,20 +336,33 @@ static int test_reserialize(EC_KEY *k,
         gref = EC_KEY_get0_group(k2);
     } else {
         buf_len = i2d_ECPKParameters(EC_KEY_get0_group(k), &buf);
-        if (buf_len <= 0 || buf == NULL)
+        if (buf_len <= 0 || buf == NULL) {
+            printf("# Cannot serialize during param reserialization test\n");
+            printf("#   pf=%d cf=%d npf=%d ncf=%d ks=%d\n", param_format, comp_format,
+                   new_param_format, new_comp_format, key_src);
             goto fail;
+        }
 
         bufi = buf;
         gref = g = d2i_ECPKParameters(NULL, (const unsigned char **)&bufi, buf_len);
-        if (gref == NULL)
+        if (gref == NULL) {
+            printf("# Cannot deserialize during param reserialization test\n");
+            printf("#   pf=%d cf=%d npf=%d ncf=%d ks=%d\n", param_format, comp_format,
+                   new_param_format, new_comp_format, key_src);
             goto fail;
+        }
     }
 
     res_asn1_flag = EC_GROUP_get_asn1_flag(gref);
     res_point_form = EC_GROUP_get_point_conversion_form(gref);
 
-    if (!verify_expected(new_param_format, new_comp_format, res_asn1_flag, res_point_form, obj_type))
+    if (!verify_expected(new_param_format, new_comp_format, res_asn1_flag, res_point_form, obj_type)) {
+        printf("# Expectation failed during reserialization test\n");
+        printf("#   pf=%d cf=%d npf=%d ncf=%d ks=%d\n", param_format, comp_format,
+               new_param_format, new_comp_format, key_src);
+        printf("#   res_asn1=%d res_point=%d\n", res_asn1_flag, res_point_form);
         goto fail;
+    }
 
     rv = 1;
 fail:
@@ -333,8 +376,8 @@ fail:
 static int comp_test_actual(size_t curve_i,
                             size_t param_format_i,
                             size_t comp_format_i,
-                            size_t key_src /* KEY_SRC_{EXISTING,GENERATE} */,
-                            size_t obj_type /* OBJ_TYPE_{PARAMS,KEY} */)
+                            int key_src /* KEY_SRC_{EXISTING,GENERATE} */,
+                            int obj_type /* OBJ_TYPE_{PARAMS,KEY} */)
 {
     int rc = 0;
     EC_KEY *k = NULL;
@@ -368,8 +411,15 @@ static int comp_test_actual(size_t curve_i,
         expected_comp_format = POINT_CONVERSION_UNCOMPRESSED;
 
     if (!verify_expected(expected_param_format, expected_comp_format,
-                         res_asn1_flag, res_point_form, obj_type))
+                         res_asn1_flag, res_point_form, obj_type)) {
+        printf("# Expectation failed during initial test\n");
+        printf("#   pfi=%s cfi=%s\n",
+               param_formats[param_format_i], comp_formats[comp_format_i]);
+        printf("#   epf=%d ecf=%d res_asn1=%d res_point=%d o=%d\n",
+               expected_param_format, expected_comp_format,
+               res_asn1_flag, res_point_form, obj_type);
         goto fail;
+    }
 
     /*
      * Test parameter/compression behaviour when round tripping through
@@ -450,8 +500,10 @@ int setup_tests(void)
     if (test_get_argument_count() > 0)
         data_path = test_get_argument(0);
 
-    if (init_curves() == 0)
+    if (init_curves() == 0) {
+        printf("# Failed to initialize curves\n");
         return 0;
+    }
 
     ADD_ALL_TESTS(from_deserialized_params_test, num_known_curves);
     ADD_ALL_TESTS(from_deserialized_key_test, num_known_curves);
