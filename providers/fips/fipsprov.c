@@ -23,6 +23,7 @@
 #include "prov/seeding.h"
 #include "self_test.h"
 #include "crypto/context.h"
+#include "internal/core.h"
 
 static const char FIPS_DEFAULT_PROPERTIES[] = "provider=fips,fips=yes";
 static const char FIPS_UNAPPROVED_PROPERTIES[] = "provider=fips,fips=no";
@@ -35,6 +36,22 @@ static OSSL_FUNC_provider_teardown_fn fips_teardown;
 static OSSL_FUNC_provider_gettable_params_fn fips_gettable_params;
 static OSSL_FUNC_provider_get_params_fn fips_get_params;
 static OSSL_FUNC_provider_query_operation_fn fips_query;
+
+/* Locale object accessor functions */
+#ifdef OPENSSL_SYS_MACOSX
+# include <xlocale.h>
+#else
+# include <locale.h>
+#endif
+
+#if defined OPENSSL_SYS_WINDOWS
+# define locale_t _locale_t
+# define freelocale _free_locale
+#endif
+static locale_t loc;
+
+static int fips_init_casecmp(void);
+static void fips_deinit_casecmp(void);
 
 #define ALGC(NAMES, FUNC, CHECK) { { NAMES, FIPS_DEFAULT_PROPERTIES, FUNC }, CHECK }
 #define ALG(NAMES, FUNC) ALGC(NAMES, FUNC, NULL)
@@ -478,6 +495,23 @@ static const OSSL_ALGORITHM *fips_query(void *provctx, int operation_id,
     return NULL;
 }
 
+void *ossl_c_locale() {
+    return (void *)loc;
+}
+
+static int fips_init_casecmp(void) {
+# ifdef OPENSSL_SYS_WINDOWS
+    loc = _create_locale(LC_COLLATE, "C");
+# else
+    loc = newlocale(LC_COLLATE_MASK, "C", (locale_t) 0);
+# endif
+    return (loc == (locale_t) 0) ? 0 : 1;
+}
+
+static void fips_deinit_casecmp(void) {
+    freelocale(loc);
+}
+
 static void fips_teardown(void *provctx)
 {
     OSSL_LIB_CTX_free(PROV_LIBCTX_OF(provctx));
@@ -490,6 +524,7 @@ static void fips_intern_teardown(void *provctx)
      * We know that the library context is the same as for the outer provider,
      * so no need to destroy it here.
      */
+    fips_deinit_casecmp();
     ossl_prov_ctx_free(provctx);
 }
 
@@ -539,6 +574,8 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
 
     memset(&selftest_params, 0, sizeof(selftest_params));
 
+    if (!fips_init_casecmp())
+        return 0;
     if (!ossl_prov_seeding_from_dispatch(in))
         return 0;
     for (; in->function_id != 0; in++) {
