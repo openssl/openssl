@@ -46,12 +46,12 @@ static const int param_formats_i[] = {
 
 enum {
     KEY_SRC_EXISTING,
-    KEY_SRC_GENERATE,
+    KEY_SRC_GENERATE
 };
 
 enum {
     OBJ_TYPE_PARAMS,
-    OBJ_TYPE_KEY,
+    OBJ_TYPE_KEY
 };
 
 static int init_curves(void)
