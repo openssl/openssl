@@ -12,9 +12,6 @@
 
 #ifndef OPENSSL_NO_EC
 
-/* Define to generate new known results on stderr. */
-/* #define GENERATE_KNOWN_RESULTS */
-
 size_t num_known_curves;
 EC_builtin_curve *known_curves;
 const char **known_curve_names;
@@ -47,1992 +44,15 @@ static const int param_formats_i[] = {
     -1,
 };
 
-struct default_config_st {
-    int asn1_flag, point_form;
-};
-
-struct known_result_st {
-    const char *curve_name;
-    int param_format, comp_format, key_src, res_param_format, res_comp_format;
+enum {
+    KEY_SRC_EXISTING,
+    KEY_SRC_GENERATE,
 };
 
 enum {
-    PARAM_FORMAT_UNSPECIFIED    = -1,
-    PARAM_FORMAT_explicit       = 0,
-    PARAM_FORMAT_named_curve    = OPENSSL_EC_NAMED_CURVE,
+    OBJ_TYPE_PARAMS,
+    OBJ_TYPE_KEY,
 };
-
-enum {
-    COMP_FORMAT_UNSPECIFIED     = -1,
-    COMP_FORMAT_uncompressed    = POINT_CONVERSION_UNCOMPRESSED,
-    COMP_FORMAT_compressed      = POINT_CONVERSION_COMPRESSED,
-    COMP_FORMAT_hybrid          = POINT_CONVERSION_HYBRID,
-};
-
-enum {
-    KEY_SRC_existing,
-    KEY_SRC_generate,
-};
-
-#define KNOWN_RESULT(curve_name, param_format, comp_format, key_src, res_param_format, res_comp_format) \
-    { curve_name,                       \
-      PARAM_FORMAT_##param_format,      \
-      COMP_FORMAT_##comp_format,        \
-      KEY_SRC_##key_src,                \
-      PARAM_FORMAT_##res_param_format,  \
-      COMP_FORMAT_##res_comp_format,    \
-    },
-
-#ifndef GENERATE_KNOWN_RESULTS
-static const struct known_result_st known_results[] = {
-KNOWN_RESULT(               "secp112r1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp112r1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp112r1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp112r1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp112r1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r2",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r2",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r2",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r2",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r2",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r2",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r2",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r2",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r2",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp112r2",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r2",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp112r2",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r2",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp112r2",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r2",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp112r2",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r2",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r2",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r2",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r2",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r2",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r2",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r2",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp112r2",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp128r1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp128r1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp128r1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp128r1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r2",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r2",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r2",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r2",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r2",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r2",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r2",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r2",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r2",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp128r2",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r2",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp128r2",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r2",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp128r2",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r2",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp128r2",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r2",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r2",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r2",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r2",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r2",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r2",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r2",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp128r2",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160k1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160k1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160k1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160k1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160k1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160k1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160k1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160k1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160k1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp160k1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160k1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp160k1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160k1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp160k1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160k1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp160k1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160k1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160k1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160k1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160k1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160k1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160k1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160k1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160k1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp160r1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp160r1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp160r1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp160r1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r2",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r2",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r2",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r2",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r2",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r2",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r2",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r2",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r2",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp160r2",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r2",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp160r2",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r2",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp160r2",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r2",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp160r2",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r2",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r2",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r2",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r2",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r2",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r2",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r2",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp160r2",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp192k1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp192k1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp192k1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp192k1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp192k1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp192k1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp192k1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp192k1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp192k1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp192k1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp192k1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp192k1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp192k1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp192k1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp192k1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp192k1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp192k1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp192k1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp192k1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp192k1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp192k1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp192k1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp192k1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp192k1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224k1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224k1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224k1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224k1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224k1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224k1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224k1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224k1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224k1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp224k1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224k1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp224k1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224k1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp224k1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224k1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp224k1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224k1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224k1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224k1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224k1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224k1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224k1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224k1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224k1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224r1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224r1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224r1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224r1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224r1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224r1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224r1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224r1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224r1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp224r1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224r1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp224r1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224r1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp224r1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224r1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp224r1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224r1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224r1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224r1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224r1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224r1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224r1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224r1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp224r1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp256k1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp256k1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp256k1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp256k1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp256k1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp256k1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp256k1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp256k1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp256k1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp256k1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp256k1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp256k1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp256k1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp256k1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp256k1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp256k1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp256k1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp256k1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp256k1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp256k1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp256k1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp256k1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp256k1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp256k1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp384r1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp384r1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp384r1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp384r1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp384r1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp384r1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp384r1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp384r1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp384r1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp384r1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp384r1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp384r1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp384r1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp384r1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp384r1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp384r1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp384r1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp384r1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp384r1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp384r1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp384r1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp384r1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp384r1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp384r1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp521r1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp521r1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp521r1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp521r1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp521r1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp521r1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp521r1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp521r1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp521r1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp521r1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp521r1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp521r1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp521r1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp521r1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp521r1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "secp521r1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp521r1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp521r1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp521r1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp521r1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp521r1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp521r1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp521r1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "secp521r1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "prime192v1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "prime192v1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "prime192v1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "prime192v1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v2",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v2",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v2",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v2",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v2",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v2",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v2",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v2",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v2",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "prime192v2",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v2",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "prime192v2",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v2",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "prime192v2",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v2",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "prime192v2",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v2",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v2",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v2",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v2",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v2",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v2",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v2",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v2",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v3",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v3",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v3",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v3",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v3",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v3",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v3",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v3",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v3",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "prime192v3",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v3",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "prime192v3",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v3",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "prime192v3",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v3",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "prime192v3",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v3",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v3",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v3",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v3",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v3",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v3",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v3",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime192v3",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "prime239v1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "prime239v1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "prime239v1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "prime239v1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v2",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v2",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v2",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v2",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v2",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v2",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v2",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v2",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v2",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "prime239v2",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v2",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "prime239v2",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v2",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "prime239v2",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v2",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "prime239v2",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v2",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v2",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v2",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v2",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v2",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v2",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v2",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v2",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v3",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v3",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v3",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v3",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v3",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v3",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v3",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v3",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v3",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "prime239v3",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v3",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "prime239v3",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v3",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "prime239v3",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v3",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "prime239v3",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v3",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v3",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v3",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v3",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v3",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v3",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v3",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime239v3",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime256v1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime256v1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime256v1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime256v1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime256v1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime256v1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime256v1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime256v1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime256v1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "prime256v1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime256v1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "prime256v1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime256v1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "prime256v1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime256v1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "prime256v1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime256v1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime256v1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime256v1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime256v1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime256v1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime256v1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime256v1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "prime256v1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect113r1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect113r1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect113r1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect113r1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r2",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r2",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r2",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r2",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r2",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r2",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r2",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r2",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r2",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect113r2",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r2",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect113r2",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r2",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect113r2",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r2",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect113r2",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r2",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r2",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r2",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r2",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r2",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r2",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r2",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect113r2",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect131r1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect131r1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect131r1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect131r1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r2",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r2",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r2",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r2",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r2",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r2",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r2",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r2",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r2",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect131r2",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r2",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect131r2",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r2",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect131r2",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r2",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect131r2",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r2",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r2",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r2",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r2",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r2",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r2",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r2",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect131r2",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163k1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163k1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163k1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163k1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163k1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163k1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163k1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163k1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163k1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect163k1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163k1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect163k1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163k1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect163k1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163k1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect163k1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163k1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163k1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163k1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163k1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163k1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163k1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163k1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163k1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect163r1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect163r1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect163r1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect163r1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r2",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r2",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r2",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r2",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r2",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r2",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r2",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r2",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r2",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect163r2",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r2",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect163r2",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r2",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect163r2",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r2",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect163r2",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r2",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r2",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r2",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r2",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r2",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r2",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r2",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect163r2",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect193r1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect193r1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect193r1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect193r1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r2",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r2",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r2",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r2",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r2",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r2",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r2",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r2",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r2",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect193r2",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r2",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect193r2",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r2",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect193r2",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r2",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect193r2",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r2",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r2",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r2",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r2",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r2",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r2",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r2",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect193r2",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233k1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233k1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233k1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233k1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233k1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233k1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233k1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233k1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233k1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect233k1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233k1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect233k1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233k1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect233k1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233k1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect233k1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233k1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233k1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233k1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233k1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233k1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233k1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233k1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233k1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233r1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233r1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233r1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233r1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233r1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233r1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233r1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233r1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233r1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect233r1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233r1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect233r1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233r1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect233r1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233r1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect233r1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233r1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233r1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233r1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233r1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233r1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233r1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233r1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect233r1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect239k1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect239k1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect239k1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect239k1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect239k1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect239k1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect239k1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect239k1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect239k1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect239k1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect239k1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect239k1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect239k1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect239k1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect239k1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect239k1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect239k1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect239k1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect239k1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect239k1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect239k1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect239k1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect239k1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect239k1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283k1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283k1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283k1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283k1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283k1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283k1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283k1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283k1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283k1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect283k1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283k1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect283k1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283k1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect283k1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283k1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect283k1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283k1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283k1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283k1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283k1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283k1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283k1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283k1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283k1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283r1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283r1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283r1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283r1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283r1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283r1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283r1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283r1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283r1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect283r1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283r1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect283r1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283r1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect283r1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283r1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect283r1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283r1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283r1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283r1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283r1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283r1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283r1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283r1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect283r1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409k1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409k1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409k1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409k1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409k1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409k1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409k1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409k1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409k1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect409k1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409k1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect409k1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409k1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect409k1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409k1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect409k1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409k1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409k1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409k1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409k1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409k1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409k1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409k1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409k1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409r1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409r1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409r1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409r1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409r1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409r1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409r1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409r1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409r1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect409r1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409r1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect409r1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409r1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect409r1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409r1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect409r1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409r1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409r1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409r1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409r1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409r1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409r1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409r1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect409r1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571k1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571k1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571k1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571k1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571k1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571k1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571k1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571k1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571k1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect571k1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571k1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect571k1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571k1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect571k1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571k1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect571k1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571k1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571k1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571k1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571k1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571k1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571k1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571k1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571k1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571r1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571r1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571r1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571r1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571r1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571r1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571r1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571r1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571r1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect571r1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571r1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect571r1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571r1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect571r1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571r1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(               "sect571r1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571r1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571r1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571r1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571r1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571r1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571r1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571r1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(               "sect571r1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2pnb163v1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2pnb163v1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2pnb163v1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2pnb163v1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v2",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v2",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v2",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v2",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v2",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v2",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v2",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v2",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v2",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2pnb163v2",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v2",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2pnb163v2",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v2",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2pnb163v2",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v2",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2pnb163v2",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v2",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v2",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v2",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v2",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v2",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v2",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v2",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v2",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v3",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v3",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v3",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v3",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v3",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v3",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v3",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v3",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v3",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2pnb163v3",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v3",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2pnb163v3",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v3",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2pnb163v3",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v3",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2pnb163v3",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v3",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v3",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v3",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v3",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v3",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v3",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v3",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb163v3",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb176v1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb176v1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb176v1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb176v1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb176v1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb176v1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb176v1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb176v1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb176v1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2pnb176v1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb176v1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2pnb176v1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb176v1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2pnb176v1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb176v1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2pnb176v1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb176v1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb176v1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb176v1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb176v1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb176v1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb176v1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb176v1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb176v1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2tnb191v1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2tnb191v1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2tnb191v1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2tnb191v1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v2",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v2",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v2",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v2",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v2",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v2",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v2",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v2",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v2",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2tnb191v2",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v2",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2tnb191v2",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v2",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2tnb191v2",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v2",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2tnb191v2",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v2",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v2",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v2",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v2",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v2",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v2",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v2",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v2",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v3",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v3",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v3",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v3",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v3",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v3",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v3",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v3",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v3",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2tnb191v3",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v3",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2tnb191v3",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v3",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2tnb191v3",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v3",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2tnb191v3",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v3",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v3",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v3",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v3",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v3",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v3",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v3",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb191v3",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb208w1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb208w1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb208w1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb208w1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb208w1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb208w1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb208w1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb208w1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb208w1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2pnb208w1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb208w1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2pnb208w1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb208w1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2pnb208w1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb208w1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2pnb208w1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb208w1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb208w1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb208w1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb208w1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb208w1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb208w1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb208w1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb208w1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2tnb239v1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2tnb239v1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2tnb239v1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2tnb239v1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v2",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v2",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v2",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v2",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v2",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v2",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v2",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v2",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v2",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2tnb239v2",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v2",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2tnb239v2",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v2",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2tnb239v2",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v2",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2tnb239v2",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v2",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v2",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v2",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v2",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v2",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v2",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v2",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v2",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v3",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v3",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v3",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v3",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v3",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v3",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v3",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v3",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v3",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2tnb239v3",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v3",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2tnb239v3",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v3",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2tnb239v3",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v3",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2tnb239v3",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v3",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v3",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v3",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v3",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v3",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v3",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v3",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb239v3",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb272w1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb272w1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb272w1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb272w1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb272w1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb272w1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb272w1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb272w1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb272w1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2pnb272w1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb272w1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2pnb272w1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb272w1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2pnb272w1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb272w1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2pnb272w1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb272w1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb272w1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb272w1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb272w1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb272w1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb272w1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb272w1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb272w1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb304w1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb304w1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb304w1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb304w1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb304w1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb304w1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb304w1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb304w1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb304w1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2pnb304w1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb304w1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2pnb304w1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb304w1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2pnb304w1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb304w1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2pnb304w1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb304w1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb304w1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb304w1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb304w1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb304w1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb304w1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb304w1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb304w1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb359v1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb359v1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb359v1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb359v1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb359v1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb359v1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb359v1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb359v1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb359v1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2tnb359v1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb359v1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2tnb359v1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb359v1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2tnb359v1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb359v1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2tnb359v1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb359v1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb359v1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb359v1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb359v1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb359v1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb359v1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb359v1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb359v1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb368w1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb368w1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb368w1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb368w1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb368w1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb368w1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb368w1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb368w1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb368w1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2pnb368w1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb368w1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2pnb368w1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb368w1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2pnb368w1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb368w1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2pnb368w1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb368w1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb368w1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb368w1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb368w1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb368w1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb368w1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb368w1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2pnb368w1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb431r1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb431r1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb431r1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb431r1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb431r1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb431r1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb431r1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb431r1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb431r1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2tnb431r1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb431r1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2tnb431r1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb431r1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2tnb431r1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb431r1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(              "c2tnb431r1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb431r1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb431r1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb431r1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb431r1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb431r1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb431r1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb431r1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(              "c2tnb431r1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls3",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls3",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls3",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls3",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls3",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls3",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls3",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls3",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls3",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls3",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls3",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls3",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls3",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls3",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls3",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls3",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls3",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls3",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls3",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls3",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls3",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls3",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls3",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls3",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls4",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls4",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls4",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls4",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls4",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls4",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls4",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls4",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls4",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls4",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls4",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls4",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls4",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls4",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls4",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls4",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls4",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls4",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls4",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls4",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls4",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls4",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls4",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls4",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls5",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls5",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls5",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls5",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls5",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls5",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls5",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls5",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls5",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls5",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls5",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls5",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls5",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls5",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls5",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls5",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls5",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls5",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls5",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls5",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls5",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls5",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls5",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls5",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls6",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls6",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls6",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls6",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls6",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls6",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls6",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls6",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls6",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls6",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls6",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls6",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls6",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls6",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls6",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls6",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls6",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls6",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls6",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls6",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls6",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls6",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls6",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls6",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls7",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls7",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls7",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls7",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls7",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls7",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls7",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls7",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls7",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls7",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls7",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls7",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls7",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls7",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls7",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls7",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls7",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls7",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls7",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls7",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls7",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls7",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls7",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls7",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls8",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls8",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls8",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls8",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls8",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls8",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls8",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls8",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls8",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls8",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls8",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls8",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls8",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls8",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls8",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls8",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls8",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls8",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls8",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls8",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls8",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls8",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls8",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls8",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls9",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls9",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls9",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls9",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls9",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls9",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls9",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls9",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls9",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls9",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls9",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls9",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls9",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls9",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls9",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls9",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls9",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls9",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls9",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls9",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls9",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls9",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls9",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(  "wap-wsg-idm-ecid-wtls9",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls10",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls10",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls10",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls10",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls10",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls10",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls10",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls10",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls10",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls10",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls10",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls10",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls10",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls10",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls10",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls10",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls10",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls10",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls10",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls10",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls10",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls10",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls10",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls10",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls11",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls11",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls11",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls11",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls11",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls11",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls11",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls11",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls11",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls11",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls11",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls11",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls11",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls11",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls11",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls11",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls11",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls11",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls11",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls11",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls11",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls11",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls11",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls11",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls12",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls12",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls12",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls12",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls12",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls12",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls12",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls12",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls12",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls12",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls12",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls12",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls12",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls12",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls12",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls12",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls12",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls12",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls12",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls12",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls12",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls12",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls12",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT( "wap-wsg-idm-ecid-wtls12",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160r1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160r1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160r1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160r1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160r1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160r1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160r1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160r1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160r1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP160r1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160r1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP160r1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160r1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP160r1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160r1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP160r1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160r1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160r1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160r1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160r1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160r1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160r1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160r1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160r1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160t1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160t1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160t1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160t1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160t1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160t1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160t1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160t1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160t1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP160t1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160t1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP160t1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160t1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP160t1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160t1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP160t1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160t1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160t1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160t1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160t1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160t1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160t1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160t1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP160t1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192r1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192r1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192r1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192r1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192r1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192r1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192r1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192r1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192r1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP192r1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192r1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP192r1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192r1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP192r1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192r1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP192r1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192r1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192r1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192r1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192r1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192r1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192r1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192r1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192r1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192t1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192t1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192t1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192t1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192t1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192t1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192t1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192t1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192t1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP192t1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192t1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP192t1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192t1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP192t1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192t1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP192t1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192t1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192t1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192t1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192t1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192t1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192t1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192t1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP192t1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224r1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224r1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224r1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224r1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224r1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224r1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224r1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224r1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224r1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP224r1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224r1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP224r1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224r1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP224r1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224r1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP224r1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224r1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224r1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224r1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224r1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224r1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224r1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224r1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224r1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224t1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224t1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224t1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224t1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224t1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224t1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224t1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224t1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224t1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP224t1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224t1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP224t1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224t1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP224t1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224t1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP224t1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224t1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224t1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224t1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224t1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224t1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224t1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224t1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP224t1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256r1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256r1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256r1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256r1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256r1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256r1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256r1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256r1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256r1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP256r1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256r1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP256r1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256r1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP256r1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256r1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP256r1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256r1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256r1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256r1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256r1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256r1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256r1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256r1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256r1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256t1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256t1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256t1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256t1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256t1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256t1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256t1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256t1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256t1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP256t1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256t1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP256t1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256t1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP256t1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256t1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP256t1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256t1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256t1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256t1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256t1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256t1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256t1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256t1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP256t1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320r1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320r1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320r1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320r1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320r1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320r1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320r1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320r1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320r1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP320r1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320r1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP320r1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320r1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP320r1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320r1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP320r1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320r1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320r1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320r1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320r1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320r1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320r1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320r1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320r1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320t1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320t1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320t1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320t1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320t1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320t1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320t1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320t1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320t1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP320t1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320t1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP320t1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320t1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP320t1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320t1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP320t1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320t1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320t1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320t1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320t1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320t1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320t1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320t1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP320t1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384r1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384r1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384r1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384r1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384r1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384r1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384r1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384r1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384r1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP384r1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384r1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP384r1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384r1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP384r1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384r1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP384r1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384r1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384r1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384r1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384r1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384r1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384r1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384r1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384r1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384t1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384t1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384t1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384t1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384t1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384t1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384t1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384t1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384t1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP384t1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384t1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP384t1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384t1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP384t1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384t1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP384t1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384t1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384t1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384t1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384t1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384t1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384t1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384t1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP384t1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512r1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512r1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512r1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512r1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512r1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512r1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512r1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512r1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512r1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP512r1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512r1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP512r1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512r1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP512r1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512r1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP512r1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512r1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512r1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512r1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512r1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512r1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512r1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512r1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512r1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512t1",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512t1",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512t1",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512t1",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512t1",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512t1",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512t1",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512t1",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512t1",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP512t1",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512t1",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP512t1",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512t1",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP512t1",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512t1",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(         "brainpoolP512t1",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512t1",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512t1",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512t1",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512t1",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512t1",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512t1",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512t1",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(         "brainpoolP512t1",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(                     "SM2",     named_curve,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(                     "SM2",     named_curve,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(                     "SM2",     named_curve,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(                     "SM2",     named_curve,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(                     "SM2",     named_curve,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(                     "SM2",     named_curve,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(                     "SM2",     named_curve,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(                     "SM2",     named_curve,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(                     "SM2",        explicit,    uncompressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(                     "SM2",        explicit,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(                     "SM2",        explicit,      compressed, existing,       explicit, uncompressed)
-KNOWN_RESULT(                     "SM2",        explicit,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(                     "SM2",        explicit,          hybrid, existing,       explicit, uncompressed)
-KNOWN_RESULT(                     "SM2",        explicit,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(                     "SM2",        explicit,     UNSPECIFIED, existing,       explicit, uncompressed)
-KNOWN_RESULT(                     "SM2",        explicit,     UNSPECIFIED, generate,    named_curve, uncompressed)
-KNOWN_RESULT(                     "SM2",     UNSPECIFIED,    uncompressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(                     "SM2",     UNSPECIFIED,    uncompressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(                     "SM2",     UNSPECIFIED,      compressed, existing,    named_curve, uncompressed)
-KNOWN_RESULT(                     "SM2",     UNSPECIFIED,      compressed, generate,    named_curve, uncompressed)
-KNOWN_RESULT(                     "SM2",     UNSPECIFIED,          hybrid, existing,    named_curve, uncompressed)
-KNOWN_RESULT(                     "SM2",     UNSPECIFIED,          hybrid, generate,    named_curve, uncompressed)
-KNOWN_RESULT(                     "SM2",     UNSPECIFIED,     UNSPECIFIED, existing,    named_curve, uncompressed)
-KNOWN_RESULT(                     "SM2",     UNSPECIFIED,     UNSPECIFIED, generate,    named_curve, uncompressed)
-};
-#endif
-
-#ifdef GENERATE_KNOWN_RESULTS
-static const char *decode_asn1_flag(int f) {
-    switch (f) {
-        case OPENSSL_EC_NAMED_CURVE:
-            return "named_curve";
-        case 0:
-            return "explicit";
-        default:
-            return "?";
-    }
-}
-
-static const char *decode_point_form(int f) {
-    switch (f) {
-        case POINT_CONVERSION_UNCOMPRESSED:
-            return "uncompressed";
-        case POINT_CONVERSION_COMPRESSED:
-            return "compressed";
-        case POINT_CONVERSION_HYBRID:
-            return "hybrid";
-        default:
-            return "?";
-    }
-}
-#endif
 
 static int init_curves(void)
 {
@@ -2066,100 +86,18 @@ fail:
     return 0;
 }
 
-static EC_KEY *generate_new_key(size_t curve_i, int asn1_flag, int point_form, struct default_config_st *dcfg)
+static int should_skip(size_t curve_i, size_t param_format_i, size_t comp_format_i, size_t key_src)
 {
-    EC_KEY *k;
-    EC_GROUP *g;
+    /*
+     * If we are loading an existing key it does not make sense to test
+     * unspecified formats, since we know what format is used.
+     */
+    if (   key_src == KEY_SRC_EXISTING
+        && (   comp_formats_i[comp_format_i] < 0
+            || param_formats_i[param_format_i] < 0))
+        return 1;
 
-    g = EC_GROUP_new_by_curve_name(known_curves[curve_i].nid);
-    if (g == NULL)
-        return NULL;
-
-#if 0
-    if (asn1_flag >= 0)
-        EC_GROUP_set_asn1_flag(g, asn1_flag);
-    if (point_form >= 0)
-        EC_GROUP_set_point_conversion_form(g, point_form);
-#endif
-
-    k = EC_KEY_new();
-    if (k == NULL) {
-        EC_GROUP_free(g);
-        return NULL;
-    }
-
-    if (EC_KEY_set_group(k, g) == 0) {
-        EC_KEY_free(k);
-        EC_GROUP_free(g);
-        return NULL;
-    }
-
-    EC_GROUP_free(g);
-
-    if (EC_KEY_generate_key(k) == 0) {
-        EC_KEY_free(k);
-        return NULL;
-    }
-
-    dcfg->asn1_flag  = EC_GROUP_get_asn1_flag(EC_KEY_get0_group(k));
-    dcfg->point_form = EC_GROUP_get_point_conversion_form(EC_KEY_get0_group(k));
-
-    if (asn1_flag >= 0)
-        EC_KEY_set_asn1_flag(k, asn1_flag);
-    if (point_form >= 0)
-        EC_KEY_set_conv_form(k, point_form);
-
-    return k;
-}
-
-static EC_KEY *get_existing_key(size_t curve_i, size_t param_format_i, size_t comp_format_i, struct default_config_st *dcfg)
-{
-    EC_KEY *k = NULL;
-    FILE *f = NULL;
-    BIO *b = NULL;
-    char filename[256];
-    snprintf(filename, sizeof(filename), "test/recipes/15-test_ec_comp_data/%s-%s-%s.priv",
-        known_curve_names[curve_i],
-        param_formats_i[param_format_i] < 0 ? "named_curve" : param_formats[param_format_i],
-        comp_formats_i[comp_format_i] < 0 ? "uncompressed" : comp_formats[comp_format_i]);
-
-    b = BIO_new(BIO_s_file());
-    if (b == NULL)
-        goto fail;
-
-    f = fopen(filename, "rb");
-    if (f == NULL) {
-        fprintf(stderr, "# Could not open '%s'\n", filename);
-        return NULL;
-    }
-
-    BIO_set_fp(b, f, BIO_NOCLOSE);
-
-    if (PEM_read_bio_ECPrivateKey(b, &k, NULL, NULL) == 0)
-        goto fail;
-
-    dcfg->asn1_flag  = EC_GROUP_get_asn1_flag(EC_KEY_get0_group(k));
-    dcfg->point_form = EC_GROUP_get_point_conversion_form(EC_KEY_get0_group(k));
-
-    if (param_formats_i[param_format_i] >= 0)
-        EC_KEY_set_asn1_flag(k, param_formats_i[param_format_i]);
-    if (comp_formats_i[comp_format_i] >= 0)
-        EC_KEY_set_conv_form(k, comp_formats_i[comp_format_i]);
-
-    BIO_free(b);
-    fclose(f);
-    return k;
-
-fail:
-    EC_KEY_free(k);
-    BIO_free(b);
-    fclose(f);
-    return NULL;
-    //return generate_new_key(curve_i, asn1_flag, point_form);
-}
-
-static int should_skip(size_t curve_i, size_t param_format_i)
-{
+    /* Skip experimental curves, which behave oddly */
     if (known_curves[curve_i].nid == nid_Oakley_EC2N_3)
         return 1;
     if (known_curves[curve_i].nid == nid_Oakley_EC2N_4)
@@ -2167,134 +105,350 @@ static int should_skip(size_t curve_i, size_t param_format_i)
     return 0;
 }
 
-#ifndef GENERATE_KNOWN_RESULTS
-static int verify_known_result(size_t curve_i, size_t param_format_i, size_t comp_format_i, size_t key_src, struct default_config_st *dcfg)
+static EC_KEY *generate_new_key(size_t curve_i, size_t param_format_i,
+                                size_t comp_format_i, size_t obj_type)
 {
-    size_t i;
+    EC_KEY *k = NULL;
+    EC_GROUP *g = NULL;
 
-    for (i=0; i<OSSL_NELEM(known_results); ++i) {
-        if (strcmp(known_results[i].curve_name, known_curve_names[curve_i]) != 0)
-            continue;
-        if (param_formats_i[param_format_i] != known_results[i].param_format)
-            continue;
-        if (comp_formats_i[comp_format_i] != known_results[i].comp_format)
-            continue;
-        if (key_src != known_results[i].key_src)
-            continue;
+    int asn1_flag = param_formats_i[param_format_i];
+    int point_form = comp_formats_i[comp_format_i];
 
-        break;
+    g = EC_GROUP_new_by_curve_name(known_curves[curve_i].nid);
+    if (g == NULL)
+        goto fail;
+
+    if (asn1_flag >= 0)
+        EC_GROUP_set_asn1_flag(g, asn1_flag);
+    if (point_form >= 0)
+        EC_GROUP_set_point_conversion_form(g, point_form);
+
+    k = EC_KEY_new();
+    if (k == NULL)
+        goto fail;
+
+    if (EC_KEY_set_group(k, g) == 0)
+        goto fail;
+
+    EC_GROUP_free(g);
+    g = NULL;
+
+    if (EC_KEY_generate_key(k) == 0)
+        goto fail;
+
+    return k;
+
+fail:
+    EC_KEY_free(k);
+    EC_GROUP_free(g);
+    return NULL;
+}
+
+static EC_KEY *get_existing_key(size_t curve_i, size_t param_format_i,
+                                size_t comp_format_i, size_t obj_type)
+{
+    EC_KEY *k = NULL, *res = NULL;
+    EC_GROUP *g = NULL;
+    FILE *f = NULL;
+    BIO *b = NULL;
+    char filename[256];
+
+    OPENSSL_assert(param_formats_i[param_format_i] >= 0);
+    OPENSSL_assert(comp_formats_i[comp_format_i] >= 0);
+
+    if (obj_type == OBJ_TYPE_PARAMS)
+        snprintf(filename, sizeof(filename), "test/recipes/15-test_ec_comp_data/%s-%s.param",
+                 known_curve_names[curve_i],
+                 param_formats[param_format_i]);
+    else
+        snprintf(filename, sizeof(filename), "test/recipes/15-test_ec_comp_data/%s-%s-%s.priv",
+                 known_curve_names[curve_i],
+                 param_formats[param_format_i],
+                 comp_formats[comp_format_i]);
+
+    b = BIO_new(BIO_s_file());
+    if (b == NULL)
+        goto fail;
+
+    f = fopen(filename, "rb");
+    if (f == NULL)
+        return NULL;
+
+    BIO_set_fp(b, f, BIO_NOCLOSE);
+
+    if (obj_type == OBJ_TYPE_PARAMS) {
+        if (PEM_read_bio_ECPKParameters(b, &g, NULL, NULL) == 0)
+            goto fail;
+
+        k = EC_KEY_new();
+        if (k == NULL)
+            goto fail;
+
+        if (EC_KEY_set_group(k, g) == 0)
+            goto fail;
+
+        EC_GROUP_free(g);
+        g = NULL;
+    } else {
+        if (PEM_read_bio_ECPrivateKey(b, &k, NULL, NULL) == 0)
+            goto fail;
     }
 
-    if (i >= OSSL_NELEM(known_results)) {
-        fprintf(stderr, "# could not identify known result\n");
-        return 0;
+    res = k;
+    k = NULL;
+fail:
+    EC_GROUP_free(g);
+    EC_KEY_free(k);
+    BIO_free(b);
+    fclose(f);
+    return res;
+}
+
+static int verify_expected(int param_format, int comp_format, int asn1_flag, int point_form, int obj_type)
+{
+    if (obj_type == OBJ_TYPE_KEY) {
+        /* Only makes sense to test comp format on key */
+        if (comp_format >= 0) {
+            /*
+             * If a compression format was specified, it must be used; however
+             * when deserializing conversion to uncompressed always occurs in
+             * 1.1
+             */
+            if (!TEST_int_eq(comp_format, point_form))
+                return 0;
+        } else {
+            /*
+             * If a compression format was not specified, uncompressed should be
+             * default
+             */
+            if (!TEST_int_eq(POINT_CONVERSION_UNCOMPRESSED, point_form))
+                return 0;
+        }
     }
 
-    if (known_results[i].res_param_format != dcfg->asn1_flag) {
-        fprintf(stderr, "# EC parameter format mismatch\n");
-        return 0;
-    }
-
-    if (known_results[i].res_comp_format != dcfg->point_form) {
-        fprintf(stderr, "# EC compression format mismatch\n");
-        return 0;
+    if (param_format >= 0) {
+        /* If a parameter format was specified, it must be used */
+        if (!TEST_int_eq(param_format, asn1_flag))
+            return 0;
+    } else {
+        /* If a parameter format was not specified, expect named curve */
+        if (!TEST_int_eq(OPENSSL_EC_NAMED_CURVE, asn1_flag))
+            return 0;
     }
 
     return 1;
 }
-#endif
 
-/*
- * curve_i: Index into known_curves.
- * param_format_i: 0=Named parameters, 1=Explicit parameters.
- * comp_format_i: Index into comp_formats(_i).
- *   If this exceeds the size of comp_formats, does not configure compression
- *   format.
- * key_src: 0=Deserialize an existing key. 1=Generate a new key.
- */
+static int test_reserialize(EC_KEY *k,
+                            int param_format,
+                            int comp_format,
+                            int new_param_format,
+                            int new_comp_format,
+                            size_t key_src,
+                            size_t obj_type)
+{
+    int rv = 0, res_asn1_flag, res_point_form, buf_len;
+    unsigned char *buf = NULL, *bufi;
+    EC_KEY *k2 = NULL;
+    EC_GROUP *g = NULL;
+    const EC_GROUP *gref = NULL;
+
+    /*
+     * Duplicate k so our changing parameters below does not
+     * affect other tests
+     */
+    k = EC_KEY_dup(k);
+    if (k == NULL)
+        goto fail;
+
+    if (new_param_format >= 0)
+        EC_KEY_set_asn1_flag(k, new_param_format);
+    else
+        new_param_format = param_format;
+
+    if (new_comp_format >= 0)
+        EC_KEY_set_conv_form(k, new_comp_format);
+    else if (key_src == KEY_SRC_GENERATE)
+        /*
+         * If we just generated our key we effectively already set the format,
+         * so we need to expect that rather than the default. Otherwise expect
+         * reversion to uncompressed.
+         */
+        new_comp_format = comp_format;
+    else
+        new_comp_format = POINT_CONVERSION_UNCOMPRESSED;
+
+    if (obj_type == OBJ_TYPE_KEY) {
+        /* If we are checking a private key: */
+        if (!EC_KEY_check_key(k))
+            goto fail;
+
+        buf_len = i2d_ECPrivateKey(k, &buf);
+        if (buf_len <= 0 || buf == NULL)
+            goto fail;
+
+        bufi = buf;
+        k2 = d2i_ECPrivateKey(NULL, (const unsigned char **)&bufi, buf_len);
+        if (k2 == NULL)
+            goto fail;
+
+        /*
+         * When we put keys through serialization and then deserialization, they
+         * always become uncompressed. (The same is not true for parameters,
+         * however.)
+         */
+        new_comp_format = POINT_CONVERSION_UNCOMPRESSED;
+        gref = EC_KEY_get0_group(k2);
+    } else {
+        buf_len = i2d_ECPKParameters(EC_KEY_get0_group(k), &buf);
+        if (buf_len <= 0 || buf == NULL)
+            goto fail;
+
+        bufi = buf;
+        gref = g = d2i_ECPKParameters(NULL, (const unsigned char **)&bufi, buf_len);
+        if (gref == NULL)
+            goto fail;
+    }
+
+    res_asn1_flag = EC_GROUP_get_asn1_flag(gref);
+    res_point_form = EC_GROUP_get_point_conversion_form(gref);
+
+    if (!verify_expected(new_param_format, new_comp_format, res_asn1_flag, res_point_form, obj_type))
+        goto fail;
+
+    rv = 1;
+fail:
+    EC_KEY_free(k2);
+    EC_KEY_free(k);
+    EC_GROUP_free(g);
+    OPENSSL_free(buf);
+    return rv;
+}
+
 static int comp_test_actual(size_t curve_i,
                             size_t param_format_i,
                             size_t comp_format_i,
-                            size_t key_src)
+                            size_t key_src /* KEY_SRC_{EXISTING,GENERATE} */,
+                            size_t obj_type /* OBJ_TYPE_{PARAMS,KEY} */)
 {
     int rc = 0;
     EC_KEY *k = NULL;
-    unsigned char *buf = NULL;
-    int buf_len;
-    struct default_config_st dcfg = {0};
-    char curve_name[256];
+    int expected_param_format, expected_comp_format;
+    int res_asn1_flag, res_point_form;
+    size_t ci, pi;
 
-    if (should_skip(curve_i, param_format_i))
+    if (should_skip(curve_i, param_format_i, comp_format_i, key_src))
         return 1;
 
-    snprintf(curve_name, sizeof(curve_name), "\"%s\"", known_curve_names[curve_i]);
-
-#ifdef GENERATE_KNOWN_RESULTS
-    fprintf(stderr, "# KNOWN_RESULT(%26s,%16s,%16s,%9s,",
-        curve_name, param_formats[param_format_i],
-        comp_formats[comp_format_i], key_src ? "generate" : "existing");
-#endif
-
-    k = (key_src == 0)
+    /* Load or generate key. */
+    k = (key_src == KEY_SRC_EXISTING)
         ? get_existing_key(curve_i,
                            param_format_i,
                            comp_format_i,
-                           &dcfg)
+                           obj_type)
         : generate_new_key(curve_i,
-                           param_formats_i[param_format_i],
-                           comp_formats_i[comp_format_i],
-                           &dcfg);
+                           param_format_i,
+                           comp_format_i,
+                           obj_type);
     if (k == NULL)
-        return 0;
-
-#ifdef GENERATE_KNOWN_RESULTS
-    fprintf(stderr, "    %11s, %8s)\\\n", decode_asn1_flag(dcfg.asn1_flag), decode_point_form(dcfg.point_form));
-#else
-    if (verify_known_result(curve_i, param_format_i, comp_format_i, key_src, &dcfg) == 0)
         goto fail;
-#endif
 
-    buf_len = i2d_ECPrivateKey(k, &buf);
-    if (buf_len == 0)
+    /* Verify param/compression formats on loaded/generated key directly. */
+    res_asn1_flag = EC_GROUP_get_asn1_flag(EC_KEY_get0_group(k));
+    res_point_form = EC_GROUP_get_point_conversion_form(EC_KEY_get0_group(k));
+
+    expected_param_format = param_formats_i[param_format_i];
+    expected_comp_format = comp_formats_i[comp_format_i];
+    if (key_src == KEY_SRC_EXISTING)
+        expected_comp_format = POINT_CONVERSION_UNCOMPRESSED;
+
+    if (!verify_expected(expected_param_format, expected_comp_format,
+                         res_asn1_flag, res_point_form, obj_type))
         goto fail;
+
+    /*
+     * Test parameter/compression behaviour when round tripping through
+     * serialization and deserialization.
+     */
+    /* For each supported compression format (and unspecified) */
+    for (ci=0; ci<OSSL_NELEM(comp_formats_i); ++ci)
+        /* For each of (named parameters, explicit parameters, unspecified) */
+        for (pi=0; pi<OSSL_NELEM(param_formats_i); ++pi)
+            if (!test_reserialize(k, param_formats_i[param_format_i], comp_formats_i[comp_format_i],
+                                  param_formats_i[pi], comp_formats_i[ci], key_src, obj_type))
+                goto fail;
 
     rc = 1;
 fail:
-    OPENSSL_free(buf);
     EC_KEY_free(k);
     return rc;
 }
 
-static int comp_test(void)
+static int from_deserialized_test(int curve_i, int obj_type)
 {
-    size_t curve_i, comp_format_i, param_format_i, key_src;
+    size_t comp_format_i, param_format_i;
 
-    /* For each known curve */
-    for (curve_i=0; curve_i<num_known_curves; ++curve_i)
-        /* For each of (named parameters, explicit parameters, unspecified) */
-        for (param_format_i=0; param_format_i<3; ++param_format_i)
-            /* For each supported compression format (and unspecified) */
-            for (comp_format_i=0;
-                 comp_format_i<OSSL_NELEM(comp_formats);
-                 ++comp_format_i)
-                /* For each of (deserialize a key, generate a key) */
-                for (key_src=0; key_src<2; ++key_src)
-                    if (comp_test_actual(curve_i, param_format_i,
-                                         comp_format_i, key_src) == 0)
-                        return 0;
+    /* For each of (named parameters, explicit parameters, unspecified) */
+    for (param_format_i=0; param_format_i<3; ++param_format_i)
+        /* For each supported compression format (and unspecified) */
+        for (comp_format_i=0;
+             comp_format_i<OSSL_NELEM(comp_formats);
+             ++comp_format_i)
+            if (comp_test_actual(curve_i, param_format_i,
+                                 comp_format_i, KEY_SRC_EXISTING, obj_type) == 0)
+                    return 0;
 
     return 1;
 }
 
+static int from_generated_test(int curve_i, int obj_type)
+{
+    size_t comp_format_i, param_format_i;
+
+    /* For each of (named parameters, explicit parameters, unspecified) */
+    for (param_format_i=0; param_format_i<3; ++param_format_i)
+        /* For each supported compression format (and unspecified) */
+        for (comp_format_i=0;
+             comp_format_i<OSSL_NELEM(comp_formats);
+             ++comp_format_i)
+            if (comp_test_actual(curve_i, param_format_i,
+                                 comp_format_i, KEY_SRC_GENERATE, obj_type) == 0)
+                    return 0;
+
+    return 1;
+}
+
+static int from_deserialized_params_test(int curve_i)
+{
+    return from_deserialized_test(curve_i, OBJ_TYPE_PARAMS);
+}
+
+static int from_deserialized_key_test(int curve_i)
+{
+    return from_deserialized_test(curve_i, OBJ_TYPE_KEY);
+}
+
+static int from_generated_params_test(int curve_i)
+{
+    return from_generated_test(curve_i, OBJ_TYPE_PARAMS);
+}
+
+static int from_generated_key_test(int curve_i)
+{
+    return from_generated_test(curve_i, OBJ_TYPE_KEY);
+}
 #endif
 
 int setup_tests(void)
 {
+#ifndef OPENSSL_NO_EC
     if (init_curves() == 0)
         return 0;
 
-#ifndef OPENSSL_NO_EC
-    ADD_TEST(comp_test);
+    ADD_ALL_TESTS(from_deserialized_params_test, num_known_curves);
+    ADD_ALL_TESTS(from_deserialized_key_test, num_known_curves);
+    ADD_ALL_TESTS(from_generated_params_test, num_known_curves);
+    ADD_ALL_TESTS(from_generated_key_test, num_known_curves);
 #endif
     return 1;
 }
