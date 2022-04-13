@@ -1588,6 +1588,9 @@ static int mac_test_run_mac(EVP_TEST *t)
         ERR_set_mark();
         if (EVP_MAC_init(ctx, NULL, 0, ivparams)) {
             ERR_clear_last_mark();
+            OPENSSL_free(got);
+            got = NULL;
+
             goto retry;
         }
         /* If reinitialization fails, it is unsupported by the algorithm */
