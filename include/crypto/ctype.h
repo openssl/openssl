@@ -80,4 +80,6 @@ int ossl_ascii_isdigit(const char inchar);
 # define ossl_isbase64(c)       (ossl_ctype_check((c), CTYPE_MASK_base64))
 # define ossl_isasn1print(c)    (ossl_ctype_check((c), CTYPE_MASK_asn1print))
 
+int ossl_init_casecmp(void);
+void ossl_deinit_casecmp(void);
 #endif
