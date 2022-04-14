@@ -309,10 +309,8 @@ static int test_d2i_CMS_bio_file_encrypted_data(void)
     ERR_print_errors(err_bio);
     err_buf_len = BIO_get_mem_data(err_bio, &err_buf);
 
-    if (!TEST_ptr_null(err_buf)) {
-        test_printf_stderr("Reported errors:\n%.*s\n", (int)err_buf_len, err_buf);
+    if (!TEST_ptr_null(err_buf))
         goto end;
-    }
 
     ret = 1;
 end:
