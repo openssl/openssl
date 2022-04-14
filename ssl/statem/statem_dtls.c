@@ -116,6 +116,7 @@ int dtls1_do_write(SSL *s, int type)
     size_t curr_mtu;
     int retry = 1;
     size_t len, frag_off, mac_size, blocksize, used_len;
+    unsigned char msg_hdr_backup[DTLS1_HM_HEADER_LENGTH];
 
     if (!dtls1_query_mtu(s))
         return -1;
@@ -234,6 +235,8 @@ int dtls1_do_write(SSL *s, int type)
             }
             dtls1_fix_message_header(s, frag_off, len - DTLS1_HM_HEADER_LENGTH);
 
+            memcpy(msg_hdr_backup, &s->init_buf->data[s->init_off],
+                   DTLS1_HM_HEADER_LENGTH);
             dtls1_write_message_header(s,
                                        (unsigned char *)&s->init_buf->
                                        data[s->init_off]);
@@ -241,6 +244,9 @@ int dtls1_do_write(SSL *s, int type)
 
         ret = dtls1_write_bytes(s, type, &s->init_buf->data[s->init_off], len,
                                 &written);
+        if (type == SSL3_RT_HANDSHAKE)
+            memcpy(&s->init_buf->data[s->init_off], msg_hdr_backup,
+                   DTLS1_HM_HEADER_LENGTH);
         if (ret <= 0) {
             /*
              * might need to update MTU here, but we don't know which
