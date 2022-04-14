@@ -293,8 +293,6 @@ static int test_d2i_CMS_bio_file_encrypted_data(void)
 {
     BIO *bio = NULL;
     CMS_ContentInfo *cms = NULL;
-    BIO *err_bio = NULL;
-    char *err_buf = NULL;
     int ret = 0;
 
     ERR_clear_error();
@@ -303,19 +301,13 @@ static int test_d2i_CMS_bio_file_encrypted_data(void)
       || !TEST_ptr(cms = d2i_CMS_bio(bio, NULL)))
       goto end;
 
-    if (!TEST_ptr(err_bio = BIO_new(BIO_s_mem())))
-        goto end;
-    ERR_print_errors(err_bio);
-    (void)BIO_get_mem_data(err_bio, &err_buf);
-
-    if (!TEST_ptr_null(err_buf))
+    if (!TEST_int_eq(ERR_peek_error(), 0)
         goto end;
 
     ret = 1;
 end:
     CMS_ContentInfo_free(cms);
     BIO_free(bio);
-    BIO_free(err_bio);
 
     return ret;
 }
