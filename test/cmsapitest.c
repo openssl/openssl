@@ -301,7 +301,7 @@ static int test_d2i_CMS_bio_file_encrypted_data(void)
       || !TEST_ptr(cms = d2i_CMS_bio(bio, NULL)))
       goto end;
 
-    if (!TEST_int_eq(ERR_peek_error(), 0)
+    if (!TEST_int_eq(ERR_peek_error(), 0))
         goto end;
 
     ret = 1;
