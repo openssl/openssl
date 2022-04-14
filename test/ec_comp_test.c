@@ -158,7 +158,6 @@ static EC_KEY *get_existing_key(size_t curve_i, size_t param_format_i,
 {
     EC_KEY *k = NULL, *res = NULL;
     EC_GROUP *g = NULL;
-    FILE *f = NULL;
     BIO *b = NULL;
     char filename[256];
 
@@ -177,19 +176,11 @@ static EC_KEY *get_existing_key(size_t curve_i, size_t param_format_i,
                  param_formats[param_format_i],
                  comp_formats[comp_format_i]);
 
-    b = BIO_new(BIO_s_file());
+    b = BIO_new_file(filename, "rb");
     if (b == NULL) {
         printf("# cannot create file BIO\n");
         goto fail;
     }
-
-    f = fopen(filename, "rb");
-    if (f == NULL) {
-        printf("# cannot open '%s'\n", filename);
-        return NULL;
-    }
-
-    BIO_set_fp(b, f, BIO_NOCLOSE);
 
     if (obj_type == OBJ_TYPE_PARAMS) {
         if (PEM_read_bio_ECPKParameters(b, &g, NULL, NULL) == 0) {
@@ -223,39 +214,39 @@ fail:
     EC_GROUP_free(g);
     EC_KEY_free(k);
     BIO_free(b);
-    fclose(f);
     return res;
 }
 
-static int verify_expected(int param_format, int comp_format, int asn1_flag, int point_form, int obj_type)
+static int verify_expected(int expected_param_format, int expected_comp_format,
+                           int actual_asn1_flag, int actual_point_form, int obj_type)
 {
     if (obj_type == OBJ_TYPE_KEY) {
         /* Only makes sense to test comp format on key */
-        if (comp_format >= 0) {
+        if (expected_comp_format >= 0) {
             /*
              * If a compression format was specified, it must be used; however
              * when deserializing conversion to uncompressed always occurs in
              * 1.1
              */
-            if (!TEST_int_eq(comp_format, point_form))
+            if (!TEST_int_eq(expected_comp_format, actual_point_form))
                 return 0;
         } else {
             /*
              * If a compression format was not specified, uncompressed should be
              * default
              */
-            if (!TEST_int_eq(POINT_CONVERSION_UNCOMPRESSED, point_form))
+            if (!TEST_int_eq(POINT_CONVERSION_UNCOMPRESSED, actual_point_form))
                 return 0;
         }
     }
 
-    if (param_format >= 0) {
+    if (expected_param_format >= 0) {
         /* If a parameter format was specified, it must be used */
-        if (!TEST_int_eq(param_format, asn1_flag))
+        if (!TEST_int_eq(expected_param_format, actual_asn1_flag))
             return 0;
     } else {
         /* If a parameter format was not specified, expect named curve */
-        if (!TEST_int_eq(OPENSSL_EC_NAMED_CURVE, asn1_flag))
+        if (!TEST_int_eq(OPENSSL_EC_NAMED_CURVE, actual_asn1_flag))
             return 0;
     }
 
