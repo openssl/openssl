@@ -295,7 +295,6 @@ static int test_d2i_CMS_bio_file_encrypted_data(void)
     CMS_ContentInfo *cms = NULL;
     BIO *err_bio = NULL;
     char *err_buf = NULL;
-    size_t err_buf_len = 0;
     int ret = 0;
 
     ERR_clear_error();
@@ -307,7 +306,7 @@ static int test_d2i_CMS_bio_file_encrypted_data(void)
     if (!TEST_ptr(err_bio = BIO_new(BIO_s_mem())))
         goto end;
     ERR_print_errors(err_bio);
-    err_buf_len = BIO_get_mem_data(err_bio, &err_buf);
+    (void)BIO_get_mem_data(err_bio, &err_buf);
 
     if (!TEST_ptr_null(err_buf))
         goto end;
