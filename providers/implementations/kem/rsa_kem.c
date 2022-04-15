@@ -1,4 +1,3 @@
---- providers/implementations/kem/rsa_kem.c
 /*
  * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *

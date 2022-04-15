@@ -27,6 +27,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <locale.h>
 #include "internal/common.h" /* for CHECK_AND_SKIP_CASE_PREFIX */
 
 #include <openssl/engine.h>
@@ -379,6 +380,10 @@ static EVP_PKEY *load_key(ENGINE *eng, const char *key_id, int pub,
 {
     BIO *in;
     EVP_PKEY *key;
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
 
     if (!CHECK_AND_SKIP_CASE_PREFIX(key_id, "ot:"))
         return NULL;

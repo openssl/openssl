@@ -20,6 +20,7 @@
 
 # include <stdarg.h>
 # include <string.h>
+# include <locale.h>
 # include <openssl/engine.h>
 # include <openssl/store.h>
 
@@ -70,6 +71,10 @@ static OSSL_STORE_LOADER_CTX *engine_open(const OSSL_STORE_LOADER *loader,
     ENGINE *e = NULL;
     char *keyid = NULL;
     OSSL_STORE_LOADER_CTX *ctx = NULL;
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
 
     if (!CHECK_AND_SKIP_CASE_PREFIX(p, ENGINE_SCHEME_COLON))
         return NULL;

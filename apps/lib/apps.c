@@ -1242,9 +1242,6 @@ static int set_table_opts(unsigned long *flags, const char *arg,
     if (c_locale == LC_GLOBAL_LOCALE)
         c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
 
-     if (c == '-') {
-         c = 0;
-         arg++;
     c = arg[0];
     if (c == '-') {
         c = 0;

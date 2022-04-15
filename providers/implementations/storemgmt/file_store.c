@@ -15,6 +15,7 @@
 #include <sys/stat.h>
 #include <ctype.h>  /* isdigit */
 #include <assert.h>
+#include <locale.h>
 
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
@@ -205,8 +206,12 @@ static void *file_open(void *provctx, const char *uri)
     size_t path_data_n = 0, i;
     const char *path, *p = uri, *q;
     BIO *bio;
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
 
     ERR_set_mark();
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
 
     /*
      * First step, just take the URI as is.

@@ -19,6 +19,7 @@
 #include <sys/stat.h>
 #include <ctype.h>
 #include <assert.h>
+#include <locale.h>
 
 #include <openssl/bio.h>
 #include <openssl/dsa.h>         /* For d2i_DSAPrivateKey */
@@ -953,6 +954,10 @@ static OSSL_STORE_LOADER_CTX *file_open_ex
     } path_data[2];
     size_t path_data_n = 0, i;
     const char *path, *p = uri, *q;
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
 
     /*
      * First step, just take the URI as is.

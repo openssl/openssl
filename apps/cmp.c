@@ -13,6 +13,7 @@
 
 #include <string.h>
 #include <ctype.h>
+#include <locale.h>
 
 #include "apps.h"
 #include "http_server.h"
@@ -1758,6 +1759,10 @@ static int handle_opt_geninfo(OSSL_CMP_CTX *ctx)
     OSSL_CMP_ITAV *itav;
     char *endstr;
     char *valptr = strchr(opt_geninfo, ':');
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
 
     if (valptr == NULL) {
         CMP_err("missing ':' in -geninfo option");
