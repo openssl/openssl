@@ -1029,7 +1029,7 @@ ossl_bsaes_cbc_encrypt:
 
         // it is up to the caller to make sure we are called with enc == 0
 
-        stp     fp, lr, [sp, #-48]!
+        stp     x29, x30, [sp, #-48]!
         stp     d8, d9, [sp, #16]
         stp     d10, d15, [sp, #32]
         lsr     x2, x2, #4                  // len in 16 byte blocks
@@ -1257,7 +1257,7 @@ ossl_bsaes_cbc_encrypt:
         str     q15, [x4]                   // return IV
         ldp     d8, d9, [sp, #16]
         ldp     d10, d15, [sp, #32]
-        ldp     fp, lr, [sp], #48
+        ldp     x29, x30, [sp], #48
         ret
 .size   ossl_bsaes_cbc_encrypt,.-ossl_bsaes_cbc_encrypt
 
@@ -1278,7 +1278,7 @@ ossl_bsaes_ctr32_encrypt_blocks:
         cmp     x2, #8                      // use plain AES for
         blo     .Lctr_enc_short             // small sizes
 
-        stp     fp, lr, [sp, #-80]!
+        stp     x29, x30, [sp, #-80]!
         stp     d8, d9, [sp, #16]
         stp     d10, d11, [sp, #32]
         stp     d12, d13, [sp, #48]
@@ -1414,11 +1414,11 @@ ossl_bsaes_ctr32_encrypt_blocks:
         ldp     d10, d11, [sp, #32]
         ldp     d12, d13, [sp, #48]
         ldp     d14, d15, [sp, #64]
-        ldp     fp, lr, [sp], #80
+        ldp     x29, x30, [sp], #80
         ret
 
 .Lctr_enc_short:
-        stp     fp, lr, [sp, #-96]!
+        stp     x29, x30, [sp, #-96]!
         stp     x19, x20, [sp, #16]
         stp     x21, x22, [sp, #32]
         str     x23, [sp, #48]
@@ -1462,7 +1462,7 @@ ossl_bsaes_ctr32_encrypt_blocks:
         ldr     x23, [sp, #48]
         ldp     x21, x22, [sp, #32]
         ldp     x19, x20, [sp, #16]
-        ldp     fp, lr, [sp], #96
+        ldp     x29, x30, [sp], #96
         ret
 .size   ossl_bsaes_ctr32_encrypt_blocks,.-ossl_bsaes_ctr32_encrypt_blocks
 
@@ -1488,7 +1488,7 @@ ossl_bsaes_xts_encrypt:
         //        4*16 bytes: tweak storage across _bsaes_encrypt8
         //        6*8 bytes: storage for 5 callee-saved general-purpose registers
         //        8*8 bytes: storage for 8 callee-saved SIMD registers
-        stp     fp, lr, [sp, #-192]!
+        stp     x29, x30, [sp, #-192]!
         stp     x19, x20, [sp, #80]
         stp     x21, x22, [sp, #96]
         str     x23, [sp, #112]
@@ -1901,7 +1901,7 @@ ossl_bsaes_xts_encrypt:
         ldp     d10, d11, [sp, #144]
         ldp     d12, d13, [sp, #160]
         ldp     d14, d15, [sp, #176]
-        ldp     fp, lr, [sp], #192
+        ldp     x29, x30, [sp], #192
         ret
 .size   ossl_bsaes_xts_encrypt,.-ossl_bsaes_xts_encrypt
 
@@ -1933,7 +1933,7 @@ ossl_bsaes_xts_decrypt:
         //        4*16 bytes: tweak storage across _bsaes_decrypt8
         //        6*8 bytes: storage for 5 callee-saved general-purpose registers
         //        8*8 bytes: storage for 8 callee-saved SIMD registers
-        stp     fp, lr, [sp, #-192]!
+        stp     x29, x30, [sp, #-192]!
         stp     x19, x20, [sp, #80]
         stp     x21, x22, [sp, #96]
         str     x23, [sp, #112]
@@ -2377,6 +2377,6 @@ ossl_bsaes_xts_decrypt:
         ldp     d10, d11, [sp, #144]
         ldp     d12, d13, [sp, #160]
         ldp     d14, d15, [sp, #176]
-        ldp     fp, lr, [sp], #192
+        ldp     x29, x30, [sp], #192
         ret
 .size   ossl_bsaes_xts_decrypt,.-ossl_bsaes_xts_decrypt
