@@ -41,7 +41,7 @@ __owur static ossl_inline int ossl_assert_int(int expr, const char *exprstr,
     (HAS_PREFIX(str, pre) ? ((str) += sizeof(pre) - 1, 1) : 0)
 /* Check if the string literal |p| is a case-insensitive prefix of |s| */
 #define HAS_CASE_PREFIX(s, p) \
-(strncasecmp(s, p "", sizeof(p) - 1, c_locale) == 0)
+(strncasecmp_l(s, p "", sizeof(p) - 1, c_locale) == 0)
 /* As before, and if check succeeds, advance |str| past the prefix |pre| */
 #define CHECK_AND_SKIP_CASE_PREFIX(str, pre) \
     (HAS_CASE_PREFIX(str, pre) ? ((str) += sizeof(pre) - 1, 1) : 0)

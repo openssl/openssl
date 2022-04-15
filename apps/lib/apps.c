@@ -684,7 +684,6 @@ int load_cert_certs(const char *uri,
 {
     int ret = 0;
     char *pass_string;
-    static locale_t c_locale = LC_GLOBAL_LOCALE;
 
     if (c_locale == LC_GLOBAL_LOCALE)
         c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
