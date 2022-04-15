@@ -9,12 +9,13 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <locale.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include <openssl/aes.h>
 #include <openssl/proverr.h>
-#include "internal/e_os.h" /* strcasecmp */
+#include "internal/e_os.h" /* strcasecmp_l */
 #include "crypto/modes.h"
 #include "internal/thread_once.h"
 #include "prov/implementations.h"
@@ -667,6 +668,10 @@ static int drbg_ctr_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     char *ecb;
     const char *propquery = NULL;
     int i, cipher_init = 0;
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_DRBG_PARAM_USE_DF)) != NULL
             && OSSL_PARAM_get_int(p, &i)) {
@@ -690,7 +695,8 @@ static int drbg_ctr_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         if (p->data_type != OSSL_PARAM_UTF8_STRING
                 || p->data_size < ctr_str_len)
             return 0;
-        if (strcasecmp("CTR", base + p->data_size - ctr_str_len) != 0) {
+        if (strcasecmp_l("CTR", base + p->data_size - ctr_str_len,
+                         c_locale) != 0) {
             ERR_raise(ERR_LIB_PROV, PROV_R_REQUIRE_CTR_MODE_CIPHER);
             return 0;
         }

@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <locale.h>
 #include <openssl/hmac.h>
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
@@ -221,20 +222,24 @@ static int hkdf_common_set_ctx_params(KDF_HKDF *ctx, const OSSL_PARAM params[])
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
     const OSSL_PARAM *p;
     int n;
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
 
     if (params == NULL)
         return 1;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
 
     if (!ossl_prov_digest_load_from_params(&ctx->digest, params, libctx))
         return 0;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_MODE)) != NULL) {
         if (p->data_type == OSSL_PARAM_UTF8_STRING) {
-            if (strcasecmp(p->data, "EXTRACT_AND_EXPAND") == 0) {
+            if (strcasecmp_l(p->data, "EXTRACT_AND_EXPAND", c_locale) == 0) {
                 ctx->mode = EVP_KDF_HKDF_MODE_EXTRACT_AND_EXPAND;
-            } else if (strcasecmp(p->data, "EXTRACT_ONLY") == 0) {
+            } else if (strcasecmp_l(p->data, "EXTRACT_ONLY", c_locale) == 0) {
                 ctx->mode = EVP_KDF_HKDF_MODE_EXTRACT_ONLY;
-            } else if (strcasecmp(p->data, "EXPAND_ONLY") == 0) {
+            } else if (strcasecmp_l(p->data, "EXPAND_ONLY", c_locale) == 0) {
                 ctx->mode = EVP_KDF_HKDF_MODE_EXPAND_ONLY;
             } else {
                 ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_MODE);

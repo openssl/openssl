@@ -9,6 +9,7 @@
  */
 
 #include <string.h>
+#include <locale.h>
 #include <openssl/opensslconf.h>
 #include <openssl/evp.h>
 #include <openssl/encoder.h>
@@ -207,6 +208,7 @@ int ecparam_main(int argc, char **argv)
     if (curve_name != NULL) {
         OSSL_PARAM params[4];
         OSSL_PARAM *p = params;
+        locale_t c_locale;
 
         if (strcmp(curve_name, "secp192r1") == 0) {
             BIO_printf(bio_err,
@@ -228,7 +230,8 @@ int ecparam_main(int argc, char **argv)
                        point_format, 0);
         *p = OSSL_PARAM_construct_end();
 
-        if (strcasecmp(curve_name, "SM2") == 0)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
+        if (strcasecmp_l(curve_name, "SM2", c_locale) == 0)
             gctx_params = EVP_PKEY_CTX_new_from_name(NULL, "sm2", NULL);
         else
             gctx_params = EVP_PKEY_CTX_new_from_name(NULL, "ec", NULL);

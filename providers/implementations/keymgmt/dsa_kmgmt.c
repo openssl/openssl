@@ -7,13 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <locale.h>
+
 /*
  * DSA low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
 #include "internal/deprecated.h"
 
-#include "internal/e_os.h" /* strcasecmp */
+#include "internal/e_os.h" /* strcasecmp_l */
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/bn.h>
@@ -88,9 +90,13 @@ static const DSA_GENTYPE_NAME2ID dsatype2id[]=
 static int dsa_gen_type_name2id(const char *name)
 {
     size_t i;
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
 
     for (i = 0; i < OSSL_NELEM(dsatype2id); ++i) {
-        if (strcasecmp(dsatype2id[i].name, name) == 0)
+        if (strcasecmp_l(dsatype2id[i].name, name, c_locale) == 0)
             return dsatype2id[i].id;
     }
     return -1;

@@ -8,6 +8,7 @@
  */
 
 #include <string.h>
+#include <locale.h>
 
 #include <openssl/e_os2.h>
 #include <openssl/x509.h>
@@ -16,7 +17,7 @@
 #include "testutil.h"
 
 #ifdef OPENSSL_SYS_WINDOWS
-# define strcasecmp _stricmp
+# define strcasecmp_l(a,b,c) _stricmp(a,b)
 #endif
 
 static const char *const names[] = {
@@ -286,8 +287,13 @@ static int run_cert(X509 *crt, const char *nameincert,
     const char *const *pname = names;
     int failed = 0;
 
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
+
     for (; *pname != NULL; ++pname) {
-        int samename = strcasecmp(nameincert, *pname) == 0;
+        int samename = strcasecmp_l(nameincert, *pname, c_locale) == 0;
         size_t namelen = strlen(*pname);
         char *name = OPENSSL_malloc(namelen + 1);
         int match, ret;

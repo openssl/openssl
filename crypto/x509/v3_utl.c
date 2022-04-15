@@ -13,6 +13,7 @@
 #include "internal/cryptlib.h"
 #include <stdio.h>
 #include <string.h>
+#include <locale.h>
 #include "crypto/ctype.h"
 #include <openssl/conf.h>
 #include <openssl/crypto.h>
@@ -21,6 +22,8 @@
 #include <openssl/bn.h>
 #include "ext_dat.h"
 #include "x509_local.h"
+
+static locale_t c_locale = LC_GLOBAL_LOCALE;
 
 static char *strip_spaces(char *name);
 static int sk_strcmp(const char *const *a, const char *const *b);
@@ -694,6 +697,9 @@ static int wildcard_match(const unsigned char *prefix, size_t prefix_len,
     int allow_multi = 0;
     int allow_idna = 0;
 
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
+
     if (subject_len < prefix_len + suffix_len)
         return 0;
     if (!equal_nocase(prefix, prefix_len, subject, prefix_len, flags))
@@ -746,6 +752,9 @@ static const unsigned char *valid_star(const unsigned char *p, size_t len,
     size_t i;
     int state = LABEL_START;
     int dots = 0;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
 
     for (i = 0; i < len; ++i) {
         /*

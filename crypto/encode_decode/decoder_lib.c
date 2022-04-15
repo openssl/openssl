@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <locale.h>
 #include <openssl/core_names.h>
 #include <openssl/bio.h>
 #include <openssl/params.h>
@@ -693,6 +694,10 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
     struct decoder_process_data_st new_data;
     const char *data_type = NULL;
     const char *data_structure = NULL;
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
 
     /*
      * This is an indicator up the call stack that something was indeed
@@ -796,7 +801,7 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
          */
         trace_data_structure = data_structure;
         if (data_type != NULL && data_structure != NULL
-            && strcasecmp(data_structure, "type-specific") == 0)
+            && strcasecmp_l(data_structure, "type-specific", c_locale) == 0)
             data_structure = NULL;
 
         OSSL_TRACE_BEGIN(DECODER) {
@@ -857,7 +862,9 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
          * that's the case, we do this extra check.
          */
         if (decoder == NULL && ctx->start_input_type != NULL
-            && strcasecmp(ctx->start_input_type, new_input_type) != 0) {
+            && strcasecmp_l(ctx->start_input_type, new_input_type,
+                            c_locale) != 0)
+        {
             OSSL_TRACE_BEGIN(DECODER) {
                 BIO_printf(trc_out,
                            "(ctx %p) %s [%u] the start input type '%s' doesn't match the input type of the considered decoder, skipping...\n",
@@ -904,7 +911,9 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
          */
         if (data_structure != NULL
             && (new_input_structure == NULL
-                || strcasecmp(data_structure, new_input_structure) != 0)) {
+                || strcasecmp_l(data_structure, new_input_structure,
+                                c_locale) != 0))
+        {
             OSSL_TRACE_BEGIN(DECODER) {
                 BIO_printf(trc_out,
                            "(ctx %p) %s [%u] the previous decoder's data structure doesn't match the input structure of the considered decoder, skipping...\n",
@@ -923,7 +932,9 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
             && ctx->input_structure != NULL
             && new_input_structure != NULL) {
             data->flag_input_structure_checked = 1;
-            if (strcasecmp(new_input_structure, ctx->input_structure) != 0) {
+            if (strcasecmp_l(new_input_structure, ctx->input_structure,
+                             c_locale) != 0)
+            {
                 OSSL_TRACE_BEGIN(DECODER) {
                     BIO_printf(trc_out,
                                "(ctx %p) %s [%u] the previous decoder's data structure doesn't match the input structure given by the user, skipping...\n",

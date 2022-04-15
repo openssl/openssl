@@ -9,6 +9,7 @@
 
 #include "internal/e_os.h"
 #include <string.h>
+#include <locale.h>
 
 #include <openssl/core.h>
 #include <openssl/core_names.h>
@@ -438,6 +439,11 @@ static int try_key(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
 static int try_cert(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
                     OSSL_LIB_CTX *libctx, const char *propq)
 {
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
+
     if (data->object_type == OSSL_OBJECT_UNKNOWN
         || data->object_type == OSSL_OBJECT_CERT) {
         /*
@@ -457,7 +463,8 @@ static int try_cert(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
 
         /* If we have a data type, it should be a PEM name */
         if (data->data_type != NULL
-            && (strcasecmp(data->data_type, PEM_STRING_X509_TRUSTED) == 0))
+            && (strcasecmp_l(data->data_type, PEM_STRING_X509_TRUSTED,
+                             c_locale) == 0))
             ignore_trusted = 0;
 
         if (d2i_X509_AUX(&cert, (const unsigned char **)&data->octet_data,

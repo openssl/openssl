@@ -11,7 +11,8 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "internal/e_os.h" /* strcasecmp and struct stat */
+#include <locale.h>
+#include "internal/e_os.h" /* strcasecmp_l and struct stat */
 #ifdef __TANDEM
 # include <sys/types.h> /* needed for stat.h */
 # include <sys/stat.h> /* struct stat */
@@ -192,11 +193,16 @@ static int def_load(CONF *conf, const char *name, long *line)
 /* Parse a boolean value and fill in *flag. Return 0 on error. */
 static int parsebool(const char *pval, int *flag)
 {
-    if (strcasecmp(pval, "on") == 0
-            || strcasecmp(pval, "true") == 0) {
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
+
+    if (strcasecmp_l(pval, "on", c_locale) == 0
+            || strcasecmp_l(pval, "true", c_locale) == 0) {
         *flag = 1;
-    } else if (strcasecmp(pval, "off") == 0
-            || strcasecmp(pval, "false") == 0) {
+    } else if (strcasecmp_l(pval, "off", c_locale) == 0
+            || strcasecmp_l(pval, "false", c_locale) == 0) {
         *flag = 0;
     } else {
         ERR_raise(ERR_LIB_CONF, CONF_R_INVALID_PRAGMA);
@@ -835,12 +841,17 @@ static BIO *get_next_file(const char *path, OPENSSL_DIR_CTX **dirctx)
     pathlen = strlen(path);
     while ((filename = OPENSSL_DIR_read(dirctx, path)) != NULL) {
         size_t namelen;
+        static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+        if (c_locale == LC_GLOBAL_LOCALE)
+            c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
 
         namelen = strlen(filename);
 
-
-        if ((namelen > 5 && strcasecmp(filename + namelen - 5, ".conf") == 0)
-            || (namelen > 4 && strcasecmp(filename + namelen - 4, ".cnf") == 0)) {
+        if ((namelen > 5 && strcasecmp_l(filename + namelen - 5, ".conf",
+                                         c_locale) == 0)
+            || (namelen > 4 && strcasecmp_l(filename + namelen - 4, ".cnf",
+                                            c_locale) == 0)) {
             size_t newlen;
             char *newpath;
             BIO *bio;

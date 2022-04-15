@@ -8,9 +8,10 @@
  */
 
 #include <string.h>
+#include <locale.h>
 #include <openssl/ec.h>
 #include "crypto/ec.h"
-#include "internal/e_os.h" /* strcasecmp required by windows */
+#include "internal/e_os.h" /* strcasecmp_l required by windows */
 
 typedef struct ec_name2nid_st {
     const char *name;
@@ -133,13 +134,17 @@ int ossl_ec_curve_name2nid(const char *name)
 {
     size_t i;
     int nid;
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
 
     if (name != NULL) {
         if ((nid = ossl_ec_curve_nist2nid_int(name)) != NID_undef)
             return nid;
 
         for (i = 0; i < OSSL_NELEM(curve_list); i++) {
-            if (strcasecmp(curve_list[i].name, name) == 0)
+            if (strcasecmp_l(curve_list[i].name, name, c_locale) == 0)
                 return curve_list[i].nid;
         }
     }

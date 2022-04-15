@@ -20,6 +20,7 @@
 # include <string.h>
 # include <ctype.h>
 # include <sys/stat.h>
+# include <locale.h>
 
 /*
  * Make sure that the processing of symbol names is treated the same as when
@@ -243,12 +244,17 @@ static int do_file(const char *filename, const char *fullpath, enum Hash h)
     unsigned char digest[EVP_MAX_MD_SIZE];
     int type, errs = 0;
     size_t i;
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
 
     /* Does it end with a recognized extension? */
     if ((ext = strrchr(filename, '.')) == NULL)
         goto end;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
+
     for (i = 0; i < OSSL_NELEM(extensions); i++) {
-        if (strcasecmp(extensions[i], ext + 1) == 0)
+        if (strcasecmp_l(extensions[i], ext + 1, c_locale) == 0)
             break;
     }
     if (i >= OSSL_NELEM(extensions))

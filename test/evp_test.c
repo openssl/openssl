@@ -12,7 +12,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include "internal/e_os.h" /* strcasecmp and strncasecmp */
+#include <locale.h>
+#include "internal/e_os.h" /* strcasecmp_l and strncasecmp_l */
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/err.h>
@@ -81,6 +82,8 @@ static OSSL_LIB_CTX *libctx = NULL;
 /* List of public and private keys */
 static KEY_LIST *private_keys;
 static KEY_LIST *public_keys;
+
+static locale_t c_locale = LC_GLOBAL_LOCALE;
 
 static int find_key(EVP_PKEY **ppk, const char *name, KEY_LIST *lst);
 static int parse_bin(const char *value, unsigned char **buf, size_t *buflen);
@@ -3923,36 +3926,39 @@ void cleanup_tests(void)
 
 static int is_digest_disabled(const char *name)
 {
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
+
 #ifdef OPENSSL_NO_BLAKE2
     if (HAS_CASE_PREFIX(name, "BLAKE"))
         return 1;
 #endif
 #ifdef OPENSSL_NO_MD2
-    if (strcasecmp(name, "MD2") == 0)
+    if (strcasecmp_l(name, "MD2", c_locale) == 0)
         return 1;
 #endif
 #ifdef OPENSSL_NO_MDC2
-    if (strcasecmp(name, "MDC2") == 0)
+    if (strcasecmp_l(name, "MDC2", c_locale) == 0)
         return 1;
 #endif
 #ifdef OPENSSL_NO_MD4
-    if (strcasecmp(name, "MD4") == 0)
+    if (strcasecmp_l(name, "MD4", c_locale) == 0)
         return 1;
 #endif
 #ifdef OPENSSL_NO_MD5
-    if (strcasecmp(name, "MD5") == 0)
+    if (strcasecmp_l(name, "MD5", c_locale) == 0)
         return 1;
 #endif
 #ifdef OPENSSL_NO_RMD160
-    if (strcasecmp(name, "RIPEMD160") == 0)
+    if (strcasecmp_l(name, "RIPEMD160", c_locale) == 0)
         return 1;
 #endif
 #ifdef OPENSSL_NO_SM3
-    if (strcasecmp(name, "SM3") == 0)
+    if (strcasecmp_l(name, "SM3", c_locale) == 0)
         return 1;
 #endif
 #ifdef OPENSSL_NO_WHIRLPOOL
-    if (strcasecmp(name, "WHIRLPOOL") == 0)
+    if (strcasecmp_l(name, "WHIRLPOOL", c_locale) == 0)
         return 1;
 #endif
     return 0;
@@ -3960,6 +3966,9 @@ static int is_digest_disabled(const char *name)
 
 static int is_pkey_disabled(const char *name)
 {
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
+
 #ifdef OPENSSL_NO_EC
     if (HAS_CASE_PREFIX(name, "EC"))
         return 1;
@@ -3977,6 +3986,9 @@ static int is_pkey_disabled(const char *name)
 
 static int is_mac_disabled(const char *name)
 {
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
+
 #ifdef OPENSSL_NO_BLAKE2
     if (HAS_CASE_PREFIX(name, "BLAKE2BMAC")
         || HAS_CASE_PREFIX(name, "BLAKE2SMAC"))
@@ -3998,6 +4010,9 @@ static int is_mac_disabled(const char *name)
 }
 static int is_kdf_disabled(const char *name)
 {
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
+
 #ifdef OPENSSL_NO_SCRYPT
     if (HAS_CASE_SUFFIX(name, "SCRYPT"))
         return 1;
@@ -4007,6 +4022,9 @@ static int is_kdf_disabled(const char *name)
 
 static int is_cipher_disabled(const char *name)
 {
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
+
 #ifdef OPENSSL_NO_ARIA
     if (HAS_CASE_PREFIX(name, "ARIA"))
         return 1;

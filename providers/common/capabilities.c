@@ -9,6 +9,7 @@
 
 #include <assert.h>
 #include <string.h>
+#include <locale.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 /* For TLS1_VERSION etc */
@@ -217,7 +218,12 @@ static int tls_group_capability(OSSL_CALLBACK *cb, void *arg)
 int ossl_prov_get_capabilities(void *provctx, const char *capability,
                                OSSL_CALLBACK *cb, void *arg)
 {
-    if (strcasecmp(capability, "TLS-GROUP") == 0)
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
+
+    if (strcasecmp_l(capability, "TLS-GROUP", c_locale) == 0)
         return tls_group_capability(cb, arg);
 
     /* We don't support this capability */

@@ -9,7 +9,8 @@
 
 #include <assert.h>
 #include <string.h>
-/* For strcasecmp on Windows */
+#include <locale.h>
+/* For strcasecmp_l on Windows */
 #include "internal/e_os.h"
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
@@ -520,9 +521,13 @@ static int ecx_gen_set_params(void *genctx, const OSSL_PARAM params[])
 {
     struct ecx_gen_ctx *gctx = genctx;
     const OSSL_PARAM *p;
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
 
     if (gctx == NULL)
         return 0;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
 
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_GROUP_NAME);
     if (p != NULL) {
@@ -546,7 +551,7 @@ static int ecx_gen_set_params(void *genctx, const OSSL_PARAM params[])
         }
         if (p->data_type != OSSL_PARAM_UTF8_STRING
                 || groupname == NULL
-                || strcasecmp(p->data, groupname) != 0) {
+                || strcasecmp_l(p->data, groupname, c_locale) != 0) {
             ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);
             return 0;
         }

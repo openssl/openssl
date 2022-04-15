@@ -7,7 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/e_os.h"                /* strcasecmp */
+#include <locale.h>
+
+#include "internal/e_os.h"                /* strcasecmp_l */
 #include "internal/namemap.h"
 #include <openssl/lhash.h>
 #include "crypto/lhash.h"      /* ossl_lh_strcasehash */
@@ -50,7 +52,12 @@ static unsigned long namenum_hash(const NAMENUM_ENTRY *n)
 
 static int namenum_cmp(const NAMENUM_ENTRY *a, const NAMENUM_ENTRY *b)
 {
-    return strcasecmp(a->name, b->name);
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
+
+    return strcasecmp_l(a->name, b->name, c_locale);
 }
 
 static void namenum_free(NAMENUM_ENTRY *n)

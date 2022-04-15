@@ -46,7 +46,8 @@
  *      Otherwise it is the same as CS2.
  */
 
-#include "internal/e_os.h" /* strcasecmp */
+#include "internal/e_os.h" /* strcasecmp_l */
+#include <locale.h>
 #include <openssl/core_names.h>
 #include "prov/ciphercommon.h"
 #include "internal/nelem.h"
@@ -90,9 +91,13 @@ const char *ossl_cipher_cbc_cts_mode_id2name(unsigned int id)
 int ossl_cipher_cbc_cts_mode_name2id(const char *name)
 {
     size_t i;
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
 
     for (i = 0; i < OSSL_NELEM(cts_modes); ++i) {
-        if (strcasecmp(name, cts_modes[i].name) == 0)
+        if (strcasecmp_l(name, cts_modes[i].name, c_locale) == 0)
             return (int)cts_modes[i].id;
     }
     return -1;

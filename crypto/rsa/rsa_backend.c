@@ -14,6 +14,7 @@
 #include "internal/deprecated.h"
 
 #include <string.h>
+#include <locale.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include <openssl/err.h>
@@ -27,7 +28,7 @@
 #include "crypto/rsa.h"
 #include "rsa_local.h"
 
-#include "internal/e_os.h"                /* strcasecmp for Windows() */
+#include "internal/e_os.h"                /* strcasecmp_l for Windows() */
 
 /*
  * The intention with the "backend" source file is to offer backend support
@@ -269,14 +270,19 @@ int ossl_rsa_pss_params_30_fromdata(RSA_PSS_PARAMS_30 *pss_params,
     if (param_mgf != NULL) {
         int default_maskgenalg_nid = ossl_rsa_pss_params_30_maskgenalg(NULL);
         const char *mgfname = NULL;
+        static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+        if (c_locale == LC_GLOBAL_LOCALE)
+            c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
 
         if (param_mgf->data_type == OSSL_PARAM_UTF8_STRING)
             mgfname = param_mgf->data;
         else if (!OSSL_PARAM_get_utf8_ptr(param_mgf, &mgfname))
             return 0;
 
-        if (strcasecmp(param_mgf->data,
-                       ossl_rsa_mgf_nid2name(default_maskgenalg_nid)) != 0)
+        if (strcasecmp_l(param_mgf->data,
+                         ossl_rsa_mgf_nid2name(default_maskgenalg_nid),
+                         c_locale) != 0)
             return 0;
     }
 

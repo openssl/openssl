@@ -36,6 +36,7 @@
 # include <errno.h>
 # include <starlet.h>
 # include <iodef.h>
+# include <locale.h>
 # ifdef __alpha
 #  include <iosbdef.h>
 # else
@@ -131,8 +132,13 @@ int main (int argc, char *argv[], char *envp[])
         status,
         len;
 
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
+
     LogMessage ("Enter 'q' or 'Q' to quit ...");
-    while (strcasecmp (TermBuff, "Q")) {
+    while (strcasecmp_l (TermBuff, "Q", c_locale)) {
         /*
         ** Create the terminal socket
         */

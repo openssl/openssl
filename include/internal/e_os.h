@@ -249,8 +249,8 @@ FILE *__iob_func();
 /***********************************************/
 
 # if defined(OPENSSL_SYS_WINDOWS)
-#  define strcasecmp _stricmp
-#  define strncasecmp _strnicmp
+#  define strcasecmp_l(a,b,c) _stricmp(a,b)
+#  define strncasecmp_l(a,b,c,d) _strnicmp(a,b,c)
 #  if (_MSC_VER >= 1310) && !defined(_WIN32_WCE)
 #   define open _open
 #   define fdopen _fdopen

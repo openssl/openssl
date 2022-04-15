@@ -9,6 +9,7 @@
  */
 
 #include <string.h>
+#include <locale.h>
 #include <openssl/params.h>
 #include "testutil.h"
 
@@ -16,7 +17,7 @@
 #if !defined(OPENSSL_NO_INTTYPES_H)
 
 # ifdef OPENSSL_SYS_WINDOWS
-#  define strcasecmp _stricmp
+#  define strcasecmp_l(a,b,c) _stricmp(a,b)
 # endif
 
 # ifdef OPENSSL_SYS_VMS
@@ -57,12 +58,16 @@ static int param_conversion_load_stanza(PARAM_CONVERSION *pc, const STANZA *s)
     const char *type = NULL;
     char *p;
     int i;
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
 
     memset(pc, 0, sizeof(*pc));
 
     for (i = 0; i < s->numpairs; i++, pp++) {
         p = "";
-        if (strcasecmp(pp->key, "type") == 0) {
+        if (strcasecmp_l(pp->key, "type", c_locale) == 0) {
             if (type != NULL) {
                 TEST_info("Line %d: multiple type lines", s->curr);
                 return 0;
@@ -72,48 +77,48 @@ static int param_conversion_load_stanza(PARAM_CONVERSION *pc, const STANZA *s)
                 TEST_info("Line %d: unknown type line", s->curr);
                 return 0;
             }
-        } else if (strcasecmp(pp->key, "int32") == 0) {
+        } else if (strcasecmp_l(pp->key, "int32", c_locale) == 0) {
             if (def_i32++) {
                 TEST_info("Line %d: multiple int32 lines", s->curr);
                 return 0;
             }
-            if (strcasecmp(pp->value, "invalid") != 0) {
+            if (strcasecmp_l(pp->value, "invalid", c_locale) != 0) {
                 pc->valid_i32 = 1;
                 pc->i32 = (int32_t)strtoimax(pp->value, &p, 10);
             }
-        } else if (strcasecmp(pp->key, "int64") == 0) {
+        } else if (strcasecmp_l(pp->key, "int64", c_locale) == 0) {
             if (def_i64++) {
                 TEST_info("Line %d: multiple int64 lines", s->curr);
                 return 0;
             }
-            if (strcasecmp(pp->value, "invalid") != 0) {
+            if (strcasecmp_l(pp->value, "invalid", c_locale) != 0) {
                 pc->valid_i64 = 1;
                 pc->i64 = (int64_t)strtoimax(pp->value, &p, 10);
             }
-        } else if (strcasecmp(pp->key, "uint32") == 0) {
+        } else if (strcasecmp_l(pp->key, "uint32", c_locale) == 0) {
             if (def_u32++) {
                 TEST_info("Line %d: multiple uint32 lines", s->curr);
                 return 0;
             }
-            if (strcasecmp(pp->value, "invalid") != 0) {
+            if (strcasecmp_l(pp->value, "invalid", c_locale) != 0) {
                 pc->valid_u32 = 1;
                 pc->u32 = (uint32_t)strtoumax(pp->value, &p, 10);
             }
-        } else if (strcasecmp(pp->key, "uint64") == 0) {
+        } else if (strcasecmp_l(pp->key, "uint64", c_locale) == 0) {
             if (def_u64++) {
                 TEST_info("Line %d: multiple uint64 lines", s->curr);
                 return 0;
             }
-            if (strcasecmp(pp->value, "invalid") != 0) {
+            if (strcasecmp_l(pp->value, "invalid", c_locale) != 0) {
                 pc->valid_u64 = 1;
                 pc->u64 = (uint64_t)strtoumax(pp->value, &p, 10);
             }
-        } else if (strcasecmp(pp->key, "double") == 0) {
+        } else if (strcasecmp_l(pp->key, "double", c_locale) == 0) {
             if (def_d++) {
                 TEST_info("Line %d: multiple double lines", s->curr);
                 return 0;
             }
-            if (strcasecmp(pp->value, "invalid") != 0) {
+            if (strcasecmp_l(pp->value, "invalid", c_locale) != 0) {
                 pc->valid_d = 1;
                 pc->d = strtod(pp->value, &p);
             }
@@ -133,7 +138,7 @@ static int param_conversion_load_stanza(PARAM_CONVERSION *pc, const STANZA *s)
         return 0;
     }
 
-    if (strcasecmp(type, "int32") == 0) {
+    if (strcasecmp_l(type, "int32", c_locale) == 0) {
         if (!TEST_true(def_i32) || !TEST_true(pc->valid_i32)) {
             TEST_note("errant int32 on line %d", s->curr);
             return 0;
@@ -142,7 +147,7 @@ static int param_conversion_load_stanza(PARAM_CONVERSION *pc, const STANZA *s)
         pc->datum = &datum_i32;
         pc->ref = &ref_i32;
         pc->size = sizeof(ref_i32);
-    } else if (strcasecmp(type, "int64") == 0) {
+    } else if (strcasecmp_l(type, "int64", c_locale) == 0) {
         if (!TEST_true(def_i64) || !TEST_true(pc->valid_i64)) {
             TEST_note("errant int64 on line %d", s->curr);
             return 0;
@@ -151,7 +156,7 @@ static int param_conversion_load_stanza(PARAM_CONVERSION *pc, const STANZA *s)
         pc->datum = &datum_i64;
         pc->ref = &ref_i64;
         pc->size = sizeof(ref_i64);
-    } else if (strcasecmp(type, "uint32") == 0) {
+    } else if (strcasecmp_l(type, "uint32", c_locale) == 0) {
         if (!TEST_true(def_u32) || !TEST_true(pc->valid_u32)) {
             TEST_note("errant uint32 on line %d", s->curr);
             return 0;
@@ -160,7 +165,7 @@ static int param_conversion_load_stanza(PARAM_CONVERSION *pc, const STANZA *s)
         pc->datum = &datum_u32;
         pc->ref = &ref_u32;
         pc->size = sizeof(ref_u32);
-    } else if (strcasecmp(type, "uint64") == 0) {
+    } else if (strcasecmp_l(type, "uint64", c_locale) == 0) {
         if (!TEST_true(def_u64) || !TEST_true(pc->valid_u64)) {
             TEST_note("errant uint64 on line %d", s->curr);
             return 0;
@@ -169,7 +174,7 @@ static int param_conversion_load_stanza(PARAM_CONVERSION *pc, const STANZA *s)
         pc->datum = &datum_u64;
         pc->ref = &ref_u64;
         pc->size = sizeof(ref_u64);
-    } else if (strcasecmp(type, "double") == 0) {
+    } else if (strcasecmp_l(type, "double", c_locale) == 0) {
         if (!TEST_true(def_d) || !TEST_true(pc->valid_d)) {
             TEST_note("errant double on line %d", s->curr);
             return 0;

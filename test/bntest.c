@@ -11,9 +11,10 @@
 #include <stdio.h>
 #include <string.h>
 #ifdef __TANDEM
-# include <strings.h> /* strcasecmp */
+# include <strings.h> /* strcasecmp_l */
 #endif
 #include <ctype.h>
+#include <locale.h>
 
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
@@ -24,7 +25,7 @@
 #include "testutil.h"
 
 #ifdef OPENSSL_SYS_WINDOWS
-# define strcasecmp _stricmp
+# define strcasecmp_l(a,b,c) _stricmp(a,b)
 #endif
 
 /*
@@ -60,11 +61,16 @@ static int p1[] = { 193, 15, 0, -1 };
  */
 static const char *findattr(STANZA *s, const char *key)
 {
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+
     int i = s->numpairs;
     PAIR *pp = s->pairs;
 
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
+
     for ( ; --i >= 0; pp++)
-        if (strcasecmp(pp->key, key) == 0)
+        if (strcasecmp_l(pp->key, key, c_locale) == 0)
             return pp->value;
     return NULL;
 }

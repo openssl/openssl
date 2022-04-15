@@ -11,6 +11,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <sys/types.h>
+#include <locale.h>
 #include <openssl/conf.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
@@ -2371,6 +2372,10 @@ static char *make_revocation_str(REVINFO_TYPE rev_type, const char *rev_arg)
     ASN1_OBJECT *otmp;
     ASN1_UTCTIME *revtm = NULL;
     int i;
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
 
     switch (rev_type) {
     case REV_NONE:
@@ -2379,7 +2384,7 @@ static char *make_revocation_str(REVINFO_TYPE rev_type, const char *rev_arg)
 
     case REV_CRL_REASON:
         for (i = 0; i < 8; i++) {
-            if (strcasecmp(rev_arg, crl_reasons[i]) == 0) {
+            if (strcasecmp_l(rev_arg, crl_reasons[i], c_locale) == 0) {
                 reason = crl_reasons[i];
                 break;
             }
@@ -2595,8 +2600,13 @@ int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
         }
     }
     if (reason_str) {
+        static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+        if (c_locale == LC_GLOBAL_LOCALE)
+            c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
+
         for (i = 0; i < NUM_REASONS; i++) {
-            if (strcasecmp(reason_str, crl_reasons[i]) == 0) {
+            if (strcasecmp_l(reason_str, crl_reasons[i], c_locale) == 0) {
                 reason_code = i;
                 break;
             }

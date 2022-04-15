@@ -1,3 +1,4 @@
+--- providers/implementations/kem/rsa_kem.c
 /*
  * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
@@ -7,13 +8,15 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <locale.h>
+
 /*
  * RSA low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
 #include "internal/deprecated.h"
 
-#include "internal/e_os.h"  /* strcasecmp */
+#include "internal/e_os.h"  /* strcasecmp_l */
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/core_dispatch.h>
@@ -64,12 +67,16 @@ static const OSSL_ITEM rsakem_opname_id_map[] = {
 static int name2id(const char *name, const OSSL_ITEM *map, size_t sz)
 {
     size_t i;
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
 
     if (name == NULL)
         return -1;
 
     for (i = 0; i < sz; ++i) {
-        if (strcasecmp(map[i].ptr, name) == 0)
+        if (strcasecmp_l(map[i].ptr, name, c_locale) == 0)
             return map[i].id;
     }
     return -1;

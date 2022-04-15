@@ -15,6 +15,7 @@
 #include "internal/deprecated.h"
 
 #include <string.h>
+#include <locale.h>
 #include <openssl/params.h>
 #include <openssl/core_names.h>
 #include <openssl/err.h>
@@ -22,7 +23,7 @@
 #include "crypto/ec.h"
 #include "internal/nelem.h"
 #include "ec_local.h"
-#include "internal/e_os.h" /* strcasecmp */
+#include "internal/e_os.h" /* strcasecmp_l */
 
 /* functions for EC_GROUP objects */
 
@@ -1552,6 +1553,7 @@ EC_GROUP *EC_GROUP_new_from_params(const OSSL_PARAM params[],
     BN_CTX *bnctx = NULL;
     const unsigned char *buf = NULL;
     int encoding_flag = -1;
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
 #endif
 
     /* This is the simple named group case */
@@ -1592,9 +1594,14 @@ EC_GROUP *EC_GROUP_new_from_params(const OSSL_PARAM params[],
         ERR_raise(ERR_LIB_EC, EC_R_INVALID_FIELD);
         goto err;
     }
-    if (strcasecmp(ptmp->data, SN_X9_62_prime_field) == 0) {
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
+
+    if (strcasecmp_l(ptmp->data, SN_X9_62_prime_field, c_locale) == 0) {
         is_prime_field = 1;
-    } else if (strcasecmp(ptmp->data, SN_X9_62_characteristic_two_field) == 0) {
+    } else if (strcasecmp_l(ptmp->data, SN_X9_62_characteristic_two_field,
+                            c_locale) == 0) {
         is_prime_field = 0;
     } else {
         /* Invalid field */

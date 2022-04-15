@@ -8,6 +8,7 @@
  */
 
 #include <stdio.h>
+#include <locale.h>
 #include "ssl_local.h"
 #include <openssl/conf.h>
 #include <openssl/objects.h>
@@ -229,11 +230,15 @@ static int cmd_Curves(SSL_CONF_CTX *cctx, const char *value)
 static int cmd_ECDHParameters(SSL_CONF_CTX *cctx, const char *value)
 {
     int rv = 1;
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
 
     /* Ignore values supported by 1.0.2 for the automatic selection */
     if ((cctx->flags & SSL_CONF_FLAG_FILE)
-            && (strcasecmp(value, "+automatic") == 0
-                || strcasecmp(value, "automatic") == 0))
+            && (strcasecmp_l(value, "+automatic", c_locale) == 0
+                || strcasecmp_l(value, "automatic", c_locale) == 0))
         return 1;
     if ((cctx->flags & SSL_CONF_FLAG_CMDLINE) &&
         strcmp(value, "auto") == 0)
@@ -846,8 +851,13 @@ static const ssl_conf_cmd_tbl *ssl_conf_cmd_lookup(SSL_CONF_CTX *cctx,
 {
     const ssl_conf_cmd_tbl *t;
     size_t i;
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+
     if (cmd == NULL)
         return NULL;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
 
     /* Look for matching parameter name in table */
     for (i = 0, t = ssl_conf_cmds; i < OSSL_NELEM(ssl_conf_cmds); i++, t++) {
@@ -857,7 +867,7 @@ static const ssl_conf_cmd_tbl *ssl_conf_cmd_lookup(SSL_CONF_CTX *cctx,
                     return t;
             }
             if (cctx->flags & SSL_CONF_FLAG_FILE) {
-                if (t->str_file && strcasecmp(t->str_file, cmd) == 0)
+                if (t->str_file && strcasecmp_l(t->str_file, cmd, c_locale) == 0)
                     return t;
             }
         }

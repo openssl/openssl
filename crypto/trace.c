@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <locale.h>
 
 #include "internal/thread_once.h"
 #include <openssl/bio.h>
@@ -19,7 +20,7 @@
 #include "internal/refcount.h"
 #include "crypto/cryptlib.h"
 
-#include "internal/e_os.h"                /* strcasecmp for Windows */
+#include "internal/e_os.h"                /* strcasecmp_l for Windows */
 
 #ifndef OPENSSL_NO_TRACE
 
@@ -156,9 +157,13 @@ const char *OSSL_trace_get_category_name(int num)
 int OSSL_trace_get_category_num(const char *name)
 {
     size_t i;
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
 
     for (i = 0; i < OSSL_NELEM(trace_categories); i++)
-        if (strcasecmp(name, trace_categories[i].name) == 0)
+        if (strcasecmp_l(name, trace_categories[i].name, c_locale) == 0)
             return trace_categories[i].num;
     return -1; /* not found */
 }

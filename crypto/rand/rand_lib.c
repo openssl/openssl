@@ -10,6 +10,7 @@
 /* We need to use some engine deprecated APIs */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
+#include <locale.h>
 #include <openssl/err.h>
 #include <openssl/opensslconf.h>
 #include <openssl/core_names.h>
@@ -765,23 +766,28 @@ static int random_conf_init(CONF_IMODULE *md, const CONF *cnf)
         return 0;
 
     for (i = 0; i < sk_CONF_VALUE_num(elist); i++) {
+        static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+        if (c_locale == LC_GLOBAL_LOCALE)
+            c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
+
         cval = sk_CONF_VALUE_value(elist, i);
-        if (strcasecmp(cval->name, "random") == 0) {
+        if (strcasecmp_l(cval->name, "random", c_locale) == 0) {
             if (!random_set_string(&dgbl->rng_name, cval->value))
                 return 0;
-        } else if (strcasecmp(cval->name, "cipher") == 0) {
+        } else if (strcasecmp_l(cval->name, "cipher", c_locale) == 0) {
             if (!random_set_string(&dgbl->rng_cipher, cval->value))
                 return 0;
-        } else if (strcasecmp(cval->name, "digest") == 0) {
+        } else if (strcasecmp_l(cval->name, "digest", c_locale) == 0) {
             if (!random_set_string(&dgbl->rng_digest, cval->value))
                 return 0;
-        } else if (strcasecmp(cval->name, "properties") == 0) {
+        } else if (strcasecmp_l(cval->name, "properties", c_locale) == 0) {
             if (!random_set_string(&dgbl->rng_propq, cval->value))
                 return 0;
-        } else if (strcasecmp(cval->name, "seed") == 0) {
+        } else if (strcasecmp_l(cval->name, "seed", c_locale) == 0) {
             if (!random_set_string(&dgbl->seed_name, cval->value))
                 return 0;
-        } else if (strcasecmp(cval->name, "seed_properties") == 0) {
+        } else if (strcasecmp_l(cval->name, "seed_properties", c_locale) == 0) {
             if (!random_set_string(&dgbl->seed_propq, cval->value))
                 return 0;
         } else {

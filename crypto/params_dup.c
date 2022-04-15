@@ -8,10 +8,11 @@
  */
 
 #include <string.h>
+#include <locale.h>
 #include <openssl/params.h>
 #include <openssl/param_build.h>
 #include "internal/param_build_set.h"
-#include "internal/e_os.h" /* strcasecmp */
+#include "internal/e_os.h" /* strcasecmp_l */
 
 #define OSSL_PARAM_ALLOCATED_END    127
 #define OSSL_PARAM_MERGE_LIST_MAX   128
@@ -143,8 +144,12 @@ static int compare_params(const void *left, const void *right)
 {
     const OSSL_PARAM *l = *(const OSSL_PARAM **)left;
     const OSSL_PARAM *r = *(const OSSL_PARAM **)right;
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
 
-    return strcasecmp(l->key, r->key);
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
+
+    return strcasecmp_l(l->key, r->key, c_locale);
 }
 
 OSSL_PARAM *OSSL_PARAM_merge(const OSSL_PARAM *p1, const OSSL_PARAM *p2)
@@ -156,6 +161,10 @@ OSSL_PARAM *OSSL_PARAM_merge(const OSSL_PARAM *p1, const OSSL_PARAM *p2)
     OSSL_PARAM *params, *dst;
     size_t  list1_sz = 0, list2_sz = 0;
     int diff;
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
 
     if (p1 == NULL && p2 == NULL) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
@@ -211,7 +220,7 @@ OSSL_PARAM *OSSL_PARAM_merge(const OSSL_PARAM *p1, const OSSL_PARAM *p2)
             break;
         }
         /* consume the list element with the smaller key */
-        diff = strcasecmp((*p1cur)->key, (*p2cur)->key);
+        diff = strcasecmp_l((*p1cur)->key, (*p2cur)->key, c_locale);
         if (diff == 0) {
             /* If the keys are the same then throw away the list1 element */
             *dst++ = **p2cur;

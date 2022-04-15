@@ -11,6 +11,7 @@
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <string.h>
+#include <locale.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/provider.h>
@@ -29,6 +30,8 @@
 
 static int verbose = 0;
 static const char *select_name = NULL;
+
+static locale_t c_locale = LC_GLOBAL_LOCALE;
 
 /* Checks to see if algorithms are fetchable */
 #define IS_FETCHABLE(type, TYPE)                                \
@@ -71,7 +74,8 @@ static void legacy_cipher_fn(const EVP_CIPHER *c,
 {
     if (select_name != NULL
         && (c == NULL
-            || strcasecmp(select_name,  EVP_CIPHER_get0_name(c)) != 0))
+            || strcasecmp_l(select_name,  EVP_CIPHER_get0_name(c),
+                            c_locale) != 0))
         return;
     if (c != NULL) {
         BIO_printf(arg, "  %s\n", EVP_CIPHER_get0_name(c));
@@ -370,7 +374,8 @@ DEFINE_STACK_OF(EVP_RAND)
 
 static int rand_cmp(const EVP_RAND * const *a, const EVP_RAND * const *b)
 {
-    int ret = strcasecmp(EVP_RAND_get0_name(*a), EVP_RAND_get0_name(*b));
+    int ret = strcasecmp_l(EVP_RAND_get0_name(*a), EVP_RAND_get0_name(*b),
+                           c_locale);
 
     if (ret == 0)
         ret = strcmp(OSSL_PROVIDER_get0_name(EVP_RAND_get0_provider(*a)),
@@ -404,7 +409,7 @@ static void list_random_generators(void)
         const EVP_RAND *m = sk_EVP_RAND_value(rands, i);
 
         if (select_name != NULL
-            && strcasecmp(EVP_RAND_get0_name(m), select_name) != 0)
+            && strcasecmp_l(EVP_RAND_get0_name(m), select_name, c_locale) != 0)
             continue;
         BIO_printf(bio_out, "  %s", EVP_RAND_get0_name(m));
         BIO_printf(bio_out, " @ %s\n",
@@ -463,7 +468,8 @@ static void display_random(const char *name, EVP_RAND_CTX *drbg)
         if (gettables != NULL)
             for (; gettables->key != NULL; gettables++) {
                 /* State has been dealt with already, so ignore */
-                if (strcasecmp(gettables->key, OSSL_RAND_PARAM_STATE) == 0)
+                if (strcasecmp_l(gettables->key, OSSL_RAND_PARAM_STATE,
+                                 c_locale) == 0)
                     continue;
                 /* Outside of verbose mode, we skip non-string values */
                 if (gettables->data_type != OSSL_PARAM_UTF8_STRING
@@ -1544,6 +1550,8 @@ int list_main(int argc, char **argv)
 
     verbose = 0;                 /* Clear a possible previous call */
 
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
     prog = opt_init(argc, argv, list_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {

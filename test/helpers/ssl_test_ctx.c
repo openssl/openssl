@@ -8,6 +8,7 @@
  */
 
 #include <string.h>
+#include <locale.h>
 
 #include <openssl/e_os2.h>
 #include <openssl/crypto.h>
@@ -17,7 +18,7 @@
 #include "../testutil.h"
 
 #ifdef OPENSSL_SYS_WINDOWS
-# define strcasecmp _stricmp
+# define strcasecmp_l(a,b,c) _stricmp(a,b)
 #endif
 
 static const int default_app_data_size = 256;
@@ -26,11 +27,16 @@ static const int default_max_fragment_size = 512;
 
 static int parse_boolean(const char *value, int *result)
 {
-    if (strcasecmp(value, "Yes") == 0) {
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
+
+    if (strcasecmp_l(value, "Yes", c_locale) == 0) {
         *result = 1;
         return 1;
     }
-    else if (strcasecmp(value, "No") == 0) {
+    else if (strcasecmp_l(value, "No", c_locale) == 0) {
         *result = 0;
         return 1;
     }

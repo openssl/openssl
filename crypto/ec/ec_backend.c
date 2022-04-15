@@ -13,6 +13,7 @@
  */
 #include "internal/deprecated.h"
 
+#include <locale.h>
 #include <openssl/core_names.h>
 #include <openssl/objects.h>
 #include <openssl/params.h>
@@ -49,12 +50,17 @@ int ossl_ec_encoding_name2id(const char *name)
 {
     size_t i, sz;
 
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+
     /* Return the default value if there is no name */
     if (name == NULL)
         return OPENSSL_EC_NAMED_CURVE;
 
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
+
     for (i = 0, sz = OSSL_NELEM(encoding_nameid_map); i < sz; i++) {
-        if (strcasecmp(name, encoding_nameid_map[i].ptr) == 0)
+        if (strcasecmp_l(name, encoding_nameid_map[i].ptr, c_locale) == 0)
             return encoding_nameid_map[i].id;
     }
     return -1;
@@ -85,13 +91,18 @@ char *ossl_ec_check_group_type_id2name(int id)
 static int ec_check_group_type_name2id(const char *name)
 {
     size_t i, sz;
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
 
     /* Return the default value if there is no name */
     if (name == NULL)
         return 0;
 
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
+
     for (i = 0, sz = OSSL_NELEM(check_group_type_nameid_map); i < sz; i++) {
-        if (strcasecmp(name, check_group_type_nameid_map[i].ptr) == 0)
+        if (strcasecmp_l(name, check_group_type_nameid_map[i].ptr,
+                         c_locale) == 0)
             return check_group_type_nameid_map[i].id;
     }
     return -1;
@@ -130,13 +141,17 @@ static int ec_set_check_group_type_from_param(EC_KEY *ec, const OSSL_PARAM *p)
 int ossl_ec_pt_format_name2id(const char *name)
 {
     size_t i, sz;
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
 
     /* Return the default value if there is no name */
     if (name == NULL)
         return (int)POINT_CONVERSION_UNCOMPRESSED;
 
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
+
     for (i = 0, sz = OSSL_NELEM(format_nameid_map); i < sz; i++) {
-        if (strcasecmp(name, format_nameid_map[i].ptr) == 0)
+        if (strcasecmp_l(name, format_nameid_map[i].ptr, c_locale) == 0)
             return format_nameid_map[i].id;
     }
     return -1;

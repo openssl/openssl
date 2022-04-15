@@ -21,6 +21,7 @@
  */
 #include "internal/deprecated.h"
 #include <assert.h>
+#include <locale.h>
 #include <openssl/evp.h>
 #include <openssl/provider.h>
 #include <openssl/dsa.h>
@@ -33,7 +34,7 @@
 #include "testutil.h"
 #include "internal/nelem.h"
 #include "crypto/bn_dh.h"   /* _bignum_ffdhe2048_p */
-#include "internal/e_os.h"        /* strcasecmp */
+#include "internal/e_os.h"        /* strcasecmp_l */
 
 static OSSL_LIB_CTX *libctx = NULL;
 static OSSL_PROVIDER *nullprov = NULL;
@@ -478,7 +479,8 @@ err:
 
 static int name_cmp(const char * const *a, const char * const *b)
 {
-    return strcasecmp(*a, *b);
+    locale_t c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
+    return strcasecmp_l(*a, *b, c_locale);
 }
 
 static void collect_cipher_names(EVP_CIPHER *cipher, void *cipher_names_list)

@@ -12,7 +12,7 @@
 #include "internal/ffc.h"
 #include "internal/param_build_set.h"
 #include "internal/nelem.h"
-#include "internal/e_os.h" /* strcasecmp */
+#include "internal/e_os.h" /* strcasecmp_l */
 
 #ifndef FIPS_MODULE
 # include <openssl/asn1.h> /* ossl_ffc_params_print */

@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <locale.h>
 #include <openssl/bio.h>
 #include <openssl/conf.h>
 #include <openssl/crypto.h>
@@ -35,7 +36,7 @@
 #include "internal/nelem.h"
 #include "internal/sizes.h"
 #include "crypto/evp.h"
-#include "internal/e_os.h" /* strcasecmp */
+#include "internal/e_os.h" /* strcasecmp_l */
 
 static OSSL_LIB_CTX *testctx = NULL;
 static char *testpropq = NULL;
@@ -1730,6 +1731,7 @@ static int ec_export_get_encoding_cb(const OSSL_PARAM params[], void *arg)
     const char *enc_name = NULL;
     int *enc = arg;
     size_t i;
+    locale_t c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
 
     *enc = -1;
 
@@ -1739,7 +1741,8 @@ static int ec_export_get_encoding_cb(const OSSL_PARAM params[], void *arg)
         return 0;
 
     for (i = 0; i < OSSL_NELEM(ec_encodings); i++) {
-        if (strcasecmp(enc_name, ec_encodings[i].encoding_name) == 0) {
+        if (strcasecmp_l(enc_name, ec_encodings[i].encoding_name,
+                         c_locale) == 0) {
             *enc = ec_encodings[i].encoding;
             break;
         }

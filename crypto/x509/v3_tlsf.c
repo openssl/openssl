@@ -10,6 +10,7 @@
 #include "internal/e_os.h"
 #include "internal/cryptlib.h"
 #include <stdio.h>
+#include <locale.h>
 #include <openssl/asn1t.h>
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
@@ -101,6 +102,11 @@ static TLS_FEATURE *v2i_TLS_FEATURE(const X509V3_EXT_METHOD *method,
     }
 
     for (i = 0; i < sk_CONF_VALUE_num(nval); i++) {
+        static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+        if (c_locale == LC_GLOBAL_LOCALE)
+            c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
+
         val = sk_CONF_VALUE_value(nval, i);
         if (val->value)
             extval = val->value;
@@ -108,7 +114,7 @@ static TLS_FEATURE *v2i_TLS_FEATURE(const X509V3_EXT_METHOD *method,
             extval = val->name;
 
         for (j = 0; j < OSSL_NELEM(tls_feature_tbl); j++)
-            if (strcasecmp(extval, tls_feature_tbl[j].name) == 0)
+            if (strcasecmp_l(extval, tls_feature_tbl[j].name, c_locale) == 0)
                 break;
         if (j < OSSL_NELEM(tls_feature_tbl))
             tlsextid = tls_feature_tbl[j].num;

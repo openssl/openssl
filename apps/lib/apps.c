@@ -31,6 +31,7 @@
 #endif
 #include <ctype.h>
 #include <errno.h>
+#include <locale.h>
 #include <openssl/err.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
@@ -74,6 +75,8 @@ typedef struct {
     unsigned long flag;
     unsigned long mask;
 } NAME_EX_TBL;
+
+static locale_t c_locale = LC_GLOBAL_LOCALE;
 
 static int set_table_opts(unsigned long *flags, const char *arg,
                           const NAME_EX_TBL * in_tbl);
@@ -681,6 +684,10 @@ int load_cert_certs(const char *uri,
 {
     int ret = 0;
     char *pass_string;
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
 
     if (desc == NULL)
         desc = pcerts == NULL ? "certificate" : "certificates";
@@ -1145,20 +1152,26 @@ int set_name_ex(unsigned long *flags, const char *arg)
 
 int set_dateopt(unsigned long *dateopt, const char *arg)
 {
-    if (strcasecmp(arg, "rfc_822") == 0)
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
+
+    if (strcasecmp_l(arg, "rfc_822", c_locale) == 0)
         *dateopt = ASN1_DTFLGS_RFC822;
-    else if (strcasecmp(arg, "iso_8601") == 0)
+    else if (strcasecmp_l(arg, "iso_8601", c_locale) == 0)
         *dateopt = ASN1_DTFLGS_ISO8601;
     return 0;
 }
 
 int set_ext_copy(int *copy_type, const char *arg)
 {
-    if (strcasecmp(arg, "none") == 0)
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
+
+    if (strcasecmp_l(arg, "none", c_locale) == 0)
         *copy_type = EXT_COPY_NONE;
-    else if (strcasecmp(arg, "copy") == 0)
+    else if (strcasecmp_l(arg, "copy", c_locale) == 0)
         *copy_type = EXT_COPY_ADD;
-    else if (strcasecmp(arg, "copyall") == 0)
+    else if (strcasecmp_l(arg, "copyall", c_locale) == 0)
         *copy_type = EXT_COPY_ALL;
     else
         return 0;
@@ -1226,7 +1239,13 @@ static int set_table_opts(unsigned long *flags, const char *arg,
 {
     char c;
     const NAME_EX_TBL *ptbl;
+ 
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
 
+     if (c == '-') {
+         c = 0;
+         arg++;
     c = arg[0];
     if (c == '-') {
         c = 0;
@@ -1239,7 +1258,7 @@ static int set_table_opts(unsigned long *flags, const char *arg,
     }
 
     for (ptbl = in_tbl; ptbl->name; ptbl++) {
-        if (strcasecmp(arg, ptbl->name) == 0) {
+        if (strcasecmp_l(arg, ptbl->name, c_locale) == 0) {
             *flags &= ~ptbl->mask;
             if (c)
                 *flags |= ptbl->flag;

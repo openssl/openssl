@@ -7,10 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <locale.h>
 #include "internal/ffc.h"
 #include "internal/nelem.h"
 #include "crypto/bn_dh.h"
-#include "internal/e_os.h" /* strcasecmp */
+#include "internal/e_os.h" /* strcasecmp_l */
 
 #ifndef OPENSSL_NO_DH
 
@@ -82,9 +83,13 @@ static const DH_NAMED_GROUP dh_named_groups[] = {
 const DH_NAMED_GROUP *ossl_ffc_name_to_dh_named_group(const char *name)
 {
     size_t i;
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
 
     for (i = 0; i < OSSL_NELEM(dh_named_groups); ++i) {
-        if (strcasecmp(dh_named_groups[i].name, name) == 0)
+        if (strcasecmp_l(dh_named_groups[i].name, name, c_locale) == 0)
             return &dh_named_groups[i];
     }
     return NULL;

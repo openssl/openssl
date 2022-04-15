@@ -8,17 +8,22 @@
  */
 
 #include <string.h>
+#include <locale.h>
 #include <openssl/bio.h>
 #include <openssl/safestack.h>
 #include "names.h"
 
 #ifdef _WIN32
-# define strcasecmp _stricmp
+# define strcasecmp_l(a,b,c) _stricmp(a,b)
 #endif
 
 int name_cmp(const char * const *a, const char * const *b)
 {
-    return strcasecmp(*a, *b);
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
+
+    return strcasecmp_l(*a, *b, c_locale);
 }
 
 void collect_names(const char *name, void *vdata)

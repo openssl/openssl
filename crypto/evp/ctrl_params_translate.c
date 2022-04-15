@@ -16,6 +16,7 @@
 #include "internal/deprecated.h"
 
 #include <string.h>
+#include <locale.h>
 
 /* The following includes get us all the EVP_PKEY_CTRL macros */
 #include <openssl/dh.h>
@@ -37,7 +38,7 @@
 #include "crypto/dh.h"
 #include "crypto/ec.h"
 
-#include "internal/e_os.h"                /* strcasecmp() for Windows */
+#include "internal/e_os.h"                /* strcasecmp_l() for Windows */
 
 struct translation_ctx_st;       /* Forwarding */
 struct translation_st;           /* Forwarding */
@@ -848,9 +849,13 @@ static int fix_kdf_type(enum state state,
      * is interpreted as the new kdf type.
      */
     int ret = 0;
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
 
     if ((ret = default_check(state, translation, ctx)) <= 0)
         return ret;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
 
     if (state == PRE_CTRL_TO_PARAMS) {
         /*
@@ -905,7 +910,9 @@ static int fix_kdf_type(enum state state,
 
         /* Convert KDF type strings to numbers */
         for (; kdf_type_map->kdf_type_str != NULL; kdf_type_map++)
-            if (strcasecmp(ctx->p2, kdf_type_map->kdf_type_str) == 0) {
+            if (strcasecmp_l(ctx->p2, kdf_type_map->kdf_type_str,
+                             c_locale) == 0)
+            {
                 ctx->p1 = kdf_type_map->kdf_type_num;
                 ret = 1;
                 break;
@@ -2415,6 +2422,10 @@ lookup_translation(struct translation_st *tmpl,
                    size_t translations_num)
 {
     size_t i;
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
 
     for (i = 0; i < translations_num; i++) {
         const struct translation_st *item = &translations[i];
@@ -2469,10 +2480,11 @@ lookup_translation(struct translation_st *tmpl,
              * cmd name in the template.
              */
             if (item->ctrl_str != NULL
-                && strcasecmp(tmpl->ctrl_str, item->ctrl_str) == 0)
+                && strcasecmp_l(tmpl->ctrl_str, item->ctrl_str, c_locale) == 0)
                 ctrl_str = tmpl->ctrl_str;
             else if (item->ctrl_hexstr != NULL
-                     && strcasecmp(tmpl->ctrl_hexstr, item->ctrl_hexstr) == 0)
+                     && strcasecmp_l(tmpl->ctrl_hexstr, item->ctrl_hexstr,
+                                     c_locale) == 0)
                 ctrl_hexstr = tmpl->ctrl_hexstr;
             else
                 continue;
@@ -2500,7 +2512,8 @@ lookup_translation(struct translation_st *tmpl,
             if ((item->action_type != NONE
                  && tmpl->action_type != item->action_type)
                 || (item->param_key != NULL
-                    && strcasecmp(tmpl->param_key, item->param_key) != 0))
+                    && strcasecmp_l(tmpl->param_key, item->param_key,
+                                    c_locale) != 0))
                 continue;
         } else {
             return NULL;

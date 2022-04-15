@@ -19,7 +19,7 @@
 #include "crypto/decoder.h"
 #include "crypto/evp/evp_local.h"
 #include "encoder_local.h"
-#include "internal/e_os.h"                /* strcasecmp on Windows */
+#include "internal/e_os.h"                /* strcasecmp_l on Windows */
 #include "internal/namemap.h"
 
 int OSSL_DECODER_CTX_set_passphrase(OSSL_DECODER_CTX *ctx,

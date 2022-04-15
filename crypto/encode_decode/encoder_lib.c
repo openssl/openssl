@@ -7,7 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/e_os.h"                /* strcasecmp on Windows */
+#include "internal/e_os.h"                /* strcasecmp_l on Windows */
+#include <locale.h>
 #include <openssl/core_names.h>
 #include <openssl/bio.h>
 #include <openssl/encoder.h>
@@ -415,6 +416,10 @@ static int encoder_process(struct encoder_process_data_st *data)
         const char *current_output_type;
         const char *current_output_structure;
         struct encoder_process_data_st new_data;
+        static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+        if (c_locale == LC_GLOBAL_LOCALE)
+            c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
 
         if (!top)
             next_encoder =
@@ -453,8 +458,8 @@ static int encoder_process(struct encoder_process_data_st *data)
          */
         if (top) {
             if (data->ctx->output_type != NULL
-                && strcasecmp(current_output_type,
-                              data->ctx->output_type) != 0) {
+                && strcasecmp_l(current_output_type,
+                              data->ctx->output_type, c_locale) != 0) {
                 OSSL_TRACE_BEGIN(ENCODER) {
                     BIO_printf(trc_out,
                                "[%d]    Skipping because current encoder output type (%s) != desired output type (%s)\n",
@@ -482,8 +487,8 @@ static int encoder_process(struct encoder_process_data_st *data)
          */
         if (data->ctx->output_structure != NULL
             && current_output_structure != NULL) {
-            if (strcasecmp(data->ctx->output_structure,
-                           current_output_structure) != 0) {
+            if (strcasecmp_l(data->ctx->output_structure,
+                           current_output_structure, c_locale) != 0) {
                 OSSL_TRACE_BEGIN(ENCODER) {
                     BIO_printf(trc_out,
                                "[%d]    Skipping because current encoder output structure (%s) != ctx output structure (%s)\n",

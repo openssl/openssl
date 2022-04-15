@@ -18,6 +18,7 @@
 #endif
 
 #include <ctype.h>
+#include <locale.h>
 #include "http_server.h"
 #include "internal/sockets.h"
 #include <openssl/err.h>
@@ -301,6 +302,10 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
     char *meth, *url, *end;
     ASN1_VALUE *req;
     int ret = 0;
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
 
     *preq = NULL;
     if (ppath != NULL)
@@ -468,10 +473,11 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
         }
         *line_end = '\0';
         /* https://tools.ietf.org/html/rfc7230#section-6.3 Persistence */
-        if (found_keep_alive != NULL && strcasecmp(key, "Connection") == 0) {
-            if (strcasecmp(value, "keep-alive") == 0)
+        if (found_keep_alive != NULL
+            && strcasecmp_l(key, "Connection", c_locale) == 0) {
+            if (strcasecmp_l(value, "keep-alive", c_locale) == 0)
                 *found_keep_alive = 1;
-            else if (strcasecmp(value, "close") == 0)
+            else if (strcasecmp_l(value, "close", c_locale) == 0)
                 *found_keep_alive = 0;
         }
     }

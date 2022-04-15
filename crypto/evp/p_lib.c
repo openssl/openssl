@@ -15,6 +15,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <locale.h>
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
 #include "internal/namemap.h"
@@ -50,7 +51,7 @@
 #include "internal/provider.h"
 #include "evp_local.h"
 
-#include "internal/e_os.h"                /* strcasecmp on Windows */
+#include "internal/e_os.h"                /* strcasecmp_l on Windows */
 
 static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
                          int len, EVP_KEYMGMT *keymgmt);
@@ -1016,9 +1017,13 @@ int evp_pkey_name2type(const char *name)
 {
     int type;
     size_t i;
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
 
     for (i = 0; i < OSSL_NELEM(standard_name2type); i++) {
-        if (strcasecmp(name, standard_name2type[i].ptr) == 0)
+        if (strcasecmp_l(name, standard_name2type[i].ptr, c_locale) == 0)
             return (int)standard_name2type[i].id;
     }
 

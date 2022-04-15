@@ -13,8 +13,9 @@
  */
 #include "internal/deprecated.h"
 
-#include "internal/e_os.h" /* strcasecmp */
+#include "internal/e_os.h" /* strcasecmp_l */
 #include <string.h>
+#include <locale.h>
 #include <openssl/crypto.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
@@ -845,6 +846,10 @@ static int rsa_digest_signverify_init(void *vprsactx, const char *mdname,
                                       int operation)
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
 
     if (!ossl_prov_is_running())
         return 0;
@@ -854,7 +859,8 @@ static int rsa_digest_signverify_init(void *vprsactx, const char *mdname,
 
     if (mdname != NULL
         /* was rsa_setup_md already called in rsa_signverify_init()? */
-        && (mdname[0] == '\0' || strcasecmp(prsactx->mdname, mdname) != 0)
+        && (mdname[0] == '\0'
+            || strcasecmp_l(prsactx->mdname, mdname, c_locale) != 0)
         && !rsa_setup_md(prsactx, mdname, prsactx->propq))
         return 0;
 

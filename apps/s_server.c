@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <locale.h>
 #if defined(_WIN32)
 /* Included before async.h to avoid some warnings */
 # include <windows.h>
@@ -432,7 +433,12 @@ static int ssl_servername_cb(SSL *s, int *ad, void *arg)
         return SSL_TLSEXT_ERR_NOACK;
 
     if (servername != NULL) {
-        if (strcasecmp(servername, p->servername))
+        static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+        if (c_locale == LC_GLOBAL_LOCALE)
+            c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
+
+        if (strcasecmp_l(servername, p->servername, c_locale))
             return p->extension_error;
         if (ctx2 != NULL) {
             BIO_printf(p->biodebug, "Switching server context.\n");

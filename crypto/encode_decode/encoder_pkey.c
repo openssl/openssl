@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/e_os.h"                /* strcasecmp on Windows */
+#include "internal/e_os.h"                /* strcasecmp_l on Windows */
 #include <openssl/err.h>
 #include <openssl/ui.h>
 #include <openssl/params.h>

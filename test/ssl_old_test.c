@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <locale.h>
 
 #include "internal/nelem.h"
 
@@ -209,6 +210,11 @@ static SSL_SESSION *client_sess;
 static int servername_cb(SSL *s, int *ad, void *arg)
 {
     const char *servername = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
+
     if (sn_server2 == NULL) {
         BIO_printf(bio_stdout, "Servername 2 is NULL\n");
         return SSL_TLSEXT_ERR_NOACK;
@@ -216,7 +222,7 @@ static int servername_cb(SSL *s, int *ad, void *arg)
 
     if (servername) {
         if (s_ctx2 != NULL && sn_server2 != NULL &&
-            !strcasecmp(servername, sn_server2)) {
+            !strcasecmp_l(servername, sn_server2, c_locale)) {
             BIO_printf(bio_stdout, "Switching server context.\n");
             SSL_set_SSL_CTX(s, s_ctx2);
         }

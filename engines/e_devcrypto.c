@@ -18,6 +18,7 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <assert.h>
+#include <locale.h>
 
 #include <openssl/conf.h>
 #include <openssl/evp.h>
@@ -1134,6 +1135,11 @@ static const ENGINE_CMD_DEFN devcrypto_cmds[] = {
 static int devcrypto_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
 {
     int *new_list;
+    static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+    if (c_locale == LC_GLOBAL_LOCALE)
+        c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
+
     switch (cmd) {
 #if defined(CIOCGSESSINFO) || defined(CIOCGSESSION2)
     case DEVCRYPTO_CMD_USE_SOFTDRIVERS:
@@ -1159,9 +1165,9 @@ static int devcrypto_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
     case DEVCRYPTO_CMD_CIPHERS:
         if (p == NULL)
             return 1;
-        if (strcasecmp((const char *)p, "ALL") == 0) {
+        if (strcasecmp_l((const char *)p, "ALL", c_locale) == 0) {
             devcrypto_select_all_ciphers(selected_ciphers);
-        } else if (strcasecmp((const char*)p, "NONE") == 0) {
+        } else if (strcasecmp_l((const char*)p, "NONE", c_locale) == 0) {
             memset(selected_ciphers, 0, sizeof(selected_ciphers));
         } else {
             new_list=OPENSSL_zalloc(sizeof(selected_ciphers));
@@ -1179,9 +1185,9 @@ static int devcrypto_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
     case DEVCRYPTO_CMD_DIGESTS:
         if (p == NULL)
             return 1;
-        if (strcasecmp((const char *)p, "ALL") == 0) {
+        if (strcasecmp_l((const char *)p, "ALL", c_locale) == 0) {
             devcrypto_select_all_digests(selected_digests);
-        } else if (strcasecmp((const char*)p, "NONE") == 0) {
+        } else if (strcasecmp_l((const char*)p, "NONE", c_locale) == 0) {
             memset(selected_digests, 0, sizeof(selected_digests));
         } else {
             new_list=OPENSSL_zalloc(sizeof(selected_digests));

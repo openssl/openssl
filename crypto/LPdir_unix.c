@@ -43,6 +43,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <errno.h>
+#include <locale.h>
 #ifndef LPDIR_H
 # include "LPdir.h"
 #endif
@@ -137,11 +138,17 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
     if ((*ctx)->expect_file_generations) {
         char *p = (*ctx)->entry_name + strlen((*ctx)->entry_name);
 
+        static locale_t c_locale = LC_GLOBAL_LOCALE;
+
+        if (c_locale == LC_GLOBAL_LOCALE)
+            c_locale = newlocale(LC_CTYPE_MASK, "C", 0);
+
         while (p > (*ctx)->entry_name && isdigit(p[-1]))
             p--;
         if (p > (*ctx)->entry_name && p[-1] == ';')
             p[-1] = '\0';
-        if (strcasecmp((*ctx)->entry_name, (*ctx)->previous_entry_name) == 0)
+        if (strcasecmp_l((*ctx)->entry_name, (*ctx)->previous_entry_name,
+                         c_locale) == 0)
             goto again;
     }
 #endif
