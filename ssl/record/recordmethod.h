@@ -128,16 +128,31 @@ struct ossl_record_method_st {
      */
 
     /*
-     * TODO: Will have to be something other than SSL_CIPHER if we make this
-     * fetchable
+     * TODO(RECLAYER): Will have to be something other than EVP_CIPHER if we
+     * make this fetchable
+     * TODO(RECLAYER): mactype should not be an int
      */
-    OSSL_RECORD_LAYER *(*new_record_layer)(int vers, int role, int direction,
-                                          int level, unsigned char *secret,
-                                          size_t secretlen, SSL_CIPHER *c,
-                                          BIO *transport, BIO_ADDR *local,
-                                          BIO_ADDR *peer,
-                                          const OSSL_PARAM *settings,
-                                          const OSSL_PARAM *options);
+    OSSL_RECORD_LAYER *(*new_record_layer)(OSSL_LIB_CTX *libctx,
+                                           const char *propq, int vers,
+                                           int role, int direction,
+                                           int level, unsigned char *key,
+                                           size_t keylen,
+                                           unsigned char *iv,
+                                           size_t ivlen,
+                                           unsigned char *mackey,
+                                           size_t mackeylen,
+                                           const EVP_CIPHER *ciph,
+                                           size_t taglen,
+                                           /* TODO(RECLAYER): This probably should not be an int */
+                                           int mactype,
+                                           const EVP_MD *md,
+                                           const SSL_COMP *comp,
+                                           BIO *transport, BIO_ADDR *local,
+                                           BIO_ADDR *peer,
+                                           const OSSL_PARAM *settings,
+                                           const OSSL_PARAM *options,
+                                           /* TODO(RECLAYER): Remove me */
+                                           SSL_CONNECTION *s);
     void (*free)(OSSL_RECORD_LAYER *rl);
 
     int (*reset)(OSSL_RECORD_LAYER *rl); /* Is this needed? */

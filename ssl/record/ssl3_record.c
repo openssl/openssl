@@ -723,8 +723,8 @@ int n_ssl3_mac(SSL_CONNECTION *sc, SSL3_RECORD *rec, unsigned char *md,
     return 1;
 }
 
-int tls1_mac(SSL_CONNECTION *sc, SSL3_RECORD *rec, unsigned char *md,
-             int sending)
+int tls1_mac_old(SSL_CONNECTION *sc, SSL3_RECORD *rec, unsigned char *md,
+                 int sending)
 {
     unsigned char *seq;
     EVP_MD_CTX *hash;
