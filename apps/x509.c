@@ -160,7 +160,7 @@ int x509_main(int argc, char **argv)
     EVP_PKEY *Upkey = NULL, *CApkey = NULL, *fkey = NULL;
     STACK_OF(ASN1_OBJECT) *trust = NULL, *reject = NULL;
     STACK_OF(OPENSSL_STRING) *sigopts = NULL;
-    X509 *x = NULL, *xca = NULL;
+    X509 *x = NULL, *xca = NULL, *issuer_cert = NULL;
     X509_REQ *req = NULL, *rq = NULL;
     X509_STORE *ctx = NULL;
     const EVP_MD *digest = NULL;
@@ -567,8 +567,6 @@ int x509_main(int argc, char **argv)
             goto end;
         }
 
-        if (!X509_set_issuer_name(x, X509_REQ_get_subject_name(req)))
-            goto end;
         if (!X509_set_subject_name(x, X509_REQ_get_subject_name(req)))
             goto end;
         if (!set_cert_times(x, NULL, NULL, days))
@@ -591,6 +589,9 @@ int x509_main(int argc, char **argv)
         if (xca == NULL)
             goto end;
     }
+    issuer_cert = xca != NULL ? xca : x;
+    if (!X509_set_issuer_name(x, X509_get_subject_name(issuer_cert)))
+        goto end;
 
     out = bio_open_default(outfile, 'w', outformat);
     if (out == NULL)
@@ -987,8 +988,6 @@ static int x509_certify(X509_STORE *ctx, const char *CAfile, const EVP_MD *diges
         goto end;
     }
 
-    if (!X509_set_issuer_name(x, X509_get_subject_name(xca)))
-        goto end;
     if (!X509_set_serialNumber(x, bs))
         goto end;
 
