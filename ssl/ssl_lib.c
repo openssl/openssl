@@ -657,6 +657,31 @@ int ossl_ssl_connection_reset(SSL *s)
 
     RECORD_LAYER_clear(&sc->rlayer);
 
+    if (sc->rrlmethod != NULL)
+        sc->rrlmethod->free(sc->rrl);
+
+    /*
+     * TODO(RECLAYER): This assignment should probably initialy come from the
+     * SSL_METHOD, and potentially be updated later. For now though we just
+     * assign it.
+     */
+    if (SSL_CONNECTION_IS_DTLS(sc))
+        sc->rrlmethod = &ossl_dtls_record_method;
+    else
+        sc->rrlmethod = &ossl_tls_record_method;
+
+    sc->rrl = sc->rrlmethod->new_record_layer(s->ctx->libctx, s->ctx->propq,
+                                            TLS_ANY_VERSION, sc->server,
+                                            OSSL_RECORD_DIRECTION_READ,
+                                            OSSL_RECORD_PROTECTION_LEVEL_NONE,
+                                            NULL, 0, NULL, 0, NULL, 0, NULL, 0,
+                                            NID_undef, NULL, NULL,  sc->rbio,
+                                            NULL, NULL, NULL, NULL, sc);
+    if (sc->rrl == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
     return 1;
 }
 
@@ -884,22 +909,6 @@ SSL *ossl_ssl_connection_new(SSL_CTX *ctx)
                                         ctx->ct_validation_callback_arg))
         goto err;
 #endif
-
-    /*
-     * TODO(RECLAYER): This assignment should probably initialy come from the
-     * SSL_METHOD, and potentially be updated later. For now though we just
-     * assign it.
-     */
-    if (SSL_CONNECTION_IS_DTLS(s))
-        s->rrlmethod = &ossl_dtls_record_method;
-    else
-        s->rrlmethod = &ossl_tls_record_method;
-
-    /* BIO is NULL initially. It will get updated later */
-    s->rrl = s->rrlmethod->new_record_layer(s->version, s->server,
-                                            OSSL_RECORD_DIRECTION_READ,
-                                            0, 0, 0, NULL, NULL, NULL,
-                                            NULL, NULL, NULL);
 
     return ssl;
  err:

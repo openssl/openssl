@@ -153,7 +153,7 @@ static int tls_iv_length_within_key_block(const EVP_CIPHER *c)
 int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
 {
     unsigned char *p, *mac_secret;
-    unsigned char *ms, *key, *iv;
+    unsigned char *key, *iv;
     EVP_CIPHER_CTX *dd;
     const EVP_CIPHER *c;
 #ifndef OPENSSL_NO_COMP
@@ -161,7 +161,7 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
 #endif
     const EVP_MD *m;
     int mac_type;
-    size_t *mac_secret_size;
+    size_t mac_secret_size;
     EVP_MD_CTX *mac_ctx;
     EVP_PKEY *mac_key;
     size_t n, i, j, k, cl;
@@ -171,27 +171,7 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
     void *rl_sequence;
     BIO *bio;
 #endif
-
-#if 0
-    if ((which & SSL3_CC_READ) != 0) {
-        /*
-        * TODO(RECLAYER): This is probably not the right place to free this. The
-        * OSSL_RECORD_METHOD might have changed since we created the rl object.
-        * We should free it at the point that we update the OSSL_RECORD_METHOD.
-        * But for now this will do.
-        */
-        s->rrlmethod->free(s->rrl);
-        s->rrl = s->rrlmethod->new_record_layer(s->version, s->server,
-                                                OSSL_RECORD_DIRECTION_READ,
-                                                0, 0, 0, NULL, s->rbio, NULL,
-                                                NULL, NULL, NULL);
-    }
-#endif
-
-    if (s->rrl == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
     c = s->s3.tmp.new_sym_enc;
     m = s->s3.tmp.new_hash;
@@ -200,58 +180,119 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
     comp = s->s3.tmp.new_compression;
 #endif
 
+    p = s->s3.tmp.key_block;
+    i = mac_secret_size = s->s3.tmp.new_mac_secret_size;
+
+    cl = EVP_CIPHER_get_key_length(c);
+    j = cl;
+    k = tls_iv_length_within_key_block(c);
+    if ((which == SSL3_CHANGE_CIPHER_CLIENT_WRITE) ||
+        (which == SSL3_CHANGE_CIPHER_SERVER_READ)) {
+        mac_secret = &(p[0]);
+        n = i + i;
+        key = &(p[n]);
+        n += j + j;
+        iv = &(p[n]);
+        n += k + k;
+    } else {
+        n = i;
+        mac_secret = &(p[n]);
+        n += i + j;
+        key = &(p[n]);
+        n += j + k;
+        iv = &(p[n]);
+        n += k;
+    }
+
+    if (n > s->s3.tmp.key_block_length) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
     if (which & SSL3_CC_READ) {
-        if (s->ext.use_etm)
-            s->s3.flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC_READ;
-        else
-            s->s3.flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC_READ;
+        if (SSL_CONNECTION_IS_DTLS(s)) {
+            if (s->ext.use_etm)
+                s->s3.flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC_READ;
+            else
+                s->s3.flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC_READ;
 
-        if (s->s3.tmp.new_cipher->algorithm2 & TLS1_STREAM_MAC)
-            s->mac_flags |= SSL_MAC_FLAG_READ_MAC_STREAM;
-        else
-            s->mac_flags &= ~SSL_MAC_FLAG_READ_MAC_STREAM;
+            if (s->s3.tmp.new_cipher->algorithm2 & TLS1_STREAM_MAC)
+                s->mac_flags |= SSL_MAC_FLAG_READ_MAC_STREAM;
+            else
+                s->mac_flags &= ~SSL_MAC_FLAG_READ_MAC_STREAM;
 
-        if (s->s3.tmp.new_cipher->algorithm2 & TLS1_TLSTREE)
-            s->mac_flags |= SSL_MAC_FLAG_READ_MAC_TLSTREE;
-        else
-            s->mac_flags &= ~SSL_MAC_FLAG_READ_MAC_TLSTREE;
+            if (s->s3.tmp.new_cipher->algorithm2 & TLS1_TLSTREE)
+                s->mac_flags |= SSL_MAC_FLAG_READ_MAC_TLSTREE;
+            else
+                s->mac_flags &= ~SSL_MAC_FLAG_READ_MAC_TLSTREE;
 
-        if (s->enc_read_ctx != NULL) {
-            reuse_dd = 1;
-        } else if ((s->enc_read_ctx = EVP_CIPHER_CTX_new()) == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
-            goto err;
-        } else {
-            /*
-             * make sure it's initialised in case we exit later with an error
-             */
-            EVP_CIPHER_CTX_reset(s->enc_read_ctx);
-        }
-        dd = s->enc_read_ctx;
-        mac_ctx = ssl_replace_hash(&s->read_hash, NULL);
-        if (mac_ctx == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-#ifndef OPENSSL_NO_COMP
-        COMP_CTX_free(s->expand);
-        s->expand = NULL;
-        if (comp != NULL) {
-            s->expand = COMP_CTX_new(comp->method);
-            if (s->expand == NULL) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                         SSL_R_COMPRESSION_LIBRARY_ERROR);
+            if (s->enc_read_ctx != NULL) {
+                reuse_dd = 1;
+            } else if ((s->enc_read_ctx = EVP_CIPHER_CTX_new()) == NULL) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+                goto err;
+            } else {
+                /*
+                * make sure it's initialised in case we exit later with an error
+                */
+                EVP_CIPHER_CTX_reset(s->enc_read_ctx);
+            }
+            dd = s->enc_read_ctx;
+            mac_ctx = ssl_replace_hash(&s->read_hash, NULL);
+            if (mac_ctx == NULL) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
+    #ifndef OPENSSL_NO_COMP
+            COMP_CTX_free(s->expand);
+            s->expand = NULL;
+            if (comp != NULL) {
+                s->expand = COMP_CTX_new(comp->method);
+                if (s->expand == NULL) {
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                            SSL_R_COMPRESSION_LIBRARY_ERROR);
+                    goto err;
+                }
+            }
+    #endif
+            /*
+            * this is done by dtls1_reset_seq_numbers for DTLS
+            */
+            if (!SSL_CONNECTION_IS_DTLS(s))
+                RECORD_LAYER_reset_read_sequence(&s->rlayer);
+        } else {
+            /*
+             * Taglen is only relevant for CCM ciphersuites. Other ciphersuites
+             * ignore this value so we can default it to 0.
+             */
+            size_t taglen = 0;
+
+            if (EVP_CIPHER_get_mode(c) == EVP_CIPH_CCM_MODE) {
+                if ((s->s3.tmp. new_cipher->algorithm_enc
+                        & (SSL_AES128CCM8 | SSL_AES256CCM8)) != 0)
+                    taglen = EVP_CCM8_TLS_TAG_LEN;
+                else
+                    taglen = EVP_CCM_TLS_TAG_LEN;
+            }
+
+            s->rrlmethod->free(s->rrl);
+            s->rrl = s->rrlmethod->new_record_layer(sctx->libctx,
+                                                    sctx->propq,
+                                                    s->version, s->server,
+                                                    OSSL_RECORD_DIRECTION_READ,
+                                                    OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
+                                                    key, cl, iv, (size_t)k,
+                                                    mac_secret,
+                                                    mac_secret_size, c, taglen,
+                                                    mac_type, m, comp, s->rbio,
+                                                    NULL, NULL, NULL, NULL, s);
+            if (s->rrl == NULL) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+            /* TODO(RECLAYER): Temporary - remove me */
+            goto check_ktls;
         }
-#endif
-        /*
-         * this is done by dtls1_reset_seq_numbers for DTLS
-         */
-        if (!SSL_CONNECTION_IS_DTLS(s))
-            RECORD_LAYER_reset_read_sequence(&s->rlayer);
-        mac_secret = &(s->s3.read_mac_secret[0]);
-        mac_secret_size = &(s->s3.read_mac_secret_size);
     } else {
         s->statem.enc_write_state = ENC_WRITE_STATE_INVALID;
         if (s->ext.use_etm)
@@ -306,51 +347,16 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
          */
         if (!SSL_CONNECTION_IS_DTLS(s))
             RECORD_LAYER_reset_write_sequence(&s->rlayer);
-        mac_secret = &(s->s3.write_mac_secret[0]);
-        mac_secret_size = &(s->s3.write_mac_secret_size);
     }
 
     if (reuse_dd)
         EVP_CIPHER_CTX_reset(dd);
 
-    p = s->s3.tmp.key_block;
-    i = *mac_secret_size = s->s3.tmp.new_mac_secret_size;
-
-    cl = EVP_CIPHER_get_key_length(c);
-    j = cl;
-    k = tls_iv_length_within_key_block(c);
-    if ((which == SSL3_CHANGE_CIPHER_CLIENT_WRITE) ||
-        (which == SSL3_CHANGE_CIPHER_SERVER_READ)) {
-        ms = &(p[0]);
-        n = i + i;
-        key = &(p[n]);
-        n += j + j;
-        iv = &(p[n]);
-        n += k + k;
-    } else {
-        n = i;
-        ms = &(p[n]);
-        n += i + j;
-        key = &(p[n]);
-        n += j + k;
-        iv = &(p[n]);
-        n += k;
-    }
-
-    if (n > s->s3.tmp.key_block_length) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
-    memcpy(mac_secret, ms, i);
-
     if (!(EVP_CIPHER_get_flags(c) & EVP_CIPH_FLAG_AEAD_CIPHER)) {
-        SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
-
         if (mac_type == EVP_PKEY_HMAC) {
             mac_key = EVP_PKEY_new_raw_private_key_ex(sctx->libctx, "HMAC",
                                                       sctx->propq, mac_secret,
-                                                      *mac_secret_size);
+                                                      mac_secret_size);
         } else {
             /*
              * If its not HMAC then the only other types of MAC we support are
@@ -358,7 +364,7 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
              * a MAC key.
              */
             mac_key = EVP_PKEY_new_mac_key(mac_type, NULL, mac_secret,
-                                           (int)*mac_secret_size);
+                                           (int)mac_secret_size);
         }
         if (mac_key == NULL
             || EVP_DigestSignInit_ex(mac_ctx, NULL, EVP_MD_get0_name(m),
@@ -373,7 +379,7 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
 
     OSSL_TRACE_BEGIN(TLS) {
         BIO_printf(trc_out, "which = %04X, mac key:\n", which);
-        BIO_dump_indent(trc_out, ms, i, 4);
+        BIO_dump_indent(trc_out, mac_secret, i, 4);
     } OSSL_TRACE_END(TLS);
 
     if (EVP_CIPHER_get_mode(c) == EVP_CIPH_GCM_MODE) {
@@ -406,9 +412,9 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
     }
     /* Needed for "composite" AEADs, such as RC4-HMAC-MD5 */
     if ((EVP_CIPHER_get_flags(c) & EVP_CIPH_FLAG_AEAD_CIPHER)
-        && *mac_secret_size
+        && mac_secret_size != 0
         && EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_AEAD_SET_MAC_KEY,
-                                (int)*mac_secret_size, mac_secret) <= 0) {
+                               (int)mac_secret_size, mac_secret) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -418,6 +424,7 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
         goto err;
     }
 
+ check_ktls:
 #ifndef OPENSSL_NO_KTLS
     if (s->compress || (s->options & SSL_OP_ENABLE_KTLS) == 0)
         goto skip_ktls;
@@ -459,8 +466,8 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
         rl_sequence = RECORD_LAYER_get_read_sequence(&s->rlayer);
 
     if (!ktls_configure_crypto(s, c, dd, rl_sequence, &crypto_info,
-                               which & SSL3_CC_WRITE, iv, key, ms,
-                               *mac_secret_size))
+                               which & SSL3_CC_WRITE, iv, key, mac_secret,
+                               mac_secret_size))
         goto skip_ktls;
 
     /* ktls works with user provided buffers directly */

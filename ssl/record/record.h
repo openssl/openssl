@@ -252,8 +252,8 @@ __owur int ssl3_write_pending(SSL_CONNECTION *s, int type,
                               size_t *written);
 __owur int tls1_enc(SSL_CONNECTION *s, SSL3_RECORD *recs, size_t n_recs,
                     int sending, SSL_MAC_BUF *mac, size_t macsize);
-__owur int tls1_mac(SSL_CONNECTION *s, SSL3_RECORD *rec, unsigned char *md,
-                    int send);
+__owur int tls1_mac_old(SSL_CONNECTION *s, SSL3_RECORD *rec, unsigned char *md,
+                        int send);
 __owur int tls13_enc(SSL_CONNECTION *s, SSL3_RECORD *recs, size_t n_recs,
                      int send, SSL_MAC_BUF *mac, size_t macsize);
 int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl);
