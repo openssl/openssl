@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2012-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -475,6 +475,7 @@ static const ssl_trace_tbl ssl_exts_tbl[] = {
     {TLSEXT_TYPE_padding, "padding"},
     {TLSEXT_TYPE_encrypt_then_mac, "encrypt_then_mac"},
     {TLSEXT_TYPE_extended_master_secret, "extended_master_secret"},
+    {TLSEXT_TYPE_record_size_limit, "record_size_limit"},
     {TLSEXT_TYPE_session_ticket, "session_ticket"},
     {TLSEXT_TYPE_psk, "psk"},
     {TLSEXT_TYPE_early_data, "early_data"},
@@ -702,11 +703,21 @@ static int ssl_print_extension(BIO *bio, int indent, int server,
     size_t xlen, share_len;
     unsigned int sigalg;
     uint32_t max_early_data;
+    uint16_t record_size_limit;
 
     BIO_indent(bio, indent, 80);
     BIO_printf(bio, "extension_type=%s(%d), length=%d\n",
                ssl_trace_str(extype, ssl_exts_tbl), extype, (int)extlen);
     switch (extype) {
+    case TLSEXT_TYPE_record_size_limit:
+        if (extlen != 2)
+            return 0;
+        BIO_indent(bio, indent + 2, 80);
+        record_size_limit = (ext[0] << 8) | ext[1];
+        BIO_printf(bio, "record_size_limit := 0x%04x (%u bytes)\n",
+                   record_size_limit, record_size_limit);
+        break;
+
     case TLSEXT_TYPE_max_fragment_length:
         if (extlen < 1)
             return 0;

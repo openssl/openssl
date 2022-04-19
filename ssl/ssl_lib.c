@@ -592,6 +592,8 @@ int SSL_clear(SSL *s)
     s->psksession_id_len = 0;
     s->hello_retry_request = 0;
     s->sent_tickets = 0;
+    s->ext.record_size_limit = 0;
+    s->ext.input_record_size_limit = 0;
 
     s->error = 0;
     s->hit = 0;
@@ -753,6 +755,7 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->quiet_shutdown = ctx->quiet_shutdown;
 
     s->ext.max_fragment_len_mode = ctx->ext.max_fragment_len_mode;
+    s->record_size_limit = ctx->record_size_limit;
     s->max_send_fragment = ctx->max_send_fragment;
     s->split_send_fragment = ctx->split_send_fragment;
     s->max_pipelines = ctx->max_pipelines;
@@ -2224,6 +2227,17 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
         l = (long)s->max_cert_list;
         s->max_cert_list = (size_t)larg;
         return l;
+    case SSL_CTRL_GET_RECORD_SIZE_LIMIT:
+        return (long)s->record_size_limit;
+    case SSL_CTRL_SET_RECORD_SIZE_LIMIT:
+        if (SSL_in_init(s) && !SSL_in_before(s))
+            return -1;
+        if ((larg != 0 && larg < 64) || larg > SSL3_RT_MAX_PLAIN_LENGTH + 1)
+            return 0;
+        s->record_size_limit = (uint16_t)larg;
+        return 1;
+    case SSL_CTRL_GET_USABLE_MAX_SEND_SIZE:
+        return ssl_get_max_send_fragment(s);
     case SSL_CTRL_SET_MAX_SEND_FRAGMENT:
         if (larg < 512 || larg > SSL3_RT_MAX_PLAIN_LENGTH)
             return 0;
@@ -2388,6 +2402,13 @@ long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         return (ctx->mode |= larg);
     case SSL_CTRL_CLEAR_MODE:
         return (ctx->mode &= ~larg);
+    case SSL_CTRL_GET_RECORD_SIZE_LIMIT:
+        return (long)ctx->record_size_limit;
+    case SSL_CTRL_SET_RECORD_SIZE_LIMIT:
+        if ((larg != 0 && larg < 64) || larg > SSL3_RT_MAX_PLAIN_LENGTH + 1)
+            return 0;
+        ctx->record_size_limit = (uint16_t)larg;
+        return 1;
     case SSL_CTRL_SET_MAX_SEND_FRAGMENT:
         if (larg < 512 || larg > SSL3_RT_MAX_PLAIN_LENGTH)
             return 0;
@@ -5584,6 +5605,17 @@ __owur unsigned int ssl_get_max_send_fragment(const SSL *ssl)
     if (ssl->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(ssl->session))
         return GET_MAX_FRAGMENT_LENGTH(ssl->session);
 
+    if (ssl->ext.record_size_limit != 0
+            && ssl->ext.record_size_limit <= ssl->max_send_fragment)
+        /*
+         * RFC 8449: The Record Size Limit value includes the content
+         * type and padding added in TLS 1.3.  Therefore we have to
+         * convert that value to the TLSPlaintext.length before adding
+         * the ContentType and the optional padding.
+         */
+        return SSL_IS_TLS13(ssl) ? ssl->ext.record_size_limit - 1
+                                 : ssl->ext.record_size_limit;
+
     /* return current SSL connection setting */
     return ssl->max_send_fragment;
 }
@@ -5595,9 +5627,16 @@ __owur unsigned int ssl_get_split_send_fragment(const SSL *ssl)
         && ssl->split_send_fragment > GET_MAX_FRAGMENT_LENGTH(ssl->session))
         return GET_MAX_FRAGMENT_LENGTH(ssl->session);
 
-    /* else limit |split_send_fragment| to current |max_send_fragment| */
-    if (ssl->split_send_fragment > ssl->max_send_fragment)
-        return ssl->max_send_fragment;
+    if (ssl->ext.record_size_limit != 0
+            && ssl->ext.record_size_limit <= ssl->split_send_fragment)
+        /*
+         * RFC 8449: The Record Size Limit value includes the content
+         * type and padding added in TLS 1.3.  Therefore we have to
+         * convert that value to the TLSPlaintext.length before adding
+         * the ContentType and the optional padding.
+         */
+        return SSL_IS_TLS13(ssl) ? ssl->ext.record_size_limit - 1
+                                 : ssl->ext.record_size_limit;
 
     /* return current SSL connection setting */
     return ssl->split_send_fragment;

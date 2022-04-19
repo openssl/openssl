@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -351,6 +351,50 @@ static int check_cipher(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
     return 1;
 }
 
+static int check_server_max_fragment_len_mode(HANDSHAKE_RESULT *result,
+                                              SSL_TEST_CTX *test_ctx)
+{
+    if (test_ctx->expected_max_fragment_len_mode == -1)
+        return 1;
+    if (!TEST_int_eq(test_ctx->expected_max_fragment_len_mode,
+                     result->server_max_fragment_len_mode))
+        return 0;
+    return 1;
+}
+
+static int check_client_max_fragment_len_mode(HANDSHAKE_RESULT *result,
+                                              SSL_TEST_CTX *test_ctx)
+{
+    if (test_ctx->expected_max_fragment_len_mode == -1)
+        return 1;
+    if (!TEST_int_eq(test_ctx->expected_max_fragment_len_mode,
+                     result->client_max_fragment_len_mode))
+        return 0;
+    return 1;
+}
+
+static int check_server_usable_max_send_size(HANDSHAKE_RESULT *result,
+                                             SSL_TEST_CTX *test_ctx)
+{
+    if (test_ctx->expected_server_usable_max_send_size == 0)
+        return 1;
+    if (!TEST_int_eq(test_ctx->expected_server_usable_max_send_size,
+                     result->server_usable_max_send_size))
+        return 0;
+    return 1;
+}
+
+static int check_client_usable_max_send_size(HANDSHAKE_RESULT *result,
+                                             SSL_TEST_CTX *test_ctx)
+{
+    if (test_ctx->expected_client_usable_max_send_size == 0)
+        return 1;
+    if (!TEST_int_eq(test_ctx->expected_client_usable_max_send_size,
+                     result->client_usable_max_send_size))
+        return 0;
+    return 1;
+}
+
 /*
  * This could be further simplified by constructing an expected
  * HANDSHAKE_RESULT, and implementing comparison methods for
@@ -384,6 +428,10 @@ static int check_test(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
         ret &= check_client_sign_hash(result, test_ctx);
         ret &= check_client_sign_type(result, test_ctx);
         ret &= check_client_ca_names(result, test_ctx);
+        ret &= check_server_max_fragment_len_mode(result, test_ctx);
+        ret &= check_client_max_fragment_len_mode(result, test_ctx);
+        ret &= check_server_usable_max_send_size(result, test_ctx);
+        ret &= check_client_usable_max_send_size(result, test_ctx);
     }
     return ret;
 }

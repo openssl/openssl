@@ -177,6 +177,35 @@ int tls_parse_ctos_server_name(SSL *s, PACKET *pkt, unsigned int context,
     return 1;
 }
 
+int tls_parse_ctos_recordsizelimit(SSL *s, PACKET *pkt, unsigned int context,
+                                   X509 *x, size_t chainidx)
+{
+    unsigned int value;
+
+    if (PACKET_remaining(pkt) != 2 || !PACKET_get_net_2(pkt, &value)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PARSE_CTOS_RECORDSIZELIMIT,
+                 SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+
+    /*
+     * An endpoint MUST treat receipt of a smaller value (than 64)
+     * as a fatal error and generate an "illegal_parameter" alert.
+     */
+    if (value < 64) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
+                 SSL_F_TLS_PARSE_CTOS_RECORDSIZELIMIT,
+                 SSL_R_SSL3_EXT_INVALID_RECORD_SIZE_LIMIT);
+        return 0;
+    }
+
+    if (s->record_size_limit == 0 || USE_MAX_FRAGMENT_LENGTH_EXT(s->session))
+        return 1;
+
+    s->ext.record_size_limit = value;
+    return 1;
+}
+
 int tls_parse_ctos_maxfragmentlen(SSL *s, PACKET *pkt, unsigned int context,
                                   X509 *x, size_t chainidx)
 {
@@ -197,11 +226,20 @@ int tls_parse_ctos_maxfragmentlen(SSL *s, PACKET *pkt, unsigned int context,
     }
 
     /*
+     * A server that supports the "record_size_limit" extension
+     * MUST ignore a "max_fragment_length" that appears in a
+     * ClientHello if both extensions appear.
+     */
+    if (s->ext.record_size_limit != 0)
+        return 1;
+
+    /*
      * RFC 6066:  The negotiated length applies for the duration of the session
      * including session resumptions.
      * We should receive the same code as in resumed session !
      */
-    if (s->hit && s->session->ext.max_fragment_len_mode != value) {
+    if (s->session->ext.max_fragment_len_mode != TLSEXT_MFL_UNSPECIFIED
+            && s->session->ext.max_fragment_len_mode != value) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
                  SSL_F_TLS_PARSE_CTOS_MAXFRAGMENTLEN,
                  SSL_R_SSL3_EXT_INVALID_MAX_FRAGMENT_LENGTH);
@@ -1349,6 +1387,36 @@ EXT_RETURN tls_construct_stoc_server_name(SSL *s, WPACKET *pkt,
             || !WPACKET_put_bytes_u16(pkt, 0)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_STOC_SERVER_NAME,
                  ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+
+    return EXT_RETURN_SENT;
+}
+
+/* Add/include the server's record size limit extension into ServerHello */
+EXT_RETURN tls_construct_stoc_recordsizelimit(SSL *s, WPACKET *pkt,
+                                              unsigned int context, X509 *x,
+                                              size_t chainidx)
+{
+    if (s->ext.input_record_size_limit == 0)
+        return EXT_RETURN_NOT_SENT;
+
+    /* Add Record Size Limit extension if client enabled it. */
+    /*-
+     * 4 bytes for this extension type and extension length
+     * 2 byte for the Record Size Limit value.
+     */
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_record_size_limit)
+        || !WPACKET_start_sub_packet_u16(pkt)
+        || !WPACKET_put_bytes_u16(pkt,
+                                  (!SSL_IS_TLS13(s)
+                                   && s->record_size_limit
+                                      == SSL3_RT_MAX_PLAIN_LENGTH + 1)
+                                  ? SSL3_RT_MAX_PLAIN_LENGTH
+                                  : s->record_size_limit)
+        || !WPACKET_close(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                 SSL_F_TLS_CONSTRUCT_STOC_RECORDSIZELIMIT, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
     }
 

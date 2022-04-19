@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -42,7 +42,8 @@ static int clientconf_eq(SSL_TEST_CLIENT_CONF *conf1,
             || !TEST_str_eq(conf1->alpn_protocols, conf2->alpn_protocols)
             || !TEST_int_eq(conf1->ct_validation, conf2->ct_validation)
             || !TEST_int_eq(conf1->max_fragment_len_mode,
-                            conf2->max_fragment_len_mode))
+                            conf2->max_fragment_len_mode)
+            || !TEST_int_eq(conf1->record_size_limit, conf2->record_size_limit))
         return 0;
     return 1;
 }
@@ -57,7 +58,8 @@ static int serverconf_eq(SSL_TEST_SERVER_CONF *serv,
                             serv2->broken_session_ticket)
             || !TEST_str_eq(serv->session_ticket_app_data,
                             serv2->session_ticket_app_data)
-            || !TEST_int_eq(serv->cert_status, serv2->cert_status))
+            || !TEST_int_eq(serv->cert_status, serv2->cert_status)
+            || !TEST_int_eq(serv->record_size_limit, serv2->record_size_limit))
         return 0;
     return 1;
 }
@@ -102,7 +104,17 @@ static int testctx_eq(SSL_TEST_CTX *ctx, SSL_TEST_CTX *ctx2)
             || !TEST_int_eq(ctx->resumption_expected,
                             ctx2->resumption_expected)
             || !TEST_int_eq(ctx->session_id_expected,
-                            ctx2->session_id_expected))
+                            ctx2->session_id_expected)
+            || !TEST_int_eq(ctx->expected_max_fragment_len_mode,
+                            ctx2->expected_max_fragment_len_mode)
+            || !TEST_int_eq(ctx->expected_server_usable_max_send_size,
+                            ctx2->expected_server_usable_max_send_size)
+            || !TEST_int_eq(ctx->expected_client_usable_max_send_size,
+                            ctx2->expected_client_usable_max_send_size)
+            || !TEST_int_eq(ctx->reneg_server_record_size_limit,
+                            ctx2->reneg_server_record_size_limit)
+            || !TEST_int_eq(ctx->reneg_client_record_size_limit,
+                            ctx2->reneg_client_record_size_limit))
         return 0;
     return 1;
 }
@@ -179,6 +191,10 @@ static int test_good_configuration(void)
     fixture->expected_ctx->session_id_expected = SSL_TEST_SESSION_ID_IGNORE;
     fixture->expected_ctx->resumption_expected = 1;
 
+    fixture->expected_ctx->expected_max_fragment_len_mode = 0;
+    fixture->expected_ctx->expected_server_usable_max_send_size = 999;
+    fixture->expected_ctx->expected_client_usable_max_send_size = 666;
+
     fixture->expected_ctx->extra.client.verify_callback =
         SSL_TEST_VERIFY_REJECT_ALL;
     fixture->expected_ctx->extra.client.servername = SSL_TEST_SERVERNAME_SERVER2;
@@ -187,10 +203,12 @@ static int test_good_configuration(void)
     if (!TEST_ptr(fixture->expected_ctx->extra.client.npn_protocols))
         goto err;
     fixture->expected_ctx->extra.client.max_fragment_len_mode = 0;
+    fixture->expected_ctx->extra.client.record_size_limit = 999;
 
     fixture->expected_ctx->extra.server.servername_callback =
         SSL_TEST_SERVERNAME_IGNORE_MISMATCH;
     fixture->expected_ctx->extra.server.broken_session_ticket = 1;
+    fixture->expected_ctx->extra.server.record_size_limit = 666;
 
     fixture->expected_ctx->resume_extra.server2.alpn_protocols =
         OPENSSL_strdup("baz");

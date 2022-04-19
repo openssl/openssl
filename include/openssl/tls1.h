@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -130,6 +130,9 @@ extern "C" {
 
 /* ExtensionType value from RFC7627 */
 # define TLSEXT_TYPE_extended_master_secret      23
+
+/* ExtensionType value from RFC8449 */
+# define TLSEXT_TYPE_record_size_limit           28
 
 /* ExtensionType value from RFC4507 */
 # define TLSEXT_TYPE_session_ticket              35

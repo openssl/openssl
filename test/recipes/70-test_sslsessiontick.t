@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2022 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -48,7 +48,7 @@ my $proxy = TLSProxy::Proxy->new(
 #                 NewSessionTicket message seen; Full handshake
 $proxy->clientflags("-no_tls1_3");
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 10;
+plan tests => 11;
 checkmessages(1, "Default session ticket test", 1, 1, 1, 1);
 
 #Test 2: If the server does not accept tickets we should get a normal handshake
@@ -150,6 +150,15 @@ $proxy->serverflags("-no_ticket");
 $proxy->filter(\&inject_empty_ticket_filter);
 $proxy->start();
 ok(TLSProxy::Message->fail, "No server ticket extension but ticket sent test");
+
+#Test11: Same as before but with -maxfraglen 512
+#Expected result: Connection failure but no crash
+clearall();
+$proxy->clientflags("-maxfraglen 512 -no_tls1_3");
+$proxy->serverflags("-no_ticket");
+$proxy->filter(\&inject_empty_ticket_filter);
+$proxy->start();
+ok(TLSProxy::Message->fail, "No server tickicket extension with maxfraglen test");
 
 sub ticket_filter
 {

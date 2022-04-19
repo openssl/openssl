@@ -85,6 +85,7 @@ B<openssl> B<s_server>
 [B<-rev>]
 [B<-async>]
 [B<-ssl_config val>]
+[B<-record_size_limit +int>]
 [B<-max_send_frag +int>]
 [B<-split_send_frag +int>]
 [B<-max_pipelines +int>]
@@ -502,6 +503,11 @@ asynchronously. This will only have an effect if an asynchronous capable engine
 is also used via the B<-engine> option. For test purposes the dummy async engine
 (dasync) can be used (if available).
 
+=item B<-record_size_limit +int>
+
+The requested record size limit of data fragments to receive.
+See L<SSL_CTX_set_record_size_limit(3)> for further information.
+
 =item B<-max_send_frag +int>
 
 The maximum size of data fragment to send.
@@ -845,7 +851,7 @@ The
 
 =head1 COPYRIGHT
 
-Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

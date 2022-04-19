@@ -325,6 +325,203 @@ sub generate_resumption_tests {
             "HandshakeMode" => "Resume",
             "ResumptionExpected" => "Yes",
             "ExpectedResult" => "Success",
+            "ExpectedMaxFragmentLenExt" => 512,
+            "ExpectedServerUsableMaxSendSize" => 512,
+            "ExpectedClientUsableMaxSendSize" => 512,
+        }
+    };
+
+    push @client_tests, {
+        "name" => "resumption-when-rcs-ext-is-used",
+        "server" => {
+            "extra" => {
+                "RecordSizeLimit" => 300,
+            },
+        },
+        "resume_server" => {
+            "extra" => {
+                "RecordSizeLimit" => 400,
+            },
+        },
+        "client" => {
+            "extra" => {
+                "RecordSizeLimit" => 350,
+            },
+        },
+        "resume_client" => {
+            "extra" => {
+                "RecordSizeLimit" => 450,
+            },
+        },
+        "test" => {
+            "MaxFragmentSize" => 1024,
+            "Method" => $method,
+            "HandshakeMode" => "Resume",
+            "ResumptionExpected" => "Yes",
+            "ExpectedResult" => "Success",
+            "ExpectedMaxFragmentLenExt" => "None",
+            "ExpectedServerUsableMaxSendSize" => disabled("tls1_3") || $dtls ? 450 : 449,
+            "ExpectedClientUsableMaxSendSize" => disabled("tls1_3") || $dtls ? 400 : 399,
+        }
+    };
+
+    push @client_tests, {
+        "name" => "resumption-when-rcs-ext-is-used-first",
+        "server" => {
+            "extra" => {
+                "RecordSizeLimit" => 300,
+            },
+        },
+        "resume_server" => { },
+        "client" => {
+            "extra" => {
+                "RecordSizeLimit" => 350,
+            },
+        },
+        "resume_client" => {
+            "extra" => {
+                "RecordSizeLimit" => 450,
+            },
+        },
+        "test" => {
+            "MaxFragmentSize" => 1024,
+            "Method" => $method,
+            "HandshakeMode" => "Resume",
+            "ResumptionExpected" => "Yes",
+            "ExpectedResult" => "Success",
+            "ExpectedMaxFragmentLenExt" => "None",
+            "ExpectedServerUsableMaxSendSize" => 1024,
+            "ExpectedClientUsableMaxSendSize" => 1024,
+        }
+    };
+
+    push @client_tests, {
+        "name" => "resumption-when-rcs-ext-is-used-second",
+        "server" => { },
+        "resume_server" => {
+            "extra" => {
+                "RecordSizeLimit" => 300,
+            },
+        },
+        "client" => {
+            "extra" => {
+                "RecordSizeLimit" => 450,
+            },
+        },
+        "resume_client" => {
+            "extra" => {
+                "RecordSizeLimit" => 350,
+            },
+        },
+        "test" => {
+            "MaxFragmentSize" => 1024,
+            "Method" => $method,
+            "HandshakeMode" => "Resume",
+            "ResumptionExpected" => "Yes",
+            "ExpectedResult" => "Success",
+            "ExpectedMaxFragmentLenExt" => "None",
+            "ExpectedServerUsableMaxSendSize" => disabled("tls1_3") || $dtls ? 350 : 349,
+            "ExpectedClientUsableMaxSendSize" => disabled("tls1_3") || $dtls ? 300 : 299,
+        }
+    };
+
+    push @client_tests, {
+        "name" => "resumption-when-mfl-ext-is-overridden",
+        "server" => {
+            "extra" => {
+                "RecordSizeLimit" => 300,
+            },
+        },
+        "resume_server" => {
+            "extra" => {
+                "RecordSizeLimit" => 400,
+            },
+        },
+        "client" => {
+            "extra" => {
+                "RecordSizeLimit" => 350,
+                "MaxFragmentLenExt" => 512,
+            },
+        },
+        "resume_client" => {
+            "extra" => {
+                "RecordSizeLimit" => 450,
+                "MaxFragmentLenExt" => 512,
+            },
+        },
+        "test" => {
+            "MaxFragmentSize" => 1024,
+            "Method" => $method,
+            "HandshakeMode" => "Resume",
+            "ResumptionExpected" => "Yes",
+            "ExpectedResult" => "Success",
+            "ExpectedMaxFragmentLenExt" => "None",
+            "ExpectedServerUsableMaxSendSize" => disabled("tls1_3") || $dtls ? 450 : 449,
+            "ExpectedClientUsableMaxSendSize" => disabled("tls1_3") || $dtls ? 400 : 399,
+        }
+    };
+
+    push @client_tests, {
+        "name" => "resumption-when-mfl-ext-is-overridden-first",
+        "server" => {
+            "extra" => {
+                "RecordSizeLimit" => 300,
+            },
+        },
+        "resume_server" => { },
+        "client" => {
+            "extra" => {
+                "RecordSizeLimit" => 350,
+                "MaxFragmentLenExt" => 512,
+            },
+        },
+        "resume_client" => {
+            "extra" => {
+                "RecordSizeLimit" => 450,
+                "MaxFragmentLenExt" => 512,
+            },
+        },
+        "test" => {
+            "MaxFragmentSize" => 1024,
+            "Method" => $method,
+            "HandshakeMode" => "Resume",
+            "ResumptionExpected" => "Yes",
+            "ExpectedResult" => "Success",
+            "ExpectedMaxFragmentLenExt" => 512,
+            "ExpectedServerUsableMaxSendSize" => 512,
+            "ExpectedClientUsableMaxSendSize" => 512,
+        }
+    };
+
+    push @client_tests, {
+        "name" => "resumption-when-mfl-ext-is-overridden-second",
+        "server" => { },
+        "resume_server" => {
+            "extra" => {
+                "RecordSizeLimit" => 300,
+            },
+        },
+        "client" => {
+            "extra" => {
+                "RecordSizeLimit" => 450,
+                "MaxFragmentLenExt" => 512,
+            },
+        },
+        "resume_client" => {
+            "extra" => {
+                "RecordSizeLimit" => 350,
+                "MaxFragmentLenExt" => 512,
+            },
+        },
+        "test" => {
+            "MaxFragmentSize" => 1024,
+            "Method" => $method,
+            "HandshakeMode" => "Resume",
+            "ResumptionExpected" => "Yes",
+            "ExpectedResult" => "Success",
+            "ExpectedMaxFragmentLenExt" => 512,
+            "ExpectedServerUsableMaxSendSize" => 512,
+            "ExpectedClientUsableMaxSendSize" => 512,
         }
     };
 

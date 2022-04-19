@@ -59,6 +59,41 @@ EXT_RETURN tls_construct_ctos_server_name(SSL *s, WPACKET *pkt,
     return EXT_RETURN_SENT;
 }
 
+/* Push a Record Size Limit extension into ClientHello */
+EXT_RETURN tls_construct_ctos_recordsizelimit(SSL *s, WPACKET *pkt,
+                                              unsigned int context, X509 *x,
+                                              size_t chainidx)
+{
+    /* Any previous Record Size Limit negotiation result is no longer valid. */
+    if (s->ext.input_record_size_limit != 0) {
+        s->ext.input_record_size_limit = 0;
+        if (!ssl3_setup_buffers(s)) {
+            /* SSLfatal() already called */
+            return EXT_RETURN_FAIL;
+        }
+    }
+
+    if (s->record_size_limit == 0)
+        return EXT_RETURN_NOT_SENT;
+
+    /* Add Record Size Limit extension if client enabled it. */
+    /*-
+     * 4 bytes for this extension type and extension length
+     * 2 byte for the Record Size Limit code value.
+     */
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_record_size_limit)
+            /* Sub-packet for Record Size Limit extension (2 bytes) */
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_put_bytes_u16(pkt, s->record_size_limit)
+            || !WPACKET_close(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                 SSL_F_TLS_CONSTRUCT_CTOS_RECORDSIZELIMIT, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+
+    return EXT_RETURN_SENT;
+}
+
 /* Push a Max Fragment Len extension into ClientHello */
 EXT_RETURN tls_construct_ctos_maxfragmentlen(SSL *s, WPACKET *pkt,
                                              unsigned int context, X509 *x,
@@ -1313,6 +1348,49 @@ int tls_parse_stoc_renegotiate(SSL *s, PACKET *pkt, unsigned int context,
     return 1;
 }
 
+/* Parse the server's record size limit extension packet */
+int tls_parse_stoc_recordsizelimit(SSL *s, PACKET *pkt, unsigned int context,
+                                   X509 *x, size_t chainidx)
+{
+    unsigned int value;
+
+    if (PACKET_remaining(pkt) != 2 || !PACKET_get_net_2(pkt, &value)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PARSE_STOC_RECORDSIZELIMIT,
+                 SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+
+    /*
+     * An endpoint MUST treat receipt of a smaller value (than 64)
+     * as a fatal error and generate an "illegal_parameter" alert.
+     */
+    if (value < 64) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
+                 SSL_F_TLS_PARSE_STOC_RECORDSIZELIMIT,
+                 SSL_R_SSL3_EXT_INVALID_RECORD_SIZE_LIMIT);
+        return 0;
+    }
+
+    /*
+     * A client MAY abort the handshake with an "illegal_parameter" alert
+     * if the record_size_limit extension includes a value greater than
+     * the maximum record size permitted by the negotiated protocol version
+     * and extensions.
+     */
+    if (value > (uint16_t)(SSL_IS_TLS13(s)
+                           ? SSL3_RT_MAX_PLAIN_LENGTH + 1
+                           : SSL3_RT_MAX_PLAIN_LENGTH)) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
+                 SSL_F_TLS_PARSE_STOC_RECORDSIZELIMIT,
+                 SSL_R_SSL3_EXT_INVALID_RECORD_SIZE_LIMIT);
+        return 0;
+    }
+
+    s->ext.record_size_limit = value;
+
+    return 1;
+}
+
 /* Parse the server's max fragment len extension packet */
 int tls_parse_stoc_maxfragmentlen(SSL *s, PACKET *pkt, unsigned int context,
                                   X509 *x, size_t chainidx)
@@ -1327,6 +1405,18 @@ int tls_parse_stoc_maxfragmentlen(SSL *s, PACKET *pkt, unsigned int context,
 
     /* |value| should contains a valid max-fragment-length code. */
     if (!IS_MAX_FRAGMENT_LENGTH_EXT_VALID(value)) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
+                 SSL_F_TLS_PARSE_STOC_MAXFRAGMENTLEN,
+                 SSL_R_SSL3_EXT_INVALID_MAX_FRAGMENT_LENGTH);
+        return 0;
+    }
+
+    /*
+     * RFC 8449: A client MUST treat receipt of both "max_fragment_length" and
+     * "record_size_limit" as a fatal error, and it SHOULD generate an
+     * "illegal_parameter" alert.
+     */
+    if (s->ext.record_size_limit != 0) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
                  SSL_F_TLS_PARSE_STOC_MAXFRAGMENTLEN,
                  SSL_R_SSL3_EXT_INVALID_MAX_FRAGMENT_LENGTH);

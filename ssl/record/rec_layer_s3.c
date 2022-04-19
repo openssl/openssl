@@ -929,7 +929,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
             SSL3_RECORD_add_length(thiswr, 1);
 
             /* Add TLS1.3 padding */
-            max_send_fragment = ssl_get_max_send_fragment(s);
+            max_send_fragment = ssl_get_max_send_fragment(s) + 1;
             rlen = SSL3_RECORD_get_length(thiswr);
             if (rlen < max_send_fragment) {
                 size_t padding = 0;

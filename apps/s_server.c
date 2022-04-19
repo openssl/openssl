@@ -752,6 +752,7 @@ typedef enum OPTION_choice {
     OPT_NO_RESUME_EPHEMERAL, OPT_PSK_IDENTITY, OPT_PSK_HINT, OPT_PSK,
     OPT_PSK_SESS, OPT_SRPVFILE, OPT_SRPUSERSEED, OPT_REV, OPT_WWW,
     OPT_UPPER_WWW, OPT_HTTP, OPT_ASYNC, OPT_SSL_CONFIG,
+    OPT_RECORD_SIZE_LIMIT,
     OPT_MAX_SEND_FRAG, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES, OPT_READ_BUF,
     OPT_SSL3, OPT_TLS1_3, OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
     OPT_DTLS1_2, OPT_SCTP, OPT_TIMEOUT, OPT_MTU, OPT_LISTEN, OPT_STATELESS,
@@ -893,6 +894,8 @@ const OPTIONS s_server_options[] = {
     {"async", OPT_ASYNC, '-', "Operate in asynchronous mode"},
     {"ssl_config", OPT_SSL_CONFIG, 's',
      "Configure SSL_CTX using the configuration 'val'"},
+    {"record_size_limit", OPT_RECORD_SIZE_LIMIT, 'p',
+     "Requested Record size limit"},
     {"max_send_frag", OPT_MAX_SEND_FRAG, 'p', "Maximum Size of send frames "},
     {"split_send_frag", OPT_SPLIT_SEND_FRAG, 'p',
      "Size used to split data for encrypt pipelines"},
@@ -1050,6 +1053,7 @@ int s_server_main(int argc, char *argv[])
     int s_tlsextstatus = 0;
 #endif
     int no_resume_ephemeral = 0;
+    unsigned int record_size_limit = 0;
     unsigned int max_send_fragment = 0;
     unsigned int split_send_fragment = 0, max_pipelines = 0;
     const char *s_serverinfo_file = NULL;
@@ -1569,6 +1573,9 @@ int s_server_main(int argc, char *argv[])
         case OPT_ASYNC:
             async = 1;
             break;
+        case OPT_RECORD_SIZE_LIMIT:
+            record_size_limit = atoi(opt_arg());
+            break;
         case OPT_MAX_SEND_FRAG:
             max_send_fragment = atoi(opt_arg());
             break;
@@ -1848,6 +1855,13 @@ int s_server_main(int argc, char *argv[])
 
     if (async) {
         SSL_CTX_set_mode(ctx, SSL_MODE_ASYNC);
+    }
+
+    if (record_size_limit > 0
+        && !SSL_CTX_set_record_size_limit(ctx, record_size_limit)) {
+        BIO_printf(bio_err, "%s: Record size limit %u is out of permitted range\n",
+                   prog, record_size_limit);
+        goto end;
     }
 
     if (max_send_fragment > 0

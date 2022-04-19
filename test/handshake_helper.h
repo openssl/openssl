@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -67,6 +67,14 @@ typedef struct handshake_result {
     char *cipher;
     /* session ticket application data */
     char *result_session_ticket_app_data;
+    /* server max fragment len mode */
+    int server_max_fragment_len_mode;
+    /* client max fragment len mode */
+    int client_max_fragment_len_mode;
+    /* server usable max send size */
+    int server_usable_max_send_size;
+    /* client usable max send size */
+    int client_usable_max_send_size;
 } HANDSHAKE_RESULT;
 
 HANDSHAKE_RESULT *HANDSHAKE_RESULT_new(void);

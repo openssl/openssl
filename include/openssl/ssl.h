@@ -1287,6 +1287,9 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_CTRL_GET_PEER_TMP_KEY               109
 # define SSL_CTRL_GET_RAW_CIPHERLIST             110
 # define SSL_CTRL_GET_EC_POINT_FORMATS           111
+# define SSL_CTRL_GET_RECORD_SIZE_LIMIT          112
+# define SSL_CTRL_SET_RECORD_SIZE_LIMIT          113
+# define SSL_CTRL_GET_USABLE_MAX_SEND_SIZE       114
 # define SSL_CTRL_GET_CHAIN_CERTS                115
 # define SSL_CTRL_SELECT_CURRENT_CERT            116
 # define SSL_CTRL_SET_CURRENT_CERT               117
@@ -2058,6 +2061,17 @@ __owur int SSL_get_ex_data_X509_STORE_CTX_idx(void);
         SSL_ctrl(ssl,SSL_CTRL_GET_MAX_CERT_LIST,0,NULL)
 # define SSL_set_max_cert_list(ssl,m) \
         SSL_ctrl(ssl,SSL_CTRL_SET_MAX_CERT_LIST,m,NULL)
+
+# define SSL_CTX_get_record_size_limit(ctx) \
+        SSL_CTX_ctrl(ctx,SSL_CTRL_GET_RECORD_SIZE_LIMIT,0,NULL)
+# define SSL_CTX_set_record_size_limit(ctx,m) \
+        SSL_CTX_ctrl(ctx,SSL_CTRL_SET_RECORD_SIZE_LIMIT,m,NULL)
+# define SSL_get_record_size_limit(ssl) \
+        SSL_ctrl(ssl,SSL_CTRL_GET_RECORD_SIZE_LIMIT,0,NULL)
+# define SSL_set_record_size_limit(ssl,m) \
+        SSL_ctrl(ssl,SSL_CTRL_SET_RECORD_SIZE_LIMIT,m,NULL)
+# define SSL_get_usable_max_send_size(ctx) \
+        SSL_ctrl(ctx,SSL_CTRL_GET_USABLE_MAX_SEND_SIZE,0,NULL)
 
 # define SSL_CTX_set_max_send_fragment(ctx,m) \
         SSL_CTX_ctrl(ctx,SSL_CTRL_SET_MAX_SEND_FRAGMENT,m,NULL)

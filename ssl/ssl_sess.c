@@ -75,6 +75,7 @@ SSL_SESSION *SSL_SESSION_new(void)
         return NULL;
     }
 
+    ss->ext.max_fragment_len_mode = TLSEXT_MFL_UNSPECIFIED;
     ss->verify_result = 1;      /* avoid 0 (= X509_V_OK) just in case */
     ss->references = 1;
     ss->timeout = 60 * 5 + 4;   /* 5 minute timeout by default */

@@ -61,6 +61,7 @@ my %conf_dependent_tests = (
   "07-dtls-protocol-version.conf" => !$is_default_dtls || !disabled("sctp"),
   "10-resumption.conf" => !$is_default_tls,
   "11-dtls_resumption.conf" => !$is_default_dtls || !disabled("sctp"),
+  "13-fragmentation.conf" => disabled("tls1_3") || disabled("tls1_2"),
   "16-dtls-certstatus.conf" => !$is_default_dtls || !disabled("sctp"),
   "17-renegotiate.conf" => disabled("tls1_2"),
   "18-dtls-renegotiate.conf" => disabled("dtls1_2") || !disabled("sctp"),
@@ -88,9 +89,7 @@ my %skip = (
   # We could run some of these tests without TLS 1.2 if we had a per-test
   # disable instruction but that's a bizarre configuration not worth
   # special-casing for.
-  # TODO(TLS 1.3): We should review this once we have TLS 1.3.
-  "13-fragmentation.conf" => disabled("tls1_2"),
-  "14-curves.conf" => disabled("tls1_2") || $no_ec || $no_ec2m,
+  "14-curves.conf" => $no_tls || $no_ec || $no_ec2m,
   "15-certstatus.conf" => $no_tls || $no_ocsp,
   "16-dtls-certstatus.conf" => $no_dtls || $no_ocsp,
   "17-renegotiate.conf" => $no_tls_below1_3,

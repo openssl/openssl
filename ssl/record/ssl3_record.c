@@ -695,6 +695,20 @@ int ssl3_get_record(SSL *s)
             }
         }
 
+        /*
+         * A TLS endpoint that receives a record larger than its advertised
+         * limit MUST generate a fatal "record_overflow" alert.
+         * If this extension is not negotiated, endpoints can send
+         * records of any size permitted by the protocol or other negotiated
+         * extensions.
+         */
+        if (s->ext.input_record_size_limit != 0
+                && thisrr->length > s->ext.input_record_size_limit) {
+            SSLfatal(s, SSL_AD_RECORD_OVERFLOW, SSL_F_SSL3_GET_RECORD,
+                     SSL_R_DATA_LENGTH_TOO_LONG);
+            return -1;
+        }
+
         if (SSL_IS_TLS13(s)
                 && s->enc_read_ctx != NULL
                 && thisrr->type != SSL3_RT_ALERT) {
@@ -1795,6 +1809,11 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
     if (s->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(s->session))
         max_plain_length = GET_MAX_FRAGMENT_LENGTH(s->session);
 
+    /* use current negotiated Record Size Limit setting if applicable */
+    if (s->ext.input_record_size_limit != 0
+            && s->ext.input_record_size_limit < max_plain_length)
+        max_plain_length = s->ext.input_record_size_limit;
+
     /* send overflow if the plaintext is too long now it has passed MAC */
     if (rr->length > max_plain_length) {
         SSLfatal(s, SSL_AD_RECORD_OVERFLOW, SSL_F_DTLS1_PROCESS_RECORD,
@@ -1941,6 +1960,17 @@ int dtls1_get_record(SSL *s)
         /* If received packet overflows own-client Max Fragment Length setting */
         if (s->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(s->session)
                 && rr->length > GET_MAX_FRAGMENT_LENGTH(s->session) + SSL3_RT_MAX_ENCRYPTED_OVERHEAD) {
+            /* record too long, silently discard it */
+            rr->length = 0;
+            rr->read = 1;
+            RECORD_LAYER_reset_packet_length(&s->rlayer);
+            goto again;
+        }
+
+        /* If received packet overflows negotiated Record Size Limit setting */
+        if (s->ext.input_record_size_limit != 0
+                && rr->length > (size_t)s->ext.input_record_size_limit
+                                + SSL3_RT_MAX_ENCRYPTED_OVERHEAD) {
             /* record too long, silently discard it */
             rr->length = 0;
             rr->read = 1;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2014-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -502,6 +502,7 @@ int SSL_extension_supported(unsigned int ext_type)
 #endif
     case TLSEXT_TYPE_padding:
     case TLSEXT_TYPE_renegotiate:
+    case TLSEXT_TYPE_record_size_limit:
     case TLSEXT_TYPE_max_fragment_length:
     case TLSEXT_TYPE_server_name:
     case TLSEXT_TYPE_session_ticket:

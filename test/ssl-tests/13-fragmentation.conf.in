@@ -1,5 +1,5 @@
 # -*- mode: perl; -*-
-# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -13,6 +13,7 @@ use strict;
 use warnings;
 
 package ssltests;
+use OpenSSL::Test::Utils;
 
 
 our @tests = (
@@ -23,6 +24,7 @@ our @tests = (
         client => { },
         test => {
             ApplicationData => 511,
+            ExpectedMaxFragmentLenExt => "None",
         }
     },
     {
@@ -31,6 +33,7 @@ our @tests = (
         client => { },
         test => {
             ApplicationData => 512,
+            ExpectedMaxFragmentLenExt => "None",
         }
     },
     {
@@ -39,6 +42,7 @@ our @tests = (
         client => { },
         test => {
             ApplicationData => 513,
+            ExpectedMaxFragmentLenExt => "None",
         }
     },
     {
@@ -47,6 +51,7 @@ our @tests = (
         client => { },
         test => {
             ApplicationData => 4 * 1024 + 1,
+            ExpectedMaxFragmentLenExt => "None",
         }
     },
     {
@@ -56,6 +61,9 @@ our @tests = (
         test => {
             ApplicationData => 4 * 1024 + 1,
             MaxFragmentSize => 16384,
+            ExpectedMaxFragmentLenExt => "None",
+            ExpectedServerUsableMaxSendSize => 16384,
+            ExpectedClientUsableMaxSendSize => 16384,
         }
     },
     {
@@ -64,6 +72,7 @@ our @tests = (
         client => { },
         test => {
             ApplicationData => 32 * 1024 + 7,
+            ExpectedMaxFragmentLenExt => "None",
         }
     },
     # Exceeds the 64kB write buffer size.
@@ -73,6 +82,7 @@ our @tests = (
         client => { },
         test => {
             ApplicationData => 128 * 1024 - 3,
+            ExpectedMaxFragmentLenExt => "None",
         }
     },
     {
@@ -81,6 +91,7 @@ our @tests = (
         client => { },
         test => {
             ApplicationData => 1024 * 1024,
+            ExpectedMaxFragmentLenExt => "None",
         }
     },
     {
@@ -90,6 +101,9 @@ our @tests = (
         test => {
             ApplicationData => 1024 * 1024,
             MaxFragmentSize => 16384,
+            ExpectedMaxFragmentLenExt => "None",
+            ExpectedServerUsableMaxSendSize => 16384,
+            ExpectedClientUsableMaxSendSize => 16384,
         }
     },
     {
@@ -99,6 +113,9 @@ our @tests = (
         test => {
             ApplicationData => 1024 * 1024,
             MaxFragmentSize => 5 * 1024 - 5,
+            ExpectedMaxFragmentLenExt => "None",
+            ExpectedServerUsableMaxSendSize => 5 * 1024 - 5,
+            ExpectedClientUsableMaxSendSize => 5 * 1024 - 5,
         }
     },
     # When the buffer / fragment size ratio is sufficiently large,
@@ -119,6 +136,10 @@ our @tests = (
         test => {
             ApplicationData => 1024 * 1024,
             MaxFragmentSize => 4 * 1024,
+            ExpectedResult => disabled("tls1_2") && !disabled("tls1_3") ? "ClientFail" : "Success",
+            ExpectedMaxFragmentLenExt => "None",
+            ExpectedServerUsableMaxSendSize => 4 * 1024,
+            ExpectedClientUsableMaxSendSize => 4 * 1024,
         }
     },
     {
@@ -131,6 +152,10 @@ our @tests = (
         test => {
             ApplicationData => 1024 * 1024,
             MaxFragmentSize => 4 * 1024,
+            ExpectedResult => disabled("tls1_2") ? "ClientFail" : "Success",
+            ExpectedMaxFragmentLenExt => "None",
+            ExpectedServerUsableMaxSendSize => 4 * 1024,
+            ExpectedClientUsableMaxSendSize => 4 * 1024,
         }
     },
         {
@@ -143,6 +168,10 @@ our @tests = (
         test => {
             ApplicationData => 1024 * 1024 + 3,
             MaxFragmentSize => 5 * 1024 - 5,
+            ExpectedResult => disabled("tls1_2") && !disabled("tls1_3") ? "ClientFail" : "Success",
+            ExpectedMaxFragmentLenExt => "None",
+            ExpectedServerUsableMaxSendSize => 5 * 1024 - 5,
+            ExpectedClientUsableMaxSendSize => 5 * 1024 - 5,
         }
     },
     {
@@ -155,6 +184,10 @@ our @tests = (
         test => {
             ApplicationData => 1024 * 1024 - 3,
             MaxFragmentSize => 5 * 1024 + 5,
+            ExpectedResult => disabled("tls1_2") ? "ClientFail" : "Success",
+            ExpectedMaxFragmentLenExt => "None",
+            ExpectedServerUsableMaxSendSize => 5 * 1024 + 5,
+            ExpectedClientUsableMaxSendSize => 5 * 1024 + 5,
         }
     },
     # Test that multibuffer-capable code also handles small data correctly.
@@ -170,6 +203,10 @@ our @tests = (
         test => {
             ApplicationData => 4 * 1024,
             MaxFragmentSize => 4 * 1024,
+            ExpectedResult => disabled("tls1_2") && !disabled("tls1_3") ? "ClientFail" : "Success",
+            ExpectedMaxFragmentLenExt => "None",
+            ExpectedServerUsableMaxSendSize => 4 * 1024,
+            ExpectedClientUsableMaxSendSize => 4 * 1024,
         }
     },
     {
@@ -182,6 +219,8 @@ our @tests = (
         test => {
             ApplicationData => 4 * 1024,
             MaxFragmentSize => 4 * 1024,
+            ExpectedResult => disabled("tls1_2") ? "ClientFail" : "Success",
+            ExpectedMaxFragmentLenExt => "None",
         }
     },
     ############################################
@@ -198,6 +237,9 @@ our @tests = (
         test => {
             ApplicationData => 3072,
             MaxFragmentSize => 16384,
+            ExpectedMaxFragmentLenExt => 1024,
+            ExpectedServerUsableMaxSendSize => 1024,
+            ExpectedClientUsableMaxSendSize => 1024,
         }
     },
     {
@@ -211,6 +253,9 @@ our @tests = (
         test => {
             ApplicationData => 3072,
             MaxFragmentSize => 2048,
+            ExpectedMaxFragmentLenExt => 2048,
+            ExpectedServerUsableMaxSendSize => 2048,
+            ExpectedClientUsableMaxSendSize => 2048,
         }
     },
     {
@@ -224,6 +269,9 @@ our @tests = (
         test => {
             ApplicationData => 3072,
             MaxFragmentSize => 1024,
+            ExpectedMaxFragmentLenExt => 512,
+            ExpectedServerUsableMaxSendSize => 512,
+            ExpectedClientUsableMaxSendSize => 512,
         }
     },
     {
@@ -237,6 +285,9 @@ our @tests = (
         test => {
             ApplicationData => 3072,
             MaxFragmentSize => 1024,
+            ExpectedMaxFragmentLenExt => 2048,
+            ExpectedServerUsableMaxSendSize => 2048,
+            ExpectedClientUsableMaxSendSize => 2048,
         }
     },
     {
@@ -250,6 +301,9 @@ our @tests = (
         test => {
             ApplicationData => 8196,
             MaxFragmentSize => 2048,
+            ExpectedMaxFragmentLenExt => 4096,
+            ExpectedServerUsableMaxSendSize => 4096,
+            ExpectedClientUsableMaxSendSize => 4096,
         }
     },
     {
@@ -263,6 +317,200 @@ our @tests = (
         test => {
             ApplicationData => 3072,
             MaxFragmentSize => 1024,
+            ExpectedMaxFragmentLenExt => 2048,
+            ExpectedServerUsableMaxSendSize => 2048,
+            ExpectedClientUsableMaxSendSize => 2048,
+        }
+    },
+    {
+        name => "Record Size Limit extension negotiated",
+        server => {
+            extra => {
+                RecordSizeLimit => 64,
+            },
+        },
+        client => {
+            extra => {
+                RecordSizeLimit => 64,
+            },
+        },
+        test => {
+            ApplicationData => 32768,
+            MaxFragmentSize => 16384,
+            ExpectedMaxFragmentLenExt => "None",
+            ExpectedServerUsableMaxSendSize => disabled("tls1_3") ? 64 : 63,
+            ExpectedClientUsableMaxSendSize => disabled("tls1_3") ? 64 : 63,
+        }
+    },
+    {
+        name => "Record Size Limit extension asymmetric",
+        server => {
+            extra => {
+                RecordSizeLimit => 128,
+            },
+        },
+        client => {
+            extra => {
+                RecordSizeLimit => 256,
+            },
+        },
+        test => {
+            ApplicationData => 32768,
+            MaxFragmentSize => 16384,
+            ExpectedMaxFragmentLenExt => "None",
+            ExpectedServerUsableMaxSendSize => disabled("tls1_3") ? 256 : 255,
+            ExpectedClientUsableMaxSendSize => disabled("tls1_3") ? 128 : 127,
+        }
+    },
+    {
+        name => "Record Size Limit extension not negotiated",
+        server => { },
+        client => {
+            extra => {
+                RecordSizeLimit => 64,
+            },
+        },
+        test => {
+            ApplicationData => 32768,
+            MaxFragmentSize => 16384,
+            ExpectedMaxFragmentLenExt => "None",
+            ExpectedServerUsableMaxSendSize => 16384,
+            ExpectedClientUsableMaxSendSize => 16384,
+        }
+    },
+    {
+        name => "Record Size Limit extension not negotiated 2",
+        server => {
+            extra => {
+                RecordSizeLimit => 64,
+            },
+        },
+        client => { },
+        test => {
+            ApplicationData => 32768,
+            MaxFragmentSize => 16384,
+            ExpectedMaxFragmentLenExt => "None",
+            ExpectedServerUsableMaxSendSize => 16384,
+            ExpectedClientUsableMaxSendSize => 16384,
+        }
+    },
+    {
+        name => "Record Size Limit extension overrides MFL",
+        server => {
+            extra => {
+                RecordSizeLimit => 64,
+            },
+        },
+        client => {
+            extra => {
+                RecordSizeLimit => 16385,
+                MaxFragmentLenExt => 4096,
+            },
+        },
+        test => {
+            ApplicationData => 32768,
+            MaxFragmentSize => 16384,
+            ExpectedMaxFragmentLenExt => "None",
+            ExpectedServerUsableMaxSendSize => 16384,
+            ExpectedClientUsableMaxSendSize => disabled("tls1_3") ? 64 : 63,
+        }
+    },
+    {
+        name => "Record Size Limit extension overrides MFL 2",
+        server => {
+            extra => {
+                RecordSizeLimit => 16385,
+            },
+        },
+        client => {
+            extra => {
+                RecordSizeLimit => 16385,
+                MaxFragmentLenExt => 4096,
+            },
+        },
+        test => {
+            ApplicationData => 32768,
+            MaxFragmentSize => 16384,
+            ExpectedMaxFragmentLenExt => "None",
+            ExpectedServerUsableMaxSendSize => 16384,
+            ExpectedClientUsableMaxSendSize => 16384,
+        }
+    },
+    {
+        name => "Record Size Limit extension overridden by MFL",
+        server => {
+            extra => {
+                RecordSizeLimit => 64,
+            },
+        },
+        client => {
+            extra => {
+                MaxFragmentLenExt => 4096,
+            },
+        },
+        test => {
+            ApplicationData => 32768,
+            MaxFragmentSize => 16384,
+            ExpectedMaxFragmentLenExt => 4096,
+            ExpectedServerUsableMaxSendSize => 4096,
+            ExpectedClientUsableMaxSendSize => 4096,
+        }
+    },
+    {
+        name => "Record Size Limit extension overridden by MFL 2",
+        server => { },
+        client => {
+            extra => {
+                RecordSizeLimit => 64,
+                MaxFragmentLenExt => 512,
+            },
+        },
+        test => {
+            ApplicationData => 32768,
+            MaxFragmentSize => 16384,
+            ExpectedMaxFragmentLenExt => 512,
+            ExpectedServerUsableMaxSendSize => 512,
+            ExpectedClientUsableMaxSendSize => 512,
+        }
+    },
+    {
+        name => "Record Size Limit extension negotiated larger than FragmentSize",
+        server => {
+            extra => {
+                RecordSizeLimit => 512,
+            },
+        },
+        client => {
+            extra => {
+                RecordSizeLimit => 2048,
+            },
+        },
+        test => {
+            ApplicationData => 4096,
+            MaxFragmentSize => 1024,
+            ExpectedMaxFragmentLenExt => "None",
+            ExpectedServerUsableMaxSendSize => 1024,
+            ExpectedClientUsableMaxSendSize => disabled("tls1_3") ? 512 : 511,
+        }
+    },
+    {
+        name => "Record Size Limit extension negotiated larger than FragmentSize 2",
+        server => {
+            extra => {
+                RecordSizeLimit => 2048,
+            },
+        },
+        client => {
+            extra => {
+                RecordSizeLimit => 512,
+            },
+        },
+        test => {
+            ApplicationData => 4096,
+            MaxFragmentSize => 1024,
+            ExpectedMaxFragmentLenExt => "None",
+            ExpectedServerUsableMaxSendSize => disabled("tls1_3") ? 512 : 511,
+            ExpectedClientUsableMaxSendSize => 1024,
         }
     },
 );

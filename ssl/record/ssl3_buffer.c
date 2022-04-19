@@ -51,15 +51,31 @@ int ssl3_setup_read_buffer(SSL *s)
     align = (-SSL3_RT_HEADER_LENGTH) & (SSL3_ALIGN_PAYLOAD - 1);
 #endif
 
-    if (b->buf == NULL) {
-        len = SSL3_RT_MAX_PLAIN_LENGTH
-            + SSL3_RT_MAX_ENCRYPTED_OVERHEAD + headerlen + align;
+    if (SSL_IS_DTLS(s) || s->rlayer.read_ahead)
+        len = SSL3_RT_MAX_PLAIN_LENGTH;
+    else if (s->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(s->session))
+        len = GET_MAX_FRAGMENT_LENGTH(s->session);
+    else if (s->ext.input_record_size_limit == 0
+                 || s->ext.input_record_size_limit > SSL3_RT_MAX_PLAIN_LENGTH)
+        len = SSL3_RT_MAX_PLAIN_LENGTH;
+    else if (SSL_IS_TLS13(s))
+        len = s->ext.input_record_size_limit - 1;
+    else
+        len = s->ext.input_record_size_limit;
+    len += SSL3_RT_MAX_ENCRYPTED_OVERHEAD + headerlen + align;
 #ifndef OPENSSL_NO_COMP
-        if (ssl_allow_compression(s))
-            len += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
+    if (ssl_allow_compression(s))
+        len += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
 #endif
-        if (b->default_len > len)
-            len = b->default_len;
+    if (b->default_len > len)
+        len = b->default_len;
+
+    if (b->buf != NULL && b->len != len && !SSL_has_pending(s)) {
+        OPENSSL_free(b->buf);
+        b->buf = NULL;         /* force reallocation */
+    }
+
+    if (b->buf == NULL) {
         if ((p = OPENSSL_malloc(len)) == NULL) {
             /*
              * We've got a malloc failure, and we're still initialising buffers.

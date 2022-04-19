@@ -369,6 +369,7 @@
     IS_MAX_FRAGMENT_LENGTH_EXT_VALID(session->ext.max_fragment_len_mode)
 # define GET_MAX_FRAGMENT_LENGTH(session) \
     (512U << (session->ext.max_fragment_len_mode - 1))
+# define TLSEXT_MFL_UNSPECIFIED 255
 
 # define SSL_READ_ETM(s) (s->s3->flags & TLS1_FLAGS_ENCRYPT_THEN_MAC_READ)
 # define SSL_WRITE_ETM(s) (s->s3->flags & TLS1_FLAGS_ENCRYPT_THEN_MAC_WRITE)
@@ -692,6 +693,7 @@ typedef struct {
 typedef enum tlsext_index_en {
     TLSEXT_IDX_renegotiate,
     TLSEXT_IDX_server_name,
+    TLSEXT_IDX_record_size_limit,
     TLSEXT_IDX_max_fragment_length,
     TLSEXT_IDX_srp,
     TLSEXT_IDX_ec_point_formats,
@@ -903,6 +905,12 @@ struct ssl_ctx_st {
      * be more than this due to padding and MAC overheads.
      */
     size_t max_send_fragment;
+
+    /*
+     * Advertised Record Size Limit as per RFC 8449.
+     * If this value is non-zero it is the advertised Record Size Limit.
+     */
+    uint16_t record_size_limit;
 
     /* Up to how many pipelines should we use? If 0 then 1 is assumed */
     size_t max_pipelines;
@@ -1257,6 +1265,13 @@ struct ssl_st {
      * be more than this due to padding and MAC overheads.
      */
     size_t max_send_fragment;
+
+    /*
+     * Advertised Record Size Limit as per RFC 8449.
+     * If this value is non-zero it is the advertised Record Size Limit.
+     */
+    uint16_t record_size_limit;
+
     /* Up to how many pipelines should we use? If 0 then 1 is assumed */
     size_t max_pipelines;
 
@@ -1346,6 +1361,20 @@ struct ssl_st {
         size_t tls13_cookie_len;
         /* Have we received a cookie from the client? */
         int cookieok;
+
+        /*
+         * Received Record Size Limit as per RFC 8449.
+         * If this value is non-zero it is the received Record Size Limit.
+         * If non-zero affects the output data records.
+         */
+        uint16_t record_size_limit;
+
+        /*
+         * Negotiated Record Size Limit as per RFC 8449.
+         * If this value is non-zero it is the negotiated Record Size Limit.
+         * If non-zero affects the input data records.
+         */
+        uint16_t input_record_size_limit;
 
         /*
          * Maximum Fragment Length as per RFC 4366.

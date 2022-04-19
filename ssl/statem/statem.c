@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -380,7 +380,7 @@ static int state_machine(SSL *s, int server)
                          ERR_R_INTERNAL_ERROR);
                 goto end;
             }
-            if (!BUF_MEM_grow(buf, SSL3_RT_MAX_PLAIN_LENGTH)) {
+            if (!BUF_MEM_grow(buf, ssl_get_max_send_fragment(s))) {
                 SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_STATE_MACHINE,
                          ERR_R_INTERNAL_ERROR);
                 goto end;
