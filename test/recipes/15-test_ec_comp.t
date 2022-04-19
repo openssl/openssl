@@ -62,49 +62,53 @@ sub classify_key {
     return "$res_comp_type/$res_param_enc";
 }
 
-foreach my $curve (@curves) {
-    subtest "=== openssl ec CLI round-trip for curve $curve" => sub {
-        foreach my $param_enc (@param_encs) {
-            foreach my $conv_form (@conv_forms) {
-                # Run openssl ecparam -genkey using input parameters.
-                run(app(["openssl", "ecparam", "-check",
-                         "-in", "$data_path/$curve-$param_enc.param",
-                         "-conv_form", $conv_form, "-param_enc", $param_enc,
-                         "-genkey", "-noout", "-out", "key.tmp"]));
-                my $expect = "$conv_form/$param_enc";
-                my $result = classify_key("key.tmp");
-                ok($expect eq $result, "(1): got '$result' expected '$expect'");
+SKIP: {
+    skip "EC is not supported by this OpenSSL build", scalar @curves if disabled("ec");
 
-                foreach my $param_enc2 (@param_encs_e) {
-                    foreach my $conv_form2 (@conv_forms_e) {
-                        # Now try round-tripping a key through openssl ec,
-                        # potentially specifying new compression/param formats.
-                        my @args = qw(openssl ec -in key.tmp -out key2.tmp);
-                        if ($conv_form2 ne "unspecified") {
-                            push(@args, "-conv_form");
-                            push(@args, $conv_form2);
-                        }
-                        if ($param_enc2 ne "unspecified") {
-                            push(@args, "-param_enc");
-                            push(@args, $param_enc2);
-                        }
-                        print (join "\n", @args);
-                        run(app([@args]));
+    foreach my $curve (@curves) {
+        subtest "=== openssl ec CLI round-trip for curve $curve" => sub {
+            foreach my $param_enc (@param_encs) {
+                foreach my $conv_form (@conv_forms) {
+                    # Run openssl ecparam -genkey using input parameters.
+                    run(app(["openssl", "ecparam", "-check",
+                             "-in", "$data_path/$curve-$param_enc.param",
+                             "-conv_form", $conv_form, "-param_enc", $param_enc,
+                             "-genkey", "-noout", "-out", "key.tmp"]));
+                    my $expect = "$conv_form/$param_enc";
+                    my $result = classify_key("key.tmp");
+                    ok($expect eq $result, "(1): got '$result' expected '$expect'");
 
-                        my $expect_conv = $conv_form2;
-                        if ($expect_conv eq "unspecified") {
-                            $expect_conv = $conv_form;
-                        }
+                    foreach my $param_enc2 (@param_encs_e) {
+                        foreach my $conv_form2 (@conv_forms_e) {
+                            # Now try round-tripping a key through openssl ec,
+                            # potentially specifying new compression/param formats.
+                            my @args = qw(openssl ec -in key.tmp -out key2.tmp);
+                            if ($conv_form2 ne "unspecified") {
+                                push(@args, "-conv_form");
+                                push(@args, $conv_form2);
+                            }
+                            if ($param_enc2 ne "unspecified") {
+                                push(@args, "-param_enc");
+                                push(@args, $param_enc2);
+                            }
+                            print (join "\n", @args);
+                            run(app([@args]));
 
-                        my $expect_param = $param_enc2;
-                        if ($expect_param eq "unspecified") {
-                            $expect_param = $param_enc;
-                        }
+                            my $expect_conv = $conv_form2;
+                            if ($expect_conv eq "unspecified") {
+                                $expect_conv = $conv_form;
+                            }
 
-                        my $expect2 = "$expect_conv/$expect_param";
-                        my $result2 = classify_key("key2.tmp");
-                        ok($expect2 eq $result2,
-                           "(2): expected '$expect2' got '$result2'");
+                            my $expect_param = $param_enc2;
+                            if ($expect_param eq "unspecified") {
+                                $expect_param = $param_enc;
+                            }
+
+                            my $expect2 = "$expect_conv/$expect_param";
+                            my $result2 = classify_key("key2.tmp");
+                            ok($expect2 eq $result2,
+                               "(2): expected '$expect2' got '$result2'");
+                        }
                     }
                 }
             }
