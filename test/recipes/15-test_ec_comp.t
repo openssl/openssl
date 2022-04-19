@@ -17,7 +17,17 @@ setup("test_ec_comp");
 
 # Only need to test a few curves as behaviour should be the same.
 # Testing all the curves would take excessive time.
-my @curves = qw/secp256k1 prime256v1 sect571r1 brainpoolP384r1 SM2/;
+my @curvesdata = run(app(["openssl", "ecparam", "-list_curves"]), capture => 1);
+my @curves;
+foreach (@curvesdata) {
+    my @parts = split(/:/, $_, 2);
+    my $p = $parts[0];
+    if ($p =~ /^\t/) { next; }
+    $p =~ s/\s+//g;
+    if (!($p =~ /(secp256k1|prime256v1|sect571r1|brainpoolP384r1|SM2)/)) { next; }
+    push @curves, $p;
+}
+
 plan tests => 1 + scalar @curves;
 
 ok(run(test(["ec_comp_test", data_file("")])), "running ec_comp_test");
