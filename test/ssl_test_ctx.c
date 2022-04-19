@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -512,6 +512,25 @@ const char *ssl_max_fragment_len_name(int MFL_mode)
                      OSSL_NELEM(ssl_max_fragment_len_mode), MFL_mode);
 }
 
+__owur static int parse_test_expected_max_fragment_len_mode(SSL_TEST_CTX *test_ctx,
+                                                            const char *value)
+{
+    int ret_value;
+
+    if (!parse_enum(ssl_max_fragment_len_mode,
+                    OSSL_NELEM(ssl_max_fragment_len_mode), &ret_value, value)) {
+        return 0;
+    }
+    test_ctx->expected_max_fragment_len_mode = ret_value;
+    return 1;
+}
+
+
+/* Expected Server&Client UsableMaxSendSize */
+
+IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_CTX, test, expected_server_usable_max_send_size)
+IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_CTX, test, expected_client_usable_max_send_size)
+
 
 /* Expected key and signature types */
 
@@ -636,6 +655,13 @@ IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_CTX, test, expected_cipher)
 IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CLIENT_CONF, client, enable_pha)
 IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_SERVER_CONF, server, force_pha)
 
+/* RecordSizeLimit */
+
+IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_CLIENT_CONF, client, record_size_limit)
+IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_SERVER_CONF, server, record_size_limit)
+IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_CTX, test, reneg_client_record_size_limit)
+IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_CTX, test, reneg_server_record_size_limit)
+
 /* Known test options and their corresponding parse methods. */
 
 /* Top-level options. */
@@ -675,6 +701,11 @@ static const ssl_test_ctx_option ssl_test_ctx_options[] = {
     { "EnableServerSCTPLabelBug", &parse_test_enable_server_sctp_label_bug },
     { "ExpectedCipher", &parse_test_expected_cipher },
     { "ExpectedSessionTicketAppData", &parse_test_expected_session_ticket_app_data },
+    { "ExpectedMaxFragmentLenExt", &parse_test_expected_max_fragment_len_mode },
+    { "ExpectedServerUsableMaxSendSize", &parse_test_expected_server_usable_max_send_size },
+    { "ExpectedClientUsableMaxSendSize", &parse_test_expected_client_usable_max_send_size },
+    { "RenegServerRecordSizeLimit", &parse_test_reneg_server_record_size_limit },
+    { "RenegClientRecordSizeLimit", &parse_test_reneg_client_record_size_limit },
 };
 
 /* Nested client options. */
@@ -694,6 +725,7 @@ static const ssl_test_client_option ssl_test_client_options[] = {
     { "SRPPassword", &parse_client_srp_password },
     { "MaxFragmentLenExt", &parse_max_fragment_len_mode },
     { "EnablePHA", &parse_client_enable_pha },
+    { "RecordSizeLimit", &parse_client_record_size_limit },
 };
 
 /* Nested server options. */
@@ -712,6 +744,7 @@ static const ssl_test_server_option ssl_test_server_options[] = {
     { "SRPPassword", &parse_server_srp_password },
     { "ForcePHA", &parse_server_force_pha },
     { "SessionTicketAppData", &parse_server_session_ticket_app_data },
+    { "RecordSizeLimit", &parse_server_record_size_limit },
 };
 
 SSL_TEST_CTX *SSL_TEST_CTX_new(void)
@@ -722,6 +755,9 @@ SSL_TEST_CTX *SSL_TEST_CTX_new(void)
     if ((ret = OPENSSL_zalloc(sizeof(*ret))) != NULL) {
         ret->app_data_size = default_app_data_size;
         ret->max_fragment_size = default_max_fragment_size;
+        ret->expected_max_fragment_len_mode = -1;
+        ret->reneg_server_record_size_limit = -1;
+        ret->reneg_client_record_size_limit = -1;
     }
     return ret;
 }

@@ -1623,6 +1623,7 @@ static int tls_early_post_process_client_hello(SSL *s)
     STACK_OF(SSL_CIPHER) *scsvs = NULL;
     CLIENTHELLO_MSG *clienthello = s->clienthello;
     DOWNGRADE dgrd = DOWNGRADE_NONE;
+    uint8_t org_mfl_mode = TLSEXT_MFL_UNSPECIFIED;
 
     /* Finished parsing the ClientHello, now we can start processing it */
     /* Give the ClientHello callback a crack at things */
@@ -1804,6 +1805,9 @@ static int tls_early_post_process_client_hello(SSL *s)
         goto err;
     }
 
+    if (s->session != NULL)
+        org_mfl_mode = s->session->ext.max_fragment_len_mode;
+
     /*
      * We don't allow resumption in a backwards compatible ClientHello.
      * TODO(openssl-team): in TLS1.1+, session_id MUST be empty.
@@ -1841,6 +1845,18 @@ static int tls_early_post_process_client_hello(SSL *s)
                 /* SSLfatal() already called */
                 goto err;
             }
+        }
+    }
+
+    if (org_mfl_mode != s->session->ext.max_fragment_len_mode
+            && org_mfl_mode != TLSEXT_MFL_UNSPECIFIED) {
+        if (s->session->ext.max_fragment_len_mode == TLSEXT_MFL_UNSPECIFIED) {
+            s->session->ext.max_fragment_len_mode = org_mfl_mode;
+        } else {
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
+                     SSL_F_TLS_EARLY_POST_PROCESS_CLIENT_HELLO,
+                     SSL_R_SSL3_EXT_INVALID_MAX_FRAGMENT_LENGTH);
+            goto err;
         }
     }
 

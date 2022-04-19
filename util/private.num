@@ -331,6 +331,7 @@ SSL_CTX_get_max_proto_version           define
 SSL_CTX_get_min_proto_version           define
 SSL_CTX_get_mode                        define
 SSL_CTX_get_read_ahead                  define
+SSL_CTX_get_record_size_limit           define
 SSL_CTX_get_session_cache_mode          define
 SSL_CTX_get_tlsext_status_arg           define
 SSL_CTX_get_tlsext_status_cb            define
@@ -373,6 +374,7 @@ SSL_CTX_set_min_proto_version           define
 SSL_CTX_set_mode                        define
 SSL_CTX_set_msg_callback_arg            define
 SSL_CTX_set_read_ahead                  define
+SSL_CTX_set_record_size_limit           define
 SSL_CTX_set_session_cache_mode          define
 SSL_CTX_set_split_send_fragment         define
 SSL_CTX_set_tlsext_servername_arg       define
@@ -405,6 +407,7 @@ SSL_get_min_proto_version               define
 SSL_get_mode                            define
 SSL_get_peer_signature_nid              define
 SSL_get_peer_tmp_key                    define
+SSL_get_record_size_limit               define
 SSL_get_secure_renegotiation_support    define
 SSL_get_server_tmp_key                  define
 SSL_get_shared_curve                    define
@@ -415,6 +418,7 @@ SSL_get_timeout                         define
 SSL_get_tlsext_status_ocsp_resp         define
 SSL_get_tlsext_status_type              define
 SSL_get_tmp_key                         define
+SSL_get_usable_max_send_size            define
 SSL_in_accept_init                      define
 SSL_in_connect_init                     define
 SSL_library_init                        define
@@ -443,6 +447,7 @@ SSL_set_min_proto_version               define
 SSL_set_mode                            define
 SSL_set_msg_callback_arg                define
 SSL_set_mtu                             define
+SSL_set_record_size_limit               define
 SSL_set_split_send_fragment             define
 SSL_set_time                            define
 SSL_set_timeout                         define

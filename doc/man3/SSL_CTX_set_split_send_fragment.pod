@@ -8,13 +8,16 @@ SSL_CTX_set_max_pipelines, SSL_set_max_pipelines,
 SSL_CTX_set_default_read_buffer_len, SSL_set_default_read_buffer_len,
 SSL_CTX_set_tlsext_max_fragment_length,
 SSL_set_tlsext_max_fragment_length,
-SSL_SESSION_get_max_fragment_length - Control fragment size settings and pipelining operations
+SSL_SESSION_get_max_fragment_length,
+SSL_CTX_set_record_size_limit, SSL_set_record_size_limit,
+SSL_CTX_get_record_size_limit, SSL_get_record_size_limit,
+SSL_get_usable_max_send_size - Control fragment size settings and pipelining operations
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
 
- long SSL_CTX_set_max_send_fragment(SSL_CTX *ctx, long);
+ long SSL_CTX_set_max_send_fragment(SSL_CTX *ctx, long m);
  long SSL_set_max_send_fragment(SSL *ssl, long m);
 
  long SSL_CTX_set_max_pipelines(SSL_CTX *ctx, long m);
@@ -29,6 +32,14 @@ SSL_SESSION_get_max_fragment_length - Control fragment size settings and pipelin
  int SSL_CTX_set_tlsext_max_fragment_length(SSL_CTX *ctx, uint8_t mode);
  int SSL_set_tlsext_max_fragment_length(SSL *ssl, uint8_t mode);
  uint8_t SSL_SESSION_get_max_fragment_length(SSL_SESSION *session);
+
+ long SSL_CTX_set_record_size_limit(SSL_CTX *ctx, long len);
+ long SSL_set_record_size_limit(SSL *ssl, long len);
+
+ long SSL_CTX_get_record_size_limit(SSL_CTX *ctx);
+ long SSL_get_record_size_limit(SSL *ssl);
+
+ long SSL_get_usable_max_send_size(SSL *ssl);
 
 =head1 DESCRIPTION
 
@@ -49,6 +60,9 @@ B<max_send_fragment> parameter for SSL_CTX and SSL objects respectively. This
 value restricts the amount of plaintext bytes that will be sent in any one
 SSL/TLS record. By default its value is SSL3_RT_MAX_PLAIN_LENGTH (16384). These
 functions will only accept a value in the range 512 - SSL3_RT_MAX_PLAIN_LENGTH.
+This value has also an influence on the size of the memory that will be
+allocated for the output record buffer, and the initial size of the handshake
+buffer (ssl->init_buf).
 
 SSL_CTX_set_max_pipelines() and SSL_set_max_pipelines() set the maximum number
 of pipelines that will be used at any one time. This value applies to both
@@ -120,6 +134,57 @@ It affects the client-side as only its side may initiate this extension use.
 SSL_SESSION_get_max_fragment_length() gets the maximum fragment length
 negotiated in B<session>.
 
+SSL_CTX_set_record_size_limit() sets the default record size limit
+value to be negotiated via the value B<len> to B<ctx>.
+This setting affects only SSL instances created after this function is called.
+The allowed values are 0 to disable this option, which is the default,
+and 64 to 16385 (SSL3_RT_MAX_PLAIN_LENGTH + 1) to enable it.  It is
+recommended to set this value to 16385, to advertise the record size limit
+extension, even if there is no need to limit the size of records.
+In TLS1.3 the value includes an additional byte for the encrypted record type,
+while in TLS1.2 the record type is unencrypted.
+The value, if negotiated, will be used to limit the record sizes sent by the
+peer in reception direction only.  However the record sizes sent to the peer
+will be limited by the peer's record size limit value.  If a lower limit of
+the send fragment size is set by the function
+L<SSL_CTX_set_max_send_fragment(3)> that limit will not be exceeded even
+if the peer advertises a higher record size limit.
+In resource-constrained environments it is furthermore recommended to use
+L<SSL_CTX_set_max_send_fragment(3)> or L<SSL_set_max_send_fragment(3)> to
+limit the memory allocation size for output record buffers, and additionally
+to use L<SSL_CTX_set_max_cert_list(3)> or L<SSL_set_max_cert_list(3)> to
+reduce the maximum size of the certificate chain from the default of
+100 KBytes to 16384.  Further reduction of this parameter is possible,
+but does not have an effect on the maximum memory size per SSL connection.
+
+SSL_set_record_size_limit() sets the default record size limit
+value to be negotiated via the value B<len> to B<ssl>.
+This setting will be used during a handshake when extensions are exchanged
+between client and server.
+The value may be changed before or after a connection was established, but
+it may not be changed while the handshake is done.
+When the connection is already established, the value will only be used
+after the next renegotiation, so usually L<SSL_renegotiate(3)> or
+L<SSL_renegotiate_abbreviated(3)> should be called in order to make the
+new record size limit effective.
+If this function is called while a handshake is done, the return value will
+be -1, in that case the value is ignored.
+If the value is outside the allowed range, the return value is 0.
+Otherwise the return value is 1.
+
+SSL_CTX_get_record_size_limit() returns the currently in B<ssl> configured
+record size limit value.
+
+SSL_get_record_size_limit() returns the currently in B<ctx> configured
+record size limit value.
+
+SSL_get_usable_max_send_size() returns the maximum data size that can be
+sent in a single data record.  Since the record size limit extension,
+unlike the max fragment length extension, can be renegotiated at any time,
+the usable max send size may change over time.
+While TLS will automatically split larger send requests into smaller
+records, DTLS will fail any attempt to send larger datagrams.
+
 =head1 RETURN VALUES
 
 All non-void functions return 1 on success and 0 on failure.
@@ -127,6 +192,8 @@ All non-void functions return 1 on success and 0 on failure.
 =head1 NOTES
 
 The Maximum Fragment Length extension support is optional on the server side.
+Likewise if the Record Size Limit extension is supported by client and
+server, the server must ignore the Maximum Fragment Length extension.
 If the server does not support this extension then
 SSL_SESSION_get_max_fragment_length() will return:
 TLSEXT_max_fragment_length_DISABLED.
@@ -178,7 +245,7 @@ and SSL_SESSION_get_max_fragment_length() functions were added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
-Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

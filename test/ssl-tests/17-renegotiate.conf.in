@@ -1,5 +1,5 @@
 # -*- mode: perl; -*-
-# Copyright 2016-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -107,7 +107,191 @@ our @tests = (
             "ResumptionExpected" => "No",
             "ExpectedResult" => "Success"
         }
-    }
+    },
+    {
+        name => "renegotiate-client-no-resume-record-size-limit",
+        server => {
+            extra => {
+                "RecordSizeLimit" => 64,
+            },
+            "Options" => "NoResumptionOnRenegotiation",
+            "MaxProtocol" => "TLSv1.2"
+        },
+        client => {
+            extra => {
+                "RecordSizeLimit" => 64,
+            },
+        },
+        test => {
+            "Method" => "TLS",
+            "HandshakeMode" => "RenegotiateClient",
+            "ResumptionExpected" => "No",
+            "ExpectedClientUsableMaxSendSize" => 64,
+            "ExpectedServerUsableMaxSendSize" => 64,
+            "ExpectedResult" => "Success"
+        }
+    },
+    {
+        name => "renegotiate-client-resume-record-size-limit",
+        server => {
+            extra => {
+                "RecordSizeLimit" => 64,
+            },
+            "MaxProtocol" => "TLSv1.2"
+        },
+        client => {
+            extra => {
+                "RecordSizeLimit" => 64,
+            },
+        },
+        test => {
+            "Method" => "TLS",
+            "HandshakeMode" => "RenegotiateClient",
+            "ResumptionExpected" => "Yes",
+            "ExpectedClientUsableMaxSendSize" => 64,
+            "ExpectedServerUsableMaxSendSize" => 64,
+            "ExpectedResult" => "Success"
+        }
+    },
+    {
+        name => "renegotiate-server-no-resume-record-size-limit",
+        server => {
+            extra => {
+                "RecordSizeLimit" => 64,
+            },
+            "Options" => "NoResumptionOnRenegotiation",
+            "MaxProtocol" => "TLSv1.2"
+        },
+        client => {
+            extra => {
+                "RecordSizeLimit" => 64,
+            },
+        },
+        test => {
+            "Method" => "TLS",
+            "HandshakeMode" => "RenegotiateServer",
+            "ResumptionExpected" => "No",
+            "ExpectedClientUsableMaxSendSize" => 64,
+            "ExpectedServerUsableMaxSendSize" => 64,
+            "ExpectedResult" => "Success"
+        }
+    },
+    {
+        name => "renegotiate-server-resume-record-size-limit",
+        server => {
+            extra => {
+                "RecordSizeLimit" => 64,
+            },
+            "MaxProtocol" => "TLSv1.2"
+        },
+        client => {
+            extra => {
+                "RecordSizeLimit" => 64,
+            },
+        },
+        test => {
+            "Method" => "TLS",
+            "HandshakeMode" => "RenegotiateServer",
+            "ResumptionExpected" => "Yes",
+            "ExpectedClientUsableMaxSendSize" => 64,
+            "ExpectedServerUsableMaxSendSize" => 64,
+            "ExpectedResult" => "Success"
+        }
+    },
+    {
+        name => "renegotiate-client-resume-record-size-limit-changed",
+        server => {
+            extra => {
+                "RecordSizeLimit" => 64,
+            },
+            "MaxProtocol" => "TLSv1.2"
+        },
+        client => {
+            extra => {
+                "RecordSizeLimit" => 64,
+            },
+        },
+        test => {
+            "Method" => "TLS",
+            "HandshakeMode" => "RenegotiateClient",
+            "ResumptionExpected" => "Yes",
+            "RenegClientRecordSizeLimit" => 128,
+            "RenegServerRecordSizeLimit" => 256,
+            "ExpectedClientUsableMaxSendSize" => 256,
+            "ExpectedServerUsableMaxSendSize" => 128,
+            "ExpectedResult" => "Success"
+        }
+    },
+    {
+        name => "renegotiate-server-resume-record-size-limit-changed",
+        server => {
+            extra => {
+                "RecordSizeLimit" => 64,
+            },
+            "MaxProtocol" => "TLSv1.2"
+        },
+        client => {
+            extra => {
+                "RecordSizeLimit" => 64,
+            },
+        },
+        test => {
+            "Method" => "TLS",
+            "HandshakeMode" => "RenegotiateServer",
+            "ResumptionExpected" => "Yes",
+            "RenegClientRecordSizeLimit" => 256,
+            "RenegServerRecordSizeLimit" => 128,
+            "ExpectedClientUsableMaxSendSize" => 128,
+            "ExpectedServerUsableMaxSendSize" => 256,
+            "ExpectedResult" => "Success"
+        }
+    },
+    {
+        name => "renegotiate-client-resume-record-size-limit-reduced",
+        server => {
+            extra => {
+                "RecordSizeLimit" => 96,
+            },
+            "MaxProtocol" => "TLSv1.2"
+        },
+        client => {
+            extra => {
+                "RecordSizeLimit" => 96,
+            },
+        },
+        test => {
+            "Method" => "TLS",
+            "HandshakeMode" => "RenegotiateClient",
+            "ResumptionExpected" => "Yes",
+            "RenegClientRecordSizeLimit" => 64,
+            "ExpectedClientUsableMaxSendSize" => 96,
+            "ExpectedServerUsableMaxSendSize" => 64,
+            "ExpectedResult" => "Success"
+        }
+    },
+    {
+        name => "renegotiate-server-resume-record-size-limit-reduced",
+        server => {
+            extra => {
+                "RecordSizeLimit" => 96,
+            },
+            "MaxProtocol" => "TLSv1.2"
+        },
+        client => {
+            extra => {
+                "RecordSizeLimit" => 96,
+            },
+        },
+        test => {
+            "Method" => "TLS",
+            "HandshakeMode" => "RenegotiateServer",
+            "ResumptionExpected" => "Yes",
+            "RenegServerRecordSizeLimit" => 64,
+            "ExpectedClientUsableMaxSendSize" => 64,
+            "ExpectedServerUsableMaxSendSize" => 96,
+            "ExpectedResult" => "Success"
+        }
+    },
 );
 our @tests_tls1_2 = (
     {
@@ -243,7 +427,7 @@ our @tests_tls1_2 = (
             "ResumptionExpected" => "No",
             "ExpectedResult" => "ClientFail"
         }
-    }
+    },
 );
 
 push @tests, @tests_tls1_2 unless disabled("tls1_2");

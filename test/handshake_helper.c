@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -543,6 +543,21 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
         break;
     }
 
+    if (!TEST_int_eq(SSL_CTX_set_record_size_limit(server_ctx,
+                                                   extra->server.record_size_limit),
+                                                   1))
+        goto err;
+    if (server2_ctx != NULL) {
+        if (!TEST_int_eq(SSL_CTX_set_record_size_limit(server2_ctx,
+                                                       extra->server2.record_size_limit),
+                                                       1))
+            goto err;
+    }
+    if (!TEST_int_eq(SSL_CTX_set_record_size_limit(client_ctx,
+                                                   extra->client.record_size_limit),
+                                                   1))
+        goto err;
+
     /*
      * Link the two contexts for SNI purposes.
      * Also do ClientHello callbacks here, as setting both ClientHello and SNI
@@ -916,6 +931,24 @@ static void do_reneg_setup_step(const SSL_TEST_CTX *test_ctx, PEER *peer)
 
     /* Reset the count of the amount of app data we need to read/write */
     peer->bytes_to_write = peer->bytes_to_read = test_ctx->app_data_size;
+
+    /* Update the record size limit if requested */
+    if (test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RENEG_SERVER
+            || test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RENEG_CLIENT) {
+        int reneg_record_size_limit;
+
+        if (SSL_is_server(peer->ssl))
+            reneg_record_size_limit = test_ctx->reneg_server_record_size_limit;
+        else
+            reneg_record_size_limit = test_ctx->reneg_client_record_size_limit;
+
+        if (reneg_record_size_limit != -1
+                && SSL_set_record_size_limit(peer->ssl,
+                                             reneg_record_size_limit) != 1) {
+            peer->status = PEER_ERROR;
+            return;
+        }
+    }
 
     /* Check if we are the peer that is going to initiate */
     if ((test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RENEG_SERVER
@@ -1730,6 +1763,18 @@ static HANDSHAKE_RESULT *do_handshake_internal(
 
     ret->server_cert_type = peer_pkey_type(client.ssl);
     ret->client_cert_type = peer_pkey_type(server.ssl);
+
+    if ((sess = SSL_get0_session(server.ssl)) != NULL)
+        ret->server_max_fragment_len_mode = SSL_SESSION_get_max_fragment_length(sess);
+    else
+        ret->server_max_fragment_len_mode = -1;
+    if ((sess = SSL_get0_session(client.ssl)) != NULL)
+        ret->client_max_fragment_len_mode = SSL_SESSION_get_max_fragment_length(sess);
+    else
+        ret->client_max_fragment_len_mode = -1;
+
+    ret->server_usable_max_send_size = SSL_get_usable_max_send_size(server.ssl);
+    ret->client_usable_max_send_size = SSL_get_usable_max_send_size(client.ssl);
 
     ctx_data_free_data(&server_ctx_data);
     ctx_data_free_data(&server2_ctx_data);

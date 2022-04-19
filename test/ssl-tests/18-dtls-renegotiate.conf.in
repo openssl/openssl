@@ -1,5 +1,5 @@
 # -*- mode: perl; -*-
-# Copyright 2016-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -105,7 +105,468 @@ foreach my $sctp ("No", "Yes")
                 "ResumptionExpected" => "No",
                 "ExpectedResult" => "Success"
             }
-        }
+        },
+        {
+            name => "simple-connect-default".$suffix,
+            server => { },
+            client => { },
+            test => {
+                "MaxFragmentSize" => 1024,
+                "ApplicationData" => 1024,
+                "Method" => "DTLS",
+                "UseSCTP" => $sctp,
+                "HandshakeMode" => "Simple",
+                "ResumptionExpected" => "No",
+                "ExpectedMaxFragmentLenExt" => "None",
+                "ExpectedClientUsableMaxSendSize" => 1024,
+                "ExpectedServerUsableMaxSendSize" => 1024,
+                "ExpectedResult" => "Success"
+            }
+        },
+        {
+            name => "simple-connect-max-fragment-length".$suffix,
+            server => {
+                extra => {
+                    "RecordSizeLimit" => 256,
+                },
+            },
+            client => {
+                extra => {
+                    "MaxFragmentLenExt" => 512,
+                },
+            },
+            test => {
+                "ApplicationData" => 512,
+                "Method" => "DTLS",
+                "UseSCTP" => $sctp,
+                "HandshakeMode" => "Simple",
+                "ResumptionExpected" => "No",
+                "ExpectedMaxFragmentLenExt" => 512,
+                "ExpectedClientUsableMaxSendSize" => 512,
+                "ExpectedServerUsableMaxSendSize" => 512,
+                "ExpectedResult" => "Success"
+            }
+        },
+        {
+            name => "simple-connect-max-fragment-length-not-overridden".$suffix,
+            server => { },
+            client => {
+                extra => {
+                    "RecordSizeLimit" => 384,
+                    "MaxFragmentLenExt" => 512,
+                },
+            },
+            test => {
+                "ApplicationData" => 512,
+                "Method" => "DTLS",
+                "UseSCTP" => $sctp,
+                "HandshakeMode" => "Simple",
+                "ResumptionExpected" => "No",
+                "ExpectedMaxFragmentLenExt" => 512,
+                "ExpectedClientUsableMaxSendSize" => 512,
+                "ExpectedServerUsableMaxSendSize" => 512,
+                "ExpectedResult" => "Success"
+            }
+        },
+        {
+            name => "simple-connect-max-fragment-length-overridden".$suffix,
+            server => {
+                extra => {
+                    "RecordSizeLimit" => 256,
+                },
+            },
+            client => {
+                extra => {
+                    "RecordSizeLimit" => 384,
+                    "MaxFragmentLenExt" => 512,
+                },
+            },
+            test => {
+                "ApplicationData" => 256,
+                "Method" => "DTLS",
+                "UseSCTP" => $sctp,
+                "HandshakeMode" => "Simple",
+                "ResumptionExpected" => "No",
+                "ExpectedMaxFragmentLenExt" => "None",
+                "ExpectedClientUsableMaxSendSize" => 256,
+                "ExpectedServerUsableMaxSendSize" => 384,
+                "ExpectedResult" => "Success"
+            }
+        },
+        {
+            name => "simple-connect-record-size-limit".$suffix,
+            server => {
+                extra => {
+                    "RecordSizeLimit" => 256,
+                },
+            },
+            client => {
+                extra => {
+                    "RecordSizeLimit" => 384,
+                },
+            },
+            test => {
+                "ApplicationData" => 256,
+                "Method" => "DTLS",
+                "UseSCTP" => $sctp,
+                "HandshakeMode" => "Simple",
+                "ResumptionExpected" => "No",
+                "ExpectedMaxFragmentLenExt" => "None",
+                "ExpectedClientUsableMaxSendSize" => 256,
+                "ExpectedServerUsableMaxSendSize" => 384,
+                "ExpectedResult" => "Success"
+            }
+        },
+        {
+            name => "simple-connect-record-size-limit-exceed".$suffix,
+            server => {
+                extra => {
+                    "RecordSizeLimit" => 256,
+                },
+            },
+            client => {
+                extra => {
+                    "RecordSizeLimit" => 384,
+                },
+            },
+            test => {
+                "ApplicationData" => 257,
+                "Method" => "DTLS",
+                "UseSCTP" => $sctp,
+                "HandshakeMode" => "Simple",
+                "ExpectedResult" => "ClientFail"
+            }
+        },
+        {
+            name => "renegotiate-client-resume-record-size-limit".$suffix,
+            server => {
+                extra => {
+                    "RecordSizeLimit" => 64,
+                },
+            },
+            client => {
+                extra => {
+                    "RecordSizeLimit" => 64,
+                },
+            },
+            test => {
+                "ApplicationData" => 64,
+                "Method" => "DTLS",
+                "UseSCTP" => $sctp,
+                "HandshakeMode" => "RenegotiateClient",
+                "ResumptionExpected" => "Yes",
+                "ExpectedMaxFragmentLenExt" => "None",
+                "ExpectedClientUsableMaxSendSize" => 64,
+                "ExpectedServerUsableMaxSendSize" => 64,
+                "ExpectedResult" => "Success"
+            }
+        },
+        {
+            name => "renegotiate-client-resume-record-size-limit-2".$suffix,
+            server => {
+                extra => {
+                    "RecordSizeLimit" => 64,
+                },
+            },
+            client => { },
+            test => {
+                "ApplicationData" => 64,
+                "Method" => "DTLS",
+                "UseSCTP" => $sctp,
+                "HandshakeMode" => "RenegotiateClient",
+                "ResumptionExpected" => "Yes",
+                "RenegClientRecordSizeLimit" => 64,
+                "ExpectedMaxFragmentLenExt" => "None",
+                "ExpectedClientUsableMaxSendSize" => 64,
+                "ExpectedServerUsableMaxSendSize" => 64,
+                "ExpectedResult" => "Success"
+            }
+        },
+        {
+            name => "renegotiate-client-resume-record-size-limit-changed".$suffix,
+            server => {
+                extra => {
+                    "RecordSizeLimit" => 96,
+                },
+            },
+            client => {
+                extra => {
+                    "RecordSizeLimit" => 96,
+                },
+            },
+            test => {
+                "ApplicationData" => 64,
+                "Method" => "DTLS",
+                "UseSCTP" => $sctp,
+                "HandshakeMode" => "RenegotiateClient",
+                "ResumptionExpected" => "Yes",
+                "RenegClientRecordSizeLimit" => 64,
+                "ExpectedMaxFragmentLenExt" => "None",
+                "ExpectedClientUsableMaxSendSize" => 96,
+                "ExpectedServerUsableMaxSendSize" => 64,
+                "ExpectedResult" => "Success"
+            }
+        },
+        {
+            name => "renegotiate-client-resume-record-size-limit-exceed".$suffix,
+            server => {
+                extra => {
+                    "RecordSizeLimit" => 96,
+                },
+            },
+            client => {
+                extra => {
+                    "RecordSizeLimit" => 96,
+                },
+            },
+            test => {
+                "ApplicationData" => 96,
+                "Method" => "DTLS",
+                "UseSCTP" => $sctp,
+                "HandshakeMode" => "RenegotiateClient",
+                "RenegClientRecordSizeLimit" => 64,
+                "ExpectedResult" => "ServerFail"
+            }
+        },
+        {
+            name => "renegotiate-server-resume-record-size-limit".$suffix,
+            server => {
+                extra => {
+                    "RecordSizeLimit" => 64,
+                },
+            },
+            client => {
+                extra => {
+                    "RecordSizeLimit" => 64,
+                },
+            },
+            test => {
+                "ApplicationData" => 64,
+                "Method" => "DTLS",
+                "UseSCTP" => $sctp,
+                "HandshakeMode" => "RenegotiateServer",
+                "ResumptionExpected" => "No",
+                "ExpectedMaxFragmentLenExt" => "None",
+                "ExpectedClientUsableMaxSendSize" => 64,
+                "ExpectedServerUsableMaxSendSize" => 64,
+                "ExpectedResult" => "Success"
+            }
+        },
+        {
+            name => "renegotiate-server-resume-record-size-limit-2".$suffix,
+            server => { },
+            client => {
+                extra => {
+                    "RecordSizeLimit" => 64,
+                },
+            },
+            test => {
+                "ApplicationData" => 64,
+                "Method" => "DTLS",
+                "UseSCTP" => $sctp,
+                "HandshakeMode" => "RenegotiateServer",
+                "ResumptionExpected" => "No",
+                "RenegServerRecordSizeLimit" => 64,
+                "ExpectedMaxFragmentLenExt" => "None",
+                "ExpectedClientUsableMaxSendSize" => 64,
+                "ExpectedServerUsableMaxSendSize" => 64,
+                "ExpectedResult" => "Success"
+            }
+        },
+        {
+            name => "renegotiate-server-resume-record-size-limit-changed".$suffix,
+            server => {
+                extra => {
+                    "RecordSizeLimit" => 96,
+                },
+            },
+            client => {
+                extra => {
+                    "RecordSizeLimit" => 96,
+                },
+            },
+            test => {
+                "ApplicationData" => 64,
+                "Method" => "DTLS",
+                "UseSCTP" => $sctp,
+                "HandshakeMode" => "RenegotiateServer",
+                "ResumptionExpected" => "No",
+                "RenegServerRecordSizeLimit" => 64,
+                "ExpectedMaxFragmentLenExt" => "None",
+                "ExpectedClientUsableMaxSendSize" => 64,
+                "ExpectedServerUsableMaxSendSize" => 96,
+                "ExpectedResult" => "Success"
+            }
+        },
+        {
+            name => "renegotiate-server-resume-record-size-limit-exceed".$suffix,
+            server => {
+                extra => {
+                    "RecordSizeLimit" => 96,
+                },
+            },
+            client => {
+                extra => {
+                    "RecordSizeLimit" => 96,
+                },
+            },
+            test => {
+                "ApplicationData" => 96,
+                "Method" => "DTLS",
+                "UseSCTP" => $sctp,
+                "HandshakeMode" => "RenegotiateServer",
+                "RenegClientRecordSizeLimit" => 64,
+                "ExpectedResult" => "ServerFail"
+            }
+        },
+        {
+            name => "renegotiate-client-resume-max-fragment-length-overridden".$suffix,
+            server => {
+                extra => {
+                    "RecordSizeLimit" => 96,
+                },
+            },
+            client => {
+                extra => {
+                    "RecordSizeLimit" => 96,
+                    "MaxFragmentLenExt" => 512,
+                },
+            },
+            test => {
+                "ApplicationData" => 64,
+                "Method" => "DTLS",
+                "UseSCTP" => $sctp,
+                "HandshakeMode" => "RenegotiateClient",
+                "ResumptionExpected" => "Yes",
+                "RenegServerRecordSizeLimit" => 64,
+                "ExpectedMaxFragmentLenExt" => "None",
+                "ExpectedClientUsableMaxSendSize" => 64,
+                "ExpectedServerUsableMaxSendSize" => 96,
+                "ExpectedResult" => "Success"
+            }
+        },
+        {
+            name => "renegotiate-client-resume-max-fragment-length-not-overridden".$suffix,
+            server => {
+                extra => {
+                    "RecordSizeLimit" => 96,
+                },
+            },
+            client => {
+                extra => {
+                    "RecordSizeLimit" => 96,
+                    "MaxFragmentLenExt" => 512,
+                },
+            },
+            test => {
+                "ApplicationData" => 96,
+                "Method" => "DTLS",
+                "UseSCTP" => $sctp,
+                "HandshakeMode" => "RenegotiateClient",
+                "ResumptionExpected" => "Yes",
+                "RenegServerRecordSizeLimit" => 0,
+                "ExpectedMaxFragmentLenExt" => 512,
+                "ExpectedClientUsableMaxSendSize" => 512,
+                "ExpectedServerUsableMaxSendSize" => 512,
+                "ExpectedResult" => "Success"
+            }
+        },
+        {
+            name => "renegotiate-client-resume-max-fragment-length-not-overridden-2".$suffix,
+            server => { },
+            client => {
+                extra => {
+                    "RecordSizeLimit" => 96,
+                    "MaxFragmentLenExt" => 512,
+                },
+            },
+            test => {
+                "ApplicationData" => 96,
+                "Method" => "DTLS",
+                "UseSCTP" => $sctp,
+                "HandshakeMode" => "RenegotiateClient",
+                "ResumptionExpected" => "Yes",
+                "RenegServerRecordSizeLimit" => 64,
+                "ExpectedMaxFragmentLenExt" => 512,
+                "ExpectedClientUsableMaxSendSize" => 512,
+                "ExpectedServerUsableMaxSendSize" => 512,
+                "ExpectedResult" => "Success"
+            }
+        },
+        {
+            name => "renegotiate-server-resume-max-fragment-length-overridden".$suffix,
+            server => {
+                extra => {
+                    "RecordSizeLimit" => 96,
+                },
+            },
+            client => {
+                extra => {
+                    "RecordSizeLimit" => 96,
+                    "MaxFragmentLenExt" => 512,
+                },
+            },
+            test => {
+                "ApplicationData" => 64,
+                "Method" => "DTLS",
+                "UseSCTP" => $sctp,
+                "HandshakeMode" => "RenegotiateServer",
+                "ResumptionExpected" => "No",
+                "RenegServerRecordSizeLimit" => 64,
+                "ExpectedMaxFragmentLenExt" => "None",
+                "ExpectedClientUsableMaxSendSize" => 64,
+                "ExpectedServerUsableMaxSendSize" => 96,
+                "ExpectedResult" => "Success"
+            }
+        },
+        {
+            name => "renegotiate-server-resume-max-fragment-length-not-overridden".$suffix,
+            server => {
+                extra => {
+                    "RecordSizeLimit" => 96,
+                },
+            },
+            client => {
+                extra => {
+                    "RecordSizeLimit" => 96,
+                    "MaxFragmentLenExt" => 512,
+                },
+            },
+            test => {
+                "ApplicationData" => 96,
+                "Method" => "DTLS",
+                "UseSCTP" => $sctp,
+                "HandshakeMode" => "RenegotiateServer",
+                "ResumptionExpected" => "No",
+                "RenegServerRecordSizeLimit" => 0,
+                "ExpectedMaxFragmentLenExt" => 512,
+                "ExpectedClientUsableMaxSendSize" => 512,
+                "ExpectedServerUsableMaxSendSize" => 512,
+                "ExpectedResult" => "Success"
+            }
+        },
+        {
+            name => "renegotiate-server-resume-max-fragment-length-not-overridden-2".$suffix,
+            server => { },
+            client => {
+                extra => {
+                    "RecordSizeLimit" => 96,
+                    "MaxFragmentLenExt" => 512,
+                },
+            },
+            test => {
+                "ApplicationData" => 512,
+                "Method" => "DTLS",
+                "UseSCTP" => $sctp,
+                "HandshakeMode" => "RenegotiateServer",
+                "ResumptionExpected" => "No",
+                "RenegServerRecordSizeLimit" => 64,
+                "ExpectedMaxFragmentLenExt" => 512,
+                "ExpectedClientUsableMaxSendSize" => 512,
+                "ExpectedServerUsableMaxSendSize" => 512,
+                "ExpectedResult" => "Success"
+            }
+        },
     );
     push @tests, @tests_basic;
 

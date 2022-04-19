@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -55,6 +55,8 @@ static int init_srtp(SSL *s, unsigned int context);
 #endif
 static int final_sig_algs(SSL *s, unsigned int context, int sent);
 static int final_early_data(SSL *s, unsigned int context, int sent);
+static int init_recordsizelimit(SSL *s, unsigned int context);
+static int final_recordsizelimit(SSL *s, unsigned int context, int sent);
 static int final_maxfragmentlen(SSL *s, unsigned int context, int sent);
 static int init_post_handshake_auth(SSL *s, unsigned int context);
 static int final_psk(SSL *s, unsigned int context, int sent);
@@ -137,6 +139,15 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         tls_parse_ctos_server_name, tls_parse_stoc_server_name,
         tls_construct_stoc_server_name, tls_construct_ctos_server_name,
         final_server_name
+    },
+    {
+        TLSEXT_TYPE_record_size_limit,
+        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_2_SERVER_HELLO
+        | SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS,
+        init_recordsizelimit,
+        tls_parse_ctos_recordsizelimit, tls_parse_stoc_recordsizelimit,
+        tls_construct_stoc_recordsizelimit, tls_construct_ctos_recordsizelimit,
+        final_recordsizelimit
     },
     {
         TLSEXT_TYPE_max_fragment_length,
@@ -1698,27 +1709,45 @@ static int final_early_data(SSL *s, unsigned int context, int sent)
     return 1;
 }
 
+static int init_recordsizelimit(SSL *s, unsigned int context)
+{
+    s->ext.record_size_limit = 0;
+
+    return 1;
+}
+
+static int final_recordsizelimit(SSL *s, unsigned int context, int sent)
+{
+    if (s->ext.record_size_limit != 0)
+        s->ext.input_record_size_limit = s->record_size_limit;
+    else
+        s->ext.input_record_size_limit = 0;
+
+    /* trigger a buffer reallocation */
+    if (!ssl3_setup_buffers(s)) {
+        /* SSLfatal() already called */
+        return 0;
+    }
+
+    return 1;
+}
+
 static int final_maxfragmentlen(SSL *s, unsigned int context, int sent)
 {
+    if (s->session->ext.max_fragment_len_mode == TLSEXT_MFL_UNSPECIFIED
+            && s->ext.record_size_limit == 0)
+        s->session->ext.max_fragment_len_mode = TLSEXT_max_fragment_length_DISABLED;
+
     /*
      * Session resumption on server-side with MFL extension active
      *  BUT MFL extension packet was not resent (i.e. sent == 0)
      */
-    if (s->server && s->hit && USE_MAX_FRAGMENT_LENGTH_EXT(s->session)
+    if (s->server && USE_MAX_FRAGMENT_LENGTH_EXT(s->session)
             && !sent ) {
         SSLfatal(s, SSL_AD_MISSING_EXTENSION, SSL_F_FINAL_MAXFRAGMENTLEN,
                  SSL_R_BAD_EXTENSION);
         return 0;
     }
-
-    /* Current SSL buffer is lower than requested MFL */
-    if (s->session && USE_MAX_FRAGMENT_LENGTH_EXT(s->session)
-            && s->max_send_fragment < GET_MAX_FRAGMENT_LENGTH(s->session))
-        /* trigger a larger buffer reallocation */
-        if (!ssl3_setup_buffers(s)) {
-            /* SSLfatal() already called */
-            return 0;
-        }
 
     return 1;
 }

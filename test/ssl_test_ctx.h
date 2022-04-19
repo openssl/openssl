@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -110,6 +110,8 @@ typedef struct {
     char *srp_password;
     /* PHA enabled */
     int enable_pha;
+    /* Record Size Limit extension */
+    int record_size_limit;
 } SSL_TEST_CLIENT_CONF;
 
 typedef struct {
@@ -128,6 +130,8 @@ typedef struct {
     /* Forced PHA */
     int force_pha;
     char *session_ticket_app_data;
+    /* Record Size Limit extension */
+    int record_size_limit;
 } SSL_TEST_SERVER_CONF;
 
 typedef struct {
@@ -223,6 +227,16 @@ typedef struct {
     char *expected_cipher;
     /* Expected Session Ticket Application Data */
     char *expected_session_ticket_app_data;
+    /* Expected server&client max fragment len mode */
+    int expected_max_fragment_len_mode;
+    /* Expected server usable max send size */
+    int expected_server_usable_max_send_size;
+    /* Expected client usable max send size */
+    int expected_client_usable_max_send_size;
+    /* Renegotiated server record size limit */
+    int reneg_server_record_size_limit;
+    /* Renegotiated client record size limit */
+    int reneg_client_record_size_limit;
 } SSL_TEST_CTX;
 
 const char *ssl_test_result_name(ssl_test_result_t result);
