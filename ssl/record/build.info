@@ -1,0 +1,24 @@
+SUBDIRS=methods
+
+#Needed for the multiblock code in rec_layer_s3.c
+IF[{- !$disabled{asm} -}]
+  $AESDEF_x86=AES_ASM
+  $AESDEF_x86_64=AES_ASM
+
+  IF[$AESDEF_{- $target{asm_arch} -}]
+    $AESDEF=$AESDEF_{- $target{asm_arch} -}
+  ENDIF
+ENDIF
+
+SOURCE[../../libssl]=\
+        rec_layer_s3.c rec_layer_d1.c ssl3_buffer.c  ssl3_record.c \
+        dtls1_bitmap.c ssl3_record_tls13.c
+
+# For shared builds we need to include the sources needed in providers
+# (tls_pad.c) in libssl as well.
+SHARED_SOURCE[../../libssl]=tls_pad.c
+
+SOURCE[../../providers/libcommon.a]=tls_pad.c
+
+DEFINE[../../libssl]=$AESDEF
+
