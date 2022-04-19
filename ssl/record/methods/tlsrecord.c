@@ -14,8 +14,8 @@
 #include <openssl/rand.h>
 #include "internal/e_os.h"
 #include "internal/packet.h"
-#include "../ssl_local.h"
-#include "record_local.h"
+#include "../../ssl_local.h"
+#include "../record_local.h"
 
 /* Protocol version specific function pointers */
 struct record_functions_st
