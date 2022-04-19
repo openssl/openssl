@@ -47,7 +47,7 @@ our @tests_ec = (
         test   => { "ExpectedResult" => "ServerFail" },
     },
     {
-        # The client will not sent the Ed448 signature algorithm, so the server
+        # The client will not send the Ed448 signature algorithm, so the server
         # doesn't have a usable signature algorithm for the certificate.
         name => "SECLEVEL 5 client with ED448 key",
         server => { "CipherString" => "DEFAULT:\@SECLEVEL=4",
@@ -81,5 +81,5 @@ our @tests_tls1_2 = (
     },
 );
 
-push @tests, @tests_ec unless disabled("ec");
+push @tests, @tests_ec unless disabled("ec") || (disabled("tls1_2") && disabled("tls1_3"));
 push @tests, @tests_tls1_2 unless disabled("tls1_2") || disabled("ec");

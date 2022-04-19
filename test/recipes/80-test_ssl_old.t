@@ -348,7 +348,7 @@ sub testssl {
 
     subtest 'standard SSL tests' => sub {
         ######################################################################
-        plan tests => 19;
+        plan tests => 21;
 
       SKIP: {
           skip "SSLv3 is not supported by this OpenSSL build", 4
@@ -376,7 +376,7 @@ sub testssl {
         }
 
       SKIP: {
-          skip "Neither SSLv3 nor any TLS version are supported by this OpenSSL build", 14
+          skip "Neither SSLv3 nor any TLS version are supported by this OpenSSL build", 16
               if $no_anytls;
 
         SKIP: {
@@ -404,7 +404,7 @@ sub testssl {
              'test sslv2/sslv3 with both client and server authentication via BIO pair and app verify');
 
         SKIP: {
-            skip "No IPv4 available on this machine", 4
+            skip "No IPv4 available on this machine", 5
                 unless !disabled("sock") && have_IPv4();
             ok(run(test([@ssltest, "-ipv4"])),
                'test TLS via IPv4');
@@ -414,10 +414,13 @@ sub testssl {
                'test TLS via IPv4 + ktls(server)');
             ok(run(test([@ssltest, "-ipv4", "-client_ktls", "-server_ktls"])),
                'test TLS via IPv4 + ktls');
+            ok(run(test([@ssltest, "-ipv4", "-client_ktls", "-server_ktls",
+               "-client_rsl", "16385", "-server_rsl", "64"])),
+               'test TLS via IPv4 + ktls + rsl');
           }
 
         SKIP: {
-            skip "No IPv6 available on this machine", 4
+            skip "No IPv6 available on this machine", 5
                 unless !disabled("sock") && have_IPv6();
             ok(run(test([@ssltest, "-ipv6"])),
                'test TLS via IPv6');
@@ -427,6 +430,9 @@ sub testssl {
                'test TLS via IPv6 + ktls(client)');
             ok(run(test([@ssltest, "-ipv6", "-client_ktls", "-server_ktls"])),
                'test TLS via IPv6 + ktls');
+            ok(run(test([@ssltest, "-ipv6", "-client_ktls", "-server_ktls",
+               "-client_rsl", "16385", "-server_rsl", "64"])),
+               'test TLS via IPv6 + ktls + rsl');
           }
         }
     };
@@ -571,7 +577,7 @@ sub testssl {
         plan tests => 10;
 
       SKIP: {
-            skip "TLSv1.0 is not supported by this OpenSSL build", 6
+            skip "TLSv1.0 is not supported by this OpenSSL build", 5
                 if $no_tls1 || $provider eq "fips";
 
         SKIP: {
@@ -606,14 +612,14 @@ sub testssl {
             ok(run(test([@ssltest, "-bio_pair", "-tls1", "-cipher", "PSK", "-psk", "abc123"])),
                'test tls1 with PSK via BIO pair');
           }
+	}
 
-        SKIP: {
-            skip "skipping auto DH PSK tests", 1
-                if ($no_dh || $no_psk);
+      SKIP: {
+          skip "skipping auto DH PSK tests", 1
+              if ($no_dh || $no_psk || $no_tls1_2);
 
-            ok(run(test(['ssl_old_test', '-psk', '0102030405', '-cipher', '@SECLEVEL=2:DHE-PSK-AES128-CCM'])),
-               'test auto DH meets security strength');
-          }
+          ok(run(test(['ssl_old_test', '-client_max_proto', 'tls1.2', '-psk', '0102030405', '-cipher', '@SECLEVEL=2:DHE-PSK-AES128-CCM'])),
+             'test auto DH meets security strength');
 	}
 
       SKIP: {

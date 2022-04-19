@@ -86,6 +86,7 @@ B<openssl> B<s_server>
 [B<-brief>]
 [B<-rev>]
 [B<-async>]
+[B<-record_size_limit> I<+int>]
 [B<-max_send_frag> I<+int>]
 [B<-split_send_frag> I<+int>]
 [B<-max_pipelines> I<+int>]
@@ -567,6 +568,11 @@ asynchronously. This will only have an effect if an asynchronous capable engine
 is also used via the B<-engine> option. For test purposes the dummy async engine
 (dasync) can be used (if available).
 
+=item B<-record_size_limit> I<+int>
+
+The requested record size limit of data fragments to receive.
+See L<SSL_CTX_set_record_size_limit(3)> for further information.
+
 =item B<-max_send_frag> I<+int>
 
 The maximum size of data fragment to send.
@@ -948,7 +954,9 @@ The
 The B<-srpvfile>, B<-srpuserseed>, and B<-engine>
 option were deprecated in OpenSSL 3.0.
 
-The -tfo option was added in OpenSSL 3.1.
+The B<-tfo> option was added in OpenSSL 3.1.
+
+The B<-record_size_limit> option was added in OpenSSL 3.1.
 
 =head1 COPYRIGHT
 

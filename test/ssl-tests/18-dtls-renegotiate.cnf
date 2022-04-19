@@ -1,16 +1,36 @@
 # Generated with generate_ssl_tests.pl
 
-num_tests = 9
+num_tests = 29
 
 test-0 = 0-renegotiate-client-no-resume
 test-1 = 1-renegotiate-client-resume
 test-2 = 2-renegotiate-server-resume
 test-3 = 3-renegotiate-client-auth-require
 test-4 = 4-renegotiate-client-auth-once
-test-5 = 5-renegotiate-aead-to-non-aead
-test-6 = 6-renegotiate-non-aead-to-aead
-test-7 = 7-renegotiate-non-aead-to-non-aead
-test-8 = 8-renegotiate-aead-to-aead
+test-5 = 5-simple-connect-default
+test-6 = 6-simple-connect-max-fragment-length
+test-7 = 7-simple-connect-max-fragment-length-not-overridden
+test-8 = 8-simple-connect-max-fragment-length-overridden
+test-9 = 9-simple-connect-record-size-limit
+test-10 = 10-simple-connect-record-size-limit-exceed
+test-11 = 11-renegotiate-client-resume-record-size-limit
+test-12 = 12-renegotiate-client-resume-record-size-limit-2
+test-13 = 13-renegotiate-client-resume-record-size-limit-changed
+test-14 = 14-renegotiate-client-resume-record-size-limit-exceed
+test-15 = 15-renegotiate-server-resume-record-size-limit
+test-16 = 16-renegotiate-server-resume-record-size-limit-2
+test-17 = 17-renegotiate-server-resume-record-size-limit-changed
+test-18 = 18-renegotiate-server-resume-record-size-limit-exceed
+test-19 = 19-renegotiate-client-resume-max-fragment-length-overridden
+test-20 = 20-renegotiate-client-resume-max-fragment-length-not-overridden
+test-21 = 21-renegotiate-client-resume-max-fragment-length-not-overridden-2
+test-22 = 22-renegotiate-server-resume-max-fragment-length-overridden
+test-23 = 23-renegotiate-server-resume-max-fragment-length-not-overridden
+test-24 = 24-renegotiate-server-resume-max-fragment-length-not-overridden-2
+test-25 = 25-renegotiate-aead-to-non-aead
+test-26 = 26-renegotiate-non-aead-to-aead
+test-27 = 27-renegotiate-non-aead-to-non-aead
+test-28 = 28-renegotiate-aead-to-aead
 # ===========================================================
 
 [0-renegotiate-client-no-resume]
@@ -157,129 +177,890 @@ UseSCTP = No
 
 # ===========================================================
 
-[5-renegotiate-aead-to-non-aead]
-ssl_conf = 5-renegotiate-aead-to-non-aead-ssl
+[5-simple-connect-default]
+ssl_conf = 5-simple-connect-default-ssl
 
-[5-renegotiate-aead-to-non-aead-ssl]
-server = 5-renegotiate-aead-to-non-aead-server
-client = 5-renegotiate-aead-to-non-aead-client
+[5-simple-connect-default-ssl]
+server = 5-simple-connect-default-server
+client = 5-simple-connect-default-client
 
-[5-renegotiate-aead-to-non-aead-server]
+[5-simple-connect-default-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[5-simple-connect-default-client]
+CipherString = DEFAULT
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-5]
+ApplicationData = 1024
+ExpectedClientUsableMaxSendSize = 1024
+ExpectedMaxFragmentLenExt = None
+ExpectedResult = Success
+ExpectedServerUsableMaxSendSize = 1024
+HandshakeMode = Simple
+MaxFragmentSize = 1024
+Method = DTLS
+ResumptionExpected = No
+UseSCTP = No
+
+
+# ===========================================================
+
+[6-simple-connect-max-fragment-length]
+ssl_conf = 6-simple-connect-max-fragment-length-ssl
+
+[6-simple-connect-max-fragment-length-ssl]
+server = 6-simple-connect-max-fragment-length-server
+client = 6-simple-connect-max-fragment-length-client
+
+[6-simple-connect-max-fragment-length-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[6-simple-connect-max-fragment-length-client]
+CipherString = DEFAULT
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-6]
+ApplicationData = 512
+ExpectedClientUsableMaxSendSize = 512
+ExpectedMaxFragmentLenExt = 512
+ExpectedResult = Success
+ExpectedServerUsableMaxSendSize = 512
+HandshakeMode = Simple
+Method = DTLS
+ResumptionExpected = No
+UseSCTP = No
+server = 6-simple-connect-max-fragment-length-server-extra
+client = 6-simple-connect-max-fragment-length-client-extra
+
+[6-simple-connect-max-fragment-length-server-extra]
+RecordSizeLimit = 256
+
+[6-simple-connect-max-fragment-length-client-extra]
+MaxFragmentLenExt = 512
+
+
+# ===========================================================
+
+[7-simple-connect-max-fragment-length-not-overridden]
+ssl_conf = 7-simple-connect-max-fragment-length-not-overridden-ssl
+
+[7-simple-connect-max-fragment-length-not-overridden-ssl]
+server = 7-simple-connect-max-fragment-length-not-overridden-server
+client = 7-simple-connect-max-fragment-length-not-overridden-client
+
+[7-simple-connect-max-fragment-length-not-overridden-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[7-simple-connect-max-fragment-length-not-overridden-client]
+CipherString = DEFAULT
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-7]
+ApplicationData = 512
+ExpectedClientUsableMaxSendSize = 512
+ExpectedMaxFragmentLenExt = 512
+ExpectedResult = Success
+ExpectedServerUsableMaxSendSize = 512
+HandshakeMode = Simple
+Method = DTLS
+ResumptionExpected = No
+UseSCTP = No
+client = 7-simple-connect-max-fragment-length-not-overridden-client-extra
+
+[7-simple-connect-max-fragment-length-not-overridden-client-extra]
+MaxFragmentLenExt = 512
+RecordSizeLimit = 384
+
+
+# ===========================================================
+
+[8-simple-connect-max-fragment-length-overridden]
+ssl_conf = 8-simple-connect-max-fragment-length-overridden-ssl
+
+[8-simple-connect-max-fragment-length-overridden-ssl]
+server = 8-simple-connect-max-fragment-length-overridden-server
+client = 8-simple-connect-max-fragment-length-overridden-client
+
+[8-simple-connect-max-fragment-length-overridden-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[8-simple-connect-max-fragment-length-overridden-client]
+CipherString = DEFAULT
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-8]
+ApplicationData = 256
+ExpectedClientUsableMaxSendSize = 256
+ExpectedMaxFragmentLenExt = None
+ExpectedResult = Success
+ExpectedServerUsableMaxSendSize = 384
+HandshakeMode = Simple
+Method = DTLS
+ResumptionExpected = No
+UseSCTP = No
+server = 8-simple-connect-max-fragment-length-overridden-server-extra
+client = 8-simple-connect-max-fragment-length-overridden-client-extra
+
+[8-simple-connect-max-fragment-length-overridden-server-extra]
+RecordSizeLimit = 256
+
+[8-simple-connect-max-fragment-length-overridden-client-extra]
+MaxFragmentLenExt = 512
+RecordSizeLimit = 384
+
+
+# ===========================================================
+
+[9-simple-connect-record-size-limit]
+ssl_conf = 9-simple-connect-record-size-limit-ssl
+
+[9-simple-connect-record-size-limit-ssl]
+server = 9-simple-connect-record-size-limit-server
+client = 9-simple-connect-record-size-limit-client
+
+[9-simple-connect-record-size-limit-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[9-simple-connect-record-size-limit-client]
+CipherString = DEFAULT
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-9]
+ApplicationData = 256
+ExpectedClientUsableMaxSendSize = 256
+ExpectedMaxFragmentLenExt = None
+ExpectedResult = Success
+ExpectedServerUsableMaxSendSize = 384
+HandshakeMode = Simple
+Method = DTLS
+ResumptionExpected = No
+UseSCTP = No
+server = 9-simple-connect-record-size-limit-server-extra
+client = 9-simple-connect-record-size-limit-client-extra
+
+[9-simple-connect-record-size-limit-server-extra]
+RecordSizeLimit = 256
+
+[9-simple-connect-record-size-limit-client-extra]
+RecordSizeLimit = 384
+
+
+# ===========================================================
+
+[10-simple-connect-record-size-limit-exceed]
+ssl_conf = 10-simple-connect-record-size-limit-exceed-ssl
+
+[10-simple-connect-record-size-limit-exceed-ssl]
+server = 10-simple-connect-record-size-limit-exceed-server
+client = 10-simple-connect-record-size-limit-exceed-client
+
+[10-simple-connect-record-size-limit-exceed-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[10-simple-connect-record-size-limit-exceed-client]
+CipherString = DEFAULT
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-10]
+ApplicationData = 257
+ExpectedResult = ClientFail
+HandshakeMode = Simple
+Method = DTLS
+UseSCTP = No
+server = 10-simple-connect-record-size-limit-exceed-server-extra
+client = 10-simple-connect-record-size-limit-exceed-client-extra
+
+[10-simple-connect-record-size-limit-exceed-server-extra]
+RecordSizeLimit = 256
+
+[10-simple-connect-record-size-limit-exceed-client-extra]
+RecordSizeLimit = 384
+
+
+# ===========================================================
+
+[11-renegotiate-client-resume-record-size-limit]
+ssl_conf = 11-renegotiate-client-resume-record-size-limit-ssl
+
+[11-renegotiate-client-resume-record-size-limit-ssl]
+server = 11-renegotiate-client-resume-record-size-limit-server
+client = 11-renegotiate-client-resume-record-size-limit-client
+
+[11-renegotiate-client-resume-record-size-limit-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[11-renegotiate-client-resume-record-size-limit-client]
+CipherString = DEFAULT
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-11]
+ApplicationData = 64
+ExpectedClientUsableMaxSendSize = 64
+ExpectedMaxFragmentLenExt = None
+ExpectedResult = Success
+ExpectedServerUsableMaxSendSize = 64
+HandshakeMode = RenegotiateClient
+Method = DTLS
+ResumptionExpected = Yes
+UseSCTP = No
+server = 11-renegotiate-client-resume-record-size-limit-server-extra
+client = 11-renegotiate-client-resume-record-size-limit-client-extra
+
+[11-renegotiate-client-resume-record-size-limit-server-extra]
+RecordSizeLimit = 64
+
+[11-renegotiate-client-resume-record-size-limit-client-extra]
+RecordSizeLimit = 64
+
+
+# ===========================================================
+
+[12-renegotiate-client-resume-record-size-limit-2]
+ssl_conf = 12-renegotiate-client-resume-record-size-limit-2-ssl
+
+[12-renegotiate-client-resume-record-size-limit-2-ssl]
+server = 12-renegotiate-client-resume-record-size-limit-2-server
+client = 12-renegotiate-client-resume-record-size-limit-2-client
+
+[12-renegotiate-client-resume-record-size-limit-2-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[12-renegotiate-client-resume-record-size-limit-2-client]
+CipherString = DEFAULT
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-12]
+ApplicationData = 64
+ExpectedClientUsableMaxSendSize = 64
+ExpectedMaxFragmentLenExt = None
+ExpectedResult = Success
+ExpectedServerUsableMaxSendSize = 64
+HandshakeMode = RenegotiateClient
+Method = DTLS
+RenegClientRecordSizeLimit = 64
+ResumptionExpected = Yes
+UseSCTP = No
+server = 12-renegotiate-client-resume-record-size-limit-2-server-extra
+
+[12-renegotiate-client-resume-record-size-limit-2-server-extra]
+RecordSizeLimit = 64
+
+
+# ===========================================================
+
+[13-renegotiate-client-resume-record-size-limit-changed]
+ssl_conf = 13-renegotiate-client-resume-record-size-limit-changed-ssl
+
+[13-renegotiate-client-resume-record-size-limit-changed-ssl]
+server = 13-renegotiate-client-resume-record-size-limit-changed-server
+client = 13-renegotiate-client-resume-record-size-limit-changed-client
+
+[13-renegotiate-client-resume-record-size-limit-changed-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[13-renegotiate-client-resume-record-size-limit-changed-client]
+CipherString = DEFAULT
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-13]
+ApplicationData = 64
+ExpectedClientUsableMaxSendSize = 96
+ExpectedMaxFragmentLenExt = None
+ExpectedResult = Success
+ExpectedServerUsableMaxSendSize = 64
+HandshakeMode = RenegotiateClient
+Method = DTLS
+RenegClientRecordSizeLimit = 64
+ResumptionExpected = Yes
+UseSCTP = No
+server = 13-renegotiate-client-resume-record-size-limit-changed-server-extra
+client = 13-renegotiate-client-resume-record-size-limit-changed-client-extra
+
+[13-renegotiate-client-resume-record-size-limit-changed-server-extra]
+RecordSizeLimit = 96
+
+[13-renegotiate-client-resume-record-size-limit-changed-client-extra]
+RecordSizeLimit = 96
+
+
+# ===========================================================
+
+[14-renegotiate-client-resume-record-size-limit-exceed]
+ssl_conf = 14-renegotiate-client-resume-record-size-limit-exceed-ssl
+
+[14-renegotiate-client-resume-record-size-limit-exceed-ssl]
+server = 14-renegotiate-client-resume-record-size-limit-exceed-server
+client = 14-renegotiate-client-resume-record-size-limit-exceed-client
+
+[14-renegotiate-client-resume-record-size-limit-exceed-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[14-renegotiate-client-resume-record-size-limit-exceed-client]
+CipherString = DEFAULT
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-14]
+ApplicationData = 96
+ExpectedResult = ServerFail
+HandshakeMode = RenegotiateClient
+Method = DTLS
+RenegClientRecordSizeLimit = 64
+UseSCTP = No
+server = 14-renegotiate-client-resume-record-size-limit-exceed-server-extra
+client = 14-renegotiate-client-resume-record-size-limit-exceed-client-extra
+
+[14-renegotiate-client-resume-record-size-limit-exceed-server-extra]
+RecordSizeLimit = 96
+
+[14-renegotiate-client-resume-record-size-limit-exceed-client-extra]
+RecordSizeLimit = 96
+
+
+# ===========================================================
+
+[15-renegotiate-server-resume-record-size-limit]
+ssl_conf = 15-renegotiate-server-resume-record-size-limit-ssl
+
+[15-renegotiate-server-resume-record-size-limit-ssl]
+server = 15-renegotiate-server-resume-record-size-limit-server
+client = 15-renegotiate-server-resume-record-size-limit-client
+
+[15-renegotiate-server-resume-record-size-limit-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[15-renegotiate-server-resume-record-size-limit-client]
+CipherString = DEFAULT
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-15]
+ApplicationData = 64
+ExpectedClientUsableMaxSendSize = 64
+ExpectedMaxFragmentLenExt = None
+ExpectedResult = Success
+ExpectedServerUsableMaxSendSize = 64
+HandshakeMode = RenegotiateServer
+Method = DTLS
+ResumptionExpected = No
+UseSCTP = No
+server = 15-renegotiate-server-resume-record-size-limit-server-extra
+client = 15-renegotiate-server-resume-record-size-limit-client-extra
+
+[15-renegotiate-server-resume-record-size-limit-server-extra]
+RecordSizeLimit = 64
+
+[15-renegotiate-server-resume-record-size-limit-client-extra]
+RecordSizeLimit = 64
+
+
+# ===========================================================
+
+[16-renegotiate-server-resume-record-size-limit-2]
+ssl_conf = 16-renegotiate-server-resume-record-size-limit-2-ssl
+
+[16-renegotiate-server-resume-record-size-limit-2-ssl]
+server = 16-renegotiate-server-resume-record-size-limit-2-server
+client = 16-renegotiate-server-resume-record-size-limit-2-client
+
+[16-renegotiate-server-resume-record-size-limit-2-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[16-renegotiate-server-resume-record-size-limit-2-client]
+CipherString = DEFAULT
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-16]
+ApplicationData = 64
+ExpectedClientUsableMaxSendSize = 64
+ExpectedMaxFragmentLenExt = None
+ExpectedResult = Success
+ExpectedServerUsableMaxSendSize = 64
+HandshakeMode = RenegotiateServer
+Method = DTLS
+RenegServerRecordSizeLimit = 64
+ResumptionExpected = No
+UseSCTP = No
+client = 16-renegotiate-server-resume-record-size-limit-2-client-extra
+
+[16-renegotiate-server-resume-record-size-limit-2-client-extra]
+RecordSizeLimit = 64
+
+
+# ===========================================================
+
+[17-renegotiate-server-resume-record-size-limit-changed]
+ssl_conf = 17-renegotiate-server-resume-record-size-limit-changed-ssl
+
+[17-renegotiate-server-resume-record-size-limit-changed-ssl]
+server = 17-renegotiate-server-resume-record-size-limit-changed-server
+client = 17-renegotiate-server-resume-record-size-limit-changed-client
+
+[17-renegotiate-server-resume-record-size-limit-changed-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[17-renegotiate-server-resume-record-size-limit-changed-client]
+CipherString = DEFAULT
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-17]
+ApplicationData = 64
+ExpectedClientUsableMaxSendSize = 64
+ExpectedMaxFragmentLenExt = None
+ExpectedResult = Success
+ExpectedServerUsableMaxSendSize = 96
+HandshakeMode = RenegotiateServer
+Method = DTLS
+RenegServerRecordSizeLimit = 64
+ResumptionExpected = No
+UseSCTP = No
+server = 17-renegotiate-server-resume-record-size-limit-changed-server-extra
+client = 17-renegotiate-server-resume-record-size-limit-changed-client-extra
+
+[17-renegotiate-server-resume-record-size-limit-changed-server-extra]
+RecordSizeLimit = 96
+
+[17-renegotiate-server-resume-record-size-limit-changed-client-extra]
+RecordSizeLimit = 96
+
+
+# ===========================================================
+
+[18-renegotiate-server-resume-record-size-limit-exceed]
+ssl_conf = 18-renegotiate-server-resume-record-size-limit-exceed-ssl
+
+[18-renegotiate-server-resume-record-size-limit-exceed-ssl]
+server = 18-renegotiate-server-resume-record-size-limit-exceed-server
+client = 18-renegotiate-server-resume-record-size-limit-exceed-client
+
+[18-renegotiate-server-resume-record-size-limit-exceed-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[18-renegotiate-server-resume-record-size-limit-exceed-client]
+CipherString = DEFAULT
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-18]
+ApplicationData = 96
+ExpectedResult = ServerFail
+HandshakeMode = RenegotiateServer
+Method = DTLS
+RenegClientRecordSizeLimit = 64
+UseSCTP = No
+server = 18-renegotiate-server-resume-record-size-limit-exceed-server-extra
+client = 18-renegotiate-server-resume-record-size-limit-exceed-client-extra
+
+[18-renegotiate-server-resume-record-size-limit-exceed-server-extra]
+RecordSizeLimit = 96
+
+[18-renegotiate-server-resume-record-size-limit-exceed-client-extra]
+RecordSizeLimit = 96
+
+
+# ===========================================================
+
+[19-renegotiate-client-resume-max-fragment-length-overridden]
+ssl_conf = 19-renegotiate-client-resume-max-fragment-length-overridden-ssl
+
+[19-renegotiate-client-resume-max-fragment-length-overridden-ssl]
+server = 19-renegotiate-client-resume-max-fragment-length-overridden-server
+client = 19-renegotiate-client-resume-max-fragment-length-overridden-client
+
+[19-renegotiate-client-resume-max-fragment-length-overridden-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[19-renegotiate-client-resume-max-fragment-length-overridden-client]
+CipherString = DEFAULT
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-19]
+ApplicationData = 64
+ExpectedClientUsableMaxSendSize = 64
+ExpectedMaxFragmentLenExt = None
+ExpectedResult = Success
+ExpectedServerUsableMaxSendSize = 96
+HandshakeMode = RenegotiateClient
+Method = DTLS
+RenegServerRecordSizeLimit = 64
+ResumptionExpected = Yes
+UseSCTP = No
+server = 19-renegotiate-client-resume-max-fragment-length-overridden-server-extra
+client = 19-renegotiate-client-resume-max-fragment-length-overridden-client-extra
+
+[19-renegotiate-client-resume-max-fragment-length-overridden-server-extra]
+RecordSizeLimit = 96
+
+[19-renegotiate-client-resume-max-fragment-length-overridden-client-extra]
+MaxFragmentLenExt = 512
+RecordSizeLimit = 96
+
+
+# ===========================================================
+
+[20-renegotiate-client-resume-max-fragment-length-not-overridden]
+ssl_conf = 20-renegotiate-client-resume-max-fragment-length-not-overridden-ssl
+
+[20-renegotiate-client-resume-max-fragment-length-not-overridden-ssl]
+server = 20-renegotiate-client-resume-max-fragment-length-not-overridden-server
+client = 20-renegotiate-client-resume-max-fragment-length-not-overridden-client
+
+[20-renegotiate-client-resume-max-fragment-length-not-overridden-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[20-renegotiate-client-resume-max-fragment-length-not-overridden-client]
+CipherString = DEFAULT
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-20]
+ApplicationData = 96
+ExpectedClientUsableMaxSendSize = 512
+ExpectedMaxFragmentLenExt = 512
+ExpectedResult = Success
+ExpectedServerUsableMaxSendSize = 512
+HandshakeMode = RenegotiateClient
+Method = DTLS
+RenegServerRecordSizeLimit = 0
+ResumptionExpected = Yes
+UseSCTP = No
+server = 20-renegotiate-client-resume-max-fragment-length-not-overridden-server-extra
+client = 20-renegotiate-client-resume-max-fragment-length-not-overridden-client-extra
+
+[20-renegotiate-client-resume-max-fragment-length-not-overridden-server-extra]
+RecordSizeLimit = 96
+
+[20-renegotiate-client-resume-max-fragment-length-not-overridden-client-extra]
+MaxFragmentLenExt = 512
+RecordSizeLimit = 96
+
+
+# ===========================================================
+
+[21-renegotiate-client-resume-max-fragment-length-not-overridden-2]
+ssl_conf = 21-renegotiate-client-resume-max-fragment-length-not-overridden-2-ssl
+
+[21-renegotiate-client-resume-max-fragment-length-not-overridden-2-ssl]
+server = 21-renegotiate-client-resume-max-fragment-length-not-overridden-2-server
+client = 21-renegotiate-client-resume-max-fragment-length-not-overridden-2-client
+
+[21-renegotiate-client-resume-max-fragment-length-not-overridden-2-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[21-renegotiate-client-resume-max-fragment-length-not-overridden-2-client]
+CipherString = DEFAULT
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-21]
+ApplicationData = 96
+ExpectedClientUsableMaxSendSize = 512
+ExpectedMaxFragmentLenExt = 512
+ExpectedResult = Success
+ExpectedServerUsableMaxSendSize = 512
+HandshakeMode = RenegotiateClient
+Method = DTLS
+RenegServerRecordSizeLimit = 64
+ResumptionExpected = Yes
+UseSCTP = No
+client = 21-renegotiate-client-resume-max-fragment-length-not-overridden-2-client-extra
+
+[21-renegotiate-client-resume-max-fragment-length-not-overridden-2-client-extra]
+MaxFragmentLenExt = 512
+RecordSizeLimit = 96
+
+
+# ===========================================================
+
+[22-renegotiate-server-resume-max-fragment-length-overridden]
+ssl_conf = 22-renegotiate-server-resume-max-fragment-length-overridden-ssl
+
+[22-renegotiate-server-resume-max-fragment-length-overridden-ssl]
+server = 22-renegotiate-server-resume-max-fragment-length-overridden-server
+client = 22-renegotiate-server-resume-max-fragment-length-overridden-client
+
+[22-renegotiate-server-resume-max-fragment-length-overridden-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[22-renegotiate-server-resume-max-fragment-length-overridden-client]
+CipherString = DEFAULT
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-22]
+ApplicationData = 64
+ExpectedClientUsableMaxSendSize = 64
+ExpectedMaxFragmentLenExt = None
+ExpectedResult = Success
+ExpectedServerUsableMaxSendSize = 96
+HandshakeMode = RenegotiateServer
+Method = DTLS
+RenegServerRecordSizeLimit = 64
+ResumptionExpected = No
+UseSCTP = No
+server = 22-renegotiate-server-resume-max-fragment-length-overridden-server-extra
+client = 22-renegotiate-server-resume-max-fragment-length-overridden-client-extra
+
+[22-renegotiate-server-resume-max-fragment-length-overridden-server-extra]
+RecordSizeLimit = 96
+
+[22-renegotiate-server-resume-max-fragment-length-overridden-client-extra]
+MaxFragmentLenExt = 512
+RecordSizeLimit = 96
+
+
+# ===========================================================
+
+[23-renegotiate-server-resume-max-fragment-length-not-overridden]
+ssl_conf = 23-renegotiate-server-resume-max-fragment-length-not-overridden-ssl
+
+[23-renegotiate-server-resume-max-fragment-length-not-overridden-ssl]
+server = 23-renegotiate-server-resume-max-fragment-length-not-overridden-server
+client = 23-renegotiate-server-resume-max-fragment-length-not-overridden-client
+
+[23-renegotiate-server-resume-max-fragment-length-not-overridden-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[23-renegotiate-server-resume-max-fragment-length-not-overridden-client]
+CipherString = DEFAULT
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-23]
+ApplicationData = 96
+ExpectedClientUsableMaxSendSize = 512
+ExpectedMaxFragmentLenExt = 512
+ExpectedResult = Success
+ExpectedServerUsableMaxSendSize = 512
+HandshakeMode = RenegotiateServer
+Method = DTLS
+RenegServerRecordSizeLimit = 0
+ResumptionExpected = No
+UseSCTP = No
+server = 23-renegotiate-server-resume-max-fragment-length-not-overridden-server-extra
+client = 23-renegotiate-server-resume-max-fragment-length-not-overridden-client-extra
+
+[23-renegotiate-server-resume-max-fragment-length-not-overridden-server-extra]
+RecordSizeLimit = 96
+
+[23-renegotiate-server-resume-max-fragment-length-not-overridden-client-extra]
+MaxFragmentLenExt = 512
+RecordSizeLimit = 96
+
+
+# ===========================================================
+
+[24-renegotiate-server-resume-max-fragment-length-not-overridden-2]
+ssl_conf = 24-renegotiate-server-resume-max-fragment-length-not-overridden-2-ssl
+
+[24-renegotiate-server-resume-max-fragment-length-not-overridden-2-ssl]
+server = 24-renegotiate-server-resume-max-fragment-length-not-overridden-2-server
+client = 24-renegotiate-server-resume-max-fragment-length-not-overridden-2-client
+
+[24-renegotiate-server-resume-max-fragment-length-not-overridden-2-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[24-renegotiate-server-resume-max-fragment-length-not-overridden-2-client]
+CipherString = DEFAULT
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-24]
+ApplicationData = 512
+ExpectedClientUsableMaxSendSize = 512
+ExpectedMaxFragmentLenExt = 512
+ExpectedResult = Success
+ExpectedServerUsableMaxSendSize = 512
+HandshakeMode = RenegotiateServer
+Method = DTLS
+RenegServerRecordSizeLimit = 64
+ResumptionExpected = No
+UseSCTP = No
+client = 24-renegotiate-server-resume-max-fragment-length-not-overridden-2-client-extra
+
+[24-renegotiate-server-resume-max-fragment-length-not-overridden-2-client-extra]
+MaxFragmentLenExt = 512
+RecordSizeLimit = 96
+
+
+# ===========================================================
+
+[25-renegotiate-aead-to-non-aead]
+ssl_conf = 25-renegotiate-aead-to-non-aead-ssl
+
+[25-renegotiate-aead-to-non-aead-ssl]
+server = 25-renegotiate-aead-to-non-aead-server
+client = 25-renegotiate-aead-to-non-aead-client
+
+[25-renegotiate-aead-to-non-aead-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT
 Options = NoResumptionOnRenegotiation
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
-[5-renegotiate-aead-to-non-aead-client]
+[25-renegotiate-aead-to-non-aead-client]
 CipherString = AES128-GCM-SHA256
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
-[test-5]
+[test-25]
 ExpectedResult = Success
 HandshakeMode = RenegotiateClient
 Method = DTLS
 ResumptionExpected = No
 UseSCTP = No
-client = 5-renegotiate-aead-to-non-aead-client-extra
+client = 25-renegotiate-aead-to-non-aead-client-extra
 
-[5-renegotiate-aead-to-non-aead-client-extra]
+[25-renegotiate-aead-to-non-aead-client-extra]
 RenegotiateCiphers = AES128-SHA
 
 
 # ===========================================================
 
-[6-renegotiate-non-aead-to-aead]
-ssl_conf = 6-renegotiate-non-aead-to-aead-ssl
+[26-renegotiate-non-aead-to-aead]
+ssl_conf = 26-renegotiate-non-aead-to-aead-ssl
 
-[6-renegotiate-non-aead-to-aead-ssl]
-server = 6-renegotiate-non-aead-to-aead-server
-client = 6-renegotiate-non-aead-to-aead-client
+[26-renegotiate-non-aead-to-aead-ssl]
+server = 26-renegotiate-non-aead-to-aead-server
+client = 26-renegotiate-non-aead-to-aead-client
 
-[6-renegotiate-non-aead-to-aead-server]
+[26-renegotiate-non-aead-to-aead-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT
 Options = NoResumptionOnRenegotiation
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
-[6-renegotiate-non-aead-to-aead-client]
+[26-renegotiate-non-aead-to-aead-client]
 CipherString = AES128-SHA
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
-[test-6]
+[test-26]
 ExpectedResult = Success
 HandshakeMode = RenegotiateClient
 Method = DTLS
 ResumptionExpected = No
 UseSCTP = No
-client = 6-renegotiate-non-aead-to-aead-client-extra
+client = 26-renegotiate-non-aead-to-aead-client-extra
 
-[6-renegotiate-non-aead-to-aead-client-extra]
+[26-renegotiate-non-aead-to-aead-client-extra]
 RenegotiateCiphers = AES128-GCM-SHA256
 
 
 # ===========================================================
 
-[7-renegotiate-non-aead-to-non-aead]
-ssl_conf = 7-renegotiate-non-aead-to-non-aead-ssl
+[27-renegotiate-non-aead-to-non-aead]
+ssl_conf = 27-renegotiate-non-aead-to-non-aead-ssl
 
-[7-renegotiate-non-aead-to-non-aead-ssl]
-server = 7-renegotiate-non-aead-to-non-aead-server
-client = 7-renegotiate-non-aead-to-non-aead-client
+[27-renegotiate-non-aead-to-non-aead-ssl]
+server = 27-renegotiate-non-aead-to-non-aead-server
+client = 27-renegotiate-non-aead-to-non-aead-client
 
-[7-renegotiate-non-aead-to-non-aead-server]
+[27-renegotiate-non-aead-to-non-aead-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT
 Options = NoResumptionOnRenegotiation
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
-[7-renegotiate-non-aead-to-non-aead-client]
+[27-renegotiate-non-aead-to-non-aead-client]
 CipherString = AES128-SHA
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
-[test-7]
+[test-27]
 ExpectedResult = Success
 HandshakeMode = RenegotiateClient
 Method = DTLS
 ResumptionExpected = No
 UseSCTP = No
-client = 7-renegotiate-non-aead-to-non-aead-client-extra
+client = 27-renegotiate-non-aead-to-non-aead-client-extra
 
-[7-renegotiate-non-aead-to-non-aead-client-extra]
+[27-renegotiate-non-aead-to-non-aead-client-extra]
 RenegotiateCiphers = AES256-SHA
 
 
 # ===========================================================
 
-[8-renegotiate-aead-to-aead]
-ssl_conf = 8-renegotiate-aead-to-aead-ssl
+[28-renegotiate-aead-to-aead]
+ssl_conf = 28-renegotiate-aead-to-aead-ssl
 
-[8-renegotiate-aead-to-aead-ssl]
-server = 8-renegotiate-aead-to-aead-server
-client = 8-renegotiate-aead-to-aead-client
+[28-renegotiate-aead-to-aead-ssl]
+server = 28-renegotiate-aead-to-aead-server
+client = 28-renegotiate-aead-to-aead-client
 
-[8-renegotiate-aead-to-aead-server]
+[28-renegotiate-aead-to-aead-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT
 Options = NoResumptionOnRenegotiation
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
-[8-renegotiate-aead-to-aead-client]
+[28-renegotiate-aead-to-aead-client]
 CipherString = AES128-GCM-SHA256
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
-[test-8]
+[test-28]
 ExpectedResult = Success
 HandshakeMode = RenegotiateClient
 Method = DTLS
 ResumptionExpected = No
 UseSCTP = No
-client = 8-renegotiate-aead-to-aead-client-extra
+client = 28-renegotiate-aead-to-aead-client-extra
 
-[8-renegotiate-aead-to-aead-client-extra]
+[28-renegotiate-aead-to-aead-client-extra]
 RenegotiateCiphers = AES256-GCM-SHA384
 
 

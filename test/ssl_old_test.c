@@ -721,6 +721,8 @@ static void sv_usage(void)
     fprintf(stderr, " -no_ticket    - do not issue TLS session ticket\n");
     fprintf(stderr, " -client_ktls  - try to enable client KTLS\n");
     fprintf(stderr, " -server_ktls  - try to enable server KTLS\n");
+    fprintf(stderr, " -client_rsl <number> - enable client record size limit\n");
+    fprintf(stderr, " -server_rsl <number> - enable server record size limit\n");
     fprintf(stderr, " -provider <name>    - Load the given provider into the library context\n");
     fprintf(stderr, " -config <cnf>    - Load the given config file into the library context\n");
 }
@@ -894,6 +896,7 @@ int main(int argc, char *argv[])
     int should_reuse = -1;
     int no_ticket = 0;
     int client_ktls = 0, server_ktls = 0;
+    int client_rsl = 0, server_rsl = 0;
     long bytes = 256L;
 #ifndef OPENSSL_NO_DH
     EVP_PKEY *dhpkey;
@@ -1186,6 +1189,14 @@ int main(int argc, char *argv[])
             client_ktls = 1;
         } else if (strcmp(*argv, "-server_ktls") == 0) {
             server_ktls = 1;
+        } else if (strcmp(*argv, "-client_rsl") == 0) {
+            if (--argc < 1)
+                goto bad;
+            client_rsl = atoi(*(++argv));
+        } else if (strcmp(*argv, "-server_rsl") == 0) {
+            if (--argc < 1)
+                goto bad;
+            server_rsl = atoi(*(++argv));
         } else if (strcmp(*argv, "-provider") == 0) {
             if (--argc < 1)
                 goto bad;
@@ -1757,6 +1768,10 @@ int main(int argc, char *argv[])
         SSL_set_options(c_ssl, SSL_OP_ENABLE_KTLS);
     if (server_ktls)
         SSL_set_options(s_ssl, SSL_OP_ENABLE_KTLS);
+    if (client_rsl)
+        SSL_set_record_size_limit(c_ssl, client_rsl);
+    if (server_rsl)
+        SSL_set_record_size_limit(s_ssl, server_rsl);
 
     if (!set_protocol_version(server_min_proto, s_ssl, SSL_CTRL_SET_MIN_PROTO_VERSION))
         goto end;
