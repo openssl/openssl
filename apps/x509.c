@@ -160,7 +160,7 @@ int x509_main(int argc, char **argv)
     EVP_PKEY *Upkey = NULL, *CApkey = NULL, *fkey = NULL;
     STACK_OF(ASN1_OBJECT) *trust = NULL, *reject = NULL;
     STACK_OF(OPENSSL_STRING) *sigopts = NULL;
-    X509 *x = NULL, *xca = NULL, *issuer_cert = NULL;
+    X509 *x = NULL, *xca = NULL;
     X509_REQ *req = NULL, *rq = NULL;
     X509_STORE *ctx = NULL;
     const EVP_MD *digest = NULL;
