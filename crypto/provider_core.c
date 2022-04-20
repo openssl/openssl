@@ -1520,33 +1520,6 @@ void ossl_provider_unquery_operation(const OSSL_PROVIDER *prov,
         prov->unquery_operation(prov->provctx, operation_id, algs);
 }
 
-int ossl_provider_clear_all_operation_bits(OSSL_LIB_CTX *libctx)
-{
-    struct provider_store_st *store;
-    OSSL_PROVIDER *provider;
-    int i, num, res = 1;
-
-    if ((store = get_provider_store(libctx)) != NULL) {
-        if (!CRYPTO_THREAD_read_lock(store->lock))
-            return 0;
-        num = sk_OSSL_PROVIDER_num(store->providers);
-        for (i = 0; i < num; i++) {
-            provider = sk_OSSL_PROVIDER_value(store->providers, i);
-            if (!CRYPTO_THREAD_write_lock(provider->opbits_lock)) {
-                res = 0;
-                continue;
-            }
-            if (provider->operation_bits != NULL)
-                memset(provider->operation_bits, 0,
-                       provider->operation_bits_sz);
-            CRYPTO_THREAD_unlock(provider->opbits_lock);
-        }
-        CRYPTO_THREAD_unlock(store->lock);
-        return res;
-    }
-    return 0;
-}
-
 int ossl_provider_set_operation_bit(OSSL_PROVIDER *provider, size_t bitnum)
 {
     size_t byte = bitnum / 8;
