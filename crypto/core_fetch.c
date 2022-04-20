@@ -24,16 +24,28 @@ struct construct_data_st {
     void *mcm_data;
 };
 
+static int is_temporary_method_store(int no_store, void *cbdata)
+{
+    struct construct_data_st *data = cbdata;
+
+    return no_store && !data->force_store;
+}
+
 static int ossl_method_construct_precondition(OSSL_PROVIDER *provider,
-                                              int operation_id, void *cbdata,
-                                              int *result)
+                                              int operation_id, int no_store,
+                                              void *cbdata, int *result)
 {
     if (!ossl_assert(result != NULL)) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
-    if (!ossl_provider_test_operation_bit(provider, operation_id, result))
+    /* Assume that no bits are set */
+    *result = 0;
+
+    /* No flag bits for temporary stores */
+    if (!is_temporary_method_store(no_store, cbdata)
+        && !ossl_provider_test_operation_bit(provider, operation_id, result))
         return 0;
 
     /*
@@ -56,7 +68,9 @@ static int ossl_method_construct_postcondition(OSSL_PROVIDER *provider,
     }
 
     *result = 1;
-    return no_store != 0
+
+    /* No flag bits for temporary stores */
+    return is_temporary_method_store(no_store, cbdata)
         || ossl_provider_set_operation_bit(provider, operation_id);
 }
 
@@ -82,7 +96,7 @@ static void ossl_method_construct_this(OSSL_PROVIDER *provider,
      * of the passed method.
      */
 
-    if (data->force_store || !no_store) {
+    if (!is_temporary_method_store(no_store, data)) {
         /* If we haven't been told not to store, add to the global store */
         data->mcm->put(NULL, method, provider, algo->algorithm_names,
                        algo->property_definition, data->mcm_data);
