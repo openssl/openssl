@@ -567,6 +567,8 @@ int x509_main(int argc, char **argv)
             goto end;
         }
 
+        if (!X509_set_issuer_name(x, X509_REQ_get_subject_name(req)))
+            goto end;
         if (!X509_set_subject_name(x, X509_REQ_get_subject_name(req)))
             goto end;
         if (!set_cert_times(x, NULL, NULL, days))
@@ -588,10 +590,9 @@ int x509_main(int argc, char **argv)
         xca = load_cert(CAfile, CAformat, "CA Certificate");
         if (xca == NULL)
             goto end;
+        if (!X509_set_issuer_name(x, X509_get_subject_name(xca)))
+            goto end;
     }
-    issuer_cert = xca != NULL ? xca : x;
-    if (!X509_set_issuer_name(x, X509_get_subject_name(issuer_cert)))
-        goto end;
 
     out = bio_open_default(outfile, 'w', outformat);
     if (out == NULL)
