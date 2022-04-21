@@ -103,6 +103,13 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     }
     return TRUE;
 }
+
+#elif defined(__GNUC__)
+# undef DEP_INIT_ATTRIBUTE
+# undef DEP_FINI_ATTRIBUTE
+# define DEP_INIT_ATTRIBUTE static __attribute__((constructor))
+# define DEP_FINI_ATTRIBUTE static __attribute__((destructor))
+
 #elif defined(__sun)
 # pragma init(init)
 # pragma fini(cleanup)
@@ -124,12 +131,6 @@ void _cleanup(void)
 #elif defined(__hpux)
 # pragma init "init"
 # pragma fini "cleanup"
-
-#elif defined(__GNUC__)
-# undef DEP_INIT_ATTRIBUTE
-# undef DEP_FINI_ATTRIBUTE
-# define DEP_INIT_ATTRIBUTE static __attribute__((constructor))
-# define DEP_FINI_ATTRIBUTE static __attribute__((destructor))
 
 #elif defined(__TANDEM)
 /* Method automatically called by the NonStop OS when the DLL loads */
