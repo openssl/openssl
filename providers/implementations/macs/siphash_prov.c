@@ -81,7 +81,7 @@ static void *siphash_dup(void *vsrc)
     if (sdst == NULL)
         return NULL;
 
-    sdst = ssrc;
+    *sdst = *ssrc;
     return sdst;
 }
 
