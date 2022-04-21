@@ -77,11 +77,11 @@ static void *siphash_dup(void *vsrc)
 
     if (!ossl_prov_is_running())
         return NULL;
-    sdst = siphash_new(ssrc->provctx);
+    sdst = OPENSSL_malloc(sizeof(*sdst));
     if (sdst == NULL)
         return NULL;
 
-    sdst->siphash = ssrc->siphash;
+    *sdst = *ssrc;
     return sdst;
 }
 
@@ -112,7 +112,8 @@ static int siphash_init(void *vmacctx, const unsigned char *key, size_t keylen,
 
     if (!ossl_prov_is_running() || !siphash_set_params(ctx, params))
         return 0;
-    /* Without a key, there is not much to do here,
+    /*
+     * Without a key, there is not much to do here,
      * The actual initialization happens through controls.
      */
     if (key == NULL) {
@@ -202,7 +203,8 @@ static int siphash_set_params(void *vmacctx, const OSSL_PARAM *params)
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_SIZE)) != NULL) {
         if (!OSSL_PARAM_get_size_t(p, &size)
-            || !SipHash_set_hash_size(&ctx->siphash, size))
+            || !SipHash_set_hash_size(&ctx->siphash, size)
+            || !SipHash_set_hash_size(&ctx->sipcopy, size))
             return 0;
     }
     if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_C_ROUNDS)) != NULL
