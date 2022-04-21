@@ -100,6 +100,8 @@ void OPENSSL_LH_flush(OPENSSL_LHASH *lh)
         }
         lh->b[i] = NULL;
     }
+
+    lh->num_items = 0;
 }
 
 void *OPENSSL_LH_insert(OPENSSL_LHASH *lh, void *data)
