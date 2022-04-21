@@ -65,11 +65,11 @@ static void *poly1305_dup(void *vsrc)
 
     if (!ossl_prov_is_running())
         return NULL;
-    dst = poly1305_new(src->provctx);
+    dst = OPENSSL_malloc(sizeof(*dst));
     if (dst == NULL)
         return NULL;
 
-    dst->poly1305 = src->poly1305;
+    *dst = *src;
     return dst;
 }
 
@@ -86,6 +86,7 @@ static int poly1305_setkey(struct poly1305_data_st *ctx,
         return 0;
     }
     Poly1305_Init(&ctx->poly1305, key);
+    ctx->updated = 0;
     return 1;
 }
 
