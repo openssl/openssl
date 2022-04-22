@@ -15,7 +15,7 @@
 #include <openssl/params.h>
 #include <openssl/opensslv.h>
 #include "crypto/cryptlib.h"
-#include "crypto/evp.h" /* evp_method_store_flush */
+#include "crypto/evp.h" /* evp_method_store_cache_flush */
 #include "crypto/rand.h"
 #include "internal/nelem.h"
 #include "internal/thread_once.h"
@@ -1152,7 +1152,7 @@ static int provider_flush_store_cache(const OSSL_PROVIDER *prov)
     CRYPTO_THREAD_unlock(store->lock);
 
     if (!freeing)
-        return evp_method_store_flush(prov->libctx);
+        return evp_method_store_cache_flush(prov->libctx);
     return 1;
 }
 
