@@ -15,7 +15,9 @@ setup("locale tests");
 plan skip_all => "Locale tests not available on Windows or VMS"
     if $^O =~ /^(VMS|MSWin32)$/;
 
-plan tests => 2;
+plan tests => 3;
+
+ok(run(test(["evp_pkey_ctx_new_from_name"])), "running evp_pkey_ctx_new_from_name without explicit context init");
 
 $ENV{LANG} = "C";
 ok(run(test(["localetest"])), "running localetest");
