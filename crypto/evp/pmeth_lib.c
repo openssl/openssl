@@ -199,6 +199,7 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
             }
 #ifndef FIPS_MODULE
             if (keytype != NULL) {
+                OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
                 id = evp_pkey_name2type(keytype);
                 if (id == NID_undef)
                     id = -1;
