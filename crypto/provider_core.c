@@ -1156,6 +1156,24 @@ static int provider_flush_store_cache(const OSSL_PROVIDER *prov)
     return 1;
 }
 
+static int provider_remove_store_methods(const OSSL_PROVIDER *prov)
+{
+    struct provider_store_st *store;
+    int freeing;
+
+    if ((store = get_provider_store(prov->libctx)) == NULL)
+        return 0;
+
+    if (!CRYPTO_THREAD_read_lock(store->lock))
+        return 0;
+    freeing = store->freeing;
+    CRYPTO_THREAD_unlock(store->lock);
+
+    if (!freeing)
+        return evp_method_store_remove_all_provided(prov);
+    return 1;
+}
+
 int ossl_provider_activate(OSSL_PROVIDER *prov, int upcalls, int aschild)
 {
     int count;
@@ -1482,7 +1500,7 @@ int ossl_provider_self_test(const OSSL_PROVIDER *prov)
         return 1;
     ret = prov->self_test(prov->provctx);
     if (ret == 0)
-        (void)provider_flush_store_cache(prov);
+        (void)provider_remove_store_methods(prov);
     return ret;
 }
 

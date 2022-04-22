@@ -419,6 +419,16 @@ int evp_method_store_cache_flush(OSSL_LIB_CTX *libctx)
     return 1;
 }
 
+int evp_method_store_remove_all_provided(const OSSL_PROVIDER *prov)
+{
+    OSSL_LIB_CTX *libctx = ossl_provider_libctx(prov);
+    OSSL_METHOD_STORE *store = get_evp_method_store(libctx);
+
+    if (store != NULL)
+        return ossl_method_store_remove_all_provided(store, prov);
+    return 1;
+}
+
 static int evp_set_parsed_default_properties(OSSL_LIB_CTX *libctx,
                                              OSSL_PROPERTY_LIST *def_prop,
                                              int loadconfig,

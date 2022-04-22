@@ -4,9 +4,10 @@
 
 OSSL_METHOD_STORE, ossl_method_store_new, ossl_method_store_free,
 ossl_method_store_init, ossl_method_store_cleanup,
-ossl_method_store_add, ossl_method_store_remove, ossl_method_store_fetch,
+ossl_method_store_add, ossl_method_store_fetch,
+ossl_method_store_remove, ossl_method_store_remove_all_provided, 
 ossl_method_store_cache_get, ossl_method_store_cache_set,
-ossl_method_store_flush_cache
+ossl_method_store_cache_flush_all
 - implementation method store and query
 
 =head1 SYNOPSIS
@@ -28,6 +29,9 @@ ossl_method_store_flush_cache
  int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
                              int nid, const char *properties,
                              void **method, const OSSL_PROVIDER **prov_rw);
+ int ossl_method_store_remove_all_provided(OSSL_METHOD_STORE *store,
+                                           const OSSL_PROVIDER *prov);
+
  int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
                                  int nid, const char *prop_query, void **method);
  int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
@@ -82,6 +86,10 @@ that matches the property query I<prop_query>.
 I<*prop> may be a pointer to a provider, which will narrow the search
 to methods from that provider.
 The result, if any, is returned in I<*method>, and its provider in I<*prov>.
+
+ossl_method_store_remove_all_provided() removes all methods from I<store>
+that are provided by I<prov>.
+When doing so, it also flushes the corresponding cache entries.
 
 =head2 Cache Functions
 
