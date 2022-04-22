@@ -77,7 +77,7 @@ int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
                                 int (*method_up_ref)(void *),
                                 void (*method_destruct)(void *));
 
-__owur int ossl_method_store_flush_cache(OSSL_METHOD_STORE *store, int all);
+__owur int ossl_method_store_cache_flush_all(OSSL_METHOD_STORE *store);
 
 /* Merge two property queries together */
 OSSL_PROPERTY_LIST *ossl_property_merge(const OSSL_PROPERTY_LIST *a,
