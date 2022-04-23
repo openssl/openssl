@@ -397,11 +397,6 @@ void OPENSSL_cleanup(void)
         async_deinit();
     }
 
-    if (casecmp_inited) {
-        OSSL_TRACE(INIT, "OPENSSL_cleanup: ossl_deinit_casecmp()\n");
-        ossl_deinit_casecmp();
-    }
-
     if (load_crypto_strings_inited) {
         OSSL_TRACE(INIT, "OPENSSL_cleanup: err_free_strings_int()\n");
         err_free_strings_int();
@@ -461,6 +456,11 @@ void OPENSSL_cleanup(void)
 
     OSSL_TRACE(INIT, "OPENSSL_cleanup: ossl_trace_cleanup()\n");
     ossl_trace_cleanup();
+
+    if (casecmp_inited) {
+        OSSL_TRACE(INIT, "OPENSSL_cleanup: ossl_deinit_casecmp()\n");
+        ossl_deinit_casecmp();
+    }
 
     base_inited = 0;
 }
