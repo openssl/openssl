@@ -110,7 +110,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 # define DEP_INIT_ATTRIBUTE static __attribute__((constructor))
 # define DEP_FINI_ATTRIBUTE static __attribute__((destructor))
 
-
 #elif defined(__sun)
 # pragma init(init)
 # pragma fini(cleanup)
