@@ -55,7 +55,7 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
 {
     long l;
     int ret = 0, i;
-    char *m = NULL, mlch = ' ';
+    char mlch = ' ';
     int nmindent = 0, printok = 0;
     EVP_PKEY *pkey = NULL;
     const char *neg;
@@ -222,7 +222,6 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
     }
     ret = 1;
  err:
-    OPENSSL_free(m);
     return ret;
 }
 
