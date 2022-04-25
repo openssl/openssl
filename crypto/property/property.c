@@ -213,14 +213,18 @@ static void impl_cache_flush_alg(ossl_uintmax_t idx, ALGORITHM *alg)
     lh_QUERY_flush(alg->cache);
 }
 
-static void alg_cleanup(ossl_uintmax_t idx, ALGORITHM *a)
+static void alg_cleanup(ossl_uintmax_t idx, ALGORITHM *a, void *arg)
 {
+    OSSL_METHOD_STORE *store = arg;
+
     if (a != NULL) {
         sk_IMPLEMENTATION_pop_free(a->impls, &impl_free);
         lh_QUERY_doall(a->cache, &impl_cache_free);
         lh_QUERY_free(a->cache);
         OPENSSL_free(a);
     }
+    if (store != NULL)
+        ossl_sa_ALGORITHM_set(store->algs, idx, NULL);
 }
 
 /*
@@ -250,7 +254,7 @@ OSSL_METHOD_STORE *ossl_method_store_new(OSSL_LIB_CTX *ctx)
 void ossl_method_store_free(OSSL_METHOD_STORE *store)
 {
     if (store != NULL) {
-        ossl_sa_ALGORITHM_doall(store->algs, &alg_cleanup);
+        ossl_sa_ALGORITHM_doall_arg(store->algs, &alg_cleanup, store);
         ossl_sa_ALGORITHM_free(store->algs);
         CRYPTO_THREAD_lock_free(store->lock);
         OPENSSL_free(store);
@@ -340,7 +344,7 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
 
 err:
     ossl_property_unlock(store);
-    alg_cleanup(0, alg);
+    alg_cleanup(0, alg, NULL);
     impl_free(impl);
     return 0;
 }
