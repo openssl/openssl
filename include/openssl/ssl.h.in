@@ -43,6 +43,9 @@ use OpenSSL::stackhash qw(generate_stack_macros generate_const_stack_macros);
 # include <openssl/ct.h>
 # include <openssl/sslerr.h>
 # include <openssl/prov_ssl.h>
+# ifndef OPENSSL_NO_STDIO
+#  include <stdio.h>
+# endif
 
 #ifdef  __cplusplus
 extern "C" {
