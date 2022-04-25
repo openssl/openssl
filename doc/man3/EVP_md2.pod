@@ -28,7 +28,7 @@ The MD2 algorithm which produces a 128-bit output from a given input.
 =head1 RETURN VALUES
 
 These functions return a B<EVP_MD> structure that contains the
-implementation of the symmetric cipher. See L<EVP_MD_meth_new(3)> for
+implementation of the message digest. See L<EVP_MD_meth_new(3)> for
 details of the B<EVP_MD> structure.
 
 =head1 CONFORMING TO
