@@ -285,7 +285,8 @@ int main(int argc, char **argv)
             /* Loop to send input from keyboard */
             while (true) {
                 /* Get a line of input */
-                txlen = getline(&txbuf, &txcap, stdin);
+                char * txbufp = txbuf;
+                txlen = getline(&txbufp, &txcap, stdin);
                 /* Exit loop if just a carriage return */
                 if (txbuf[0] == '\n') {
                     break;
@@ -330,9 +331,6 @@ int main(int argc, char **argv)
         close(client_skt);
     if (server_skt != -1)
         close(server_skt);
-
-    OPENSSL_free(txbuf);
-    OPENSSL_free(rxbuf);
 
     printf("sslecho exiting\n");
 
