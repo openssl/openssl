@@ -22,6 +22,9 @@
 # include <openssl/evp.h>
 # include <openssl/x509.h>
 # include <openssl/pemerr.h>
+# ifndef OPENSSL_NO_STDIO
+#  include <stdio.h>
+# endif
 
 #ifdef  __cplusplus
 extern "C" {
