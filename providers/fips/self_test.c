@@ -132,7 +132,6 @@ void _cleanup(void)
 # pragma init "init"
 # pragma fini "cleanup"
 
-
 #elif defined(__TANDEM)
 /* Method automatically called by the NonStop OS when the DLL loads */
 void __INIT__init(void) {
