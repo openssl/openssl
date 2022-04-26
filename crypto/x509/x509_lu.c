@@ -93,18 +93,22 @@ int X509_LOOKUP_by_subject_ex(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
                               const X509_NAME *name, X509_OBJECT *ret,
                               OSSL_LIB_CTX *libctx, const char *propq)
 {
-    if (ctx->skip || ctx->method == NULL
-           || ctx->method->get_by_subject_ex == NULL)
+    if (ctx->skip
+        || ctx->method == NULL
+        || (ctx->method->get_by_subject == NULL
+            && ctx->method->get_by_subject_ex == NULL))
         return 0;
-    return ctx->method->get_by_subject_ex(ctx, type, name, ret, libctx, propq);
+    if (ctx->method->get_by_subject_ex != NULL)
+        return ctx->method->get_by_subject_ex(ctx, type, name, ret, libctx,
+                                              propq);
+    else
+        return ctx->method->get_by_subject(ctx, type, name, ret);
 }
 
 int X509_LOOKUP_by_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
                            const X509_NAME *name, X509_OBJECT *ret)
 {
-    if (ctx->skip || ctx->method == NULL || ctx->method->get_by_subject == NULL)
-        return 0;
-    return ctx->method->get_by_subject(ctx, type, name, ret);
+    return X509_LOOKUP_by_subject_ex(ctx, type, name, ret, NULL, NULL);
 }
 
 int X509_LOOKUP_by_issuer_serial(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
@@ -303,7 +307,7 @@ X509_OBJECT *X509_STORE_CTX_get_obj_by_subject(X509_STORE_CTX *vs,
 
 /*
  * Returns 1 if successful,
- * 0 if not found or X509_LOOKUP_by_subject() error,
+ * 0 if not found or X509_LOOKUP_by_subject_ex() returns an error,
  * -1 on failure
  */
 static int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *vs,
@@ -334,13 +338,8 @@ static int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *vs,
                 continue;
             if (lu->method == NULL)
                 return -1;
-            if (lu->method->get_by_subject_ex != NULL)
-                j = X509_LOOKUP_by_subject_ex(lu, type, name, &stmp,
-                                              vs->libctx, vs->propq);
-            else if (lu->method->get_by_subject != NULL)
-                j = X509_LOOKUP_by_subject(lu, type, name, &stmp);
-            else
-                continue;
+            j = X509_LOOKUP_by_subject_ex(lu, type, name, &stmp,
+                                          vs->libctx, vs->propq);
             if (j != 0) { /* non-zero value is considered success here */
                 tmp = &stmp;
                 break;
