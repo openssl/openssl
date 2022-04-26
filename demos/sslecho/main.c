@@ -137,8 +137,9 @@ int main(int argc, char **argv)
     int server_skt = -1;
     int client_skt = -1;
 
-    char txbuf[128];
-    size_t txcap = sizeof(txbuf);
+    /** used by getline relying on realloc, can't be statically allocated */
+    char * txbuf = NULL;
+    size_t txcap = 0;
     int txlen;
 
     char rxbuf[128];
@@ -285,13 +286,15 @@ int main(int argc, char **argv)
             /* Loop to send input from keyboard */
             while (true) {
                 /* Get a line of input */
-                char * txbufp = txbuf;
-                txlen = getline(&txbufp, &txcap, stdin);
+                txlen = getline(&txbuf, &txcap, stdin);
+                /* Exit loop on error */
+                if ((txlen < 0  )||(txbuf == NULL)) {
+                    break;
+                }
                 /* Exit loop if just a carriage return */
                 if (txbuf[0] == '\n') {
                     break;
                 }
-
                 /* Send it to the server */
                 if ((result = SSL_write(ssl, txbuf, txlen)) <= 0) {
                     printf("Server closed connection\n");
@@ -331,6 +334,11 @@ int main(int argc, char **argv)
         close(client_skt);
     if (server_skt != -1)
         close(server_skt);
+
+    if ( txbuf && (txcap>0) )
+      {
+	free(txbuf);
+      }
 
     printf("sslecho exiting\n");
 
