@@ -254,17 +254,13 @@ jobs:
     strategy:
       matrix:
         RUST:
-        - 1.51.0
+          - 1.51.0
         PYTHON:
-        - 3.9
+          - 3.9
     steps:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
-    - name: package installs
-      run: |
-        sudo apt-get update
-        sudo apt-get -yq install python3-virtualenv virtualenv
     - name: Configure OpenSSL
       run: ./config --strict-warnings --debug enable-external-tests && perl configdata.pm --dump
     - name: make
