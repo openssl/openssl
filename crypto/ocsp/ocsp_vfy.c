@@ -144,7 +144,7 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
             goto end;
 
         x = sk_X509_value(chain, sk_X509_num(chain) - 1);
-        if (X509_check_trust(x, NID_OCSP_sign, 0) != X509_TRUST_TRUSTED) {
+        if (X509_check_trust(x, X509_TRUST_OCSP_SIGN, 0) != X509_TRUST_TRUSTED) {
             ERR_raise(ERR_LIB_OCSP, OCSP_R_ROOT_CA_NOT_TRUSTED);
             ret = 0;
             goto end;
