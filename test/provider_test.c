@@ -191,12 +191,15 @@ static int test_builtin_provider_with_child(void)
          * In this case we assume we've been built with "no-legacy" and skip
          * this test (there is no OPENSSL_NO_LEGACY)
          */
+        OSSL_LIB_CTX_free(libctx);
         return 1;
     }
 
     if (!TEST_true(OSSL_PROVIDER_add_builtin(libctx, name,
-                                             PROVIDER_INIT_FUNCTION_NAME)))
+                                             PROVIDER_INIT_FUNCTION_NAME))) {
+        OSSL_LIB_CTX_free(libctx);
         return 0;
+    }
 
     /* test_provider will free libctx and unload legacy as part of the test */
     return test_provider(&libctx, name, legacy);
