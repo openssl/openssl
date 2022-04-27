@@ -131,12 +131,17 @@ int ASN1_item_sign_ex(const ASN1_ITEM *it, X509_ALGOR *algor1,
 {
     int rv = 0;
     EVP_MD_CTX *ctx = evp_md_ctx_new_ex(pkey, id, libctx, propq);
+    char mdname[80] = "";
+
+    if (EVP_PKEY_get_default_digest_name(pkey, mdname, sizeof(mdname)) > 0
+            && strcmp(mdname, "UNDEF") == 0) /* at least for Ed25519, Ed448 */
+        md = NULL;
 
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    /* We can use the non _ex variant here since the pkey is already setup */
+    /* We can use the non _ex variant here since the pkey is already set up */
     if (!EVP_DigestSignInit(ctx, NULL, md, NULL, pkey))
         goto err;
 
