@@ -40,7 +40,10 @@ ASN1 sign and verify
 =head1 DESCRIPTION
 
 ASN1_item_sign_ex() is used to sign arbitrary ASN1 data using a data object
-I<data>, the ASN.1 structure I<it>, private key I<pkey> and message digest I<md>.
+I<data>, the ASN.1 structure I<it>, a private key I<pkey>,
+and a message digest algorithm I<md>.
+In case the private key is of a type (such as Ed25519 and Ed448) that is
+implicitly associated with a digest alorithm, the I<md> argument is ignored.
 The data that is signed is formed by taking the data object in I<data> and
 converting it to der format using the ASN.1 structure I<it>.
 The I<data> that will be signed, and a structure containing the signature may
