@@ -1375,6 +1375,8 @@ AES.
 
 =head2 SIV Mode
 
+Both the AES-SIV and AES-GCM-SIV ciphers fall under this mode.
+
 For SIV mode ciphers the behaviour of the EVP interface is subtly
 altered and several additional ctrl operations are supported.
 
