@@ -1072,7 +1072,11 @@ static int fix_dh_paramgen_type(enum state state,
         return 0;
 
     if (state == PRE_CTRL_STR_TO_PARAMS) {
-        ctx->p2 = (char *)ossl_dh_gen_type_id2name(atoi(ctx->p2));
+        if ((ctx->p2 = (char *)ossl_dh_gen_type_id2name(atoi(ctx->p2)))
+             == NULL) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_VALUE);
+            return 0;
+        }
         ctx->p1 = strlen(ctx->p2);
     }
 
