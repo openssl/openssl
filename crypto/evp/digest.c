@@ -141,6 +141,20 @@ void EVP_MD_CTX_free(EVP_MD_CTX *ctx)
     OPENSSL_free(ctx);
 }
 
+int evp_md_ctx_free_algctx(EVP_MD_CTX *ctx)
+{
+    if (ctx->algctx != NULL) {
+        if (!ossl_assert(ctx->digest != NULL)) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+            return 0;
+        }
+        if (ctx->digest->freectx != NULL)
+            ctx->digest->freectx(ctx->algctx);
+        ctx->algctx = NULL;
+    }
+    return 1;
+}
+
 static int evp_md_init_internal(EVP_MD_CTX *ctx, const EVP_MD *type,
                                 const OSSL_PARAM params[], ENGINE *impl)
 {
@@ -218,15 +232,8 @@ static int evp_md_init_internal(EVP_MD_CTX *ctx, const EVP_MD *type,
             || (ctx->flags & EVP_MD_CTX_FLAG_NO_INIT) != 0
             || type->origin == EVP_ORIG_METH) {
         /* If we were using provided hash before, cleanup algctx */
-        if (ctx->algctx != NULL) {
-            if (!ossl_assert(ctx->digest != NULL)) {
-                ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-                return 0;
-            }
-            if (ctx->digest->freectx != NULL)
-                ctx->digest->freectx(ctx->algctx);
-            ctx->algctx = NULL;
-        }
+        if (!evp_md_ctx_free_algctx(ctx))
+            return 0;
 
         if (ctx->digest == ctx->fetched_digest)
             ctx->digest = NULL;
@@ -238,15 +245,8 @@ static int evp_md_init_internal(EVP_MD_CTX *ctx, const EVP_MD *type,
     cleanup_old_md_data(ctx, 1);
 
     /* Start of non-legacy code below */
-    if (ctx->algctx != NULL && ctx->digest != type) {
-        if (!ossl_assert(ctx->digest != NULL)) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-            return 0;
-        }
-        if (ctx->digest->freectx != NULL)
-            ctx->digest->freectx(ctx->algctx);
-        ctx->algctx = NULL;
-    }
+    if (ctx->digest != type && !evp_md_ctx_free_algctx(ctx))
+        return 0;
 
     if (type->prov == NULL) {
 #ifdef FIPS_MODULE
