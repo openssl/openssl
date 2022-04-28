@@ -245,6 +245,9 @@ extern const OSSL_DISPATCH ossl_chacha20_ossl_poly1305_functions[];
 extern const OSSL_DISPATCH ossl_aes128siv_functions[];
 extern const OSSL_DISPATCH ossl_aes192siv_functions[];
 extern const OSSL_DISPATCH ossl_aes256siv_functions[];
+extern const OSSL_DISPATCH ossl_aes128gcm_siv_functions[];
+extern const OSSL_DISPATCH ossl_aes192gcm_siv_functions[];
+extern const OSSL_DISPATCH ossl_aes256gcm_siv_functions[];
 #endif /* OPENSSL_NO_SIV */
 
 /* MACs */

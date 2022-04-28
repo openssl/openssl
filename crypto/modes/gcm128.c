@@ -501,6 +501,43 @@ static void gcm_get_funcs(struct gcm_funcs_st *ctx)
 #endif
 }
 
+void ossl_gcm_init_4bit(u128 Htable[16], const u64 H[2])
+{
+    struct gcm_funcs_st funcs;
+
+    gcm_get_funcs(&funcs);
+    funcs.ginit(Htable, H);
+}
+
+void ossl_gcm_gmult_4bit(u64 Xi[2], const u128 Htable[16])
+{
+    struct gcm_funcs_st funcs;
+
+    gcm_get_funcs(&funcs);
+    funcs.gmult(Xi, Htable);
+}
+
+void ossl_gcm_ghash_4bit(u64 Xi[2], const u128 Htable[16],
+                         const u8 *inp, size_t len)
+{
+    struct gcm_funcs_st funcs;
+    u64 tmp[2];
+    size_t i;
+
+    gcm_get_funcs(&funcs);
+    if (funcs.ghash != NULL) {
+        funcs.ghash(Xi, Htable, inp, len);
+    } else {
+        /* Emulate ghash if needed */
+        for (i = 0; i < len; i += 16) {
+            memcpy(tmp, &inp[i], sizeof(tmp));
+            Xi[0] ^= tmp[0];
+            Xi[1] ^= tmp[1];
+            funcs.gmult(Xi, Htable);
+        }
+    }
+}
+
 void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx, void *key, block128_f block)
 {
     DECLARE_IS_ENDIAN;
