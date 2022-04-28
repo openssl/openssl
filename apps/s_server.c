@@ -2328,6 +2328,30 @@ static void print_stats(BIO *bio, SSL_CTX *ssl_ctx)
                SSL_CTX_sess_get_cache_size(ssl_ctx));
 }
 
+static long count_reads_callback(BIO *bio, int cmd, const char *argp, size_t len,
+                                 int argi, long argl, int ret, size_t *processed)
+{
+    unsigned *p_counter = (unsigned*)BIO_get_callback_arg(bio);
+
+    switch (cmd) {
+    case BIO_CB_READ:  /* No break here */
+    case BIO_CB_GETS:
+        if (p_counter != NULL)
+            ++*p_counter;
+        break;
+    default:
+        break;
+    }
+
+    if (s_debug) {
+        BIO_set_callback_arg(bio, (char* )bio_s_out);
+        bio_dump_callback(bio, cmd, argp, len, argi, argl, ret, processed);
+        BIO_set_callback_arg(bio, (char* )p_counter);
+    }
+
+    return ret;
+}
+
 static int sv_body(int s, int stype, int prot, unsigned char *context)
 {
     char *buf = NULL;
@@ -2456,10 +2480,7 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
     SSL_set_accept_state(con);
     /* SSL_set_fd(con,s); */
 
-    if (s_debug) {
-        BIO_set_callback_ex(SSL_get_rbio(con), bio_dump_callback);
-        BIO_set_callback_arg(SSL_get_rbio(con), (char *)bio_s_out);
-    }
+    BIO_set_callback_ex(SSL_get_rbio(con), count_reads_callback);
     if (s_msg) {
 #ifndef OPENSSL_NO_SSL_TRACE
         if (s_msg == 2)
@@ -2737,8 +2758,24 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
              */
             if ((!async || !SSL_waiting_for_async(con))
                     && !SSL_is_init_finished(con)) {
+                /*
+                 * Count number of reads during init_ssl_connection.
+                 * It helps us to recognise configuration errors and errors
+                 * caused by a client.
+                 */
+                unsigned read_counter = 0;
+                BIO_set_callback_arg(SSL_get_rbio(con), (char *)&read_counter);
                 i = init_ssl_connection(con);
+                BIO_set_callback_arg(SSL_get_rbio(con), NULL);
 
+                /*
+                 * If initialization fails without reads, then
+                 * there was a fatal error in configuration.
+                 */
+                if (i <= 0 && read_counter == 0) {
+                    ret = -1;
+                    goto err;
+                }
                 if (i < 0) {
                     ret = 0;
                     goto err;
