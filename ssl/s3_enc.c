@@ -90,128 +90,55 @@ static int ssl3_generate_key_block(SSL_CONNECTION *s, unsigned char *km, int num
 int ssl3_change_cipher_state(SSL_CONNECTION *s, int which)
 {
     unsigned char *p, *mac_secret;
-    unsigned char *ms, *key, *iv;
+    size_t md_len;
+    unsigned char *key, *iv;
     EVP_CIPHER_CTX *dd;
-    const EVP_CIPHER *c;
+    const EVP_CIPHER *ciph;
 #ifndef OPENSSL_NO_COMP
-    COMP_METHOD *comp;
+    const SSL_COMP *comp;
 #endif
-    const EVP_MD *m;
+    const EVP_MD *md;
     int mdi;
-    size_t n, i, j, k, cl;
+    size_t n, iv_len, key_len;
     int reuse_dd = 0;
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
-    c = s->s3.tmp.new_sym_enc;
-    m = s->s3.tmp.new_hash;
+    ciph = s->s3.tmp.new_sym_enc;
+    md = s->s3.tmp.new_hash;
     /* m == NULL will lead to a crash later */
-    if (!ossl_assert(m != NULL)) {
+    if (!ossl_assert(md != NULL)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 #ifndef OPENSSL_NO_COMP
-    if (s->s3.tmp.new_compression == NULL)
-        comp = NULL;
-    else
-        comp = s->s3.tmp.new_compression->method;
+    comp = s->s3.tmp.new_compression;
 #endif
-
-    if (which & SSL3_CC_READ) {
-        if (s->enc_read_ctx != NULL) {
-            reuse_dd = 1;
-        } else if ((s->enc_read_ctx = EVP_CIPHER_CTX_new()) == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
-            goto err;
-        } else {
-            /*
-             * make sure it's initialised in case we exit later with an error
-             */
-            EVP_CIPHER_CTX_reset(s->enc_read_ctx);
-        }
-        dd = s->enc_read_ctx;
-
-        if (ssl_replace_hash(&s->read_hash, m) == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-#ifndef OPENSSL_NO_COMP
-        /* COMPRESS */
-        COMP_CTX_free(s->expand);
-        s->expand = NULL;
-        if (comp != NULL) {
-            s->expand = COMP_CTX_new(comp);
-            if (s->expand == NULL) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                         SSL_R_COMPRESSION_LIBRARY_ERROR);
-                goto err;
-            }
-        }
-#endif
-        RECORD_LAYER_reset_read_sequence(&s->rlayer);
-        mac_secret = &(s->s3.read_mac_secret[0]);
-    } else {
-        s->statem.enc_write_state = ENC_WRITE_STATE_INVALID;
-        if (s->enc_write_ctx != NULL) {
-            reuse_dd = 1;
-        } else if ((s->enc_write_ctx = EVP_CIPHER_CTX_new()) == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
-            goto err;
-        } else {
-            /*
-             * make sure it's initialised in case we exit later with an error
-             */
-            EVP_CIPHER_CTX_reset(s->enc_write_ctx);
-        }
-        dd = s->enc_write_ctx;
-        if (ssl_replace_hash(&s->write_hash, m) == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
-            goto err;
-        }
-#ifndef OPENSSL_NO_COMP
-        /* COMPRESS */
-        COMP_CTX_free(s->compress);
-        s->compress = NULL;
-        if (comp != NULL) {
-            s->compress = COMP_CTX_new(comp);
-            if (s->compress == NULL) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                         SSL_R_COMPRESSION_LIBRARY_ERROR);
-                goto err;
-            }
-        }
-#endif
-        RECORD_LAYER_reset_write_sequence(&s->rlayer);
-        mac_secret = &(s->s3.write_mac_secret[0]);
-    }
-
-    if (reuse_dd)
-        EVP_CIPHER_CTX_reset(dd);
 
     p = s->s3.tmp.key_block;
-    mdi = EVP_MD_get_size(m);
+    mdi = EVP_MD_get_size(md);
     if (mdi < 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    i = mdi;
-    cl = EVP_CIPHER_get_key_length(c);
-    j = cl;
-    k = EVP_CIPHER_get_iv_length(c);
+    md_len = (size_t)mdi;
+    key_len = EVP_CIPHER_get_key_length(ciph);
+    iv_len = EVP_CIPHER_get_iv_length(ciph);
     if ((which == SSL3_CHANGE_CIPHER_CLIENT_WRITE) ||
         (which == SSL3_CHANGE_CIPHER_SERVER_READ)) {
-        ms = &(p[0]);
-        n = i + i;
+        mac_secret = &(p[0]);
+        n = md_len + md_len;
         key = &(p[n]);
-        n += j + j;
+        n += key_len + key_len;
         iv = &(p[n]);
-        n += k + k;
+        n += iv_len + iv_len;
     } else {
-        n = i;
-        ms = &(p[n]);
-        n += i + j;
+        n = md_len;
+        mac_secret = &(p[n]);
+        n += md_len + key_len;
         key = &(p[n]);
-        n += j + k;
+        n += key_len + iv_len;
         iv = &(p[n]);
-        n += k;
+        n += iv_len;
     }
 
     if (n > s->s3.tmp.key_block_length) {
@@ -219,15 +146,67 @@ int ssl3_change_cipher_state(SSL_CONNECTION *s, int which)
         goto err;
     }
 
-    memcpy(mac_secret, ms, i);
+    if (which & SSL3_CC_READ) {
+        s->rrlmethod->free(s->rrl);
+        s->rrl = s->rrlmethod->new_record_layer(sctx->libctx,
+                                                sctx->propq,
+                                                SSL3_VERSION, s->server,
+                                                OSSL_RECORD_DIRECTION_READ,
+                                                OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
+                                                key, key_len, iv, iv_len,
+                                                mac_secret, md_len, ciph, 0,
+                                                NID_undef, md, comp, s->rbio,
+                                                NULL, NULL, NULL, NULL, s);
+        if (s->rrl == NULL) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
 
-    if (!EVP_CipherInit_ex(dd, c, NULL, key, iv, (which & SSL3_CC_WRITE))) {
+        s->statem.enc_write_state = ENC_WRITE_STATE_VALID;
+        return 1;
+    }
+
+    s->statem.enc_write_state = ENC_WRITE_STATE_INVALID;
+    if (s->enc_write_ctx != NULL) {
+        reuse_dd = 1;
+    } else if ((s->enc_write_ctx = EVP_CIPHER_CTX_new()) == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        goto err;
+    } else {
+        /*  make sure it's initialised in case we exit later with an error */
+        EVP_CIPHER_CTX_reset(s->enc_write_ctx);
+    }
+    dd = s->enc_write_ctx;
+    if (ssl_replace_hash(&s->write_hash, md) == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+#ifndef OPENSSL_NO_COMP
+    /* COMPRESS */
+    COMP_CTX_free(s->compress);
+    s->compress = NULL;
+    if (comp != NULL) {
+        s->compress = COMP_CTX_new(comp->method);
+        if (s->compress == NULL) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                        SSL_R_COMPRESSION_LIBRARY_ERROR);
+            goto err;
+        }
+    }
+#endif
+    RECORD_LAYER_reset_write_sequence(&s->rlayer);
+    memcpy(&(s->s3.write_mac_secret[0]), mac_secret, md_len);
+
+    if (reuse_dd)
+        EVP_CIPHER_CTX_reset(dd);
+
+    if (!EVP_CipherInit_ex(dd, ciph, NULL, key, iv, (which & SSL3_CC_WRITE))) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
-    if (EVP_CIPHER_get0_provider(c) != NULL
-            && !tls_provider_set_tls_params(s, dd, c, m)) {
+    if (EVP_CIPHER_get0_provider(ciph) != NULL
+            && !tls_provider_set_tls_params(s, dd, ciph, md)) {
         /* SSLfatal already called */
         goto err;
     }
