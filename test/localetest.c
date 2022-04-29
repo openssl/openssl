@@ -91,12 +91,14 @@ int setup_tests(void)
     X509_PUBKEY *cert_pubkey = NULL;
     const unsigned char *p = der_bytes;
 
-    TEST_ptr(setlocale(LC_ALL, ""));
+    if (setlocale(LC_ALL, "") == NULL)
+        return TEST_skip("Cannot set the locale necessary for test");
 
     res = strcasecmp(str1, str2);
     TEST_note("Case-insensitive comparison via strcasecmp in current locale %s\n", res ? "failed" : "succeeded");
 
-    TEST_false(OPENSSL_strcasecmp(str1, str2));
+    if (!TEST_false(OPENSSL_strcasecmp(str1, str2)))
+        return 0;
 
     cert = d2i_X509(NULL, &p, sizeof(der_bytes));
     if (!TEST_ptr(cert))
