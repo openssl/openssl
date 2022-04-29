@@ -181,6 +181,10 @@ int dhparam_main(int argc, char **argv)
     if (num) {
         const char *alg = dsaparam ? "DSA" : "DH";
 
+        if (infile != NULL) {
+            BIO_printf(bio_err, "Warning, input file %s ignored\n", infile);
+        }
+
         ctx = EVP_PKEY_CTX_new_from_name(NULL, alg, NULL);
         if (ctx == NULL) {
             BIO_printf(bio_err,
