@@ -137,8 +137,8 @@ int main(int argc, char **argv)
     int server_skt = -1;
     int client_skt = -1;
 
-    /** used by getline relying on realloc, can't be statically allocated */
-    char * txbuf = NULL;
+    /* used by getline relying on realloc, can't be statically allocated */
+    char *txbuf = NULL;
     size_t txcap = 0;
     int txlen;
 
@@ -288,7 +288,7 @@ int main(int argc, char **argv)
                 /* Get a line of input */
                 txlen = getline(&txbuf, &txcap, stdin);
                 /* Exit loop on error */
-                if ((txlen < 0  )||(txbuf == NULL)) {
+                if (txlen < 0 || txbuf == NULL) {
                     break;
                 }
                 /* Exit loop if just a carriage return */
@@ -335,10 +335,8 @@ int main(int argc, char **argv)
     if (server_skt != -1)
         close(server_skt);
 
-    if ( txbuf && (txcap>0) )
-      {
-	free(txbuf);
-      }
+    if (txbuf != NULL && txcap > 0)
+        free(txbuf);
 
     printf("sslecho exiting\n");
 
