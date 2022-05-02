@@ -22,7 +22,6 @@
 #include <openssl/asn1t.h>
 #include <openssl/crmf.h>
 #include <openssl/err.h>
-#include <openssl/evp.h>
 #include <openssl/params.h>
 #include <openssl/core_names.h>
 

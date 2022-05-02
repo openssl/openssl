@@ -5,7 +5,6 @@
 #include "testutil.h"
 #include "testutil/output.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <locale.h>
 #ifdef OPENSSL_SYS_WINDOWS
