@@ -17,7 +17,6 @@
 #include "internal/core.h"
 #include "internal/provider.h"
 #include "internal/namemap.h"
-#include "internal/property.h"
 #include "crypto/evp.h"    /* evp_local.h needs it */
 #include "evp_local.h"
 
