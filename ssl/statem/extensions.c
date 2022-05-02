@@ -17,7 +17,6 @@
 #include "internal/cryptlib.h"
 #include "../ssl_local.h"
 #include "statem_local.h"
-#include "internal/cryptlib.h"
 
 static int final_renegotiate(SSL *s, unsigned int context, int sent);
 static int init_server_name(SSL *s, unsigned int context);

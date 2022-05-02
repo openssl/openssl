@@ -44,7 +44,6 @@
 #include <openssl/rand.h>
 #include <openssl/bn.h>
 #include <openssl/ssl.h>
-#include <openssl/store.h>
 #include <openssl/core_names.h>
 #include "s_apps.h"
 #include "apps.h"

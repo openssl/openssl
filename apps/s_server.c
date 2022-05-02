@@ -42,7 +42,6 @@ typedef unsigned int u_int;
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/x509.h>
-#include <openssl/ssl.h>
 #include <openssl/rand.h>
 #include <openssl/ocsp.h>
 #ifndef OPENSSL_NO_DH
