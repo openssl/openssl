@@ -22,7 +22,6 @@
 #include <openssl/dsa.h>
 #include <openssl/params.h>
 #include <openssl/evp.h>
-#include <openssl/err.h>
 #include <openssl/proverr.h>
 #include "internal/nelem.h"
 #include "internal/sizes.h"

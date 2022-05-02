@@ -20,7 +20,6 @@
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
-#include "prov/implementations.h"
 #include "prov/provider_util.h"
 
 #ifndef OPENSSL_NO_SCRYPT

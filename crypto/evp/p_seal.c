@@ -15,7 +15,6 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
-#include <openssl/evp.h>
 
 int EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
                  unsigned char **ek, int *ekl, unsigned char *iv,

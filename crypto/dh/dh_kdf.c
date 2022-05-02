@@ -14,7 +14,6 @@
 #include "internal/deprecated.h"
 
 #include "internal/e_os.h"
-#include "internal/e_os.h"
 #include <string.h>
 #include <openssl/core_names.h>
 #include <openssl/dh.h>

@@ -14,7 +14,6 @@
 #include <openssl/bio.h>
 #include <openssl/asn1.h>
 #include <openssl/cms.h>
-#include <openssl/cms.h>
 #include "internal/sizes.h"
 #include "crypto/x509.h"
 #include "cms_local.h"
