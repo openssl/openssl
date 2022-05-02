@@ -247,8 +247,15 @@ static int evp_md_init_internal(EVP_MD_CTX *ctx, const EVP_MD *type,
     cleanup_old_md_data(ctx, 1);
 
     /* Start of non-legacy code below */
-    if (ctx->digest != type && !evp_md_ctx_free_algctx(ctx))
-        return 0;
+    if (ctx->digest == type) {
+        if (!ossl_assert(type->prov != NULL)) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+            return 0;
+        }
+    } else {
+        if (!evp_md_ctx_free_algctx(ctx))
+            return 0;
+    }
 
     if (type->prov == NULL) {
 #ifdef FIPS_MODULE
