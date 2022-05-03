@@ -112,7 +112,7 @@ breaking changes, and mappings for the large list of deprecated functions.
       others that both endpoints have in common
    (CVE-2022-1434)
 
-   *Matt Caswell *
+   *Matt Caswell*
 
  * Fix a bug in the OPENSSL_LH_flush() function that breaks reuse of the memory
    occuppied by the removed hash table entries.
@@ -127,7 +127,7 @@ breaking changes, and mappings for the large list of deprecated functions.
    configured to accept client certificate authentication.
    (CVE-2022-1473)
 
-   *Tomáš Mráz*
+   *Hugo Landau, Aliaksei Levin*
 
  * The functions `OPENSSL_LH_stats` and `OPENSSL_LH_stats_bio` now only report
    the `num_items`, `num_nodes` and `num_alloc_nodes` statistics. All other
