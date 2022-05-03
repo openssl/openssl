@@ -7,6 +7,10 @@
  https://github.com/openssl/openssl/commits/ and pick the appropriate
  release branch.
 
+ Changes between 1.1.1o and 1.1.1p [xx XXX xxxx]
+
+  *)
+
  Changes between 1.1.1n and 1.1.1o [3 May 2022]
 
   *) Fixed a bug in the c_rehash script which was not properly sanitising shell
