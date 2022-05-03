@@ -945,17 +945,17 @@ int X509v3_asid_add_inherit(ASIdentifiers *asid, int which);
 int X509v3_asid_add_id_or_range(ASIdentifiers *asid, int which,
     ASN1_INTEGER *min, ASN1_INTEGER *max);
 int X509v3_addr_add_inherit(IPAddrBlocks *addr,
-    const unsigned afi, const unsigned *safi);
+    unsigned afi, const unsigned *safi);
 int X509v3_addr_add_prefix(IPAddrBlocks *addr,
-    const unsigned afi, const unsigned *safi,
+    unsigned afi, const unsigned *safi,
     unsigned char *a, const int prefixlen);
 int X509v3_addr_add_range(IPAddrBlocks *addr,
-    const unsigned afi, const unsigned *safi,
+    unsigned afi, const unsigned *safi,
     unsigned char *min, unsigned char *max);
 unsigned X509v3_addr_get_afi(const IPAddressFamily *f);
-int X509v3_addr_get_range(IPAddressOrRange *aor, const unsigned afi,
+int X509v3_addr_get_range(IPAddressOrRange *aor, unsigned afi,
     unsigned char *min, unsigned char *max,
-    const int length);
+    int length);
 
 /*
  * Canonical forms.
