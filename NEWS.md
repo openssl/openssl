@@ -18,6 +18,10 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
+### Major changes between OpenSSL 3.0.3 and OpenSSL 3.0.4 [under development]
+
+  * none
+
 ### Major changes between OpenSSL 3.0.2 and OpenSSL 3.0.3 [3 May 2022]
 
   * Fixed a bug in the c_rehash script which was not properly sanitising shell

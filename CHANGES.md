@@ -28,6 +28,10 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 [Migration guide]: https://github.com/openssl/openssl/tree/master/doc/man7/migration_guide.pod
 
+### Changes between 3.0.3 and 3.0.4 [xx XXX xxxx]
+
+ * none yet
+
 ### Changes between 3.0.2 and 3.0.3 [3 May 2022]
 
  * Fixed a bug in the c_rehash script which was not properly sanitising shell
