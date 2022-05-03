@@ -628,7 +628,7 @@ static void KeyExpansion(const unsigned char *key, u64 *w,
 /**
  * Expand the cipher key into the encryption key schedule.
  */
-int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
+int AES_set_encrypt_key(const unsigned char *userKey, int bits,
     AES_KEY *key)
 {
     u64 *rk;
@@ -654,7 +654,7 @@ int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
 /**
  * Expand the cipher key into the decryption key schedule.
  */
-int AES_set_decrypt_key(const unsigned char *userKey, const int bits,
+int AES_set_decrypt_key(const unsigned char *userKey, int bits,
     AES_KEY *key)
 {
     return AES_set_encrypt_key(userKey, bits, key);
@@ -3042,7 +3042,7 @@ static const u32 rcon[] = {
 /**
  * Expand the cipher key into the encryption key schedule.
  */
-int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
+int AES_set_encrypt_key(const unsigned char *userKey, int bits,
     AES_KEY *key)
 {
 
@@ -3125,7 +3125,7 @@ int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
 /**
  * Expand the cipher key into the decryption key schedule.
  */
-int AES_set_decrypt_key(const unsigned char *userKey, const int bits,
+int AES_set_decrypt_key(const unsigned char *userKey, int bits,
     AES_KEY *key)
 {
 
@@ -3482,7 +3482,7 @@ static const u32 rcon[] = {
 /**
  * Expand the cipher key into the encryption key schedule.
  */
-int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
+int AES_set_encrypt_key(const unsigned char *userKey, int bits,
     AES_KEY *key)
 {
     u32 *rk;
@@ -3564,7 +3564,7 @@ int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
 /**
  * Expand the cipher key into the decryption key schedule.
  */
-int AES_set_decrypt_key(const unsigned char *userKey, const int bits,
+int AES_set_decrypt_key(const unsigned char *userKey, int bits,
     AES_KEY *key)
 {
 
