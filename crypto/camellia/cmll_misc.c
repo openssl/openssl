@@ -17,7 +17,7 @@
 #include <openssl/camellia.h>
 #include "cmll_local.h"
 
-int Camellia_set_key(const unsigned char *userKey, const int bits,
+int Camellia_set_key(const unsigned char *userKey, int bits,
     CAMELLIA_KEY *key)
 {
     if (!userKey || !key)
