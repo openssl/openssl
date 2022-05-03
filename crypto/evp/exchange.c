@@ -425,7 +425,7 @@ int EVP_PKEY_derive_set_peer_ex(EVP_PKEY_CTX *ctx, EVP_PKEY *peer,
                                     ctx->propquery);
     if (tmp_keymgmt != NULL)
         /* A Coverity issue with up_ref/down_ref and free */
-        /* coverity[ass_freed_arg] */
+        /* coverity[pass_freed_arg] */
         provkey = evp_pkey_export_to_provider(peer, ctx->libctx,
                                               &tmp_keymgmt, ctx->propquery);
     EVP_KEYMGMT_free(tmp_keymgmt_tofree);
