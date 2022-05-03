@@ -210,7 +210,7 @@ one, otherwise NULL.
 X509_LOOKUP_by_subject_ex() returns 0 if there is no B<X509_LOOKUP_METHOD>
 that implements any of the get_by_subject_ex() or get_by_subject() functions.
 It calls get_by_subject_ex() if present, otherwise get_by_subject(), and returns
-the result of the function, which is usually 1 on success and 0 in error.
+the result of the function, which is usually 1 on success and 0 on error.
 
 X509_LOOKUP_by_subject() is similar to X509_LOOKUP_by_subject_ex()
 but passes NULL for both the libctx and propq.

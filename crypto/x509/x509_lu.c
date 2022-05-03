@@ -348,16 +348,11 @@ static int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *vs,
         if (tmp == NULL)
             return 0;
     }
-    if (tmp->type != type)
+    if (!X509_OBJECT_up_ref_count(tmp))
         return -1;
 
-    if (ret != NULL) {
-        if (!X509_OBJECT_up_ref_count(tmp))
-            return -1;
-
-        ret->type = tmp->type;
-        ret->data.ptr = tmp->data.ptr;
-    }
+    ret->type = tmp->type;
+    ret->data.ptr = tmp->data.ptr;
     return 1;
 }
 
