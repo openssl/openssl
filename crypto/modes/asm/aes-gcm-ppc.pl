@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2014-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2014-2022 The OpenSSL Project Authors. All Rights Reserved.
 # Copyright 2021- IBM Inc. All rights reserved
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
