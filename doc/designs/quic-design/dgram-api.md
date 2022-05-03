@@ -29,6 +29,105 @@ subset of `struct mmsghdr` as being supported, specifically no control messages;
 The flags argument is defined by us. Initially we can support something like
 `MSG_DONTWAIT` (say, `BIO_DONTWAIT`).
 
+### Implementation Questions
+
+If we go with this, there are some issues that arise:
+
+- Are `BIO_mmsghdr`, `BIO_msghdr` and `BIO_iovec` simple typedefs
+  for OS-provided structures, or our own independent structure
+  definitions?
+
+  - If we use OS-provided structures:
+
+    - We would need to include the OS headers which provide these
+      structures in our public API headers.
+
+    - If we choose to support these functions when OS support is not available
+      (see discussion below), We would need to define our own structures in this
+      case (a “polyfill” approach).
+
+  - If we use our own structures:
+
+    - We would need to translate these structures during every call.
+
+      But we would need to have storage inside the BIO_dgram for *m* `struct
+      msghdr`, *m\*v* iovecs, etc. Since we want to support multithreaded use
+      these allocations probably will need to be on the stack, and therefore
+      must be limited.
+
+      Limiting *m* isn't a problem, because `sendmmsg` returns the number
+      of messages sent, so the existing semantics we are trying to match
+      lets us just send or receive fewer messages than we were asked to.
+
+      However, it does seem like we will need to limit *v*, the number of iovecs
+      per message. So what limit should we give to *v*, the number of iovecs? We
+      will need a fixed stack allocation of OS iovec structures and we can
+      allocate from this stack allocation as we iterate through the `BIO_msghdr`
+      we have been given. So in practice we could just only send messages
+      until we reach our iovec limit, and then return.
+
+      For example, suppose we allocate 64 iovecs internally:
+
+      ```c
+      struct iovec vecs[64];
+      ```
+
+      If the first message passed to a call to `BIO_writem` has 64 iovecs
+      attached to it, no further messages can be sent and `BIO_writem`
+      returns 1.
+
+      If three messages are sent, with 32, 32, and 1 iovecs respectively,
+      the first two messages are sent and `BIO_writem` returns 2.
+
+      So the only important thing we would need to document in this API
+      is the limit of iovecs on a single message; in other words, the
+      number of iovecs which must not be exceeded if a forward progress
+      guarantee is to be made. e.g. if we allocate 64 iovecs internally,
+      `BIO_writem` with a single message with 65 iovecs will never work
+      and this becomes part of the API contract.
+
+      Obviously these quantities of iovecs are unrealistically large.
+      iovecs are small, so we can afford to set the limit high enough
+      that it shouldn't cause any problems in practice. We can increase
+      the limit later without a breaking API change, but we cannot decrease
+      it later. So we might want to start with something small, like 8.
+
+- We also need to decide what to do for OSes which don't support at least
+  `sendmsg`/`recvmsg`.
+
+  - Don't provide these functions and require all users of these functions to
+    have an alternate code path which doesn't rely on them?
+
+    - Not providing these functions on OSes that don't support
+      at least sendmsg/recvmsg is a simple solution but adds
+      complexity to code using BIO_dgram. (Though it does communicate
+      to code more realistic performance expectations since it
+      knows when these functions are actually available.)
+
+  - Provide these functions and emulate the functionality:
+
+    - However there is a question here as to how we implement
+      the iovec arguments on platforms without `sendmsg`/`recvmsg`. (We cannot
+      use `writev`/`readv` because we need peer address information.) Logically
+      implementing these would then have to be done by copying buffers around
+      internally before calling `sendto`/`recvfrom`, defeating the point of
+      iovecs and providing a performance profile which is surprising to code
+      using BIO_dgram.
+
+    - Another option could be a variable limit on the number of iovecs,
+      which can be queried from BIO_dgram. This would be a constant set
+      when libcrypto is compiled. It would be 1 for platforms not supporting
+      `sendmsg`/`recvmsg`. This again adds burdens on the code using
+      BIO_dgram, but it seems the only way to avoid the surprising performance
+      pitfall of buffer copying to emulate iovec support. There is a fair risk
+      of code being written which accidentially works on one platform but not
+      another, because the author didn't realise the iovec limit is 1 on some
+      platforms. Possibly we could have an “iovec limit” variable in the
+      BIO_dgram which is 1 by default, which can be increased by a call to a
+      function BIO_set_iovec_limit, but not beyond the fixed size discussed
+      above. It would return failure if not possible and this would give client
+      code a clear way to determine if its expectations are met.
+
 Alternate API
 -------------
 
