@@ -295,7 +295,7 @@ int ossl_ascii_isdigit(const char inchar) {
 /* str[n]casecmp_l is defined in POSIX 2008-01. Value is taken accordingly
  * https://www.gnu.org/software/libc/manual/html_node/Feature-Test-Macros.html */
 
-#if (defined OPENSSL_SYS_WINDOWS) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200809L)
+#if ((defined OPENSSL_SYS_WINDOWS) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200809L))
 
 # if defined OPENSSL_SYS_WINDOWS
 # define locale_t _locale_t
@@ -305,7 +305,9 @@ int ossl_ascii_isdigit(const char inchar) {
 # endif
 
 # ifndef FIPS_MODULE
+#  ifndef OPENSSL_SUPPRESS_LOCALE_T
 static locale_t loc;
+#  endif
 
 static int locale_base_inited = 0;
 static CRYPTO_ONCE locale_base = CRYPTO_ONCE_STATIC_INIT;

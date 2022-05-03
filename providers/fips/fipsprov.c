@@ -43,11 +43,13 @@ static OSSL_FUNC_provider_query_operation_fn fips_query;
 # include <locale.h>
 #endif
 
-#if defined OPENSSL_SYS_WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 # define locale_t _locale_t
 # define freelocale _free_locale
 #endif
+#ifndef OPENSSL_SUPPRESS_LOCALE_T
 static locale_t loc;
+#endif
 
 static int fips_init_casecmp(void);
 static void fips_deinit_casecmp(void);
@@ -504,20 +506,29 @@ static const OSSL_ALGORITHM *fips_query(void *provctx, int operation_id,
 }
 
 void *ossl_c_locale() {
+# ifndef OPENSSL_SUPPRESS_LOCALE_T
     return (void *)loc;
+# else
+    return NULL;
+# endif
 }
 
 static int fips_init_casecmp(void) {
 # ifdef OPENSSL_SYS_WINDOWS
     loc = _create_locale(LC_COLLATE, "C");
+    return (loc == (locale_t) 0) ? 0 : 1;
+# elif defined (OPENSSL_SUPPRESS_LOCALE_T)
+    return 1;
 # else
     loc = newlocale(LC_COLLATE_MASK, "C", (locale_t) 0);
-# endif
     return (loc == (locale_t) 0) ? 0 : 1;
+# endif
 }
 
 static void fips_deinit_casecmp(void) {
+# ifndef OPENSSL_SUPPRESS_LOCALE_T
     freelocale(loc);
+# endif
 }
 
 static void fips_teardown(void *provctx)
