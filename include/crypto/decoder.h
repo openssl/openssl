@@ -13,10 +13,6 @@
 
 # include <openssl/decoder.h>
 
-OSSL_DECODER *ossl_decoder_fetch_by_number(OSSL_LIB_CTX *libctx,
-                                                     int id,
-                                                     const char *properties);
-
 /*
  * These are specially made for the 'file:' provider-native loader, which
  * uses this to install a DER to anything decoder, which doesn't do much

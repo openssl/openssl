@@ -122,7 +122,7 @@ static void *get_evp_method_from_store(void *store, const OSSL_PROVIDER **prov,
 {
     struct evp_method_data_st *methdata = data;
     void *method = NULL;
-    int name_id = 0;
+    int name_id;
     uint32_t meth_id;
 
     /*
@@ -239,8 +239,7 @@ static void destruct_evp_method(void *method, void *data)
 static void *
 inner_evp_generic_fetch(struct evp_method_data_st *methdata,
                         OSSL_PROVIDER *prov, int operation_id,
-                        int name_id, const char *name,
-                        const char *properties,
+                        const char *name, const char *properties,
                         void *(*new_method)(int name_id,
                                             const OSSL_ALGORITHM *algodef,
                                             OSSL_PROVIDER *prov),
@@ -252,7 +251,7 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
     const char *const propq = properties != NULL ? properties : "";
     uint32_t meth_id = 0;
     void *method = NULL;
-    int unsupported = 0;
+    int unsupported, name_id;
 
     if (store == NULL || namemap == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_INVALID_ARGUMENT);
@@ -268,18 +267,8 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
         return NULL;
     }
 
-    /*
-     * If we have been passed both a name_id and a name, we have an
-     * internal programming error.
-     */
-    if (!ossl_assert(name_id == 0 || name == NULL)) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
-        return NULL;
-    }
-
     /* If we haven't received a name id yet, try to get one for the name */
-    if (name_id == 0 && name != NULL)
-        name_id = ossl_namemap_name2num(namemap, name);
+    name_id = name != NULL ? ossl_namemap_name2num(namemap, name) : 0;
 
     /*
      * If we have a name id, calculate a method id with evp_method_id().
@@ -298,8 +287,7 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
      * If we haven't found the name yet, chances are that the algorithm to
      * be fetched is unsupported.
      */
-    if (name_id == 0)
-        unsupported = 1;
+    unsupported = name_id == 0;
 
     if (meth_id == 0
         || !ossl_method_store_cache_get(store, prov, meth_id, propq, &method)) {
@@ -374,34 +362,7 @@ void *evp_generic_fetch(OSSL_LIB_CTX *libctx, int operation_id,
     methdata.libctx = libctx;
     methdata.tmp_store = NULL;
     method = inner_evp_generic_fetch(&methdata, NULL, operation_id,
-                                     0, name, properties,
-                                     new_method, up_ref_method, free_method);
-    dealloc_tmp_evp_method_store(methdata.tmp_store);
-    return method;
-}
-
-/*
- * evp_generic_fetch_by_number() is special, and only returns methods for
- * already known names, i.e. it refuses to work if no name_id can be found
- * (it's considered an internal programming error).
- * This is meant to be used when one method needs to fetch an associated
- * method.
- */
-void *evp_generic_fetch_by_number(OSSL_LIB_CTX *libctx, int operation_id,
-                                  int name_id, const char *properties,
-                                  void *(*new_method)(int name_id,
-                                                      const OSSL_ALGORITHM *algodef,
-                                                      OSSL_PROVIDER *prov),
-                                  int (*up_ref_method)(void *),
-                                  void (*free_method)(void *))
-{
-    struct evp_method_data_st methdata;
-    void *method;
-
-    methdata.libctx = libctx;
-    methdata.tmp_store = NULL;
-    method = inner_evp_generic_fetch(&methdata, NULL, operation_id,
-                                     name_id, NULL, properties,
+                                     name, properties,
                                      new_method, up_ref_method, free_method);
     dealloc_tmp_evp_method_store(methdata.tmp_store);
     return method;
@@ -427,7 +388,7 @@ void *evp_generic_fetch_from_prov(OSSL_PROVIDER *prov, int operation_id,
     methdata.libctx = ossl_provider_libctx(prov);
     methdata.tmp_store = NULL;
     method = inner_evp_generic_fetch(&methdata, prov, operation_id,
-                                     0, name, properties,
+                                     name, properties,
                                      new_method, up_ref_method, free_method);
     dealloc_tmp_evp_method_store(methdata.tmp_store);
     return method;
@@ -631,7 +592,7 @@ void evp_generic_do_all(OSSL_LIB_CTX *libctx, int operation_id,
 
     methdata.libctx = libctx;
     methdata.tmp_store = NULL;
-    (void)inner_evp_generic_fetch(&methdata, NULL, operation_id, 0, NULL, NULL,
+    (void)inner_evp_generic_fetch(&methdata, NULL, operation_id, NULL, NULL,
                                   new_method, up_ref_method, free_method);
 
     data.operation_id = operation_id;
