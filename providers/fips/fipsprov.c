@@ -23,6 +23,7 @@
 #include "prov/seeding.h"
 #include "self_test.h"
 #include "internal/core.h"
+#include "e_os.h"
 
 static const char FIPS_DEFAULT_PROPERTIES[] = "provider=fips,fips=yes";
 static const char FIPS_UNAPPROVED_PROPERTIES[] = "provider=fips,fips=no";
@@ -37,17 +38,13 @@ static OSSL_FUNC_provider_get_params_fn fips_get_params;
 static OSSL_FUNC_provider_query_operation_fn fips_query;
 
 /* Locale object accessor functions */
-#ifdef OPENSSL_SYS_MACOSX
-# include <xlocale.h>
-#else
+#ifndef OPENSSL_NO_LOCALE
 # include <locale.h>
-#endif
-
-#if defined OPENSSL_SYS_WINDOWS
-# define locale_t _locale_t
-# define freelocale _free_locale
-#endif
+# ifdef OPENSSL_SYS_MACOSX
+#  include <xlocale.h>
+# endif
 static locale_t loc;
+#endif
 
 static int fips_init_casecmp(void);
 static void fips_deinit_casecmp(void);
@@ -503,22 +500,35 @@ static const OSSL_ALGORITHM *fips_query(void *provctx, int operation_id,
     return NULL;
 }
 
+# ifndef OPENSSL_NO_LOCALE
 void *ossl_c_locale() {
     return (void *)loc;
 }
 
 static int fips_init_casecmp(void) {
-# ifdef OPENSSL_SYS_WINDOWS
+#  ifdef OPENSSL_SYS_WINDOWS
     loc = _create_locale(LC_COLLATE, "C");
-# else
+#  else
     loc = newlocale(LC_COLLATE_MASK, "C", (locale_t) 0);
-# endif
+#  endif
     return (loc == (locale_t) 0) ? 0 : 1;
 }
 
 static void fips_deinit_casecmp(void) {
     freelocale(loc);
 }
+# else
+void *ossl_c_locale() {
+    return NULL;
+}
+
+static int fips_init_casecmp(void) {
+    return 1;
+}
+
+static void fips_deinit_casecmp(void) {
+}
+# endif
 
 static void fips_teardown(void *provctx)
 {
