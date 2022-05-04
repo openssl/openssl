@@ -585,9 +585,14 @@ my @tests_pss = (
 my @tests_tls_1_1 = (
     {
         name => "Only RSA-PSS Certificate, TLS v1.1",
-        server => $server_pss_only,
+        server => {
+            "CipherString" => "DEFAULT:\@SECLEVEL=0",
+            "Certificate" => test_pem("server-pss-cert.pem"),
+            "PrivateKey" => test_pem("server-pss-key.pem"),
+        },
         client => {
             "MaxProtocol" => "TLSv1.1",
+            "CipherString" => "DEFAULT:\@SECLEVEL=0",
         },
         test   => {
             "ExpectedResult" => "ServerFail"

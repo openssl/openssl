@@ -81,6 +81,7 @@ plan tests =>
    ($no_fips ? 0 : 5)     # testssl with fips provider
     + 1                   # For testss
     + 5                   # For the testssl with default provider
+    + 1                   # For security level 0 failure tests
     ;
 
 subtest 'test_ss' => sub {
@@ -345,7 +346,6 @@ sub testssl {
         $dsa_cert = 1;
     }
 
-
     subtest 'standard SSL tests' => sub {
         ######################################################################
         plan tests => 19;
@@ -527,10 +527,48 @@ sub testssl {
         }
     };
 
+    subtest 'SSL security level failure tests' => sub {
+        ######################################################################
+        plan tests => 3;
+
+      SKIP: {
+          skip "SSLv3 is not supported by this OpenSSL build", 1
+              if disabled("ssl3");
+
+          skip "SSLv3 is not supported by the FIPS provider", 1
+              if $provider eq "fips";
+
+          is(run(test([@ssltest, "-bio_pair", "-ssl3", "-cipher", '@SECLEVEL=1'])),
+             0, "test sslv3 fails at security level 1, expecting failure");
+        }
+
+      SKIP: {
+          skip "TLSv1.0 is not supported by this OpenSSL build", 1
+              if $no_tls1;
+
+          skip "TLSv1.0 is not supported by the FIPS provider", 1
+              if $provider eq "fips";
+
+          is(run(test([@ssltest, "-bio_pair", "-tls1", "-cipher", '@SECLEVEL=1'])),
+             0, 'test tls1 fails at security level 1, expecting failure');
+        }
+
+      SKIP: {
+          skip "TLSv1.1 is not supported by this OpenSSL build", 1
+              if $no_tls1_1;
+
+          skip "TLSv1.1 is not supported by the FIPS provider", 1
+              if $provider eq "fips";
+
+          is(run(test([@ssltest, "-bio_pair", "-tls1_1", "-cipher", '@SECLEVEL=1'])),
+             0, 'test tls1.1 fails at security level 1, expecting failure');
+        }
+    };
+
     subtest 'RSA/(EC)DHE/PSK tests' => sub {
         ######################################################################
 
-        plan tests => 10;
+        plan tests => 6;
 
       SKIP: {
             skip "TLSv1.0 is not supported by this OpenSSL build", 6
@@ -577,44 +615,6 @@ sub testssl {
                'test auto DH meets security strength');
           }
 	}
-
-      SKIP: {
-            skip "TLSv1.1 is not supported by this OpenSSL build", 4
-                if $no_tls1_1;
-
-        SKIP: {
-            skip "skipping auto DHE PSK test at SECLEVEL 3", 1
-                if ($no_dh || $no_psk);
-
-            ok(run(test(['ssl_old_test', '-tls1_1', '-dhe4096', '-psk', '0102030405', '-cipher', '@SECLEVEL=3:DHE-PSK-AES256-CBC-SHA384'])),
-               'test auto DHE PSK meets security strength');
-          }
-
-        SKIP: {
-            skip "skipping auto ECDHE PSK test at SECLEVEL 3", 1
-                if ($no_ec || $no_psk);
-
-            ok(run(test(['ssl_old_test', '-tls1_1', '-no_dhe', '-psk', '0102030405', '-cipher', '@SECLEVEL=3:ECDHE-PSK-AES256-CBC-SHA384'])),
-               'test auto ECDHE PSK meets security strength');
-          }
-
-        SKIP: {
-            skip "skipping no RSA PSK at SECLEVEL 3 test", 1
-                if ($no_rsa || $no_psk);
-
-            ok(!run(test(['ssl_old_test', '-tls1_1', '-no_dhe', '-psk', '0102030405', '-cipher', '@SECLEVEL=3:RSA-PSK-AES256-CBC-SHA384'])),
-               'test auto RSA PSK does not meet security level 3 requirements (PFS)');
-          }
-
-        SKIP: {
-            skip "skipping no PSK at SECLEVEL 3 test", 1
-                if ($no_psk);
-
-            ok(!run(test(['ssl_old_test', '-tls1_1', '-no_dhe', '-psk', '0102030405', '-cipher', '@SECLEVEL=3:PSK-AES256-CBC-SHA384'])),
-               'test auto PSK does not meet security level 3 requirements (PFS)');
-          }
-	}
-
     };
 
     subtest 'Custom Extension tests' => sub {
