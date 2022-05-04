@@ -278,39 +278,28 @@ static void destruct_loader(void *method, void *data)
 
 /* Fetching support.  Can fetch by numeric identity or by scheme */
 static OSSL_STORE_LOADER *
-inner_loader_fetch(struct loader_data_st *methdata, int id,
+inner_loader_fetch(struct loader_data_st *methdata,
                    const char *scheme, const char *properties)
 {
     OSSL_METHOD_STORE *store = get_loader_store(methdata->libctx);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(methdata->libctx);
     const char *const propq = properties != NULL ? properties : "";
     void *method = NULL;
-    int unsupported = 0;
+    int unsupported, id;
 
     if (store == NULL || namemap == NULL) {
         ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_PASSED_INVALID_ARGUMENT);
         return NULL;
     }
 
-    /*
-     * If we have been passed both an id and a scheme, we have an
-     * internal programming error.
-     */
-    if (!ossl_assert(id == 0 || scheme == NULL)) {
-        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_INTERNAL_ERROR);
-        return NULL;
-    }
-
     /* If we haven't received a name id yet, try to get one for the name */
-    if (id == 0 && scheme != NULL)
-        id = ossl_namemap_name2num(namemap, scheme);
+    id = scheme != NULL ? ossl_namemap_name2num(namemap, scheme) : 0;
 
     /*
      * If we haven't found the name yet, chances are that the algorithm to
      * be fetched is unsupported.
      */
-    if (id == 0)
-        unsupported = 1;
+    unsupported = id == 0;
 
     if (id == 0
         || !ossl_method_store_cache_get(store, NULL, id, propq, &method)) {
@@ -381,21 +370,7 @@ OSSL_STORE_LOADER *OSSL_STORE_LOADER_fetch(OSSL_LIB_CTX *libctx,
 
     methdata.libctx = libctx;
     methdata.tmp_store = NULL;
-    method = inner_loader_fetch(&methdata, 0, scheme, properties);
-    dealloc_tmp_loader_store(methdata.tmp_store);
-    return method;
-}
-
-OSSL_STORE_LOADER *ossl_store_loader_fetch_by_number(OSSL_LIB_CTX *libctx,
-                                                     int scheme_id,
-                                                     const char *properties)
-{
-    struct loader_data_st methdata;
-    void *method;
-
-    methdata.libctx = libctx;
-    methdata.tmp_store = NULL;
-    method = inner_loader_fetch(&methdata, scheme_id, NULL, properties);
+    method = inner_loader_fetch(&methdata, scheme, properties);
     dealloc_tmp_loader_store(methdata.tmp_store);
     return method;
 }
@@ -491,7 +466,7 @@ void OSSL_STORE_LOADER_do_all_provided(OSSL_LIB_CTX *libctx,
 
     methdata.libctx = libctx;
     methdata.tmp_store = NULL;
-    (void)inner_loader_fetch(&methdata, 0, NULL, NULL /* properties */);
+    (void)inner_loader_fetch(&methdata, NULL, NULL /* properties */);
 
     data.user_fn = user_fn;
     data.user_arg = user_arg;

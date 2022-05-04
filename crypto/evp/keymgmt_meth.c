@@ -203,16 +203,6 @@ static void *keymgmt_from_algorithm(int name_id,
     return keymgmt;
 }
 
-EVP_KEYMGMT *evp_keymgmt_fetch_by_number(OSSL_LIB_CTX *ctx, int name_id,
-                                         const char *properties)
-{
-    return evp_generic_fetch_by_number(ctx,
-                                       OSSL_OP_KEYMGMT, name_id, properties,
-                                       keymgmt_from_algorithm,
-                                       (int (*)(void *))EVP_KEYMGMT_up_ref,
-                                       (void (*)(void *))EVP_KEYMGMT_free);
-}
-
 EVP_KEYMGMT *evp_keymgmt_fetch_from_prov(OSSL_PROVIDER *prov,
                                          const char *name,
                                          const char *properties)

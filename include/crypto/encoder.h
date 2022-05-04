@@ -13,8 +13,6 @@
 
 # include <openssl/types.h>
 
-OSSL_ENCODER *ossl_encoder_fetch_by_number(OSSL_LIB_CTX *libctx, int id,
-                                           const char *properties);
 int ossl_encoder_get_number(const OSSL_ENCODER *encoder);
 int ossl_encoder_store_cache_flush(OSSL_LIB_CTX *libctx);
 int ossl_encoder_store_remove_all_provided(const OSSL_PROVIDER *prov);
