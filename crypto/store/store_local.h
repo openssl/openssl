@@ -168,9 +168,6 @@ int ossl_store_file_detach_pem_bio_int(OSSL_STORE_LOADER_CTX *ctx);
 OSSL_STORE_LOADER *ossl_store_loader_fetch(OSSL_LIB_CTX *libctx,
                                            const char *scheme,
                                            const char *properties);
-OSSL_STORE_LOADER *ossl_store_loader_fetch_by_number(OSSL_LIB_CTX *libctx,
-                                                     int scheme_id,
-                                                     const char *properties);
 
 /* Standard function to handle the result from OSSL_FUNC_store_load() */
 struct ossl_load_result_data_st {

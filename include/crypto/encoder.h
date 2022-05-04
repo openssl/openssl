@@ -9,6 +9,4 @@
 
 #include <openssl/types.h>
 
-OSSL_ENCODER *ossl_encoder_fetch_by_number(OSSL_LIB_CTX *libctx, int id,
-                                           const char *properties);
 int ossl_encoder_get_number(const OSSL_ENCODER *encoder);
