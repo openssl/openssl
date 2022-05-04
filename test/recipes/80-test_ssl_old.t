@@ -78,7 +78,7 @@ my $client_sess="client.ss";
 # If you're adding tests here, you probably want to convert them to the
 # new format in ssl_test.c and add recipes to 80-test_ssl_new.t instead.
 plan tests =>
-   ($no_fips ? 0 : 5)     # testssl with fips provider
+   ($no_fips ? 0 : 6)     # testssl with fips provider
     + 1                   # For testss
     + 5                   # For the testssl with default provider
     + 1                   # For security level 0 failure tests
