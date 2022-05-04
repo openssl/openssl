@@ -462,11 +462,6 @@ int SSL_get_accept_stream_queue_len(SSL *ssl);
  * at connection time and the initial connection object does not represent
  * a stream. Calls to SSL_read()/SSL_write() on this object fail. Streams
  * must be created using SSL_new_stream() or SSL_accept_stream().
- *
- * If the SSL_FLAG_NO_DEFAULT_STREAM flag is set, the initial SSL object is
- * associated with a connection but not a a stream. An initial stream must be
- * created using SSL_new_stream(). SSL_read()/SSL_write() on the connection
- * object will fail. This must be set before connecting.
  */
 __owur int SSL_set_default_stream_type(SSL *ssl, int type);
 
