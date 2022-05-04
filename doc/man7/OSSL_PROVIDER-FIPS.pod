@@ -160,9 +160,17 @@ The OpenSSL FIPS provider supports these operations and algorithms:
 
 =item DH, see L<EVP_KEYMGMT-DH(7)>
 
+=item DHX, see L<EVP_KEYMGMT-DHX(7)>
+
 =item DSA, see L<EVP_KEYMGMT-DSA(7)>
 
 =item RSA, see L<EVP_KEYMGMT-RSA(7)>
+
+=item EC, see L<EVP_KEYMGMT-EC(7)>
+
+=item X25519, see L<EVP_KEYMGMT-X25519(7)>
+
+=item X448, see L<EVP_KEYMGMT-X448(7)>
 
 =back
 
