@@ -9,20 +9,24 @@
 
  Changes between 1.1.1o and 1.1.1p [xx XXX xxxx]
 
-  *)
+  *) When OpenSSL TLS client is connecting without any supported elliptic
+     curves and TLS-1.3 protocol is disabled the connection will no longer fail
+     if a ciphersuite that does not use a key exchange based on elliptic
+     curves can be negotiated.
+     [Tomáš Mráz]
 
  Changes between 1.1.1n and 1.1.1o [3 May 2022]
 
   *) Fixed a bug in the c_rehash script which was not properly sanitising shell
-    metacharacters to prevent command injection.  This script is distributed by
-    some operating systems in a manner where it is automatically executed.  On
-    such operating systems, an attacker could execute arbitrary commands with the
-    privileges of the script.
+     metacharacters to prevent command injection.  This script is distributed
+     by some operating systems in a manner where it is automatically executed.
+     On such operating systems, an attacker could execute arbitrary commands
+     with the privileges of the script.
 
-    Use of the c_rehash script is considered obsolete and should be replaced
-    by the OpenSSL rehash command line tool.
-    (CVE-2022-1292)
-    [Tomáš Mráz]
+     Use of the c_rehash script is considered obsolete and should be replaced
+     by the OpenSSL rehash command line tool.
+     (CVE-2022-1292)
+     [Tomáš Mráz]
 
  Changes between 1.1.1m and 1.1.1n [15 Mar 2022]
 
