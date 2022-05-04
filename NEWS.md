@@ -25,6 +25,7 @@ OpenSSL 3.1
   * Fixed regressions introduced in 3.0.6 version.
   * Fixed two buffer overflows in punycode decoding functions.
     ([CVE-2022-3786]) and ([CVE-2022-3602])
+  * SSL 3, TLS 1.0, TLS 1.1, and DTLS 1.0 only work at security level 0.
 
 OpenSSL 3.0
 -----------
