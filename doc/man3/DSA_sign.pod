@@ -58,7 +58,7 @@ L<ERR_get_error(3)>.
 
 =head1 CONFORMING TO
 
-US Federal Information Processing Standard FIPS 186 (Digital Signature
+US Federal Information Processing Standard FIPS186-4 (Digital Signature
 Standard, DSS), ANSI X9.30
 
 =head1 SEE ALSO

@@ -196,7 +196,7 @@ The following sections of SP800-56Ar3:
 
 =back
 
-The following sections of FIPS 186-4:
+The following sections of FIPS186-4:
 
 =over 4
 
