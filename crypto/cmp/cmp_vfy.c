@@ -749,7 +749,8 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
     }
 
     /* check CMP version number in header */
-    if (ossl_cmp_hdr_get_pvno(hdr) != OSSL_CMP_PVNO) {
+    if (ossl_cmp_hdr_get_pvno(hdr) != OSSL_CMP_PVNO_2
+            && ossl_cmp_hdr_get_pvno(hdr) != OSSL_CMP_PVNO_3) {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
         ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PVNO);
         return 0;
