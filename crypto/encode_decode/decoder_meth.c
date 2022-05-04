@@ -446,6 +446,25 @@ OSSL_DECODER *ossl_decoder_fetch_by_number(OSSL_LIB_CTX *libctx, int id,
     return method;
 }
 
+int ossl_decoder_store_cache_flush(OSSL_LIB_CTX *libctx)
+{
+    OSSL_METHOD_STORE *store = get_decoder_store(libctx);
+
+    if (store != NULL)
+        return ossl_method_store_cache_flush_all(store);
+    return 1;
+}
+
+int ossl_decoder_store_remove_all_provided(const OSSL_PROVIDER *prov)
+{
+    OSSL_LIB_CTX *libctx = ossl_provider_libctx(prov);
+    OSSL_METHOD_STORE *store = get_decoder_store(libctx);
+
+    if (store != NULL)
+        return ossl_method_store_remove_all_provided(store, prov);
+    return 1;
+}
+
 /*
  * Library of basic method functions
  */

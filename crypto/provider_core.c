@@ -15,7 +15,10 @@
 #include <openssl/params.h>
 #include <openssl/opensslv.h>
 #include "crypto/cryptlib.h"
+#include "crypto/decoder.h" /* ossl_decoder_store_cache_flush */
+#include "crypto/encoder.h" /* ossl_encoder_store_cache_flush */
 #include "crypto/evp.h" /* evp_method_store_cache_flush */
+#include "crypto/store.h" /* ossl_store_loader_store_cache_flush */
 #include "crypto/rand.h"
 #include "internal/nelem.h"
 #include "internal/thread_once.h"
@@ -1159,8 +1162,22 @@ static int provider_flush_store_cache(const OSSL_PROVIDER *prov)
     freeing = store->freeing;
     CRYPTO_THREAD_unlock(store->lock);
 
-    if (!freeing)
-        return evp_method_store_cache_flush(prov->libctx);
+    if (!freeing) {
+        int acc
+            = evp_method_store_cache_flush(prov->libctx)
+#ifndef FIPS_MODULE
+            + ossl_encoder_store_cache_flush(prov->libctx)
+            + ossl_decoder_store_cache_flush(prov->libctx)
+            + ossl_store_loader_store_cache_flush(prov->libctx)
+#endif
+            ;
+
+#ifndef FIPS_MODULE
+        return acc == 4;
+#else
+        return acc == 1;
+#endif
+    }
     return 1;
 }
 
@@ -1178,12 +1195,28 @@ static int provider_remove_store_methods(OSSL_PROVIDER *prov)
     CRYPTO_THREAD_unlock(store->lock);
 
     if (!freeing) {
+        int acc;
+
+        if (!CRYPTO_THREAD_read_lock(prov->opbits_lock))
+            return 0;
         OPENSSL_free(prov->operation_bits);
         prov->operation_bits = NULL;
         prov->operation_bits_sz = 0;
         CRYPTO_THREAD_unlock(prov->opbits_lock);
 
-        return evp_method_store_remove_all_provided(prov);
+        acc = evp_method_store_remove_all_provided(prov)
+#ifndef FIPS_MODULE
+            + ossl_encoder_store_remove_all_provided(prov)
+            + ossl_decoder_store_remove_all_provided(prov)
+            + ossl_store_loader_store_remove_all_provided(prov)
+#endif
+            ;
+
+#ifndef FIPS_MODULE
+        return acc == 4;
+#else
+        return acc == 1;
+#endif
     }
     return 1;
 }
