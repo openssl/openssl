@@ -38,5 +38,7 @@ int ossl_decoder_ctx_setup_for_pkey(OSSL_DECODER_CTX *ctx,
                                     const char *propquery);
 
 int ossl_decoder_get_number(const OSSL_DECODER *encoder);
+int ossl_decoder_store_cache_flush(OSSL_LIB_CTX *libctx);
+int ossl_decoder_store_remove_all_provided(const OSSL_PROVIDER *prov);
 
 #endif
