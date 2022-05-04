@@ -1,3 +1,11 @@
+/*
+ * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
 
 #include <stdio.h>
 #include <string.h>
@@ -6,12 +14,12 @@
 #include "testutil/output.h"
 
 #include <stdlib.h>
-#include <locale.h>
-#ifdef OPENSSL_SYS_WINDOWS
-# define strcasecmp _stricmp
-#else
-# include <strings.h>
-#endif
+#include "internal/e_os.h"
+#ifndef OPENSSL_NO_LOCALE
+# include <locale.h>
+# ifdef OPENSSL_SYS_MACOSX
+#  include <xlocale.h>
+# endif
 
 int setup_tests(void)
 {
@@ -117,7 +125,12 @@ int setup_tests(void)
     X509_free(cert);
     return 1;
 }
-
+#else
+int setup_tests(void)
+{
+    return TEST_skip("Locale support not available");
+}
+#endif /* OPENSSL_NO_LOCALE */
 void cleanup_tests(void)
 {
 }
