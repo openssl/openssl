@@ -162,7 +162,7 @@ simply b. In either case for the curve to be valid the discriminant must be non 
 The function EC_GROUP_check() behaves in the following way:
 For the OpenSSL default provider it performs a number of checks on a curve to verify that it is valid. Checks performed include
 verifying that the discriminant is non zero; that a generator has been defined; that the generator is on the curve and has
-the correct order. For the OpenSSL fips provider it uses EC_GROUP_check_named_curve() to conform to SP800-56Ar3.
+the correct order. For the OpenSSL FIPS provider it uses EC_GROUP_check_named_curve() to conform to SP800-56Ar3.
 
 The function EC_GROUP_check_named_curve() determines if the group's domain parameters match one of the built-in curves supported by the library.
 The curve name is returned as a B<NID> if it matches. If the group's domain parameters have been modified then no match will be found.
