@@ -1052,10 +1052,7 @@ static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
                 return 0;
         } else {
             /* DTLS v1.0 only allowed at level 0 */
-            if (DTLS_VERSION_LE(nid, DTLS1_VERSION) && level > 0)
-                return 0;
-            /* DTLS v1.2 only for level 4 and above */
-            if (DTLS_VERSION_LT(nid, DTLS1_2_VERSION) && level >= 4)
+            if (DTLS_VERSION_LT(nid, DTLS1_2_VERSION) && level > 0)
                 return 0;
         }
         break;
