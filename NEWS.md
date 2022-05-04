@@ -25,6 +25,7 @@ OpenSSL 3.1
     by default.
   * TCP Fast Open (RFC7413) support is available on Linux, macOS, and FreeBSD
     where enabled and supported.
+  * SSL 3, TLS 1.0, TLS 1.1, and DTLS 1.0 only work at security level 0.
 
 OpenSSL 3.0
 -----------
