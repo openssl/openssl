@@ -209,7 +209,7 @@ __owur ssize_t SSL_get_preferred_max_dgram_len(SSL *ssl);
  * BIO_dgram enhancements
  */
 
-/* 
+/*
  * Create a BIO_dgram_mem pair. This functions like a BIO pair but
  * has datagram semantics.
  */
@@ -239,8 +239,10 @@ __owur int BIO_dgram_set_no_trunc(BIO *bio, int enable);
  */
 #define BIO_DGRAM_CAP_DST_ADDR              (1U<<0)
 #define BIO_DGRAM_CAP_SRC_ADDR              (1U<<1)
-__owur int BIO_set_dgram_caps(BIO *bio, unsigned int caps); /* BIO_CTRL_DGRAM_SET_CAPS */
-__owur int BIO_get_dgram_caps(BIO *bio, unsigned int *caps); /* BIO_CTRL_DGRAM_GET_CAPS */
+__owur int BIO_set_dgram_caps(BIO *bio, unsigned int caps);
+    /* BIO_CTRL_DGRAM_SET_CAPS */
+__owur int BIO_get_dgram_caps(BIO *bio, unsigned int *caps);
+    /* BIO_CTRL_DGRAM_GET_CAPS */
 
 /*
  * These set and get source and destination address metadata.
@@ -283,11 +285,15 @@ __owur int BIO_get_dgram_caps(BIO *bio, unsigned int *caps); /* BIO_CTRL_DGRAM_G
  * avoid mutating state inside the BIO_dgram, allowing arbitrary multithreaded
  * use.
  */
-__owur int BIO_get_dgram_rx_src_addr(BIO *bio, BIO_ADDR *addr); /* BIO_CTRL_GET_DGRAM_RX_SRC_ADDR */
-__owur int BIO_get_dgram_rx_dst_addr(BIO *bio, BIO_ADDR *addr); /* BIO_CTRL_GET_DGRAM_RX_DST_ADDR */
+__owur int BIO_get_dgram_rx_src_addr(BIO *bio, BIO_ADDR *addr);
+    /* BIO_CTRL_GET_DGRAM_RX_SRC_ADDR */
+__owur int BIO_get_dgram_rx_dst_addr(BIO *bio, BIO_ADDR *addr);
+    /* BIO_CTRL_GET_DGRAM_RX_DST_ADDR */
 
-__owur int BIO_set_dgram_tx_src_addr(BIO *bio, const BIO_ADDR *addr); /* (non-MVP) BIO_CTRL_SET_DGRAM_TX_SRC_ADDR */
-__owur int BIO_set_dgram_tx_dst_addr(BIO *bio, const BIO_ADDR *addr); /* BIO_CTRL_SET_DGRAM_TX_DST_ADDR */
+__owur int BIO_set_dgram_tx_src_addr(BIO *bio, const BIO_ADDR *addr);
+    /* (non-MVP) BIO_CTRL_SET_DGRAM_TX_SRC_ADDR */
+__owur int BIO_set_dgram_tx_dst_addr(BIO *bio, const BIO_ADDR *addr);
+    /* BIO_CTRL_SET_DGRAM_TX_DST_ADDR */
 
 /*
  * Read/write multiple API.
@@ -370,7 +376,7 @@ __owur ssize_t BIO_sendmmsg(BIO *bio, BIO_msg *msg,
 __owur ssize_t BIO_recvmmsg(BIO *bio, BIO_msg *msg,
                             size_t stride, size_t num_msg, unsigned int flags);
 
-/* 
+/*
  * (There will of course be BIO_METH_get/set functions corresponding to all of
  * these, which are not shown here)
  */
