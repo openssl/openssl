@@ -17,5 +17,7 @@
 
 void ossl_store_cleanup_int(void);
 int ossl_store_loader_get_number(const OSSL_STORE_LOADER *loader);
+int ossl_store_loader_store_cache_flush(OSSL_LIB_CTX *libctx);
+int ossl_store_loader_store_remove_all_provided(const OSSL_PROVIDER *prov);
 
 #endif
