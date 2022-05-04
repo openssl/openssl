@@ -14,16 +14,12 @@
 
 #include "internal/e_os.h"
 #include "internal/core.h"
-
-#ifndef OPENSSL_SYS_WINDOWS
-#include <strings.h>
+#ifndef OPENSSL_NO_LOCALE
+# include <locale.h>
+# ifdef OPENSSL_SYS_MACOSX
+#  include <xlocale.h>
+# endif
 #endif
-#include <locale.h>
-
-#ifdef OPENSSL_SYS_MACOSX
-#include <xlocale.h>
-#endif
-
 /*
  * Define the character classes for each character in the seven bit ASCII
  * character set.  This is independent of the host's character set, characters
@@ -291,24 +287,14 @@ int ossl_ascii_isdigit(const char inchar) {
     return 0;
 }
 
-/* str[n]casecmp_l is defined in POSIX 2008-01. Value is taken accordingly
- * https://www.gnu.org/software/libc/manual/html_node/Feature-Test-Macros.html */
-
-#if (defined OPENSSL_SYS_WINDOWS) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200809L)
-
-# if defined OPENSSL_SYS_WINDOWS
-# define locale_t _locale_t
-# define freelocale _free_locale
-# define strcasecmp_l _stricmp_l
-# define strncasecmp_l _strnicmp_l
-# endif
+#ifndef OPENSSL_NO_LOCALE
+# ifndef FIPS_MODULE
 static locale_t loc;
 
-# ifndef FIPS_MODULE
+
 void *ossl_c_locale() {
     return (void *)loc;
 }
-# endif
 
 int ossl_init_casecmp_int() {
 # ifdef OPENSSL_SYS_WINDOWS
@@ -322,6 +308,7 @@ int ossl_init_casecmp_int() {
 void ossl_deinit_casecmp() {
     freelocale(loc);
 }
+# endif
 
 int OPENSSL_strcasecmp(const char *s1, const char *s2)
 {
