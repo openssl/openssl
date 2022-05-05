@@ -71,7 +71,7 @@ Decrypt data using OAEP (for RSA keys):
      /* Error occurred */
  if (EVP_PKEY_decrypt_init(ctx) <= 0)
      /* Error */
- if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_OAEP_PADDING) <= 0)
+ if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING) <= 0)
      /* Error */
 
  /* Determine buffer length */
