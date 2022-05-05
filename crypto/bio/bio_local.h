@@ -33,13 +33,6 @@
 #  error openssl/bio.h included before bio_local.h
 # endif
 
-/*
- * Undefine AF_UNIX on systems that define it but don't support it.
- */
-# if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_VMS)
-#  undef AF_UNIX
-# endif
-
 # ifdef AI_PASSIVE
 
 /*
@@ -77,7 +70,7 @@ union bio_addr_st {
     struct sockaddr_in6 s_in6;
 # endif
     struct sockaddr_in s_in;
-# ifdef AF_UNIX
+# ifndef OPENSSL_NO_UNIX_SOCK
     struct sockaddr_un s_un;
 # endif
 };
