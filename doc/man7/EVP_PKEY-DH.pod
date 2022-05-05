@@ -145,7 +145,7 @@ The OpenSSL FIPS provider tests if the parameters are either an approved safe
 prime group OR that the FFC parameters conform to FIPS186-4 as defined in
 SP800-56Ar3 I<Assurances of Domain-Parameter Validity>.
 The OpenSSL default provider uses simpler checks that allows there to be no I<q>
-value for backwards compatability.
+value for backwards compatibility.
 
 For DH keys, L<EVP_PKEY_param_check_quick(3)> is equivalent to
 L<EVP_PKEY_param_check(3)>.
@@ -161,7 +161,7 @@ L<EVP_PKEY_public_check(3)>.
 For DH Keys, L<EVP_PKEY_private_check(3)> tests that the private key is in the
 correct range according to SP800-56Ar3. The OpenSSL FIPS provider requires the
 value of I<q> to be set (note that this is set for named safe prime groups).
-For backwards compatability the OpenSSL default provider only requires I<p> to
+For backwards compatibility the OpenSSL default provider only requires I<p> to
 be set.
 
 For DH keys, L<EVP_PKEY_pairwise_check(3)> conforms to

@@ -33,7 +33,7 @@ For "group" this can be any one of 2048, 3072, 4096, 6144 or 8192.
 
 For DSA keys, L<EVP_PKEY_param_check(3)> behaves in the following way:
 The OpenSSL FIPS provider conforms to the rules within the FIPS186-4
-standard for FFC parameter validation. For backwards compatability the OpenSSL
+standard for FFC parameter validation. For backwards compatibility the OpenSSL
 default provider uses a much simpler check (see below) for parameter validation,
 unless the seed parameter is set.
 

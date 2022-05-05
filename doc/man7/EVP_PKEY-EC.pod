@@ -170,7 +170,7 @@ that m > k3 > k2 > k1 > 0
 =head2 EC key validation
 
 For EC keys, L<EVP_PKEY_param_check(3)> behaves in the following way:
-For the OpenSSL default provider it tests either
+For the OpenSSL default provider it uses either
 L<EC_GROUP_check(3)> or L<EC_GROUP_check_named_curve(3)> depending on the flag
 EC_FLAG_CHECK_NAMED_GROUP.
 The OpenSSL FIPS provider uses L<EC_GROUP_check_named_curve(3)> in order to
