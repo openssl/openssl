@@ -2328,7 +2328,7 @@ static void print_stats(BIO *bio, SSL_CTX *ssl_ctx)
                SSL_CTX_sess_get_cache_size(ssl_ctx));
 }
 
-static long count_reads_callback(BIO *bio, int cmd, const char *argp, size_t len,
+static long int count_reads_callback(BIO *bio, int cmd, const char *argp, size_t len,
                                  int argi, long argl, int ret, size_t *processed)
 {
     unsigned int *p_counter = (unsigned int *)BIO_get_callback_arg(bio);
@@ -2760,10 +2760,11 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
                     && !SSL_is_init_finished(con)) {
                 /*
                  * Count number of reads during init_ssl_connection.
-                 * It helps us to recognise configuration errors and errors
+                 * It helps us to distinguish configuration errors from errors
                  * caused by a client.
                  */
                 unsigned int read_counter = 0;
+
                 BIO_set_callback_arg(SSL_get_rbio(con), (char *)&read_counter);
                 i = init_ssl_connection(con);
                 BIO_set_callback_arg(SSL_get_rbio(con), NULL);
