@@ -101,7 +101,7 @@ int BIO_ADDR_make(BIO_ADDR *ap, const struct sockaddr *sa)
         return 1;
     }
 #endif
-#ifdef AF_UNIX
+#ifndef OPENSSL_NO_UNIX_SOCK
     if (sa->sa_family == AF_UNIX) {
         memcpy(&(ap->s_un), sa, sizeof(struct sockaddr_un));
         return 1;
@@ -115,7 +115,7 @@ int BIO_ADDR_rawmake(BIO_ADDR *ap, int family,
                      const void *where, size_t wherelen,
                      unsigned short port)
 {
-#ifdef AF_UNIX
+#ifndef OPENSSL_NO_UNIX_SOCK
     if (family == AF_UNIX) {
         if (wherelen + 1 > sizeof(ap->s_un.sun_path))
             return 0;
@@ -169,7 +169,7 @@ int BIO_ADDR_rawaddress(const BIO_ADDR *ap, void *p, size_t *l)
         addrptr = &ap->s_in6.sin6_addr;
     }
 #endif
-#ifdef AF_UNIX
+#ifndef OPENSSL_NO_UNIX_SOCK
     else if (ap->sa.sa_family == AF_UNIX) {
         len = strlen(ap->s_un.sun_path);
         addrptr = &ap->s_un.sun_path;
@@ -308,7 +308,7 @@ char *BIO_ADDR_service_string(const BIO_ADDR *ap, int numeric)
 
 char *BIO_ADDR_path_string(const BIO_ADDR *ap)
 {
-#ifdef AF_UNIX
+#ifndef OPENSSL_NO_UNIX_SOCK
     if (ap->sa.sa_family == AF_UNIX)
         return OPENSSL_strdup(ap->s_un.sun_path);
 #endif
@@ -350,7 +350,7 @@ socklen_t BIO_ADDR_sockaddr_size(const BIO_ADDR *ap)
     if (ap->sa.sa_family == AF_INET6)
         return sizeof(ap->s_in6);
 #endif
-#ifdef AF_UNIX
+#ifndef OPENSSL_NO_UNIX_SOCK
     if (ap->sa.sa_family == AF_UNIX)
         return sizeof(ap->s_un);
 #endif
@@ -390,7 +390,7 @@ int BIO_ADDRINFO_protocol(const BIO_ADDRINFO *bai)
         if (bai->bai_protocol != 0)
             return bai->bai_protocol;
 
-#ifdef AF_UNIX
+#ifndef OPENSSL_NO_UNIX_SOCK
         if (bai->bai_family == AF_UNIX)
             return 0;
 #endif
@@ -442,7 +442,7 @@ void BIO_ADDRINFO_free(BIO_ADDRINFO *bai)
         return;
 
 #ifdef AI_PASSIVE
-# ifdef AF_UNIX
+# ifndef OPENSSL_NO_UNIX_SOCK
 #  define _cond bai->bai_family != AF_UNIX
 # else
 #  define _cond 1
@@ -601,7 +601,7 @@ static int addrinfo_wrap(int family, int socktype,
         (*bai)->bai_protocol = IPPROTO_TCP;
     if (socktype == SOCK_DGRAM)
         (*bai)->bai_protocol = IPPROTO_UDP;
-#ifdef AF_UNIX
+#ifndef OPENSSL_NO_UNIX_SOCK
     if (family == AF_UNIX)
         (*bai)->bai_protocol = 0;
 #endif
@@ -671,7 +671,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
 #if OPENSSL_USE_IPV6
     case AF_INET6:
 #endif
-#ifdef AF_UNIX
+#ifndef OPENSSL_NO_UNIX_SOCK
     case AF_UNIX:
 #endif
 #ifdef AF_UNSPEC
@@ -683,7 +683,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
         return 0;
     }
 
-#ifdef AF_UNIX
+#ifndef OPENSSL_NO_UNIX_SOCK
     if (family == AF_UNIX) {
         if (addrinfo_wrap(family, socktype, host, strlen(host), 0, res))
             return 1;
