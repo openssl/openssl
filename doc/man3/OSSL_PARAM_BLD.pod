@@ -183,7 +183,7 @@ public key.
 
     if (nld == NULL
         || !OSSL_PARAM_BLD_push_BN(bld, "n", n)
-        || !OSSL_PARAM_BLD_push_BN(bld, "d", d)
+        || !OSSL_PARAM_BLD_push_BN(bld, "e", e)
         || (params = OSSL_PARAM_BLD_to_param(bld)) == NULL)
         goto err;
     OSSL_PARAM_BLD_free(bld);
