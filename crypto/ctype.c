@@ -7,12 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/e_os.h"
 #include <string.h>
 #include <stdio.h>
 #include "crypto/ctype.h"
 #include <openssl/ebcdic.h>
-
-#include "internal/e_os.h"
 #include "internal/core.h"
 #ifndef OPENSSL_NO_LOCALE
 # include <locale.h>
