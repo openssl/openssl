@@ -479,7 +479,7 @@ sub testssl {
 	plan tests => 10;
 
       SKIP: {
-	  skip "TLSv1.0 is not supported by this OpenSSL build", 6
+	  skip "TLSv1.0 is not supported by this OpenSSL build", 5
 	      if $no_tls1;
 
 	SKIP: {
@@ -514,14 +514,14 @@ sub testssl {
 	    ok(run(test([@ssltest, "-bio_pair", "-tls1", "-cipher", "PSK", "-psk", "abc123"])),
 	       'test tls1 with PSK via BIO pair');
 	  }
+	}
 
-	SKIP: {
-	    skip "skipping auto PSK tests", 1
-	        if ($no_dh || $no_psk || $no_ec);
+      SKIP: {
+	  skip "skipping auto PSK tests", 1
+	      if ($no_dh || $no_psk || $no_tls1_2);
 
-	    ok(run(test(['ssltest_old', '-dhe2048', '-psk', '0102030405', '-cipher', '@SECLEVEL=2:DHE-PSK-AES128-CCM'])),
-	       'test auto DH meets security strength');
-	  }
+	  ok(run(test(['ssltest_old', '-client_max_proto', 'tls1.2', '-dhe2048', '-psk', '0102030405', '-cipher', '@SECLEVEL=2:DHE-PSK-AES128-CCM'])),
+	     'test auto DH meets security strength');
 	}
 
       SKIP: {
