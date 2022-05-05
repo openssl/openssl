@@ -24,6 +24,8 @@ jobs:
           no-threads,
           no-tls,
           no-tls1_2,
+          no-tls1_2 no-tls1_3,
+          no-tls1_2 no-ec no-dh,
           no-tls1_3,
           no-ts,
           no-ui,
