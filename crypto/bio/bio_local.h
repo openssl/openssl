@@ -73,7 +73,7 @@ struct bio_addrinfo_st {
 
 union bio_addr_st {
     struct sockaddr sa;
-# ifdef AF_INET6
+# if OPENSSL_USE_IPV6
     struct sockaddr_in6 s_in6;
 # endif
     struct sockaddr_in s_in;

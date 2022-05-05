@@ -105,7 +105,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
                               * at least the "else" part will always be
                               * compiled.
                               */
-#ifdef AF_INET6
+#if OPENSSL_USE_IPV6
                         family = AF_INET6;
                     } else {
 #endif
@@ -422,7 +422,7 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
                 *pptr = (const char *)BIO_ADDRINFO_address(data->addr_iter);
             } else if (num == 3) {
                 switch (BIO_ADDRINFO_family(data->addr_iter)) {
-# ifdef AF_INET6
+# if OPENSSL_USE_IPV6
                 case AF_INET6:
                     ret = BIO_FAMILY_IPV6;
                     break;
