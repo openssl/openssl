@@ -77,7 +77,7 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #   include <inet.h>
 #  else
 #   include <sys/socket.h>
-#   ifndef NO_SYS_UN_H
+#   if !defined(NO_SYS_UN_H) && defined(AF_UNIX) && !defined(OPENSSL_NO_UNIX_SOCK)
 #    include <sys/un.h>
 #    ifndef UNIX_PATH_MAX
 #     define UNIX_PATH_MAX sizeof(((struct sockaddr_un *)NULL)->sun_path)
@@ -122,6 +122,15 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #   define OPENSSL_USE_IPV6 1
 #  else
 #   define OPENSSL_USE_IPV6 0
+#  endif
+# endif
+
+/*
+ * Some platforms define AF_UNIX, but don't support it
+ */
+# if !defined(OPENSSL_NO_UNIX_SOCK)
+#  if !defined(AF_UNIX) || defined(NO_SYS_UN_H)
+#   define OPENSSL_NO_UNIX_SOCK
 #  endif
 # endif
 
