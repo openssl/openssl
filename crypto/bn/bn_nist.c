@@ -256,7 +256,8 @@ const BIGNUM *BN_get0_nist_prime_521(void)
  * cached in a local since this no longer references the union and again falls
  * foul of the strict aliasing criteria.  Refer to #18225 for the initial
  * diagnostics and llvm/llvm-project#55255 for the later discussions with the
- * LLVM developers.
+ * LLVM developers.  The problem boils down to if an array in the union is
+ * converted to a pointer or if it is used directly.
  *
  * This function was inlined regardless, so there is no space cost to be
  * paid for making it a macro.
