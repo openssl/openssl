@@ -7,7 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/ssl.h>
+#ifndef OSSL_INTERNAL_RECORDMETHOD_H
+# define OSSL_INTERNAL_RECORDMETHOD_H
+# pragma once
+
+# include <openssl/ssl.h>
 
 /*
  * We use the term "record" here to refer to a packet of data. Records are
@@ -54,26 +58,26 @@ typedef struct ossl_record_method_st OSSL_RECORD_METHOD;
 typedef struct ossl_record_layer_st OSSL_RECORD_LAYER;
 
 
-#define OSSL_RECORD_ROLE_CLIENT 0
-#define OSSL_RECORD_ROLE_SERVER 1
+# define OSSL_RECORD_ROLE_CLIENT 0
+# define OSSL_RECORD_ROLE_SERVER 1
 
-#define OSSL_RECORD_DIRECTION_READ  0
-#define OSSL_RECORD_DIRECTION_WRITE 1
+# define OSSL_RECORD_DIRECTION_READ  0
+# define OSSL_RECORD_DIRECTION_WRITE 1
 
 /*
  * Protection level. For <= TLSv1.2 only "NONE" and "APPLICATION" are used.
  */
-#define OSSL_RECORD_PROTECTION_LEVEL_NONE        0
-#define OSSL_RECORD_PROTECTION_LEVEL_EARLY       1
-#define OSSL_RECORD_PROTECTION_LEVEL_HANDSHAKE   2
-#define OSSL_RECORD_PROTECTION_LEVEL_APPLICATION 3
+# define OSSL_RECORD_PROTECTION_LEVEL_NONE        0
+# define OSSL_RECORD_PROTECTION_LEVEL_EARLY       1
+# define OSSL_RECORD_PROTECTION_LEVEL_HANDSHAKE   2
+# define OSSL_RECORD_PROTECTION_LEVEL_APPLICATION 3
 
 
-#define OSSL_RECORD_RETURN_SUCCESS           1
-#define OSSL_RECORD_RETURN_RETRY             0
-#define OSSL_RECORD_RETURN_NON_FATAL_ERR    -1
-#define OSSL_RECORD_RETURN_FATAL            -2
-#define OSSL_RECORD_RETURN_EOF              -3
+# define OSSL_RECORD_RETURN_SUCCESS           1
+# define OSSL_RECORD_RETURN_RETRY             0
+# define OSSL_RECORD_RETURN_NON_FATAL_ERR    -1
+# define OSSL_RECORD_RETURN_FATAL            -2
+# define OSSL_RECORD_RETURN_EOF              -3
 
 /*
  * Template for creating a record. A record consists of the |type| of data it
@@ -291,3 +295,5 @@ struct ossl_record_method_st {
 /* Standard built-in record methods */
 extern const OSSL_RECORD_METHOD ossl_tls_record_method;
 extern const OSSL_RECORD_METHOD ossl_dtls_record_method;
+
+#endif /* !defined(OSSL_INTERNAL_RECORDMETHOD_H) */

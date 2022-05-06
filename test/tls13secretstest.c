@@ -225,6 +225,18 @@ void ssl_evp_md_free(const EVP_MD *md)
 {
 }
 
+int ssl_set_new_record_layer(SSL_CONNECTION *s, const OSSL_RECORD_METHOD *meth,
+                             int version, int direction, int level,
+                             unsigned char *key, size_t keylen,
+                             unsigned char *iv,  size_t ivlen,
+                             unsigned char *mackey, size_t mackeylen,
+                             const EVP_CIPHER *ciph, size_t taglen,
+                             int mactype, const EVP_MD *md,
+                             const SSL_COMP *comp)
+{
+    return 0;
+}
+
 /* End of mocked out code */
 
 static int test_secret(SSL_CONNECTION *s, unsigned char *prk,

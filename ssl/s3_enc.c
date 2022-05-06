@@ -101,7 +101,6 @@ int ssl3_change_cipher_state(SSL_CONNECTION *s, int which)
     int mdi;
     size_t n, iv_len, key_len;
     int reuse_dd = 0;
-    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
     ciph = s->s3.tmp.new_sym_enc;
     md = s->s3.tmp.new_hash;
@@ -147,18 +146,12 @@ int ssl3_change_cipher_state(SSL_CONNECTION *s, int which)
     }
 
     if (which & SSL3_CC_READ) {
-        s->rrlmethod->free(s->rrl);
-        s->rrl = s->rrlmethod->new_record_layer(sctx->libctx,
-                                                sctx->propq,
-                                                SSL3_VERSION, s->server,
-                                                OSSL_RECORD_DIRECTION_READ,
-                                                OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
-                                                key, key_len, iv, iv_len,
-                                                mac_secret, md_len, ciph, 0,
-                                                NID_undef, md, comp, s->rbio,
-                                                NULL, NULL, NULL, NULL, s);
-        if (s->rrl == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        if (!ssl_set_new_record_layer(s, NULL, SSL3_VERSION,
+                                      OSSL_RECORD_DIRECTION_READ,
+                                      OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
+                                      key, key_len, iv, iv_len, mac_secret,
+                                      md_len, ciph, 0, NID_undef, md, comp)) {
+            /* SSLfatal already called */
             goto err;
         }
 

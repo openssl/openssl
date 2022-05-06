@@ -8,6 +8,9 @@
  */
 
 typedef struct ssl_connection_st SSL_CONNECTION;
+typedef struct ssl3_buffer_st SSL3_BUFFER;
+
+#include "recordmethod.h"
 
 /*****************************************************************************
  *                                                                           *
@@ -16,7 +19,7 @@ typedef struct ssl_connection_st SSL_CONNECTION;
  *                                                                           *
  *****************************************************************************/
 
-typedef struct ssl3_buffer_st {
+struct ssl3_buffer_st {
     /* at least SSL3_RT_MAX_PACKET_SIZE bytes, see ssl3_setup_buffers() */
     unsigned char *buf;
     /* default buffer size (or 0 if no default set) */
@@ -29,7 +32,7 @@ typedef struct ssl3_buffer_st {
     size_t left;
     /* 'buf' is from application for KTLS */
     int app_buffer;
-} SSL3_BUFFER;
+};
 
 #define SEQ_NUM_SIZE                            8
 
@@ -279,3 +282,12 @@ int dtls_buffer_listen_record(SSL_CONNECTION *s, size_t len, unsigned char *seq,
 
 int ossl_tls_handle_rlayer_return(SSL_CONNECTION *s, int ret, char *file,
                                   int line);
+
+int ssl_set_new_record_layer(SSL_CONNECTION *s, const OSSL_RECORD_METHOD *meth,
+                             int version, int direction, int level,
+                             unsigned char *key, size_t keylen,
+                             unsigned char *iv,  size_t ivlen,
+                             unsigned char *mackey, size_t mackeylen,
+                             const EVP_CIPHER *ciph, size_t taglen,
+                             int mactype, const EVP_MD *md,
+                             const SSL_COMP *comp);

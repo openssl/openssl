@@ -275,21 +275,16 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
                     taglen = EVP_CCM_TLS_TAG_LEN;
             }
 
-            s->rrlmethod->free(s->rrl);
-            s->rrl = s->rrlmethod->new_record_layer(sctx->libctx,
-                                                    sctx->propq,
-                                                    s->version, s->server,
-                                                    OSSL_RECORD_DIRECTION_READ,
-                                                    OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
-                                                    key, cl, iv, (size_t)k,
-                                                    mac_secret,
-                                                    mac_secret_size, c, taglen,
-                                                    mac_type, m, comp, s->rbio,
-                                                    NULL, NULL, NULL, NULL, s);
-            if (s->rrl == NULL) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            if (!ssl_set_new_record_layer(s, NULL, s->version,
+                                        OSSL_RECORD_DIRECTION_READ,
+                                        OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
+                                        key, cl, iv, (size_t)k, mac_secret,
+                                        mac_secret_size, c, taglen, mac_type, m,
+                                        comp)) {
+                /* SSLfatal already called */
                 goto err;
             }
+
             /* TODO(RECLAYER): Temporary - remove me */
             goto check_ktls;
         }
