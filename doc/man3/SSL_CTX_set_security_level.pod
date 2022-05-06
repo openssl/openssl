@@ -80,6 +80,9 @@ cipher suites using CCM with a 64 bit authentication tag are prohibited. Note
 that signatures using SHA1 and MD5 are also forbidden at this level as they
 have less than 80 security bits.
 
+Additionally, SSLv3, TLS 1.0, TLS 1.1 and DTLS 1.0 are all disabled at this
+level.
+
 =item B<Level 2>
 
 Security level set to 112 bits of security. As a result RSA, DSA and DH keys
