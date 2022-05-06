@@ -709,21 +709,15 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
                     : ((which &SSL3_CC_HANDSHAKE) != 0
                        ? OSSL_RECORD_PROTECTION_LEVEL_HANDSHAKE
                        : OSSL_RECORD_PROTECTION_LEVEL_APPLICATION);
-        s->rrlmethod->free(s->rrl);
-        s->rrl = s->rrlmethod->new_record_layer(sctx->libctx,
-                                                sctx->propq,
-                                                s->version, s->server,
-                                                OSSL_RECORD_DIRECTION_READ,
-                                                level, key, keylen, iv, ivlen,
-                                                NULL, 0, cipher, taglen,
-                                                NID_undef, NULL, NULL, s->rbio,
-                                                NULL, NULL, NULL, NULL, s);
-        if (s->rrl == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+
+        if (!ssl_set_new_record_layer(s, NULL, s->version,
+                                    OSSL_RECORD_DIRECTION_READ,
+                                    level, key, keylen, iv, ivlen, NULL, 0,
+                                    cipher, taglen, NID_undef, NULL, NULL)) {
+            /* SSLfatal already called */
             goto err;
         }
     }
-
 
 #ifndef OPENSSL_NO_KTLS
 # if defined(OPENSSL_KTLS_TLS13)
@@ -803,7 +797,6 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
     EVP_CIPHER_CTX *ciph_ctx;
     size_t keylen, ivlen, taglen;
     int ret = 0;
-    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
     if (s->server == sending)
         insecret = s->server_app_traffic_secret;
@@ -833,23 +826,16 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
     memcpy(insecret, secret, hashlen);
 
     if (!sending) {
-        s->rrlmethod->free(s->rrl);
-        s->rrl = s->rrlmethod->new_record_layer(sctx->libctx,
-                                                sctx->propq,
-                                                s->version, s->server,
-                                                OSSL_RECORD_DIRECTION_READ,
-                                                OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
-                                                key, keylen, iv, ivlen,
-                                                NULL, 0, s->s3.tmp.new_sym_enc,
-                                                taglen, NID_undef, NULL, NULL,
-                                                s->rbio, NULL, NULL, NULL, NULL,
-                                                s);
-        if (s->rrl == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        if (!ssl_set_new_record_layer(s, NULL, s->version,
+                                OSSL_RECORD_DIRECTION_READ,
+                                OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
+                                key, keylen, iv, ivlen, NULL, 0,
+                                s->s3.tmp.new_sym_enc, taglen, NID_undef, NULL,
+                                NULL)) {
+            /* SSLfatal already called */
             goto err;
         }
     }
-
 
     s->statem.enc_write_state = ENC_WRITE_STATE_VALID;
     ret = 1;

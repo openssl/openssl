@@ -1486,7 +1486,7 @@ static int tls_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
      * Ktls always reads full records.
      * Also, we always act like read_ahead is set for DTLS.
      */
-    if (!BIO_get_ktls_recv(s->rbio) && !rl->read_ahead
+    if (!BIO_get_ktls_recv(rl->bio) && !rl->read_ahead
             && !rl->isdtls) {
         /* ignore max parameter */
         max = n;
@@ -2341,6 +2341,10 @@ static OSSL_RECORD_LAYER *tls_new_record_layer(OSSL_LIB_CTX *libctx,
         goto err;
     }
 
+    /*
+     * TODO(RECLAYER): Need to handle the case where the params are updated
+     * after the record layer has been created.
+     */
     p = OSSL_PARAM_locate_const(options, OSSL_LIBSSL_RECORD_LAYER_PARAM_OPTIONS);
     if (p != NULL && !OSSL_PARAM_get_uint64(p, &rl->options)) {
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_FAILED_TO_GET_PARAMETER);
@@ -2353,11 +2357,22 @@ static OSSL_RECORD_LAYER *tls_new_record_layer(OSSL_LIB_CTX *libctx,
         goto err;
     }
 
-
-    p = OSSL_PARAM_locate_const(options, OSSL_LIBSSL_RECORD_LAYER_PARAM_READ_AHEAD);
-    if (p != NULL && !OSSL_PARAM_get_int(p, &rl->read_ahead)) {
-        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_FAILED_TO_GET_PARAMETER);
-        goto err;
+    if (level == OSSL_RECORD_PROTECTION_LEVEL_APPLICATION) {
+        /*
+         * We ignore any read_ahead setting prior to the application protection
+         * level. Otherwise we may read ahead data in a lower protection level
+         * that is destined for a higher protection level. To simplify the logic
+         * we don't support that at this stage.
+         */
+        /*
+         * TODO(RECLAYER): Handle the case of read_ahead at the application
+         * level and a key update/reneg occurs.
+         */
+        p = OSSL_PARAM_locate_const(options, OSSL_LIBSSL_RECORD_LAYER_PARAM_READ_AHEAD);
+        if (p != NULL && !OSSL_PARAM_get_int(p, &rl->read_ahead)) {
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_FAILED_TO_GET_PARAMETER);
+            goto err;
+        }
     }
 
     rl->libctx = libctx;

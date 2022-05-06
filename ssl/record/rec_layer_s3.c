@@ -14,6 +14,8 @@
 #include <openssl/evp.h>
 #include <openssl/buffer.h>
 #include <openssl/rand.h>
+#include <openssl/core_names.h>
+#include <openssl/param_build.h>
 #include "record_local.h"
 #include "internal/packet.h"
 
@@ -1746,4 +1748,63 @@ int RECORD_LAYER_is_sslv2_record(RECORD_LAYER *rl)
 size_t RECORD_LAYER_get_rrec_length(RECORD_LAYER *rl)
 {
     return SSL3_RECORD_get_length(&rl->rrec[0]);
+}
+
+int ssl_set_new_record_layer(SSL_CONNECTION *s, const OSSL_RECORD_METHOD *meth,
+                             int version, int direction, int level,
+                             unsigned char *key, size_t keylen,
+                             unsigned char *iv,  size_t ivlen,
+                             unsigned char *mackey, size_t mackeylen,
+                             const EVP_CIPHER *ciph, size_t taglen,
+                             int mactype, const EVP_MD *md,
+                             const SSL_COMP *comp)
+{
+    OSSL_PARAM_BLD *tmpl = NULL;
+    OSSL_PARAM *options = NULL;
+    int ret = 0;
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+
+    if (s->rrlmethod != NULL)
+        s->rrlmethod->free(s->rrl);
+
+    if (meth != NULL)
+        s->rrlmethod = meth;
+
+    if (!ossl_assert(s->rrlmethod != NULL)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    if ((tmpl = OSSL_PARAM_BLD_new()) == NULL
+            || !OSSL_PARAM_BLD_push_uint64(tmpl,
+                                           OSSL_LIBSSL_RECORD_LAYER_PARAM_OPTIONS,
+                                           s->options)
+            || !OSSL_PARAM_BLD_push_uint32(tmpl,
+                                           OSSL_LIBSSL_RECORD_LAYER_PARAM_MODE,
+                                           s->mode)
+            || !OSSL_PARAM_BLD_push_int(tmpl,
+                                        OSSL_LIBSSL_RECORD_LAYER_PARAM_READ_AHEAD,
+                                        s->rlayer.read_ahead)
+            || (options = OSSL_PARAM_BLD_to_param(tmpl)) == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    s->rrl = s->rrlmethod->new_record_layer(sctx->libctx, sctx->propq,
+                                            version, s->server, direction,
+                                            level, key, keylen, iv, ivlen,
+                                            mackey, mackeylen, ciph, taglen,
+                                            mactype, md, comp,  s->rbio,
+                                            NULL, NULL, NULL, options, s);
+    if (s->rrl == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    ret = 1;
+ err:
+    OSSL_PARAM_free(options);
+    OSSL_PARAM_BLD_free(tmpl);
+
+    return ret;
 }
