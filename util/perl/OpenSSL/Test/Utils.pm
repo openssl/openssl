@@ -1,4 +1,4 @@
-# Copyright 2016-2019 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -151,7 +151,11 @@ sub available_protocols {
     load_configdata() unless $configdata_loaded;
     my $protocol_class = shift;
     if (exists $available_protocols{lc $protocol_class}) {
-	return @{$available_protocols{lc $protocol_class}}
+	my @result = @{$available_protocols{lc $protocol_class}};
+	if (alldisabled("ec", "dh")) {
+	    @result = grep { $_ ne "tls1_3" } @result
+	}
+	return @result;
     }
     return ();
 }
