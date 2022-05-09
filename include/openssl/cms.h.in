@@ -32,6 +32,7 @@ use OpenSSL::stackhash qw(generate_stack_macros);
 extern "C" {
 # endif
 
+typedef struct CMS_EnvelopedData_st CMS_EnvelopedData;
 typedef struct CMS_ContentInfo_st CMS_ContentInfo;
 typedef struct CMS_SignerInfo_st CMS_SignerInfo;
 typedef struct CMS_CertificateChoices CMS_CertificateChoices;
@@ -49,6 +50,7 @@ typedef struct CMS_OtherKeyAttribute_st CMS_OtherKeyAttribute;
     .generate_stack_macros("CMS_RevocationInfoChoice");
 -}
 
+DECLARE_ASN1_ITEM(CMS_EnvelopedData)
 DECLARE_ASN1_FUNCTIONS(CMS_ContentInfo)
 DECLARE_ASN1_FUNCTIONS(CMS_ReceiptRequest)
 DECLARE_ASN1_PRINT_FUNCTION(CMS_ContentInfo)
@@ -202,6 +204,9 @@ CMS_ContentInfo *CMS_EnvelopedData_create(const EVP_CIPHER *cipher);
 CMS_ContentInfo *CMS_EnvelopedData_create_ex(const EVP_CIPHER *cipher,
                                              OSSL_LIB_CTX *ctx,
                                              const char *propq);
+BIO *CMS_EnvelopedData_decrypt(CMS_EnvelopedData *env, BIO *detached_data,
+                               EVP_PKEY *pkey, X509 *cert,
+                               ASN1_OCTET_STRING *secret, unsigned int flags);
 
 CMS_RecipientInfo *CMS_add1_recipient_cert(CMS_ContentInfo *cms,
                                            X509 *recip, unsigned int flags);
