@@ -1,4 +1,10 @@
-LIBS=../libssl
-
 SOURCE[../../../libssl]=\
-        tlsrecord.c
+        tls_common.c ssl3_meth.c tls1_meth.c tls13_meth.c tlsany_meth.c
+
+# For shared builds we need to include the sources needed in providers
+# (ssl3_cbc.c) in libssl as well.
+IF[{- !$disabled{'deprecated-3.0'} -}]
+  SHARED_SOURCE[../../../libssl]=ssl3_cbc.c
+ENDIF
+
+SOURCE[../../../providers/libdefault.a ../../../providers/libfips.a]=ssl3_cbc.c

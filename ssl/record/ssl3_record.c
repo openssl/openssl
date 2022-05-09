@@ -604,23 +604,19 @@ int tls1_enc(SSL_CONNECTION *s, SSL3_RECORD *recs, size_t n_recs, int sending,
 }
 
 /*
- * ssl3_cbc_record_digest_supported returns 1 iff |ctx| uses a hash function
- * which ssl3_cbc_digest_record supports.
+ * TODO(RECLAYER): Remove me: now declared in
+ * ssl/record/methods/recmethod_local.h
  */
-char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx)
-{
-    switch (EVP_MD_CTX_get_type(ctx)) {
-    case NID_md5:
-    case NID_sha1:
-    case NID_sha224:
-    case NID_sha256:
-    case NID_sha384:
-    case NID_sha512:
-        return 1;
-    default:
-        return 0;
-    }
-}
+char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx);
+int ssl3_cbc_digest_record(const EVP_MD *md,
+                           unsigned char *md_out,
+                           size_t *md_out_size,
+                           const unsigned char *header,
+                           const unsigned char *data,
+                           size_t data_size,
+                           size_t data_plus_mac_plus_padding_size,
+                           const unsigned char *mac_secret,
+                           size_t mac_secret_length, char is_sslv3);
 
 int n_ssl3_mac(SSL_CONNECTION *sc, SSL3_RECORD *rec, unsigned char *md,
                int sending)
