@@ -42,6 +42,82 @@
          ((a)->s6_addr32[2] == htonl(0x0000ffff)))
 # endif
 
+/* Determine what method to use for BIO_sendmmsg and BIO_recvmmsg. */
+# define M_METHOD_NONE       0
+# define M_METHOD_RECVMMSG   1
+# define M_METHOD_RECVMSG    2
+# define M_METHOD_RECVFROM   3
+# define M_METHOD_WSARECVMSG 4
+
+# if !defined(M_METHOD)
+#  if defined(OPENSSL_SYS_WINDOWS) && defined(BIO_HAVE_WSAMSG) && !defined(NO_WSARECVMSG)
+#   define M_METHOD  M_METHOD_WSARECVMSG
+#  elif !defined(OPENSSL_SYS_WINDOWS) && defined(MSG_WAITFORONE) && !defined(NO_RECVMMSG)
+#   define M_METHOD  M_METHOD_RECVMMSG
+#  elif !defined(OPENSSL_SYS_WINDOWS) && defined(CMSG_LEN) && !defined(NO_RECVMSG)
+#   define M_METHOD  M_METHOD_RECVMSG
+#  elif !defined(NO_RECVFROM)
+#   define M_METHOD  M_METHOD_RECVFROM
+#  else
+#   define M_METHOD  M_METHOD_NONE
+#  endif
+# endif
+
+# if defined(OPENSSL_SYS_WINDOWS)
+#  define BIO_CMSG_SPACE(x) WSA_CMSG_SPACE(x)
+#  define BIO_CMSG_FIRSTHDR(x) WSA_CMSG_FIRSTHDR(x)
+#  define BIO_CMSG_NXTHDR(x, y) WSA_CMSG_NXTHDR(x, y)
+#  define BIO_CMSG_DATA(x) WSA_CMSG_DATA(x)
+#  define BIO_CMSG_LEN(x) WSA_CMSG_LEN(x)
+#  define MSGHDR_TYPE WSAMSG
+#  define CMSGHDR_TYPE WSACMSGHDR
+# else
+#  define MSGHDR_TYPE struct msghdr
+#  define CMSGHDR_TYPE struct cmsghdr
+#  define BIO_CMSG_SPACE(x) CMSG_SPACE(x)
+#  define BIO_CMSG_FIRSTHDR(x) CMSG_FIRSTHDR(x)
+#  define BIO_CMSG_NXTHDR(x, y) CMSG_NXTHDR(x, y)
+#  define BIO_CMSG_DATA(x) CMSG_DATA(x)
+#  define BIO_CMSG_LEN(x) CMSG_LEN(x)
+# endif
+
+# if   M_METHOD == M_METHOD_RECVMMSG   \
+    || M_METHOD == M_METHOD_RECVMSG    \
+    || M_METHOD == M_METHOD_WSARECVMSG
+#  if defined(__APPLE__)
+    /*
+     * CMSG_SPACE is not a constant expresson on OSX even though POSIX
+     * says it's supposed to be. This should be adequate.
+     */
+#   define BIO_CMSG_ALLOC_LEN   64
+#  else
+#   if defined(IPV6_PKTINFO)
+#     define BIO_CMSG_ALLOC_LEN_1   BIO_CMSG_SPACE(sizeof(struct in6_pktinfo))
+#   else
+#     define BIO_CMSG_ALLOC_LEN_1   0
+#   endif
+#   if defined(IP_PKTINFO)
+#     define BIO_CMSG_ALLOC_LEN_2   BIO_CMSG_SPACE(sizeof(struct in_pktinfo))
+#   else
+#     define BIO_CMSG_ALLOC_LEN_2   0
+#   endif
+#   if defined(IP_RECVDSTADDR)
+#     define BIO_CMSG_ALLOC_LEN_3   BIO_CMSG_SPACE(sizeof(struct in_addr))
+#   else
+#     define BIO_CMSG_ALLOC_LEN_3   0
+#   endif
+#   define BIO_MAX(X,Y) ((X) > (Y) ? (X) : (Y))
+#   define BIO_CMSG_ALLOC_LEN                                        \
+        BIO_MAX(BIO_CMSG_ALLOC_LEN_1,                                \
+                BIO_MAX(BIO_CMSG_ALLOC_LEN_2, BIO_CMSG_ALLOC_LEN_3))
+#  endif
+#  if (defined(IP_PKTINFO) || defined(IP_RECVDSTADDR)) && defined(IPV6_RECVPKTINFO)
+#   define SUPPORT_LOCAL_ADDR
+#  endif
+# endif
+
+# define BIO_MSG_N(array, stride, n) (*(BIO_MSG *)((char *)(array) + (n)*(stride)))
+
 static int dgram_write(BIO *h, const char *buf, int num);
 static int dgram_read(BIO *h, char *buf, int size);
 static int dgram_puts(BIO *h, const char *str);
@@ -49,6 +125,12 @@ static long dgram_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int dgram_new(BIO *h);
 static int dgram_free(BIO *data);
 static int dgram_clear(BIO *bio);
+static int dgram_sendmmsg(BIO *b, BIO_MSG *msg,
+                          size_t stride, size_t num_msg,
+                          uint64_t flags, size_t *num_processed);
+static int dgram_recvmmsg(BIO *b, BIO_MSG *msg,
+                          size_t stride, size_t num_msg,
+                          uint64_t flags, size_t *num_processed);
 
 # ifndef OPENSSL_NO_SCTP
 static int dgram_sctp_write(BIO *h, const char *buf, int num);
@@ -82,6 +164,8 @@ static const BIO_METHOD methods_dgramp = {
     dgram_new,
     dgram_free,
     NULL,                       /* dgram_callback_ctrl */
+    dgram_sendmmsg,
+    dgram_recvmmsg,
 };
 
 # ifndef OPENSSL_NO_SCTP
@@ -98,17 +182,21 @@ static const BIO_METHOD methods_dgramp_sctp = {
     dgram_sctp_new,
     dgram_sctp_free,
     NULL,                       /* dgram_callback_ctrl */
+    NULL,                       /* sendmmsg */
+    NULL,                       /* recvmmsg */
 };
 # endif
 
 typedef struct bio_dgram_data_st {
     BIO_ADDR peer;
+    BIO_ADDR local_addr;
     unsigned int connected;
     unsigned int _errno;
     unsigned int mtu;
     struct timeval next_timeout;
     struct timeval socket_timeout;
     unsigned int peekmode;
+    char local_addr_enabled;
 } bio_dgram_data;
 
 # ifndef OPENSSL_NO_SCTP
@@ -265,6 +353,27 @@ static void dgram_adjust_rcv_timeout(BIO *b)
 # endif
 }
 
+static void dgram_update_local_addr(BIO *b)
+{
+    bio_dgram_data *data = (bio_dgram_data *)b->ptr;
+    socklen_t addr_len = sizeof(data->local_addr);
+
+    if (getsockname(b->num, &data->local_addr.sa, &addr_len) < 0)
+        /*
+         * This should not be possible, but zero-initialize and return
+         * anyway.
+         */
+        BIO_ADDR_clear(&data->local_addr);
+}
+
+# if M_METHOD == M_METHOD_RECVMMSG || M_METHOD == M_METHOD_RECVMSG || M_METHOD == M_METHOD_WSARECVMSG
+static int dgram_get_sock_family(BIO *b)
+{
+    bio_dgram_data *data = (bio_dgram_data *)b->ptr;
+    return data->local_addr.sa.sa_family;
+}
+# endif
+
 static void dgram_reset_rcv_timeout(BIO *b)
 {
 # if defined(SO_RCVTIMEO)
@@ -301,7 +410,7 @@ static int dgram_read(BIO *b, char *out, int outl)
 
     if (out != NULL) {
         clear_socket_error();
-        memset(&peer, 0, sizeof(peer));
+        BIO_ADDR_clear(&peer);
         dgram_adjust_rcv_timeout(b);
         if (data->peekmode)
             flags = MSG_PEEK;
@@ -388,6 +497,47 @@ static long dgram_get_mtu_overhead(bio_dgram_data *data)
     return ret;
 }
 
+/* Enables appropriate destination address reception option on the socket. */
+# if defined(SUPPORT_LOCAL_ADDR)
+static int enable_local_addr(BIO *b, int enable) {
+    int af = dgram_get_sock_family(b);
+
+    if (af == AF_INET) {
+#  if defined(IP_PKTINFO)
+        /* IP_PKTINFO is preferred */
+        if (setsockopt(b->num, IPPROTO_IP, IP_PKTINFO,
+                       (void *)&enable, sizeof(enable)) < 0)
+            return 0;
+
+        return 1;
+
+#  elif defined(IP_RECVDSTADDR)
+        /* Fall back to IP_RECVDSTADDR */
+
+        if (setsockopt(b->num, IPPROTO_IP, IP_RECVDSTADDR,
+                       &enable, sizeof(enable)) < 0)
+            return 0;
+
+        return 1;
+#  endif
+    }
+
+#  if OPENSSL_USE_IPV6
+    if (af == AF_INET6) {
+#   if defined(IPV6_RECVPKTINFO)
+        if (setsockopt(b->num, IPPROTO_IPV6, IPV6_RECVPKTINFO,
+                       &enable, sizeof(enable)) < 0)
+            return 0;
+
+        return 1;
+#   endif
+    }
+#  endif
+
+    return 0;
+}
+# endif
+
 static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 {
     long ret = 1;
@@ -417,6 +567,13 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         b->num = *((int *)ptr);
         b->shutdown = (int)num;
         b->init = 1;
+        dgram_update_local_addr(b);
+# if defined(SUPPORT_LOCAL_ADDR)
+        if (data->local_addr_enabled) {
+            if (enable_local_addr(b, 1) < 1)
+                data->local_addr_enabled = 0;
+        }
+# endif
         break;
     case BIO_C_GET_FD:
         if (b->init) {
@@ -448,7 +605,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_DGRAM_MTU_DISCOVER:
 # if defined(OPENSSL_SYS_LINUX) && defined(IP_MTU_DISCOVER) && defined(IP_PMTUDISC_DO)
         addr_len = (socklen_t) sizeof(addr);
-        memset(&addr, 0, sizeof(addr));
+        BIO_ADDR_clear(&addr);
         if (getsockname(b->num, &addr.sa, &addr_len) < 0) {
             ret = 0;
             break;
@@ -479,7 +636,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_DGRAM_QUERY_MTU:
 # if defined(OPENSSL_SYS_LINUX) && defined(IP_MTU)
         addr_len = (socklen_t) sizeof(addr);
-        memset(&addr, 0, sizeof(addr));
+        BIO_ADDR_clear(&addr);
         if (getsockname(b->num, &addr.sa, &addr_len) < 0) {
             ret = 0;
             break;
@@ -562,7 +719,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
             BIO_ADDR_make(&data->peer, BIO_ADDR_sockaddr((BIO_ADDR *)ptr));
         } else {
             data->connected = 0;
-            memset(&data->peer, 0, sizeof(data->peer));
+            BIO_ADDR_clear(&data->peer);
         }
         break;
     case BIO_CTRL_DGRAM_GET_PEER:
@@ -774,6 +931,35 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_DGRAM_SET_PEEK_MODE:
         data->peekmode = (unsigned int)num;
         break;
+
+    case BIO_CTRL_DGRAM_GET_LOCAL_ADDR_CAP:
+# if defined(SUPPORT_LOCAL_ADDR)
+        ret = 1;
+# else
+        ret = 0;
+# endif
+        break;
+
+    case BIO_CTRL_DGRAM_SET_LOCAL_ADDR_ENABLE:
+# if defined(SUPPORT_LOCAL_ADDR)
+        num = num > 0;
+        if (num != data->local_addr_enabled) {
+            if (enable_local_addr(b, num) < 1) {
+                ret = 0;
+                break;
+            }
+
+            data->local_addr_enabled = (char)num;
+        }
+# else
+        ret = 0;
+# endif
+        break;
+
+    case BIO_CTRL_DGRAM_GET_LOCAL_ADDR_ENABLE:
+        *(int *)ptr = data->local_addr_enabled;
+        break;
+
     default:
         ret = 0;
         break;
@@ -788,6 +974,714 @@ static int dgram_puts(BIO *bp, const char *str)
     n = strlen(str);
     ret = dgram_write(bp, str, n);
     return ret;
+}
+
+# if M_METHOD == M_METHOD_WSARECVMSG
+static void translate_msg_win(BIO *b, WSAMSG *mh, WSABUF *iov,
+                              unsigned char *control, BIO_MSG *msg)
+{
+    iov->len = msg->data_len;
+    iov->buf = msg->data;
+
+    /* Windows requires namelen to be set exactly */
+    mh->name = msg->peer != NULL ? &msg->peer->sa : NULL;
+    if (msg->peer != NULL && dgram_get_sock_family(b) == AF_INET)
+        mh->namelen = sizeof(struct sockaddr_in);
+#  if OPENSSL_USE_IPV6
+    else if (msg->peer != NULL && dgram_get_sock_family(b) == AF_INET6)
+        mh->namelen = sizeof(struct sockaddr_in6);
+#  endif
+    else
+        mh->namelen = 0;
+
+    /*
+     * When local address reception (IP_PKTINFO, etc.) is enabled, on Windows
+     * this causes WSARecvMsg to fail if the control buffer is too small to hold
+     * the structure, or if no control buffer is passed. So we need to give it
+     * the control buffer even if we aren't actually going to examine the
+     * result.
+     */
+    mh->lpBuffers       = iov;
+    mh->dwBufferCount   = 1;
+    mh->Control.len     = BIO_CMSG_ALLOC_LEN;
+    mh->Control.buf     = control;
+    mh->dwFlags         = 0;
+}
+# endif
+
+# if M_METHOD == M_METHOD_RECVMMSG || M_METHOD == M_METHOD_RECVMSG
+/* Translates a BIO_MSG to a msghdr and iovec. */
+static void translate_msg(BIO *b, struct msghdr *mh, struct iovec *iov,
+                          unsigned char *control, BIO_MSG *msg)
+{
+    iov->iov_base = msg->data;
+    iov->iov_len  = msg->data_len;
+
+    /* macOS requires msg_namelen be 0 if msg_name is NULL */
+    mh->msg_name = msg->peer != NULL ? &msg->peer->sa : NULL;
+    if (msg->peer != NULL && dgram_get_sock_family(b) == AF_INET)
+        mh->msg_namelen = sizeof(struct sockaddr_in);
+#  if OPENSSL_USE_IPV6
+    else if (msg->peer != NULL && dgram_get_sock_family(b) == AF_INET6)
+        mh->msg_namelen = sizeof(struct sockaddr_in6);
+#  endif
+    else
+        mh->msg_namelen = 0;
+
+    mh->msg_iov         = iov;
+    mh->msg_iovlen      = 1;
+    mh->msg_control     = msg->local != NULL ? control : NULL;
+    mh->msg_controllen  = msg->local != NULL ? BIO_CMSG_ALLOC_LEN : 0;
+    mh->msg_flags       = 0;
+}
+# endif
+
+# if M_METHOD == M_METHOD_RECVMMSG || M_METHOD == M_METHOD_RECVMSG || M_METHOD == M_METHOD_WSARECVMSG
+/* Extracts destination address from the control buffer. */
+static int extract_local(BIO *b, MSGHDR_TYPE *mh, BIO_ADDR *local) {
+#  if defined(IP_PKTINFO) || defined(IP_RECVDSTADDR) || defined(IPV6_PKTINFO)
+    CMSGHDR_TYPE *cmsg;
+    int af = dgram_get_sock_family(b);
+
+    for (cmsg = BIO_CMSG_FIRSTHDR(mh); cmsg != NULL;
+         cmsg = BIO_CMSG_NXTHDR(mh, cmsg)) {
+        if (af == AF_INET) {
+            if (cmsg->cmsg_level != IPPROTO_IP)
+                continue;
+
+#   if defined(IP_PKTINFO)
+            if (cmsg->cmsg_type != IP_PKTINFO)
+                continue;
+
+            local->s_in.sin_addr =
+                ((struct in_pktinfo *)BIO_CMSG_DATA(cmsg))->ipi_addr;
+
+#   elif defined(IP_RECVDSTADDR)
+            if (cmsg->cmsg_type != IP_RECVDSTADDR)
+                continue;
+
+            local->s_in.sin_addr = *(struct in_addr *)BIO_CMSG_DATA(cmsg);
+#   endif
+
+#   if defined(IP_PKTINFO) || defined(IP_RECVDSTADDR)
+            {
+                bio_dgram_data *data = b->ptr;
+
+                local->s_in.sin_family = AF_INET;
+                local->s_in.sin_port   = data->local_addr.s_in.sin_port;
+            }
+            return 1;
+#   endif
+        }
+#   if OPENSSL_USE_IPV6
+        else if (af == AF_INET6) {
+            if (cmsg->cmsg_level != IPPROTO_IPV6)
+                continue;
+
+#    if defined(IPV6_RECVPKTINFO)
+            if (cmsg->cmsg_type != IPV6_PKTINFO)
+                continue;
+
+            {
+                bio_dgram_data *data = b->ptr;
+
+                local->s_in6.sin6_addr     =
+                    ((struct in6_pktinfo *)BIO_CMSG_DATA(cmsg))->ipi6_addr;
+                local->s_in6.sin6_family   = AF_INET6;
+                local->s_in6.sin6_port     = data->local_addr.s_in6.sin6_port;
+                local->s_in6.sin6_scope_id =
+                    data->local_addr.s_in6.sin6_scope_id;
+                local->s_in6.sin6_flowinfo = 0;
+            }
+            return 1;
+#    endif
+        }
+#   endif
+    }
+#  endif
+
+    return 0;
+}
+
+static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local) {
+    int af = dgram_get_sock_family(b);
+
+    if (af == AF_INET) {
+#  if defined(IP_PKTINFO)
+        CMSGHDR_TYPE *cmsg;
+        struct in_pktinfo *info;
+        bio_dgram_data *data = b->ptr;
+
+#   if defined(OPENSSL_SYS_WINDOWS)
+        cmsg = (CMSGHDR_TYPE *)mh->Control.buf;
+#   else
+        cmsg = (CMSGHDR_TYPE *)mh->msg_control;
+#   endif
+
+        cmsg->cmsg_len   = BIO_CMSG_LEN(sizeof(struct in_pktinfo));
+        cmsg->cmsg_level = IPPROTO_IP;
+        cmsg->cmsg_type  = IP_PKTINFO;
+
+        info = (struct in_pktinfo *)BIO_CMSG_DATA(cmsg);
+        info->ipi_spec_dst      = local->s_in.sin_addr;
+        info->ipi_addr.s_addr   = 0;
+        info->ipi_ifindex       = 0;
+
+        /*
+         * We cannot override source port using this API, therefore
+         * ensure the application specified a source port of 0
+         * or the one we are bound to. (Better to error than silently
+         * ignore this.)
+         */
+        if (local->s_in.sin_port != 0
+            && data->local_addr.s_in.sin_port != local->s_in.sin_port) {
+            ERR_raise(ERR_LIB_BIO, BIO_R_PORT_MISMATCH);
+            return 0;
+        }
+
+#   if defined(OPENSSL_SYS_WINDOWS)
+        mh->Control.len = BIO_CMSG_SPACE(sizeof(struct in_pktinfo));
+#   else
+        mh->msg_controllen = BIO_CMSG_SPACE(sizeof(struct in_pktinfo));
+#   endif
+        return 1;
+
+#  elif defined(IP_SENDSRCADDR)
+        {
+            struct cmsghdr *cmsg;
+            struct in_addr *info;
+
+            cmsg = (struct cmsghdr *)mh->msg_control;
+            cmsg->cmsg_len   = BIO_CMSG_LEN(sizeof(struct in_addr));
+            cmsg->cmsg_level = IPPROTO_IP;
+            cmsg->cmsg_type  = IP_SENDSRCADDR;
+
+            info = (struct in_addr *)BIO_CMSG_DATA(cmsg);
+            *info = local->s_in.sin_addr;
+        }
+
+        /* See comment above. */
+        if (local->s_in.sin_port != 0
+            && data->local_addr.s_in.sin_port != local->s_in.sin_port) {
+            ERR_raise(ERR_LIB_BIO, BIO_R_PORT_MISMATCH);
+            return 0;
+        }
+
+        mh->msg_controllen = BIO_CMSG_SPACE(sizeof(struct in_addr));
+        return 1;
+#  endif
+    }
+#  if OPENSSL_USE_IPV6
+    else if (af == AF_INET6) {
+#   if defined(IPV6_PKTINFO)
+        CMSGHDR_TYPE *cmsg;
+        struct in6_pktinfo *info;
+        bio_dgram_data *data = b->ptr;
+
+#    if defined(OPENSSL_SYS_WINDOWS)
+        cmsg = (CMSGHDR_TYPE *)mh->Control.buf;
+#    else
+        cmsg = (CMSGHDR_TYPE *)mh->msg_control;
+#    endif
+        cmsg->cmsg_len   = BIO_CMSG_LEN(sizeof(struct in6_pktinfo));
+        cmsg->cmsg_level = IPPROTO_IPV6;
+        cmsg->cmsg_type  = IPV6_PKTINFO;
+
+        info = (struct in6_pktinfo *)BIO_CMSG_DATA(cmsg);
+        info->ipi6_addr     = local->s_in6.sin6_addr;
+        info->ipi6_ifindex  = 0;
+
+        /*
+         * See comment above, but also applies to the other fields
+         * in sockaddr_in6.
+         */
+        if (local->s_in6.sin6_port != 0
+            && data->local_addr.s_in6.sin6_port != local->s_in6.sin6_port) {
+            ERR_raise(ERR_LIB_BIO, BIO_R_PORT_MISMATCH);
+            return 0;
+        }
+
+        if (local->s_in6.sin6_scope_id != 0
+            && data->local_addr.s_in6.sin6_scope_id != local->s_in6.sin6_scope_id) {
+            ERR_raise(ERR_LIB_BIO, BIO_R_PORT_MISMATCH);
+            return 0;
+        }
+
+#    if defined(OPENSSL_SYS_WINDOWS)
+        mh->Control.len = BIO_CMSG_SPACE(sizeof(struct in6_pktinfo));
+#    else
+        mh->msg_controllen = BIO_CMSG_SPACE(sizeof(struct in6_pktinfo));
+#    endif
+        return 1;
+#   endif
+    }
+#  endif
+
+    return 0;
+}
+# endif
+
+/*
+ * Converts flags passed to BIO_sendmmsg or BIO_recvmmsg to syscall flags. You
+ * should mask out any system flags returned by this function you cannot support
+ * in a particular circumstance. Currently no flags are defined.
+ */
+# if M_METHOD != M_METHOD_NONE
+static int translate_flags(uint64_t flags) {
+    return 0;
+}
+# endif
+
+static int dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
+                          size_t num_msg, uint64_t flags, size_t *num_processed)
+{
+# if M_METHOD != M_METHOD_NONE && M_METHOD != M_METHOD_RECVMSG
+    int ret;
+# endif
+# if M_METHOD == M_METHOD_RECVMMSG
+#  define BIO_MAX_MSGS_PER_CALL   64
+    int sysflags;
+    bio_dgram_data *data = (bio_dgram_data *)b->ptr;
+    size_t i;
+    struct mmsghdr mh[BIO_MAX_MSGS_PER_CALL];
+    struct iovec iov[BIO_MAX_MSGS_PER_CALL];
+    unsigned char control[BIO_MAX_MSGS_PER_CALL][BIO_CMSG_ALLOC_LEN];
+    int have_local_enabled = data->local_addr_enabled;
+# elif M_METHOD == M_METHOD_RECVMSG
+    int sysflags;
+    bio_dgram_data *data = (bio_dgram_data *)b->ptr;
+    ossl_ssize_t l;
+    struct msghdr mh;
+    struct iovec iov;
+    unsigned char control[BIO_CMSG_ALLOC_LEN];
+    int have_local_enabled = data->local_addr_enabled;
+# elif M_METHOD == M_METHOD_WSARECVMSG
+    bio_dgram_data *data = (bio_dgram_data *)b->ptr;
+    int have_local_enabled = data->local_addr_enabled;
+    WSAMSG wmsg;
+    WSABUF wbuf;
+    DWORD num_bytes_sent = 0;
+    unsigned char control[BIO_CMSG_ALLOC_LEN];
+# endif
+# if M_METHOD == M_METHOD_RECVFROM || M_METHOD == M_METHOD_WSARECVMSG
+    int sysflags;
+# endif
+
+    if (num_msg == 0) {
+        *num_processed = 0;
+        return 1;
+    }
+
+    if (num_msg > OSSL_SSIZE_MAX)
+        num_msg = OSSL_SSIZE_MAX;
+
+# if M_METHOD != M_METHOD_NONE
+    sysflags = translate_flags(flags);
+# endif
+
+# if M_METHOD == M_METHOD_RECVMMSG
+    /*
+     * In the sendmmsg/recvmmsg case, we need to allocate our translated struct
+     * msghdr and struct iovec on the stack to support multithreaded use. Thus
+     * we place a fixed limit on the number of messages per call, in the
+     * expectation that we will be called again if there were more messages to
+     * be sent.
+     */
+    if (num_msg > BIO_MAX_MSGS_PER_CALL)
+        num_msg = BIO_MAX_MSGS_PER_CALL;
+
+    for (i = 0; i < num_msg; ++i) {
+        translate_msg(b, &mh[i].msg_hdr, &iov[i],
+                      control[i], &BIO_MSG_N(msg, stride, i));
+
+        /* If local address was requested, it must have been enabled */
+        if (BIO_MSG_N(msg, stride, i).local != NULL) {
+            if (!have_local_enabled) {
+                ERR_raise(ERR_LIB_BIO, BIO_R_LOCAL_ADDR_NOT_AVAILABLE);
+                *num_processed = 0;
+                return 0;
+            }
+
+            if (pack_local(b, &mh[i].msg_hdr,
+                           BIO_MSG_N(msg, stride, i).local) < 1) {
+                ERR_raise(ERR_LIB_BIO, BIO_R_LOCAL_ADDR_NOT_AVAILABLE);
+                *num_processed = 0;
+                return 0;
+            }
+        }
+    }
+
+    /* Do the batch */
+    ret = sendmmsg(b->num, mh, num_msg, sysflags);
+    if (ret < 0) {
+        ERR_raise(ERR_LIB_SYS, get_last_socket_error());
+        *num_processed = 0;
+        return 0;
+    }
+
+    for (i = 0; i < (size_t)ret; ++i) {
+        BIO_MSG_N(msg, stride, i).data_len = mh[i].msg_len;
+        BIO_MSG_N(msg, stride, i).flags    = 0;
+    }
+
+    *num_processed = (size_t)ret;
+    return 1;
+
+# elif M_METHOD == M_METHOD_RECVMSG
+    /*
+     * If sendmsg is available, use it.
+     */
+    translate_msg(b, &mh, &iov, control, msg);
+
+    if (msg->local != NULL) {
+        if (!have_local_enabled) {
+            ERR_raise(ERR_LIB_BIO, BIO_R_LOCAL_ADDR_NOT_AVAILABLE);
+            *num_processed = 0;
+            return 0;
+        }
+
+        if (pack_local(b, &mh, msg->local) < 1) {
+            ERR_raise(ERR_LIB_BIO, BIO_R_LOCAL_ADDR_NOT_AVAILABLE);
+            *num_processed = 0;
+            return 0;
+        }
+    }
+
+    l = sendmsg(b->num, &mh, sysflags);
+    if (l < 0) {
+        ERR_raise(ERR_LIB_SYS, get_last_socket_error());
+        *num_processed = 0;
+        return 0;
+    }
+
+    msg->data_len   = (size_t)l;
+    msg->flags      = 0;
+    *num_processed  = 1;
+    return 1;
+
+# elif M_METHOD == M_METHOD_WSARECVMSG || M_METHOD == M_METHOD_RECVFROM
+#  if M_METHOD == M_METHOD_WSARECVMSG
+    if (bio_WSASendMsg != NULL) {
+        /* WSASendMsg-based implementation for Windows. */
+        translate_msg_win(b, &wmsg, &wbuf, control, msg);
+
+        if (msg[0].local != NULL) {
+            if (!have_local_enabled) {
+                ERR_raise(ERR_LIB_BIO, BIO_R_LOCAL_ADDR_NOT_AVAILABLE);
+                *num_processed = 0;
+                return 0;
+            }
+
+            if (pack_local(b, &wmsg, msg[0].local) < 1) {
+                ERR_raise(ERR_LIB_BIO, BIO_R_LOCAL_ADDR_NOT_AVAILABLE);
+                *num_processed = 0;
+                return 0;
+            }
+        }
+
+        ret = WSASendMsg((SOCKET)b->num, &wmsg, 0, &num_bytes_sent, NULL, NULL);
+        if (ret < 0) {
+            ERR_raise(ERR_LIB_SYS, get_last_socket_error());
+            *num_processed = 0;
+            return 0;
+        }
+
+        msg[0].data_len = num_bytes_sent;
+        msg[0].flags    = 0;
+        *num_processed  = 1;
+        return 1;
+    }
+#  endif
+
+    /*
+     * Fallback to sendto and send a single message.
+     */
+    if (msg[0].local != NULL) {
+        /*
+         * We cannot set the local address if using sendto
+         * so fail in this case
+         */
+        ERR_raise(ERR_LIB_BIO, BIO_R_LOCAL_ADDR_NOT_AVAILABLE);
+        *num_processed = 0;
+        return 0;
+    }
+
+    ret = sendto(b->num, msg[0].data,
+#  if defined(OPENSSL_SYS_WINDOWS)
+                 (int)msg[0].data_len,
+#  else
+                 msg[0].data_len,
+#  endif
+                 sysflags,
+                 msg[0].peer != NULL ? &msg[0].peer->sa : NULL,
+                 msg[0].peer != NULL ? sizeof(*msg[0].peer) : 0);
+    if (ret <= 0) {
+        ERR_raise(ERR_LIB_SYS, get_last_socket_error());
+        *num_processed = 0;
+        return 0;
+    }
+
+    msg[0].data_len = ret;
+    msg[0].flags    = 0;
+    *num_processed  = 1;
+    return 1;
+
+# else
+    ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_METHOD);
+    *num_processed = 0;
+    return 0;
+# endif
+}
+
+static int dgram_recvmmsg(BIO *b, BIO_MSG *msg,
+                          size_t stride, size_t num_msg,
+                          uint64_t flags, size_t *num_processed)
+{
+# if M_METHOD != M_METHOD_NONE && M_METHOD != M_METHOD_RECVMSG
+    int ret;
+# endif
+# if M_METHOD == M_METHOD_RECVMMSG
+    int sysflags;
+    bio_dgram_data *data = (bio_dgram_data *)b->ptr;
+    size_t i;
+    struct mmsghdr mh[BIO_MAX_MSGS_PER_CALL];
+    struct iovec iov[BIO_MAX_MSGS_PER_CALL];
+    unsigned char control[BIO_MAX_MSGS_PER_CALL][BIO_CMSG_ALLOC_LEN];
+    int have_local_enabled = data->local_addr_enabled;
+# elif M_METHOD == M_METHOD_RECVMSG
+    int sysflags;
+    bio_dgram_data *data = (bio_dgram_data *)b->ptr;
+    ossl_ssize_t l;
+    struct msghdr mh;
+    struct iovec iov;
+    unsigned char control[BIO_CMSG_ALLOC_LEN];
+    int have_local_enabled = data->local_addr_enabled;
+# elif M_METHOD == M_METHOD_WSARECVMSG
+    bio_dgram_data *data = (bio_dgram_data *)b->ptr;
+    int have_local_enabled = data->local_addr_enabled;
+    WSAMSG wmsg;
+    WSABUF wbuf;
+    DWORD num_bytes_received = 0;
+    unsigned char control[BIO_CMSG_ALLOC_LEN];
+# endif
+# if M_METHOD == M_METHOD_RECVFROM || M_METHOD == M_METHOD_WSARECVMSG
+    int sysflags;
+    socklen_t slen;
+# endif
+
+    if (num_msg == 0) {
+        *num_processed = 0;
+        return 1;
+    }
+
+    if (num_msg > OSSL_SSIZE_MAX)
+        num_msg = OSSL_SSIZE_MAX;
+
+# if M_METHOD != M_METHOD_NONE
+    sysflags = translate_flags(flags);
+# endif
+
+# if M_METHOD == M_METHOD_RECVMMSG
+    /*
+     * In the sendmmsg/recvmmsg case, we need to allocate our translated struct
+     * msghdr and struct iovec on the stack to support multithreaded use. Thus
+     * we place a fixed limit on the number of messages per call, in the
+     * expectation that we will be called again if there were more messages to
+     * be sent.
+     */
+    if (num_msg > BIO_MAX_MSGS_PER_CALL)
+        num_msg = BIO_MAX_MSGS_PER_CALL;
+
+    for (i = 0; i < num_msg; ++i) {
+        translate_msg(b, &mh[i].msg_hdr, &iov[i], 
+                      control[i], &BIO_MSG_N(msg, stride, i));
+
+        /* If local address was requested, it must have been enabled */
+        if (BIO_MSG_N(msg, stride, i).local != NULL && !have_local_enabled) {
+            ERR_raise(ERR_LIB_BIO, BIO_R_LOCAL_ADDR_NOT_AVAILABLE);
+            *num_processed = 0;
+            return 0;
+        }
+    }
+
+    /* Do the batch */
+    ret = recvmmsg(b->num, mh, num_msg, sysflags, NULL);
+    if (ret < 0) {
+        ERR_raise(ERR_LIB_SYS, get_last_socket_error());
+        *num_processed = 0;
+        return 0;
+    }
+
+    for (i = 0; i < (size_t)ret; ++i) {
+        BIO_MSG_N(msg, stride, i).data_len = mh[i].msg_len;
+        BIO_MSG_N(msg, stride, i).flags    = 0;
+        /*
+         * *(msg->peer) will have been filled in by recvmmsg;
+         * for msg->local we parse the control data returned
+         */
+        if (BIO_MSG_N(msg, stride, i).local != NULL)
+            if (extract_local(b, &mh[i].msg_hdr,
+                              BIO_MSG_N(msg, stride, i).local) < 1) {
+                if (i > 0) {
+                    *num_processed = i;
+                    return 1;
+                } else {
+                    *num_processed = 0;
+                    ERR_raise(ERR_LIB_BIO, BIO_R_LOCAL_ADDR_NOT_AVAILABLE);
+                    return 0;
+                }
+            }
+    }
+
+    *num_processed = (size_t)ret;
+    return 1;
+
+# elif M_METHOD == M_METHOD_RECVMSG
+    /*
+     * If recvmsg is available, use it.
+     */
+    translate_msg(b, &mh, &iov, control, msg);
+
+    /* If local address was requested, it must have been enabled */
+    if (msg->local != NULL && !have_local_enabled) {
+        /*
+         * If we have done at least one message, we must return the
+         * count; if we haven't done any, we can give an error code
+         */
+        ERR_raise(ERR_LIB_BIO, BIO_R_LOCAL_ADDR_NOT_AVAILABLE);
+        *num_processed = 0;
+        return 0;
+    }
+
+    l = recvmsg(b->num, &mh, sysflags);
+    if (l < 0) {
+        ERR_raise(ERR_LIB_SYS, get_last_socket_error());
+        *num_processed = 0;
+        return 0;
+    }
+
+    msg->data_len   = (size_t)l;
+    msg->flags      = 0;
+
+    if (msg->local != NULL)
+        if (extract_local(b, &mh, msg->local) < 1) {
+            /*
+             * OS X exhibits odd behaviour where it appears that if a packet is
+             * sent before the receiving interface enables IP_PKTINFO, it will
+             * sometimes not have any control data returned even if the
+             * receiving interface enables IP_PKTINFO before calling recvmsg().
+             * This appears to occur non-deterministically. Presumably, OS X
+             * handles IP_PKTINFO at the time the packet is enqueued into a
+             * socket's receive queue, rather than at the time recvmsg() is
+             * called, unlike most other operating systems. Thus (if this
+             * hypothesis is correct) there is a race between where IP_PKTINFO
+             * is enabled by the process and when the kernel's network stack
+             * queues the incoming message.
+             *
+             * We cannot return the local address if we do not have it, but this
+             * is not a caller error either, so just return a zero address
+             * structure.
+             *
+             * We enable this workaround for Apple only as it should not
+             * be necessary otherwise.
+             */
+#  if defined(__APPLE__)
+            BIO_ADDR_clear(msg->local);
+#  else
+            ERR_raise(ERR_LIB_BIO, BIO_R_LOCAL_ADDR_NOT_AVAILABLE);
+            *num_processed = 0;
+            return 0;
+#  endif
+        }
+
+    *num_processed = 1;
+    return 1;
+
+# elif M_METHOD == M_METHOD_RECVFROM || M_METHOD == M_METHOD_WSARECVMSG
+#  if M_METHOD == M_METHOD_WSARECVMSG
+    if (bio_WSARecvMsg != NULL) {
+        /* WSARecvMsg-based implementation for Windows. */
+        translate_msg_win(b, &wmsg, &wbuf, control, msg);
+
+        /* If local address was requested, it must have been enabled */
+        if (msg[0].local != NULL && !have_local_enabled) {
+            ERR_raise(ERR_LIB_BIO, BIO_R_LOCAL_ADDR_NOT_AVAILABLE);
+            *num_processed = 0;
+            return 0;
+        }
+
+        ret = WSARecvMsg((SOCKET)b->num, &wmsg, &num_bytes_received, NULL, NULL);
+        if (ret < 0) {
+            ERR_raise(ERR_LIB_SYS, get_last_socket_error());
+            *num_processed = 0;
+            return 0;
+        }
+
+        msg[0].data_len = num_bytes_received;
+        msg[0].flags    = 0;
+        if (msg[0].local != NULL)
+            if (extract_local(b, &wmsg, msg[0].local) < 1)
+                /*
+                 * On Windows, loopback is not a "proper" interface and it works
+                 * differently; packets are essentially short-circuited and
+                 * don't go through all of the normal processing. A consequence
+                 * of this is that packets sent from the local machine to the
+                 * local machine _will not have IP_PKTINFO_ even if the
+                 * IP_PKTINFO socket option is enabled. WSARecvMsg just sets
+                 * Control.len to 0 on returning.
+                 *
+                 * This applies regardless of whether the loopback address,
+                 * 127.0.0.1 is used, or a local interface address (e.g.
+                 * 192.168.1.1); in both cases IP_PKTINFO will not be present.
+                 *
+                 * We report this condition by setting the local BIO_ADDR's
+                 * family to 0.
+                 */
+                BIO_ADDR_clear(msg[0].local);
+
+        *num_processed = 1;
+        return 1;
+    }
+#  endif
+
+    /*
+     * Fallback to recvfrom and receive a single message.
+     */
+    if (msg[0].local != NULL) {
+        /*
+         * We cannot determine the local address if using recvfrom
+         * so fail in this case
+         */
+        ERR_raise(ERR_LIB_BIO, BIO_R_LOCAL_ADDR_NOT_AVAILABLE);
+        *num_processed = 0;
+        return 0;
+    }
+
+    slen = sizeof(*msg[0].peer);
+    ret = recvfrom(b->num, msg[0].data,
+#  if defined(OPENSSL_SYS_WINDOWS)
+                   (int)msg[0].data_len,
+#  else
+                   msg[0].data_len,
+#  endif
+                   sysflags,
+                   msg[0].peer != NULL ? &msg[0].peer->sa : NULL,
+                   msg[0].peer != NULL ? &slen : NULL);
+    if (ret <= 0) {
+        ERR_raise(ERR_LIB_SYS, get_last_socket_error());
+        return 0;
+    }
+
+    msg[0].data_len = ret;
+    msg[0].flags    = 0;
+    *num_processed = 1;
+    return 1;
+
+# else
+    ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_METHOD);
+    *num_processed = 0;
+    return 0;
+# endif
 }
 
 # ifndef OPENSSL_NO_SCTP

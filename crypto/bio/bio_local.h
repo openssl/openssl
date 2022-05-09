@@ -142,6 +142,12 @@ struct sockaddr *BIO_ADDR_sockaddr_noconst(BIO_ADDR *ap);
 socklen_t BIO_ADDR_sockaddr_size(const BIO_ADDR *ap);
 socklen_t BIO_ADDRINFO_sockaddr_size(const BIO_ADDRINFO *bai);
 const struct sockaddr *BIO_ADDRINFO_sockaddr(const BIO_ADDRINFO *bai);
+
+# if defined(OPENSSL_SYS_WINDOWS) && defined(WSAID_WSARECVMSG)
+#  define BIO_HAVE_WSAMSG
+extern LPFN_WSARECVMSG bio_WSARecvMsg;
+extern LPFN_WSASENDMSG bio_WSASendMsg;
+# endif
 #endif
 
 extern CRYPTO_RWLOCK *bio_type_lock;

@@ -130,6 +130,11 @@ struct hostent *BIO_gethostbyname(const char *name)
 }
 # endif
 
+# ifdef BIO_HAVE_WSAMSG
+LPFN_WSARECVMSG bio_WSARecvMsg;
+LPFN_WSASENDMSG bio_WSASendMsg;
+# endif
+
 int BIO_sock_init(void)
 {
 # ifdef OPENSSL_SYS_WINDOWS
@@ -150,6 +155,39 @@ int BIO_sock_init(void)
             ERR_raise(ERR_LIB_BIO, BIO_R_WSASTARTUP);
             return -1;
         }
+
+        /*
+         * On Windows, some socket functions are not exposed as a prototype.
+         * Instead, their function pointers must be loaded via this elaborate
+         * process...
+         */
+#  ifdef BIO_HAVE_WSAMSG
+        {
+            GUID id_WSARecvMsg = WSAID_WSARECVMSG;
+            GUID id_WSASendMsg = WSAID_WSASENDMSG;
+            DWORD len_out = 0;
+            SOCKET s;
+
+            s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+            if (s != INVALID_SOCKET) {
+                if (WSAIoctl(s, SIO_GET_EXTENSION_FUNCTION_POINTER,
+                             &id_WSARecvMsg, sizeof(id_WSARecvMsg),
+                             &bio_WSARecvMsg, sizeof(bio_WSARecvMsg),
+                             &len_out, NULL, NULL) != 0
+                    || len_out != sizeof(bio_WSARecvMsg))
+                    bio_WSARecvMsg = NULL;
+
+                if (WSAIoctl(s, SIO_GET_EXTENSION_FUNCTION_POINTER,
+                             &id_WSASendMsg, sizeof(id_WSASendMsg),
+                             &bio_WSASendMsg, sizeof(bio_WSASendMsg),
+                             &len_out, NULL, NULL) != 0
+                    || len_out != sizeof(bio_WSASendMsg))
+                    bio_WSASendMsg = NULL;
+
+                closesocket(s);
+            }
+        }
+#  endif
     }
 # endif                         /* OPENSSL_SYS_WINDOWS */
 # ifdef WATT32

@@ -173,6 +173,12 @@ OpenSSL 3.1
 
    *David von Oheimb*
 
+ * Add new BIO_sendmmsg() and BIO_recvmmsg() BIO methods which allow
+   sending and receiving multiple messages in a single call. An implementation
+   is provided for BIO_dgram. For further details, see BIO_sendmmsg(3).
+
+   *Hugo Landau*
+
 OpenSSL 3.0
 -----------
 
