@@ -185,6 +185,9 @@ BIO_get_read_request                    define
 BIO_get_ssl                             define
 BIO_get_write_buf_size                  define
 BIO_get_write_guarantee                 define
+BIO_dgram_get_local_addr_cap            define
+BIO_dgram_get_local_addr_enable         define
+BIO_dgram_set_local_addr_enable         define
 BIO_make_bio_pair                       define
 BIO_pending                             define
 BIO_read_filename                       define
