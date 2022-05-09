@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -108,6 +108,11 @@ static int test_record_overflow(int idx)
                                        TLS1_VERSION, 0,
                                        &sctx, &cctx, cert, privkey)))
         goto end;
+
+#if defined(OPENSSL_NO_TLS1_2) && defined(OPENSSL_NO_TLS1_3)
+    SSL_CTX_set_security_level(sctx, 0);
+    SSL_CTX_set_security_level(cctx, 0);
+#endif
 
     if (idx == TEST_ENCRYPTED_OVERFLOW_TLS1_2_OK
             || idx == TEST_ENCRYPTED_OVERFLOW_TLS1_2_NOT_OK) {
