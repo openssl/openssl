@@ -123,31 +123,34 @@ void *ossl_method_construct(OSSL_LIB_CTX *libctx, int operation_id,
                             OSSL_METHOD_CONSTRUCT_METHOD *mcm, void *mcm_data)
 {
     void *method = NULL;
+    OSSL_PROVIDER *provider = provider_rw != NULL ? *provider_rw : NULL;
+    struct construct_data_st cbdata;
 
-    if ((method = mcm->get(NULL, (const OSSL_PROVIDER **)provider_rw,
-                           mcm_data)) == NULL) {
-        OSSL_PROVIDER *provider = provider_rw != NULL ? *provider_rw : NULL;
-        struct construct_data_st cbdata;
+    /*
+     * We might be tempted to try to look into the method store without
+     * constructing to see if we can find our method there already.
+     * Unfortunately that does not work well if the query contains
+     * optional properties as newly loaded providers can match them better.
+     */
 
-        cbdata.store = NULL;
-        cbdata.force_store = force_store;
-        cbdata.mcm = mcm;
-        cbdata.mcm_data = mcm_data;
-        ossl_algorithm_do_all(libctx, operation_id, provider,
-                              ossl_method_construct_precondition,
-                              ossl_method_construct_this,
-                              ossl_method_construct_postcondition,
-                              &cbdata);
+    cbdata.store = NULL;
+    cbdata.force_store = force_store;
+    cbdata.mcm = mcm;
+    cbdata.mcm_data = mcm_data;
+    ossl_algorithm_do_all(libctx, operation_id, provider,
+                          ossl_method_construct_precondition,
+                          ossl_method_construct_this,
+                          ossl_method_construct_postcondition,
+                          &cbdata);
 
-        /* If there is a temporary store, try there first */
-        if (cbdata.store != NULL)
-            method = mcm->get(cbdata.store, (const OSSL_PROVIDER **)provider_rw,
-                              mcm_data);
+    /* If there is a temporary store, try there first */
+    if (cbdata.store != NULL)
+        method = mcm->get(cbdata.store, (const OSSL_PROVIDER **)provider_rw,
+                          mcm_data);
 
-        /* If no method was found yet, try the global store */
-        if (method == NULL)
-            method = mcm->get(NULL, (const OSSL_PROVIDER **)provider_rw, mcm_data);
-    }
+    /* If no method was found yet, try the global store */
+    if (method == NULL)
+        method = mcm->get(NULL, (const OSSL_PROVIDER **)provider_rw, mcm_data);
 
     return method;
 }
