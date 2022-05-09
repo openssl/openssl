@@ -23,6 +23,8 @@
  */
 #include "internal/deprecated.h"
 
+#include "recmethod_local.h"
+
 #include "internal/constant_time.h"
 #include "internal/cryptlib.h"
 
@@ -31,17 +33,6 @@
 # include <openssl/md5.h>
 #endif
 #include <openssl/sha.h>
-
-char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx);
-int ssl3_cbc_digest_record(const EVP_MD *md,
-                           unsigned char *md_out,
-                           size_t *md_out_size,
-                           const unsigned char *header,
-                           const unsigned char *data,
-                           size_t data_size,
-                           size_t data_plus_mac_plus_padding_size,
-                           const unsigned char *mac_secret,
-                           size_t mac_secret_length, char is_sslv3);
 
 # define l2n(l,c)        (*((c)++)=(unsigned char)(((l)>>24)&0xff), \
                          *((c)++)=(unsigned char)(((l)>>16)&0xff), \

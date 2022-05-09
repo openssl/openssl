@@ -59,7 +59,7 @@ struct hmac_data_st {
     size_t tls_mac_out_size;
 };
 
-/* Defined in ssl/s3_cbc.c */
+/* Defined in ssl/record/methods/ssl3_cbc.c */
 int ssl3_cbc_digest_record(const EVP_MD *md,
                            unsigned char *md_out,
                            size_t *md_out_size,

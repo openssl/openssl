@@ -2869,18 +2869,6 @@ int ktls_configure_crypto(SSL_CONNECTION *s, const EVP_CIPHER *c,
                           size_t mac_secret_size);
 #  endif
 
-/* s3_cbc.c */
-__owur char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx);
-__owur int ssl3_cbc_digest_record(const EVP_MD *md,
-                                  unsigned char *md_out,
-                                  size_t *md_out_size,
-                                  const unsigned char *header,
-                                  const unsigned char *data,
-                                  size_t data_size,
-                                  size_t data_plus_mac_plus_padding_size,
-                                  const unsigned char *mac_secret,
-                                  size_t mac_secret_length, char is_sslv3);
-
 __owur int srp_generate_server_master_secret(SSL_CONNECTION *s);
 __owur int srp_generate_client_master_secret(SSL_CONNECTION *s);
 __owur int srp_verify_server_param(SSL_CONNECTION *s);

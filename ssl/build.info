@@ -25,16 +25,15 @@ SOURCE[../libssl]=\
         bio_ssl.c ssl_err.c ssl_err_legacy.c tls_srp.c t1_trce.c ssl_utst.c \
         statem/statem.c \
         tls_depr.c $KTLSSRC
-# For shared builds we need to include the libcrypto packet.c and sources
-# needed in providers (s3_cbc.c) in libssl as well.
+
+# For shared builds we need to include the libcrypto packet.c and quic_vlint.c
+# in libssl as well.
 SHARED_SOURCE[../libssl]=../crypto/packet.c ../crypto/quic_vlint.c
+
 IF[{- !$disabled{'deprecated-3.0'} -}]
-  SHARED_SOURCE[../libssl]=s3_cbc.c
   SOURCE[../libssl]=ssl_rsa_legacy.c
 ENDIF
 
 IF[{- !$disabled{quic} -}]
   SOURCE[../libssl]=priority_queue.c event_queue.c
 ENDIF
-
-SOURCE[../providers/libdefault.a ../providers/libfips.a]=s3_cbc.c
