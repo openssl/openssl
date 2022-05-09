@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -320,6 +320,11 @@ static int test_asyncio(int test)
         BIO_free(c_to_s_fbio);
         goto end;
     }
+
+#if defined(OPENSSL_NO_TLS1_2) && defined(OPENSSL_NO_TLS1_3)
+    SSL_CTX_set_security_level(serverctx, 0);
+    SSL_CTX_set_security_level(clientctx, 0);
+#endif
 
     /* BIOs get freed on error */
     if (!TEST_true(create_ssl_objects(serverctx, clientctx, &serverssl,
