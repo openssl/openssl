@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2022 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2017 BaishanCloud. All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -109,6 +109,9 @@ static int client_setup_sni_before_state(void)
         goto end;
 
     if (maxversion > 0
+#ifdef OPENSSL_NO_TLS1_2
+            && !TEST_true(SSL_CTX_set_cipher_list(ctx, "DEFAULT@SECLEVEL=0"))
+#endif
             && !TEST_true(SSL_CTX_set_max_proto_version(ctx, maxversion)))
         goto end;
 
@@ -161,6 +164,9 @@ static int client_setup_sni_after_state(void)
         goto end;
 
     if (maxversion > 0
+#ifdef OPENSSL_NO_TLS1_2
+            && !TEST_true(SSL_CTX_set_cipher_list(ctx, "DEFAULT@SECLEVEL=0"))
+#endif
             && !TEST_true(SSL_CTX_set_max_proto_version(ctx, maxversion)))
         goto end;
 
@@ -212,6 +218,13 @@ static int server_setup_sni(void)
             || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                              NULL, NULL)))
         goto end;
+
+#ifdef OPENSSL_NO_TLS1_2
+    if (maxversion > 0) {
+        SSL_set_security_level(serverssl, 0);
+        SSL_set_security_level(clientssl, 0);
+    }
+#endif
 
     /* set SNI at server side */
     SSL_set_tlsext_host_name(serverssl, host);
