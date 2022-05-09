@@ -135,7 +135,7 @@ __owur int SSL_get_next_tick(SSL *ssl);
  * even when no specific read or write call is being performed.
  *
  * Note that:
- *   - For TLS this ss a no-op, as there are no timer events for TLS;
+ *   - For TLS this is a no-op, as there are no timer events for TLS;
  *   - For DTLS this is equivalent to calling DTLSv1_handle_timeout();
  *   - For QUIC, only SSL objects representing a connection have timer events;
  *   - For QUIC SSL objects representing additional streams, this is a no-op.
@@ -337,13 +337,7 @@ __owur int BIO_set_dgram_tx_dst_addr(BIO *bio, const BIO_ADDR *addr);
  * There are no per-message flags currently defined.
  *
  * The flags argument to these functions defines global flags.
- *
- * The defined global flags are:
- *   BIO_DONTWAIT
- *      Return immediately if no data is available.
- *   BIO_WAITFORONE
- *      Acts as though BIO_DONTWAIT was passed after one datagram has been
- *      received.
+ * There are no global flags currently defined.
  *
  * These functions are made extensible via a 'stride' argument which is set to
  * sizeof(BIO_msg) by the caller. This allows us to add more fields later
@@ -365,22 +359,46 @@ typedef struct bio_msg_st {
     void           *data;
     size_t          data_len;
     BIO_ADDR       *peer, *local;
-    unsigned int    flags;
+    uint64_t        flags;
 } BIO_msg;
 
-#define BIO_WAITFORONE      (1U<<0)
-#define BIO_DONTWAIT        (1U<<1)
-
 __owur ssize_t BIO_sendmmsg(BIO *bio, BIO_msg *msg,
-                            size_t stride, size_t num_msg, unsigned int flags);
+                            size_t stride, size_t num_msg, uint64_t flags);
 __owur ssize_t BIO_recvmmsg(BIO *bio, BIO_msg *msg,
-                            size_t stride, size_t num_msg, unsigned int flags);
+                            size_t stride, size_t num_msg, uint64_t flags);
 
 /*
- * (There will of course be BIO_METH_get/set functions corresponding to all of
+ * (There will of course be BIO_met_get/set functions corresponding to all of
  * these, which are not shown here)
  */
 
+/*
+ * These functions are used to setup local address support for a BIO_dgram.
+ *
+ * BIO_dgram_get_local_addr_cap determines if a BIO can support local address
+ * support (i.e., the local field of BIO_MSG being non-NULL). It returns 1 if
+ * support is available.
+ */
+int BIO_dgram_get_local_addr_cap(BIO *b);
+/* BIO_CTRL_DGRAM_GET_LOCAL_ADDR_CAP */
+
+/*
+ * BIO_dgram_get/set_local_addr_enable turns local address support on and off.
+ * The reason we force this to be done up-front is because it requires a
+ * setsockopt, and we do not want to do this lazily because this will introduce
+ * the need for locking into BIO_sendmmsg and BIO_recvmmsg.
+ *
+ * BIO_dgram_set_local_addr_enable() returns 1 on success and 0 otherwise (e.g.
+ * if support is not available).
+ *
+ * BIO_dgram_get_local_addr_enable() writes 1 to *enable if support is
+ * currently enabled and 0 otherwise and returns 1.
+ */
+int BIO_dgram_set_local_addr_enable(BIO *b, int enable);
+// BIO_CTRL_DGRAM_SET_LOCAL_ADDR_ENABLiE
+
+int BIO_dgram_get_local_addr_enable(BIO *b, int *enable);
+// BIO_CTRL_DGRAM_GET_LOCAL_ADDR_ENABLE
 ```
 
 Post-MVP Functionality
@@ -418,7 +436,7 @@ int BIO_put_dgram(BIO *bio, const void *buf, size_t buf_len,
  *   Always fails.
  */
 #define SSL_FLAG_UNI    1
-SSL *SSL_new_stream(SSL *ssl, unsigned int flags);
+SSL *SSL_new_stream(SSL *ssl, uint64_t flags);
 
 /*
  * Create a new SSL object representing an additional stream which has created
@@ -438,7 +456,7 @@ SSL *SSL_new_stream(SSL *ssl, unsigned int flags);
  *
  * TODO: Do we want a WAIT flag for synchronous blocking here?
  */
-SSL *SSL_accept_stream(SSL *ssl, unsigned int flags);
+SSL *SSL_accept_stream(SSL *ssl, uint64_t flags);
 
 /*
  * Determine the number of streams waiting to be returned on a subsequent call
