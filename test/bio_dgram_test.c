@@ -12,6 +12,8 @@
 #include "testutil.h"
 #include "internal/sockets.h"
 
+#if !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK)
+
 static int compare_addr(const BIO_ADDR *a, const BIO_ADDR *b)
 {
     struct in_addr xa, xb;
@@ -68,9 +70,11 @@ static int test_bio_dgram_impl(int af, int use_local)
     ina6.s6_addr[15] = 1;
 
     if (af == AF_INET) {
+        printf("# Testing with AF_INET, local=%d\n", use_local);
         pina = &ina;
         inal = sizeof(ina);
     } else if (af == AF_INET6) {
+        printf("# Testing with AF_INET6, local=%d\n", use_local);
         pina = &ina6;
         inal = sizeof(ina6);
     } else
@@ -287,6 +291,8 @@ static int test_bio_dgram(void)
     return 1;
 }
 
+#endif
+
 int setup_tests(void)
 {
     if (!test_skip_common_options()) {
@@ -294,6 +300,8 @@ int setup_tests(void)
         return 0;
     }
 
+#if !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK)
     ADD_TEST(test_bio_dgram);
+#endif
     return 1;
 }

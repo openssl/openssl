@@ -50,7 +50,7 @@
 #define M_METHOD_WSARECVMSG 4
 
 #if !defined(M_METHOD)
-# if defined(_WIN32) && !defined(NO_WSARECVMSG)
+# if defined(_WIN32) && defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0600 && !defined(NO_WSARECVMSG)
 #  define M_METHOD  M_METHOD_WSARECVMSG
 # elif defined(MSG_WAITFORONE) && !defined(NO_RECVMMSG)
 #  define M_METHOD  M_METHOD_RECVMMSG
@@ -66,7 +66,9 @@
 #define PACK_ERRNO(e) BIO_UNPACK_ERRNO(e) /* function is its own inverse */
 
 #if defined(_WIN32)
-#  include <mswsock.h>
+#  if defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0600
+#    include <mswsock.h>
+#  endif
 #  define CMSG_SPACE(x) WSA_CMSG_SPACE(x)
 #  define CMSG_FIRSTHDR(x) WSA_CMSG_FIRSTHDR(x)
 #  define CMSG_NXTHDR(x, y) WSA_CMSG_NXTHDR(x, y)
@@ -928,13 +930,14 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_DGRAM_SET_LOCAL_ADDR_ENABLE:
 #if (defined(IP_PKTINFO) || defined(IP_RECVDSTADDR)) && \
     (M_METHOD == M_METHOD_RECVMMSG || M_METHOD == M_METHOD_RECVMSG || M_METHOD == M_METHOD_WSARECVMSG)
+        num = (num > 0);
         if (num != data->local_addr_enabled) {
             if (enable_local_addr(b, num) < 1) {
                 ret = 0;
                 break;
             }
 
-            data->local_addr_enabled = num;
+            data->local_addr_enabled = (char)num;
         }
 #else
         ret = 0;
