@@ -81,7 +81,11 @@ static const PROV_GCM_HW sm4_gcm = {
     ossl_gcm_one_shot
 };
 
+#if defined(RVI_ZKSED_CAPABLE)
+# include "cipher_sm4_gcm_hw_rvi_zksed.inc"
+#else
 const PROV_GCM_HW *ossl_prov_sm4_hw_gcm(size_t keybits)
 {
     return &sm4_gcm;
 }
+#endif

@@ -35,7 +35,11 @@ static const PROV_CCM_HW ccm_sm4 = {
     ossl_ccm_generic_gettag
 };
 
+#if defined(RVI_ZKSED_CAPABLE)
+# include "cipher_aes_ccm_hw_rvi_zksed.inc"
+#else
 const PROV_CCM_HW *ossl_prov_sm4_hw_ccm(size_t keybits)
 {
     return &ccm_sm4;
 }
+#endif
