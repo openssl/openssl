@@ -1750,8 +1750,44 @@ size_t RECORD_LAYER_get_rrec_length(RECORD_LAYER *rl)
     return SSL3_RECORD_get_length(&rl->rrec[0]);
 }
 
-int ssl_set_new_record_layer(SSL_CONNECTION *s, const OSSL_RECORD_METHOD *meth,
-                             int version, int direction, int level,
+static const OSSL_RECORD_METHOD *ssl_select_next_record_layer(SSL_CONNECTION *s,
+                                                              int level)
+{
+
+    if (level == OSSL_RECORD_PROTECTION_LEVEL_NONE) {
+        if (SSL_CONNECTION_IS_DTLS(s))
+            return &ossl_dtls_record_method;
+
+        return &ossl_tls_record_method;
+    }
+
+#ifndef OPENSSL_NO_KTLS
+    /* KTLS does not support renegotiation */
+    if (level == OSSL_RECORD_PROTECTION_LEVEL_APPLICATION
+            && (s->options & SSL_OP_ENABLE_KTLS) != 0
+            && (SSL_CONNECTION_IS_TLS13(s) || SSL_IS_FIRST_HANDSHAKE(s)))
+        return &ossl_ktls_record_method;
+#endif
+
+    /* Default to the current OSSL_RECORD_METHOD */
+    return s->rrlmethod;
+}
+
+static int ssl_post_record_layer_select(SSL_CONNECTION *s)
+{
+#ifndef OPENSSL_NO_KTLS
+    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+
+    if (s->rrlmethod == &ossl_ktls_record_method) {
+        /* KTLS does not support renegotiation so disallow it */
+        SSL_set_options(ssl, SSL_OP_NO_RENEGOTIATION);
+    }
+#endif
+    return 1;
+}
+
+int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
+                             int direction, int level,
                              unsigned char *key, size_t keylen,
                              unsigned char *iv,  size_t ivlen,
                              unsigned char *mackey, size_t mackeylen,
@@ -1761,8 +1797,12 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, const OSSL_RECORD_METHOD *meth,
 {
     OSSL_PARAM_BLD *tmpl = NULL;
     OSSL_PARAM *options = NULL;
+    const OSSL_RECORD_METHOD *origmeth = s->rrlmethod;
     int ret = 0;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    const OSSL_RECORD_METHOD *meth;
+
+    meth = ssl_select_next_record_layer(s, level);
 
     if (s->rrlmethod != NULL)
         s->rrlmethod->free(s->rrl);
@@ -1790,18 +1830,29 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, const OSSL_RECORD_METHOD *meth,
         goto err;
     }
 
-    s->rrl = s->rrlmethod->new_record_layer(sctx->libctx, sctx->propq,
-                                            version, s->server, direction,
-                                            level, key, keylen, iv, ivlen,
-                                            mackey, mackeylen, ciph, taglen,
-                                            mactype, md, comp,  s->rbio,
-                                            NULL, NULL, NULL, options, s);
-    if (s->rrl == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
-        goto err;
+    for (;;) {
+        s->rrl = s->rrlmethod->new_record_layer(sctx->libctx, sctx->propq,
+                                                version, s->server, direction,
+                                                level, key, keylen, iv, ivlen,
+                                                mackey, mackeylen, ciph, taglen,
+                                                mactype, md, comp,  s->rbio,
+                                                NULL, NULL, NULL, options, s);
+        if (s->rrl == NULL) {
+            if (s->rrlmethod != origmeth && origmeth != NULL) {
+                /*
+                 * We tried a new record layer method, but it didn't work out,
+                 * so we fallback to the original method and try again
+                 */
+                s->rrlmethod = origmeth;
+                continue;
+            }
+            ERR_raise(ERR_LIB_SSL, SSL_R_NO_SUITABLE_RECORD_LAYER);
+            goto err;
+        }
+        break;
     }
 
-    ret = 1;
+    ret = ssl_post_record_layer_select(s);
  err:
     OSSL_PARAM_free(options);
     OSSL_PARAM_BLD_free(tmpl);

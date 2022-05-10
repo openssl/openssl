@@ -2860,13 +2860,12 @@ __owur int ssl_log_secret(SSL_CONNECTION *s, const char *label,
 #  ifndef OPENSSL_NO_KTLS
 /* ktls.c */
 int ktls_check_supported_cipher(const SSL_CONNECTION *s, const EVP_CIPHER *c,
-                                const EVP_CIPHER_CTX *dd);
+                                size_t taglen);
 int ktls_configure_crypto(SSL_CONNECTION *s, const EVP_CIPHER *c,
-                          EVP_CIPHER_CTX *dd,
                           void *rl_sequence, ktls_crypto_info_t *crypto_info,
-                          int is_tx, unsigned char *iv,
-                          unsigned char *key, unsigned char *mac_key,
-                          size_t mac_secret_size);
+                          int is_tx, unsigned char *iv, size_t ivlen,
+                          unsigned char *key, size_t keylen,
+                          unsigned char *mac_key, size_t mac_secret_size);
 #  endif
 
 __owur int srp_generate_server_master_secret(SSL_CONNECTION *s);

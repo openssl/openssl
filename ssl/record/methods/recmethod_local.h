@@ -113,6 +113,7 @@ struct ossl_record_layer_st
 extern struct record_functions_st ssl_3_0_funcs;
 extern struct record_functions_st tls_1_funcs;
 extern struct record_functions_st tls_1_3_funcs;
+extern struct record_functions_st ossl_ktls_funcs;
 extern struct record_functions_st tls_any_funcs;
 
 void ossl_rlayer_fatal(OSSL_RECORD_LAYER *rl, int al, int reason,
