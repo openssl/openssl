@@ -23,7 +23,6 @@
 #include "prov/seeding.h"
 #include "self_test.h"
 #include "internal/core.h"
-#include "e_os.h"
 
 static const char FIPS_DEFAULT_PROPERTIES[] = "provider=fips,fips=yes";
 static const char FIPS_UNAPPROVED_PROPERTIES[] = "provider=fips,fips=no";
@@ -36,18 +35,6 @@ static OSSL_FUNC_provider_teardown_fn fips_teardown;
 static OSSL_FUNC_provider_gettable_params_fn fips_gettable_params;
 static OSSL_FUNC_provider_get_params_fn fips_get_params;
 static OSSL_FUNC_provider_query_operation_fn fips_query;
-
-/* Locale object accessor functions */
-#ifndef OPENSSL_NO_LOCALE
-# include <locale.h>
-# ifdef OPENSSL_SYS_MACOSX
-#  include <xlocale.h>
-# endif
-static locale_t loc;
-#endif
-
-static int fips_init_casecmp(void);
-static void fips_deinit_casecmp(void);
 
 #define ALGC(NAMES, FUNC, CHECK) { { NAMES, FIPS_DEFAULT_PROPERTIES, FUNC }, CHECK }
 #define ALG(NAMES, FUNC) ALGC(NAMES, FUNC, NULL)
@@ -500,40 +487,11 @@ static const OSSL_ALGORITHM *fips_query(void *provctx, int operation_id,
     return NULL;
 }
 
-# ifndef OPENSSL_NO_LOCALE
-void *ossl_c_locale() {
-    return (void *)loc;
-}
-
-static int fips_init_casecmp(void) {
-#  ifdef OPENSSL_SYS_WINDOWS
-    loc = _create_locale(LC_COLLATE, "C");
-#  else
-    loc = newlocale(LC_COLLATE_MASK, "C", (locale_t) 0);
-#  endif
-    return (loc == (locale_t) 0) ? 0 : 1;
-}
-
-static void fips_deinit_casecmp(void) {
-    freelocale(loc);
-}
-# else
-void *ossl_c_locale() {
-    return NULL;
-}
-
-static int fips_init_casecmp(void) {
-    return 1;
-}
-
-static void fips_deinit_casecmp(void) {
-}
-# endif
-
 static void fips_teardown(void *provctx)
 {
     OSSL_LIB_CTX_free(PROV_LIBCTX_OF(provctx));
     ossl_prov_ctx_free(provctx);
+    ossl_deinit_casecmp();
 }
 
 static void fips_intern_teardown(void *provctx)
@@ -542,7 +500,6 @@ static void fips_intern_teardown(void *provctx)
      * We know that the library context is the same as for the outer provider,
      * so no need to destroy it here.
      */
-    fips_deinit_casecmp();
     ossl_prov_ctx_free(provctx);
 }
 
@@ -592,10 +549,10 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
 
     memset(&selftest_params, 0, sizeof(selftest_params));
 
-    if (!fips_init_casecmp())
+    if (!ossl_init_casecmp_int())
         return 0;
     if (!ossl_prov_seeding_from_dispatch(in))
-        return 0;
+        goto err;
     for (; in->function_id != 0; in++) {
         /*
          * We do not support the scenario of an application linked against
