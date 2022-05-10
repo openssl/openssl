@@ -349,8 +349,8 @@ int openssl_strerror_r(int errnum, char *buf, size_t buflen)
 #ifndef OPENSSL_NO_LOCALE
 static locale_t loc;
 
-static void *ossl_c_locale(void) {
-    return (void *)loc;
+static locale_t ossl_c_locale(void) {
+    return loc;
 }
 
 int ossl_init_casecmp_int(void) {
@@ -359,21 +359,32 @@ int ossl_init_casecmp_int(void) {
 # else
     loc = newlocale(LC_COLLATE_MASK, "C", (locale_t) 0);
 # endif
-    return (loc == (locale_t) 0) ? 0 : 1;
+    return (loc == (locale_t)0) ? 0 : 1;
 }
 
 void ossl_deinit_casecmp(void) {
     freelocale(loc);
+    loc = (locale_t)0;
 }
 
 int OPENSSL_strcasecmp(const char *s1, const char *s2)
 {
-    return strcasecmp_l(s1, s2, (locale_t)ossl_c_locale());
+    locale_t l = ossl_c_locale();
+
+    /* Fallback in case of locale initialization failure */
+    if (l == (locale_t)0)
+        return strcasecmp(s1, s2);
+    return strcasecmp_l(s1, s2, l);
 }
 
 int OPENSSL_strncasecmp(const char *s1, const char *s2, size_t n)
 {
-    return strncasecmp_l(s1, s2, n, (locale_t)ossl_c_locale());
+    locale_t l = ossl_c_locale();
+
+    /* Fallback in case of locale initialization failure */
+    if (l == (locale_t)0)
+        return strncasecmp(s1, s2, n);
+    return strncasecmp_l(s1, s2, n, l);
 }
 #else
 int ossl_init_casecmp_int(void) {
