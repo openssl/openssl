@@ -200,6 +200,7 @@
 # define SSL_R_NO_SUITABLE_DIGEST_ALGORITHM               297
 # define SSL_R_NO_SUITABLE_GROUPS                         295
 # define SSL_R_NO_SUITABLE_KEY_SHARE                      101
+# define SSL_R_NO_SUITABLE_RECORD_LAYER                   322
 # define SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM            118
 # define SSL_R_NO_VALID_SCTS                              216
 # define SSL_R_NO_VERIFY_COOKIE_CALLBACK                  403

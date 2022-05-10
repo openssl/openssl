@@ -663,14 +663,12 @@ int ossl_ssl_connection_reset(SSL *s)
      * assign it.
      */
     if (!ssl_set_new_record_layer(sc,
-                                  SSL_CONNECTION_IS_DTLS(sc) ? &ossl_dtls_record_method
-                                                             : &ossl_tls_record_method,
                                   TLS_ANY_VERSION,
                                   OSSL_RECORD_DIRECTION_READ,
                                   OSSL_RECORD_PROTECTION_LEVEL_NONE,
                                   NULL, 0, NULL, 0, NULL,  0, NULL, 0,
                                   NID_undef, NULL, NULL)) {
-        /* SSLfatal already called */
+        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, SSL_R_NO_SUITABLE_RECORD_LAYER);
         return 0;
     }
 

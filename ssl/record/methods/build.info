@@ -7,4 +7,8 @@ IF[{- !$disabled{'deprecated-3.0'} -}]
   SHARED_SOURCE[../../../libssl]=ssl3_cbc.c
 ENDIF
 
+IF[{- !$disabled{'ktls'} -}]
+  SOURCE[../../../libssl]=ktls_meth.c
+ENDIF
+
 SOURCE[../../../providers/libdefault.a ../../../providers/libfips.a]=ssl3_cbc.c

@@ -165,6 +165,7 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
     EVP_MD_CTX *mac_ctx;
     EVP_PKEY *mac_key;
     size_t n, i, j, k, cl;
+    int iivlen;
     int reuse_dd = 0;
 #ifndef OPENSSL_NO_KTLS
     ktls_crypto_info_t crypto_info;
@@ -172,6 +173,11 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
     BIO *bio;
 #endif
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    /*
+     * Taglen is only relevant for CCM ciphersuites. Other ciphersuites
+     * ignore this value so we can default it to 0.
+     */
+    size_t taglen = 0;
 
     c = s->s3.tmp.new_sym_enc;
     m = s->s3.tmp.new_hash;
@@ -185,7 +191,12 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
 
     cl = EVP_CIPHER_get_key_length(c);
     j = cl;
-    k = tls_iv_length_within_key_block(c);
+    iivlen = tls_iv_length_within_key_block(c);
+    if (iivlen < 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    k = iivlen;
     if ((which == SSL3_CHANGE_CIPHER_CLIENT_WRITE) ||
         (which == SSL3_CHANGE_CIPHER_SERVER_READ)) {
         mac_secret = &(p[0]);
@@ -207,6 +218,14 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
     if (n > s->s3.tmp.key_block_length) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
+    }
+
+    if (EVP_CIPHER_get_mode(c) == EVP_CIPH_CCM_MODE) {
+        if ((s->s3.tmp.new_cipher->algorithm_enc
+                & (SSL_AES128CCM8 | SSL_AES256CCM8)) != 0)
+            taglen = EVP_CCM8_TLS_TAG_LEN;
+        else
+            taglen = EVP_CCM_TLS_TAG_LEN;
     }
 
     if (which & SSL3_CC_READ) {
@@ -261,32 +280,18 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
             if (!SSL_CONNECTION_IS_DTLS(s))
                 RECORD_LAYER_reset_read_sequence(&s->rlayer);
         } else {
-            /*
-             * Taglen is only relevant for CCM ciphersuites. Other ciphersuites
-             * ignore this value so we can default it to 0.
-             */
-            size_t taglen = 0;
-
-            if (EVP_CIPHER_get_mode(c) == EVP_CIPH_CCM_MODE) {
-                if ((s->s3.tmp. new_cipher->algorithm_enc
-                        & (SSL_AES128CCM8 | SSL_AES256CCM8)) != 0)
-                    taglen = EVP_CCM8_TLS_TAG_LEN;
-                else
-                    taglen = EVP_CCM_TLS_TAG_LEN;
-            }
-
-            if (!ssl_set_new_record_layer(s, NULL, s->version,
-                                        OSSL_RECORD_DIRECTION_READ,
-                                        OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
-                                        key, cl, iv, (size_t)k, mac_secret,
-                                        mac_secret_size, c, taglen, mac_type, m,
-                                        comp)) {
-                /* SSLfatal already called */
+            if (!ssl_set_new_record_layer(s, s->version,
+                                          OSSL_RECORD_DIRECTION_READ,
+                                          OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
+                                          key, cl, iv, (size_t)k, mac_secret,
+                                          mac_secret_size, c, taglen, mac_type,
+                                          m, comp)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_NO_SUITABLE_RECORD_LAYER);
                 goto err;
             }
 
             /* TODO(RECLAYER): Temporary - remove me */
-            goto check_ktls;
+            goto skip_ktls;
         }
     } else {
         s->statem.enc_write_state = ENC_WRITE_STATE_INVALID;
@@ -385,12 +390,6 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
             goto err;
         }
     } else if (EVP_CIPHER_get_mode(c) == EVP_CIPH_CCM_MODE) {
-        int taglen;
-        if (s->s3.tmp.
-            new_cipher->algorithm_enc & (SSL_AES128CCM8 | SSL_AES256CCM8))
-            taglen = EVP_CCM8_TLS_TAG_LEN;
-        else
-            taglen = EVP_CCM_TLS_TAG_LEN;
         if (!EVP_CipherInit_ex(dd, c, NULL, NULL, NULL, (which & SSL3_CC_WRITE))
             || (EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_AEAD_SET_IVLEN, 12, NULL) <= 0)
             || (EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_AEAD_SET_TAG, taglen, NULL) <= 0)
@@ -419,7 +418,6 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
         goto err;
     }
 
- check_ktls:
 #ifndef OPENSSL_NO_KTLS
     if (s->compress || (s->options & SSL_OP_ENABLE_KTLS) == 0)
         goto skip_ktls;
@@ -429,7 +427,7 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
         goto skip_ktls;
 
     /* check that cipher is supported */
-    if (!ktls_check_supported_cipher(s, c, dd))
+    if (!ktls_check_supported_cipher(s, c, taglen))
         goto skip_ktls;
 
     if (which & SSL3_CC_WRITE)
@@ -460,9 +458,9 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
     else
         rl_sequence = RECORD_LAYER_get_read_sequence(&s->rlayer);
 
-    if (!ktls_configure_crypto(s, c, dd, rl_sequence, &crypto_info,
-                               which & SSL3_CC_WRITE, iv, key, mac_secret,
-                               mac_secret_size))
+    if (!ktls_configure_crypto(s, c, rl_sequence, &crypto_info,
+                               which & SSL3_CC_WRITE, iv, (size_t)k, key, cl,
+                               mac_secret, mac_secret_size))
         goto skip_ktls;
 
     /* ktls works with user provided buffers directly */
@@ -472,8 +470,8 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
         SSL_set_options(SSL_CONNECTION_GET_SSL(s), SSL_OP_NO_RENEGOTIATION);
     }
 
- skip_ktls:
 #endif                          /* OPENSSL_NO_KTLS */
+ skip_ktls:
     s->statem.enc_write_state = ENC_WRITE_STATE_VALID;
 
     OSSL_TRACE_BEGIN(TLS) {
@@ -497,6 +495,7 @@ int tls1_setup_key_block(SSL_CONNECTION *s)
     int mac_type = NID_undef;
     size_t num, mac_secret_size = 0;
     int ret = 0;
+    int ivlen;
 
     if (s->s3.tmp.key_block_length != 0)
         return 1;
@@ -515,8 +514,12 @@ int tls1_setup_key_block(SSL_CONNECTION *s)
     s->s3.tmp.new_hash = hash;
     s->s3.tmp.new_mac_pkey_type = mac_type;
     s->s3.tmp.new_mac_secret_size = mac_secret_size;
-    num = mac_secret_size + EVP_CIPHER_get_key_length(c)
-          + tls_iv_length_within_key_block(c);
+    ivlen = tls_iv_length_within_key_block(c);
+    if (ivlen < 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    num = mac_secret_size + EVP_CIPHER_get_key_length(c) + ivlen;
     num *= 2;
 
     ssl3_cleanup_key_block(s);

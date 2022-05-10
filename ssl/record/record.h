@@ -283,9 +283,8 @@ int dtls_buffer_listen_record(SSL_CONNECTION *s, size_t len, unsigned char *seq,
 int ossl_tls_handle_rlayer_return(SSL_CONNECTION *s, int ret, char *file,
                                   int line);
 
-int ssl_set_new_record_layer(SSL_CONNECTION *s, const OSSL_RECORD_METHOD *meth,
-                             int version, int direction, int level,
-                             unsigned char *key, size_t keylen,
+int ssl_set_new_record_layer(SSL_CONNECTION *s, int version, int direction,
+                             int level, unsigned char *key, size_t keylen,
                              unsigned char *iv,  size_t ivlen,
                              unsigned char *mackey, size_t mackeylen,
                              const EVP_CIPHER *ciph, size_t taglen,

@@ -307,6 +307,8 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_NO_SUITABLE_GROUPS), "no suitable groups"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_NO_SUITABLE_KEY_SHARE),
     "no suitable key share"},
+    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_NO_SUITABLE_RECORD_LAYER),
+    "no suitable record layer"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM),
     "no suitable signature algorithm"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_NO_VALID_SCTS), "no valid scts"},
