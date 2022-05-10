@@ -52,11 +52,11 @@
 #if !defined(M_METHOD)
 # if defined(_WIN32) && defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0600 && !defined(NO_WSARECVMSG)
 #  define M_METHOD  M_METHOD_WSARECVMSG
-# elif defined(MSG_WAITFORONE) && !defined(NO_RECVMMSG)
+# elif !defined(_WIN32) && defined(MSG_WAITFORONE) && !defined(NO_RECVMMSG)
 #  define M_METHOD  M_METHOD_RECVMMSG
-# elif defined(CMSG_LEN) && !defined(NO_RECVMSG)
+# elif !defined(_WIN32) && defined(CMSG_LEN) && !defined(NO_RECVMSG)
 #  define M_METHOD  M_METHOD_RECVMSG
-# elif defined(MSG_DONTWAIT) && !defined(NO_RECVFROM)
+# elif !defined(_WIN32) && defined(MSG_DONTWAIT) && !defined(NO_RECVFROM)
 #  define M_METHOD  M_METHOD_RECVFROM
 # else
 #  define M_METHOD  M_METHOD_NONE
@@ -69,16 +69,21 @@
 #  if defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0600
 #    include <mswsock.h>
 #  endif
-#  define CMSG_SPACE(x) WSA_CMSG_SPACE(x)
-#  define CMSG_FIRSTHDR(x) WSA_CMSG_FIRSTHDR(x)
-#  define CMSG_NXTHDR(x, y) WSA_CMSG_NXTHDR(x, y)
-#  define CMSG_DATA(x) WSA_CMSG_DATA(x)
-#  define CMSG_LEN(x) WSA_CMSG_LEN(x)
+#  define BIO_CMSG_SPACE(x) WSA_CMSG_SPACE(x)
+#  define BIO_CMSG_FIRSTHDR(x) WSA_CMSG_FIRSTHDR(x)
+#  define BIO_CMSG_NXTHDR(x, y) WSA_CMSG_NXTHDR(x, y)
+#  define BIO_CMSG_DATA(x) WSA_CMSG_DATA(x)
+#  define BIO_CMSG_LEN(x) WSA_CMSG_LEN(x)
 #  define MSGHDR_TYPE WSAMSG
 #  define CMSGHDR_TYPE WSACMSGHDR
 #else
 #  define MSGHDR_TYPE struct msghdr
 #  define CMSGHDR_TYPE struct cmsghdr
+#  define BIO_CMSG_SPACE(x) CMSG_SPACE(x)
+#  define BIO_CMSG_FIRSTHDR(x) CMSG_FIRSTHDR(x)
+#  define BIO_CMSG_NXTHDR(x, y) CMSG_NXTHDR(x, y)
+#  define BIO_CMSG_DATA(x) CMSG_DATA(x)
+#  define BIO_CMSG_LEN(x) CMSG_LEN(x)
 #endif
 
 #if    M_METHOD == M_METHOD_RECVMMSG   \
@@ -92,17 +97,17 @@
 #   define BIO_CMSG_ALLOC_LEN   64
 # else
 #   if defined(IPV6_PKTINFO)
-#     define BIO_CMSG_ALLOC_LEN_1   CMSG_SPACE(sizeof(struct in6_pktinfo))
+#     define BIO_CMSG_ALLOC_LEN_1   BIO_CMSG_SPACE(sizeof(struct in6_pktinfo))
 #   else
 #     define BIO_CMSG_ALLOC_LEN_1   0
 #   endif
 #   if defined(IP_PKTINFO)
-#     define BIO_CMSG_ALLOC_LEN_2   CMSG_SPACE(sizeof(struct in_pktinfo))
+#     define BIO_CMSG_ALLOC_LEN_2   BIO_CMSG_SPACE(sizeof(struct in_pktinfo))
 #   else
 #     define BIO_CMSG_ALLOC_LEN_2   0
 #   endif
 #   if defined(IP_RECVDSTADDR)
-#     define BIO_CMSG_ALLOC_LEN_3   CMSG_SPACE(sizeof(struct in_addr))
+#     define BIO_CMSG_ALLOC_LEN_3   BIO_CMSG_SPACE(sizeof(struct in_addr))
 #   else
 #     define BIO_CMSG_ALLOC_LEN_3   0
 #   endif
@@ -1004,7 +1009,7 @@ static int extract_local(BIO *b, MSGHDR_TYPE *mh, BIO_ADDR *local) {
     CMSGHDR_TYPE *cmsg;
     int af = dgram_get_sock_family(b);
 
-    for (cmsg=CMSG_FIRSTHDR(mh); cmsg != NULL; cmsg=CMSG_NXTHDR(mh, cmsg)) {
+    for (cmsg=BIO_CMSG_FIRSTHDR(mh); cmsg != NULL; cmsg=BIO_CMSG_NXTHDR(mh, cmsg)) {
         if (af == AF_INET) {
             if (cmsg->cmsg_level != IPPROTO_IP)
                 continue;
@@ -1013,12 +1018,12 @@ static int extract_local(BIO *b, MSGHDR_TYPE *mh, BIO_ADDR *local) {
             if (cmsg->cmsg_type != IP_PKTINFO)
                 continue;
 
-            local->s_in.sin_addr = ((struct in_pktinfo *)CMSG_DATA(cmsg))->ipi_addr;
+            local->s_in.sin_addr = ((struct in_pktinfo *)BIO_CMSG_DATA(cmsg))->ipi_addr;
 #  elif defined(IP_RECVDSTADDR)
             if (cmsg->cmsg_type != IP_RECVDSTADDR)
                 continue;
 
-            local->s_in.sin_addr = *(struct in_addr *)CMSG_DATA(cmsg);
+            local->s_in.sin_addr = *(struct in_addr *)BIO_CMSG_DATA(cmsg);
 #  endif
 #  if defined(IP_PKTINFO) || defined(IP_RECVDSTADDR)
             {
@@ -1039,7 +1044,7 @@ static int extract_local(BIO *b, MSGHDR_TYPE *mh, BIO_ADDR *local) {
 
             {
                 bio_dgram_data *data = b->ptr;
-                local->s_in6.sin6_addr     = ((struct in6_pktinfo *)CMSG_DATA(cmsg))->ipi6_addr;
+                local->s_in6.sin6_addr     = ((struct in6_pktinfo *)BIO_CMSG_DATA(cmsg))->ipi6_addr;
                 local->s_in6.sin6_family   = AF_INET6;
                 local->s_in6.sin6_port     = data->local_addr.s_in6.sin6_port;
                 local->s_in6.sin6_scope_id = data->local_addr.s_in6.sin6_scope_id;
@@ -1069,12 +1074,14 @@ static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local) {
         cmsg = (CMSGHDR_TYPE *)mh->msg_control;
 #endif
 
-        cmsg->cmsg_len   = CMSG_LEN(sizeof(struct in_pktinfo));
+        cmsg->cmsg_len   = BIO_CMSG_LEN(sizeof(struct in_pktinfo));
         cmsg->cmsg_level = IPPROTO_IP;
         cmsg->cmsg_type  = IP_PKTINFO;
 
-        info = (struct in_pktinfo *)CMSG_DATA(cmsg);
-        info->ipi_addr = local->s_in.sin_addr;
+        info = (struct in_pktinfo *)BIO_CMSG_DATA(cmsg);
+        info->ipi_spec_dst      = local->s_in.sin_addr;
+        info->ipi_addr.s_addr   = 0;
+        info->ipi_ifindex       = 0;
 
         /*
          * We cannot override source port using this API, therefore
@@ -1087,9 +1094,9 @@ static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local) {
             return 0;
 
 #if defined(_WIN32)
-        mh->Control.len = CMSG_SPACE(sizeof(struct in_pktinfo));
+        mh->Control.len = BIO_CMSG_SPACE(sizeof(struct in_pktinfo));
 #else
-        mh->msg_controllen = CMSG_SPACE(sizeof(struct in_pktinfo));
+        mh->msg_controllen = BIO_CMSG_SPACE(sizeof(struct in_pktinfo));
 #endif
         return 1;
 # elif defined(IP_SENDSRCADDR)
@@ -1097,11 +1104,11 @@ static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local) {
         struct in_addr *info;
 
         cmsg = (struct cmsghdr *)mh->msg_control;
-        cmsg->cmsg_len   = CMSG_LEN(sizeof(struct in_addr));
+        cmsg->cmsg_len   = BIO_CMSG_LEN(sizeof(struct in_addr));
         cmsg->cmsg_level = IPPROTO_IP;
         cmsg->cmsg_type  = IP_SENDSRCADDR;
 
-        info = (struct in_addr *)CMSG_DATA(cmsg);
+        info = (struct in_addr *)BIO_CMSG_DATA(cmsg);
         *info = local->s_in.sin_addr;
 
         /* See comment above. */
@@ -1109,7 +1116,7 @@ static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local) {
             && data->local_addr.s_in.sin_port != local->s_in.sin_port)
             return 0;
 
-        mh->msg_controllen = CMSG_SPACE(sizeof(struct in_addr));
+        mh->msg_controllen = BIO_CMSG_SPACE(sizeof(struct in_addr));
         return 1;
 # endif
     } else if (af == AF_INET6) {
@@ -1123,12 +1130,13 @@ static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local) {
 #else
         cmsg = (CMSGHDR_TYPE *)mh->msg_control;
 #endif
-        cmsg->cmsg_len   = CMSG_LEN(sizeof(struct in6_pktinfo));
+        cmsg->cmsg_len   = BIO_CMSG_LEN(sizeof(struct in6_pktinfo));
         cmsg->cmsg_level = IPPROTO_IPV6;
         cmsg->cmsg_type  = IPV6_PKTINFO;
 
-        info = (struct in6_pktinfo *)CMSG_DATA(cmsg);
-        info->ipi6_addr = local->s_in6.sin6_addr;
+        info = (struct in6_pktinfo *)BIO_CMSG_DATA(cmsg);
+        info->ipi6_addr     = local->s_in6.sin6_addr;
+        info->ipi6_ifindex  = 0;
 
         /*
          * See comment above, but also applies to the other fields
@@ -1143,9 +1151,9 @@ static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local) {
             return 0;
 
 #if defined(_WIN32)
-        mh->Control.len = CMSG_SPACE(sizeof(struct in6_pktinfo));
+        mh->Control.len = BIO_CMSG_SPACE(sizeof(struct in6_pktinfo));
 #else
-        mh->msg_controllen = CMSG_SPACE(sizeof(struct in6_pktinfo));
+        mh->msg_controllen = BIO_CMSG_SPACE(sizeof(struct in6_pktinfo));
 #endif
         return 1;
 # endif
@@ -1260,8 +1268,7 @@ static ossl_ssize_t dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t n
 
 #elif M_METHOD == M_METHOD_RECVMSG
     /*
-     * If CMSG_LEN is defined, take this as a cue that recvmsg is available.
-     * We emulate recvmmsg using multiple calls.
+     * If recvmsg is available, we emulate recvmmsg using multiple calls.
      */
     sysflags &= MSG_DONTWAIT; /* we only support this flag here */
     for (i=0; i<num_msg; ++i) {

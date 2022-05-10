@@ -70,11 +70,11 @@ static int test_bio_dgram_impl(int af, int use_local)
     ina6.s6_addr[15] = 1;
 
     if (af == AF_INET) {
-        printf("# Testing with AF_INET, local=%d\n", use_local);
+        fprintf(stderr, "# Testing with AF_INET, local=%d\n", use_local);
         pina = &ina;
         inal = sizeof(ina);
     } else if (af == AF_INET6) {
-        printf("# Testing with AF_INET6, local=%d\n", use_local);
+        fprintf(stderr, "# Testing with AF_INET6, local=%d\n", use_local);
         pina = &ina6;
         inal = sizeof(ina6);
     } else
@@ -199,8 +199,10 @@ static int test_bio_dgram_impl(int af, int use_local)
 
     /* Third effort should succeed */
     ret = BIO_sendmmsg(b1, tx_msg, sizeof(BIO_MSG), 1, 0);
-    if (!TEST_int_eq(ret, 1))
+    if (!TEST_int_eq(ret, 1)) {
+        printf("# Failed sending message\n");
         goto err;
+    }
 
     /* Now try receiving */
     rx_msg[0].data      = rx_buf;
