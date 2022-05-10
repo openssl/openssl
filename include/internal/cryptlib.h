@@ -259,5 +259,6 @@ static ossl_inline int ossl_is_absolute_path(const char *path)
 }
 
 int ossl_init_casecmp_int(void);
+int ossl_init_casecmp(void);
 void ossl_deinit_casecmp(void);
 #endif
