@@ -7,18 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/e_os.h"
 #include <string.h>
 #include <stdio.h>
 #include "crypto/ctype.h"
 #include <openssl/ebcdic.h>
-#include "internal/core.h"
-#ifndef OPENSSL_NO_LOCALE
-# include <locale.h>
-# ifdef OPENSSL_SYS_MACOSX
-#  include <xlocale.h>
-# endif
-#endif
+
 /*
  * Define the character classes for each character in the seven bit ASCII
  * character set.  This is independent of the host's character set, characters
@@ -285,60 +278,3 @@ int ossl_ascii_isdigit(const char inchar) {
         return 1;
     return 0;
 }
-
-#ifndef OPENSSL_NO_LOCALE
-# ifndef FIPS_MODULE
-static locale_t loc;
-
-
-void *ossl_c_locale() {
-    return (void *)loc;
-}
-
-int ossl_init_casecmp_int() {
-# ifdef OPENSSL_SYS_WINDOWS
-    loc = _create_locale(LC_COLLATE, "C");
-# else
-    loc = newlocale(LC_COLLATE_MASK, "C", (locale_t) 0);
-# endif
-    return (loc == (locale_t) 0) ? 0 : 1;
-}
-
-void ossl_deinit_casecmp() {
-    freelocale(loc);
-}
-# endif
-
-int OPENSSL_strcasecmp(const char *s1, const char *s2)
-{
-    return strcasecmp_l(s1, s2, (locale_t)ossl_c_locale());
-}
-
-int OPENSSL_strncasecmp(const char *s1, const char *s2, size_t n)
-{
-    return strncasecmp_l(s1, s2, n, (locale_t)ossl_c_locale());
-}
-#else
-# ifndef FIPS_MODULE
-void *ossl_c_locale() {
-    return NULL;
-}
-# endif
-
-int ossl_init_casecmp_int() {
-    return 1;
-}
-
-void ossl_deinit_casecmp() {
-}
-
-int OPENSSL_strcasecmp(const char *s1, const char *s2)
-{
-    return strcasecmp(s1, s2);
-}
-
-int OPENSSL_strncasecmp(const char *s1, const char *s2, size_t n)
-{
-    return strncasecmp(s1, s2, n);
-}
-#endif
