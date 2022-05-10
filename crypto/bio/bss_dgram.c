@@ -993,7 +993,13 @@ static void translate_msg(struct msghdr *mh, struct iovec *iov, unsigned char *c
     iov->iov_len  = msg->data_len;
 
     mh->msg_name        = msg->peer != NULL ? &msg->peer->sa : NULL;
-    mh->msg_namelen     = sizeof(*msg->peer);
+    if (msg->peer != NULL && msg->peer->sa.sa_family == AF_INET)
+        mh->msg_namelen = sizeof(struct sockaddr_in);
+    else if (msg->peer != NULL && msg->peer->sa.sa_family == AF_INET6)
+        mh->msg_namelen = sizeof(struct sockaddr_in6);
+    else
+        mh->msg_namelen = 0;
+
     mh->msg_iov         = iov;
     mh->msg_iovlen      = 1;
     mh->msg_control     = msg->local != NULL ? control : NULL;
@@ -1231,7 +1237,7 @@ static ossl_ssize_t dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t n
             translate_msg(&mh[j].msg_hdr, &iov[j], control[j], &BIO_MSG_N(msg, i+j));
 
             /* If local address was requested, it must have been enabled */
-            if (msg[i+j].local != NULL) {
+            if (BIO_MSG_N(msg, i+j).local != NULL) {
                 if (!have_local_enabled)
                     /*
                      * If we have done at least one message, we must return the
@@ -1248,12 +1254,12 @@ static ossl_ssize_t dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t n
         ret = sendmmsg(b->num, mh, jlim, sysflags);
         if (ret > 0) {
             for (j=0; j<(size_t)ret; ++j) {
-                msg[i+j].data_len = mh[j].msg_len;
-                msg[i+j].flags    = 0;
+                BIO_MSG_N(msg, i+j).data_len = mh[j].msg_len;
+                BIO_MSG_N(msg, i+j).flags    = 0;
             }
             num_done += ret;
         } else if (ret < 0) {
-            return num_done > 0 ? num_done : PACK_ERRNO(errno);
+            return num_done > 0 ? num_done : PACK_ERRNO(get_last_socket_error());
         }
 
         /*
@@ -1270,7 +1276,6 @@ static ossl_ssize_t dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t n
     /*
      * If recvmsg is available, we emulate recvmmsg using multiple calls.
      */
-    sysflags &= MSG_DONTWAIT; /* we only support this flag here */
     for (i=0; i<num_msg; ++i) {
         translate_msg(&mh, &iov, control, &BIO_MSG_N(msg, i));
 
@@ -1278,7 +1283,7 @@ static ossl_ssize_t dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t n
             if (!have_local_enabled)
                 return i > 0 ? (ossl_ssize_t)i : -3;
 
-            if (pack_local(b, &mh, msg[i].local) < 1)
+            if (pack_local(b, &mh, BIO_MSG_N(msg, i).local) < 1)
                 return i > 0 ? (ossl_ssize_t)i : -3;
         }
 
@@ -1290,14 +1295,12 @@ static ossl_ssize_t dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t n
         BIO_MSG_N(msg, i).flags    = 0;
     }
 
-    return i > 0 ? (ossl_ssize_t)i : PACK_ERRNO(errno);
+    return i > 0 ? (ossl_ssize_t)i : PACK_ERRNO(get_last_socket_error());
 
 #elif M_METHOD == M_METHOD_RECVFROM
     /*
      * Fallback to recvfrom and send a single message.
      */
-    sysflags &= MSG_DONTWAIT; /* we only support this flag here */
-
     if (msg[0].local != NULL)
         /*
          * We cannot set the local address if using sendto
@@ -1309,7 +1312,7 @@ static ossl_ssize_t dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t n
                  msg[0].peer != NULL ? &msg[0].peer->sa : NULL,
                  msg[0].peer != NULL ? sizeof(*msg[0].peer) : 0);
     if (ret <= 0)
-        return PACK_ERRNO(errno);
+        return PACK_ERRNO(get_last_socket_error());
 
     msg[0].data_len = ret;
     msg[0].flags    = 0;
@@ -1425,7 +1428,7 @@ static ossl_ssize_t dgram_recvmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t n
                 ++num_done;
             }
         } else if (ret < 0) {
-            return num_done > 0 ? num_done : PACK_ERRNO(errno);
+            return num_done > 0 ? num_done : PACK_ERRNO(get_last_socket_error());
         }
 
         /*
@@ -1466,7 +1469,7 @@ static ossl_ssize_t dgram_recvmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t n
                 return i > 0 ? (ossl_ssize_t)i : -3;
     }
 
-    return i > 0 ? (ossl_ssize_t)i : PACK_ERRNO(errno);
+    return i > 0 ? (ossl_ssize_t)i : PACK_ERRNO(get_last_socket_error());
 
 #elif M_METHOD == M_METHOD_RECVFROM
     /*
