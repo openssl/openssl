@@ -421,6 +421,7 @@ inline int nssgetpid();
 #  define strcasecmp_l _stricmp_l
 #  define strncasecmp_l _strnicmp_l
 #  define strcasecmp _stricmp
+#  define strncasecmp _strnicmp
 # elif !defined(_POSIX_C_SOURCE) || _POSIX_C_SOURCE < 200809L \
      || defined(OPENSSL_SYS_TANDEM)
 #  ifndef OPENSSL_NO_LOCALE
