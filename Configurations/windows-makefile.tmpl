@@ -744,7 +744,7 @@ EOF
               $args{generator}->[1] || platform->dsoname($args{product});
           return <<"EOF";
 $target: $gen0 $deps $mkdef
-	"\$(PERL)" "$mkdef"$ord_ver --ordinals $gen0 --name $ord_name --OS windows > $target
+	"\$(PERL)" "$mkdef"$ord_ver --type $args{intent} --ordinals $gen0 --name $ord_name --OS windows > $target
 EOF
       } elsif (platform->isasm($args{src})) {
           #
