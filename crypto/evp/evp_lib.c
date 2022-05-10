@@ -1172,8 +1172,6 @@ EVP_PKEY *EVP_PKEY_Q_keygen(OSSL_LIB_CTX *libctx, const char *propq,
 
     va_start(args, type);
 
-    OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL);
-
     if (OPENSSL_strcasecmp(type, "RSA") == 0) {
         bits = va_arg(args, size_t);
         params[0] = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_RSA_BITS, &bits);
