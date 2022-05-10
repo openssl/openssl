@@ -132,7 +132,7 @@ static const SHA_LONG K256[64] = {
 # ifndef PEDANTIC
 #  if defined(__GNUC__) && __GNUC__>=2 && \
       !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
-#   if __riscv_zknh
+#   if defined(__riscv_zknh)
 #    define Sigma0(x) ({ MD32_REG_T ret;            \
                         asm ("sha256sum0 %0, %1"    \
                         : "=r"(ret)                 \
@@ -150,7 +150,7 @@ static const SHA_LONG K256[64] = {
                         : "=r"(ret)                 \
                         : "r"(x)); ret;             })
 #   endif
-#   if __riscv_zbt || __riscv_zpn
+#   if defined(__riscv_zbt) || defined(__riscv_zpn)
 #    define Ch(x,y,z) ({  MD32_REG_T ret;                           \
                         asm (".insn r4 0x33, 1, 0x3, %0, %2, %1, %3"\
                         : "=r"(ret)                                 \
