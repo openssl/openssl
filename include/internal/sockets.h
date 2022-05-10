@@ -60,6 +60,13 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #  endif
 
 # else
+#  if defined(__APPLE__)
+    /*
+     * This must be defined before including <netinet/in6.h> to get
+     * IPV6_RECVPKTINFO
+     */
+#   define __APPLE_USE_RFC_3542
+#  endif
 
 #  ifndef NO_SYS_PARAM_H
 #   include <sys/param.h>

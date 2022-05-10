@@ -524,6 +524,8 @@ static int enable_local_addr(BIO *b, int enable) {
             return 0;
 
         return 1;
+# elif defined(__APPLE__)
+#   error No IPV6_RECVPKTINFO
 # endif
     }
 
@@ -924,7 +926,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
 
     case BIO_CTRL_DGRAM_GET_LOCAL_ADDR_CAP:
-#if (defined(IP_PKTINFO) || defined(IP_RECVDSTADDR)) && \
+#if (defined(IP_PKTINFO) || defined(IP_RECVDSTADDR) || defined(IPV6_RECVPKTINFO)) && \
     (M_METHOD == M_METHOD_RECVMMSG || M_METHOD == M_METHOD_RECVMSG || M_METHOD == M_METHOD_WSARECVMSG)
         ret = 1;
 #else
@@ -933,7 +935,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
 
     case BIO_CTRL_DGRAM_SET_LOCAL_ADDR_ENABLE:
-#if (defined(IP_PKTINFO) || defined(IP_RECVDSTADDR)) && \
+#if (defined(IP_PKTINFO) || defined(IP_RECVDSTADDR) || defined(IPV6_RECVPKTINFO)) && \
     (M_METHOD == M_METHOD_RECVMMSG || M_METHOD == M_METHOD_RECVMSG || M_METHOD == M_METHOD_WSARECVMSG)
         num = (num > 0);
         if (num != data->local_addr_enabled) {
@@ -992,6 +994,7 @@ static void translate_msg(struct msghdr *mh, struct iovec *iov, unsigned char *c
     iov->iov_base = msg->data;
     iov->iov_len  = msg->data_len;
 
+    /* macOS requires msg_namelen be 0 if msg_name is NULL */
     mh->msg_name        = msg->peer != NULL ? &msg->peer->sa : NULL;
     if (msg->peer != NULL && msg->peer->sa.sa_family == AF_INET)
         mh->msg_namelen = sizeof(struct sockaddr_in);
