@@ -131,6 +131,10 @@ void *ossl_method_construct(OSSL_LIB_CTX *libctx, int operation_id,
      * constructing to see if we can find our method there already.
      * Unfortunately that does not work well if the query contains
      * optional properties as newly loaded providers can match them better.
+     * We trust that ossl_method_construct_precondition() and
+     * ossl_method_construct_postcondition() make sure that the
+     * ossl_algorithm_do_all() does very little when methods from
+     * a provider have already been constructed.
      */
 
     cbdata.store = NULL;
