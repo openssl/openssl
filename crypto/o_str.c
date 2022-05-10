@@ -18,7 +18,6 @@
 #endif
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
-#include "internal/core.h"
 
 #define DEFAULT_SEPARATOR ':'
 #define CH_ZERO '\0'
@@ -348,15 +347,13 @@ int openssl_strerror_r(int errnum, char *buf, size_t buflen)
 }
 
 #ifndef OPENSSL_NO_LOCALE
-# ifndef FIPS_MODULE
 static locale_t loc;
 
-
-void *ossl_c_locale() {
+static void *ossl_c_locale(void) {
     return (void *)loc;
 }
 
-int ossl_init_casecmp_int() {
+int ossl_init_casecmp_int(void) {
 # ifdef OPENSSL_SYS_WINDOWS
     loc = _create_locale(LC_COLLATE, "C");
 # else
@@ -365,10 +362,9 @@ int ossl_init_casecmp_int() {
     return (loc == (locale_t) 0) ? 0 : 1;
 }
 
-void ossl_deinit_casecmp() {
+void ossl_deinit_casecmp(void) {
     freelocale(loc);
 }
-# endif
 
 int OPENSSL_strcasecmp(const char *s1, const char *s2)
 {
@@ -380,17 +376,11 @@ int OPENSSL_strncasecmp(const char *s1, const char *s2, size_t n)
     return strncasecmp_l(s1, s2, n, (locale_t)ossl_c_locale());
 }
 #else
-# ifndef FIPS_MODULE
-void *ossl_c_locale() {
-    return NULL;
-}
-# endif
-
-int ossl_init_casecmp_int() {
+int ossl_init_casecmp_int(void) {
     return 1;
 }
 
-void ossl_deinit_casecmp() {
+void ossl_deinit_casecmp(void) {
 }
 
 int OPENSSL_strcasecmp(const char *s1, const char *s2)
