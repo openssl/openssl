@@ -23,7 +23,7 @@
 #include <openssl/dh.h>
 #include <openssl/rsa.h>
 #include <openssl/kdf.h>
-#include "crypto/cryptlib.h"
+#include "internal/cryptlib.h"
 #ifndef FIPS_MODULE
 # include "crypto/asn1.h"
 #endif
@@ -199,7 +199,6 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
             }
 #ifndef FIPS_MODULE
             if (keytype != NULL) {
-                OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL);
                 id = evp_pkey_name2type(keytype);
                 if (id == NID_undef)
                     id = -1;
