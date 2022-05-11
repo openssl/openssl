@@ -66,22 +66,6 @@ void ossl_sm3_transform(SM3_CTX *c, const unsigned char *data);
                        : "=r"(ret)         \
                        : "r"(x)); ret;     })
 #  endif
-#  if defined(__riscv_zbb) || defined(__riscv_zbkb)
-#   if __riscv_xlen == 64
-#   undef ROTATE
-#   define ROTATE(x, n) ({ MD32_REG_T ret;            \
-                       asm ("roriw %0, %1, %2"        \
-                       : "=r"(ret)                    \
-                       : "r"(x), "i"(32 - (n))); ret;})
-#   endif
-#   if __riscv_xlen == 32
-#   undef ROTATE
-#   define ROTATE(x, n) ({ MD32_REG_T ret;            \
-                       asm ("rori %0, %1, %2"         \
-                       : "=r"(ret)                    \
-                       : "r"(x), "i"(32 - (n))); ret;})
-#   endif
-#  endif
 # endif
 #endif
 
