@@ -23,7 +23,7 @@ typedef struct {
     int number;
 } NAMENUM_ENTRY;
 
-DEFINE_LHASH_OF(NAMENUM_ENTRY);
+DEFINE_LHASH_OF_2(NAMENUM_ENTRY);
 
 /*-
  * The namemap itself

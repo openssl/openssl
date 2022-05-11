@@ -96,22 +96,17 @@ unsigned long OPENSSL_LH_num_items(const OPENSSL_LHASH *lh);
 unsigned long OPENSSL_LH_get_down_load(const OPENSSL_LHASH *lh);
 void OPENSSL_LH_set_down_load(OPENSSL_LHASH *lh, unsigned long down_load);
 
-/*
- * These are deprecated but are not tagged as deprecated to avoid generating
- * warnings due to the calls from the static inlines generated in the macros
- * below.
- */
 # ifndef OPENSSL_NO_STDIO
 #  ifndef OPENSSL_NO_DEPRECATED_3_1
-void OPENSSL_LH_stats(const OPENSSL_LHASH *lh, FILE *fp);
-void OPENSSL_LH_node_stats(const OPENSSL_LHASH *lh, FILE *fp);
-void OPENSSL_LH_node_usage_stats(const OPENSSL_LHASH *lh, FILE *fp);
+OSSL_DEPRECATEDIN_3_1 void OPENSSL_LH_stats(const OPENSSL_LHASH *lh, FILE *fp);
+OSSL_DEPRECATEDIN_3_1 void OPENSSL_LH_node_stats(const OPENSSL_LHASH *lh, FILE *fp);
+OSSL_DEPRECATEDIN_3_1 void OPENSSL_LH_node_usage_stats(const OPENSSL_LHASH *lh, FILE *fp);
 #  endif
 # endif
 # ifndef OPENSSL_NO_DEPRECATED_3_1
-void OPENSSL_LH_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
-void OPENSSL_LH_node_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
-void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
+OSSL_DEPRECATEDIN_3_1 void OPENSSL_LH_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
+OSSL_DEPRECATEDIN_3_1 void OPENSSL_LH_node_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
+OSSL_DEPRECATEDIN_3_1 void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
 # endif
 
 # ifndef OPENSSL_NO_DEPRECATED_1_1_0
@@ -207,7 +202,7 @@ void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
 #  define DEFINE_LHASH_OF_DEPRECATED(type)
 # endif
 
-# define DEFINE_LHASH_OF(type) \
+# define DEFINE_LHASH_OF_2(type) \
     LHASH_OF(type) { \
         union lh_##type##_dummy { void* d1; unsigned long d2; int d3; } dummy; \
     }; \
@@ -253,7 +248,6 @@ void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
     { \
         return OPENSSL_LH_num_items((OPENSSL_LHASH *)lh); \
     } \
-    DEFINE_LHASH_OF_DEPRECATED(type) \
     static ossl_unused ossl_inline unsigned long \
     lh_##type##_get_down_load(LHASH_OF(type) *lh) \
     { \
@@ -276,6 +270,11 @@ void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
         OPENSSL_LH_doall_arg((OPENSSL_LHASH *)lh, \
                              (OPENSSL_LH_DOALL_FUNCARG)doallarg, arg); \
     } \
+    LHASH_OF(type)
+
+# define DEFINE_LHASH_OF(type) \
+    DEFINE_LHASH_OF_2(type); \
+    DEFINE_LHASH_OF_DEPRECATED(type) \
     LHASH_OF(type)
 
 #define IMPLEMENT_LHASH_DOALL_ARG_CONST(type, argtype) \

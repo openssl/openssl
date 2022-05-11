@@ -118,6 +118,25 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 [Migration guide]: https://github.com/openssl/openssl/tree/master/doc/man7/migration_guide.pod
 
+### Changes between 3.0.3 and 3.0.4
+
+ * The functions `OPENSSL_LH_stats`, `OPENSSL_LH_node_stats`,
+   `OPENSSL_LH_node_usage_stats`, `OPENSSL_LH_stats_bio`,
+   `OPENSSL_LH_node_stats_bio` and `OPENSSL_LH_node_usage_stats_bio` are now
+   marked deprecated from OpenSSL 3.1 onwards and can be disabled by defining
+   `OPENSSL_NO_DEPRECATED_3_1`.
+
+   The macro `DEFINE_LHASH_OF` is now deprecated in favour of the macro
+   `DEFINE_LHASH_OF_2`, which omits the corresponding type-specific function
+   definitions for these functions regardless of whether
+   `OPENSSL_NO_DEPRECATED_3_1` is defined.
+
+   Users of `DEFINE_LHASH_OF` may start receiving deprecation warnings for these
+   functions regardless of whether they are using them. It is recommended that
+   users transition to the new macro, `DEFINE_LHASH_OF_2`.
+
+   *Hugo Landau*
+
 ### Changes between 3.0.2 and 3.0.3
 
  * Fixed a bug in the c_rehash script which was not properly sanitising shell
