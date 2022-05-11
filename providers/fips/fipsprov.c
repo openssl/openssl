@@ -24,7 +24,6 @@
 #include "self_test.h"
 #include "crypto/context.h"
 #include "internal/core.h"
-#include "internal/e_os.h"
 
 static const char FIPS_DEFAULT_PROPERTIES[] = "provider=fips,fips=yes";
 static const char FIPS_UNAPPROVED_PROPERTIES[] = "provider=fips,fips=no";
