@@ -53,8 +53,28 @@ void ossl_sm3_transform(SM3_CTX *c, const unsigned char *data);
 
 #include "crypto/md32_common.h"
 
-#define P0(X) (X ^ ROTATE(X, 9) ^ ROTATE(X, 17))
-#define P1(X) (X ^ ROTATE(X, 15) ^ ROTATE(X, 23))
+#ifndef PEDANTIC
+# if defined(__GNUC__) && __GNUC__>=2 && \
+     !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
+#  if defined(__riscv_zksh)
+#   define P0(x) ({ MD32_REG_T ret;                \
+                       asm ("sm3p0 %0, %1"         \
+                       : "=r"(ret)                 \
+                       : "r"(x)); ret;             })
+#   define P1(x) ({ MD32_REG_T ret;                \
+                       asm ("sm3p1 %0, %1"         \
+                       : "=r"(ret)                 \
+                       : "r"(x)); ret;             })
+#  endif
+# endif
+#endif
+
+#ifndef P0
+# define P0(X) (X ^ ROTATE(X, 9) ^ ROTATE(X, 17))
+#endif
+#ifndef P1
+# define P1(X) (X ^ ROTATE(X, 15) ^ ROTATE(X, 23))
+#endif
 
 #define FF0(X,Y,Z) (X ^ Y ^ Z)
 #define GG0(X,Y,Z) (X ^ Y ^ Z)
