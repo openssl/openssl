@@ -59,7 +59,7 @@ static int test_bio_dgram_impl(int af, int use_local)
     BIO *b1 = NULL, *b2 = NULL;
     int fd1 = -1, fd2 = -1;
     BIO_ADDR *addr1 = NULL, *addr2 = NULL, *addr3 = NULL, *addr4 = NULL;
-    struct in_addr ina = {htonl(0x7f000001UL)};
+    struct in_addr ina = {0};
     struct in6_addr ina6 = {0};
     void *pina;
     size_t inal; 
@@ -67,6 +67,7 @@ static int test_bio_dgram_impl(int af, int use_local)
     char rx_buf[64];
     BIO_MSG tx_msg[2], rx_msg[2];
 
+    ina.s_addr = htonl(0x7f000001UL);
     ina6.s6_addr[15] = 1;
 
     if (af == AF_INET) {
@@ -176,7 +177,7 @@ static int test_bio_dgram_impl(int af, int use_local)
 
     /* First effort should fail due to missing destination address */
     ret = BIO_sendmmsg(b1, tx_msg, sizeof(BIO_MSG), 1, 0);
-    if (!TEST_int_le(ret, -32))
+    if (!TEST_int_le((int)ret, -32))
         goto err;
 
     /*
@@ -186,7 +187,7 @@ static int test_bio_dgram_impl(int af, int use_local)
     tx_msg[0].peer  = addr2;
     tx_msg[0].local = addr1;
     ret = BIO_sendmmsg(b1, tx_msg, sizeof(BIO_MSG), 1, 0);
-    if (!TEST_int_eq(ret, -3))
+    if (!TEST_int_eq((int)ret, -3))
         goto err;
 
     /* Enable local if we are using it */
@@ -199,8 +200,8 @@ static int test_bio_dgram_impl(int af, int use_local)
 
     /* Third effort should succeed */
     ret = BIO_sendmmsg(b1, tx_msg, sizeof(BIO_MSG), 1, 0);
-    if (!TEST_int_eq(ret, 1)) {
-        printf("# Failed sending message\n");
+    if (!TEST_int_eq((int)ret, 1)) {
+        fprintf(stderr, "# Failed sending message\n");
         goto err;
     }
 
@@ -218,14 +219,14 @@ static int test_bio_dgram_impl(int af, int use_local)
      * enabled
      */
     ret = BIO_recvmmsg(b2, rx_msg, sizeof(BIO_MSG), 1, 0);
-    if (!TEST_int_eq(ret, -3))
+    if (!TEST_int_eq((int)ret, -3))
         goto err;
 
     /* Fields have not been modified */
-    if (!TEST_int_eq(rx_msg[0].data_len, sizeof(rx_buf)))
+    if (!TEST_int_eq((int)rx_msg[0].data_len, sizeof(rx_buf)))
         goto err;
 
-    if (!TEST_ulong_eq(rx_msg[0].flags, 1UL<<31))
+    if (!TEST_ulong_eq((unsigned long)rx_msg[0].flags, 1UL<<31))
         goto err;
 
     /* Enable local if we are using it */
@@ -238,15 +239,15 @@ static int test_bio_dgram_impl(int af, int use_local)
 
     /* Do the receive. */
     ret = BIO_recvmmsg(b2, rx_msg, sizeof(BIO_MSG), 1, 0);
-    if (!TEST_int_eq(ret, 1))
+    if (!TEST_int_eq((int)ret, 1))
         goto err;
 
     /* data_len should have been updated correctly */
-    if (!TEST_int_eq(rx_msg[0].data_len, 5))
+    if (!TEST_int_eq((int)rx_msg[0].data_len, 5))
         goto err;
 
     /* flags should have been zeroed */
-    if (!TEST_int_eq(rx_msg[0].flags, 0))
+    if (!TEST_int_eq((int)rx_msg[0].flags, 0))
         goto err;
 
     /* peer address should match expected */

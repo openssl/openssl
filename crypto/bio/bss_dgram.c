@@ -50,13 +50,13 @@
 #define M_METHOD_WSARECVMSG 4
 
 #if !defined(M_METHOD)
-# if defined(_WIN32) && defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0600 && !defined(NO_WSARECVMSG)
+# if defined(OPENSSL_SYS_WINDOWS) && defined(BIO_HAVE_WSAMSG) && !defined(NO_WSARECVMSG)
 #  define M_METHOD  M_METHOD_WSARECVMSG
-# elif !defined(_WIN32) && defined(MSG_WAITFORONE) && !defined(NO_RECVMMSG)
+# elif !defined(OPENSSL_SYS_WINDOWS) && defined(MSG_WAITFORONE) && !defined(NO_RECVMMSG)
 #  define M_METHOD  M_METHOD_RECVMMSG
-# elif !defined(_WIN32) && defined(CMSG_LEN) && !defined(NO_RECVMSG)
+# elif !defined(OPENSSL_SYS_WINDOWS) && defined(CMSG_LEN) && !defined(NO_RECVMSG)
 #  define M_METHOD  M_METHOD_RECVMSG
-# elif !defined(_WIN32) && defined(MSG_DONTWAIT) && !defined(NO_RECVFROM)
+# elif !defined(NO_RECVFROM)
 #  define M_METHOD  M_METHOD_RECVFROM
 # else
 #  define M_METHOD  M_METHOD_NONE
@@ -115,6 +115,11 @@
 #   define BIO_CMSG_ALLOC_LEN                                        \
         BIO_MAX(BIO_CMSG_ALLOC_LEN_1,                                \
                 BIO_MAX(BIO_CMSG_ALLOC_LEN_2, BIO_CMSG_ALLOC_LEN_3))
+# endif
+# if (defined(IP_PKTINFO) || defined(IP_RECVDSTADDR)) && defined(IPV6_RECVPKTINFO)
+#   define SUPPORT_LOCAL_ADDR
+# else
+#   error No local address support?
 # endif
 #endif
 
@@ -496,7 +501,7 @@ static long dgram_get_mtu_overhead(bio_dgram_data *data)
 }
 
 /* Enables appropriate destination address reception option on the socket. */
-#if M_METHOD == M_METHOD_RECVMMSG || M_METHOD == M_METHOD_RECVMSG || M_METHOD == M_METHOD_WSARECVMSG
+#if defined(SUPPORT_LOCAL_ADDR)
 static int enable_local_addr(BIO *b, int enable) {
     int af = dgram_get_sock_family(b);
 
@@ -563,10 +568,12 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         b->shutdown = (int)num;
         b->init = 1;
         dgram_update_local_addr(b);
+#if defined(SUPPORT_LOCAL_ADDR)
         if (data->local_addr_enabled) {
             if (enable_local_addr(b, 1) < 1)
                 data->local_addr_enabled = 0;
         }
+#endif
         break;
     case BIO_C_GET_FD:
         if (b->init) {
@@ -926,8 +933,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
 
     case BIO_CTRL_DGRAM_GET_LOCAL_ADDR_CAP:
-#if (defined(IP_PKTINFO) || defined(IP_RECVDSTADDR) || defined(IPV6_RECVPKTINFO)) && \
-    (M_METHOD == M_METHOD_RECVMMSG || M_METHOD == M_METHOD_RECVMSG || M_METHOD == M_METHOD_WSARECVMSG)
+#if defined(SUPPORT_LOCAL_ADDR)
         ret = 1;
 #else
         ret = 0;
@@ -935,8 +941,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
 
     case BIO_CTRL_DGRAM_SET_LOCAL_ADDR_ENABLE:
-#if (defined(IP_PKTINFO) || defined(IP_RECVDSTADDR) || defined(IPV6_RECVPKTINFO)) && \
-    (M_METHOD == M_METHOD_RECVMMSG || M_METHOD == M_METHOD_RECVMSG || M_METHOD == M_METHOD_WSARECVMSG)
+#if defined(SUPPORT_LOCAL_ADDR)
         num = (num > 0);
         if (num != data->local_addr_enabled) {
             if (enable_local_addr(b, num) < 1) {
@@ -977,12 +982,27 @@ static void translate_msg_win(WSAMSG *mh, WSABUF *iov, unsigned char *control, B
     iov->len = msg->data_len;
     iov->buf = msg->data;
 
+    /* Windows requires namelen to be set exactly */
     mh->name            = msg->peer != NULL ? &msg[0].peer->sa : NULL;
-    mh->namelen         = msg->peer != NULL ? sizeof(*msg[0].peer) : 0;
+    if (msg->peer != NULL && msg->peer->sa.sa_family == AF_INET)
+        mh->namelen = sizeof(struct sockaddr_in);
+    else if (msg->peer != NULL && msg->peer->sa.sa_family == AF_INET6)
+        mh->namelen = sizeof(struct sockaddr_in6);
+    else
+        mh->namelen = 0;
+
+    /*
+     * When local address reception (IP_PKTINFO, etc.) is enabled, on Windows
+     * this causes WSARecvMsg to fail if the control buffer is too small to hold
+     * the structure, or if no control buffer is passed. So we need to give it
+     * the control buffer even if we aren't actually going to examine the
+     * result.
+     */
+    mh->namelen         = msg->peer != NULL ? (ULONG)sizeof(*msg[0].peer) : 0;
     mh->lpBuffers       = iov;
     mh->dwBufferCount   = 1;
-    mh->Control.len     = msg->local != NULL ? BIO_CMSG_ALLOC_LEN : 0;
-    mh->Control.buf     = msg->local != NULL ? (char *)control : NULL;
+    mh->Control.len     = BIO_CMSG_ALLOC_LEN;
+    mh->Control.buf     = control;
     mh->dwFlags         = 0;
 }
 #endif
@@ -1212,7 +1232,8 @@ static ossl_ssize_t dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t n
     WSABUF wbuf;
     DWORD num_bytes_sent = 0;
     unsigned char control[BIO_CMSG_ALLOC_LEN];
-#elif M_METHOD == M_METHOD_RECVFROM
+#endif
+#if M_METHOD == M_METHOD_RECVFROM || M_METHOD == M_METHOD_WSARECVMSG
     int sysflags;
 #endif
 
@@ -1300,9 +1321,32 @@ static ossl_ssize_t dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t n
 
     return i > 0 ? (ossl_ssize_t)i : PACK_ERRNO(get_last_socket_error());
 
-#elif M_METHOD == M_METHOD_RECVFROM
+#elif M_METHOD == M_METHOD_WSARECVMSG || M_METHOD == M_METHOD_RECVFROM
+# if M_METHOD == M_METHOD_WSARECVMSG
+    if (bio_WSASendMsg != NULL) {
+        /* WSASendMsg-based implementation for Windows. */
+        translate_msg_win(&wmsg, &wbuf, control, msg);
+
+        if (msg[0].local != NULL) {
+            if (!have_local_enabled)
+                return -3;
+
+            if (pack_local(b, &wmsg, msg[0].local) < 1)
+                return -3;
+        }
+
+        ret = WSASendMsg((SOCKET)b->num, &wmsg, 0, &num_bytes_sent, NULL, NULL);
+        if (ret < 0)
+            return PACK_ERRNO(get_last_socket_error());
+
+        msg[0].data_len = num_bytes_sent;
+        msg[0].flags    = 0;
+        return 1;
+    }
+#endif
+
     /*
-     * Fallback to recvfrom and send a single message.
+     * Fallback to sendto and send a single message.
      */
     if (msg[0].local != NULL)
         /*
@@ -1311,33 +1355,19 @@ static ossl_ssize_t dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t n
          */
         return -3;
 
-    ret = sendto(b->num, msg[0].data, msg[0].data_len, sysflags,
+    ret = sendto(b->num, msg[0].data,
+# if defined(OPENSSL_SYS_WINDOWS)
+                 (int)msg[0].data_len,
+# else
+                 msg[0].data_len,
+# endif
+                 sysflags,
                  msg[0].peer != NULL ? &msg[0].peer->sa : NULL,
                  msg[0].peer != NULL ? sizeof(*msg[0].peer) : 0);
     if (ret <= 0)
         return PACK_ERRNO(get_last_socket_error());
 
     msg[0].data_len = ret;
-    msg[0].flags    = 0;
-    return 1;
-
-#elif M_METHOD == M_METHOD_WSARECVMSG
-    /* WSASendMsg-based implementation for Windows. */
-    translate_msg_win(&wmsg, &wbuf, control, msg);
-
-    if (msg[0].local != NULL) {
-        if (!have_local_enabled)
-            return -3;
-
-        if (pack_local(b, &wmsg, msg[0].local) < 1)
-            return -3;
-    }
-
-    ret = WSASendMsg((SOCKET)b->num, &wmsg, 0, &num_bytes_sent, NULL, NULL);
-    if (ret < 0)
-        return PACK_ERRNO(get_last_socket_error());
-
-    msg[0].data_len = num_bytes_sent;
     msg[0].flags    = 0;
     return 1;
 
@@ -1449,7 +1479,6 @@ static ossl_ssize_t dgram_recvmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t n
      * If CMSG_LEN is defined, take this as a cue that recvmsg is available.
      * We emulate recvmmsg using multiple calls.
      */
-    sysflags &= MSG_DONTWAIT; /* we only support this flag here */
     for (i=0; i<num_msg; ++i) {
         translate_msg(&mh, &iov, control, &BIO_MSG_N(msg, i));
 
@@ -1474,12 +1503,49 @@ static ossl_ssize_t dgram_recvmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t n
 
     return i > 0 ? (ossl_ssize_t)i : PACK_ERRNO(get_last_socket_error());
 
-#elif M_METHOD == M_METHOD_RECVFROM
+#elif M_METHOD == M_METHOD_RECVFROM || M_METHOD == M_METHOD_WSARECVMSG
+# if M_METHOD == M_METHOD_WSARECVMSG
+    if (bio_WSARecvMsg != NULL) {
+        /* WSARecvMsg-based implementation for Windows. */
+        translate_msg_win(&wmsg, &wbuf, control, msg);
+
+        /* If local address was requested, it must have been enabled */
+        if (msg[0].local != NULL && !have_local_enabled)
+            return -3;
+
+        ret = WSARecvMsg((SOCKET)b->num, &wmsg, &num_bytes_received, NULL, NULL);
+        if (ret < 0)
+            return PACK_ERRNO(get_last_socket_error());
+
+        msg[0].data_len = num_bytes_received;
+        msg[0].flags    = 0;
+        if (msg[0].local != NULL)
+            if (extract_local(b, &wmsg, msg[0].local) < 1)
+                /*
+                 * On Windows, loopback is not a "proper" interface and it works
+                 * differently; packets are essentially short-circuited and
+                 * don't go through all of the normal processing. A consequence
+                 * of this is that packets sent from the local machine to the
+                 * local machine _will not have IP_PKTINFO_ even if the
+                 * IP_PKTINFO socket option is enabled. WSARecvMsg just sets
+                 * Control.len to 0 on returning.
+                 *
+                 * This applies regardless of whether the loopback address,
+                 * 127.0.0.1 is used, or a local interface address (e.g.
+                 * 192.168.1.1); in both cases IP_PKTINFO will not be present.
+                 *
+                 * We report this condition by setting the local BIO_ADDR's
+                 * family to 0.
+                 */
+                BIO_ADDR_clear(msg[0].local);
+
+        return 1;
+    }
+# endif
+
     /*
      * Fallback to recvfrom and receive a single message.
      */
-    sysflags &= MSG_DONTWAIT; /* we only support this flag here */
-
     if (msg[0].local != NULL)
         /*
          * We cannot determine the local address if using recvfrom
@@ -1488,7 +1554,13 @@ static ossl_ssize_t dgram_recvmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t n
         return -3;
 
     slen = sizeof(*msg[0].peer);
-    ret = recvfrom(b->num, msg[0].data, msg[0].data_len, sysflags,
+    ret = recvfrom(b->num, msg[0].data,
+#if defined(OPENSSL_SYS_WINDOWS)
+                   (int)msg[0].data_len,
+#else
+                   msg[0].data_len,
+#endif
+                   sysflags,
                    msg[0].peer != NULL ? &msg[0].peer->sa : NULL,
                    msg[0].peer != NULL ? &slen : NULL);
     if (ret <= 0)
@@ -1496,26 +1568,6 @@ static ossl_ssize_t dgram_recvmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t n
 
     msg[0].data_len = ret;
     msg[0].flags    = 0;
-    return 1;
-
-#elif M_METHOD == M_METHOD_WSARECVMSG
-    /* WSARecvMsg-based implementation for Windows. */
-    translate_msg_win(&wmsg, &wbuf, control, msg);
-
-    /* If local address was requested, it must have been enabled */
-    if (msg[0].local != NULL && !have_local_enabled)
-        return -3;
-
-    ret = WSARecvMsg((SOCKET)b->num, &wmsg, &num_bytes_received, NULL, NULL);
-    if (ret < 0)
-        return PACK_ERRNO(get_last_socket_error());
-
-    msg[0].data_len = num_bytes_received;
-    msg[0].flags    = 0;
-    if (msg[0].local != NULL)
-        if (extract_local(b, &wmsg, msg[0].local) < 1)
-            return -3;
-
     return 1;
 
 #else
