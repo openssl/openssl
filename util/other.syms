@@ -429,6 +429,9 @@ OSSL_CMP_exec_IR_ses                    define
 OSSL_CMP_exec_CR_ses                    define
 OSSL_CMP_exec_P10CR_ses                 define
 OSSL_CMP_exec_KUR_ses                   define
+OSSL_CMP_ATAV                           datatype
+OSSL_CMP_ATAV_free                      define
+OSSL_CMP_ATAVS                          datatype
 OSSL_CMP_CTX_get0_trusted               define
 OSSL_CMP_CTX_set0_trusted               define
 OSSL_CMP_CTX_set_log_verbosity          define

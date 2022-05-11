@@ -31,14 +31,16 @@ OSSL_CMP_ITAV_create() creates a new B<OSSL_CMP_ITAV> structure and fills it in.
 It combines OSSL_CMP_ITAV_new() and OSSL_CMP_ITAV_set0().
 
 OSSL_CMP_ITAV_set0() sets the I<itav> with an infoType of I<type> and an
-infoValue of I<value>. This function uses the pointers I<type> and I<value>
-internally, so they must B<not> be freed up after the call.
+infoValue of I<value>.
+The pointers I<type> and I<value> may be NULL, otherwise
+they must B<not> be freed up after the call because they are used internally.
+The I<itav> pointer must not be NULL.
 
 OSSL_CMP_ITAV_get0_type() returns a direct pointer to the infoType in the
-I<itav>.
+I<itav> unless it is NULL.
 
 OSSL_CMP_ITAV_get0_value() returns a direct pointer to the infoValue in
-the I<itav> as generic B<ASN1_TYPE> pointer.
+the I<itav> as generic B<ASN1_TYPE> pointer unless I<itav> is NULL.
 
 OSSL_CMP_ITAV_push0_stack_item() pushes I<itav> to the stack pointed to
 by I<*itav_sk_p>. It creates a new stack if I<*itav_sk_p> points to NULL.

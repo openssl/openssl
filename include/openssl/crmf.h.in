@@ -53,7 +53,13 @@ DECLARE_ASN1_DUP_FUNCTION(OSSL_CRMF_MSG)
 {-
     generate_stack_macros("OSSL_CRMF_MSG");
 -}
+
 typedef struct ossl_crmf_attributetypeandvalue_st OSSL_CRMF_ATTRIBUTETYPEANDVALUE;
+{-
+    generate_stack_macros("OSSL_CRMF_ATTRIBUTETYPEANDVALUE");
+-}
+void OSSL_CRMF_ATTRIBUTETYPEANDVALUE_free(OSSL_CRMF_ATTRIBUTETYPEANDVALUE *v);
+
 typedef struct ossl_crmf_pbmparameter_st OSSL_CRMF_PBMPARAMETER;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_PBMPARAMETER)
 typedef struct ossl_crmf_poposigningkey_st OSSL_CRMF_POPOSIGNINGKEY;

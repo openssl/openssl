@@ -1583,6 +1583,10 @@ DEPEND[html/man3/OSSL_CALLBACK.html]=man3/OSSL_CALLBACK.pod
 GENERATE[html/man3/OSSL_CALLBACK.html]=man3/OSSL_CALLBACK.pod
 DEPEND[man/man3/OSSL_CALLBACK.3]=man3/OSSL_CALLBACK.pod
 GENERATE[man/man3/OSSL_CALLBACK.3]=man3/OSSL_CALLBACK.pod
+DEPEND[html/man3/OSSL_CMP_ATAV_set0.html]=man3/OSSL_CMP_ATAV_set0.pod
+GENERATE[html/man3/OSSL_CMP_ATAV_set0.html]=man3/OSSL_CMP_ATAV_set0.pod
+DEPEND[man/man3/OSSL_CMP_ATAV_set0.3]=man3/OSSL_CMP_ATAV_set0.pod
+GENERATE[man/man3/OSSL_CMP_ATAV_set0.3]=man3/OSSL_CMP_ATAV_set0.pod
 DEPEND[html/man3/OSSL_CMP_CTX_new.html]=man3/OSSL_CMP_CTX_new.pod
 GENERATE[html/man3/OSSL_CMP_CTX_new.html]=man3/OSSL_CMP_CTX_new.pod
 DEPEND[man/man3/OSSL_CMP_CTX_new.3]=man3/OSSL_CMP_CTX_new.pod
@@ -3299,6 +3303,7 @@ html/man3/OPENSSL_secure_malloc.html \
 html/man3/OPENSSL_strcasecmp.html \
 html/man3/OSSL_ALGORITHM.html \
 html/man3/OSSL_CALLBACK.html \
+html/man3/OSSL_CMP_ATAV_set0.html \
 html/man3/OSSL_CMP_CTX_new.html \
 html/man3/OSSL_CMP_HDR_get0_transactionID.html \
 html/man3/OSSL_CMP_ITAV_new_caCerts.html \
@@ -3937,6 +3942,7 @@ man/man3/OPENSSL_secure_malloc.3 \
 man/man3/OPENSSL_strcasecmp.3 \
 man/man3/OSSL_ALGORITHM.3 \
 man/man3/OSSL_CALLBACK.3 \
+man/man3/OSSL_CMP_ATAV_set0.3 \
 man/man3/OSSL_CMP_CTX_new.3 \
 man/man3/OSSL_CMP_HDR_get0_transactionID.3 \
 man/man3/OSSL_CMP_ITAV_new_caCerts.3 \

@@ -204,6 +204,39 @@ typedef struct ossl_cmp_cakeyupdanncontent_st {
 } OSSL_CMP_CAKEYUPDANNCONTENT;
 DECLARE_ASN1_FUNCTIONS(OSSL_CMP_CAKEYUPDANNCONTENT)
 
+typedef struct ossl_cmp_rootcakeyupdate_st OSSL_CMP_ROOTCAKEYUPDATE;
+DECLARE_ASN1_FUNCTIONS(OSSL_CMP_ROOTCAKEYUPDATE)
+
+typedef struct ossl_cmp_certreqtemplate_st OSSL_CMP_CERTREQTEMPLATE;
+DECLARE_ASN1_FUNCTIONS(OSSL_CMP_CERTREQTEMPLATE)
+
+/*-
+ * CRLSource ::= CHOICE {
+ *      dpn          [0] DistributionPointName,
+ *      issuer       [1] GeneralNames }
+ */
+
+typedef struct ossl_cmp_crlsource_st {
+    int type;
+    union {
+        DIST_POINT_NAME *dpn;
+        GENERAL_NAMES *issuer;
+    } value;
+} OSSL_CMP_CRLSOURCE;
+DECLARE_ASN1_FUNCTIONS(OSSL_CMP_CRLSOURCE)
+
+/*
+ * CRLStatus ::= SEQUENCE {
+ *      source       CRLSource,
+ *      thisUpdate   Time OPTIONAL }
+ */
+
+struct ossl_cmp_crlstatus_st {
+    OSSL_CMP_CRLSOURCE *source;
+    ASN1_TIME *thisUpdate;
+}; /* OSSL_CMP_CRLSTATUS */
+DECLARE_ASN1_FUNCTIONS(OSSL_CMP_CRLSTATUS)
+
 /*-
  * declared already here as it will be used in OSSL_CMP_MSG (nested) and
  * infoType and infoValue
@@ -251,6 +284,16 @@ struct ossl_cmp_itav_st {
         STACK_OF(ASN1_UTF8STRING) *suppLangTagsValue;
         /* NID_id_it_caCerts - CA Certificates */
         STACK_OF(X509) *caCerts;
+        /* NID_id_it_rootCaCert - Root CA Certificate */
+        X509 *rootCaCert;
+        /* NID_id_it_rootCaKeyUpdate - Root CA Certificate Update */
+        OSSL_CMP_ROOTCAKEYUPDATE *rootCaKeyUpdate;
+        /* NID_id_it_certReqTemplate - Certificate Request Template */
+        OSSL_CMP_CERTREQTEMPLATE *certReqTemplate;
+        /* NID_id_it_crlStatusList -  CRL Update Retrieval */
+        STACK_OF(OSSL_CMP_CRLSTATUS) *crlStatusList;
+        /* NID_id_it_crls - Certificate Status Lists */
+        STACK_OF(X509_CRL) *crls;
         /* this is to be used for so far undeclared objects */
         ASN1_TYPE *other;
     } infoValue;
@@ -736,6 +779,32 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CMP_PROTECTEDPART)
  *           -- self-signed certificate with the identifier certID.
  *   }
  */
+
+/*
+ * RootCaKeyUpdateContent ::= SEQUENCE {
+ *      newWithNew       CMPCertificate,
+ *      newWithOld   [0] CMPCertificate OPTIONAL,
+ *      oldWithNew   [1] CMPCertificate OPTIONAL
+ * }
+ */
+
+struct ossl_cmp_rootcakeyupdate_st {
+    X509 *newWithNew;
+    X509 *newWithOld;
+    X509 *oldWithNew;
+} /* OSSL_CMP_ROOTCAKEYUPDATE */;
+DECLARE_ASN1_FUNCTIONS(OSSL_CMP_ROOTCAKEYUPDATE)
+
+/*-
+ * CertReqTemplateContent ::= SEQUENCE {
+ *      certTemplate      CertTemplate,
+ *      keySpec           Controls OPTIONAL
+ * }
+ */
+struct ossl_cmp_certreqtemplate_st {
+    OSSL_CRMF_CERTTEMPLATE *certTemplate;
+    OSSL_CMP_ATAVS *keySpec;
+} /* OSSL_CMP_CERTREQTEMPLATE */;
 
 /* from cmp_asn.c */
 int ossl_cmp_asn1_get_int(const ASN1_INTEGER *a);

@@ -140,12 +140,30 @@ ASN1_ADB(OSSL_CRMF_ATTRIBUTETYPEANDVALUE) = {
               ASN1_SIMPLE(OSSL_CRMF_ATTRIBUTETYPEANDVALUE,
                           value.pkiPublicationInfo,
                           OSSL_CRMF_PKIPUBLICATIONINFO)),
+    /* missing here: id-regCtrl-pkiArchiveOptions */
     ADB_ENTRY(NID_id_regCtrl_oldCertID,
               ASN1_SIMPLE(OSSL_CRMF_ATTRIBUTETYPEANDVALUE,
                           value.oldCertID, OSSL_CRMF_CERTID)),
+    ADB_ENTRY(NID_id_regCtrl_algId,
+              ASN1_SIMPLE(OSSL_CRMF_ATTRIBUTETYPEANDVALUE,
+                          value.algId, X509_ALGOR)),
+    ADB_ENTRY(NID_id_regCtrl_rsaKeyLen,
+              ASN1_SIMPLE(OSSL_CRMF_ATTRIBUTETYPEANDVALUE,
+                          value.rsaKeyLen, ASN1_INTEGER)),
     ADB_ENTRY(NID_id_regCtrl_protocolEncrKey,
               ASN1_SIMPLE(OSSL_CRMF_ATTRIBUTETYPEANDVALUE,
                           value.protocolEncrKey, X509_PUBKEY)),
+    /* missing here: id-regCtrl-altCertTemplate */
+    /* missing here: id-regCtrl-wtlsTemplate */
+    /* missing here: id-regCtrl-regTokenUTF8 */
+    /* missing here: id-regCtrl-authenticatorUTF8 */
+    ADB_ENTRY(NID_id_regCtrl_algId,
+              ASN1_SIMPLE(OSSL_CRMF_ATTRIBUTETYPEANDVALUE,
+                          value.algId, X509_ALGOR)),
+    ADB_ENTRY(NID_id_regCtrl_rsaKeyLen,
+              ASN1_SIMPLE(OSSL_CRMF_ATTRIBUTETYPEANDVALUE,
+                          value.rsaKeyLen, ASN1_INTEGER)),
+
     ADB_ENTRY(NID_id_regInfo_utf8Pairs,
               ASN1_SIMPLE(OSSL_CRMF_ATTRIBUTETYPEANDVALUE,
                           value.utf8Pairs, ASN1_UTF8STRING)),
@@ -194,6 +212,7 @@ ASN1_SEQUENCE(OSSL_CRMF_CERTTEMPLATE) = {
                              X509_EXTENSION, 9),
 } ASN1_SEQUENCE_END(OSSL_CRMF_CERTTEMPLATE)
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_CRMF_CERTTEMPLATE)
+IMPLEMENT_ASN1_DUP_FUNCTION(OSSL_CRMF_CERTTEMPLATE)
 
 ASN1_SEQUENCE(OSSL_CRMF_CERTREQUEST) = {
     ASN1_SIMPLE(OSSL_CRMF_CERTREQUEST, certReqId, ASN1_INTEGER),

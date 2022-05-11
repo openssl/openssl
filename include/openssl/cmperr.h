@@ -62,6 +62,7 @@
 #  define CMP_R_GETTING_GENP                               192
 #  define CMP_R_INVALID_ARGS                               100
 #  define CMP_R_INVALID_GENP                               193
+#  define CMP_R_INVALID_KEYSPEC                            106
 #  define CMP_R_INVALID_OPTION                             174
 #  define CMP_R_MISSING_CERTID                             165
 #  define CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION  130
