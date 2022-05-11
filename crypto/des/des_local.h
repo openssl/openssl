@@ -109,6 +109,19 @@
                                         : "cc");        \
                            ret;                         \
                         })
+#  elif defined(__riscv_zbb) || defined(__riscv_zbkb)
+#   if __riscv_xlen == 64
+#    define ROTATE(x, n) ({ register unsigned int ret; \
+                       asm ("roriw %0, %1, %2"         \
+                       : "=r"(ret)                     \
+                       : "r"(x), "i"(n)); ret; })
+#   endif
+#   if __riscv_xlen == 32
+#    define ROTATE(x, n) ({ register unsigned int ret; \
+                       asm ("rori %0, %1, %2"          \
+                       : "=r"(ret)                     \
+                       : "r"(x), "i"(n)); ret; })
+#   endif
 #  endif
 # endif
 # ifndef ROTATE
