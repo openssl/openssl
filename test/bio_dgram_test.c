@@ -62,7 +62,7 @@ static int test_bio_dgram_impl(int af, int use_local)
     struct in_addr ina = {0};
     struct in6_addr ina6 = {0};
     void *pina;
-    size_t inal; 
+    size_t inal;
     union BIO_sock_info_u info1 = {0}, info2 = {0};
     char rx_buf[64];
     BIO_MSG tx_msg[2], rx_msg[2];

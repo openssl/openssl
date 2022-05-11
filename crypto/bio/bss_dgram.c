@@ -518,6 +518,7 @@ static int enable_local_addr(BIO *b, int enable) {
 # endif
     }
 
+#if OPENSSL_USE_IPV6
     if (af == AF_INET6) {
 # if defined(IPV6_RECVPKTINFO)
         if (setsockopt(b->num, IPPROTO_IPV6, IPV6_RECVPKTINFO, &enable, sizeof(enable)) < 0)
@@ -526,6 +527,7 @@ static int enable_local_addr(BIO *b, int enable) {
         return 1;
 # endif
     }
+#endif
 
     return 0;
 }
@@ -979,8 +981,10 @@ static void translate_msg_win(WSAMSG *mh, WSABUF *iov, unsigned char *control, B
     mh->name            = msg->peer != NULL ? &msg[0].peer->sa : NULL;
     if (msg->peer != NULL && msg->peer->sa.sa_family == AF_INET)
         mh->namelen = sizeof(struct sockaddr_in);
+#if OPENSSL_USE_IPV6
     else if (msg->peer != NULL && msg->peer->sa.sa_family == AF_INET6)
         mh->namelen = sizeof(struct sockaddr_in6);
+#endif
     else
         mh->namelen = 0;
 
@@ -1011,8 +1015,10 @@ static void translate_msg(struct msghdr *mh, struct iovec *iov, unsigned char *c
     mh->msg_name        = msg->peer != NULL ? &msg->peer->sa : NULL;
     if (msg->peer != NULL && msg->peer->sa.sa_family == AF_INET)
         mh->msg_namelen = sizeof(struct sockaddr_in);
+#if OPENSSL_USE_IPV6
     else if (msg->peer != NULL && msg->peer->sa.sa_family == AF_INET6)
         mh->msg_namelen = sizeof(struct sockaddr_in6);
+#endif
     else
         mh->msg_namelen = 0;
 
@@ -1058,11 +1064,13 @@ static int extract_local(BIO *b, MSGHDR_TYPE *mh, BIO_ADDR *local) {
             }
             return 1;
 #  endif
-        } else if (af == AF_INET6) {
+        }
+#  if OPENSSL_USE_IPV6
+        else if (af == AF_INET6) {
             if (cmsg->cmsg_level != IPPROTO_IPV6)
                 continue;
 
-# if defined(IPV6_RECVPKTINFO)
+#   if defined(IPV6_RECVPKTINFO)
             if (cmsg->cmsg_type != IPV6_PKTINFO)
                 continue;
 
@@ -1075,8 +1083,9 @@ static int extract_local(BIO *b, MSGHDR_TYPE *mh, BIO_ADDR *local) {
                 local->s_in6.sin6_flowinfo = 0;
             }
             return 1;
-# endif
+#   endif
         }
+#  endif
     }
 # endif
 
@@ -1092,11 +1101,11 @@ static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local) {
         struct in_pktinfo *info;
         bio_dgram_data *data = b->ptr;
 
-#if defined(OPENSSL_SYS_WINDOWS)
+#  if defined(OPENSSL_SYS_WINDOWS)
         cmsg = (CMSGHDR_TYPE *)mh->Control.buf;
-#else
+#  else
         cmsg = (CMSGHDR_TYPE *)mh->msg_control;
-#endif
+#  endif
 
         cmsg->cmsg_len   = BIO_CMSG_LEN(sizeof(struct in_pktinfo));
         cmsg->cmsg_level = IPPROTO_IP;
@@ -1117,11 +1126,11 @@ static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local) {
             && data->local_addr.s_in.sin_port != local->s_in.sin_port)
             return 0;
 
-#if defined(OPENSSL_SYS_WINDOWS)
+#  if defined(OPENSSL_SYS_WINDOWS)
         mh->Control.len = BIO_CMSG_SPACE(sizeof(struct in_pktinfo));
-#else
+#  else
         mh->msg_controllen = BIO_CMSG_SPACE(sizeof(struct in_pktinfo));
-#endif
+#  endif
         return 1;
 
 # elif defined(IP_SENDSRCADDR)
@@ -1144,17 +1153,19 @@ static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local) {
         mh->msg_controllen = BIO_CMSG_SPACE(sizeof(struct in_addr));
         return 1;
 # endif
-    } else if (af == AF_INET6) {
-# if defined(IPV6_PKTINFO)
+    }
+# if OPENSSL_USE_IPV6
+    else if (af == AF_INET6) {
+#  if defined(IPV6_PKTINFO)
         CMSGHDR_TYPE *cmsg;
         struct in6_pktinfo *info;
         bio_dgram_data *data = b->ptr;
 
-#if defined(OPENSSL_SYS_WINDOWS)
+#   if defined(OPENSSL_SYS_WINDOWS)
         cmsg = (CMSGHDR_TYPE *)mh->Control.buf;
-#else
+#   else
         cmsg = (CMSGHDR_TYPE *)mh->msg_control;
-#endif
+#   endif
         cmsg->cmsg_len   = BIO_CMSG_LEN(sizeof(struct in6_pktinfo));
         cmsg->cmsg_level = IPPROTO_IPV6;
         cmsg->cmsg_type  = IPV6_PKTINFO;
@@ -1175,14 +1186,15 @@ static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local) {
             && data->local_addr.s_in6.sin6_scope_id != local->s_in6.sin6_scope_id)
             return 0;
 
-#if defined(OPENSSL_SYS_WINDOWS)
+#   if defined(OPENSSL_SYS_WINDOWS)
         mh->Control.len = BIO_CMSG_SPACE(sizeof(struct in6_pktinfo));
-#else
+#   else
         mh->msg_controllen = BIO_CMSG_SPACE(sizeof(struct in6_pktinfo));
-#endif
+#   endif
         return 1;
-# endif
+#  endif
     }
+# endif
 
     return 0;
 }
@@ -1339,7 +1351,7 @@ static ossl_ssize_t dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t n
         msg[0].flags    = 0;
         return 1;
     }
-#endif
+# endif
 
     /*
      * Fallback to sendto and send a single message.
@@ -1552,11 +1564,11 @@ static ossl_ssize_t dgram_recvmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t n
 
     slen = sizeof(*msg[0].peer);
     ret = recvfrom(b->num, msg[0].data,
-#if defined(OPENSSL_SYS_WINDOWS)
+# if defined(OPENSSL_SYS_WINDOWS)
                    (int)msg[0].data_len,
-#else
+# else
                    msg[0].data_len,
-#endif
+# endif
                    sysflags,
                    msg[0].peer != NULL ? &msg[0].peer->sa : NULL,
                    msg[0].peer != NULL ? &slen : NULL);
