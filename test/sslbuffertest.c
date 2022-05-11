@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,11 @@ static int test_func(int test)
         TEST_error("Test %d failed: Create SSL objects failed\n", test);
         goto end;
     }
+
+#if defined(OPENSSL_NO_TLS1_2) && defined(OPENSSL_NO_TLS1_3)
+    SSL_set_security_level(serverssl, 0);
+    SSL_set_security_level(clientssl, 0);
+#endif
 
     if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE))) {
         TEST_error("Test %d failed: Create SSL connection failed\n", test);
