@@ -65,10 +65,7 @@
 
 #define PACK_ERRNO(e) BIO_UNPACK_ERRNO(e) /* function is its own inverse */
 
-#if defined(_WIN32)
-#  if defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0600
-#    include <mswsock.h>
-#  endif
+#if defined(OPENSSL_SYS_WINDOWS)
 #  define BIO_CMSG_SPACE(x) WSA_CMSG_SPACE(x)
 #  define BIO_CMSG_FIRSTHDR(x) WSA_CMSG_FIRSTHDR(x)
 #  define BIO_CMSG_NXTHDR(x, y) WSA_CMSG_NXTHDR(x, y)
@@ -118,8 +115,6 @@
 # endif
 # if (defined(IP_PKTINFO) || defined(IP_RECVDSTADDR)) && defined(IPV6_RECVPKTINFO)
 #   define SUPPORT_LOCAL_ADDR
-# else
-#   error No local address support?
 # endif
 #endif
 
@@ -529,8 +524,6 @@ static int enable_local_addr(BIO *b, int enable) {
             return 0;
 
         return 1;
-# elif defined(__APPLE__)
-#   error No IPV6_RECVPKTINFO
 # endif
     }
 
@@ -1048,12 +1041,14 @@ static int extract_local(BIO *b, MSGHDR_TYPE *mh, BIO_ADDR *local) {
                 continue;
 
             local->s_in.sin_addr = ((struct in_pktinfo *)BIO_CMSG_DATA(cmsg))->ipi_addr;
+
 #  elif defined(IP_RECVDSTADDR)
             if (cmsg->cmsg_type != IP_RECVDSTADDR)
                 continue;
 
             local->s_in.sin_addr = *(struct in_addr *)BIO_CMSG_DATA(cmsg);
 #  endif
+
 #  if defined(IP_PKTINFO) || defined(IP_RECVDSTADDR)
             {
                 bio_dgram_data *data = b->ptr;
@@ -1097,7 +1092,7 @@ static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local) {
         struct in_pktinfo *info;
         bio_dgram_data *data = b->ptr;
 
-#if defined(_WIN32)
+#if defined(OPENSSL_SYS_WINDOWS)
         cmsg = (CMSGHDR_TYPE *)mh->Control.buf;
 #else
         cmsg = (CMSGHDR_TYPE *)mh->msg_control;
@@ -1122,12 +1117,13 @@ static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local) {
             && data->local_addr.s_in.sin_port != local->s_in.sin_port)
             return 0;
 
-#if defined(_WIN32)
+#if defined(OPENSSL_SYS_WINDOWS)
         mh->Control.len = BIO_CMSG_SPACE(sizeof(struct in_pktinfo));
 #else
         mh->msg_controllen = BIO_CMSG_SPACE(sizeof(struct in_pktinfo));
 #endif
         return 1;
+
 # elif defined(IP_SENDSRCADDR)
         struct cmsghdr *cmsg;
         struct in_addr *info;
@@ -1154,7 +1150,7 @@ static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local) {
         struct in6_pktinfo *info;
         bio_dgram_data *data = b->ptr;
 
-#if defined(_WIN32)
+#if defined(OPENSSL_SYS_WINDOWS)
         cmsg = (CMSGHDR_TYPE *)mh->Control.buf;
 #else
         cmsg = (CMSGHDR_TYPE *)mh->msg_control;
@@ -1179,7 +1175,7 @@ static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local) {
             && data->local_addr.s_in6.sin6_scope_id != local->s_in6.sin6_scope_id)
             return 0;
 
-#if defined(_WIN32)
+#if defined(OPENSSL_SYS_WINDOWS)
         mh->Control.len = BIO_CMSG_SPACE(sizeof(struct in6_pktinfo));
 #else
         mh->msg_controllen = BIO_CMSG_SPACE(sizeof(struct in6_pktinfo));
@@ -1197,7 +1193,7 @@ static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local) {
  * should mask out any system flags returned by this function you cannot support
  * in a particular circumstance. Currently no flags are defined.
  */
-#if M_METHOD != M_METHOD_NONE && M_METHOD != M_METHOD_WSARECVMSG
+#if M_METHOD != M_METHOD_NONE
 static int translate_flags(uint64_t flags) {
     return 0;
 }
@@ -1240,7 +1236,7 @@ static ossl_ssize_t dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t n
     if (num_msg == 0)
         return 0;
 
-#if M_METHOD != M_METHOD_NONE && M_METHOD != M_METHOD_WSARECVMSG
+#if M_METHOD != M_METHOD_NONE
     sysflags = translate_flags(flags);
 #endif
 
@@ -1400,9 +1396,6 @@ static ossl_ssize_t dgram_recvmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t n
     struct iovec iov;
     unsigned char control[BIO_CMSG_ALLOC_LEN];
     int have_local_enabled = data->local_addr_enabled;
-#elif M_METHOD == M_METHOD_RECVFROM
-    int sysflags;
-    socklen_t slen;
 #elif M_METHOD == M_METHOD_WSARECVMSG
     bio_dgram_data *data = (bio_dgram_data *)b->ptr;
     int have_local_enabled = data->local_addr_enabled;
@@ -1411,11 +1404,15 @@ static ossl_ssize_t dgram_recvmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t n
     DWORD num_bytes_received = 0;
     unsigned char control[BIO_CMSG_ALLOC_LEN];
 #endif
+#if M_METHOD == M_METHOD_RECVFROM || M_METHOD == M_METHOD_WSARECVMSG
+    int sysflags;
+    socklen_t slen;
+#endif
 
     if (num_msg == 0)
         return 0;
 
-#if M_METHOD != M_METHOD_NONE && M_METHOD != M_METHOD_WSARECVMSG
+#if M_METHOD != M_METHOD_NONE
     sysflags = translate_flags(flags);
 #endif
 

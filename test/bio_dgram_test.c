@@ -200,10 +200,8 @@ static int test_bio_dgram_impl(int af, int use_local)
 
     /* Third effort should succeed */
     ret = BIO_sendmmsg(b1, tx_msg, sizeof(BIO_MSG), 1, 0);
-    if (!TEST_int_eq((int)ret, 1)) {
-        fprintf(stderr, "# Failed sending message\n");
+    if (!TEST_int_eq((int)ret, 1))
         goto err;
-    }
 
     /* Now try receiving */
     rx_msg[0].data      = rx_buf;
