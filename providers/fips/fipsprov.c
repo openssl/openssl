@@ -23,7 +23,6 @@
 #include "prov/seeding.h"
 #include "self_test.h"
 #include "internal/core.h"
-#include "e_os.h"
 
 static const char FIPS_DEFAULT_PROPERTIES[] = "provider=fips,fips=yes";
 static const char FIPS_UNAPPROVED_PROPERTIES[] = "provider=fips,fips=no";
