@@ -1675,6 +1675,10 @@ DEPEND[html/man3/OSSL_PROVIDER.html]=man3/OSSL_PROVIDER.pod
 GENERATE[html/man3/OSSL_PROVIDER.html]=man3/OSSL_PROVIDER.pod
 DEPEND[man/man3/OSSL_PROVIDER.3]=man3/OSSL_PROVIDER.pod
 GENERATE[man/man3/OSSL_PROVIDER.3]=man3/OSSL_PROVIDER.pod
+DEPEND[html/man3/OSSL_QUIC_client_method.html]=man3/OSSL_QUIC_client_method.pod
+GENERATE[html/man3/OSSL_QUIC_client_method.html]=man3/OSSL_QUIC_client_method.pod
+DEPEND[man/man3/OSSL_QUIC_client_method.3]=man3/OSSL_QUIC_client_method.pod
+GENERATE[man/man3/OSSL_QUIC_client_method.3]=man3/OSSL_QUIC_client_method.pod
 DEPEND[html/man3/OSSL_SELF_TEST_new.html]=man3/OSSL_SELF_TEST_new.pod
 GENERATE[html/man3/OSSL_SELF_TEST_new.html]=man3/OSSL_SELF_TEST_new.pod
 DEPEND[man/man3/OSSL_SELF_TEST_new.3]=man3/OSSL_SELF_TEST_new.pod
@@ -3154,6 +3158,7 @@ html/man3/OSSL_PARAM_allocate_from_text.html \
 html/man3/OSSL_PARAM_dup.html \
 html/man3/OSSL_PARAM_int.html \
 html/man3/OSSL_PROVIDER.html \
+html/man3/OSSL_QUIC_client_method.html \
 html/man3/OSSL_SELF_TEST_new.html \
 html/man3/OSSL_SELF_TEST_set_callback.html \
 html/man3/OSSL_STORE_INFO.html \
@@ -3750,6 +3755,7 @@ man/man3/OSSL_PARAM_allocate_from_text.3 \
 man/man3/OSSL_PARAM_dup.3 \
 man/man3/OSSL_PARAM_int.3 \
 man/man3/OSSL_PROVIDER.3 \
+man/man3/OSSL_QUIC_client_method.3 \
 man/man3/OSSL_SELF_TEST_new.3 \
 man/man3/OSSL_SELF_TEST_set_callback.3 \
 man/man3/OSSL_STORE_INFO.3 \
