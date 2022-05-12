@@ -43,8 +43,113 @@ static int tls_any_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs,
     return 1;
 }
 
+static int tls_validate_record_header(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
+{
+    if (rec->rec_version == SSL2_VERSION) {
+        /* SSLv2 format ClientHello */
+        if (!ossl_assert(rl->version == TLS_ANY_VERSION)) {
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        if (rec->length < MIN_SSL2_RECORD_LEN) {
+            RLAYERfatal(rl, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_TOO_SHORT);
+            return 0;
+        }
+    } else {
+        if (rl->version == TLS_ANY_VERSION) {
+            if ((rec->rec_version >> 8) != SSL3_VERSION_MAJOR) {
+                if (rl->is_first_record) {
+                    unsigned char *p;
+
+                    /*
+                     * Go back to start of packet, look at the five bytes that
+                     * we have.
+                     */
+                    p = rl->packet;
+                    if (HAS_PREFIX((char *)p, "GET ") ||
+                        HAS_PREFIX((char *)p, "POST ") ||
+                        HAS_PREFIX((char *)p, "HEAD ") ||
+                        HAS_PREFIX((char *)p, "PUT ")) {
+                        RLAYERfatal(rl, SSL_AD_NO_ALERT, SSL_R_HTTP_REQUEST);
+                        return 0;
+                    } else if (HAS_PREFIX((char *)p, "CONNE")) {
+                        RLAYERfatal(rl, SSL_AD_NO_ALERT,
+                                    SSL_R_HTTPS_PROXY_REQUEST);
+                        return 0;
+                    }
+
+                    /* Doesn't look like TLS - don't send an alert */
+                    RLAYERfatal(rl, SSL_AD_NO_ALERT,
+                                SSL_R_WRONG_VERSION_NUMBER);
+                    return 0;
+                } else {
+                    RLAYERfatal(rl, SSL_AD_PROTOCOL_VERSION,
+                                SSL_R_WRONG_VERSION_NUMBER);
+                    return 0;
+                }
+            }
+        } else if (rl->version == TLS1_3_VERSION) {
+            /*
+             * In this case we know we are going to negotiate TLSv1.3, but we've
+             * had an HRR, so we haven't actually done so yet. Nonetheless we
+             * still expect the record version to be TLSv1.2 as per a normal
+             * TLSv1.3 record
+             */
+            if (rec->rec_version != TLS1_2_VERSION) {
+                RLAYERfatal(rl, SSL_AD_PROTOCOL_VERSION,
+                            SSL_R_WRONG_VERSION_NUMBER);
+                return 0;
+            }
+        } else if (rec->rec_version != rl->version) {
+            if ((rl->version & 0xFF00) == (rec->rec_version & 0xFF00)) {
+                if (rec->type == SSL3_RT_ALERT) {
+                    /*
+                     * The record is using an incorrect version number,
+                     * but what we've got appears to be an alert. We
+                     * haven't read the body yet to check whether its a
+                     * fatal or not - but chances are it is. We probably
+                     * shouldn't send a fatal alert back. We'll just
+                     * end.
+                     */
+                    RLAYERfatal(rl, SSL_AD_NO_ALERT,
+                                SSL_R_WRONG_VERSION_NUMBER);
+                    return 0;
+                }
+                /* Send back error using their minor version number */
+                rl->version = (unsigned short)rec->rec_version;
+            }
+            RLAYERfatal(rl, SSL_AD_PROTOCOL_VERSION,
+                        SSL_R_WRONG_VERSION_NUMBER);
+            return 0;
+        }
+    }
+    if (rec->length > SSL3_RT_MAX_PLAIN_LENGTH) {
+        /*
+         * We use SSL_R_DATA_LENGTH_TOO_LONG instead of
+         * SSL_R_ENCRYPTED_LENGTH_TOO_LONG here because we are the "any" method
+         * and we know that we are dealing with plaintext data
+         */
+        RLAYERfatal(rl, SSL_AD_RECORD_OVERFLOW, SSL_R_DATA_LENGTH_TOO_LONG);
+        return 0;
+    }
+    return 1;
+}
+
+static int tls_any_set_protocol_version(OSSL_RECORD_LAYER *rl, int vers)
+{
+    if (rl->version != TLS_ANY_VERSION && rl->version != vers)
+        return 0;
+    rl->version = vers;
+
+    return 1;
+}
+
 struct record_functions_st tls_any_funcs = {
     tls_any_set_crypto_state,
+    tls_default_read_n,
     tls_any_cipher,
-    NULL
+    NULL,
+    tls_any_set_protocol_version,
+    tls_validate_record_header,
+    tls_default_post_process_record
 };

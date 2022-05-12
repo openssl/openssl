@@ -408,6 +408,35 @@ static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     return OSSL_RECORD_RETURN_SUCCESS;
 }
 
+static int ktls_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
+                       int clearold, size_t *readbytes)
+{
+    int ret;
+
+    ret = tls_default_read_n(rl, n, max, extend, clearold, readbytes);
+
+    if (ret < OSSL_RECORD_RETURN_RETRY) {
+        switch (errno) {
+        case EBADMSG:
+            RLAYERfatal(rl, SSL_AD_BAD_RECORD_MAC,
+                        SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC);
+            break;
+        case EMSGSIZE:
+            RLAYERfatal(rl, SSL_AD_RECORD_OVERFLOW,
+                        SSL_R_PACKET_LENGTH_TOO_LONG);
+            break;
+        case EINVAL:
+            RLAYERfatal(rl, SSL_AD_PROTOCOL_VERSION,
+                        SSL_R_WRONG_VERSION_NUMBER);
+            break;
+        default:
+            break;
+        }
+    }
+
+    return ret;
+}
+
 static int ktls_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *inrecs, size_t n_recs,
                        int sending, SSL_MAC_BUF *mac, size_t macsize,
                        /* TODO(RECLAYER): Remove me */ SSL_CONNECTION *s)
@@ -415,8 +444,108 @@ static int ktls_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *inrecs, size_t n_recs
     return 1;
 }
 
-struct record_functions_st ossl_ktls_funcs = {
+static int ktls_validate_record_header(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
+{
+    if (rec->rec_version != TLS1_2_VERSION) {
+        RLAYERfatal(rl, SSL_AD_DECODE_ERROR, SSL_R_WRONG_VERSION_NUMBER);
+        return 0;
+    }
+
+    return 1;
+}
+
+static int ktls_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec,
+                                    SSL_CONNECTION *s)
+{
+    if (rl->version == TLS1_3_VERSION)
+        return tls13_common_post_process_record(rl, rec, s);
+
+    return 1;
+}
+
+static struct record_functions_st ossl_ktls_funcs = {
     ktls_set_crypto_state,
+    ktls_read_n,
     ktls_cipher,
-    NULL
+    NULL,
+    tls_default_set_protocol_version,
+    ktls_validate_record_header,
+    ktls_post_process_record
+};
+
+static int
+ktls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
+                      int role, int direction, int level, unsigned char *key,
+                      size_t keylen, unsigned char *iv, size_t ivlen,
+                      unsigned char *mackey, size_t mackeylen,
+                      const EVP_CIPHER *ciph, size_t taglen,
+                      /* TODO(RECLAYER): This probably should not be an int */
+                      int mactype,
+                      const EVP_MD *md, const SSL_COMP *comp, BIO *transport,
+                      BIO_ADDR *local, BIO_ADDR *peer,
+                      const OSSL_PARAM *settings, const OSSL_PARAM *options,
+                      OSSL_RECORD_LAYER **retrl,
+                      /* TODO(RECLAYER): Remove me */
+                      SSL_CONNECTION *s)
+{
+    int ret;
+
+    ret = tls_int_new_record_layer(libctx, propq, vers, role, direction, level,
+                                   key, keylen, iv, ivlen, mackey, mackeylen,
+                                   ciph, taglen, mactype, md, comp, transport,
+                                   local, peer, settings, options, retrl, s);
+
+    if (ret != OSSL_RECORD_RETURN_SUCCESS)
+        return ret;
+
+    (*retrl)->funcs = &ossl_ktls_funcs;
+
+    ret = (*retrl)->funcs->set_crypto_state(*retrl, level, key, keylen, iv,
+                                            ivlen, mackey, mackeylen, ciph,
+                                            taglen, mactype, md, comp, s);
+
+    if (ret != OSSL_RECORD_RETURN_SUCCESS) {
+        OPENSSL_free(*retrl);
+        *retrl = NULL;
+    } else {
+        /*
+         * With KTLS we always try and read as much as possible and fill the
+         * buffer
+         */
+        (*retrl)->read_ahead = 1;
+    }
+    return ret;
+}
+
+const OSSL_RECORD_METHOD ossl_ktls_record_method = {
+    ktls_new_record_layer,
+    tls_free,
+    tls_reset,
+    tls_unprocessed_read_pending,
+    tls_processed_read_pending,
+    tls_app_data_pending,
+    tls_write_pending,
+    tls_get_max_record_len,
+    tls_get_max_records,
+    tls_write_records,
+    tls_retry_write_records,
+    tls_read_record,
+    tls_release_record,
+    tls_get_alert_code,
+    tls_set1_bio,
+    tls_set_protocol_version,
+    tls_set_plain_alerts,
+    tls_set_first_handshake,
+
+    /*
+     * TODO(RECLAYER): Remove these. These function pointers are temporary hacks
+     * during the record layer refactoring. They need to be removed before the
+     * refactor is complete.
+     */
+    tls_default_read_n,
+    tls_get0_rbuf,
+    tls_get0_packet,
+    tls_set0_packet,
+    tls_get_packet_length,
+    tls_reset_packet_length
 };

@@ -794,16 +794,18 @@ MSG_PROCESS_RETURN tls_process_finished(SSL_CONNECTION *s, PACKET *pkt)
 {
     size_t md_len;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    int was_first = SSL_IS_FIRST_HANDSHAKE(s);
 
 
     /* This is a real handshake so make sure we clean it up at the end */
     if (s->server) {
         /*
         * To get this far we must have read encrypted data from the client. We
-        * no longer tolerate unencrypted alerts. This value is ignored if less
-        * than TLSv1.3
+        * no longer tolerate unencrypted alerts. This is ignored if less than
+        * TLSv1.3
         */
-        s->statem.enc_read_state = ENC_READ_STATE_VALID;
+        if (s->rrlmethod->set_plain_alerts != NULL)
+            s->rrlmethod->set_plain_alerts(s->rrl, 0);
         if (s->post_handshake_auth != SSL_PHA_REQUESTED)
             s->statem.cleanuphand = 1;
         if (SSL_CONNECTION_IS_TLS13(s)
@@ -892,6 +894,11 @@ MSG_PROCESS_RETURN tls_process_finished(SSL_CONNECTION *s, PACKET *pkt)
             }
         }
     }
+
+    if (was_first
+            && !SSL_IS_FIRST_HANDSHAKE(s)
+            && s->rrlmethod->set_first_handshake != NULL)
+        s->rrlmethod->set_first_handshake(s->rrl, 0);
 
     return MSG_PROCESS_FINISHED_READING;
 }
@@ -1873,6 +1880,9 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
             check_for_downgrade(s, best_vers, dgrd);
             s->version = best_vers;
             ssl->method = best_method;
+            if (!s->rrlmethod->set_protocol_version(s->rrl, best_vers))
+                return ERR_R_INTERNAL_ERROR;
+
             return 0;
         }
         return SSL_R_UNSUPPORTED_PROTOCOL;
@@ -1900,6 +1910,9 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
             check_for_downgrade(s, vent->version, dgrd);
             s->version = vent->version;
             ssl->method = method;
+            if (!s->rrlmethod->set_protocol_version(s->rrl, s->version))
+                return ERR_R_INTERNAL_ERROR;
+
             return 0;
         }
         disabled = 1;
@@ -1959,6 +1972,10 @@ int ssl_choose_client_version(SSL_CONNECTION *s, int version,
          * versions they don't want.  If not, then easy to fix, just return
          * ssl_method_error(s, s->method)
          */
+        if (!s->rrlmethod->set_protocol_version(s->rrl, s->version)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
         return 1;
     case TLS_ANY_VERSION:
         table = tls_version_table;
@@ -2019,6 +2036,10 @@ int ssl_choose_client_version(SSL_CONNECTION *s, int version,
             continue;
 
         ssl->method = vent->cmeth();
+        if (!s->rrlmethod->set_protocol_version(s->rrl, s->version)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
         return 1;
     }
 

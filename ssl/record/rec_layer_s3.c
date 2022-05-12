@@ -1783,6 +1783,8 @@ static int ssl_post_record_layer_select(SSL_CONNECTION *s)
         SSL_set_options(ssl, SSL_OP_NO_RENEGOTIATION);
     }
 #endif
+    if (SSL_IS_FIRST_HANDSHAKE(s) && s->rrlmethod->set_first_handshake != NULL)
+        s->rrlmethod->set_first_handshake(s->rrl, 1);
     return 1;
 }
 
