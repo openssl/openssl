@@ -284,6 +284,22 @@ struct ossl_record_method_st {
      */
     int (*set1_bio)(OSSL_RECORD_LAYER *rl, BIO *bio);
 
+    /* Called when protocol negotiation selects a protocol version to use */
+    int (*set_protocol_version)(OSSL_RECORD_LAYER *rl, int version);
+
+    /*
+     * Whether we are allowed to receive unencrypted alerts, even if we might
+     * otherwise expect encrypted records. Ignored by protocol versions where
+     * this isn't relevant
+     */
+    void (*set_plain_alerts)(OSSL_RECORD_LAYER *rl, int allow);
+
+    /*
+     * Called immediately after creation of the recory layer if we are in a
+     * first handshake. Also called at the end of the first handshake
+     */
+    void (*set_first_handshake)(OSSL_RECORD_LAYER *rl, int first);
+
     /*
      * TODO(RECLAYER): Remove these. These function pointers are temporary hacks
      * during the record layer refactoring. They need to be removed before the

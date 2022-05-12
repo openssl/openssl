@@ -591,6 +591,10 @@ static int tls1_mac(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, unsigned char *md,
 /* TLSv1.0, TLSv1.1 and TLSv1.2 all use the same funcs */
 struct record_functions_st tls_1_funcs = {
     tls1_set_crypto_state,
+    tls_default_read_n,
     tls1_cipher,
-    tls1_mac
+    tls1_mac,
+    tls_default_set_protocol_version,
+    tls_default_validate_record_header,
+    tls_default_post_process_record
 };
