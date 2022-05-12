@@ -384,6 +384,8 @@ static int cmd_Options(SSL_CONF_CTX *cctx, const char *value)
         SSL_FLAG_TBL_SRV("ECDHSingle", SSL_OP_SINGLE_ECDH_USE),
         SSL_FLAG_TBL("UnsafeLegacyRenegotiation",
                      SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION),
+        SSL_FLAG_TBL("UnsafeLegacyServerConnect",
+                     SSL_OP_LEGACY_SERVER_CONNECT),
         SSL_FLAG_TBL("ClientRenegotiation",
                      SSL_OP_ALLOW_CLIENT_RENEGOTIATION),
         SSL_FLAG_TBL_INV("EncryptThenMac", SSL_OP_NO_ENCRYPT_THEN_MAC),
