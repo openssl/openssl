@@ -39,6 +39,7 @@ sub run_test {
     # Not using TLSv1.3 allows the test to work with "no-ec"
     my @s_cmd = ("s_server", "-accept", ":0", "-cert", $cert, "-www", "-no_tls1_3", "-naccept", "1");
     push @s_cmd, "-tfo" if ($tfo);
+    push @s_cmd, ('-cipher', 'DEFAULT@SECLEVEL=0') if disabled("tls1_2");
 
     my $spid = open2(my $sout, my $sin, $shlib_wrap, $apps_openssl, @s_cmd);
 
@@ -57,6 +58,7 @@ sub run_test {
     # Start up the client
     my @c_cmd = ("s_client", "-connect", ":$port", "-no_tls1_3");
     push @c_cmd, "-tfo" if ($tfo);
+    push @c_cmd, ('-cipher', 'DEFAULT@SECLEVEL=0') if disabled("tls1_2");
 
     my $cpid = open2(my $cout, my $cin, $shlib_wrap, $apps_openssl, @c_cmd);
 
