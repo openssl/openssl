@@ -107,7 +107,24 @@ our @tests = (
             "ResumptionExpected" => "No",
             "ExpectedResult" => "Success"
         }
-    }
+    },
+    {
+#       Just test that UnsafeLegacyServerConnect option
+#       exists, it won't have any real effect here
+        name => "renegotiate-client-legacy-connect",
+        server => {
+            "MaxProtocol" => "TLSv1.2"
+        },
+        client => {
+            "Options" => "UnsafeLegacyServerConnect",
+        },
+        test => {
+            "Method" => "TLS",
+            "HandshakeMode" => "RenegotiateClient",
+            "ResumptionExpected" => "Yes",
+            "ExpectedResult" => "Success"
+        }
+    },
 );
 our @tests_tls1_2 = (
     {
