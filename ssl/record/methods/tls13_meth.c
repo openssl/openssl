@@ -30,15 +30,15 @@ static int tls13_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     int mode;
 
     if (ivlen > sizeof(rl->iv)) {
-        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return 0;
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        return OSSL_RECORD_RETURN_FATAL;
     }
     memcpy(rl->iv, iv, ivlen);
 
     ciph_ctx = rl->enc_read_ctx = EVP_CIPHER_CTX_new();
     if (ciph_ctx == NULL) {
-        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
-        return 0;
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        return OSSL_RECORD_RETURN_FATAL;
     }
 
     RECORD_LAYER_reset_read_sequence(&s->rlayer);
@@ -51,11 +51,11 @@ static int tls13_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
         || (mode == EVP_CIPH_CCM_MODE
             && EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_AEAD_SET_TAG,  taglen, NULL) <= 0)
         || EVP_DecryptInit_ex(ciph_ctx, NULL, NULL, key, NULL) <= 0) {
-        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
-        return 0;
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        return OSSL_RECORD_RETURN_FATAL;
     }
 
-    return 1;
+    return OSSL_RECORD_RETURN_SUCCESS;
 }
 
 static int tls13_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,

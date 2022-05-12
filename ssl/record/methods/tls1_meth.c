@@ -32,7 +32,7 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     EVP_PKEY *mac_key;
 
     if (level != OSSL_RECORD_PROTECTION_LEVEL_APPLICATION)
-        return 0;
+        return OSSL_RECORD_RETURN_FATAL;
 
     if (s->ext.use_etm)
         s->s3.flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC_READ;
@@ -51,7 +51,7 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
 
     if ((rl->enc_read_ctx = EVP_CIPHER_CTX_new()) == NULL) {
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
-        return 0;
+        return OSSL_RECORD_RETURN_FATAL;
     }
 
     ciph_ctx = rl->enc_read_ctx;
@@ -59,15 +59,14 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     rl->read_hash = EVP_MD_CTX_new();
     if (rl->read_hash == NULL) {
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return OSSL_RECORD_RETURN_FATAL;
     }
 #ifndef OPENSSL_NO_COMP
     if (comp != NULL) {
         rl->expand = COMP_CTX_new(comp->method);
         if (rl->expand == NULL) {
-            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR,
-                        SSL_R_COMPRESSION_LIBRARY_ERROR);
-            return 0;
+            ERR_raise(ERR_LIB_SSL, SSL_R_COMPRESSION_LIBRARY_ERROR);
+            return OSSL_RECORD_RETURN_FATAL;
         }
     }
 #endif
@@ -100,8 +99,8 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
                                      rl->libctx, rl->propq, mac_key,
                                      NULL) <= 0) {
             EVP_PKEY_free(mac_key);
-            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return 0;
+            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+            return OSSL_RECORD_RETURN_FATAL;
         }
         EVP_PKEY_free(mac_key);
     }
@@ -109,9 +108,9 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     if (EVP_CIPHER_get_mode(ciph) == EVP_CIPH_GCM_MODE) {
         if (!EVP_DecryptInit_ex(ciph_ctx, ciph, NULL, key, NULL)
                 || EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_GCM_SET_IV_FIXED,
-                                        (int)ivlen, iv) <= 0) {
-            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return 0;
+                                       (int)ivlen, iv) <= 0) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+            return OSSL_RECORD_RETURN_FATAL;
         }
     } else if (EVP_CIPHER_get_mode(ciph) == EVP_CIPH_CCM_MODE) {
         if (!EVP_DecryptInit_ex(ciph_ctx, ciph, NULL, NULL, NULL)
@@ -126,13 +125,13 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
                     * why not in the initial EVP_DecryptInit_ex() call?
                     */
                 || !EVP_DecryptInit_ex(ciph_ctx, NULL, NULL, key, NULL)) {
-            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return 0;
+            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+            return OSSL_RECORD_RETURN_FATAL;
         }
     } else {
         if (!EVP_DecryptInit_ex(ciph_ctx, ciph, NULL, key, iv)) {
-            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return 0;
+            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+            return OSSL_RECORD_RETURN_FATAL;
         }
     }
     /* Needed for "composite" AEADs, such as RC4-HMAC-MD5 */
@@ -140,16 +139,14 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
         && mackeylen != 0
         && EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_AEAD_SET_MAC_KEY,
                                (int)mackeylen, mackey) <= 0) {
-        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return 0;
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        return OSSL_RECORD_RETURN_FATAL;
     }
     if (EVP_CIPHER_get0_provider(ciph) != NULL
-            && !ossl_set_tls_provider_parameters(rl, ciph_ctx, ciph, md, s)) {
-        /* RLAYERfatal already called */
-        return 0;
-    }
+            && !ossl_set_tls_provider_parameters(rl, ciph_ctx, ciph, md, s))
+        return OSSL_RECORD_RETURN_FATAL;
 
-    return 1;
+    return OSSL_RECORD_RETURN_SUCCESS;
 }
 
 #define MAX_PADDING 256

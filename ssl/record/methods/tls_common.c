@@ -63,7 +63,7 @@ int ossl_set_tls_provider_parameters(OSSL_RECORD_LAYER *rl,
     *pprm = OSSL_PARAM_construct_end();
 
     if (!EVP_CIPHER_CTX_set_params(ctx, params)) {
-        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -1102,7 +1102,7 @@ static int tls_release_record(OSSL_RECORD_LAYER *rl, void *rechandle)
     return OSSL_RECORD_RETURN_SUCCESS;
 }
 
-static OSSL_RECORD_LAYER *
+static int
 tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                          int role, int direction, int level, unsigned char *key,
                          size_t keylen, unsigned char *iv, size_t ivlen,
@@ -1113,15 +1113,18 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                          const EVP_MD *md, const SSL_COMP *comp, BIO *transport,
                          BIO_ADDR *local, BIO_ADDR *peer,
                          const OSSL_PARAM *settings, const OSSL_PARAM *options,
+                         OSSL_RECORD_LAYER **retrl,
                          /* TODO(RECLAYER): Remove me */
                          SSL_CONNECTION *s)
 {
     OSSL_RECORD_LAYER *rl = OPENSSL_zalloc(sizeof(*rl));
     const OSSL_PARAM *p;
 
+    *retrl = NULL;
+
     if (rl == NULL) {
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
-        return NULL;
+        return OSSL_RECORD_RETURN_FATAL;
     }
 
     if (transport != NULL && !BIO_up_ref(transport)) {
@@ -1176,13 +1179,14 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     if (!tls_set1_bio(rl, transport))
         goto err;
 
-    return rl;
+    *retrl = rl;
+    return OSSL_RECORD_RETURN_SUCCESS;
  err:
     OPENSSL_free(rl);
-    return NULL;
+    return OSSL_RECORD_RETURN_FATAL;
 }
 
-static OSSL_RECORD_LAYER *
+static int
 tls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                      int role, int direction, int level, unsigned char *key,
                      size_t keylen, unsigned char *iv, size_t ivlen,
@@ -1193,54 +1197,55 @@ tls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                      const EVP_MD *md, const SSL_COMP *comp, BIO *transport,
                      BIO_ADDR *local, BIO_ADDR *peer,
                      const OSSL_PARAM *settings, const OSSL_PARAM *options,
+                     OSSL_RECORD_LAYER **retrl,
                      /* TODO(RECLAYER): Remove me */
                      SSL_CONNECTION *s)
 {
-    OSSL_RECORD_LAYER *rl = tls_int_new_record_layer(libctx, propq, vers, role,
-                                                     direction, level, key,
-                                                     keylen, iv, ivlen, mackey,
-                                                     mackeylen, ciph, taglen,
-                                                     mactype, md, comp,
-                                                     transport, local, peer,
-                                                     settings, options, s);
+    int ret;
+    
+    ret = tls_int_new_record_layer(libctx, propq, vers, role, direction, level,
+                                   key, keylen, iv, ivlen, mackey, mackeylen,
+                                   ciph, taglen, mactype, md, comp, transport,
+                                   local, peer, settings, options, retrl, s);
 
-    if (rl == NULL)
-        return NULL;
+    if (ret != OSSL_RECORD_RETURN_SUCCESS)
+        return ret;
 
     switch (vers) {
     case TLS_ANY_VERSION:
-        rl->funcs = &tls_any_funcs;
+        (*retrl)->funcs = &tls_any_funcs;
         break;
     case TLS1_3_VERSION:
-        rl->funcs = &tls_1_3_funcs;
+        (*retrl)->funcs = &tls_1_3_funcs;
         break;
     case TLS1_2_VERSION:
     case TLS1_1_VERSION:
     case TLS1_VERSION:
-        rl->funcs = &tls_1_funcs;
+        (*retrl)->funcs = &tls_1_funcs;
         break;
     case SSL3_VERSION:
-        rl->funcs = &ssl_3_0_funcs;
+        (*retrl)->funcs = &ssl_3_0_funcs;
         break;
     default:
         /* Should not happen */
-        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        ret = OSSL_RECORD_RETURN_FATAL;
         goto err;
     }
 
-    if (!rl->funcs->set_crypto_state(rl, level, key, keylen, iv, ivlen,
-                                     mackey, mackeylen, ciph, taglen,
-                                     mactype, md, comp, s))
-        goto err;
+    ret = (*retrl)->funcs->set_crypto_state(*retrl, level, key, keylen, iv,
+                                             ivlen, mackey, mackeylen, ciph,
+                                             taglen, mactype, md, comp, s);
 
-    return rl;
  err:
-    /* TODO(RECLAYER): How do we distinguish between fatal and non-fatal errors? */
-    OPENSSL_free(rl);
-    return NULL;
+    if (ret != OSSL_RECORD_RETURN_SUCCESS) {
+        OPENSSL_free(*retrl);
+        *retrl = NULL;
+    }
+    return ret;
 }
 
-static OSSL_RECORD_LAYER *
+static int
 dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                       int role, int direction, int level, unsigned char *key,
                       size_t keylen, unsigned char *iv, size_t ivlen,
@@ -1251,27 +1256,27 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                       const EVP_MD *md, const SSL_COMP *comp, BIO *transport,
                       BIO_ADDR *local, BIO_ADDR *peer,
                       const OSSL_PARAM *settings, const OSSL_PARAM *options,
+                      OSSL_RECORD_LAYER **retrl,
                       /* TODO(RECLAYER): Remove me */
                       SSL_CONNECTION *s)
 {
-    OSSL_RECORD_LAYER *rl = tls_int_new_record_layer(libctx, propq, vers, role,
-                                                     direction, level, key,
-                                                     keylen, iv, ivlen, mackey,
-                                                     mackeylen, ciph, taglen,
-                                                     mactype, md, comp,
-                                                     transport, local, peer,
-                                                     settings, options, s);
+    int ret;
 
-    if (rl == NULL)
-        return NULL;
+    ret = tls_int_new_record_layer(libctx, propq, vers, role, direction, level,
+                                   key, keylen, iv, ivlen, mackey, mackeylen,
+                                   ciph, taglen, mactype, md, comp, transport,
+                                   local, peer, settings, options, retrl, s);
 
-    rl->isdtls = 1;
+    if (ret != OSSL_RECORD_RETURN_SUCCESS)
+        return ret;
 
-    return rl;
+    (*retrl)->isdtls = 1;
+
+    return OSSL_RECORD_RETURN_SUCCESS;
 }
 
 #ifndef OPENSSL_NO_KTLS
-static OSSL_RECORD_LAYER *
+static int
 ktls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                       int role, int direction, int level, unsigned char *key,
                       size_t keylen, unsigned char *iv, size_t ivlen,
@@ -1282,32 +1287,31 @@ ktls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                       const EVP_MD *md, const SSL_COMP *comp, BIO *transport,
                       BIO_ADDR *local, BIO_ADDR *peer,
                       const OSSL_PARAM *settings, const OSSL_PARAM *options,
+                      OSSL_RECORD_LAYER **retrl,
                       /* TODO(RECLAYER): Remove me */
                       SSL_CONNECTION *s)
 {
-    OSSL_RECORD_LAYER *rl = tls_int_new_record_layer(libctx, propq, vers, role,
-                                                     direction, level, key,
-                                                     keylen, iv, ivlen, mackey,
-                                                     mackeylen, ciph, taglen,
-                                                     mactype, md, comp,
-                                                     transport, local, peer,
-                                                     settings, options, s);
+    int ret;
 
-    if (rl == NULL)
-        return NULL;
+    ret = tls_int_new_record_layer(libctx, propq, vers, role, direction, level,
+                                   key, keylen, iv, ivlen, mackey, mackeylen,
+                                   ciph, taglen, mactype, md, comp, transport,
+                                   local, peer, settings, options, retrl, s);
 
-    rl->funcs = &ossl_ktls_funcs;
+    if (ret != OSSL_RECORD_RETURN_SUCCESS)
+        return ret;
 
-    if (!rl->funcs->set_crypto_state(rl, level, key, keylen, iv, ivlen,
-                                     mackey, mackeylen, ciph, taglen,
-                                     mactype, md, comp, s))
-        goto err;
+    (*retrl)->funcs = &ossl_ktls_funcs;
 
-    return rl;
- err:
-    /* TODO(RECLAYER): How do we distinguish between fatal and non-fatal errors? */
-    OPENSSL_free(rl);
-    return NULL;
+    ret = (*retrl)->funcs->set_crypto_state(*retrl, level, key, keylen, iv,
+                                            ivlen, mackey, mackeylen, ciph,
+                                            taglen, mactype, md, comp, s);
+
+    if (ret != OSSL_RECORD_RETURN_SUCCESS) {
+        OPENSSL_free(*retrl);
+        *retrl = NULL;
+    }
+    return ret;
 }
 #endif
 

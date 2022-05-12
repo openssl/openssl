@@ -16,6 +16,11 @@
 /* Protocol version specific function pointers */
 struct record_functions_st
 {
+    /*
+     * Returns either OSSL_RECORD_RETURN_SUCCESS, OSSL_RECORD_RETURN_FATAL or
+     * OSSL_RECORD_RETURN_NON_FATAL_ERR if we can keep trying to find an
+     * alternative record layer.
+     */
     int (*set_crypto_state)(OSSL_RECORD_LAYER *rl, int level,
                             unsigned char *key, size_t keylen,
                             unsigned char *iv, size_t ivlen,
@@ -28,9 +33,16 @@ struct record_functions_st
                             const SSL_COMP *comp,
                             /* TODO(RECLAYER): Remove me */
                             SSL_CONNECTION *s);
+    /*
+     * Returns:
+     *    0: if the record is publicly invalid, or an internal error, or AEAD
+     *       decryption failed, or EtM decryption failed.
+     *    1: Success or MtE decryption failed (MAC will be randomised)
+     */
     int (*cipher)(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
                   int sending, SSL_MAC_BUF *macs, size_t macsize,
                   /* TODO(RECLAYER): Remove me */ SSL_CONNECTION *s);
+    /* Returns 1 for success or 0 for error */
     int (*mac)(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, unsigned char *md,
                int sending, /* TODO(RECLAYER): Remove me */SSL_CONNECTION *ssl);
 };

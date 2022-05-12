@@ -668,7 +668,7 @@ int ossl_ssl_connection_reset(SSL *s)
                                   OSSL_RECORD_PROTECTION_LEVEL_NONE,
                                   NULL, 0, NULL, 0, NULL,  0, NULL, 0,
                                   NID_undef, NULL, NULL)) {
-        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, SSL_R_NO_SUITABLE_RECORD_LAYER);
+        /* SSLfatal already called */
         return 0;
     }
 

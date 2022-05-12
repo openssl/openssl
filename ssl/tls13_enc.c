@@ -721,7 +721,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
                                     OSSL_RECORD_DIRECTION_READ,
                                     level, key, keylen, iv, ivlen, NULL, 0,
                                     cipher, taglen, NID_undef, NULL, NULL)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_NO_SUITABLE_RECORD_LAYER);
+            /* SSLfatal already called */
             goto err;
         }
         /* TODO(RECLAYER): Remove me */
@@ -842,7 +842,7 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
                                 key, keylen, iv, ivlen, NULL, 0,
                                 s->s3.tmp.new_sym_enc, taglen, NID_undef, NULL,
                                 NULL)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_NO_SUITABLE_RECORD_LAYER);
+            /* SSLfatal already called */
             goto err;
         }
     }

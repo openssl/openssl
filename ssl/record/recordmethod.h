@@ -129,6 +129,13 @@ struct ossl_record_method_st {
      * force at any one time (one for reading and one for writing). In some
      * protocols more than 2 might be used (e.g. in DTLS for retransmitting
      * messages from an earlier epoch).
+     *
+     * The created OSSL_RECORD_LAYER object is stored in *ret on success (or
+     * NULL otherwise). The return value will be one of
+     * OSSL_RECORD_RETURN_SUCCESS, OSSL_RECORD_RETURN_FATAL or
+     * OSSL_RECORD_RETURN_NON_FATAL. A non-fatal return means that creation of
+     * the record layer has failed because it is unsuitable, but an alternative
+     * record layer can be tried instead.
      */
 
     /*
@@ -136,27 +143,28 @@ struct ossl_record_method_st {
      * make this fetchable
      * TODO(RECLAYER): mactype should not be an int
      */
-    OSSL_RECORD_LAYER *(*new_record_layer)(OSSL_LIB_CTX *libctx,
-                                           const char *propq, int vers,
-                                           int role, int direction,
-                                           int level, unsigned char *key,
-                                           size_t keylen,
-                                           unsigned char *iv,
-                                           size_t ivlen,
-                                           unsigned char *mackey,
-                                           size_t mackeylen,
-                                           const EVP_CIPHER *ciph,
-                                           size_t taglen,
-                                           /* TODO(RECLAYER): This probably should not be an int */
-                                           int mactype,
-                                           const EVP_MD *md,
-                                           const SSL_COMP *comp,
-                                           BIO *transport, BIO_ADDR *local,
-                                           BIO_ADDR *peer,
-                                           const OSSL_PARAM *settings,
-                                           const OSSL_PARAM *options,
-                                           /* TODO(RECLAYER): Remove me */
-                                           SSL_CONNECTION *s);
+    int (*new_record_layer)(OSSL_LIB_CTX *libctx,
+                            const char *propq, int vers,
+                            int role, int direction,
+                            int level, unsigned char *key,
+                            size_t keylen,
+                            unsigned char *iv,
+                            size_t ivlen,
+                            unsigned char *mackey,
+                            size_t mackeylen,
+                            const EVP_CIPHER *ciph,
+                            size_t taglen,
+                            /* TODO(RECLAYER): This probably should not be an int */
+                            int mactype,
+                            const EVP_MD *md,
+                            const SSL_COMP *comp,
+                            BIO *transport, BIO_ADDR *local,
+                            BIO_ADDR *peer,
+                            const OSSL_PARAM *settings,
+                            const OSSL_PARAM *options,
+                            OSSL_RECORD_LAYER **ret,
+                            /* TODO(RECLAYER): Remove me */
+                            SSL_CONNECTION *s);
     void (*free)(OSSL_RECORD_LAYER *rl);
 
     int (*reset)(OSSL_RECORD_LAYER *rl); /* Is this needed? */

@@ -151,7 +151,7 @@ int ssl3_change_cipher_state(SSL_CONNECTION *s, int which)
                                       OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
                                       key, key_len, iv, iv_len, mac_secret,
                                       md_len, ciph, 0, NID_undef, md, comp)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_NO_SUITABLE_RECORD_LAYER);
+            /* SSLfatal already called */
             goto err;
         }
 

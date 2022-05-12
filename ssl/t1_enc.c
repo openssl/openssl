@@ -286,7 +286,7 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
                                           key, cl, iv, (size_t)k, mac_secret,
                                           mac_secret_size, c, taglen, mac_type,
                                           m, comp)) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_NO_SUITABLE_RECORD_LAYER);
+                /* SSLfatal already called */
                 goto err;
             }
 
