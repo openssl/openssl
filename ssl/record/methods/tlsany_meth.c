@@ -26,13 +26,13 @@ static int tls_any_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
                                     SSL_CONNECTION *s)
 {
     if (level != OSSL_RECORD_PROTECTION_LEVEL_NONE) {
-        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return 0;
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        return OSSL_RECORD_RETURN_FATAL;
     }
 
     /* No crypto protection at the "NONE" level so nothing to be done */
 
-    return 1;
+    return OSSL_RECORD_RETURN_SUCCESS;
 }
 
 static int tls_any_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs,

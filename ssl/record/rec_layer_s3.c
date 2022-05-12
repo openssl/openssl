@@ -1831,13 +1831,21 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
     }
 
     for (;;) {
-        s->rrl = s->rrlmethod->new_record_layer(sctx->libctx, sctx->propq,
-                                                version, s->server, direction,
-                                                level, key, keylen, iv, ivlen,
-                                                mackey, mackeylen, ciph, taglen,
-                                                mactype, md, comp,  s->rbio,
-                                                NULL, NULL, NULL, options, s);
-        if (s->rrl == NULL) {
+        int rlret;
+
+        rlret = s->rrlmethod->new_record_layer(sctx->libctx, sctx->propq,
+                                               version, s->server, direction,
+                                               level, key, keylen, iv, ivlen,
+                                               mackey, mackeylen, ciph, taglen,
+                                               mactype, md, comp,  s->rbio,
+                                               NULL, NULL, NULL, options,
+                                               &s->rrl, s);
+        switch (rlret) {
+        case OSSL_RECORD_RETURN_FATAL:
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_RECORD_LAYER_FAILURE);
+            goto err;
+
+        case OSSL_RECORD_RETURN_NON_FATAL_ERR:
             if (s->rrlmethod != origmeth && origmeth != NULL) {
                 /*
                  * We tried a new record layer method, but it didn't work out,
@@ -1846,7 +1854,15 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
                 s->rrlmethod = origmeth;
                 continue;
             }
-            ERR_raise(ERR_LIB_SSL, SSL_R_NO_SUITABLE_RECORD_LAYER);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_NO_SUITABLE_RECORD_LAYER);
+            goto err;
+
+        case OSSL_RECORD_RETURN_SUCCESS:
+            break;
+
+        default:
+            /* Should not happen */
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
         }
         break;

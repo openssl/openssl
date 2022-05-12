@@ -30,18 +30,22 @@ static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     void *rl_sequence;
     ktls_crypto_info_t crypto_info;
 
-    /* Check if we are suitable for KTLS */
+    /*
+     * Check if we are suitable for KTLS. If not suitable we return
+     * OSSL_RECORD_RETURN_NON_FATAL_ERR so that other record layers can be tried
+     * instead
+     */
 
     if (comp != NULL)
-        return 0;
+        return OSSL_RECORD_RETURN_NON_FATAL_ERR;
 
     /* ktls supports only the maximum fragment size */
     if (ssl_get_max_send_fragment(s) != SSL3_RT_MAX_PLAIN_LENGTH)
-        return 0;
+        return OSSL_RECORD_RETURN_NON_FATAL_ERR;
 
     /* check that cipher is supported */
     if (!ktls_check_supported_cipher(s, ciph, taglen))
-        return 0;
+        return OSSL_RECORD_RETURN_NON_FATAL_ERR;
 
     /*
      * TODO(RECLAYER): For the write side we need to add a check for
@@ -51,7 +55,7 @@ static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     /* All future data will get encrypted by ktls. Flush the BIO or skip ktls */
     if (rl->direction == OSSL_RECORD_DIRECTION_WRITE) {
        if (BIO_flush(rl->bio) <= 0)
-           return 0;
+           return OSSL_RECORD_RETURN_NON_FATAL_ERR;
     }
 
     if (rl->direction == OSSL_RECORD_DIRECTION_WRITE)
@@ -62,12 +66,12 @@ static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     if (!ktls_configure_crypto(s, ciph, rl_sequence, &crypto_info,
                                rl->direction == OSSL_RECORD_DIRECTION_WRITE,
                                iv, ivlen, key, keylen, mackey, mackeylen))
-       return 0;
+       return OSSL_RECORD_RETURN_NON_FATAL_ERR;
 
     if (!BIO_set_ktls(rl->bio, &crypto_info, rl->direction))
-        return 0;
+        return OSSL_RECORD_RETURN_NON_FATAL_ERR;
 
-    return 1;
+    return OSSL_RECORD_RETURN_SUCCESS;
 }
 
 static int ktls_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *inrecs, size_t n_recs,
