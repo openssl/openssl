@@ -6,11 +6,6 @@ IF[{- !$disabled{quic} -}]
   SUBDIRS=quic
 ENDIF
 
-$KTLSSRC=
-IF[{- !$disabled{ktls} -}]
-  $KTLSSRC=ktls.c
-ENDIF
-
 SOURCE[../libssl]=\
         pqueue.c time.c \
         statem/statem_srvr.c statem/statem_clnt.c  s3_lib.c  s3_enc.c \
@@ -24,7 +19,7 @@ SOURCE[../libssl]=\
         ssl_asn1.c ssl_txt.c ssl_init.c ssl_conf.c  ssl_mcnf.c \
         bio_ssl.c ssl_err.c ssl_err_legacy.c tls_srp.c t1_trce.c ssl_utst.c \
         statem/statem.c \
-        tls_depr.c $KTLSSRC
+        tls_depr.c
 
 # For shared builds we need to include the libcrypto packet.c and quic_vlint.c
 # in libssl as well.
