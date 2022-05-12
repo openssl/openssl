@@ -120,6 +120,13 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 3.0.2 and 3.0.3
 
+ * Case insensitive string comparison is reimplemented via new locale-agnostic
+   comparison functions OPENSSL_str[n]casecmp always using the POSIX locale for
+   comparison. The previous implementation had problems when the Turkish locale
+   was used.
+
+   *Dmitry Belyavskiy*
+
  * Fixed a bug in the c_rehash script which was not properly sanitising shell
    metacharacters to prevent command injection.  This script is distributed by
    some operating systems in a manner where it is automatically executed.  On
