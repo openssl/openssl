@@ -1,14 +1,16 @@
+$KTLSSRC=
+IF[{- !$disabled{ktls} -}]
+  $KTLSSRC=ktls_meth.c
+ENDIF
+
 SOURCE[../../../libssl]=\
-        tls_common.c ssl3_meth.c tls1_meth.c tls13_meth.c tlsany_meth.c
+        tls_common.c ssl3_meth.c tls1_meth.c tls13_meth.c tlsany_meth.c \
+        $KTLSSRC
 
 # For shared builds we need to include the sources needed in providers
 # (ssl3_cbc.c) in libssl as well.
 IF[{- !$disabled{'deprecated-3.0'} -}]
   SHARED_SOURCE[../../../libssl]=ssl3_cbc.c
-ENDIF
-
-IF[{- !$disabled{'ktls'} -}]
-  SOURCE[../../../libssl]=ktls_meth.c
 ENDIF
 
 SOURCE[../../../providers/libdefault.a ../../../providers/libfips.a]=ssl3_cbc.c
