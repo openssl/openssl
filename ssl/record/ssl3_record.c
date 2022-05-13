@@ -217,7 +217,7 @@ int ssl3_get_record(SSL *s)
                                num_recs == 0 ? 1 : 0, &n);
             if (rret <= 0) {
 #ifndef OPENSSL_NO_KTLS
-                if (!BIO_get_ktls_recv(s->rbio) || rret == 0)
+                if (!using_ktls || rret == 0)
                     return rret;     /* error or non-blocking */
                 switch (errno) {
                 case EBADMSG:
