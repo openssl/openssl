@@ -33,7 +33,7 @@ const SSL_METHOD *func_name(void)  \
                 ossl_quic_write, \
                 ossl_quic_shutdown, \
                 NULL /* renegotiate */, \
-                NULL /* renegotiate_check */, \
+                ossl_quic_renegotiate_check, \
                 NULL /* read_bytes */, \
                 NULL /* write_bytes */, \
                 NULL /* dispatch_alert */, \
@@ -42,9 +42,9 @@ const SSL_METHOD *func_name(void)  \
                 NULL /* get_cipher_by_char */, \
                 NULL /* put_cipher_by_char */, \
                 ossl_quic_pending, \
-                NULL /* num_ciphers */, \
-                NULL /* get_cipher */, \
-                NULL /* default_timeout */, \
+                ossl_quic_num_ciphers, \
+                ossl_quic_get_cipher, \
+                ossl_quic_default_timeout, \
                 &enc_data, \
                 ssl_undefined_void_function, \
                 ossl_quic_callback_ctrl, \
@@ -67,5 +67,9 @@ __owur long ossl_quic_ctx_ctrl(SSL_CTX *s, int cmd, long larg, void *parg);
 __owur long ossl_quic_callback_ctrl(SSL *s, int cmd, void (*fp) (void));
 __owur long ossl_quic_ctx_callback_ctrl(SSL_CTX *s, int cmd, void (*fp) (void));
 __owur size_t ossl_quic_pending(const SSL *s);
+__owur long ossl_quic_default_timeout(void);
+__owur int ossl_quic_num_ciphers(void);
+__owur const SSL_CIPHER *ossl_quic_get_cipher(unsigned int u);
+int ossl_quic_renegotiate_check(SSL *ssl, int initok);
 
 #endif
