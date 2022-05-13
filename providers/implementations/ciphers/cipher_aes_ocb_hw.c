@@ -124,6 +124,44 @@ static const PROV_CIPHER_HW aes_rv64i_zknd_zkne_ocb = {                        \
 # define PROV_CIPHER_HW_select()                                               \
     if (RV64I_ZKND_ZKNE_CAPABLE)                                               \
         return &aes_rv64i_zknd_zkne_ocb;
+#elif defined(RV32I_ZBKB_ZKND_ZKNE_CAPABLE) && defined(RV32I_ZKND_ZKNE_CAPABLE)
+
+static int cipher_hw_aes_ocb_rv32i_zknd_zkne_initkey(PROV_CIPHER_CTX *vctx,
+                                                     const unsigned char *key,
+                                                     size_t keylen)
+{
+    PROV_AES_OCB_CTX *ctx = (PROV_AES_OCB_CTX *)vctx;
+
+    OCB_SET_KEY_FN(rv32i_zkne_set_encrypt_key, rv32i_zknd_zkne_set_decrypt_key,
+                   rv32i_zkne_encrypt, rv32i_zknd_decrypt, NULL, NULL);
+    return 1;
+}
+
+static int cipher_hw_aes_ocb_rv32i_zbkb_zknd_zkne_initkey(PROV_CIPHER_CTX *vctx,
+                                                          const unsigned char *key,
+                                                          size_t keylen)
+{
+    PROV_AES_OCB_CTX *ctx = (PROV_AES_OCB_CTX *)vctx;
+
+    OCB_SET_KEY_FN(rv32i_zbkb_zkne_set_encrypt_key, rv32i_zbkb_zknd_zkne_set_decrypt_key,
+                   rv32i_zkne_encrypt, rv32i_zknd_decrypt, NULL, NULL);
+    return 1;
+}
+
+# define PROV_CIPHER_HW_declare()                                              \
+static const PROV_CIPHER_HW aes_rv32i_zknd_zkne_ocb = {                        \
+    cipher_hw_aes_ocb_rv32i_zknd_zkne_initkey,                                 \
+    NULL                                                                       \
+};                                                                             \
+static const PROV_CIPHER_HW aes_rv32i_zbkb_zknd_zkne_ocb = {                   \
+    cipher_hw_aes_ocb_rv32i_zbkb_zknd_zkne_initkey,                            \
+    NULL                                                                       \
+};
+# define PROV_CIPHER_HW_select()                                               \
+    if (RV32I_ZBKB_ZKND_ZKNE_CAPABLE)                                          \
+        return &aes_rv32i_zbkb_zknd_zkne_ocb;                                  \
+    if (RV32I_ZKND_ZKNE_CAPABLE)                                               \
+        return &aes_rv32i_zknd_zkne_ocb;
 #else
 # define PROV_CIPHER_HW_declare()
 # define PROV_CIPHER_HW_select()
