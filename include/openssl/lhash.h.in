@@ -202,7 +202,7 @@ OSSL_DEPRECATEDIN_3_1 void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *
 #  define DEFINE_LHASH_OF_DEPRECATED(type)
 # endif
 
-# define DEFINE_LHASH_OF_2(type) \
+# define DEFINE_LHASH_OF_EX(type) \
     LHASH_OF(type) { \
         union lh_##type##_dummy { void* d1; unsigned long d2; int d3; } dummy; \
     }; \
@@ -273,7 +273,7 @@ OSSL_DEPRECATEDIN_3_1 void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *
     LHASH_OF(type)
 
 # define DEFINE_LHASH_OF(type) \
-    DEFINE_LHASH_OF_2(type); \
+    DEFINE_LHASH_OF_EX(type); \
     DEFINE_LHASH_OF_DEPRECATED(type) \
     LHASH_OF(type)
 

@@ -27,7 +27,7 @@
 #pragma clang diagnostic ignored "-Wunused-function"
 #endif
 
-DEFINE_LHASH_OF_2(int);
+DEFINE_LHASH_OF_EX(int);
 
 static int int_tests[] = { 65537, 13, 1, 3, -5, 6, 7, 4, -10, -12, -14, 22, 9,
                            -17, 16, 17, -23, 35, 37, 173, 11 };

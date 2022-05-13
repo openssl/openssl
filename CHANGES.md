@@ -127,13 +127,13 @@ breaking changes, and mappings for the large list of deprecated functions.
    `OPENSSL_NO_DEPRECATED_3_1`.
 
    The macro `DEFINE_LHASH_OF` is now deprecated in favour of the macro
-   `DEFINE_LHASH_OF_2`, which omits the corresponding type-specific function
+   `DEFINE_LHASH_OF_EX`, which omits the corresponding type-specific function
    definitions for these functions regardless of whether
    `OPENSSL_NO_DEPRECATED_3_1` is defined.
 
    Users of `DEFINE_LHASH_OF` may start receiving deprecation warnings for these
    functions regardless of whether they are using them. It is recommended that
-   users transition to the new macro, `DEFINE_LHASH_OF_2`.
+   users transition to the new macro, `DEFINE_LHASH_OF_EX`.
 
    *Hugo Landau*
 
