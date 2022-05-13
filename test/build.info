@@ -934,6 +934,14 @@ ENDIF
   INCLUDE[build_wincrypt_test]=../include
   DEPEND[build_wincrypt_test]=../libssl ../libcrypto
 
+  IF[{- !$disabled{'quic'} -}]
+    PROGRAMS{noinst}=quicapitest
+  ENDIF
+
+  SOURCE[quicapitest]=quicapitest.c helpers/ssltestlib.c
+  INCLUDE[quicapitest]=../include ../apps/include
+  DEPEND[quicapitest]=../libcrypto ../libssl libtestutil.a
+
 {-
    use File::Spec::Functions;
    use File::Basename;
