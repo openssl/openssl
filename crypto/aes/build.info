@@ -49,6 +49,7 @@ IF[{- !$disabled{asm} -}]
 
   $AESASM_riscv64=aes_cbc.c aes-riscv64.s aes-riscv64-zkn.s
   $AESDEF_riscv64=AES_ASM
+  $AESASM_riscv32=aes_core.c aes_cbc.c aes-riscv32-zkn.s
 
   # Now that we have defined all the arch specific variables, use the
   # appropriate one, and define the appropriate macros
@@ -119,6 +120,7 @@ INCLUDE[aes-mips.o]=..
 
 GENERATE[aes-riscv64.s]=asm/aes-riscv64.pl
 GENERATE[aes-riscv64-zkn.s]=asm/aes-riscv64-zkn.pl
+GENERATE[aes-riscv32-zkn.s]=asm/aes-riscv32-zkn.pl
 
 GENERATE[aesv8-armx.S]=asm/aesv8-armx.pl
 INCLUDE[aesv8-armx.o]=..
