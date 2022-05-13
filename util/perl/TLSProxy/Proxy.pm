@@ -1,4 +1,4 @@
-# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -23,6 +23,7 @@ use TLSProxy::CertificateRequest;
 use TLSProxy::CertificateVerify;
 use TLSProxy::ServerKeyExchange;
 use TLSProxy::NewSessionTicket;
+use OpenSSL::Test::Utils qw/alldisabled/;
 
 my $have_IPv6;
 my $IP_factory;
@@ -99,7 +100,8 @@ sub new
         debug => $debug,
         cipherc => "",
         ciphersuitesc => "",
-        ciphers => "AES128-SHA",
+        ciphers => alldisabled("tls1_2", "tls1_3") ? "AES128-SHA\@SECLEVEL=0"
+                                                   : "AES128-SHA",
         ciphersuitess => "TLS_AES_128_GCM_SHA256",
         flight => -1,
         direction => -1,
@@ -167,7 +169,8 @@ sub clear
     my $self = shift;
 
     $self->clearClient;
-    $self->{ciphers} = "AES128-SHA";
+    $self->{ciphers} = alldisabled("tls1_2", "tls1_3") ? "AES128-SHA\@SECLEVEL=0"
+                                                       : "AES128-SHA",
     $self->{ciphersuitess} = "TLS_AES_128_GCM_SHA256";
     $self->{serverflags} = "";
     $self->{serverconnects} = 1;
@@ -232,6 +235,9 @@ sub start
         ." -naccept ".$self->serverconnects;
     if ($self->ciphers ne "") {
         $execcmd .= " -cipher ".$self->ciphers;
+    }
+    elsif (alldisabled("tls1_2", "tls1_3")) {
+        $execcmd .= " -cipher DEFAULT\@SECLEVEL=0";
     }
     if ($self->ciphersuitess ne "") {
         $execcmd .= " -ciphersuites ".$self->ciphersuitess;
@@ -318,6 +324,9 @@ sub clientstart
              ." -connect $self->{proxy_addr}:$self->{proxy_port}";
         if ($self->cipherc ne "") {
             $execcmd .= " -cipher ".$self->cipherc;
+        }
+        elsif (alldisabled("tls1_2", "tls1_3")) {
+            $execcmd .= " -cipher DEFAULT\@SECLEVEL=0";
         }
         if ($self->ciphersuitesc ne "") {
             $execcmd .= " -ciphersuites ".$self->ciphersuitesc;
