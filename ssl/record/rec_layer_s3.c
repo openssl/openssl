@@ -437,7 +437,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
             && s->msg_callback == NULL
             && !SSL_WRITE_ETM(s)
             && SSL_USE_EXPLICIT_IV(s)
-            && BIO_get_ktls_send(s->wbio) == 0
+            && !BIO_get_ktls_send(s->wbio)
             && (EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(s->enc_write_ctx))
                 & EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK) != 0) {
         unsigned char aad[13];
@@ -681,6 +681,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
     SSL_SESSION *sess;
     size_t totlen = 0, len, wpinited = 0;
     size_t j;
+    int using_ktls;
 
     for (j = 0; j < numpipes; j++)
         totlen += pipelens[j];
@@ -764,7 +765,8 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         s->s3.empty_fragment_done = 1;
     }
 
-    if (BIO_get_ktls_send(s->wbio)) {
+    using_ktls = BIO_get_ktls_send(s->wbio);
+    if (using_ktls) {
         /*
          * ktls doesn't modify the buffer, but to avoid a warning we need to
          * discard the const qualifier.
@@ -889,7 +891,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
          * When using offload kernel will write the header.
          * Otherwise write the header now
          */
-        if (!BIO_get_ktls_send(s->wbio)
+        if (!using_ktls
                 && (!WPACKET_put_bytes_u8(thispkt, rectype)
                 || !WPACKET_put_bytes_u16(thispkt, version)
                 || !WPACKET_start_sub_packet_u16(thispkt)
@@ -921,7 +923,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
                 goto err;
             }
         } else {
-            if (BIO_get_ktls_send(s->wbio)) {
+            if (using_ktls) {
                 SSL3_RECORD_reset_data(&wr[j]);
             } else {
                 if (!WPACKET_memcpy(thispkt, thiswr->input, thiswr->length)) {
@@ -933,7 +935,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         }
 
         if (SSL_TREAT_AS_TLS13(s)
-                && !BIO_get_ktls_send(s->wbio)
+                && !using_ktls
                 && s->enc_write_ctx != NULL
                 && (s->statem.enc_write_state != ENC_WRITE_STATE_WRITE_PLAIN_ALERTS
                     || type != SSL3_RT_ALERT)) {
@@ -988,7 +990,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
          * in the wb->buf
          */
 
-        if (!BIO_get_ktls_send(s->wbio) && !SSL_WRITE_ETM(s) && mac_size != 0) {
+        if (!using_ktls && !SSL_WRITE_ETM(s) && mac_size != 0) {
             unsigned char *mac;
 
             if (!WPACKET_allocate_bytes(thispkt, mac_size, &mac)
@@ -1003,7 +1005,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
          * This will be at most one cipher block or the tag length if using
          * AEAD. SSL_RT_MAX_CIPHER_BLOCK_SIZE covers either case.
          */
-        if (!BIO_get_ktls_send(s->wbio)) {
+        if (!using_ktls) {
             if (!WPACKET_reserve_bytes(thispkt,
                                         SSL_RT_MAX_CIPHER_BLOCK_SIZE,
                                         NULL)
@@ -1036,7 +1038,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
             goto err;
         }
     } else {
-        if (!BIO_get_ktls_send(s->wbio)) {
+        if (!using_ktls) {
             if (s->method->ssl3_enc->enc(s, wr, numpipes, 1, NULL,
                                          mac_size) < 1) {
                 if (!ossl_statem_in_error(s)) {
@@ -1053,7 +1055,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         thispkt = &pkt[j];
         thiswr = &wr[j];
 
-        if (BIO_get_ktls_send(s->wbio))
+        if (using_ktls)
             goto mac_done;
 
         /* Allocate bytes for the encryption overhead */
