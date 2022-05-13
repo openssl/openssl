@@ -1,5 +1,9 @@
 LIBS=../libssl
 
+IF[{- !$disabled{quic} -}]
+  SUBDIRS=quic
+ENDIF
+
 #Needed for the multiblock code in rec_layer_s3.c
 IF[{- !$disabled{asm} -}]
   $AESDEF_x86=AES_ASM
