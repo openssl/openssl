@@ -441,6 +441,25 @@ void rv64i_zkne_encrypt(const unsigned char *in, unsigned char *out,
                    const AES_KEY *key);
 void rv64i_zknd_decrypt(const unsigned char *in, unsigned char *out,
                    const AES_KEY *key);
+# elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32
+/* RISC-V 32 support */
+#  include "riscv_arch.h"
+#  define RV32I_ZKND_ZKNE_CAPABLE   (RISCV_HAS_ZKND() && RISCV_HAS_ZKNE())
+#  define RV32I_ZBKB_ZKND_ZKNE_CAPABLE   (RV32I_ZKND_ZKNE_CAPABLE && RISCV_HAS_ZBKB())
+
+int rv32i_zkne_set_encrypt_key(const unsigned char *userKey, const int bits,
+                               AES_KEY *key);
+/* set_decrypt_key needs both zknd and zkne */
+int rv32i_zknd_zkne_set_decrypt_key(const unsigned char *userKey, const int bits,
+                                    AES_KEY *key);
+int rv32i_zbkb_zkne_set_encrypt_key(const unsigned char *userKey, const int bits,
+                                    AES_KEY *key);
+int rv32i_zbkb_zknd_zkne_set_decrypt_key(const unsigned char *userKey, const int bits,
+                                         AES_KEY *key);
+void rv32i_zkne_encrypt(const unsigned char *in, unsigned char *out,
+                        const AES_KEY *key);
+void rv32i_zknd_decrypt(const unsigned char *in, unsigned char *out,
+                        const AES_KEY *key);
 # endif
 
 # if defined(HWAES_CAPABLE)
