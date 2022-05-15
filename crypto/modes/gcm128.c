@@ -537,7 +537,7 @@ static void gcm_ghash_4bit(u64 Xi[2], const u128 Htable[16],
             Xi[0] = Z.hi;
             Xi[1] = Z.lo;
         }
-    } while (inp += 16, len -= 16);
+    } while (inp += 16, (len -= 16)>0);
 }
 #  endif
 # else
