@@ -545,7 +545,11 @@ static void gcm_ghash_4bit(u64 Xi[2], const u128 Htable[16],
             Xi[0] = Z.hi;
             Xi[1] = Z.lo;
         }
-    } while (inp += 16, len -= 16);
+
+        inp += 16;
+        /* Block size is 128 bits so len is a multiple of 16 */
+        len -= 16;
+    } while (len > 0);
 }
 #  endif
 # else
