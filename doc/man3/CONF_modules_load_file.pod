@@ -3,8 +3,8 @@
 =head1 NAME
 
 CONF_get1_default_config_file, CONF_modules_load_file_ex,
-CONF_modules_load_file, CONF_modules_load_ex, CONF_modules_load
-- OpenSSL configuration functions
+CONF_modules_load_file, CONF_modules_load_ex, CONF_modules_load,
+CONF_module_add_ex, CONF_module_add - OpenSSL configuration functions
 
 =head1 SYNOPSIS
 
@@ -19,6 +19,10 @@ CONF_modules_load_file, CONF_modules_load_ex, CONF_modules_load
                        unsigned long flags);
  int CONF_modules_load(const CONF *cnf, const char *appname,
                        unsigned long flags);
+ int CONF_module_add_ex(OSSL_LIB_CTX *libctx, const char *name,
+                       conf_init_func *ifunc, conf_finish_func *ffunc);
+ int CONF_module_add(const char *name,
+                     conf_init_func *ifunc, conf_finish_func *ffunc);
 
 =head1 DESCRIPTION
 
@@ -45,6 +49,12 @@ CONF_modules_load_ex() is identical to CONF_modules_load_file() except it
 reads configuration information from B<cnf>.
 
 CONF_modules_load() is identical to CONF_modules_load_ex() except it
+has a NULL library context.
+
+CONF_module_add_ex() registers a module into a library context using the given
+name, initialization and finish functions.
+
+CONF_module_add() is identical to CONF_modules_add_Ex() except it
 has a NULL library context.
 
 =head1 NOTES
@@ -151,16 +161,17 @@ Load and parse configuration file manually, custom error handling:
      NCONF_free(cnf);
  }
 
-=head1 HISTORY
-
-The CONF_modules_load_ex() function was introduced in OpenSSL 3.1. Prior to this
-version, module state was maintained independently of library contexts.
-
 =head1 SEE ALSO
 
 L<config(5)>,
 L<OPENSSL_config(3)>,
 L<NCONF_new_ex(3)>
+
+=head1 HISTORY
+
+The CONF_modules_load_ex(), CONF_modules_load_file_ex() and CONF_module_add_ex()
+functions were introduced in OpenSSL 3.1. Prior to this version, module state
+was maintained independently of library contexts.
 
 =head1 COPYRIGHT
 
