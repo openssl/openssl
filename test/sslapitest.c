@@ -98,12 +98,14 @@ static char *dhfile = NULL;
 
 static int is_fips = 0;
 
+#if !defined(OPENSSL_NO_TLS1_2) || !defined(OSSL_NO_USABLE_TLS1_3)
 #define LOG_BUFFER_SIZE 2048
 static char server_log_buffer[LOG_BUFFER_SIZE + 1] = {0};
 static size_t server_log_buffer_index = 0;
 static char client_log_buffer[LOG_BUFFER_SIZE + 1] = {0};
 static size_t client_log_buffer_index = 0;
 static int error_writing_log = 0;
+#endif
 
 #ifndef OPENSSL_NO_OCSP
 static const unsigned char orespder[] = "Dummy OCSP Response";
@@ -159,6 +161,7 @@ static int hostname_cb(SSL *s, int *al, void *arg)
     return SSL_TLSEXT_ERR_NOACK;
 }
 
+#if !defined(OPENSSL_NO_TLS1_2) || !defined(OSSL_NO_USABLE_TLS1_3)
 static void client_keylog_callback(const SSL *ssl, const char *line)
 {
     int line_length = strlen(line);
@@ -356,8 +359,9 @@ static int test_keylog_output(char *buffer, const SSL *ssl,
         return 0;
     return 1;
 }
+#endif
 
-#if !defined(OPENSSL_NO_TLS1_2) || defined(OSSL_NO_USABLE_TLS1_3)
+#ifndef OPENSSL_NO_TLS1_2
 static int test_keylog(void)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
@@ -604,6 +608,11 @@ static int test_client_cert_verify_cb(void)
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
                                       &clientssl, NULL, NULL)))
         goto end;
+
+#if defined(OPENSSL_NO_TLS1_2) && defined(OSSL_NO_USABLE_TLS1_3)
+    SSL_set_security_level(serverssl, 0);
+    SSL_set_security_level(clientssl, 0);
+#endif
 
     /* attempt SSL_connect() with incomplete server chain */
     if (!TEST_false(create_ssl_connection(serverssl, clientssl,
@@ -999,6 +1008,19 @@ static int execute_test_large_message(const SSL_METHOD *smeth,
         if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0"))
                 || !TEST_true(SSL_CTX_set_cipher_list(cctx,
                                                     "DEFAULT:@SECLEVEL=0")))
+            goto end;
+    }
+#endif
+
+#if defined(OPENSSL_NO_TLS1_2) && defined(OSSL_NO_USABLE_TLS1_3)
+    if (smeth == TLS_server_method()) {
+        /*
+         * Default sigalgs are SHA1 based in <TLS1.2 which is in security
+         * level 0
+         */
+        if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0"))
+                || !TEST_true(SSL_CTX_set_cipher_list(cctx,
+                                                      "DEFAULT:@SECLEVEL=0")))
             goto end;
     }
 #endif
@@ -1759,6 +1781,11 @@ static int test_tlsext_status_type(void)
         goto end;
     SSL_free(clientssl);
     clientssl = NULL;
+
+#if defined(OPENSSL_NO_TLS1_2) && defined(OSSL_NO_USABLE_TLS1_3)
+    SSL_CTX_set_security_level(sctx, 0);
+    SSL_CTX_set_security_level(cctx, 0);
+#endif
 
     /*
      * Now actually do a handshake and check OCSP information is exchanged and
@@ -2768,6 +2795,12 @@ static int test_ssl_set_bio(int idx)
         SSL_CTX_set_min_proto_version(sctx, TLS1_3_VERSION);
         SSL_CTX_set_max_proto_version(cctx, TLS1_2_VERSION);
     }
+#if defined(OPENSSL_NO_TLS1_2) && defined(OSSL_NO_USABLE_TLS1_3)
+    else if (conntype == CONNTYPE_CONNECTION_SUCCESS) {
+        SSL_CTX_set_security_level(sctx, 0);
+        SSL_CTX_set_security_level(cctx, 0);
+    }
+#endif
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                       NULL, NULL)))
@@ -2918,7 +2951,7 @@ static int test_ssl_bio_change_wbio(void)
     return execute_test_ssl_bio(0, CHANGE_WBIO);
 }
 
-#if !defined(OPENSSL_NO_TLS1_2) || defined(OSSL_NO_USABLE_TLS1_3)
+#ifndef OPENSSL_NO_TLS1_2
 typedef struct {
     /* The list of sig algs */
     const int *list;
@@ -5651,6 +5684,12 @@ static int test_custom_exts(int tst)
         SSL_CTX_set_options(sctx, SSL_OP_NO_TLSv1_3);
         if (sctx2 != NULL)
             SSL_CTX_set_options(sctx2, SSL_OP_NO_TLSv1_3);
+#ifdef OPENSSL_NO_TLS1_2
+        SSL_CTX_set_security_level(cctx, 0);
+        SSL_CTX_set_security_level(sctx, 0);
+        if (sctx2 != NULL)
+            SSL_CTX_set_security_level(sctx2, 0);
+#endif
     }
 
     if (tst == 5) {
@@ -6559,6 +6598,10 @@ static int test_ssl_clear(int idx)
             || (idx == 1
                 && !TEST_true(SSL_CTX_set_max_proto_version(cctx,
                                                             TLS1_2_VERSION)))
+#if defined(OPENSSL_NO_TLS1_2) && defined(OSSL_NO_USABLE_TLS1_3)
+            || !TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT@SECLEVEL=0"))
+            || !TEST_true(SSL_CTX_set_cipher_list(cctx, "DEFAULT@SECLEVEL=0"))
+#endif
             || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
                                           &clientssl, NULL, NULL))
             || !TEST_true(create_ssl_connection(serverssl, clientssl,
@@ -6668,6 +6711,10 @@ static int test_max_fragment_len_ext(int idx_tst)
                                        TLS1_VERSION, 0, NULL, &ctx, NULL,
                                        NULL)))
         return 0;
+
+#if defined(OPENSSL_NO_TLS1_2) && defined(OSSL_NO_USABLE_TLS1_3)
+    SSL_CTX_set_security_level(ctx, 0);
+#endif
 
     if (!TEST_true(SSL_CTX_set_tlsext_max_fragment_length(
                    ctx, max_fragment_len_test[idx_tst])))
@@ -7266,6 +7313,17 @@ static int test_ssl_pending(int tst)
                                            TLS1_VERSION, 0,
                                            &sctx, &cctx, cert, privkey)))
             goto end;
+
+# if defined(OPENSSL_NO_TLS1_2) && defined(OSSL_NO_USABLE_TLS1_3)
+        /*
+         * Default sigalgs are SHA1 based in <TLS1.2 which is in security
+         * level 0
+         */
+        if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0"))
+                || !TEST_true(SSL_CTX_set_cipher_list(cctx,
+                                                    "DEFAULT:@SECLEVEL=0")))
+            goto end;
+# endif
     } else {
 #ifndef OPENSSL_NO_DTLS
         if (!TEST_true(create_ssl_ctx_pair(libctx, DTLS_server_method(),
@@ -7355,7 +7413,11 @@ static struct {
         NULL,
         "AES128-SHA:ECDHE-RSA-CHACHA20-POLY1305",
         NULL,
+#  ifndef OPENSSL_NO_TLS1_2
         "AES128-SHA:ECDHE-RSA-CHACHA20-POLY1305",
+#  else
+        "AES128-SHA",
+#  endif
         "AES128-SHA"
     },
 # endif
@@ -7455,6 +7517,10 @@ static int int_test_ssl_get_shared_ciphers(int tst, int clnt)
                                     shared_ciphers_data[tst].srvrtls13ciphers))))
         goto end;
 
+#if defined(OPENSSL_NO_TLS1_2) && defined(OSSL_NO_USABLE_TLS1_3)
+    SSL_CTX_set_security_level(sctx, 0);
+    SSL_CTX_set_security_level(cctx, 0);
+#endif
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                              NULL, NULL))
@@ -7793,6 +7859,11 @@ static int test_incorrect_shutdown(int tst)
                                        TLS_client_method(), 0, 0,
                                        &sctx, &cctx, cert, privkey)))
         goto end;
+
+#if defined(OPENSSL_NO_TLS1_2) && defined(OSSL_NO_USABLE_TLS1_3)
+    SSL_CTX_set_security_level(sctx, 0);
+    SSL_CTX_set_security_level(cctx, 0);
+#endif
 
     if (tst == 1)
         SSL_CTX_set_options(sctx, SSL_OP_IGNORE_UNEXPECTED_EOF);
@@ -9957,7 +10028,7 @@ int setup_tests(void)
     ADD_TEST(test_ssl_bio_pop_ssl_bio);
     ADD_TEST(test_ssl_bio_change_rbio);
     ADD_TEST(test_ssl_bio_change_wbio);
-#if !defined(OPENSSL_NO_TLS1_2) || defined(OSSL_NO_USABLE_TLS1_3)
+#ifndef OPENSSL_NO_TLS1_2
     ADD_ALL_TESTS(test_set_sigalgs, OSSL_NELEM(testsigalgs) * 2);
     ADD_TEST(test_keylog);
 #endif
