@@ -328,6 +328,7 @@ const char *ssl_session_id_name(ssl_session_id_t server)
 static const test_enum ssl_test_methods[] = {
     {"TLS", SSL_TEST_METHOD_TLS},
     {"DTLS", SSL_TEST_METHOD_DTLS},
+    {"QUIC", SSL_TEST_METHOD_QUIC}
 };
 
 __owur static int parse_test_method(SSL_TEST_CTX *test_ctx, const char *value)

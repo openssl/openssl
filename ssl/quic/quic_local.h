@@ -15,8 +15,8 @@
 
 # define OSSL_QUIC_ANY_VERSION 0xFFFFF
 
-# define IMPLEMENT_quic_meth_func(version, func_name, s_accept, \
-                                 s_connect, enc_data) \
+# define IMPLEMENT_quic_meth_func(version, func_name, q_accept, \
+                                 q_connect, enc_data) \
 const SSL_METHOD *func_name(void)  \
         { \
         static const SSL_METHOD func_name##_data= { \
@@ -26,8 +26,8 @@ const SSL_METHOD *func_name(void)  \
                 ossl_quic_new, \
                 ossl_quic_clear, \
                 ossl_quic_free, \
-                s_accept, \
-                s_connect, \
+                q_accept, \
+                q_connect, \
                 ossl_quic_read, \
                 ossl_quic_peek, \
                 ossl_quic_write, \
