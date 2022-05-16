@@ -127,7 +127,7 @@ be at infinity by calling EC_POINT_set_to_infinity().
 The affine co-ordinates for a point describe a point in terms of its x and y
 position. The function EC_POINT_set_affine_coordinates() sets the B<x> and B<y>
 co-ordinates for the point B<p> defined over the curve given in B<group>. The
-function EC_POINT_get_affine_coordinates() sets B<x> and B<y>, either of which
+function EC_POINT_set_affine_coordinates() sets B<x> and B<y>, either of which
 may be NULL, to the corresponding coordinates of B<p>.
 
 The functions EC_POINT_set_affine_coordinates_GFp() and
