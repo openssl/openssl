@@ -43,6 +43,9 @@ struct ossl_lib_ctx_st {
     void *fips_prov;
 #endif
 
+    OPENSSL_STACK *supported_conf_modules;
+    OPENSSL_STACK *initialized_conf_modules;
+
     unsigned int ischild:1;
 };
 
@@ -88,6 +91,15 @@ static int context_init(OSSL_LIB_CTX *ctx)
     if (!ossl_do_ex_data_init(ctx))
         goto err;
     exdata_done = 1;
+
+    /* Initialize module lists for CONF. */
+    ctx->supported_conf_modules = OPENSSL_sk_new_null();
+    if (ctx->supported_conf_modules == NULL)
+        goto err;
+
+    ctx->initialized_conf_modules = OPENSSL_sk_new_null();
+    if (ctx->initialized_conf_modules == NULL)
+        goto err;
 
     /* P2. We want evp_method_store to be cleaned up before the provider store */
     ctx->evp_method_store = ossl_method_store_new(ctx);
@@ -306,6 +318,12 @@ static void context_deinit_objs(OSSL_LIB_CTX *ctx)
         ctx->child_provider = NULL;
     }
 #endif
+
+    OPENSSL_sk_free(ctx->supported_conf_modules);
+    ctx->supported_conf_modules = NULL;
+
+    OPENSSL_sk_free(ctx->initialized_conf_modules);
+    ctx->initialized_conf_modules = NULL;
 }
 
 static int context_deinit(OSSL_LIB_CTX *ctx)
@@ -576,6 +594,22 @@ OSSL_EX_DATA_GLOBAL *ossl_lib_ctx_get_ex_data_global(OSSL_LIB_CTX *ctx)
     if (ctx == NULL)
         return NULL;
     return &ctx->global;
+}
+
+void *ossl_lib_ctx_get_supported_conf_modules(OSSL_LIB_CTX *ctx)
+{
+    ctx = ossl_lib_ctx_get_concrete(ctx);
+    if (ctx == NULL)
+        return NULL;
+    return ctx->supported_conf_modules;
+}
+
+void *ossl_lib_ctx_get_initialized_conf_modules(OSSL_LIB_CTX *ctx)
+{
+    ctx = ossl_lib_ctx_get_concrete(ctx);
+    if (ctx == NULL)
+        return NULL;
+    return ctx->initialized_conf_modules;
 }
 
 const char *ossl_lib_ctx_get_descriptor(OSSL_LIB_CTX *libctx)

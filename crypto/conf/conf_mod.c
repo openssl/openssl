@@ -15,6 +15,7 @@
 #include <ctype.h>
 #include <openssl/crypto.h>
 #include "internal/conf.h"
+#include "internal/core.h"
 #include <openssl/conf_api.h>
 #include "internal/dso.h"
 #include "internal/thread_once.h"
@@ -62,22 +63,19 @@ struct conf_imodule_st {
     void *usr_data;
 };
 
-static STACK_OF(CONF_MODULE) *supported_modules = NULL;
-static STACK_OF(CONF_IMODULE) *initialized_modules = NULL;
-
 static CRYPTO_ONCE load_builtin_modules = CRYPTO_ONCE_STATIC_INIT;
 
 static void module_free(CONF_MODULE *md);
 static void module_finish(CONF_IMODULE *imod);
-static int module_run(const CONF *cnf, const char *name, const char *value,
+static int module_run(OSSL_LIB_CTX *libctx, const CONF *cnf, const char *name, const char *value,
                       unsigned long flags);
-static CONF_MODULE *module_add(DSO *dso, const char *name,
+static CONF_MODULE *module_add(OSSL_LIB_CTX *libctx, DSO *dso, const char *name,
                                conf_init_func *ifunc,
                                conf_finish_func *ffunc);
-static CONF_MODULE *module_find(const char *name);
-static int module_init(CONF_MODULE *pmod, const char *name, const char *value,
+static CONF_MODULE *module_find(OSSL_LIB_CTX *libctx, const char *name);
+static int module_init(OSSL_LIB_CTX *libctx, CONF_MODULE *pmod, const char *name, const char *value,
                        const CONF *cnf);
-static CONF_MODULE *module_load_dso(const CONF *cnf, const char *name,
+static CONF_MODULE *module_load_dso(OSSL_LIB_CTX *libctx, const CONF *cnf, const char *name,
                                     const char *value);
 
 static int conf_diagnostics(const CONF *cnf)
@@ -86,9 +84,8 @@ static int conf_diagnostics(const CONF *cnf)
 }
 
 /* Main function: load modules from a CONF structure */
-
-int CONF_modules_load(const CONF *cnf, const char *appname,
-                      unsigned long flags)
+int CONF_modules_load_ex(OSSL_LIB_CTX *libctx, const CONF *cnf, const char *appname,
+                         unsigned long flags)
 {
     STACK_OF(CONF_VALUE) *values;
     CONF_VALUE *vl;
@@ -135,7 +132,7 @@ int CONF_modules_load(const CONF *cnf, const char *appname,
     for (i = 0; i < sk_CONF_VALUE_num(values); i++) {
         vl = sk_CONF_VALUE_value(values, i);
         ERR_set_mark();
-        ret = module_run(cnf, vl->name, vl->value, flags);
+        ret = module_run(libctx, cnf, vl->name, vl->value, flags);
         OSSL_TRACE3(CONF, "Running module %s (%s) returned %d\n",
                     vl->name, vl->value, ret);
         if (ret <= 0)
@@ -148,6 +145,11 @@ int CONF_modules_load(const CONF *cnf, const char *appname,
 
     return 1;
 
+}
+
+int CONF_modules_load(const CONF *cnf, const char *appname, unsigned long flags)
+{
+    return CONF_modules_load_ex(NULL, cnf, appname, flags);
 }
 
 int CONF_modules_load_file_ex(OSSL_LIB_CTX *libctx, const char *filename,
@@ -213,8 +215,8 @@ DEFINE_RUN_ONCE_STATIC(do_load_builtin_modules)
     return 1;
 }
 
-static int module_run(const CONF *cnf, const char *name, const char *value,
-                      unsigned long flags)
+static int module_run(OSSL_LIB_CTX *libctx, const CONF *cnf,
+                      const char *name, const char *value, unsigned long flags)
 {
     CONF_MODULE *md;
     int ret;
@@ -222,11 +224,11 @@ static int module_run(const CONF *cnf, const char *name, const char *value,
     if (!RUN_ONCE(&load_builtin_modules, do_load_builtin_modules))
         return -1;
 
-    md = module_find(name);
+    md = module_find(libctx, name);
 
     /* Module not found: try to load DSO */
     if (!md && !(flags & CONF_MFLAGS_NO_DSO))
-        md = module_load_dso(cnf, name, value);
+        md = module_load_dso(libctx, cnf, name, value);
 
     if (!md) {
         if (!(flags & CONF_MFLAGS_SILENT)) {
@@ -236,7 +238,7 @@ static int module_run(const CONF *cnf, const char *name, const char *value,
         return -1;
     }
 
-    ret = module_init(md, name, value, cnf);
+    ret = module_init(libctx, md, name, value, cnf);
 
     if (ret <= 0) {
         if (!(flags & CONF_MFLAGS_SILENT))
@@ -249,7 +251,7 @@ static int module_run(const CONF *cnf, const char *name, const char *value,
 }
 
 /* Load a module from a DSO */
-static CONF_MODULE *module_load_dso(const CONF *cnf,
+static CONF_MODULE *module_load_dso(OSSL_LIB_CTX *libctx, const CONF *cnf,
                                     const char *name, const char *value)
 {
     DSO *dso = NULL;
@@ -276,7 +278,7 @@ static CONF_MODULE *module_load_dso(const CONF *cnf,
     }
     ffunc = (conf_finish_func *)DSO_bind_func(dso, DSO_mod_finish_name);
     /* All OK, add module */
-    md = module_add(dso, name, ifunc, ffunc);
+    md = module_add(libctx, dso, name, ifunc, ffunc);
 
     if (md == NULL)
         goto err;
@@ -290,14 +292,12 @@ static CONF_MODULE *module_load_dso(const CONF *cnf,
 }
 
 /* add module to list */
-static CONF_MODULE *module_add(DSO *dso, const char *name,
+static CONF_MODULE *module_add(OSSL_LIB_CTX *libctx, DSO *dso, const char *name,
                                conf_init_func *ifunc, conf_finish_func *ffunc)
 {
     CONF_MODULE *tmod = NULL;
-    if (supported_modules == NULL)
-        supported_modules = sk_CONF_MODULE_new_null();
-    if (supported_modules == NULL)
-        return NULL;
+    STACK_OF(CONF_MODULE) *supported_modules = ossl_lib_ctx_get_supported_conf_modules(libctx);
+
     if ((tmod = OPENSSL_zalloc(sizeof(*tmod))) == NULL) {
         ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -312,12 +312,20 @@ static CONF_MODULE *module_add(DSO *dso, const char *name,
         return NULL;
     }
 
-    if (!sk_CONF_MODULE_push(supported_modules, tmod)) {
+    if (ossl_lib_ctx_write_lock(libctx) <= 0) {
         OPENSSL_free(tmod->name);
         OPENSSL_free(tmod);
         return NULL;
     }
 
+    if (!sk_CONF_MODULE_push(supported_modules, tmod)) {
+        OPENSSL_free(tmod->name);
+        OPENSSL_free(tmod);
+        ossl_lib_ctx_unlock(libctx);
+        return NULL;
+    }
+
+    ossl_lib_ctx_unlock(libctx);
     return tmod;
 }
 
@@ -327,11 +335,12 @@ static CONF_MODULE *module_add(DSO *dso, const char *name,
  * initialized more than once.
  */
 
-static CONF_MODULE *module_find(const char *name)
+static CONF_MODULE *module_find(OSSL_LIB_CTX *libctx, const char *name)
 {
     CONF_MODULE *tmod;
     int i, nchar;
     char *p;
+    STACK_OF(CONF_MODULE) *supported_modules = ossl_lib_ctx_get_supported_conf_modules(libctx);
     p = strrchr(name, '.');
 
     if (p)
@@ -339,23 +348,30 @@ static CONF_MODULE *module_find(const char *name)
     else
         nchar = strlen(name);
 
+    if (ossl_lib_ctx_read_lock(libctx) <= 0)
+        return NULL;
+
     for (i = 0; i < sk_CONF_MODULE_num(supported_modules); i++) {
         tmod = sk_CONF_MODULE_value(supported_modules, i);
-        if (strncmp(tmod->name, name, nchar) == 0)
+        if (strncmp(tmod->name, name, nchar) == 0) {
+            ossl_lib_ctx_unlock(libctx);
             return tmod;
+        }
     }
 
+    ossl_lib_ctx_unlock(libctx);
     return NULL;
 
 }
 
 /* initialize a module */
-static int module_init(CONF_MODULE *pmod, const char *name, const char *value,
-                       const CONF *cnf)
+static int module_init(OSSL_LIB_CTX *libctx, CONF_MODULE *pmod,
+                       const char *name, const char *value, const CONF *cnf)
 {
     int ret = 1;
     int init_called = 0;
     CONF_IMODULE *imod = NULL;
+    STACK_OF(CONF_IMODULE) *initialized_modules;
 
     /* Otherwise add initialized module to list */
     imod = OPENSSL_malloc(sizeof(*imod));
@@ -379,19 +395,17 @@ static int module_init(CONF_MODULE *pmod, const char *name, const char *value,
             goto err;
     }
 
-    if (initialized_modules == NULL) {
-        initialized_modules = sk_CONF_IMODULE_new_null();
-        if (!initialized_modules) {
-            ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
-            goto err;
-        }
-    }
+    if (ossl_lib_ctx_write_lock(libctx) <= 0)
+        goto err;
 
+    initialized_modules = ossl_lib_ctx_get_initialized_conf_modules(libctx);
     if (!sk_CONF_IMODULE_push(initialized_modules, imod)) {
+        ossl_lib_ctx_unlock(libctx);
         ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
+    ossl_lib_ctx_unlock(libctx);
     pmod->links++;
 
     return ret;
@@ -419,11 +433,19 @@ static int module_init(CONF_MODULE *pmod, const char *name, const char *value,
  * including static ones.
  */
 
-void CONF_modules_unload(int all)
+void CONF_modules_unload_ex(OSSL_LIB_CTX *libctx, int all)
 {
     int i;
     CONF_MODULE *md;
+    STACK_OF(CONF_MODULE) *supported_modules;
+
     CONF_modules_finish();
+
+    supported_modules = (STACK_OF(CONF_MODULE) *)ossl_lib_ctx_get_supported_conf_modules(libctx);
+
+    if (ossl_lib_ctx_write_lock(libctx) <= 0)
+        return;
+
     /* unload modules in reverse order */
     for (i = sk_CONF_MODULE_num(supported_modules) - 1; i >= 0; i--) {
         md = sk_CONF_MODULE_value(supported_modules, i);
@@ -434,10 +456,13 @@ void CONF_modules_unload(int all)
         (void)sk_CONF_MODULE_delete(supported_modules, i);
         module_free(md);
     }
-    if (sk_CONF_MODULE_num(supported_modules) == 0) {
-        sk_CONF_MODULE_free(supported_modules);
-        supported_modules = NULL;
-    }
+
+    ossl_lib_ctx_unlock(libctx);
+}
+
+void CONF_modules_unload(int all)
+{
+    CONF_modules_unload_ex(NULL, all);
 }
 
 /* unload a single module */
@@ -450,15 +475,25 @@ static void module_free(CONF_MODULE *md)
 
 /* finish and free up all modules instances */
 
-void CONF_modules_finish(void)
+void CONF_modules_finish_ex(OSSL_LIB_CTX *libctx)
 {
     CONF_IMODULE *imod;
+    STACK_OF(CONF_IMODULE) *initialized_modules = ossl_lib_ctx_get_initialized_conf_modules(libctx);
+
+    if (ossl_lib_ctx_write_lock(libctx) <= 0)
+        return;
+
     while (sk_CONF_IMODULE_num(initialized_modules) > 0) {
         imod = sk_CONF_IMODULE_pop(initialized_modules);
         module_finish(imod);
     }
-    sk_CONF_IMODULE_free(initialized_modules);
-    initialized_modules = NULL;
+
+    ossl_lib_ctx_unlock(libctx);
+}
+
+void CONF_modules_finish(void)
+{
+    CONF_modules_finish_ex(NULL);
 }
 
 /* finish a module instance */
@@ -477,13 +512,19 @@ static void module_finish(CONF_IMODULE *imod)
 
 /* Add a static module to OpenSSL */
 
-int CONF_module_add(const char *name, conf_init_func *ifunc,
-                    conf_finish_func *ffunc)
+int CONF_module_add_ex(OSSL_LIB_CTX *libctx, const char *name,
+                       conf_init_func *ifunc, conf_finish_func *ffunc)
 {
-    if (module_add(NULL, name, ifunc, ffunc))
+    if (module_add(libctx, NULL, name, ifunc, ffunc))
         return 1;
     else
         return 0;
+}
+
+int CONF_module_add(const char *name,
+                    conf_init_func *ifunc, conf_finish_func *ffunc)
+{
+    return CONF_module_add_ex(NULL, name, ifunc, ffunc);
 }
 
 void ossl_config_modules_free(void)

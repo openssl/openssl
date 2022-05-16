@@ -5440,3 +5440,7 @@ BIO_ADDR_dup                            ?	3_1_0	EXIST::FUNCTION:SOCK
 CMS_final_digest                        ?	3_1_0	EXIST::FUNCTION:CMS
 OPENSSL_strcasecmp                      ?	3_0_3	EXIST::FUNCTION:
 OPENSSL_strncasecmp                     ?	3_0_3	EXIST::FUNCTION:
+CONF_modules_load_ex                    ?	3_1_0	EXIST::FUNCTION:
+CONF_modules_unload_ex                  ?	3_1_0	EXIST::FUNCTION:
+CONF_modules_finish_ex                  ?	3_1_0	EXIST::FUNCTION:
+CONF_module_add_ex                      ?	3_1_0	EXIST::FUNCTION:

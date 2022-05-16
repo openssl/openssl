@@ -2,8 +2,8 @@
 
 =head1 NAME
 
-CONF_get1_default_config_file,
-CONF_modules_load_file_ex, CONF_modules_load_file, CONF_modules_load
+CONF_get1_default_config_file, CONF_modules_load_file_ex,
+CONF_modules_load_file, CONF_modules_load_ex, CONF_modules_load
 - OpenSSL configuration functions
 
 =head1 SYNOPSIS
@@ -15,6 +15,8 @@ CONF_modules_load_file_ex, CONF_modules_load_file, CONF_modules_load
                                const char *appname, unsigned long flags);
  int CONF_modules_load_file(const char *filename, const char *appname,
                             unsigned long flags);
+ int CONF_modules_load_ex(OSSL_LIB_CTX *libctx, const CONF *cnf, const char *appname,
+                       unsigned long flags);
  int CONF_modules_load(const CONF *cnf, const char *appname,
                        unsigned long flags);
 
@@ -39,8 +41,11 @@ can be overridden by B<config_diagnostics> as described in L<config(5)>.
 CONF_modules_load_file() is the same as CONF_modules_load_file_ex() but
 has a NULL library context.
 
-CONF_modules_load() is identical to CONF_modules_load_file() except it
+CONF_modules_load_ex() is identical to CONF_modules_load_file() except it
 reads configuration information from B<cnf>.
+
+CONF_modules_load() is identical to CONF_modules_load_ex() except it
+has a NULL library context.
 
 =head1 NOTES
 
@@ -81,7 +86,7 @@ applications. For example in some cases an error may simply print out a warning
 message and the application continue. In other cases an application might
 consider a configuration file error as fatal and exit immediately.
 
-Applications can use the CONF_modules_load() function if they wish to load a
+Applications can use the CONF_modules_load_ex() function if they wish to load a
 configuration file themselves and have finer control over how errors are
 treated.
 
@@ -145,6 +150,11 @@ Load and parse configuration file manually, custom error handling:
      fclose(fp);
      NCONF_free(cnf);
  }
+
+=head1 HISTORY
+
+The CONF_modules_load_ex() function was introduced in OpenSSL 3.1. Prior to this
+version, module state was maintained independently of library contexts.
 
 =head1 SEE ALSO
 

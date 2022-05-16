@@ -140,16 +140,22 @@ int NCONF_dump_bio(const CONF *conf, BIO *out);
 
 int CONF_modules_load(const CONF *cnf, const char *appname,
                       unsigned long flags);
+int CONF_modules_load_ex(OSSL_LIB_CTX *libctx, const CONF *cnf,
+                         const char *appname, unsigned long flags);
 int CONF_modules_load_file_ex(OSSL_LIB_CTX *libctx, const char *filename,
                               const char *appname, unsigned long flags);
 int CONF_modules_load_file(const char *filename, const char *appname,
                            unsigned long flags);
 void CONF_modules_unload(int all);
+void CONF_modules_unload_ex(OSSL_LIB_CTX *libctx, int all);
 void CONF_modules_finish(void);
+void CONF_modules_finish_ex(OSSL_LIB_CTX *libctx);
 #ifndef OPENSSL_NO_DEPRECATED_1_1_0
 # define CONF_modules_free() while(0) continue
 #endif
 int CONF_module_add(const char *name, conf_init_func *ifunc,
+                    conf_finish_func *ffunc);
+int CONF_module_add_ex(OSSL_LIB_CTX *libctx, const char *name, conf_init_func *ifunc,
                     conf_finish_func *ffunc);
 
 const char *CONF_imodule_get_name(const CONF_IMODULE *md);

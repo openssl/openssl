@@ -140,6 +140,9 @@ int ossl_crypto_get_ex_new_index_ex(OSSL_LIB_CTX *ctx, int class_index,
                                     int priority);
 int ossl_crypto_free_ex_index_ex(OSSL_LIB_CTX *ctx, int class_index, int idx);
 
+void *ossl_lib_ctx_get_supported_conf_modules(OSSL_LIB_CTX *ctx);
+void *ossl_lib_ctx_get_initialized_conf_modules(OSSL_LIB_CTX *ctx);
+
 /* Function for simple binary search */
 
 /* Flags */
