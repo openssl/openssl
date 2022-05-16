@@ -1,0 +1,30 @@
+Field Type: characteristic-two-field
+Basis Type: tpBasis
+Polynomial:
+    00:80:00:00:00:00:00:00:00:00:00:00:00:00:00:
+    00:00:00:00:00:00:00:00:02:01
+A:   
+    6c:01:07:47:56:09:91:22:22:10:56:91:1c:77:d7:
+    7e:77:a7:77:e7:e7:e7:7f:cb
+B:   
+    71:fe:1a:f9:26:cf:84:79:89:ef:ef:8d:b4:59:f6:
+    63:94:d9:0f:32:ad:3f:15:e8
+Generator (uncompressed):
+    04:37:5d:4c:e2:4f:de:43:44:89:de:87:46:e7:17:
+    86:01:50:09:e6:6e:38:a9:26:dd:54:5a:39:17:61:
+    96:57:5d:98:59:99:36:6e:6a:d3:4c:e0:a7:7c:d7:
+    12:7b:06:be
+Order: 
+    15:55:55:55:55:55:55:55:55:55:55:55:61:0c:0b:
+    19:68:12:bf:b6:28:8a:3e:a3
+Cofactor:  6 (0x6)
+Seed:
+    e0:53:51:2d:c6:84:d6:96:e6:76:87:56:15:17:50:
+    67:ae:78:6d:1f
+-----BEGIN EC PARAMETERS-----
+MIG/AgEBMB0GByqGSM49AQIwEgICAL8GCSqGSM49AQIDAgIBCTBLBBhsAQdHVgmR
+IiIQVpEcd9d+d6d35+fnf8sEGHH+Gvkmz4R5ie/vjbRZ9mOU2Q8yrT8V6AMVAOBT
+US3GhNaW5naHVhUXUGeueG0fBDEEN11M4k/eQ0SJ3odG5xeGAVAJ5m44qSbdVFo5
+F2GWV12YWZk2bmrTTOCnfNcSewa+AhgVVVVVVVVVVVVVVVVhDAsZaBK/tiiKPqMC
+AQY=
+-----END EC PARAMETERS-----
