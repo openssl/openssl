@@ -5,6 +5,7 @@ IF[{- !$disabled{asm} -}]
   $SM4ASM_aarch64=sm4-armv8.S vpsm4-armv8.S
 
   $SM4ASM_riscv64=sm4-riscv-zks.S
+  $SM4ASM_riscv32=sm4-riscv-zks.S
 
   # Now that we have defined all the arch specific variables, use the
   # appropriate one, and define the appropriate macros
