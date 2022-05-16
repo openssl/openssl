@@ -1,5 +1,5 @@
 # -*- mode: perl; -*-
-# Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2017-2022 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -11,13 +11,17 @@ use warnings;
 
 package ssltests;
 
+use OpenSSL::Test::Utils;
+
 # SRP is only supported up to TLSv1.2
 
 our @tests = (
     {
         name => "srp",
         server => {
-            "CipherString" => "SRP",
+            "CipherString" => alldisabled("tls1_2", "tls1_3")
+                              ? "SRP\@SECLEVEL=0"
+                              : "SRP",
             "MaxProtocol" => "TLSv1.2",
             extra => {
                 "SRPUser" => "user",
@@ -25,7 +29,9 @@ our @tests = (
             },
         },
         client => {
-            "CipherString" => "SRP",
+            "CipherString" => alldisabled("tls1_2", "tls1_3")
+                              ? "SRP\@SECLEVEL=0"
+                              : "SRP",
             "MaxProtocol" => "TLSv1.2",
             extra => {
                 "SRPUser" => "user",
@@ -39,7 +45,9 @@ our @tests = (
     {
         name => "srp-bad-password",
         server => {
-            "CipherString" => "SRP",
+            "CipherString" => alldisabled("tls1_2", "tls1_3")
+                              ? "SRP\@SECLEVEL=0"
+                              : "SRP",
             "MaxProtocol" => "TLSv1.2",
             extra => {
                 "SRPUser" => "user",
@@ -47,7 +55,9 @@ our @tests = (
             },
         },
         client => {
-            "CipherString" => "SRP",
+            "CipherString" => alldisabled("tls1_2", "tls1_3")
+                              ? "SRP\@SECLEVEL=0"
+                              : "SRP",
             "MaxProtocol" => "TLSv1.2",
             extra => {
                 "SRPUser" => "user",
@@ -62,7 +72,9 @@ our @tests = (
     {
         name => "srp-auth",
         server => {
-            "CipherString" => "aSRP",
+            "CipherString" => alldisabled("tls1_2", "tls1_3")
+                              ? "aSRP\@SECLEVEL=0"
+                              : "aSRP",
             "MaxProtocol" => "TLSv1.2",
             extra => {
                 "SRPUser" => "user",
@@ -70,7 +82,9 @@ our @tests = (
             },
         },
         client => {
-            "CipherString" => "aSRP",
+            "CipherString" => alldisabled("tls1_2", "tls1_3")
+                              ? "aSRP\@SECLEVEL=0"
+                              : "aSRP",
             "MaxProtocol" => "TLSv1.2",
             extra => {
                 "SRPUser" => "user",
@@ -84,7 +98,9 @@ our @tests = (
     {
         name => "srp-auth-bad-password",
         server => {
-            "CipherString" => "aSRP",
+            "CipherString" => alldisabled("tls1_2", "tls1_3")
+                              ? "aSRP\@SECLEVEL=0"
+                              : "aSRP",
             "MaxProtocol" => "TLSv1.2",
             extra => {
                 "SRPUser" => "user",
@@ -92,7 +108,9 @@ our @tests = (
             },
         },
         client => {
-            "CipherString" => "aSRP",
+            "CipherString" => alldisabled("tls1_2", "tls1_3")
+                              ? "aSRP\@SECLEVEL=0"
+                              : "aSRP",
             "MaxProtocol" => "TLSv1.2",
             extra => {
                 "SRPUser" => "user",
