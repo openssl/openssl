@@ -786,7 +786,7 @@ properly secure the private key(s) used for signing certificates.
 It is advisable to keep them in a secure HW storage such as a smart card or HSM
 and access them via a suitable engine or crypto provider.
 
-This command command is effectively a single user command: no locking
+This command is effectively a single user command: no locking
 is done on the various files and attempts to run more than one B<openssl ca>
 command on the same database can have unpredictable results.
 
