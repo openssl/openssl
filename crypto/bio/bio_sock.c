@@ -400,7 +400,7 @@ int BIO_socket_wait(int fd, int for_read, time_t max_time)
         return 1;
 
     now = time(NULL);
-    if (max_time <= now)
+    if (max_time < now)
         return 0;
 
     FD_ZERO(&confds);
