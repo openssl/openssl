@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,8 +155,28 @@ static int test_default_cipherlist(SSL_CTX *ctx)
     if (ctx == NULL)
         return 0;
 
-    if (!TEST_ptr(ssl = SSL_new(ctx))
-            || !TEST_ptr(ciphers = SSL_get1_supported_ciphers(ssl)))
+    if (!TEST_ptr(ssl = SSL_new(ctx)))
+        goto err;
+
+#if defined(OPENSSL_NO_TLS1_2) && defined(OPENSSL_NO_TLS1_3)
+    /*
+     * When only TLS<1.2 is available and the security level is > 0,
+     * SSL_get1_supported_ciphers(ssl) retuns NULL.
+     * That changed with commit 7bf2e4d7f0c7ae19b7a8c416910886a7171e9820.
+     * Not sure of that is a bug or a feature, especially since
+     * that does not happen with no-tls1_2 no-ec no-dh.
+     * In that configuration tls-1.3 is enabled and there will be the
+     * tls-1.3 ciphersuites.  Although they in a sense depend on ec and dh
+     * availability - this can be supplied by some provider later.
+     * Test the current behaviour in case it changes again,
+     * so we will know.
+     */
+    if (!TEST_ptr_null(SSL_get1_supported_ciphers(ssl)))
+        goto err;
+    SSL_set_security_level(ssl, 0);
+#endif
+
+    if (!TEST_ptr(ciphers = SSL_get1_supported_ciphers(ssl)))
         goto err;
 
     num_expected_ciphers = OSSL_NELEM(default_ciphers_in_order);
