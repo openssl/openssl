@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -52,6 +52,17 @@ sub print_templates {
 
     # Add the implicit base configuration.
     foreach my $test (@ssltests::tests) {
+        # When tls1_2 and tls1_3 are both disabled and the test does not define
+        # an explicit CipherString, use "DEFAULT\@SECLEVEL=0" instead of "DEFAULT".
+        if ((!defined $test->{"test"}->{"Method"} || $test->{"test"}->{"Method"} eq "TLS")
+                && alldisabled("tls1_2", "tls1_3")) {
+            foreach my $name ("server", "server2", "resume_server",
+                              "client", "resume_client") {
+                if (defined $test->{$name} && !defined $test->{$name}->{"CipherString"}) {
+                    $test->{$name}->{"CipherString"} = "DEFAULT\@SECLEVEL=0";
+                }
+            }
+        }
         $test->{"server"} = { (%ssltests::base_server, %{$test->{"server"}}) };
         if (defined $test->{"server2"}) {
             $test->{"server2"} = { (%ssltests::base_server, %{$test->{"server2"}}) };
