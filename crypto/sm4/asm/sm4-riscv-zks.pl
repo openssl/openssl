@@ -127,11 +127,12 @@ sub rv_pack {
 }
 
 ################################################################################
-# Register assignment for rvi_zksed_encrypt and rvi_zksed_decrypt
+# Register assignment for rvi_zksed_cipher
 ################################################################################
 
 # Registers to hold SM4 state (called s0-s3 or y0-y3 elsewhere)
-my ($Q0,$Q1,$Q2,$Q3) = use_regs(6..9);
+# avoid callee-saved reg because this asm is for both rv32/rv64
+my ($Q0,$Q1,$Q2,$Q3) = use_regs(6..7,28..29);
 
 # Function arguments (x10-x12 are a0-a2 in the ABI)
 # Input block pointer, output block pointer, key pointer
@@ -144,13 +145,13 @@ my ($T0,$T1,$T2,$T3) = use_regs(13..16);
 my ($T) = use_regs(17);
 
 # Intermediate XOR
-my ($XOR) = use_regs(30);
+my ($XOR) = use_regs(31);
 
 # Loop counter
 my ($loopcntr) = use_regs(30);
 
 ################################################################################
-# Utility for rvi_zksed_encrypt and rvi_zksed_decrypt
+# Utility for rvi_zksed_cipher
 ################################################################################
 
 sub input {
@@ -283,7 +284,8 @@ clear_regs();
 my ($UKEY,$KEYP) = use_regs(10..11);
 
 # Registers to hold userkey (called s0-s3 or y0-y3 elsewhere)
-my ($Q0,$Q1,$Q2,$Q3) = use_regs(6..9);
+# avoid callee-saved reg because this asm is for both rv32/rv64
+my ($Q0,$Q1,$Q2,$Q3) = use_regs(6..7,28..29);
 
 # CKP
 my ($CKP) = use_regs(31);
