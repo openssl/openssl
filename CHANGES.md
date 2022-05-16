@@ -108,18 +108,6 @@ OpenSSL 3.1
 
    *Sergey Kirillov, Andrey Matyukov (Intel Corp)*
 
-OpenSSL 3.0
------------
-
-For OpenSSL 3.0 a [Migration guide][] has been added, so the CHANGES entries
-listed here are only a brief description.
-The migration guide contains more detailed information related to new features,
-breaking changes, and mappings for the large list of deprecated functions.
-
-[Migration guide]: https://github.com/openssl/openssl/tree/master/doc/man7/migration_guide.pod
-
-### Changes between 3.0.3 and 3.0.4
-
  * The functions `OPENSSL_LH_stats`, `OPENSSL_LH_node_stats`,
    `OPENSSL_LH_node_usage_stats`, `OPENSSL_LH_stats_bio`,
    `OPENSSL_LH_node_stats_bio` and `OPENSSL_LH_node_usage_stats_bio` are now
@@ -136,6 +124,16 @@ breaking changes, and mappings for the large list of deprecated functions.
    users transition to the new macro, `DEFINE_LHASH_OF_EX`.
 
    *Hugo Landau*
+
+OpenSSL 3.0
+-----------
+
+For OpenSSL 3.0 a [Migration guide][] has been added, so the CHANGES entries
+listed here are only a brief description.
+The migration guide contains more detailed information related to new features,
+breaking changes, and mappings for the large list of deprecated functions.
+
+[Migration guide]: https://github.com/openssl/openssl/tree/master/doc/man7/migration_guide.pod
 
 ### Changes between 3.0.2 and 3.0.3
 
