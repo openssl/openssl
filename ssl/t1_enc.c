@@ -414,6 +414,14 @@ int tls1_change_cipher_state(SSL *s, int which)
         goto err;
     }
 
+    /*
+     * Disable the KTLS RX path for now, since that may
+     * cause bad record mac errors for unknown reasons.
+     * See: https://github.com/openssl/openssl/issues/18276
+     */
+    if (which & SSL3_CC_READ)
+       goto skip_ktls;
+
     /* All future data will get encrypted by ktls. Flush the BIO or skip ktls */
     if (which & SSL3_CC_WRITE) {
        if (BIO_flush(bio) <= 0)
