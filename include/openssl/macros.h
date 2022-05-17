@@ -76,8 +76,8 @@
  * are unsuitable for use in a typedef.
  */
 # ifndef OSSL_DEPRECATED
-#  define OSSL_DEPRECATED(since)
-#  define OSSL_DEPRECATED_FOR(since, message)
+#  define OSSL_DEPRECATED(since)                extern
+#  define OSSL_DEPRECATED_FOR(since, message)   extern
 # endif
 
 /*
