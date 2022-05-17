@@ -38,7 +38,7 @@ if (defined $ENV{SSL_TESTS}) {
     @conf_srcs = glob(srctop_file("test", "ssl-tests", "*.cnf.in"));
     # We hard-code the number of tests to double-check that the globbing above
     # finds all files as expected.
-    plan tests => 30;
+    plan tests => 31;
 }
 map { s/;.*// } @conf_srcs if $^O eq "VMS";
 my @conf_files = map { basename($_, ".in") } @conf_srcs;
