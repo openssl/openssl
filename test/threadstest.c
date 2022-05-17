@@ -555,6 +555,19 @@ static int test_multi_load(void)
     return res && multi_success;
 }
 
+static void test_lib_ctx_load_config_worker(void)
+{
+    if (!TEST_int_eq(OSSL_LIB_CTX_load_config(multi_libctx, config_file), 1))
+        multi_success = 0;
+}
+
+static int test_lib_ctx_load_config(void)
+{
+    return thread_run_test(&test_lib_ctx_load_config_worker,
+                           MAXIMUM_THREADS, &test_lib_ctx_load_config_worker,
+                           1, default_provider);
+}
+
 typedef enum OPTION_choice {
     OPT_ERR = -1,
     OPT_EOF = 0,
@@ -610,6 +623,7 @@ int setup_tests(void)
     ADD_TEST(test_atomic);
     ADD_TEST(test_multi_load);
     ADD_ALL_TESTS(test_multi, 6);
+    ADD_TEST(test_lib_ctx_load_config);
     return 1;
 }
 
