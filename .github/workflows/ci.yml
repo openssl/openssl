@@ -30,7 +30,7 @@ jobs:
       with:
         fetch-depth: 0
     - name: config
-      run: ./config --banner=Configured --strict-warnings enable-fips && perl configdata.pm --dump
+      run: ./config --banner=Configured --strict-warnings enable-fips enable-quic && perl configdata.pm --dump
     - name: make build_generated
       run: make -s build_generated
     - name: make update
@@ -43,7 +43,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: config
-      run: ./config --banner=Configured --strict-warnings enable-fips && perl configdata.pm --dump
+      run: ./config --banner=Configured --strict-warnings enable-fips enable-quic && perl configdata.pm --dump
     - name: make build_generated
       run: make -s build_generated
     - name: make doc-nits
@@ -61,7 +61,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: config
-      run: CPPFLAGS=-ansi ./config --banner=Configured no-asm no-makedepend enable-buildtest-c++ enable-fips --strict-warnings -D_DEFAULT_SOURCE && perl configdata.pm --dump
+      run: CPPFLAGS=-ansi ./config --banner=Configured no-asm no-makedepend enable-buildtest-c++ enable-fips enable-quic --strict-warnings -D_DEFAULT_SOURCE && perl configdata.pm --dump
     - name: make
       run: make -s -j4
 
@@ -72,7 +72,7 @@ jobs:
     - name: localegen
       run: sudo locale-gen tr_TR.UTF-8
     - name: config
-      run: CC=gcc ./config --banner=Configured enable-fips --strict-warnings && perl configdata.pm --dump
+      run: CC=gcc ./config --banner=Configured enable-fips enable-quic --strict-warnings && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: make test
@@ -105,7 +105,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: config
-      run: ./config --banner=Configured --strict-warnings no-deprecated enable-fips && perl configdata.pm --dump
+      run: ./config --banner=Configured --strict-warnings no-deprecated enable-fips enable-quic && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: make test
@@ -141,7 +141,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: config
-      run: ./config --banner=Configured --debug enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION && perl configdata.pm --dump
+      run: ./config --banner=Configured --debug enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips enable-quic -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: make test
@@ -153,7 +153,7 @@ jobs:
     - uses: actions/checkout@v2
     - name: config
       # --debug -O1 is to produce a debug build that runs in a reasonable amount of time
-      run: CC=clang ./config --banner=Configured --debug -O1 -fsanitize=memory -DOSSL_SANITIZE_MEMORY -fno-optimize-sibling-calls enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips && perl configdata.pm --dump
+      run: CC=clang ./config --banner=Configured --debug -O1 -fsanitize=memory -DOSSL_SANITIZE_MEMORY -fno-optimize-sibling-calls enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips enable-quic && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: make test
@@ -177,7 +177,7 @@ jobs:
     - name: modprobe tls
       run: sudo modprobe tls
     - name: config
-      run: ./config --banner=Configured --strict-warnings no-ec enable-ssl-trace enable-zlib enable-zlib-dynamic enable-crypto-mdebug enable-crypto-mdebug-backtrace enable-egd enable-ktls enable-fips && perl configdata.pm --dump
+      run: ./config --banner=Configured --strict-warnings no-ec enable-ssl-trace enable-zlib enable-zlib-dynamic enable-crypto-mdebug enable-crypto-mdebug-backtrace enable-egd enable-ktls enable-fips enable-quic && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: make test
@@ -190,7 +190,7 @@ jobs:
     - name: modprobe tls
       run: sudo modprobe tls
     - name: config
-      run: ./config --banner=Configured --strict-warnings enable-ktls enable-fips && perl configdata.pm --dump
+      run: ./config --banner=Configured --strict-warnings enable-ktls enable-fips enable-quic && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: make test
@@ -201,7 +201,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: config
-      run: ./config --banner=Configured --strict-warnings no-legacy enable-fips && perl configdata.pm --dump
+      run: ./config --banner=Configured --strict-warnings no-legacy enable-fips enable-quic && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: make test
@@ -226,7 +226,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: config
-      run: CC=gcc ./config --banner=Configured enable-tfo --strict-warnings && perl configdata.pm --dump
+      run: CC=gcc ./config --banner=Configured enable-tfo enable-quic --strict-warnings && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: make test
