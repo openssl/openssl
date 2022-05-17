@@ -252,6 +252,7 @@ static int ssl_set_cert(CERT *c, X509 *x)
         /*
          * The return code from EVP_PKEY_copy_parameters is deliberately
          * ignored. Some EVP_PKEY types cannot do this.
+         * coverity[check_return]
          */
         EVP_PKEY_copy_parameters(pkey, c->pkeys[i].privatekey);
         ERR_clear_error();
