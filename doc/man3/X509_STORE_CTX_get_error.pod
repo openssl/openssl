@@ -212,7 +212,7 @@ and it is not self-signed and the B<X509_V_FLAG_PARTIAL_CHAIN> flag is not set.
 
 =item B<X509_V_ERR_CERT_CHAIN_TOO_LONG: certificate chain too long>
 
-The certificate chain length is greater than the supplied maximum depth. Unused.
+The certificate chain length is greater than the supplied maximum depth.
 
 =item B<X509_V_ERR_CERT_REVOKED: certificate revoked>
 
