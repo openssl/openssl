@@ -19,6 +19,8 @@
 
 # define SSL_AD_NO_ALERT    -1
 
+static void tls_int_free(OSSL_RECORD_LAYER *rl);
+
 void ossl_rlayer_fatal(OSSL_RECORD_LAYER *rl, int al, int reason,
                        const char *fmt, ...)
 {
@@ -284,6 +286,7 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
     while (left < n) {
         size_t bioread = 0;
         int ret;
+        BIO *bio = rl->prev != NULL ? rl->prev : rl->bio;
 
         /*
          * Now we have len+left bytes at the front of s->s3.rbuf.buf and
@@ -292,14 +295,23 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
          */
 
         clear_sys_error();
-        if (rl->bio != NULL) {
-            ret = BIO_read(rl->bio, pkt + len + left, max - left);
+        if (bio != NULL) {
+            ret = BIO_read(bio, pkt + len + left, max - left);
             if (ret > 0) {
                 bioread = ret;
                 ret = OSSL_RECORD_RETURN_SUCCESS;
-            } else if (BIO_should_retry(rl->bio)) {
+            } else if (BIO_should_retry(bio)) {
+                if (rl->prev != NULL) {
+                    /*
+                     * We were reading from the previous epoch. Now there is no
+                     * more data, so swap to the actual transport BIO
+                     */
+                    BIO_free(rl->prev);
+                    rl->prev = NULL;
+                    continue;
+                }
                 ret = OSSL_RECORD_RETURN_RETRY;
-            } else if (BIO_eof(rl->bio)) {
+            } else if (BIO_eof(bio)) {
                 ret = OSSL_RECORD_RETURN_EOF;
             } else {
                 ret = OSSL_RECORD_RETURN_FATAL;
@@ -989,10 +1001,10 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                          const EVP_CIPHER *ciph, size_t taglen,
                          /* TODO(RECLAYER): This probably should not be an int */
                          int mactype,
-                         const EVP_MD *md, const SSL_COMP *comp, BIO *transport,
-                         BIO_ADDR *local, BIO_ADDR *peer,
-                         const OSSL_PARAM *settings, const OSSL_PARAM *options,
-                         OSSL_RECORD_LAYER **retrl,
+                         const EVP_MD *md, const SSL_COMP *comp, BIO *prev,
+                         BIO *transport, BIO *next, BIO_ADDR *local,
+                         BIO_ADDR *peer, const OSSL_PARAM *settings,
+                         const OSSL_PARAM *options, OSSL_RECORD_LAYER **retrl,
                          /* TODO(RECLAYER): Remove me */
                          SSL_CONNECTION *s)
 {
@@ -1004,11 +1016,6 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     if (rl == NULL) {
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
         return OSSL_RECORD_RETURN_FATAL;
-    }
-
-    if (transport != NULL && !BIO_up_ref(transport)) {
-        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
-        goto err;
     }
 
     /*
@@ -1058,10 +1065,18 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     if (!tls_set1_bio(rl, transport))
         goto err;
 
+    if (prev != NULL && !BIO_up_ref(prev))
+        goto err;
+    rl->prev = prev;
+
+    if (next != NULL && !BIO_up_ref(next))
+        goto err;
+    rl->next = next;
+
     *retrl = rl;
     return OSSL_RECORD_RETURN_SUCCESS;
  err:
-    OPENSSL_free(rl);
+    tls_int_free(rl);
     return OSSL_RECORD_RETURN_FATAL;
 }
 
@@ -1073,8 +1088,8 @@ tls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                      const EVP_CIPHER *ciph, size_t taglen,
                      /* TODO(RECLAYER): This probably should not be an int */
                      int mactype,
-                     const EVP_MD *md, const SSL_COMP *comp, BIO *transport,
-                     BIO_ADDR *local, BIO_ADDR *peer,
+                     const EVP_MD *md, const SSL_COMP *comp, BIO *prev, 
+                     BIO *transport, BIO *next, BIO_ADDR *local, BIO_ADDR *peer,
                      const OSSL_PARAM *settings, const OSSL_PARAM *options,
                      OSSL_RECORD_LAYER **retrl,
                      /* TODO(RECLAYER): Remove me */
@@ -1084,8 +1099,9 @@ tls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     
     ret = tls_int_new_record_layer(libctx, propq, vers, role, direction, level,
                                    key, keylen, iv, ivlen, mackey, mackeylen,
-                                   ciph, taglen, mactype, md, comp, transport,
-                                   local, peer, settings, options, retrl, s);
+                                   ciph, taglen, mactype, md, comp, prev,
+                                   transport, next, local, peer, settings,
+                                   options, retrl, s);
 
     if (ret != OSSL_RECORD_RETURN_SUCCESS)
         return ret;
@@ -1147,8 +1163,8 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                       const EVP_CIPHER *ciph, size_t taglen,
                       /* TODO(RECLAYER): This probably should not be an int */
                       int mactype,
-                      const EVP_MD *md, const SSL_COMP *comp, BIO *transport,
-                      BIO_ADDR *local, BIO_ADDR *peer,
+                      const EVP_MD *md, const SSL_COMP *comp, BIO *prev,
+                      BIO *transport, BIO *next, BIO_ADDR *local, BIO_ADDR *peer,
                       const OSSL_PARAM *settings, const OSSL_PARAM *options,
                       OSSL_RECORD_LAYER **retrl,
                       /* TODO(RECLAYER): Remove me */
@@ -1159,8 +1175,9 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
 
     ret = tls_int_new_record_layer(libctx, propq, vers, role, direction, level,
                                    key, keylen, iv, ivlen, mackey, mackeylen,
-                                   ciph, taglen, mactype, md, comp, transport,
-                                   local, peer, settings, options, retrl, s);
+                                   ciph, taglen, mactype, md, comp, prev,
+                                   transport, next, local, peer, settings,
+                                   options, retrl, s);
 
     if (ret != OSSL_RECORD_RETURN_SUCCESS)
         return ret;
@@ -1171,12 +1188,42 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     return OSSL_RECORD_RETURN_SUCCESS;
 }
 
-void tls_free(OSSL_RECORD_LAYER *rl)
+static void tls_int_free(OSSL_RECORD_LAYER *rl)
 {
     /* TODO(RECLAYER): Cleanse sensitive fields */
+    BIO_free(rl->prev);
     BIO_free(rl->bio);
+    BIO_free(rl->next);
+    SSL3_BUFFER_release(&rl->rbuf);
+
+    EVP_CIPHER_CTX_free(rl->enc_read_ctx);
+    EVP_MD_CTX_free(rl->read_hash);
+    COMP_CTX_free(rl->expand);
+
     OPENSSL_free(rl);
 }
+
+int tls_free(OSSL_RECORD_LAYER *rl)
+{
+    SSL3_BUFFER *rbuf;
+    size_t left, written;
+    int ret = 1;
+
+    rbuf = &rl->rbuf;
+
+    left = SSL3_BUFFER_get_left(rbuf);
+    if (left > 0) {
+        /*
+         * This record layer is closing but we still have data left in our
+         * buffer. It must be destined for the next epoch - so push it there.
+         */
+        ret = BIO_write_ex(rl->next, rbuf->buf + rbuf->offset, left, &written);
+    }
+    tls_int_free(rl);
+
+    return ret;
+}
+
 
 int tls_reset(OSSL_RECORD_LAYER *rl)
 {

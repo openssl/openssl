@@ -1806,8 +1806,10 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
 
     meth = ssl_select_next_record_layer(s, level);
 
-    if (s->rrlmethod != NULL)
-        s->rrlmethod->free(s->rrl);
+    if (s->rrlmethod != NULL && !s->rrlmethod->free(s->rrl)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
 
     if (meth != NULL)
         s->rrlmethod = meth;
@@ -1834,14 +1836,24 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
 
     for (;;) {
         int rlret;
+        BIO *prev = s->rrlnext;
+
+        s->rrlnext = BIO_new(BIO_s_mem());
+
+        if (s->rrlnext == NULL) {
+            BIO_free(prev);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
 
         rlret = s->rrlmethod->new_record_layer(sctx->libctx, sctx->propq,
                                                version, s->server, direction,
                                                level, key, keylen, iv, ivlen,
                                                mackey, mackeylen, ciph, taglen,
-                                               mactype, md, comp,  s->rbio,
-                                               NULL, NULL, NULL, options,
-                                               &s->rrl, s);
+                                               mactype, md, comp, prev, s->rbio,
+                                               s->rrlnext, NULL, NULL, NULL,
+                                               options, &s->rrl, s);
+        BIO_free(prev);
         switch (rlret) {
         case OSSL_RECORD_RETURN_FATAL:
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_RECORD_LAYER_FAILURE);

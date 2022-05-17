@@ -68,7 +68,22 @@ struct ossl_record_layer_st
     int version;
     int role;
     int direction;
+
+    /*
+     * A BIO containing any data read in the previous epoch that was destined
+     * for this epoch
+     */
+    BIO *prev;
+
+    /* The transport BIO */
     BIO *bio;
+
+    /*
+     * A BIO where we will send any data read by us that is destined for the
+     * next epoch.
+     */
+    BIO *next;
+
     /* Types match the equivalent structures in the SSL object */
     uint64_t options;
     /*
@@ -190,13 +205,14 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                          const EVP_CIPHER *ciph, size_t taglen,
                          /* TODO(RECLAYER): This probably should not be an int */
                          int mactype,
-                         const EVP_MD *md, const SSL_COMP *comp, BIO *transport,
+                         const EVP_MD *md, const SSL_COMP *comp, BIO *prev,
+                         BIO *transport, BIO *next,
                          BIO_ADDR *local, BIO_ADDR *peer,
                          const OSSL_PARAM *settings, const OSSL_PARAM *options,
                          OSSL_RECORD_LAYER **retrl,
                          /* TODO(RECLAYER): Remove me */
                          SSL_CONNECTION *s);
-void tls_free(OSSL_RECORD_LAYER *rl);
+int tls_free(OSSL_RECORD_LAYER *rl);
 int tls_reset(OSSL_RECORD_LAYER *rl);
 int tls_unprocessed_read_pending(OSSL_RECORD_LAYER *rl);
 int tls_processed_read_pending(OSSL_RECORD_LAYER *rl);

@@ -656,6 +656,8 @@ int ossl_ssl_connection_reset(SSL *s)
     }
 
     RECORD_LAYER_clear(&sc->rlayer);
+    BIO_free(sc->rrlnext);
+    sc->rrlnext = NULL;
 
     /*
      * TODO(RECLAYER): The record method should probably initialy come from the
@@ -1350,6 +1352,10 @@ void ossl_ssl_connection_free(SSL *ssl)
     s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
     if (s == NULL)
         return;
+
+    if (s->rrlmethod != NULL)
+        s->rrlmethod->free(s->rrl); /* Ignore return value */
+    BIO_free(s->rrlnext);
 
     X509_VERIFY_PARAM_free(s->param);
     dane_final(&s->dane);

@@ -481,8 +481,8 @@ ktls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                       const EVP_CIPHER *ciph, size_t taglen,
                       /* TODO(RECLAYER): This probably should not be an int */
                       int mactype,
-                      const EVP_MD *md, const SSL_COMP *comp, BIO *transport,
-                      BIO_ADDR *local, BIO_ADDR *peer,
+                      const EVP_MD *md, const SSL_COMP *comp, BIO *prev,
+                      BIO *transport, BIO *next, BIO_ADDR *local, BIO_ADDR *peer,
                       const OSSL_PARAM *settings, const OSSL_PARAM *options,
                       OSSL_RECORD_LAYER **retrl,
                       /* TODO(RECLAYER): Remove me */
@@ -492,8 +492,9 @@ ktls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
 
     ret = tls_int_new_record_layer(libctx, propq, vers, role, direction, level,
                                    key, keylen, iv, ivlen, mackey, mackeylen,
-                                   ciph, taglen, mactype, md, comp, transport,
-                                   local, peer, settings, options, retrl, s);
+                                   ciph, taglen, mactype, md, comp, prev,
+                                   transport, next, local, peer, settings,
+                                   options, retrl, s);
 
     if (ret != OSSL_RECORD_RETURN_SUCCESS)
         return ret;
