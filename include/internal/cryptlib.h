@@ -21,6 +21,7 @@
 # include "internal/common.h"
 
 # include <openssl/crypto.h>
+# include <openssl/conf.h>
 # include <openssl/buffer.h>
 # include <openssl/bio.h>
 # include <openssl/asn1.h>
@@ -140,8 +141,8 @@ int ossl_crypto_get_ex_new_index_ex(OSSL_LIB_CTX *ctx, int class_index,
                                     int priority);
 int ossl_crypto_free_ex_index_ex(OSSL_LIB_CTX *ctx, int class_index, int idx);
 
-void *ossl_lib_ctx_get_supported_conf_modules(OSSL_LIB_CTX *ctx);
-void *ossl_lib_ctx_get_initialized_conf_modules(OSSL_LIB_CTX *ctx);
+STACK_OF(CONF_MODULE) *ossl_lib_ctx_get_supported_conf_modules(OSSL_LIB_CTX *ctx);
+STACK_OF(CONF_IMODULE) *ossl_lib_ctx_get_initialized_conf_modules(OSSL_LIB_CTX *ctx);
 
 /* Function for simple binary search */
 

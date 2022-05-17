@@ -12,9 +12,13 @@
 #include "internal/thread_once.h"
 #include "internal/property.h"
 #include "internal/core.h"
+#include "internal/conf.h"
 #include "internal/bio.h"
 #include "internal/provider.h"
 #include "crypto/context.h"
+
+DEFINE_STACK_OF(CONF_MODULE)
+DEFINE_STACK_OF(CONF_IMODULE)
 
 struct ossl_lib_ctx_st {
     CRYPTO_RWLOCK *lock, *rand_crngt_lock;
@@ -43,8 +47,8 @@ struct ossl_lib_ctx_st {
     void *fips_prov;
 #endif
 
-    OPENSSL_STACK *supported_conf_modules;
-    OPENSSL_STACK *initialized_conf_modules;
+    STACK_OF(CONF_MODULE) *supported_conf_modules;
+    STACK_OF(CONF_IMODULE) *initialized_conf_modules;
 
     unsigned int ischild:1;
 };
@@ -93,11 +97,11 @@ static int context_init(OSSL_LIB_CTX *ctx)
     exdata_done = 1;
 
     /* Initialize module lists for CONF. */
-    ctx->supported_conf_modules = OPENSSL_sk_new_null();
+    ctx->supported_conf_modules = sk_CONF_MODULE_new_null();
     if (ctx->supported_conf_modules == NULL)
         goto err;
 
-    ctx->initialized_conf_modules = OPENSSL_sk_new_null();
+    ctx->initialized_conf_modules = sk_CONF_IMODULE_new_null();
     if (ctx->initialized_conf_modules == NULL)
         goto err;
 
@@ -319,10 +323,10 @@ static void context_deinit_objs(OSSL_LIB_CTX *ctx)
     }
 #endif
 
-    OPENSSL_sk_free(ctx->supported_conf_modules);
+    sk_CONF_MODULE_free(ctx->supported_conf_modules);
     ctx->supported_conf_modules = NULL;
 
-    OPENSSL_sk_free(ctx->initialized_conf_modules);
+    sk_CONF_IMODULE_free(ctx->initialized_conf_modules);
     ctx->initialized_conf_modules = NULL;
 }
 
@@ -596,7 +600,7 @@ OSSL_EX_DATA_GLOBAL *ossl_lib_ctx_get_ex_data_global(OSSL_LIB_CTX *ctx)
     return &ctx->global;
 }
 
-void *ossl_lib_ctx_get_supported_conf_modules(OSSL_LIB_CTX *ctx)
+STACK_OF(CONF_MODULE) *ossl_lib_ctx_get_supported_conf_modules(OSSL_LIB_CTX *ctx)
 {
     ctx = ossl_lib_ctx_get_concrete(ctx);
     if (ctx == NULL)
@@ -604,7 +608,7 @@ void *ossl_lib_ctx_get_supported_conf_modules(OSSL_LIB_CTX *ctx)
     return ctx->supported_conf_modules;
 }
 
-void *ossl_lib_ctx_get_initialized_conf_modules(OSSL_LIB_CTX *ctx)
+STACK_OF(CONF_IMODULE) *ossl_lib_ctx_get_initialized_conf_modules(OSSL_LIB_CTX *ctx)
 {
     ctx = ossl_lib_ctx_get_concrete(ctx);
     if (ctx == NULL)

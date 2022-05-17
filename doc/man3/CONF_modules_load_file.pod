@@ -54,7 +54,7 @@ has a NULL library context.
 CONF_module_add_ex() registers a module into a library context using the given
 name, initialization and finish functions.
 
-CONF_module_add() is identical to CONF_modules_add_Ex() except it
+CONF_module_add() is identical to CONF_module_add_ex() except it
 has a NULL library context.
 
 =head1 NOTES

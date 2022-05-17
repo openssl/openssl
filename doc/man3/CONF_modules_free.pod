@@ -28,13 +28,13 @@ configuration modules.  Normally, in versions of OpenSSL prior to 1.1.0,
 applications called
 CONF_modules_free() at exit to tidy up any configuration performed.
 
-CONF_modules_finish_ex() calls each configuration modules B<finish> handler to
+CONF_modules_finish_ex() calls each configuration module's B<finish> handler to
 free up any configuration that module may have performed. CONF_modules_finish()
 is equivalent to calling CONF_modules_finish_ex() with the default library
 context.
 
 CONF_modules_unload_ex() finishes and unloads configuration modules. If B<all>
-is set to B<0> only modules loaded from DSOs will be unloads. If B<all> is B<1>
+is set to B<0> only modules loaded from DSOs will be unloaded. If B<all> is B<1>
 all modules, including built-in modules will be unloaded. CONF_modules_unload()
 is equivalent to calling CONF_modules_unload_ex() with the default library
 context.
