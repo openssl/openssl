@@ -9880,6 +9880,72 @@ end:
 #endif
 }
 
+#ifndef OSSL_NO_USABLE_TLS1_3
+/* Test that read_ahead works across a key change */
+static int test_read_ahead_key_change(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    char *msg = "Hello World";
+    size_t written, readbytes;
+    char buf[80];
+    int i;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                       TLS_client_method(), TLS1_3_VERSION, 0,
+                                       &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    SSL_CTX_set_read_ahead(sctx, 1);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                                      &clientssl, NULL, NULL)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /* Write some data, send a key update, write more data */
+    if (!TEST_true(SSL_write_ex(clientssl, msg, strlen(msg), &written))
+        || !TEST_size_t_eq(written, strlen(msg)))
+        goto end;
+
+    if (!TEST_true(SSL_key_update(clientssl, SSL_KEY_UPDATE_NOT_REQUESTED)))
+        goto end;
+
+    if (!TEST_true(SSL_write_ex(clientssl, msg, strlen(msg), &written))
+        || !TEST_size_t_eq(written, strlen(msg)))
+        goto end;
+
+    /*
+     * Since read_ahead is on the first read below should read the record with
+     * the first app data, the second record with the key update message, and
+     * the third record with the app data all in one go. We should be able to
+     * still process the read_ahead data correctly even though it crosses
+     * epochs
+     */
+    for (i = 0; i < 2; i++) {
+        if (!TEST_true(SSL_read_ex(serverssl, buf, sizeof(buf) - 1,
+                                    &readbytes)))
+            goto end;
+
+        buf[readbytes] = '\0';
+        if (!TEST_str_eq(buf, msg))
+            goto end;
+    }
+
+    testresult = 1;
+
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+#endif /* OSSL_NO_USABLE_TLS1_3 */
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile provider config dhfile\n")
 
 int setup_tests(void)
@@ -10144,6 +10210,9 @@ int setup_tests(void)
     ADD_TEST(test_set_verify_cert_store_ssl);
     ADD_ALL_TESTS(test_session_timeout, 1);
     ADD_TEST(test_load_dhfile);
+#ifndef OSSL_NO_USABLE_TLS1_3
+    ADD_TEST(test_read_ahead_key_change);
+#endif
 #if !defined(OPENSSL_NO_TLS1_2) && !defined(OSSL_NO_USABLE_TLS1_3)
     ADD_ALL_TESTS(test_serverinfo_custom, 4);
 #endif
