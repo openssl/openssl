@@ -12,6 +12,7 @@
  */
 
 #include "cipher_sm4_ccm.h"
+#include "crypto/sm4_platform.h"
 
 static int ccm_sm4_initkey(PROV_CCM_CTX *ctx,
                            const unsigned char *key, size_t keylen)
@@ -36,7 +37,7 @@ static const PROV_CCM_HW ccm_sm4 = {
 };
 
 #if defined(RVI_ZKSED_CAPABLE)
-# include "cipher_aes_ccm_hw_rvi_zksed.inc"
+# include "cipher_sm4_ccm_hw_rvi_zksed.inc"
 #else
 const PROV_CCM_HW *ossl_prov_sm4_hw_ccm(size_t keybits)
 {
