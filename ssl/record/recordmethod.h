@@ -158,14 +158,17 @@ struct ossl_record_method_st {
                             int mactype,
                             const EVP_MD *md,
                             const SSL_COMP *comp,
-                            BIO *transport, BIO_ADDR *local,
+                            BIO *prev,
+                            BIO *transport,
+                            BIO *next,
+                            BIO_ADDR *local,
                             BIO_ADDR *peer,
                             const OSSL_PARAM *settings,
                             const OSSL_PARAM *options,
                             OSSL_RECORD_LAYER **ret,
                             /* TODO(RECLAYER): Remove me */
                             SSL_CONNECTION *s);
-    void (*free)(OSSL_RECORD_LAYER *rl);
+    int (*free)(OSSL_RECORD_LAYER *rl);
 
     int (*reset)(OSSL_RECORD_LAYER *rl); /* Is this needed? */
 

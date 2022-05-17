@@ -1771,7 +1771,8 @@ struct ssl_connection_st {
     const OSSL_RECORD_METHOD *rrlmethod;
     /* The read direction record layer */
     OSSL_RECORD_LAYER *rrl;
-
+    /* BIO to store data destined for the next record layer epoch */
+    BIO *rrlnext;
 
     /* Default password callback. */
     pem_password_cb *default_passwd_callback;
