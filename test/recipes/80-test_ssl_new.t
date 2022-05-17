@@ -123,7 +123,7 @@ my %skip = (
   "25-cipher.cnf" => disabled("ec") || disabled("tls1_2"),
   "26-tls13_client_auth.cnf" => disabled("tls1_3") || ($no_ec && $no_dh),
   "29-dtls-sctp-label-bug.cnf" => disabled("sctp") || disabled("sock"),
-  "31-quic.cnf" => $no_quic
+  "31-quic.cnf" => $no_quic || $no_ec
 );
 
 foreach my $conf (@conf_files) {
