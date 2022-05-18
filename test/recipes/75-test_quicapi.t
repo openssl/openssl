@@ -23,8 +23,8 @@ plan skip_all => "QUIC protocol is not supported by this OpenSSL build"
     if disabled('quic');
 
 plan tests =>
-    ($no_fips ? 0 : 1)          # sslapitest with fips
-    + 1;                        # sslapitest with default provider
+    ($no_fips ? 0 : 1)          # quicapitest with fips
+    + 1;                        # quicapitest with default provider
 
 ok(run(test(["quicapitest", "default",
              srctop_file("test", "default.cnf")])),
