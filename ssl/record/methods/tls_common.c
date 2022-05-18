@@ -517,6 +517,18 @@ static int tls_get_more_records(OSSL_RECORD_LAYER *rl,
                 thisrr->type = type;
                 thisrr->rec_version = version;
 
+                /*
+                 * When we call validate_record_header() only records actually
+                 * received in SSLv2 format should have the record version set
+                 * to SSL2_VERSION. This way validate_record_header() can know
+                 * what format the record was in based on the version.
+                 */
+                if (thisrr->rec_version == SSL2_VERSION) {
+                    RLAYERfatal(rl, SSL_AD_PROTOCOL_VERSION,
+                                SSL_R_WRONG_VERSION_NUMBER);
+                    return OSSL_RECORD_RETURN_FATAL;
+                }
+
                 if (s->msg_callback)
                     s->msg_callback(0, version, SSL3_RT_HEADER, p, 5, ssl,
                                     s->msg_callback_arg);
