@@ -166,22 +166,19 @@ int ossl_namemap_doall_names(const OSSL_NAMEMAP *namemap, int number,
     return 1;
 }
 
-static int namemap_name2num_n(const OSSL_NAMEMAP *namemap,
-                              const char *name, size_t name_len)
+static int namemap_name2num(const OSSL_NAMEMAP *namemap,
+                            const char *name)
 {
     NAMENUM_ENTRY *namenum_entry, namenum_tmpl;
 
-    if ((namenum_tmpl.name = OPENSSL_strndup(name, name_len)) == NULL)
-        return 0;
+    namenum_tmpl.name = (char *)name;
     namenum_tmpl.number = 0;
     namenum_entry =
         lh_NAMENUM_ENTRY_retrieve(namemap->namenum, &namenum_tmpl);
-    OPENSSL_free(namenum_tmpl.name);
     return namenum_entry != NULL ? namenum_entry->number : 0;
 }
 
-int ossl_namemap_name2num_n(const OSSL_NAMEMAP *namemap,
-                            const char *name, size_t name_len)
+int ossl_namemap_name2num(const OSSL_NAMEMAP *namemap, const char *name)
 {
     int number;
 
@@ -195,18 +192,24 @@ int ossl_namemap_name2num_n(const OSSL_NAMEMAP *namemap,
 
     if (!CRYPTO_THREAD_read_lock(namemap->lock))
         return 0;
-    number = namemap_name2num_n(namemap, name, name_len);
+    number = namemap_name2num(namemap, name);
     CRYPTO_THREAD_unlock(namemap->lock);
 
     return number;
 }
 
-int ossl_namemap_name2num(const OSSL_NAMEMAP *namemap, const char *name)
+int ossl_namemap_name2num_n(const OSSL_NAMEMAP *namemap,
+                            const char *name, size_t name_len)
 {
-    if (name == NULL)
+    char *tmp;
+    int ret;
+
+    if (name == NULL || (tmp = OPENSSL_strndup(name, name_len)) == NULL)
         return 0;
 
-    return ossl_namemap_name2num_n(namemap, name, strlen(name));
+    ret = ossl_namemap_name2num(namemap, tmp);
+    OPENSSL_free(tmp);
+    return ret;
 }
 
 struct num2name_data_st {
@@ -241,14 +244,20 @@ static int namemap_add_name_n(OSSL_NAMEMAP *namemap, int number,
 {
     NAMENUM_ENTRY *namenum = NULL;
     int tmp_number;
+    char *tmp = OPENSSL_strndup(name, name_len);
+
+    if (tmp == NULL)
+        return 0;
 
     /* If it already exists, we don't add it */
-    if ((tmp_number = namemap_name2num_n(namemap, name, name_len)) != 0)
+    if ((tmp_number = namemap_name2num(namemap, tmp)) != 0) {
+        OPENSSL_free(tmp);
         return tmp_number;
+    }
 
-    if ((namenum = OPENSSL_zalloc(sizeof(*namenum))) == NULL
-        || (namenum->name = OPENSSL_strndup(name, name_len)) == NULL)
+    if ((namenum = OPENSSL_zalloc(sizeof(*namenum))) == NULL)
         goto err;
+    namenum->name = tmp;
 
     /* The tsan_counter use here is safe since we're under lock */
     namenum->number =
@@ -260,7 +269,8 @@ static int namemap_add_name_n(OSSL_NAMEMAP *namemap, int number,
     return namenum->number;
 
  err:
-    namenum_free(namenum);
+    OPENSSL_free(tmp);
+    OPENSSL_free(namenum);
     return 0;
 }
 
@@ -312,13 +322,22 @@ int ossl_namemap_add_names(OSSL_NAMEMAP *namemap, int number,
      */
     for (p = names; *p != '\0'; p = (q == NULL ? p + l : q + 1)) {
         int this_number;
+        char *allocated;
+        const char *tmp;
 
-        if ((q = strchr(p, separator)) == NULL)
+        if ((q = strchr(p, separator)) == NULL) {
             l = strlen(p);       /* offset to \0 */
-        else
+            tmp = p;
+            allocated = NULL;
+        } else {
             l = q - p;           /* offset to the next separator */
+            tmp = allocated = OPENSSL_strndup(p, l);
+            if (tmp == NULL)
+                goto err;
+        }
 
-        this_number = namemap_name2num_n(namemap, p, l);
+        this_number = namemap_name2num(namemap, tmp);
+        OPENSSL_free(allocated);
 
         if (*p == '\0' || *p == separator) {
             ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_BAD_ALGORITHM_NAME);
