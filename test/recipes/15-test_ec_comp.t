@@ -24,7 +24,7 @@ foreach (@curvesdata) {
     my $p = $parts[0];
     if ($p =~ /^\t/) { next; }
     $p =~ s/\s+//g;
-    if (!($p =~ /(secp256k1|prime256v1|sect571r1|brainpoolP384r1|SM2)/)) { next; }
+    if (!($p =~ /(secp256k1|prime256v1|sect571r1|brainpoolP384r1)/)) { next; }
     push @curves, $p;
 }
 
