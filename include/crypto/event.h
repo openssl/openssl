@@ -54,7 +54,7 @@ struct ossl_event_st {
     void *ctx;
 
     /*
-     * Optional data (may be NULL).
+     * Optional data (may be NULL or zero).
      *
      * These fields are considered mutable, in so far that an event handler
      * may "steal" them, and replace them with NULL.
@@ -63,6 +63,14 @@ struct ossl_event_st {
      * it's not certain that they come from the same source, or are located
      * consecutively in memory.
      */
+
+    /*
+     * Time value.
+     *
+     * When non-zero, this denotes earliest time that this event should be
+     * fired off (passed to subscribers).
+     */
+    OSSL_TIME when;
 
     /* Identifying material */
     const void *identifiers;
@@ -235,7 +243,7 @@ struct ossl_event_queue_method_st {
  */
 
 /* Allocate / deallocate an event structure dynamically and populate it */
-struct ossl_event_st *ossl_event_new(uint32_t type, void *ctx,
+struct ossl_event_st *ossl_event_new(uint32_t type, void *ctx, OSSL_TIME when,
                                      const void *identifiers,
                                      void *payload, size_t payload_size,
                                      ossl_event_destructor_fn *destructor);
@@ -250,7 +258,7 @@ void ossl_event_free(struct ossl_event_st *);
  * 1    Set
  */
 int ossl_event_set0(struct ossl_event_st *event,
-                    uint32_t type, void *ctx,
+                    uint32_t type, void *ctx, OSSL_TIME when,
                     const void *identifiers,
                     void *payload, size_t payload_size,
                     ossl_event_destructor_fn *destructor);

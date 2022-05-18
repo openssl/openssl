@@ -38,6 +38,8 @@ An event is a small short-lived structure carrying information:
 -   *[mandatory]* An event type, which is a simple numeric identity, the
     meaning of which is not known by the event functionality itself.
 -   *[mandatory]* A reference to an event context
+-   *[optional]* A time value, to indicate when the event is to be fired
+    off (i.e. when it's going to be passed to subscribers)
 -   *[optional]* A reference to auxilliary identifying information.
 -   *[optional]* A reference to a payload, which is data passed with the
     event (for example, a read event would carry along a buffer with data)
@@ -66,6 +68,16 @@ automatically destroyed when not needed any more.
 Events may also be embedded in another structure, as a static variable, or
 as an local variable in a function.  In that case, owndership remains with
 that structure or that variable.
+
+Events may have a time value.  This may be zero to indicate that it should
+be fired off as soon as possible, and will otherwise be compared to the
+current time to figure out if it should be fired off or should remain in the
+event queue for a bit longer.
+
+The time value allows for time delay events, where the subscriber that
+listens to them can simply generate a new time delay event, thereby ensuring
+that they happen at regular intervals without any extra help from outside
+calls.
 
 ### Event queue
 
