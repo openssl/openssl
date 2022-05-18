@@ -91,7 +91,8 @@ EOF
 # zlib-dynamic  Like "zlib", but the zlib library is expected to be a shared
 #               library and will be loaded in run-time by the OpenSSL library.
 # sctp          include SCTP support
-# quic          include QUIC support (currently experimental, in development)
+# enable-quic   include QUIC support (currently just for developers as the
+#               implementation is by no means complete and usable)
 # no-uplink     Don't build support for UPLINK interface.
 # enable-weak-ssl-ciphers
 #               Enable weak ciphers that are disabled by default.
