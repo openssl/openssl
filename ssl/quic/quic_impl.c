@@ -48,23 +48,29 @@ int ossl_quic_read(SSL *s, void *buf, size_t len, size_t *readbytes)
 
     s->rwstate = SSL_READING;
     ret = BIO_read_ex(rbio, buf, len, readbytes);
+    if (ret > 0 || !BIO_should_retry(rbio))
+        s->rwstate = SSL_NOTHING;
     return ret <= 0 ? -1 : ret;
 }
 
 int ossl_quic_peek(SSL *s, void *buf, size_t len, size_t *readbytes)
 {
-    return 1;
+    return -1;
 }
 
 int ossl_quic_write(SSL *s, const void *buf, size_t len, size_t *written)
 {
     BIO *wbio = SSL_get_wbio(s);
+    int ret;
 
     if (wbio == NULL)
         return 0;
 
     s->rwstate = SSL_WRITING;
-    return BIO_write_ex(wbio, buf, len, written);
+    ret = BIO_write_ex(wbio, buf, len, written);
+    if (ret > 0 || !BIO_should_retry(wbio))
+        s->rwstate = SSL_NOTHING;
+    return ret;
 }
 
 int ossl_quic_shutdown(SSL *s)
@@ -95,41 +101,8 @@ long ossl_quic_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 
     case SSL_CTRL_SET_TLSEXT_TICKET_KEYS:
     case SSL_CTRL_GET_TLSEXT_TICKET_KEYS:
-        {
-            unsigned char *keys = parg;
-            long tick_keylen = (sizeof(ctx->ext.tick_key_name) +
-                                sizeof(ctx->ext.secure->tick_hmac_key) +
-                                sizeof(ctx->ext.secure->tick_aes_key));
-            if (keys == NULL)
-                return tick_keylen;
-            if (larg != tick_keylen) {
-                ERR_raise(ERR_LIB_SSL, SSL_R_INVALID_TICKET_KEYS_LENGTH);
-                return 0;
-            }
-            if (cmd == SSL_CTRL_SET_TLSEXT_TICKET_KEYS) {
-                memcpy(ctx->ext.tick_key_name, keys,
-                       sizeof(ctx->ext.tick_key_name));
-                memcpy(ctx->ext.secure->tick_hmac_key,
-                       keys + sizeof(ctx->ext.tick_key_name),
-                       sizeof(ctx->ext.secure->tick_hmac_key));
-                memcpy(ctx->ext.secure->tick_aes_key,
-                       keys + sizeof(ctx->ext.tick_key_name) +
-                       sizeof(ctx->ext.secure->tick_hmac_key),
-                       sizeof(ctx->ext.secure->tick_aes_key));
-            } else {
-                memcpy(keys, ctx->ext.tick_key_name,
-                       sizeof(ctx->ext.tick_key_name));
-                memcpy(keys + sizeof(ctx->ext.tick_key_name),
-                       ctx->ext.secure->tick_hmac_key,
-                       sizeof(ctx->ext.secure->tick_hmac_key));
-                memcpy(keys + sizeof(ctx->ext.tick_key_name) +
-                       sizeof(ctx->ext.secure->tick_hmac_key),
-                       ctx->ext.secure->tick_aes_key,
-                       sizeof(ctx->ext.secure->tick_aes_key));
-            }
-            return 1;
-        }
-
+        /* TODO(QUIC): these will have to be implemented properly */
+        return 1;
     }
     return 0;
 }
@@ -161,6 +134,12 @@ int ossl_quic_num_ciphers(void)
 
 const SSL_CIPHER *ossl_quic_get_cipher(unsigned int u)
 {
+    /*
+     * TODO(QUIC): This is needed so the SSL_CTX_set_cipher_list("DEFAULT");
+     * produces at least one valid TLS-1.2 cipher.
+     * Later we should allow that there are none with QUIC protocol as
+     * SSL_CTX_set_cipher_list should still allow setting a SECLEVEL.
+     */
     static const SSL_CIPHER ciph = {
         1,
         TLS1_TXT_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
