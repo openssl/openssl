@@ -383,7 +383,12 @@ int ossl_init_casecmp_int(void)
 # else
     loc = newlocale(LC_COLLATE_MASK, "C", (locale_t) 0);
 # endif
-    return (loc == (locale_t)0) ? 0 : 1;
+    /*
+     * Ignore an eventual locale creation failure on purpose.
+     * It can fail on Windows 7 for example.
+     * We depend on the fallback to strcasecmp in that case.
+     */
+    return 1;
 }
 
 void ossl_deinit_casecmp(void)
