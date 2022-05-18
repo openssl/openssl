@@ -21,6 +21,7 @@
 #include "evp_local.h"
 
 #define MACCIPHER_SHA384_KEY_SIZE 64
+#define MACCIPHER_SHA384_IV_LEN 16
 #define MACCIPHER_SHA384_CTX_DATA_SIZE 608
 
 #define data(ctx) ((EVP_MACCIPHER_SHA384_KEY*) EVP_CIPHER_CTX_get_cipher_data(ctx))
@@ -45,7 +46,7 @@ static const EVP_CIPHER cipher = {
 #else
     NID_undef,
 #endif
-    MACCIPHER_SHA384_KEY_SIZE, MACCIPHER_SHA384_KEY_SIZE, 16, 0,
+    MACCIPHER_SHA384_KEY_SIZE, MACCIPHER_SHA384_KEY_SIZE, MACCIPHER_SHA384_IV_LEN, 0,
     EVP_ORIG_GLOBAL,
     maccipher_sha384_init_key,
     maccipher_sha384_cipher,
@@ -158,7 +159,7 @@ static int maccipher_sha384_cipher_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, 
         }
 
         case EVP_CTRL_GET_IVLEN:
-            *(int *)ptr = 16;
+            *(int *)ptr = MACCIPHER_SHA384_IV_LEN;
             return 1;
 
         case EVP_CTRL_AEAD_SET_IVLEN:
