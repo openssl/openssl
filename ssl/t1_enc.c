@@ -156,9 +156,7 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
     unsigned char *key, *iv;
     EVP_CIPHER_CTX *dd;
     const EVP_CIPHER *c;
-#ifndef OPENSSL_NO_COMP
-    const SSL_COMP *comp;
-#endif
+    const SSL_COMP *comp = NULL;
     const EVP_MD *m;
     int mac_type;
     size_t mac_secret_size;

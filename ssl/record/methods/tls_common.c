@@ -91,17 +91,19 @@ char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx)
     }
 }
 
+#ifndef OPENSSL_NO_COMP
 static int rlayer_allow_compression(OSSL_RECORD_LAYER *rl)
 {
     if (rl->options & SSL_OP_NO_COMPRESSION)
         return 0;
-#if 0
+# if 0
     /* TODO(RECLAYER): Implement ssl_security inside the record layer */
     return ssl_security(s, SSL_SECOP_COMPRESSION, 0, 0, NULL);
-#else
+# else
     return 1;
-#endif
+# endif
 }
+#endif
 
 static int rlayer_setup_read_buffer(OSSL_RECORD_LAYER *rl)
 {
@@ -1198,7 +1200,9 @@ static void tls_int_free(OSSL_RECORD_LAYER *rl)
 
     EVP_CIPHER_CTX_free(rl->enc_read_ctx);
     EVP_MD_CTX_free(rl->read_hash);
+#ifndef OPENSSL_NO_COMP
     COMP_CTX_free(rl->expand);
+#endif
 
     OPENSSL_free(rl);
 }

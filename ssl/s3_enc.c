@@ -94,9 +94,7 @@ int ssl3_change_cipher_state(SSL_CONNECTION *s, int which)
     unsigned char *key, *iv;
     EVP_CIPHER_CTX *dd;
     const EVP_CIPHER *ciph;
-#ifndef OPENSSL_NO_COMP
-    const SSL_COMP *comp;
-#endif
+    const SSL_COMP *comp = NULL;
     const EVP_MD *md;
     int mdi;
     size_t n, iv_len, key_len;
