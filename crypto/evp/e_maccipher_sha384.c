@@ -29,7 +29,7 @@
 typedef struct {
     unsigned char ks[MACCIPHER_SHA384_KEY_SIZE];
     unsigned char iv[EVP_MAX_IV_LENGTH];
-    SHA256_CTX head, tail, md;
+    SHA512_CTX head, tail, md;
 } EVP_MACCIPHER_SHA384_KEY;
 
 
@@ -89,7 +89,6 @@ static int maccipher_sha384_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             if (in != out)
                 memcpy(out, in, inl);
 
-            int k = inl - SHA384_DIGEST_LENGTH;
             key->md = key->tail;
             SHA384_Update(&key->md, in, inl - SHA384_DIGEST_LENGTH);
             SHA384_Final(out + inl - SHA384_DIGEST_LENGTH, &key->md);
@@ -103,7 +102,6 @@ static int maccipher_sha384_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             if (in != out)
                 memcpy(out, in, inl);
 
-            int k = inl - SHA384_DIGEST_LENGTH;
             key->md = key->tail;
             SHA384_Update(&key->md, in, inl - SHA384_DIGEST_LENGTH);
             SHA384_Final(out + inl - SHA384_DIGEST_LENGTH, &key->md);

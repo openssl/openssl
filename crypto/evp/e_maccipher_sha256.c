@@ -90,7 +90,6 @@ static int maccipher_sha256_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             if (in != out )
                 memcpy(out, in, inl);
 
-            int k = inl - SHA256_DIGEST_LENGTH;
             key->md = key->tail;
             SHA256_Update(&key->md, in, inl - SHA256_DIGEST_LENGTH);
             SHA256_Final(out + inl - SHA256_DIGEST_LENGTH, &key->md);
@@ -104,7 +103,6 @@ static int maccipher_sha256_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             if (in != out)
                 memcpy(out, in, inl);
 
-            int k = inl - SHA256_DIGEST_LENGTH;
             key->md = key->tail;
             SHA256_Update(&key->md, in, inl - SHA256_DIGEST_LENGTH);
             SHA256_Final(out + inl - SHA256_DIGEST_LENGTH, &key->md);
