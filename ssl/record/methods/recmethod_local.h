@@ -171,6 +171,9 @@ void ossl_rlayer_fatal(OSSL_RECORD_LAYER *rl, int al, int reason,
      ERR_set_debug(OPENSSL_FILE, OPENSSL_LINE, OPENSSL_FUNC),      \
      ossl_rlayer_fatal)
 
+# define RLAYER_USE_EXPLICIT_IV(rl) ((rl)->version == TLS1_1_VERSION \
+                                     || (rl)->version == TLS1_2_VERSION)
+
 int ossl_set_tls_provider_parameters(OSSL_RECORD_LAYER *rl,
                                      EVP_CIPHER_CTX *ctx,
                                      const EVP_CIPHER *ciph,
