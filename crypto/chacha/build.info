@@ -2,7 +2,7 @@ LIBS=../../libcrypto
 
 $CHACHAASM=chacha_enc.c
 IF[{- !$disabled{asm} -}]
-  $CHACHAASM_x86=chacha-x86.s
+  $CHACHAASM_x86=chacha-x86.S
   $CHACHAASM_x86_64=chacha-x86_64.s
 
   $CHACHAASM_ia64=chacha-ia64.s
@@ -26,7 +26,7 @@ ENDIF
 
 SOURCE[../../libcrypto]=$CHACHAASM
 
-GENERATE[chacha-x86.s]=asm/chacha-x86.pl
+GENERATE[chacha-x86.S]=asm/chacha-x86.pl
 GENERATE[chacha-x86_64.s]=asm/chacha-x86_64.pl
 GENERATE[chacha-ppc.s]=asm/chacha-ppc.pl
 GENERATE[chachap10-ppc.s]=asm/chachap10-ppc.pl
