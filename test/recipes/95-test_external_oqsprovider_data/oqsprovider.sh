@@ -61,10 +61,6 @@ if [ ! -d $SRCTOP/oqs-provider/oqs ]; then
    )
 fi
 
-if [ ! -f $SRCTOP/oqs-provider/test/ssltestlib.c ]; then
-   ( cd $SRCTOP/oqs-provider && OPENSSL_BLDTOP=$BLDTOP ./scripts/preptests.sh )
-fi
-
 echo "   CWD:                $PWD"
 cmake $SRCTOP/oqs-provider -DCMAKE_INCLUDE_PATH=$SRCTOP/oqs-provider/oqs -DCMAKE_PREFIX_PATH=$SRCTOP/oqs-provider/oqs -DOPENSSL_ROOT_DIR="$OPENSSL_ROOT_DIR" -DOPENSSL_BLDTOP=$BLDTOP -B _build && cmake --build _build
 export CTEST_OUTPUT_ON_FAILURE=1
