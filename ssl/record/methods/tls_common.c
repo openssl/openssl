@@ -608,7 +608,7 @@ static int tls_get_more_records(OSSL_RECORD_LAYER *rl,
         rl->is_first_record = 0;
     } while (num_recs < max_recs
              && thisrr->type == SSL3_RT_APPLICATION_DATA
-             && SSL_USE_EXPLICIT_IV(s)
+             && RLAYER_USE_EXPLICIT_IV(rl)
              && rl->enc_read_ctx != NULL
              && (EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(rl->enc_read_ctx))
                  & EVP_CIPH_FLAG_PIPELINE) != 0

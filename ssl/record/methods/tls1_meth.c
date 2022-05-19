@@ -198,7 +198,7 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
 
         enc = EVP_CIPHER_CTX_get0_cipher(s->enc_write_ctx);
         /* For TLSv1.1 and later explicit IV */
-        if (SSL_USE_EXPLICIT_IV(s)
+        if (RLAYER_USE_EXPLICIT_IV(s)
             && EVP_CIPHER_get_mode(enc) == EVP_CIPH_CBC_MODE)
             ivlen = EVP_CIPHER_get_iv_length(enc);
         else
@@ -399,7 +399,7 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
             } else if (EVP_CIPHER_get_mode(enc) == EVP_CIPH_CCM_MODE) {
                     recs[0].data += EVP_CCM_TLS_EXPLICIT_IV_LEN;
                     recs[0].input += EVP_CCM_TLS_EXPLICIT_IV_LEN;
-            } else if (bs != 1 && SSL_USE_EXPLICIT_IV(s)) {
+            } else if (bs != 1 && RLAYER_USE_EXPLICIT_IV(rl)) {
                 recs[0].data += bs;
                 recs[0].input += bs;
                 recs[0].orig_len -= bs;
@@ -449,7 +449,7 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
                     recs[ctr].data += EVP_CCM_TLS_EXPLICIT_IV_LEN;
                     recs[ctr].input += EVP_CCM_TLS_EXPLICIT_IV_LEN;
                     recs[ctr].length -= EVP_CCM_TLS_EXPLICIT_IV_LEN;
-                } else if (bs != 1 && SSL_USE_EXPLICIT_IV(s)) {
+                } else if (bs != 1 && RLAYER_USE_EXPLICIT_IV(rl)) {
                     if (recs[ctr].length < bs)
                         return 0;
                     recs[ctr].data += bs;
