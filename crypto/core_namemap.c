@@ -166,6 +166,7 @@ int ossl_namemap_doall_names(const OSSL_NAMEMAP *namemap, int number,
     return 1;
 }
 
+/* This function is not thread safe, the namemap must be locked */
 static int namemap_name2num(const OSSL_NAMEMAP *namemap,
                             const char *name)
 {
@@ -239,25 +240,22 @@ const char *ossl_namemap_num2name(const OSSL_NAMEMAP *namemap, int number,
     return data.name;
 }
 
-static int namemap_add_name_n(OSSL_NAMEMAP *namemap, int number,
-                              const char *name, size_t name_len)
+/* This function is not thread safe, the namemap must be locked */
+static int namemap_add_name(OSSL_NAMEMAP *namemap, int number,
+                            const char *name)
 {
     NAMENUM_ENTRY *namenum = NULL;
     int tmp_number;
-    char *tmp = OPENSSL_strndup(name, name_len);
-
-    if (tmp == NULL)
-        return 0;
 
     /* If it already exists, we don't add it */
-    if ((tmp_number = namemap_name2num(namemap, tmp)) != 0) {
-        OPENSSL_free(tmp);
+    if ((tmp_number = namemap_name2num(namemap, name)) != 0)
         return tmp_number;
-    }
 
     if ((namenum = OPENSSL_zalloc(sizeof(*namenum))) == NULL)
+        return 0;
+
+    if ((namenum->name = OPENSSL_strdup(name)) == NULL)
         goto err;
-    namenum->name = tmp;
 
     /* The tsan_counter use here is safe since we're under lock */
     namenum->number =
@@ -269,13 +267,12 @@ static int namemap_add_name_n(OSSL_NAMEMAP *namemap, int number,
     return namenum->number;
 
  err:
-    OPENSSL_free(tmp);
-    OPENSSL_free(namenum);
+    namenum_free(namenum);
     return 0;
 }
 
-int ossl_namemap_add_name_n(OSSL_NAMEMAP *namemap, int number,
-                            const char *name, size_t name_len)
+int ossl_namemap_add_name(OSSL_NAMEMAP *namemap, int number,
+                          const char *name)
 {
     int tmp_number;
 
@@ -284,29 +281,20 @@ int ossl_namemap_add_name_n(OSSL_NAMEMAP *namemap, int number,
         namemap = ossl_namemap_stored(NULL);
 #endif
 
-    if (name == NULL || name_len == 0 || namemap == NULL)
+    if (name == NULL || *name == 0 || namemap == NULL)
         return 0;
 
     if (!CRYPTO_THREAD_write_lock(namemap->lock))
         return 0;
-    tmp_number = namemap_add_name_n(namemap, number, name, name_len);
+    tmp_number = namemap_add_name(namemap, number, name);
     CRYPTO_THREAD_unlock(namemap->lock);
     return tmp_number;
-}
-
-int ossl_namemap_add_name(OSSL_NAMEMAP *namemap, int number, const char *name)
-{
-    if (name == NULL)
-        return 0;
-
-    return ossl_namemap_add_name_n(namemap, number, name, strlen(name));
 }
 
 int ossl_namemap_add_names(OSSL_NAMEMAP *namemap, int number,
                            const char *names, const char separator)
 {
-    const char *p, *q;
-    size_t l;
+    char *tmp, *p, *q, *endp;
 
     /* Check that we have a namemap */
     if (!ossl_assert(namemap != NULL)) {
@@ -314,71 +302,71 @@ int ossl_namemap_add_names(OSSL_NAMEMAP *namemap, int number,
         return 0;
     }
 
-    if (!CRYPTO_THREAD_write_lock(namemap->lock))
+    if ((tmp = OPENSSL_strdup(names)) == NULL)
         return 0;
+
+    if (!CRYPTO_THREAD_write_lock(namemap->lock)) {
+        OPENSSL_free(tmp);
+        return 0;
+    }
     /*
      * Check that no name is an empty string, and that all names have at
      * most one numeric identity together.
      */
-    for (p = names; *p != '\0'; p = (q == NULL ? p + l : q + 1)) {
+    for (p = tmp; *p != '\0'; p = q) {
         int this_number;
-        char *allocated;
-        const char *tmp;
+        size_t l;
 
         if ((q = strchr(p, separator)) == NULL) {
             l = strlen(p);       /* offset to \0 */
-            tmp = p;
-            allocated = NULL;
+            q = p + l;
         } else {
             l = q - p;           /* offset to the next separator */
-            tmp = allocated = OPENSSL_strndup(p, l);
-            if (tmp == NULL)
-                goto err;
+            *q++ = '\0';
         }
 
-        this_number = namemap_name2num(namemap, tmp);
-        OPENSSL_free(allocated);
-
-        if (*p == '\0' || *p == separator) {
+        if (*p == '\0') {
             ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_BAD_ALGORITHM_NAME);
-            goto err;
+            number = 0;
+            goto end;
         }
+
+        this_number = namemap_name2num(namemap, p);
+
         if (number == 0) {
             number = this_number;
         } else if (this_number != 0 && this_number != number) {
             ERR_raise_data(ERR_LIB_CRYPTO, CRYPTO_R_CONFLICTING_NAMES,
-                           "\"%.*s\" has an existing different identity %d (from \"%s\")",
-                           l, p, this_number, names);
-            goto err;
+                           "\"%s\" has an existing different identity %d (from \"%s\")",
+                           p, this_number, names);
+            number = 0;
+            goto end;
         }
     }
+    endp = p;
 
     /* Now that we have checked, register all names */
-    for (p = names; *p != '\0'; p = (q == NULL ? p + l : q + 1)) {
+    for (p = tmp; p < endp; p = q) {
         int this_number;
 
-        if ((q = strchr(p, separator)) == NULL)
-            l = strlen(p);       /* offset to \0 */
-        else
-            l = q - p;           /* offset to the next separator */
+        q = p + strlen(p) + 1;
 
-        this_number = namemap_add_name_n(namemap, number, p, l);
+        this_number = namemap_add_name(namemap, number, p);
         if (number == 0) {
             number = this_number;
         } else if (this_number != number) {
             ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR,
                            "Got number %d when expecting %d",
                            this_number, number);
-            goto err;
+            number = 0;
+            goto end;
         }
     }
 
+ end:
     CRYPTO_THREAD_unlock(namemap->lock);
+    OPENSSL_free(tmp);
     return number;
-
- err:
-    CRYPTO_THREAD_unlock(namemap->lock);
-    return 0;
 }
 
 /*-
