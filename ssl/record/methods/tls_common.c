@@ -616,7 +616,8 @@ static int tls_get_more_records(OSSL_RECORD_LAYER *rl,
 
     if (num_recs == 1
             && thisrr->type == SSL3_RT_CHANGE_CIPHER_SPEC
-            && (SSL_CONNECTION_IS_TLS13(s) || s->hello_retry_request != SSL_HRR_NONE)
+               /* The following can happen in tlsany_meth after HRR */
+            && rl->version == TLS1_3_VERSION
             && rl->is_first_handshake) {
         /*
          * CCS messages must be exactly 1 byte long, containing the value 0x01
