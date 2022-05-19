@@ -491,7 +491,6 @@ static void fips_teardown(void *provctx)
 {
     OSSL_LIB_CTX_free(PROV_LIBCTX_OF(provctx));
     ossl_prov_ctx_free(provctx);
-    ossl_deinit_casecmp();
 }
 
 static void fips_intern_teardown(void *provctx)
@@ -549,8 +548,6 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
 
     memset(&selftest_params, 0, sizeof(selftest_params));
 
-    if (!ossl_init_casecmp_int())
-        return 0;
     if (!ossl_prov_seeding_from_dispatch(in))
         goto err;
     for (; in->function_id != 0; in++) {

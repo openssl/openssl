@@ -10,13 +10,8 @@
 #include "e_os.h"
 #include <string.h>
 #include <limits.h>
-#ifndef OPENSSL_NO_LOCALE
-# include <locale.h>
-# ifdef OPENSSL_SYS_MACOSX
-#  include <xlocale.h>
-# endif
-#endif
 #include <openssl/crypto.h>
+#include "crypto/ctype.h"
 #include "internal/cryptlib.h"
 #include "internal/thread_once.h"
 
@@ -347,94 +342,25 @@ int openssl_strerror_r(int errnum, char *buf, size_t buflen)
 #endif
 }
 
-#ifndef OPENSSL_NO_LOCALE
-# ifndef FIPS_MODULE
-static CRYPTO_ONCE casecmp = CRYPTO_ONCE_STATIC_INIT;
-DEFINE_RUN_ONCE_STATIC(init_casecmp)
-{
-    int ret = ossl_init_casecmp_int();
-
-    return ret;
-}
-
-int ossl_init_casecmp(void)
-{
-    if (!RUN_ONCE(&casecmp, init_casecmp))
-        return 0;
-    return 1;
-}
-# endif
-
-static locale_t loc;
-
-static locale_t ossl_c_locale(void)
-{
-# ifndef FIPS_MODULE
-    if (!ossl_init_casecmp())
-        return (locale_t)0;
-# endif
-    return loc;
-}
-
-int ossl_init_casecmp_int(void)
-{
-# ifdef OPENSSL_SYS_WINDOWS
-    loc = _create_locale(LC_COLLATE, "C");
-# else
-    loc = newlocale(LC_COLLATE_MASK, "C", (locale_t) 0);
-# endif
-    return (loc == (locale_t)0) ? 0 : 1;
-}
-
-void ossl_deinit_casecmp(void)
-{
-    if (loc != (locale_t)0) {
-        freelocale(loc);
-        loc = (locale_t)0;
-    }
-}
-
 int OPENSSL_strcasecmp(const char *s1, const char *s2)
 {
-    locale_t l = ossl_c_locale();
+    int t;
 
-    /* Fallback in case of locale initialization failure */
-    if (l == (locale_t)0)
-        return strcasecmp(s1, s2);
-    return strcasecmp_l(s1, s2, l);
+    while ((t = ossl_tolower(*s1) - ossl_tolower(*s2++)) == 0)
+        if (*s1++ == '\0')
+            return 0;
+    return t;
 }
 
 int OPENSSL_strncasecmp(const char *s1, const char *s2, size_t n)
 {
-    locale_t l = ossl_c_locale();
+    int t;
+    size_t i;
 
-    /* Fallback in case of locale initialization failure */
-    if (l == (locale_t)0)
-        return strncasecmp(s1, s2, n);
-    return strncasecmp_l(s1, s2, n, l);
+    for (i = 0; i < n; i++)
+        if ((t = ossl_tolower(*s1) - ossl_tolower(*s2++)) != 0)
+            return t;
+        else if (*s1++ == '\0')
+            return 0;
+    return 0;
 }
-#else
-int ossl_init_casecmp(void)
-{
-    return 1;
-}
-
-int ossl_init_casecmp_int(void)
-{
-    return 1;
-}
-
-void ossl_deinit_casecmp(void)
-{
-}
-
-int OPENSSL_strcasecmp(const char *s1, const char *s2)
-{
-    return strcasecmp(s1, s2);
-}
-
-int OPENSSL_strncasecmp(const char *s1, const char *s2, size_t n)
-{
-    return strncasecmp(s1, s2, n);
-}
-#endif
