@@ -38,8 +38,6 @@ An event is a small short-lived structure carrying information:
 -   *[mandatory]* An event type, which is a simple numeric identity, the
     meaning of which is not known by the event functionality itself.
 -   *[mandatory]* A reference to an event context
--   *[optional]* A time value, to indicate when the event is to be fired
-    off (i.e. when it's going to be passed to subscribers)
 -   *[optional]* A reference to auxilliary identifying information.
 -   *[optional]* A reference to a payload, which is data passed with the
     event (for example, a read event would carry along a buffer with data)
@@ -69,16 +67,6 @@ Events may also be embedded in another structure, as a static variable, or
 as an local variable in a function.  In that case, owndership remains with
 that structure or that variable.
 
-Events may have a time value.  This may be zero to indicate that it should
-be fired off as soon as possible, and will otherwise be compared to the
-current time to figure out if it should be fired off or should remain in the
-event queue for a bit longer.
-
-The time value allows for time delay events, where the subscriber that
-listens to them can simply generate a new time delay event, thereby ensuring
-that they happen at regular intervals without any extra help from outside
-calls.
-
 ### Event queue
 
 An event queue is a structure holding the following:
@@ -87,12 +75,27 @@ An event queue is a structure holding the following:
 -   A reference to auxilliary data for the methods.
 -   An array of subscribers, which are simple callbacks taking a reference
     to an event structure, along with auxilliary arguments.
--   Stacks of events.  The number of such arrays depends on how many
-    priority levels are implemented by the functions of the method
-    structure.
-    If there are zero priority levels, there is no array of events at all,
-    and events "added" to such a queue structure are always dispatched
+-   Buckets of events, one bucket for each priority level.  The number of
+    buckets depends on how many priority levels are implemented by the
+    functions of the method structure.
+    If there are zero priority levels, there are no buckets at all, and
+    events "added" to such a queue structure are always dispatched
     immediately, if the function used to "add" the event supports that.
+
+For each event added to the queue, there is associated data:
+
+-   *[optional]* A time value, to indicate when the event is to be fired
+    off (i.e. when it's going to be passed to subscribers)
+
+    This may be zero to indicate that it should be fired off as soon as
+    possible, and will otherwise be compared to the current time to figure
+    out if it should be fired off or should remain in the event queue for a
+    bit longer.
+
+    The time value allows for time delay events, where the subscriber that
+    listens to them can simply generate a new time delay event, thereby
+    ensuring that they happen at regular intervals without any extra help
+    from outside calls.
 
 #### Associated structures and services
 
@@ -115,7 +118,7 @@ Let's assume that packet retransmit data is stored in a structure somewhere
 Two things can happen:
 
 1.  An ACK is received, triggering a READ event with ACK payload.
-2.  A timer event for retransmission is triggered.
+2.  A timer event for retransmission is fired.
 
 The action to perform for each case is:
 

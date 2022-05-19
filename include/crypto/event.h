@@ -64,14 +64,6 @@ struct ossl_event_st {
      * consecutively in memory.
      */
 
-    /*
-     * Time value.
-     *
-     * When non-zero, this denotes earliest time that this event should be
-     * fired off (passed to subscribers).
-     */
-    OSSL_TIME when;
-
     /* Identifying material */
     const void *identifiers;
     /* Data carried by the event */
@@ -118,15 +110,16 @@ typedef struct ossl_event_subscriber_closure_st {
 /*
  * Opaque definition, to allow an optimal internal implementation without
  * having to change anything else.
- * This structure is expected to have the semantics of an array of stacks
- * of events, and should only be affected by event addition, event removal
- * and event dispatching, all of is internal code in crypto/event/event.c.
  *
- * Each element in this implied array represent a priority level, and each
- * stack (element in this array) simply stores the events for its priority
- * level in a FIFO manner; events get pushed in and shifted out.
+ * This structure is semantically an array of event lists, one list for each
+ * priority level it will be used for.  It should only be affected by event
+ * addition, event removal and event dispatching.
+ *
+ * The exact implementation isn't specified here.  It might be done as an
+ * array of doubly linked lists, but it might as well be a single array
+ * sorted by priority level and event firing timestamp.
  */
-struct ossl_events_stacks_st;
+struct ossl_events_buckets_st;
 
 struct ossl_event_queue_method_st;
 struct ossl_event_queue_st {
@@ -143,16 +136,10 @@ struct ossl_event_queue_st {
     /*
      * Buckets of events
      *
-     * The |ossl_events_buckets_st| is semantically an array of event queues,
-     * on queue for each priority level this |ossl_event_queue_st| will be
-     * used for.
-     * The exact implementation isn't specified here.  It might be done as
-     * an array of doubly linked lists, but it might as well be a single
-     * array sorted by priority level and event insertion timestamp.
-     *
      * It's possible to have no buckets at all, i.e. for this field to be
      * NULL.  In that case, the event publishing function will dispatch
-     * events to the subscribers immediately.
+     * events to the subscribers immediately.  In that case, the time delay
+     * isn't relevant (it's an error to try setting it).
      */
     struct ossl_events_buckets_st *events_buckets;
 
@@ -243,7 +230,7 @@ struct ossl_event_queue_method_st {
  */
 
 /* Allocate / deallocate an event structure dynamically and populate it */
-struct ossl_event_st *ossl_event_new(uint32_t type, void *ctx, OSSL_TIME when,
+struct ossl_event_st *ossl_event_new(uint32_t type, void *ctx,
                                      const void *identifiers,
                                      void *payload, size_t payload_size,
                                      ossl_event_destructor_fn *destructor);
@@ -258,7 +245,7 @@ void ossl_event_free(struct ossl_event_st *);
  * 1    Set
  */
 int ossl_event_set0(struct ossl_event_st *event,
-                    uint32_t type, void *ctx, OSSL_TIME when,
+                    uint32_t type, void *ctx,
                     const void *identifiers,
                     void *payload, size_t payload_size,
                     ossl_event_destructor_fn *destructor);
@@ -307,7 +294,8 @@ int ossl_event_queue_unsubscribe(struct ossl_event_queue_st *queue,
  */
 
 /*
- * Add an event to the queue
+ * Add an event to the queue, to be fired at a given time (immediately
+ * if |when| is zero).
  *
  * Returns one of these values:
  *
@@ -318,7 +306,7 @@ int ossl_event_queue_unsubscribe(struct ossl_event_queue_st *queue,
  * If 0 is returned, an option is to use ossl_event_queue_add_and_wait_for().
  */
 int ossl_event_queue_add(struct ossl_event_queue_st *queue,
-                         struct ossl_event_st *event);
+                         struct ossl_event_st *event, OSSL_TIME when);
 
 /*
  * Remove events from the queue, based on the result of calling the filter
@@ -370,8 +358,9 @@ int ossl_event_queue_wait_for(struct ossl_event_queue_st *queue,
  *  0   |subscriber| was never run, or returned |ossl_event_pass|
  *  1   |subscriber| was run, and returned something other than |ossl_event_pass|
  */
-int ossl_event_queue_add_and_wait_for(struct ossl_event_st *event,
-                                      struct ossl_event_queue_st *queue,
+int ossl_event_queue_add_and_wait_for(struct ossl_event_queue_st *queue,
+                                      struct ossl_event_st *event,
+                                      OSSL_TIME when,
                                       uint64_t event_types,
                                       ossl_event_callback_fn *subscriber,
                                       void *subscriber_data);
