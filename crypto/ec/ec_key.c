@@ -947,8 +947,7 @@ int ossl_ec_key_simple_oct2priv(EC_KEY *eckey, const unsigned char *buf,
         ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    eckey->priv_key = BN_bin2bn(buf, len, eckey->priv_key);
-    if (eckey->priv_key == NULL) {
+    if (BN_bin2bn(buf, len, eckey->priv_key) == NULL) {
         ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         return 0;
     }
