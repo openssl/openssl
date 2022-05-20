@@ -138,7 +138,8 @@ static const struct trace_category_st trace_categories[] = {
     TRACE_CATEGORY_(STORE),
     TRACE_CATEGORY_(DECODER),
     TRACE_CATEGORY_(ENCODER),
-    TRACE_CATEGORY_(REF_COUNT)
+    TRACE_CATEGORY_(REF_COUNT),
+    TRACE_CATEGORY_(ERR)
 };
 
 const char *OSSL_trace_get_category_name(int num)

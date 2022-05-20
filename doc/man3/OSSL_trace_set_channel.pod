@@ -179,6 +179,11 @@ Traces BIGNUM context operations.
 
 Traces details about the provider and engine configuration.
 
+=item B<OSSL_TRACE_CATEGORY_ERR>
+
+Trace every error record that is added, even those that are cleared
+from the error queue later on.
+
 =back
 
 There is also B<OSSL_TRACE_CATEGORY_ALL>, which works as a fallback

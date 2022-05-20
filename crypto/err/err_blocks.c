@@ -11,6 +11,7 @@
 
 #include <string.h>
 #include <openssl/err.h>
+#include <openssl/trace.h>
 #include "err_local.h"
 
 void ERR_new(void)
@@ -114,4 +115,21 @@ void ERR_vset_error(int lib, int reason, const char *fmt, va_list args)
     err_set_error(es, es->top, lib, reason);
     if (fmt != NULL)
         err_set_data(es, es->top, buf, buf_size, flags);
+
+    OSSL_TRACE_BEGIN(ERR) {
+        CRYPTO_THREAD_ID tid = CRYPTO_THREAD_get_current_id();
+        unsigned long l;
+        const char *efile, *edata, *efunc;
+        int eline, eflags;
+        char ebuf[ERR_PRINT_BUF_SIZE] = "";
+        char ehex[sizeof(tid) * 2 + 1];
+        size_t ehexl = 0;
+
+        OPENSSL_buf2hexstr_ex(ehex, sizeof(ehex), &ehexl,
+                              (const unsigned char *)&tid, sizeof(tid), '\0');
+        l = ERR_peek_last_error_all(&efile, &eline, &efunc, &edata, &eflags);
+        BIO_printf(trc_out, "Error generated : %s:", ehex);
+        ossl_err_string_int(l, efunc, ebuf, sizeof(ebuf));
+        BIO_printf(trc_out, "%s:%s:%d:%s\n", ebuf, efile, eline, edata);
+    } OSSL_TRACE_END(ERR);
 }

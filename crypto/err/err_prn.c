@@ -16,7 +16,6 @@
 #include <openssl/err.h>
 #include "err_local.h"
 
-#define ERR_PRINT_BUF_SIZE 4096
 void ERR_print_errors_cb(int (*cb) (const char *str, size_t len, void *u),
                          void *u)
 {
