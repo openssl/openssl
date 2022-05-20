@@ -523,6 +523,8 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_UNKNOWN_DIGEST), "unknown digest"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_UNKNOWN_KEY_EXCHANGE_TYPE),
     "unknown key exchange type"},
+    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_UNKNOWN_MANDATORY_PARAMETER),
+    "unknown mandatory parameter"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_UNKNOWN_PKEY_TYPE), "unknown pkey type"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_UNKNOWN_PROTOCOL), "unknown protocol"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_UNKNOWN_SSL_VERSION),

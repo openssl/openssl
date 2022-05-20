@@ -743,7 +743,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
         goto skip_ktls;
 
     /* check that cipher is supported */
-    if (!ktls_check_supported_cipher(s, cipher, taglen))
+    if (!ktls_check_supported_cipher(s, cipher, NULL, taglen))
         goto skip_ktls;
 
     if (which & SSL3_CC_WRITE)

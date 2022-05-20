@@ -139,6 +139,9 @@ struct ossl_record_layer_st
     /* Only used by SSLv3 */
     unsigned char mac_secret[EVP_MAX_MD_SIZE];
 
+    /* TLSv1.0/TLSv1.1/TLSv1.2 */
+    int use_etm;
+
     /* TLSv1.3 fields */
     /* static IV */
     unsigned char iv[EVP_MAX_IV_LENGTH];
@@ -177,8 +180,7 @@ void ossl_rlayer_fatal(OSSL_RECORD_LAYER *rl, int al, int reason,
 int ossl_set_tls_provider_parameters(OSSL_RECORD_LAYER *rl,
                                      EVP_CIPHER_CTX *ctx,
                                      const EVP_CIPHER *ciph,
-                                     const EVP_MD *md,
-                                     SSL_CONNECTION *s);
+                                     const EVP_MD *md);
 /* ssl3_cbc.c */
 __owur char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx);
 __owur int ssl3_cbc_digest_record(const EVP_MD *md,

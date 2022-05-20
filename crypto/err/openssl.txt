@@ -1529,6 +1529,7 @@ SSL_R_UNKNOWN_CMD_NAME:386:unknown cmd name
 SSL_R_UNKNOWN_COMMAND:139:unknown command
 SSL_R_UNKNOWN_DIGEST:368:unknown digest
 SSL_R_UNKNOWN_KEY_EXCHANGE_TYPE:250:unknown key exchange type
+SSL_R_UNKNOWN_MANDATORY_PARAMETER:323:unknown mandatory parameter
 SSL_R_UNKNOWN_PKEY_TYPE:251:unknown pkey type
 SSL_R_UNKNOWN_PROTOCOL:252:unknown protocol
 SSL_R_UNKNOWN_SSL_VERSION:254:unknown ssl version

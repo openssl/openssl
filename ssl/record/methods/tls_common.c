@@ -36,8 +36,7 @@ void ossl_rlayer_fatal(OSSL_RECORD_LAYER *rl, int al, int reason,
 int ossl_set_tls_provider_parameters(OSSL_RECORD_LAYER *rl,
                                      EVP_CIPHER_CTX *ctx,
                                      const EVP_CIPHER *ciph,
-                                     const EVP_MD *md,
-                                     SSL_CONNECTION *s)
+                                     const EVP_MD *md)
 {
     /*
      * Provided cipher, the TLS padding/MAC removal is performed provider
@@ -48,12 +47,7 @@ int ossl_set_tls_provider_parameters(OSSL_RECORD_LAYER *rl,
     int imacsize = -1;
 
     if ((EVP_CIPHER_get_flags(ciph) & EVP_CIPH_FLAG_AEAD_CIPHER) == 0
-               /*
-                * We look at s->ext.use_etm instead of SSL_READ_ETM() or
-                * SSL_WRITE_ETM() because this test applies to both reading
-                * and writing.
-                */
-            && !s->ext.use_etm)
+            && !rl->use_etm)
         imacsize = EVP_MD_get_size(md);
     if (imacsize >= 0)
         macsize = (size_t)imacsize;
@@ -662,7 +656,7 @@ static int tls_get_more_records(OSSL_RECORD_LAYER *rl,
      * If in encrypt-then-mac mode calculate mac from encrypted record. All
      * the details below are public so no timing details can leak.
      */
-    if (SSL_READ_ETM(s) && rl->read_hash) {
+    if (rl->use_etm && rl->read_hash) {
         unsigned char *mac;
 
         for (j = 0; j < num_recs; j++) {
@@ -748,7 +742,7 @@ static int tls_get_more_records(OSSL_RECORD_LAYER *rl,
     /* r->length is now the compressed data plus mac */
     if ((sess != NULL)
             && (rl->enc_read_ctx != NULL)
-            && (!SSL_READ_ETM(s) && EVP_MD_CTX_get0_md(rl->read_hash) != NULL)) {
+            && (!rl->use_etm && EVP_MD_CTX_get0_md(rl->read_hash) != NULL)) {
         /* rl->read_hash != NULL => mac_size != -1 */
 
         for (j = 0; j < num_recs; j++) {
@@ -1048,6 +1042,21 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_FAILED_TO_GET_PARAMETER);
         goto err;
     }
+
+    /* Loop through all the settings since they must all be understood */
+    for (p = settings; p->key != NULL; p++) {
+        if (strcmp(p->key, OSSL_LIBSSL_RECORD_LAYER_PARAM_USE_ETM) == 0) {
+            if (!OSSL_PARAM_get_int(p, &rl->use_etm)) {
+                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_FAILED_TO_GET_PARAMETER);
+                goto err;
+            }
+            break;
+        } else {
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_UNKNOWN_MANDATORY_PARAMETER);
+            goto err;
+        }
+    }
+
 
     if (level == OSSL_RECORD_PROTECTION_LEVEL_APPLICATION) {
         /*

@@ -79,14 +79,13 @@ static int check_rx_read_ahead(SSL_CONNECTION *s, unsigned char *rec_seq)
 #if defined(__FreeBSD__)
 # include "crypto/cryptodev.h"
 
-/*-
- * Check if a given cipher is supported by the KTLS interface.
- * The kernel might still fail the setsockopt() if no suitable
- * provider is found, but this checks if the socket option
- * supports the cipher suite used at all.
+/*
+ * TODO(RECLAYER): This is essentially a copy of ktls_int_check_supported_cipher
+ * but using an SSL object instead of an OSSL_RECORD_LAYER object. Once
+ * everything has been moved to the reocrd layer this can be deleted
  */
 int ktls_check_supported_cipher(const SSL_CONNECTION *s, const EVP_CIPHER *c,
-                                size_t taglen)
+                                const EVP_MD *md, size_t taglen)
 {
 
     switch (s->version) {
@@ -99,29 +98,73 @@ int ktls_check_supported_cipher(const SSL_CONNECTION *s, const EVP_CIPHER *c,
         return 0;
     }
 
-    switch (s->s3.tmp.new_cipher->algorithm_enc) {
-    case SSL_AES128GCM:
-    case SSL_AES256GCM:
-        return 1;
+    if (EVP_CIPHER_is_a(c, "AES-128-GCM")
+        || EVP_CIPHER_is_a(c, "AES-256-GCM")
 # ifdef OPENSSL_KTLS_CHACHA20_POLY1305
-    case SSL_CHACHA20POLY1305:
-        return 1;
+        || EVP_CIPHER_is_a(c, "CHACHA20-POLY1305")
 # endif
-    case SSL_AES128:
-    case SSL_AES256:
-        if (s->ext.use_etm)
-            return 0;
-        switch (s->s3.tmp.new_cipher->algorithm_mac) {
-        case SSL_SHA1:
-        case SSL_SHA256:
-        case SSL_SHA384:
-            return 1;
-        default:
-            return 0;
-        }
+       )
+       return 1;
+
+    if (!EVP_CIPHER_is_a(c, "AES-128-CBC")
+            && !EVP_CIPHER_is_a(c, "AES-256-CBC"))
+        return 0;
+
+    if (s->ext.use_etm)
+        return 0;
+
+    if (md == NULL
+            || EVP_MD_is_a(md, "SHA1")
+            || EVP_MD_is_a(md, "SHA2-256")
+            || EVP_MD_is_a(md, "SHA2-384"))
+        return 1;
+
+    return 0;
+}
+
+/*-
+ * Check if a given cipher is supported by the KTLS interface.
+ * The kernel might still fail the setsockopt() if no suitable
+ * provider is found, but this checks if the socket option
+ * supports the cipher suite used at all.
+ */
+static int ktls_int_check_supported_cipher(OSSL_RECORD_LAYER *rl,
+                                           const EVP_CIPHER *c,
+                                           const EVP_MD *md,
+                                           size_t taglen)
+{
+    switch (rl->version) {
+    case TLS1_VERSION:
+    case TLS1_1_VERSION:
+    case TLS1_2_VERSION:
+    case TLS1_3_VERSION:
+        break;
     default:
         return 0;
     }
+
+    if (EVP_CIPHER_is_a(c, "AES-128-GCM")
+        || EVP_CIPHER_is_a(c, "AES-256-GCM")
+# ifdef OPENSSL_KTLS_CHACHA20_POLY1305
+        || EVP_CIPHER_is_a(c, "CHACHA20-POLY1305")
+# endif
+       )
+       return 1;
+
+    if (!EVP_CIPHER_is_a(c, "AES-128-CBC")
+            && !EVP_CIPHER_is_a(c, "AES-256-CBC"))
+        return 0;
+
+    if (rl->use_etm)
+        return 0;
+
+    if (md == NULL
+            || EVP_MD_is_a(md, "SHA1")
+            || EVP_MD_is_a(md, "SHA2-256")
+            || EVP_MD_is_a(md, "SHA2-384"))
+        return 1;
+
+    return 0;
 }
 
 /* Function to configure kernel TLS structure */
@@ -187,9 +230,13 @@ int ktls_configure_crypto(SSL_CONNECTION *s, const EVP_CIPHER *c,
 
 #if defined(OPENSSL_SYS_LINUX)
 
-/* Function to check supported ciphers in Linux */
+/*
+ * TODO(RECLAYER): This is essentially a copy of ktls_int_check_supported_cipher
+ * but using an SSL object instead of an OSSL_RECORD_LAYER object. Once
+ * everything has been moved to the reocrd layer this can be deleted
+ */
 int ktls_check_supported_cipher(const SSL_CONNECTION *s, const EVP_CIPHER *c,
-                                size_t taglen)
+                                const EVP_MD *md, size_t taglen)
 {
     switch (s->version) {
     case TLS1_2_VERSION:
@@ -205,6 +252,47 @@ int ktls_check_supported_cipher(const SSL_CONNECTION *s, const EVP_CIPHER *c,
 # ifdef OPENSSL_KTLS_AES_CCM_128
     if (EVP_CIPHER_is_a(c, "AES-128-CCM")) {
         if (s->version == TLS_1_3_VERSION /* broken on 5.x kernels */
+            || taglen != EVP_CCM_TLS_TAG_LEN)
+            return 0;
+        return 1;
+    } else
+# endif
+    if (0
+# ifdef OPENSSL_KTLS_AES_GCM_128
+        || EVP_CIPHER_is_a(c, "AES-128-GCM")
+# endif
+# ifdef OPENSSL_KTLS_AES_GCM_256
+        || EVP_CIPHER_is_a(c, "AES-256-GCM")
+# endif
+# ifdef OPENSSL_KTLS_CHACHA20_POLY1305
+        || EVP_CIPHER_is_a(c, "ChaCha20-Poly1305")
+# endif
+        ) {
+        return 1;
+    }
+    return 0;
+}
+
+/* Function to check supported ciphers in Linux */
+static int ktls_int_check_supported_cipher(OSSL_RECORD_LAYER *rl,
+                                           const EVP_CIPHER *c,
+                                           const EVP_MD *md,
+                                           size_t taglen)
+{
+    switch (rl->version) {
+    case TLS1_2_VERSION:
+    case TLS1_3_VERSION:
+        break;
+    default:
+        return 0;
+    }
+
+    /* check that cipher is AES_GCM_128, AES_GCM_256, AES_CCM_128
+     * or Chacha20-Poly1305
+     */
+# ifdef OPENSSL_KTLS_AES_CCM_128
+    if (EVP_CIPHER_is_a(c, "AES-128-CCM")) {
+        if (rl->version == TLS_1_3_VERSION /* broken on 5.x kernels */
             || taglen != EVP_CCM_TLS_TAG_LEN)
             return 0;
         return 1;
@@ -378,7 +466,7 @@ static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
         return OSSL_RECORD_RETURN_NON_FATAL_ERR;
 
     /* check that cipher is supported */
-    if (!ktls_check_supported_cipher(s, ciph, taglen))
+    if (!ktls_int_check_supported_cipher(rl, ciph, md, taglen))
         return OSSL_RECORD_RETURN_NON_FATAL_ERR;
 
     /*

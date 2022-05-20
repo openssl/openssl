@@ -561,6 +561,7 @@ extern "C" {
 #define OSSL_LIBSSL_RECORD_LAYER_PARAM_OPTIONS    "options"
 #define OSSL_LIBSSL_RECORD_LAYER_PARAM_MODE       "mode"
 #define OSSL_LIBSSL_RECORD_LAYER_PARAM_READ_AHEAD "read_ahead"
+#define OSSL_LIBSSL_RECORD_LAYER_PARAM_USE_ETM    "use_etm"
 
 # ifdef __cplusplus
 }
