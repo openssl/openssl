@@ -703,8 +703,8 @@ static int tls_get_more_records(OSSL_RECORD_LAYER *rl,
      *    1: Success or MTE decryption failed (MAC will be randomised)
      */
     if (enc_err == 0) {
-        if (ossl_statem_in_error(s)) {
-            /* SSLfatal() already got called */
+        if (rl->alert != 0) {
+            /* RLAYERfatal() already got called */
             goto end;
         }
         if (num_recs == 1 && ossl_statem_skip_early_data(s)) {
@@ -759,8 +759,8 @@ static int tls_get_more_records(OSSL_RECORD_LAYER *rl,
     }
 
     if (enc_err == 0) {
-        if (ossl_statem_in_error(s)) {
-            /* We already called SSLfatal() */
+        if (rl->alert != 0) {
+            /* We already called RLAYERfatal() */
             goto end;
         }
         /*
