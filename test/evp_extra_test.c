@@ -3267,6 +3267,31 @@ err:
 }
 #endif
 
+#ifndef OPENSSL_NO_BF
+static int test_evp_bf_default_keylen(int idx)
+{
+    int ret = 0;
+    static const char *algos[4] = {
+        "bf-ecb", "bf-cbc", "bf-cfb", "bf-ofb"
+    };
+    int ivlen[4] = { 0, 8, 8, 8 };
+    EVP_CIPHER *cipher = NULL;
+
+    if (lgcyprov == NULL)
+        return TEST_skip("Test requires legacy provider to be loaded");
+
+    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(testctx, algos[idx], testpropq))
+            || !TEST_int_eq(EVP_CIPHER_get_key_length(cipher), 16)
+            || !TEST_int_eq(EVP_CIPHER_get_iv_length(cipher), ivlen[idx]))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_CIPHER_free(cipher);
+    return ret;
+}
+#endif
+
 #ifndef OPENSSL_NO_EC
 static int ecpub_nids[] = {
     NID_brainpoolP256r1, NID_X9_62_prime256v1,
@@ -4557,6 +4582,9 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_evp_iv_aes, 12);
 #ifndef OPENSSL_NO_DES
     ADD_ALL_TESTS(test_evp_iv_des, 6);
+#endif
+#ifndef OPENSSL_NO_BF
+    ADD_ALL_TESTS(test_evp_bf_default_keylen, 4);
 #endif
     ADD_TEST(test_EVP_rsa_pss_with_keygen_bits);
     ADD_TEST(test_EVP_rsa_pss_set_saltlen);
