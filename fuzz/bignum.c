@@ -45,6 +45,9 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     b4 = BN_new();
     b5 = BN_new();
     ctx = BN_CTX_new();
+    if (b1 == NULL || b2 == NULL || b3 == NULL
+        || b4 == NULL || b5 == NULL || ctx == NULL)
+        goto err;
 
     /* Divide the input into three parts, using the values of the first two
      * bytes to choose lengths, which generate b1, b2 and b3. Use three bits
@@ -62,10 +65,13 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         s3 = buf[0] & 4;
         ++buf;
     }
-    OPENSSL_assert(BN_bin2bn(buf, l1, b1) == b1);
+    if (BN_bin2bn(buf, l1, b1) != b1)
+        goto err;
     BN_set_negative(b1, s1);
-    OPENSSL_assert(BN_bin2bn(buf + l1, l2, b2) == b2);
-    OPENSSL_assert(BN_bin2bn(buf + l1 + l2, l3, b3) == b3);
+    if (BN_bin2bn(buf + l1, l2, b2) != b2)
+        goto err;
+    if (BN_bin2bn(buf + l1 + l2, l3, b3) != b3)
+        goto err;
     BN_set_negative(b3, s3);
 
     /* mod 0 is undefined */
@@ -74,8 +80,10 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         goto done;
     }
 
-    OPENSSL_assert(BN_mod_exp(b4, b1, b2, b3, ctx));
-    OPENSSL_assert(BN_mod_exp_simple(b5, b1, b2, b3, ctx));
+    if (!BN_mod_exp(b4, b1, b2, b3, ctx))
+        goto err;
+    if (!BN_mod_exp_simple(b5, b1, b2, b3, ctx))
+        goto err;
 
     success = BN_cmp(b4, b5) == 0;
     if (!success) {
@@ -93,6 +101,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 
  done:
     OPENSSL_assert(success);
+ err:
     BN_free(b1);
     BN_free(b2);
     BN_free(b3);
