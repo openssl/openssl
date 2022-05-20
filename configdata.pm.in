@@ -136,7 +136,7 @@ _____
         open BUILDFILE, ">$buildfile.new"
             or die "Trying to create $buildfile.new: $!";
         $tmpl = OpenSSL::Template->new(TYPE => 'FILE',
-                                          SOURCE => $buildfile_template);
+                                       SOURCE => $buildfile_template);
         $tmpl->fill_in(FILENAME => $_,
                        OUTPUT => \*BUILDFILE,
                        HASH => \%gendata,
@@ -155,8 +155,8 @@ _____
             catfile('include', 'openssl', 'configuration.h');
         my $configuration_h_in =
             catfile($config{sourcedir}, 'include', 'openssl', 'configuration.h.in');
-        open CONFIGURATION_H, ">$configuration_h.new"
-            or die "Trying to create $configuration_h.new: $!";
+        open CONFIGURATION_H, ">${configuration_h}.new"
+            or die "Trying to create ${configuration_h}.new: $!";
         $tmpl = OpenSSL::Template->new(TYPE => 'FILE',
                                        SOURCE => $configuration_h_in);
         $tmpl->fill_in(FILENAME => $_,
@@ -184,20 +184,20 @@ _____
             # or if configuration.h.new differs configuration.h, we update
             # configuration.h
             if ($configuration_h_mtime < $configuration_h_in_mtime
-                || compare_text("$configuration_h.new", $configuration_h) != 0) {
+                || compare_text("${configuration_h}.new", $configuration_h) != 0) {
                 $update_configuration_h = 1;
             } else {
                 # If nothing has changed, let's just drop the new one and
                 # pretend like nothing happened
-                unlink "$configuration_h.new"
+                unlink "${configuration_h}.new"
             }
         } else {
             $update_configuration_h = 1;
         }
 
         if ($update_configuration_h) {
-            rename("$configuration_h.new", $configuration_h)
-                or die "Trying to rename $configuration_h.new to $configuration_h: $!";
+            rename("${configuration_h}.new", $configuration_h)
+                or die "Trying to rename ${configuration_h}.new to $configuration_h: $!";
             print 'Created ',$configuration_h,"\n";
         }
 
