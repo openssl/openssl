@@ -45,12 +45,12 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     EVP_PKEY_CTX *ctx = NULL;
     BIO *bio;
 
-    bio = BIO_new(BIO_s_null());
     dctx = OSSL_DECODER_CTX_new_for_pkey(&pkey, NULL, NULL, NULL, 0, NULL,
                                                 NULL);
-    if (dctx == NULL) {
+    if (dctx == NULL)
         return 0;
-    }
+
+    bio = BIO_new(BIO_s_null());
     if (OSSL_DECODER_from_data(dctx, &buf, &len)) {
         EVP_PKEY *pkey2;
 
