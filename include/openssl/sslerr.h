@@ -320,6 +320,7 @@
 # define SSL_R_UNKNOWN_COMMAND                            139
 # define SSL_R_UNKNOWN_DIGEST                             368
 # define SSL_R_UNKNOWN_KEY_EXCHANGE_TYPE                  250
+# define SSL_R_UNKNOWN_MANDATORY_PARAMETER                323
 # define SSL_R_UNKNOWN_PKEY_TYPE                          251
 # define SSL_R_UNKNOWN_PROTOCOL                           252
 # define SSL_R_UNKNOWN_SSL_VERSION                        254

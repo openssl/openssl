@@ -61,7 +61,7 @@ static int ssl3_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     }
 
     if (EVP_CIPHER_get0_provider(ciph) != NULL
-            && !ossl_set_tls_provider_parameters(rl, ciph_ctx, ciph, md, s)) {
+            && !ossl_set_tls_provider_parameters(rl, ciph_ctx, ciph, md)) {
         return OSSL_RECORD_RETURN_FATAL;
     }
 

@@ -15,7 +15,6 @@
 #include <openssl/buffer.h>
 #include <openssl/rand.h>
 #include <openssl/core_names.h>
-#include <openssl/param_build.h>
 #include "record_local.h"
 #include "internal/packet.h"
 
@@ -1797,18 +1796,18 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
                              int mactype, const EVP_MD *md,
                              const SSL_COMP *comp)
 {
-    OSSL_PARAM_BLD *tmpl = NULL;
-    OSSL_PARAM *options = NULL;
+    OSSL_PARAM options[4], *opts = options;
+    OSSL_PARAM settings[2], *set =  settings;
     const OSSL_RECORD_METHOD *origmeth = s->rrlmethod;
-    int ret = 0;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     const OSSL_RECORD_METHOD *meth;
+    int use_etm;
 
     meth = ssl_select_next_record_layer(s, level);
 
     if (s->rrlmethod != NULL && !s->rrlmethod->free(s->rrl)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
-        goto err;
+        return 0;
     }
 
     if (meth != NULL)
@@ -1819,20 +1818,25 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
         return 0;
     }
 
-    if ((tmpl = OSSL_PARAM_BLD_new()) == NULL
-            || !OSSL_PARAM_BLD_push_uint64(tmpl,
-                                           OSSL_LIBSSL_RECORD_LAYER_PARAM_OPTIONS,
-                                           s->options)
-            || !OSSL_PARAM_BLD_push_uint32(tmpl,
-                                           OSSL_LIBSSL_RECORD_LAYER_PARAM_MODE,
-                                           s->mode)
-            || !OSSL_PARAM_BLD_push_int(tmpl,
-                                        OSSL_LIBSSL_RECORD_LAYER_PARAM_READ_AHEAD,
-                                        s->rlayer.read_ahead)
-            || (options = OSSL_PARAM_BLD_to_param(tmpl)) == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
+    /* Parameters that *may* be supported by a record layer if passed */
+    *opts++ = OSSL_PARAM_construct_uint64(OSSL_LIBSSL_RECORD_LAYER_PARAM_OPTIONS,
+                                          &s->options);
+    *opts++ = OSSL_PARAM_construct_uint32(OSSL_LIBSSL_RECORD_LAYER_PARAM_MODE,
+                                          &s->mode);
+    *opts++ = OSSL_PARAM_construct_int(OSSL_LIBSSL_RECORD_LAYER_PARAM_MODE,
+                                       &s->rlayer.read_ahead);
+    *opts = OSSL_PARAM_construct_end();
+
+    /* Parameters that *must* be supported by a record layer if passed */
+    if (direction == OSSL_RECORD_DIRECTION_READ)
+        use_etm = SSL_READ_ETM(s) ? 1 : 0;
+    else
+        use_etm = SSL_WRITE_ETM(s) ? 1 : 0;
+
+    if (use_etm)
+        *set++ = OSSL_PARAM_construct_int(OSSL_LIBSSL_RECORD_LAYER_PARAM_USE_ETM,
+                                          &use_etm);
+    *set = OSSL_PARAM_construct_end();
 
     for (;;) {
         int rlret;
@@ -1843,7 +1847,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
         if (s->rrlnext == NULL) {
             BIO_free(prev);
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
+            return 0;
         }
 
         rlret = s->rrlmethod->new_record_layer(sctx->libctx, sctx->propq,
@@ -1851,13 +1855,13 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
                                                level, key, keylen, iv, ivlen,
                                                mackey, mackeylen, ciph, taglen,
                                                mactype, md, comp, prev, s->rbio,
-                                               s->rrlnext, NULL, NULL, NULL,
+                                               s->rrlnext, NULL, NULL, settings,
                                                options, &s->rrl, s);
         BIO_free(prev);
         switch (rlret) {
         case OSSL_RECORD_RETURN_FATAL:
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_RECORD_LAYER_FAILURE);
-            goto err;
+            return 0;
 
         case OSSL_RECORD_RETURN_NON_FATAL_ERR:
             if (s->rrlmethod != origmeth && origmeth != NULL) {
@@ -1869,7 +1873,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
                 continue;
             }
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_NO_SUITABLE_RECORD_LAYER);
-            goto err;
+            return 0;
 
         case OSSL_RECORD_RETURN_SUCCESS:
             break;
@@ -1877,15 +1881,10 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
         default:
             /* Should not happen */
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
+            return 0;
         }
         break;
     }
 
-    ret = ssl_post_record_layer_select(s);
- err:
-    OSSL_PARAM_free(options);
-    OSSL_PARAM_BLD_free(tmpl);
-
-    return ret;
+    return ssl_post_record_layer_select(s);
 }

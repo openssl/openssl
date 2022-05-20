@@ -34,21 +34,6 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     if (level != OSSL_RECORD_PROTECTION_LEVEL_APPLICATION)
         return OSSL_RECORD_RETURN_FATAL;
 
-    if (s->ext.use_etm)
-        s->s3.flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC_READ;
-    else
-        s->s3.flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC_READ;
-
-    if (s->s3.tmp.new_cipher->algorithm2 & TLS1_STREAM_MAC)
-        s->mac_flags |= SSL_MAC_FLAG_READ_MAC_STREAM;
-    else
-        s->mac_flags &= ~SSL_MAC_FLAG_READ_MAC_STREAM;
-
-    if (s->s3.tmp.new_cipher->algorithm2 & TLS1_TLSTREE)
-        s->mac_flags |= SSL_MAC_FLAG_READ_MAC_TLSTREE;
-    else
-        s->mac_flags &= ~SSL_MAC_FLAG_READ_MAC_TLSTREE;
-
     if ((rl->enc_read_ctx = EVP_CIPHER_CTX_new()) == NULL) {
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
         return OSSL_RECORD_RETURN_FATAL;
@@ -143,7 +128,7 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
         return OSSL_RECORD_RETURN_FATAL;
     }
     if (EVP_CIPHER_get0_provider(ciph) != NULL
-            && !ossl_set_tls_provider_parameters(rl, ciph_ctx, ciph, md, s))
+            && !ossl_set_tls_provider_parameters(rl, ciph_ctx, ciph, md))
         return OSSL_RECORD_RETURN_FATAL;
 
     return OSSL_RECORD_RETURN_SUCCESS;
@@ -362,7 +347,7 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
             * So if we are in ETM mode, we use seq 'as is' in the ctrl-function.
             * Otherwise we have to decrease it in the implementation
             */
-        if (sending && !SSL_WRITE_ETM(s))
+        if (sending && !rl->use_etm)
             decrement_seq = 1;
 
         seq = sending ? RECORD_LAYER_get_write_sequence(&s->rlayer)
@@ -543,7 +528,7 @@ static int tls1_mac(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, unsigned char *md,
     header[11] = (unsigned char)(rec->length >> 8);
     header[12] = (unsigned char)(rec->length & 0xff);
 
-    if (!sending && !SSL_READ_ETM(ssl)
+    if (!sending && !rl->use_etm
         && EVP_CIPHER_CTX_get_mode(rl->enc_read_ctx) == EVP_CIPH_CBC_MODE
         && ssl3_cbc_record_digest_supported(mac_ctx)) {
         OSSL_PARAM tls_hmac_params[2], *p = tls_hmac_params;
