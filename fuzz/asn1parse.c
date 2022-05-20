@@ -19,11 +19,8 @@
 #include <openssl/err.h>
 #include "fuzzer.h"
 
-static BIO *bio_out;
-
 int FuzzerInitialize(int *argc, char ***argv)
 {
-    bio_out = BIO_new_file("/dev/null", "w");
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
     ERR_get_state();
     CRYPTO_free_ex_index(0, -1);
@@ -32,12 +29,16 @@ int FuzzerInitialize(int *argc, char ***argv)
 
 int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
+    BIO *bio_out = BIO_new(BIO_s_null());
+
+    if (bio_out == NULL)
+        return 0;
     (void)ASN1_parse_dump(bio_out, buf, len, 0, 0);
     ERR_clear_error();
+    BIO_free(bio_out);
     return 0;
 }
 
 void FuzzerCleanup(void)
 {
-    BIO_free(bio_out);
 }
