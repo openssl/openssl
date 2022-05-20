@@ -730,7 +730,7 @@ int x509_main(int argc, char **argv)
         }
         if ((x = X509_new_ex(app_get0_libctx(), app_get0_propq())) == NULL)
             goto end;
-        if (sno == NULL) {
+        if (CAfile == NULL && sno == NULL) {
             sno = ASN1_INTEGER_new();
             if (sno == NULL || !rand_serial(NULL, sno))
                 goto end;
