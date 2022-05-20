@@ -255,7 +255,7 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         break;
 
     case ASN1_OP_FREE_POST:
-        if (crl->meth->crl_free) {
+        if (crl->meth != NULL && crl->meth->crl_free != NULL) {
             if (!crl->meth->crl_free(crl))
                 return 0;
         }
