@@ -657,8 +657,7 @@ int ec_key_simple_oct2priv(EC_KEY *eckey, const unsigned char *buf, size_t len)
         ECerr(EC_F_EC_KEY_SIMPLE_OCT2PRIV, ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    eckey->priv_key = BN_bin2bn(buf, len, eckey->priv_key);
-    if (eckey->priv_key == NULL) {
+    if (BN_bin2bn(buf, len, eckey->priv_key) == NULL) {
         ECerr(EC_F_EC_KEY_SIMPLE_OCT2PRIV, ERR_R_BN_LIB);
         return 0;
     }
