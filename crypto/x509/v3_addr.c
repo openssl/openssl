@@ -1135,9 +1135,9 @@ int X509v3_addr_subset(IPAddrBlocks *a, IPAddrBlocks *b)
         fb = sk_IPAddressFamily_value(b, j);
         if (fb == NULL)
             return 0;
-        if (!addr_contains(fb->ipAddressChoice->u.addressesOrRanges,
+        if (addr_contains(fb->ipAddressChoice->u.addressesOrRanges,
                            fa->ipAddressChoice->u.addressesOrRanges,
-                           length_from_afi(X509v3_addr_get_afi(fb))))
+                           length_from_afi(X509v3_addr_get_afi(fb))) <= 0)
             return 0;
     }
     return 1;
@@ -1247,7 +1247,7 @@ static int addr_validate_path_internal(X509_STORE_CTX *ctx,
                 if (fc->ipAddressChoice->type == IPAddressChoice_inherit
                     || addr_contains(fp->ipAddressChoice->u.addressesOrRanges,
                                      fc->ipAddressChoice->u.addressesOrRanges,
-                                     length_from_afi(X509v3_addr_get_afi(fc))))
+                                     length_from_afi(X509v3_addr_get_afi(fc))) > 0)
                     (void)sk_IPAddressFamily_set(child, j, fp);
                 else
                     validation_err(X509_V_ERR_UNNESTED_RESOURCE);
