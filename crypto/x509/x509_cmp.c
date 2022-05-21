@@ -39,7 +39,7 @@ unsigned long X509_issuer_and_serial_hash(X509 *a)
     unsigned long ret = 0;
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
     unsigned char md[16];
-    char *f;
+    char *f = NULL;
     EVP_MD *digest = NULL;
 
     if (ctx == NULL)
@@ -55,7 +55,6 @@ unsigned long X509_issuer_and_serial_hash(X509 *a)
         goto err;
     if (!EVP_DigestUpdate(ctx, (unsigned char *)f, strlen(f)))
         goto err;
-    OPENSSL_free(f);
     if (!EVP_DigestUpdate
         (ctx, (unsigned char *)a->cert_info.serialNumber.data,
          (unsigned long)a->cert_info.serialNumber.length))
@@ -66,6 +65,7 @@ unsigned long X509_issuer_and_serial_hash(X509 *a)
            ((unsigned long)md[2] << 16L) | ((unsigned long)md[3] << 24L)
         ) & 0xffffffffL;
  err:
+    OPENSSL_free(f);
     EVP_MD_free(digest);
     EVP_MD_CTX_free(ctx);
     return ret;
