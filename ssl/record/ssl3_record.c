@@ -1728,7 +1728,7 @@ int dtls1_get_record(SSL *s)
      * The epoch may have changed.  If so, process all the pending records.
      * This is a non-blocking operation.
      */
-    if (!dtls1_process_buffered_records(s)) {
+    if (dtls1_process_buffered_records(s) <= 0) {
         /* SSLfatal() already called */
         return -1;
     }
