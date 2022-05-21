@@ -3085,7 +3085,7 @@ static int tls_process_cke_srp(SSL *s, PACKET *pkt)
         return 0;
     }
 
-    if (!srp_generate_server_master_secret(s)) {
+    if (srp_generate_server_master_secret(s) <= 0) {
         /* SSLfatal() already called */
         return 0;
     }
