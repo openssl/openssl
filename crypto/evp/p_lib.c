@@ -2163,7 +2163,7 @@ int EVP_PKEY_get_octet_string_param(const EVP_PKEY *pkey, const char *key_name,
 
     params[0] = OSSL_PARAM_construct_octet_string(key_name, buf, max_buf_sz);
     params[1] = OSSL_PARAM_construct_end();
-    if (ret1 = (EVP_PKEY_get_params(pkey, params) > 0))
+    if ((ret1 = (EVP_PKEY_get_params(pkey, params) > 0)))
         ret2 = OSSL_PARAM_modified(params);
     if (ret2 && out_len != NULL)
         *out_len = params[0].return_size;
@@ -2182,7 +2182,7 @@ int EVP_PKEY_get_utf8_string_param(const EVP_PKEY *pkey, const char *key_name,
 
     params[0] = OSSL_PARAM_construct_utf8_string(key_name, str, max_buf_sz);
     params[1] = OSSL_PARAM_construct_end();
-    if (ret1 = (EVP_PKEY_get_params(pkey, params) > 0))
+    if ((ret1 = (EVP_PKEY_get_params(pkey, params) > 0)))
         ret2 = OSSL_PARAM_modified(params);
     if (ret2 && out_len != NULL)
         *out_len = params[0].return_size;
