@@ -103,13 +103,17 @@ static int crl_set_issuers(X509_CRL *crl)
 
         if (gtmp) {
             gens = gtmp;
-            if (!crl->issuers) {
+            if (crl->issuers == NULL) {
                 crl->issuers = sk_GENERAL_NAMES_new_null();
-                if (!crl->issuers)
+                if (crl->issuers == NULL) {
+                    GENERAL_NAMES_free(gtmp);
                     return 0;
+                }
             }
-            if (!sk_GENERAL_NAMES_push(crl->issuers, gtmp))
+            if (!sk_GENERAL_NAMES_push(crl->issuers, gtmp)) {
+                GENERAL_NAMES_free(gtmp);
                 return 0;
+            }
         }
         rev->issuer = gens;
 
