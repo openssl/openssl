@@ -2343,10 +2343,10 @@ int EVP_PKEY_get_params(const EVP_PKEY *pkey, OSSL_PARAM params[])
 {
     if (pkey != NULL) {
         if (evp_pkey_is_provided(pkey))
-            return evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params);
+            return evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params) > 0;
 #ifndef FIPS_MODULE
         else if (evp_pkey_is_legacy(pkey))
-            return evp_pkey_get_params_to_ctrl(pkey, params);
+            return evp_pkey_get_params_to_ctrl(pkey, params) > 0;
 #endif
     }
     ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_KEY);
