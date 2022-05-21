@@ -1898,7 +1898,7 @@ int dtls1_get_record(SSL *s)
         goto again;
     }
 
-    if (!dtls1_process_record(s, bitmap)) {
+    if (dtls1_process_record(s, bitmap) <= 0) {
         if (ossl_statem_in_error(s)) {
             /* dtls1_process_record() called SSLfatal */
             return -1;

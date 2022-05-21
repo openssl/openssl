@@ -282,7 +282,7 @@ int dtls1_process_buffered_records(SSL *s)
                 replayok = dtls1_record_replay_check(s, bitmap);
             }
 
-            if (!replayok || !dtls1_process_record(s, bitmap)) {
+            if (!replayok || dtls1_process_record(s, bitmap) <= 0) {
                 if (ossl_statem_in_error(s)) {
                     /* dtls1_process_record called SSLfatal() */
                     return -1;
