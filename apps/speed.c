@@ -3608,8 +3608,8 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
         app_bail_out("failed to set cipher key\n");
     OPENSSL_clear_free(key, keylen);
 
-    if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_MAC_KEY,
-                             sizeof(no_key), no_key))
+    if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_MAC_KEY,
+                             sizeof(no_key), no_key) <= 0)
         app_bail_out("failed to set AEAD key\n");
     if ((alg_name = EVP_CIPHER_get0_name(evp_cipher)) == NULL)
         app_bail_out("failed to get cipher name\n");

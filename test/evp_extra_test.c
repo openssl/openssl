@@ -3506,7 +3506,7 @@ static int evp_init_seq_set_iv(EVP_CIPHER_CTX *ctx, const EVP_INIT_TEST_st *t)
     int res = 0;
 
     if (t->ivlen != 0) {
-        if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, t->ivlen, NULL)))
+        if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, t->ivlen, NULL), 0))
             goto err;
     }
     if (!TEST_true(EVP_CipherInit_ex(ctx, NULL, NULL, NULL, t->iv, -1)))
@@ -3572,8 +3572,8 @@ static int test_evp_init_seq(int idx)
     }
     if (t->finalenc == 0 && t->tag != NULL) {
         /* Set expected tag */
-        if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
-                                           t->taglen, (void *)t->tag))) {
+        if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
+                                           t->taglen, (void *)t->tag), 0)) {
             errmsg = "SET_TAG";
             goto err;
         }
@@ -3587,7 +3587,7 @@ static int test_evp_init_seq(int idx)
         goto err;
     }
     if (t->finalenc != 0 && t->tag != NULL) {
-        if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen, tag))) {
+        if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen, tag), 0)) {
             errmsg = "GET_TAG";
             goto err;
         }
@@ -3848,7 +3848,7 @@ static int test_gcm_reinit(int idx)
         errmsg = "ENC_INIT";
         goto err;
     }
-    if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, t->ivlen1, NULL))) {
+    if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, t->ivlen1, NULL), 0)) {
         errmsg = "SET_IVLEN1";
         goto err;
     }
@@ -3874,7 +3874,7 @@ static int test_gcm_reinit(int idx)
         errmsg = "WRONG_RESULT1";
         goto err;
     }
-    if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen, tag))) {
+    if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen, tag), 0)) {
         errmsg = "GET_TAG1";
         goto err;
     }
@@ -3883,7 +3883,7 @@ static int test_gcm_reinit(int idx)
         goto err;
     }
     /* Now reinit */
-    if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, t->ivlen2, NULL))) {
+    if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, t->ivlen2, NULL), 0)) {
         errmsg = "SET_IVLEN2";
         goto err;
     }
@@ -3908,7 +3908,7 @@ static int test_gcm_reinit(int idx)
         errmsg = "WRONG_RESULT2";
         goto err;
     }
-    if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen, tag))) {
+    if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen, tag), 0)) {
         errmsg = "GET_TAG2";
         goto err;
     }
