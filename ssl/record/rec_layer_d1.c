@@ -535,7 +535,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
          */
         if (BIO_dgram_is_sctp(SSL_get_rbio(s)) &&
             s->d1->shutdown_received
-            && !BIO_dgram_sctp_msg_waiting(SSL_get_rbio(s))) {
+            && BIO_dgram_sctp_msg_waiting(SSL_get_rbio(s)) <= 0) {
             s->shutdown |= SSL_RECEIVED_SHUTDOWN;
             return 0;
         }
@@ -596,7 +596,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                  * that nothing gets discarded.
                  */
                 if (BIO_dgram_is_sctp(SSL_get_rbio(s)) &&
-                    BIO_dgram_sctp_msg_waiting(SSL_get_rbio(s))) {
+                    BIO_dgram_sctp_msg_waiting(SSL_get_rbio(s)) > 0) {
                     s->d1->shutdown_received = 1;
                     s->rwstate = SSL_READING;
                     BIO_clear_retry_flags(SSL_get_rbio(s));
