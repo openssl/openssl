@@ -1099,7 +1099,7 @@ static int addr_contains(IPAddressOrRanges *parent,
     for (c = 0; c < sk_IPAddressOrRange_num(child); c++) {
         if (!extract_min_max(sk_IPAddressOrRange_value(child, c),
                              c_min, c_max, length))
-            return -1;
+            return 0;
         for (;; p++) {
             if (p >= sk_IPAddressOrRange_num(parent))
                 return 0;
