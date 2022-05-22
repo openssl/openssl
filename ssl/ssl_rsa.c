@@ -120,9 +120,11 @@ int SSL_use_certificate_ASN1(SSL *ssl, const unsigned char *d, int len)
 
 static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey)
 {
-    size_t i;
+    size_t i=SSL_aANY; /* indicating non-legacy key */
 
-    if (ssl_cert_lookup_by_pkey(pkey, &i) == NULL) {
+    /* cert lookup test only for legacy keys */
+    if ((EVP_PKEY_get_base_id(pkey) != NID_undef) &&
+        (ssl_cert_lookup_by_pkey(pkey, &i) == NULL)) {
         ERR_raise(ERR_LIB_SSL, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
         return 0;
     }
@@ -230,7 +232,7 @@ int SSL_CTX_use_certificate(SSL_CTX *ctx, X509 *x)
 static int ssl_set_cert(CERT *c, X509 *x)
 {
     EVP_PKEY *pkey;
-    size_t i;
+    size_t i=SSL_aANY; /* indicating non-legacy PKEY */
 
     pkey = X509_get0_pubkey(x);
     if (pkey == NULL) {
@@ -238,7 +240,9 @@ static int ssl_set_cert(CERT *c, X509 *x)
         return 0;
     }
 
-    if (ssl_cert_lookup_by_pkey(pkey, &i) == NULL) {
+    /* cert lookup test only for legacy keys */
+    if ((EVP_PKEY_get_base_id(pkey) != NID_undef) &&
+        (ssl_cert_lookup_by_pkey(pkey, &i) == NULL)) {
         ERR_raise(ERR_LIB_SSL, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
         return 0;
     }
@@ -887,7 +891,7 @@ static int ssl_set_cert_and_key(SSL *ssl, SSL_CTX *ctx, X509 *x509, EVP_PKEY *pr
                                 STACK_OF(X509) *chain, int override)
 {
     int ret = 0;
-    size_t i;
+    size_t i=SSL_aANY; /* indicating non-legacy key */;
     int j;
     int rv;
     CERT *c = ssl != NULL ? ssl->cert : ctx->cert;
@@ -941,7 +945,9 @@ static int ssl_set_cert_and_key(SSL *ssl, SSL_CTX *ctx, X509 *x509, EVP_PKEY *pr
             goto out;
         }
     }
-    if (ssl_cert_lookup_by_pkey(pubkey, &i) == NULL) {
+    /* cert lookup test only for legacy keys */
+    if ((EVP_PKEY_get_base_id(pubkey) != NID_undef) &&
+        (ssl_cert_lookup_by_pkey(pubkey, &i) == NULL)) {
         ERR_raise(ERR_LIB_SSL, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
         goto out;
     }

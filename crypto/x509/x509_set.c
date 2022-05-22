@@ -192,11 +192,13 @@ int X509_get_signature_info(X509 *x, int *mdnid, int *pknid, int *secbits,
     return X509_SIG_INFO_get(&x->siginf, mdnid, pknid, secbits, flags);
 }
 
+#define MAX(a, b) if (b<a) a=b
+
 /* Modify *siginf according to alg and sig. Return 1 on success, else 0. */
 static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
-                              const ASN1_STRING *sig)
+                              const ASN1_STRING *sig, const EVP_PKEY *pubkey)
 {
-    int pknid, mdnid;
+    int pknid, mdnid, snid;
     const EVP_MD *md;
     const EVP_PKEY_ASN1_METHOD *ameth;
 
@@ -212,12 +214,18 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
     siginf->mdnid = mdnid;
     siginf->pknid = pknid;
 
+    /* First check for provider-registered PKEY/MD handling */
+    if (OBJ_find_sigid_by_algs(&snid, mdnid, pknid)) {
+        siginf->secbits=EVP_PKEY_get_security_bits(pubkey);
+    }
     switch (mdnid) {
     case NID_undef:
-        /* If we have one, use a custom handler for this algorithm */
+        /* If we have one, use a custom legacy handler for this algorithm */
         ameth = EVP_PKEY_asn1_find(NULL, pknid);
-        if (ameth == NULL || ameth->siginf_set == NULL
-                || !ameth->siginf_set(siginf, alg, sig)) {
+        /* error only if secbits not yet set by provider */
+        if ((ameth == NULL || ameth->siginf_set == NULL
+                || !ameth->siginf_set(siginf, alg, sig)) &&
+            siginf->secbits<0) {
             ERR_raise(ERR_LIB_X509, X509_R_ERROR_USING_SIGINF_SET);
             return 0;
         }
@@ -233,21 +241,21 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
          * https://eprint.iacr.org/2020/014 puts a chosen-prefix attack
          * for SHA1 at2^63.4
          */
-        siginf->secbits = 63;
+        MAX(siginf->secbits, 63);
         break;
     case NID_md5:
         /*
          * https://documents.epfl.ch/users/l/le/lenstra/public/papers/lat.pdf
          * puts a chosen-prefix attack for MD5 at 2^39.
          */
-        siginf->secbits = 39;
+        MAX(siginf->secbits, 39);
         break;
     case NID_id_GostR3411_94:
         /*
          * There is a collision attack on GOST R 34.11-94 at 2^105, see
          * https://link.springer.com/chapter/10.1007%2F978-3-540-85174-5_10
          */
-        siginf->secbits = 105;
+        MAX(siginf->secbits, 105);
         break;
     default:
         /* Security bits: half number of bits in digest */
@@ -255,7 +263,7 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
             ERR_raise(ERR_LIB_X509, X509_R_ERROR_GETTING_MD_BY_NID);
             return 0;
         }
-        siginf->secbits = EVP_MD_get_size(md) * 4;
+        MAX(siginf->secbits, EVP_MD_get_size(md) * 4);
         break;
     }
     switch (mdnid) {
@@ -272,5 +280,5 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
 /* Returns 1 on success, 0 on failure */
 int ossl_x509_init_sig_info(X509 *x)
 {
-    return x509_sig_info_init(&x->siginf, &x->sig_alg, &x->signature);
+    return x509_sig_info_init(&x->siginf, &x->sig_alg, &x->signature, X509_PUBKEY_get(x->cert_info.key));
 }
