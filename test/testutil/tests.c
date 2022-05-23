@@ -235,6 +235,7 @@ DEFINE_COMPARISONS(char, char, "%c")
 DEFINE_COMPARISONS(unsigned char, uchar, "%u")
 DEFINE_COMPARISONS(long, long, "%ld")
 DEFINE_COMPARISONS(unsigned long, ulong, "%lu")
+DEFINE_COMPARISONS(uint64_t, uint64_t, "%" PRIu64)
 DEFINE_COMPARISONS(size_t, size_t, "%zu")
 DEFINE_COMPARISONS(double, double, "%g")
 

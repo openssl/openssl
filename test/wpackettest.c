@@ -26,6 +26,24 @@ static const unsigned char simpleder[] = {
     0xfc, 0x04, 0x00, 0x01, 0x02, 0x03, 0xff, 0xfe, 0xfd
 };
 
+static const unsigned char quic1[] = { 0x80, 0x00, 0x00, 0x01, 0x09 };
+static const unsigned char quic2[] = { 0x01, 0x09 };
+static const unsigned char quic3[] = { 0x40, 0x02, 0x40, 0x41 };
+static const unsigned char quic4[] = { 0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x80, 0x01, 0x3c, 0x6a };
+static const unsigned char quic5[] = { 0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0xef, 0x77, 0x21, 0x3f, 0x3f, 0x50, 0x5b, 0xa5 };
+static const unsigned char quic6[] = { 0x03, 0x55, 0x66, 0x77 };
+
+static const unsigned char quic7[] = {
+    0x07, 0x80, 0x00, 0x00, 0x08, 0x65, 0x14, 0x40, 0x01, 0x05,
+    0x40, 0x01, 0x11,/*]*/ 0x40, 0x01, 0x12, 0x40, 0x01, 0x13,
+};
+
+static const unsigned char quic8[] = {
+    0x07,
+    0x44, 0xd2, 0x05, 'a', 'p', 'p', 'l', 'e',
+    0x49, 0x29, 0x02, 0x51, 0xd7,
+};
+
 static BUF_MEM *buf;
 
 static int cleanup(WPACKET *pkt)
@@ -424,6 +442,135 @@ static int test_WPACKET_init_der(void)
     return 1;
 }
 
+static int test_WPACKET_quic(void)
+{
+    WPACKET pkt;
+    size_t written, len;
+    unsigned char *bytes;
+
+    /* QUIC sub-packet with 4-byte length prefix, containing a 1-byte vlint */
+    if (!TEST_true(WPACKET_init(&pkt, buf))
+            || !TEST_true(WPACKET_start_quic_sub_packet(&pkt))
+            || !TEST_true(WPACKET_quic_write_vlint(&pkt, 0x09))
+                /* Can't finish because we have a sub packet */
+            || !TEST_false(WPACKET_finish(&pkt))
+            || !TEST_true(WPACKET_close(&pkt))
+                /* Sub packet is closed so can't close again */
+            || !TEST_false(WPACKET_close(&pkt))
+                /* Now a top level so finish should succeed */
+            || !TEST_true(WPACKET_finish(&pkt))
+            || !TEST_true(WPACKET_get_total_written(&pkt, &written))
+            || !TEST_mem_eq(buf->data, written, quic1, sizeof(quic1)))
+        return cleanup(&pkt);
+
+    /* QUIC sub-packet with 1-byte length prefix, containing a 1-byte vlint */
+    if (!TEST_true(WPACKET_init(&pkt, buf))
+            || !TEST_true(WPACKET_start_quic_sub_packet_bound(&pkt, OSSL_QUIC_VLINT_2B_MIN-1))
+            || !TEST_true(WPACKET_quic_write_vlint(&pkt, 0x09))
+            || !TEST_false(WPACKET_finish(&pkt))
+            || !TEST_true(WPACKET_close(&pkt))
+            || !TEST_false(WPACKET_close(&pkt))
+            || !TEST_true(WPACKET_finish(&pkt))
+            || !TEST_true(WPACKET_get_total_written(&pkt, &written))
+            || !TEST_mem_eq(buf->data, written, quic2, sizeof(quic2)))
+        return cleanup(&pkt);
+
+    /* QUIC sub-packet with 2-byte length prefix, containing a 2-byte vlint */
+    if (!TEST_true(WPACKET_init(&pkt, buf))
+            || !TEST_true(WPACKET_start_quic_sub_packet_bound(&pkt, OSSL_QUIC_VLINT_2B_MIN))
+            || !TEST_true(WPACKET_quic_write_vlint(&pkt, 0x41))
+            || !TEST_false(WPACKET_finish(&pkt))
+            || !TEST_true(WPACKET_close(&pkt))
+            || !TEST_false(WPACKET_close(&pkt))
+            || !TEST_true(WPACKET_finish(&pkt))
+            || !TEST_true(WPACKET_get_total_written(&pkt, &written))
+            || !TEST_mem_eq(buf->data, written, quic3, sizeof(quic3)))
+        return cleanup(&pkt);
+
+    /* QUIC sub-packet with 8-byte length prefix, containing a 4-byte vlint */
+    if (!TEST_true(WPACKET_init(&pkt, buf))
+            || !TEST_true(WPACKET_start_quic_sub_packet_bound(&pkt, OSSL_QUIC_VLINT_8B_MIN))
+            || !TEST_true(WPACKET_quic_write_vlint(&pkt, 0x13c6a))
+            || !TEST_false(WPACKET_finish(&pkt))
+            || !TEST_true(WPACKET_close(&pkt))
+            || !TEST_false(WPACKET_close(&pkt))
+            || !TEST_true(WPACKET_finish(&pkt))
+            || !TEST_true(WPACKET_get_total_written(&pkt, &written))
+            || !TEST_mem_eq(buf->data, written, quic4, sizeof(quic4)))
+        return cleanup(&pkt);
+
+    /* QUIC sub-packet with 8-byte length prefix, containing a 8-byte vlint */
+    if (!TEST_true(WPACKET_init(&pkt, buf))
+            || !TEST_true(WPACKET_start_quic_sub_packet_bound(&pkt, OSSL_QUIC_VLINT_8B_MIN))
+            || !TEST_true(WPACKET_quic_write_vlint(&pkt, 0x2f77213f3f505ba5ULL))
+            || !TEST_false(WPACKET_finish(&pkt))
+            || !TEST_true(WPACKET_close(&pkt))
+            || !TEST_false(WPACKET_close(&pkt))
+            || !TEST_true(WPACKET_finish(&pkt))
+            || !TEST_true(WPACKET_get_total_written(&pkt, &written))
+            || !TEST_mem_eq(buf->data, written, quic5, sizeof(quic5)))
+        return cleanup(&pkt);
+
+    /* QUIC sub-packet, length known up-front */
+    if (!TEST_true(WPACKET_init(&pkt, buf))
+            || !TEST_true(WPACKET_quic_sub_allocate_bytes(&pkt, 3, &bytes)))
+        return cleanup(&pkt);
+
+    bytes[0] = 0x55;
+    bytes[1] = 0x66;
+    bytes[2] = 0x77;
+
+    if (!TEST_true(WPACKET_finish(&pkt))
+            || !TEST_true(WPACKET_get_total_written(&pkt, &written))
+            || !TEST_mem_eq(buf->data, written, quic6, sizeof(quic6)))
+        return cleanup(&pkt);
+
+    /* Nested and sequential sub-packets with length prefixes */
+    if (!TEST_true(WPACKET_init(&pkt, buf))
+            || !TEST_true(WPACKET_quic_write_vlint(&pkt, 0x07))
+            || !TEST_true(WPACKET_get_length(&pkt, &len))
+            || !TEST_size_t_eq(len, 1)
+            || !TEST_true(WPACKET_start_quic_sub_packet_bound(&pkt, OSSL_QUIC_VLINT_4B_MIN))
+            || !TEST_true(WPACKET_quic_write_vlint(&pkt, 0x2514))
+            || !TEST_true(WPACKET_get_length(&pkt, &len))
+            || !TEST_size_t_eq(len, 2)
+            || !TEST_true(WPACKET_start_quic_sub_packet_bound(&pkt, OSSL_QUIC_VLINT_2B_MIN))
+            || !TEST_true(WPACKET_quic_write_vlint(&pkt, 0x05))
+            || !TEST_true(WPACKET_get_length(&pkt, &len))
+            || !TEST_size_t_eq(len, 1)
+            || !TEST_true(WPACKET_close(&pkt))
+            || !TEST_true(WPACKET_start_quic_sub_packet_bound(&pkt, OSSL_QUIC_VLINT_2B_MIN))
+            || !TEST_true(WPACKET_quic_write_vlint(&pkt, 0x11))
+            || !TEST_true(WPACKET_close(&pkt))
+            || !TEST_true(WPACKET_get_length(&pkt, &len))
+            || !TEST_size_t_eq(len, 8)
+            || !TEST_true(WPACKET_close(&pkt))
+            || !TEST_true(WPACKET_start_quic_sub_packet_bound(&pkt, OSSL_QUIC_VLINT_2B_MIN))
+            || !TEST_true(WPACKET_quic_write_vlint(&pkt, 0x12))
+            || !TEST_true(WPACKET_close(&pkt))
+            || !TEST_true(WPACKET_start_quic_sub_packet_bound(&pkt, OSSL_QUIC_VLINT_2B_MIN))
+            || !TEST_true(WPACKET_quic_write_vlint(&pkt, 0x13))
+            || !TEST_true(WPACKET_close(&pkt))
+            || !TEST_true(WPACKET_finish(&pkt))
+            || !TEST_true(WPACKET_get_total_written(&pkt, &written))
+            || !TEST_mem_eq(buf->data, written, quic7, sizeof(quic7)))
+        return cleanup(&pkt);
+
+    /* QUIC transport parameters */
+    if (!TEST_true(WPACKET_init(&pkt, buf))
+            || !TEST_true(WPACKET_quic_write_vlint(&pkt, 0x07))
+            || !TEST_true(WPACKET_quic_write_transport_param_bytes(&pkt, 1234,
+                          (unsigned char *)"apple", 5))
+            || !TEST_true(WPACKET_quic_write_transport_param_int(&pkt, 2345, 4567))
+            || !TEST_true(WPACKET_finish(&pkt))
+            || !TEST_true(WPACKET_get_total_written(&pkt, &written))
+            || !TEST_mem_eq(buf->data, written, quic8, sizeof(quic8)))
+        return cleanup(&pkt);
+
+    WPACKET_cleanup(&pkt);
+    return 1;
+}
+
 int setup_tests(void)
 {
     if (!TEST_ptr(buf = BUF_MEM_new()))
@@ -436,6 +583,7 @@ int setup_tests(void)
     ADD_TEST(test_WPACKET_allocate_bytes);
     ADD_TEST(test_WPACKET_memcpy);
     ADD_TEST(test_WPACKET_init_der);
+    ADD_TEST(test_WPACKET_quic);
     return 1;
 }
 
