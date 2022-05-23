@@ -891,9 +891,9 @@ static int ssl_set_cert_and_key(SSL *ssl, SSL_CTX *ctx, X509 *x509, EVP_PKEY *pr
                                 STACK_OF(X509) *chain, int override)
 {
     int ret = 0;
+    size_t i;
     int j;
     int rv;
-    size_t i=SSL_aANY; /* indicating non-legacy key */;
     CERT *c = ssl != NULL ? ssl->cert : ctx->cert;
     STACK_OF(X509) *dup_chain = NULL;
     EVP_PKEY *pubkey = NULL;
@@ -946,6 +946,7 @@ static int ssl_set_cert_and_key(SSL *ssl, SSL_CTX *ctx, X509 *x509, EVP_PKEY *pr
         }
     }
     /* cert lookup test only for legacy keys */
+    i=SSL_aANY; /* pre-set non-legacy key */;
     if ((EVP_PKEY_get_base_id(pubkey) != NID_undef) &&
         (ssl_cert_lookup_by_pkey(pubkey, &i) == NULL)) {
         ERR_raise(ERR_LIB_SSL, SSL_R_UNKNOWN_CERTIFICATE_TYPE);

@@ -192,8 +192,6 @@ int X509_get_signature_info(X509 *x, int *mdnid, int *pknid, int *secbits,
     return X509_SIG_INFO_get(&x->siginf, mdnid, pknid, secbits, flags);
 }
 
-#define MIN(A, B) if (A>B || A<0) A=B
-
 /* Modify *siginf according to alg and sig. Return 1 on success, else 0. */
 static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
                               const ASN1_STRING *sig, const EVP_PKEY *pubkey)
@@ -242,21 +240,21 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
          * https://eprint.iacr.org/2020/014 puts a chosen-prefix attack
          * for SHA1 at2^63.4
          */
-        MIN(siginf->secbits, 63);
+        siginf->secbits = 63;
         break;
     case NID_md5:
         /*
          * https://documents.epfl.ch/users/l/le/lenstra/public/papers/lat.pdf
          * puts a chosen-prefix attack for MD5 at 2^39.
          */
-        MIN(siginf->secbits, 39);
+        siginf->secbits = 39;
         break;
     case NID_id_GostR3411_94:
         /*
          * There is a collision attack on GOST R 34.11-94 at 2^105, see
          * https://link.springer.com/chapter/10.1007%2F978-3-540-85174-5_10
          */
-        MIN(siginf->secbits, 105);
+        siginf->secbits = 105;
         break;
     default:
         /* Security bits: half number of bits in digest */
@@ -264,7 +262,7 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
             ERR_raise(ERR_LIB_X509, X509_R_ERROR_GETTING_MD_BY_NID);
             return 0;
         }
-        MIN(siginf->secbits, EVP_MD_get_size(md) * 4);
+        siginf->secbits = EVP_MD_get_size(md) * 4;
         break;
     }
     switch (mdnid) {
