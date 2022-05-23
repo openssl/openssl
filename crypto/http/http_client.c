@@ -20,6 +20,7 @@
 #include <openssl/cmperr.h>
 #include <openssl/buffer.h>
 #include <openssl/http.h>
+#include <openssl/trace.h>
 #include "internal/sockets.h"
 #include "internal/cryptlib.h" /* for ossl_assert() */
 
@@ -513,6 +514,7 @@ static int may_still_retry(time_t max_time, int *ptimeout)
 int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
 {
     int i, found_expected_ct = 0, found_keep_alive = 0;
+    int found_text_ct = 0;
     long n;
     size_t resp_len;
     const unsigned char *p;
@@ -568,6 +570,8 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
     case OHS_WRITE_INIT:
         rctx->len_to_send = BIO_get_mem_data(rctx->mem, &rctx->pos);
         rctx->state = OHS_WRITE_HDR;
+        if (OSSL_TRACE_ENABLED(HTTP))
+            OSSL_TRACE(HTTP, "Sending request header:\n");
 
         /* fall through */
     case OHS_WRITE_HDR:
@@ -576,6 +580,10 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
         /* Copy some chunk of data from rctx->req to rctx->wbio */
 
         if (rctx->len_to_send > 0) {
+            if (OSSL_TRACE_ENABLED(HTTP)
+                && rctx->state == OHS_WRITE_HDR && rctx->len_to_send <= INT_MAX)
+                OSSL_TRACE2(HTTP, "%.*s", (int)rctx->len_to_send, rctx->pos);
+
             i = BIO_write(rctx->wbio, rctx->pos, rctx->len_to_send);
             if (i <= 0) {
                 if (BIO_should_retry(rctx->wbio))
@@ -659,6 +667,13 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
             return 0;
         }
 
+        /* dump all response header lines */
+        if (OSSL_TRACE_ENABLED(HTTP)) {
+            if (rctx->state == OHS_FIRSTLINE)
+                OSSL_TRACE(HTTP, "Received response header:\n");
+            OSSL_TRACE1(HTTP, "%s", buf);
+        }
+
         /* First line */
         if (rctx->state == OHS_FIRSTLINE) {
             switch (parse_http_line1(buf, &found_keep_alive)) {
@@ -697,15 +712,20 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
                 rctx->redirection_url = value;
                 return 0;
             }
-            if (rctx->state == OHS_HEADERS && rctx->expected_ct != NULL
-                    && OPENSSL_strcasecmp(key, "Content-Type") == 0) {
-                if (OPENSSL_strcasecmp(rctx->expected_ct, value) != 0) {
-                    ERR_raise_data(ERR_LIB_HTTP, HTTP_R_UNEXPECTED_CONTENT_TYPE,
-                                   "expected=%s, actual=%s",
-                                   rctx->expected_ct, value);
-                    return 0;
+            if (OPENSSL_strcasecmp(key, "Content-Type") == 0) {
+                if (rctx->state == OHS_HEADERS
+                    && rctx->expected_ct != NULL) {
+                    if (OPENSSL_strcasecmp(rctx->expected_ct, value) != 0) {
+                        ERR_raise_data(ERR_LIB_HTTP,
+                                       HTTP_R_UNEXPECTED_CONTENT_TYPE,
+                                       "expected=%s, actual=%s",
+                                       rctx->expected_ct, value);
+                        return 0;
+                    }
+                    found_expected_ct = 1;
                 }
-                found_expected_ct = 1;
+                if (OPENSSL_strncasecmp(value, "text/", 5) == 0)
+                    found_text_ct = 1;
             }
 
             /* https://tools.ietf.org/html/rfc7230#section-6.3 Persistence */
@@ -745,8 +765,12 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
             rctx->keep_alive = 0;
         }
 
-        if (rctx->state == OHS_ERROR)
+        if (rctx->state == OHS_ERROR) {
+            if (OSSL_TRACE_ENABLED(HTTP)
+                    && found_text_ct && BIO_get_mem_data(rctx->mem, &p) > 0)
+                OSSL_TRACE1(HTTP, "%s", p);
             return 0;
+        }
 
         if (rctx->expected_ct != NULL && !found_expected_ct) {
             ERR_raise_data(ERR_LIB_HTTP, HTTP_R_MISSING_CONTENT_TYPE,

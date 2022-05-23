@@ -671,8 +671,8 @@ see L<openssl-env(7)>.
 
 Enable tracing output of OpenSSL library, by name.
 This output will only make sense if you know OpenSSL internals well.
-Also, it might not give you any output at all, depending on how
-OpenSSL was built.
+Also, it might not give you any output at all
+if OpenSSL was built without tracing support.
 
 The value is a comma separated list of names, with the following
 available:
@@ -750,6 +750,10 @@ Traces encoder operations.
 =item B<REF_COUNT>
 
 Traces decrementing certain ASN.1 structure references.
+
+=item B<HTTP>
+
+HTTP client diagnostics
 
 =back
 
