@@ -282,6 +282,8 @@ DECLARE_COMPARISONS(char, char)
 DECLARE_COMPARISONS(unsigned char, uchar)
 DECLARE_COMPARISONS(long, long)
 DECLARE_COMPARISONS(unsigned long, ulong)
+DECLARE_COMPARISONS(int64_t, int64_t)
+DECLARE_COMPARISONS(uint64_t, uint64_t)
 DECLARE_COMPARISONS(double, double)
 DECLARE_COMPARISONS(time_t, time_t)
 
@@ -430,6 +432,13 @@ void test_perror(const char *s);
 # define TEST_ulong_le(a, b)  test_ulong_le(__FILE__, __LINE__, #a, #b, a, b)
 # define TEST_ulong_gt(a, b)  test_ulong_gt(__FILE__, __LINE__, #a, #b, a, b)
 # define TEST_ulong_ge(a, b)  test_ulong_ge(__FILE__, __LINE__, #a, #b, a, b)
+
+# define TEST_uint64_t_eq(a, b)  test_uint64_t_eq(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_uint64_t_ne(a, b)  test_uint64_t_ne(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_uint64_t_lt(a, b)  test_uint64_t_lt(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_uint64_t_le(a, b)  test_uint64_t_le(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_uint64_t_gt(a, b)  test_uint64_t_gt(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_uint64_t_ge(a, b)  test_uint64_t_ge(__FILE__, __LINE__, #a, #b, a, b)
 
 # define TEST_size_t_eq(a, b) test_size_t_eq(__FILE__, __LINE__, #a, #b, a, b)
 # define TEST_size_t_ne(a, b) test_size_t_ne(__FILE__, __LINE__, #a, #b, a, b)

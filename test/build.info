@@ -270,7 +270,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[bad_dtls_test]=../include ../apps/include
   DEPEND[bad_dtls_test]=../libcrypto ../libssl libtestutil.a
 
-  SOURCE[packettest]=packettest.c
+  SOURCE[packettest]=packettest.c ../crypto/quic_vlint.c
   INCLUDE[packettest]=../include ../apps/include
   DEPEND[packettest]=../libcrypto libtestutil.a
 
@@ -816,7 +816,7 @@ IF[{- !$disabled{tests} -}]
     PROGRAMS{noinst}=tls13secretstest
     SOURCE[tls13secretstest]=tls13secretstest.c
     DEFINE[tls13secretstest]=OPENSSL_NO_KTLS
-    SOURCE[tls13secretstest]= ../ssl/tls13_enc.c ../crypto/packet.c
+    SOURCE[tls13secretstest]= ../ssl/tls13_enc.c ../crypto/packet.c ../crypto/quic_vlint.c
     INCLUDE[tls13secretstest]=.. ../include ../apps/include
     DEPEND[tls13secretstest]=../libcrypto ../libssl libtestutil.a
   ENDIF
