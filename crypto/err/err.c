@@ -345,6 +345,7 @@ void ERR_clear_error(void)
         err_clear(es, i, 0);
     }
     es->top = es->bottom = 0;
+    OSSL_TRACE(ERR, "--- cleared the error record queue");
 }
 
 unsigned long ERR_get_error(void)
