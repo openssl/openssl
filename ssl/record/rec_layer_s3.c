@@ -1797,11 +1797,12 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
                              const SSL_COMP *comp)
 {
     OSSL_PARAM options[4], *opts = options;
-    OSSL_PARAM settings[2], *set =  settings;
+    OSSL_PARAM settings[3], *set =  settings;
     const OSSL_RECORD_METHOD *origmeth = s->rrlmethod;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     const OSSL_RECORD_METHOD *meth;
     int use_etm;
+    unsigned int maxfrag = SSL3_RT_MAX_PLAIN_LENGTH;
 
     meth = ssl_select_next_record_layer(s, level);
 
@@ -1836,6 +1837,14 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
     if (use_etm)
         *set++ = OSSL_PARAM_construct_int(OSSL_LIBSSL_RECORD_LAYER_PARAM_USE_ETM,
                                           &use_etm);
+
+    if (s->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(s->session))
+        maxfrag = GET_MAX_FRAGMENT_LENGTH(s->session);
+
+    if (maxfrag != SSL3_RT_MAX_PLAIN_LENGTH)
+        *set++ = OSSL_PARAM_construct_uint(OSSL_LIBSSL_RECORD_LAYER_PARAM_MAX_FRAG_LEN,
+                                           &maxfrag);
+
     *set = OSSL_PARAM_construct_end();
 
     for (;;) {
