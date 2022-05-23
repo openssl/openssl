@@ -35,6 +35,8 @@ static int wsa_init_done = 0;
 #  include <unistd.h>
 #  if defined __VMS
 #   include <sys/socket.h>
+#  elif defined _HPUX_SOURCE
+#   include <sys/time.h>
 #  else
 #   include <sys/select.h>
 #  endif
