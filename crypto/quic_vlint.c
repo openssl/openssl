@@ -3,16 +3,19 @@
 
 size_t ossl_quic_vlint_encode_len(uint64_t v)
 {
-    if (v < 64)
+    if (v < OSSL_QUIC_VLINT_2B_MIN)
         return 1;
 
-    if (v < 16384)
+    if (v < OSSL_QUIC_VLINT_4B_MIN)
         return 2;
 
-    if (v < 1073741824)
+    if (v < OSSL_QUIC_VLINT_8B_MIN)
         return 4;
 
-    return 8;
+    if (v <= OSSL_QUIC_VLINT_MAX)
+        return 8;
+
+    return 0;
 }
 
 size_t ossl_quic_vlint_decode_len(uint8_t first_byte)
@@ -79,13 +82,18 @@ uint64_t ossl_quic_vlint_decode_unchecked(const unsigned char *buf)
 
 int ossl_quic_vlint_decode(const unsigned char *buf, size_t buf_len, uint64_t *v)
 {
+    size_t dec_len;
     uint64_t x;
 
-    if (buf_len < 1 || buf_len < ossl_quic_vlint_decode_len(buf[0]))
+    if (buf_len < 1)
+        return 0;
+
+    dec_len = ossl_quic_vlint_decode_len(buf[0]);
+    if (buf_len < dec_len)
         return 0;
 
     x = ossl_quic_vlint_decode_unchecked(buf);
 
     *v = x;
-    return 1;
+    return dec_len;
 }

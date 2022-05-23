@@ -500,7 +500,7 @@ static int test_PACKET_get_quic_vlint(void)
     size_t i;
     uint64_t v;
 
-    for (i=0; i<OSSL_NELEM(cases); ++i) {
+    for (i = 0; i < OSSL_NELEM(cases); ++i) {
         memset(&pkt, 0, sizeof(pkt));
         v = 55;
 
@@ -541,7 +541,7 @@ static int test_PACKET_get_quic_length_prefixed(void)
     size_t i;
     PACKET pkt, subpkt = {0};
 
-    for (i=0; i<OSSL_NELEM(cases); ++i) {
+    for (i = 0; i < OSSL_NELEM(cases); ++i) {
         memset(&pkt, 0, sizeof(pkt));
 
         if (!TEST_true(PACKET_buf_init(&pkt, cases[i].buf,

@@ -530,8 +530,12 @@ void WPACKET_cleanup(WPACKET *pkt)
 
 int WPACKET_start_quic_sub_packet_bound(WPACKET *pkt, size_t max_len)
 {
-    if (WPACKET_start_sub_packet_len__(pkt,
-                                       ossl_quic_vlint_encode_len(max_len)) == 0)
+    size_t enclen = ossl_quic_vlint_encode_len(max_len);
+
+    if (enclen == 0)
+        return 0;
+
+    if (WPACKET_start_sub_packet_len__(pkt, enclen) == 0)
         return 0;
 
     pkt->subs->flags |= WPACKET_FLAGS_QUIC_VLINT;
@@ -565,43 +569,12 @@ int WPACKET_quic_write_vlint(WPACKET *pkt, uint64_t v)
     unsigned char *b = NULL;
     size_t enclen = ossl_quic_vlint_encode_len(v);
 
+    if (enclen == 0)
+        return 0;
+
     if (WPACKET_allocate_bytes(pkt, enclen, &b) == 0)
         return 0;
 
     ossl_quic_vlint_encode(b, v);
-    return 1;
-}
-
-int WPACKET_quic_allocate_transport_param_bytes(WPACKET *pkt, uint64_t id,
-                                                unsigned char **value, size_t value_len)
-{
-    if (   WPACKET_quic_write_vlint(pkt, id) == 0
-        || WPACKET_quic_write_vlint(pkt, value_len) == 0)
-        return 0;
-
-    return WPACKET_allocate_bytes(pkt, value_len, value);
-}
-
-int WPACKET_quic_write_transport_param_bytes(WPACKET *pkt, uint64_t id,
-                                             const unsigned char *value, size_t value_len)
-{
-    unsigned char *b;
-
-    if (WPACKET_quic_allocate_transport_param_bytes(pkt, id, &b, value_len) == 0)
-        return 0;
-
-    memcpy(b, value, value_len);
-    return 1;
-}
-
-int WPACKET_quic_write_transport_param_int(WPACKET *pkt, uint64_t id, uint64_t value)
-{
-    unsigned char *buf = NULL;
-
-    if (WPACKET_quic_allocate_transport_param_bytes(pkt, id, &buf,
-                                                    ossl_quic_vlint_encode_len(value)) == 0)
-        return 0;
-
-    ossl_quic_vlint_encode(buf, value);
     return 1;
 }

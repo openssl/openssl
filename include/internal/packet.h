@@ -627,10 +627,10 @@ __owur static ossl_inline int PACKET_get_length_prefixed_3(PACKET *pkt,
 __owur static ossl_inline int PACKET_get_quic_length_prefixed(PACKET *pkt,
                                                               PACKET *subpkt)
 {
-
     uint64_t length;
     const unsigned char *data;
     PACKET tmp = *pkt;
+
     if (!PACKET_get_quic_vlint(&tmp, &length) ||
         !PACKET_get_bytes(&tmp, &data, (size_t)length)) {
         return 0;
@@ -978,29 +978,5 @@ __owur int WPACKET_quic_sub_allocate_bytes(WPACKET *pkt, size_t len,
  * Write a QUIC variable-length integer to the packet.
  */
 __owur int WPACKET_quic_write_vlint(WPACKET *pkt, uint64_t v);
-
-/*
- * Encodes a QUIC transport parameter TLV with the given ID into the WPACKET.
- * The payload is not written; *value is written with the payload buffer region
- * which must be filled. The payload must be exactly value_len bytes in length.
- */
-__owur int WPACKET_quic_allocate_transport_param_bytes(WPACKET *pkt, uint64_t id,
-                                                       unsigned char **value,
-                                                       size_t value_len);
-
-/*
- * Encodes a QUIC transport parameter TLV with the given ID into the WPACKET.
- * The payload is an arbitrary buffer which is copied into the WPACKET.
- */
-__owur int WPACKET_quic_write_transport_param_bytes(WPACKET *pkt, uint64_t id,
-                                                    const unsigned char *value,
-                                                    size_t value_len);
-
-/*
- * Encodes a QUIC transport parameter TLV with the given ID into the WPACKET.
- * The payload is a QUIC variable-length integer with the given value.
- */
-__owur int WPACKET_quic_write_transport_param_int(WPACKET *pkt,
-                                                  uint64_t id, uint64_t value);
 
 #endif                          /* OSSL_INTERNAL_PACKET_H */

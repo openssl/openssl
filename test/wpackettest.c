@@ -26,22 +26,28 @@ static const unsigned char simpleder[] = {
     0xfc, 0x04, 0x00, 0x01, 0x02, 0x03, 0xff, 0xfe, 0xfd
 };
 
+/* QUIC sub-packet with 4-byte length prefix, containing a 1-byte vlint */
 static const unsigned char quic1[] = { 0x80, 0x00, 0x00, 0x01, 0x09 };
+/* QUIC sub-packet with 1-byte length prefix, containing a 1-byte vlint */
 static const unsigned char quic2[] = { 0x01, 0x09 };
+/* QUIC sub-packet with 2-byte length prefix, containing a 2-byte vlint */
 static const unsigned char quic3[] = { 0x40, 0x02, 0x40, 0x41 };
-static const unsigned char quic4[] = { 0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x80, 0x01, 0x3c, 0x6a };
-static const unsigned char quic5[] = { 0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0xef, 0x77, 0x21, 0x3f, 0x3f, 0x50, 0x5b, 0xa5 };
+/* QUIC sub-packet with 8-byte length prefix, containing a 4-byte vlint */
+static const unsigned char quic4[] = {
+    0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04,
+    0x80, 0x01, 0x3c, 0x6a
+};
+/* QUIC sub-packet with 8-byte length prefix, containing a 8-byte vlint */
+static const unsigned char quic5[] = {
+    0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08,
+    0xef, 0x77, 0x21, 0x3f, 0x3f, 0x50, 0x5b, 0xa5
+};
+/* QUIC sub-packet, length known up-front */
 static const unsigned char quic6[] = { 0x03, 0x55, 0x66, 0x77 };
-
+/* Nested and sequential sub-packets with length prefixes */
 static const unsigned char quic7[] = {
     0x07, 0x80, 0x00, 0x00, 0x08, 0x65, 0x14, 0x40, 0x01, 0x05,
-    0x40, 0x01, 0x11,/*]*/ 0x40, 0x01, 0x12, 0x40, 0x01, 0x13,
-};
-
-static const unsigned char quic8[] = {
-    0x07,
-    0x44, 0xd2, 0x05, 'a', 'p', 'p', 'l', 'e',
-    0x49, 0x29, 0x02, 0x51, 0xd7,
+    0x40, 0x01, 0x11, 0x40, 0x01, 0x12, 0x40, 0x01, 0x13
 };
 
 static BUF_MEM *buf;
@@ -465,7 +471,7 @@ static int test_WPACKET_quic(void)
 
     /* QUIC sub-packet with 1-byte length prefix, containing a 1-byte vlint */
     if (!TEST_true(WPACKET_init(&pkt, buf))
-            || !TEST_true(WPACKET_start_quic_sub_packet_bound(&pkt, OSSL_QUIC_VLINT_2B_MIN-1))
+            || !TEST_true(WPACKET_start_quic_sub_packet_bound(&pkt, OSSL_QUIC_VLINT_1B_MAX))
             || !TEST_true(WPACKET_quic_write_vlint(&pkt, 0x09))
             || !TEST_false(WPACKET_finish(&pkt))
             || !TEST_true(WPACKET_close(&pkt))
@@ -556,16 +562,60 @@ static int test_WPACKET_quic(void)
             || !TEST_mem_eq(buf->data, written, quic7, sizeof(quic7)))
         return cleanup(&pkt);
 
-    /* QUIC transport parameters */
+    /* Trying to encode a value above OSSL_QUIC_VLINT_MAX should fail */
     if (!TEST_true(WPACKET_init(&pkt, buf))
-            || !TEST_true(WPACKET_quic_write_vlint(&pkt, 0x07))
-            || !TEST_true(WPACKET_quic_write_transport_param_bytes(&pkt, 1234,
-                          (unsigned char *)"apple", 5))
-            || !TEST_true(WPACKET_quic_write_transport_param_int(&pkt, 2345, 4567))
-            || !TEST_true(WPACKET_finish(&pkt))
-            || !TEST_true(WPACKET_get_total_written(&pkt, &written))
-            || !TEST_mem_eq(buf->data, written, quic8, sizeof(quic8)))
-        return cleanup(&pkt);
+            || !TEST_false(WPACKET_quic_write_vlint(&pkt, OSSL_QUIC_VLINT_MAX+1))
+            || !TEST_true(WPACKET_quic_write_vlint(&pkt, OSSL_QUIC_VLINT_MAX)))
+            return cleanup(&pkt);
+
+    WPACKET_cleanup(&pkt);
+    return 1;
+}
+
+static int test_WPACKET_quic_vlint_random(void)
+{
+    size_t i, written;
+    uint64_t expected, actual = 0;
+    unsigned char rand_data[9];
+    WPACKET pkt;
+    PACKET read_pkt = {0};
+
+    for (i = 0; i < 10000; ++i) {
+        if (!TEST_true(RAND_bytes(rand_data, sizeof(rand_data))))
+            return cleanup(&pkt);
+
+        expected = *(uint64_t*)rand_data;
+
+        /*
+         * Ensure that all size classes get tested with equal probability.
+         */
+        switch (rand_data[8] & 3) {
+            case 0:
+                expected &= OSSL_QUIC_VLINT_1B_MAX;
+                break;
+            case 1:
+                expected &= OSSL_QUIC_VLINT_2B_MAX;
+                break;
+            case 2:
+                expected &= OSSL_QUIC_VLINT_4B_MAX;
+                break;
+            case 3:
+                expected &= OSSL_QUIC_VLINT_8B_MAX;
+                break;
+        }
+
+        if (!TEST_true(WPACKET_init(&pkt, buf))
+                || !TEST_true(WPACKET_quic_write_vlint(&pkt, expected))
+                || !TEST_true(WPACKET_get_total_written(&pkt, &written)))
+            return cleanup(&pkt);
+
+        if (!TEST_true(PACKET_buf_init(&read_pkt, (unsigned char *)buf->data, written))
+                || !TEST_true(PACKET_get_quic_vlint(&read_pkt, &actual))
+                || !TEST_uint64_t_eq(expected, actual))
+            return cleanup(&pkt);
+
+        WPACKET_cleanup(&pkt);
+    }
 
     WPACKET_cleanup(&pkt);
     return 1;
@@ -584,6 +634,7 @@ int setup_tests(void)
     ADD_TEST(test_WPACKET_memcpy);
     ADD_TEST(test_WPACKET_init_der);
     ADD_TEST(test_WPACKET_quic);
+    ADD_TEST(test_WPACKET_quic_vlint_random);
     return 1;
 }
 
