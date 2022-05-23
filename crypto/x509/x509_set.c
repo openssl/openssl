@@ -198,7 +198,7 @@ int X509_get_signature_info(X509 *x, int *mdnid, int *pknid, int *secbits,
 static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
                               const ASN1_STRING *sig, const EVP_PKEY *pubkey)
 {
-    int pknid, mdnid, snid;
+    int pknid, mdnid;
     const EVP_MD *md;
     const EVP_PKEY_ASN1_METHOD *ameth;
 
@@ -214,20 +214,21 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
     siginf->mdnid = mdnid;
     siginf->pknid = pknid;
 
-    /* First check for provider-registered PKEY/MD handling */
-    if (OBJ_find_sigid_by_algs(&snid, mdnid, pknid)) {
-        siginf->secbits=EVP_PKEY_get_security_bits(pubkey);
-    }
     switch (mdnid) {
     case NID_undef:
         /* If we have one, use a custom legacy handler for this algorithm */
         ameth = EVP_PKEY_asn1_find(NULL, pknid);
-        /* error only if secbits not yet set by provider */
-        if ((ameth == NULL || ameth->siginf_set == NULL
-                || !ameth->siginf_set(siginf, alg, sig)) &&
-            siginf->secbits<0) {
-            ERR_raise(ERR_LIB_X509, X509_R_ERROR_USING_SIGINF_SET);
-            return 0;
+        if (ameth == NULL || ameth->siginf_set == NULL
+                || !ameth->siginf_set(siginf, alg, sig)) {
+            int snid;
+            /* error only if no provider can handle md/pkey combination */
+            if (OBJ_find_sigid_by_algs(&snid, mdnid, pknid)) {
+                siginf->secbits=EVP_PKEY_get_security_bits(pubkey);
+            }
+            else {
+                ERR_raise(ERR_LIB_X509, X509_R_ERROR_USING_SIGINF_SET);
+                return 0;
+            }
         }
         break;
         /*
@@ -280,5 +281,6 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
 /* Returns 1 on success, 0 on failure */
 int ossl_x509_init_sig_info(X509 *x)
 {
-    return x509_sig_info_init(&x->siginf, &x->sig_alg, &x->signature, X509_PUBKEY_get(x->cert_info.key));
+    return x509_sig_info_init(&x->siginf, &x->sig_alg, &x->signature,
+                              X509_PUBKEY_get0(x->cert_info.key));
 }
