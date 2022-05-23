@@ -81,8 +81,6 @@ These functions only work for B<EVP_PKEY>s that contain a provider side key.
 
 EVP_PKEY_gettable_params() returns NULL on error or if it is not supported.
 
-EVP_PKEY_get_params() returs 1 on success or <=0 on error.
-
 All other methods return 1 if a value associated with the key's I<key_name> was
 successfully returned, or 0 if there was an error.
 An error may be returned by methods EVP_PKEY_get_utf8_string_param() and

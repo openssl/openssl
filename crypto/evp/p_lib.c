@@ -2125,7 +2125,7 @@ int EVP_PKEY_get_bn_param(const EVP_PKEY *pkey, const char *key_name,
     memset(buffer, 0, sizeof(buffer));
     params[0] = OSSL_PARAM_construct_BN(key_name, buffer, sizeof(buffer));
     params[1] = OSSL_PARAM_construct_end();
-    if (EVP_PKEY_get_params(pkey, params) <= 0) {
+    if (!EVP_PKEY_get_params(pkey, params)) {
         if (!OSSL_PARAM_modified(params) || params[0].return_size == 0)
             return 0;
         buf_sz = params[0].return_size;
@@ -2139,7 +2139,7 @@ int EVP_PKEY_get_bn_param(const EVP_PKEY *pkey, const char *key_name,
         params[0].data = buf;
         params[0].data_size = buf_sz;
 
-        if (EVP_PKEY_get_params(pkey, params) <= 0)
+        if (!EVP_PKEY_get_params(pkey, params))
             goto err;
     }
     /* Fail if the param was not found */
@@ -2163,7 +2163,7 @@ int EVP_PKEY_get_octet_string_param(const EVP_PKEY *pkey, const char *key_name,
 
     params[0] = OSSL_PARAM_construct_octet_string(key_name, buf, max_buf_sz);
     params[1] = OSSL_PARAM_construct_end();
-    if ((ret1 = (EVP_PKEY_get_params(pkey, params) > 0)))
+    if ((ret1 = EVP_PKEY_get_params(pkey, params)))
         ret2 = OSSL_PARAM_modified(params);
     if (ret2 && out_len != NULL)
         *out_len = params[0].return_size;
@@ -2182,7 +2182,7 @@ int EVP_PKEY_get_utf8_string_param(const EVP_PKEY *pkey, const char *key_name,
 
     params[0] = OSSL_PARAM_construct_utf8_string(key_name, str, max_buf_sz);
     params[1] = OSSL_PARAM_construct_end();
-    if ((ret1 = (EVP_PKEY_get_params(pkey, params) > 0)))
+    if ((ret1 = EVP_PKEY_get_params(pkey, params)))
         ret2 = OSSL_PARAM_modified(params);
     if (ret2 && out_len != NULL)
         *out_len = params[0].return_size;
@@ -2343,10 +2343,10 @@ int EVP_PKEY_get_params(const EVP_PKEY *pkey, OSSL_PARAM params[])
 {
     if (pkey != NULL) {
         if (evp_pkey_is_provided(pkey))
-            return evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params);
+            return evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params) > 0;
 #ifndef FIPS_MODULE
         else if (evp_pkey_is_legacy(pkey))
-            return evp_pkey_get_params_to_ctrl(pkey, params);
+            return evp_pkey_get_params_to_ctrl(pkey, params) > 0;
 #endif
     }
     ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_KEY);
