@@ -136,6 +136,9 @@ struct ossl_record_layer_st
     /* Set to 1 if this is the first handshake. 0 otherwise */
     int is_first_handshake;
 
+    /* The negotiated maximum fragment length */
+    unsigned int max_frag_len;
+
     /* Only used by SSLv3 */
     unsigned char mac_secret[EVP_MAX_MD_SIZE];
 

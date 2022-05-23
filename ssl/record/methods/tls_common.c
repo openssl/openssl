@@ -413,7 +413,6 @@ static int tls_get_more_records(OSSL_RECORD_LAYER *rl,
     size_t more, n;
     SSL3_RECORD *rr, *thisrr;
     SSL3_BUFFER *rbuf;
-    SSL_SESSION *sess;
     unsigned char *p;
     unsigned char md[EVP_MAX_MD_SIZE];
     unsigned int version;
@@ -437,7 +436,6 @@ static int tls_get_more_records(OSSL_RECORD_LAYER *rl,
     max_recs = s->max_pipelines;
     if (max_recs == 0)
         max_recs = 1;
-    sess = s->session;
 
     do {
         thisrr = &rr[num_recs];
@@ -740,9 +738,9 @@ static int tls_get_more_records(OSSL_RECORD_LAYER *rl,
     } OSSL_TRACE_END(TLS);
 
     /* r->length is now the compressed data plus mac */
-    if ((sess != NULL)
-            && (rl->enc_read_ctx != NULL)
-            && (!rl->use_etm && EVP_MD_CTX_get0_md(rl->read_hash) != NULL)) {
+    if (rl->enc_read_ctx != NULL
+            && !rl->use_etm
+            && EVP_MD_CTX_get0_md(rl->read_hash) != NULL) {
         /* rl->read_hash != NULL => mac_size != -1 */
 
         for (j = 0; j < num_recs; j++) {
@@ -786,10 +784,9 @@ static int tls_get_more_records(OSSL_RECORD_LAYER *rl,
         /*
          * Check if the received packet overflows the current
          * Max Fragment Length setting.
-         * Note: USE_MAX_FRAGMENT_LENGTH_EXT and KTLS are mutually exclusive.
+         * Note: rl->max_frag_len > 0 and KTLS are mutually exclusive.
          */
-        if (s->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(s->session)
-                && thisrr->length > GET_MAX_FRAGMENT_LENGTH(s->session)) {
+        if (rl->max_frag_len > 0 && thisrr->length > rl->max_frag_len) {
             RLAYERfatal(rl, SSL_AD_RECORD_OVERFLOW, SSL_R_DATA_LENGTH_TOO_LONG);
             goto end;
         }
@@ -1050,7 +1047,11 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                 RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_FAILED_TO_GET_PARAMETER);
                 goto err;
             }
-            break;
+        } else if (strcmp(p->key, OSSL_LIBSSL_RECORD_LAYER_PARAM_MAX_FRAG_LEN) == 0) {
+            if (!OSSL_PARAM_get_uint(p, &rl->max_frag_len)) {
+                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_FAILED_TO_GET_PARAMETER);
+                goto err;
+            }
         } else {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_UNKNOWN_MANDATORY_PARAMETER);
             goto err;

@@ -558,10 +558,11 @@ extern "C" {
 
 /* Libssl record layer */
 
-#define OSSL_LIBSSL_RECORD_LAYER_PARAM_OPTIONS    "options"
-#define OSSL_LIBSSL_RECORD_LAYER_PARAM_MODE       "mode"
-#define OSSL_LIBSSL_RECORD_LAYER_PARAM_READ_AHEAD "read_ahead"
-#define OSSL_LIBSSL_RECORD_LAYER_PARAM_USE_ETM    "use_etm"
+#define OSSL_LIBSSL_RECORD_LAYER_PARAM_OPTIONS      "options"
+#define OSSL_LIBSSL_RECORD_LAYER_PARAM_MODE         "mode"
+#define OSSL_LIBSSL_RECORD_LAYER_PARAM_READ_AHEAD   "read_ahead"
+#define OSSL_LIBSSL_RECORD_LAYER_PARAM_USE_ETM      "use_etm"
+#define OSSL_LIBSSL_RECORD_LAYER_PARAM_MAX_FRAG_LEN "max_frag_len"
 
 # ifdef __cplusplus
 }
