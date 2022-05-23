@@ -213,6 +213,13 @@ This may be omitted if the GET method is used and "keep-alive" is not requested.
 When the request context is fully prepared, the HTTP exchange may be performed
 with OSSL_HTTP_REQ_CTX_nbio() or OSSL_HTTP_REQ_CTX_exchange().
 
+=head1 NOTES
+
+When built with tracing enabled, OSSL_HTTP_REQ_CTX_nbio() and all functions
+using it, such as OSSL_HTTP_REQ_CTX_exchange() and L<OSSL_HTTP_transfer(3)>,
+may be traced using B<OSSL_TRACE_CATEGORY_HTTP>.
+See also L<OSSL_trace_enabled(3)> and L<openssl(1)/ENVIRONMENT>.
+
 =head1 RETURN VALUES
 
 OSSL_HTTP_REQ_CTX_new() returns a pointer to a B<OSSL_HTTP_REQ_CTX>, or NULL
@@ -248,7 +255,8 @@ L<ASN1_item_i2d_mem_bio(3)>,
 L<OSSL_HTTP_open(3)>,
 L<OSSL_HTTP_get(3)>,
 L<OSSL_HTTP_transfer(3)>,
-L<OSSL_HTTP_close(3)>
+L<OSSL_HTTP_close(3)>,
+L<OSSL_trace_enabled(3)>
 
 =head1 HISTORY
 
