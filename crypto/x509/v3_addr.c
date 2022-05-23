@@ -1099,7 +1099,7 @@ static int addr_contains(IPAddressOrRanges *parent,
     for (c = 0; c < sk_IPAddressOrRange_num(child); c++) {
         if (!extract_min_max(sk_IPAddressOrRange_value(child, c),
                              c_min, c_max, length))
-            return -1;
+            return 0;
         for (;; p++) {
             if (p >= sk_IPAddressOrRange_num(parent))
                 return 0;
@@ -1135,9 +1135,9 @@ int X509v3_addr_subset(IPAddrBlocks *a, IPAddrBlocks *b)
         fb = sk_IPAddressFamily_value(b, j);
         if (fb == NULL)
             return 0;
-        if (addr_contains(fb->ipAddressChoice->u.addressesOrRanges,
+        if (!addr_contains(fb->ipAddressChoice->u.addressesOrRanges,
                            fa->ipAddressChoice->u.addressesOrRanges,
-                           length_from_afi(X509v3_addr_get_afi(fb))) <= 0)
+                           length_from_afi(X509v3_addr_get_afi(fb))))
             return 0;
     }
     return 1;
@@ -1247,7 +1247,7 @@ static int addr_validate_path_internal(X509_STORE_CTX *ctx,
                 if (fc->ipAddressChoice->type == IPAddressChoice_inherit
                     || addr_contains(fp->ipAddressChoice->u.addressesOrRanges,
                                      fc->ipAddressChoice->u.addressesOrRanges,
-                                     length_from_afi(X509v3_addr_get_afi(fc))) > 0)
+                                     length_from_afi(X509v3_addr_get_afi(fc))))
                     (void)sk_IPAddressFamily_set(child, j, fp);
                 else
                     validation_err(X509_V_ERR_UNNESTED_RESOURCE);

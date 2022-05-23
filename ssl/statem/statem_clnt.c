@@ -3335,7 +3335,7 @@ int tls_client_key_exchange_post_work(SSL *s)
 #ifndef OPENSSL_NO_SRP
     /* Check for SRP */
     if (s->s3.tmp.new_cipher->algorithm_mkey & SSL_kSRP) {
-        if (srp_generate_client_master_secret(s) <= 0) {
+        if (!srp_generate_client_master_secret(s)) {
             /* SSLfatal() already called */
             goto err;
         }
