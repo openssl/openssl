@@ -206,16 +206,16 @@ int dhparam_main(int argc, char **argv)
         }
 
         if (dsaparam) {
-            if (!EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx, num)) {
+            if (EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx, num) <= 0) {
                 BIO_printf(bio_err, "Error, unable to set DSA prime length\n");
                 goto end;
             }
         } else {
-            if (!EVP_PKEY_CTX_set_dh_paramgen_prime_len(ctx, num)) {
+            if (EVP_PKEY_CTX_set_dh_paramgen_prime_len(ctx, num) <= 0) {
                 BIO_printf(bio_err, "Error, unable to set DH prime length\n");
                 goto end;
             }
-            if (!EVP_PKEY_CTX_set_dh_paramgen_generator(ctx, g)) {
+            if (EVP_PKEY_CTX_set_dh_paramgen_generator(ctx, g) <= 0) {
                 BIO_printf(bio_err, "Error, unable to set generator\n");
                 goto end;
             }

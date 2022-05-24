@@ -289,7 +289,7 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
     kdf_type = EVP_PKEY_CTX_get_ecdh_kdf_type(pctx);
     if (kdf_type <= 0)
         goto err;
-    if (!EVP_PKEY_CTX_get_ecdh_kdf_md(pctx, &kdf_md))
+    if (EVP_PKEY_CTX_get_ecdh_kdf_md(pctx, &kdf_md) <= 0)
         goto err;
     ecdh_nid = EVP_PKEY_CTX_get_ecdh_cofactor_mode(pctx);
     if (ecdh_nid < 0)

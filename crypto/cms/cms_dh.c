@@ -244,7 +244,7 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
 
     /* See if custom parameters set */
     kdf_type = EVP_PKEY_CTX_get_dh_kdf_type(pctx);
-    if (kdf_type <= 0 || !EVP_PKEY_CTX_get_dh_kdf_md(pctx, &kdf_md))
+    if (kdf_type <= 0 || EVP_PKEY_CTX_get_dh_kdf_md(pctx, &kdf_md) <= 0)
         goto err;
 
     if (kdf_type == EVP_PKEY_DH_KDF_NONE) {
