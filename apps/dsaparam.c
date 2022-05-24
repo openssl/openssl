@@ -173,7 +173,7 @@ int dsaparam_main(int argc, char **argv)
                        "Error, DSA key generation paramgen init failed\n");
             goto end;
         }
-        if (!EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx, num)) {
+        if (EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx, num) <= 0) {
             BIO_printf(bio_err,
                        "Error, DSA key generation setting bit length failed\n");
             goto end;
