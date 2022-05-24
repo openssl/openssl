@@ -1760,7 +1760,7 @@ static int test_EC_keygen_with_enc(int idx)
     if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_name(testctx, "EC", NULL))
         || !TEST_int_gt(EVP_PKEY_paramgen_init(pctx), 0)
         || !TEST_int_gt(EVP_PKEY_CTX_set_group_name(pctx, "P-256"), 0)
-        || !TEST_true(EVP_PKEY_CTX_set_ec_param_enc(pctx, enc))
+        || !TEST_int_gt(EVP_PKEY_CTX_set_ec_param_enc(pctx, enc), 0)
         || !TEST_true(EVP_PKEY_paramgen(pctx, &params))
         || !TEST_ptr(params))
         goto done;
@@ -1897,7 +1897,7 @@ static int test_EVP_SM2(void)
     if (!TEST_true(EVP_PKEY_paramgen_init(pctx) == 1))
         goto done;
 
-    if (!TEST_true(EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, NID_sm2)))
+    if (!TEST_int_gt(EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, NID_sm2), 0))
         goto done;
 
     if (!TEST_true(EVP_PKEY_paramgen(pctx, &pkeyparams)))
@@ -3325,7 +3325,7 @@ static int test_ecpub(int idx)
     ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL);
     if (!TEST_ptr(ctx)
         || !TEST_int_gt(EVP_PKEY_keygen_init(ctx), 0)
-        || !TEST_true(EVP_PKEY_CTX_set_ec_paramgen_curve_nid(ctx, nid))
+        || !TEST_int_gt(EVP_PKEY_CTX_set_ec_paramgen_curve_nid(ctx, nid), 0)
         || !TEST_true(EVP_PKEY_keygen(ctx, &pkey)))
         goto done;
     len = i2d_PublicKey(pkey, NULL);
@@ -3380,7 +3380,7 @@ static int test_EVP_rsa_pss_with_keygen_bits(void)
         && TEST_ptr((ctx = EVP_PKEY_CTX_new_from_name(testctx, "RSA", testpropq)))
         && TEST_int_gt(EVP_PKEY_keygen_init(ctx), 0)
         && TEST_int_gt(EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, 512), 0)
-        && TEST_true(EVP_PKEY_CTX_set_rsa_pss_keygen_md(ctx, md))
+        && TEST_int_gt(EVP_PKEY_CTX_set_rsa_pss_keygen_md(ctx, md), 0)
         && TEST_true(EVP_PKEY_keygen(ctx, &pkey));
 
     EVP_MD_free(md);
