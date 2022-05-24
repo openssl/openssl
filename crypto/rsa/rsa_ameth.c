@@ -454,7 +454,7 @@ static RSA_PSS_PARAMS *rsa_ctx_to_pss(EVP_PKEY_CTX *pkctx)
         return NULL;
     if (EVP_PKEY_CTX_get_rsa_mgf1_md(pkctx, &mgf1md) <= 0)
         return NULL;
-    if (!EVP_PKEY_CTX_get_rsa_pss_saltlen(pkctx, &saltlen))
+    if (EVP_PKEY_CTX_get_rsa_pss_saltlen(pkctx, &saltlen) <= 0)
         return NULL;
     if (saltlen == -1) {
         saltlen = EVP_MD_get_size(sigmd);
