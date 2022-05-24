@@ -478,6 +478,7 @@ clean: libclean
 	-rd /Q /S test\test-runs
 
 distclean: clean
+	-del /Q /F include\openssl\configuration.h
 	-del /Q /F configdata.pm
 	-del /Q /F makefile
 

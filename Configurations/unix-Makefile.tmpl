@@ -594,6 +594,7 @@ clean: libclean
 	-find . -type l \! -name '.*' -exec $(RM) {} \;
 
 distclean: clean
+	$(RM) include/openssl/configuration.h
 	$(RM) configdata.pm
 	$(RM) Makefile
 
