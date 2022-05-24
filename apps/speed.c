@@ -695,7 +695,7 @@ static EVP_CIPHER_CTX *init_evp_cipher_ctx(const char *ciphername,
         goto end;
     }
 
-    if (!EVP_CIPHER_CTX_set_key_length(ctx, keylen)) {
+    if (EVP_CIPHER_CTX_set_key_length(ctx, keylen) <= 0) {
         EVP_CIPHER_CTX_free(ctx);
         ctx = NULL;
         goto end;
