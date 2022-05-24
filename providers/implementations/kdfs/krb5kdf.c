@@ -336,8 +336,10 @@ static int cipher_init(EVP_CIPHER_CTX *ctx,
     klen = EVP_CIPHER_CTX_get_key_length(ctx);
     if (key_len != (size_t)klen) {
         ret = EVP_CIPHER_CTX_set_key_length(ctx, key_len);
-        if (!ret)
+        if (ret <= 0) {
+            ret = 0;
             goto out;
+        }
     }
     /* we never want padding, either the length requested is a multiple of
      * the cipher block size or we are passed a cipher that can cope with
