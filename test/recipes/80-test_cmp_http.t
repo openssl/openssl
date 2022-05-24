@@ -170,7 +170,7 @@ sub test_cmp_http_aspect {
 # from $BLDTOP/test-runs/test_cmp_http and prepending the input files by SRCTOP.
 
 indir data_dir() => sub {
-    plan tests => @server_configurations * @all_aspects
+    plan tests => 1 + @server_configurations * @all_aspects
         + (grep(/^Mock$/, @server_configurations)
            && grep(/^certstatus$/, @all_aspects));
 
@@ -196,6 +196,7 @@ indir data_dir() => sub {
                 };
             };
             stop_mock_server($pid) if $pid;
+            ok(1, "killing mock server");
           }
         }
     };
@@ -294,4 +295,5 @@ sub stop_mock_server {
     my $pid = $_[0];
     print "Killing mock server with pid=$pid\n";
     kill('KILL', $pid);
+    waitpid($pid, 0);
 }
