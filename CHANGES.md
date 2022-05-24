@@ -122,6 +122,13 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 [Migration guide]: https://github.com/openssl/openssl/tree/master/doc/man7/migration_guide.pod
 
+### Changes between 3.0.3 and 3.0.4
+
+ * Case insensitive string comparison no longer uses locales.  It has instead
+   been directly implemented.
+
+   *Paul Dale*
+
 ### Changes between 3.0.2 and 3.0.3
 
  * Case insensitive string comparison is reimplemented via new locale-agnostic
