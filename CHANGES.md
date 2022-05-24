@@ -30,7 +30,10 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 3.0.3 and 3.0.4 [xx XXX xxxx]
 
- * none yet
+ * Case insensitive string comparison no longer uses locales.  It has instead
+   been directly implemented.
+
+   *Paul Dale*
 
 ### Changes between 3.0.2 and 3.0.3 [3 May 2022]
 
