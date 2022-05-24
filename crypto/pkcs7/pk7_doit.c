@@ -612,7 +612,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
              * length. The key length is determined by the size of the
              * decrypted RSA key.
              */
-            if (!EVP_CIPHER_CTX_set_key_length(evp_ctx, eklen)) {
+            if (EVP_CIPHER_CTX_set_key_length(evp_ctx, eklen) <= 0) {
                 /* Use random key as MMA defence */
                 OPENSSL_clear_free(ek, eklen);
                 ek = tkey;
