@@ -41,7 +41,6 @@ static int tls13_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
         return OSSL_RECORD_RETURN_FATAL;
     }
 
-    RECORD_LAYER_reset_read_sequence(&s->rlayer);
     rl->taglen = taglen;
 
     mode = EVP_CIPHER_get_mode(ciph);
@@ -66,7 +65,7 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
     unsigned char iv[EVP_MAX_IV_LENGTH], recheader[SSL3_RT_HEADER_LENGTH];
     size_t ivlen, offset, loop, hdrlen;
     unsigned char *staticiv;
-    unsigned char *seq;
+    unsigned char *seq = rl->sequence;
     int lenu, lenf;
     SSL3_RECORD *rec = &recs[0];
     WPACKET wpkt;
@@ -82,11 +81,9 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
     if (sending) {
         ctx = s->enc_write_ctx;
         staticiv = s->write_iv;
-        seq = RECORD_LAYER_get_write_sequence(&s->rlayer);
     } else {
         ctx = rl->enc_read_ctx;
         staticiv = rl->iv;
-        seq = RECORD_LAYER_get_read_sequence(&s->rlayer);
     }
 
     cipher = EVP_CIPHER_CTX_get0_cipher(ctx);
