@@ -113,6 +113,9 @@ struct ossl_record_layer_st
     unsigned char *packet;
     size_t packet_length;
 
+    /* Sequence number for the next record */
+    unsigned char sequence[SEQ_NUM_SIZE];
+
     int alert;
 
     /*

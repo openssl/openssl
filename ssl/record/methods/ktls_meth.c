@@ -449,7 +449,6 @@ static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
                                  /* TODO(RECLAYER): Remove me */
                                  SSL_CONNECTION *s)
 {
-    void *rl_sequence;
     ktls_crypto_info_t crypto_info;
 
     /*
@@ -488,12 +487,7 @@ static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
            return OSSL_RECORD_RETURN_NON_FATAL_ERR;
     }
 
-    if (rl->direction == OSSL_RECORD_DIRECTION_WRITE)
-        rl_sequence = RECORD_LAYER_get_write_sequence(&s->rlayer);
-    else
-        rl_sequence = RECORD_LAYER_get_read_sequence(&s->rlayer);
-
-    if (!ktls_configure_crypto(s, ciph, rl_sequence, &crypto_info,
+    if (!ktls_configure_crypto(s, ciph, rl->sequence, &crypto_info,
                                rl->direction == OSSL_RECORD_DIRECTION_WRITE,
                                iv, ivlen, key, keylen, mackey, mackeylen))
        return OSSL_RECORD_RETURN_NON_FATAL_ERR;

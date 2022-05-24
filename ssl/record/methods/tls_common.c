@@ -724,7 +724,8 @@ static int tls_get_more_records(OSSL_RECORD_LAYER *rl,
             rl->num_recs = 0;
             rl->curr_rec = 0;
             rl->num_released = 0;
-            RECORD_LAYER_reset_read_sequence(&s->rlayer);
+            /* Reset the read sequence */
+            memset(rl->sequence, 0, sizeof(rl->sequence));
             ret = 1;
             goto end;
         }
@@ -1260,7 +1261,7 @@ int tls_reset(OSSL_RECORD_LAYER *rl)
 
 int tls_unprocessed_read_pending(OSSL_RECORD_LAYER *rl)
 {
-    return SSL3_BUFFER_get_left(&rl->rbuf) != 0;;
+    return SSL3_BUFFER_get_left(&rl->rbuf) != 0;
 }
 
 int tls_processed_read_pending(OSSL_RECORD_LAYER *rl)

@@ -215,7 +215,7 @@ static const unsigned char ssl3_pad_2[48] = {
 static int ssl3_mac(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, unsigned char *md,
                     int sending, SSL_CONNECTION *ssl)
 {
-    unsigned char *mac_sec, *seq;
+    unsigned char *mac_sec, *seq = rl->sequence;
     const EVP_MD_CTX *hash;
     unsigned char *p, rec_char;
     size_t md_size;
@@ -224,11 +224,9 @@ static int ssl3_mac(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, unsigned char *md,
 
     if (sending) {
         mac_sec = &(ssl->s3.write_mac_secret[0]);
-        seq = RECORD_LAYER_get_write_sequence(&ssl->rlayer);
         hash = ssl->write_hash;
     } else {
         mac_sec = &(rl->mac_secret[0]);
-        seq = RECORD_LAYER_get_read_sequence(&ssl->rlayer);
         hash = rl->read_hash;
     }
 

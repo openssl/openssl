@@ -55,11 +55,6 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
         }
     }
 #endif
-    /*
-     * this is done by dtls1_reset_seq_numbers for DTLS
-     */
-    if (!rl->isdtls)
-        RECORD_LAYER_reset_read_sequence(&s->rlayer);
 
     /*
      * If we have an AEAD Cipher, then there is no separate MAC, so we can skip
@@ -248,8 +243,7 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
                     & EVP_CIPH_FLAG_AEAD_CIPHER) != 0) {
             unsigned char *seq;
 
-            seq = sending ? RECORD_LAYER_get_write_sequence(&s->rlayer)
-                : RECORD_LAYER_get_read_sequence(&s->rlayer);
+            seq = rl->sequence;
 
             if (SSL_CONNECTION_IS_DTLS(s)) {
                 /* DTLS does not support pipelining */
@@ -350,8 +344,7 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
         if (sending && !rl->use_etm)
             decrement_seq = 1;
 
-        seq = sending ? RECORD_LAYER_get_write_sequence(&s->rlayer)
-                        : RECORD_LAYER_get_read_sequence(&s->rlayer);
+        seq = rl->sequence;
         if (EVP_CIPHER_CTX_ctrl(ds, EVP_CTRL_TLSTREE, decrement_seq, seq) <= 0) {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
@@ -468,7 +461,7 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
 static int tls1_mac(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, unsigned char *md,
                     int sending, SSL_CONNECTION *ssl)
 {
-    unsigned char *seq;
+    unsigned char *seq = rl->sequence;
     EVP_MD_CTX *hash;
     size_t md_size;
     int i;
@@ -481,13 +474,10 @@ static int tls1_mac(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, unsigned char *md,
     int t;
     int ret = 0;
 
-    if (sending) {
-        seq = RECORD_LAYER_get_write_sequence(&ssl->rlayer);
+    if (sending)
         hash = ssl->write_hash;
-    } else {
-        seq = RECORD_LAYER_get_read_sequence(&ssl->rlayer);
+    else
         hash = rl->read_hash;
-    }
 
     t = EVP_MD_CTX_get_size(hash);
     if (!ossl_assert(t >= 0))
