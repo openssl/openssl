@@ -1100,7 +1100,7 @@ int EVP_PKEY_CTX_set0_rsa_oaep_label(EVP_PKEY_CTX *ctx, void *label, int llen)
                                              (void *)label, (size_t)llen);
     *p++ = OSSL_PARAM_construct_end();
 
-    if (!evp_pkey_ctx_set_params_strict(ctx, rsa_params))
+    if (evp_pkey_ctx_set_params_strict(ctx, rsa_params) <= 0)
         return 0;
 
     /* Ownership is supposed to be transferred to the callee. */
