@@ -8,6 +8,7 @@
  */
 
 #include <assert.h>
+#include <limits.h>
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
@@ -2285,6 +2286,7 @@ OSSL_FUNC_BIO_free_fn ossl_core_bio_free;
 OSSL_FUNC_BIO_vprintf_fn ossl_core_bio_vprintf;
 OSSL_FUNC_BIO_vsnprintf_fn BIO_vsnprintf;
 static OSSL_FUNC_indicator_cb_fn core_indicator_get_callback;
+static OSSL_FUNC_BIO_ctrl_fn core_bio_ctrl;
 static OSSL_FUNC_self_test_cb_fn core_self_test_get_callback;
 static OSSL_FUNC_get_entropy_fn rand_get_entropy;
 static OSSL_FUNC_get_user_entropy_fn rand_get_user_entropy;
@@ -2450,6 +2452,25 @@ static void core_indicator_get_callback(OPENSSL_CORE_CTX *libctx,
     OSSL_INDICATOR_get_callback((OSSL_LIB_CTX *)libctx, cb);
 }
 
+/*
+ * This function maps ossl_core_bio_ctrl() to a function signature that
+ * matches OSSL_FUNC_BIO_ctrl_fn (it's unfortunately defined to return int
+ * when it should have returned long).
+ *
+ * No actual BIO control is expected to return a value that makes us lose
+ * significant bits.  The ossl_assert() ensures that we notice in debug
+ * builds, and in other builds, we return an error instead of returning a
+ * truncated value.
+ */
+static int core_bio_ctrl(OSSL_CORE_BIO *bio, int cmd, long num, void *ptr)
+{
+    long ret = ossl_core_bio_ctrl(bio, cmd, num, ptr);
+
+    if (!ossl_assert(ret >= INT_MIN && ret <= INT_MAX))
+        return -1;
+    return (int)ret;
+}
+
 static void core_self_test_get_callback(OPENSSL_CORE_CTX *libctx,
     OSSL_CALLBACK **cb, void **cbarg)
 {
@@ -2606,7 +2627,7 @@ static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_BIO_WRITE_EX, (void (*)(void))ossl_core_bio_write_ex },
     { OSSL_FUNC_BIO_GETS, (void (*)(void))ossl_core_bio_gets },
     { OSSL_FUNC_BIO_PUTS, (void (*)(void))ossl_core_bio_puts },
-    { OSSL_FUNC_BIO_CTRL, (void (*)(void))ossl_core_bio_ctrl },
+    { OSSL_FUNC_BIO_CTRL, (void (*)(void))core_bio_ctrl },
     { OSSL_FUNC_BIO_UP_REF, (void (*)(void))ossl_core_bio_up_ref },
     { OSSL_FUNC_BIO_FREE, (void (*)(void))ossl_core_bio_free },
     { OSSL_FUNC_BIO_VPRINTF, (void (*)(void))ossl_core_bio_vprintf },
