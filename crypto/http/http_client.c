@@ -20,6 +20,7 @@
 #include <openssl/cmperr.h>
 #include <openssl/buffer.h>
 #include <openssl/http.h>
+#include <openssl/trace.h>
 #include "internal/sockets.h"
 #include "internal/common.h" /* for ossl_assert() */
 
@@ -632,11 +633,12 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
             return 0;
         }
 
-#ifndef NDEBUG
-        if ((rctx->state == OHS_FIRSTLINE && strstr(buf, " 200") == NULL)
-                || rctx->state == OHS_ERROR)
-            printf("%s", buf); /* dump header lines */
-#endif
+        /* dump header lines */
+        if (OSSL_TRACE_ENABLED(HTTP)
+            && ((rctx->state == OHS_FIRSTLINE && strstr(buf, " 200") == NULL)
+                || rctx->state == OHS_ERROR))
+            OSSL_TRACE1(HTTP, "%s", buf);
+
         /* First line */
         if (rctx->state == OHS_FIRSTLINE) {
             switch (parse_http_line1(buf, &found_keep_alive)) {
@@ -729,12 +731,9 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
         }
 
         if (rctx->state == OHS_ERROR) {
-            if (found_text_ct) {
-#ifndef NDEBUG
-                if (BIO_get_mem_data(rctx->mem, &p) > 0)
-                    printf("%s", p);
-#endif
-            }
+            if (OSSL_TRACE_ENABLED(HTTP)
+                    && found_text_ct && BIO_get_mem_data(rctx->mem, &p) > 0)
+                OSSL_TRACE1(HTTP, "%s", p);
             return 0;
         }
 
@@ -982,11 +981,20 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
                             buf_size, overall_timeout);
 
  end:
-    if (rctx != NULL)
+    if (rctx != NULL) {
         /* remove any spurious error queue entries by ssl_add_cert_chain() */
         (void)ERR_pop_to_mark();
-    else
+#if !defined(OPENSSL_NO_TRACE) && !defined(OPENSSL_NO_STDIO)
+        {
+            BIO *trc_out = BIO_new_fp(stdout, BIO_NOCLOSE);
+
+            if (!OSSL_trace_set_channel(OSSL_TRACE_CATEGORY_HTTP, trc_out))
+                BIO_free(trc_out);
+        }
+#endif
+    } else {
         (void)ERR_clear_last_mark();
+    }
 
     return rctx;
 }
@@ -1227,6 +1235,7 @@ int OSSL_HTTP_close(OSSL_HTTP_REQ_CTX *rctx, int ok)
             rctx->wbio = wbio;
     }
     OSSL_HTTP_REQ_CTX_free(rctx);
+    (void)OSSL_trace_set_channel(OSSL_TRACE_CATEGORY_HTTP, NULL);
     return ret;
 }
 
