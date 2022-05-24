@@ -549,6 +549,7 @@ clean : libclean
         - DELETE []vmsconfig.pm;*
 
 distclean : clean
+        - DELETE [.include.openssl]configuration.h;*
         - DELETE configdata.pm;*
         - DELETE descrip.mms;*
 
