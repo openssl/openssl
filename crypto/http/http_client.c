@@ -542,6 +542,8 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
     case OHS_WRITE_INIT:
         rctx->len_to_send = BIO_get_mem_data(rctx->mem, &rctx->pos);
         rctx->state = OHS_WRITE_HDR;
+        if (OSSL_TRACE_ENABLED(HTTP))
+            OSSL_TRACE(HTTP, "Sending request header:\n");
 
         /* fall thru */
     case OHS_WRITE_HDR:
@@ -550,6 +552,10 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
         /* Copy some chunk of data from rctx->req to rctx->wbio */
 
         if (rctx->len_to_send > 0) {
+            if (OSSL_TRACE_ENABLED(HTTP)
+                && rctx->state == OHS_WRITE_HDR && rctx->len_to_send <= INT_MAX)
+                OSSL_TRACE2(HTTP, "%.*s", (int)rctx->len_to_send, rctx->pos);
+
             i = BIO_write(rctx->wbio, rctx->pos, rctx->len_to_send);
             if (i <= 0) {
                 if (BIO_should_retry(rctx->wbio))
@@ -633,11 +639,12 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
             return 0;
         }
 
-        /* dump header lines */
-        if (OSSL_TRACE_ENABLED(HTTP)
-            && ((rctx->state == OHS_FIRSTLINE && strstr(buf, " 200") == NULL)
-                || rctx->state == OHS_ERROR))
+        /* dump all response header lines */
+        if (OSSL_TRACE_ENABLED(HTTP)) {
+            if (rctx->state == OHS_FIRSTLINE)
+                OSSL_TRACE(HTTP, "Received response header:\n");
             OSSL_TRACE1(HTTP, "%s", buf);
+        }
 
         /* First line */
         if (rctx->state == OHS_FIRSTLINE) {
