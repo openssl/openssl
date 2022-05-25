@@ -547,15 +547,15 @@ int WPACKET_start_quic_sub_packet(WPACKET *pkt)
     /*
      * Assume no (sub)packet will exceed 4GiB, thus the 8-byte encoding need not
      * be used.
-     * */
+     */
     return WPACKET_start_quic_sub_packet_bound(pkt, OSSL_QUIC_VLINT_4B_MIN);
 }
 
 int WPACKET_quic_sub_allocate_bytes(WPACKET *pkt, size_t len, unsigned char **allocbytes)
 {
-    if (   !WPACKET_start_quic_sub_packet_bound(pkt, len)
-        || !WPACKET_allocate_bytes(pkt, len, allocbytes)
-        || !WPACKET_close(pkt))
+    if (!WPACKET_start_quic_sub_packet_bound(pkt, len)
+            || !WPACKET_allocate_bytes(pkt, len, allocbytes)
+            || !WPACKET_close(pkt))
         return 0;
 
     return 1;

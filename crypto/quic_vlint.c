@@ -1,28 +1,6 @@
 #include "internal/quic_vlint.h"
 #include "internal/e_os.h"
 
-size_t ossl_quic_vlint_encode_len(uint64_t v)
-{
-    if (v < OSSL_QUIC_VLINT_2B_MIN)
-        return 1;
-
-    if (v < OSSL_QUIC_VLINT_4B_MIN)
-        return 2;
-
-    if (v < OSSL_QUIC_VLINT_8B_MIN)
-        return 4;
-
-    if (v <= OSSL_QUIC_VLINT_MAX)
-        return 8;
-
-    return 0;
-}
-
-size_t ossl_quic_vlint_decode_len(uint8_t first_byte)
-{
-    return 1U << ((first_byte & 0xC0) >> 6);
-}
-
 void ossl_quic_vlint_encode_n(uint8_t *buf, uint64_t v, int n)
 {
     if (n == 1) {
