@@ -1383,7 +1383,7 @@ static int final_key_share(SSL *s, unsigned int context, int sent)
 
                 if (i < num_groups) {
                     /* A shared group exists so send a HelloRetryRequest */
-                    s->s3.group_id = group_id;
+                    s->s3.group_id = ssl_group_id_internal_to_tls13(group_id);
                     s->hello_retry_request = SSL_HRR_PENDING;
                     return 1;
                 }

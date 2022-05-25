@@ -4621,6 +4621,17 @@ static int test_key_exchange(int idx)
             kexch_alg = NID_X448;
             kexch_name0 = "x448";
             break;
+# ifndef OPENSSL_NO_TLS1_2
+        case 15:
+            max_version = TLS1_2_VERSION;
+# endif
+            /* Fall through */
+        case 14:
+            kexch_alg = NID_brainpoolP256r1;
+            kexch_name0 = "brainpoolP256r1";
+            if (is_fips)
+                return TEST_skip("brainpoolP256r1 is not supported in FIPS");
+            break;
 # endif
 # ifndef OPENSSL_NO_DH
 # ifndef OPENSSL_NO_TLS1_2
@@ -9985,7 +9996,7 @@ int setup_tests(void)
 # endif  /* OPENSSL_NO_PSK */
 # ifndef OPENSSL_NO_TLS1_2
     /* Test with both TLSv1.3 and 1.2 versions */
-    ADD_ALL_TESTS(test_key_exchange, 14);
+    ADD_ALL_TESTS(test_key_exchange, 16);
 #  if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_DH)
     ADD_ALL_TESTS(test_negotiated_group,
                   4 * (OSSL_NELEM(ecdhe_kexch_groups)

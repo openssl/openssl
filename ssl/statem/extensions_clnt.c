@@ -227,8 +227,7 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt,
 #ifndef OPENSSL_NO_TLS1_3
             int ctmp13 = ssl_group_id_internal_to_tls13(ctmp);
 
-            if (ctmp13 != 0 && ctmp13 != ctmp
-                    && max_version == TLS1_3_VERSION) {
+            if (okfortls13 && max_version == TLS1_3_VERSION && ctmp13 != ctmp) {
                 if (!WPACKET_put_bytes_u16(pkt, ctmp13)) {
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                     return EXT_RETURN_FAIL;
@@ -690,9 +689,6 @@ EXT_RETURN tls_construct_ctos_key_share(SSL *s, WPACKET *pkt,
         curve_id = s->s3.group_id;
     } else {
         for (i = 0; i < num_groups; i++) {
-            if (ssl_group_id_internal_to_tls13(pgroups[i]) == 0)
-                continue;
-
             if (!tls_group_allowed(s, pgroups[i], SSL_SECOP_CURVE_SUPPORTED))
                 continue;
 

@@ -635,7 +635,7 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
          * we requested, and must be the only key_share sent.
          */
         if (s->s3.group_id != 0
-                && (ssl_group_id_tls13_to_internal(group_id) != s->s3.group_id
+                && (group_id != s->s3.group_id
                     || PACKET_remaining(&key_share_list) != 0)) {
             SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_KEY_SHARE);
             return 0;
@@ -1349,6 +1349,7 @@ EXT_RETURN tls_construct_stoc_supported_groups(SSL *s, WPACKET *pkt,
 
         if (tls_valid_group(s, group, version, version, 0, NULL)
                 && tls_group_allowed(s, group, SSL_SECOP_CURVE_SUPPORTED)) {
+            group = ssl_group_id_internal_to_tls13(group);
             if (first) {
                 /*
                  * Check if the client is already using our preferred group. If
@@ -1593,8 +1594,7 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
         }
         if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_key_share)
                 || !WPACKET_start_sub_packet_u16(pkt)
-                || !WPACKET_put_bytes_u16(pkt, ssl_group_id_internal_to_tls13(
-                                          s->s3.group_id))
+                || !WPACKET_put_bytes_u16(pkt, s->s3.group_id)
                 || !WPACKET_close(pkt)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return EXT_RETURN_FAIL;
@@ -1626,7 +1626,8 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
         return EXT_RETURN_FAIL;
     }
 
-    if ((ginf = tls1_group_id_lookup(s->ctx, s->s3.group_id)) == NULL) {
+    if ((ginf = tls1_group_id_lookup(s->ctx, ssl_group_id_tls13_to_internal(
+                                     s->s3.group_id))) == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
     }

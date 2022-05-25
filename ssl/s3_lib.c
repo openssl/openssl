@@ -3650,6 +3650,8 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
                 id = s->s3.group_id;
             else
                 id = s->session->kex_group;
+            if (SSL_IS_TLS13(s) && s->server)
+                id = ssl_group_id_tls13_to_internal(id);
             ret = tls1_group_id2nid(id, 1);
             break;
         }
