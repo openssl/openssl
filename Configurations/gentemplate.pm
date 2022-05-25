@@ -227,6 +227,10 @@ sub dogenerate {
         foreach (@{$self->{info}->{depends}->{$src} // []}) {
             $self->dogenerate($_, $obj, $bin, %opts);
         }
+        # The generator itself may be is generated
+        if ($self->{info}->{generate}->{$script}) {
+            $self->dogenerate($script, $obj, $bin, %opts);
+        }
     }
     $cache{$src} = 1;
 }
