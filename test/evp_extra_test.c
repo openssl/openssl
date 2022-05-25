@@ -3377,7 +3377,7 @@ static int test_EVP_rsa_pss_with_keygen_bits(void)
 
     md = EVP_MD_fetch(testctx, "sha256", testpropq);
     ret = TEST_ptr(md)
-        && TEST_ptr((ctx = EVP_PKEY_CTX_new_from_name(testctx, "RSA", testpropq)))
+        && TEST_ptr((ctx = EVP_PKEY_CTX_new_from_name(testctx, "RSA-PSS", testpropq)))
         && TEST_int_gt(EVP_PKEY_keygen_init(ctx), 0)
         && TEST_int_gt(EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, 512), 0)
         && TEST_int_gt(EVP_PKEY_CTX_set_rsa_pss_keygen_md(ctx, md), 0)
