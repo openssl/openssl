@@ -87,7 +87,8 @@ sub generate_tests() {
                 "Curves" => $curve
             },
             test   => {
-                "ExpectedResult" => "ClientFail"
+                "ExpectedResult" => $curve =~ "brainpoolP.*"
+                                    ? "Success" : "ClientFail"
             },
         };
     }

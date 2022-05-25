@@ -1545,7 +1545,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-52]
-ExpectedResult = ClientFail
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -1572,7 +1572,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-53]
-ExpectedResult = ClientFail
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -1599,6 +1599,6 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-54]
-ExpectedResult = ClientFail
+ExpectedResult = Success
 
 
