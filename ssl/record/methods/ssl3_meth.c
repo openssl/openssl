@@ -23,9 +23,7 @@ static int ssl3_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
                                  /* TODO(RECLAYER): This probably should not be an int */
                                  int mactype,
                                  const EVP_MD *md,
-                                 const SSL_COMP *comp,
-                                 /* TODO(RECLAYER): Remove me */
-                                 SSL_CONNECTION *s)
+                                 const SSL_COMP *comp)
 {
     EVP_CIPHER_CTX *ciph_ctx;
 
@@ -84,8 +82,7 @@ static int ssl3_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
  *    1: Success or Mac-then-encrypt decryption failed (MAC will be randomised)
  */
 static int ssl3_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *inrecs, size_t n_recs,
-                       int sending, SSL_MAC_BUF *mac, size_t macsize,
-                       /* TODO(RECLAYER): Remove me */ SSL_CONNECTION *s)
+                       int sending, SSL_MAC_BUF *mac, size_t macsize)
 {
     SSL3_RECORD *rec;
     EVP_CIPHER_CTX *ds;
@@ -206,7 +203,7 @@ static const unsigned char ssl3_pad_2[48] = {
 };
 
 static int ssl3_mac(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, unsigned char *md,
-                    int sending, SSL_CONNECTION *ssl)
+                    int sending)
 {
     unsigned char *mac_sec, *seq = rl->sequence;
     const EVP_MD_CTX *hash;

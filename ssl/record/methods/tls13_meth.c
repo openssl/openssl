@@ -22,9 +22,7 @@ static int tls13_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
                                   /* TODO(RECLAYER): This probably should not be an int */
                                   int mactype,
                                   const EVP_MD *md,
-                                  const SSL_COMP *comp,
-                                  /* TODO(RECLAYER): Remove me */
-                                  SSL_CONNECTION *s)
+                                  const SSL_COMP *comp)
 {
     EVP_CIPHER_CTX *ciph_ctx;
     int mode;
@@ -58,8 +56,7 @@ static int tls13_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
 }
 
 static int tls13_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
-                        int sending, SSL_MAC_BUF *mac, size_t macsize,
-                        /* TODO(RECLAYER): Remove me */ SSL_CONNECTION *s)
+                        int sending, SSL_MAC_BUF *mac, size_t macsize)
 {
     EVP_CIPHER_CTX *ctx;
     unsigned char iv[EVP_MAX_IV_LENGTH], recheader[SSL3_RT_HEADER_LENGTH];
@@ -206,8 +203,7 @@ static int tls13_validate_record_header(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
     return 1;
 }
 
-static int tls13_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec,
-                                     SSL_CONNECTION *s)
+static int tls13_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
 {
     /* Skip this if we've received a plaintext alert */
     if (rec->type != SSL3_RT_ALERT) {
@@ -234,7 +230,7 @@ static int tls13_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec,
         return 0;
     }
 
-    if (!tls13_common_post_process_record(rl, rec, s)) {
+    if (!tls13_common_post_process_record(rl, rec)) {
         /* RLAYERfatal already called */
         return 0;
     }

@@ -812,8 +812,6 @@ SSL *ossl_ssl_connection_new(SSL_CTX *ctx)
     s->max_send_fragment = ctx->max_send_fragment;
     s->split_send_fragment = ctx->split_send_fragment;
     s->max_pipelines = ctx->max_pipelines;
-    if (s->max_pipelines > 1)
-        RECORD_LAYER_set_read_ahead(&s->rlayer, 1);
     if (ctx->default_read_buf_len > 0)
         SSL_set_default_read_buffer_len(ssl, ctx->default_read_buf_len);
 
@@ -2779,8 +2777,8 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
         if (larg < 1 || larg > SSL_MAX_PIPELINES)
             return 0;
         sc->max_pipelines = larg;
-        if (larg > 1)
-            RECORD_LAYER_set_read_ahead(&sc->rlayer, 1);
+        if (sc->rrlmethod->set_max_pipelines != NULL)
+            sc->rrlmethod->set_max_pipelines(sc->rrl, (size_t)larg);
         return 1;
     case SSL_CTRL_GET_RI_SUPPORT:
         return sc->s3.send_connection_binding;

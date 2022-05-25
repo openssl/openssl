@@ -1278,7 +1278,7 @@ int ssl3_read_bytes(SSL *ssl, int type, int *recvd_type, unsigned char *buf,
                     s->rrlmethod->read_record(s->rrl, &rr->rechandle,
                                               &rr->version, &rr->type,
                                               &rr->data, &rr->length,
-                                              NULL, NULL, s));
+                                              NULL, NULL));
             if (ret <= 0) {
                 /* SSLfatal() already called if appropriate */
                 return ret;
@@ -1813,6 +1813,10 @@ static int ssl_post_record_layer_select(SSL_CONNECTION *s)
 #endif
     if (SSL_IS_FIRST_HANDSHAKE(s) && s->rrlmethod->set_first_handshake != NULL)
         s->rrlmethod->set_first_handshake(s->rrl, 1);
+
+    if (s->max_pipelines != 0 && s->rrlmethod->set_max_pipelines != NULL)
+        s->rrlmethod->set_max_pipelines(s->rrl, s->max_pipelines);
+
     return 1;
 }
 
@@ -1826,11 +1830,11 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
                              const SSL_COMP *comp)
 {
     OSSL_PARAM options[4], *opts = options;
-    OSSL_PARAM settings[4], *set =  settings;
+    OSSL_PARAM settings[6], *set =  settings;
     const OSSL_RECORD_METHOD *origmeth = s->rrlmethod;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     const OSSL_RECORD_METHOD *meth;
-    int use_etm;
+    int use_etm, stream_mac = 0, tlstree = 0;
     unsigned int maxfrag = SSL3_RT_MAX_PLAIN_LENGTH;
     int use_early_data = 0;
     uint32_t max_early_data;
@@ -1855,19 +1859,38 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
                                           &s->options);
     *opts++ = OSSL_PARAM_construct_uint32(OSSL_LIBSSL_RECORD_LAYER_PARAM_MODE,
                                           &s->mode);
-    *opts++ = OSSL_PARAM_construct_int(OSSL_LIBSSL_RECORD_LAYER_PARAM_MODE,
+    *opts++ = OSSL_PARAM_construct_int(OSSL_LIBSSL_RECORD_LAYER_PARAM_READ_AHEAD,
                                        &s->rlayer.read_ahead);
     *opts = OSSL_PARAM_construct_end();
 
     /* Parameters that *must* be supported by a record layer if passed */
-    if (direction == OSSL_RECORD_DIRECTION_READ)
+    if (direction == OSSL_RECORD_DIRECTION_READ) {
         use_etm = SSL_READ_ETM(s) ? 1 : 0;
-    else
+        if ((s->mac_flags & SSL_MAC_FLAG_READ_MAC_STREAM) != 0)
+            stream_mac = 1;
+
+        if ((s->mac_flags & SSL_MAC_FLAG_READ_MAC_TLSTREE) != 0)
+            tlstree = 1;
+    } else {
         use_etm = SSL_WRITE_ETM(s) ? 1 : 0;
+        if ((s->mac_flags & SSL_MAC_FLAG_WRITE_MAC_STREAM) != 0)
+            stream_mac = 1;
+
+        if ((s->mac_flags & SSL_MAC_FLAG_WRITE_MAC_TLSTREE) != 0)
+            tlstree = 1;
+    }
 
     if (use_etm)
         *set++ = OSSL_PARAM_construct_int(OSSL_LIBSSL_RECORD_LAYER_PARAM_USE_ETM,
                                           &use_etm);
+
+    if (stream_mac)
+        *set++ = OSSL_PARAM_construct_int(OSSL_LIBSSL_RECORD_LAYER_PARAM_STREAM_MAC,
+                                          &stream_mac);
+
+    if (tlstree)
+        *set++ = OSSL_PARAM_construct_int(OSSL_LIBSSL_RECORD_LAYER_PARAM_TLSTREE,
+                                          &tlstree);
 
     if (s->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(s->session))
         maxfrag = GET_MAX_FRAGMENT_LENGTH(s->session);
@@ -1917,7 +1940,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
                                                mactype, md, comp, prev, s->rbio,
                                                s->rrlnext, NULL, NULL, settings,
                                                options, rlayer_dispatch, s,
-                                               &s->rrl, s);
+                                               &s->rrl);
         BIO_free(prev);
         switch (rlret) {
         case OSSL_RECORD_RETURN_FATAL:

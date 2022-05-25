@@ -768,9 +768,9 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
     else
         rl_sequence = RECORD_LAYER_get_read_sequence(&s->rlayer);
 
-    if (!ktls_configure_crypto(s, cipher, rl_sequence, &crypto_info,
-                               which & SSL3_CC_WRITE, iv, ivlen, key, keylen,
-                               NULL, 0))
+    if (!ktls_configure_crypto(sctx->libctx, s->version, cipher, NULL,
+                               rl_sequence, &crypto_info, which & SSL3_CC_WRITE,
+                               iv, ivlen, key, keylen, NULL, 0))
         goto skip_ktls;
 
     /* ktls works with user provided buffers directly */

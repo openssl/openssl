@@ -21,9 +21,7 @@ static int tls_any_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
                                     /* TODO(RECLAYER): This probably should not be an int */
                                     int mactype,
                                     const EVP_MD *md,
-                                    const SSL_COMP *comp,
-                                    /* TODO(RECLAYER): Remove me */
-                                    SSL_CONNECTION *s)
+                                    const SSL_COMP *comp)
 {
     if (level != OSSL_RECORD_PROTECTION_LEVEL_NONE) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
@@ -37,8 +35,7 @@ static int tls_any_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
 
 static int tls_any_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs,
                           size_t n_recs, int sending, SSL_MAC_BUF *macs,
-                          size_t macsize,
-                          /* TODO(RECLAYER): Remove me */ SSL_CONNECTION *s)
+                          size_t macsize)
 {
     return 1;
 }
