@@ -294,4 +294,3 @@ files. The values in SSL_TESTS are globbed.
     $ make test TESTS=test_ssl_new SSL_TESTS="0*.cnf.in"
 
     $ make test TESTS=test_ssl_new SSL_TESTS="01-simple.cnf.in 05-sni.cnf.in"
-    
