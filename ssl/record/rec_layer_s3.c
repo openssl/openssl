@@ -1749,8 +1749,21 @@ size_t RECORD_LAYER_get_rrec_length(RECORD_LAYER *rl)
     return SSL3_RECORD_get_length(&rl->rrec[0]);
 }
 
+static void rlayer_msg_callback_wrapper(int write_p, int version,
+                                        int content_type, const void *buf,
+                                        size_t len, void *cbarg)
+{
+    SSL_CONNECTION *s = cbarg;
+    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+
+    if (s->msg_callback != NULL)
+        s->msg_callback(write_p, version, content_type, buf, len, ssl,
+                        s->msg_callback_arg);
+}
+
 static const OSSL_DISPATCH rlayer_dispatch[] = {
     { OSSL_FUNC_RLAYER_SKIP_EARLY_DATA, (void (*)(void))ossl_statem_skip_early_data },
+    { OSSL_FUNC_RLAYER_MSG_CALLBACK, (void (*)(void))rlayer_msg_callback_wrapper },
     { 0, NULL }
 };
 
