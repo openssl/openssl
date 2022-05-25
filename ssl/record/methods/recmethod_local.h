@@ -68,6 +68,7 @@ struct ossl_record_layer_st
     int version;
     int role;
     int direction;
+    int level;
 
     /*
      * A BIO containing any data read in the previous epoch that was destined
@@ -142,6 +143,12 @@ struct ossl_record_layer_st
     /* The negotiated maximum fragment length */
     unsigned int max_frag_len;
 
+    /* The maxium amount of early data we can receive/send */
+    uint32_t max_early_data;
+
+    /* The amount of early data that we have sent/received */
+    size_t early_data_count;
+
     /* Only used by SSLv3 */
     unsigned char mac_secret[EVP_MAX_MD_SIZE];
 
@@ -161,7 +168,10 @@ struct ossl_record_layer_st
 
     size_t taglen;
 
-    /* Function pointers for version specific functions */
+    /* Callbacks */
+    void *cbarg;
+    OSSL_FUNC_rlayer_skip_early_data_fn *rlayer_skip_early_data;
+
     /* Function pointers for version specific functions */
     struct record_functions_st *funcs;
 };
@@ -220,6 +230,7 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                          BIO *transport, BIO *next,
                          BIO_ADDR *local, BIO_ADDR *peer,
                          const OSSL_PARAM *settings, const OSSL_PARAM *options,
+                         const OSSL_DISPATCH *fns, void *cbarg,
                          OSSL_RECORD_LAYER **retrl,
                          /* TODO(RECLAYER): Remove me */
                          SSL_CONNECTION *s);

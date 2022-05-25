@@ -1749,6 +1749,11 @@ size_t RECORD_LAYER_get_rrec_length(RECORD_LAYER *rl)
     return SSL3_RECORD_get_length(&rl->rrec[0]);
 }
 
+static const OSSL_DISPATCH rlayer_dispatch[] = {
+    { OSSL_FUNC_RLAYER_SKIP_EARLY_DATA, (void (*)(void))ossl_statem_skip_early_data },
+    { 0, NULL }
+};
+
 static const OSSL_RECORD_METHOD *ssl_select_next_record_layer(SSL_CONNECTION *s,
                                                               int level)
 {
@@ -1797,12 +1802,14 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
                              const SSL_COMP *comp)
 {
     OSSL_PARAM options[4], *opts = options;
-    OSSL_PARAM settings[3], *set =  settings;
+    OSSL_PARAM settings[4], *set =  settings;
     const OSSL_RECORD_METHOD *origmeth = s->rrlmethod;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     const OSSL_RECORD_METHOD *meth;
     int use_etm;
     unsigned int maxfrag = SSL3_RT_MAX_PLAIN_LENGTH;
+    int use_early_data = 0;
+    uint32_t max_early_data;
 
     meth = ssl_select_next_record_layer(s, level);
 
@@ -1845,6 +1852,26 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
         *set++ = OSSL_PARAM_construct_uint(OSSL_LIBSSL_RECORD_LAYER_PARAM_MAX_FRAG_LEN,
                                            &maxfrag);
 
+    /*
+     * The record layer must check the amount of early data sent or received
+     * using the early keys. A server also needs to worry about rejected early
+     * data that might arrive when the handshake keys are in force.
+     */
+    /* TODO(RECLAYER): Check this when doing the "write" record layer */
+    if (s->server && direction == OSSL_RECORD_DIRECTION_READ) {
+        use_early_data = (level == OSSL_RECORD_PROTECTION_LEVEL_EARLY
+                          || level == OSSL_RECORD_PROTECTION_LEVEL_HANDSHAKE);
+    } else if (!s->server && direction == OSSL_RECORD_DIRECTION_WRITE) {
+        use_early_data = (level == OSSL_RECORD_PROTECTION_LEVEL_EARLY);
+    }
+    if (use_early_data) {
+        max_early_data = ossl_get_max_early_data(s);
+
+        if (max_early_data != 0)
+            *set++ = OSSL_PARAM_construct_uint(OSSL_LIBSSL_RECORD_LAYER_PARAM_MAX_EARLY_DATA,
+                                            &max_early_data);
+    }
+
     *set = OSSL_PARAM_construct_end();
 
     for (;;) {
@@ -1865,7 +1892,8 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
                                                mackey, mackeylen, ciph, taglen,
                                                mactype, md, comp, prev, s->rbio,
                                                s->rrlnext, NULL, NULL, settings,
-                                               options, &s->rrl, s);
+                                               options, rlayer_dispatch, s,
+                                               &s->rrl, s);
         BIO_free(prev);
         switch (rlret) {
         case OSSL_RECORD_RETURN_FATAL:

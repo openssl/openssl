@@ -10,6 +10,7 @@
 typedef struct ssl_connection_st SSL_CONNECTION;
 typedef struct ssl3_buffer_st SSL3_BUFFER;
 
+#include <openssl/core_dispatch.h>
 #include "recordmethod.h"
 
 /*****************************************************************************
@@ -290,3 +291,6 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version, int direction,
                              const EVP_CIPHER *ciph, size_t taglen,
                              int mactype, const EVP_MD *md,
                              const SSL_COMP *comp);
+
+# define OSSL_FUNC_RLAYER_SKIP_EARLY_DATA        1
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, rlayer_skip_early_data,(void *cbarg))

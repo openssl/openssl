@@ -165,6 +165,8 @@ struct ossl_record_method_st {
                             BIO_ADDR *peer,
                             const OSSL_PARAM *settings,
                             const OSSL_PARAM *options,
+                            const OSSL_DISPATCH *fns,
+                            void *cbarg,
                             OSSL_RECORD_LAYER **ret,
                             /* TODO(RECLAYER): Remove me */
                             SSL_CONNECTION *s);
