@@ -299,3 +299,6 @@ OSSL_CORE_MAKE_FUNC(void, rlayer_msg_callback, (int write_p, int version,
                                                 int content_type,
                                                 const void *buf, size_t len,
                                                 void *cbarg))
+# define OSSL_FUNC_RLAYER_SECURITY               3
+OSSL_CORE_MAKE_FUNC(int, rlayer_security, (void *cbarg, int op, int bits,
+                                           int nid, void *other))
