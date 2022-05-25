@@ -31,14 +31,22 @@ my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
 $ENV{TEST_CERTS_DIR} = srctop_dir("test", "certs");
 
-my @conf_srcs =  glob(srctop_file("test", "ssl-tests", "*.cnf.in"));
+my @conf_srcs = ();
+if (defined $ENV{SSL_TESTS}) {
+    my @conf_list = split(' ', $ENV{SSL_TESTS});
+    foreach my $conf_file (@conf_list) {
+        push (@conf_srcs, glob(srctop_file("test", "ssl-tests", $conf_file)));
+    }
+    plan tests => scalar @conf_srcs;
+} else {
+    @conf_srcs = glob(srctop_file("test", "ssl-tests", "*.cnf.in"));
+    # We hard-code the number of tests to double-check that the globbing above
+    # finds all files as expected.
+    plan tests => 30;
+}
 map { s/;.*// } @conf_srcs if $^O eq "VMS";
 my @conf_files = map { basename($_, ".in") } @conf_srcs;
 map { s/\^// } @conf_files if $^O eq "VMS";
-
-# We hard-code the number of tests to double-check that the globbing above
-# finds all files as expected.
-plan tests => 30;
 
 # Some test results depend on the configuration of enabled protocols. We only
 # verify generated sources in the default configuration.
