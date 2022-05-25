@@ -167,9 +167,7 @@ struct ossl_record_method_st {
                             const OSSL_PARAM *options,
                             const OSSL_DISPATCH *fns,
                             void *cbarg,
-                            OSSL_RECORD_LAYER **ret,
-                            /* TODO(RECLAYER): Remove me */
-                            SSL_CONNECTION *s);
+                            OSSL_RECORD_LAYER **ret);
     int (*free)(OSSL_RECORD_LAYER *rl);
 
     int (*reset)(OSSL_RECORD_LAYER *rl); /* Is this needed? */
@@ -267,8 +265,7 @@ struct ossl_record_method_st {
      */
     int (*read_record)(OSSL_RECORD_LAYER *rl, void **rechandle, int *rversion,
                       int *type, unsigned char **data, size_t *datalen,
-                      uint16_t *epoch, unsigned char *seq_num,
-                      /* TODO(RECLAYER): Remove me */ SSL_CONNECTION *s);
+                      uint16_t *epoch, unsigned char *seq_num);
     /*
      * Release a buffer associated with a record previously read with
      * read_record. Records are guaranteed to be released in the order that they
@@ -304,6 +301,12 @@ struct ossl_record_method_st {
      * first handshake. Also called at the end of the first handshake
      */
     void (*set_first_handshake)(OSSL_RECORD_LAYER *rl, int first);
+
+    /*
+     * Set the maximum number of pipelines that the record layer should process.
+     * The default is 1.
+     */
+    void (*set_max_pipelines)(OSSL_RECORD_LAYER *rl, size_t max_pipelines);
 
     /*
      * TODO(RECLAYER): Remove these. These function pointers are temporary hacks

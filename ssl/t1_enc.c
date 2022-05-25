@@ -456,9 +456,9 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
     else
         rl_sequence = RECORD_LAYER_get_read_sequence(&s->rlayer);
 
-    if (!ktls_configure_crypto(s, c, rl_sequence, &crypto_info,
-                               which & SSL3_CC_WRITE, iv, (size_t)k, key, cl,
-                               mac_secret, mac_secret_size))
+    if (!ktls_configure_crypto(sctx->libctx, s->version, c, m, rl_sequence,
+                               &crypto_info, which & SSL3_CC_WRITE, iv,
+                               (size_t)k, key, cl, mac_secret, mac_secret_size))
         goto skip_ktls;
 
     /* ktls works with user provided buffers directly */

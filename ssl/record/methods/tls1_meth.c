@@ -24,9 +24,7 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
                                  /* TODO(RECLAYER): This probably should not be an int */
                                  int mactype,
                                  const EVP_MD *md,
-                                 const SSL_COMP *comp,
-                                 /* TODO(RECLAYER): Remove me */
-                                 SSL_CONNECTION *s)
+                                 const SSL_COMP *comp)
 {
     EVP_CIPHER_CTX *ciph_ctx;
     EVP_PKEY *mac_key;
@@ -141,8 +139,7 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
  *    1: Success or Mac-then-encrypt decryption failed (MAC will be randomised)
  */
 static int tls1_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
-                       int sending, SSL_MAC_BUF *macs, size_t macsize,
-                       /* TODO(RECLAYER): Remove me */ SSL_CONNECTION *s)
+                       int sending, SSL_MAC_BUF *macs, size_t macsize)
 {
     EVP_CIPHER_CTX *ds;
     size_t reclen[SSL_MAX_PIPELINES];
@@ -151,9 +148,6 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
     size_t bs, ctr, padnum, loop;
     unsigned char padval;
     const EVP_CIPHER *enc;
-    int tlstree_enc = sending ? (s->mac_flags & SSL_MAC_FLAG_WRITE_MAC_TLSTREE)
-                              : (s->mac_flags & SSL_MAC_FLAG_READ_MAC_TLSTREE);
-    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
     if (n_recs == 0) {
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -180,7 +174,7 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
         int ivlen;
 
         /* For TLSv1.1 and later explicit IV */
-        if (RLAYER_USE_EXPLICIT_IV(s)
+        if (RLAYER_USE_EXPLICIT_IV(rl)
             && EVP_CIPHER_get_mode(enc) == EVP_CIPH_CBC_MODE)
             ivlen = EVP_CIPHER_get_iv_length(enc);
         else
@@ -202,7 +196,7 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
             }
         }
     }
-    if ((s->session == NULL) || (enc == NULL)) {
+    if (!ossl_assert(enc != NULL)) {
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -231,7 +225,9 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
 
             seq = rl->sequence;
 
-            if (SSL_CONNECTION_IS_DTLS(s)) {
+            if (rl->isdtls) {
+#if 0
+                /* TODO(RECLAYER): FIXME */
                 /* DTLS does not support pipelining */
                 unsigned char dtlsseq[8], *p = dtlsseq;
 
@@ -239,6 +235,7 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
                     DTLS_RECORD_LAYER_get_r_epoch(&s->rlayer), p);
                 memcpy(p, &seq[2], 6);
                 memcpy(buf[ctr], dtlsseq, 8);
+#endif
             } else {
                 memcpy(buf[ctr], seq, 8);
                 for (i = 7; i >= 0; i--) { /* increment */
@@ -318,7 +315,7 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
         }
     }
 
-    if (!SSL_CONNECTION_IS_DTLS(s) && tlstree_enc) {
+    if (!rl->isdtls && rl->tlstree) {
         unsigned char *seq;
         int decrement_seq = 0;
 
@@ -436,7 +433,7 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
                                         pad ? (size_t)pad : macsize,
                                         (EVP_CIPHER_get_flags(enc)
                                         & EVP_CIPH_FLAG_AEAD_CIPHER) != 0,
-                                        sctx->libctx))
+                                        rl->libctx))
                     return 0;
             }
         }
@@ -445,7 +442,7 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
 }
 
 static int tls1_mac(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, unsigned char *md,
-                    int sending, SSL_CONNECTION *ssl)
+                    int sending)
 {
     unsigned char *seq = rl->sequence;
     EVP_MD_CTX *hash;
@@ -453,10 +450,6 @@ static int tls1_mac(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, unsigned char *md,
     int i;
     EVP_MD_CTX *hmac = NULL, *mac_ctx;
     unsigned char header[13];
-    int stream_mac = sending ? (ssl->mac_flags & SSL_MAC_FLAG_WRITE_MAC_STREAM)
-                             : (ssl->mac_flags & SSL_MAC_FLAG_READ_MAC_STREAM);
-    int tlstree_mac = sending ? (ssl->mac_flags & SSL_MAC_FLAG_WRITE_MAC_TLSTREE)
-                              : (ssl->mac_flags & SSL_MAC_FLAG_READ_MAC_TLSTREE);
     int t;
     int ret = 0;
 
@@ -467,8 +460,7 @@ static int tls1_mac(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, unsigned char *md,
         return 0;
     md_size = t;
 
-    /* I should fix this up TLS TLS TLS TLS TLS XXXXXXXX */
-    if (stream_mac) {
+    if (rl->stream_mac) {
         mac_ctx = hash;
     } else {
         hmac = EVP_MD_CTX_new();
@@ -479,12 +471,14 @@ static int tls1_mac(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, unsigned char *md,
     }
 
     if (!rl->isdtls
-            && tlstree_mac
+            && rl->tlstree
             && EVP_MD_CTX_ctrl(mac_ctx, EVP_MD_CTRL_TLSTREE, 0, seq) <= 0) {
         goto end;
     }
 
     if (rl->isdtls) {
+#if 0
+        /* TODO(RECLAYER): FIX ME */
         unsigned char dtlsseq[8], *p = dtlsseq;
 
         s2n(sending ? DTLS_RECORD_LAYER_get_w_epoch(&ssl->rlayer) :
@@ -492,12 +486,13 @@ static int tls1_mac(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, unsigned char *md,
         memcpy(p, &seq[2], 6);
 
         memcpy(header, dtlsseq, 8);
+#endif
     } else
         memcpy(header, seq, 8);
 
     header[8] = rec->type;
-    header[9] = (unsigned char)(ssl->version >> 8);
-    header[10] = (unsigned char)(ssl->version);
+    header[9] = (unsigned char)(rl->version >> 8);
+    header[10] = (unsigned char)(rl->version);
     header[11] = (unsigned char)(rec->length >> 8);
     header[12] = (unsigned char)(rec->length & 0xff);
 
@@ -529,7 +524,7 @@ static int tls1_mac(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, unsigned char *md,
         BIO_dump_indent(trc_out, rec->data, rec->length, 4);
     } OSSL_TRACE_END(TLS);
 
-    if (!SSL_CONNECTION_IS_DTLS(ssl)) {
+    if (!rl->isdtls) {
         for (i = 7; i >= 0; i--) {
             ++seq[i];
             if (seq[i] != 0)

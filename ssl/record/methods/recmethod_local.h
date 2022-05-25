@@ -30,9 +30,7 @@ struct record_functions_st
                             /* TODO(RECLAYER): This probably should not be an int */
                             int mactype,
                             const EVP_MD *md,
-                            const SSL_COMP *comp,
-                            /* TODO(RECLAYER): Remove me */
-                            SSL_CONNECTION *s);
+                            const SSL_COMP *comp);
 
     int (*read_n)(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
                   int clearold, size_t *readbytes);
@@ -43,11 +41,10 @@ struct record_functions_st
      *    1: Success or MtE decryption failed (MAC will be randomised)
      */
     int (*cipher)(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
-                  int sending, SSL_MAC_BUF *macs, size_t macsize,
-                  /* TODO(RECLAYER): Remove me */ SSL_CONNECTION *s);
+                  int sending, SSL_MAC_BUF *macs, size_t macsize);
     /* Returns 1 for success or 0 for error */
     int (*mac)(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, unsigned char *md,
-               int sending, /* TODO(RECLAYER): Remove me */SSL_CONNECTION *ssl);
+               int sending);
 
     /* Return 1 for success or 0 for error */
     int (*set_protocol_version)(OSSL_RECORD_LAYER *rl, int version);
@@ -56,8 +53,7 @@ struct record_functions_st
     int (*validate_record_header)(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec);
 
     /* Return 1 for success or 0 for error */
-    int (*post_process_record)(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec,
-                               /* TODO(RECLAYER): Remove me */ SSL_CONNECTION *s);
+    int (*post_process_record)(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec);
 };
 
 struct ossl_record_layer_st
@@ -156,6 +152,10 @@ struct ossl_record_layer_st
     /* TLSv1.0/TLSv1.1/TLSv1.2 */
     int use_etm;
 
+    /* Flags for GOST ciphers */
+    int stream_mac;
+    int tlstree;
+
     /* TLSv1.3 fields */
     /* static IV */
     unsigned char iv[EVP_MAX_IV_LENGTH];
@@ -174,6 +174,8 @@ struct ossl_record_layer_st
     OSSL_FUNC_rlayer_skip_early_data_fn *skip_early_data;
     OSSL_FUNC_rlayer_msg_callback_fn *msg_callback;
     OSSL_FUNC_rlayer_security_fn *security;
+
+    size_t max_pipelines;
 
     /* Function pointers for version specific functions */
     struct record_functions_st *funcs;
@@ -217,9 +219,8 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
 
 int tls_default_set_protocol_version(OSSL_RECORD_LAYER *rl, int version);
 int tls_default_validate_record_header(OSSL_RECORD_LAYER *rl, SSL3_RECORD *re);
-int tls_default_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, SSL_CONNECTION *s);
-int tls13_common_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec,
-                                     SSL_CONNECTION *s);
+int tls_default_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec);
+int tls13_common_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec);
 
 int
 tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
@@ -234,9 +235,7 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                          BIO_ADDR *local, BIO_ADDR *peer,
                          const OSSL_PARAM *settings, const OSSL_PARAM *options,
                          const OSSL_DISPATCH *fns, void *cbarg,
-                         OSSL_RECORD_LAYER **retrl,
-                         /* TODO(RECLAYER): Remove me */
-                         SSL_CONNECTION *s);
+                         OSSL_RECORD_LAYER **retrl);
 int tls_free(OSSL_RECORD_LAYER *rl);
 int tls_reset(OSSL_RECORD_LAYER *rl);
 int tls_unprocessed_read_pending(OSSL_RECORD_LAYER *rl);
@@ -253,13 +252,13 @@ int tls_get_alert_code(OSSL_RECORD_LAYER *rl);
 int tls_set1_bio(OSSL_RECORD_LAYER *rl, BIO *bio);
 int tls_read_record(OSSL_RECORD_LAYER *rl, void **rechandle,  int *rversion,
                     int *type, unsigned char **data, size_t *datalen,
-                    uint16_t *epoch, unsigned char *seq_num,
-                    /* TODO(RECLAYER): Remove me */ SSL_CONNECTION *s);
+                    uint16_t *epoch, unsigned char *seq_num);
 int tls_release_record(OSSL_RECORD_LAYER *rl, void *rechandle);
 int tls_default_set_protocol_version(OSSL_RECORD_LAYER *rl, int version);
 int tls_set_protocol_version(OSSL_RECORD_LAYER *rl, int version);
 void tls_set_plain_alerts(OSSL_RECORD_LAYER *rl, int allow);
 void tls_set_first_handshake(OSSL_RECORD_LAYER *rl, int first);
+void tls_set_max_pipelines(OSSL_RECORD_LAYER *rl, size_t max_pipelines);
 SSL3_BUFFER *tls_get0_rbuf(OSSL_RECORD_LAYER *rl);
 unsigned char *tls_get0_packet(OSSL_RECORD_LAYER *rl);
 void tls_set0_packet(OSSL_RECORD_LAYER *rl, unsigned char *packet,

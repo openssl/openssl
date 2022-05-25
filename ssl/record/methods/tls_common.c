@@ -425,8 +425,7 @@ static int rlayer_early_data_count_ok(OSSL_RECORD_LAYER *rl, size_t length,
  * SSL3_RT_APPLICATION_DATA. The number of records returned will always be <=
  * |max_pipelines|
  */
-static int tls_get_more_records(OSSL_RECORD_LAYER *rl, 
-                                /* TODO(RECLAYER): Remove me */ SSL_CONNECTION *s)
+static int tls_get_more_records(OSSL_RECORD_LAYER *rl)
 {
     int enc_err, rret;
     int i;
@@ -452,7 +451,8 @@ static int tls_get_more_records(OSSL_RECORD_LAYER *rl,
         }
     }
 
-    max_recs = s->max_pipelines;
+    max_recs = rl->max_pipelines;
+
     if (max_recs == 0)
         max_recs = 1;
 
@@ -681,7 +681,7 @@ static int tls_get_more_records(OSSL_RECORD_LAYER *rl,
             }
             thisrr->length -= mac_size;
             mac = thisrr->data + thisrr->length;
-            i = rl->funcs->mac(rl, thisrr, md, 0 /* not send */, s);
+            i = rl->funcs->mac(rl, thisrr, md, 0 /* not send */);
             if (i == 0 || CRYPTO_memcmp(md, mac, mac_size) != 0) {
                 RLAYERfatal(rl, SSL_AD_BAD_RECORD_MAC,
                             SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC);
@@ -707,7 +707,7 @@ static int tls_get_more_records(OSSL_RECORD_LAYER *rl,
      * TODO(RECLAYER): Only call rl functions once TLSv1.3/SSLv3 is moved to new
      * record layer code
      */
-    enc_err = rl->funcs->cipher(rl, rr, num_recs, 0, macbufs, mac_size, s);
+    enc_err = rl->funcs->cipher(rl, rr, num_recs, 0, macbufs, mac_size);
 
     /*-
      * enc_err is:
@@ -763,7 +763,7 @@ static int tls_get_more_records(OSSL_RECORD_LAYER *rl,
             SSL_MAC_BUF *thismb = &macbufs[j];
             thisrr = &rr[j];
 
-            i = rl->funcs->mac(rl, thisrr, md, 0 /* not send */, s);
+            i = rl->funcs->mac(rl, thisrr, md, 0 /* not send */);
             if (i == 0 || thismb == NULL || thismb->mac == NULL
                 || CRYPTO_memcmp(md, thismb->mac, (size_t)mac_size) != 0)
                 enc_err = 0;
@@ -792,7 +792,7 @@ static int tls_get_more_records(OSSL_RECORD_LAYER *rl,
     for (j = 0; j < num_recs; j++) {
         thisrr = &rr[j];
 
-        if (!rl->funcs->post_process_record(rl, thisrr, s)) {
+        if (!rl->funcs->post_process_record(rl, thisrr)) {
             /* RLAYERfatal already called */
             goto end;
         }
@@ -905,7 +905,7 @@ static int tls_do_uncompress(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
 }
 
 /* Shared by tlsany_meth, ssl3_meth and tls1_meth */
-int tls_default_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, SSL_CONNECTION *s)
+int tls_default_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
 {
     if (rl->expand != NULL) {
         if (rec->length > SSL3_RT_MAX_COMPRESSED_LENGTH) {
@@ -929,8 +929,7 @@ int tls_default_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, SSL
 }
 
 /* Shared by tls13_meth and ktls_meth */
-int tls13_common_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec,
-                                     SSL_CONNECTION *s)
+int tls13_common_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
 {
     if (rec->type != SSL3_RT_APPLICATION_DATA
             && rec->type != SSL3_RT_ALERT
@@ -958,8 +957,7 @@ int tls13_common_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec,
 
 int tls_read_record(OSSL_RECORD_LAYER *rl, void **rechandle,  int *rversion,
                     int *type, unsigned char **data, size_t *datalen,
-                    uint16_t *epoch, unsigned char *seq_num,
-                    /* TODO(RECLAYER): Remove me */ SSL_CONNECTION *s)
+                    uint16_t *epoch, unsigned char *seq_num)
 {
     SSL3_RECORD *rec;
 
@@ -977,7 +975,7 @@ int tls_read_record(OSSL_RECORD_LAYER *rl, void **rechandle,  int *rversion,
             return OSSL_RECORD_RETURN_FATAL;
         }
 
-        ret = tls_get_more_records(rl, s);
+        ret = tls_get_more_records(rl);
 
         if (ret != OSSL_RECORD_RETURN_SUCCESS)
             return ret;
@@ -1025,9 +1023,7 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                          BIO_ADDR *peer, const OSSL_PARAM *settings,
                          const OSSL_PARAM *options,
                          const OSSL_DISPATCH *fns, void *cbarg,
-                         OSSL_RECORD_LAYER **retrl,
-                         /* TODO(RECLAYER): Remove me */
-                         SSL_CONNECTION *s)
+                         OSSL_RECORD_LAYER **retrl)
 {
     OSSL_RECORD_LAYER *rl = OPENSSL_zalloc(sizeof(*rl));
     const OSSL_PARAM *p;
@@ -1069,6 +1065,16 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
             }
         } else if (strcmp(p->key, OSSL_LIBSSL_RECORD_LAYER_PARAM_MAX_EARLY_DATA) == 0) {
             if (!OSSL_PARAM_get_uint32(p, &rl->max_early_data)) {
+                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_FAILED_TO_GET_PARAMETER);
+                goto err;
+            }
+        } else if (strcmp(p->key, OSSL_LIBSSL_RECORD_LAYER_PARAM_STREAM_MAC) == 0) {
+            if (!OSSL_PARAM_get_int(p, &rl->stream_mac)) {
+                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_FAILED_TO_GET_PARAMETER);
+                goto err;
+            }
+        } else if (strcmp(p->key, OSSL_LIBSSL_RECORD_LAYER_PARAM_TLSTREE) == 0) {
+            if (!OSSL_PARAM_get_int(p, &rl->tlstree)) {
                 RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_FAILED_TO_GET_PARAMETER);
                 goto err;
             }
@@ -1156,9 +1162,7 @@ tls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                      BIO *transport, BIO *next, BIO_ADDR *local, BIO_ADDR *peer,
                      const OSSL_PARAM *settings, const OSSL_PARAM *options,
                      const OSSL_DISPATCH *fns, void *cbarg,
-                     OSSL_RECORD_LAYER **retrl,
-                     /* TODO(RECLAYER): Remove me */
-                     SSL_CONNECTION *s)
+                     OSSL_RECORD_LAYER **retrl)
 {
     int ret;
     
@@ -1166,7 +1170,7 @@ tls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                                    key, keylen, iv, ivlen, mackey, mackeylen,
                                    ciph, taglen, mactype, md, comp, prev,
                                    transport, next, local, peer, settings,
-                                   options, fns, cbarg, retrl, s);
+                                   options, fns, cbarg, retrl);
 
     if (ret != OSSL_RECORD_RETURN_SUCCESS)
         return ret;
@@ -1195,7 +1199,7 @@ tls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
 
     ret = (*retrl)->funcs->set_crypto_state(*retrl, level, key, keylen, iv,
                                              ivlen, mackey, mackeylen, ciph,
-                                             taglen, mactype, md, comp, s);
+                                             taglen, mactype, md, comp);
 
  err:
     if (ret != OSSL_RECORD_RETURN_SUCCESS) {
@@ -1232,9 +1236,7 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                       BIO *transport, BIO *next, BIO_ADDR *local, BIO_ADDR *peer,
                       const OSSL_PARAM *settings, const OSSL_PARAM *options,
                       const OSSL_DISPATCH *fns, void *cbarg,
-                      OSSL_RECORD_LAYER **retrl,
-                      /* TODO(RECLAYER): Remove me */
-                      SSL_CONNECTION *s)
+                      OSSL_RECORD_LAYER **retrl)
 {
     int ret;
 
@@ -1243,7 +1245,7 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                                    key, keylen, iv, ivlen, mackey, mackeylen,
                                    ciph, taglen, mactype, md, comp, prev,
                                    transport, next, local, peer, settings,
-                                   options, fns, cbarg, retrl, s);
+                                   options, fns, cbarg, retrl);
 
     if (ret != OSSL_RECORD_RETURN_SUCCESS)
         return ret;
@@ -1381,6 +1383,13 @@ void tls_set_first_handshake(OSSL_RECORD_LAYER *rl, int first)
     rl->is_first_handshake = first;
 }
 
+void tls_set_max_pipelines(OSSL_RECORD_LAYER *rl, size_t max_pipelines)
+{
+    rl->max_pipelines = max_pipelines;
+    if (max_pipelines > 1)
+        rl->read_ahead = 1;
+}
+
 SSL3_BUFFER *tls_get0_rbuf(OSSL_RECORD_LAYER *rl)
 {
     return &rl->rbuf;
@@ -1422,6 +1431,7 @@ const OSSL_RECORD_METHOD ossl_tls_record_method = {
     tls_set_protocol_version,
     tls_set_plain_alerts,
     tls_set_first_handshake,
+    tls_set_max_pipelines,
 
     /*
      * TODO(RECLAYER): Remove these. These function pointers are temporary hacks
@@ -1455,6 +1465,7 @@ const OSSL_RECORD_METHOD ossl_dtls_record_method = {
     tls_set_protocol_version,
     NULL,
     tls_set_first_handshake,
+    tls_set_max_pipelines,
 
     /*
      * TODO(RECLAYER): Remove these. These function pointers are temporary hacks
