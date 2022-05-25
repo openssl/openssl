@@ -170,7 +170,8 @@ struct ossl_record_layer_st
 
     /* Callbacks */
     void *cbarg;
-    OSSL_FUNC_rlayer_skip_early_data_fn *rlayer_skip_early_data;
+    OSSL_FUNC_rlayer_skip_early_data_fn *skip_early_data;
+    OSSL_FUNC_rlayer_msg_callback_fn *msg_callback;
 
     /* Function pointers for version specific functions */
     struct record_functions_st *funcs;
