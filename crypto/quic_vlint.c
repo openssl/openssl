@@ -33,7 +33,7 @@ void ossl_quic_vlint_encode(uint8_t *buf, uint64_t v)
 uint64_t ossl_quic_vlint_decode_unchecked(const unsigned char *buf)
 {
     uint8_t first_byte = buf[0];
-    uint8_t sz = ossl_quic_vlint_decode_len(first_byte);
+    size_t sz = ossl_quic_vlint_decode_len(first_byte);
 
     if (sz == 1)
         return first_byte & 0x3F;
