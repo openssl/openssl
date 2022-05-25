@@ -63,8 +63,7 @@ void SSL3_RECORD_set_seq_num(SSL3_RECORD *r, const unsigned char *seq_num)
     memcpy(r->seq_num, seq_num, SEQ_NUM_SIZE);
 }
 
-int ossl_early_data_count_ok(SSL_CONNECTION *s, size_t length,
-                             size_t overhead, int send)
+uint32_t ossl_get_max_early_data(SSL_CONNECTION *s)
 {
     uint32_t max_early_data;
     SSL_SESSION *sess = s->session;
@@ -91,6 +90,16 @@ int ossl_early_data_count_ok(SSL_CONNECTION *s, size_t length,
         max_early_data = s->recv_max_early_data < sess->ext.max_early_data
                          ? s->recv_max_early_data : sess->ext.max_early_data;
 
+    return max_early_data;
+}
+
+int ossl_early_data_count_ok(SSL_CONNECTION *s, size_t length, size_t overhead,
+                             int send)
+{
+    uint32_t max_early_data;
+
+    max_early_data = ossl_get_max_early_data(s);
+
     if (max_early_data == 0) {
         SSLfatal(s, send ? SSL_AD_INTERNAL_ERROR : SSL_AD_UNEXPECTED_MESSAGE,
                  SSL_R_TOO_MUCH_EARLY_DATA);
@@ -110,8 +119,7 @@ int ossl_early_data_count_ok(SSL_CONNECTION *s, size_t length,
     return 1;
 }
 
-
-int ssl3_do_uncompress(SSL_CONNECTION *sc, SSL3_RECORD *rr)
+int ssl3_do_uncompress(SSL_CONNECTION *ssl, SSL3_RECORD *rr)
 {
 #ifndef OPENSSL_NO_COMP
     int i;
@@ -123,7 +131,7 @@ int ssl3_do_uncompress(SSL_CONNECTION *sc, SSL3_RECORD *rr)
     if (rr->comp == NULL)
         return 0;
 
-    i = COMP_expand_block(sc->expand, rr->comp,
+    i = COMP_expand_block(ssl->expand, rr->comp,
                           SSL3_RT_MAX_PLAIN_LENGTH, rr->data, (int)rr->length);
     if (i < 0)
         return 0;

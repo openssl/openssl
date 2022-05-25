@@ -574,6 +574,7 @@ ktls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                       const EVP_MD *md, const SSL_COMP *comp, BIO *prev,
                       BIO *transport, BIO *next, BIO_ADDR *local, BIO_ADDR *peer,
                       const OSSL_PARAM *settings, const OSSL_PARAM *options,
+                      const OSSL_DISPATCH *fns, void *cbarg,
                       OSSL_RECORD_LAYER **retrl,
                       /* TODO(RECLAYER): Remove me */
                       SSL_CONNECTION *s)
@@ -584,7 +585,7 @@ ktls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                                    key, keylen, iv, ivlen, mackey, mackeylen,
                                    ciph, taglen, mactype, md, comp, prev,
                                    transport, next, local, peer, settings,
-                                   options, retrl, s);
+                                   options, fns, cbarg, retrl, s);
 
     if (ret != OSSL_RECORD_RETURN_SUCCESS)
         return ret;
