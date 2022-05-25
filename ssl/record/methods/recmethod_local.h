@@ -130,10 +130,11 @@ struct ossl_record_layer_st
     size_t empty_record_count;
 
     /* cryptographic state */
-    EVP_CIPHER_CTX *enc_read_ctx;
+    EVP_CIPHER_CTX *enc_ctx;
 
     /* used for mac generation */
-    EVP_MD_CTX *read_hash;
+    EVP_MD_CTX *md_ctx;
+
     /* uncompress */
     COMP_CTX *expand;
 

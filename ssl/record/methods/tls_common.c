@@ -616,8 +616,8 @@ static int tls_get_more_records(OSSL_RECORD_LAYER *rl,
     } while (num_recs < max_recs
              && thisrr->type == SSL3_RT_APPLICATION_DATA
              && RLAYER_USE_EXPLICIT_IV(rl)
-             && rl->enc_read_ctx != NULL
-             && (EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(rl->enc_read_ctx))
+             && rl->enc_ctx != NULL
+             && (EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(rl->enc_ctx))
                  & EVP_CIPH_FLAG_PIPELINE) != 0
              && tls_record_app_data_waiting(rl));
 
@@ -652,8 +652,8 @@ static int tls_get_more_records(OSSL_RECORD_LAYER *rl,
         return OSSL_RECORD_RETURN_SUCCESS;
     }
 
-    if (rl->read_hash != NULL) {
-        const EVP_MD *tmpmd = EVP_MD_CTX_get0_md(rl->read_hash);
+    if (rl->md_ctx != NULL) {
+        const EVP_MD *tmpmd = EVP_MD_CTX_get0_md(rl->md_ctx);
 
         if (tmpmd != NULL) {
             imac_size = EVP_MD_get_size(tmpmd);
@@ -669,7 +669,7 @@ static int tls_get_more_records(OSSL_RECORD_LAYER *rl,
      * If in encrypt-then-mac mode calculate mac from encrypted record. All
      * the details below are public so no timing details can leak.
      */
-    if (rl->use_etm && rl->read_hash) {
+    if (rl->use_etm && rl->md_ctx) {
         unsigned char *mac;
 
         for (j = 0; j < num_recs; j++) {
@@ -754,10 +754,10 @@ static int tls_get_more_records(OSSL_RECORD_LAYER *rl,
     } OSSL_TRACE_END(TLS);
 
     /* r->length is now the compressed data plus mac */
-    if (rl->enc_read_ctx != NULL
+    if (rl->enc_ctx != NULL
             && !rl->use_etm
-            && EVP_MD_CTX_get0_md(rl->read_hash) != NULL) {
-        /* rl->read_hash != NULL => mac_size != -1 */
+            && EVP_MD_CTX_get0_md(rl->md_ctx) != NULL) {
+        /* rl->md_ctx != NULL => mac_size != -1 */
 
         for (j = 0; j < num_recs; j++) {
             SSL_MAC_BUF *thismb = &macbufs[j];
@@ -1262,8 +1262,8 @@ static void tls_int_free(OSSL_RECORD_LAYER *rl)
     BIO_free(rl->next);
     SSL3_BUFFER_release(&rl->rbuf);
 
-    EVP_CIPHER_CTX_free(rl->enc_read_ctx);
-    EVP_MD_CTX_free(rl->read_hash);
+    EVP_CIPHER_CTX_free(rl->enc_ctx);
+    EVP_MD_CTX_free(rl->md_ctx);
 #ifndef OPENSSL_NO_COMP
     COMP_CTX_free(rl->expand);
 #endif

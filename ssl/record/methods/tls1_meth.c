@@ -34,15 +34,15 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     if (level != OSSL_RECORD_PROTECTION_LEVEL_APPLICATION)
         return OSSL_RECORD_RETURN_FATAL;
 
-    if ((rl->enc_read_ctx = EVP_CIPHER_CTX_new()) == NULL) {
+    if ((rl->enc_ctx = EVP_CIPHER_CTX_new()) == NULL) {
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
         return OSSL_RECORD_RETURN_FATAL;
     }
 
-    ciph_ctx = rl->enc_read_ctx;
+    ciph_ctx = rl->enc_ctx;
 
-    rl->read_hash = EVP_MD_CTX_new();
-    if (rl->read_hash == NULL) {
+    rl->md_ctx = EVP_MD_CTX_new();
+    if (rl->md_ctx == NULL) {
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return OSSL_RECORD_RETURN_FATAL;
     }
@@ -75,7 +75,7 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
                                            (int)mackeylen);
         }
         if (mac_key == NULL
-            || EVP_DigestSignInit_ex(rl->read_hash, NULL, EVP_MD_get0_name(md),
+            || EVP_DigestSignInit_ex(rl->md_ctx, NULL, EVP_MD_get0_name(md),
                                      rl->libctx, rl->propq, mac_key,
                                      NULL) <= 0) {
             EVP_PKEY_free(mac_key);
@@ -160,23 +160,25 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
         return 0;
     }
 
-    if (sending) {
-        int ivlen;
 
-        if (EVP_MD_CTX_get0_md(s->write_hash)) {
-            int n = EVP_MD_CTX_get_size(s->write_hash);
-            if (!ossl_assert(n >= 0)) {
-                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                return 0;
-            }
-        }
-        ds = s->enc_write_ctx;
-        if (!ossl_assert(s->enc_write_ctx)) {
+    if (EVP_MD_CTX_get0_md(rl->md_ctx)) {
+        int n = EVP_MD_CTX_get_size(rl->md_ctx);
+        if (!ossl_assert(n >= 0)) {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
         }
+    }
+    ds = rl->enc_ctx;
+    if (!ossl_assert(rl->enc_ctx)) {
+        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
 
-        enc = EVP_CIPHER_CTX_get0_cipher(s->enc_write_ctx);
+    enc = EVP_CIPHER_CTX_get0_cipher(rl->enc_ctx);
+
+    if (sending) {
+        int ivlen;
+
         /* For TLSv1.1 and later explicit IV */
         if (RLAYER_USE_EXPLICIT_IV(s)
             && EVP_CIPHER_get_mode(enc) == EVP_CIPH_CBC_MODE)
@@ -192,30 +194,14 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
                         */
                     RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                     return 0;
-                } else if (RAND_bytes_ex(sctx->libctx, recs[ctr].input,
-                                         ivlen, 0) <= 0) {
+                } else if (RAND_bytes_ex(rl->libctx, recs[ctr].input,
+                                            ivlen, 0) <= 0) {
                     RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                     return 0;
                 }
             }
         }
-    } else {
-        if (EVP_MD_CTX_get0_md(rl->read_hash)) {
-            int n = EVP_MD_CTX_get_size(rl->read_hash);
-            if (!ossl_assert(n >= 0)) {
-                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                return 0;
-            }
-        }
-        ds = rl->enc_read_ctx;
-        if (!ossl_assert(rl->enc_read_ctx)) {
-            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
-
-        enc = EVP_CIPHER_CTX_get0_cipher(rl->enc_read_ctx);
     }
-
     if ((s->session == NULL) || (enc == NULL)) {
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
@@ -474,10 +460,7 @@ static int tls1_mac(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, unsigned char *md,
     int t;
     int ret = 0;
 
-    if (sending)
-        hash = ssl->write_hash;
-    else
-        hash = rl->read_hash;
+    hash = rl->md_ctx;
 
     t = EVP_MD_CTX_get_size(hash);
     if (!ossl_assert(t >= 0))
@@ -519,7 +502,7 @@ static int tls1_mac(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, unsigned char *md,
     header[12] = (unsigned char)(rec->length & 0xff);
 
     if (!sending && !rl->use_etm
-        && EVP_CIPHER_CTX_get_mode(rl->enc_read_ctx) == EVP_CIPH_CBC_MODE
+        && EVP_CIPHER_CTX_get_mode(rl->enc_ctx) == EVP_CIPH_CBC_MODE
         && ssl3_cbc_record_digest_supported(mac_ctx)) {
         OSSL_PARAM tls_hmac_params[2], *p = tls_hmac_params;
 

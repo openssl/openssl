@@ -35,7 +35,7 @@ static int tls13_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     }
     memcpy(rl->iv, iv, ivlen);
 
-    ciph_ctx = rl->enc_read_ctx = EVP_CIPHER_CTX_new();
+    ciph_ctx = rl->enc_ctx = EVP_CIPHER_CTX_new();
     if (ciph_ctx == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return OSSL_RECORD_RETURN_FATAL;
@@ -78,13 +78,8 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
         return 0;
     }
 
-    if (sending) {
-        ctx = s->enc_write_ctx;
-        staticiv = s->write_iv;
-    } else {
-        ctx = rl->enc_read_ctx;
-        staticiv = rl->iv;
-    }
+    ctx = rl->enc_ctx;
+    staticiv = rl->iv;
 
     cipher = EVP_CIPHER_CTX_get0_cipher(ctx);
     if (cipher == NULL) {
