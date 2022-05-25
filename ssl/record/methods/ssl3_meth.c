@@ -34,14 +34,14 @@ static int ssl3_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
         return OSSL_RECORD_RETURN_FATAL;
     }
 
-    if ((rl->enc_read_ctx = EVP_CIPHER_CTX_new()) == NULL) {
+    if ((rl->enc_ctx = EVP_CIPHER_CTX_new()) == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return OSSL_RECORD_RETURN_FATAL;
     }
-    ciph_ctx = rl->enc_read_ctx;
+    ciph_ctx = rl->enc_ctx;
 
-    rl->read_hash = EVP_MD_CTX_new();
-    if (rl->read_hash == NULL) {
+    rl->md_ctx = EVP_MD_CTX_new();
+    if (rl->md_ctx == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return OSSL_RECORD_RETURN_FATAL;
     }
@@ -100,19 +100,12 @@ static int ssl3_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *inrecs, size_t n_recs
      */
     if (n_recs != 1)
         return 0;
-    if (sending) {
-        ds = s->enc_write_ctx;
-        if (s->enc_write_ctx == NULL)
-            enc = NULL;
-        else
-            enc = EVP_CIPHER_CTX_get0_cipher(s->enc_write_ctx);
-    } else {
-        ds = rl->enc_read_ctx;
-        if (rl->enc_read_ctx == NULL)
-            enc = NULL;
-        else
-            enc = EVP_CIPHER_CTX_get0_cipher(rl->enc_read_ctx);
-    }
+
+    ds = rl->enc_ctx;
+    if (rl->enc_ctx == NULL)
+        enc = NULL;
+    else
+        enc = EVP_CIPHER_CTX_get0_cipher(rl->enc_ctx);
 
     provided = (EVP_CIPHER_get0_provider(enc) != NULL);
 
@@ -222,13 +215,8 @@ static int ssl3_mac(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, unsigned char *md,
     size_t npad;
     int t;
 
-    if (sending) {
-        mac_sec = &(ssl->s3.write_mac_secret[0]);
-        hash = ssl->write_hash;
-    } else {
-        mac_sec = &(rl->mac_secret[0]);
-        hash = rl->read_hash;
-    }
+    mac_sec = &(rl->mac_secret[0]);
+    hash = rl->md_ctx;
 
     t = EVP_MD_CTX_get_size(hash);
     if (t < 0)
@@ -237,7 +225,7 @@ static int ssl3_mac(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, unsigned char *md,
     npad = (48 / md_size) * md_size;
 
     if (!sending
-        && EVP_CIPHER_CTX_get_mode(rl->enc_read_ctx) == EVP_CIPH_CBC_MODE
+        && EVP_CIPHER_CTX_get_mode(rl->enc_ctx) == EVP_CIPH_CBC_MODE
         && ssl3_cbc_record_digest_supported(hash)) {
 #ifdef OPENSSL_NO_DEPRECATED_3_0
         return 0;
