@@ -245,6 +245,10 @@ C<http_proxy>, C<HTTP_PROXY>, C<https_proxy>, C<HTTPS_PROXY>, C<no_proxy>, and
 C<NO_PROXY>, have been chosen for maximal compatibility with
 other HTTP client implementations such as wget, curl, and git.
 
+When built with tracing enabled, OSSL_HTTP_transfer() and all functions using it
+may be traced using B<OSSL_TRACE_CATEGORY_HTTP>.
+See also L<OSSL_trace_enabled(3)> and L<openssl(1)/ENVIRONMENT>.
+
 =head1 RETURN VALUES
 
 OSSL_HTTP_open() returns on success a B<OSSL_HTTP_REQ_CTX>, else NULL.
@@ -266,7 +270,8 @@ OSSL_HTTP_close() returns 0 if anything went wrong while disconnecting, else 1.
 
 L<OSSL_HTTP_parse_url(3)>, L<BIO_new_connect(3)>,
 L<ASN1_item_i2d_mem_bio(3)>, L<ASN1_item_d2i_bio(3)>,
-L<OSSL_HTTP_is_alive(3)>
+L<OSSL_HTTP_is_alive(3)>,
+L<OSSL_trace_enabled(3)>
 
 =head1 HISTORY
 

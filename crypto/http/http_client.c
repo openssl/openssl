@@ -981,20 +981,11 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
                             buf_size, overall_timeout);
 
  end:
-    if (rctx != NULL) {
+    if (rctx != NULL)
         /* remove any spurious error queue entries by ssl_add_cert_chain() */
         (void)ERR_pop_to_mark();
-#if !defined(OPENSSL_NO_TRACE) && !defined(OPENSSL_NO_STDIO)
-        {
-            BIO *trc_out = BIO_new_fp(stdout, BIO_NOCLOSE);
-
-            if (!OSSL_trace_set_channel(OSSL_TRACE_CATEGORY_HTTP, trc_out))
-                BIO_free(trc_out);
-        }
-#endif
-    } else {
+    else
         (void)ERR_clear_last_mark();
-    }
 
     return rctx;
 }
@@ -1235,7 +1226,6 @@ int OSSL_HTTP_close(OSSL_HTTP_REQ_CTX *rctx, int ok)
             rctx->wbio = wbio;
     }
     OSSL_HTTP_REQ_CTX_free(rctx);
-    (void)OSSL_trace_set_channel(OSSL_TRACE_CATEGORY_HTTP, NULL);
     return ret;
 }
 
