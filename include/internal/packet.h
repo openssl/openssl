@@ -632,13 +632,14 @@ __owur static ossl_inline int PACKET_get_quic_length_prefixed(PACKET *pkt,
     PACKET tmp = *pkt;
 
     if (!PACKET_get_quic_vlint(&tmp, &length) ||
+        length > SIZE_MAX ||
         !PACKET_get_bytes(&tmp, &data, (size_t)length)) {
         return 0;
     }
 
     *pkt = tmp;
     subpkt->curr = data;
-    subpkt->remaining = length;
+    subpkt->remaining = (size_t)length;
 
     return 1;
 }
