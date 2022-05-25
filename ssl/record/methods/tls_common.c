@@ -90,12 +90,8 @@ static int rlayer_allow_compression(OSSL_RECORD_LAYER *rl)
 {
     if (rl->options & SSL_OP_NO_COMPRESSION)
         return 0;
-# if 0
-    /* TODO(RECLAYER): Implement ssl_security inside the record layer */
-    return ssl_security(s, SSL_SECOP_COMPRESSION, 0, 0, NULL);
-# else
-    return 1;
-# endif
+
+    return rl->security(rl->cbarg, SSL_SECOP_COMPRESSION, 0, 0, NULL);
 }
 #endif
 
@@ -1131,6 +1127,9 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
             break;
         case OSSL_FUNC_RLAYER_MSG_CALLBACK:
             rl->msg_callback = OSSL_FUNC_rlayer_msg_callback(fns);
+            break;
+        case OSSL_FUNC_RLAYER_SECURITY:
+            rl->security = OSSL_FUNC_rlayer_security(fns);
             break;
         default:
             /* Just ignore anything we don't understand */
