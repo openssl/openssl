@@ -10,6 +10,7 @@
 #define OSSL_FORCE_ERR_STATE
 
 #include <openssl/err.h>
+#include <openssl/trace.h>
 #include "err_local.h"
 
 int ERR_set_mark(void)
