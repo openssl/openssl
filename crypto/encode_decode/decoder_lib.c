@@ -358,8 +358,9 @@ static void collect_all_decoders(OSSL_DECODER *decoder, void *arg)
 {
     STACK_OF(OSSL_DECODER) *skdecoders = arg;
 
-    if (OSSL_DECODER_up_ref(decoder))
-        sk_OSSL_DECODER_push(skdecoders, decoder);
+    if (OSSL_DECODER_up_ref(decoder)
+            && !sk_OSSL_DECODER_push(skdecoders, decoder))
+        OSSL_DECODER_free(decoder);
 }
 
 static void collect_extra_decoder(OSSL_DECODER *decoder, void *arg)
