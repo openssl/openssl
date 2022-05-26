@@ -1401,8 +1401,10 @@ int ossl_provider_doall_activated(OSSL_LIB_CTX *ctx,
     for (curr = 0; curr < max; curr++) {
         OSSL_PROVIDER *prov = sk_OSSL_PROVIDER_value(provs, curr);
 
-        if (!cb(prov, cbdata))
+        if (!cb(prov, cbdata)) {
+            curr = -1;
             goto finish;
+        }
     }
     curr = -1;
 
