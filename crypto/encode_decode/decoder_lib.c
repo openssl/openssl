@@ -227,10 +227,6 @@ OSSL_DECODER_INSTANCE *ossl_decoder_instance_new(OSSL_DECODER *decoder,
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    if (!OSSL_DECODER_up_ref(decoder)) {
-        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
 
     prov = OSSL_DECODER_get0_provider(decoder);
     libctx = ossl_provider_libctx(prov);
@@ -261,6 +257,10 @@ OSSL_DECODER_INSTANCE *ossl_decoder_instance_new(OSSL_DECODER *decoder,
             = ossl_property_get_string_value(libctx, prop);
     }
 
+    if (!OSSL_DECODER_up_ref(decoder)) {
+        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
     decoder_inst->decoder = decoder;
     decoder_inst->decoderctx = decoderctx;
     return decoder_inst;
