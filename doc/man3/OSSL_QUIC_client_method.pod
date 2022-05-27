@@ -20,19 +20,20 @@ The OSSL_QUIC_client_method(), OSSL_QUIC_client_thread_method(), and
 OSSL_QUIC_server_method() functions provide methods for the
 L<SSL_CTX_new_ex(3)> function to provide QUIC protocol support.
 
-The OSSL_QUIC_client_thread_method() uses threads to allow blocking
-mode of operation and avoid the need to return the control to the
+The OSSL_QUIC_client_thread_method() uses threads to allow for a blocking
+mode of operation and avoid the need to return control to the
 OpenSSL library for processing time based events.
 The OSSL_QUIC_client_method() does not use threads and depends on
-nonblocking mode and the application periodically calling SSL functions.
+nonblocking mode of operation and the application periodically calling SSL
+functions.
 
 The OSSL_QUIC_server_method() is currently experimental and unsupported.
 It is provided for testing purposes. It does not provide a QUIC server
-implementation compliant with QUIC specification.
+implementation compliant with the QUIC specification.
 
 =head1 RETURN VALUES
 
-The functions return pointers to the constant method objects.
+These functions return pointers to the constant method objects.
 
 =head1 SEE ALSO
 

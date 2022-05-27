@@ -16,9 +16,9 @@
 
 # ifndef OPENSSL_NO_QUIC
 
-#ifdef  __cplusplus
+#  ifdef __cplusplus
 extern "C" {
-#endif
+#  endif
 
 /*
  * Method used for non-thread-assisted QUIC client operation.
@@ -35,9 +35,9 @@ __owur const SSL_METHOD *OSSL_QUIC_client_thread_method(void);
  */
 __owur const SSL_METHOD *OSSL_QUIC_server_method(void);
 
-#ifdef  __cplusplus
+#  ifdef __cplusplus
 }
-#endif
+#  endif
 
 # endif /* OPENSSL_NO_QUIC */
 #endif
