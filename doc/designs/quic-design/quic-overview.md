@@ -91,7 +91,7 @@ Packets are received from the network through the Datagram BIO interface.
 Congestion Controller
 ---------------------
 
-This is a pluggable API that provides calls to collect data relevant
+This is a pluggable API that provides calls to record data relevant
 for congestion control decisions and to query for decision on whether
 more data is allowed to be sent or not.
 
@@ -101,7 +101,7 @@ Loss Detector modules.
 ACK Handling And Loss Detector
 ------------------------------
 
-A complex module that tracks packets sent to the peer and received ACK frames.
+A module that tracks packets sent to the peer and received ACK frames.
 It detects lost packets (after an ACK is not received in time). It informs
 TX packetizer that it can drop frames waiting to be ACKed when ACK is received.
 It also schedules retransmits of frames from packets that are considered

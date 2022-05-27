@@ -501,10 +501,10 @@
       </g>
       <g class="com.sun.star.drawing.ConnectorShape">
        <g id="id53">
-        <rect class="BoundingBox" stroke="none" fill="none" x="5762" y="8927" width="1271" height="2089"/>
-        <path fill="none" stroke="rgb(0,0,0)" d="M 6036,9015 C 6587,9392 6202,10565 6768,10929"/>
-        <path fill="rgb(0,0,0)" stroke="none" d="M 5762,8937 L 6020,9119 6078,8928 5762,8937 Z"/>
-        <path fill="rgb(0,0,0)" stroke="none" d="M 7032,11001 L 6771,10822 6716,11014 7032,11001 Z"/>
+        <rect class="BoundingBox" stroke="none" fill="none" x="5761" y="9232" width="1272" height="1795"/>
+        <path fill="none" stroke="rgb(0,0,0)" d="M 6039,9322 C 6586,9645 6204,10624 6763,10938"/>
+        <path fill="rgb(0,0,0)" stroke="none" d="M 5761,9254 L 6026,9426 6077,9233 5761,9254 Z"/>
+        <path fill="rgb(0,0,0)" stroke="none" d="M 7032,11001 L 6765,10831 6717,11025 7032,11001 Z"/>
        </g>
       </g>
       <g class="com.sun.star.drawing.CustomShape">
@@ -517,10 +517,9 @@
       </g>
       <g class="com.sun.star.drawing.ConnectorShape">
        <g id="id55">
-        <rect class="BoundingBox" stroke="none" fill="none" x="15446" y="8837" width="8732" height="1371"/>
-        <path fill="none" stroke="rgb(0,0,0)" d="M 23878,8937 C 18256,8952 16098,9275 15545,9951"/>
-        <path fill="rgb(0,0,0)" stroke="none" d="M 24177,8937 L 23877,8837 23877,9037 24177,8937 Z"/>
-        <path fill="rgb(0,0,0)" stroke="none" d="M 15446,10207 L 15650,9966 15465,9891 15446,10207 Z"/>
+        <rect class="BoundingBox" stroke="none" fill="none" x="16556" y="9253" width="7623" height="955"/>
+        <path fill="none" stroke="rgb(0,0,0)" d="M 24177,9254 C 19096,9254 17257,9494 16684,9976"/>
+        <path fill="rgb(0,0,0)" stroke="none" d="M 16556,10207 L 16792,9997 16619,9897 16556,10207 Z"/>
        </g>
       </g>
       <g class="com.sun.star.drawing.ConnectorShape">
@@ -546,9 +545,9 @@
       </g>
       <g class="com.sun.star.drawing.ConnectorShape">
        <g id="id59">
-        <rect class="BoundingBox" stroke="none" fill="none" x="5761" y="8936" width="9686" height="1272"/>
-        <path fill="none" stroke="rgb(0,0,0)" d="M 5762,8937 C 12218,8937 14734,9276 15340,9955"/>
-        <path fill="rgb(0,0,0)" stroke="none" d="M 15446,10207 L 15418,9892 15234,9972 15446,10207 Z"/>
+        <rect class="BoundingBox" stroke="none" fill="none" x="5761" y="8936" width="8576" height="1272"/>
+        <path fill="none" stroke="rgb(0,0,0)" d="M 5762,8937 C 11478,8937 13694,9275 14239,9951"/>
+        <path fill="rgb(0,0,0)" stroke="none" d="M 14336,10207 L 14319,9891 14133,9965 14336,10207 Z"/>
        </g>
       </g>
       <g class="com.sun.star.drawing.ConnectorShape">
@@ -567,10 +566,10 @@
       </g>
       <g class="com.sun.star.drawing.ConnectorShape">
        <g id="id62">
-        <rect class="BoundingBox" stroke="none" fill="none" x="13700" y="5188" width="4353" height="1845"/>
-        <path fill="none" stroke="rgb(0,0,0)" d="M 13996,5288 C 16657,5328 17735,5774 17956,6750"/>
-        <path fill="rgb(0,0,0)" stroke="none" d="M 13700,5286 L 13999,5388 14001,5188 13700,5286 Z"/>
-        <path fill="rgb(0,0,0)" stroke="none" d="M 17986,7032 L 18052,6723 17853,6745 17986,7032 Z"/>
+        <rect class="BoundingBox" stroke="none" fill="none" x="13699" y="5662" width="4323" height="1371"/>
+        <path fill="none" stroke="rgb(0,0,0)" d="M 13995,5763 C 16656,5791 17640,6093 17930,6757"/>
+        <path fill="rgb(0,0,0)" stroke="none" d="M 13699,5761 L 13998,5863 14000,5663 13699,5761 Z"/>
+        <path fill="rgb(0,0,0)" stroke="none" d="M 17986,7032 L 18021,6718 17825,6760 17986,7032 Z"/>
        </g>
       </g>
       <g class="com.sun.star.drawing.ConnectorShape">
