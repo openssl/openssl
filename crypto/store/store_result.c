@@ -199,7 +199,7 @@ static EVP_PKEY *try_key_ref(struct extracted_param_data_st *data,
 
     keymgmt = EVP_KEYMGMT_fetch(libctx, data->data_type, propq);
     ERR_set_mark();
-    while (keymgmt != NULL && keydata == NULL && try_fallback--) {
+    while (keymgmt != NULL && keydata == NULL && try_fallback-- > 0) {
         /*
          * There are two possible cases
          *
@@ -235,7 +235,7 @@ static EVP_PKEY *try_key_ref(struct extracted_param_data_st *data,
             keydata = import_data.keydata;
         }
 
-        if (keydata == NULL && try_fallback) {
+        if (keydata == NULL && try_fallback > 0) {
             EVP_KEYMGMT_free(keymgmt);
             keymgmt = evp_keymgmt_fetch_from_prov((OSSL_PROVIDER *)provider,
                                                   data->data_type, propq);
