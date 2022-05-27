@@ -454,6 +454,7 @@ typedef enum OPTION_choice {
     OPT_CASTORE, OPT_NOCASTORE, OPT_CHAINCASTORE, OPT_VERIFYCASTORE,
     OPT_SERVERINFO, OPT_STARTTLS, OPT_SERVERNAME, OPT_NOSERVERNAME, OPT_ASYNC,
     OPT_USE_SRTP, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN, OPT_PROTOHOST,
+    OPT_RECORD_SIZE_LIMIT,
     OPT_MAXFRAGLEN, OPT_MAX_SEND_FRAG, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES,
     OPT_READ_BUF, OPT_KEYLOG_FILE, OPT_EARLY_DATA, OPT_REQCAFILE,
     OPT_TFO,
@@ -506,6 +507,8 @@ const OPTIONS s_client_options[] = {
 #ifdef AF_INET6
     {"6", OPT_6, '-', "Use IPv6 only"},
 #endif
+    {"record_size_limit", OPT_RECORD_SIZE_LIMIT, 'p',
+     "Requested Record size limit"},
     {"maxfraglen", OPT_MAXFRAGLEN, 'p',
      "Enable Maximum Fragment Length Negotiation (len values: 512, 1024, 2048 and 4096)"},
     {"max_send_frag", OPT_MAX_SEND_FRAG, 'p', "Maximum Size of send frames "},
@@ -878,6 +881,7 @@ int s_client_main(int argc, char **argv)
 #endif
     int min_version = 0, max_version = 0, prot_opt = 0, no_prot_opt = 0;
     int async = 0;
+    unsigned int record_size_limit = 0;
     unsigned int max_send_fragment = 0;
     unsigned int split_send_fragment = 0, max_pipelines = 0;
     enum { use_inet, use_unix, use_unknown } connect_type = use_unknown;
@@ -1462,6 +1466,9 @@ int s_client_main(int argc, char **argv)
                 goto opthelp;
             }
             break;
+        case OPT_RECORD_SIZE_LIMIT:
+            record_size_limit = atoi(opt_arg());
+            break;
         case OPT_MAX_SEND_FRAG:
             max_send_fragment = atoi(opt_arg());
             break;
@@ -1762,6 +1769,13 @@ int s_client_main(int argc, char **argv)
 
     if (async) {
         SSL_CTX_set_mode(ctx, SSL_MODE_ASYNC);
+    }
+
+    if (record_size_limit > 0
+        && !SSL_CTX_set_record_size_limit(ctx, record_size_limit)) {
+        BIO_printf(bio_err, "%s: Record size limit %u is out of permitted range\n",
+                   prog, record_size_limit);
+        goto end;
     }
 
     if (max_send_fragment > 0

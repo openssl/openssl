@@ -397,7 +397,8 @@ int tls1_change_cipher_state(SSL *s, int which)
         goto skip_ktls;
 
     /* ktls supports only the maximum fragment size */
-    if (ssl_get_max_send_fragment(s) != SSL3_RT_MAX_PLAIN_LENGTH)
+    if (USE_MAX_FRAGMENT_LENGTH_EXT(s->session)
+            || s->ext.record_size_limit != 0)
         goto skip_ktls;
 
     /* check that cipher is supported */

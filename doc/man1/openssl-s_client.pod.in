@@ -76,6 +76,7 @@ B<openssl> B<s_client>
 [B<-sctp_label_bug>]
 [B<-fallback_scsv>]
 [B<-async>]
+[B<-record_size_limit> I<+int>]
 [B<-maxfraglen> I<len>]
 [B<-max_send_frag>]
 [B<-split_send_frag>]
@@ -558,6 +559,11 @@ is also used via the B<-engine> option. For test purposes the dummy async engine
 Enable Maximum Fragment Length Negotiation; allowed values are
 C<512>, C<1024>, C<2048>, and C<4096>.
 
+=item B<-record_size_limit> I<+int>
+
+The requested record size limit of data fragments to receive.
+See L<SSL_CTX_set_record_size_limit(3)> for further information.
+
 =item B<-max_send_frag> I<int>
 
 The maximum size of data fragment to send.
@@ -929,7 +935,9 @@ The B<-certform> option has become obsolete in OpenSSL 3.0.0 and has no effect.
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
 
-The -tfo option was added in OpenSSL 3.1.
+The B<-tfo> option was added in OpenSSL 3.1.
+
+The B<-record_size_limit> option was added in OpenSSL 3.1.
 
 =head1 COPYRIGHT
 

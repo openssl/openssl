@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2022 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -70,6 +70,7 @@ my %conf_dependent_tests = (
   "07-dtls-protocol-version.cnf" => !$is_default_dtls || !disabled("sctp"),
   "10-resumption.cnf" => !$is_default_tls || $no_ec,
   "11-dtls_resumption.cnf" => !$is_default_dtls || !disabled("sctp"),
+  "13-fragmentation.cnf" => alldisabled("ec", "dh") || disabled("tls1_3") || disabled("tls1_2"),
   "16-dtls-certstatus.cnf" => !$is_default_dtls || !disabled("sctp"),
   "17-renegotiate.cnf" => disabled("tls1_2"),
   "18-dtls-renegotiate.cnf" => disabled("dtls1_2") || !disabled("sctp"),
@@ -96,8 +97,6 @@ my %skip = (
   # We could run some of these tests without TLS 1.2 if we had a per-test
   # disable instruction but that's a bizarre configuration not worth
   # special-casing for.
-  # TODO(TLS 1.3): We should review this once we have TLS 1.3.
-  "13-fragmentation.cnf" => disabled("tls1_2"),
   "14-curves.cnf" => disabled("tls1_2") || disabled("tls1_3")
                      || $no_ec || $no_ec2m,
   "15-certstatus.cnf" => $no_tls || $no_ocsp,
