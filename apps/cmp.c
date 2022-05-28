@@ -2729,7 +2729,7 @@ static int cmp_server(OSSL_CMP_CTX *srv_cmp_ctx)
         msgs++;
         if (req != NULL) {
             if (strcmp(path, "") != 0 && strcmp(path, "pkix/") != 0) {
-                (void)http_server_send_status(cbio, 404, "Not Found");
+                (void)http_server_send_status(prog, cbio, 404, "Not Found");
                 CMP_err1("expecting empty path or 'pkix/' but got '%s'",
                          path);
                 OPENSSL_free(path);
@@ -2740,11 +2740,11 @@ static int cmp_server(OSSL_CMP_CTX *srv_cmp_ctx)
             resp = OSSL_CMP_CTX_server_perform(cmp_ctx, req);
             OSSL_CMP_MSG_free(req);
             if (resp == NULL) {
-                (void)http_server_send_status(cbio,
+                (void)http_server_send_status(prog, cbio,
                                               500, "Internal Server Error");
                 break; /* treated as fatal error */
             }
-            ret = http_server_send_asn1_resp(cbio, keep_alive,
+            ret = http_server_send_asn1_resp(prog, cbio, keep_alive,
                                              "application/pkixcmp",
                                              ASN1_ITEM_rptr(OSSL_CMP_MSG),
                                              (const ASN1_VALUE *)resp);

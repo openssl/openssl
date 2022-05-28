@@ -633,14 +633,15 @@ int ocsp_main(int argc, char **argv)
     }
 
 #ifdef HTTP_DAEMON
-    if (multi && acbio != NULL)
+    if (multi != 0 && acbio != NULL)
         spawn_loop(prog);
     if (acbio != NULL && req_timeout > 0)
         signal(SIGALRM, socket_timeout);
 #endif
 
     if (acbio != NULL)
-        log_message(prog, LOG_INFO, "waiting for OCSP client connections...");
+        trace_log_message(-1, prog,
+                          LOG_INFO, "waiting for OCSP client connections...");
 
 redo_accept:
 
@@ -654,8 +655,9 @@ redo_accept:
                 rdb = newrdb;
             } else {
                 free_index(newrdb);
-                log_message(prog, LOG_ERR, "error reloading updated index: %s",
-                            ridx_filename);
+                trace_log_message(-1, prog,
+                                  LOG_ERR, "error reloading updated index: %s",
+                                  ridx_filename);
             }
         }
 #endif
@@ -1217,7 +1219,7 @@ static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio,
 static int send_ocsp_response(BIO *cbio, const OCSP_RESPONSE *resp)
 {
 #ifndef OPENSSL_NO_SOCK
-    return http_server_send_asn1_resp(cbio,
+    return http_server_send_asn1_resp(prog, cbio,
                                       0 /* no keep-alive */,
                                       "application/ocsp-response",
                                       ASN1_ITEM_rptr(OCSP_RESPONSE),
