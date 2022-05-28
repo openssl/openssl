@@ -386,7 +386,7 @@ static int test_WPACKET_init_der(void)
         return cleanup(&pkt);
 
     /* Generate random packet data for test */
-    if (!TEST_true(RAND_bytes(&testdata2[3], sizeof(testdata2) - 3)))
+    if (!TEST_int_gt(RAND_bytes(&testdata2[3], sizeof(testdata2) - 3), 0))
         return 0;
 
     /*

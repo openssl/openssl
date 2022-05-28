@@ -223,7 +223,7 @@ static int test_builtin(int n, int as)
 
     if (!TEST_ptr(mctx = EVP_MD_CTX_new())
         /* get some random message data */
-        || !TEST_true(RAND_bytes(tbs, sizeof(tbs)))
+        || !TEST_int_gt(RAND_bytes(tbs, sizeof(tbs)), 0)
         /* real key */
         || !TEST_ptr(eckey = EC_KEY_new_by_curve_name(nid))
         || !TEST_true(EC_KEY_generate_key(eckey))
