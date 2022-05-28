@@ -564,8 +564,6 @@ static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
         break;
 
     case BIO_CTRL_FLUSH:
-    case BIO_CTRL_PUSH:
-    case BIO_CTRL_POP:
         break;
 
     case BIO_CTRL_EOF:
@@ -575,8 +573,13 @@ static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
             ret = (long)(peer_b->len == 0 && peer_b->closed);
         }
         break;
+    case BIO_CTRL_PUSH:
+    case BIO_CTRL_POP:
+        ret = 0;
+        break;
 
     default:
+        ERR_raise_data(ERR_LIB_BIO, ERR_R_UNSUPPORTED, "cmd=%d", cmd);
         ret = 0;
     }
     return ret;
