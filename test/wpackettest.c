@@ -410,7 +410,7 @@ static int test_WPACKET_init_der(void)
         return cleanup(&pkt);
 
     /* Generate random packet data for test */
-    if (!TEST_true(RAND_bytes(&testdata2[3], sizeof(testdata2) - 3)))
+    if (!TEST_int_gt(RAND_bytes(&testdata2[3], sizeof(testdata2) - 3), 0))
         return 0;
 
     /*
@@ -581,7 +581,7 @@ static int test_WPACKET_quic_vlint_random(void)
     PACKET read_pkt = {0};
 
     for (i = 0; i < 10000; ++i) {
-        if (!TEST_true(RAND_bytes(rand_data, sizeof(rand_data))))
+        if (!TEST_int_gt(RAND_bytes(rand_data, sizeof(rand_data)), 0))
             return cleanup(&pkt);
 
         expected = *(uint64_t*)rand_data;
