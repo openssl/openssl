@@ -144,21 +144,21 @@ static int test_mod_exp(int round)
         || !TEST_ptr(m = BN_new()))
         goto err;
 
-    if (!TEST_true(RAND_bytes(&c, 1)))
+    if (!TEST_int_gt(RAND_bytes(&c, 1), 0))
         goto err;
     c = (c % BN_BITS) - BN_BITS2;
     if (!TEST_true(BN_rand(a, NUM_BITS + c, BN_RAND_TOP_ONE,
                            BN_RAND_BOTTOM_ANY)))
         goto err;
 
-    if (!TEST_true(RAND_bytes(&c, 1)))
+    if (!TEST_int_gt(RAND_bytes(&c, 1), 0))
         goto err;
     c = (c % BN_BITS) - BN_BITS2;
     if (!TEST_true(BN_rand(b, NUM_BITS + c, BN_RAND_TOP_ONE,
                            BN_RAND_BOTTOM_ANY)))
         goto err;
 
-    if (!TEST_true(RAND_bytes(&c, 1)))
+    if (!TEST_int_gt(RAND_bytes(&c, 1), 0))
         goto err;
     c = (c % BN_BITS) - BN_BITS2;
     if (!TEST_true(BN_rand(m, NUM_BITS + c, BN_RAND_TOP_ONE,
