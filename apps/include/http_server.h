@@ -48,13 +48,19 @@
 # define LOG_ERR       3
 
 /*-
- * Log a message to syslog if multi-threaded HTTP_DAEMON, else to bio_err
- * prog: the name of the current app
+ * Output a message using the trace API with the given category
+ * if the category is >= 0 and tracing is enabled.
+ * Log the message to syslog if multi-threaded HTTP_DAEMON, else to bio_err
+ * if the verbosity is sufficient for the given level of severity.
+ * category: trace category as defined in trace.h, or -1
+ * prog: the name of the current app, or NULL
  * level: the severity of the message, e.g., LOG_ERR
- * fmt: message with potential extra parameters like with printf()
+ * fmt: message format, which should not include a trailing newline
+ * ...: potential extra parameters like with printf()
  * returns nothing
  */
-void log_message(const char *prog, int level, const char *fmt, ...);
+void trace_log_message(int category,
+                       const char *prog, int level, const char *fmt, ...);
 
 # ifndef OPENSSL_NO_SOCK
 /*-
@@ -92,6 +98,7 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
 
 /*-
  * Send an ASN.1-formatted HTTP response
+ * prog: the name of the current app, for diagnostics only
  * cbio: destination BIO (typically as returned by http_server_get_asn1_req())
  *       note: cbio should not do an encoding that changes the output length
  * keep_alive: grant persistent connection
@@ -100,18 +107,20 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
  * resp: the response to send
  * returns 1 on success, 0 on failure
  */
-int http_server_send_asn1_resp(BIO *cbio, int keep_alive,
+int http_server_send_asn1_resp(const char *prog, BIO *cbio, int keep_alive,
                                const char *content_type,
                                const ASN1_ITEM *it, const ASN1_VALUE *resp);
 
 /*-
  * Send a trivial HTTP response, typically to report an error or OK
+ * prog: the name of the current app, for diagnostics only
  * cbio: destination BIO (typically as returned by http_server_get_asn1_req())
  * status: the status code to send
  * reason: the corresponding human-readable string
  * returns 1 on success, 0 on failure
  */
-int http_server_send_status(BIO *cbio, int status, const char *reason);
+int http_server_send_status(const char *prog, BIO *cbio,
+                            int status, const char *reason);
 
 # endif
 

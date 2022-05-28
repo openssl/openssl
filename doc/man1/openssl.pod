@@ -769,7 +769,7 @@ Traces decrementing certain ASN.1 structure references.
 
 =item B<HTTP>
 
-Traces the HTTP client, such as message headers being sent and received.
+Traces the HTTP client and server, such as messages being sent and received.
 
 =back
 
